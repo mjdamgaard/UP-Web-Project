@@ -80,26 +80,28 @@ CREATE TABLE Statements (
 	/* database types (tables) of primary fields */
 		/* subject types */
 		-- allowed subject types: any (so no constraints).
-		subject_type TINYINT,
+		subject_type TINYINT
 
 		/* predicate types */
-		-- allowed predicate types: DescribedTerm or FunctionalTerm.
-		statement_type TINYINT CHECK (
-			statement_type = 3 OR -- (DescribedTerm)
-			statement_type = 4    -- (FunctionalTerm)
-		)
+			-- -- allowed predicate types: DescribedTerm or FunctionalTerm.
+			-- predicate_type TINYINT CHECK (
+			-- 	statement_type = 3 OR -- (DescribedTerm)
+			-- 	statement_type = 4    -- (FunctionalTerm)
+			-- )
+		-- allowed predicate types: Predicate (so no flag needed).
 	/**/
 );
 
 
 
--- type code for DescribedTerm: 3.
-CREATE TABLE DescribedTerms (
+-- type code for DescribedEntities: 3.
+CREATE TABLE DescribedEntity (
 	/* described term ID */
 	id BIGINT AUTO_INCREMENT,
 	PRIMARY KEY(id),
 
 	/* primary fields */
+	--TODO: Change!
 	description_schema BIGINT,
 	schema_input BIGINT,
 	-- (these two fields combine into one "Description" of the Term in question)
@@ -115,15 +117,55 @@ CREATE TABLE DescribedTerms (
 );
 
 
--- type code for DescriptionSchemas: 4.
-CREATE TABLE DescriptionSchemas (
-	/* description schema ID */
+-- -- type code for DescriptionSchemas: 4.
+-- CREATE TABLE DescriptionSchemas (
+-- 	/* description schema ID */
+-- 	id BIGINT AUTO_INCREMENT,
+-- 	PRIMARY KEY(id),
+--
+-- 	/* data (text defining the description schema) */
+-- 	str TEXT
+-- );
+
+
+-- type code for Predicate: 4.
+CREATE TABLE Predicates (
+	/* predicate ID */
 	id BIGINT AUTO_INCREMENT,
 	PRIMARY KEY(id),
 
-	/* data (text defining the description schema) */
-	str TEXT
+	/* primary fields */
+	relation BIGINT,
+	object BIGINT,
+	-- (these two fields combine into one "Description" of the Term in question)
+
+	/* database types (tables) of primary fields */
+		/* relation types */
+		-- allowed relation types: any (so no constraints).
+		relation_type TINYINT,
+
+		/* object types */
+		-- allowed object types: any (so no constraints).
+		object_type TINYINT
+	/**/
 );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 -- type code for DateTime: 6.
