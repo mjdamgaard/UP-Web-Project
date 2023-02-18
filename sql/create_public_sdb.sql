@@ -1,22 +1,22 @@
 USE mydatabase;
 
-DROP TABLE Users;
-DROP TABLE SemanticInputs;
-DROP TABLE Statements;
-DROP TABLE DescribedEntities;
-DROP TABLE Predicates;
--- DROP TABLE Strings;
-DROP TABLE TTexts;
-DROP TABLE STexts;
-DROP TABLE MTexts;
--- DROP TABLE Binaries;
-DROP TABLE TBlobs;
-DROP TABLE SBlobs;
-DROP TABLE MBlobs;
-DROP TABLE L1Lists;
-DROP TABLE L2Lists;
-DROP TABLE L3Lists;
-DROP TABLE L4Lists;
+-- DROP TABLE Users;
+-- DROP TABLE SemanticInputs;
+-- DROP TABLE Statements;
+-- DROP TABLE DescribedEntities;
+-- DROP TABLE Predicates;
+-- DROP TABLE TVarChars;
+-- DROP TABLE TTexts;
+-- DROP TABLE STexts;
+-- DROP TABLE MTexts;
+-- DROP TABLE TVarBinaries;
+-- DROP TABLE TBlobs;
+-- DROP TABLE SBlobs;
+-- DROP TABLE MBlobs;
+-- DROP TABLE L1Lists;
+-- DROP TABLE L2Lists;
+-- DROP TABLE L3Lists;
+-- DROP TABLE L4Lists;
 
 
 
@@ -57,7 +57,6 @@ CREATE TABLE SemanticInputs (
         -- allowed statement types: only Statement (so no flag needed).
 
         /* value types */
-            -- (OBSOLETE: allowed value types: only BIGINT (so no flag needed).)
         -- allowed value types: any (so no constraints).
         value_type TINYINT,
     /**/
@@ -122,16 +121,6 @@ CREATE TABLE DescribedEntities (
 );
 
 
--- -- type code for DescriptionSchemas: 4.
--- CREATE TABLE DescriptionSchemas (
---     /* description schema ID */
---     id BIGINT AUTO_INCREMENT,
---     PRIMARY KEY(id),
---
---     /* data (text defining the description schema) */
---     str TEXT
--- );
-
 
 -- type code for Predicate: 4.
 CREATE TABLE Predicates (
@@ -141,7 +130,7 @@ CREATE TABLE Predicates (
 
     /* primary fields */
     -- "relation" can here be either an attribute name or verb (if the mydatabase
-    -- type is a TText) or a (described) relation if the database type is a
+    -- type is a TVarChar) or a (described) relation if the database type is a
     -- DescribedEntity.
     relation BIGINT,
     -- Input in the relation, sentence object of the verb, or value of the
@@ -150,10 +139,10 @@ CREATE TABLE Predicates (
 
     /* database types (tables) of primary fields */
         /* relation/verb/attribute types */
-        -- allowed relation types: DescripedEntity (if rel) or TText (if other).
+        -- allowed relation types: DescripedEntity (if rel.) or TVarChar (else).
         relation_type TINYINT CHECK (
             relation_type = 3 OR -- DescripedEntity
-            relation_type = 21   -- TText
+            relation_type = 21   -- TVarChar
         ),
 
         /* input types */
@@ -185,18 +174,20 @@ CREATE TABLE Predicates (
 
 
 
--- -- type code for Strings: 20.
--- CREATE TABLE Strings (
---     /* string data entity ID */
---     id BIGINT AUTO_INCREMENT,
---     PRIMARY KEY(id),
---
---     /* data */
---     str VARCHAR(16383)
--- );
+-- type code for TVarChar: 21.
+CREATE TABLE TVarChars (
+    /* variable character string ID */
+    id BIGINT AUTO_INCREMENT,
+    PRIMARY KEY(id),
+
+    /* data */
+    str VARCHAR(255)
+);
+
+-- saving SVarChars for later.
 
 
--- type code for TText: 21.
+-- type code for TText: 26.
 CREATE TABLE TTexts (
     /* tiny text ID */
     id BIGINT AUTO_INCREMENT,
@@ -206,7 +197,7 @@ CREATE TABLE TTexts (
     str TINYTEXT
 );
 
--- type code for SText: 22.
+-- type code for SText: 27.
 CREATE TABLE STexts (
     /* small text ID */
     id BIGINT AUTO_INCREMENT,
@@ -216,7 +207,7 @@ CREATE TABLE STexts (
     str TEXT
 );
 
--- type code for MText: 23.
+-- type code for MText: 28.
 CREATE TABLE MTexts (
     /* medium text ID */
     id BIGINT AUTO_INCREMENT,
@@ -226,23 +217,26 @@ CREATE TABLE MTexts (
     str MEDIUMTEXT
 );
 
-
 -- saving LTexts for later.
+
 -- saving DeltaTexts and CompoundTexts for later.
 
 
 
--- -- type code for Binary: 30.
--- CREATE TABLE Binaries (
---     /* string data entity ID */
---     id BIGINT AUTO_INCREMENT,
---     PRIMARY KEY(id),
---
---     /* data */
---     bin VARBINARY(65535)
--- );
+-- type code for TVarBinary: 31.
+CREATE TABLE TVarBinaries (
+    /* string data entity ID */
+    id BIGINT AUTO_INCREMENT,
+    PRIMARY KEY(id),
 
--- type code for TBlob: 31.
+    /* data */
+    bin VARBINARY(255)
+);
+
+-- saving SVarBinaries for later.
+
+
+-- type code for TBlob: 36.
 CREATE TABLE TBlobs (
     /* tiny BLOB ID */
     id BIGINT AUTO_INCREMENT,
@@ -252,7 +246,7 @@ CREATE TABLE TBlobs (
     bin TINYBLOB
 );
 
--- type code for SBlob: 32.
+-- type code for SBlob: 37.
 CREATE TABLE SBlobs (
     /* small BLOB ID */
     id BIGINT AUTO_INCREMENT,
@@ -262,7 +256,7 @@ CREATE TABLE SBlobs (
     bin BLOB
 );
 
--- type code for MBlob: 33.
+-- type code for MBlob: 38.
 CREATE TABLE MBlobs (
     /* medium BLOB ID */
     id BIGINT AUTO_INCREMENT,
