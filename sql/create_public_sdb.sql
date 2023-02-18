@@ -3,8 +3,8 @@ USE mydatabase;
 DROP TABLE Users;
 DROP TABLE SemanticInputs;
 DROP TABLE Statements;
-DROP TABLE DescribedTerms;
-DROP TABLE DescriptionSchemas;
+DROP TABLE DescribedEntities;
+DROP TABLE Predicates;
 -- DROP TABLE Strings;
 DROP TABLE TTexts;
 DROP TABLE STexts;
@@ -89,20 +89,21 @@ CREATE TABLE Statements (
 
 
 
--- type code for DescribedEntities: 3.
-CREATE TABLE DescribedEntity (
+-- type code for DescribedEntity: 3.
+CREATE TABLE DescribedEntities (
     /* described term ID */
     id BIGINT AUTO_INCREMENT,
     PRIMARY KEY(id),
 
     /* primary fields */
-    -- List of attributes (i.e. the attribute names), predicates, relations,
-    -- categories, etc., which all defines the overall type and category of the
-    -- entity.
+    -- List of attribute names, verbs and (described) relations, as well as
+    -- predicates, categories, etc., which all defines the overall type and
+    -- category of the entity.
     categorizing_list BIGINT,
-    -- List of input specifically to each attribute and relation in the catego-
-    -- rizing list (with all other elements of that list ignored) in the same
-    -- order as how the attributes and relations appear in that list. 
+    -- List of input specifically to each attribute name, verb and/or relation
+    -- in the categorizing list (with all other elements of that list ignored)
+    -- in the same order as how all these attributes, verbs and/or relations
+    -- appear in that list.
     input_list BIGINT,
 
     /* database types (tables) of primary fields */
@@ -139,21 +140,25 @@ CREATE TABLE Predicates (
     PRIMARY KEY(id),
 
     /* primary fields */
-    rel_or_att BIGINT, -- relation or attribute depending on the database type.
-    inpput BIGINT, -- object of the realtion or value of the attribute.
-    -- (these two fields combine into one "Description" of the Term in question)
+    -- "relation" can here be either an attribute name or verb (if the mydatabase
+    -- type is a TText) or a (described) relation if the database type is a
+    -- DescribedEntity.
+    relation BIGINT,
+    -- Input in the relation, sentence object of the verb, or value of the
+    -- attribute, depending on the database type of "relation."
+    input BIGINT,
 
     /* database types (tables) of primary fields */
-        /* relation/attribute types */
-        -- allowed rel_or_att types: DescripedEntity (if rel) or TText (if att).
-        rel_or_att_type TINYINT CHECK (
-            rel_or_att_type = 3 OR -- DescripedEntity
-            rel_or_att_type = 21   -- TText
+        /* relation/verb/attribute types */
+        -- allowed relation types: DescripedEntity (if rel) or TText (if other).
+        relation_type TINYINT CHECK (
+            relation_type = 3 OR -- DescripedEntity
+            relation_type = 21   -- TText
         ),
 
-        /* inpput types */
-        -- allowed inpput types: any (so no constraints).
-        inpput_type TINYINT
+        /* input types */
+        -- allowed input types: any (so no constraints).
+        input_type TINYINT
     /**/
 );
 
@@ -351,16 +356,3 @@ CREATE TABLE L4Lists (
 );
 
 -- saving larger lists for later.
-
-
-
-
-
--- insert some users
-INSERT INTO Users (public_encryption_key) VALUES (NULL);
-INSERT INTO Users () VALUES ();
-INSERT INTO Users () VALUES ();
-
--- --test timestamp
--- DO SLEEP(1);
--- UPDATE Users SET public_encryption_key = 0xAAAA WHERE id = 1;
