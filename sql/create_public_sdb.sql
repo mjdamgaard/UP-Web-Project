@@ -112,8 +112,8 @@ CREATE TABLE DescribedEntities (
 
         /* srel_inputs types */
         -- allowed srel_inputs types: any List types.
-        srel_inputs TINYINT CHECK (
-            srel_inputs >= 40 -- all List types
+        srel_inputs_type TINYINT CHECK (
+            srel_inputs_type >= 40 -- all List types
         )
     /**/
 );
