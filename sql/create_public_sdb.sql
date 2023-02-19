@@ -17,6 +17,7 @@ USE mydatabase;
 -- DROP TABLE L2Lists;
 -- DROP TABLE L3Lists;
 -- DROP TABLE L4Lists;
+-- DROP TABLE LongLists;
 
 
 
@@ -307,7 +308,7 @@ CREATE TABLE L2Lists (
 
 -- type code for L3List: 43.
 CREATE TABLE L3Lists (
-    /* length 2 list ID */
+    /* length 3 list ID */
     id BIGINT AUTO_INCREMENT,
     PRIMARY KEY(id),
 
@@ -325,9 +326,9 @@ CREATE TABLE L3Lists (
     /**/
 );
 
--- type code for L3List: 44.
+-- type code for L4List: 44.
 CREATE TABLE L4Lists (
-    /* length 2 list ID */
+    /* length 4 list ID */
     id BIGINT AUTO_INCREMENT,
     PRIMARY KEY(id),
 
@@ -347,4 +348,46 @@ CREATE TABLE L4Lists (
     /**/
 );
 
--- saving larger lists for later.
+-- saving larger fixed-length lists for later.
+
+
+-- type code for LongList: 51.
+CREATE TABLE LongLists (
+    /* long (+10) length list ID */
+    id BIGINT AUTO_INCREMENT,
+    PRIMARY KEY(id),
+
+    /* primary fields */
+    element_1 BIGINT,
+    element_2 BIGINT,
+    element_3 BIGINT,
+    element_4 BIGINT,
+    element_5 BIGINT,
+    element_6 BIGINT,
+    element_7 BIGINT,
+    element_8 BIGINT,
+    element_9 BIGINT,
+    element_10 BIGINT,
+    tail BIGINT,
+
+    /* database types (tables) of primary fields */
+        /* element types */
+        -- allowed element types: any (so no constraints).
+        element_1_type TINYINT,
+        element_2_type TINYINT,
+        element_3_type TINYINT,
+        element_4_type TINYINT,
+        element_5_type TINYINT,
+        element_6_type TINYINT,
+        element_7_type TINYINT,
+        element_8_type TINYINT,
+        element_9_type TINYINT,
+        element_10_type TINYINT,
+
+        /* tail types */
+        -- allowed tail types: any List types.
+        tail_type TINYINT CHECK (
+            tail_type >= 40 -- all List types
+        )
+    /**/
+);
