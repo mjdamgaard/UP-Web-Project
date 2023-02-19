@@ -18,7 +18,10 @@ INSERT INTO TVarChars (str) VALUES (".type=");
     -- Term is the default type so it is not needed:
     -- INSERT INTO TVarChars (str) VALUES ("term");
 
-INSERT INTO TVarChars (str) VALUES (".favname=");
+INSERT INTO TVarChars (str) VALUES (".lexical_item=");
 INSERT INTO TVarChars (str) VALUES (".description=");
+
+INSERT INTO TVarChars (str) VALUES (".identifierSuggestion:");
+INSERT INTO TVarChars (str) VALUES (".relevantKeyword:");
 
 -- This is perhaps all we need to start with..
