@@ -95,27 +95,25 @@ CREATE TABLE DescribedEntities (
     PRIMARY KEY(id),
 
     /* primary fields */
-    -- List of attribute names, verbs and (described) relations, as well as
-    -- predicates, categories, etc., which all defines the overall type and
-    -- category of the entity.
-    categorizing_list BIGINT,
-    -- List of input specifically to each attribute name, verb and/or relation
-    -- in the categorizing list (with all other elements of that list ignored)
-    -- in the same order as how all these attributes, verbs and/or relations
-    -- appear in that list.
-    input_list BIGINT,
+    -- List of two lists: A (possibly empty) list of category predicates
+    -- (cpreds), and a list of specification relations (srels), the latter of
+    -- which, together with the srel_inputs (also a list), specifies the entity
+    -- within the given category defined by the cpreds.
+    cpreds_and_srels BIGINT,
+    -- List of input to each specification relation (srel) in the second list
+    -- within cpreds_and_srels. The order of the srel inputs is taken to match
+    -- the order of the srels, and the lengths of these two lists should thus be
+    -- the same.
+    srel_inputs BIGINT,
 
     /* database types (tables) of primary fields */
-        /* categorizing_list types */
-        -- allowed categorizing_list types: any List types.
-        categorizing_list_type TINYINT CHECK (
-            categorizing_list_type >= 40 -- all List types
-        ),
+        /* "category predicates and specification relations" types */
+        -- allowed cpreds_and_srels types: L2List (so no flag needed).
 
-        /* input_list types */
-        -- allowed input_list types: any List types.
-        input_list_type TINYINT CHECK (
-            input_list_type >= 40 -- all List types
+        /* srel_inputs types */
+        -- allowed srel_inputs types: any List types.
+        srel_inputs TINYINT CHECK (
+            srel_inputs >= 40 -- all List types
         )
     /**/
 );
