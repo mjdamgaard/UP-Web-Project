@@ -3,8 +3,10 @@ USE mydatabase;
 -- DROP TABLE Users;
 -- DROP TABLE SemanticInputs;
 -- DROP TABLE Statements;
--- DROP TABLE DescribedEntities;
+DROP TABLE DescribedEntities;
 -- DROP TABLE Predicates;
+-- DROP TABLE Relations;
+-- DROP TABLE Categories;
 -- DROP TABLE TVarChars;
 -- DROP TABLE TTexts;
 -- DROP TABLE STexts;
@@ -88,24 +90,49 @@ CREATE TABLE Statements (
 );
 
 
+/* Objects, Relations and Categories each fall into two subtypes: "Categorized"
+ * and "Simple" ones. Both subtypes take two inputs each in all three cases,
+ * which we will call descriptors (1 and 2).
+ *
+ * The "Simple" subtype takes as its first descriptor a string denoting af
+ * lexical item (a semantically meaningful part of a sentence). Examples of lex-
+ * ical items could be: "the number pi", "is subset of" (or "belongs to"), "has
+ * related link:", and "is funny".
+ * The second descriptor of the Simple subtype is an (optional) text descrip-
+ * tion, which can be used to explain the lexical item more thoroughly, and to
+ * clear up any potential ambiguities.
+ *
+ * The "Categorized" subtype, on the other hand, takes as its first descriptor
+ * a list of two element which are themselves lists. The first of these two sub-
+ * lists is a list of "categorizing predicates," which we will abbreviate as
+ * 'cpreds,' and the second sublist is a list of "specification relations,"
+ * which we will abbreviate as 'srels.'
+ * The list of cpreds... Hm, jeg tænkte lige for lidt siden, om ikke man bare
+ * skulle lave cpreds om til en liste af kategorier i stedet, men besluttede
+ * nej. Nu er jeg så lige blevet i tvivl igen: Skal cpreds ikke bare ændres til
+ * cats?.. (11:44) 
 
--- type code for DescribedEntity: 3.
-CREATE TABLE DescribedEntities (
+
+-- type code for Objects: 3.
+CREATE TABLE Objects (
     /* described term ID */
     id BIGINT AUTO_INCREMENT,
     PRIMARY KEY(id),
 
-    /* primary fields */
-    -- List of two lists: A (possibly empty) list of category predicates
-    -- (cpreds), and a list of specification relations (srels), the latter of
-    -- which, together with the srel_inputs (also a list), specifies the entity
-    -- within the given category defined by the cpreds.
-    cpreds_and_srels BIGINT,
-    -- List of input to each specification relation (srel) in the second list
-    -- within cpreds_and_srels. The order of the srel inputs is taken to match
-    -- the order of the srels, and the lengths of these two lists should thus be
-    -- the same.
-    srel_inputs BIGINT,
+    -- /* primary fields */
+    -- -- List of two lists: A (possibly empty) list of category predicates
+    -- -- (cpreds), and a list of specification relations (srels), the latter of
+    -- -- which, together with the srel_inputs (also a list), specifies the entity
+    -- -- within the given category defined by the cpreds.
+    -- cpreds_and_srels BIGINT,
+    -- -- List of input to each specification relation (srel) in the second list
+    -- -- within cpreds_and_srels. The order of the srel inputs is taken to match
+    -- -- the order of the srels, and the lengths of these two lists should thus be
+    -- -- the same.
+    -- srel_inputs BIGINT,
+
+    descriptor_1 BIGINT,
+    descriptor_2 BIGINT,
 
     /* database types (tables) of primary fields */
         /* "category predicates and specification relations" types */
@@ -127,14 +154,17 @@ CREATE TABLE Predicates (
     id BIGINT AUTO_INCREMENT,
     PRIMARY KEY(id),
 
-    /* primary fields */
-    -- "relation" can here be either an attribute name or verb (if the mydatabase
-    -- type is a TVarChar) or a (described) relation if the database type is a
-    -- DescribedEntity.
-    relation BIGINT,
-    -- Input in the relation, sentence object of the verb, or value of the
-    -- attribute, depending on the database type of "relation."
-    input BIGINT,
+    -- /* primary fields */
+    -- -- "relation" can here be either an attribute name or verb (if the mydatabase
+    -- -- type is a TVarChar) or a (described) relation if the database type is a
+    -- -- DescribedEntity.
+    -- relation BIGINT,
+    -- -- Input in the relation, sentence object of the verb, or value of the
+    -- -- attribute, depending on the database type of "relation."
+    -- input BIGINT,
+
+    descriptor_1 BIGINT,
+    descriptor_2 BIGINT,
 
     /* database types (tables) of primary fields */
         /* relation/verb/attribute types */
@@ -150,9 +180,53 @@ CREATE TABLE Predicates (
     /**/
 );
 
+-- type code for Relations: 5.
+CREATE TABLE Relations (
+    /* predicate ID */
+    id BIGINT AUTO_INCREMENT,
+    PRIMARY KEY(id),
 
 
+    descriptor_1 BIGINT,
+    descriptor_2 BIGINT,
 
+    /* database types (tables) of primary fields */
+        /* relation/verb/attribute types */
+        -- allowed relation types: DescripedEntity (if rel.) or TVarChar (else).
+        relation_type TINYINT CHECK (
+            relation_type = 3 OR -- DescripedEntity
+            relation_type = 21   -- TVarChar
+        ),
+
+        /* input types */
+        -- allowed input types: any (so no constraints).
+        input_type TINYINT
+    /**/
+);
+
+-- type code for Categories: 6.
+CREATE TABLE Categories (
+    /* predicate ID */
+    id BIGINT AUTO_INCREMENT,
+    PRIMARY KEY(id),
+
+
+    descriptor_1 BIGINT,
+    descriptor_2 BIGINT,
+
+    /* database types (tables) of primary fields */
+        /* relation/verb/attribute types */
+        -- allowed relation types: DescripedEntity (if rel.) or TVarChar (else).
+        relation_type TINYINT CHECK (
+            relation_type = 3 OR -- DescripedEntity
+            relation_type = 21   -- TVarChar
+        ),
+
+        /* input types */
+        -- allowed input types: any (so no constraints).
+        input_type TINYINT
+    /**/
+);
 
 
 
