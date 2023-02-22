@@ -82,6 +82,7 @@ CREATE TABLE StatementInputs (
         -- ...or if it is, then it cannot be a predicate, and object thus has to
         -- not be an empty object.
         OR object_t <> -1 -- @empty_t
+        -- (Apparently you cannot write a @ right after the -- in a comment!x))
     )
 
 
