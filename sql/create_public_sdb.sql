@@ -23,33 +23,15 @@ DROP TABLE DescribedEntities;
 
 
 
--- type code for User: 0.
-CREATE TABLE Users (
-    /* user ID */
-    id BIGINT AUTO_INCREMENT,
-    PRIMARY KEY(id),
-
-    /* primary fields */
-    public_encryption_key BIGINT,
-
-    /* database types (tables) of primary fields */
-        /* public_encryption_key types */
-        -- allowed public_encryption_key types: TBLOB (so no flag needed).
-    /**/
-
-    /* timestamp */
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- type code for SemanticInput: 1.
+/* Semantic inputs which the users (or bots) state. A fundamental feature of
+ * this semantic system is that all such statements comes ...
+ **/
 CREATE TABLE SemanticInputs (
-    /* semantic input ID */
-    id BIGINT AUTO_INCREMENT,
-    PRIMARY KEY(id),
-
     /* primary fields */
+    -- subject of predicate or relation
+    subject BIGINT,
+    -- user (or bot) who states the semantic input.
     user BIGINT,
-    statement BIGINT,
     value BIGINT,
 
     /* database types (tables) of primary fields */
@@ -69,25 +51,46 @@ CREATE TABLE SemanticInputs (
 );
 
 
--- type code for Statement: 2.
-CREATE TABLE Statements (
-    /* statement ID */
-    id BIGINT AUTO_INCREMENT,
+-- type code for User: 0.
+CREATE TABLE Users (
+    /* user ID */
+    id BIGINT AUTO_INCREMENT=0x0000000000000000,
     PRIMARY KEY(id),
 
     /* primary fields */
-    subject BIGINT,
-    predicate BIGINT,
+    -- TBD.
 
-    /* database types (tables) of primary fields */
-        /* subject types */
-        -- allowed subject types: any (so no constraints).
-        subject_type TINYINT
-
-        /* predicate types */
-        -- allowed predicate types: Predicate (so no flag needed).
-    /**/
+    /* timestamp */
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+--
+-- -- type code for Statement: 2.
+-- CREATE TABLE Statements (
+--     /* statement ID */
+--     id BIGINT AUTO_INCREMENT,
+--     PRIMARY KEY(id),
+--
+--     /* primary fields */
+--     subject BIGINT,
+--     predicate BIGINT,
+--
+--     /* database types (tables) of primary fields */
+--         /* subject types */
+--         -- allowed subject types: any (so no constraints).
+--         subject_type TINYINT
+--
+--         /* predicate types */
+--         -- allowed predicate types: Predicate (so no flag needed).
+--     /**/
+-- );
+
+
+
+
+
+
 
 
 /* Objects, Relations and Categories each fall into two subtypes: "Categorized"
@@ -110,7 +113,8 @@ CREATE TABLE Statements (
  * The list of cpreds... Hm, jeg tænkte lige for lidt siden, om ikke man bare
  * skulle lave cpreds om til en liste af kategorier i stedet, men besluttede
  * nej. Nu er jeg så lige blevet i tvivl igen: Skal cpreds ikke bare ændres til
- * cats?.. (11:44) 
+ * cats?.. (11:44)
+ **/
 
 
 -- type code for Objects: 3.

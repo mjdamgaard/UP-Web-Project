@@ -62,7 +62,7 @@ INSERT INTO L2Lists (
     element_2_type, element_2
 )
 VALUES (
-    40, 0, -- the empty list.
+    40, NULL, -- 0, -- the empty list.
     42, @srel_basic
 );
 SET @cps_srs_basic = 1;
