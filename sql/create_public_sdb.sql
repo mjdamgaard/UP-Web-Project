@@ -72,8 +72,8 @@ CREATE TABLE StatementInputs (
         -- either pred_or_rel is NOT a compound term...
         (pred_or_rel NOT BETWEEN 0x0300000000000000 AND 0x0400000000000000 - 1)
         -- ...or if it is, then it cannot be a predicate, and object thus has to
-        -- not be null.
-        OR object != NULL
+        -- not be 0.
+        OR object != 0
     )
 
 
@@ -84,12 +84,27 @@ CREATE TABLE StatementInputs (
 
 
 
+CREATE TABLE Bots (
+    /* bot ID */
+    id BIGINT UNSIGNED CHECK (
+        -- type code for Bot: 0x00.
+        id BETWEEN 0x0000000000000001 -- 0x0000000000000000 = 0 is reserved.
+           AND     0x0100000000000000 - 1
+        -- (Bots are in fact Terms from the beginning.)
+    ),
+    PRIMARY KEY(id),
+
+    /* primary fields */
+    description Text
+);
+
+
 CREATE TABLE Users (
     -- user ID.
     id BIGINT UNSIGNED CHECK (
         -- type code for User: 0x01.
-        id >= 0x0100000000000000 AND
-        id <  0x0200000000000000
+        id BETWEEN 0x0100000000000000
+           AND     0x0200000000000000 - 1
         -- (This is in case Users are included as Terms in a future version.)
     ),
     PRIMARY KEY(id),
@@ -101,18 +116,6 @@ CREATE TABLE Users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE Bots (
-    /* bot ID */
-    id BIGINT UNSIGNED CHECK (
-        -- type code for Bot: 0x00.
-        id BETWEEN 0x0000000000000000 AND 0x0100000000000000 - 1
-        -- (This is in case Bots are included as Terms in a future version.)
-    ),
-    PRIMARY KEY(id),
-
-    /* primary fields */
-    description Text
-);
 
 
 
@@ -155,8 +158,8 @@ CREATE TABLE SimpleTerms (
     -- simple term ID.
     id BIGINT UNSIGNED CHECK (
         -- type code for SimpleTerm: 0x02.
-        id >= 0x0200000000000000 AND
-        id <  0x0300000000000000
+        id BETWEEN 0x0200000000000000
+           AND     0x0300000000000000 - 1
     ),
     PRIMARY KEY(id),
 
@@ -172,8 +175,8 @@ CREATE TABLE SimpleTerms (
     -- specifying lexical item.
     spec_lexical_item BIGINT,
 
-    -- specifying description.
-    spec_description BIGINT
+    -- description.
+    description BIGINT
 );
 
 
@@ -181,8 +184,8 @@ CREATE TABLE StandardTerms (
     /* standard term ID */
     id BIGINT UNSIGNED CHECK (
         -- type code for StandardTerm: 0x03.
-        id >= 0x0300000000000000 AND
-        id <  0x0400000000000000
+        id BETWEEN 0x0300000000000000
+           AND     0x0400000000000000 - 1
     ),
     PRIMARY KEY(id),
 
@@ -195,13 +198,12 @@ CREATE TABLE StandardTerms (
 );
 
 
-
 CREATE TABLE CompoundTerms (
     /* compound term ID */
     id BIGINT UNSIGNED CHECK (
         -- type code for CompoundTerm: 0x04.
-        id >= 0x0400000000000000 AND
-        id <  0x0500000000000000
+        id BETWEEN 0x0400000000000000
+           AND     0x0500000000000000 - 1
     ),
     PRIMARY KEY(id),
 
@@ -213,6 +215,59 @@ CREATE TABLE CompoundTerms (
     input BIGINT
 );
 
+
+
+CREATE TABLE Strings (
+    /* variable character string ID */
+    id BIGINT AUTO_INCREMENT,
+    PRIMARY KEY(id),
+
+    /* data */
+    str VARCHAR(255)
+);
+
+CREATE TABLE Binaries (
+    /* variable character string ID */
+    id BIGINT AUTO_INCREMENT,
+    PRIMARY KEY(id),
+
+    /* data */
+    str VARCHAR(255)
+);
+
+CREATE TABLE Lists (
+    /* variable character string ID */
+    id BIGINT AUTO_INCREMENT,
+    PRIMARY KEY(id),
+
+    /* data */
+    str VARCHAR(255)
+);
+
+
+
+CREATE VIEW Terms AS
+SELECT (id, descriptor_1, descriptor_2) FROM
+    SELECT (
+        id,
+        spec_lexical_item AS descriptor_1,
+        description       AS descriptor_2
+    )
+    FROM SimpleTerms
+    UNION
+    SELECT (
+        id,
+        spec_parent_preds AS descriptor_1,
+        spec_child_preds  AS descriptor_2
+    )
+    FROM StandardTerms
+    UNION
+    SELECT (
+        id,
+        rel_or_fun AS descriptor_1,
+        input      AS descriptor_2
+    )
+    FROM CompoundTerms;
 
 -- type code for DateTime: 6.
 -- type code for Year: 7.
