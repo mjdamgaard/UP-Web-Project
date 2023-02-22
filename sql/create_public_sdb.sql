@@ -176,7 +176,7 @@ CREATE TABLE SimpleTerms (
 
     -- specifying lexical item.
     -- spec_lexical_item_t is not needed; it is always String type.
-    spec_lexical_item_id BIGINT,
+    spec_lexical_item_id BIGINT UNSIGNED,
 
     -- description.
     -- description_t is not needed; it is always String type.
