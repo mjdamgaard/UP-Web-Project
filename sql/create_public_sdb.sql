@@ -23,38 +23,56 @@ DROP TABLE DescribedEntities;
 
 
 
-/* Semantic inputs which the users (or bots) state. A fundamental feature of
- * this semantic system is that all such statements comes ...
+/* Statements which the users (or bots) give as input to the semantic network.
+ * A central feature of this semantic system is that all such statements come
+ * with a numerical value which represents the degree to which the user deems
+ * that the statement is correct (like when answering a survey).
  **/
-CREATE TABLE SemanticInputs (
-    /* primary fields */
-    -- subject of predicate or relation
-    subject BIGINT,
-    -- user (or bot) who states the semantic input.
+CREATE TABLE StatementInputs (
+    -- subject of predicate or relation.
+    subject BIGINT
+    FOREIGN KEY (subject) REFERENCES Entities(id),
+
+    -- user (or bot) who states the statement.
     user BIGINT,
-    value BIGINT,
+    FOREIGN KEY (user) REFERENCES Users(id),
 
-    /* database types (tables) of primary fields */
-        /* user types */
-        -- allowed user types: only User (so no flag needed).
+    -- predicate or relation.
+    pred_or_rel BIGINT,
+    -- FOREIGN KEY (pred_or_rel) REFERENCES Entities(id),
 
-        /* statement types */
-        -- allowed statement types: only Statement (so no flag needed).
+    -- relation object (second input, so to speak) if pred_or_rel is a relation.
+    object BIGINT,
+    -- FOREIGN KEY (pred_or_rel) REFERENCES Entities(id),
 
-        /* value types */
-        -- allowed value types: any (so no constraints).
-        value_type TINYINT,
-    /**/
+    -- numerical value (signed) which defines the degree to which the users
+    -- (or bot) deems the statement to be true/fitting. When dividing with
+    -- 2^63, this value runs from -1 to (almost) 1. And then -1 is taken to mean
+    -- "very far from true/fitting," 0 is taken to mean "not sure / not
+    -- particularly fitting or unfitting," and 1 is taken to mean "very much
+    -- true/fitting."
+    rating_value BIGINT,
+
+    -- In this version, a user or bot can only have one rating value per
+    -- statement, which means that the combination of user and statement
+    -- (subject, pred_or_rel and object) is unique for each row.
+    PRIMARY KEY(subject, user, pred_or_rel, object)
+    -- Additionally, I intend to create a clustered index on
+    -- (subject, user, pred_or_rel) (in that order). (Part of the reason why
+    -- is that I intend to implement all aggregates, such as average, via bots,
+    -- which are also implemented as "Users.")
 
     /* timestamp */
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    -- created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
--- type code for User: 0.
+
 CREATE TABLE Users (
     /* user ID */
-    id BIGINT AUTO_INCREMENT=0x0000000000000000,
+    id BIGINT AUTO_INCREMENT=0x0000000000000000 CHECK(
+        id < 0x0100000000000000 -- type code for User: 0x00.
+    ),
     PRIMARY KEY(id),
 
     /* primary fields */
@@ -63,28 +81,6 @@ CREATE TABLE Users (
     /* timestamp */
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-
---
--- -- type code for Statement: 2.
--- CREATE TABLE Statements (
---     /* statement ID */
---     id BIGINT AUTO_INCREMENT,
---     PRIMARY KEY(id),
---
---     /* primary fields */
---     subject BIGINT,
---     predicate BIGINT,
---
---     /* database types (tables) of primary fields */
---         /* subject types */
---         -- allowed subject types: any (so no constraints).
---         subject_type TINYINT
---
---         /* predicate types */
---         -- allowed predicate types: Predicate (so no flag needed).
---     /**/
--- );
 
 
 
@@ -147,88 +143,6 @@ CREATE TABLE Objects (
         srel_inputs_type TINYINT CHECK (
             srel_inputs_type >= 40 -- all List types
         )
-    /**/
-);
-
-
-
--- type code for Predicate: 4.
-CREATE TABLE Predicates (
-    /* predicate ID */
-    id BIGINT AUTO_INCREMENT,
-    PRIMARY KEY(id),
-
-    -- /* primary fields */
-    -- -- "relation" can here be either an attribute name or verb (if the mydatabase
-    -- -- type is a TVarChar) or a (described) relation if the database type is a
-    -- -- DescribedEntity.
-    -- relation BIGINT,
-    -- -- Input in the relation, sentence object of the verb, or value of the
-    -- -- attribute, depending on the database type of "relation."
-    -- input BIGINT,
-
-    descriptor_1 BIGINT,
-    descriptor_2 BIGINT,
-
-    /* database types (tables) of primary fields */
-        /* relation/verb/attribute types */
-        -- allowed relation types: DescripedEntity (if rel.) or TVarChar (else).
-        relation_type TINYINT CHECK (
-            relation_type = 3 OR -- DescripedEntity
-            relation_type = 21   -- TVarChar
-        ),
-
-        /* input types */
-        -- allowed input types: any (so no constraints).
-        input_type TINYINT
-    /**/
-);
-
--- type code for Relations: 5.
-CREATE TABLE Relations (
-    /* predicate ID */
-    id BIGINT AUTO_INCREMENT,
-    PRIMARY KEY(id),
-
-
-    descriptor_1 BIGINT,
-    descriptor_2 BIGINT,
-
-    /* database types (tables) of primary fields */
-        /* relation/verb/attribute types */
-        -- allowed relation types: DescripedEntity (if rel.) or TVarChar (else).
-        relation_type TINYINT CHECK (
-            relation_type = 3 OR -- DescripedEntity
-            relation_type = 21   -- TVarChar
-        ),
-
-        /* input types */
-        -- allowed input types: any (so no constraints).
-        input_type TINYINT
-    /**/
-);
-
--- type code for Categories: 6.
-CREATE TABLE Categories (
-    /* predicate ID */
-    id BIGINT AUTO_INCREMENT,
-    PRIMARY KEY(id),
-
-
-    descriptor_1 BIGINT,
-    descriptor_2 BIGINT,
-
-    /* database types (tables) of primary fields */
-        /* relation/verb/attribute types */
-        -- allowed relation types: DescripedEntity (if rel.) or TVarChar (else).
-        relation_type TINYINT CHECK (
-            relation_type = 3 OR -- DescripedEntity
-            relation_type = 21   -- TVarChar
-        ),
-
-        /* input types */
-        -- allowed input types: any (so no constraints).
-        input_type TINYINT
     /**/
 );
 
