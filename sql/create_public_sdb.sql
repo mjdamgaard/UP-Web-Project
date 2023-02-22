@@ -1,9 +1,10 @@
 USE mydatabase;
 
+-- DROP TABLE StatementInputs;
 -- DROP TABLE Users;
--- DROP TABLE SemanticInputs;
--- DROP TABLE Statements;
-DROP TABLE DescribedEntities;
+-- DROP TABLE Bots;
+
+-- DROP TABLE Terms;
 -- DROP TABLE Predicates;
 -- DROP TABLE Relations;
 -- DROP TABLE Categories;
@@ -30,20 +31,20 @@ DROP TABLE DescribedEntities;
  **/
 CREATE TABLE StatementInputs (
     -- subject of predicate or relation.
-    subject BIGINT
-    FOREIGN KEY (subject) REFERENCES Entities(id),
+    subject BIGINT UNSIGNED,
+    -- FOREIGN KEY (subject) REFERENCES Term(id),
 
-    -- user (or bot) who states the statement.
-    user BIGINT,
-    FOREIGN KEY (user) REFERENCES Users(id),
+    -- user or bot who states the statement.
+    user BIGINT UNSIGNED,
+    -- FOREIGN KEY (user) REFERENCES Users(id),
 
     -- predicate or relation.
-    pred_or_rel BIGINT,
-    -- FOREIGN KEY (pred_or_rel) REFERENCES Entities(id),
+    pred_or_rel BIGINT UNSIGNED,
+    -- FOREIGN KEY (pred_or_rel) REFERENCES Term(id),
 
     -- relation object (second input, so to speak) if pred_or_rel is a relation.
-    object BIGINT,
-    -- FOREIGN KEY (pred_or_rel) REFERENCES Entities(id),
+    object BIGINT UNSIGNED,
+    -- FOREIGN KEY (pred_or_rel) REFERENCES Term(id),
 
     -- numerical value (signed) which defines the degree to which the users
     -- (or bot) deems the statement to be true/fitting. When dividing with
@@ -51,7 +52,7 @@ CREATE TABLE StatementInputs (
     -- "very far from true/fitting," 0 is taken to mean "not sure / not
     -- particularly fitting or unfitting," and 1 is taken to mean "very much
     -- true/fitting."
-    rating_value BIGINT,
+    rating_value BIGINT UNSIGNED,
 
     -- In this version, a user or bot can only have one rating value per
     -- statement, which means that the combination of user and statement
@@ -70,8 +71,12 @@ CREATE TABLE StatementInputs (
 
 CREATE TABLE Users (
     /* user ID */
-    id BIGINT AUTO_INCREMENT=0x0000000000000000 CHECK(
-        id < 0x0100000000000000 -- type code for User: 0x00.
+    -- id BIGINT UNSIGNED AUTO_INCREMENT=0x0100000000000000
+    id BIGINT UNSIGNED CHECK (
+        -- type code for User: 0x01.
+        id >= 0x0100000000000000 AND
+        id <  0x0200000000000000
+        -- (This is in case Users are included as Terms in a future version.)
     ),
     PRIMARY KEY(id),
 
@@ -82,6 +87,19 @@ CREATE TABLE Users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE Bots (
+    /* bot ID */
+    id BIGINT UNSIGNED CHECK (
+        -- type code for Bot: 0x00.
+        id >= 0x0000000000000000 AND
+        id <  0x0100000000000000
+        -- (This is in case Bots are included as Terms in a future version.)
+    ),
+    PRIMARY KEY(id),
+
+    /* primary fields */
+    description Text
+);
 
 
 
@@ -114,9 +132,9 @@ CREATE TABLE Users (
 
 
 -- type code for Objects: 3.
-CREATE TABLE Objects (
+CREATE TABLE Terms (
     /* described term ID */
-    id BIGINT AUTO_INCREMENT,
+    id BIGINT UNSIGNED,
     PRIMARY KEY(id),
 
     -- /* primary fields */
