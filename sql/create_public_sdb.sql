@@ -5,7 +5,7 @@ USE mydatabase;
 -- DROP TABLE Bots;
 -- DROP TABLE SimpleTerms;
 -- DROP TABLE StandardTerms;
--- DROP TABLE CompoundTerms;
+-- DROP TABLE RelationalPredicates;
 -- DROP TABLE Strings;
 -- DROP TABLE Binaries;
 -- DROP TABLE Lists;
@@ -18,7 +18,7 @@ USE mydatabase;
 -- SET @user_t = 1;
 -- SET @simple_t = 2;
 -- SET @standard_t = 3;
--- SET @compound_t = 4;
+-- SET @relpred_t = 4;
 -- SET @string_t = 5;
 -- SET @binary_t = 6;
 -- SET @list_t = 7;
@@ -41,7 +41,9 @@ CREATE TABLE StatementInputs (
     user_id BIGINT UNSIGNED,
 
     -- predicate or relation.
-    pred_or_rel_t TINYINT,
+    pred_or_rel_t TINYINT CHECK (
+        pred_or_rel_t BETWEEN 2 AND 3 -- SimpleTerm og StandardTerm.
+    ),
     pred_or_rel_id BIGINT UNSIGNED,
 
     -- relation object (second input, so to speak) if pred_or_rel is a relation.
@@ -77,8 +79,8 @@ CREATE TABLE StatementInputs (
     -- and thus that relation--object predicates are always saved in their
     -- exploded version in the StatementInputs rows.
     CHECK (
-        -- either pred_or_rel is NOT a compound term...
-        pred_or_rel_t <> 4 -- @compound_t
+        -- either pred_or_rel is NOT a relational predicate term...
+        pred_or_rel_t <> 4 -- @relpred_t
         -- ...or if it is, then it cannot be a predicate, and object thus has to
         -- not be an empty object.
         OR object_t <> -1 -- @empty_t
@@ -94,30 +96,28 @@ CREATE TABLE StatementInputs (
 
 CREATE TABLE Bots (
     -- bot ID.
-    -- type TINYINT = @bot_t,
+    -- type TINYINT = 0,
     id BIGINT UNSIGNED CHECK (
         -- ensure that first byte of id is redundant such that the type flag
         -- is able to be sent via this byte for this type if desired.
         id <= 0x0011111111111111
     ),
-    -- PRIMARY KEY(type, id),
     PRIMARY KEY(id),
 
     /* primary fields */
-    description_t TINYINT,
+    -- description_t is not needed; it is always String type.
     description_id BIGINT UNSIGNED
 );
 
 
 CREATE TABLE Users (
     -- user ID.
-    -- type TINYINT = @user_t,
+    -- type TINYINT = 1,
     id BIGINT UNSIGNED CHECK (
         -- ensure that first byte of id is redundant such that the type flag
         -- is able to be sent via this byte for this type if desired.
         id <= 0x0011111111111111
     ),
-    -- PRIMARY KEY(type, id),
     PRIMARY KEY(id),
 
     /* primary fields */
@@ -153,27 +153,16 @@ CREATE TABLE Users (
 -- * cats?.. (11:44)
 
 
-/* Terms each fall into three subtypes: Simple, Standard, and Compound Terms.
- *
- * The "Simple" subtype takes as its first descriptor a string denoting af
- * lexical item (a semantically meaningful part of a sentence). Examples of
- * lexical items could be: "the number pi", "is subset of" (or "belongs to"),
- * "has related link:", and "is funny".
- * The second descriptor of the Simple subtype is an (optional) text descrip-
- * tion, which can be used to explain the lexical item more thoroughly, and to
- * clear up any potential ambiguities.
- **/
 
 
 CREATE TABLE SimpleTerms (
     -- simple term ID.
-    -- type TINYINT = @simple_t,
+    -- type TINYINT = 2,
     id BIGINT UNSIGNED CHECK (
         -- ensure that first byte of id is redundant such that the type flag
         -- is able to be sent via this byte for this type if desired.
         id <= 0x0011111111111111
     ),
-    -- PRIMARY KEY(type, id),
     PRIMARY KEY(id),
 
     /* The "Simple" subtype takes as its first descriptor a string denoting af
@@ -186,69 +175,69 @@ CREATE TABLE SimpleTerms (
      **/
 
     -- specifying lexical item.
-    spec_lexical_item_t TINYINT,
+    -- spec_lexical_item_t is not needed; it is always String type.
     spec_lexical_item_id BIGINT,
 
     -- description.
-    description_t TINYINT,
+    -- description_t is not needed; it is always String type.
     description_id BIGINT UNSIGNED
 );
 
 
 CREATE TABLE StandardTerms (
     /* standard term ID */
-    -- type TINYINT = @standard_t,
+    -- type TINYINT = 3,
     id BIGINT UNSIGNED CHECK (
         -- ensure that first byte of id is redundant such that the type flag
         -- is able to be sent via this byte for this type if desired.
         id <= 0x0011111111111111
     ),
-    -- PRIMARY KEY(type, id),
     PRIMARY KEY(id),
 
 
     -- specifying parent predicates.
-    spec_parent_preds_t TINYINT,
+    -- spec_parent_preds_t not needed; it is always List type.
     spec_parent_preds_id BIGINT UNSIGNED,
 
     -- specifying child predicates.
-    spec_child_preds_t TINYINT,
+    -- spec_child_preds_t not needed; it is always List type.
     spec_child_preds_id BIGINT UNSIGNED
 );
 
 
-CREATE TABLE CompoundTerms (
-    /* compound term ID */
-    -- type TINYINT = @compound_t,
+CREATE TABLE RelationalPredicates (
+    /* relational predicate ID */
+    -- type TINYINT = 4,
     id BIGINT UNSIGNED CHECK (
         -- ensure that first byte of id is redundant such that the type flag
         -- is able to be sent via this byte for this type if desired.
         id <= 0x0011111111111111
     ),
-    -- PRIMARY KEY(type, id),
     PRIMARY KEY(id),
 
 
-    -- relation (or perhaps function).
-    rel_or_fun_t TINYINT,
-    rel_or_fun_id BIGINT UNSIGNED,
+    -- relation.
+    relation_t TINYINT CHECK (
+        relation_t BETWEEN 2 AND 3 -- SimpleTerm og StandardTerm.
+    ),
+    relation_id BIGINT UNSIGNED,
 
     -- realtion object (or perhaps function input).
-    input_t TINYINT,
-    input_id BIGINT UNSIGNED
+    object_t TINYINT,
+    object_id BIGINT UNSIGNED
 );
+
 
 
 
 CREATE TABLE Strings (
     /* variable character string ID */
-    -- type TINYINT = @string_t,
+    -- type TINYINT = 5,
     id BIGINT UNSIGNED CHECK (
         -- ensure that first byte of id is redundant such that the type flag
         -- is able to be sent via this byte for this type if desired.
         id <= 0x0011111111111111
     ),
-    -- PRIMARY KEY(type, id),
     PRIMARY KEY(id),
 
 
@@ -258,13 +247,12 @@ CREATE TABLE Strings (
 
 CREATE TABLE Binaries (
     /* variable character string ID */
-    -- type TINYINT = @binary_t,
+    -- type TINYINT = 6,
     id BIGINT UNSIGNED CHECK (
         -- ensure that first byte of id is redundant such that the type flag
         -- is able to be sent via this byte for this type if desired.
         id <= 0x0011111111111111
     ),
-    -- PRIMARY KEY(type, id),
     PRIMARY KEY(id),
 
     /* data */
@@ -275,13 +263,12 @@ CREATE TABLE Binaries (
 -- tail) require no extra storage.
 CREATE TABLE Lists (
     /* variable character string ID */
-    -- type TINYINT = @binary_t,
+    -- type TINYINT = 7,
     id BIGINT UNSIGNED CHECK (
         -- ensure that first byte of id is redundant such that the type flag
         -- is able to be sent via this byte for this type if desired.
         id <= 0x0011111111111111
     ),
-    -- PRIMARY KEY(type, id),
     PRIMARY KEY(id),
 
     /* data */
@@ -308,33 +295,36 @@ CREATE TABLE Lists (
     elem_10_t TINYINT,
     elem_10_id BIGINT UNSIGNED,
 
-    tail BIGINT UNSIGNED,
+    -- tail_t not needed; it is always List type.
+    tail_id BIGINT UNSIGNED
 );
 
 
--- TODO: change to a join on type as a virtual columns and also on id.
-CREATE VIEW Terms AS
-SELECT (type, id, descriptor_1, descriptor_2) FROM
-    SELECT (
-        type, id,
-        spec_lexical_item AS descriptor_1,
-        description       AS descriptor_2
-    )
-    FROM SimpleTerms
-    UNION
-    SELECT (
-        type, id,
-        spec_parent_preds AS descriptor_1,
-        spec_child_preds  AS descriptor_2
-    )
-    FROM StandardTerms
-    UNION
-    SELECT (
-        type, id,
-        rel_or_fun AS descriptor_1,
-        input      AS descriptor_2
-    )
-    FROM CompoundTerms;
+-- Hm, no I don't think I need this view after all.
+-- CREATE VIEW Terms AS
+-- SELECT (type, id, descriptor_1, descriptor_2) FROM
+--     SELECT (
+--         type, id,
+--         spec_lexical_item AS descriptor_1,
+--         description       AS descriptor_2
+--     )
+--     FROM SimpleTerms
+--     UNION
+--     SELECT (
+--         type, id,
+--         spec_parent_preds AS descriptor_1,
+--         spec_child_preds  AS descriptor_2
+--     )
+--     FROM StandardTerms
+--     UNION
+--     SELECT (
+--         type, id,
+--         rel_or_fun AS descriptor_1,
+--         input      AS descriptor_2
+--     )
+--     FROM RelationalPredicates;
+
+
 
 -- TODO: change these type codes.
 -- type code for DateTime: 6.
