@@ -97,11 +97,7 @@ CREATE TABLE StatementInputs (
 CREATE TABLE Bots (
     -- bot ID.
     -- type TINYINT = 0,
-    id BIGINT UNSIGNED CHECK (
-        -- ensure that first byte of id is redundant such that the type flag
-        -- is able to be sent via this byte for this type if desired.
-        id <= 0x0011111111111111
-    ),
+    id BIGINT UNSIGNED AUTO_INCREMENT,
     PRIMARY KEY(id),
 
     /* primary fields */
@@ -113,11 +109,7 @@ CREATE TABLE Bots (
 CREATE TABLE Users (
     -- user ID.
     -- type TINYINT = 1,
-    id BIGINT UNSIGNED CHECK (
-        -- ensure that first byte of id is redundant such that the type flag
-        -- is able to be sent via this byte for this type if desired.
-        id <= 0x0011111111111111
-    ),
+    id BIGINT UNSIGNED AUTO_INCREMENT,
     PRIMARY KEY(id),
 
     /* primary fields */
@@ -158,11 +150,7 @@ CREATE TABLE Users (
 CREATE TABLE SimpleTerms (
     -- simple term ID.
     -- type TINYINT = 2,
-    id BIGINT UNSIGNED CHECK (
-        -- ensure that first byte of id is redundant such that the type flag
-        -- is able to be sent via this byte for this type if desired.
-        id <= 0x0011111111111111
-    ),
+    id BIGINT UNSIGNED AUTO_INCREMENT,
     PRIMARY KEY(id),
 
     /* The "Simple" subtype takes as its first descriptor a string denoting af
@@ -187,11 +175,7 @@ CREATE TABLE SimpleTerms (
 CREATE TABLE StandardTerms (
     /* standard term ID */
     -- type TINYINT = 3,
-    id BIGINT UNSIGNED CHECK (
-        -- ensure that first byte of id is redundant such that the type flag
-        -- is able to be sent via this byte for this type if desired.
-        id <= 0x0011111111111111
-    ),
+    id BIGINT UNSIGNED AUTO_INCREMENT,
     PRIMARY KEY(id),
 
 
@@ -208,11 +192,7 @@ CREATE TABLE StandardTerms (
 CREATE TABLE RelationalPredicates (
     /* relational predicate ID */
     -- type TINYINT = 4,
-    id BIGINT UNSIGNED CHECK (
-        -- ensure that first byte of id is redundant such that the type flag
-        -- is able to be sent via this byte for this type if desired.
-        id <= 0x0011111111111111
-    ),
+    id BIGINT UNSIGNED AUTO_INCREMENT,
     PRIMARY KEY(id),
 
 
@@ -233,11 +213,7 @@ CREATE TABLE RelationalPredicates (
 CREATE TABLE Strings (
     /* variable character string ID */
     -- type TINYINT = 5,
-    id BIGINT UNSIGNED CHECK (
-        -- ensure that first byte of id is redundant such that the type flag
-        -- is able to be sent via this byte for this type if desired.
-        id <= 0x0011111111111111
-    ),
+    id BIGINT UNSIGNED AUTO_INCREMENT,
     PRIMARY KEY(id),
 
 
@@ -248,11 +224,7 @@ CREATE TABLE Strings (
 CREATE TABLE Binaries (
     /* variable character string ID */
     -- type TINYINT = 6,
-    id BIGINT UNSIGNED CHECK (
-        -- ensure that first byte of id is redundant such that the type flag
-        -- is able to be sent via this byte for this type if desired.
-        id <= 0x0011111111111111
-    ),
+    id BIGINT UNSIGNED AUTO_INCREMENT,
     PRIMARY KEY(id),
 
     /* data */
@@ -264,36 +236,32 @@ CREATE TABLE Binaries (
 CREATE TABLE Lists (
     /* variable character string ID */
     -- type TINYINT = 7,
-    id BIGINT UNSIGNED CHECK (
-        -- ensure that first byte of id is redundant such that the type flag
-        -- is able to be sent via this byte for this type if desired.
-        id <= 0x0011111111111111
-    ),
+    id BIGINT UNSIGNED AUTO_INCREMENT,
     PRIMARY KEY(id),
 
     /* data */
     length SMALLINT UNSIGNED,
 
-    elem_1_t TINYINT,
-    elem_1_id BIGINT UNSIGNED,
-    elem_2_t TINYINT,
-    elem_2_id BIGINT UNSIGNED,
-    elem_3_t TINYINT,
-    elem_3_id BIGINT UNSIGNED,
-    elem_4_t TINYINT,
-    elem_4_id BIGINT UNSIGNED,
-    elem_5_t TINYINT,
-    elem_5_id BIGINT UNSIGNED,
-    elem_6_t TINYINT,
-    elem_6_id BIGINT UNSIGNED,
-    elem_7_t TINYINT,
-    elem_7_id BIGINT UNSIGNED,
-    elem_8_t TINYINT,
-    elem_8_id BIGINT UNSIGNED,
-    elem_9_t TINYINT,
-    elem_9_id BIGINT UNSIGNED,
-    elem_10_t TINYINT,
-    elem_10_id BIGINT UNSIGNED,
+    elem1_t TINYINT,
+    elem1_id BIGINT UNSIGNED,
+    elem2_t TINYINT,
+    elem2_id BIGINT UNSIGNED,
+    elem3_t TINYINT,
+    elem3_id BIGINT UNSIGNED,
+    elem4_t TINYINT,
+    elem4_id BIGINT UNSIGNED,
+    elem5_t TINYINT,
+    elem5_id BIGINT UNSIGNED,
+    elem6_t TINYINT,
+    elem6_id BIGINT UNSIGNED,
+    elem7_t TINYINT,
+    elem7_id BIGINT UNSIGNED,
+    elem8_t TINYINT,
+    elem8_id BIGINT UNSIGNED,
+    elem9_t TINYINT,
+    elem9_id BIGINT UNSIGNED,
+    elem10_t TINYINT,
+    elem10_id BIGINT UNSIGNED,
 
     -- tail_t not needed; it is always List type.
     tail_id BIGINT UNSIGNED

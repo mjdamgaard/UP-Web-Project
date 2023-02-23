@@ -12,16 +12,17 @@ UPDATE Users SET public_encryption_key = 0xAAAA WHERE id = 1;
 
 /* Inserting the most fundamental relations */
 
-INSERT INTO Strings (id, str)
+-- define the string fields used in '.lexicalItem=' and '.description='.
+INSERT INTO Strings (str)
 VALUES (1, "can be referenced by the lexical item given by");
+SET @has_lex_item = 1;
 
-INSERT INTO Strings (id, str)
-VALUES (2, "has a description given by");
--- SET @has_description = 2;
+INSERT INTO Strings (str)
+VALUES ("has a description given by");
+SET @has_description = 2;
 
-INSERT INTO Strings (id, str)
+INSERT INTO Strings (str)
 VALUES (
-    3,
     "This relation states about its Subject and its Object, " +
     "the latter of which should be a text string that is part of an English "
     "sentence with a meaning attached to it (i.e. a lexical item), " +
@@ -36,22 +37,34 @@ VALUES (
     "relation descibed by this description. In that case, the Object could " +
     "be the string: \"can be referenced by the lexical item given by.\""
 );
+SET @description_of_has_lex_item = 3;
+
+INSERT INTO Strings (str)
+VALUES ( -- TODO: write this description.
+    "TODO: write this description."
+);
+SET @description_of_has_description = 4;
+
 
 -- insert the "can be referenced by the lexical item given by" relation.
 INSERT INTO SimpleTerms (
-    id,
     spec_lexical_item_id,
     description_id
 )
 VALUES (
-    1, -- SimpleTerms is another table so we can use 1 again as id.
-    1,
-    3
+    @has_lex_item,
+    @has_description
 );
 
---TODO: continue this at some point, first of all by adding "has a description
--- given by" relation..
-
+-- insert the "has a description given by" relation.
+INSERT INTO SimpleTerms (
+    spec_lexical_item_id,
+    description_id
+)
+VALUES (
+    @has_description,
+    @description_of_has_description
+);
 
 
 
