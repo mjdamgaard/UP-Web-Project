@@ -1,9 +1,9 @@
 USE mydatabase;
 
-DROP TABLE SemanticInputs;
+-- DROP TABLE SemanticInputs;
 -- DROP TABLE Users;
 -- DROP TABLE Bots;
-DROP TABLE SimpleTerms;
+-- DROP TABLE SimpleTerms;
 
 -- DROP TABLE StandardTerms;
 -- DROP TABLE RelationalPredicates;
@@ -97,7 +97,11 @@ CREATE TABLE SemanticInputs (
         -- not be an empty object.
         OR obj_t <> -1 -- @empty_t
         -- (Apparently you cannot write a @ right after the -- in a comment!x))
-    )
+    ),
+
+    CHECK (rat_val <> 0x80000000)
+    -- This makes max and min values equal to 2^31 - 1 and -2^31 + 1, resp.
+    -- Divide by 2^31 to get floating point number strictly between -1 and 1.
 
 
 
@@ -235,7 +239,10 @@ CREATE TABLE Strings (
 
 
     /* data */
-    str TEXT
+    is_changed BOOL DEFAULT 0,
+    -- str TEXT -- VARCHAR(768) UNIQUE
+    str BLOB -- gets the new id value (and date) if changed.
+    -- ..And maybe an overwritten address gets old id appended to str as well..
 );
 
 CREATE TABLE Binaries (
