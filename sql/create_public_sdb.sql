@@ -1,17 +1,17 @@
 USE mydatabase;
 
-DROP TABLE StatementInputs;
-DROP TABLE Users;
-DROP TABLE Bots;
-DROP TABLE FundamentalTerms;
+DROP TABLE SemanticInputs;
+-- DROP TABLE Users;
+-- DROP TABLE Bots;
+DROP TABLE SimpleTerms;
 
-
--- DROP TABLE SimpleTerms;
 -- DROP TABLE StandardTerms;
 -- DROP TABLE RelationalPredicates;
--- DROP TABLE Strings;
+
+DROP TABLE Strings;
 -- DROP TABLE Binaries;
 -- DROP TABLE Lists;
+
 
 
 /* Types */
@@ -38,23 +38,24 @@ DROP TABLE FundamentalTerms;
  * with a numerical value which represents the degree to which the user deems
  * that the statement is correct (like when answering a survey).
  **/
-CREATE TABLE StatementInputs (
+CREATE TABLE SemanticInputs (
     -- subject of predicate or relation.
-    subject_t TINYINT,
-    subject_id BIGINT UNSIGNED,
+    subj_t TINYINT,
+    subj_id BIGINT UNSIGNED,
 
     -- user or bot who states the statement.
+    user_t TINYINT,
     user_id BIGINT UNSIGNED,
 
-    -- predicate or relation.
-    pred_or_rel_t TINYINT CHECK (
-        pred_or_rel_t BETWEEN 2 AND 3 -- FundamentalTerm og StandardTerm.
+    -- relation or predicate.
+    rel_t TINYINT CHECK (
+        rel_t = 2 OR rel_t = 4 -- SimpleTerm og StandardTerm.
     ),
-    pred_or_rel_id BIGINT UNSIGNED,
+    rel_id BIGINT UNSIGNED,
 
     -- relation object (second input, so to speak) if pred_or_rel is a relation.
-    object_t TINYINT,
-    object_id BIGINT UNSIGNED,
+    obj_t TINYINT,
+    obj_id BIGINT UNSIGNED,
     -- FOREIGN KEY (pred_or_rel) REFERENCES Term(id),
 
 
@@ -65,7 +66,8 @@ CREATE TABLE StatementInputs (
     -- "very far from true/fitting," 0 is taken to mean "not sure / not
     -- particularly fitting or unfitting," and 1 is taken to mean "very much
     -- true/fitting."
-    rating_value VARBINARY(255),
+    rat_val INT,
+    opt_data VARBINARY(255),
     -- (Could have size=255, but might as well restrict..) ..Then again, let me
     -- actually just implement that restriction at the control layer..
 
@@ -73,26 +75,27 @@ CREATE TABLE StatementInputs (
     -- statement, which means that the combination of user and statement
     -- (subject, pred_or_rel and object) is unique for each row.
     PRIMARY KEY (
-        subject_t, subject_id,
-        user_id,
-        pred_or_rel_t, pred_or_rel_id,
-        object_t, object_id
+        subj_t, subj_id,
+        user_t, user_id,
+        rel_t, rel_id,
+        obj_t, obj_id
     ),
-    -- Additionally, I intend to create a clustered index on
-    -- (subject, user, pred_or_rel) (in that order). (Part of the reason why
-    -- is that I intend to implement all aggregates, such as average, via bots,
-    -- which are also implemented as "Users.")
 
 
-    -- preventing that relation--object combinations are saved as predicates,
+    CHECK (
+        user_t = 0 OR -- @bot_t
+        user_t = 1    -- @user_t
+    ),
+
+    -- prevent that relation--object combinations are saved as predicates,
     -- and thus that relation--object predicates are always saved in their
     -- exploded version in the StatementInputs rows.
     CHECK (
         -- either pred_or_rel is NOT a relational predicate term...
-        pred_or_rel_t <> 4 -- @relpred_t
+        rel_t <> 4 -- @relpred_t
         -- ...or if it is, then it cannot be a predicate, and object thus has to
         -- not be an empty object.
-        OR object_t <> -1 -- @empty_t
+        OR obj_t <> -1 -- @empty_t
         -- (Apparently you cannot write a @ right after the -- in a comment!x))
     )
 
@@ -101,6 +104,7 @@ CREATE TABLE StatementInputs (
     /* timestamp */
     -- created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 
 
 CREATE TABLE Bots (
@@ -130,12 +134,12 @@ CREATE TABLE Users (
 
 
 
-CREATE TABLE FundamentalTerms (
+CREATE TABLE SimpleTerms (
     -- simple term ID.
     id BIGINT UNSIGNED AUTO_INCREMENT,
     PRIMARY KEY(id),
 
-    /* A FundamentalTerm takes as its first descriptor a string denoting af
+    /* A SimpleTerm takes as its first descriptor a string denoting af
      * lexical item (a semantically meaningful part of a sentence). Examples of
      * lexical items could be: "the number pi", "is subset of",
      * "has related link:", "is funny", "is" and "funny".
@@ -159,30 +163,30 @@ CREATE TABLE FundamentalTerms (
 
 -- TODO: Make changes and deletions below.
 
-
-CREATE TABLE SimpleTerms (
-    -- simple term ID.
-    -- type TINYINT = 2,
-    id BIGINT UNSIGNED AUTO_INCREMENT,
-    PRIMARY KEY(id),
-
-    /* The "Simple" subtype takes as its first descriptor a string denoting af
-     * lexical item (a semantically meaningful part of a sentence). Examples of
-     * lexical items could be: "the number pi", "is subset of" (or "belongs to"),
-     * "has related link:", and "is funny".
-     * The second descriptor of the Simple subtype is an (optional) text descrip-
-     * tion, which can be used to explain the lexical item more thoroughly, and to
-     * clear up any potential ambiguities.
-     **/
-
-    -- specifying lexical item.
-    -- spec_lexical_item_t is not needed; it is always String type.
-    spec_lexical_item_id BIGINT UNSIGNED,
-
-    -- description.
-    -- description_t is not needed; it is always String type.
-    description_id BIGINT UNSIGNED
-);
+--
+-- CREATE TABLE SimpleTerms (
+--     -- simple term ID.
+--     -- type TINYINT = 2,
+--     id BIGINT UNSIGNED AUTO_INCREMENT,
+--     PRIMARY KEY(id),
+--
+--     /* The "Simple" subtype takes as its first descriptor a string denoting af
+--      * lexical item (a semantically meaningful part of a sentence). Examples of
+--      * lexical items could be: "the number pi", "is subset of" (or "belongs to"),
+--      * "has related link:", and "is funny".
+--      * The second descriptor of the Simple subtype is an (optional) text descrip-
+--      * tion, which can be used to explain the lexical item more thoroughly, and to
+--      * clear up any potential ambiguities.
+--      **/
+--
+--     -- specifying lexical item.
+--     -- spec_lexical_item_t is not needed; it is always String type.
+--     spec_lexical_item_id BIGINT UNSIGNED,
+--
+--     -- description.
+--     -- description_t is not needed; it is always String type.
+--     description_id BIGINT UNSIGNED
+-- );
 
 
 CREATE TABLE StandardTerms (
@@ -211,7 +215,7 @@ CREATE TABLE RelationalPredicates (
 
     -- relation.
     relation_t TINYINT CHECK (
-        relation_t BETWEEN 2 AND 3 -- FundamentalTerm og StandardTerm.
+        relation_t = 2 OR relation_t = 4 -- SimpleTerm og StandardTerm.
     ),
     relation_id BIGINT UNSIGNED,
 
