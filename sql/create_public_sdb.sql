@@ -1,15 +1,17 @@
 USE mydatabase;
 
--- DROP TABLE StatementInputs;
--- DROP TABLE Users;
--- DROP TABLE Bots;
+DROP TABLE StatementInputs;
+DROP TABLE Users;
+DROP TABLE Bots;
+DROP TABLE FundamentalTerms;
+
+
 -- DROP TABLE SimpleTerms;
 -- DROP TABLE StandardTerms;
 -- DROP TABLE RelationalPredicates;
 -- DROP TABLE Strings;
 -- DROP TABLE Binaries;
 -- DROP TABLE Lists;
-
 
 
 /* Types */
@@ -24,6 +26,10 @@ USE mydatabase;
 -- SET @list_t = 7;
 
 
+-- Jeg tror måske jeg laver det om, så at vi bare forestiller os, at Termerne
+-- holder de felter, jeg har beskrevet herunder, og så i stedet bare gør
+-- udelukkende brug af en forfatter-siger-bot til at definere ikke-data-.. tja,
+-- eller måske egentligt bare alle termerne... (10:13)
 
 
 
@@ -42,7 +48,7 @@ CREATE TABLE StatementInputs (
 
     -- predicate or relation.
     pred_or_rel_t TINYINT CHECK (
-        pred_or_rel_t BETWEEN 2 AND 3 -- SimpleTerm og StandardTerm.
+        pred_or_rel_t BETWEEN 2 AND 3 -- FundamentalTerm og StandardTerm.
     ),
     pred_or_rel_id BIGINT UNSIGNED,
 
@@ -53,12 +59,15 @@ CREATE TABLE StatementInputs (
 
 
     -- numerical value (signed) which defines the degree to which the users
-    -- (or bot) deems the statement to be true/fitting. When dividing with
-    -- 2^63, this value runs from -1 to (almost) 1. And then -1 is taken to mean
+    -- (or bot) deems the statement to be true/fitting. When dividing the int
+    -- sitting at the first four bytes with
+    -- 2^31, this value runs from -1 to (almost) 1. And then -1 is taken to mean
     -- "very far from true/fitting," 0 is taken to mean "not sure / not
     -- particularly fitting or unfitting," and 1 is taken to mean "very much
     -- true/fitting."
-    rating_value BIGINT UNSIGNED,
+    rating_value VARBINARY(255),
+    -- (Could have size=255, but might as well restrict..) ..Then again, let me
+    -- actually just implement that restriction at the control layer..
 
     -- In this version, a user or bot can only have one rating value per
     -- statement, which means that the combination of user and statement
@@ -121,30 +130,34 @@ CREATE TABLE Users (
 
 
 
+CREATE TABLE FundamentalTerms (
+    -- simple term ID.
+    id BIGINT UNSIGNED AUTO_INCREMENT,
+    PRIMARY KEY(id),
+
+    /* A FundamentalTerm takes as its first descriptor a string denoting af
+     * lexical item (a semantically meaningful part of a sentence). Examples of
+     * lexical items could be: "the number pi", "is subset of",
+     * "has related link:", "is funny", "is" and "funny".
+     * The description is an (optional) text description, which can be used to
+     * explain the lexical item more thoroughly, and to clear up any potential
+     * ambiguities.
+     **/
+
+    -- defining lexical item.
+    full_lexical_item TEXT,
+    -- abbreviated lexical item (such as ".Lexical item=", ".is:" or ".is a:").
+    abbr_lexical_item VARCHAR(255),
+    -- description.
+    description TEXT
+);
 
 
--- * and "Simple" ones. Both subtypes take two inputs each in all three cases,
--- * which we will call descriptors (1 and 2).
--- *
--- * The "Simple" subtype takes as its first descriptor a string denoting af
--- * lexical item (a semantically meaningful part of a sentence). Examples of lex-
--- * ical items could be: "the number pi", "is subset of" (or "belongs to"), "has
--- * related link:", and "is funny".
--- * The second descriptor of the Simple subtype is an (optional) text descrip-
--- * tion, which can be used to explain the lexical item more thoroughly, and to
--- * clear up any potential ambiguities.
--- *
--- * The "Categorized" subtype, on the other hand, takes as its first descriptor
--- * a list of two element which are themselves lists. The first of these two sub-
--- * lists is a list of "categorizing predicates," which we will abbreviate as
--- * 'cpreds,' and the second sublist is a list of "specification relations,"
--- * which we will abbreviate as 'srels.'
--- * The list of cpreds... Hm, jeg tænkte lige for lidt siden, om ikke man bare
--- * skulle lave cpreds om til en liste af kategorier i stedet, men besluttede
--- * nej. Nu er jeg så lige blevet i tvivl igen: Skal cpreds ikke bare ændres til
--- * cats?.. (11:44)
 
 
+
+
+-- TODO: Make changes and deletions below.
 
 
 CREATE TABLE SimpleTerms (
@@ -198,7 +211,7 @@ CREATE TABLE RelationalPredicates (
 
     -- relation.
     relation_t TINYINT CHECK (
-        relation_t BETWEEN 2 AND 3 -- SimpleTerm og StandardTerm.
+        relation_t BETWEEN 2 AND 3 -- FundamentalTerm og StandardTerm.
     ),
     relation_id BIGINT UNSIGNED,
 
