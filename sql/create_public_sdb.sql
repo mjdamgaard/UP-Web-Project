@@ -1,7 +1,7 @@
 USE mydatabase;
 
 -- DROP TABLE SemanticInputs;
--- DROP TABLE Users;
+DROP TABLE Users;
 -- DROP TABLE Bots;
 -- DROP TABLE SimpleTerms;
 
@@ -126,8 +126,7 @@ CREATE TABLE Bots (
 CREATE TABLE Users (
     -- user ID.
     -- type TINYINT = 1,
-    id BIGINT UNSIGNED AUTO_INCREMENT,
-    PRIMARY KEY(id),
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     /* primary fields */
     -- TBD.
@@ -135,7 +134,9 @@ CREATE TABLE Users (
     /* timestamp */
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
+-- SET @user_start = 0x0100000000000000;
+-- ALTER TABLE Users AUTO_INCREMENT = @user_start; -- 0x0100000000000000;
+INSERT INTO Users (id) VALUES (0x0100000000000000);
 
 
 CREATE TABLE SimpleTerms (
@@ -234,15 +235,11 @@ CREATE TABLE RelationalPredicates (
 CREATE TABLE Strings (
     /* variable character string ID */
     -- type TINYINT = 5,
-    id BIGINT UNSIGNED AUTO_INCREMENT,
-    PRIMARY KEY(id),
-
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     /* data */
-    is_changed BOOL DEFAULT 0,
-    -- str TEXT -- VARCHAR(768) UNIQUE
-    str BLOB -- gets the new id value (and date) if changed.
-    -- ..And maybe an overwritten address gets old id appended to str as well..
+    str VARCHAR(500) UNIQUE
+    -- FULLTEXT idx (str)
 );
 
 CREATE TABLE Binaries (
