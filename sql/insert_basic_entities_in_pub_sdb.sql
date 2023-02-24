@@ -22,19 +22,18 @@ INSERT INTO Strings (str)
 VALUES (
     "can be referenced by the full (non-abbreviated) lexical item given by"
 );
-SET @fullLexItem_has_full_lex = 1;
+SET @Str_canbereferencedbyfulllex = 1 + 0x0A00000000000000;
 
 INSERT INTO Strings (str)
 VALUES (".full lexical item=");
-SET @abbrLexItem_has_full_lex = 2;
+SET @Str_dotfulllex = 2 + 0x0A00000000000000;
 
 
 
 
-INSERT INTO Strings (str)
+INSERT INTO Texts (str)
 VALUES (
     CONCAT (
---------
 "This relation states about its Subject and its Object, ",
 "the latter of which should be a text string that is part of an ",
 "English sentence with a meaning attached to it ",
@@ -57,24 +56,23 @@ VALUES (
 "As a standard, we propose that first letter are not capitalized, ",
 "except if the word is part of a proper noun or an abbreviation that ",
 "requires capitalization."
---------
     )
 );
-SET @description_has_full_lex = 3;
+SET @Text_description_of_rel_fulllex = 1 + 0x0B00000000000000;
 
 
 -- insert the '.Full lexical item=' fundamental relation.
-INSERT INTO SimpleTerms (
-    full_lexical_item,
-    abbr_lexical_item,
-    description
-)
-VALUES (
-    @fullLexItem_has_full_lex,
-    @abbrLexItem_has_full_lex,
-    @description_has_full_lex
-);
-SET @rel_has_full_lex = 1;
+-- INSERT INTO SimpleTerms (
+--     full_lexical_item,
+--     abbr_lexical_item,
+--     description
+-- )
+-- VALUES (
+--     @Str_canbereferencedbyfulllex,
+--     @Str_dotfulllex,
+--     @Str_description_of_rel_fulllex
+-- );
+SET @Term_rel_hasfulllex = 1 + 0x0200000000000000;
 
 
 -- define the string fields used in '.lexical item='.
@@ -82,17 +80,16 @@ INSERT INTO Strings (str)
 VALUES (
     "can be referenced by the abbreviated lexical item given by"
 );
-SET @fullLexItem_has_abbr_lex = 4;
+SET @Str_canbereferencedbyabbrlex = 3 + 0x0A00000000000000;
 
 INSERT INTO Strings (str)
 VALUES (".lexical item=");
-SET @abbrLexItem_has_abbr_lex = 5;
+SET @Str_dotlexitem = 4 + 0x0A00000000000000;
 
 
-INSERT INTO Strings (str)
+INSERT INTO Texts (str)
 VALUES (
     CONCAT (
---------
 "This relation is similar to the relation with lexical item given by ",
 "\'can be referenced by the full (non-abbreviated) ",
 "lexical item given by\' ",
@@ -101,7 +98,7 @@ VALUES (
 "lexical item rather than the full lexical item.\n",
 "We propose the following standard for constructing ",
 "abbreviated lexical items.\n\t",
---TODO: I can write this shorter writing out the syntax instead..
+-- TODO: I can write this shorter writing out the syntax instead..
 "1) First letters should not be capitalized, except if the given word is part ",
 "of a proper noun or an abbreviation that requires capitalization.\n\t",
 "2) Refer to abbreviated lexical items simply as ",
@@ -129,24 +126,23 @@ VALUES (
 "5) When referencing things, simply choose a fitting ",
 "(possibly proper) noun. ",
 "Do not include \'a\' or \'an\' at the beginning."
---------
     )
 );
-SET @description_has_abbr_lex = 6;
+SET @Text_description_of_haslexitem = 2 + 0x0B00000000000000;
 
 
 -- insert the '.Lexical item=' fundamental relation.
-INSERT INTO SimpleTerms (
-    full_lexical_item,
-    abbr_lexical_item,
-    description
-)
-VALUES (
-    @fullLexItem_has_abbr_lex,
-    @abbrLexItem_has_abbr_lex,
-    @description_has_abbr_lex
-);
-SET @rel_has_abbr_lex = 2;
+-- INSERT INTO SimpleTerms (
+--     full_lexical_item,
+--     abbr_lexical_item,
+--     description
+-- )
+-- VALUES (
+--     @Str_canbereferencedbyabbrlex,
+--     @Str_dotlexitem,
+--     @Str_description_of_haslexitem
+-- );
+SET @Term_rel_haslex = 2 + 0x0200000000000000;
 
 
 
@@ -154,35 +150,35 @@ SET @rel_has_abbr_lex = 2;
 
 INSERT INTO Strings (str)
 VALUES ("has a description given by");
-SET @fullLexItem_has_description = 7;
+SET @Str_has_description = 5 + 0x0A00000000000000;
 
 INSERT INTO Strings (str)
 VALUES (".description=");
-SET @abbrLexItem_has_description = 8;
+SET @Str_dotdescription = 6 + 0x0A00000000000000;
 
-INSERT INTO Strings (str)
+INSERT INTO Texts (str)
 VALUES ( -- TODO: write this description.
     "TODO: write this description.\n"
     -- "TODO: Write about standard of beginning relations with something like:\n",
     -- "Relation: Object (a String) forms a lexical item which references",
     -- "Subject (any Term)."
 );
-SET @description_has_description = 9;
+SET @Text_description_of_hasdescription = 3 + 0x0B00000000000000;
 
 
 
 -- insert the '.Description=' fundamental relation.
-INSERT INTO SimpleTerms (
-    full_lexical_item,
-    abbr_lexical_item,
-    description
-)
-VALUES (
-    @fullLexItem_has_description,
-    @abbrLexItem_has_description,
-    @description_has_description
-);
-SET @rel_has_description = 3;
+-- INSERT INTO SimpleTerms (
+--     full_lexical_item,
+--     abbr_lexical_item,
+--     description
+-- )
+-- VALUES (
+--     @Str_has_description,
+--     @Str_dotdescription,
+--     @Str_description_of_hasdescription
+-- );
+SET @Term_rel_hasdescription = 3 + 0x0200000000000000;
 
 
 -- types for reference:
@@ -211,24 +207,41 @@ SET @rel_has_description = 3;
 --     description
 -- )
 -- VALUES (
---     @fullLexItem_has_full_lex,
---     @abbrLexItem_has_full_lex,
---     @description_has_full_lex
+--     @Str_canbereferencedbyfulllex,
+--     @Str_dotfulllex,
+--     @Str_description_of_rel_fulllex
 -- );
--- SET @rel_has_full_lex = 1;
+-- SET @Term_rel_hasfulllex = 1;
 
+
+-- insert ralations about '.full lexical item' relation.
 INSERT INTO SemanticInputs (
-    subj_t, subj_id,
-    user_t, user_id,
-    rel_t, rel_id,
-    obj_t, obj_id,
+    subj_id,
+    user_id,
+    rel_id,
+    obj_id,
     rat_val, opt_data
 )
-VALUES (
-    2, @rel_has_full_lex,
-    0, @author_bot,
-    2, @rel_has_full_lex,
-    5, @fullLexItem_has_full_lex,
+VALUES
+(
+    @Term_rel_hasfulllex,
+    @author_bot,
+    @Term_rel_hasfulllex,
+    @Str_canbereferencedbyfulllex,
+    0x7FFFFFFF, NULL
+),
+(
+    @Term_rel_hasfulllex,
+    @author_bot,
+    @Term_rel_haslex,
+    @Str_dotfulllex,
+    0x7FFFFFFF, NULL
+),
+(
+    @Term_rel_hasfulllex,
+    @author_bot,
+    @Term_rel_hasdescription,
+    @Text_description_of_rel_fulllex,
     0x7FFFFFFF, NULL
 );
 
