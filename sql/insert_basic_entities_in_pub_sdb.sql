@@ -22,11 +22,11 @@ INSERT INTO Strings (str)
 VALUES (
     "can be referenced by the full (non-abbreviated) lexical item given by"
 );
-SET @Str_canbereferencedbyfulllex = 1 + 0x0A00000000000000;
+SET @Str_canbereferencedbyfulllex = 1 + 0xA000000000000000;
 
 INSERT INTO Strings (str)
-VALUES (".full lexical item=");
-SET @Str_dotfulllex = 2 + 0x0A00000000000000;
+VALUES (". full lexical item =");
+SET @Str_dotfulllex = 2 + 0xA000000000000000;
 
 
 
@@ -58,7 +58,7 @@ VALUES (
 "requires capitalization."
     )
 );
-SET @Text_description_of_rel_fulllex = 1 + 0x0B00000000000000;
+SET @Text_description_of_rel_fulllex = 1 + 0xB000000000000000;
 
 
 -- insert the '.Full lexical item=' fundamental relation.
@@ -72,7 +72,7 @@ SET @Text_description_of_rel_fulllex = 1 + 0x0B00000000000000;
 --     @Str_dotfulllex,
 --     @Str_description_of_rel_fulllex
 -- );
-SET @Term_rel_hasfulllex = 1 + 0x0200000000000000;
+SET @Term_rel_hasfulllex = 1 + 0x2000000000000000;
 
 
 -- define the string fields used in '.lexical item='.
@@ -80,11 +80,11 @@ INSERT INTO Strings (str)
 VALUES (
     "can be referenced by the abbreviated lexical item given by"
 );
-SET @Str_canbereferencedbyabbrlex = 3 + 0x0A00000000000000;
+SET @Str_canbereferencedbyabbrlex = 3 + 0xA000000000000000;
 
 INSERT INTO Strings (str)
-VALUES (".lexical item=");
-SET @Str_dotlexitem = 4 + 0x0A00000000000000;
+VALUES (". lexical item =");
+SET @Str_dotlexitem = 4 + 0xA000000000000000;
 
 
 INSERT INTO Texts (str)
@@ -128,7 +128,7 @@ VALUES (
 "Do not include \'a\' or \'an\' at the beginning."
     )
 );
-SET @Text_description_of_haslexitem = 2 + 0x0B00000000000000;
+SET @Text_description_of_haslexitem = 2 + 0xB000000000000000;
 
 
 -- insert the '.Lexical item=' fundamental relation.
@@ -142,7 +142,7 @@ SET @Text_description_of_haslexitem = 2 + 0x0B00000000000000;
 --     @Str_dotlexitem,
 --     @Str_description_of_haslexitem
 -- );
-SET @Term_rel_haslex = 2 + 0x0200000000000000;
+SET @Term_rel_haslex = 2 + 0x2000000000000000;
 
 
 
@@ -150,11 +150,11 @@ SET @Term_rel_haslex = 2 + 0x0200000000000000;
 
 INSERT INTO Strings (str)
 VALUES ("has a description given by");
-SET @Str_has_description = 5 + 0x0A00000000000000;
+SET @Str_has_description = 5 + 0xA000000000000000;
 
 INSERT INTO Strings (str)
-VALUES (".description=");
-SET @Str_dotdescription = 6 + 0x0A00000000000000;
+VALUES (". description =");
+SET @Str_dotdescription = 6 + 0xA000000000000000;
 
 INSERT INTO Texts (str)
 VALUES ( -- TODO: write this description.
@@ -163,7 +163,7 @@ VALUES ( -- TODO: write this description.
     -- "Relation: Object (a String) forms a lexical item which references",
     -- "Subject (any Term)."
 );
-SET @Text_description_of_hasdescription = 3 + 0x0B00000000000000;
+SET @Text_description_of_hasdescription = 3 + 0xB000000000000000;
 
 
 
@@ -178,7 +178,7 @@ SET @Text_description_of_hasdescription = 3 + 0x0B00000000000000;
 --     @Str_dotdescription,
 --     @Str_description_of_hasdescription
 -- );
-SET @Term_rel_hasdescription = 3 + 0x0200000000000000;
+SET @Term_rel_hasdescription = 3 + 0x2000000000000000;
 
 
 -- types for reference:

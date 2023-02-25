@@ -1,20 +1,42 @@
 USE mydatabase;
 
+
+
+DELETE FROM SemanticInputs;
+DELETE FROM Bots;
+DELETE FROM Users;
+
+DELETE FROM Lists;
+DELETE FROM Binaries;
+DELETE FROM Blobs;
+DELETE FROM Strings;
+DELETE FROM Texts;
+
+
 -- DROP TABLE SemanticInputs;
--- DROP TABLE Users;
 -- DROP TABLE Bots;
-
--- DROP TABLE SimpleTerms;
--- DROP TABLE StandardTerms;
--- DROP TABLE RelationalPredicates;
-
-DROP TABLE Strings;
-DROP TABLE Texts;
+-- DROP TABLE Users;
+--
+-- -- DROP TABLE RelationalPredicates;
+-- -- DROP TABLE SimpleTerms;
+-- -- DROP TABLE StandardTerms;
+--
+-- DROP TABLE Lists;
 -- DROP TABLE Binaries;
 -- DROP TABLE Blobs;
--- DROP TABLE Lists;
+-- DROP TABLE Strings;
+-- DROP TABLE Texts;
 
 
+
+
+
+
+/* Types */
+-- SET @start_dist = 0x1000000000000000;
+--
+-- SET @bot_start = 0x0000000000000000;
+-- SET @user_start = 0x1000000000000000;
 
 
 /* Statements which the users (or bots) give as input to the semantic network.
@@ -55,46 +77,57 @@ CREATE TABLE SemanticInputs (
     -- (Could have size=255, but might as well restrict..) ..Then again, let me
     -- actually just implement that restriction at the control layer..
 
-    -- In this version, a user or bot can only have one rating value per
-    -- statement, which means that the combination of user and statement
-    -- (subject, pred_or_rel and object) is unique for each row.
+
+    /* date */
+    created_at DATE DEFAULT (CURRENT_DATE),
+
+
     PRIMARY KEY (
-        -- subj_t,
         subj_id,
-        -- user_t,
         user_id,
-        -- rel_t,
         rel_id,
-        -- obj_t,
-        obj_id
+        obj_id,
+        created_at
     ),
 
 
-    -- CHECK (
-    --     user_t = 0 OR -- @bot_t
-    --     user_t = 1    -- @user_t
-    -- ),
+    CONSTRAINT CHK_user_id CHECK (
+        user_id BETWEEN 0 AND 0x200000000000000 - 1
+    ),
 
-    -- prevent that relation--object combinations are saved as predicates,
-    -- and thus that relation--object predicates are always saved in their
-    -- exploded version in the StatementInputs rows.
-    -- CHECK (
-    --     -- either pred_or_rel is NOT a relational predicate term...
-    --     rel_t <> 4 -- @relpred_t
-    --     -- ...or if it is, then it cannot be a predicate, and object thus has to
-    --     -- not be an empty object.
-    --     OR obj_t <> -1 -- @empty_t
-    --     -- (Apparently you cannot write a @ right after the -- in a comment!x))
-    -- ),
+    -- relations cannot be users/bots, relational predicates (0x20) or any
+    -- data terms (0x70 and up).
+    CONSTRAINT CHK_rel_id CHECK (
+        rel_id BETWEEN 0x300000000000000 AND 0x700000000000000 - 1
+    ),
 
-    CHECK (rat_val <> 0x80000000)
+    -- -- prevent that relation--object combinations are saved as predicates,
+    -- -- and thus that relation--object predicates are always saved in their
+    -- -- exploded version in the StatementInputs rows.
+    -- -- CHECK (
+    -- --     -- either pred_or_rel is NOT a relational predicate term...
+    -- --     rel_t <> 4 -- @relpred_t
+    -- --     -- ...or if it is, then it cannot be a predicate, and object thus has to
+    -- --     -- not be an empty object.
+    -- --     OR obj_t <> -1 -- @empty_t
+    -- -- ),
+    -- CONSTRAINT CHK_obj_null_for_pred_stmts CHECK (
+    --     -- either rel is NOT a relational predicate...
+    --     (rel_id NOT BETWEEN 0x200000000000000 AND 0x300000000000000 - 1)
+    --     -- ...or if it is, then object thus has to be the null object:
+    --     OR obj_id = 0
+    -- ),
+    -- No, I just need to not include relational predicates, so let me simply
+    -- prevent rel_id's with 0x20 as the first byte above (which means changing
+    -- 0x20 to 0x30 in the CHK_rel_id constraint above).
+
+
+    CONSTRAINT CHK_rat_val CHECK (rat_val <> 0x80000000)
     -- This makes max and min values equal to 2^31 - 1 and -2^31 + 1, resp.
     -- Divide by 2^31 to get floating point number strictly between -1 and 1.
 
 
 
-    /* timestamp */
-    -- created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -109,6 +142,10 @@ CREATE TABLE Bots (
     -- description_t is not needed; it is always String type.
     description_id BIGINT UNSIGNED
 );
+-- INSERT INTO Bots (id) VALUES (0x0000000000000001);
+-- -- 0 is reserved for null-objects for predicate statements in SemanticInputs.
+-- -- ...no..
+INSERT INTO Bots (id) VALUES (0x0000000000000000);
 
 
 CREATE TABLE Users (
@@ -122,7 +159,7 @@ CREATE TABLE Users (
     /* timestamp */
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-INSERT INTO Users (id) VALUES (0x0100000000000000);
+INSERT INTO Users (id) VALUES (0x1000000000000000);
 
 
 -- CREATE TABLE SimpleTerms (
@@ -151,8 +188,6 @@ INSERT INTO Users (id) VALUES (0x0100000000000000);
 
 
 
-
--- TODO: Make changes and deletions below.
 
 --
 -- CREATE TABLE SimpleTerms (
@@ -224,6 +259,9 @@ CREATE TABLE Lists (
     id BIGINT UNSIGNED AUTO_INCREMENT,
     PRIMARY KEY(id),
 
+    /* creator */
+    user_id BIGINT UNSIGNED,
+
     /* data */
     len SMALLINT UNSIGNED,
 
@@ -253,28 +291,40 @@ CREATE TABLE Lists (
     -- tail_t not needed; it is always List type.
     tail_id BIGINT UNSIGNED
 );
-INSERT INTO Lists (id) VALUES (0x0700000000000000);
+INSERT INTO Lists (id) VALUES (0x7000000000000000);
+
+
+
 
 
 CREATE TABLE Binaries (
     /* variable character string ID */
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
+    /* creator */
+    user_id BIGINT UNSIGNED,
+
     /* data */
     str VARCHAR(500) UNIQUE
     -- FULLTEXT idx (str)
 );
-INSERT INTO Binaries (id) VALUES (0x0800000000000000);
+INSERT INTO Binaries (id) VALUES (0x8000000000000000);
 
 CREATE TABLE Blobs (
     /* variable character string ID */
     id BIGINT UNSIGNED AUTO_INCREMENT,
     PRIMARY KEY(id),
 
+    /* creator */
+    user_id BIGINT UNSIGNED,
+
     /* data */
     bin BLOB
 );
-INSERT INTO Blobs (id) VALUES (0x0900000000000000);
+INSERT INTO Blobs (id) VALUES (0x9000000000000000);
+
+
+
 
 
 
@@ -283,20 +333,26 @@ CREATE TABLE Strings (
     -- type TINYINT = 5,
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
+    /* creator */
+    user_id BIGINT UNSIGNED,
+
     /* data */
-    str VARCHAR(500) UNIQUE -- VARCHAR(255) UNIQUE
-    -- FULLTEXT idx (str)
+    str VARCHAR(255) UNIQUE,
+    FULLTEXT idx (str)
 );
-INSERT INTO Strings (id) VALUES (0x0A00000000000000);
+INSERT INTO Strings (id) VALUES (0xA000000000000000);
 
 CREATE TABLE Texts (
     /* variable character string ID */
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
+    /* creator */
+    user_id BIGINT UNSIGNED,
+
     /* data */
     str TEXT
 );
-INSERT INTO Strings (id) VALUES (0x0B00000000000000);
+INSERT INTO Strings (id) VALUES (0xB000000000000000);
 
 
 
