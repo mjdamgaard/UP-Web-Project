@@ -25,7 +25,7 @@ VALUES (
 SET @Str_canbereferencedbyfulllex = 1 + 0xA000000000000000;
 
 INSERT INTO Strings (str)
-VALUES (". full lexical item =");
+VALUES (".full lexical item:");
 SET @Str_dotfulllex = 2 + 0xA000000000000000;
 
 
@@ -83,7 +83,7 @@ VALUES (
 SET @Str_canbereferencedbyabbrlex = 3 + 0xA000000000000000;
 
 INSERT INTO Strings (str)
-VALUES (". lexical item =");
+VALUES (".lexical item:");
 SET @Str_dotlexitem = 4 + 0xA000000000000000;
 
 
@@ -153,7 +153,7 @@ VALUES ("has a description given by");
 SET @Str_has_description = 5 + 0xA000000000000000;
 
 INSERT INTO Strings (str)
-VALUES (". description =");
+VALUES (".description:");
 SET @Str_dotdescription = 6 + 0xA000000000000000;
 
 INSERT INTO Texts (str)
