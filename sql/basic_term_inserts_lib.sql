@@ -35,6 +35,16 @@ BEGIN
 END //
 DELIMITER ;
 
+DELIMITER //
+CREATE PROCEDURE insertStringWORollback (
+    IN str VARCHAR(255),
+    OUT new_id BIGINT UNSIGNED
+)
+BEGIN
+    CALL getNewTermID (0xA0, new_id);
+    INSERT INTO Strings (id, str) VALUES (new_id, str);
+END //
+DELIMITER ;
 
 
 -- CALL insertString ("hello world!", @hello_id, @exit_status);
