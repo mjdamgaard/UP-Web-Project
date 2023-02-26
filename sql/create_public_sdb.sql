@@ -20,7 +20,7 @@ DELETE FROM Texts;
 -- DROP TABLE Users;
 --
 -- DROP TABLE NextIDPointers;
--- DROP PROCEDURE SelectNextTermID;
+DROP PROCEDURE getNewTermID;
 --
 -- DROP TABLE Lists;
 -- DROP TABLE Binaries;
@@ -178,17 +178,16 @@ VALUES
 -- END //
 -- DELIMITER ;
 DELIMITER //
-CREATE PROCEDURE SelectNextTermID
-    (
-        IN tc TINYINT UNSIGNED,
-        OUT ...
-    )
+CREATE PROCEDURE getNewTermID (
+    IN tc TINYINT UNSIGNED,
+    OUT new_id BIGINT UNSIGNED
+)
 BEGIN
     SELECT next_id_pointer
+    INTO new_id
     FROM NextIDPointers
     WHERE type_code = tc
     FOR UPDATE;
-
     UPDATE NextIDPointers
     SET next_id_pointer = next_id_pointer + 1
     WHERE type_code = tc;

@@ -10,10 +10,12 @@
 <?php
 namespace Basic;
 
-function getSQL_addString($inStr, $idVarName) {
-    $sql = "";
+function appendSQL_addString($sql, $inStr, $idVarName) {
 
     $str_selectID = 'BEGIN DECLARE CALL SelectNextTermID (0x20)'
+
+    // Nå, nej jeg burde faktisk hellere lave disse funktioner som SQL-
+    // procedures..
 
     $sql .= 'INSERT INTO Strings (id, str) VALUES ';
     $sql .= '(' . $str_selectID . ', \"' . $inStr . '\");';
@@ -22,7 +24,7 @@ function getSQL_addString($inStr, $idVarName) {
 }
 
 
-function getSQL_addObjNounRelation($subjType, $objNoun, $objType, $dscrptn) {
+function appendSQL_addObjNounRelation($subjType, $objNoun, $objType, $dscrptn) {
     $sql = "";
     if (strlen($subjType) != 0) {
         $sql .= "(".$subjType.") ";
