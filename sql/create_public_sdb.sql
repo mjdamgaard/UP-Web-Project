@@ -6,6 +6,9 @@ DELETE FROM SemanticInputs;
 DELETE FROM Bots;
 DELETE FROM Users;
 
+DELETE FROM NextRelPredIDs;
+DELETE FROM NextTermIDs;
+
 DELETE FROM Lists;
 DELETE FROM Binaries;
 DELETE FROM Blobs;
@@ -17,9 +20,10 @@ DELETE FROM Texts;
 -- DROP TABLE Bots;
 -- DROP TABLE Users;
 --
--- -- DROP TABLE RelationalPredicates;
--- -- DROP TABLE SimpleTerms;
--- -- DROP TABLE StandardTerms;
+-- DROP TABLE NextRelPredIDs;
+-- DROP TABLE NextTermIDs;
+DROP PROCEDURE  SelectNextRelPredID;
+DROP PROCEDURE SelectNextTermID;
 --
 -- DROP TABLE Lists;
 -- DROP TABLE Binaries;
@@ -66,16 +70,14 @@ CREATE TABLE SemanticInputs (
 
 
     -- numerical value (signed) which defines the degree to which the users
-    -- (or bot) deems the statement to be true/fitting. When dividing the int
-    -- sitting at the first four bytes with
-    -- 2^31, this value runs from -1 to (almost) 1. And then -1 is taken to mean
+    -- (or bot) deems the statement to be true/fitting.
+    -- When dividing the TINYINT with 128,
+    -- this value runs from -1 to (almost) 1. And then -1 is taken to mean
     -- "very far from true/fitting," 0 is taken to mean "not sure / not
     -- particularly fitting or unfitting," and 1 is taken to mean "very much
     -- true/fitting."
-    rat_val INT,
+    rat_val TINYINT,
     opt_data VARBINARY(255),
-    -- (Could have size=255, but might as well restrict..) ..Then again, let me
-    -- actually just implement that restriction at the control layer..
 
 
     /* date */
@@ -99,12 +101,12 @@ CREATE TABLE SemanticInputs (
     -- data terms (0x70 and up).
     CONSTRAINT CHK_rel_id CHECK (
         rel_id BETWEEN 0x300000000000000 AND 0x700000000000000 - 1
-    ),
+    )
 
 
-    CONSTRAINT CHK_rat_val CHECK (rat_val <> 0x80000000)
-    -- This makes max and min values equal to 2^31 - 1 and -2^31 + 1, resp.
-    -- Divide by 2^31 to get floating point number strictly between -1 and 1.
+    -- CONSTRAINT CHK_rat_val CHECK (rat_val <> 0x80000000) -- or 0x8000..
+    -- -- This makes max and min values equal to 2^31 - 1 and -2^31 + 1, resp.
+    -- -- Divide by 2^31 to get floating point number strictly between -1 and 1.
 
 
 
@@ -130,13 +132,86 @@ CREATE TABLE Users (
     -- type TINYINT = 1,
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    /* primary fields */
-    -- TBD.
+    num_inserts_today INT,
 
     /* timestamp */
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 INSERT INTO Users (id) VALUES (0x1000000000000000);
+
+
+
+-- CREATE TABLE NextIDPointers (
+--     type_code TINYINT UNSIGNED PRIMARY KEY,
+--     next_id_pointer BIGINT UNSIGNED
+-- );
+-- INSERT INTO NextIDPointers (type_code, next_id_pointer)
+-- VALUES
+--     (0x20, 1),
+--     (0x30, 1)
+-- ;
+
+CREATE TABLE NextRelPredIDs (
+    next_id_pointer BIGINT UNSIGNED
+);
+INSERT INTO NextRelPredIDs (next_id_pointer) VALUES (0x2000000000000001);
+
+CREATE TABLE NextTermIDs (
+    next_id_pointer BIGINT UNSIGNED
+);
+INSERT INTO NextTermIDs (next_id_pointer) VALUES (0x3000000000000001);
+
+DELIMITER //
+CREATE PROCEDURE SelectNextRelPredID ()
+BEGIN
+    -- START TRANSACTION;
+    SELECT next_id_pointer FROM NextRelPredIDs FOR UPDATE;
+    UPDATE NextRelPredIDs SET next_id_pointer = next_id_pointer + 1;
+    -- COMMIT;
+END //
+-- DELIMITER ;
+-- DELIMITER //
+CREATE PROCEDURE SelectNextTermID ()
+BEGIN
+    -- BEGIN;
+    SELECT next_id_pointer FROM NextTermIDs FOR UPDATE;
+    UPDATE NextTermIDs SET next_id_pointer = next_id_pointer + 1;
+    -- COMMIT;
+END //
+DELIMITER ;
+
+
+-- DELIMITER //
+-- CREATE PROCEDURE GetNextRelPredID (OUT next_id BIGINT UNSIGNED)
+-- BEGIN
+--     LOCK TABLE NextRelPredIDs WRITE;
+--     SET next_id = SELECT next_id_pointer FROM NextRelPredIDs;
+--
+--     UPDATE NextRelPredIDs
+--     SET next_id_pointer = next_id_pointer + 1
+--     WHERE next_id_pointer = next_id;
+--
+--     UNLOCK TABLES;
+-- END //
+-- DELIMITER ;
+--
+-- DELIMITER //
+-- CREATE PROCEDURE GetNextTermID (OUT next_id BIGINT UNSIGNED)
+-- BEGIN
+--     LOCK TABLE NextTermIDs WRITE;
+--     SET next_id = SELECT next_id_pointer FROM NextTermIDs;
+--
+--     UPDATE NextTermIDs
+--     SET next_id_pointer = next_id_pointer + 1
+--     WHERE next_id_pointer = next_id;
+--
+--     UNLOCK TABLES;
+-- END //
+-- DELIMITER ;
+
+
+
+
 
 
 -- CREATE TABLE SimpleTerms (
@@ -160,10 +235,6 @@ INSERT INTO Users (id) VALUES (0x1000000000000000);
 --     -- description.
 --     description TEXT
 -- );
-
-
-
-
 
 
 --
@@ -226,7 +297,6 @@ INSERT INTO Users (id) VALUES (0x1000000000000000);
 --     object_t TINYINT,
 --     object_id BIGINT UNSIGNED
 -- );
-
 
 
 
