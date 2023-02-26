@@ -6,8 +6,7 @@ DELETE FROM SemanticInputs;
 DELETE FROM Bots;
 DELETE FROM Users;
 
-DELETE FROM NextRelPredIDs;
-DELETE FROM NextTermIDs;
+DELETE FROM NextIDPointers;
 
 DELETE FROM Lists;
 DELETE FROM Binaries;
@@ -20,10 +19,9 @@ DELETE FROM Texts;
 -- DROP TABLE Bots;
 -- DROP TABLE Users;
 --
--- DROP TABLE NextRelPredIDs;
--- DROP TABLE NextTermIDs;
-DROP PROCEDURE  SelectNextRelPredID;
-DROP PROCEDURE SelectNextTermID;
+-- DROP TABLE NextIDPointers;
+-- DROP PROCEDURE  SelectNextRelPredID;
+-- DROP PROCEDURE SelectNextTermID;
 --
 -- DROP TABLE Lists;
 -- DROP TABLE Binaries;
@@ -141,73 +139,54 @@ INSERT INTO Users (id) VALUES (0x1000000000000000);
 
 
 
--- CREATE TABLE NextIDPointers (
---     type_code TINYINT UNSIGNED PRIMARY KEY,
---     next_id_pointer BIGINT UNSIGNED
--- );
--- INSERT INTO NextIDPointers (type_code, next_id_pointer)
--- VALUES
---     (0x20, 1),
---     (0x30, 1)
--- ;
-
-CREATE TABLE NextRelPredIDs (
+CREATE TABLE NextIDPointers (
+    type_code TINYINT UNSIGNED PRIMARY KEY,
     next_id_pointer BIGINT UNSIGNED
 );
-INSERT INTO NextRelPredIDs (next_id_pointer) VALUES (0x2000000000000001);
+INSERT INTO NextIDPointers (type_code, next_id_pointer)
+VALUES
+    (0x20, 0x2000000000000001),
+    (0x30, 0x3000000000000001)
+;
 
-CREATE TABLE NextTermIDs (
-    next_id_pointer BIGINT UNSIGNED
-);
-INSERT INTO NextTermIDs (next_id_pointer) VALUES (0x3000000000000001);
 
 DELIMITER //
 CREATE PROCEDURE SelectNextRelPredID ()
 BEGIN
-    -- START TRANSACTION;
-    SELECT next_id_pointer FROM NextRelPredIDs FOR UPDATE;
-    UPDATE NextRelPredIDs SET next_id_pointer = next_id_pointer + 1;
-    -- COMMIT;
+    SELECT next_id_pointer
+    FROM NextRelPredIDs
+    WHERE type_code = 0x20
+    FOR UPDATE;
+
+    UPDATE NextRelPredIDs
+    SET next_id_pointer = next_id_pointer + 1
+    WHERE type_code = 0x20;
 END //
 -- DELIMITER ;
 -- DELIMITER //
 CREATE PROCEDURE SelectNextTermID ()
 BEGIN
-    -- BEGIN;
-    SELECT next_id_pointer FROM NextTermIDs FOR UPDATE;
-    UPDATE NextTermIDs SET next_id_pointer = next_id_pointer + 1;
-    -- COMMIT;
+    SELECT next_id_pointer
+    FROM NextIDPointers
+    WHERE type_code = 0x30
+    FOR UPDATE;
+
+    UPDATE NextIDPointers
+    SET next_id_pointer = next_id_pointer + 1
+    WHERE type_code = 0x30;
 END //
 DELIMITER ;
 
+-- CREATE TABLE NextRelPredIDs (
+--     next_id_pointer BIGINT UNSIGNED
+-- );
+-- INSERT INTO NextRelPredIDs (next_id_pointer) VALUES (0x2000000000000001);
+--
+-- CREATE TABLE NextTermIDs (
+--     next_id_pointer BIGINT UNSIGNED
+-- );
+-- INSERT INTO NextTermIDs (next_id_pointer) VALUES (0x3000000000000001);
 
--- DELIMITER //
--- CREATE PROCEDURE GetNextRelPredID (OUT next_id BIGINT UNSIGNED)
--- BEGIN
---     LOCK TABLE NextRelPredIDs WRITE;
---     SET next_id = SELECT next_id_pointer FROM NextRelPredIDs;
---
---     UPDATE NextRelPredIDs
---     SET next_id_pointer = next_id_pointer + 1
---     WHERE next_id_pointer = next_id;
---
---     UNLOCK TABLES;
--- END //
--- DELIMITER ;
---
--- DELIMITER //
--- CREATE PROCEDURE GetNextTermID (OUT next_id BIGINT UNSIGNED)
--- BEGIN
---     LOCK TABLE NextTermIDs WRITE;
---     SET next_id = SELECT next_id_pointer FROM NextTermIDs;
---
---     UPDATE NextTermIDs
---     SET next_id_pointer = next_id_pointer + 1
---     WHERE next_id_pointer = next_id;
---
---     UNLOCK TABLES;
--- END //
--- DELIMITER ;
 
 
 
@@ -236,33 +215,6 @@ DELIMITER ;
 --     description TEXT
 -- );
 
-
---
--- CREATE TABLE SimpleTerms (
---     -- simple term ID.
---     -- type TINYINT = 2,
---     id BIGINT UNSIGNED AUTO_INCREMENT,
---     PRIMARY KEY(id),
---
---     /* The "Simple" subtype takes as its first descriptor a string denoting af
---      * lexical item (a semantically meaningful part of a sentence). Examples of
---      * lexical items could be: "the number pi", "is subset of" (or "belongs to"),
---      * "has related link:", and "is funny".
---      * The second descriptor of the Simple subtype is an (optional) text descrip-
---      * tion, which can be used to explain the lexical item more thoroughly, and to
---      * clear up any potential ambiguities.
---      **/
---
---     -- specifying lexical item.
---     -- spec_lexical_item_t is not needed; it is always String type.
---     spec_lexical_item_id BIGINT UNSIGNED,
---
---     -- description.
---     -- description_t is not needed; it is always String type.
---     description_id BIGINT UNSIGNED
--- );
-
-
 -- CREATE TABLE StandardTerms (
 --     /* standard term ID */
 --     -- type TINYINT = 3,
@@ -278,7 +230,6 @@ DELIMITER ;
 --     -- spec_child_preds_t not needed; it is always List type.
 --     spec_child_preds_id BIGINT UNSIGNED
 -- );
---
 --
 -- CREATE TABLE RelationalPredicates (
 --     /* relational predicate ID */
