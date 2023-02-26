@@ -1,0 +1,16 @@
+div.universalQuantifierFormula,
+div.existentialQuantifierFormula,
+div.negationFormula,
+div.conjunctionFormula,
+div.disjunctionFormula,
+div.implicationFormula,
+div.biconditionalFormula,
+div.atomicFormula,
+div.compoundElement,
+div.atomicElement,
+div.anonymousFunction,
+div.list,
+div.length {
+    display: inline;
+    /* background-color:  */
+}
