@@ -8,6 +8,8 @@ DELETE FROM Users;
 
 DELETE FROM NextIDPointers;
 
+DELETE FROM Creators;
+
 DELETE FROM Lists;
 DELETE FROM Binaries;
 DELETE FROM Blobs;
@@ -18,10 +20,13 @@ DELETE FROM Texts;
 -- DROP TABLE SemanticInputs;
 -- DROP TABLE Bots;
 -- DROP TABLE Users;
---
+
 -- DROP TABLE NextIDPointers;
-DROP PROCEDURE getNewTermID;
+
+DROP PROCEDURE createTerm;
 --
+-- DROP TABLE Creators;
+
 -- DROP TABLE Lists;
 -- DROP TABLE Binaries;
 -- DROP TABLE Blobs;
@@ -178,8 +183,9 @@ VALUES
 -- END //
 -- DELIMITER ;
 DELIMITER //
-CREATE PROCEDURE getNewTermID (
+CREATE PROCEDURE createTerm (
     IN tc TINYINT UNSIGNED,
+    IN u_id BIGINT UNSIGNED,
     OUT new_id BIGINT UNSIGNED
 )
 BEGIN
@@ -188,9 +194,13 @@ BEGIN
     FROM NextIDPointers
     WHERE type_code = tc
     FOR UPDATE;
+
     UPDATE NextIDPointers
     SET next_id_pointer = next_id_pointer + 1
     WHERE type_code = tc;
+
+    INSERT INTO Creators (user_id, term_id)
+    VALUES (u_id, new_id);
 END //
 DELIMITER ;
 
@@ -267,14 +277,20 @@ DELIMITER ;
 -- );
 
 
+CREATE TABLE Creators (
+    user_id BIGINT UNSIGNED,
+    term_id BIGINT UNSIGNED,
+    PRIMARY KEY (user_id, term_id)
+);
+
 
 
 CREATE TABLE Lists (
     /* list ID */
     id BIGINT UNSIGNED PRIMARY KEY,
 
-    /* creator */
-    user_id BIGINT UNSIGNED,
+    -- /* creator */
+    -- user_id BIGINT UNSIGNED,
 
     /* data */
     len SMALLINT UNSIGNED,
@@ -315,8 +331,8 @@ CREATE TABLE Binaries (
     /* variable character string ID */
     id BIGINT UNSIGNED PRIMARY KEY,
 
-    /* creator */
-    user_id BIGINT UNSIGNED,
+    -- /* creator */
+    -- user_id BIGINT UNSIGNED,
 
     /* data */
     str VARCHAR(500) UNIQUE
@@ -328,8 +344,8 @@ CREATE TABLE Blobs (
     /* variable character string ID */
     id BIGINT UNSIGNED PRIMARY KEY,
 
-    /* creator */
-    user_id BIGINT UNSIGNED,
+    -- /* creator */
+    -- user_id BIGINT UNSIGNED,
 
     /* data */
     bin BLOB
@@ -345,8 +361,8 @@ CREATE TABLE Strings (
     /* variable character string ID */
     id BIGINT UNSIGNED PRIMARY KEY,
 
-    /* creator */
-    user_id BIGINT UNSIGNED,
+    -- /* creator */
+    -- user_id BIGINT UNSIGNED,
 
     /* data */
     str VARCHAR(255) UNIQUE,
