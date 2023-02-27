@@ -92,20 +92,18 @@ CREATE TABLE SemanticInputs (
         rel_id,
         obj_id,
         created_at
-    ) -- ********************,
+    ),
 
 
-    -- CONSTRAINT CHK_user_id CHECK (
-    --     -- user_id BETWEEN 0 AND 0x200000000000000 - 1
-    --         0 <= user_id AND user_id <= 0x200000000000000 - 1
-    -- ),
+    CONSTRAINT CHK_user_id CHECK (
+        user_id BETWEEN 0 AND 0x2000000000000000 - 1
+    ),
 
     -- relations cannot be users/bots, relational predicates (0x20) or any
     -- data terms (0x70 and up).
-    -- CONSTRAINT CHK_rel_id CHECK (
-    --     -- rel_id BETWEEN 0x300000000000000 AND 0x700000000000000 - 1
-    --     0x300000000000000 <= rel_id AND rel_id <= 0x700000000000000 - 1
-    -- )
+    CONSTRAINT CHK_rel_id CHECK (
+        rel_id BETWEEN 0x3000000000000000 AND 0x7000000000000000 - 1
+    )
 
 
     -- CONSTRAINT CHK_rat_val CHECK (rat_val <> 0x80000000) -- or 0x8000..
