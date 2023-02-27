@@ -9,10 +9,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // $password = test_input($_POST["password"]);
 
     //look up userid in database
-    $conn = "";
-    if (makeConnection($conn)) {
-        error_log("connection failed!");
-    }
+    $conn = getConnectionOrDie();
+
     $sql = "SELECT id FROM mydatabase.Users
         WHERE id = '" . strval($userid) . "'";
     $result = $conn->query($sql);

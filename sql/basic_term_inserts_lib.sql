@@ -195,10 +195,10 @@ DELIMITER ;
 -- use once (then drop procedure).
 DELIMITER //
 CREATE PROCEDURE insertRels_hasLexItem_and_hasDescription (
-    str_lexItem_of_hasLexItem VARCHAR(255),
-    str_description_of_hasLexItem TEXT,
-    str_lexItem_of_hasDescription VARCHAR(255),
-    str_description_of_hasDescription TEXT
+    IN str_lexItem_of_hasLexItem VARCHAR(255),
+    IN str_description_of_hasLexItem TEXT,
+    IN str_lexItem_of_hasDescription VARCHAR(255),
+    IN str_description_of_hasDescription TEXT
 )
 BEGIN
     CALL getNewTermID (0x30, @TermID_hasLexItem);
@@ -261,24 +261,25 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE insertTerm (
-    str_lexItem VARCHAR(255),
-    str_description TEXT,
+    IN str_lexItem VARCHAR(255),
+    IN str_description TEXT,
+    OUT new_id BIGINT UNSIGNED,
     OUT exit_code_lex TINYINT,
     OUT exit_code_dscr TINYINT
 )
 BEGIN
-    CALL getNewTermID (0x30, @TermID_new);
+    CALL getNewTermID (0x30, new_id);
 
     CALL insertOrFindString (str_LexItem, @StrID_lexItem, exit_code_lex);
     CALL insertOrFindText (str_LexItem, @StrID_description, exit_code_dscr);
 
     CALL authorBotInsert (
-        @TermID_new,
+        @new_id,
         0x3000000000000001, -- TermID of hasLexItem
         @StrID_lexItem
     );
     CALL authorBotInsert (
-        @TermID_new,
+        @new_id,
         0x3000000000000002, -- TermID of hasDescription
         @StrID_description
     );
@@ -289,16 +290,17 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE insertTermWODescription (
-    str_lexItem VARCHAR(255),
+    IN str_lexItem VARCHAR(255),
+    OUT new_id BIGINT UNSIGNED,
     OUT exit_code_lex TINYINT
 )
 BEGIN
-    CALL getNewTermID (0x30, @TermID_new);
+    CALL getNewTermID (0x30, new_id);
 
     CALL insertOrFindString (str_LexItem, @StrID_lexItem, exit_code_lex);
 
     CALL authorBotInsert (
-        @TermID_new,
+        new_id,
         0x3000000000000001, -- TermID of hasLexItem
         @StrID_lexItem
     );

@@ -5,20 +5,27 @@ require_once $path . "connect.php";
 
 
 
-function insertSimpleTerm(str_lexItem, str_description) {
-    $sql =
-        'CALL insertTerm (\"' .
-            str_lexItem . '\", \"' .
-            str_description .
-        '\")';
+function insertSimpleTerm($str_lexItem, $str_description, $new_id) {
 
-    $conn = "";
-    if (makeConnection($conn)) {
-        error_log("connection failed!");
-        return 1; // EXIT_FAILURE.
-    }
+    $conn = getConnectionOrDie();
 
-    $conn->query($sql);
+    // prepare and bind.
+    $stmt = $conn->prepare(
+        "CALL insertTerm (?, ?, ?, ?)"
+    );
+    $stmt->bind_param(
+        "ss",
+        $str_lexItem, $str_description,
+        $new_id,
+        $exit_code_lex, $exit_code_dscr
+    );
+
+    // set parameters and execute.
+    // $lexItem = $str_lexItem;
+    // $description = $str_description;
+    $stmt->execute();
+
+    return array($exit_code_lex, $exit_code_dscr);
 }
 
 
