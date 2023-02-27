@@ -342,8 +342,12 @@ CREATE PROCEDURE insertTerm (
 BEGIN
     CALL createTerm (0x30, u_id, new_id);
 
-    CALL insertOrFindString (str_LexItem, u_id, @StrID_lexItem, exit_code_lex);
-    CALL insertOrFindText (str_LexItem, u_id, @StrID_description, exit_code_dscr);
+    CALL insertOrFindString (
+        str_LexItem, u_id, @StrID_lexItem, exit_code_lex
+    );
+    CALL insertOrFindText (
+        str_LexItem, u_id, @StrID_description, exit_code_dscr
+    );
 
     CALL inputUpvoteDuringCreation (
         u_id,
@@ -372,7 +376,9 @@ CREATE PROCEDURE insertTermWODescription (
 BEGIN
     CALL createTerm (0x30, u_id, new_id);
 
-    CALL insertOrFindString (str_LexItem, u_id, @StrID_lexItem, exit_code_lex);
+    CALL insertOrFindString (
+        str_LexItem, u_id, @StrID_lexItem, exit_code_lex
+    );
 
     CALL inputUpvoteDuringCreation (
         u_id,

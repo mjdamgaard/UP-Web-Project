@@ -11,13 +11,15 @@ $lexItem = $description = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // $lexItem = sanitize_input($_POST["lexItem"]);
     // $description = sanitize_input($_POST["description"]);
+    $userid = intval($_POST["userid"]);
     $lexItem = $_POST["lexItem"]; // UNSANITIZED, CAREFUL!
     $description = $_POST["description"]; // UNSANITIZED, CAREFUL!
 
     $new_id = 0;
 
     // insert term without warning is lexItem string already exists in the DB.
-    insertSimpleTerm($lexItem, $description, $new_id);
+    // ...And without nounce or user validation at all..
+    insertSimpleTerm($lexItem, $description, $userid, $new_id);
 }
 
 // function sanitize_input($data) {

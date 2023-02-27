@@ -5,17 +5,17 @@ require_once $path . "connect.php";
 
 
 
-function insertSimpleTerm($str_lexItem, $str_description, $new_id) {
-
+function insertSimpleTerm($lexItem, $description, $user_id, $new_id) {
     $conn = getConnectionOrDie();
 
     // prepare and bind.
     $stmt = $conn->prepare(
-        "CALL insertTerm (?, ?, ?, ?)"
+        "CALL insertTerm (?, ?, ?, ?, ?, ?)"
     );
     $stmt->bind_param(
-        "ss",
-        $str_lexItem, $str_description,
+        "ssiiii",
+        $lexItem, $description,
+        $user_id,
         $new_id,
         $exit_code_lex, $exit_code_dscr
     );
