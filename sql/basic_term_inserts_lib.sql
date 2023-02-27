@@ -312,10 +312,6 @@ DELIMITER ;
 
 
 
-
-
-
-
 -- Some testing.
 
 -- CALL insertString ("hello world!", @hello_id, @exit_code);
@@ -333,27 +329,3 @@ DELIMITER ;
 -- -- SET @hello_id = 0xA000000000000000 + 1;
 -- -- SELECT @hello_id;
 -- -- SELECT @exit_code;
-
-
-
-
-
-
-
--- function appendSQL_addObjNounRelation($subjType, $objNoun, $objType, $dscrptn) {
---     $sql = "";
---     if (strlen($subjType) != 0) {
---         $sql .= "(".$subjType.") ";
---     }
---     $sql .= "has ".$objNoun . " ";
---     if (strlen($objType) != 0) {
---         $sql .= "(".$objType.") ";
---     }
---     $sql .= "=";
---
---     if (strlen($dscrptn) != 0) {
---
---     }
---
---     return $sql;
--- }

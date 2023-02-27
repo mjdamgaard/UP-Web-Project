@@ -1,6 +1,6 @@
 <?php
 
-function get_connection() {
+function makeConnection($conn) {
     $servername = "localhost";
     $username = "mads";
     $password = "lemmein";
@@ -21,11 +21,12 @@ function get_connection() {
 
     // Check connection
     if ($conn->connect_error) {
-      die("Connection failed: " . $conn->connect_error);
+      // die("Connection failed: " . $conn->connect_error);
+      return 1; // EXIT_FAILURE.
     }
     // echo "Connected successfully";
 
-    return $conn;
+    return 0; // EXIT_SUCCESS.
 }
 
 ?>

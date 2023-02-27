@@ -1,11 +1,16 @@
 <?php
 
+$database_path = "src/database/";
+require_once $database_path . "connect.php";
+require_once $database_path . "insert.php";
+
 
 // define variables and set to empty values
-$userid = $password = "";
+$lexItem = $description = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $userid = test_input($_POST["userid"]);
+    $lexItem = sanitize_input($_POST["lexItem"]);
+    $description = sanitize_input($_POST["description"]);
     // $password = test_input($_POST["password"]);
 
     //look up userid in database
@@ -32,40 +37,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $conn->close();
 }
 
-
-
-
-
-
-function test_input($data) {
+function sanitize_input($data) {
     $data = trim($data);
-    $data = stripslashes($data);
+    // $data = stripslashes($data);
     $data = htmlspecialchars($data);
     return $data;
 }
 
 
 
-echo '
-    <form
-        method="post"
-        action='
-        . htmlspecialchars($_SERVER['PHP_SELF'])
-        . '
-        autocomplete="on"
-    >
-        User ID: <input type="text" name="userid">
-        <br><br>
-        <!--
-        Password: <input type="text" name="password">
-        <br><br>
-        -->
-        <input type="submit" name="submit" value="Submit">
-    </form>
-';
-
-
-
-
-
 ?>
+
+<!-- <div>
+    Note that backslashes are stripped from input, turning e.g.
+    \&#34; into &#34; and \\ into \.
+</div> -->
+
+<form
+    method="post"
+    action=<?php echo '\"'.htmlspecialchars($_SERVER["PHP_SELF"]) '\"';?>
+    autocomplete="on"
+>
+    <p>
+        <label for="lexItemInput">Lexical item:</label>
+        <input type="text" id="lexItemInput" name="lexItem">
+    </p>
+    <p>
+        <label for="descriptionInput">Description:</label>
+        <input type="text" id="descriptionInput" name="description">
+    </p>
+</form>

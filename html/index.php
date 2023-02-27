@@ -1,6 +1,6 @@
 <?php
 
-require 'src/database.php';
+require_once 'src/database.php';
 
 
 
