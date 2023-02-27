@@ -1,7 +1,7 @@
 <?php
 
-$path = "src/database/";
-require_once $path . "connect.php";
+$database_path = "";
+require_once $database_path . "connect.php";
 
 
 

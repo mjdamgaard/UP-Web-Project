@@ -4,7 +4,7 @@ function getConnection() {
     $servername = "localhost";
     $username = "mads";
     $password = "lemmein";
-    $database = "mydatabase";
+    $dbname = "mydatabase";
 
 
     // create connection.
@@ -18,7 +18,7 @@ function getConnectionOrDie() {
     $servername = "localhost";
     $username = "mads";
     $password = "lemmein";
-    $database = "mydatabase";
+    $dbname = "mydatabase";
 
 
     // create connection.

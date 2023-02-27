@@ -36,6 +36,8 @@ VALUES
     (0xB0, 0xB000000000000001)
 ;
 
+DELETE FROM Creators;
+
 DELETE FROM Lists;
 DELETE FROM Binaries;
 DELETE FROM Blobs;
@@ -227,6 +229,7 @@ CREATE PROCEDURE inputUpvoteDuringCreation (
     IN o_id BIGINT UNSIGNED
 )
 BEGIN
+    SELECT r_id;
     INSERT INTO SemanticInputs (
         subj_id,
         user_id,
@@ -355,12 +358,12 @@ BEGIN
         0x3000000000000001, -- TermID of hasLexItem
         @StrID_lexItem
     );
-    CALL inputUpvoteDuringCreation (
-        u_id,
-        @new_id,
-        0x3000000000000002, -- TermID of hasDescription
-        @StrID_description
-    );
+    -- CALL inputUpvoteDuringCreation (
+    --     u_id,
+    --     @new_id,
+    --     0x3000000000000002, -- TermID of hasDescription
+    --     @StrID_description
+    -- );
 END //
 DELIMITER ;
 

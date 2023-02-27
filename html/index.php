@@ -1,5 +1,9 @@
 <?php
 
+// phpinfo();
+
+echo $_SERVER['DOCUMENT_ROOT'];
+
 require_once 'src/database.php';
 
 
