@@ -3,10 +3,38 @@ USE mydatabase;
 
 DROP PROCEDURE insertString;
 DROP PROCEDURE insertStringWORollback;
+DROP PROCEDURE insertOrFindString;
 DROP PROCEDURE insertText;
 DROP PROCEDURE insertTextWORollback;
+DROP PROCEDURE insertOrFindText;
 DROP PROCEDURE authorBotInsert;
 DROP PROCEDURE insertRels_hasLexItem_and_hasDescription;
+
+
+DELETE FROM SemanticInputs;
+DELETE FROM Bots;
+DELETE FROM Users;
+
+DELETE FROM NextIDPointers;
+INSERT INTO NextIDPointers (type_code, next_id_pointer)
+VALUES
+    (0x00, 0x0000000000000001),
+    (0x10, 0x1000000000000001),
+    (0x20, 0x2000000000000001),
+    (0x30, 0x3000000000000001),
+    (0x70, 0x7000000000000001),
+    (0x80, 0x8000000000000001),
+    (0x90, 0x9000000000000001),
+    (0xA0, 0xA000000000000001),
+    (0xB0, 0xB000000000000001)
+;
+
+DELETE FROM Lists;
+DELETE FROM Binaries;
+DELETE FROM Blobs;
+DELETE FROM Strings;
+DELETE FROM Texts;
+
 
 /* This library is for the basic insert functions used to initialize
  * the semantic tree (adding some fundamental terms).
@@ -21,7 +49,7 @@ DELIMITER //
 CREATE PROCEDURE insertString (
     IN str VARCHAR(255),
     OUT new_id BIGINT UNSIGNED,
-    OUT exit_status TINYINT
+    OUT exit_code TINYINT
 )
 BEGIN
     DECLARE `_rollback` BOOL DEFAULT 0;
@@ -31,10 +59,10 @@ BEGIN
         INSERT INTO Strings (id, str) VALUES (new_id, str);
     IF `_rollback` THEN
         ROLLBACK;
-        SET exit_status = 1; -- failure.
+        SET exit_code = 1; -- failure.
     ELSE
         COMMIT;
-        SET exit_status = 0; -- success.
+        SET exit_code = 0; -- success.
     END IF;
 END //
 DELIMITER ;
@@ -50,13 +78,34 @@ BEGIN
 END //
 DELIMITER ;
 
+DELIMITER //
+CREATE PROCEDURE insertOrFindString (
+    IN in_str VARCHAR(255),
+    OUT new_id BIGINT UNSIGNED,
+    OUT exit_code TINYINT -- 0 is successful insertion, 2 is successful find.
+)
+BEGIN
+    SELECT id INTO new_id FROM Strings WHERE str = in_str;
+    IF (new_id IS NULL) THEN
+        CALL getNewTermID (0xA0, new_id);
+        INSERT INTO Strings (id, str) VALUES (new_id, in_str);
+        SET exit_code = 0; -- insert.
+    ELSE
+        SET exit_code = 2; -- find.
+    END IF;
+END //
+DELIMITER ;
+
+
+
+
 
 
 DELIMITER //
 CREATE PROCEDURE insertText (
     IN str TEXT,
     OUT new_id BIGINT UNSIGNED,
-    OUT exit_status TINYINT
+    OUT exit_code TINYINT
 )
 BEGIN
     DECLARE `_rollback` BOOL DEFAULT 0;
@@ -66,10 +115,10 @@ BEGIN
         INSERT INTO Texts (id, str) VALUES (new_id, str);
     IF `_rollback` THEN
         ROLLBACK;
-        SET exit_status = 1; -- failure.
+        SET exit_code = 1; -- failure.
     ELSE
         COMMIT;
-        SET exit_status = 0; -- success.
+        SET exit_code = 0; -- success.
     END IF;
 END //
 DELIMITER ;
@@ -84,6 +133,26 @@ BEGIN
     INSERT INTO Texts (id, str) VALUES (new_id, str);
 END //
 DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE insertOrFindText (
+    IN in_str TEXT,
+    OUT new_id BIGINT UNSIGNED,
+    OUT exit_code TINYINT -- 0 is successful insertion, 2 is successful find.
+)
+BEGIN
+    SELECT id INTO new_id FROM Texts WHERE str = in_str;
+    IF (new_id IS NULL) THEN
+        CALL getNewTermID (0xB0, new_id);
+        INSERT INTO Texts (id, str) VALUES (new_id, in_str);
+        SET exit_code = 0; -- insert.
+    ELSE
+        SET exit_code = 2; -- find.
+    END IF;
+END //
+DELIMITER ;
+
 
 
 
@@ -182,17 +251,20 @@ DELIMITER ;
 
 
 
--- CALL insertString ("hello world!", @hello_id, @exit_status);
--- CALL insertString ("hello world!!", @hello_id, @exit_status);
--- CALL insertString ("hello world!! How are you?", @hello_id, @exit_status);
--- -- CALL insertString ("hello world!", @hello_id, @exit_status);
--- -- CALL insertString ("hello world!", @hello_id, @exit_status);
--- -- CALL insertString ("hello world!", @hello_id, @exit_status);
--- -- CALL insertString ("hello world!", @hello_id, @exit_status);
---
--- -- SET @hello_id = 0xA000000000000000 + 1;
+CALL insertString ("hello world!", @hello_id, @exit_code);
+CALL insertString ("hello world!!", @hello_id, @exit_code);
+CALL insertString ("hello world!! How are you?", @hello_id, @exit_code);
+
+CALL insertString ("hello world!", @hello_id, @exit_code);
+CALL insertStringWOROllback ("hello world!", @hello_id);
+CALL insertOrFindString ("hello world!", @hello_id, @exit_code);
+SELECT @hello_id; SELECT @exit_code;
+CALL insertOrFindString ("hello new world!", @hello_id, @exit_code);
+SELECT @hello_id; SELECT @exit_code;
+
+-- SET @hello_id = 0xA000000000000000 + 1;
 -- SELECT @hello_id;
--- SELECT @exit_status;
+-- SELECT @exit_code;
 
 
 
