@@ -8,7 +8,12 @@ DROP PROCEDURE insertText;
 DROP PROCEDURE insertTextWORollback;
 DROP PROCEDURE insertOrFindText;
 DROP PROCEDURE authorBotInsert;
+
 DROP PROCEDURE insertRels_hasLexItem_and_hasDescription;
+
+DROP PROCEDURE insertTermWODescription;
+DROP PROCEDURE insertTerm;
+
 
 
 DELETE FROM SemanticInputs;
@@ -187,59 +192,116 @@ DELIMITER ;
 
 -- First two relations:
 
-
+-- use once (then drop procedure).
 DELIMITER //
 CREATE PROCEDURE insertRels_hasLexItem_and_hasDescription (
-    str_LexItem_of_hasLexItem VARCHAR(255),
-    str_Description_of_hasLexItem TEXT,
-    str_LexItem_of_hasDescription VARCHAR(255),
-    str_Description_of_hasDescription TEXT
+    str_lexItem_of_hasLexItem VARCHAR(255),
+    str_description_of_hasLexItem TEXT,
+    str_lexItem_of_hasDescription VARCHAR(255),
+    str_description_of_hasDescription TEXT
 )
 BEGIN
-    CALL getNewTermID (0x30, @hasLexItem_id);
-    SELECT @hasLexItem_id;
-    CALL getNewTermID (0x30, @hasDescription_id);
-    SELECT @hasDescription_id;
+    CALL getNewTermID (0x30, @TermID_hasLexItem);
+    SELECT @TermID_hasLexItem;
+    CALL getNewTermID (0x30, @TermID_hasDescription);
+    SELECT @TermID_hasDescription;
 
     CALL insertStringWORollback(
-        str_LexItem_of_hasLexItem,
+        str_lexItem_of_hasLexItem,
         @StrID_LexItem_of_hasLexItem
     );
     CALL insertTextWORollback(
-        str_Description_of_hasLexItem,
+        str_description_of_hasLexItem,
         @StrID_Description_of_hasLexItem
     );
     CALL insertStringWORollback(
-        str_LexItem_of_hasDescription,
+        str_lexItem_of_hasDescription,
         @StrID_LexItem_of_hasDescription
     );
     CALL insertTextWORollback(
-        str_Description_of_hasDescription,
+        str_description_of_hasDescription,
         @StrID_Description_of_hasDescription
     );
 
 
     CALL authorBotInsert (
-        @hasLexItem_id,
-        @hasLexItem_id,
+        @TermID_hasLexItem,
+        @TermID_hasLexItem,
         @StrID_LexItem_of_hasLexItem
     );
     CALL authorBotInsert (
-        @hasLexItem_id,
-        @hasDescription_id,
+        @TermID_hasLexItem,
+        @TermID_hasDescription,
         @StrID_Description_of_hasLexItem
     );
     CALL authorBotInsert (
-        @hasDescription_id,
-        @hasLexItem_id,
+        @TermID_hasDescription,
+        @TermID_hasLexItem,
         @StrID_LexItem_of_hasDescription
     );
     CALL authorBotInsert (
-        @hasDescription_id,
-        @hasLexItem_id,
+        @TermID_hasDescription,
+        @TermID_hasLexItem,
         @StrID_Description_of_hasDescription
     );
 
+    IF (@TermID_hasLexItem != 0x3000000000000001) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'TermID_hasLexItem wrong value';
+    END IF;
+    IF (@TermID_hasDescription != 0x3000000000000002) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'TermID_hasDescription wrong value';
+    END IF;
+END //
+DELIMITER ;
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertTerm (
+    str_lexItem VARCHAR(255),
+    str_description TEXT,
+    OUT exit_code_lex TINYINT,
+    OUT exit_code_dscr TINYINT
+)
+BEGIN
+    CALL getNewTermID (0x30, @TermID_new);
+
+    CALL insertOrFindString (str_LexItem, @StrID_lexItem, exit_code_lex);
+    CALL insertOrFindText (str_LexItem, @StrID_description, exit_code_dscr);
+
+    CALL authorBotInsert (
+        @TermID_new,
+        0x3000000000000001, -- TermID of hasLexItem
+        @StrID_lexItem
+    );
+    CALL authorBotInsert (
+        @TermID_new,
+        0x3000000000000002, -- TermID of hasDescription
+        @StrID_description
+    );
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertTermWODescription (
+    str_lexItem VARCHAR(255),
+    OUT exit_code_lex TINYINT
+)
+BEGIN
+    CALL getNewTermID (0x30, @TermID_new);
+
+    CALL insertOrFindString (str_LexItem, @StrID_lexItem, exit_code_lex);
+
+    CALL authorBotInsert (
+        @TermID_new,
+        0x3000000000000001, -- TermID of hasLexItem
+        @StrID_lexItem
+    );
 END //
 DELIMITER ;
 
@@ -251,20 +313,26 @@ DELIMITER ;
 
 
 
-CALL insertString ("hello world!", @hello_id, @exit_code);
-CALL insertString ("hello world!!", @hello_id, @exit_code);
-CALL insertString ("hello world!! How are you?", @hello_id, @exit_code);
 
-CALL insertString ("hello world!", @hello_id, @exit_code);
-CALL insertStringWOROllback ("hello world!", @hello_id);
-CALL insertOrFindString ("hello world!", @hello_id, @exit_code);
-SELECT @hello_id; SELECT @exit_code;
-CALL insertOrFindString ("hello new world!", @hello_id, @exit_code);
-SELECT @hello_id; SELECT @exit_code;
 
--- SET @hello_id = 0xA000000000000000 + 1;
--- SELECT @hello_id;
--- SELECT @exit_code;
+
+-- Some testing.
+
+-- CALL insertString ("hello world!", @hello_id, @exit_code);
+-- CALL insertString ("hello world!!", @hello_id, @exit_code);
+-- CALL insertString ("hello world!! How are you?", @hello_id, @exit_code);
+--
+-- CALL insertString ("hello world!", @hello_id, @exit_code);
+-- -- CALL insertStringWOROllback ("hello world!", @hello_id); -- correct
+-- -- -- (throws error).
+-- CALL insertOrFindString ("hello world!", @hello_id, @exit_code);
+-- -- SELECT @hello_id; SELECT @exit_code; -- correct
+-- CALL insertOrFindString ("hello new world!", @hello_id, @exit_code);
+-- -- SELECT @hello_id; SELECT @exit_code; -- corret
+--
+-- -- SET @hello_id = 0xA000000000000000 + 1;
+-- -- SELECT @hello_id;
+-- -- SELECT @exit_code;
 
 
 
