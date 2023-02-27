@@ -7,7 +7,9 @@ DROP PROCEDURE insertOrFindString;
 DROP PROCEDURE insertText;
 DROP PROCEDURE insertTextWORollback;
 DROP PROCEDURE insertOrFindText;
-DROP PROCEDURE authorBotInsert;
+
+DROP PROCEDURE inputUpvote;
+DROP PROCEDURE inputUpvoteDuringCreation;
 
 DROP PROCEDURE insertRels_hasLexItem_and_hasDescription;
 
@@ -167,30 +169,29 @@ DELIMITER ;
 
 
 
--- TODO: change or delete.
-DELIMITER //
-CREATE PROCEDURE authorBotInsert (
-    IN s_id BIGINT UNSIGNED,
-    IN r_id BIGINT UNSIGNED,
-    IN o_id BIGINT UNSIGNED
-)
-BEGIN
-    INSERT INTO SemanticInputs (
-        subj_id,
-        user_id,
-        rel_id,
-        obj_id,
-        rat_val, opt_data
-    )
-    VALUES (
-        s_id,
-        1,
-        r_id,
-        o_id,
-        0x7F, NULL
-    );
-END //
-DELIMITER ;
+-- DELIMITER //
+-- CREATE PROCEDURE authorBotInsert (
+--     IN s_id BIGINT UNSIGNED,
+--     IN r_id BIGINT UNSIGNED,
+--     IN o_id BIGINT UNSIGNED
+-- )
+-- BEGIN
+--     INSERT INTO SemanticInputs (
+--         subj_id,
+--         user_id,
+--         rel_id,
+--         obj_id,
+--         rat_val, opt_data
+--     )
+--     VALUES (
+--         s_id,
+--         1,
+--         r_id,
+--         o_id,
+--         0x7F, NULL
+--     );
+-- END //
+-- DELIMITER ;
 
 
 DELIMITER //
@@ -217,6 +218,38 @@ BEGIN
     );
 END //
 DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE inputUpvoteDuringCreation (
+    IN u_id BIGINT UNSIGNED,
+    IN s_id BIGINT UNSIGNED,
+    IN r_id BIGINT UNSIGNED,
+    IN o_id BIGINT UNSIGNED
+)
+BEGIN
+    INSERT INTO SemanticInputs (
+        subj_id,
+        user_id,
+        rel_id,
+        obj_id,
+        rat_val, opt_data
+    )
+    VALUES (
+        s_id,
+        u_id,
+        r_id,
+        o_id,
+        0x7F, NULL
+    ), (
+        s_id,
+        1,
+        r_id,
+        o_id,
+        0x7F, NULL
+    );
+END //
+DELIMITER ;
+
 
 
 
@@ -312,13 +345,13 @@ BEGIN
     CALL insertOrFindString (str_LexItem, u_id, @StrID_lexItem, exit_code_lex);
     CALL insertOrFindText (str_LexItem, u_id, @StrID_description, exit_code_dscr);
 
-    CALL inputUpvote (
+    CALL inputUpvoteDuringCreation (
         u_id,
         @new_id,
         0x3000000000000001, -- TermID of hasLexItem
         @StrID_lexItem
     );
-    CALL inputUpvote (
+    CALL inputUpvoteDuringCreation (
         u_id,
         @new_id,
         0x3000000000000002, -- TermID of hasDescription
@@ -341,7 +374,7 @@ BEGIN
 
     CALL insertOrFindString (str_LexItem, u_id, @StrID_lexItem, exit_code_lex);
 
-    CALL inputUpvote (
+    CALL inputUpvoteDuringCreation (
         u_id,
         new_id,
         0x3000000000000001, -- TermID of hasLexItem
