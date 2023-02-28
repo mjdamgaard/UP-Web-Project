@@ -22,8 +22,6 @@ function insertRels_hasLexItem_and_hasDescription(
     );
 
     // set parameters and execute.
-    // $lexItem = $str_lexItem;
-    // $description = $str_description;
     $stmt->execute();
 
     return 0;

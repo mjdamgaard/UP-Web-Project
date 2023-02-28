@@ -272,9 +272,11 @@ CREATE PROCEDURE insertRels_hasLexItem_and_hasDescription (
 )
 BEGIN
     CALL createTerm (0x30, 1, @TermID_hasLexItem);
-    SELECT @TermID_hasLexItem;
     CALL createTerm (0x30, 1, @TermID_hasDescription);
-    SELECT @TermID_hasDescription;
+    -- There apparently cannot be any selects in a MySQLi prepared statement
+    -- for insertion. (?..) 
+    -- SELECT @TermID_hasLexItem;
+    -- SELECT @TermID_hasDescription;
 
     CALL insertStringWORollback(
         str_lexItem_of_hasLexItem,
