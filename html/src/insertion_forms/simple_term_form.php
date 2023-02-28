@@ -21,19 +21,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     insertSimpleTerm($lexItem, $description, $user_id, $new_id);
 }
 
-// function sanitize_input($data) {
-//     $data = trim($data);
-//     // $data = stripslashes($data);
-//     $data = htmlspecialchars($data);
-//     return $data;
-// }
-
-
-// $arr = array($lexItem, $description, $user_id, $new_id);
-// foreach($arr as $x){
-//     echo strval($x) . "<br>";
-// }
-
 
 ?>
 

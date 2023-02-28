@@ -2,10 +2,7 @@
 
 // phpinfo();
 
-echo $_SERVER['DOCUMENT_ROOT'];
-
 require_once 'src/database.php';
-
 
 
 ?>
@@ -17,6 +14,16 @@ require_once 'src/database.php';
 <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
+
+<?php
+
+$filepath = "src/insertion_forms/temp/description_of_hasLexItem.txt";
+echo nl2br(htmlspecialchars(file_get_contents($filepath)));
+
+
+?>
+
+
 
 <div id="userid"></div>
 
