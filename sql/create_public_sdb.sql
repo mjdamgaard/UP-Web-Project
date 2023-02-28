@@ -3,12 +3,13 @@ USE mydatabase;
 
 
 DELETE FROM SemanticInputs;
-DELETE FROM Bots;
+DELETE FROM NativeBots;
+DELETE FROM UserGroups;
 DELETE FROM Users;
 
+DELETE FROM Creators;
 DELETE FROM NextIDPointers;
 
-DELETE FROM Creators;
 
 DELETE FROM Lists;
 DELETE FROM Binaries;
@@ -17,15 +18,17 @@ DELETE FROM Strings;
 DELETE FROM Texts;
 
 
-DROP TABLE SemanticInputs;
--- DROP TABLE Bots;
+-- DROP TABLE SemanticInputs;
+
+-- DROP TABLE NativeBots;
+-- DROP TABLE UserGroups;
 -- DROP TABLE Users;
 
--- DROP TABLE NextIDPointers;
+DROP TABLE RelationalPredicates;
 
-DROP PROCEDURE createTerm;
---
+-- DROP TABLE NextIDPointers;
 -- DROP TABLE Creators;
+-- DROP PROCEDURE createTerm;
 
 -- DROP TABLE Lists;
 -- DROP TABLE Binaries;
@@ -71,6 +74,9 @@ CREATE TABLE SemanticInputs (
     -- FOREIGN KEY (pred_or_rel) REFERENCES Term(id),
 
 
+    /* date */
+    created_at DATE DEFAULT (CURRENT_DATE),
+
     -- numerical value (signed) which defines the degree to which the users
     -- (or bot) deems the statement to be true/fitting.
     -- When dividing the TINYINT with 128,
@@ -82,8 +88,6 @@ CREATE TABLE SemanticInputs (
     opt_data VARBINARY(255),
 
 
-    /* date */
-    created_at DATE DEFAULT (CURRENT_DATE),
 
 
     PRIMARY KEY (
@@ -95,13 +99,13 @@ CREATE TABLE SemanticInputs (
     ),
 
 
-    CONSTRAINT CHK_user_id CHECK (
+    CONSTRAINT CHK_SemanticInputs_user_id CHECK (
         user_id BETWEEN 0 AND 0x2000000000000000 - 1
     ),
 
     -- relations cannot be users/bots, relational predicates (0x20) or any
     -- data terms (0x70 and up).
-    CONSTRAINT CHK_rel_id CHECK (
+    CONSTRAINT CHK_SemanticInputs_rel_id CHECK (
         rel_id BETWEEN 0x3000000000000000 AND 0x7000000000000000 - 1
     )
 
@@ -116,29 +120,158 @@ CREATE TABLE SemanticInputs (
 
 
 
-CREATE TABLE Bots (
+CREATE TABLE NativeBots (
     -- bot ID.
-    -- type TINYINT = 0,
     id BIGINT UNSIGNED PRIMARY KEY,
+    -- type code = 0x00,
 
     /* primary fields */
     -- description_t is not needed; it is always String type.
     description_id BIGINT UNSIGNED
 );
--- INSERT INTO Bots (id) VALUES (0x0000000000000000);
+-- INSERT INTO NativeBots (id) VALUES (0x0000000000000000);
+
+
+CREATE TABLE UserGroups (
+    -- user group ID.
+    id BIGINT UNSIGNED PRIMARY KEY,
+    -- type code = 0x06,
+
+    -- id of the creating user group (or user or bot).
+    creator_id BIGINT UNSIGNED,
+
+    -- This is not the date at which the user group was created as a term.
+    -- Rather, it is the date at which the weights within the creating user
+    -- group are measured (if creator is not a single user or bot). Thus, if
+    -- the creating user group is dynamic and its weights thus changes after
+    -- this "effective creation date," these changes will then not affect this
+    -- user group.
+    effective_creation_date DATE,
+    -- If effective_creation_date is a date in the future, or if it is NULL,
+    -- it might mean (if this functionality is implemented) that the creating
+    -- group is also allowed change in time. But this functionality will
+    -- probably not be useful enough compared to the cost to be impleented,
+    -- however. (But I just wanted to note the possibility, should we realize
+    -- that it will be useful at some point.)
+
+
+    -- Flag (interpreted as a BOOL) that tells if the user group is dynamic,
+    -- meaning that the creating user group (which will probably either be a
+    -- "constant" user group, or will be effectively constant due to the
+    -- effective_creation_date) is allowed to continously change the weights
+    -- of this user group. A "constant" user group (with is_dynamic = FALSE),
+    -- on the other hand, has constant weight which are set at the "effective
+    -- creation date" and not changed after that.
+    is_dynamic TINYINT, -- BOOL,
+
+    -- Flag (interpreted as a BOOL) telling is the user group is live, meaning
+    -- that the servers will make sure to continously update its semantic
+    -- inputs (which generally always include a weighted average of the
+    -- ratings from the user group).
+    -- If the flag is 0, then the user group is live. If it is not 0, the user
+    -- group is either in the proces of being created (i.e. before the
+    -- "effective creation date" has been set), or it has been discontinued
+    -- by the servers. The value of the flag might signal the reason.
+    is_inactive TINYINT -- BOOL
+);
 
 
 CREATE TABLE Users (
     -- user ID.
-    -- type TINYINT = 1,
     id BIGINT UNSIGNED PRIMARY KEY,
+    -- type code = 0x10,
 
-    num_inserts_today INT,
+    -- num_inserts_today INT,
+
+    pub_encr_key VARBINARY(10000),
 
     /* timestamp */
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 -- INSERT INTO Users (id) VALUES (0x1000000000000000);
+
+
+
+
+
+
+
+
+
+
+
+
+-- CREATE TABLE SimpleTerms (
+--     -- simple term ID.
+--     id BIGINT UNSIGNED AUTO_INCREMENT,
+--     PRIMARY KEY(id),
+--
+--     /* A SimpleTerm takes as its first descriptor a string denoting af
+--      * lexical item (a semantically meaningful part of a sentence). Examples of
+--      * lexical items could be: "the number pi", "is subset of",
+--      * "has related link:", "is funny", "is" and "funny".
+--      * The description is an (optional) text description, which can be used to
+--      * explain the lexical item more thoroughly, and to clear up any potential
+--      * ambiguities.
+--      **/
+--
+--     -- defining lexical item.
+--     full_lexical_item TEXT,
+--     -- abbreviated lexical item (such as ".Lexical item=", ".is:" or ".is a:").
+--     abbr_lexical_item VARCHAR(255),
+--     -- description.
+--     description TEXT
+-- );
+
+-- CREATE TABLE StandardTerms (
+--     /* standard term ID */
+--     -- type TINYINT = 3,
+--     id BIGINT UNSIGNED AUTO_INCREMENT,
+--     PRIMARY KEY(id),
+--
+--
+--     -- specifying parent predicates.
+--     -- spec_parent_preds_t not needed; it is always List type.
+--     spec_parent_preds_id BIGINT UNSIGNED,
+--
+--     -- specifying child predicates.
+--     -- spec_child_preds_t not needed; it is always List type.
+--     spec_child_preds_id BIGINT UNSIGNED
+-- );
+--
+
+
+-- Predicate terms, each formed from an existing relation and a relational
+-- object.
+CREATE TABLE RelationalPredicates (
+    /* relational predicate ID */
+    id BIGINT UNSIGNED PRIMARY KEY,
+
+    -- relation.
+    rel_id BIGINT UNSIGNED NOT NULL,
+    -- relational object.
+    obj_id BIGINT UNSIGNED NOT NULL,
+
+    CONSTRAINT CHK_RelationalPredicates_rel_id CHECK (
+        rel_id BETWEEN 0x3000000000000000 AND 0x7000000000000000 - 1
+    ),
+
+    CONSTRAINT UNIQUE_RelationalPredicates_rel_and_obj UNIQUE (rel_id, obj_id)
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -158,6 +291,7 @@ CREATE TABLE NextIDPointers (
 INSERT INTO NextIDPointers (type_code, next_id_pointer)
 VALUES
     (0x00, 0x0000000000000001),
+    (0x06, 0x0000000000000001),
     (0x10, 0x1000000000000001),
     (0x20, 0x2000000000000001),
     (0x30, 0x3000000000000001),
@@ -167,6 +301,17 @@ VALUES
     (0xA0, 0xA000000000000001),
     (0xB0, 0xB000000000000001)
 ;
+
+
+
+CREATE TABLE Creators (
+    user_id BIGINT UNSIGNED,
+    term_id BIGINT UNSIGNED,
+    PRIMARY KEY (user_id, term_id)
+);
+
+
+
 
 
 -- DELIMITER //
@@ -220,68 +365,6 @@ DELIMITER ;
 
 
 
--- CREATE TABLE SimpleTerms (
---     -- simple term ID.
---     id BIGINT UNSIGNED AUTO_INCREMENT,
---     PRIMARY KEY(id),
---
---     /* A SimpleTerm takes as its first descriptor a string denoting af
---      * lexical item (a semantically meaningful part of a sentence). Examples of
---      * lexical items could be: "the number pi", "is subset of",
---      * "has related link:", "is funny", "is" and "funny".
---      * The description is an (optional) text description, which can be used to
---      * explain the lexical item more thoroughly, and to clear up any potential
---      * ambiguities.
---      **/
---
---     -- defining lexical item.
---     full_lexical_item TEXT,
---     -- abbreviated lexical item (such as ".Lexical item=", ".is:" or ".is a:").
---     abbr_lexical_item VARCHAR(255),
---     -- description.
---     description TEXT
--- );
-
--- CREATE TABLE StandardTerms (
---     /* standard term ID */
---     -- type TINYINT = 3,
---     id BIGINT UNSIGNED AUTO_INCREMENT,
---     PRIMARY KEY(id),
---
---
---     -- specifying parent predicates.
---     -- spec_parent_preds_t not needed; it is always List type.
---     spec_parent_preds_id BIGINT UNSIGNED,
---
---     -- specifying child predicates.
---     -- spec_child_preds_t not needed; it is always List type.
---     spec_child_preds_id BIGINT UNSIGNED
--- );
---
--- CREATE TABLE RelationalPredicates (
---     /* relational predicate ID */
---     -- type TINYINT = 4,
---     id BIGINT UNSIGNED AUTO_INCREMENT,
---     PRIMARY KEY(id),
---
---
---     -- relation.
---     relation_t TINYINT CHECK (
---         relation_t = 2 OR relation_t = 4 -- SimpleTerm og StandardTerm.
---     ),
---     relation_id BIGINT UNSIGNED,
---
---     -- realtion object (or perhaps function input).
---     object_t TINYINT,
---     object_id BIGINT UNSIGNED
--- );
-
-
-CREATE TABLE Creators (
-    user_id BIGINT UNSIGNED,
-    term_id BIGINT UNSIGNED,
-    PRIMARY KEY (user_id, term_id)
-);
 
 
 
@@ -371,7 +454,7 @@ CREATE TABLE Strings (
 -- INSERT INTO Strings (id) VALUES (0xA000000000000000);
 
 CREATE TABLE Texts (
-    /* variable character string ID */
+    /* text ID */
     id BIGINT UNSIGNED PRIMARY KEY,
 
     /* creator */

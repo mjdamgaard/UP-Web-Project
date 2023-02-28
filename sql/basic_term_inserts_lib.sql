@@ -16,16 +16,22 @@ DROP PROCEDURE insertRels_hasLexItem_and_hasDescription;
 DROP PROCEDURE insertTermWODescription;
 DROP PROCEDURE insertTerm;
 
+DROP PROCEDURE insertRelationalPredicate;
 
 
 DELETE FROM SemanticInputs;
-DELETE FROM Bots;
+
+DELETE FROM NativeBots;
+DELETE FROM UserGroups;
 DELETE FROM Users;
+
+DELETE FROM RelationalPredicates;
 
 DELETE FROM NextIDPointers;
 INSERT INTO NextIDPointers (type_code, next_id_pointer)
 VALUES
     (0x00, 0x0000000000000001),
+    (0x06, 0x0000000000000001),
     (0x10, 0x1000000000000001),
     (0x20, 0x2000000000000001),
     (0x30, 0x3000000000000001),
@@ -35,7 +41,6 @@ VALUES
     (0xA0, 0xA000000000000001),
     (0xB0, 0xB000000000000001)
 ;
-
 DELETE FROM Creators;
 
 DELETE FROM Lists;
@@ -377,6 +382,33 @@ CREATE PROCEDURE insertTermWODescription (
 )
 BEGIN
     CALL createTerm (0x30, u_id, new_id);
+
+    CALL insertOrFindString (
+        str_LexItem, u_id, @StrID_lexItem, exit_code_lex
+    );
+
+    CALL inputUpvoteDuringCreation (
+        u_id,
+        new_id,
+        0x3000000000000001, -- TermID of hasLexItem
+        @StrID_lexItem
+    );
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertRelationalPredicate (
+    IN u_id BIGINT UNSIGNED,
+    IN r_id BIGINT UNSIGNED,
+    IN o_id BIGINT UNSIGNED,
+    OUT new_id BIGINT UNSIGNED,
+    OUT exit_code TINYINT
+)
+BEGIN
+    -- TODO: change.
+    CALL createTerm (0x20, u_id, new_id);
 
     CALL insertOrFindString (
         str_LexItem, u_id, @StrID_lexItem, exit_code_lex
