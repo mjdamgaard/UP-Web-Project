@@ -29,6 +29,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 // }
 
 
+// $arr = array($lexItem, $description, $user_id, $new_id);
+// foreach($arr as $x){
+//     echo strval($x) . "<br>";
+// }
+
 
 ?>
 

@@ -348,7 +348,7 @@ BEGIN
         str_LexItem, u_id, @StrID_lexItem, exit_code_lex
     );
     CALL insertOrFindText (
-        str_LexItem, u_id, @StrID_description, exit_code_dscr
+        str_description, u_id, @StrID_description, exit_code_dscr
     );
 
     CALL inputUpvoteDuringCreation (
@@ -359,7 +359,7 @@ BEGIN
     );
     CALL inputUpvoteDuringCreation (
         u_id,
-        @new_id,
+        new_id,
         0x3000000000000002, -- TermID of hasDescription
         @StrID_description
     );
