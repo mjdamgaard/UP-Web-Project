@@ -9,7 +9,7 @@ function insertRels_hasLexItem_and_hasDescription(
 ) {
     $conn = getConnectionOrDie();
 
-    // prepare and bind.
+
     $stmt = $conn->prepare(
         "CALL insertRels_hasLexItem_and_hasDescription (?, ?, ?, ?)"
     );
@@ -21,7 +21,6 @@ function insertRels_hasLexItem_and_hasDescription(
         $str_description_of_hasDescription
     );
 
-    // set parameters and execute.
     $stmt->execute();
 
     return 0;

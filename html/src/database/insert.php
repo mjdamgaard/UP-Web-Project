@@ -8,7 +8,7 @@ require_once $database_path . "connect.php";
 function insertSimpleTerm($lexItem, $description, $user_id, $new_id) {
     $conn = getConnectionOrDie();
 
-    // prepare and bind.
+
     $stmt = $conn->prepare(
         "CALL insertTerm (?, ?, ?, ?, ?, ?)"
     );
@@ -20,9 +20,6 @@ function insertSimpleTerm($lexItem, $description, $user_id, $new_id) {
         $exit_code_lex, $exit_code_dscr
     );
 
-    // set parameters and execute.
-    // $lexItem = $str_lexItem;
-    // $description = $str_description;
     $stmt->execute();
 
     return array($exit_code_lex, $exit_code_dscr);
