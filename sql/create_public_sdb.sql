@@ -18,13 +18,15 @@ DELETE FROM Strings;
 DELETE FROM Texts;
 
 
--- DROP TABLE SemanticInputs;
+DROP TABLE SemanticInputsWDescendingRatings;
+DROP VIEW SemanticInputs;
+DROP TABLE Sets;
 
--- DROP TABLE NativeBots;
+DROP TABLE NativeBots;
 -- DROP TABLE UserGroups;
 -- DROP TABLE Users;
 
--- DROP TABLE DerivedTerms;
+DROP TABLE DerivedTerms;
 
 -- DROP TABLE NextIDPointers;
 -- DROP TABLE Creators;
@@ -47,54 +49,166 @@ DELETE FROM Texts;
 -- SET @bot_start = 0x0000000000000000;
 -- SET @user_start = 0x1000000000000000;
 
+/* Statements which the users (or bots) give as input to the semantic network.
+ * A central feature of this semantic system is that all such statements come
+ * with a numerical value which represents the degree to which the user deems
+ * that the statement is correct (like when answering a survey).
+ **/
+CREATE TABLE SemanticUserInputs (
+    /* Set */
+    -- set id.
+    set_id BIGINT UNSIGNED,
+    -- (while identifying a set uniquely, set_id is not part of the key for
+    -- the Sets table and should therefore not be searched for.)
+
+    /* Member */
+    -- The members of sets include a rating value and a Term.
+
+    -- rat_val is a numerical rating value (signed) which defines the
+    -- degree to which the user/user group of the set deems the statement
+    -- to be true/fitting.
+    -- When dividing rat_val with 128, this value runs from -1 to (almost) 1.
+    -- And then -1 is taken to mean "very far from true/fitting," 0 is taken
+    -- to mean "not sure" / "not particularly fitting or unfitting," and 1 is
+    -- taken to mean "very much true/fitting."
+    -- inv_rat_val is the multiplicational inverse of rat_val, meaning that
+    -- it is rat_val with its sign flipped.
+    inv_rat_val TINYINT,
+
+    -- term (the primary part of the member of which the rating is about).
+    term_id BIGINT UNSIGNED,
+
+    -- PRIMARY KEY (
+    --     set_id, -- suggested abbr.: sid
+    --     rat_val,  -- suggested abbr.: rval
+    --     rat_w, -- suggested abbr.: rw
+    --     term_id -- suggested abbr.: tid
+    -- ),
+
+    PRIMARY KEY (
+        set_id,
+        inv_rat_val,
+        term_id
+    ),
+
+    -- w_exp is a nummerical value which gives the weight of the rating
+    -- when plugged into the equation w = 2^(w_exp / 32).
+    -- inv_w_exp is the multiplicational inverse of w_exp, meaning that
+    -- w = 2^(- inv_w_exp / 32).
+    inv_w_exp_t32 TINYINT UNSIGNED NOT NULL
+
+
+    -- CONSTRAINT CHK_rat_val_not_min CHECK (rat_val <> 0x80)
+    -- -- This makes max and min values equal to 127 and -127, respectively.
+    -- -- Divide by 127 to get floating point number strictly between -1 and 1.
+    -- Maybe rat_val = 0x80 can be used as a report for removal flag..
+
+);
+
+CREATE TABLE SemanticUserGroupInputs (
+    /* Set */
+    -- set id.
+    set_id BIGINT UNSIGNED,
+    -- (while identifying a set uniquely, set_id is not part of the key for
+    -- the Sets table and should therefore not be searched for.)
+
+    /* Member */
+    -- The members of sets include a rating value and a Term.
+
+    -- rat_val is a numerical rating value (signed) which defines the
+    -- degree to which the user/user group of the set deems the statement
+    -- to be true/fitting.
+    -- When dividing rat_val with 128, this value runs from -1 to (almost) 1.
+    -- And then -1 is taken to mean "very far from true/fitting," 0 is taken
+    -- to mean "not sure" / "not particularly fitting or unfitting," and 1 is
+    -- taken to mean "very much true/fitting."
+    -- inv_rat_val is the multiplicational inverse of rat_val, meaning that
+    -- it is rat_val with its sign flipped.
+    inv_rat_val TINYINT,
+
+    -- wc_exp_t4 is a nummerical value which gives a weighted user count
+    -- of how many users in the user group have given their voice to the
+    -- rating. If the user group has equal weights for all its members, the
+    -- weigthed count would be the actual count of users.
+    -- When plugged into the equation,
+    -- wc_lb = floor(2^(wc_exp_t4 / 4)),
+    -- one gets a lower bound, wc_lb, on the weighted count. In other words,
+    -- if wc is the actual weighted count, then
+    -- floor(2^(wc_exp_t4 / 4)) <= wc <= floor(2^((wc_exp_t4 + 1) / 4)).
+    -- inv_wc_exp_t4 is then given by inv_wc_exp_t4 = 254 - wc_exp_t4.
+    -- This means that when inv_wc_exp_t4 runs from 0 to 255, then wc_exp_t4
+    -- runs from 254 to -1.
+    inv_wc_exp_t4 TINYINT UNSIGNED,
+
+    -- term (the primary part of the member of which the rating is about).
+    term_id BIGINT UNSIGNED,
+
+    -- PRIMARY KEY (
+    --     set_id, -- suggested abbr.: sid
+    --     rat_val,  -- suggested abbr.: rval
+    --     rat_w, -- suggested abbr.: rw
+    --     term_id -- suggested abbr.: tid
+    -- ),
+
+    PRIMARY KEY (
+        set_id,
+        inv_rat_w,
+        inv_wc_exp_t4,
+        term_id
+    ),
+
+    -- CONSTRAINT CHK_rat_val_not_min CHECK (rat_val <> 0x80)
+    -- -- This makes max and min values equal to 127 and -127, respectively.
+    -- -- Divide by 127 to get floating point number strictly between -1 and 1.
+    -- Maybe rat_val = 0x80 can be used as a report for removal flag..
+
+);
+
+
+
+
 
 /* Statements which the users (or bots) give as input to the semantic network.
  * A central feature of this semantic system is that all such statements come
  * with a numerical value which represents the degree to which the user deems
  * that the statement is correct (like when answering a survey).
  **/
-CREATE TABLE SemanticInputs (
-    -- subject of relation or predicate.
-    subj_id BIGINT UNSIGNED,
+CREATE VIEW SemanticInputs AS
+SELECT
+    set_id,
+    - inv_rat_val AS rat_val,
+    254 - inv_wc_exp_t4 AS wc_exp_t4,
+    term_id
+FROM SemanticUserGroupInputs
+UNION
+SELECT
+    set_id,
+    - inv_rat_val AS rat_val,
+    - inv_w_exp_t32 AS w_exp_t32,
+    term_id
+FROM SemanticUserInputs;
 
+
+
+
+CREATE TABLE Sets (
     -- user, native bot or user group who states the statement.
     user_id BIGINT UNSIGNED,
 
-    -- relation or predicate id.
+    -- subject of relation.
+    subj_id BIGINT UNSIGNED,
+
+    -- relation.
     rel_id BIGINT UNSIGNED,
 
-    -- relation object (second input, so to speak) if rel is a relation.
-    -- if rel is a predicate, then obj_id has to be 0.
-    obj_id BIGINT UNSIGNED,
-    -- FOREIGN KEY (pred_or_rel) REFERENCES Term(id),
-
-
-    -- date.
-    created_at DATE DEFAULT (CURRENT_DATE),
-
-    -- numerical value (signed) which defines the degree to which the users
-    -- (or bot) deems the statement to be true/fitting.
-    -- When dividing the TINYINT with 128,
-    -- this value runs from -1 to (almost) 1. And then -1 is taken to mean
-    -- "very far from true/fitting," 0 is taken to mean "not sure / not
-    -- particularly fitting or unfitting," and 1 is taken to mean "very much
-    -- true/fitting."
-    rat_val TINYINT,
-    opt_data VARBINARY(255),
-
-
-
-
     PRIMARY KEY (
-        subj_id,
         user_id,
-        rel_id,
-        obj_id,
-        created_at
+        subj_id,
+        rel_id
     ),
 
 
-    CONSTRAINT CHK_SemanticInputs_user_id CHECK (
+    CONSTRAINT CHK_SemanticInputs_user CHECK (
         user_id BETWEEN 0 AND 0x2000000000000000 - 1
     ),
 
@@ -102,42 +216,101 @@ CREATE TABLE SemanticInputs (
     -- can only be "semantic terms" in other words.
     CONSTRAINT CHK_SemanticInputs_rel_is_semantic CHECK (
         rel_id BETWEEN 0x2000000000000000 AND 0x7000000000000000 - 1
-    ),
-
-    -- if rel is a derived (i.e. functional) term, then it cannot be a
-    -- predicate, meaning that obj_id cannot be 0.
-    CONSTRAINT CHK_SemanticInputs_obj_not_zero_if_rel_is_derived CHECK (
-        NOT (rel_id BETWEEN 0x2000000000000000 AND 0x3000000000000000 - 1)
-        OR NOT (obj_id = 0)
     )
 
 
-    -- CONSTRAINT CHK_rat_val_not_min CHECK (rat_val <> 0x80)
-    -- -- This makes max and min values equal to 127 and -127, respectively.
-    -- -- Divide by 127 to get floating point number strictly between -1 and 1.
-
-
-
 );
 
+-- /* Statements which the users (or bots) give as input to the semantic network.
+--  * A central feature of this semantic system is that all such statements come
+--  * with a numerical value which represents the degree to which the user deems
+--  * that the statement is correct (like when answering a survey).
+--  **/
+-- CREATE TABLE SemanticInputs (
+--     -- subject of relation or predicate.
+--     subj_id BIGINT UNSIGNED,
+--
+--     -- user, native bot or user group who states the statement.
+--     user_id BIGINT UNSIGNED,
+--
+--     -- relation or predicate id.
+--     rel_id BIGINT UNSIGNED,
+--
+--     -- relation object (second input, so to speak) if rel is a relation.
+--     -- if rel is a predicate, then obj_id has to be 0.
+--     obj_id BIGINT UNSIGNED,
+--     -- FOREIGN KEY (pred_or_rel) REFERENCES Term(id),
+--
+--
+--     -- date.
+--     created_at DATE DEFAULT (CURRENT_DATE),
+--
+--     -- numerical value (signed) which defines the degree to which the users
+--     -- (or bot) deems the statement to be true/fitting.
+--     -- When dividing the TINYINT with 128,
+--     -- this value runs from -1 to (almost) 1. And then -1 is taken to mean
+--     -- "very far from true/fitting," 0 is taken to mean "not sure / not
+--     -- particularly fitting or unfitting," and 1 is taken to mean "very much
+--     -- true/fitting."
+--     rat_val TINYINT,
+--     opt_data VARBINARY(255),
+--
+--
+--
+--
+--     PRIMARY KEY (
+--         subj_id,
+--         user_id,
+--         rel_id,
+--         obj_id,
+--         created_at
+--     ),
+--
+--
+--     CONSTRAINT CHK_SemanticInputs_user_id CHECK (
+--         user_id BETWEEN 0 AND 0x2000000000000000 - 1
+--     ),
+--
+--     -- relations cannot be users/bots or any data terms (0x70 and up). They
+--     -- can only be "semantic terms" in other words.
+--     CONSTRAINT CHK_SemanticInputs_rel_is_semantic CHECK (
+--         rel_id BETWEEN 0x2000000000000000 AND 0x7000000000000000 - 1
+--     ),
+--
+--     -- if rel is a derived (i.e. functional) term, then it cannot be a
+--     -- predicate, meaning that obj_id cannot be 0.
+--     CONSTRAINT CHK_SemanticInputs_obj_not_zero_if_rel_is_derived CHECK (
+--         NOT (rel_id BETWEEN 0x2000000000000000 AND 0x3000000000000000 - 1)
+--         OR NOT (obj_id = 0)
+--     )
+--
+--
+--     -- CONSTRAINT CHK_rat_val_not_min CHECK (rat_val <> 0x80)
+--     -- -- This makes max and min values equal to 127 and -127, respectively.
+--     -- -- Divide by 127 to get floating point number strictly between -1 and 1.
+--
+--
+--
+-- );
 
 
-CREATE TABLE NativeBots (
-    -- bot ID.
-    id BIGINT UNSIGNED PRIMARY KEY,
-    -- type code = 0x00, -- (but all types start from 0x..00000000000001)
 
-    /* primary fields */
-    -- description_t is not needed; it is always String type.
-    description_id BIGINT UNSIGNED
-);
--- INSERT INTO NativeBots (id) VALUES (0x0000000000000000);
+-- CREATE TABLE NativeBots (
+--     -- bot ID.
+--     id BIGINT UNSIGNED PRIMARY KEY,
+--     -- type code = 0x00, -- (but all types start from 0x..00000000000001)
+--
+--     /* primary fields */
+--     -- description_t is not needed; it is always String type.
+--     description_id BIGINT UNSIGNED
+-- );
+-- -- INSERT INTO NativeBots (id) VALUES (0x0000000000000000);
 
 
 CREATE TABLE UserGroups (
     -- user group ID.
     id BIGINT UNSIGNED PRIMARY KEY,
-    -- type code = 0x06,
+    -- type code = 0x00,
 
     -- id of the creating user group (or user or bot).
     creator_id BIGINT UNSIGNED,
@@ -262,22 +435,25 @@ CREATE TABLE Users (
 -- );
 
 
--- Terms derived from taking a function on an input.
-CREATE TABLE DerivedTerms (
-    /* relational predicate ID */
-    id BIGINT UNSIGNED PRIMARY KEY,
 
-    -- function.
-    fun BIGINT UNSIGNED NOT NULL,
-    -- input.
-    input BIGINT UNSIGNED NOT NULL,
 
-    CONSTRAINT CHK_DerivedTerms_fun_is_semantic CHECK (
-        fun BETWEEN 0x2000000000000000 AND 0x7000000000000000 - 1
-    ),
 
-    CONSTRAINT UNIQUE_DerivedTerms_fun_input UNIQUE (fun, input)
-);
+-- -- Terms derived from taking a function on an input.
+-- CREATE TABLE DerivedTerms (
+--     /* relational predicate ID */
+--     id BIGINT UNSIGNED PRIMARY KEY,
+--
+--     -- function.
+--     fun BIGINT UNSIGNED NOT NULL,
+--     -- input.
+--     input BIGINT UNSIGNED NOT NULL,
+--
+--     CONSTRAINT CHK_DerivedTerms_fun_is_semantic CHECK (
+--         fun BETWEEN 0x2000000000000000 AND 0x7000000000000000 - 1
+--     ),
+--
+--     CONSTRAINT UNIQUE_DerivedTerms_fun_input UNIQUE (fun, input)
+-- );
 
 
 
@@ -310,7 +486,7 @@ CREATE TABLE NextIDPointers (
 INSERT INTO NextIDPointers (type_code, next_id_pointer)
 VALUES
     (0x00, 0x0000000000000001),
-    (0x06, 0x0600000000000001),
+    -- (0x06, 0x0600000000000001),
     (0x10, 0x1000000000000001),
     (0x20, 0x2000000000000001),
     (0x30, 0x3000000000000001),
