@@ -1,4 +1,4 @@
-USE mydatabase;
+-- USE mydatabase;
 
 
 
@@ -23,10 +23,12 @@ DELETE FROM Texts;
 -- DROP TABLE SemanticUserInputs;
 -- DROP TABLE SemanticUserGroupInputs;
 -- DROP VIEW  SemanticInputs;
--- DROP TABLE Sets;
+DROP TABLE Sets;
 --
 -- DROP TABLE UserGroups;
 -- DROP TABLE Users;
+
+DROP TABLE FundamentalTerms;
 
 -- DROP TABLE NextIDPointers;
 -- DROP TABLE Creators;
@@ -48,6 +50,43 @@ DELETE FROM Texts;
 --
 -- SET @bot_start = 0x0000000000000000;
 -- SET @user_start = 0x1000000000000000;
+
+
+
+
+CREATE TABLE Sets (
+    -- user or user group who states the statement.
+    user_id BIGINT UNSIGNED,
+
+    -- subject of relation.
+    subj_id BIGINT UNSIGNED,
+
+    -- relation.
+    rel_id BIGINT UNSIGNED,
+
+    PRIMARY KEY (
+        user_id,
+        subj_id,
+        rel_id
+    ),
+
+    set_id BIGINT UNSIGNED NOT NULL, -- sets are not Terms, so IDs take any val.
+
+    CONSTRAINT CHK_Sets_user CHECK (
+        user_id BETWEEN 0 AND 0x2000000000000000 - 1
+    ),
+
+    -- relations cannot be users/bots or any data terms (0x70 and up). They
+    -- can only be "semantic terms" in other words.
+    CONSTRAINT CHK_Sets_rel_is_semantic CHECK (
+        rel_id BETWEEN 0x2000000000000000 AND 0x7000000000000000 - 1
+    )
+
+
+);
+
+
+
 
 /* Statements which the users (or bots) give as input to the semantic network.
  * A central feature of this semantic system is that all such statements come
@@ -75,20 +114,21 @@ CREATE TABLE SemanticUserInputs (
     -- it is rat_val with its sign flipped.
     inv_rat_val TINYINT,
 
-    -- term (the primary part of the member of which the rating is about).
-    term_id BIGINT UNSIGNED,
+    -- object of the relation defining the set (i.e. the primary part of the
+    -- member of which the rating is about).
+    obj_id BIGINT UNSIGNED,
 
     -- PRIMARY KEY (
     --     set_id, -- suggested abbr.: sid
     --     rat_val,  -- suggested abbr.: rval
     --     rat_w, -- suggested abbr.: rw
-    --     term_id -- suggested abbr.: tid
+    --     obj_id -- suggested abbr.: oid
     -- ),
 
     PRIMARY KEY (
         set_id,
         inv_rat_val,
-        term_id
+        obj_id
     ),
 
     -- w_exp is a nummerical value which gives the weight of the rating
@@ -109,7 +149,7 @@ INSERT INTO SemanticUserInputs (
     set_id,
     inv_rat_val,
     inv_w_exp_t32,
-    term_id
+    obj_id
 )
 VALUES (
     1,
@@ -158,21 +198,16 @@ CREATE TABLE SemanticUserGroupInputs (
     -- runs from 254 to -1.
     inv_wc_exp_t4 TINYINT UNSIGNED,
 
-    -- term (the primary part of the member of which the rating is about).
-    term_id BIGINT UNSIGNED,
+    -- object of the relation defining the set (i.e. the primary part of the
+    -- member of which the rating is about).
+    obj_id BIGINT UNSIGNED,
 
-    -- PRIMARY KEY (
-    --     set_id, -- suggested abbr.: sid
-    --     rat_val,  -- suggested abbr.: rval
-    --     rat_w, -- suggested abbr.: rw
-    --     term_id -- suggested abbr.: tid
-    -- ),
 
     PRIMARY KEY (
         set_id,
         inv_rat_val,
         inv_wc_exp_t4,
-        term_id
+        obj_id
     )
 
     -- CONSTRAINT CHK_rat_val_not_min CHECK (rat_val <> 0x80)
@@ -186,7 +221,7 @@ INSERT INTO SemanticUserGroupInputs (
     set_id,
     inv_rat_val,
     inv_wc_exp_t4,
-    term_id
+    obj_id
 )
 VALUES (
     1,
@@ -209,7 +244,7 @@ SELECT
     - inv_rat_val AS rat_val,
     - inv_w_exp_t32 AS w_exp_t32,
     NULL AS wc_exp_t4,
-    term_id
+    obj_id
 FROM SemanticUserInputs
 UNION
 SELECT
@@ -217,42 +252,10 @@ SELECT
     - inv_rat_val AS rat_val,
     NULL AS w_exp_t32,
     254 - inv_wc_exp_t4 AS wc_exp_t4,
-    term_id
+    obj_id
 FROM SemanticUserGroupInputs;
 
 
-
-
-CREATE TABLE Sets (
-    -- user, native bot or user group who states the statement.
-    user_id BIGINT UNSIGNED,
-
-    -- subject of relation.
-    subj_id BIGINT UNSIGNED,
-
-    -- relation.
-    rel_id BIGINT UNSIGNED,
-
-    PRIMARY KEY (
-        user_id,
-        subj_id,
-        rel_id
-    ),
-
-    set_id BIGINT UNSIGNED NOT NULL, -- sets are not Terms, so IDs take any val.
-
-    CONSTRAINT CHK_SemanticInputs_user CHECK (
-        user_id BETWEEN 0 AND 0x2000000000000000 - 1
-    ),
-
-    -- relations cannot be users/bots or any data terms (0x70 and up). They
-    -- can only be "semantic terms" in other words.
-    CONSTRAINT CHK_SemanticInputs_rel_is_semantic CHECK (
-        rel_id BETWEEN 0x2000000000000000 AND 0x7000000000000000 - 1
-    )
-
-
-);
 
 
 -- /* Statements which the users (or bots) give as input to the semantic network.
@@ -417,10 +420,12 @@ CREATE TABLE Users (
 
 
 
--- CREATE TABLE SimpleTerms (
+
+
+
+-- CREATE TABLE FundamentalTerms (
 --     -- simple term ID.
---     id BIGINT UNSIGNED AUTO_INCREMENT,
---     PRIMARY KEY(id),
+--     id BIGINT UNSIGNED PRIMARY KEY,
 --
 --     /* A SimpleTerm takes as its first descriptor a string denoting af
 --      * lexical item (a semantically meaningful part of a sentence). Examples of
@@ -432,11 +437,18 @@ CREATE TABLE Users (
 --      **/
 --
 --     -- defining lexical item.
---     full_lexical_item TEXT,
---     -- abbreviated lexical item (such as ".Lexical item=", ".is:" or ".is a:").
---     abbr_lexical_item VARCHAR(255),
+--     lex_item BIGINT UNSIGNED,
+--
 --     -- description.
---     description TEXT
+--     descr BIGINT UNSIGNED,
+--
+--     -- CONSTRAINT CHK_FundamentalTerms_lex_item CHECK (
+--     --     lex_item BETWEEN 0xA000000000000000 AND 0xB000000000000000 - 1
+--     -- ),
+--     --
+--     -- CONSTRAINT CHK_FundamentalTerms_descr CHECK (
+--     --     descr BETWEEN 0xB000000000000000 AND 0xC000000000000000 - 1
+--     -- )
 -- );
 
 -- CREATE TABLE StandardTerms (

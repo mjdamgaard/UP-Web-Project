@@ -1,4 +1,4 @@
-USE mydatabase;
+-- USE mydatabase;
 
 
 DROP PROCEDURE insertString;
