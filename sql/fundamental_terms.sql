@@ -34,23 +34,23 @@ INSERT INTO FundamentalCategories (
 VALUES (
     1,
     "Terms",
-    "The category of all terms"
+    "Category of all terms"
 ), (
     2,
     "Categories",
-    "TODO"
+    "Category of all categories"
 ), (
     3,
     "Keyword strings",
-    "TODO"
+    "Category of all searchable keyword strings"
 ), (
     4,
     "User groups",
-    "TODO"
+    "Category of all user groups"
 ), (
     5,
     "Users",
-    "TODO"
+    "Category of all users"
 );
 
 
@@ -74,10 +74,10 @@ CREATE TABLE FundamentalRelations (
 
     -- flag representing if relation expects only one object (in general) per
     -- subject.
-    is_one_to_one BOOL
+    is_one_to_one BOOL,
 
     -- description.
-    descr TEXT,
+    descr TEXT
 
 );
 
@@ -91,19 +91,19 @@ INSERT INTO FundamentalRelations (
 )
 VALUES (
     10,
-    "Subcategories",
-    "Category",
-    "parent",
-    FALSE,
-    "TODO"
-), (
-    11,
     "Elements",
     "Category",
     "self",
     FALSE,
     "TODO"
-),
+), (
+    11,
+    "Subcategories",
+    "Category",
+    "Category",
+    FALSE,
+    "TODO"
+);
 
 
 -- CREATE VIEW FundamentalTerms (
