@@ -2,8 +2,10 @@ USE mydatabase;
 
 
 
-DELETE FROM SemanticInputs;
-DELETE FROM NativeBots;
+DELETE FROM SemanticUserInputs;
+DELETE FROM SemanticUserGroupInputs;
+DELETE FROM Sets;
+
 DELETE FROM UserGroups;
 DELETE FROM Users;
 
@@ -18,15 +20,13 @@ DELETE FROM Strings;
 DELETE FROM Texts;
 
 
-DROP TABLE SemanticInputsWDescendingRatings;
-DROP VIEW SemanticInputs;
-DROP TABLE Sets;
-
-DROP TABLE NativeBots;
+-- DROP TABLE SemanticUserInputs;
+-- DROP TABLE SemanticUserGroupInputs;
+-- DROP VIEW  SemanticInputs;
+-- DROP TABLE Sets;
+--
 -- DROP TABLE UserGroups;
 -- DROP TABLE Users;
-
-DROP TABLE DerivedTerms;
 
 -- DROP TABLE NextIDPointers;
 -- DROP TABLE Creators;
@@ -105,6 +105,24 @@ CREATE TABLE SemanticUserInputs (
 
 );
 
+INSERT INTO SemanticUserInputs (
+    set_id,
+    inv_rat_val,
+    inv_w_exp_t32,
+    term_id
+)
+VALUES (
+    1,
+    2,
+    3,
+    4
+);
+
+
+
+
+
+
 CREATE TABLE SemanticUserGroupInputs (
     /* Set */
     -- set id.
@@ -152,10 +170,10 @@ CREATE TABLE SemanticUserGroupInputs (
 
     PRIMARY KEY (
         set_id,
-        inv_rat_w,
+        inv_rat_val,
         inv_wc_exp_t4,
         term_id
-    ),
+    )
 
     -- CONSTRAINT CHK_rat_val_not_min CHECK (rat_val <> 0x80)
     -- -- This makes max and min values equal to 127 and -127, respectively.
@@ -164,6 +182,18 @@ CREATE TABLE SemanticUserGroupInputs (
 
 );
 
+INSERT INTO SemanticUserGroupInputs (
+    set_id,
+    inv_rat_val,
+    inv_wc_exp_t4,
+    term_id
+)
+VALUES (
+    1,
+    2,
+    3,
+    4
+);
 
 
 
@@ -177,16 +207,18 @@ CREATE VIEW SemanticInputs AS
 SELECT
     set_id,
     - inv_rat_val AS rat_val,
-    254 - inv_wc_exp_t4 AS wc_exp_t4,
+    - inv_w_exp_t32 AS w_exp_t32,
+    NULL AS wc_exp_t4,
     term_id
-FROM SemanticUserGroupInputs
+FROM SemanticUserInputs
 UNION
 SELECT
     set_id,
     - inv_rat_val AS rat_val,
-    - inv_w_exp_t32 AS w_exp_t32,
+    NULL AS w_exp_t32,
+    254 - inv_wc_exp_t4 AS wc_exp_t4,
     term_id
-FROM SemanticUserInputs;
+FROM SemanticUserGroupInputs;
 
 
 
@@ -207,6 +239,7 @@ CREATE TABLE Sets (
         rel_id
     ),
 
+    set_id BIGINT UNSIGNED NOT NULL, -- sets are not Terms, so IDs take any val.
 
     CONSTRAINT CHK_SemanticInputs_user CHECK (
         user_id BETWEEN 0 AND 0x2000000000000000 - 1
@@ -220,6 +253,7 @@ CREATE TABLE Sets (
 
 
 );
+
 
 -- /* Statements which the users (or bots) give as input to the semantic network.
 --  * A central feature of this semantic system is that all such statements come
@@ -325,29 +359,36 @@ CREATE TABLE UserGroups (
     -- If effective_creation_date is a date in the future, or if it is NULL,
     -- it might mean (if this functionality is implemented) that the creating
     -- group is also allowed change in time. But this functionality will
-    -- probably not be useful enough compared to the cost to be impleented,
+    -- probably not be useful enough compared to the cost to be implemented,
     -- however. (But I just wanted to note the possibility, should we realize
     -- that it will be useful at some point.)
 
+    -- date after which, if it is not NULL, all ratings are frozen and no new
+    -- ratings are recorded for the user group. The end date can start out as
+    -- NULL and then be set to a value at a later date, if the group decides
+    -- to stop being active. It might also happen that the server decides to
+    -- discontinue a group due to cost of maintaining, in which case an end
+    -- date will also be set.
+    end_date DATE,
 
     -- Flag (interpreted as a BOOL) that tells if the user group is dynamic,
     -- meaning that the creating user group (which will probably either be a
     -- "constant" user group, or will be effectively constant due to the
     -- effective_creation_date) is allowed to continously change the weights
     -- of this user group. A "constant" user group (with is_dynamic = FALSE),
-    -- on the other hand, has constant weight which are set at the "effective
+    -- on the other hand, has constant weights which are set at the "effective
     -- creation date" and not changed after that.
-    is_dynamic TINYINT, -- BOOL,
+    is_dynamic TINYINT -- BOOL,
 
-    -- Flag (interpreted as a BOOL) telling is the user group is live, meaning
-    -- that the servers will make sure to continously update its semantic
-    -- inputs (which generally always include a weighted average of the
-    -- ratings from the user group).
-    -- If the flag is 0, then the user group is live. If it is not 0, the user
-    -- group is either in the proces of being created (i.e. before the
-    -- "effective creation date" has been set), or it has been discontinued
-    -- by the servers. The value of the flag might signal the reason.
-    is_inactive TINYINT -- BOOL
+    -- -- Flag (interpreted as a BOOL) telling is the user group is live, meaning
+    -- -- that the servers will make sure to continously update its semantic
+    -- -- inputs (which generally always include a weighted average of the
+    -- -- ratings from the user group).
+    -- -- If the flag is 0, then the user group is live. If it is not 0, the user
+    -- -- group is either in the proces of being created (i.e. before the
+    -- -- "effective creation date" has been set), or it has been discontinued
+    -- -- by the servers. The value of the flag might signal the reason.
+    -- is_inactive TINYINT -- BOOL
 );
 
 
