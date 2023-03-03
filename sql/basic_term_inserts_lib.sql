@@ -25,13 +25,13 @@ DELETE FROM NativeBots;
 DELETE FROM UserGroups;
 DELETE FROM Users;
 
-DELETE FROM RelationalPredicates;
+DELETE FROM DerivedTerms;
 
 DELETE FROM NextIDPointers;
 INSERT INTO NextIDPointers (type_code, next_id_pointer)
 VALUES
     (0x00, 0x0000000000000001),
-    (0x06, 0x0000000000000001),
+    (0x06, 0x0600000000000001),
     (0x10, 0x1000000000000001),
     (0x20, 0x2000000000000001),
     (0x30, 0x3000000000000001),
@@ -274,7 +274,7 @@ BEGIN
     CALL createTerm (0x30, 1, @TermID_hasLexItem);
     CALL createTerm (0x30, 1, @TermID_hasDescription);
     -- There apparently cannot be any selects in a MySQLi prepared statement
-    -- for insertion. (?..) 
+    -- for insertion. (?..)
     -- SELECT @TermID_hasLexItem;
     -- SELECT @TermID_hasDescription;
 

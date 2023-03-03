@@ -24,7 +24,7 @@ DELETE FROM Texts;
 -- DROP TABLE UserGroups;
 -- DROP TABLE Users;
 
-DROP TABLE RelationalPredicates;
+-- DROP TABLE DerivedTerms;
 
 -- DROP TABLE NextIDPointers;
 -- DROP TABLE Creators;
@@ -54,27 +54,22 @@ DROP TABLE RelationalPredicates;
  * that the statement is correct (like when answering a survey).
  **/
 CREATE TABLE SemanticInputs (
-    -- subject of predicate or relation.
-    -- subj_t TINYINT,
+    -- subject of relation or predicate.
     subj_id BIGINT UNSIGNED,
 
-    -- user or bot who states the statement.
-    -- user_t TINYINT,
+    -- user, native bot or user group who states the statement.
     user_id BIGINT UNSIGNED,
 
-    -- relation or predicate.
-    -- rel_t TINYINT CHECK (
-    --     rel_t = 2 OR rel_t = 4 -- SimpleTerm og StandardTerm.
-    -- ),
+    -- relation or predicate id.
     rel_id BIGINT UNSIGNED,
 
-    -- relation object (second input, so to speak) if pred_or_rel is a relation.
-    -- obj_t TINYINT,
+    -- relation object (second input, so to speak) if rel is a relation.
+    -- if rel is a predicate, then obj_id has to be 0.
     obj_id BIGINT UNSIGNED,
     -- FOREIGN KEY (pred_or_rel) REFERENCES Term(id),
 
 
-    /* date */
+    -- date.
     created_at DATE DEFAULT (CURRENT_DATE),
 
     -- numerical value (signed) which defines the degree to which the users
@@ -103,16 +98,23 @@ CREATE TABLE SemanticInputs (
         user_id BETWEEN 0 AND 0x2000000000000000 - 1
     ),
 
-    -- relations cannot be users/bots, relational predicates (0x20) or any
-    -- data terms (0x70 and up).
-    CONSTRAINT CHK_SemanticInputs_rel_id CHECK (
-        rel_id BETWEEN 0x3000000000000000 AND 0x7000000000000000 - 1
+    -- relations cannot be users/bots or any data terms (0x70 and up). They
+    -- can only be "semantic terms" in other words.
+    CONSTRAINT CHK_SemanticInputs_rel_is_semantic CHECK (
+        rel_id BETWEEN 0x2000000000000000 AND 0x7000000000000000 - 1
+    ),
+
+    -- if rel is a derived (i.e. functional) term, then it cannot be a
+    -- predicate, meaning that obj_id cannot be 0.
+    CONSTRAINT CHK_SemanticInputs_obj_not_zero_if_rel_is_derived CHECK (
+        NOT (rel_id BETWEEN 0x2000000000000000 AND 0x3000000000000000 - 1)
+        OR NOT (obj_id = 0)
     )
 
 
-    -- CONSTRAINT CHK_rat_val CHECK (rat_val <> 0x80000000) -- or 0x8000..
-    -- -- This makes max and min values equal to 2^31 - 1 and -2^31 + 1, resp.
-    -- -- Divide by 2^31 to get floating point number strictly between -1 and 1.
+    -- CONSTRAINT CHK_rat_val_not_min CHECK (rat_val <> 0x80)
+    -- -- This makes max and min values equal to 127 and -127, respectively.
+    -- -- Divide by 127 to get floating point number strictly between -1 and 1.
 
 
 
@@ -123,7 +125,7 @@ CREATE TABLE SemanticInputs (
 CREATE TABLE NativeBots (
     -- bot ID.
     id BIGINT UNSIGNED PRIMARY KEY,
-    -- type code = 0x00,
+    -- type code = 0x00, -- (but all types start from 0x..00000000000001)
 
     /* primary fields */
     -- description_t is not needed; it is always String type.
@@ -241,24 +243,41 @@ CREATE TABLE Users (
 --
 
 
--- Predicate terms, each formed from an existing relation and a relational
--- object.
-CREATE TABLE RelationalPredicates (
+-- -- Predicate terms, each formed from an existing relation and a relational
+-- -- object.
+-- CREATE TABLE RelationalPredicates (
+--     /* relational predicate ID */
+--     id BIGINT UNSIGNED PRIMARY KEY,
+--
+--     -- relation.
+--     rel_id BIGINT UNSIGNED NOT NULL,
+--     -- relational object.
+--     obj_id BIGINT UNSIGNED NOT NULL,
+--
+--     CONSTRAINT CHK_RelationalPredicates_rel_id CHECK (
+--         rel_id BETWEEN 0x3000000000000000 AND 0x7000000000000000 - 1
+--     ),
+--
+--     CONSTRAINT UNIQUE_RelationalPredicates_rel_and_obj UNIQUE (rel_id, obj_id)
+-- );
+
+
+-- Terms derived from taking a function on an input.
+CREATE TABLE DerivedTerms (
     /* relational predicate ID */
     id BIGINT UNSIGNED PRIMARY KEY,
 
-    -- relation.
-    rel_id BIGINT UNSIGNED NOT NULL,
-    -- relational object.
-    obj_id BIGINT UNSIGNED NOT NULL,
+    -- function.
+    fun BIGINT UNSIGNED NOT NULL,
+    -- input.
+    input BIGINT UNSIGNED NOT NULL,
 
-    CONSTRAINT CHK_RelationalPredicates_rel_id CHECK (
-        rel_id BETWEEN 0x3000000000000000 AND 0x7000000000000000 - 1
+    CONSTRAINT CHK_DerivedTerms_fun_is_semantic CHECK (
+        fun BETWEEN 0x2000000000000000 AND 0x7000000000000000 - 1
     ),
 
-    CONSTRAINT UNIQUE_RelationalPredicates_rel_and_obj UNIQUE (rel_id, obj_id)
+    CONSTRAINT UNIQUE_DerivedTerms_fun_input UNIQUE (fun, input)
 );
-
 
 
 
@@ -291,7 +310,7 @@ CREATE TABLE NextIDPointers (
 INSERT INTO NextIDPointers (type_code, next_id_pointer)
 VALUES
     (0x00, 0x0000000000000001),
-    (0x06, 0x0000000000000001),
+    (0x06, 0x0600000000000001),
     (0x10, 0x1000000000000001),
     (0x20, 0x2000000000000001),
     (0x30, 0x3000000000000001),
