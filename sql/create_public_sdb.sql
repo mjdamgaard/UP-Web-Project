@@ -9,6 +9,10 @@ DELETE FROM Sets;
 DELETE FROM UserGroups;
 DELETE FROM Users;
 
+DELETE FROM Categories;
+DELETE FROM Relations;
+DELETE FROM KeywordStrings;
+
 DELETE FROM Creators;
 DELETE FROM NextIDPointers;
 
@@ -23,17 +27,19 @@ DELETE FROM Texts;
 -- DROP TABLE SemanticUserInputs;
 -- DROP TABLE SemanticUserGroupInputs;
 -- DROP VIEW  SemanticInputs;
-DROP TABLE Sets;
+-- DROP TABLE Sets;
 --
 -- DROP TABLE UserGroups;
 -- DROP TABLE Users;
-
-DROP TABLE FundamentalTerms;
-
+--
+DROP TABLE Categories;
+DROP TABLE Relations;
+DROP TABLE KeywordStrings;
+--
 -- DROP TABLE NextIDPointers;
 -- DROP TABLE Creators;
 -- DROP PROCEDURE createTerm;
-
+--
 -- DROP TABLE Lists;
 -- DROP TABLE Binaries;
 -- DROP TABLE Blobs;
@@ -162,7 +168,6 @@ VALUES (
 
 
 
-
 CREATE TABLE SemanticUserGroupInputs (
     /* Set */
     -- set id.
@@ -217,18 +222,18 @@ CREATE TABLE SemanticUserGroupInputs (
 
 );
 
-INSERT INTO SemanticUserGroupInputs (
-    set_id,
-    inv_rat_val,
-    inv_wc_exp_t4,
-    obj_id
-)
-VALUES (
-    1,
-    2,
-    3,
-    4
-);
+-- INSERT INTO SemanticUserGroupInputs (
+--     set_id,
+--     inv_rat_val,
+--     inv_wc_exp_t4,
+--     obj_id
+-- )
+-- VALUES (
+--     1,
+--     2,
+--     3,
+--     4
+-- );
 
 
 
@@ -258,11 +263,7 @@ FROM SemanticUserGroupInputs;
 
 
 
--- /* Statements which the users (or bots) give as input to the semantic network.
---  * A central feature of this semantic system is that all such statements come
---  * with a numerical value which represents the degree to which the user deems
---  * that the statement is correct (like when answering a survey).
---  **/
+
 -- CREATE TABLE SemanticInputs (
 --     -- subject of relation or predicate.
 --     subj_id BIGINT UNSIGNED,
@@ -417,10 +418,80 @@ CREATE TABLE Users (
 
 
 
+CREATE TABLE Categories (
+    -- category ID.
+    id BIGINT UNSIGNED PRIMARY KEY,
+
+    -- title of the category, preferably a plural noun describing/referencing
+    -- the elements in the category.
+    title VARCHAR(255) NOT NULL,
+
+    -- -- possible empty list of BIGINTs pointing to super categories.
+    -- super_cats VARBINARY(248)
+    -- -- this is useful when the title is best understood in the context of
+    -- -- one or more super categories.
+
+    -- id of a super category.
+    super_cat BIGINT UNSIGNED NOT NULL,
+    -- This is useful when the title is best understood in the context of
+    -- a super category.
+    -- Note that 0x2000000000000001 is category of all Terms.
+
+    -- -- description.
+    -- descr TEXT
+
+    INDEX (title, super_cat),
+
+    CONSTRAINT CHK_Categories_super_cat CHECK (
+        super_cat BETWEEN 0x2000000000000000 AND 0x3000000000000000 - 1
+    )
+);
+-- INSERT INTO Categories (id) VALUES (0x2000000000000000);
 
 
+CREATE TABLE Relations (
+    -- relation ID.
+    id BIGINT UNSIGNED PRIMARY KEY,
+
+    -- noun describing the object in terms of what the object is to the
+    -- subject of the relation.
+    -- TODO: mention forward and backwards syntax for parsing this noun from
+    -- the realtion expressed as a verb.
+    obj_noun VARCHAR(255) NOT NULL,
+
+    subj_cat BIGINT UNSIGNED NOT NULL,
+
+    obj_cat BIGINT UNSIGNED NOT NULL,
+
+    -- flag representing if relation expects only one object (in general) per
+    -- subject.
+    is_one_to_one TINYINT NOT NULL,
+
+    -- -- description.
+    -- descr TEXT
+
+    INDEX (obj_noun, obj_cat, subj_cat),
+
+    CONSTRAINT CHK_Relations_subj_cat CHECK (
+        subj_cat BETWEEN 0x2000000000000000 AND 0x3000000000000000 - 1
+    ),
+
+    CONSTRAINT CHK_Relations_obj_cat CHECK (
+        obj_cat BETWEEN 0x2000000000000000 AND 0x3000000000000000 - 1
+    )
+);
+-- INSERT INTO Relations (id) VALUES (0x3000000000000000);
 
 
+CREATE TABLE KeywordStrings (
+    /* keyword string ID */
+    id BIGINT UNSIGNED PRIMARY KEY,
+
+    -- keyword string.
+    str VARCHAR(255) UNIQUE,
+    FULLTEXT idx (str)
+);
+-- INSERT INTO KeywordStrings (id) VALUES (0x4000000000000000);
 
 
 -- CREATE TABLE FundamentalTerms (
