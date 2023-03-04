@@ -9,7 +9,7 @@ DELETE FROM Sets;
 DELETE FROM UserGroups;
 DELETE FROM Users;
 
-DELETE FROM Categories;
+DELETE FROM Terms;
 DELETE FROM Relations;
 DELETE FROM KeywordStrings;
 
@@ -34,7 +34,7 @@ DELETE FROM Texts;
 -- DROP TABLE UserGroups;
 -- DROP TABLE Users;
 --
--- DROP TABLE Categories;
+-- DROP TABLE Terms;
 -- DROP TABLE Relations;
 -- DROP TABLE KeywordStrings;
 --
@@ -427,35 +427,55 @@ ALTER TABLE Users AUTO_INCREMENT = 1000000000000000001;
 
 
 
-CREATE TABLE Categories (
-    -- category ID.
+-- CREATE TABLE Categories (
+--     -- category ID.
+--     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+--
+--     -- title of the category, preferably a plural noun describing/referencing
+--     -- the elements in the category.
+--     title VARCHAR(255) NOT NULL,
+--
+--     -- -- possible empty list of BIGINTs pointing to super categories.
+--     -- super_cats VARBINARY(248)
+--     -- -- this is useful when the title is best understood in the context of
+--     -- -- one or more super categories.
+--
+--     -- id of a super category.
+--     super_cat BIGINT UNSIGNED NOT NULL,
+--     -- This is useful when the title is best understood in the context of
+--     -- a super category.
+--     -- Note that 0x2000000000000001 is category of all Terms.
+--
+--     -- -- description.
+--     -- descr TEXT
+--
+--     INDEX (title, super_cat),
+--
+--     CONSTRAINT CHK_Categories_super_cat CHECK (
+--         super_cat BETWEEN 0x2000000000000000 AND 0x3000000000000000 - 1
+--     )
+-- );
+-- ALTER TABLE Categories AUTO_INCREMENT = 2000000000000000001;
+
+CREATE TABLE Terms (
+    -- term ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- title of the category, preferably a plural noun describing/referencing
-    -- the elements in the category.
+    -- title of the term.
     title VARCHAR(255) NOT NULL,
-
-    -- -- possible empty list of BIGINTs pointing to super categories.
-    -- super_cats VARBINARY(248)
-    -- -- this is useful when the title is best understood in the context of
-    -- -- one or more super categories.
 
     -- id of a super category.
     super_cat BIGINT UNSIGNED NOT NULL,
-    -- This is useful when the title is best understood in the context of
-    -- a super category.
     -- Note that 0x2000000000000001 is category of all Terms.
 
-    -- -- description.
-    -- descr TEXT
+    INDEX (title, super_cat) -- TODO: add unique constraint..
 
-    INDEX (title, super_cat),
-
-    CONSTRAINT CHK_Categories_super_cat CHECK (
-        super_cat BETWEEN 0x2000000000000000 AND 0x3000000000000000 - 1
-    )
+    -- CONSTRAINT CHK_Terms_super_cat CHECK (
+    --     super_cat BETWEEN 0x2000000000000000 AND 0x3000000000000000 - 1
+    -- )
 );
-ALTER TABLE Categories AUTO_INCREMENT = 2000000000000000001;
+ALTER TABLE Terms AUTO_INCREMENT = 2000000000000000001;
+
 
 
 CREATE TABLE Relations (
