@@ -13,8 +13,10 @@ DELETE FROM Categories;
 DELETE FROM Relations;
 DELETE FROM KeywordStrings;
 
-DELETE FROM Creators;
+DELETE FROM SavedSets;
+
 DELETE FROM NextIDPointers;
+DELETE FROM Creators;
 
 
 DELETE FROM Lists;
@@ -35,6 +37,8 @@ DELETE FROM Texts;
 -- DROP TABLE Categories;
 -- DROP TABLE Relations;
 -- DROP TABLE KeywordStrings;
+--
+-- DROP TABLE SavedSets;
 --
 -- DROP TABLE NextIDPointers;
 -- DROP TABLE Creators;
@@ -90,7 +94,6 @@ CREATE TABLE Sets (
 
 
 );
-
 
 
 
@@ -590,6 +593,9 @@ ALTER TABLE KeywordStrings AUTO_INCREMENT = 4000000000000000001;
 
 
 
+CREATE TABLE SavedSets (
+    -- TODO..
+);
 
 
 
