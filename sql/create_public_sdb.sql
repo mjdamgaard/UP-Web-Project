@@ -32,9 +32,9 @@ DELETE FROM Texts;
 -- DROP TABLE UserGroups;
 -- DROP TABLE Users;
 --
-DROP TABLE Categories;
-DROP TABLE Relations;
-DROP TABLE KeywordStrings;
+-- DROP TABLE Categories;
+-- DROP TABLE Relations;
+-- DROP TABLE KeywordStrings;
 --
 -- DROP TABLE NextIDPointers;
 -- DROP TABLE Creators;
@@ -347,7 +347,7 @@ FROM SemanticUserGroupInputs;
 
 CREATE TABLE UserGroups (
     -- user group ID.
-    id BIGINT UNSIGNED PRIMARY KEY,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     -- type code = 0x00,
 
     -- id of the creating user group (or user or bot).
@@ -394,11 +394,14 @@ CREATE TABLE UserGroups (
     -- -- by the servers. The value of the flag might signal the reason.
     -- is_inactive TINYINT -- BOOL
 );
+-- ALTER TABLE UserGroups AUTO_INCREMENT = CONV(0x0000000000000001, 16, 10);
+-- 0x0000000000000001 = 1.
+ALTER TABLE UserGroups AUTO_INCREMENT = 1;
 
 
 CREATE TABLE Users (
     -- user ID.
-    id BIGINT UNSIGNED PRIMARY KEY,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     -- type code = 0x10,
 
     -- num_inserts_today INT,
@@ -408,7 +411,10 @@ CREATE TABLE Users (
     /* timestamp */
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
--- INSERT INTO Users (id) VALUES (0x1000000000000000);
+-- ALTER TABLE Users AUTO_INCREMENT = CONV(0x1000000000000001, 16, 10);
+-- -- 0x1000000000000001 = 1152921504606846977.
+-- A..TABLE UserGroups AUTO_INCREMENT = 1152921504606846977;
+ALTER TABLE Users AUTO_INCREMENT = 1000000000000000001;
 
 
 
@@ -420,7 +426,7 @@ CREATE TABLE Users (
 
 CREATE TABLE Categories (
     -- category ID.
-    id BIGINT UNSIGNED PRIMARY KEY,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     -- title of the category, preferably a plural noun describing/referencing
     -- the elements in the category.
@@ -446,12 +452,12 @@ CREATE TABLE Categories (
         super_cat BETWEEN 0x2000000000000000 AND 0x3000000000000000 - 1
     )
 );
--- INSERT INTO Categories (id) VALUES (0x2000000000000000);
+ALTER TABLE Categories AUTO_INCREMENT = 2000000000000000001;
 
 
 CREATE TABLE Relations (
     -- relation ID.
-    id BIGINT UNSIGNED PRIMARY KEY,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     -- noun describing the object in terms of what the object is to the
     -- subject of the relation.
@@ -480,18 +486,18 @@ CREATE TABLE Relations (
         obj_cat BETWEEN 0x2000000000000000 AND 0x3000000000000000 - 1
     )
 );
--- INSERT INTO Relations (id) VALUES (0x3000000000000000);
+ALTER TABLE Relations AUTO_INCREMENT = 3000000000000000001;
 
 
 CREATE TABLE KeywordStrings (
     /* keyword string ID */
-    id BIGINT UNSIGNED PRIMARY KEY,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     -- keyword string.
     str VARCHAR(255) UNIQUE,
     FULLTEXT idx (str)
 );
--- INSERT INTO KeywordStrings (id) VALUES (0x4000000000000000);
+ALTER TABLE KeywordStrings AUTO_INCREMENT = 4000000000000000001;
 
 
 -- CREATE TABLE FundamentalTerms (
