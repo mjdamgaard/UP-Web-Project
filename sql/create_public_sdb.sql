@@ -15,15 +15,11 @@ DELETE FROM KeywordStrings;
 
 -- DELETE FROM SavedSets;
 
-DELETE FROM NextIDPointers;
 DELETE FROM Creators;
 
-
+DELETE FROM Texts;
 DELETE FROM Lists;
 DELETE FROM Binaries;
-DELETE FROM Blobs;
-DELETE FROM Strings;
-DELETE FROM Texts;
 
 
 -- DROP TABLE Sets;
@@ -32,22 +28,18 @@ DELETE FROM Texts;
 -- DROP TABLE UserGroups;
 -- DROP TABLE Users;
 --
-DROP TABLE Categories;
-DROP TABLE StandardTerms;
-DROP TABLE Relations;
-DROP TABLE KeywordStrings;
+-- DROP TABLE Categories;
+-- DROP TABLE StandardTerms;
+-- DROP TABLE Relations;
+-- DROP TABLE KeywordStrings;
 --
 -- DROP TABLE SavedSets;
 --
--- DROP TABLE NextIDPointers;
 -- DROP TABLE Creators;
--- DROP PROCEDURE createTerm;
 --
+-- DROP TABLE Texts;
 -- DROP TABLE Lists;
 -- DROP TABLE Binaries;
--- DROP TABLE Blobs;
--- DROP TABLE Strings;
--- DROP TABLE Texts;
 
 
 
@@ -474,6 +466,7 @@ CREATE TABLE Categories (
     -- title of the category, preferably a plural noun describing/referencing
     -- the elements in the category.
     title VARCHAR(255) NOT NULL,
+    FULLTEXT idx (title),
 
     -- -- possible empty list of BIGINTs pointing to super categories.
     -- super_cats VARBINARY(248)
@@ -504,6 +497,7 @@ CREATE TABLE StandardTerms (
 
     -- title of the term.
     title VARCHAR(255) NOT NULL,
+    FULLTEXT idx (title),
 
     -- id of a defining category.
     cat BIGINT UNSIGNED NOT NULL,
@@ -529,6 +523,7 @@ CREATE TABLE Relations (
     -- TODO: mention forward and backwards syntax for parsing this noun from
     -- the realtion expressed as a verb.
     obj_noun VARCHAR(255) NOT NULL,
+    FULLTEXT idx (obj_noun),
 
     obj_cat BIGINT UNSIGNED NOT NULL,
 
@@ -671,39 +666,43 @@ CREATE TABLE KeywordStrings (
 
 
 
--- I think it will be easiest to use the same procedure for getting next id
--- pointers for all terms, so let me actually just make NextIDPointers
--- include all types. ..(Then it will also be easier to implement, if I want
--- to have several pointers in play for the same type at a time (maybe in
--- order to allocate ids..))..
-CREATE TABLE NextIDPointers (
-    type_code TINYINT UNSIGNED,
-    next_id_pointer BIGINT UNSIGNED,
-
-    -- this id is not intended for any use!
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY
-    -- PRIMARY KEY (type_code, id)
-);
-INSERT INTO NextIDPointers (type_code, next_id_pointer)
-VALUES
-    (0x00, 0x0000000000000001),
-    -- (0x06, 0x0600000000000001),
-    (0x10, 0x1000000000000001),
-    (0x20, 0x2000000000000001),
-    (0x30, 0x3000000000000001),
-    (0x70, 0x7000000000000001),
-    (0x80, 0x8000000000000001),
-    (0x90, 0x9000000000000001),
-    (0xA0, 0xA000000000000001),
-    (0xB0, 0xB000000000000001)
-;
+-- -- I think it will be easiest to use the same procedure for getting next id
+-- -- pointers for all terms, so let me actually just make NextIDPointers
+-- -- include all types. ..(Then it will also be easier to implement, if I want
+-- -- to have several pointers in play for the same type at a time (maybe in
+-- -- order to allocate ids..))..
+-- CREATE TABLE NextIDPointers (
+--     type_code TINYINT UNSIGNED,
+--     next_id_pointer BIGINT UNSIGNED,
+--
+--     -- this id is not intended for any use!
+--     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY
+--     -- PRIMARY KEY (type_code, id)
+-- );
+-- INSERT INTO NextIDPointers (type_code, next_id_pointer)
+-- VALUES
+--     (0x00, 0x0000000000000001),
+--     -- (0x06, 0x0600000000000001),
+--     (0x10, 0x1000000000000001),
+--     (0x20, 0x2000000000000001),
+--     (0x30, 0x3000000000000001),
+--     (0x70, 0x7000000000000001),
+--     (0x80, 0x8000000000000001),
+--     (0x90, 0x9000000000000001),
+--     (0xA0, 0xA000000000000001),
+--     (0xB0, 0xB000000000000001)
+-- ;
 
 
 
 CREATE TABLE Creators (
-    user_id BIGINT UNSIGNED,
+    term_t CHAR(3),
     term_id BIGINT UNSIGNED,
-    PRIMARY KEY (user_id, term_id)
+    PRIMARY KEY (term_t, term_id),
+
+    -- creator (always has type = "usr").
+    user_id BIGINT UNSIGNED,
+    INDEX (user_id)
 );
 
 
@@ -711,54 +710,55 @@ CREATE TABLE Creators (
 
 
 -- DELIMITER //
--- CREATE PROCEDURE SelectNextRelPredID ()
+-- CREATE PROCEDURE createTerm (
+--     IN tc TINYINT UNSIGNED,
+--     IN u_id BIGINT UNSIGNED,
+--     OUT new_id BIGINT UNSIGNED
+-- )
 -- BEGIN
 --     SELECT next_id_pointer
---     FROM NextRelPredIDs
---     WHERE type_code = 0x20
+--     INTO new_id
+--     FROM NextIDPointers
+--     WHERE type_code = tc
 --     FOR UPDATE;
 --
---     UPDATE NextRelPredIDs
+--     UPDATE NextIDPointers
 --     SET next_id_pointer = next_id_pointer + 1
---     WHERE type_code = 0x20;
+--     WHERE type_code = tc;
+--
+--     INSERT INTO Creators (user_id, term_id)
+--     VALUES (u_id, new_id);
 -- END //
 -- DELIMITER ;
-DELIMITER //
-CREATE PROCEDURE createTerm (
-    IN tc TINYINT UNSIGNED,
-    IN u_id BIGINT UNSIGNED,
-    OUT new_id BIGINT UNSIGNED
-)
-BEGIN
-    SELECT next_id_pointer
-    INTO new_id
-    FROM NextIDPointers
-    WHERE type_code = tc
-    FOR UPDATE;
 
-    UPDATE NextIDPointers
-    SET next_id_pointer = next_id_pointer + 1
-    WHERE type_code = tc;
 
-    INSERT INTO Creators (user_id, term_id)
-    VALUES (u_id, new_id);
-END //
-DELIMITER ;
 
--- CREATE TABLE NextRelPredIDs (
---     next_id_pointer BIGINT UNSIGNED
--- );
--- INSERT INTO NextRelPredIDs (next_id_pointer) VALUES (0x2000000000000001);
+
+
+
+
+-- CREATE TABLE Strings (
+--     /* variable character string ID */
+--     id BIGINT UNSIGNED PRIMARY KEY,
 --
--- CREATE TABLE NextTermIDs (
---     next_id_pointer BIGINT UNSIGNED
+--     -- /* creator */
+--     -- user_id BIGINT UNSIGNED,
+--
+--     /* data */
+--     str VARCHAR(255) UNIQUE,
+--     FULLTEXT idx (str)
 -- );
--- INSERT INTO NextTermIDs (next_id_pointer) VALUES (0x3000000000000001);
+-- -- INSERT INTO Strings (id) VALUES (0xA000000000000000);
 
+CREATE TABLE Texts (
+    /* text ID */
+    id BIGINT UNSIGNED PRIMARY KEY,
+    -- type = "txt".
 
-
-
-
+    /* data */
+    str TEXT
+);
+-- INSERT INTO Strings (id) VALUES (0xB000000000000000);
 
 
 
@@ -767,12 +767,10 @@ DELIMITER ;
 CREATE TABLE Lists (
     /* list ID */
     id BIGINT UNSIGNED PRIMARY KEY,
-
-    -- /* creator */
-    -- user_id BIGINT UNSIGNED,
+    -- type = "lst".
 
     /* data */
-    len SMALLINT UNSIGNED,
+    len SMALLINT UNSIGNED NOT NULL,
 
     elems VARBINARY(248),
 
@@ -804,62 +802,24 @@ CREATE TABLE Lists (
 
 
 
-
-
 CREATE TABLE Binaries (
-    /* variable character string ID */
+    /* binary string ID */
     id BIGINT UNSIGNED PRIMARY KEY,
-
-    -- /* creator */
-    -- user_id BIGINT UNSIGNED,
-
-    /* data */
-    str VARCHAR(500) UNIQUE
-    -- FULLTEXT idx (str)
-);
--- INSERT INTO Binaries (id) VALUES (0x8000000000000000);
-
-CREATE TABLE Blobs (
-    /* variable character string ID */
-    id BIGINT UNSIGNED PRIMARY KEY,
-
-    -- /* creator */
-    -- user_id BIGINT UNSIGNED,
+    -- type = "bin".
 
     /* data */
     bin BLOB
 );
--- INSERT INTO Blobs (id) VALUES (0x9000000000000000);
+-- INSERT INTO Binaries (id) VALUES (0x8000000000000000);
 
-
-
-
-
-
-CREATE TABLE Strings (
-    /* variable character string ID */
-    id BIGINT UNSIGNED PRIMARY KEY,
-
-    -- /* creator */
-    -- user_id BIGINT UNSIGNED,
-
-    /* data */
-    str VARCHAR(255) UNIQUE,
-    FULLTEXT idx (str)
-);
--- INSERT INTO Strings (id) VALUES (0xA000000000000000);
-
-CREATE TABLE Texts (
-    /* text ID */
-    id BIGINT UNSIGNED PRIMARY KEY,
-
-    /* creator */
-    user_id BIGINT UNSIGNED,
-
-    /* data */
-    str TEXT
-);
--- INSERT INTO Strings (id) VALUES (0xB000000000000000);
+-- CREATE TABLE Blobs (
+--     /* variable character string ID */
+--     id BIGINT UNSIGNED PRIMARY KEY,
+--
+--     /* data */
+--     bin BLOB
+-- );
+-- -- INSERT INTO Blobs (id) VALUES (0x9000000000000000);
 
 
 
