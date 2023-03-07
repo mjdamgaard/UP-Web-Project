@@ -35,29 +35,31 @@ require_once $database_path . "connect.php";
 function insertOrFindCat($titel, $superCatID, $user_id, $new_id) {
     $conn = getConnectionOrDie();
 
-    $exit_code = -1;
-
+    // insert or find term.
     $stmt = $conn->prepare(
-        // "INSERT INTO Categories (title, super_cat)
-        //  VALUES (?, ?);
-        //  INSERT INTO Creators (term_t, term_id, user_id)
-        //  VALUES ('cat', ?);
-        // "
-        "CALL insertOrFindCat (?, ?, ?, ?, ?)"
+        "CALL insertOrFindCat (?, ?, ?, @new_id, @exit_code)"
     );
     $stmt->bind_param(
-        "siiii",
+        "sii",
         $titel,
         $superCatID,
-        $user_id,
-        $new_id,
-        $exit_code
+        $user_id
     );
+    executeSuccessfulOrDie($stmt);
 
-    executeOrDie($stmt);
+    // get new_id and exit_code from insertion.
+    $stmt = $conn->prepare(
+        "SELECT @new_id, @exit_code"
+    );
+    executeSuccessfulOrDie($stmt);
+
+    $results = $stmt->get_result()->fetch_assoc();
+    // print_r($results); echo "<br>";
+    $new_id = $results["@new_id"];
+    $ec = $results["@exit_code"];
 
     echo "in-scope new_id = " . strval($new_id) . "<br>";
-    echo "in-scope exit_code = " . strval($exit_code) . "<br>";
+    echo "in-scope exit_code = " . strval($ec) . "<br>";
 
     return $exit_code;
 }

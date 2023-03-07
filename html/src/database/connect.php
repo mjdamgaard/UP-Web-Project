@@ -31,7 +31,7 @@ function getConnectionOrDie() {
     return $conn;
 }
 
-function executeOrDie($stmt) {
+function executeSuccessfulOrDie($stmt) {
     $stmt->execute();
 
     $error = mysqli_stmt_error($stmt);
