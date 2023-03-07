@@ -9,36 +9,30 @@ require_once "extra_initial_insert_lib.php";
 
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // $lexItem = sanitize_input($_POST["lexItem"]);
-    // $description = sanitize_input($_POST["description"]);
-    // $user_id = 1;
 
-    // $str_lexItem_of_hasLexItem = ".Lexical item:";
-    // $str_description_of_hasLexItem =
-    //     file_get_contents("description_of_hasLexItem.txt");
-    //
-    // $str_lexItem_of_hasDescription = ".Description:";
-    // $str_description_of_hasDescription =
-    //     file_get_contents("description_of_hasDescription.txt");
-    //
-    // // insertion functions.
-    // insertRels_hasLexItem_and_hasDescription(
-    //     $str_lexItem_of_hasLexItem,
-    //     $str_description_of_hasLexItem,
-    //     $str_lexItem_of_hasDescription,
-    //     $str_description_of_hasDescription
-    // );
-
-
-    // list($newID, $ec) = insertOrFindCat("Terms", 1, NULL);
-    $result = insertOrFindCat("Terms", 1, NULL);
-    // list($newID, $ec) = $outputs;
-    $id = $result["id"];
-    $ec = $result["ec"];
+    $res = insertOrFindCat("Terms", 1, NULL);
+    $id = $res["id"];
+    $ec = $res["ec"];
 
     echo "new (or old) ID = " . strval($id) . "<br>";
     echo "exit code = " . strval($ec) . "<br>";
 
+
+    insertOrFindCat("Terms", 1, NULL);
+    insertOrFindCat("Categories", 1, NULL);
+    insertOrFindCat("Standard terms", 1, NULL);
+    insertOrFindCat("Relations", 1, NULL);
+
+    insertOrFindCat("Users", 1, NULL);
+    insertOrFindCat("User groups", 1, NULL);
+
+    insertOrFindCat("Data terms", 1, NULL);
+
+    insertOrFindCat("Keyword strings", 7, NULL);
+    insertOrFindCat("Sets", 7, NULL);
+    insertOrFindCat("Lists", 7, NULL);
+    insertOrFindCat("Texts", 7, NULL);
+    insertOrFindCat("Binaries", 7, NULL);
 }
 
 // function sanitize_input($data) {

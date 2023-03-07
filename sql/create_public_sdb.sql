@@ -12,9 +12,9 @@ DELETE FROM Categories;
 DELETE FROM StandardTerms;
 DELETE FROM Relations;
 DELETE FROM KeywordStrings;
-DELETE FROM SavedSets;
-DELETE FROM Texts;
+DELETE FROM ConstantSets;
 DELETE FROM Lists;
+DELETE FROM Texts;
 DELETE FROM Binaries;
 
 DELETE FROM Creators;
@@ -32,10 +32,10 @@ DELETE FROM Creators;
 -- DROP TABLE Relations;
 -- DROP TABLE KeywordStrings;
 --
--- DROP TABLE SavedSets;
+-- DROP TABLE ConstantSets;
 --
--- DROP TABLE Texts;
 -- DROP TABLE Lists;
+-- DROP TABLE Texts;
 -- DROP TABLE Binaries;
 --
 -- /* Meta data */
@@ -380,14 +380,14 @@ CREATE TABLE Relations (
 
     subj_cat_id BIGINT UNSIGNED NOT NULL,
 
-    -- flag representing if relation expects only one object (in general) per
-    -- subject.
-    is_one_to_one TINYINT NOT NULL,
+    -- -- flag representing if relation expects only one object (in general) per
+    -- -- subject.
+    -- is_one_to_one TINYINT NOT NULL,
 
     -- -- description.
     -- descr TEXT
 
-    UNIQUE INDEX (obj_noun, obj_cat_id, subj_cat_id, is_one_to_one)
+    UNIQUE INDEX (obj_noun, obj_cat_id, subj_cat_id)
 
     -- CONSTRAINT CHK_Relations_subj_cat_id CHECK (
     --     subj_cat_id BETWEEN 0x2000000000000000 AND 0x3000000000000000 - 1
@@ -419,11 +419,11 @@ CREATE TABLE KeywordStrings (
 
 
 
--- Jeg tror at SavedSets ("set") bare simpelthen skal være en
+-- Jeg tror at ConstantSets ("set") bare simpelthen skal være en
 -- VARBINARY(2**16).. ..eller en BLOB med andre ord.. som så indeholder
 -- en liste over (rat_data, (obj_t, obj_id))-tupler..
 
-CREATE TABLE SavedSets (
+CREATE TABLE ConstantSets (
     /* saved set ID */
     id BIGINT UNSIGNED PRIMARY KEY,
     -- type = "set".
@@ -434,35 +434,6 @@ CREATE TABLE SavedSets (
 );
 
 
-
-
-
-
-
-
-
--- CREATE TABLE Strings (
---     /* variable character string ID */
---     id BIGINT UNSIGNED PRIMARY KEY,
---
---     -- /* creator */
---     -- user_id BIGINT UNSIGNED,
---
---     /* data */
---     str VARCHAR(255) UNIQUE,
---     FULLTEXT idx (str)
--- );
--- -- INSERT INTO Strings (id) VALUES (0xA000000000000000);
-
-CREATE TABLE Texts (
-    /* text ID */
-    id BIGINT UNSIGNED PRIMARY KEY,
-    -- type = "txt".
-
-    /* data */
-    str TEXT
-);
--- INSERT INTO Strings (id) VALUES (0xB000000000000000);
 
 
 
@@ -506,6 +477,32 @@ CREATE TABLE Lists (
 
 
 
+
+-- CREATE TABLE Strings (
+--     /* variable character string ID */
+--     id BIGINT UNSIGNED PRIMARY KEY,
+--
+--     -- /* creator */
+--     -- user_id BIGINT UNSIGNED,
+--
+--     /* data */
+--     str VARCHAR(255) UNIQUE,
+--     FULLTEXT idx (str)
+-- );
+-- -- INSERT INTO Strings (id) VALUES (0xA000000000000000);
+
+CREATE TABLE Texts (
+    /* text ID */
+    id BIGINT UNSIGNED PRIMARY KEY,
+    -- type = "txt".
+
+    /* data */
+    str TEXT
+);
+-- INSERT INTO Strings (id) VALUES (0xB000000000000000);
+
+
+
 CREATE TABLE Binaries (
     /* binary string ID */
     id BIGINT UNSIGNED PRIMARY KEY,
@@ -524,6 +521,8 @@ CREATE TABLE Binaries (
 --     bin BLOB
 -- );
 -- -- INSERT INTO Blobs (id) VALUES (0x9000000000000000);
+
+
 
 
 

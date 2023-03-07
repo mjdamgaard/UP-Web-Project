@@ -19,13 +19,25 @@ DROP PROCEDURE insertTerm;
 DROP PROCEDURE insertRelationalPredicate;
 
 
+
+
+
+DROP PROCEDURE insertOrFindCat;
+DROP PROCEDURE insertOrFindStd;
+DROP PROCEDURE insertOrFindRel;
+
+
+
+
+
+
 -- DELETE FROM Sets;
 -- DELETE FROM SemanticInputs;
 --
 -- DELETE FROM UserGroups;
 -- DELETE FROM Users;
 --
--- DELETE FROM Categories;
+TRUNCATE TABLE Categories; -- slow..
 -- DELETE FROM StandardTerms;
 -- DELETE FROM Relations;
 -- DELETE FROM KeywordStrings;
@@ -34,7 +46,7 @@ DROP PROCEDURE insertRelationalPredicate;
 -- DELETE FROM Lists;
 -- DELETE FROM Binaries;
 --
--- DELETE FROM Creators;
+DELETE FROM Creators;
 
 
 
@@ -53,7 +65,7 @@ CREATE PROCEDURE insertOrFindCat (
 BEGIN
     SELECT id INTO new_id
     FROM Categories
-    WHERE title = in_title AND super_cat_id = in_super_cat_id;
+    WHERE (title = in_title AND super_cat_id = in_super_cat_id);
     IF (new_id IS NULL) THEN
         INSERT INTO Categories (title, super_cat_id)
         VALUES (in_title, in_super_cat_id);
@@ -70,6 +82,71 @@ BEGIN
 END //
 DELIMITER ;
 
+
+
+DELIMITER //
+CREATE PROCEDURE insertOrFindStd (
+    IN in_title TEXT,
+    IN in_cat_id BIGINT UNSIGNED,
+    IN in_user_id BIGINT UNSIGNED,
+    OUT new_id BIGINT UNSIGNED,
+    OUT exit_code TINYINT -- 0 is successful insertion, 1 is successful find.
+)
+BEGIN
+    SELECT id INTO new_id
+    FROM StandardTerms
+    WHERE (title = in_title AND cat_id = in_cat_id);
+    IF (new_id IS NULL) THEN
+        INSERT INTO StandardTerms (title, cat_id)
+        VALUES (in_title, in_cat_id);
+        SELECT LAST_INSERT_ID() INTO new_id;
+        IF (in_user_id IS NOT NULL) THEN
+            -- NOTE: This procedure assumes that user_id is correct if not null.
+            INSERT INTO Creators (term_t, term_id, user_id)
+            VALUES ("std", new_id, in_user_id);
+        END IF;
+        SET exit_code = 0; -- insert.
+    ELSE
+        SET exit_code = 1; -- find.
+    END IF;
+END //
+DELIMITER ;
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertOrFindRel (
+    IN in_obj_noun TEXT,
+    IN in_obj_cat_id BIGINT UNSIGNED,
+    IN in_subj_cat_id BIGINT UNSIGNED,
+    IN in_user_id BIGINT UNSIGNED,
+    OUT new_id BIGINT UNSIGNED,
+    OUT exit_code TINYINT -- 0 is successful insertion, 1 is successful find.
+)
+BEGIN
+    SELECT id INTO new_id
+    FROM Relations
+    WHERE (
+        obj_noun = in_obj_noun AND
+        obj_cat_id = in_obj_cat_id AND
+        subj_cat_id = in_subj_cat_id
+    );
+    IF (new_id IS NULL) THEN
+        INSERT INTO Relations (obj_noun, obj_cat_id, subj_cat_id)
+        VALUES (in_obj_noun, in_obj_cat_id, in_subj_cat_id);
+        SELECT LAST_INSERT_ID() INTO new_id;
+        IF (in_user_id IS NOT NULL) THEN
+            -- NOTE: This procedure assumes that user_id is correct if not null.
+            INSERT INTO Creators (term_t, term_id, user_id)
+            VALUES ("rel", new_id, in_user_id);
+        END IF;
+        SET exit_code = 0; -- insert.
+    ELSE
+        SET exit_code = 1; -- find.
+    END IF;
+END //
+DELIMITER ;
 
 
 
