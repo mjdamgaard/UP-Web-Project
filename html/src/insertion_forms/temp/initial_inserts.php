@@ -10,7 +10,7 @@ require_once "extra_initial_insert_lib.php";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    $res = insertOrFindCat("Terms", 1, NULL);
+    $res = insertOrFindCat("Terms", 0, NULL);
     $id = $res["id"];
     $ec = $res["ec"];
 
