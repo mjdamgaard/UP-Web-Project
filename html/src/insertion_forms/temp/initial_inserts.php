@@ -18,7 +18,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     echo "exit code = " . strval($ec) . "<br>";
 
 
-    insertOrFindCat("Terms", 1, NULL);
+    insertOrFindCat("Terms", 0, NULL);
     insertOrFindCat("Categories", 1, NULL);
     insertOrFindCat("Standard terms", 1, NULL);
     insertOrFindCat("Relations", 1, NULL);
