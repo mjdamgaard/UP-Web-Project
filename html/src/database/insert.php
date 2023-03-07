@@ -32,28 +32,34 @@ require_once $database_path . "connect.php";
 // }
 
 
-function insertCat($titel, $superCatID, $user_id, $new_id) {
+function insertOrFindCat($titel, $superCatID, $user_id, $new_id) {
     $conn = getConnectionOrDie();
 
+    $exit_code = -1;
+
     $stmt = $conn->prepare(
-        "INSERT INTO Categories (title, super_cat)
-         VALUES (?, ?);
-         INSERT INTO Creators (term_t, term_id, user_id)
-         VALUES ('cat', ?);
-        "
+        // "INSERT INTO Categories (title, super_cat)
+        //  VALUES (?, ?);
+        //  INSERT INTO Creators (term_t, term_id, user_id)
+        //  VALUES ('cat', ?);
+        // "
+        "CALL insertOrFindCat (?, ?, ?, ?, ?)"
     );
     $stmt->bind_param(
-        "si",
-        $superCatID
+        "siiii",
+        $titel,
+        $superCatID,
         $user_id,
         $new_id,
-        $exit_code_lex, $exit_code_dscr
+        $exit_code
     );
 
     executeOrDie($stmt);
 
-    $new_id = ;
-    return 0;
+    echo "in-scope new_id = " . strval($new_id) . "<br>";
+    echo "in-scope exit_code = " . strval($exit_code) . "<br>";
+
+    return $exit_code;
 }
 
 

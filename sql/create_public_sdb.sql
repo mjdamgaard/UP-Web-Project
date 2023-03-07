@@ -339,9 +339,9 @@ CREATE TABLE Categories (
     FULLTEXT idx (title),
 
     -- id of a defining super category.
-    super_cat BIGINT UNSIGNED NOT NULL,
+    super_cat_id BIGINT UNSIGNED NOT NULL,
 
-    UNIQUE INDEX (title, super_cat)
+    UNIQUE INDEX (title, super_cat_id)
 );
 -- ALTER TABLE Categories AUTO_INCREMENT = 2000000000000000001;
 
@@ -355,10 +355,10 @@ CREATE TABLE StandardTerms (
     FULLTEXT idx (title),
 
     -- id of a defining category.
-    cat BIGINT UNSIGNED NOT NULL,
+    cat_id BIGINT UNSIGNED NOT NULL,
     -- Note that 0x2000000000000001 is category of all Terms.
 
-    UNIQUE INDEX (title, cat)
+    UNIQUE INDEX (title, cat_id)
 );
 -- ALTER TABLE StandardTerms AUTO_INCREMENT = 2000000000000000001;
 
@@ -376,9 +376,9 @@ CREATE TABLE Relations (
     obj_noun VARCHAR(255) NOT NULL,
     FULLTEXT idx (obj_noun),
 
-    obj_cat BIGINT UNSIGNED NOT NULL,
+    obj_cat_id BIGINT UNSIGNED NOT NULL,
 
-    subj_cat BIGINT UNSIGNED NOT NULL,
+    subj_cat_id BIGINT UNSIGNED NOT NULL,
 
     -- flag representing if relation expects only one object (in general) per
     -- subject.
@@ -387,14 +387,14 @@ CREATE TABLE Relations (
     -- -- description.
     -- descr TEXT
 
-    UNIQUE INDEX (obj_noun, obj_cat, subj_cat, is_one_to_one)
+    UNIQUE INDEX (obj_noun, obj_cat_id, subj_cat_id, is_one_to_one)
 
-    -- CONSTRAINT CHK_Relations_subj_cat CHECK (
-    --     subj_cat BETWEEN 0x2000000000000000 AND 0x3000000000000000 - 1
+    -- CONSTRAINT CHK_Relations_subj_cat_id CHECK (
+    --     subj_cat_id BETWEEN 0x2000000000000000 AND 0x3000000000000000 - 1
     -- ),
 
-    -- CONSTRAINT CHK_Relations_obj_cat CHECK (
-    --     obj_cat BETWEEN 0x2000000000000000 AND 0x3000000000000000 - 1
+    -- CONSTRAINT CHK_Relations_obj_cat_id CHECK (
+    --     obj_cat_id BETWEEN 0x2000000000000000 AND 0x3000000000000000 - 1
     -- )
 );
 -- ALTER TABLE Relations AUTO_INCREMENT = 3000000000000000001;

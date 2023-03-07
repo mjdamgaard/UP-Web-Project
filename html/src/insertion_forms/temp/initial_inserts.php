@@ -11,24 +11,31 @@ require_once "extra_initial_insert_lib.php";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // $lexItem = sanitize_input($_POST["lexItem"]);
     // $description = sanitize_input($_POST["description"]);
-    $user_id = 1;
+    // $user_id = 1;
 
-    $str_lexItem_of_hasLexItem = ".Lexical item:";
-    $str_description_of_hasLexItem =
-        file_get_contents("description_of_hasLexItem.txt");
+    // $str_lexItem_of_hasLexItem = ".Lexical item:";
+    // $str_description_of_hasLexItem =
+    //     file_get_contents("description_of_hasLexItem.txt");
+    //
+    // $str_lexItem_of_hasDescription = ".Description:";
+    // $str_description_of_hasDescription =
+    //     file_get_contents("description_of_hasDescription.txt");
+    //
+    // // insertion functions.
+    // insertRels_hasLexItem_and_hasDescription(
+    //     $str_lexItem_of_hasLexItem,
+    //     $str_description_of_hasLexItem,
+    //     $str_lexItem_of_hasDescription,
+    //     $str_description_of_hasDescription
+    // );
 
-    $str_lexItem_of_hasDescription = ".Description:";
-    $str_description_of_hasDescription =
-        file_get_contents("description_of_hasDescription.txt");
+    $new_id = -1;
+    $ec = -1;
 
-    // insertion functions.
-    insertRels_hasLexItem_and_hasDescription(
-        $str_lexItem_of_hasLexItem,
-        $str_description_of_hasLexItem,
-        $str_lexItem_of_hasDescription,
-        $str_description_of_hasDescription
-    );
+    $ec = insertOrFindCat("Terms", 1, NULL, $new_id);
 
+    echo "new_id = " . strval($new_id) . "<br>";
+    echo "exit_code = " . strval($ec) . "<br>";
 
 }
 
