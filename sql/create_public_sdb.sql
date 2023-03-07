@@ -12,19 +12,18 @@ DELETE FROM Categories;
 DELETE FROM StandardTerms;
 DELETE FROM Relations;
 DELETE FROM KeywordStrings;
-
--- DELETE FROM SavedSets;
-
-DELETE FROM Creators;
-
+DELETE FROM SavedSets;
 DELETE FROM Texts;
 DELETE FROM Lists;
 DELETE FROM Binaries;
 
+DELETE FROM Creators;
 
+-- /* Semantic inputs */
 -- DROP TABLE Sets;
 -- DROP TABLE SemanticInputs;
 --
+-- /* Terms */
 -- DROP TABLE UserGroups;
 -- DROP TABLE Users;
 --
@@ -35,22 +34,14 @@ DELETE FROM Binaries;
 --
 -- DROP TABLE SavedSets;
 --
--- DROP TABLE Creators;
---
 -- DROP TABLE Texts;
 -- DROP TABLE Lists;
 -- DROP TABLE Binaries;
-
-
-
-
-
-
-/* Types */
--- SET @start_dist = 0x1000000000000000;
 --
--- SET @bot_start = 0x0000000000000000;
--- SET @user_start = 0x1000000000000000;
+-- /* Meta data */
+-- DROP TABLE Creators;
+
+
 
 
 
@@ -84,18 +75,6 @@ CREATE TABLE Sets (
 
     set_id BIGINT UNSIGNED NOT NULL UNIQUE
     -- Sets are not Terms, so IDs take any value.
-
-    -- CONSTRAINT CHK_Sets_user CHECK (
-    --     user_id BETWEEN 0 AND 0x2000000000000000 - 1
-    -- ),
-
-    -- relations cannot be users/bots or any data terms (0x70 and up). They
-    -- can only be "semantic terms" in other words.
-    -- CONSTRAINT CHK_Sets_rel_is_semantic CHECK (
-    --     rel_id BETWEEN 0x2000000000000000 AND 0x7000000000000000 - 1
-    -- )
-
-
 );
 
 
@@ -257,21 +236,6 @@ VALUES (
 --
 -- );
 
--- INSERT INTO SemanticUserGroupInputs (
---     set_id,
---     inv_rat_val,
---     inv_wc_exp_t4,
---     obj_id
--- )
--- VALUES (
---     1,
---     2,
---     3,
---     4
--- );
-
-
-
 
 -- CREATE VIEW SemanticInputs AS
 -- SELECT
@@ -296,91 +260,10 @@ VALUES (
 
 
 
--- CREATE TABLE SemanticInputs (
---     -- subject of relation or predicate.
---     subj_id BIGINT UNSIGNED,
---
---     -- user, native bot or user group who states the statement.
---     user_id BIGINT UNSIGNED,
---
---     -- relation or predicate id.
---     rel_id BIGINT UNSIGNED,
---
---     -- relation object (second input, so to speak) if rel is a relation.
---     -- if rel is a predicate, then obj_id has to be 0.
---     obj_id BIGINT UNSIGNED,
---     -- FOREIGN KEY (pred_or_rel) REFERENCES Term(id),
---
---
---     -- date.
---     created_at DATE DEFAULT (CURRENT_DATE),
---
---     -- numerical value (signed) which defines the degree to which the users
---     -- (or bot) deems the statement to be true/fitting.
---     -- When dividing the TINYINT with 128,
---     -- this value runs from -1 to (almost) 1. And then -1 is taken to mean
---     -- "very far from true/fitting," 0 is taken to mean "not sure / not
---     -- particularly fitting or unfitting," and 1 is taken to mean "very much
---     -- true/fitting."
---     rat_val TINYINT,
---     opt_data VARBINARY(255),
---
---
---
---
---     PRIMARY KEY (
---         subj_id,
---         user_id,
---         rel_id,
---         obj_id,
---         created_at
---     ),
---
---
---     CONSTRAINT CHK_SemanticInputs_user_id CHECK (
---         user_id BETWEEN 0 AND 0x2000000000000000 - 1
---     ),
---
---     -- relations cannot be users/bots or any data terms (0x70 and up). They
---     -- can only be "semantic terms" in other words.
---     CONSTRAINT CHK_SemanticInputs_rel_is_semantic CHECK (
---         rel_id BETWEEN 0x2000000000000000 AND 0x7000000000000000 - 1
---     ),
---
---     -- if rel is a derived (i.e. functional) term, then it cannot be a
---     -- predicate, meaning that obj_id cannot be 0.
---     CONSTRAINT CHK_SemanticInputs_obj_not_zero_if_rel_is_derived CHECK (
---         NOT (rel_id BETWEEN 0x2000000000000000 AND 0x3000000000000000 - 1)
---         OR NOT (obj_id = 0)
---     )
---
---
---     -- CONSTRAINT CHK_rat_val_not_min CHECK (rat_val <> 0x80)
---     -- -- This makes max and min values equal to 127 and -127, respectively.
---     -- -- Divide by 127 to get floating point number strictly between -1 and 1.
---
---
---
--- );
-
-
-
--- CREATE TABLE NativeBots (
---     -- bot ID.
---     id BIGINT UNSIGNED PRIMARY KEY,
---     -- type code = 0x00, -- (but all types start from 0x..00000000000001)
---
---     /* primary fields */
---     -- description_t is not needed; it is always String type.
---     description_id BIGINT UNSIGNED
--- );
--- -- INSERT INTO NativeBots (id) VALUES (0x0000000000000000);
-
-
 CREATE TABLE UserGroups (
     -- user group ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    -- type = "ugr".
+    -- type = "grp".
 
     -- id of the creating user group (or user or bot).
     creator_id BIGINT UNSIGNED,
@@ -399,6 +282,7 @@ CREATE TABLE UserGroups (
     -- however. (But I just wanted to note the possibility, should we realize
     -- that it will be useful at some point.)
 
+
     -- date after which, if it is not NULL, all ratings are frozen and no new
     -- ratings are recorded for the user group. The end date can start out as
     -- NULL and then be set to a value at a later date, if the group decides
@@ -414,20 +298,8 @@ CREATE TABLE UserGroups (
     -- of this user group. A "constant" user group (with is_dynamic = FALSE),
     -- on the other hand, has constant weights which are set at the "effective
     -- creation date" and not changed after that.
-    is_dynamic TINYINT -- BOOL,
-
-    -- -- Flag (interpreted as a BOOL) telling is the user group is live, meaning
-    -- -- that the servers will make sure to continously update its semantic
-    -- -- inputs (which generally always include a weighted average of the
-    -- -- ratings from the user group).
-    -- -- If the flag is 0, then the user group is live. If it is not 0, the user
-    -- -- group is either in the proces of being created (i.e. before the
-    -- -- "effective creation date" has been set), or it has been discontinued
-    -- -- by the servers. The value of the flag might signal the reason.
-    -- is_inactive TINYINT -- BOOL
+    is_dynamic TINYINT -- BOOL
 );
--- -- ALTER TABLE UserGroups AUTO_INCREMENT = CONV(0x0000000000000001, 16, 10);
--- -- 0x0000000000000001 = 1.
 -- ALTER TABLE UserGroups AUTO_INCREMENT = 1;
 
 
@@ -436,17 +308,17 @@ CREATE TABLE Users (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     -- type = "usr".
 
-    -- num_inserts_today INT,
+    -- upload_vol_today INT,
+    -- download_vol_today INT,
 
+    -- In order for third parties to be able to copy the database and then
+    -- be able to have users log on, without the need for exchanging
+    -- passwords between (third) parties.
     pub_encr_key VARBINARY(10000),
 
     /* timestamp */
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
--- -- ALTER TABLE Users AUTO_INCREMENT = CONV(0x1000000000000001, 16, 10);
--- -- -- 0x1000000000000001 = 1152921504606846977.
--- -- A..TABLE UserGroups AUTO_INCREMENT = 1152921504606846977;
--- ALTER TABLE Users AUTO_INCREMENT = 1000000000000000001;
 
 
 
@@ -466,25 +338,10 @@ CREATE TABLE Categories (
     title VARCHAR(255) NOT NULL,
     FULLTEXT idx (title),
 
-    -- -- possible empty list of BIGINTs pointing to super categories.
-    -- super_cats VARBINARY(248)
-    -- -- this is useful when the title is best understood in the context of
-    -- -- one or more super categories.
-
     -- id of a defining super category.
     super_cat BIGINT UNSIGNED NOT NULL,
-    -- This is useful when the title is best understood in the context of
-    -- a super category.
-    -- Note that 0x2000000000000001 is category of all Terms.
-
-    -- -- description.
-    -- descr TEXT
 
     UNIQUE INDEX (title, super_cat)
-
-    -- CONSTRAINT CHK_Categories_super_cat CHECK (
-    --     super_cat BETWEEN 0x2000000000000000 AND 0x3000000000000000 - 1
-    -- )
 );
 -- ALTER TABLE Categories AUTO_INCREMENT = 2000000000000000001;
 
@@ -502,10 +359,6 @@ CREATE TABLE StandardTerms (
     -- Note that 0x2000000000000001 is category of all Terms.
 
     UNIQUE INDEX (title, cat)
-
-    -- CONSTRAINT CHK_Terms_super_cat CHECK (
-    --     super_cat BETWEEN 0x2000000000000000 AND 0x3000000000000000 - 1
-    -- )
 );
 -- ALTER TABLE StandardTerms AUTO_INCREMENT = 2000000000000000001;
 
@@ -559,90 +412,8 @@ CREATE TABLE KeywordStrings (
 -- ALTER TABLE KeywordStrings AUTO_INCREMENT = 4000000000000000001;
 
 
--- CREATE TABLE FundamentalTerms (
---     -- simple term ID.
---     id BIGINT UNSIGNED PRIMARY KEY,
---
---     /* A SimpleTerm takes as its first descriptor a string denoting af
---      * lexical item (a semantically meaningful part of a sentence). Examples of
---      * lexical items could be: "the number pi", "is subset of",
---      * "has related link:", "is funny", "is" and "funny".
---      * The description is an (optional) text description, which can be used to
---      * explain the lexical item more thoroughly, and to clear up any potential
---      * ambiguities.
---      **/
---
---     -- defining lexical item.
---     lex_item BIGINT UNSIGNED,
---
---     -- description.
---     descr BIGINT UNSIGNED,
---
---     -- CONSTRAINT CHK_FundamentalTerms_lex_item CHECK (
---     --     lex_item BETWEEN 0xA000000000000000 AND 0xB000000000000000 - 1
---     -- ),
---     --
---     -- CONSTRAINT CHK_FundamentalTerms_descr CHECK (
---     --     descr BETWEEN 0xB000000000000000 AND 0xC000000000000000 - 1
---     -- )
--- );
-
--- CREATE TABLE StandardTerms (
---     /* standard term ID */
---     -- type TINYINT = 3,
---     id BIGINT UNSIGNED AUTO_INCREMENT,
---     PRIMARY KEY(id),
---
---
---     -- specifying parent predicates.
---     -- spec_parent_preds_t not needed; it is always List type.
---     spec_parent_preds_id BIGINT UNSIGNED,
---
---     -- specifying child predicates.
---     -- spec_child_preds_t not needed; it is always List type.
---     spec_child_preds_id BIGINT UNSIGNED
--- );
---
 
 
--- -- Predicate terms, each formed from an existing relation and a relational
--- -- object.
--- CREATE TABLE RelationalPredicates (
---     /* relational predicate ID */
---     id BIGINT UNSIGNED PRIMARY KEY,
---
---     -- relation.
---     rel_id BIGINT UNSIGNED NOT NULL,
---     -- relational object.
---     obj_id BIGINT UNSIGNED NOT NULL,
---
---     CONSTRAINT CHK_RelationalPredicates_rel_id CHECK (
---         rel_id BETWEEN 0x3000000000000000 AND 0x7000000000000000 - 1
---     ),
---
---     CONSTRAINT UNIQUE_RelationalPredicates_rel_and_obj UNIQUE (rel_id, obj_id)
--- );
-
-
-
-
-
--- -- Terms derived from taking a function on an input.
--- CREATE TABLE DerivedTerms (
---     /* relational predicate ID */
---     id BIGINT UNSIGNED PRIMARY KEY,
---
---     -- function.
---     fun BIGINT UNSIGNED NOT NULL,
---     -- input.
---     input BIGINT UNSIGNED NOT NULL,
---
---     CONSTRAINT CHK_DerivedTerms_fun_is_semantic CHECK (
---         fun BETWEEN 0x2000000000000000 AND 0x7000000000000000 - 1
---     ),
---
---     CONSTRAINT UNIQUE_DerivedTerms_fun_input UNIQUE (fun, input)
--- );
 
 
 
@@ -663,78 +434,6 @@ CREATE TABLE SavedSets (
 );
 
 
-
-
-
-
-
-
-
-
--- -- I think it will be easiest to use the same procedure for getting next id
--- -- pointers for all terms, so let me actually just make NextIDPointers
--- -- include all types. ..(Then it will also be easier to implement, if I want
--- -- to have several pointers in play for the same type at a time (maybe in
--- -- order to allocate ids..))..
--- CREATE TABLE NextIDPointers (
---     type_code TINYINT UNSIGNED,
---     next_id_pointer BIGINT UNSIGNED,
---
---     -- this id is not intended for any use!
---     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY
---     -- PRIMARY KEY (type_code, id)
--- );
--- INSERT INTO NextIDPointers (type_code, next_id_pointer)
--- VALUES
---     (0x00, 0x0000000000000001),
---     -- (0x06, 0x0600000000000001),
---     (0x10, 0x1000000000000001),
---     (0x20, 0x2000000000000001),
---     (0x30, 0x3000000000000001),
---     (0x70, 0x7000000000000001),
---     (0x80, 0x8000000000000001),
---     (0x90, 0x9000000000000001),
---     (0xA0, 0xA000000000000001),
---     (0xB0, 0xB000000000000001)
--- ;
-
-
-
-CREATE TABLE Creators (
-    term_t CHAR(3),
-    term_id BIGINT UNSIGNED,
-    PRIMARY KEY (term_t, term_id),
-
-    -- creator (always has type = "usr").
-    user_id BIGINT UNSIGNED,
-    INDEX (user_id)
-);
-
-
-
-
-
--- DELIMITER //
--- CREATE PROCEDURE createTerm (
---     IN tc TINYINT UNSIGNED,
---     IN u_id BIGINT UNSIGNED,
---     OUT new_id BIGINT UNSIGNED
--- )
--- BEGIN
---     SELECT next_id_pointer
---     INTO new_id
---     FROM NextIDPointers
---     WHERE type_code = tc
---     FOR UPDATE;
---
---     UPDATE NextIDPointers
---     SET next_id_pointer = next_id_pointer + 1
---     WHERE type_code = tc;
---
---     INSERT INTO Creators (user_id, term_id)
---     VALUES (u_id, new_id);
--- END //
--- DELIMITER ;
 
 
 
@@ -828,6 +527,17 @@ CREATE TABLE Binaries (
 
 
 
+
+
+CREATE TABLE Creators (
+    term_t CHAR(3),
+    term_id BIGINT UNSIGNED,
+    PRIMARY KEY (term_t, term_id),
+
+    -- creator (always has type = "usr").
+    user_id BIGINT UNSIGNED,
+    INDEX (user_id)
+);
 
 
 
