@@ -31,5 +31,27 @@ function getConnectionOrDie() {
     return $conn;
 }
 
+function executeOrDie($stmt) {
+    $stmt->execute();
+
+    $error = mysqli_stmt_error($stmt);
+    if ($error) {
+        die("MySQLi stmt error: " . $error);
+    }
+
+    return 0;
+}
+
+
+function dieIfMySQLiError($conn ) {
+    if ($conn->error) {
+        die("MySQLi error: " . $conn->error);
+    }
+
+    return 0;
+}
+
+
+
 
 ?>

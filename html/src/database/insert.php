@@ -5,25 +5,101 @@ require_once $database_path . "connect.php";
 
 
 
-function insertSimpleTerm($lexItem, $description, $user_id, $new_id) {
+
+
+
+// function insertEntity(
+//     $tableName, $columnNameTuple, $columnTypes, $valueArr, $new_id
+// ) {
+//     $conn = getConnectionOrDie();
+//
+//     $stmt = $conn->prepare(
+//         "INSERT INTO " . $tableName . $columnNameTuple .
+//         "VALUES (" . $values . ")"
+//     );
+//     $stmt->bind_param(
+//         $columnTypes,
+//         $lexItem, $description,
+//         $user_id,
+//         $new_id,
+//         $exit_code_lex, $exit_code_dscr
+//     );
+//
+//     executeOrDie($stmt);
+//
+//     $new_id = ;
+//     return 0;
+// }
+
+
+function insertCat($titel, $superCatID, $user_id, $new_id) {
     $conn = getConnectionOrDie();
 
-
     $stmt = $conn->prepare(
-        "CALL insertTerm (?, ?, ?, ?, ?, ?)"
+        "INSERT INTO Categories (title, super_cat)
+         VALUES (?, ?);
+         INSERT INTO Creators (term_t, term_id, user_id)
+         VALUES ('cat', ?);
+        "
     );
     $stmt->bind_param(
-        "ssiiii",
-        $lexItem, $description,
+        "si",
+        $superCatID
         $user_id,
         $new_id,
         $exit_code_lex, $exit_code_dscr
     );
 
-    $stmt->execute();
+    executeOrDie($stmt);
 
-    return array($exit_code_lex, $exit_code_dscr);
+    $new_id = ;
+    return 0;
 }
+
+
+
+
+
+
+
+
+
+
+function insertStdTerm($lexItem, $description, $user_id, $new_id) {
+
+}
+
+
+
+
+
+
+
+
+// function insertSimpleTerm($lexItem, $description, $user_id, $new_id) {
+//     $conn = getConnectionOrDie();
+//
+//
+//     $stmt = $conn->prepare(
+//         "CALL insertTerm (?, ?, ?, ?, ?, ?)"
+//     );
+//     $stmt->bind_param(
+//         "ssiiii",
+//         $lexItem, $description,
+//         $user_id,
+//         $new_id,
+//         $exit_code_lex, $exit_code_dscr
+//     );
+//
+//     $stmt->execute();
+//
+//     return array($exit_code_lex, $exit_code_dscr);
+// }
+
+
+
+
+
 
 
 
