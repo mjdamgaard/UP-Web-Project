@@ -32,7 +32,7 @@ require_once $database_path . "connect.php";
 // }
 
 
-function insertOrFindCat($titel, $superCatID, $user_id, $new_id) {
+function insertOrFindCat($titel, $superCatID, $userID) {
     $conn = getConnectionOrDie();
 
     // insert or find term.
@@ -43,25 +43,18 @@ function insertOrFindCat($titel, $superCatID, $user_id, $new_id) {
         "sii",
         $titel,
         $superCatID,
-        $user_id
+        $userID
     );
     executeSuccessfulOrDie($stmt);
 
     // get new_id and exit_code from insertion.
     $stmt = $conn->prepare(
-        "SELECT @new_id, @exit_code"
+        "SELECT @new_id AS id, @exit_code AS ec"
     );
     executeSuccessfulOrDie($stmt);
 
-    $results = $stmt->get_result()->fetch_assoc();
-    // print_r($results); echo "<br>";
-    $new_id = $results["@new_id"];
-    $ec = $results["@exit_code"];
-
-    echo "in-scope new_id = " . strval($new_id) . "<br>";
-    echo "in-scope exit_code = " . strval($ec) . "<br>";
-
-    return $exit_code;
+    // return array("newID" => @new_id, "exitCode" => @exit_code).
+    return $stmt->get_result()->fetch_assoc();
 }
 
 
@@ -73,7 +66,7 @@ function insertOrFindCat($titel, $superCatID, $user_id, $new_id) {
 
 
 
-function insertStdTerm($lexItem, $description, $user_id, $new_id) {
+function insertStdTerm($lexItem, $description, $userID, $newID) {
 
 }
 

@@ -29,13 +29,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     //     $str_description_of_hasDescription
     // );
 
-    $new_id = -1;
-    $ec = -1;
 
-    $ec = insertOrFindCat("Terms", 1, NULL, $new_id);
+    // list($newID, $ec) = insertOrFindCat("Terms", 1, NULL);
+    $result = insertOrFindCat("Terms", 1, NULL);
+    // list($newID, $ec) = $outputs;
+    $id = $result["id"];
+    $ec = $result["ec"];
 
-    echo "new_id = " . strval($new_id) . "<br>";
-    echo "exit_code = " . strval($ec) . "<br>";
+    echo "new (or old) ID = " . strval($id) . "<br>";
+    echo "exit code = " . strval($ec) . "<br>";
 
 }
 
