@@ -117,6 +117,9 @@ CREATE TABLE Sets (
 -- enten ordnes efter ascending eller descending order). (13:04)
 -- ..(13:12) Ah, og så kan vi forresten også samle SemanticUserInputs og
 -- SemanticUserGroupInputs igen til bare SemanticInputs..
+-- (14:50) Hm, jeg tror nu, at jeg alligevel vil kalde det 'rat_val' i stedet
+-- for rat_data, og så bliver det bare underforstået, at val også kan
+-- indeholde data på de mindre betydende bytes.
 
 
 /* Statements which the users (or bots) give as input to the semantic network.
@@ -144,7 +147,7 @@ CREATE TABLE SemanticInputs (
     -- -- inv_rat_val is the multiplicational inverse of rat_val, meaning that
     -- -- it is rat_val with its sign flipped.
     -- inv_rat_val TINYINT,
-    rat_data VARBINARY(255) NOT NULL,
+    rat_val VARBINARY(255) NOT NULL,
 
     -- object of the relation defining the set (i.e. the primary part of the
     -- member of which the rating is about).
@@ -161,7 +164,7 @@ CREATE TABLE SemanticInputs (
     PRIMARY KEY (
         set_id,
         -- inv_rat_val,
-        rat_data,
+        rat_val,
         obj_t,
         obj_id
     )
@@ -182,7 +185,7 @@ CREATE TABLE SemanticInputs (
 
 INSERT INTO SemanticInputs (
     set_id,
-    rat_data,
+    rat_val,
     obj_t,
     obj_id
 )
@@ -270,11 +273,6 @@ VALUES (
 
 
 
-/* Statements which the users (or bots) give as input to the semantic network.
- * A central feature of this semantic system is that all such statements come
- * with a numerical value which represents the degree to which the user deems
- * that the statement is correct (like when answering a survey).
- **/
 -- CREATE VIEW SemanticInputs AS
 -- SELECT
 --     set_id,
@@ -650,12 +648,19 @@ CREATE TABLE KeywordStrings (
 
 
 
+-- Jeg tror at SavedSets ("set") bare simpelthen skal være en
+-- VARBINARY(2**16).. ..eller en BLOB med andre ord.. som så indeholder
+-- en liste over (rat_data, (obj_t, obj_id))-tupler..
 
--- CREATE TABLE SavedSets (
---     -- TODO: Jeg tror at SavedSets ("set") bare simpelthen skal være en
---     -- VARBINARY(2**16).. ..eller en BLOB med andre ord.. som så indeholder
---     -- en liste over (rat_data, (obj_t, obj_id))-tupler..
--- );
+CREATE TABLE SavedSets (
+    /* saved set ID */
+    id BIGINT UNSIGNED PRIMARY KEY,
+    -- type = "set".
+    -- (We are free to use "set" since the Sets entities are not terms.)
+
+    /* data */
+    elems BLOB
+);
 
 
 
