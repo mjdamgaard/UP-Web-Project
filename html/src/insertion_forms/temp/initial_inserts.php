@@ -19,9 +19,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // categories.
     insertOrFindCat("Terms", 0, NULL);
-    insertOrFindCat("Categories", 1, NULL);
-    insertOrFindCat("Standard terms", 1, NULL);
-    insertOrFindCat("Relations", 1, NULL);
+    // insertOrFindCat("Categories", 1, NULL);
+    // insertOrFindCat("Standard terms", 1, NULL);
+    // insertOrFindCat("Relations", 1, NULL);
 
     $res = insertOrFindCat("Users and bots", 1, NULL);
     $catUserEtcID = $res["id"];
@@ -29,14 +29,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     insertOrFindCat("Users", $catUserEtcID, NULL);
     insertOrFindCat("User groups", $catUserEtcID, NULL);
 
-    $res = insertOrFindCat("Data terms", 1, NULL);
-    $catDataTermsID = $res["id"];
+    // $res = insertOrFindCat("Internal data", 1, NULL);
+    // $catDataTermsID = $res["id"];
+    //
+    // insertOrFindCat("Keyword strings", $catDataTermsID, NULL);
+    // insertOrFindCat("Constant sets", $catDataTermsID, NULL);
+    // insertOrFindCat("Lists", $catDataTermsID, NULL);
+    // insertOrFindCat("Texts", $catDataTermsID, NULL);
+    // insertOrFindCat("Binaries", $catDataTermsID, NULL);
 
-    insertOrFindCat("Keyword strings", $catDataTermsID, NULL);
-    insertOrFindCat("Constant sets", $catDataTermsID, NULL);
-    insertOrFindCat("Lists", $catDataTermsID, NULL);
-    insertOrFindCat("Texts", $catDataTermsID, NULL);
-    insertOrFindCat("Binaries", $catDataTermsID, NULL);
+    // insertOrFindCat("Keyword strings", 1, NULL);
 
     // relations.
     insertOrFindRel("Subcategories", 1, 1, NULL);

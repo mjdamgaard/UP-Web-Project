@@ -27,8 +27,7 @@ DROP PROCEDURE insertOrFindStd;
 DROP PROCEDURE insertOrFindRel;
 
 DROP PROCEDURE findOrCreateSet;
-
-
+DROP PROCEDURE inputOrChangeRating;
 
 
 
@@ -205,7 +204,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE inputRating (
+CREATE PROCEDURE inputOrChangeRating (
     IN u_t CHAR(3),
     IN u_id BIGINT UNSIGNED,
     IN s_t CHAR(3),
