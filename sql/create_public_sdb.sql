@@ -308,16 +308,21 @@ CREATE TABLE Users (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     -- type = "usr".
 
-    -- upload_vol_today INT,
-    -- download_vol_today INT,
+    upload_vol_today BIGINT,
+    download_vol_today BIGINT,
+
+    upload_vol_this_month BIGINT,
+    download_vol_this_month BIGINT,
 
     -- In order for third parties to be able to copy the database and then
     -- be able to have users log on, without the need for exchanging
     -- passwords between (third) parties.
-    pub_encr_key VARBINARY(10000),
+    pub_encr_key VARBINARY(10000)
 
-    /* timestamp */
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    -- /* timestamp */
+    -- not needed since one should rather just keep a rough(!) count on the
+    -- id--date correspondance.
+    -- created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -428,6 +433,18 @@ CREATE TABLE ConstantSets (
     id BIGINT UNSIGNED PRIMARY KEY,
     -- type = "set".
     -- (We are free to use "set" since the Sets entities are not terms.)
+
+    -- user or user group who states the statement.
+    user_t CHAR(3),
+    user_id BIGINT UNSIGNED,
+
+    -- subject of relation.
+    subj_t CHAR(3),
+    subj_id BIGINT UNSIGNED,
+
+    -- relation.
+    rel_id BIGINT UNSIGNED,
+
 
     /* data */
     elems BLOB

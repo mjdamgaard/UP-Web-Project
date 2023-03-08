@@ -17,22 +17,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     echo "new (or old) ID = " . strval($id) . "<br>";
     echo "exit code = " . strval($ec) . "<br>";
 
-
+    // categories.
     insertOrFindCat("Terms", 0, NULL);
     insertOrFindCat("Categories", 1, NULL);
     insertOrFindCat("Standard terms", 1, NULL);
     insertOrFindCat("Relations", 1, NULL);
 
-    insertOrFindCat("Users", 1, NULL);
-    insertOrFindCat("User groups", 1, NULL);
+    $res = insertOrFindCat("Users and bots", 1, NULL);
+    $catUserEtcID = $res["id"];
 
-    insertOrFindCat("Data terms", 1, NULL);
+    insertOrFindCat("Users", $catUserEtcID, NULL);
+    insertOrFindCat("User groups", $catUserEtcID, NULL);
 
-    insertOrFindCat("Keyword strings", 7, NULL);
-    insertOrFindCat("Sets", 7, NULL);
-    insertOrFindCat("Lists", 7, NULL);
-    insertOrFindCat("Texts", 7, NULL);
-    insertOrFindCat("Binaries", 7, NULL);
+    $res = insertOrFindCat("Data terms", 1, NULL);
+    $catDataTermsID = $res["id"];
+
+    insertOrFindCat("Keyword strings", $catDataTermsID, NULL);
+    insertOrFindCat("Constant sets", $catDataTermsID, NULL);
+    insertOrFindCat("Lists", $catDataTermsID, NULL);
+    insertOrFindCat("Texts", $catDataTermsID, NULL);
+    insertOrFindCat("Binaries", $catDataTermsID, NULL);
+
+    // relations.
+    insertOrFindRel("Subcategories", 1, 1, NULL);
+    insertOrFindRel("Elements", 1, 1, NULL);
+
+
+
+
+
 }
 
 // function sanitize_input($data) {
