@@ -58,18 +58,17 @@ function insertOrFindStd($titel, $catID, $userID) {
 }
 
 
-function insertOrFindRel($objNoun, $objCat, $subjCat, $userID) {
+function insertOrFindRel($objNoun, $subjCatID, $userID) {
     $conn = getConnectionOrDie();
 
     // insert or find term.
     $stmt = $conn->prepare(
-        "CALL insertOrFindRel (?, ?, ?, ?, @new_id, @exit_code)"
+        "CALL insertOrFindRel (?, ?, ?, @new_id, @exit_code)"
     );
     $stmt->bind_param(
-        "siii",
+        "sii",
         $objNoun,
-        $objCat,
-        $subjCat,
+        $subjCatID,
         $userID
     );
     executeSuccessfulOrDie($stmt);

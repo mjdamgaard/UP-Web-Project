@@ -41,8 +41,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // insertOrFindCat("Keyword strings", 1, NULL);
 
     // relations.
-    insertOrFindRel("Subcategories", 1, 1, NULL);
-    insertOrFindRel("Elements", 1, 1, NULL);
+    insertOrFindRel("Subcategories", 1, NULL);
+    insertOrFindRel("Elements", 1, NULL);
 
 
 

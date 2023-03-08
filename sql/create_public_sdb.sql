@@ -106,7 +106,6 @@ CREATE TABLE Sets (
 
 
 
-
 -- (12:56, 07.03.23) Jeg tror faktisk, at jeg vil sige, at både Users og
 -- UserGroups bare holder en VARBINARY i stedet for rat_val og anden data,
 -- og så sørger jeg bare for at denne "rat_data" bliver en del af nøglen.
@@ -161,13 +160,6 @@ CREATE TABLE SemanticInputs (
     obj_t CHAR(3),
     obj_id BIGINT UNSIGNED,
 
-    -- PRIMARY KEY (
-    --     set_id, -- suggested abbr.: sid
-    --     rat_val,  -- suggested abbr.: rval
-    --     rat_w, -- suggested abbr.: rw
-    --     obj_id -- suggested abbr.: oid
-    -- ),
-
     PRIMARY KEY (
         set_id,
         rat_val,
@@ -181,108 +173,7 @@ CREATE TABLE SemanticInputs (
     -- -- w = 2^(- inv_w_exp / 32).
     -- inv_w_exp_t32 TINYINT UNSIGNED NOT NULL
 
-
-    -- CONSTRAINT CHK_rat_val_not_min CHECK (rat_val <> 0x80)
-    -- -- This makes max and min values equal to 127 and -127, respectively.
-    -- -- Divide by 127 to get floating point number strictly between -1 and 1.
-    -- Maybe rat_val = 0x80 can be used as a report for removal flag..
-
 );
-
-INSERT INTO SemanticInputs (
-    set_id,
-    rat_val,
-    obj_t,
-    obj_id
-)
-VALUES (
-    1,
-    2,
-    "cat",
-    4
-);
-
-
-
-
-
--- CREATE TABLE SemanticUserGroupInputs (
---     /* Set */
---     -- set id.
---     set_id BIGINT UNSIGNED,
---     -- (while identifying a set uniquely, set_id is not part of the key for
---     -- the Sets table and should therefore not be searched for.)
---
---     /* Member */
---     -- The members of sets include a rating value and a Term.
---
---     -- -- rat_val is a numerical rating value (signed) which defines the
---     -- -- degree to which the user/user group of the set deems the statement
---     -- -- to be true/fitting.
---     -- -- When dividing rat_val with 128, this value runs from -1 to (almost) 1.
---     -- -- And then -1 is taken to mean "very far from true/fitting," 0 is taken
---     -- -- to mean "not sure" / "not particularly fitting or unfitting," and 1 is
---     -- -- taken to mean "very much true/fitting."
---     -- -- inv_rat_val is the multiplicational inverse of rat_val, meaning that
---     -- -- it is rat_val with its sign flipped.
---     -- inv_rat_val TINYINT,
---     rat_data VARBINARY(255) NOT NULL,
---
---     -- -- wc_exp_t4 is a nummerical value which gives a weighted user count
---     -- -- of how many users in the user group have given their voice to the
---     -- -- rating. If the user group has equal weights for all its members, the
---     -- -- weigthed count would be the actual count of users.
---     -- -- When plugged into the equation,
---     -- -- wc_lb = floor(2^(wc_exp_t4 / 4)),
---     -- -- one gets a lower bound, wc_lb, on the weighted count. In other words,
---     -- -- if wc is the actual weighted count, then
---     -- -- floor(2^(wc_exp_t4 / 4)) <= wc <= floor(2^((wc_exp_t4 + 1) / 4)).
---     -- -- inv_wc_exp_t4 is then given by inv_wc_exp_t4 = 254 - wc_exp_t4.
---     -- -- This means that when inv_wc_exp_t4 runs from 0 to 255, then wc_exp_t4
---     -- -- runs from 254 to -1.
---     -- inv_wc_exp_t4 TINYINT UNSIGNED,
---
---     -- object of the relation defining the set (i.e. the primary part of the
---     -- member of which the rating is about).
---     obj_t CHAR(3),
---     obj_id BIGINT UNSIGNED,
---
---
---     PRIMARY KEY (
---         set_id,
---         inv_rat_val,
---         inv_wc_exp_t4,
---         obj_t,
---         obj_id
---     )
---
---     -- CONSTRAINT CHK_rat_val_not_min CHECK (rat_val <> 0x80)
---     -- -- This makes max and min values equal to 127 and -127, respectively.
---     -- -- Divide by 127 to get floating point number strictly between -1 and 1.
---     -- Maybe rat_val = 0x80 can be used as a report for removal flag..
---
--- );
-
-
--- CREATE VIEW SemanticInputs AS
--- SELECT
---     set_id,
---     - inv_rat_val AS rat_val,
---     - inv_w_exp_t32 AS w_exp_t32,
---     NULL AS wc_exp_t4,
---     obj_t,
---     obj_id
--- FROM SemanticUserInputs
--- UNION
--- SELECT
---     set_id,
---     - inv_rat_val AS rat_val,
---     NULL AS w_exp_t32,
---     254 - inv_wc_exp_t4 AS wc_exp_t4,
---     obj_t,
---     obj_id
--- FROM SemanticUserGroupInputs;
-
 
 
 
@@ -327,7 +218,6 @@ CREATE TABLE UserGroups (
     -- creation date" and not changed after that.
     is_dynamic TINYINT -- BOOL
 );
--- ALTER TABLE UserGroups AUTO_INCREMENT = 1;
 
 
 CREATE TABLE Users (
@@ -375,7 +265,6 @@ CREATE TABLE Categories (
 
     UNIQUE INDEX (title, super_cat_id)
 );
--- ALTER TABLE Categories AUTO_INCREMENT = 2000000000000000001;
 
 CREATE TABLE StandardTerms (
     -- term ID.
@@ -388,11 +277,9 @@ CREATE TABLE StandardTerms (
 
     -- id of a defining category.
     cat_id BIGINT UNSIGNED NOT NULL,
-    -- Note that 0x2000000000000001 is category of all Terms.
 
     UNIQUE INDEX (title, cat_id)
 );
--- ALTER TABLE StandardTerms AUTO_INCREMENT = 2000000000000000001;
 
 
 
@@ -408,28 +295,15 @@ CREATE TABLE Relations (
     obj_noun VARCHAR(255) NOT NULL,
     FULLTEXT idx (obj_noun),
 
-    obj_cat_id BIGINT UNSIGNED NOT NULL,
+    -- obj_cat_id BIGINT UNSIGNED NOT NULL,
 
     subj_cat_id BIGINT UNSIGNED NOT NULL,
 
-    -- -- flag representing if relation expects only one object (in general) per
-    -- -- subject.
-    -- is_one_to_one TINYINT NOT NULL,
-
-    -- -- description.
-    -- descr TEXT
-
-    UNIQUE INDEX (obj_noun, obj_cat_id, subj_cat_id)
-
-    -- CONSTRAINT CHK_Relations_subj_cat_id CHECK (
-    --     subj_cat_id BETWEEN 0x2000000000000000 AND 0x3000000000000000 - 1
-    -- ),
-
-    -- CONSTRAINT CHK_Relations_obj_cat_id CHECK (
-    --     obj_cat_id BETWEEN 0x2000000000000000 AND 0x3000000000000000 - 1
-    -- )
+    -- UNIQUE INDEX (obj_noun, obj_cat_id, subj_cat_id)
+    UNIQUE INDEX (obj_noun, subj_cat_id)
 );
--- ALTER TABLE Relations AUTO_INCREMENT = 3000000000000000001;
+
+
 
 
 CREATE TABLE KeywordStrings (
@@ -441,10 +315,6 @@ CREATE TABLE KeywordStrings (
     str VARCHAR(255) NOT NULL UNIQUE,
     FULLTEXT idx (str)
 );
--- ALTER TABLE KeywordStrings AUTO_INCREMENT = 4000000000000000001;
-
-
-
 
 
 
@@ -519,23 +389,8 @@ CREATE TABLE Lists (
     -- tail_t not needed; it is always List type.
     tail_id BIGINT UNSIGNED
 );
--- INSERT INTO Lists (id) VALUES (0x7000000000000000);
 
 
-
-
--- CREATE TABLE Strings (
---     /* variable character string ID */
---     id BIGINT UNSIGNED PRIMARY KEY,
---
---     -- /* creator */
---     -- user_id BIGINT UNSIGNED,
---
---     /* data */
---     str VARCHAR(255) UNIQUE,
---     FULLTEXT idx (str)
--- );
--- -- INSERT INTO Strings (id) VALUES (0xA000000000000000);
 
 CREATE TABLE Texts (
     /* text ID */
@@ -545,7 +400,6 @@ CREATE TABLE Texts (
     /* data */
     str TEXT
 );
--- INSERT INTO Strings (id) VALUES (0xB000000000000000);
 
 
 
@@ -557,18 +411,6 @@ CREATE TABLE Binaries (
     /* data */
     bin BLOB
 );
--- INSERT INTO Binaries (id) VALUES (0x8000000000000000);
-
--- CREATE TABLE Blobs (
---     /* variable character string ID */
---     id BIGINT UNSIGNED PRIMARY KEY,
---
---     /* data */
---     bin BLOB
--- );
--- -- INSERT INTO Blobs (id) VALUES (0x9000000000000000);
-
-
 
 
 
@@ -583,25 +425,3 @@ CREATE TABLE Creators (
     user_id BIGINT UNSIGNED,
     INDEX (user_id)
 );
-
-
-
-
-
--- type code for DateTime: 6.
--- type code for Year: 7.
--- type code for Date: 8.
--- type code for Time: 9.
-
--- type code for BigInt: 18.
-
-
--- -- type code for MBlob: 38.
--- CREATE TABLE MBlobs (
---     /* medium BLOB ID */
---     id BIGINT AUTO_INCREMENT,
---     PRIMARY KEY(id),
---
---     /* data */
---     bin MEDIUMBLOB
--- );

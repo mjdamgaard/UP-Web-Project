@@ -119,7 +119,6 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindRel (
     IN on_str TEXT,
-    IN oc_id BIGINT UNSIGNED,
     IN sc_id BIGINT UNSIGNED,
     IN u_id BIGINT UNSIGNED,
     OUT new_id BIGINT UNSIGNED,
@@ -130,12 +129,11 @@ BEGIN
     FROM Relations
     WHERE (
         obj_noun = on_str AND
-        obj_cat_id = oc_id AND
         subj_cat_id = sc_id
     );
     IF (new_id IS NULL) THEN
-        INSERT INTO Relations (obj_noun, obj_cat_id, subj_cat_id)
-        VALUES (on_str, oc_id, sc_id);
+        INSERT INTO Relations (obj_noun, subj_cat_id)
+        VALUES (on_str, sc_id);
         SELECT LAST_INSERT_ID() INTO new_id;
         IF (u_id IS NOT NULL) THEN
             -- NOTE: This procedure assumes that user_id is correct if not null.
