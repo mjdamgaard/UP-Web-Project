@@ -52,8 +52,11 @@ DELETE FROM Creators;
 -- lader disse typer være CHAR(3)'s! (hvilket de nemlig bliver i det indledende
 -- query-format).
 
-
 CREATE TABLE Sets (
+    -- set ID (which is not a term ID).
+    set_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    -- Sets are not Terms, so IDs take any value.
+
     -- user or user group who states the statement.
     user_t CHAR(3),
     user_id BIGINT UNSIGNED,
@@ -65,17 +68,42 @@ CREATE TABLE Sets (
     -- relation.
     rel_id BIGINT UNSIGNED,
 
-    PRIMARY KEY (
+    UNIQUE INDEX (
         user_t,
         user_id,
         subj_t,
         subj_id,
         rel_id
-    ),
+    )
 
-    set_id BIGINT UNSIGNED NOT NULL UNIQUE
-    -- Sets are not Terms, so IDs take any value.
 );
+
+-- CREATE TABLE Sets (
+--     -- user or user group who states the statement.
+--     user_t CHAR(3),
+--     user_id BIGINT UNSIGNED,
+--
+--     -- subject of relation.
+--     subj_t CHAR(3),
+--     subj_id BIGINT UNSIGNED,
+--
+--     -- relation.
+--     rel_id BIGINT UNSIGNED,
+--
+--     PRIMARY KEY (
+--         user_t,
+--         user_id,
+--         subj_t,
+--         subj_id,
+--         rel_id
+--     ),
+--
+--     set_id BIGINT UNSIGNED NOT NULL UNIQUE
+--     -- Sets are not Terms, so IDs take any value.
+-- );
+
+
+
 
 
 
@@ -142,7 +170,6 @@ CREATE TABLE SemanticInputs (
 
     PRIMARY KEY (
         set_id,
-        -- inv_rat_val,
         rat_val,
         obj_t,
         obj_id
@@ -445,8 +472,10 @@ CREATE TABLE ConstantSets (
     -- relation.
     rel_id BIGINT UNSIGNED,
 
+    -- date
+    saved_at DATE,
 
-    /* data */
+    -- saved data.
     elems BLOB
 );
 
