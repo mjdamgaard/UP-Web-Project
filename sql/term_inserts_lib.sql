@@ -139,6 +139,44 @@ DELIMITER ;
 
 
 DELIMITER //
+CREATE PROCEDURE insertTxt (
+    IN s TEXT,
+    IN u_id BIGINT UNSIGNED,
+    OUT new_id BIGINT UNSIGNED
+    OUT exit_code TINYINT -- 0 is successful insertion.
+)
+BEGIN
+    INSERT INTO Texts (srt) VALUES (s);
+    SELECT LAST_INSERT_ID() INTO new_id;
+    IF (u_id IS NOT NULL) THEN
+        -- NOTE: This procedure assumes that user_id is correct if not null.
+        INSERT INTO Creators (term_t, term_id, user_id)
+        VALUES ("txt", new_id, u_id);
+    END IF;
+    SET exit_code = 0; -- insert.
+END //
+DELIMITER ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DELIMITER //
 CREATE PROCEDURE findOrCreateSet (
     IN u_t CHAR(3),
     IN u_id BIGINT UNSIGNED,
@@ -243,70 +281,3 @@ BEGIN
     END IF;
 END //
 DELIMITER ;
-
-
-
-
-
-
-
-
-
-
-
---
--- DELIMITER //
--- CREATE PROCEDURE inputUpvote (
---     IN u_id BIGINT UNSIGNED,
---     IN s_id BIGINT UNSIGNED,
---     IN r_id BIGINT UNSIGNED,
---     IN o_id BIGINT UNSIGNED
--- )
--- BEGIN
---     INSERT INTO SemanticInputs (
---         subj_id,
---         user_id,
---         rel_id,
---         obj_id,
---         rat_val, opt_data
---     )
---     VALUES (
---         s_id,
---         u_id,
---         r_id,
---         o_id,
---         0x7F, NULL
---     );
--- END //
--- DELIMITER ;
---
--- DELIMITER //
--- CREATE PROCEDURE inputUpvoteDuringCreation (
---     IN u_id BIGINT UNSIGNED,
---     IN s_id BIGINT UNSIGNED,
---     IN r_id BIGINT UNSIGNED,
---     IN o_id BIGINT UNSIGNED
--- )
--- BEGIN
---     INSERT INTO SemanticInputs (
---         subj_id,
---         user_id,
---         rel_id,
---         obj_id,
---         rat_val, opt_data
---     )
---     VALUES (
---         s_id,
---         u_id,
---         r_id,
---         o_id,
---         0x7F, NULL
---     ), (
---         s_id,
---         1,
---         r_id,
---         o_id,
---         0x7F, NULL
---     );
--- END //
--- DELIMITER ;

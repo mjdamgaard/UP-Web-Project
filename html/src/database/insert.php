@@ -6,7 +6,7 @@ require_once $database_path . "connect.php";
 
 
 
-function insertOrFindCat($titel, $superCatID, $userID) {
+function insertOrFindCategory($titel, $superCatID, $userID) {
     $conn = getConnectionOrDie();
 
     // insert or find term.
@@ -32,7 +32,9 @@ function insertOrFindCat($titel, $superCatID, $userID) {
 }
 
 
-function insertOrFindStd($titel, $catID, $userID) {
+
+
+function insertOrFindStandard($titel, $catID, $userID) {
     $conn = getConnectionOrDie();
 
     // insert or find term.
@@ -58,7 +60,7 @@ function insertOrFindStd($titel, $catID, $userID) {
 }
 
 
-function insertOrFindRel($objNoun, $subjCatID, $userID) {
+function insertOrFindRelation($objNoun, $subjCatID, $userID) {
     $conn = getConnectionOrDie();
 
     // insert or find term.
@@ -91,53 +93,33 @@ function insertOrFindRel($objNoun, $subjCatID, $userID) {
 
 
 
-// function insertSimpleTerm($lexItem, $description, $user_id, $new_id) {
-//     $conn = getConnectionOrDie();
-//
-//
-//     $stmt = $conn->prepare(
-//         "CALL insertTerm (?, ?, ?, ?, ?, ?)"
-//     );
-//     $stmt->bind_param(
-//         "ssiiii",
-//         $lexItem, $description,
-//         $user_id,
-//         $new_id,
-//         $exit_code_lex, $exit_code_dscr
-//     );
-//
-//     $stmt->execute();
-//
-//     return array($exit_code_lex, $exit_code_dscr);
-// }
+function insertText($str, $userID) {
+    $conn = getConnectionOrDie();
+
+    // insert term.
+    $stmt = $conn->prepare(
+        "CALL insertTxt (?, ?, @new_id, @exit_code)"
+    );
+    $stmt->bind_param(
+        "si",
+        $str,
+        $userID
+    );
+    executeSuccessfulOrDie($stmt);
+
+    // get new_id and exit_code from insertion.
+    $stmt = $conn->prepare(
+        "SELECT @new_id AS id, @exit_code AS ec"
+    );
+    executeSuccessfulOrDie($stmt);
+
+    // return array("newID" => @new_id, "exitCode" => @exit_code).
+    return $stmt->get_result()->fetch_assoc();
+}
 
 
 
 
 
-
-
-
-
-
-// function appendSQL_addObjNounRelation(
-//     $subjType, $objNoun, $objType, $dscrptn
-// ) {
-//     $sql = "";
-//     if (strlen($subjType) != 0) {
-//         $sql .= "(".$subjType.") ";
-//     }
-//     $sql .= "has ".$objNoun . " ";
-//     if (strlen($objType) != 0) {
-//         $sql .= "(".$objType.") ";
-//     }
-//     $sql .= "=";
-//
-//     if (strlen($dscrptn) != 0) {
-//
-//     }
-//
-//     return $sql;
-// }
 
 ?>

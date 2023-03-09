@@ -1,0 +1,23 @@
+-- TODO:
+-- insertOrFindCategory("Categories", 0, NULL);
+-- insertOrFindCategory("Terms", 0, NULL);
+-- // insertOrFindCategory("Standard terms", 1, NULL);
+-- insertOrFindCategory("Relations", 2, NULL);
+--
+-- $res = insertOrFindCategory("Users and bots", 2, NULL);
+-- $catUserEtcID = $res["id"];
+--
+-- insertOrFindCategory("Users", $catUserEtcID, NULL);
+-- insertOrFindCategory("User groups", $catUserEtcID, NULL);
+--
+-- $res = insertOrFindCategory("Internal data", 1, NULL);
+-- $catDataTermsID = $res["id"];
+--
+-- insertOrFindCategory("Keyword strings", $catDataTermsID, NULL);
+-- insertOrFindCategory("Lists", $catDataTermsID, NULL);
+-- insertOrFindCategory("Texts", $catDataTermsID, NULL);
+-- insertOrFindCategory("Binaries", $catDataTermsID, NULL);
+--
+-- // relations.
+-- insertOrFindRelation("Subcategories", 1, NULL);
+-- insertOrFindRelation("Elements", 1, NULL);
