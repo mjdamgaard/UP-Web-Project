@@ -38,28 +38,28 @@ DROP PROCEDURE insertOrFindRel;
 
 DELIMITER //
 CREATE PROCEDURE insertOrFindCat (
-    IN t_str TEXT,
-    IN sc_id BIGINT UNSIGNED,
-    IN u_id BIGINT UNSIGNED,
-    OUT new_id BIGINT UNSIGNED,
-    OUT exit_code TINYINT -- 0 is successful insertion, 1 is successful find.
+    IN catTitle TEXT,
+    IN subjCatID BIGINT UNSIGNED,
+    IN userID BIGINT UNSIGNED,
+    OUT newID BIGINT UNSIGNED,
+    OUT exitCode TINYINT -- 0 is successful insertion, 1 is successful find.
 )
 BEGIN
-    SELECT id INTO new_id
+    SELECT id INTO newID
     FROM Categories
-    WHERE (title = t_str AND super_cat_id = sc_id);
-    IF (new_id IS NULL) THEN
+    WHERE (title = catTitle AND super_cat_id = subjCatID);
+    IF (newID IS NULL) THEN
         INSERT INTO Categories (title, super_cat_id)
-        VALUES (t_str, sc_id);
-        SELECT LAST_INSERT_ID() INTO new_id;
-        IF (u_id IS NOT NULL) THEN
+        VALUES (catTitle, subjCatID);
+        SELECT LAST_INSERT_ID() INTO newID;
+        IF (userID IS NOT NULL) THEN
             -- NOTE: This procedure assumes that user_id is correct if not null.
             INSERT INTO Creators (term_t, term_id, user_id)
-            VALUES ("c", new_id, u_id);
+            VALUES ("c", newID, userID);
         END IF;
-        SET exit_code = 0; -- insert.
+        SET exitCode = 0; -- insert.
     ELSE
-        SET exit_code = 1; -- find.
+        SET exitCode = 1; -- find.
     END IF;
 END //
 DELIMITER ;
@@ -68,28 +68,28 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE insertOrFindStd (
-    IN t_str TEXT,
-    IN c_id BIGINT UNSIGNED,
-    IN u_id BIGINT UNSIGNED,
-    OUT new_id BIGINT UNSIGNED,
-    OUT exit_code TINYINT -- 0 is successful insertion, 1 is successful find.
+    IN stdTitle TEXT,
+    IN catID BIGINT UNSIGNED,
+    IN userID BIGINT UNSIGNED,
+    OUT newID BIGINT UNSIGNED,
+    OUT exitCode TINYINT -- 0 is successful insertion, 1 is successful find.
 )
 BEGIN
-    SELECT id INTO new_id
+    SELECT id INTO newID
     FROM StandardTerms
-    WHERE (title = t_str AND cat_id = c_id);
-    IF (new_id IS NULL) THEN
+    WHERE (title = stdTitle AND cat_id = catID);
+    IF (newID IS NULL) THEN
         INSERT INTO StandardTerms (title, cat_id)
-        VALUES (t_str, c_id);
-        SELECT LAST_INSERT_ID() INTO new_id;
-        IF (u_id IS NOT NULL) THEN
+        VALUES (stdTitle, catID);
+        SELECT LAST_INSERT_ID() INTO newID;
+        IF (userID IS NOT NULL) THEN
             -- NOTE: This procedure assumes that user_id is correct if not null.
             INSERT INTO Creators (term_t, term_id, user_id)
-            VALUES ("s", new_id, u_id);
+            VALUES ("s", newID, userID);
         END IF;
-        SET exit_code = 0; -- insert.
+        SET exitCode = 0; -- insert.
     ELSE
-        SET exit_code = 1; -- find.
+        SET exitCode = 1; -- find.
     END IF;
 END //
 DELIMITER ;
@@ -99,31 +99,31 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE insertOrFindRel (
-    IN on_str TEXT,
-    IN sc_id BIGINT UNSIGNED,
-    IN u_id BIGINT UNSIGNED,
-    OUT new_id BIGINT UNSIGNED,
-    OUT exit_code TINYINT -- 0 is successful insertion, 1 is successful find.
+    IN objNoun TEXT,
+    IN subjCatID BIGINT UNSIGNED,
+    IN userID BIGINT UNSIGNED,
+    OUT newID BIGINT UNSIGNED,
+    OUT exitCode TINYINT -- 0 is successful insertion, 1 is successful find.
 )
 BEGIN
-    SELECT id INTO new_id
+    SELECT id INTO newID
     FROM Relations
     WHERE (
-        obj_noun = on_str AND
-        subj_cat_id = sc_id
+        obj_noun = objNoun AND
+        subj_cat_id = subjCatID
     );
-    IF (new_id IS NULL) THEN
+    IF (newID IS NULL) THEN
         INSERT INTO Relations (obj_noun, subj_cat_id)
-        VALUES (on_str, sc_id);
-        SELECT LAST_INSERT_ID() INTO new_id;
-        IF (u_id IS NOT NULL) THEN
+        VALUES (objNoun, subjCatID);
+        SELECT LAST_INSERT_ID() INTO newID;
+        IF (userID IS NOT NULL) THEN
             -- NOTE: This procedure assumes that user_id is correct if not null.
             INSERT INTO Creators (term_t, term_id, user_id)
-            VALUES ("r", new_id, u_id);
+            VALUES ("r", newID, userID);
         END IF;
-        SET exit_code = 0; -- insert.
+        SET exitCode = 0; -- insert.
     ELSE
-        SET exit_code = 1; -- find.
+        SET exitCode = 1; -- find.
     END IF;
 END //
 DELIMITER ;
@@ -137,19 +137,19 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE insertTxt (
-    IN s TEXT,
-    IN u_id BIGINT UNSIGNED,
-    OUT new_id BIGINT UNSIGNED,
-    OUT exit_code TINYINT -- 0 is successful insertion.
+    IN textStr TEXT,
+    IN userID BIGINT UNSIGNED,
+    OUT newID BIGINT UNSIGNED,
+    OUT exitCode TINYINT -- 0 is successful insertion.
 )
 BEGIN
-    INSERT INTO Texts (str) VALUES (s);
-    SELECT LAST_INSERT_ID() INTO new_id;
-    IF (u_id IS NOT NULL) THEN
+    INSERT INTO Texts (str) VALUES (textStr);
+    SELECT LAST_INSERT_ID() INTO newID;
+    IF (userID IS NOT NULL) THEN
         -- NOTE: This procedure assumes that user_id is correct if not null.
         INSERT INTO Creators (term_t, term_id, user_id)
-        VALUES ("t", new_id, u_id);
+        VALUES ("t", newID, userID);
     END IF;
-    SET exit_code = 0; -- insert.
+    SET exitCode = 0; -- insert.
 END //
 DELIMITER ;

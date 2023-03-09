@@ -10,25 +10,25 @@ DROP PROCEDURE inputOrChangeRating;
 
 DELIMITER //
 CREATE PROCEDURE findOrCreateSet (
-    IN u_t CHAR(1),
-    IN u_id BIGINT UNSIGNED,
-    IN s_t CHAR(1),
-    IN s_id BIGINT UNSIGNED,
-    IN r_id BIGINT UNSIGNED,
-    OUT new_id BIGINT UNSIGNED,
-    OUT exit_code TINYINT
+    IN userType CHAR(1),
+    IN userID BIGINT UNSIGNED,
+    IN subjType CHAR(1),
+    IN subjID BIGINT UNSIGNED,
+    IN relID BIGINT UNSIGNED,
+    OUT newID BIGINT UNSIGNED,
+    OUT exitCode TINYINT
 )
 BEGIN
-    SELECT set_id INTO new_id
+    SELECT set_id INTO newID
     FROM Sets
     WHERE (
-        user_t = u_t AND
-        user_id = u_id AND
-        subj_t = s_t AND
-        subj_id = s_id AND
-        rel_id = r_id
+        user_t = userType AND
+        user_id = userID AND
+        subj_t = subjType AND
+        subj_id = subjID AND
+        rel_id = ID
     );
-    IF (new_id IS NULL) THEN
+    IF (newID IS NULL) THEN
         INSERT INTO Sets (
             user_t,
             user_id,
@@ -37,16 +37,16 @@ BEGIN
             rel_id
         )
         VALUES (
-            u_t,
-            u_id,
-            s_t,
-            s_id,
-            r_id
+            userType,
+            userID,
+            subjType,
+            subjID,
+            ID
         );
-        SELECT LAST_INSERT_ID() INTO new_id;
-        SET exit_code = 1; -- create.
+        SELECT LAST_INSERT_ID() INTO newID;
+        SET exitCode = 1; -- create.
     ELSE
-        SET exit_code = 0; -- find.
+        SET exitCode = 0; -- find.
     END IF;
 END //
 DELIMITER ;
@@ -57,34 +57,34 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE inputOrChangeRating (
-    IN u_t CHAR(1),
-    IN u_id BIGINT UNSIGNED,
-    IN s_t CHAR(1),
-    IN s_id BIGINT UNSIGNED,
-    IN r_id BIGINT UNSIGNED,
-    IN rv VARBINARY(255),
-    IN o_t CHAR(1),
-    IN o_id BIGINT UNSIGNED,
-    -- OUT new_id BIGINT UNSIGNED,
-    OUT exit_code TINYINT
+    IN userType CHAR(1),
+    IN userID BIGINT UNSIGNED,
+    IN subjType CHAR(1),
+    IN subjID BIGINT UNSIGNED,
+    IN relID BIGINT UNSIGNED,
+    IN ratingVal VARBINARY(255),
+    IN objType CHAR(1),
+    IN objID BIGINT UNSIGNED,
+    -- OUT newID BIGINT UNSIGNED,
+    OUT exitCode TINYINT
 )
 BEGIN
     CALL findOrCreateSet (
-        u_t,
-        u_id,
-        s_t,
-        s_id,
-        r_id,
+        userType,
+        userID,
+        subjType,
+        subjID,
+        relID,
         @setID,
-        @ec_findOrCreateSet
+        @ecFindOrCreateSet
     );
     SET @existsPriorRating = (
         SELECT set_id
         FROM SemanticInputs
         WHERE (
             set_id = @setID AND
-            obj_t = o_t AND
-            obj_id = o_id
+            obj_t = objType AND
+            obj_id = objID
         )
     );
     IF (@existsPriorRating IS NULL) THEN
@@ -96,20 +96,20 @@ BEGIN
         )
         VALUES (
             @setID,
-            rv,
-            o_t,
-            o_id
+            ratingVal,
+            objType,
+            objID
         );
-        SET exit_code = (0 + @ec_findOrCreateSet); -- no prior rating.
+        SET exitCode = (0 + @ecFindOrCreateSet); -- no prior rating.
     ELSE
         UPDATE SemanticInputs
-        SET rat_val = rv
+        SET rat_val = ratingVal
         WHERE (
             set_id = @setID AND
-            obj_t = o_t AND
-            obj_id = o_id
+            obj_t = objType AND
+            obj_id = objID
         );
-        SET exit_code = (2 + @ec_findOrCreateSet); -- overwriting an old rating.
+        SET exitCode = (2 + @ecFindOrCreateSet); -- overwriting an old rating.
     END IF;
 END //
 DELIMITER ;

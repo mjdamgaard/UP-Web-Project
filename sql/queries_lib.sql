@@ -5,45 +5,111 @@
 
 DELIMITER //
 CREATE PROCEDURE selectSet (
-    IN u_t CHAR(1),
-    IN u_id BIGINT UNSIGNED,
-    IN s_t CHAR(1),
-    IN s_id BIGINT UNSIGNED,
-    IN r_id BIGINT UNSIGNED,
-    IN rat_range_min VARBINARY(255),
-    IN rat_range_max VARBINARY(255),
-    IN is_asc_order BOOL,
+    IN userType CHAR(1),
+    IN userID BIGINT UNSIGNED,
+    IN subjType CHAR(1),
+    IN subjID BIGINT UNSIGNED,
+    IN relID BIGINT UNSIGNED,
+    IN ratingRangeMin VARBINARY(255),
+    IN ratingRangeMax VARBINARY(255),
     IN num INT UNSIGNED,
-    IN num_offset INT UNSIGNED
+    IN numOffset INT UNSIGNED,
+    IN isAscOrder BOOL
 )
 BEGIN
     SELECT set_id INTO @setID
     FROM Sets
     WHERE (
-        user_t = u_t AND
-        user_id = u_id AND
-        subj_t = s_t AND
-        subj_id = s_id AND
-        rel_id = r_id
+        user_t = userType AND
+        user_id = userID AND
+        subj_t = subjType AND
+        subj_id = subjID AND
+        rel_id = relID
     );
-    IF (is_asc_order) THEN
+    IF (isAscOrder) THEN
         SELECT (rat_val, obj_t, obj_id)
         FROM SemanticInputs
         WHERE (
             set_id = @setID AND
-            (rat_val BETWEEN rat_range_min AND rat_range_max)
+            (rat_val BETWEEN ratingRangeMin AND ratingRangeMax)
         )
         ORDER BY rat_val, obj_t, obj_id ASC
-        LIMIT num_offset, num;
+        LIMIT numOffset, num;
     ELSE
         SELECT (rat_val, obj_t, obj_id)
         FROM SemanticInputs
         WHERE (
             set_id = @setID AND
-            (rat_val BETWEEN rat_range_min AND rat_range_max)
+            (rat_val BETWEEN ratingRangeMin AND ratingRangeMax)
         )
         ORDER BY rat_val, obj_t, obj_id DESC
-        LIMIT num_offset, num;
+        LIMIT numOffset, num;
     END IF;
+END //
+DELIMITER ;
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectData (
+    IN data_t CHAR(1),
+    IN data_id BIGINT UNSIGNED,
+    IN relID BIGINT UNSIGNED,
+)
+BEGIN
+    SELECT set_id INTO @setID
+    FROM Sets
+    WHERE (
+        user_t = userType AND
+        user_id = userID AND
+        subj_t = subjType AND
+        subj_id = subjID AND
+        rel_id = relID
+    );
+    IF (isAscOrder) THEN
+        SELECT (rat_val, obj_t, obj_id)
+        FROM SemanticInputs
+        WHERE (
+            set_id = @setID AND
+            (rat_val BETWEEN ratingRangeMin AND ratingRangeMax)
+        )
+        ORDER BY rat_val, obj_t, obj_id ASC
+        LIMIT numOffset, num;
+    ELSE
+        SELECT (rat_val, obj_t, obj_id)
+        FROM SemanticInputs
+        WHERE (
+            set_id = @setID AND
+            (rat_val BETWEEN ratingRangeMin AND ratingRangeMax)
+        )
+        ORDER BY rat_val, obj_t, obj_id DESC
+        LIMIT numOffset, num;
+    END IF;
+END //
+DELIMITER ;
+
+
+
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectCreations (
+    IN userID BIGINT UNSIGNED,
+       termT
+    IN num INT UNSIGNED,
+    IN numOffset INT UNSIGNED,
+    IN isAscOrder BOOL
+)
+BEGIN
+    SELECT (term_t, term_id)
+    FROM Creators
+    WHERE (user_id = userID)
+    ORDER BY rat_val, obj_t, obj_id DESC
+    LIMIT numOffset, num;
 END //
 DELIMITER ;

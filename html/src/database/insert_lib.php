@@ -11,7 +11,7 @@ function insertOrFindCategory($titel, $superCatID, $userID) {
 
     // insert or find term.
     $stmt = $conn->prepare(
-        "CALL insertOrFindCat (?, ?, ?, @new_id, @exit_code)"
+        "CALL insertOrFindCat (?, ?, ?, @newID, @exitCode)"
     );
     $stmt->bind_param(
         "sii",
@@ -23,7 +23,7 @@ function insertOrFindCategory($titel, $superCatID, $userID) {
 
     // get new_id and exit_code from insertion.
     $stmt = $conn->prepare(
-        "SELECT @new_id AS id, @exit_code AS ec"
+        "SELECT @newID AS id, @exitCode AS ec"
     );
     executeSuccessfulOrDie($stmt);
 
@@ -39,7 +39,7 @@ function insertOrFindStandard($titel, $catID, $userID) {
 
     // insert or find term.
     $stmt = $conn->prepare(
-        "CALL insertOrFindStd (?, ?, ?, @new_id, @exit_code)"
+        "CALL insertOrFindStd (?, ?, ?, @newID, @exitCode)"
     );
     $stmt->bind_param(
         "sii",
@@ -51,7 +51,7 @@ function insertOrFindStandard($titel, $catID, $userID) {
 
     // get new_id and exit_code from insertion.
     $stmt = $conn->prepare(
-        "SELECT @new_id AS id, @exit_code AS ec"
+        "SELECT @newID AS id, @exitCode AS ec"
     );
     executeSuccessfulOrDie($stmt);
 
@@ -65,7 +65,7 @@ function insertOrFindRelation($objNoun, $subjCatID, $userID) {
 
     // insert or find term.
     $stmt = $conn->prepare(
-        "CALL insertOrFindRel (?, ?, ?, @new_id, @exit_code)"
+        "CALL insertOrFindRel (?, ?, ?, @newID, @exitCode)"
     );
     $stmt->bind_param(
         "sii",
@@ -77,7 +77,7 @@ function insertOrFindRelation($objNoun, $subjCatID, $userID) {
 
     // get new_id and exit_code from insertion.
     $stmt = $conn->prepare(
-        "SELECT @new_id AS id, @exit_code AS ec"
+        "SELECT @newID AS id, @exitCode AS ec"
     );
     executeSuccessfulOrDie($stmt);
 
@@ -98,7 +98,7 @@ function insertText($str, $userID) {
 
     // insert term.
     $stmt = $conn->prepare(
-        "CALL insertTxt (?, ?, @new_id, @exit_code)"
+        "CALL insertTxt (?, ?, @newID, @exitCode)"
     );
     $stmt->bind_param(
         "si",
@@ -109,7 +109,7 @@ function insertText($str, $userID) {
 
     // get new_id and exit_code from insertion.
     $stmt = $conn->prepare(
-        "SELECT @new_id AS id, @exit_code AS ec"
+        "SELECT @newID AS id, @exitCode AS ec"
     );
     executeSuccessfulOrDie($stmt);
 
