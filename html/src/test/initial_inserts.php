@@ -3,7 +3,6 @@
 $src_path = $_SERVER['DOCUMENT_ROOT'] . "/src/";
 require_once $src_path . "database_lib.php";
 
-require_once "extra_initial_insert_lib.php";
 
 
 
@@ -33,7 +32,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     insertOrFindRelation("Subcategories", 1, NULL);
     insertOrFindRelation("Elements", 1, NULL);
 
-
+    // exit;
+    // insertOrFindRelation("I should not exist", 1, NULL);
+    if (!isset($_POST["protocol"])) {
+       echo "Error: No protocol specified";
+       exit;
+    }
 }
 
 // function sanitize_input($data) {
