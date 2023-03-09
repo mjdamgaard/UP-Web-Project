@@ -1,8 +1,7 @@
 <?php
 
-$database_path = $_SERVER['DOCUMENT_ROOT'] . "/src/database/";
-require_once ($database_path . "connect.php");
-require_once ($database_path . "insert.php");
+$src_path = $_SERVER['DOCUMENT_ROOT'] . "/src/";
+require_once $src_path . "database_lib.php";
 
 require_once "extra_initial_insert_lib.php";
 

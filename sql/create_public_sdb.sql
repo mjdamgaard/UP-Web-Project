@@ -44,9 +44,13 @@ DELETE FROM Creators;
 -- (07.03.23, 12:31) Okay, jeg tror faktisk, at jeg bare vil implementere
 -- det på en ikke-effektiv måde, som til gengæld er mere overskulig, fra
 -- starten her, nemlig ved at jeg simpelthen indfører user_t, subj_t og obj_t,
--- som jeg havde det engang, og hvor jeg endda simpelthen siger fuck it og
+-- som jeg havde det engang, og hvor jeg endda simpelthen [...] og
 -- lader disse typer være CHAR(3)'s! (hvilket de nemlig bliver i det indledende
 -- query-format).
+-- Hm, jeg tror jeg vil skære de to sidste CHARs af i typerne, for der er
+-- alligevel ingen kollisioner med de typer jeg har. Dette betyder dog ikke,
+-- at jeg ikke nødvendigvis vil beholde tre chars i applikation--control-
+-- grænsefladen (interfacet). (09.03.23)
 
 CREATE TABLE Sets (
     -- set ID (which is not a term ID).

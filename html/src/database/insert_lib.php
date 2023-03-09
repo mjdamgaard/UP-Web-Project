@@ -1,7 +1,7 @@
 <?php
 
 $database_path = "";
-require_once $database_path . "connect.php";
+require_once $database_path . "connect_lib.php";
 
 
 
@@ -116,7 +116,6 @@ function insertText($str, $userID) {
     // return array("newID" => @new_id, "exitCode" => @exit_code).
     return $stmt->get_result()->fetch_assoc();
 }
-
 
 
 
