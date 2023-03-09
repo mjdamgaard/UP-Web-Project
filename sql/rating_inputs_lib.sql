@@ -10,9 +10,9 @@ DROP PROCEDURE inputOrChangeRating;
 
 DELIMITER //
 CREATE PROCEDURE findOrCreateSet (
-    IN u_t CHAR(3),
+    IN u_t CHAR(1),
     IN u_id BIGINT UNSIGNED,
-    IN s_t CHAR(3),
+    IN s_t CHAR(1),
     IN s_id BIGINT UNSIGNED,
     IN r_id BIGINT UNSIGNED,
     OUT new_id BIGINT UNSIGNED,
@@ -57,13 +57,13 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE inputOrChangeRating (
-    IN u_t CHAR(3),
+    IN u_t CHAR(1),
     IN u_id BIGINT UNSIGNED,
-    IN s_t CHAR(3),
+    IN s_t CHAR(1),
     IN s_id BIGINT UNSIGNED,
     IN r_id BIGINT UNSIGNED,
     IN rv VARBINARY(255),
-    IN o_t CHAR(3),
+    IN o_t CHAR(1),
     IN o_id BIGINT UNSIGNED,
     -- OUT new_id BIGINT UNSIGNED,
     OUT exit_code TINYINT

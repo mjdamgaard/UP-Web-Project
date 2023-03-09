@@ -55,7 +55,7 @@ BEGIN
         IF (u_id IS NOT NULL) THEN
             -- NOTE: This procedure assumes that user_id is correct if not null.
             INSERT INTO Creators (term_t, term_id, user_id)
-            VALUES ("cat", new_id, u_id);
+            VALUES ("c", new_id, u_id);
         END IF;
         SET exit_code = 0; -- insert.
     ELSE
@@ -85,7 +85,7 @@ BEGIN
         IF (u_id IS NOT NULL) THEN
             -- NOTE: This procedure assumes that user_id is correct if not null.
             INSERT INTO Creators (term_t, term_id, user_id)
-            VALUES ("std", new_id, u_id);
+            VALUES ("s", new_id, u_id);
         END IF;
         SET exit_code = 0; -- insert.
     ELSE
@@ -119,7 +119,7 @@ BEGIN
         IF (u_id IS NOT NULL) THEN
             -- NOTE: This procedure assumes that user_id is correct if not null.
             INSERT INTO Creators (term_t, term_id, user_id)
-            VALUES ("rel", new_id, u_id);
+            VALUES ("r", new_id, u_id);
         END IF;
         SET exit_code = 0; -- insert.
     ELSE
@@ -139,16 +139,16 @@ DELIMITER //
 CREATE PROCEDURE insertTxt (
     IN s TEXT,
     IN u_id BIGINT UNSIGNED,
-    OUT new_id BIGINT UNSIGNED
+    OUT new_id BIGINT UNSIGNED,
     OUT exit_code TINYINT -- 0 is successful insertion.
 )
 BEGIN
-    INSERT INTO Texts (srt) VALUES (s);
+    INSERT INTO Texts (str) VALUES (s);
     SELECT LAST_INSERT_ID() INTO new_id;
     IF (u_id IS NOT NULL) THEN
         -- NOTE: This procedure assumes that user_id is correct if not null.
         INSERT INTO Creators (term_t, term_id, user_id)
-        VALUES ("txt", new_id, u_id);
+        VALUES ("t", new_id, u_id);
     END IF;
     SET exit_code = 0; -- insert.
 END //

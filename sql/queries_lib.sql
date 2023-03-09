@@ -5,9 +5,9 @@
 
 DELIMITER //
 CREATE PROCEDURE selectSet (
-    IN u_t CHAR(3),
+    IN u_t CHAR(1),
     IN u_id BIGINT UNSIGNED,
-    IN s_t CHAR(3),
+    IN s_t CHAR(1),
     IN s_id BIGINT UNSIGNED,
     IN r_id BIGINT UNSIGNED,
     IN rat_range_min VARBINARY(255),
@@ -42,7 +42,7 @@ BEGIN
             set_id = @setID AND
             (rat_val BETWEEN rat_range_min AND rat_range_max)
         )
-        ORDER BY rat_val, obj_t, obj_id DESC 
+        ORDER BY rat_val, obj_t, obj_id DESC
         LIMIT num_offset, num;
     END IF;
 END //

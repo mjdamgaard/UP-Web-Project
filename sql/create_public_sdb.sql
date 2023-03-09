@@ -58,11 +58,11 @@ CREATE TABLE Sets (
     -- Sets are not Terms, so IDs take any value.
 
     -- user or user group who states the statement.
-    user_t CHAR(3),
+    user_t CHAR(1),
     user_id BIGINT UNSIGNED,
 
     -- subject of relation.
-    subj_t CHAR(3),
+    subj_t CHAR(1),
     subj_id BIGINT UNSIGNED,
 
     -- relation.
@@ -80,11 +80,11 @@ CREATE TABLE Sets (
 
 -- CREATE TABLE Sets (
 --     -- user or user group who states the statement.
---     user_t CHAR(3),
+--     user_t CHAR(1),
 --     user_id BIGINT UNSIGNED,
 --
 --     -- subject of relation.
---     subj_t CHAR(3),
+--     subj_t CHAR(1),
 --     subj_id BIGINT UNSIGNED,
 --
 --     -- relation.
@@ -157,7 +157,7 @@ CREATE TABLE SemanticInputs (
 
     -- object of the relation defining the set (i.e. the primary part of the
     -- member of which the rating is about).
-    obj_t CHAR(3),
+    obj_t CHAR(1),
     obj_id BIGINT UNSIGNED,
 
     PRIMARY KEY (
@@ -332,11 +332,11 @@ CREATE TABLE KeywordStrings (
 --     -- (We are free to use "set" since the Sets entities are not terms.)
 --
 --     -- user or user group who states the statement.
---     user_t CHAR(3),
+--     user_t CHAR(1),
 --     user_id BIGINT UNSIGNED,
 --
 --     -- subject of relation.
---     subj_t CHAR(3),
+--     subj_t CHAR(1),
 --     subj_id BIGINT UNSIGNED,
 --
 --     -- relation.
@@ -415,7 +415,7 @@ CREATE TABLE Binaries (
 
 
 CREATE TABLE Creators (
-    term_t CHAR(3),
+    term_t CHAR(1),
     term_id BIGINT UNSIGNED,
     PRIMARY KEY (term_t, term_id),
 
