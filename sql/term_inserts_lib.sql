@@ -10,6 +10,7 @@ DROP PROCEDURE insertOrFindCat;
 DROP PROCEDURE insertOrFindStd;
 DROP PROCEDURE insertOrFindRel;
 
+DROP PROCEDURE insertTxt;
 
 
 
