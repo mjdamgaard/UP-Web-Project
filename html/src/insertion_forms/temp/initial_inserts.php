@@ -58,6 +58,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 ?>
 
 
+<!-- <form action="javascript:void(0);" onsubmit="myFunction()">
+  Enter name: <input type="text" name="fname">
+  <input type="submit" value="Submit">
+</form>
+
+<script>
+function myFunction() {
+  alert("The form was submitted");
+}
+</script> -->
+
+
 <form
     method="post"
     action=<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>

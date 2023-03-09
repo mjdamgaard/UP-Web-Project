@@ -1,22 +1,6 @@
 -- USE mydatabase;
 
 
--- DROP PROCEDURE insertString;
--- DROP PROCEDURE insertStringWORollback;
--- DROP PROCEDURE insertOrFindString;
--- DROP PROCEDURE insertText;
--- DROP PROCEDURE insertTextWORollback;
--- DROP PROCEDURE insertOrFindText;
-
--- DROP PROCEDURE inputUpvote;
--- DROP PROCEDURE inputUpvoteDuringCreation;
-
--- DROP PROCEDURE insertRels_hasLexItem_and_hasDescription;
-
--- DROP PROCEDURE insertTermWODescription;
--- DROP PROCEDURE insertTerm;
-
--- DROP PROCEDURE insertRelationalPredicate;
 
 
 
@@ -270,265 +254,59 @@ DELIMITER ;
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-DELIMITER //
-CREATE PROCEDURE inputUpvote (
-    IN u_id BIGINT UNSIGNED,
-    IN s_id BIGINT UNSIGNED,
-    IN r_id BIGINT UNSIGNED,
-    IN o_id BIGINT UNSIGNED
-)
-BEGIN
-    INSERT INTO SemanticInputs (
-        subj_id,
-        user_id,
-        rel_id,
-        obj_id,
-        rat_val, opt_data
-    )
-    VALUES (
-        s_id,
-        u_id,
-        r_id,
-        o_id,
-        0x7F, NULL
-    );
-END //
-DELIMITER ;
-
-DELIMITER //
-CREATE PROCEDURE inputUpvoteDuringCreation (
-    IN u_id BIGINT UNSIGNED,
-    IN s_id BIGINT UNSIGNED,
-    IN r_id BIGINT UNSIGNED,
-    IN o_id BIGINT UNSIGNED
-)
-BEGIN
-    INSERT INTO SemanticInputs (
-        subj_id,
-        user_id,
-        rel_id,
-        obj_id,
-        rat_val, opt_data
-    )
-    VALUES (
-        s_id,
-        u_id,
-        r_id,
-        o_id,
-        0x7F, NULL
-    ), (
-        s_id,
-        1,
-        r_id,
-        o_id,
-        0x7F, NULL
-    );
-END //
-DELIMITER ;
-
-
-
-
--- First two relations:
-
--- use once (then drop procedure).
-DELIMITER //
-CREATE PROCEDURE insertRels_hasLexItem_and_hasDescription (
-    IN str_lexItem_of_hasLexItem VARCHAR(255),
-    IN str_description_of_hasLexItem TEXT,
-    IN str_lexItem_of_hasDescription VARCHAR(255),
-    IN str_description_of_hasDescription TEXT
-)
-BEGIN
-    CALL createTerm (0x30, 1, @TermID_hasLexItem);
-    CALL createTerm (0x30, 1, @TermID_hasDescription);
-    -- There apparently cannot be any selects in a MySQLi prepared statement
-    -- for insertion. (?..)
-    -- SELECT @TermID_hasLexItem;
-    -- SELECT @TermID_hasDescription;
-
-    CALL insertStringWORollback(
-        str_lexItem_of_hasLexItem,
-        1,
-        @StrID_LexItem_of_hasLexItem
-    );
-    CALL insertTextWORollback(
-        str_description_of_hasLexItem,
-        1,
-        @StrID_Description_of_hasLexItem
-    );
-    CALL insertStringWORollback(
-        str_lexItem_of_hasDescription,
-        1,
-        @StrID_LexItem_of_hasDescription
-    );
-    CALL insertTextWORollback(
-        str_description_of_hasDescription,
-        1,
-        @StrID_Description_of_hasDescription
-    );
-
-
-    CALL inputUpvote (
-        1,
-        @TermID_hasLexItem,
-        @TermID_hasLexItem,
-        @StrID_LexItem_of_hasLexItem
-    );
-    CALL inputUpvote (
-        1,
-        @TermID_hasLexItem,
-        @TermID_hasDescription,
-        @StrID_Description_of_hasLexItem
-    );
-    CALL inputUpvote (
-        1,
-        @TermID_hasDescription,
-        @TermID_hasLexItem,
-        @StrID_LexItem_of_hasDescription
-    );
-    CALL inputUpvote (
-        1,
-        @TermID_hasDescription,
-        @TermID_hasLexItem,
-        @StrID_Description_of_hasDescription
-    );
-
-    IF (@TermID_hasLexItem != 0x3000000000000001) THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'TermID_hasLexItem wrong value';
-    END IF;
-    IF (@TermID_hasDescription != 0x3000000000000002) THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'TermID_hasDescription wrong value';
-    END IF;
-END //
-DELIMITER ;
-
-
-
-
-DELIMITER //
-CREATE PROCEDURE insertTerm (
-    IN str_lexItem VARCHAR(255),
-    IN str_description TEXT,
-    IN u_id BIGINT UNSIGNED,
-    OUT new_id BIGINT UNSIGNED,
-    OUT exit_code_lex TINYINT,
-    OUT exit_code_dscr TINYINT
-)
-BEGIN
-    CALL createTerm (0x30, u_id, new_id);
-
-    CALL insertOrFindString (
-        str_LexItem, u_id, @StrID_lexItem, exit_code_lex
-    );
-    CALL insertOrFindText (
-        str_description, u_id, @StrID_description, exit_code_dscr
-    );
-
-    CALL inputUpvoteDuringCreation (
-        u_id,
-        new_id,
-        0x3000000000000001, -- TermID of hasLexItem
-        @StrID_lexItem
-    );
-    CALL inputUpvoteDuringCreation (
-        u_id,
-        new_id,
-        0x3000000000000002, -- TermID of hasDescription
-        @StrID_description
-    );
-END //
-DELIMITER ;
-
-
-
-DELIMITER //
-CREATE PROCEDURE insertTermWODescription (
-    IN str_lexItem VARCHAR(255),
-    IN u_id BIGINT UNSIGNED,
-    OUT new_id BIGINT UNSIGNED,
-    OUT exit_code_lex TINYINT
-)
-BEGIN
-    CALL createTerm (0x30, u_id, new_id);
-
-    CALL insertOrFindString (
-        str_LexItem, u_id, @StrID_lexItem, exit_code_lex
-    );
-
-    CALL inputUpvoteDuringCreation (
-        u_id,
-        new_id,
-        0x3000000000000001, -- TermID of hasLexItem
-        @StrID_lexItem
-    );
-END //
-DELIMITER ;
-
-
-
-DELIMITER //
-CREATE PROCEDURE insertRelationalPredicate (
-    IN u_id BIGINT UNSIGNED,
-    IN r_id BIGINT UNSIGNED,
-    IN o_id BIGINT UNSIGNED,
-    OUT new_id BIGINT UNSIGNED,
-    OUT exit_code TINYINT
-)
-BEGIN
-    -- TODO: change.
-    CALL createTerm (0x20, u_id, new_id);
-
-    CALL insertOrFindString (
-        str_LexItem, u_id, @StrID_lexItem, exit_code_lex
-    );
-
-    CALL inputUpvoteDuringCreation (
-        u_id,
-        new_id,
-        0x3000000000000001, -- TermID of hasLexItem
-        @StrID_lexItem
-    );
-END //
-DELIMITER ;
-
-
-
-
-
-
-
-
--- Some testing.
-
--- CALL insertString ("hello world!", @hello_id, @exit_code);
--- CALL insertString ("hello world!!", @hello_id, @exit_code);
--- CALL insertString ("hello world!! How are you?", @hello_id, @exit_code);
 --
--- CALL insertString ("hello world!", @hello_id, @exit_code);
--- -- CALL insertStringWOROllback ("hello world!", @hello_id); -- correct
--- -- -- (throws error).
--- CALL insertOrFindString ("hello world!", @hello_id, @exit_code);
--- -- SELECT @hello_id; SELECT @exit_code; -- correct
--- CALL insertOrFindString ("hello new world!", @hello_id, @exit_code);
--- -- SELECT @hello_id; SELECT @exit_code; -- corret
+-- DELIMITER //
+-- CREATE PROCEDURE inputUpvote (
+--     IN u_id BIGINT UNSIGNED,
+--     IN s_id BIGINT UNSIGNED,
+--     IN r_id BIGINT UNSIGNED,
+--     IN o_id BIGINT UNSIGNED
+-- )
+-- BEGIN
+--     INSERT INTO SemanticInputs (
+--         subj_id,
+--         user_id,
+--         rel_id,
+--         obj_id,
+--         rat_val, opt_data
+--     )
+--     VALUES (
+--         s_id,
+--         u_id,
+--         r_id,
+--         o_id,
+--         0x7F, NULL
+--     );
+-- END //
+-- DELIMITER ;
 --
--- -- SET @hello_id = 0xA000000000000000 + 1;
--- -- SELECT @hello_id;
--- -- SELECT @exit_code;
+-- DELIMITER //
+-- CREATE PROCEDURE inputUpvoteDuringCreation (
+--     IN u_id BIGINT UNSIGNED,
+--     IN s_id BIGINT UNSIGNED,
+--     IN r_id BIGINT UNSIGNED,
+--     IN o_id BIGINT UNSIGNED
+-- )
+-- BEGIN
+--     INSERT INTO SemanticInputs (
+--         subj_id,
+--         user_id,
+--         rel_id,
+--         obj_id,
+--         rat_val, opt_data
+--     )
+--     VALUES (
+--         s_id,
+--         u_id,
+--         r_id,
+--         o_id,
+--         0x7F, NULL
+--     ), (
+--         s_id,
+--         1,
+--         r_id,
+--         o_id,
+--         0x7F, NULL
+--     );
+-- END //
+-- DELIMITER ;

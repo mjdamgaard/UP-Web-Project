@@ -12,7 +12,6 @@ DELETE FROM Categories;
 DELETE FROM StandardTerms;
 DELETE FROM Relations;
 DELETE FROM KeywordStrings;
-DELETE FROM ConstantSets;
 DELETE FROM Lists;
 DELETE FROM Texts;
 DELETE FROM Binaries;
@@ -31,9 +30,6 @@ DELETE FROM Creators;
 -- DROP TABLE StandardTerms;
 -- DROP TABLE Relations;
 -- DROP TABLE KeywordStrings;
---
--- DROP TABLE ConstantSets;
---
 -- DROP TABLE Lists;
 -- DROP TABLE Texts;
 -- DROP TABLE Binaries;
@@ -319,37 +315,35 @@ CREATE TABLE KeywordStrings (
 
 
 
-
-
--- Jeg tror at ConstantSets ("set") bare simpelthen skal være en
--- VARBINARY(2**16).. ..eller en BLOB med andre ord.. som så indeholder
--- en liste over (rat_data, (obj_t, obj_id))-tupler..
-
-CREATE TABLE ConstantSets (
-    /* saved set ID */
-    id BIGINT UNSIGNED PRIMARY KEY,
-    -- type = "set".
-    -- (We are free to use "set" since the Sets entities are not terms.)
-
-    -- user or user group who states the statement.
-    user_t CHAR(3),
-    user_id BIGINT UNSIGNED,
-
-    -- subject of relation.
-    subj_t CHAR(3),
-    subj_id BIGINT UNSIGNED,
-
-    -- relation.
-    rel_id BIGINT UNSIGNED,
-
-    -- date
-    saved_at DATE,
-
-    -- saved data.
-    elems BLOB
-);
-
-
+-- -- Jeg tror at ConstantSets ("set") bare simpelthen skal være en
+-- -- VARBINARY(2**16).. ..eller en BLOB med andre ord.. som så indeholder
+-- -- en liste over (rat_data, (obj_t, obj_id))-tupler..
+--
+-- -- Jeg er kommet i tvivl om, hvorvidt disse constant sets overhovedet er
+-- -- brugbare, så lad mig bare udelade dem, i hvert fald i starten.
+-- CREATE TABLE ConstantSets (
+--     /* saved set ID */
+--     id BIGINT UNSIGNED PRIMARY KEY,
+--     -- type = "set".
+--     -- (We are free to use "set" since the Sets entities are not terms.)
+--
+--     -- user or user group who states the statement.
+--     user_t CHAR(3),
+--     user_id BIGINT UNSIGNED,
+--
+--     -- subject of relation.
+--     subj_t CHAR(3),
+--     subj_id BIGINT UNSIGNED,
+--
+--     -- relation.
+--     rel_id BIGINT UNSIGNED,
+--
+--     -- date
+--     saved_at DATE,
+--
+--     -- saved data.
+--     elems BLOB
+-- );
 
 
 
