@@ -1,6 +1,6 @@
 <?php
 
-// $database_path = $_SERVER['DOCUMENT_ROOT'] . "/src/database/";
+$database_path = $_SERVER['DOCUMENT_ROOT'] . "/src/database_io/";
 require_once $database_path . "connect_lib.php";
 
 
