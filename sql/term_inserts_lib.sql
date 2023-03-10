@@ -40,7 +40,7 @@ DROP PROCEDURE insertTxt;
 DELIMITER //
 CREATE PROCEDURE insertOrFindCat (
     IN catTitle TEXT,
-    IN subjCatID BIGINT UNSIGNED,
+    IN superCatID BIGINT UNSIGNED,
     IN userID BIGINT UNSIGNED,
     OUT newID BIGINT UNSIGNED,
     OUT exitCode TINYINT -- 0 is successful insertion, 1 is successful find.
@@ -48,19 +48,24 @@ CREATE PROCEDURE insertOrFindCat (
 BEGIN
     SELECT id INTO newID
     FROM Categories
-    WHERE (title = catTitle AND super_cat_id = subjCatID);
-    IF (newID IS NULL) THEN
-        INSERT INTO Categories (title, super_cat_id)
-        VALUES (catTitle, subjCatID);
-        SELECT LAST_INSERT_ID() INTO newID;
-        IF (userID IS NOT NULL) THEN
-            -- NOTE: This procedure assumes that user_id is correct if not null.
-            INSERT INTO Creators (term_t, term_id, user_id)
-            VALUES ("c", newID, userID);
-        END IF;
-        SET exitCode = 0; -- insert.
-    ELSE
+    WHERE (title = catTitle AND super_cat_id = superCatID);
+    IF (newID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
+    ELSE
+        IF (NOT EXISTS (SELECT id FROM Categories WHERE id = superCatID)) THEN
+            SET newID = NULL;
+            SET exitCode = 2; -- super category doesn't exist.
+        ELSE
+            INSERT INTO Categories (title, super_cat_id)
+            VALUES (catTitle, superCatID);
+            SELECT LAST_INSERT_ID() INTO newID;
+            -- NOTE: This procedure assumes that user_id is correct if not null.
+            IF (userID IS NOT NULL) THEN
+                INSERT INTO Creators (term_t, term_id, user_id)
+                VALUES ("c", newID, userID);
+            END IF;
+            SET exitCode = 0; -- insert.
+        END IF;
     END IF;
 END //
 DELIMITER ;
@@ -79,18 +84,23 @@ BEGIN
     SELECT id INTO newID
     FROM StandardTerms
     WHERE (title = stdTitle AND cat_id = catID);
-    IF (newID IS NULL) THEN
-        INSERT INTO StandardTerms (title, cat_id)
-        VALUES (stdTitle, catID);
-        SELECT LAST_INSERT_ID() INTO newID;
-        IF (userID IS NOT NULL) THEN
-            -- NOTE: This procedure assumes that user_id is correct if not null.
-            INSERT INTO Creators (term_t, term_id, user_id)
-            VALUES ("s", newID, userID);
-        END IF;
-        SET exitCode = 0; -- insert.
-    ELSE
+    IF (newID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
+    ELSE
+        IF (NOT EXISTS (SELECT id FROM Categories WHERE id = catID)) THEN
+            SET newID = NULL;
+            SET exitCode = 2; -- category doesn't exist.
+        ELSE
+            INSERT INTO StandardTerms (title, cat_id)
+            VALUES (stdTitle, catID);
+            SELECT LAST_INSERT_ID() INTO newID;
+            -- NOTE: This procedure assumes that user_id is correct if not null.
+            IF (userID IS NOT NULL) THEN
+                INSERT INTO Creators (term_t, term_id, user_id)
+                VALUES ("s", newID, userID);
+            END IF;
+            SET exitCode = 0; -- insert.
+        END IF;
     END IF;
 END //
 DELIMITER ;
@@ -109,22 +119,24 @@ CREATE PROCEDURE insertOrFindRel (
 BEGIN
     SELECT id INTO newID
     FROM Relations
-    WHERE (
-        obj_noun = objNoun AND
-        subj_cat_id = subjCatID
-    );
-    IF (newID IS NULL) THEN
-        INSERT INTO Relations (obj_noun, subj_cat_id)
-        VALUES (objNoun, subjCatID);
-        SELECT LAST_INSERT_ID() INTO newID;
-        IF (userID IS NOT NULL) THEN
-            -- NOTE: This procedure assumes that user_id is correct if not null.
-            INSERT INTO Creators (term_t, term_id, user_id)
-            VALUES ("r", newID, userID);
-        END IF;
-        SET exitCode = 0; -- insert.
-    ELSE
+    WHERE (obj_noun = objNoun AND subj_cat_id = subjCatID);
+    IF (newID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
+    ELSE
+        IF (NOT EXISTS (SELECT id FROM Categories WHERE id = subjCatID)) THEN
+            SET newID = NULL;
+            SET exitCode = 2; -- subject category doesn't exist.
+        ELSE
+            INSERT INTO Relations (obj_noun, subj_cat_id)
+            VALUES (objNoun, subjCatID);
+            SELECT LAST_INSERT_ID() INTO newID;
+            -- NOTE: This procedure assumes that user_id is correct if not null.
+            IF (userID IS NOT NULL) THEN
+                INSERT INTO Creators (term_t, term_id, user_id)
+                VALUES ("r", newID, userID);
+            END IF;
+            SET exitCode = 0; -- insert.
+        END IF;
     END IF;
 END //
 DELIMITER ;

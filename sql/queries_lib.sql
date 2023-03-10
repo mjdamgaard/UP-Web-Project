@@ -31,7 +31,7 @@ BEGIN
         rel_id = relID
     );
     IF (isAscOrder) THEN
-        SELECT (rat_val, obj_t, obj_id)
+        SELECT (rat_val AS ratingVal, obj_t AS objType, obj_id AS objID)
         FROM SemanticInputs
         WHERE (
             set_id = @setID AND
@@ -40,7 +40,7 @@ BEGIN
         ORDER BY rat_val, obj_t, obj_id ASC
         LIMIT numOffset, num;
     ELSE
-        SELECT (rat_val, obj_t, obj_id)
+        SELECT (rat_val AS ratingVal, obj_t AS objType, obj_id AS objID)
         FROM SemanticInputs
         WHERE (
             set_id = @setID AND
@@ -56,6 +56,64 @@ DELIMITER ;
 
 
 
+
+
+DELIMITER //
+CREATE PROCEDURE selectCatTitle (
+    IN catID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT (title AS catTitle) FROM Categories WHERE id = catID;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE selectCatSuperCat (
+    IN catID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT (super_cat_id AS superCatID) FROM Categories WHERE id = catID;
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectCatAllSuperCats (
+    IN catID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT (super_cat_id AS superCatID) FROM Categories WHERE id = catID;
+END //
+DELIMITER ;
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectRelObjNoun (
+    IN relID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT (obj_noun AS objNoun) FROM Relations WHERE id = relID;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE selectRelSubjCat (
+    IN relID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT (subj_cat_id AS subjCatID) FROM Relations WHERE id = relID;
+END //
+DELIMITER ;
+
+
+
+
+
+
+
+
 DELIMITER //
 CREATE PROCEDURE selectData (
     IN dataType CHAR(1),
@@ -64,7 +122,7 @@ CREATE PROCEDURE selectData (
 BEGIN
     CASE dataType
         WHEN "t" THEN
-            SELECT str FROM Texts WHERE (id = dataID);
+            SELECT str AS data FROM Texts WHERE (id = dataID);
         -- TODO: Implement more data term types.
         ELSE
             SELECT NULL;
