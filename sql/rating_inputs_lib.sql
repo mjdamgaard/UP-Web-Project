@@ -69,25 +69,27 @@ CREATE PROCEDURE inputOrChangeRating (
     OUT exitCode TINYINT
 )
 BEGIN
+    DECLARE setID, existsPriorRating BIGINT UNSIGNED;
+    DECLARE ecFindOrCreateSet TINYINT;
     CALL findOrCreateSet (
         userType,
         userID,
         subjType,
         subjID,
         relID,
-        @setID,
-        @ecFindOrCreateSet
+        setID,
+        ecFindOrCreateSet
     );
-    SET @existsPriorRating = (
+    SET existsPriorRating = (
         SELECT set_id
         FROM SemanticInputs
         WHERE (
-            set_id = @setID AND
+            set_id = setID AND
             obj_t = objType AND
             obj_id = objID
         )
     );
-    IF (@existsPriorRating IS NULL) THEN
+    IF (existsPriorRating IS NULL) THEN
         INSERT INTO SemanticInputs (
             set_id,
             rat_val,
@@ -95,21 +97,21 @@ BEGIN
             obj_id
         )
         VALUES (
-            @setID,
+            setID,
             ratingVal,
             objType,
             objID
         );
-        SET exitCode = (0 + @ecFindOrCreateSet); -- no prior rating.
+        SET exitCode = (0 + ecFindOrCreateSet); -- no prior rating.
     ELSE
         UPDATE SemanticInputs
         SET rat_val = ratingVal
         WHERE (
             obj_t = objType AND
             obj_id = objID AND
-            set_id = @setID
+            set_id = setID
         );
-        SET exitCode = (2 + @ecFindOrCreateSet); -- overwriting an old rating.
+        SET exitCode = (2 + ecFindOrCreateSet); -- overwriting an old rating.
     END IF;
 END //
 DELIMITER ;
