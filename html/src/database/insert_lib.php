@@ -34,7 +34,7 @@ function insertOrFindCategory($titel, $superCatID, $userID) {
 
 
 
-function insertOrFindStandard($titel, $catID, $userID) {
+function insertOrFindStandardTerm($titel, $catID, $userID) {
     $conn = getConnectionOrDie();
 
     // insert or find term.

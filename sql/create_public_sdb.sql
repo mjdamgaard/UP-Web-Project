@@ -165,7 +165,12 @@ CREATE TABLE SemanticInputs (
         rat_val,
         obj_t,
         obj_id
-    )
+    ),
+
+    -- (obj_t, obj_id and set_id will not be redundantly repeated in this
+    -- secondary index. The size of the index will thus be the same as the
+    -- clustered index.)
+    INDEX (obj_t, obj_id, set_id)
 
     -- -- w_exp is a nummerical value which gives the weight of the rating
     -- -- when plugged into the equation w = 2^(w_exp / 32).

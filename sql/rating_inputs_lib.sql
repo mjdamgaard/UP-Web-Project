@@ -105,9 +105,9 @@ BEGIN
         UPDATE SemanticInputs
         SET rat_val = ratingVal
         WHERE (
-            set_id = @setID AND
             obj_t = objType AND
-            obj_id = objID
+            obj_id = objID AND
+            set_id = @setID
         );
         SET exitCode = (2 + @ecFindOrCreateSet); -- overwriting an old rating.
     END IF;
