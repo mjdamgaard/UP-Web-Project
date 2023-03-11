@@ -66,7 +66,12 @@ function queryAndEchoSet() {
         $$paramName = $_POST[$paramName];
     }
 
-    
+    db_io\getSet(
+        $userType, $userID, $subjType, $subjID, $relID,
+        $ratingRangeMin, $ratingRangeMax,
+        $num, $numOffset,
+        $isAscOrder
+    );
 }
 
 

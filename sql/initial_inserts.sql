@@ -1,9 +1,9 @@
 -- TODO:
--- insertOrFindCategory("Categories", 0, NULL);
+-- insertOrFindCategory("Categories", 1, NULL);
 -- // insertOrFindCategory("Standard terms", 1, NULL);
--- insertOrFindCategory("Relations", 2, NULL);
+-- insertOrFindCategory("Relations", 1, NULL);
 --
--- $res = insertOrFindCategory("Users and bots", 2, NULL);
+-- $res = insertOrFindCategory("Users and bots", 1, NULL);
 -- $catUserEtcID = $res["id"];
 --
 -- insertOrFindCategory("Users", $catUserEtcID, NULL);
