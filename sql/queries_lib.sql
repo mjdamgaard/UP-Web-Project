@@ -39,7 +39,7 @@ BEGIN
         rel_id = relID
     );
     IF (isAscOrder) THEN
-        SELECT rat_val AS ratingVal, obj_t AS objType, obj_id AS objID
+        SELECT HEX(rat_val) AS ratingVal, obj_t AS objType, obj_id AS objID
         FROM SemanticInputs
         WHERE (
             set_id = setID AND
@@ -48,7 +48,7 @@ BEGIN
         ORDER BY rat_val, obj_t, obj_id ASC
         LIMIT numOffset, num;
     ELSE
-        SELECT rat_val AS ratingVal, obj_t AS objType, obj_id AS objID
+        SELECT HEX(rat_val) AS ratingVal, obj_t AS objType, obj_id AS objID
         FROM SemanticInputs
         WHERE (
             set_id = setID AND
@@ -82,7 +82,7 @@ BEGIN
         subj_id = subjID AND
         rel_id = relID
     );
-    SELECT rat_val AS ratingVal
+    SELECT HEX(rat_val) AS ratingVal
     FROM SemanticInputs
     WHERE (obj_t = objType AND obj_id = objID AND set_id = setID);
 END //
@@ -107,7 +107,7 @@ CREATE PROCEDURE selectCatSuperCat (
     IN catID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT super_cat_id AS superCatID FROM Categories WHERE id = catID;
+    SELECT HEX(super_cat_id) AS superCatID FROM Categories WHERE id = catID;
 END //
 DELIMITER ;
 
@@ -136,7 +136,7 @@ CREATE PROCEDURE selectStdCat (
     IN stdID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT cat_id AS catID FROM StandardTerms WHERE id = stdID;
+    SELECT HEX(cat_id) AS catID FROM StandardTerms WHERE id = stdID;
 END //
 DELIMITER ;
 
@@ -160,7 +160,7 @@ CREATE PROCEDURE selectRelSubjCat (
     IN relID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT subj_cat_id AS subjCatID FROM Relations WHERE id = relID;
+    SELECT HEX(subj_cat_id) AS subjCatID FROM Relations WHERE id = relID;
 END //
 DELIMITER ;
 
@@ -204,13 +204,13 @@ CREATE PROCEDURE selectCreations (
 )
 BEGIN
     IF (isAscOrder) THEN
-        SELECT term_id AS termID
+        SELECT HEX(term_id) AS termID
         FROM Creators
         WHERE (user_id = userID AND term_t = termType)
         ORDER BY term_id ASC
         LIMIT numOffset, num;
     ELSE
-        SELECT term_id AS termID
+        SELECT HEX(term_id) AS termID
         FROM Creators
         WHERE (user_id = userID AND term_t = termType)
         ORDER BY term_id DESC
