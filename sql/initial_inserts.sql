@@ -1,6 +1,5 @@
 -- TODO:
 -- insertOrFindCategory("Categories", 0, NULL);
--- insertOrFindCategory("Terms", 0, NULL);
 -- // insertOrFindCategory("Standard terms", 1, NULL);
 -- insertOrFindCategory("Relations", 2, NULL);
 --

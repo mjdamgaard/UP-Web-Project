@@ -5,8 +5,8 @@ $request_handling_path = $_SERVER['DOCUMENT_ROOT'] . "/src/request_handling/";
 
 // check that http method is the POST method.
 if ($_SERVER["REQUEST_METHOD"] != "POST") {
-   echo "Error: Only the POST method is implemented";
-   exit;
+    echo "Error: Only the POST method is implemented";
+    exit;
 }
 
 // get the protocol.

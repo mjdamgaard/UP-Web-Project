@@ -1,7 +1,7 @@
-<?php
+<?php  namespace db_io;
 
-$database_path = $_SERVER['DOCUMENT_ROOT'] . "/src/database_io/";
-require_once $database_path . "connect_lib.php";
+$db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/src/db_io/";
+require_once $db_io_path . "connect_lib.php";
 
 
 

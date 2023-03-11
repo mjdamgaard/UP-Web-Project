@@ -26,7 +26,7 @@ DELETE FROM Creators;
 -- DROP TABLE UserGroups;
 -- DROP TABLE Users;
 --
--- DROP TABLE Categories;
+DROP TABLE Categories;
 -- DROP TABLE StandardTerms;
 -- DROP TABLE Relations;
 -- DROP TABLE KeywordStrings;
@@ -51,6 +51,13 @@ DELETE FROM Creators;
 -- alligevel ingen kollisioner med de typer jeg har. Dette betyder dog ikke,
 -- at jeg ikke nødvendigvis vil beholde tre chars i applikation--control-
 -- grænsefladen (interfacet). (09.03.23)
+
+-- Det kan jo sagtens være, at jeg lader Sets smelte sammen med SemanticInputs
+-- på et tidspunkt. Jeg tror bare, jeg holder dem adskilte fordi, måske fordi
+-- jeg kunne forestille mig, at det letter komprimeringsarbejdet, når
+-- SemanticInputs skal opdateres, når jeg skal komprimere det (hvad jeg helt
+-- sikkert ville skulle, hvis nu et samlet SemanticInputs (samlet med Sets)
+-- viser sig at være det mest effektive).
 
 CREATE TABLE Sets (
     -- set ID (which is not a term ID).
@@ -270,6 +277,8 @@ CREATE TABLE Categories (
 
     UNIQUE INDEX (title, super_cat_id)
 );
+INSERT INTO Categories (title, super_cat_id)
+VALUES ("Terms", 0);
 
 CREATE TABLE StandardTerms (
     -- term ID.
@@ -285,7 +294,6 @@ CREATE TABLE StandardTerms (
 
     UNIQUE INDEX (title, cat_id)
 );
-
 
 
 CREATE TABLE Relations (

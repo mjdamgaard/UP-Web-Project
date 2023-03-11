@@ -4,15 +4,15 @@ $html = "";
 
 // check that http method is the POST method.
 if ($_SERVER["REQUEST_METHOD"] != "POST") {
-   echo "Error: Only the POST method is implemented";
-   exit;
+    echo "Error: Only the POST method is implemented";
+    exit;
 }
 
 
 // get request type.
 if (!isset($_POST["reqType"])) {
-   echo "Error: No request type specified";
-   exit;
+    echo "Error: No request type specified";
+    exit;
 }
 $reqType = $_POST["reqType"];
 
@@ -39,7 +39,7 @@ function safeEcho($str) {
 }
 
 safeEcho($html);
-
+exit;
 
 
 
@@ -48,6 +48,24 @@ safeEcho($html);
 
 
 function queryAndEchoSet() {
+    // get parameters.
+    foreach (
+        array(
+            "userType", "userID", "subjType", "subjID", "relID",
+            "ratingRangeMin", "ratingRangeMax",
+            "num", "numOffset",
+            "isAscOrder"
+        )
+        as $paramName
+    ) {
+        if (!isset($_POST[$paramName])) {
+            echo "Error: Set request error: " .
+                "Parameter ". $paramName ." is not specified";
+            exit;
+        }
+        $$paramName = $_POST[$paramName];
+    }
+
     
 }
 

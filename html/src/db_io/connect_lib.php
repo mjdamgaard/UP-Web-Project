@@ -1,4 +1,4 @@
-<?php
+<?php namespace db_io;
 
 function getConnection() {
     $servername = "localhost";
@@ -8,7 +8,7 @@ function getConnection() {
 
 
     // create connection.
-    $conn = new mysqli($servername, $username, $password, $dbname);
+    $conn = new \mysqli($servername, $username, $password, $dbname);
 
     return $conn;
 }
@@ -22,7 +22,7 @@ function getConnectionOrDie() {
 
 
     // create connection.
-    $conn = new mysqli($servername, $username, $password, $dbname);
+    $conn = new \mysqli($servername, $username, $password, $dbname);
     // verify connection (or die).
     if ($conn->connect_error) {
         die("Connection failed: " . $conn->connect_error);

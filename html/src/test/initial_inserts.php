@@ -1,7 +1,7 @@
 <?php
 
 $src_path = $_SERVER['DOCUMENT_ROOT'] . "/src/";
-require_once $src_path . "database_lib.php";
+require_once $src_path . "db_io_lib.php";
 
 
 
@@ -9,34 +9,33 @@ require_once $src_path . "database_lib.php";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // categories.
-    insertOrFindCategory("Categories", 0, NULL);
-    insertOrFindCategory("Terms", 0, NULL);
+    db_io\insertOrFindCategory("Categories", 1, NULL);
     // insertOrFindCategory("Standard terms", 1, NULL);
-    insertOrFindCategory("Relations", 2, NULL);
+    db_io\insertOrFindCategory("Relations", 1, NULL);
 
-    $res = insertOrFindCategory("Users and bots", 2, NULL);
+    $res = db_io\insertOrFindCategory("Users and bots", 1, NULL);
     $catUserEtcID = $res["id"];
 
-    insertOrFindCategory("Users", $catUserEtcID, NULL);
-    insertOrFindCategory("User groups", $catUserEtcID, NULL);
+    db_io\insertOrFindCategory("Users", $catUserEtcID, NULL);
+    db_io\insertOrFindCategory("User groups", $catUserEtcID, NULL);
 
-    $res = insertOrFindCategory("Internal data", 1, NULL);
+    $res = db_io\insertOrFindCategory("Internal data", 1, NULL);
     $catDataTermsID = $res["id"];
 
-    insertOrFindCategory("Keyword strings", $catDataTermsID, NULL);
-    insertOrFindCategory("Lists", $catDataTermsID, NULL);
-    insertOrFindCategory("Texts", $catDataTermsID, NULL);
-    insertOrFindCategory("Binaries", $catDataTermsID, NULL);
+    db_io\insertOrFindCategory("Keyword strings", $catDataTermsID, NULL);
+    db_io\insertOrFindCategory("Lists", $catDataTermsID, NULL);
+    db_io\insertOrFindCategory("Texts", $catDataTermsID, NULL);
+    db_io\insertOrFindCategory("Binaries", $catDataTermsID, NULL);
 
     // relations.
-    insertOrFindRelation("Subcategories", 1, NULL);
-    insertOrFindRelation("Elements", 1, NULL);
+    db_io\insertOrFindRelation("Subcategories", 1, NULL);
+    db_io\insertOrFindRelation("Elements", 1, NULL);
 
     // exit;
     // insertOrFindRelation("I should not exist", 1, NULL);
     if (!isset($_POST["protocol"])) {
        echo "Error: No protocol specified";
-       exit;
+       // exit;
     }
 }
 
