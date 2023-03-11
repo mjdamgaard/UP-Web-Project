@@ -8,15 +8,13 @@ use p0_0 as p;
 
 // check that http method is the POST method.
 if ($_SERVER["REQUEST_METHOD"] != "POST") {
-    echo p\getErrorJSON("Only the POST method is implemented");
-    exit;
+    p\echoErrorJSONAndExit("Only the POST method is implemented");
 }
 
 
 // get request type.
 if (!isset($_POST["reqType"])) {
-    echo p\getErrorJSON("No request type specified");
-    exit;
+    p\echoErrorJSONAndExit("No request type specified");
 }
 $reqType = $_POST["reqType"];
 
@@ -33,8 +31,7 @@ switch ($reqType) {
         exit;
         break;
     default:
-        echo p\getErrorJSON("Unrecognized request type");
-        exit;
+        p\echoErrorJSONAndExit("Unrecognized request type");
 }
 
 p\safeEcho($unsafeJSON);
@@ -59,11 +56,10 @@ function getSetUnsafeJSON() {
         as $paramName
     ) {
         if (!isset($_POST[$paramName])) {
-            echo p\getErrorJSON(
+            p\echoErrorJSONAndExit(
                 "Set request error: " .
                 "Parameter ". $paramName . " is not specified"
             );
-            exit;
         }
         $$paramName = $_POST[$paramName];
     }

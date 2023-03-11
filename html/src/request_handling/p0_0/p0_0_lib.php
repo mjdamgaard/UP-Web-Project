@@ -6,6 +6,18 @@ function getErrorJSON($msg) {
     return '{"Error":"' . $msg . '"}'
 }
 
+function echoErrorJSONAndExit($msg) {
+    echo getErrorJSON($msg);
+    exit;
+}
+
+function echoTypeErrorJSONAndExit($errPrefix, $paramName, $expectedType) {
+    echoErrorJSONAndExit(
+        $errPrefix . "Parameter ". $paramName . " has a wrong type: " .
+        "Expected type is " . $expectedType.
+    );
+}
+
 
 /* Output */
 
@@ -20,24 +32,57 @@ function safeEcho($str) {
 /* parameter getting, verifying and setting */
 
 function verifyAndSetParams($paramNameArr, $typeArr, $errPrefix) {
-    foreach ($paramNameArr as $paramName) {
+    $len = count($paramNameArr);
+    // TODO: Out-comment this length check.
+    if (count($typeArr) != $len) {
+        die("verifyAndSetParams(): count(paramNameArr) != count(typeArr)");
+    }
+    for ($i = 0; $i <= $len - 1; $i++) {
         // get parameters.
+        $paramName = $paramNameArr[$i];
         if (!isset($_POST[$paramName])) {
-            echo p\getErrorJSON(
-                $errPrefix . "Parameter ". $paramName . " is not specified"
+            echoErrorJSONAndExit(
+                $errPrefix . "Parameter ". $paramName .
+                " is not specified"
             );
-            exit;
         }
         // set parameters.
         $$paramName = $_POST[$paramName];
         // verify parameter types.
-        verifyParamTypes($paramNameArr, $typeArr);
-    }
-}
-
-function verifyParamTypes($paramNameArr, $typeArr) {
-    foreach ($paramNameArr as $paramName) {
-        // TODO: ...
+        $type = $typeArr[$i];
+        $param = $$paramName;
+        switch($type) {
+            case "char1":
+                if (!is_string($param) || count($param) != 1) {
+                    echoTypeErrorJSONAndExit(
+                        $errPrefix, $paramName, "CHAR(1)"
+                    );
+                }
+                break;
+            case "varchar255":
+                if (!is_string($param) || count($param) > 255) {
+                    echoTypeErrorJSONAndExit(
+                        $errPrefix, $paramName, "VARCHAR(225)"
+                    );
+                }
+                break;
+            case "ptr":
+                if (!is_numeric($param) || count($param) > 255) {
+                    echoTypeErrorJSONAndExit(
+                        $errPrefix, $paramName, "BIGINT UNSIGNED"
+                    );
+                }
+                break;
+            case "int":
+                if (!is_numeric($param) || count($param) > 255) {
+                    echoTypeErrorJSONAndExit(
+                        $errPrefix, $paramName, "INT"
+                    );
+                }
+                break;
+            default:
+                die("verifyAndSetParams(): wrong type string");
+        }
     }
 }
 
