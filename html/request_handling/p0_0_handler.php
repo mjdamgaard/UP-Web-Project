@@ -19,58 +19,52 @@ if (!isset($_POST["reqType"])) {
 $reqType = $_POST["reqType"];
 
 
-// branch to corresponding request handler.
-$unsafeJSON = "";
+// branch to corresponding request handling subprocedure and exit afterwards.
 switch ($reqType) {
     case "set":
-        $unsafeJSON = getSetUnsafeJSON();
-        break;
+        echo p\getSetJSON();
+        exit;
     case "catTitle":
         // TODO..
-        p\safeEcho("...");
         exit;
-        break;
     default:
         p\echoErrorJSONAndExit("Unrecognized request type");
 }
 
-p\safeEcho($unsafeJSON);
-exit;
 
 
 
 
 
+function getSetJSON() {
+    // verify and get parameters.
+    $paramNameArr = array(
+        "userType", "userID", "subjType", "subjID", "relID",
+        "ratingRangeMin", "ratingRangeMax",
+        "num", "numOffset",
+        "isAscOrder"
+    );
+    $typeArr = array(
+        "char1", "ptr", "char1", "ptr", "ptr",
+        "varchar255", "varchar255",
+        "int", "int",
+        "bool"
+    );
+    $errPrefix = "Set request error: ";
+    $paramArr = p\verifyAndGetParams($paramNameArr, $typeArr, $errPrefix);
 
 
-
-function getSetUnsafeJSON() {
-    // get, verify and set parameters.
-    foreach (
-        array(
-            "userType", "userID", "subjType", "subjID", "relID",
-            "ratingRangeMin", "ratingRangeMax",
-            "num", "numOffset",
-            "isAscOrder"
-        )
-        as $paramName
-    ) {
-        if (!isset($_POST[$paramName])) {
-            p\echoErrorJSONAndExit(
-                "Set request error: " .
-                "Parameter ". $paramName . " is not specified"
-            );
-        }
-        $$paramName = $_POST[$paramName];
+    // initialize input variables for querying.
+    for ($i = 0; $i < 10; $i++) {
+        ${$paramNameArr[$i]} = $paramArr[i];
     }
     // query database.
-    $queryRes =
-        db_io\getSet(
-            $userType, $userID, $subjType, $subjID, $relID,
-            $ratingRangeMin, $ratingRangeMax,
-            $num, $numOffset,
-            $isAscOrder
-        );
+    $queryRes = db_io\getSet(
+        $userType, $userID, $subjType, $subjID, $relID,
+        $ratingRangeMin, $ratingRangeMax,
+        $num, $numOffset,
+        $isAscOrder
+    );
     // JSON-encode and return the query result.
     return json_encode($queryRes);
 }

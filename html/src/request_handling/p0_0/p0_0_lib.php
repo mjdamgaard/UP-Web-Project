@@ -32,14 +32,19 @@ function echoTypeErrorJSONAndExit($errPrefix, $paramName, $expectedType) {
 
 /* parameter getting, verifying and setting */
 
-function verifyAndSetParams($paramNameArr, $typeArr, $errPrefix) {
+function verifyAndGetParams($paramNameArr, $typeArr, $errPrefix) {
+    // initialize return array.
+    $paramArr = arrray();
+
+    // get length of array.
     $len = count($paramNameArr);
     // TODO: Out-comment this length check.
     if (count($typeArr) != $len) {
         die("verifyAndSetParams(): count(paramNameArr) != count(typeArr)");
     }
+    // get and verify all parameters.
     for ($i = 0; $i <= $len - 1; $i++) {
-        // get parameters.
+        // get ith parameter.
         $paramName = $paramNameArr[$i];
         if (!isset($_POST[$paramName])) {
             echoErrorJSONAndExit(
@@ -47,13 +52,17 @@ function verifyAndSetParams($paramNameArr, $typeArr, $errPrefix) {
                 " is not specified"
             );
         }
-        // set parameters.
-        $$paramName = $_POST[$paramName];
-        // verify parameter types.
-        $param = $$paramName;
+        $param = $_POST[$paramName];
+
+        // verify ith parameter type.
         $type = $typeArr[$i];
         verifyType($param, $type, $errPrefix);
+
+        // append ith parameter to return array.
+        $paramArr[] = $param;
     }
+
+    return $paramArr;
 }
 
 function verifyType($param, $type, $errPrefix) {
