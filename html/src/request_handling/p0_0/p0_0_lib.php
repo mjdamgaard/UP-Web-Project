@@ -49,44 +49,68 @@ function verifyAndSetParams($paramNameArr, $typeArr, $errPrefix) {
         // set parameters.
         $$paramName = $_POST[$paramName];
         // verify parameter types.
-        $type = $typeArr[$i];
         $param = $$paramName;
-        switch($type) {
-            case "char1":
-                if (!is_string($param) || count($param) != 1) {
-                    echoTypeErrorJSONAndExit(
-                        $errPrefix, $paramName, "CHAR(1)"
-                    );
-                }
-                break;
-            case "varchar255":
-                if (!is_string($param) || count($param) > 255) {
-                    echoTypeErrorJSONAndExit(
-                        $errPrefix, $paramName, "VARCHAR(225)"
-                    );
-                }
-                break;
-            case "ptr":
-                if (!is_numeric($param) || count($param) > 255) {
-                    echoTypeErrorJSONAndExit(
-                        $errPrefix, $paramName, "BIGINT UNSIGNED"
-                    );
-                }
-                break;
-            case "int":
-                if (!is_numeric($param) || count($param) > 255) {
-                    echoTypeErrorJSONAndExit(
-                        $errPrefix, $paramName, "INT"
-                    );
-                }
-                break;
-            default:
-                die("verifyAndSetParams(): wrong type string");
-        }
+        $type = $typeArr[$i];
+        verifyType($param, $type, $errPrefix);
     }
 }
 
-
+function verifyType($param, $type, $errPrefix) {
+    switch($type) {
+        case "char1":
+            if (!is_string($param) || count($param) != 1) {
+                echoTypeErrorJSONAndExit(
+                    $errPrefix, $paramName, "char(1)"
+                );
+            }
+            break;
+        case "varchar255":
+            if (!is_string($param) || count($param) > 255) {
+                echoTypeErrorJSONAndExit(
+                    $errPrefix, $paramName, "varchar(225)"
+                );
+            }
+            break;
+        case "ptr":
+            if (!ctype_xdigit($param) || count($param) > 16) {
+                echoTypeErrorJSONAndExit(
+                    $errPrefix, $paramName, "varhexadecimal(16)"
+                );
+            }
+            break;
+        case "varbin255":
+            if (!ctype_xdigit($param) || count($param) > 2 * 255) {
+                echoTypeErrorJSONAndExit(
+                    $errPrefix, $paramName, "varhexadecimal(510)"
+                );
+            }
+            break;
+        case "int":
+            if (
+                !is_int($param) ||
+                $param < -2147483648 ||
+                $param > 2147483647
+            ) {
+                echoTypeErrorJSONAndExit(
+                    $errPrefix, $paramName, "INT"
+                );
+            }
+            break;
+        case "bool":
+            if (
+                !is_int($param) ||
+                $param < -128 ||
+                $param > 127
+            ) {
+                echoTypeErrorJSONAndExit(
+                    $errPrefix, $paramName, "TINYINT"
+                );
+            }
+            break;
+        default:
+            die("verifyAndSetParams(): wrong type string");
+    }
+}
 
 
 
