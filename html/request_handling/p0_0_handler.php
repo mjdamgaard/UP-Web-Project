@@ -1,44 +1,43 @@
 <?php
 
-$html = "";
+$p0_0_path = $_SERVER['DOCUMENT_ROOT'] . "/src/request_handling/p0_0/";
+require_once $p0_0_path . "p0_0_lib.php";
+
+use p0_0 as p;
+
 
 // check that http method is the POST method.
 if ($_SERVER["REQUEST_METHOD"] != "POST") {
-    echo "Error: Only the POST method is implemented";
+    echo p\getErrorJSON("Only the POST method is implemented");
     exit;
 }
 
 
 // get request type.
 if (!isset($_POST["reqType"])) {
-    echo "Error: No request type specified";
+    echo p\getErrorJSON("No request type specified");
     exit;
 }
 $reqType = $_POST["reqType"];
 
+
 // branch to corresponding request handler.
+$unsafeJSON = "";
 switch ($reqType) {
     case "set":
-        $html = queryAndEchoSet();
+        $unsafeJSON = getSetUnsafeJSON();
         break;
     case "catTitle":
         // TODO..
-        echo "";
+        p\safeEcho("...");
+        exit;
         break;
     default:
-        return "Error: Unrecognized request type";
+        echo p\getErrorJSON("Unrecognized request type");
+        exit;
 }
 
-
-function convertToSafeOutputFormat($str) {
-    return htmlspecialchars($str);
-}
-
-function safeEcho($str) {
-    echo convertToSafeOutputFormat($str);
-}
-
-safeEcho($html);
+p\safeEcho($unsafeJSON);
 exit;
 
 
@@ -47,8 +46,9 @@ exit;
 
 
 
-function queryAndEchoSet() {
-    // get parameters.
+
+function getSetUnsafeJSON() {
+    // get, verify and set parameters.
     foreach (
         array(
             "userType", "userID", "subjType", "subjID", "relID",
@@ -59,19 +59,24 @@ function queryAndEchoSet() {
         as $paramName
     ) {
         if (!isset($_POST[$paramName])) {
-            echo "Error: Set request error: " .
-                "Parameter ". $paramName ." is not specified";
+            echo p\getErrorJSON(
+                "Set request error: " .
+                "Parameter ". $paramName . " is not specified"
+            );
             exit;
         }
         $$paramName = $_POST[$paramName];
     }
-
-    db_io\getSet(
-        $userType, $userID, $subjType, $subjID, $relID,
-        $ratingRangeMin, $ratingRangeMax,
-        $num, $numOffset,
-        $isAscOrder
-    );
+    // query database.
+    $queryRes =
+        db_io\getSet(
+            $userType, $userID, $subjType, $subjID, $relID,
+            $ratingRangeMin, $ratingRangeMax,
+            $num, $numOffset,
+            $isAscOrder
+        );
+    // JSON-encode and return the query result.
+    return json_encode($queryRes);
 }
 
 

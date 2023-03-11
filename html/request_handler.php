@@ -1,11 +1,8 @@
 <?php
 
-$request_handling_path = $_SERVER['DOCUMENT_ROOT'] . "/src/request_handling/";
-
-
 // check that http method is the POST method.
 if ($_SERVER["REQUEST_METHOD"] != "POST") {
-    echo "Error: Only the POST method is implemented";
+    echo '{"Error":"Only the POST method is implemented"}';
     exit;
 }
 
@@ -25,11 +22,11 @@ switch ($protocol) {
         require $request_handling_path . "p0_0_handler.php";
     case "1.0":
         // TODO: Implement "insert/input term" protocol/procedure.
-        echo "Error: Protocol not implemented yet";
+        echo '{"Error":"Protocol not implemented yet"}';
         exit;
         break;
     default:
-        echo "Error: Unrecognized protocol";
+        echo '{"Error":"Unrecognized protocol"}';
         exit;
 }
 

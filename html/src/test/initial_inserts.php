@@ -31,6 +31,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     db_io\insertOrFindRelation("Subcategories", 1, NULL);
     db_io\insertOrFindRelation("Elements", 1, NULL);
 
+
+
     // exit;
     // insertOrFindRelation("I should not exist", 1, NULL);
     if (!isset($_POST["protocol"])) {

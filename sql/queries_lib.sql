@@ -122,6 +122,28 @@ DELIMITER ;
 -- DELIMITER ;
 
 
+DELIMITER //
+CREATE PROCEDURE selectStdTitle (
+    IN stdID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT title AS stdTitle FROM StandardTerms WHERE id = stdID;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE selectStdCat (
+    IN stdID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT cat_id AS catID FROM StandardTerms WHERE id = stdID;
+END //
+DELIMITER ;
+
+
+
+
+
 
 
 DELIMITER //

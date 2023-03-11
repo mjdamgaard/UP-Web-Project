@@ -17,8 +17,9 @@ require_once 'src/db_io_lib.php';
 
 <?php
 
-$filepath = "src/insertion_forms/temp/description_of_hasLexItem.txt";
-echo nl2br(htmlspecialchars(file_get_contents($filepath)));
+$arr = array("str1"=>"hello", "num"=>30, "str2"=>"world");
+
+echo json_encode($arr);
 
 
 ?>
