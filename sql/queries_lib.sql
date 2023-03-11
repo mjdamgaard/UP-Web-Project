@@ -1,9 +1,13 @@
 
 
 DROP PROCEDURE selectSet;
+DROP PROCEDURE selectRating;
 
 DROP PROCEDURE selectCatTitle;
 DROP PROCEDURE selectCatSuperCat;
+
+DROP PROCEDURE selectStdTitle;
+DROP PROCEDURE selectStdCat;
 
 DROP PROCEDURE selectRelObjNoun;
 DROP PROCEDURE selectRelSubjCat;
@@ -98,7 +102,7 @@ CREATE PROCEDURE selectCatTitle (
     IN catID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT title AS catTitle FROM Categories WHERE id = catID;
+    SELECT title AS title FROM Categories WHERE id = catID;
 END //
 DELIMITER ;
 
@@ -127,7 +131,7 @@ CREATE PROCEDURE selectStdTitle (
     IN stdID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT title AS stdTitle FROM StandardTerms WHERE id = stdID;
+    SELECT title AS title FROM StandardTerms WHERE id = stdID;
 END //
 DELIMITER ;
 
@@ -179,7 +183,7 @@ CREATE PROCEDURE selectData (
 BEGIN
     CASE dataType
         WHEN "t" THEN
-            SELECT str AS data FROM Texts WHERE (id = dataID);
+            SELECT str AS str FROM Texts WHERE (id = dataID);
         -- TODO: Implement more data term types.
         ELSE
             SELECT NULL;

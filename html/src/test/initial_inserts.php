@@ -33,12 +33,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 
 
-    // exit;
-    // insertOrFindRelation("I should not exist", 1, NULL);
-    if (!isset($_POST["protocol"])) {
-       echo "Error: No protocol specified";
-       // exit;
-    }
+    echo db_io\getCatSafeTitle("01") . "<br>";
+    echo db_io\getCatSafeTitle("02") . "<br>";
+    echo db_io\getCatSafeTitle("03") . "<br>";
+
+    // // exit;
+    // // insertOrFindRelation("I should not exist", 1, NULL);
+    // if (!isset($_POST["protocol"])) {
+    //    echo "Error: No protocol specified";
+    //    // exit;
+    // }
 }
 
 // function sanitize_input($data) {

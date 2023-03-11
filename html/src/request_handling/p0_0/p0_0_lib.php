@@ -19,15 +19,16 @@ function echoTypeErrorJSONAndExit($errPrefix, $paramName, $expectedType) {
 }
 
 
-/* Output */
-
-function convertToSafeOutputFormat($str) {
-    return htmlspecialchars($str); // stripslashes (if so) happens in app layer.
-}
-
-function safeEcho($str) {
-    echo convertToSafeOutputFormat($str);
-}
+// /* Output */
+//
+// function convertToSafeOutputFormat($str) {
+//     return htmlspecialchars($str);
+//     // stripslashes (if so) happens in app layer.
+// }
+//
+// function safeEcho($str) {
+//     echo convertToSafeOutputFormat($str);
+// }
 
 /* parameter getting, verifying and setting */
 

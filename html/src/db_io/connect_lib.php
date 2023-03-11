@@ -34,7 +34,7 @@ function getConnectionOrDie() {
 function executeSuccessfulOrDie($stmt) {
     $stmt->execute();
 
-    $error = mysqli_stmt_error($stmt);
+    $error = \mysqli_stmt_error($stmt);
     if ($error) {
         die("MySQLi stmt error: " . $error);
     }
