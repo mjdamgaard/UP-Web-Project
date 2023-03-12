@@ -1,7 +1,7 @@
 <?php
 
 $src_path = $_SERVER['DOCUMENT_ROOT'] . "/src/";
-require_once $src_path . "db_io_lib.php";
+require_once $src_path . "db_io.php";
 
 
 
