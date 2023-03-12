@@ -2,7 +2,7 @@
 
 // phpinfo();
 
-require_once 'src/db_io_lib.php';
+require_once '../src/db_io_lib.php';
 
 
 ?>
