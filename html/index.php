@@ -2,8 +2,6 @@
 
 // phpinfo();
 
-require_once "../src/db_io/db_io.php";
-
 
 ?>
 <!DOCTYPE html>

@@ -15,7 +15,7 @@ if (!isset($_POST["p"])) {
     $protocol = intval($_POST["p"]);
 }
 
-$request_handling_path = $_SERVER['DOCUMENT_ROOT'] . "/request_handling/";
+$request_handling_path = $_SERVER['DOCUMENT_ROOT'] . "/src/request_handling/";
 
 // match with a known protocol.
 switch ($protocol) {

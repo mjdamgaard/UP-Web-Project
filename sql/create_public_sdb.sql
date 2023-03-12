@@ -153,8 +153,8 @@ CREATE TABLE SemanticInputs (
     -- -- rat_val is a numerical rating value (signed) which defines the
     -- -- degree to which the user/user group of the set deems the statement
     -- -- to be true/fitting.
-    -- -- When dividing rat_val with 128, this value runs from -1 to (almost) 1.
-    -- -- And then -1 is taken to mean "very far from true/fitting," 0 is taken
+    -- -- When dividing rat_val with 255, this value runs from 0 to 1.
+    -- -- And then 0 is taken to mean "very far from true/fitting," 0.5 is taken
     -- -- to mean "not sure" / "not particularly fitting or unfitting," and 1 is
     -- -- taken to mean "very much true/fitting."
     -- -- inv_rat_val is the multiplicational inverse of rat_val, meaning that

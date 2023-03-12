@@ -26,7 +26,7 @@ BEGIN
         user_id = userID AND
         subj_t = subjType AND
         subj_id = subjID AND
-        rel_id = ID
+        rel_id = relID
     );
     IF (newID IS NULL) THEN
         INSERT INTO Sets (
@@ -41,7 +41,7 @@ BEGIN
             userID,
             subjType,
             subjID,
-            ID
+            relID
         );
         SELECT LAST_INSERT_ID() INTO newID;
         SET exitCode = 1; -- create.
@@ -80,7 +80,7 @@ BEGIN
         setID,
         ecFindOrCreateSet
     );
-    SET existsPriorRating = (
+    SET existsPriorRating = EXISTS (
         SELECT set_id
         FROM SemanticInputs
         WHERE (
@@ -89,7 +89,7 @@ BEGIN
             obj_id = objID
         )
     );
-    IF (existsPriorRating IS NULL) THEN
+    IF (NOT existsPriorRating) THEN
         INSERT INTO SemanticInputs (
             set_id,
             rat_val,
