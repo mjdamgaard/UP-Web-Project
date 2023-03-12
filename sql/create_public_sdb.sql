@@ -277,8 +277,7 @@ CREATE TABLE Categories (
 
     UNIQUE INDEX (title, super_cat_id)
 );
-INSERT INTO Categories (title, super_cat_id)
-VALUES ("Terms", 0);
+
 
 CREATE TABLE StandardTerms (
     -- term ID.

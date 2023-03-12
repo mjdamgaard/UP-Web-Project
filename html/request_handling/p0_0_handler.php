@@ -1,6 +1,6 @@
 <?php
 
-$p0_0_path = $_SERVER['DOCUMENT_ROOT'] . "../src/request_handling/p0_0/";
+$p0_0_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/request_handling/p0_0/";
 require_once $p0_0_path . "p0_0.php";
 
 use p0_0 as p;
