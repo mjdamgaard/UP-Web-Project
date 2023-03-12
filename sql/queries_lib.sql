@@ -3,16 +3,12 @@
 DROP PROCEDURE selectSet;
 DROP PROCEDURE selectRating;
 
-DROP PROCEDURE selectCatTitle;
-DROP PROCEDURE selectCatSuperCat;
-
-DROP PROCEDURE selectStdTitle;
-DROP PROCEDURE selectStdCat;
-
-DROP PROCEDURE selectRelObjNoun;
-DROP PROCEDURE selectRelSubjCat;
+DROP PROCEDURE selectCatDef;
+DROP PROCEDURE selectStdDef;
+DROP PROCEDURE selectRelDef;
 
 DROP PROCEDURE selectData;
+
 DROP PROCEDURE selectCreations;
 
 
@@ -97,77 +93,43 @@ DELIMITER ;
 
 
 
+
+
+
 DELIMITER //
-CREATE PROCEDURE selectCatTitle (
+CREATE PROCEDURE selectCatDef (
     IN catID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT title AS title FROM Categories WHERE id = catID;
-END //
-DELIMITER ;
-
-DELIMITER //
-CREATE PROCEDURE selectCatSuperCat (
-    IN catID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT HEX(super_cat_id) AS superCatID FROM Categories WHERE id = catID;
+    SELECT title AS title, HEX(super_cat_id) AS superCatID
+    FROM Categories
+    WHERE id = catID;
 END //
 DELIMITER ;
 
 
--- DELIMITER //
--- CREATE PROCEDURE selectCatAllSuperCats (
---     IN catID BIGINT UNSIGNED
--- )
--- BEGIN
---     SELECT (super_cat_id AS superCatID) FROM Categories WHERE id = catID;
--- END //
--- DELIMITER ;
-
-
 DELIMITER //
-CREATE PROCEDURE selectStdTitle (
+CREATE PROCEDURE selectStdDef (
     IN stdID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT title AS title FROM StandardTerms WHERE id = stdID;
-END //
-DELIMITER ;
-
-DELIMITER //
-CREATE PROCEDURE selectStdCat (
-    IN stdID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT HEX(cat_id) AS catID FROM StandardTerms WHERE id = stdID;
+    SELECT title AS title, HEX(cat_id) AS catID
+    FROM StandardTerms
+    WHERE id = stdID;
 END //
 DELIMITER ;
 
 
-
-
-
-
-
 DELIMITER //
-CREATE PROCEDURE selectRelObjNoun (
+CREATE PROCEDURE selectRelDef (
     IN relID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT obj_noun AS objNoun FROM Relations WHERE id = relID;
+    SELECT obj_noun AS objNoun, HEX(subj_cat_id) AS subjCatID
+    FROM Relations
+    WHERE id = relID;
 END //
 DELIMITER ;
-
-DELIMITER //
-CREATE PROCEDURE selectRelSubjCat (
-    IN relID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT HEX(subj_cat_id) AS subjCatID FROM Relations WHERE id = relID;
-END //
-DELIMITER ;
-
 
 
 
@@ -190,8 +152,6 @@ BEGIN
     END CASE;
 END //
 DELIMITER ;
-
-
 
 
 

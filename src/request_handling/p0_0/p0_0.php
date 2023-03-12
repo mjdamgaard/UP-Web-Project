@@ -67,28 +67,28 @@ function verifyAndGetParams($paramNameArr, $typeArr, $errPrefix) {
 
 function verifyType($param, $type, $errPrefix) {
     switch($type) {
-        case "char1":
+        case "t":
             if (!is_string($param) || count($param) != 1) {
                 echoTypeErrorJSONAndExit(
                     $errPrefix, $paramName, "char(1)"
                 );
             }
             break;
-        case "varchar255":
+        case "str":
             if (!is_string($param) || count($param) > 255) {
                 echoTypeErrorJSONAndExit(
                     $errPrefix, $paramName, "varchar(225)"
                 );
             }
             break;
-        case "ptr":
+        case "id":
             if (!ctype_xdigit($param) || count($param) > 16) {
                 echoTypeErrorJSONAndExit(
                     $errPrefix, $paramName, "varhexadecimal(16)"
                 );
             }
             break;
-        case "varbin255":
+        case "bin":
             if (!ctype_xdigit($param) || count($param) > 2 * 255) {
                 echoTypeErrorJSONAndExit(
                     $errPrefix, $paramName, "varhexadecimal(510)"
@@ -106,7 +106,7 @@ function verifyType($param, $type, $errPrefix) {
                 );
             }
             break;
-        case "bool":
+        case "tint":
             if (
                 !is_int($param) ||
                 $param < -128 ||

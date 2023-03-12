@@ -1,9 +1,8 @@
-<?php  namespace db_io;
+<?php namespace db_io;
+
 
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "../src/db_io/";
 require_once $db_io_path . "connect.php";
-
-
 
 
 function getSet(
@@ -38,99 +37,47 @@ function getSet(
 }
 
 
-
-
-
-function getCatSafeTitle($catID) {
+function getSafeDef(
+    $id, $procIdent, $strColumnName, $catColumnName
+) {
     // convert ID from hexadecimal string to hexadecimal literal.
-    $catID = "0x" . $catID;
+    $id = "0x" . $id;
 
     // get connection.
     $conn = getConnectionOrDie();
 
     // insert or find term.
     $stmt = $conn->prepare(
-        "CALL selectCatTitle (?)"
+        "CALL " . $procIdent . " (?)"
     );
     $stmt->bind_param(
         "i",
-        $catID
+        $id
     );
     executeSuccessfulOrDie($stmt);
 
-    // return array("title" => res).
-    $unsafeTitle = $stmt->get_result()->fetch_column();
-    return htmlspecialchars($unsafeTitle);
+    // fetch and sanitize data.
+    $unsafeStr = $stmt->get_result()->fetch_column(0);
+    $safeStr = htmlspecialchars($unsafeStr);
+    $catID = $stmt->get_result()->fetch_column(1);
+
+    // return data as array.
+    return array($strColumnName => $safeStr, $catColumnName => $catID);
+
 }
 
 
-function getStdTermSafeTitle($stdTermID) {
-    // convert ID from hexadecimal string to hexadecimal literal.
-    $stdTermID = "0x" . $stdTermID;
-
-    // get connection.
-    $conn = getConnectionOrDie();
-
-    // insert or find term.
-    $stmt = $conn->prepare(
-        "CALL selectStdTitle (?)"
-    );
-    $stmt->bind_param(
-        "i",
-        $stdTermID
-    );
-    executeSuccessfulOrDie($stmt);
-
-    // return array("title" => res).
-    $unsafeTitle = $stmt->get_result()->fetch_column();
-    return htmlspecialchars($unsafeTitle);
+function getCatSafeDef($catID) {
+    return getSafeDef($catID, "selectCatDef", "title", "superCatID");
 }
 
-
-
-function getCatSuperCatID($catID) {
-    // convert ID from hexadecimal string to hexadecimal literal.
-    $catID = "0x" . $catID;
-
-    // get connection.
-    $conn = getConnectionOrDie();
-
-    // insert or find term.
-    $stmt = $conn->prepare(
-        "CALL selectCatSuperCat (?)"
-    );
-    $stmt->bind_param(
-        "i",
-        $catID
-    );
-    executeSuccessfulOrDie($stmt);
-
-    // return array("superCatID" => res).
-    return $stmt->get_result()->fetch_column();
+function getStdSafeDef($catID) {
+    return getSafeDef($catID, "selectStdDef", "title", "catID");
 }
 
-
-function getStdTermCatID($stdTermID) {
-    // convert ID from hexadecimal string to hexadecimal literal.
-    $stdTermID = "0x" . $stdTermID;
-
-    // get connection.
-    $conn = getConnectionOrDie();
-
-    // insert or find term.
-    $stmt = $conn->prepare(
-        "CALL selectStdCat (?)"
-    );
-    $stmt->bind_param(
-        "i",
-        $stdTermID
-    );
-    executeSuccessfulOrDie($stmt);
-
-    // return array("catID" => res).
-    return $stmt->get_result()->fetch_column();
+function getRelSafeDef($catID) {
+    return getSafeDef($catID, "selectCatDef", "objNoun", "subjCatID");
 }
-
 
 
 
@@ -153,14 +100,13 @@ function getSafeText($txtID) {
     );
     executeSuccessfulOrDie($stmt);
 
-    // return array("str" => res).
-    $unsafeText = $stmt->get_result()->fetch_column();
-    return htmlspecialchars($unsafeText);
+    // fetch and sanitize data.
+    $unsafeStr = $stmt->get_result()->fetch_column();
+    $safeStr = htmlspecialchars($unsafeStr);
+
+    // return text string.
+    return $safeStr;
 }
-
-
-
-
 
 
 

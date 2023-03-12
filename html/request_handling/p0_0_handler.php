@@ -22,10 +22,10 @@ $reqType = $_POST["reqType"];
 // branch to corresponding request handling subprocedure and exit afterwards.
 switch ($reqType) {
     case "set":
-        echo p\getSetJSON();
+        echo getSetJSON();
         exit;
-    case "catTitle":
-        // TODO..
+    case "def":
+        echo getDefJSON();
         exit;
     default:
         p\echoErrorJSONAndExit("Unrecognized request type");
@@ -45,10 +45,10 @@ function getSetJSON() {
         "isAscOrder"
     );
     $typeArr = array(
-        "char1", "ptr", "char1", "ptr", "ptr",
-        "varchar255", "varchar255",
+        "t", "id", "t", "id", "id",
+        "bin", "bin",
         "int", "int",
-        "bool"
+        "tint"
     );
     $errPrefix = "Set request error: ";
     $paramArr = p\verifyAndGetParams($paramNameArr, $typeArr, $errPrefix);
@@ -69,6 +69,36 @@ function getSetJSON() {
     return json_encode($queryRes);
 }
 
+
+
+
+
+function getDefJSON() {
+    // verify and get parameters.
+    $paramNameArr = array("termType", "id");
+    $typeArr = array("t", "id");
+    $errPrefix = "Definition request error: ";
+    $paramArr = p\verifyAndGetParams($paramNameArr, $typeArr, $errPrefix);
+
+    // initialize input variables for querying.
+    $termType = $paramArr[0];
+    $id = $paramArr[1];
+
+    // branch according to the term type.
+    switch ($type) {
+        case "cat":
+            $queryRes = db_io\getCatDef($id);
+            return json_encode($queryRes);
+        case "std":
+            $queryRes = db_io\getStdDef($id);
+            return json_encode($queryRes);
+        case "rel":
+            $queryRes = db_io\getRelDef($id);
+            return json_encode($queryRes);
+        default:
+            p\echoErrorJSONAndExit("Unrecognized request type");
+    }
+}
 
 
 
