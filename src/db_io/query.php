@@ -48,7 +48,7 @@ function getSafeDef($id, $procIdent, $strColumnName, $catColumnName) {
 
     // fetch and sanitize data.
     $res = $stmt->get_result()->fetch_assoc();
-echo var_dump($res) . "<br>";
+    $res = array_values($res);
     $unsafeStr = $res[0];
     $safeStr = htmlspecialchars($unsafeStr);
     $catID = $res[1];
