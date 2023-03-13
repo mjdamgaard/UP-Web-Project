@@ -41,7 +41,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     echo var_dump(db_io\getCatSafeDef("01")) . "<br>";
     echo var_dump(db_io\getCatSafeDef("02")) . "<br>";
     echo var_dump(db_io\getCatSafeDef("03")) . "<br>";
-    echo var_dump(db_io\getCatSafeDef("0x0A")) . "<br>";
+    echo var_dump(db_io\getCatSafeDef("0A")) . "<br>";
 
     // // exit;
     // // insertOrFindRelation("I should not exist", 1, NULL);

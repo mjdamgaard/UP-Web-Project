@@ -31,9 +31,9 @@ CREATE PROCEDURE selectSet (
 )
 BEGIN
     DECLARE userID, subjID, relID, setID BIGINT UNSIGNED;
-    SET userID = (UNHEX(userIDHex));
-    SET subjID = UNHEX(subjIDHex);
-    SET relID = UNHEX(relIDHex);
+    SET userID = CONV(userIDHex, 16, 10);
+    SET subjID = CONV(subjIDHex, 16, 10);
+    SET relID = CONV(relIDHex, 16, 10);
 
     -- DECLARE setID BIGINT UNSIGNED;
     SELECT set_id INTO setID
@@ -80,10 +80,10 @@ CREATE PROCEDURE selectRating (
 )
 BEGIN
     DECLARE objID, userID, subjID, relID, setID BIGINT UNSIGNED;
-    SET objID = UNHEX(objIDHex);
-    SET userID = UNHEX(userIDHex);
-    SET subjID = UNHEX(subjIDHex);
-    SET relID = UNHEX(relIDHex);
+    SET objID = CONV(objIDHex, 16, 10);
+    SET userID = CONV(userIDHex, 16, 10);
+    SET subjID = CONV(subjIDHex, 16, 10);
+    SET relID = CONV(relIDHex, 16, 10);
 
     -- DECLARE setID BIGINT UNSIGNED;
     SELECT set_id INTO setID
@@ -115,7 +115,7 @@ CREATE PROCEDURE selectCatDef (
 )
 BEGIN
     DECLARE catID BIGINT UNSIGNED;
-    SET catID = UNHEX(catIDHex);
+    SET catID = CONV(catIDHex, 16, 10);
 
     SELECT title AS title, HEX(super_cat_id) AS superCatID
     FROM Categories
@@ -130,7 +130,7 @@ CREATE PROCEDURE selectStdDef (
 )
 BEGIN
     DECLARE stdID BIGINT UNSIGNED;
-    SET stdID = UNHEX(stdIDHex);
+    SET stdID = CONV(stdIDHex, 16, 10);
 
     SELECT title AS title, HEX(cat_id) AS catID
     FROM StandardTerms
@@ -145,7 +145,7 @@ CREATE PROCEDURE selectRelDef (
 )
 BEGIN
     DECLARE relID BIGINT UNSIGNED;
-    SET relID = UNHEX(relIDHex);
+    SET relID = CONV(relIDHex, 16, 10);
 
     SELECT obj_noun AS objNoun, HEX(subj_cat_id) AS subjCatID
     FROM Relations
@@ -164,7 +164,7 @@ BEGIN
     DECLARE catID BIGINT UNSIGNED;
     DECLARE str VARCHAR(255);
     DECLARE n TINYINT UNSIGNED;
-    SET catID = UNHEX(catIDHex);
+    SET catID = CONV(catIDHex, 16, 10);
 
     SET n = 255;
     label1: LOOP
@@ -192,7 +192,7 @@ CREATE PROCEDURE selectData (
 )
 BEGIN
     DECLARE dataID BIGINT UNSIGNED;
-    SET dataID = UNHEX(dataIDHex);
+    SET dataID = CONV(dataIDHex, 16, 10);
 
     CASE dataType
         WHEN "t" THEN
@@ -219,7 +219,7 @@ CREATE PROCEDURE selectCreations (
 )
 BEGIN
     DECLARE userID BIGINT UNSIGNED;
-    SET userID = UNHEX(userIDHex);
+    SET userID = CONV(userIDHex, 16, 10);
 
     IF (isAscOrder) THEN
         SELECT HEX(term_id) AS termID

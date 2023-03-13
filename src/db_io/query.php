@@ -11,11 +11,6 @@ function getSet(
     $num, $numOffset,
     $isAscOrder
 ) {
-    // convert IDs from hexadecimal strings to hexadecimal literals.
-    $userID = "0x" . $userID;
-    $subjID = "0x" . $subjID;
-    $relID = "0x" . $relID;
-
     // get connection.
     $conn = getConnectionOrDie();
 
@@ -24,7 +19,7 @@ function getSet(
         "CALL selectSet (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
     $stmt->bind_param(
-        "sisiibbiii",
+        "sssssssiii",
         $userType, $userID, $subjType, $subjID, $relID,
         $ratingRangeMin, $ratingRangeMax,
         $num, $numOffset,
@@ -37,18 +32,10 @@ function getSet(
 }
 
 
-function getSafeDef(
-    $id, $procIdent, $strColumnName, $catColumnName
-) {
-    // convert ID from hexadecimal string to hexadecimal literal.
-// echo $id . ",  ";
-// $id = hexdec($id);
-    // $id = "0x" . $id;
-
+function getSafeDef($id, $procIdent, $strColumnName, $catColumnName) {
     // get connection.
     $conn = getConnectionOrDie();
 
-echo $id . "<br>";
     // insert or find term.
     $stmt = $conn->prepare(
         "CALL " . $procIdent . " (?)"
@@ -60,9 +47,8 @@ echo $id . "<br>";
     executeSuccessfulOrDie($stmt);
 
     // fetch and sanitize data.
-    // $res = $stmt->get_result()->fetch_assoc();
-$res = $stmt->get_result()->fetch_column();
-echo var_dump($res);
+    $res = $stmt->get_result()->fetch_assoc();
+echo var_dump($res) . "<br>";
     $unsafeStr = $res[0];
     $safeStr = htmlspecialchars($unsafeStr);
     $catID = $res[1];
@@ -93,9 +79,6 @@ function getRelSafeDef($catID) {
 
 
 function getSafeSuperCats($catID) {
-    // convert ID from hexadecimal string to hexadecimal literal.
-    $catID = "0x" . $catID;
-
     // get connection.
     $conn = getConnectionOrDie();
 
@@ -104,7 +87,7 @@ function getSafeSuperCats($catID) {
         "CALL selectSuperCats (?)"
     );
     $stmt->bind_param(
-        "i",
+        "s",
         $catID
     );
     executeSuccessfulOrDie($stmt);
@@ -125,16 +108,7 @@ function getSafeSuperCats($catID) {
 
 
 
-
-
-
-
-
-
-
 function getSafeText($txtID) {
-    // convert ID from hexadecimal string to hexadecimal literal.
-    $txtID = "0x" . $txtID;
 
     // get connection.
     $conn = getConnectionOrDie();
@@ -144,7 +118,7 @@ function getSafeText($txtID) {
         "CALL selectData ('t', ?)"
     );
     $stmt->bind_param(
-        "i",
+        "s",
         $txtID
     );
     executeSuccessfulOrDie($stmt);
