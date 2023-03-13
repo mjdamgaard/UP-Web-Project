@@ -32,14 +32,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // db_io\insertOrFindRelation("Elements", 1, NULL);
 
 
-    echo var_dump(intval("0x01")) . ",  ";
-    echo intval("0x01") . ",  ";
-    echo var_dump(intval("0xAF")) . ",  ";
-    echo "<br>";
+    // echo var_dump(intval("0x01")) . ",  ";
+    // echo intval("0x01") . ",  ";
+    // echo var_dump(intval("0xAF")) . ",  ";
+    // echo "<br>";
+    // // what the hell php/Apache2..???..
 
     echo var_dump(db_io\getCatSafeDef("01")) . "<br>";
     echo var_dump(db_io\getCatSafeDef("02")) . "<br>";
     echo var_dump(db_io\getCatSafeDef("03")) . "<br>";
+    echo var_dump(db_io\getCatSafeDef("0x0A")) . "<br>";
 
     // // exit;
     // // insertOrFindRelation("I should not exist", 1, NULL);

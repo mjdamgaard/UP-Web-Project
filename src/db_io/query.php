@@ -41,8 +41,9 @@ function getSafeDef(
     $id, $procIdent, $strColumnName, $catColumnName
 ) {
     // convert ID from hexadecimal string to hexadecimal literal.
-echo $id . ",  ";
-    $id = intval("0x" . $id);
+// echo $id . ",  ";
+// $id = hexdec($id);
+    // $id = "0x" . $id;
 
     // get connection.
     $conn = getConnectionOrDie();
@@ -53,7 +54,7 @@ echo $id . "<br>";
         "CALL " . $procIdent . " (?)"
     );
     $stmt->bind_param(
-        "i",
+        "s",
         $id
     );
     executeSuccessfulOrDie($stmt);

@@ -19,10 +19,10 @@ DROP PROCEDURE selectCreations;
 DELIMITER //
 CREATE PROCEDURE selectSet (
     IN userType CHAR(1),
-    IN userID BIGINT UNSIGNED,
+    IN userIDHex VARCHAR(16),
     IN subjType CHAR(1),
-    IN subjID BIGINT UNSIGNED,
-    IN relID BIGINT UNSIGNED,
+    IN subjIDHex VARCHAR(16),
+    IN relIDHex VARCHAR(16),
     IN ratingRangeMin VARBINARY(255),
     IN ratingRangeMax VARBINARY(255),
     IN num INT UNSIGNED,
@@ -30,7 +30,12 @@ CREATE PROCEDURE selectSet (
     IN isAscOrder BOOL
 )
 BEGIN
-    DECLARE setID BIGINT UNSIGNED;
+    DECLARE userID, subjID, relID, setID BIGINT UNSIGNED;
+    SET userID = (UNHEX(userIDHex));
+    SET subjID = UNHEX(subjIDHex);
+    SET relID = UNHEX(relIDHex);
+
+    -- DECLARE setID BIGINT UNSIGNED;
     SELECT set_id INTO setID
     FROM Sets
     WHERE (
@@ -66,15 +71,21 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectRating (
     IN objType CHAR(1),
-    IN objID BIGINT UNSIGNED,
+    IN objIDHex VARCHAR(16),
     IN userType CHAR(1),
-    IN userID BIGINT UNSIGNED,
+    IN userIDHex VARCHAR(16),
     IN subjType CHAR(1),
-    IN subjID BIGINT UNSIGNED,
-    IN relID BIGINT UNSIGNED
+    IN subjIDHex VARCHAR(16),
+    IN relIDHex VARCHAR(16)
 )
 BEGIN
-    DECLARE setID BIGINT UNSIGNED;
+    DECLARE objID, userID, subjID, relID, setID BIGINT UNSIGNED;
+    SET objID = UNHEX(objIDHex);
+    SET userID = UNHEX(userIDHex);
+    SET subjID = UNHEX(subjIDHex);
+    SET relID = UNHEX(relIDHex);
+
+    -- DECLARE setID BIGINT UNSIGNED;
     SELECT set_id INTO setID
     FROM Sets
     WHERE (
@@ -100,9 +111,12 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectCatDef (
-    IN catID BIGINT UNSIGNED
+    IN catIDHex VARCHAR(16)
 )
 BEGIN
+    DECLARE catID BIGINT UNSIGNED;
+    SET catID = UNHEX(catIDHex);
+
     SELECT title AS title, HEX(super_cat_id) AS superCatID
     FROM Categories
     WHERE id = catID;
@@ -112,9 +126,12 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectStdDef (
-    IN stdID BIGINT UNSIGNED
+    IN stdIDHex VARCHAR(16)
 )
 BEGIN
+    DECLARE stdID BIGINT UNSIGNED;
+    SET stdID = UNHEX(stdIDHex);
+
     SELECT title AS title, HEX(cat_id) AS catID
     FROM StandardTerms
     WHERE id = stdID;
@@ -124,9 +141,12 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectRelDef (
-    IN relID BIGINT UNSIGNED
+    IN relIDHex VARCHAR(16)
 )
 BEGIN
+    DECLARE relID BIGINT UNSIGNED;
+    SET relID = UNHEX(relIDHex);
+
     SELECT obj_noun AS objNoun, HEX(subj_cat_id) AS subjCatID
     FROM Relations
     WHERE id = relID;
@@ -138,11 +158,14 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectSuperCats (
-    IN catID BIGINT UNSIGNED
+    IN catIDHex VARCHAR(16)
 )
 BEGIN
+    DECLARE catID BIGINT UNSIGNED;
     DECLARE str VARCHAR(255);
     DECLARE n TINYINT UNSIGNED;
+    SET catID = UNHEX(catIDHex);
+
     SET n = 255;
     label1: LOOP
         IF (NOT catID > 0 OR n = 0) THEN
@@ -165,9 +188,12 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectData (
     IN dataType CHAR(1),
-    IN dataID BIGINT UNSIGNED
+    IN dataIDHex VARCHAR(16)
 )
 BEGIN
+    DECLARE dataID BIGINT UNSIGNED;
+    SET dataID = UNHEX(dataIDHex);
+
     CASE dataType
         WHEN "t" THEN
             SELECT str AS str FROM Texts WHERE (id = dataID);
@@ -185,13 +211,16 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectCreations (
-    IN userID BIGINT UNSIGNED,
+    IN userIDHex VARCHAR(16),
     IN termType CHAR(1),
     IN num INT UNSIGNED,
     IN numOffset INT UNSIGNED,
     IN isAscOrder BOOL
 )
 BEGIN
+    DECLARE userID BIGINT UNSIGNED;
+    SET userID = UNHEX(userIDHex);
+
     IF (isAscOrder) THEN
         SELECT HEX(term_id) AS termID
         FROM Creators
