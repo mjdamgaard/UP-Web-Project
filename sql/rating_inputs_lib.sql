@@ -11,14 +11,19 @@ DROP PROCEDURE inputOrChangeRating;
 DELIMITER //
 CREATE PROCEDURE findOrCreateSet (
     IN userType CHAR(1),
-    IN userID BIGINT UNSIGNED,
+    IN userIDHex VARCHAR(16),
     IN subjType CHAR(1),
-    IN subjID BIGINT UNSIGNED,
-    IN relID BIGINT UNSIGNED,
-    OUT newID BIGINT UNSIGNED,
+    IN subjIDHex VARCHAR(16),
+    IN relIDHex VARCHAR(16),
+    OUT newIDHex VARCHAR(16),
     OUT exitCode TINYINT
 )
 BEGIN
+    DECLARE userID, subjID, relID, newID BIGINT UNSIGNED;
+    SET userID = CONV(userIDHex, 16, 10);
+    SET subjID = CONV(subjIDHex, 16, 10);
+    SET relID = CONV(relIDHex, 16, 10);
+
     SELECT set_id INTO newID
     FROM Sets
     WHERE (
@@ -48,6 +53,7 @@ BEGIN
     ELSE
         SET exitCode = 0; -- find.
     END IF;
+    SET newIDHex = HEX(newID);
 END //
 DELIMITER ;
 
@@ -58,14 +64,14 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE inputOrChangeRating (
     IN userType CHAR(1),
-    IN userID BIGINT UNSIGNED,
+    IN userIDHex VARCHAR(16),
     IN subjType CHAR(1),
-    IN subjID BIGINT UNSIGNED,
-    IN relID BIGINT UNSIGNED,
+    IN subjIDHex VARCHAR(16),
+    IN relIDHex VARCHAR(16),
     IN ratingVal VARBINARY(255),
     IN objType CHAR(1),
-    IN objID BIGINT UNSIGNED,
-    -- OUT newID BIGINT UNSIGNED,
+    IN objIDHex VARCHAR(16),
+    -- OUT newIDHex VARCHAR(16),
     OUT exitCode TINYINT
 )
 BEGIN

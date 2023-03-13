@@ -40,12 +40,16 @@ DROP PROCEDURE insertTxt;
 DELIMITER //
 CREATE PROCEDURE insertOrFindCat (
     IN catTitle TEXT,
-    IN superCatID BIGINT UNSIGNED,
-    IN userID BIGINT UNSIGNED,
-    OUT newID BIGINT UNSIGNED,
+    IN superCatIDHex VARCHAR(16),
+    IN userIDHex VARCHAR(16),
+    OUT newIDHex VARCHAR(16),
     OUT exitCode TINYINT -- 0 is successful insertion, 1 is successful find.
 )
 BEGIN
+    DECLARE superCatID, userID, newID BIGINT UNSIGNED;
+    SET superCatID = CONV(superCatIDHex, 16, 10);
+    SET userID = CONV(userIDHex, 16, 10);
+
     SELECT id INTO newID
     FROM Categories
     WHERE (title = catTitle AND super_cat_id = superCatID);
@@ -67,6 +71,7 @@ BEGIN
             SET exitCode = 0; -- insert.
         END IF;
     END IF;
+    SET newIDHex = HEX(newID);
 END //
 DELIMITER ;
 
@@ -75,12 +80,16 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindStd (
     IN stdTitle TEXT,
-    IN catID BIGINT UNSIGNED,
-    IN userID BIGINT UNSIGNED,
-    OUT newID BIGINT UNSIGNED,
+    IN catIDHex VARCHAR(16),
+    IN userIDHex VARCHAR(16),
+    OUT newIDHex VARCHAR(16),
     OUT exitCode TINYINT -- 0 is successful insertion, 1 is successful find.
 )
 BEGIN
+    DECLARE catID, userID, newID BIGINT UNSIGNED;
+    SET catID = CONV(catIDHex, 16, 10);
+    SET userID = CONV(userIDHex, 16, 10);
+
     SELECT id INTO newID
     FROM StandardTerms
     WHERE (title = stdTitle AND cat_id = catID);
@@ -102,6 +111,7 @@ BEGIN
             SET exitCode = 0; -- insert.
         END IF;
     END IF;
+    SET newIDHex = HEX(newID);
 END //
 DELIMITER ;
 
@@ -111,12 +121,16 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindRel (
     IN objNoun TEXT,
-    IN subjCatID BIGINT UNSIGNED,
-    IN userID BIGINT UNSIGNED,
-    OUT newID BIGINT UNSIGNED,
+    IN subjCatIDHex VARCHAR(16),
+    IN userIDHex VARCHAR(16),
+    OUT newIDHex VARCHAR(16),
     OUT exitCode TINYINT -- 0 is successful insertion, 1 is successful find.
 )
 BEGIN
+    DECLARE subjCatID, userID, newID BIGINT UNSIGNED;
+    SET subjCatID = CONV(subjCatIDHex, 16, 10);
+    SET userID = CONV(userIDHex, 16, 10);
+
     SELECT id INTO newID
     FROM Relations
     WHERE (obj_noun = objNoun AND subj_cat_id = subjCatID);
@@ -138,6 +152,7 @@ BEGIN
             SET exitCode = 0; -- insert.
         END IF;
     END IF;
+    SET newIDHex = HEX(newID);
 END //
 DELIMITER ;
 
@@ -151,11 +166,14 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertTxt (
     IN textStr TEXT,
-    IN userID BIGINT UNSIGNED,
-    OUT newID BIGINT UNSIGNED,
+    IN userIDHex VARCHAR(16),
+    OUT newIDHex VARCHAR(16),
     OUT exitCode TINYINT -- 0 is successful insertion.
 )
 BEGIN
+    DECLARE userID, newID BIGINT UNSIGNED;
+    SET userID = CONV(userIDHex, 16, 10);
+
     INSERT INTO Texts (str) VALUES (textStr);
     SELECT LAST_INSERT_ID() INTO newID;
     IF (userID IS NOT NULL) THEN
@@ -164,5 +182,6 @@ BEGIN
         VALUES ("t", newID, userID);
     END IF;
     SET exitCode = 0; -- insert.
+    SET newIDHex = HEX(newID);
 END //
 DELIMITER ;
