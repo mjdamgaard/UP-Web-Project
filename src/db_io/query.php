@@ -41,11 +41,13 @@ function getSafeDef(
     $id, $procIdent, $strColumnName, $catColumnName
 ) {
     // convert ID from hexadecimal string to hexadecimal literal.
-    $id = "0x" . $id;
+echo $id . ",  ";
+    $id = intval("0x" . $id);
 
     // get connection.
     $conn = getConnectionOrDie();
 
+echo $id . "<br>";
     // insert or find term.
     $stmt = $conn->prepare(
         "CALL " . $procIdent . " (?)"
@@ -57,9 +59,12 @@ function getSafeDef(
     executeSuccessfulOrDie($stmt);
 
     // fetch and sanitize data.
-    $unsafeStr = $stmt->get_result()->fetch_column(0);
+    // $res = $stmt->get_result()->fetch_assoc();
+$res = $stmt->get_result()->fetch_column();
+echo var_dump($res);
+    $unsafeStr = $res[0];
     $safeStr = htmlspecialchars($unsafeStr);
-    $catID = $stmt->get_result()->fetch_column(1);
+    $catID = $res[1];
 
     // return data as array.
     return array($strColumnName => $safeStr, $catColumnName => $catID);
@@ -76,8 +81,51 @@ function getStdSafeDef($catID) {
 }
 
 function getRelSafeDef($catID) {
-    return getSafeDef($catID, "selectCatDef", "objNoun", "subjCatID");
+    return getSafeDef($catID, "selectRelDef", "objNoun", "subjCatID");
 }
+
+
+
+
+
+
+
+
+function getSafeSuperCats($catID) {
+    // convert ID from hexadecimal string to hexadecimal literal.
+    $catID = "0x" . $catID;
+
+    // get connection.
+    $conn = getConnectionOrDie();
+
+    // insert or find term.
+    $stmt = $conn->prepare(
+        "CALL selectSuperCats (?)"
+    );
+    $stmt->bind_param(
+        "i",
+        $catID
+    );
+    executeSuccessfulOrDie($stmt);
+
+    // fetch and sanitize data.
+    $unsafeStr = $stmt->get_result()->fetch_column();
+    $safeStr = htmlspecialchars($unsafeStr);
+
+    // return text string.
+    return $safeStr;
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -7,6 +7,8 @@ DROP PROCEDURE selectCatDef;
 DROP PROCEDURE selectStdDef;
 DROP PROCEDURE selectRelDef;
 
+DROP PROCEDURE selectSuperCats;
+
 DROP PROCEDURE selectData;
 
 DROP PROCEDURE selectCreations;
@@ -134,6 +136,29 @@ DELIMITER ;
 
 
 
+DELIMITER //
+CREATE PROCEDURE selectSuperCats (
+    IN catID BIGINT UNSIGNED
+)
+BEGIN
+    DECLARE str VARCHAR(255);
+    DECLARE n TINYINT UNSIGNED;
+    SET n = 255;
+    label1: LOOP
+        IF (NOT catID > 0 OR n = 0) THEN
+            LEAVE label1;
+        END IF;
+        SELECT title, super_cat_id INTO str, catID
+        FROM Categories
+        WHERE id = catID;
+        SELECT str as title, catID;
+        SET n = n - 1;
+        ITERATE label1;
+    END LOOP label1;
+END //
+DELIMITER ;
+
+-- SHOW WARNINGS;
 
 
 
