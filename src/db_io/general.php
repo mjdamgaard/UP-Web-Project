@@ -20,7 +20,7 @@ function getConnectionOrDie() {
 
     // verify connection (or die).
     if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
+        throw new \Exception("Connection failed: " . $conn->connect_error);
     }
 
     return $conn;
@@ -31,7 +31,7 @@ function executeSuccessfulOrDie($stmt) {
 
     $error = \mysqli_stmt_error($stmt);
     if ($error) {
-        die("MySQLi stmt error: " . $error);
+        throw new \Exception("MySQLi stmt error: " . $error);
     }
 
     return 0;

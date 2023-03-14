@@ -13,8 +13,8 @@ function echoErrorJSONAndExit($msg) {
 
 function echoTypeErrorJSONAndExit($errPrefix, $paramName, $expectedType) {
     echoErrorJSONAndExit(
-        $errPrefix . "Parameter ". $paramName . " has a wrong type: " .
-        "Expected type is " . $expectedType
+        $errPrefix . "parameter ". $paramName . " has a wrong type; " .
+        "expected type is " . $expectedType
     );
 }
 
@@ -40,7 +40,8 @@ function verifyAndGetParams($paramNameArr, $typeArr, $errPrefix) {
     $len = count($paramNameArr);
     // TODO: Out-comment this length check.
     if (count($typeArr) != $len) {
-        die("verifyAndSetParams(): count(paramNameArr) != count(typeArr)");
+        throw new \Exception('verifyAndSetParams(): ' .
+            'count(paramNameArr) != count(typeArr).');
     }
     // get and verify all parameters.
     for ($i = 0; $i <= $len - 1; $i++) {
@@ -100,11 +101,12 @@ function verifyType($param, $type, $errPrefix) {
                 );
             }
             break;
-        case "int":
+        case "uint":
+            $n = intval($param);
             if (
-                !is_int($param) ||
-                $param < -2147483648 ||
-                $param > 2147483647
+                !is_int($n) ||
+                $n < 0 ||
+                $n > 4294967295
             ) {
                 echoTypeErrorJSONAndExit(
                     $errPrefix, $paramName, "INT"
@@ -112,10 +114,11 @@ function verifyType($param, $type, $errPrefix) {
             }
             break;
         case "tint":
+            $n = intval($param);
             if (
-                !is_int($param) ||
-                $param < -128 ||
-                $param > 127
+                !is_int($n) ||
+                $n < -128 ||
+                $n > 127
             ) {
                 echoTypeErrorJSONAndExit(
                     $errPrefix, $paramName, "TINYINT"
@@ -123,7 +126,7 @@ function verifyType($param, $type, $errPrefix) {
             }
             break;
         default:
-            die("verifyAndSetParams(): wrong type string");
+            throw new \Exception('verifyAndSetParams(): wrong type string.');
     }
 }
 

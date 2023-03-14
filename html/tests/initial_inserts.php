@@ -67,8 +67,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             'c', "08",
             "01",
             "00", "",
-            100, 0,
-            0
+            "100", "0",
+            "0"
         )
     ) . "<br>";
 
@@ -78,14 +78,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             'c', "08",
             "01",
             "", "FF",
-            100, 0,
-            0
+            "100", "0",
+            "0"
+        )
+    ) . "<br>";
+
+    echo "br<br>";
+    echo print_r(
+        db_io\getSet(
+            'u', "01",
+            'c', "08",
+            "01",
+            "", "FF",
+            "3", "0",
+            "0"
         )
     ) . "<br>";
 
 
-
-
+    echo print_r(
+        db_io\getSet(
+            'u', "01",
+            'c', "08",
+            "01",
+            "", "FF",
+            "3", "0",
+            "1"
+        )
+    ) . "<br>";
 
     // // exit;
     // // insertOrFindRelation("I should not exist", 1, NULL);

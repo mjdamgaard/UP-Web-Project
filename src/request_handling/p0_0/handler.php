@@ -49,7 +49,7 @@ function getSetJSON() {
     $typeArr = array(
         "t", "id", "t", "id", "id",
         "bin", "bin",
-        "int", "int",
+        "uint", "uint",
         "tint"
     );
     $errPrefix = "Set request error: ";
@@ -58,14 +58,14 @@ function getSetJSON() {
 
     // initialize input variables for querying.
     for ($i = 0; $i < 10; $i++) {
-        ${$paramNameArr[$i]} = $paramArr[i];
+        ${$paramNameArr[$i]} = $paramArr[$i];
     }
     // query database.
     $queryRes = db_io\getSet(
         $userType, $userID, $subjType, $subjID, $relID,
         $ratingRangeMin, $ratingRangeMax,
-        $num, $numOffset,
-        $isAscOrder
+        intval($num), intval($numOffset),
+        intval($isAscOrder)
     );
     // JSON-encode and return the query result.
     return json_encode($queryRes);

@@ -23,7 +23,7 @@ function getSet(
         "CALL selectSet (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
     $stmt->bind_param(
-        "sssssssiii",
+        "ssssssssss",
         $userType, $userID, $subjType, $subjID, $relID,
         $ratingRangeMin, $ratingRangeMax,
         $num, $numOffset,
