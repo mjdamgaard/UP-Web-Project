@@ -50,7 +50,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     echo print_r(db_io\getCatSafeSuperCats("0A")) . "<br>";
 
 
-    // echo ctype_xdigit("00AG");
+    echo ctype_xdigit("00A");
+    echo ctype_xdigit("");
+    echo ctype_xdigit("");
+    echo ctype_xdigit("");
+    echo ctype_xdigit("");
+    echo ctype_xdigit("");
+    echo is_string("");
+    echo ctype_xdigit("00A") . "<br>";
 
     echo var_dump(hex2bin("00")) . "<br>";
 
@@ -59,13 +66,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             'u', "01",
             'c', "08",
             "01",
-            "00", NULL,
+            "00", "",
             100, 0,
             0
         )
     ) . "<br>";
 
-
+    echo print_r(
+        db_io\getSet(
+            'u', "01",
+            'c', "08",
+            "01",
+            "", "FF",
+            100, 0,
+            0
+        )
+    ) . "<br>";
 
 
 

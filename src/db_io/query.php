@@ -15,7 +15,6 @@ function getSet(
     $ratingRangeMin = hex2bin($ratingRangeMin);
     $ratingRangeMax = hex2bin($ratingRangeMax);
 
-    echo print_r(array($ratingRangeMin, $ratingRangeMax)) . "<br>";
     // get connection.
     $conn = getConnectionOrDie();
 
@@ -24,7 +23,7 @@ function getSet(
         "CALL selectSet (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
     $stmt->bind_param(
-        "sssssbbiii",
+        "sssssssiii",
         $userType, $userID, $subjType, $subjID, $relID,
         $ratingRangeMin, $ratingRangeMax,
         $num, $numOffset,

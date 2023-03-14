@@ -52,8 +52,8 @@ BEGIN
     FROM SemanticInputs
     WHERE (
         set_id = setID AND
-        (ratingRangeMin IS NULL OR rat_val >= ratingRangeMin) AND
-        (ratingRangeMax IS NULL OR rat_val <= ratingRangeMax)
+        (ratingRangeMin = "" OR rat_val >= ratingRangeMin) AND
+        (ratingRangeMax = "" OR rat_val <= ratingRangeMax)
     )
     ORDER BY
         CASE WHEN isAscOrder THEN rat_val END ASC,

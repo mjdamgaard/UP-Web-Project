@@ -90,6 +90,9 @@ function verifyType($param, $type, $errPrefix) {
             }
             break;
         case "bin":
+            if ($param === "") {
+                break;
+            }
             $len = count($param);
             if (!ctype_xdigit($param) || $len > 2 * 255 || $len % 2 != 0) {
                 echoTypeErrorJSONAndExit(
