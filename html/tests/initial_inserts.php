@@ -50,7 +50,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     echo print_r(db_io\getCatSafeSuperCats("0A")) . "<br>";
 
 
-
+    echo ctype_xdigit("00AG");
 
 
 

@@ -38,22 +38,22 @@ CALL insertOrFindRel ("Elements", @termsID, NULL, @ec, @nid);
 
 -- up-vote categories for all the fundamental term types.
 CALL inputOrChangeRating (
-    'u', 1, 'c', @termsID, @s, 0xFF, 'c', @catCatid, @ec
+    'u', 1, 'c', @termsID, @s, 0xF0, 'c', @catCatid, @ec
 );
 CALL inputOrChangeRating (
-    'u', 1, 'c', @catCatid, @e, 0xFF, 'c', @catCatid, @ec
+    'u', 1, 'c', @catCatid, @e, 0xF1, 'c', @catCatid, @ec
 );
 CALL inputOrChangeRating (
-    'u', 1, 'c', @termsID, @s, 0xFF, 'c', @stdCatID, @ec
+    'u', 1, 'c', @termsID, @s, 0xF2, 'c', @stdCatID, @ec
 );
 CALL inputOrChangeRating (
-    'u', 1, 'c', @catCatid, @e, 0xFF, 'c', @stdCatID, @ec
+    'u', 1, 'c', @catCatid, @e, 0xF3, 'c', @stdCatID, @ec
 );
 CALL inputOrChangeRating (
-    'u', 1, 'c', @termsID, @s, 0xFF, 'c', @relCatid, @ec
+    'u', 1, 'c', @termsID, @s, 0xF4, 'c', @relCatid, @ec
 );
 CALL inputOrChangeRating (
-    'u', 1, 'c', @catCatid, @e, 0xFF, 'c', @relCatid, @ec
+    'u', 1, 'c', @catCatid, @e, 0xF5, 'c', @relCatid, @ec
 );
 
 
@@ -78,7 +78,7 @@ CALL inputOrChangeRating (
     'u', 1, 'c', @stdCatID, @s, 0xFF, 'c', @mediaCatID, @ec
 );
     CALL inputOrChangeRating (
-        'u', 1, 'c', @mediaCatID, @s, 0xFF, 'c', @musicCatID, @ec
+        'u', 1, 'c', @mediaCatID, @s, 0xF6, 'c', @musicCatID, @ec
     );
         CALL inputOrChangeRating (
             'u', 1, 'c', @musicCatID, @s, 0xFF, 'c', @Rock, @ec
@@ -87,13 +87,13 @@ CALL inputOrChangeRating (
             'u', 1, 'c', @musicCatID, @s, 0xFF, 'c', @Pop, @ec
         );
         CALL inputOrChangeRating (
-            'u', 1, 'c', @musicCatID, @s, 0xFF, 'c', @Blues, @ec
+            'u', 1, 'c', @musicCatID, @s, 0xEF, 'c', @Blues, @ec
         );
         CALL inputOrChangeRating (
-            'u', 1, 'c', @musicCatID, @s, 0xFF, 'c', @RandB, @ec
+            'u', 1, 'c', @musicCatID, @s, 0xDF, 'c', @RandB, @ec
         );
         CALL inputOrChangeRating (
-            'u', 1, 'c', @musicCatID, @s, 0xFF, 'c', @Hip_hop, @ec
+            'u', 1, 'c', @musicCatID, @s, 0xCF, 'c', @Hip_hop, @ec
         );
         CALL inputOrChangeRating (
             'u', 1, 'c', @musicCatID, @s, 0xFF, 'c', @Indie, @ec

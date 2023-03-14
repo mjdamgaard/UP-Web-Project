@@ -21,7 +21,7 @@ $request_handling_path = $_SERVER['DOCUMENT_ROOT'] . "/src/request_handling/";
 switch ($protocol) {
     case "0.0":
         // TODO: Discontinue this protocol.
-        require $request_handling_path . "p0_0_handler.php";
+        require $request_handling_path . "p0_0/handler.php";
     case "1.0":
         // TODO: Implement "insert/input term" protocol/procedure.
         echo '{"Error":"Protocol not implemented yet"}';

@@ -71,7 +71,7 @@ BEGIN
             SET exitCode = 0; -- insert.
         END IF;
     END IF;
-    SET newIDHex = HEX(newID);
+    SET newIDHex = CONV(newID, 10, 16);
 END //
 DELIMITER ;
 
@@ -111,7 +111,7 @@ BEGIN
             SET exitCode = 0; -- insert.
         END IF;
     END IF;
-    SET newIDHex = HEX(newID);
+    SET newIDHex = CONV(newID, 10, 16);
 END //
 DELIMITER ;
 
@@ -152,7 +152,7 @@ BEGIN
             SET exitCode = 0; -- insert.
         END IF;
     END IF;
-    SET newIDHex = HEX(newID);
+    SET newIDHex = CONV(newID, 10, 16);
 END //
 DELIMITER ;
 
@@ -182,6 +182,6 @@ BEGIN
         VALUES ("t", newID, userID);
     END IF;
     SET exitCode = 0; -- insert.
-    SET newIDHex = HEX(newID);
+    SET newIDHex = CONV(newID, 10, 16);
 END //
 DELIMITER ;

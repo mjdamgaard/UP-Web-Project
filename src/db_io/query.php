@@ -11,6 +11,10 @@ function getSet(
     $num, $numOffset,
     $isAscOrder
 ) {
+    // convert rating ranges from hexadecimal string to binary strings
+    $ratingRangeMin = hex2bin($ratingRangeMin);
+    $ratingRangeMax = hex2bin($ratingRangeMax);
+
     // get connection.
     $conn = getConnectionOrDie();
 
@@ -19,7 +23,7 @@ function getSet(
         "CALL selectSet (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
     $stmt->bind_param(
-        "sssssssiii",
+        "sssssbbiii",
         $userType, $userID, $subjType, $subjID, $relID,
         $ratingRangeMin, $ratingRangeMax,
         $num, $numOffset,
@@ -84,7 +88,7 @@ function getCatSafeSuperCats($catID) {
 
     // insert or find term.
     $stmt = $conn->prepare(
-        "CALL selectSuperCats (?)"
+        "CALL selectSuperCatDefs (?)"
     );
     $stmt->bind_param(
         "s",

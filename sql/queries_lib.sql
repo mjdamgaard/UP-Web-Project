@@ -7,7 +7,7 @@ DROP PROCEDURE selectCatDef;
 DROP PROCEDURE selectStdDef;
 DROP PROCEDURE selectRelDef;
 
-DROP PROCEDURE selectSuperCats;
+DROP PROCEDURE selectSuperCatDefs;
 
 DROP PROCEDURE selectData;
 
@@ -45,31 +45,22 @@ BEGIN
         subj_id = subjID AND
         rel_id = relID
     );
-    IF (isAscOrder) THEN
-        SELECT
-            CONV(rat_val, 10, 16) AS ratingVal,
-            obj_t AS objType,
-            obj_id AS objID
-        FROM SemanticInputs
-        WHERE (
-            set_id = setID AND
-            rat_val BETWEEN ratingRangeMin AND ratingRangeMax
-        )
-        ORDER BY rat_val, obj_t, obj_id ASC
-        LIMIT numOffset, num;
-    ELSE
-        SELECT
-            CONV(rat_val, 10, 16) AS ratingVal,
-            obj_t AS objType,
-            obj_id AS objID
-        FROM SemanticInputs
-        WHERE (
-            set_id = setID AND
-            rat_val BETWEEN ratingRangeMin AND ratingRangeMax
-        )
-        ORDER BY rat_val, obj_t, obj_id DESC
-        LIMIT numOffset, num;
-    END IF;
+    SELECT
+        HEX(rat_val) AS ratingVal,
+        obj_t AS objType,
+        obj_id AS objID
+    FROM SemanticInputs
+    WHERE (
+        set_id = setID AND
+        (ratingRangeMin IS NULL OR rat_val >= ratingRangeMin) AND
+        (ratingRangeMax IS NULL OR rat_val <= ratingRangeMax)
+    )
+    ORDER BY
+        CASE WHEN isAscOrder THEN rat_val END ASC,
+        CASE WHEN NOT isAscOrder THEN rat_val END DESC,
+        obj_t ASC,
+        obj_id ASC
+    LIMIT numOffset, num;
 END //
 DELIMITER ;
 
@@ -101,7 +92,7 @@ BEGIN
         subj_id = subjID AND
         rel_id = relID
     );
-    SELECT CONV(rat_val, 10, 16) AS ratingVal
+    SELECT HEX(rat_val) AS ratingVal
     FROM SemanticInputs
     WHERE (obj_t = objType AND obj_id = objID AND set_id = setID);
 END //
@@ -163,7 +154,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectSuperCats (
+CREATE PROCEDURE selectSuperCatDefs (
     IN catIDHex VARCHAR(16)
 )
 BEGIN

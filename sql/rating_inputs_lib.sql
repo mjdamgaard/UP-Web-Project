@@ -53,7 +53,7 @@ BEGIN
     ELSE
         SET exitCode = 0; -- find.
     END IF;
-    SET newIDCONV = CONV(newID, 10, 16);
+    SET newIDHex = CONV(newID, 10, 16);
 END //
 DELIMITER ;
 
