@@ -78,7 +78,7 @@ function getRelSafeDef($catID) {
 
 
 
-function getSafeSuperCats($catID) {
+function getCatSafeSuperCats($catID) {
     // get connection.
     $conn = getConnectionOrDie();
 
@@ -93,11 +93,19 @@ function getSafeSuperCats($catID) {
     executeSuccessfulOrDie($stmt);
 
     // fetch and sanitize data.
-    $unsafeStr = $stmt->get_result()->fetch_column();
-    $safeStr = htmlspecialchars($unsafeStr);
+    $res = $stmt->get_result()->fetch_all();
+    $ret = array(
+        array($catID, htmlspecialchars($res[0][0]))
+    );
+    $len = count($res);
+    for ($i = 1; $i < $len; $i++) {
+        $ret[] = array($res[$i - 1][1], htmlspecialchars($res[$i][0]));
+    }
 
-    // return text string.
-    return $safeStr;
+    // return multi-dimensional array of category IDs and corresponding
+    // titles starting from an array of the ID and title of the input
+    // category and ending with array("1", "Terms").
+    return $ret;
 }
 
 

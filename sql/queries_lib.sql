@@ -46,7 +46,10 @@ BEGIN
         rel_id = relID
     );
     IF (isAscOrder) THEN
-        SELECT HEX(rat_val) AS ratingVal, obj_t AS objType, obj_id AS objID
+        SELECT
+            CONV(rat_val, 10, 16) AS ratingVal,
+            obj_t AS objType,
+            obj_id AS objID
         FROM SemanticInputs
         WHERE (
             set_id = setID AND
@@ -55,7 +58,10 @@ BEGIN
         ORDER BY rat_val, obj_t, obj_id ASC
         LIMIT numOffset, num;
     ELSE
-        SELECT HEX(rat_val) AS ratingVal, obj_t AS objType, obj_id AS objID
+        SELECT
+            CONV(rat_val, 10, 16) AS ratingVal,
+            obj_t AS objType,
+            obj_id AS objID
         FROM SemanticInputs
         WHERE (
             set_id = setID AND
@@ -95,7 +101,7 @@ BEGIN
         subj_id = subjID AND
         rel_id = relID
     );
-    SELECT HEX(rat_val) AS ratingVal
+    SELECT CONV(rat_val, 10, 16) AS ratingVal
     FROM SemanticInputs
     WHERE (obj_t = objType AND obj_id = objID AND set_id = setID);
 END //
@@ -166,18 +172,25 @@ BEGIN
     DECLARE n TINYINT UNSIGNED;
     SET catID = CONV(catIDHex, 16, 10);
 
-    SET n = 255;
+    CREATE TEMPORARY TABLE ret
+        SELECT title, super_cat_id AS superCatID
+        FROM Categories
+        WHERE id = NULL;
+
+    SET n = 0;
     label1: LOOP
-        IF (NOT catID > 0 OR n = 0) THEN
+        IF (NOT catID > 0 OR n >= 255) THEN
             LEAVE label1;
         END IF;
         SELECT title, super_cat_id INTO str, catID
         FROM Categories
         WHERE id = catID;
-        SELECT str as title, catID;
-        SET n = n - 1;
+        INSERT INTO ret (title, superCatID)
+        VALUES (str, catID);
+        SET n = n + 1;
         ITERATE label1;
     END LOOP label1;
+    SELECT title, CONV(superCatID, 10, 16) FROM ret ORDER BY superCatID DESC;
 END //
 DELIMITER ;
 
@@ -222,13 +235,13 @@ BEGIN
     SET userID = CONV(userIDHex, 16, 10);
 
     IF (isAscOrder) THEN
-        SELECT HEX(term_id) AS termID
+        SELECT CONV(term_id, 10, 16) AS termID
         FROM Creators
         WHERE (user_id = userID AND term_t = termType)
         ORDER BY term_id ASC
         LIMIT numOffset, num;
     ELSE
-        SELECT HEX(term_id) AS termID
+        SELECT CONV(term_id, 10, 16) AS termID
         FROM Creators
         WHERE (user_id = userID AND term_t = termType)
         ORDER BY term_id DESC
