@@ -2,8 +2,10 @@
 
 $p0_0_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/request_handling/p0_0/";
 require_once $p0_0_path . "p0_0.php";
-
 use p0_0 as p;
+
+$db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
+require_once $db_io_path . "query.php";
 
 
 // check that http method is the POST method.
@@ -18,14 +20,13 @@ if (!isset($_POST["reqType"])) {
 }
 $reqType = $_POST["reqType"];
 
-echo var_dump($reqType) . "<br>";
+
 // branch to corresponding request handling subprocedure and exit afterwards.
 switch ($reqType) {
     case "set":
         echo getSetJSON();
         exit;
     case "def":
-        echo "Hallo???..";
         echo getDefJSON();
         exit;
     default:
@@ -81,23 +82,24 @@ function getDefJSON() {
     $errPrefix = "Definition request error: ";
     $paramArr = p\verifyAndGetParams($paramNameArr, $typeArr, $errPrefix);
 
+
     // initialize input variables for querying.
     $termType = $paramArr[0];
     $id = $paramArr[1];
 
     // branch according to the term type.
-    switch ($type) {
+    switch ($termType) {
         case "c":
-            $queryRes = db_io\getCatDef($id);
+            $queryRes = db_io\getCatSafeDef($id);
             return json_encode($queryRes);
         case "s":
-            $queryRes = db_io\getStdDef($id);
+            $queryRes = db_io\getStdSafeDef($id);
             return json_encode($queryRes);
         case "r":
-            $queryRes = db_io\getRelDef($id);
+            $queryRes = db_io\getRelSafeDef($id);
             return json_encode($queryRes);
         default:
-            p\echoErrorJSONAndExit("Unrecognized request type");
+            p\echoErrorJSONAndExit($errPrefix . "Unrecognized term type");
     }
 }
 
