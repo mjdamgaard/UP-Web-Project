@@ -8,25 +8,26 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 
 // get the protocol.
 $protocol = "";
-if (!isset($_POST["p"])) {
+if (isset($_POST["p"])) {
+    $protocol = $_POST["p"];
+} else {
     // default protocol.
     $protocol = "0.0";
-} else {
-    $protocol = intval($_POST["p"]);
 }
 
-$request_handling_path = $_SERVER['DOCUMENT_ROOT'] . "/src/request_handling/";
+$request_handling_path = $_SERVER['DOCUMENT_ROOT'] .
+    "/../src/request_handling/";
 
 // match with a known protocol.
 switch ($protocol) {
     case "0.0":
         // TODO: Discontinue this protocol.
         require $request_handling_path . "p0_0/handler.php";
+        exit;
     case "1.0":
         // TODO: Implement "insert/input term" protocol/procedure.
         echo '{"Error":"Protocol not implemented yet"}';
         exit;
-        break;
     default:
         echo '{"Error":"Unrecognized protocol"}';
         exit;

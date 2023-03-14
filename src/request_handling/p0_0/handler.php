@@ -18,13 +18,14 @@ if (!isset($_POST["reqType"])) {
 }
 $reqType = $_POST["reqType"];
 
-
+echo var_dump($reqType) . "<br>";
 // branch to corresponding request handling subprocedure and exit afterwards.
 switch ($reqType) {
     case "set":
         echo getSetJSON();
         exit;
     case "def":
+        echo "Hallo???..";
         echo getDefJSON();
         exit;
     default:
@@ -86,13 +87,13 @@ function getDefJSON() {
 
     // branch according to the term type.
     switch ($type) {
-        case "cat":
+        case "c":
             $queryRes = db_io\getCatDef($id);
             return json_encode($queryRes);
-        case "std":
+        case "s":
             $queryRes = db_io\getStdDef($id);
             return json_encode($queryRes);
-        case "rel":
+        case "r":
             $queryRes = db_io\getRelDef($id);
             return json_encode($queryRes);
         default:

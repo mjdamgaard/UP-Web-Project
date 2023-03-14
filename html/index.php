@@ -17,14 +17,15 @@
 
 $arr = array("str1"=>"hello", "num"=>30, "str2"=>"world");
 
-echo json_encode($arr);
+echo json_encode($arr) . "<br>";
 
 
 ?>
 
-
-
-<div id="userid"></div>
+<div id="test1">
+    <h2>Let AJAX change this text</h2>
+    <button type="button" onclick="loadDoc()">Change Content</button>
+</div>
 
 
 </body>
@@ -33,4 +34,24 @@ echo json_encode($arr);
 
 
 
-<script src="src/login/free_login.js"></script>
+<script>
+
+function loadDoc() {
+    const xhttp = new XMLHttpRequest();
+    xhttp.onload = function() {
+        document.getElementById("test1").innerHTML = this.responseText;
+    }
+    xhttp.open("POST", "request_handler.php", true);
+    xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    xhttp.send(
+        [
+            "p=0.0",
+            "reqType=def",
+            "termType=c",
+            "id=0A"
+        ].join("&")
+    );
+}
+
+
+</script>

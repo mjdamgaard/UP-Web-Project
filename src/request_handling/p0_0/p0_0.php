@@ -3,7 +3,7 @@
 /* Error messages */
 
 function getErrorJSON($msg) {
-    return '{"Error":"' . $msg . '"}'
+    return '{"Error":"' . $msg . '"}';
 }
 
 function echoErrorJSONAndExit($msg) {
@@ -14,7 +14,7 @@ function echoErrorJSONAndExit($msg) {
 function echoTypeErrorJSONAndExit($errPrefix, $paramName, $expectedType) {
     echoErrorJSONAndExit(
         $errPrefix . "Parameter ". $paramName . " has a wrong type: " .
-        "Expected type is " . $expectedType.
+        "Expected type is " . $expectedType
     );
 }
 
@@ -34,7 +34,7 @@ function echoTypeErrorJSONAndExit($errPrefix, $paramName, $expectedType) {
 
 function verifyAndGetParams($paramNameArr, $typeArr, $errPrefix) {
     // initialize return array.
-    $paramArr = arrray();
+    $paramArr = array();
 
     // get length of array.
     $len = count($paramNameArr);
@@ -68,21 +68,21 @@ function verifyAndGetParams($paramNameArr, $typeArr, $errPrefix) {
 function verifyType($param, $type, $errPrefix) {
     switch($type) {
         case "t":
-            if (!is_string($param) || count($param) != 1) {
+            if (!is_string($param) || strlen($param) != 1) {
                 echoTypeErrorJSONAndExit(
                     $errPrefix, $paramName, "char(1)"
                 );
             }
             break;
         case "str":
-            if (!is_string($param) || count($param) > 255) {
+            if (!is_string($param) || strlen($param) > 255) {
                 echoTypeErrorJSONAndExit(
                     $errPrefix, $paramName, "char(<226)"
                 );
             }
             break;
         case "id":
-            $len = count($param);
+            $len = strlen($param);
             if (!ctype_xdigit($param) || $len > 16 || $len % 2 != 0) {
                 echoTypeErrorJSONAndExit(
                     $errPrefix, $paramName, "hexadecimal(<17 and even)"
@@ -93,7 +93,7 @@ function verifyType($param, $type, $errPrefix) {
             if ($param === "") {
                 break;
             }
-            $len = count($param);
+            $len = strlen($param);
             if (!ctype_xdigit($param) || $len > 2 * 255 || $len % 2 != 0) {
                 echoTypeErrorJSONAndExit(
                     $errPrefix, $paramName, "hexadecimal(<511 and even)"
