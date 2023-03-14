@@ -15,6 +15,7 @@ function getSet(
     $ratingRangeMin = hex2bin($ratingRangeMin);
     $ratingRangeMax = hex2bin($ratingRangeMax);
 
+    echo print_r(array($ratingRangeMin, $ratingRangeMax)) . "<br>";
     // get connection.
     $conn = getConnectionOrDie();
 
@@ -31,8 +32,8 @@ function getSet(
     );
     executeSuccessfulOrDie($stmt);
 
-    // return array("ratingVal" => res, "objType" => res, "objID" => res).
-    return $stmt->get_result()->fetch_assoc();
+    // return multidimensional array with columns: (ratingVal, objType, objID).
+    return $stmt->get_result()->fetch_all();
 }
 
 

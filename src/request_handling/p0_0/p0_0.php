@@ -77,21 +77,23 @@ function verifyType($param, $type, $errPrefix) {
         case "str":
             if (!is_string($param) || count($param) > 255) {
                 echoTypeErrorJSONAndExit(
-                    $errPrefix, $paramName, "varchar(225)"
+                    $errPrefix, $paramName, "char(<226)"
                 );
             }
             break;
         case "id":
-            if (!ctype_xdigit($param) || count($param) > 16) {
+            $len = count($param);
+            if (!ctype_xdigit($param) || $len > 16 || $len % 2 != 0) {
                 echoTypeErrorJSONAndExit(
-                    $errPrefix, $paramName, "varhexadecimal(16)"
+                    $errPrefix, $paramName, "hexadecimal(<17 and even)"
                 );
             }
             break;
         case "bin":
-            if (!ctype_xdigit($param) || count($param) > 2 * 255) {
+            $len = count($param);
+            if (!ctype_xdigit($param) || $len > 2 * 255 || $len % 2 != 0) {
                 echoTypeErrorJSONAndExit(
-                    $errPrefix, $paramName, "varhexadecimal(510)"
+                    $errPrefix, $paramName, "hexadecimal(<511 and even)"
                 );
             }
             break;

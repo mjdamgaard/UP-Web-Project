@@ -50,8 +50,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     echo print_r(db_io\getCatSafeSuperCats("0A")) . "<br>";
 
 
-    echo ctype_xdigit("00AG");
+    // echo ctype_xdigit("00AG");
 
+    echo var_dump(hex2bin("00")) . "<br>";
+
+    echo print_r(
+        db_io\getSet(
+            'u', "01",
+            'c', "08",
+            "01",
+            "00", NULL,
+            100, 0,
+            0
+        )
+    ) . "<br>";
 
 
 
