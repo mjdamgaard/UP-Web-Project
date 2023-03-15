@@ -70,7 +70,7 @@ function getSetTest() {
         [
             "p=0.0",
             "reqType=set",
-            "userType=u", "userID=01", "subjType=c", "subjID=0A", "relID=01",
+            "userType=u", "userID=01", "subjType=c", "subjID=08", "relID=01",
             "ratingRangeMin=80", "ratingRangeMax=",
             "num=100", "numOffset=0",
             "isAscOrder=0"

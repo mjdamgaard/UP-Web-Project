@@ -107,6 +107,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         )
     ) . "<br>";
 
+
+    echo print_r(
+        db_io\getSet(
+            'u', "01",
+            'c', "08",
+            "01",
+            "", "",
+            "3", "0",
+            "1"
+        )
+    ) . "<br>";
+
     // // exit;
     // // insertOrFindRelation("I should not exist", 1, NULL);
     // if (!isset($_POST["protocol"])) {

@@ -48,7 +48,7 @@ BEGIN
     SELECT
         HEX(rat_val) AS ratingVal,
         obj_t AS objType,
-        obj_id AS objID
+        HEX(obj_id) AS objID
     FROM SemanticInputs
     WHERE (
         set_id = setID AND

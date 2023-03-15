@@ -1,7 +1,8 @@
 <?php
 
-$p0_0_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/request_handling/p0_0/";
-require_once $p0_0_path . "p0_0.php";
+// $p0_0_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/request_handling/p0_0/";
+// require_once $p0_0_path . "p0_0.php";
+require_once "p0_0.php";
 use p0_0 as p;
 
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
@@ -64,8 +65,8 @@ function getSetJSON() {
     $queryRes = db_io\getSet(
         $userType, $userID, $subjType, $subjID, $relID,
         $ratingRangeMin, $ratingRangeMax,
-        intval($num), intval($numOffset),
-        intval($isAscOrder)
+        $num, $numOffset,
+        $isAscOrder
     );
     // JSON-encode and return the query result.
     return json_encode($queryRes);
