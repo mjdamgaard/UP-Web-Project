@@ -2,21 +2,21 @@
 
 
 
-DELETE FROM Sets;
-DELETE FROM SemanticInputs;
-
-DELETE FROM UserGroups;
-DELETE FROM Users;
-
-DELETE FROM Categories;
-DELETE FROM StandardTerms;
-DELETE FROM Relations;
-DELETE FROM KeywordStrings;
-DELETE FROM Lists;
-DELETE FROM Texts;
-DELETE FROM Binaries;
-
-DELETE FROM Creators;
+-- DELETE FROM Sets;
+-- DELETE FROM SemanticInputs;
+--
+-- DELETE FROM UserGroups;
+-- DELETE FROM Users;
+--
+-- DELETE FROM Categories;
+-- DELETE FROM StandardTerms;
+-- DELETE FROM Relations;
+-- DELETE FROM KeywordStrings;
+-- DELETE FROM Lists;
+-- DELETE FROM Texts;
+-- DELETE FROM Binaries;
+--
+-- DELETE FROM Creators;
 
 -- /* Semantic inputs */
 -- DROP TABLE Sets;
@@ -26,7 +26,7 @@ DELETE FROM Creators;
 -- DROP TABLE UserGroups;
 -- DROP TABLE Users;
 --
-DROP TABLE Categories;
+-- DROP TABLE Categories;
 -- DROP TABLE StandardTerms;
 -- DROP TABLE Relations;
 -- DROP TABLE KeywordStrings;
@@ -144,8 +144,6 @@ CREATE TABLE SemanticInputs (
     /* Set */
     -- set id.
     set_id BIGINT UNSIGNED,
-    -- (while identifying a set uniquely, set_id is not part of the key for
-    -- the Sets table and should therefore not be searched for.)
 
     /* Member */
     -- The members of sets include a rating value and a Term.
@@ -187,6 +185,34 @@ CREATE TABLE SemanticInputs (
 
 );
 
+
+CREATE TABLE RecentInputs (
+    /* Set */
+    -- set id.
+    set_id BIGINT UNSIGNED,
+
+    /* Member */
+    -- The members of sets include a rating value and a Term.
+
+    -- old and new rating value (NULL means nonexistent or removed).
+    old_rat_val VARBINARY(255),
+    new_rat_val VARBINARY(255),
+
+    -- object of the relation defining the set (i.e. the primary part of the
+    -- member of which the rating is about).
+    obj_t CHAR(1),
+    obj_id BIGINT UNSIGNED,
+
+    changed_at DATE NOT NULL,
+
+    PRIMARY KEY (
+        set_id,
+        changed_at,
+        obj_t,
+        obj_id
+    )
+
+);
 
 
 
