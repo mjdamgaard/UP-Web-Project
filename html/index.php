@@ -33,6 +33,11 @@ echo json_encode($arr) . "<br>";
     <button type="button" onclick="getSetTest()">Change Content</button>
 </div>
 
+<div id="test3">
+    <h2>test2</h2>
+    <button type="button" onclick="getSupTest()">Change Content</button>
+</div>
+
 
 </body>
 </html>
@@ -74,6 +79,22 @@ function getSetTest() {
             "ratingRangeMin=80", "ratingRangeMax=",
             "num=100", "numOffset=0",
             "isAscOrder=0"
+        ].join("&")
+    );
+}
+
+function getSupTest() {
+    const xhttp = new XMLHttpRequest();
+    xhttp.onload = function() {
+        document.getElementById("test3").innerHTML = this.responseText;
+    }
+    xhttp.open("POST", "request_handler.php", true);
+    xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    xhttp.send(
+        [
+            "p=0.0",
+            "reqType=sup",
+            "catID=0F"
         ].join("&")
     );
 }

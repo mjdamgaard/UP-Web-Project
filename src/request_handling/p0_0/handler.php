@@ -30,6 +30,9 @@ switch ($reqType) {
     case "def":
         echo getDefJSON();
         exit;
+    case "sup":
+        echo getSuperCatsJSON();
+        exit;
     default:
         p\echoErrorJSONAndExit("Unrecognized request type");
 }
@@ -104,6 +107,24 @@ function getDefJSON() {
     }
 }
 
+
+
+
+function getSuperCatsJSON() {
+    // verify and get parameters.
+    $paramNameArr = array("catID");
+    $typeArr = array("id");
+    $errPrefix = "Supercategories request error: ";
+    $paramArr = p\verifyAndGetParams($paramNameArr, $typeArr, $errPrefix);
+
+
+    // initialize input variables for querying.
+    $catID = $paramArr[0];
+    // query database.
+    $queryRes = db_io\getCatSafeSuperCats($catID);
+    // JSON-encode and return the query result.
+    return json_encode($queryRes);
+}
 
 
 
