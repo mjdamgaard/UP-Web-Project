@@ -53,12 +53,12 @@ function getSetJSON() {
         "tint"
     );
     $errPrefix = "Set request error: ";
-    $paramArr = p\verifyAndGetParams($paramNameArr, $typeArr, $errPrefix);
+    $paramValArr = p\verifyAndGetParams($paramNameArr, $typeArr, $errPrefix);
 
 
     // initialize input variables for querying.
     for ($i = 0; $i < 10; $i++) {
-        ${$paramNameArr[$i]} = $paramArr[$i];
+        ${$paramNameArr[$i]} = $paramValArr[$i];
     }
     // query database.
     $queryRes = db_io\getSet(
@@ -80,12 +80,12 @@ function getDefJSON() {
     $paramNameArr = array("termType", "id");
     $typeArr = array("t", "id");
     $errPrefix = "Definition request error: ";
-    $paramArr = p\verifyAndGetParams($paramNameArr, $typeArr, $errPrefix);
+    $paramValArr = p\verifyAndGetParams($paramNameArr, $typeArr, $errPrefix);
 
 
     // initialize input variables for querying.
-    $termType = $paramArr[0];
-    $id = $paramArr[1];
+    $termType = $paramValArr[0];
+    $id = $paramValArr[1];
 
     // branch according to the term type.
     switch ($termType) {
@@ -111,11 +111,11 @@ function getSuperCatsJSON() {
     $paramNameArr = array("catID");
     $typeArr = array("id");
     $errPrefix = "Supercategories request error: ";
-    $paramArr = p\verifyAndGetParams($paramNameArr, $typeArr, $errPrefix);
+    $paramValArr = p\verifyAndGetParams($paramNameArr, $typeArr, $errPrefix);
 
 
     // initialize input variables for querying.
-    $catID = $paramArr[0];
+    $catID = $paramValArr[0];
     // query database.
     $queryRes = db_io\getCatSafeSuperCats($catID);
     // JSON-encode and return the query result.

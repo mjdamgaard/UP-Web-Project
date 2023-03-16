@@ -7,7 +7,7 @@ require_once $general_path . "errors.php";
 
 function verifyAndGetParams($paramNameArr, $typeArr, $errPrefix) {
     // initialize return array.
-    $paramArr = array();
+    $paramValArr = array();
 
     // get length of array.
     $len = count($paramNameArr);
@@ -33,10 +33,10 @@ function verifyAndGetParams($paramNameArr, $typeArr, $errPrefix) {
         verifyType($paramVal, $type, $errPrefix);
 
         // append ith parameter to return array.
-        $paramArr[] = $paramVal;
+        $paramValArr[] = $paramVal;
     }
 
-    return $paramArr;
+    return $paramValArr;
 }
 
 function verifyType($paramVal, $type, $errPrefix) {

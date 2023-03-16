@@ -34,7 +34,7 @@ function echoTypeErrorJSONAndExit($errPrefix, $paramName, $expectedType) {
 
 function verifyAndGetParams($paramNameArr, $typeArr, $errPrefix) {
     // initialize return array.
-    $paramArr = array();
+    $paramValArr = array();
 
     // get length of array.
     $len = count($paramNameArr);
@@ -60,10 +60,10 @@ function verifyAndGetParams($paramNameArr, $typeArr, $errPrefix) {
         verifyType($param, $type, $errPrefix);
 
         // append ith parameter to return array.
-        $paramArr[] = $param;
+        $paramValArr[] = $param;
     }
 
-    return $paramArr;
+    return $paramValArr;
 }
 
 function verifyType($param, $type, $errPrefix) {

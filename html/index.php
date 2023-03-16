@@ -1,15 +1,34 @@
 <?php
 
-// phpinfo();
+$general_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/general/";
+require_once $general_path . "input_verification.php";
+
+$template_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/templates/";
+require $template_path . "term.php";
+
 
 if ($_SERVER["REQUEST_METHOD"] != "POST") {
     $_POST = $_GET;
 }
 
-// // TODO: remove this if statement.
-// if (empty($_POST)) {
-//     header("Location: term.php");
-// }
+// TODO: remove this if statement.
+if (empty($_POST)) {
+    $_POST["type"]="c";
+    $_POST["tid"]="03";
+}
+
+// verify and get posted term attributes.
+$paramNameArr = array(
+    "type", "tid"
+);
+$typeArr = array(
+    "t", "id"
+);
+$errPrefix = "Term attribute GET/POST error: ";
+$safeParamValArr = verifyAndGetParams($paramNameArr, $typeArr, $errPrefix);
+
+
+
 
 
 ?>
@@ -25,11 +44,17 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 <body>
 
 
+<h2> Term </h2>
 
 <?php
-$template_path = $_SERVER['DOCUMENT_ROOT'] . "/../templates/";
-require $template_path . "term.php";
+
+echoTermHomeHTML($paramNameArr, $safeParamValArr);
+
+
+
 ?>
+
+
 
 
 
@@ -60,6 +85,9 @@ require $template_path . "term.php";
 <script>
 
 
+$(function(){
+  $('.term[context="home"]').html("Hello world of jQuery!");
+});
 
 
 
