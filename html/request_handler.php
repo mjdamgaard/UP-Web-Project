@@ -1,10 +1,10 @@
 <?php
 
-// check that http method is the POST method.
+
 if ($_SERVER["REQUEST_METHOD"] != "POST") {
-    echo '{"Error":"Only the POST method is implemented"}';
-    exit;
+    $_POST = $_GET;
 }
+
 
 // get the protocol.
 $protocol = "";

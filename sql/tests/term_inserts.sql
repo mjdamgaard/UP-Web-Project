@@ -96,13 +96,13 @@ CALL inputOrChangeRating (
             'u', 1, 'c', @musicCatID, @s, 0xCF, 'c', @Hip_hop, @ec
         );
         CALL inputOrChangeRating (
-            'u', 1, 'c', @musicCatID, @s, 0xFF, 'c', @Indie, @ec
+            'u', 1, 'c', @musicCatID, @s, 0xFFCC, 'c', @Indie, @ec
         );
         CALL inputOrChangeRating (
-            'u', 1, 'c', @musicCatID, @s, 0xFF, 'c', @Electronic, @ec
+            'u', 1, 'c', @musicCatID, @s, 0xFFF, 'c', @Electronic, @ec
         );
         CALL inputOrChangeRating (
-            'u', 1, 'c', @musicCatID, @s, 0xFF, 'c', @Techno, @ec
+            'u', 1, 'c', @musicCatID, @s, 0x7FF, 'c', @Techno, @ec
         );
     CALL inputOrChangeRating (
         'u', 1, 'c', @mediaCatID, @s, 0xFF, 'c', @movCatID, @ec

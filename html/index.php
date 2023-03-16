@@ -2,6 +2,15 @@
 
 // phpinfo();
 
+if ($_SERVER["REQUEST_METHOD"] != "POST") {
+    $_POST = $_GET;
+}
+
+// // TODO: remove this if statement.
+// if (empty($_POST)) {
+//     header("Location: term.php");
+// }
+
 
 ?>
 <!DOCTYPE html>
@@ -9,20 +18,22 @@
 <head>
 <meta charset="utf-8">
 
-<link rel="stylesheet" type="text/css" href="style.css">
+<link rel="stylesheet" type="text/css" href="src/css/style.css">
+<script src="/lib/jquery-3.6.4.js"></script>
+
 </head>
 <body>
 
+
+
 <?php
-
-$arr = array("str1"=>"hello", "num"=>30, "str2"=>"world");
-
-echo json_encode($arr) . "<br>";
-
-
+$template_path = $_SERVER['DOCUMENT_ROOT'] . "/../templates/";
+require $template_path . "term.php";
 ?>
 
-<div id="test1">
+
+
+<!-- <div id="test1">
     <h2>Let AJAX change this text</h2>
     <button type="button" onclick="getDefTest()">Change Content</button>
 </div>
@@ -36,11 +47,45 @@ echo json_encode($arr) . "<br>";
 <div id="test3">
     <h2>test2</h2>
     <button type="button" onclick="getSupTest()">Change Content</button>
-</div>
+</div> -->
 
 
 </body>
 </html>
+
+
+
+
+
+<script>
+
+
+
+
+
+
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

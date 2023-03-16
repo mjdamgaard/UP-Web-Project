@@ -9,10 +9,6 @@ $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
 require_once $db_io_path . "query.php";
 
 
-// check that http method is the POST method.
-if ($_SERVER["REQUEST_METHOD"] != "POST") {
-    p\echoErrorJSONAndExit("Only the POST method is implemented");
-}
 
 
 // get request type.
