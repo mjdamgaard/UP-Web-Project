@@ -16,11 +16,11 @@ CREATE PROCEDURE findOrCreateSet (
     IN subjType CHAR(1),
     IN subjIDHex VARCHAR(16),
     IN relIDHex VARCHAR(16),
-    OUT newIDHex VARCHAR(16),
+    OUT newID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 BEGIN
-    DECLARE userID, subjID, relID, newID BIGINT UNSIGNED;
+    DECLARE userID, subjID, relID BIGINT UNSIGNED;
     SET userID = CONV(userIDHex, 16, 10);
     SET subjID = CONV(subjIDHex, 16, 10);
     SET relID = CONV(relIDHex, 16, 10);
@@ -54,7 +54,6 @@ BEGIN
     ELSE
         SET exitCode = 0; -- find.
     END IF;
-    SET newIDHex = CONV(newID, 10, 16);
 END //
 DELIMITER ;
 
@@ -139,10 +138,11 @@ BEGIN
     DECLARE existsPriorRating, ecFindOrCreateSet TINYINT;
     DECLARE currentDate DATE;
     DECLARE oldRatingVal VARBINARY(255);
-    DECLARE userID, subjID, relID, newID BIGINT UNSIGNED;
+    DECLARE userID, subjID, relID, objID BIGINT UNSIGNED;
     SET userID = CONV(userIDHex, 16, 10);
     SET subjID = CONV(subjIDHex, 16, 10);
     SET relID = CONV(relIDHex, 16, 10);
+    SET objID = CONV(objIDHex, 16, 10);
     SET currentDate = CURDATE();
 
     CALL findOrCreateSet (
