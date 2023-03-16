@@ -4,6 +4,27 @@
 DELETE FROM Categories;
 ALTER TABLE Categories AUTO_INCREMENT=1;
 
+DELETE FROM Sets;
+DELETE FROM SemanticInputs;
+DELETE FROM RecentInputs;
+
+-- DELETE FROM UserGroups;
+-- DELETE FROM Users;
+
+DELETE FROM Categories;
+ALTER TABLE Categories AUTO_INCREMENT=1;
+-- DELETE FROM StandardTerms;
+-- ALTER TABLE StandardTerms AUTO_INCREMENT=1;
+-- DELETE FROM Relations;
+-- ALTER TABLE Relations AUTO_INCREMENT=1;
+-- DELETE FROM KeywordStrings;
+-- DELETE FROM Lists;
+-- DELETE FROM Texts;
+-- DELETE FROM Binaries;
+
+DELETE FROM Creators;
+ALTER TABLE Creators AUTO_INCREMENT=1;
+
 -- TRUNCATE TABLE Creators;
 
 

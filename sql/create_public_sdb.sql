@@ -4,6 +4,7 @@
 
 -- DELETE FROM Sets;
 -- DELETE FROM SemanticInputs;
+-- DELETE FROM RecentInputs
 --
 -- DELETE FROM UserGroups;
 -- DELETE FROM Users;
@@ -21,6 +22,7 @@
 -- /* Semantic inputs */
 -- DROP TABLE Sets;
 -- DROP TABLE SemanticInputs;
+-- DROP TABLE RecentInputs;
 --
 -- /* Terms */
 -- DROP TABLE UserGroups;

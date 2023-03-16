@@ -56,25 +56,6 @@ echoTermHomeHTML($paramNameArr, $safeParamValArr);
 
 
 
-
-
-<!-- <div id="test1">
-    <h2>Let AJAX change this text</h2>
-    <button type="button" onclick="getDefTest()">Change Content</button>
-</div>
-
-
-<div id="test2">
-    <h2>test2</h2>
-    <button type="button" onclick="getSetTest()">Change Content</button>
-</div>
-
-<div id="test3">
-    <h2>test2</h2>
-    <button type="button" onclick="getSupTest()">Change Content</button>
-</div> -->
-
-
 </body>
 </html>
 
@@ -94,16 +75,6 @@ $(function(){
 
 
 </script>
-
-
-
-
-
-
-
-
-
-
 
 
 
