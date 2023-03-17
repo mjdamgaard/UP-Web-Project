@@ -54,7 +54,7 @@ function verifyType($paramVal, $type, $paramName, $errPrefix) {
                 strlen($paramVal) > 255
             ) {
                 echoTypeErrorJSONAndExit(
-                    $errPrefix, $paramName, "char(<226)"
+                    $errPrefix, $paramName, "CHAR(225)"
                 );
             }
             break;

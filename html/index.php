@@ -58,16 +58,7 @@ echoTermHomeHTML($paramNameArr, $safeParamValArr);
     <button>Get JSON data</button>
 </div>
 
-<?php
 
-// $paramVal = "10000";
-// $pattern = "/^[1-9][0-9]*$/";
-// echo var_dump(!preg_match($pattern, $paramVal)) . "<br>";
-// $n = intval($paramVal);
-// echo var_dump($n) . "<br>";
-// echo var_dump($n < 0) . "<br>";
-// echo var_dump($n > 4294967295) . "<br>";
-?>
 
 
 
@@ -79,6 +70,41 @@ echoTermHomeHTML($paramNameArr, $safeParamValArr);
 <script src="src/requests/p0_0/P0_0_Query.js"></script>
 
 
+
+<script>
+
+// sends a request and gets JSON. Any HTTP error is logged in console.
+function requestAndGetJSON(reqData, success) {
+    let jqxhr = $.getJSON("request_handler.php", reqData, success)
+        .fail(function() {
+            console.log(this.status);
+        });
+    return jqxhr.responseText;
+}
+
+function getDefiningUpwardPath(termType, termID) {
+    var data = new P0_0_Query.DefReqData(termType, termID);
+    let res = $.getJSON("request_handler.php", data)
+        .fail(function() {
+            console.log(this.status);
+        })
+        .responseText;
+    switch (termType) {
+        case "c":
+            //TODO.. maybe..
+            break;
+        default:
+            console.log("getDefiningUpwardPath(): unrecognized termType");
+    }
+    // ..Okay, jeg kan lige mærke, at jeg lige skal lægge en ordenlig plan for,
+    // hvad jeg gerne vil bygge nu her.. (17:29, 17.03.23)
+}
+
+
+</script>
+
+
+
 <script>
 
 // var data = new P0_0_Query.SetReqData("u", "01", "c", "14", "01");
@@ -87,7 +113,6 @@ echoTermHomeHTML($paramNameArr, $safeParamValArr);
 var data = new P0_0_Query.SupReqData("015");
 
 $(function(){
-    console.log(data);
     $("button").click(function(){
         $.getJSON("request_handler.php", data, function(result){
             $.each(result, function(key, field){
