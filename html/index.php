@@ -76,17 +76,22 @@ echoTermHomeHTML($paramNameArr, $safeParamValArr);
 
 
 
-<script src="src/requests/p0_0/query_data.js"></script>
+<script src="src/requests/p0_0/P0_0_Query.js"></script>
 
 
 <script>
+
+// var data = new P0_0_Query.SetReqData("u", "01", "c", "14", "01");
+// var data = new P0_0_Query.DefReqData("c", "3");
+// var data = new P0_0_Query.SupReqData("3");
+var data = new P0_0_Query.SupReqData("015");
+
 $(function(){
-    const data = new P0_0_Query.SetReqData("u", "01", "c", "14", "01");
     console.log(data);
     $("button").click(function(){
         $.getJSON("request_handler.php", data, function(result){
             $.each(result, function(key, field){
-                $('.term[context="home"]').append(key + ": " + field + " ");
+                $('.term[context="home"]').append(key + ": " + field + ". ");
             });
         });
     });

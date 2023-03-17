@@ -43,7 +43,7 @@ function getSetJSON() {
 
 function getDefJSON() {
     // verify and get parameters.
-    $paramNameArr = array("termType", "id");
+    $paramNameArr = array("termType", "termID");
     $typeArr = array("t", "id");
     $errPrefix = "Definition request error: ";
     $paramValArr = verifyAndGetParams($paramNameArr, $typeArr, $errPrefix);

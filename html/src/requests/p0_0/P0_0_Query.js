@@ -21,11 +21,24 @@ var P0_0_Query = {
       this.numOffset = numOffset;
       this.isAscOrder = isAscOrder;
 
+  },
+
+    DefReqData: function(termType, termID) {
+      this.p = "0.0";
+      this.reqType = "q";
+      this.qType = "def";
+      this.termType = termType;
+      this.termID = termID;
+
+  },
+
+
+    SupReqData: function(catID) {
+      this.p = "0.0";
+      this.reqType = "q";
+      this.qType = "sup";
+      this.catID = catID;
+
     }
-
-
-
-
-
 
 }

@@ -48,7 +48,11 @@ function verifyType($paramVal, $type, $paramName, $errPrefix) {
             }
             break;
         case "str":
-            if (!is_string($param) || strlen($param) > 255) {
+            if (
+                !is_string($paramVal) ||
+                !ctype_print($paramVal) ||
+                strlen($paramVal) > 255
+            ) {
                 echoTypeErrorJSONAndExit(
                     $errPrefix, $paramName, "char(<226)"
                 );
