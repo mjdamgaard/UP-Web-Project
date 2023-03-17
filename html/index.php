@@ -46,12 +46,27 @@ $safeParamValArr = verifyAndGetParams($paramNameArr, $typeArr, $errPrefix);
 
 <h2> Term </h2>
 
+
+
 <?php
 
 echoTermHomeHTML($paramNameArr, $safeParamValArr);
 
+?>
 
+<div>
+    <button>Get JSON data</button>
+</div>
 
+<?php
+
+// $paramVal = "10000";
+// $pattern = "/^[1-9][0-9]*$/";
+// echo var_dump(!preg_match($pattern, $paramVal)) . "<br>";
+// $n = intval($paramVal);
+// echo var_dump($n) . "<br>";
+// echo var_dump($n < 0) . "<br>";
+// echo var_dump($n > 4294967295) . "<br>";
 ?>
 
 
@@ -61,24 +76,22 @@ echoTermHomeHTML($paramNameArr, $safeParamValArr);
 
 
 
+<script src="src/requests/p0_0/query_data.js"></script>
 
 
 <script>
-
-
 $(function(){
-  $('.term[context="home"]').html("Hello world of jQuery!");
+    const data = new P0_0_Query.SetReqData("u", "01", "c", "14", "01");
+    console.log(data);
+    $("button").click(function(){
+        $.getJSON("request_handler.php", data, function(result){
+            $.each(result, function(key, field){
+                $('.term[context="home"]').append(key + ": " + field + " ");
+            });
+        });
+    });
 });
-
-
-
-
-
 </script>
-
-
-
-
 
 
 

@@ -152,7 +152,8 @@ CALL insertOrFindCat ("Books etc.", @stdCatID, NULL, @booksEtcCatID, @ec);
 
 
 
-
+-- -- Works; "terms" are seen as different from "Terms."
+-- CALL insertOrFindCat ("terms", @termsID, NULL, @stdCatID, @ec);
 
 
 

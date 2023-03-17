@@ -30,7 +30,7 @@ function verifyAndGetParams($paramNameArr, $typeArr, $errPrefix) {
 
         // verify ith parameter type.
         $type = $typeArr[$i];
-        verifyType($paramVal, $type, $errPrefix);
+        verifyType($paramVal, $type, $paramName, $errPrefix);
 
         // append ith parameter to return array.
         $paramValArr[] = $paramVal;
@@ -39,7 +39,7 @@ function verifyAndGetParams($paramNameArr, $typeArr, $errPrefix) {
     return $paramValArr;
 }
 
-function verifyType($paramVal, $type, $errPrefix) {
+function verifyType($paramVal, $type, $paramName, $errPrefix) {
     switch($type) {
         case "t":
             $pattern = "/^[crsugkltb]$/";
@@ -55,7 +55,7 @@ function verifyType($paramVal, $type, $errPrefix) {
             }
             break;
         case "id":
-            $pattern = "/^([0-9a-fA-F]{2}){1,8}$/";
+            $pattern = "/^[0-9a-fA-F]{1,16}$/";
             if (!preg_match($pattern, $paramVal)) {
                 echoTypeErrorJSONAndExit($errPrefix, $paramName, $pattern);
             }
@@ -67,7 +67,7 @@ function verifyType($paramVal, $type, $errPrefix) {
             }
             break;
         case "uint":
-            $pattern = "/^[1-9][0-9]*$/";
+            $pattern = "/^([1-9][0-9]*|0)$/";
             $n = intval($paramVal);
             if (
                 !preg_match($pattern, $paramVal) ||
@@ -78,7 +78,7 @@ function verifyType($paramVal, $type, $errPrefix) {
             }
             break;
         case "int":
-            $pattern = "/^-?[1-9][0-9]*$/";
+            $pattern = "/^-?([1-9][0-9]*|0)$/"; // this allows "-0", why not?..
             $n = intval($paramVal);
             if (
                 !preg_match($pattern, $paramVal) ||
@@ -89,7 +89,7 @@ function verifyType($paramVal, $type, $errPrefix) {
             }
             break;
         case "tint":
-            $pattern = "/^-?[1-9][0-9]*$/";
+            $pattern = "/^-?([1-9][0-9]*|0)$/"; // this allows "-0", why not?..
             $n = intval($paramVal);
             if (
                 !preg_match($pattern, $paramVal) ||
