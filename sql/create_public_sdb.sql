@@ -67,15 +67,15 @@ CREATE TABLE Sets (
     -- Sets are not Terms, so IDs take any value.
 
     -- user or user group who states the statement.
-    user_t CHAR(1),
-    user_id BIGINT UNSIGNED,
+    user_t CHAR(1) NOT NULL,
+    user_id BIGINT UNSIGNED NOT NULL,
 
     -- subject of relation.
-    subj_t CHAR(1),
-    subj_id BIGINT UNSIGNED,
+    subj_t CHAR(1) NOT NULL,
+    subj_id BIGINT UNSIGNED NOT NULL,
 
     -- relation.
-    rel_id BIGINT UNSIGNED,
+    rel_id BIGINT UNSIGNED NOT NULL,
 
     UNIQUE INDEX (
         user_t,
@@ -145,7 +145,7 @@ CREATE TABLE Sets (
 CREATE TABLE SemanticInputs (
     /* Set */
     -- set id.
-    set_id BIGINT UNSIGNED,
+    set_id BIGINT UNSIGNED NOT NULL,
 
     /* Member */
     -- The members of sets include a rating value and a Term.
@@ -164,8 +164,8 @@ CREATE TABLE SemanticInputs (
 
     -- object of the relation defining the set (i.e. the primary part of the
     -- member of which the rating is about).
-    obj_t CHAR(1),
-    obj_id BIGINT UNSIGNED,
+    obj_t CHAR(1) NOT NULL,
+    obj_id BIGINT UNSIGNED NOT NULL,
 
     PRIMARY KEY (
         set_id,
@@ -191,7 +191,7 @@ CREATE TABLE SemanticInputs (
 CREATE TABLE RecentInputs (
     /* Set */
     -- set id.
-    set_id BIGINT UNSIGNED,
+    set_id BIGINT UNSIGNED NOT NULL,
 
     /* Member */
     -- The members of sets include a rating value and a Term.
@@ -202,8 +202,8 @@ CREATE TABLE RecentInputs (
 
     -- object of the relation defining the set (i.e. the primary part of the
     -- member of which the rating is about).
-    obj_t CHAR(1),
-    obj_id BIGINT UNSIGNED,
+    obj_t CHAR(1) NOT NULL,
+    obj_id BIGINT UNSIGNED NOT NULL,
 
     changed_at DATE NOT NULL,
 
@@ -224,7 +224,8 @@ CREATE TABLE UserGroups (
     -- type = "grp".
 
     -- id of the creating user group (or user or bot).
-    creator_id BIGINT UNSIGNED,
+    creator_t CHAR(1) NOT NULL,
+    creator_id BIGINT UNSIGNED NOT NULL,
 
     -- This is not the date at which the user group was created as a term.
     -- Rather, it is the date at which the weights within the creating user
@@ -256,7 +257,7 @@ CREATE TABLE UserGroups (
     -- of this user group. A "constant" user group (with is_dynamic = FALSE),
     -- on the other hand, has constant weights which are set at the "effective
     -- creation date" and not changed after that.
-    is_dynamic TINYINT -- BOOL
+    is_dynamic TINYINT NOT NULL -- BOOL
 );
 
 
@@ -297,15 +298,16 @@ CREATE TABLE Categories (
 
     -- title of the category, preferably a plural noun describing/referencing
     -- the elements in the category.
-    title VARCHAR(255) NOT NULL,
+    title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
     FULLTEXT idx (title),
 
     -- id of a defining super category.
     super_cat_id BIGINT UNSIGNED NOT NULL,
 
     UNIQUE INDEX (title, super_cat_id)
-);
 
+);
+-- SHOW WARNINGS;
 
 CREATE TABLE StandardTerms (
     -- term ID.
@@ -313,7 +315,7 @@ CREATE TABLE StandardTerms (
     -- type = "std".
 
     -- title of the term.
-    title VARCHAR(255) NOT NULL,
+    title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
     FULLTEXT idx (title),
 
     -- id of a defining category.
@@ -332,7 +334,7 @@ CREATE TABLE Relations (
     -- subject of the relation.
     -- TODO: mention forward and backwards syntax for parsing this noun from
     -- the realtion expressed as a verb.
-    obj_noun VARCHAR(255) NOT NULL,
+    obj_noun VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
     FULLTEXT idx (obj_noun),
 
     -- obj_cat_id BIGINT UNSIGNED NOT NULL,
@@ -352,7 +354,7 @@ CREATE TABLE KeywordStrings (
     -- type = "kws".
 
     -- keyword string.
-    str VARCHAR(255) NOT NULL UNIQUE,
+    str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL UNIQUE,
     FULLTEXT idx (str)
 );
 
@@ -401,7 +403,8 @@ CREATE TABLE Lists (
     /* data */
     len SMALLINT UNSIGNED NOT NULL,
 
-    elems VARBINARY(248),
+    elem_ts VARCHAR(31) NOT NULL,
+    elem_ids VARBINARY(248) NOT NULL,
 
     -- elem1_t TINYINT,
     -- elem1_id BIGINT UNSIGNED,
@@ -436,7 +439,7 @@ CREATE TABLE Texts (
     -- type = "txt".
 
     /* data */
-    str TEXT
+    str TEXT NOT NULL
 );
 
 
@@ -447,7 +450,7 @@ CREATE TABLE Binaries (
     -- type = "bin".
 
     /* data */
-    bin BLOB
+    bin BLOB NOT NULL
 );
 
 
@@ -455,11 +458,11 @@ CREATE TABLE Binaries (
 
 
 CREATE TABLE Creators (
-    term_t CHAR(1),
-    term_id BIGINT UNSIGNED,
+    term_t CHAR(1) NOT NULL,
+    term_id BIGINT UNSIGNED NOT NULL,
     PRIMARY KEY (term_t, term_id),
 
     -- creator (always has type = "usr").
-    user_id BIGINT UNSIGNED,
+    user_id BIGINT UNSIGNED NOT NULL,
     INDEX (user_id)
 );

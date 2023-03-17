@@ -59,12 +59,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     echo is_string("");
     echo ctype_xdigit("00A") . "<br>";
 
-    echo var_dump(hex2bin("00")) . "<br>";
+    echo var_dump(hex2bin("00")) . "hex2bin<br>";
+
+    echo var_dump(hexdec("FF")) . "hexdec<br>";
 
     echo print_r(
         db_io\getSet(
             'u', "01",
-            'c', "08",
+            'c', "13",
             "01",
             "00", "",
             "100", "0",
@@ -75,7 +77,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     echo print_r(
         db_io\getSet(
             'u', "01",
-            'c', "08",
+            'c', "14",
             "01",
             "", "FF",
             "100", "0",
@@ -84,12 +86,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     ) . "<br>";
 
     echo "br<br>";
+
     echo print_r(
         db_io\getSet(
             'u', "01",
-            'c', "08",
+            'c', "14",
             "01",
-            "", "FF",
+            "00", "FF",
             "3", "0",
             "0"
         )
@@ -99,9 +102,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     echo print_r(
         db_io\getSet(
             'u', "01",
-            'c', "08",
+            'c', "14",
             "01",
-            "", "FF",
+            "00", "FF",
             "3", "0",
             "1"
         )

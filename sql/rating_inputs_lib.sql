@@ -21,9 +21,9 @@ CREATE PROCEDURE findOrCreateSet (
 )
 BEGIN
     DECLARE userID, subjID, relID BIGINT UNSIGNED;
-    SET userID = UNHEX(userIDHex);
-    SET subjID = UNHEX(subjIDHex);
-    SET relID = UNHEX(relIDHex);
+    SET userID = CONV(userIDHex, 16, 10);
+    SET subjID = CONV(subjIDHex, 16, 10);
+    SET relID = CONV(relIDHex, 16, 10);
 
     SELECT set_id INTO newID
     FROM Sets
@@ -139,10 +139,10 @@ BEGIN
     DECLARE currentDate DATE;
     DECLARE oldRatingVal VARBINARY(255);
     DECLARE userID, subjID, relID, objID BIGINT UNSIGNED;
-    SET userID = UNHEX(userIDHex); -- for the life of me, I can't get this to work; not with CAST, CONV or CONVERT..(!)
-    SET subjID = UNHEX(subjIDHex);
-    SET relID = UNHEX(relIDHex);
-    SET objID = UNHEX(objIDHex);
+    SET userID = CONV(userIDHex, 16, 10);
+    SET subjID = CONV(subjIDHex, 16, 10);
+    SET relID = CONV(relIDHex, 16, 10);
+    SET objID = CONV(objIDHex, 16, 10);
     SET currentDate = CURDATE();
 
     CALL findOrCreateSet (

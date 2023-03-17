@@ -11,7 +11,7 @@ function getSet(
     $num, $numOffset,
     $isAscOrder
 ) {
-    // convert rating ranges from hexadecimal string to binary strings
+    // convert rating ranges from hexadecimal string to binary strings.
     $ratingRangeMin = hex2bin($ratingRangeMin);
     $ratingRangeMax = hex2bin($ratingRangeMax);
 
