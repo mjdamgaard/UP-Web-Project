@@ -5,14 +5,14 @@
  * layer before they are sent to the procedures in the query API of the
  * database. But the output *IS* changed! All text outputs should be
  * converted to safe html texts (using the htmlspecialchars() function)
- * in this layer! 
+ * in this layer!
  **/
 
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
 require_once $db_io_path . "mysqli_procedures.php";
 
 
-function getSafeSet(
+function getSafeSetFromSecIndex(
     $userType, $userID, $subjType, $subjID, $relID,
     $ratingRangeMin, $ratingRangeMax,
     $num, $numOffset,

@@ -1,10 +1,10 @@
 
 
-DROP PROCEDURE selectSet;
+DROP PROCEDURE selectSetFromSecIndex;
 DROP PROCEDURE selectRating;
 
 DROP PROCEDURE selectCatDef;
-DROP PROCEDURE selectStdDef;
+DROP PROCEDURE selectElemDef;
 DROP PROCEDURE selectRelDef;
 
 DROP PROCEDURE selectSuperCatDefs;
@@ -15,14 +15,11 @@ DROP PROCEDURE selectCreations;
 
 
 
+/* Subprocedures */
 
 DELIMITER //
-CREATE PROCEDURE selectSet (
-    IN userType CHAR(1),
-    IN userIDBin VARCHAR(16),
-    IN subjType CHAR(1),
-    IN subjIDBin VARCHAR(16),
-    IN relIDBin VARCHAR(16),
+CREATE PROCEDURE selectSetFromSetIDInt(
+    IN setID BIGINT UNSIGNED,
     IN ratingRangeMin VARBINARY(255),
     IN ratingRangeMax VARBINARY(255),
     IN num INT UNSIGNED,
@@ -30,21 +27,6 @@ CREATE PROCEDURE selectSet (
     IN isAscOrder BOOL
 )
 BEGIN
-    DECLARE userID, subjID, relID, setID BIGINT UNSIGNED;
-    SET userID = CONV(userIDBin, 16, 10);
-    SET subjID = CONV(subjIDBin, 16, 10);
-    SET relID = CONV(relIDBin, 16, 10);
-
-    -- DECLARE setID BIGINT UNSIGNED;
-    SELECT set_id INTO setID
-    FROM Sets
-    WHERE (
-        user_t = userType AND
-        user_id = userID AND -- CONV(userIDBin, 2, 10) AND
-        subj_t = subjType AND
-        subj_id = subjID AND -- CONV(subjIDBin, 2, 10) AND
-        rel_id = relID -- CONV(relIDBin, 2, 10)
-    );
     SELECT
         HEX(rat_val) AS ratingVal,
         obj_t AS objType,
@@ -63,25 +45,184 @@ BEGIN
     LIMIT numOffset, num;
 END //
 DELIMITER ;
--- SHOW WARNINGS;
+
+
+DELIMITER //
+CREATE PROCEDURE getSetIDIntFromSecKey(
+    IN userType CHAR(1),
+    IN userIDHex VARCHAR(16),
+    IN subjType CHAR(1),
+    IN subjIDHex VARCHAR(16),
+    IN relIDHex VARCHAR(16),
+    OUT setID BIGINT UNSIGNED
+)
+BEGIN
+    DECLARE userID, subjID, relID, setID BIGINT UNSIGNED;
+    SET userID = CONV(userIDHex, 16, 10);
+    SET subjID = CONV(subjIDHex, 16, 10);
+    SET relID = CONV(relIDHex, 16, 10);
+
+    -- DECLARE setID BIGINT UNSIGNED;
+    SELECT set_id INTO setID
+    FROM Sets
+    WHERE (
+        user_t = userType AND
+        user_id = userID AND
+        subj_t = subjType AND
+        subj_id = subjID AND
+        rel_id = relID
+    );
+END //
+DELIMITER ;
+
+
+
+
+
+/* Actual API */
+
+DELIMITER //
+CREATE PROCEDURE selectSetFromSecKey(
+    IN userType CHAR(1),
+    IN userIDHex VARCHAR(16),
+    IN subjType CHAR(1),
+    IN subjIDHex VARCHAR(16),
+    IN relIDHex VARCHAR(16),
+    IN ratingRangeMin VARBINARY(255),
+    IN ratingRangeMax VARBINARY(255),
+    IN num INT UNSIGNED,
+    IN numOffset INT UNSIGNED,
+    IN isAscOrder BOOL
+)
+BEGIN
+    DECLARE setID BIGINT UNSIGNED;
+    CALL getSetIDFromSecKey (
+        userType,
+        userIDHex,
+        subjType,
+        subjIDHex,
+        relIDHex,
+        setID
+    );
+    CALL selectSetFromSetIDInt (
+        setID,
+        ratingRangeMin,
+        ratingRangeMax,
+        num,
+        numOffset,
+        isAscOrder
+    );
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectSetFromPrimKey (
+    IN setIDHex VARCHAR(16),
+    IN ratingRangeMin VARBINARY(255),
+    IN ratingRangeMax VARBINARY(255),
+    IN num INT UNSIGNED,
+    IN numOffset INT UNSIGNED,
+    IN isAscOrder BOOL
+)
+BEGIN
+    DECLARE setID BIGINT UNSIGNED;
+    SET setID = CONV(setIDHex, 16, 10);
+    CALL selectSetFromSetIDInt (
+        setID,
+        ratingRangeMin,
+        ratingRangeMax,
+        num,
+        numOffset,
+        isAscOrder
+    );
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectSetIDFromSecKey(
+    IN userType CHAR(1),
+    IN userIDHex VARCHAR(16),
+    IN subjType CHAR(1),
+    IN subjIDHex VARCHAR(16),
+    IN relIDHex VARCHAR(16)
+)
+BEGIN
+    DECLARE setID BIGINT UNSIGNED;
+    CALL _getSetIDFromSecKey (
+        userType,
+        userIDHex,
+        subjType,
+        subjIDHex,
+        relIDHex,
+        setID
+    );
+    SELECT CONV(setID, 10, 16);
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectSetSecKeyFromID(
+    IN setIDHex VARCHAR(16)
+)
+BEGIN
+    DECLARE setID BIGINT UNSIGNED;
+    SET setID = CONV(setIDHex, 16, 10);
+    SELECT
+        user_t AS userType,
+        CONV(user_id, 10, 16) AS userID,
+        subj_t AS subjType,
+        CONV(subj_id, 10, 16) AS subjID,
+        CONV(rel_id, 10, 16) AS relID
+    FROM Sets
+    WHERE (set_id = setID);
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectSetElemNumFromID(
+    IN setIDHex VARCHAR(16)
+)
+BEGIN
+    DECLARE setID BIGINT UNSIGNED;
+    SET setID = CONV(setIDHex, 16, 10);
+    SELECT elem_num AS elemNum
+    FROM Sets
+    WHERE (set_id = setID);
+END //
+DELIMITER ;
+
+
+
+
+
+
+
+
+
+
 
 
 DELIMITER //
 CREATE PROCEDURE selectRating (
     IN objType CHAR(1),
-    IN objIDBin VARCHAR(16),
+    IN objIDHex VARCHAR(16),
     IN userType CHAR(1),
-    IN userIDBin VARCHAR(16),
+    IN userIDHex VARCHAR(16),
     IN subjType CHAR(1),
-    IN subjIDBin VARCHAR(16),
-    IN relIDBin VARCHAR(16)
+    IN subjIDHex VARCHAR(16),
+    IN relIDHex VARCHAR(16)
 )
 BEGIN
     DECLARE objID, userID, subjID, relID, setID BIGINT UNSIGNED;
-    SET objID = CONV(objIDBin, 16, 10);
-    SET userID = CONV(userIDBin, 16, 10);
-    SET subjID = CONV(subjIDBin, 16, 10);
-    SET relID = CONV(relIDBin, 16, 10);
+    SET objID = CONV(objIDHex, 16, 10);
+    SET userID = CONV(userIDHex, 16, 10);
+    SET subjID = CONV(subjIDHex, 16, 10);
+    SET relID = CONV(relIDHex, 16, 10);
 
     -- DECLARE setID BIGINT UNSIGNED;
     SELECT set_id INTO setID
@@ -109,11 +250,11 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectCatDef (
-    IN catIDBin VARCHAR(16)
+    IN catIDHex VARCHAR(16)
 )
 BEGIN
     DECLARE catID BIGINT UNSIGNED;
-    SET catID = CONV(catIDBin, 16, 10);
+    SET catID = CONV(catIDHex, 16, 10);
 
     SELECT title AS title, HEX(super_cat_id) AS superCatID
     FROM Categories
@@ -124,11 +265,11 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectElemDef (
-    IN elemIDBin VARCHAR(16)
+    IN elemIDHex VARCHAR(16)
 )
 BEGIN
     DECLARE elemID BIGINT UNSIGNED;
-    SET elemID = CONV(elemIDBin, 16, 10);
+    SET elemID = CONV(elemIDHex, 16, 10);
 
     SELECT title AS title, HEX(cat_id) AS catID
     FROM StandardTerms
@@ -139,11 +280,11 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectRelDef (
-    IN relIDBin VARCHAR(16)
+    IN relIDHex VARCHAR(16)
 )
 BEGIN
     DECLARE relID BIGINT UNSIGNED;
-    SET relID = CONV(relIDBin, 16, 10);
+    SET relID = CONV(relIDHex, 16, 10);
 
     SELECT obj_noun AS objNoun, HEX(subj_cat_id) AS subjCatID
     FROM Relations
@@ -156,13 +297,13 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectSuperCatDefs (
-    IN catIDBin VARCHAR(16)
+    IN catIDHex VARCHAR(16)
 )
 BEGIN
     DECLARE catID BIGINT UNSIGNED;
     DECLARE str VARCHAR(255);
     DECLARE n TINYINT UNSIGNED;
-    SET catID = CONV(catIDBin, 16, 10);
+    SET catID = CONV(catIDHex, 16, 10);
 
     CREATE TEMPORARY TABLE ret
         SELECT title, super_cat_id AS superCatID
@@ -193,11 +334,11 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectData (
     IN dataType CHAR(1),
-    IN dataIDBin VARCHAR(16)
+    IN dataIDHex VARCHAR(16)
 )
 BEGIN
     DECLARE dataID BIGINT UNSIGNED;
-    SET dataID = CONV(dataIDBin, 16, 10);
+    SET dataID = CONV(dataIDHex, 16, 10);
 
     CASE dataType
         WHEN "t" THEN
@@ -216,7 +357,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectCreations (
-    IN userIDBin VARCHAR(16),
+    IN userIDHex VARCHAR(16),
     IN termType CHAR(1),
     IN num INT UNSIGNED,
     IN numOffset INT UNSIGNED,
@@ -224,7 +365,7 @@ CREATE PROCEDURE selectCreations (
 )
 BEGIN
     DECLARE userID BIGINT UNSIGNED;
-    SET userID = CONV(userIDBin, 16, 10);
+    SET userID = CONV(userIDHex, 16, 10);
 
     IF (isAscOrder) THEN
         SELECT CONV(term_id, 10, 16) AS termID

@@ -34,7 +34,7 @@ function getSetJSON() {
     $ratMax = hex2bin($ratMax);
 
     // query database.
-    $queryRes = \db_io\getSafeSet(
+    $queryRes = \db_io\getSafeSetFromSecIndex(
         $userID[0], substr($userID, 1),
         $subjID[0], substr($subjID, 1),
         substr($relID, 1),

@@ -2,7 +2,7 @@
 
 
 if ($_SERVER["REQUEST_METHOD"] != "POST") {
-    $_POST = $_GET;
+    echo '{"Error":"GET HTTP method is not allowed for input requests"}';
 }
 
 
@@ -22,7 +22,7 @@ $request_handling_path = $_SERVER['DOCUMENT_ROOT'] .
 switch ($protocol) {
     case "0.0":
         // TODO: Discontinue this protocol.
-        require $request_handling_path . "p0_0/handler.php";
+        require $request_handling_path . "p0_0/input_handler.php";
         exit;
     case "1.0":
         // TODO: Implement "insert/input term" protocol/procedure.
