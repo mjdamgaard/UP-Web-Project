@@ -29,7 +29,7 @@
 -- DROP TABLE Users;
 --
 -- DROP TABLE Categories;
--- DROP TABLE StandardTerms;
+-- DROP TABLE ElementaryTerms;
 -- DROP TABLE Relations;
 -- DROP TABLE KeywordStrings;
 -- DROP TABLE Lists;
@@ -313,7 +313,7 @@ CREATE TABLE Categories (
 );
 -- SHOW WARNINGS;
 
-CREATE TABLE StandardTerms (
+CREATE TABLE ElementaryTerms (
     -- term ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     -- type = "std".

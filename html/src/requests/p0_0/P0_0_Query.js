@@ -2,32 +2,29 @@
 var P0_0_Query = {
 
     SetReqData: function(
-        userType, userID, subjType, subjID, relID,
-        ratingRangeMin = "", ratingRangeMax = "",
-        num = "10000", numOffset = "0",
-        isAscOrder = "0"
+        userID, subjID, relID,
+        ratMin = "", ratMax = "",
+        num = "10000", offset = "0",
+        isAsc = "0"
     ) {
       this.p = "0.0";
       this.reqType = "q";
       this.qType = "set";
-      this.userType = userType;
       this.userID = userID;
-      this.subjType = subjType;
       this.subjID = subjID;
       this.relID = relID;
-      this.ratingRangeMin = ratingRangeMin;
-      this.ratingRangeMax = ratingRangeMax;
+      this.ratMin = ratMin;
+      this.ratMax = ratMax;
       this.num = num;
-      this.numOffset = numOffset;
-      this.isAscOrder = isAscOrder;
+      this.offset = offset;
+      this.isAsc = isAsc;
 
   },
 
-    DefReqData: function(termType, termID) {
+    DefReqData: function(termID) {
       this.p = "0.0";
       this.reqType = "q";
       this.qType = "def";
-      this.termType = termType;
       this.termID = termID;
 
   },

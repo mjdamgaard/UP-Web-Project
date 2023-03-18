@@ -14,8 +14,8 @@ DELETE FROM RecentInputs;
 
 DELETE FROM Categories;
 ALTER TABLE Categories AUTO_INCREMENT=1;
--- DELETE FROM StandardTerms;
--- ALTER TABLE StandardTerms AUTO_INCREMENT=1;
+-- DELETE FROM ElementaryTerms;
+-- ALTER TABLE ElementaryTerms AUTO_INCREMENT=1;
 -- DELETE FROM Relations;
 -- ALTER TABLE Relations AUTO_INCREMENT=1;
 -- DELETE FROM KeywordStrings;

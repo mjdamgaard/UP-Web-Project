@@ -1,19 +1,21 @@
 <?php namespace p0_0;
 
+/* Input IDs are always prefixed with a type character in this protocol.
+ **/
 
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
-require_once $db_io_path . "query.php";
+require_once $db_io_path . "safe_query.php";
 
 function getSetJSON() {
     // verify and get parameters.
     $paramNameArr = array(
-        "userType", "userID", "subjType", "subjID", "relID",
-        "ratingRangeMin", "ratingRangeMax",
-        "num", "numOffset",
-        "isAscOrder"
+        "userID", "subjID", "relID",
+        "ratMin", "ratMax",
+        "num", "offset",
+        "isAsc"
     );
     $typeArr = array(
-        "t", "id", "t", "id", "id",
+        "userOrGroupID", "termID", "relID",
         "bin", "bin",
         "uint", "uint",
         "tint"
@@ -22,16 +24,23 @@ function getSetJSON() {
     $paramValArr = verifyAndGetParams($paramNameArr, $typeArr, $errPrefix);
 
 
-    // initialize input variables for querying.
+    // initialize input as variables with corresponding names.
     for ($i = 0; $i < 10; $i++) {
         ${$paramNameArr[$i]} = $paramValArr[$i];
     }
+
+    // convert rating ranges from hexadecimal string to binary strings.
+    $ratMin = hex2bin($ratMin);
+    $ratMax = hex2bin($ratMax); throw new \Exception("POST=" . print_r($_POST));
+
     // query database.
-    $queryRes = \db_io\getSet(
-        $userType, $userID, $subjType, $subjID, $relID,
-        $ratingRangeMin, $ratingRangeMax,
-        $num, $numOffset,
-        $isAscOrder
+    $queryRes = \db_io\getSafeSet(
+        $userID[0], substr($userID, 1),
+        $subjID[0], substr($subjID, 1),
+        $relID[0], substr($relID, 1),
+        $ratMin, $ratMax,
+        $num, $offset,
+        $isAsc
     );
     // JSON-encode and return the query result.
     return json_encode($queryRes);
@@ -43,26 +52,27 @@ function getSetJSON() {
 
 function getDefJSON() {
     // verify and get parameters.
-    $paramNameArr = array("termType", "termID");
-    $typeArr = array("t", "id");
+    $paramNameArr = array("termID");
+    $typeArr = array("termID");
     $errPrefix = "Definition request error: ";
     $paramValArr = verifyAndGetParams($paramNameArr, $typeArr, $errPrefix);
 
 
-    // initialize input variables for querying.
-    $termType = $paramValArr[0];
-    $id = $paramValArr[1];
+    // initialize input as variables with corresponding names.
+    ${$paramNameArr[0]} = $paramValArr[0];
 
+    $type = $termID[0];
+    $id =  substr($termID, 1);
     // branch according to the term type.
-    switch ($termType) {
+    switch ($type) {
         case "c":
-            $queryRes = \db_io\getCatSafeDef($id);
+            $queryRes = \db_io\getSafeCatDef($id);
             return json_encode($queryRes);
-        case "s":
-            $queryRes = \db_io\getStdSafeDef($id);
+        case "e":
+            $queryRes = \db_io\getSafeElemDef($id);
             return json_encode($queryRes);
         case "r":
-            $queryRes = \db_io\getRelSafeDef($id);
+            $queryRes = \db_io\getSafeRelDef($id);
             return json_encode($queryRes);
         default:
             echoErrorJSONAndExit($errPrefix . "Unrecognized term type");
@@ -75,15 +85,17 @@ function getDefJSON() {
 function getSuperCatsJSON() {
     // verify and get parameters.
     $paramNameArr = array("catID");
-    $typeArr = array("id");
+    $typeArr = array("catID");
     $errPrefix = "Supercategories request error: ";
     $paramValArr = verifyAndGetParams($paramNameArr, $typeArr, $errPrefix);
 
+    // initialize input as variables with corresponding names.
+    ${$paramNameArr[0]} = $paramValArr[0];
 
     // initialize input variables for querying.
-    $catID = $paramValArr[0];
+    $id = substr($catID, 1);
     // query database.
-    $queryRes = \db_io\getCatSafeSuperCats($catID);
+    $queryRes = \db_io\getSafeCatSuperCats($id);
     // JSON-encode and return the query result.
     return json_encode($queryRes);
 }

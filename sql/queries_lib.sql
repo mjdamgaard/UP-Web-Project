@@ -123,16 +123,16 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectStdDef (
-    IN stdIDBin VARCHAR(16)
+CREATE PROCEDURE selectElemDef (
+    IN elemIDBin VARCHAR(16)
 )
 BEGIN
-    DECLARE stdID BIGINT UNSIGNED;
-    SET stdID = CONV(stdIDBin, 16, 10);
+    DECLARE elemID BIGINT UNSIGNED;
+    SET elemID = CONV(elemIDBin, 16, 10);
 
     SELECT title AS title, HEX(cat_id) AS catID
     FROM StandardTerms
-    WHERE id = stdID;
+    WHERE id = elemID;
 END //
 DELIMITER ;
 

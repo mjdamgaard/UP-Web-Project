@@ -157,10 +157,17 @@ BEGIN
         obj_t = objType AND
         obj_id = objID AND
         set_id = setID
-    )
-    FOR UPDATE; -- Since this search only touches one row, only that row will
+    );
+    -- FOR UPDATE; -- Since this search only touches one row, only that row will
     -- be locked. *No, this might cause some weird next-key locking.. Let me
-    -- see what to do..
+    -- see what to do.. ...Wait no, that actually shouldn't hurt much..
+    -- ..Yes, it might hurt (by beeing slow), who knows. I think I will
+    -- actually just query the Users table FOR UPDATE, which might actually
+    -- be reasonable in the future as well to check if the user is allowed
+    -- to make more inputs today, and thereby we will then also create a
+    -- mutex lock to ensure that a user (or user group (bot)) can only input/
+    -- update one rating at a time even when using several server clients at
+    -- the same time. ..But let me implement all this at a later time..
     IF (previousRating IS NULL AND ratingVal IS NOT NULL) THEN
         INSERT INTO SemanticInputs (
             set_id,
@@ -185,7 +192,7 @@ BEGIN
             objType,
             objID,
             ratingVal,
-            NULL
+            previousRating
         );
         SET exitCode = (0 + ecFindOrCreateSet); -- no prior rating.
     -- nothing happens if (previousRating IS NULL AND ratingVal IS NULL).
@@ -196,8 +203,7 @@ BEGIN
             objID,
             ratingVal,
             previousRating
-        ); -- I call this first so that the FOR UPDATE lock is certain to
-        -- not be lifted.
+        );
         UPDATE SemanticInputs
         SET rat_val = ratingVal
         WHERE (
@@ -207,22 +213,25 @@ BEGIN
         );
         SET exitCode = (2 + ecFindOrCreateSet); -- overwriting an old rating.
     ELSEIF (previousRating IS NOT NULL AND ratingVal IS NULL) THEN
+        CALL insertOrUpdateRecentInput (
+            setID,
+            objType,
+            objID,
+            ratingVal,
+            previousRating
+        );
         DELETE FROM SemanticInputs
         WHERE (
             set_id = setID AND
             obj_t = objType AND
             obj_id = objID
 
-        ); -- No race condition here because of the FOR SHARE declaration above.
+        );
+        -- This UPDATE statement might cause a harmful race condition until
+        -- I reimplement this procedure more correctly at some point.
         UPDATE Sets
         SET elem_num = elem_num - 1
         WHERE set_id = setID;
-        CALL insertOrUpdateRecentInput (
-            setID,
-            objType,
-            objID,
-            ratingVal
-        );
         SET exitCode = (2 + ecFindOrCreateSet); -- overwriting an old rating.
     END IF;
 END //

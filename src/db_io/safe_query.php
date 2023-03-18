@@ -1,19 +1,26 @@
 <?php namespace db_io;
 
+/* In this database interface layer, "ID" refers to un-prefixed (pure
+ * hexadecimal) IDs. The inputs of the functions are not changed in this
+ * layer before they are sent to the procedures in the query API of the
+ * database. But the output *IS* changed! All text outputs should be
+ * converted to safe html texts (using the htmlspecialchars() function)
+ * in this layer! 
+ **/
 
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
 require_once $db_io_path . "mysqli_procedures.php";
 
 
-function getSet(
+function getSafeSet(
     $userType, $userID, $subjType, $subjID, $relID,
     $ratingRangeMin, $ratingRangeMax,
     $num, $numOffset,
     $isAscOrder
 ) {
-    // convert rating ranges from hexadecimal string to binary strings.
-    $ratingRangeMin = hex2bin($ratingRangeMin);
-    $ratingRangeMax = hex2bin($ratingRangeMax);
+    // // convert rating ranges from hexadecimal string to binary strings.
+    // $ratingRangeMin = hex2bin($ratingRangeMin);
+    // $ratingRangeMax = hex2bin($ratingRangeMax);
 
     // get connection.
     $conn = getConnectionOrDie();
@@ -63,15 +70,15 @@ function getSafeDef($id, $procIdent, $strColumnName, $catColumnName) {
 }
 
 
-function getCatSafeDef($catID) {
+function getSafeCatDef($catID) {
     return getSafeDef($catID, "selectCatDef", "title", "superCatID");
 }
 
-function getStdSafeDef($catID) {
-    return getSafeDef($catID, "selectStdDef", "title", "catID");
+function getSafeElemDef($catID) {
+    return getSafeDef($catID, "selectElemDef", "title", "catID");
 }
 
-function getRelSafeDef($catID) {
+function getSafeRelDef($catID) {
     return getSafeDef($catID, "selectRelDef", "objNoun", "subjCatID");
 }
 
@@ -82,7 +89,7 @@ function getRelSafeDef($catID) {
 
 
 
-function getCatSafeSuperCats($catID) {
+function getSafeCatSuperCats($catID) {
     // get connection.
     $conn = getConnectionOrDie();
 
@@ -120,7 +127,7 @@ function getCatSafeSuperCats($catID) {
 
 
 
-function getSafeText($txtID) {
+function getSafeText($textID) {
 
     // get connection.
     $conn = getConnectionOrDie();
@@ -131,7 +138,7 @@ function getSafeText($txtID) {
     );
     $stmt->bind_param(
         "s",
-        $txtID
+        $textID
     );
     executeSuccessfulOrDie($stmt);
 

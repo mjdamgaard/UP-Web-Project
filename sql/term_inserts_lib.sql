@@ -78,8 +78,8 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE insertOrFindStd (
-    IN stdTitle TEXT,
+CREATE PROCEDURE insertOrFindElem (
+    IN elemTitle TEXT,
     IN catIDHex VARCHAR(16),
     IN userIDHex VARCHAR(16),
     OUT newIDHex VARCHAR(16),
@@ -92,7 +92,7 @@ BEGIN
 
     SELECT id INTO newID
     FROM StandardTerms
-    WHERE (title = stdTitle AND cat_id = catID);
+    WHERE (title = elemTitle AND cat_id = catID);
     IF (newID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
     ELSE
@@ -101,7 +101,7 @@ BEGIN
             SET exitCode = 2; -- category doesn't exist.
         ELSE
             INSERT INTO StandardTerms (title, cat_id)
-            VALUES (stdTitle, catID);
+            VALUES (elemTitle, catID);
             SELECT LAST_INSERT_ID() INTO newID;
             -- NOTE: This procedure assumes that user_id is correct if not null.
             IF (userID IS NOT NULL) THEN

@@ -13,16 +13,15 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 
 // TODO: remove this if statement.
 if (empty($_POST)) {
-    $_POST["type"]="c";
-    $_POST["tid"]="03";
+    $_POST["termID"]="c1";
 }
 
 // verify and get posted term attributes.
 $paramNameArr = array(
-    "type", "tid"
+    "termID"
 );
 $typeArr = array(
-    "t", "id"
+    "termID"
 );
 $errPrefix = "Term attribute GET/POST error: ";
 $safeParamValArr = verifyAndGetParams($paramNameArr, $typeArr, $errPrefix);
@@ -107,11 +106,12 @@ function getDefiningUpwardPath(termType, termID) {
 
 <script>
 
-// var data = new P0_0_Query.SetReqData("u", "01", "c", "14", "01");
+var data = new P0_0_Query.SetReqData("u01", "c14", "r1");
 // var data = new P0_0_Query.DefReqData("c", "3");
 // var data = new P0_0_Query.SupReqData("3");
-var data = new P0_0_Query.SupReqData("015");
+// var data = new P0_0_Query.SupReqData("015");
 
+console.log(JSON.stringify(data));
 $(function(){
     $("button").click(function(){
         $.getJSON("request_handler.php", data, function(result){

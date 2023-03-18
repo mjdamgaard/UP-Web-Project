@@ -40,14 +40,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 
 
-    // echo var_dump(db_io\getCatSafeDef("01")) . "<br>";
-    // echo var_dump(db_io\getCatSafeDef("02")) . "<br>";
-    // echo var_dump(db_io\getCatSafeDef("03")) . "<br>";
+    // echo var_dump(db_io\getSafeCatDef("01")) . "<br>";
+    // echo var_dump(db_io\getSafeCatDef("02")) . "<br>";
+    // echo var_dump(db_io\getSafeCatDef("03")) . "<br>";
 
 
-    echo var_dump(db_io\getCatSafeDef("0A")) . "<br>";
-    echo var_dump(db_io\getCatSafeSuperCats("0A")) . "<br>";
-    echo print_r(db_io\getCatSafeSuperCats("0A")) . "<br>";
+    echo var_dump(db_io\getSafeCatDef("0A")) . "<br>";
+    echo var_dump(db_io\getSafeCatSuperCats("0A")) . "<br>";
+    echo print_r(db_io\getSafeCatSuperCats("0A")) . "<br>";
 
 
     echo ctype_xdigit("00A");
@@ -64,7 +64,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     echo var_dump(hexdec("FF")) . "hexdec<br>";
 
     echo print_r(
-        db_io\getSet(
+        db_io\getSafeSet(
             'u', "01",
             'c', "13",
             "01",
@@ -75,7 +75,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     ) . "<br>";
 
     echo print_r(
-        db_io\getSet(
+        db_io\getSafeSet(
             'u', "01",
             'c', "14",
             "01",
@@ -88,7 +88,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     echo "br<br>";
 
     echo print_r(
-        db_io\getSet(
+        db_io\getSafeSet(
             'u', "01",
             'c', "14",
             "01",
@@ -100,7 +100,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 
     echo print_r(
-        db_io\getSet(
+        db_io\getSafeSet(
             'u', "01",
             'c', "14",
             "01",
@@ -112,7 +112,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 
     echo print_r(
-        db_io\getSet(
+        db_io\getSafeSet(
             'u', "01",
             'c', "08",
             "01",

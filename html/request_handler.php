@@ -20,7 +20,7 @@ $request_handling_path = $_SERVER['DOCUMENT_ROOT'] .
 
 // match with a known protocol.
 switch ($protocol) {
-    case "0.0":
+    case "0.0": throw new \Exception("POST=" . var_dump($_POST));
         // TODO: Discontinue this protocol.
         require $request_handling_path . "p0_0/handler.php";
         exit;

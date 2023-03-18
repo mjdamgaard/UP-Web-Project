@@ -41,12 +41,92 @@ function verifyAndGetParams($paramNameArr, $typeArr, $errPrefix) {
 
 function verifyType($paramVal, $type, $paramName, $errPrefix) {
     switch($type) {
-        case "t":
-            $pattern = "/^[crsugkltb]$/";
+        /* Type and ID input */
+        case "type":
+            $pattern = "/^[cerugkltb]$/";
             if (!preg_match($pattern, $paramVal)) {
                 echoTypeErrorJSONAndExit($errPrefix, $paramName, $pattern);
             }
             break;
+        case "id":
+            $pattern = "/^[0-9a-fA-F]{1,16}$/";
+            if (!preg_match($pattern, $paramVal)) {
+                echoTypeErrorJSONAndExit($errPrefix, $paramName, $pattern);
+            }
+            break;
+        case "setID":
+            $pattern = "/^s[0-9a-fA-F]{1,16}$/";
+            if (!preg_match($pattern, $paramVal)) {
+                echoTypeErrorJSONAndExit($errPrefix, $paramName, $pattern);
+            }
+            break;
+        case "termID":
+            $pattern = "/^[cerugkltb][0-9a-fA-F]{1,16}$/";
+            if (!preg_match($pattern, $paramVal)) {
+                echoTypeErrorJSONAndExit($errPrefix, $paramName, $pattern);
+            }
+            break;
+        case "catID":
+            $pattern = "/^c[0-9a-fA-F]{1,16}$/";
+            if (!preg_match($pattern, $paramVal)) {
+                echoTypeErrorJSONAndExit($errPrefix, $paramName, $pattern);
+            }
+            break;
+        case "elemID":
+            $pattern = "/^e[0-9a-fA-F]{1,16}$/";
+            if (!preg_match($pattern, $paramVal)) {
+                echoTypeErrorJSONAndExit($errPrefix, $paramName, $pattern);
+            }
+            break;
+        case "relID":
+            $pattern = "/^r[0-9a-fA-F]{1,16}$/";
+            if (!preg_match($pattern, $paramVal)) {
+                echoTypeErrorJSONAndExit($errPrefix, $paramName, $pattern);
+            }
+            break;
+        case "userOrGroupID":
+            $pattern = "/^[ug][0-9a-fA-F]{1,16}$/";
+            if (!preg_match($pattern, $paramVal)) {
+                echoTypeErrorJSONAndExit($errPrefix, $paramName, $pattern);
+            }
+            break;
+        case "userID":
+            $pattern = "/^u[0-9a-fA-F]{1,16}$/";
+            if (!preg_match($pattern, $paramVal)) {
+                echoTypeErrorJSONAndExit($errPrefix, $paramName, $pattern);
+            }
+            break;
+        case "groupID":
+            $pattern = "/^g[0-9a-fA-F]{1,16}$/";
+            if (!preg_match($pattern, $paramVal)) {
+                echoTypeErrorJSONAndExit($errPrefix, $paramName, $pattern);
+            }
+            break;
+        case "kwStringID":
+            $pattern = "/^k[0-9a-fA-F]{1,16}$/";
+            if (!preg_match($pattern, $paramVal)) {
+                echoTypeErrorJSONAndExit($errPrefix, $paramName, $pattern);
+            }
+            break;
+        case "listID":
+            $pattern = "/^l[0-9a-fA-F]{1,16}$/";
+            if (!preg_match($pattern, $paramVal)) {
+                echoTypeErrorJSONAndExit($errPrefix, $paramName, $pattern);
+            }
+            break;
+        case "textID":
+            $pattern = "/^t[0-9a-fA-F]{1,16}$/";
+            if (!preg_match($pattern, $paramVal)) {
+                echoTypeErrorJSONAndExit($errPrefix, $paramName, $pattern);
+            }
+            break;
+        case "binID":
+            $pattern = "/^b[0-9a-fA-F]{1,16}$/";
+            if (!preg_match($pattern, $paramVal)) {
+                echoTypeErrorJSONAndExit($errPrefix, $paramName, $pattern);
+            }
+            break;
+        /* Data input */
         case "str":
             if (
                 !is_string($paramVal) ||
@@ -56,12 +136,6 @@ function verifyType($paramVal, $type, $paramName, $errPrefix) {
                 echoTypeErrorJSONAndExit(
                     $errPrefix, $paramName, "CHAR(225)"
                 );
-            }
-            break;
-        case "id":
-            $pattern = "/^[0-9a-fA-F]{1,16}$/";
-            if (!preg_match($pattern, $paramVal)) {
-                echoTypeErrorJSONAndExit($errPrefix, $paramName, $pattern);
             }
             break;
         case "bin":
@@ -106,7 +180,9 @@ function verifyType($paramVal, $type, $paramName, $errPrefix) {
             }
             break;
         default:
-            throw new \Exception('verifyAndSetParams(): unknown type.');
+            throw new \Exception(
+                'verifyAndSetParams(): unknown type for ' . $paramName
+            );
     }
 }
 
