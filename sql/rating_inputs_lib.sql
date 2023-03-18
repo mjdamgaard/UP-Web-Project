@@ -82,7 +82,10 @@ BEGIN
             obj_t = objType AND
             obj_id = objID
         )
-        FOR SHARE
+        -- If this procedure is not called from any other procedures than
+        -- inputOrChangeRating() below (as intended!), no race conditions
+        -- are possible due to the FOR UPDATE lock on (setID, objType, objID)
+        -- in that procedure.
     );
 
     IF (existsPriorChangeToday) THEN
@@ -155,10 +158,9 @@ BEGIN
         obj_id = objID AND
         set_id = setID
     )
-    FOR SHARE; -- I don't want to lock indices just for preventing a non-
-    -- harmful error to be thrown below.. *(And I know that this search uses
-    -- the secondary index, but FOR UPDATE might lock the primary index for
-    -- all I know..)
+    FOR UPDATE; -- Since this search only touches one row, only that row will
+    -- be locked. *No, this might cause some weird next-key locking.. Let me
+    -- see what to do..
     IF (previousRating IS NULL AND ratingVal IS NOT NULL) THEN
         INSERT INTO SemanticInputs (
             set_id,
@@ -194,7 +196,7 @@ BEGIN
             objID,
             ratingVal,
             previousRating
-        ); -- I call this first such that the FOR SHARE lock is certain to
+        ); -- I call this first so that the FOR UPDATE lock is certain to
         -- not be lifted.
         UPDATE SemanticInputs
         SET rat_val = ratingVal
