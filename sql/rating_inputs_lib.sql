@@ -65,14 +65,15 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrUpdateRecentInput (
     IN setID BIGINT UNSIGNED,
-    IN currentDate DATE,
     IN objType CHAR(1),
     IN objID BIGINT UNSIGNED,
-    IN ratingVal VARBINARY(255)
+    IN ratingVal VARBINARY(255),
+    IN previousRating VARBINARY(255)
 )
 BEGIN
-    DECLARE previousRating VARBINARY(255);
     DECLARE existsPriorChangeToday TINYINT;
+    DECLARE currentDate DATE;
+    SET currentDate = CURDATE();
     SET existsPriorChangeToday = EXISTS (
         SELECT * FROM RecentInputs
         WHERE (
@@ -81,6 +82,7 @@ BEGIN
             obj_t = objType AND
             obj_id = objID
         )
+        FOR SHARE
     );
 
     IF (existsPriorChangeToday) THEN
@@ -93,14 +95,6 @@ BEGIN
             obj_id = objID
         );
     ELSE
-        SET previousRating = (
-            SELECT rat_val FROM SemanticInputs
-            WHERE (
-                obj_t = objType AND
-                obj_id = objID AND
-                set_id = setID
-            )
-        );
         INSERT INTO RecentInputs (
             set_id,
             changed_at,
@@ -137,15 +131,13 @@ CREATE PROCEDURE inputOrChangeRating (
 )
 BEGIN
     DECLARE setID BIGINT UNSIGNED;
-    DECLARE existsPriorRating, ecFindOrCreateSet TINYINT;
-    DECLARE currentDate DATE;
-    DECLARE oldRatingVal VARBINARY(255);
+    DECLARE ecFindOrCreateSet TINYINT;
+    DECLARE previousRating VARBINARY(255);
     DECLARE userID, subjID, relID, objID BIGINT UNSIGNED;
     SET userID = CONV(userIDHex, 16, 10);
     SET subjID = CONV(subjIDHex, 16, 10);
     SET relID = CONV(relIDHex, 16, 10);
     SET objID = CONV(objIDHex, 16, 10);
-    SET currentDate = CURDATE();
 
     CALL findOrCreateSet (
         userType,
@@ -156,17 +148,18 @@ BEGIN
         setID,
         ecFindOrCreateSet
     );
-    SET existsPriorRating = EXISTS (
-        SELECT *
-        FROM SemanticInputs
-        WHERE (
-            obj_t = objType AND
-            obj_id = objID AND
-            set_id = setID
-        )
-        -- FOR UPDATE -- no, not enough reason to lock part of table for this..
-    );
-    IF (NOT existsPriorRating AND ratingVal IS NOT NULL) THEN
+    SELECT rat_val INTO previousRating
+    FROM SemanticInputs
+    WHERE (
+        obj_t = objType AND
+        obj_id = objID AND
+        set_id = setID
+    )
+    FOR SHARE; -- I don't want to lock indices just for preventing a non-
+    -- harmful error to be thrown below.. *(And I know that this search uses
+    -- the secondary index, but FOR UPDATE might lock the primary index for
+    -- all I know..)
+    IF (previousRating IS NULL AND ratingVal IS NOT NULL) THEN
         INSERT INTO SemanticInputs (
             set_id,
             rat_val,
@@ -180,20 +173,29 @@ BEGIN
             objID
         ); -- This might throw error due to race condition, but only if several
         -- clients are logged in as the same user and rates at the same time.
-        -- If the insert succeeds, we can update elem_num.
+        -- ...(At least I think so, because FOR SHARE shouldn't lock indices..)
+        -- If the insert succeeds, we can then update elem_num.
         UPDATE Sets
         SET elem_num = elem_num + 1
         WHERE set_id = setID;
         CALL insertOrUpdateRecentInput (
             setID,
-            currentDate,
             objType,
             objID,
-            ratingVal
+            ratingVal,
+            NULL
         );
         SET exitCode = (0 + ecFindOrCreateSet); -- no prior rating.
-    -- nothing happens if (NOT existsPriorRating AND ratingVal *IS* NULL).
-    ELSEIF (existsPriorRating AND ratingVal IS NOT NULL) THEN
+    -- nothing happens if (previousRating IS NULL AND ratingVal IS NULL).
+    ELSEIF (previousRating IS NOT NULL AND ratingVal IS NOT NULL) THEN
+        CALL insertOrUpdateRecentInput (
+            setID,
+            objType,
+            objID,
+            ratingVal,
+            previousRating
+        ); -- I call this first such that the FOR SHARE lock is certain to
+        -- not be lifted.
         UPDATE SemanticInputs
         SET rat_val = ratingVal
         WHERE (
@@ -201,25 +203,20 @@ BEGIN
             obj_id = objID AND
             set_id = setID
         );
-        CALL insertOrUpdateRecentInput (
-            setID,
-            currentDate,
-            objType,
-            objID,
-            ratingVal
-        );
         SET exitCode = (2 + ecFindOrCreateSet); -- overwriting an old rating.
-    ELSEIF (existsPriorRating AND ratingVal IS NULL) THEN
+    ELSEIF (previousRating IS NOT NULL AND ratingVal IS NULL) THEN
         DELETE FROM SemanticInputs
         WHERE (
             set_id = setID AND
             obj_t = objType AND
             obj_id = objID
 
-        );
+        ); -- No race condition here because of the FOR SHARE declaration above.
+        UPDATE Sets
+        SET elem_num = elem_num - 1
+        WHERE set_id = setID;
         CALL insertOrUpdateRecentInput (
             setID,
-            currentDate,
             objType,
             objID,
             ratingVal
