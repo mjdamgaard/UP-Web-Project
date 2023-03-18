@@ -25,19 +25,19 @@ function getSetJSON() {
 
 
     // initialize input as variables with corresponding names.
-    for ($i = 0; $i < 10; $i++) {
+    for ($i = 0; $i < 8; $i++) {
         ${$paramNameArr[$i]} = $paramValArr[$i];
     }
 
     // convert rating ranges from hexadecimal string to binary strings.
     $ratMin = hex2bin($ratMin);
-    $ratMax = hex2bin($ratMax); throw new \Exception("POST=" . print_r($_POST));
+    $ratMax = hex2bin($ratMax);
 
     // query database.
     $queryRes = \db_io\getSafeSet(
         $userID[0], substr($userID, 1),
         $subjID[0], substr($subjID, 1),
-        $relID[0], substr($relID, 1),
+        substr($relID, 1),
         $ratMin, $ratMax,
         $num, $offset,
         $isAsc
