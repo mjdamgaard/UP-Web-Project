@@ -40,14 +40,16 @@ BEGIN
             user_id,
             subj_t,
             subj_id,
-            rel_id
+            rel_id,
+            elem_num
         )
         VALUES (
             userType,
             userID,
             subjType,
             subjID,
-            relID
+            relID,
+            0
         );
         SELECT LAST_INSERT_ID() INTO newID;
         SET exitCode = 1; -- create.
@@ -162,6 +164,7 @@ BEGIN
             obj_id = objID AND
             set_id = setID
         )
+        -- FOR UPDATE -- no, not enough reason to lock part of table for this..
     );
     IF (NOT existsPriorRating AND ratingVal IS NOT NULL) THEN
         INSERT INTO SemanticInputs (
@@ -175,7 +178,12 @@ BEGIN
             ratingVal,
             objType,
             objID
-        );
+        ); -- This might throw error due to race condition, but only if several
+        -- clients are logged in as the same user and rates at the same time.
+        -- If the insert succeeds, we can update elem_num.
+        UPDATE Sets
+        SET elem_num = elem_num + 1
+        WHERE set_id = setID;
         CALL insertOrUpdateRecentInput (
             setID,
             currentDate,

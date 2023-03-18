@@ -77,6 +77,9 @@ CREATE TABLE Sets (
     -- relation.
     rel_id BIGINT UNSIGNED NOT NULL,
 
+    -- number of elements.
+    elem_num BIGINT UNSIGNED NOT NULL,
+
     UNIQUE INDEX (
         user_t,
         user_id,
@@ -84,6 +87,7 @@ CREATE TABLE Sets (
         subj_id,
         rel_id
     )
+
 
 );
 
