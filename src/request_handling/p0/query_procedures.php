@@ -29,10 +29,6 @@ function getSetJSON() {
         ${$paramNameArr[$i]} = $paramValArr[$i];
     }
 
-    // convert rating ranges from hexadecimal string to binary strings.
-    $ratMin = hex2bin($ratMin);
-    $ratMax = hex2bin($ratMax);
-
     // query database.
     $queryRes = \db_io\getSafeSet(
         substr($setID, 1),

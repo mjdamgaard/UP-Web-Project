@@ -187,7 +187,7 @@ BEGIN
         subj_id = subjID AND
         rel_id = relID
     );
-    SELECT HEX(rat_val) AS ratingVal
+    SELECT rat_val AS ratingVal
     FROM SemanticInputs
     WHERE (obj_t = objType AND obj_id = objID AND set_id = setID);
 END //
@@ -259,7 +259,7 @@ BEGIN
     SET catID = CONV(catIDHex, 16, 10);
 
     CREATE TEMPORARY TABLE ret
-        SELECT title, super_cat_id AS superCatID
+        SELECT title, super_cat_id
         FROM Categories
         WHERE id = NULL;
 
@@ -271,12 +271,14 @@ BEGIN
         SELECT title, super_cat_id INTO str, catID
         FROM Categories
         WHERE id = catID;
-        INSERT INTO ret (title, superCatID)
+        INSERT INTO ret (title, super_cat_id)
         VALUES (str, catID);
         SET n = n + 1;
         ITERATE label1;
     END LOOP label1;
-    SELECT title, CONV(superCatID, 10, 16) FROM ret ORDER BY superCatID DESC;
+    SELECT title, CONV(super_cat_id, 10, 16) AS superCatID
+    FROM ret
+    ORDER BY super_cat_id DESC;
 END //
 DELIMITER ;
 

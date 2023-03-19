@@ -1,15 +1,13 @@
 <?php namespace db_io;
 
 /* In this database interface layer, "ID" refers to un-prefixed (pure
- * hexadecimal) IDs. The inputs of the functions are not changed in this
- * layer before they are sent to the procedures in the query API of the
- * database. But the output *IS* changed! All text outputs should be
- * converted to safe html texts (using the htmlspecialchars() function)
- * in this layer!
- * ... Well, at this point the inputs are the same, put that is not a
- * persistent requirement of this layer; if the SQL API changes, the
- * API in this layer (including the query fuctions below) does not need
- * to change.
+ * hexadecimal) IDs. The functions thus needs types and IDs seperately
+ * as their inputs.
+ * Input binaries are supposed to be in hexadecimal form, and in return,
+ * this layer makes sure to convert all output binaries to safe hexa-
+ * decimal strings.
+ * Furthermore, all text outputs are converted to safe html texts (using
+ * the htmlspecialchars() function) in this layer!
  **/
 
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
@@ -24,6 +22,10 @@ function getSafeSet(
     $num, $numOffset,
     $isAscOrder
 ) {
+    // convert rating ranges from hexadecimal string to binary strings.
+    $ratingRangeMin = hex2bin($ratingRangeMax);
+    $ratingRangeMin = hex2bin($ratingRangeMax);
+
     // get connection.
     $conn = getConnectionOrDie();
 
