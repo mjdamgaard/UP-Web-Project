@@ -26,3 +26,16 @@ SELECT
     HEX(obj_id) AS objID
 FROM SemanticInputs
 ORDER BY set_id ASC, rat_val DESC;
+
+
+/* MySQL binary handling hack test */
+
+-- MySQL has wierd behaviour here:
+SELECT CONV(0x0F, 10, 16); -- = "F"; OK.
+SELECT UNHEX("F"); -- = 0x0F; OK.
+SELECT CONV(UNHEX("F"), 10, 16); -- = 0; not OK..!
+
+-- Let us try something else..
+BEGIN
+    DECLARE str VARCHAR(255); -- TODO: continue this test..
+END;
