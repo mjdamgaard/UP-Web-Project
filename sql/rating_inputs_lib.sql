@@ -2,9 +2,9 @@
 
 
 
-DROP PROCEDURE findOrCreateSet;
-DROP PROCEDURE insertOrUpdateRecentInput;
-DROP PROCEDURE inputOrChangeRating;
+-- DROP PROCEDURE findOrCreateSet;
+-- DROP PROCEDURE insertOrUpdateRecentInput;
+-- DROP PROCEDURE inputOrChangeRating;
 
 
 

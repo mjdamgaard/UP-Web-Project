@@ -1,82 +1,21 @@
 
 
 
-DROP PROCEDURE selectSet;
-DROP PROCEDURE selectSetInfo;
-DROP PROCEDURE selectSetInfoFromSecKey;
-
-DROP PROCEDURE selectRating;
-
-DROP PROCEDURE selectCatDef;
-DROP PROCEDURE selectElemDef;
-DROP PROCEDURE selectRelDef;
-
-DROP PROCEDURE selectSuperCatDefs;
-
-DROP PROCEDURE selectData;
-
-DROP PROCEDURE selectCreations;
-
-
-
--- DELIMITER //
--- CREATE PROCEDURE selectSetFromSetIDInt (
---     IN setID BIGINT UNSIGNED,
---     IN ratingRangeMin VARBINARY(255),
---     IN ratingRangeMax VARBINARY(255),
---     IN num INT UNSIGNED,
---     IN numOffset INT UNSIGNED,
---     IN isAscOrder BOOL
--- )
--- BEGIN
---     SELECT
---         HEX(rat_val) AS ratingVal,
---         obj_t AS objType,
---         HEX(obj_id) AS objID
---     FROM SemanticInputs
---     WHERE (
---         set_id = setID AND
---         (ratingRangeMin = "" OR rat_val >= ratingRangeMin) AND
---         (ratingRangeMax = "" OR rat_val <= ratingRangeMax)
---     )
---     ORDER BY
---         CASE WHEN isAscOrder THEN rat_val END ASC,
---         CASE WHEN NOT isAscOrder THEN rat_val END DESC,
---         obj_t ASC,
---         obj_id ASC
---     LIMIT numOffset, num;
--- END //
--- DELIMITER ;
-
-
--- DELIMITER //
--- CREATE PROCEDURE getSetIntsFromSecKey (
---     IN userType CHAR(1),
---     IN userIDHex VARCHAR(16),
---     IN subjType CHAR(1),
---     IN subjIDHex VARCHAR(16),
---     IN relIDHex VARCHAR(16),
---     OUT setID BIGINT UNSIGNED,
---     OUT elemNum BIGINT UNSIGNED
--- )
--- BEGIN
---     DECLARE userID, subjID, relID, setID, elemNum BIGINT UNSIGNED;
---     SET userID = CONV(userIDHex, 16, 10);
---     SET subjID = CONV(subjIDHex, 16, 10);
---     SET relID = CONV(relIDHex, 16, 10);
+-- DROP PROCEDURE selectSet;
+-- DROP PROCEDURE selectSetInfo;
+-- DROP PROCEDURE selectSetInfoFromSecKey;
 --
---     -- DECLARE setID BIGINT UNSIGNED;
---     SELECT id, elem_num INTO setID, elemNum
---     FROM Sets
---     WHERE (
---         user_t = userType AND
---         user_id = userID AND
---         subj_t = subjType AND
---         subj_id = subjID AND
---         rel_id = relID
---     );
--- END //
--- DELIMITER ;
+-- DROP PROCEDURE selectRating;
+--
+-- DROP PROCEDURE selectCatDef;
+-- DROP PROCEDURE selectElemDef;
+-- DROP PROCEDURE selectRelDef;
+--
+-- DROP PROCEDURE selectSuperCatDefs;
+--
+-- DROP PROCEDURE selectData;
+--
+-- DROP PROCEDURE selectCreations;
 
 
 
