@@ -3,11 +3,9 @@
 /* In this database interface layer, "ID" refers to un-prefixed (pure
  * hexadecimal) IDs. The functions thus needs types and IDs seperately
  * as their inputs. All IDs are input and output as hexadecimal strings
- * to/from the SQL API (because so far, that is the only way that I can
- * get it (i.e. MySQLi) to work).
- * Input binaries are supposed to be in hexadecimal form, and in return,
- * this layer makes sure to convert all output binaries to (safe!) hexa-
- * decimal strings as well.
+ * to/from the SQL API. The same goes for the binary rating values. This
+ * means that the output IDs and rating values (and the input ones for that
+ * matter) is always safe to print.
  * Furthermore, all text outputs are converted to safe html texts (using
  * the htmlspecialchars() function) in this layer!
  **/
@@ -24,14 +22,10 @@ function getSafeSet(
     $num, $numOffset,
     $isAscOrder
 ) {
-    // convert rating ranges from hexadecimal string to binary strings.
-    $ratingRangeMin = hex2bin($ratingRangeMax);
-    $ratingRangeMin = hex2bin($ratingRangeMax);
-
     // get connection.
     $conn = getConnectionOrDie();
 
-    // insert or find term.
+    // query database.
     $stmt = $conn->prepare(
         "CALL selectSet (?, ?, ?, ?, ?, ?)"
     );
@@ -44,17 +38,15 @@ function getSafeSet(
     );
     executeSuccessfulOrDie($stmt);
 
-    $stmt->get_result()->fetch_all()
-
     // return multidimensional array with columns: (ratingVal, objType, objID).
-    return //; TODO: I need to bin2hex() the output ratingVals..
+    return $stmt->get_result()->fetch_all();
 }
 
 function getSafeSetInfo($setID) {
     // get connection.
     $conn = getConnectionOrDie();
 
-    // insert or find term.
+    // query database.
     $stmt = $conn->prepare(
         "CALL selectSetInfo (?)"
     );
@@ -75,7 +67,7 @@ function getSafeSetInfoFromSecKey(
     // get connection.
     $conn = getConnectionOrDie();
 
-    // insert or find term.
+    // query database.
     $stmt = $conn->prepare(
         "CALL selectSetInfoFromSecKey (?, ?, ?, ?, ?)"
     );
@@ -97,7 +89,7 @@ function getSafeDef($id, $procIdent, $strColumnName, $catColumnName) {
     // get connection.
     $conn = getConnectionOrDie();
 
-    // insert or find term.
+    // query database.
     $stmt = $conn->prepare(
         "CALL " . $procIdent . " (?)"
     );
@@ -141,7 +133,7 @@ function getSafeCatSuperCats($catID) {
     // get connection.
     $conn = getConnectionOrDie();
 
-    // insert or find term.
+    // query database.
     $stmt = $conn->prepare(
         "CALL selectSuperCatDefs (?)"
     );
@@ -180,7 +172,7 @@ function getSafeText($textID) {
     // get connection.
     $conn = getConnectionOrDie();
 
-    // insert or find term.
+    // query database.
     $stmt = $conn->prepare(
         "CALL selectData ('t', ?)"
     );
