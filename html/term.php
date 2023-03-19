@@ -102,13 +102,12 @@ function getDefiningUpwardPath(termType, termID) {
 
 <script>
 
-var data = new P0QueryDataConstructors.SetInfoFromSecKeyReqData(
-    "u01", "c14", "r1"
-);
-// var data = new P0QueryDataConstructors.SetInfoReqData("u01", "c14", "r1");
-// var data = new P0QueryDataConstructors.DefReqData("c3");
-// var data = new P0QueryDataConstructors.SupReqData("c3");
-// var data = new P0QueryDataConstructors.SuperCatsReqData("c015");
+// var data = new P0QueryDataConstructors.SetInfoFromSecKeyReqData(
+//     "u01", "c14", "r1"
+// );
+// var data = new P0QueryDataConstructors.SetInfoReqData("s5");
+// var data = new P0QueryDataConstructors.DefReqData("c14");
+var data = new P0QueryDataConstructors.SuperCatsReqData("c14");
 
 console.log(JSON.stringify(data));
 $(function(){

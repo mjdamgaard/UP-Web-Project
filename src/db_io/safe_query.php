@@ -9,7 +9,7 @@
  * ... Well, at this point the inputs are the same, put that is not a
  * persistent requirement of this layer; if the SQL API changes, the
  * API in this layer (including the query fuctions below) does not need
- * to change. 
+ * to change.
  **/
 
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
@@ -59,7 +59,7 @@ function getSafeSetInfo($setID) {
     executeSuccessfulOrDie($stmt);
 
     // return array with: (userType, userID, subjType, subjID, relID, elemNum).
-    return $stmt->get_result()->fetch_all();
+    return $stmt->get_result()->fetch_assoc();
 }
 
 
@@ -80,7 +80,7 @@ function getSafeSetInfoFromSecKey(
     executeSuccessfulOrDie($stmt);
 
     // return array with: (setID, elemNum).
-    return $stmt->get_result()->fetch_all();
+    return $stmt->get_result()->fetch_assoc();
 }
 
 
