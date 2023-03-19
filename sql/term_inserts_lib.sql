@@ -1,35 +1,15 @@
--- USE mydatabase;
 
 
 
 
 
-
-
-DROP PROCEDURE insertOrFindCat;
-DROP PROCEDURE insertOrFindStd;
-DROP PROCEDURE insertOrFindRel;
-
-DROP PROCEDURE insertTxt;
-
-
-
--- DELETE FROM Sets;
--- DELETE FROM SemanticInputs;
+-- DROP PROCEDURE insertOrFindCat;
+-- DROP PROCEDURE insertOrFindElemTerm;
+-- DROP PROCEDURE insertOrFindRel;
 --
--- DELETE FROM UserGroups;
--- DELETE FROM Users;
---
--- TRUNCATE TABLE Categories; -- slow..
--- DELETE FROM StandardTerms;
--- DELETE FROM Relations;
--- DELETE FROM KeywordStrings;
--- DELETE FROM SavedSets;
--- DELETE FROM Texts;
--- DELETE FROM Lists;
--- DELETE FROM Binaries;
---
--- DELETE FROM Creators;
+-- DROP PROCEDURE insertTxt;
+
+
 
 
 
@@ -78,7 +58,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE insertOrFindElem (
+CREATE PROCEDURE insertOrFindElemTerm (
     IN elemTitle TEXT,
     IN catIDHex VARCHAR(16),
     IN userIDHex VARCHAR(16),

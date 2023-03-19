@@ -1,8 +1,5 @@
 <?php
 
-header("Location: term.php?id=c3");
-
-
 $general_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/general/";
 require_once $general_path . "input_verification.php";
 
@@ -14,14 +11,10 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
     $_POST = $_GET;
 }
 
-// TODO: remove this if statement.
-if (empty($_POST)) {
-    $_POST["termID"]="c1";
-}
 
 // verify and get posted term attributes.
 $paramNameArr = array(
-    "termID"
+    "id"
 );
 $typeArr = array(
     "termID"
@@ -69,7 +62,7 @@ echoTermHomeHTML($paramNameArr, $safeParamValArr);
 
 
 
-<script src="src/requests/p0/P0_0_Query.js"></script>
+<script src="src/requests/p0/P0QueryDataConstructors.js"></script>
 
 
 
@@ -109,15 +102,18 @@ function getDefiningUpwardPath(termType, termID) {
 
 <script>
 
-// var data = new P0_0_Query.SetReqData("u01", "c14", "r1");
-// var data = new P0_0_Query.DefReqData("c3");
-// var data = new P0_0_Query.SupReqData("c3");
-var data = new P0_0_Query.SupReqData("c015");
+var data = new P0QueryDataConstructors.SetInfoFromSecKeyReqData(
+    "u01", "c14", "r1"
+);
+// var data = new P0QueryDataConstructors.SetInfoReqData("u01", "c14", "r1");
+// var data = new P0QueryDataConstructors.DefReqData("c3");
+// var data = new P0QueryDataConstructors.SupReqData("c3");
+// var data = new P0QueryDataConstructors.SuperCatsReqData("c015");
 
 console.log(JSON.stringify(data));
 $(function(){
     $("button").click(function(){
-        $.getJSON("request_handler.php", data, function(result){
+        $.getJSON("p0/query_handler.php", data, function(result){
             $.each(result, function(key, field){
                 $('.term[context="home"]').append(key + ": " + field + ". ");
             });

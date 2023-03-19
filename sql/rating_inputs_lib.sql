@@ -25,7 +25,7 @@ BEGIN
     SET subjID = CONV(subjIDHex, 16, 10);
     SET relID = CONV(relIDHex, 16, 10);
 
-    SELECT set_id INTO newID
+    SELECT id INTO newID
     FROM Sets
     WHERE (
         user_t = userType AND
@@ -186,7 +186,7 @@ BEGIN
         -- If the insert succeeds, we can then update elem_num.
         UPDATE Sets
         SET elem_num = elem_num + 1
-        WHERE set_id = setID;
+        WHERE id = setID;
         CALL insertOrUpdateRecentInput (
             setID,
             objType,
@@ -231,7 +231,7 @@ BEGIN
         -- I reimplement this procedure more correctly at some point.
         UPDATE Sets
         SET elem_num = elem_num - 1
-        WHERE set_id = setID;
+        WHERE id = setID;
         SET exitCode = (2 + ecFindOrCreateSet); -- overwriting an old rating.
     END IF;
 END //

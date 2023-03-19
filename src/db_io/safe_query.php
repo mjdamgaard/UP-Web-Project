@@ -6,32 +6,34 @@
  * database. But the output *IS* changed! All text outputs should be
  * converted to safe html texts (using the htmlspecialchars() function)
  * in this layer!
+ * ... Well, at this point the inputs are the same, put that is not a
+ * persistent requirement of this layer; if the SQL API changes, the
+ * API in this layer (including the query fuctions below) does not need
+ * to change. 
  **/
 
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
 require_once $db_io_path . "mysqli_procedures.php";
 
 
-function getSafeSetFromSecIndex(
-    $userType, $userID, $subjType, $subjID, $relID,
+/* Sets and set info */
+
+function getSafeSet(
+    $setID,
     $ratingRangeMin, $ratingRangeMax,
     $num, $numOffset,
     $isAscOrder
 ) {
-    // // convert rating ranges from hexadecimal string to binary strings.
-    // $ratingRangeMin = hex2bin($ratingRangeMin);
-    // $ratingRangeMax = hex2bin($ratingRangeMax);
-
     // get connection.
     $conn = getConnectionOrDie();
 
     // insert or find term.
     $stmt = $conn->prepare(
-        "CALL selectSet (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        "CALL selectSet (?, ?, ?, ?, ?, ?)"
     );
     $stmt->bind_param(
-        "ssssssssss",
-        $userType, $userID, $subjType, $subjID, $relID,
+        "ssssss",
+        $setID,
         $ratingRangeMin, $ratingRangeMax,
         $num, $numOffset,
         $isAscOrder
@@ -42,6 +44,48 @@ function getSafeSetFromSecIndex(
     return $stmt->get_result()->fetch_all();
 }
 
+function getSafeSetInfo($setID) {
+    // get connection.
+    $conn = getConnectionOrDie();
+
+    // insert or find term.
+    $stmt = $conn->prepare(
+        "CALL selectSetInfo (?)"
+    );
+    $stmt->bind_param(
+        "s",
+        $setID
+    );
+    executeSuccessfulOrDie($stmt);
+
+    // return array with: (userType, userID, subjType, subjID, relID, elemNum).
+    return $stmt->get_result()->fetch_all();
+}
+
+
+function getSafeSetInfoFromSecKey(
+    $userType, $userID, $subjType, $subjID, $relID
+) {
+    // get connection.
+    $conn = getConnectionOrDie();
+
+    // insert or find term.
+    $stmt = $conn->prepare(
+        "CALL selectSetInfoFromSecKey (?, ?, ?, ?, ?)"
+    );
+    $stmt->bind_param(
+        "sssss",
+        $userType, $userID, $subjType, $subjID, $relID
+    );
+    executeSuccessfulOrDie($stmt);
+
+    // return array with: (setID, elemNum).
+    return $stmt->get_result()->fetch_all();
+}
+
+
+
+/* Definitions (of categories, relations and elementary terms) */
 
 function getSafeDef($id, $procIdent, $strColumnName, $catColumnName) {
     // get connection.
@@ -64,7 +108,7 @@ function getSafeDef($id, $procIdent, $strColumnName, $catColumnName) {
     $safeStr = htmlspecialchars($unsafeStr);
     $catID = $res[1];
 
-    // return data as array.
+    // return array with: ($strColumnName, $catColumnName).
     return array($strColumnName => $safeStr, $catColumnName => $catID);
 
 }
@@ -85,9 +129,7 @@ function getSafeRelDef($catID) {
 
 
 
-
-
-
+/* Array of defining supercategories for an input category */
 
 function getSafeCatSuperCats($catID) {
     // get connection.

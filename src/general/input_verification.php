@@ -54,14 +54,20 @@ function verifyType($paramVal, $type, $paramName, $errPrefix) {
                 echoTypeErrorJSONAndExit($errPrefix, $paramName, $pattern);
             }
             break;
+        case "termID":
+            $pattern = "/^[scerugkltb][0-9a-fA-F]{1,16}$/";
+            if (!preg_match($pattern, $paramVal)) {
+                echoTypeErrorJSONAndExit($errPrefix, $paramName, $pattern);
+            }
+            break;
         case "setID":
             $pattern = "/^s[0-9a-fA-F]{1,16}$/";
             if (!preg_match($pattern, $paramVal)) {
                 echoTypeErrorJSONAndExit($errPrefix, $paramName, $pattern);
             }
             break;
-        case "termID":
-            $pattern = "/^[cerugkltb][0-9a-fA-F]{1,16}$/";
+        case "semTermID":
+            $pattern = "/^[cer][0-9a-fA-F]{1,16}$/";
             if (!preg_match($pattern, $paramVal)) {
                 echoTypeErrorJSONAndExit($errPrefix, $paramName, $pattern);
             }

@@ -66,7 +66,7 @@ DROP PROCEDURE selectCreations;
 --     SET relID = CONV(relIDHex, 16, 10);
 --
 --     -- DECLARE setID BIGINT UNSIGNED;
---     SELECT set_id, elem_num INTO setID, elemNum
+--     SELECT id, elem_num INTO setID, elemNum
 --     FROM Sets
 --     WHERE (
 --         user_t = userType AND
@@ -130,7 +130,7 @@ BEGIN
         CONV(rel_id, 10, 16) AS relID,
         elem_num AS elemNum
     FROM Sets
-    WHERE (set_id = setID);
+    WHERE id = setID;
 END //
 DELIMITER ;
 
@@ -149,7 +149,7 @@ BEGIN
     SET subjID = CONV(subjIDHex, 16, 10);
     SET relID = CONV(relIDHex, 16, 10);
 
-    SELECT set_id, elem_num INTO setID, elemNum
+    SELECT id, elem_num INTO setID, elemNum
     FROM Sets
     WHERE (
         user_t = userType AND
@@ -174,7 +174,7 @@ DELIMITER ;
 --     SET setID = CONV(setIDHex, 16, 10);
 --     SELECT elem_num AS elemNum
 --     FROM Sets
---     WHERE (set_id = setID);
+--     WHERE (id = setID);
 -- END //
 -- DELIMITER ;
 
@@ -239,7 +239,7 @@ BEGIN
     SET relID = CONV(relIDHex, 16, 10);
 
     -- DECLARE setID BIGINT UNSIGNED;
-    SELECT set_id INTO setID
+    SELECT id INTO setID
     FROM Sets
     WHERE (
         user_t = userType AND

@@ -63,7 +63,7 @@
 
 CREATE TABLE Sets (
     -- set ID (which is not a term ID).
-    set_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     -- Sets are not Terms, so IDs take any value.
 
     -- user or user group who states the statement.
