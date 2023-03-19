@@ -24,24 +24,28 @@
 DELIMITER //
 CREATE PROCEDURE selectSet (
     IN setIDHex VARCHAR(16),
-    IN ratingRangeMin VARBINARY(255),
-    IN ratingRangeMax VARBINARY(255),
+    IN ratingRangeMinHex VARCHAR(510),
+    IN ratingRangeMaxHex VARCHAR(510),
     IN num INT UNSIGNED,
     IN numOffset INT UNSIGNED,
     IN isAscOrder BOOL
 )
 BEGIN
     DECLARE setID BIGINT UNSIGNED;
+    DECLARE ratMin, ratMax VARBINARY(255);
+    SET ratMin = UNHEX(ratingRangeMinHex);
+    SET ratMax = UNHEX(ratingRangeMaxHex);
     SET setID = CONV(setIDHex, 16, 10);
+
     SELECT
-        rat_val AS ratingVal,
+        HEX(rat_val) AS ratingVal,
         obj_t AS objType,
         CONV(obj_id, 10, 16) AS objID
     FROM SemanticInputs
     WHERE (
         set_id = setID AND
-        (ratingRangeMin = "" OR rat_val >= ratingRangeMin) AND
-        (ratingRangeMax = "" OR rat_val <= ratingRangeMax)
+        (ratMin = "" OR rat_val >= ratMin) AND
+        (ratMax = "" OR rat_val <= ratMax)
     )
     ORDER BY
         CASE WHEN isAscOrder THEN rat_val END ASC,
@@ -187,7 +191,7 @@ BEGIN
         subj_id = subjID AND
         rel_id = relID
     );
-    SELECT rat_val AS ratingVal
+    SELECT HEX(rat_val) AS ratingVal
     FROM SemanticInputs
     WHERE (obj_t = objType AND obj_id = objID AND set_id = setID);
 END //

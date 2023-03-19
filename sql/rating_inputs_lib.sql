@@ -67,12 +67,15 @@ CREATE PROCEDURE insertOrUpdateRecentInput (
     IN setID BIGINT UNSIGNED,
     IN objType CHAR(1),
     IN objID BIGINT UNSIGNED,
-    IN ratingVal VARBINARY(255),
-    IN previousRating VARBINARY(255)
+    IN ratingValHex VARCHAR(510),
+    IN previousRatingHex VARCHAR(510)
 )
 BEGIN
     DECLARE existsPriorChangeToday TINYINT;
     DECLARE currentDate DATE;
+    DECLARE ratingVal, previousRating VARBINARY(255);
+    SET ratingVal = UNHEX(ratingValHex);
+    SET previousRating = UNHEX(previousRatingHex);
     SET currentDate = CURDATE();
     SET existsPriorChangeToday = EXISTS (
         SELECT * FROM RecentInputs
@@ -126,7 +129,7 @@ CREATE PROCEDURE inputOrChangeRating (
     IN subjType CHAR(1),
     IN subjIDHex VARCHAR(16),
     IN relIDHex VARCHAR(16),
-    IN ratingVal VARBINARY(255),
+    IN ratingValHex VARCHAR(510),
     IN objType CHAR(1),
     IN objIDHex VARCHAR(16),
     -- OUT newIDHex VARCHAR(16),
@@ -135,12 +138,13 @@ CREATE PROCEDURE inputOrChangeRating (
 BEGIN
     DECLARE setID BIGINT UNSIGNED;
     DECLARE ecFindOrCreateSet TINYINT;
-    DECLARE previousRating VARBINARY(255);
+    DECLARE previousRating, ratingVal VARBINARY(255);
     DECLARE userID, subjID, relID, objID BIGINT UNSIGNED;
     SET userID = CONV(userIDHex, 16, 10);
     SET subjID = CONV(subjIDHex, 16, 10);
     SET relID = CONV(relIDHex, 16, 10);
     SET objID = CONV(objIDHex, 16, 10);
+    SET ratingVal = UNHEX(ratingValHex);
 
     CALL findOrCreateSet (
         userType,
