@@ -36,6 +36,23 @@ SELECT UNHEX("F"); -- = 0x0F; OK.
 SELECT CONV(UNHEX("F"), 10, 16); -- = 0; not OK..!
 
 -- Let us try something else..
+
+DELIMITER //
+CREATE PROCEDURE test ()
 BEGIN
-    DECLARE str VARCHAR(255); -- TODO: continue this test..
-END;
+    DECLARE bin VARBINARY(255);
+    DECLARE str VARCHAR(510);
+    DECLARE n BIGINT UNSIGNED;
+    SET bin = UNHEX("100001");
+    SELECT HEX(bin);
+    SET str = HEX(bin);
+    -- SELECT CONV(bin, 10, 16); and SELECT CONV(bin, 2, 16); returns "0".
+    SET n = CONV(str, 16, 10);
+    SELECT n;
+END //
+DELIMITER ;
+-- This does work, and I almost expect that UNHEX and HEX will cancel, but it
+-- might depend on their implementation..
+
+CALL test ();
+DROP PROCEDURE test;
