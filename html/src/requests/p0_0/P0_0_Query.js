@@ -8,8 +8,7 @@ var P0_0_Query = {
         isAsc = "0"
     ) {
       this.p = "0.0";
-      this.reqType = "q";
-      this.qType = "set";
+      this.reqType = "set";
       this.userID = userID;
       this.subjID = subjID;
       this.relID = relID;
@@ -23,8 +22,7 @@ var P0_0_Query = {
 
     DefReqData: function(termID) {
       this.p = "0.0";
-      this.reqType = "q";
-      this.qType = "def";
+      this.reqType = "def";
       this.termID = termID;
 
   },
@@ -32,8 +30,7 @@ var P0_0_Query = {
 
     SupReqData: function(catID) {
       this.p = "0.0";
-      this.reqType = "q";
-      this.qType = "sup";
+      this.reqType = "sup";
       this.catID = catID;
 
     }
