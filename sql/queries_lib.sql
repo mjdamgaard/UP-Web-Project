@@ -34,9 +34,9 @@ BEGIN
     DECLARE setID BIGINT UNSIGNED;
     SET setID = CONV(setIDHex, 16, 10);
     SELECT
-        HEX(rat_val) AS ratingVal,
+        rat_val AS ratingVal,
         obj_t AS objType,
-        HEX(obj_id) AS objID
+        CONV(obj_id, 10, 16) AS objID
     FROM SemanticInputs
     WHERE (
         set_id = setID AND

@@ -2,10 +2,12 @@
 
 /* In this database interface layer, "ID" refers to un-prefixed (pure
  * hexadecimal) IDs. The functions thus needs types and IDs seperately
- * as their inputs.
+ * as their inputs. All IDs are input and output as hexadecimal strings
+ * to/from the SQL API (because so far, that is the only way that I can
+ * get it (i.e. MySQLi) to work).
  * Input binaries are supposed to be in hexadecimal form, and in return,
- * this layer makes sure to convert all output binaries to safe hexa-
- * decimal strings.
+ * this layer makes sure to convert all output binaries to (safe!) hexa-
+ * decimal strings as well.
  * Furthermore, all text outputs are converted to safe html texts (using
  * the htmlspecialchars() function) in this layer!
  **/
@@ -42,8 +44,10 @@ function getSafeSet(
     );
     executeSuccessfulOrDie($stmt);
 
+    $stmt->get_result()->fetch_all()
+
     // return multidimensional array with columns: (ratingVal, objType, objID).
-    return $stmt->get_result()->fetch_all();
+    return //; TODO: I need to bin2hex() the output ratingVals..
 }
 
 function getSafeSetInfo($setID) {
