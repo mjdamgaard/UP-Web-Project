@@ -14,6 +14,8 @@ $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
 require_once $db_io_path . "mysqli_procedures.php";
 
 
+// const SQL = {selectSet=>"CALL selectSet (?, ?, ?, ?, ?, ?)", etc.}..
+
 /* Sets and set info */
 
 function getSafeSet(
@@ -174,7 +176,7 @@ function getSafeText($textID) {
 
     // query database.
     $stmt = $conn->prepare(
-        "CALL selectData ('t', ?)"
+        "CALL selectText (?)"
     );
     $stmt->bind_param(
         "s",

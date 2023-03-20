@@ -1,5 +1,5 @@
 
-var P0QueryDataConstructors = {
+const P0QueryDataConstructors = {
 
     SetReqData: function(
         setID,

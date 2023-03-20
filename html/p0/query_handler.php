@@ -19,7 +19,7 @@ use p0 as p;
 if (!isset($_POST["reqType"])) {
     echoErrorJSONAndExit("No request type specified");
 }
-$reqType = $_POST["reqType"]; //echo json_encode(array("reqType"=>$reqType)); exit;
+$reqType = $_POST["reqType"];
 
 
 // branch to corresponding query type and exit afterwards.
