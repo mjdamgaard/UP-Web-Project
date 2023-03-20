@@ -10,7 +10,7 @@
 -- DELETE FROM Users;
 --
 -- DELETE FROM Categories;
--- DELETE FROM StandardTerms;
+-- DELETE FROM ElementaryTerms;
 -- DELETE FROM Relations;
 -- DELETE FROM KeywordStrings;
 -- DELETE FROM Lists;

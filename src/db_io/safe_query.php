@@ -14,7 +14,15 @@ $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
 require_once $db_io_path . "mysqli_procedures.php";
 
 
-// const SQL = {selectSet=>"CALL selectSet (?, ?, ?, ?, ?, ?)", etc.}..
+const QuerySQL = {
+    selectSet: "CALL selectSet (?, ?, ?, ?, ?, ?)",
+    selectSetInfo: "CALL selectSetInfo (?)",
+    "CALL selectSetInfoFromSecKey (?, ?, ?, ?, ?)"
+    "selectCatDef"
+    "selectETermDef"
+    "selectRelDef"
+
+}
 
 /* Sets and set info */
 
@@ -118,8 +126,8 @@ function getSafeCatDef($catID) {
     return getSafeDef($catID, "selectCatDef", "title", "superCatID");
 }
 
-function getSafeElemDef($catID) {
-    return getSafeDef($catID, "selectElemDef", "title", "catID");
+function getSafeETermDef($catID) {
+    return getSafeDef($catID, "selectETermDef", "title", "catID");
 }
 
 function getSafeRelDef($catID) {

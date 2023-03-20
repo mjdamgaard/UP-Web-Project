@@ -8,7 +8,7 @@
 -- DROP PROCEDURE selectRating;
 --
 -- DROP PROCEDURE selectCatDef;
--- DROP PROCEDURE selectElemDef;
+-- DROP PROCEDURE selectETermDef;
 -- DROP PROCEDURE selectRelDef;
 --
 -- DROP PROCEDURE selectSuperCatDefs;
@@ -221,16 +221,16 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectElemDef (
-    IN elemIDHex VARCHAR(16)
+CREATE PROCEDURE selectETermDef (
+    IN eTermIDHex VARCHAR(16)
 )
 BEGIN
-    DECLARE elemID BIGINT UNSIGNED;
-    SET elemID = CONV(elemIDHex, 16, 10);
+    DECLARE eTermID BIGINT UNSIGNED;
+    SET eTermID = CONV(eTermIDHex, 16, 10);
 
     SELECT title AS title, HEX(cat_id) AS catID
-    FROM StandardTerms
-    WHERE id = elemID;
+    FROM ElementaryTerms
+    WHERE id = eTermID;
 END //
 DELIMITER ;
 

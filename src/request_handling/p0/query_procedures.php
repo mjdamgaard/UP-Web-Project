@@ -109,7 +109,7 @@ function getDefJSON() {
             $queryRes = \db_io\getSafeCatDef($id);
             return json_encode($queryRes);
         case "e":
-            $queryRes = \db_io\getSafeElemDef($id);
+            $queryRes = \db_io\getSafeETermDef($id);
             return json_encode($queryRes);
         case "r":
             $queryRes = \db_io\getSafeRelDef($id);

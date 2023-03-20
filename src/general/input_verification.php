@@ -78,7 +78,7 @@ function verifyType($paramVal, $type, $paramName, $errPrefix) {
                 echoTypeErrorJSONAndExit($errPrefix, $paramName, $pattern);
             }
             break;
-        case "elemID":
+        case "eTermID":
             $pattern = "/^e[0-9a-fA-F]{1,16}$/";
             if (!preg_match($pattern, $paramVal)) {
                 echoTypeErrorJSONAndExit($errPrefix, $paramName, $pattern);
