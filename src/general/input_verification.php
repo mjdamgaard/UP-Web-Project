@@ -39,6 +39,10 @@ function verifyAndGetParams($paramNameArr, $typeArr, $errPrefix) {
     return $paramValArr;
 }
 
+
+
+
+
 function verifyType($paramVal, $type, $paramName, $errPrefix) {
     switch($type) {
         /* Type and ID input */
