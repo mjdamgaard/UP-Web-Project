@@ -111,17 +111,8 @@ class SafeQuerier {
     );
 
     private function verifyInputAndGetMySQLiResult (
-        $conn, $sqlSelector, $paramValArr
+        $conn, $sqlSpec, $paramValArr
     ) {
-        // lookup SQL specs.
-        if (!isset($querySQLSpecs[$sqlSelector])) {
-            throw new Exception(
-                "verifyInputAndGetMySQLiResult(): " .
-                "sqlSelector does not match any selector"
-            );
-        }
-        $sqlSpec = $querySQLSpecs[$sqlSelector];
-
         // check length of $paramValArr.
         if (count($paramValArr) != $sqlSpec["n"]) {
             throw new Exception(
@@ -143,14 +134,57 @@ class SafeQuerier {
         // prepare MySQLi statement.
         $stmt = $conn->prepare($sqlSpec["sql"]);
         // execute statement with the (now type verified) input parameters.
-        $stmt->execute($paramValArr);
+        executeSuccessfulOrDie($stmt, $paramValArr);
 
         // return mysqli_result object.
         return $stmt->get_result();
     }
 
-    private function fetchSafeRows() {
 
+    public static function query($conn, $sqlSelector, $paramValArr) {
+        if (!isset($querySQLSpecs[$sqlSelector])) {
+            throw new Exception(
+                "verifyInputAndGetMySQLiResult(): " .
+                "sqlSelector does not match any selector"
+            );
+        }
+        $sqlSpec = $querySQLSpecs[$sqlSelector];
+
+        $res = verifyInputAndGetMySQLiResult($conn, $sqlSpec, $paramValArr);
+
+        // branch according to the "outputType" and return a sanitized result.
+        if ($sqlSpec["outputType"] === "numArr")
+            // fetch all rows as a multidimensional array.
+            $rows = $res->fetch_all();
+            // return $rows as is if all columns are safe, or else loop through
+            // each row and sanitize all unsafe columns.
+            if ($sqlSpec["unsafeColumns"] === array()) {
+                return $rows;
+            } else {
+                foreach ($rows as &$row) {
+                    foreach ($sqlSpec["unsafeColumns"] as $columnNum) {
+                        $row[$columnNum] = htmlspecialchars($row[$columnNum]);
+                    }
+                }
+                unset($row);
+                return $rows;
+            }
+        } elseif ($sqlSpec["outputType"] === "assocArr") {
+            // fetch all rows as a multidimensional array.
+            $row = $res->fetch_assoc();
+            // return $row as is if all columns are safe, or else sanitize all
+            // unsafe columns.
+            if ($sqlSpec["unsafeColumns"] === array()) {
+                return $row;
+            } else {
+                foreach ($sqlSpec["unsafeColumns"] as $columnNum) {
+                    $row[$columnNum] = htmlspecialchars($row[$columnNum]);
+                }
+                return $row;
+            }
+        } else {
+            throw new Exception("query(): typo in outputType");
+        }
     }
 
 }

@@ -1,4 +1,4 @@
-<?php namespace db_io;
+<?php // namespace db_io;
 
 function getConnection() {
     $servername = "localhost";
@@ -26,15 +26,13 @@ function getConnectionOrDie() {
     return $conn;
 }
 
-function executeSuccessfulOrDie($stmt) {
-    $stmt->execute();
+function executeSuccessfulOrDie($stmt, $paramValArr) {
+    $stmt->execute($paramValArr);
 
     $error = \mysqli_stmt_error($stmt);
     if ($error) {
         throw new \Exception("MySQLi stmt error: " . $error);
     }
-
-    return 0;
 }
 
 
