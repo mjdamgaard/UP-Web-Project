@@ -14,15 +14,25 @@ $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
 require_once $db_io_path . "mysqli_procedures.php";
 
 
-const QuerySQL = {
-    selectSet: "CALL selectSet (?, ?, ?, ?, ?, ?)",
-    selectSetInfo: "CALL selectSetInfo (?)",
-    "CALL selectSetInfoFromSecKey (?, ?, ?, ?, ?)"
-    "selectCatDef"
-    "selectETermDef"
-    "selectRelDef"
+// const QuerySQL = {
+//     selectSet: "CALL selectSet (?, ?, ?, ?, ?, ?)",
+//     selectSetInfo: "CALL selectSetInfo (?)",
+//     selectSetInfoSK: "CALL selectSetInfoFromSecKey (?, ?, ?, ?, ?)"
+//     // "selectCatDef"
+//     // "selectETermDef"
+//     // "selectRelDef"
+//
+// }
+//
+// function getMySQLiQueryResult ($conn, $sqlSelector, $paramValArr) {
+//     $stmt = $conn->prepare(
+//         QuerySQL[$sqlSelector]
+//     );
+//     $stmt->execute($paramValArr);
+//
+//     return ...
+// }
 
-}
 
 /* Sets and set info */
 
