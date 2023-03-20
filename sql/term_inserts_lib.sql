@@ -1,6 +1,6 @@
 
 
-
+SELECT "term_inserts";
 
 
 -- DROP PROCEDURE insertOrFindCat;
@@ -15,20 +15,20 @@
 
 
 
-
+-- TODO: I sorta started to correct insertOrFindCat(), but I'll finish it later.
 
 DELIMITER //
 CREATE PROCEDURE insertOrFindCat (
     IN catTitle TEXT,
-    IN superCatIDHex VARCHAR(16),
-    IN userIDHex VARCHAR(16),
-    OUT newIDHex VARCHAR(16),
+    IN superCatCombID VARCHAR(17),
+    IN userCombID VARCHAR(17),
+    OUT newCombID VARCHAR(17),
     OUT exitCode TINYINT -- 0 is successful insertion, 1 is successful find.
 )
 BEGIN
     DECLARE superCatID, userID, newID BIGINT UNSIGNED;
-    SET superCatID = CONV(superCatIDHex, 16, 10);
-    SET userID = CONV(userIDHex, 16, 10);
+    CALL getConvID (superCatCombID, superCatID);
+    CALL getConvID (userCombID, userID);
 
     SELECT id INTO newID
     FROM Categories
@@ -51,7 +51,7 @@ BEGIN
             SET exitCode = 0; -- insert.
         END IF;
     END IF;
-    SET newIDHex = CONV(newID, 10, 16);
+    SET newCombID = CONCAT('c', CONV(newID, 10, 16));
 END //
 DELIMITER ;
 
