@@ -198,7 +198,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectRating (
     IN objCombID VARCHAR(17),
-    IN setCombID VARCHAR(17),
+    IN setCombID VARCHAR(17)
 )
 BEGIN
     DECLARE objType CHAR(1);
@@ -265,7 +265,7 @@ BEGIN
 
     SELECT
         obj_noun AS objNoun,
-        CONCAT('r', CONV(subj_cat_id, 10, 16)) AS subjCatID
+        CONCAT('c', CONV(subj_cat_id, 10, 16)) AS subjCatID
     FROM Relations
     WHERE id = relID;
 END //

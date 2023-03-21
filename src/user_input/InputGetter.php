@@ -1,8 +1,8 @@
 <?php
 
 
-$general_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/general/";
-require_once $general_path . "errors.php";
+$err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";
+require_once $err_path . "errors.php";
 
 class InputGetter {
 

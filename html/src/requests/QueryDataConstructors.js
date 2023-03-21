@@ -7,42 +7,53 @@ const QueryDataConstructors = {
         num = "10000", offset = "0",
         isAsc = "0"
     ) {
-        this.reqType = "set";
-        this.setID = setID;
-        this.ratMin = ratMin;
-        this.ratMax = ratMax;
-        this.num = num;
-        this.offset = offset;
-        this.isAsc = isAsc;
+        this.type = "S";
+        this.id = setID;
+        this.rl = ratMin;
+        this.rh = ratMax;
+        this.n = num;
+        this.o = offset;
+        this.a = isAsc;
     },
 
-    SetInfoReqData: function(
-        setID
-    ) {
-        this.reqType = "setInfo";
-        this.setID = setID;
-
-    },
-
-    SetInfoFromSecKeyReqData: function(
-        userID, subjID, relID
-    ) {
-        this.reqType = "setInfoSK";
-        this.userID = userID;
-        this.subjID = subjID;
-        this.relID = relID;
+    SetInfoReqData: function(setID) {
+        this.type = "SInfo";
+        this.id = setID;
 
     },
 
-    DefReqData: function(termID) {
-        this.reqType = "def";
-        this.termID = termID;
+    SetInfoSecKeyReqData: function(userID, subjID, relID) {
+        this.type = "SInfoSK";
+        this.uid = userID;
+        this.sid = subjID;
+        this.rid = relID;
+
+    },
+
+    RatReqData: function(objID, setID) {
+        this.type = "R";
+        this.oid = objID
+        this.sid = setID
+    },
+
+
+    CatDefReqData: function(catID) {
+        this.type = "CDef";
+        this.id = catID;
+    },
+    ETermDefReqData: function(eTermID) {
+        this.type = "ETDef";
+        this.id = eTermID;
+    },
+    RelDefReqData: function(relID) {
+        this.type = "RDef";
+        this.id = relID;
     },
 
 
     SuperCatsReqData: function(catID) {
-      this.reqType = "sup";
-      this.catID = catID;
+      this.type = "SCDefs";
+      this.id = catID;
     }
 
 }

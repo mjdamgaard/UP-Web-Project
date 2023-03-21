@@ -1,15 +1,10 @@
 <?php
 
-if ($_SERVER["REQUEST_METHOD"] != "POST") {
-    $_POST = $_GET;
-}
-
-
 $err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";
 require_once $err_path . "errors.php";
 
-$user_input_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
-require_once $user_input_path . "InputVarNames.php";
+$user_input_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/user_input/";
+require_once $user_input_path . "InputVarNamer.php";
 require_once $user_input_path . "InputGetter.php";
 
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
@@ -17,6 +12,11 @@ require_once $db_io_path . "DBConnector.php";
 require_once $db_io_path . "SafeQuerier.php";
 
 
+
+// queries can also be GET-gotten.
+if ($_SERVER["REQUEST_METHOD"] != "POST") {
+    $_POST = $_GET;
+}
 
 
 // get request type.
@@ -33,28 +33,28 @@ $conn = DBConnector::getConnectionOrDie();
 // and execute the corresponding query if a match is found.
 $sqlKey = "";
 switch ($reqType) {
-    case "set":
+    case "S":
         $sqlKey = "set";
         break;
-    case "setInfo":
+    case "SInfo":
         $sqlKey = "setInfo";
         break;
-    case "setInfoSK":
+    case "SInfoSK":
         $sqlKey = "setInfoSK";
         break;
-    case "rat":
-        $sqlKey = "rat";
+    case "R":
+        $sqlKey = "rating";
         break;
-    case "catDef":
+    case "CDef":
         $sqlKey = "catDef";
         break;
-    case "eTermDef":
+    case "ETDef":
         $sqlKey = "eTermDef";
         break;
-    case "relDef":
+    case "RDef":
         $sqlKey = "relDef";
         break;
-    case "superCatDefs":
+    case "SCDefs":
         $sqlKey = "superCatDefs";
         break;
 }

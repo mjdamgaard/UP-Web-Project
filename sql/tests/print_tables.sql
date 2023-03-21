@@ -8,6 +8,13 @@ SELECT
 FROM Categories
 ORDER BY id;
 
+-- SELECT "Relations:";
+SELECT
+    HEX(id) AS relID,
+    obj_noun AS objNoun,
+    subj_cat_id AS subjCatID
+FROM Relations
+ORDER BY id;
 
 SELECT
     HEX(id) AS id,
@@ -26,6 +33,14 @@ SELECT
     HEX(obj_id) AS objID
 FROM SemanticInputs
 ORDER BY set_id ASC, rat_val DESC;
+
+
+
+
+
+
+
+
 
 --
 -- /* MySQL binary handling hack test */

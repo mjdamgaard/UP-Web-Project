@@ -11,8 +11,10 @@
  **/
 
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
-require_once $db_io_path . "DBInterface.php";
-require_once $db_io_path . "InputVerifier.php";
+require_once $db_io_path . "DBConnector.php";
+
+$user_input_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/user_input/";
+require_once $user_input_path . "InputVerifier.php";
 
 
 interface Querier {
@@ -21,96 +23,96 @@ interface Querier {
 
 class SafeQuerier implements Querier {
     private static $querySQLSpecs = array(
-        set => array(
-            n => 6,
-            sql => "CALL selectSet (?, ?, ?, ?, ?, ?)",
-            typeArr => array(
+        "set" => array(
+            "n" => 6,
+            "sql" => "CALL selectSet (?, ?, ?, ?, ?, ?)",
+            "typeArr" => array(
                 "setID",
                 "bin", "bin",
                 "uint", "uint",
                 "tint"
             ),
-            outputType => "numArr",
-            columnNames => array("ratVal", "objID"),
-            unsafeColumns => array()
+            "outputType" => "numArr",
+            "columnNames" => array("ratVal", "objID"),
+            "unsafeColumns" => array()
         ),
 
-        setInfo => array(
-            n => 1,
-            sql => "CALL selectSetInfo (?)",
-            typeArr => array(
+        "setInfo" => array(
+            "n" => 1,
+            "sql" => "CALL selectSetInfo (?)",
+            "typeArr" => array(
                 "setID"
             ),
-            outputType => "assocArr",
-            columnNames => array("userID", "subjID", "relID", "elemNum"),
-            unsafeColumns => array()
+            "outputType" => "assocArr",
+            "columnNames" => array("userID", "subjID", "relID", "elemNum"),
+            "unsafeColumns" => array()
         ),
 
-        setInfoSK => array(
-            n => 3,
-            sql => "CALL selectSetInfoFromSecKey (?, ?, ?)",
-            typeArr => array(
+        "setInfoSK" => array(
+            "n" => 3,
+            "sql" => "CALL selectSetInfoFromSecKey (?, ?, ?)",
+            "typeArr" => array(
                 "userOrGroupID", "termID", "relID"
             ),
-            outputType => "assocArr",
-            columnNames => array("setID", "elemNum"),
-            unsafeColumns => array()
+            "outputType" => "assocArr",
+            "columnNames" => array("setID", "elemNum"),
+            "unsafeColumns" => array()
         ),
 
-        rat => array(
-            n => 4,
-            sql => "CALL selectRating (?, ?)",
-            typeArr => array(
+        "rating" => array(
+            "n" => 2,
+            "sql" => "CALL selectRating (?, ?)",
+            "typeArr" => array(
                 "termID", "setID"
             ),
-            outputType => "assocArr",
-            columnNames => array("ratVal"),
-            unsafeColumns => array()
+            "outputType" => "assocArr",
+            "columnNames" => array("ratVal"),
+            "unsafeColumns" => array()
         ),
 
-        catDef => array(
-            n => 1,
-            sql => "CALL selectCatDef (?)",
-            typeArr => array(
+        "catDef" => array(
+            "n" => 1,
+            "sql" => "CALL selectCatDef (?)",
+            "typeArr" => array(
                 "catID"
             ),
-            outputType => "assocArr",
-            columnNames => array("catTitle", "superCatID"),
-            unsafeColumns => array(0) // this means that first column has to
+            "outputType" => "assocArr",
+            "columnNames" => array("catTitle", "superCatID"),
+            "unsafeColumns" => array(0) // this means that first column has to
             // be sanitized (by calling htmlspecailchars()).
         ),
 
-        eTermDef => array(
-            n => 1,
-            sql => "CALL selectETermDef (?)",
-            typeArr => array(
+        "eTermDef" => array(
+            "n" => 1,
+            "sql" => "CALL selectETermDef (?)",
+            "typeArr" => array(
                 "eTermID"
             ),
-            outputType => "assocArr",
-            columnNames => array("eTermTitle", "catID"),
-            unsafeColumns => array(0)
+            "outputType" => "assocArr",
+            "columnNames" => array("eTermTitle", "catID"),
+            "unsafeColumns" => array(0)
         ),
 
-        relDef => array(
-            n => 1,
-            sql => "CALL selectRelDef (?)",
-            typeArr => array(
-                "eTermID"
+        "relDef" => array(
+            "n" => 1,
+            "sql" => "CALL selectRelDef (?)",
+            "typeArr" => array(
+                "relID"
             ),
-            outputType => "assocArr",
-            columnNames => array("objNoun", "subjCatID"),
-            unsafeColumns => array(0)
+            "outputType" => "assocArr",
+            "columnNames" => array("objNoun", "subjCatID"),
+            "unsafeColumns" => array(0)
         ),
 
-        superCatDefs => array(
-            n => 1,
-            sql => "CALL selectRelDef (?)",
-            typeArr => array(
+        "superCatDefs" => array(
+            "n" => 1,
+            "sql" => "CALL selectSuperCatDefs (?)",
+            "typeArr" => array(
                 "catID"
             ),
-            outputType => "numArr",
-            columnNames => array("catTitle", "superCatID"),
-            unsafeColumns => array(0) // this means that the whole first
+            "outputType" => "numArr",
+            "columnNames" => array("catTitle", "superCatID"),
+            "unsafeColumns" => array(0) // this means that the whole first
             // column has to be sanitized (by calling htmlspecailchars()).
         )
     );
@@ -146,18 +148,20 @@ class SafeQuerier implements Querier {
 
 
     public static function query($conn, $sqlKey, $paramValArr) {
-        if (!isset($querySQLSpecs[$sqlKey])) {
+        if (!isset(self::$querySQLSpecs[$sqlKey])) {
             throw new Exception(
                 "verifyInputAndGetMySQLiResult(): " .
-                "sqlKey does not match any selector"
+                "sqlKey does not match any key"
             );
         }
-        $sqlSpec = $querySQLSpecs[$sqlKey];
+        $sqlSpec = self::$querySQLSpecs[$sqlKey];
 
-        $res = verifyInputAndGetMySQLiResult($conn, $sqlSpec, $paramValArr);
+        $res = self::verifyInputAndGetMySQLiResult(
+            $conn, $sqlSpec, $paramValArr
+        );
 
         // branch according to the "outputType" and return a sanitized result.
-        if ($sqlSpec["outputType"] === "numArr")
+        if ($sqlSpec["outputType"] === "numArr") {
             // fetch all rows as a multidimensional array.
             $rows = $res->fetch_all();
             // return $rows as is if all columns are safe, or else loop through

@@ -53,8 +53,8 @@ CALL insertOrFindCat ("Binaries", @dataCatID, NULL, @nid, @ec);
 
 
 -- insert fundamental relations.
-CALL insertOrFindRel ("Subcategories", @termsID, NULL, @s, @ec);
-CALL insertOrFindRel ("Elements", @termsID, NULL, @e, @ec);
+CALL insertOrFindRel ("Subcategories", @catCatid, NULL, @s, @ec);
+CALL insertOrFindRel ("Elements", @catCatid, NULL, @e, @ec);
 
 
 

@@ -1,8 +1,13 @@
 <?php
 
-$general_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/general/";
-require_once $general_path . "input_verification.php";
 
+// $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
+// require_once $db_io_path . "DBInterface.php";
+// require_once $db_io_path . "InputVerifier.php";
+//
+// $general_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/general/";
+// require_once $general_path . "input_verification.php";
+//
 $template_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/templates/";
 require $template_path . "termHTML.php";
 
@@ -12,15 +17,15 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 }
 
 
-// verify and get posted term attributes.
-$paramNameArr = array(
-    "id"
-);
-$typeArr = array(
-    "termID"
-);
-$errPrefix = "Term attribute GET/POST error: ";
-$safeParamValArr = verifyAndGetParams($paramNameArr, $typeArr, $errPrefix);
+// // verify and get posted term attributes.
+// $paramNameArr = array(
+//     "id"
+// );
+// $typeArr = array(
+//     "termID"
+// );
+// $errPrefix = "Term attribute GET/POST error: ";
+// $safeParamValArr = verifyAndGetParams($paramNameArr, $typeArr, $errPrefix);
 
 
 
@@ -45,7 +50,7 @@ $safeParamValArr = verifyAndGetParams($paramNameArr, $typeArr, $errPrefix);
 
 <?php
 
-echoTermHomeHTML($paramNameArr, $safeParamValArr);
+echoTermHomeHTML(array("id"), array("c03"));
 
 ?>
 
@@ -62,11 +67,11 @@ echoTermHomeHTML($paramNameArr, $safeParamValArr);
 
 
 
-<script src="src/requests/p0/P0QueryDataConstructors.js"></script>
+<script src="src/requests/QueryDataConstructors.js"></script>
 
 
 
-<script>
+<!-- <script>
 
 // sends a request and gets JSON. Any HTTP error is logged in console.
 function requestAndGetJSON(reqData, success) {
@@ -96,23 +101,26 @@ function getDefiningUpwardPath(termType, termID) {
 }
 
 
-</script>
+</script> -->
 
 
 
 <script>
-
+//
 // var data =
-//     new P0QueryDataConstructors.SetInfoFromSecKeyReqData("u01", "c14", "r1");
-// var data = new P0QueryDataConstructors.SetInfoReqData("s5");
-var data = new P0QueryDataConstructors.SetReqData("s5");
-// var data = new P0QueryDataConstructors.DefReqData("c14");
-// var data = new P0QueryDataConstructors.SuperCatsReqData("c14");
+//     new QueryDataConstructors.SetInfoSecKeyReqData("u01", "c14", "r1");
+// var data = new QueryDataConstructors.SetInfoReqData("s5");
+// var data = new QueryDataConstructors.SetReqData("s5");
+// var data = new QueryDataConstructors.RatReqData("c14", "s5");
+// var data = new QueryDataConstructors.CatDefReqData("c14");
+// var data = new QueryDataConstructors.SuperCatsReqData("c14");
+// var data = new QueryDataConstructors.ETermDefReqData("...");
+var data = new QueryDataConstructors.RelDefReqData("r2");
 
 console.log(JSON.stringify(data));
 $(function(){
     $("button").click(function(){
-        $.getJSON("p0/query_handler.php", data, function(result){
+        $.getJSON("query_handler.php", data, function(result){
             $.each(result, function(key, field){
                 $('.term[context="home"]').append(key + ": " + field + ". ");
             });
