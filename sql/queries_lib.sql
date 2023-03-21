@@ -50,8 +50,10 @@ BEGIN
     ORDER BY
         CASE WHEN isAscOrder THEN rat_val END ASC,
         CASE WHEN NOT isAscOrder THEN rat_val END DESC,
-        obj_t ASC,
-        obj_id ASC
+        CASE WHEN isAscOrder THEN obj_t END ASC,
+        CASE WHEN NOT isAscOrder THEN obj_t END DESC,
+        CASE WHEN isAscOrder THEN obj_id END ASC,
+        CASE WHEN NOT isAscOrder THEN obj_id END DESC
     LIMIT numOffset, num;
 END //
 DELIMITER ;
@@ -160,33 +162,50 @@ DELIMITER ;
 
 
 
+-- DELIMITER //
+-- CREATE PROCEDURE selectRatingFromSecKey (
+--     IN objCombID VARCHAR(17),
+--     IN userCombID VARCHAR(17),
+--     IN subjCombID VARCHAR(17),
+--     IN relCombID VARCHAR(17)
+-- )
+-- BEGIN
+--     DECLARE objType, userType, subjType CHAR(1);
+--     DECLARE objID, userID, subjID, relID, setID BIGINT UNSIGNED;
+--
+--     CALL getTypeAndConvID (objCombID, objType, objID);
+--     CALL getTypeAndConvID (userCombID, userType, userID);
+--     CALL getTypeAndConvID (subjCombID, subjType, subjID);
+--     CALL getConvID (relCombID, relID);
+--     SELECT id INTO setID
+--     FROM Sets
+--     WHERE (
+--         user_t = userType AND
+--         user_id = userID AND
+--         subj_t = subjType AND
+--         subj_id = subjID AND
+--         rel_id = relID
+--     );
+--
+--     SELECT HEX(rat_val) AS ratVal
+--     FROM SemanticInputs
+--     WHERE (obj_t = objType AND obj_id = objID AND set_id = setID);
+-- END //
+-- DELIMITER ;
 
 
 
 DELIMITER //
 CREATE PROCEDURE selectRating (
     IN objCombID VARCHAR(17),
-    IN userCombID VARCHAR(17),
-    IN subjCombID VARCHAR(17),
-    IN relCombID VARCHAR(17)
+    IN setCombID VARCHAR(17),
 )
 BEGIN
-    DECLARE objType, userType, subjType CHAR(1);
-    DECLARE objID, userID, subjID, relID, setID BIGINT UNSIGNED;
+    DECLARE objType CHAR(1);
+    DECLARE objID, setID BIGINT UNSIGNED;
 
     CALL getTypeAndConvID (objCombID, objType, objID);
-    CALL getTypeAndConvID (userCombID, userType, userID);
-    CALL getTypeAndConvID (subjCombID, subjType, subjID);
-    CALL getConvID (relCombID, relID);
-    SELECT id INTO setID
-    FROM Sets
-    WHERE (
-        user_t = userType AND
-        user_id = userID AND
-        subj_t = subjType AND
-        subj_id = subjID AND
-        rel_id = relID
-    );
+    CALL getConvID (setCombID, setID);
 
     SELECT HEX(rat_val) AS ratVal
     FROM SemanticInputs
