@@ -2,9 +2,12 @@
 
 
 
-
 function getErrorJSON($msg) {
     return '{"Error":"' . $msg . '"}';
+}
+
+function echoErrorJSON($msg) {
+    echo getErrorJSON($msg);
 }
 
 function echoErrorJSONAndExit($msg) {
@@ -12,9 +15,9 @@ function echoErrorJSONAndExit($msg) {
     exit;
 }
 
-function echoTypeErrorJSONAndExit($errPrefix, $paramName, $expectedType) {
+function echoTypeErrorJSONAndExit($paramName, $expectedType) {
     echoErrorJSONAndExit(
-        $errPrefix . "parameter ". $paramName . " has a wrong type; " .
+        "Parameter ". $paramName . " has a wrong type; " .
         "expected type is " . $expectedType
     );
 }

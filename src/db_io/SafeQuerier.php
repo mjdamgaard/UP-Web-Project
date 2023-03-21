@@ -11,12 +11,17 @@
  **/
 
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
-require_once $db_io_path . "mysqli_procedures.php";
+require_once $db_io_path . "DBInterface.php";
+require_once $db_io_path . "InputVerifier.php";
 
 
-class SafeQuerier {
+interface Querier {
+    public static function query($conn, $sqlKey, $paramValArr);
+}
+
+class SafeQuerier implements Querier {
     private static $querySQLSpecs = array(
-        selectSet => array(
+        set => array(
             n => 6,
             sql => "CALL selectSet (?, ?, ?, ?, ?, ?)",
             typeArr => array(
@@ -30,7 +35,7 @@ class SafeQuerier {
             unsafeColumns => array()
         ),
 
-        selectSetInfo => array(
+        setInfo => array(
             n => 1,
             sql => "CALL selectSetInfo (?)",
             typeArr => array(
@@ -41,7 +46,7 @@ class SafeQuerier {
             unsafeColumns => array()
         ),
 
-        selectSetInfoSK => array(
+        setInfoSK => array(
             n => 3,
             sql => "CALL selectSetInfoFromSecKey (?, ?, ?)",
             typeArr => array(
@@ -52,18 +57,18 @@ class SafeQuerier {
             unsafeColumns => array()
         ),
 
-        selectRating => array(
+        rat => array(
             n => 4,
-            sql => "CALL selectRating (?, ?, ?, ?)",
+            sql => "CALL selectRating (?, ?)",
             typeArr => array(
-                "termID", "userOrGroupID", "termID", "relID"
+                "termID", "setID"
             ),
             outputType => "assocArr",
             columnNames => array("ratVal"),
             unsafeColumns => array()
         ),
 
-        selectCatDef => array(
+        catDef => array(
             n => 1,
             sql => "CALL selectCatDef (?)",
             typeArr => array(
@@ -75,7 +80,7 @@ class SafeQuerier {
             // be sanitized (by calling htmlspecailchars()).
         ),
 
-        selectETermDef => array(
+        eTermDef => array(
             n => 1,
             sql => "CALL selectETermDef (?)",
             typeArr => array(
@@ -86,7 +91,7 @@ class SafeQuerier {
             unsafeColumns => array(0)
         ),
 
-        selectRelDef => array(
+        relDef => array(
             n => 1,
             sql => "CALL selectRelDef (?)",
             typeArr => array(
@@ -97,7 +102,7 @@ class SafeQuerier {
             unsafeColumns => array(0)
         ),
 
-        selectSuperCatDefs => array(
+        superCatDefs => array(
             n => 1,
             sql => "CALL selectRelDef (?)",
             typeArr => array(
@@ -110,7 +115,7 @@ class SafeQuerier {
         )
     );
 
-    private function verifyInputAndGetMySQLiResult (
+    private static function verifyInputAndGetMySQLiResult (
         $conn, $sqlSpec, $paramValArr
     ) {
         // check length of $paramValArr.
@@ -123,32 +128,31 @@ class SafeQuerier {
 
         // verify types of $paramValArr.
         for ($i = 0; $i < $sqlSpec["n"]; $i++) {
-            verifyType(
+            InputVerifier::verifyType(
                 $paramValArr[$i],
                 $sqlSpec["typeArr"][$i],
-                strval($i),
-                $sqlSelector // sqlSelector must not come from user input!
+                strval($i)
             );
         }
 
         // prepare MySQLi statement.
         $stmt = $conn->prepare($sqlSpec["sql"]);
         // execute statement with the (now type verified) input parameters.
-        executeSuccessfulOrDie($stmt, $paramValArr);
+        DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 
         // return mysqli_result object.
         return $stmt->get_result();
     }
 
 
-    public static function query($conn, $sqlSelector, $paramValArr) {
-        if (!isset($querySQLSpecs[$sqlSelector])) {
+    public static function query($conn, $sqlKey, $paramValArr) {
+        if (!isset($querySQLSpecs[$sqlKey])) {
             throw new Exception(
                 "verifyInputAndGetMySQLiResult(): " .
-                "sqlSelector does not match any selector"
+                "sqlKey does not match any selector"
             );
         }
-        $sqlSpec = $querySQLSpecs[$sqlSelector];
+        $sqlSpec = $querySQLSpecs[$sqlKey];
 
         $res = verifyInputAndGetMySQLiResult($conn, $sqlSpec, $paramValArr);
 
@@ -188,206 +192,5 @@ class SafeQuerier {
     }
 
 }
-
-// const QuerySQLSpecs = {
-//     selectSet => array(
-//
-//         "CALL selectSet (?, ?, ?, ?, ?, ?)",
-//     ),
-//     selectSetInfo => "CALL selectSetInfo (?)",
-//     selectSetInfoSK => "CALL selectSetInfoFromSecKey (?, ?, ?, ?, ?)"
-//     // "selectCatDef"
-//     // "selectETermDef"
-//     // "selectRelDef"
-//
-// }
-
-function getMySQLiQueryResult ($conn, $sqlSelector, $paramValArr) {
-    $stmt = $conn->prepare(
-        QuerySQL[$sqlSelector]
-    );
-    $stmt->execute($paramValArr);
-
-    return $stmt->get_result();
-}
-
-
-/* Sets and set info */
-
-function getSafeSet(
-    $setID,
-    $ratingRangeMin, $ratingRangeMax,
-    $num, $numOffset,
-    $isAscOrder
-) {
-    // get connection.
-    $conn = getConnectionOrDie();
-
-    // query database.
-    $stmt = $conn->prepare(
-        "CALL selectSet (?, ?, ?, ?, ?, ?)"
-    );
-    $stmt->bind_param(
-        "ssssss",
-        $setID,
-        $ratingRangeMin, $ratingRangeMax,
-        $num, $numOffset,
-        $isAscOrder
-    );
-    executeSuccessfulOrDie($stmt);
-
-    // return multidimensional array with columns: (ratingVal, objType, objID).
-    return $stmt->get_result()->fetch_all();
-}
-
-function getSafeSetInfo($setID) {
-    // get connection.
-    $conn = getConnectionOrDie();
-
-    // query database.
-    $stmt = $conn->prepare(
-        "CALL selectSetInfo (?)"
-    );
-    $stmt->bind_param(
-        "s",
-        $setID
-    );
-    executeSuccessfulOrDie($stmt);
-
-    // return array with: (userType, userID, subjType, subjID, relID, elemNum).
-    return $stmt->get_result()->fetch_assoc();
-}
-
-
-function getSafeSetInfoFromSecKey(
-    $userType, $userID, $subjType, $subjID, $relID
-) {
-    // get connection.
-    $conn = getConnectionOrDie();
-
-    // query database.
-    $stmt = $conn->prepare(
-        "CALL selectSetInfoFromSecKey (?, ?, ?, ?, ?)"
-    );
-    $stmt->bind_param(
-        "sssss",
-        $userType, $userID, $subjType, $subjID, $relID
-    );
-    executeSuccessfulOrDie($stmt);
-
-    // return array with: (setID, elemNum).
-    return $stmt->get_result()->fetch_assoc();
-}
-
-
-
-/* Definitions (of categories, relations and elementary terms) */
-
-function getSafeDef($id, $procIdent, $strColumnName, $catColumnName) {
-    // get connection.
-    $conn = getConnectionOrDie();
-
-    // query database.
-    $stmt = $conn->prepare(
-        "CALL " . $procIdent . " (?)"
-    );
-    $stmt->bind_param(
-        "s",
-        $id
-    );
-    executeSuccessfulOrDie($stmt);
-
-    // fetch and sanitize data.
-    $res = $stmt->get_result()->fetch_assoc();
-    $res = array_values($res);
-    $unsafeStr = $res[0];
-    $safeStr = htmlspecialchars($unsafeStr);
-    $catID = $res[1];
-
-    // return array with: ($strColumnName, $catColumnName).
-    return array($strColumnName => $safeStr, $catColumnName => $catID);
-
-}
-
-
-function getSafeCatDef($catID) {
-    return getSafeDef($catID, "selectCatDef", "title", "superCatID");
-}
-
-function getSafeETermDef($catID) {
-    return getSafeDef($catID, "selectETermDef", "title", "catID");
-}
-
-function getSafeRelDef($catID) {
-    return getSafeDef($catID, "selectRelDef", "objNoun", "subjCatID");
-}
-
-
-
-
-/* Array of defining supercategories for an input category */
-
-function getSafeCatSuperCats($catID) {
-    // get connection.
-    $conn = getConnectionOrDie();
-
-    // query database.
-    $stmt = $conn->prepare(
-        "CALL selectSuperCatDefs (?)"
-    );
-    $stmt->bind_param(
-        "s",
-        $catID
-    );
-    executeSuccessfulOrDie($stmt);
-
-    // fetch and sanitize data.
-    $res = $stmt->get_result()->fetch_all();
-    $ret = array(
-        array($catID, htmlspecialchars($res[0][0]))
-    );
-    $len = count($res);
-    for ($i = 1; $i < $len; $i++) {
-        $ret[] = array($res[$i - 1][1], htmlspecialchars($res[$i][0]));
-    }
-
-    // return multi-dimensional array of category IDs and corresponding
-    // titles starting from an array of the ID and title of the input
-    // category and ending with array("1", "Terms").
-    return $ret;
-}
-
-
-
-
-
-
-
-
-
-function getSafeText($textID) {
-
-    // get connection.
-    $conn = getConnectionOrDie();
-
-    // query database.
-    $stmt = $conn->prepare(
-        "CALL selectText (?)"
-    );
-    $stmt->bind_param(
-        "s",
-        $textID
-    );
-    executeSuccessfulOrDie($stmt);
-
-    // fetch and sanitize data.
-    $unsafeStr = $stmt->get_result()->fetch_column();
-    $safeStr = htmlspecialchars($unsafeStr);
-
-    // return text string.
-    return $safeStr;
-}
-
-
 
 ?>
