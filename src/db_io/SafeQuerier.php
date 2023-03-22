@@ -186,7 +186,8 @@ class SafeQuerier implements Querier {
                 return $row;
             } else {
                 foreach ($sqlSpec["unsafeColumns"] as $columnNum) {
-                    $row[$columnNum] = htmlspecialchars($row[$columnNum]);
+                    $key = $sqlSpec["columnNames"][$columnNum];
+                    $row[$key] = htmlspecialchars($row[$key]);
                 }
                 return $row;
             }

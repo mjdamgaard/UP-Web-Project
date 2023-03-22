@@ -106,7 +106,8 @@ function getDefiningUpwardPath(termType, termID) {
 
 
 <script>
-//
+"use strict";
+
 // var data =
 //     new QueryDataConstructors.SetInfoSecKeyReqData("u01", "c14", "r1");
 // var data = new QueryDataConstructors.SetInfoReqData("s5");
@@ -124,6 +125,7 @@ $(function(){
             $.each(result, function(key, field){
                 $('.term[context="home"]').append(key + ": " + field + ". ");
             });
+            console.log(document.currentScript.innerHTML);
         });
     });
 });
