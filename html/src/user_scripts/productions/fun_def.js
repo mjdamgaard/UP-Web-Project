@@ -12,11 +12,11 @@ import stmtLstPatt
 
 
 export const funDefPatt =
-    "(export)?" +reqWS+
-    "function" +reqWS+
-    identPatt +optWS+
-    "\(" +optWS+ identLstPatt + "\)" +optWS+
-    "\{" +optWS+ stmtLstPatt + "\}";
+    "(export\s)?" +
+    "function\s" +
+    identPatt + "\s?" +
+    "\(\s?" + identLstPatt + "\)\s" + // all "LstPatt"s have "\s?" at the end.
+    "\{\s?" + stmtLstPatt + "\}";
 
 export const funDefLstPatt =
-    "(" + funDefPatt +optWS+ ")*";
+    "(" + funDefPatt + "\s?)*";

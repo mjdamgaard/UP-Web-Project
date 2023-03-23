@@ -15,8 +15,8 @@
 
 
 
-import reqWS, optWS //, identPatt, numPatt, strPatt
-    from "./productions/atomic.js";
+// import reqWS, optWS //, identPatt, numPatt, strPatt
+//     from "./productions/atomic.js";
 
 
 import stmtLstPatt
@@ -29,13 +29,18 @@ import funDefLstPatt
 import importLstPatt
     from "./productions/import.js";
 
-export const scriptPatt =
-    optWS + '"use strict";' +optWS+
-    importLstPatt +
-    funDefLstPatt +
-    stmtLstPatt + // these do not include function definitions in this subset.
-    funDefLstPatt + optWS;
 
+const s = "\s?";
+
+export const scriptPatt =
+    '"use strict";' +s+
+    importLstPatt +s+
+    // (Stmt's do not include function definitions in this subset.)
+    funDefLstPatt +s+
+    stmtLstPatt +s+
+    funDefLstPatt +s;
+// (All "Lst" patterns have "\s?" at the end inside anyway, but it is easier to
+// just forget that, and put a few "\s?"'s to many rather than a few to little.)
 
 
 

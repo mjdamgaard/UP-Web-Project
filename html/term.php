@@ -108,7 +108,8 @@ function getDefiningUpwardPath(termType, termID) {
 <script>
 "use strict"; // (I wrote in a commit that a certian exception was only thrown
 // because of this, but that does not make since, since that was in the php
-// code.) 
+// code.)
+if(true){console.log("nospaces")};
 
 // var data =
 //     new QueryDataConstructors.SetInfoSecKeyReqData("u01", "c14", "r1");
