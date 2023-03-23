@@ -8,8 +8,14 @@
 
 
 
+const ifBlockPatt =
+    "if" +reqWS+ "\(" +optWS+ condPatt + "\)";
 
-export const stmtPatt = ...;
+
+
+const stmtBlockPatt =
+
+
 
 export const stmtLstPatt =
-    "(" + stmtPatt +optWS+ ")*";
+    "(" + stmtBlockPatt +optWS+ ")*";
