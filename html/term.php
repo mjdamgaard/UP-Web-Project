@@ -110,6 +110,14 @@ function getDefiningUpwardPath(termType, termID) {
 // because of this, but that does not make since, since that was in the php
 // code.)
 if(true){console.log("nospaces")};
+// var x = 10;
+// var x = x + 1;
+// console.log(x.toString());
+
+if (true) {
+    var x = x + 1;
+}
+console.log(x.toString());
 
 // var data =
 //     new QueryDataConstructors.SetInfoSecKeyReqData("u01", "c14", "r1");
