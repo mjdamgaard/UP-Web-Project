@@ -1,5 +1,5 @@
 
-/* This defines a non-recursive subset of jQuery--JavaScript. More precisely,
+/* This defines a non-recursive subset of JavaScript. More precisely,
  * the subset includes no recursively defined productions in its grammar.
  * In pratice, this e.g. means that function declarations cannot be nested
  * inside other function declarations/definitions. And more importantly, it
@@ -26,15 +26,23 @@ import identLstPatt
 // import expPatt
 //     from "./productions/expression.js";
 
-import stmtPatt, stmtLstPatt
+import stmtLstPatt
     from "./productions/statement.js";
 
 
-const funDecPatt =
-    "function" +reqWS+ identPatt +optWS+ "\(" + identLstPatt + "\)" +optWS+
-    "\{" +
-        stmtLstPatt +
-    "\}";
+import funDecLstPatt
+    from "./productions/function_dec.js";
 
-const funDecLstPatt =
-    optWS + "(" + funDecPatt +optWS+ ")*";
+import importLstPatt
+    from "./productions/module_import.js";
+
+
+
+
+
+
+
+
+
+
+//

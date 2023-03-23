@@ -19,85 +19,85 @@ class InputVerifier {
                 }
                 break;
             case "id":
-                $pattern = "/^[0-9a-fA-F]{1,16}$/";
+                $pattern = "/^[1-9A-F][0-9A-F]{0,15}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
                 break;
             case "termID":
-                $pattern = "/^[scerugkltb][0-9a-fA-F]{1,16}$/";
+                $pattern = "/^[scerugkltb]self::$$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
                 break;
             case "setID":
-                $pattern = "/^s[0-9a-fA-F]{1,16}$/";
+                $pattern = "/^s[1-9A-F][0-9A-F]{0,15}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
                 break;
             case "semTermID":
-                $pattern = "/^[cer][0-9a-fA-F]{1,16}$/";
+                $pattern = "/^[cer][1-9A-F][0-9A-F]{0,15}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
                 break;
             case "catID":
-                $pattern = "/^c[0-9a-fA-F]{1,16}$/";
+                $pattern = "/^c[1-9A-F][0-9A-F]{0,15}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
                 break;
             case "eTermID":
-                $pattern = "/^e[0-9a-fA-F]{1,16}$/";
+                $pattern = "/^e[1-9A-F][0-9A-F]{0,15}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
                 break;
             case "relID":
-                $pattern = "/^r[0-9a-fA-F]{1,16}$/";
+                $pattern = "/^r[1-9A-F][0-9A-F]{0,15}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
                 break;
             case "userOrGroupID":
-                $pattern = "/^[ug][0-9a-fA-F]{1,16}$/";
+                $pattern = "/^[ug][1-9A-F][0-9A-F]{0,15}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
                 break;
             case "userID":
-                $pattern = "/^u[0-9a-fA-F]{1,16}$/";
+                $pattern = "/^u[1-9A-F][0-9A-F]{0,15}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
                 break;
             case "groupID":
-                $pattern = "/^g[0-9a-fA-F]{1,16}$/";
+                $pattern = "/^g[1-9A-F][0-9A-F]{0,15}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
                 break;
             case "kwStringID":
-                $pattern = "/^k[0-9a-fA-F]{1,16}$/";
+                $pattern = "/^k[1-9A-F][0-9A-F]{0,15}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
                 break;
             case "listID":
-                $pattern = "/^l[0-9a-fA-F]{1,16}$/";
+                $pattern = "/^l[1-9A-F][0-9A-F]{0,15}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
                 break;
             case "textID":
-                $pattern = "/^t[0-9a-fA-F]{1,16}$/";
+                $pattern = "/^t[1-9A-F][0-9A-F]{0,15}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
                 break;
             case "binID":
-                $pattern = "/^b[0-9a-fA-F]{1,16}$/";
+                $pattern = "/^b[1-9A-F][0-9A-F]{0,15}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
@@ -113,7 +113,7 @@ class InputVerifier {
                 }
                 break;
             case "bin":
-                $pattern = "/^([0-9a-fA-F]{2}){0,255}$/";
+                $pattern = "/^([0-9A-F]{2}){0,255}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
