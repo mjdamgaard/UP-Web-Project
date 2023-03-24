@@ -35,17 +35,17 @@ const s = "\s?";
 export const modulePatt =
     // '"use strict";' +s+ // not necessary; strict mode is default for modules.
     importLstPatt +s+
-    funDefLstPatt +s;
+    "(" +
+        "(" + pureVarAssignPatt +s+ ")" +
+    "|" +
+        "(" + funDefLstPatt +s+ ")" +
+    ")*";
 
 export const scriptPatt =
     '"use strict";' +s+
     importLstPatt +s+
-    // (Stmt's do not include function definitions in this subset.)
-    funDefLstPatt +s+
-    stmtLstPatt +s+
-    funDefLstPatt +s;
-// (All "Lst" patterns have "\s?" at the end inside anyway, but it is easier to
-// just forget that, and put a few "\s?"'s to many rather than a few to little.)
+    stmtLstPatt +s;
+// (I'm purposefully adding redundant +s+'s; rather have too many than too few.)
 
 
 

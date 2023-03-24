@@ -1,5 +1,11 @@
 
 import
+    boolIdentPatt, numIdentPatt, arrIdentPatt, objIdentPatt,
+    strIdentPatt, txtIdentPatt, attIdentPatt,
+    identLstPatt
+from "./productions/ident.js";
+
+import
     boolPureExpPatt, numPureExpPatt, arrPureExpPatt, objPureExpPatt,
     strPureExpPatt, txtPureExpPatt, attPureExpPatt
     voidExpPatt, numExpPatt
@@ -11,20 +17,20 @@ const s = "\s?";
 const optVarKeywordPatt =
     "(((var)|(let)|((export\s)?const))\s)?";
 
+const boolPureVarAssignPatt =
+    optVarKeywordPatt + boolIdentPatt +s+ "=" +s+ boolPureExpPatt +s+ ";" +s;
 const numPureVarAssignPatt =
     optVarKeywordPatt + numIdentPatt +s+ "=" +s+ numPureExpPatt +s+ ";" +s;
 const arrPureVarAssignPatt =
     optVarKeywordPatt + arrIdentPatt +s+ "=" +s+ arrPureExpPatt +s+ ";" +s;
 const objPureVarAssignPatt =
     optVarKeywordPatt + objIdentPatt +s+ "=" +s+ objPureExpPatt +s+ ";" +s;
-const boolPureVarAssignPatt =
-    optVarKeywordPatt + boolIdentPatt +s+ "=" +s+ boolPureExpPatt +s+ ";" +s;
 const strPureVarAssignPatt =
     optVarKeywordPatt + strIdentPatt +s+ "=" +s+ strPureExpPatt +s+ ";" +s;
 const txtPureVarAssignPatt =
-    optVarKeywordPatt + strIdentPatt +s+ "=" +s+ txtPureExpPatt +s+ ";" +s;
+    optVarKeywordPatt + txtIdentPatt +s+ "=" +s+ txtPureExpPatt +s+ ";" +s;
 const attPureVarAssignPatt =
-    optVarKeywordPatt + strIdentPatt +s+ "=" +s+ attPureExpPatt +s+ ";" +s;
+    optVarKeywordPatt + attIdentPatt +s+ "=" +s+ attPureExpPatt +s+ ";" +s;
 
 
 const numVarAssignPatt =
@@ -54,7 +60,7 @@ const procStmtPatt =
     ")" +s;
 
 
-export const stmtPatt =
+const stmtSinglePatt =
     "(" +
         "(" + pureVarAssignPatt + ")" +
     "|" +
@@ -64,24 +70,24 @@ export const stmtPatt =
 
 // statement list without any branching.
 const stmtSeriesPatt =
-    "(" + stmtPatt +s+ ")*";
+    "(" + stmtSinglePatt +s+ ")*";
 
 
 
 // some block statements that can include the above statements (and loop
 // statements can also include if(-else) statements, by the way, but not the
 // other way around).
-const blockPatt =
+const stmtSeriesBlockPatt =
     "\{" +s+ stmtSeriesPatt "\}" +s;
 
 const ifBlockPatt =
-    "if" +s+ "\(" +s+ boolPureExpPatt +s+ "\)" +s+ blockPatt +s;
+    "if" +s+ "\(" +s+ boolPureExpPatt +s+ "\)" +s+ stmtSeriesBlockPatt +s;
 
 
 const ifElseBlockPatt = // Note that this pattern also includes the ifBlockPatt.
     ifBlockPatt +s+
     "(" + "else\s" + ifBlockPatt +s+ ")*" +
-    "(" + "else" +s+ blockPatt +s+ ")?";
+    "(" + "else" +s+ stmtSeriesBlockPatt +s+ ")?";
 
 
 const loopInnerBlockPatt =
@@ -94,27 +100,46 @@ const whileLoopBlockPatt =
 
 const forLoopBeginningPatt =
     "for" +s+ "\(" +s+
-        numPureVarAssignPatt +s+ boolPureExpPatt +s+ ";" +s+ stmtPatt +s+
+        numPureVarAssignPatt +s+ boolPureExpPatt +s+ ";" +s+ stmtSinglePatt +s+
      "\)" +s;
 
 const forLoopBlockPatt =
     "(" + forLoopBeginningPatt +s+ ")+" +
     loopInnerBlockPatt +s;
 
-const stmtBlockPatt =
+
+
+export const stmtNoFunDefLstPatt =
     "(" +
-        "(" + whileLoopBlockPatt + ")" +
+        "(" + stmtSeriesPatt +s+ ")" +
     "|" +
-        "(" + forLoopBlockPatt + ")" +
+        "(" + ifElseBlockPatt +s+ ")" +
     "|" +
-        "(" + ifElseBlockPatt + ")" + // (This also includes the ifBlockPatt.)
+        "(" + forLoopBlockPatt +s+ ")" +
     "|" +
-        "(" + blockPatt + ")" +
+        "(" + whileLoopBlockPatt +s+ ")" + // (This also includes the ifBlockPatt.)
     "|" +
-        "(" + stmtSeriesPatt + ")" +
-    ")";
+        "(" + stmtSeriesBlockPatt +s+ ")" +
+    ")*";
 
 
-// final "stmtLstPatt".
+
+
+export const funDefPatt =
+    "(export\s)?" +
+    "function\s" +
+    identPatt +s+
+    "\(" +s+ identLstPatt +s+ "\)" +s+
+    "\{" +s+ stmtNoFunDefLstPatt +s+ "\}" +s;
+
+export const funDefLstPatt =
+    "(" + funDefPatt +s+ ")*";
+
+
 export const stmtLstPatt =
-    "(" + stmtBlockPatt +s+ ")*";
+    "(" +
+        "(" + stmtNoFunDefLstPatt +s+ ")" +
+    "|" +
+        "(" + funDefLstPatt +s+ ")" +
+    ")*";
+// pureVarAssignPatt is also exported above.
