@@ -15,36 +15,40 @@
 
 
 
-// import reqWS, optWS //, identPatt, numPatt, strPatt
+// import reqWS, optWS //, ident, num, str
 //     from "./productions/atomic.js";
 
 
-import stmtLstPatt
+import stmtLst
 from "./productions/stmt.js";
 
 
-import funDefLstPatt
+import funDefLst
 from "./productions/fun_def.js";
 
-import importLstPatt
+import importLst
 from "./productions/import.js";
 
 
 const s = "\s?";
 
-export const modulePatt =
+export const modulePattern =
     // '"use strict";' +s+ // not necessary; strict mode is default for modules.
-    importLstPatt +s+
-    "(" +
-        "(" + pureVarAssignPatt +s+ ")" +
-    "|" +
-        "(" + funDefLstPatt +s+ ")" +
-    ")*";
+    "/" +s+
+        importLst +s+
+        "(" +
+            "(" + pureVarAssign +s+ ")" +
+        "|" +
+            "(" + funDefLst +s+ ")" +
+        ")*" +
+    "/";
 
-export const scriptPatt =
-    '"use strict";' +s+
-    importLstPatt +s+
-    stmtLstPatt +s;
+export const scriptPattern =
+    "/" +s+
+        '"use strict";' +s+
+        importLst +s+
+        stmtLst +s+
+    "/";
 // (I'm purposefully adding redundant +s+'s; rather have too many than too few.)
 
 
