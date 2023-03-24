@@ -1,43 +1,65 @@
 
-import strExp, numExp, arrExp, objExp, boolExp, voidExp
-    from "./productions/exp.js";
+import
+    boolPureExpPatt, numPureExpPatt, arrPureExpPatt, objPureExpPatt,
+    strPureExpPatt, txtPureExpPatt, attPureExpPatt
+    voidExpPatt, numExpPatt
+from "./productions/exp.js";
 
 const s = "\s?";
 
 
 const optVarKeywordPatt =
-    "((export\s)?[(var)(let)(const)]\s)?";
+    "(((var)|(let)|((export\s)?const))\s)?";
 
-const strVarAssignPatt =
-    optVarKeywordPatt + strIdentPatt +s+ "=" +s+ strExpPatt +s+ ";" +s;
+const numPureVarAssignPatt =
+    optVarKeywordPatt + numIdentPatt +s+ "=" +s+ numPureExpPatt +s+ ";" +s;
+const arrPureVarAssignPatt =
+    optVarKeywordPatt + arrIdentPatt +s+ "=" +s+ arrPureExpPatt +s+ ";" +s;
+const objPureVarAssignPatt =
+    optVarKeywordPatt + objIdentPatt +s+ "=" +s+ objPureExpPatt +s+ ";" +s;
+const boolPureVarAssignPatt =
+    optVarKeywordPatt + boolIdentPatt +s+ "=" +s+ boolPureExpPatt +s+ ";" +s;
+const strPureVarAssignPatt =
+    optVarKeywordPatt + strIdentPatt +s+ "=" +s+ strPureExpPatt +s+ ";" +s;
+const txtPureVarAssignPatt =
+    optVarKeywordPatt + strIdentPatt +s+ "=" +s+ txtPureExpPatt +s+ ";" +s;
+const attPureVarAssignPatt =
+    optVarKeywordPatt + strIdentPatt +s+ "=" +s+ attPureExpPatt +s+ ";" +s;
+
+
 const numVarAssignPatt =
     optVarKeywordPatt + numIdentPatt +s+ "=" +s+ numExpPatt +s+ ";" +s;
-const arrVarAssignPatt =
-    optVarKeywordPatt + arrIdentPatt +s+ "=" +s+ arrExpPatt +s+ ";" +s;
-const objVarAssignPatt =
-    optVarKeywordPatt + objIdentPatt +s+ "=" +s+ objExpPatt +s+ ";" +s;
-const boolVarAssignPatt =
-    optVarKeywordPatt + boolIdentPatt +s+ "=" +s+ boolExpPatt +s+ ";" +s;
 
 
-const stmtPatt =
-    "("
-        "(" + strVarAssignPatt + ")" +
+export const pureVarAssignPatt =
+    "(" +
+        "(" + strPureVarAssignPatt + ")" +
     "|" +
-        "(" + numVarAssignPatt + ")" +
+        "(" + numPureVarAssignPatt + ")" +
     "|" +
-        "(" + arrVarAssignPatt + ")" +
+        "(" + arrPureVarAssignPatt + ")" +
     "|" +
-        "(" + objVarAssignPatt + ")" +
+        "(" + objPureVarAssignPatt + ")" +
     "|" +
-        "(" + boolVarAssignPatt + ")" +
-    "|" +
+        "(" + boolPureVarAssignPatt + ")" +
+    ")" +s;
+
+const procStmtPatt =
+    "(" +
         "(" + voidExp +s+ ";" ")" +
     "|" +
         "(" + numExp +s+ ";" ")" +
-    ")";
+    "|" +
+        "(" + numVarAssignPatt + ")" +
+    ")" +s;
 
 
+export const stmtPatt =
+    "(" +
+        "(" + pureVarAssignPatt + ")" +
+    "|" +
+        "(" + procStmtPatt + ")" +
+    ")" +s;
 
 
 // statement list without any branching.
@@ -53,7 +75,7 @@ const blockPatt =
     "\{" +s+ stmtSeriesPatt "\}" +s;
 
 const ifBlockPatt =
-    "if" +s+ "\(" +s+ boolExp +s+ "\)" +s+ blockPatt +s;
+    "if" +s+ "\(" +s+ boolPureExpPatt +s+ "\)" +s+ blockPatt +s;
 
 
 const ifElseBlockPatt = // Note that this pattern also includes the ifBlockPatt.
@@ -68,17 +90,22 @@ const loopInnerBlockPatt =
 // Note if(-else) statements cannot include loops directly; only indirectly
 // by calling looping functions inside their blocks.
 const whileLoopBlockPatt =
-    "while" +s+ "\(" +s+ boolExp +s+ "\)" +s+ loopInnerBlockPatt +s;
+    "while" +s+ "\(" +s+ boolPureExpPatt +s+ "\)" +s+ loopInnerBlockPatt +s;
+
+const forLoopBeginningPatt =
+    "for" +s+ "\(" +s+
+        numPureVarAssignPatt +s+ boolPureExpPatt +s+ ";" +s+ stmtPatt +s+
+     "\)" +s;
 
 const forLoopBlockPatt =
-    "for" +s+ "\(" +s+ "(" + stmtPatt +s+ "){3}" + "\)" +s+
+    "(" + forLoopBeginningPatt +s+ ")+" +
     loopInnerBlockPatt +s;
 
 const stmtBlockPatt =
-    "("
-        "(" + forLoopBlockPatt + ")" +
-    "|" +
+    "(" +
         "(" + whileLoopBlockPatt + ")" +
+    "|" +
+        "(" + forLoopBlockPatt + ")" +
     "|" +
         "(" + ifElseBlockPatt + ")" + // (This also includes the ifBlockPatt.)
     "|" +

@@ -2,13 +2,13 @@
 
 
 import reqWS, optWS //, identPatt, numPatt, strPatt
-    from "./productions/atomic.js";
+from "./productions/atomic.js";
 
 import identLstPatt
-    from "./productions/ident_lst.js";
+from "./productions/ident_lst.js";
 
 import stmtLstPatt
-    from "./productions/stmt.js";
+from "./productions/stmt.js";
 
 
 export const funDefPatt =

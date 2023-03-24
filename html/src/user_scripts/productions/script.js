@@ -20,17 +20,22 @@
 
 
 import stmtLstPatt
-    from "./productions/stmt.js";
+from "./productions/stmt.js";
 
 
 import funDefLstPatt
-    from "./productions/fun_def.js";
+from "./productions/fun_def.js";
 
 import importLstPatt
-    from "./productions/import.js";
+from "./productions/import.js";
 
 
 const s = "\s?";
+
+export const modulePatt =
+    // '"use strict";' +s+ // not necessary; strict mode is default for modules.
+    importLstPatt +s+
+    funDefLstPatt +s;
 
 export const scriptPatt =
     '"use strict";' +s+

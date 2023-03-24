@@ -119,6 +119,12 @@ if (true) {
 }
 console.log(x.toString());
 
+for (var i = 0; i < 2; i++)
+for (var j = 0; j < 3; j++) 
+{
+    console.log(j.toString());
+}
+
 // var data =
 //     new QueryDataConstructors.SetInfoSecKeyReqData("u01", "c14", "r1");
 // var data = new QueryDataConstructors.SetInfoReqData("s5");
