@@ -2,7 +2,7 @@
 
 
 export function lex(script) {
-    // first check for unwanted whitespace characters
+    // first check for unwanted whitespace characters.
     if (!script.test("/^( \n\S)*$/")) {
         throw new Exception("lex(): unwanted whitespace characters");
     }

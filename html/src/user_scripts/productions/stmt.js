@@ -3,14 +3,14 @@ import
     boolIdent, numIdent, arrIdent, objIdent,
     strIdent, txtIdent, attIdent,
     identLst
-from "./productions/ident.js";
+from "./ident.js";
 
 import
     boolPureExp, numPureExp, arrPureExp, objPureExp,
     strPureExp, txtPureExp, attPureExp
     voidExp, ecExp,
     numAtom
-from "./productions/exp.js";
+from "./exp.js";
 
 const s = "\s?";
 

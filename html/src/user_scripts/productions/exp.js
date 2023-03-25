@@ -10,12 +10,12 @@ import
     strFunIdent, txtFunIdent, attFunIdent,
     voidFunIdent, ecFunIdent
     identLst
-from "./productions/ident.js";
+from "./ident.js";
 
 import
     boolLiteral, numLiteral, strLiteral, txtLiteral, attLiteral,
     arrLiteral, objLiteral
-from "./productions/literal.js";
+from "./literal.js";
 
 
 export const boolAtom =
