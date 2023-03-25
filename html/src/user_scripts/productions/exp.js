@@ -146,3 +146,20 @@ export const voidExp =
 
 export const ecExp =
     ecFunCall;
+
+
+// (12:44, 25.03.23) Commit msg: "sorta done with exp.js, but I
+// imagine that all this will give me a very large string, so now
+// I'm wondering, if it wouldn't be better to just go the AST way
+// instead from the beginning.."
+// ..Hm, but maybe I can just parse one regex at a.. Wait.. Maybe I could
+// just lex the script first in an way where I already create a tree in this
+// lexing step..! I'm thinking about parsing all parentheses as one "word,"
+// essentially, and then "lex" each element of such "compound words," as
+// we can call them, recursively..!.. (12:49) ..Well, let me just call it
+// an initial parsing, where we achieve lexing as well as getting an
+// initial syntax tree, namely where all parentheses are.. wait no, let me
+// actually not really "lex" the script at all. Let me instead just make
+// the initial parsing return an array of subprograms, which themselves are
+// either strings with any multiple-character whitespace reduced to a single
+// \s, or they are arrays themselves (of strings and arrays on so on).
