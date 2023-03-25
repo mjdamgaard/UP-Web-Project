@@ -34,21 +34,21 @@ const s = "\s?";
 
 export const modulePattern =
     // '"use strict";' +s+ // not necessary; strict mode is default for modules.
-    "/" +s+
+    "/^" +s+
         importLst +s+
         "(" +
             "(" + pureVarAssign +s+ ")" +
         "|" +
             "(" + funDefLst +s+ ")" +
         ")*" +
-    "/";
+    "$/";
 
 export const scriptPattern =
-    "/" +s+
+    "/^" +s+
         '"use strict";' +s+
         importLst +s+
         stmtLst +s+
-    "/";
+    "$/";
 // (I'm purposefully adding redundant +s+'s; rather have too many than too few.)
 
 

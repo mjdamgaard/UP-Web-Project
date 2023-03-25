@@ -8,14 +8,15 @@ from "./productions/ident.js";
 import
     boolPureExp, numPureExp, arrPureExp, objPureExp,
     strPureExp, txtPureExp, attPureExp
-    voidExp, ecExp
+    voidExp, ecExp,
+    numAtom
 from "./productions/exp.js";
 
 const s = "\s?";
 
 
 const optVarKeyword =
-    "(((var)|(let)|((export\s)?const))\s)?";
+    "((export\s)?((var)|(let)|(const))\s)?";
 
 const boolPureVarAssign =
     optVarKeyword + boolIdent +s+ "=" +s+ boolPureExp +s+ ";" +s;
@@ -91,7 +92,7 @@ const ifElseBlock = // Note that this ern also includes the ifBlock.
 
 
 const loopInnerBlock =
-    "\{" +s+ "(" + stmtSeries +s+ "|"+ ifElseBlock +s+ ")*" + "\}" +s;
+    "\{" +s+ "((" + stmtSeries +s+ ")|("+ ifElseBlock +s+ "))*" + "\}" +s;
 
 // Note if(-else) statements cannot include loops directly; only indirectly
 // by calling looping functions inside their blocks.
@@ -100,7 +101,9 @@ const whileLoopBlock =
 
 const forLoopBeginning =
     "for" +s+ "\(" +s+
-        numPureVarAssign +s+ boolPureExp +s+ ";" +s+ stmtSingle +s+
+        "let\s" + numIdent +s+ "=" +s+ numAtom +s+ ";"
+        numIdent +s+ "[<>(<=)(>=)]" +s+ numAtom  +s+ ";" +s+
+        numAtom +s+ "[(++)(--)]" +s+
      "\)" +s;
 
 const forLoopBlock =
