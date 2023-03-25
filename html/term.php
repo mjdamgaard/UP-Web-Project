@@ -133,6 +133,12 @@ console.log(x.toString());
 var str = "\( hello )";
 console.log(str);
 
+console.log("hello ${not_a_template}");
+
+// console.log("hello newline
+// world"); // not allowed
+
+
 // var data =
 //     new QueryDataConstructors.SetInfoSecKeyReqData("u01", "c14", "r1");
 // var data = new QueryDataConstructors.SetInfoReqData("s5");
