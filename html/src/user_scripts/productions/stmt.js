@@ -103,7 +103,8 @@ const forLoopBeginning =
     "for" +s+ "\(" +s+
         "let\s" + numIdent +s+ "=" +s+ numAtom +s+ ";"
         numIdent +s+ "[<>(<=)(>=)]" +s+ numAtom  +s+ ";" +s+
-        numAtom +s+ "[(++)(--)]" +s+
+        numAtom +s+ "[(\+\+)(\-\-)]" +s+
+        // voidExp +s+
      "\)" +s;
 
 const forLoopBlock =
@@ -128,12 +129,15 @@ export const stmtNoFunDefLst =
 
 
 
-export const funDef =
+export const boolfunDef =
     "(export\s)?" +
     "function\s" +
-    ident +s+
+    boolFunident +s+
     "\(" +s+ identLst +s+ "\)" +s+
-    "\{" +s+ stmtNoFunDefLst +s+ "\}" +s;
+    "\{" +s+
+        stmtNoFunDefLst +s+
+        "return\s" boolPureExp +s+ ";"
+    "\}" +s;
 
 export const funDefLst =
     "(" + funDef +s+ ")*";

@@ -59,17 +59,14 @@ const ecFunCall =
 
 /* Numerical expressions */
 
-const numExp1 =
-    "\-?" +s+ "((" + numAtom + ")|(" + numFunCall + "))";
-
 
 const aritOp =
-    "[\+\-\*\/%(**)]";
+    "[\+\-\*\/%(\*\*)]";
 
 
 
 const numAritExp1 =
-    numExp1 +s+ "(" + aritOp +s+ numExp1 +s+ ")*";
+    numAtom +s+ "(" + aritOp +s+ numAtom +s+ ")*";
 
 const numAritExp2 =
     "\(" +s+ numAritExp1 +s+ "\)";
@@ -87,15 +84,65 @@ export const numPureExp =
 const numCompOp =
     "[(==)<>(<=)(>=)(!=)]";
 
-const boolNumAtomComp =
+const boolNumAritComp =
     numAritExp1 +s+ numCompOp +s+ numAritExp1;
 
-const
+
+const boolNoLogOp =
+    "((" + "!?" +s+ boolAtom + ")|(" + boolNumAritComp + "))";
+
+
+const logOp =
+    "[(\|\|)(\?\?)(&&)]";
+
+const boolCompoundExp =
+    boolNoLogOp +s+ "(" + logOp +s+ boolNoLogOp +s+ ")*";
+
+
+export const boolPureExp =
+    "(" +
+        "(" + boolCompoundExp +s+ ")" +
+    "|" +
+        "(" + boolFunCall +s+ ")" +
+    ")";
 
 
 
 
 
 
+/* String, text (safe for HTML printing) and attribute (safe for printing as
+ * HTML attribute values) expressions
+ **/
 
-//
+const strNoConcat =
+    "((" + strAtom + ")|(" + strFunCall + "))";
+const txtNoConcat =
+    "((" + txtAtom + ")|(" + txtFunCall + "))";
+const attNoConcat =
+    "((" + attAtom + ")|(" + attFunCall + "))";
+
+
+const strPureExp =
+    strNoConcat +s+ "(" + "\+" +s+ strNoConcat +s+ ")*";
+const txtPureExp =
+    txtNoConcat +s+ "(" + "\+" +s+ txtNoConcat +s+ ")*";
+const attPureExp =
+    attNoConcat +s+ "(" + "\+" +s+ attNoConcat +s+ ")*";
+
+
+/* Array and object expressions */
+
+export const arrPureExp =
+    "((" + arrAtom + ")|(" + arrFunCall + "))";
+export const objPureExp =
+    "((" + objAtom + ")|(" + objFunCall + "))";
+
+
+/* Void and exit code (ec) expressions */
+
+export const voidExp =
+    "((" + voidFunCall + ")|(" + numIdent +s+ "[(\+\+)(\-\-)]" + "))";
+
+export const ecExp =
+    ecFunCall;
