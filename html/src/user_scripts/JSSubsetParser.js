@@ -23,8 +23,23 @@ function lex(script) {
         } else if (nextChar == "'") {
             lexSnglQuoteStr(script, pos, len, nextLexObj);
 
-        } else if (nextChar.test("/^\w/"))
+        } else if (nextChar.test("/^\w/")) {
             lexWord(script, pos, len, nextLexObj);
+
+        } else if (nextChar == "/")) {
+            // check if next two characters are the start of a comment and
+            // branch accordingly.
+            let nextTwoChars = script.substring(pos, pos + 2)
+            if (nextTwoChars == "//") {
+                lexSnglLineComment(script, pos, len, nextLexObj);
+
+            } else if (nextTwoChars == "/*") {
+                lexMltLineComment(script, pos, len, nextLexObj);
+
+            } else {
+                nextLexObj.nextLex = nextChar;
+                nextLexObj.nextPos = pos + 1;
+            }
 
         } else {
             nextLexObj.nextLex = nextChar;
@@ -47,7 +62,7 @@ function lexWhitespace(script, pos, len, nextLexObj) {
     // loop and increase nextPos until the next character is no longer a
     // whitespace character.
     var nextChar = script.substring(pos, pos + 1);
-    while (nextPos < len && nextChar.test("/^\s/")) {
+    while (nextPos < len && nextChar.test("/^[ \n\r]/")) { // no irregular ws.
         nextPos++;
         nextChar = script.substring(nextPos, nextPos + 1);
     }
