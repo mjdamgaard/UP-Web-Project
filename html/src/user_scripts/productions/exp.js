@@ -163,3 +163,4 @@ export const ecExp =
 // the initial parsing return an array of subprograms, which themselves are
 // either strings with any multiple-character whitespace reduced to a single
 // \s, or they are arrays themselves (of strings and arrays on so on).
+// ...(13:48) No, I should also lex the program initially. :)

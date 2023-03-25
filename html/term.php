@@ -129,6 +129,10 @@ var x = 2 *-  2;
 x   ++;
 console.log(x.toString());
 
+
+var str = "\( hello )";
+console.log(str);
+
 // var data =
 //     new QueryDataConstructors.SetInfoSecKeyReqData("u01", "c14", "r1");
 // var data = new QueryDataConstructors.SetInfoReqData("s5");
