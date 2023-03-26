@@ -71,7 +71,7 @@ export function parseFunDef(lexArr, nextPosObj) {
     };
     // parse a block ending with the correct return statement (or no return
     // statement in the case of the "void" return type).
-    if (!parseFunctionDefBlock(lexArr, nextPosObj, indentType.returnType)) {
+    if (!parseFunctionDefBlock(lexArr, nextPosObj, indentType.retType)) {
         nextPosObj.pos = initialPos;
         return false;
     }
@@ -80,9 +80,49 @@ export function parseFunDef(lexArr, nextPosObj) {
 }
 
 
+function parseFunctionDefBlock(lexArr, nextPosObj, retType) {
+    // record the initial position.
+    var initialPos = nextPosObj.pos;
+    // parse the initial '{'. (We disallow non-block function definitions.)
+    if (lexArr[nextPosObj.pos] == "{") {
+        nextPosObj.pos = nextPosObj.pos + 1;
+    } else {
+        return false;
+    }
+    // parse a list of non-return statements.
+    if (!parseStmtList(lexArr, nextPosObj)) {
+        nextPosObj.pos = initialPos;
+        return false;
+    };
+    // parse expected return statement if the return type is not "void."
+    if (retType != "void") {
+        if (!parseReturnStatement(lexArr, nextPosObj, retType)) {
+            nextPosObj.pos = initialPos;
+            return false;
+        }
+    }
+    // parse the final '}'.
+    if (lexArr[nextPosObj.pos] == "}") {
+        nextPosObj.pos = nextPosObj.pos + 1;
+    } else {
+        nextPosObj.pos = initialPos;
+        return false;
+    }
+    // if all parsing succeeded, return true.
+    return true;
+}
 
-
-
+function parseReturnStatement(lexArr, nextPosObj, retType) {
+    // record the initial position.
+    var initialPos = nextPosObj.pos;
+    // parse the first keyword lexeme of a return statement.
+    if (lexArr[nextPosObj.pos] == "return") {
+        nextPosObj.pos = nextPosObj.pos + 1;
+    } else {
+        return false;
+    }
+    // ...
+}
 
 
 
