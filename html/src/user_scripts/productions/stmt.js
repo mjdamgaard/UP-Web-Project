@@ -1,4 +1,97 @@
 
+
+export function parseImportStmt(lexArr, nextPosObj) {
+    // record the initial position.
+    var initialPos = nextPosObj.pos;
+    // parse the first keyword lexeme of an import statement.
+    if (lexArr[nextPosObj.pos] == "import") {
+        nextPosObj.pos = nextPosObj.pos + 1;
+    } else {
+        return false;
+    }
+    // parse an identifier list.
+    if (!parseIdentifierList(lexArr, nextPosObj)) {
+        nextPosObj.pos = initialPos;
+        return false;
+    };
+    // parse "from" lexeme.
+    if (lexArr[nextPosObj.pos] == "from") {
+        nextPosObj.pos = nextPosObj.pos + 1;
+    } else {
+        nextPosObj.pos = initialPos;
+        return false;
+    }
+    // parse import path string literal.
+    if (!parseImportPath(lexArr, nextPosObj)) {
+        nextPosObj.pos = initialPos;
+        return false;
+    }
+    // parse final ';'.
+    if (lexArr[nextPosObj.pos] == ";") {
+        nextPosObj.pos = nextPosObj.pos + 1;
+    } else {
+        nextPosObj.pos = initialPos;
+        return false;
+    }
+    // if all parsing succeeded, return true.
+    return true;
+}
+
+
+export function parseFunDef(lexArr, nextPosObj) {
+    // record the initial position.
+    var initialPos = nextPosObj.pos;
+    // parse the first keyword lexemes of a function definition.
+    if (
+        lexArr[nextPosObj.pos] == "export" &&
+        lexArr[nextPosObj.pos + 1] == "function"
+    ) {
+        nextPosObj.pos = nextPosObj.pos + 2;
+
+    } else if (
+        lexArr[nextPosObj.pos] == "function"
+    ) {
+        nextPosObj.pos = nextPosObj.pos + 1;
+
+    } else {
+        return false;
+    }
+
+    // parse and get the type of the next identifier lexeme.
+    var indentType = parseAndgetIdentType(lexArr, nextPosObj);
+    // return false if indentifier is not a function identifier.
+    if (!indentType.isFun) {
+        return false;
+    }
+    // parse an identifier tuple (including the parentheses and with no type
+    // checks).
+    if (!parseIdentifierTuple(lexArr, nextPosObj)) {
+        nextPosObj.pos = initialPos;
+        return false;
+    };
+    // parse a block ending with the correct return statement (or no return
+    // statement in the case of the "void" return type).
+    if (!parseFunctionDefBlock(lexArr, nextPosObj, indentType.returnType)) {
+        nextPosObj.pos = initialPos;
+        return false;
+    }
+    // if all parsing succeeded, return true.
+    return true;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import
     boolIdent, numIdent, arrIdent, objIdent,
     strIdent, txtIdent, attIdent,

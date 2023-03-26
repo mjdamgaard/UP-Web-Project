@@ -26,7 +26,8 @@ export function parseModuleScript(script) {
         matchWasFound = parseImportStmt(lexArr, nextPosObj);
     }
 
-    // parse a list of function definitions or pure variable definitions.
+    // parse a list of function definitions or pure variable definitions. (We
+    // only allow these two types of definitions at this point.)
     var matchWasFound = true;
     while (matchWasFound) {
         matchWasFound = (
