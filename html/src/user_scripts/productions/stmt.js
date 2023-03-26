@@ -13,7 +13,7 @@ export function parseImportStmt(lexArr, nextPosObj) {
     if (!parseIdentifierList(lexArr, nextPosObj)) {
         nextPosObj.pos = initialPos;
         return false;
-    };
+    }
     // parse "from" lexeme.
     if (lexArr[nextPosObj.pos] == "from") {
         nextPosObj.pos = nextPosObj.pos + 1;
@@ -58,9 +58,9 @@ export function parseFunDef(lexArr, nextPosObj) {
     }
 
     // parse and get the type of the next identifier lexeme.
-    var indentType = parseAndgetIdentType(lexArr, nextPosObj);
+    var varType = parseAndgetIdentType(lexArr, nextPosObj);
     // return false if indentifier is not a function identifier.
-    if (!indentType.isFun) {
+    if (!varType.isFun) {
         return false;
     }
     // parse an identifier tuple (including the parentheses and with no type
@@ -68,10 +68,12 @@ export function parseFunDef(lexArr, nextPosObj) {
     if (!parseIdentifierTuple(lexArr, nextPosObj)) {
         nextPosObj.pos = initialPos;
         return false;
-    };
-    // parse a block ending with the correct return statement (or no return
-    // statement in the case of the "void" return type).
-    if (!parseFunctionDefBlock(lexArr, nextPosObj, indentType.retType)) {
+    }
+
+    // parse either a block of pure statements or impure statements depending
+    // on varType.isPure. This block has to end with the correct return
+    // statement (or no return statement in the case of the "void" return type).
+    if (!parseFunctionDefBlock(lexArr, nextPosObj, varType)) {
         nextPosObj.pos = initialPos;
         return false;
     }
@@ -80,7 +82,7 @@ export function parseFunDef(lexArr, nextPosObj) {
 }
 
 
-function parseFunctionDefBlock(lexArr, nextPosObj, retType) {
+function parseFunctionDefBlock(lexArr, nextPosObj, varType) {
     // record the initial position.
     var initialPos = nextPosObj.pos;
     // parse the initial '{'. (We disallow non-block function definitions.)
@@ -89,17 +91,17 @@ function parseFunctionDefBlock(lexArr, nextPosObj, retType) {
     } else {
         return false;
     }
-    // parse a list of non-return statements.
-    if (!parseStmtList(lexArr, nextPosObj)) {
+    // parse a list of non-return statements, either pure or impure depending
+    // on varType.isPure.
+    if (!parseStmtList(lexArr, nextPosObj, varType.isPure)) {
         nextPosObj.pos = initialPos;
         return false;
-    };
-    // parse expected return statement if the return type is not "void."
-    if (retType != "void") {
-        if (!parseReturnStatement(lexArr, nextPosObj, retType)) {
-            nextPosObj.pos = initialPos;
-            return false;
-        }
+    }
+    // parse expected (if varType.retType != "void") return statement. The
+    // purity of the return statement depends on varType.isPure.
+    if (!parseReturnStatement(lexArr, nextPosObj, varType)) {
+        nextPosObj.pos = initialPos;
+        return false;
     }
     // parse the final '}'.
     if (lexArr[nextPosObj.pos] == "}") {
@@ -112,7 +114,11 @@ function parseFunctionDefBlock(lexArr, nextPosObj, retType) {
     return true;
 }
 
-function parseReturnStatement(lexArr, nextPosObj, retType) {
+function parseReturnStatement(lexArr, nextPosObj, Type) {
+    // return true immediately, if the return type is "void."
+    if (varType.retType == "void") {
+        return true;
+    }
     // record the initial position.
     var initialPos = nextPosObj.pos;
     // parse the first keyword lexeme of a return statement.
@@ -121,7 +127,20 @@ function parseReturnStatement(lexArr, nextPosObj, retType) {
     } else {
         return false;
     }
-    // ...
+    // parse expression of the correct type and of the correct purity.
+    if (!parseExp(lexArr, nextPosObj, varType)) {
+        nextPosObj.pos = initialPos;
+        return false;
+    }
+    // parse final ';'.
+    if (lexArr[nextPosObj.pos] == ";") {
+        nextPosObj.pos = nextPosObj.pos + 1;
+    } else {
+        nextPosObj.pos = initialPos;
+        return false;
+    }
+    // if all parsing succeeded, return true.
+    return true;
 }
 
 
