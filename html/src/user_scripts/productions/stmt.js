@@ -1,4 +1,6 @@
 
+import parseExp from "./exp.js";
+
 
 export function parseImportStmt(lexArr, nextPosObj) {
     // record the initial position.
@@ -114,7 +116,7 @@ function parseFunctionDefBlock(lexArr, nextPosObj, varType) {
     return true;
 }
 
-function parseReturnStatement(lexArr, nextPosObj, Type) {
+function parseReturnStatement(lexArr, nextPosObj, varType) {
     // return true immediately, if the return type is "void."
     if (varType.retType == "void") {
         return true;
@@ -144,9 +146,79 @@ function parseReturnStatement(lexArr, nextPosObj, Type) {
 }
 
 
+function parseStmtList(lexArr, nextPosObj, isPure) {
+    // parse as many statements as possible of a possibly empty statement list.
+    var matchWasFound = true;
+    while (matchWasFound) {
+        matchWasFound = (
+            parseIfElseStmt(lexArr, nextPosObj, isPure) ||
+            parseLoopStmt(lexArr, nextPosObj, isPure) ||
+            parseBlockStmt(lexArr, nextPosObj, isPure) ||
+            parseSingleStmt(lexArr, nextPosObj, isPure) ||
+        );
+    }
+    // always returns true after parsing as many statements as possible.
+    return true;
+}
+
+
+function parseIfElseStmt(lexArr, nextPosObj, isPure) {
+    // record the initial position.
+    var initialPos = nextPosObj.pos;
+    // parse the initial if statement in full.
+
+    if (!parseIfStmt(lexArr, nextPosObj, isPure) ) {
+        nextPosObj.pos = initialPos;
+        return false;
+    }
+    // ...
+}
+
+
+function parseIfStmt(lexArr, nextPosObj, isPure) {
+    // record the initial position.
+    var initialPos = nextPosObj.pos;
+    // parse the initial 'if'.
+    if (lexArr[nextPosObj.pos] == "if") {
+        nextPosObj.pos = nextPosObj.pos + 1;
+    } else {
+        return false;
+    }
+    // parse the first '('.
+    if (lexArr[nextPosObj.pos] == "(") {
+        nextPosObj.pos = nextPosObj.pos + 1;
+    } else {
+        nextPosObj.pos = initialPos;
+        return false;
+    }
+    // parse a boolean expression with correct purity.
+    varType = {isPure:isPure, retType:"bool", isFun:false};
+    if (!parseExp(lexArr, nextPosObj, varType)) {
+        nextPosObj.pos = initialPos;
+        return false;
+    }
+    // parse the ')' before the consequence statement.
+    if (lexArr[nextPosObj.pos] == ")") {
+        nextPosObj.pos = nextPosObj.pos + 1;
+    } else {
+        nextPosObj.pos = initialPos;
+        return false;
+    }
+    // parse a block statement, and only that; not a single statement (even
+    // though such is allowed in JS proper).
+    if (!parseBlockStmt(lexArr, nextPosObj, isPure)) {
+        nextPosObj.pos = initialPos;
+        return false;
+    }
+    // if all parsing succeeded, return true.
+    return true;
+}
 
 
 
+function parseSingleStmt(lexArr, nextPosObj, isPure) {
+
+}
 
 
 

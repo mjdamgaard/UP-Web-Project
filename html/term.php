@@ -135,6 +135,16 @@ console.log(str);
 
 console.log("hello ${not_a_template}");
 
+// if (3 == 3) && true == false || true console.log("weird if");
+// // Throws exception.
+// if 3 == 3 && true == false || true console.log("weird if2");
+// // Throws exception.
+if (3 == 3 && true == false || true) console.log("weird if3");
+// prints "weird if3" successfully. (Not that I think I will allow these kinds
+// of statements; I will let if-else and function and loop statements all
+// accept only block statements as their definition statements.)
+
+
 // console.log("hello newline
 // world"); // not allowed
 
