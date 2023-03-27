@@ -32,7 +32,7 @@ export function parseModuleScript(script) {
     while (matchWasFound) {
         matchWasFound = (
             parseFunDef(lexArr, nextPosObj) || // short-circuits if true.
-            parsePureVarDef(lexArr, nextPosObj)
+            parsePureVarDef...(lexArr, nextPosObj) // TODO: Change name
         );
     }
 

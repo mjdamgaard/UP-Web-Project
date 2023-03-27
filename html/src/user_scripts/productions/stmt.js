@@ -228,8 +228,8 @@ function parseForLoopStmt(lexArr, nextPosObj) {
     }
     // parse two statements.
     if (
-        !parseStmt(lexArr, nextPosObj) ||
-        !parseStmt(lexArr, nextPosObj)
+        !parseVarAssignStmt(lexArr, nextPosObj) ||
+        !parseExp(lexArr, nextPosObj) ... // TODO: continue (but refactor, btw).
     ) {
         nextPosObj.pos = initialPos;
         return false;

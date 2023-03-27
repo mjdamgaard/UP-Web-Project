@@ -185,6 +185,30 @@ console.log(x = x + 1); // This succeeds.
 // Hm, developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/
 // -Statements/for and -Operators/Assignment lying about the syntax..
 
+// var x = 10;
+// for (
+//     x=0; x.toString();
+//     console.log("loop iteration end")
+// ) {
+//     console.log("loop iteration beginning");
+//     x = x + 1;
+//     if (x == 4) {
+//         x = "";
+//     }
+// }
+// console.log("loop end");
+// // Works..
+
+// var x = 10;
+// for (
+//     x=0; x<3;
+//     console.log("loop iteration end");
+// ) {
+//     x++;
+// }
+// // Fails, so last part has to be an expression..
+
+
 
 
 // var data =
