@@ -144,6 +144,11 @@ if (3 == 3 && true == false || true) console.log("weird if3");
 // of statements; I will let if-else and function and loop statements all
 // accept only block statements as their definition statements.)
 
+// var x = 1000  .999;
+// console.log("is this a float? " + x.toString());
+// no..
+var x = 1000.999;
+console.log("this is a float: " + x.toString());
 
 // console.log("hello newline
 // world"); // not allowed

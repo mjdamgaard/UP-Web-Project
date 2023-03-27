@@ -6,7 +6,7 @@ export function parseModuleScript(script) {
     // get lexeme array.
     // TODO: implement exception handling here.
     var lexArr = lex(script);
-    // initialize position object and ...
+    // initialize position object.
     var nextPosObj = {pos:0};
 
     // if first lexeme is '"use strict"', continue, or else return false.

@@ -28,8 +28,11 @@ export function lex(script) {
         } else if (nextChar == "'") {
             lexSnglQuoteStr(script, pos, len, nextLexObj);
 
-        } else if (nextChar.test("/^\w/")) {
+        } else if (nextChar.test("/^[a-zA-Z_]/")) {
             lexWord(script, pos, len, nextLexObj);
+
+        } else if (nextChar.test("/^[0-9]/")) {
+            lexNum(script, pos, len, nextLexObj);
 
         } else if (nextChar == "/")) {
             // check if next two characters are the start of a comment and
@@ -47,8 +50,11 @@ export function lex(script) {
             }
 
         } else {
-            nextLexObj.nextLex = nextChar;
-            nextLexObj.nextPos = pos + 1;
+            if (!lexOperator(script, pos, len, nextLexObj)) {
+                throw new Exception(
+                    "lex(): invalid lexeme at " + nextLexObj.pos.toString()
+                );
+            }
         }
         // if nextChar was not whitespace, append the recorded lexeme to lexArr.
         if (nextLexObj.nextLex != "") {
@@ -93,6 +99,30 @@ function lexWord(script, pos, len, nextLexObj) {
     nextLexObj.nextPos = nextPos;
 }
 
+function lexNum(script, pos, len, nextLexObj) {
+    var nextPos = pos;
+    // loop and increase nextPos until the next character is no longer a
+    // digit, a dot or a word character.
+    var nextChar = script.substring(nextPos, nextPos + 1);
+    while (nextPos < len && nextChar.test("/^[\w\.]/")) {
+        nextPos++;
+        nextChar = script.substring(nextPos, nextPos + 1);
+    }
+    // finally overwrite nextLexObj with the result.
+    nextLexObj.nextLex = script.substring(pos, nextPos);
+    nextLexObj.nextPos = nextPos;
+}
+
+
+function lexDblQuoteStr(script, pos, len, nextLexObj) {
+    lexQuoteStr(script, pos, len, nextLexObj, '"');
+}
+
+function lexSnglQuoteStr(script, pos, len, nextLexObj) {
+    lexQuoteStr(script, pos, len, nextLexObj, "'");
+}
+
+
 function lexQuoteStr(script, pos, len, nextLexObj, quoteChar) {
     // here we immediately skip past the initial '"' or "'" character.
     var nextPos = pos + 1;
@@ -124,13 +154,6 @@ function lexQuoteStr(script, pos, len, nextLexObj, quoteChar) {
     nextLexObj.nextPos = nextPos;
 }
 
-function lexDblQuoteStr(script, pos, len, nextLexObj) {
-    lexQuoteStr(script, pos, len, nextLexObj, '"');
-}
-
-function lexSnglQuoteStr(script, pos, len, nextLexObj) {
-    lexQuoteStr(script, pos, len, nextLexObj, "'");
-}
 
 
 function lexSnglLineComment(script, pos, len, nextLexObj) {
@@ -171,7 +194,50 @@ function lexMltLineComment(script, pos, len, nextLexObj) {
 }
 
 
+const snglCharOps = [
+    "\+", "\-", "\*", "=", "<", ">", "&", "\|", "\?", "!", "."
+];
 
+const twoCharOps = [
+    "\+\+", "\-\-", "\*\*", "=>", "&&", "\|\|", "\?\?",
+    "==", "!=", "<=", ">="
+];
 
+const threeCharOps = [
+    "===", "!=="
+];
 
-//
+const snglCharOpPatt =
+    "/^((" +
+        snglCharOps.join(")|(")
+    "))/";
+const twoCharOpPatt =
+    "/^((" +
+        twoCharOps.join(")|(")
+    "))/";
+
+const threeCharOpPatt =
+    "/^((" +
+        threeCharOps.join(")|(")
+    "))/";
+
+function lexOperator(script, pos, len, nextLexObj) {
+    // we start at pos.
+    var nextPos = pos;
+    // get the first four chars.
+    var nextChars = script.substring(nextPos, nextPos + 4);
+
+    if (nextChars.test(threeCharOpPatt)) {
+        nextPos = nextPos + 3;
+    } else if (nextChars.test(twoCharOpPatt)) {
+        nextPos = nextPos + 2;
+    } else if (nextChars.test(snglCharOpPatt)) {
+        nextPos = nextPos + 1;
+    } else {
+        return false;
+    }
+    // finally overwrite nextLexObj with the result and return true.
+    nextLexObj.nextLex = script.substring(pos, nextPos);
+    nextLexObj.nextPos = nextPos;
+    return true;
+}
