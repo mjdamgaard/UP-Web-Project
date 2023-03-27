@@ -59,12 +59,12 @@ export function parseFunDef(lexArr, nextPosObj) {
         return false;
     }
 
-    // parse and get the type of the next identifier lexeme.
-    var varType = parseAndgetIdentType(lexArr, nextPosObj);
-    // return false if indentifier is not a function identifier.
-    if (!varType.isFun) {
+    // parse function identifier.
+    if (!parseIdentifier(lexArr, nextPosObj)) {
+        nextPosObj.pos = initialPos;
         return false;
     }
+
     // parse an identifier tuple (including the parentheses and with no type
     // checks).
     if (!parseIdentifierTuple(lexArr, nextPosObj)) {
@@ -75,7 +75,7 @@ export function parseFunDef(lexArr, nextPosObj) {
     // parse either a block of pure or impure statements depending
     // on varType.isPure. All return statments nested in this block (if any)
     // have to return the right type, namely the one given by varType.retType.
-    if (!parseBlockStmt(lexArr, nextPosObj, varType)) {
+    if (!parseBlockStmt(lexArr, nextPosObj)) {
         nextPosObj.pos = initialPos;
         return false;
     }
@@ -84,10 +84,11 @@ export function parseFunDef(lexArr, nextPosObj) {
 }
 
 
-function parseBlockStmt(lexArr, nextPosObj, varType) {
+function parseBlockStmt(lexArr, nextPosObj) {
     // record the initial position.
     var initialPos = nextPosObj.pos;
-    // parse the initial '{'. (We disallow non-block function definitions.)
+    // parse the initial '{'. (We don't care to include non-block function
+    // definitions.)
     if (lexArr[nextPosObj.pos] == "{") {
         nextPosObj.pos = nextPosObj.pos + 1;
     } else {
@@ -96,7 +97,7 @@ function parseBlockStmt(lexArr, nextPosObj, varType) {
     // parse a list of non-return statements, either pure or impure depending
     // on varType.isPure. As many statements as possible are parsed here
     // (possibly zero).
-    if (!parseStmtList(lexArr, nextPosObj, varType)) {
+    if (!parseStmtList(lexArr, nextPosObj)) {
         nextPosObj.pos = initialPos;
         return false;
     }
@@ -112,16 +113,16 @@ function parseBlockStmt(lexArr, nextPosObj, varType) {
 }
 
 
-function parseStmtList(lexArr, nextPosObj, varType) {
+function parseStmtList(lexArr, nextPosObj) {
     // parse as many statements as possible of a possibly empty statement list.
     var matchWasFound = true;
     while (matchWasFound) {
         matchWasFound = (
-            parseSingleStmt(lexArr, nextPosObj, varType) ||
-            parseIfElseStmt(lexArr, nextPosObj, varType) ||
-            parseSwitchStmt(lexArr, nextPosObj, varType) ||
-            parseLoopStmt(lexArr, nextPosObj, varType) ||
-            parseBlockStmt(lexArr, nextPosObj, varType) ||
+            parseSingleStmt(lexArr, nextPosObj) ||
+            parseIfElseStmt(lexArr, nextPosObj) ||
+            parseSwitchStmt(lexArr, nextPosObj) ||
+            parseLoopStmt(lexArr, nextPosObj) ||
+            parseBlockStmt(lexArr, nextPosObj) ||
         );
     }
     // always returns true after parsing as many statements as possible.
@@ -129,12 +130,12 @@ function parseStmtList(lexArr, nextPosObj, varType) {
 }
 
 
-function parseIfElseStmt(lexArr, nextPosObj, varType) {
+function parseIfElseStmt(lexArr, nextPosObj) {
     // record the initial position.
     var initialPos = nextPosObj.pos;
     // parse the initial if statement in full.
 
-    if (!parseIfStmt(lexArr, nextPosObj, varType) ) {
+    if (!parseIfStmt(lexArr, nextPosObj) ) {
         nextPosObj.pos = initialPos;
         return false;
     }
@@ -143,8 +144,8 @@ function parseIfElseStmt(lexArr, nextPosObj, varType) {
     while (lexArr[nextPosObj.pos] == "else") {
         nextPosObj.pos = nextPosObj.pos + 1;
         if (
-            !parseIfStmt(lexArr, nextPosObj, varType) &&
-            !parseBlockStmt(lexArr, nextPosObj, varType)
+            !parseIfStmt(lexArr, nextPosObj) &&
+            !parseBlockStmt(lexArr, nextPosObj)
         ) {
             nextPosObj.pos = initialPos;
             return false;
@@ -155,7 +156,7 @@ function parseIfElseStmt(lexArr, nextPosObj, varType) {
 }
 
 
-function parseIfStmt(lexArr, nextPosObj, varType) {
+function parseIfStmt(lexArr, nextPosObj) {
     // record the initial position.
     var initialPos = nextPosObj.pos;
     // parse the initial 'if'.
@@ -171,9 +172,8 @@ function parseIfStmt(lexArr, nextPosObj, varType) {
         nextPosObj.pos = initialPos;
         return false;
     }
-    // parse a boolean expression with correct purity.
-    condVarType = {isPure:varType.isPure, retType:"bool", isFun:false};
-    if (!parseExp(lexArr, nextPosObj, condVarType)) {
+    // parse expression inside condition parentheses.
+    if (!parseExp(lexArr, nextPosObj)) {
         nextPosObj.pos = initialPos;
         return false;
     }
@@ -186,7 +186,7 @@ function parseIfStmt(lexArr, nextPosObj, varType) {
     }
     // parse a block statement, and only that; not a single statement (even
     // though such is allowed in JS proper).
-    if (!parseBlockStmt(lexArr, nextPosObj, varType)) {
+    if (!parseBlockStmt(lexArr, nextPosObj)) {
         nextPosObj.pos = initialPos;
         return false;
     }
@@ -197,8 +197,72 @@ function parseIfStmt(lexArr, nextPosObj, varType) {
 
 
 function parseSwitchStmt(lexArr, nextPosObj, isPure) {
-
+    // TODO: Implement.
 }
+
+
+function parseLoopStmt(lexArr, nextPosObj) {
+    return
+        parseForLoopStmt(lexArr, nextPosObj) ||
+        parseWhileLoopStmt(lexArr, nextPosObj) ||
+        parseDoWhileLoopStmt(lexArr, nextPosObj);
+}
+
+
+
+function parseForLoopStmt(lexArr, nextPosObj) {
+    // record the initial position.
+    var initialPos = nextPosObj.pos;
+    // parse the initial 'for'.
+    if (lexArr[nextPosObj.pos] == "for") {
+        nextPosObj.pos = nextPosObj.pos + 1;
+    } else {
+        return false;
+    }
+    // parse the first '('.
+    if (lexArr[nextPosObj.pos] == "(") {
+        nextPosObj.pos = nextPosObj.pos + 1;
+    } else {
+        nextPosObj.pos = initialPos;
+        return false;
+    }
+    // parse two statements.
+    if (
+        !parseStmt(lexArr, nextPosObj) ||
+        !parseStmt(lexArr, nextPosObj)
+    ) {
+        nextPosObj.pos = initialPos;
+        return false;
+    }
+    // parse final expression before the last ')'.
+    if (!parseExp(lexArr, nextPosObj)) {
+        nextPosObj.pos = initialPos;
+        return false;
+    }
+
+    // parse the last ')' before the consequence statement.
+    if (lexArr[nextPosObj.pos] == ")") {
+        nextPosObj.pos = nextPosObj.pos + 1;
+    } else {
+        nextPosObj.pos = initialPos;
+        return false;
+    }
+    // parse a block statement, and only that; not a single statement (even
+    // though such is allowed in JS proper).
+    if (!parseBlockStmt(lexArr, nextPosObj)) {
+        nextPosObj.pos = initialPos;
+        return false;
+    }
+    // if all parsing succeeded, return true.
+    return true;
+}
+
+
+
+
+
+
+
 
 
 
@@ -212,7 +276,7 @@ function parseSwitchStmt(lexArr, nextPosObj, isPure) {
 
 
 // TODO: Change.
-function parseReturnStmt(lexArr, nextPosObj, varType) {
+function parseReturnStmt(lexArr, nextPosObj) {
     // return true immediately, if the return type is "void."
     if (varType.retType == "void") {
         return true;
@@ -226,7 +290,7 @@ function parseReturnStmt(lexArr, nextPosObj, varType) {
         return false;
     }
     // parse expression of the correct type and of the correct purity.
-    if (!parseExp(lexArr, nextPosObj, varType)) {
+    if (!parseExp(lexArr, nextPosObj)) {
         nextPosObj.pos = initialPos;
         return false;
     }

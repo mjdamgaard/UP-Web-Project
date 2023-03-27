@@ -50,7 +50,7 @@ export function lex(script) {
             }
 
         } else {
-            if (!lexOperator(script, pos, len, nextLexObj)) {
+            if (!lexSymbol(script, pos, len, nextLexObj)) {
                 throw new Exception(
                     "lex(): invalid lexeme at " + nextLexObj.pos.toString()
                 );
@@ -194,44 +194,46 @@ function lexMltLineComment(script, pos, len, nextLexObj) {
 }
 
 
-const snglCharOps = [
-    "\+", "\-", "\*", "=", "<", ">", "&", "\|", "\?", "!", "."
+const oneCharSyms = [
+    "\+", "\-", "\*", "=", "<", ">", "&", "\|", "\?", "!", ".",
+    ";", ",",
+    "\(", "\)", "\{", "\}", "\[", "\]"
 ];
 
-const twoCharOps = [
+const twoCharSyms = [
     "\+\+", "\-\-", "\*\*", "=>", "&&", "\|\|", "\?\?",
     "==", "!=", "<=", ">="
 ];
 
-const threeCharOps = [
+const threeCharSyms = [
     "===", "!=="
 ];
 
-const snglCharOpPatt =
+const oneCharSymPatt =
     "/^((" +
-        snglCharOps.join(")|(")
+        oneCharSyms.join(")|(")
     "))/";
-const twoCharOpPatt =
+const twoCharSymPatt =
     "/^((" +
-        twoCharOps.join(")|(")
-    "))/";
-
-const threeCharOpPatt =
-    "/^((" +
-        threeCharOps.join(")|(")
+        twoCharSyms.join(")|(")
     "))/";
 
-function lexOperator(script, pos, len, nextLexObj) {
+const threeCharSymPatt =
+    "/^((" +
+        threeCharSyms.join(")|(")
+    "))/";
+
+function lexSymbol(script, pos, len, nextLexObj) {
     // we start at pos.
     var nextPos = pos;
     // get the first four chars.
     var nextChars = script.substring(nextPos, nextPos + 4);
 
-    if (nextChars.test(threeCharOpPatt)) {
+    if (nextChars.test(threeCharSymPatt)) {
         nextPos = nextPos + 3;
-    } else if (nextChars.test(twoCharOpPatt)) {
+    } else if (nextChars.test(twoCharSymPatt)) {
         nextPos = nextPos + 2;
-    } else if (nextChars.test(snglCharOpPatt)) {
+    } else if (nextChars.test(oneCharSymPatt)) {
         nextPos = nextPos + 1;
     } else {
         return false;

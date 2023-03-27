@@ -130,6 +130,9 @@ x   ++;
 console.log(x.toString());
 
 
+// console.log("hello newline
+// world"); // not allowed
+
 var str = "\( hello )";
 console.log(str);
 
@@ -150,8 +153,38 @@ if (3 == 3 && true == false || true) console.log("weird if3");
 var x = 1000.999;
 console.log("this is a float: " + x.toString());
 
-// console.log("hello newline
-// world"); // not allowed
+
+// var x = 0;
+// for (
+//     if (true) {console.log("loop start")} x<4;
+//     console.log("loop iteration end")
+// ) {
+//     console.log("loop iteration beginning");
+//     x = x + 1;
+// }
+// console.log("loop end");
+// // Interesting!: It expects an expression at first..! Hm..
+
+// if (var x = 1) {
+//     console.log("if (var x = 1)");
+// }
+// if (var x = 0) {
+//     console.log("if (var x = 0)");
+// }
+// // Also fails saying it expects expression..
+// if (let x = 1) {
+//     console.log("if (var x = 1)");
+// }
+// if (let x = 0) {
+//     console.log("if (var x = 0)");
+// }
+// // Same..
+// Hm, let me try this:
+console.log(x = x + 1); // This succeeds.
+// console.log(var x = x + 1); // This fails!
+// Hm, developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/
+// -Statements/for and -Operators/Assignment lying about the syntax..
+
 
 
 // var data =
