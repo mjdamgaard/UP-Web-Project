@@ -208,7 +208,14 @@ console.log(x = x + 1); // This succeeds.
 // }
 // // Fails, so last part has to be an expression..
 
+var x = 3;
+while (x--);
 
+var x = 0;
+// for (const c = 0; c<3; c++); // Fails.
+for (const c = 0; x<3; x++); // Succeeds.
+// for (const c = 0; var x = x - 1; ); // Fails on "var x = x - 1"; expects
+// expression.
 
 
 // var data =
