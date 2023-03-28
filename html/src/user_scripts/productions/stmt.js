@@ -15,7 +15,7 @@ parseLexeme(str, lexArr, nextPos, successRequired) {
     } else {
         if (successRequired) {
             throw new ParseException(
-                nextPos[0], "Expected lexeme: \"" + str + "\""
+                lexArr[nextPos[0]], "Expected lexeme: \"" + str + "\""
             );
         }
         return false;
@@ -28,7 +28,8 @@ export function parseImportStmt(lexArr, nextPos, successRequired) {
     var initialPos = nextPos[0];
     // parse import statement.
     if (
-        parseLexeme(lexArr, nextPos, "import", false) && // short-circuits if false.
+        // short-circuits if false.
+        parseLexeme(lexArr, nextPos, "import", false) &&
         parseIdentifierList(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, "from", true) &&
         parseImportPath(lexArr, nextPos, true) &&
@@ -39,7 +40,7 @@ export function parseImportStmt(lexArr, nextPos, successRequired) {
     } else {
         if (successRequired) {
             throw new ParseException(
-                nextPos[0], "Expected import statement"
+                lexArr[nextPos[0]], "Expected import statement"
             );
         }
         // else reset the position to the initial one and return false.
@@ -70,7 +71,7 @@ export function parseFunDef(lexArr, nextPos, successRequired) {
     } else {
         if (successRequired) {
             throw new ParseException(
-                nextPos[0], "Expected function definition"
+                lexArr[nextPos[0]], "Expected function definition"
             );
         }
         // else reset the position to the initial one and return false.
@@ -89,7 +90,7 @@ function parseStmt(lexArr, nextPos, successRequired) {
 
     if (successRequired && !ret) {
         throw new ParseException(
-            nextPos[0], "Expected statement"
+            lexArr[nextPos[0]], "Expected statement"
         );
     }
     return ret;
@@ -107,7 +108,7 @@ function parseBlockStmt(lexArr, nextPos, successRequired) {
     } else {
         if (successRequired) {
             throw new ParseException(
-                nextPos[0], "Expected block statement"
+                lexArr[nextPos[0]], "Expected block statement"
             );
         }
         nextPos[0] = initialPos;
@@ -139,7 +140,7 @@ function parseIfStmt(lexArr, nextPos, successRequired) {
     } else {
         if (successRequired) {
             throw new ParseException(
-                nextPos[0], "Expected if statement"
+                lexArr[nextPos[0]], "Expected if statement"
             );
         }
         nextPos[0] = initialPos;
@@ -163,24 +164,45 @@ function parseIfElseStmt(lexArr, nextPos, successRequired) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-function parseSwitchStmt(lexArr, nextPos, isPure) {
-    // TODO: Implement.
+function parseSwitchStmt(lexArr, nextPos, successRequired) {
+    var initialPos = nextPos[0];
+    if (
+        parseLexeme(lexArr, nextPos, "switch", false) &&
+        parseLexeme(lexArr, nextPos, "(", true) &&
+        parseExp(lexArr, nextPos, true) &&
+        parseLexeme(lexArr, nextPos, ")", true) &&
+        parseLexeme(lexArr, nextPos, "{", true) &&
+        parseCaseSeries(lexArr, nextPos, true)
+        parseLexeme(lexArr, nextPos, "}", true) &&
+    ) {
+        return true;
+    } else {
+        if (successRequired) {
+            throw new ParseException(
+                lexArr[nextPos[0]], "Expected switch-case statement"
+            );
+        }
+        nextPos[0] = initialPos;
+        return false;
+    }
 }
+
+
+
+function parseCaseSeries(lexArr, nextPos, successRequired) {
+    var initialPos = nextPos[0];
+    if (successRequired) {
+        parseLexeme(lexArr, nextPos, "case", true);
+        parseExp(lexArr, nextPos, true);
+        parseLexeme(lexArr, nextPos, ":", true);
+    }
+    while (parseLexeme(lexArr, nextPos, "case", false)) {
+        parseExp(lexArr, nextPos, true);
+        parseLexeme(lexArr, nextPos, ":", true);
+    }
+    parseStmt(lexArr, nextPos, true) ...
+}
+
 
 
 function parseLoopStmt(lexArr, nextPos) {

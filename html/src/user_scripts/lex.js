@@ -15,11 +15,6 @@ class LexException {
 }
 
 export function lex(script) {
-    // first check for unwanted whitespace characters.
-    if (!script.test("/^( \n\S)*$/")) {
-        throw new LexException(NaN, "Unwanted whitespace characters");
-    }
-
     // initialize return array.
     var lexArr = [];
     // initialize position as a singleton array, such that it can be passed to
@@ -43,7 +38,7 @@ export function lex(script) {
     // throw exception containing the current position if the whole script
     // could not be lexed.
     if (nextPos[0] != len) {
-        throw new LexException (nextPos[0], "Unrecognized lexeme");
+        throw new LexException (nextPos[0], "Invalid character");
     }
     // return lexeme array if the whole script was lexed.
     return lexArr;
@@ -54,7 +49,7 @@ export function lex(script) {
 function lexWhitespace(script, len, lexArr, nextPos) {
     // get and test the first character.
     var nextChar = script.substring(nextPos[0], nextPos[0] + 1);
-    if (!nextChar.test("/^\s/")) {
+    if (!nextChar.test("/^[ \n]/")) {
         // return false immedeately if first character is not a whitespace.
         return false;
     }
@@ -62,7 +57,7 @@ function lexWhitespace(script, len, lexArr, nextPos) {
     do {
         nextPos[0] = nextPos[0] + 1;
         nextChar = script.substring(nextPos[0], nextPos[0] + 1)
-    } while (nextPos[0] < len && nextChar.test("/^\s/"));
+    } while (nextPos[0] < len && nextChar.test("/^[ \n]/"));
 
     // return true if any whitespaces were found, but do not append
     // anything to lexArr.
@@ -200,8 +195,8 @@ function lexMultiLineComment(script, len, lexArr, nextPos) {
 
 
 const oneCharSyms = [
-    "\+", "\-", "\*", "=", "<", ">", "&", "\|", "\?", "!", ".",
-    ";", ",",
+    "\+", "\-", "\*", "=", "<", ">", "&", "\|", "\?", "!",
+    ";", ":", ",", ".",
     "\(", "\)", "\{", "\}", "\[", "\]"
 ];
 
