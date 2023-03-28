@@ -24,69 +24,63 @@ parseLexeme(str, lexArr, nextPos, successRequired) {
 
 
 export function parseImportStmt(lexArr, nextPos, successRequired) {
-    // record the initial position.
-    var initialPos = nextPos[0];
-    // parse import statement.
-    if (
-        // short-circuits if false.
+    let ret =
         parseLexeme(lexArr, nextPos, "import", false) &&
         parseIdentifierList(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, "from", true) &&
         parseImportPath(lexArr, nextPos, true) &&
-        parseLexeme(lexArr, nextPos, ";", true)
+        parseLexeme(lexArr, nextPos, ";", true);
+
+    if (successRequired && !ret) {
+        throw new ParseException(
+            lexArr[nextPos[0]], "Expected import statement"
+        );
+    }
+    return ret;
+}
+
+
+export parseDef(lexArr, nextPos, successRequired) {
+    // record the initial position.
+    let initialPos = nextPos[0];
+    // parse optional export keyword.
+    parseLexeme(lexArr, nextPos, "export", false);
+    // parse mandatory definitions.
+    if (
+        !parseFunDef(lexArr, nextPos, false) ||
+        !parseVarDef(lexArr, nextPos, false)
     ) {
-        // if all parsing succeeded, return true.
         return true;
     } else {
         if (successRequired) {
             throw new ParseException(
-                lexArr[nextPos[0]], "Expected import statement"
+                lexArr[nextPos[0]], "Expected function or variable definition"
             );
         }
-        // else reset the position to the initial one and return false.
         nextPos[0] = initialPos;
         return false;
     }
+
 }
 
 
-export function parseFunDef(lexArr, nextPos, successRequired) {
-    // record the initial position.
-    var initialPos = nextPos[0];
-    // parse function definition.
-    if (
-        (
-            parseLexeme(lexArr, nextPos, "function", false)
-            || // short circuits if true, has less precedence than &&.
-            parseLexeme(lexArr, nextPos, "export", false) &&
-            parseLexeme(lexArr, nextPos, "function", false)
-        )
-        &&
+function parseFunDef(lexArr, nextPos, successRequired) {
+    return
+        parseLexeme(lexArr, nextPos, "function", successRequired) &&
         parseIdentifier(lexArr, nextPos, true) &&
         parseIdentifierTuple(lexArr, nextPos, true) &&
-        parseStmt(lexArr, nextPos, true)
-    ) {
-        // if all parsing succeeded, return true.
-        return true;
-    } else {
-        if (successRequired) {
-            throw new ParseException(
-                lexArr[nextPos[0]], "Expected function definition"
-            );
-        }
-        // else reset the position to the initial one and return false.
-        nextPos[0] = initialPos;
-        return false;
-    }
+        parseStmt(lexArr, nextPos, true);
 }
+
+
 
 function parseStmt(lexArr, nextPos, successRequired) {
     let ret =
-        parseBlockStmt(lexArr, nextPos) ||
-        parseIfElseStmt(lexArr, nextPos) ||
-        parseSwitchStmt(lexArr, nextPos) ||
-        parseLoopStmt(lexArr, nextPos) ||
-        parseSingleStmt(lexArr, nextPos);
+        parseBlockStmt(lexArr, nextPos, false) ||
+        parseIfElseStmt(lexArr, nextPos, false) ||
+        parseSwitchStmt(lexArr, nextPos, false) ||
+        parseLoopStmt(lexArr, nextPos, false) ||
+        parseSingleStmt(lexArr, nextPos, false);
 
     if (successRequired && !ret) {
         throw new ParseException(
@@ -98,28 +92,16 @@ function parseStmt(lexArr, nextPos, successRequired) {
 
 
 function parseBlockStmt(lexArr, nextPos, successRequired) {
-    var initialPos = nextPos[0];
-    if (
-        parseLexeme(lexArr, nextPos, "{", false) &&
-        parseStmtList(lexArr, nextPos, false) &&
-        parseLexeme(lexArr, nextPos, "}", false)
-    ) {
-        return true;
-    } else {
-        if (successRequired) {
-            throw new ParseException(
-                lexArr[nextPos[0]], "Expected block statement"
-            );
-        }
-        nextPos[0] = initialPos;
-        return false;
-    }
+    return
+        parseLexeme(lexArr, nextPos, "{", successRequired) &&
+        parseStmtList(lexArr, nextPos, true) &&
+        parseLexeme(lexArr, nextPos, "}", true);
 }
 
 
 function parseStmtList(lexArr, nextPos, successRequired) {
     // parse as many statements as possible of a possibly empty statement list.
-    while (parseStmt(lexArr, nextPos));
+    while (parseStmt(lexArr, nextPos, false));
     // always return true.
     return true;
 }
@@ -128,28 +110,15 @@ function parseStmtList(lexArr, nextPos, successRequired) {
 
 
 function parseIfStmt(lexArr, nextPos, successRequired) {
-    var initialPos = nextPos[0];
-    if (
-        parseLexeme(lexArr, nextPos, "if", false) &&
+    return
+        parseLexeme(lexArr, nextPos, "if", successRequired) &&
         parseLexeme(lexArr, nextPos, "(", true) &&
         parseExp(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, ")", true) &&
-        parseStmt(lexArr, nextPos, true)
-    ) {
-        return true;
-    } else {
-        if (successRequired) {
-            throw new ParseException(
-                lexArr[nextPos[0]], "Expected if statement"
-            );
-        }
-        nextPos[0] = initialPos;
-        return false;
-    }
+        parseStmt(lexArr, nextPos, true);
 }
 
 function parseIfElseStmt(lexArr, nextPos, successRequired) {
-    var initialPos = nextPos[0];
     // parse the initial mandatory if statement.
     if (!parseIfStmt(lexArr, nextPos, successRequired)) {
         return false;
@@ -165,34 +134,27 @@ function parseIfElseStmt(lexArr, nextPos, successRequired) {
 
 
 function parseSwitchStmt(lexArr, nextPos, successRequired) {
-    var initialPos = nextPos[0];
-    if (
-        parseLexeme(lexArr, nextPos, "switch", false) &&
+    return
+        parseLexeme(lexArr, nextPos, "switch", successRequired) &&
         parseLexeme(lexArr, nextPos, "(", true) &&
         parseExp(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, ")", true) &&
-        parseLexeme(lexArr, nextPos, "{", true) &&
-        parseCaseSeries(lexArr, nextPos, true)
-        parseLexeme(lexArr, nextPos, "}", true) &&
-    ) {
-        return true;
-    } else {
-        if (successRequired) {
-            throw new ParseException(
-                lexArr[nextPos[0]], "Expected switch-case statement"
-            );
-        }
-        nextPos[0] = initialPos;
-        return false;
-    }
+        parseCaseBlock(lexArr, nextPos, true);
 }
 
 
+function parseCaseBlock(lexArr, nextPos, successRequired) {
+    // record the initial position.
+    let initialPos = nextPos[0];
+
+    parseLexeme(lexArr, nextPos, "{", successRequired);
+}
 
 function parseCaseSeries(lexArr, nextPos, successRequired) {
-    var initialPos = nextPos[0];
-    if (successRequired) {
-        parseLexeme(lexArr, nextPos, "case", true);
+    // record the initial position.
+    let initialPos = nextPos[0];
+    // parse a series of at least one "case exp :" sequence.
+    if (parseLexeme(lexArr, nextPos, "case", successRequired)) {
         parseExp(lexArr, nextPos, true);
         parseLexeme(lexArr, nextPos, ":", true);
     }
@@ -200,7 +162,15 @@ function parseCaseSeries(lexArr, nextPos, successRequired) {
         parseExp(lexArr, nextPos, true);
         parseLexeme(lexArr, nextPos, ":", true);
     }
-    parseStmt(lexArr, nextPos, true) ...
+    parseStmt(lexArr, nextPos, true);
+
+    while (
+        parseLexeme(lexArr, nextPos, "case", false) ||
+        parseLexeme(lexArr, nextPos, "default", false)
+    ) {
+        parseExp(lexArr, nextPos, true);
+        parseLexeme(lexArr, nextPos, ":", true);
+    }
 }
 
 
@@ -215,7 +185,7 @@ function parseLoopStmt(lexArr, nextPos) {
 
 
 function parseForLoopStmt(lexArr, nextPos) {
-    var initialPos = nextPos[0];
+    let initialPos = nextPos[0];
     if (
         parseLexeme(lexArr, nextPos, "for") &&
         parseLexeme(lexArr, nextPos, "(") &&
@@ -235,7 +205,7 @@ function parseForLoopStmt(lexArr, nextPos) {
 
 
     // record the initial position.
-    var initialPos = nextPos[0];
+    let initialPos = nextPos[0];
     // parse the initial 'for'.
     if (lexArr[nextPos[0]] == "for") {
         nextPos[0] = nextPos[0] + 1;
@@ -305,7 +275,7 @@ function parseReturnStmt(lexArr, nextPos, successRequired) {
         return true;
     }
     // record the initial position.
-    var initialPos = nextPos[0];
+    let initialPos = nextPos[0];
     // parse the first keyword lexeme of a return statement.
     if (lexArr[nextPos[0]] == "return") {
         nextPos[0] = nextPos[0] + 1;

@@ -21,27 +21,14 @@ export function parseModuleScript(script) {
     // not loaded as module scripts like they are supposed to.)
 
     // parse a list of import statements.
-    var matchWasFound = true;
-    while (matchWasFound) {
-        matchWasFound = parseImportStmt(lexArr, nextPos);
-    }
+    while (parseImportStmt(lexArr, nextPos, false));
 
     // parse a list of function definitions or pure variable definitions. (We
     // only allow these two types of definitions at this point.)
-    var matchWasFound = true;
-    while (matchWasFound) {
-        matchWasFound = (
-            parseFunDef(lexArr, nextPos) || // short-circuits if true.
-            parsePureVarDef...(lexArr, nextPos) // TODO: Change name
-        );
-    }
+    while (parseDef(lexArr, nextPos, false));
 
     // return true only if all lexemes have been successfully parsed.
-    if (nextPos[0] == lexArr.length) {
-        return true;
-    } else {
-        return false;
-    }
+    return (nextPos[0] == lexArr.length);
 }
 
 
