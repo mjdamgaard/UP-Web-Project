@@ -217,6 +217,19 @@ for (const c = 0; x<3; x++); // Succeeds.
 // for (const c = 0; var x = x - 1; ); // Fails on "var x = x - 1"; expects
 // expression.
 
+// break; // Fails.
+
+var x = 0;
+function test() {
+    return x = 0; //Succeeds.
+}
+test();
+
+
+
+
+
+
 
 // var data =
 //     new QueryDataConstructors.SetInfoSecKeyReqData("u01", "c14", "r1");
