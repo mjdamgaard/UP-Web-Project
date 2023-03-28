@@ -95,17 +95,17 @@ export function lex(script) {
 
 function lexWhitespace(script, len, lexArr, nextPos) {
     // get and test the first character.
-    let nextChar = script.substring(nextPos[0], nextPos[0] + 1);
+    var nextChar = script.substring(nextPos[0], nextPos[0] + 1);
     if (!nextChar.test("/^\s/")) {
         // return false immedeately if first character is not a whitespace.
         return false;
-    } else {
-        // match as many whitespaces as possible.
-        do {
-            nextPos[0] = nextPos[0] + 1;
-            nextChar = script.substring(nextPos[0], nextPos[0] + 1)
-        } while (nextPos[0] < len && nextChar.test("/^\s/"));
     }
+    // match as many whitespaces as possible.
+    do {
+        nextPos[0] = nextPos[0] + 1;
+        nextChar = script.substring(nextPos[0], nextPos[0] + 1)
+    } while (nextPos[0] < len && nextChar.test("/^\s/"));
+
     // return true if any whitespaces were found, but do not append
     // anything to lexArr.
     return true;
@@ -114,19 +114,19 @@ function lexWhitespace(script, len, lexArr, nextPos) {
 
 function lexWord(script, len, lexArr, nextPos) {
     // record the initial position.
-    var initialPos = nextPos[0];
+    let initialPos = nextPos[0];
     // get and test the first character.
-    let nextChar = script.substring(nextPos[0], nextPos[0] + 1);
-    if (!nextChar.test("/^\w/")) {
+    var nextChar = script.substring(nextPos[0], nextPos[0] + 1);
+    if (!nextChar.test("/^[a-zA-Z_]/")) {
         // return false immedeately if first character is not a word character.
         return false;
-    } else {
-        // match as many word characters as possible.
-        do {
-            nextPos[0] = nextPos[0] + 1;
-            nextChar = script.substring(nextPos[0], nextPos[0] + 1)
-        } while (nextPos[0] < len && nextChar.test("/^\w/"));
     }
+    // match as many word characters as possible.
+    do {
+        nextPos[0] = nextPos[0] + 1;
+        nextChar = script.substring(nextPos[0], nextPos[0] + 1)
+    } while (nextPos[0] < len && nextChar.test("/^\w/"));
+
     // if word characters were found, append the lexeme to lexArr.
     let lexemeStr = script.substring(initialPos, nextPos[0]);
     lexArr.push(Lexeme(lexemeStr, initialPos, nextPos[0]));
@@ -135,104 +135,105 @@ function lexWord(script, len, lexArr, nextPos) {
 }
 
 function lexNum(script, len, lexArr, nextPos) {
-    var initialPos = nextPos[0];
-    let nextChar = script.substring(nextPos[0], nextPos[0] + 1);
+    let initialPos = nextPos[0];
+    var nextChar = script.substring(nextPos[0], nextPos[0] + 1);
     if (!nextChar.test("/^[0-9]/")) {
         return false;
-    } else {
-        do {
-            nextPos[0] = nextPos[0] + 1;
-            nextChar = script.substring(nextPos[0], nextPos[0] + 1)
-        } while (nextPos[0] < len && nextChar.test("/^\w\./"));
     }
+    do {
+        // match as many word or '.' characters as possible.
+        nextPos[0] = nextPos[0] + 1;
+        nextChar = script.substring(nextPos[0], nextPos[0] + 1)
+    } while (nextPos[0] < len && nextChar.test("/^\w\./"));
+
     let lexemeStr = script.substring(initialPos, nextPos[0]);
     lexArr.push(Lexeme(lexemeStr, initialPos, nextPos[0]));
     return true;
 }
 
-/*
-...
-" */  1 + 1 == 2; // Okay..
-
-...
-
-function lexDblQuoteStr(script, len, lexArr, nextPos) {
-    lexQuoteStr(script, pos, len, nextLexObj, '"');
-}
-
-function lexSnglQuoteStr(script, len, lexArr, nextPos) {
-    lexQuoteStr(script, pos, len, nextLexObj, "'");
-}
 
 
-function lexStrLiteral(script, pos, len, nextLexObj, quoteChar) {
-    // here we immediately skip past the initial '"' or "'" character.
-    var nextPos = pos + 1;
-    // loop and increase nextPos until the end of the string is found.
-    var nextChar = script.substring(nextPos, nextPos + 1);
-    while (nextPos < len && nextChar.test("/^[^" + quoteChar + "]/")) {
-        if (nextChar == "\\") {
-            nextPos = nextPos + 2;
-        } else if (nextChar == "\n") {
-            // NOTE: this error have to be caught and handled.
-            throw new Exception(
-                "lex(): string litteral with unescaped newline"
-            );
-        } else {
-            nextPos = nextPos + 1;
+function lexStrLiteral(script, len, lexArr, nextPos) {
+    let initialPos = nextPos[0];
+    var nextChar = script.substring(nextPos[0], nextPos[0] + 1);
+    // test and record the first quote character. Return false if test fails.
+    var quoteChar;
+    if (nextChar == "'" || nextChar == '"') {
+        quoteChar = nextChar;
+    } else {
+        return false;
+    }
+    // loop until final quote character is found, or until the script ends, or
+    // until an illigal, unescaped newline occurs.
+    do {
+        nextPos[0] = nextPos[0] + 1;
+        nextChar = script.substring(nextPos[0], nextPos[0] + 1)
+        // throw exception if unescaped newline appears.
+        if (nextChar == "\n") {
+            throw {msg:"String litteral with unescaped newline"}
         }
-        nextChar = script.substring(nextPos, nextPos + 1);
+        // if the next character is a backslash, skip past it and the
+        // character that follows it (including newline characters).
+        if (nextChar == "\\") {
+            nextPos[0] = nextPos[0] + 2;
+        }
+    } while (nextPos[0] < len && nextChar.test("/^[^" + quoteChar + "]"));
+
+    if (nextPos[0] >= len) {
+        throw {msg:"String litteral with no end"}
     }
-    // include the last '"' or "'" character as well by increasing nextPos by 1.
-    nextPos++;
-    // throw error if this means that nextPos becomes greater than script
-    // length.
-    if (nextPos >= len) {
-        // NOTE: this error have to be caught and handled.
-        throw new Exception("lex(): string litteral with no end");
-    }
-    // finally overwrite nextLexObj with the result.
-    nextLexObj.nextLex = script.substring(pos, nextPos);
-    nextLexObj.nextPos = nextPos;
+
+    // skip past the final "'" or '"' as well.
+    nextPos[0] = nextPos[0] + 1;
+
+    let lexemeStr = script.substring(initialPos, nextPos[0]);
+    lexArr.push(Lexeme(lexemeStr, initialPos, nextPos[0]));
+    return true;
 }
 
 
 
-function lexSnglLineComment(script, len, lexArr, nextPos) {
-    // here we immediately skip past the comment start delimeter.
-    var nextPos = pos + 2;
-    // loop and increase nextPos until a newline is found.
-    var nextChar = script.substring(nextPos, nextPos + 1);
-    while (nextPos < len && nextChar != "\n") {
-        nextPos++;
-        nextChar = script.substring(nextPos, nextPos + 1);
-    }
-    if (nextChar == "\n") {
-        nextPos++;
-    }
-    // finally overwrite nextLexObj with the result ("" means no lexeme will
-    // be added lexArr in lex()).
-    nextLexObj.nextLex = "";
-    nextLexObj.nextPos = nextPos;
+function lexComment(script, len, lexArr, nextPos) {
+    return lexSingleLineComment || lexMultiLineComment;
 }
 
 
-function lexMltLineComment(script, len, lexArr, nextPos) {
-    // here we immediately skip past the comment start delimeter.
-    var nextPos = pos + 2;
-    // loop and increase nextPos until "*/" is found.
-    var nextTwoChars = script.substring(nextPos, nextPos + 2);
-    while (nextPos < len && nextTwoChars != "*/")) {
-        nextPos++;
-        nextChar = script.substring(nextPos, nextPos + 1);
+function lexSingleLineComment(script, len, lexArr, nextPos) {
+    var nextChars = script.substring(nextPos[0], nextPos[0] + 2);
+    if (nextChars != "//") {
+        return false;
     }
-    if (nextTwoChars == "*/") {
-        nextPos = nextPos + 2;
+    nextPos[0] = nextPos[0] + 1;
+    do {
+        nextPos[0] = nextPos[0] + 1;
+        nextChar = script.substring(nextPos[0], nextPos[0] + 1)
+    } while (nextPos[0] < len && nextChar != "\n");
+
+    // do not skip past the final "\n'; simply lex it as whitespace instead.
+
+    return true;
+}
+
+
+function lexMultiLineComment(script, len, lexArr, nextPos) {
+    var nextChars = script.substring(nextPos[0], nextPos[0] + 2);
+    if (nextChars != "/*") {
+        return false;
     }
-    // finally overwrite nextLexObj with the result ("" means no lexeme will
-    // be added lexArr in lex()).
-    nextLexObj.nextLex = "";
-    nextLexObj.nextPos = nextPos;
+    nextPos[0] = nextPos[0] + 1;
+    do {
+        nextPos[0] = nextPos[0] + 1;
+        nextChars = script.substring(nextPos[0], nextPos[0] + 2)
+    } while (nextPos[0] < len && nextChar != "*/");
+
+    if (nextPos[0] + 1 >= len) {
+        throw {msg:"Multi-line comment with no end"}
+    }
+
+    // skip past the final "*/" as well.
+    nextPos[0] = nextPos[0] + 2;
+
+    return true;
 }
 
 

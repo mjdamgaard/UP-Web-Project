@@ -239,7 +239,11 @@ $(function(){
         });
     });
 });
-</script>
+
+/* multi-line comment with no end delimeter.
+... Oh, this is apparently not allowed. */
+
+// single line comment with no end newline. (Succeeds) </script>
 
 
 
