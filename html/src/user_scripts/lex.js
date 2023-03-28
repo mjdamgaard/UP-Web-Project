@@ -7,11 +7,17 @@ class Lexeme {
     }
 }
 
+class LexException {
+    constructor(pos, msg) {
+        this.pos = pos;
+        this.msg = msg;
+    }
+}
 
 export function lex(script) {
     // first check for unwanted whitespace characters.
     if (!script.test("/^( \n\S)*$/")) {
-        throw new Exception("lex(): unwanted whitespace characters");
+        throw new LexException(NaN, "Unwanted whitespace characters");
     }
 
     // initialize return array.
@@ -37,57 +43,9 @@ export function lex(script) {
     // throw exception containing the current position if the whole script
     // could not be lexed.
     if (nextPos[0] != len) {
-        throw {unknownLexemeAt:nextPos[0]};
+        throw new LexException (nextPos[0], "Unrecognized lexeme");
     }
     // return lexeme array if the whole script was lexed.
-    return lexArr;
-
-        if (nextChar.test("/^\s/")) {
-            lexWhitespace(script, len, lexArr, nextPos);
-
-        } else if (nextChar == '"') {
-            lexDblQuoteStr(script, len, lexArr, nextPos);
-
-        } else if (nextChar == "'") {
-            lexSnglQuoteStr(script, len, lexArr, nextPos);
-
-        } else if (nextChar.test("/^[a-zA-Z_]/")) {
-            lexWord(script, len, lexArr, nextPos);
-
-        } else if (nextChar.test("/^[0-9]/")) {
-            lexNum(script, len, lexArr, nextPos);
-
-        } else if (lexSymbol(script, pos, len, nextPos))
-        else if (nextChar == "/")) {
-            // check if next two characters are the start of a comment and
-            // branch accordingly.
-            let nextTwoChars = script.substring(nextPos[0], nextPos[0] + 2)
-            if (nextTwoChars == "//") {
-                lexSnglLineComment(script, len, lexArr, nextPos);
-
-            } else if (nextTwoChars == "/*") {
-                lexMltLineComment(script, len, lexArr, nextPos);
-
-            } else if (!lexSymbol(script, pos, len, nextPos)) {
-                throw {unknownLexemeAt:nextPos[0]};
-            }
-
-        } else {
-            if (!lexSymbol(script, len, lexArr, nextPos)) {
-                throw new Exception(
-                    "lex(): invalid lexeme at " + nextLexObj.pos.toString()
-                );
-            }
-        }
-        // if nextChar was not whitespace, append the recorded lexeme to lexArr.
-        if (nextLexObj.nextLex != "") {
-            lexArr[lexArrLen] = nextLexObj.nextLex;
-            lexArrLen++;
-        }
-        // increase pos to the position of the next potential lexeme.
-        pos = nextLexObj.nextPos;
-    }
-    // return array of all lexemes in the input script.
     return lexArr;
 }
 
@@ -170,7 +128,9 @@ function lexStrLiteral(script, len, lexArr, nextPos) {
         nextChar = script.substring(nextPos[0], nextPos[0] + 1)
         // throw exception if unescaped newline appears.
         if (nextChar == "\n") {
-            throw {msg:"String litteral with unescaped newline"}
+            throw new LexException (
+                nextPos[0], "String litteral with unescaped newline"
+            );
         }
         // if the next character is a backslash, skip past it and the
         // character that follows it (including newline characters).
@@ -180,7 +140,9 @@ function lexStrLiteral(script, len, lexArr, nextPos) {
     } while (nextPos[0] < len && nextChar.test("/^[^" + quoteChar + "]"));
 
     if (nextPos[0] >= len) {
-        throw {msg:"String litteral with no end"}
+        throw new LexException (
+            nextPos[0], "String litteral with no end"
+        );
     }
 
     // skip past the final "'" or '"' as well.

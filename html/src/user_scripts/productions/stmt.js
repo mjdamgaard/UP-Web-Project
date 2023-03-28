@@ -1,94 +1,124 @@
 
 import parseExp from "./exp.js";
 
+class ParseException {
+    constructor(pos, msg) {
+        this.pos = pos;
+        this.msg = msg;
+    }
+}
 
-parseLexeme(str, lexArr, nextPosObj, successRequired) {
-    if (lexArr[nextPosObj.pos] == str) {
-        nextPosObj.pos = nextPosObj.pos + 1;
+parseLexeme(str, lexArr, nextPos, successRequired) {
+    if (lexArr[nextPos[0]] == str) {
+        nextPos[0] = nextPos[0] + 1;
         return true;
     } else {
         if (successRequired) {
-            throw new Exception();
+            throw new ParseException(
+                nextPos[0], "Expected lexeme: \"" + str + "\""
+            );
         }
         return false;
     }
 }
 
 
-export function parseImportStmt(lexArr, nextPosObj) {
+export function parseImportStmt(lexArr, nextPos, successRequired) {
     // record the initial position.
-    var initialPos = nextPosObj.pos;
+    var initialPos = nextPos[0];
     // parse import statement.
     if (
-        parseLexeme(lexArr, nextPosObj, "import") && // short-circuits if false.
-        parseIdentifierList(lexArr, nextPosObj) &&
-        parseLexeme(lexArr, nextPosObj, "from") &&
-        parseImportPath(lexArr, nextPosObj) &&
-        parseLexeme(lexArr, nextPosObj, ";")
+        parseLexeme(lexArr, nextPos, "import", false) && // short-circuits if false.
+        parseIdentifierList(lexArr, nextPos, true) &&
+        parseLexeme(lexArr, nextPos, "from", true) &&
+        parseImportPath(lexArr, nextPos, true) &&
+        parseLexeme(lexArr, nextPos, ";", true)
     ) {
         // if all parsing succeeded, return true.
         return true;
     } else {
+        if (successRequired) {
+            throw new ParseException(
+                nextPos[0], "Expected import statement"
+            );
+        }
         // else reset the position to the initial one and return false.
-        nextPosObj.pos = initialPos;
+        nextPos[0] = initialPos;
         return false;
     }
 }
 
 
-export function parseFunDef(lexArr, nextPosObj) {
+export function parseFunDef(lexArr, nextPos, successRequired) {
     // record the initial position.
-    var initialPos = nextPosObj.pos;
+    var initialPos = nextPos[0];
     // parse function definition.
     if (
         (
-            parseLexeme(lexArr, nextPosObj, "function")
+            parseLexeme(lexArr, nextPos, "function", false)
             || // short circuits if true, has less precedence than &&.
-            parseLexeme(lexArr, nextPosObj, "export") &&
-            parseLexeme(lexArr, nextPosObj, "function")
+            parseLexeme(lexArr, nextPos, "export", false) &&
+            parseLexeme(lexArr, nextPos, "function", false)
         )
         &&
-        parseIdentifier(lexArr, nextPosObj) &&
-        parseIdentifierTuple(lexArr, nextPosObj) &&
-        parseStmt(lexArr, nextPosObj)
+        parseIdentifier(lexArr, nextPos, true) &&
+        parseIdentifierTuple(lexArr, nextPos, true) &&
+        parseStmt(lexArr, nextPos, true)
     ) {
         // if all parsing succeeded, return true.
         return true;
     } else {
+        if (successRequired) {
+            throw new ParseException(
+                nextPos[0], "Expected function definition"
+            );
+        }
         // else reset the position to the initial one and return false.
-        nextPosObj.pos = initialPos;
+        nextPos[0] = initialPos;
         return false;
     }
 }
 
-function parseStmt(lexArr, nextPosObj) {
-    return
-        parseBlockStmt(lexArr, nextPosObj) ||
-        parseIfElseStmt(lexArr, nextPosObj) ||
-        parseSwitchStmt(lexArr, nextPosObj) ||
-        parseLoopStmt(lexArr, nextPosObj) ||
-        parseSingleStmt(lexArr, nextPosObj);
+function parseStmt(lexArr, nextPos, successRequired) {
+    let ret =
+        parseBlockStmt(lexArr, nextPos) ||
+        parseIfElseStmt(lexArr, nextPos) ||
+        parseSwitchStmt(lexArr, nextPos) ||
+        parseLoopStmt(lexArr, nextPos) ||
+        parseSingleStmt(lexArr, nextPos);
+
+    if (successRequired && !ret) {
+        throw new ParseException(
+            nextPos[0], "Expected statement"
+        );
+    }
+    return ret;
 }
 
 
-function parseBlockStmt(lexArr, nextPosObj) {
-    var initialPos = nextPosObj.pos;
+function parseBlockStmt(lexArr, nextPos, successRequired) {
+    var initialPos = nextPos[0];
     if (
-        parseLexeme(lexArr, nextPosObj, "{") &&
-        parseStmtList(lexArr, nextPosObj) &&
-        parseLexeme(lexArr, nextPosObj, "}")
+        parseLexeme(lexArr, nextPos, "{", false) &&
+        parseStmtList(lexArr, nextPos, false) &&
+        parseLexeme(lexArr, nextPos, "}", false)
     ) {
         return true;
     } else {
-        nextPosObj.pos = initialPos;
+        if (successRequired) {
+            throw new ParseException(
+                nextPos[0], "Expected block statement"
+            );
+        }
+        nextPos[0] = initialPos;
         return false;
     }
 }
 
 
-function parseStmtList(lexArr, nextPosObj) {
+function parseStmtList(lexArr, nextPos, successRequired) {
     // parse as many statements as possible of a possibly empty statement list.
-    while (parseStmt(lexArr, nextPosObj));
+    while (parseStmt(lexArr, nextPos));
     // always return true.
     return true;
 }
@@ -96,35 +126,36 @@ function parseStmtList(lexArr, nextPosObj) {
 
 
 
-function parseIfStmt(lexArr, nextPosObj) {
-    var initialPos = nextPosObj.pos;
+function parseIfStmt(lexArr, nextPos, successRequired) {
+    var initialPos = nextPos[0];
     if (
-        parseLexeme(lexArr, nextPosObj, "if") &&
-        parseLexeme(lexArr, nextPosObj, "(") &&
-        parseExp(lexArr, nextPosObj) &&
-        parseLexeme(lexArr, nextPosObj, ")") &&
-        parseStmt(lexArr, nextPosObj)
+        parseLexeme(lexArr, nextPos, "if", false) &&
+        parseLexeme(lexArr, nextPos, "(", true) &&
+        parseExp(lexArr, nextPos, true) &&
+        parseLexeme(lexArr, nextPos, ")", true) &&
+        parseStmt(lexArr, nextPos, true)
     ) {
         return true;
     } else {
-        nextPosObj.pos = initialPos;
+        if (successRequired) {
+            throw new ParseException(
+                nextPos[0], "Expected if statement"
+            );
+        }
+        nextPos[0] = initialPos;
         return false;
     }
 }
 
-function parseIfElseStmt(lexArr, nextPosObj) {
-    var initialPos = nextPosObj.pos;
+function parseIfElseStmt(lexArr, nextPos, successRequired) {
+    var initialPos = nextPos[0];
     // parse the initial mandatory if statement.
-    if (!parseIfStmt(lexArr, nextPosObj)) {
+    if (!parseIfStmt(lexArr, nextPos, successRequired)) {
         return false;
     }
     // parse all following else statements if there are any.
-    while (parseLexeme(lexArr, nextPosObj, "else")) {
-        if (!parseStmt(lexArr, nextPosObj)) {
-            // reset the position to the initial one and return false.
-            nextPosObj.pos = initialPos;
-            return false; // (One could also throw an exception here.)
-        }
+    while (parseLexeme(lexArr, nextPos, "else")) {
+        parseStmt(lexArr, nextPos, true);
     }
     // if all those else keywords were followed by a statement, return true.
     return true;
@@ -133,80 +164,94 @@ function parseIfElseStmt(lexArr, nextPosObj) {
 
 
 
-function parseSwitchStmt(lexArr, nextPosObj, isPure) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function parseSwitchStmt(lexArr, nextPos, isPure) {
     // TODO: Implement.
 }
 
 
-function parseLoopStmt(lexArr, nextPosObj) {
+function parseLoopStmt(lexArr, nextPos) {
     return
-        parseForLoopStmt(lexArr, nextPosObj) ||
-        parseWhileLoopStmt(lexArr, nextPosObj) ||
-        parseDoWhileLoopStmt(lexArr, nextPosObj);
+        parseForLoopStmt(lexArr, nextPos) ||
+        parseWhileLoopStmt(lexArr, nextPos) ||
+        parseDoWhileLoopStmt(lexArr, nextPos);
 }
 
 
 
-function parseForLoopStmt(lexArr, nextPosObj) {
-    var initialPos = nextPosObj.pos;
+function parseForLoopStmt(lexArr, nextPos) {
+    var initialPos = nextPos[0];
     if (
-        parseLexeme(lexArr, nextPosObj, "for") &&
-        parseLexeme(lexArr, nextPosObj, "(") &&
+        parseLexeme(lexArr, nextPos, "for") &&
+        parseLexeme(lexArr, nextPos, "(") &&
         // The JS syntax doc seems ambiguous here, so let's be safe.
-        parseVarAssignment(lexArr, nextPosObj) && // includes ';'.
-        parseExp(lexArr, nextPosObj) &&
-        parseLexeme(lexArr, nextPosObj, ";") &&
-        parseExp(lexArr, nextPosObj) &&
-        parseLexeme(lexArr, nextPosObj, ")") &&
-        parseStmt(lexArr, nextPosObj)
+        parseVarAssignment(lexArr, nextPos) && // includes ';'.
+        parseExp(lexArr, nextPos) &&
+        parseLexeme(lexArr, nextPos, ";") &&
+        parseExp(lexArr, nextPos) &&
+        parseLexeme(lexArr, nextPos, ")") &&
+        parseStmt(lexArr, nextPos)
     ) {
         return true;
     } else {
-        nextPosObj.pos = initialPos;
+        nextPos[0] = initialPos;
         return false;
     }
 
 
     // record the initial position.
-    var initialPos = nextPosObj.pos;
+    var initialPos = nextPos[0];
     // parse the initial 'for'.
-    if (lexArr[nextPosObj.pos] == "for") {
-        nextPosObj.pos = nextPosObj.pos + 1;
+    if (lexArr[nextPos[0]] == "for") {
+        nextPos[0] = nextPos[0] + 1;
     } else {
         return false;
     }
     // parse the first '('.
-    if (lexArr[nextPosObj.pos] == "(") {
-        nextPosObj.pos = nextPosObj.pos + 1;
+    if (lexArr[nextPos[0]] == "(") {
+        nextPos[0] = nextPos[0] + 1;
     } else {
-        nextPosObj.pos = initialPos;
+        nextPos[0] = initialPos;
         return false;
     }
     // parse two statements.
     if (
-        !parseVarAssignStmt(lexArr, nextPosObj) ||
-        !parseExp(lexArr, nextPosObj) ... // TODO: continue (but refactor, btw).
+        !parseVarAssignStmt(lexArr, nextPos) ||
+        !parseExp(lexArr, nextPos) ... // TODO: continue (but refactor, btw).
     ) {
-        nextPosObj.pos = initialPos;
+        nextPos[0] = initialPos;
         return false;
     }
     // parse final expression before the last ')'.
-    if (!parseExp(lexArr, nextPosObj)) {
-        nextPosObj.pos = initialPos;
+    if (!parseExp(lexArr, nextPos)) {
+        nextPos[0] = initialPos;
         return false;
     }
 
     // parse the last ')' before the consequence statement.
-    if (lexArr[nextPosObj.pos] == ")") {
-        nextPosObj.pos = nextPosObj.pos + 1;
+    if (lexArr[nextPos[0]] == ")") {
+        nextPos[0] = nextPos[0] + 1;
     } else {
-        nextPosObj.pos = initialPos;
+        nextPos[0] = initialPos;
         return false;
     }
     // parse a block statement, and only that; not a single statement (even
     // though such is allowed in JS proper).
-    if (!parseBlockStmt(lexArr, nextPosObj)) {
-        nextPosObj.pos = initialPos;
+    if (!parseBlockStmt(lexArr, nextPos)) {
+        nextPos[0] = initialPos;
         return false;
     }
     // if all parsing succeeded, return true.
@@ -232,29 +277,29 @@ function parseForLoopStmt(lexArr, nextPosObj) {
 
 
 // TODO: Change.
-function parseReturnStmt(lexArr, nextPosObj) {
+function parseReturnStmt(lexArr, nextPos, successRequired) {
     // return true immediately, if the return type is "void."
     if (varType.retType == "void") {
         return true;
     }
     // record the initial position.
-    var initialPos = nextPosObj.pos;
+    var initialPos = nextPos[0];
     // parse the first keyword lexeme of a return statement.
-    if (lexArr[nextPosObj.pos] == "return") {
-        nextPosObj.pos = nextPosObj.pos + 1;
+    if (lexArr[nextPos[0]] == "return") {
+        nextPos[0] = nextPos[0] + 1;
     } else {
         return false;
     }
     // parse expression of the correct type and of the correct purity.
-    if (!parseExp(lexArr, nextPosObj)) {
-        nextPosObj.pos = initialPos;
+    if (!parseExp(lexArr, nextPos)) {
+        nextPos[0] = initialPos;
         return false;
     }
     // parse final ';'.
-    if (lexArr[nextPosObj.pos] == ";") {
-        nextPosObj.pos = nextPosObj.pos + 1;
+    if (lexArr[nextPos[0]] == ";") {
+        nextPos[0] = nextPos[0] + 1;
     } else {
-        nextPosObj.pos = initialPos;
+        nextPos[0] = initialPos;
         return false;
     }
     // if all parsing succeeded, return true.

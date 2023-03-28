@@ -7,11 +7,11 @@ export function parseModuleScript(script) {
     // TODO: implement exception handling here.
     var lexArr = lex(script);
     // initialize position object.
-    var nextPosObj = {pos:0};
+    var nextPos = [0];
 
     // if first lexeme is '"use strict"', continue, or else return false.
     if (lexArr[0] == '"use strict"' && lexArr[1] == ';') {
-        nextPosObj.pos = 2;
+        nextPos[0] = 2;
     } else {
         return false;
     }
@@ -23,7 +23,7 @@ export function parseModuleScript(script) {
     // parse a list of import statements.
     var matchWasFound = true;
     while (matchWasFound) {
-        matchWasFound = parseImportStmt(lexArr, nextPosObj);
+        matchWasFound = parseImportStmt(lexArr, nextPos);
     }
 
     // parse a list of function definitions or pure variable definitions. (We
@@ -31,13 +31,13 @@ export function parseModuleScript(script) {
     var matchWasFound = true;
     while (matchWasFound) {
         matchWasFound = (
-            parseFunDef(lexArr, nextPosObj) || // short-circuits if true.
-            parsePureVarDef...(lexArr, nextPosObj) // TODO: Change name
+            parseFunDef(lexArr, nextPos) || // short-circuits if true.
+            parsePureVarDef...(lexArr, nextPos) // TODO: Change name
         );
     }
 
     // return true only if all lexemes have been successfully parsed.
-    if (nextPosObj.pos == lexArr.length) {
+    if (nextPos[0] == lexArr.length) {
         return true;
     } else {
         return false;
@@ -53,11 +53,11 @@ export function parseModuleScript(script) {
 //     // TODO: implement exception handling here.
 //     var lexArr = lex(script);
 //     // initialize position object and ...
-//     var nextPosObj = {pos:0};
+//     var nextPos = {pos:0};
 //
 //     // if first lexeme is '"use strict"', continue, or else return false.
 //     if (lexArr[0] == '"use strict"' && lexArr[1] == ';') {
-//         nextPosObj.pos = 2;
+//         nextPos[0] = 2;
 //     } else {
 //         return false;
 //     }
@@ -65,17 +65,17 @@ export function parseModuleScript(script) {
 //     // parse a list of import statements.
 //     var matchWasFound = true;
 //     while (matchWasFound) {
-//         matchWasFound = parseImportStmt(lexArr, nextPosObj);
+//         matchWasFound = parseImportStmt(lexArr, nextPos);
 //     }
 //
 //     // parse a list of function definitions or pure variable definitions.
 //     var matchWasFound = true;
 //     while (matchWasFound) {
-//         matchWasFound = parseStmt(lexArr, nextPosObj);
+//         matchWasFound = parseStmt(lexArr, nextPos);
 //     }
 //
 //     // return true only if all lexemes have been successfully parsed.
-//     if (nextPosObj.pos == lexArr.length) {
+//     if (nextPos[0] == lexArr.length) {
 //         return true;
 //     } else {
 //         return false;
