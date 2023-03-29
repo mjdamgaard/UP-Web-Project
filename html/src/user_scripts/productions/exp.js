@@ -112,7 +112,20 @@ function parseAssignOp(lexArr, nextPos, successRequired) {
 // inside the body, not anywhere outside of function calls. Okay, let me say
 // that. And let me just require the users to explicaitely include these
 // prefixes as well (unless I should actually just make them be postfixes
-// instead.. (but still)).. (18:57)  
+// instead.. (but still)).. (18:57) ..Ah, I'll just allow both things: Either
+// a arr_ or obj_ prefix, og a arr/Arr or obj/Obj suffix (maening that the
+// number and string variables cannot e.g. end in [aA]rr or [oO]bj).:) (19:06)
+// ... Let me actually allow declaring/defining new array and object variables,
+// and let me then just keep these out of compound expressions, except for
+// the '.' operator. I'll then also just require obj_ and arr_ for functions
+// that return either arrays or objects, so that the normal variables can't
+// be assigned an array or object value. ..Well, and this also means that I
+// don't have to do anything special about implementing that "big data
+// structure." That is no longer necessary.
+// ..Hm, but now I also have to consider: Why not then also go back to having
+// at least a HTML element type, namely such that some runtime checks can be
+// avoided?.. But perhaps I will not include the printable text type, or the
+// safe-as-attribute-value string type.. But let me think about, though. (20:50)
 
 
 
