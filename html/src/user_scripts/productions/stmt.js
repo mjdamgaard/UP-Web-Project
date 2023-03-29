@@ -308,6 +308,7 @@ function parseSimpleStmt(lexArr, nextPos, successRequired) {
     return ret;
 }
 
+
 function parseReturnStmt(lexArr, nextPos, successRequired) {
     return
         parseLexeme(lexArr, nextPos, "return", successRequired) &&
@@ -316,9 +317,21 @@ function parseReturnStmt(lexArr, nextPos, successRequired) {
 }
 
 function parseExpStmt(lexArr, nextPos, successRequired) {
-    return
-        parseExp(lexArr, nextPos, successRequired) &&
-        parseLexeme(lexArr, nextPos, ";", true);
+    // parse either an assignment expression or a non-assignment expression.
+    if (
+        !parseAssignExp(lexArr, nextPos, false) &&
+        !parseExp(lexArr, nextPos, false)
+    ) {
+        if (successRequired) {
+            throw new ParseException(
+                lexArr[nextPos[0]], "Expected expression statement"
+            );
+        }
+        return false
+    }
+    // if an expression was parsed, parse the final ';' and either return
+    // true or throw an exception depending on the result.
+    return parseLexeme(lexArr, nextPos, ";", true);
 }
 
 

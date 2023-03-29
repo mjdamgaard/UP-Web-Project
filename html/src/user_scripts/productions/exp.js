@@ -15,19 +15,58 @@ class ParseException {
  * this logic.
  **/
 
-export function parseExp(lexArr, nextPos, successRequired) {
-    let ret =
-        parseAssignExp(lexArr, nextPos, false) ||
-        parseIndexExp(lexArr, nextPos, false) ||
-        ...
 
-    if (successRequired && !ret) {
+// TODO change such that a list of variables can be assigned at once. ..No,
+// I just tested, what I intended, and I can't do that.. (15:03)
+export function parseAssignExp(lexArr, nextPos, successRequired) {
+    return
+        parseIdentifier(lexArr, nextPos, successRequired) &&
+        parseAssignOp(lexArr, nextPos, false) &&
+        parseExp(lexArr, nextPos, false);
+}
+
+
+export function parseExp(lexArr, nextPos, successRequired) {
+    // all expressions have to begin with a monadic expression (i.e.
+    // containing only unary operators).
+    if (!parseMonadicExp(lexArr, nextPos, false)) {
         throw new ParseException(
             lexArr[nextPos[0]], "Expected expression"
         );
+        return false
     }
-    return ret;
+    // parse any subsequent binary operators as well as the
+    // expression that must come after them.
+    while (parseOperator(lexArr, nextPos, false)) {
+        parseExp(lexArr, nextPos, true);
+    }
+    // return true if those parsings succeeded.
+    return true;
 }
+
+
+function parseMonadicExp(lexArr, nextPos, successRequired) {
+
+}
+
+
+function parseOperator(lexArr, nextPos, successRequired) {
+
+}
+
+
+function parseAssignOp(lexArr, nextPos, successRequired) {
+
+}
+
+
+
+
+
+
+
+
+
 
 /* Here "Index" refers to special variables who can also been assigned and
  * changed via certain restricted operations. They cannot be passed to
@@ -45,31 +84,33 @@ export function parseExp(lexArr, nextPos, successRequired) {
 // to implement a typed version (perhaps like TypeScript), such that these
 // checks can be done statically instead. (14:00)
 
-export function parseAssignExp(lexArr, nextPos, successRequired) {
-    let initialPos = nextPos[0];
-    if (
-        parseIndexIdentifier(lexArr, nextPos, false) &&
-        parseLexeme(lexArr, nextPos, "=", false) && //no other assignOp allowed.
-        parseIndexExp(lexArr, nextPos, false)
-    ) {
-        return true;
-    }
-    nextPos[0] = initialPos;
-    if (
-        parseIdentifier(lexArr, nextPos, false) &&
-        parseAssignOp(lexArr, nextPos, false) &&
-        parseExp(lexArr, nextPos, false)
-    ) {
-        return true;
-    }
-    nextPos[0] = initialPos;
-    if (successRequired) {
-        throw new ParseException(
-            lexArr[nextPos[0]], "Expected assignment expression"
-        );
-    }
-    return false;
-}
+
+
+// export function parseAssignExp(lexArr, nextPos, successRequired) {
+//     let initialPos = nextPos[0];
+//     if (
+//         parseIndexIdentifier(lexArr, nextPos, false) &&
+//         parseLexeme(lexArr, nextPos, "=", false) && //no other assignOp allowed.
+//         parseIndexExp(lexArr, nextPos, false)
+//     ) {
+//         return true;
+//     }
+//     nextPos[0] = initialPos;
+//     if (
+//         parseIdentifier(lexArr, nextPos, false) &&
+//         parseAssignOp(lexArr, nextPos, false) &&
+//         parseExp(lexArr, nextPos, false)
+//     ) {
+//         return true;
+//     }
+//     nextPos[0] = initialPos;
+//     if (successRequired) {
+//         throw new ParseException(
+//             lexArr[nextPos[0]], "Expected assignment expression"
+//         );
+//     }
+//     return false;
+// }
 
 
 // function parseIndexExp(lexArr, nextPos, successRequired) {

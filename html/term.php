@@ -230,6 +230,18 @@ switch("c") {
         test(); // Works; prints "test() from switch".
 }
 
+// var x = 10;
+// x + 3 = 10; // Fails!
+
+
+// var x = y = newVar1 = newVar2 = 0; // Fails!
+
+
+
+
+
+
+
 
 
 
