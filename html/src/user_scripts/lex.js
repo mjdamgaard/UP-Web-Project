@@ -196,6 +196,7 @@ function lexMultiLineComment(script, len, lexArr, nextPos) {
 
 const oneCharSyms = [
     "\+", "\-", "\*", "=", "<", ">", "&", "\|", "\?", "!",
+    "~", "&", "|", "^"
     ";", ":", ",", ".",
     "\(", "\)", "\{", "\}", "\[", "\]"
 ];
@@ -206,7 +207,7 @@ const twoCharSyms = [
 ];
 
 const threeCharSyms = [
-    "===", "!=="
+    "===", "!==", "/~~"
 ];
 
 const oneCharSymPatt =

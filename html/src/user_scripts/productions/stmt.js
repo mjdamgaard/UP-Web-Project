@@ -15,31 +15,24 @@ parseLexeme(lexArr, nextPos, str, successRequired) {
     if (lexArr[nextPos[0]].str == str) {
         nextPos[0] = nextPos[0] + 1;
         return true;
-    } else {
-        if (successRequired) {
-            throw new ParseException(
-                lexArr[nextPos[0]], "Expected lexeme: \"" + str + "\""
-            );
-        }
-        return false;
     }
+    // if parsing has failed potentially trow an exception and return false.
+    if (successRequired) {
+        throw new ParseException(
+            lexArr[nextPos[0]], "Expected lexeme: \"" + str + "\""
+        );
+    }
+    return false;
 }
 
 
 export function parseImportStmt(lexArr, nextPos, successRequired) {
-    let ret =
+    return
         parseLexeme(lexArr, nextPos, "import", successRequired) &&
         parseImportIdentifierList(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, "from", true) &&
         parseImportPath(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, ";", true);
-
-    if (successRequired && !ret) {
-        throw new ParseException(
-            lexArr[nextPos[0]], "Expected import statement"
-        );
-    }
-    return ret;
 }
 
 // Obsolete.
@@ -54,15 +47,15 @@ function parseDef(lexArr, nextPos, successRequired) {
         parseVarDef(lexArr, nextPos, false)
     ) {
         return true;
-    } else {
-        if (successRequired) {
-            throw new ParseException(
-                lexArr[nextPos[0]], "Expected function or variable definition"
-            );
-        }
-        nextPos[0] = initialPos;
-        return false;
     }
+    // if parsing has failed potentially trow an exception and return false.
+    nextPos[0] = initialPos;
+    if (successRequired) {
+        throw new ParseException(
+            lexArr[nextPos[0]], "Expected function or variable definition"
+        );
+    }
+    return false;
 }
 
 export function parseOuterFunDef(lexArr, nextPos, successRequired) {
@@ -74,10 +67,15 @@ export function parseOuterFunDef(lexArr, nextPos, successRequired) {
     // parseFunDef() returns false.
     if (parseFunDef(lexArr, nextPos, successRequired)) {
         return true;
-    } else {
-        nextPos[0] = initialPos;
-        return false;
     }
+    // if parsing has failed potentially trow an exception and return false.
+    nextPos[0] = initialPos;
+    if (successRequired) {
+        throw new ParseException(
+            lexArr[nextPos[0]], "Expected function definition"
+        );
+    }
+    return false;
 }
 
 
@@ -148,6 +146,7 @@ function parseIfStmt(lexArr, nextPos, successRequired) {
         parseLexeme(lexArr, nextPos, ")", true) &&
         parseStmt(lexArr, nextPos, true);
 }
+
 
 function parseIfElseStmt(lexArr, nextPos, successRequired) {
     // parse the initial mandatory if statement.
