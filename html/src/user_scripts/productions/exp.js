@@ -16,14 +16,6 @@ class ParseException {
  **/
 
 
-// TODO change such that a list of variables can be assigned at once. ..No,
-// I just tested, what I intended, and I can't do that.. (15:03)
-export function parseAssignExp(lexArr, nextPos, successRequired) {
-    return
-        parseIdentifier(lexArr, nextPos, successRequired) &&
-        parseAssignOp(lexArr, nextPos, false) &&
-        parseExp(lexArr, nextPos, false);
-}
 
 
 export function parseExp(lexArr, nextPos, successRequired) {
@@ -36,7 +28,11 @@ export function parseExp(lexArr, nextPos, successRequired) {
         return false
     }
     // parse any subsequent binary operators as well as the
-    // expression that must come after them.
+    // expression that must come after them. (This would not work if we
+    // had to biuld an AST in order to define the semantics of the
+    // expression, but since we only need to verify the syntax, we can
+    // just parse it this way, without caring much about the precedence
+    // order.)
     while (parseOperator(lexArr, nextPos, false)) {
         parseExp(lexArr, nextPos, true);
     }
@@ -46,7 +42,17 @@ export function parseExp(lexArr, nextPos, successRequired) {
 
 
 function parseMonadicExp(lexArr, nextPos, successRequired) {
+    if (
+        parseParenthesesExp(lexArr, nextPos, false) ||
+        parseFunCall(lexArr, nextPos, false) ||
+        parseIncrementExp(lexArr, nextPos, false) ||
+        parseDecrementExp(lexArr, nextPos, false) ||
+        parseNotExp(lexArr, nextPos, false) ||
+        parseUnaryMinusOrPlusExp(lexArr, nextPos, false) ||
+        parseTypeOfExp(lexArr, nextPos, false) ||
+        parseVoidExp(lexArr, nextPos, false) ||
 
+    )
 }
 
 
@@ -83,6 +89,8 @@ function parseAssignOp(lexArr, nextPos, successRequired) {
 // the code is known to be safe, that's when we in the future should consider
 // to implement a typed version (perhaps like TypeScript), such that these
 // checks can be done statically instead. (14:00)
+// ... (17:49) Oh, I can just use unary plus instead, so let me actually
+// do that!
 
 
 

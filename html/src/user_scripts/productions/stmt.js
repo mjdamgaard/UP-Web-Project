@@ -1,8 +1,10 @@
 
-import parseIdentifier, parseImportIdentifierList, parseIdentifierTuple
-    from "./ident.js";
-import parseExp, parseAssignExp
-    from "./exp.js";
+import parseIdentifier, parseImportIdentifierList,
+    parseIdentifierTuple, parseNonEmptyIdentifierList
+from "./ident.js";
+
+import parseExp, parseAssignExp, parseAssignOp
+from "./exp.js";
 
 class ParseException {
     constructor(pos, msg) {
@@ -336,18 +338,20 @@ function parseExpStmt(lexArr, nextPos, successRequired) {
 
 
 
-
+// Var declaration without initialization is not implemented at this point.
 function parseVarDef(lexArr, nextPos, successRequired) {
     return
-        parseVarDecKeyword(lexArr, nextPos, successRequired) &&
-        parseAssignExp(lexArr, nextPos, true) &&
+        parseVarDefKeyword(lexArr, nextPos, successRequired) &&
+        parseNonEmptyIdentifierList(lexArr, nextPos, true) &&
+        parseAssignOp(lexArr, nextPos, true) &&
+        parseExp(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, ";", true);
 }
 
 
 
 
-function parseVarDecKeyword(lexArr, nextPos, successRequired) {
+function parseVarDefKeyword(lexArr, nextPos, successRequired) {
     let ret =
         parseLexeme(lexArr, nextPos, "var", false) ||
         parseLexeme(lexArr, nextPos, "let", false) ||

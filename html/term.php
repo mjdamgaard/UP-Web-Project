@@ -233,9 +233,13 @@ switch("c") {
 // var x = 10;
 // x + 3 = 10; // Fails!
 
+var x = 0;
+for (const c; x<3; x++);
 
-// var x = y = newVar1 = newVar2 = 0; // Fails!
-
+// var x = y = newVar1 = newVar2 = 0; // Fails!! ..Wait, now it succeeds..?..
+// // .. probalby because of hoisting..
+// // var x, y, newVar1, newVar2 = 0; // Suceeds!
+// Yes, fist line fails without the second line.(!)
 
 
 
