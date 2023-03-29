@@ -1,6 +1,8 @@
 
-import parseIdentifier from "./ident.js";
-import parseExp from "./exp.js";
+import parseIdentifier, parseImportIdentifierList, parseIdentifierTuple
+    from "./ident.js";
+import parseExp
+    from "./exp.js";
 
 class ParseException {
     constructor(pos, msg) {
@@ -26,8 +28,8 @@ parseLexeme(lexArr, nextPos, str, successRequired) {
 
 export function parseImportStmt(lexArr, nextPos, successRequired) {
     let ret =
-        parseLexeme(lexArr, nextPos, "import", false) &&
-        parseIdentifierList(lexArr, nextPos, true) &&
+        parseLexeme(lexArr, nextPos, "import", successRequired) &&
+        parseImportIdentifierList(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, "from", true) &&
         parseImportPath(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, ";", true);
@@ -40,8 +42,8 @@ export function parseImportStmt(lexArr, nextPos, successRequired) {
     return ret;
 }
 
-
-export parseDef(lexArr, nextPos, successRequired) {
+// Obsolete.
+function parseDef(lexArr, nextPos, successRequired) {
     // record the initial position.
     let initialPos = nextPos[0];
     // parse optional export keyword.
@@ -61,16 +63,41 @@ export parseDef(lexArr, nextPos, successRequired) {
         nextPos[0] = initialPos;
         return false;
     }
+}
 
+export function parseOuterFunDef(lexArr, nextPos, successRequired) {
+    // record the initial position.
+    let initialPos = nextPos[0];
+    // parse optional export keyword.
+    parseLexeme(lexArr, nextPos, "export", false);
+    // parse mandatory definitions, and make sure to reset nextPos if
+    // parseFunDef() returns false.
+    if (parseFunDef(lexArr, nextPos, successRequired)) {
+        return true;
+    } else {
+        nextPos[0] = initialPos;
+        return false;
+    }
 }
 
 
+
 function parseFunDef(lexArr, nextPos, successRequired) {
-    return
+    // record the initial position.
+    let initialPos = nextPos[0];
+    // parse function, and make sure to reset nextPos if parseIdentifier()
+    // is called but return false (and if successRequired == false).
+    if (
         parseLexeme(lexArr, nextPos, "function", successRequired) &&
-        parseIdentifier(lexArr, nextPos, true) &&
-        parseIdentifierTuple(lexArr, nextPos, true) &&
+        parseIdentifier(lexArr, nextPos, successRequired)
+    ) {
+        parseIdentifierTuple(lexArr, nextPos, true);
         parseStmt(lexArr, nextPos, true);
+        return true;
+    } else {
+        nextPos[0] = initialPos;
+        return false;
+    }
 }
 
 
@@ -81,7 +108,8 @@ function parseStmt(lexArr, nextPos, successRequired) {
         parseIfElseStmt(lexArr, nextPos, false) ||
         parseSwitchStmt(lexArr, nextPos, false) ||
         parseLoopStmt(lexArr, nextPos, false) ||
-        parseSingleStmt(lexArr, nextPos, false);
+        parseSingleStmt(lexArr, nextPos, false) ||
+        parseFunDef(lexArr, nextPos, false);
 
     if (successRequired && !ret) {
         throw new ParseException(

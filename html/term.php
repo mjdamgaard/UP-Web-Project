@@ -225,8 +225,10 @@ function test() {
 }
 test();
 
-
-
+switch("c") {
+    case "c" : function test() {console.log("test() from switch")}
+        test(); // Works; prints "test() from switch".
+}
 
 
 

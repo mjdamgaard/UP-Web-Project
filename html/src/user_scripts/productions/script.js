@@ -25,7 +25,7 @@ export function parseModuleScript(script) {
 
     // parse a list of function definitions or pure variable definitions. (We
     // only allow these two types of definitions at this point.)
-    while (parseDef(lexArr, nextPos, false));
+    while (parseOuterFunDef(lexArr, nextPos, false));
 
     // return true only if all lexemes have been successfully parsed.
     return (nextPos[0] == lexArr.length);
