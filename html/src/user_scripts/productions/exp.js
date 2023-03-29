@@ -35,7 +35,15 @@ export function parseExp(lexArr, nextPos, successRequired) {
  * indeces. (This fact is what requires us to be careful with them.)
  **/
 // (13:46, 29.03.23) Ah, no! I will simply just require parseInt() in all
-// array indeces!
+// array indeces! ...Hm, but if we call parseInt each time, couldn't we
+// just call a getElem() function..? ..Well, but then that might very well
+// be implemented with a call to parseInt() as well.. But aesthetically,
+// it seems a bit nicer with getElem().. (13:57) ..And it's a bit easier,
+// so let me just go with that, i.e. a user-defined getElem() function. And
+// when it comes to elimination such runtime checks, that is redundant when
+// the code is known to be safe, that's when we in the future should consider
+// to implement a typed version (perhaps like TypeScript), such that these
+// checks can be done statically instead. (14:00)
 
 export function parseAssignExp(lexArr, nextPos, successRequired) {
     let initialPos = nextPos[0];
