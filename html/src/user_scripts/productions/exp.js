@@ -34,7 +34,8 @@ export function parseExp(lexArr, nextPos, successRequired) {
  * functions. But as opposed to "normal" vars, they can be used as array
  * indeces. (This fact is what requires us to be careful with them.)
  **/
-
+// (13:46, 29.03.23) Ah, no! I will simply just require parseInt() in all
+// array indeces!
 
 export function parseAssignExp(lexArr, nextPos, successRequired) {
     let initialPos = nextPos[0];
@@ -63,40 +64,40 @@ export function parseAssignExp(lexArr, nextPos, successRequired) {
 }
 
 
-function parseIndexExp(lexArr, nextPos, successRequired) {
-    let ret =
-        parseIndexOperation(lexArr, nextPos, false) ||
-        parseIndexIncrement(lexArr, nextPos, false) ||
-        parseIndexDecrement(lexArr, nextPos, false) ||
-        parseIndexIdentifier(lexArr, nextPos, false) ||
-        parseIntLiteral(lexArr, nextPos, false) ||
-}
-
-function parseIndexOperation(lexArr, nextPos, successRequired) {
-    let initialPos = nextPos[0];
-    if (!parseIndexIdentifier(lexArr, nextPos, successRequired)) {
-        return false;
-    }
-    if (
-        !parseLexeme(lexArr, nextPos, "+", false) &&
-        !parseLexeme(lexArr, nextPos, "-", false) &&
-        !parseLexeme(lexArr, nextPos, "*", false) &&
-        !parseLexeme(lexArr, nextPos, "**", false) &&
-        !parseLexeme(lexArr, nextPos, "/~~", false) &&
-        !parseLexeme(lexArr, nextPos, "%", false)
-    ) {
-        nextPos[0] = initialPos;
-        if (successRequired) {
-            throw new ParseException(
-                lexArr[nextPos[0]], "Expected integer operator"
-            );
-        }
-        return false;
-    }
-    // this recursive call allows for a series of operations, but not with
-    // any parenthesis.
-    return parseIndexExp(lexArr, nextPos, successRequired);
-}
+// function parseIndexExp(lexArr, nextPos, successRequired) {
+//     let ret =
+//         parseIndexOperation(lexArr, nextPos, false) ||
+//         parseIndexIncrement(lexArr, nextPos, false) ||
+//         parseIndexDecrement(lexArr, nextPos, false) ||
+//         parseIndexIdentifier(lexArr, nextPos, false) ||
+//         parseIntLiteral(lexArr, nextPos, false) ||
+// }
+//
+// function parseIndexOperation(lexArr, nextPos, successRequired) {
+//     let initialPos = nextPos[0];
+//     if (!parseIndexIdentifier(lexArr, nextPos, successRequired)) {
+//         return false;
+//     }
+//     if (
+//         !parseLexeme(lexArr, nextPos, "+", false) &&
+//         !parseLexeme(lexArr, nextPos, "-", false) &&
+//         !parseLexeme(lexArr, nextPos, "*", false) &&
+//         !parseLexeme(lexArr, nextPos, "**", false) &&
+//         !parseLexeme(lexArr, nextPos, "/~~", false) &&
+//         !parseLexeme(lexArr, nextPos, "%", false)
+//     ) {
+//         nextPos[0] = initialPos;
+//         if (successRequired) {
+//             throw new ParseException(
+//                 lexArr[nextPos[0]], "Expected integer operator"
+//             );
+//         }
+//         return false;
+//     }
+//     // this recursive call allows for a series of operations, but not with
+//     // any parenthesis.
+//     return parseIndexExp(lexArr, nextPos, successRequired);
+// }
 
         // parseIndexSum(lexArr, nextPos, false) ||
         // parseIndexDifference(lexArr, nextPos, false) ||
