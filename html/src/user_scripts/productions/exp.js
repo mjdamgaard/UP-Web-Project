@@ -100,7 +100,19 @@ function parseAssignOp(lexArr, nextPos, successRequired) {
 // use "one big object" that users are only allowed to give as inputs to
 // functions, which can then do work on its nested objects.. (18:37) ..Yeah,
 // this could work.. One big datastructure, and then variables can only be
-// num and strings (including null, undefined, NaN, Infinity and so on)..
+// nums and strings (including null, undefined, NaN, Infinity and so on)..
+// ..And maybe I'll arrays as well for variables.. I might do that.. ..Or
+// maybe not; just to be safe from any weird JS behavier regarding assignment
+// operators and increaments.. ..But I should still allow array "literals"
+// as function input.. (18:47) ..Wait, but then I should also allow array
+// variables.. ..Oh no, not necessarily, no.. But I might have to go back to
+// requiring Hungarian notation for array and object variables, which can
+// then simply one come into being from being part of a functions input
+// variables, and they can then only appear as inputs for function calls
+// inside the body, not anywhere outside of function calls. Okay, let me say
+// that. And let me just require the users to explicaitely include these
+// prefixes as well (unless I should actually just make them be postfixes
+// instead.. (but still)).. (18:57)  
 
 
 
