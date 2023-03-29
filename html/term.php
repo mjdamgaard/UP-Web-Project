@@ -233,18 +233,33 @@ switch("c") {
 // var x = 10;
 // x + 3 = 10; // Fails!
 
-var x = 0;
-for (const c; x<3; x++);
+// var x = 0;
+// for (const c; x<3; x++); // Fails!
 
 // var x = y = newVar1 = newVar2 = 0; // Fails!! ..Wait, now it succeeds..?..
 // // .. probalby because of hoisting..
 // // var x, y, newVar1, newVar2 = 0; // Suceeds!
 // Yes, fist line fails without the second line.(!)
 
+// // Perhaps an important test:
+// function changeObjectRef(obj) {
+//     obj = {name:"new object"};
+// }
+//
+// var myObj = {name:"initial object", someOtherProp:10};
+// changeObjectRef(myObj);
+// console.log(myObj.name + myObj.someOtherProp.toString());
+// // Øv.. Doesn't work..
 
+function changeObjectRef(obj) {
+    obj = {name:"new object"};
+    console.log(obj.name);
+}
 
-
-
+var myObj = {name:"initial object", someOtherProp:10};
+changeObjectRef(myObj);
+console.log(myObj.name + myObj.someOtherProp.toString());
+// Øv.. Doesn't work..
 
 
 

@@ -91,6 +91,22 @@ function parseAssignOp(lexArr, nextPos, successRequired) {
 // checks can be done statically instead. (14:00)
 // ... (17:49) Oh, I can just use unary plus instead, so let me actually
 // do that!
+// ...(18:11) "pausing to consider if I should not do more to prevent the
+// ability to change objects outside of function calls.." ..Hm, but if objects
+// are always called by reference, shouldn't we be able to then re-reference
+// them in function calls..? (If so, I can perhaps just say that variables
+// cannot be assigned to object expressions..) ...One cannot change the
+// object pointer itself b passing it to a function, but I could perhaps just
+// use "one big object" that users are only allowed to give as inputs to
+// functions, which can then do work on its nested objects.. (18:37) ..Yeah,
+// this could work.. One big datastructure, and then variables can only be
+// num and strings (including null, undefined, NaN, Infinity and so on)..
+
+
+
+
+
+
 
 
 
