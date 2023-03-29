@@ -1,3 +1,68 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Here "num" refers to special variables who can also been assigned and
+ * changed via certain restricted operations. They cannot be passed to
+ * functions. But as opposed to "normal" vars, they can be used as array
+ * indeces
+ **/
+
+
+
+
+function parseAssignOp(lexArr, nextPos, successRequired) {
+    let ret =
+        parseLexeme(lexArr, nextPos, "=", false) ||
+        parseLexeme(lexArr, nextPos, "+=", false) ||
+        parseLexeme(lexArr, nextPos, "-=", false) ||
+        parseLexeme(lexArr, nextPos, "*=", false) ||
+        parseLexeme(lexArr, nextPos, "**=", false) ||
+        parseLexeme(lexArr, nextPos, "/=", false) ||
+        parseLexeme(lexArr, nextPos, "%=", false) ||
+        parseLexeme(lexArr, nextPos, "&&=", false) ||
+        parseLexeme(lexArr, nextPos, "||=", false);
+
+    if (successRequired && !ret) {
+        throw new ParseException(
+            lexArr[nextPos[0]], "Expected non-block statement"
+        );
+    }
+    return ret;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //TODO:
     // boolPureExp, numPureExp, arrPureExp, objPureExp,
     // strPureExp, txtPureExp, attPureExp

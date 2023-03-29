@@ -1,7 +1,7 @@
 
 import parseIdentifier, parseImportIdentifierList, parseIdentifierTuple
     from "./ident.js";
-import parseExp
+import parseExp, parseAssignExp
     from "./exp.js";
 
 class ParseException {
@@ -108,7 +108,7 @@ function parseStmt(lexArr, nextPos, successRequired) {
         parseIfElseStmt(lexArr, nextPos, false) ||
         parseSwitchStmt(lexArr, nextPos, false) ||
         parseLoopStmt(lexArr, nextPos, false) ||
-        parseSingleStmt(lexArr, nextPos, false) ||
+        parseSimpleStmt(lexArr, nextPos, false) ||
         parseFunDef(lexArr, nextPos, false);
 
     if (successRequired && !ret) {
@@ -122,6 +122,8 @@ function parseStmt(lexArr, nextPos, successRequired) {
 
 function parseBlockStmt(lexArr, nextPos, successRequired) {
     return
+        // With this implementation, e.q. {prop1:exp, prop2:exp}; is not
+        // allowed as a statment.
         parseLexeme(lexArr, nextPos, "{", successRequired) &&
         parseStmtList(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, "}", true);
@@ -292,28 +294,20 @@ function parseDoWhileLoopStmt(lexArr, nextPos, successRequired) {
 
 
 
-function parseSingleStmt(lexArr, nextPos, successRequired) {
+function parseSimpleStmt(lexArr, nextPos, successRequired) {
     let ret =
         parseLexeme(lexArr, nextPos, ";", false) ||
         parseVarDef(lexArr, nextPos, false) ||
-        parseVarAssign(lexArr, nextPos, false) ||
-        parseReturnStmt(lexArr, nextPos, false) ||
-        parseExpStmt(lexArr, nextPos, false);
+        parseExpStmt(lexArr, nextPos, false) ||
+        parseReturnStmt(lexArr, nextPos, false);
 
     if (successRequired && !ret) {
         throw new ParseException(
-            lexArr[nextPos[0]], "Expected non-block statement"
+            lexArr[nextPos[0]], "Expected simple statement"
         );
     }
     return ret;
 }
-
-parseExpStmt(lexArr, nextPos, successRequired) {
-    return
-        parseExp(lexArr, nextPos, successRequired) &&
-        parseLexeme(lexArr, nextPos, ";", true);
-}
-
 
 function parseReturnStmt(lexArr, nextPos, successRequired) {
     return
@@ -322,44 +316,24 @@ function parseReturnStmt(lexArr, nextPos, successRequired) {
         parseLexeme(lexArr, nextPos, ";", true);
 }
 
-
-function parseVarAssign(lexArr, nextPos, successRequired) {
+function parseExpStmt(lexArr, nextPos, successRequired) {
     return
-        parseIdentifier(lexArr, nextPos, successRequired) &&
-        parseAssignOp(lexArr, nextPos, true) &&
-        parseExp(lexArr, nextPos, true) &&
+        parseExp(lexArr, nextPos, successRequired) &&
         parseLexeme(lexArr, nextPos, ";", true);
 }
+
+
 
 
 function parseVarDef(lexArr, nextPos, successRequired) {
     return
         parseVarDecKeyword(lexArr, nextPos, successRequired) &&
-        parseVarAssign(lexArr, nextPos, true);
+        parseAssignExp(lexArr, nextPos, true) &&
+        parseLexeme(lexArr, nextPos, ";", true);
 }
 
 
 
-
-function parseAssignOp(lexArr, nextPos, successRequired) {
-    let ret =
-        parseLexeme(lexArr, nextPos, "=", false) ||
-        parseLexeme(lexArr, nextPos, "+=", false) ||
-        parseLexeme(lexArr, nextPos, "-=", false) ||
-        parseLexeme(lexArr, nextPos, "*=", false) ||
-        parseLexeme(lexArr, nextPos, "**=", false) ||
-        parseLexeme(lexArr, nextPos, "/=", false) ||
-        parseLexeme(lexArr, nextPos, "%=", false) ||
-        parseLexeme(lexArr, nextPos, "&&=", false) ||
-        parseLexeme(lexArr, nextPos, "||=", false);
-
-    if (successRequired && !ret) {
-        throw new ParseException(
-            lexArr[nextPos[0]], "Expected non-block statement"
-        );
-    }
-    return ret;
-}
 
 function parseVarDecKeyword(lexArr, nextPos, successRequired) {
     let ret =
@@ -369,7 +343,7 @@ function parseVarDecKeyword(lexArr, nextPos, successRequired) {
 
     if (successRequired && !ret) {
         throw new ParseException(
-            lexArr[nextPos[0]], "Expected non-block statement"
+            lexArr[nextPos[0]], "Expected variable definition keyword"
         );
     }
     return ret;
