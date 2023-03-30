@@ -42,6 +42,26 @@ export function parseExp(lexArr, nextPos, varType, successRequired) {
 }
 
 
+
+function parseExpList(lexArr, nextPos, varType, successRequired) {
+    // parse as many expressions as possible of a possibly empty list.
+    if (!parseExp(lexArr, nextPos, varType, false)) {
+        // return true even if no expression was parsed.
+        return true;
+    }
+    while (parseLexeme(lexArr, nextPos, ",", false)) {
+        parseExp(lexArr, nextPos, varType, true);
+    }
+    // always return true (unless exception was thrown).
+    return true;
+}
+
+
+
+
+
+/* The normal "value" expressions (numerical and string expressions) */
+
 function parseValExp(lexArr, nextPos, successRequired) {
     // all non-assignment expressions have to begin with a monadic expression
     // (i.e. containing only unary operators).
@@ -66,7 +86,7 @@ function parseMonadicValExp(lexArr, nextPos, successRequired) {
     let ret =
         parseParenthesesExp(lexArr, nextPos, false) ||
         parseArrElemExp(lexArr, nextPos, false) ||
-        parseFunCall(lexArr, nextPos, false) ||
+        parseValFunCall(lexArr, nextPos, false) ||
         parseIncrementOrDecrementExp(lexArr, nextPos, false) ||
         // this fails if a non-value identifier is parsed.
         parseIdentifier(lexArr, nextPos, ["value"], false) ||
@@ -135,7 +155,7 @@ function parseArrElemExp(lexArr, nextPos, successRequired) {
 
 
 
-function parseFunCall(lexArr, nextPos, successRequired) {
+function parseValFunCall(lexArr, nextPos, successRequired) {
     let initialPos = nextPos[0];
     if (
         // since retType == ["value"] and not ["undefined"],
@@ -259,6 +279,167 @@ function parseVoidExp(lexArr, nextPos, successRequired) {
         return false;
     }
 }
+
+
+
+
+function parseBinaryOp(lexArr, nextPos, successRequired) {
+    let ret =
+        parseLexeme(lexArr, nextPos, "**", false) ||
+        parseLexeme(lexArr, nextPos, "*", false) ||
+        parseLexeme(lexArr, nextPos, "/", false) ||
+        parseLexeme(lexArr, nextPos, "%", false) ||
+        parseLexeme(lexArr, nextPos, "+", false) ||
+        parseLexeme(lexArr, nextPos, "-", false) ||
+        parseLexeme(lexArr, nextPos, "<<", false) ||
+        parseLexeme(lexArr, nextPos, ">>", false) ||
+        parseLexeme(lexArr, nextPos, ">>>", false) ||
+        parseLexeme(lexArr, nextPos, "<", false) ||
+        parseLexeme(lexArr, nextPos, ">", false) ||
+        parseLexeme(lexArr, nextPos, "<=", false) ||
+        parseLexeme(lexArr, nextPos, ">=", false) ||
+        parseLexeme(lexArr, nextPos, "==", false) ||
+        parseLexeme(lexArr, nextPos, "!=", false) ||
+        parseLexeme(lexArr, nextPos, "===", false) ||
+        parseLexeme(lexArr, nextPos, "!==", false) ||
+        parseLexeme(lexArr, nextPos, "&", false) ||
+        parseLexeme(lexArr, nextPos, "^", false) ||
+        parseLexeme(lexArr, nextPos, "|", false) ||
+        parseLexeme(lexArr, nextPos, "&&", false) ||
+        parseLexeme(lexArr, nextPos, "||", false) ||
+        parseLexeme(lexArr, nextPos, "??", false);
+
+    if (successRequired && !ret) {
+        throw new ParseException(
+            lexArr[nextPos[0]], "Expected binary operator"
+        );
+    }
+    return ret;
+}
+
+
+
+
+
+
+/* The "array" expressions */
+
+function parseArrExp(lexArr, nextPos, successRequired) {
+    let ret =
+        parseArrLiteral(lexArr, nextPos, false) ||
+        parseArrFunCall(lexArr, nextPos, false) ||
+        // this fails if a non-value identifier is parsed.
+        parseIdentifier(lexArr, nextPos, ["array"], false);
+
+    if (successRequired && !ret) {
+        throw new ParseException(
+            lexArr[nextPos[0]], "Expected numeric or string expression"
+        );
+    }
+    return ret;
+
+}
+
+
+function parseArrFunCall(lexArr, nextPos, successRequired) {
+    let initialPos = nextPos[0];
+    if (
+        // since retType == ["array"] and not ["undefined"],
+        // parseFunIdentifier() will verify the return type rather than
+        // setting it.
+        !parseFunIdentifier(lexArr, nextPos, ["array"], successRequired) ||
+        !parseLexeme(lexArr, nextPos, "(", successRequired)
+    ) {
+        nextPos[0] = initialPos;
+        return false;
+    }
+    // parse optional list of expressions (of any type).
+    parseExpList(lexArr, nextPos, ["any"], false);
+    // parse the mandatory final ")".
+    return parseLexeme(lexArr, nextPos, ")", true);
+}
+
+
+function parseArrLiteral(lexArr, nextPos, successRequired) {
+    return
+        parseLexeme(lexArr, nextPos, "[", successRequired) &&
+        parseExpList(lexArr, nextPos, ["value"], true) &&
+        parseLexeme(lexArr, nextPos, "]", true);
+}
+
+
+
+
+
+
+/* The "object" expressions */
+
+function parseObjExp(lexArr, nextPos, successRequired) {
+    let ret =
+        parseObjLiteral(lexArr, nextPos, false) ||
+        parseObjFunCall(lexArr, nextPos, false) ||
+        // this fails if a non-value identifier is parsed.
+        parseIdentifier(lexArr, nextPos, ["object"], false);
+
+    if (successRequired && !ret) {
+        throw new ParseException(
+            lexArr[nextPos[0]], "Expected numeric or string expression"
+        );
+    }
+    return ret;
+
+}
+
+
+function parseObjFunCall(lexArr, nextPos, successRequired) {
+    let initialPos = nextPos[0];
+    if (
+        // since retType == ["object"] and not ["undefined"],
+        // parseFunIdentifier() will verify the return type rather than
+        // setting it.
+        !parseFunIdentifier(lexArr, nextPos, ["object"], successRequired) ||
+        !parseLexeme(lexArr, nextPos, "(", successRequired)
+    ) {
+        nextPos[0] = initialPos;
+        return false;
+    }
+    // parse optional list of expressions (of any type).
+    parseExpList(lexArr, nextPos, ["any"], false);
+    // parse the mandatory final ")".
+    return parseLexeme(lexArr, nextPos, ")", true);
+}
+
+
+
+
+function parseObjLiteral(lexArr, nextPos, successRequired) {
+    return
+        parseLexeme(lexArr, nextPos, "{", successRequired) &&
+        parseObjPropList(lexArr, nextPos, true) &&
+        parseLexeme(lexArr, nextPos, "}", true);
+}
+
+
+function parseObjPropList(lexArr, nextPos, successRequired) {
+    // parse as many object proporties as possible of a possibly empty list.
+    if (!parseObjProp(lexArr, nextPos, false)) {
+        // return true even if no expression was parsed.
+        return true;
+    }
+    while (parseLexeme(lexArr, nextPos, ",", false)) {
+        parseObjProp(lexArr, nextPos, true);
+    }
+    // always return true (unless exception was thrown).
+    return true;
+}
+
+// Hm, shouldn't I actually also use types for property identifiers?..
+function parseObjProp(lexArr, nextPos, successRequired) {
+
+}
+
+
+
 
 
 
@@ -401,25 +582,25 @@ function parseVoidExp(lexArr, nextPos, successRequired) {
 
 
 
-function parseAssignOp(lexArr, nextPos, successRequired) {
-    let ret =
-        parseLexeme(lexArr, nextPos, "=", false) ||
-        parseLexeme(lexArr, nextPos, "+=", false) ||
-        parseLexeme(lexArr, nextPos, "-=", false) ||
-        parseLexeme(lexArr, nextPos, "*=", false) ||
-        parseLexeme(lexArr, nextPos, "**=", false) ||
-        parseLexeme(lexArr, nextPos, "/=", false) ||
-        parseLexeme(lexArr, nextPos, "%=", false) ||
-        parseLexeme(lexArr, nextPos, "&&=", false) ||
-        parseLexeme(lexArr, nextPos, "||=", false);
-
-    if (successRequired && !ret) {
-        throw new ParseException(
-            lexArr[nextPos[0]], "Expected non-block statement"
-        );
-    }
-    return ret;
-}
+// function parseAssignOp(lexArr, nextPos, successRequired) {
+//     let ret =
+//         parseLexeme(lexArr, nextPos, "=", false) ||
+//         parseLexeme(lexArr, nextPos, "+=", false) ||
+//         parseLexeme(lexArr, nextPos, "-=", false) ||
+//         parseLexeme(lexArr, nextPos, "*=", false) ||
+//         parseLexeme(lexArr, nextPos, "**=", false) ||
+//         parseLexeme(lexArr, nextPos, "/=", false) ||
+//         parseLexeme(lexArr, nextPos, "%=", false) ||
+//         parseLexeme(lexArr, nextPos, "&&=", false) ||
+//         parseLexeme(lexArr, nextPos, "||=", false);
+//
+//     if (successRequired && !ret) {
+//         throw new ParseException(
+//             lexArr[nextPos[0]], "Expected non-block statement"
+//         );
+//     }
+//     return ret;
+// }
 
 
 
