@@ -110,6 +110,10 @@ function parseParenthesesExp(lexArr, nextPos, successRequired) {
 }
 
 
+// Note that arrays always has "value" elements here. If wanting to use multi-
+// dimensional arrays or other arrays, give them the type "object" and use
+// function calls to access their elements (as well as to initialize and do
+// work on them).
 function parseArrElemExp(lexArr, nextPos, successRequired) {
     let initialPos = nextPos[0];
     if (
@@ -123,7 +127,7 @@ function parseArrElemExp(lexArr, nextPos, successRequired) {
         // The ~~ in arr[~~exp] means that the expression will always be
         // an integer, not a string.
         parseLexeme(lexArr, nextPos, "~", true) &&
-        parseLexeme(lexArr, nextPos, "~", true) &&
+        // parseLexeme(lexArr, nextPos, "~", true) && // one is enough.
         parseValExp(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, "]", true);
 }
@@ -133,63 +137,128 @@ function parseArrElemExp(lexArr, nextPos, successRequired) {
 
 function parseFunCall(lexArr, nextPos, successRequired) {
     let initialPos = nextPos[0];
-    var retType = ["undefined"];
     if (
-        !parseFunIdentifier(lexArr, nextPos, retType, successRequired) ||
+        // since retType == ["value"] and not ["undefined"],
+        // parseFunIdentifier() will verify the return type rather than
+        // setting it.
+        !parseFunIdentifier(lexArr, nextPos, ["value"], successRequired) ||
         !parseLexeme(lexArr, nextPos, "(", successRequired)
     ) {
         nextPos[0] = initialPos;
         return false;
     }
-    // parse ...
+    // parse optional list of expressions (of any type).
+    parseExpList(lexArr, nextPos, ["any"], false);
+    // parse the mandatory final ")".
+    return parseLexeme(lexArr, nextPos, ")", true);
 }
 
 
-
-
-
-
-
-
-
-
-function parseValExp(lexArr, nextPos, successRequired) {
-    // first parse an optional list of variables and '='s.
-    var varType = ["undefined"];
-    while (parseIdentifier(lexArr, nextPos, varType, false)) {
-        if (varType[0] != "value") {
+function parseIncrementOrDecrementExp(lexArr, nextPos, successRequired) {
+    let initialPos = nextPos[0];
+    // parse a prefix incremment or decrement expression.
+    if (
+        parseLexeme(lexArr, nextPos, "++", false)) ||
+        parseLexeme(lexArr, nextPos, "--", false))
+    ) {
+        // parse a then-mandatory value variable and nothing else.
+        return parseIdentifier(lexArr, nextPos, ["value"], true)
+    }
+    // parse a postfix incremment or decrement expression.
+    if (
+        !parseIdentifier(lexArr, nextPos, ["value"], false) ||
+        !parseLexeme(lexArr, nextPos, "++", false) &&
+            !parseLexeme(lexArr, nextPos, "--", false)
+    ) {
+        nextPos[0] = initialPos;
+        if (successRequired) {
             throw new ParseException(
-                lexArr[nextPos[0]], "Expected numeric or string expression"
+                lexArr[nextPos[0]], "Expected increment or decrement expression"
             );
         }
-        // if a variable is not followed by '=', go back one step and parse
-        // a non-assignment expression.
-        if (!parseLexeme(lexArr, nextPos, "=", false)) {
-            nextPos[0] = nextPos[0] - 1;
-            break;
-        }
+        return false;
+    } else {
+        return true;
     }
-    // all non-assignment expressions have to begin with a monadic expression
-    // (i.e. containing only unary operators).
-    if (!parseMonadicValExp(lexArr, nextPos, false)) {
-        throw new ParseException(
-            lexArr[nextPos[0]], "Expected expression"
-        );
-        return false
-    }
-    // parse any subsequent operators as well as the
-    // expression that must come after them. (This would not work if we
-    // had to build an AST in order to define the semantics of the
-    // expression, but since we only need to verify the syntax, we can
-    // just parse it this way, without caring much about the precedence
-    // order.)
-    while (parseValOperationTail(lexArr, nextPos, false));
-    // return true if those parsings succeeded.
-    return true;
-
 }
 
+function parseNotExp(lexArr, nextPos, successRequired) {
+    let initialPos = nextPos[0];
+    // parse a logically or bitwise negated expression.
+    if (
+        parseLexeme(lexArr, nextPos, "!", false)) ||
+        parseLexeme(lexArr, nextPos, "~", false))
+    ) {
+        // parse a then-mandatory value variable and nothing else.
+        return parseValExp(lexArr, nextPos, true)
+    } else {
+        nextPos[0] = initialPos;
+        if (successRequired) {
+            throw new ParseException(
+                lexArr[nextPos[0]], "Expected negated expression"
+            );
+        }
+        return false;
+    }
+}
 
+function parseUnaryMinusOrPlusExp(lexArr, nextPos, successRequired) {
+    let initialPos = nextPos[0];
+    // parse a unary plus or minus expression.
+    if (
+        parseLexeme(lexArr, nextPos, "+", false)) ||
+        parseLexeme(lexArr, nextPos, "-", false))
+    ) {
+        // parse a then-mandatory value variable and nothing else.
+        return parseValExp(lexArr, nextPos, true)
+    } else {
+        nextPos[0] = initialPos;
+        if (successRequired) {
+            throw new ParseException(
+                lexArr[nextPos[0]], "Expected unary plus or minus expression"
+            );
+        }
+        return false;
+    }
+}
+
+function parseTypeOfExp(lexArr, nextPos, successRequired) {
+    let initialPos = nextPos[0];
+    // parse a typeof expression.
+    if (
+        parseLexeme(lexArr, nextPos, "typeof", false))
+    ) {
+        // parse a then-mandatory expression of any type and nothing else.
+        return parseExp(lexArr, nextPos, ["any"], true)
+    } else {
+        nextPos[0] = initialPos;
+        if (successRequired) {
+            throw new ParseException(
+                lexArr[nextPos[0]], "Expected typeof expression"
+            );
+        }
+        return false;
+    }
+}
+
+function parseVoidExp(lexArr, nextPos, successRequired) {
+    let initialPos = nextPos[0];
+    // parse a void expression.
+    if (
+        parseLexeme(lexArr, nextPos, "void", false))
+    ) {
+        // parse a then-mandatory expression of any type and nothing else.
+        return parseExp(lexArr, nextPos, ["any"], true)
+    } else {
+        nextPos[0] = initialPos;
+        if (successRequired) {
+            throw new ParseException(
+                lexArr[nextPos[0]], "Expected void expression"
+            );
+        }
+        return false;
+    }
+}
 
 
 
