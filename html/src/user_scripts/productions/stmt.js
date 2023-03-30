@@ -1,5 +1,5 @@
 
-import parseIdentifier, parseImportIdentifierList,
+import parseIdentifier, parseFunIdentifier, parseImportIdentifierList,
     parseIdentifierTuple, parseNonEmptyIdentifierList
 from "./ident.js";
 
@@ -71,7 +71,7 @@ function parseFunDef(lexArr, nextPos, successRequired) {
     if (
         parseLexeme(lexArr, nextPos, "function", successRequired) &&
         // this also records the return type by setting retType[0] to it.
-        parseIdentifier(lexArr, nextPos, retType, successRequired)
+        parseFunIdentifier(lexArr, nextPos, retType, successRequired)
     ) {
         parseIdentifierTuple(lexArr, nextPos, true);
         parseStmt(lexArr, nextPos, retType, true);

@@ -262,6 +262,9 @@ console.log(myObj.name + myObj.someOtherProp.toString());
 // Øv.. Doesn't work..
 
 
+var x = 1 ? 1 - 1 ? -42 : 1 ? 42 : -42 : -42;
+console.log(x.toString()); // Does as expected, it seems.
+
 
 
 // var data =

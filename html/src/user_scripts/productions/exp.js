@@ -17,55 +17,175 @@ class ParseException {
 
 
 
+export function parseExp(lexArr, nextPos, varType, successRequired) {
+    if (varType[0] == "any") {
+        let ret =
+            parseValExp(lexArr, nextPos, false) ||
+            parseArrExp(lexArr, nextPos, false) ||
+            parseObjExp(lexArr, nextPos, false);
 
-export function parseExp(lexArr, nextPos, successRequired) {
-    // all expressions have to begin with a monadic expression (i.e.
-    // containing only unary operators).
-    if (!parseMonadicExp(lexArr, nextPos, false)) {
+        if (successRequired && !ret) {
+            throw new ParseException(
+                lexArr[nextPos[0]], "Expected expression"
+            );
+        }
+        return ret;
+    } else if (varType[0] == "value") {
+        return parseValExp(lexArr, nextPos, successRequired);
+
+    } else if (varType[0] == "array") {
+        return parseArrExp(lexArr, nextPos, successRequired);
+
+    } else if (varType[0] == "object") {
+        return parseObjExp(lexArr, nextPos, successRequired);
+    }
+}
+
+
+function parseValExp(lexArr, nextPos, successRequired) {
+    let initialPos = nextPos[0];
+    // first parse an optional list of variables and '='s.
+    var varType = ["undefined"];
+    while (parseIdentifier(lexArr, nextPos, varType, false)) {
+        if (varType[0] != "value") {
+            throw new ParseException(
+                lexArr[nextPos[0]], "Expected numeric or string expression"
+            );
+        }
+        // if a variable is not followed by '=', go back one step and parse
+        // a non-assignment expression.
+        if (!parseLexeme(lexArr, nextPos, "=", false)) {
+            nextPos[0] = nextPos[0] - 1;
+            break;
+        }
+    }
+    // all non-assignment expressions have to begin with a monadic expression
+    // (i.e. containing only unary operators).
+    if (!parseMonadicValExp(lexArr, nextPos, successRequired)) {
+        nextPos[0] = initialPos;
+        return false;
+    }
+    // parse any subsequent operators as well as the
+    // expression that must come after them. (This would not work if we
+    // had to build an AST in order to define the semantics of the
+    // expression, but since we only need to verify the syntax, we can
+    // just parse it this way, without caring much about the precedence
+    // order.)
+    while (parseValOperationTail(lexArr, nextPos, false));
+    // return true if those parsings succeeded.
+    return true;
+
+}
+
+
+
+function parseMonadicValExp(lexArr, nextPos, successRequired) {
+    var varType = ["value"];
+    let ret =
+        parseParenthesesExp(lexArr, nextPos, false) ||
+        parseFunCall(lexArr, nextPos, false) ||
+        parseIncrementOrDecrementExp(lexArr, nextPos, false) ||
+        parseIdentifier(lexArr, nextPos, varType, false) ||
+        parseNotExp(lexArr, nextPos, false) ||
+        parseUnaryMinusOrPlusExp(lexArr, nextPos, false) ||
+        parseTypeOfExp(lexArr, nextPos, false) ||
+        parseVoidExp(lexArr, nextPos, false);
+
+    if (varType[0] != "value") {
+        throw new ParseException(
+            lexArr[nextPos[0]], "Expected numeric or string expression"
+        );
+    }
+    if (successRequired && !ret) {
+        throw new ParseException(
+            lexArr[nextPos[0]], "Expected numeric or string expression"
+        );
+    }
+    return ret;
+}
+
+
+function parseValOperationTail(lexArr, nextPos, successRequired) {
+    if (!parseBinaryOp(lexArr, nextPos, false)) {
+        return
+            parseLexeme(lexArr, nextPos, "?", successRequired) &&
+            parseValExp(lexArr, nextPos, true) &&
+            parseLexeme(lexArr, nextPos, ":", true) &&
+            parseValExp(lexArr, nextPos, true);
+    }
+    // if binary operator was parsed, parse exp an either return true or
+    // throw an exception depending on the outcome.
+    return parseValExp(lexArr, nextPos, true);
+}
+
+
+
+
+
+
+function parseParenthesesExp(lexArr, nextPos, successRequired) {
+    return
+        parseLexeme(lexArr, nextPos, "(", successRequired) &&
+        parseValExp(lexArr, nextPos, true) &&
+        parseLexeme(lexArr, nextPos, ")", true);
+}
+
+function parseFunCall(lexArr, nextPos, successRequired) {
+    let initialPos = nextPos[0];
+    var retType = ["undefined"];
+    if (
+        !parseFunIdentifier(lexArr, nextPos, retType, successRequired) ||
+        !parseLexeme(lexArr, nextPos, "(", successRequired)
+    ) {
+        return false;
+    }
+    // parse ...
+}
+
+
+
+
+
+
+
+
+
+
+function parseValExp(lexArr, nextPos, successRequired) {
+    // first parse an optional list of variables and '='s.
+    var varType = ["undefined"];
+    while (parseIdentifier(lexArr, nextPos, varType, false)) {
+        if (varType[0] != "value") {
+            throw new ParseException(
+                lexArr[nextPos[0]], "Expected numeric or string expression"
+            );
+        }
+        // if a variable is not followed by '=', go back one step and parse
+        // a non-assignment expression.
+        if (!parseLexeme(lexArr, nextPos, "=", false)) {
+            nextPos[0] = nextPos[0] - 1;
+            break;
+        }
+    }
+    // all non-assignment expressions have to begin with a monadic expression
+    // (i.e. containing only unary operators).
+    if (!parseMonadicValExp(lexArr, nextPos, false)) {
         throw new ParseException(
             lexArr[nextPos[0]], "Expected expression"
         );
         return false
     }
-    // parse any subsequent binary operators as well as the
+    // parse any subsequent operators as well as the
     // expression that must come after them. (This would not work if we
-    // had to biuld an AST in order to define the semantics of the
+    // had to build an AST in order to define the semantics of the
     // expression, but since we only need to verify the syntax, we can
     // just parse it this way, without caring much about the precedence
     // order.)
-    while (parseOperator(lexArr, nextPos, false)) {
-        parseExp(lexArr, nextPos, true);
-    }
+    while (parseValOperationTail(lexArr, nextPos, false));
     // return true if those parsings succeeded.
     return true;
-}
-
-
-function parseMonadicExp(lexArr, nextPos, successRequired) {
-    if (
-        parseParenthesesExp(lexArr, nextPos, false) ||
-        parseFunCall(lexArr, nextPos, false) ||
-        parseIncrementExp(lexArr, nextPos, false) ||
-        parseDecrementExp(lexArr, nextPos, false) ||
-        parseNotExp(lexArr, nextPos, false) ||
-        parseUnaryMinusOrPlusExp(lexArr, nextPos, false) ||
-        parseTypeOfExp(lexArr, nextPos, false) ||
-        parseVoidExp(lexArr, nextPos, false) ||
-
-    )
-}
-
-
-function parseOperator(lexArr, nextPos, successRequired) {
 
 }
-
-
-function parseAssignOp(lexArr, nextPos, successRequired) {
-
-}
-
-
 
 
 
