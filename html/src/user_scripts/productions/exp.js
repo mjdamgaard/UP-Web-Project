@@ -121,6 +121,13 @@ function parseObjPropOrArrElemOrFunCall(
     return parseLexeme(lexArr, nextPos, ")", true);
 }
 
+
+// I have to remake it so that all compound expressions are parsed this way
+// where the "current type" is continously recorded at each step before moving
+// on to the next operation (including arr[] and fun()). And I still intend
+// to make varType into a class, also so that parseFunIdentifier() can be
+// absorbed into parseIdentifier().
+
 function parseObjPropOrArrElemOrFunCallTail(
     lexArr, nextPos, varType, currentVarType, successRequired
 ) {
