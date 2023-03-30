@@ -433,7 +433,10 @@ function parseObjPropList(lexArr, nextPos, successRequired) {
     return true;
 }
 
-// Hm, shouldn't I actually also use types for property identifiers?..
+// Hm, shouldn't I actually also use types for property identifiers?.. ..Yes,
+// I definitely should, and I should even make sure, that properties can
+// be function types, namely with any of the three return types, "value",
+// "array" and "object"! :)
 function parseObjProp(lexArr, nextPos, successRequired) {
 
 }
