@@ -280,8 +280,9 @@ function parseDoWhileLoopStmt(lexArr, nextPos, retType, successRequired) {
 function parseSimpleStmt(lexArr, nextPos, retType, successRequired) {
     let ret =
         parseLexeme(lexArr, nextPos, ";", false) ||
-        parseVarDef(lexArr, nextPos, false) ||
-        parseExpStmt(lexArr, nextPos, ["any"], false) ||
+        parseVarDec(lexArr, nextPos, false) ||
+        parseVarAssignment(lexArr, nextPos, false) ||
+        parseExpStmt(lexArr, nextPos, false) ||
         parseReturnStmt(lexArr, nextPos, retType, false);
 
     if (successRequired && !ret) {
@@ -319,6 +320,38 @@ function parseReturnStmt(lexArr, nextPos, retType, successRequired) {
 
 
 
+function parseVarAssignment(lexArr, nextPos, successRequired) {
+    let initialPos = nextPos[0];
+    var varType = ["undefined"];
+    // parseIdentifier() sets the varType if varType[0] == "undefined", and if
+    // varType[0] != "undefined", the identifier is instead type-checked
+    // according to varType.
+    if (
+        !parseIdentifier(lexArr, nextPos, varType, successRequired) ||
+        !parseLexeme(lexArr, nextPos, "=", successRequired)
+    ) {
+        nextPos[0] = initialPos;
+        return false;
+    }
+    // first parse an optional list of variables and '='s.
+    // (Recall: If varType[0] != "undefined", the identifier is instead type-
+    // checked according to varType.)
+    while (parseIdentifier(lexArr, nextPos, varType, false)) {
+        // if a variable is not followed by '=', go back one step and parse
+        // a non-assignment expression followed by ";".
+        if (!parseLexeme(lexArr, nextPos, "=", false)) {
+            nextPos[0] = nextPos[0] - 1;
+            break;
+        }
+    }
+    // parse the mentioned non-assignment expression followed by ";".
+    return
+        parseExp(lexArr, nextPos, varType, true) &&
+        parseLexeme(lexArr, nextPos, ";", true);
+}
+
+
+
 
 function parseExpStmt(lexArr, nextPos, successRequired) {
     return
@@ -327,13 +360,19 @@ function parseExpStmt(lexArr, nextPos, successRequired) {
 }
 
 
-// Value variables are either string or double variables (or undefined, NaN,
-// etc.).
-// (Var declaration without initialization is not implemented at this point.)
-function parseVarDef(lexArr, nextPos, varType, successRequired) {
+
+function parseVarDec(lexArr, nextPos, varType, successRequired) {
+    // parse mandatory var, let or const keyword or return false.
+    if (!parseVarDecKeyword(lexArr, nextPos, successRequired)) {
+        return false;
+    }
+    // parse mandatory identifier list.
+    parseNonEmptyIdentifierList(lexArr, nextPos, varType, true);
+    // either parse ";" or if that fails, parse the then mandatory "= <exp> ;".
+    if (parseLexeme(lexArr, nextPos, ";", false)) {
+        return true
+    }
     return
-        parseVarDefKeyword(lexArr, nextPos, successRequired) &&
-        parseNonEmptyIdentifierList(lexArr, nextPos, varType, true) &&
         parseLexeme(lexArr, nextPos, "=", true) &&
         parseExp(lexArr, nextPos, varType, true) &&
         parseLexeme(lexArr, nextPos, ";", true);
@@ -342,7 +381,7 @@ function parseVarDef(lexArr, nextPos, varType, successRequired) {
 
 
 
-function parseVarDefKeyword(lexArr, nextPos, successRequired) {
+function parseVarDecKeyword(lexArr, nextPos, successRequired) {
     let ret =
         parseLexeme(lexArr, nextPos, "var", false) ||
         parseLexeme(lexArr, nextPos, "let", false) ||

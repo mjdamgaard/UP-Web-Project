@@ -43,26 +43,9 @@ export function parseExp(lexArr, nextPos, varType, successRequired) {
 
 
 function parseValExp(lexArr, nextPos, successRequired) {
-    let initialPos = nextPos[0];
-    // first parse an optional list of variables and '='s.
-    var varType = ["undefined"];
-    while (parseIdentifier(lexArr, nextPos, varType, false)) {
-        if (varType[0] != "value") {
-            throw new ParseException(
-                lexArr[nextPos[0]], "Expected numeric or string expression"
-            );
-        }
-        // if a variable is not followed by '=', go back one step and parse
-        // a non-assignment expression.
-        if (!parseLexeme(lexArr, nextPos, "=", false)) {
-            nextPos[0] = nextPos[0] - 1;
-            break;
-        }
-    }
     // all non-assignment expressions have to begin with a monadic expression
     // (i.e. containing only unary operators).
     if (!parseMonadicValExp(lexArr, nextPos, successRequired)) {
-        nextPos[0] = initialPos;
         return false;
     }
     // parse any subsequent operators as well as the
@@ -80,22 +63,18 @@ function parseValExp(lexArr, nextPos, successRequired) {
 
 
 function parseMonadicValExp(lexArr, nextPos, successRequired) {
-    var varType = ["value"];
     let ret =
         parseParenthesesExp(lexArr, nextPos, false) ||
+        parseArrElemExp(lexArr, nextPos, false) ||
         parseFunCall(lexArr, nextPos, false) ||
         parseIncrementOrDecrementExp(lexArr, nextPos, false) ||
-        parseIdentifier(lexArr, nextPos, varType, false) ||
+        // this fails if a non-value identifier is parsed.
+        parseIdentifier(lexArr, nextPos, ["value"], false) ||
         parseNotExp(lexArr, nextPos, false) ||
         parseUnaryMinusOrPlusExp(lexArr, nextPos, false) ||
         parseTypeOfExp(lexArr, nextPos, false) ||
         parseVoidExp(lexArr, nextPos, false);
 
-    if (varType[0] != "value") {
-        throw new ParseException(
-            lexArr[nextPos[0]], "Expected numeric or string expression"
-        );
-    }
     if (successRequired && !ret) {
         throw new ParseException(
             lexArr[nextPos[0]], "Expected numeric or string expression"
@@ -130,6 +109,28 @@ function parseParenthesesExp(lexArr, nextPos, successRequired) {
         parseLexeme(lexArr, nextPos, ")", true);
 }
 
+
+function parseArrElemExp(lexArr, nextPos, successRequired) {
+    let initialPos = nextPos[0];
+    if (
+        !parseIdentifier(lexArr, nextPos, ["array"], successRequired) ||
+        !parseLexeme(lexArr, nextPos, "[", successRequired)
+    ) {
+        nextPos[0] = initialPos;
+        return false;
+    }
+    return
+        // The ~~ in arr[~~exp] means that the expression will always be
+        // an integer, not a string.
+        parseLexeme(lexArr, nextPos, "~", true) &&
+        parseLexeme(lexArr, nextPos, "~", true) &&
+        parseValExp(lexArr, nextPos, true) &&
+        parseLexeme(lexArr, nextPos, "]", true);
+}
+
+
+
+
 function parseFunCall(lexArr, nextPos, successRequired) {
     let initialPos = nextPos[0];
     var retType = ["undefined"];
@@ -137,6 +138,7 @@ function parseFunCall(lexArr, nextPos, successRequired) {
         !parseFunIdentifier(lexArr, nextPos, retType, successRequired) ||
         !parseLexeme(lexArr, nextPos, "(", successRequired)
     ) {
+        nextPos[0] = initialPos;
         return false;
     }
     // parse ...

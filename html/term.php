@@ -266,6 +266,8 @@ var x = 1 ? 1 - 1 ? -42 : 1 ? 42 : -42 : -42;
 console.log(x.toString()); // Does as expected, it seems.
 
 
+console.log(~~"I should not be printed");
+
 
 // var data =
 //     new QueryDataConstructors.SetInfoSecKeyReqData("u01", "c14", "r1");
