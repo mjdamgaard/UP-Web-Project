@@ -269,6 +269,56 @@ console.log(x.toString()); // Does as expected, it seems.
 console.log(~~"I should not be printed");
 
 
+
+
+// function test(arr) {
+//     arr = ["came from function"];
+// }
+// var arr = ["came outside of function"];
+// test(arr);
+// console.log(arr.toString()); // prints the outside version.
+
+
+// function test(arr) {
+//     arr[0] = "came from function";
+// } // Fails with "Uncaught TypeError: arr is undefined"..! What??
+// // var arr = ["came outside of function"];
+// // test(arr);
+// // console.log(arr.toString());
+// // ??..
+
+// function test2(arr) {
+//     arr[0] = "came from function";
+// } // Hm, maybe I just get a weird behavior when redifining test().. But that
+// // would be terrible..
+
+function test2(arr) {
+    arr[0] = "came from function";
+}
+var arr = ["came from outside of function"];
+test2(arr);
+console.log(arr.toString()); // Prints "came from function". Good, but what
+// about that earlier bug..??..
+
+// function test() {
+//     console.log("You should not see me!");
+// }
+//
+// function test() {
+//     1 + 1 == 2;
+// } // does nothing as expected..
+
+// function test(arr) {
+//     arr[0] = "came from function";
+// }
+// var arr = ["came from outside of function"];
+// test(arr);
+// console.log(arr.toString());
+
+// Ah! No worries! It's just because of hoisting, and the fact that I'm also
+// calling test() somewhere above. Okay, all is as expected then.
+
+
 // var data =
 //     new QueryDataConstructors.SetInfoSecKeyReqData("u01", "c14", "r1");
 // var data = new QueryDataConstructors.SetInfoReqData("s5");

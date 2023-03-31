@@ -21,6 +21,8 @@ class ParseException {
 // let the next elements denote the return or element type.. or in fact, let
 // me reverse the order such that I for instance can pop "fun" from the array
 // and then know that the remaining array contains the return type.
+// No, that doesn't quite work for me, so I'll go back to using that string
+// format as my varType data structure..
 
 
 
@@ -110,6 +112,9 @@ function parseObjPropArrElemFunCallString(
     ) {
         return true;
     } else {
+        if (varType[0] == "get") {
+            varType = currentType
+        }
         if (currentType[0] != varType[0])
         nextPos[0] = initialPos;
         return false;
