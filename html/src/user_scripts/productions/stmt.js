@@ -64,15 +64,23 @@ export function parseOuterFunDef(lexArr, nextPos, successRequired) {
 function parseFunDef(lexArr, nextPos, successRequired) {
     // record the initial position.
     let initialPos = nextPos[0];
-    // initialize variable to record the expected return type.
-    var retType = ["undefined"];
+    // initialize variable to get the expected return type. When the string
+    // is "get", parseIdentifier() will set it rather than verify it.
+    var varType = ["get"];
     // parse function, and make sure to reset nextPos if parseIdentifier()
     // is called but return false (and if successRequired == false).
     if (
         parseLexeme(lexArr, nextPos, "function", successRequired) &&
-        // this also records the return type by setting retType[0] to it.
-        parseFunIdentifier(lexArr, nextPos, retType, successRequired)
+        // this also records the return type by setting varType[0] to it.
+        parseIdentifier(lexArr, nextPos, varType, successRequired)
     ) {
+        if (!varType[0].test("/^fun/")) {
+            throw new ParseException(
+                lexArr[nextPos[0]], "Expected function identifier"
+            );
+        }
+        // get the return type signified with the tail of the varType string.
+        let retType = [varType[0].substring(3)];
         parseIdentifierTuple(lexArr, nextPos, true);
         parseStmt(lexArr, nextPos, retType, true);
         return true;
@@ -154,7 +162,7 @@ function parseSwitchStmt(lexArr, nextPos, retType, successRequired) {
     return
         parseLexeme(lexArr, nextPos, "switch", successRequired) &&
         parseLexeme(lexArr, nextPos, "(", true) &&
-        parseExp(lexArr, nextPos, ["value"], true) &&
+        parseExp(lexArr, nextPos, ["val"], true) &&
         parseLexeme(lexArr, nextPos, ")", true) &&
         parseCaseBlock(lexArr, nextPos, retType, true);
 }
@@ -181,12 +189,12 @@ function parseCaseStmt(lexArr, nextPos, retType, successRequired) {
     if (!parseLexeme(lexArr, nextPos, "case", successRequired)) {
         rerun false;
     }
-    parseExp(lexArr, nextPos, ["value"], true);
+    parseExp(lexArr, nextPos, ["val"], true);
     parseLexeme(lexArr, nextPos, ":", true)
 
     // parse an optional list of additional "case <exp> :" expressions.
     while (parseLexeme(lexArr, nextPos, "case", false)) {
-        parseExp(lexArr, nextPos, ["value"], true);
+        parseExp(lexArr, nextPos, ["val"], true);
         parseLexeme(lexArr, nextPos, ":", true);
     }
     // parse a non-empty list of statements possibly ending on "break;".
@@ -303,7 +311,7 @@ function parseReturnStmt(lexArr, nextPos, retType, successRequired) {
     // (In order to ease the typechecking, we only allow the return of single
     // variables.)
     // read the returned type from the varaible.
-    var varType = ["undefined"];
+    var varType = ["get"];
     // this also records the variables type by setting varType[0] to it.
     parseIdentifier(lexArr, nextPos, varType, true);
     // match this variable type with the required return type.
@@ -322,9 +330,9 @@ function parseReturnStmt(lexArr, nextPos, retType, successRequired) {
 
 function parseVarAssignment(lexArr, nextPos, successRequired) {
     let initialPos = nextPos[0];
-    var varType = ["undefined"];
-    // parseIdentifier() sets the varType if varType[0] == "undefined", and if
-    // varType[0] != "undefined", the identifier is instead type-checked
+    var varType = ["get"];
+    // parseIdentifier() sets the varType if varType[0] == "get", and if
+    // varType[0] != "get", the identifier is instead type-checked
     // according to varType.
     if (
         !parseIdentifier(lexArr, nextPos, varType, successRequired) ||
@@ -334,7 +342,7 @@ function parseVarAssignment(lexArr, nextPos, successRequired) {
         return false;
     }
     // first parse an optional list of variables and '='s.
-    // (Recall: If varType[0] != "undefined", the identifier is instead type-
+    // (Recall: If varType[0] != "get", the identifier is instead type-
     // checked according to varType.)
     while (parseIdentifier(lexArr, nextPos, varType, false)) {
         // if a variable is not followed by '=', go back one step and parse

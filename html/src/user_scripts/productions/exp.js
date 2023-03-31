@@ -10,6 +10,20 @@ class ParseException {
     }
 }
 
+// class VarType {
+//     constructor(typeClass, retOrElemType) {
+//         typeClass
+//     }
+// }
+// No, I'm just gonna use a string with a series of [(val)(arr)(obj)(fun)]
+// kaywords. (And I will use "get" instead of "undefined"..)
+// ...No, I can just use the fact that I am already using an array and just
+// let the next elements denote the return or element type.. or in fact, let
+// me reverse the order such that I for instance can pop "fun" from the array
+// and then know that the remaining array contains the return type.
+
+
+
 /* A lot of comments are omitted here, namely when the procedures follow the
  * same logical flow as in stmt.js. So see that source code to understand
  * this logic.
@@ -30,13 +44,13 @@ export function parseExp(lexArr, nextPos, varType, successRequired) {
             );
         }
         return ret;
-    } else if (varType[0] == "value") {
+    } else if (varType[0] == "val") {
         return parseValExp(lexArr, nextPos, successRequired);
 
-    } else if (varType[0] == "array") {
+    } else if (varType[0] == "arr") {
         return parseArrExp(lexArr, nextPos, successRequired);
 
-    } else if (varType[0] == "object") {
+    } else if (varType[0] == "obj") {
         return parseObjExp(lexArr, nextPos, successRequired);
     }
 }
@@ -57,70 +71,107 @@ function parseExpList(lexArr, nextPos, varType, successRequired) {
 }
 
 
+function parseParExpOrIdentifier(
+    lexArr, nextPos, varType, successRequired
+) {
+    let ret =
+        parseParExp(lexArr, nextPos, varType, false) ||
+        parseIdentifier(lexArr, nextPos, varType, false);
 
-function parseObjPropOrArrElemOrFunCall(
+    if (successRequired && !ret) {
+        throw new ParseException(
+            lexArr[nextPos[0]],
+            "Expected expression of type " + getTypeText(varType[0])
+        );
+    }
+    return ret;
+}
+
+function parseObjPropArrElemFunCallString(
     lexArr, nextPos, varType, successRequired
 ) {
     let initialPos = nextPos[0];
-    var currentVarType = ["undefined"];
-    if (
-        !parseIdentifier(lexArr, nextPos, currentVarType, successRequired)
-    ) {
+    // parse and get the type of the first parentheses expression or identifier.
+    var currentType = ["get"];
+    if (!parseParExpOrIdentifier(lexArr, nextPos, currentType, false)) {
+        if (successRequired) {
+            throw new ParseException(
+                lexArr[nextPos[0]],
+                "Expected expression"
+            );
+        }
         return false;
     }
+    // parse the optional rest (the tail) of the "ObjPropArrElemFunCall" string.
+    if (
+        parseObjPropArrElemFunCallTail(
+            lexArr, nextPos, varType, currentType, false
+        )
+    ) {
+        return true;
+    } else {
+        if (currentType[0] != varType[0])
+        nextPos[0] = initialPos;
+        return false;
+    }
+}
+
+
+function parseObjPropArrElemFunCallTail(
+    lexArr, nextPos, varType, successRequired
+) {
+    let initialPos = nextPos[0];
 
     if (parseLexeme(lexArr, nextPos, ".", false)) {
         // check that previous expression was of the "object" type.
-        if (currentVarType[0] != "object") {
+        if (currentType[0] != "obj") {
             throw new ParseException(
                 lexArr[nextPos[0]], "Trying to access property of non-object"
             );
         }
-        // call parseObjPropOrArrElemOrFunCall recursively
-        parseObjPropOrArrElemOrFunCall(lexArr, nextPos, varType, true);
+        // call parseObjPropOrArrElemOrFunCall recursively.
+        if (
+            parseObjPropArrElemFunCallString(
+                lexArr, nextPos, varType, successRequired
+            )
+        ) {
+            return true;
+        } else {
+            nextPos[0] = initialPos;
+            return false;
+        }
     }
 
     if (parseLexeme(lexArr, nextPos, "[", false)) {
-        // check that previous expression was of the "object" type.
-        if (currentVarType[0] != "array") {
+        // check that previous expression was of the "array" type.
+        if (!currentType[0].test("/^arr/")) {
             throw new ParseException(
                 lexArr[nextPos[0]],
                 "Trying to access array element of non-array"
             );
         }
+        // get the element type signified with the tail of the varType string.
+        let elemType = [varType[0].substring(3)];
+
         // The ~~ in arr[~~exp] means that the expression will always be
         // an integer, not a string.
         parseLexeme(lexArr, nextPos, "~", true);
-        // parseLexeme(lexArr, nextPos, "~", true) && // one is enough.
-        parseValExp(lexArr, nextPos, true);
+        // parseLexeme(lexArr, nextPos, "~", true); // one is enough..
+        parseExp(lexArr, nextPos, ["val"] true);
         parseLexeme(lexArr, nextPos, "]", true);
-        // call parseObjPropOrArrElemOrFunCall recursively
-        parseObjPropOrArrElemOrFunCall(lexArr, nextPos, varType, true);
+        // call parseObjPropOrArrElemOrFunCall recursively.
+        if (
+            parseObjPropArrElemFunCallString(
+                lexArr, nextPos, varType, successRequired
+            )
+        ) {
+            return true;
+        } else {
+            nextPos[0] = initialPos;
+            return false;
+        }
     }
-
-
-
-
-    if (varType[0] == "undefined") {
-
-
-    }
-    if (
-        // since retType == ["value"] and not ["undefined"],
-        // parseFunIdentifier() will verify the return type rather than
-        // setting it.
-        !parseIdentifier(lexArr, nextPos, ["value"], successRequired) ||
-        !parseLexeme(lexArr, nextPos, "(", successRequired)
-    ) {
-        nextPos[0] = initialPos;
-        return false;
-    }
-    // parse optional list of expressions (of any type).
-    parseExpList(lexArr, nextPos, ["any"], false);
-    // parse the mandatory final ")".
-    return parseLexeme(lexArr, nextPos, ")", true);
 }
-
 
 // I have to remake it so that all compound expressions are parsed this way
 // where the "current type" is continously recorded at each step before moving
@@ -134,13 +185,13 @@ function parseObjPropOrArrElemOrFunCallTail(
     // parse tail beginning with an accessing of an object property.
     if (parseLexeme(lexArr, nextPos, ".", false)) {
         // check that previous expression was of the "object" type.
-        if (currentVarType[0] != "object") {
+        if (currentVarType[0] != "obj") {
             throw new ParseException(
                 lexArr[nextPos[0]], "Trying to access property of non-object"
             );
         }
         // parse an identifier and record its type in a nextType variable.
-        let nextType = ["undefined"];
+        let nextType = ["get"];
         parseIdentifyer(lexArr, nextPos, nextType, true);
         // call parseObjPropOrArrElemOrFunCallTail() recursively
         return parseObjPropOrArrElemOrFunCallTail(
@@ -150,13 +201,13 @@ function parseObjPropOrArrElemOrFunCallTail(
 
     if (parseLexeme(lexArr, nextPos, "[", false)) {
         // check that previous expression was of the "object" type.
-        if (currentVarType[0] != "array") {
+        if (currentVarType[0] != "arr") {
             throw new ParseException(
                 lexArr[nextPos[0]],
                 "Trying to access array element of non-array"
             );
         }
-        if (varType[0] != "value" && varType[0] != "undefined") {
+        if (varType[0] != "val" && varType[0] != "get") {
             throw new ParseException(
                 lexArr[nextPos[0]],
                 "Trying to access an array element when expecting a non-" +
@@ -169,14 +220,14 @@ function parseObjPropOrArrElemOrFunCallTail(
         // parseLexeme(lexArr, nextPos, "~", true) && // one is enough.
         parseValExp(lexArr, nextPos, true);
         parseLexeme(lexArr, nextPos, "]", true);
-        // if varType was "undefined" initially, set it to "value" and return
+        // if varType was "get" initially, set it to "value" and return
         // true.
-        if (varType[0] == "undefined") {
-            varType[0] = "value";
+        if (varType[0] == "get") {
+            varType[0] = "val";
             return true;
         }
         // simply return true if varType was "value" already.
-        if (varType[0] == "value") {
+        if (varType[0] == "val") {
             return true;
         }
     }
@@ -218,7 +269,7 @@ function parseValExp(lexArr, nextPos, successRequired) {
 function parseMonadicValExp(lexArr, nextPos, successRequired) {
     let ret =
         parseParenthesesExp(lexArr, nextPos, false) ||
-        parseObjPropOrArrElemOrFunCall(lexArr, nextPos, ["value"], false) ||
+        parseObjPropOrArrElemOrFunCall(lexArr, nextPos, ["val"], false) ||
         // parseObjPropExp(lexArr, nextPos, false) ||
         // parseArrElemExp(lexArr, nextPos, false) ||
         // parseValFunCall(lexArr, nextPos, false) ||
@@ -318,11 +369,11 @@ function parseIncrementOrDecrementExp(lexArr, nextPos, successRequired) {
         parseLexeme(lexArr, nextPos, "--", false))
     ) {
         // parse a then-mandatory value variable and nothing else.
-        return parseIdentifier(lexArr, nextPos, ["value"], true)
+        return parseIdentifier(lexArr, nextPos, ["val"], true)
     }
     // parse a postfix incremment or decrement expression.
     if (
-        !parseIdentifier(lexArr, nextPos, ["value"], false) ||
+        !parseIdentifier(lexArr, nextPos, ["val"], false) ||
         !parseLexeme(lexArr, nextPos, "++", false) &&
             !parseLexeme(lexArr, nextPos, "--", false)
     ) {
@@ -465,7 +516,7 @@ function parseArrExp(lexArr, nextPos, successRequired) {
         parseArrLiteral(lexArr, nextPos, false) ||
         parseArrFunCall(lexArr, nextPos, false) ||
         // this fails if a non-value identifier is parsed.
-        parseIdentifier(lexArr, nextPos, ["array"], false);
+        parseIdentifier(lexArr, nextPos, ["arr"], false);
 
     if (successRequired && !ret) {
         throw new ParseException(
@@ -480,10 +531,10 @@ function parseArrExp(lexArr, nextPos, successRequired) {
 function parseArrFunCall(lexArr, nextPos, successRequired) {
     let initialPos = nextPos[0];
     if (
-        // since retType == ["array"] and not ["undefined"],
+        // since retType == ["arr"] and not ["get"],
         // parseFunIdentifier() will verify the return type rather than
         // setting it.
-        !parseFunIdentifier(lexArr, nextPos, ["array"], successRequired) ||
+        !parseFunIdentifier(lexArr, nextPos, ["arr"], successRequired) ||
         !parseLexeme(lexArr, nextPos, "(", successRequired)
     ) {
         nextPos[0] = initialPos;
@@ -499,7 +550,7 @@ function parseArrFunCall(lexArr, nextPos, successRequired) {
 function parseArrLiteral(lexArr, nextPos, successRequired) {
     return
         parseLexeme(lexArr, nextPos, "[", successRequired) &&
-        parseExpList(lexArr, nextPos, ["value"], true) &&
+        parseExpList(lexArr, nextPos, ["val"], true) &&
         parseLexeme(lexArr, nextPos, "]", true);
 }
 
@@ -515,7 +566,7 @@ function parseObjExp(lexArr, nextPos, successRequired) {
         parseObjLiteral(lexArr, nextPos, false) ||
         parseObjFunCall(lexArr, nextPos, false) ||
         // this fails if a non-value identifier is parsed.
-        parseIdentifier(lexArr, nextPos, ["object"], false);
+        parseIdentifier(lexArr, nextPos, ["obj"], false);
 
     if (successRequired && !ret) {
         throw new ParseException(
@@ -530,10 +581,10 @@ function parseObjExp(lexArr, nextPos, successRequired) {
 function parseObjFunCall(lexArr, nextPos, successRequired) {
     let initialPos = nextPos[0];
     if (
-        // since retType == ["object"] and not ["undefined"],
+        // since retType == ["obj"] and not ["get"],
         // parseFunIdentifier() will verify the return type rather than
         // setting it.
-        !parseFunIdentifier(lexArr, nextPos, ["object"], successRequired) ||
+        !parseFunIdentifier(lexArr, nextPos, ["obj"], successRequired) ||
         !parseLexeme(lexArr, nextPos, "(", successRequired)
     ) {
         nextPos[0] = initialPos;
