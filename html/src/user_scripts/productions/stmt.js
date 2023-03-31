@@ -74,14 +74,13 @@ function parseFunDef(lexArr, nextPos, successRequired) {
         // this also records the return type by setting varType[0] to it.
         parseIdentifier(lexArr, nextPos, varType, successRequired)
     ) {
-        if (varType.pop() != "fun") {
+        if (!varType[0].test("/^fun/")) {
             throw new ParseException(
                 lexArr[nextPos[0]], "Expected function identifier"
             );
         }
-        // get the return type signified with the array with the last "fun"
-        // element now popped off.
-        let retType = varType;
+        // get the return type signified with the tail of the varType string.
+        let retType = [varType[0].substring(3)];
         parseIdentifierTuple(lexArr, nextPos, true);
         parseStmt(lexArr, nextPos, retType, true);
         return true;

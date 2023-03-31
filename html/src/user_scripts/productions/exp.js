@@ -73,21 +73,21 @@ function parseExpList(lexArr, nextPos, varType, successRequired) {
 }
 
 
-function parseParExpOrIdentifier(
-    lexArr, nextPos, varType, successRequired
-) {
-    let ret =
-        parseParExp(lexArr, nextPos, varType, false) ||
-        parseIdentifier(lexArr, nextPos, varType, false);
-
-    if (successRequired && !ret) {
-        throw new ParseException(
-            lexArr[nextPos[0]],
-            "Expected expression of type " + getTypeText(varType[0])
-        );
-    }
-    return ret;
-}
+// function parseParExpOrIdentifier(
+//     lexArr, nextPos, varType, successRequired
+// ) {
+//     let ret =
+//         parseParExp(lexArr, nextPos, varType, false) ||
+//         parseIdentifier(lexArr, nextPos, varType, false);
+//
+//     if (successRequired && !ret) {
+//         throw new ParseException(
+//             lexArr[nextPos[0]],
+//             "Expected expression of type " + getTypeText(varType[0])
+//         );
+//     }
+//     return ret;
+// }
 
 function parseObjPropArrElemFunCallString(
     lexArr, nextPos, varType, successRequired
@@ -95,11 +95,10 @@ function parseObjPropArrElemFunCallString(
     let initialPos = nextPos[0];
     // parse and get the type of the first parentheses expression or identifier.
     var currentType = ["get"];
-    if (!parseParExpOrIdentifier(lexArr, nextPos, currentType, false)) {
+    if (!parseIdentifier(lexArr, nextPos, currentType, false)) {
         if (successRequired) {
             throw new ParseException(
-                lexArr[nextPos[0]],
-                "Expected expression"
+                lexArr[nextPos[0]], "Expected an identifier"
             );
         }
         return false;
@@ -113,20 +112,32 @@ function parseObjPropArrElemFunCallString(
         return true;
     } else {
         if (varType[0] == "get") {
-            varType = currentType
+            varType[0] = currentType[0];
+            return true;
         }
-        if (currentType[0] != varType[0])
-        nextPos[0] = initialPos;
-        return false;
+        if (varType[0] == "any") {
+            return true;
+        }
+        if (currentType[0] == varType[0]){
+            return true;
+        } else {
+            if (successRequired) {
+                throw new ParseException(
+                    lexArr[nextPos[0]],
+                    "Expected expression of type " + getTypeText(varType[0])
+                );
+            }
+            return false;
+        }
     }
 }
 
 
 function parseObjPropArrElemFunCallTail(
-    lexArr, nextPos, varType, successRequired
+    lexArr, nextPos, varType, currentType, successRequired
 ) {
-    let initialPos = nextPos[0];
-
+    // if the previous string is followed by a '.', parse mandatory string
+    // beginning with an identifier.
     if (parseLexeme(lexArr, nextPos, ".", false)) {
         // check that previous expression was of the "object" type.
         if (currentType[0] != "obj") {
@@ -135,18 +146,12 @@ function parseObjPropArrElemFunCallTail(
             );
         }
         // call parseObjPropOrArrElemOrFunCall recursively.
-        if (
-            parseObjPropArrElemFunCallString(
-                lexArr, nextPos, varType, successRequired
-            )
-        ) {
-            return true;
-        } else {
-            nextPos[0] = initialPos;
-            return false;
-        }
+        return parseObjPropArrElemFunCallString(lexArr, nextPos, varType, true);
+
     }
 
+    // if the previous string is followed by a '[', parse the rest of the
+    // [~~valExp] syntax and parse a new optional string tail.
     if (parseLexeme(lexArr, nextPos, "[", false)) {
         // check that previous expression was of the "array" type.
         if (!currentType[0].test("/^arr/")) {
@@ -155,28 +160,90 @@ function parseObjPropArrElemFunCallTail(
                 "Trying to access array element of non-array"
             );
         }
-        // get the element type signified with the tail of the varType string.
-        let elemType = [varType[0].substring(3)];
-
         // The ~~ in arr[~~exp] means that the expression will always be
         // an integer, not a string.
         parseLexeme(lexArr, nextPos, "~", true);
         // parseLexeme(lexArr, nextPos, "~", true); // one is enough..
-        parseExp(lexArr, nextPos, ["val"] true);
+        parseExp(lexArr, nextPos, ["val"], true);
         parseLexeme(lexArr, nextPos, "]", true);
+
+        // get the element type signified with the tail of the varType string.
+        let elemType = [varType[0].substring(3)];
         // call parseObjPropOrArrElemOrFunCall recursively.
         if (
             parseObjPropArrElemFunCallString(
-                lexArr, nextPos, varType, successRequired
+                lexArr, nextPos, varType, elemType, successRequired
             )
         ) {
             return true;
         } else {
-            nextPos[0] = initialPos;
-            return false;
+            if (varType[0] == "get") {
+                varType[0] = elemType[0];
+                return true;
+            }
+            if (varType[0] == "any") {
+                return true;
+            }
+            if (elemType[0] == varType[0]){
+                return true;
+            } else {
+                if (successRequired) {
+                    throw new ParseException(
+                        lexArr[nextPos[0]],
+                        "Expected expression of type " + getTypeText(varType[0])
+                    );
+                }
+                return false;
+            }
+        }
+    }
+
+    // if the previous string is followed by a '(', parse the rest of the
+    // expression list and parse a new optional string tail.
+    if (parseLexeme(lexArr, nextPos, "(", false)) {
+        // check that previous expression was of the "array" type.
+        if (!currentType[0].test("/^fun/")) {
+            throw new ParseException(
+                lexArr[nextPos[0]],
+                "Trying to call a non-function"
+            );
+        }
+        parseExpList(lexArr, nextPos, ["any"], true);
+        parseLexeme(lexArr, nextPos, ")", true);
+
+        // get the return type signified with the tail of the varType string.
+        let retType = [varType[0].substring(3)];
+        // call parseObjPropOrArrElemOrFunCall recursively.
+        if (
+            parseObjPropArrElemFunCallString(
+                lexArr, nextPos, varType, retType, successRequired
+            )
+        ) {
+            return true;
+        } else {
+            if (varType[0] == "get") {
+                varType[0] = retType[0];
+                return true;
+            }
+            if (varType[0] == "any") {
+                return true;
+            }
+            if (retType[0] == varType[0]){
+                return true;
+            } else {
+                if (successRequired) {
+                    throw new ParseException(
+                        lexArr[nextPos[0]],
+                        "Expected expression of type " + getTypeText(varType[0])
+                    );
+                }
+                return false;
+            }
         }
     }
 }
+
+
 
 // I have to remake it so that all compound expressions are parsed this way
 // where the "current type" is continously recorded at each step before moving
