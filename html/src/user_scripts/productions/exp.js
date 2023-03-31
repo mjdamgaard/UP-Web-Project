@@ -23,6 +23,17 @@ class ParseException {
 // and then know that the remaining array contains the return type.
 // No, that doesn't quite work for me, so I'll go back to using that string
 // format as my varType data structure..
+// ... Wait, why did I include all these types again, wasn't just because I
+// didn't want users to be able to.. Ah, right, to set the properties of
+// objects.. ..Hm, but can't I just simply.. Hm.. ..Oh! Because objects
+// parameters are not pointers, but are only called by reference so far as
+// to keep any changes you make to their elements or properties, then I must
+// simply be able to just limit how properties can be set/changed in this
+// language subset, and we're good!.. Hm, all that work, but whatever.. Yeah,
+// let me take a break and think about it a bit more, but yeah, I think I can
+// just make sure to limit objects changes to function calls, and then I should
+// be good, at least if I don't include any of those "+="-like assign operators,
+// that I don't really care to test for objects.. 
 
 
 
@@ -73,21 +84,7 @@ function parseExpList(lexArr, nextPos, varType, successRequired) {
 }
 
 
-// function parseParExpOrIdentifier(
-//     lexArr, nextPos, varType, successRequired
-// ) {
-//     let ret =
-//         parseParExp(lexArr, nextPos, varType, false) ||
-//         parseIdentifier(lexArr, nextPos, varType, false);
-//
-//     if (successRequired && !ret) {
-//         throw new ParseException(
-//             lexArr[nextPos[0]],
-//             "Expected expression of type " + getTypeText(varType[0])
-//         );
-//     }
-//     return ret;
-// }
+
 
 function parseObjPropArrElemFunCallString(
     lexArr, nextPos, varType, successRequired
