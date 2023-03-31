@@ -33,7 +33,15 @@ class ParseException {
 // let me take a break and think about it a bit more, but yeah, I think I can
 // just make sure to limit objects changes to function calls, and then I should
 // be good, at least if I don't include any of those "+="-like assign operators,
-// that I don't really care to test for objects.. 
+// that I don't really care to test for objects..
+// ... Nah, I don't really trust that people can't just build.. ..function
+// objects.. but if the properties cannot be set or changed except.. ..and
+// if only some identifiers are allowed as properties.. Maybe I should think
+// a bit more about it..
+// ... ... Can I not just have two types: functions and non-functions..?
+// ..Yes, that is probably, what I will do.. Should I then even transform
+// non-function variable names, or..? ..No, I shouldn't need to.. 
+
 
 
 
@@ -45,6 +53,47 @@ class ParseException {
 
 
 export function parseExp(lexArr, nextPos, varType, successRequired) {
+    let initialPos = nextPos[0];
+    // only value expression are allowed to be wrapped in parentheses.
+    if (parseParExp(lexArr, nextPos, false)) {
+        // after a value
+        if (varType[0] == "get") {
+            varType[0] = "val";
+            return true;
+        }
+        if (varType[0] == "any") {
+            return true;
+        }
+        if (currentType[0] == "val"){
+            return true;
+        } else {
+            if (successRequired) {
+                throw new ParseException(
+                    lexArr[nextPos[0]],
+                    "Expected expression of type " + getTypeText(varType[0])
+                );
+            }
+            nextPos[0] = initialPos;
+            return false;
+        }
+    }
+    // an expression has to start with
+    if (
+        !parseParExp(lexArr, nextPos, varType, false) &&
+        !parseObjPropArrElemFunCallString(lexArr, nextPos, varType, false)
+    ) {
+        if (successRequired) {
+            throw new ParseException(
+                lexArr[nextPos[0]],
+                "Expected expression of type " + getTypeText(varType[0])
+            );
+        }
+        return false;
+    }
+
+    let ret =
+        parseParExp(lexArr, nextPos, varType, false) ||
+        parseObjPropArrElemFunCallString(lexArr, nextPos, varType, false) ||
     if (varType[0] == "any") {
         let ret =
             parseValExp(lexArr, nextPos, false) ||
@@ -124,6 +173,7 @@ function parseObjPropArrElemFunCallString(
                     "Expected expression of type " + getTypeText(varType[0])
                 );
             }
+            nextPos[0] = initialPos;
             return false;
         }
     }
@@ -133,6 +183,7 @@ function parseObjPropArrElemFunCallString(
 function parseObjPropArrElemFunCallTail(
     lexArr, nextPos, varType, currentType, successRequired
 ) {
+    let initialPos = nextPos[0];
     // if the previous string is followed by a '.', parse mandatory string
     // beginning with an identifier.
     if (parseLexeme(lexArr, nextPos, ".", false)) {
@@ -190,6 +241,7 @@ function parseObjPropArrElemFunCallTail(
                         "Expected expression of type " + getTypeText(varType[0])
                     );
                 }
+                nextPos[0] = initialPos;
                 return false;
             }
         }
@@ -234,6 +286,7 @@ function parseObjPropArrElemFunCallTail(
                         "Expected expression of type " + getTypeText(varType[0])
                     );
                 }
+                nextPos[0] = initialPos;
                 return false;
             }
         }
@@ -242,73 +295,8 @@ function parseObjPropArrElemFunCallTail(
 
 
 
-// I have to remake it so that all compound expressions are parsed this way
-// where the "current type" is continously recorded at each step before moving
-// on to the next operation (including arr[] and fun()). And I still intend
-// to make varType into a class, also so that parseFunIdentifier() can be
-// absorbed into parseIdentifier().
 
-function parseObjPropOrArrElemOrFunCallTail(
-    lexArr, nextPos, varType, currentVarType, successRequired
-) {
-    // parse tail beginning with an accessing of an object property.
-    if (parseLexeme(lexArr, nextPos, ".", false)) {
-        // check that previous expression was of the "object" type.
-        if (currentVarType[0] != "obj") {
-            throw new ParseException(
-                lexArr[nextPos[0]], "Trying to access property of non-object"
-            );
-        }
-        // parse an identifier and record its type in a nextType variable.
-        let nextType = ["get"];
-        parseIdentifyer(lexArr, nextPos, nextType, true);
-        // call parseObjPropOrArrElemOrFunCallTail() recursively
-        return parseObjPropOrArrElemOrFunCallTail(
-            lexArr, nextPos, varType, nextType, true
-        );
-    }
 
-    if (parseLexeme(lexArr, nextPos, "[", false)) {
-        // check that previous expression was of the "object" type.
-        if (currentVarType[0] != "arr") {
-            throw new ParseException(
-                lexArr[nextPos[0]],
-                "Trying to access array element of non-array"
-            );
-        }
-        if (varType[0] != "val" && varType[0] != "get") {
-            throw new ParseException(
-                lexArr[nextPos[0]],
-                "Trying to access an array element when expecting a non-" +
-                "numeric and non-string type"
-            );
-        }
-        // The ~~ in arr[~~exp] means that the expression will always be
-        // an integer, not a string.
-        parseLexeme(lexArr, nextPos, "~", true);
-        // parseLexeme(lexArr, nextPos, "~", true) && // one is enough.
-        parseValExp(lexArr, nextPos, true);
-        parseLexeme(lexArr, nextPos, "]", true);
-        // if varType was "get" initially, set it to "value" and return
-        // true.
-        if (varType[0] == "get") {
-            varType[0] = "val";
-            return true;
-        }
-        // simply return true if varType was "value" already.
-        if (varType[0] == "val") {
-            return true;
-        }
-    }
-    if (parseLexeme(lexArr, nextPos, "(", false)) {
-        // check that previous expression was of the "function" type.
-        if (currentVarType[0].test(.......)) { // I have make varType a class..
-
-        }
-        ...
-    }
-
-}
 
 
 

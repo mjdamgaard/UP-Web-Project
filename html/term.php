@@ -319,6 +319,41 @@ console.log(arr.toString()); // Prints "came from function". Good, but what
 // calling test() somewhere above. Okay, all is as expected then.
 
 
+function printHello(arr) {
+    console.log("Hello");
+}
+
+// "printHello"();
+// Luckily: "Uncaught TypeError: "printHello" is not a function".
+// var obj = {caller:printHello};
+// obj();
+// "Uncaught TypeError: obj is not a function"
+// ..Good..
+
+
+var obj = {caller:printHello};
+var num = obj.num;
+console.log(typeof num);
+var str = "string" + num;
+console.log(typeof str);
+console.log(str);
+var obj2 = obj + str;
+console.log(typeof obj2);
+console.log(obj2.toString());
+
+console.log(~~obj);
+console.log(~obj);
+console.log(~"a");
+
+
+
+
+
+
+
+
+
+
 // var data =
 //     new QueryDataConstructors.SetInfoSecKeyReqData("u01", "c14", "r1");
 // var data = new QueryDataConstructors.SetInfoReqData("s5");
