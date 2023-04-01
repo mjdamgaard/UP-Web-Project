@@ -1,7 +1,2 @@
 
-
-
-
-
-export const importLstPatt =
-    "(" + importPatt +optWS+ ")*";
+// parseImportIdentList, parseImportPath

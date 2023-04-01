@@ -1,5 +1,2 @@
 
-
-
-export const identLstPatt =
-    identPatt + "(" +optWS+ "," +optWS+ identPatt +optWS+ ")*";
+// parseVarIdent, parseVarIdentList, parseFunIdent

@@ -1,5 +1,5 @@
 
-import parseVarIdent, parseVarIdentTuple, parseIndexIdentifier
+import parseVarIdent, parseFunIdent
 from "./ident.js";
 
 import parseLexeme

@@ -385,17 +385,80 @@ console.log(JSON.stringify(obj)); // Succeeds.
 // console.log(JSON.stringify(obj)); // Fails.
 
 
+// string literal tests.
+// var str = "\uab";
+// str += "ab";
+// console.log(str); // Fails.
+//
+// var str = "\uabab";
+// str += "ab";
+// console.log(str); // Fails.
+
+var str = "\0";
+str += "07";
+console.log(str); // Succeeds: Prints one special character followed by "07".
+
+// var str = "\007123";
+// console.log(str); // Fails!! (with "octal escape sequences can't be used in
+// // untagged template literals or in strict mode code").
+
+// var str = "\007";
+// console.log(str); // Fails.
+
+// var str = "\07";
+// console.log(str); // Fails!
+
+var str = "\x07";
+console.log(str); // Succeeds.
+
+var str = "\xFF07";
+console.log(str); // Succeeds: Prints one special character followed by "07".
+
+var str = "\uFF07";
+console.log(str); // Succeeds.
+
+var str = "\uFF07FF";
+console.log(str); // Succeeds: Prints one special character followed by "FF".
+
+var str = "\u{FF07}";
+console.log(str); // Succeeds! Prints the same specail character!
+
+var str = "\u{Fa0e}";
+console.log(str); // Succeeds.
+
+var str = "\u{Fa0}";
+console.log(str); // Succeeds! (??)
+
+var str = "\u{0Fa0}";
+console.log(str); // Succeeds! Prints the same character as before.
+
+// By the way: a few number literal tests (with underscores)
+
+console.log([100_00, 0xF_F_00, 0xFF00, 1_00.9_08_7].toString()); // Suceeds.
+console.log([1.7e+1_0].toString()); // Suceeds..
+// console.log([._1].toString()); // Fails..
+console.log([.1_1, 1.e+2, .1e+2, 111.e-3].toString()); // Suceeds.
 
 
+// back to string literal tests.
 
+// var str = "\xFsss";
+// console.log(str); // Fails.
 
+// var str = "\uFsss";
+// console.log(str); // Fails.
 
+// var str = "\uFeFsss";
+// console.log(str); // Fails.
 
+var str = "\uFeF0sss";
+console.log(str); // Suceeds.
 
+var str = "\u{FFFFF}sss";
+console.log(str); // Suceeds!
 
-
-
-
+var str = "\u{F}sss";
+console.log(str); // Suceeds.
 
 
 // var data =
