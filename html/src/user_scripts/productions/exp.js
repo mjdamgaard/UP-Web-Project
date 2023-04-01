@@ -243,7 +243,7 @@ function parseExpList(lexArr, nextPos, successRequired) {
     // parse an optional (since one trailing comma is allowed) expression
     // list after that.
     if (parseLexeme(lexArr, nextPos, ",", false)) {
-        parseExpList(lexArr, nextPos, false);
+        return parseExpList(lexArr, nextPos, false);
     }
     // always return true (unless exception was thrown).
     return true;
