@@ -239,8 +239,11 @@ function parseExpList(lexArr, nextPos, successRequired) {
         // return true even if no expression was parsed.
         return true;
     }
-    while (parseLexeme(lexArr, nextPos, ",", false)) {
-        parseExp(lexArr, nextPos, true);
+    // if the next lexeme is a comma, call this function recursively to
+    // parse an optional (since one trailing comma is allowed) expression
+    // list after that.
+    if (parseLexeme(lexArr, nextPos, ",", false)) {
+        parseExpList(lexArr, nextPos, false);
     }
     // always return true (unless exception was thrown).
     return true;
@@ -267,7 +270,7 @@ function parseObjPropList(lexArr, nextPos, successRequired) {
     parseExp(lexArr, nextPos, true);
     // if the next lexeme is a comma, call this function recursively to
     // parse an optional (since one trailing comma is allowed) object property
-    // list.
+    // list after that.
     if (parseLexeme(lexArr, nextPos, ",", false)) {
         return parseObjPropList(lexArr, nextPos, false);
     }
