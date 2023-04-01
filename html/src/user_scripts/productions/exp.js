@@ -2,8 +2,8 @@
 import parseVarIdent, parseVarIdentTuple, parseIndexIdentifier
 from "./ident.js";
 
-import parseLexeme,
-from "./lexeme.js";
+import parseLexeme
+from "./symbol.js";
 
 import parseLiteral
 from "./literal.js";

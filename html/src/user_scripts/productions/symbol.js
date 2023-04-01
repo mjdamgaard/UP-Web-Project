@@ -9,7 +9,7 @@ export function parseLexeme(lexArr, nextPos, str, successRequired) {
     // if parsing has failed potentially trow an exception and return false.
     if (successRequired) {
         throw new ParseException(
-            lexArr[nextPos[0]], "Expected lexeme: \"" + str + "\""
+            lexArr[nextPos[0]], "Expected lexeme: '" + str + "'"
         );
     }
     return false;

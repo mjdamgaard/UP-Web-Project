@@ -1,10 +1,12 @@
 
-import parseVarIdent, parseFunIdent, parseImportIdentList,
-    parseVarIdentTuple, parseNonEmptyIdentList
+import parseVarIdent, parseVarIdentList, parseFunIdent
 from "./ident.js";
 
-import parseLexeme,
-from "./lexeme.js";
+import parseImportIdentList, parseImportPath
+from "./import.js";
+
+import parseLexeme
+from "./symbol.js";
 
 import parseExp, parseAssignExp, parseAssignOp
 from "./exp.js";
@@ -61,7 +63,9 @@ function parseFunDef(lexArr, nextPos, successRequired) {
         parseLexeme(lexArr, nextPos, "function", successRequired) &&
         parseFunIdent(lexArr, nextPos, successRequired)
     ) {
-        parseVarIdentTuple(lexArr, nextPos, true);
+        parseLexeme(lexArr, nextPos, "(", true);
+        parseVarIdentList(lexArr, nextPos, false);
+        parseLexeme(lexArr, nextPos, ")", true)
         parseStmt(lexArr, nextPos, true);
         return true;
     } else {
@@ -293,10 +297,16 @@ function parseReturnStmt(lexArr, nextPos, successRequired) {
         return true;
     }
     // else parse the then mandatory expression followed by ';'.
-    return
-        parseExp(lexArr, nextPos, true) && // this will say that an expression
-        // is expected, but whatever..
+    let ret =
+        parseExp(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, ";", true);
+
+    if (!ret) {
+        throw new ParseException(
+            lexArr[nextPos[0]], "Expected expression or ';'"
+        );
+    }
+    return ret;
 }
 
 
@@ -316,15 +326,25 @@ function parseVarDec(lexArr, nextPos, successRequired) {
         return false;
     }
     // parse mandatory identifier list.
-    parseNonEmptyIdentList(lexArr, nextPos, true);
+    parseVarIdent(lexArr, nextPos, true);
+    while (parseLexeme(lexArr, nextPos, ",", false)) {
+        parseVarIdent(lexArr, nextPos, true);
+    }
     // either parse ";" or if that fails, parse the then mandatory "= <exp> ;".
     if (parseLexeme(lexArr, nextPos, ";", false)) {
         return true
     }
-    return
-        parseLexeme(lexArr, nextPos, "=", true) &&
+    let ret =
+        parseLexeme(lexArr, nextPos, "=", false) &&
         parseExp(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, ";", true);
+
+    if (!ret) {
+        throw new ParseException(
+            lexArr[nextPos[0]], "Expected '=' or ';'"
+        );
+    }
+    return ret;
 }
 
 
