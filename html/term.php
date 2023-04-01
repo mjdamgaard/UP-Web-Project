@@ -351,6 +351,22 @@ function noRetExpFun() {
 console.log(typeof noRetExpFun());
 
 
+// double float without dot?
+var x = 10e+3;
+console.log(x.toString()); // Succeeds.
+// And just to test these:
+console.log((.10).toString());
+console.log((10.).toString()); // Succeeds indeed.
+
+// array with variables?
+var str = "Saab";
+var cars = [
+  str,
+  "Volvo",
+  "BMW"
+];
+console.log(cars.toString()); // Succeeds..
+
 
 
 
