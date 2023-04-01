@@ -366,6 +366,33 @@ var cars = [
   "BMW"
 ];
 console.log(cars.toString()); // Succeeds..
+// array with a bunch of trailing commas?
+var str = "Saab";
+var cars = [ ,,,,,,,,,,,,,,,
+  str,,,,,,,,,,
+  "Volvo",
+  "BMW",,,,,,,,,,,,,,,,,,
+];
+console.log(cars.toString()); // Succeeds.
+
+// object test..
+var x, y = 0;
+var obj = {x:x=2, y:y=3,};
+console.log(JSON.stringify(obj)); // Succeeds.
+// more commas?..
+// var x, y = 0;
+// var obj = {x:x=2, y:y=3,,};
+// console.log(JSON.stringify(obj)); // Fails.
+
+
+
+
+
+
+
+
+
+
 
 
 

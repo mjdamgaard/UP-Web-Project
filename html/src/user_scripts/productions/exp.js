@@ -49,6 +49,8 @@ function parseExp2(lexArr, nextPos, successRequired) {
     // call.
     if (
         !parseParExp(lexArr, nextPos, false) &&
+        !parseArrExp(lexArr, nextPos, false) &&
+        !parseObjExp(lexArr, nextPos, false) &&
         !parseLiteral(lexArr, nextPos, false) &&
         !parseVarIdent(lexArr, nextPos, false) &&
         !parseFunCall(lexArr, nextPos, false)
@@ -85,26 +87,6 @@ function parseExp2(lexArr, nextPos, successRequired) {
 
 
 
-export function parseExpList(lexArr, nextPos, successRequired) {
-    // parse as many expressions as possible of a possibly empty list.
-    if (!parseExp(lexArr, nextPos, false)) {
-        // return true even if no expression was parsed.
-        return true;
-    }
-    while (parseLexeme(lexArr, nextPos, ",", false)) {
-        parseExp(lexArr, nextPos, true);
-    }
-    // always return true (unless exception was thrown).
-    return true;
-}
-
-function parsePostfixOp(lexArr, nextPos, successRequired) {
-
-}
-
-
-
-
 
 function parseArrElemAccess(lexArr, nextPos, successRequired) {
     // parse any series of '[~~(<exp>)]'s or '[~(<exp>)]'s.
@@ -129,6 +111,20 @@ function parseParExp(lexArr, nextPos, successRequired) {
         parseLexeme(lexArr, nextPos, "(", successRequired) &&
         parseExp(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, ")", true);
+}
+
+function parseArrExp(lexArr, nextPos, successRequired) {
+    return
+        parseLexeme(lexArr, nextPos, "[", successRequired) &&
+        parseArrElemList(lexArr, nextPos, false) &&
+        parseLexeme(lexArr, nextPos, "]", true);
+}
+
+function parseObjExp(lexArr, nextPos, successRequired) {
+    return
+        parseLexeme(lexArr, nextPos, "{", successRequired) &&
+        parseObjPropList(lexArr, nextPos, false) &&
+        parseLexeme(lexArr, nextPos, "}", true);
 }
 
 function parseFunCall(lexArr, nextPos, successRequired) {
@@ -231,6 +227,58 @@ function parseAssignOp(lexArr, nextPos, successRequired) {
     }
     return ret;
 }
+
+
+
+
+
+
+function parseExpList(lexArr, nextPos, successRequired) {
+    // parse as many expressions as possible of a possibly empty list.
+    if (!parseExp(lexArr, nextPos, false)) {
+        // return true even if no expression was parsed.
+        return true;
+    }
+    while (parseLexeme(lexArr, nextPos, ",", false)) {
+        parseExp(lexArr, nextPos, true);
+    }
+    // always return true (unless exception was thrown).
+    return true;
+}
+
+function parseArrElemList(lexArr, nextPos, successRequired) {
+    // parse as many expressions and commas as possible in any order of a
+    // possibly empty list.
+    while (
+        parseLexeme(lexArr, nextPos, ",", false) ||
+        parseExp(lexArr, nextPos, false)
+    );
+    // always return true (unless exception was thrown).
+    return true;
+}
+
+function parseObjPropList(lexArr, nextPos, successRequired) {
+    // parse as many expressions as possible of a possibly empty list.
+    if (!parseVarIdent(lexArr, nextPos, false)) {
+        // return true even if no expression was parsed.
+        return true;
+    }
+    parseLexeme(lexArr, nextPos, ":", true);
+    parseExp(lexArr, nextPos, true);
+    // if the next lexeme is a comma, call this function recursively to
+    // parse an optional (since one trailing comma is allowed) object property
+    // list.
+    if (parseLexeme(lexArr, nextPos, ",", false)) {
+        return parseObjPropList(lexArr, nextPos, false);
+    }
+    // always return true (unless exception was thrown).
+    return true;
+}
+
+
+
+
+
 
 
 
