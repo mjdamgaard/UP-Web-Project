@@ -1,8 +1,12 @@
 
 import parseVarIdent, parseVarIdentTuple, parseIndexIdentifier
-    from "./ident.js";
+from "./ident.js";
+
+import parseLexeme,
+from "./lexeme.js";
+
 import parseLiteral
-    from "./literal.js";
+from "./literal.js";
 
 // TODO change this to an import from an exception module.
 class ParseException {

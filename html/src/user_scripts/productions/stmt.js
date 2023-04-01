@@ -3,6 +3,9 @@ import parseVarIdent, parseFunIdent, parseImportIdentList,
     parseVarIdentTuple, parseNonEmptyIdentList
 from "./ident.js";
 
+import parseLexeme,
+from "./lexeme.js";
+
 import parseExp, parseAssignExp, parseAssignOp
 from "./exp.js";
 
@@ -13,19 +16,7 @@ class ParseException {
     }
 }
 
-parseLexeme(lexArr, nextPos, str, successRequired) {
-    if (lexArr[nextPos[0]].str == str) {
-        nextPos[0] = nextPos[0] + 1;
-        return true;
-    }
-    // if parsing has failed potentially trow an exception and return false.
-    if (successRequired) {
-        throw new ParseException(
-            lexArr[nextPos[0]], "Expected lexeme: \"" + str + "\""
-        );
-    }
-    return false;
-}
+
 
 
 export function parseImportStmt(lexArr, nextPos, successRequired) {
@@ -278,7 +269,6 @@ function parseSimpleStmt(lexArr, nextPos, successRequired) {
     let ret =
         parseLexeme(lexArr, nextPos, ";", false) ||
         parseVarDec(lexArr, nextPos, false) ||
-        // parseVarAssignment(lexArr, nextPos, false) ||
         parseExpStmt(lexArr, nextPos, false) ||
         parseReturnStmt(lexArr, nextPos, false);
 
@@ -308,33 +298,6 @@ function parseReturnStmt(lexArr, nextPos, successRequired) {
         // is expected, but whatever..
         parseLexeme(lexArr, nextPos, ";", true);
 }
-
-
-
-
-// function parseVarAssignment(lexArr, nextPos, successRequired) {
-//     let initialPos = nextPos[0];
-//     if (
-//         !parseVarIdent(lexArr, nextPos, successRequired) ||
-//         !parseLexeme(lexArr, nextPos, "=", successRequired)
-//     ) {
-//         nextPos[0] = initialPos;
-//         return false;
-//     }
-//     // first parse an optional list of variables and '='s.
-//     while (parseVarIdent(lexArr, nextPos, false)) {
-//         // if a variable is not followed by '=', go back one step and parse
-//         // a non-assignment expression followed by ";".
-//         if (!parseLexeme(lexArr, nextPos, "=", false)) {
-//             nextPos[0] = nextPos[0] - 1;
-//             break;
-//         }
-//     }
-//     // parse the mentioned non-assignment expression followed by ";".
-//     return
-//         parseExp(lexArr, nextPos, true) &&
-//         parseLexeme(lexArr, nextPos, ";", true);
-// }
 
 
 
