@@ -345,9 +345,10 @@ console.log(~~obj);
 console.log(~obj);
 console.log(~"a");
 
-
-
-
+function noRetExpFun() {
+    return;
+}
+console.log(typeof noRetExpFun());
 
 
 

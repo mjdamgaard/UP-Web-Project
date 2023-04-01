@@ -1,6 +1,6 @@
 
-import parseIdentifier, parseFunIdentifier, parseImportIdentifierList,
-    parseIdentifierTuple, parseNonEmptyIdentifierList
+import parseVarIdent, parseFunIdent, parseImportIdentList,
+    parseVarIdentTuple, parseNonEmptyIdentList
 from "./ident.js";
 
 import parseExp, parseAssignExp, parseAssignOp
@@ -31,7 +31,7 @@ parseLexeme(lexArr, nextPos, str, successRequired) {
 export function parseImportStmt(lexArr, nextPos, successRequired) {
     return
         parseLexeme(lexArr, nextPos, "import", successRequired) &&
-        parseImportIdentifierList(lexArr, nextPos, true) &&
+        parseImportIdentList(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, "from", true) &&
         parseImportPath(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, ";", true);
@@ -64,25 +64,14 @@ export function parseOuterFunDef(lexArr, nextPos, successRequired) {
 function parseFunDef(lexArr, nextPos, successRequired) {
     // record the initial position.
     let initialPos = nextPos[0];
-    // initialize variable to get the expected return type. When the string
-    // is "get", parseIdentifier() will set it rather than verify it.
-    var varType = ["get"];
-    // parse function, and make sure to reset nextPos if parseIdentifier()
+    // parse function, and make sure to reset nextPos if parseVarIdent()
     // is called but return false (and if successRequired == false).
     if (
         parseLexeme(lexArr, nextPos, "function", successRequired) &&
-        // this also records the return type by setting varType[0] to it.
-        parseIdentifier(lexArr, nextPos, varType, successRequired)
+        parseFunIdent(lexArr, nextPos, successRequired)
     ) {
-        if (!varType[0].test("/^fun/")) {
-            throw new ParseException(
-                lexArr[nextPos[0]], "Expected function identifier"
-            );
-        }
-        // get the return type signified with the tail of the varType string.
-        let retType = [varType[0].substring(3)];
-        parseIdentifierTuple(lexArr, nextPos, true);
-        parseStmt(lexArr, nextPos, retType, true);
+        parseVarIdentTuple(lexArr, nextPos, true);
+        parseStmt(lexArr, nextPos, true);
         return true;
     } else {
         nextPos[0] = initialPos;
@@ -92,14 +81,14 @@ function parseFunDef(lexArr, nextPos, successRequired) {
 
 
 
-function parseStmt(lexArr, nextPos, retType, successRequired) {
+function parseStmt(lexArr, nextPos, successRequired) {
     let ret =
-        parseBlockStmt(lexArr, nextPos, retType, false) ||
-        parseIfElseStmt(lexArr, nextPos, retType, false) ||
-        parseSwitchStmt(lexArr, nextPos, retType, false) ||
-        parseLoopStmt(lexArr, nextPos, retType, false) ||
-        parseSimpleStmt(lexArr, nextPos, retType, false) ||
-        parseFunDef(lexArr, nextPos, retType, false);
+        parseBlockStmt(lexArr, nextPos, false) ||
+        parseIfElseStmt(lexArr, nextPos, false) ||
+        parseSwitchStmt(lexArr, nextPos, false) ||
+        parseLoopStmt(lexArr, nextPos, false) ||
+        parseSimpleStmt(lexArr, nextPos, false) ||
+        parseFunDef(lexArr, nextPos, false);
 
     if (successRequired && !ret) {
         throw new ParseException(
@@ -110,19 +99,19 @@ function parseStmt(lexArr, nextPos, retType, successRequired) {
 }
 
 
-function parseBlockStmt(lexArr, nextPos, retType, successRequired) {
+function parseBlockStmt(lexArr, nextPos, successRequired) {
     return
         // With this implementation, e.q. {prop1:exp, prop2:exp}; is not
         // allowed as a statment.
         parseLexeme(lexArr, nextPos, "{", successRequired) &&
-        parseStmtList(lexArr, nextPos, retType, true) &&
+        parseStmtList(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, "}", true);
 }
 
 
-function parseStmtList(lexArr, nextPos, retType, successRequired) {
+function parseStmtList(lexArr, nextPos, successRequired) {
     // parse as many statements as possible of a possibly empty statement list.
-    while (parseStmt(lexArr, nextPos, retType, false));
+    while (parseStmt(lexArr, nextPos, false));
     // always return true.
     return true;
 }
@@ -130,24 +119,24 @@ function parseStmtList(lexArr, nextPos, retType, successRequired) {
 
 
 
-function parseIfStmt(lexArr, nextPos, retType, successRequired) {
+function parseIfStmt(lexArr, nextPos, successRequired) {
     return
         parseLexeme(lexArr, nextPos, "if", successRequired) &&
         parseLexeme(lexArr, nextPos, "(", true) &&
-        parseExp(lexArr, nextPos, ["any"], true) &&
+        parseExp(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, ")", true) &&
-        parseStmt(lexArr, nextPos, retType, true);
+        parseStmt(lexArr, nextPos, true);
 }
 
 
-function parseIfElseStmt(lexArr, nextPos, retType, successRequired) {
+function parseIfElseStmt(lexArr, nextPos, successRequired) {
     // parse the initial mandatory if statement.
-    if (!parseIfStmt(lexArr, nextPos, retType, successRequired)) {
+    if (!parseIfStmt(lexArr, nextPos, successRequired)) {
         return false;
     }
     // parse all following else statements if there are any.
     while (parseLexeme(lexArr, nextPos, "else")) {
-        parseStmt(lexArr, nextPos, retType, true);
+        parseStmt(lexArr, nextPos, true);
     }
     // if all those else keywords were followed by a statement, return true.
     return true;
@@ -158,55 +147,55 @@ function parseIfElseStmt(lexArr, nextPos, retType, successRequired) {
 
 
 
-function parseSwitchStmt(lexArr, nextPos, retType, successRequired) {
+function parseSwitchStmt(lexArr, nextPos, successRequired) {
     return
         parseLexeme(lexArr, nextPos, "switch", successRequired) &&
         parseLexeme(lexArr, nextPos, "(", true) &&
-        parseExp(lexArr, nextPos, ["val"], true) &&
+        parseExp(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, ")", true) &&
-        parseCaseBlock(lexArr, nextPos, retType, true);
+        parseCaseBlock(lexArr, nextPos, true);
 }
 
 
-function parseCaseBlock(lexArr, nextPos, retType, successRequired) {
+function parseCaseBlock(lexArr, nextPos, successRequired) {
 
     if (!parseLexeme(lexArr, nextPos, "{", successRequired)) {
         return false;
     }
     // parse first mandatory case statement.
-    parseCaseStmt(lexArr, nextPos, retType, true);
+    parseCaseStmt(lexArr, nextPos, true);
     // parse optional case statements, including default case at last.
-    while (parseCaseStmt(lexArr, nextPos, retType, false));
-    parseDefaultCaseStmt(lexArr, nextPos, retType, false);
+    while (parseCaseStmt(lexArr, nextPos, false));
+    parseDefaultCaseStmt(lexArr, nextPos, false);
 
     parseLexeme(lexArr, nextPos, "}", true);
 
     return true;
 }
 
-function parseCaseStmt(lexArr, nextPos, retType, successRequired) {
+function parseCaseStmt(lexArr, nextPos, successRequired) {
     // parse fisrt "case <exp> :" expression.
     if (!parseLexeme(lexArr, nextPos, "case", successRequired)) {
         rerun false;
     }
-    parseExp(lexArr, nextPos, ["val"], true);
+    parseExp(lexArr, nextPos, true);
     parseLexeme(lexArr, nextPos, ":", true)
 
     // parse an optional list of additional "case <exp> :" expressions.
     while (parseLexeme(lexArr, nextPos, "case", false)) {
-        parseExp(lexArr, nextPos, ["val"], true);
+        parseExp(lexArr, nextPos, true);
         parseLexeme(lexArr, nextPos, ":", true);
     }
     // parse a non-empty list of statements possibly ending on "break;".
-    parseStmt(lexArr, nextPos, retType, true);
-    while (parseStmt(lexArr, nextPos, retType, false));
+    parseStmt(lexArr, nextPos, true);
+    while (parseStmt(lexArr, nextPos, false));
     if (parseLexeme(lexArr, nextPos, "break", false)) {
         parseLexeme(lexArr, nextPos, ";", true);
     }
     return true;
 }
 
-function parseDefaultCaseStmt(lexArr, nextPos, retType, successRequired) {
+function parseDefaultCaseStmt(lexArr, nextPos, successRequired) {
     // parse fisrt "case <exp> :" expression.
     if (!parseLexeme(lexArr, nextPos, "default", successRequired)) {
         rerun false;
@@ -214,8 +203,8 @@ function parseDefaultCaseStmt(lexArr, nextPos, retType, successRequired) {
     parseLexeme(lexArr, nextPos, ":", true)
 
     // parse a non-empty list of statements possibly ending on "break;".
-    parseStmt(lexArr, nextPos, retType, true);
-    while (parseStmt(lexArr, nextPos, retType, false));
+    parseStmt(lexArr, nextPos, true);
+    while (parseStmt(lexArr, nextPos, false));
     if (parseLexeme(lexArr, nextPos, "break", false)) {
         parseLexeme(lexArr, nextPos, ";", true);
     }
@@ -229,11 +218,11 @@ function parseDefaultCaseStmt(lexArr, nextPos, retType, successRequired) {
 
 
 
-function parseLoopStmt(lexArr, nextPos, retType, successRequired) {
+function parseLoopStmt(lexArr, nextPos, successRequired) {
     let ret =
-        parseForLoopStmt(lexArr, nextPos, retType, false) ||
-        parseWhileLoopStmt(lexArr, nextPos, retType, false) ||
-        parseDoWhileLoopStmt(lexArr, nextPos, retType, false);
+        parseForLoopStmt(lexArr, nextPos, false) ||
+        parseWhileLoopStmt(lexArr, nextPos, false) ||
+        parseDoWhileLoopStmt(lexArr, nextPos, false);
 
     if (successRequired && !ret) {
         throw new ParseException(
@@ -245,36 +234,36 @@ function parseLoopStmt(lexArr, nextPos, retType, successRequired) {
 
 
 
-function parseForLoopStmt(lexArr, nextPos, retType, successRequired) {
+function parseForLoopStmt(lexArr, nextPos, successRequired) {
     return
         parseLexeme(lexArr, nextPos, "for", successRequired) &&
         parseLexeme(lexArr, nextPos, "(", true) &&
         // The JS syntax doc seems ambiguous here, so let's be safe.
         parseValVarDef(lexArr, nextPos, true) && // includes ';'.
-        parseExp(lexArr, nextPos, ["any"], true) &&
+        parseExp(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, ";", true) &&
-        parseExp(lexArr, nextPos, ["any"], true) &&
+        parseExp(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, ")", true) &&
-        parseStmt(lexArr, nextPos, retType, true);
+        parseStmt(lexArr, nextPos, true);
 }
 
-function parseWhileLoopStmt(lexArr, nextPos, retType, successRequired) {
+function parseWhileLoopStmt(lexArr, nextPos, successRequired) {
     return
         parseLexeme(lexArr, nextPos, "while", successRequired) &&
         parseLexeme(lexArr, nextPos, "(", true) &&
-        parseExp(lexArr, nextPos, ["any"], true) &&
+        parseExp(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, ")", true) &&
-        parseStmt(lexArr, nextPos, retType, true);
+        parseStmt(lexArr, nextPos, true);
 }
 
 
-function parseDoWhileLoopStmt(lexArr, nextPos, retType, successRequired) {
+function parseDoWhileLoopStmt(lexArr, nextPos, successRequired) {
     return
         parseLexeme(lexArr, nextPos, "do", successRequired) &&
-        parseStmt(lexArr, nextPos, retType, true) &&
+        parseStmt(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, "while", true) &&
         parseLexeme(lexArr, nextPos, "(", true) &&
-        parseExp(lexArr, nextPos, ["any"], true) &&
+        parseExp(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, ")", true) &&
         parseLexeme(lexArr, nextPos, ";", true);
 }
@@ -285,13 +274,13 @@ function parseDoWhileLoopStmt(lexArr, nextPos, retType, successRequired) {
 
 
 
-function parseSimpleStmt(lexArr, nextPos, retType, successRequired) {
+function parseSimpleStmt(lexArr, nextPos, successRequired) {
     let ret =
         parseLexeme(lexArr, nextPos, ";", false) ||
         parseVarDec(lexArr, nextPos, false) ||
         parseVarAssignment(lexArr, nextPos, false) ||
         parseExpStmt(lexArr, nextPos, false) ||
-        parseReturnStmt(lexArr, nextPos, retType, false);
+        parseReturnStmt(lexArr, nextPos, false);
 
     if (successRequired && !ret) {
         throw new ParseException(
@@ -304,25 +293,20 @@ function parseSimpleStmt(lexArr, nextPos, retType, successRequired) {
 
 
 
-function parseReturnStmt(lexArr, nextPos, retType, successRequired) {
+function parseReturnStmt(lexArr, nextPos, successRequired) {
+    // parse mandatory return keyword.
     if (!parseLexeme(lexArr, nextPos, "return", successRequired)) {
         return false;
     }
-    // (In order to ease the typechecking, we only allow the return of single
-    // variables.)
-    // read the returned type from the varaible.
-    var varType = ["get"];
-    // this also records the variables type by setting varType[0] to it.
-    parseIdentifier(lexArr, nextPos, varType, true);
-    // match this variable type with the required return type.
-    if (varType[0] != retType[0]) {
-        throw new ParseException(
-            lexArr[nextPos[0]], "Expected variable of type " + retType[0]
-        );
+    // parse optional ';' to end the return statement right away.
+    if (parseLexeme(lexArr, nextPos, ";", false)) {
+        return true;
     }
-    // parse the final ';' and either return true or throw an exception
-    // depending on the result.
-    return parseLexeme(lexArr, nextPos, ";", true);
+    // else parse the then mandatory expression followed by ';'.
+    return
+        parseExp(lexArr, nextPos, true) && // this will say that an expression
+        // is expected, but whatever..
+        parseLexeme(lexArr, nextPos, ";", true);
 }
 
 
@@ -330,21 +314,15 @@ function parseReturnStmt(lexArr, nextPos, retType, successRequired) {
 
 function parseVarAssignment(lexArr, nextPos, successRequired) {
     let initialPos = nextPos[0];
-    var varType = ["get"];
-    // parseIdentifier() sets the varType if varType[0] == "get", and if
-    // varType[0] != "get", the identifier is instead type-checked
-    // according to varType.
     if (
-        !parseIdentifier(lexArr, nextPos, varType, successRequired) ||
+        !parseVarIdent(lexArr, nextPos, successRequired) ||
         !parseLexeme(lexArr, nextPos, "=", successRequired)
     ) {
         nextPos[0] = initialPos;
         return false;
     }
     // first parse an optional list of variables and '='s.
-    // (Recall: If varType[0] != "get", the identifier is instead type-
-    // checked according to varType.)
-    while (parseIdentifier(lexArr, nextPos, varType, false)) {
+    while (parseVarIdent(lexArr, nextPos, false)) {
         // if a variable is not followed by '=', go back one step and parse
         // a non-assignment expression followed by ";".
         if (!parseLexeme(lexArr, nextPos, "=", false)) {
@@ -354,7 +332,7 @@ function parseVarAssignment(lexArr, nextPos, successRequired) {
     }
     // parse the mentioned non-assignment expression followed by ";".
     return
-        parseExp(lexArr, nextPos, varType, true) &&
+        parseExp(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, ";", true);
 }
 
@@ -363,26 +341,26 @@ function parseVarAssignment(lexArr, nextPos, successRequired) {
 
 function parseExpStmt(lexArr, nextPos, successRequired) {
     return
-        parseExp(lexArr, nextPos, ["any"], successRequired) &&
+        parseExp(lexArr, nextPos, successRequired) &&
         parseLexeme(lexArr, nextPos, ";", true);
 }
 
 
 
-function parseVarDec(lexArr, nextPos, varType, successRequired) {
+function parseVarDec(lexArr, nextPos, successRequired) {
     // parse mandatory var, let or const keyword or return false.
     if (!parseVarDecKeyword(lexArr, nextPos, successRequired)) {
         return false;
     }
     // parse mandatory identifier list.
-    parseNonEmptyIdentifierList(lexArr, nextPos, varType, true);
+    parseNonEmptyIdentList(lexArr, nextPos, true);
     // either parse ";" or if that fails, parse the then mandatory "= <exp> ;".
     if (parseLexeme(lexArr, nextPos, ";", false)) {
         return true
     }
     return
         parseLexeme(lexArr, nextPos, "=", true) &&
-        parseExp(lexArr, nextPos, varType, true) &&
+        parseExp(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, ";", true);
 }
 
