@@ -22,45 +22,37 @@ const numLiteralPatt =
         ")" +
     ")$/";
 
-// the strings are already partly parsed at this point, namely such that we
-// know that the begin and end with the same ' or " character, and with no
-// unescaped similar character in between. So in regards to qoutation marks,
-// we just need to check that the first character is ' or " to know that the
-// literal is a (potential) string literal to begin with. However, we still
-// need ... Hm, never mind, let me just double check about the quote
-// characters..
+
 const strLiteralPatt =
-    "/^(" +
-        "(" +
-            "\"" +
-                "(" +
-                    "[^\\\"]" +
-                "|" +
-                    "(\\[^xu0-9a-fA-F])" +
-                "|" +
-                    "(\\x[0-9a-fA-F]{2})" +
-                "|" +
-                    "(\\u[0-9a-fA-F]{4})" +
-                "|" +
-                    "(\\u\{[0-9a-fA-F]{1,5}\})" +
-                ")*" +
-            "\""
-        ")|(" +
-            "\'" +
-                "(" +
-                    "[^\\\']" +
-                "|" +
-                    "(\\[^xu0-9a-fA-F])" +
-                "|" +
-                    "(\\x[0-9a-fA-F]{2})" +
-                "|" +
-                    "(\\u[0-9a-fA-F]{4})" +
-                "|" +
-                    "(\\u\{[0-9a-fA-F]{1,5}\})" +
-                ")*" +
-            "\'"
-        ")" +
-    ")$/";
+    "/^((" +
+        "\"" +
+            "((" +
+                "[^\\\"]" +
+            ")|(" +
+                "\\[^xu0-9a-fA-F]" +
+            ")|(" +
+                "\\x[0-9a-fA-F]{2}" +
+            ")|(" +
+                "\\u[0-9a-fA-F]{4}" +
+            ")|(" +
+                "\\u\{[0-9a-fA-F]{1,5}\}" +
+            "))*" +
+        "\""
+    ")|(" +
+        "\'" +
+            "((" +
+                "[^\\\']" +
+            ")|(" +
+                "\\[^xu0-9a-fA-F]" +
+            ")|(" +
+                "\\x[0-9a-fA-F]{2}" +
+            ")|(" +
+                "\\u[0-9a-fA-F]{4}" +
+            ")|(" +
+                "\\u\{[0-9a-fA-F]{1,5}\}" +
+            "))*" +
+        "\'"
+    "))$/";
 
 
 
