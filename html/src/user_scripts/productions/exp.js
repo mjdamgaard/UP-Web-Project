@@ -61,7 +61,7 @@ class ParseException {
 // now. I'll remove the '.' operator. It is not that handy anyway, now that
 // the users (in the beginning) have to add the prefixes to the property names.
 // Then using functions to get and set properties might be at least as good
-// in terms of aesthetics and clarity. (12:07)  
+// in terms of aesthetics and clarity. (12:07)
 
 
 /* A lot of comments are omitted here, namely when the procedures follow the
@@ -69,232 +69,126 @@ class ParseException {
  * this logic.
  **/
 
-
+function parseVarAssignment(lexArr, nextPos, successRequired) {
+    let initialPos = nextPos[0];
+    if (
+        !parseVarIdent(lexArr, nextPos, successRequired) ||
+        !parseLexeme(lexArr, nextPos, "=", successRequired)
+    ) {
+        nextPos[0] = initialPos;
+        return false;
+    }
+    // first parse an optional list of variables and '='s.
+    while (parseVarIdent(lexArr, nextPos, false)) {
+        // if a variable is not followed by '=', go back one step and parse
+        // a non-assignment expression followed by ";".
+        if (!parseLexeme(lexArr, nextPos, "=", false)) {
+            nextPos[0] = nextPos[0] - 1;
+            break;
+        }
+    }
+    // parse the mentioned non-assignment expression followed by ";".
+    return
+        parseExp(lexArr, nextPos, true) &&
+        parseLexeme(lexArr, nextPos, ";", true);
+}
 
 export function parseExp(lexArr, nextPos, successRequired) {
+    let initialPos = nextPos[0];
+    // first parse an optional list of variables or array elements and '='s.
+    if (parseVarIdent(lexArr, nextPos, false)) {
+        // parse an optional series of []'s.
+        while (parseArrElemAccess(lexArr, nextPos, false));
+        // if an assignment operator is parsed next, parse and return an
+        // expression with a recursive call to this function.
+        if (parseAssignOp(lexArr, nextPos, false)) {
+            return parseExp(lexArr, nextPos, successRequired);
+        // else set nextPos[0] back to the initial position and try to parse
+        // a no-assignment expression.
+        } else {
+            nextPos[0] = initialPos;
+            return parseExp2(lexArr, nextPos, successRequired);
+        }
+    }
+}
+
+
+function parseExp2(lexArr, nextPos, successRequired) {
+    // parse an optional series of prefix operators.
+    while (parsePrefixOp(lexArr, nextPos, false));
+    // parse the first part of the expression, which is always either a
+    // parentheses expression, a variable identifier, a literal or a function
+    // call.
     if (
-        !parseParExp(lexArr, nextPos, varType, false) &&
-        !parseVarIdent(lexArr, nextPos, varType, false) &&
-        !parseFunCall(lexArr, nextPos, varType, false)
+        !parseParExp(lexArr, nextPos, false) &&
+        !parseLiteral(lexArr, nextPos, false) &&
+        !parseVarIdent(lexArr, nextPos, false) &&
+        !parseFunCall(lexArr, nextPos, false)
     ) {
         if (successRequired) {
             throw new ParseException(
-                lexArr[nextPos[0]],
-                "Expected expression of type " + getTypeText(varType[0])
+                lexArr[nextPos[0]], "Expected expression"
             );
         }
         return false;
     }
 
-    while (parseLexeme)
+    while (parsePostfixOp(lexArr, nextPos, false));
 
-    let ret =
-        parseParExp(lexArr, nextPos, varType, false) ||
-        parseObjPropArrElemFunCallString(lexArr, nextPos, varType, false) ||
-    if (varType[0] == "any") {
-        let ret =
-            parseValExp(lexArr, nextPos, false) ||
-            parseArrExp(lexArr, nextPos, false) ||
-            parseObjExp(lexArr, nextPos, false);
 
-        if (successRequired && !ret) {
-            throw new ParseException(
-                lexArr[nextPos[0]], "Expected expression"
-            );
-        }
-        return ret;
-    } else if (varType[0] == "val") {
-        return parseValExp(lexArr, nextPos, successRequired);
-
-    } else if (varType[0] == "arr") {
-        return parseArrExp(lexArr, nextPos, successRequired);
-
-    } else if (varType[0] == "obj") {
-        return parseObjExp(lexArr, nextPos, successRequired);
+    // parse an optional tail of operations (using recursive calls to this
+    // function).
+    if (parseBinaryOp(lexArr, nextPos, false)) {
+        parseExp2(lexArr, nextPos, true);
     }
-}
-
-
-
-function parseExpList(lexArr, nextPos, varType, successRequired) {
-    // parse as many expressions as possible of a possibly empty list.
-    if (!parseExp(lexArr, nextPos, varType, false)) {
-        // return true even if no expression was parsed.
-        return true;
+    if (parseLexeme(lexArr, nextPos, "?", false)) {
+        parseExp2(lexArr, nextPos, true);
+        parseLexeme(lexArr, nextPos, ":", true);
+        parseExp2(lexArr, nextPos, true);
     }
-    while (parseLexeme(lexArr, nextPos, ",", false)) {
-        parseExp(lexArr, nextPos, varType, true);
-    }
-    // always return true (unless exception was thrown).
+    // (This would not work if we had to build an AST in order to define the
+    // semantics of the expression, but since we only need to verify the
+    // syntax, we can just parse it this way, without caring much about the
+    // precedence order.)
+    // return true if all parsings has succeeded an no operator comes next.
     return true;
 }
 
 
 
-
-function parseObjPropArrElemFunCallString(
-    lexArr, nextPos, varType, successRequired
-) {
-    let initialPos = nextPos[0];
-    // parse and get the type of the first parentheses expression or identifier.
-    var currentType = ["get"];
-    if (!parseIdentifier(lexArr, nextPos, currentType, false)) {
-        if (successRequired) {
-            throw new ParseException(
-                lexArr[nextPos[0]], "Expected an identifier"
-            );
-        }
-        return false;
-    }
-    // parse the optional rest (the tail) of the "ObjPropArrElemFunCall" string.
-    if (
-        parseObjPropArrElemFunCallTail(
-            lexArr, nextPos, varType, currentType, false
-        )
-    ) {
+export function parseExpList(lexArr, nextPos, successRequired) {
+    // parse as many expressions as possible of a possibly empty list.
+    if (!parseExp(lexArr, nextPos, false)) {
+        // return true even if no expression was parsed.
         return true;
-    } else {
-        if (varType[0] == "get") {
-            varType[0] = currentType[0];
-            return true;
-        }
-        if (varType[0] == "any") {
-            return true;
-        }
-        if (currentType[0] == varType[0]){
-            return true;
-        } else {
-            if (successRequired) {
-                throw new ParseException(
-                    lexArr[nextPos[0]],
-                    "Expected expression of type " + getTypeText(varType[0])
-                );
-            }
-            nextPos[0] = initialPos;
-            return false;
-        }
     }
+    while (parseLexeme(lexArr, nextPos, ",", false)) {
+        parseExp(lexArr, nextPos, true);
+    }
+    // always return true (unless exception was thrown).
+    return true;
+}
+
+function parsePostfixOp(lexArr, nextPos, successRequired) {
+
 }
 
 
-function parseObjPropArrElemFunCallTail(
-    lexArr, nextPos, varType, currentType, successRequired
-) {
-    let initialPos = nextPos[0];
-    // if the previous string is followed by a '.', parse mandatory string
-    // beginning with an identifier.
-    if (parseLexeme(lexArr, nextPos, ".", false)) {
-        // check that previous expression was of the "object" type.
-        if (currentType[0] != "obj") {
-            throw new ParseException(
-                lexArr[nextPos[0]], "Trying to access property of non-object"
-            );
-        }
-        // call parseObjPropOrArrElemOrFunCall recursively.
-        return parseObjPropArrElemFunCallString(lexArr, nextPos, varType, true);
 
-    }
-
-    // if the previous string is followed by a '[', parse the rest of the
-    // [~~valExp] syntax and parse a new optional string tail.
-    if (parseLexeme(lexArr, nextPos, "[", false)) {
-        // check that previous expression was of the "array" type.
-        if (!currentType[0].test("/^arr/")) {
-            throw new ParseException(
-                lexArr[nextPos[0]],
-                "Trying to access array element of non-array"
-            );
-        }
-        // The ~~ in arr[~~exp] means that the expression will always be
-        // an integer, not a string.
+function parseArrElemAccess(lexArr, nextPos, successRequired) {
+    // parse any series of '[~~(<exp>)]'s or '[~(<exp>)]'s.
+    while (parseLexeme(lexArr, nextPos, "[", false)) {
+        // Always wrapping the expression in ~() or ~~() makes sure that it
+        // is always converted to an integer.
         parseLexeme(lexArr, nextPos, "~", true);
-        // parseLexeme(lexArr, nextPos, "~", true); // one is enough..
-        parseExp(lexArr, nextPos, ["val"], true);
-        parseLexeme(lexArr, nextPos, "]", true);
-
-        // get the element type signified with the tail of the varType string.
-        let elemType = [varType[0].substring(3)];
-        // call parseObjPropOrArrElemOrFunCall recursively.
-        if (
-            parseObjPropArrElemFunCallString(
-                lexArr, nextPos, varType, elemType, successRequired
-            )
-        ) {
-            return true;
-        } else {
-            if (varType[0] == "get") {
-                varType[0] = elemType[0];
-                return true;
-            }
-            if (varType[0] == "any") {
-                return true;
-            }
-            if (elemType[0] == varType[0]){
-                return true;
-            } else {
-                if (successRequired) {
-                    throw new ParseException(
-                        lexArr[nextPos[0]],
-                        "Expected expression of type " + getTypeText(varType[0])
-                    );
-                }
-                nextPos[0] = initialPos;
-                return false;
-            }
-        }
-    }
-
-    // if the previous string is followed by a '(', parse the rest of the
-    // expression list and parse a new optional string tail.
-    if (parseLexeme(lexArr, nextPos, "(", false)) {
-        // check that previous expression was of the "array" type.
-        if (!currentType[0].test("/^fun/")) {
-            throw new ParseException(
-                lexArr[nextPos[0]],
-                "Trying to call a non-function"
-            );
-        }
-        parseExpList(lexArr, nextPos, ["any"], true);
+        parseLexeme(lexArr, nextPos, "~", false); // 'false' makes it optional.
+        parseLexeme(lexArr, nextPos, "(", true);
+        parseExp(lexArr, nextPos, true);
         parseLexeme(lexArr, nextPos, ")", true);
-
-        // get the return type signified with the tail of the varType string.
-        let retType = [varType[0].substring(3)];
-        // call parseObjPropOrArrElemOrFunCall recursively.
-        if (
-            parseObjPropArrElemFunCallString(
-                lexArr, nextPos, varType, retType, successRequired
-            )
-        ) {
-            return true;
-        } else {
-            if (varType[0] == "get") {
-                varType[0] = retType[0];
-                return true;
-            }
-            if (varType[0] == "any") {
-                return true;
-            }
-            if (retType[0] == varType[0]){
-                return true;
-            } else {
-                if (successRequired) {
-                    throw new ParseException(
-                        lexArr[nextPos[0]],
-                        "Expected expression of type " + getTypeText(varType[0])
-                    );
-                }
-                nextPos[0] = initialPos;
-                return false;
-            }
-        }
+        parseLexeme(lexArr, nextPos, "]", true);
     }
+
 }
-
-
-
-
-
-
 
 
 
@@ -690,6 +584,173 @@ function parseObjProp(lexArr, nextPos, successRequired) {
 
 
 
+
+
+// function parseObjPropArrElemFunCallString(
+//     lexArr, nextPos, varType, successRequired
+// ) {
+//     let initialPos = nextPos[0];
+//     // parse and get the type of the first parentheses expression or identifier.
+//     var currentType = ["get"];
+//     if (!parseIdentifier(lexArr, nextPos, currentType, false)) {
+//         if (successRequired) {
+//             throw new ParseException(
+//                 lexArr[nextPos[0]], "Expected an identifier"
+//             );
+//         }
+//         return false;
+//     }
+//     // parse the optional rest (the tail) of the "ObjPropArrElemFunCall" string.
+//     if (
+//         parseObjPropArrElemFunCallTail(
+//             lexArr, nextPos, varType, currentType, false
+//         )
+//     ) {
+//         return true;
+//     } else {
+//         if (varType[0] == "get") {
+//             varType[0] = currentType[0];
+//             return true;
+//         }
+//         if (varType[0] == "any") {
+//             return true;
+//         }
+//         if (currentType[0] == varType[0]){
+//             return true;
+//         } else {
+//             if (successRequired) {
+//                 throw new ParseException(
+//                     lexArr[nextPos[0]],
+//                     "Expected expression of type " + getTypeText(varType[0])
+//                 );
+//             }
+//             nextPos[0] = initialPos;
+//             return false;
+//         }
+//     }
+// }
+//
+//
+// function parseObjPropArrElemFunCallTail(
+//     lexArr, nextPos, varType, currentType, successRequired
+// ) {
+//     let initialPos = nextPos[0];
+//     // if the previous string is followed by a '.', parse mandatory string
+//     // beginning with an identifier.
+//     if (parseLexeme(lexArr, nextPos, ".", false)) {
+//         // check that previous expression was of the "object" type.
+//         if (currentType[0] != "obj") {
+//             throw new ParseException(
+//                 lexArr[nextPos[0]], "Trying to access property of non-object"
+//             );
+//         }
+//         // call parseObjPropOrArrElemOrFunCall recursively.
+//         return parseObjPropArrElemFunCallString(lexArr, nextPos, varType, true);
+//
+//     }
+//
+//     // if the previous string is followed by a '[', parse the rest of the
+//     // [~~valExp] syntax and parse a new optional string tail.
+//     if (parseLexeme(lexArr, nextPos, "[", false)) {
+//         // check that previous expression was of the "array" type.
+//         if (!currentType[0].test("/^arr/")) {
+//             throw new ParseException(
+//                 lexArr[nextPos[0]],
+//                 "Trying to access array element of non-array"
+//             );
+//         }
+//         // The ~~ in arr[~~exp] means that the expression will always be
+//         // an integer, not a string.
+//         parseLexeme(lexArr, nextPos, "~", true);
+//         // parseLexeme(lexArr, nextPos, "~", true); // one is enough..
+//         parseExp(lexArr, nextPos, ["val"], true);
+//         parseLexeme(lexArr, nextPos, "]", true);
+//
+//         // get the element type signified with the tail of the varType string.
+//         let elemType = [varType[0].substring(3)];
+//         // call parseObjPropOrArrElemOrFunCall recursively.
+//         if (
+//             parseObjPropArrElemFunCallString(
+//                 lexArr, nextPos, varType, elemType, successRequired
+//             )
+//         ) {
+//             return true;
+//         } else {
+//             if (varType[0] == "get") {
+//                 varType[0] = elemType[0];
+//                 return true;
+//             }
+//             if (varType[0] == "any") {
+//                 return true;
+//             }
+//             if (elemType[0] == varType[0]){
+//                 return true;
+//             } else {
+//                 if (successRequired) {
+//                     throw new ParseException(
+//                         lexArr[nextPos[0]],
+//                         "Expected expression of type " + getTypeText(varType[0])
+//                     );
+//                 }
+//                 nextPos[0] = initialPos;
+//                 return false;
+//             }
+//         }
+//     }
+//
+//     // if the previous string is followed by a '(', parse the rest of the
+//     // expression list and parse a new optional string tail.
+//     if (parseLexeme(lexArr, nextPos, "(", false)) {
+//         // check that previous expression was of the "array" type.
+//         if (!currentType[0].test("/^fun/")) {
+//             throw new ParseException(
+//                 lexArr[nextPos[0]],
+//                 "Trying to call a non-function"
+//             );
+//         }
+//         parseExpList(lexArr, nextPos, ["any"], true);
+//         parseLexeme(lexArr, nextPos, ")", true);
+//
+//         // get the return type signified with the tail of the varType string.
+//         let retType = [varType[0].substring(3)];
+//         // call parseObjPropOrArrElemOrFunCall recursively.
+//         if (
+//             parseObjPropArrElemFunCallString(
+//                 lexArr, nextPos, varType, retType, successRequired
+//             )
+//         ) {
+//             return true;
+//         } else {
+//             if (varType[0] == "get") {
+//                 varType[0] = retType[0];
+//                 return true;
+//             }
+//             if (varType[0] == "any") {
+//                 return true;
+//             }
+//             if (retType[0] == varType[0]){
+//                 return true;
+//             } else {
+//                 if (successRequired) {
+//                     throw new ParseException(
+//                         lexArr[nextPos[0]],
+//                         "Expected expression of type " + getTypeText(varType[0])
+//                     );
+//                 }
+//                 nextPos[0] = initialPos;
+//                 return false;
+//             }
+//         }
+//     }
+// }
+
+
+
+
+
+
+
+
 /* Here "Index" refers to special variables who can also been assigned and
  * changed via certain restricted operations. They cannot be passed to
  * functions. But as opposed to "normal" vars, they can be used as array
@@ -751,74 +812,6 @@ function parseObjProp(lexArr, nextPos, successRequired) {
 
 
 
-// export function parseAssignExp(lexArr, nextPos, successRequired) {
-//     let initialPos = nextPos[0];
-//     if (
-//         parseIndexIdentifier(lexArr, nextPos, false) &&
-//         parseLexeme(lexArr, nextPos, "=", false) && //no other assignOp allowed.
-//         parseIndexExp(lexArr, nextPos, false)
-//     ) {
-//         return true;
-//     }
-//     nextPos[0] = initialPos;
-//     if (
-//         parseIdentifier(lexArr, nextPos, false) &&
-//         parseAssignOp(lexArr, nextPos, false) &&
-//         parseExp(lexArr, nextPos, false)
-//     ) {
-//         return true;
-//     }
-//     nextPos[0] = initialPos;
-//     if (successRequired) {
-//         throw new ParseException(
-//             lexArr[nextPos[0]], "Expected assignment expression"
-//         );
-//     }
-//     return false;
-// }
-
-
-// function parseIndexExp(lexArr, nextPos, successRequired) {
-//     let ret =
-//         parseIndexOperation(lexArr, nextPos, false) ||
-//         parseIndexIncrement(lexArr, nextPos, false) ||
-//         parseIndexDecrement(lexArr, nextPos, false) ||
-//         parseIndexIdentifier(lexArr, nextPos, false) ||
-//         parseIntLiteral(lexArr, nextPos, false) ||
-// }
-//
-// function parseIndexOperation(lexArr, nextPos, successRequired) {
-//     let initialPos = nextPos[0];
-//     if (!parseIndexIdentifier(lexArr, nextPos, successRequired)) {
-//         return false;
-//     }
-//     if (
-//         !parseLexeme(lexArr, nextPos, "+", false) &&
-//         !parseLexeme(lexArr, nextPos, "-", false) &&
-//         !parseLexeme(lexArr, nextPos, "*", false) &&
-//         !parseLexeme(lexArr, nextPos, "**", false) &&
-//         !parseLexeme(lexArr, nextPos, "/~~", false) &&
-//         !parseLexeme(lexArr, nextPos, "%", false)
-//     ) {
-//         nextPos[0] = initialPos;
-//         if (successRequired) {
-//             throw new ParseException(
-//                 lexArr[nextPos[0]], "Expected integer operator"
-//             );
-//         }
-//         return false;
-//     }
-//     // this recursive call allows for a series of operations, but not with
-//     // any parenthesis.
-//     return parseIndexExp(lexArr, nextPos, successRequired);
-// }
-
-        // parseIndexSum(lexArr, nextPos, false) ||
-        // parseIndexDifference(lexArr, nextPos, false) ||
-        // parseIndexMultiplication(lexArr, nextPos, false) ||
-        // parseIndexExponentiation(lexArr, nextPos, false) ||
-        // parseIndexIntDivision(lexArr, nextPos, false) ||
-        // parseIndexModulus(lexArr, nextPos, false) ||
 
 
 
@@ -845,186 +838,3 @@ function parseObjProp(lexArr, nextPos, successRequired) {
 //     }
 //     return ret;
 // }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//TODO:
-    // boolPureExp, numPureExp, arrPureExp, objPureExp,
-    // strPureExp, txtPureExp, attPureExp
-    // voidExp, numExp
-
-import
-    boolIdent, numIdent, arrIdent, objIdent,
-    strIdent, txtIdent, attIdent,
-    boolFunIdent, numFunIdent, arrFunIdent, objFunIdent,
-    strFunIdent, txtFunIdent, attFunIdent,
-    voidFunIdent, ecFunIdent
-    identLst
-from "./ident.js";
-
-import
-    boolLiteral, numLiteral, strLiteral, txtLiteral, attLiteral,
-    arrLiteral, objLiteral
-from "./literal.js";
-
-
-export const boolAtom =
-    "((" + boolLiteral + ")|(" + boolIdent + "))";
-export const numAtom =
-    "((" + numLiteral + ")|(" + numIdent + "))";
-export const strAtom =
-    "((" + strLiteral + ")|(" + strIdent + "))";
-export const txtAtom =
-    "((" + txtLiteral + ")|(" + txtIdent + "))";
-export const attAtom =
-    "((" + attLiteral + ")|(" + attIdent + "))";
-export const arrAtom =
-    "((" + arrLiteral + ")|(" + arrIdent + "))";
-export const objAtom =
-    "((" + objLiteral + ")|(" + objIdent + "))";
-
-
-
-const boolFunCall =
-    boolFunIdent +s+ "\(" +s+ identLst +s+ "\)" +s;
-const numFunCall =
-    numFunIdent +s+ "\(" +s+ identLst +s+ "\)" +s;
-const strFunCall =
-    strFunIdent +s+ "\(" +s+ identLst +s+ "\)" +s;
-const txtFunCall =
-    txtFunIdent +s+ "\(" +s+ identLst +s+ "\)" +s;
-const attFunCall =
-    attFunIdent +s+ "\(" +s+ identLst +s+ "\)" +s;
-const arrFunCall =
-    arrFunIdent +s+ "\(" +s+ identLst +s+ "\)" +s;
-const objFunCall =
-    objFunIdent +s+ "\(" +s+ identLst +s+ "\)" +s;
-
-const voidFunCall =
-    voidFunIdent +s+ "\(" +s+ identLst +s+ "\)" +s;
-const ecFunCall =
-    ecFunIdent +s+ "\(" +s+ identLst +s+ "\)" +s;
-
-
-
-/* Numerical expressions */
-
-
-const aritOp =
-    "[\+\-\*\/%(\*\*)]";
-
-
-
-const numAritExp1 =
-    numAtom +s+ "(" + aritOp +s+ numAtom +s+ ")*";
-
-const numAritExp2 =
-    "\(" +s+ numAritExp1 +s+ "\)";
-
-const numAritExp3 =
-    "((" + numAritExp1 + ")|(" + "\-?" +s+ numAritExp2 + "))";
-
-
-export const numPureExp =
-    numAritExp3 +s+ "(" + aritOp +s+ numAritExp3 +s+ ")*";
-
-
-/* Boolean expressions */
-
-const numCompOp =
-    "[(==)<>(<=)(>=)(!=)]";
-
-const boolNumAritComp =
-    numAritExp1 +s+ numCompOp +s+ numAritExp1;
-
-
-const boolNoLogOp =
-    "((" + "!?" +s+ boolAtom + ")|(" + boolNumAritComp + "))";
-
-
-const logOp =
-    "[(\|\|)(\?\?)(&&)]";
-
-const boolCompoundExp =
-    boolNoLogOp +s+ "(" + logOp +s+ boolNoLogOp +s+ ")*";
-
-
-export const boolPureExp =
-    "(" +
-        "(" + boolCompoundExp +s+ ")" +
-    "|" +
-        "(" + boolFunCall +s+ ")" +
-    ")";
-
-
-
-
-
-
-/* String, text (safe for HTML printing) and attribute (safe for printing as
- * HTML attribute values) expressions
- **/
-
-const strNoConcat =
-    "((" + strAtom + ")|(" + strFunCall + "))";
-const txtNoConcat =
-    "((" + txtAtom + ")|(" + txtFunCall + "))";
-const attNoConcat =
-    "((" + attAtom + ")|(" + attFunCall + "))";
-
-
-const strPureExp =
-    strNoConcat +s+ "(" + "\+" +s+ strNoConcat +s+ ")*";
-const txtPureExp =
-    txtNoConcat +s+ "(" + "\+" +s+ txtNoConcat +s+ ")*";
-const attPureExp =
-    attNoConcat +s+ "(" + "\+" +s+ attNoConcat +s+ ")*";
-
-
-/* Array and object expressions */
-
-export const arrPureExp =
-    "((" + arrAtom + ")|(" + arrFunCall + "))";
-export const objPureExp =
-    "((" + objAtom + ")|(" + objFunCall + "))";
-
-
-/* Void and exit code (ec) expressions */
-
-export const voidExp =
-    "((" + voidFunCall + ")|(" + numIdent +s+ "[(\+\+)(\-\-)]" + "))";
-
-export const ecExp =
-    ecFunCall;
-
-
-// (12:44, 25.03.23) Commit msg: "sorta done with exp.js, but I
-// imagine that all this will give me a very large string, so now
-// I'm wondering, if it wouldn't be better to just go the AST way
-// instead from the beginning.."
-// ..Hm, but maybe I can just parse one regex at a.. Wait.. Maybe I could
-// just lex the script first in an way where I already create a tree in this
-// lexing step..! I'm thinking about parsing all parentheses as one "word,"
-// essentially, and then "lex" each element of such "compound words," as
-// we can call them, recursively..!.. (12:49) ..Well, let me just call it
-// an initial parsing, where we achieve lexing as well as getting an
-// initial syntax tree, namely where all parentheses are.. wait no, let me
-// actually not really "lex" the script at all. Let me instead just make
-// the initial parsing return an array of subprograms, which themselves are
-// either strings with any multiple-character whitespace reduced to a single
-// \s, or they are arrays themselves (of strings and arrays on so on).
-// ...(13:48) No, I should also lex the program initially. :)
