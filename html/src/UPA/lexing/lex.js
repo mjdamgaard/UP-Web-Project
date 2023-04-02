@@ -1,4 +1,8 @@
 
+import {
+    LexException
+} from "../exceptions/except.js";
+
 class Lexeme {
     constructor(str, pos1, pos2) {
         this.str = str;
@@ -7,12 +11,6 @@ class Lexeme {
     }
 }
 
-class LexException {
-    constructor(pos, msg) {
-        this.pos = pos;
-        this.msg = msg;
-    }
-}
 
 export function lex(script) {
     // initialize return array.

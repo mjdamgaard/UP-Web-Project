@@ -1,7 +1,7 @@
 
 import {
     ParseException
-} from "./exception.js";
+} from "../exceptions/except.js";
 
 
 

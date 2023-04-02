@@ -1,19 +1,19 @@
 
 import {
     ParseException
-} from "./exception.js";
+} from "../exceptions/except.js";
 
-import parseVarIdent, parseFunIdent
-from "./ident.js";
+import {
+    parseVarIdent, parseFunIdent
+} from "./ident.js";
 
-import parseLexeme
-from "./symbol.js";
+import {
+    parseLexeme
+} from "./symbol.js";
 
-import parseLiteral
-from "./literal.js";
-
-/
-
+import {
+    parseLiteral
+} from "./literal.js";
 
 
 

@@ -1,7 +1,7 @@
 
 import {
     lex
-} from "./lex.js";
+} from "../lexing/lex.js";
 
 import {
     parseImportStmt, parseOuterFunDef
@@ -36,41 +36,3 @@ export function parseModuleScript(script) {
     // return true only if all lexemes have been successfully parsed.
     return (nextPos[0] == lexArr.length);
 }
-
-
-/* Not needed after all, for users should instead define a main procedure
- * in their main module.
- **/
-// function parseMainScript(script) {
-//     // get lexeme array.
-//     // TODO: implement exception handling here.
-//     var lexArr = lex(script);
-//     // initialize position object and ...
-//     var nextPos = {pos:0};
-//
-//     // if first lexeme is '"use strict"', continue, or else return false.
-//     if (lexArr[0] == '"use strict"' && lexArr[1] == ';') {
-//         nextPos[0] = 2;
-//     } else {
-//         return false;
-//     }
-//
-//     // parse a list of import statements.
-//     var matchWasFound = true;
-//     while (matchWasFound) {
-//         matchWasFound = parseImportStmt(lexArr, nextPos);
-//     }
-//
-//     // parse a list of function definitions or pure variable definitions.
-//     var matchWasFound = true;
-//     while (matchWasFound) {
-//         matchWasFound = parseStmt(lexArr, nextPos);
-//     }
-//
-//     // return true only if all lexemes have been successfully parsed.
-//     if (nextPos[0] == lexArr.length) {
-//         return true;
-//     } else {
-//         return false;
-//     }
-// }
