@@ -32,37 +32,51 @@ $conn = DBConnector::getConnectionOrDie();
 // match $reqType against any of the following single-query request types
 // and execute the corresponding query if a match is found.
 $sqlKey = "";
+$paramNameArr = "";
 switch ($reqType) {
     case "S":
         $sqlKey = "set";
+        $paramNameArr = array(
+            "id",
+            "rl", "rh",
+            "n", "o",
+            "a"
+        );
         break;
     case "SInfo":
         $sqlKey = "setInfo";
+        $paramNameArr = array("id");
         break;
     case "SInfoSK":
         $sqlKey = "setInfoSK";
+        $paramNameArr = array("uid", "sid", "rid");
         break;
     case "R":
         $sqlKey = "rating";
+        $paramNameArr = array("oid", "sid");
         break;
     case "CDef":
         $sqlKey = "catDef";
+        $paramNameArr = array("id");
         break;
     case "ETDef":
         $sqlKey = "eTermDef";
+        $paramNameArr = array("id");
         break;
     case "RDef":
         $sqlKey = "relDef";
+        $paramNameArr = array("id");
         break;
     case "SCDefs":
         $sqlKey = "superCatDefs";
+        $paramNameArr = array("id");
         break;
     case "T":
         $sqlKey = "text";
+        $paramNameArr = array("id");
         break;
 }
 if ($sqlKey != "") {
-    $paramNameArr = InputVarNamer::getQueryVarNames($sqlKey);
     $paramValArr = InputGetter::getParams($paramNameArr);
     $safeRes = SafeQuerier::query($conn, $sqlKey, $paramValArr);
     echo json_encode($safeRes);
