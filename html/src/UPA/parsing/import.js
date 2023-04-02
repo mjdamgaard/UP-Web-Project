@@ -55,6 +55,7 @@ export function parseImportIdentList(lexArr, nextPos, successRequired) {
 
 const upaModulePathPatt =
     "/^UPA_modules\.php\?tid=[1-9A-F][0-9A-F]{0,15}$/";
+    // "/^UPA_modules\.php\?[\w=&]+$/";
 
 export function parseImportPath(lexArr, nextPos, successRequired) {
     if (lexArr[nextPos[0]].test(upaModulePathPatt)) {
