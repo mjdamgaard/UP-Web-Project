@@ -17,14 +17,14 @@ $UPA_dev_modules_path = $_SERVER['DOCUMENT_ROOT'] . "/../UPA_dev_modules/";
 
 // modules can only be GET-gotten.
 $textID = "";
-if (!isset($_GET["tid"])) {
-    echoTypeErrorJSONAndExit("No text ID (tid) specified");
+if (!isset($_GET["id"])) {
+    echoTypeErrorJSONAndExit("No text ID (id) specified");
 } else {
-    $textID = $_GET["tid"];
+    $textID = $_GET["id"];
 }
 
 // verify the input text ID.
-InputVerifier::verifyType($textID, "textID", "tid");
+InputVerifier::verifyType($textID, "textID", "id");
 
 // array of text IDs of legal developer-made modules.
 $devModuleIDs = array (
@@ -47,7 +47,16 @@ if (preg_match($devModuleIDPatt, $textID)) {
     //TODO: Implement a querier that get texts from the database that are rated
     // as safe by a certain native user and returns them without converting
     // any characters (so without htmlspecialchars()).
-    echoTypeErrorJSONAndExit("User-made modules are not implemented yet!");
+    //TODO: Remove the implementation below which does not check the returned
+    // texts at all!
+    // get connection.
+    $conn = DBConnector::getConnectionOrDie();
+    // define the parameters used to get the (unsanitized!) text.
+    $sqlKey = "text";
+    $paramValArr = array($textID);
+    $res = UnsafeQuerier::query($conn, $sqlKey, $paramValArr);
+    // return the text as is. //TODO: Is is important that I change this impl.
+    echo $res;
 }
 
 

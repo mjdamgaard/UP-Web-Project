@@ -1,13 +1,7 @@
 <?php
 
-/* In this database interface layer, "ID" refers to un-prefixed (pure
- * hexadecimal) IDs. The functions thus needs types and IDs seperately
- * as their inputs. All IDs are input and output as hexadecimal strings
- * to/from the SQL API. The same goes for the binary rating values. This
- * means that the output IDs and rating values (and the input ones for that
- * matter) is always safe to print.
- * Furthermore, all text outputs are converted to safe html texts (using
- * the htmlspecialchars() function) in this layer!
+/* All text outputs are converted to safe html texts (using the
+ * htmlspecialchars() function) in this layer!
  **/
 
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
@@ -189,7 +183,7 @@ class SafeQuerier implements Querier {
                 return $rows;
             }
         } elseif ($sqlSpec["outputType"] === "assocArr") {
-            // fetch all rows as a multidimensional array.
+            // fetch a single row as an associative array.
             $row = $res->fetch_assoc();
             // return $row as is if all columns are safe, or else sanitize all
             // unsafe columns.
