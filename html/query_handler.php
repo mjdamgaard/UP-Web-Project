@@ -43,11 +43,11 @@ switch ($reqType) {
             "a"
         );
         break;
-    case "SInfo":
+    case "SI":
         $sqlKey = "setInfo";
         $paramNameArr = array("id");
         break;
-    case "SInfoSK":
+    case "SISK":
         $sqlKey = "setInfoSK";
         $paramNameArr = array("uid", "sid", "rid");
         break;
@@ -55,19 +55,19 @@ switch ($reqType) {
         $sqlKey = "rating";
         $paramNameArr = array("oid", "sid");
         break;
-    case "CDef":
+    case "CD":
         $sqlKey = "catDef";
         $paramNameArr = array("id");
         break;
-    case "ETDef":
+    case "ED":
         $sqlKey = "eTermDef";
         $paramNameArr = array("id");
         break;
-    case "RDef":
+    case "RD":
         $sqlKey = "relDef";
         $paramNameArr = array("id");
         break;
-    case "SCDefs":
+    case "SCD":
         $sqlKey = "superCatDefs";
         $paramNameArr = array("id");
         break;
@@ -81,7 +81,7 @@ if ($sqlKey != "") {
     $safeRes = SafeQuerier::query($conn, $sqlKey, $paramValArr);
     echo json_encode($safeRes);
 } else {
-    // No multiple-query requests are implemented, at least at this point.
+    // No multiple-query requests are implemented, at least not at this point.
     echoErrorJSON("Unrecognized request type");
 }
 

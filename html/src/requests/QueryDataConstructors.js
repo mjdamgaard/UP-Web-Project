@@ -17,13 +17,13 @@ const QueryDataConstructors = {
     },
 
     SetInfoReqData: function(setID) {
-        this.type = "SInfo";
+        this.type = "SI";
         this.id = setID;
 
     },
 
     SetInfoSecKeyReqData: function(userID, subjID, relID) {
-        this.type = "SInfoSK";
+        this.type = "SISK";
         this.uid = userID;
         this.sid = subjID;
         this.rid = relID;
@@ -38,21 +38,21 @@ const QueryDataConstructors = {
 
 
     CatDefReqData: function(catID) {
-        this.type = "CDef";
+        this.type = "CD";
         this.id = catID;
     },
     ETermDefReqData: function(eTermID) {
-        this.type = "ETDef";
+        this.type = "ED";
         this.id = eTermID;
     },
     RelDefReqData: function(relID) {
-        this.type = "RDef";
+        this.type = "RD";
         this.id = relID;
     },
 
 
     SuperCatsReqData: function(catID) {
-      this.type = "SCDefs";
+      this.type = "SCD";
       this.id = catID;
   },
 
