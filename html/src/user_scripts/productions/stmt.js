@@ -26,7 +26,9 @@ import {
 export function parseImportStmt(lexArr, nextPos, successRequired) {
     return
         parseLexeme(lexArr, nextPos, "import", successRequired) &&
-        parseImportIdentList(lexArr, nextPos, true) &&
+        parseLexeme(lexArr, nextPos, "{", true) &&
+        parseNonEmptyImportIdentList(lexArr, nextPos, true) &&
+        parseLexeme(lexArr, nextPos, "}", true) &&
         parseLexeme(lexArr, nextPos, "from", true) &&
         parseImportPath(lexArr, nextPos, true) &&
         parseLexeme(lexArr, nextPos, ";", true);
