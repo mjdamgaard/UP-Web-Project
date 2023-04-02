@@ -13,7 +13,7 @@ DROP PROCEDURE selectRelDef;
 
 DROP PROCEDURE selectSuperCatDefs;
 
-DROP PROCEDURE selectData;
+DROP PROCEDURE selectText;
 
 DROP PROCEDURE selectCreations;
 
@@ -313,6 +313,28 @@ END //
 DELIMITER ;
 
 -- SHOW WARNINGS;
+
+
+
+
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectText (
+    IN txtCombID VARCHAR(17)
+)
+BEGIN
+    DECLARE txtID BIGINT UNSIGNED;
+    CALL getConvID (txtCombID, txtID);
+
+    SELECT str as text
+    FROM Texts
+    WHERE id = txtID;
+END //
+DELIMITER ;
 
 
 

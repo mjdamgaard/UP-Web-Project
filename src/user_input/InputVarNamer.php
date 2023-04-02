@@ -24,7 +24,8 @@ class InputVarNamer {
         "catDef" => array("id"),
         "eTermDef" => array("id"),
         "relDef" => array("id"),
-        "superCatDefs" => array("id")
+        "superCatDefs" => array("id"),
+        "text" => array("id")
     );
 
     public static function getQueryVarNames($sqlKey) {

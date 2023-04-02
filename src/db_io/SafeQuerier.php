@@ -114,6 +114,17 @@ class SafeQuerier implements Querier {
             "columnNames" => array("catTitle", "superCatID"),
             "unsafeColumns" => array(0) // this means that the whole first
             // column has to be sanitized (by calling htmlspecailchars()).
+        ),
+
+        "text" => array(
+            "n" => 1,
+            "sql" => "CALL selectText (?)",
+            "typeArr" => array(
+                "textID"
+            ),
+            "outputType" => "assocArr",
+            "columnNames" => array("text"),
+            "unsafeColumns" => array(0)
         )
     );
 

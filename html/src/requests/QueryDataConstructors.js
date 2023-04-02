@@ -54,6 +54,11 @@ const QueryDataConstructors = {
     SuperCatsReqData: function(catID) {
       this.type = "SCDefs";
       this.id = catID;
+  },
+
+    TextReqData: function(textID) {
+      this.type = "T";
+      this.id = textID;
     }
 
 }

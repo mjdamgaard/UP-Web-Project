@@ -57,6 +57,9 @@ switch ($reqType) {
     case "SCDefs":
         $sqlKey = "superCatDefs";
         break;
+    case "T":
+        $sqlKey = "text";
+        break;
 }
 if ($sqlKey != "") {
     $paramNameArr = InputVarNamer::getQueryVarNames($sqlKey);
