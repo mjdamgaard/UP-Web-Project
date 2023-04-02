@@ -1,22 +1,24 @@
 
-import parseVarIdent, parseVarIdentList, parseFunIdent
-from "./ident.js";
+import {
+    ParseException
+} from "./exception.js";
 
-import parseImportIdentList, parseImportPath
-from "./import.js";
+import {
+    parseVarIdent, parseVarIdentList, parseFunIdent
+} from "./ident.js";
 
-import parseLexeme
-from "./symbol.js";
+import {
+    parseImportIdentList, parseImportPath
+} from "./import.js";
 
-import parseExp, parseAssignExp, parseAssignOp
-from "./exp.js";
+import {
+    parseLexeme
+} from "./symbol.js";
 
-class ParseException {
-    constructor(pos, msg) {
-        this.pos = pos;
-        this.msg = msg;
-    }
-}
+import {
+    parseExp, parseAssignExp, parseAssignOp
+} from "./exp.js";
+
 
 
 

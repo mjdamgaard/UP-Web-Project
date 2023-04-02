@@ -1,6 +1,12 @@
 
+import {
+    lex
+} from "./lex.js";
 
-import lex from "./lex.js";
+import {
+    parseImportStmt, parseOuterFunDef
+} from "./stmt.js";
+
 
 export function parseModuleScript(script) {
     // get lexeme array.
@@ -68,37 +74,3 @@ export function parseModuleScript(script) {
 //         return false;
 //     }
 // }
-
-
-
-// import stmtLst
-// from "./stmt.js";
-//
-//
-// import funDefLst
-// from "./fun_def.js";
-//
-// import importLst
-// from "./import.js";
-//
-//
-// const s = "\s?";
-//
-// export const modulePattern =
-//     // '"use strict";' +s+ // not necessary; strict mode is default for modules.
-//     "/^" +s+
-//         importLst +s+
-//         "(" +
-//             "(" + pureVarAssign +s+ ")" +
-//         "|" +
-//             "(" + funDefLst +s+ ")" +
-//         ")*" +
-//     "$/";
-//
-// export const scriptPattern =
-//     "/^" +s+
-//         '"use strict";' +s+
-//         importLst +s+
-//         stmtLst +s+
-//     "$/";
-// // (I'm purposefully adding redundant +s+'s; rather have too many than too few.)

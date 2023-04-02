@@ -461,6 +461,25 @@ var str = "\u{F}sss";
 console.log(str); // Suceeds.
 
 
+// var str = "\07ss";
+// console.log(str); // Fails.
+
+var str = "\0ss";
+console.log(str); // Succeeds..
+
+// var str = "\08";
+// console.log(str); // Fails.
+
+// Luckily, one can just write \x00 instead of \0.
+
+
+
+
+
+
+
+
+
 // var data =
 //     new QueryDataConstructors.SetInfoSecKeyReqData("u01", "c14", "r1");
 // var data = new QueryDataConstructors.SetInfoReqData("s5");

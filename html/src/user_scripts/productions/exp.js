@@ -1,4 +1,8 @@
 
+import {
+    ParseException
+} from "./exception.js";
+
 import parseVarIdent, parseFunIdent
 from "./ident.js";
 
@@ -8,14 +12,7 @@ from "./symbol.js";
 import parseLiteral
 from "./literal.js";
 
-// TODO change this to an import from an exception module.
-class ParseException {
-    constructor(pos, msg) {
-        this.pos = pos;
-        this.msg = msg;
-    }
-}
-
+/
 
 
 
@@ -245,7 +242,7 @@ function parseExpList(lexArr, nextPos, successRequired) {
     if (parseLexeme(lexArr, nextPos, ",", false)) {
         return parseExpList(lexArr, nextPos, false);
     }
-    // always return true (unless exception was thrown).
+    // always return true (unless an exception was thrown).
     return true;
 }
 
@@ -256,14 +253,14 @@ function parseArrElemList(lexArr, nextPos, successRequired) {
         parseLexeme(lexArr, nextPos, ",", false) ||
         parseExp(lexArr, nextPos, false)
     );
-    // always return true (unless exception was thrown).
+    // always return true (unless an exception was thrown).
     return true;
 }
 
 function parseObjPropList(lexArr, nextPos, successRequired) {
-    // parse as many expressions as possible of a possibly empty list.
+    // parse as many object properties as possible of a possibly empty list.
     if (!parseVarIdent(lexArr, nextPos, false)) {
-        // return true even if no expression was parsed.
+        // return true even if no property was parsed.
         return true;
     }
     parseLexeme(lexArr, nextPos, ":", true);
@@ -274,7 +271,7 @@ function parseObjPropList(lexArr, nextPos, successRequired) {
     if (parseLexeme(lexArr, nextPos, ",", false)) {
         return parseObjPropList(lexArr, nextPos, false);
     }
-    // always return true (unless exception was thrown).
+    // always return true (unless an exception was thrown).
     return true;
 }
 

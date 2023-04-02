@@ -1,4 +1,9 @@
 
+import {
+    ParseException
+} from "./exception.js";
+
+
 
 const boolLiteralPatt = "/^((true)|(false))$/"
 
@@ -27,9 +32,9 @@ const strLiteralPatt =
     "/^((" +
         "\"" +
             "((" +
-                "[^\\\"]" +
+                "[^\\\n\"]" +
             ")|(" +
-                "\\[^xu0-9a-fA-F]" +
+                "\\[^xu0-9]" +
             ")|(" +
                 "\\x[0-9a-fA-F]{2}" +
             ")|(" +
@@ -41,9 +46,9 @@ const strLiteralPatt =
     ")|(" +
         "\'" +
             "((" +
-                "[^\\\']" +
+                "[^\\\n\']" +
             ")|(" +
-                "\\[^xu0-9a-fA-F]" +
+                "\\[^xu0-9]" +
             ")|(" +
                 "\\x[0-9a-fA-F]{2}" +
             ")|(" +
@@ -60,7 +65,7 @@ export function parseLiteral(lexArr, nextPos, successRequired) {
     if (
         lexArr[nextPos[0]].test(boolLiteralPatt) ||
         lexArr[nextPos[0]].test(numLiteralPatt) ||
-        lexArr[nextPos[0]].test(strLiteralPatt);
+        lexArr[nextPos[0]].test(strLiteralPatt)
     ) {
         nextPos[0] = nextPos[0] + 1;
         return true;
