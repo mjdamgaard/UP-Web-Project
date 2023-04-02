@@ -8,7 +8,7 @@ import {
 } from "./ident.js";
 
 import {
-    parseImportIdentList, parseImportPath
+    parseNonEmptyImportIdentList, parseImportPath
 } from "./import.js";
 
 import {
@@ -46,7 +46,7 @@ export function parseOuterFunDef(lexArr, nextPos, successRequired) {
     if (parseFunDef(lexArr, nextPos, successRequired)) {
         return true;
     }
-    // if parsing has failed potentially trow an exception and return false.
+    // if parsing has failed, potentially throw an exception and return false.
     nextPos[0] = initialPos;
     if (successRequired) {
         throw new ParseException(

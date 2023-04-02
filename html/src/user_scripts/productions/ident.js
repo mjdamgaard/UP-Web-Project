@@ -14,7 +14,7 @@ export function parseVarIdent(lexArr, nextPos, successRequired) {
         nextPos[0] = nextPos[0] + 1;
         return true;
     }
-    // if parsing has failed potentially trow an exception and return false.
+    // if parsing has failed, potentially throw an exception and return false.
     if (successRequired) {
         throw new ParseException(
             lexArr[nextPos[0]], "Expected variable identifier"
@@ -29,7 +29,7 @@ export function parseFunIdent(lexArr, nextPos, successRequired) {
         nextPos[0] = nextPos[0] + 1;
         return true;
     }
-    // if parsing has failed potentially trow an exception and return false.
+    // if parsing has failed, potentially throw an exception and return false.
     if (successRequired) {
         throw new ParseException(
             lexArr[nextPos[0]], "Expected function identifier"

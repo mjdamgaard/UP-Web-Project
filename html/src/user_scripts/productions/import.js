@@ -53,8 +53,19 @@ export function parseImportIdentList(lexArr, nextPos, successRequired) {
 
 
 
-
+const upaModulePathPatt =
+    "/^UPA_modules\.php\?tid=[1-9A-F][0-9A-F]{0,15}$/";
 
 export function parseImportPath(lexArr, nextPos, successRequired) {
-    
+    if (lexArr[nextPos[0]].test(upaModulePathPatt)) {
+        nextPos[0] = nextPos[0] + 1;
+        return true;
+    }
+    // if parsing has failed, potentially throw an exception and return false.
+    if (successRequired) {
+        throw new ParseException(
+            lexArr[nextPos[0]], "Expected valid path to UPA module"
+        );
+    }
+    return false;
 }

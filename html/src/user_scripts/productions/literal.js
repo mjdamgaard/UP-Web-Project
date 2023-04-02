@@ -70,7 +70,7 @@ export function parseLiteral(lexArr, nextPos, successRequired) {
         nextPos[0] = nextPos[0] + 1;
         return true;
     }
-    // if parsing has failed potentially trow an exception and return false.
+    // if parsing has failed, potentially throw an exception and return false.
     if (successRequired) {
         throw new ParseException(
             lexArr[nextPos[0]], "Expected numeric, string or boolean literal"
