@@ -7,9 +7,15 @@ require_once $err_path . "errors.php";
 
 class InputVerifier {
 
-    public static function verifyType(
-        $paramVal, $type, $paramName
-    ) {
+    public static function verifyTypes($paramValArr, $typeArr, $paramNameArr) {
+        for ($i = 0; $i < count($paramVal); $i++) {
+            InputVerifier::verifyType(
+                $paramValArr[$i], $typeArr[$i], $paramNameArr[$i]
+            );
+        }
+    }
+
+    public static function verifyType($paramVal, $type, $paramName) {
         switch($type) {
             /* Type and ID input */
             case "type":
