@@ -15,7 +15,7 @@ interface Inputter {
     public static function input($conn, $sqlKey, $paramValArr);
 }
 
-class SafeDBInputter implements Inputter {
+class DBInputter implements Inputter {
     private static $querySQLSpecs = array(
         "rate" => array(
             "n" => 5,
@@ -26,6 +26,43 @@ class SafeDBInputter implements Inputter {
                 "bin"
             )
         ),
+
+        "cat" => array(
+            "n" => 3,
+            "sql" => "CALL insertOrFindCat (?, ?, ?, @ec, @outID)",
+            "typeArr" => array(
+                "userID", "catID",
+                "str"
+            )
+        ),
+
+        "eTerm" => array(
+            "n" => 3,
+            "sql" => "CALL insertOrFindETerm (?, ?, ?, @ec, @outID)",
+            "typeArr" => array(
+                "userID", "catID",
+                "str"
+            )
+        ),
+
+        "rel" => array(
+            "n" => 3,
+            "sql" => "CALL insertOrFindRel (?, ?, ?, @ec, @outID)",
+            "typeArr" => array(
+                "userID", "catID",
+                "str"
+            )
+        ),
+
+        "text" => array(
+            "n" => 2,
+            "sql" => "CALL insertText (?, ?, @ec, @outID)",
+            "typeArr" => array(
+                "userID",
+                "str"
+            )
+        ),
+
     );
 
     private static function verifyInputAndGetMySQLiResult (
@@ -52,8 +89,9 @@ class SafeDBInputter implements Inputter {
         $stmt = $conn->prepare($sqlSpec["sql"]);
         // execute statement with the (now type verified) input parameters.
         DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
-        // prepare the select statement to get the exit code.
-        $stmt = $conn->prepare("SELECT @ec AS exitCode");
+        // prepare the select statement to get the exit code and the potentally
+        // new ID, which we will denote as 'outID'.
+        $stmt = $conn->prepare("SELECT @ec AS exitCode, @outID AS outID");
         // execute this select statement.
         DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 

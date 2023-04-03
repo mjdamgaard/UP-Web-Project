@@ -8,7 +8,7 @@ require_once $user_input_path . "InputGetter.php";
 
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
 require_once $db_io_path . "DBConnector.php";
-require_once $db_io_path . "SafeDBInputter.php";
+require_once $db_io_path . "DBInputter.php";
 
 
 
@@ -47,10 +47,38 @@ switch ($reqType) {
             "r"
         );
         break;
+    case "C":
+        $sqlKey = "cat";
+        $paramNameArr = array(
+            "uid", "scid",
+            "t"
+        );
+        break;
+    case "E":
+        $sqlKey = "eTerm";
+        $paramNameArr = array(
+            "uid", "cid",
+            "t"
+        );
+        break;
+    case "R":
+        $sqlKey = "rel";
+        $paramNameArr = array(
+            "uid", "scid",
+            "n"
+        );
+        break;
+    case "T":
+        $sqlKey = "text";
+        $paramNameArr = array(
+            "uid",
+            "t"
+        );
+        break;
 }
 if ($sqlKey != "") {
     $paramValArr = InputGetter::getParams($paramNameArr);
-    $safeRes = SafeDBInputter::input($conn, $sqlKey, $paramValArr);
+    $safeRes = DBInputter::input($conn, $sqlKey, $paramValArr);
     echo json_encode($safeRes);
 } else {
     // No multiple-input requests are implemented yet. TODO: Implement some..
