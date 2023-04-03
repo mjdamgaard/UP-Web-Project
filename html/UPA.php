@@ -6,6 +6,7 @@ require_once $err_path . "errors.php";
 
 $user_input_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/user_input/";
 require_once $user_input_path . "InputGetter.php";
+require_once $user_input_path . "InputVerifier.php";
 
 
 
@@ -16,7 +17,7 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 
 // get and verify the required inputs.
 $paramNameArr = array("tid", "uid");
-$typeArr = array("termID, userOrGroupID");
+$typeArr = array("termID", "userOrGroupID");
 $paramValArr = InputGetter::getParams($paramNameArr);
 InputVerifier::verifyTypes($paramValArr, $typeArr, $paramNameArr);
 
@@ -32,7 +33,7 @@ InputVerifier::verifyTypes($paramValArr, $typeArr, $paramNameArr);
 // echo the div that the UPA scripts are allowed to change internally (as well
 // as a specific "area" of the local storage; they are also allowed to change
 // that).
-echo '<div id="upaFrame"></div>\n';
+echo '<div id="upaFrame"></div>';
 
 
 // query the database for the UPA main module that is the preference of the

@@ -14,3 +14,7 @@ div.length {
     display: inline;
     /* background-color:  */
 }
+
+#headerBar {
+    background-color: turquoise;
+}

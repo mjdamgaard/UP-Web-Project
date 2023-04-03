@@ -8,7 +8,7 @@ require_once $err_path . "errors.php";
 class InputVerifier {
 
     public static function verifyTypes($paramValArr, $typeArr, $paramNameArr) {
-        for ($i = 0; $i < count($paramVal); $i++) {
+        for ($i = 0; $i < count($paramValArr); $i++) {
             InputVerifier::verifyType(
                 $paramValArr[$i], $typeArr[$i], $paramNameArr[$i]
             );
@@ -31,7 +31,7 @@ class InputVerifier {
                 }
                 break;
             case "termID":
-                $pattern = "/^[scerugkltb]self::$$/";
+                $pattern = "/^[scerugkltb][1-9A-F][0-9A-F]{0,15}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
@@ -167,7 +167,8 @@ class InputVerifier {
                 break;
             default:
                 throw new \Exception(
-                    'verifyAndSetParams(): unknown type for ' . $paramName
+                    'verifyAndSetParams(): unknown type ' .
+                    $type . ' for ' . $paramName
                 );
         }
     }
