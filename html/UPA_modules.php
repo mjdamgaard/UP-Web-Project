@@ -54,7 +54,7 @@ if (preg_match($devModuleIDPatt, $textID)) {
     // define the parameters used to get the (unsanitized!) text.
     $sqlKey = "text";
     $paramValArr = array($textID);
-    $res = UnsafeQuerier::query($conn, $sqlKey, $paramValArr);
+    $res = UnsafeDBQuerier::query($conn, $sqlKey, $paramValArr);
     // return the text as is. //TODO: Is is important that I change this impl.
     echo $res;
 }

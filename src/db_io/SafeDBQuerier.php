@@ -15,7 +15,7 @@ interface Querier {
     public static function query($conn, $sqlKey, $paramValArr);
 }
 
-class SafeQuerier implements Querier {
+class SafeDBQuerier implements Querier {
     private static $querySQLSpecs = array(
         "set" => array(
             "n" => 6,

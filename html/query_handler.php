@@ -20,11 +20,10 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 
 
 // get request type.
-$reqTypeVarName = InputVarNamer::getReqTypeVarName();
-if (!isset($_POST[$reqTypeVarName])) {
+if (!isset($_POST["type"])) {
     echoErrorJSONAndExit("No request type specified");
 }
-$reqType = $_POST[$reqTypeVarName];
+$reqType = $_POST["type"];
 
 // get connection.
 $conn = DBConnector::getConnectionOrDie();

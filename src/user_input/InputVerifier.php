@@ -118,6 +118,14 @@ class InputVerifier {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
                 break;
+            case "blob":
+                // TODO: Implement.
+                echoErrorJSONAndExit("BLOB types are not implemented yet!");
+                break;
+            case "text":
+                // TODO: Implement soon.
+                echoErrorJSONAndExit("Text types are not implemented yet!");
+                break;
             case "uint":
                 $pattern = "/^([1-9][0-9]*|0)$/";
                 $n = intval($paramVal);

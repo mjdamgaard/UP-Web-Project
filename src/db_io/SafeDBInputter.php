@@ -1,5 +1,8 @@
 <?php
 
+/* All text outputs are converted to safe html texts (using the
+ * htmlspecialchars() function) in this layer!
+ **/
 
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
 require_once $db_io_path . "DBConnector.php";
@@ -8,21 +11,21 @@ $user_input_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/user_input/";
 require_once $user_input_path . "InputVerifier.php";
 
 
-interface Querier {
-    public static function query($conn, $sqlKey, $paramValArr);
+interface Inputter {
+    public static function input($conn, $sqlKey, $paramValArr);
 }
 
-class UnsafeQuerier implements Querier {
+class SafeDBInputter implements Inputter {
     private static $querySQLSpecs = array(
-        "text" => array(
-            "n" => 1,
-            "sql" => "CALL selectText (?)",
+        "rate" => array(
+            "n" => 5,
+            "sql" => "CALL inputOrChangeRating (?, ?, ?, ?, @ec)",
             "typeArr" => array(
-                "textID"
-            ),
-            "outputType" => "assocArr",
-            "columnNames" => array("text")
-        )
+                "userID", "termID", "relID",
+                "termID",
+                "bin"
+            )
+        ),
     );
 
     private static function verifyInputAndGetMySQLiResult (
@@ -49,13 +52,17 @@ class UnsafeQuerier implements Querier {
         $stmt = $conn->prepare($sqlSpec["sql"]);
         // execute statement with the (now type verified) input parameters.
         DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
+        // prepare the select statement to get the exit code.
+        $stmt = $conn->prepare("SELECT @ec AS exitCode");
+        // execute this select statement.
+        DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 
         // return mysqli_result object.
         return $stmt->get_result();
     }
 
 
-    public static function query($conn, $sqlKey, $paramValArr) {
+    public static function input($conn, $sqlKey, $paramValArr) {
         if (!isset(self::$querySQLSpecs[$sqlKey])) {
             throw new Exception(
                 "verifyInputAndGetMySQLiResult(): " .
@@ -64,25 +71,12 @@ class UnsafeQuerier implements Querier {
         }
         $sqlSpec = self::$querySQLSpecs[$sqlKey];
 
+        // try to input the requested data into database and get the exit code.
         $res = self::verifyInputAndGetMySQLiResult(
             $conn, $sqlSpec, $paramValArr
         );
-
-        // branch according to the "outputType" and return unsanitized result.
-        if ($sqlSpec["outputType"] === "numArr") {
-            // fetch all rows as a multidimensional array.
-            $rows = $res->fetch_all();
-            // return $rows as is; unsanitized!
-            return $rows;
-
-        } elseif ($sqlSpec["outputType"] === "assocArr") {
-            // fetch a single row as an associative array.
-            $row = $res->fetch_assoc();
-            // return $row as is; unsanitized!
-            return $row;
-        } else {
-            throw new Exception("query(): typo in outputType");
-        }
+        // return the exit code (as an associative array) for the input request.
+        return $res->fetch_assoc();
     }
 
 }
