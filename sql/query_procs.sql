@@ -14,6 +14,7 @@ DROP PROCEDURE selectRelDef;
 DROP PROCEDURE selectSuperCatDefs;
 
 DROP PROCEDURE selectText;
+DROP PROCEDURE selectBinary;
 
 DROP PROCEDURE selectCreations;
 
@@ -333,6 +334,20 @@ BEGIN
     SELECT str as text
     FROM Texts
     WHERE id = txtID;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE selectBinary (
+    IN binCombID VARCHAR(17)
+)
+BEGIN
+    DECLARE binID BIGINT UNSIGNED;
+    CALL getConvID (binCombID, binID);
+
+    SELECT bin as bin
+    FROM Binaries
+    WHERE id = binID;
 END //
 DELIMITER ;
 

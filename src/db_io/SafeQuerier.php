@@ -120,6 +120,17 @@ class SafeQuerier implements Querier {
             "columnNames" => array("text"),
             "unsafeColumns" => array(0)
         )
+
+        // "binary" => array(
+        //     "n" => 1,
+        //     "sql" => "CALL selectBinary (?)",
+        //     "typeArr" => array(
+        //         "binID"
+        //     ),
+        //     "outputType" => "assocArr",
+        //     "columnNames" => array("binary"),
+        //     "unsafeColumns" => array()
+        // )
     );
 
     private static function verifyInputAndGetMySQLiResult (

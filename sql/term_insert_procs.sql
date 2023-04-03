@@ -3,27 +3,24 @@
 SELECT "term_inserts";
 
 
--- DROP PROCEDURE insertOrFindCat;
--- DROP PROCEDURE insertOrFindETerm;
--- DROP PROCEDURE insertOrFindRel;
---
--- DROP PROCEDURE insertTxt;
+DROP PROCEDURE insertOrFindCat;
+DROP PROCEDURE insertOrFindETerm;
+DROP PROCEDURE insertOrFindRel;
+
+DROP PROCEDURE insertText;
 
 
 
 
 
-
-
--- TODO: I sorta started to correct insertOrFindCat(), but I'll finish it later.
 
 DELIMITER //
 CREATE PROCEDURE insertOrFindCat (
-    IN catTitle TEXT,
+    IN catTitle VARCHAR(255),
     IN superCatCombID VARCHAR(17),
     IN userCombID VARCHAR(17),
     OUT newCombID VARCHAR(17),
-    OUT exitCode TINYINT -- 0 is successful insertion, 1 is successful find.
+    OUT exitCode TINYINT
 )
 BEGIN
     DECLARE superCatID, userID, newID BIGINT UNSIGNED;
@@ -40,11 +37,12 @@ BEGIN
             SET newID = NULL;
             SET exitCode = 2; -- super category doesn't exist.
         ELSE
+            -- TODO: Insert a check that the user is part of a set and with a
+            -- non-negative rating denoting that the user is allowed to insert.
             INSERT INTO Categories (title, super_cat_id)
             VALUES (catTitle, superCatID);
             SELECT LAST_INSERT_ID() INTO newID;
-            -- NOTE: This procedure assumes that user_id is correct if not null.
-            IF (userID IS NOT NULL) THEN
+            IF (userID != 0) THEN
                 INSERT INTO Creators (term_t, term_id, user_id)
                 VALUES ("c", newID, userID);
             END IF;
@@ -59,16 +57,16 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE insertOrFindETerm (
-    IN eTermTitle TEXT,
-    IN catIDHex VARCHAR(16),
-    IN userIDHex VARCHAR(16),
-    OUT newIDHex VARCHAR(16),
-    OUT exitCode TINYINT -- 0 is successful insertion, 1 is successful find.
+    IN eTermTitle VARCHAR(255),
+    IN catCombID VARCHAR(17),
+    IN userCombID VARCHAR(17),
+    OUT newCombID VARCHAR(17),
+    OUT exitCode TINYINT
 )
 BEGIN
     DECLARE catID, userID, newID BIGINT UNSIGNED;
-    SET catID = CONV(catIDHex, 16, 10);
-    SET userID = CONV(userIDHex, 16, 10);
+    CALL getConvID (catCombID, catID);
+    CALL getConvID (userCombID, userID);
 
     SELECT id INTO newID
     FROM ElementaryTerms
@@ -80,18 +78,19 @@ BEGIN
             SET newID = NULL;
             SET exitCode = 2; -- category doesn't exist.
         ELSE
+            -- TODO: Insert a check that the user is part of a set and with a
+            -- non-negative rating denoting that the user is allowed to insert.
             INSERT INTO ElementaryTerms (title, cat_id)
             VALUES (eTermTitle, catID);
             SELECT LAST_INSERT_ID() INTO newID;
-            -- NOTE: This procedure assumes that user_id is correct if not null.
-            IF (userID IS NOT NULL) THEN
+            IF (userID != 0) THEN
                 INSERT INTO Creators (term_t, term_id, user_id)
-                VALUES ("s", newID, userID);
+                VALUES ("e", newID, userID);
             END IF;
             SET exitCode = 0; -- insert.
         END IF;
     END IF;
-    SET newIDHex = CONV(newID, 10, 16);
+    SET newCombID = CONCAT('e', CONV(newID, 10, 16));
 END //
 DELIMITER ;
 
@@ -100,16 +99,16 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE insertOrFindRel (
-    IN objNoun TEXT,
-    IN subjCatIDHex VARCHAR(16),
-    IN userIDHex VARCHAR(16),
-    OUT newIDHex VARCHAR(16),
-    OUT exitCode TINYINT -- 0 is successful insertion, 1 is successful find.
+    IN objNoun VARCHAR(255),
+    IN subjCatCombID VARCHAR(17),
+    IN userCombID VARCHAR(17),
+    OUT newCombID VARCHAR(17),
+    OUT exitCode TINYINT
 )
 BEGIN
     DECLARE subjCatID, userID, newID BIGINT UNSIGNED;
-    SET subjCatID = CONV(subjCatIDHex, 16, 10);
-    SET userID = CONV(userIDHex, 16, 10);
+    CALL getConvID (subjCatCombID, subjCatID);
+    CALL getConvID (userCombID, userID);
 
     SELECT id INTO newID
     FROM Relations
@@ -121,18 +120,19 @@ BEGIN
             SET newID = NULL;
             SET exitCode = 2; -- subject category doesn't exist.
         ELSE
+            -- TODO: Insert a check that the user is part of a set and with a
+            -- non-negative rating denoting that the user is allowed to insert.
             INSERT INTO Relations (obj_noun, subj_cat_id)
             VALUES (objNoun, subjCatID);
             SELECT LAST_INSERT_ID() INTO newID;
-            -- NOTE: This procedure assumes that user_id is correct if not null.
-            IF (userID IS NOT NULL) THEN
+            IF (userID != 0) THEN
                 INSERT INTO Creators (term_t, term_id, user_id)
                 VALUES ("r", newID, userID);
             END IF;
             SET exitCode = 0; -- insert.
         END IF;
     END IF;
-    SET newIDHex = CONV(newID, 10, 16);
+    SET newCombID = CONCAT('r', CONV(newID, 10, 16));
 END //
 DELIMITER ;
 
@@ -144,24 +144,33 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE insertTxt (
+CREATE PROCEDURE insertText (
     IN textStr TEXT,
-    IN userIDHex VARCHAR(16),
-    OUT newIDHex VARCHAR(16),
+    IN userCombID VARCHAR(17),
+    OUT newCombID VARCHAR(17),
     OUT exitCode TINYINT -- 0 is successful insertion.
 )
 BEGIN
     DECLARE userID, newID BIGINT UNSIGNED;
-    SET userID = CONV(userIDHex, 16, 10);
+    CALL getConvID (userCombID, userID);
 
-    INSERT INTO Texts (str) VALUES (textStr);
-    SELECT LAST_INSERT_ID() INTO newID;
-    IF (userID IS NOT NULL) THEN
-        -- NOTE: This procedure assumes that user_id is correct if not null.
-        INSERT INTO Creators (term_t, term_id, user_id)
-        VALUES ("t", newID, userID);
+    SELECT id INTO newID
+    FROM Texts
+    WHERE (str = textStr);
+    IF (newID IS NOT NULL) THEN
+        SET exitCode = 1; -- find.
+    ELSE
+        -- TODO: Insert a check that the user is part of a set and with a
+        -- non-negative rating denoting that the user is allowed to insert.
+        INSERT INTO Texts (str)
+        VALUES (textStr);
+        SELECT LAST_INSERT_ID() INTO newID;
+        IF (userID != 0) THEN
+            INSERT INTO Creators (term_t, term_id, user_id)
+            VALUES ("t", newID, userID);
+        END IF;
+        SET exitCode = 0; -- insert.
     END IF;
-    SET exitCode = 0; -- insert.
-    SET newIDHex = CONV(newID, 10, 16);
+    SET newCombID = CONCAT('t', CONV(newID, 10, 16));
 END //
 DELIMITER ;

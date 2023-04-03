@@ -41,24 +41,30 @@ const QueryDataConstructors = {
         this.type = "CD";
         this.id = catID;
     },
+
     ETermDefReqData: function(eTermID) {
         this.type = "ED";
         this.id = eTermID;
     },
+
     RelDefReqData: function(relID) {
         this.type = "RD";
         this.id = relID;
     },
 
-
     SuperCatsReqData: function(catID) {
       this.type = "SCD";
       this.id = catID;
-  },
+    },
 
     TextReqData: function(textID) {
       this.type = "T";
       this.id = textID;
-    }
+    },
+
+    // BinaryReqData: function(binID) {
+    //   this.type = "B";
+    //   this.id = binID;
+    // },
 
 }

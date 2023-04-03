@@ -75,6 +75,10 @@ switch ($reqType) {
         $sqlKey = "text";
         $paramNameArr = array("id");
         break;
+    // case "B":
+    //     $sqlKey = "binary";
+    //     $paramNameArr = array("id");
+    //     break;
 }
 if ($sqlKey != "") {
     $paramValArr = InputGetter::getParams($paramNameArr);
