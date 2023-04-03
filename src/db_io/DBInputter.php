@@ -29,7 +29,7 @@ class DBInputter implements Inputter {
 
         "cat" => array(
             "n" => 3,
-            "sql" => "CALL insertOrFindCat (?, ?, ?, @ec, @outID)",
+            "sql" => "CALL insertOrFindCat (?, ?, ?, @outID, @ec)",
             "typeArr" => array(
                 "userID", "catID",
                 "str"
@@ -38,7 +38,7 @@ class DBInputter implements Inputter {
 
         "eTerm" => array(
             "n" => 3,
-            "sql" => "CALL insertOrFindETerm (?, ?, ?, @ec, @outID)",
+            "sql" => "CALL insertOrFindETerm (?, ?, ?, @outID, @ec)",
             "typeArr" => array(
                 "userID", "catID",
                 "str"
@@ -47,7 +47,7 @@ class DBInputter implements Inputter {
 
         "rel" => array(
             "n" => 3,
-            "sql" => "CALL insertOrFindRel (?, ?, ?, @ec, @outID)",
+            "sql" => "CALL insertOrFindRel (?, ?, ?, @outID, @ec)",
             "typeArr" => array(
                 "userID", "catID",
                 "str"
@@ -56,7 +56,7 @@ class DBInputter implements Inputter {
 
         "text" => array(
             "n" => 2,
-            "sql" => "CALL insertText (?, ?, @ec, @outID)",
+            "sql" => "CALL insertText (?, ?, @outID, @ec)",
             "typeArr" => array(
                 "userID",
                 "str"
@@ -91,7 +91,7 @@ class DBInputter implements Inputter {
         DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
         // prepare the select statement to get the exit code and the potentally
         // new ID, which we will denote as 'outID'.
-        $stmt = $conn->prepare("SELECT @ec AS exitCode, @outID AS outID");
+        $stmt = $conn->prepare("SELECT @outID AS outID, @ec AS exitCode");
         // execute this select statement.
         DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 

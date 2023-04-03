@@ -32,128 +32,126 @@ ALTER TABLE Creators AUTO_INCREMENT=1;
 -- insert the fundamental category of all terms (with no super category).
 INSERT INTO Categories (id, title, super_cat_id)
 VALUES (1, "Terms", 0); -- ('super_cat_id = 0' means 'no super category.')
-SET @termsID = "1";
+SET @termsID = "c1";
 
 -- insert categories for all the fundamental term types.
-CALL insertOrFindCat ("Categories", @termsID, NULL, @catCatid, @ec);
-CALL insertOrFindCat ("Standard terms", @termsID, NULL, @stdCatID, @ec);
-CALL insertOrFindCat ("Relations", @termsID, NULL, @relCatid, @ec);
+CALL insertOrFindCat (NULL, @termsID, "Categories", @catCatid, @ec);
+CALL insertOrFindCat (NULL, @termsID, "Standard terms", @stdCatID, @ec);
+CALL insertOrFindCat (NULL, @termsID, "Relations", @relCatid, @ec);
 
-CALL insertOrFindCat ("Users and bots", @termsID, NULL, @usersEtcCatID, @ec);
+CALL insertOrFindCat (NULL, @termsID, "Users and bots", @usersEtcCatID, @ec);
 
-CALL insertOrFindCat ("Users", @usersEtcCatID, NULL, @nid, @ec);
-CALL insertOrFindCat ("User groups", @usersEtcCatID, NULL, @nid, @ec);
+CALL insertOrFindCat (NULL, @usersEtcCatID, "Users", @nid, @ec);
+CALL insertOrFindCat (NULL, @usersEtcCatID, "User groups", @nid, @ec);
 
-CALL insertOrFindCat ("Internal data", @termsID, NULL, @dataCatID, @ec);
+CALL insertOrFindCat (NULL, @termsID, "Internal data", @nid, @ec);
 
-CALL insertOrFindCat ("Keyword strings", @dataCatID, NULL, @nid, @ec);
-CALL insertOrFindCat ("Lists", @dataCatID, NULL, @nid, @ec);
-CALL insertOrFindCat ("Texts", @dataCatID, NULL, @nid, @ec);
-CALL insertOrFindCat ("Binaries", @dataCatID, NULL, @nid, @ec);
+CALL insertOrFindCat (NULL, @dataCatID, "Keyword strings", @nid, @ec);
+CALL insertOrFindCat (NULL, @dataCatID, "Lists", @nid, @ec);
+CALL insertOrFindCat (NULL, @dataCatID, "Texts", @nid, @ec);
+CALL insertOrFindCat (NULL, @dataCatID,  "Binaries", @nid, @ec);
 
 
 -- insert fundamental relations.
-CALL insertOrFindRel ("Subcategories", @catCatid, NULL, @s, @ec);
-CALL insertOrFindRel ("Elements", @catCatid, NULL, @e, @ec);
+CALL insertOrFindRel (NULL, @catCatid, "Subcategories", @s, @ec);
+CALL insertOrFindRel (NULL, @catCatid, "Elements", @e, @ec);
 
 
-
+SELECT "hell0";
 
 -- up-vote categories for all the fundamental term types.
 CALL inputOrChangeRating (
-    'u', 1, 'c', @termsID, @s, 0xF0, 'c', @catCatid, @ec
+    'u1', @termsID, @s, @catCatid, "F0", @ec
 );
 CALL inputOrChangeRating (
-    'u', 1, 'c', @catCatid, @e, 0xF1, 'c', @catCatid, @ec
+    'u1', @catCatid, @e, @catCatid, "F1", @ec
 );
 CALL inputOrChangeRating (
-    'u', 1, 'c', @termsID, @s, 0xF2, 'c', @stdCatID, @ec
+    'u1', @termsID, @s, @stdCatID, "F2", @ec
 );
 CALL inputOrChangeRating (
-    'u', 1, 'c', @catCatid, @e, 0xF3, 'c', @stdCatID, @ec
+    'u1', @catCatid, @e, @stdCatID, "F3", @ec
 );
 CALL inputOrChangeRating (
-    'u', 1, 'c', @termsID, @s, 0xF4, 'c', @relCatid, @ec
+    'u1', @termsID, @s, @relCatid, "F4", @ec
 );
 CALL inputOrChangeRating (
-    'u', 1, 'c', @catCatid, @e, 0xF5, 'c', @relCatid, @ec
+    'u1', @catCatid, @e, @relCatid, "F5", @ec
 );
 
 
 
 
-CALL insertOrFindCat ("Media", @stdCatID, NULL, @mediaCatID, @ec);
-    CALL insertOrFindCat ("Music", @mediaCatID, NULL, @musicCatID, @ec);
-        CALL insertOrFindCat ("Rock", @musicCatID, NULL, @Rock, @ec);
-        CALL insertOrFindCat ("Pop", @musicCatID, NULL, @Pop, @ec);
-        CALL insertOrFindCat ("Blues", @musicCatID, NULL, @Blues, @ec);
-        CALL insertOrFindCat ("R&B", @musicCatID, NULL, @RandB, @ec);
-        CALL insertOrFindCat ("Hip hop", @musicCatID, NULL, @Hip_hop, @ec);
-        CALL insertOrFindCat ("Indie", @musicCatID, NULL, @Indie, @ec);
-        CALL insertOrFindCat ("Electronic", @musicCatID, NULL, @Electronic, @ec);
-        CALL insertOrFindCat ("Techno", @musicCatID, NULL, @Techno, @ec);
-    CALL insertOrFindCat ("Movies", @mediaCatID, NULL, @movCatID, @ec);
-        CALL insertOrFindCat ("Sci-fi", @movCatID, NULL, @scifi, @ec);
-        CALL insertOrFindCat ("Action", @movCatID, NULL, @Action, @ec);
-        CALL insertOrFindCat ("Comedy", @movCatID, NULL, @Comedy, @ec);
+CALL insertOrFindCat (NULL, @stdCatID, "Media", @mediaCatID, @ec);
+    CALL insertOrFindCat (NULL, @mediaCatID, "Music", @musicCatID, @ec);
+        CALL insertOrFindCat (NULL, @musicCatID, "Rock", @Rock, @ec);
+        CALL insertOrFindCat (NULL, @musicCatID, "Pop", @Pop, @ec);
+        CALL insertOrFindCat (NULL, @musicCatID, "Blues", @Blues, @ec);
+        CALL insertOrFindCat (NULL, @musicCatID, "R&B", @RandB, @ec);
+        CALL insertOrFindCat (NULL, @musicCatID, "Hip hop", @Hip_hop, @ec);
+        CALL insertOrFindCat (NULL, @musicCatID, "Indie", @Indie, @ec);
+        CALL insertOrFindCat (NULL, @musicCatID, "Electronic", @Electronic, @ec);
+        CALL insertOrFindCat (NULL, @musicCatID, "Techno", @Techno, @ec);
+    CALL insertOrFindCat (NULL, @mediaCatID, "Movies", @movCatID, @ec);
+        CALL insertOrFindCat (NULL, @movCatID, "Sci-fi", @scifi, @ec);
+        CALL insertOrFindCat (NULL, @movCatID, "Action", @Action, @ec);
+        CALL insertOrFindCat (NULL, @movCatID, "Comedy", @Comedy, @ec);
 
 
 CALL inputOrChangeRating (
-    'u', 1, 'c', @stdCatID, @s, 0xFF, 'c', @mediaCatID, @ec
+    'u1', @stdCatID, @s, @mediaCatID, "FF", @ec
 );
     CALL inputOrChangeRating (
-        'u', 1, 'c', @mediaCatID, @s, 0xF6, 'c', @musicCatID, @ec
+        'u1', @mediaCatID, @s, @musicCatID, "F6", @ec
     );
         CALL inputOrChangeRating (
-            'u', 1, 'c', @musicCatID, @s, 0xFF, 'c', @Rock, @ec
+            'u1', @musicCatID, @s, @Rock, "FF", @ec
         );
         CALL inputOrChangeRating (
-            'u', 1, 'c', @musicCatID, @s, 0xFF, 'c', @Pop, @ec
+            'u1', @musicCatID, @s, @Pop, "FF", @ec
         );
         CALL inputOrChangeRating (
-            'u', 1, 'c', @musicCatID, @s, 0xEF, 'c', @Blues, @ec
+            'u1', @musicCatID, @s, @Blues, "EF", @ec
         );
         CALL inputOrChangeRating (
-            'u', 1, 'c', @musicCatID, @s, 0xDF, 'c', @RandB, @ec
+            'u1', @musicCatID, @s, @RandB, "DF", @ec
         );
         CALL inputOrChangeRating (
-            'u', 1, 'c', @musicCatID, @s, 0xCF, 'c', @Hip_hop, @ec
+            'u1', @musicCatID, @s, @Hip_hop, "CF", @ec
         );
         CALL inputOrChangeRating (
-            'u', 1, 'c', @musicCatID, @s, 0xFFCC, 'c', @Indie, @ec
+            'u1', @musicCatID, @s, @Indie, "FFCC", @ec
         );
         CALL inputOrChangeRating (
-            'u', 1, 'c', @musicCatID, @s, 0xFFF, 'c', @Electronic, @ec
+            'u1', @musicCatID, @s, @Electronic, "FFF", @ec
         );
         CALL inputOrChangeRating (
-            'u', 1, 'c', @musicCatID, @s, 0x7FF, 'c', @Techno, @ec
+            'u1', @musicCatID, @s, @Techno, "7FF", @ec
         );
     CALL inputOrChangeRating (
-        'u', 1, 'c', @mediaCatID, @s, 0xFF, 'c', @movCatID, @ec
+        'u1', @mediaCatID, @s, @movCatID, "FF", @ec
     );
         CALL inputOrChangeRating (
-            'u', 1, 'c', @movCatID, @s, 0xFF, 'c', @scifi, @ec
+            'u1', @movCatID, @s, @scifi, "FF", @ec
         );
         CALL inputOrChangeRating (
-            'u', 1, 'c', @movCatID, @s, 0xFF, 'c', @Action, @ec
+            'u1', @movCatID, @s, @Action, "FF", @ec
         );
         CALL inputOrChangeRating (
-            'u', 1, 'c', @movCatID, @s, 0xFF, 'c', @Comedy, @ec
+            'u1', @movCatID, @s, @Comedy, "FF", @ec
         );
 
 
 
-CALL insertOrFindCat ("Books etc.", @stdCatID, NULL, @booksEtcCatID, @ec);
-    CALL insertOrFindCat ("Fiction", @booksEtcCatID, NULL, @ficCatID, @ec);
-    CALL insertOrFindCat (
-        "Nonfiction", @booksEtcCatID, NULL, @nonficCatID, @ec
-    );
+CALL insertOrFindCat (NULL, @stdCatID, "Books etc.", @booksEtcCatID, @ec);
+    CALL insertOrFindCat (NULL, @booksEtcCatID, "Fiction", @ficCatID, @ec);
+    CALL insertOrFindCat (NULL @booksEtcCatID, "Nonfiction", @nonficCatID, @ec);
 
 
 
 
 -- -- Works; "terms" are seen as different from "Terms."
--- CALL insertOrFindCat ("terms", @termsID, NULL, @stdCatID, @ec);
+-- CALL insertOrFindCat (NULL, "terms", @stdCatID, @ec);
 
 
 
