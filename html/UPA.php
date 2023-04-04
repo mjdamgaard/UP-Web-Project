@@ -41,9 +41,13 @@ $preferenceUserOrGroupID = $paramValArr[2];
 // chosen user/user group.
 //TODO: For now I am just loading a module in the UPA_dev_modules folder. Change
 // this such that the user (group) is queried for their preference instead.
-$mainModuleID = "t1";
+$mainModuleID = "tA";
 
 
+// verify that the main module is either one of the cached ones, or is rated
+// (by a certain user) in the SDB to be a valid and safe module script.
+// TODO: Do that!
+;
 
 
 // echo the div that the UPA scripts are allowed to change internally (as well
@@ -51,21 +55,32 @@ $mainModuleID = "t1";
 // Also place the script that imports and runs the chosen UPA main module in
 // this div.
 ?>
-<div id="upaFrame">
-    <div class="ratingQueue"></div>
-    <div class="insertQueue"></div>
-    <script type="module">
-        // import the chosen UPA main module.
-        import {
-            upaFun_main
-        } from "./UPA_modules.php?id=<?php echo $mainModuleID; ?>";
-        // run the main function from that module right away.
-        upaFun_main(<?php
-            echo '{'
-                'tid:"' . $termID . '", ' .
-                'uid:"' . $userID . '", ' .
-                'pid:"' . $preferenceUserOrGroupID . '"' .
-            '}';
-        ?>);
-    </script>
+<div id="upaMainFrame">
+    <div upaAtt_class="ratingQueue"></div>
+    <div upaAtt_class="insertQueue"></div>
 </div>
+<script id="upaMainFunLoader" type="module">
+    // import the chosen UPA main module.
+    import {
+        upaFun_main
+    } from "./UPA_modules.php?id=<?php echo $mainModuleID; ?>";
+    // run the main function from that module right away.
+    upaFun_main(<?php
+        echo '{'
+            'tid:"' . $termID . '", ' .
+            'uid:"' . $userID . '", ' .
+            'pid:"' . $preferenceUserOrGroupID . '"' .
+        '}';
+    ?>);
+</script>
+<script  id="ratingQueueHandler">
+    // TODO: Implement a function that listens to new ratings.
+    // In the beginning, I will just let this handler sent the ratings straight
+    // to the SDB right away, without further ado.
+</script>
+<script  id="insertQueueHandler">
+    // TODO: Implement a function that listens to new term insert requests.
+    // In the beginning, I might implement this handler such that the user
+    // has to actively confirm new inserts. But I might also just make it like
+    // ratingQueueHandler in the very beginning..
+</script>
