@@ -6,9 +6,13 @@ require_once $err_path . "errors.php";
 $user_input_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/user_input/";
 require_once $user_input_path . "InputVerifier.php";
 
+$db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
+require_once $db_io_path . "DBConnector.php";
+require_once $db_io_path . "UnsafeDBQuerier.php";
+
 $UPA_cached_modules_path = $_SERVER['DOCUMENT_ROOT'] .
     "/../UPA_cached_modules/";
-$UPA_dev_modules_path = $UPA_cached_modules_path . "dev_modules/"
+$UPA_dev_modules_path = $UPA_cached_modules_path . "dev_modules/";
 
 
 // modules can only be GET-gotten.
@@ -29,14 +33,14 @@ InputVerifier::verifyType($textID, "textID", "id");
 
 // array of text IDs of legal developer-made modules.
 $devModuleIDs = array (
-    "t1", "t2" //TODO: Change these to match the text IDs in the database of the
+    "t1", "tA" //TODO: Change these to match the text IDs in the database of the
     // developer-made modules.
 );
 
 $devModuleIDPatt =
     "/^((" .
     implode(")|(", $devModuleIDs) .
-    "))$/"
+    "))$/";
 
 // if the text ID matches the ID of a developer-made module, change the header
 // to that module

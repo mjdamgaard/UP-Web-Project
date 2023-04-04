@@ -44,10 +44,8 @@ $preferenceUserOrGroupID = $paramValArr[2];
 $mainModuleID = "tA";
 
 
-// I wrote the following, but no, that verification should happen in
-// UPA_modules.php instead:
-// "verify that the main module is either one of the cached ones, or is rated
-// (by a certain user) in the SDB to be a valid and safe module script."
+// The safety of the main module should not be verified here! That is the
+// responsibility of UPA_modules.php instead!
 
 
 
@@ -67,7 +65,7 @@ $mainModuleID = "tA";
     } from "./UPA_modules.php?id=<?php echo $mainModuleID; ?>";
     // run the main function from that module right away.
     upaFun_main(<?php
-        echo '{'
+        echo '{' .
             'tid:"' . $termID . '", ' .
             'uid:"' . $userID . '", ' .
             'pid:"' . $preferenceUserOrGroupID . '"' .

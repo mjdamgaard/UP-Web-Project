@@ -23,11 +23,14 @@
 
 
 <?php
+if (!isset($_GET["tid"])) {
+    $_GET["tid"] = "c3";
+}
 if (!isset($_GET["uid"])) {
     $_GET["uid"] = "u1";
 }
-if (!isset($_GET["tid"])) {
-    $_GET["tid"] = "c3";
+if (!isset($_GET["pid"])) {
+    $_GET["pid"] = "u1";
 }
 require $_SERVER['DOCUMENT_ROOT'] . "/UPA.php";
 ?>
