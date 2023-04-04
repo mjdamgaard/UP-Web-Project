@@ -44,10 +44,11 @@ $preferenceUserOrGroupID = $paramValArr[2];
 $mainModuleID = "tA";
 
 
-// verify that the main module is either one of the cached ones, or is rated
-// (by a certain user) in the SDB to be a valid and safe module script.
-// TODO: Do that!
-;
+// I wrote the following, but no, that verification should happen in
+// UPA_modules.php instead:
+// "verify that the main module is either one of the cached ones, or is rated
+// (by a certain user) in the SDB to be a valid and safe module script."
+
 
 
 // echo the div that the UPA scripts are allowed to change internally (as well
