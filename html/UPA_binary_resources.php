@@ -10,6 +10,22 @@ $UPA_dev_modules_path = $_SERVER['DOCUMENT_ROOT'] . "/../UPA_dev_modules/";
 
 
 
+
+// "... I think renaming the URL paths *is* the way to go, cause that means
+// the browsers are likely to cache the scripts (also for HTTPs). I will
+// then also do something similar for UPA_binary_resources.php, but where
+// I'll take the given file extension and as it as a parameter, namely
+// such that e.g. UPA_binary_resources.jpg?id=b5F is interpreted as
+// somehting like UPA_binary_resources.php?fileType=jpg&id=b5F."
+
+
+
+
+
+
+
+
+
 // modules can only be GET-gotten.
 // if ($_SERVER["REQUEST_METHOD"] != "GET") {
 //     $_POST = $_GET;

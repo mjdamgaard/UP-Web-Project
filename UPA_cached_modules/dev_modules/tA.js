@@ -4,6 +4,6 @@ import {
     appendHelloWorld
 } from "./t1.js";
 
-export upaFun_main(argObj) {
+export function upaFun_main(argObj) {
     upaFun_appendHelloWorld();
 }
