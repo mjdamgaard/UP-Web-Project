@@ -79,19 +79,14 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE findOrCreateSet (
     IN userType CHAR(1),
-    IN userIDHex VARCHAR(16),
+    IN userID BIGINT UNSIGNED,
     IN subjType CHAR(1),
-    IN subjIDHex VARCHAR(16),
-    IN relIDHex VARCHAR(16),
+    IN subjID BIGINT UNSIGNED,
+    IN relID BIGINT UNSIGNED,
     OUT newID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 BEGIN
-    DECLARE userID, subjID, relID BIGINT UNSIGNED;
-    SET userID = CONV(userIDHex, 16, 10);
-    SET subjID = CONV(subjIDHex, 16, 10);
-    SET relID = CONV(relIDHex, 16, 10);
-
     SELECT id INTO newID
     FROM Sets
     WHERE (
@@ -134,15 +129,12 @@ CREATE PROCEDURE insertOrUpdateRecentInput (
     IN setID BIGINT UNSIGNED,
     IN objType CHAR(1),
     IN objID BIGINT UNSIGNED,
-    IN ratingValHex VARCHAR(510),
-    IN previousRatingHex VARCHAR(510)
+    IN ratingVal VARBINARY(255),
+    IN previousRating VARBINARY(255)
 )
 BEGIN
     DECLARE existsPriorChangeToday TINYINT;
     DECLARE currentDate DATE;
-    DECLARE ratingVal, previousRating VARBINARY(255);
-    SET ratingVal = UNHEX(ratingValHex);
-    SET previousRating = UNHEX(previousRatingHex);
     SET currentDate = CURDATE();
     SET existsPriorChangeToday = EXISTS (
         SELECT * FROM RecentInputs

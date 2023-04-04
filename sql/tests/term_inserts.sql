@@ -57,21 +57,25 @@ CALL insertOrFindRel (NULL, @catCatid, "Subcategories", @s, @ec);
 CALL insertOrFindRel (NULL, @catCatid, "Elements", @e, @ec);
 
 
-SELECT "hell0";
+
 
 -- up-vote categories for all the fundamental term types.
 CALL inputOrChangeRating (
     'u1', @termsID, @s, @catCatid, "F0", @ec
 );
+SELECT @ec;
 CALL inputOrChangeRating (
     'u1', @catCatid, @e, @catCatid, "F1", @ec
 );
+SELECT @ec;
 CALL inputOrChangeRating (
     'u1', @termsID, @s, @stdCatID, "F2", @ec
 );
+SELECT @ec;
 CALL inputOrChangeRating (
     'u1', @catCatid, @e, @stdCatID, "F3", @ec
 );
+SELECT @ec;
 CALL inputOrChangeRating (
     'u1', @termsID, @s, @relCatid, "F4", @ec
 );
@@ -144,8 +148,8 @@ CALL inputOrChangeRating (
 
 
 CALL insertOrFindCat (NULL, @stdCatID, "Books etc.", @booksEtcCatID, @ec);
-    CALL insertOrFindCat (NULL, @booksEtcCatID, "Fiction", @ficCatID, @ec);
-    CALL insertOrFindCat (NULL @booksEtcCatID, "Nonfiction", @nonficCatID, @ec);
+CALL insertOrFindCat (NULL, @booksEtcCatID, "Fiction", @ficCatID, @ec);
+CALL insertOrFindCat (NULL, @booksEtcCatID, "Nonfiction", @nonficCatID, @ec);
 
 
 
