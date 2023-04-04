@@ -6,8 +6,9 @@ require_once $err_path . "errors.php";
 $user_input_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/user_input/";
 require_once $user_input_path . "InputVerifier.php";
 
-$UPA_dev_modules_path = $_SERVER['DOCUMENT_ROOT'] . "/../UPA_dev_modules/";
-
+$UPA_cached_modules_path = $_SERVER['DOCUMENT_ROOT'] .
+    "/../UPA_cached_modules/";
+$UPA_dev_modules_path = $UPA_cached_modules_path . "dev_modules/"
 
 
 // modules can only be GET-gotten.
@@ -40,9 +41,8 @@ $devModuleIDPatt =
 // if the text ID matches the ID of a developer-made module, change the header
 // to that module
 if (preg_match($devModuleIDPatt, $textID)) {
-    //TODO: Change this!
-    header("Location: " . "localhost" . "/UPA_dev_modules/" . $textID . ".js");
-
+    echo file_get_contents($UPA_dev_modules_path . $textID . ".js");
+    exit;
 } else {
     //TODO: Implement a querier that get texts from the database that are rated
     // as safe by a certain native user and returns them without converting
@@ -57,8 +57,6 @@ if (preg_match($devModuleIDPatt, $textID)) {
     $res = UnsafeDBQuerier::query($conn, $sqlKey, $paramValArr);
     // return the text as is. //TODO: Is is important that I change this impl.
     echo $res;
+    exit;
 }
-
-
-
 ?>
