@@ -63,6 +63,11 @@ $mainModuleID = "tA";
     import {
         upaFun_main
     } from "./UPA_modules.php?id=<?php echo $mainModuleID; ?>";
+    // This does not seem to be a good idea after all, so I should either do it
+    // in a completely different way, or I should just try to make the server
+    // rename UPA_modules.php to UPA_modules.js for HTTP requests.. ..Let me
+    // think about it..
+
     // run the main function from that module right away.
     upaFun_main(<?php
         echo '{' .
