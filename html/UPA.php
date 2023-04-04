@@ -67,6 +67,12 @@ $mainModuleID = "tA";
     // in a completely different way, or I should just try to make the server
     // rename UPA_modules.php to UPA_modules.js for HTTP requests.. ..Let me
     // think about it..
+    // ... I think renaming the URL paths *is* the way to go, cause that means
+    // the browsers are likely to cache the scripts (also for HTTPs). I will
+    // then also do something similar for UPA_binary_resources.php, but where
+    // I'll take the given file extension and as it as a parameter, namely
+    // such that e.g. UPA_binary_resources.jpg?id=b5F is interpreted as
+    // somehting like UPA_binary_resources.php?fileType=jpg&id=b5F.
 
     // run the main function from that module right away.
     upaFun_main(<?php
