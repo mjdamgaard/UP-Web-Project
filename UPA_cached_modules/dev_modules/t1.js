@@ -9,26 +9,74 @@ export function upaFun_appendHelloWorld() {
 
 
 
-export function upaFun_isUPAjQueryElement(obj) {
-    // This is unafe..:\..
-    // return
-    //     obj instanceof jQuery &&
-    //     obj.is("#upaMainFrame *");
+class JQueryObjCache {
+    public static cache = {"mainFrame":$("#upaMainFrame")};
 }
 
-export function upaFun_assertUPAjQueryElement(obj) {
-    if (
-        !(obj instanceof jQuery) ||
-        !obj.is("#upaMainFrame *")
-    ) {
+
+// TODO: Construct this pattern.. (Or consider making a parse function instead.)
+const selectorPatt =
+    "/^((" +
+        "\$\w+" +
+    ")|("
+        "[(div)(a)(p)(#\w+)(\.\w+)]?" + "(\[\w+(=\w+)?\])?" + "([ >][\*])" +
+    "))$/"
+
+export function upaFun_isValidSelector(selector) {
+    if (typeof selector !== "string") {
+        throw new Exception("isValidSelector(): selector is not a string");
+    }
+    return selector.test(selectorPatt);
+}
+
+
+export function upaFun_assertValidSelector(selector) {
+    if (!upaFun_isValidSelector(selector)) {
         throw new Exception(
-            "assertUPAjQueryElement(): input is not both a jQuery object " +
-            "and a descendent of #upaMainFrame"
+            "assertValidSelector(): input is not a valid selector"
         );
     }
 }
 
-export function upaFun_setAtts(obj, attObj) {
-    upaFun_assertUPAjQueryElement(obj);
-    "...";
+
+export function upaFun_isValidAttKey(selector) {
+
+}
+
+export function upaFun_assertValidAttKey(selector) {
+
+}
+
+export function upaFun_isValidAttVal(selector) {
+
+}
+
+export function upaFun_assertValidAttVal(selector) {
+
+}
+
+
+
+export function upaFun_setAttributes(selector, keyValArr) {
+    upaFun_assertValidSelector(selector);
+    var jqObj;
+    if (selector.test("/^\$/")) {
+        jqObj = JQueryObjCache.cache[substring(selector, 1)];
+    } else {
+        jqObj = $(selector);
+    }
+
+    if (typeof keyValArr !== "array") {
+        throw new Exception(
+            "setAttributes(): second input is not an array"
+        );
+    }
+    for (let $i = 0; $i < keyValArr.length; $i++)) {
+        let key = keyValArr[$i][0];
+        let val = keyValArr[$i][1];
+        upaFun_assertValidAttKey(key);
+        upaFun_assertValidAttVal(val);
+
+        jqObj.attr("upaAtt_" + key, val);
+    }
 }
