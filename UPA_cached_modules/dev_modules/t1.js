@@ -36,6 +36,8 @@ function getAbsoluteSelector(selector) {
     return "#upaMainFrame " + selector;
 }
 
+// Note that since this function does not have the upaFun_ prefix, it cannot
+// be exported to the final user modules (but only to other developer modules).
 export function verifySelectorAndGetJQueryObj(selector) {
     upaFun_assertValidSelector(selector);
     if (selector.test("/^\$/")) {
