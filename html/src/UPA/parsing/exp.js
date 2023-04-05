@@ -47,7 +47,7 @@ function parseExp2(lexArr, nextPos, successRequired) {
     if (
         !parseParExp(lexArr, nextPos, false) &&
         !parseArrExp(lexArr, nextPos, false) &&
-        !parseObjExp(lexArr, nextPos, false) &&
+        // !parseObjExp(lexArr, nextPos, false) &&
         !parseLiteral(lexArr, nextPos, false) &&
         !parseVarIdent(lexArr, nextPos, false) &&
         !parseFunCall(lexArr, nextPos, false)
@@ -117,12 +117,12 @@ function parseArrExp(lexArr, nextPos, successRequired) {
         parseLexeme(lexArr, nextPos, "]", true);
 }
 
-function parseObjExp(lexArr, nextPos, successRequired) {
-    return
-        parseLexeme(lexArr, nextPos, "{", successRequired) &&
-        parseObjPropList(lexArr, nextPos, false) &&
-        parseLexeme(lexArr, nextPos, "}", true);
-}
+// function parseObjExp(lexArr, nextPos, successRequired) {
+//     return
+//         parseLexeme(lexArr, nextPos, "{", successRequired) &&
+//         parseObjPropList(lexArr, nextPos, false) &&
+//         parseLexeme(lexArr, nextPos, "}", true);
+// }
 
 function parseFunCall(lexArr, nextPos, successRequired) {
     return
@@ -257,23 +257,23 @@ function parseArrElemList(lexArr, nextPos, successRequired) {
     return true;
 }
 
-function parseObjPropList(lexArr, nextPos, successRequired) {
-    // parse as many object properties as possible of a possibly empty list.
-    if (!parseVarIdent(lexArr, nextPos, false)) {
-        // return true even if no property was parsed.
-        return true;
-    }
-    parseLexeme(lexArr, nextPos, ":", true);
-    parseExp(lexArr, nextPos, true);
-    // if the next lexeme is a comma, call this function recursively to
-    // parse an optional (since one trailing comma is allowed) object property
-    // list after that.
-    if (parseLexeme(lexArr, nextPos, ",", false)) {
-        return parseObjPropList(lexArr, nextPos, false);
-    }
-    // always return true (unless an exception was thrown).
-    return true;
-}
+// function parseObjPropList(lexArr, nextPos, successRequired) {
+//     // parse as many object properties as possible of a possibly empty list.
+//     if (!parseVarIdent(lexArr, nextPos, false)) {
+//         // return true even if no property was parsed.
+//         return true;
+//     }
+//     parseLexeme(lexArr, nextPos, ":", true);
+//     parseExp(lexArr, nextPos, true);
+//     // if the next lexeme is a comma, call this function recursively to
+//     // parse an optional (since one trailing comma is allowed) object property
+//     // list after that.
+//     if (parseLexeme(lexArr, nextPos, ",", false)) {
+//         return parseObjPropList(lexArr, nextPos, false);
+//     }
+//     // always return true (unless an exception was thrown).
+//     return true;
+// }
 
 
 

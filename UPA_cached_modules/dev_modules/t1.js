@@ -19,7 +19,7 @@ const selectorPatt =
     "/^((" +
         "\$\w+" +
     ")|("
-        "[(div)(a)(p)(#\w+)(\.\w+)]?" + "(\[\w+(=\w+)?\])?" + "([ >][\*])" +
+        "[(div)(a)(p)(#\w+)(\.\w+)]?" + "(\[\w+(=\w+)?\])?" + "([ >][\*])?" +
     "))$/"
 
 export function upaFun_isValidSelector(selector) {
@@ -56,15 +56,22 @@ export function upaFun_assertValidAttVal(selector) {
 }
 
 
+function getAbsoluteSelector(selector) {
+    // TODO: Change if/when selectors can include commas (unions).
+    return "#upaMainFrame " + selector;
+}
+
+function verifySelectorAndGetJQueryObj(selector) {
+    upaFun_assertValidSelector(selector);
+    if (selector.test("/^\$/")) {
+        return JQueryObjCache.cache[substring(selector, 1)];
+    } else {
+        return getAbsoluteSelector(selector);
+    }
+}
 
 export function upaFun_setAttributes(selector, keyValArr) {
-    upaFun_assertValidSelector(selector);
-    var jqObj;
-    if (selector.test("/^\$/")) {
-        jqObj = JQueryObjCache.cache[substring(selector, 1)];
-    } else {
-        jqObj = $(selector);
-    }
+    verifySelectorAndGetJQueryObj(selector);
 
     if (typeof keyValArr !== "array") {
         throw new Exception(
