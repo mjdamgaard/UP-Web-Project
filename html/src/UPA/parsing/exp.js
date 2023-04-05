@@ -117,6 +117,12 @@ function parseArrExp(lexArr, nextPos, successRequired) {
         parseLexeme(lexArr, nextPos, "]", true);
 }
 
+/* We should actually not let non-array objects be part of the expressions,
+ * including the returns of functions. So no upaFun_ function should have
+ * any other return type than the primitive types or (possibly multi-
+ * dimensional) arrays holding primitive types as their leaves!
+ **/
+
 // function parseObjExp(lexArr, nextPos, successRequired) {
 //     return
 //         parseLexeme(lexArr, nextPos, "{", successRequired) &&
