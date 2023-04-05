@@ -1,6 +1,6 @@
 /* Some functions for the JS subset to use */
 
-import {$} from "/lib/jquery-3.6.4.js";
+// import {$} from "/lib/jquery-3.6.4.js";
 
 
 export function upaFun_appendHelloWorld() {

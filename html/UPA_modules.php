@@ -1,5 +1,7 @@
 <?php
 
+header('Content-Type: text/javascript');
+
 $err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";
 require_once $err_path . "errors.php";
 

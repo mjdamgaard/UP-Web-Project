@@ -62,7 +62,7 @@ $mainModuleID = "tA";
     // import the chosen UPA main module.
     import {
         upaFun_main
-    } from "./UPA_modules.js?id=<?php echo $mainModuleID; ?>";
+    } from "./UPA_modules.php?id=<?php echo $mainModuleID; ?>";
     // run the main function from that module right away.
     upaFun_main(<?php
         echo '{' .
