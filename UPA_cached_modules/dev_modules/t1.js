@@ -144,6 +144,8 @@ export function upaFun_getAttributes(selector, keyArr) {
     return ret;
 }
 
+// TODO: Add a toggleAttributes function.
+
 
 
 
@@ -363,6 +365,8 @@ export function upaFun_slide(typeSpeedCallbackDataTuple) {
     }
 }
 
+
+// TODO: Add jQuery.animate() wrapper.
 
 
 

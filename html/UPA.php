@@ -36,6 +36,13 @@ $preferenceUserOrGroupID = $paramValArr[2];
 
 
 
+// TODO: The server should also query the database for the chosen user (group)'s
+// URL pattern whitelist and blacklist (and send that along to the browser)!
+// I should then write some JS functions in html/src to create a little API
+// that the UPA developer functions then can call to implement a filter for
+// all URLs that can appear in links in the UPA.
+
+
 
 // query the database for the UPA main module that is the preference of the
 // chosen user/user group.
