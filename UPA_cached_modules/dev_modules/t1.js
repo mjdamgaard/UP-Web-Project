@@ -14,10 +14,7 @@ export function upaFun_appendHelloWorld() {
 
 var mainFrameJQueryObj = $("#upaMainFrame");
 
-var JQueryObjCache = {
-    cache: {"mainFrame":mainFrameJQueryObj},
-    // cache: {},
-};
+var jQueryObjCache = {"mainFrame":mainFrameJQueryObj};
 
 
 // Note that since this function does not have the upaFun_ prefix, it cannot
@@ -34,7 +31,7 @@ export function getJQueryObj(selector) {
     // object. If so return that object (possibly undefined). Else return
     // mainFrameJQueryObj.find(selector).
     if (selector.test("/^\$\w+$/")) {
-        return JQueryObjCache.cache[substring(selector, 1)];
+        return jQueryObjCache[substring(selector, 1)];
     } else {
         // TODO: Test/check that jQuery.find() is safe for any string input
         // such that it always returns a descendent element or null/undefined
@@ -51,7 +48,7 @@ export function upaFun_cacheJQueryObj(selector, key) {
             "cacheJQueryObj(): input key is not a valid /^\w+$/ string"
         );
     }
-    JQueryObjCache.cache[key] = jqObj;
+    jQueryObjCache[key] = jqObj;
 }
 
 
