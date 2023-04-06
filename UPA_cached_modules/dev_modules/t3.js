@@ -4,7 +4,7 @@
 
 // Note that since this function does not have the upaFun_ prefix, it cannot
 // be exported to the final user modules (but only to other developer modules).
-export function verifyAndGetUPAFunction(funName) {
+export function verifyFunNameAndGetUPAFunction(funName) {
     if (!funName.test("/^[\$\w]+$/")) {
         throw new Exception(
             "getUPAFunction(): function name is not a valid /^[\$\w]+$/ string"

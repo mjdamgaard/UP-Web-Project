@@ -2,18 +2,72 @@
 /* Some functions to cache and select jQuery objects */
 
 
+
 class JQueryObjCache {
-    public static cache = {"mainFrame":$("#upaMainFrame")};
+    // public static cache = {"mainFrame":$("#upaMainFrame")};
+    public static cache = {};
 }
 
 
-// TODO: Construct this pattern.. (Or consider making a parse function instead.)
-const selectorPattern =
+export const elementNames =
+    [ +
+        "address", "article", "aside", "footer", "header", "h[1-6]",
+        "hgroup", "main", "nav", "section", "blockquote", "dd",
+        "div", "dl", "dt", "figcaption", "figure", "hr",
+        "li", "menu", "ol", "p", "pre", "ul",
+        "a", "abbr", "b", "bdi", "bdo", // "br" not included
+        "cite", "code", "data", "dfn", "em", "i",
+        // TODO: complete this.
+        "aaa", "aaa", "aaa", "aaa", "aaa", "aaa",
+        "aaa", "aaa", "aaa", "aaa", "aaa", "aaa",
+        "aaa", "aaa", "aaa", "aaa", "aaa", "aaa",
+    ];
+
+export const typeSelectorPattern =
+    "((" +
+        elementNames.join(")|(") +
+    "))";
+
+export const pseudoClasses =
+    [ +
+        "first", "last", "even", "odd",
+        "[(first)(last)(only)]\-[(child)(of\-type)]",
+        "nth\-(last\-)?[(child)(of\-type)]\([1-9][0-9]*\)",
+        "eq\((0|[1-9][0-9]*)\)",
+        "[(gt)(lt)]\(([1-9][0-9]*)\)",
+        "header", "animated", "focus", "empty", "parent", "hidden",
+        "visible", "input", "text", "password", "radio", "checkbox",
+        "submit", "reset", "button", "image", "file",
+        "enabled", "diabled", "selected", "checked",
+        "lang\(\w+(\-\w+)*\)",
+    ];
+
+export const pseudoClassPattern =
+    "((" +
+        pseudoClasses.join(")|(") +
+    "))";
+
+const attSelectorPattern = "(\[" + "\w+" + "([!\$\|\^~\*]?=\w+)?" + "\])";
+
+const combinatorPattern = "[ >~\+(\|\|)]";
+
+const selectorPattern1 =
+    "((" +
+        "\*" +
+    ")|("
+        typeSelectorPattern + "?" + attSelectorPattern + "*" +
+    "))";
+
+const selectorPattern2 = selectorPattern1 ...
+
+export const selectorPattern =
     "/^((" +
         "\$\w+" +
     ")|("
         "[(div)(a)(p)(#\w+)(\.\w+)]?" + "(\[\w+(=\w+)?\])?" + "([ >][\*])?" +
     "))$/";
+
+
 
 
 export function upaFun_isValidSelector(selector) {
