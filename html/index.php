@@ -35,8 +35,12 @@ if (!isset($_GET["pid"])) {
 require $_SERVER['DOCUMENT_ROOT'] . "/UPA.php";
 ?>
 
+<!-- Tests -->
+<script>
 
+console.log(~~"12367");
 
+</script>
 
 </body>
 </html>
