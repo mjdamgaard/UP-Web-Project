@@ -170,3 +170,71 @@ export function verifyFunNameAndGetUPAFunction(funName) {
     }
     return window[fullFunName];
 }
+
+
+
+
+
+/* Functions to add events to HTML elements */
+
+const jQueryEvents = [
+    "blur", "change", "focus", "focusin", "focusout", "select", "submit",
+    "keydown", "keypress", "keyup",
+    "click", "dblclick", "hover", "mousedown", "mouseenter", "mouseleave",
+    "mousemove", "mouseout", "mouseover", "mouseup",
+    "toggle", "resize", "scroll", "load", "ready", "unload",
+];
+
+const singleEventPattern =
+    "((" +
+        jQueryEvents.join(")|(") +
+    "))";
+
+const eventsPattern =
+    "/^" +
+        singleEventPattern + "(" + " " +  singleEventPattern + ")*" +
+    "$/";
+
+export function upaFun_verifyEvents(events) {
+    if (!events.test(eventsPattern)) {
+        throw new Exception(
+            "verifyEvents(): unrecognized events pattern"
+        );
+    }
+}
+
+export function upaFun_onEvent(selector, eventsDataHandlerTupleArr) {
+    let jqObj = getJQueryObj(selector);
+
+    for (let i = 0; i < eventsDataHandlerTupleArr.length; i++) {
+        let events = eventsDataHandlerTupleArr[$i][0];
+        let data = eventsDataHandlerTupleArr[$i][1];
+        let handlerKey = eventsDataHandlerTupleArr[$i][2];
+        let handler = verifyFunNameAndGetUPAFunction(handlerKey);
+
+        upaFun_verifyEvents(events);
+
+        jqObj.on(events, null, data, handler);
+    }
+}
+
+
+
+
+
+
+
+/* Some functions that add jQuery effects to HTML elements */
+
+export function upaFun_hide(selector) {
+    let jqObj = getJQueryObj(selector);
+    ...//TODO..
+}
+
+
+
+
+
+
+
+//
