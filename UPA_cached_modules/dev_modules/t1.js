@@ -206,7 +206,7 @@ export function upaFun_verifyEvents(events) {
 }
 
 
-export function upaFun_onEvents(selector, eventsDataHandlerTupleArr) {
+export function upaFun_on(selector, eventsDataHandlerTupleArr) {
     let jqObj = getJQueryObj(selector);
 
     for (let i = 0; i < eventsDataHandlerTupleArr.length; i++) {
@@ -221,7 +221,7 @@ export function upaFun_onEvents(selector, eventsDataHandlerTupleArr) {
     }
 }
 
-export function upaFun_oneEvents(selector, eventsDataHandlerTupleArr) {
+export function upaFun_one(selector, eventsDataHandlerTupleArr) {
     let jqObj = getJQueryObj(selector);
 
     for (let i = 0; i < eventsDataHandlerTupleArr.length; i++) {
@@ -236,7 +236,7 @@ export function upaFun_oneEvents(selector, eventsDataHandlerTupleArr) {
     }
 }
 
-export function upaFun_offEvents(selector, eventsHandlerPairArr) {
+export function upaFun_off(selector, eventsHandlerPairArr) {
     let jqObj = getJQueryObj(selector);
 
     for (let i = 0; i < eventsHandlerPairArr.length; i++) {
@@ -262,108 +262,59 @@ export function upaFun_offEvents(selector, eventsHandlerPairArr) {
 
 /* Some functions that add jQuery effects to HTML elements */
 
-export function upaFun_hide(selector) {
-    getJQueryObj(selector).hide();
-}
-export function upaFun_show(selector) {
-    getJQueryObj(selector).show();
-}
-export function upaFun_toggle(selector) {
-    getJQueryObj(selector).toggle();
-}
 
-export function upaFun_fade(typeSpeedCallbackDataTuple) {
-    let type = typeSpeedCallbackDataTuple[0];
-    let speed = typeSpeedCallbackDataTuple[1];
-    let callbackKey = typeSpeedCallbackDataTuple[2];
+// input = [selector, effectTypeString, [speed (, opacity)], callbackFunction,
+//     inputDataForCallbackFunction].
+export function upaFun_visibilityEffect(
+    selectorEffectTypeSettingsCallbackDataTuple
+) {
+    let selector = typeSpeedCallbackDataTuple[0];
+    let effectType = typeSpeedCallbackDataTuple[1];
+    let speed = typeSpeedCallbackDataTuple[2][0];
+    let opacity = typeSpeedCallbackDataTuple[2][1];
+    let callbackKey = typeSpeedCallbackDataTuple[3];
     let callback = verifyFunNameAndGetUPAFunction(callbackKey);
-    let data = typeSpeedCallbackDataTuple[3];
+    let data = typeSpeedCallbackDataTuple[4];
 
     let jqObj = getJQueryObj(selector);
     let resultingCallback = function() {
         callback(data);
     };
 
-    if (!(speed == ~~speed) && !speed.test("/^[(slow)(fast)]$/")) {
+    if (
+        !(typeof speed === "undefined") &&
+        !(speed == ~~speed) &&
+        !speed.test("/^[(slow)(fast)]$/")
+    ) {
         throw new Exception(
-            "fade(): invalid speed (2nd) input"
+            "visibilityEffect(): invalid speed input " +
+            "(contained in input[2][0])"
         );
     }
 
-    switch (type) {
-        case "in":
-            jqObj.fadeIn(speed, resultingCallback);
-            break;
-        case "out":
-            jqObj.fadeOut(speed, resultingCallback);
-            break;
+    switch (effectType) {
+        case "show":
+        case "hide":
         case "toggle":
-            jqObj.fadeToggle(speed, resultingCallback);
+        case "fadeIn":
+        case "fadeOut":
+        case "fadeToggle":
+        case "slideDown":
+        case "slideUp":
+        case "slideToggle":
+            jqObj[effectType](speed, resultingCallback);
+            break;
+        case "fadeTo":
+            jqObj[effectType](speed, opacity, resultingCallback);
             break;
         default:
             throw new Exception(
-                "fade(): invalid fade type (3rd) input " +
-                "(options are 'in', 'out', or 'toggle')"
+                "visibilityEffect(): invalid effect type input " +
+                "(contained in input[1])"
             );
     }
 }
 
-export function upaFun_fadeTo(speedOpacityCallbackDataTuple) {
-    let speed = typeSpeedOpacityCallbackDataTuple[0];
-    let opacity = typeSpeedOpacityCallbackDataTuple[1];
-    let callbackKey = typeSpeedOpacityCallbackDataTuple[2];
-    let callback = verifyFunNameAndGetUPAFunction(callbackKey);
-    let data = typeSpeedOpacityCallbackDataTuple[3];
-
-    let jqObj = getJQueryObj(selector);
-    let resultingCallback = function() {
-        callback(data);
-    };
-
-    if (!(speed == ~~speed) && !speed.test("/^[(slow)(fast)]$/")) {
-        throw new Exception(
-            "fadeTo(): invalid speed (1st) input"
-        );
-    }
-
-    jqObj.fadeTo(speed, opacity, resultingCallback);
-}
-
-export function upaFun_slide(typeSpeedCallbackDataTuple) {
-    let type = typeSpeedCallbackDataTuple[0];
-    let speed = typeSpeedCallbackDataTuple[1];
-    let callbackKey = typeSpeedCallbackDataTuple[2];
-    let callback = verifyFunNameAndGetUPAFunction(callbackKey);
-    let data = typeSpeedCallbackDataTuple[3];
-
-    let jqObj = getJQueryObj(selector);
-    let resultingCallback = function() {
-        callback(data);
-    };
-
-    if (!(speed == ~~speed) && !speed.test("/^[(slow)(fast)]$/")) {
-        throw new Exception(
-            "fadeTo(): invalid speed (2nd) input"
-        );
-    }
-
-    switch (type) {
-        case "down":
-            jqObj.slideDown(speed, resultingCallback);
-            break;
-        case "up":
-            jqObj.slideUp(speed, resultingCallback);
-            break;
-        case "toggle":
-            jqObj.slideToggle(speed, resultingCallback);
-            break;
-        default:
-            throw new Exception(
-                "slide(): invalid slide type (3rd) input " +
-                "(options are 'down', 'up', or 'toggle')"
-            );
-    }
-}
 
 
 // TODO: Add jQuery.animate() wrapper.
