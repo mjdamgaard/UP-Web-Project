@@ -144,7 +144,7 @@ export function upaFun_getAttributes(selector, keyArr) {
     return ret;
 }
 
-// TODO: Add a toggleAttributes function.
+
 
 
 
@@ -263,24 +263,46 @@ export function upaFun_off(selector, eventsHandlerPairArr) {
 /* Some functions that add jQuery effects to HTML elements */
 
 
-// input = [selector, effectTypeString, [speed (, opacity)], callbackFunction,
-//     inputDataForCallbackFunction].
+/* << jQuery show/hide/fade/slide wrapper >>
+ * input = [selector, effectTypeString, speed, callbackFunction,
+ *     inputDataForCallbackFunction],
+ * or
+ * input = [selector, effectTypeString, [speed (, opacity)], callbackFunction,
+ *     inputDataForCallbackFunction].
+ **/
 export function upaFun_visibilityEffect(
     selectorEffectTypeSettingsCallbackDataTuple
 ) {
+    // get variables from input array.
     let selector = typeSpeedCallbackDataTuple[0];
     let effectType = typeSpeedCallbackDataTuple[1];
-    let speed = typeSpeedCallbackDataTuple[2][0];
-    let opacity = typeSpeedCallbackDataTuple[2][1];
+    let settings = typeSpeedCallbackDataTuple[2];
     let callbackKey = typeSpeedCallbackDataTuple[3];
-    let callback = verifyFunNameAndGetUPAFunction(callbackKey);
     let data = typeSpeedCallbackDataTuple[4];
-
+    // get the selected descendents of #upaMainFrame as a jQuery object .
     let jqObj = getJQueryObj(selector);
     let resultingCallback = function() {
         callback(data);
     };
-
+    // get the optional callback function pointed to by the optionally provided
+    // function key (string).
+    var resultingCallback;
+    if (typeof callbackKey === "string") {
+        callback = verifyFunNameAndGetUPAFunction(callbackKey);
+        resultingCallback = function() {
+            callback(data);
+        };
+    }
+    // verify the speed and opacity inputs if some are provided.
+    var speed, opacity;
+    // get these variables from input array.
+    if (typeof settings === "object") {
+        speed = settings[0];
+        opacity = settings[1];
+    } else {
+        speed = settings;
+    }
+    // verify the speed input if one is provided.
     if (
         !(typeof speed === "undefined") &&
         !(speed == ~~speed) &&
@@ -288,10 +310,21 @@ export function upaFun_visibilityEffect(
     ) {
         throw new Exception(
             "visibilityEffect(): invalid speed input " +
-            "(contained in input[2][0])"
+            "(contained in input[2] or input[2][0])"
         );
     }
-
+    // verify the opacity input if one is provided and the effect type is
+    // "fadeTo".
+    if (
+        effectType === "fadeTo" &&
+        !opacity.toString().test("/^[01(0?\.[0-9]+)]$/")
+    ) {
+        throw new Exception(
+            "visibilityEffect(): invalid opacity input " +
+            "(contained in input[2][2])"
+        );
+    }
+    // match the provided effect type an initialize the effect.
     switch (effectType) {
         case "show":
         case "hide":
@@ -316,9 +349,108 @@ export function upaFun_visibilityEffect(
 }
 
 
+/* jQuery.animate wrapper */
 
-// TODO: Add jQuery.animate() wrapper.
+export const cssPropertiesForAnimate = [
+    "backgroundPositionX", "backgroundPositionY", "borderWidth",
+    "borderBottomWidth", "borderLeftWidth", "borderRightWidth",
+    "borderTopWidth", "borderSpacing", "margin", "marginBottom",
+    "marginLeft", "marginRight", "marginTop", "opacity", "outlineWidth",
+    "padding", "paddingBottom", "paddingLeft", "paddingRight",
+    "paddingTop", "height", "width", "maxHeight", "maxWidth",
+    "minHeight", "minWidth", "fontSize", "bottom", "left", "right", "top",
+    "letterSpacing", "wordSpacing", "lineHeight", "textIndent"
+];
 
+export const cssPropertiesForAnimatePattern =
+    "/^((" +
+        cssPropertiesForAnimate.join(")|(") +
+    "))$/";
+
+/* << jQuery.animate wrapper >>
+ * input = [selector, ...]..
+ **/
+export function upaFun_animate(
+    selectorStylesSettingsCallbackDataTuple
+) {
+    // // get variables from input array.
+    // let selector = typeSpeedCallbackDataTuple[0];
+    // let effectType = typeSpeedCallbackDataTuple[1];
+    // let speed = typeSpeedCallbackDataTuple[2][0];
+    // let easingOrOpacity = typeSpeedCallbackDataTuple[2][1];
+    // var opacity = typeSpeedCallbackDataTuple[2][2];
+    // let callbackKey = typeSpeedCallbackDataTuple[3];
+    // let data = typeSpeedCallbackDataTuple[4];
+    // // get the selected descendents of #upaMainFrame as a jQuery object .
+    // let jqObj = getJQueryObj(selector);
+    // let resultingCallback = function() {
+    //     callback(data);
+    // };
+    // // get the optional callback function pointed to by the optionally provided
+    // // function key (string).
+    // var resultingCallback; // = function(){};
+    // if (typeof callbackKey === "string") {
+    //     callback = verifyFunNameAndGetUPAFunction(callbackKey);
+    //     resultingCallback = function() {
+    //         callback(data);
+    //     };
+    // }
+    // // verify the speed input if one is provided.
+    // if (
+    //     !(typeof speed === "undefined") &&
+    //     !(speed == ~~speed) &&
+    //     !speed.test("/^[(slow)(fast)]$/")
+    // ) {
+    //     throw new Exception(
+    //         "visibilityEffect(): invalid speed input " +
+    //         "(contained in input[2][0])"
+    //     );
+    // }
+    // // verify the easing and opacity inputs if some are provided.
+    // var easing;
+    // if (typeof easingOrOpacity !== "undefined") {
+    //     if (easingOrOpacity.toString().test("/^[01(0?\.[0-9]+)]$/")) {
+    //         opacity = easingOrOpacity;
+    //
+    //     } else if (!easingOrOpacity.test("/^[(swing)(linear)]$/")) {
+    //         throw new Exception(
+    //             "animate(): invalid easing input " +
+    //             "(contained in input[2][1])" +
+    //             "(options are 'swing' or 'linear')"
+    //         );
+    //     } else if (
+    //         effectType === "fadeTo" &&
+    //         !opacity.toString().test("/^[01(0?\.[0-9]+)]$/")
+    //     ) {
+    //         throw new Exception(
+    //             "animate(): invalid opacity input " +
+    //             "(contained in input[2][2])"
+    //         );
+    //     }
+    // }
+    // // match the provided effect type an initialize the effect.
+    // switch (effectType) {
+    //     case "show":
+    //     case "hide":
+    //     case "toggle":
+    //     case "fadeIn":
+    //     case "fadeOut":
+    //     case "fadeToggle":
+    //     case "slideDown":
+    //     case "slideUp":
+    //     case "slideToggle":
+    //         jqObj[effectType](speed, resultingCallback);
+    //         break;
+    //     case "fadeTo":
+    //         jqObj[effectType](speed, opacity, resultingCallback);
+    //         break;
+    //     default:
+    //         throw new Exception(
+    //             "visibilityEffect(): invalid effect type input " +
+    //             "(contained in input[1])"
+    //         );
+    // }
+}
 
 
 //
