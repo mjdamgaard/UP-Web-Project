@@ -79,8 +79,8 @@ const compoundSelectorPattern =
     ")|("
         typeSelectorPattern + "?" +
             "((" +
-                classSelectorPattern +
-            ")|(" +
+            //     classSelectorPattern +
+            // ")|(" +
                 attrSelectorPattern +
             ")|(" +
                 pseudoClassPattern +
@@ -276,6 +276,56 @@ export function verifyFunNameAndGetUPAFunction(funName) {
 
 
 
+/* Some functions to add and remove HTML elements */
+
+//TODO: Make an add and remove function for all element types, where the add
+// function can also set some attributes
+
+
+
+
+
+/* Some functions to add and remove CSS styles */
+
+export const cssUnitPatterns = [
+    "em", "ex", "cap", "ch", "ic", "lh", "vw", "vh", "vi", "vb", "vmin", "vmax",
+    "cq[whib(min)(max)]",
+    "cm", "mm", "Q", "in", "pc", "pt", "px",
+    "deg", "grad", "rad", "turn",
+    "s", "ms", "Hz", "kHz"
+    "flex",
+    "dpi", "dpcm", "dppx",
+    "%"
+];
+
+const cssUnitPattern =
+    "((" +
+        cssUnitPatterns.join(")|(") +
+    "))";
+
+const cssNumericPattern =
+    "[\+\-]?[0-9]*\.?[0-9]*" + cssUnitPattern;
+
+const cssHexColorPattern =
+    "#[([0-9a-fA-F]{3,4})([0-9a-fA-F]{6})([0-9a-fA-F]{8})]";
+    // TODO: Consider adding more color value syntaxes.
+
+export const cssNumericOrColorPattern =
+    "/^((" +
+        cssHexColorPattern +
+    ")|(" +
+        cssNumericPattern +
+    "))$/";
+
+// TODO: To be continued.
+
+
+
+
+
+
+
+
 
 /* Functions to add events to HTML elements */
 
@@ -462,7 +512,7 @@ export const cssPropertiesForAnimate = [
     "letterSpacing", "wordSpacing", "lineHeight", "textIndent"
 ];
 
-export const cssPropertiesForAnimatePattern =
+export const cssPropertiesForAnimatePattern = //TODO: change.
     "/^((" +
         cssPropertiesForAnimate.join(")|(") +
     "))$/";
