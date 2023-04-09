@@ -27,8 +27,9 @@ $preferenceUserOrGroupID = $paramValArr[2];
 
 // authenticate the user make sure that the uid is either one which that user
 // has actively whitelisted or one of the standard user groups that the site
-// has whitelisted for the general public to freely use.
-// TODO: Implement this such that user is actually authenticated!
+// has whitelisted for the general public to use freely.
+// TODO: Implement this such that user is actually authenticated! (Unless,
+// a standard whitelisted user (group) is chosen!)
 ;
 // TODO: Branch away to login page, if the user cannot be authenticated, but
 // keep the parameters in the URL path such that the application can return to

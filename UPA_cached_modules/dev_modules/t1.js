@@ -17,12 +17,112 @@ var mainFrameJQueryObj = $("#upaMainFrame");
 var jQueryObjCache = {"mainFrame":mainFrameJQueryObj};
 
 
+export const elementNames =
+    [ +
+        "address", "article", "aside", "footer", "header", "h[1-6]",
+        "hgroup", "main", "nav", "section", "blockquote", "dd",
+        "div", "dl", "dt", "figcaption", "figure", "hr",
+        "li", "menu", "ol", "p", "pre", "ul",
+        "a", "abbr", "b", "bdi", "bdo", // "br" not included
+        "cite", "code", "data", "dfn", "em", "i",
+        // TODO: complete this.
+        "aaa", "aaa", "aaa", "aaa", "aaa", "aaa",
+        "aaa", "aaa", "aaa", "aaa", "aaa", "aaa",
+        "aaa", "aaa", "aaa", "aaa", "aaa", "aaa",
+    ];
+
+const typeSelectorPattern =
+    "((" +
+        elementNames.join(")|(") +
+    "))";
+
+export const pseudoClasses =
+    [ +
+        "first", "last", "even", "odd",
+        "[(first)(last)(only)]\-[(child)(of\-type)]",
+        "nth\-(last\-)?[(child)(of\-type)]\([1-9][0-9]*\)",
+        "eq\((0|[1-9][0-9]*)\)",
+        "[(gt)(lt)]\(([1-9][0-9]*)\)",
+        "header", "animated", "focus", "empty", "parent", "hidden",
+        "visible", "input", "text", "password", "radio", "checkbox",
+        "submit", "reset", "button", "image", "file",
+        "enabled", "diabled", "selected", "checked",
+        "lang\(\w+(\-\w+)*\)",
+    ];
+
+const pseudoClassPattern =
+    ":((" +
+        pseudoClasses.join(")|(") +
+    "))";
+
+
+export const pseudoElements =
+    [ +
+        "after", "backdrop", "before", "cue", "cue-region",
+        "first-letter", "first-line", //TODO: complete this.
+    ];
+
+const pseudoElementPattern =
+    "::((" +
+        pseudoElements.join(")|(") +
+    "))";
+
+const classSelectorPattern = "(\.\w+)";
+
+const attrSelectorPattern = "(\[" + "\w+" + "([!\$\|\^~\*]?=\w+)?" + "\])";
+
+const combinatorPattern = "[ >~\+]";
+
+const compoundSelectorPattern =
+    "((" +
+        "\*" +
+    ")|("
+        typeSelectorPattern + "?" +
+            "((" +
+                classSelectorPattern +
+            ")|(" +
+                attrSelectorPattern +
+            ")|(" +
+                pseudoClassPattern +
+            ")|(" +
+                pseudoElementPattern +
+            "))*" +
+    "))";
+
+
+const complexSelectorPattern =
+    compoundSelectorPattern + "(" +
+        combinatorPattern + compoundSelectorPattern +
+    ")*";
+
+const whitespacePattern = "[ \n\r\t]*";
+
+const selectorListPattern =
+    complexSelectorPattern + "(" +
+        whitespacePattern + "," + whitespacePattern + complexSelectorPattern +
+    ")*";
+
+export const selectorPattern =
+    "/^((" +
+        "\$\w+" +
+    ")|(" +
+        selectorListPattern +
+    "))$/";
+
+
+
+
 // Note that since this function does not have the upaFun_ prefix, it cannot
 // be exported to the final user modules (but only to other developer modules).
 export function getJQueryObj(selector) {
     if (typeof selector !== "string") {
         throw new Exception(
-            "getJQueryObj(): input selector is not a string"
+            "getJQueryObj(): selector is not a string"
+        );
+    }
+    if (!selector.test(selectorPattern)) {
+        throw new Exception(
+            "getJQueryObj(): selector does not match expected pattern"
         );
     }
     // replace all  "[~attr(=value)]" with "[upaAtt_attr(=value)]"
