@@ -402,9 +402,54 @@ export const cssAComplexValuePattern =
         ")*" +
     ")$/";
 
-/* A function to add CSS styles to a selection of elements */
-export function upaf_css(selector) {
 
+/* A function to add CSS styles to a selection of elements */
+
+export function upaf_css(selector, propertyOrPropertyValuePairArr) {
+    // get the selected descendents of #upaMainFrame as a jQuery object.
+    let jqObj = getJQueryObj(selector);
+    if (typeof propertyOrPropertyValuePairArr === "string") {
+        let property = propertyOrPropertyValuePairArr;
+        if (!property.test("/^@?[[a-zA-Z]\-]+$/")) {
+            throw new Exception(
+                "css(): properties can only contain letters, '-' and '@'"
+            );
+        }
+        return jqObj.css(property);
+    } else {
+        let propertyValuePairArr = propertyOrPropertyValuePairArr;
+        // verify all values to be (PERHAPS! (TODO: verify this!)) safe.
+        let len = propertyValuePairArr.length;
+        for (let i = 0; i < len; i++) {
+            let property = propertyValuePairArr[i][0];
+            let value = propertyValuePairArr[i][1];
+            // test property.
+            if (!property.test("/^@?[[a-zA-Z]\-]+$/")) {
+                throw new Exception(
+                    "css(): property" + i.toString() +
+                    "can only contain letters, '-' and '@'"
+                );
+            }
+            // test value.
+            if (!value.test(cssAComplexValuePattern)) {
+                throw new Exception(
+                    "css(): property value " + i.toString() +
+                    " is either invalid or not implemented yet"
+                );
+            }
+            // test that this nested array is a pair.
+            if (!propertyValuePairArr[i].length === 2) {
+                throw new Exception(
+                    "css(): propertyValuePairArr[" + i.toString() + "] " +
+                    "did not have a length of 2"
+                );
+            }
+        }
+        // convert the property--value array to a plain object
+        let stylesObj = Object.fromEntries(styles);
+        // set the css properties.
+        jqObj.css(stylesObj);
+    }
 }
 
 
@@ -517,7 +562,7 @@ export function upaf_off(selector, eventsHandlerPairArr) {
 export function upaf_visibilityEffect(
     selector, effectType, settings, callbackKey, callbackDataArr
 ) {
-    // get the selected descendents of #upaMainFrame as a jQuery object .
+    // get the selected descendents of #upaMainFrame as a jQuery object.
     let jqObj = getJQueryObj(selector);
     // get the optional callback function pointed to by the optionally provided
     // function key (string).
@@ -607,7 +652,7 @@ export const cssPropertiesForAnimatePattern =
 export function upaf_animate(
     selector, styles, settings, callbackKey, callbackDataArr
 ) {
-    // get the selected descendents of #upaMainFrame as a jQuery object .
+    // get the selected descendents of #upaMainFrame as a jQuery object.
     let jqObj = getJQueryObj(selector);
     // get the optional callback function pointed to by the optionally provided
     // function key (string).
