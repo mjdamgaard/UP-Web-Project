@@ -5,8 +5,8 @@ import {
 
 
 
-const varIdentPatt = "/^upaVar_[\w\$]+$/";
-const funIdentPatt = "/^upaFun_[\w\$]+$/";
+const varIdentPatt = "/^upav_[\w\$]+$/";
+const funIdentPatt = "/^upaf_[\w\$]+$/";
 
 
 export function parseVarIdent(lexArr, nextPos, successRequired) {

@@ -1,9 +1,9 @@
 /* A main function */
 
 import {
-    upaFun_appendHelloWorld
+    upaf_appendHelloWorld
 } from "/UPA_modules.php?id=t1";
 
-export function upaFun_main(argObj) {
-    upaFun_appendHelloWorld();
+export function upaf_main(argObj) {
+    upaf_appendHelloWorld();
 }

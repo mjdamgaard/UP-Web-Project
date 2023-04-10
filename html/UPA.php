@@ -71,10 +71,10 @@ $mainModuleID = "tA";
 <script id="upaMainFunLoader" type="module">
     // import the chosen UPA main module.
     import {
-        upaFun_main
+        upaf_main
     } from "./UPA_modules.php?id=<?php echo $mainModuleID; ?>";
     // run the main function from that module right away.
-    upaFun_main(<?php
+    upaf_main(<?php
         echo '{' .
             'tid:"' . $termID . '", ' .
             'uid:"' . $userID . '", ' .
