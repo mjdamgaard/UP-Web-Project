@@ -323,17 +323,28 @@ export const cssHexColorPattern =
     // TODO: Consider adding more color value syntaxes.
 
 
-export const cssNumericOrColorPattern =
-    "/^((" +
+export const cssNumericOrColorRegEx =
+    "((" +
         cssHexColorRegEx +
     ")|(" +
         cssNumericRegEx +
-    "))$/";
+    "))";
 
+
+export const cssGradientValueRegEx =
+    "((" +
+        "linear-gradient\(" +
+            "[0-9]+deg" + "(" + whitespaceRegEx +
+                "[, \n]" + whitespaceRegEx + cssNumericOrColorRegEx +
+            ")+" +
+        "\)" +
+    ")|(" +
+        cssNumericRegEx +
+    "))";
 
 
 /* Some CSS keyword values that I hope is safe for all CSS properties */
-export const someCSSKeywordValues = [
+export const cssSomeKeywordValues = [
     "left", "right", "none", "inline-start", "inline-end",
 // "inline-table"
 // "table-row"
@@ -361,7 +372,8 @@ export const someCSSKeywordValues = [
     "Arial", "Verdana", "Tahoma", "Trebuchet", "Times",
     "Georgia", "Garamond", "Courier", "Brush",
     "normal", "italic", "oblique", "bold", "small-caps",
-    "circle", "square", "upper-roman", "upper-alpha", "lower-alpha",
+    "circle", "ellipse", "square",
+    "upper-roman", "upper-alpha", "lower-alpha",
     "outside", "inside",
     "collapse",
     "inline", "block", "inline-block",
@@ -376,14 +388,21 @@ export const someCSSKeywordValues = [
     "fill", "scale-down",
     "not-allowed",
     "horizontal", "vertical",
+    "farthest-corner", "closest-side", "closest-corner", "farthest-side",
+    "at" // this is not actually a *value* keyword.
+    "normal", "reverse", "alternate", "alternate-reverse",
+    "forwards", "backwards",
+    "infinite", "example",
     // TODO: Consider adding more.
     // TODO: Verify their safety of these keyword values!
 ];
 
-export const someCSSKeywordValuesRegEx =
+export const cssSomeKeywordValuesRegEx =
     "((" +
-        someCSSKeywordValues.join(")|(") +
+        cssSomeKeywordValues.join(")|(") +
     "))";
+
+export
 
 
 export const cssACombinedValueRegEx =
@@ -392,14 +411,35 @@ export const cssACombinedValueRegEx =
     ")|(" +
         cssNumericRegEx +
     ")|(" +
-        someCSSKeywordValuesRegEx +
+        cssSomeKeywordValuesRegEx +
     "))"
 
-export const cssAComplexValuePattern =
-    "/^(" +
+export const cssAComplexValueRegex =
+    "(" +
         cssACombinedValueRegEx + "(" + whitespaceRegEx +
             "[, \n]" + whitespaceRegEx + cssACombinedValueRegEx +
         ")*" +
+    ")";
+
+export const cssSomeFunctions = [
+    "linear-gradient", "radial-gradient", "conic-gradient",
+    "translate", "rotate", "scale", "scaleX", "scaleY",
+    "skew", "skewX", "skewY", "matrix",
+];
+
+export const cssSomeFunctionsRegEx =
+    "((" +
+        cssSomeFunctions.join(")|(") +
+    "))";
+
+export const cssAFunctionalValueRegEx =
+    "(" +
+        cssSomeFunctionsRegEx + "\(" + cssAComplexValueRegex + "\)" +
+    ")";
+
+export const cssAComplexPattern =
+    "/^(" +
+        "(" + cssAComplexValueRegex + "|" + cssAFunctionalValueRegEx + ")+"
     ")$/";
 
 
@@ -431,7 +471,7 @@ export function upaf_css(selector, propertyOrPropertyValuePairArr) {
                 );
             }
             // test value.
-            if (!value.test(cssAComplexValuePattern)) {
+            if (!value.test(cssAComplexPattern)) {
                 throw new Exception(
                     "css(): property value " + i.toString() +
                     " is either invalid or not implemented yet"
