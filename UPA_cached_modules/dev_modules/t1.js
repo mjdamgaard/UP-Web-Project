@@ -303,19 +303,25 @@ const cssUnitPattern =
         cssUnitPatterns.join(")|(") +
     "))";
 
-const cssNumericPattern =
-    "[\+\-]?[0-9]*\.?[0-9]*" + cssUnitPattern;
+export const cssNumericPattern =
+    "/^" +
+        "[\+\-]?[0-9]*\.?[0-9]*" + cssUnitPattern +
+    "$/";
+
 
 const cssHexColorPattern =
-    "#[([0-9a-fA-F]{3,4})([0-9a-fA-F]{6})([0-9a-fA-F]{8})]";
+    "/^" +
+        "#[([0-9a-fA-F]{3,4})([0-9a-fA-F]{6})([0-9a-fA-F]{8})]" +
+    "$/";
     // TODO: Consider adding more color value syntaxes.
 
-export const cssNumericOrColorPattern =
-    "/^((" +
-        cssHexColorPattern +
-    ")|(" +
-        cssNumericPattern +
-    "))$/";
+
+// export const cssNumericOrColorPattern =
+//     "/^((" +
+//         cssHexColorPattern +
+//     ")|(" +
+//         cssNumericPattern +
+//     "))$/";
 
 // TODO: To be continued.
 
@@ -512,7 +518,7 @@ export const cssPropertiesForAnimate = [
     "letterSpacing", "wordSpacing", "lineHeight", "textIndent"
 ];
 
-export const cssPropertiesForAnimatePattern = //TODO: change.
+export const cssPropertiesForAnimatePattern =
     "/^((" +
         cssPropertiesForAnimate.join(")|(") +
     "))$/";
@@ -574,8 +580,27 @@ export function upaFun_animate(
             "(options are 'swing' or 'linear' or undefined)"
         );
     }
-    // TODO: initiate the animation..
-    ...
+    // verify the styles array.
+    let len = styles.length;
+    for (let i = 0; i < len; i++) {
+        if (!styles[0].test(cssPropertiesForAnimatePattern)) {
+            throw new Exception(
+                "animate(): invalid property for animation " +
+                "(contained in input[1][" + i.toString() + "][0])"
+            );
+        }
+        if (!styles[1].test(cssNumericPattern)) {
+            throw new Exception(
+                "animate(): invalid property value for animation " +
+                "(contained in input[1][" + i.toString() + "][1]), " +
+                "expects a numeric value"
+            );
+        }
+    }
+    // convert the styles array to a plain object
+    let stylesObj = Object.fromEntries(styles);
+    // initiate the animation.
+    jqObj.animate(stylesObj, speed, easing, resultingCallback);
 }
 
 
