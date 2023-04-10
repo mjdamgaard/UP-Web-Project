@@ -404,7 +404,7 @@ export const cssAComplexValuePattern =
 
 /* A function to add CSS styles to a selection of elements */
 export function upaf_css(selector) {
-    
+
 }
 
 
@@ -508,33 +508,24 @@ export function upaf_off(selector, eventsHandlerPairArr) {
 
 
 /* << jQuery show/hide/fade/slide wrapper >>
- * input = [selector, effectTypeString, speed, callbackFunction,
- *     inputDataForCallbackFunction],
+ * input = (selector, effectTypeString, speed, callbackFunction,
+ *     inputDataForCallbackFunction),
  * or
- * input = [selector, effectTypeString, [speed (, opacity)], callbackFunction,
- *     inputDataForCallbackFunction].
+ * input = (selector, effectTypeString, [speed (, opacity)], callbackFunction,
+ *     inputDataForCallbackFunction).
  **/
 export function upaf_visibilityEffect(
-    selectorEffectTypeSettingsCallbackDataTuple
+    selector, effectType, settings, callbackKey, callbackDataArr
 ) {
-    // get variables from input array.
-    let selector = typeSpeedCallbackDataTuple[0];
-    let effectType = typeSpeedCallbackDataTuple[1];
-    let settings = typeSpeedCallbackDataTuple[2];
-    let callbackKey = typeSpeedCallbackDataTuple[3];
-    let data = typeSpeedCallbackDataTuple[4];
     // get the selected descendents of #upaMainFrame as a jQuery object .
     let jqObj = getJQueryObj(selector);
-    let resultingCallback = function() {
-        callback(data);
-    };
     // get the optional callback function pointed to by the optionally provided
     // function key (string).
     var resultingCallback;
     if (typeof callbackKey === "string") {
         callback = verifyFunNameAndGetUPAFunction(callbackKey);
         resultingCallback = function() {
-            callback(data);
+            callback.apply(null, callbackDataArr);
         };
     }
     // verify the speed and opacity inputs if some are provided.
@@ -554,7 +545,7 @@ export function upaf_visibilityEffect(
     ) {
         throw new Exception(
             "visibilityEffect(): invalid speed input " +
-            "(contained in input[2] or input[2][0])"
+            "(contained in settings or settings[0])"
         );
     }
     // verify the opacity input if one is provided and the effect type is
@@ -565,7 +556,7 @@ export function upaf_visibilityEffect(
     ) {
         throw new Exception(
             "visibilityEffect(): invalid opacity input " +
-            "(contained in input[2][2])"
+            "(contained in settings[1])"
         );
     }
     // match the provided effect type an initiate the effect.
@@ -586,8 +577,7 @@ export function upaf_visibilityEffect(
             break;
         default:
             throw new Exception(
-                "visibilityEffect(): invalid effect type input " +
-                "(contained in input[1])"
+                "visibilityEffect(): invalid effect type input"
             );
     }
 }
@@ -615,26 +605,17 @@ export const cssPropertiesForAnimatePattern =
  * input = [selector, ...]..
  **/
 export function upaf_animate(
-    selectorStylesSettingsCallbackDataTuple
+    selector, styles, settings, callbackKey, callbackDataArr
 ) {
-    // get variables from input array.
-    let selector = typeSpeedCallbackDataTuple[0];
-    let styles = typeSpeedCallbackDataTuple[1];
-    let settings = typeSpeedCallbackDataTuple[2];
-    let callbackKey = typeSpeedCallbackDataTuple[3];
-    let data = typeSpeedCallbackDataTuple[4];
     // get the selected descendents of #upaMainFrame as a jQuery object .
     let jqObj = getJQueryObj(selector);
-    let resultingCallback = function() {
-        callback(data);
-    };
     // get the optional callback function pointed to by the optionally provided
     // function key (string).
     var resultingCallback; // = function(){};
     if (typeof callbackKey === "string") {
         callback = verifyFunNameAndGetUPAFunction(callbackKey);
         resultingCallback = function() {
-            callback(data);
+            callback.apply(null, callbackDataArr);
         };
     }
     // verify the speed and easing inputs if some are provided.
@@ -654,7 +635,7 @@ export function upaf_animate(
     ) {
         throw new Exception(
             "animate(): invalid speed input " +
-            "(contained in input[2] or input[2][0])"
+            "(contained in settings or settings[0])"
         );
     }
     // verify the easing input if one is provided.
@@ -664,7 +645,7 @@ export function upaf_animate(
     ) {
         throw new Exception(
             "animate(): invalid easing input " +
-            "(contained in input[2][1])" +
+            "(contained in settings[1])" +
             "(options are 'swing' or 'linear' or undefined)"
         );
     }
@@ -674,13 +655,13 @@ export function upaf_animate(
         if (!styles[0].test(cssCCasePropertiesForAnimate)) {
             throw new Exception(
                 "animate(): invalid property for animation " +
-                "(contained in input[1][" + i.toString() + "][0])"
+                "(contained in styles[" + i.toString() + "][0])"
             );
         }
         if (!styles[1].test(cssNumericPattern)) {
             throw new Exception(
                 "animate(): invalid property value for animation " +
-                "(contained in input[1][" + i.toString() + "][1]), " +
+                "(contained in styles[" + i.toString() + "][1]), " +
                 "expects a numeric value"
             );
         }
