@@ -31,7 +31,7 @@ export const elementNames =
         "aaa", "aaa", "aaa", "aaa", "aaa", "aaa",
     ];
 
-const typeSelectorPattern =
+const typeSelectorRegEx =
     "((" +
         elementNames.join(")|(") +
     "))";
@@ -50,7 +50,7 @@ export const pseudoClasses =
         "lang\(\w+(\-\w+)*\)",
     ];
 
-const pseudoClassPattern =
+const pseudoClassRegEx =
     ":((" +
         pseudoClasses.join(")|(") +
     "))";
@@ -62,51 +62,51 @@ export const pseudoElements =
         "first-letter", "first-line", //TODO: complete this.
     ];
 
-const pseudoElementPattern =
+const pseudoElementRegEx =
     "::((" +
         pseudoElements.join(")|(") +
     "))";
 
-const classSelectorPattern = "(\.\w+)";
+const classSelectorRegEx = "(\.\w+)";
 
-const attrSelectorPattern = "(\[" + "\w+" + "([!\$\|\^~\*]?=\w+)?" + "\])";
+const attrSelectorRegEx = "(\[" + "\w+" + "([!\$\|\^~\*]?=\w+)?" + "\])";
 
-const combinatorPattern = "[ >~\+]";
+const combinatorRegEx = "[ >~\+]";
 
-const compoundSelectorPattern =
+const compoundSelectorRegEx =
     "((" +
         "\*" +
     ")|("
-        typeSelectorPattern + "?" +
+        typeSelectorRegEx + "?" +
             "((" +
-            //     classSelectorPattern +
+            //     classSelectorRegEx +
             // ")|(" +
-                attrSelectorPattern +
+                attrSelectorRegEx +
             ")|(" +
-                pseudoClassPattern +
+                pseudoClassRegEx +
             ")|(" +
-                pseudoElementPattern +
+                pseudoElementRegEx +
             "))*" +
     "))";
 
 
-const complexSelectorPattern =
-    compoundSelectorPattern + "(" +
-        combinatorPattern + compoundSelectorPattern +
+const complexSelectorRegEx =
+    compoundSelectorRegEx + "(" +
+        combinatorRegEx + compoundSelectorRegEx +
     ")*";
 
-const whitespacePattern = "[ \n\r\t]*";
+const whitespaceRegEx = "[ \n\r\t]*";
 
-const selectorListPattern =
-    complexSelectorPattern + "(" +
-        whitespacePattern + "," + whitespacePattern + complexSelectorPattern +
+const selectorListRegEx =
+    complexSelectorRegEx + "(" +
+        whitespaceRegEx + "," + whitespaceRegEx + complexSelectorRegEx +
     ")*";
 
 export const selectorPattern =
     "/^((" +
         "\$\w+" +
     ")|(" +
-        selectorListPattern +
+        selectorListRegEx +
     "))$/";
 
 
@@ -287,7 +287,7 @@ export function verifyFunNameAndGetUPAFunction(funName) {
 
 /* Some functions to add and remove CSS styles */
 
-export const cssUnitPatterns = [
+export const cssUnitRegExs = [
     "em", "ex", "cap", "ch", "ic", "lh", "vw", "vh", "vi", "vb", "vmin", "vmax",
     "cq[whib(min)(max)]",
     "cm", "mm", "Q", "in", "pc", "pt", "px",
@@ -298,34 +298,63 @@ export const cssUnitPatterns = [
     "%"
 ];
 
-const cssUnitPattern =
+const cssUnitRegEx =
     "((" +
-        cssUnitPatterns.join(")|(") +
+        cssUnitRegExs.join(")|(") +
     "))";
+
+
+export const cssNumericRegEx =
+    "[\+\-]?[0-9]*\.?[0-9]*" + cssUnitRegEx;
 
 export const cssNumericPattern =
     "/^" +
-        "[\+\-]?[0-9]*\.?[0-9]*" + cssUnitPattern +
+        cssNumericRegEx +
     "$/";
 
 
-const cssHexColorPattern =
+export const cssHexColorRegEx =
+    "#[([0-9a-fA-F]{3,4})([0-9a-fA-F]{6})([0-9a-fA-F]{8})]";
+
+export const cssHexColorPattern =
     "/^" +
-        "#[([0-9a-fA-F]{3,4})([0-9a-fA-F]{6})([0-9a-fA-F]{8})]" +
+        cssHexColorRegEx +
     "$/";
     // TODO: Consider adding more color value syntaxes.
 
 
-// export const cssNumericOrColorPattern =
-//     "/^((" +
-//         cssHexColorPattern +
-//     ")|(" +
-//         cssNumericPattern +
-//     "))$/";
-
-// TODO: To be continued.
+export const cssNumericOrColorPattern =
+    "/^((" +
+        cssHexColorRegEx +
+    ")|(" +
+        cssNumericRegEx +
+    "))$/";
 
 
+
+/* Some CSS keyword values that I hope is safe for all CSS properties */
+export const someCSSKeywordValues = [
+    "left", "right", "none", "inline-start", "inline-end",
+    "repeat-x", "repeat-y", "no-repeat", "top", "bottom", "fixed",
+    "scroll", "center", "justify",
+    "dotted", "dashed", "solid", "double", "groove", "ridge", "inset",
+    "outset", "none", "hidden",
+    "thin", "medium", "thick",
+    "border-box",
+    "baseline", "text-top", "text-bottom", "sub", "super",
+    "overline", "underline", "line-through",
+    "uppercase", "lowercase", "capitalize",
+    "nowrap",
+    "sans-serif", "serif", "monospace", "cursive", "fantasy",
+    "Arial", "Verdana", "Tahoma", "Trebuchet", "Times",
+    "Georgia", "Garamond", "Courier", "Brush",
+    "normal", "italic", "oblique", "bold", "small-caps",
+    "circle", "square", "upper-roman", "upper-alpha", "lower-alpha",
+    "outside", "inside",
+
+    // TODO: Add more.
+    // TODO: Verify their safety (or do something different).
+];
 
 
 
@@ -343,14 +372,14 @@ const jQueryEvents = [
     "toggle", "resize", "scroll", "load", "ready", "unload",
 ];
 
-const singleEventPattern =
+const singleEventRegEx =
     "((" +
         jQueryEvents.join(")|(") +
     "))";
 
 const eventsPattern =
     "/^" +
-        singleEventPattern + "(" + " " +  singleEventPattern + ")*" +
+        singleEventRegEx + "(" + " " +  singleEventRegEx + ")*" +
     "$/";
 
 export function upaFun_verifyEvents(events) {
@@ -507,7 +536,7 @@ export function upaFun_visibilityEffect(
 
 /* jQuery.animate wrapper */
 
-export const cssPropertiesForAnimate = [
+export const cssCCasePropertiesForAnimate = [
     "backgroundPositionX", "backgroundPositionY", "borderWidth",
     "borderBottomWidth", "borderLeftWidth", "borderRightWidth",
     "borderTopWidth", "borderSpacing", "margin", "marginBottom",
@@ -583,7 +612,7 @@ export function upaFun_animate(
     // verify the styles array.
     let len = styles.length;
     for (let i = 0; i < len; i++) {
-        if (!styles[0].test(cssPropertiesForAnimatePattern)) {
+        if (!styles[0].test(cssCCasePropertiesForAnimate)) {
             throw new Exception(
                 "animate(): invalid property for animation " +
                 "(contained in input[1][" + i.toString() + "][0])"
@@ -602,6 +631,3 @@ export function upaFun_animate(
     // initiate the animation.
     jqObj.animate(stylesObj, speed, easing, resultingCallback);
 }
-
-
-//

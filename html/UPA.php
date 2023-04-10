@@ -56,6 +56,8 @@ $mainModuleID = "tA";
 // responsibility of UPA_modules.php instead!
 
 
+// TODO: Also add a Content Security Policy (CSP), btw.
+
 
 // echo the div that the UPA scripts are allowed to change internally (as well
 // as being able to read and write to a specific "area" of the local storage).
@@ -83,11 +85,14 @@ $mainModuleID = "tA";
 <script  id="ratingQueueHandler">
     // TODO: Implement a function that listens to new ratings.
     // In the beginning, I will just let this handler sent the ratings straight
-    // to the SDB right away, without further ado.
+    // to the SDB right away, without further ado. // No! Users should always
+    // have to manually confirm a list of new ratings.
 </script>
 <script  id="insertQueueHandler">
     // TODO: Implement a function that listens to new term insert requests.
     // In the beginning, I might implement this handler such that the user
     // has to actively confirm new inserts. But I might also just make it like
-    // ratingQueueHandler in the very beginning..
+    // ratingQueueHandler in the very beginning.. // No! I should implement it
+    // in the beginning (and keep it like that) such that users should always
+    // have to manually confirm a list of new ratings.
 </script>
