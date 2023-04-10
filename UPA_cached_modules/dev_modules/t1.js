@@ -335,7 +335,19 @@ export const cssNumericOrColorPattern =
 /* Some CSS keyword values that I hope is safe for all CSS properties */
 export const someCSSKeywordValues = [
     "left", "right", "none", "inline-start", "inline-end",
-    "repeat-x", "repeat-y", "no-repeat", "top", "bottom", "fixed",
+// "inline-table"
+// "table-row"
+// "table-row-group"
+// "table-column"
+// "table-column-group"
+// "table-cell"
+// "table-caption"
+// "table-header-group"
+// "table-footer-group"
+// "inline-flex"
+// "inline-grid"
+    "repeat-x", "repeat-y", "no-repeat", "repeat",
+    "top", "bottom", "fixed",
     "scroll", "center", "justify",
     "dotted", "dashed", "solid", "double", "groove", "ridge", "inset",
     "outset", "none", "hidden",
@@ -344,17 +356,64 @@ export const someCSSKeywordValues = [
     "baseline", "text-top", "text-bottom", "sub", "super",
     "overline", "underline", "line-through",
     "uppercase", "lowercase", "capitalize",
-    "nowrap",
+    "nowrap", "clip",
     "sans-serif", "serif", "monospace", "cursive", "fantasy",
     "Arial", "Verdana", "Tahoma", "Trebuchet", "Times",
     "Georgia", "Garamond", "Courier", "Brush",
     "normal", "italic", "oblique", "bold", "small-caps",
     "circle", "square", "upper-roman", "upper-alpha", "lower-alpha",
     "outside", "inside",
-
-    // TODO: Add more.
-    // TODO: Verify their safety (or do something different).
+    "collapse",
+    "inline", "block", "inline-block",
+    "static", "relative", "fixed", "absolute", "sticky",
+    "visible", "auto", "both", "table",
+    "cover", "contain", "content-box",
+    "ellipsis", "break-word", "break-all", "keep-all",
+    // "ltr", "rtl",
+    "width", "height",
+    "ease", "linear", "ease-in", "ease-out", "ease-in-out",
+    "transform",
+    "fill", "scale-down",
+    "not-allowed",
+    "horizontal", "vertical",
+    // TODO: Consider adding more.
+    // TODO: Verify their safety of these keyword values!
 ];
+
+export const someCSSKeywordValuesRegEx =
+    "((" +
+        someCSSKeywordValues.join(")|(") +
+    "))";
+
+
+export const cssACombinedValueRegEx =
+    "((" +
+        cssHexColorRegEx +
+    ")|(" +
+        cssNumericRegEx +
+    ")|(" +
+        someCSSKeywordValuesRegEx +
+    "))"
+
+export const cssAComplexValuePattern =
+    "/^(" +
+        cssACombinedValueRegEx + "(" + whitespaceRegEx +
+            "[, \n]" + whitespaceRegEx + cssACombinedValueRegEx +
+        ")*" +
+    ")$/";
+
+/* A function to add CSS styles to a selection of elements */
+export function upaf_css(selector) {
+    
+}
+
+
+
+
+
+
+
+
 
 
 
