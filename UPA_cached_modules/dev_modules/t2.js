@@ -163,8 +163,8 @@ export function upaf_math(methodName, num1, num2) {
         case "tan":
         case "tanh":
         case "trunc":
-            return Math[methodName](num1);
-            break;
+            // return Math[methodName](num1);
+            // break;
         case "pow":
         case "atan2":
         case "hypot":
@@ -189,6 +189,7 @@ export function upaf_numberMethod(methodName, num) {
         case "isInfinite":
         case "isNaN":
             return num[methodName]();
+            break;
         default:
             throw new Exception(
                 "numberMethods(): method name not recognized"

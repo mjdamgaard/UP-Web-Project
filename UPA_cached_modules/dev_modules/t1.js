@@ -293,7 +293,20 @@ export function verifyFunNameAndGetUPAFunction(funName) {
  * attributes = undefined | [([key, value],)*].
  **/
 export function upaf_addHTML(selector, method, content) {
-
+    let jqObj = getJQueryObj(selector);
+    let html = getHTML(content);
+    switch (method) {
+        case "append":
+        case "prepend":
+        case "before":
+        case "after":
+            return jqObj[method](html);
+            break;
+        default:
+            throw new Exception(
+                "addHTML(): method name not recognized"
+            );
+    }
 }
 
 
@@ -393,6 +406,17 @@ export function upaf_convertHTMLSpecialChars(str) {
         .replaceAll(">", "&gt;");
 }
 
+
+
+export function upaf_removeHTML(selector, method, content) {
+    let jqObj = getJQueryObj(selector);
+    jqObj.remove();
+}
+
+export function upaf_emptyHTML(selector, method, content) {
+    let jqObj = getJQueryObj(selector);
+    jqObj.empty();
+}
 
 
 
