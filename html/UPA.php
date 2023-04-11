@@ -91,7 +91,12 @@ $mainModuleID = "tA";
     principle be able to extract this data. But anyway, this doesn't matter
     much; in conclusion, I can call it a "semi-private database"..
     ..Wait is this even worth the effort?.. Can't I just let the UPA input and
-    insert freely..? ..Hm..
+    insert freely..? ..Hm.. ..Ah, whatever I do, I should make it so that users
+    have to elevate their privileges in order to insert terms!.. ..And ratings
+    can be undone as soon as I implement queries for RecentInputs, so therefore,
+    shouldn't I just make the UPA free to input ratings and insert terms, as
+    long as the user is logged in with high enough privileges to do so?:)..
+    ..Yes, let me say that.
 -->
 <!-- <script  id="ratingQueueHandler">
     // TODO: Implement a function that listens to new ratings.
