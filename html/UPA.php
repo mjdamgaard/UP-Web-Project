@@ -64,10 +64,7 @@ $mainModuleID = "tA";
 // Also place the script that imports and runs the chosen UPA main module in
 // this div.
 ?>
-<div id="upaMainFrame">
-    <div upaAtt_class="ratingQueue"></div>
-    <div upaAtt_class="insertQueue"></div>
-</div>
+<div id="upaMainFrame"></div>
 <script id="upaMainFunLoader" type="module">
     // import the chosen UPA main module.
     import {
