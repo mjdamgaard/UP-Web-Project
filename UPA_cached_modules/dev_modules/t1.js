@@ -285,13 +285,12 @@ export function verifyFunNameAndGetUPAFunction(funName) {
  * where
  * method = "append" | "prepend" | "before" | "after",
  * and where
- * content = contentText | [(tagAttributesContentTuple,)*],
+ * content = undefined | contentText | [(tagAttributesContentTuple,)*],
  * where
  * tagAttributesContentTuple =
- *     contentText | [content] | [tagName, content] |
- *     [tagName, attributes, content],
+ *     [content] | [tagName, content] | [tagName, attributes, content],
  * where
- * attributes = undefined | [key, value] | [([key, value],)*].
+ * attributes = undefined | [([key, value],)*].
  **/
 export function upaf_addHTML(selector, method, content) {
 
@@ -306,10 +305,10 @@ function getHTML(
         return upaf_convertHTMLSpecialChars(content);
     }
     // if content is undefined or an empty array, return "".
-    let len = content.length;
+    var len;
     if (
         typeof content === "undefined" ||
-        len == 0
+        (len = content.length) == 0
     ) {
         return "";
     }
@@ -317,13 +316,7 @@ function getHTML(
     // html to a return variable, ret.
     var ret = "";
     for (let i = 0; i < len; i++) {
-        // if the "tuple" is a string, just append the converted string to ret.
-        if (typeof tagAttributesContentTupleArr[i] === "string") {
-            ret = ret +
-                upaf_convertHTMLSpecialChars(tagAttributesContentTupleArr[i]);
-            continue;
-        }
-        // otherwise, get the variables.
+        // get the variables.
         var tag, attributes, content;
         let tupleLen = tagAttributesContentTupleArr[i];
         if (tupleLen === 3) {
@@ -375,10 +368,12 @@ function getHTML(
             }
         }
         // test and convert content, and add it inside the new HTML element.
-        if (typeof content === "undefined") {
-            content = "";
-        }
+        htmlElem.innerHTML = getHTML(content);
+        // append the new HTML element to ret.
+        ret = ret + htmlElem.outerHTML;
     }
+    // return the resulting HTML string.
+    return ret;
 }
 
 
