@@ -43,6 +43,7 @@ export const pseudoClasses =
         "submit", "reset", "button", "image", "file",
         "enabled", "diabled", "selected", "checked",
         "lang\(\w+(\-\w+)*\)",
+        // TODO: add more pseudo classes!
     ];
 
 const pseudoClassRegEx =
@@ -425,6 +426,9 @@ export function upaf_emptyHTML(selector, method, content) {
 
 /* Some functions to add and remove CSS styles */
 
+const cssPropPattern = "/^@?[[a-zA-Z]\-]+$/";
+
+
 export const cssUnitRegExs = [
     "em", "ex", "cap", "ch", "ic", "lh", "vw", "vh", "vi", "vb", "vmin", "vmax",
     "cq[whib(min)(max)]",
@@ -602,7 +606,7 @@ export function upaf_css(selector, propertyOrPropertyValuePairArr) {
             let property = propertyValuePairArr[i][0];
             let value = propertyValuePairArr[i][1];
             // test property.
-            if (!property.test("/^@?[[a-zA-Z]\-]+$/")) {
+            if (!property.test(cssPropPattern)) {
                 throw new Exception(
                     "css(): property" + i.toString() +
                     "can only contain letters, '-' and '@'"
@@ -631,11 +635,67 @@ export function upaf_css(selector, propertyOrPropertyValuePairArr) {
 }
 
 
+/* Function to add and remove CSS style tags to document head */
+
+export function upaf_addCSS(selector, propertyValuePairArr) {
+    // test the selector.
+    if (!selector.test(selectorPattern)) {
+        throw new Exception(
+            "addCSS(): selector does not match expected pattern"
+        );
+    }
+    // initialize styleElem as the first part of the desired HTML string.
+    var styleElem =
+        '<style class="upa" selector="' +
+            upaf_convertHTMLSpecialChars(selector) +
+        '"> ' +
+        "#upaMainFrame { " + selector + " { ";
+    // loop through property--value pairs and append them to styleElem.
+    let len = propertyValuePairArr.length;
+    for (let i = 0; i < len; i++) {
+        let property = propertyValuePairArr[i][0];
+        let value = propertyValuePairArr[i][1];
+        // test property.
+        if (!property.test(cssPropPattern)) {
+            throw new Exception(
+                "addCSS(): property" + i.toString() +
+                "can only contain letters, '-' and '@'"
+            );
+        }
+        // test value.
+        if (!value.test(cssAComplexPattern)) {
+            throw new Exception(
+                "addCSS(): property value " + i.toString() +
+                " is either invalid or not implemented yet"
+            );
+        }
+        // append property and value to styleElem.
+        styleElem += property + ": " + value + "; ";
+    }
+    // append the final part of the style tag.
+    styleElem += "}}</style>";
+    // append the resulting style element to the document head.
+    $(":root > head").append(styleElem);
+}
 
 
+export function upaf_removeCSS(selector) {
+    // remove all UPA style tags with the given selector.
+    $(
+        ':root > head > .upa[' +
+            'selector="' + upaf_convertHTMLSpecialChars(selector) +
+        '"]'
+    ).remove();
+}
 
-
-
+export function upaf_removeLastCSS(selector) {
+    // remove the last UPA style tag with the given selector.
+    $(
+        ':root > head > .upa[' +
+            'selector="' + upaf_convertHTMLSpecialChars(selector) +
+        '"]:last-of-type'
+    ).remove();
+}
 
 
 
