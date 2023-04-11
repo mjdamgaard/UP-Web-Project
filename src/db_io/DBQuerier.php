@@ -22,7 +22,7 @@ class SafeDBQuerier implements Querier {
                 "uint", "uint",
                 "tint"
             ),
-            "outputType" => "numArr",
+            "outputType" => "array",
             // "columnNames" => array("ratVal", "objID"),
         ),
 
@@ -32,7 +32,7 @@ class SafeDBQuerier implements Querier {
             "typeArr" => array(
                 "setID"
             ),
-            "outputType" => "assocArr",
+            "outputType" => "array",
             // "columnNames" => array("userID", "subjID", "relID", "elemNum"),
         ),
 
@@ -42,7 +42,7 @@ class SafeDBQuerier implements Querier {
             "typeArr" => array(
                 "userOrGroupID", "termID", "relID"
             ),
-            "outputType" => "assocArr",
+            "outputType" => "array",
             // "columnNames" => array("setID", "elemNum"),
         ),
 
@@ -52,7 +52,7 @@ class SafeDBQuerier implements Querier {
             "typeArr" => array(
                 "termID", "setID"
             ),
-            "outputType" => "assocArr",
+            "outputType" => "array",
             // "columnNames" => array("ratVal"),
         ),
 
@@ -62,7 +62,7 @@ class SafeDBQuerier implements Querier {
             "typeArr" => array(
                 "catID"
             ),
-            "outputType" => "assocArr",
+            "outputType" => "array",
             // "columnNames" => array("catTitle", "superCatID"),
         ),
 
@@ -72,7 +72,7 @@ class SafeDBQuerier implements Querier {
             "typeArr" => array(
                 "eTermID"
             ),
-            "outputType" => "assocArr",
+            "outputType" => "array",
             // "columnNames" => array("eTermTitle", "catID"),
         ),
 
@@ -82,7 +82,7 @@ class SafeDBQuerier implements Querier {
             "typeArr" => array(
                 "relID"
             ),
-            "outputType" => "assocArr",
+            "outputType" => "array",
             // "columnNames" => array("objNoun", "subjCatID"),
         ),
 
@@ -92,7 +92,7 @@ class SafeDBQuerier implements Querier {
             "typeArr" => array(
                 "catID"
             ),
-            "outputType" => "numArr",
+            "outputType" => "array",
             // "columnNames" => array("catTitle", "superCatID"),
         ),
 
@@ -161,13 +161,13 @@ class SafeDBQuerier implements Querier {
         );
 
         // branch according to the "outputType" and return the result.
-        if ($sqlSpec["outputType"] === "numArr") {
+        if ($sqlSpec["outputType"] === "array") {
             // return all rows as a multidimensional array.
             return $res->fetch_all();
 
-        } elseif ($sqlSpec["outputType"] === "assocArr") {
-            // return a single row as an associative array.
-            return $res->fetch_assoc();
+        // } elseif ($sqlSpec["outputType"] === "assocArr") {
+        //     // return a single row as an associative array.
+        //     return $res->fetch_assoc();
 
         } elseif ($sqlSpec["outputType"] === "data") {
             // return the data itself.

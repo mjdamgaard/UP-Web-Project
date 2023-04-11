@@ -1,7 +1,5 @@
 <?php
 
-header('Content-Type: text/javascript');
-
 $err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";
 require_once $err_path . "errors.php";
 
@@ -10,7 +8,7 @@ require_once $user_input_path . "InputVerifier.php";
 
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
 require_once $db_io_path . "DBConnector.php";
-require_once $db_io_path . "UnsafeDBQuerier.php";
+require_once $db_io_path . "DBQuerier.php";
 
 $UPA_cached_modules_path = $_SERVER['DOCUMENT_ROOT'] .
     "/../UPA_cached_modules/";
@@ -25,6 +23,7 @@ $UPA_dev_modules_path = $UPA_cached_modules_path . "dev_modules/";
 // modules can only be GET-gotten.
 $textID = "";
 if (!isset($_GET["id"])) {
+    header('Content-Type: text/json');
     echoTypeErrorJSONAndExit("No text ID (id) specified");
 } else {
     $textID = $_GET["id"];
@@ -41,12 +40,13 @@ $devModuleIDs = array (
 
 $devModuleIDPatt =
     "/^((" .
-    implode(")|(", $devModuleIDs) .
+        implode(")|(", $devModuleIDs) .
     "))$/";
 
 // if the text ID matches the ID of a developer-made module, change the header
 // to that module
 if (preg_match($devModuleIDPatt, $textID)) {
+    header('Content-Type: text/javascript');
     echo file_get_contents($UPA_dev_modules_path . $textID . ".js");
     exit;
 } else {
@@ -60,8 +60,9 @@ if (preg_match($devModuleIDPatt, $textID)) {
     // define the parameters used to get the (unsanitized!) text.
     $sqlKey = "text";
     $paramValArr = array($textID);
-    $res = UnsafeDBQuerier::query($conn, $sqlKey, $paramValArr);
+    $res = DBQuerier::query($conn, $sqlKey, $paramValArr);
     // return the text as is. //TODO: Is is important that I change this impl.
+    header('Content-Type: text/javascript');
     echo $res;
     exit;
 }
