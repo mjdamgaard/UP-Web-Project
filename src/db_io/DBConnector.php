@@ -3,6 +3,8 @@
 class DBConnector {
 
     public static function getConnection() {
+        // TODO: Make it so that these values are read from a config file
+        // instead.
         $servername = "localhost";
         $username = "mads";
         $password = "lemmein";
