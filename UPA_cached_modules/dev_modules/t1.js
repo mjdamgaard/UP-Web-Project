@@ -260,26 +260,11 @@ export function verifyFunNameAndGetUPAFunction(funName) {
 
 
 
+
+
+
+
 /* Some functions to add and remove HTML elements */
-
-// TODO: Make an add and remove function for all element types, where the add
-// function can also set some attributes. ... (19:18) Just had a good idea
-// to make the functions (append, prepend, before, after) take arrays as input,
-// namely with tag--content pairs, where content then can either be texts or
-// new tag--content pairs.!:) ..(19:23) Hm, and I can now see that I should
-// let these add-HTML functions convert.. Well, at least I think now that I
-// should (probably) let these functions convert "htmlspecialchars." And this
-// then means that I should probably remove the sanitazation responibilities
-// from the server altogether, making it the responsibility just of the
-// "upaf_" API instead.. ..Sure. Let it just be the responsibility of the UPA
-// (A)PI instead; this seems to make things easier (and a little bit better,
-// even). (19:30) ...(19:50) I btw also have to consider if I should make it
-// so that users can't select #upaMainFrame, and/or if I should add a second
-// frame, due to the before and after methods.. (11.04.23, 9:29) Well, if I
-// remove the cached main frame object, then they shouldn't be able to grab
-// it, I think.. ..Ah, I should also let the array include (optional)
-// attributes! So it should be an tag--(attributes--)content array.
-
 
 /* << addHTML() >>
  * input = (selector, method, content),
@@ -646,7 +631,7 @@ export function upaf_addCSS(selector, propertyValuePairArr) {
     }
     // initialize styleElem as the first part of the desired HTML string.
     var styleElem =
-        '<style class="upa" selector="' +
+        '<style class="upas" selector="' +
             upaf_convertHTMLSpecialChars(selector) +
         '"> ' +
         "#upaMainFrame { " + selector + " { ";
@@ -682,7 +667,7 @@ export function upaf_addCSS(selector, propertyValuePairArr) {
 export function upaf_removeCSS(selector) {
     // remove all UPA style tags with the given selector.
     $(
-        ':root > head > .upa[' +
+        ':root > head > .upas[' +
             'selector="' + upaf_convertHTMLSpecialChars(selector) +
         '"]'
     ).remove();
@@ -691,7 +676,7 @@ export function upaf_removeCSS(selector) {
 export function upaf_removeLastCSS(selector) {
     // remove the last UPA style tag with the given selector.
     $(
-        ':root > head > .upa[' +
+        ':root > head > .upas[' +
             'selector="' + upaf_convertHTMLSpecialChars(selector) +
         '"]:last-of-type'
     ).remove();
