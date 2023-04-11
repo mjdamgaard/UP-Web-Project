@@ -12,11 +12,6 @@ export function upaf_appendHelloWorld() {
 
 /* Some functions to cache and select jQuery objects */
 
-var mainFrameJQueryObj = $("#upaMainFrame");
-
-var jQueryObjCache = {"mainFrame":mainFrameJQueryObj};
-
-
 export const elementNames =
     [ +
         "address", "article", "aside", "footer", "header", "h[1-6]",
@@ -31,7 +26,7 @@ export const elementNames =
         "aaa", "aaa", "aaa", "aaa", "aaa", "aaa",
     ];
 
-const typeSelectorRegEx =
+const elementNameRegEx =
     "((" +
         elementNames.join(")|(") +
     "))";
@@ -77,7 +72,7 @@ const compoundSelectorRegEx =
     "((" +
         "\*" +
     ")|("
-        typeSelectorRegEx + "?" +
+        elementNameRegEx + "?" +
             "((" +
             //     classSelectorRegEx +
             // ")|(" +
@@ -111,6 +106,9 @@ export const selectorPattern =
 
 
 
+var jQueryObjCache = {};
+
+var mainFrameJQueryObj = $("#upaMainFrame");
 
 // Note that since this function does not have the upaf_ prefix, it cannot
 // be exported to the final user modules (but only to other developer modules).
@@ -165,39 +163,8 @@ export function upaf_cacheJQueryObj(selector, key) {
 /* Some functions to get and set upaa_ attributes */
 
 
-const attKeyPattern = "/^upaa_\w+$/";
-const attValPattern = "/^\w*$/";
-
-
-export function upaf_isValidAttKey(key) {
-    // if (typeof key !== "string") {
-    //     throw new Exception("isValidAttKey(): selector is not a string");
-    // }
-    return key.test(attKeyPattern);
-}
-
-export function upaf_assertValidAttKey(key) {
-    if (!upaf_isValidAttKey(key)) {
-        throw new Exception(
-            "assertValidAttKey(): input is not a valid attribute key"
-        );
-    }
-}
-
-export function upaf_isValidAttVal(val) {
-    // if (typeof val !== "string") {
-    //     throw new Exception("isValidAttVal(): selector is not a string");
-    // }
-    return val.test(attValPattern);
-}
-
-export function upaf_assertValidAttVal(val) {
-    if (!upaf_isValidAttVal(val)) {
-        throw new Exception(
-            "assertValidAttVal(): input is not a valid attribute value"
-        );
-    }
-}
+const attrKeyPattern = "/^\w+$/";
+const attrValPattern = "/^\w*$/";
 
 
 export function upaf_setAttributes(selector, keyValArr) {
@@ -208,9 +175,17 @@ export function upaf_setAttributes(selector, keyValArr) {
     for (let i = 0; i < keyValArr.length; i++) {
         let key = keyValArr[$i][0];
         let val = keyValArr[$i][1];
-        // assert that key and val are defined and have the right formats.
-        upaf_assertValidAttKey(key);
-        upaf_assertValidAttVal(val);
+        // verify that key and val are defined and have the right formats.
+        if (!key.test(attrKeyPattern)) {
+            throw new Exception(
+                "setAttributes(): input is not a valid attribute key"
+            );
+        }
+        if (!val.test(attrValPattern)) {
+            throw new Exception(
+                "setAttributes(): input is not a valid attribute value"
+            );
+        }
         // set the attributes of the selected HTML element.
         jqObj.attr("upaa_" + key, val);
     }
@@ -218,7 +193,11 @@ export function upaf_setAttributes(selector, keyValArr) {
 
 export function upaf_getAttribute(selector, key) {
     // assert that key is defined and has the right format.
-    upaf_assertValidAttKey(key);
+    if (!key.test(attrKeyPattern)) {
+        throw new Exception(
+            "getAttribute(): input is not a valid attribute key"
+        );
+    }
     // get the selected HTML element as a jQuery object.
     let jqObj = getJQueryObj(selector);
     // return the attribute of the selected HTML element.
@@ -235,7 +214,11 @@ export function upaf_getAttributes(selector, keyArr) {
     for (let i = 0; i < keyArr.length; i++) {
         let key = keyValArr[$i];
         // assert that key is defined and has the right format.
-        upaf_assertValidAttKey(key);
+        if (!key.test(attrKeyPattern)) {
+            throw new Exception(
+                "getAttributes(): input is not a valid attribute key"
+            );
+        }
         // get the attribute of the selected HTML element and store it in the
         // return array.
         ret[i] = jqObj.attr("upaa_" + key);
@@ -278,7 +261,7 @@ export function verifyFunNameAndGetUPAFunction(funName) {
 
 /* Some functions to add and remove HTML elements */
 
-//TODO: Make an add and remove function for all element types, where the add
+// TODO: Make an add and remove function for all element types, where the add
 // function can also set some attributes. ... (19:18) Just had a good idea
 // to make the functions (append, prepend, before, after) take arrays as input,
 // namely with tag--content pairs, where content then can either be texts or
@@ -291,21 +274,133 @@ export function verifyFunNameAndGetUPAFunction(funName) {
 // (A)PI instead; this seems to make things easier (and a little bit better,
 // even). (19:30) ...(19:50) I btw also have to consider if I should make it
 // so that users can't select #upaMainFrame, and/or if I should add a second
-// frame, due to the before and after methods..
+// frame, due to the before and after methods.. (11.04.23, 9:29) Well, if I
+// remove the cached main frame object, then they shouldn't be able to grab
+// it, I think.. ..Ah, I should also let the array include (optional)
+// attributes! So it should be an tag--(attributes--)content array.
 
-function sanitizeAndVerifyTagContentPairArr(tagContentPairArr) {
-    let len = tagContentPairArr.length;
+
+/* << addHTML() >>
+ * input = (selector, method, tagAttributesContentTupleArr),
+ * where
+ * method = "append" | "prepend" | "before" | "after",
+ * and where
+ * tagAttributesContentTupleArr = [(tagAttributesContentTuple,)*],
+ * where
+ * tagAttributesContentTuple =
+ *     contentText | [content] | [tagName, content] |
+ *     [tagName, attributes, content],
+ * where
+ * attributes = undefined | [key, value] | [([key, value],)*],
+ * and where
+ * content =
+ *     contentText | [content] | [tagName, content] |
+ *     [tagName, attributes, content].
+ **/
+export function upaf_addHTML(selector, method, tagAttributesContentTupleArr) {
+
+}
+
+
+function getHTMLFromTagAttributesContentTupleArr(
+    tagAttributesContentTupleArr
+) {
+    // return empty string if input is undefined or an empty array.
+    let len = tagAttributesContentTupleArr.length;
+    if (
+        typeof tagAttributesContentTupleArr === "undefined" ||
+        len == 0
+    ) {
+        return "";
+    }
+    // loop through tag--attribute--content tuples and append the resulting
+    // html to a return variable, ret.
+    var ret = "";
     for (let i = 0; i < len; i++) {
-        let tag = tagContentPairArr[i][0];
-        let content = tagContentPairArr[i][0];
-        ...
+        // if the "tuple" is a string, just append the converted string to ret.
+        if (typeof tagAttributesContentTupleArr[i] === "string") {
+            ret = ret +
+                upaf_convertHTMLSpecialChars(tagAttributesContentTupleArr[i]);
+            continue;
+        }
+        // otherwise, get the variables.
+        var tag, attributes, content;
+        let tupleLen = tagAttributesContentTupleArr[i];
+        if (tupleLen === 3) {
+            tag = tagAttributesContentTupleArr[i][0];
+            attributes = tagAttributesContentTupleArr[i][1];
+            content = tagAttributesContentTupleArr[i][2];
+        } else if (tupleLen === 2) {
+            tag = tagAttributesContentTupleArr[i][0];
+            content = tagAttributesContentTupleArr[i][1];
+        } else if (tupleLen === 1) {
+            content = tagAttributesContentTupleArr[i][0];
+        }
+        // if tag input is undefined, simply append the converted content to
+        // ret.
+        if (typeof tag === "undefined") {
+            ret = ret +
+                getHTMLFromTagAttributesContentTupleArr(content);
+        } else {
+            // test tag input.
+            if (!tag.test(elementNameRegEx)) {
+                throw new Exception(
+                    "getHTMLFromTagAttributesContentTupleArr(): "
+                    "unrecognized tag: " + tag.toString()
+                );
+            }
+            // initialize new HTML element.
+            var htmlElem = document.createElement(tag);
+            // test attribute input.
+            if (typeof attributes !== "undefined") {
+                let lenAttr = attributes.length;
+                for (let j = 0; j < lenAttr; j++) {
+                    // get attribute key and value.
+                    let key = attributes[j][0];
+                    let val = attributes[j][1];
+                    // verify that key and val are defined and have the right
+                    // formats.
+                    if (!key.test(attrKeyPattern)) {
+                        throw new Exception(
+                            "getHTMLFromTagAttributesContentTupleArr(): "
+                            "input contains an invalid attribute key"
+                        );
+                    }
+                    if (!val.test(attrValPattern)) {
+                        throw new Exception(
+                            "getHTMLFromTagAttributesContentTupleArr(): "
+                            "input contains an invalid attribute value"
+                        );
+                    }
+                    // set a new upaa_ attribute for the new HTML element.
+                    htmlElem.setAttribute("upaa_" + key, val);
+                }
+            }
+            // test and convert content
+            if (typeof content === "undefined") {
+                content = "";
+            } else if (typeof content === "string") {
+
+            }
     }
 }
 
-export function upaf_addHTML(selector, method, tagContentPairArr) {
 
+export function upaf_convertHTMLSpecialChars(str) {
+    // verify that input is a string.
+    if (typeof str !== "string") {
+        throw new Exception(
+            "convertHTMLSpecialChars(): input is not a string"
+        );
+    }
+    // return the converted (HTML safe) string.
+    return str
+        .replaceAll("&", "&amp;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
 }
-
 
 
 
