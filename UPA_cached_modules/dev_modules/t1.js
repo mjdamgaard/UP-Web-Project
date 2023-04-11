@@ -281,34 +281,34 @@ export function verifyFunNameAndGetUPAFunction(funName) {
 
 
 /* << addHTML() >>
- * input = (selector, method, tagAttributesContentTupleArr),
+ * input = (selector, method, content),
  * where
  * method = "append" | "prepend" | "before" | "after",
  * and where
- * tagAttributesContentTupleArr = [(tagAttributesContentTuple,)*],
+ * content = contentText | [(tagAttributesContentTuple,)*],
  * where
  * tagAttributesContentTuple =
  *     contentText | [content] | [tagName, content] |
  *     [tagName, attributes, content],
  * where
- * attributes = undefined | [key, value] | [([key, value],)*],
- * and where
- * content =
- *     contentText | [content] | [tagName, content] |
- *     [tagName, attributes, content].
+ * attributes = undefined | [key, value] | [([key, value],)*].
  **/
-export function upaf_addHTML(selector, method, tagAttributesContentTupleArr) {
+export function upaf_addHTML(selector, method, content) {
 
 }
 
 
-function getHTMLFromTagAttributesContentTupleArr(
-    tagAttributesContentTupleArr
+function getHTML(
+    content
 ) {
-    // return empty string if input is undefined or an empty array.
-    let len = tagAttributesContentTupleArr.length;
+    // if content is a string, return the converted (HTML safe) string.
+    if (typeof content === "string") {
+        return upaf_convertHTMLSpecialChars(content);
+    }
+    // if content is undefined or an empty array, return "".
+    let len = content.length;
     if (
-        typeof tagAttributesContentTupleArr === "undefined" ||
+        typeof content === "undefined" ||
         len == 0
     ) {
         return "";
@@ -339,49 +339,45 @@ function getHTMLFromTagAttributesContentTupleArr(
         // if tag input is undefined, simply append the converted content to
         // ret.
         if (typeof tag === "undefined") {
-            ret = ret +
-                getHTMLFromTagAttributesContentTupleArr(content);
-        } else {
-            // test tag input.
-            if (!tag.test(elementNameRegEx)) {
-                throw new Exception(
-                    "getHTMLFromTagAttributesContentTupleArr(): "
-                    "unrecognized tag: " + tag.toString()
-                );
-            }
-            // initialize new HTML element.
-            var htmlElem = document.createElement(tag);
-            // test attribute input.
-            if (typeof attributes !== "undefined") {
-                let lenAttr = attributes.length;
-                for (let j = 0; j < lenAttr; j++) {
-                    // get attribute key and value.
-                    let key = attributes[j][0];
-                    let val = attributes[j][1];
-                    // verify that key and val are defined and have the right
-                    // formats.
-                    if (!key.test(attrKeyPattern)) {
-                        throw new Exception(
-                            "getHTMLFromTagAttributesContentTupleArr(): "
-                            "input contains an invalid attribute key"
-                        );
-                    }
-                    if (!val.test(attrValPattern)) {
-                        throw new Exception(
-                            "getHTMLFromTagAttributesContentTupleArr(): "
-                            "input contains an invalid attribute value"
-                        );
-                    }
-                    // set a new upaa_ attribute for the new HTML element.
-                    htmlElem.setAttribute("upaa_" + key, val);
+            ret = ret + getHTML(content);
+            continue;
+        }
+        // else, test tag input.
+        if (!tag.test(elementNameRegEx)) {
+            throw new Exception(
+                "getHTML(): unrecognized tag: " + tag.toString()
+            );
+        }
+        // initialize new HTML element.
+        var htmlElem = document.createElement(tag);
+        // test each attribute input and add the attribute key--value pair to
+        // the new HTML element.
+        if (typeof attributes !== "undefined") {
+            let lenAttr = attributes.length;
+            for (let j = 0; j < lenAttr; j++) {
+                // get attribute key and value.
+                let key = attributes[j][0];
+                let val = attributes[j][1];
+                // verify that key and val are defined and have the right
+                // formats.
+                if (!key.test(attrKeyPattern)) {
+                    throw new Exception(
+                        "getHTML(): input contains an invalid attribute key"
+                    );
                 }
+                if (!val.test(attrValPattern)) {
+                    throw new Exception(
+                        "getHTML(): input contains an invalid attribute value"
+                    );
+                }
+                // set a new upaa_ attribute for the new HTML element.
+                htmlElem.setAttribute("upaa_" + key, val);
             }
-            // test and convert content
-            if (typeof content === "undefined") {
-                content = "";
-            } else if (typeof content === "string") {
-
-            }
+        }
+        // test and convert content, and add it inside the new HTML element.
+        if (typeof content === "undefined") {
+            content = "";
+        }
     }
 }
 
