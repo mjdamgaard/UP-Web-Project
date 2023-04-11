@@ -82,7 +82,18 @@ $mainModuleID = "tA";
         '}';
     ?>);
 </script>
-<script  id="ratingQueueHandler">
+<!--
+    TODO: I think I actually have to implement these queues in a semi-private
+    database instead (not generally open to the public, but not safe from
+    users sniffing.. (via UPA functions).. Hm, or maybe not..).. ..No, cause
+    the UPA can only output data.. well, no.. No, cause I will allow
+    whitelisted hyperlinks, which means that.. well, that users *might* in
+    principle be able to extract this data. But anyway, this doesn't matter
+    much; in conclusion, I can call it a "semi-private database"..
+    ..Wait is this even worth the effort?.. Can't I just let the UPA input and
+    insert freely..? ..Hm..
+-->
+<!-- <script  id="ratingQueueHandler">
     // TODO: Implement a function that listens to new ratings.
     // In the beginning, I will just let this handler sent the ratings straight
     // to the SDB right away, without further ado. // No! Users should always
@@ -95,4 +106,4 @@ $mainModuleID = "tA";
     // ratingQueueHandler in the very beginning.. // No! I should implement it
     // in the beginning (and keep it like that) such that users should always
     // have to manually confirm a list of new ratings.
-</script>
+</script> -->
