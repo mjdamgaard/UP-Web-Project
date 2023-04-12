@@ -75,13 +75,22 @@ switch ($reqType) {
             "t"
         );
         break;
+    case "B":
+        $sqlKey = "binary";
+        $paramNameArr = array(
+            "uid",
+            "b"
+        );
+        break;
 }
 if ($sqlKey != "") {
     $paramValArr = InputGetter::getParams($paramNameArr);
-    $safeRes = DBInputter::input($conn, $sqlKey, $paramValArr);
-    echo json_encode($safeRes);
+    $res = DBInputter::input($conn, $sqlKey, $paramValArr);
+    header("Content-Type: text/json");
+    echo json_encode($res);
 } else {
     // No multiple-input requests are implemented yet. TODO: Implement some..
+    header("Content-Type: text/json");
     echoErrorJSON("Unrecognized request type");
 }
 

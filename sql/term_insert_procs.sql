@@ -140,7 +140,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertText (
     IN userCombID VARCHAR(17),
-    IN textStr TEXT,
+    IN inStr TEXT,
     OUT newCombID VARCHAR(17),
     OUT exitCode TINYINT -- 0 is successful insertion.
 )
@@ -150,18 +150,50 @@ BEGIN
 
     SELECT id INTO newID
     FROM Texts
-    WHERE (str = textStr);
+    WHERE (str = inStr);
     IF (newID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
     ELSE
         -- TODO: Insert a check that the user is part of a set and with a
         -- non-negative rating denoting that the user is allowed to insert.
         INSERT INTO Texts (str)
-        VALUES (textStr);
+        VALUES (inStr);
         SELECT LAST_INSERT_ID() INTO newID;
         IF (userID != 0) THEN
             INSERT INTO Creators (term_t, term_id, user_id)
             VALUES ("t", newID, userID);
+        END IF;
+        SET exitCode = 0; -- insert.
+    END IF;
+    SET newCombID = CONCAT('t', CONV(newID, 10, 16));
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE insertBinary (
+    IN userCombID VARCHAR(17),
+    IN inBin BLOB,
+    OUT newCombID VARCHAR(17),
+    OUT exitCode TINYINT -- 0 is successful insertion.
+)
+BEGIN
+    DECLARE userID, newID BIGINT UNSIGNED;
+    CALL getConvID (userCombID, userID);
+
+    SELECT id INTO newID
+    FROM Binaries
+    WHERE (bin = inBin);
+    IF (newID IS NOT NULL) THEN
+        SET exitCode = 1; -- find.
+    ELSE
+        -- TODO: Insert a check that the user is part of a set and with a
+        -- non-negative rating denoting that the user is allowed to insert.
+        INSERT INTO Binaries (bin)
+        VALUES (inBin);
+        SELECT LAST_INSERT_ID() INTO newID;
+        IF (userID != 0) THEN
+            INSERT INTO Creators (term_t, term_id, user_id)
+            VALUES ("b", newID, userID);
         END IF;
         SET exitCode = 0; -- insert.
     END IF;

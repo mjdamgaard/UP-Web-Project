@@ -4,14 +4,14 @@ const InputDataConstructors = {
     RateReqData: function(
         userID, subjID, relID,
         objID,
-        rat
+        rating
     ) {
         this.type = "R";
         this.uid = userID;
         this.sid = subjID;
         this.rid = relID;
         this.oid = objID;
-        this.r = rat;
+        this.r = rating;
     },
 
     CatReqData: function(
@@ -34,7 +34,7 @@ const InputDataConstructors = {
         this.t = title;
     },
 
-    CatReqData: function(
+    RelReqData: function(
         userID, subjCatID,
         objNoun
     ) {
@@ -46,11 +46,20 @@ const InputDataConstructors = {
 
     TextReqData: function(
         userID,
-        textStr
+        str
     ) {
         this.type = "T";
         this.uid = userID;
         this.t = textStr;
+    },
+
+    BinReqData: function(
+        userID,
+        bin
+    ) {
+        this.type = "B";
+        this.uid = userID;
+        this.b = bin;
     },
 
 }

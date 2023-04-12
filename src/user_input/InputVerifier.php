@@ -125,12 +125,21 @@ class InputVerifier {
                 }
                 break;
             case "blob":
-                // TODO: Implement.
-                echoErrorJSONAndExit("BLOB types are not implemented yet!");
+                if (
+                    !is_string($paramVal) ||
+                    strlen($paramVal) > 65535
+                ) {
+                    echoTypeErrorJSONAndExit($paramName, "BLOB");
+                }
                 break;
             case "text":
-                // TODO: Implement soon.
-                echoErrorJSONAndExit("Text types are not implemented yet!");
+                if (
+                    !is_string($paramVal) ||
+                    !ctype_print($paramVal) ||
+                    strlen($paramVal) > 65535
+                ) {
+                    echoTypeErrorJSONAndExit($paramName, "TEXT");
+                }
                 break;
             case "uint":
                 $pattern = "/^([1-9][0-9]*|0)$/";

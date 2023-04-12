@@ -257,7 +257,12 @@ export function verifyFunNameAndGetUPAFunction(funName) {
     return window[fullFunName];
 }
 
-
+export function getResultingCallback(callbackKey, dataArr) {
+    var callback = verifyFunNameAndGetUPAFunction(callbackKey);
+    return function() {
+        callback.apply(null, dataArr);
+    };
+}
 
 
 
@@ -791,10 +796,7 @@ export function upaf_visibilityEffect(
     // function key (string).
     var resultingCallback;
     if (typeof callbackKey === "string") {
-        callback = verifyFunNameAndGetUPAFunction(callbackKey);
-        resultingCallback = function() {
-            callback.apply(null, callbackDataArr);
-        };
+        resultingCallback = getResultingCallback(callbackKey, callbackDataArr);
     }
     // verify the speed and opacity inputs if some are provided.
     var speed, opacity;
@@ -879,12 +881,9 @@ export function upaf_animate(
     let jqObj = getJQueryObj(selector);
     // get the optional callback function pointed to by the optionally provided
     // function key (string).
-    var resultingCallback; // = function(){};
+    var resultingCallback;
     if (typeof callbackKey === "string") {
-        callback = verifyFunNameAndGetUPAFunction(callbackKey);
-        resultingCallback = function() {
-            callback.apply(null, callbackDataArr);
-        };
+        resultingCallback = getResultingCallback(callbackKey, callbackDataArr);
     }
     // verify the speed and easing inputs if some are provided.
     var speed, easing;

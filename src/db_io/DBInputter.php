@@ -59,7 +59,16 @@ class DBInputter implements Inputter {
             "sql" => "CALL insertText (?, ?, @outID, @ec)",
             "typeArr" => array(
                 "userID",
-                "str"
+                "text"
+            )
+        ),
+
+        "binary" => array(
+            "n" => 2,
+            "sql" => "CALL insertBinary (?, ?, @outID, @ec)",
+            "typeArr" => array(
+                "userID",
+                "blob"
             )
         ),
 
