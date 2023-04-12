@@ -62,16 +62,16 @@ const InputDataConstructors = {
         this.b = bin;
     },
 
-    /* Multiple insertions */
-    MultiETermsReqData: function(
-        userID, catID,
-        titleArr, number
-    ) {
-        this.type = "E";
-        this.uid = userID;
-        this.scid = catID;
-        this.ts = titleArr;
-        this.n = number;
-    },
+    // /* Multiple insertions */
+    // MultiETermsReqData: function(
+    //     userID, catID,
+    //     titleArr, number
+    // ) {
+    //     this.type = "E";
+    //     this.uid = userID;
+    //     this.scid = catID;
+    //     this.ts = titleArr;
+    //     this.n = number;
+    // },
 
 }

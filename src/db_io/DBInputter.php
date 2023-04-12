@@ -13,7 +13,7 @@ require_once $user_input_path . "InputVerifier.php";
 
 interface Inputter {
     public static function input($conn, $sqlKey, $paramValArr);
-    public static function inputMultiple($conn, $sqlKey, $paramValArr, $n);
+    // public static function inputMultiple($conn, $sqlKey, $paramValArr, $n);
 }
 
 class DBInputter implements Inputter {
@@ -127,42 +127,42 @@ class DBInputter implements Inputter {
         return $res->fetch_assoc();
     }
 
-    public static function inputMultiple($conn, $sqlKey, $paramValArr, $i, $n) {
-        if (!isset(self::$querySQLSpecs[$sqlKey])) {
-            throw new Exception(
-                "inputMultiple(): " .
-                "sqlKey does not match any key"
-            );
-        }
-        $sqlSpec = self::$querySQLSpecs[$sqlKey];
-
-        // initialize resulting parameter value array, which is supposed to be
-        // set as the $paramValArr for the query at each iteration of the
-        // loop.
-        $resultingParamValArr = $paramValArr;
-        $resultingParamValArr[$i] = $paramValArr[$i][0];
-        // insert the first term and verify all the != $i indeces.
-        self::verifyInputAndGetMySQLiResult(
-            $conn, $sqlSpec, $resultingParamValArr
-        );
-        // prepare MySQLi statement.
-        $stmt = $conn->prepare($sqlSpec["sql"]);
-        // loop..
-        $len = count($paramValArr[$i]);
-        $m = min($len, $n, 200);
-        for ($j = 1; $j < $m; $j++) {
-            $resultingParamValArr[$i] = $paramValArr[$i][$j];
-            // verify types of $paramValArr.
-            InputVerifier::verifyType(
-                $resultingParamValArr[$i],
-                $sqlSpec["typeArr"][$i],
-                strval($i)
-            );
-            // execute statement with the (now type verified) input parameters.
-            DBConnector::executeSuccessfulOrDie($stmt, $resultingParamValArr);
-        }
-        // return nothing.
-    }
+// public static function inputMultiple($conn, $sqlKey, $paramValArr, $i, $n) {
+//     if (!isset(self::$querySQLSpecs[$sqlKey])) {
+//         throw new Exception(
+//             "inputMultiple(): " .
+//             "sqlKey does not match any key"
+//         );
+//     }
+//     $sqlSpec = self::$querySQLSpecs[$sqlKey];
+//
+//     // initialize resulting parameter value array, which is supposed to be
+//     // set as the $paramValArr for the query at each iteration of the
+//     // loop.
+//     $resultingParamValArr = $paramValArr;
+//     $resultingParamValArr[$i] = $paramValArr[$i][0];
+//     // insert the first term and verify all the != $i indeces.
+//     self::verifyInputAndGetMySQLiResult(
+//         $conn, $sqlSpec, $resultingParamValArr
+//     );
+//     // prepare MySQLi statement.
+//     $stmt = $conn->prepare($sqlSpec["sql"]);
+//     // loop..
+//     $len = count($paramValArr[$i]);
+//     $m = min($len, $n, 200);
+//     for ($j = 1; $j < $m; $j++) {
+//         $resultingParamValArr[$i] = $paramValArr[$i][$j];
+//         // verify types of $paramValArr.
+//         InputVerifier::verifyType(
+//             $resultingParamValArr[$i],
+//             $sqlSpec["typeArr"][$i],
+//             strval($i)
+//         );
+//         // execute statement with the (now type verified) input parameters.
+//         DBConnector::executeSuccessfulOrDie($stmt, $resultingParamValArr);
+//     }
+//     // return nothing.
+// }
 }
 
 ?>
