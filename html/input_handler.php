@@ -88,8 +88,20 @@ if ($sqlKey != "") {
     $res = DBInputter::input($conn, $sqlKey, $paramValArr);
     header("Content-Type: text/json");
     echo json_encode($res);
+} else if ($reqType === "ME") {
+    // insert multiple elementary terms and count the succesful inserts (not
+    // finds).
+    $sqlKey = "eTerm";
+    $paramNameArr = array(
+        "uid", "cid",
+        "ts", "n"
+    );
+    $paramValArr = InputGetter::getParams($paramNameArr);
+    $n = intval(array_pop($paramValArr));
+    $res = DBInputter::inputMultiple($conn, $sqlKey, $paramValArr, 2, $n);
+    header("Content-Type: text/json");
+    echo '{exit:"success"}';
 } else {
-    // No multiple-input requests are implemented yet. TODO: Implement some..
     header("Content-Type: text/json");
     echoErrorJSON("Unrecognized request type");
 }

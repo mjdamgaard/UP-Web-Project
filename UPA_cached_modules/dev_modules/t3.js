@@ -17,7 +17,7 @@ export upaf_rate(userID, subjID, relID, objID, rating) {
 
 export upaf_insertSemanticTerm(type, userID, catID, str) {
     // request that user is authenticated for
-    AuthRequestor.authForRate(userID);
+    AuthRequestor.authForInsert(userID);
     // initialize the input request according to the chosen term type.
     var data;
     switch (type) {
@@ -62,14 +62,10 @@ export upaf_insertRel(userID, subjCatID, objNoun) {
 
 export upaf_insertText(userID, str) {
     // request that user is authenticated for
-    AuthRequestor.authForRate(userID);
+    AuthRequestor.authForInsert(userID);
     // initialize the input request according to the chosen term type.
     var data = new InputDataConstructors.TextReqData(userID, str);
-    // request insertion of the text term and get the result containing the
-    // exit code and the "outID," which can be either a new ID or an old ID,
-    // depending on whether an identical term already exist in the database. If
-    // the exit code is 0, outID is a new ID, and if it is 1, outID is the ID
-    // of the existing identical term.
+    // request insertion of the text term and get the result co... --"--.
     let resObj = JSON.parse($.getJSON("input_handler.php", data).responseText);
     // return the exit code.
     return [resObj.outID, resObj.exitCode];
@@ -77,15 +73,17 @@ export upaf_insertText(userID, str) {
 
 export upaf_insertBinary(userID, bin) {
     // request that user is authenticated for
-    AuthRequestor.authForRate(userID);
+    AuthRequestor.authForInsert(userID);
     // initialize the input request according to the chosen term type.
     var data = new InputDataConstructors.BinReqData(userID, bin);
-    // request insertion of the binary term and get the result containing the
-    // exit code and the "outID," which can be either a new ID or an old ID,
-    // depending on whether an identical term already exist in the database. If
-    // the exit code is 0, outID is a new ID, and if it is 1, outID is the ID
-    // of the existing identical term.
+    // request insertion of the binary term and get the result co... --"--.
     let resObj = JSON.parse($.getJSON("input_handler.php", data).responseText);
     // return the exit code.
     return [resObj.outID, resObj.exitCode];
 }
+
+
+
+/* Functions to query the semantic database */
+
+// TODO.

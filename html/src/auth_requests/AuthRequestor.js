@@ -12,8 +12,8 @@ const AuthRequestor {
         return 0;
     },
 
-    authForInsertViaFile: function (userID) {
-        console.log("WARNING: authForInsertViaFile() is not implemented yet!");
-        return 0;
-    },
+    // authForInsertViaFile: function (userID) {
+    //     console.log("WARNING: authForInsertViaFile() is not implemented yet!");
+    //     return 0;
+    // },
 }
