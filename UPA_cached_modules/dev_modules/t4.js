@@ -4,7 +4,7 @@ import {
 } from "/UPA_scripts.php?id=t1";
 
 
-/* Functions to load hyperlinks into the UPA */
+/* Functions to verify and load hyperlinks into the UPA, and to follow them */
 
 var urlRegExCache = {};
 
@@ -81,10 +81,13 @@ export function upaf_followLink(url, urlRegExKey, target) {
             "followLink(): RegEx was cached but did not match the input link"
         );
     }
-    // ..window.open()..
+    // follow the link.
+    window.open(url, target);
 }
 
 
 
 
 /* Functions to load images into the UPA */
+
+// TODO: Make these at some point, perhaps after UPA_data.php has been made.
