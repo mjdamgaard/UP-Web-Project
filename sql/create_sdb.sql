@@ -28,11 +28,11 @@
 -- DROP TABLE UserGroups;
 -- DROP TABLE Users;
 --
--- DROP TABLE Categories;
--- DROP TABLE ElementaryTerms;
--- DROP TABLE Relations;
+DROP TABLE Categories;
+DROP TABLE ElementaryTerms;
+DROP TABLE Relations;
 -- DROP TABLE KeywordStrings;
--- DROP TABLE Patterns;
+DROP TABLE Patterns;
 -- DROP TABLE Lists;
 -- DROP TABLE Texts;
 -- DROP TABLE Binaries;
@@ -304,7 +304,7 @@ CREATE TABLE Categories (
     -- title of the category, preferably a plural noun describing/referencing
     -- the elements in the category.
     title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-    FULLTEXT idx (title),
+    -- FULLTEXT idx (title),
 
     -- id of a defining super category.
     super_cat_id BIGINT UNSIGNED NOT NULL,
@@ -321,7 +321,7 @@ CREATE TABLE ElementaryTerms (
 
     -- title of the term.
     title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-    FULLTEXT idx (title),
+    -- FULLTEXT idx (title),
 
     -- id of a defining category.
     cat_id BIGINT UNSIGNED NOT NULL,
@@ -340,7 +340,7 @@ CREATE TABLE Relations (
     -- TODO: mention forward and backwards syntax for parsing this noun from
     -- the realtion expressed as a verb.
     obj_noun VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-    FULLTEXT idx (obj_noun),
+    -- FULLTEXT idx (obj_noun),
 
     -- obj_cat_id BIGINT UNSIGNED NOT NULL,
 
