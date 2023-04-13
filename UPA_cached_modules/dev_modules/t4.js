@@ -81,8 +81,7 @@ export function upaf_followLink(url, pattKey, target) {
             "loadLink(): Pattern was cached but did not match the input link"
         );
     }
-    // load the link into all selected <a></a> elements.
-    jqObj.filter('a').attr("src", link});
+    // ..window.open()..
 }
 
 
