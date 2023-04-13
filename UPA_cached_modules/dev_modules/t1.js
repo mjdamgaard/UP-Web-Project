@@ -26,27 +26,33 @@ export const elementNames =
         "aaa", "aaa", "aaa", "aaa", "aaa", "aaa",
     ];
 
-const elementNameRegEx =
+const elementNamePattern =
     "((" +
         elementNames.join(")|(") +
     "))";
 
+const elementNameRegEx = new RegEx(
+    "/^(" +
+        elementNamePattern +
+    ")$/"
+);
+
 export const pseudoClasses =
     [ +
         "first", "last", "even", "odd",
-        "[(first)(last)(only)]\-[(child)(of\-type)]",
-        "nth\-(last\-)?[(child)(of\-type)]\([1-9][0-9]*\)",
-        "eq\((0|[1-9][0-9]*)\)",
-        "[(gt)(lt)]\(([1-9][0-9]*)\)",
+        "[(first)(last)(only)]\\-[(child)(of\\-type)]",
+        "nth\\-(last\\-)?[(child)(of\\-type)]\\([1-9][0-9]*\\)",
+        "eq\\((0|[1-9][0-9]*)\\)",
+        "[(gt)(lt)]\\(([1-9][0-9]*)\\)",
         "header", "animated", "focus", "empty", "parent", "hidden",
         "visible", "input", "text", "password", "radio", "checkbox",
         "submit", "reset", "button", "image", "file",
         "enabled", "diabled", "selected", "checked",
-        "lang\(\w+(\-\w+)*\)",
+        "lang\\(\\w+(\\-\\w+)*\\)",
         // TODO: add more pseudo classes!
     ];
 
-const pseudoClassRegEx =
+const pseudoClassPattern =
     ":((" +
         pseudoClasses.join(")|(") +
     "))";
@@ -58,52 +64,56 @@ export const pseudoElements =
         "first-letter", "first-line", //TODO: complete this.
     ];
 
-const pseudoElementRegEx =
+const pseudoElementPattern =
     "::((" +
         pseudoElements.join(")|(") +
     "))";
 
-const classSelectorRegEx = "(\.\w+)";
+const classSelectorPattern = "(\\.\\w+)";
 
-const attrSelectorRegEx = "(\[" + "\w+" + "([!\$\|\^~\*]?=\w+)?" + "\])";
+const attrSelectorPattern =
+    "(\\[" +
+        "\\w+" + "([!\\$\\|\\^~\\*]?=\\w+)?" +
+    "\\])";
 
-const combinatorRegEx = "[ >~\+]";
+const combinatorPattern = "[ >~\\+]";
 
-const compoundSelectorRegEx =
+const compoundSelectorPattern =
     "((" +
-        "\*" +
+        "\\*" +
     ")|("
-        elementNameRegEx + "?" +
+        elementNamePattern + "?" +
             "((" +
-            //     classSelectorRegEx +
+            //     classSelectorPattern +
             // ")|(" +
-                attrSelectorRegEx +
+                attrSelectorPattern +
             ")|(" +
-                pseudoClassRegEx +
+                pseudoClassPattern +
             ")|(" +
-                pseudoElementRegEx +
+                pseudoElementPattern +
             "))*" +
     "))";
 
 
-const complexSelectorRegEx =
-    compoundSelectorRegEx + "(" +
-        combinatorRegEx + compoundSelectorRegEx +
+const complexSelectorPattern =
+    compoundSelectorPattern + "(" +
+        combinatorPattern + compoundSelectorPattern +
     ")*";
 
-const whitespaceRegEx = "[ \n\r\t]*";
+const whitespacePattern = "[ \\n\\r\\t]*";
 
-const selectorListRegEx =
-    complexSelectorRegEx + "(" +
-        whitespaceRegEx + "," + whitespaceRegEx + complexSelectorRegEx +
+const selectorListPattern =
+    complexSelectorPattern + "(" +
+        whitespacePattern + "," + whitespacePattern + complexSelectorPattern +
     ")*";
 
-export const selectorPattern =
+export const selectorRegex = new RegExp(
     "/^((" +
-        "\$\w+" +
+        "\\$\\w+" +
     ")|(" +
-        selectorListRegEx +
-    "))$/";
+        selectorListPattern +
+    "))$/"
+);
 
 
 
@@ -119,7 +129,7 @@ export function getJQueryObj(selector) {
             "getJQueryObj(): selector is not a string"
         );
     }
-    if (!selector.test(selectorPattern)) {
+    if (!selectorRegex.test(selector)) {
         throw new Exception(
             "getJQueryObj(): selector does not match expected pattern"
         );
@@ -129,7 +139,7 @@ export function getJQueryObj(selector) {
     // see if the selector is a special selector with a key for a chaced jQuery
     // object. If so return that object (possibly undefined). Else return
     // mainFrameJQueryObj.find(selector).
-    if (selector.test("/^\$\w+$/")) {
+    if ( (new RegExp("/^\\$\\w+$/")).test(selector) ) {
         return jQueryObjCache[substring(selector, 1)];
     } else {
         // TODO: Test/check that jQuery.find() is safe for any string input
@@ -142,9 +152,9 @@ export function getJQueryObj(selector) {
 
 export function upaf_cacheJQueryObj(selector, key) {
     let jqObj = getJQueryObj(selector);
-    if (!key.test("/^\w+$/")) {
+    if ( !(new RegExp("/^\\w+$/")).test(key) ) {
         throw new Exception(
-            "cacheJQueryObj(): input key is not a valid /^\w+$/ string"
+            "cacheJQueryObj(): input key is not a valid /^\\w+$/ string"
         );
     }
     jQueryObjCache[key] = jqObj;
@@ -164,8 +174,8 @@ export function upaf_cacheJQueryObj(selector, key) {
 /* Some functions to get and set upaa_ attributes */
 
 
-const attrKeyPattern = "/^\w+$/";
-const attrValPattern = "/^\w*$/";
+const attrKeyRegEx =  new RegExp("/^\\w+$/");
+const attrValRegEx =  new RegExp("/^\\w*$/");
 
 
 export function upaf_setAttributes(selector, keyValArr) {
@@ -177,12 +187,12 @@ export function upaf_setAttributes(selector, keyValArr) {
         let key = keyValArr[$i][0];
         let val = keyValArr[$i][1];
         // verify that key and val are defined and have the right formats.
-        if (!key.test(attrKeyPattern)) {
+        if (!attrKeyRegEx.test(key)) {
             throw new Exception(
                 "setAttributes(): input is not a valid attribute key"
             );
         }
-        if (!val.test(attrValPattern)) {
+        if (!attrValRegEx.test(val)) {
             throw new Exception(
                 "setAttributes(): input is not a valid attribute value"
             );
@@ -194,7 +204,7 @@ export function upaf_setAttributes(selector, keyValArr) {
 
 export function upaf_getAttribute(selector, key) {
     // assert that key is defined and has the right format.
-    if (!key.test(attrKeyPattern)) {
+    if (!attrKeyRegEx.test(key)) {
         throw new Exception(
             "getAttribute(): input is not a valid attribute key"
         );
@@ -215,7 +225,7 @@ export function upaf_getAttributes(selector, keyArr) {
     for (let i = 0; i < keyArr.length; i++) {
         let key = keyValArr[$i];
         // assert that key is defined and has the right format.
-        if (!key.test(attrKeyPattern)) {
+        if (!attrKeyRegEx.test(key)) {
             throw new Exception(
                 "getAttributes(): input is not a valid attribute key"
             );
@@ -242,9 +252,10 @@ export function upaf_getAttributes(selector, keyArr) {
 // Note that since this function does not have the upaf_ prefix, it cannot
 // be exported to the final user modules (but only to other developer modules).
 export function verifyFunNameAndGetUPAFunction(funName) {
-    if (!funName.test("/^[\$\w]+$/")) {
+    if ( !(new RegExp("/^[\\$\\w]+$/")).test(funName) ) {
         throw new Exception(
-            "getUPAFunction(): function name is not a valid /^[\$\w]+$/ string"
+            "getUPAFunction(): function name is not a valid " +
+            "/^[\\$\\w]+$/ string"
         );
     }
     let fullFunName = "upaFun_" + funName;
@@ -340,7 +351,7 @@ function getHTML(
             continue;
         }
         // else, test tag input.
-        if (!tag.test(elementNameRegEx)) {
+        if (!elementNameRegEx.test(tag)) {
             throw new Exception(
                 "getHTML(): unrecognized tag: " + tag.toString()
             );
@@ -357,12 +368,12 @@ function getHTML(
                 let val = attributes[j][1];
                 // verify that key and val are defined and have the right
                 // formats.
-                if (!key.test(attrKeyPattern)) {
+                if (!attrKeyRegEx.test(key)) {
                     throw new Exception(
                         "getHTML(): input contains an invalid attribute key"
                     );
                 }
-                if (!val.test(attrValPattern)) {
+                if (!attrValRegEx.test(val)) {
                     throw new Exception(
                         "getHTML(): input contains an invalid attribute value"
                     );
@@ -416,10 +427,10 @@ export function upaf_emptyHTML(selector, method, content) {
 
 /* Some functions to add and remove CSS styles */
 
-const cssPropPattern = "/^@?[[a-zA-Z]\-]+$/";
+const cssPropRegEx = new RegExp("/^@?[[a-zA-Z]\\-]+$/");
 
 
-export const cssUnitRegExs = [
+export const cssUnitPatterns = [
     "em", "ex", "cap", "ch", "ic", "lh", "vw", "vh", "vi", "vb", "vmin", "vmax",
     "cq[whib(min)(max)]",
     "cm", "mm", "Q", "in", "pc", "pt", "px",
@@ -430,48 +441,50 @@ export const cssUnitRegExs = [
     "%"
 ];
 
-const cssUnitRegEx =
+const cssUnitPattern =
     "((" +
-        cssUnitRegExs.join(")|(") +
+        cssUnitPatterns.join(")|(") +
     "))";
 
-
-export const cssNumericRegEx =
-    "[\+\-]?[0-9]*\.?[0-9]*" + cssUnitRegEx;
 
 export const cssNumericPattern =
+    "[\\+\\-]?[0-9]*\\.?[0-9]*" + cssUnitPattern;
+
+export const cssNumericRegEx = new RegExp(
     "/^" +
-        cssNumericRegEx +
-    "$/";
+        cssNumericPattern +
+    "$/"
+);
 
-
-export const cssHexColorRegEx =
-    "#[([0-9a-fA-F]{3,4})([0-9a-fA-F]{6})([0-9a-fA-F]{8})]";
 
 export const cssHexColorPattern =
+    "#[([0-9a-fA-F]{3,4})([0-9a-fA-F]{6})([0-9a-fA-F]{8})]";
+
+export const cssHexColorRegEx = new RegExp(
     "/^" +
-        cssHexColorRegEx +
-    "$/";
-    // TODO: Consider adding more color value syntaxes.
+        cssHexColorPattern +
+    "$/"
+);
+// TODO: Consider adding more color value syntaxes.
 
 
-export const cssNumericOrColorRegEx =
+export const cssNumericOrColorPattern =
     "((" +
-        cssHexColorRegEx +
+        cssHexColorPattern +
     ")|(" +
-        cssNumericRegEx +
+        cssNumericPattern +
     "))";
 
 
-export const cssGradientValueRegEx =
+export const cssGradientValuePattern =
     "((" +
-        "linear-gradient\(" +
-            "[0-9]+deg" + "(" + whitespaceRegEx +
-                "[, \n]" + whitespaceRegEx + cssNumericOrColorRegEx +
+        "linear-gradient\\(" +
+            "[0-9]+deg" + "(" + whitespacePattern +
+                "[, \\n]" + whitespacePattern + cssNumericOrColorPattern +
             ")+" +
-        "\)" +
+        "\\)" +
     ")|(" +
-        cssNumericRegEx +
+        cssNumericPattern +
     "))";
 
 
@@ -529,7 +542,7 @@ export const cssSomeKeywordValues = [
     // TODO: Verify their safety of these keyword values!
 ];
 
-export const cssSomeKeywordValuesRegEx =
+export const cssSomeKeywordValuesPattern =
     "((" +
         cssSomeKeywordValues.join(")|(") +
     "))";
@@ -537,19 +550,19 @@ export const cssSomeKeywordValuesRegEx =
 export
 
 
-export const cssACombinedValueRegEx =
+export const cssACombinedValuePattern =
     "((" +
-        cssHexColorRegEx +
+        cssHexColorPattern +
     ")|(" +
-        cssNumericRegEx +
+        cssNumericPattern +
     ")|(" +
-        cssSomeKeywordValuesRegEx +
+        cssSomeKeywordValuesPattern +
     "))"
 
-export const cssAComplexValueRegex =
+export const cssAComplexValuePattern =
     "(" +
-        cssACombinedValueRegEx + "(" + whitespaceRegEx +
-            "[, \n]" + whitespaceRegEx + cssACombinedValueRegEx +
+        cssACombinedValuePattern + "(" + whitespacePattern +
+            "[, \\n]" + whitespacePattern + cssACombinedValuePattern +
         ")*" +
     ")";
 
@@ -559,20 +572,21 @@ export const cssSomeFunctions = [
     "skew", "skewX", "skewY", "matrix",
 ];
 
-export const cssSomeFunctionsRegEx =
+export const cssSomeFunctionsPattern =
     "((" +
         cssSomeFunctions.join(")|(") +
     "))";
 
-export const cssAFunctionalValueRegEx =
+export const cssAFunctionalValuePattern =
     "(" +
-        cssSomeFunctionsRegEx + "\(" + cssAComplexValueRegex + "\)" +
+        cssSomeFunctionsPattern + "\\(" + cssAComplexValuePattern + "\\)" +
     ")";
 
-export const cssAComplexPattern =
+export const cssAComplexRegEx = new RegExp(
     "/^(" +
-        "(" + cssAComplexValueRegex + "|" + cssAFunctionalValueRegEx + ")+"
-    ")$/";
+        "(" + cssAComplexValuePattern + "|" + cssAFunctionalValuePattern + ")+"
+    ")$/"
+);
 
 
 /* A function to add CSS styles to a selection of elements */
@@ -582,7 +596,7 @@ export function upaf_css(selector, propertyOrPropertyValuePairArr) {
     let jqObj = getJQueryObj(selector);
     if (typeof propertyOrPropertyValuePairArr === "string") {
         let property = propertyOrPropertyValuePairArr;
-        if (!property.test("/^@?[[a-zA-Z]\-]+$/")) {
+        if ( !(new RegExp("/^@?[[a-zA-Z]\\-]+$/")).test(property) ) {
             throw new Exception(
                 "css(): properties can only contain letters, '-' and '@'"
             );
@@ -596,14 +610,14 @@ export function upaf_css(selector, propertyOrPropertyValuePairArr) {
             let property = propertyValuePairArr[i][0];
             let value = propertyValuePairArr[i][1];
             // test property.
-            if (!property.test(cssPropPattern)) {
+            if (!cssPropRegEx.test(property)) {
                 throw new Exception(
                     "css(): property" + i.toString() +
                     "can only contain letters, '-' and '@'"
                 );
             }
             // test value.
-            if (!value.test(cssAComplexPattern)) {
+            if (!cssAComplexRegEx.test(value)) {
                 throw new Exception(
                     "css(): property value " + i.toString() +
                     " is either invalid or not implemented yet"
@@ -629,7 +643,7 @@ export function upaf_css(selector, propertyOrPropertyValuePairArr) {
 
 export function upaf_addCSS(selector, propertyValuePairArr) {
     // test the selector.
-    if (!selector.test(selectorPattern)) {
+    if (!selectorRegex.test(selector)) {
         throw new Exception(
             "addCSS(): selector does not match expected pattern"
         );
@@ -646,14 +660,14 @@ export function upaf_addCSS(selector, propertyValuePairArr) {
         let property = propertyValuePairArr[i][0];
         let value = propertyValuePairArr[i][1];
         // test property.
-        if (!property.test(cssPropPattern)) {
+        if (!cssPropRegEx.test(property)) {
             throw new Exception(
                 "addCSS(): property" + i.toString() +
                 "can only contain letters, '-' and '@'"
             );
         }
         // test value.
-        if (!value.test(cssAComplexPattern)) {
+        if (!cssAComplexRegEx.test(value)) {
             throw new Exception(
                 "addCSS(): property value " + i.toString() +
                 " is either invalid or not implemented yet"
@@ -704,18 +718,19 @@ const jQueryEvents = [
     "toggle", "resize", "scroll", "load", "ready", "unload",
 ];
 
-const singleEventRegEx =
+const singleEventPattern =
     "((" +
         jQueryEvents.join(")|(") +
     "))";
 
-const eventsPattern =
+const eventsRegEx = new RegExp(
     "/^" +
-        singleEventRegEx + "(" + " " +  singleEventRegEx + ")*" +
-    "$/";
+        singleEventPattern + "(" + " " +  singleEventPattern + ")*" +
+    "$/"
+);
 
 export function upaf_verifyEvents(events) {
-    if (!events.test(eventsPattern)) {
+    if (!eventsRegEx.test(events)) {
         throw new Exception(
             "verifyEvents(): unrecognized events pattern"
         );
@@ -811,7 +826,7 @@ export function upaf_visibilityEffect(
     if (
         !(typeof speed === "undefined") &&
         !(speed == ~~speed) &&
-        !speed.test("/^[(slow)(fast)]$/")
+        !(new RegExp("/^[(slow)(fast)]$/")).test(speed)
     ) {
         throw new Exception(
             "visibilityEffect(): invalid speed input " +
@@ -822,7 +837,7 @@ export function upaf_visibilityEffect(
     // "fadeTo".
     if (
         effectType === "fadeTo" &&
-        !opacity.toString().test("/^[01(0?\.[0-9]+)]$/")
+        !(new RegExp("/^[01(0?\\.[0-9]+)]$/")).test(opacity)
     ) {
         throw new Exception(
             "visibilityEffect(): invalid opacity input " +
@@ -866,10 +881,11 @@ export const cssCCasePropertiesForAnimate = [
     "letterSpacing", "wordSpacing", "lineHeight", "textIndent"
 ];
 
-export const cssPropertiesForAnimatePattern =
+export const cssCCasePropertiesForAnimateRegEx = new RegExp(
     "/^((" +
         cssPropertiesForAnimate.join(")|(") +
-    "))$/";
+    "))$/"
+);
 
 /* << jQuery.animate wrapper >>
  * input = [selector, ...]..
@@ -898,7 +914,7 @@ export function upaf_animate(
     if (
         !(typeof speed === "undefined") &&
         !(speed == ~~speed) &&
-        !speed.test("/^[(slow)(fast)]$/")
+        !(new RegExp("/^[(slow)(fast)]$/")).test(speed)
     ) {
         throw new Exception(
             "animate(): invalid speed input " +
@@ -908,7 +924,7 @@ export function upaf_animate(
     // verify the easing input if one is provided.
     if (
         typeof easing !== "undefined" &&
-        !easing.test("/^[(swing)(linear)]$/")
+        !(new RegExp("/^[(swing)(linear)]$/")).test(easing)
     ) {
         throw new Exception(
             "animate(): invalid easing input " +
@@ -919,13 +935,13 @@ export function upaf_animate(
     // verify the styles array.
     let len = styles.length;
     for (let i = 0; i < len; i++) {
-        if (!styles[0].test(cssCCasePropertiesForAnimate)) {
+        if (!cssCCasePropertiesForAnimateRegEx.test(styles[0])) {
             throw new Exception(
                 "animate(): invalid property for animation " +
                 "(contained in styles[" + i.toString() + "][0])"
             );
         }
-        if (!styles[1].test(cssNumericPattern)) {
+        if (!cssNumericRegEx.test(styles[1])) {
             throw new Exception(
                 "animate(): invalid property value for animation " +
                 "(contained in styles[" + i.toString() + "][1]), " +
