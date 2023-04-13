@@ -71,13 +71,11 @@ $mainModuleID = "tA";
         upaf_main
     } from "./UPA_modules.php?id=<?php echo $mainModuleID; ?>";
     // run the main function from that module right away.
-    upaf_main(<?php
-        echo '{' .
-            'tid:"' . $termID . '", ' .
-            'uid:"' . $userID . '", ' .
-            'pid:"' . $preferenceUserOrGroupID . '"' .
-        '}';
-    ?>);
+    upaf_main(
+        <?php
+        echo '"'.$userID.'", "'.$termID.'", "'.$preferenceUserOrGroupID.'"';
+        ?>
+    );
 </script>
 <!--
     TODO: I think I actually have to implement these queues in a semi-private
