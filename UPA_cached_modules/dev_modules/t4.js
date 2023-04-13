@@ -6,22 +6,22 @@ import {
 
 /* Functions to load hyperlinks into the UPA */
 
-var linkRegExCache = {};
+var urlRegExCache = {};
 
-export function upaf_cacheLinkPattern(userID, pattID, key) {
+export function upaf_cacheURLRegEx(userID, pattID, key) {
     // test key.
     if (typeof key !== "string") {
         throw new Exception(
-            "loadLinkPattern(): key is not a string"
+            "cacheURLRegEx(): key is not a string"
         );
     }
     if ( !(new RegExp("/^\\w+$/")).test(key) ) {
         throw new Exception(
-            "loadLinkPattern(): key does not match the right pattern " +
+            "cacheURLRegEx(): key does not match the right pattern " +
             '("/^\\w+$/")'
         );
     }
-    // query UPA_links.php to see if pattID points to a whitelisted link
+    // query UPA_links.php to see if pattID points to a whitelisted URL
     // pattern, and to get the held pattern string if so.
     // (UPA_links.php also verifies that userID is whitelisted for the
     // requesting user (if logged in; if not, userID has to be whitelisted
@@ -30,7 +30,7 @@ export function upaf_cacheLinkPattern(userID, pattID, key) {
     let res = JSON.parse($.getJSON("UPA_links.php", ).responseText);
     // if the pattern was whitelisted for UPA links, store it in the cache.
     if (res.success) {
-        linkRegExCache[key] = new RegExp(res.pattern);
+        urlRegExCache[key] = new RegExp(res.pattern);
         return 0;
     } else {
         return res.error;
@@ -38,19 +38,19 @@ export function upaf_cacheLinkPattern(userID, pattID, key) {
 }
 
 
-export function upaf_isACachedLink(key) {
-    if (typeof linkRegExCache[key] === "undefined") {
+export function upaf_isACachedURL(key) {
+    if (typeof urlRegExCache[key] === "undefined") {
         return false;
     } else {
         return true;
     }
 }
 
-export function upaf_loadLink(selector, url, linkRegExKey) {
+export function upaf_loadLink(selector, url, urlRegExKey) {
     let jqObj = getJQueryObj(selector);
     // lookup pattern (will fail if link is not cached, so the users might want
     // to check this first with isACachedLink()).
-    let regex = linkRegExCache[linkRegExKey];
+    let regex = urlRegExCache[urlRegExKey];
     // match link againt pattern.
     if (!regex.test(url)) {
         throw new Exception(
@@ -61,11 +61,11 @@ export function upaf_loadLink(selector, url, linkRegExKey) {
     jqObj.filter('a').attr("src", url});
 }
 
-export function upaf_followLink(url, linkRegExKey, target) {
+export function upaf_followLink(url, urlRegExKey, target) {
     // test target.
     if (
         typeof target !== "undefined" &&
-        !(new RegExp("/^[(_self)(_blank)(_parent)(_top)]$/")).test(target)
+        !(target in ["_self", "_blank", "_parent", "_top"])
     ) {
         throw new Exception(
             "loadLink(): invalid target " +
@@ -74,7 +74,7 @@ export function upaf_followLink(url, linkRegExKey, target) {
     }
     // lookup pattern (will fail if link is not cached, so the users might want
     // to check this first with isACachedLink()).
-    let regex = linkRegExCache[linkRegExKey];
+    let regex = urlRegExCache[urlRegExKey];
     // match link againt pattern.
     if (!regex.test(url)) {
         throw new Exception(

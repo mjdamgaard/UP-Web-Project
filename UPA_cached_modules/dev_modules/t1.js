@@ -826,7 +826,7 @@ export function upaf_visibilityEffect(
     if (
         !(typeof speed === "undefined") &&
         !(speed == ~~speed) &&
-        !(new RegExp("/^[(slow)(fast)]$/")).test(speed)
+        !(speed in ["slow", "fast"])
     ) {
         throw new Exception(
             "visibilityEffect(): invalid speed input " +
@@ -914,7 +914,7 @@ export function upaf_animate(
     if (
         !(typeof speed === "undefined") &&
         !(speed == ~~speed) &&
-        !(new RegExp("/^[(slow)(fast)]$/")).test(speed)
+        !(speed in ["slow", "fast"])
     ) {
         throw new Exception(
             "animate(): invalid speed input " +
@@ -924,7 +924,7 @@ export function upaf_animate(
     // verify the easing input if one is provided.
     if (
         typeof easing !== "undefined" &&
-        !(new RegExp("/^[(swing)(linear)]$/")).test(easing)
+        !(easing in ["swing", "linear"])
     ) {
         throw new Exception(
             "animate(): invalid easing input " +
