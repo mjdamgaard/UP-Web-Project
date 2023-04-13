@@ -3,7 +3,7 @@
 
 
 function getErrorJSON($msg) {
-    return '{"Error":"' . $msg . '"}';
+    return '{"error":"' . $msg . '"}';
 }
 
 function echoErrorJSON($msg) {

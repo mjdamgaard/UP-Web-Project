@@ -55,7 +55,7 @@ function parseImportIdentList(lexArr, nextPos, successRequired) {
 
 
 upaModulePathPatt =
-    "/^UPA_modules\.php\?id=[1-9A-F][0-9A-F]{0,15}$/";
+    "/^UPA_scripts\.php\?id=t[1-9A-F][0-9A-F]{0,15}$/";
     // "/^UPA_modules\.php\?[\w=&]+$/";
 
 function parseImportPath(lexArr, nextPos, successRequired) {

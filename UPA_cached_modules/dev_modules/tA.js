@@ -2,7 +2,7 @@
 
 import {
     upaf_appendHelloWorld
-} from "/UPA_modules.php?id=t1";
+} from "/UPA_scripts.php?id=t1";
 
 export function upaf_main(argObj) {
     upaf_appendHelloWorld();

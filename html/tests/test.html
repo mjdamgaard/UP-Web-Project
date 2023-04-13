@@ -1,0 +1,15 @@
+<script>
+
+var str;
+// console.log(str.test("aaa")); // throws error.
+// console.log(str.test("")); // throws error.
+// console.log("aaa".test(str)); // throws error.
+// console.log("aaa".test("")); // apparently can't take test on string literal.
+var str = "aaa";
+console.log(str.test("")); // ...What??..
+console.log(str.test("aaa"));
+console.log("".test(str));
+console.log("".test(""));
+console.log("".test("aaa"));
+
+</script>
