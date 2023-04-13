@@ -32,6 +32,7 @@
 -- DROP TABLE ElementaryTerms;
 -- DROP TABLE Relations;
 -- DROP TABLE KeywordStrings;
+-- DROP TABLE Patterns;
 -- DROP TABLE Lists;
 -- DROP TABLE Texts;
 -- DROP TABLE Binaries;
@@ -358,10 +359,19 @@ CREATE TABLE KeywordStrings (
     -- type = "kws".
 
     -- keyword string.
-    str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL UNIQUE,
+    str VARCHAR(768) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL UNIQUE,
     FULLTEXT idx (str)
 );
 
+
+CREATE TABLE Patterns (
+    /* RegEx pattern string ID */
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    -- type = "pat".
+
+    -- pattern string.
+    str VARCHAR(768) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL UNIQUE
+);
 
 
 

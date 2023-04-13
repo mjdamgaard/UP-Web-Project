@@ -62,9 +62,19 @@ const QueryDataConstructors = {
       this.id = textID;
     },
 
-    // BinaryReqData: function(binID) {
-    //   this.type = "B";
-    //   this.id = binID;
-    // },
+    BinaryReqData: function(binID) {
+      this.type = "B";
+      this.id = binID;
+    },
+
+    KeywordStrReqData: function(kwsID) {
+      this.type = "K";
+      this.id = kwsID;
+    },
+
+    PatternReqData: function(patID) {
+      this.type = "P";
+      this.id = patID;
+    },
 
 }

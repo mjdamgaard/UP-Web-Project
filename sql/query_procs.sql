@@ -351,6 +351,35 @@ BEGIN
 END //
 DELIMITER ;
 
+DELIMITER //
+CREATE PROCEDURE selectKeywordString (
+    IN kwsCombID VARCHAR(17)
+)
+BEGIN
+    DECLARE kwsID BIGINT UNSIGNED;
+    CALL getConvID (kwsCombID, kwsID);
+
+    SELECT str as str
+    FROM KeywordStrings
+    WHERE id = kwsID;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE selectPattern (
+    IN patCombID VARCHAR(17)
+)
+BEGIN
+    DECLARE patID BIGINT UNSIGNED;
+    CALL getConvID (patCombID, patID);
+
+    SELECT str as str
+    FROM Patterns
+    WHERE id = patID;
+END //
+DELIMITER ;
+
+
 
 
 -- TODO: Add data select procedures.

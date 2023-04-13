@@ -149,7 +149,9 @@ function lexStrLiteral(script, len, lexArr, nextPos) {
 
 
 function lexComment(script, len, lexArr, nextPos) {
-    return lexSingleLineComment || lexMultiLineComment;
+    return
+        lexSingleLineComment(script, len, lexArr, nextPos) ||
+        lexMultiLineComment(script, len, lexArr, nextPos);
 }
 
 
