@@ -737,7 +737,8 @@ export function upaf_verifyEvents(events) {
     }
 }
 
-
+// TODO: change this so that the second input is just (event, data, handler)
+// instead. ...No, maybe not. I should probably keep it like this..
 export function upaf_on(selector, eventsDataHandlerTupleArr) {
     let jqObj = getJQueryObj(selector);
 

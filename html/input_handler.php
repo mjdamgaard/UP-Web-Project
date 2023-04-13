@@ -12,7 +12,6 @@ require_once $db_io_path . "DBInputter.php";
 
 
 
-// queries can also be GET-gotten.
 if ($_SERVER["REQUEST_METHOD"] != "POST") {
     echoErrorJSONAndExit("Only the POST HTTP method is allowed for inputs");
 }
