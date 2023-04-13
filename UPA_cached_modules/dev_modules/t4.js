@@ -93,9 +93,11 @@ export function upaf_followLink(url, urlRegExKey, target) {
 
 /* Functions to load more scripts on-demand */
 
-export function upaf_loadModule(textID, funIdentList, asFunIdentList) {
+export function upaf_loadModule(userID, textID, funIdentList, asFunIdentList) {
     // request the module script from server through UPA_scripts.php.
-    let data = {id: textID};
+    // (The user ID will probably not be used for most request, but can
+    // perhaps be used to allow developers more freedom.)
+    let data = {uid: userID, pid: pattID}
     let res = $.get("UPA_scripts.php", data).responseText;
     // check for returned error JSON.
     // (This check is not very robust, but the server will never send any script
@@ -172,4 +174,4 @@ export function testFunIdentArrAndPrependUPAFPrefix(funIdentList) {
 
 /* Functions to load images into the UPA */
 
-// TODO: Make these at some point, perhaps after UPA_data.php has been made.
+// TODO: Make these..
