@@ -47,7 +47,7 @@ export function upaf_setInputType(selector, type) {
     // test type
     if (!(type in legalInputTypes)) {
         throw new Exception(
-            "setInputType(): invalidor illegal type"
+            "setInputType(): invalid or illegal type"
         );
     }
     // set the input types of all selected <input> elements.
