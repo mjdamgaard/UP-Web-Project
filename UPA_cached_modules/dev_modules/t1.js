@@ -420,12 +420,19 @@ export function upaf_emptyHTML(selector, method, content) {
 
 
 
-/* A function to get inner HTML (of the first matched element only) */
+/* Function to get inner and outer HTML (of the first matched element only) */
 
 export upaf_getInnerHTML(selector) {
     let jqObj = getJQueryObj(selector);
-    return jqObj.html();
+    return jqObj[0].innerHTML;
 }
+
+export upaf_getOuterHTML(selector) {
+    let jqObj = getJQueryObj(selector);
+    return jqObj[0].outerHTML;
+}
+
+
 
 
 
