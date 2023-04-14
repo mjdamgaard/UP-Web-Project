@@ -111,6 +111,8 @@ export const selectorRegex = new RegExp(
     "/^((" +
         "\\$\\w+" +
     ")|(" +
+        "#\\w+" +
+    ")|(" +
         selectorListPattern +
     "))$/"
 );
@@ -141,6 +143,9 @@ export function getJQueryObj(selector) {
     // mainFrameJQueryObj.find(selector).
     if (/^\$\w+$/.test(selector)) {
         return jQueryObjCache[substring(selector, 1)];
+
+    } else if (/^#\w+$/.test(selector)) {
+        return mainFrameJQueryObj.find('#upai_' + substring(selector, 1));
     } else {
         // TODO: Test/check that jQuery.find() is safe for any string input
         // such that it always returns a descendent element or null/undefined

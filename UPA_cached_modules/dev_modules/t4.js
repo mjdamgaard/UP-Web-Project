@@ -94,7 +94,7 @@ export function upaf_followLink(url, urlRegExKey, target) {
 /* Functions to load more scripts on-demand */
 
 export function upaf_loadScript(
-    textID, callbackName, funIdentList, asFunIdentList, userID
+    textID, callbackName, funIdentList, asFunIdentList
 ) {
     // test callback key (which shouldn't necessarily be defined at this point;
     // it can potentially be defined by the loaded module (which can be useful
@@ -107,7 +107,8 @@ export function upaf_loadScript(
     }
 // // request the module script from server through UPA_scripts.php.
 // // (The user ID will probably not be used for most request, but can
-// // perhaps be used to allow developers more freedom.)
+// // perhaps be used to allow developers more freedom.) *No, cause we
+// // wouldn't want to expose developers to hacking.
 // let data = {pid: pattID, uid: userID}
 // let res = $.get("UPA_scripts.php", data).responseText;
 // // check for returned error JSON.
@@ -141,7 +142,7 @@ export function upaf_loadScript(
     }
     // construct the first part of the script html element, including the
     // import statement.
-    var html = '<script type="module"> import {';
+    var html = '<script type="module" async> import {';
     if (typeof asFunIdentList === "undefined") {
         html += funIdentList.join(", ")
     } else {
@@ -150,19 +151,11 @@ export function upaf_loadScript(
             html += ", " + funIdentList[i] + " as " + asFunIdentList[i];
         }
     }
-    html += } 'from "UPA_scripts.php?id=' + textID;
-    if (
-        typeof userID === "string" &&
-        /^[ug][1-9A-F][0-9A-F]{0,15}$/.test(userID)
-    ) {
-        html += "&uid=" + userID;
-    }
-    html += '"; ';
+    html += '} from "UPA_scripts.php?id=' + textID + '"; ';
     // append a call statement to the callback function, which should be
-    // defined at this point in the newly loaded script.
-    html += "upaf_" + callbackName + "(); ";
-    // append the closing script tag.
-    html += "</script>";
+    // defined at this point in the newly loaded script, and append also the
+    // closing script tag.
+    html += "upaf_" + callbackName + "(); </script>";
     // append a script that imports functions from the module and runs the
     // provided callback function, which can either one of the newly loaded
     // functions, or a function that calls one or several of the newly loaded
@@ -195,7 +188,7 @@ export function testFunIdentArrAndPrependUPAFPrefix(funIdentList) {
 
 /* Functions to load images into the UPA */
 
-export function upaf_loadImage(selector, binID, format, userID) {
+export function upaf_loadImage(selector, binID, format, altText, userID) {
     let data = {bid: binID, f: format, uid: userID}
     // TODO..
 }
