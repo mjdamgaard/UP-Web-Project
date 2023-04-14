@@ -155,14 +155,21 @@ export function getJQueryObj(selector) {
 }
 
 
-export function upaf_cacheJQueryObj(selector, key) {
+export function upaf_cacheJQueryObj(selector, key, traverseAndFilterArr) {
     let jqObj = getJQueryObj(selector);
+    // test key.
     if (!(/^\w+$/.test(key)) {
         throw new Exception(
             "cacheJQueryObj(): input key is not a valid /^\\w+$/ string"
         );
     }
-    jQueryObjCache[key] = jqObj;
+    // if traversing/filter array is not supplied, simply cache jqObj as is.
+    if (typeof traverseAndFilterArr === "undefined") {
+        jQueryObjCache[key] = jqObj;
+    }
+    // if traversing/filter array is supplied, get the new jQuery objects
+    // following the commands of that array.
+
 }
 
 
