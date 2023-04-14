@@ -139,7 +139,7 @@ export function getJQueryObj(selector) {
     // see if the selector is a special selector with a key for a chaced jQuery
     // object. If so return that object (possibly undefined). Else return
     // mainFrameJQueryObj.find(selector).
-    if ( (new RegExp("/^\\$\\w+$/")).test(selector) ) {
+    if (/^\$\w+$/.test(selector)) {
         return jQueryObjCache[substring(selector, 1)];
     } else {
         // TODO: Test/check that jQuery.find() is safe for any string input
@@ -152,7 +152,7 @@ export function getJQueryObj(selector) {
 
 export function upaf_cacheJQueryObj(selector, key) {
     let jqObj = getJQueryObj(selector);
-    if ( !(new RegExp("/^\\w+$/")).test(key) ) {
+    if (!(/^\w+$/.test(key)) {
         throw new Exception(
             "cacheJQueryObj(): input key is not a valid /^\\w+$/ string"
         );
@@ -252,7 +252,7 @@ export function upaf_getAttributes(selector, keyArr) {
 // Note that since this function does not have the upaf_ prefix, it cannot
 // be exported to the final user modules (but only to other developer modules).
 export function verifyFunNameAndGetUPAFunction(funName) {
-    if ( !(new RegExp("/^[\\$\\w]+$/")).test(funName) ) {
+    if (!/^[\$\w]+$/.test(funName)) {
         throw new Exception(
             "getUPAFunction(): function name is not a valid " +
             "/^[\\$\\w]+$/ string"
@@ -296,7 +296,7 @@ export function getResultingCallback(callbackKey, dataArr) {
  **/
 export function upaf_addHTML(selector, method, content) {
     let jqObj = getJQueryObj(selector);
-    let html = getHTML(content);
+    let html = upaf_getHTML(content);
     switch (method) {
         case "append":
         case "prepend":
@@ -312,9 +312,7 @@ export function upaf_addHTML(selector, method, content) {
 }
 
 
-function getHTML(
-    content
-) {
+export function upaf_getHTML(content) {
     // if content is a string, return the converted (HTML safe) string.
     if (typeof content === "string") {
         return upaf_convertHTMLSpecialChars(content);
@@ -347,7 +345,7 @@ function getHTML(
         // if tag input is undefined, simply append the converted content to
         // ret.
         if (typeof tag === "undefined") {
-            ret = ret + getHTML(content);
+            ret = ret + upaf_getHTML(content);
             continue;
         }
         // else, test tag input.
@@ -383,7 +381,7 @@ function getHTML(
             }
         }
         // test and convert content, and add it inside the new HTML element.
-        htmlElem.innerHTML = getHTML(content);
+        htmlElem.innerHTML = upaf_getHTML(content);
         // append the new HTML element to ret.
         ret = ret + htmlElem.outerHTML;
     }
@@ -422,10 +420,21 @@ export function upaf_emptyHTML(selector, method, content) {
 
 
 
+/* A function to get inner HTML (of the first matched element only) */
+
+export upaf_getInnerHTML(selector) {
+    let jqObj = getJQueryObj(selector);
+    return jqObj.html();
+}
 
 
 
-/* Some functions to add and remove CSS styles */
+
+
+
+
+
+/* Some functions to get, add and remove CSS styles */
 
 const cssPropRegEx = new RegExp("/^@?[[a-zA-Z]\\-]+$/");
 
@@ -596,7 +605,7 @@ export function upaf_css(selector, propertyOrPropertyValuePairArr) {
     let jqObj = getJQueryObj(selector);
     if (typeof propertyOrPropertyValuePairArr === "string") {
         let property = propertyOrPropertyValuePairArr;
-        if ( !(new RegExp("/^@?[[a-zA-Z]\\-]+$/")).test(property) ) {
+        if (!/^@?[[a-zA-Z]\-]+$/.test(property)) {
             throw new Exception(
                 "css(): properties can only contain letters, '-' and '@'"
             );
@@ -737,8 +746,7 @@ export function upaf_verifyEvents(events) {
     }
 }
 
-// TODO: change this so that the second input is just (event, data, handler)
-// instead. ...No, maybe not. I should probably keep it like this..
+
 export function upaf_on(selector, eventsDataHandlerTupleArr) {
     let jqObj = getJQueryObj(selector);
 
@@ -793,6 +801,8 @@ export function upaf_off(selector, eventsHandlerPairArr) {
 
 
 
+
+
 /* Some functions that add jQuery effects to HTML elements */
 
 
@@ -838,7 +848,7 @@ export function upaf_visibilityEffect(
     // "fadeTo".
     if (
         effectType === "fadeTo" &&
-        !(new RegExp("/^[01(0?\\.[0-9]+)]$/")).test(opacity)
+        !/^[01(0?\.[0-9]+)]$/.test(opacity)
     ) {
         throw new Exception(
             "visibilityEffect(): invalid opacity input " +
