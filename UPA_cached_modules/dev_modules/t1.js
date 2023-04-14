@@ -127,17 +127,30 @@ var mainFrameJQueryObj = $("#upaMainFrame");
 // be exported to the final user modules (but only to other developer modules).
 export function getJQueryObj(selector) {
     if (typeof selector !== "string") {
-        throw new Exception(
-            "getJQueryObj(): selector is not a string"
-        );
+        if (selector.length < 1) {
+            throw new Exception(
+                "getJQueryObj(): selector has to be a string or a non-empty " +
+                "array";
+            );
+        } else {
+            if (selector)
+        }
     }
+
+    // if traversing/filter array is not supplied, simply cache jqObj as is.
+    if (typeof traverseAndFilterArr === "undefined") {
+        jQueryObjCache[key] = jqObj;
+    }
+    // if traversing/filter array is supplied, get the new jQuery objects
+    // following the commands of that array.
+
     if (!selectorRegex.test(selector)) {
         throw new Exception(
             "getJQueryObj(): selector does not match expected pattern"
         );
     }
     // replace all  "[~attr(=value)]" with "[upaa_attr(=value)]"
-    selector = selector.replaceAll("[~", "[upaf_");
+    selector = selector.replaceAll("[~", "[upaa_");
     // see if the selector is a special selector with a key for a chaced jQuery
     // object. If so return that object (possibly undefined). Else return
     // mainFrameJQueryObj.find(selector).
@@ -146,6 +159,7 @@ export function getJQueryObj(selector) {
 
     } else if (/^#\w+$/.test(selector)) {
         return mainFrameJQueryObj.find('#upai_' + selector.substring(1));
+
     } else {
         // TODO: Test/check that jQuery.find() is safe for any string input
         // such that it always returns a descendent element or null/undefined
@@ -154,8 +168,77 @@ export function getJQueryObj(selector) {
     }
 }
 
+export const noParameterCommands = [
+    "parent", "parents", "children", "siblings", "next", "prev",
+    "first", "last"
+];
 
-export function upaf_cacheJQueryObj(selector, key, traverseAndFilterArr) {
+export const oneParameterCommands = [
+    "eq", "filter", "not", "find"
+];
+
+export function getChangedJQueryObj(jqObj, commandArr) {
+    // initialize the return jQuery object.
+    var ret = jqObj;
+    let len = commandArr.length;
+    for (let i = 0; i < len; i++) {
+        // if commandArr[i] is a string, expect a selector for the find()
+        // method.
+        if (typeof commandArr[i] === "string") {
+            // test that the string is a valid selector.
+            if (!selectorRegex.test(commandArr[i])) {
+                throw new Exception(
+                    "getChangedJQueryObj(): invalid selector in " +
+                    "commandArr[" + i.toString() + "]";
+                );
+            }
+            // change ret with a call to find() method.
+            ret = ret.find(commandArr[i]);
+        // if commandArr[i] has length 1, expect no-parameter command.
+        } else if (commandArr[i].length === 1) {
+            if (!(commandArr[i][0] in noParameterCommands)) {
+                throw new Exception(
+                    "getChangedJQueryObj(): " +
+                    "invalid no-parameter command in " +
+                    "commandArr[" + i.toString() + "]";
+                );
+            }
+            // change ret with a call to a method in noParameterCommands.
+            ret = ret.[commandArr[i][0]](); // NO. Remember that I would need to append
+            // "Until" to parent and next/prev etc. with this method. Perhaps I will do
+            // something else..
+        // if commandArr[i] has length 2, expect one-parameter command.
+        } else {
+            if (!(commandArr[i][0] in oneParameterCommands)) {
+                throw new Exception(
+                    "getChangedJQueryObj(): " +
+                    "invalid command in " +
+                    "commandArr[" + i.toString() + "]";
+                );
+            }
+            // if "eq" is chosen, change ret with a call to the eq() method,
+            // and make sure that the input is numeric by adding ~~ in front.
+            if (commandArr[i][0] === "eq") {
+                ret = ret.eq(~~commandArr[i][1]);
+                continue;
+            }
+            // else, test that commandArr[i][1] is a selector.
+            if (!selectorRegex.test(commandArr[i][1]) {
+                throw new Exception(
+                    "getChangedJQueryObj(): invalid selector in " +
+                    "commandArr[" + i.toString() + "][1]";
+                );
+            }
+            // change ret with a call to the chosen filter method.
+            ret = ret[commandArr[i][0]](commandArr[i][1]);
+        }
+    }
+    // finally return the changed jQuery object.
+    return ret;
+}
+
+
+export function upaf_cacheJQueryObj(selector, key) {
     let jqObj = getJQueryObj(selector);
     // test key.
     if (!(/^\w+$/.test(key)) {
@@ -163,15 +246,13 @@ export function upaf_cacheJQueryObj(selector, key, traverseAndFilterArr) {
             "cacheJQueryObj(): input key is not a valid /^\\w+$/ string"
         );
     }
-    // if traversing/filter array is not supplied, simply cache jqObj as is.
-    if (typeof traverseAndFilterArr === "undefined") {
-        jQueryObjCache[key] = jqObj;
-    }
-    // if traversing/filter array is supplied, get the new jQuery objects
-    // following the commands of that array.
-
+    // cache jQuery object.
+    jQueryObjCache[key] = jqObj;
 }
 
+export function upaf_uncacheJQueryObj(key) {
+    jQueryObjCache[key] = undefined;
+}
 
 
 
