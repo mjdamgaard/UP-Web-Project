@@ -34,7 +34,7 @@ export function upaf_getID(selector) {
 
 
 
-/* Functions to set and get the types of input HTML elements */
+/* Functions to set and get the types of <input> HTML elements */
 
 export const legalInputTypes [
     "button", "checkbox", "color", "date", "file", "hidden", "image",
@@ -60,8 +60,40 @@ export function upaf_getInputType(selector) {
     return jqObj.filter('input').attr("type");
 }
 
+// TODO: Add some more functions to set input attributes, such as 'pattern',
+// 'placeholder' and 'list'..
 
 
-// TODO: Add some more functions to set HTML attributes, such that 'list' for
-// <input>'s and 'id' for <datalist>'s. *Never mind about ids, I will make a
-// function to set these now..
+
+
+
+
+/* Functions to set form actions (to javascript functions) */
+
+// Note that upaf_setFormAction(<selector>, "void") is useful to call even
+// when submission is set to be almost entirely handled by a jQuery event
+// instead.
+export function upaf_setFormAction(selector, funName) {
+    let jqObj = getJQueryObj(selector);
+    // test funName.
+    if (!/^[\$\w]+$/.test(funName)) {
+        throw new Exception(
+            "setFormAction(): function name is not a valid " +
+            "/^[\\$\\w]+$/ string"
+        );
+    }
+    // initialize action attribute value depending on funName.
+    var action;
+    if (funName === "void") {
+        action = "javascript:void(0)";
+    } else {
+        action = "javascript:" + "upaf_" + funName + "()";
+    }
+    // set the action attributes of all the selected <form> elements.
+    jqObj.filter('form').attr("action", action);
+}
+
+
+
+
+// TODO: Potentially add some more functions to set HTML attributes..
