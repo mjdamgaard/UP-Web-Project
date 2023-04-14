@@ -203,6 +203,15 @@ export function upaf_numberMethod(methodName, num) {
 
 
 
+/* Some JS array method wrappers */
+
+// TODO: make these.
+
+
+
+
+
+
 /* Some JS string method wrappers */
 
 // TODO: make these.
@@ -212,6 +221,6 @@ export function upaf_numberMethod(methodName, num) {
 
 
 
-/* Some JS array method wrappers */
+/* Some JS regex method wrappers (using strings as inputs) */
 
 // TODO: make these.

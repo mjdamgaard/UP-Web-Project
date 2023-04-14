@@ -1103,3 +1103,8 @@ export function upaf_animate(
     // initiate the animation.
     jqObj.animate(stylesObj, speed, easing, resultingCallback);
 }
+
+
+
+
+// TODO: Make an each() wrapper, possibly using the "upai_" IDs.

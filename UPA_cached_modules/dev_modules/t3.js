@@ -98,6 +98,16 @@ export upaf_insertBinary(userID, bin) {
 
 
 
+/* Functions to verify and insert new scripts */
+
+// TODO..
+
+
+
+
+
+
+
 
 /* Functions to query the semantic database */
 
