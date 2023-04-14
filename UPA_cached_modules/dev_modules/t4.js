@@ -8,7 +8,7 @@ import {
 
 var urlRegExCache = {};
 
-export function upaf_cacheURLRegEx(userID, pattID, key) {
+export function upaf_cacheURLRegEx(pattID, key, userID) {
     // test key.
     if (typeof key !== "string") {
         throw new Exception(
@@ -26,7 +26,7 @@ export function upaf_cacheURLRegEx(userID, pattID, key) {
     // (UPA_links.php also verifies that userID is whitelisted for the
     // requesting user (if logged in; if not, userID has to be whitelisted
     // for public use).)
-    let data = {uid: userID, pid: pattID}
+    let data = {pid: pattID, uid: userID}
     let res = JSON.parse($.getJSON("UPA_links.php", ).responseText);
     // if the pattern was whitelisted for UPA links, store it in the cache.
     if (res.success) {
@@ -93,20 +93,31 @@ export function upaf_followLink(url, urlRegExKey, target) {
 
 /* Functions to load more scripts on-demand */
 
-export function upaf_loadModule(userID, textID, funIdentList, asFunIdentList) {
-    // request the module script from server through UPA_scripts.php.
-    // (The user ID will probably not be used for most request, but can
-    // perhaps be used to allow developers more freedom.)
-    let data = {uid: userID, pid: pattID}
-    let res = $.get("UPA_scripts.php", data).responseText;
-    // check for returned error JSON.
-    // (This check is not very robust, but the server will never send any script
-    // that hasn't been whitelisted, so a bug here shouldn't be harmful.)
-    if (res.substring(0, 6) == '{error') {
+export function upaf_loadScript(
+    textID, callbackName, funIdentList, asFunIdentList, userID
+) {
+    // test callback key (which shouldn't necessarily be defined at this point;
+    // it can potentially be defined by the loaded module (which can be useful
+    // if the function requires no input)).
+    if (!/^[\$\w]+$/.test(callbackName)) {
         throw new Exception(
-            "loadModule(): input text ID does not point to a valid module"
+            "loadScript(): callback function name is not a valid " +
+            "/^[\\$\\w]+$/ string"
         );
     }
+// // request the module script from server through UPA_scripts.php.
+// // (The user ID will probably not be used for most request, but can
+// // perhaps be used to allow developers more freedom.)
+// let data = {pid: pattID, uid: userID}
+// let res = $.get("UPA_scripts.php", data).responseText;
+// // check for returned error JSON.
+// // (This check is not very robust, but the server will never send any script
+// // that hasn't been whitelisted, so a bug here shouldn't be harmful.)
+// if (res.substring(0, 6) == '{error') {
+//     throw new Exception(
+//         "loadModule(): input text ID does not point to a valid module"
+//     );
+// }
     // test mandatory funIdentList and prepend "upaf_" to all the identifiers.
     testFunIdentArrAndPrependUPAFPrefix(funIdentList);
     // test that the length is greater than zero.
@@ -128,7 +139,8 @@ export function upaf_loadModule(userID, textID, funIdentList, asFunIdentList) {
             );
         }
     }
-    // construct the module loading script html.
+    // construct the first part of the script html element, including the
+    // import statement.
     var html = '<script type="module"> import {';
     if (typeof asFunIdentList === "undefined") {
         html += funIdentList.join(", ")
@@ -138,15 +150,24 @@ export function upaf_loadModule(userID, textID, funIdentList, asFunIdentList) {
             html += ", " + funIdentList[i] + " as " + asFunIdentList[i];
         }
     }
-    html += "} from UPA_scripts.php?id=" + textID + "; </script>";
-    // append a script that imports functions from the result module (which
-    // the browser has hopefully cached such that the HTTP request does not
-    // need to be sent again).
+    html += } 'from "UPA_scripts.php?id=' + textID;
+    if (
+        typeof userID === "string" &&
+        /^[ug][1-9A-F][0-9A-F]{0,15}$/.test(userID)
+    ) {
+        html += "&uid=" + userID;
+    }
+    html += '"; ';
+    // append a call statement to the callback function, which should be
+    // defined at this point in the newly loaded script.
+    html += "upaf_" + callbackName + "(); ";
+    // append the closing script tag.
+    html += "</script>";
+    // append a script that imports functions from the module and runs the
+    // provided callback function, which can either one of the newly loaded
+    // functions, or a function that calls one or several of the newly loaded
+    // functions.
     $('#upaMainFrame').after(html);
-    // return the script just in case users have to take care to keep it in
-    // memory to ensure that the HTTP request is still cached when needed
-    // again.
-    return res;
 }
 
 
@@ -174,4 +195,10 @@ export function testFunIdentArrAndPrependUPAFPrefix(funIdentList) {
 
 /* Functions to load images into the UPA */
 
-// TODO: Make these..
+export function upaf_loadImage(selector, binID, format, userID) {
+    let data = {bid: binID, f: format, uid: userID}
+    // TODO..
+}
+
+// TODO: Continue adding more types of binary resources, or add them in another
+// file/text.

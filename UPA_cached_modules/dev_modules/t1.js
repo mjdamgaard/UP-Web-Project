@@ -246,8 +246,7 @@ export function upaf_getAttributes(selector, keyArr) {
 
 
 
-/* A private function to get callback upaFun functions from user-provided key */
-
+/* A private function to get callback upaf_ functions from user-provided key */
 
 // Note that since this function does not have the upaf_ prefix, it cannot
 // be exported to the final user modules (but only to other developer modules).
@@ -268,12 +267,24 @@ export function verifyFunNameAndGetUPAFunction(funName) {
     return window[fullFunName];
 }
 
-export function getResultingCallback(callbackKey, dataArr) {
-    var callback = verifyFunNameAndGetUPAFunction(callbackKey);
+/* A private function to get a resulting function from key and a data array
+ * containing the input parameters.
+ **/
+export function getResultingFunction(funName, dataArr) {
+    var fun = verifyFunNameAndGetUPAFunction(funName);
     return function() {
-        callback.apply(null, dataArr);
+        fun.apply(null, dataArr);
     };
 }
+
+/* A public function run a upaf_ function pointed to by a key */
+
+export function upaf_runResultingFunction(funName, dataArr) {
+    var fun = verifyFunNameAndGetUPAFunction(funName);
+    fun.apply(null, dataArr);
+}
+
+
 
 
 
@@ -829,7 +840,7 @@ export function upaf_visibilityEffect(
     // function key (string).
     var resultingCallback;
     if (typeof callbackKey === "string") {
-        resultingCallback = getResultingCallback(callbackKey, callbackDataArr);
+        resultingCallback = getResultingFunction(callbackKey, callbackDataArr);
     }
     // verify the speed and opacity inputs if some are provided.
     var speed, opacity;
@@ -917,7 +928,7 @@ export function upaf_animate(
     // function key (string).
     var resultingCallback;
     if (typeof callbackKey === "string") {
-        resultingCallback = getResultingCallback(callbackKey, callbackDataArr);
+        resultingCallback = getResultingFunction(callbackKey, callbackDataArr);
     }
     // verify the speed and easing inputs if some are provided.
     var speed, easing;
