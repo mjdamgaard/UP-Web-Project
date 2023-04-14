@@ -27,8 +27,13 @@ export function upaf_setIDAndGetExitCode(selector, id) {
 
 export function upaf_getID(selector) {
     let jqObj = getJQueryObj(selector);
-    // return the id of the first element in the selection.
-    return jqObj[0].id;
+    // if id of the first element in the selection is not set, return false.
+    if (typeof jqObj[0].id === "undefined") {
+        return false;
+    }
+    // return the id of the first element in the selection without the "upai_"
+    // prefix.
+    return jqObj[0].id.substring(5);
 }
 
 
@@ -82,15 +87,23 @@ export function upaf_setFormAction(selector, funName) {
             "/^[\\$\\w]+$/ string"
         );
     }
-    // initialize action attribute value depending on funName.
-    var action;
+    // if "void" is given as the "funName," set the action attributes for all
+    // selected <form> elements to "javascript:void(0)".
     if (funName === "void") {
-        action = "javascript:void(0)";
+        jqObj.filter('form').attr("action", "javascript:void(0)");
+    // else set the action attributes to "javascript:upaf_<funName>(<id>),"
+    // where id is either the id of the <form> element, or is "" if the
+    // element does not have any id set.
     } else {
-        action = "javascript:" + "upaf_" + funName + "()";
+        let actionStart = "javascript:upaf_" + funName + "(";
+        jqObj.filter('form').each(function(){
+            var id = "";
+            if (typeof this[0].id === "string") {
+                id = this[0].id.substring(5); // i.e. without the upai_ prefix.
+            }
+            this.attr("action", actionStart + id + ")");
+        });
     }
-    // set the action attributes of all the selected <form> elements.
-    jqObj.filter('form').attr("action", action);
 }
 
 

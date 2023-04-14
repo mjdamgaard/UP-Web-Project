@@ -142,10 +142,10 @@ export function getJQueryObj(selector) {
     // object. If so return that object (possibly undefined). Else return
     // mainFrameJQueryObj.find(selector).
     if (/^\$\w+$/.test(selector)) {
-        return jQueryObjCache[substring(selector, 1)];
+        return jQueryObjCache[selector.substring(1)];
 
     } else if (/^#\w+$/.test(selector)) {
-        return mainFrameJQueryObj.find('#upai_' + substring(selector, 1));
+        return mainFrameJQueryObj.find('#upai_' + selector.substring(1));
     } else {
         // TODO: Test/check that jQuery.find() is safe for any string input
         // such that it always returns a descendent element or null/undefined
@@ -278,7 +278,7 @@ export function verifyFunNameAndGetUPAFunction(funName) {
 export function getResultingFunction(funName, dataArr) {
     var fun = verifyFunNameAndGetUPAFunction(funName);
     return function() {
-        fun.apply(null, dataArr);
+        fun.apply(null, dataArr ?? []);
     };
 }
 
@@ -775,7 +775,7 @@ export function upaf_on(selector, eventsDataHandlerTupleArr) {
 
     for (let i = 0; i < eventsDataHandlerTupleArr.length; i++) {
         let events = eventsDataHandlerTupleArr[$i][0];
-        let data = eventsDataHandlerTupleArr[$i][1];
+        let data = eventsDataHandlerTupleArr[$i][1] ?? "";
         let handlerKey = eventsDataHandlerTupleArr[$i][2];
         let handler = verifyFunNameAndGetUPAFunction(handlerKey);
 
@@ -790,7 +790,7 @@ export function upaf_one(selector, eventsDataHandlerTupleArr) {
 
     for (let i = 0; i < eventsDataHandlerTupleArr.length; i++) {
         let events = eventsDataHandlerTupleArr[$i][0];
-        let data = eventsDataHandlerTupleArr[$i][1];
+        let data = eventsDataHandlerTupleArr[$i][1] ?? "";
         let handlerKey = eventsDataHandlerTupleArr[$i][2];
         let handler = verifyFunNameAndGetUPAFunction(handlerKey);
 
