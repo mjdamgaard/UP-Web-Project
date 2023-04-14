@@ -127,14 +127,9 @@ var mainFrameJQueryObj = $("#upaMainFrame");
 // be exported to the final user modules (but only to other developer modules).
 export function getJQueryObj(selector) {
     if (typeof selector !== "string") {
-        if (selector.length < 1) {
-            throw new Exception(
-                "getJQueryObj(): selector has to be a string or a non-empty " +
-                "array";
-            );
-        } else {
-            if (selector)
-        }
+        throw new Exception(
+            "getJQueryObj(): selector has to be a string"
+        );
     }
 
     // if traversing/filter array is not supplied, simply cache jqObj as is.
@@ -331,6 +326,45 @@ export function upaf_getAttributes(selector, keyArr) {
     return ret;
 }
 
+
+
+
+/* functions to set and get (unique!) IDs of HTML elements */
+
+export function upaf_setID(selector, id) {
+    let jqObj = getJQueryObj(selector);
+    // test that id contains only \w characters.
+    if (!/^\w+$/.test(id)) {
+        throw new Exception(
+            "setID(): invalid id pattern (not of /^\\w+$/)"
+        );
+    }
+    // test that the id does not already exist.
+    let resultingID = "upai_" + id;
+    if ($('#upaMainFrame #' + resultingID).length > 0) {
+        throw new Exception(
+            "setID(): id is already given to an element"
+        );
+    }
+    // set the id.
+    jqObj[0].id = resultingID;
+}
+
+export function upaf_isExistingID(id) {
+    let resultingID = "upai_" + id;
+    return $('#upaMainFrame #' + resultingID).length > 0;
+}
+
+export function upaf_getID(selector) {
+    let jqObj = getJQueryObj(selector);
+    // if id of the first element in the selection is not set, return false.
+    if (typeof jqObj[0].id === "undefined") {
+        return false;
+    }
+    // return the id of the first element in the selection without the "upai_"
+    // prefix.
+    return jqObj[0].id.substring(5);
+}
 
 
 
