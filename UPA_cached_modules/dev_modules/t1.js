@@ -126,19 +126,12 @@ var mainFrameJQueryObj = $("#upaMainFrame");
 // Note that since this function does not have the upaf_ prefix, it cannot
 // be exported to the final user modules (but only to other developer modules).
 export function getJQueryObj(selector) {
+    // test selector.
     if (typeof selector !== "string") {
         throw new Exception(
             "getJQueryObj(): selector has to be a string"
         );
     }
-
-    // if traversing/filter array is not supplied, simply cache jqObj as is.
-    if (typeof traverseAndFilterArr === "undefined") {
-        jQueryObjCache[key] = jqObj;
-    }
-    // if traversing/filter array is supplied, get the new jQuery objects
-    // following the commands of that array.
-
     if (!selectorRegex.test(selector)) {
         throw new Exception(
             "getJQueryObj(): selector does not match expected pattern"
@@ -329,7 +322,7 @@ export function upaf_getAttributes(selector, keyArr) {
 
 
 
-/* functions to set and get (unique!) IDs of HTML elements */
+/* Functions to set and get (unique!) IDs of HTML elements */
 
 export function upaf_setID(selector, id) {
     let jqObj = getJQueryObj(selector);
