@@ -119,7 +119,7 @@ export const selectorRegex = new RegExp(
 
 
 
-var jQueryObjCache = {};
+var jQueryObjCache = jQueryObjCache ?? {};
 
 var mainFrameJQueryObj = $("#upaMainFrame");
 
@@ -255,8 +255,8 @@ export function upaf_uncacheJQueryObj(key) {
 /* Some functions to get and set upaa_ attributes */
 
 
-const attrKeyRegEx =  new RegExp("/^\\w+$/");
-const attrValRegEx =  new RegExp("/^\\w*$/");
+const attrKeyRegEx =  /^\w+$/;
+const attrValRegEx =  /^\w+$/;
 
 
 export function upaf_setAttributes(selector, keyValArr) {
@@ -323,6 +323,9 @@ export function upaf_getAttributes(selector, keyArr) {
 
 
 /* Functions to set and get (unique!) IDs of HTML elements */
+
+// TODO: Change this to instead use:
+var idRecord = idRecord ?? [];
 
 export function upaf_setID(selector, id) {
     let jqObj = getJQueryObj(selector);
@@ -507,6 +510,7 @@ export function upaf_getHTML(content) {
                         "getHTML(): input contains an invalid attribute value"
                     );
                 }
+                // TODO: implement id setting..
                 // set a new upaa_ attribute for the new HTML element.
                 htmlElem.setAttribute("upaa_" + key, val);
             }

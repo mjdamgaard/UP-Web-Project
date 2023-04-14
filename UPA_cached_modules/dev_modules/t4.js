@@ -6,7 +6,7 @@ import {
 
 /* Functions to verify and load hyperlinks into the UPA, and to follow them */
 
-var urlRegExCache = {};
+var urlRegExCache = urlRegExCache ?? {};
 
 export function upaf_cacheURLRegEx(pattID, key, userID) {
     // test key.

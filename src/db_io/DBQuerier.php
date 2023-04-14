@@ -1,5 +1,7 @@
 <?php
 
+// TODO: Re-refactor and absorb this into query_handler.
+
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
 require_once $db_io_path . "DBConnector.php";
 

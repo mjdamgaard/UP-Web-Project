@@ -1,5 +1,7 @@
 <?php
 
+// TODO: Re-refactor and absorb this into input_handler.
+
 /* All text outputs are converted to safe html texts (using the
  * htmlspecialchars() function) in this layer!
  **/
