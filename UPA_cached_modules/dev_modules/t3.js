@@ -84,17 +84,7 @@ export upaf_insertBinary(userID, bin) {
 
 
 
-// export upaf_insertMultipleETerms(userID, catID, titleArr, n) {
-//     // request that user is authenticated for
-//     AuthRequestor.authForInsert(userID);
-//     // initialize the input request according to the chosen term type.
-//     var data = new InputDataConstructors.MultiETermsReqData(
-//         userID, catID, titleArr, n
-//     );
-//     // request insertion of multiple elementary term and get... --"--.
-//     $.getJSON("input_handler.php", data);
-//     // return nothing.
-// }
+
 
 
 

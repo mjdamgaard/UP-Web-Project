@@ -123,11 +123,11 @@ DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 $stmt = $conn->prepare("SELECT @outID AS outID, @ec AS exitCode");
 // execute this select statement.
 DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
-// fetch the result as an associative array.
-$res = $stmt->get_result()->fetch_assoc();
+// fetch the result as a numeric array.
+$res = $stmt->get_result()->fetch_all();
 // set the Content-Type header to json.
 header("Content-Type: text/json");
-// finally echo the JSON-encoded result (containing outID and exitCode).
+// finally echo the JSON-encoded result array (containing outID and exitCode).
 echo json_encode($res);
 
 

@@ -30,7 +30,6 @@ $reqType = $_POST["type"];
 $sql = "";
 $paramNameArr = "";
 $typeArr = "";
-$outputType = "";
 switch ($reqType) {
     case "S":
         $sql = "CALL selectSet (?, ?, ?, ?, ?, ?)";
@@ -46,7 +45,6 @@ switch ($reqType) {
             "uint", "uint",
             "tint"
         );
-        $outputType = "array";
         // columns: ("ratVal", "objID"),
         break;
     case "SI":
@@ -55,7 +53,6 @@ switch ($reqType) {
         $typeArr = array(
             "setID"
         );
-        $outputType = "array";
         // columns: ("userID", "subjID", "relID", "elemNum"),
         break;
     case "SISK":
@@ -64,7 +61,6 @@ switch ($reqType) {
         $typeArr = array(
             "userOrGroupID", "termID", "relID"
         );
-        $outputType = "array";
         // columns: ("setID", "elemNum"),
         break;
     case "R":
@@ -73,7 +69,6 @@ switch ($reqType) {
         $typeArr = array(
             "termID", "setID"
         );
-        $outputType = "array";
         // columns: ("ratVal"),
         break;
     case "CD":
@@ -82,7 +77,6 @@ switch ($reqType) {
         $typeArr = array(
             "catID"
         );
-        $outputType = "array";
         // columns: ("catTitle", "superCatID"),
         break;
     case "ED":
@@ -91,7 +85,6 @@ switch ($reqType) {
         $typeArr = array(
             "eTermID"
         );
-        $outputType = "array";
         // columns: ("eTermTitle", "catID"),
         break;
     case "RD":
@@ -100,7 +93,6 @@ switch ($reqType) {
         $typeArr = array(
             "relID"
         );
-        $outputType = "array";
         // columns: ("objNoun", "subjCatID"),
         break;
     case "SCD":
@@ -109,7 +101,6 @@ switch ($reqType) {
         $typeArr = array(
             "catID"
         );
-        $outputType = "array";
         // columns: ("catTitle", "superCatID"),
         break;
     case "T":
@@ -118,7 +109,6 @@ switch ($reqType) {
         $typeArr = array(
             "textID"
         );
-        $outputType = "data";
         // columns: ("text"),
         break;
     case "B":
@@ -127,7 +117,6 @@ switch ($reqType) {
         $typeArr = array(
             "binID"
         );
-        $outputType = "data";
         // columns: ("binary"),
         break;
     default:
@@ -145,38 +134,14 @@ $conn = DBConnector::getConnectionOrDie();
 $stmt = $conn->prepare($sql);
 // execute query statement.
 DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
-// fetch the result as a numric array if $outputType equals "array".
-$res = $stmt->get_result();
-if ($outputType == "array") {
-    $res = $res->fetch_all();
-// else if outputType equals "data", fetch the result as the data itself.
-} else if ($outputType == "data") {
-    $res = $res->fetch_row()[0];
-}
-// set the "Content-Type" HTTP header and echo the (perhaps JSON-encoded)
-// query result according to the request type.
-switch ($reqType) {
-    case "S":
-    case "SI":
-    case "SISK":
-    case "R":
-    case "CD":
-    case "ED":
-    case "RD":
-    case "SCD":
-        header("Content-Type: text/json");
-        echo json_encode($res);
-        break;
-    case "T":
-        header("Content-Type: text/plain");
-        echo $res;
-        break;
-    case "B":
-        header("Content-Type: application/octet-stream");
-        echo $res;
-        break;
-}
-
+// fetch the result as a numeric array.
+$res = $stmt->get_result()->fetch_all();
+// set the Content-Type header to json.
+header("Content-Type: text/json");
+// finally echo the JSON-encoded numeric array, containing e.g. the
+// columns: ("ratVal", "objID") for $reqType == "S", etc., so look at
+// the comments above for what the resulting arrays will contain.
+echo json_encode($res);
 
 // The program exits here, which also closes $conn.
 
