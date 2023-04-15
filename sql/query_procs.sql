@@ -11,6 +11,10 @@ DROP PROCEDURE selectCatDef;
 DROP PROCEDURE selectETermDef;
 DROP PROCEDURE selectRelDef;
 
+DROP PROCEDURE selectCatInfoFromSecKey;
+DROP PROCEDURE selectETermInfoFromSecKey;
+DROP PROCEDURE selectRelInfoFromSecKey;
+
 DROP PROCEDURE selectSuperCatDefs;
 
 DROP PROCEDURE selectText;
@@ -18,6 +22,11 @@ DROP PROCEDURE selectBinary;
 
 DROP PROCEDURE selectCreations;
 
+DROP PROCEDURE selectRecentInputs;
+
+DROP PROCEDURE selectPublicUserKey;
+
+DROP PROCEDURE selectUserGroupInfo;
 
 
 

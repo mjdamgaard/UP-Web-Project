@@ -168,7 +168,7 @@ CREATE TABLE SemanticInputs (
     rat_val VARBINARY(255) NOT NULL,
 
     -- object of the relation defining the set (i.e. the primary part of the
-    -- member of which the rating is about).
+    -- member which the rating is about).
     obj_t CHAR(1) NOT NULL,
     obj_id BIGINT UNSIGNED NOT NULL,
 
@@ -280,7 +280,7 @@ CREATE TABLE Users (
     -- In order for third parties to be able to copy the database and then
     -- be able to have users log on, without the need for exchanging
     -- passwords between (third) parties.
-    pub_encr_key VARBINARY(10000)
+    public_key_for_authentication VARBINARY(10000)
 
     -- /* timestamp */
     -- not needed since one should rather just keep a rough(!) count on the
