@@ -19,7 +19,13 @@ DROP PROCEDURE selectSuperCatDefs;
 
 DROP PROCEDURE selectText;
 DROP PROCEDURE selectBinary;
+DROP PROCEDURE selectList;
+DROP PROCEDURE selectKeywordString;
+DROP PROCEDURE selectKeywordIDFromSearch;
+DROP PROCEDURE selectPattern;
+DROP PROCEDURE selectPatternInfoFromSecKey;
 
+DROP PROCEDURE selectCreator;
 DROP PROCEDURE selectCreations;
 
 DROP PROCEDURE selectRecentInputs;
