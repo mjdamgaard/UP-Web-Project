@@ -132,7 +132,7 @@ switch ($reqType) {
         break;
     default:
         header("Content-Type: text/json");
-        echoErrorJSONAndExit("unrecognized request type");
+        echoErrorJSONAndExit("Unrecognized request type");
 }
 
 // get inputs.
