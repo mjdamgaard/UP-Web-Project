@@ -105,20 +105,6 @@ export function upaf_loadScript(
             "/^[\\$\\w]+$/ string"
         );
     }
-// // request the module script from server through UPA_scripts.php.
-// // (The user ID will probably not be used for most request, but can
-// // perhaps be used to allow developers more freedom.) *No, cause we
-// // wouldn't want to expose developers to hacking.
-// let data = {pid: pattID, uid: userID}
-// let res = $.get("UPA_scripts.php", data).responseText;
-// // check for returned error JSON.
-// // (This check is not very robust, but the server will never send any script
-// // that hasn't been whitelisted, so a bug here shouldn't be harmful.)
-// if (res.substring(0, 6) == '{error') {
-//     throw new Exception(
-//         "loadModule(): input text ID does not point to a valid module"
-//     );
-// }
     // test mandatory funIdentList and prepend "upaf_" to all the identifiers.
     testFunIdentArrAndPrependUPAFPrefix(funIdentList);
     // test that the length is greater than zero.
@@ -147,7 +133,7 @@ export function upaf_loadScript(
         html += funIdentList.join(", ")
     } else {
         html += funIdentList[0] + " as " + asFunIdentList[0];
-        for (let i = 0; i < len; i++) {
+        for (let i = 1; i < len; i++) {
             html += ", " + funIdentList[i] + " as " + asFunIdentList[i];
         }
     }

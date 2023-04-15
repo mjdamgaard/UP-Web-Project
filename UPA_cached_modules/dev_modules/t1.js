@@ -44,12 +44,14 @@ export const pseudoClasses =
         "nth\\-(last\\-)?[(child)(of\\-type)]\\([1-9][0-9]*\\)",
         "eq\\((0|[1-9][0-9]*)\\)",
         "[(gt)(lt)]\\(([1-9][0-9]*)\\)",
-        "header", "animated", "focus", "empty", /*"parent",*/ "hidden",
+        "header", "animated", "focus", "empty",
+        // "parent",
+        "hidden",
         "visible", "input", "text", "password", "radio", "checkbox",
         "submit", "reset", "button", "image", "file",
         "enabled", "diabled", "selected", "checked",
         // "lang\\(\\w+(\\-\\w+)*\\)",
-        // TODO: add more pseudo classes!
+        // TODO: add more pseudo classes. (maybe)
     ];
 
 const pseudoClassPattern =
@@ -60,8 +62,10 @@ const pseudoClassPattern =
 
 export const pseudoElements =
     [ +
-        /*"after"*/, "backdrop", /*"before"*/, "cue", "cue-region",
-        "first-letter", "first-line", //TODO: complete this.
+        // "before", "after",
+        "backdrop", "cue", "cue-region",
+        "first-letter", "first-line",
+        //TODO: complete this.
     ];
 
 const pseudoElementPattern =
@@ -509,6 +513,23 @@ export function upaf_convertHTMLSpecialChars(str) {
         .replaceAll(">", "&gt;");
 }
 
+export function upaf_convertHTMLSpecialCharsAndBackslashes(str) {
+    // verify that input is a string.
+    if (typeof str !== "string") {
+        throw new Exception(
+            "convertHTMLSpecialCharsAndBackslashes(): " +
+            "input is not a string"
+        );
+    }
+    // return the converted (HTML safe and attribute value safe) string.
+    return str
+        .replaceAll("&", "&amp;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\\", "&#92;");
+}
 
 
 
@@ -887,7 +908,7 @@ export function upaf_addCSS(selector, propertyValuePairArr) {
     // initialize styleElem as the first part of the desired HTML string.
     var styleElem =
         '<style class="upas" selector="' +
-            upaf_convertHTMLSpecialChars(selector) +
+            upaf_convertHTMLSpecialCharsAndBackslashes(selector) +
         '"> ' +
         "#upaMainFrame { " + selector + " { ";
     // loop through property--value pairs and append them to styleElem.
@@ -923,7 +944,8 @@ export function upaf_removeCSS(selector) {
     // remove all UPA style tags with the given selector.
     $(
         ':root > head > .upas[' +
-            'selector="' + upaf_convertHTMLSpecialChars(selector) +
+            'selector="' +
+            upaf_convertHTMLSpecialCharsAndBackslashes(selector) +
         '"]'
     ).remove();
 }
@@ -932,7 +954,8 @@ export function upaf_removeLastCSS(selector) {
     // remove the last UPA style tag with the given selector.
     $(
         ':root > head > .upas[' +
-            'selector="' + upaf_convertHTMLSpecialChars(selector) +
+            'selector="' +
+            upaf_convertHTMLSpecialCharsAndBackslashes(selector) +
         '"]:last-of-type'
     ).remove();
 }
@@ -1238,8 +1261,3 @@ export function upaf_animate(
     // initiate the animation.
     jqObj.animate(stylesObj, speed, easing, resultingCallback);
 }
-
-
-
-
-// TODO: Make an each() wrapper, possibly using the "upai_" IDs.
