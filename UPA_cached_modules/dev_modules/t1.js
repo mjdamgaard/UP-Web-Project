@@ -44,11 +44,11 @@ export const pseudoClasses =
         "nth\\-(last\\-)?[(child)(of\\-type)]\\([1-9][0-9]*\\)",
         "eq\\((0|[1-9][0-9]*)\\)",
         "[(gt)(lt)]\\(([1-9][0-9]*)\\)",
-        "header", "animated", "focus", "empty", "parent", "hidden",
+        "header", "animated", "focus", "empty", /*"parent",*/ "hidden",
         "visible", "input", "text", "password", "radio", "checkbox",
         "submit", "reset", "button", "image", "file",
         "enabled", "diabled", "selected", "checked",
-        "lang\\(\\w+(\\-\\w+)*\\)",
+        // "lang\\(\\w+(\\-\\w+)*\\)",
         // TODO: add more pseudo classes!
     ];
 
@@ -60,7 +60,7 @@ const pseudoClassPattern =
 
 export const pseudoElements =
     [ +
-        "after", "backdrop", "before", "cue", "cue-region",
+        /*"after"*/, "backdrop", /*"before"*/, "cue", "cue-region",
         "first-letter", "first-line", //TODO: complete this.
     ];
 
@@ -73,7 +73,7 @@ const classSelectorPattern = "(\\.\\w+)";
 
 const attrSelectorPattern =
     "(\\[" +
-        "\\w+" + "([!\\$\\|\\^~\\*]?=\\w+)?" +
+        "~?\\w+" + "([!\\$\\|\\^~\\*]?=\\w+)?" +
     "\\])";
 
 const combinatorPattern = "[ >~\\+]";
@@ -109,8 +109,8 @@ const selectorListPattern =
 
 export const selectorRegex = new RegExp(
     "/^((" +
-        "\\$\\w+" +
-    ")|(" +
+    //     "\\$\\w+" +
+    // ")|(" +
         "#\\w+" +
     ")|(" +
         selectorListPattern +
@@ -118,13 +118,13 @@ export const selectorRegex = new RegExp(
 );
 
 
-
-var jQueryObjCache = jQueryObjCache ?? {};
+//  // Hm, I maybe don't trust such a cache after all..
+// var jQueryObjCache = jQueryObjCache ?? {};
 
 var mainFrameJQueryObj = $("#upaMainFrame");
 
 // Note that since this function does not have the upaf_ prefix, it cannot
-// be exported to the final user modules (but only to other developer modules).
+// be exported to the final user modules (only to other developer modules).
 export function getJQueryObj(selector) {
     // test selector.
     if (typeof selector !== "string") {
@@ -139,13 +139,14 @@ export function getJQueryObj(selector) {
     }
     // replace all  "[~attr(=value)]" with "[upaa_attr(=value)]"
     selector = selector.replaceAll("[~", "[upaa_");
-    // see if the selector is a special selector with a key for a chaced jQuery
-    // object. If so return that object (possibly undefined). Else return
-    // mainFrameJQueryObj.find(selector).
-    if (/^\$\w+$/.test(selector)) {
-        return jQueryObjCache[selector.substring(1)];
-
-    } else if (/^#\w+$/.test(selector)) {
+// // see if the selector is a special selector with a key for a chaced jQuery
+// // object. If so return that object (possibly undefined). Else return
+// // mainFrameJQueryObj.find(selector).
+// if (/^\$\w+$/.test(selector)) {
+//     return jQueryObjCache[selector.substring(1)];
+//
+// } else
+    if (/^#\w+$/.test(selector)) {
         return mainFrameJQueryObj.find('#upai_' + selector.substring(1));
 
     } else {
@@ -156,91 +157,23 @@ export function getJQueryObj(selector) {
     }
 }
 
-export const noParameterCommands = [
-    "parent", "parents", "children", "siblings", "next", "prev",
-    "first", "last"
-];
-
-export const oneParameterCommands = [
-    "eq", "filter", "not", "find"
-];
-
-export function getChangedJQueryObj(jqObj, commandArr) {
-    // initialize the return jQuery object.
-    var ret = jqObj;
-    let len = commandArr.length;
-    for (let i = 0; i < len; i++) {
-        // if commandArr[i] is a string, expect a selector for the find()
-        // method.
-        if (typeof commandArr[i] === "string") {
-            // test that the string is a valid selector.
-            if (!selectorRegex.test(commandArr[i])) {
-                throw new Exception(
-                    "getChangedJQueryObj(): invalid selector in " +
-                    "commandArr[" + i.toString() + "]";
-                );
-            }
-            // change ret with a call to find() method.
-            ret = ret.find(commandArr[i]);
-        // if commandArr[i] has length 1, expect no-parameter command.
-        } else if (commandArr[i].length === 1) {
-            if (!(commandArr[i][0] in noParameterCommands)) {
-                throw new Exception(
-                    "getChangedJQueryObj(): " +
-                    "invalid no-parameter command in " +
-                    "commandArr[" + i.toString() + "]";
-                );
-            }
-            // change ret with a call to a method in noParameterCommands.
-            ret = ret.[commandArr[i][0]](); // NO. Remember that I would need to append
-            // "Until" to parent and next/prev etc. with this method. Perhaps I will do
-            // something else..
-        // if commandArr[i] has length 2, expect one-parameter command.
-        } else {
-            if (!(commandArr[i][0] in oneParameterCommands)) {
-                throw new Exception(
-                    "getChangedJQueryObj(): " +
-                    "invalid command in " +
-                    "commandArr[" + i.toString() + "]";
-                );
-            }
-            // if "eq" is chosen, change ret with a call to the eq() method,
-            // and make sure that the input is numeric by adding ~~ in front.
-            if (commandArr[i][0] === "eq") {
-                ret = ret.eq(~~commandArr[i][1]);
-                continue;
-            }
-            // else, test that commandArr[i][1] is a selector.
-            if (!selectorRegex.test(commandArr[i][1]) {
-                throw new Exception(
-                    "getChangedJQueryObj(): invalid selector in " +
-                    "commandArr[" + i.toString() + "][1]";
-                );
-            }
-            // change ret with a call to the chosen filter method.
-            ret = ret[commandArr[i][0]](commandArr[i][1]);
-        }
-    }
-    // finally return the changed jQuery object.
-    return ret;
-}
 
 
-export function upaf_cacheJQueryObj(selector, key) {
-    let jqObj = getJQueryObj(selector);
-    // test key.
-    if (!(/^\w+$/.test(key)) {
-        throw new Exception(
-            "cacheJQueryObj(): input key is not a valid /^\\w+$/ string"
-        );
-    }
-    // cache jQuery object.
-    jQueryObjCache[key] = jqObj;
-}
-
-export function upaf_uncacheJQueryObj(key) {
-    jQueryObjCache[key] = undefined;
-}
+// export function upaf_cacheJQueryObj(selector, key) {
+//     let jqObj = getJQueryObj(selector);
+//     // test key.
+//     if (!(/^\w+$/.test(key)) {
+//         throw new Exception(
+//             "cacheJQueryObj(): input key is not a valid /^\\w+$/ string"
+//         );
+//     }
+//     // cache jQuery object.
+//     jQueryObjCache[key] = jqObj;
+// }
+//
+// export function upaf_uncacheJQueryObj(key) {
+//     jQueryObjCache[key] = undefined;
+// }
 
 
 
@@ -430,7 +363,7 @@ export function upaf_runResultingFunction(funName, dataArr) {
  **/
 export function upaf_addHTML(selector, method, content) {
     let jqObj = getJQueryObj(selector);
-    let html = upaf_getHTML(content);
+    let html = upaf_getHTMLFromStructure(content);
     switch (method) {
         case "append":
         case "prepend":
@@ -446,7 +379,7 @@ export function upaf_addHTML(selector, method, content) {
 }
 
 
-export function upaf_getHTML(content) {
+export function upaf_getHTMLFromStructure(content) {
     // if content is a string, return the converted (HTML safe) string.
     if (typeof content === "string") {
         return upaf_convertHTMLSpecialChars(content);
@@ -479,7 +412,7 @@ export function upaf_getHTML(content) {
         // if tag input is undefined, simply append the converted content to
         // ret.
         if (typeof tag === "undefined") {
-            ret = ret + upaf_getHTML(content);
+            ret = ret + upaf_getHTMLFromStructure(content);
             continue;
         }
         // else, test tag input.
@@ -516,7 +449,8 @@ export function upaf_getHTML(content) {
             }
         }
         // test and convert content, and add it inside the new HTML element.
-        htmlElem.innerHTML = upaf_getHTML(content);
+        // (This might not work in some Internet Explorer browsers, I think..)
+        htmlElem.innerHTML = upaf_getHTMLFromStructure(content);
         // append the new HTML element to ret.
         ret = ret + htmlElem.outerHTML;
     }
@@ -559,7 +493,7 @@ export function upaf_emptyHTML(selector, method, content) {
 
 export upaf_getInnerHTML(selector) {
     let jqObj = getJQueryObj(selector);
-    return jqObj[0].innerHTML;
+    return jqObj[0].innerHTML; // (I don't know if this works in I.E. browsers.)
 }
 
 export upaf_getOuterHTML(selector) {
@@ -578,7 +512,7 @@ export upaf_getOuterHTML(selector) {
 
 /* Some functions to get, add and remove CSS styles */
 
-const cssPropRegEx = new RegExp("/^@?[[a-zA-Z]\\-]+$/");
+const cssPropRegEx = /^@?[[a-zA-Z]\-]+$/;
 
 
 export const cssUnitPatterns = [
