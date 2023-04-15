@@ -662,10 +662,9 @@ const cssLegalProperties = [
 "unicode-bidi", "user-select", "vertical-align", "visibility", "white-space",
 "widows", "width", "word-break", "word-spacing", "word-wrap", "writing-mode",
 "z-index",
-// TODO: Try to make this list once again, and remember to change
-// references to cssPropRegEx below. ...Okay, that was so much easier,
-// when I used the regex search(-and-replace) feature.
 ];
+// TODO: Outcomment properties that I'm not confident are safe to use with
+// the "legal values" below.
 
 export const cssUnitPatterns = [
     "em", "ex", "cap", "ch", "ic", "lh", "vw", "vh", "vi", "vb", "vmin", "vmax",
@@ -847,7 +846,7 @@ export function upaf_css(selector, propertyOrPropertyValuePairArr) {
             let property = propertyValuePairArr[i][0];
             let value = propertyValuePairArr[i][1];
             // test property.
-            if (!cssPropRegEx.test(property)) {
+            if (!cssLegalProperties.includes(property)) {
                 throw new Exception(
                     "css(): property" + i.toString() +
                     "can only contain letters, '-' and '@'"
@@ -897,7 +896,7 @@ export function upaf_addCSS(selector, propertyValuePairArr) {
         let property = propertyValuePairArr[i][0];
         let value = propertyValuePairArr[i][1];
         // test property.
-        if (!cssPropRegEx.test(property)) {
+        if (!cssLegalProperties.includes(property)) {
             throw new Exception(
                 "addCSS(): property" + i.toString() +
                 "can only contain letters, '-' and '@'"
