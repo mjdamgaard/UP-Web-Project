@@ -5,10 +5,10 @@ require_once $err_path . "errors.php";
 
 $user_input_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/user_input/";
 require_once $user_input_path . "InputGetter.php";
+require_once $user_input_path . "InputVerifier.php";
 
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
 require_once $db_io_path . "DBConnector.php";
-require_once $db_io_path . "DBInputter.php";
 
 
 
@@ -29,81 +29,107 @@ if (!isset($_POST["type"])) {
 }
 $reqType = $_POST["type"];
 
-// get connection.
-$conn = DBConnector::getConnectionOrDie();
 
 // match $reqType against any of the following single-query request types
 // and execute the corresponding query if a match is found.
-$sqlKey = "";
+$sql = "";
 $paramNameArr = "";
+$typeArr = "";
 switch ($reqType) {
     // case "RSK":
     case "R":
-        $sqlKey = "rate";
+        $sql = "CALL inputOrChangeRating (?, ?, ?, ?, @ec)";
         $paramNameArr = array(
             "uid", "sid", "rid",
             "oid",
             "r"
         );
+        $typeArr = array(
+            "userID", "termID", "relID",
+            "termID",
+            "bin"
+        );
         break;
     case "C":
-        $sqlKey = "cat";
+        $sql = "CALL insertOrFindCat (?, ?, ?, @outID, @ec)";
         $paramNameArr = array(
             "uid", "scid",
             "t"
         );
+        $typeArr = array(
+            "userID", "catID",
+            "str"
+        );
         break;
     case "E":
-        $sqlKey = "eTerm";
+        $sql = "CALL insertOrFindETerm (?, ?, ?, @outID, @ec)";
         $paramNameArr = array(
-            "uid", "cid",
-            "t"
+            "userID", "catID",
+            "str"
+        );
+        $typeArr = array(
+
         );
         break;
     case "R":
-        $sqlKey = "rel";
+        $sql = "CALL insertOrFindRel (?, ?, ?, @outID, @ec)";
         $paramNameArr = array(
             "uid", "scid",
             "n"
         );
+        $typeArr = array(
+            "userID", "catID",
+            "str"
+        );
         break;
     case "T":
-        $sqlKey = "text";
+        $sql = "CALL insertText (?, ?, @outID, @ec)";
         $paramNameArr = array(
             "uid",
             "t"
         );
+        $typeArr = array(
+            "userID",
+            "text"
+        );
         break;
     case "B":
-        $sqlKey = "binary";
+        $sql = "CALL insertBinary (?, ?, @outID, @ec)";
         $paramNameArr = array(
             "uid",
             "b"
         );
+        $typeArr = array(
+            "userID",
+            "blob"
+        );
         break;
+    default:
+        header("Content-Type: text/json");
+        echoErrorJSONAndExit("unrecognized request type");
 }
-if ($sqlKey != "") {
-    $paramValArr = InputGetter::getParams($paramNameArr);
-    $res = DBInputter::input($conn, $sqlKey, $paramValArr);
-    header("Content-Type: text/json");
-    echo json_encode($res);
-// } else if ($reqType === "ME") {
-//     // insert multiple elementary terms and count the succesful inserts (not
-//     // finds).
-//     $sqlKey = "eTerm";
-//     $paramNameArr = array(
-//         "uid", "cid",
-//         "ts", "n"
-//     );
-//     $paramValArr = InputGetter::getParams($paramNameArr);
-//     $n = intval(array_pop($paramValArr));
-//     $res = DBInputter::inputMultiple($conn, $sqlKey, $paramValArr, 2, $n);
-//     header("Content-Type: text/json");
-//     echo '{exit:"success"}';
-} else {
-    header("Content-Type: text/json");
-    echoErrorJSON("Unrecognized request type");
-}
+
+// get inputs.
+$paramValArr = InputGetter::getParams($paramNameArr);
+// verify inputs.
+InputVerifier::verifyTypes($paramValArr, $typeArr, $paramNameArr);
+// get connection.
+$conn = DBConnector::getConnectionOrDie();
+// prepare input MySQLi statement.
+$stmt = $conn->prepare($sql);
+// execute input statement.
+DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
+// prepare statement to select outID and exitCode.
+$stmt = $conn->prepare("SELECT @outID AS outID, @ec AS exitCode");
+// execute this select statement.
+DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
+// fetch the result as an associative array.
+$res = $stmt->get_result()->fetch_assoc();
+// set the Content-Type header to json.
+header("Content-Type: text/json");
+// finally echo the JSON-encoded result (containing outID and exitCode).
+echo json_encode($res);
+
 
 // The program exits here, which also closes $conn.
 

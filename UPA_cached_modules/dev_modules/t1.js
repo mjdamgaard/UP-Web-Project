@@ -573,8 +573,13 @@ export upaf_getOuterStructure(selector) {
 
 /* Some functions to get, add and remove CSS styles */
 
-const cssPropRegEx = /^@?[[a-zA-Z]\-]+$/;
+// const cssPropRegEx = /^@?[[a-zA-Z]\-]+$/;
 
+// TODO: Check that these are safe with the "legal values" below!
+const cssLegalProperties = [
+    // TODO: Try to make this list once again, and remember to change
+    // references to cssPropRegEx below.
+];
 
 export const cssUnitPatterns = [
     "em", "ex", "cap", "ch", "ic", "lh", "vw", "vh", "vi", "vb", "vmin", "vmax",
@@ -635,7 +640,7 @@ export const cssGradientValuePattern =
 
 
 /* Some CSS keyword values that I hope is safe for all CSS properties */
-export const cssSomeKeywordValues = [
+export const cssLegalKeywordValues = [
     "left", "right", "none", "inline-start", "inline-end",
 // "inline-table"
 // "table-row"
@@ -688,9 +693,9 @@ export const cssSomeKeywordValues = [
     // TODO: Verify their safety of these keyword values!
 ];
 
-export const cssSomeKeywordValuesPattern =
+export const cssLegalKeywordValuesPattern =
     "((" +
-        cssSomeKeywordValues.join(")|(") +
+        cssLegalKeywordValues.join(")|(") +
     "))";
 
 export
@@ -702,7 +707,7 @@ export const cssACombinedValuePattern =
     ")|(" +
         cssNumericPattern +
     ")|(" +
-        cssSomeKeywordValuesPattern +
+        cssLegalKeywordValuesPattern +
     "))"
 
 export const cssAComplexValuePattern =
@@ -712,20 +717,20 @@ export const cssAComplexValuePattern =
         ")*" +
     ")";
 
-export const cssSomeFunctions = [
+export const cssLegalFunctions = [
     "linear-gradient", "radial-gradient", "conic-gradient",
     "translate", "rotate", "scale", "scaleX", "scaleY",
     "skew", "skewX", "skewY", "matrix",
 ];
 
-export const cssSomeFunctionsPattern =
+export const cssLegalFunctionsPattern =
     "((" +
-        cssSomeFunctions.join(")|(") +
+        cssLegalFunctions.join(")|(") +
     "))";
 
 export const cssAFunctionalValuePattern =
     "(" +
-        cssSomeFunctionsPattern + "\\(" + cssAComplexValuePattern + "\\)" +
+        cssLegalFunctionsPattern + "\\(" + cssAComplexValuePattern + "\\)" +
     ")";
 
 export const cssAComplexRegEx = new RegExp(

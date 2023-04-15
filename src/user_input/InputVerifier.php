@@ -8,7 +8,8 @@ require_once $err_path . "errors.php";
 class InputVerifier {
 
     public static function verifyTypes($paramValArr, $typeArr, $paramNameArr) {
-        for ($i = 0; $i < count($paramValArr); $i++) {
+        $len = count($paramValArr);
+        for ($i = 0; $i < $len; $i++) {
             InputVerifier::verifyType(
                 $paramValArr[$i], $typeArr[$i], $paramNameArr[$i]
             );
