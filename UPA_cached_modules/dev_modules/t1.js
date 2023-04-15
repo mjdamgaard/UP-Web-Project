@@ -118,10 +118,6 @@ export const selectorRegex = new RegExp(
 );
 
 
-//  // Hm, I maybe don't trust such a cache after all..
-// var jQueryObjCache = jQueryObjCache ?? {};
-
-var mainFrameJQueryObj = $("#upaMainFrame");
 
 // Note that since this function does not have the upaf_ prefix, it cannot
 // be exported to the final user modules (only to other developer modules).
@@ -139,41 +135,17 @@ export function getJQueryObj(selector) {
     }
     // replace all  "[~attr(=value)]" with "[upaa_attr(=value)]"
     selector = selector.replaceAll("[~", "[upaa_");
-// // see if the selector is a special selector with a key for a chaced jQuery
-// // object. If so return that object (possibly undefined). Else return
-// // mainFrameJQueryObj.find(selector).
-// if (/^\$\w+$/.test(selector)) {
-//     return jQueryObjCache[selector.substring(1)];
-//
-// } else
+    // sif the selector is an id selector, then prepend "upai_" to the value.
     if (/^#\w+$/.test(selector)) {
-        return mainFrameJQueryObj.find('#upai_' + selector.substring(1));
-
+        return $("#upaMainFrame").find('#upai_' + selector.substring(1));
+    // else use the selctor as is to find descendents of #upaMainFrame.
     } else {
-        // TODO: Test/check that jQuery.find() is safe for any string input
-        // such that it always returns a descendent element or null/undefined
-        // or throws an exception.
-        return mainFrameJQueryObj.find(selector);
+        return $("#upaMainFrame").find(selector);
     }
 }
 
 
 
-// export function upaf_cacheJQueryObj(selector, key) {
-//     let jqObj = getJQueryObj(selector);
-//     // test key.
-//     if (!(/^\w+$/.test(key)) {
-//         throw new Exception(
-//             "cacheJQueryObj(): input key is not a valid /^\\w+$/ string"
-//         );
-//     }
-//     // cache jQuery object.
-//     jQueryObjCache[key] = jqObj;
-// }
-//
-// export function upaf_uncacheJQueryObj(key) {
-//     jQueryObjCache[key] = undefined;
-// }
 
 
 
@@ -183,16 +155,63 @@ export function getJQueryObj(selector) {
 
 
 
+/* Functions to set and get (unique!) IDs of HTML elements */
 
+// TODO: Change this to instead use:
+var idRecord = idRecord ?? [];
+
+export function upaf_setID(selector, id) {
+    let jqObj = getJQueryObj(selector);
+    // test that id contains only \w characters.
+    if (!/^\w+$/.test(id)) {
+        throw new Exception(
+            "setID(): invalid id pattern (not of /^\\w+$/)"
+        );
+    }
+    // test that id is unused. (Let's not care to much about race conditions.)
+    if (id in inRecord) {
+        throw new Exception(
+            "setID(): id has already been used"
+        );
+    }
+    // record id.
+    idRecord.push(id);
+    // set the (prefixed) id of the first element in the selection.
+    jqObj[0].id = "upai_" + id;
+}
+
+export function upaf_isExistingID(id) {
+    return (id in idRecord);
+}
+
+export function upaf_recordID(id) {
+    idRecord.push(id);
+}
+
+export function upaf_getID(selector) {
+    let jqObj = getJQueryObj(selector);
+    // if id of the first element in the selection is not set, return false.
+    if (typeof jqObj[0].id === "undefined") {
+        return false;
+    }
+    // return the id of the first element in the selection without the "upai_"
+    // prefix.
+    return jqObj[0].id.substring(5);
+}
+
+
+
+
+
+// TODO Gather all the following attribute setters/getters..
 
 /* Some functions to get and set upaa_ attributes */
 
-
-const attrKeyRegEx =  /^\w+$/;
+const attrKeyRegEx =  /^~?\w+$/;
+const upaAttrKeyRegEx =  /^~\w+$/;
 const attrValRegEx =  /^\w+$/;
 
-
-export function upaf_setAttributes(selector, keyValArr) {
+export function upaf_setUPAAttributes(selector, keyValArr) {
     // get the selected HTML element as a jQuery object.
     let jqObj = getJQueryObj(selector);
     // loop through key value pairs and set the attributes of the HTML element
@@ -201,9 +220,9 @@ export function upaf_setAttributes(selector, keyValArr) {
         let key = keyValArr[$i][0];
         let val = keyValArr[$i][1];
         // verify that key and val are defined and have the right formats.
-        if (!attrKeyRegEx.test(key)) {
+        if (!upaAttrKeyRegEx.test(key)) {
             throw new Exception(
-                "setAttributes(): input is not a valid attribute key"
+                "setAttributes(): input is not a valid UPA attribute key"
             );
         }
         if (!attrValRegEx.test(val)) {
@@ -218,9 +237,9 @@ export function upaf_setAttributes(selector, keyValArr) {
 
 export function upaf_getAttribute(selector, key) {
     // assert that key is defined and has the right format.
-    if (!attrKeyRegEx.test(key)) {
+    if (!upaAttrKeyRegEx.test(key)) {
         throw new Exception(
-            "getAttribute(): input is not a valid attribute key"
+            "getAttribute(): input is not a valid UPA attribute key"
         );
     }
     // get the selected HTML element as a jQuery object.
@@ -239,9 +258,10 @@ export function upaf_getAttributes(selector, keyArr) {
     for (let i = 0; i < keyArr.length; i++) {
         let key = keyValArr[$i];
         // assert that key is defined and has the right format.
-        if (!attrKeyRegEx.test(key)) {
+        if (!upaAttrKeyRegEx.test(key)) {
             throw new Exception(
-                "getAttributes(): input is not a valid attribute key"
+                "getAttributes(): input " + i.toString() +
+                " is not a valid UPA attribute key"
             );
         }
         // get the attribute of the selected HTML element and store it in the
@@ -255,90 +275,108 @@ export function upaf_getAttributes(selector, keyArr) {
 
 
 
-/* Functions to set and get (unique!) IDs of HTML elements */
 
-// TODO: Change this to instead use:
-var idRecord = idRecord ?? [];
+/* Functions to set and get the types of <input> HTML elements */
 
-export function upaf_setID(selector, id) {
+export const legalInputTypes [
+    "button", "checkbox", "color", "date", "file", "hidden", "image",
+    "month", "number", "radio", "range", "reset", "search", "submit",
+    "tel", "text", "time", "url", "week",
+];
+
+export function upaf_setInputType(selector, type) {
     let jqObj = getJQueryObj(selector);
-    // test that id contains only \w characters.
-    if (!/^\w+$/.test(id)) {
+    // test type
+    if (!(type in legalInputTypes)) {
         throw new Exception(
-            "setID(): invalid id pattern (not of /^\\w+$/)"
+            "setInputType(): invalid or illegal type"
         );
     }
-    // test that the id does not already exist.
-    let resultingID = "upai_" + id;
-    if ($('#upaMainFrame #' + resultingID).length > 0) {
-        throw new Exception(
-            "setID(): id is already given to an element"
-        );
-    }
-    // set the id.
-    jqObj[0].id = resultingID;
+    // set the input types of all selected <input> elements.
+    jqObj.filter('input').attr("type", type);
 }
 
-export function upaf_isExistingID(id) {
-    let resultingID = "upai_" + id;
-    return $('#upaMainFrame #' + resultingID).length > 0;
-}
-
-export function upaf_getID(selector) {
+export function upaf_getInputType(selector) {
     let jqObj = getJQueryObj(selector);
-    // if id of the first element in the selection is not set, return false.
-    if (typeof jqObj[0].id === "undefined") {
-        return false;
-    }
-    // return the id of the first element in the selection without the "upai_"
-    // prefix.
-    return jqObj[0].id.substring(5);
+    // return the input type of the first <input> element in the selection.
+    return jqObj.filter('input').attr("type");
 }
 
+// TODO: Add some more functions to set input attributes, such as 'pattern',
+// 'placeholder' and 'list'..
 
 
 
 
+/* Functions to set form actions (to javascript functions) */
 
-
-
-/* A private function to get callback upaf_ functions from user-provided key */
-
-// Note that since this function does not have the upaf_ prefix, it cannot
-// be exported to the final user modules (but only to other developer modules).
-export function verifyFunNameAndGetUPAFunction(funName) {
+// Note that upaf_setFormAction(<selector>, "void") is useful to call even
+// when submission is set to be almost entirely handled by a jQuery event
+// instead.
+export function upaf_setFormAction(selector, funName) {
+    let jqObj = getJQueryObj(selector);
+    // test funName.
     if (!/^[\$\w]+$/.test(funName)) {
         throw new Exception(
-            "getUPAFunction(): function name is not a valid " +
+            "setFormAction(): function name is not a valid " +
             "/^[\\$\\w]+$/ string"
         );
     }
-    let fullFunName = "upaFun_" + funName;
-    if (typeof window[fullFunName] != "function") {
-        throw new Exception(
-            "verifyAndGetUPAFunction(): function " + fullFunName +
-                " is not defined yet"
-        );
+    // if "void" is given as the "funName," set the action attributes for all
+    // selected <form> elements to "javascript:void(0)".
+    if (funName === "void") {
+        jqObj.filter('form').attr("action", "javascript:void(0)");
+    // else set the action attributes to "javascript:upaf_<funName>(<id>),"
+    // where id is either the id of the <form> element, or is "" if the
+    // element does not have any id set.
+    } else {
+        let actionStart = "javascript:upaf_" + funName + "(";
+        jqObj.filter('form').each(function(){
+            var id = "";
+            if (typeof this[0].id === "string") {
+                id = this[0].id.substring(5); // i.e. without the upai_ prefix.
+            }
+            this.attr("action", actionStart + id + ")");
+        });
     }
-    return window[fullFunName];
 }
 
-/* A private function to get a resulting function from key and a data array
- * containing the input parameters.
- **/
-export function getResultingFunction(funName, dataArr) {
-    var fun = verifyFunNameAndGetUPAFunction(funName);
-    return function() {
-        fun.apply(null, dataArr ?? []);
-    };
-}
 
-/* A public function run a upaf_ function pointed to by a key */
 
-export function upaf_runResultingFunction(funName, dataArr) {
-    var fun = verifyFunNameAndGetUPAFunction(funName);
-    fun.apply(null, dataArr);
+
+// TODO: Potentially add some more functions to set HTML attributes..
+
+
+
+
+
+
+
+export const legalInputTypes [
+    "button", "checkbox", "color", "date", "file", "hidden", "image",
+    "month", "number", "radio", "range", "reset", "search", "submit",
+    "tel", "text", "time", "url", "week",
+];
+
+
+// TODO: Find out where to place this function.
+export function upaf_isLegalKeyValAttrPair(tagName, key, val) {
+    switch (key) {
+        case "type":
+            switch (tagName) {
+                case "input":
+                    return legalInputTypes.includes(val);
+            }
+            break;
+        default:
+            return false;
+    }
 }
+// TODO: Add some more functions to set input attributes, such as 'pattern',
+// 'placeholder' and 'list'..
+
+
+
 
 
 
@@ -350,20 +388,20 @@ export function upaf_runResultingFunction(funName, dataArr) {
 /* Some functions to add and remove HTML elements */
 
 /* << addHTML() >>
- * input = (selector, method, content),
+ * input = (selector, method, struct),
  * where
  * method = "append" | "prepend" | "before" | "after",
  * and where
- * content = undefined | contentText | [(tagAttributesContentTuple,)*],
+ * struct = undefined | contentText | [(tagAttributesContentTuple,)*],
  * where
  * tagAttributesContentTuple =
- *     [content] | [tagName, content] | [tagName, attributes, content],
+ *     [struct] | [tagName, struct] | [tagName, attributes, struct],
  * where
  * attributes = undefined | [([key, value],)*].
  **/
-export function upaf_addHTML(selector, method, content) {
+export function upaf_addHTML(selector, method, struct) {
     let jqObj = getJQueryObj(selector);
-    let html = upaf_getHTMLFromStructure(content);
+    let html = upaf_getHTMLFromStructure(struct);
     switch (method) {
         case "append":
         case "prepend":
@@ -379,16 +417,16 @@ export function upaf_addHTML(selector, method, content) {
 }
 
 
-export function upaf_getHTMLFromStructure(content) {
-    // if content is a string, return the converted (HTML safe) string.
-    if (typeof content === "string") {
-        return upaf_convertHTMLSpecialChars(content);
+export function upaf_getHTMLFromStructure(struct) {
+    // if struct is a string, return the converted (HTML safe) string.
+    if (typeof struct === "string") {
+        return upaf_convertHTMLSpecialChars(struct);
     }
-    // if content is undefined or an empty array, return "".
+    // if struct is undefined or an empty array, return "".
     var len;
     if (
-        typeof content === "undefined" ||
-        (len = content.length) == 0
+        typeof struct === "undefined" ||
+        (len = struct.length) == 0
     ) {
         return "";
     }
@@ -397,32 +435,32 @@ export function upaf_getHTMLFromStructure(content) {
     var ret = "";
     for (let i = 0; i < len; i++) {
         // get the variables.
-        var tag, attributes, content;
-        let tupleLen = tagAttributesContentTupleArr[i];
+        var tagName, attributes, content;
+        let tupleLen = struct[i].length;
         if (tupleLen === 3) {
-            tag = tagAttributesContentTupleArr[i][0];
-            attributes = tagAttributesContentTupleArr[i][1];
-            content = tagAttributesContentTupleArr[i][2];
+            tagName = struct[i][0];
+            attributes = struct[i][1];
+            content = struct[i][2];
         } else if (tupleLen === 2) {
-            tag = tagAttributesContentTupleArr[i][0];
-            content = tagAttributesContentTupleArr[i][1];
+            tagName = struct[i][0];
+            content = struct[i][1];
         } else if (tupleLen === 1) {
-            content = tagAttributesContentTupleArr[i][0];
+            content = struct[i][0];
         }
         // if tag input is undefined, simply append the converted content to
         // ret.
-        if (typeof tag === "undefined") {
+        if (typeof tagName === "undefined") {
             ret = ret + upaf_getHTMLFromStructure(content);
             continue;
         }
         // else, test tag input.
-        if (!elementNameRegEx.test(tag)) {
+        if (!elementNameRegEx.test(tagName)) {
             throw new Exception(
-                "getHTML(): unrecognized tag: " + tag.toString()
+                "getHTML(): unrecognized tag name: " + tagName.toString()
             );
         }
         // initialize new HTML element.
-        var htmlElem = document.createElement(tag);
+        var htmlElem = document.createElement(tagName);
         // test each attribute input and add the attribute key--value pair to
         // the new HTML element.
         if (typeof attributes !== "undefined") {
@@ -443,9 +481,28 @@ export function upaf_getHTMLFromStructure(content) {
                         "getHTML(): input contains an invalid attribute value"
                     );
                 }
-                // TODO: implement id setting..
-                // set a new upaa_ attribute for the new HTML element.
-                htmlElem.setAttribute("upaa_" + key, val);
+                // if attribute key starts with '~,' set a new upaa_ attribute
+                // for the new HTML element.
+                if (key.substring(0, 1) === "~") {
+                    htmlElem.setAttribute("upaa_" + key.substring(1), val);
+                } else if (key === "id") {
+                    if (upaf_isExistingID(val)) {
+                        throw new Exception(
+                            "getHTML(): id=\"" + val +
+                            "\" has already been used"
+                        );
+                    }
+                    upaf_recordID(val);
+                    htmlElem.setAttribute("id", val);
+                } else if (upaf_isLegalKeyValAttrPair(tagName, key, val)) {
+                    htmlElem.setAttribute(key, val);
+                } else {
+                    throw new Exception(
+                        "getHTML(): illegal combination of tagName, " +
+                        "attribute key and attribute value at " +
+                        "input[" + i.toString() + "][1][" + j.toString() + "]"
+                    );
+                }
             }
         }
         // test and convert content, and add it inside the new HTML element.
@@ -457,6 +514,12 @@ export function upaf_getHTMLFromStructure(content) {
     // return the resulting HTML string.
     return ret;
 }
+
+// TODO: Make this function:
+export function upaf_getStructureFromHTML(struct) {
+    //TODO..
+}
+
 
 
 export function upaf_convertHTMLSpecialChars(str) {
@@ -500,6 +563,18 @@ export upaf_getOuterHTML(selector) {
     let jqObj = getJQueryObj(selector);
     return jqObj[0].outerHTML;
 }
+
+// TODO: Make these:
+export upaf_getInnerStructure(selector) {
+
+}
+
+export upaf_getOuterStructure(selector) {
+
+}
+
+
+
 
 
 
@@ -793,6 +868,52 @@ export function upaf_removeLastCSS(selector) {
 
 
 
+
+/* A private function to get callback upaf_ functions from user-provided key */
+
+// Note that since this function does not have the upaf_ prefix, it cannot
+// be exported to the final user modules (but only to other developer modules).
+export function verifyFunNameAndGetUPAFunction(funName) {
+    if (!/^[\$\w]+$/.test(funName)) {
+        throw new Exception(
+            "getUPAFunction(): function name is not a valid " +
+            "/^[\\$\\w]+$/ string"
+        );
+    }
+    let fullFunName = "upaFun_" + funName;
+    if (typeof window[fullFunName] != "function") {
+        throw new Exception(
+            "verifyAndGetUPAFunction(): function " + fullFunName +
+                " is not defined yet"
+        );
+    }
+    return window[fullFunName];
+}
+
+/* A private function to get a resulting function from key and a data array
+ * containing the input parameters.
+ **/
+export function getResultingFunction(funName, dataArr) {
+    var fun = verifyFunNameAndGetUPAFunction(funName);
+    return function() {
+        fun.apply(null, dataArr ?? []);
+    };
+}
+
+/* A public function run a upaf_ function pointed to by a key */
+
+export function upaf_runResultingFunction(funName, dataArr) {
+    var fun = verifyFunNameAndGetUPAFunction(funName);
+    fun.apply(null, dataArr);
+}
+
+
+
+
+
+
+
+
 /* Functions to add events to HTML elements */
 
 const jQueryEvents = [
@@ -913,7 +1034,7 @@ export function upaf_visibilityEffect(
     if (
         !(typeof speed === "undefined") &&
         !(speed == ~~speed) &&
-        !(speed in ["slow", "fast"])
+        !(["slow", "fast"].includes(speed))
     ) {
         throw new Exception(
             "visibilityEffect(): invalid speed input " +
@@ -1001,7 +1122,7 @@ export function upaf_animate(
     if (
         !(typeof speed === "undefined") &&
         !(speed == ~~speed) &&
-        !(speed in ["slow", "fast"])
+        !(["slow", "fast"].includes(speed))
     ) {
         throw new Exception(
             "animate(): invalid speed input " +
@@ -1011,7 +1132,7 @@ export function upaf_animate(
     // verify the easing input if one is provided.
     if (
         typeof easing !== "undefined" &&
-        !(easing in ["swing", "linear"])
+        !(["swing", "linear"].includes(easing))
     ) {
         throw new Exception(
             "animate(): invalid easing input " +

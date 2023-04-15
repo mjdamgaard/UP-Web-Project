@@ -65,7 +65,7 @@ export function upaf_followLink(url, urlRegExKey, target) {
     // test target.
     if (
         typeof target !== "undefined" &&
-        !(target in ["_self", "_blank", "_parent", "_top"])
+        !(["_self", "_blank", "_parent", "_top"].includes(target))
     ) {
         throw new Exception(
             "loadLink(): invalid target " +
