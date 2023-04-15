@@ -211,67 +211,6 @@ const attrKeyRegEx =  /^~?\w+$/;
 const upaAttrKeyRegEx =  /^~\w+$/;
 const attrValRegEx =  /^\w+$/;
 
-export function upaf_setUPAAttributes(selector, keyValArr) {
-    // get the selected HTML element as a jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // loop through key value pairs and set the attributes of the HTML element
-    // accordingly.
-    for (let i = 0; i < keyValArr.length; i++) {
-        let key = keyValArr[$i][0];
-        let val = keyValArr[$i][1];
-        // verify that key and val are defined and have the right formats.
-        if (!upaAttrKeyRegEx.test(key)) {
-            throw new Exception(
-                "setAttributes(): input is not a valid UPA attribute key"
-            );
-        }
-        if (!attrValRegEx.test(val)) {
-            throw new Exception(
-                "setAttributes(): input is not a valid attribute value"
-            );
-        }
-        // set the attributes of the selected HTML element.
-        jqObj.attr("upaa_" + key, val);
-    }
-}
-
-export function upaf_getAttribute(selector, key) {
-    // assert that key is defined and has the right format.
-    if (!upaAttrKeyRegEx.test(key)) {
-        throw new Exception(
-            "getAttribute(): input is not a valid UPA attribute key"
-        );
-    }
-    // get the selected HTML element as a jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // return the attribute of the selected HTML element.
-    return jqObj.attr("upaa_" + key);
-}
-
-
-export function upaf_getAttributes(selector, keyArr) {
-    var ret = [];
-    // get the selected HTML element as a jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // loop through the keys in keyArr and get the corresponding attribute
-    // values from the selected HTML element.
-    for (let i = 0; i < keyArr.length; i++) {
-        let key = keyValArr[$i];
-        // assert that key is defined and has the right format.
-        if (!upaAttrKeyRegEx.test(key)) {
-            throw new Exception(
-                "getAttributes(): input " + i.toString() +
-                " is not a valid UPA attribute key"
-            );
-        }
-        // get the attribute of the selected HTML element and store it in the
-        // return array.
-        ret[i] = jqObj.attr("upaa_" + key);
-    }
-    // return an array of the gotten attribute values.
-    return ret;
-}
-
 
 
 
@@ -317,18 +256,22 @@ export function upaf_isLegalKeyValAttrPair(tagName, key, val) {
 // TODO: Add some more attributes, such as 'pattern', 'placeholder' and 'list'..
 
 
-export function setAttributeOfJQueryObj(jqObj, tagName, key, val) {
+
+
+
+
+export function setAttributeOfSingleJQueryObj(jqObj, tagName, key, val) {
     // verify that key and val are defined and have the right
     // formats.
     if (!attrKeyRegEx.test(key)) {
         throw new Exception(
-            "setAttributeOfJQueryObj(): input contains an invalid " +
+            "setAttributeOfSingleJQueryObj(): input contains an invalid " +
             "attribute key"
         );
     }
     if (!attrValRegEx.test(val)) {
         throw new Exception(
-            "setAttributeOfJQueryObj(): input contains an invalid " +
+            "setAttributeOfSingleJQueryObj(): input contains an invalid " +
             "attribute value"
         );
     }
@@ -354,11 +297,68 @@ export function setAttributeOfJQueryObj(jqObj, tagName, key, val) {
         jqObj.attr(key, val);
     } else {
         throw new Exception(
-            "setAttributeOfJQueryObj(): illegal combination of tagName, " +
-            "attribute key and attribute value at " +
-            "input[" + i.toString() + "][1][" + j.toString() + "]"
+            "setAttributeOfSingleJQueryObj(): illegal combination of "
+            "tagName, key and value"
         );
     }
+}
+
+
+
+export function upaf_setAttributes(selector, keyValArr) {
+    // get the selected HTML element as a jQuery object.
+    let jqObj = getJQueryObj(selector);
+    // loop through key value pairs and set the attributes of the HTML element
+    // accordingly.
+    for (let i = 0; i < keyValArr.length; i++) {
+        let key = keyValArr[$i][0];
+        let val = keyValArr[$i][1];
+        // verify that key and val are defined and have the right formats.
+        jqObj.each(function() {
+            setAttributeOfSingleJQueryObj(this, tagName, key, val)
+        });
+    }
+}
+
+export function upaf_getAttribute(selector, key) {
+    // get the selected HTML element as a jQuery object.
+    let jqObj = getJQueryObj(selector);
+    // assert that key is defined and has the right format.
+    if (!attrKeyRegEx.test(key)) {
+        throw new Exception(
+            "getAttribute(): input is not a valid attribute key"
+        );
+    }
+    // replace '~' with 'upaa_' in key.
+    key = key.replaceAll("~", "upaa_")
+    // return the attribute of the first selected HTML element.
+    return jqObj.first().attr(key);
+}
+
+
+export function upaf_getAttributes(selector, keyArr) {
+    var ret = [];
+    // get the selected HTML element as a jQuery object.
+    let jqObj = getJQueryObj(selector);
+    // loop through the keys in keyArr and get the corresponding attribute
+    // values from the selected HTML element.
+    for (let i = 0; i < keyArr.length; i++) {
+        let key = keyValArr[$i];
+        // assert that key is defined and has the right format.
+        if (!attrKeyRegEx.test(key)) {
+            throw new Exception(
+                "getAttributes(): input " + i.toString() +
+                " is not a valid attribute key"
+            );
+        }
+        // replace '~' with 'upaa_' in key.
+        key = key.replaceAll("~", "upaa_")
+        // get the attribute of the selected HTML element and store it in the
+        // return array.
+        ret[i] = jqObj.first().attr(key);
+    }
+    // return an array of the gotten attribute values.
+    return ret;
 }
 
 
@@ -440,7 +440,7 @@ export function getHTMLFromStructureAndRecordIDs(struct) {
             );
         }
         // initialize new HTML element.
-        var htmlElem = $("<" + tagName + "></" + tagName + ">");
+        var htmlJQObj = $("<" + tagName + "></" + tagName + ">");
         // test each attribute input and add the attribute key--value pair to
         // the new HTML element.
         if (typeof attributes !== "undefined") {
@@ -449,45 +449,8 @@ export function getHTMLFromStructureAndRecordIDs(struct) {
                 // get attribute key and value.
                 let key = attributes[j][0];
                 let val = attributes[j][1];
-                // verify that key and val are defined and have the right
-                // formats.
-                if (!attrKeyRegEx.test(key)) {
-                    throw new Exception(
-                        "getHTML(): input contains an invalid attribute key"
-                    );
-                }
-                if (!attrValRegEx.test(val)) {
-                    throw new Exception(
-                        "getHTML(): input contains an invalid attribute value"
-                    );
-                }
-                // if attribute key starts with '~,' set a new upaa_ attribute
-                // for the new HTML element.
-                if (key.substring(0, 1) === "~") {
-                    htmlElem.attr("upaa_" + key.substring(1), val);
-                // if it is instead an id, test that it has not already been
-                // used and make sure to record it. (Let's not care about
-                // race conditions.)
-                } else if (key === "id") {
-                    if (upaf_isExistingID(val)) {
-                        throw new Exception(
-                            "getHTML(): id=\"" + val +
-                            "\" has already been used"
-                        );
-                    }
-                    upaf_recordID(val);
-                    htmlElem.attr("id", val);
-                // else, test that it is one of the allowed nagName--key--val
-                // tuples.
-                } else if (upaf_isLegalKeyValAttrPair(tagName, key, val)) {
-                    htmlElem.attr(key, val);
-                } else {
-                    throw new Exception(
-                        "getHTML(): illegal combination of tagName, " +
-                        "attribute key and attribute value at " +
-                        "input[" + i.toString() + "][1][" + j.toString() + "]"
-                    );
-                }
+                // try to set key="val" for htmlJQObj.
+                setAttributeOfSingleJQueryObj(htmlJQObj, tagName, key, val);
             }
         }
         // test and convert content, and add it inside the new HTML element.
@@ -497,11 +460,6 @@ export function getHTMLFromStructureAndRecordIDs(struct) {
     }
     // return the resulting HTML string.
     return ret;
-}
-
-// TODO: Make this function:
-export function upaf_getStructureFromHTML(struct) {
-    //TODO..
 }
 
 
@@ -521,6 +479,7 @@ export function upaf_convertHTMLSpecialChars(str) {
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;");
 }
+
 
 
 
@@ -546,6 +505,14 @@ export upaf_getInnerHTML(selector) {
 export upaf_getOuterHTML(selector) {
     let jqObj = getJQueryObj(selector);
     return jqObj[0].outerHTML;
+}
+
+
+
+
+// TODO: Make this function:
+export function upaf_getStructureFromHTML(struct) {
+    //TODO..
 }
 
 // TODO: Make these:
