@@ -1,4 +1,4 @@
-
+recordID
 /* Some developer functions, both private and public */
 
 
@@ -157,7 +157,6 @@ export function getJQueryObj(selector) {
 
 /* Functions to set and get (unique!) IDs of HTML elements */
 
-// TODO: Change this to instead use:
 var idRecord = idRecord ?? [];
 
 export function upaf_setID(selector, id) {
@@ -169,23 +168,53 @@ export function upaf_setID(selector, id) {
         );
     }
     // test that id is unused. (Let's not care to much about race conditions.)
-    if (id in inRecord) {
+    if (upaf_isExistingID(id)) {
         throw new Exception(
             "setID(): id has already been used"
         );
     }
     // record id.
-    idRecord.push(id);
+    recordID(id);
     // set the (prefixed) id of the first element in the selection.
     jqObj[0].id = "upai_" + id;
 }
 
 export function upaf_isExistingID(id) {
-    return (id in idRecord);
+    return idRecord.includes(id);
 }
 
-export function upaf_recordID(id) {
-    idRecord.push(id);
+export function recordID(id) {
+    if (!idRecord.includes(id))
+        idRecord.push(id);
+    }
+}
+
+export function removeIDRecord(id) {
+    let i = idRecord.findIndex(id);
+    if (i >= 0) {
+        idRecord[i] = null;
+    }
+}
+
+export function removeAllInnerIDRecords(jqObj) {
+    // for each descendent with an id, remove the record of the id.
+    jqObj.find('[id^=upai_]').each(function(){
+        let id = this.attr("id").substring(5);
+        removeIDRecord(id);
+    });
+}
+
+export function removeAllIDRecords(jqObj) {
+    // for each descendent with an id, remove the record of that id.
+    jqObj.find('[id^=upai]').each(function(){
+        let id = this.attr("id").substring(5);
+        removeIDRecord(id);
+    });
+    // for each selected element with an id, remove the record of that id.
+    jqObj.filter('[id^=upai]').each(function(){
+        let id = this.attr("id").substring(5);
+        removeIDRecord(id);
+    });
 }
 
 export function upaf_getID(selector) {
@@ -289,7 +318,7 @@ export function setAttributeOfSingleJQueryObj(jqObj, tagName, key, val) {
                 "\" has already been used"
             );
         }
-        upaf_recordID(val);
+        recordID(val);
         jqObj.attr("id", val);
     // else, test that it is one of the allowed nagName--key--val
     // tuples.
@@ -483,13 +512,19 @@ export function upaf_convertHTMLSpecialChars(str) {
 
 
 
-export function upaf_removeHTML(selector, method, content) {
+export function upaf_removeHTML(selector) {
     let jqObj = getJQueryObj(selector);
+    // remove all id in the selction from the idRecord.
+    removeAllIDRecords(jqObj)
+    // remove all elements in the selction.
     jqObj.remove();
 }
 
-export function upaf_emptyHTML(selector, method, content) {
+export function upaf_emptyHTML(selector) {
     let jqObj = getJQueryObj(selector);
+    // remove all id in the descendents of the selction from the idRecord.
+    removeAllInnerIDRecords(jqObj)
+    // remove all elements in the selction.
     jqObj.empty();
 }
 
