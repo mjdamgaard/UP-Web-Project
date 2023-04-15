@@ -175,6 +175,9 @@ export function testFunIdentArrAndPrependUPAFPrefix(funIdentList) {
 /* Functions to load images into the UPA */
 
 export function upaf_loadImage(selector, binID, format, altText, userID) {
+    if (binID === "b0") {
+        // add null src to <image> elements..
+    }
     let data = {bid: binID, f: format, uid: userID}
     // TODO..
 }

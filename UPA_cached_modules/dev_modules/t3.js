@@ -1,7 +1,7 @@
 
 /* Functions to input ratings and insert terms */
 
-export upaf_rate(userID, subjID, relID, objID, rating) {
+export upaf_uploadRating(userID, subjID, relID, objID, rating) {
     // request that user is authenticated for
     AuthRequestor.authForRate(userID);
     // initialize the input request.
@@ -15,7 +15,7 @@ export upaf_rate(userID, subjID, relID, objID, rating) {
 }
 
 
-export upaf_insertSemanticTerm(type, userID, catID, str) {
+export upaf_uploadSemanticTerm(type, userID, catID, str) {
     // request that user is authenticated for
     AuthRequestor.authForInsert(userID);
     // initialize the input request according to the chosen term type.
@@ -46,21 +46,21 @@ export upaf_insertSemanticTerm(type, userID, catID, str) {
     return [resObj.outID, resObj.exitCode];
 }
 
-export upaf_insertCat(userID, superCatID, title) {
-    return upaf_insertSemanticTerm("cat", userID, superCatID, title);
+export upaf_uploadCat(userID, superCatID, title) {
+    return upaf_uploadSemanticTerm("cat", userID, superCatID, title);
 }
 
-export upaf_insertETerm(userID, catID, title) {
-    return upaf_insertSemanticTerm("eTerm", userID, catID, title);
+export upaf_uploadETerm(userID, catID, title) {
+    return upaf_uploadSemanticTerm("eTerm", userID, catID, title);
 }
 
-export upaf_insertRel(userID, subjCatID, objNoun) {
-    return upaf_insertSemanticTerm("rel", userID, subjCatID, objNoun);
+export upaf_uploadRel(userID, subjCatID, objNoun) {
+    return upaf_uploadSemanticTerm("rel", userID, subjCatID, objNoun);
 }
 
 
 
-export upaf_insertText(userID, str) {
+export upaf_uploadText(userID, str) {
     // request that user is authenticated for
     AuthRequestor.authForInsert(userID);
     // initialize the input request according to the chosen term type.
@@ -71,7 +71,7 @@ export upaf_insertText(userID, str) {
     return [resObj.outID, resObj.exitCode];
 }
 
-export upaf_insertBinary(userID, bin) {
+export upaf_uploadBinary(userID, bin) {
     // request that user is authenticated for
     AuthRequestor.authForInsert(userID);
     // initialize the input request according to the chosen term type.
@@ -88,17 +88,21 @@ export upaf_insertBinary(userID, bin) {
 
 
 
-/* Functions to verify and insert new scripts */
-
-// TODO..
-
-
-
-
-
-
-
-
 /* Functions to query the semantic database */
 
 // TODO.
+// Hm, and I'll let it be entirely the users' *(of this API) responsibility
+// to filter the content for the UPA users, right?.. ..Yes, of course..
+
+
+
+
+
+
+
+
+
+
+/* Functions to verify and insert new scripts */
+
+// TODO..
