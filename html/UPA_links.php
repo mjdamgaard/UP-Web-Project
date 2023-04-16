@@ -1,5 +1,18 @@
 <?php
 
+/* At this point (and perhaps it will remain that way), this server program
+ * is suppoesed to be called upaf_cacheURLRegEx() specifically, located in
+ * t4.js in the moment of writing. The responsibility of this program is then
+ * to first of all look up a setID and potentially a patID for the given user,
+ * meaning that if the user has rated a setID and/or a patID above a certain
+ * threshold for certain relations, then the highest rated ones will be chosen,
+ * and otherwise some standard ones will be chosen. The chosen setID represents
+ * a set of whitelisted URL RegEx patterns, and pattID represents (if it is
+ * p0) a blacklist pattern, which can add some final user preferences on top
+ * of the chosen set. ..Come to think of it, let us say that two patIDs are
+ * looked up: a blacklist pattern and also a whitelist pattern, which.. Hm..
+ **/
+
 $err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";
 require_once $err_path . "errors.php";
 
@@ -8,62 +21,5 @@ require_once $user_input_path . "InputVerifier.php";
 
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
 require_once $db_io_path . "DBConnector.php";
-require_once $db_io_path . "DBQuerier.php";
 
-$UPA_cached_modules_path = $_SERVER['DOCUMENT_ROOT'] .
-    "/../UPA_cached_modules/";
-$UPA_dev_modules_path = $UPA_cached_modules_path . "dev_modules/";
-
-
-// modules can only be GET-gotten.
-// if ($_SERVER["REQUEST_METHOD"] != "GET") {
-//     $_POST = $_GET;
-// }
-
-// modules can only be GET-gotten.
-$textID = "";
-if (!isset($_GET["id"])) {
-    header('Content-Type: text/json');
-    echoTypeErrorJSONAndExit("No text ID (id) specified");
-} else {
-    $textID = $_GET["id"];
-}
-
-// verify the input text ID.
-InputVerifier::verifyType($textID, "textID", "id");
-
-// array of text IDs of legal developer-made modules.
-$devModuleIDs = array (
-    "t1", "tA" //TODO: Change these to match the text IDs in the database of the
-    // developer-made modules.
-);
-
-$devModuleIDPatt =
-    "/^((" .
-        implode(")|(", $devModuleIDs) .
-    "))$/";
-
-// if the text ID matches the ID of a developer-made module, change the header
-// to that module
-if (preg_match($devModuleIDPatt, $textID)) {
-    header('Content-Type: text/javascript');
-    echo file_get_contents($UPA_dev_modules_path . $textID . ".js");
-    exit;
-} else {
-    //TODO: Implement a querier that get texts from the database that are rated
-    // as safe by a certain native user and returns them without converting
-    // any characters (so without htmlspecialchars()).
-    //TODO: Remove the implementation below which does not check the returned
-    // texts at all!
-    // get connection.
-    $conn = DBConnector::getConnectionOrDie();
-    // define the parameters used to get the (unsanitized!) text.
-    $sqlKey = "text";
-    $paramValArr = array($textID);
-    $res = DBQuerier::query($conn, $sqlKey, $paramValArr);
-    // return the text as is. //TODO: Is is important that I change this impl.
-    header('Content-Type: text/javascript');
-    echo $res;
-    exit;
-}
 ?>
