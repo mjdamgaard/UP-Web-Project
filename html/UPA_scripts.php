@@ -1,17 +1,18 @@
 <?php
 
 // Set the Content-Type HTTP header to text/json for now.
-header('Content-Type: text/json');
+// header('Content-Type: text/json');
+header('Content-Type: text/javascript');
 
 $err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";
 require_once $err_path . "errors.php";
 
 $user_input_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/user_input/";
+require_once $user_input_path . "InputGetter.php";
 require_once $user_input_path . "InputVerifier.php";
 
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
 require_once $db_io_path . "DBConnector.php";
-require_once $db_io_path . "DBQuerier.php";
 
 $UPA_cached_modules_path = $_SERVER['DOCUMENT_ROOT'] .
     "/../UPA_cached_modules/";
@@ -24,6 +25,7 @@ if ($_SERVER["REQUEST_METHOD"] != "GET") {
         "Only the GET HTTP method is allowed script requests"
     );
 }
+$_POST = $_GET;
 
 
 $sql = "CALL selectText (?)";

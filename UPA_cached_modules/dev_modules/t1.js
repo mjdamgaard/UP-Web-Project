@@ -1,4 +1,4 @@
-recordID
+
 /* Some developer functions, both private and public */
 
 
@@ -31,28 +31,27 @@ const elementNamePattern =
         elementNames.join(")|(") +
     "))";
 
-const elementNameRegEx = new RegEx(
+const elementNameRegEx = new RegExp(
     "/^(" +
         elementNamePattern +
     ")$/"
 );
 
-export const pseudoClasses =
-    [ +
-        "first", "last", "even", "odd",
-        "[(first)(last)(only)]\\-[(child)(of\\-type)]",
-        "nth\\-(last\\-)?[(child)(of\\-type)]\\([1-9][0-9]*\\)",
-        "eq\\((0|[1-9][0-9]*)\\)",
-        "[(gt)(lt)]\\(([1-9][0-9]*)\\)",
-        "header", "animated", "focus", "empty",
-        // "parent",
-        "hidden",
-        "visible", "input", "text", "password", "radio", "checkbox",
-        "submit", "reset", "button", "image", "file",
-        "enabled", "diabled", "selected", "checked",
-        // "lang\\(\\w+(\\-\\w+)*\\)",
-        // TODO: add more pseudo classes. (maybe)
-    ];
+export const pseudoClasses = [
+    "first", "last", "even", "odd",
+    "[(first)(last)(only)]\\-[(child)(of\\-type)]",
+    "nth\\-(last\\-)?[(child)(of\\-type)]\\([1-9][0-9]*\\)",
+    "eq\\((0|[1-9][0-9]*)\\)",
+    "[(gt)(lt)]\\(([1-9][0-9]*)\\)",
+    "header", "animated", "focus", "empty",
+    // "parent",
+    "hidden",
+    "visible", "input", "text", "password", "radio", "checkbox",
+    "submit", "reset", "button", "image", "file",
+    "enabled", "diabled", "selected", "checked",
+    // "lang\\(\\w+(\\-\\w+)*\\)",
+    // TODO: add more pseudo classes. (maybe)
+];
 
 const pseudoClassPattern =
     ":((" +
@@ -85,7 +84,7 @@ const combinatorPattern = "[ >~\\+]";
 const compoundSelectorPattern =
     "((" +
         "\\*" +
-    ")|("
+    ")|(" +
         elementNamePattern + "?" +
             "((" +
             //     classSelectorPattern +
@@ -111,10 +110,9 @@ const selectorListPattern =
         whitespacePattern + "," + whitespacePattern + complexSelectorPattern +
     ")*";
 
+
 export const selectorRegex = new RegExp(
     "/^((" +
-    //     "\\$\\w+" +
-    // ")|(" +
         "#\\w+" +
     ")|(" +
         selectorListPattern +
@@ -188,7 +186,7 @@ export function upaf_isExistingID(id) {
 }
 
 export function recordID(id) {
-    if (!idRecord.includes(id))
+    if (!idRecord.includes(id)) {
         idRecord.push(id);
     }
 }
@@ -254,14 +252,14 @@ const attrValRegEx =  /^\w+$/;
 
 
 
-export const legalInputTypes [
+export const legalInputTypes = [
     "button", "checkbox", "color", "date", "file", "hidden", "image",
     "month", "number", "radio", "range", "reset", "search", "submit",
     "tel", "text", "time", "url", "week",
 ];
 
 export const legalFormActionRegEx =
-    /^javascript:[(void\(0\))(upaf_[\$\w]+\(\w*\))]$/;
+    /^javascript:((void\(0\))|(upaf_[\$\w]+\(\w*\)))$/;
 
 // TODO: Find out where to place this function.
 export function upaf_isLegalKeyValAttrPair(tagName, key, val) {
@@ -330,7 +328,7 @@ export function setAttributeOfSingleJQueryObj(jqObj, tagName, key, val) {
         jqObj.attr(key, val);
     } else {
         throw new Exception(
-            "setAttributeOfSingleJQueryObj(): illegal combination of "
+            "setAttributeOfSingleJQueryObj(): illegal combination of " +
             "tagName, key and value"
         );
     }
@@ -553,12 +551,12 @@ export function upaf_emptyHTML(selector) {
 
 /* Function to get inner and outer HTML (of the first matched element only) */
 
-export upaf_getInnerHTML(selector) {
+export function upaf_getInnerHTML(selector) {
     let jqObj = getJQueryObj(selector);
     return jqObj[0].innerHTML; // (I don't know if this works in I.E. browsers.)
 }
 
-export upaf_getOuterHTML(selector) {
+export function upaf_getOuterHTML(selector) {
     let jqObj = getJQueryObj(selector);
     return jqObj[0].outerHTML;
 }
@@ -572,11 +570,11 @@ export function upaf_getStructureFromHTML(struct) {
 }
 
 // TODO: Make these:
-export upaf_getInnerStructure(selector) {
+export function upaf_getInnerStructure(selector) {
 
 }
 
-export upaf_getOuterStructure(selector) {
+export function upaf_getOuterStructure(selector) {
 
 }
 
@@ -692,10 +690,10 @@ export const cssUnitPatterns = [
     "cq[whib(min)(max)]",
     "cm", "mm", "Q", "in", "pc", "pt", "px",
     "deg", "grad", "rad", "turn",
-    "s", "ms", "Hz", "kHz"
+    "s", "ms", "Hz", "kHz",
     "flex",
     "dpi", "dpcm", "dppx",
-    "%"
+    "%",
 ];
 
 const cssUnitPattern =
@@ -715,7 +713,7 @@ export const cssNumericRegEx = new RegExp(
 
 
 export const cssHexColorPattern =
-    "#[([0-9a-fA-F]{3,4})([0-9a-fA-F]{6})([0-9a-fA-F]{8})]";
+    "#([0-9a-fA-F]{3,4})|([0-9a-fA-F]{6})|([0-9a-fA-F]{8})";
 
 export const cssHexColorRegEx = new RegExp(
     "/^" +
@@ -791,7 +789,7 @@ export const cssLegalKeywordValues = [
     "not-allowed",
     "horizontal", "vertical",
     "farthest-corner", "closest-side", "closest-corner", "farthest-side",
-    "at" // this is not actually a *value* keyword.
+    "at", // this is not actually a *value* keyword.
     "normal", "reverse", "alternate", "alternate-reverse",
     "forwards", "backwards",
     "infinite", "example",
@@ -804,7 +802,6 @@ export const cssLegalKeywordValuesPattern =
         cssLegalKeywordValues.join(")|(") +
     "))";
 
-export
 
 
 export const cssACombinedValuePattern =
@@ -841,7 +838,10 @@ export const cssAFunctionalValuePattern =
 
 export const cssAComplexRegEx = new RegExp(
     "/^(" +
-        "(" + cssAComplexValuePattern + "|" + cssAFunctionalValuePattern + ")+"
+        "(" +
+            cssAComplexValuePattern + "|" +
+            cssAFunctionalValuePattern +
+        ")+" +
     ")$/"
 );
 
@@ -1144,7 +1144,7 @@ export function upaf_visibilityEffect(
     // "fadeTo".
     if (
         effectType === "fadeTo" &&
-        !/^[01(0?\.[0-9]+)]$/.test(opacity)
+        !/^0|1|(0?\.[0-9]+)$/.test(opacity)
     ) {
         throw new Exception(
             "visibilityEffect(): invalid opacity input " +
@@ -1190,7 +1190,7 @@ export const cssCCasePropertiesForAnimate = [
 
 export const cssCCasePropertiesForAnimateRegEx = new RegExp(
     "/^((" +
-        cssPropertiesForAnimate.join(")|(") +
+        cssCCasePropertiesForAnimate.join(")|(") +
     "))$/"
 );
 

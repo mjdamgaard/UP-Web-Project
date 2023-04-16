@@ -38,7 +38,7 @@ require $_SERVER['DOCUMENT_ROOT'] . "/UPA.php";
 <!-- Tests -->
 <script>
 
-console.log(~~"12367");
+// console.log(~~"12367");
 
 </script>
 

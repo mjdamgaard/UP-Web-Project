@@ -65,12 +65,13 @@ $mainModuleID = "tA";
 // Also place the script that imports and runs the chosen UPA main module in
 // this div.
 ?>
+<div id="protectedRatingBuffer"></div>
 <div id="upaMainFrame"></div>
 <script id="upaMainFunLoader" type="module">
     // import the chosen UPA main module.
     import {
         upaf_main
-    } from "./UPA_modules.php?id=<?php echo $mainModuleID; ?>";
+    } from "./UPA_scripts.php?id=<?php echo $mainModuleID; ?>";
     // run the main function from that module right away.
     upaf_main(<?php
         echo '"' . $preferenceUserID . '", "' . $termID.'", "' . $userID . '"';
