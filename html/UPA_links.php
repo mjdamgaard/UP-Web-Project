@@ -15,7 +15,14 @@
  * The set that this program looks up is therefore mainly intended an initial
  * filter to prevent links to malicious and/or scamming sites. ..Oh wait, but
  * the UPA can in priciple just change the mentioned ratings, so how to we
- * prevent it from doing that?.. 
+ * prevent it from doing that?.. ..Keep account of a set of protected
+ * releations..? ..Sounds like a decent solution.. ..Hm, shouldn't I then just
+ * pass a relation along with authForRate()..? ..Yes. And I should btw also
+ * make sure to include a window outside of the UPA where users can see and
+ * confirm recent ratings.. ..Ah, or maybe I should just prevent rating of
+ * the protected relations in the UPA, but make it so that the UPA can send
+ * rating data to said outside window --- only one rating at a time! --- which
+ * the user can then confirm and send onward from there..
  **/
 
 $err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";
