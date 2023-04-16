@@ -9,9 +9,9 @@ export upaf_uploadRating(userID, subjID, relID, objID, rating) {
         userID, subjID, relID, objID, rating
     );
     // request inputting the rating and get the result containing an exit code.
-    let resObj = JSON.parse($.getJSON("input_handler.php", data).responseText);
+    let res = JSON.parse($.getJSON("input_handler.php", data).responseText);
     // return the exit code.
-    return resObj.exitCode;
+    return res[1];
 }
 
 
@@ -41,9 +41,9 @@ export upaf_uploadSemanticTerm(type, userID, catID, str) {
     // depending on whether an identical term already exist in the database. If
     // the exit code is 0, outID is a new ID, and if it is 1, outID is the ID
     // of the existing identical term.
-    let resObj = JSON.parse($.getJSON("input_handler.php", data).responseText);
-    // return the exit code.
-    return [resObj.outID, resObj.exitCode];
+    let res = JSON.parse($.getJSON("input_handler.php", data).responseText);
+    // return [outID, exit code].
+    return res;
 }
 
 export upaf_uploadCat(userID, superCatID, title) {
@@ -66,9 +66,9 @@ export upaf_uploadText(userID, str) {
     // initialize the input request according to the chosen term type.
     var data = new InputDataConstructors.TextReqData(userID, str);
     // request insertion of the text term and get the result co... --"--.
-    let resObj = JSON.parse($.getJSON("input_handler.php", data).responseText);
-    // return the exit code.
-    return [resObj.outID, resObj.exitCode];
+    let res = JSON.parse($.getJSON("input_handler.php", data).responseText);
+    // return [outID, exit code].
+    return res;
 }
 
 export upaf_uploadBinary(userID, bin) {
@@ -77,9 +77,9 @@ export upaf_uploadBinary(userID, bin) {
     // initialize the input request according to the chosen term type.
     var data = new InputDataConstructors.BinReqData(userID, bin);
     // request insertion of the binary term and get the result co... --"--.
-    let resObj = JSON.parse($.getJSON("input_handler.php", data).responseText);
-    // return the exit code.
-    return [resObj.outID, resObj.exitCode];
+    let res = JSON.parse($.getJSON("input_handler.php", data).responseText);
+    // return [outID, exit code].
+    return res;
 }
 
 
@@ -90,11 +90,98 @@ export upaf_uploadBinary(userID, bin) {
 
 /* Functions to query the semantic database */
 
-// TODO.
-// Hm, and I'll let it be entirely the users' *(of this API) responsibility
-// to filter the content for the UPA users, right?.. ..Yes, of course..
+export upaf_querySet(setID, ratMin, ratMax, maxNum, offset, isAscending) {
+    let data = new QueryDataConstructors.SetReqData(
+        setID, ratMin, ratMax, maxNum, offset, isAscending
+    );
+    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
+    // return multidimensional array with columns: (ratingVal, objID).
+    return res;
+}
+
+export upaf_querySetInfo(setID) {
+    let data = new QueryDataConstructors.SetInfoReqData(
+        setID
+    );
+    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
+    // return array with elements: (userID, subjID, relID, elemNum).
+    return res;
+}
+
+export upaf_querySetInfoFromSecKey(userID, subjID, relID) {
+    let data = new QueryDataConstructors.SetInfoSecKeyReqData(
+        userID, subjID, relID
+    );
+    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
+    // return array with elements: (setID, elemNum).
+    return res;
+}
 
 
+export upaf_queryRating(objID, setID) {
+    let data = new QueryDataConstructors.RatReqData(
+        objID, setID
+    );
+    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
+    // return ratingVal.
+    return res[0];
+}
+
+export upaf_queryCatDef(catID) {
+    let data = new QueryDataConstructors.CatDefReqData(
+        catID
+    );
+    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
+    // return array with elements: (catTitle, superCatID).
+    return res;
+}
+
+export upaf_queryETermDef(eTermID) {
+    let data = new QueryDataConstructors.ETermDefReqData(
+        eTermID
+    );
+    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
+    // return array with elements: (eTermTitle, catID).
+    return res;
+}
+
+export upaf_queryRelDef(relID) {
+    let data = new QueryDataConstructors.RelDefReqData(
+        relID
+    );
+    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
+    // return array with elements: (objNoun, subjCatID).
+    return res;
+}
+
+export upaf_querySuperCatDefs(catID) {
+    let data = new QueryDataConstructors.SuperCatsReqData(
+        catID
+    );
+    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
+    // return multidimensional array with columns: (catTitle, superCatID).
+    return res;
+}
+
+export upaf_queryText(textID) {
+    let data = new QueryDataConstructors.TextReqData(
+        textID
+    );
+    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
+    // return text.
+    return res[0];
+}
+
+export upaf_queryBinary(binID) {
+    let data = new QueryDataConstructors.BinaryReqData(
+        binID
+    );
+    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
+    // return binary.
+    return res[0];
+}
+
+// TODO: Add more query requests.
 
 
 

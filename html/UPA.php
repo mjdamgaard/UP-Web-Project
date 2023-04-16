@@ -22,7 +22,7 @@ $paramValArr = InputGetter::getParams($paramNameArr);
 InputVerifier::verifyTypes($paramValArr, $typeArr, $paramNameArr);
 $termID = $paramValArr[0];
 $userID = $paramValArr[1];
-$preferenceUserOrGroupID = $paramValArr[2];
+$preferenceUserID = $paramValArr[2];
 
 
 // authenticate the user make sure that the uid is either one that user
@@ -56,7 +56,8 @@ $mainModuleID = "tA";
 // responsibility of UPA_modules.php instead!
 
 
-// TODO: Also add a Content Security Policy (CSP), btw.
+// TODO: Also add a Content Security Policy (CSP), btw. ..Hm, perhaps not,
+// except maybe in the beginning, of course.. Yeah..
 
 
 // echo the div that the UPA scripts are allowed to change internally (as well
@@ -71,39 +72,7 @@ $mainModuleID = "tA";
         upaf_main
     } from "./UPA_modules.php?id=<?php echo $mainModuleID; ?>";
     // run the main function from that module right away.
-    upaf_main(
-        <?php
-        echo '"'.$userID.'", "'.$termID.'", "'.$preferenceUserOrGroupID.'"';
-        ?>
-    );
+    upaf_main(<?php
+        echo '"' . $preferenceUserID . '", "' . $termID.'", "' . $userID . '"';
+    ?>);
 </script>
-<!--
-    TODO: I think I actually have to implement these queues in a semi-private
-    database instead (not generally open to the public, but not safe from
-    users sniffing.. (via UPA functions).. Hm, or maybe not..).. ..No, cause
-    the UPA can only output data.. well, no.. No, cause I will allow
-    whitelisted hyperlinks, which means that.. well, that users *might* in
-    principle be able to extract this data. But anyway, this doesn't matter
-    much; in conclusion, I can call it a "semi-private database"..
-    ..Wait is this even worth the effort?.. Can't I just let the UPA input and
-    insert freely..? ..Hm.. ..Ah, whatever I do, I should make it so that users
-    have to elevate their privileges in order to insert terms!.. ..And ratings
-    can be undone as soon as I implement queries for RecentInputs, so therefore,
-    shouldn't I just make the UPA free to input ratings and insert terms, as
-    long as the user is logged in with high enough privileges to do so?:)..
-    ..Yes, let me say that.
--->
-<!-- <script  id="ratingQueueHandler">
-    // TODO: Implement a function that listens to new ratings.
-    // In the beginning, I will just let this handler sent the ratings straight
-    // to the SDB right away, without further ado. // No! Users should always
-    // have to manually confirm a list of new ratings.
-</script>
-<script  id="insertQueueHandler">
-    // TODO: Implement a function that listens to new term insert requests.
-    // In the beginning, I might implement this handler such that the user
-    // has to actively confirm new inserts. But I might also just make it like
-    // ratingQueueHandler in the very beginning.. // No! I should implement it
-    // in the beginning (and keep it like that) such that users should always
-    // have to manually confirm a list of new ratings.
-</script> -->
