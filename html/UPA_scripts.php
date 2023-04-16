@@ -1,5 +1,8 @@
 <?php
 
+// Set the Content-Type HTTP header to text/json for now.
+header('Content-Type: text/json');
+
 $err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";
 require_once $err_path . "errors.php";
 
@@ -15,26 +18,33 @@ $UPA_cached_modules_path = $_SERVER['DOCUMENT_ROOT'] .
 $UPA_dev_modules_path = $UPA_cached_modules_path . "dev_modules/";
 
 
-// modules can only be GET-gotten.
-// if ($_SERVER["REQUEST_METHOD"] != "GET") {
-//     $_POST = $_GET;
-// }
-
-// modules can only be GET-gotten.
-$textID = "";
-if (!isset($_GET["id"])) {
-    header('Content-Type: text/json');
-    echoTypeErrorJSONAndExit("No text ID (id) specified");
-} else {
-    $textID = $_GET["id"];
+if ($_SERVER["REQUEST_METHOD"] != "GET") {
+    // header('Content-Type: text/json');
+    echoErrorJSONAndExit(
+        "Only the GET HTTP method is allowed script requests"
+    );
 }
 
-// verify the input text ID.
-InputVerifier::verifyType($textID, "textID", "id");
+
+$sql = "CALL selectText (?)";
+$paramNameArr = array("id");
+$typeArr = array(
+    "textID"
+);
+
+// get inputs.
+$paramValArr = InputGetter::getParams($paramNameArr);
+// verify inputs.
+InputVerifier::verifyTypes($paramValArr, $typeArr, $paramNameArr);
+// store input in appropriate variable.
+$textID = $paramValArr[0];
+
+
 
 // array of text IDs of legal developer-made modules.
 $devModuleIDs = array (
-    "t1", "tA" //TODO: Change these to match the text IDs in the database of the
+    "t[1-5]", "tA"
+    //TODO: Change these to match the text IDs in the database of the
     // developer-made modules.
 );
 
@@ -57,13 +67,14 @@ if (preg_match($devModuleIDPatt, $textID)) {
     // texts at all!
     // get connection.
     $conn = DBConnector::getConnectionOrDie();
-    // define the parameters used to get the (unsanitized!) text.
-    $sqlKey = "text";
-    $paramValArr = array($textID);
-    $res = DBQuerier::query($conn, $sqlKey, $paramValArr);
-    // return the text as is. //TODO: Is is important that I change this impl.
+    // prepare input MySQLi statement.
+    $stmt = $conn->prepare($sql);
+    // execute query statement.
+    DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
+    // fetch the result as an numeric array containing the text.
+    $res = $stmt->get_result()->fetch_all();
+    // finally set the HTTP content type to javascript echo the text.
     header('Content-Type: text/javascript');
-    echo $res;
-    exit;
+    echo $res[0]; //NOTE: No checks have been made in ths dummy implementation.
 }
 ?>

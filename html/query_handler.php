@@ -1,5 +1,7 @@
 <?php
 
+header("Content-Type: text/json");
+
 $err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";
 require_once $err_path . "errors.php";
 
@@ -152,8 +154,6 @@ $stmt = $conn->prepare($sql);
 DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 // fetch the result as a numeric array.
 $res = $stmt->get_result()->fetch_all();
-// set the Content-Type header to json.
-header("Content-Type: text/json");
 // finally echo the JSON-encoded numeric array, containing e.g. the
 // columns: ("ratVal", "objID") for $reqType == "S", etc., so look at
 // the comments above for what the resulting arrays will contain.

@@ -1,5 +1,7 @@
 <?php
 
+header("Content-Type: text/json");
+
 $err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";
 require_once $err_path . "errors.php";
 

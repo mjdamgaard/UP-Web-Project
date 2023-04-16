@@ -27,6 +27,8 @@
 // any actual verification (so no lookup of that whitelist set). TODO: Change
 // this to an actual implementation.
 
+header('Content-Type: text/json');
+
 $err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";
 require_once $err_path . "errors.php";
 
@@ -39,6 +41,7 @@ require_once $db_io_path . "DBConnector.php";
 
 
 if ($_SERVER["REQUEST_METHOD"] != "POST") {
+    // header('Content-Type: text/json');
     echoErrorJSONAndExit(
         "Only the POST HTTP method is allowed URL pattern requests"
     );
@@ -55,8 +58,7 @@ $typeArr = array(
 $paramValArr = InputGetter::getParams($paramNameArr);
 // verify inputs.
 InputVerifier::verifyTypes($paramValArr, $typeArr, $paramNameArr);
-// store input in appropriate variables.
-$pattID = $paramValArr[0];
+// store user ID in appropriate variable.
 $userID = $paramValArr[1];
 
 
@@ -85,8 +87,6 @@ $res = $stmt->get_result()->fetch_assoc();
 // this is a dummy implementation, so let us just always return success (at
 // least for now)..
 $res["success"] = true;
-// set the Content-Type header to json.
-header("Content-Type: text/json");
 // finally echo the JSON-encoded numeric array.
 echo json_encode($res);
 
