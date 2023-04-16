@@ -36,9 +36,9 @@ const elementNamePattern =
     "))";
 
 const elementNameRegEx = new RegExp(
-    "/^(" +
+    "^(" +
         elementNamePattern +
-    ")$/"
+    ")$"
 );
 
 export const pseudoClasses = [
@@ -116,11 +116,11 @@ const selectorListPattern =
 
 
 export const selectorRegex = new RegExp(
-    "/^((" +
+    "^((" +
         "#\\w+" +
     ")|(" +
         selectorListPattern +
-    "))$/"
+    "))$"
 );
 
 
@@ -130,12 +130,12 @@ export const selectorRegex = new RegExp(
 export function getJQueryObj(selector) {
     // test selector.
     if (typeof selector !== "string") {
-        throw new Exception(
+        throw (
             "getJQueryObj(): selector has to be a string"
         );
     }
     if (!selectorRegex.test(selector)) {
-        throw new Exception(
+        throw (
             "getJQueryObj(): selector does not match expected pattern"
         );
     }
@@ -169,13 +169,13 @@ export function upaf_setID(selector, id) {
     let jqObj = getJQueryObj(selector);
     // test that id contains only \w characters.
     if (!/^\w+$/.test(id)) {
-        throw new Exception(
+        throw (
             "setID(): invalid id pattern (not of /^\\w+$/)"
         );
     }
     // test that id is unused. (Let's not care to much about race conditions.)
     if (upaf_isExistingID(id)) {
-        throw new Exception(
+        throw (
             "setID(): id has already been used"
         );
     }
@@ -299,13 +299,13 @@ export function setAttributeOfSingleJQueryObj(jqObj, tagName, key, val) {
     // verify that key and val are defined and have the right
     // formats.
     if (!attrKeyRegEx.test(key)) {
-        throw new Exception(
+        throw (
             "setAttributeOfSingleJQueryObj(): input contains an invalid " +
             "attribute key"
         );
     }
     if (!attrValRegEx.test(val)) {
-        throw new Exception(
+        throw (
             "setAttributeOfSingleJQueryObj(): input contains an invalid " +
             "attribute value"
         );
@@ -319,7 +319,7 @@ export function setAttributeOfSingleJQueryObj(jqObj, tagName, key, val) {
     // race conditions.)
     } else if (key === "id") {
         if (upaf_isExistingID(val)) {
-            throw new Exception(
+            throw (
                 "getHTML(): id=\"" + val +
                 "\" has already been used"
             );
@@ -331,7 +331,7 @@ export function setAttributeOfSingleJQueryObj(jqObj, tagName, key, val) {
     } else if (upaf_isLegalKeyValAttrPair(tagName, key, val)) {
         jqObj.attr(key, val);
     } else {
-        throw new Exception(
+        throw (
             "setAttributeOfSingleJQueryObj(): illegal combination of " +
             "tagName, key and value"
         );
@@ -360,7 +360,7 @@ export function upaf_getAttribute(selector, key) {
     let jqObj = getJQueryObj(selector);
     // assert that key is defined and has the right format.
     if (!attrKeyRegEx.test(key)) {
-        throw new Exception(
+        throw (
             "getAttribute(): input is not a valid attribute key"
         );
     }
@@ -381,7 +381,7 @@ export function upaf_getAttributes(selector, keyArr) {
         let key = keyValArr[$i];
         // assert that key is defined and has the right format.
         if (!attrKeyRegEx.test(key)) {
-            throw new Exception(
+            throw (
                 "getAttributes(): input " + i.toString() +
                 " is not a valid attribute key"
             );
@@ -414,7 +414,7 @@ export function upaf_getAttributes(selector, keyArr) {
  * struct = undefined | contentText | [(tagAttributesContentTuple,)*],
  * where
  * tagAttributesContentTuple =
- *     [struct] | [tagName, struct] | [tagName, attributes, struct],
+ *     [tagName] | [tagName, struct] | [tagName, attributes, struct],
  * where
  * attributes = undefined | [([key, value],)*].
  **/
@@ -422,7 +422,7 @@ export function upaf_addHTML(selector, method, struct) {
     let jqObj = getJQueryObj(selector);
     // test method.
     if (!["append", "prepend", "before", "after"].includes(method)) {
-        throw new Exception(
+        throw (
             "addHTML(): method name not recognized"
         );
     }
@@ -450,7 +450,8 @@ export function getHTMLFromStructureAndRecordIDs(struct) {
     var ret = "";
     for (let i = 0; i < len; i++) {
         // get the variables.
-        var tagName, attributes, content;
+        var tagName, attributes;
+        var content = "";
         let tupleLen = struct[i].length;
         if (tupleLen === 3) {
             tagName = struct[i][0];
@@ -460,7 +461,7 @@ export function getHTMLFromStructureAndRecordIDs(struct) {
             tagName = struct[i][0];
             content = struct[i][1];
         } else if (tupleLen === 1) {
-            content = struct[i][0];
+            tagName = struct[i][0];
         }
         // if tag input is undefined, simply append the converted content to
         // ret.
@@ -470,8 +471,9 @@ export function getHTMLFromStructureAndRecordIDs(struct) {
         }
         // else, test tag input.
         if (!elementNameRegEx.test(tagName)) {
-            throw new Exception(
-                "getHTML(): unrecognized tag name: " + tagName.toString()
+            throw (
+                "getHTMLFromStructureAndRecordIDs(): unrecognized tag name: " +
+                tagName.toString()
             );
         }
         // initialize new HTML element.
@@ -489,9 +491,9 @@ export function getHTMLFromStructureAndRecordIDs(struct) {
             }
         }
         // test and convert content, and add it inside the new HTML element.
-        htmlElem.html(getHTMLFromStructureAndRecordIDs(content));
+        htmlJQObj.html(getHTMLFromStructureAndRecordIDs(content));
         // append the new HTML element to ret.
-        ret = ret + htmlElem[0].outerHTML;
+        ret = ret + htmlJQObj[0].outerHTML;
     }
     // return the resulting HTML string.
     return ret;
@@ -502,7 +504,7 @@ export function getHTMLFromStructureAndRecordIDs(struct) {
 export function upaf_convertHTMLSpecialChars(str) {
     // verify that input is a string.
     if (typeof str !== "string") {
-        throw new Exception(
+        throw (
             "convertHTMLSpecialChars(): input is not a string"
         );
     }
@@ -518,7 +520,7 @@ export function upaf_convertHTMLSpecialChars(str) {
 export function upaf_convertHTMLSpecialCharsAndBackslashes(str) {
     // verify that input is a string.
     if (typeof str !== "string") {
-        throw new Exception(
+        throw (
             "convertHTMLSpecialCharsAndBackslashes(): " +
             "input is not a string"
         );
@@ -710,9 +712,9 @@ export const cssNumericPattern =
     "[\\+\\-]?[0-9]*\\.?[0-9]*" + cssUnitPattern;
 
 export const cssNumericRegEx = new RegExp(
-    "/^" +
+    "^" +
         cssNumericPattern +
-    "$/"
+    "$"
 );
 
 
@@ -720,9 +722,9 @@ export const cssHexColorPattern =
     "#([0-9a-fA-F]{3,4})|([0-9a-fA-F]{6})|([0-9a-fA-F]{8})";
 
 export const cssHexColorRegEx = new RegExp(
-    "/^" +
+    "^" +
         cssHexColorPattern +
-    "$/"
+    "$"
 );
 // TODO: Consider adding more color value syntaxes.
 
@@ -841,12 +843,12 @@ export const cssAFunctionalValuePattern =
     ")";
 
 export const cssAComplexRegEx = new RegExp(
-    "/^(" +
+    "^(" +
         "(" +
             cssAComplexValuePattern + "|" +
             cssAFunctionalValuePattern +
         ")+" +
-    ")$/"
+    ")$"
 );
 
 
@@ -858,7 +860,7 @@ export function upaf_css(selector, propertyOrPropertyValuePairArr) {
     if (typeof propertyOrPropertyValuePairArr === "string") {
         let property = propertyOrPropertyValuePairArr;
         if (!/^@?[[a-zA-Z]\-]+$/.test(property)) {
-            throw new Exception(
+            throw (
                 "css(): properties can only contain letters, '-' and '@'"
             );
         }
@@ -872,21 +874,21 @@ export function upaf_css(selector, propertyOrPropertyValuePairArr) {
             let value = propertyValuePairArr[i][1];
             // test property.
             if (!cssLegalProperties.includes(property)) {
-                throw new Exception(
+                throw (
                     "css(): property" + i.toString() +
                     "can only contain letters, '-' and '@'"
                 );
             }
             // test value.
             if (!cssAComplexRegEx.test(value)) {
-                throw new Exception(
+                throw (
                     "css(): property value " + i.toString() +
                     " is either invalid or not implemented yet"
                 );
             }
             // test that this nested array is a pair.
             if (!propertyValuePairArr[i].length === 2) {
-                throw new Exception(
+                throw (
                     "css(): propertyValuePairArr[" + i.toString() + "] " +
                     "did not have a length of 2"
                 );
@@ -905,7 +907,7 @@ export function upaf_css(selector, propertyOrPropertyValuePairArr) {
 export function upaf_addCSS(selector, propertyValuePairArr) {
     // test the selector.
     if (!selectorRegex.test(selector)) {
-        throw new Exception(
+        throw (
             "addCSS(): selector does not match expected pattern"
         );
     }
@@ -922,14 +924,14 @@ export function upaf_addCSS(selector, propertyValuePairArr) {
         let value = propertyValuePairArr[i][1];
         // test property.
         if (!cssLegalProperties.includes(property)) {
-            throw new Exception(
+            throw (
                 "addCSS(): property" + i.toString() +
                 "can only contain letters, '-' and '@'"
             );
         }
         // test value.
         if (!cssAComplexRegEx.test(value)) {
-            throw new Exception(
+            throw (
                 "addCSS(): property value " + i.toString() +
                 " is either invalid or not implemented yet"
             );
@@ -978,14 +980,14 @@ export function upaf_removeLastCSS(selector) {
 // be exported to the final user modules (but only to other developer modules).
 export function verifyFunNameAndGetUPAFunction(funName) {
     if (!/^[\$\w]+$/.test(funName)) {
-        throw new Exception(
+        throw (
             "getUPAFunction(): function name is not a valid " +
             "/^[\\$\\w]+$/ string"
         );
     }
     let fullFunName = "upaFun_" + funName;
     if (typeof window[fullFunName] != "function") {
-        throw new Exception(
+        throw (
             "verifyAndGetUPAFunction(): function " + fullFunName +
                 " is not defined yet"
         );
@@ -1033,14 +1035,14 @@ const singleEventPattern =
     "))";
 
 const eventsRegEx = new RegExp(
-    "/^" +
+    "^" +
         singleEventPattern + "(" + " " +  singleEventPattern + ")*" +
-    "$/"
+    "$"
 );
 
 export function upaf_verifyEvents(events) {
     if (!eventsRegEx.test(events)) {
-        throw new Exception(
+        throw (
             "verifyEvents(): unrecognized events pattern"
         );
     }
@@ -1139,7 +1141,7 @@ export function upaf_visibilityEffect(
         !(speed == ~~speed) &&
         !(["slow", "fast"].includes(speed))
     ) {
-        throw new Exception(
+        throw (
             "visibilityEffect(): invalid speed input " +
             "(contained in settings or settings[0])"
         );
@@ -1150,7 +1152,7 @@ export function upaf_visibilityEffect(
         effectType === "fadeTo" &&
         !/^0|1|(0?\.[0-9]+)$/.test(opacity)
     ) {
-        throw new Exception(
+        throw (
             "visibilityEffect(): invalid opacity input " +
             "(contained in settings[1])"
         );
@@ -1172,7 +1174,7 @@ export function upaf_visibilityEffect(
             jqObj[effectType](speed, opacity, resultingCallback);
             break;
         default:
-            throw new Exception(
+            throw (
                 "visibilityEffect(): invalid effect type input"
             );
     }
@@ -1193,9 +1195,9 @@ export const cssCCasePropertiesForAnimate = [
 ];
 
 export const cssCCasePropertiesForAnimateRegEx = new RegExp(
-    "/^((" +
+    "^((" +
         cssCCasePropertiesForAnimate.join(")|(") +
-    "))$/"
+    "))$"
 );
 
 /* << jQuery.animate wrapper >>
@@ -1227,7 +1229,7 @@ export function upaf_animate(
         !(speed == ~~speed) &&
         !(["slow", "fast"].includes(speed))
     ) {
-        throw new Exception(
+        throw (
             "animate(): invalid speed input " +
             "(contained in settings or settings[0])"
         );
@@ -1237,7 +1239,7 @@ export function upaf_animate(
         typeof easing !== "undefined" &&
         !(["swing", "linear"].includes(easing))
     ) {
-        throw new Exception(
+        throw (
             "animate(): invalid easing input " +
             "(contained in settings[1])" +
             "(options are 'swing' or 'linear' or undefined)"
@@ -1247,13 +1249,13 @@ export function upaf_animate(
     let len = styles.length;
     for (let i = 0; i < len; i++) {
         if (!cssCCasePropertiesForAnimateRegEx.test(styles[0])) {
-            throw new Exception(
+            throw (
                 "animate(): invalid property for animation " +
                 "(contained in styles[" + i.toString() + "][0])"
             );
         }
         if (!cssNumericRegEx.test(styles[1])) {
-            throw new Exception(
+            throw (
                 "animate(): invalid property value for animation " +
                 "(contained in styles[" + i.toString() + "][1]), " +
                 "expects a numeric value"

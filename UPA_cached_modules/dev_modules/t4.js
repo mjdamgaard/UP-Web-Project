@@ -11,12 +11,12 @@ var urlRegExCache = urlRegExCache ?? {};
 export function upaf_cacheURLRegEx(pattID, key, userID) {
     // test key.
     if (typeof key !== "string") {
-        throw new Exception(
+        throw (
             "cacheURLRegEx(): key is not a string"
         );
     }
-    if ( !(new RegExp("/^\\w+$/")).test(key) ) {
-        throw new Exception(
+    if ( !(/^\w+$/.test(key) ) {
+        throw (
             "cacheURLRegEx(): key does not match the right pattern " +
             '("/^\\w+$/")'
         );
@@ -53,7 +53,7 @@ export function upaf_loadLink(selector, url, urlRegExKey) {
     let regex = urlRegExCache[urlRegExKey];
     // match link againt pattern.
     if (!regex.test(url)) {
-        throw new Exception(
+        throw (
             "loadLink(): RegEx was cached but did not match the input link"
         );
     }
@@ -67,7 +67,7 @@ export function upaf_followLink(url, urlRegExKey, target) {
         typeof target !== "undefined" &&
         !(["_self", "_blank", "_parent", "_top"].includes(target))
     ) {
-        throw new Exception(
+        throw (
             "loadLink(): invalid target " +
             "(options are '_self', '_blank', '_parent' or '_top')"
         );
@@ -77,7 +77,7 @@ export function upaf_followLink(url, urlRegExKey, target) {
     let regex = urlRegExCache[urlRegExKey];
     // match link againt pattern.
     if (!regex.test(url)) {
-        throw new Exception(
+        throw (
             "followLink(): RegEx was cached but did not match the input link"
         );
     }
@@ -100,7 +100,7 @@ export function upaf_loadScript(
     // it can potentially be defined by the loaded module (which can be useful
     // if the function requires no input)).
     if (!/^[\$\w]+$/.test(callbackName)) {
-        throw new Exception(
+        throw (
             "loadScript(): callback function name is not a valid " +
             "/^[\\$\\w]+$/ string"
         );
@@ -110,7 +110,7 @@ export function upaf_loadScript(
     // test that the length is greater than zero.
     let len = funIdentList.length;
     if (len == 0) {
-        throw new Exception(
+        throw (
             "loadModule(): function identifier array is empty"
         );
     }
@@ -120,7 +120,7 @@ export function upaf_loadScript(
         testFunIdentArrAndPrependUPAFPrefix(asFunIdentList);
         // test that the length is equal to the length of funIdentList.
         if (!(len === asFunIdentList.length)) {
-            throw new Exception(
+            throw (
                 "loadModule(): function identifier arrays are of different "
                 "sizes"
             );
@@ -153,11 +153,11 @@ export function upaf_loadScript(
 export function testFunIdentArrAndPrependUPAFPrefix(funIdentList) {
     //test funIdentList and prepend "upaf_" to all the identifiers.
     let len = funIdentList.length;
-    let funIdentRegEx = new RegExp("/[\\w\\$]+/");
+    let funIdentRegEx = /[\w\$]+/;
     for (let i = 0; i < len; i++) {
         // test identifier.
         if (!funIdentRegEx.test(funIdentList[i])) {
-            throw new Exception(
+            throw (
                 "loadModule(): invalid function identifier at index " +
                 i.toString()
             );

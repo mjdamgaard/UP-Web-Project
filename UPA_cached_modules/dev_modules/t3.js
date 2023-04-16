@@ -45,7 +45,7 @@ export upaf_uploadSemanticTerm(type, userID, catID, str) {
             data = new InputDataConstructors.RelReqData(userID, catID, str);
             break;
         default:
-            throw new Exception(
+            throw (
                 "insertSemanticTerm(): invalid type input " +
                 "(options are 'cat', 'eTerm' or 'rel')"
             );

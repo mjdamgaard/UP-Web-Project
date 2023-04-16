@@ -172,7 +172,7 @@ export function upaf_math(methodName, num1, num2) {
             return Math[methodName](num1, num2);
             break;
         default:
-            throw new Exception(
+            throw (
                 "math(): method name not recognized"
             );
     }
@@ -191,7 +191,7 @@ export function upaf_numberMethod(methodName, num) {
             return num[methodName]();
             break;
         default:
-            throw new Exception(
+            throw (
                 "numberMethods(): method name not recognized"
             );
     }
