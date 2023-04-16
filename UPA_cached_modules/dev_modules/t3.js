@@ -195,6 +195,24 @@ export upaf_queryBinary(binID) {
     return res[0];
 }
 
+export upaf_queryKeywordString(kwsID) {
+    let data = new QueryDataConstructors.KeywordStrReqData(
+        kwsID
+    );
+    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
+    // return keyword string.
+    return res[0];
+}
+
+export upaf_queryKeywordString(patID) {
+    let data = new QueryDataConstructors.PatternReqData(
+        patID
+    );
+    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
+    // return pattern string.
+    return res[0];
+}
+
 // TODO: Add more query requests.
 
 

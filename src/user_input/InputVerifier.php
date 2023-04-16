@@ -85,8 +85,14 @@ class InputVerifier {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
                 break;
-            case "kwStringID":
+            case "kwsID":
                 $pattern = "/^k[1-9A-F][0-9A-F]{0,15}$/";
+                if (!preg_match($pattern, $paramVal)) {
+                    echoTypeErrorJSONAndExit($paramName, $pattern);
+                }
+                break;
+            case "pattID":
+                $pattern = "/^p[1-9A-F][0-9A-F]{0,15}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
                 }

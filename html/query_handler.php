@@ -119,6 +119,22 @@ switch ($reqType) {
         );
         // columns: ("binary"),
         break;
+    case "K":
+        $sql = "CALL selectKeywordString (?)";
+        $paramNameArr = array("id");
+        $typeArr = array(
+            "kwsID"
+        );
+        // columns: ("keywordString"),
+        break;
+    case "P":
+        $sql = "CALL selectPattern (?)";
+        $paramNameArr = array("id");
+        $typeArr = array(
+            "pattID"
+        );
+        // columns: ("pattern"),
+        break;
     default:
         header("Content-Type: text/json");
         echoErrorJSONAndExit("Unrecognized request type");

@@ -30,7 +30,7 @@ export function upaf_cacheURLRegEx(pattID, key, userID) {
     let res = JSON.parse($.getJSON("UPA_links.php", ).responseText);
     // if the pattern was whitelisted for UPA links, store it in the cache.
     if (res.success) {
-        urlRegExCache[key] = new RegExp(res.pattern);
+        urlRegExCache[key] = new RegExp(res.str);
         return 0;
     } else {
         return res.error;
