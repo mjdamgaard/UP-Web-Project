@@ -2,22 +2,36 @@
 /* Functions to input ratings and insert terms */
 
 export upaf_uploadRating(userID, subjID, relID, objID, rating) {
-    // request that user is authenticated for
-    AuthRequestor.authForRate(userID);
     // initialize the input request.
     let data = new InputDataConstructors.RateReqData(
         userID, subjID, relID, objID, rating
     );
+    // request that user is authenticated/authorized for uploading
+    // non-protected ratings.
+    AuthRequestor.authForRate(userID, relID);
     // request inputting the rating and get the result containing an exit code.
     let res = JSON.parse($.getJSON("input_handler.php", data).responseText);
     // return the exit code.
     return res[1];
 }
 
+export upaf_uploadProtectedRating(userID, subjID, relID, objID, rating) {
+    // initialize the input request.
+    let data = new InputDataConstructors.RateReqData(
+        userID, subjID, relID, objID, rating
+    );
+    // request that user is authenticated/authorized for uploading protected
+    // ratings.
+    AuthRequestor.authForProtectedRate(userID, relID);
+    // construct a data HTML element and append it to #protectedRatingBuffer.
+    let html = $("<data></data>").attr(data);
+    $('#protectedRatingBuffer').append(html);
+}
+
 
 export upaf_uploadSemanticTerm(type, userID, catID, str) {
-    // request that user is authenticated for
-    AuthRequestor.authForInsert(userID);
+    // request that user is authenticated/authorized for sementic term uploads.
+    AuthRequestor.authForTermInsert(userID);
     // initialize the input request according to the chosen term type.
     var data;
     switch (type) {
@@ -61,8 +75,8 @@ export upaf_uploadRel(userID, subjCatID, objNoun) {
 
 
 export upaf_uploadText(userID, str) {
-    // request that user is authenticated for
-    AuthRequestor.authForInsert(userID);
+    // request that user is authenticated/authorized for term uploads.
+    AuthRequestor.authForTextInsert(userID, str.length);
     // initialize the input request according to the chosen term type.
     var data = new InputDataConstructors.TextReqData(userID, str);
     // request insertion of the text term and get the result co... --"--.
@@ -72,8 +86,8 @@ export upaf_uploadText(userID, str) {
 }
 
 export upaf_uploadBinary(userID, bin) {
-    // request that user is authenticated for
-    AuthRequestor.authForInsert(userID);
+    // request that user is authenticated/authorized for
+    AuthRequestor.authForBinaryInsert(userID, bin.length);
     // initialize the input request according to the chosen term type.
     var data = new InputDataConstructors.BinReqData(userID, bin);
     // request insertion of the binary term and get the result co... --"--.

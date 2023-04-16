@@ -10,20 +10,22 @@
  * and otherwise some standard set will be chosen. The UPA are then not allowed
  * (and it should not be possible if the API is correctly made) to use links
  * with URLs that have not first been confirmed to be in this set (and with a
- * high enough rating). Any further blacklisting and whitelisting preferences
- * that are specific to the end user must be implemented in the UPA layer.
- * The set that this program looks up is therefore mainly intended an initial
- * filter to prevent links to malicious and/or scamming sites. ..Oh wait, but
- * the UPA can in priciple just change the mentioned ratings, so how to we
- * prevent it from doing that?.. ..Keep account of a set of protected
- * releations..? ..Sounds like a decent solution.. ..Hm, shouldn't I then just
- * pass a relation along with authForRate()..? ..Yes. And I should btw also
- * make sure to include a window outside of the UPA where users can see and
- * confirm recent ratings.. ..Ah, or maybe I should just prevent rating of
- * the protected relations in the UPA, but make it so that the UPA can send
- * rating data to said outside window --- only one rating at a time! --- which
- * the user can then confirm and send onward from there..
+ * high enough rating).
+ * The relation with which to rate whitelist sets should of course be a
+ * protected relation, meaning that the UPA cannot upload a new rating by
+ * itself, but must instead send the rating data to a certain rating buffer
+ * where the user can then manually confirm the new rating (and should be
+ * given a warning about doing so).
+ * Any further blacklisting and whitelisting preferences that are specific to
+ * the end user must be implemented in the UPA layer. The set that this program
+ * looks up is therefore mainly intended an initial filter to prevent links to
+ * malicious and/or scamming sites.
  **/
+
+// TODO: At first I will just make a dummy implementation of this program such
+// that all requested patterns are queried and returned to the client without
+// any actual verification (so no lookup of that whitelist set). TODO: Change
+// this to an actual implementation. 
 
 $err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";
 require_once $err_path . "errors.php";
