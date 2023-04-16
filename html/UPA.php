@@ -65,8 +65,11 @@ $mainModuleID = "tA";
 // Also place the script that imports and runs the chosen UPA main module in
 // this div.
 ?>
+<!-- TODO: move protectedRatingBuffer div to index.php -->
 <div id="protectedRatingBuffer"></div>
-<div id="upaMainFrame"></div>
+<div id="upaMainFrame">
+    <main></main>
+</div>
 <script id="upaMainFunLoader" type="module">
     // import the chosen UPA main module.
     import {

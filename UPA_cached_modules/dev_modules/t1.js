@@ -12,19 +12,23 @@ export function upaf_appendHelloWorld() {
 
 /* Some functions to cache and select jQuery objects */
 
-export const elementNames =
-    [ +
-        "address", "article", "aside", "footer", "header", "h[1-6]",
-        "hgroup", "main", "nav", "section", "blockquote", "dd",
-        "div", "dl", "dt", "figcaption", "figure", "hr",
-        "li", "menu", "ol", "p", "pre", "ul",
-        "a", "abbr", "b", "bdi", "bdo", // "br" not included
-        "cite", "code", "data", "dfn", "em", "i",
-        // TODO: complete this.
-        "aaa", "aaa", "aaa", "aaa", "aaa", "aaa",
-        "aaa", "aaa", "aaa", "aaa", "aaa", "aaa",
-        "aaa", "aaa", "aaa", "aaa", "aaa", "aaa",
-    ];
+export const elementNames = [
+    "a", "abbr", "address", "area", "article", "aside",
+    "audio", "b", "base", "bdi", "bdo", "blockquote",
+    "br", "button", "canvas", "caption", "cite", "code", "col",
+    "colgroup", "data", "datalist", "dd", "del", "details", "dfn", "dialog",
+    "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure",
+    "footer", "form", "h[1-6]", "head", "header",
+    "hr", "i", "iframe", "img", "input", "ins", "kbd", "label", "legend",
+    "li", "link", "main", "map", "mark", "meta", "meter", "nav",
+    "noscript", "object", "ol", "optgroup", "option", "output", "p", "param",
+    "picture", "pre", "progress", "q", "rp", "rt", "ruby", "s", "samp",
+    "section", "select", "small", "source", "span", "strong", "style",
+    "sub", "summary", "sup", "svg", "table", "tbody", "td", "template",
+    "textarea", "tfoot", "th", "thead", "time", "title", "tr", "track",
+    "u", "ul", "var", "video", "wbr",
+];
+// TODO: Check all these to see that they are all safe to use.
 
 const elementNamePattern =
     "((" +
