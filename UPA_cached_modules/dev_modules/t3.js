@@ -28,7 +28,7 @@ export function upaf_query(reqDataArr, callbackKey) {
 
 export function upaf_getUploadReqDataArr(reqKey, inputArr) {
     let Constructor = function(inputArr) {
-        InputDataConstructors[reqKey].apply(null, inputArr);
+        InputDataConstructors[reqKey + "ReqData"].apply(null, inputArr);
     };
     return Object.entries(
         new Constructor(inputArr)
@@ -37,7 +37,7 @@ export function upaf_getUploadReqDataArr(reqKey, inputArr) {
 
 export function upaf_getQueryReqDataArr(reqKey, inputArr) {
     let Constructor = function(inputArr) {
-        QueryDataConstructors[reqKey].apply(null, inputArr);
+        QueryDataConstructors[reqKey + "ReqData"].apply(null, inputArr);
     };
     return Object.entries(
         new Constructor(inputArr)
@@ -68,7 +68,7 @@ export function upaf_cacheURLRegEx(pattID, key, userID) {
             "cacheURLRegEx(): key is not a string"
         );
     }
-    if ( !(/^\w+$/.test(key) ) {
+    if ( !(/^\w+$/.test(key)) ) {
         throw (
             "cacheURLRegEx(): key does not match the right pattern " +
             '("/^\\w+$/")'
@@ -111,7 +111,7 @@ export function upaf_loadLink(selector, url, urlRegExKey) {
         );
     }
     // load the link into all selected <a></a> elements.
-    jqObj.filter('a').attr("src", url});
+    jqObj.filter('a').attr("src", url);
 }
 
 export function upaf_followLink(url, urlRegExKey, target) {
@@ -174,7 +174,7 @@ export function upaf_loadScript(
         // test that the length is equal to the length of funIdentList.
         if (!(len === asFunIdentList.length)) {
             throw (
-                "loadModule(): function identifier arrays are of different "
+                "loadModule(): function identifier arrays are of different " +
                 "sizes"
             );
         }

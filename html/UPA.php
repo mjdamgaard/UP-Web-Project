@@ -1,5 +1,6 @@
 <?php
 
+// TODO: I should move this to src/.
 
 $err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";
 require_once $err_path . "errors.php";
