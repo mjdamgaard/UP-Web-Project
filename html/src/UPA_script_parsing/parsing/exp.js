@@ -50,6 +50,7 @@ function parseExp2(lexArr, nextPos, successRequired) {
         // !parseObjExp(lexArr, nextPos, false) &&
         !parseLiteral(lexArr, nextPos, false) &&
         !parseVarIdent(lexArr, nextPos, false) &&
+        !parseFunCall(lexArr, nextPos, false)  &&
         !parseFunCall(lexArr, nextPos, false)
     ) {
         if (successRequired) {
@@ -138,6 +139,16 @@ function parseFunCall(lexArr, nextPos, successRequired) {
         parseLexeme(lexArr, nextPos, ")", true);
 }
 
+
+function parseStoreFunctionCall(lexArr, nextPos, successRequired) {
+    return
+        parseLexeme(lexArr, nextPos, "storeFunction" successRequired) &&
+        parseLexeme(lexArr, nextPos, "(", true) &&
+        parseFunIdent(lexArr, nextPos, true) &&
+        parseLexeme(lexArr, nextPos, ",", true) &&
+        parseExp(lexArr, nextPos, true) && // the key for accessing stored fun.
+        parseLexeme(lexArr, nextPos, ")", true);
+}
 
 
 

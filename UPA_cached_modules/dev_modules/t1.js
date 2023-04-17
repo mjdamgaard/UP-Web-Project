@@ -976,66 +976,52 @@ export function upaf_removeLastCSS(selector) {
 
 /* Functions to store and get callback upaf_ functions from key strings */
 
-// (17:02) Hm, one solution could perhaps be to allow a very specific function
-// call statement to include function variables.. ..Hm, or I could introduce
-// a special type of upaff_ functions, that returns upaf_ functions.. (17:07)
-// ..No, that doesn't work either, cause then I also need to have input types
-// as part of the function types, and I would like to avoid that.. (17:10)
 
-var storedFunctions = storedFunctions ?? {};
+// The following out-commented code is copied from html/src/storeFunction.js.
+// While it has no upaf_ prefix, it is exceptionally still part of the UPA's
+// API, namely since the storedFunctions(<funIdent>, <exp>) syntax has been
+// made a special part of the syntax of our JS subset. And storeFunction.js
+// is run in the document head (before loading the UPA).
 
-export function upaf_storeFunction(funName) {
-    if (!/^[\$\w]+$/.test(funName)) {
+// var storedFunctions = storedFunctions ?? {};
+//
+// function storeFunction(fun, key) {
+//     if (!/^\w+$/.test(key)) {
+//         throw (
+//             "storeFunction(): function key is not a valid " +
+//             "/^\\w+$/ string"
+//         );
+//     }
+//     storedFunctions["upaf_" + key] = fun;
+// }
+
+export function upaf_isAStoredFunction(key) {
+    if (!/^\w+$/.test(key)) {
         throw (
-            "storeFunction(): function name is not a valid " +
-            "/^[\\$\\w]+$/ string"
+            "storeFunction(): function key is not a valid " +
+            "/^\\w+$/ string"
         );
     }
-    let fullFunName = "upaFun_" + funName;
-    if (typeof window[fullFunName] === "undefined") {
-        throw (
-            "storeFunction(): function " + fullFunName +
-            " is not defined yet"
-        );
-    }
-    storedFunctions[funName] = window[fullFunName];
-}
-
-export function upaf_isAStoredFunction(funName) {
-    if (!/^[\$\w]+$/.test(funName)) {
-        throw (
-            "isAStoredFunction(): function name is not a valid " +
-            "/^[\\$\\w]+$/ string"
-        );
-    }
-    let fullFunName = "upaFun_" + funName;
-    return (typeof window[fullFunName] !== "undefined");
+    return (typeof storedFunctions["upaf_" + key] !== "undefined");
 }
 
 // Note that since this function does not have the upaf_ prefix, it cannot
 // be exported to the final user modules (but only to other developer modules).
-export function getFunction(funName) {
-    if (!/^[\$\w]+$/.test(funName)) {
+export function getFunction(key) {
+    if (!/^\w+$/.test(key)) {
         throw (
-            "getFunction(): function name is not a valid " +
-            "/^[\\$\\w]+$/ string"
+            "storeFunction(): function key is not a valid " +
+            "/^\\w+$/ string"
         );
     }
-    let fullFunName = "upaFun_" + funName;
-    if (typeof window[fullFunName] === "undefined") {
-        throw (
-            "getFunction(): function " + fullFunName +
-            " is not defined yet"
-        );
-    }
-    return window[fullFunName];
+    return storedFunctions["upaf_" + key];
 }
 
 /* A private function to get a resulting function from key and a data array
  * containing the input parameters.
  **/
 export function getResultingFunction(funName, dataArr) {
-    var fun = verifyFunNameAndGetUPAFunction(funName);
+    var fun = getFunction(funName);
     return function() {
         fun.apply(null, dataArr ?? []);
     };
@@ -1044,7 +1030,7 @@ export function getResultingFunction(funName, dataArr) {
 /* A public function run a upaf_ function pointed to by a key */
 
 export function upaf_runResultingFunction(funName, dataArr) {
-    var fun = verifyFunNameAndGetUPAFunction(funName);
+    var fun = getFunction(funName);
     fun.apply(null, dataArr);
 }
 
@@ -1092,7 +1078,7 @@ export function upaf_on(selector, eventsDataHandlerTupleArr) {
         let events = eventsDataHandlerTupleArr[$i][0];
         let data = eventsDataHandlerTupleArr[$i][1] ?? "";
         let handlerKey = eventsDataHandlerTupleArr[$i][2];
-        let handler = verifyFunNameAndGetUPAFunction(handlerKey);
+        let handler = getFunction(handlerKey);
 
         upaf_verifyEvents(events);
 
@@ -1107,7 +1093,7 @@ export function upaf_one(selector, eventsDataHandlerTupleArr) {
         let events = eventsDataHandlerTupleArr[$i][0];
         let data = eventsDataHandlerTupleArr[$i][1] ?? "";
         let handlerKey = eventsDataHandlerTupleArr[$i][2];
-        let handler = verifyFunNameAndGetUPAFunction(handlerKey);
+        let handler = getFunction(handlerKey);
 
         upaf_verifyEvents(events);
 
@@ -1124,7 +1110,7 @@ export function upaf_off(selector, eventsHandlerPairArr) {
         if (typeof eventsHandlerPairArr[$i][2] !== "undefined") {
             handlerKey = eventsHandlerPairArr[$i][2];
         }
-        let handler = verifyFunNameAndGetUPAFunction(handlerKey);
+        let handler = getFunction(handlerKey);
 
         upaf_verifyEvents(events);
 

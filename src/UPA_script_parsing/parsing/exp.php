@@ -19,8 +19,8 @@ import {
 
 
 
-function parseExp(lexArr, nextPos, successRequired) {
-    $initialPos = nextPos[0];
+export function parseExp(lexArr, nextPos, successRequired) {
+    let initialPos = nextPos[0];
     // first parse an optional list of variables or array elements and '='s.
     if (parseVarIdent(lexArr, nextPos, false)) {
         // parse an optional series of []'s.
@@ -51,6 +51,7 @@ function parseExp2(lexArr, nextPos, successRequired) {
         // !parseObjExp(lexArr, nextPos, false) &&
         !parseLiteral(lexArr, nextPos, false) &&
         !parseVarIdent(lexArr, nextPos, false) &&
+        !parseFunCall(lexArr, nextPos, false)  &&
         !parseFunCall(lexArr, nextPos, false)
     ) {
         if (successRequired) {
@@ -140,10 +141,20 @@ function parseFunCall(lexArr, nextPos, successRequired) {
 }
 
 
+function parseStoreFunctionCall(lexArr, nextPos, successRequired) {
+    return
+        parseLexeme(lexArr, nextPos, "storeFunction" successRequired) &&
+        parseLexeme(lexArr, nextPos, "(", true) &&
+        parseFunIdent(lexArr, nextPos, true) &&
+        parseLexeme(lexArr, nextPos, ",", true) &&
+        parseExp(lexArr, nextPos, true) && // the key for accessing stored fun.
+        parseLexeme(lexArr, nextPos, ")", true);
+}
+
 
 
 function parsePostfixOp(lexArr, nextPos, successRequired) {
-    ret =
+    let ret =
         parseArrElemAccess(lexArr, nextPos, false) ||
         parseLexeme(lexArr, nextPos, "++", false) ||
         parseLexeme(lexArr, nextPos, "--", false);
@@ -157,7 +168,7 @@ function parsePostfixOp(lexArr, nextPos, successRequired) {
 }
 
 function parsePrefixOp(lexArr, nextPos, successRequired) {
-    ret =
+    let ret =
         parseLexeme(lexArr, nextPos, "++", false) ||
         parseLexeme(lexArr, nextPos, "--", false) ||
         parseLexeme(lexArr, nextPos, "!", false) ||
@@ -177,7 +188,7 @@ function parsePrefixOp(lexArr, nextPos, successRequired) {
 
 
 function parseBinaryOp(lexArr, nextPos, successRequired) {
-    ret =
+    let ret =
         parseLexeme(lexArr, nextPos, "**", false) ||
         parseLexeme(lexArr, nextPos, "*", false) ||
         parseLexeme(lexArr, nextPos, "/", false) ||
@@ -213,7 +224,7 @@ function parseBinaryOp(lexArr, nextPos, successRequired) {
 
 
 function parseAssignOp(lexArr, nextPos, successRequired) {
-    ret =
+    let ret =
         parseLexeme(lexArr, nextPos, "=", false);
         // parseLexeme(lexArr, nextPos, "+=", false) ||
         // parseLexeme(lexArr, nextPos, "-=", false) ||

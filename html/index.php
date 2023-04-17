@@ -14,7 +14,7 @@
 <script src="/lib/jquery-3.6.4.js"></script>
 <script src="/src/requests/QueryDataConstructors.js"></script>
 <script src="/src/requests/InputDataConstructors.js"></script>
-<script src="/src/UPA_global_structs.js"></script>
+<script src="/src/storeFunction.js"></script>
 
 
 </head>
