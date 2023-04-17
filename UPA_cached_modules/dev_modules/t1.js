@@ -974,22 +974,52 @@ export function upaf_removeLastCSS(selector) {
 
 
 
-/* A private function to get callback upaf_ functions from user-provided key */
+/* Functions to store and get callback upaf_ functions from key strings */
 
-// Note that since this function does not have the upaf_ prefix, it cannot
-// be exported to the final user modules (but only to other developer modules).
-export function verifyFunNameAndGetUPAFunction(funName) {
+var storedFunctions = storedFunctions ?? {};
+
+export function upaf_storeFunction(funName) {
     if (!/^[\$\w]+$/.test(funName)) {
         throw (
-            "getUPAFunction(): function name is not a valid " +
+            "storeFunction(): function name is not a valid " +
             "/^[\\$\\w]+$/ string"
         );
     }
     let fullFunName = "upaFun_" + funName;
-    if (typeof window[fullFunName] != "function") {
+    if (typeof window[fullFunName] === "undefined") {
         throw (
-            "verifyAndGetUPAFunction(): function " + fullFunName +
-                " is not defined yet"
+            "storeFunction(): function " + fullFunName +
+            " is not defined yet"
+        );
+    }
+    storedFunctions[funName] = window[fullFunName];
+}
+
+export function upaf_isAStoredFunction(funName) {
+    if (!/^[\$\w]+$/.test(funName)) {
+        throw (
+            "isAStoredFunction(): function name is not a valid " +
+            "/^[\\$\\w]+$/ string"
+        );
+    }
+    let fullFunName = "upaFun_" + funName;
+    return (typeof window[fullFunName] !== "undefined");
+}
+
+// Note that since this function does not have the upaf_ prefix, it cannot
+// be exported to the final user modules (but only to other developer modules).
+export function getFunction(funName) {
+    if (!/^[\$\w]+$/.test(funName)) {
+        throw (
+            "getFunction(): function name is not a valid " +
+            "/^[\\$\\w]+$/ string"
+        );
+    }
+    let fullFunName = "upaFun_" + funName;
+    if (typeof window[fullFunName] === "undefined") {
+        throw (
+            "getFunction(): function " + fullFunName +
+            " is not defined yet"
         );
     }
     return window[fullFunName];
