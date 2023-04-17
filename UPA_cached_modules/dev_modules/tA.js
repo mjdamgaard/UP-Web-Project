@@ -41,5 +41,5 @@ export function upaf_main(preferenceUserID, termID, userID) {
 }
 
 function upaf_appendDataHTML(dataArr) {
-    upaf_addHTML("main", "append", JSON.stringify(dataArr));
+    upaf_addHTML("main", "append", dataArr[~~(0)] + ", " + dataArr[~~(1)]);
 }

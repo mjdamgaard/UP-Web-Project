@@ -154,6 +154,11 @@ $stmt = $conn->prepare($sql);
 DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 // fetch the result as a numeric array.
 $res = $stmt->get_result()->fetch_all();
+// if res included only one row, return the inner, single-dimensional array
+// instead.
+if (count($res) === 1) {
+    $res = $res[0];
+}
 // finally echo the JSON-encoded numeric array, containing e.g. the
 // columns: ("ratVal", "objID") for $reqType == "S", etc., so look at
 // the comments above for what the resulting arrays will contain.
