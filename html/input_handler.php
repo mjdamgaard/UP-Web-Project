@@ -66,11 +66,12 @@ switch ($reqType) {
     case "E":
         $sql = "CALL insertOrFindETerm (?, ?, ?, @outID, @ec)";
         $paramNameArr = array(
-            "userID", "catID",
-            "str"
+            "uid", "cid",
+            "t"
         );
         $typeArr = array(
-
+            "userID", "catID",
+            "str"
         );
         break;
     case "R":

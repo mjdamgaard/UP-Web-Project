@@ -1,32 +1,98 @@
 
+import {
+    upaf_runResultingFunction
+} from "/UPA_scripts.php?id=t1";
+
+
 /* Functions to input ratings and insert terms */
 
-export function upaf_uploadRating(userID, subjID, relID, objID, rating) {
-    // initialize the input request.
-    let data = new InputDataConstructors.RateReqData(
-        userID, subjID, relID, objID, rating
-    );
-    // request that user is authenticated/authorized for uploading
-    // non-protected ratings.
-    AuthRequestor.authForRate(userID, relID);
-    // request inputting the rating and get the result containing an exit code.
-    let res = JSON.parse($.getJSON("input_handler.php", data).responseText);
-    // return the exit code.
-    return res[1];
+export function upaf_upload(reqDataArr, callbackKey) {
+    let reqData = Object.fromEntries(reqDataArr);
+    $.getJSON("input_handler.php", reqData, function(result){
+        // call callback(result) via runResultingFunction(). (Note that result
+        // ought to be an array.)
+        upaf_runResultingFunction(callbackKey, [result]);
+    });
 }
 
-export function upaf_uploadProtectedRating(userID, subjID, relID, objID, rating) {
-    // initialize the input request.
-    let data = new InputDataConstructors.RateReqData(
-        userID, subjID, relID, objID, rating
-    );
-    // request that user is authenticated/authorized for uploading protected
-    // ratings.
-    AuthRequestor.authForProtectedRate(userID, relID);
-    // construct a data HTML element and append it to #protectedRatingBuffer.
-    let html = $("<data></data>").attr(data);
-    $('#protectedRatingBuffer').append(html);
+
+export function upaf_query(reqDataArr, callbackKey) {
+    let reqData = Object.fromEntries(reqDataArr);
+    $.getJSON("query_handler.php", reqData, function(result){
+        // call callback(result) via runResultingFunction(). (Note that result
+        // ought to be an array.)
+        upaf_runResultingFunction(callbackKey, [result]);
+    });
 }
+
+export function upaf_getSetQueryReqData(
+    setID, ratMin, ratMax, maxNum, offset, isAscending
+) {
+    return Object.entries(
+        new QueryDataConstructors.SetReqData(
+            setID, ratMin, ratMax, maxNum, offset, isAscending
+        )
+    );
+}
+export function upaf_getSetInfoQueryReqData(setID) {
+    return Object.entries(
+        new QueryDataConstructors.SetInfoReqData(setID)
+    );
+}
+export function upaf_getSetInfoSecKeyQueryReqData(userID, subjID, relID) {
+    return Object.entries(
+        new QueryDataConstructors.SetInfoSecKeyReqData(userID, subjID, relID)
+    );
+}
+export function upaf_getRatQueryReqData(objID, setID)  {
+    return Object.entries(
+        new QueryDataConstructors.RatReqData(objID, setID)
+    );
+}
+export function upaf_getCatDefQueryReqData() {
+    return Object.entries(
+        new QueryDataConstructors.SetInfoReqData(setID)
+    );
+}
+export function upaf_getETermDefQueryReqData() {
+
+}
+export function upaf_getRelDefQueryReqData() {
+
+}
+export function upaf_getSuperCatsQueryReqData() {
+
+}
+export function upaf_getTextQueryReqData() {
+
+}
+export function upaf_getBinaryQueryReqData() {
+
+}
+export function upaf_getKeywordStrQueryReqData() {
+
+}
+export function upaf_getPatternQueryReqData() {
+
+}
+
+
+
+
+// export function upaf_uploadProtectedRating(
+//     userID, subjID, relID, objID, rating
+// ) {
+//     // initialize the input request.
+//     let data = new InputDataConstructors.RateReqData(
+//         userID, subjID, relID, objID, rating
+//     );
+//     // request that user is authenticated/authorized for uploading protected
+//     // ratings.
+//     AuthRequestor.authForProtectedRate(userID, relID);
+//     // construct a data HTML element and append it to #protectedRatingBuffer.
+//     let html = $("<data></data>").attr(data);
+//     $('#protectedRatingBuffer').append(html);
+// }
 
 
 export function upaf_uploadSemanticTerm(type, userID, catID, str) {
