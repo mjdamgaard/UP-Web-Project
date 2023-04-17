@@ -1,6 +1,6 @@
 
 import {
-    upaf_runResultingFunction
+    getJQueryObj, upaf_runResultingFunction
 } from "/UPA_scripts.php?id=t1";
 
 
@@ -15,7 +15,6 @@ export function upaf_upload(reqDataArr, callbackKey) {
     });
 }
 
-
 export function upaf_query(reqDataArr, callbackKey) {
     let reqData = Object.fromEntries(reqDataArr);
     $.getJSON("query_handler.php", reqData, function(result){
@@ -25,269 +24,216 @@ export function upaf_query(reqDataArr, callbackKey) {
     });
 }
 
-export function upaf_getSetQueryReqData(
-    setID, ratMin, ratMax, maxNum, offset, isAscending
-) {
+/* Helping functions to construct request data arrays */
+
+export function upaf_getUploadReqDataArr(reqKey, inputArr) {
+    let Constructor = function(inputArr) {
+        InputDataConstructors[reqKey].apply(null, inputArr);
+    };
     return Object.entries(
-        new QueryDataConstructors.SetReqData(
-            setID, ratMin, ratMax, maxNum, offset, isAscending
-        )
+        new Constructor(inputArr)
     );
 }
-export function upaf_getSetInfoQueryReqData(setID) {
+
+export function upaf_getQueryReqDataArr(reqKey, inputArr) {
+    let Constructor = function(inputArr) {
+        QueryDataConstructors[reqKey].apply(null, inputArr);
+    };
     return Object.entries(
-        new QueryDataConstructors.SetInfoReqData(setID)
+        new Constructor(inputArr)
     );
 }
-export function upaf_getSetInfoSecKeyQueryReqData(userID, subjID, relID) {
-    return Object.entries(
-        new QueryDataConstructors.SetInfoSecKeyReqData(userID, subjID, relID)
-    );
-}
-export function upaf_getRatQueryReqData(objID, setID)  {
-    return Object.entries(
-        new QueryDataConstructors.RatReqData(objID, setID)
-    );
-}
-export function upaf_getCatDefQueryReqData() {
-    return Object.entries(
-        new QueryDataConstructors.SetInfoReqData(setID)
-    );
-}
-export function upaf_getETermDefQueryReqData() {
-
-}
-export function upaf_getRelDefQueryReqData() {
-
-}
-export function upaf_getSuperCatsQueryReqData() {
-
-}
-export function upaf_getTextQueryReqData() {
-
-}
-export function upaf_getBinaryQueryReqData() {
-
-}
-export function upaf_getKeywordStrQueryReqData() {
-
-}
-export function upaf_getPatternQueryReqData() {
-
-}
-
-
-
-
-// export function upaf_uploadProtectedRating(
-//     userID, subjID, relID, objID, rating
-// ) {
-//     // initialize the input request.
-//     let data = new InputDataConstructors.RateReqData(
-//         userID, subjID, relID, objID, rating
-//     );
-//     // request that user is authenticated/authorized for uploading protected
-//     // ratings.
-//     AuthRequestor.authForProtectedRate(userID, relID);
-//     // construct a data HTML element and append it to #protectedRatingBuffer.
-//     let html = $("<data></data>").attr(data);
-//     $('#protectedRatingBuffer').append(html);
-// }
-
-
-export function upaf_uploadSemanticTerm(type, userID, catID, str) {
-    // request that user is authenticated/authorized for sementic term uploads.
-    AuthRequestor.authForTermInsert(userID);
-    // initialize the input request according to the chosen term type.
-    var data;
-    switch (type) {
-        case "cat":
-            data = new InputDataConstructors.CatReqData(userID, catID, str);
-            break;
-        case "eTerm":
-            data = new InputDataConstructors.ETermReqData(userID, catID, str);
-            break;
-        case "rel":
-            data = new InputDataConstructors.RelReqData(userID, catID, str);
-            break;
-        default:
-            throw (
-                "insertSemanticTerm(): invalid type input " +
-                "(options are 'cat', 'eTerm' or 'rel')"
-            );
-    }
-    // request insertion of the term and get the result containing the
-    // exit code and the "outID," which can be either a new ID or an old ID,
-    // depending on whether an identical term already exist in the database. If
-    // the exit code is 0, outID is a new ID, and if it is 1, outID is the ID
-    // of the existing identical term.
-    let res = JSON.parse($.getJSON("input_handler.php", data).responseText);
-    // return [outID, exit code].
-    return res;
-}
-
-export function upaf_uploadCat(userID, superCatID, title) {
-    return upaf_uploadSemanticTerm("cat", userID, superCatID, title);
-}
-
-export function upaf_uploadETerm(userID, catID, title) {
-    return upaf_uploadSemanticTerm("eTerm", userID, catID, title);
-}
-
-export function upaf_uploadRel(userID, subjCatID, objNoun) {
-    return upaf_uploadSemanticTerm("rel", userID, subjCatID, objNoun);
-}
-
-
-
-export function upaf_uploadText(userID, str) {
-    // request that user is authenticated/authorized for term uploads.
-    AuthRequestor.authForTextInsert(userID, str.length);
-    // initialize the input request according to the chosen term type.
-    var data = new InputDataConstructors.TextReqData(userID, str);
-    // request insertion of the text term and get the result co... --"--.
-    let res = JSON.parse($.getJSON("input_handler.php", data).responseText);
-    // return [outID, exit code].
-    return res;
-}
-
-export function upaf_uploadBinary(userID, bin) {
-    // request that user is authenticated/authorized for
-    AuthRequestor.authForBinaryInsert(userID, bin.length);
-    // initialize the input request according to the chosen term type.
-    var data = new InputDataConstructors.BinReqData(userID, bin);
-    // request insertion of the binary term and get the result co... --"--.
-    let res = JSON.parse($.getJSON("input_handler.php", data).responseText);
-    // return [outID, exit code].
-    return res;
-}
-
-
-
-
-
-
-
-/* Functions to query the semantic database */
-
-export function upaf_querySet(setID, ratMin, ratMax, maxNum, offset, isAscending) {
-    let data = new QueryDataConstructors.SetReqData(
-        setID, ratMin, ratMax, maxNum, offset, isAscending
-    );
-    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
-    // return multidimensional array with columns: (ratingVal, objID).
-    return res;
-}
-
-export function upaf_querySetInfo(setID) {
-    let data = new QueryDataConstructors.SetInfoReqData(
-        setID
-    );
-    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
-    // return array with elements: (userID, subjID, relID, elemNum).
-    return res;
-}
-
-export function upaf_querySetInfoFromSecKey(userID, subjID, relID) {
-    let data = new QueryDataConstructors.SetInfoSecKeyReqData(
-        userID, subjID, relID
-    );
-    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
-    // return array with elements: (setID, elemNum).
-    return res;
-}
-
-
-export function upaf_queryRating(objID, setID) {
-    let data = new QueryDataConstructors.RatReqData(
-        objID, setID
-    );
-    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
-    // return ratingVal.
-    return res[0];
-}
-
-export function upaf_queryCatDef(catID) {
-    let data = new QueryDataConstructors.CatDefReqData(
-        catID
-    );
-    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
-    // return array with elements: (catTitle, superCatID).
-    return res;
-}
-
-export function upaf_queryETermDef(eTermID) {
-    let data = new QueryDataConstructors.ETermDefReqData(
-        eTermID
-    );
-    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
-    // return array with elements: (eTermTitle, catID).
-    return res;
-}
-
-export function upaf_queryRelDef(relID) {
-    let data = new QueryDataConstructors.RelDefReqData(
-        relID
-    );
-    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
-    // return array with elements: (objNoun, subjCatID).
-    return res;
-}
-
-export function upaf_querySuperCatDefs(catID) {
-    let data = new QueryDataConstructors.SuperCatsReqData(
-        catID
-    );
-    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
-    // return multidimensional array with columns: (catTitle, superCatID).
-    return res;
-}
-
-export function upaf_queryText(textID) {
-    let data = new QueryDataConstructors.TextReqData(
-        textID
-    );
-    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
-    // return text.
-    return res[0];
-}
-
-export function upaf_queryBinary(binID) {
-    let data = new QueryDataConstructors.BinaryReqData(
-        binID
-    );
-    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
-    // return binary.
-    return res[0];
-}
-
-export function upaf_queryKeywordString(kwsID) {
-    let data = new QueryDataConstructors.KeywordStrReqData(
-        kwsID
-    );
-    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
-    // return keyword string.
-    return res[0];
-}
-
-export function upaf_queryPattern(patID) {
-    let data = new QueryDataConstructors.PatternReqData(
-        patID
-    );
-    let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
-    // return pattern string.
-    return res[0];
-}
-
-// TODO: Add more query requests.
-
-
-
-
-
 
 
 
 /* Functions to verify and insert new scripts */
 
 // TODO..
+
+
+
+
+
+
+
+
+/* Functions to verify and load hyperlinks into the UPA, and to follow them */
+
+// var urlRegExCache = urlRegExCache ?? {};
+
+export function upaf_cacheURLRegEx(pattID, key, userID) {
+    // test key.
+    if (typeof key !== "string") {
+        throw (
+            "cacheURLRegEx(): key is not a string"
+        );
+    }
+    if ( !(/^\w+$/.test(key) ) {
+        throw (
+            "cacheURLRegEx(): key does not match the right pattern " +
+            '("/^\\w+$/")'
+        );
+    }
+    // query UPA_links.php to see if pattID points to a whitelisted URL
+    // pattern, and to get the held pattern string if so.
+    // (UPA_links.php also verifies that userID is whitelisted for the
+    // requesting user (if logged in; if not, userID has to be whitelisted
+    // for public use).)
+    let data = {pid: pattID, uid: userID}
+    let res = JSON.parse($.getJSON("UPA_link_patterns.php", ).responseText);
+    // if the pattern was whitelisted for UPA links, store it in the cache.
+    if (res.success) {
+        urlRegExCache[key] = new RegExp(res.str);
+        return 0;
+    } else {
+        return res.error;
+    }
+}
+
+
+export function upaf_isACachedURL(key) {
+    if (typeof urlRegExCache[key] === "undefined") {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+export function upaf_loadLink(selector, url, urlRegExKey) {
+    let jqObj = getJQueryObj(selector);
+    // lookup pattern (will fail if link is not cached, so the users might want
+    // to check this first with isACachedLink()).
+    let regex = urlRegExCache[urlRegExKey];
+    // match link againt pattern.
+    if (!regex.test(url)) {
+        throw (
+            "loadLink(): RegEx was cached but did not match the input link"
+        );
+    }
+    // load the link into all selected <a></a> elements.
+    jqObj.filter('a').attr("src", url});
+}
+
+export function upaf_followLink(url, urlRegExKey, target) {
+    // test target.
+    if (
+        typeof target !== "undefined" &&
+        !(["_self", "_blank", "_parent", "_top"].includes(target))
+    ) {
+        throw (
+            "loadLink(): invalid target " +
+            "(options are '_self', '_blank', '_parent' or '_top')"
+        );
+    }
+    // lookup pattern (will fail if link is not cached, so the users might want
+    // to check this first with isACachedLink()).
+    let regex = urlRegExCache[urlRegExKey];
+    // match link againt pattern.
+    if (!regex.test(url)) {
+        throw (
+            "followLink(): RegEx was cached but did not match the input link"
+        );
+    }
+    // follow the link.
+    window.open(url, target);
+}
+
+
+
+
+
+
+
+/* Functions to load more scripts on-demand */
+
+export function upaf_loadScript(
+    textID, callbackName, funIdentList, asFunIdentList
+) {
+    // test callback key (which shouldn't necessarily be defined at this point;
+    // it can potentially be defined by the loaded module (which can be useful
+    // if the function requires no input)).
+    if (!/^[\$\w]+$/.test(callbackName)) {
+        throw (
+            "loadScript(): callback function name is not a valid " +
+            "/^[\\$\\w]+$/ string"
+        );
+    }
+    // test mandatory funIdentList and prepend "upaf_" to all the identifiers.
+    testFunIdentArrAndPrependUPAFPrefix(funIdentList);
+    // test that the length is greater than zero.
+    let len = funIdentList.length;
+    if (len == 0) {
+        throw (
+            "loadModule(): function identifier array is empty"
+        );
+    }
+    // do something similar to asFunIdentList if it is supplied.
+    if (typeof asFunIdentList !== "undefined") {
+        // test asFunIdentList and prepend "upaf_" to all the identifiers.
+        testFunIdentArrAndPrependUPAFPrefix(asFunIdentList);
+        // test that the length is equal to the length of funIdentList.
+        if (!(len === asFunIdentList.length)) {
+            throw (
+                "loadModule(): function identifier arrays are of different "
+                "sizes"
+            );
+        }
+    }
+    // construct the first part of the script html element, including the
+    // import statement.
+    var html = '<script type="module" async> import {';
+    if (typeof asFunIdentList === "undefined") {
+        html += funIdentList.join(", ")
+    } else {
+        html += funIdentList[0] + " as " + asFunIdentList[0];
+        for (let i = 1; i < len; i++) {
+            html += ", " + funIdentList[i] + " as " + asFunIdentList[i];
+        }
+    }
+    html += '} from "UPA_scripts.php?id=' + textID + '"; ';
+    // append a call statement to the callback function, which should be
+    // defined at this point in the newly loaded script, and append also the
+    // closing script tag.
+    html += "upaf_" + callbackName + "(); </script>";
+    // append a script that imports functions from the module and runs the
+    // provided callback function, which can either one of the newly loaded
+    // functions, or a function that calls one or several of the newly loaded
+    // functions.
+    $('#upaMainFrame').after(html);
+}
+
+
+export function testFunIdentArrAndPrependUPAFPrefix(funIdentList) {
+    //test funIdentList and prepend "upaf_" to all the identifiers.
+    let len = funIdentList.length;
+    let funIdentRegEx = /[\w\$]+/;
+    for (let i = 0; i < len; i++) {
+        // test identifier.
+        if (!funIdentRegEx.test(funIdentList[i])) {
+            throw (
+                "loadModule(): invalid function identifier at index " +
+                i.toString()
+            );
+        }
+        // prepend "upaf_" to it.
+        funIdentList[i] = "upaf_" + funIdentList[i];
+    }
+}
+
+
+
+
+
+
+/* Functions to load images into the UPA */
+
+export function upaf_loadImage(selector, binID, format, altText, userID) {
+    if (binID === "b0") {
+        // add null src to <image> elements..
+    }
+    let data = {bid: binID, f: format, uid: userID}
+    // TODO..
+}
+
+// TODO: Continue adding more types of binary resources, or add them in another
+// file/text.
