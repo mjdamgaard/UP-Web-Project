@@ -8,7 +8,7 @@ import {
 } from "./stmt.js";
 
 
-export function parseModuleScript(script) {
+export function parseScript(script) {
     // get lexeme array.
     // TODO: implement exception handling here.
     var lexArr = lex(script);

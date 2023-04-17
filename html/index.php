@@ -36,7 +36,7 @@ if (!isset($_GET["uid"])) {
 if (!isset($_GET["pid"])) {
     $_GET["pid"] = "u1";
 }
-require $_SERVER['DOCUMENT_ROOT'] . "/UPA.php";
+require $_SERVER['DOCUMENT_ROOT'] . "/../src/UPA.php";
 ?>
 
 <!-- Tests -->
