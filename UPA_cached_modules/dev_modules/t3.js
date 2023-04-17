@@ -59,7 +59,7 @@ export function upaf_getQueryReqDataArr(reqKey, inputArr) {
 
 /* Functions to verify and load hyperlinks into the UPA, and to follow them */
 
-// var urlRegExCache = urlRegExCache ?? {};
+var urlRegExCache = urlRegExCache ?? {};
 
 export function upaf_cacheURLRegEx(pattID, key, userID) {
     // test key.

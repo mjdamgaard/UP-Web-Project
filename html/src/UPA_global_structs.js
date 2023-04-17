@@ -1,4 +1,0 @@
-
-var idRecord = [];
-
-var urlRegExCache = {};
