@@ -83,7 +83,7 @@ export function upaf_cacheURLRegEx(pattID, key, userID) {
     let res = JSON.parse($.getJSON("UPA_link_patterns.php", ).responseText);
     // if the pattern was whitelisted for UPA links, store it in the cache.
     if (res.success) {
-        urlRegExCache[key] = new RegExp(res.str);
+        urlRegExCache["upak_" + key] = new RegExp(res.str);
         return 0;
     } else {
         return res.error;
@@ -92,7 +92,7 @@ export function upaf_cacheURLRegEx(pattID, key, userID) {
 
 
 export function upaf_isACachedURL(key) {
-    if (typeof urlRegExCache[key] === "undefined") {
+    if (typeof urlRegExCache["upak_" + key] === "undefined") {
         return false;
     } else {
         return true;
@@ -103,7 +103,7 @@ export function upaf_loadLink(selector, url, urlRegExKey) {
     let jqObj = getJQueryObj(selector);
     // lookup pattern (will fail if link is not cached, so the users might want
     // to check this first with isACachedLink()).
-    let regex = urlRegExCache[urlRegExKey];
+    let regex = urlRegExCache["upak_" + urlRegExKey];
     // match link againt pattern.
     if (!regex.test(url)) {
         throw (
@@ -127,7 +127,7 @@ export function upaf_followLink(url, urlRegExKey, target) {
     }
     // lookup pattern (will fail if link is not cached, so the users might want
     // to check this first with isACachedLink()).
-    let regex = urlRegExCache[urlRegExKey];
+    let regex = urlRegExCache["upak_" + urlRegExKey];
     // match link againt pattern.
     if (!regex.test(url)) {
         throw (

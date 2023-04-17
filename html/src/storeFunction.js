@@ -8,5 +8,5 @@ function storeFunction(fun, key) {
             "/^\\w+$/ string"
         );
     }
-    storedFunctions["upaf_" + key] = fun;
+    storedFunctions["upak_" + key] = fun;
 }

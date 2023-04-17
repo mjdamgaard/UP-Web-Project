@@ -992,7 +992,7 @@ export function upaf_removeLastCSS(selector) {
 //             "/^\\w+$/ string"
 //         );
 //     }
-//     storedFunctions["upaf_" + key] = fun;
+//     storedFunctions["upak_" + key] = fun;
 // }
 
 export function upaf_isAStoredFunction(key) {
@@ -1002,7 +1002,7 @@ export function upaf_isAStoredFunction(key) {
             "/^\\w+$/ string"
         );
     }
-    return (typeof storedFunctions["upaf_" + key] !== "undefined");
+    return (typeof storedFunctions["upak_" + key] !== "undefined");
 }
 
 // Note that since this function does not have the upaf_ prefix, it cannot
@@ -1014,7 +1014,7 @@ export function getFunction(key) {
             "/^\\w+$/ string"
         );
     }
-    return storedFunctions["upaf_" + key];
+    return storedFunctions["upak_" + key];
 }
 
 /* A private function to get a resulting function from key and a data array
