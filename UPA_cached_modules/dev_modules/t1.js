@@ -976,6 +976,12 @@ export function upaf_removeLastCSS(selector) {
 
 /* Functions to store and get callback upaf_ functions from key strings */
 
+// (17:02) Hm, one solution could perhaps be to allow a very specific function
+// call statement to include function variables.. ..Hm, or I could introduce
+// a special type of upaff_ functions, that returns upaf_ functions.. (17:07)
+// ..No, that doesn't work either, cause then I also need to have input types
+// as part of the function types, and I would like to avoid that.. (17:10)
+
 var storedFunctions = storedFunctions ?? {};
 
 export function upaf_storeFunction(funName) {

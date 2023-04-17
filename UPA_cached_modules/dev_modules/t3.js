@@ -59,10 +59,6 @@ export function upaf_getQueryReqDataArr(reqKey, inputArr) {
 
 /* Functions to verify and load hyperlinks into the UPA, and to follow them */
 
-// (17:02) Hm, one solution could perhaps be to allow a very specific function
-// call statement to include function variables..
-
-
 var urlRegExCache = urlRegExCache ?? {};
 
 export function upaf_cacheURLRegEx(pattID, key, userID) {
