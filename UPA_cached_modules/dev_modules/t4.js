@@ -27,7 +27,7 @@ export function upaf_cacheURLRegEx(pattID, key, userID) {
     // requesting user (if logged in; if not, userID has to be whitelisted
     // for public use).)
     let data = {pid: pattID, uid: userID}
-    let res = JSON.parse($.getJSON("UPA_links.php", ).responseText);
+    let res = JSON.parse($.getJSON("UPA_link_patterns.php", ).responseText);
     // if the pattern was whitelisted for UPA links, store it in the cache.
     if (res.success) {
         urlRegExCache[key] = new RegExp(res.str);

@@ -1,7 +1,7 @@
 
 /* Functions to input ratings and insert terms */
 
-export upaf_uploadRating(userID, subjID, relID, objID, rating) {
+export function upaf_uploadRating(userID, subjID, relID, objID, rating) {
     // initialize the input request.
     let data = new InputDataConstructors.RateReqData(
         userID, subjID, relID, objID, rating
@@ -15,7 +15,7 @@ export upaf_uploadRating(userID, subjID, relID, objID, rating) {
     return res[1];
 }
 
-export upaf_uploadProtectedRating(userID, subjID, relID, objID, rating) {
+export function upaf_uploadProtectedRating(userID, subjID, relID, objID, rating) {
     // initialize the input request.
     let data = new InputDataConstructors.RateReqData(
         userID, subjID, relID, objID, rating
@@ -29,7 +29,7 @@ export upaf_uploadProtectedRating(userID, subjID, relID, objID, rating) {
 }
 
 
-export upaf_uploadSemanticTerm(type, userID, catID, str) {
+export function upaf_uploadSemanticTerm(type, userID, catID, str) {
     // request that user is authenticated/authorized for sementic term uploads.
     AuthRequestor.authForTermInsert(userID);
     // initialize the input request according to the chosen term type.
@@ -60,21 +60,21 @@ export upaf_uploadSemanticTerm(type, userID, catID, str) {
     return res;
 }
 
-export upaf_uploadCat(userID, superCatID, title) {
+export function upaf_uploadCat(userID, superCatID, title) {
     return upaf_uploadSemanticTerm("cat", userID, superCatID, title);
 }
 
-export upaf_uploadETerm(userID, catID, title) {
+export function upaf_uploadETerm(userID, catID, title) {
     return upaf_uploadSemanticTerm("eTerm", userID, catID, title);
 }
 
-export upaf_uploadRel(userID, subjCatID, objNoun) {
+export function upaf_uploadRel(userID, subjCatID, objNoun) {
     return upaf_uploadSemanticTerm("rel", userID, subjCatID, objNoun);
 }
 
 
 
-export upaf_uploadText(userID, str) {
+export function upaf_uploadText(userID, str) {
     // request that user is authenticated/authorized for term uploads.
     AuthRequestor.authForTextInsert(userID, str.length);
     // initialize the input request according to the chosen term type.
@@ -85,7 +85,7 @@ export upaf_uploadText(userID, str) {
     return res;
 }
 
-export upaf_uploadBinary(userID, bin) {
+export function upaf_uploadBinary(userID, bin) {
     // request that user is authenticated/authorized for
     AuthRequestor.authForBinaryInsert(userID, bin.length);
     // initialize the input request according to the chosen term type.
@@ -104,7 +104,7 @@ export upaf_uploadBinary(userID, bin) {
 
 /* Functions to query the semantic database */
 
-export upaf_querySet(setID, ratMin, ratMax, maxNum, offset, isAscending) {
+export function upaf_querySet(setID, ratMin, ratMax, maxNum, offset, isAscending) {
     let data = new QueryDataConstructors.SetReqData(
         setID, ratMin, ratMax, maxNum, offset, isAscending
     );
@@ -113,7 +113,7 @@ export upaf_querySet(setID, ratMin, ratMax, maxNum, offset, isAscending) {
     return res;
 }
 
-export upaf_querySetInfo(setID) {
+export function upaf_querySetInfo(setID) {
     let data = new QueryDataConstructors.SetInfoReqData(
         setID
     );
@@ -122,7 +122,7 @@ export upaf_querySetInfo(setID) {
     return res;
 }
 
-export upaf_querySetInfoFromSecKey(userID, subjID, relID) {
+export function upaf_querySetInfoFromSecKey(userID, subjID, relID) {
     let data = new QueryDataConstructors.SetInfoSecKeyReqData(
         userID, subjID, relID
     );
@@ -132,7 +132,7 @@ export upaf_querySetInfoFromSecKey(userID, subjID, relID) {
 }
 
 
-export upaf_queryRating(objID, setID) {
+export function upaf_queryRating(objID, setID) {
     let data = new QueryDataConstructors.RatReqData(
         objID, setID
     );
@@ -141,16 +141,16 @@ export upaf_queryRating(objID, setID) {
     return res[0];
 }
 
-export upaf_queryCatDef(catID) {
+export function upaf_queryCatDef(catID) {
     let data = new QueryDataConstructors.CatDefReqData(
         catID
-    );
+    );let jqXHR = $.getJSON("query_handler.php", data); console.log(jqXHR); console.log(jqXHR.responseText);
     let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
     // return array with elements: (catTitle, superCatID).
     return res;
 }
 
-export upaf_queryETermDef(eTermID) {
+export function upaf_queryETermDef(eTermID) {
     let data = new QueryDataConstructors.ETermDefReqData(
         eTermID
     );
@@ -159,7 +159,7 @@ export upaf_queryETermDef(eTermID) {
     return res;
 }
 
-export upaf_queryRelDef(relID) {
+export function upaf_queryRelDef(relID) {
     let data = new QueryDataConstructors.RelDefReqData(
         relID
     );
@@ -168,7 +168,7 @@ export upaf_queryRelDef(relID) {
     return res;
 }
 
-export upaf_querySuperCatDefs(catID) {
+export function upaf_querySuperCatDefs(catID) {
     let data = new QueryDataConstructors.SuperCatsReqData(
         catID
     );
@@ -177,7 +177,7 @@ export upaf_querySuperCatDefs(catID) {
     return res;
 }
 
-export upaf_queryText(textID) {
+export function upaf_queryText(textID) {
     let data = new QueryDataConstructors.TextReqData(
         textID
     );
@@ -186,7 +186,7 @@ export upaf_queryText(textID) {
     return res[0];
 }
 
-export upaf_queryBinary(binID) {
+export function upaf_queryBinary(binID) {
     let data = new QueryDataConstructors.BinaryReqData(
         binID
     );
@@ -195,7 +195,7 @@ export upaf_queryBinary(binID) {
     return res[0];
 }
 
-export upaf_queryKeywordString(kwsID) {
+export function upaf_queryKeywordString(kwsID) {
     let data = new QueryDataConstructors.KeywordStrReqData(
         kwsID
     );
@@ -204,7 +204,7 @@ export upaf_queryKeywordString(kwsID) {
     return res[0];
 }
 
-export upaf_queryKeywordString(patID) {
+export function upaf_queryPattern(patID) {
     let data = new QueryDataConstructors.PatternReqData(
         patID
     );

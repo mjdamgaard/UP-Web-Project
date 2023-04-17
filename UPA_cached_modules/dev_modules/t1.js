@@ -163,7 +163,7 @@ export function getJQueryObj(selector) {
 
 /* Functions to set and get (unique!) IDs of HTML elements */
 
-var idRecord = idRecord ?? [];
+// var idRecord = idRecord ?? []; // I have moved this to a script in html/src.
 
 export function upaf_setID(selector, id) {
     let jqObj = getJQueryObj(selector);

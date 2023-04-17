@@ -28,11 +28,11 @@
 -- DROP TABLE UserGroups;
 -- DROP TABLE Users;
 --
-DROP TABLE Categories;
-DROP TABLE ElementaryTerms;
-DROP TABLE Relations;
+-- DROP TABLE Categories;
+-- DROP TABLE ElementaryTerms;
+-- DROP TABLE Relations;
 -- DROP TABLE KeywordStrings;
-DROP TABLE Patterns;
+-- DROP TABLE Patterns;
 -- DROP TABLE Lists;
 -- DROP TABLE Texts;
 -- DROP TABLE Binaries;
