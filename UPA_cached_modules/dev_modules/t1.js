@@ -983,7 +983,7 @@ export function upaf_removeLastCSS(selector) {
 // made a special part of the syntax of our JS subset. And storeFunction.js
 // is run in the document head (before loading the UPA).
 
-// var storedFunctions = storedFunctions ?? {};
+// var storedFunctions = {};
 //
 // function storeFunction(fun, key) {
 //     if (!/^\w+$/.test(key)) {
@@ -1031,7 +1031,7 @@ export function getResultingFunction(funName, dataArr) {
 
 export function upaf_runResultingFunction(funName, dataArr) {
     var fun = getFunction(funName);
-    fun.apply(null, dataArr);
+    fun.apply(null, dataArr ?? []);
 }
 
 

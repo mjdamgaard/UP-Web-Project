@@ -1,5 +1,5 @@
 
-var storedFunctions {};
+var storedFunctions = {};
 
 function storeFunction(fun, key) {
     if (!/^\w+$/.test(key)) {
