@@ -144,7 +144,7 @@ export function upaf_queryRating(objID, setID) {
 export function upaf_queryCatDef(catID) {
     let data = new QueryDataConstructors.CatDefReqData(
         catID
-    );let jqXHR = $.getJSON("query_handler.php", data); console.log(jqXHR); console.log(jqXHR.responseText);
+    );
     let res = JSON.parse($.getJSON("query_handler.php", data).responseText);
     // return array with elements: (catTitle, superCatID).
     return res;
