@@ -26,21 +26,23 @@ export function upaf_query(reqDataArr, callbackKey) {
 
 /* Helping functions to construct request data arrays */
 
-export function upaf_getUploadReqDataArr(reqKey, inputArr) {
-    let Constructor = function(inputArr) {
-        InputDataConstructors[reqKey + "ReqData"].apply(null, inputArr);
-    };
+export function upaf_getUploadReqDataArr(
+    reqKey, var1, var2, var3, var4, var5, var6
+) {
     return Object.entries(
-        new Constructor(inputArr)
+        new InputDataConstructors[reqKey + "ReqData"](
+            var1, var2, var3, var4, var5, var6
+        )
     );
 }
 
-export function upaf_getQueryReqDataArr(reqKey, inputArr) {
-    let Constructor = function(inputArr) {
-        QueryDataConstructors[reqKey + "ReqData"].apply(null, inputArr);
-    };
+export function upaf_getQueryReqDataArr(
+    reqKey, var1, var2, var3, var4, var5, var6
+) {
     return Object.entries(
-        new Constructor(inputArr)
+        new QueryDataConstructors[reqKey + "ReqData"](
+            var1, var2, var3, var4, var5, var6
+        )
     );
 }
 

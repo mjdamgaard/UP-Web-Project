@@ -32,8 +32,7 @@ export function upaf_main(preferenceUserID, termID, userID) {
     switch (termType) {
         case "c":
             storeFunction(upaf_appendDataHTML, "appendDataHTML");
-            let reqDataArr = upaf_getQueryReqDataArr("CatDef", [termID]);
-            console.log(reqDataArr);
+            let reqDataArr = upaf_getQueryReqDataArr("CatDef", termID);
             let catDef = upaf_query(reqDataArr, "appendDataHTML");
             break;
         default:
@@ -42,5 +41,5 @@ export function upaf_main(preferenceUserID, termID, userID) {
 }
 
 function upaf_appendDataHTML(dataArr) {
-    upaf_addHTML("main", "append", dataArr)
+    upaf_addHTML("main", "append", JSON.stringify(dataArr));
 }
