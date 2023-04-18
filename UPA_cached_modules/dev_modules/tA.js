@@ -3,7 +3,7 @@
 import {
     upaf_appendHelloWorld, upaf_addHTML,
     upaf_css, upaf_addCSS, upaf_removeCSS, upaf_removeLastCSS,
-    cssACombinedValuePattern
+    cssACombinedValuePattern, cssAComplexRegEx
 } from "/UPA_scripts.php?id=t1";
 
 import {
@@ -33,8 +33,11 @@ export function upaf_main(preferenceUserID, termID, userID) {
     // just a few CSS tests.
     let cssACombinedValueRegEx = (new RegExp("^"+cssACombinedValuePattern+"$"));
     console.log(cssACombinedValueRegEx.test("#FF0000"));
+    console.log(cssAComplexRegEx);
     upaf_addCSS('*', [["background-color", "#FF0000"]]);
     // Apart from the bug, why is this so slow?!!
+    // ..Hm, it seems to be the cssAComplexRegEx match.. ..Hm, let me debug
+    // and then look at the speed, I guess..
     upaf_addCSS('[~foo="bar"]', [["background-color", "#FF0000"]]);
 
     let termType = termID.substring(0, 1);
