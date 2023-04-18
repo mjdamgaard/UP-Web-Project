@@ -12,7 +12,8 @@ class Lexer = {
         this.whitespaceRegEx = whitespaceRegEx;
         this.error = undefined;
         this.success = undefined;
-        this.result = undefined;
+        this.lexArr = undefined;
+        this.nextPos = undefined;
     },
 
     lex(str) {
@@ -21,23 +22,23 @@ class Lexer = {
         let whitespaceRegEx = this.whitespaceRegEx;
         let noneWSCharRegEx = /\S/;
         // initialize the return lexeme array and the position variable.
-        var lexArr = [];
-        var nextPos = 0;
+        this.lexArr = [];
+        this.nextPos = 0;
         // initialize the loop lengths.
         let strLen = str.length;
         let lexArrLen = lexRegExEndPairArr.length;
         // lex and obtain the return lexeme array in the following loop.
-        outerLoop: while (nextPos < strLen) {
+        outerLoop: while (this.nextPos < strLen) {
             // first match an optional string of whitespace, increase nextPos
             // with the matched length and return the lexeme array if the end
             // of the string is reached.
             let wsLen = getMatchLen(
-                str, nextPos, whitespaceRegEx, noneWSCharRegEx
+                str, this.nextPos, whitespaceRegEx, noneWSCharRegEx
             );
-            nextPos += wsLen;
-            if (nextPos >= strLen) {
+            this.nextPos += wsLen;
+            if (this.nextPos >= strLen) {
                 this.success = true;
-                this.result = lexArr;
+                this.lexArr = lexArr;
                 return true;
             }
             // then loop through all pairs in lexRegExEndPairArr, expecting to
@@ -47,22 +48,23 @@ class Lexer = {
                 let endCharRegEx = lexRegExEndPairArr[i][1];
                 // get the length of the potential match.
                 let matchLen = getMatchLen(
-                    str, nextPos, lexemeRegEx, endCharRegEx
+                    str, this.nextPos, lexemeRegEx, endCharRegEx
                 );
                 // if a match was found, increase nexPos and continue the outer
                 // for loop.
                 if (matchLen > 0) {
-                    nextPos += matchLen;
-                    continue innerLoop;
+                    this.nextPos += matchLen;
+                    continue outerLoop; // in PHP, this would be "continue 2;"
                 }
             }
             // if the program reaches here, no match was found, which means
             // that we should set an error message and return false.
             this.success = false;
-            this.error = "Invalid lexeme at position " + nextPos.toString() +
+            this.error = "Invalid lexeme at position " +
+                this.nextPos.toString() +
                 " after: " +
                 ("^" + str).substring(Math.max(0, nextPos - 160), nextPos + 1);
-            this.result = lexArr;
+            this.lexArr = lexArr;
             return false;
         }
     }
