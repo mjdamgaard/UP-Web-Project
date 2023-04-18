@@ -61,6 +61,8 @@ addProduction(key, parseSettings) {
     this.parseFunctions[key] = function(lexArr, nextPos, successRequired) {
         // record the initial position.
         initialPos = nextPos[0];
+        // declare the boolean return value.
+        var ret;
         // go through each parse setting and do the parsing as instructed.
         try {
             for (let i = 0; i < settingsLen; i++) {
@@ -70,13 +72,13 @@ addProduction(key, parseSettings) {
                 switch (parseType) {
                     case ("optWords"):
                         // parse some optional words that are never required.
-                        parseWords(
+                        ret = parseWords(
                             lexArr, nextPos, subproductionKeys, false
                         );
                     case ("initWords"):
                         // parse some initial words after which the rest of
                         // the "words" in the production become mandatory.
-                        parseWords(
+                        ret = parseWords(
                             lexArr, nextPos, subproductionKeys, successRequired
                         );
                         successRequired = true;
@@ -84,7 +86,7 @@ addProduction(key, parseSettings) {
                         // parse some words which are required only if
                         // successRequired is true or if "initalWords" has
                         // appeared before.
-                        parseWords(
+                        ret = parseWords(
                             lexArr, nextPos, subproductionKeys, successRequired
                         );
                     case ("list"):
@@ -92,23 +94,25 @@ addProduction(key, parseSettings) {
                         // a pattern defined by subSettings (in the form of a
                         // RegExp object).
                         let delimeterRegEx = subSettings;
-                        parseList(
+                        ret = parseList(
                             lexArr, nextPos, subproductionKeys[0],
                             delimeterRegEx
                         );
                     case ("union"):
                         // parse at least one of the subproductions pointed to
                         // by each of the the subproductionKeys.
-                        parseUnion(
+                        ret = parseUnion(
                             lexArr, nextPos, subproductionKeys, successRequired
                         );
                     case ("optUnion"):
                         // parse at most one of the subproductions pointed to
                         // by each of the the subproductionKeys.
-                        parseUnion(
+                        ret = parseUnion(
                             lexArr, nextPos, subproductionKeys, false
                         );
                     default:
+                        // (Note that this error is only thrown in the call
+                        // to parse(), not to addProduction().)
                         throw (
                             "addProduction(): Unknown parseType: " + parseType
                         );
@@ -118,11 +122,29 @@ addProduction(key, parseSettings) {
             error += " in " + key;
             throw error;
         }
+        // if no error was thrown, test ret to see if nextPos has to be reset.
+        if (!ret) {
+            nextPos[0] = initialPos;
+        }
+        // return the boolean ret, which denotes if the parsing succeeded or
+        // not.
+        return ret;
     }
 }
 
 parseWords(lexArr, nextPos, subproductionKeys, successRequired) {
-
+    // initialize bolean return value to true.
+    var ret = true;
+    // loop through the subproductionKeys and call the corresponding parsing
+    // function.
+    let subKeysLen = subproductionKeys.length;
+    for (let i = 0; i < subKeysLen; i++) {
+        let key = subproductionKeys[i];
+        ret = ret && this.parseFunctions[key](lexArr, nextPos, successRequired);
+    }
+    // return the conjunction of all the individual return values from those
+    // parsings.
+    return ret;
 }
 
 parseUnion(lexArr, nextPos, subproductionKeys, successRequired) {
