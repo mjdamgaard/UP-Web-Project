@@ -15,15 +15,19 @@ parse(lexArr, productionKey) {
     try {
         this.parseFunctions[productionKey](lexArr, this.nextPos, true);
     } catch (error) {
-        this.error = error;
+        this.error = "Parsing failed at position " + this.nextPos.toString() +
+            " after\n'" +
+            lexArr.slice(Math.max(0, nextPos - 20), nextPos).join(" ") + "'\n" +
+            error;
         this.success = false;
         return false;
     }
     // check if all the lexeme array has been parsed.
     if (this.nextPos >= lexArr.length) {
-        this.error = "parsing failed at position " + this.nextPos.toString() +
-            " after: " +
-            lexArr.slice(Math.max(0, nextPos - 20), nextPos).join(" ");
+        this.error = "Parsing failed at position " + this.nextPos.toString() +
+            " after\n'" +
+            lexArr.slice(Math.max(0, nextPos - 20), nextPos).join(" ") + "'\n" +
+            "The lexame array was only partially parsed";
         this.success = false;
         return false;
     }
@@ -43,8 +47,8 @@ addProduction(key, parseSettings) {
                 let test = parseSettings.test(lexArr[nextPos[0]]);
                 if (!test && successRequired) {
                     throw (
-                        'expected lexeme of "/' + parseSettings.source +
-                        '/" in ' + key
+                        'Expected lexeme of production ' + key + ' ' +
+                        '(with syntax pattern "/' + parseSettings.source + '/")'
                     );
                 } else if (!test) {
                     return false;
@@ -68,7 +72,6 @@ addProduction(key, parseSettings) {
             for (let i = 0; i < settingsLen; i++) {
                 let parseType = parseSettings[i][0];
                 let subproductionKeys = parseSettings[i][1];
-                let subSettings = parseSettings[i][2];
                 switch (parseType) {
                     case ("optWords"):
                         // parse some optional words that are never required.
@@ -91,12 +94,13 @@ addProduction(key, parseSettings) {
                         );
                     case ("list"):
                         // parse an optional list with a required delimeter of
-                        // a pattern defined by subSettings (in the form of a
-                        // RegExp object).
+                        // a syntax defined by subproductionKeys[1]. If
+                        // subproductionKeys[1] is undefined, then the list
+                        // expects no delimeter between its elements.
                         let delimeterRegEx = subSettings;
                         ret = parseList(
-                            lexArr, nextPos, subproductionKeys[0],
-                            delimeterRegEx
+                            lexArr, nextPos,
+                            subproductionKeys[0], subproductionKeys[1]
                         );
                     case ("union"):
                         // parse at least one of the subproductions pointed to
@@ -119,7 +123,7 @@ addProduction(key, parseSettings) {
                 }
             }
         } catch (error) {
-            error += " in " + key;
+            error += " in " + key + " at position " + initialPos.toString();
             throw error;
         }
         // if no error was thrown, test ret to see if nextPos has to be reset.
@@ -133,27 +137,73 @@ addProduction(key, parseSettings) {
 }
 
 parseWords(lexArr, nextPos, subproductionKeys, successRequired) {
-    // initialize bolean return value to true.
+    // initialize bolean return value as true.
     var ret = true;
+    // loop through the subproductionKeys and call the corresponding parsing
+    // function.
+    let subKeysLen = subproductionKeys.length;
+    var i;
+    for (i = 0; i < subKeysLen; i++) {
+        let key = subproductionKeys[i];
+        // (Note that all parseFunctions reset nextPos on failure (excpet when
+        // an error is thrown).)
+        ret = this.parseFunctions[key](lexArr, nextPos, successRequired);
+        if (!ret) {
+            break;
+        }
+    }
+    // throw an error if parsing failed and successRequired == true;
+    if (successRequired && !ret) {
+        throw (
+            'Expected word of production ' + subproductionKeys[i]
+        );
+    }
+    // return the conjunction of all the individual results of those parsings.
+    return ret;
+}
+
+parseUnion(lexArr, nextPos, subproductionKeys, successRequired) {
+    // initialize bolean return value as false.
+    var ret = false;
     // loop through the subproductionKeys and call the corresponding parsing
     // function.
     let subKeysLen = subproductionKeys.length;
     for (let i = 0; i < subKeysLen; i++) {
         let key = subproductionKeys[i];
-        ret = ret && this.parseFunctions[key](lexArr, nextPos, successRequired);
+        // (Note that all parseFunctions reset nextPos on failure.)
+        ret = this.parseFunctions[key](lexArr, nextPos, successRequired);
+        if (ret) {
+            break;
+        }
     }
-    // return the conjunction of all the individual return values from those
-    // parsings.
+    // throw an error if parsing failed and successRequired == true;
+    if (successRequired && !ret) {
+        throw (
+            'Expected word of production (' + subproductionKeys.join("|") + ")"
+        );
+    }
+    // return true if one of the parsings succeeded, or return false otherwise.
     return ret;
 }
 
-parseUnion(lexArr, nextPos, subproductionKeys, successRequired) {
-
+parseList(lexArr, nextPos, elementProductionKey, delimeterProductionKey) {
+    let delimeterIsProvided = (typeof delimeterProductionKey !== "undefined");
+    // (Note that all parseFunctions reset nextPos on failure.)
+    while (this.parseFunctions[elementProductionKey](lexArr, nextPos, false)) {
+        if (
+            delimeterIsProvided &&
+            !this.parseFunctions[delimeterProductionKey](lexArr, nextPos, false)
+        ) {
+            break;
+        }
+    }
+    // always return true unless an error was thrown in a nested parsing.
+    return true;
+    // NOTE: If a trailing delimeter is allowed, this should be implemented
+    // by adding an "optWord" parsing after this "list" parsing.
 }
 
-parseList(lexArr, nextPos, subproductionKey, delimeterRegEx) {
-
-}
 
 
+// end of class.
 }
