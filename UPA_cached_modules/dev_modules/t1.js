@@ -80,7 +80,7 @@ const classSelectorPattern = "(\\.\\w+)";
 
 const attrSelectorPattern =
     "(\\[" +
-        "~?\\w+" + "([!\\$\\|\\^~\\*]?=\\w+)?" +
+        "~?\\w+" + '([!\\$\\|\\^~\\*]?="w+")?' +
     "\\])";
 
 const combinatorPattern = "[ >~\\+]";
@@ -906,7 +906,7 @@ export function upaf_css(selector, propertyOrPropertyValuePairArr) {
 
 export function upaf_addCSS(selector, propertyValuePairArr) {
     // test the selector.
-    if (!selectorRegex.test(selector)) {
+    if (!selectorRegex.test(selector)) {console.log(selectorRegex);
         throw (
             "addCSS(): selector does not match expected pattern"
         );
@@ -914,6 +914,8 @@ export function upaf_addCSS(selector, propertyValuePairArr) {
     // initialize styleElem as the first part of the desired HTML string.
     var styleElem =
         '<style class="upas" selector="' +
+            // (This should be safe since it is inside quotation marks, I
+            // believe.. TODO: Verify this.)
             upaf_convertHTMLSpecialCharsAndBackslashes(selector) +
         '"> ' +
         "#upaMainFrame { " + selector + " { ";

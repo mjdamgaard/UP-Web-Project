@@ -1,7 +1,9 @@
 /* A main function */
 
 import {
-    upaf_appendHelloWorld, upaf_addHTML
+    upaf_appendHelloWorld, upaf_addHTML,
+    upaf_css, upaf_addCSS, upaf_removeCSS, upaf_removeLastCSS,
+    cssACombinedValuePattern
 } from "/UPA_scripts.php?id=t1";
 
 import {
@@ -27,6 +29,13 @@ export function upaf_main(preferenceUserID, termID, userID) {
     upaf_addHTML("main", "append", struct2); // works now.
     upaf_addHTML("main", "append", struct3); // works now.
     upaf_addHTML("main", "append", struct4); // works now.
+
+    // just a few CSS tests.
+    let cssACombinedValueRegEx = (new RegExp("^"+cssACombinedValuePattern+"$"));
+    console.log(cssACombinedValueRegEx.test("#FF0000"));
+    upaf_addCSS('*', [["background-color", "#FF0000"]]);
+    // Apart from the bug, why is this so slow?!!
+    upaf_addCSS('[~foo="bar"]', [["background-color", "#FF0000"]]);
 
     let termType = termID.substring(0, 1);
     switch (termType) {
