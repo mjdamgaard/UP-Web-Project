@@ -201,7 +201,7 @@ export function upaf_loadScript(
     // provided callback function, which can either one of the newly loaded
     // functions, or a function that calls one or several of the newly loaded
     // functions.
-    $('#upaMainFrame').after(html);
+    $('#upaFrame').after(html);
 }
 
 

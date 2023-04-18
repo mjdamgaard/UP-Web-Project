@@ -5,7 +5,7 @@
 /* A print hello world function */
 
 export function upaf_appendHelloWorld() {
-    $("#upaMainFrame").append("<div><b>Hello, world!</b></div>");
+    $("#upaFrame").append("<div><b>Hello, world!</b></div>");
 }
 
 
@@ -18,7 +18,7 @@ export const elementNames = [
     "br", "button", "canvas", "caption", "cite", "code", "col",
     "colgroup", "data", "datalist", "dd", "del", "details", "dfn", "dialog",
     "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure",
-    "footer", "form", "h[1-6]", "head", "header",
+    "footer", "form", "h[1-6]", "header",
     "hr", "i", "iframe", "img", "input", "ins", "kbd", "label", "legend",
     "li", "link", "main", "map", "mark", "meta", "meter", "nav",
     "noscript", "object", "ol", "optgroup", "option", "output", "p", "param",
@@ -143,10 +143,10 @@ export function getJQueryObj(selector) {
     selector = selector.replaceAll("[~", "[upaa_");
     // sif the selector is an id selector, then prepend "upai_" to the value.
     if (/^#\w+$/.test(selector)) {
-        return $("#upaMainFrame").find('#upai_' + selector.substring(1));
-    // else use the selctor as is to find descendents of #upaMainFrame.
+        return $("#upaFrame").find('#upai_' + selector.substring(1));
+    // else use the selctor as is to find descendents of #upaFrame.
     } else {
-        return $("#upaMainFrame").find(selector);
+        return $("#upaFrame").find(selector);
     }
 }
 
@@ -855,7 +855,7 @@ export const cssAComplexRegEx = new RegExp(
 /* A function to add CSS styles to a selection of elements */
 
 export function upaf_css(selector, propertyOrPropertyValuePairArr) {
-    // get the selected descendents of #upaMainFrame as a jQuery object.
+    // get the selected descendents of #upaFrame as a jQuery object.
     let jqObj = getJQueryObj(selector);
     if (typeof propertyOrPropertyValuePairArr === "string") {
         let property = propertyOrPropertyValuePairArr;
@@ -918,7 +918,7 @@ export function upaf_addCSS(selector, propertyValuePairArr) {
             // believe.. TODO: Verify this.)
             upaf_convertHTMLSpecialCharsAndBackslashes(selector) +
         '"> ' +
-        "#upaMainFrame { " + selector + " { ";
+        "#upaFrame { " + selector + " { ";
     // loop through property--value pairs and append them to styleElem.
     let len = propertyValuePairArr.length;
     for (let i = 0; i < len; i++) {
@@ -1142,7 +1142,7 @@ export function upaf_off(selector, eventsHandlerPairArr) {
 export function upaf_visibilityEffect(
     selector, effectType, settings, callbackKey, callbackDataArr
 ) {
-    // get the selected descendents of #upaMainFrame as a jQuery object.
+    // get the selected descendents of #upaFrame as a jQuery object.
     let jqObj = getJQueryObj(selector);
     // get the optional callback function pointed to by the optionally provided
     // function key (string).
@@ -1230,7 +1230,7 @@ export const cssCCasePropertiesForAnimateRegEx = new RegExp(
 export function upaf_animate(
     selector, styles, settings, callbackKey, callbackDataArr
 ) {
-    // get the selected descendents of #upaMainFrame as a jQuery object.
+    // get the selected descendents of #upaFrame as a jQuery object.
     let jqObj = getJQueryObj(selector);
     // get the optional callback function pointed to by the optionally provided
     // function key (string).

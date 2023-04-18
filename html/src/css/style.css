@@ -15,6 +15,6 @@ div.length {
     /* background-color:  */
 }
 
-#headerBar {
+body > header {
     background-color: turquoise;
 }

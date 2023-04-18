@@ -22,23 +22,25 @@
 <body>
 
 <!-- TODO: Add functionalities to this bar; login etc.. -->
-<div id="headerBar">
+<header>
     <h2> openSDB </h2>
-</div>
+</header>
 
-
-<?php
-if (!isset($_GET["tid"])) {
-    $_GET["tid"] = "c3";
-}
-if (!isset($_GET["uid"])) {
-    $_GET["uid"] = "u1";
-}
-if (!isset($_GET["pid"])) {
-    $_GET["pid"] = "u1";
-}
-require $_SERVER['DOCUMENT_ROOT'] . "/../src/UPA.php";
-?>
+<main>
+    <div id="protectedRatingBuffer"></div>
+    <?php
+    if (!isset($_GET["tid"])) {
+        $_GET["tid"] = "c3";
+    }
+    if (!isset($_GET["uid"])) {
+        $_GET["uid"] = "u1";
+    }
+    if (!isset($_GET["pid"])) {
+        $_GET["pid"] = "u1";
+    }
+    require $_SERVER['DOCUMENT_ROOT'] . "/../src/UPA.php";
+    ?>
+</main>
 
 <!-- Tests -->
 <script>

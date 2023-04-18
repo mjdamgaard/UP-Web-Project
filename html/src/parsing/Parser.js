@@ -11,23 +11,25 @@ constructor() {
 
 
 parse(lexArr, productionKey) {
+    // set nextPos to [0].
+    this.nextPos = [0];
     // parse and try for error.
     try {
         this.parseFunctions[productionKey](lexArr, this.nextPos, true);
     } catch (error) {
-        this.error = "Parsing failed at position " + this.nextPos.toString() +
-            " after\n'" +
-            lexArr.slice(Math.max(0, nextPos - 20), nextPos).join(" ") + "'\n" +
-            error;
+        this.error = "Parsing failed at position " +
+            this.nextPos[0].toString() + " after\n'" +
+            lexArr.slice(Math.max(0, nextPos[0] - 20), nextPos[0]).join(" ") +
+            "'\n" + error;
         this.success = false;
         return false;
     }
-    // check if all the lexeme array has been parsed.
-    if (this.nextPos >= lexArr.length) {
-        this.error = "Parsing failed at position " + this.nextPos.toString() +
-            " after\n'" +
-            lexArr.slice(Math.max(0, nextPos - 20), nextPos).join(" ") + "'\n" +
-            "The lexame array was only partially parsed";
+    // check if the whole lexeme array has been parsed.
+    if (this.nextPos[0] >= lexArr.length) {
+        this.error = "Parsing failed at position " +
+            this.nextPos[0].toString() + " after\n'" +
+            lexArr.slice(Math.max(0, nextPos[0] - 20), nextPos[0]).join(" ") +
+            "'\nThe lexame array was only partially parsed";
         this.success = false;
         return false;
     }
