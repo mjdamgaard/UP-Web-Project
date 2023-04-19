@@ -72,74 +72,26 @@ const pseudoElementPattern =
     "))";
 
 
-
-const classSelectorPattern = "(\\.\\w+)";
-
-const attrSelectorPattern =
-    "(\\[" +
-        "~?\\w+" + '([!\\$\\|\\^~\\*]?="w+")?' +
-    "\\])";
-
-const combinatorPattern = "[ >~\\+]";
-
-const compoundSelectorPattern =
-    "((" +
-        "\\*" +
-    ")|(" +
-        elementNamePattern + "?" +
-            "((" +
-            //     classSelectorPattern +
-            // ")|(" +
-                attrSelectorPattern +
-            ")|(" +
-                pseudoClassPattern +
-            ")|(" +
-                pseudoElementPattern +
-            "))*" +
-    "))";
-
-
-const complexSelectorPattern =
-    compoundSelectorPattern + "(" +
-        combinatorPattern + compoundSelectorPattern +
-    ")*";
-
-const whitespacePattern = "[ \\n\\r\\t]*";
-
-const selectorListPattern =
-    complexSelectorPattern + "(" +
-        whitespacePattern + "," + whitespacePattern + complexSelectorPattern +
-    ")*";
-
-
-export const selectorRegex = new RegExp(
-    "^((" +
-        "#\\w+" +
-    ")|(" +
-        selectorListPattern +
-    "))$"
-);
-
 export const attributeSelectorPattern =
     /\[\w+([!\$\|\^~\*]?="w+")?\]/.source;
 
 // construct a lexer for selectors.
 selectorLexer = new Lexer(null, null);
 selectorLexemeAndEndCharPatterns = [
-    ["\\*"],
-    [" ?> ?", "\S"], [", ?", "\S"], [" ?~ ?", "\S"],
-    [" ?\\+ ?", "\S"],  [" {1,3}", "\S"],
+    [" ?> ?", "\S"], [", ?", "\S"], [" ?~ ?", "\S"], [" ?\\+ ?", "\S"],
+    [" {1,3}", "\S"],
     [elementNamePattern, "[\\W\\-]"],
     [pseudoElementPattern, "[\\W\\-]"],
     [pseudoClassPattern, "[\\W\\-]"],
-    [attributeSelectorPattern] // why not just parse this as
-    // one lexeme.
+    [attributeSelectorPattern], // why not just parse this as one lexeme.
+    ["\\*"],
 ];
 selectorLexer.addLexemeAndEndCharPatternPairs(selectorLexemeAndEndCharPatterns);
 
 // construct a parser for selectors.
-selectorParser = new Parser();
+selectorParser = new Parser(selectorLexer);
 selectorParser.addLexemePatterns(selectorLexemeAndEndCharPatterns);
+
 selectorParser.addProduction("<SimpleSelector>", [
     ["union", [
         elementNamePattern, pseudoElementPattern, pseudoClassPattern,
@@ -151,24 +103,32 @@ selectorParser.addProduction("<CompoundSelector>", [
         "<SimpleSelector>"
     ]],
 ]);
-
 selectorParser.addProduction("<Combinator>", [
     ["union", [
         " ?> ?", ", ?", " ?~ ?", " ?\\+ ?",  " {1,3}",
     ]],
 ]);
-
 selectorParser.addProduction("<ComplexSelector>", [
     ["nonemptyList", [
         "<CompoundSelector>", "<Combinator>"
     ]],
 ]);
-
 selectorParser.addProduction("<Selector>", [
     ["union", [
         "\\*", "<ComplexSelector>",
     ]],
 ]);
+
+export function upaf_parseSelector(selector, successRequired) {
+    successRequired = successRequired ?? true;
+    let ret = selectorParser.lexAndParse(selector);
+    if (!ret && successRequired) {
+        throw selectorParser.error;
+    } else {
+        return selectorParser.success;
+    }
+}
+
 
 
 
@@ -176,25 +136,9 @@ selectorParser.addProduction("<Selector>", [
 // be exported to the final user modules (only to other developer modules).
 export function getJQueryObj(selector) {
     // test selector.
-    if (typeof selector !== "string") {
-        throw (
-            "getJQueryObj(): selector has to be a string"
-        );
-    }
-    if (!selectorRegex.test(selector)) {
-        throw (
-            "getJQueryObj(): selector does not match expected pattern"
-        );
-    }
-    // replace all  "[~attr(=value)]" with "[upaa_attr(=value)]"
-    selector = selector.replaceAll("[~", "[upaa_");
-    // sif the selector is an id selector, then prepend "upai_" to the value.
-    if (/^#\w+$/.test(selector)) {
-        return $("#upaFrame").find('#upai_' + selector.substring(1));
-    // else use the selctor as is to find descendents of #upaFrame.
-    } else {
-        return $("#upaFrame").find(selector);
-    }
+    upaf_parseSelector(selector);
+    // return the descendents of #upaFrame that matches the selector.
+    return $("#upaFrame").find(selector);
 }
 
 

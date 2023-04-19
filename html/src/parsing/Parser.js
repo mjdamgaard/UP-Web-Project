@@ -2,13 +2,25 @@
 class Parser = {
 
 constructor(lexer) {
+    this.lexer = lexer;
     this.parseFunctions = {};
     this.error = "";
     this.success = undefined;
-    // this.lexArr = undefined;
     this.nextPos = [0];
 }
 
+lexAndParse(str, productionKey) {
+    // lex the string.
+    this.lexer.lex(str);
+    // test for lexing error.
+    if (!this.lexer.success) {
+        this.success = false;
+        this.error = "Lexing error: " + this.lexer.error;
+        return false;
+    }
+    // parse the resulting lexeme array.
+    return this.parse(this.lexer.lexArr, productionKey);
+}
 
 parse(lexArr, productionKey) {
     // set nextPos to [0].
@@ -86,13 +98,13 @@ addProduction(key, parseSettings) {
                 switch (parseType) {
                     case ("optWords"):
                         // parse some optional words that are never required.
-                        ret = parseWords(
+                        ret = this.parseWords(
                             lexArr, nextPos, subproductionKeys, false
                         );
                     case ("initWords"):
                         // parse some initial words after which the rest of
                         // the "words" in the production become mandatory.
-                        ret = parseWords(
+                        ret = this.parseWords(
                             lexArr, nextPos, subproductionKeys, successRequired
                         );
                         successRequired = true;
@@ -100,7 +112,7 @@ addProduction(key, parseSettings) {
                         // parse some words which are required only if
                         // successRequired is true or if "initalWords" has
                         // appeared before.
-                        ret = parseWords(
+                        ret = this.parseWords(
                             lexArr, nextPos, subproductionKeys, successRequired
                         );
                     case ("optList"):
@@ -108,8 +120,7 @@ addProduction(key, parseSettings) {
                         // a syntax defined by subproductionKeys[1]. If
                         // subproductionKeys[1] is undefined, then the list
                         // expects no delimeter between its elements.
-                        let delimeterRegEx = subSettings;
-                        ret = parseList(
+                        ret = this.parseList(
                             lexArr, nextPos,
                             subproductionKeys[0], subproductionKeys[1]
                         );
@@ -118,7 +129,7 @@ addProduction(key, parseSettings) {
                         // a syntax defined by subproductionKeys[1]. If
                         // subproductionKeys[1] is undefined, then the list
                         // expects no delimeter between its elements.
-                        parseNonemptyList(
+                        ret = this.parseNonemptyList(
                             lexArr, nextPos,
                             subproductionKeys[0], subproductionKeys[1],
                             successRequired
@@ -139,7 +150,8 @@ addProduction(key, parseSettings) {
                         // (Note that this error is only thrown in the call
                         // to parse(), not to addProduction().)
                         throw (
-                            "addProduction(): Unknown parseType: " + parseType
+                            'addProduction(): Unknown parseType: "' +
+                            parseType + '" in input'
                         );
                 }
             }
