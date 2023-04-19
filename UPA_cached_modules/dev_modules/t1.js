@@ -85,15 +85,15 @@ export const attributeSelectorPattern =
 
 // construct a lexer for selectors.
 var selectorLexer = new Lexer(null, null);
-selectorLexemeAndEndCharPatterns = [
+let selectorLexemeAndEndCharPatterns = [
     [" ?[>,~\\+ ] ?", "\S"], // combinators.
-    ["[\\w]", "[^\\w]"], // element names.
+    ["[\\w]", "\\W"], // element names.
     ["::[\\w\\-]", "[^\\w\\-]"], // pseudo-elements.
     [":[\\w\\-]", "[^\\w\\-]"], // pseudo-classes (perhaps functional).
     ["\\("], ["\\)"],
     [attributeSelectorPattern], // why not just parse this as one lexeme.
     ["\\*"],
-    ["#upai_\\w+", "[\\W]"],
+    ["#upai_\\w+", "\\W"],
 ];
 selectorLexer.addLexemeAndEndCharPatternPairs(selectorLexemeAndEndCharPatterns);
 
@@ -440,33 +440,27 @@ export function upaf_getAttributes(selector, keyArr) {
 /* Some functions to add and remove HTML elements */
 
 // construct a lexer for HTML.
-var selectorLexer = new Lexer(null, null);
-selectorLexemeAndEndCharPatterns = [
-    ["<\\w+", "\\W"], [">"],
+let htmlLexemeAndEndCharPatterns = [
+    ["<\\w+", "\\W"], [">"], // tag beginning and end.
     ["="], ["\\("], ["\\)"],
+    ['"[\\n\\r\\t -\\[\\]\\^a-~]*"'], // strings of printable, non-backslash
+    // ASCII characters.
+    ["\\w+", "\\W"], // attribute names.
 ];
-selectorLexer.addLexemeAndEndCharPatternPairs(selectorLexemeAndEndCharPatterns);
+var htmlLexer = new Lexer(htmlLexemeAndEndCharPatterns, "[ \\n\\r\\t]+");
 
 // construct a parser for HTML.
-var = selectorParser = new Parser(selectorLexer);
-selectorParser.addLexemePatterns(selectorLexemeAndEndCharPatterns);
+var = htmlParser = new Parser(htmlLexer);
+htmlParser.addLexemePatterns([
+    // TODO..
+]);
 
-selectorParser.addProduction("<SimpleSelector>", [
-    ["union", [
-        elementNamePattern, pseudoElementPattern, pseudoClassPattern,
-        attributeSelectorPattern
+htmlParser.addProduction("<Tag>", [
+    ["initWords", [
+        // TODO..
     ]],
 ]);
 
-export function upaf_parseSelector(selector, successRequired) {
-    successRequired = successRequired ?? true;
-    let ret = selectorParser.lexAndParse(selector, "<Selector>");
-    if (!ret && successRequired) {
-        throw selectorParser.error;
-    } else {
-        return selectorParser.success;
-    }
-}
 
 
 
