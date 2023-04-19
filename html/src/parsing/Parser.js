@@ -105,6 +105,7 @@ addProduction(key, parseSettings) {
                         ret = this.parseWords(
                             lexArr, nextPos, subproductionKeys, false
                         );
+                        break;
                     case ("initWords"):
                         // parse some initial words after which the rest of
                         // the "words" in the production become mandatory.
@@ -112,6 +113,7 @@ addProduction(key, parseSettings) {
                             lexArr, nextPos, subproductionKeys, successRequired
                         );
                         successRequired = true;
+                        break;
                     case ("words"):
                         // parse some words which are required only if
                         // successRequired is true or if "initalWords" has
@@ -119,6 +121,7 @@ addProduction(key, parseSettings) {
                         ret = this.parseWords(
                             lexArr, nextPos, subproductionKeys, successRequired
                         );
+                        break;
                     case ("optList"):
                         // parse an optional list with a required delimeter of
                         // a syntax defined by subproductionKeys[1]. If
@@ -128,6 +131,7 @@ addProduction(key, parseSettings) {
                             lexArr, nextPos,
                             subproductionKeys[0], subproductionKeys[1]
                         );
+                        break;
                     case ("nonemptyList"):
                         // parse a non-empty list with a required delimeter of
                         // a syntax defined by subproductionKeys[1]. If
@@ -138,18 +142,21 @@ addProduction(key, parseSettings) {
                             subproductionKeys[0], subproductionKeys[1],
                             successRequired
                         );
+                        break;
                     case ("union"):
                         // parse at least one of the subproductions pointed to
                         // by each of the the subproductionKeys.
                         ret = parseUnion(
                             lexArr, nextPos, subproductionKeys, successRequired
                         );
+                        break;
                     case ("optUnion"):
                         // parse at most one of the subproductions pointed to
                         // by each of the the subproductionKeys.
                         ret = parseUnion(
                             lexArr, nextPos, subproductionKeys, false
                         );
+                        break;
                     default:
                         // (Note that this error is only thrown in the call
                         // to parse(), not to addProduction().)

@@ -1048,14 +1048,14 @@ export function upaf_removeLastCSS(selector) {
 // The following out-commented code is copied from html/src/storeFunction.js.
 // While it has a upas_ prefix instead of the upaf_ prefix, it is exceptionally
 // still part of the UPA's API, namely since the
-// upas_storedFunctions(<funIdent>, <exp>) syntax has been made a special part
+// upas_storedFunctions(<Exp>, <Fun>) syntax has been made a special part
 // of the syntax of our JS subset. And storeFunction.js is run in the document
 // head (before loading the UPA).
 
 // // (Here 's' stands for "special function/variable.")
 // var upas_storedFunctions = {};
 //
-// function upas_storeFunction(fun, key) {
+// function upas_storeFunction(key, fun) {
 //     if (!/^\w+$/.test(key)) {
 //         throw (
 //             "storeFunction(): function key is not a valid " +
