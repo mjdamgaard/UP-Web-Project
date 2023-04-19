@@ -979,23 +979,19 @@ export function upaf_removeLastCSS(selector) {
 /* Functions to store and get callback upaf_ functions from key strings */
 
 
-// The following out-commented code is copied from html/src/storeFunction.js.
-// While it has no upaf_ prefix, it is exceptionally still part of the UPA's
-// API, namely since the storedFunctions(<funIdent>, <exp>) syntax has been
-// made a special part of the syntax of our JS subset. And storeFunction.js
-// is run in the document head (before loading the UPA).
+var storedFunctions = {};
 
-// var storedFunctions = {};
-//
-// function storeFunction(fun, key) {
-//     if (!/^\w+$/.test(key)) {
-//         throw (
-//             "storeFunction(): function key is not a valid " +
-//             "/^\\w+$/ string"
-//         );
-//     }
-//     storedFunctions["upak_" + key] = fun;
-// }
+// This is a special function, recognized by the parser to allow for a upaf_
+// function identifier (and only that) as the first input parameter.
+function upaf_storeFunction(fun, key) {
+    if (!/^\w+$/.test(key)) {
+        throw (
+            "storeFunction(): function key is not a valid " +
+            "/^\\w+$/ string"
+        );
+    }
+    storedFunctions["upak_" + key] = fun;
+}
 
 export function upaf_isAStoredFunction(key) {
     if (!/^\w+$/.test(key)) {

@@ -14,8 +14,6 @@
 <script src="/lib/jquery-3.6.4.js"></script>
 <script src="/src/requests/QueryDataConstructors.js"></script>
 <script src="/src/requests/InputDataConstructors.js"></script>
-<!-- Do not overwrite this global function! (or any of these other globals) -->
-<script src="/src/storeFunction.js"></script>
 
 
 </head>
