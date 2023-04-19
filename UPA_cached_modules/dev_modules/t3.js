@@ -29,6 +29,12 @@ export function upaf_query(reqDataArr, callbackKey) {
 export function upaf_getUploadReqDataArr(
     reqKey, var1, var2, var3, var4, var5, var6
 ) {
+    if ( !(/^\w+$/.test(reqKey)) ) {
+        throw (
+            "getUploadReqDataArr(): key does not match the right pattern " +
+            '("/^\\w+$/")'
+        );
+    }
     return Object.entries(
         new InputDataConstructors[reqKey + "ReqData"](
             var1, var2, var3, var4, var5, var6
@@ -39,6 +45,12 @@ export function upaf_getUploadReqDataArr(
 export function upaf_getQueryReqDataArr(
     reqKey, var1, var2, var3, var4, var5, var6
 ) {
+    if ( !(/^\w+$/.test(reqKey)) ) {
+        throw (
+            "getQueryReqDataArr(): key does not match the right pattern " +
+            '("/^\\w+$/")'
+        );
+    }
     return Object.entries(
         new QueryDataConstructors[reqKey + "ReqData"](
             var1, var2, var3, var4, var5, var6

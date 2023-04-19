@@ -1,7 +1,7 @@
 
 class Parser = {
 
-constructor() {
+constructor(lexer) {
     this.parseFunctions = {};
     this.error = "";
     this.success = undefined;
@@ -39,6 +39,15 @@ parse(lexArr, productionKey) {
     return true;
 }
 
+addLexemePatterns(lexemePatternArrArr) {
+    // add single-lexeme productions from the patterns contained as the first
+    // element of each array contained in lexemePatternArrArr.
+    let len = lexemePatternArrArr.length;
+    for (let i = 0; i < len; i++) {
+        this.addProduction(lexemePatternArrArr[i][0]);
+    }
+}
+
 addProduction(key, parseSettings) {
     // if parseSettings is undefined, then key is assumed to be a pattern
     // string for a single-lexeme parsing.
@@ -50,7 +59,7 @@ addProduction(key, parseSettings) {
                 let test = regex.test(lexArr[nextPos[0]]);
                 if (!test && successRequired) {
                     throw (
-                        'Expected lexeme of pattern ' + key
+                        'Expected lexeme of pattern /' + key +'/'
                     );
                 } else if (!test) {
                     return false;
@@ -94,7 +103,7 @@ addProduction(key, parseSettings) {
                         ret = parseWords(
                             lexArr, nextPos, subproductionKeys, successRequired
                         );
-                    case ("list"):
+                    case ("optList"):
                         // parse an optional list with a required delimeter of
                         // a syntax defined by subproductionKeys[1]. If
                         // subproductionKeys[1] is undefined, then the list
@@ -103,6 +112,16 @@ addProduction(key, parseSettings) {
                         ret = parseList(
                             lexArr, nextPos,
                             subproductionKeys[0], subproductionKeys[1]
+                        );
+                    case ("nonemptyList"):
+                        // parse a non-empty list with a required delimeter of
+                        // a syntax defined by subproductionKeys[1]. If
+                        // subproductionKeys[1] is undefined, then the list
+                        // expects no delimeter between its elements.
+                        parseNonemptyList(
+                            lexArr, nextPos,
+                            subproductionKeys[0], subproductionKeys[1],
+                            successRequired
                         );
                     case ("union"):
                         // parse at least one of the subproductions pointed to
@@ -202,10 +221,33 @@ parseList(lexArr, nextPos, elementProductionKey, delimeterProductionKey) {
     // always return true unless an error was thrown in a nested parsing.
     return true;
     // NOTE: If a trailing delimeter is allowed, this should be implemented
-    // by adding an "optWord" parsing after this "list" parsing.
+    // by adding an "optWord" parsing after this "optList" parsing.
 }
 
-
+parseNonemptyList(
+    lexArr, nextPos, elementProductionKey, delimeterProductionKey,
+    successRequired
+) {
+    // first record the initial position.
+    let initialPos = nextPos[];
+    // try parsing a list.
+    parseList(lexArr, nextPos, elementProductionKey, delimeterProductionKey);
+    // return false or fail if nextPos[0] is still equal to the initialPos.
+    if (nextPos[0] === currentPos) {
+        if (successRequired) {
+            throw(
+                "Expected non-empty list of productions " + elementProductionKey
+            );
+        } else {
+            // (Note that all parseFunctions reset nextPos on failure.)
+            return false;
+        }
+    }
+    // else return true.
+    return true;
+    // NOTE: If a trailing delimeter is allowed, this should be implemented
+    // by adding an "optWord" parsing after this "nonemptylist" parsing.
+}
 
 // end of class.
 }

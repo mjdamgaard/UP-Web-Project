@@ -30,16 +30,11 @@ export const elementNames = [
 ];
 // TODO: Check all these to see that they are all safe to use.
 
-const elementNamePattern =
+export const elementNamePattern =
     "((" +
         elementNames.join(")|(") +
     "))";
 
-const elementNameRegEx = new RegExp(
-    "^(" +
-        elementNamePattern +
-    ")$"
-);
 
 export const pseudoClasses = [
     "first", "last", "even", "odd",
@@ -57,7 +52,7 @@ export const pseudoClasses = [
     // TODO: add more pseudo classes. (maybe)
 ];
 
-const pseudoClassPattern =
+export const pseudoClassPattern =
     ":((" +
         pseudoClasses.join(")|(") +
     "))";
@@ -75,6 +70,8 @@ const pseudoElementPattern =
     "::((" +
         pseudoElements.join(")|(") +
     "))";
+
+
 
 const classSelectorPattern = "(\\.\\w+)";
 
@@ -122,6 +119,56 @@ export const selectorRegex = new RegExp(
         selectorListPattern +
     "))$"
 );
+
+export const attributeSelectorPattern =
+    /\[\w+([!\$\|\^~\*]?="w+")?\]/.source;
+
+// construct a lexer for selectors.
+selectorLexer = new Lexer(null, null);
+selectorLexemeAndEndCharPatterns = [
+    ["\\*"],
+    [" ?> ?", "\S"], [", ?", "\S"], [" ?~ ?", "\S"],
+    [" ?\\+ ?", "\S"],  [" {1,3}", "\S"],
+    [elementNamePattern, "[\\W\\-]"],
+    [pseudoElementPattern, "[\\W\\-]"],
+    [pseudoClassPattern, "[\\W\\-]"],
+    [attributeSelectorPattern] // why not just parse this as
+    // one lexeme.
+];
+selectorLexer.addLexemeAndEndCharPatternPairs(selectorLexemeAndEndCharPatterns);
+
+// construct a parser for selectors.
+selectorParser = new Parser();
+selectorParser.addLexemePatterns(selectorLexemeAndEndCharPatterns);
+selectorParser.addProduction("<SimpleSelector>", [
+    ["union", [
+        elementNamePattern, pseudoElementPattern, pseudoClassPattern,
+        attributeSelectorPattern
+    ]],
+]);
+selectorParser.addProduction("<CompoundSelector>", [
+    ["nonemptyList", [
+        "<SimpleSelector>"
+    ]],
+]);
+
+selectorParser.addProduction("<Combinator>", [
+    ["union", [
+        " ?> ?", ", ?", " ?~ ?", " ?\\+ ?",  " {1,3}",
+    ]],
+]);
+
+selectorParser.addProduction("<ComplexSelector>", [
+    ["nonemptyList", [
+        "<CompoundSelector>", "<Combinator>"
+    ]],
+]);
+
+selectorParser.addProduction("<Selector>", [
+    ["union", [
+        "\\*", "<ComplexSelector>",
+    ]],
+]);
 
 
 
@@ -913,7 +960,8 @@ export function upaf_addCSS(selector, propertyValuePairArr) {
     }
     // initialize styleElem as the first part of the desired HTML string.
     var styleElem =
-        '<style class="upas" selector="' +
+        '<style class="upas" selector="' + // Change to just have upak="key"
+        // instead..
             // (This should be safe since it is inside quotation marks, I
             // believe.. TODO: Verify this.)
             upaf_convertHTMLSpecialCharsAndBackslashes(selector) +

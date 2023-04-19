@@ -68,12 +68,14 @@ $mainModuleID = "tA";
 <div id="upaFrame">
     <main></main>
 </div>
-<script id="upaMainFunLoader" type="module">
-    // import the chosen UPA main module.
-    import {
-        upaf_main
-    } from "./UPA_scripts.php?id=<?php echo $mainModuleID; ?>";
-    // run the main function from that module right away.
+<script
+    id="upaMainFunLoader"
+    type="module"
+    src="./UPA_scripts.php?id=<?php echo $mainModuleID; ?>"
+>
+</script>
+<script id="upaMainFunRunner">
+    "use strict";
     upaf_main(<?php
         echo '"' . $preferenceUserID . '", "' . $termID.'", "' . $userID . '"';
     ?>);
