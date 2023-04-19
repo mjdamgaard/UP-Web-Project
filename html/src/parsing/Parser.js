@@ -40,17 +40,17 @@ parse(lexArr, productionKey) {
 }
 
 addProduction(key, parseSettings) {
-    // if parseSettings is a RegEx, simply add the corresponding single-
-    // lexeme production (as a parse function).
-    if (parseSettings instanceof RegExp) {
+    // if parseSettings is undefined, then key is assumed to be a pattern
+    // string for a single-lexeme parsing.
+    if (typeof parseSettings === "undefined") {
+        let regex = new RegExp(key);
         // initialize the single-lexeme parse function.
         this.parseFunctions[key] =
             function(lexArr, nextPos, successRequired) {
-                let test = parseSettings.test(lexArr[nextPos[0]]);
+                let test = regex.test(lexArr[nextPos[0]]);
                 if (!test && successRequired) {
                     throw (
-                        'Expected lexeme of production ' + key + ' ' +
-                        '(with syntax pattern "/' + parseSettings.source + '/")'
+                        'Expected lexeme of pattern ' + key
                     );
                 } else if (!test) {
                     return false;

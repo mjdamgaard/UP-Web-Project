@@ -693,7 +693,7 @@ const cssLegalProperties = [
 
 export const cssUnitPatterns = [
     "em", "ex", "cap", "ch", "ic", "lh", "vw", "vh", "vi", "vb", "vmin", "vmax",
-    "cq[whib(min)(max)]",
+    "cq[whib(min)(max)]", // TODO..
     "cm", "mm", "Q", "in", "pc", "pt", "px",
     "deg", "grad", "rad", "turn",
     "s", "ms", "Hz", "kHz",
@@ -953,7 +953,7 @@ export function upaf_removeCSS(selector) {
     $(
         ':root > head > .upas[' +
             'selector="' +
-            upaf_convertHTMLSpecialCharsAndBackslashes(selector) +
+            upaf_convertHTMLSpecialCharsAndBackslashes(selector) + // TODO: Change for key.
         '"]'
     ).remove();
 }
