@@ -56,7 +56,11 @@ addLexemePatterns(lexemePatternArrArr) {
     // element of each array contained in lexemePatternArrArr.
     let len = lexemePatternArrArr.length;
     for (let i = 0; i < len; i++) {
-        this.addProduction(lexemePatternArrArr[i][0]);
+        if (typeof lexemePatternArrArr[i] === "string") {
+            this.addProduction(lexemePatternArrArr[i]);
+        } else {
+            this.addProduction(lexemePatternArrArr[i][0]);
+        }
     }
 }
 

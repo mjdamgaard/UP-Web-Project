@@ -38,10 +38,10 @@ export const elementNamePattern =
 
 export const pseudoClasses = [
     "first", "last", "even", "odd",
-    "[(first)(last)(only)]\\-[(child)(of\\-type)]",
-    "nth\\-(last\\-)?[(child)(of\\-type)]\\([1-9][0-9]*\\)",
-    "eq\\((0|[1-9][0-9]*)\\)",
-    "[(gt)(lt)]\\(([1-9][0-9]*)\\)",
+    // "((first)|(last)|(only))\\-((child)|(of\\-type))",
+    // "nth\\-(last\\-)?[(child)(of\\-type)]\\([1-9][0-9]*\\)",
+    // "eq\\((0|[1-9][0-9]*)\\)",
+    // "[(gt)(lt)]\\(([1-9][0-9]*)\\)",
     "header", "animated", "focus", "empty",
     // "parent",
     "hidden",
@@ -49,7 +49,7 @@ export const pseudoClasses = [
     "submit", "reset", "button", "image", "file",
     "enabled", "diabled", "selected", "checked",
     // "lang\\(\\w+(\\-\\w+)*\\)",
-    // TODO: add more pseudo classes. (maybe)
+    // TODO: add more pseudo-classes!
 ];
 
 export const pseudoClassPattern =
@@ -57,6 +57,14 @@ export const pseudoClassPattern =
         pseudoClasses.join(")|(") +
     "))";
 
+export const functionalPseudoClassesWithSelectorInput = [
+    "is", "not", "where", "has",
+];
+
+export const functionalPseudoClassesWithSelectorInputPattern =
+    ":((" +
+        functionalPseudoClassesWithSelectorInput.join(")|(") +
+    "))";
 
 export const pseudoElements =
     [ +
@@ -78,11 +86,11 @@ export const attributeSelectorPattern =
 // construct a lexer for selectors.
 var selectorLexer = new Lexer(null, null);
 selectorLexemeAndEndCharPatterns = [
-    [" ?> ?", "\S"], [", ?", "\S"], [" ?~ ?", "\S"], [" ?\\+ ?", "\S"],
-    [" {1,3}", "\S"],
-    [elementNamePattern, "[\\W\\-]"],
-    [pseudoElementPattern, "[\\W\\-]"],
-    [pseudoClassPattern, "[\\W\\-]"],
+    [" ?[>,~\\+ ] ?", "\S"], // combinators.
+    ["[\\w]", "[^\\w]"], // element names.
+    ["::[\\w\\-]", "[^\\w\\-]"], // pseudo-elements.
+    [":[\\w\\-]", "[^\\w\\-]"], // pseudo-classes (perhaps functional).
+    ["\\("], ["\\)"],
     [attributeSelectorPattern], // why not just parse this as one lexeme.
     ["\\*"],
     ["#upai_\\w+", "[\\W]"],
@@ -91,12 +99,34 @@ selectorLexer.addLexemeAndEndCharPatternPairs(selectorLexemeAndEndCharPatterns);
 
 // construct a parser for selectors.
 var = selectorParser = new Parser(selectorLexer);
-selectorParser.addLexemePatterns(selectorLexemeAndEndCharPatterns);
+selectorParser.addLexemePatterns([
+    [" ?[>,~\\+ ] ?"],
+    [elementNamePattern],
+    [pseudoElementPattern],
+    [pseudoClassPattern],
+    [functionalPseudoClassesWithSelectorInputPattern],
+    ["\\([ \\n\\r\\t]*"], ["[ \\n\\r\\t]*\\)"],
+    [attributeSelectorPattern],
+    ["\\*"],
+    ["#upai_\\w+"],
+]);
 
+
+
+selectorParser.addProduction("<PseudoClassFunctionCall>", [
+    ["initWords", [
+        functionalPseudoClassesWithSelectorInputPattern,
+    ]],
+    ["words", [
+        "\\([ \\n\\r\\t]*",
+        "<Selector>",
+        "[ \\n\\r\\t]*\\)",
+    ]],
+]);
 selectorParser.addProduction("<SimpleSelector>", [
     ["union", [
         elementNamePattern, pseudoElementPattern, pseudoClassPattern,
-        attributeSelectorPattern
+        attributeSelectorPattern, "<PseudoClassFunctionCall>"
     ]],
 ]);
 selectorParser.addProduction("<CompoundSelector>", [
@@ -105,8 +135,8 @@ selectorParser.addProduction("<CompoundSelector>", [
     ]],
 ]);
 selectorParser.addProduction("<Combinator>", [
-    ["union", [
-        " ?> ?", ", ?", " ?~ ?", " ?\\+ ?",  " {1,3}",
+    ["words", [
+        " ?[>,~\\+ ] ?",
     ]],
 ]);
 selectorParser.addProduction("<ComplexSelector>", [
@@ -153,82 +183,85 @@ export function getJQueryObj(selector) {
 
 
 
-/* Functions to set and get (unique!) IDs of HTML elements */
-
-// Hm, I actually doubt that this is worth the effort. So let me for now just
-// assume that allowing multiple IDs does not cause any security risk, and if
-// I/we then at some point find a use of IDs that requires IDs to be unique for
-// safety, ... Hm, no I really do not see that happening..
-var idRecord = idRecord ?? [];
-
-export function upaf_setID(selector, id) {
-    let jqObj = getJQueryObj(selector);
-    // test that id contains only \w characters.
-    if (!/^\w+$/.test(id)) {
-        throw (
-            "setID(): invalid id pattern (not of /^\\w+$/)"
-        );
-    }
-    // test that id is unused. (Let's not care to much about race conditions.)
-    if (upaf_isExistingID(id)) {
-        throw (
-            "setID(): id has already been used"
-        );
-    }
-    // record id.
-    recordID(id);
-    // set the (prefixed) id of the first element in the selection.
-    jqObj[0].id = "upai_" + id;
-}
-
-export function upaf_isExistingID(id) {
-    return idRecord.includes(id);
-}
-
-export function recordID(id) {
-    if (!idRecord.includes(id)) {
-        idRecord.push(id);
-    }
-}
-
-export function removeIDRecord(id) {
-    let i = idRecord.findIndex(id);
-    if (i >= 0) {
-        idRecord[i] = null;
-    }
-}
-
-export function removeAllInnerIDRecords(jqObj) {
-    // for each descendent with an id, remove the record of the id.
-    jqObj.find('[id^=upai_]').each(function(){
-        let id = this.attr("id").substring(5);
-        removeIDRecord(id);
-    });
-}
-
-export function removeAllIDRecords(jqObj) {
-    // for each descendent with an id, remove the record of that id.
-    jqObj.find('[id^=upai]').each(function(){
-        let id = this.attr("id").substring(5);
-        removeIDRecord(id);
-    });
-    // for each selected element with an id, remove the record of that id.
-    jqObj.filter('[id^=upai]').each(function(){
-        let id = this.attr("id").substring(5);
-        removeIDRecord(id);
-    });
-}
-
-export function upaf_getID(selector) {
-    let jqObj = getJQueryObj(selector);
-    // if id of the first element in the selection is not set, return false.
-    if (typeof jqObj[0].id === "undefined") {
-        return false;
-    }
-    // return the id of the first element in the selection without the "upai_"
-    // prefix.
-    return jqObj[0].id.substring(5);
-}
+// /* Functions to set and get (unique!) IDs of HTML elements */
+//
+// // Hm, I actually doubt that this is worth the effort. So let me for now just
+// // assume that allowing multiple IDs does not cause any security risk, and if
+// // I/we then at some point find a use of IDs that requires IDs to be unique for
+// // safety, ... Hm, no I really do not see that happening.. ...Ah, and even
+// // if we find a use for ID where they are required to be unique for safety,
+// // we can then just add a check for uniqueness to whatever function adds
+// // the given functionality.
+// var idRecord = idRecord ?? [];
+//
+// export function upaf_setID(selector, id) {
+//     let jqObj = getJQueryObj(selector);
+//     // test that id contains only \w characters.
+//     if (!/^\w+$/.test(id)) {
+//         throw (
+//             "setID(): invalid id pattern (not of /^\\w+$/)"
+//         );
+//     }
+//    // test that id is unused. (Let's not care to much about race conditions.)
+//     if (upaf_isExistingID(id)) {
+//         throw (
+//             "setID(): id has already been used"
+//         );
+//     }
+//     // record id.
+//     recordID(id);
+//     // set the (prefixed) id of the first element in the selection.
+//     jqObj[0].id = "upai_" + id;
+// }
+//
+// export function upaf_isExistingID(id) {
+//     return idRecord.includes(id);
+// }
+//
+// export function recordID(id) {
+//     if (!idRecord.includes(id)) {
+//         idRecord.push(id);
+//     }
+// }
+//
+// export function removeIDRecord(id) {
+//     let i = idRecord.findIndex(id);
+//     if (i >= 0) {
+//         idRecord[i] = null;
+//     }
+// }
+//
+// export function removeAllInnerIDRecords(jqObj) {
+//     // for each descendent with an id, remove the record of the id.
+//     jqObj.find('[id^=upai_]').each(function(){
+//         let id = this.attr("id").substring(5);
+//         removeIDRecord(id);
+//     });
+// }
+//
+// export function removeAllIDRecords(jqObj) {
+//     // for each descendent with an id, remove the record of that id.
+//     jqObj.find('[id^=upai]').each(function(){
+//         let id = this.attr("id").substring(5);
+//         removeIDRecord(id);
+//     });
+//     // for each selected element with an id, remove the record of that id.
+//     jqObj.filter('[id^=upai]').each(function(){
+//         let id = this.attr("id").substring(5);
+//         removeIDRecord(id);
+//     });
+// }
+//
+// export function upaf_getID(selector) {
+//     let jqObj = getJQueryObj(selector);
+//     // if id of the first element in the selection is not set, return false.
+//     if (typeof jqObj[0].id === "undefined") {
+//         return false;
+//     }
+//    // return the id of the first element in the selection without the "upai_"
+//     // prefix.
+//     return jqObj[0].id.substring(5);
+// }
 
 
 
@@ -400,7 +433,49 @@ export function upaf_getAttributes(selector, keyArr) {
 
 
 
+
+
+
+
 /* Some functions to add and remove HTML elements */
+
+// construct a lexer for HTML.
+var selectorLexer = new Lexer(null, null);
+selectorLexemeAndEndCharPatterns = [
+    ["<\\w+", "\\W"], [">"],
+    ["="], ["\\("], ["\\)"],
+];
+selectorLexer.addLexemeAndEndCharPatternPairs(selectorLexemeAndEndCharPatterns);
+
+// construct a parser for HTML.
+var = selectorParser = new Parser(selectorLexer);
+selectorParser.addLexemePatterns(selectorLexemeAndEndCharPatterns);
+
+selectorParser.addProduction("<SimpleSelector>", [
+    ["union", [
+        elementNamePattern, pseudoElementPattern, pseudoClassPattern,
+        attributeSelectorPattern
+    ]],
+]);
+
+export function upaf_parseSelector(selector, successRequired) {
+    successRequired = successRequired ?? true;
+    let ret = selectorParser.lexAndParse(selector, "<Selector>");
+    if (!ret && successRequired) {
+        throw selectorParser.error;
+    } else {
+        return selectorParser.success;
+    }
+}
+
+
+
+
+
+
+
+
+
 
 /* << addHTML() >>
  * input = (selector, method, struct),
