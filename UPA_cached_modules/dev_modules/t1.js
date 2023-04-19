@@ -979,19 +979,25 @@ export function upaf_removeLastCSS(selector) {
 /* Functions to store and get callback upaf_ functions from key strings */
 
 
-var storedFunctions = {};
+// The following out-commented code is copied from html/src/storeFunction.js.
+// While it has a upas_ prefix instead of the upaf_ prefix, it is exceptionally
+// still part of the UPA's API, namely since the
+// upas_storedFunctions(<funIdent>, <exp>) syntax has been made a special part
+// of the syntax of our JS subset. And storeFunction.js is run in the document
+// head (before loading the UPA).
 
-// This is a special function, recognized by the parser to allow for a upaf_
-// function identifier (and only that) as the first input parameter.
-export function upaf_storeFunction(fun, key) {
-    if (!/^\w+$/.test(key)) {
-        throw (
-            "storeFunction(): function key is not a valid " +
-            "/^\\w+$/ string"
-        );
-    }
-    storedFunctions["upak_" + key] = fun;
-}
+// // (Here 's' stands for "special function/variable.")
+// var upas_storedFunctions = {};
+//
+// function upas_storeFunction(fun, key) {
+//     if (!/^\w+$/.test(key)) {
+//         throw (
+//             "storeFunction(): function key is not a valid " +
+//             "/^\\w+$/ string"
+//         );
+//     }
+//     upas_storedFunctions["upak_" + key] = fun;
+// }
 
 export function upaf_isAStoredFunction(key) {
     if (!/^\w+$/.test(key)) {
@@ -1000,7 +1006,7 @@ export function upaf_isAStoredFunction(key) {
             "/^\\w+$/ string"
         );
     }
-    return (typeof storedFunctions["upak_" + key] !== "undefined");
+    return (typeof upas_storedFunctions["upak_" + key] !== "undefined");
 }
 
 // Note that since this function does not have the upaf_ prefix, it cannot
@@ -1012,7 +1018,7 @@ export function getFunction(key) {
             "/^\\w+$/ string"
         );
     }
-    return storedFunctions["upak_" + key];
+    return upas_storedFunctions["upak_" + key];
 }
 
 /* A private function to get a resulting function from key and a data array
