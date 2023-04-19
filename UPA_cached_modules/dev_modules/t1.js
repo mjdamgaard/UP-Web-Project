@@ -155,6 +155,10 @@ export function getJQueryObj(selector) {
 
 /* Functions to set and get (unique!) IDs of HTML elements */
 
+// Hm, I actually doubt that this is worth the effort. So let me for now just
+// assume that allowing multiple IDs does not cause any security risk, and if
+// I/we then at some point find a use of IDs that requires IDs to be unique for
+// safety, ... Hm, no I really do not see that happening..
 var idRecord = idRecord ?? [];
 
 export function upaf_setID(selector, id) {
