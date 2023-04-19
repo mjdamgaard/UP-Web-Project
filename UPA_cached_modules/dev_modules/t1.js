@@ -983,7 +983,7 @@ var storedFunctions = {};
 
 // This is a special function, recognized by the parser to allow for a upaf_
 // function identifier (and only that) as the first input parameter.
-function upaf_storeFunction(fun, key) {
+export function upaf_storeFunction(fun, key) {
     if (!/^\w+$/.test(key)) {
         throw (
             "storeFunction(): function key is not a valid " +
