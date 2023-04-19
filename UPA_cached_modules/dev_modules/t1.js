@@ -76,7 +76,7 @@ export const attributeSelectorPattern =
     /\[\w+([!\$\|\^~\*]?="w+")?\]/.source;
 
 // construct a lexer for selectors.
-selectorLexer = new Lexer(null, null);
+var selectorLexer = new Lexer(null, null);
 selectorLexemeAndEndCharPatterns = [
     [" ?> ?", "\S"], [", ?", "\S"], [" ?~ ?", "\S"], [" ?\\+ ?", "\S"],
     [" {1,3}", "\S"],
@@ -85,11 +85,12 @@ selectorLexemeAndEndCharPatterns = [
     [pseudoClassPattern, "[\\W\\-]"],
     [attributeSelectorPattern], // why not just parse this as one lexeme.
     ["\\*"],
+    ["#upai_\\w+", "[\\W]"],
 ];
 selectorLexer.addLexemeAndEndCharPatternPairs(selectorLexemeAndEndCharPatterns);
 
 // construct a parser for selectors.
-selectorParser = new Parser(selectorLexer);
+var = selectorParser = new Parser(selectorLexer);
 selectorParser.addLexemePatterns(selectorLexemeAndEndCharPatterns);
 
 selectorParser.addProduction("<SimpleSelector>", [
@@ -115,13 +116,13 @@ selectorParser.addProduction("<ComplexSelector>", [
 ]);
 selectorParser.addProduction("<Selector>", [
     ["union", [
-        "\\*", "<ComplexSelector>",
+        "\\*", "#upai_\\w+", "<ComplexSelector>",
     ]],
 ]);
 
 export function upaf_parseSelector(selector, successRequired) {
     successRequired = successRequired ?? true;
-    let ret = selectorParser.lexAndParse(selector);
+    let ret = selectorParser.lexAndParse(selector, "<Selector>");
     if (!ret && successRequired) {
         throw selectorParser.error;
     } else {
