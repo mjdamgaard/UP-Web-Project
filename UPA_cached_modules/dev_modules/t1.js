@@ -443,6 +443,20 @@ export function upaf_getAttributes(selector, keyArr) {
 // now has the ability in principle to record the ids it encounters during the
 // parsing.)
 
+
+// construct a lexer for HTML.
+let htmlLexemeAndEndCharPatterns = [
+    ["<\\w+", "\\W"], [">"], // beginning tag.
+    ["<\\/\\w+>"], // end tag.
+    ["="], ["\\("], ["\\)"],
+    ['"[\\n\\r\\t -\\[\\]\\^a-~]*"'], // strings of printable, non-backslash
+    // ASCII characters.
+    ["\\w+", "\\W"], // attribute names.
+];
+var htmlLexer = new Lexer(htmlLexemeAndEndCharPatterns, "[ \\n\\r\\t]+");
+
+
+// initialize a parser for HTML flow content.
 export const flowContent = [
     "a", "abbr", "address", "article", "aside", "audio", "b", "bdi", "bdo",
     "blockquote", "br", "button", "canvas", "cite", "code", "data",
@@ -463,17 +477,6 @@ export const flowContent = [
     "wbr",
     //"autonomous custom elements",
 ];
-
-// construct a lexer for HTML.
-let htmlLexemeAndEndCharPatterns = [
-    ["<\\w+", "\\W"], [">"], // beginning tag.
-    ["<\\/\\w+>"], // end tag.
-    ["="], ["\\("], ["\\)"],
-    ['"[\\n\\r\\t -\\[\\]\\^a-~]*"'], // strings of printable, non-backslash
-    // ASCII characters.
-    ["\\w+", "\\W"], // attribute names.
-];
-var htmlLexer = new Lexer(htmlLexemeAndEndCharPatterns, "[ \\n\\r\\t]+");
 
 // construct a parser for HTML.
 var = htmlParser = new Parser(htmlLexer);
