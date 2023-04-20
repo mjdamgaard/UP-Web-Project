@@ -453,7 +453,7 @@ var htmlLexer = new Lexer(htmlLexemeAndEndCharPatterns, "[ \\n\\r\\t]+");
 // construct a parser for HTML.
 var = htmlParser = new Parser(htmlLexer);
 htmlParser.addLexemePatterns([
-    // TODO..
+    // TODO...
 ]);
 
 htmlParser.addProduction("<Tag>", [
