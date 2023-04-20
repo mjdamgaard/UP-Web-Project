@@ -439,6 +439,31 @@ export function upaf_getAttributes(selector, keyArr) {
 
 /* Some functions to add and remove HTML elements */
 
+// (I still don't wnt to worry about repeated ids, even though my Parser class
+// now has the ability in principle to record the ids it encounters during the
+// parsing.)
+
+export const flowContent = [
+    "a", "abbr", "address", "article", "aside", "audio", "b", "bdi", "bdo",
+    "blockquote", "br", "button", "canvas", "cite", "code", "data",
+    "datalist", "del", "details", "dfn", "dialog", "div", "dl", "em",
+    "embed", "fieldset", "figure", "footer", "form",
+    "h[1-6]",
+    "header", "hgroup", "hr", "i", "iframe", "img", "input", "ins", "kbd",
+    "label", "map", "mark",
+    //"MathML math",
+    "menu", "meter", "nav",
+    "noscript", "object", "ol", "output", "p", "picture", "pre",
+    "progress", "q", "ruby", "s", "samp",
+    // "script",
+    "search", "section",
+    "select", "slot", "small", "span", "strong", "sub", "sup",
+    // "SVG svg",
+    "table", "template", "textarea", "time", "u", "ul", "var", "video",
+    "wbr",
+    //"autonomous custom elements",
+];
+
 // construct a lexer for HTML.
 let htmlLexemeAndEndCharPatterns = [
     ["<\\w+", "\\W"], [">"], // beginning tag.
@@ -453,7 +478,12 @@ var htmlLexer = new Lexer(htmlLexemeAndEndCharPatterns, "[ \\n\\r\\t]+");
 // construct a parser for HTML.
 var = htmlParser = new Parser(htmlLexer);
 htmlParser.addLexemePatterns([
-    // TODO...
+    ["<\\w+"], [">"], // beginning tag.
+    ["<\\/\\w+>"], // end tag.
+    ["="], ["\\("], ["\\)"],
+    ['"[\\n\\r\\t -\\[\\]\\^a-~]*"'], // strings of printable, non-backslash
+    // ASCII characters.
+    ["\\w+"], // attribute names.
 ]);
 
 htmlParser.addProduction("<Tag>", [
