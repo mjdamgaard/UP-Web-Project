@@ -456,7 +456,7 @@ let htmlLexemeAndEndCharPatterns = [
 var htmlLexer = new Lexer(htmlLexemeAndEndCharPatterns, "[ \\n\\r\\t]+");
 
 
-// initialize a parser for HTML flow content. ...
+// initialize a parser for HTML flow content. ... ..
 export const flowContent = [
     "a", "abbr", "address", "article", "aside", "audio", "b", "bdi", "bdo",
     "blockquote", "br", "button", "canvas", "cite", "code", "data",
