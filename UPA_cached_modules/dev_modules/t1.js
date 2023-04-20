@@ -479,10 +479,13 @@ htmlParser.addProduction("<FlowContent>", [
 htmlParser.addProduction("<FlowElement>", [
     ["union", [
         "<FlowContainingFlowElement>",
-        "<ListOrMenuElement>",
+        "<UnorderedListElement>",
+        "<OrderedListElement>",
+        // "<MenuElement>",
         // "<DescriptionListElement>",
-        "<TableElement>",
+        // "<TableElement>", // TODO: Implement this not to far in the future.
         // "<FigureElement>",
+        "<FormElement>",
         "<PhrasingElement>",
     ]],
 ]);
@@ -503,124 +506,104 @@ htmlParser.addProduction("<PhrasingElement>", [
         // "<SVG>",
     ]],
 ]);
+
+function getParseSettingsForRestrictedHTMLElements(
+    elementNameArr, attributeDefProductionKey, contentProductionKey
+) {
+    return [
+        // recall that "initSequence" means that all non-optional parts of the
+        // production following this one will throw on failure.
+        ["initSequence", [
+            ["<\\w+",
+                function(lexeme, productionScopeArray, parseScopeArray) {
+                    // get the "\\w+" element name from the "<\\w+" lexeme.
+                    let elementName = lexeme.substring(1);
+                    // let this testFun fail if elementName is not included in
+                    // elementNameArr.
+                    if (!elementNameArr.includes(elementName)) {
+                        return false;
+                    }
+                    // add the element name to productionScopeArray in order to
+                    // test if the ending tag matches it.
+                    productionScopeArray[0] = elementName;
+                }
+            ],
+        ]],
+        ["sequence", [
+            attributeDefProductionKey, // This can be a optList production in
+            // most cases where attribute definitions are optional. This means
+            // that the parsing will not fail if the list is empty, and
+            // therefore not throw either.
+            ">",
+            contentProductionKey, // this production will also typically be a
+            // optList.
+            ["<\\/\\w+>",
+                function(lexeme, productionScopeArray, parseScopeArray) {
+                    // let this testFun return whether the element name in this
+                    // end tag matches the recorded name for the beginning tag.
+                    return ("</" + productionScopeArray[0] + ">" === lexeme);
+                }
+            ],
+        ]],
+    ];
+}
+
 const flowContainingFlowElements = [
-    "div", "span", "main", "header", "footer", "nav", "section",
+    "div", "main", "header", "footer", "nav", "section", "search",
     // TODO: add some more.
 ];
-htmlParser.addProduction("<FlowContainingFlowElement>", [
-    ["sequence", [
-        ["<\\w+",
-            function(lexeme, productionScopeArray, parseScopeArray) {
-                // get the "\\w+" element name.
-                let elementName = lexeme.substring(1);
-                // let this testFun fail if elementName is not included in
-                // flowContainingFlowElements.
-                if (!flowContainingFlowElements.includes(elementName)) {
-                    return false;
-                }
-                // add the element name to productionScopeArray in order to
-                // test if the ending tag matches it.
-                productionScopeArray[0] = elementName;
-            }
-        ],
-        "<FlowContent>",
-        ["<\\/\\w+>",
-            function(lexeme, productionScopeArray, parseScopeArray) {
-                // let this testFun return whether the element name in this
-                // end tag matches the recorded name for the beginning tag.
-                return ("</" + productionScopeArray[0] + ">" === lexeme);
-            }
-        ],
-    ]],
-]);
+htmlParser.addProduction("<FlowContainingFlowElement>",
+    getParseSettingsForRestrictedHTMLElements(
+        flowContainingFlowElements, "<GlobalAttributeDefs>", "<FlowContent>"
+    )
+);
 
-getTestFunToRecordBeginTagNameAndMatchAgainstArray(elementNameArr) {
-    return function(lexeme, productionScopeArray, parseScopeArray) {
-        // get the "\\w+" element name from the "<\\w+" lexeme.
-        let elementName = lexeme.substring(1);
-        // let this testFun fail if elementName is not included in
-        // elementNameArr.
-        if (!elementNameArr.includes(elementName)) {
-            return false;
-        }
-        // add the element name to productionScopeArray in order to
-        // test if the ending tag matches it.
-        productionScopeArray[0] = elementName;
-    }
-}
+htmlParser.addProduction("<UnorderedListElement>",
+    getParseSettingsForRestrictedHTMLElements(
+        ["ul"], "<GlobalAttributeDefs>", "<ListItemContent>"
+    )
+);
+htmlParser.addProduction("<OrderedListElement>",
+    getParseSettingsForRestrictedHTMLElements(
+        ["ol"], "<OrderedListAttributeDefs>", "<ListItemContent>"
+    )
+);
 
-
-getTestFunToMatchEndTagAgainstRecordedBeginTag() {
-    return function(lexeme, productionScopeArray, parseScopeArray) {
-        // let this testFun return whether the element name in this
-        // end tag matches the recorded name for the beginning tag.
-        return ("</" + productionScopeArray[0] + ">" === lexeme);
-    }
-}
-
-const listOrMenuElements = [
-    "ol", "ul", "menu",
-    // TODO: add some more.
-];
-htmlParser.addProduction("<ListOrMenuElement>", [
-    ["sequence", [
-        ["<\\w+",
-            function(lexeme, productionScopeArray, parseScopeArray) {
-                // get the "\\w+" element name.
-                let elementName = lexeme.substring(1);
-                // let this testFun fail if elementName is not included in
-                // listOrMenuElements.
-                if (!listOrMenuElements.includes(elementName)) {
-                    return false;
-                }
-                // add the element name to productionScopeArray in order to
-                // test if the ending tag matches it.
-                productionScopeArray[0] = elementName;
-            }
-        ],
-        "<FlowContent>",
-        ["<\\/\\w+>",
-            function(lexeme, productionScopeArray, parseScopeArray) {
-                // let this testFun return whether the element name in this
-                // end tag matches the recorded name for the beginning tag.
-                return ("</" + productionScopeArray[0] + ">" === lexeme);
-            }
-        ],
-    ]],
-]);
-
-
-
-
-
-
-
-htmlParser.addProduction("<FormElement>", [
+htmlParser.addProduction("<ListItemContent>", [
     ["optList", [
-        "<FlowContentElement>",
+        "<ListItemElement>",
     ]],
 ]);
-htmlParser.addProduction("<TableElement>", [
-    ["optList", [
-        "<FlowContentElement>",
-    ]],
-]);
-htmlParser.addProduction("<TableRowElement>", [
-    ["optList", [
-        "<FlowContentElement>",
-    ]],
-]);
-htmlParser.addProduction("<DescriptionListElement>", [
-    ["optList", [
-        "<FlowContentElement>",
-    ]],
-]);
-htmlParser.addProduction("<FigureElement>", [
-    ["optList", [
-        "<FlowContentElement>",
-    ]],
-]);
+htmlParser.addProduction("<ListItemElement>",
+    getParseSettingsForRestrictedHTMLElements(
+        ["li"], "<GlobalAttributeDefs>", "<FlowContent>"
+    )
+);
 
+htmlParser.addProduction("<FormElement>",
+    getParseSettingsForRestrictedHTMLElements(
+        ["form"], "<FormAttributeDefs>", "<FlowContent>"
+    )
+);
+
+
+
+htmlParser.addProduction("<PhrasingContainingPhrasingElement>", [
+    ["union", [
+        "<PhrasingElementWithOnlyGlobalAttributes>",
+        "<Button>",
+        "<Label>",
+    ]],
+)
+]);
+htmlParser.addProduction("<PhrasingElementWithOnlyGlobalAttributes>",
+    getParseSettingsForRestrictedHTMLElements(
+        ["span", "b", "i", "em", "cite", "mark"], // TODO: Add more (perhaps).
+        "<GlobalAttributeDefs>", "<FlowContent>"
+    )
+);
+
+// Button and Label...
 
 htmlParser.addProduction("<EmptyPhrasingElement>", [
     ["optList", [
@@ -634,11 +617,6 @@ htmlParser.addProduction("<Text>", [
     ]],
 ]);
 
-htmlParser.addProduction("<FlowContentTagElement>", [
-    ["union", [
-        //
-    ]],
-]);
 
 
 // export const flowContentElements = [
