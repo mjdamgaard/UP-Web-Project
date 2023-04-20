@@ -92,6 +92,10 @@ addProduction(key, parseSettings) {
     this.parseFunctions[key] = function(lexArr, nextPos, successRequired) {
         // record the initial position.
         initialPos = nextPos[0];
+        // initialize a local variable for storing lexemes to test, which can
+        // for instance be used to test that an end XML tag matches its
+        // beginning.
+        var lexemesToTest = [];
         // declare the boolean return value.
         var ret;
         // go through each parse setting and do the parsing as instructed.
@@ -99,6 +103,7 @@ addProduction(key, parseSettings) {
             for (let i = 0; i < settingsLen; i++) {
                 let parseType = parseSettings[i][0];
                 let subproductionKeys = parseSettings[i][1];
+                let testFun = parseSettings[i][2] ?? function(){};
                 switch (parseType) {
                     case ("optWords"):
                         // parse some optional words that are never required.
@@ -155,6 +160,36 @@ addProduction(key, parseSettings) {
                         // by each of the the subproductionKeys.
                         ret = parseUnion(
                             lexArr, nextPos, subproductionKeys, false
+                        );
+                        break;
+                    case ("lexemeToTest"):
+                        // This is the only option where parseSettings[i][1]
+                        // does not contain production keys exclusively. Instead
+                        // it contains a pattern to match the lexeme with, as
+                        // well as an optional function to run on lexemesToTest
+                        // after the current lexeme as been added to the array.
+                        // Note that the pattern still has to be recorded as
+                        // a production key (with a call to addProduction(<
+                        // pattern>)) before (or after) declaring this
+                        // production.
+                        let lexemePatternProductionKey =
+                            parseSettings[i][1][0];
+                        let testFun = parseSettings[i][1][1] ?? function(){};
+                        // record the current position of the lexeme.
+                        let lexemePosition = nextPos[0];
+                        ret = parseWords(
+                            lexArr, nextPos,
+                            ,
+                            successRequired
+                        );
+                        break;
+                    case ("optLexemeToTest"):
+                        // This is the same as the previous option, only where
+                        // the lexeme is optional to parse.
+                        ret = parseWords(
+                            lexArr, nextPos,
+                            subproductionKeys,
+                            false
                         );
                         break;
                     default:

@@ -441,7 +441,8 @@ export function upaf_getAttributes(selector, keyArr) {
 
 // construct a lexer for HTML.
 let htmlLexemeAndEndCharPatterns = [
-    ["<\\w+", "\\W"], [">"], // tag beginning and end.
+    ["<\\w+", "\\W"], [">"], // beginning tag.
+    ["<\\/\\w+>"], // end tag.
     ["="], ["\\("], ["\\)"],
     ['"[\\n\\r\\t -\\[\\]\\^a-~]*"'], // strings of printable, non-backslash
     // ASCII characters.
