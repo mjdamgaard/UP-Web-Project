@@ -7,6 +7,7 @@ constructor(lexer) {
     this.error = "";
     this.success = undefined;
     this.nextPos = [0];
+    this.storageForTests = [];
 }
 
 lexAndParse(str, productionKey) {
@@ -23,8 +24,10 @@ lexAndParse(str, productionKey) {
 }
 
 parse(lexArr, productionKey) {
-    // set nextPos to [0].
+    // reset nextPos to [0] and reset storageForTests to [].
     this.nextPos = [0];
+    this.storageForTests = [];
+    // refresh this.storageForTests
     // parse and try for error.
     try {
         this.parseFunctions[productionKey](lexArr, this.nextPos, true);
@@ -102,20 +105,34 @@ addProduction(key, parseSettings) {
         try {
             for (let i = 0; i < settingsLen; i++) {
                 let parseType = parseSettings[i][0];
+                // Normally, subproductionKeys contains key strings as elements,
+                // but they can also contain [key, testFun] pairs, where key
+                // then has to be a single-lexeme key, and where testFun is a
+                // function to then be run by a call to
+                // testFun(lexeme, lexemesToTest, this.storageForTests), where
+                // lexeme is the current lexeme parsed by key. testFun() can
+                // either push data to the production-scope-local lexemesToTest,
+                // to the storageForTests Parser property, which is reset for
+                // each parsing, or to any other global variables it wants to,
+                // and/or it can also perform a test on the previous data stored
+                // in these variables. This only works of parseType is "words",
+                // "optWords" or "initWords", otherwise subproductionKeys has
+                // to contain only keys.
                 let subproductionKeys = parseSettings[i][1];
-                let testFun = parseSettings[i][2] ?? function(){};
                 switch (parseType) {
                     case ("optWords"):
                         // parse some optional words that are never required.
                         ret = this.parseWords(
-                            lexArr, nextPos, subproductionKeys, false
+                            lexArr, nextPos, lexemesToTest, subproductionKeys,
+                            false
                         );
                         break;
                     case ("initWords"):
                         // parse some initial words after which the rest of
                         // the "words" in the production become mandatory.
                         ret = this.parseWords(
-                            lexArr, nextPos, subproductionKeys, successRequired
+                            lexArr, nextPos, lexemesToTest, subproductionKeys,
+                            successRequired
                         );
                         successRequired = true;
                         break;
@@ -124,7 +141,8 @@ addProduction(key, parseSettings) {
                         // successRequired is true or if "initalWords" has
                         // appeared before.
                         ret = this.parseWords(
-                            lexArr, nextPos, subproductionKeys, successRequired
+                            lexArr, nextPos, lexemesToTest, subproductionKeys,
+                            successRequired
                         );
                         break;
                     case ("optList"):
@@ -162,36 +180,6 @@ addProduction(key, parseSettings) {
                             lexArr, nextPos, subproductionKeys, false
                         );
                         break;
-                    case ("lexemeToTest"):
-                        // This is the only option where parseSettings[i][1]
-                        // does not contain production keys exclusively. Instead
-                        // it contains a pattern to match the lexeme with, as
-                        // well as an optional function to run on lexemesToTest
-                        // after the current lexeme as been added to the array.
-                        // Note that the pattern still has to be recorded as
-                        // a production key (with a call to addProduction(<
-                        // pattern>)) before (or after) declaring this
-                        // production.
-                        let lexemePatternProductionKey =
-                            parseSettings[i][1][0];
-                        let testFun = parseSettings[i][1][1] ?? function(){};
-                        // record the current position of the lexeme.
-                        let lexemePosition = nextPos[0];
-                        ret = parseWords(
-                            lexArr, nextPos,
-                            ,
-                            successRequired
-                        );
-                        break;
-                    case ("optLexemeToTest"):
-                        // This is the same as the previous option, only where
-                        // the lexeme is optional to parse.
-                        ret = parseWords(
-                            lexArr, nextPos,
-                            subproductionKeys,
-                            false
-                        );
-                        break;
                     default:
                         // (Note that this error is only thrown in the call
                         // to parse(), not to addProduction().)
@@ -215,7 +203,7 @@ addProduction(key, parseSettings) {
     }
 }
 
-parseWords(lexArr, nextPos, subproductionKeys, successRequired) {
+parseWords(lexArr, nextPos, lexemesToTest, subproductionKeys, successRequired) {
     // initialize bolean return value as true.
     var ret = true;
     // loop through the subproductionKeys and call the corresponding parsing
@@ -223,7 +211,23 @@ parseWords(lexArr, nextPos, subproductionKeys, successRequired) {
     let subKeysLen = subproductionKeys.length;
     var i;
     for (i = 0; i < subKeysLen; i++) {
-        let key = subproductionKeys[i];
+        var key = subproductionKeys[i];
+        // if subproductionKeys[i] is of [lexemeKey, testFun] rather than key,
+        // run a test on the lexeme before continuing with the regular parsing.
+        if (typeof key !== "string") {
+            key = subproductionKeys[i][0];
+            let testFun = subproductionKeys[i][1];
+            let lexeme = lexArr[nextPos[0]];
+            let testRes = testFun(lexeme, lexemesToTest, this.storageForTests);
+            if (successRequired && !testRes) {
+                throw (
+                    "Test function failed for '" + lexeme +
+                    "' (expecting a pattern of " + subproductionKeys[i] + ")"
+                );
+            } else if (!testRes) {
+                return false;
+            }
+        }
         // (Note that all parseFunctions reset nextPos on failure (excpet when
         // an error is thrown).)
         ret = this.parseFunctions[key](lexArr, nextPos, successRequired);
