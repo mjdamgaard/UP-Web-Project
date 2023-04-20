@@ -456,6 +456,25 @@ let htmlLexemeAndEndCharPatterns = [
 var htmlLexer = new Lexer(htmlLexemeAndEndCharPatterns, "[ \\n\\r\\t]+");
 
 
+// construct a parser for HTML.
+var = htmlParser = new Parser(htmlLexer);
+// it doesn't hurt to add all the pattern from the lexer, even if I won't use
+// them all.
+htmlParser.addLexemePatterns([
+    ["<\\w+"], [">"], // beginning tag.
+    ["<\\/\\w+>"], // end tag.
+    ["="], ["\\("], ["\\)"],
+    ['"[\\n\\r\\t -\\[\\]\\^a-~]*"'], // strings of printable, non-backslash
+    // ASCII characters.
+    ["\\w+"], // attribute names.
+]);
+
+htmlParser.addProduction("<Tag>", [
+    ["initWords", [
+        // TODO..
+    ]],
+]);
+
 // initialize a parser for HTML flow content. ... ..
 export const flowContent = [
     "a", "abbr", "address", "article", "aside", "audio", "b", "bdi", "bdo",
@@ -477,25 +496,6 @@ export const flowContent = [
     "wbr",
     //"autonomous custom elements",
 ];
-
-// construct a parser for HTML.
-var = htmlParser = new Parser(htmlLexer);
-htmlParser.addLexemePatterns([
-    ["<\\w+"], [">"], // beginning tag.
-    ["<\\/\\w+>"], // end tag.
-    ["="], ["\\("], ["\\)"],
-    ['"[\\n\\r\\t -\\[\\]\\^a-~]*"'], // strings of printable, non-backslash
-    // ASCII characters.
-    ["\\w+"], // attribute names.
-]);
-
-htmlParser.addProduction("<Tag>", [
-    ["initWords", [
-        // TODO..
-    ]],
-]);
-
-
 
 
 
