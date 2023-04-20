@@ -452,6 +452,7 @@ let htmlLexemeAndEndCharPatterns = [
     ['"[\\n\\r\\t -\\[\\]\\^a-~]*"'], // strings of printable, non-backslash
     // ASCII characters.
     ["\\w+", "\\W"], // attribute names.
+    ["[^<>\"'\\\\]+", "[<>\"'\\\\]"], // text.
 ];
 var htmlLexer = new Lexer(htmlLexemeAndEndCharPatterns, "[ \\n\\r\\t]+");
 
@@ -460,23 +461,12 @@ var htmlLexer = new Lexer(htmlLexemeAndEndCharPatterns, "[ \\n\\r\\t]+");
 var = htmlParser = new Parser(htmlLexer);
 // it doesn't hurt to add all the pattern from the lexer, even if I won't use
 // them all.
-htmlParser.addLexemePatterns([
-    ["<\\w+"], [">"], // beginning tag.
-    ["<\\/\\w+>"], // end tag.
-    ["="], ["\\("], ["\\)"],
-    ['"[\\n\\r\\t -\\[\\]\\^a-~]*"'], // strings of printable, non-backslash
-    // ASCII characters.
-    ["\\w+"], // attribute names.
-]);
+htmlParser.addLexemePatterns(htmlLexemeAndEndCharPatterns);
 
-htmlParser.addProduction("<Tag>", [
-    ["initWords", [
-        // TODO..
-    ]],
-]);
 
-// initialize a parser for HTML flow content. ... ..
-export const flowContent = [
+// add a production for (some!) flow content elements.
+
+export const flowContentElements = [
     "a", "abbr", "address", "article", "aside", "audio", "b", "bdi", "bdo",
     "blockquote", "br", "button", "canvas", "cite", "code", "data",
     "datalist", "del", "details", "dfn", "dialog", "div", "dl", "em",
@@ -497,9 +487,37 @@ export const flowContent = [
     //"autonomous custom elements",
 ];
 
+// (Look at https://html.spec.whatwg.org/multipage/indices.html
+//     #element-content-categories
+// for what is meant by "flow content" etc.)
+htmlParser.addProduction("<FlowContent>", [
+    ["optList", [
+        "<FlowContentElement>",
+    ]],
+]);
 
+htmlParser.addProduction("<FlowContentElement>", [
+    ["union", [
+        // I'll leave "<MathMLCore>" and "<SVG>" out for now.
+        "<Text>",
+        "<PhrasingContentTagElement>",
+        "<FlowContentTagElement>", ,
+        // I'll leave "<MathMLCore>" and "<SVG>" out for now.
+        // "<MathMLCore>", "<SVG>",
+    ]],
+]);
 
+htmlParser.addProduction("<Text>", [
+    ["words", [
+        "[^<>\"'\\\\]+",
+    ]],
+]);
 
+htmlParser.addProduction("<FlowContentTagElement>", [
+    ["union", [
+        //
+    ]],
+]);
 
 
 
