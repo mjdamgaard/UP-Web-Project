@@ -54,6 +54,12 @@ parse(lexArr, productionKey) {
     return true;
 }
 
+parseNext(lexArr, productionKey, successRequired) {
+    return this.parseFunctions[productionKey](
+        lexArr, this.nextPos, successRequired
+    );
+}
+
 addLexemePatterns(lexemePatternArrArr) {
     // add single-lexeme productions from the patterns contained as the first
     // element of each array contained in lexemePatternArrArr.
@@ -115,32 +121,32 @@ addProduction(key, parseSettings) {
                 // to the storageForTests Parser property, which is reset for
                 // each parsing, or to any other global variables it wants to,
                 // and/or it can also perform a test on the previous data stored
-                // in these variables. This only works of parseType is "words",
-                // "optWords" or "initWords", otherwise subproductionKeys has
-                // to contain only keys.
+                // in these variables. This only works of parseType is
+                // "sequence", "optSequence" or "initSequence", otherwise
+                // subproductionKeys has to contain only keys.
                 let subproductionKeys = parseSettings[i][1];
                 switch (parseType) {
-                    case ("optWords"):
+                    case ("optSequence"):
                         // parse some optional words that are never required.
-                        ret = this.parseWords(
+                        ret = this.parseSequence(
                             lexArr, nextPos, lexemesToTest, subproductionKeys,
                             false
                         );
                         break;
-                    case ("initWords"):
+                    case ("initSequence"):
                         // parse some initial words after which the rest of
-                        // the "words" in the production become mandatory.
-                        ret = this.parseWords(
+                        // the "sequence" in the production become mandatory.
+                        ret = this.parseSequence(
                             lexArr, nextPos, lexemesToTest, subproductionKeys,
                             successRequired
                         );
                         successRequired = true;
                         break;
-                    case ("words"):
+                    case ("sequence"):
                         // parse some words which are required only if
-                        // successRequired is true or if "initalWords" has
+                        // successRequired is true or if "initSequence" has
                         // appeared before.
-                        ret = this.parseWords(
+                        ret = this.parseSequence(
                             lexArr, nextPos, lexemesToTest, subproductionKeys,
                             successRequired
                         );
@@ -203,7 +209,9 @@ addProduction(key, parseSettings) {
     }
 }
 
-parseWords(lexArr, nextPos, lexemesToTest, subproductionKeys, successRequired) {
+parseSequence(
+    lexArr, nextPos, lexemesToTest, subproductionKeys, successRequired
+) {
     // initialize bolean return value as true.
     var ret = true;
     // loop through the subproductionKeys and call the corresponding parsing

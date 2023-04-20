@@ -114,10 +114,10 @@ selectorParser.addLexemePatterns([
 
 
 selectorParser.addProduction("<PseudoClassFunctionCall>", [
-    ["initWords", [
+    ["initSequence", [
         functionalPseudoClassesWithSelectorInputPattern,
     ]],
-    ["words", [
+    ["sequence", [
         "\\([ \\n\\r\\t]*",
         "<Selector>",
         "[ \\n\\r\\t]*\\)",
@@ -135,7 +135,7 @@ selectorParser.addProduction("<CompoundSelector>", [
     ]],
 ]);
 selectorParser.addProduction("<Combinator>", [
-    ["words", [
+    ["sequence", [
         " ?[>,~\\+ ] ?",
     ]],
 ]);
@@ -460,55 +460,176 @@ var htmlLexer = new Lexer(htmlLexemeAndEndCharPatterns, "[ \\n\\r\\t]+");
 // construct a parser for HTML.
 var = htmlParser = new Parser(htmlLexer);
 // it doesn't hurt to add all the pattern from the lexer, even if I won't use
-// them all.
+// some of them.
 htmlParser.addLexemePatterns(htmlLexemeAndEndCharPatterns);
 
 
-// add a production for (some!) flow content elements.
-
-export const flowContentElements = [
-    "a", "abbr", "address", "article", "aside", "audio", "b", "bdi", "bdo",
-    "blockquote", "br", "button", "canvas", "cite", "code", "data",
-    "datalist", "del", "details", "dfn", "dialog", "div", "dl", "em",
-    "embed", "fieldset", "figure", "footer", "form",
-    "h[1-6]",
-    "header", "hgroup", "hr", "i", "iframe", "img", "input", "ins", "kbd",
-    "label", "map", "mark",
-    //"MathML math",
-    "menu", "meter", "nav",
-    "noscript", "object", "ol", "output", "p", "picture", "pre",
-    "progress", "q", "ruby", "s", "samp",
-    // "script",
-    "search", "section",
-    "select", "slot", "small", "span", "strong", "sub", "sup",
-    // "SVG svg",
-    "table", "template", "textarea", "time", "u", "ul", "var", "video",
-    "wbr",
-    //"autonomous custom elements",
-];
 
 // (Look at https://html.spec.whatwg.org/multipage/indices.html
 //     #element-content-categories
 // for what is meant by "flow content" etc.)
 htmlParser.addProduction("<FlowContent>", [
     ["optList", [
+        "<FlowElement>",
+    ]],
+]);
+// (Out-commented productions are left for a future implementation.)
+// (Also, the unions below are not meant to be complete; they may be expanded
+// in a future implementation.)
+htmlParser.addProduction("<FlowElement>", [
+    ["union", [
+        "<FlowContainingFlowElement>",
+        "<ListOrMenuElement>",
+        // "<DescriptionListElement>",
+        "<TableElement>",
+        // "<FigureElement>",
+        "<PhrasingElement>",
+    ]],
+]);
+htmlParser.addProduction("<PhrasingContent>", [
+    ["optList", [
+        "<PhrasingElement>",
+    ]],
+]);
+htmlParser.addProduction("<PhrasingElement>", [
+    ["union", [
+        "<PhrasingContainingPhrasingElement>",
+        // "<PictureElement>",
+        // "<VideoElement>",
+        // "<AudioElement>",
+        "<EmptyPhrasingElement>",
+        "<Text>",
+        // "<MathMLCore>",
+        // "<SVG>",
+    ]],
+]);
+const flowContainingFlowElements = [
+    "div", "span", "main", "header", "footer", "nav", "section",
+    // TODO: add some more.
+];
+htmlParser.addProduction("<FlowContainingFlowElement>", [
+    ["sequence", [
+        ["<\\w+",
+            function(lexeme, productionScopeArray, parseScopeArray) {
+                // get the "\\w+" element name.
+                let elementName = lexeme.substring(1);
+                // let this testFun fail if elementName is not included in
+                // flowContainingFlowElements.
+                if (!flowContainingFlowElements.includes(elementName)) {
+                    return false;
+                }
+                // add the element name to productionScopeArray in order to
+                // test if the ending tag matches it.
+                productionScopeArray[0] = elementName;
+            }
+        ],
+        "<FlowContent>",
+        ["<\\/\\w+>",
+            function(lexeme, productionScopeArray, parseScopeArray) {
+                // let this testFun return whether the element name in this
+                // end tag matches the recorded name for the beginning tag.
+                return ("</" + productionScopeArray[0] + ">" === lexeme);
+            }
+        ],
+    ]],
+]);
+
+getTestFunToRecordBeginTagNameAndMatchAgainstArray(elementNameArr) {
+    return function(lexeme, productionScopeArray, parseScopeArray) {
+        // get the "\\w+" element name from the "<\\w+" lexeme.
+        let elementName = lexeme.substring(1);
+        // let this testFun fail if elementName is not included in
+        // elementNameArr.
+        if (!elementNameArr.includes(elementName)) {
+            return false;
+        }
+        // add the element name to productionScopeArray in order to
+        // test if the ending tag matches it.
+        productionScopeArray[0] = elementName;
+    }
+}
+
+
+getTestFunToMatchEndTagAgainstRecordedBeginTag() {
+    return function(lexeme, productionScopeArray, parseScopeArray) {
+        // let this testFun return whether the element name in this
+        // end tag matches the recorded name for the beginning tag.
+        return ("</" + productionScopeArray[0] + ">" === lexeme);
+    }
+}
+
+const listOrMenuElements = [
+    "ol", "ul", "menu",
+    // TODO: add some more.
+];
+htmlParser.addProduction("<ListOrMenuElement>", [
+    ["sequence", [
+        ["<\\w+",
+            function(lexeme, productionScopeArray, parseScopeArray) {
+                // get the "\\w+" element name.
+                let elementName = lexeme.substring(1);
+                // let this testFun fail if elementName is not included in
+                // listOrMenuElements.
+                if (!listOrMenuElements.includes(elementName)) {
+                    return false;
+                }
+                // add the element name to productionScopeArray in order to
+                // test if the ending tag matches it.
+                productionScopeArray[0] = elementName;
+            }
+        ],
+        "<FlowContent>",
+        ["<\\/\\w+>",
+            function(lexeme, productionScopeArray, parseScopeArray) {
+                // let this testFun return whether the element name in this
+                // end tag matches the recorded name for the beginning tag.
+                return ("</" + productionScopeArray[0] + ">" === lexeme);
+            }
+        ],
+    ]],
+]);
+
+
+
+
+
+
+
+htmlParser.addProduction("<FormElement>", [
+    ["optList", [
+        "<FlowContentElement>",
+    ]],
+]);
+htmlParser.addProduction("<TableElement>", [
+    ["optList", [
+        "<FlowContentElement>",
+    ]],
+]);
+htmlParser.addProduction("<TableRowElement>", [
+    ["optList", [
+        "<FlowContentElement>",
+    ]],
+]);
+htmlParser.addProduction("<DescriptionListElement>", [
+    ["optList", [
+        "<FlowContentElement>",
+    ]],
+]);
+htmlParser.addProduction("<FigureElement>", [
+    ["optList", [
         "<FlowContentElement>",
     ]],
 ]);
 
-htmlParser.addProduction("<FlowContentElement>", [
-    ["union", [
-        // I'll leave "<MathMLCore>" and "<SVG>" out for now.
-        "<Text>",
-        "<PhrasingContentTagElement>",
-        "<FlowContentTagElement>", ,
-        // I'll leave "<MathMLCore>" and "<SVG>" out for now.
-        // "<MathMLCore>", "<SVG>",
+
+htmlParser.addProduction("<EmptyPhrasingElement>", [
+    ["optList", [
+        "<FlowContentElement>",
     ]],
 ]);
 
 htmlParser.addProduction("<Text>", [
-    ["words", [
+    ["sequence", [
         "[^<>\"'\\\\]+",
     ]],
 ]);
@@ -518,6 +639,28 @@ htmlParser.addProduction("<FlowContentTagElement>", [
         //
     ]],
 ]);
+
+
+// export const flowContentElements = [
+//     "a", "abbr", "address", "article", "aside", "audio", "b", "bdi", "bdo",
+//     "blockquote", "br", "button", "canvas", "cite", "code", "data",
+//     "datalist", "del", "details", "dfn", "dialog", "div", "dl", "em",
+//     "embed", "fieldset", "figure", "footer", "form",
+//     "h[1-6]",
+//     "header", "hgroup", "hr", "i", "iframe", "img", "input", "ins", "kbd",
+//     "label", "map", "mark",
+//     //"MathML math",
+//     "menu", "meter", "nav",
+//     "noscript", "object", "ol", "output", "p", "picture", "pre",
+//     "progress", "q", "ruby", "s", "samp",
+//     // "script",
+//     "search", "section",
+//     "select", "slot", "small", "span", "strong", "sub", "sup",
+//     // "SVG svg",
+//     "table", "template", "textarea", "time", "u", "ul", "var", "video",
+//     "wbr",
+//     //"autonomous custom elements",
+// ];
 
 
 
