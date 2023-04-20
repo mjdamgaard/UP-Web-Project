@@ -226,6 +226,8 @@ parseSequence(
             key = subproductionKeys[i][0];
             let testFun = subproductionKeys[i][1];
             let lexeme = lexArr[nextPos[0]];
+            // TODO: insert a try--catch statement to also handle and pass on
+            // errors thrown in testFun.
             let testRes = testFun(lexeme, lexemesToTest, this.storageForTests);
             if (successRequired && !testRes) {
                 throw (
