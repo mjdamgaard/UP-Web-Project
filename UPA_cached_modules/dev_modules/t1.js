@@ -578,12 +578,18 @@ htmlChecker.addProduction("<EmptyTagElement>", [
                 if (!legalEmptyHTMLElements.includes(elementName)) {
                     return false;
                 }
+                // push the element name to mainProdScopedArr specifically in
+                // order to be able to check the <AttributeDefinitionList>.
+                mainProdScopedArr.push(elementName);
             }
         ],
     ]],
     ["sequence", [
         "<AttributeDefinitionList>",
-        ">",
+        [">",
+            // make sure to pop the elementName again.
+            mainProdScopedArr.pop();
+        ]
     ]],
 ]);
 
@@ -604,7 +610,9 @@ htmlChecker.addProduction("<AttributeDefinition>", [
     ["initSequence", [
         ["\\w+",
             function(lexeme, currentProdScopedArr, mainProdScopedArr) {
-                // TODO: push to currentProdScopedArr.. ..or mainProdScopedArr..
+                // record the "\\w+" attribute name recorded in lexeme in
+                // currentProdScopedArr.
+                currentProdScopedArr[0] = lexeme;
             }
         ],
     ]],
@@ -612,10 +620,13 @@ htmlChecker.addProduction("<AttributeDefinition>", [
         "=",
         ['"[\\n\\r\\t -\\[\\]\\^a-~]*"',
             function(lexeme, currentProdScopedArr, mainProdScopedArr) {
-                // TODO: read the tagName from mainProdScopedArr, read the
-                // attrName from attrVal currentProdScopedArr (or ...), and
-                // read attrVal from lexeme, and then pass this triplet to
-                // a function to validate it.
+                // read the tag name from mainProdScopedArr, read the attribute
+                // name from currentProdScopedArr[0], and read the attribute
+                // value from lexeme.
+                let tagName = mainProdScopedArr[mainProdScopedArr.length - 1];
+                let attrName = currentProdScopedArr[0];
+                let attrVal = lexeme.substring(1, lexeme.length - 1);
+                // then validate this triplet be a call to ... // TODO..
             }
         ],
     ]],
