@@ -472,174 +472,120 @@ htmlChecker.addLexemePatterns(htmlLexemeAndEndCharPatterns);
 
 
 
-// (Look at https://html.spec.whatwg.org/multipage/indices.html
-//     #element-content-categories
-// for what is meant by "flow content" etc.)
-htmlChecker.addProduction("<FlowContent>", [
+
+htmlChecker.addProduction("<LegalHTMLContent>", [
     ["optList", [
-        "<FlowElement>",
+        "<HTMLElement>",
     ]],
 ]);
 // (Out-commented productions are left for a future implementation.)
 // (Also, the unions below are not meant to be complete; they may be expanded
 // in a future implementation.)
-htmlChecker.addProduction("<FlowElement>", [
+htmlChecker.addProduction("<LegalHTMLElement>", [
     ["union", [
-        "<FlowContainingFlowElement>",
-        // "<HeadingGroupElement>",
-        "<HeadingElement>",
-        "<UnorderedListElement>",
-        "<OrderedListElement>",
-        // "<MenuElement>",
-        // "<DescriptionListElement>",
-        // "<TableElement>", // TODO: Implement this not to far in the future.
-        // "<FigureElement>",
-        "<FormElement>",
-        "<PhrasingElement>",
-    ]],
-]);
-htmlChecker.addProduction("<PhrasingContent>", [
-    ["optList", [
-        "<PhrasingElement>",
-    ]],
-]);
-htmlChecker.addProduction("<PhrasingElement>", [
-    ["union", [
-        "<PhrasingContainingPhrasingElementWithOnlyGlobalAttributes>",
-        // "<PictureElement>",
-        // "<VideoElement>",
-        // "<AudioElement>",
-        "<ButtonElement>",
-        "<LabelElement>",
-        "<TextAreaElement>",
-        "<ImageElement>",
-        "<InputElement>",
-        "<BreakElement>",
+        "<ContainerTagElement>",
+        "<EmptyTagElement>",
         "<Text>",
         // "<MathMLCore>",
         // "<SVG>",
     ]],
 ]);
-
-function getProductionSettingsForHTMLElements(
-    elementNameArr, attributeDefProductionKey, contentProductionKey
-) {
-    return [
-        // recall that "initSequence" means that all non-optional parts of the
-        // production following this one will throw on failure.
-        ["initSequence", [
-            ["<\\w+",
-                function(lexeme, currentProdScopedArr, mainProdScopedArr) {
-                    // get the "\\w+" element name from the "<\\w+" lexeme.
-                    let elementName = lexeme.substring(1);
-                    // let this testFun fail if elementName is not included in
-                    // elementNameArr.
-                    if (!elementNameArr.includes(elementName)) {
-                        return false;
-                    }
-                    // add the element name to productionScopeArray in order to
-                    // test if the ending tag matches it.
-                    currentProdScopedArr[0] = elementName;
-                }
-            ],
-        ]],
-        ["sequence", [
-            //TODO: Change this to a attrName, "=", attrVal parsing, record
-            // the attrName in currentProdScopedArr[1] each time, and call an
-            // input testFun for attrVal testing, given tagName and attrName
-            // stored in currentProdScopedArr ([0] and [1]).
-            attributeDefProductionKey, // This can be a optList production in
-            // most cases where attribute definitions are optional. This means
-            // that the parsing will not fail if the list is empty, and
-            // therefore not throw either.
-            ">",
-            contentProductionKey, // this production will also typically be a
-            // optList.
-            ["<\\/\\w+>",
-                function(lexeme, currentProdScopedArr, mainProdScopedArr) {
-                    // let this testFun return whether the element name in this
-                    // end tag matches the recorded name for the beginning tag.
-                    let endTag = "</" + currentProdScopedArr[0] + ">";
-                    if (endTag !== lexeme) {
-                        // This error message overwrites the standard one.
-                        throw (
-                            "Expected either " + contentProductionKey +
-                            " or '" + endTag + "' but got " + lexeme
-                        );
-                    }
-                    // if (endTag === lexeme), return true.
-                    return true;
-                }
-            ],
-        ]],
-    ];
-}
-
-const flowContainingFlowElements = [
-    "div", "main", "header", "footer", "nav", "section", "search",
-    // TODO: add some more.
+const legalContainerHTMLElements = [
+    "a", "article", "aside", "audio", "b", "bdi", "bdo",
+    "blockquote", "button", "cite", "code", "colgroup", "data",
+    "datalist", "del", "details", "dfn", "dialog", "div", "dl", "em",
+    "fieldset", "figure", "footer", "form",
+    "h1", "h2", "h3", "h4", "h5", "h6",
+    "header", "hgroup", "hr", "i", "ins", "kbd",
+    "label", "map", "mark",
+    //"MathML math",
+    "menu", "meter", "nav",
+    "object", "ol", "output", "p", "picture", "pre",
+    "progress", "q", "ruby","rp", "rt", "s", "samp",
+    // "script",
+    "search", "section",
+    "select", "slot", "small", "span", "strong", "sub", "sup",
+    // "SVG svg",
+    "table", "tbody", "td", "tfoot", "th", "thead", "tr",
+    "template",
+    "textarea", "time", "u", "ul", "var", "video",
+    //"autonomous custom elements",
 ];
-htmlChecker.addProduction("<FlowContainingFlowElement>",
-    getProductionSettingsForHTMLElements(
-        flowContainingFlowElements, "<GlobalAttributeDefs>", "<FlowContent>"
-    )
-);
-
-htmlChecker.addProduction("<HeadingElement>",
-    getProductionSettingsForHTMLElements(
-        ["h1", "h2", "h3", "h4", "h5", "h6", ],
-        "<GlobalAttributeDefs>", "<PhrasingContent>"
-    )
-);
-
-htmlChecker.addProduction("<UnorderedListElement>",
-    getProductionSettingsForHTMLElements(
-        ["ul"], "<GlobalAttributeDefs>", "<ListItemContent>"
-    )
-);
-htmlChecker.addProduction("<OrderedListElement>",
-    getProductionSettingsForHTMLElements(
-        ["ol"], "<OrderedListAttributeDefs>", "<ListItemContent>"
-    )
-);
-
-htmlChecker.addProduction("<ListItemContent>", [
-    ["optList", [
-        "<ListItemElement>",
+const legalEmptyHTMLElements = [
+    "area", "br", "col",
+    // "embed",
+    "iframe",
+    "img", "input", "track",
+    "source",
+    "wbr",
+];
+htmlChecker.addProduction("<ContainerTagElement>", [
+    ["initSequence", [
+        ["<\\w+",
+            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
+                // get the "\\w+" element name from the "<\\w+" lexeme.
+                let elementName = lexeme.substring(1);
+                // let this testFun fail if elementName is not included in
+                // legalContainerHTMLElements.
+                if (!legalContainerHTMLElements.includes(elementName)) {
+                    return false;
+                }
+                // push the element name to mainProdScopedArr in order to
+                // test if the ending tag matches it, among other things.
+                mainProdScopedArr.push(elementName);
+            }
+        ],
+    ]],
+    ["sequence", [
+        // (Note that the <AttributeDefinitionList> production also includes
+        // a test function which depends on the newly pushed elementName.)
+        "<AttributeDefinitionList>",
+        ">", // because of the "initSequence", htmlChecker.check() will throw
+        // immediately if reaching this point and failing to parse ">". (The
+        // same thing can be said about parsing the end tag below, but both
+        // <AttributeDefinitionList> and <LegalHTMLContent> are optional, and
+        // will thus not fail unless they contain invalid syntax within them.)
+        "<LegalHTMLContent>",
+        ["<\\/\\w+>",
+            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
+                // let this testFun return whether the element name in this
+                // end tag matches the recorded name for the beginning tag,
+                // and make sure to also pop the tag name from mainProdScopedArr
+                // again.
+                let endTag = "</" + mainProdScopedArr.pop() + ">";
+                if (endTag !== lexeme) {
+                    // This error message overwrites the standard one.
+                    throw (
+                        "Expected either <LegalHTMLContent> or '" + endTag +
+                        "' but got " + lexeme
+                    );
+                }
+                // if (endTag === lexeme), return true.
+                return true;
+            }
+        ],
     ]],
 ]);
-htmlChecker.addProduction("<ListItemElement>",
-    getProductionSettingsForHTMLElements(
-        ["li"], "<GlobalAttributeDefs>", "<FlowContent>"
-    )
-);
 
-
-htmlChecker.addProduction("<FormElement>",
-    getProductionSettingsForHTMLElements(
-        ["form"], "<FormAttributeDefs>", "<FlowContent>"
-    )
-);
-
-
-
-htmlChecker.addProduction(
-    "<PhrasingContainingPhrasingElementWithOnlyGlobalAttributes>",
-    getProductionSettingsForHTMLElements(
-        ["span", "b", "i", "em", "cite", "mark"], // TODO: Add more (perhaps).
-        "<GlobalAttributeDefs>", "<PhrasingContent>"
-    )
-);
-
-
-// TODO:
-"<ButtonElement>",
-"<LabelElement>",
-"<TextAreaElement>",
-"<ImageElement>",
-"<InputElement>",
-"<BreakElement>",
-
+htmlChecker.addProduction("<EmptyTagElement>", [
+    ["initSequence", [
+        ["<\\w+",
+            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
+                // get the "\\w+" element name from the "<\\w+" lexeme.
+                let elementName = lexeme.substring(1);
+                // let this testFun fail if elementName is not included in
+                // legalContainerHTMLElements.
+                if (!legalEmptyHTMLElements.includes(elementName)) {
+                    return false;
+                }
+            }
+        ],
+    ]],
+    ["sequence", [
+        "<AttributeDefinitionList>",
+        ">",
+    ]],
+]);
 
 htmlChecker.addProduction("<Text>", [
     ["sequence", [
@@ -649,12 +595,38 @@ htmlChecker.addProduction("<Text>", [
 
 
 
+htmlChecker.addProduction("<AttributeDefinitionList>", [
+    ["optList", [
+        "<AttributeDefinition>"
+    ]],
+]);
+htmlChecker.addProduction("<AttributeDefinition>", [
+    ["initSequence", [
+        ["\\w+",
+            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
+                // TODO: push to currentProdScopedArr.. ..or mainProdScopedArr..
+            }
+        ],
+    ]],
+    ["sequence", [
+        "=",
+        ['"[\\n\\r\\t -\\[\\]\\^a-~]*"',
+            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
+                // TODO: read the tagName from mainProdScopedArr, read the
+                // attrName from attrVal currentProdScopedArr (or ...), and
+                // read attrVal from lexeme, and then pass this triplet to
+                // a function to validate it.
+            }
+        ],
+    ]],
+]);
+
 // export const flowContentElements = [
 //     "a", "abbr", "address", "article", "aside", "audio", "b", "bdi", "bdo",
 //     "blockquote", "br", "button", "canvas", "cite", "code", "data",
 //     "datalist", "del", "details", "dfn", "dialog", "div", "dl", "em",
 //     "embed", "fieldset", "figure", "footer", "form",
-//     "h[1-6]",
+//     "h1", "h2", "h3", "h4", "h5", "h6",
 //     "header", "hgroup", "hr", "i", "iframe", "img", "input", "ins", "kbd",
 //     "label", "map", "mark",
 //     //"MathML math",
