@@ -521,7 +521,7 @@ htmlChecker.addProduction("<PhrasingElement>", [
     ]],
 ]);
 
-function getProductionSettingsForRestrictedHTMLElements(
+function getProductionSettingsForHTMLElements(
     elementNameArr, attributeDefProductionKey, contentProductionKey
 ) {
     return [
@@ -580,25 +580,25 @@ const flowContainingFlowElements = [
     // TODO: add some more.
 ];
 htmlChecker.addProduction("<FlowContainingFlowElement>",
-    getProductionSettingsForRestrictedHTMLElements(
+    getProductionSettingsForHTMLElements(
         flowContainingFlowElements, "<GlobalAttributeDefs>", "<FlowContent>"
     )
 );
 
 htmlChecker.addProduction("<HeadingElement>",
-    getProductionSettingsForRestrictedHTMLElements(
+    getProductionSettingsForHTMLElements(
         ["h1", "h2", "h3", "h4", "h5", "h6", ],
         "<GlobalAttributeDefs>", "<PhrasingContent>"
     )
 );
 
 htmlChecker.addProduction("<UnorderedListElement>",
-    getProductionSettingsForRestrictedHTMLElements(
+    getProductionSettingsForHTMLElements(
         ["ul"], "<GlobalAttributeDefs>", "<ListItemContent>"
     )
 );
 htmlChecker.addProduction("<OrderedListElement>",
-    getProductionSettingsForRestrictedHTMLElements(
+    getProductionSettingsForHTMLElements(
         ["ol"], "<OrderedListAttributeDefs>", "<ListItemContent>"
     )
 );
@@ -609,14 +609,14 @@ htmlChecker.addProduction("<ListItemContent>", [
     ]],
 ]);
 htmlChecker.addProduction("<ListItemElement>",
-    getProductionSettingsForRestrictedHTMLElements(
+    getProductionSettingsForHTMLElements(
         ["li"], "<GlobalAttributeDefs>", "<FlowContent>"
     )
 );
 
 
 htmlChecker.addProduction("<FormElement>",
-    getProductionSettingsForRestrictedHTMLElements(
+    getProductionSettingsForHTMLElements(
         ["form"], "<FormAttributeDefs>", "<FlowContent>"
     )
 );
@@ -625,7 +625,7 @@ htmlChecker.addProduction("<FormElement>",
 
 htmlChecker.addProduction(
     "<PhrasingContainingPhrasingElementWithOnlyGlobalAttributes>",
-    getProductionSettingsForRestrictedHTMLElements(
+    getProductionSettingsForHTMLElements(
         ["span", "b", "i", "em", "cite", "mark"], // TODO: Add more (perhaps).
         "<GlobalAttributeDefs>", "<PhrasingContent>"
     )
