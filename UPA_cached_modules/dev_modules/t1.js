@@ -614,9 +614,9 @@ htmlChecker.addProduction("<AttributeDefinition>", [
 ]);
 
 
-var cssDecListLexer = new Lexer();
+var cssDeclarationsLexer = new Lexer();
 // TODO: Add CSS declaration list lexing rules.
-var cssDecListChecker = new SyntaxChecker();
+var cssDeclarationsChecker = new SyntaxChecker();
 // TODO: Add productions to this syntax checker, but consider doing it after
 // the definition of isLegalTagNameAttrNameAttrValTriplet() below.
 
@@ -628,11 +628,11 @@ const legalAttrNameAttrValPairStruct = {
     "style": {
         "All":
             // TODO: See if this works before adding the productions to
-            // cssDecListChecker or not (which depends on whether a copy of
-            // cssDecListChecker.lexAndCheck is made here)..
-            cssDecListChecker.lexAndCheck,
+            // cssDeclarationsChecker or not (which depends on whether a copy of
+            // cssDeclarationsChecker.lexAndCheck is made here)..
+            cssDeclarationsChecker.lexAndCheck,
             // ..Ah, but I can always just replace it with function(str) {
-            // cssDecListChecker.lexAndCheck(str); } in that case.
+            // cssDeclarationsChecker.lexAndCheck(str); } in that case.
         }
     },
     "type": {
