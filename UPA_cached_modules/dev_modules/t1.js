@@ -150,7 +150,7 @@ selectorChecker.addProduction("<Selector>", [
     ]],
 ]);
 
-export function upaf_checkSelector(selector, successRequired) {
+export function checkSelector(selector, successRequired) {
     successRequired = successRequired ?? true;
     let ret = selectorChecker.lexAndParse(selector, "<Selector>");
     if (!ret && successRequired) {
@@ -158,6 +158,13 @@ export function upaf_checkSelector(selector, successRequired) {
     } else {
         return selectorChecker.success;
     }
+}
+
+
+// Function meant to help with debugging.
+export function upaf_checkSelectorAndGetErrorAndLexArr(selector) {
+    selectorChecker.lexAndParse(selector, "<Selector>");
+    return [selectorChecker.error, selectorChecker.lexer.lexArr];
 }
 
 
@@ -603,6 +610,7 @@ htmlChecker.addProduction("<ListItemElement>",
     )
 );
 
+
 htmlChecker.addProduction("<FormElement>",
     getProductionSettingsForRestrictedHTMLElements(
         ["form"], "<FormAttributeDefs>", "<FlowContent>"
@@ -619,7 +627,14 @@ htmlChecker.addProduction(
     )
 );
 
-// Button and Label...
+
+// TODO:
+"<ButtonElement>",
+"<LabelElement>",
+"<TextAreaElement>",
+"<ImageElement>",
+"<InputElement>",
+"<BreakElement>",
 
 
 htmlChecker.addProduction("<Text>", [

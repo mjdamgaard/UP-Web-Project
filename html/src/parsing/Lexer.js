@@ -33,7 +33,7 @@ lex(str) {
     let whitespacePattern = this.whitespacePattern;
     let noneWSCharPattern = /\S/;
     // test that str is a string.
-    if (typeof selector !== "string") {
+    if (typeof str !== "string") {
         throw "Lexer.lex(): input is not a string";
     }
     // initialize the return lexeme array and the position variable.
