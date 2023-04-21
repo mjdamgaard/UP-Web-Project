@@ -627,13 +627,9 @@ const legalAttrNameAttrValPairStruct = {
     },
     "style": {
         "All":
-            // TODO: See if this works before adding the productions to
-            // cssDeclarationsChecker or not (which depends on whether a copy of
-            // cssDeclarationsChecker.lexAndCheck is made here)..
-            cssDeclarationsChecker.lexAndCheck,
-            // ..Ah, but I can always just replace it with function(str) {
-            // cssDeclarationsChecker.lexAndCheck(str); } in that case.
-        }
+            function(str) {
+                cssDeclarationsChecker.lexAndCheck(str);
+            },
     },
     "type": {
         "input": [
