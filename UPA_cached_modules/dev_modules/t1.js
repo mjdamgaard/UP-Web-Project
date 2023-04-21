@@ -91,15 +91,15 @@ let selectorLexemeAndEndCharPatterns = [
     ["::[\\w\\-]", "[^\\w\\-]"], // pseudo-elements.
     [":[\\w\\-]", "[^\\w\\-]"], // pseudo-classes (perhaps functional).
     ["\\("], ["\\)"],
-    [attributeSelectorPattern], // why not just parse this as one lexeme.
+    [attributeSelectorPattern], // why not just lex this as one lexeme.
     ["\\*"],
     ["#upai_\\w+", "\\W"],
 ];
 selectorLexer.addLexemeAndEndCharPatternPairs(selectorLexemeAndEndCharPatterns);
 
-// construct a parser for selectors.
-var = selectorParser = new Parser(selectorLexer);
-selectorParser.addLexemePatterns([
+// construct a grammar checker for selectors.
+var = selectorChecker = new GrammarChecker(selectorLexer);
+selectorChecker.addLexemePatterns([
     [" ?[>,~\\+ ] ?"],
     [elementNamePattern],
     [pseudoElementPattern],
@@ -113,7 +113,7 @@ selectorParser.addLexemePatterns([
 
 
 
-selectorParser.addProduction("<PseudoClassFunctionCall>", [
+selectorChecker.addProduction("<PseudoClassFunctionCall>", [
     ["initSequence", [
         functionalPseudoClassesWithSelectorInputPattern,
     ]],
@@ -123,40 +123,40 @@ selectorParser.addProduction("<PseudoClassFunctionCall>", [
         "[ \\n\\r\\t]*\\)",
     ]],
 ]);
-selectorParser.addProduction("<SimpleSelector>", [
+selectorChecker.addProduction("<SimpleSelector>", [
     ["union", [
         elementNamePattern, pseudoElementPattern, pseudoClassPattern,
         attributeSelectorPattern, "<PseudoClassFunctionCall>"
     ]],
 ]);
-selectorParser.addProduction("<CompoundSelector>", [
+selectorChecker.addProduction("<CompoundSelector>", [
     ["nonemptyList", [
         "<SimpleSelector>"
     ]],
 ]);
-selectorParser.addProduction("<Combinator>", [
+selectorChecker.addProduction("<Combinator>", [
     ["sequence", [
         " ?[>,~\\+ ] ?",
     ]],
 ]);
-selectorParser.addProduction("<ComplexSelector>", [
+selectorChecker.addProduction("<ComplexSelector>", [
     ["nonemptyList", [
         "<CompoundSelector>", "<Combinator>"
     ]],
 ]);
-selectorParser.addProduction("<Selector>", [
+selectorChecker.addProduction("<Selector>", [
     ["union", [
         "\\*", "#upai_\\w+", "<ComplexSelector>",
     ]],
 ]);
 
-export function upaf_parseSelector(selector, successRequired) {
+export function upaf_checkSelector(selector, successRequired) {
     successRequired = successRequired ?? true;
-    let ret = selectorParser.lexAndParse(selector, "<Selector>");
+    let ret = selectorChecker.lexAndParse(selector, "<Selector>");
     if (!ret && successRequired) {
-        throw selectorParser.error;
+        throw selectorChecker.error;
     } else {
-        return selectorParser.success;
+        return selectorChecker.success;
     }
 }
 
@@ -167,7 +167,7 @@ export function upaf_parseSelector(selector, successRequired) {
 // be exported to the final user modules (only to other developer modules).
 export function getJQueryObj(selector) {
     // test selector.
-    upaf_parseSelector(selector);
+    upaf_checkSelector(selector);
     // return the descendents of #upaFrame that matches the selector.
     return $("#upaFrame").find(selector);
 }
@@ -439,9 +439,9 @@ export function upaf_getAttributes(selector, keyArr) {
 
 /* Some functions to add and remove HTML elements */
 
-// (I still don't wnt to worry about repeated ids, even though my Parser class
-// now has the ability in principle to record the ids it encounters during the
-// parsing.)
+// (I still don't wnt to worry about repeated ids, even though my
+// GrammarChecker class now has the ability in principle to record the ids
+// it encounters during the parsing.)
 
 
 // construct a lexer for HTML.
@@ -457,18 +457,18 @@ let htmlLexemeAndEndCharPatterns = [
 var htmlLexer = new Lexer(htmlLexemeAndEndCharPatterns, "[ \\n\\r\\t]+");
 
 
-// construct a parser for HTML.
-var = htmlParser = new Parser(htmlLexer);
+// construct a grammar checker for HTML.
+var = htmlChecker = new GrammarChecker(htmlLexer);
 // it doesn't hurt to add all the pattern from the lexer, even if I won't use
 // some of them.
-htmlParser.addLexemePatterns(htmlLexemeAndEndCharPatterns);
+htmlChecker.addLexemePatterns(htmlLexemeAndEndCharPatterns);
 
 
 
 // (Look at https://html.spec.whatwg.org/multipage/indices.html
 //     #element-content-categories
 // for what is meant by "flow content" etc.)
-htmlParser.addProduction("<FlowContent>", [
+htmlChecker.addProduction("<FlowContent>", [
     ["optList", [
         "<FlowElement>",
     ]],
@@ -476,7 +476,7 @@ htmlParser.addProduction("<FlowContent>", [
 // (Out-commented productions are left for a future implementation.)
 // (Also, the unions below are not meant to be complete; they may be expanded
 // in a future implementation.)
-htmlParser.addProduction("<FlowElement>", [
+htmlChecker.addProduction("<FlowElement>", [
     ["union", [
         "<FlowContainingFlowElement>",
         // "<HeadingGroupElement>",
@@ -491,12 +491,12 @@ htmlParser.addProduction("<FlowElement>", [
         "<PhrasingElement>",
     ]],
 ]);
-htmlParser.addProduction("<PhrasingContent>", [
+htmlChecker.addProduction("<PhrasingContent>", [
     ["optList", [
         "<PhrasingElement>",
     ]],
 ]);
-htmlParser.addProduction("<PhrasingElement>", [
+htmlChecker.addProduction("<PhrasingElement>", [
     ["union", [
         "<PhrasingContainingPhrasingElementWithOnlyGlobalAttributes>",
         // "<PictureElement>",
@@ -514,7 +514,7 @@ htmlParser.addProduction("<PhrasingElement>", [
     ]],
 ]);
 
-function getParseSettingsForRestrictedHTMLElements(
+function getProductionSettingsForRestrictedHTMLElements(
     elementNameArr, attributeDefProductionKey, contentProductionKey
 ) {
     return [
@@ -522,7 +522,7 @@ function getParseSettingsForRestrictedHTMLElements(
         // production following this one will throw on failure.
         ["initSequence", [
             ["<\\w+",
-                function(lexeme, productionScopeArray, parseScopeArray) {
+                function(lexeme, currentProdScopedArr, mainProdScopedArr) {
                     // get the "\\w+" element name from the "<\\w+" lexeme.
                     let elementName = lexeme.substring(1);
                     // let this testFun fail if elementName is not included in
@@ -532,7 +532,7 @@ function getParseSettingsForRestrictedHTMLElements(
                     }
                     // add the element name to productionScopeArray in order to
                     // test if the ending tag matches it.
-                    productionScopeArray[0] = elementName;
+                    currentProdScopedArr[0] = elementName;
                 }
             ],
         ]],
@@ -545,10 +545,10 @@ function getParseSettingsForRestrictedHTMLElements(
             contentProductionKey, // this production will also typically be a
             // optList.
             ["<\\/\\w+>",
-                function(lexeme, productionScopeArray, parseScopeArray) {
+                function(lexeme, currentProdScopedArr, mainProdScopedArr) {
                     // let this testFun return whether the element name in this
                     // end tag matches the recorded name for the beginning tag.
-                    let endTag = "</" + productionScopeArray[0] + ">";
+                    let endTag = "</" + currentProdScopedArr[0] + ">";
                     if (endTag !== lexeme) {
                         // This error message overwrites the standard one.
                         throw (
@@ -568,52 +568,52 @@ const flowContainingFlowElements = [
     "div", "main", "header", "footer", "nav", "section", "search",
     // TODO: add some more.
 ];
-htmlParser.addProduction("<FlowContainingFlowElement>",
-    getParseSettingsForRestrictedHTMLElements(
+htmlChecker.addProduction("<FlowContainingFlowElement>",
+    getProductionSettingsForRestrictedHTMLElements(
         flowContainingFlowElements, "<GlobalAttributeDefs>", "<FlowContent>"
     )
 );
 
-htmlParser.addProduction("<HeadingElement>",
-    getParseSettingsForRestrictedHTMLElements(
+htmlChecker.addProduction("<HeadingElement>",
+    getProductionSettingsForRestrictedHTMLElements(
         ["h1", "h2", "h3", "h4", "h5", "h6", ],
         "<GlobalAttributeDefs>", "<PhrasingContent>"
     )
 );
 
-htmlParser.addProduction("<UnorderedListElement>",
-    getParseSettingsForRestrictedHTMLElements(
+htmlChecker.addProduction("<UnorderedListElement>",
+    getProductionSettingsForRestrictedHTMLElements(
         ["ul"], "<GlobalAttributeDefs>", "<ListItemContent>"
     )
 );
-htmlParser.addProduction("<OrderedListElement>",
-    getParseSettingsForRestrictedHTMLElements(
+htmlChecker.addProduction("<OrderedListElement>",
+    getProductionSettingsForRestrictedHTMLElements(
         ["ol"], "<OrderedListAttributeDefs>", "<ListItemContent>"
     )
 );
 
-htmlParser.addProduction("<ListItemContent>", [
+htmlChecker.addProduction("<ListItemContent>", [
     ["optList", [
         "<ListItemElement>",
     ]],
 ]);
-htmlParser.addProduction("<ListItemElement>",
-    getParseSettingsForRestrictedHTMLElements(
+htmlChecker.addProduction("<ListItemElement>",
+    getProductionSettingsForRestrictedHTMLElements(
         ["li"], "<GlobalAttributeDefs>", "<FlowContent>"
     )
 );
 
-htmlParser.addProduction("<FormElement>",
-    getParseSettingsForRestrictedHTMLElements(
+htmlChecker.addProduction("<FormElement>",
+    getProductionSettingsForRestrictedHTMLElements(
         ["form"], "<FormAttributeDefs>", "<FlowContent>"
     )
 );
 
 
 
-htmlParser.addProduction(
+htmlChecker.addProduction(
     "<PhrasingContainingPhrasingElementWithOnlyGlobalAttributes>",
-    getParseSettingsForRestrictedHTMLElements(
+    getProductionSettingsForRestrictedHTMLElements(
         ["span", "b", "i", "em", "cite", "mark"], // TODO: Add more (perhaps).
         "<GlobalAttributeDefs>", "<PhrasingContent>"
     )
@@ -622,7 +622,7 @@ htmlParser.addProduction(
 // Button and Label...
 
 
-htmlParser.addProduction("<Text>", [
+htmlChecker.addProduction("<Text>", [
     ["sequence", [
         "[^<>\"'\\\\]+",
     ]],

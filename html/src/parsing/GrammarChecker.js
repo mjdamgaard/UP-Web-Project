@@ -1,16 +1,16 @@
 
-class Parser = {
+class GrammarChecker = {
 
 constructor(lexer) {
     this.lexer = lexer;
-    this.parseFunctions = {};
+    this.productionCheckers = {};
     this.error = "";
     this.success = undefined;
     this.nextPos = [0];
     this.storageForTests = [];
 }
 
-lexAndParse(str, productionKey) {
+lexAndCheck(str, productionKey) {
     // lex the string.
     this.lexer.lex(str);
     // test for lexing error.
@@ -19,21 +19,21 @@ lexAndParse(str, productionKey) {
         this.error = "Lexing error: " + this.lexer.error;
         return false;
     }
-    // parse the resulting lexeme array.
-    return this.parse(this.lexer.lexArr, productionKey);
+    // check the resulting lexeme array.
+    return this.check(this.lexer.lexArr, productionKey);
 }
 
-parse(lexArr, productionKey) {
+check(lexArr, productionKey) {
     // reset nextPos to [0] and reset storageForTests to [].
     this.nextPos = [0];
     this.storageForTests = [];
     // refresh this.storageForTests
-    // parse and try for error.
+    // check and try for error.
     try {
-        this.parseFunctions[productionKey](lexArr, this.nextPos, true);
+        this.productionCheckers[productionKey](lexArr, this.nextPos, true);
     } catch (error) {
         this.error = (
-            "Parsing failed at position " +
+            "Grammar check failed at lexeme position " +
             this.nextPos[0].toString() + " after\n'" +
             lexArr.slice(Math.max(0, nextPos[0] - 80), nextPos[0]).join(" ") +
             "'\n" + error
@@ -41,13 +41,14 @@ parse(lexArr, productionKey) {
         this.success = false;
         return false;
     }
-    // check if the whole lexeme array has been parsed.
+    // check if the whole lexeme array has been correctly grammar checked.
     if (this.nextPos[0] >= lexArr.length) {
         this.error = (
-            "Parsing failed at lexeme position " +
+            "Grammar check failed at lexeme position " +
             this.nextPos[0].toString() + " after\n'" +
             lexArr.slice(Math.max(0, nextPos[0] - 80), nextPos[0]).join(" ") +
-            "'\nThe lexame array was only partially parsed"
+            "'\nThe main production stopped before the end of the " +
+            "lexame array"
         );
         this.success = false;
         return false;
@@ -58,8 +59,8 @@ parse(lexArr, productionKey) {
     return true;
 }
 
-parseNext(lexArr, productionKey, successRequired) {
-    return this.parseFunctions[productionKey](
+checkNext(lexArr, productionKey, successRequired) {
+    return this.productionCheckers[productionKey](
         lexArr, this.nextPos, successRequired
     );
 }
@@ -77,13 +78,13 @@ addLexemePatterns(lexemePatternArrArr) {
     }
 }
 
-addProduction(key, parseSettings) {
-    // if parseSettings is undefined, then key is assumed to be a pattern
+addProduction(key, settings) {
+    // if settings is undefined, then key is assumed to be a pattern
     // string for a single-lexeme parsing.
-    if (typeof parseSettings === "undefined") {
+    if (typeof settings === "undefined") {
         let regex = new RegExp(key);
-        // initialize the single-lexeme parse function.
-        this.parseFunctions[key] =
+        // initialize the single-lexeme production checking function.
+        this.productionCheckers[key] =
             function(lexArr, nextPos, successRequired) {
                 let test = regex.test(lexArr[nextPos[0]]);
                 if (!test && successRequired) {
@@ -98,11 +99,11 @@ addProduction(key, parseSettings) {
                 }
             };
     }
-    // else we assume that parseSettings is an array of [parseType,
+    // else we assume that settings is an array of [checkType,
     // subproductionKeys] arrays, where subproductionKeys are
     // earlier (or later) defined function keys added with addProduction().
-    let settingsLen = parseSettings.length;
-    this.parseFunctions[key] = function(lexArr, nextPos, successRequired) {
+    let settingsLen = settings.length;
+    this.productionCheckers[key] = function(lexArr, nextPos, successRequired) {
         // record the initial position.
         initialPos = nextPos[0];
         // initialize a local variable for storing lexemes to test, which can
@@ -111,91 +112,91 @@ addProduction(key, parseSettings) {
         var lexemesToTest = [];
         // declare the boolean return value.
         var ret;
-        // go through each parse setting and do the parsing as instructed.
+        // go through each grammar setting and do the checking as instructed.
         try {
             for (let i = 0; i < settingsLen; i++) {
-                let parseType = parseSettings[i][0];
+                let checkType = settings[i][0];
                 // Normally, subproductionKeys contains key strings as elements,
                 // but they can also contain [key, testFun] pairs, where key
                 // then has to be a single-lexeme key, and where testFun is a
                 // function to then be run by a call to
                 // testFun(lexeme, lexemesToTest, this.storageForTests), where
-                // lexeme is the current lexeme parsed by key. testFun() can
+                // lexeme is the current lexeme checked by key. testFun() can
                 // either push data to the production-scope-local lexemesToTest,
-                // to the storageForTests Parser property, which is reset for
+                // to the storageForTests property, which is reset for
                 // each parsing, or to any other global variables it wants to,
                 // and/or it can also perform a test on the previous data stored
-                // in these variables. This only works of parseType is
+                // in these variables. This only works of checkType is
                 // "sequence", "optSequence" or "initSequence", otherwise
                 // subproductionKeys has to contain only keys.
-                let subproductionKeys = parseSettings[i][1];
-                switch (parseType) {
+                let subproductionKeys = settings[i][1];
+                switch (checkType) {
                     case ("optSequence"):
-                        // parse some optional words that are never required.
-                        ret = this.parseSequence(
+                        // check some optional words that are never required.
+                        ret = this.checkSequence(
                             lexArr, nextPos, lexemesToTest, subproductionKeys,
                             false
                         );
                         break;
                     case ("initSequence"):
-                        // parse some initial words after which the rest of
+                        // check some initial words after which the rest of
                         // the "sequence" in the production become mandatory.
-                        ret = this.parseSequence(
+                        ret = this.checkSequence(
                             lexArr, nextPos, lexemesToTest, subproductionKeys,
                             successRequired
                         );
                         successRequired = true;
                         break;
                     case ("sequence"):
-                        // parse some words which are required only if
+                        // check some words which are required only if
                         // successRequired is true or if "initSequence" has
                         // appeared before.
-                        ret = this.parseSequence(
+                        ret = this.checkSequence(
                             lexArr, nextPos, lexemesToTest, subproductionKeys,
                             successRequired
                         );
                         break;
                     case ("optList"):
-                        // parse an optional list with a required delimeter of
+                        // check an optional list with a required delimeter of
                         // a syntax defined by subproductionKeys[1]. If
                         // subproductionKeys[1] is undefined, then the list
                         // expects no delimeter between its elements.
-                        ret = this.parseList(
+                        ret = this.checkList(
                             lexArr, nextPos,
                             subproductionKeys[0], subproductionKeys[1]
                         );
                         break;
                     case ("nonemptyList"):
-                        // parse a non-empty list with a required delimeter of
+                        // check a non-empty list with a required delimeter of
                         // a syntax defined by subproductionKeys[1]. If
                         // subproductionKeys[1] is undefined, then the list
                         // expects no delimeter between its elements.
-                        ret = this.parseNonemptyList(
+                        ret = this.checkNonemptyList(
                             lexArr, nextPos,
                             subproductionKeys[0], subproductionKeys[1],
                             successRequired
                         );
                         break;
                     case ("union"):
-                        // parse at least one of the subproductions pointed to
+                        // check at least one of the subproductions pointed to
                         // by each of the the subproductionKeys.
-                        ret = parseUnion(
+                        ret = checkUnion(
                             lexArr, nextPos, subproductionKeys, successRequired
                         );
                         break;
                     case ("optUnion"):
-                        // parse at most one of the subproductions pointed to
+                        // check at most one of the subproductions pointed to
                         // by each of the the subproductionKeys.
-                        ret = parseUnion(
+                        ret = checkUnion(
                             lexArr, nextPos, subproductionKeys, false
                         );
                         break;
                     default:
                         // (Note that this error is only thrown in the call
-                        // to parse(), not to addProduction().)
+                        // to check(), not to addProduction().)
                         throw (
-                            'addProduction(): Unknown parseType: "' +
-                            parseType + '" in input'
+                            'addProduction(): Unknown checkType: "' +
+                            checkType + '" in input'
                         );
                 }
             }
@@ -213,7 +214,7 @@ addProduction(key, parseSettings) {
     }
 }
 
-parseSequence(
+checkSequence(
     lexArr, nextPos, lexemesToTest, subproductionKeys, successRequired
 ) {
     // initialize bolean return value as true.
@@ -240,9 +241,9 @@ parseSequence(
                 return false;
             }
         }
-        // (Note that all parseFunctions reset nextPos on failure (excpet when
-        // an error is thrown).)
-        ret = this.parseFunctions[key](lexArr, nextPos, successRequired);
+        // (Note that all productionCheckers reset nextPos on failure (excpet
+        // when an error is thrown).)
+        ret = this.productionCheckers[key](lexArr, nextPos, successRequired);
         if (!ret) {
             break;
         }
@@ -257,7 +258,7 @@ parseSequence(
     return ret;
 }
 
-parseUnion(lexArr, nextPos, subproductionKeys, successRequired) {
+checkUnion(lexArr, nextPos, subproductionKeys, successRequired) {
     // initialize bolean return value as false.
     var ret = false;
     // loop through the subproductionKeys and call the corresponding parsing
@@ -265,8 +266,8 @@ parseUnion(lexArr, nextPos, subproductionKeys, successRequired) {
     let subKeysLen = subproductionKeys.length;
     for (let i = 0; i < subKeysLen; i++) {
         let key = subproductionKeys[i];
-        // (Note that all parseFunctions reset nextPos on failure.)
-        ret = this.parseFunctions[key](lexArr, nextPos, successRequired);
+        // (Note that all productionCheckers reset nextPos on failure.)
+        ret = this.productionCheckers[key](lexArr, nextPos, successRequired);
         if (ret) {
             break;
         }
@@ -281,13 +282,17 @@ parseUnion(lexArr, nextPos, subproductionKeys, successRequired) {
     return ret;
 }
 
-parseList(lexArr, nextPos, elementProductionKey, delimeterProductionKey) {
+checkList(lexArr, nextPos, elementProductionKey, delimeterProductionKey) {
     let delimeterIsProvided = (typeof delimeterProductionKey !== "undefined");
-    // (Note that all parseFunctions reset nextPos on failure.)
-    while (this.parseFunctions[elementProductionKey](lexArr, nextPos, false)) {
+    // (Note that all productionCheckers reset nextPos on failure.)
+    while (
+        this.productionCheckers[elementProductionKey](lexArr, nextPos, false)
+    ) {
         if (
             delimeterIsProvided &&
-            !this.parseFunctions[delimeterProductionKey](lexArr, nextPos, false)
+            !this.productionCheckers[delimeterProductionKey](
+                lexArr, nextPos, false
+            )
         ) {
             break;
         }
@@ -298,14 +303,14 @@ parseList(lexArr, nextPos, elementProductionKey, delimeterProductionKey) {
     // by adding an "optWord" parsing after this "optList" parsing.
 }
 
-parseNonemptyList(
+checkNonemptyList(
     lexArr, nextPos, elementProductionKey, delimeterProductionKey,
     successRequired
 ) {
     // first record the initial position.
     let initialPos = nextPos[];
     // try parsing a list.
-    parseList(lexArr, nextPos, elementProductionKey, delimeterProductionKey);
+    checkList(lexArr, nextPos, elementProductionKey, delimeterProductionKey);
     // return false or fail if nextPos[0] is still equal to the initialPos.
     if (nextPos[0] === currentPos) {
         if (successRequired) {
@@ -313,7 +318,7 @@ parseNonemptyList(
                 "Expected non-empty list of productions " + elementProductionKey
             );
         } else {
-            // (Note that all parseFunctions reset nextPos on failure.)
+            // (Note that all productionCheckers reset nextPos on failure.)
             return false;
         }
     }
