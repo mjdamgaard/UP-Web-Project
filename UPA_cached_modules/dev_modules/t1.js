@@ -125,8 +125,11 @@ selectorChecker.addProduction("<PseudoClassFunctionCall>", [
 ]);
 selectorChecker.addProduction("<SimpleSelector>", [
     ["union", [
-        elementNamePattern, pseudoElementPattern, pseudoClassPattern,
-        attributeSelectorPattern, "<PseudoClassFunctionCall>"
+        elementNamePattern,
+        pseudoElementPattern,
+        pseudoClassPattern,
+        attributeSelectorPattern,
+        "<PseudoClassFunctionCall>"
     ]],
 ]);
 selectorChecker.addProduction("<CompoundSelector>", [
@@ -146,7 +149,9 @@ selectorChecker.addProduction("<ComplexSelector>", [
 ]);
 selectorChecker.addProduction("<Selector>", [
     ["union", [
-        "\\*", "#upai_\\w+", "<ComplexSelector>",
+        "\\*",
+        "#upai_\\w+",
+        "<ComplexSelector>",
     ]],
 ]);
 
@@ -170,14 +175,13 @@ export function upaf_checkSelectorAndGetErrorAndLexArr(selector) {
 
 
 
-// Note that since this function does not have the upaf_ prefix, it cannot
-// be exported to the final user modules (only to other developer modules).
-export function getJQueryObj(selector) {
-    // test selector.
-    upaf_checkSelector(selector);
-    // return the descendents of #upaFrame that matches the selector.
-    return $("#upaFrame").find(selector);
-}
+
+/* CSS syntax checking */
+
+var cssDeclarationsLexer = new Lexer();
+// TODO: Add CSS declaration list lexing rules.
+var cssDeclarationsChecker = new SyntaxChecker();
+// TODO: ...
 
 
 
@@ -287,6 +291,16 @@ const attrValRegEx =  /^\w+$/;
 
 
 
+
+
+// Note that since this function does not have the upaf_ prefix, it cannot
+// be exported to the final user modules (only to other developer modules).
+export function getJQueryObj(selector) {
+    // test selector.
+    upaf_checkSelector(selector);
+    // return the descendents of #upaFrame that matches the selector.
+    return $("#upaFrame").find(selector);
+}
 
 
 
@@ -614,11 +628,7 @@ htmlChecker.addProduction("<AttributeDefinition>", [
 ]);
 
 
-var cssDeclarationsLexer = new Lexer();
-// TODO: Add CSS declaration list lexing rules.
-var cssDeclarationsChecker = new SyntaxChecker();
-// TODO: Add productions to this syntax checker, but consider doing it after
-// the definition of isLegalTagNameAttrNameAttrValTriplet() below.
+/* A function to validate tagName--attrName--attrVal triplets */
 
 const legalAttrNameAttrValPairStruct = {
     "id": {
@@ -626,10 +636,9 @@ const legalAttrNameAttrValPairStruct = {
             /^upai_\w+$/,
     },
     "style": {
-        "All":
-            function(str) {
-                cssDeclarationsChecker.lexAndCheck(str);
-            },
+        "All": function(attrVal) {
+            cssDeclarationsChecker.lexAndCheck(attrVal);
+        },
     },
     "type": {
         "input": [
@@ -686,6 +695,7 @@ export function isLegalTagNameAttrNameAttrValTriplet(
     );
 }
 // TODO: Add some more attributes, such as 'pattern', 'placeholder' and 'list'..
+
 
 
 
