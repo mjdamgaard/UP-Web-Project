@@ -479,6 +479,8 @@ htmlParser.addProduction("<FlowContent>", [
 htmlParser.addProduction("<FlowElement>", [
     ["union", [
         "<FlowContainingFlowElement>",
+        // "<HeadingGroupElement>",
+        "<HeadingElement>",
         "<UnorderedListElement>",
         "<OrderedListElement>",
         // "<MenuElement>",
@@ -496,11 +498,16 @@ htmlParser.addProduction("<PhrasingContent>", [
 ]);
 htmlParser.addProduction("<PhrasingElement>", [
     ["union", [
-        "<PhrasingContainingPhrasingElement>",
+        "<PhrasingContainingPhrasingElementWithOnlyGlobalAttributes>",
         // "<PictureElement>",
         // "<VideoElement>",
         // "<AudioElement>",
-        "<EmptyPhrasingElement>",
+        "<ButtonElement>",
+        "<LabelElement>",
+        "<TextAreaElement>",
+        "<ImageElement>",
+        "<InputElement>",
+        "<BreakElement>",
         "<Text>",
         // "<MathMLCore>",
         // "<SVG>",
@@ -541,7 +548,16 @@ function getParseSettingsForRestrictedHTMLElements(
                 function(lexeme, productionScopeArray, parseScopeArray) {
                     // let this testFun return whether the element name in this
                     // end tag matches the recorded name for the beginning tag.
-                    return ("</" + productionScopeArray[0] + ">" === lexeme);
+                    let endTag = "</" + productionScopeArray[0] + ">";
+                    if (endTag !== lexeme) {
+                        // This error message overwrites the standard one.
+                        throw (
+                            "Expected either " + contentProductionKey +
+                            " or '" + endTag + "' but got " + lexeme
+                        );
+                    }
+                    // if (endTag === lexeme), return true.
+                    return true;
                 }
             ],
         ]],
@@ -555,6 +571,13 @@ const flowContainingFlowElements = [
 htmlParser.addProduction("<FlowContainingFlowElement>",
     getParseSettingsForRestrictedHTMLElements(
         flowContainingFlowElements, "<GlobalAttributeDefs>", "<FlowContent>"
+    )
+);
+
+htmlParser.addProduction("<HeadingElement>",
+    getParseSettingsForRestrictedHTMLElements(
+        ["h1", "h2", "h3", "h4", "h5", "h6", ],
+        "<GlobalAttributeDefs>", "<PhrasingContent>"
     )
 );
 
@@ -588,28 +611,16 @@ htmlParser.addProduction("<FormElement>",
 
 
 
-htmlParser.addProduction("<PhrasingContainingPhrasingElement>", [
-    ["union", [
-        "<PhrasingElementWithOnlyGlobalAttributes>",
-        "<Button>",
-        "<Label>",
-    ]],
-)
-]);
-htmlParser.addProduction("<PhrasingElementWithOnlyGlobalAttributes>",
+htmlParser.addProduction(
+    "<PhrasingContainingPhrasingElementWithOnlyGlobalAttributes>",
     getParseSettingsForRestrictedHTMLElements(
         ["span", "b", "i", "em", "cite", "mark"], // TODO: Add more (perhaps).
-        "<GlobalAttributeDefs>", "<FlowContent>"
+        "<GlobalAttributeDefs>", "<PhrasingContent>"
     )
 );
 
 // Button and Label...
 
-htmlParser.addProduction("<EmptyPhrasingElement>", [
-    ["optList", [
-        "<FlowContentElement>",
-    ]],
-]);
 
 htmlParser.addProduction("<Text>", [
     ["sequence", [

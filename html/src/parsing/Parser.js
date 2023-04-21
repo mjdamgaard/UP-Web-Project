@@ -32,19 +32,23 @@ parse(lexArr, productionKey) {
     try {
         this.parseFunctions[productionKey](lexArr, this.nextPos, true);
     } catch (error) {
-        this.error = "Parsing failed at position " +
+        this.error = (
+            "Parsing failed at position " +
             this.nextPos[0].toString() + " after\n'" +
-            lexArr.slice(Math.max(0, nextPos[0] - 20), nextPos[0]).join(" ") +
-            "'\n" + error;
+            lexArr.slice(Math.max(0, nextPos[0] - 80), nextPos[0]).join(" ") +
+            "'\n" + error
+        );
         this.success = false;
         return false;
     }
     // check if the whole lexeme array has been parsed.
     if (this.nextPos[0] >= lexArr.length) {
-        this.error = "Parsing failed at position " +
+        this.error = (
+            "Parsing failed at lexeme position " +
             this.nextPos[0].toString() + " after\n'" +
-            lexArr.slice(Math.max(0, nextPos[0] - 20), nextPos[0]).join(" ") +
-            "'\nThe lexame array was only partially parsed";
+            lexArr.slice(Math.max(0, nextPos[0] - 80), nextPos[0]).join(" ") +
+            "'\nThe lexame array was only partially parsed"
+        );
         this.success = false;
         return false;
     }
@@ -196,7 +200,7 @@ addProduction(key, parseSettings) {
                 }
             }
         } catch (error) {
-            error += " in " + key + " at position " + initialPos.toString();
+            error += " in " + key; // + " at position " + initialPos.toString();
             throw error;
         }
         // if no error was thrown, test ret to see if nextPos has to be reset.
@@ -226,8 +230,6 @@ parseSequence(
             key = subproductionKeys[i][0];
             let testFun = subproductionKeys[i][1];
             let lexeme = lexArr[nextPos[0]];
-            // TODO: insert a try--catch statement to also handle and pass on
-            // errors thrown in testFun.
             let testRes = testFun(lexeme, lexemesToTest, this.storageForTests);
             if (successRequired && !testRes) {
                 throw (

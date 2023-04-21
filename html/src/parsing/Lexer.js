@@ -77,8 +77,8 @@ lex(str) {
         this.success = false;
         this.error = "Invalid lexeme at position " +
             this.nextPos.toString() +
-            " after: " +
-            ("^" + str).substring(Math.max(0, nextPos - 160), nextPos + 1);
+            " after\n" +
+            ("^" + str).substring(Math.max(0, nextPos - 320), nextPos + 1);
         this.lexArr = lexArr;
         return false;
     }
