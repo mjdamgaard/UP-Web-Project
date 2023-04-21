@@ -97,8 +97,8 @@ let selectorLexemeAndEndCharPatterns = [
 ];
 selectorLexer.addLexemeAndEndCharPatternPairs(selectorLexemeAndEndCharPatterns);
 
-// construct a grammar checker for selectors.
-var = selectorChecker = new GrammarChecker(selectorLexer);
+// construct a syntax checker for selectors.
+var = selectorChecker = new SyntaxChecker(selectorLexer);
 selectorChecker.addLexemePatterns([
     [" ?[>,~\\+ ] ?"],
     [elementNamePattern],
@@ -447,7 +447,7 @@ export function upaf_getAttributes(selector, keyArr) {
 /* Some functions to add and remove HTML elements */
 
 // (I still don't wnt to worry about repeated ids, even though my
-// GrammarChecker class now has the ability in principle to record the ids
+// SyntaxChecker class now has the ability in principle to record the ids
 // it encounters during the parsing.)
 
 
@@ -464,8 +464,8 @@ let htmlLexemeAndEndCharPatterns = [
 var htmlLexer = new Lexer(htmlLexemeAndEndCharPatterns, "[ \\n\\r\\t]+");
 
 
-// construct a grammar checker for HTML.
-var = htmlChecker = new GrammarChecker(htmlLexer);
+// construct a syntax checker for HTML.
+var = htmlChecker = new SyntaxChecker(htmlLexer);
 // it doesn't hurt to add all the pattern from the lexer, even if I won't use
 // some of them.
 htmlChecker.addLexemePatterns(htmlLexemeAndEndCharPatterns);

@@ -1,5 +1,5 @@
 
-class GrammarChecker = {
+class SyntaxChecker = {
 
 constructor(lexer) {
     this.lexer = lexer;
@@ -33,7 +33,7 @@ check(lexArr, productionKey) {
         this.productionCheckers[productionKey](lexArr, this.nextPos, true);
     } catch (error) {
         this.error = (
-            "Grammar check failed at lexeme position " +
+            "Syntax check failed at lexeme position " +
             this.nextPos[0].toString() + " after\n'" +
             lexArr.slice(Math.max(0, nextPos[0] - 80), nextPos[0]).join(" ") +
             "'\n" + error
@@ -41,10 +41,10 @@ check(lexArr, productionKey) {
         this.success = false;
         return false;
     }
-    // check if the whole lexeme array has been correctly grammar checked.
+    // check if the whole lexeme array has been correctly syntax checked.
     if (this.nextPos[0] >= lexArr.length) {
         this.error = (
-            "Grammar check failed at lexeme position " +
+            "Syntax check failed at lexeme position " +
             this.nextPos[0].toString() + " after\n'" +
             lexArr.slice(Math.max(0, nextPos[0] - 80), nextPos[0]).join(" ") +
             "'\nThe main production stopped before the end of the " +
@@ -80,7 +80,7 @@ addLexemePatterns(lexemePatternArrArr) {
 
 addProduction(key, settings) {
     // if settings is undefined, then key is assumed to be a pattern
-    // string for a single-lexeme parsing.
+    // string for a single-lexeme check.
     if (typeof settings === "undefined") {
         let regex = new RegExp(key);
         // initialize the single-lexeme production checking function.
@@ -112,7 +112,7 @@ addProduction(key, settings) {
         var lexemesToTest = [];
         // declare the boolean return value.
         var ret;
-        // go through each grammar setting and do the checking as instructed.
+        // go through each syntax setting and do the checking as instructed.
         try {
             for (let i = 0; i < settingsLen; i++) {
                 let checkType = settings[i][0];
@@ -124,7 +124,7 @@ addProduction(key, settings) {
                 // lexeme is the current lexeme checked by key. testFun() can
                 // either push data to the production-scope-local lexemesToTest,
                 // to the storageForTests property, which is reset for
-                // each parsing, or to any other global variables it wants to,
+                // each check, or to any other global variables it wants to,
                 // and/or it can also perform a test on the previous data stored
                 // in these variables. This only works of checkType is
                 // "sequence", "optSequence" or "initSequence", otherwise
@@ -208,7 +208,7 @@ addProduction(key, settings) {
         if (!ret) {
             nextPos[0] = initialPos;
         }
-        // return the boolean ret, which denotes if the parsing succeeded or
+        // return the boolean ret, which denotes if the check succeeded or
         // not.
         return ret;
     }
@@ -219,14 +219,14 @@ checkSequence(
 ) {
     // initialize bolean return value as true.
     var ret = true;
-    // loop through the subproductionKeys and call the corresponding parsing
+    // loop through the subproductionKeys and call the corresponding check
     // function.
     let subKeysLen = subproductionKeys.length;
     var i;
     for (i = 0; i < subKeysLen; i++) {
         var key = subproductionKeys[i];
         // if subproductionKeys[i] is of [lexemeKey, testFun] rather than key,
-        // run a test on the lexeme before continuing with the regular parsing.
+        // run a test on the lexeme before continuing with the regular check.
         if (typeof key !== "string") {
             key = subproductionKeys[i][0];
             let testFun = subproductionKeys[i][1];
@@ -248,20 +248,20 @@ checkSequence(
             break;
         }
     }
-    // throw an error if parsing failed and successRequired == true;
+    // throw an error if check failed and successRequired == true;
     if (successRequired && !ret) {
         throw (
             'Expected word of production ' + subproductionKeys[i]
         );
     }
-    // return the conjunction of all the individual results of those parsings.
+    // return the conjunction of all the individual results of those checks.
     return ret;
 }
 
 checkUnion(lexArr, nextPos, subproductionKeys, successRequired) {
     // initialize bolean return value as false.
     var ret = false;
-    // loop through the subproductionKeys and call the corresponding parsing
+    // loop through the subproductionKeys and call the corresponding check
     // function.
     let subKeysLen = subproductionKeys.length;
     for (let i = 0; i < subKeysLen; i++) {
@@ -272,13 +272,13 @@ checkUnion(lexArr, nextPos, subproductionKeys, successRequired) {
             break;
         }
     }
-    // throw an error if parsing failed and successRequired == true;
+    // throw an error if check failed and successRequired == true;
     if (successRequired && !ret) {
         throw (
             'Expected word of production (' + subproductionKeys.join("|") + ")"
         );
     }
-    // return true if one of the parsings succeeded, or return false otherwise.
+    // return true if one of the checks succeeded, or return false otherwise.
     return ret;
 }
 
@@ -297,10 +297,10 @@ checkList(lexArr, nextPos, elementProductionKey, delimeterProductionKey) {
             break;
         }
     }
-    // always return true unless an error was thrown in a nested parsing.
+    // always return true unless an error was thrown in a nested check.
     return true;
     // NOTE: If a trailing delimeter is allowed, this should be implemented
-    // by adding an "optWord" parsing after this "optList" parsing.
+    // by adding an "optWord" check after this "optList" check.
 }
 
 checkNonemptyList(
@@ -309,7 +309,7 @@ checkNonemptyList(
 ) {
     // first record the initial position.
     let initialPos = nextPos[];
-    // try parsing a list.
+    // try checking a list.
     checkList(lexArr, nextPos, elementProductionKey, delimeterProductionKey);
     // return false or fail if nextPos[0] is still equal to the initialPos.
     if (nextPos[0] === currentPos) {
@@ -325,7 +325,7 @@ checkNonemptyList(
     // else return true.
     return true;
     // NOTE: If a trailing delimeter is allowed, this should be implemented
-    // by adding an "optWord" parsing after this "nonemptylist" parsing.
+    // by adding an "optWord" check after this "nonemptylist" check.
 }
 
 // end of class.
