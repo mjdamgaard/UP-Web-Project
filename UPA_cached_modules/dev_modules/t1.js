@@ -292,40 +292,6 @@ const attrValRegEx =  /^\w+$/;
 
 
 
-export const legalInputTypes = [
-    "button", "checkbox", "color", "date", "file", "hidden", "image",
-    "month", "number", "radio", "range", "reset", "search", "submit",
-    "tel", "text", "time", "url", "week",
-];
-
-export const legalFormActionRegEx =
-    /^javascript:((void\(0\))|(upaf_[\$\w]+\(\w*\)))$/;
-
-// TODO: Find out where to place this function.
-export function upaf_isLegalKeyValAttrPair(tagName, key, val) {
-    switch (key) {
-        case "type":
-            switch (tagName) {
-                case "input":
-                    return legalInputTypes.includes(val);
-                default:
-                    return false;
-            }
-            break;
-        case "action":
-            switch (tagName) {
-                case "form":
-                    return legalFormActionRegEx.test(val);
-                default:
-                    return false;
-            }
-            break;
-        default:
-            return false;
-    }
-}
-// TODO: Add some more attributes, such as 'pattern', 'placeholder' and 'list'..
-
 
 
 
@@ -631,6 +597,52 @@ htmlChecker.addProduction("<AttributeDefinition>", [
         ],
     ]],
 ]);
+
+
+
+
+export const legalInputTypes = [
+    "button", "checkbox", "color", "date", "file", "hidden", "image",
+    "month", "number", "radio", "range", "reset", "search", "submit",
+    "tel", "text", "time", "url", "week",
+];
+
+export const legalFormActionRegEx =
+    /^javascript:((void\(0\))|(upaf_[\$\w]+\(\w*\)))$/;
+
+
+export function upaf_isLegalTagNameAttrNameAttrValTriplet(
+    tagName, attrName, attrVal
+) {
+    switch (key) {
+        case "type":
+            switch (tagName) {
+                case "input":
+                    return legalInputTypes.includes(val);
+                default:
+                    return false;
+            }
+            break;
+        case "action":
+            switch (tagName) {
+                case "form":
+                    return legalFormActionRegEx.test(val);
+                default:
+                    return false;
+            }
+            break;
+        default:
+            return false;
+    }
+}
+// TODO: Add some more attributes, such as 'pattern', 'placeholder' and 'list'..
+
+
+
+
+
+
+
 
 // export const flowContentElements = [
 //     "a", "abbr", "address", "article", "aside", "audio", "b", "bdi", "bdo",
