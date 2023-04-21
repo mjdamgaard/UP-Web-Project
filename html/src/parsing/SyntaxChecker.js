@@ -82,7 +82,7 @@ addProduction(key, settings) {
     // if settings is undefined, then key is assumed to be a pattern
     // string for a single-lexeme check.
     if (typeof settings === "undefined") {
-        let regex = new RegExp(key);
+        let regex = new RegExp( "^" + key + "$");
         // initialize the single-lexeme production checking function.
         this.productionCheckers[key] =
             function(lexArr, nextPos, successRequired) {

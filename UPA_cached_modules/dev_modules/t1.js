@@ -422,10 +422,10 @@ let htmlLexemeAndEndCharPatterns = [
     ["<\\w+", "\\W"], [">"], // beginning tag.
     ["<\\/\\w+>"], // end tag.
     ["="], ["\\("], ["\\)"],
-    ['"[\\n\\r\\t -\\[\\]\\^a-~]*"'], // strings of printable, non-backslash
+    ['"[ -\\[\\]\\^a-~]*"'], // strings of printable, non-backslash
     // ASCII characters.
     ["\\w+", "\\W"], // attribute names.
-    ["[^<>\"'\\\\]+", "[<>\"'\\\\]"], // text.
+    ["[^<>]+", "[<>]"], // text.
 ];
 var htmlLexer = new Lexer(htmlLexemeAndEndCharPatterns, "[ \\n\\r\\t]+");
 
@@ -559,9 +559,10 @@ htmlChecker.addProduction("<EmptyTagElement>", [
     ]],
 ]);
 
+htmlChecker.addProduction("(([^<>&]+)|(&#[0-9]+;)|(&\\w+;))+");
 htmlChecker.addProduction("<Text>", [
     ["sequence", [
-        "[^<>\"'\\\\]+",
+        "(([^<>&]+)|(&#[0-9]+;)|(&\\w+;))+",
     ]],
 ]);
 
@@ -584,7 +585,7 @@ htmlChecker.addProduction("<AttributeDefinition>", [
     ]],
     ["sequence", [
         "=",
-        ['"[\\n\\r\\t -\\[\\]\\^a-~]*"',
+        ['"[ -\\[\\]\\^a-~]*"',
             function(lexeme, currentProdScopedArr, mainProdScopedArr) {
                 // read the tag name from mainProdScopedArr, read the attribute
                 // name from currentProdScopedArr[0], and read the attribute
@@ -592,7 +593,21 @@ htmlChecker.addProduction("<AttributeDefinition>", [
                 let tagName = mainProdScopedArr[mainProdScopedArr.length - 1];
                 let attrName = currentProdScopedArr[0];
                 let attrVal = lexeme.substring(1, lexeme.length - 1);
-                // then validate this triplet be a call to ... // TODO..
+                // then validate this triplet be a call to
+                // isLegalTagNameAttrNameAttrValTriplet().
+                let res = isLegalTagNameAttrNameAttrValTriplet(
+                    tagName, attrName, attrVal
+                );
+                // throw error if the triplet is illegal.
+                if (!res) {
+                    throw (
+                        "Illegal combination of tag name, attribute name " +
+                        "and attribute value: " +
+                        "(" + tagName + ", " + attrName + ", " + attrVal + ")"
+                    );
+                }
+                // else return true.
+                return true;
             }
         ],
     ]],
@@ -601,39 +616,41 @@ htmlChecker.addProduction("<AttributeDefinition>", [
 
 
 
-export const legalInputTypes = [
-    "button", "checkbox", "color", "date", "file", "hidden", "image",
-    "month", "number", "radio", "range", "reset", "search", "submit",
-    "tel", "text", "time", "url", "week",
-];
+const legalAttrNameAttrValPairStruct = {
+    "type": {
+        "input": [
+            "button", "checkbox", "color", "date", "file", "hidden", "image",
+            "month", "number", "radio", "range", "reset", "search", "submit",
+            "tel", "text", "time", "url", "week",
+        ],
+    },
+    "action": {
+        "form":
+            /^javascript:((void\(0\))|(upaf_[\$\w]+\(\w*\)))$/,
+    },
+};
 
-export const legalFormActionRegEx =
-    /^javascript:((void\(0\))|(upaf_[\$\w]+\(\w*\)))$/;
-
-
-export function upaf_isLegalTagNameAttrNameAttrValTriplet(
+export function isLegalTagNameAttrNameAttrValTriplet(
     tagName, attrName, attrVal
 ) {
-    switch (key) {
-        case "type":
-            switch (tagName) {
-                case "input":
-                    return legalInputTypes.includes(val);
-                default:
-                    return false;
-            }
-            break;
-        case "action":
-            switch (tagName) {
-                case "form":
-                    return legalFormActionRegEx.test(val);
-                default:
-                    return false;
-            }
-            break;
-        default:
-            return false;
+    let attrValValidationData =
+        legalAttrNameAttrValPairStruct[attrName][tagName] ?? false;
+    if (!attrValValidationData) {
+        return false;
     }
+    if (attrValValidationData instanceof Array) {
+        return attrValValidationData.includes(attrVal);
+    }
+    if (attrValValidationData instanceof RegExp) {
+        return attrValValidationData.test(attrVal);
+    }
+    if (attrValValidationData instanceof Function) {
+        return attrValValidationData(attrVal);
+    }
+    throw (
+        "isLegalTagNameAttrNameAttrValTriplet(): " +
+        "attrValValidationData not a instance of a right class"
+    );
 }
 // TODO: Add some more attributes, such as 'pattern', 'placeholder' and 'list'..
 

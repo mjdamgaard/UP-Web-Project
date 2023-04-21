@@ -41,7 +41,7 @@ lex(str) {
     this.nextPos = 0;
     // initialize the loop lengths.
     let strLen = str.length;
-    let lexArrLen = lexPatternEndPairArr.length;
+    let lexPatternEndPairArrLen = lexPatternEndPairArr.length;
     // lex and obtain the return lexeme array in the following loop.
     outerLoop: while (this.nextPos < strLen) {
         // first match an optional string of whitespace, increase nextPos
@@ -58,7 +58,7 @@ lex(str) {
         }
         // then loop through all pairs in lexPatternEndPairArr, expecting to
         // find at least one match to add to lexArr.
-        innerLoop: for (let i = 0; i < lexArrLen; i++) {
+        innerLoop: for (let i = 0; i < lexPatternEndPairArrLen; i++) {
             let lexemePattern = lexPatternEndPairArr[i][0];
             let endCharPattern = lexPatternEndPairArr[i][1];
             // get the length of the potential match.
@@ -75,10 +75,12 @@ lex(str) {
         // if the program reaches here, no match was found, which means
         // that we should set an error message and return false.
         this.success = false;
-        this.error = "Invalid lexeme at position " +
+        this.error = (
+            "Invalid lexeme at position " +
             this.nextPos.toString() +
             " after\n" +
-            ("^" + str).substring(Math.max(0, nextPos - 320), nextPos + 1);
+            ("^" + str).substring(Math.max(0, nextPos - 320), nextPos + 1)
+        );
         this.lexArr = lexArr;
         return false;
     }
