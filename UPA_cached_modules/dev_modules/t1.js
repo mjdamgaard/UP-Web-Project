@@ -631,6 +631,9 @@ const legalAttrNameAttrValPairStruct = {
             // cssChecker or not (which depends on whether a copy of
             // cssChecker.lexAndCheck is made here)..
             cssChecker.lexAndCheck,
+            // ..Ah, but I can always just replace it with function(str) {
+            // cssChecker.lexAndCheck(str); } in that case.
+        }
     },
     "type": {
         "input": [
@@ -667,8 +670,6 @@ export function isLegalTagNameAttrNameAttrValTriplet(
         legalAttrNameAttrValPairStruct[attrName][tagName] ??
         false;
     if (!attrValValidationData) {
-        // If we ever want to include a check that does not use the
-        // legalAttrNameAttrValPairStruct above, we can include it here.
         return false;
     }
     if (attrValValidationData instanceof Array) {
