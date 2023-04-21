@@ -544,6 +544,10 @@ function getProductionSettingsForRestrictedHTMLElements(
             ],
         ]],
         ["sequence", [
+            //TODO: Change this to a attrName, "=", attrVal parsing, record
+            // the attrName in currentProdScopedArr[1] each time, and call an
+            // input testFun for attrVal testing, given tagName and attrName
+            // stored in currentProdScopedArr ([0] and [1]).
             attributeDefProductionKey, // This can be a optList production in
             // most cases where attribute definitions are optional. This means
             // that the parsing will not fail if the list is empty, and
