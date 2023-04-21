@@ -224,6 +224,8 @@ checkSequence(
     let subKeysLen = subproductionKeys.length;
     var i;
     for (i = 0; i < subKeysLen; i++) {
+        // TODO: Refactor a bit and consider testing the RegEx before the
+        // test function in cases where subproductionKeys[i] !== "string".
         var key = subproductionKeys[i];
         // if subproductionKeys[i] is of [lexemeKey, testFun] rather than key,
         // run a test on the lexeme before continuing with the regular check.

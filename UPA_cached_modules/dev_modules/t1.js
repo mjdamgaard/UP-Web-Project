@@ -588,6 +588,12 @@ htmlChecker.addProduction("<AttributeDefinitionList>", [
     ]],
 ]);
 htmlChecker.addProduction("<AttributeDefinition>", [
+    ["union", [
+        "<RegularAttributeDefinition>"
+        "<BooleanAttributeDefinition>"
+    ]],
+]);
+htmlChecker.addProduction("<RegularAttributeDefinition>", [
     ["initSequence", [
         ["\\w+",
             function(lexeme, currentProdScopedArr, mainProdScopedArr) {
@@ -596,9 +602,9 @@ htmlChecker.addProduction("<AttributeDefinition>", [
                 currentProdScopedArr[0] = lexeme;
             }
         ],
+        "=",
     ]],
     ["sequence", [
-        "=",
         ['"[ -\\[\\]\\^a-~]*"',
             function(lexeme, currentProdScopedArr, mainProdScopedArr) {
                 // read the tag name from mainProdScopedArr, read the attribute
@@ -627,6 +633,33 @@ htmlChecker.addProduction("<AttributeDefinition>", [
     ]],
 ]);
 
+htmlChecker.addProduction("<BooleanAttributeDefinition>", [
+    ["sequence", [
+        ["\\w+",
+            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
+                // read the tag name from mainProdScopedArr and read the
+                // attribute name from lexeme.
+                let tagName = mainProdScopedArr[mainProdScopedArr.length - 1];
+                let attrName = lexeme;
+                // then validate this pair be a call to
+                // isLegalTagNameAttrNameAttrValTriplet().
+                let res = isLegalTagNameAttrNameAttrValTriplet(
+                    tagName, attrName, null
+                );
+                // throw error if the pair is illegal.
+                if (!res) {
+                    throw (
+                        "Illegal combination of tag name and attribute name: " +
+                        "(" + tagName + ", " + attrName + ")"
+                    );
+                }
+                // else return true.
+                return true;
+            }
+        ],
+    ]],
+]);
+
 
 /* A function to validate tagName--attrName--attrVal triplets */
 
@@ -639,6 +672,10 @@ const legalAttrNameAttrValPairStruct = {
         "All": function(attrVal) {
             cssDeclarationsChecker.lexAndCheck(attrVal);
         },
+    },
+    "hidden": {
+        "All":
+            true,
     },
     "type": {
         "input": [
@@ -674,8 +711,11 @@ export function isLegalTagNameAttrNameAttrValTriplet(
         legalAttrNameAttrValPairStruct[attrName]["All"] ??
         legalAttrNameAttrValPairStruct[attrName][tagName] ??
         false;
-    if (!attrValValidationData) {
+    if (attrValValidationData === false) {
         return false;
+    }
+    if (attrValValidationData === true) {
+        return true;
     }
     if (attrValValidationData instanceof Array) {
         return attrValValidationData.includes(attrVal);
@@ -685,9 +725,6 @@ export function isLegalTagNameAttrNameAttrValTriplet(
     }
     if (attrValValidationData instanceof Function) {
         return attrValValidationData(attrVal);
-    }
-    if (attrValValidationData === true) {
-        return true;
     }
     throw (
         "isLegalTagNameAttrNameAttrValTriplet(): " +
