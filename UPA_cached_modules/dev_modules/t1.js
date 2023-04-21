@@ -422,8 +422,8 @@ let htmlLexemeAndEndCharPatterns = [
     ["<\\w+", "\\W"], [">"], // beginning tag.
     ["<\\/\\w+>"], // end tag.
     ["="], ["\\("], ["\\)"],
-    ['"[ -\\[\\]\\^a-~]*"'], // strings of printable, non-backslash
-    // ASCII characters.
+    ['"[ -\\[\\]\\^a-~]*"'], // strings of printable, non-backslash, non-
+    // whitespace --- except space --- ASCII characters.
     ["\\w+", "\\W"], // attribute names.
     ["[^<>]+", "[<>]"], // text.
 ];
@@ -614,9 +614,24 @@ htmlChecker.addProduction("<AttributeDefinition>", [
 ]);
 
 
-
+var cssLexer = new Lexer();
+// TODO: Add CSS lexing rules.
+var cssChecker = new SyntaxChecker();
+// TODO: Add productions to this syntax checker, but consider doing it after
+// the definition of isLegalTagNameAttrNameAttrValTriplet() below.
 
 const legalAttrNameAttrValPairStruct = {
+    "id": {
+        "All":
+            /^upai_\w+$/,
+    },
+    "style": {
+        "All":
+            // TODO: See if this works before adding the productions to
+            // cssChecker or not (which depends on whether a copy of
+            // cssChecker.lexAndCheck is made here)..
+            cssChecker.lexAndCheck,
+    },
     "type": {
         "input": [
             "button", "checkbox", "color", "date", "file", "hidden", "image",
@@ -628,14 +643,32 @@ const legalAttrNameAttrValPairStruct = {
         "form":
             /^javascript:((void\(0\))|(upaf_[\$\w]+\(\w*\)))$/,
     },
+    "alt": {
+        "area":
+            // (Note that attrVal already matches /[ -\[\]\^a-~]*/ here.)
+            /^[^<>]$/,
+        "img":
+            /^[^<>]$/,
+        "input":
+            /^[^<>]$/,
+    },
+    "for": {
+        "label":
+            /^upai_\w+$/,
+    },
+    // TODO: Add more.
 };
 
 export function isLegalTagNameAttrNameAttrValTriplet(
     tagName, attrName, attrVal
 ) {
     let attrValValidationData =
-        legalAttrNameAttrValPairStruct[attrName][tagName] ?? false;
+        legalAttrNameAttrValPairStruct[attrName]["All"] ??
+        legalAttrNameAttrValPairStruct[attrName][tagName] ??
+        false;
     if (!attrValValidationData) {
+        // If we ever want to include a check that does not use the
+        // legalAttrNameAttrValPairStruct above, we can include it here.
         return false;
     }
     if (attrValValidationData instanceof Array) {
@@ -646,6 +679,9 @@ export function isLegalTagNameAttrNameAttrValTriplet(
     }
     if (attrValValidationData instanceof Function) {
         return attrValValidationData(attrVal);
+    }
+    if (attrValValidationData === true) {
+        return true;
     }
     throw (
         "isLegalTagNameAttrNameAttrValTriplet(): " +
