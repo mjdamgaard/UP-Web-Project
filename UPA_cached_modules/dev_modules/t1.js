@@ -1027,117 +1027,20 @@ export function upaf_checkHTMLAndGetErrorAndLexArr(html) {
 
 
 
+/* jQuery wrappers and other functions to add and remove HTML, HTML attributes,
+ * and CSS styles.
+ **/
 
 
 
 
-
-
-
-// /* Functions to set and get (unique!) IDs of HTML elements */
-//
-// // Hm, I actually doubt that this is worth the effort. So let me for now just
-// // assume that allowing multiple IDs does not cause any security risk, and if
-// // I/we then at some point find a use of IDs that requires IDs to be unique for
-// // safety, ... Hm, no I really do not see that happening.. ...Ah, and even
-// // if we find a use for ID where they are required to be unique for safety,
-// // we can then just add a check for uniqueness to whatever function adds
-// // the given functionality.
-// var idRecord = idRecord ?? [];
-//
-// export function upaf_setID(selector, id) {
-//     let jqObj = getJQueryObj(selector);
-//     // test that id contains only \w characters.
-//     if (!/^\w+$/.test(id)) {
-//         throw (
-//             "setID(): invalid id pattern (not of /^\\w+$/)"
-//         );
-//     }
-//    // test that id is unused. (Let's not care to much about race conditions.)
-//     if (upaf_isExistingID(id)) {
-//         throw (
-//             "setID(): id has already been used"
-//         );
-//     }
-//     // record id.
-//     recordID(id);
-//     // set the (prefixed) id of the first element in the selection.
-//     jqObj[0].id = "upai_" + id;
-// }
-//
-// export function upaf_isExistingID(id) {
-//     return idRecord.includes(id);
-// }
-//
-// export function recordID(id) {
-//     if (!idRecord.includes(id)) {
-//         idRecord.push(id);
-//     }
-// }
-//
-// export function removeIDRecord(id) {
-//     let i = idRecord.findIndex(id);
-//     if (i >= 0) {
-//         idRecord[i] = null;
-//     }
-// }
-//
-// export function removeAllInnerIDRecords(jqObj) {
-//     // for each descendent with an id, remove the record of the id.
-//     jqObj.find('[id^=upai_]').each(function(){
-//         let id = this.attr("id").substring(5);
-//         removeIDRecord(id);
-//     });
-// }
-//
-// export function removeAllIDRecords(jqObj) {
-//     // for each descendent with an id, remove the record of that id.
-//     jqObj.find('[id^=upai]').each(function(){
-//         let id = this.attr("id").substring(5);
-//         removeIDRecord(id);
-//     });
-//     // for each selected element with an id, remove the record of that id.
-//     jqObj.filter('[id^=upai]').each(function(){
-//         let id = this.attr("id").substring(5);
-//         removeIDRecord(id);
-//     });
-// }
-//
-// export function upaf_getID(selector) {
-//     let jqObj = getJQueryObj(selector);
-//     // if id of the first element in the selection is not set, return false.
-//     if (typeof jqObj[0].id === "undefined") {
-//         return false;
-//     }
-//    // return the id of the first element in the selection without the "upai_"
-//     // prefix.
-//     return jqObj[0].id.substring(5);
-// }
-
-
-
-
-
-// TODO Gather all the following attribute setters/getters..
-
-/* Some functions to get and set upaa_ attributes */
-
-const attrKeyRegEx =  /^~?\w+$/;
-const upaAttrKeyRegEx =  /^~\w+$/;
-const attrValRegEx =  /^\w+$/;
-
-
-
-
-
-
-
+/* A private function to get jQuery objects */
 
 // Note that since this function does not have the upaf_ prefix, it cannot
 // be exported to the final user modules (only to other developer modules).
 export function getJQueryObj(selector) {
-    // test selector.
-    upaf_checkSelector(selector);
+    // syntax check selector.
+    checkSelector(selector);
     // return the descendents of #upaFrame that matches the selector.
     return $("#upaFrame").find(selector);
 }
@@ -1145,6 +1048,60 @@ export function getJQueryObj(selector) {
 
 
 
+
+
+/* jQuery wrappers to get, add, remove and empty HTML */
+
+
+export function upaf_html(selector, html, method) {
+    // test selector and get jQuery object.
+    let jqObj = getJQueryObj(selector);
+    // if html is undefined/null, return the HTML of the selection.
+    if (typeof html === "undefined") {
+        return jqObj.html()
+    }
+    // else verify html first of all.
+    checkHTML(html);
+    // if this check succeeds, get ready to append or prepend html, insert
+    // it after or before, or replace it as the innerHTML of each element
+    // the selection.
+    method = method ?? "inner";
+    switch (method) {
+        case "append":
+        case "prepend":
+        case "after":
+        case "before":
+            jqObj[method](html);
+            break;
+        case "inner":
+        jqObj.html(html);
+            break;
+        default:
+            throw (
+                "html(): unrecognized method '" + method.toString() + "'"
+            );
+    }
+}
+
+export function upaf_remove(selector) {
+    // test selector and get jQuery object.
+    let jqObj = getJQueryObj(selector);
+    // remove all selected elements.
+    jqObj.remove();
+}
+
+export function upaf_empty(selector) {
+    // test selector and get jQuery object.
+    let jqObj = getJQueryObj(selector);
+    // empty all selected elements of their inner HTML.
+    jqObj.empty();
+}
+
+
+
+
+
+/* jQuery wrappers to get and set HTML attributes */
 
 
 
@@ -1484,263 +1441,6 @@ export function upaf_getOuterStructure(selector) {
 
 
 
-
-
-/* Some functions to get, add and remove CSS styles */
-
-// const cssPropRegEx = /^@?[[a-zA-Z]\-]+$/;
-
-// TODO: Check that these are safe with the "legal values" below!
-const cssLegalProperties = [
-"accent-color", "align-content", "align-items", "align-self", "all",
-"animation", "animation-delay", "animation-direction", "animation-duration",
-"animation-fill-mode", "animation-iteration-count", "animation-name",
-"animation-play-state", "animation-timing-function", "aspect-ratio",
-"backdrop-filter", "backface-visibility", "background", "background-attachment",
-"background-blend-mode", "background-clip", "background-color",
-"background-image", "background-origin", "background-position",
-"background-position-x", "background-position-y", "background-repeat",
-"background-size", "block-size", "border", "border-block", "border-block-color",
-"border-block-end-color", "border-block-end-style", "border-block-end-width",
-"border-block-start-color", "border-block-start-style",
-"border-block-start-width", "border-block-style", "border-block-width",
-"border-bottom", "border-bottom-color", "border-bottom-left-radius",
-"border-bottom-right-radius", "border-bottom-style", "border-bottom-width",
-"border-collapse", "border-color", "border-end-end-radius",
-"border-end-start-radius", "border-image", "border-image-outset",
-"border-image-repeat", "border-image-slice", "border-image-source",
-"border-image-width", "border-inline", "border-inline-color",
-"border-inline-end-color", "border-inline-end-style", "border-inline-end-width",
-"border-inline-start-color", "border-inline-start-style",
-"border-inline-start-width", "border-inline-style", "border-inline-width",
-"border-left", "border-left-color", "border-left-style", "border-left-width",
-"border-radius", "border-right", "border-right-color", "border-right-style",
-"border-right-width", "border-spacing", "border-start-end-radius",
-"border-start-start-radius", "border-style", "border-top", "border-top-color",
-"border-top-left-radius", "border-top-right-radius", "border-top-style",
-"border-top-width", "border-width", "bottom", "box-decoration-break",
-"box-reflect", "box-shadow", "box-sizing", "break-after", "break-before",
-"break-inside", "caption-side", "caret-color", "@charset", "clear", "clip",
-"clip-path", "color", "column-count", "column-fill", "column-gap",
-"column-rule", "column-rule-color", "column-rule-style", "column-rule-width",
-"column-span", "column-width", "columns", "content", "counter-increment",
-"counter-reset", "cursor", "direction", "display", "empty-cells", "filter",
-"flex", "flex-basis", "flex-direction", "flex-flow", "flex-grow", "flex-shrink",
-"flex-wrap", "float", "font", "@font-face", "font-family",
-"font-feature-settings", "font-kerning", "font-size", "font-size-adjust",
-"font-stretch", "font-style", "font-variant", "font-variant-caps",
-"font-weight", "gap", "grid", "grid-area", "grid-auto-columns",
-"grid-auto-flow", "grid-auto-rows", "grid-column", "grid-column-end",
-"grid-column-gap", "grid-column-start", "grid-gap", "grid-row",
-"grid-row-end", "grid-row-gap", "grid-row-start", "grid-template",
-"grid-template-areas", "grid-template-columns", "grid-template-rows",
-"hanging-punctuation", "height", "hyphens", "image-rendering", "@import",
-"inline-size", "inset", "inset-block", "inset-block-end", "inset-block-start",
-"inset-inline", "inset-inline-end", "inset-inline-start", "isolation",
-"justify-content", "justify-items", "justify-self", "@keyframes", "left",
-"letter-spacing", "line-height", "list-style", "list-style-image",
-"list-style-position", "list-style-type", "margin", "margin-block",
-"margin-block-end", "margin-block-start", "margin-bottom", "margin-inline",
-"margin-inline-end", "margin-inline-start", "margin-left", "margin-right",
-"margin-top", "mask-image", "mask-mode", "mask-origin", "mask-position",
-"mask-repeat", "mask-size", "max-block-size", "max-height", "max-inline-size",
-"max-width", "@media", "min-block-size", "min-inline-size", "min-height",
-"min-width", "mix-blend-mode", "object-fit", "object-position", "offset",
-"offset-anchor", "offset-distance", "offset-path", "offset-rotate",
-"opacity", "order", "orphans", "outline", "outline-color", "outline-offset",
-"outline-style", "outline-width", "overflow", "overflow-anchor",
-"overflow-wrap", "overflow-x", "overflow-y", "overscroll-behavior",
-"overscroll-behavior-block", "overscroll-behavior-inline",
-"overscroll-behavior-x", "overscroll-behavior-y", "padding",
-"padding-block", "padding-block-end", "padding-block-start", "padding-bottom",
-"padding-inline", "padding-inline-end", "padding-inline-start",
-"padding-left", "padding-right", "padding-top", "page-break-after",
-"page-break-before", "page-break-inside", "paint-order", "perspective",
-"perspective-origin", "place-content", "place-items", "place-self",
-"pointer-events", "position", "quotes", "resize", "right", "rotate", "row-gap",
-"scale", "scroll-behavior", "scroll-margin", "scroll-margin-block",
-"scroll-margin-block-end", "scroll-margin-block-start", "scroll-margin-bottom",
-"scroll-margin-inline", "scroll-margin-inline-end",
-"scroll-margin-inline-start", "scroll-margin-left", "scroll-margin-right",
-"scroll-margin-top", "scroll-padding", "scroll-padding-block",
-"scroll-padding-block-end", "scroll-padding-block-start",
-"scroll-padding-bottom", "scroll-padding-inline", "scroll-padding-inline-end",
-"scroll-padding-inline-start", "scroll-padding-left", "scroll-padding-right",
-"scroll-padding-top", "scroll-snap-align", "scroll-snap-stop",
-"scroll-snap-type", "tab-size", "table-layout", "text-align",
-"text-align-last", "text-decoration", "text-decoration-color",
-"text-decoration-line", "text-decoration-style", "text-decoration-thickness",
-"text-indent", "text-justify", "text-orientation", "text-overflow",
-"text-shadow", "text-transform", "top", "transform", "transform-origin",
-"transform-style", "transition", "transition-delay", "transition-duration",
-"transition-property", "transition-timing-function", "translate",
-"unicode-bidi", "user-select", "vertical-align", "visibility", "white-space",
-"widows", "width", "word-break", "word-spacing", "word-wrap", "writing-mode",
-"z-index",
-];
-// TODO: Outcomment properties that I'm not confident are safe to use with
-// the "legal values" below.
-
-export const cssUnits = [
-    "cm", "mm", "Q", "in", "pc", "pt", "px",
-    "em", "ex", "ch", "rem", "lh", "rlh",
-    "vw", "vh", "vi", "vb", "vmin", "vmax",
-    "svw", "svh", "lvw", "lvh", "dvw", "dvh",
-    "deg", "grad", "rad", "turn",
-    "s", "ms", "Hz", "kHz",
-    "flex",
-    "dpi", "dpcm", "dppx",
-    "%",
-];
-
-const cssUnitPattern =
-    "((" +
-        cssUnitPatterns.join(")|(") +
-    "))";
-
-
-export const cssNumericPattern =
-    "[\\+\\-]?[0-9]*\\.?[0-9]*" + cssUnitPattern;
-
-export const cssNumericRegEx = new RegExp(
-    "^" +
-        cssNumericPattern +
-    "$"
-);
-
-
-export const cssHexColorPattern =
-    "#([0-9a-fA-F]{3,4})|([0-9a-fA-F]{6})|([0-9a-fA-F]{8})";
-
-export const cssHexColorRegEx = new RegExp(
-    "^" +
-        cssHexColorPattern +
-    "$"
-);
-// TODO: Consider adding more color value syntaxes.
-
-
-export const cssNumericOrColorPattern =
-    "((" +
-        cssHexColorPattern +
-    ")|(" +
-        cssNumericPattern +
-    "))";
-
-
-export const cssGradientValuePattern =
-    "((" +
-        "linear-gradient\\(" +
-            "[0-9]+deg" + "(" + whitespacePattern +
-                "[, \\n]" + whitespacePattern + cssNumericOrColorPattern +
-            ")+" +
-        "\\)" +
-    ")|(" +
-        cssNumericPattern +
-    "))";
-
-
-/* Some CSS keyword values that I hope is safe for all CSS properties */
-export const cssLegalKeywordValues = [
-    "left", "right", "none", "inline-start", "inline-end",
-// "inline-table"
-// "table-row"
-// "table-row-group"
-// "table-column"
-// "table-column-group"
-// "table-cell"
-// "table-caption"
-// "table-header-group"
-// "table-footer-group"
-// "inline-flex"
-// "inline-grid"
-    "repeat-x", "repeat-y", "no-repeat", "repeat",
-    "top", "bottom", "fixed",
-    "scroll", "center", "justify",
-    "dotted", "dashed", "solid", "double", "groove", "ridge", "inset",
-    "outset", "none", "hidden",
-    "thin", "medium", "thick",
-    "border-box",
-    "baseline", "text-top", "text-bottom", "sub", "super",
-    "overline", "underline", "line-through",
-    "uppercase", "lowercase", "capitalize",
-    "nowrap", "clip",
-    "sans-serif", "serif", "monospace", "cursive", "fantasy",
-    "Arial", "Verdana", "Tahoma", "Trebuchet", "Times",
-    "Georgia", "Garamond", "Courier", "Brush",
-    "normal", "italic", "oblique", "bold", "small-caps",
-    "circle", "ellipse", "square",
-    "upper-roman", "upper-alpha", "lower-alpha",
-    "outside", "inside",
-    "collapse",
-    "inline", "block", "inline-block",
-    "static", "relative", "fixed", "absolute", "sticky",
-    "visible", "auto", "both", "table",
-    "cover", "contain", "content-box",
-    "ellipsis", "break-word", "break-all", "keep-all",
-    // "ltr", "rtl",
-    "width", "height",
-    "ease", "linear", "ease-in", "ease-out", "ease-in-out",
-    "transform",
-    "fill", "scale-down",
-    "not-allowed",
-    "horizontal", "vertical",
-    "farthest-corner", "closest-side", "closest-corner", "farthest-side",
-    "at", // this is not actually a *value* keyword.
-    "normal", "reverse", "alternate", "alternate-reverse",
-    "forwards", "backwards",
-    "infinite", "example",
-    // TODO: Consider adding more.
-    // TODO: Verify their safety of these keyword values!
-];
-
-export const cssLegalKeywordValuesPattern =
-    "((" +
-        cssLegalKeywordValues.join(")|(") +
-    "))";
-
-
-
-export const cssACombinedValuePattern =
-    "((" +
-        cssHexColorPattern +
-    ")|(" +
-        cssNumericPattern +
-    ")|(" +
-        cssLegalKeywordValuesPattern +
-    "))"
-
-export const cssAComplexValuePattern =
-    "(" +
-        cssACombinedValuePattern + "(" + whitespacePattern +
-            "[, \\n]" + whitespacePattern + cssACombinedValuePattern +
-        ")*" +
-    ")";
-
-export const cssLegalFunctions = [
-    "linear-gradient", "radial-gradient", "conic-gradient",
-    "translate", "rotate", "scale", "scaleX", "scaleY",
-    "skew", "skewX", "skewY", "matrix",
-];
-
-export const cssLegalFunctionsPattern =
-    "((" +
-        cssLegalFunctions.join(")|(") +
-    "))";
-
-export const cssAFunctionalValuePattern =
-    "(" +
-        cssLegalFunctionsPattern + "\\(" + cssAComplexValuePattern + "\\)" +
-    ")";
-
-export const cssAComplexRegEx = new RegExp(
-    "^(" +
-        "(" +
-            cssAComplexValuePattern + "|" +
-            cssAFunctionalValuePattern +
-        ")+" +
-    ")$"
-);
 
 
 /* A function to add CSS styles to a selection of elements */
