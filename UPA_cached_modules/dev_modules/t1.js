@@ -387,7 +387,7 @@ const cssDecLexemePatterns = [
 // (Note that while we let the whitespace pattern be " \\n\\r\\t", the
 // "\\n\\r\\t" characters will only appear in CSS header styles; not
 // in in-line styles.)
-var cssDeclarationsLexer = new Lexer(cssDecLexemePatterns, " \\n\\r\\t");
+var cssLexer = new Lexer(cssDecLexemePatterns, " \\n\\r\\t");
 
 var cssDeclarationsChecker = new SyntaxChecker(cssDeclarationsLexer);
 cssDeclarationsChecker.addLexemePatterns(cssDecLexemePatterns);
