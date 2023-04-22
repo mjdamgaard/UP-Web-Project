@@ -151,6 +151,8 @@ export function upaf_html(selector, html, method) {
             );
     }
 }
+// (One could also make a function to do several of these actions for the same
+// selection, but I will let this be a (potential) task for a future module.)
 
 export function upaf_remove(selector) {
     // test selector and get jQuery object.
@@ -170,7 +172,61 @@ export function upaf_empty(selector) {
 
 
 
-/* jQuery wrappers to get and set HTML attributes */
+
+/* jQuery wrapper to get and set standard HTML attributes that does not need
+ * quering of the server to verify their legality (but can be verified by
+ * isLegalTagNameAttrNameAttrValTriplet() defined below).
+ **/
+
+export function upaf_attr(selector, attrOrAttrValPairArr, val) {
+    // test selector and get jQuery object.
+    let jqObj = getJQueryObj(selector);
+    // // if val is undefined/null, interpret attrOrAttrValPairArr as attribute,
+    // // test it, and return jqObj.attr(attribute).
+    // if (
+    //     typeof val === "undefined" &&
+    //     typeof attrOrAttrValPairArr === "string"
+    // ) {
+    //     let attribute = attrOrAttrValPairArr;
+    //     if (!/\w+/.test(attribute)) {
+    //         throw (
+    //             "attr(): attribute input was not string of pattern /\\w+/"
+    //         );
+    //     }
+    //     return jqObj.attr(attribute);
+    // }
+    // else interpret attrOrAttrValPairArr as an array of attribute--value
+    // pairs, test these with a call to isLegalTagNameAttrNameAttrValTriplet(),
+    // defined below (near the end of this script), and return
+    // jqObj.attr(Object.fromEntries(attrValPairArr)),
+    let attrValPairArr = attrOrAttrValPairArr;
+    let attrValPairArrLen = attrValPairArr.length;
+
+    for (let i = 0; i < attrValPairArrLen; i++) {
+        if (!isLegalTagNameAttrNameAttrValTriplet)
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -943,6 +999,8 @@ export const elementNamePattern =
         elementNames.join(")|(") +
     "))";
 
+export const classPattern =
+    "\\.[\\w\\- ]+";
 
 export const pseudoClasses = [
     "first", "last", "even", "odd",
@@ -996,9 +1054,10 @@ export const attributeSelectorPattern =
 // construct a lexer for selectors.
 let selectorLexemeAndEndCharPatterns = [
     [" ?[>,~\\+ ] ?", "\S"], // combinators.
-    ["[\\w]", "\\W"], // element names.
-    ["::[\\w\\-]", "[^\\w\\-]"], // pseudo-elements.
-    [":[\\w\\-]", "[^\\w\\-]"], // pseudo-classes (perhaps functional).
+    ["\\w+", "\\W"], // element names.
+    ["\\.[\\w\\- ]+", "[^\\w\\- ]"], // classes.
+    ["::[\\w\\-]+", "[^\\w\\-]"], // pseudo-elements.
+    [":[\\w\\-]+", "[^\\w\\-]"], // pseudo-classes (perhaps functional).
     ["\\("],
     ["\\)"],
     [attributeSelectorPattern], // why not just lex this as one lexeme.
@@ -1012,8 +1071,9 @@ var = selectorChecker = new SyntaxChecker(selectorLexer);
 selectorChecker.addLexemePatterns([
     [" ?[>,~\\+ ] ?"],
     [elementNamePattern],
-    [pseudoElementPattern],
+    [classPattern],
     [pseudoClassPattern],
+    [pseudoElementPattern],
     [functionalPseudoClassesWithSelectorInputPattern],
     ["\\("],
     ["\\)"],
@@ -1035,8 +1095,9 @@ selectorChecker.addProduction("<PseudoClassFunctionCall>", [
 selectorChecker.addProduction("<SimpleSelector>", [
     ["union", [
         elementNamePattern,
-        pseudoElementPattern,
+        classPattern,
         pseudoClassPattern,
+        pseudoElementPattern,
         attributeSelectorPattern,
         "\\*",
         "#upai_\\w+",
@@ -1747,6 +1808,10 @@ const legalAttrNameAttrValPairStruct = {
         "All":
             /^upai_\w+$/,
     },
+    "class": {
+        "All":
+            true,
+    },
     "style": {
         "All": function(attrVal) {
             cssDeclarationsChecker.lexAndCheck(attrVal);
@@ -1794,8 +1859,8 @@ export function isLegalTagNameAttrNameAttrValTriplet(
     tagName, attrName, attrVal
 ) {
     let attrValValidationData =
-        legalAttrNameAttrValPairStruct[attrName]["All"] ??
         legalAttrNameAttrValPairStruct[attrName][tagName] ??
+        legalAttrNameAttrValPairStruct[attrName]["All"] ??
         false;
     if (attrValValidationData === false) {
         return false;

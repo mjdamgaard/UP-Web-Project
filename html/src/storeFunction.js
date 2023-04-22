@@ -17,6 +17,6 @@ function upas_getStoreFunction() {
                 "/^\\w+$/ string"
             );
         }
-        storedFunctions[key] = fun;
+        storedFunctions["upak_" + key] = fun;
     }
 }
