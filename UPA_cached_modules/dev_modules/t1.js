@@ -25,23 +25,31 @@ export function upaf_appendHelloWorld() {
 // of the syntax of our JS subset. And storeFunction.js is run in the document
 // head (before loading the UPA).
 
-// // (Here 's' stands for "special function/variable.")
-// var upas_storedFunctions = {};
+// // With upas_getStoreFunction I then intend to allow a definition of
+// // a upas_storeFunction() in the begining of a script, namely by a statement
+// // of the form
+// // "const upas_storeFunction = upas_getStoreFunction();",
+// // and then I will also allow statements of the form
+// // "upas_storeFunction(<Exp>, <FunIdent>);".
+// // (Here 's' in "upas_" stands for "special function.")
 //
-// function upas_storeFunction(key, fun) {
-//     if (!/^\w+$/.test(key)) {
-//         throw (
-//             "storeFunction(): function key is not a valid " +
-//             "/^\\w+$/ string"
-//         );
+// function upas_getStoreFunction() {
+//     var storedFunctions = {};
+//     return function(key, fun) {
+//         if (!/^\w+$/.test(key)) {
+//             throw (
+//                 "storeFunction(): function key is not a valid " +
+//                 "/^\\w+$/ string"
+//             );
+//         }
+//         storedFunctions[key] = fun;
 //     }
-//     upas_storedFunctions["upak_" + key] = fun;
 // }
 
 export function upaf_isAStoredFunction(key) {
     if (!/^\w+$/.test(key)) {
         throw (
-            "storeFunction(): function key is not a valid " +
+            "isAStoredFunction(): function key is not a valid " +
             "/^\\w+$/ string"
         );
     }
@@ -53,7 +61,7 @@ export function upaf_isAStoredFunction(key) {
 export function getFunction(key) {
     if (!/^\w+$/.test(key)) {
         throw (
-            "storeFunction(): function key is not a valid " +
+            "getFunction(): function key is not a valid " +
             "/^\\w+$/ string"
         );
     }
