@@ -958,6 +958,13 @@ const legalAttrNameAttrValPairStruct = {
     },
     // TODO: Add more.
 };
+// (I thought I would add e.g. hrefs and srcs, but because one needs to know
+// the pattern / pattern key to verify a URL, it makes more sense to this be
+// handled by special upaf_ functions only. It is anyway also often best to
+// insert any new HTML as soon as possible, and then handle all subsequent
+// AJAX requests (asynchronously) afterwards (and not try to verify relevant
+// URLs *before* the new HTML is inserted).
+
 
 export function isLegalTagNameAttrNameAttrValTriplet(
     tagName, attrName, attrVal
@@ -1005,14 +1012,6 @@ export function upaf_checkHTMLAndGetErrorAndLexArr(html) {
     htmlChecker.lexAndParse(html, "<LegalHTMLContent>");
     return [htmlChecker.error, htmlChecker.lexer.lexArr];
 }
-
-
-
-
-
-
-
-
 
 
 
@@ -1252,80 +1251,6 @@ export function upaf_getAttributes(selector, keyArr) {
     // return an array of the gotten attribute values.
     return ret;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Functions to verify and load hyperlinks into the UPA, and to follow them */
-
-var urlRegExCache = urlRegExCache ?? {};
-
-export function upaf_cacheURLRegEx(pattID, key, userID) {
-    // test key.
-    if (typeof key !== "string") {
-        throw (
-            "cacheURLRegEx(): key is not a string"
-        );
-    }
-    if ( !(/^\w+$/.test(key)) ) {
-        throw (
-            "cacheURLRegEx(): key does not match the right pattern " +
-            '("/^\\w+$/")'
-        );
-    }
-    // query UPA_links.php to see if pattID points to a whitelisted URL
-    // pattern, and to get the held pattern string if so.
-    // (UPA_links.php also verifies that userID is whitelisted for the
-    // requesting user (if logged in; if not, userID has to be whitelisted
-    // for public use).)
-    let data = {pid: pattID, uid: userID}
-    let res = JSON.parse($.getJSON("UPA_link_patterns.php", ).responseText);
-    // if the pattern was whitelisted for UPA links, store it in the cache.
-    if (res.success) {
-        urlRegExCache["upak_" + key] = new RegExp(res.str);
-        return 0;
-    } else {
-        return res.error;
-    }
-}
-
-
-export function upaf_isACachedURL(key) {
-    if (typeof urlRegExCache["upak_" + key] === "undefined") {
-        return false;
-    } else {
-        return true;
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
