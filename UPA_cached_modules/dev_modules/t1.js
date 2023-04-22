@@ -85,12 +85,828 @@ export function upaf_runResultingFunction(funName, dataArr) {
 
 
 
+
+
+
+/* jQuery wrappers and other functions to add and remove HTML, HTML attributes,
+ * and CSS styles.
+ **/
+
+
+
+
+/* A private function to get jQuery objects */
+
+// Note that since this function does not have the upaf_ prefix, it cannot
+// be exported to the final user modules (only to other developer modules).
+export function getJQueryObj(selector) {
+    // syntax check selector.
+    checkSelector(selector);
+    // return the descendents of #upaFrame that matches the selector.
+    return $("#upaFrame").find(selector);
+}
+
+
+
+
+
+
+/* jQuery wrappers to get, add, remove and empty HTML */
+
+
+export function upaf_html(selector, html, method) {
+    // test selector and get jQuery object.
+    let jqObj = getJQueryObj(selector);
+    // if html is undefined/null, return the HTML of the selection.
+    if (typeof html === "undefined") {
+        return jqObj.html()
+    }
+    // else verify html first of all.
+    checkHTML(html);
+    // if this check succeeds, get ready to append or prepend html, insert
+    // it after or before, or replace it as the innerHTML of each element
+    // the selection.
+    method = method ?? "inner";
+    switch (method) {
+        case "inner":
+            jqObj.html(html);
+            break;
+        case "append":
+        case "prepend":
+        case "after":
+        case "before":
+            jqObj[method](html);
+            break;
+        default:
+            throw (
+                "html(): unrecognized method '" + method.toString() + "'"
+            );
+    }
+}
+
+export function upaf_remove(selector) {
+    // test selector and get jQuery object.
+    let jqObj = getJQueryObj(selector);
+    // remove all selected elements.
+    jqObj.remove();
+}
+
+export function upaf_empty(selector) {
+    // test selector and get jQuery object.
+    let jqObj = getJQueryObj(selector);
+    // empty all selected elements of their inner HTML.
+    jqObj.empty();
+}
+
+
+
+
+
+/* jQuery wrappers to get and set HTML attributes */
+
+
+
+
+
+
+export function setAttributeOfSingleJQueryObj(jqObj, tagName, key, val) {
+    // verify that key and val are defined and have the right
+    // formats.
+    if (!attrKeyRegEx.test(key)) {
+        throw (
+            "setAttributeOfSingleJQueryObj(): input contains an invalid " +
+            "attribute key"
+        );
+    }
+    if (!attrValRegEx.test(val)) {
+        throw (
+            "setAttributeOfSingleJQueryObj(): input contains an invalid " +
+            "attribute value"
+        );
+    }
+    // if attribute key starts with '~,' set a new upaa_ attribute
+    // for the new HTML element.
+    if (key.substring(0, 1) === "~") {
+        jqObj.attr("upaa_" + key.substring(1), val);
+    // if it is instead an id, test that it has not already been
+    // used and make sure to record it. (Let's not care about
+    // race conditions.)
+    } else if (key === "id") {
+        if (upaf_isExistingID(val)) {
+            throw (
+                "getHTML(): id=\"" + val +
+                "\" has already been used"
+            );
+        }
+        recordID(val);
+        jqObj.attr("id", val);
+    // else, test that it is one of the allowed nagName--key--val
+    // tuples.
+    } else if (upaf_isLegalKeyValAttrPair(tagName, key, val)) {
+        jqObj.attr(key, val);
+    } else {
+        throw (
+            "setAttributeOfSingleJQueryObj(): illegal combination of " +
+            "tagName, key and value"
+        );
+    }
+}
+
+
+
+export function upaf_setAttributes(selector, keyValArr) {
+    // get the selected HTML element as a jQuery object.
+    let jqObj = getJQueryObj(selector);
+    // loop through key value pairs and set the attributes of the HTML element
+    // accordingly.
+    for (let i = 0; i < keyValArr.length; i++) {
+        let key = keyValArr[$i][0];
+        let val = keyValArr[$i][1];
+        // verify that key and val are defined and have the right formats.
+        jqObj.each(function() {
+            setAttributeOfSingleJQueryObj(this, tagName, key, val)
+        });
+    }
+}
+
+export function upaf_getAttribute(selector, key) {
+    // get the selected HTML element as a jQuery object.
+    let jqObj = getJQueryObj(selector);
+    // assert that key is defined and has the right format.
+    if (!attrKeyRegEx.test(key)) {
+        throw (
+            "getAttribute(): input is not a valid attribute key"
+        );
+    }
+    // replace '~' with 'upaa_' in key.
+    key = key.replaceAll("~", "upaa_")
+    // return the attribute of the first selected HTML element.
+    return jqObj.first().attr(key);
+}
+
+
+export function upaf_getAttributes(selector, keyArr) {
+    var ret = [];
+    // get the selected HTML element as a jQuery object.
+    let jqObj = getJQueryObj(selector);
+    // loop through the keys in keyArr and get the corresponding attribute
+    // values from the selected HTML element.
+    for (let i = 0; i < keyArr.length; i++) {
+        let key = keyValArr[$i];
+        // assert that key is defined and has the right format.
+        if (!attrKeyRegEx.test(key)) {
+            throw (
+                "getAttributes(): input " + i.toString() +
+                " is not a valid attribute key"
+            );
+        }
+        // replace '~' with 'upaa_' in key.
+        key = key.replaceAll("~", "upaa_")
+        // get the attribute of the selected HTML element and store it in the
+        // return array.
+        ret[i] = jqObj.first().attr(key);
+    }
+    // return an array of the gotten attribute values.
+    return ret;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Some functions to add and remove HTML elements */
+
+
+// export const flowContentElements = [
+//     "a", "abbr", "address", "article", "aside", "audio", "b", "bdi", "bdo",
+//     "blockquote", "br", "button", "canvas", "cite", "code", "data",
+//     "datalist", "del", "details", "dfn", "dialog", "div", "dl", "em",
+//     "embed", "fieldset", "figure", "footer", "form",
+//     "h1", "h2", "h3", "h4", "h5", "h6",
+//     "header", "hgroup", "hr", "i", "iframe", "img", "input", "ins", "kbd",
+//     "label", "map", "mark",
+//     //"MathML math",
+//     "menu", "meter", "nav",
+//     "noscript", "object", "ol", "output", "p", "picture", "pre",
+//     "progress", "q", "ruby", "s", "samp",
+//     // "script",
+//     "search", "section",
+//     "select", "slot", "small", "span", "strong", "sub", "sup",
+//     // "SVG svg",
+//     "table", "template", "textarea", "time", "u", "ul", "var", "video",
+//     "wbr",
+//     //"autonomous custom elements",
+// ];
+
+
+
+
+
+/* << addHTML() >>
+ * input = (selector, method, struct),
+ * where
+ * method = "append" | "prepend" | "before" | "after",
+ * and where
+ * struct = undefined | contentText | [(tagAttributesContentTuple,)*],
+ * where
+ * tagAttributesContentTuple =
+ *     [tagName] | [tagName, struct] | [tagName, attributes, struct],
+ * where
+ * attributes = undefined | [([key, value],)*].
+ **/
+export function upaf_addHTML(selector, method, struct) {
+    let jqObj = getJQueryObj(selector);
+    // test method.
+    if (!["append", "prepend", "before", "after"].includes(method)) {
+        throw (
+            "addHTML(): method name not recognized"
+        );
+    }
+    let html = getHTMLFromStructureAndRecordIDs(struct);
+    // insert html via the append(), prepend(), before() or after() method.
+    return jqObj[method](html);
+}
+
+
+export function getHTMLFromStructureAndRecordIDs(struct) {
+    // if struct is a string, return the converted (HTML safe) string.
+    if (typeof struct === "string") {
+        return upaf_convertHTMLSpecialChars(struct);
+    }
+    // if struct is undefined or an empty array, return "".
+    var len;
+    if (
+        typeof struct === "undefined" ||
+        (len = struct.length) == 0
+    ) {
+        return "";
+    }
+    // loop through tag--attribute--content tuples and append the resulting
+    // html to a return variable, ret.
+    var ret = "";
+    for (let i = 0; i < len; i++) {
+        // get the variables.
+        var tagName, attributes;
+        var content = "";
+        let tupleLen = struct[i].length;
+        if (tupleLen === 3) {
+            tagName = struct[i][0];
+            attributes = struct[i][1];
+            content = struct[i][2];
+        } else if (tupleLen === 2) {
+            tagName = struct[i][0];
+            content = struct[i][1];
+        } else if (tupleLen === 1) {
+            tagName = struct[i][0];
+        }
+        // if tag input is undefined, simply append the converted content to
+        // ret.
+        if (typeof tagName === "undefined") {
+            ret = ret + getHTMLFromStructureAndRecordIDs(content);
+            continue;
+        }
+        // else, test tag input.
+        if (!elementNameRegEx.test(tagName)) {
+            throw (
+                "getHTMLFromStructureAndRecordIDs(): unrecognized tag name: " +
+                tagName.toString()
+            );
+        }
+        // initialize new HTML element.
+        var htmlJQObj = $("<" + tagName + "></" + tagName + ">");
+        // test each attribute input and add the attribute key--value pair to
+        // the new HTML element.
+        if (typeof attributes !== "undefined") {
+            let lenAttr = attributes.length;
+            for (let j = 0; j < lenAttr; j++) {
+                // get attribute key and value.
+                let key = attributes[j][0];
+                let val = attributes[j][1];
+                // try to set key="val" for htmlJQObj.
+                setAttributeOfSingleJQueryObj(htmlJQObj, tagName, key, val);
+            }
+        }
+        // test and convert content, and add it inside the new HTML element.
+        htmlJQObj.html(getHTMLFromStructureAndRecordIDs(content));
+        // append the new HTML element to ret.
+        ret = ret + htmlJQObj[0].outerHTML;
+    }
+    // return the resulting HTML string.
+    return ret;
+}
+
+
+
+export function upaf_convertHTMLSpecialChars(str) {
+    // verify that input is a string.
+    if (typeof str !== "string") {
+        throw (
+            "convertHTMLSpecialChars(): input is not a string"
+        );
+    }
+    // return the converted (HTML safe) string.
+    return str
+        .replaceAll("&", "&amp;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+}
+
+export function upaf_convertHTMLSpecialCharsAndBackslashes(str) {
+    // verify that input is a string.
+    if (typeof str !== "string") {
+        throw (
+            "convertHTMLSpecialCharsAndBackslashes(): " +
+            "input is not a string"
+        );
+    }
+    // return the converted (HTML safe and attribute value safe) string.
+    return str
+        .replaceAll("&", "&amp;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\\", "&#92;");
+}
+
+
+
+export function upaf_removeHTML(selector) {
+    let jqObj = getJQueryObj(selector);
+    // remove all id in the selction from the idRecord.
+    removeAllIDRecords(jqObj)
+    // remove all elements in the selction.
+    jqObj.remove();
+}
+
+export function upaf_emptyHTML(selector) {
+    let jqObj = getJQueryObj(selector);
+    // remove all id in the descendents of the selction from the idRecord.
+    removeAllInnerIDRecords(jqObj)
+    // remove all elements in the selction.
+    jqObj.empty();
+}
+
+
+
+/* Function to get inner and outer HTML (of the first matched element only) */
+
+export function upaf_getInnerHTML(selector) {
+    let jqObj = getJQueryObj(selector);
+    return jqObj[0].innerHTML; // (I don't know if this works in I.E. browsers.)
+}
+
+export function upaf_getOuterHTML(selector) {
+    let jqObj = getJQueryObj(selector);
+    return jqObj[0].outerHTML;
+}
+
+
+
+
+// TODO: Make this function:
+export function upaf_getStructureFromHTML(struct) {
+    //TODO..
+}
+
+// TODO: Make these:
+export function upaf_getInnerStructure(selector) {
+
+}
+
+export function upaf_getOuterStructure(selector) {
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* A function to add CSS styles to a selection of elements */
+
+export function upaf_css(selector, propertyOrPropertyValuePairArr) {
+    // get the selected descendents of #upaFrame as a jQuery object.
+    let jqObj = getJQueryObj(selector);
+    if (typeof propertyOrPropertyValuePairArr === "string") {
+        let property = propertyOrPropertyValuePairArr;
+        if (!/^@?[[a-zA-Z]\-]+$/.test(property)) {
+            throw (
+                "css(): properties can only contain letters, '-' and '@'"
+            );
+        }
+        return jqObj.css(property);
+    } else {
+        let propertyValuePairArr = propertyOrPropertyValuePairArr;
+        // verify all values to be (PERHAPS! (TODO: verify this!)) safe.
+        let len = propertyValuePairArr.length;
+        for (let i = 0; i < len; i++) {
+            let property = propertyValuePairArr[i][0];
+            let value = propertyValuePairArr[i][1];
+            // test property.
+            if (!cssLegalProperties.includes(property)) {
+                throw (
+                    "css(): property" + i.toString() +
+                    "can only contain letters, '-' and '@'"
+                );
+            }
+            // test value.
+            if (!cssAComplexRegEx.test(value)) {
+                throw (
+                    "css(): property value " + i.toString() +
+                    " is either invalid or not implemented yet"
+                );
+            }
+            // test that this nested array is a pair.
+            if (!propertyValuePairArr[i].length === 2) {
+                throw (
+                    "css(): propertyValuePairArr[" + i.toString() + "] " +
+                    "did not have a length of 2"
+                );
+            }
+        }
+        // convert the property--value array to a plain object
+        let stylesObj = Object.fromEntries(styles);
+        // set the css properties.
+        jqObj.css(stylesObj);
+    }
+}
+
+
+/* Function to add and remove CSS style tags to document head */
+
+export function upaf_addCSS(selector, propertyValuePairArr) {
+    // test the selector.
+    if (!selectorRegex.test(selector)) {console.log(selectorRegex);
+        throw (
+            "addCSS(): selector does not match expected pattern"
+        );
+    }
+    // initialize styleElem as the first part of the desired HTML string.
+    var styleElem =
+        '<style class="upas" selector="' + // Change to just have upak="key"
+        // instead..
+            // (This should be safe since it is inside quotation marks, I
+            // believe.. TODO: Verify this.)
+            upaf_convertHTMLSpecialCharsAndBackslashes(selector) +
+        '"> ' +
+        "#upaFrame { " + selector + " { ";
+    // loop through property--value pairs and append them to styleElem.
+    let len = propertyValuePairArr.length;
+    for (let i = 0; i < len; i++) {
+        let property = propertyValuePairArr[i][0];
+        let value = propertyValuePairArr[i][1];
+        // test property.
+        if (!cssLegalProperties.includes(property)) {
+            throw (
+                "addCSS(): property" + i.toString() +
+                "can only contain letters, '-' and '@'"
+            );
+        }
+        // test value.
+        if (!cssAComplexRegEx.test(value)) {
+            throw (
+                "addCSS(): property value " + i.toString() +
+                " is either invalid or not implemented yet"
+            );
+        }
+        // append property and value to styleElem.
+        styleElem += property + ": " + value + "; ";
+    }
+    // append the final part of the style tag.
+    styleElem += "}}</style>";
+    // append the resulting style element to the document head.
+    $(":root > head").append(styleElem);
+}
+
+
+export function upaf_removeCSS(selector) {
+    // remove all UPA style tags with the given selector.
+    $(
+        ':root > head > .upas[' +
+            'selector="' +
+            upaf_convertHTMLSpecialCharsAndBackslashes(selector) + // TODO: Change for key.
+        '"]'
+    ).remove();
+}
+
+export function upaf_removeLastCSS(selector) {
+    // remove the last UPA style tag with the given selector.
+    $(
+        ':root > head > .upas[' +
+            'selector="' +
+            upaf_convertHTMLSpecialCharsAndBackslashes(selector) +
+        '"]:last-of-type'
+    ).remove();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Functions to add events to HTML elements */
+
+const jQueryEvents = [
+    "blur", "change", "focus", "focusin", "focusout", "select", "submit",
+    "keydown", "keypress", "keyup",
+    "click", "dblclick", "hover", "mousedown", "mouseenter", "mouseleave",
+    "mousemove", "mouseout", "mouseover", "mouseup",
+    "toggle", "resize", "scroll", "load", "ready", "unload",
+];
+
+const singleEventPattern =
+    "((" +
+        jQueryEvents.join(")|(") +
+    "))";
+
+const eventsRegEx = new RegExp(
+    "^" +
+        singleEventPattern + "(" + " " +  singleEventPattern + ")*" +
+    "$"
+);
+
+export function upaf_verifyEvents(events) {
+    if (!eventsRegEx.test(events)) {
+        throw (
+            "verifyEvents(): unrecognized events pattern"
+        );
+    }
+}
+
+
+export function upaf_on(selector, eventsDataHandlerTupleArr) {
+    let jqObj = getJQueryObj(selector);
+
+    for (let i = 0; i < eventsDataHandlerTupleArr.length; i++) {
+        let events = eventsDataHandlerTupleArr[$i][0];
+        let data = eventsDataHandlerTupleArr[$i][1] ?? "";
+        let handlerKey = eventsDataHandlerTupleArr[$i][2];
+        let handler = getFunction(handlerKey);
+
+        upaf_verifyEvents(events);
+
+        jqObj.on(events, null, data, handler);
+    }
+}
+
+export function upaf_one(selector, eventsDataHandlerTupleArr) {
+    let jqObj = getJQueryObj(selector);
+
+    for (let i = 0; i < eventsDataHandlerTupleArr.length; i++) {
+        let events = eventsDataHandlerTupleArr[$i][0];
+        let data = eventsDataHandlerTupleArr[$i][1] ?? "";
+        let handlerKey = eventsDataHandlerTupleArr[$i][2];
+        let handler = getFunction(handlerKey);
+
+        upaf_verifyEvents(events);
+
+        jqObj.one(events, null, data, handler);
+    }
+}
+
+export function upaf_off(selector, eventsHandlerPairArr) {
+    let jqObj = getJQueryObj(selector);
+
+    for (let i = 0; i < eventsHandlerPairArr.length; i++) {
+        let events = eventsHandlerPairArr[$i][0];
+        let handlerKey = eventsHandlerPairArr[$i][1];
+        if (typeof eventsHandlerPairArr[$i][2] !== "undefined") {
+            handlerKey = eventsHandlerPairArr[$i][2];
+        }
+        let handler = getFunction(handlerKey);
+
+        upaf_verifyEvents(events);
+
+        jqObj.off(events, null, handler);
+    }
+}
+
+// TODO: Consider adding a jQuery.trigger() wrapper also.
+
+
+
+
+
+
+
+
+/* Some functions that add jQuery effects to HTML elements */
+
+
+/* << jQuery show/hide/fade/slide wrapper >>
+ * input = (selector, effectTypeString, speed, callbackFunction,
+ *     inputDataForCallbackFunction),
+ * or
+ * input = (selector, effectTypeString, [speed (, opacity)], callbackFunction,
+ *     inputDataForCallbackFunction).
+ **/
+export function upaf_visibilityEffect(
+    selector, effectType, settings, callbackKey, callbackDataArr
+) {
+    // get the selected descendents of #upaFrame as a jQuery object.
+    let jqObj = getJQueryObj(selector);
+    // get the optional callback function pointed to by the optionally provided
+    // function key (string).
+    var resultingCallback;
+    if (typeof callbackKey === "string") {
+        resultingCallback = getResultingFunction(callbackKey, callbackDataArr);
+    }
+    // verify the speed and opacity inputs if some are provided.
+    var speed, opacity;
+    // get these variables from input array.
+    if (typeof settings === "object") {
+        speed = settings[0];
+        opacity = settings[1];
+    } else {
+        speed = settings;
+    }
+    // verify the speed input if one is provided.
+    if (
+        !(typeof speed === "undefined") &&
+        !(speed == ~~speed) &&
+        !(["slow", "fast"].includes(speed))
+    ) {
+        throw (
+            "visibilityEffect(): invalid speed input " +
+            "(contained in settings or settings[0])"
+        );
+    }
+    // verify the opacity input if one is provided and the effect type is
+    // "fadeTo".
+    if (
+        effectType === "fadeTo" &&
+        !/^0|1|(0?\.[0-9]+)$/.test(opacity)
+    ) {
+        throw (
+            "visibilityEffect(): invalid opacity input " +
+            "(contained in settings[1])"
+        );
+    }
+    // match the provided effect type an initiate the effect.
+    switch (effectType) {
+        case "show":
+        case "hide":
+        case "toggle":
+        case "fadeIn":
+        case "fadeOut":
+        case "fadeToggle":
+        case "slideDown":
+        case "slideUp":
+        case "slideToggle":
+            jqObj[effectType](speed, resultingCallback);
+            break;
+        case "fadeTo":
+            jqObj[effectType](speed, opacity, resultingCallback);
+            break;
+        default:
+            throw (
+                "visibilityEffect(): invalid effect type input"
+            );
+    }
+}
+
+
+/* jQuery.animate wrapper */
+
+export const cssCCasePropertiesForAnimate = [
+    "backgroundPositionX", "backgroundPositionY", "borderWidth",
+    "borderBottomWidth", "borderLeftWidth", "borderRightWidth",
+    "borderTopWidth", "borderSpacing", "margin", "marginBottom",
+    "marginLeft", "marginRight", "marginTop", "opacity", "outlineWidth",
+    "padding", "paddingBottom", "paddingLeft", "paddingRight",
+    "paddingTop", "height", "width", "maxHeight", "maxWidth",
+    "minHeight", "minWidth", "fontSize", "bottom", "left", "right", "top",
+    "letterSpacing", "wordSpacing", "lineHeight", "textIndent"
+];
+
+export const cssCCasePropertiesForAnimateRegEx = new RegExp(
+    "^((" +
+        cssCCasePropertiesForAnimate.join(")|(") +
+    "))$"
+);
+
+/* << jQuery.animate wrapper >>
+ * input = [selector, ...]..
+ **/
+export function upaf_animate(
+    selector, styles, settings, callbackKey, callbackDataArr
+) {
+    // get the selected descendents of #upaFrame as a jQuery object.
+    let jqObj = getJQueryObj(selector);
+    // get the optional callback function pointed to by the optionally provided
+    // function key (string).
+    var resultingCallback;
+    if (typeof callbackKey === "string") {
+        resultingCallback = getResultingFunction(callbackKey, callbackDataArr);
+    }
+    // verify the speed and easing inputs if some are provided.
+    var speed, easing;
+    // get these variables from input array.
+    if (typeof settings === "object") {
+        speed = settings[0];
+        easing = settings[1];
+    } else {
+        speed = settings;
+    }
+    // verify the speed input if one is provided.
+    if (
+        !(typeof speed === "undefined") &&
+        !(speed == ~~speed) &&
+        !(["slow", "fast"].includes(speed))
+    ) {
+        throw (
+            "animate(): invalid speed input " +
+            "(contained in settings or settings[0])"
+        );
+    }
+    // verify the easing input if one is provided.
+    if (
+        typeof easing !== "undefined" &&
+        !(["swing", "linear"].includes(easing))
+    ) {
+        throw (
+            "animate(): invalid easing input " +
+            "(contained in settings[1])" +
+            "(options are 'swing' or 'linear' or undefined)"
+        );
+    }
+    // verify the styles array.
+    let len = styles.length;
+    for (let i = 0; i < len; i++) {
+        if (!cssCCasePropertiesForAnimateRegEx.test(styles[0])) {
+            throw (
+                "animate(): invalid property for animation " +
+                "(contained in styles[" + i.toString() + "][0])"
+            );
+        }
+        if (!cssNumericRegEx.test(styles[1])) {
+            throw (
+                "animate(): invalid property value for animation " +
+                "(contained in styles[" + i.toString() + "][1]), " +
+                "expects a numeric value"
+            );
+        }
+    }
+    // convert the styles array to a plain object
+    let stylesObj = Object.fromEntries(styles);
+    // initiate the animation.
+    jqObj.animate(stylesObj, speed, easing, resultingCallback);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* Syntax checkers for CSS/jQuery selectors, CSS declarations, CSS rules and
  * HTML.
  **/
 
 // (These syntax checkers use the SyntaxChecker and Lexer classes, so check
 // those out to understand how the following code works.)
+
+
+
 
 
 
@@ -1011,813 +1827,4 @@ export function checkHTML(html, successRequired) {
 export function upaf_checkHTMLAndGetErrorAndLexArr(html) {
     htmlChecker.lexAndParse(html, "<LegalHTMLContent>");
     return [htmlChecker.error, htmlChecker.lexer.lexArr];
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* jQuery wrappers and other functions to add and remove HTML, HTML attributes,
- * and CSS styles.
- **/
-
-
-
-
-/* A private function to get jQuery objects */
-
-// Note that since this function does not have the upaf_ prefix, it cannot
-// be exported to the final user modules (only to other developer modules).
-export function getJQueryObj(selector) {
-    // syntax check selector.
-    checkSelector(selector);
-    // return the descendents of #upaFrame that matches the selector.
-    return $("#upaFrame").find(selector);
-}
-
-
-
-
-
-
-/* jQuery wrappers to get, add, remove and empty HTML */
-
-
-export function upaf_html(selector, html, method) {
-    // test selector and get jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // if html is undefined/null, return the HTML of the selection.
-    if (typeof html === "undefined") {
-        return jqObj.html()
-    }
-    // else verify html first of all.
-    checkHTML(html);
-    // if this check succeeds, get ready to append or prepend html, insert
-    // it after or before, or replace it as the innerHTML of each element
-    // the selection.
-    method = method ?? "inner";
-    switch (method) {
-        case "append":
-        case "prepend":
-        case "after":
-        case "before":
-            jqObj[method](html);
-            break;
-        case "inner":
-        jqObj.html(html);
-            break;
-        default:
-            throw (
-                "html(): unrecognized method '" + method.toString() + "'"
-            );
-    }
-}
-
-export function upaf_remove(selector) {
-    // test selector and get jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // remove all selected elements.
-    jqObj.remove();
-}
-
-export function upaf_empty(selector) {
-    // test selector and get jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // empty all selected elements of their inner HTML.
-    jqObj.empty();
-}
-
-
-
-
-
-/* jQuery wrappers to get and set HTML attributes */
-
-
-
-
-
-
-export function setAttributeOfSingleJQueryObj(jqObj, tagName, key, val) {
-    // verify that key and val are defined and have the right
-    // formats.
-    if (!attrKeyRegEx.test(key)) {
-        throw (
-            "setAttributeOfSingleJQueryObj(): input contains an invalid " +
-            "attribute key"
-        );
-    }
-    if (!attrValRegEx.test(val)) {
-        throw (
-            "setAttributeOfSingleJQueryObj(): input contains an invalid " +
-            "attribute value"
-        );
-    }
-    // if attribute key starts with '~,' set a new upaa_ attribute
-    // for the new HTML element.
-    if (key.substring(0, 1) === "~") {
-        jqObj.attr("upaa_" + key.substring(1), val);
-    // if it is instead an id, test that it has not already been
-    // used and make sure to record it. (Let's not care about
-    // race conditions.)
-    } else if (key === "id") {
-        if (upaf_isExistingID(val)) {
-            throw (
-                "getHTML(): id=\"" + val +
-                "\" has already been used"
-            );
-        }
-        recordID(val);
-        jqObj.attr("id", val);
-    // else, test that it is one of the allowed nagName--key--val
-    // tuples.
-    } else if (upaf_isLegalKeyValAttrPair(tagName, key, val)) {
-        jqObj.attr(key, val);
-    } else {
-        throw (
-            "setAttributeOfSingleJQueryObj(): illegal combination of " +
-            "tagName, key and value"
-        );
-    }
-}
-
-
-
-export function upaf_setAttributes(selector, keyValArr) {
-    // get the selected HTML element as a jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // loop through key value pairs and set the attributes of the HTML element
-    // accordingly.
-    for (let i = 0; i < keyValArr.length; i++) {
-        let key = keyValArr[$i][0];
-        let val = keyValArr[$i][1];
-        // verify that key and val are defined and have the right formats.
-        jqObj.each(function() {
-            setAttributeOfSingleJQueryObj(this, tagName, key, val)
-        });
-    }
-}
-
-export function upaf_getAttribute(selector, key) {
-    // get the selected HTML element as a jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // assert that key is defined and has the right format.
-    if (!attrKeyRegEx.test(key)) {
-        throw (
-            "getAttribute(): input is not a valid attribute key"
-        );
-    }
-    // replace '~' with 'upaa_' in key.
-    key = key.replaceAll("~", "upaa_")
-    // return the attribute of the first selected HTML element.
-    return jqObj.first().attr(key);
-}
-
-
-export function upaf_getAttributes(selector, keyArr) {
-    var ret = [];
-    // get the selected HTML element as a jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // loop through the keys in keyArr and get the corresponding attribute
-    // values from the selected HTML element.
-    for (let i = 0; i < keyArr.length; i++) {
-        let key = keyValArr[$i];
-        // assert that key is defined and has the right format.
-        if (!attrKeyRegEx.test(key)) {
-            throw (
-                "getAttributes(): input " + i.toString() +
-                " is not a valid attribute key"
-            );
-        }
-        // replace '~' with 'upaa_' in key.
-        key = key.replaceAll("~", "upaa_")
-        // get the attribute of the selected HTML element and store it in the
-        // return array.
-        ret[i] = jqObj.first().attr(key);
-    }
-    // return an array of the gotten attribute values.
-    return ret;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Some functions to add and remove HTML elements */
-
-
-// export const flowContentElements = [
-//     "a", "abbr", "address", "article", "aside", "audio", "b", "bdi", "bdo",
-//     "blockquote", "br", "button", "canvas", "cite", "code", "data",
-//     "datalist", "del", "details", "dfn", "dialog", "div", "dl", "em",
-//     "embed", "fieldset", "figure", "footer", "form",
-//     "h1", "h2", "h3", "h4", "h5", "h6",
-//     "header", "hgroup", "hr", "i", "iframe", "img", "input", "ins", "kbd",
-//     "label", "map", "mark",
-//     //"MathML math",
-//     "menu", "meter", "nav",
-//     "noscript", "object", "ol", "output", "p", "picture", "pre",
-//     "progress", "q", "ruby", "s", "samp",
-//     // "script",
-//     "search", "section",
-//     "select", "slot", "small", "span", "strong", "sub", "sup",
-//     // "SVG svg",
-//     "table", "template", "textarea", "time", "u", "ul", "var", "video",
-//     "wbr",
-//     //"autonomous custom elements",
-// ];
-
-
-
-
-
-/* << addHTML() >>
- * input = (selector, method, struct),
- * where
- * method = "append" | "prepend" | "before" | "after",
- * and where
- * struct = undefined | contentText | [(tagAttributesContentTuple,)*],
- * where
- * tagAttributesContentTuple =
- *     [tagName] | [tagName, struct] | [tagName, attributes, struct],
- * where
- * attributes = undefined | [([key, value],)*].
- **/
-export function upaf_addHTML(selector, method, struct) {
-    let jqObj = getJQueryObj(selector);
-    // test method.
-    if (!["append", "prepend", "before", "after"].includes(method)) {
-        throw (
-            "addHTML(): method name not recognized"
-        );
-    }
-    let html = getHTMLFromStructureAndRecordIDs(struct);
-    // insert html via the append(), prepend(), before() or after() method.
-    return jqObj[method](html);
-}
-
-
-export function getHTMLFromStructureAndRecordIDs(struct) {
-    // if struct is a string, return the converted (HTML safe) string.
-    if (typeof struct === "string") {
-        return upaf_convertHTMLSpecialChars(struct);
-    }
-    // if struct is undefined or an empty array, return "".
-    var len;
-    if (
-        typeof struct === "undefined" ||
-        (len = struct.length) == 0
-    ) {
-        return "";
-    }
-    // loop through tag--attribute--content tuples and append the resulting
-    // html to a return variable, ret.
-    var ret = "";
-    for (let i = 0; i < len; i++) {
-        // get the variables.
-        var tagName, attributes;
-        var content = "";
-        let tupleLen = struct[i].length;
-        if (tupleLen === 3) {
-            tagName = struct[i][0];
-            attributes = struct[i][1];
-            content = struct[i][2];
-        } else if (tupleLen === 2) {
-            tagName = struct[i][0];
-            content = struct[i][1];
-        } else if (tupleLen === 1) {
-            tagName = struct[i][0];
-        }
-        // if tag input is undefined, simply append the converted content to
-        // ret.
-        if (typeof tagName === "undefined") {
-            ret = ret + getHTMLFromStructureAndRecordIDs(content);
-            continue;
-        }
-        // else, test tag input.
-        if (!elementNameRegEx.test(tagName)) {
-            throw (
-                "getHTMLFromStructureAndRecordIDs(): unrecognized tag name: " +
-                tagName.toString()
-            );
-        }
-        // initialize new HTML element.
-        var htmlJQObj = $("<" + tagName + "></" + tagName + ">");
-        // test each attribute input and add the attribute key--value pair to
-        // the new HTML element.
-        if (typeof attributes !== "undefined") {
-            let lenAttr = attributes.length;
-            for (let j = 0; j < lenAttr; j++) {
-                // get attribute key and value.
-                let key = attributes[j][0];
-                let val = attributes[j][1];
-                // try to set key="val" for htmlJQObj.
-                setAttributeOfSingleJQueryObj(htmlJQObj, tagName, key, val);
-            }
-        }
-        // test and convert content, and add it inside the new HTML element.
-        htmlJQObj.html(getHTMLFromStructureAndRecordIDs(content));
-        // append the new HTML element to ret.
-        ret = ret + htmlJQObj[0].outerHTML;
-    }
-    // return the resulting HTML string.
-    return ret;
-}
-
-
-
-export function upaf_convertHTMLSpecialChars(str) {
-    // verify that input is a string.
-    if (typeof str !== "string") {
-        throw (
-            "convertHTMLSpecialChars(): input is not a string"
-        );
-    }
-    // return the converted (HTML safe) string.
-    return str
-        .replaceAll("&", "&amp;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;");
-}
-
-export function upaf_convertHTMLSpecialCharsAndBackslashes(str) {
-    // verify that input is a string.
-    if (typeof str !== "string") {
-        throw (
-            "convertHTMLSpecialCharsAndBackslashes(): " +
-            "input is not a string"
-        );
-    }
-    // return the converted (HTML safe and attribute value safe) string.
-    return str
-        .replaceAll("&", "&amp;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll("\\", "&#92;");
-}
-
-
-
-export function upaf_removeHTML(selector) {
-    let jqObj = getJQueryObj(selector);
-    // remove all id in the selction from the idRecord.
-    removeAllIDRecords(jqObj)
-    // remove all elements in the selction.
-    jqObj.remove();
-}
-
-export function upaf_emptyHTML(selector) {
-    let jqObj = getJQueryObj(selector);
-    // remove all id in the descendents of the selction from the idRecord.
-    removeAllInnerIDRecords(jqObj)
-    // remove all elements in the selction.
-    jqObj.empty();
-}
-
-
-
-/* Function to get inner and outer HTML (of the first matched element only) */
-
-export function upaf_getInnerHTML(selector) {
-    let jqObj = getJQueryObj(selector);
-    return jqObj[0].innerHTML; // (I don't know if this works in I.E. browsers.)
-}
-
-export function upaf_getOuterHTML(selector) {
-    let jqObj = getJQueryObj(selector);
-    return jqObj[0].outerHTML;
-}
-
-
-
-
-// TODO: Make this function:
-export function upaf_getStructureFromHTML(struct) {
-    //TODO..
-}
-
-// TODO: Make these:
-export function upaf_getInnerStructure(selector) {
-
-}
-
-export function upaf_getOuterStructure(selector) {
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* A function to add CSS styles to a selection of elements */
-
-export function upaf_css(selector, propertyOrPropertyValuePairArr) {
-    // get the selected descendents of #upaFrame as a jQuery object.
-    let jqObj = getJQueryObj(selector);
-    if (typeof propertyOrPropertyValuePairArr === "string") {
-        let property = propertyOrPropertyValuePairArr;
-        if (!/^@?[[a-zA-Z]\-]+$/.test(property)) {
-            throw (
-                "css(): properties can only contain letters, '-' and '@'"
-            );
-        }
-        return jqObj.css(property);
-    } else {
-        let propertyValuePairArr = propertyOrPropertyValuePairArr;
-        // verify all values to be (PERHAPS! (TODO: verify this!)) safe.
-        let len = propertyValuePairArr.length;
-        for (let i = 0; i < len; i++) {
-            let property = propertyValuePairArr[i][0];
-            let value = propertyValuePairArr[i][1];
-            // test property.
-            if (!cssLegalProperties.includes(property)) {
-                throw (
-                    "css(): property" + i.toString() +
-                    "can only contain letters, '-' and '@'"
-                );
-            }
-            // test value.
-            if (!cssAComplexRegEx.test(value)) {
-                throw (
-                    "css(): property value " + i.toString() +
-                    " is either invalid or not implemented yet"
-                );
-            }
-            // test that this nested array is a pair.
-            if (!propertyValuePairArr[i].length === 2) {
-                throw (
-                    "css(): propertyValuePairArr[" + i.toString() + "] " +
-                    "did not have a length of 2"
-                );
-            }
-        }
-        // convert the property--value array to a plain object
-        let stylesObj = Object.fromEntries(styles);
-        // set the css properties.
-        jqObj.css(stylesObj);
-    }
-}
-
-
-/* Function to add and remove CSS style tags to document head */
-
-export function upaf_addCSS(selector, propertyValuePairArr) {
-    // test the selector.
-    if (!selectorRegex.test(selector)) {console.log(selectorRegex);
-        throw (
-            "addCSS(): selector does not match expected pattern"
-        );
-    }
-    // initialize styleElem as the first part of the desired HTML string.
-    var styleElem =
-        '<style class="upas" selector="' + // Change to just have upak="key"
-        // instead..
-            // (This should be safe since it is inside quotation marks, I
-            // believe.. TODO: Verify this.)
-            upaf_convertHTMLSpecialCharsAndBackslashes(selector) +
-        '"> ' +
-        "#upaFrame { " + selector + " { ";
-    // loop through property--value pairs and append them to styleElem.
-    let len = propertyValuePairArr.length;
-    for (let i = 0; i < len; i++) {
-        let property = propertyValuePairArr[i][0];
-        let value = propertyValuePairArr[i][1];
-        // test property.
-        if (!cssLegalProperties.includes(property)) {
-            throw (
-                "addCSS(): property" + i.toString() +
-                "can only contain letters, '-' and '@'"
-            );
-        }
-        // test value.
-        if (!cssAComplexRegEx.test(value)) {
-            throw (
-                "addCSS(): property value " + i.toString() +
-                " is either invalid or not implemented yet"
-            );
-        }
-        // append property and value to styleElem.
-        styleElem += property + ": " + value + "; ";
-    }
-    // append the final part of the style tag.
-    styleElem += "}}</style>";
-    // append the resulting style element to the document head.
-    $(":root > head").append(styleElem);
-}
-
-
-export function upaf_removeCSS(selector) {
-    // remove all UPA style tags with the given selector.
-    $(
-        ':root > head > .upas[' +
-            'selector="' +
-            upaf_convertHTMLSpecialCharsAndBackslashes(selector) + // TODO: Change for key.
-        '"]'
-    ).remove();
-}
-
-export function upaf_removeLastCSS(selector) {
-    // remove the last UPA style tag with the given selector.
-    $(
-        ':root > head > .upas[' +
-            'selector="' +
-            upaf_convertHTMLSpecialCharsAndBackslashes(selector) +
-        '"]:last-of-type'
-    ).remove();
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Functions to add events to HTML elements */
-
-const jQueryEvents = [
-    "blur", "change", "focus", "focusin", "focusout", "select", "submit",
-    "keydown", "keypress", "keyup",
-    "click", "dblclick", "hover", "mousedown", "mouseenter", "mouseleave",
-    "mousemove", "mouseout", "mouseover", "mouseup",
-    "toggle", "resize", "scroll", "load", "ready", "unload",
-];
-
-const singleEventPattern =
-    "((" +
-        jQueryEvents.join(")|(") +
-    "))";
-
-const eventsRegEx = new RegExp(
-    "^" +
-        singleEventPattern + "(" + " " +  singleEventPattern + ")*" +
-    "$"
-);
-
-export function upaf_verifyEvents(events) {
-    if (!eventsRegEx.test(events)) {
-        throw (
-            "verifyEvents(): unrecognized events pattern"
-        );
-    }
-}
-
-
-export function upaf_on(selector, eventsDataHandlerTupleArr) {
-    let jqObj = getJQueryObj(selector);
-
-    for (let i = 0; i < eventsDataHandlerTupleArr.length; i++) {
-        let events = eventsDataHandlerTupleArr[$i][0];
-        let data = eventsDataHandlerTupleArr[$i][1] ?? "";
-        let handlerKey = eventsDataHandlerTupleArr[$i][2];
-        let handler = getFunction(handlerKey);
-
-        upaf_verifyEvents(events);
-
-        jqObj.on(events, null, data, handler);
-    }
-}
-
-export function upaf_one(selector, eventsDataHandlerTupleArr) {
-    let jqObj = getJQueryObj(selector);
-
-    for (let i = 0; i < eventsDataHandlerTupleArr.length; i++) {
-        let events = eventsDataHandlerTupleArr[$i][0];
-        let data = eventsDataHandlerTupleArr[$i][1] ?? "";
-        let handlerKey = eventsDataHandlerTupleArr[$i][2];
-        let handler = getFunction(handlerKey);
-
-        upaf_verifyEvents(events);
-
-        jqObj.one(events, null, data, handler);
-    }
-}
-
-export function upaf_off(selector, eventsHandlerPairArr) {
-    let jqObj = getJQueryObj(selector);
-
-    for (let i = 0; i < eventsHandlerPairArr.length; i++) {
-        let events = eventsHandlerPairArr[$i][0];
-        let handlerKey = eventsHandlerPairArr[$i][1];
-        if (typeof eventsHandlerPairArr[$i][2] !== "undefined") {
-            handlerKey = eventsHandlerPairArr[$i][2];
-        }
-        let handler = getFunction(handlerKey);
-
-        upaf_verifyEvents(events);
-
-        jqObj.off(events, null, handler);
-    }
-}
-
-// TODO: Consider adding a jQuery.trigger() wrapper also.
-
-
-
-
-
-
-
-
-/* Some functions that add jQuery effects to HTML elements */
-
-
-/* << jQuery show/hide/fade/slide wrapper >>
- * input = (selector, effectTypeString, speed, callbackFunction,
- *     inputDataForCallbackFunction),
- * or
- * input = (selector, effectTypeString, [speed (, opacity)], callbackFunction,
- *     inputDataForCallbackFunction).
- **/
-export function upaf_visibilityEffect(
-    selector, effectType, settings, callbackKey, callbackDataArr
-) {
-    // get the selected descendents of #upaFrame as a jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // get the optional callback function pointed to by the optionally provided
-    // function key (string).
-    var resultingCallback;
-    if (typeof callbackKey === "string") {
-        resultingCallback = getResultingFunction(callbackKey, callbackDataArr);
-    }
-    // verify the speed and opacity inputs if some are provided.
-    var speed, opacity;
-    // get these variables from input array.
-    if (typeof settings === "object") {
-        speed = settings[0];
-        opacity = settings[1];
-    } else {
-        speed = settings;
-    }
-    // verify the speed input if one is provided.
-    if (
-        !(typeof speed === "undefined") &&
-        !(speed == ~~speed) &&
-        !(["slow", "fast"].includes(speed))
-    ) {
-        throw (
-            "visibilityEffect(): invalid speed input " +
-            "(contained in settings or settings[0])"
-        );
-    }
-    // verify the opacity input if one is provided and the effect type is
-    // "fadeTo".
-    if (
-        effectType === "fadeTo" &&
-        !/^0|1|(0?\.[0-9]+)$/.test(opacity)
-    ) {
-        throw (
-            "visibilityEffect(): invalid opacity input " +
-            "(contained in settings[1])"
-        );
-    }
-    // match the provided effect type an initiate the effect.
-    switch (effectType) {
-        case "show":
-        case "hide":
-        case "toggle":
-        case "fadeIn":
-        case "fadeOut":
-        case "fadeToggle":
-        case "slideDown":
-        case "slideUp":
-        case "slideToggle":
-            jqObj[effectType](speed, resultingCallback);
-            break;
-        case "fadeTo":
-            jqObj[effectType](speed, opacity, resultingCallback);
-            break;
-        default:
-            throw (
-                "visibilityEffect(): invalid effect type input"
-            );
-    }
-}
-
-
-/* jQuery.animate wrapper */
-
-export const cssCCasePropertiesForAnimate = [
-    "backgroundPositionX", "backgroundPositionY", "borderWidth",
-    "borderBottomWidth", "borderLeftWidth", "borderRightWidth",
-    "borderTopWidth", "borderSpacing", "margin", "marginBottom",
-    "marginLeft", "marginRight", "marginTop", "opacity", "outlineWidth",
-    "padding", "paddingBottom", "paddingLeft", "paddingRight",
-    "paddingTop", "height", "width", "maxHeight", "maxWidth",
-    "minHeight", "minWidth", "fontSize", "bottom", "left", "right", "top",
-    "letterSpacing", "wordSpacing", "lineHeight", "textIndent"
-];
-
-export const cssCCasePropertiesForAnimateRegEx = new RegExp(
-    "^((" +
-        cssCCasePropertiesForAnimate.join(")|(") +
-    "))$"
-);
-
-/* << jQuery.animate wrapper >>
- * input = [selector, ...]..
- **/
-export function upaf_animate(
-    selector, styles, settings, callbackKey, callbackDataArr
-) {
-    // get the selected descendents of #upaFrame as a jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // get the optional callback function pointed to by the optionally provided
-    // function key (string).
-    var resultingCallback;
-    if (typeof callbackKey === "string") {
-        resultingCallback = getResultingFunction(callbackKey, callbackDataArr);
-    }
-    // verify the speed and easing inputs if some are provided.
-    var speed, easing;
-    // get these variables from input array.
-    if (typeof settings === "object") {
-        speed = settings[0];
-        easing = settings[1];
-    } else {
-        speed = settings;
-    }
-    // verify the speed input if one is provided.
-    if (
-        !(typeof speed === "undefined") &&
-        !(speed == ~~speed) &&
-        !(["slow", "fast"].includes(speed))
-    ) {
-        throw (
-            "animate(): invalid speed input " +
-            "(contained in settings or settings[0])"
-        );
-    }
-    // verify the easing input if one is provided.
-    if (
-        typeof easing !== "undefined" &&
-        !(["swing", "linear"].includes(easing))
-    ) {
-        throw (
-            "animate(): invalid easing input " +
-            "(contained in settings[1])" +
-            "(options are 'swing' or 'linear' or undefined)"
-        );
-    }
-    // verify the styles array.
-    let len = styles.length;
-    for (let i = 0; i < len; i++) {
-        if (!cssCCasePropertiesForAnimateRegEx.test(styles[0])) {
-            throw (
-                "animate(): invalid property for animation " +
-                "(contained in styles[" + i.toString() + "][0])"
-            );
-        }
-        if (!cssNumericRegEx.test(styles[1])) {
-            throw (
-                "animate(): invalid property value for animation " +
-                "(contained in styles[" + i.toString() + "][1]), " +
-                "expects a numeric value"
-            );
-        }
-    }
-    // convert the styles array to a plain object
-    let stylesObj = Object.fromEntries(styles);
-    // initiate the animation.
-    jqObj.animate(stylesObj, speed, easing, resultingCallback);
 }
