@@ -178,14 +178,283 @@ export function upaf_checkSelectorAndGetErrorAndLexArr(selector) {
 
 /* CSS syntax checking */
 
-var cssDeclarationsLexer = new Lexer();
-// TODO: Add CSS declaration list lexing rules.
-var cssDeclarationsChecker = new SyntaxChecker();
-// TODO: ...
+
+// TODO: Check that these are safe with the "legal values" below!
+const cssLegalProperties = [
+"accent-color", "align-content", "align-items", "align-self", "all",
+"animation", "animation-delay", "animation-direction", "animation-duration",
+"animation-fill-mode", "animation-iteration-count", "animation-name",
+"animation-play-state", "animation-timing-function", "aspect-ratio",
+"backdrop-filter", "backface-visibility", "background", "background-attachment",
+"background-blend-mode", "background-clip", "background-color",
+"background-image", "background-origin", "background-position",
+"background-position-x", "background-position-y", "background-repeat",
+"background-size", "block-size", "border", "border-block", "border-block-color",
+"border-block-end-color", "border-block-end-style", "border-block-end-width",
+"border-block-start-color", "border-block-start-style",
+"border-block-start-width", "border-block-style", "border-block-width",
+"border-bottom", "border-bottom-color", "border-bottom-left-radius",
+"border-bottom-right-radius", "border-bottom-style", "border-bottom-width",
+"border-collapse", "border-color", "border-end-end-radius",
+"border-end-start-radius", "border-image", "border-image-outset",
+"border-image-repeat", "border-image-slice", "border-image-source",
+"border-image-width", "border-inline", "border-inline-color",
+"border-inline-end-color", "border-inline-end-style", "border-inline-end-width",
+"border-inline-start-color", "border-inline-start-style",
+"border-inline-start-width", "border-inline-style", "border-inline-width",
+"border-left", "border-left-color", "border-left-style", "border-left-width",
+"border-radius", "border-right", "border-right-color", "border-right-style",
+"border-right-width", "border-spacing", "border-start-end-radius",
+"border-start-start-radius", "border-style", "border-top", "border-top-color",
+"border-top-left-radius", "border-top-right-radius", "border-top-style",
+"border-top-width", "border-width", "bottom", "box-decoration-break",
+"box-reflect", "box-shadow", "box-sizing", "break-after", "break-before",
+"break-inside", "caption-side", "caret-color",
+// "@charset",
+"clear", "clip",
+"clip-path", "color", "column-count", "column-fill", "column-gap",
+"column-rule", "column-rule-color", "column-rule-style", "column-rule-width",
+"column-span", "column-width", "columns", "content", "counter-increment",
+"counter-reset", "cursor", "direction", "display", "empty-cells", "filter",
+"flex", "flex-basis", "flex-direction", "flex-flow", "flex-grow", "flex-shrink",
+"flex-wrap", "float", "font",
+// "@font-face",
+"font-family",
+"font-feature-settings", "font-kerning", "font-size", "font-size-adjust",
+"font-stretch", "font-style", "font-variant", "font-variant-caps",
+"font-weight", "gap", "grid", "grid-area", "grid-auto-columns",
+"grid-auto-flow", "grid-auto-rows", "grid-column", "grid-column-end",
+"grid-column-gap", "grid-column-start", "grid-gap", "grid-row",
+"grid-row-end", "grid-row-gap", "grid-row-start", "grid-template",
+"grid-template-areas", "grid-template-columns", "grid-template-rows",
+"hanging-punctuation", "height", "hyphens", "image-rendering",
+// "@import",
+"inline-size", "inset", "inset-block", "inset-block-end", "inset-block-start",
+"inset-inline", "inset-inline-end", "inset-inline-start", "isolation",
+"justify-content", "justify-items", "justify-self",
+// "@keyframes",
+"left",
+"letter-spacing", "line-height", "list-style", "list-style-image",
+"list-style-position", "list-style-type", "margin", "margin-block",
+"margin-block-end", "margin-block-start", "margin-bottom", "margin-inline",
+"margin-inline-end", "margin-inline-start", "margin-left", "margin-right",
+"margin-top", "mask-image", "mask-mode", "mask-origin", "mask-position",
+"mask-repeat", "mask-size", "max-block-size", "max-height", "max-inline-size",
+"max-width",
+// "@media",
+"min-block-size", "min-inline-size", "min-height",
+"min-width", "mix-blend-mode", "object-fit", "object-position", "offset",
+"offset-anchor", "offset-distance", "offset-path", "offset-rotate",
+"opacity", "order", "orphans", "outline", "outline-color", "outline-offset",
+"outline-style", "outline-width", "overflow", "overflow-anchor",
+"overflow-wrap", "overflow-x", "overflow-y", "overscroll-behavior",
+"overscroll-behavior-block", "overscroll-behavior-inline",
+"overscroll-behavior-x", "overscroll-behavior-y", "padding",
+"padding-block", "padding-block-end", "padding-block-start", "padding-bottom",
+"padding-inline", "padding-inline-end", "padding-inline-start",
+"padding-left", "padding-right", "padding-top", "page-break-after",
+"page-break-before", "page-break-inside", "paint-order", "perspective",
+"perspective-origin", "place-content", "place-items", "place-self",
+"pointer-events", "position", "quotes", "resize", "right", "rotate", "row-gap",
+"scale", "scroll-behavior", "scroll-margin", "scroll-margin-block",
+"scroll-margin-block-end", "scroll-margin-block-start", "scroll-margin-bottom",
+"scroll-margin-inline", "scroll-margin-inline-end",
+"scroll-margin-inline-start", "scroll-margin-left", "scroll-margin-right",
+"scroll-margin-top", "scroll-padding", "scroll-padding-block",
+"scroll-padding-block-end", "scroll-padding-block-start",
+"scroll-padding-bottom", "scroll-padding-inline", "scroll-padding-inline-end",
+"scroll-padding-inline-start", "scroll-padding-left", "scroll-padding-right",
+"scroll-padding-top", "scroll-snap-align", "scroll-snap-stop",
+"scroll-snap-type", "tab-size", "table-layout", "text-align",
+"text-align-last", "text-decoration", "text-decoration-color",
+"text-decoration-line", "text-decoration-style", "text-decoration-thickness",
+"text-indent", "text-justify", "text-orientation", "text-overflow",
+"text-shadow", "text-transform", "top", "transform", "transform-origin",
+"transform-style", "transition", "transition-delay", "transition-duration",
+"transition-property", "transition-timing-function", "translate",
+"unicode-bidi", "user-select", "vertical-align", "visibility", "white-space",
+"widows", "width", "word-break", "word-spacing", "word-wrap", "writing-mode",
+"z-index",
+];
+// TODO: Outcomment properties that I'm not confident are safe to use with
+// the "legal values" below.
+
+export const cssUnits = [
+    "cm", "mm", "Q", "in", "pc", "pt", "px",
+    "em", "ex", "ch", "rem", "lh", "rlh",
+    "vw", "vh", "vi", "vb", "vmin", "vmax",
+    "svw", "svh", "lvw", "lvh", "dvw", "dvh",
+    "deg", "grad", "rad", "turn",
+    "s", "ms", "Hz", "kHz",
+    "flex",
+    "dpi", "dpcm", "dppx",
+    "%",
+];
+
+export const cssUnitsPattern =
+    "((" +
+        cssUnits.join(")|(") +
+    "))";
+
+export const decimalNumberPattern =
+    "(\\.[0-9]+)|((0|[1-9][0-9]*)(\\.[0-9]*)?)";
+export const cssNumberUnitPattern =
+    decimalNumberPattern + cssUnitsPattern;
+
+export const cssHexColorPattern =
+    "#([0-9a-fA-F]{3,4})|([0-9a-fA-F]{6})|([0-9a-fA-F]{8})";
+
+export const cssHexColorRegEx = new RegExp(
+    "^" +
+        cssHexColorPattern +
+    "$"
+);
+// TODO: Consider adding more color value syntaxes.
+
+
+/* Some CSS keyword values that I hope is safe for all CSS properties */
+export const cssLegalKeywordValues = [
+    "left", "right", "none", "inline-start", "inline-end",
+// "inline-table"
+// "table-row"
+// "table-row-group"
+// "table-column"
+// "table-column-group"
+// "table-cell"
+// "table-caption"
+// "table-header-group"
+// "table-footer-group"
+// "inline-flex"
+// "inline-grid"
+    "repeat-x", "repeat-y", "no-repeat", "repeat",
+    "top", "bottom", "fixed",
+    "scroll", "center", "justify",
+    "dotted", "dashed", "solid", "double", "groove", "ridge", "inset",
+    "outset", "none", "hidden",
+    "thin", "medium", "thick",
+    "border-box",
+    "baseline", "text-top", "text-bottom", "sub", "super",
+    "overline", "underline", "line-through",
+    "uppercase", "lowercase", "capitalize",
+    "nowrap", "clip",
+    "sans-serif", "serif", "monospace", "cursive", "fantasy",
+    "Arial", "Verdana", "Tahoma", "Trebuchet", "Times",
+    "Georgia", "Garamond", "Courier", "Brush",
+    "normal", "italic", "oblique", "bold", "small-caps",
+    "circle", "ellipse", "square",
+    "upper-roman", "upper-alpha", "lower-alpha",
+    "outside", "inside",
+    "collapse",
+    "inline", "block", "inline-block",
+    "static", "relative", "fixed", "absolute", "sticky",
+    "visible", "auto", "both", "table",
+    "cover", "contain", "content-box",
+    "ellipsis", "break-word", "break-all", "keep-all",
+    // "ltr", "rtl",
+    "width", "height",
+    "ease", "linear", "ease-in", "ease-out", "ease-in-out",
+    "transform",
+    "fill", "scale-down",
+    "not-allowed",
+    "horizontal", "vertical",
+    "farthest-corner", "closest-side", "closest-corner", "farthest-side",
+    "at", // this is not actually a *value* keyword.
+    "normal", "reverse", "alternate", "alternate-reverse",
+    "forwards", "backwards",
+    "infinite", "example",
+    // TODO: Consider adding more.
+    // TODO: Verify their safety of these keyword values!
+];
+
+
+export const cssLegalFunctions = [
+    "linear-gradient", "radial-gradient", "conic-gradient",
+    "translate", "rotate", "scale", "scaleX", "scaleY",
+    "skew", "skewX", "skewY", "matrix",
+    "rgb", "rgba",
+];
 
 
 
 
+// I think we can just allow any string on the form:
+// Dec ::= ( <Property> : <Values> ; )*
+// with
+// <Values> ::= ( <Value> [, ] )+
+// <Value> ::= <LegalFun> \( <Values> \) | <Number><Unit> | <LegalKeyword> | at
+// (In other words, let us just treat 'at' as a value.)
+// So this will definitely not be a subset of CSS, but it will be a restriction
+// at least in terms of the functions that we are allowed to use.
+const cssDecLexemePatterns = [
+    ["[\\w+\\-]", "[^\\w+\\-]"],
+    [":"], [";"], ["\\("], ["\\)"], [","],
+];
+var cssDeclarationsLexer = new Lexer(cssDecLexemePatterns, " ");
+
+var cssDeclarationsChecker = new SyntaxChecker(cssDeclarationsLexer);
+cssDeclarationsChecker.addLexemePatterns(cssDecLexemePatterns);
+cssDeclarationsChecker.addLexemePatterns([
+    // "[a-z]+[\\-a-z]*", // regular properties. *No, I don't need this.
+    cssNumberUnitPattern, // <Number><Unit>.
+    cssHexColorPattern, // hexadecimal color literals.
+    "[a-zA-Z]", // keywords and functions.
+]);
+cssDeclarationsChecker.addProduction("<DeclarationList>", [
+    ["initSequence", [
+        ["[\\w+\\-]",
+            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
+                // (lexeme variable will hold the "[\\w+\\-]" property lexeme.)
+                return cssLegalProperties.includes(lexeme);
+            }
+        ]
+    ]],
+    ["sequence", [
+        ":",
+        "<Values>",
+        ";"
+    ]],
+
+]);
+cssDeclarationsChecker.addProduction("<Values>", [
+    ["nonemptyList", [
+        "<Value>", "<OptionalComma>"
+    ]],
+
+]);
+cssDeclarationsChecker.addProduction("<OptionalComma>", [
+    ["optSequence", [
+        ","
+    ]],
+
+]);
+cssDeclarationsChecker.addProduction("<Value>", [
+    ["union", [
+        cssNumberUnitPattern, // <Number><Unit>.
+        cssHexColorPattern, // hexadecimal color literals.
+        "<FunctionCall>",
+        ["[a-zA-Z]", // keywords.
+            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
+                // (lexeme variable will hold the "[a-zA-Z]" keyword lexeme.)
+                return cssLegalKeywordValues.includes(lexeme);
+            }
+        ],
+    ]],
+]);
+cssDeclarationsChecker.addProduction("<FunctionCall>", [
+    ["initSequence", [
+        ["[a-zA-Z]",
+            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
+                // (lexeme variable will hold the "[a-zA-Z]" function name.)
+                return cssLegalFunctions.includes(lexeme);
+            }
+        ]
+    ]],
+    ["sequence", [
+        "\\(",
+        "<Values>",
+        "\\)",
+    ]],
+]);
 
 
 
@@ -1051,10 +1320,11 @@ const cssLegalProperties = [
 // TODO: Outcomment properties that I'm not confident are safe to use with
 // the "legal values" below.
 
-export const cssUnitPatterns = [
-    "em", "ex", "cap", "ch", "ic", "lh", "vw", "vh", "vi", "vb", "vmin", "vmax",
-    "cq[whib(min)(max)]", // TODO..
+export const cssUnits = [
     "cm", "mm", "Q", "in", "pc", "pt", "px",
+    "em", "ex", "ch", "rem", "lh", "rlh",
+    "vw", "vh", "vi", "vb", "vmin", "vmax",
+    "svw", "svh", "lvw", "lvh", "dvw", "dvh",
     "deg", "grad", "rad", "turn",
     "s", "ms", "Hz", "kHz",
     "flex",

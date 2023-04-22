@@ -9,7 +9,7 @@ constructor(lexemeAndEndCharPatternPairArr, whitespacePattern) {
     // the lexeme itself. If endCharPattern is null/undefined, the lexeme
     // is taken to include its own end delimeter.
     this.lexPatternEndPairArr = lexemeAndEndCharPatternPairArr ?? [];
-    this.whitespacePattern = whitespacePattern ?? "[^\s\S]";
+    this.whitespacePattern = whitespacePattern ?? "[^\w\W]";
     this.whitespacePattern = whitespacePattern;
     this.error = undefined;
     this.success = undefined;
