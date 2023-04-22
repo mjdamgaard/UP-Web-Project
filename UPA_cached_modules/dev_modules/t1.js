@@ -111,8 +111,6 @@ selectorChecker.addLexemePatterns([
     ["#upai_\\w+"],
 ]);
 
-
-
 selectorChecker.addProduction("<PseudoClassFunctionCall>", [
     ["initSequence", [
         functionalPseudoClassesWithSelectorInputPattern,
@@ -602,242 +600,11 @@ export function upaf_checkCSSRuleListAndGetErrorAndLexArr(css) {
 
 
 
-// /* Functions to set and get (unique!) IDs of HTML elements */
-//
-// // Hm, I actually doubt that this is worth the effort. So let me for now just
-// // assume that allowing multiple IDs does not cause any security risk, and if
-// // I/we then at some point find a use of IDs that requires IDs to be unique for
-// // safety, ... Hm, no I really do not see that happening.. ...Ah, and even
-// // if we find a use for ID where they are required to be unique for safety,
-// // we can then just add a check for uniqueness to whatever function adds
-// // the given functionality.
-// var idRecord = idRecord ?? [];
-//
-// export function upaf_setID(selector, id) {
-//     let jqObj = getJQueryObj(selector);
-//     // test that id contains only \w characters.
-//     if (!/^\w+$/.test(id)) {
-//         throw (
-//             "setID(): invalid id pattern (not of /^\\w+$/)"
-//         );
-//     }
-//    // test that id is unused. (Let's not care to much about race conditions.)
-//     if (upaf_isExistingID(id)) {
-//         throw (
-//             "setID(): id has already been used"
-//         );
-//     }
-//     // record id.
-//     recordID(id);
-//     // set the (prefixed) id of the first element in the selection.
-//     jqObj[0].id = "upai_" + id;
-// }
-//
-// export function upaf_isExistingID(id) {
-//     return idRecord.includes(id);
-// }
-//
-// export function recordID(id) {
-//     if (!idRecord.includes(id)) {
-//         idRecord.push(id);
-//     }
-// }
-//
-// export function removeIDRecord(id) {
-//     let i = idRecord.findIndex(id);
-//     if (i >= 0) {
-//         idRecord[i] = null;
-//     }
-// }
-//
-// export function removeAllInnerIDRecords(jqObj) {
-//     // for each descendent with an id, remove the record of the id.
-//     jqObj.find('[id^=upai_]').each(function(){
-//         let id = this.attr("id").substring(5);
-//         removeIDRecord(id);
-//     });
-// }
-//
-// export function removeAllIDRecords(jqObj) {
-//     // for each descendent with an id, remove the record of that id.
-//     jqObj.find('[id^=upai]').each(function(){
-//         let id = this.attr("id").substring(5);
-//         removeIDRecord(id);
-//     });
-//     // for each selected element with an id, remove the record of that id.
-//     jqObj.filter('[id^=upai]').each(function(){
-//         let id = this.attr("id").substring(5);
-//         removeIDRecord(id);
-//     });
-// }
-//
-// export function upaf_getID(selector) {
-//     let jqObj = getJQueryObj(selector);
-//     // if id of the first element in the selection is not set, return false.
-//     if (typeof jqObj[0].id === "undefined") {
-//         return false;
-//     }
-//    // return the id of the first element in the selection without the "upai_"
-//     // prefix.
-//     return jqObj[0].id.substring(5);
-// }
-
-
-
-
-
-// TODO Gather all the following attribute setters/getters..
-
-/* Some functions to get and set upaa_ attributes */
-
-const attrKeyRegEx =  /^~?\w+$/;
-const upaAttrKeyRegEx =  /^~\w+$/;
-const attrValRegEx =  /^\w+$/;
-
-
-
-
-
-
-
-
-// Note that since this function does not have the upaf_ prefix, it cannot
-// be exported to the final user modules (only to other developer modules).
-export function getJQueryObj(selector) {
-    // test selector.
-    upaf_checkSelector(selector);
-    // return the descendents of #upaFrame that matches the selector.
-    return $("#upaFrame").find(selector);
-}
-
-
-
-
-
-
-
-
-
-
-export function setAttributeOfSingleJQueryObj(jqObj, tagName, key, val) {
-    // verify that key and val are defined and have the right
-    // formats.
-    if (!attrKeyRegEx.test(key)) {
-        throw (
-            "setAttributeOfSingleJQueryObj(): input contains an invalid " +
-            "attribute key"
-        );
-    }
-    if (!attrValRegEx.test(val)) {
-        throw (
-            "setAttributeOfSingleJQueryObj(): input contains an invalid " +
-            "attribute value"
-        );
-    }
-    // if attribute key starts with '~,' set a new upaa_ attribute
-    // for the new HTML element.
-    if (key.substring(0, 1) === "~") {
-        jqObj.attr("upaa_" + key.substring(1), val);
-    // if it is instead an id, test that it has not already been
-    // used and make sure to record it. (Let's not care about
-    // race conditions.)
-    } else if (key === "id") {
-        if (upaf_isExistingID(val)) {
-            throw (
-                "getHTML(): id=\"" + val +
-                "\" has already been used"
-            );
-        }
-        recordID(val);
-        jqObj.attr("id", val);
-    // else, test that it is one of the allowed nagName--key--val
-    // tuples.
-    } else if (upaf_isLegalKeyValAttrPair(tagName, key, val)) {
-        jqObj.attr(key, val);
-    } else {
-        throw (
-            "setAttributeOfSingleJQueryObj(): illegal combination of " +
-            "tagName, key and value"
-        );
-    }
-}
-
-
-
-export function upaf_setAttributes(selector, keyValArr) {
-    // get the selected HTML element as a jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // loop through key value pairs and set the attributes of the HTML element
-    // accordingly.
-    for (let i = 0; i < keyValArr.length; i++) {
-        let key = keyValArr[$i][0];
-        let val = keyValArr[$i][1];
-        // verify that key and val are defined and have the right formats.
-        jqObj.each(function() {
-            setAttributeOfSingleJQueryObj(this, tagName, key, val)
-        });
-    }
-}
-
-export function upaf_getAttribute(selector, key) {
-    // get the selected HTML element as a jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // assert that key is defined and has the right format.
-    if (!attrKeyRegEx.test(key)) {
-        throw (
-            "getAttribute(): input is not a valid attribute key"
-        );
-    }
-    // replace '~' with 'upaa_' in key.
-    key = key.replaceAll("~", "upaa_")
-    // return the attribute of the first selected HTML element.
-    return jqObj.first().attr(key);
-}
-
-
-export function upaf_getAttributes(selector, keyArr) {
-    var ret = [];
-    // get the selected HTML element as a jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // loop through the keys in keyArr and get the corresponding attribute
-    // values from the selected HTML element.
-    for (let i = 0; i < keyArr.length; i++) {
-        let key = keyValArr[$i];
-        // assert that key is defined and has the right format.
-        if (!attrKeyRegEx.test(key)) {
-            throw (
-                "getAttributes(): input " + i.toString() +
-                " is not a valid attribute key"
-            );
-        }
-        // replace '~' with 'upaa_' in key.
-        key = key.replaceAll("~", "upaa_")
-        // get the attribute of the selected HTML element and store it in the
-        // return array.
-        ret[i] = jqObj.first().attr(key);
-    }
-    // return an array of the gotten attribute values.
-    return ret;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Some functions to add and remove HTML elements */
+/* HTML syntax checker */
 
 // (I still don't wnt to worry about repeated ids, even though my
 // SyntaxChecker class now has the ability in principle to record the ids
 // it encounters during the parsing.)
-
 
 // construct a lexer for HTML.
 let htmlLexemeAndEndCharPatterns = [
@@ -857,9 +624,6 @@ var = htmlChecker = new SyntaxChecker(htmlLexer);
 // it doesn't hurt to add all the pattern from the lexer, even if I won't use
 // some of them.
 htmlChecker.addLexemePatterns(htmlLexemeAndEndCharPatterns);
-
-
-
 
 htmlChecker.addProduction("<LegalHTMLContent>", [
     ["optList", [
@@ -1144,9 +908,281 @@ export function isLegalTagNameAttrNameAttrValTriplet(
 
 
 
+export function checkHTML(html, successRequired) {
+    successRequired = successRequired ?? true;
+    let ret = htmlChecker.lexAndParse(html, "<LegalHTMLContent>");
+    if (!ret && successRequired) {
+        throw htmlChecker.error;
+    } else {
+        return ret;
+    }
+}
+// Function meant to help with debugging.
+export function upaf_checkHTMLAndGetErrorAndLexArr(html) {
+    htmlChecker.lexAndParse(html, "<LegalHTMLContent>");
+    return [htmlChecker.error, htmlChecker.lexer.lexArr];
+}
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// /* Functions to set and get (unique!) IDs of HTML elements */
+//
+// // Hm, I actually doubt that this is worth the effort. So let me for now just
+// // assume that allowing multiple IDs does not cause any security risk, and if
+// // I/we then at some point find a use of IDs that requires IDs to be unique for
+// // safety, ... Hm, no I really do not see that happening.. ...Ah, and even
+// // if we find a use for ID where they are required to be unique for safety,
+// // we can then just add a check for uniqueness to whatever function adds
+// // the given functionality.
+// var idRecord = idRecord ?? [];
+//
+// export function upaf_setID(selector, id) {
+//     let jqObj = getJQueryObj(selector);
+//     // test that id contains only \w characters.
+//     if (!/^\w+$/.test(id)) {
+//         throw (
+//             "setID(): invalid id pattern (not of /^\\w+$/)"
+//         );
+//     }
+//    // test that id is unused. (Let's not care to much about race conditions.)
+//     if (upaf_isExistingID(id)) {
+//         throw (
+//             "setID(): id has already been used"
+//         );
+//     }
+//     // record id.
+//     recordID(id);
+//     // set the (prefixed) id of the first element in the selection.
+//     jqObj[0].id = "upai_" + id;
+// }
+//
+// export function upaf_isExistingID(id) {
+//     return idRecord.includes(id);
+// }
+//
+// export function recordID(id) {
+//     if (!idRecord.includes(id)) {
+//         idRecord.push(id);
+//     }
+// }
+//
+// export function removeIDRecord(id) {
+//     let i = idRecord.findIndex(id);
+//     if (i >= 0) {
+//         idRecord[i] = null;
+//     }
+// }
+//
+// export function removeAllInnerIDRecords(jqObj) {
+//     // for each descendent with an id, remove the record of the id.
+//     jqObj.find('[id^=upai_]').each(function(){
+//         let id = this.attr("id").substring(5);
+//         removeIDRecord(id);
+//     });
+// }
+//
+// export function removeAllIDRecords(jqObj) {
+//     // for each descendent with an id, remove the record of that id.
+//     jqObj.find('[id^=upai]').each(function(){
+//         let id = this.attr("id").substring(5);
+//         removeIDRecord(id);
+//     });
+//     // for each selected element with an id, remove the record of that id.
+//     jqObj.filter('[id^=upai]').each(function(){
+//         let id = this.attr("id").substring(5);
+//         removeIDRecord(id);
+//     });
+// }
+//
+// export function upaf_getID(selector) {
+//     let jqObj = getJQueryObj(selector);
+//     // if id of the first element in the selection is not set, return false.
+//     if (typeof jqObj[0].id === "undefined") {
+//         return false;
+//     }
+//    // return the id of the first element in the selection without the "upai_"
+//     // prefix.
+//     return jqObj[0].id.substring(5);
+// }
+
+
+
+
+
+// TODO Gather all the following attribute setters/getters..
+
+/* Some functions to get and set upaa_ attributes */
+
+const attrKeyRegEx =  /^~?\w+$/;
+const upaAttrKeyRegEx =  /^~\w+$/;
+const attrValRegEx =  /^\w+$/;
+
+
+
+
+
+
+
+
+// Note that since this function does not have the upaf_ prefix, it cannot
+// be exported to the final user modules (only to other developer modules).
+export function getJQueryObj(selector) {
+    // test selector.
+    upaf_checkSelector(selector);
+    // return the descendents of #upaFrame that matches the selector.
+    return $("#upaFrame").find(selector);
+}
+
+
+
+
+
+
+
+
+
+
+export function setAttributeOfSingleJQueryObj(jqObj, tagName, key, val) {
+    // verify that key and val are defined and have the right
+    // formats.
+    if (!attrKeyRegEx.test(key)) {
+        throw (
+            "setAttributeOfSingleJQueryObj(): input contains an invalid " +
+            "attribute key"
+        );
+    }
+    if (!attrValRegEx.test(val)) {
+        throw (
+            "setAttributeOfSingleJQueryObj(): input contains an invalid " +
+            "attribute value"
+        );
+    }
+    // if attribute key starts with '~,' set a new upaa_ attribute
+    // for the new HTML element.
+    if (key.substring(0, 1) === "~") {
+        jqObj.attr("upaa_" + key.substring(1), val);
+    // if it is instead an id, test that it has not already been
+    // used and make sure to record it. (Let's not care about
+    // race conditions.)
+    } else if (key === "id") {
+        if (upaf_isExistingID(val)) {
+            throw (
+                "getHTML(): id=\"" + val +
+                "\" has already been used"
+            );
+        }
+        recordID(val);
+        jqObj.attr("id", val);
+    // else, test that it is one of the allowed nagName--key--val
+    // tuples.
+    } else if (upaf_isLegalKeyValAttrPair(tagName, key, val)) {
+        jqObj.attr(key, val);
+    } else {
+        throw (
+            "setAttributeOfSingleJQueryObj(): illegal combination of " +
+            "tagName, key and value"
+        );
+    }
+}
+
+
+
+export function upaf_setAttributes(selector, keyValArr) {
+    // get the selected HTML element as a jQuery object.
+    let jqObj = getJQueryObj(selector);
+    // loop through key value pairs and set the attributes of the HTML element
+    // accordingly.
+    for (let i = 0; i < keyValArr.length; i++) {
+        let key = keyValArr[$i][0];
+        let val = keyValArr[$i][1];
+        // verify that key and val are defined and have the right formats.
+        jqObj.each(function() {
+            setAttributeOfSingleJQueryObj(this, tagName, key, val)
+        });
+    }
+}
+
+export function upaf_getAttribute(selector, key) {
+    // get the selected HTML element as a jQuery object.
+    let jqObj = getJQueryObj(selector);
+    // assert that key is defined and has the right format.
+    if (!attrKeyRegEx.test(key)) {
+        throw (
+            "getAttribute(): input is not a valid attribute key"
+        );
+    }
+    // replace '~' with 'upaa_' in key.
+    key = key.replaceAll("~", "upaa_")
+    // return the attribute of the first selected HTML element.
+    return jqObj.first().attr(key);
+}
+
+
+export function upaf_getAttributes(selector, keyArr) {
+    var ret = [];
+    // get the selected HTML element as a jQuery object.
+    let jqObj = getJQueryObj(selector);
+    // loop through the keys in keyArr and get the corresponding attribute
+    // values from the selected HTML element.
+    for (let i = 0; i < keyArr.length; i++) {
+        let key = keyValArr[$i];
+        // assert that key is defined and has the right format.
+        if (!attrKeyRegEx.test(key)) {
+            throw (
+                "getAttributes(): input " + i.toString() +
+                " is not a valid attribute key"
+            );
+        }
+        // replace '~' with 'upaa_' in key.
+        key = key.replaceAll("~", "upaa_")
+        // get the attribute of the selected HTML element and store it in the
+        // return array.
+        ret[i] = jqObj.first().attr(key);
+    }
+    // return an array of the gotten attribute values.
+    return ret;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Some functions to add and remove HTML elements */
 
 
 // export const flowContentElements = [
