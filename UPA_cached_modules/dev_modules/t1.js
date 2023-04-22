@@ -298,18 +298,13 @@ export const cssUnitsPattern =
 
 export const decimalNumberPattern =
     "(\\.[0-9]+)|((0|[1-9][0-9]*)(\\.[0-9]*)?)";
+
 export const cssNumberUnitPattern =
     decimalNumberPattern + cssUnitsPattern;
 
 export const cssHexColorPattern =
     "#([0-9a-fA-F]{3,4})|([0-9a-fA-F]{6})|([0-9a-fA-F]{8})";
 
-export const cssHexColorRegEx = new RegExp(
-    "^" +
-        cssHexColorPattern +
-    "$"
-);
-// TODO: Consider adding more color value syntaxes.
 
 
 /* Some CSS keyword values that I hope is safe for all CSS properties */
@@ -389,7 +384,10 @@ const cssDecLexemePatterns = [
     ["[\\w+\\-]", "[^\\w+\\-]"],
     [":"], [";"], ["\\("], ["\\)"], [","],
 ];
-var cssDeclarationsLexer = new Lexer(cssDecLexemePatterns, " ");
+// (Note that while we let the whitespace pattern be " \\n\\r\\t", the
+// "\\n\\r\\t" characters will only appear in CSS header styles; not
+// in in-line styles.)
+var cssDeclarationsLexer = new Lexer(cssDecLexemePatterns, " \\n\\r\\t");
 
 var cssDeclarationsChecker = new SyntaxChecker(cssDeclarationsLexer);
 cssDeclarationsChecker.addLexemePatterns(cssDecLexemePatterns);
