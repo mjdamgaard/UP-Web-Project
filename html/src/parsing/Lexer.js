@@ -17,7 +17,7 @@ constructor(lexemeAndEndCharPatternPairArr, whitespacePattern) {
     this.nextPos = undefined;
 }
 
-addwhitespacePattern(whitespacePattern) {
+setWhitespacePattern(whitespacePattern) {
     this.whitespacePattern = whitespacePattern;
 }
 

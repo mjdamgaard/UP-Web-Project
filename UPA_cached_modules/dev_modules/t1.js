@@ -10,7 +10,91 @@ export function upaf_appendHelloWorld() {
 
 
 
-/* Some functions to cache and select jQuery objects */
+
+
+
+
+
+/* Functions to store and get callback upaf_ functions from key strings */
+
+
+// The following out-commented code is copied from html/src/storeFunction.js.
+// While it has a upas_ prefix instead of the upaf_ prefix, it is exceptionally
+// still part of the UPA's API, namely since the
+// upas_storedFunctions(<Exp>, <Fun>) syntax has been made a special part
+// of the syntax of our JS subset. And storeFunction.js is run in the document
+// head (before loading the UPA).
+
+// // (Here 's' stands for "special function/variable.")
+// var upas_storedFunctions = {};
+//
+// function upas_storeFunction(key, fun) {
+//     if (!/^\w+$/.test(key)) {
+//         throw (
+//             "storeFunction(): function key is not a valid " +
+//             "/^\\w+$/ string"
+//         );
+//     }
+//     upas_storedFunctions["upak_" + key] = fun;
+// }
+
+export function upaf_isAStoredFunction(key) {
+    if (!/^\w+$/.test(key)) {
+        throw (
+            "storeFunction(): function key is not a valid " +
+            "/^\\w+$/ string"
+        );
+    }
+    return (typeof upas_storedFunctions["upak_" + key] !== "undefined");
+}
+
+// Note that since this function does not have the upaf_ prefix, it cannot
+// be exported to the final user modules (but only to other developer modules).
+export function getFunction(key) {
+    if (!/^\w+$/.test(key)) {
+        throw (
+            "storeFunction(): function key is not a valid " +
+            "/^\\w+$/ string"
+        );
+    }
+    return upas_storedFunctions["upak_" + key];
+}
+
+/* A private function to get a resulting function from key and a data array
+ * containing the input parameters.
+ **/
+export function getResultingFunction(funName, dataArr) {
+    var fun = getFunction(funName);
+    return function() {
+        fun.apply(null, dataArr ?? []);
+    };
+}
+
+/* A public function run a upaf_ function pointed to by a key */
+
+export function upaf_runResultingFunction(funName, dataArr) {
+    var fun = getFunction(funName);
+    fun.apply(null, dataArr ?? []);
+}
+
+
+
+
+
+
+
+
+
+/* Syntax checkers for CSS/jQuery selectors, CSS declarations, CSS rules and
+ * HTML.
+ **/
+
+// (These syntax checkers use the SyntaxChecker and Lexer classes, so check
+// those out to understand how the following code works.)
+
+
+
+/* CSS/jQuery selector syntax checker */
 
 export const elementNames = [
     "a", "abbr", "address", "area", "article", "aside",
@@ -83,19 +167,21 @@ const pseudoElementPattern =
 export const attributeSelectorPattern =
     /\[\w+([!\$\|\^~\*]?="w+")?\]/.source;
 
+
+
 // construct a lexer for selectors.
-var selectorLexer = new Lexer(null, null);
 let selectorLexemeAndEndCharPatterns = [
     [" ?[>,~\\+ ] ?", "\S"], // combinators.
     ["[\\w]", "\\W"], // element names.
     ["::[\\w\\-]", "[^\\w\\-]"], // pseudo-elements.
     [":[\\w\\-]", "[^\\w\\-]"], // pseudo-classes (perhaps functional).
-    ["\\("], ["\\)"],
+    ["\\("],
+    ["\\)"],
     [attributeSelectorPattern], // why not just lex this as one lexeme.
     ["\\*"],
     ["#upai_\\w+", "\\W"],
 ];
-selectorLexer.addLexemeAndEndCharPatternPairs(selectorLexemeAndEndCharPatterns);
+var selectorLexer = new Lexer(selectorLexemeAndEndCharPatterns, null);
 
 // construct a syntax checker for selectors.
 var = selectorChecker = new SyntaxChecker(selectorLexer);
@@ -105,7 +191,8 @@ selectorChecker.addLexemePatterns([
     [pseudoElementPattern],
     [pseudoClassPattern],
     [functionalPseudoClassesWithSelectorInputPattern],
-    ["\\([ \\n\\r\\t]*"], ["[ \\n\\r\\t]*\\)"],
+    ["\\("],
+    ["\\)"],
     [attributeSelectorPattern],
     ["\\*"],
     ["#upai_\\w+"],
@@ -116,9 +203,9 @@ selectorChecker.addProduction("<PseudoClassFunctionCall>", [
         functionalPseudoClassesWithSelectorInputPattern,
     ]],
     ["sequence", [
-        "\\([ \\n\\r\\t]*",
+        "\\(",
         "<Selector>",
-        "[ \\n\\r\\t]*\\)",
+        "\\)",
     ]],
 ]);
 selectorChecker.addProduction("<SimpleSelector>", [
@@ -127,6 +214,8 @@ selectorChecker.addProduction("<SimpleSelector>", [
         pseudoElementPattern,
         pseudoClassPattern,
         attributeSelectorPattern,
+        "\\*",
+        "#upai_\\w+",
         "<PseudoClassFunctionCall>"
     ]],
 ]);
@@ -145,18 +234,11 @@ selectorChecker.addProduction("<ComplexSelector>", [
         "<CompoundSelector>", "<Combinator>"
     ]],
 ]);
-selectorChecker.addProduction("<Selector>", [
-    ["union", [
-        "\\*",
-        "#upai_\\w+",
-        "<ComplexSelector>",
-    ]],
-]);
 
 
 export function checkSelector(selector, successRequired) {
     successRequired = successRequired ?? true;
-    let ret = selectorChecker.lexAndParse(selector, "<Selector>");
+    let ret = selectorChecker.lexAndParse(selector, "<ComplexSelector>");
     if (!ret && successRequired) {
         throw selectorChecker.error;
     } else {
@@ -165,7 +247,7 @@ export function checkSelector(selector, successRequired) {
 }
 // Function meant to help with debugging.
 export function upaf_checkSelectorAndGetErrorAndLexArr(selector) {
-    selectorChecker.lexAndParse(selector, "<Selector>");
+    selectorChecker.lexAndParse(selector, "<ComplexSelector>");
     return [selectorChecker.error, selectorChecker.lexer.lexArr];
 }
 
@@ -173,7 +255,8 @@ export function upaf_checkSelectorAndGetErrorAndLexArr(selector) {
 
 
 
-/* CSS syntax checking */
+
+/* CSS declaration list syntax checking */
 
 
 // TODO: Check that these are safe with the "legal values" below!
@@ -1182,6 +1265,84 @@ export function upaf_getAttributes(selector, keyArr) {
 
 
 
+
+/* Functions to verify and load hyperlinks into the UPA, and to follow them */
+
+var urlRegExCache = urlRegExCache ?? {};
+
+export function upaf_cacheURLRegEx(pattID, key, userID) {
+    // test key.
+    if (typeof key !== "string") {
+        throw (
+            "cacheURLRegEx(): key is not a string"
+        );
+    }
+    if ( !(/^\w+$/.test(key)) ) {
+        throw (
+            "cacheURLRegEx(): key does not match the right pattern " +
+            '("/^\\w+$/")'
+        );
+    }
+    // query UPA_links.php to see if pattID points to a whitelisted URL
+    // pattern, and to get the held pattern string if so.
+    // (UPA_links.php also verifies that userID is whitelisted for the
+    // requesting user (if logged in; if not, userID has to be whitelisted
+    // for public use).)
+    let data = {pid: pattID, uid: userID}
+    let res = JSON.parse($.getJSON("UPA_link_patterns.php", ).responseText);
+    // if the pattern was whitelisted for UPA links, store it in the cache.
+    if (res.success) {
+        urlRegExCache["upak_" + key] = new RegExp(res.str);
+        return 0;
+    } else {
+        return res.error;
+    }
+}
+
+
+export function upaf_isACachedURL(key) {
+    if (typeof urlRegExCache["upak_" + key] === "undefined") {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* Some functions to add and remove HTML elements */
 
 
@@ -1779,70 +1940,6 @@ export function upaf_removeLastCSS(selector) {
 
 
 
-
-
-
-/* Functions to store and get callback upaf_ functions from key strings */
-
-
-// The following out-commented code is copied from html/src/storeFunction.js.
-// While it has a upas_ prefix instead of the upaf_ prefix, it is exceptionally
-// still part of the UPA's API, namely since the
-// upas_storedFunctions(<Exp>, <Fun>) syntax has been made a special part
-// of the syntax of our JS subset. And storeFunction.js is run in the document
-// head (before loading the UPA).
-
-// // (Here 's' stands for "special function/variable.")
-// var upas_storedFunctions = {};
-//
-// function upas_storeFunction(key, fun) {
-//     if (!/^\w+$/.test(key)) {
-//         throw (
-//             "storeFunction(): function key is not a valid " +
-//             "/^\\w+$/ string"
-//         );
-//     }
-//     upas_storedFunctions["upak_" + key] = fun;
-// }
-
-export function upaf_isAStoredFunction(key) {
-    if (!/^\w+$/.test(key)) {
-        throw (
-            "storeFunction(): function key is not a valid " +
-            "/^\\w+$/ string"
-        );
-    }
-    return (typeof upas_storedFunctions["upak_" + key] !== "undefined");
-}
-
-// Note that since this function does not have the upaf_ prefix, it cannot
-// be exported to the final user modules (but only to other developer modules).
-export function getFunction(key) {
-    if (!/^\w+$/.test(key)) {
-        throw (
-            "storeFunction(): function key is not a valid " +
-            "/^\\w+$/ string"
-        );
-    }
-    return upas_storedFunctions["upak_" + key];
-}
-
-/* A private function to get a resulting function from key and a data array
- * containing the input parameters.
- **/
-export function getResultingFunction(funName, dataArr) {
-    var fun = getFunction(funName);
-    return function() {
-        fun.apply(null, dataArr ?? []);
-    };
-}
-
-/* A public function run a upaf_ function pointed to by a key */
-
-export function upaf_runResultingFunction(funName, dataArr) {
-    var fun = getFunction(funName);
-    fun.apply(null, dataArr ?? []);
-}
 
 
 
