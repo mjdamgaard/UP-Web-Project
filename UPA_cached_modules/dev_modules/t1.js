@@ -155,17 +155,16 @@ selectorChecker.addProduction("<Selector>", [
     ]],
 ]);
 
+
 export function checkSelector(selector, successRequired) {
     successRequired = successRequired ?? true;
     let ret = selectorChecker.lexAndParse(selector, "<Selector>");
     if (!ret && successRequired) {
         throw selectorChecker.error;
     } else {
-        return selectorChecker.success;
+        return ret;
     }
 }
-
-
 // Function meant to help with debugging.
 export function upaf_checkSelectorAndGetErrorAndLexArr(selector) {
     selectorChecker.lexAndParse(selector, "<Selector>");
@@ -399,17 +398,23 @@ cssDeclarationsChecker.addLexemePatterns([
 ]);
 cssDeclarationsChecker.addProduction("<DeclarationList>", [
     ["initSequence", [
+        "<Property>"
+    ]],
+    ["sequence", [
+        ":",
+        "<Values>",
+        ";"
+    ]],
+
+]);
+cssDeclarationsChecker.addProduction("<Property>", [
+    ["sequence", [
         ["[\\w+\\-]",
             function(lexeme, currentProdScopedArr, mainProdScopedArr) {
                 // (lexeme variable will hold the "[\\w+\\-]" property lexeme.)
                 return cssLegalProperties.includes(lexeme);
             }
         ]
-    ]],
-    ["sequence", [
-        ":",
-        "<Values>",
-        ";"
     ]],
 
 ]);
@@ -456,6 +461,142 @@ cssDeclarationsChecker.addProduction("<FunctionCall>", [
 
 
 
+
+export function checkCSSDeclarationList(declarations, successRequired) {
+    successRequired = successRequired ?? true;
+    let ret = cssDeclarationsChecker.lexAndParse(
+        declarations, "<DeclarationList>"
+    );
+    if (!ret && successRequired) {
+        throw cssDeclarationsChecker.error;
+    } else {
+        return ret;
+    }
+}
+// Function meant to help with debugging.
+export function upaf_checkCSSDeclarationListAndGetErrorAndLexArr(declarations) {
+    cssDeclarationsChecker.lexAndParse(declarations, "<DeclarationList>");
+    return [cssDeclarationsChecker.error, cssDeclarationsChecker.lexer.lexArr];
+}
+
+
+export function checkCSSValues(values, successRequired) {
+    successRequired = successRequired ?? true;
+    let ret = cssDeclarationsChecker.lexAndParse(values, "<Values>");
+    if (!ret && successRequired) {
+        throw cssDeclarationsChecker.error;
+    } else {
+        return ret;
+    }
+}
+// Function meant to help with debugging.
+export function upaf_checkCSSValuesAndGetErrorAndLexArr(values) {
+    cssDeclarationsChecker.lexAndParse(values, "<Values>");
+    return [cssDeclarationsChecker.error, cssDeclarationsChecker.lexer.lexArr];
+}
+
+
+export function checkCSSProperty(property, successRequired) {
+    successRequired = successRequired ?? true;
+    let ret = cssLegalProperties.includes(property);
+    if (!ret && successRequired) {
+        throw "property is not a legal CSS property";
+    } else {
+        return ret;
+    }
+}
+// // Function meant to help with debugging.
+// export function upaf_checkCSSPropertyAndGetError(property) {
+//     if (cssLegalProperties.includes(property)) {
+//         return "";
+//     } else {
+//         return "property is not a legal CSS property";
+//     }
+// }
+
+
+
+
+
+
+
+
+/* Full CSS syntax (or rather a (safe) subset of a superset of CSS) */
+
+// Let us assume that this will always be wrapped in "#upaFrame {...}", such
+// that we are safe as long as we don't include any pseudo elements like
+// ::before, ::after or ::parent.
+const cssRulesLexemePatterns = [
+    // ["#upaFrame "],
+    ["[^\\{\\}]", "[\\{\\}]"],
+    ["\\{"],
+    ["\\}"],
+
+];
+var cssRulesLexer = new Lexer(cssDecLexemePatterns, null);
+
+var cssRulesChecker = new SyntaxChecker(cssRulesLexer);
+cssRulesChecker.addLexemePatterns(cssRulesPatterns);
+// cssRulesChecker.addLexemePatterns([
+//
+// ]);
+
+cssRulesChecker.addProduction("<RuleList>", [
+    ["optList", [
+        "<Rule>",
+    ]],
+]);
+cssRulesChecker.addProduction("<Rule>", [
+    ["initSequence", [
+        ["[^\\{\\}]",
+            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
+                // (The lexeme variable will hold the "[^\\{\\}]" selector,
+                // perhaps surrounded by whitespace.)
+                // trim the whitespace at both ends to get the selector.
+                let selector = lexeme.trim();
+                // check the selector using checkSelector().
+                return checkSelector(selector, false);
+            }
+        ],
+        "\\{",
+    ]],
+    ["sequence", [
+        "<DeclarationListOrRuleList>"
+        "\\}",
+    ]],
+]);
+cssRulesChecker.addProduction("<DeclarationListOrRuleList>", [
+    ["union", [
+        "<DeclarationList>",
+        "<RuleList>",
+    ]],
+]);
+cssRulesChecker.addProduction("<DeclarationList>", [
+    ["sequence", [
+        ["[^\\{\\}]",
+            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
+                // (The lexeme variable will hold the CSS declaration list.)
+                // check the declaration list using checkCSSDeclarationList().
+                return checkCSSDeclarationList(lexeme, false);
+            }
+        ],
+    ]],
+]);
+
+export function checkCSSRuleList(css, successRequired) {
+    successRequired = successRequired ?? true;
+    let ret = cssRulesChecker.lexAndParse(css, "<RuleList>");
+    if (!ret && successRequired) {
+        throw cssRulesChecker.error;
+    } else {
+        return ret;
+    }
+}
+// Function meant to help with debugging.
+export function upaf_checkCSSRuleListAndGetErrorAndLexArr(css) {
+    cssRulesChecker.lexAndParse(css, "<RuleList>");
+    return [cssRulesChecker.error, cssRulesChecker.lexer.lexArr];
+}
 
 
 
