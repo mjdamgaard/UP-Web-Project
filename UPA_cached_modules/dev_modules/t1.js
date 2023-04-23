@@ -189,7 +189,7 @@ export function upaf_attr(selector, attrOrAttrValPairArr, val) {
     ) {
         let attr = attrOrAttrValPairArr;
         // test the format of attr.
-        if (!/\w+/.test(attr)) {
+        if (!/[\w\-]+/.test(attr)) {
             throw (
                 "attr(): attribute input was not string of pattern /\\w+/"
             );
@@ -205,12 +205,6 @@ export function upaf_attr(selector, attrOrAttrValPairArr, val) {
         typeof attrOrAttrValPairArr === "string"
     ) {
         let attr = attrOrAttrValPairArr;
-        // test the format of attr.
-        if (!/\w+/.test(attr)) {
-            throw (
-                "attr(): attribute input was not string of pattern /\\w+/"
-            );
-        }
         // set attrOrAttrValPairArr = [[attr, val]] and continue with the last
         // option.
         attrOrAttrValPairArr = [[attr, val]];
@@ -223,13 +217,13 @@ export function upaf_attr(selector, attrOrAttrValPairArr, val) {
     jqObj.each(function(){
         // get the tagName of the current element.
         tagName = this.prop("tagName").toLowerCase();
-        // loop and set new attributes according to attrValPairArr.
+        // loop and test the all the attribute--value pairs w.r.t. tagName.
         for (let i = 0; i < attrValPairArrLen; i++) {
             // get the ith attribute--value pair.
             let attr = attrValPairArr[i][0];
             let val = attrValPairArr[i][1];
             // test the format of the attribute.
-            if (!/\w+/.test(attr)) {
+            if (!/[\w\-]+/.test(attr)) {
                 throw (
                     "attr(): attribute number " + i.toString() +
                     " was not string of pattern /\\w+/"
