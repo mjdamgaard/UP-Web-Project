@@ -357,7 +357,9 @@ export function upaf_css(selector, propOrPropValPairArr, val) {
 
 
 
-/* Function to add and remove CSS style tags to document head */
+
+/* Functions to add and remove CSS style tags to/from the document head */
+
 
 export function upaf_addCSS(css, classKey) {
     // test the css.
@@ -370,58 +372,31 @@ export function upaf_addCSS(css, classKey) {
             "string of pattern /[\\w\\-]+/"
         );
     }
-// initialize styleElem as the first part of the desired HTML string.
+    // append css nested inside a "#upaFrame {...}" rule as a style tag in head.
     $(':root > head').append(
         '<style class="upak_' + classKey + '"> #upaFrame { ' +
         css + " }</style>";
     );
-    // loop through property--value pairs and append them to styleElem.
-    let len = propertyValuePairArr.length;
-    for (let i = 0; i < len; i++) {
-        let property = propertyValuePairArr[i][0];
-        let value = propertyValuePairArr[i][1];
-        // test property.
-        if (!cssLegalProperties.includes(property)) {
-            throw (
-                "addCSS(): property" + i.toString() +
-                "can only contain letters, '-' and '@'"
-            );
-        }
-        // test value.
-        if (!cssAComplexRegEx.test(value)) {
-            throw (
-                "addCSS(): property value " + i.toString() +
-                " is either invalid or not implemented yet"
-            );
-        }
-        // append property and value to styleElem.
-        styleElem += property + ": " + value + "; ";
+}
+
+
+export function upaf_removeCSS(classKey, removeLatestOnly) {
+    if (!/[\w\-]+/.test(classKey)) {
+        throw (
+            "removeCSS(): classKey '" + classKey.toString() + "' is not a " +
+            "string of pattern /[\\w\\-]+/"
+        );
     }
-    // append the final part of the style tag.
-    styleElem += "}}</style>";
-    // append the resulting style element to the document head.
-    $(":root > head").append(styleElem);
-}
-
-
-export function upaf_removeCSS(selector) {
-    // remove all UPA style tags with the given selector.
-    $(
-        ':root > head > .upas[' +
-            'selector="' +
-            upaf_convertHTMLSpecialCharsAndBackslashes(selector) + // TODO: Change for key.
-        '"]'
-    ).remove();
-}
-
-export function upaf_removeLastCSS(selector) {
-    // remove the last UPA style tag with the given selector.
-    $(
-        ':root > head > .upas[' +
-            'selector="' +
-            upaf_convertHTMLSpecialCharsAndBackslashes(selector) +
-        '"]:last-of-type'
-    ).remove();
+    // set removeLatestOnly flag to false if not supplied.
+    let removeLatestOnly = removeLatestOnly ?? false;
+    // remove only the latest UPA style element with the given class key if
+    // removeLatestOnly == true.
+    if (removeLatestOnly) {
+        $(':root > head > .upak_' + classKey + ':last-of-type').remove();
+    // else remove UPA style elements with the class key.
+    } else {
+        $(':root > head > .upak_' + classKey).remove();
+    }
 }
 
 
@@ -431,6 +406,16 @@ export function upaf_removeLastCSS(selector) {
 
 
 
+
+
+
+
+
+
+
+
+
+// TODO: Update the event and animation jQuery wrappers below!
 
 
 
