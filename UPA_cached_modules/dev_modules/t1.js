@@ -18,61 +18,41 @@ export function upaf_appendHelloWorld() {
 /* Functions to store and get callback upaf_ functions from key strings */
 
 
-// The following out-commented code is copied from html/src/storeFunction.js.
-// While it has a upas_ prefix instead of the upaf_ prefix, it is exceptionally
-// still part of the UPA's API, namely since the
-// upas_storedFunctions(<Exp>, <Fun>) syntax has been made a special part
-// of the syntax of our JS subset. And storeFunction.js is run in the document
-// head (before loading the UPA).
-
-// // With upas_getStoreFunction I then intend to allow a definition of
-// // a upas_storeFunction() in the begining of a script, namely by a statement
-// // of the form
-// // "const upas_storeFunction = upas_getStoreFunction();",
-// // and then I will also allow statements of the form
-// // "upas_storeFunction(<Exp>, <FunIdent>);".
-// // (Here 's' in "upas_" stands for "special function.")
-//
-// function upas_getStoreFunction() {
-//     var storedFunctions = {};
-//     return function(key, fun) {
-//         if (!/^[\w\-]+$/.test(key)) {
-//             throw (
-//                 "storeFunction(): function key is not a valid " +
-//                 "/^[\\w\\-]+$/ string"
-//             );
-//         }
-//         storedFunctions[key] = fun;
-//     }
-// }
-
-export function upaf_isAStoredFunction(key) {
+// This is a special function (and 's' in "upas_" stands for "special"),
+// namely statements of the form
+// "upas_storeFunction(<FunIdent>, <Exp>, upas_functionStore);"
+// is allowed in the JS subset, where <FunIdent> is a function identifier
+// beginning with "upaf_". And to initialize upas_functionStore, statements
+// of the form
+// "var upas_functionStore = {};"
+// is also allowed.
+export function upas_storeFunction(fun, key, functionStore) {
     if (!/^[\w\-]+$/.test(key)) {
         throw (
-            "isAStoredFunction(): function key '" + key.toString() +
-            "' is not a valid /^[\\w\\-]+$/ string"
+            "storeFunction(): function key is not a valid " +
+            "/^[\\w\\-]+$/ string"
         );
     }
-    return (typeof upas_storedFunctions["upak_" + key] !== "undefined");
+    functionStore["upak_" + key] = fun;
 }
 
 // Note that since this function does not have the upaf_ prefix, it cannot
 // be exported to the final user modules (but only to other developer modules).
-export function getFunction(key) {
+export function getFunction(key, functionStore) {
     if (!/^[\w\-]+$/.test(key)) {
         throw (
             "getFunction(): function key is not a valid " +
             "/^[\\w\\-]+$/ string"
         );
     }
-    return upas_storedFunctions["upak_" + key];
+    return functionStore["upak_" + key];
 }
 
 /* A private function to get a resulting function from key and a data array
  * containing the input parameters.
  **/
-export function getResultingFunction(funName, dataArr) {
-    var fun = getFunction(funName);
+export function getResultingFunction(key, functionStore, dataArr) {
+    var fun = getFunction(key, functionStore);
     return function() {
         fun.apply(null, dataArr ?? []);
     };
@@ -80,8 +60,11 @@ export function getResultingFunction(funName, dataArr) {
 
 /* A public function run a upaf_ function pointed to by a key */
 
-export function upaf_runResultingFunction(funName, dataArr) {
-    var fun = getFunction(funName);
+// This is also a special function for which statements of the form
+// "upaf_runResultingFunction(<Exp>, upas_functionStore, <Exp>);"
+// is allowed in the JS subset.
+export function upaf_runResultingFunction(key, functionStore, dataArr) {
+    var fun = getFunction(key, functionStore);
     fun.apply(null, dataArr ?? []);
 }
 
