@@ -173,9 +173,9 @@ export function upaf_empty(selector) {
 
 
 
-/* jQuery wrapper to get and set standard HTML attributes that does not need
- * quering of the server to verify their legality (but can be verified by
- * checkTagNameAttrNameAttrValTriplet() defined below).
+/* jQuery.attr() wrapper to get and set standard HTML attributes that does
+ * not need quering of the server to verify their legality (but can be
+ * verified by checkTagNameAttrNameAttrValTriplet() defined below).
  **/
 
 export function upaf_attr(selector, attrOrAttrValPairArr, val) {
@@ -233,6 +233,64 @@ export function upaf_attr(selector, attrOrAttrValPairArr, val) {
 
 
 
+// // (Users should define this function themselves, if they need it.)
+// export function upaf_getAttributes(selector, keyArr) {
+//     var ret = [];
+//     // get the selected HTML element as a jQuery object.
+//     let jqObj = getJQueryObj(selector);
+//     // loop through the keys in keyArr and get the corresponding attribute
+//     // values from the selected HTML element.
+//     for (let i = 0; i < keyArr.length; i++) {
+//         let key = keyValArr[$i];
+//         // assert that key is defined and has the right format.
+//         if (!attrKeyRegEx.test(key)) {
+//             throw (
+//                 "getAttributes(): input " + i.toString() +
+//                 " is not a valid attribute key"
+//             );
+//         }
+//         // replace '~' with 'upaa_' in key.
+//         key = key.replaceAll("~", "upaa_")
+//         // get the attribute of the selected HTML element and store it in the
+//         // return array.
+//         ret[i] = jqObj.first().attr(key);
+//     }
+//     // return an array of the gotten attribute values.
+//     return ret;
+// }
+// // (The same goes for these:)
+// export function upaf_convertHTMLSpecialChars(str) {
+//     // verify that input is a string.
+//     if (typeof str !== "string") {
+//         throw (
+//             "convertHTMLSpecialChars(): input is not a string"
+//         );
+//     }
+//     // return the converted (HTML safe) string.
+//     return str
+//         .replaceAll("&", "&amp;")
+//         .replaceAll('"', "&quot;")
+//         .replaceAll("'", "&#039;")
+//         .replaceAll("<", "&lt;")
+//         .replaceAll(">", "&gt;");
+// }
+// export function upaf_convertHTMLSpecialCharsAndBackslashes(str) {
+//     // verify that input is a string.
+//     if (typeof str !== "string") {
+//         throw (
+//             "convertHTMLSpecialCharsAndBackslashes(): " +
+//             "input is not a string"
+//         );
+//     }
+//     // return the converted (HTML safe and attribute value safe) string.
+//     return str
+//         .replaceAll("&", "&amp;")
+//         .replaceAll('"', "&quot;")
+//         .replaceAll("'", "&#039;")
+//         .replaceAll("<", "&lt;")
+//         .replaceAll(">", "&gt;")
+//         .replaceAll("\\", "&#92;");
+// }
 
 
 
@@ -241,403 +299,57 @@ export function upaf_attr(selector, attrOrAttrValPairArr, val) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-export function setAttributeOfSingleJQueryObj(jqObj, tagName, key, val) {
-    // verify that key and val are defined and have the right
-    // formats.
-    if (!attrKeyRegEx.test(key)) {
-        throw (
-            "setAttributeOfSingleJQueryObj(): input contains an invalid " +
-            "attribute key"
-        );
-    }
-    if (!attrValRegEx.test(val)) {
-        throw (
-            "setAttributeOfSingleJQueryObj(): input contains an invalid " +
-            "attribute value"
-        );
-    }
-    // if attribute key starts with '~,' set a new upaa_ attribute
-    // for the new HTML element.
-    if (key.substring(0, 1) === "~") {
-        jqObj.attr("upaa_" + key.substring(1), val);
-    // if it is instead an id, test that it has not already been
-    // used and make sure to record it. (Let's not care about
-    // race conditions.)
-    } else if (key === "id") {
-        if (upaf_isExistingID(val)) {
-            throw (
-                "getHTML(): id=\"" + val +
-                "\" has already been used"
-            );
-        }
-        recordID(val);
-        jqObj.attr("id", val);
-    // else, test that it is one of the allowed nagName--key--val
-    // tuples.
-    } else if (upaf_isLegalKeyValAttrPair(tagName, key, val)) {
-        jqObj.attr(key, val);
-    } else {
-        throw (
-            "setAttributeOfSingleJQueryObj(): illegal combination of " +
-            "tagName, key and value"
-        );
-    }
-}
-
-
-
-export function upaf_setAttributes(selector, keyValArr) {
-    // get the selected HTML element as a jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // loop through key value pairs and set the attributes of the HTML element
-    // accordingly.
-    for (let i = 0; i < keyValArr.length; i++) {
-        let key = keyValArr[$i][0];
-        let val = keyValArr[$i][1];
-        // verify that key and val are defined and have the right formats.
-        jqObj.each(function() {
-            setAttributeOfSingleJQueryObj(this, tagName, key, val)
-        });
-    }
-}
-
-export function upaf_getAttribute(selector, key) {
-    // get the selected HTML element as a jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // assert that key is defined and has the right format.
-    if (!attrKeyRegEx.test(key)) {
-        throw (
-            "getAttribute(): input is not a valid attribute key"
-        );
-    }
-    // replace '~' with 'upaa_' in key.
-    key = key.replaceAll("~", "upaa_")
-    // return the attribute of the first selected HTML element.
-    return jqObj.first().attr(key);
-}
-
-
-export function upaf_getAttributes(selector, keyArr) {
-    var ret = [];
-    // get the selected HTML element as a jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // loop through the keys in keyArr and get the corresponding attribute
-    // values from the selected HTML element.
-    for (let i = 0; i < keyArr.length; i++) {
-        let key = keyValArr[$i];
-        // assert that key is defined and has the right format.
-        if (!attrKeyRegEx.test(key)) {
-            throw (
-                "getAttributes(): input " + i.toString() +
-                " is not a valid attribute key"
-            );
-        }
-        // replace '~' with 'upaa_' in key.
-        key = key.replaceAll("~", "upaa_")
-        // get the attribute of the selected HTML element and store it in the
-        // return array.
-        ret[i] = jqObj.first().attr(key);
-    }
-    // return an array of the gotten attribute values.
-    return ret;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Some functions to add and remove HTML elements */
-
-
-// export const flowContentElements = [
-//     "a", "abbr", "address", "article", "aside", "audio", "b", "bdi", "bdo",
-//     "blockquote", "br", "button", "canvas", "cite", "code", "data",
-//     "datalist", "del", "details", "dfn", "dialog", "div", "dl", "em",
-//     "embed", "fieldset", "figure", "footer", "form",
-//     "h1", "h2", "h3", "h4", "h5", "h6",
-//     "header", "hgroup", "hr", "i", "iframe", "img", "input", "ins", "kbd",
-//     "label", "map", "mark",
-//     //"MathML math",
-//     "menu", "meter", "nav",
-//     "noscript", "object", "ol", "output", "p", "picture", "pre",
-//     "progress", "q", "ruby", "s", "samp",
-//     // "script",
-//     "search", "section",
-//     "select", "slot", "small", "span", "strong", "sub", "sup",
-//     // "SVG svg",
-//     "table", "template", "textarea", "time", "u", "ul", "var", "video",
-//     "wbr",
-//     //"autonomous custom elements",
-// ];
-
-
-
-
-
-/* << addHTML() >>
- * input = (selector, method, struct),
- * where
- * method = "append" | "prepend" | "before" | "after",
- * and where
- * struct = undefined | contentText | [(tagAttributesContentTuple,)*],
- * where
- * tagAttributesContentTuple =
- *     [tagName] | [tagName, struct] | [tagName, attributes, struct],
- * where
- * attributes = undefined | [([key, value],)*].
+/* jQuery.css() wrapper to get and set inline
  **/
-export function upaf_addHTML(selector, method, struct) {
+
+export function upaf_css(selector, propOrPropValPairArr, val) {
+    // test selector and get jQuery object.
     let jqObj = getJQueryObj(selector);
-    // test method.
-    if (!["append", "prepend", "before", "after"].includes(method)) {
-        throw (
-            "addHTML(): method name not recognized"
-        );
-    }
-    let html = getHTMLFromStructureAndRecordIDs(struct);
-    // insert html via the append(), prepend(), before() or after() method.
-    return jqObj[method](html);
-}
-
-
-export function getHTMLFromStructureAndRecordIDs(struct) {
-    // if struct is a string, return the converted (HTML safe) string.
-    if (typeof struct === "string") {
-        return upaf_convertHTMLSpecialChars(struct);
-    }
-    // if struct is undefined or an empty array, return "".
-    var len;
+    // if val is undefined/null and propOrPropValPairArr as a string, test it
+    // and return jqObj.css(property).
     if (
-        typeof struct === "undefined" ||
-        (len = struct.length) == 0
+        typeof val === "undefined" &&
+        typeof propOrPropValPairArr === "string"
     ) {
-        return "";
-    }
-    // loop through tag--attribute--content tuples and append the resulting
-    // html to a return variable, ret.
-    var ret = "";
-    for (let i = 0; i < len; i++) {
-        // get the variables.
-        var tagName, attributes;
-        var content = "";
-        let tupleLen = struct[i].length;
-        if (tupleLen === 3) {
-            tagName = struct[i][0];
-            attributes = struct[i][1];
-            content = struct[i][2];
-        } else if (tupleLen === 2) {
-            tagName = struct[i][0];
-            content = struct[i][1];
-        } else if (tupleLen === 1) {
-            tagName = struct[i][0];
-        }
-        // if tag input is undefined, simply append the converted content to
-        // ret.
-        if (typeof tagName === "undefined") {
-            ret = ret + getHTMLFromStructureAndRecordIDs(content);
-            continue;
-        }
-        // else, test tag input.
-        if (!elementNameRegEx.test(tagName)) {
+        let prop = propOrPropValPairArr;
+        // test the format of prop.
+        if (!/[\w\-]+/.test(prop)) {
             throw (
-                "getHTMLFromStructureAndRecordIDs(): unrecognized tag name: " +
-                tagName.toString()
+                "css(): property input was not string of pattern /[\\w\\-]+/"
             );
         }
-        // initialize new HTML element.
-        var htmlJQObj = $("<" + tagName + "></" + tagName + ">");
-        // test each attribute input and add the attribute key--value pair to
-        // the new HTML element.
-        if (typeof attributes !== "undefined") {
-            let lenAttr = attributes.length;
-            for (let j = 0; j < lenAttr; j++) {
-                // get attribute key and value.
-                let key = attributes[j][0];
-                let val = attributes[j][1];
-                // try to set key="val" for htmlJQObj.
-                setAttributeOfSingleJQueryObj(htmlJQObj, tagName, key, val);
-            }
-        }
-        // test and convert content, and add it inside the new HTML element.
-        htmlJQObj.html(getHTMLFromStructureAndRecordIDs(content));
-        // append the new HTML element to ret.
-        ret = ret + htmlJQObj[0].outerHTML;
+        // return the property value of the first element in the selection.
+        return jqObj.css(prop);
     }
-    // return the resulting HTML string.
-    return ret;
-}
-
-
-
-export function upaf_convertHTMLSpecialChars(str) {
-    // verify that input is a string.
-    if (typeof str !== "string") {
-        throw (
-            "convertHTMLSpecialChars(): input is not a string"
-        );
+    // if both propOrPropValPairArr and val are strings, test them as prop and
+    // val, and call jqObj.css(prop, val).
+    if (
+        typeof val === "string" &&
+        typeof propOrPropValPairArr === "string"
+    ) {
+        let prop = propOrPropValPairArr;
+        // test the property.
+        testCSSProperty(prop);
+        // test the value(s).
+        checkCSSValues(val);
+        // if these tests succeded change property for the element and return.
+        jqObj.css(prop, val);
+        return;
     }
-    // return the converted (HTML safe) string.
-    return str
-        .replaceAll("&", "&amp;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;");
-}
-
-export function upaf_convertHTMLSpecialCharsAndBackslashes(str) {
-    // verify that input is a string.
-    if (typeof str !== "string") {
-        throw (
-            "convertHTMLSpecialCharsAndBackslashes(): " +
-            "input is not a string"
-        );
+    // else loop and test the all the property--value pairs.
+    let propValPairArr = propOrPropValPairArr;
+    let propValPairArrLen = propValPairArr.length;
+    for (let i = 0; i < propValPairArrLen; i++) {
+        // get the ith property--value pair.
+        let prop = propValPairArr[i][0];
+        let val = propValPairArr[i][1];
+        // test the property.
+        testCSSProperty(prop);
+        // test the value(s).
+        checkCSSValues(val);
     }
-    // return the converted (HTML safe and attribute value safe) string.
-    return str
-        .replaceAll("&", "&amp;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll("\\", "&#92;");
-}
-
-
-
-export function upaf_removeHTML(selector) {
-    let jqObj = getJQueryObj(selector);
-    // remove all id in the selction from the idRecord.
-    removeAllIDRecords(jqObj)
-    // remove all elements in the selction.
-    jqObj.remove();
-}
-
-export function upaf_emptyHTML(selector) {
-    let jqObj = getJQueryObj(selector);
-    // remove all id in the descendents of the selction from the idRecord.
-    removeAllInnerIDRecords(jqObj)
-    // remove all elements in the selction.
-    jqObj.empty();
-}
-
-
-
-/* Function to get inner and outer HTML (of the first matched element only) */
-
-export function upaf_getInnerHTML(selector) {
-    let jqObj = getJQueryObj(selector);
-    return jqObj[0].innerHTML; // (I don't know if this works in I.E. browsers.)
-}
-
-export function upaf_getOuterHTML(selector) {
-    let jqObj = getJQueryObj(selector);
-    return jqObj[0].outerHTML;
-}
-
-
-
-
-// TODO: Make this function:
-export function upaf_getStructureFromHTML(struct) {
-    //TODO..
-}
-
-// TODO: Make these:
-export function upaf_getInnerStructure(selector) {
-
-}
-
-export function upaf_getOuterStructure(selector) {
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* A function to add CSS styles to a selection of elements */
-
-export function upaf_css(selector, propertyOrPropertyValuePairArr) {
-    // get the selected descendents of #upaFrame as a jQuery object.
-    let jqObj = getJQueryObj(selector);
-    if (typeof propertyOrPropertyValuePairArr === "string") {
-        let property = propertyOrPropertyValuePairArr;
-        if (!/^@?[[a-zA-Z]\-]+$/.test(property)) {
-            throw (
-                "css(): properties can only contain letters, '-' and '@'"
-            );
-        }
-        return jqObj.css(property);
-    } else {
-        let propertyValuePairArr = propertyOrPropertyValuePairArr;
-        // verify all values to be (PERHAPS! (TODO: verify this!)) safe.
-        let len = propertyValuePairArr.length;
-        for (let i = 0; i < len; i++) {
-            let property = propertyValuePairArr[i][0];
-            let value = propertyValuePairArr[i][1];
-            // test property.
-            if (!cssLegalProperties.includes(property)) {
-                throw (
-                    "css(): property" + i.toString() +
-                    "can only contain letters, '-' and '@'"
-                );
-            }
-            // test value.
-            if (!cssAComplexRegEx.test(value)) {
-                throw (
-                    "css(): property value " + i.toString() +
-                    " is either invalid or not implemented yet"
-                );
-            }
-            // test that this nested array is a pair.
-            if (!propertyValuePairArr[i].length === 2) {
-                throw (
-                    "css(): propertyValuePairArr[" + i.toString() + "] " +
-                    "did not have a length of 2"
-                );
-            }
-        }
-        // convert the property--value array to a plain object
-        let stylesObj = Object.fromEntries(styles);
-        // set the css properties.
-        jqObj.css(stylesObj);
-    }
+    // if all tests succeded change all the properties for the element.
+    this.css(Object.fromEntries(propValPairArr));
 }
 
 
@@ -1485,7 +1197,7 @@ export function upaf_checkCSSValuesAndGetErrorAndLexArr(values) {
 }
 
 
-export function checkCSSProperty(property, successRequired) {
+export function testCSSProperty(property, successRequired) {
     successRequired = successRequired ?? true;
     let ret = cssLegalProperties.includes(property);
     if (!ret && successRequired) {
@@ -1494,14 +1206,6 @@ export function checkCSSProperty(property, successRequired) {
         return ret;
     }
 }
-// // Function meant to help with debugging.
-// export function upaf_checkCSSPropertyAndGetError(property) {
-//     if (cssLegalProperties.includes(property)) {
-//         return "";
-//     } else {
-//         return "property is not a legal CSS property";
-//     }
-// }
 
 
 
