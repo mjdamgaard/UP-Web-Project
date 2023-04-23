@@ -710,7 +710,7 @@ export const attributeSelectorPattern =
 let selectorLexemeAndEndCharPatterns = [
     [" ?[>,~\\+ ] ?", "\S"], // combinators.
     ["\\w+", "\\W"], // element names.
-    ["\\.[\\w\\- ]+", "[^\\w\\- ]"], // classes.
+    ["\\.[\\w\\-]+", "[^\\w\\-]"], // classes.
     ["::[\\w\\-]+", "[^\\w\\-]"], // pseudo-elements.
     [":[\\w\\-]+", "[^\\w\\-]"], // pseudo-classes (perhaps functional).
     ["\\("],
@@ -1438,11 +1438,11 @@ htmlChecker.addProduction("<BooleanAttributeDefinition>", [
 const legalAttrNameAttrValPairStruct = {
     "id": {
         "All":
-            /^upai_\w+$/,
+            /^upai_[\w\-]+$/,
     },
     "class": {
         "All":
-            true,
+            /^[\w\-]+$/
     },
     "style": {
         "All": function(attrVal) {
@@ -1475,7 +1475,7 @@ const legalAttrNameAttrValPairStruct = {
     },
     "for": {
         "label":
-            /^upai_\w+$/,
+            /^upai_[\w\-]+$/,
     },
     // TODO: Add more.
 };
