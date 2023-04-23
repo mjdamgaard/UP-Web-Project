@@ -93,16 +93,6 @@ export function upaf_runResultingFunction(funName, dataArr) {
 
 
 
-
-
-
-/* jQuery wrappers and other functions to add and remove HTML, HTML attributes,
- * and CSS styles.
- **/
-
-
-
-
 /* A private function to get jQuery objects */
 
 // Note that since this function does not have the upaf_ prefix, it cannot
@@ -119,8 +109,18 @@ export function getJQueryObj(selector) {
 
 
 
-/* jQuery wrappers to get, add, remove and empty HTML */
 
+
+
+
+
+/* jQuery wrappers and other functions to add and remove HTML, HTML attributes,
+ * and CSS styles.
+ **/
+
+
+
+/* jQuery wrappers to get, add, remove and empty HTML */
 
 export function upaf_html(selector, html, method) {
     // test selector and get jQuery object.
@@ -233,72 +233,6 @@ export function upaf_attr(selector, attrOrAttrValPairArr, val) {
 
 
 
-// // (Users should define this function themselves, if they need it.)
-// export function upaf_getAttributes(selector, keyArr) {
-//     var ret = [];
-//     // get the selected HTML element as a jQuery object.
-//     let jqObj = getJQueryObj(selector);
-//     // loop through the keys in keyArr and get the corresponding attribute
-//     // values from the selected HTML element.
-//     for (let i = 0; i < keyArr.length; i++) {
-//         let key = keyValArr[$i];
-//         // assert that key is defined and has the right format.
-//         if (!attrKeyRegEx.test(key)) {
-//             throw (
-//                 "getAttributes(): input " + i.toString() +
-//                 " is not a valid attribute key"
-//             );
-//         }
-//         // replace '~' with 'upaa_' in key.
-//         key = key.replaceAll("~", "upaa_")
-//         // get the attribute of the selected HTML element and store it in the
-//         // return array.
-//         ret[i] = jqObj.first().attr(key);
-//     }
-//     // return an array of the gotten attribute values.
-//     return ret;
-// }
-// // (The same goes for these:)
-// export function upaf_convertHTMLSpecialChars(str) {
-//     // verify that input is a string.
-//     if (typeof str !== "string") {
-//         throw (
-//             "convertHTMLSpecialChars(): input is not a string"
-//         );
-//     }
-//     // return the converted (HTML safe) string.
-//     return str
-//         .replaceAll("&", "&amp;")
-//         .replaceAll('"', "&quot;")
-//         .replaceAll("'", "&#039;")
-//         .replaceAll("<", "&lt;")
-//         .replaceAll(">", "&gt;");
-// }
-// export function upaf_convertHTMLSpecialCharsAndBackslashes(str) {
-//     // verify that input is a string.
-//     if (typeof str !== "string") {
-//         throw (
-//             "convertHTMLSpecialCharsAndBackslashes(): " +
-//             "input is not a string"
-//         );
-//     }
-//     // return the converted (HTML safe and attribute value safe) string.
-//     return str
-//         .replaceAll("&", "&amp;")
-//         .replaceAll('"', "&quot;")
-//         .replaceAll("'", "&#039;")
-//         .replaceAll("<", "&lt;")
-//         .replaceAll(">", "&gt;")
-//         .replaceAll("\\", "&#92;");
-// }
-
-
-
-
-
-
-
-
 /* jQuery.css() wrapper to get and set inline
  **/
 
@@ -356,10 +290,7 @@ export function upaf_css(selector, propOrPropValPairArr, val) {
 
 
 
-
-
 /* Functions to add and remove CSS style tags to/from the document head */
-
 
 export function upaf_addCSS(css, classKey) {
     // test the css.
