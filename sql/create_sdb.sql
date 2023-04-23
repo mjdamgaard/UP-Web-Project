@@ -336,9 +336,10 @@ CREATE TABLE Relations (
     -- type = "rel".
 
     -- noun describing the object in terms of what the object is to the
-    -- subject of the relation.
-    -- TODO: mention forward and backwards syntax for parsing this noun from
-    -- the realtion expressed as a verb.
+    -- subject of the relation. This is except (at least) in cases where the
+    -- subject category is Categories: Then the obj_noun can also be an
+    -- adjective instead, saying that "object is <adjective> for an element
+    -- in <subject>. Please capitilize nouns, but not adjectives.
     obj_noun VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
     -- FULLTEXT idx (obj_noun),
 
