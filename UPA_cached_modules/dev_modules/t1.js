@@ -36,10 +36,10 @@ export function upaf_appendHelloWorld() {
 // function upas_getStoreFunction() {
 //     var storedFunctions = {};
 //     return function(key, fun) {
-//         if (!/^\w+$/.test(key)) {
+//         if (!/^[\w\-]+$/.test(key)) {
 //             throw (
 //                 "storeFunction(): function key is not a valid " +
-//                 "/^\\w+$/ string"
+//                 "/^[\\w\\-]+$/ string"
 //             );
 //         }
 //         storedFunctions[key] = fun;
@@ -47,10 +47,10 @@ export function upaf_appendHelloWorld() {
 // }
 
 export function upaf_isAStoredFunction(key) {
-    if (!/^\w+$/.test(key)) {
+    if (!/^[\w\-]+$/.test(key)) {
         throw (
-            "isAStoredFunction(): function key is not a valid " +
-            "/^\\w+$/ string"
+            "isAStoredFunction(): function key '" + key.toString() +
+            "' is not a valid /^[\\w\\-]+$/ string"
         );
     }
     return (typeof upas_storedFunctions["upak_" + key] !== "undefined");
@@ -59,10 +59,10 @@ export function upaf_isAStoredFunction(key) {
 // Note that since this function does not have the upaf_ prefix, it cannot
 // be exported to the final user modules (but only to other developer modules).
 export function getFunction(key) {
-    if (!/^\w+$/.test(key)) {
+    if (!/^[\w\-]+$/.test(key)) {
         throw (
             "getFunction(): function key is not a valid " +
-            "/^\\w+$/ string"
+            "/^[\\w\\-]+$/ string"
         );
     }
     return upas_storedFunctions["upak_" + key];
@@ -353,24 +353,28 @@ export function upaf_css(selector, propOrPropValPairArr, val) {
 }
 
 
+
+
+
+
 /* Function to add and remove CSS style tags to document head */
 
-export function upaf_addCSS(selector, propertyValuePairArr) {
-    // test the selector.
-    if (!selectorRegex.test(selector)) {console.log(selectorRegex);
+export function upaf_addCSS(css, classKey) {
+    // test the css.
+    checkCSSRuleList(css);
+    // set classKey to default if not supplied.
+    let classKey = classKey ?? "DEFAULT_KEY";
+    if (!/[\w\-]+/.test(classKey)) {
         throw (
-            "addCSS(): selector does not match expected pattern"
+            "addCSS(): classKey '" + classKey.toString() + "' is not a " +
+            "string of pattern /[\\w\\-]+/"
         );
     }
-    // initialize styleElem as the first part of the desired HTML string.
-    var styleElem =
-        '<style class="upas" selector="' + // Change to just have upak="key"
-        // instead..
-            // (This should be safe since it is inside quotation marks, I
-            // believe.. TODO: Verify this.)
-            upaf_convertHTMLSpecialCharsAndBackslashes(selector) +
-        '"> ' +
-        "#upaFrame { " + selector + " { ";
+// initialize styleElem as the first part of the desired HTML string.
+    $(':root > head').append(
+        '<style class="upak_' + classKey + '"> #upaFrame { ' +
+        css + " }</style>";
+    );
     // loop through property--value pairs and append them to styleElem.
     let len = propertyValuePairArr.length;
     for (let i = 0; i < len; i++) {
@@ -1201,7 +1205,9 @@ export function testCSSProperty(property, successRequired) {
     successRequired = successRequired ?? true;
     let ret = cssLegalProperties.includes(property);
     if (!ret && successRequired) {
-        throw "property is not a legal CSS property";
+        throw (
+            "property '" + property.toString() + "' is not a legal CSS property"
+        );
     } else {
         return ret;
     }
@@ -1572,14 +1578,14 @@ export function upaf_isLegalTagNameAttrNameAttrValTriplet(
     if (!/[\w]+/.test(tagName)) {
         throw (
             "isLegalTagNameAttrNameAttrValTriplet(): tag name '" +
-            tagName + "' is not string of pattern /\\w+/"
+            tagName.toString() + "' is not string of pattern /\\w+/"
         );
     }
     // test attrName.
     if (!/[\w\-]+/.test(attrName)) {
         throw (
             "isLegalTagNameAttrNameAttrValTriplet(): attribute name '" +
-            attrName + "' is not string of pattern /[\\w\\-]+/"
+            attrName.toString() + "' is not string of pattern /[\\w\\-]+/"
         );
     }
     // get the validation data for attrVal from legalAttrNameAttrValPairStruct.
@@ -1618,8 +1624,9 @@ export function testTagNameAttrNameAttrValTriplet(
     ) {
         throw (
             "testTagNameAttrNameAttrValTriplet(): illegal combination of " +
-            "tagName, attribute name and attribute value (" + tagName +
-            ", " + attrName + ", " + attrVal + ")"
+            "tagName, attribute name and attribute value (" +
+            tagName.toString() + ", " + attrName.toString() + ", " +
+            attrVal.toString() + ")"
         );
     }
 }

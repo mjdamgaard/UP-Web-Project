@@ -11,10 +11,10 @@
 function upas_getStoreFunction() {
     var storedFunctions = {};
     return function(key, fun) {
-        if (!/^\w+$/.test(key)) {
+        if (!/^[\w\-]+$/.test(key)) {
             throw (
                 "storeFunction(): function key is not a valid " +
-                "/^\\w+$/ string"
+                "/^[\\w\\-]+$/ string"
             );
         }
         storedFunctions["upak_" + key] = fun;
