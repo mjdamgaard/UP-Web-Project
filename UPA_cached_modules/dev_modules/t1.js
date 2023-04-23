@@ -280,7 +280,7 @@ export function upaf_addCSS(css, classKey) {
     // test the css.
     checkCSSRuleList(css);
     // set classKey to default if not supplied.
-    let classKey = classKey ?? "DEFAULT_KEY";
+    classKey = classKey ?? "DEFAULT_KEY";
     if (!/[\w\-]+/.test(classKey)) {
         throw (
             "addCSS(): classKey '" + classKey.toString() + "' is not a " +
@@ -290,7 +290,7 @@ export function upaf_addCSS(css, classKey) {
     // append css nested inside a "#upaFrame {...}" rule as a style tag in head.
     $(':root > head').append(
         '<style class="upak_' + classKey + '"> #upaFrame { ' +
-        css + " }</style>";
+        css + " }</style>"
     );
 }
 
@@ -303,7 +303,7 @@ export function upaf_removeCSS(classKey, removeLatestOnly) {
         );
     }
     // set removeLatestOnly flag to false if not supplied.
-    let removeLatestOnly = removeLatestOnly ?? false;
+    removeLatestOnly = removeLatestOnly ?? false;
     // remove only the latest UPA style element with the given class key if
     // removeLatestOnly == true.
     if (removeLatestOnly) {
@@ -706,7 +706,7 @@ let selectorLexemeAndEndCharPatterns = [
 var selectorLexer = new Lexer(selectorLexemeAndEndCharPatterns, null);
 
 // construct a syntax checker for selectors.
-var = selectorChecker = new SyntaxChecker(selectorLexer);
+var selectorChecker = new SyntaxChecker(selectorLexer);
 selectorChecker.addLexemePatterns([
     [" ?[>,~\\+ ] ?"],
     [elementNamePattern],
@@ -762,7 +762,7 @@ selectorChecker.addProduction("<ComplexSelector>", [
 
 export function checkSelector(selector, successRequired) {
     successRequired = successRequired ?? true;
-    let ret = selectorChecker.lexAndParse(selector, "<ComplexSelector>");
+    let ret = selectorChecker.lexAndCheck(selector, "<ComplexSelector>");
     if (!ret && successRequired) {
         throw selectorChecker.error;
     } else {
@@ -771,7 +771,7 @@ export function checkSelector(selector, successRequired) {
 }
 // Function meant to help with debugging.
 export function upaf_checkSelectorAndGetErrorAndLexArr(selector) {
-    selectorChecker.lexAndParse(selector, "<ComplexSelector>");
+    selectorChecker.lexAndCheck(selector, "<ComplexSelector>");
     return [selectorChecker.error, selectorChecker.lexer.lexArr];
 }
 
@@ -991,7 +991,7 @@ const cssDecLexemePatterns = [
 // (Note that while we let the whitespace pattern be " \\n\\r\\t", the
 // "\\n\\r\\t" characters will only appear in CSS header styles; not
 // in in-line styles.)
-var cssDeclarationLexer = new Lexer(cssDecLexemePatterns, " \\n\\r\\t");
+var cssDeclarationsLexer = new Lexer(cssDecLexemePatterns, " \\n\\r\\t");
 
 var cssDeclarationsChecker = new SyntaxChecker(cssDeclarationsLexer);
 cssDeclarationsChecker.addLexemePatterns(cssDecLexemePatterns);
@@ -1069,7 +1069,7 @@ cssDeclarationsChecker.addProduction("<FunctionCall>", [
 
 export function checkCSSDeclarationList(declarations, successRequired) {
     successRequired = successRequired ?? true;
-    let ret = cssDeclarationsChecker.lexAndParse(
+    let ret = cssDeclarationsChecker.lexAndCheck(
         declarations, "<DeclarationList>"
     );
     if (!ret && successRequired) {
@@ -1080,14 +1080,14 @@ export function checkCSSDeclarationList(declarations, successRequired) {
 }
 // Function meant to help with debugging.
 export function upaf_checkCSSDeclarationListAndGetErrorAndLexArr(declarations) {
-    cssDeclarationsChecker.lexAndParse(declarations, "<DeclarationList>");
+    cssDeclarationsChecker.lexAndCheck(declarations, "<DeclarationList>");
     return [cssDeclarationsChecker.error, cssDeclarationsChecker.lexer.lexArr];
 }
 
 
 export function checkCSSValues(values, successRequired) {
     successRequired = successRequired ?? true;
-    let ret = cssDeclarationsChecker.lexAndParse(values, "<Values>");
+    let ret = cssDeclarationsChecker.lexAndCheck(values, "<Values>");
     if (!ret && successRequired) {
         throw cssDeclarationsChecker.error;
     } else {
@@ -1096,7 +1096,7 @@ export function checkCSSValues(values, successRequired) {
 }
 // Function meant to help with debugging.
 export function upaf_checkCSSValuesAndGetErrorAndLexArr(values) {
-    cssDeclarationsChecker.lexAndParse(values, "<Values>");
+    cssDeclarationsChecker.lexAndCheck(values, "<Values>");
     return [cssDeclarationsChecker.error, cssDeclarationsChecker.lexer.lexArr];
 }
 
@@ -1135,7 +1135,7 @@ const cssRulesLexemePatterns = [
 var cssRulesLexer = new Lexer(cssDecLexemePatterns, null);
 
 var cssRulesChecker = new SyntaxChecker(cssRulesLexer);
-cssRulesChecker.addLexemePatterns(cssRulesPatterns);
+cssRulesChecker.addLexemePatterns(cssRulesLexemePatterns);
 // cssRulesChecker.addLexemePatterns([
 //
 // ]);
@@ -1160,7 +1160,7 @@ cssRulesChecker.addProduction("<Rule>", [
         "\\{",
     ]],
     ["sequence", [
-        "<DeclarationListOrRuleList>"
+        "<DeclarationListOrRuleList>",
         "\\}",
     ]],
 ]);
@@ -1184,7 +1184,7 @@ cssRulesChecker.addProduction("<DeclarationList>", [
 
 export function checkCSSRuleList(css, successRequired) {
     successRequired = successRequired ?? true;
-    let ret = cssRulesChecker.lexAndParse(css, "<RuleList>");
+    let ret = cssRulesChecker.lexAndCheck(css, "<RuleList>");
     if (!ret && successRequired) {
         throw cssRulesChecker.error;
     } else {
@@ -1193,7 +1193,7 @@ export function checkCSSRuleList(css, successRequired) {
 }
 // Function meant to help with debugging.
 export function upaf_checkCSSRuleListAndGetErrorAndLexArr(css) {
-    cssRulesChecker.lexAndParse(css, "<RuleList>");
+    cssRulesChecker.lexAndCheck(css, "<RuleList>");
     return [cssRulesChecker.error, cssRulesChecker.lexer.lexArr];
 }
 
@@ -1221,7 +1221,7 @@ var htmlLexer = new Lexer(htmlLexemeAndEndCharPatterns, "[ \\n\\r\\t]+");
 
 
 // construct a syntax checker for HTML.
-var = htmlChecker = new SyntaxChecker(htmlLexer);
+var htmlChecker = new SyntaxChecker(htmlLexer);
 // it doesn't hurt to add all the pattern from the lexer, even if I won't use
 // some of them.
 htmlChecker.addLexemePatterns(htmlLexemeAndEndCharPatterns);
@@ -1340,9 +1340,11 @@ htmlChecker.addProduction("<EmptyTagElement>", [
     ["sequence", [
         "<AttributeDefinitionList>",
         [">",
-            // make sure to pop the elementName again.
-            mainProdScopedArr.pop();
-        ]
+            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
+                // make sure to pop the elementName again.
+                mainProdScopedArr.pop();
+            }
+        ],
     ]],
 ]);
 
@@ -1357,13 +1359,13 @@ htmlChecker.addProduction("<Text>", [
 
 htmlChecker.addProduction("<AttributeDefinitionList>", [
     ["optList", [
-        "<AttributeDefinition>"
+        "<AttributeDefinition>",
     ]],
 ]);
 htmlChecker.addProduction("<AttributeDefinition>", [
     ["union", [
-        "<RegularAttributeDefinition>"
-        "<BooleanAttributeDefinition>"
+        "<RegularAttributeDefinition>",
+        "<BooleanAttributeDefinition>",
     ]],
 ]);
 htmlChecker.addProduction("<RegularAttributeDefinition>", [
@@ -1534,7 +1536,7 @@ export function testTagNameAttrNameAttrValTriplet(
 
 export function checkHTML(html, successRequired) {
     successRequired = successRequired ?? true;
-    let ret = htmlChecker.lexAndParse(html, "<LegalHTMLContent>");
+    let ret = htmlChecker.lexAndCheck(html, "<LegalHTMLContent>");
     if (!ret && successRequired) {
         throw htmlChecker.error;
     } else {
@@ -1543,6 +1545,6 @@ export function checkHTML(html, successRequired) {
 }
 // Function meant to help with debugging.
 export function upaf_checkHTMLAndGetErrorAndLexArr(html) {
-    htmlChecker.lexAndParse(html, "<LegalHTMLContent>");
+    htmlChecker.lexAndCheck(html, "<LegalHTMLContent>");
     return [htmlChecker.error, htmlChecker.lexer.lexArr];
 }

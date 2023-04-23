@@ -15,6 +15,8 @@
 <script src="/lib/jquery-3.6.4.js"></script>
 <script src="/src/requests/QueryDataConstructors.js"></script>
 <script src="/src/requests/InputDataConstructors.js"></script>
+<script src="/src/parsing/Lexer.js"></script>
+<script src="/src/parsing/SyntaxChecker.js"></script>
 
 
 </head>

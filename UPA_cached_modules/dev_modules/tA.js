@@ -1,9 +1,8 @@
 /* A main function */
 
 import {
-    upaf_appendHelloWorld, upaf_addHTML,
-    upaf_css, upaf_addCSS, upaf_removeCSS, upaf_removeLastCSS,
-    cssACombinedValuePattern, cssAComplexRegEx
+    upaf_appendHelloWorld,
+    upaf_html, upaf_attr, upaf_css, upaf_addCSS, upaf_removeCSS,
 } from "/UPA_scripts.php?id=t1";
 
 import {
@@ -11,30 +10,13 @@ import {
 } from "/UPA_scripts.php?id=t3";
 
 
-export function upaf_main(preferenceUserID, termID, userID) {
-    // upaf_appendHelloWorld();
+let helloHTML = "<b>Hello, world</b>";
 
-    // just a few tests; not meant to be thorough at all.
-    let struct1 = [
-        ["div", "hello world"]
-    ];
-    let struct2 = "hello <&>\"'";
-    let struct3 = [
-        ["div", [["~foo", "bar"], ["~bar", "foo"]], "hello world"]
-    ];
-    let struct4 = [
-        ["div"]
-    ];
-    upaf_addHTML("main", "append", struct1); // works now.
-    upaf_addHTML("main", "append", struct2); // works now.
-    upaf_addHTML("main", "append", struct3); // works now.
-    upaf_addHTML("main", "append", struct4); // works now.
+export function upaf_main(preferenceUserID, termID, userID) {
+    upaf_appendHelloWorld();
 
     // just a few CSS tests.
-    let cssACombinedValueRegEx = (new RegExp("^"+cssACombinedValuePattern+"$"));
-    console.log(cssACombinedValueRegEx.test("#FF0000"));
-    console.log(cssAComplexRegEx);
-    upaf_addCSS('*', [["background-color", "#FF0000"]]);
+    upaf_addCSS('* { background-color: #FF0000; }');
     // Apart from the bug, why is this so slow?!!
     // ..Hm, it seems to be the cssAComplexRegEx match.. ..Hm, let me debug
     // and then look at the speed, I guess..

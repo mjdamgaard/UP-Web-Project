@@ -1,5 +1,5 @@
 
-class SyntaxChecker = {
+class SyntaxChecker {
 
 constructor(lexer) {
     this.lexer = lexer;
@@ -98,6 +98,7 @@ addProduction(key, settings) {
                     return true;
                 }
             };
+        return;
     }
     // else we assume that settings is an array of [checkType,
     // subproductionKeys] arrays, where subproductionKeys are
@@ -310,7 +311,7 @@ checkNonemptyList(
     successRequired
 ) {
     // first record the initial position.
-    let initialPos = nextPos[];
+    let initialPos = nextPos[0];
     // try checking a list.
     checkList(lexArr, nextPos, elementProductionKey, delimeterProductionKey);
     // return false or fail if nextPos[0] is still equal to the initialPos.

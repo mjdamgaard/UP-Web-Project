@@ -1,5 +1,5 @@
 
-class Lexer = {
+class Lexer {
 
 constructor(lexemeAndEndCharPatternPairArr, whitespacePattern) {
     // lexemeAndEndCharPatternPairArr consitst of
@@ -9,8 +9,7 @@ constructor(lexemeAndEndCharPatternPairArr, whitespacePattern) {
     // the lexeme itself. If endCharPattern is null/undefined, the lexeme
     // is taken to include its own end delimeter.
     this.lexPatternEndPairArr = lexemeAndEndCharPatternPairArr ?? [];
-    this.whitespacePattern = whitespacePattern ?? "[^\w\W]";
-    this.whitespacePattern = whitespacePattern;
+    this.whitespacePattern = whitespacePattern ?? "[^\\w\\W]";
     this.error = undefined;
     this.success = undefined;
     this.lexArr = undefined;
@@ -31,7 +30,7 @@ lex(str) {
     // let us first rename the input variables.
     let lexPatternEndPairArr = this.lexPatternEndPairArr;
     let whitespacePattern = this.whitespacePattern;
-    let noneWSCharPattern = /\S/;
+    let noneWSCharPattern = "\\S";
     // test that str is a string.
     if (typeof str !== "string") {
         throw "Lexer.lex(): input is not a string";
@@ -47,13 +46,12 @@ lex(str) {
         // first match an optional string of whitespace, increase nextPos
         // with the matched length and return the lexeme array if the end
         // of the string is reached.
-        let wsLen = getMatchLen(
+        let wsLen = this.getMatchLen(
             str, this.nextPos, whitespacePattern, noneWSCharPattern
         );
         this.nextPos += wsLen;
         if (this.nextPos >= strLen) {
             this.success = true;
-            this.lexArr = lexArr;
             return true;
         }
         // then loop through all pairs in lexPatternEndPairArr, expecting to
@@ -62,7 +60,7 @@ lex(str) {
             let lexemePattern = lexPatternEndPairArr[i][0];
             let endCharPattern = lexPatternEndPairArr[i][1];
             // get the length of the potential match.
-            let matchLen = getMatchLen(
+            let matchLen = this.getMatchLen(
                 str, this.nextPos, lexemePattern, endCharPattern
             );
             // if a match was found, increase nexPos and continue the outer
@@ -79,9 +77,10 @@ lex(str) {
             "Invalid lexeme at position " +
             this.nextPos.toString() +
             " after\n" +
-            ("^" + str).substring(Math.max(0, nextPos - 320), nextPos + 1)
+            ("^" + str).substring(
+                Math.max(0, this.nextPos - 320), this.nextPos + 1
+            )
         );
-        this.lexArr = lexArr;
         return false;
     }
 }
@@ -90,22 +89,19 @@ getMatchLen(str, nextPos, lexemePattern, endCharPattern) {
     // if endCharPattern is null/undefined, then we assume that lexemePattern
     // includes its own end delimeter.
     if (typeof endCharPattern === "undefined") {
-        let regex = new RegExp(
-            "^" + lexemePattern
-        );
-        let match = regex.match(str.substring(nextPos)) ?? [""];
+        let regex = new RegExp("^" + lexemePattern);
+        let match = str.substring(nextPos).match(regex) ?? [""];
         // return the length of the matched lexeme, or return 0 if no match
         // was found.
         return match[0].length;
     // else, endCharRegEx denotes the ending character, which we will then
     // also have to remove before returning the length, but only if the
     // lexeme did not end the string.
-    } else {
+} else {
         let regex = new RegExp(
-            "^" + lexemePattern +
-            "((" + endCharPattern + ")|$)"
+            "^" + lexemePattern + "((" + endCharPattern + ")|$)"
         );
-        let match = regex.match(str.substring(nextPos)) ?? false;
+        let match = str.substring(nextPos).match(regex) ?? false;
         // return 0 if no match was found.
         if (!match) {
             return 0;

@@ -68,15 +68,19 @@ $mainModuleID = "tA";
 <div id="upaFrame">
     <main></main>
 </div>
-<script
-    id="upaMainFunLoader"
-    type="module"
-    src="./UPA_scripts.php?id=<?php echo $mainModuleID; ?>"
->
-</script>
-<script id="upaMainFunRunner">
-    "use strict";
+<script id="upaMainFunLoader" type="module">
+    import {
+        upaf_main
+    } from "./UPA_scripts.php?id=<?php echo $mainModuleID; ?>";
     upaf_main(<?php
         echo '"' . $preferenceUserID . '", "' . $termID.'", "' . $userID . '"';
     ?>);
 </script>
+<!-- The following test still throws error, which is nice to know, cause this
+  // means that I can run several main functions without collision.
+ -->
+<!-- <script id="test">
+    upaf_main(<?php
+        echo '"' . $preferenceUserID . '", "' . $termID.'", "' . $userID . '"';
+    ?>);
+</script> -->
