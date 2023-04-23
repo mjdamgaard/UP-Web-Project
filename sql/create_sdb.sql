@@ -339,7 +339,12 @@ CREATE TABLE Relations (
     -- subject of the relation. This is except (at least) in cases where the
     -- subject category is Categories: Then the obj_noun can also be an
     -- adjective instead, saying that "object is <adjective> for an element
-    -- in <subject>. Please capitilize nouns, but not adjectives.
+    -- in <subject>. Please capitilize nouns, but not adjectives. *No. I
+    -- actually think that it is better if we do use only nouns, write
+    -- "<adjective> elements" instead of "<adjective>." This allows us to
+    -- better parse whether parse the adjectives, without a very high risk
+    -- of parsing an object noun as an adjective instead. And the "elements"
+    -- can then just be removed client-side for adjective relations.
     obj_noun VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
     -- FULLTEXT idx (obj_noun),
 
