@@ -20,12 +20,13 @@ export function upaf_appendHelloWorld() {
 
 // This is a special function (and 's' in "upas_" stands for "special"),
 // namely statements of the form
-// "upas_storeFunction(<FunIdent>, <Exp>, upas_functionStore);"
+// "upas_storeFunction(<FunIdent>, <Exp>, upas_fs);"
 // is allowed in the JS subset, where <FunIdent> is a function identifier
-// beginning with "upaf_". And to initialize upas_functionStore, statements
+// beginning with "upaf_" and where upas_fs is a special "function store".
+// And in order to be able to initialize this upas_fs, statements
 // of the form
-// "var upas_functionStore = {};"
-// is also allowed.
+// "var upas_fs = {};"
+// are also allowed.
 export function upas_storeFunction(fun, key, functionStore) {
     if (!/^[\w\-]+$/.test(key)) {
         throw (
@@ -61,7 +62,7 @@ export function getResultingFunction(key, functionStore, dataArr) {
 /* A public function run a upaf_ function pointed to by a key */
 
 // This is also a special function for which statements of the form
-// "upaf_runResultingFunction(<Exp>, upas_functionStore, <Exp>);"
+// "upaf_runResultingFunction(<Exp>, upas_fs, <Exp>);"
 // is allowed in the JS subset.
 export function upaf_runResultingFunction(key, functionStore, dataArr) {
     var fun = getFunction(key, functionStore);
