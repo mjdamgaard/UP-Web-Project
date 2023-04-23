@@ -181,30 +181,66 @@ export function upaf_empty(selector) {
 export function upaf_attr(selector, attrOrAttrValPairArr, val) {
     // test selector and get jQuery object.
     let jqObj = getJQueryObj(selector);
-    // // if val is undefined/null, interpret attrOrAttrValPairArr as attribute,
-    // // test it, and return jqObj.attr(attribute).
-    // if (
-    //     typeof val === "undefined" &&
-    //     typeof attrOrAttrValPairArr === "string"
-    // ) {
-    //     let attribute = attrOrAttrValPairArr;
-    //     if (!/\w+/.test(attribute)) {
-    //         throw (
-    //             "attr(): attribute input was not string of pattern /\\w+/"
-    //         );
-    //     }
-    //     return jqObj.attr(attribute);
-    // }
-    // else interpret attrOrAttrValPairArr as an array of attribute--value
-    // pairs, test these with a call to isLegalTagNameAttrNameAttrValTriplet(),
-    // defined below (near the end of this script), and return
-    // jqObj.attr(Object.fromEntries(attrValPairArr)),
+    // if val is undefined/null and attrOrAttrValPairArr as a string, test it
+    // and return jqObj.attr(attribute).
+    if (
+        typeof val === "undefined" &&
+        typeof attrOrAttrValPairArr === "string"
+    ) {
+        let attr = attrOrAttrValPairArr;
+        // test the format of attr.
+        if (!/\w+/.test(attr)) {
+            throw (
+                "attr(): attribute input was not string of pattern /\\w+/"
+            );
+        }
+        // return the attribute value of the first element in the selection.
+        return jqObj.attr(attr);
+    }
+    // if both attrOrAttrValPairArr and val are strings, the semantics should
+    // be the same as if attrOrAttrValPairArr had been [[attrOrAttrValPairArr,
+    // val]] and val had been undefined/null.
+    if (
+        typeof val === "string" &&
+        typeof attrOrAttrValPairArr === "string"
+    ) {
+        let attr = attrOrAttrValPairArr;
+        // test the format of attr.
+        if (!/\w+/.test(attr)) {
+            throw (
+                "attr(): attribute input was not string of pattern /\\w+/"
+            );
+        }
+        // set attrOrAttrValPairArr = [[attr, val]] and continue with the last
+        // option.
+        attrOrAttrValPairArr = [[attr, val]];
+    }
+    // loop over all elements in the selection and for each element, get the
+    // tagName and then try to set its attributes according to the input
+    // attribute--value pair array.
     let attrValPairArr = attrOrAttrValPairArr;
     let attrValPairArrLen = attrValPairArr.length;
-
-    for (let i = 0; i < attrValPairArrLen; i++) {
-        if (!isLegalTagNameAttrNameAttrValTriplet)
-    }
+    jqObj.each(function(){
+        // get the tagName of the current element.
+        tagName = this.prop("tagName").toLowerCase();
+        // loop and set new attributes according to attrValPairArr.
+        for (let i = 0; i < attrValPairArrLen; i++) {
+            // get the ith attribute--value pair.
+            let attr = attrValPairArr[i][0];
+            let val = attrValPairArr[i][1];
+            // test the format of the attribute.
+            if (!/\w+/.test(attr)) {
+                throw (
+                    "attr(): attribute number " + i.toString() +
+                    " was not string of pattern /\\w+/"
+                );
+            }
+            // test the (tagName, attr, val) triplet.
+            testTagNameAttrNameAttrValTriplet(tagName, attr, val);
+        }
+        // if all tests succeded change all the attributes for the element.
+        this.attr(Object.fromEntries(attrValPairArr));
+    });
 }
 
 
@@ -1611,7 +1647,7 @@ htmlChecker.addProduction("<LegalHTMLElement>", [
     ]],
 ]);
 const legalContainerHTMLElements = [
-    "a", "article", "aside", "audio", "b", "bdi", "bdo",
+    "a", "abbr", "address", "article", "aside", "audio", "b", "bdi", "bdo",
     "blockquote", "button", "cite", "code", "colgroup", "data",
     "datalist", "del", "details", "dfn", "dialog", "div", "dl", "em",
     "fieldset", "figure", "footer", "form",
@@ -1754,19 +1790,10 @@ htmlChecker.addProduction("<RegularAttributeDefinition>", [
                 let attrName = currentProdScopedArr[0];
                 let attrVal = lexeme.substring(1, lexeme.length - 1);
                 // then validate this triplet be a call to
-                // isLegalTagNameAttrNameAttrValTriplet().
-                let res = isLegalTagNameAttrNameAttrValTriplet(
-                    tagName, attrName, attrVal
-                );
-                // throw error if the triplet is illegal.
-                if (!res) {
-                    throw (
-                        "Illegal combination of tag name, attribute name " +
-                        "and attribute value: " +
-                        "(" + tagName + ", " + attrName + ", " + attrVal + ")"
-                    );
-                }
-                // else return true.
+                // testTagNameAttrNameAttrValTriplet() (which throws an
+                // error if the triplet is illegal).
+                testTagNameAttrNameAttrValTriplet(tagName, attrName, attrVal);
+                // return true if the check succeeded without throwing.
                 return true;
             }
         ],
@@ -1782,18 +1809,10 @@ htmlChecker.addProduction("<BooleanAttributeDefinition>", [
                 let tagName = mainProdScopedArr[mainProdScopedArr.length - 1];
                 let attrName = lexeme;
                 // then validate this pair be a call to
-                // isLegalTagNameAttrNameAttrValTriplet().
-                let res = isLegalTagNameAttrNameAttrValTriplet(
-                    tagName, attrName, null
-                );
-                // throw error if the pair is illegal.
-                if (!res) {
-                    throw (
-                        "Illegal combination of tag name and attribute name: " +
-                        "(" + tagName + ", " + attrName + ")"
-                    );
-                }
-                // else return true.
+                // testTagNameAttrNameAttrValTriplet() (which throws an
+                // error if the triplet is illegal).
+                testTagNameAttrNameAttrValTriplet(tagName, attrName, null);
+                // return true if the check succeeded without throwing.
                 return true;
             }
         ],
@@ -1884,7 +1903,17 @@ export function isLegalTagNameAttrNameAttrValTriplet(
 }
 // TODO: Add some more attributes, such as 'pattern', 'placeholder' and 'list'..
 
-
+export function testTagNameAttrNameAttrValTriplet(
+    tagName, attrName, attrVal
+) {
+    if (!isLegalTagNameAttrNameAttrValTriplet(tagName, attrName, attrVal)) {
+        throw (
+            "testTagNameAttrNameAttrValTriplet(): illegal combination of " +
+            "tagName, attribute name and attribute value (" + tagName +
+            ", " + attrName + ", " + attrVal + ")"
+        );
+    }
+}
 
 
 export function checkHTML(html, successRequired) {
