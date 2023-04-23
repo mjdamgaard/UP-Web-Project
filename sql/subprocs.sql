@@ -75,7 +75,7 @@ DELIMITER ;
 /* Rating inputs */
 
 
-
+-- TODO: Change such that new sets are also added to Creations.
 DELIMITER //
 CREATE PROCEDURE findOrCreateSet (
     IN userType CHAR(1),

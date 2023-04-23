@@ -160,8 +160,9 @@ export function upaf_followLink(url, urlRegExKey, target) {
 
 /* Functions to load more scripts on-demand */
 
+// TODO: Change..
 export function upaf_loadScript(
-    textID, callbackName, funIdentList, asFunIdentList
+    moduleID, callbackName, funIdentList, asFunIdentList
 ) {
     // test callback key (which shouldn't necessarily be defined at this point;
     // it can potentially be defined by the loaded module (which can be useful
@@ -204,7 +205,7 @@ export function upaf_loadScript(
             html += ", " + funIdentList[i] + " as " + asFunIdentList[i];
         }
     }
-    html += '} from "UPA_scripts.php?id=' + textID + '"; ';
+    html += '} from "UPA_scripts.php?id=' + moduleID + '"; ';
     // append a call statement to the callback function, which should be
     // defined at this point in the newly loaded script, and append also the
     // closing script tag.
