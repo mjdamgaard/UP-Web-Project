@@ -175,7 +175,7 @@ export function upaf_empty(selector) {
 
 /* jQuery wrapper to get and set standard HTML attributes that does not need
  * quering of the server to verify their legality (but can be verified by
- * isLegalTagNameAttrNameAttrValTriplet() defined below).
+ * checkTagNameAttrNameAttrValTriplet() defined below).
  **/
 
 export function upaf_attr(selector, attrOrAttrValPairArr, val) {
@@ -191,7 +191,7 @@ export function upaf_attr(selector, attrOrAttrValPairArr, val) {
         // test the format of attr.
         if (!/[\w\-]+/.test(attr)) {
             throw (
-                "attr(): attribute input was not string of pattern /\\w+/"
+                "attr(): attribute input was not string of pattern /[\\w\\-]+/"
             );
         }
         // return the attribute value of the first element in the selection.
@@ -222,13 +222,6 @@ export function upaf_attr(selector, attrOrAttrValPairArr, val) {
             // get the ith attribute--value pair.
             let attr = attrValPairArr[i][0];
             let val = attrValPairArr[i][1];
-            // test the format of the attribute.
-            if (!/[\w\-]+/.test(attr)) {
-                throw (
-                    "attr(): attribute number " + i.toString() +
-                    " was not string of pattern /\\w+/"
-                );
-            }
             // test the (tagName, attr, val) triplet.
             testTagNameAttrNameAttrValTriplet(tagName, attr, val);
         }
@@ -1868,13 +1861,29 @@ const legalAttrNameAttrValPairStruct = {
 // URLs *before* the new HTML is inserted).
 
 
-export function isLegalTagNameAttrNameAttrValTriplet(
+export function upaf_isLegalTagNameAttrNameAttrValTriplet(
     tagName, attrName, attrVal
 ) {
+    // test tagName.
+    if (!/[\w]+/.test(tagName)) {
+        throw (
+            "isLegalTagNameAttrNameAttrValTriplet(): tag name '" +
+            tagName + "' is not string of pattern /\\w+/"
+        );
+    }
+    // test attrName.
+    if (!/[\w\-]+/.test(attrName)) {
+        throw (
+            "isLegalTagNameAttrNameAttrValTriplet(): attribute name '" +
+            attrName + "' is not string of pattern /[\\w\\-]+/"
+        );
+    }
+    // get the validation data for attrVal from legalAttrNameAttrValPairStruct.
     let attrValValidationData =
         legalAttrNameAttrValPairStruct[attrName][tagName] ??
         legalAttrNameAttrValPairStruct[attrName]["All"] ??
         false;
+    // test attrVal according the type of the validation data.
     if (attrValValidationData === false) {
         return false;
     }
@@ -1900,7 +1909,9 @@ export function isLegalTagNameAttrNameAttrValTriplet(
 export function testTagNameAttrNameAttrValTriplet(
     tagName, attrName, attrVal
 ) {
-    if (!isLegalTagNameAttrNameAttrValTriplet(tagName, attrName, attrVal)) {
+    if (
+        !upaf_isLegalTagNameAttrNameAttrValTriplet(tagName, attrName, attrVal)
+    ) {
         throw (
             "testTagNameAttrNameAttrValTriplet(): illegal combination of " +
             "tagName, attribute name and attribute value (" + tagName +
