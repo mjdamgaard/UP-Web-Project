@@ -81,7 +81,7 @@ addLexemePatterns(lexemePatternArrArr) {
     }
 }
 
-// Hm...
+// Hm... ...Oh..
 addProduction(key, settings) {
     // if settings is undefined, then key is assumed to be a pattern
     // string for a single-lexeme check.
