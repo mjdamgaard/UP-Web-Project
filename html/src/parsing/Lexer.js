@@ -13,6 +13,7 @@ constructor(lexemeAndEndCharPatternPairArr, whitespacePattern) {
     this.error = undefined;
     this.success = undefined;
     this.lexArr = undefined;
+    this.lexArrLen = undefined;
     this.nextPos = undefined;
 }
 
@@ -37,12 +38,13 @@ lex(str) {
     }
     // initialize the return lexeme array and the position variable.
     this.lexArr = [];
+    this.lexArrLen = 0;
     this.nextPos = 0;
     // initialize the loop lengths.
     let strLen = str.length;
     let lexPatternEndPairArrLen = lexPatternEndPairArr.length;
     // lex and obtain the return lexeme array in the following loop.
-    outerLoop: while (this.nextPos < strLen) {
+    outerLoop: while (true) {
         // first match an optional string of whitespace, increase nextPos
         // with the matched length and return the lexeme array if the end
         // of the string is reached.
@@ -66,6 +68,9 @@ lex(str) {
             // if a match was found, increase nexPos and continue the outer
             // for loop.
             if (matchLen > 0) {
+                this.lexArr[this.lexArrLen] =
+                    str.substring(this.nextPos, this.nextPos + matchLen);
+                this.lexArrLen += 1;
                 this.nextPos += matchLen;
                 continue outerLoop; // in PHP, this would be "continue 2;"
             }

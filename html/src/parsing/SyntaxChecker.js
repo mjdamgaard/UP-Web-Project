@@ -27,16 +27,18 @@ check(lexArr, productionKey) {
     // reset nextPos to [0] and reset storageForTests to [].
     this.nextPos = [0];
     this.storageForTests = [];
-    // refresh this.storageForTests
     // check and try for error.
     try {
-        this.productionCheckers[productionKey](lexArr, this.nextPos, true);
+        this.productionCheckers[productionKey](
+            this, lexArr, this.nextPos, true
+        );
     } catch (error) {
         this.error = (
             "Syntax check failed at lexeme position " +
-            this.nextPos[0].toString() + " after\n'" +
-            lexArr.slice(Math.max(0, nextPos[0] - 80), nextPos[0]).join(" ") +
-            "'\n" + error
+            this.nextPos[0].toString() + " after '" + lexArr.slice(
+                Math.max(0, this.nextPos[0] - 80), this.nextPos[0]
+            ).join(" ") +
+            "'. " + error
         );
         this.success = false;
         return false;
@@ -45,9 +47,10 @@ check(lexArr, productionKey) {
     if (this.nextPos[0] >= lexArr.length) {
         this.error = (
             "Syntax check failed at lexeme position " +
-            this.nextPos[0].toString() + " after\n'" +
-            lexArr.slice(Math.max(0, nextPos[0] - 80), nextPos[0]).join(" ") +
-            "'\nThe main production stopped before the end of the " +
+            this.nextPos[0].toString() + " after '" + lexArr.slice(
+                Math.max(0, this.nextPos[0] - 80), this.nextPos[0]
+            ).join(" ") +
+            "'. The main production stopped before the end of the " +
             "lexame array"
         );
         this.success = false;
@@ -85,7 +88,7 @@ addProduction(key, settings) {
         let regex = new RegExp( "^" + key + "$");
         // initialize the single-lexeme production checking function.
         this.productionCheckers[key] =
-            function(lexArr, nextPos, successRequired) {
+            function(thisLexer, lexArr, nextPos, successRequired) {
                 let test = regex.test(lexArr[nextPos[0]]);
                 if (!test && successRequired) {
                     throw (
@@ -104,9 +107,11 @@ addProduction(key, settings) {
     // subproductionKeys] arrays, where subproductionKeys are
     // earlier (or later) defined function keys added with addProduction().
     let settingsLen = settings.length;
-    this.productionCheckers[key] = function(lexArr, nextPos, successRequired) {
+    this.productionCheckers[key] = function(
+        thisLexer, lexArr, nextPos, successRequired
+    ) {
         // record the initial position.
-        initialPos = nextPos[0];
+        let initialPos = nextPos[0];
         // initialize a local variable for storing lexemes to test, which can
         // for instance be used to test that an end XML tag matches its
         // beginning.
@@ -142,7 +147,7 @@ addProduction(key, settings) {
                     case ("initSequence"):
                         // check some initial words after which the rest of
                         // the "sequence" in the production become mandatory.
-                        ret = this.checkSequence(
+                        ret = thisLexer.checkSequence(
                             lexArr, nextPos, lexemesToTest, subproductionKeys,
                             successRequired
                         );
@@ -152,7 +157,7 @@ addProduction(key, settings) {
                         // check some words which are required only if
                         // successRequired is true or if "initSequence" has
                         // appeared before.
-                        ret = this.checkSequence(
+                        ret = thisLexer.checkSequence(
                             lexArr, nextPos, lexemesToTest, subproductionKeys,
                             successRequired
                         );
@@ -162,7 +167,7 @@ addProduction(key, settings) {
                         // a syntax defined by subproductionKeys[1]. If
                         // subproductionKeys[1] is undefined, then the list
                         // expects no delimeter between its elements.
-                        ret = this.checkList(
+                        ret = thisLexer.checkOptList(
                             lexArr, nextPos,
                             subproductionKeys[0], subproductionKeys[1]
                         );
@@ -172,7 +177,7 @@ addProduction(key, settings) {
                         // a syntax defined by subproductionKeys[1]. If
                         // subproductionKeys[1] is undefined, then the list
                         // expects no delimeter between its elements.
-                        ret = this.checkNonemptyList(
+                        ret = thisLexer.checkNonemptyList(
                             lexArr, nextPos,
                             subproductionKeys[0], subproductionKeys[1],
                             successRequired
@@ -181,14 +186,14 @@ addProduction(key, settings) {
                     case ("union"):
                         // check at least one of the subproductions pointed to
                         // by each of the the subproductionKeys.
-                        ret = checkUnion(
+                        ret = thisLexer.checkUnion(
                             lexArr, nextPos, subproductionKeys, successRequired
                         );
                         break;
                     case ("optUnion"):
                         // check at most one of the subproductions pointed to
                         // by each of the the subproductionKeys.
-                        ret = checkUnion(
+                        ret = thisLexer.checkUnion(
                             lexArr, nextPos, subproductionKeys, false
                         );
                         break;
@@ -202,7 +207,7 @@ addProduction(key, settings) {
                 }
             }
         } catch (error) {
-            error += " in " + key; // + " at position " + initialPos.toString();
+            '"' + error + '" in ' + key;
             throw error;
         }
         // if no error was thrown, test ret to see if nextPos has to be reset.
@@ -246,7 +251,9 @@ checkSequence(
         }
         // (Note that all productionCheckers reset nextPos on failure (excpet
         // when an error is thrown).)
-        ret = this.productionCheckers[key](lexArr, nextPos, successRequired);
+        ret = this.productionCheckers[key](
+            this, lexArr, nextPos, successRequired
+        );
         if (!ret) {
             break;
         }
@@ -270,7 +277,9 @@ checkUnion(lexArr, nextPos, subproductionKeys, successRequired) {
     for (let i = 0; i < subKeysLen; i++) {
         let key = subproductionKeys[i];
         // (Note that all productionCheckers reset nextPos on failure.)
-        ret = this.productionCheckers[key](lexArr, nextPos, successRequired);
+        ret = this.productionCheckers[key](
+            this, lexArr, nextPos, successRequired
+        );
         if (ret) {
             break;
         }
@@ -285,16 +294,18 @@ checkUnion(lexArr, nextPos, subproductionKeys, successRequired) {
     return ret;
 }
 
-checkList(lexArr, nextPos, elementProductionKey, delimeterProductionKey) {
+checkOptList(lexArr, nextPos, elementProductionKey, delimeterProductionKey) {
     let delimeterIsProvided = (typeof delimeterProductionKey !== "undefined");
     // (Note that all productionCheckers reset nextPos on failure.)
     while (
-        this.productionCheckers[elementProductionKey](lexArr, nextPos, false)
+        this.productionCheckers[elementProductionKey](
+            this, lexArr, nextPos, false
+        )
     ) {
         if (
             delimeterIsProvided &&
             !this.productionCheckers[delimeterProductionKey](
-                lexArr, nextPos, false
+                this, lexArr, nextPos, false
             )
         ) {
             break;
@@ -313,7 +324,7 @@ checkNonemptyList(
     // first record the initial position.
     let initialPos = nextPos[0];
     // try checking a list.
-    checkList(lexArr, nextPos, elementProductionKey, delimeterProductionKey);
+    this.checkOptList(lexArr, nextPos, elementProductionKey, delimeterProductionKey);
     // return false or fail if nextPos[0] is still equal to the initialPos.
     if (nextPos[0] === currentPos) {
         if (successRequired) {
