@@ -82,6 +82,14 @@ addLexemePatterns(lexemePatternArrArr) {
 }
 
 // Hm... ...Oh..
+// NOTE: Before deciding to put a pin in automatic syntax checks (to make
+// verifying user scripts for the UPA easier), I thought I would remake this
+// class, such that it is simply given each production setting to hold, instead
+// of adding "method" to it for each production, so to speak. The algorithm of
+// check should then just continuously read from the given settings of what to
+// do next (so with a similar algorithm overall, but where.. well, I guess
+// this check() would then just have to call itself for each subproduction..
+// Yeah..).
 addProduction(key, settings) {
     // if settings is undefined, then key is assumed to be a pattern
     // string for a single-lexeme check.
