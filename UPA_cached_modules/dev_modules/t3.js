@@ -1,68 +1,44 @@
 
-import {
-    getJQueryObj, upaf_runResultingFunction
-} from "/UPA_scripts.php?id=t1";
+// import {
+//     getJQueryObj, upaf_runResultingFunction
+// } from "/UPA_scripts.php?id=t1";
 
 
-/* Functions to input ratings and insert terms */
+/* Function to upload and query ratings, terms and other info */
 
-export function upaf_upload(reqDataArr, callbackKey) {
-    let reqData = Object.fromEntries(reqDataArr);
-    $.getJSON("input_handler.php", reqData, function(result){
-        // call callback(result) via runResultingFunction(). (Note that result
-        // ought to be an array.)
-        upaf_runResultingFunction(callbackKey, [result]);
-    });
+export function upaf_upload(reqKey, reqDataArr, callback) {
+    let reqData = new InputDataConstructors[reqKey + "ReqData"](
+        reqDataArr[0], reqDataArr[1], reqDataArr[2], reqDataArr[3],
+        reqDataArr[4], reqDataArr[5],
+    );
+    $.getJSON("input_handler.php", reqData, callback);
 }
 
-export function upaf_query(reqDataArr, callbackKey) {
-    let reqData = Object.fromEntries(reqDataArr);
+export function upaf_queryAndSanitize(reqKey, reqDataArr, callback) {
+    let reqData = new QueryDataConstructors[reqKey + "ReqData"](
+        reqDataArr[0], reqDataArr[1], reqDataArr[2], reqDataArr[3],
+        reqDataArr[4], reqDataArr[5],
+    );
     $.getJSON("query_handler.php", reqData, function(result){
-        // call callback(result) via runResultingFunction(). (Note that result
-        // ought to be an array.)
-        upaf_runResultingFunction(callbackKey, [result]);
+        // unless reqKey == "Set", sanitize the first column of result.
+        let resultLen = result.length;
+        for (let i = 0; i < resultLen; i++) {
+            result[i] = result[i]
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&apos;");
+        }
+        // then call the callback function on the sanitized result.
+        callback(result);
     });
 }
 
-/* Helping functions to construct request data arrays */
-
-export function upaf_getUploadReqDataArr(
-    reqKey, var1, var2, var3, var4, var5, var6
-) {
-    if ( !(/^\w+$/.test(reqKey)) ) {
-        throw (
-            "getUploadReqDataArr(): key does not match the right pattern " +
-            '("/^\\w+$/")'
-        );
-    }
-    return Object.entries(
-        new InputDataConstructors[reqKey + "ReqData"](
-            var1, var2, var3, var4, var5, var6
-        )
-    );
-}
-
-export function upaf_getQueryReqDataArr(
-    reqKey, var1, var2, var3, var4, var5, var6
-) {
-    if ( !(/^\w+$/.test(reqKey)) ) {
-        throw (
-            "getQueryReqDataArr(): key does not match the right pattern " +
-            '("/^\\w+$/")'
-        );
-    }
-    return Object.entries(
-        new QueryDataConstructors[reqKey + "ReqData"](
-            var1, var2, var3, var4, var5, var6
-        )
-    );
-}
 
 
 
-/* Functions to verify and insert new scripts */
 
-// TODO..
 
 
 
@@ -72,6 +48,8 @@ export function upaf_getQueryReqDataArr(
 
 
 /* Functions to verify and load hyperlinks into the UPA, and to follow them */
+
+// TODO: Update these at some point.
 
 var urlRegExCache = urlRegExCache ?? {};
 
