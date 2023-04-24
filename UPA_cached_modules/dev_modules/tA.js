@@ -1,26 +1,29 @@
 /* A main function */
 
-
-
 import {
-    upaf_upload, upaf_queryAndSanitize,
+    upa_upload, upa_queryAndSanitize, upa_getJQueryObj
 } from "/UPA_scripts.php?id=t3";
 
 
-let helloHTML = "<b>Hello, world</b>";
 
-export function upaf_main(preferenceUserID, termID, userID) {
+export function upa_main(preferenceUserID, termID, userID) {
 
-    
+    upa_getJQueryObj('main').append('<div></div>');
 
     let termType = termID.substring(0, 1);
     switch (termType) {
         case "c":
-            storeFunction(upaf_appendDataHTML, "appendDataHTML");
-            let reqDataArr = upaf_getQueryReqDataArr("CatDef", termID);
-            let catDef = upaf_query(reqDataArr, "appendDataHTML");
+            upa_getJQueryObj('main > div:last-of-type').append(
+                upa_getCategoryHTML(termID)
+            );
             break;
         default:
-            throw "main(): termType not implemented";
+            throw "main(): term type not implemented";
     }
+}
+
+function upa_getCategoryHTML(catID) {
+
+
+    return "<b>Hellos</b>";
 }

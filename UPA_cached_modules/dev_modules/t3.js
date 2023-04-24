@@ -6,7 +6,7 @@
 
 /* Function to upload and query ratings, terms and other info */
 
-export function upaf_upload(reqKey, reqDataArr, callback) {
+export function upa_upload(reqKey, reqDataArr, callback) {
     let reqData = new InputDataConstructors[reqKey + "ReqData"](
         reqDataArr[0], reqDataArr[1], reqDataArr[2], reqDataArr[3],
         reqDataArr[4], reqDataArr[5],
@@ -14,7 +14,7 @@ export function upaf_upload(reqKey, reqDataArr, callback) {
     $.getJSON("input_handler.php", reqData, callback);
 }
 
-export function upaf_queryAndSanitize(reqKey, reqDataArr, callback) {
+export function upa_queryAndSanitize(reqKey, reqDataArr, callback) {
     let reqData = new QueryDataConstructors[reqKey + "ReqData"](
         reqDataArr[0], reqDataArr[1], reqDataArr[2], reqDataArr[3],
         reqDataArr[4], reqDataArr[5],
@@ -43,6 +43,15 @@ export function upaf_queryAndSanitize(reqKey, reqDataArr, callback) {
 
 
 
+export function upa_getJQueryObj(selector) {
+    // return the descendents of #upaFrame that matches the selector.
+    return $("#upaFrame").find(selector);
+}
+
+
+
+
+
 
 
 
@@ -53,7 +62,7 @@ export function upaf_queryAndSanitize(reqKey, reqDataArr, callback) {
 
 var urlRegExCache = urlRegExCache ?? {};
 
-export function upaf_cacheURLRegEx(pattID, key, userID) {
+export function upa_cacheURLRegEx(pattID, key, userID) {
     // test key.
     if (typeof key !== "string") {
         throw (
@@ -83,7 +92,7 @@ export function upaf_cacheURLRegEx(pattID, key, userID) {
 }
 
 
-export function upaf_isACachedURL(key) {
+export function upa_isACachedURL(key) {
     if (typeof urlRegExCache["upak_" + key] === "undefined") {
         return false;
     } else {
@@ -91,7 +100,7 @@ export function upaf_isACachedURL(key) {
     }
 }
 
-export function upaf_loadLink(selector, url, urlRegExKey) {
+export function upa_loadLink(selector, url, urlRegExKey) {
     let jqObj = getJQueryObj(selector);
     // lookup pattern (will fail if link is not cached, so the users might want
     // to check this first with isACachedLink()).
@@ -106,7 +115,7 @@ export function upaf_loadLink(selector, url, urlRegExKey) {
     jqObj.filter('a').attr("src", url);
 }
 
-export function upaf_followLink(url, urlRegExKey, target) {
+export function upa_followLink(url, urlRegExKey, target) {
     // test target.
     if (
         typeof target !== "undefined" &&
@@ -139,7 +148,7 @@ export function upaf_followLink(url, urlRegExKey, target) {
 /* Functions to load more scripts on-demand */
 
 // TODO: Change..
-export function upaf_loadScript(
+export function upa_loadScript(
     moduleID, callbackName, funIdentList, asFunIdentList
 ) {
     // test callback key (which shouldn't necessarily be defined at this point;
@@ -220,7 +229,7 @@ export function testFunIdentArrAndPrependUPAFPrefix(funIdentList) {
 
 /* Functions to load images into the UPA */
 
-export function upaf_loadImage(selector, binID, format, altText, userID) {
+export function upa_loadImage(selector, binID, format, altText, userID) {
     if (binID === "b0") {
         // add null src to <image> elements..
     }
