@@ -1,29 +1,26 @@
 /* A main function */
 
-import {
-    upa_upload, upa_queryAndSanitize, upa_getJQueryObj
-} from "/UPA_scripts.php?id=t3";
+import * as t3Mod from "/UPA_scripts.php?id=t3";
 
 
 
 export function upa_main(preferenceUserID, termID, userID) {
 
-    upa_getJQueryObj('main').append('<div></div>');
+    t3Mod.upa_getJQueryObj('main').append('<div></div>');
+    let initialDiv = t3Mod.upa_getJQueryObj('main > div:last-of-type');
 
     let termType = termID.substring(0, 1);
     switch (termType) {
         case "c":
-            upa_getJQueryObj('main > div:last-of-type').append(
-                upa_getCategoryHTML(termID)
-            );
+            upa_insertCategoryHTML(initialDiv);
             break;
         default:
             throw "main(): term type not implemented";
     }
 }
 
-function upa_getCategoryHTML(catID) {
+function upa_insertCategoryHTML(jqObj) {
 
 
-    return "<b>Hellos</b>";
+    jqObj.html("<b>Hellos</b>");
 }
