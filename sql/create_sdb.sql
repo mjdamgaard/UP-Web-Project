@@ -345,6 +345,9 @@ CREATE TABLE Relations (
     -- better parse whether parse the adjectives, without a very high risk
     -- of parsing an object noun as an adjective instead. And the "elements"
     -- can then just be removed client-side for adjective relations.
+    -- *(And we should also have object nouns of the form "Elements <verb in
+    -- adjective form>", e.g. "Elements related to so and so". Then the app
+    -- can also remove the "Elements" in front and only print the rest.)
     obj_noun VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
     -- FULLTEXT idx (obj_noun),
 
