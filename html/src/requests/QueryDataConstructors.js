@@ -34,9 +34,8 @@ const QueryDataConstructors = {
         this.type = "R";
         // TODO: change this into objIDArr: A limited-size array of objects to
         // query ratings for (w.r.t the setID).
-        this.oid = objID
-        // TODO: Also at least consider changing setID to to setIDArr as well..
-        this.sid = setID
+        this.oid = objID;
+        this.sid = setID;
     },
 
 

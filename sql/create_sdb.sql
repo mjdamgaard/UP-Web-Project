@@ -228,6 +228,9 @@ CREATE TABLE UserGroups (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     -- type = "grp".
 
+    -- TODO: I think I will change (creator_t, creator_id) to just a set_id
+    -- instead.
+
     -- id of the creating user group (or user or bot).
     creator_t CHAR(1) NOT NULL,
     creator_id BIGINT UNSIGNED NOT NULL,
