@@ -25,12 +25,12 @@ function upa1_loadContent(jqObj) {
     jqObj.find('[content-key]').each(function() {
         // set the id of the child content loader and increase idSuffix.
         let childID = id + "-" + idSuffix.toString();
-        this.attr("id", childID);
+        $(this).attr("id", childID);
         idSuffix += 1;
         // set up an event listener for the child to load its own content.
-        this.on("Load content", function() {
+        $(this).on("Load content", function() {
             // load the inner content of child.
-            upa1_loadContent(this);
+            upa1_loadContent($(this));
         });
     });
     // trigger an event at the parent content loader to signal that the
