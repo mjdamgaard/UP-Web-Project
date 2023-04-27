@@ -10,10 +10,7 @@ import * as t2Mod from "/UPA_scripts.php?id=t2";
 upa1_contentLoaderFunctions["categoryTerm"] = function(jqObj, contextData) {
     jqObj.html("<b>Hello</b>, I'm gonna be a category.")
         .append('<div content-key="subcategories"></div>')
-        .append('<div content-key="elements" style="float:left"></div>')
-        .on("Children are ready", function() {
-            $(this).find('> *').trigger("Load content");debugger;
-        });debugger;
+        .append('<div content-key="elements" style="float:left"></div>');
 }
 
 upa1_contentLoaderFunctions["subcategories"] = function(jqObj, contextData) {

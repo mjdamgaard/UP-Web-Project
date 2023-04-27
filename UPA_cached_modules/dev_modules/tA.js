@@ -9,8 +9,8 @@ export function upa_main(preferenceUserID, termID, userID) {
         throw "Unrecognized preference user";
     }
 
-    t1Mod.upaFind('main').append('<div id="upa1"></div>');
-    let upa1Frame = t1Mod.upaFind('#upa1');
+    t1Mod.upaFind('main').append('<div id="upa1-0"></div>');
+    let upa1Frame = t1Mod.upaFind('#upa1-0');
     let contextData = JSON.stringify({termID: termID, userID: userID});
     upa1Frame.attr("contextData", contextData);
 
@@ -19,7 +19,9 @@ export function upa_main(preferenceUserID, termID, userID) {
     let termType = termID.substring(0, 1);
     switch (termType) {
         case "c":
-            upa1_loadContent(upa1Frame);
+            $(function() {
+                upa1_loadContent(upa1Frame);
+            });
             break;
         default:
             throw "main(): term type not implemented";
