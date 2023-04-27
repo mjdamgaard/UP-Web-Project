@@ -27,22 +27,13 @@ export function loadContent(jqObj) {
         let childID = id + "-" + idSuffix.toString();
         this.attr("id", childID);
         idSuffix += 1;
-        // set up a special event listener for the child to load its own
-        // content.
-        this.on(childID + ":Load content", function() {
-            // load the inner content of child.
-            loadContent(this);
-        });
-        // set up a shared event listener for the child to load its own
-        // content (together with all its content loader siblings).
-        this.on(id + ":Load content of children", function() {
-            // remove the targeted event listener.
-            this.off(childID + ":Load content");
+        // set up an event listener for the child to load its own content.
+        this.on("Load content", function() {
             // load the inner content of child.
             loadContent(this);
         });
     });
     // trigger an event at the parent content loader to signal that the children
     // are ready.
-    
+
 }
