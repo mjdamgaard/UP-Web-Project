@@ -12,8 +12,8 @@ upa1_contentLoaderFunctions["categoryTerm"] = function(jqObj, contextData) {
         .append('<div content-key="subcategories"></div>')
         .append('<div content-key="elements" style="float:left"></div>')
         .on("Children are ready", function() {
-            $(this).find('> *').trigger("Load content");
-        });
+            $(this).find('> *').trigger("Load content");debugger;
+        });debugger;
 }
 
 upa1_contentLoaderFunctions["subcategories"] = function(jqObj, contextData) {

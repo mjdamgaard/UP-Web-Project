@@ -32,10 +32,10 @@ function upa1_loadContent(jqObj) {
             // load the inner content of child.
             upa1_loadContent($(this));
         });
-    });
+    });debugger;
     // trigger an event at the parent content loader to signal that the
     // children are ready.
-    jqObj.trigger("Children are ready");
+    jqObj.trigger("Children are ready");debugger;
 }
 
 // initialize upa1_contentLoaderFunctions globally.
