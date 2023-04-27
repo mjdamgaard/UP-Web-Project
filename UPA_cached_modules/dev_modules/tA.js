@@ -1,12 +1,12 @@
 /* A main function */
 
-import * as t3Mod from "/UPA_scripts.php?id=t3";
+import * as t1Mod from "/UPA_scripts.php?id=t1";
 
 
 
 export function upa_main(preferenceUserID, termID, userID) {
 
-    t3Mod.upa_getJQueryObj('main').append('<div></div>');
+    t1Mod.upa_getJQueryObj('main').append('<div></div>');
     let initialDiv = t3Mod.upa_getJQueryObj('main > div:last-of-type');
 
     let termType = termID.substring(0, 1);

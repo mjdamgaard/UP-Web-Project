@@ -33,7 +33,8 @@ const QueryDataConstructors = {
     RatReqData: function(objID, setID) {
         this.type = "R";
         // TODO: change this into objIDArr: A limited-size array of objects to
-        // query ratings for (w.r.t the setID).
+        // query ratings for (w.r.t the setID). *Never mind, I will make do
+        // with single-query requests, at least in the beginning of the site..
         this.oid = objID;
         this.sid = setID;
     },

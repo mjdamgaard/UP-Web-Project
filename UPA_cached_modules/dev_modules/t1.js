@@ -1,72 +1,38 @@
 
-/* Some developer functions, both private and public */
+// import {
+//     getJQueryObj, upaf_runResultingFunction
+// } from "/UPA_scripts.php?id=t1";
 
 
-/* A print hello world function */
+/* Function to upload and query ratings, terms and other info */
 
-export function upaf_appendHelloWorld() {
-    $("#upaFrame").append("<div><b>Hello, world!</b></div>");
+export function upa_upload(reqKey, reqDataArr, callback) {
+    let reqData = new InputDataConstructors[reqKey + "ReqData"](
+        reqDataArr[0], reqDataArr[1], reqDataArr[2], reqDataArr[3],
+        reqDataArr[4], reqDataArr[5],
+    );
+    $.getJSON("input_handler.php", reqData, callback);
 }
 
-
-
-
-
-
-
-
-/* Functions to store and get callback upaf_ functions from key strings */
-
-
-// This is a special function (and 's' in "upas_" stands for "special"),
-// namely statements of the form
-// "upas_storeFunction(<FunIdent>, <Exp>, upas_fs);"
-// is allowed in the JS subset, where <FunIdent> is a function identifier
-// beginning with "upaf_" and where upas_fs is a special "function store".
-// And in order to be able to initialize this upas_fs, statements
-// of the form
-// "var upas_fs = {};"
-// are also allowed.
-export function upas_storeFunction(fun, key, functionStore) {
-    if (!/^[\w\-]+$/.test(key)) {
-        throw (
-            "storeFunction(): function key is not a valid " +
-            "/^[\\w\\-]+$/ string"
-        );
-    }
-    functionStore["upak_" + key] = fun;
-}
-
-// Note that since this function does not have the upaf_ prefix, it cannot
-// be exported to the final user modules (but only to other developer modules).
-export function getFunction(key, functionStore) {
-    if (!/^[\w\-]+$/.test(key)) {
-        throw (
-            "getFunction(): function key is not a valid " +
-            "/^[\\w\\-]+$/ string"
-        );
-    }
-    return functionStore["upak_" + key];
-}
-
-/* A private function to get a resulting function from key and a data array
- * containing the input parameters.
- **/
-export function getResultingFunction(key, functionStore, dataArr) {
-    var fun = getFunction(key, functionStore);
-    return function() {
-        fun.apply(null, dataArr ?? []);
-    };
-}
-
-/* A public function run a upaf_ function pointed to by a key */
-
-// This is also a special function for which statements of the form
-// "upaf_runResultingFunction(<Exp>, upas_fs, <Exp>);"
-// is allowed in the JS subset.
-export function upaf_runResultingFunction(key, functionStore, dataArr) {
-    var fun = getFunction(key, functionStore);
-    fun.apply(null, dataArr ?? []);
+export function upa_queryAndSanitize(reqKey, reqDataArr, callback) {
+    let reqData = new QueryDataConstructors[reqKey + "ReqData"](
+        reqDataArr[0], reqDataArr[1], reqDataArr[2], reqDataArr[3],
+        reqDataArr[4], reqDataArr[5],
+    );
+    $.getJSON("query_handler.php", reqData, function(result){
+        // unless reqKey == "Set", sanitize the first column of result.
+        let resultLen = result.length;
+        for (let i = 0; i < resultLen; i++) {
+            result[i] = result[i]
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&apos;");
+        }
+        // then call the callback function on the sanitized result.
+        callback(result);
+    });
 }
 
 
@@ -77,13 +43,7 @@ export function upaf_runResultingFunction(key, functionStore, dataArr) {
 
 
 
-/* A private function to get jQuery objects */
-
-// Note that since this function does not have the upaf_ prefix, it cannot
-// be exported to the final user modules (only to other developer modules).
-export function getJQueryObj(selector) {
-    // syntax check selector.
-    checkSelector(selector);
+export function upa_getJQueryObj(selector) {
     // return the descendents of #upaFrame that matches the selector.
     return $("#upaFrame").find(selector);
 }
@@ -96,1455 +56,186 @@ export function getJQueryObj(selector) {
 
 
 
+/* Functions to verify and load hyperlinks into the UPA, and to follow them */
 
+// TODO: Update these at some point.
 
-/* jQuery wrappers and other functions to add and remove HTML, HTML attributes,
- * and CSS styles.
- **/
+var urlRegExCache = urlRegExCache ?? {};
 
-
-
-/* jQuery wrappers to get, add, remove and empty HTML */
-
-export function upaf_html(selector, html, method) {
-    // test selector and get jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // if html is undefined/null, return the HTML of the selection.
-    if (typeof html === "undefined") {
-        return jqObj.html()
-    }
-    // else verify html first of all.
-    checkHTML(html);
-    // if this check succeeds, get ready to append or prepend html, insert
-    // it after or before, or replace it as the innerHTML of each element
-    // the selection.
-    method = method ?? "inner";
-    switch (method) {
-        case "inner":
-            jqObj.html(html);
-            break;
-        case "append":
-        case "prepend":
-        case "after":
-        case "before":
-            jqObj[method](html);
-            break;
-        default:
-            throw (
-                "html(): unrecognized method '" + method.toString() + "'"
-            );
-    }
-}
-// (One could also make a function to do several of these actions for the same
-// selection, but I will let this be a (potential) task for a future module.)
-
-export function upaf_remove(selector) {
-    // test selector and get jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // remove all selected elements.
-    jqObj.remove();
-}
-
-export function upaf_empty(selector) {
-    // test selector and get jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // empty all selected elements of their inner HTML.
-    jqObj.empty();
-}
-
-
-
-
-
-
-/* jQuery.attr() wrapper to get and set standard HTML attributes that does
- * not need quering of the server to verify their legality (but can be
- * verified by checkTagNameAttrNameAttrValTriplet() defined below).
- **/
-
-export function upaf_attr(selector, attrOrAttrValPairArr, val) {
-    // test selector and get jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // if val is undefined/null and attrOrAttrValPairArr as a string, test it
-    // and return jqObj.attr(attribute).
-    if (
-        typeof val === "undefined" &&
-        typeof attrOrAttrValPairArr === "string"
-    ) {
-        let attr = attrOrAttrValPairArr;
-        // test the format of attr.
-        if (!/[\w\-]+/.test(attr)) {
-            throw (
-                "attr(): attribute input was not string of pattern /[\\w\\-]+/"
-            );
-        }
-        // return the attribute value of the first element in the selection.
-        return jqObj.attr(attr);
-    }
-    // if both attrOrAttrValPairArr and val are strings, the semantics should
-    // be the same as if attrOrAttrValPairArr had been [[attrOrAttrValPairArr,
-    // val]] and val had been undefined/null.
-    if (
-        typeof val === "string" &&
-        typeof attrOrAttrValPairArr === "string"
-    ) {
-        let attr = attrOrAttrValPairArr;
-        // set attrOrAttrValPairArr = [[attr, val]] and continue with the last
-        // option.
-        attrOrAttrValPairArr = [[attr, val]];
-    }
-    // loop over all elements in the selection and for each element, get the
-    // tagName and then try to set its attributes according to the input
-    // attribute--value pair array.
-    let attrValPairArr = attrOrAttrValPairArr;
-    let attrValPairArrLen = attrValPairArr.length;
-    jqObj.each(function(){
-        // get the tagName of the current element.
-        tagName = this.prop("tagName").toLowerCase();
-        // loop and test the all the attribute--value pairs w.r.t. tagName.
-        for (let i = 0; i < attrValPairArrLen; i++) {
-            // get the ith attribute--value pair.
-            let attr = attrValPairArr[i][0];
-            let val = attrValPairArr[i][1];
-            // test the (tagName, attr, val) triplet.
-            testTagNameAttrNameAttrValTriplet(tagName, attr, val);
-        }
-        // if all tests succeded change all the attributes for the element.
-        this.attr(Object.fromEntries(attrValPairArr));
-    });
-}
-
-
-
-
-/* jQuery.css() wrapper to get and set inline
- **/
-
-export function upaf_css(selector, propOrPropValPairArr, val) {
-    // test selector and get jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // if val is undefined/null and propOrPropValPairArr as a string, test it
-    // and return jqObj.css(property).
-    if (
-        typeof val === "undefined" &&
-        typeof propOrPropValPairArr === "string"
-    ) {
-        let prop = propOrPropValPairArr;
-        // test the format of prop.
-        if (!/[\w\-]+/.test(prop)) {
-            throw (
-                "css(): property input was not string of pattern /[\\w\\-]+/"
-            );
-        }
-        // return the property value of the first element in the selection.
-        return jqObj.css(prop);
-    }
-    // if both propOrPropValPairArr and val are strings, test them as prop and
-    // val, and call jqObj.css(prop, val).
-    if (
-        typeof val === "string" &&
-        typeof propOrPropValPairArr === "string"
-    ) {
-        let prop = propOrPropValPairArr;
-        // test the property.
-        testCSSProperty(prop);
-        // test the value(s).
-        checkCSSValues(val);
-        // if these tests succeded change property for the element and return.
-        jqObj.css(prop, val);
-        return;
-    }
-    // else loop and test the all the property--value pairs.
-    let propValPairArr = propOrPropValPairArr;
-    let propValPairArrLen = propValPairArr.length;
-    for (let i = 0; i < propValPairArrLen; i++) {
-        // get the ith property--value pair.
-        let prop = propValPairArr[i][0];
-        let val = propValPairArr[i][1];
-        // test the property.
-        testCSSProperty(prop);
-        // test the value(s).
-        checkCSSValues(val);
-    }
-    // if all tests succeded change all the properties for the element.
-    this.css(Object.fromEntries(propValPairArr));
-}
-
-
-
-
-
-/* Functions to add and remove CSS style tags to/from the document head */
-
-export function upaf_addCSS(css, classKey) {
-    // test the css.
-    checkCSSRuleList(css);
-    // set classKey to default if not supplied.
-    classKey = classKey ?? "DEFAULT_KEY";
-    if (!/[\w\-]+/.test(classKey)) {
+export function upa_cacheURLRegEx(pattID, key, userID) {
+    // test key.
+    if (typeof key !== "string") {
         throw (
-            "addCSS(): classKey '" + classKey.toString() + "' is not a " +
-            "string of pattern /[\\w\\-]+/"
+            "cacheURLRegEx(): key is not a string"
         );
     }
-    // append css nested inside a "#upaFrame {...}" rule as a style tag in head.
-    $(':root > head').append(
-        '<style class="upak_' + classKey + '"> #upaFrame { ' +
-        css + " }</style>"
-    );
-}
-
-
-export function upaf_removeCSS(classKey, removeLatestOnly) {
-    if (!/[\w\-]+/.test(classKey)) {
+    if ( !(/^\w+$/.test(key)) ) {
         throw (
-            "removeCSS(): classKey '" + classKey.toString() + "' is not a " +
-            "string of pattern /[\\w\\-]+/"
+            "cacheURLRegEx(): key does not match the right pattern " +
+            '("/^\\w+$/")'
         );
     }
-    // set removeLatestOnly flag to false if not supplied.
-    removeLatestOnly = removeLatestOnly ?? false;
-    // remove only the latest UPA style element with the given class key if
-    // removeLatestOnly == true.
-    if (removeLatestOnly) {
-        $(':root > head > .upak_' + classKey + ':last-of-type').remove();
-    // else remove UPA style elements with the class key.
+    // query UPA_links.php to see if pattID points to a whitelisted URL
+    // pattern, and to get the held pattern string if so.
+    // (UPA_links.php also verifies that userID is whitelisted for the
+    // requesting user (if logged in; if not, userID has to be whitelisted
+    // for public use).)
+    let data = {pid: pattID, uid: userID}
+    let res = JSON.parse($.getJSON("UPA_link_patterns.php", ).responseText);
+    // if the pattern was whitelisted for UPA links, store it in the cache.
+    if (res.success) {
+        urlRegExCache["upak_" + key] = new RegExp(res.str);
+        return 0;
     } else {
-        $(':root > head > .upak_' + classKey).remove();
+        return res.error;
     }
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// TODO: Update the event and animation jQuery wrappers below!
-
-
-
-
-
-
-/* Functions to add events to HTML elements */
-
-const jQueryEvents = [
-    "blur", "change", "focus", "focusin", "focusout", "select", "submit",
-    "keydown", "keypress", "keyup",
-    "click", "dblclick", "hover", "mousedown", "mouseenter", "mouseleave",
-    "mousemove", "mouseout", "mouseover", "mouseup",
-    "toggle", "resize", "scroll", "load", "ready", "unload",
-];
-
-const singleEventPattern =
-    "((" +
-        jQueryEvents.join(")|(") +
-    "))";
-
-const eventsRegEx = new RegExp(
-    "^" +
-        singleEventPattern + "(" + " " +  singleEventPattern + ")*" +
-    "$"
-);
-
-export function upaf_verifyEvents(events) {
-    if (!eventsRegEx.test(events)) {
-        throw (
-            "verifyEvents(): unrecognized events pattern"
-        );
-    }
-}
-
-
-export function upaf_on(selector, eventsDataHandlerTupleArr) {
-    let jqObj = getJQueryObj(selector);
-
-    for (let i = 0; i < eventsDataHandlerTupleArr.length; i++) {
-        let events = eventsDataHandlerTupleArr[$i][0];
-        let data = eventsDataHandlerTupleArr[$i][1] ?? "";
-        let handlerKey = eventsDataHandlerTupleArr[$i][2];
-        let handler = getFunction(handlerKey);
-
-        upaf_verifyEvents(events);
-
-        jqObj.on(events, null, data, handler);
-    }
-}
-
-export function upaf_one(selector, eventsDataHandlerTupleArr) {
-    let jqObj = getJQueryObj(selector);
-
-    for (let i = 0; i < eventsDataHandlerTupleArr.length; i++) {
-        let events = eventsDataHandlerTupleArr[$i][0];
-        let data = eventsDataHandlerTupleArr[$i][1] ?? "";
-        let handlerKey = eventsDataHandlerTupleArr[$i][2];
-        let handler = getFunction(handlerKey);
-
-        upaf_verifyEvents(events);
-
-        jqObj.one(events, null, data, handler);
-    }
-}
-
-export function upaf_off(selector, eventsHandlerPairArr) {
-    let jqObj = getJQueryObj(selector);
-
-    for (let i = 0; i < eventsHandlerPairArr.length; i++) {
-        let events = eventsHandlerPairArr[$i][0];
-        let handlerKey = eventsHandlerPairArr[$i][1];
-        if (typeof eventsHandlerPairArr[$i][2] !== "undefined") {
-            handlerKey = eventsHandlerPairArr[$i][2];
-        }
-        let handler = getFunction(handlerKey);
-
-        upaf_verifyEvents(events);
-
-        jqObj.off(events, null, handler);
-    }
-}
-
-// TODO: Consider adding a jQuery.trigger() wrapper also.
-
-
-
-
-
-
-
-
-/* Some functions that add jQuery effects to HTML elements */
-
-
-/* << jQuery show/hide/fade/slide wrapper >>
- * input = (selector, effectTypeString, speed, callbackFunction,
- *     inputDataForCallbackFunction),
- * or
- * input = (selector, effectTypeString, [speed (, opacity)], callbackFunction,
- *     inputDataForCallbackFunction).
- **/
-export function upaf_visibilityEffect(
-    selector, effectType, settings, callbackKey, callbackDataArr
-) {
-    // get the selected descendents of #upaFrame as a jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // get the optional callback function pointed to by the optionally provided
-    // function key (string).
-    var resultingCallback;
-    if (typeof callbackKey === "string") {
-        resultingCallback = getResultingFunction(callbackKey, callbackDataArr);
-    }
-    // verify the speed and opacity inputs if some are provided.
-    var speed, opacity;
-    // get these variables from input array.
-    if (typeof settings === "object") {
-        speed = settings[0];
-        opacity = settings[1];
-    } else {
-        speed = settings;
-    }
-    // verify the speed input if one is provided.
-    if (
-        !(typeof speed === "undefined") &&
-        !(speed == ~~speed) &&
-        !(["slow", "fast"].includes(speed))
-    ) {
-        throw (
-            "visibilityEffect(): invalid speed input " +
-            "(contained in settings or settings[0])"
-        );
-    }
-    // verify the opacity input if one is provided and the effect type is
-    // "fadeTo".
-    if (
-        effectType === "fadeTo" &&
-        !/^0|1|(0?\.[0-9]+)$/.test(opacity)
-    ) {
-        throw (
-            "visibilityEffect(): invalid opacity input " +
-            "(contained in settings[1])"
-        );
-    }
-    // match the provided effect type an initiate the effect.
-    switch (effectType) {
-        case "show":
-        case "hide":
-        case "toggle":
-        case "fadeIn":
-        case "fadeOut":
-        case "fadeToggle":
-        case "slideDown":
-        case "slideUp":
-        case "slideToggle":
-            jqObj[effectType](speed, resultingCallback);
-            break;
-        case "fadeTo":
-            jqObj[effectType](speed, opacity, resultingCallback);
-            break;
-        default:
-            throw (
-                "visibilityEffect(): invalid effect type input"
-            );
-    }
-}
-
-
-/* jQuery.animate wrapper */
-
-export const cssCCasePropertiesForAnimate = [
-    "backgroundPositionX", "backgroundPositionY", "borderWidth",
-    "borderBottomWidth", "borderLeftWidth", "borderRightWidth",
-    "borderTopWidth", "borderSpacing", "margin", "marginBottom",
-    "marginLeft", "marginRight", "marginTop", "opacity", "outlineWidth",
-    "padding", "paddingBottom", "paddingLeft", "paddingRight",
-    "paddingTop", "height", "width", "maxHeight", "maxWidth",
-    "minHeight", "minWidth", "fontSize", "bottom", "left", "right", "top",
-    "letterSpacing", "wordSpacing", "lineHeight", "textIndent"
-];
-
-export const cssCCasePropertiesForAnimateRegEx = new RegExp(
-    "^((" +
-        cssCCasePropertiesForAnimate.join(")|(") +
-    "))$"
-);
-
-/* << jQuery.animate wrapper >>
- * input = [selector, ...]..
- **/
-export function upaf_animate(
-    selector, styles, settings, callbackKey, callbackDataArr
-) {
-    // get the selected descendents of #upaFrame as a jQuery object.
-    let jqObj = getJQueryObj(selector);
-    // get the optional callback function pointed to by the optionally provided
-    // function key (string).
-    var resultingCallback;
-    if (typeof callbackKey === "string") {
-        resultingCallback = getResultingFunction(callbackKey, callbackDataArr);
-    }
-    // verify the speed and easing inputs if some are provided.
-    var speed, easing;
-    // get these variables from input array.
-    if (typeof settings === "object") {
-        speed = settings[0];
-        easing = settings[1];
-    } else {
-        speed = settings;
-    }
-    // verify the speed input if one is provided.
-    if (
-        !(typeof speed === "undefined") &&
-        !(speed == ~~speed) &&
-        !(["slow", "fast"].includes(speed))
-    ) {
-        throw (
-            "animate(): invalid speed input " +
-            "(contained in settings or settings[0])"
-        );
-    }
-    // verify the easing input if one is provided.
-    if (
-        typeof easing !== "undefined" &&
-        !(["swing", "linear"].includes(easing))
-    ) {
-        throw (
-            "animate(): invalid easing input " +
-            "(contained in settings[1])" +
-            "(options are 'swing' or 'linear' or undefined)"
-        );
-    }
-    // verify the styles array.
-    let len = styles.length;
-    for (let i = 0; i < len; i++) {
-        if (!cssCCasePropertiesForAnimateRegEx.test(styles[0])) {
-            throw (
-                "animate(): invalid property for animation " +
-                "(contained in styles[" + i.toString() + "][0])"
-            );
-        }
-        if (!cssNumericRegEx.test(styles[1])) {
-            throw (
-                "animate(): invalid property value for animation " +
-                "(contained in styles[" + i.toString() + "][1]), " +
-                "expects a numeric value"
-            );
-        }
-    }
-    // convert the styles array to a plain object
-    let stylesObj = Object.fromEntries(styles);
-    // initiate the animation.
-    jqObj.animate(stylesObj, speed, easing, resultingCallback);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Syntax checkers for CSS/jQuery selectors, CSS declarations, CSS rules and
- * HTML.
- **/
-
-// (These syntax checkers use the SyntaxChecker and Lexer classes, so check
-// those out to understand how the following code works.)
-
-
-
-
-
-
-/* CSS/jQuery selector syntax checker */
-
-export const elementNames = [
-    "a", "abbr", "address", "area", "article", "aside",
-    "audio", "b", "base", "bdi", "bdo", "blockquote",
-    "br", "button", "canvas", "caption", "cite", "code", "col",
-    "colgroup", "data", "datalist", "dd", "del", "details", "dfn", "dialog",
-    "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure",
-    "footer", "form", "h[1-6]", "header",
-    "hr", "i", "iframe", "img", "input", "ins", "kbd", "label", "legend",
-    "li", "link", "main", "map", "mark", "meta", "meter", "nav",
-    "noscript", "object", "ol", "optgroup", "option", "output", "p", "param",
-    "picture", "pre", "progress", "q", "rp", "rt", "ruby", "s", "samp",
-    "section", "select", "small", "source", "span", "strong", "style",
-    "sub", "summary", "sup", "svg", "table", "tbody", "td", "template",
-    "textarea", "tfoot", "th", "thead", "time", "title", "tr", "track",
-    "u", "ul", "var", "video", "wbr",
-];
-// TODO: Check all these to see that they are all safe to use.
-
-export const elementNamePattern =
-    "((" +
-        elementNames.join(")|(") +
-    "))";
-
-export const classPattern =
-    "\\.[\\w\\- ]+";
-
-export const pseudoClasses = [
-    "first", "last", "even", "odd",
-    // "((first)|(last)|(only))\\-((child)|(of\\-type))",
-    // "nth\\-(last\\-)?[(child)(of\\-type)]\\([1-9][0-9]*\\)",
-    // "eq\\((0|[1-9][0-9]*)\\)",
-    // "[(gt)(lt)]\\(([1-9][0-9]*)\\)",
-    "header", "animated", "focus", "empty",
-    // "parent",
-    "hidden",
-    "visible", "input", "text", "password", "radio", "checkbox",
-    "submit", "reset", "button", "image", "file",
-    "enabled", "diabled", "selected", "checked",
-    // "lang\\(\\w+(\\-\\w+)*\\)",
-    // TODO: add more pseudo-classes!
-];
-
-export const pseudoClassPattern =
-    ":((" +
-        pseudoClasses.join(")|(") +
-    "))";
-
-export const functionalPseudoClassesWithSelectorInput = [
-    "is", "not", "where", "has",
-];
-
-export const functionalPseudoClassesWithSelectorInputPattern =
-    ":((" +
-        functionalPseudoClassesWithSelectorInput.join(")|(") +
-    "))";
-
-export const pseudoElements =
-    [ +
-        // "before", "after",
-        "backdrop", "cue", "cue-region",
-        "first-letter", "first-line",
-        //TODO: complete this.
-    ];
-
-const pseudoElementPattern =
-    "::((" +
-        pseudoElements.join(")|(") +
-    "))";
-
-
-export const attributeSelectorPattern =
-    /\[\w+([!\$\|\^~\*]?="w+")?\]/.source;
-
-
-
-// construct a lexer for selectors.
-let selectorLexemeAndEndCharPatterns = [
-    [" ?[>,~\\+ ] ?", "\S"], // combinators.
-    ["\\w+", "\\W"], // element names.
-    ["\\.[\\w\\-]+", "[^\\w\\-]"], // classes.
-    ["::[\\w\\-]+", "[^\\w\\-]"], // pseudo-elements.
-    [":[\\w\\-]+", "[^\\w\\-]"], // pseudo-classes (perhaps functional).
-    ["\\("],
-    ["\\)"],
-    [attributeSelectorPattern], // why not just lex this as one lexeme.
-    ["\\*"],
-    ["#upai_\\w+", "\\W"],
-];
-var selectorLexer = new Lexer(selectorLexemeAndEndCharPatterns, null);
-
-// construct a syntax checker for selectors.
-var selectorChecker = new SyntaxChecker(selectorLexer);
-selectorChecker.addLexemePatterns([
-    [" ?[>,~\\+ ] ?"],
-    [elementNamePattern],
-    [classPattern],
-    [pseudoClassPattern],
-    [pseudoElementPattern],
-    [functionalPseudoClassesWithSelectorInputPattern],
-    ["\\("],
-    ["\\)"],
-    [attributeSelectorPattern],
-    ["\\*"],
-    ["#upai_\\w+"],
-]);
-
-selectorChecker.addProduction("<PseudoClassFunctionCall>", [
-    ["initSequence", [
-        functionalPseudoClassesWithSelectorInputPattern,
-    ]],
-    ["sequence", [
-        "\\(",
-        "<Selector>",
-        "\\)",
-    ]],
-]);
-selectorChecker.addProduction("<SimpleSelector>", [
-    ["union", [
-        elementNamePattern,
-        classPattern,
-        pseudoClassPattern,
-        pseudoElementPattern,
-        attributeSelectorPattern,
-        "\\*",
-        "#upai_\\w+",
-        "<PseudoClassFunctionCall>"
-    ]],
-]);
-selectorChecker.addProduction("<CompoundSelector>", [
-    ["nonemptyList", [
-        "<SimpleSelector>"
-    ]],
-]);
-selectorChecker.addProduction("<Combinator>", [
-    ["sequence", [
-        " ?[>,~\\+ ] ?",
-    ]],
-]);
-selectorChecker.addProduction("<ComplexSelector>", [
-    ["nonemptyList", [
-        "<CompoundSelector>", "<Combinator>"
-    ]],
-]);
-
-
-export function checkSelector(selector, successRequired) {
-    successRequired = successRequired ?? true;
-    let ret = selectorChecker.lexAndCheck(selector, "<ComplexSelector>");
-    if (!ret && successRequired) {
-        throw selectorChecker.error;
-    } else {
-        return ret;
-    }
-}
-// Function meant to help with debugging.
-export function upaf_checkSelectorAndGetErrorAndLexArr(selector) {
-    selectorChecker.lexAndCheck(selector, "<ComplexSelector>");
-    return [selectorChecker.error, selectorChecker.lexer.lexArr];
-}
-
-
-
-
-
-
-/* CSS declaration list syntax checking */
-
-
-// TODO: Check that these are safe with the "legal values" below!
-const cssLegalProperties = [
-"accent-color", "align-content", "align-items", "align-self", "all",
-"animation", "animation-delay", "animation-direction", "animation-duration",
-"animation-fill-mode", "animation-iteration-count", "animation-name",
-"animation-play-state", "animation-timing-function", "aspect-ratio",
-"backdrop-filter", "backface-visibility", "background", "background-attachment",
-"background-blend-mode", "background-clip", "background-color",
-"background-image", "background-origin", "background-position",
-"background-position-x", "background-position-y", "background-repeat",
-"background-size", "block-size", "border", "border-block", "border-block-color",
-"border-block-end-color", "border-block-end-style", "border-block-end-width",
-"border-block-start-color", "border-block-start-style",
-"border-block-start-width", "border-block-style", "border-block-width",
-"border-bottom", "border-bottom-color", "border-bottom-left-radius",
-"border-bottom-right-radius", "border-bottom-style", "border-bottom-width",
-"border-collapse", "border-color", "border-end-end-radius",
-"border-end-start-radius", "border-image", "border-image-outset",
-"border-image-repeat", "border-image-slice", "border-image-source",
-"border-image-width", "border-inline", "border-inline-color",
-"border-inline-end-color", "border-inline-end-style", "border-inline-end-width",
-"border-inline-start-color", "border-inline-start-style",
-"border-inline-start-width", "border-inline-style", "border-inline-width",
-"border-left", "border-left-color", "border-left-style", "border-left-width",
-"border-radius", "border-right", "border-right-color", "border-right-style",
-"border-right-width", "border-spacing", "border-start-end-radius",
-"border-start-start-radius", "border-style", "border-top", "border-top-color",
-"border-top-left-radius", "border-top-right-radius", "border-top-style",
-"border-top-width", "border-width", "bottom", "box-decoration-break",
-"box-reflect", "box-shadow", "box-sizing", "break-after", "break-before",
-"break-inside", "caption-side", "caret-color",
-// "@charset",
-"clear", "clip",
-"clip-path", "color", "column-count", "column-fill", "column-gap",
-"column-rule", "column-rule-color", "column-rule-style", "column-rule-width",
-"column-span", "column-width", "columns", "content", "counter-increment",
-"counter-reset", "cursor", "direction", "display", "empty-cells", "filter",
-"flex", "flex-basis", "flex-direction", "flex-flow", "flex-grow", "flex-shrink",
-"flex-wrap", "float", "font",
-// "@font-face",
-"font-family",
-"font-feature-settings", "font-kerning", "font-size", "font-size-adjust",
-"font-stretch", "font-style", "font-variant", "font-variant-caps",
-"font-weight", "gap", "grid", "grid-area", "grid-auto-columns",
-"grid-auto-flow", "grid-auto-rows", "grid-column", "grid-column-end",
-"grid-column-gap", "grid-column-start", "grid-gap", "grid-row",
-"grid-row-end", "grid-row-gap", "grid-row-start", "grid-template",
-"grid-template-areas", "grid-template-columns", "grid-template-rows",
-"hanging-punctuation", "height", "hyphens", "image-rendering",
-// "@import",
-"inline-size", "inset", "inset-block", "inset-block-end", "inset-block-start",
-"inset-inline", "inset-inline-end", "inset-inline-start", "isolation",
-"justify-content", "justify-items", "justify-self",
-// "@keyframes",
-"left",
-"letter-spacing", "line-height", "list-style", "list-style-image",
-"list-style-position", "list-style-type", "margin", "margin-block",
-"margin-block-end", "margin-block-start", "margin-bottom", "margin-inline",
-"margin-inline-end", "margin-inline-start", "margin-left", "margin-right",
-"margin-top", "mask-image", "mask-mode", "mask-origin", "mask-position",
-"mask-repeat", "mask-size", "max-block-size", "max-height", "max-inline-size",
-"max-width",
-// "@media",
-"min-block-size", "min-inline-size", "min-height",
-"min-width", "mix-blend-mode", "object-fit", "object-position", "offset",
-"offset-anchor", "offset-distance", "offset-path", "offset-rotate",
-"opacity", "order", "orphans", "outline", "outline-color", "outline-offset",
-"outline-style", "outline-width", "overflow", "overflow-anchor",
-"overflow-wrap", "overflow-x", "overflow-y", "overscroll-behavior",
-"overscroll-behavior-block", "overscroll-behavior-inline",
-"overscroll-behavior-x", "overscroll-behavior-y", "padding",
-"padding-block", "padding-block-end", "padding-block-start", "padding-bottom",
-"padding-inline", "padding-inline-end", "padding-inline-start",
-"padding-left", "padding-right", "padding-top", "page-break-after",
-"page-break-before", "page-break-inside", "paint-order", "perspective",
-"perspective-origin", "place-content", "place-items", "place-self",
-"pointer-events", "position", "quotes", "resize", "right", "rotate", "row-gap",
-"scale", "scroll-behavior", "scroll-margin", "scroll-margin-block",
-"scroll-margin-block-end", "scroll-margin-block-start", "scroll-margin-bottom",
-"scroll-margin-inline", "scroll-margin-inline-end",
-"scroll-margin-inline-start", "scroll-margin-left", "scroll-margin-right",
-"scroll-margin-top", "scroll-padding", "scroll-padding-block",
-"scroll-padding-block-end", "scroll-padding-block-start",
-"scroll-padding-bottom", "scroll-padding-inline", "scroll-padding-inline-end",
-"scroll-padding-inline-start", "scroll-padding-left", "scroll-padding-right",
-"scroll-padding-top", "scroll-snap-align", "scroll-snap-stop",
-"scroll-snap-type", "tab-size", "table-layout", "text-align",
-"text-align-last", "text-decoration", "text-decoration-color",
-"text-decoration-line", "text-decoration-style", "text-decoration-thickness",
-"text-indent", "text-justify", "text-orientation", "text-overflow",
-"text-shadow", "text-transform", "top", "transform", "transform-origin",
-"transform-style", "transition", "transition-delay", "transition-duration",
-"transition-property", "transition-timing-function", "translate",
-"unicode-bidi", "user-select", "vertical-align", "visibility", "white-space",
-"widows", "width", "word-break", "word-spacing", "word-wrap", "writing-mode",
-"z-index",
-];
-// TODO: Outcomment properties that I'm not confident are safe to use with
-// the "legal values" below.
-
-export const cssUnits = [
-    "cm", "mm", "Q", "in", "pc", "pt", "px",
-    "em", "ex", "ch", "rem", "lh", "rlh",
-    "vw", "vh", "vi", "vb", "vmin", "vmax",
-    "svw", "svh", "lvw", "lvh", "dvw", "dvh",
-    "deg", "grad", "rad", "turn",
-    "s", "ms", "Hz", "kHz",
-    "flex",
-    "dpi", "dpcm", "dppx",
-    "%",
-];
-
-export const cssUnitsPattern =
-    "((" +
-        cssUnits.join(")|(") +
-    "))";
-
-export const decimalNumberPattern =
-    "(\\.[0-9]+)|((0|[1-9][0-9]*)(\\.[0-9]*)?)";
-
-export const cssNumberUnitPattern =
-    decimalNumberPattern + cssUnitsPattern;
-
-export const cssHexColorPattern =
-    "#([0-9a-fA-F]{3,4})|([0-9a-fA-F]{6})|([0-9a-fA-F]{8})";
-
-
-
-/* Some CSS keyword values that I hope is safe for all CSS properties */
-export const cssLegalKeywordValues = [
-    "left", "right", "none", "inline-start", "inline-end",
-// "inline-table"
-// "table-row"
-// "table-row-group"
-// "table-column"
-// "table-column-group"
-// "table-cell"
-// "table-caption"
-// "table-header-group"
-// "table-footer-group"
-// "inline-flex"
-// "inline-grid"
-    "repeat-x", "repeat-y", "no-repeat", "repeat",
-    "top", "bottom", "fixed",
-    "scroll", "center", "justify",
-    "dotted", "dashed", "solid", "double", "groove", "ridge", "inset",
-    "outset", "none", "hidden",
-    "thin", "medium", "thick",
-    "border-box",
-    "baseline", "text-top", "text-bottom", "sub", "super",
-    "overline", "underline", "line-through",
-    "uppercase", "lowercase", "capitalize",
-    "nowrap", "clip",
-    "sans-serif", "serif", "monospace", "cursive", "fantasy",
-    "Arial", "Verdana", "Tahoma", "Trebuchet", "Times",
-    "Georgia", "Garamond", "Courier", "Brush",
-    "normal", "italic", "oblique", "bold", "small-caps",
-    "circle", "ellipse", "square",
-    "upper-roman", "upper-alpha", "lower-alpha",
-    "outside", "inside",
-    "collapse",
-    "inline", "block", "inline-block",
-    "static", "relative", "fixed", "absolute", "sticky",
-    "visible", "auto", "both", "table",
-    "cover", "contain", "content-box",
-    "ellipsis", "break-word", "break-all", "keep-all",
-    // "ltr", "rtl",
-    "width", "height",
-    "ease", "linear", "ease-in", "ease-out", "ease-in-out",
-    "transform",
-    "fill", "scale-down",
-    "not-allowed",
-    "horizontal", "vertical",
-    "farthest-corner", "closest-side", "closest-corner", "farthest-side",
-    "at", // this is not actually a *value* keyword.
-    "normal", "reverse", "alternate", "alternate-reverse",
-    "forwards", "backwards",
-    "infinite", "example",
-    // TODO: Consider adding more.
-    // TODO: Verify their safety of these keyword values!
-];
-
-
-export const cssLegalFunctions = [
-    "linear-gradient", "radial-gradient", "conic-gradient",
-    "translate", "rotate", "scale", "scaleX", "scaleY",
-    "skew", "skewX", "skewY", "matrix",
-    "rgb", "rgba",
-];
-
-
-
-
-// I think we can just allow any string on the form:
-// Dec ::= ( <Property> : <Values> ; )*
-// with
-// <Values> ::= ( <Value> [, ] )+
-// <Value> ::= <LegalFun> \( <Values> \) | <Number><Unit> | <LegalKeyword> | at
-// (In other words, let us just treat 'at' as a value.)
-// So this will definitely not be a subset of CSS, but it will be a restriction
-// at least in terms of the functions that we are allowed to use.
-const cssDecLexemePatterns = [
-    ["[\\w+\\-]", "[^\\w+\\-]"],
-    [":"], [";"], ["\\("], ["\\)"], [","],
-];
-// (Note that while we let the whitespace pattern be " \\n\\r\\t", the
-// "\\n\\r\\t" characters will only appear in CSS header styles; not
-// in in-line styles.)
-var cssDeclarationsLexer = new Lexer(cssDecLexemePatterns, " \\n\\r\\t");
-
-var cssDeclarationsChecker = new SyntaxChecker(cssDeclarationsLexer);
-cssDeclarationsChecker.addLexemePatterns(cssDecLexemePatterns);
-cssDeclarationsChecker.addLexemePatterns([
-    // "[a-z]+[\\-a-z]*", // regular properties. *No, I don't need this.
-    cssNumberUnitPattern, // <Number><Unit>.
-    cssHexColorPattern, // hexadecimal color literals.
-    "[a-zA-Z]", // keywords and functions.
-]);
-cssDeclarationsChecker.addProduction("<DeclarationList>", [
-    ["initSequence", [
-        "<Property>"
-    ]],
-    ["sequence", [
-        ":",
-        "<Values>",
-        ";"
-    ]],
-
-]);
-cssDeclarationsChecker.addProduction("<Property>", [
-    ["sequence", [
-        ["[\\w+\\-]",
-            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
-                // (lexeme variable will hold the "[\\w+\\-]" property lexeme.)
-                return cssLegalProperties.includes(lexeme);
-            }
-        ]
-    ]],
-
-]);
-cssDeclarationsChecker.addProduction("<Values>", [
-    ["nonemptyList", [
-        "<Value>", "<OptionalComma>"
-    ]],
-
-]);
-cssDeclarationsChecker.addProduction("<OptionalComma>", [
-    ["optSequence", [
-        ","
-    ]],
-
-]);
-cssDeclarationsChecker.addProduction("<Value>", [
-    ["union", [
-        cssNumberUnitPattern, // <Number><Unit>.
-        cssHexColorPattern, // hexadecimal color literals.
-        "<FunctionCall>",
-        ["[a-zA-Z]", // keywords.
-            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
-                // (lexeme variable will hold the "[a-zA-Z]" keyword lexeme.)
-                return cssLegalKeywordValues.includes(lexeme);
-            }
-        ],
-    ]],
-]);
-cssDeclarationsChecker.addProduction("<FunctionCall>", [
-    ["initSequence", [
-        ["[a-zA-Z]",
-            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
-                // (lexeme variable will hold the "[a-zA-Z]" function name.)
-                return cssLegalFunctions.includes(lexeme);
-            }
-        ]
-    ]],
-    ["sequence", [
-        "\\(",
-        "<Values>",
-        "\\)",
-    ]],
-]);
-
-
-
-
-export function checkCSSDeclarationList(declarations, successRequired) {
-    successRequired = successRequired ?? true;
-    let ret = cssDeclarationsChecker.lexAndCheck(
-        declarations, "<DeclarationList>"
-    );
-    if (!ret && successRequired) {
-        throw cssDeclarationsChecker.error;
-    } else {
-        return ret;
-    }
-}
-// Function meant to help with debugging.
-export function upaf_checkCSSDeclarationListAndGetErrorAndLexArr(declarations) {
-    cssDeclarationsChecker.lexAndCheck(declarations, "<DeclarationList>");
-    return [cssDeclarationsChecker.error, cssDeclarationsChecker.lexer.lexArr];
-}
-
-
-export function checkCSSValues(values, successRequired) {
-    successRequired = successRequired ?? true;
-    let ret = cssDeclarationsChecker.lexAndCheck(values, "<Values>");
-    if (!ret && successRequired) {
-        throw cssDeclarationsChecker.error;
-    } else {
-        return ret;
-    }
-}
-// Function meant to help with debugging.
-export function upaf_checkCSSValuesAndGetErrorAndLexArr(values) {
-    cssDeclarationsChecker.lexAndCheck(values, "<Values>");
-    return [cssDeclarationsChecker.error, cssDeclarationsChecker.lexer.lexArr];
-}
-
-
-export function testCSSProperty(property, successRequired) {
-    successRequired = successRequired ?? true;
-    let ret = cssLegalProperties.includes(property);
-    if (!ret && successRequired) {
-        throw (
-            "property '" + property.toString() + "' is not a legal CSS property"
-        );
-    } else {
-        return ret;
-    }
-}
-
-
-
-
-
-
-
-
-/* Full CSS syntax (or rather a (safe) subset of a superset of CSS) */
-
-// Let us assume that this will always be wrapped in "#upaFrame {...}", such
-// that we are safe as long as we don't include any pseudo elements like
-// ::before, ::after or ::parent.
-const cssRulesLexemePatterns = [
-    // ["#upaFrame "],
-    ["[^\\{\\}]", "[\\{\\}]"],
-    ["\\{"],
-    ["\\}"],
-
-];
-var cssRulesLexer = new Lexer(cssDecLexemePatterns, null);
-
-var cssRulesChecker = new SyntaxChecker(cssRulesLexer);
-cssRulesChecker.addLexemePatterns(cssRulesLexemePatterns);
-// cssRulesChecker.addLexemePatterns([
-//
-// ]);
-
-cssRulesChecker.addProduction("<RuleList>", [
-    ["optList", [
-        "<Rule>",
-    ]],
-]);
-cssRulesChecker.addProduction("<Rule>", [
-    ["initSequence", [
-        ["[^\\{\\}]",
-            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
-                // (The lexeme variable will hold the "[^\\{\\}]" selector,
-                // perhaps surrounded by whitespace.)
-                // trim the whitespace at both ends to get the selector.
-                let selector = lexeme.trim();
-                // check the selector using checkSelector().
-                return checkSelector(selector, false);
-            }
-        ],
-        "\\{",
-    ]],
-    ["sequence", [
-        "<DeclarationListOrRuleList>",
-        "\\}",
-    ]],
-]);
-cssRulesChecker.addProduction("<DeclarationListOrRuleList>", [
-    ["union", [
-        "<DeclarationList>",
-        "<RuleList>",
-    ]],
-]);
-cssRulesChecker.addProduction("<DeclarationList>", [
-    ["sequence", [
-        ["[^\\{\\}]",
-            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
-                // (The lexeme variable will hold the CSS declaration list.)
-                // check the declaration list using checkCSSDeclarationList().
-                return checkCSSDeclarationList(lexeme, false);
-            }
-        ],
-    ]],
-]);
-
-export function checkCSSRuleList(css, successRequired) {
-    successRequired = successRequired ?? true;
-    let ret = cssRulesChecker.lexAndCheck(css, "<RuleList>");
-    if (!ret && successRequired) {
-        throw cssRulesChecker.error;
-    } else {
-        return ret;
-    }
-}
-// Function meant to help with debugging.
-export function upaf_checkCSSRuleListAndGetErrorAndLexArr(css) {
-    cssRulesChecker.lexAndCheck(css, "<RuleList>");
-    return [cssRulesChecker.error, cssRulesChecker.lexer.lexArr];
-}
-
-
-
-
-
-/* HTML syntax checker */
-
-// (I still don't wnt to worry about repeated ids, even though my
-// SyntaxChecker class now has the ability in principle to record the ids
-// it encounters during the parsing.)
-
-// construct a lexer for HTML.
-let htmlLexemeAndEndCharPatterns = [
-    ["<\\w+", "\\W"], [">"], // beginning tag.
-    ["<\\/\\w+>"], // end tag.
-    ["="], ["\\("], ["\\)"],
-    ['"[ -\\[\\]\\^a-~]*"'], // strings of printable, non-backslash, non-
-    // whitespace --- except space --- ASCII characters.
-    ["\\w+", "\\W"], // attribute names.
-    ["[^<>]+", "[<>]"], // text.
-];
-var htmlLexer = new Lexer(htmlLexemeAndEndCharPatterns, "[ \\n\\r\\t]+");
-
-
-// construct a syntax checker for HTML.
-var htmlChecker = new SyntaxChecker(htmlLexer);
-// it doesn't hurt to add all the pattern from the lexer, even if I won't use
-// some of them.
-htmlChecker.addLexemePatterns(htmlLexemeAndEndCharPatterns);
-
-htmlChecker.addProduction("<LegalHTMLContent>", [
-    ["optList", [
-        "<HTMLElement>",
-    ]],
-]);
-// (Out-commented productions are left for a future implementation.)
-// (Also, the unions below are not meant to be complete; they may be expanded
-// in a future implementation.)
-htmlChecker.addProduction("<LegalHTMLElement>", [
-    ["union", [
-        "<ContainerTagElement>",
-        "<EmptyTagElement>",
-        "<Text>",
-        // "<MathMLCore>",
-        // "<SVG>",
-    ]],
-]);
-const legalContainerHTMLElements = [
-    "a", "abbr", "address", "article", "aside", "audio", "b", "bdi", "bdo",
-    "blockquote", "button", "cite", "code", "colgroup", "data",
-    "datalist", "del", "details", "dfn", "dialog", "div", "dl", "em",
-    "fieldset", "figure", "footer", "form",
-    "h1", "h2", "h3", "h4", "h5", "h6",
-    "header", "hgroup", "hr", "i", "ins", "kbd",
-    "label", "map", "mark",
-    //"MathML math",
-    "menu", "meter", "nav",
-    "object", "ol", "output", "p", "picture", "pre",
-    "progress", "q", "ruby","rp", "rt", "s", "samp",
-    // "script",
-    "search", "section",
-    "select", "slot", "small", "span", "strong", "sub", "sup",
-    // "SVG svg",
-    "table", "tbody", "td", "tfoot", "th", "thead", "tr",
-    "template",
-    "textarea", "time", "u", "ul", "var", "video",
-    //"autonomous custom elements",
-];
-const legalEmptyHTMLElements = [
-    "area", "br", "col",
-    // "embed",
-    "iframe",
-    "img", "input", "track",
-    "source",
-    "wbr",
-];
-htmlChecker.addProduction("<ContainerTagElement>", [
-    ["initSequence", [
-        ["<\\w+",
-            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
-                // get the "\\w+" element name from the "<\\w+" lexeme.
-                let elementName = lexeme.substring(1);
-                // let this testFun fail if elementName is not included in
-                // legalContainerHTMLElements.
-                if (!legalContainerHTMLElements.includes(elementName)) {
-                    return false;
-                }
-                // push the element name to mainProdScopedArr in order to
-                // test if the ending tag matches it, among other things.
-                mainProdScopedArr.push(elementName);
-            }
-        ],
-    ]],
-    ["sequence", [
-        // (Note that the <AttributeDefinitionList> production also includes
-        // a test function which depends on the newly pushed elementName.)
-        "<AttributeDefinitionList>",
-        ">", // because of the "initSequence", htmlChecker.check() will throw
-        // immediately if reaching this point and failing to parse ">". (The
-        // same thing can be said about parsing the end tag below, but both
-        // <AttributeDefinitionList> and <LegalHTMLContent> are optional, and
-        // will thus not fail unless they contain invalid syntax within them.)
-        "<LegalHTMLContent>",
-        ["<\\/\\w+>",
-            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
-                // let this testFun return whether the element name in this
-                // end tag matches the recorded name for the beginning tag,
-                // and make sure to also pop the tag name from mainProdScopedArr
-                // again.
-                let endTag = "</" + mainProdScopedArr.pop() + ">";
-                if (endTag !== lexeme) {
-                    // This error message overwrites the standard one.
-                    throw (
-                        "Expected either <LegalHTMLContent> or '" + endTag +
-                        "' but got " + lexeme
-                    );
-                }
-                // if (endTag === lexeme), return true.
-                return true;
-            }
-        ],
-    ]],
-]);
-
-htmlChecker.addProduction("<EmptyTagElement>", [
-    ["initSequence", [
-        ["<\\w+",
-            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
-                // get the "\\w+" element name from the "<\\w+" lexeme.
-                let elementName = lexeme.substring(1);
-                // let this testFun fail if elementName is not included in
-                // legalContainerHTMLElements.
-                if (!legalEmptyHTMLElements.includes(elementName)) {
-                    return false;
-                }
-                // push the element name to mainProdScopedArr specifically in
-                // order to be able to check the <AttributeDefinitionList>.
-                mainProdScopedArr.push(elementName);
-            }
-        ],
-    ]],
-    ["sequence", [
-        "<AttributeDefinitionList>",
-        [">",
-            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
-                // make sure to pop the elementName again.
-                mainProdScopedArr.pop();
-            }
-        ],
-    ]],
-]);
-
-htmlChecker.addProduction("(([^<>&]+)|(&#[0-9]+;)|(&\\w+;))+");
-htmlChecker.addProduction("<Text>", [
-    ["sequence", [
-        "(([^<>&]+)|(&#[0-9]+;)|(&\\w+;))+",
-    ]],
-]);
-
-
-
-htmlChecker.addProduction("<AttributeDefinitionList>", [
-    ["optList", [
-        "<AttributeDefinition>",
-    ]],
-]);
-htmlChecker.addProduction("<AttributeDefinition>", [
-    ["union", [
-        "<RegularAttributeDefinition>",
-        "<BooleanAttributeDefinition>",
-    ]],
-]);
-htmlChecker.addProduction("<RegularAttributeDefinition>", [
-    ["initSequence", [
-        ["\\w+",
-            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
-                // record the "\\w+" attribute name recorded in lexeme in
-                // currentProdScopedArr.
-                currentProdScopedArr[0] = lexeme;
-            }
-        ],
-        "=",
-    ]],
-    ["sequence", [
-        ['"[ -\\[\\]\\^a-~]*"',
-            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
-                // read the tag name from mainProdScopedArr, read the attribute
-                // name from currentProdScopedArr[0], and read the attribute
-                // value from lexeme.
-                let tagName = mainProdScopedArr[mainProdScopedArr.length - 1];
-                let attrName = currentProdScopedArr[0];
-                let attrVal = lexeme.substring(1, lexeme.length - 1);
-                // then validate this triplet be a call to
-                // testTagNameAttrNameAttrValTriplet() (which throws an
-                // error if the triplet is illegal).
-                testTagNameAttrNameAttrValTriplet(tagName, attrName, attrVal);
-                // return true if the check succeeded without throwing.
-                return true;
-            }
-        ],
-    ]],
-]);
-
-htmlChecker.addProduction("<BooleanAttributeDefinition>", [
-    ["sequence", [
-        ["\\w+",
-            function(lexeme, currentProdScopedArr, mainProdScopedArr) {
-                // read the tag name from mainProdScopedArr and read the
-                // attribute name from lexeme.
-                let tagName = mainProdScopedArr[mainProdScopedArr.length - 1];
-                let attrName = lexeme;
-                // then validate this pair be a call to
-                // testTagNameAttrNameAttrValTriplet() (which throws an
-                // error if the triplet is illegal).
-                testTagNameAttrNameAttrValTriplet(tagName, attrName, null);
-                // return true if the check succeeded without throwing.
-                return true;
-            }
-        ],
-    ]],
-]);
-
-
-/* A function to validate tagName--attrName--attrVal triplets */
-
-const legalAttrNameAttrValPairStruct = {
-    "id": {
-        "All":
-            /^upai_[\w\-]+$/,
-    },
-    "class": {
-        "All":
-            /^[\w\-]+$/
-    },
-    "style": {
-        "All": function(attrVal) {
-            cssDeclarationsChecker.lexAndCheck(attrVal);
-        },
-    },
-    "hidden": {
-        "All":
-            true,
-    },
-    "type": {
-        "input": [
-            "button", "checkbox", "color", "date", "file", "hidden", "image",
-            "month", "number", "radio", "range", "reset", "search", "submit",
-            "tel", "text", "time", "url", "week",
-        ],
-    },
-    "action": {
-        "form":
-            /^javascript:((void\(0\))|(upaf_[\$\w]+\(\w*\)))$/,
-    },
-    "alt": {
-        "area":
-            // (Note that attrVal already matches /[ -\[\]\^a-~]*/ here.)
-            /^[^<>]$/,
-        "img":
-            /^[^<>]$/,
-        "input":
-            /^[^<>]$/,
-    },
-    "for": {
-        "label":
-            /^upai_[\w\-]+$/,
-    },
-    // TODO: Add more.
-};
-// (I thought I would add e.g. hrefs and srcs, but because one needs to know
-// the pattern / pattern key to verify a URL, it makes more sense to this be
-// handled by special upaf_ functions only. It is anyway also often best to
-// insert any new HTML as soon as possible, and then handle all subsequent
-// AJAX requests (asynchronously) afterwards (and not try to verify relevant
-// URLs *before* the new HTML is inserted).
-
-
-export function upaf_isLegalTagNameAttrNameAttrValTriplet(
-    tagName, attrName, attrVal
-) {
-    // test tagName.
-    if (!/[\w]+/.test(tagName)) {
-        throw (
-            "isLegalTagNameAttrNameAttrValTriplet(): tag name '" +
-            tagName.toString() + "' is not string of pattern /\\w+/"
-        );
-    }
-    // test attrName.
-    if (!/[\w\-]+/.test(attrName)) {
-        throw (
-            "isLegalTagNameAttrNameAttrValTriplet(): attribute name '" +
-            attrName.toString() + "' is not string of pattern /[\\w\\-]+/"
-        );
-    }
-    // get the validation data for attrVal from legalAttrNameAttrValPairStruct.
-    let attrValValidationData =
-        legalAttrNameAttrValPairStruct[attrName][tagName] ??
-        legalAttrNameAttrValPairStruct[attrName]["All"] ??
-        false;
-    // test attrVal according the type of the validation data.
-    if (attrValValidationData === false) {
+export function upa_isACachedURL(key) {
+    if (typeof urlRegExCache["upak_" + key] === "undefined") {
         return false;
-    }
-    if (attrValValidationData === true) {
+    } else {
         return true;
     }
-    if (attrValValidationData instanceof Array) {
-        return attrValValidationData.includes(attrVal);
-    }
-    if (attrValValidationData instanceof RegExp) {
-        return attrValValidationData.test(attrVal);
-    }
-    if (attrValValidationData instanceof Function) {
-        return attrValValidationData(attrVal);
-    }
-    throw (
-        "isLegalTagNameAttrNameAttrValTriplet(): " +
-        "attrValValidationData not a instance of a right class"
-    );
 }
-// TODO: Add some more attributes, such as 'pattern', 'placeholder' and 'list'..
 
-export function testTagNameAttrNameAttrValTriplet(
-    tagName, attrName, attrVal
-) {
-    if (
-        !upaf_isLegalTagNameAttrNameAttrValTriplet(tagName, attrName, attrVal)
-    ) {
+export function upa_loadLink(selector, url, urlRegExKey) {
+    let jqObj = getJQueryObj(selector);
+    // lookup pattern (will fail if link is not cached, so the users might want
+    // to check this first with isACachedLink()).
+    let regex = urlRegExCache["upak_" + urlRegExKey];
+    // match link againt pattern.
+    if (!regex.test(url)) {
         throw (
-            "testTagNameAttrNameAttrValTriplet(): illegal combination of " +
-            "tagName, attribute name and attribute value (" +
-            tagName.toString() + ", " + attrName.toString() + ", " +
-            attrVal.toString() + ")"
+            "loadLink(): RegEx was cached but did not match the input link"
         );
     }
+    // load the link into all selected <a></a> elements.
+    jqObj.filter('a').attr("src", url);
+}
+
+export function upa_followLink(url, urlRegExKey, target) {
+    // test target.
+    if (
+        typeof target !== "undefined" &&
+        !(["_self", "_blank", "_parent", "_top"].includes(target))
+    ) {
+        throw (
+            "loadLink(): invalid target " +
+            "(options are '_self', '_blank', '_parent' or '_top')"
+        );
+    }
+    // lookup pattern (will fail if link is not cached, so the users might want
+    // to check this first with isACachedLink()).
+    let regex = urlRegExCache["upak_" + urlRegExKey];
+    // match link againt pattern.
+    if (!regex.test(url)) {
+        throw (
+            "followLink(): RegEx was cached but did not match the input link"
+        );
+    }
+    // follow the link.
+    window.open(url, target);
 }
 
 
-export function checkHTML(html, successRequired) {
-    successRequired = successRequired ?? true;
-    let ret = htmlChecker.lexAndCheck(html, "<LegalHTMLContent>");
-    if (!ret && successRequired) {
-        throw htmlChecker.error;
+
+
+
+
+
+/* Functions to load more scripts on-demand */
+
+// TODO: Change..
+export function upa_loadScript(
+    moduleID, callbackName, funIdentList, asFunIdentList
+) {
+    // test callback key (which shouldn't necessarily be defined at this point;
+    // it can potentially be defined by the loaded module (which can be useful
+    // if the function requires no input)).
+    if (!/^[\$\w]+$/.test(callbackName)) {
+        throw (
+            "loadScript(): callback function name is not a valid " +
+            "/^[\\$\\w]+$/ string"
+        );
+    }
+    // test mandatory funIdentList and prepend "upaf_" to all the identifiers.
+    testFunIdentArrAndPrependUPAFPrefix(funIdentList);
+    // test that the length is greater than zero.
+    let len = funIdentList.length;
+    if (len == 0) {
+        throw (
+            "loadModule(): function identifier array is empty"
+        );
+    }
+    // do something similar to asFunIdentList if it is supplied.
+    if (typeof asFunIdentList !== "undefined") {
+        // test asFunIdentList and prepend "upaf_" to all the identifiers.
+        testFunIdentArrAndPrependUPAFPrefix(asFunIdentList);
+        // test that the length is equal to the length of funIdentList.
+        if (!(len === asFunIdentList.length)) {
+            throw (
+                "loadModule(): function identifier arrays are of different " +
+                "sizes"
+            );
+        }
+    }
+    // construct the first part of the script html element, including the
+    // import statement.
+    var html = '<script type="module" async> import {';
+    if (typeof asFunIdentList === "undefined") {
+        html += funIdentList.join(", ")
     } else {
-        return ret;
+        html += funIdentList[0] + " as " + asFunIdentList[0];
+        for (let i = 1; i < len; i++) {
+            html += ", " + funIdentList[i] + " as " + asFunIdentList[i];
+        }
+    }
+    html += '} from "UPA_scripts.php?id=' + moduleID + '"; ';
+    // append a call statement to the callback function, which should be
+    // defined at this point in the newly loaded script, and append also the
+    // closing script tag.
+    html += "upaf_" + callbackName + "(); </script>";
+    // append a script that imports functions from the module and runs the
+    // provided callback function, which can either one of the newly loaded
+    // functions, or a function that calls one or several of the newly loaded
+    // functions.
+    $('#upaFrame').after(html);
+}
+
+
+export function testFunIdentArrAndPrependUPAFPrefix(funIdentList) {
+    //test funIdentList and prepend "upaf_" to all the identifiers.
+    let len = funIdentList.length;
+    let funIdentRegEx = /[\w\$]+/;
+    for (let i = 0; i < len; i++) {
+        // test identifier.
+        if (!funIdentRegEx.test(funIdentList[i])) {
+            throw (
+                "loadModule(): invalid function identifier at index " +
+                i.toString()
+            );
+        }
+        // prepend "upaf_" to it.
+        funIdentList[i] = "upaf_" + funIdentList[i];
     }
 }
-// Function meant to help with debugging.
-export function upaf_checkHTMLAndGetErrorAndLexArr(html) {
-    htmlChecker.lexAndCheck(html, "<LegalHTMLContent>");
-    return [htmlChecker.error, htmlChecker.lexer.lexArr];
+
+
+
+
+
+
+/* Functions to load images into the UPA */
+
+export function upa_loadImage(selector, binID, format, altText, userID) {
+    if (binID === "b0") {
+        // add null src to <image> elements..
+    }
+    let data = {bid: binID, f: format, uid: userID}
+    // TODO..
 }
+
+// TODO: Continue adding more types of binary resources, or add them in another
+// file/text.
