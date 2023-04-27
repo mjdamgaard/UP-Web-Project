@@ -17,7 +17,7 @@ export function loadContent(jqObj) {
     // context data as input as well.
     clFun(jqObj, contextData);
     // after the content is loaded, seach through the children to find any
-    // nested content loaders and make them each listen for a "load content"
-    // event..
+    // nested content loaders, give them each unique ids (of the form
+    // parentID + uniqueSuffix), ..
 
 }
