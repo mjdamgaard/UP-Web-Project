@@ -32,7 +32,7 @@ export function loadContent(jqObj) {
         this.on(childID + ":Load content", function() {
             // load the inner content of child.
             loadContent(this);
-        })
+        });
         // set up a shared event listener for the child to load its own
         // content (together with all its content loader siblings).
         this.on(id + ":Load content of children", function() {
@@ -40,8 +40,9 @@ export function loadContent(jqObj) {
             this.off(childID + ":Load content");
             // load the inner content of child.
             loadContent(this);
-        })
-        // I'm considering triggering an "I am ready" event at the parent here..
+        });
     });
-
+    // trigger an event at the parent content loader to signal that the children
+    // are ready.
+    
 }
