@@ -16,11 +16,10 @@ export function loadContent(jqObj) {
     // call the content loader function on the jQuery object and pass the
     // context data as input as well.
     clFun(jqObj, contextData);
-    // after the content is loaded, seach through the children to find any
+    // after the content is loaded, search through the children to find any
     // nested content loaders, give them each unique ids (of the form
-    // parentID + uniqueSuffix), and make them each listen for a targeted
-    // event (with their own id prepended) to call this function for them as
-    // well.
+    // parentID + uniqueSuffix), and make them each listen for an event to
+    // call this function for them as well.
     var idSuffix = 0;
     jqObj.find('[content-key]').each(function() {
         // set the id of the child content loader and increase idSuffix.
@@ -33,7 +32,7 @@ export function loadContent(jqObj) {
             loadContent(this);
         });
     });
-    // trigger an event at the parent content loader to signal that the children
-    // are ready.
-
+    // trigger an event at the parent content loader to signal that the
+    // children are ready.
+    jqObj.trigger("Children are ready");
 }
