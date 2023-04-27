@@ -33,7 +33,8 @@ function upa1_loadContent(jqObj) {
             upa1_loadContent($(this));
         });
     });
-    // trigger the loading of all the children.
+    // trigger the loading of the content all the CL children that does not
+    // have the wait attribute.
     jqObj.find('[content-key]:not([wait])').trigger("load-content");
 }
 
