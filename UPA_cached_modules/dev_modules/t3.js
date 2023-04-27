@@ -6,11 +6,16 @@ import * as t2Mod from "/UPA_scripts.php?id=t2";
  * initialized to the window by the t2 module.
  **/
 
+// For each content key definition, use only content keys that are defined
+// below the  current one. This makes it easier to prevent infinity recursion.
+// If a content key uses a content key from above itself, one should take great
+// care that the content is only loaded following a user input that commands it
+// to load. (But such cases should be very rare, perhaps almost non-existing.)
 
 upa1_contentLoaderFunctions["categoryTerm"] = function(jqObj, contextData) {
     jqObj.html("<b>Hello</b>, I'm gonna be a category.")
         .append('<div content-key="subcategories"></div>')
-        .append('<div content-key="elements" style="float:left"></div>');
+        .append('<div content-key="elements" wait style="float:left"></div>');
 }
 
 upa1_contentLoaderFunctions["subcategories"] = function(jqObj, contextData) {
