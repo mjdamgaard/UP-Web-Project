@@ -1,11 +1,12 @@
 
 /* This module exports the function to initialize new content loaders and
- * make them wait for activation. (It will probably also export other functions
- * at some point..)
+ * make them wait for activation. It also has the side-effect of attaching
+ * a variable, upa1_contentLoaderFunctions, to the window, for which content
+ * loader functions are supposed to be inserted (each with a "content key").
  **/
 
 
-export function loadContent(jqObj) {
+function upa1_loadContent(jqObj) {
     // get the content key from the jQuery object, its id, and its context data.
     var contentKey = jqObj.attr("content-key");
     var id = jqObj.attr("id");
@@ -29,10 +30,16 @@ export function loadContent(jqObj) {
         // set up an event listener for the child to load its own content.
         this.on("Load content", function() {
             // load the inner content of child.
-            loadContent(this);
+            upa1_loadContent(this);
         });
     });
     // trigger an event at the parent content loader to signal that the
     // children are ready.
     jqObj.trigger("Children are ready");
 }
+
+// initialize upa1_contentLoaderFunctions globally.
+window["upa1_contentLoaderFunctions"] = [];
+
+// initialize upa1_loadContent globally.
+window["upa1_loadContent"] = upa1_loadContent;
