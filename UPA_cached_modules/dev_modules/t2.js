@@ -6,14 +6,14 @@
  **/
 
 
-function upa1_loadContent(jqObj) {console.log("upa1_loadContent()");
+function upa1_loadContent(jqObj) {
     // get the content key from the jQuery object, its id, and its context data.
     var contentKey = jqObj.attr("content-key");
     var id = jqObj.attr("id");
     var contextData = jqObj.attr("context-data");
     // look up the corresponding content loader function in a global variable
     // called upa1_contentLoaderFunctions.
-    var clFun = upa1_contentLoaderFunctions[contentKey];console.log(contentKey);
+    var clFun = upa1_contentLoaderFunctions[contentKey];
     // call the content loader function on the jQuery object and pass the
     // context data as input as well.
     clFun(jqObj, contextData);
@@ -28,14 +28,13 @@ function upa1_loadContent(jqObj) {console.log("upa1_loadContent()");
         $(this).attr("id", childID);
         idSuffix += 1;console.log($(this).attr("id"));
         // set up an event listener for the child to load its own content.
-        $(this).one("load-content", function() {
+        $(this).on("load-content", function() {
             // load the inner content of child.
             upa1_loadContent($(this));
         });
     });
-    // trigger an event at the parent content loader to signal that the
-    // children are ready.
-    jqObj.trigger("children-are-ready");
+    // trigger the loading of all the children.
+    jqObj.find('[content-key]:not([wait])').trigger("load-content");
 }
 
 // initialize upa1_contentLoaderFunctions globally.
