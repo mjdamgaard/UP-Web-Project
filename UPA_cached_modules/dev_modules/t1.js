@@ -43,7 +43,7 @@ export function upa_queryAndSanitize(reqKey, reqDataArr, callback) {
 
 
 
-export function upa_getJQueryObj(selector) {
+export function upaFind(selector) {
     // return the descendents of #upaFrame that matches the selector.
     return $("#upaFrame").find(selector);
 }

@@ -6,6 +6,7 @@ import * as t2Mod from "/UPA_scripts.php?id=t2";
  * initialized to the window by the t2 module.
  **/
 
- // test that upa1_contentLoaderFunctions exists.
- upa1_contentLoaderFunctions["foo"] = "bar";
-console.log(upa1_contentLoaderFunctions.foo)
+// test that upa1_contentLoaderFunctions exists.
+upa1_contentLoaderFunctions["categoryTerm"] = function(jqObj, contextData) {
+    jqObj.html("<b>Hello</b>, I am gonna be a category.")
+}
