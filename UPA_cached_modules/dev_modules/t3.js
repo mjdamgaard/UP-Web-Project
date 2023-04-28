@@ -38,13 +38,6 @@ upa1_contentLoaderFuns["categoryTerm"] = function(jqObj, contextData) {
         });
 }
 
-upa1_contentLoaderFuns["subcategoryList"] = function(jqObj, contextData) {
-    jqObj.html("<i>Hello</i>, I'm gonna be a subcategory list.");
-}
-upa1_contentLoaderFuns["elementList"] = function(jqObj, contextData) {
-    jqObj.html("And I'm gonna be a list of elements!");
-}
-
 upa1_contentLoaderFuns["categoryTermHeader"] = function(jqObj, contextData) {
     jqObj.html('<ul class="nav nav-tabs"></ul>')
         .find('ul')
@@ -65,6 +58,15 @@ upa1_contentLoaderFuns["categoryTermHeader"] = function(jqObj, contextData) {
                 .trigger("show-element-list");
         });
 }
+
+
+upa1_contentLoaderFuns["subcategoryList"] = function(jqObj, contextData) {
+    jqObj.html('<div hidden content-key="setData"></div>');
+}
+upa1_contentLoaderFuns["elementList"] = function(jqObj, contextData) {
+    jqObj.html('And I am gonna be a list of elements!');
+}
+
 
 upa1_contentLoaderFuns["categoryTermFooter"] = function(jqObj, contextData) {
     jqObj.html("I'm gonna be a footer.");
