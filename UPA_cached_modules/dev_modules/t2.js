@@ -10,7 +10,6 @@ export class ContentManager {
         this.contentKey = contentKey;
         this.cmParent = cmParent;
         this.idArr = idArr;
-        this.contextData = undefined;
         this.cmChildren = [];
         this.cmChildrenCount = 0;
     }

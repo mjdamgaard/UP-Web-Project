@@ -31,9 +31,8 @@ upa1_contentSpecs["categoryHeader"] = [
         '</ul>'
     ], [], [],
 ];
-upa1_contentSpecs["categoryHeader"][3].push(function(cm, contextData)) {
-    cm.
-    cm.jqObj.find('li:first-of-type')
+upa1_contentSpecs["categoryHeader"][3].push(function(cm, jqObj)) {
+    jqObj.find('li:first-of-type')
         .on("click", function() {
             $(this).siblings().attr("class", "inactive");
             $(this).attr("class", "active")
