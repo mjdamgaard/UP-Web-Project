@@ -9,8 +9,8 @@ export function upa_main(preferenceUserID, termID, userID) {
         throw "Unrecognized preference user";
     }
 
-    t1Mod.upaFind('main').append('<div id="upa1"></div>');
-    let upa1Frame = t1Mod.upaFind('#upa1');
+    t1Mod.upaFind('main').append('<div id="upa1_0"></div>');
+    let upa1Frame = t1Mod.upaFind('#upa1_0');
     let contextData = JSON.stringify({termID: termID, userID: userID});
     upa1Frame.attr("contextData", contextData);
 
