@@ -5,6 +5,18 @@
  * loader functions are supposed to be inserted (each with a "content key").
  **/
 
+export class ContentLoader {
+    contructor(
+        jqObj, contextData, idArr,
+        contents,
+        afterLoadedFuns, afterDescendantsLoadedFuns
+    ) {
+        this.contextData = contextData;
+        this.idArr = idArr;
+        initialize(jqObj, idArr);
+        load(jqObj);
+    }
+}
 
 function upa1_loadContent(jqObj) {
     // get the content key from the jQuery object, its id, and its context data.
