@@ -46,9 +46,9 @@ upa1_contentLoaderFuns["elementList"] = function(jqObj, contextData) {
 }
 
 upa1_contentLoaderFuns["categoryTermHeader"] = function(jqObj, contextData) {
-    jqObj.html('<ul class="nav nav-tabs></ul>')
+    jqObj.html('<ul class="nav nav-tabs"></ul>')
         .find('ul')
-        .append('<li class="active"> <a href="#">Elements</a> </li>')
+        .append('<li class="active"> <a href="#">Subcategories</a> </li>')
         .append('<li> <a href="#">Elements</a> </li>')
         .find('li:first-of-type')
         .on("click", function() {
