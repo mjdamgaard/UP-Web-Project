@@ -11,7 +11,7 @@ export class ContentManager {
         this.cmParent = cmParent;
         this.idArr = idArr;
         this.cmChildren = [];
-        this.cmChildrenCount = 0;
+        this.cmChildrenCounter = 0;
     }
 
     get jqObj() {
@@ -46,10 +46,10 @@ export class ContentManager {
             } else {
                 // initialize a new ContentManager instance as a "child" of
                 // this one.
-                let cmChildIDArr = this.idArr.concat([this.cmChildrenCount]);
+                let cmChildIDArr = this.idArr.concat([this.cmChildrenCounter]);
                 let cmChild = new ContentManager(contents[i], this, childIDArr);
                 this.cmChildren.push(cmChild);
-                this.cmChildrenCount++;
+                this.cmChildrenCounter++;
                 // call its loadAndAppendContent() method to load its content
                 // and append it to newContentContainer.
                 cmChild.loadAndAppendContent(newContentContainer);
