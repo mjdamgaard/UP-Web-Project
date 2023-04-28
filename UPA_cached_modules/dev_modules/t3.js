@@ -46,19 +46,20 @@ upa1_contentLoaderFuns["elementList"] = function(jqObj, contextData) {
 }
 
 upa1_contentLoaderFuns["categoryTermHeader"] = function(jqObj, contextData) {
-    jqObj.html('<ul class="list-inline"></ul>')
+    jqObj.html('<ul class="nav nav-tabs></ul>')
         .find('ul')
-        .append('<li>Subcategories</li>')
-        .append('<li>Elements</li>')
+        .append('<li class="active"> <a href="#">Elements</a> </li>')
+        .append('<li> <a href="#">Elements</a> </li>')
         .find('li:first-of-type')
         .on("click", function() {
-            $(this).parent().trigger("show-subcategory-list");
+            $(this).parents('[content-key="categoryTerm"]')
+                .trigger("show-subcategory-list");
         })
         .next()
         .on("click", function() {
             $(this).parents('[content-key="categoryTerm"]')
                 .trigger("show-element-list");
-        });
+        });debugger;
 }
 
 upa1_contentLoaderFuns["categoryTermFooter"] = function(jqObj, contextData) {

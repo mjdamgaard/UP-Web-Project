@@ -28,13 +28,13 @@ function upa1_loadContent(jqObj) {
         $(this).attr("id", childID);
         idSuffix += 1;
         // set a boolean attribute to signal that content is not loaded yet.
-        $(this).attr("isLoaded", false);
+        $(this).attr("is-loaded", false);
         // set up an event listener for the child to load its own content.
         $(this).one("load-content", function() {
             // load the inner content of child.
             upa1_loadContent($(this));
             // set boolean attribute to signal that content is loaded.
-            $(this).attr("isLoaded", true);
+            $(this).attr("is-loaded", true);
         });
     });
     // trigger the loading of the content all the CL children that does not
