@@ -24,7 +24,7 @@ upa1_contentLoaderFuns["categoryTerm"] = function(jqObj, contextData) {
             $(this).children('[content-key$="List"]').hide();
             let jqObj = $(this).children('[content-key="subcategoryList"]');
             jqObj.show();
-            if (!jqObj.attr("isLoaded")) {
+            if (!jqObj.attr("is-loaded")) {
                 jqObj.trigger("load-content");
             }
         })
@@ -32,7 +32,7 @@ upa1_contentLoaderFuns["categoryTerm"] = function(jqObj, contextData) {
             $(this).children('[content-key$="List"]').hide();
             let jqObj = $(this).children('[content-key="elementList"]');
             jqObj.show();
-            if (!jqObj.attr("isLoaded")) {
+            if (!jqObj.attr("is-loaded")) {
                 jqObj.trigger("load-content");
             }
         });
@@ -56,7 +56,8 @@ upa1_contentLoaderFuns["categoryTermHeader"] = function(jqObj, contextData) {
         })
         .next()
         .on("click", function() {
-            $(this).parent().trigger("show-element-list");
+            $(this).parents('[content-key="categoryTerm"]')
+                .trigger("show-element-list");
         });
 }
 
