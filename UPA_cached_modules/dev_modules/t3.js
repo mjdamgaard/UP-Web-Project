@@ -1,5 +1,7 @@
 
-import {ContentManager, ContentSpecs} from "/UPA_scripts.php?id=t2";
+import {
+    ContentManager, ContentSpec, contentSpecs,
+} from "/UPA_scripts.php?id=t2";
 
 /* This module defines some basic content loader functions and attaches them,
  * together with a content key each, to the upa1_contentSpecs object

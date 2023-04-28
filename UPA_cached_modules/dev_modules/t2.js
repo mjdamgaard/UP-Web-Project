@@ -63,10 +63,11 @@ export class ContentManager {
 }
 
 
-export class ContentSpecs {
+export class ContentSpec {
 
 }
 
+export var contentSpecs = [];
 
 // function upa1_loadContent(jqObj) {
 //     // get the content key from the jQuery object, its id, and its context data.
