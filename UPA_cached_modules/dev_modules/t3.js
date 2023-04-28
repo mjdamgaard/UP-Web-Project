@@ -14,6 +14,7 @@ import {ContentManager, ContentSpecs} from "/UPA_scripts.php?id=t2";
 
 
 
+
 upa1_contentSpecs["categoryTerm"] = [
     "div", {class:"container"}, [
         "categoryHeader",
