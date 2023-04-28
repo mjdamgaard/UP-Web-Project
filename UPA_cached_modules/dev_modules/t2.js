@@ -1,7 +1,7 @@
 
 /* This module exports the function to initialize new content loaders and
  * make them wait for activation. It also has the side-effect of attaching
- * a variable, upa1_contentLoaderFunctions, to the window, for which content
+ * a variable, upa1_contentLoaderFuns, to the window, for which content
  * loader functions are supposed to be inserted (each with a "content key").
  **/
 
@@ -12,8 +12,8 @@ function upa1_loadContent(jqObj) {
     var id = jqObj.attr("id");
     var contextData = jqObj.attr("context-data");
     // look up the corresponding content loader function in a global variable
-    // called upa1_contentLoaderFunctions.
-    var clFun = upa1_contentLoaderFunctions[contentKey];
+    // called upa1_contentLoaderFuns.
+    var clFun = upa1_contentLoaderFuns[contentKey];
     // call the content loader function on the jQuery object and pass the
     // context data as input as well.
     clFun(jqObj, contextData);
@@ -27,10 +27,14 @@ function upa1_loadContent(jqObj) {
         let childID = id + "." + idSuffix.toString();
         $(this).attr("id", childID);
         idSuffix += 1;
+        // set a boolean attribute to signal that content is not loaded yet.
+        $(this).attr("isLoaded", false);
         // set up an event listener for the child to load its own content.
         $(this).one("load-content", function() {
             // load the inner content of child.
             upa1_loadContent($(this));
+            // set boolean attribute to signal that content is loaded.
+            $(this).attr("isLoaded", true);
         });
     });
     // trigger the loading of the content all the CL children that does not
@@ -38,8 +42,8 @@ function upa1_loadContent(jqObj) {
     jqObj.find('[content-key]:not([wait])').trigger("load-content");
 }
 
-// initialize upa1_contentLoaderFunctions globally.
-window["upa1_contentLoaderFunctions"] = [];
+// initialize upa1_contentLoaderFuns globally.
+window["upa1_contentLoaderFuns"] = [];
 
 // initialize upa1_loadContent globally.
 window["upa1_loadContent"] = upa1_loadContent;
