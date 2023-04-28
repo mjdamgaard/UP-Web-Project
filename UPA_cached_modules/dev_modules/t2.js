@@ -17,8 +17,8 @@ export class ContentManager {
     get jqObj() {
         return $(
             '#' + this.idArr[0] +
-            '> [cm-sibling-index="' +
-                this.idArr.slice(1).join('"] > [cm-sibling-index="') +
+            '> [cm-sibling-id="' +
+                this.idArr.slice(1).join('"] > [cm-sibling-id="') +
             ']'
         );
     }
@@ -32,7 +32,7 @@ export class ContentManager {
         jqObj.append("<" + tagName "></" + tagName + ">");
         let newContentContainer = jqObj.children(':last-child')
             .attr("id", this.idArr.join("."))
-            .attr("cm-sibling-index", this.idArr[this.idArr.length - 1])
+            .attr("cm-sibling-id", this.idArr[this.idArr.length - 1])
             .attr(attributes);
 
         let contentsLen = contents.length;
