@@ -13,6 +13,7 @@ import * as t2Mod from "/UPA_scripts.php?id=t2";
 // to load. (But such cases should be very rare, perhaps almost non-existing.)
 
 
+
 upa1_contentLoaderFuns["categoryTerm"] = function(jqObj, contextData) {
     jqObj.html('<div content-key="categoryTermHeader" class="container"></div>')
         .append('<div content-key="subcategoryList" class="container"></div>')
