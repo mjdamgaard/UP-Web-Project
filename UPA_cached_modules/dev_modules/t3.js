@@ -13,10 +13,10 @@ import * as t2Mod from "/UPA_scripts.php?id=t2";
 // to load. (But such cases should be very rare, perhaps almost non-existing.)
 
 upa1_contentLoaderFuns["categoryTerm"] = function(jqObj, contextData) {
-    jqObj.html('<header content-key="categoryTermHeader" class=""></header>')
-        .append('<div content-key="subcategoryList"></div>')
-        .append('<div content-key="elementList" wait></div>')
-        .append('<footer content-key="categoryTermFooter"></footer>')
+    jqObj.html('<div content-key="categoryTermHeader" class="container"></div>')
+        .append('<div content-key="subcategoryList" class="container"></div>')
+        .append('<div content-key="elementList" wait class="container"></div>')
+        .append('<div content-key="categoryTermFooter" class="container"></div>')
         // .on("hide-current-list", function() {
         //     $(this).children('[content-key$="List"]').hide();
         // })
@@ -46,9 +46,18 @@ upa1_contentLoaderFuns["elementList"] = function(jqObj, contextData) {
 }
 
 upa1_contentLoaderFuns["categoryTermHeader"] = function(jqObj, contextData) {
-    jqObj.html('<span>Subcategories</span>')
-        .append('<span>Elements</span>');
-    var scButton = jqObj.children()
+    jqObj.html('<ul class="list-inline"></ul>')
+        .find('ul')
+        .append('<li>Subcategories</li>')
+        .append('<li>Elements</li>')
+        .find('li:first-of-type')
+        .on("click", function() {
+            $(this).parent().trigger("show-subcategory-list");
+        })
+        .next()
+        .on("click", function() {
+            $(this).parent().trigger("show-element-list");
+        });
 }
 
 upa1_contentLoaderFuns["categoryTermFooter"] = function(jqObj, contextData) {
