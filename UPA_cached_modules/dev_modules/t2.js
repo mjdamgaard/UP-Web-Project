@@ -8,7 +8,7 @@
 export class ContentSpec {
     constructor(
         tagName, attributes, htmlTemplate,
-        eventSpecs, inwardLoadCallbacks, outwardLoadCallbacks
+        inwardLoadCallbacks, outwardLoadCallbacks
     ) {
         this.tagName = tagName;
         this.attributes = attributes ?? {};
@@ -17,7 +17,6 @@ export class ContentSpec {
                 let key = str.slice(2, -2);
                 return '<template content-key="' + key + '"></template>';
             });
-        this.eventSpecs = eventSpecs ?? [];
         this.inwardLoadCallbacks = inwardLoadCallbacks ?? [];
         this.outwardLoadCallbacks = outwardLoadCallbacks ?? [];
     }
@@ -31,17 +30,6 @@ export class ContentSpec {
     }
     get htmlTemplate() {
         return this.html; // no need to convert back here.
-    }
-
-    addOnEvent(events, handler) {
-        this.eventSpecs.push(
-            {method:"on", events:events, handler:handler}
-        );
-    }
-    addOneEvent(events, handler) {
-        this.eventSpecs.push(
-            {method:"one", events:events, handler:handler}
-        );
     }
 
     addInwardLoadCallback(callback) {
@@ -67,12 +55,6 @@ export function replaceWithContent(jqObj, contentSpecIndex, key) {
         .removeAttr("id")
         .removeAttr("hidden")
         .attr(contentSpec.attributes);
-
-    let len = contentSpec.eventSpecs.length;
-    for (let i = 0; i < len; i++) {
-        let eventSpec = contentSpec.eventSpecs[i];
-        jqObj[eventSpec.method](eventSpec.events, eventSpec.handler);
-    }
 
     let len = contentSpec.inwardLoadCallbacks.length;
     for (let i = 0; i < len; i++) {
