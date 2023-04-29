@@ -10,7 +10,7 @@ export class ContentSpec {
         this.tagName = tagName;
         this.attributes = attributes ?? {};
         this.html = htmlTemplate.replaceALL(
-            /<<[^a-z_<>][^<>]*>>/, function(str) {
+            /<<[^a-z_<>"][^<>"]*>>/, function(str) {
                 let key = str.slice(2, -2);
                 return '<template content-key="' + key + '"></template>';
             });
@@ -25,7 +25,7 @@ export class ContentSpec {
             });
     }
     get htmlTemplate() {
-        return this.html;
+        return this.html; // no need to convert back here.
     }
 
     addOnEvent(events, handler) {
@@ -59,47 +59,26 @@ export class ContentSpec {
 
 
 
-/* The function to load and append content from content specification */
-export function loadAndAppendContent(jqObj, contentSpecIndex, key) {
-
+/* Function to load content from content spec and replace it as outer HTML */
+export function replaceByContent(jqObj, contentSpecIndex, key) {
+    // TODO..
 }
 
-/* A function to load contents of all inner content template elements */
-export function loadInnerContentTemplates(jqObj) {
-
+/* Function to load content from content spec and append it to inner HTML */
+export function appendContent(jqObj, contentSpecIndex, key) {
+    jqObj.append('<template></template>');
+    let newChild = jqObj.children(':last-child');
+    replaceByContent(newChild, contentSpecIndex, key);
 }
 
-
-function loadAndAppendContent(jqObj, contentSpec) {
-    // get the content key from the jQuery object, its id, and its context data.
-    var contentKey = jqObj.attr("content-key");
-    var id = jqObj.attr("id");
-    var contextData = jqObj.attr("context-data");
-    // look up the corresponding content loader function in a global variable
-    // called upa1_contentSpecs.
-    var clFun = upa1_contentSpecs[contentKey];
-    // call the content loader function on the jQuery object and pass the
-    // context data as input as well.
-    clFun(jqObj, contextData);
-    // after the content is loaded, search through the children to find any
-    // nested content loaders, give them each unique ids (of the form
-    // parentID + uniqueSuffix), and make them each listen for an event to
-    // call this function for them as well.
-    var idSuffix = 0;
-    jqObj.find('[content-key]').each(function() {
-        // set the id of the child content loader and increase idSuffix.
-        let childID = id + "." + idSuffix.toString();
-        $(this).attr("id", childID);
-        idSuffix += 1;
-        // set up an event listener for the child to load its own content.
-        $(this).one("load-content", function() {
-            // load the inner content of child.
-            loadContent($(this));
-            // set boolean attribute to signal that content is loaded.
-            $(this).attr("is-loaded", "true");
-        });
+/* A function to load the selected content template elements */
+// export function transformContentPlaceholders(jqObj) {
+export function loadContent(jqObj, contentSpecIndex) {
+    jqObj.filter('template[content-key]').each(function() {
+        loadContentOfSingleTemplate($(this), contentSpecIndex);
     });
-    // trigger the loading of the content all the CL children that does not
-    // have the wait attribute.
-    jqObj.find('[content-key]:not([wait])').trigger("load-content");
+}
+function loadContentOfSingleTemplate(jqObj, contentSpecIndex) {
+    let key = jqObj.attr("content-key");
+    replaceByContent(jqObj, contentSpecIndex, key);
 }
