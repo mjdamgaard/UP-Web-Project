@@ -42,7 +42,6 @@ export class ContentSpec {
 
 
 
-
 /* Function to load content from content spec and replace it as outer HTML */
 export function replaceWithContent(jqObj, contentSpecIndex, key) {
     let contentSpec = contentSpecIndex[key];
@@ -82,7 +81,6 @@ export function appendContent(jqObj, contentSpecIndex, key) {
 }
 
 /* A function to load the selected content template elements */
-// export function transformContentPlaceholders(jqObj) {
 export function transformContentTemplates(jqObj, contentSpecIndex) {
     jqObj.filter('template[content-key]').each(function() {
         transformSingleContentTemplate($(this), contentSpecIndex);
