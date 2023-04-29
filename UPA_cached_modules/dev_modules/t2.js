@@ -67,13 +67,13 @@ export function replaceWithContent(jqObj, contentSpecIndex, key) {
         '<' + contentSpec.tagName + ' id="RESERVED_TEMPORARY_ID" hidden >' +
         contentSpec.html + '</' + contentSpec.tagName + '>'
     );
-    parent.children('#RESERVED_TEMPORARY_ID')
+    let jqObj = parent.children('#RESERVED_TEMPORARY_ID')
         .removeAttr("id")
         .removeAttr("hidden")
         .attr(contentSpec.attributes)
         .trigger("inward") // No, I have to set the inward event first.. well,
         // maybe I *should* use callbacks for this instead.. Or just call the
-        // handlers directly here.. 
+        // handlers directly here..
         .find('template[content-key]')
         .each(function() {
             transformSingleContentTemplate($(this), contentSpecIndex);
