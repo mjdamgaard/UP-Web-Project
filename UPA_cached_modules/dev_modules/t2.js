@@ -7,8 +7,7 @@
 
 export class ContentSpec {
     constructor(
-        tagName, attributes, htmlTemplate,
-        inwardLoadCallbacks, outwardLoadCallbacks
+        tagName, attributes, htmlTemplate, inwardCallbacks, outwardCallbacks
     ) {
         this.tagName = tagName;
         this.attributes = attributes ?? {};
@@ -17,8 +16,8 @@ export class ContentSpec {
                 let key = str.slice(2, -2);
                 return '<template content-key="' + key + '"></template>';
             });
-        this.inwardLoadCallbacks = inwardLoadCallbacks ?? [];
-        this.outwardLoadCallbacks = outwardLoadCallbacks ?? [];
+        this.inwardCallbacks = inwardCallbacks ?? [];
+        this.outwardCallbacks = outwardCallbacks ?? [];
     }
 
     set htmlTemplate(htmlTemplate) {
@@ -32,11 +31,11 @@ export class ContentSpec {
         return this.html; // no need to convert back here.
     }
 
-    addInwardLoadCallback(callback) {
-        this.inwardLoadCallbacks.push(callback);
+    addInwardCallback(callback) {
+        this.inwardCallbacks.push(callback);
     }
-    addOutwardLoadCallback(callback) {
-        this.outwardLoadCallbacks.push(callback);
+    addOutwardCallback(callback) {
+        this.outwardCallbacks.push(callback);
     }
 }
 
@@ -55,9 +54,9 @@ export function replaceWithContent(jqObj, contentSpecIndex, key) {
         .removeAttr("hidden")
         .attr(contentSpec.attributes);
 
-    let len = contentSpec.inwardLoadCallbacks.length;
+    let len = contentSpec.inwardCallbacks.length;
     for (let i = 0; i < len; i++) {
-        let callback = contentSpec.inwardLoadCallbacks[i];
+        let callback = contentSpec.inwardCallbacks[i];
         callback(jqObj);
     }
 
@@ -66,9 +65,9 @@ export function replaceWithContent(jqObj, contentSpecIndex, key) {
             transformSingleContentTemplate($(this), contentSpecIndex);
         });
 
-    let len = contentSpec.outwardLoadCallbacks.length;
+    let len = contentSpec.outwardCallbacks.length;
     for (let i = 0; i < len; i++) {
-        let callback = contentSpec.outwardLoadCallbacks[i];
+        let callback = contentSpec.outwardCallbacks[i];
         callback(jqObj);
     }
 }
