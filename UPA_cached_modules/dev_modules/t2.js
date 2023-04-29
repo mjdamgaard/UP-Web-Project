@@ -9,7 +9,7 @@ export class ContentSpec {
     constructor(tagName, attributes, htmlTemplate, eventSpecs) {
         this.tagName = tagName;
         this.attributes = attributes ?? {};
-        this.htmlTemplate = htmlTemplate.replaceALL(
+        this.html = htmlTemplate.replaceALL(
             /<<[^a-z_<>][^<>]*>>/, function(str) {
                 let key = str.slice(2, -2);
                 return '<template content-key="' + key + '"></template>';
@@ -18,11 +18,14 @@ export class ContentSpec {
     }
 
     set htmlTemplate(htmlTemplate) {
-        this.htmlTemplate = htmlTemplate.replaceALL(
+        this.html = htmlTemplate.replaceALL(
             /<<[^a-z_<>][^<>]*>>/, function(str) {
                 let key = str.slice(2, -2);
                 return '<template content-key="' + key + '"></template>';
             });
+    }
+    get htmlTemplate() {
+        return this.html;
     }
 
     addOnEvent(events, handler) {
