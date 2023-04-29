@@ -26,6 +26,7 @@ export class ContentSpec {
     }
 }
 
+
 function loadContent(jqObj, contentSpec) {
     // get the content key from the jQuery object, its id, and its context data.
     var contentKey = jqObj.attr("content-key");
