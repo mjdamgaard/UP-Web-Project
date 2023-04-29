@@ -9,7 +9,11 @@ export class ContentSpec {
     constructor(tagName, attributes, htmlTemplate, eventSpecs) {
         this.tagName = tagName;
         this.attributes = attributes ?? {};
-        this.htmlTemplate = htmlTemplate;
+        this.htmlTemplate = htmlTemplate.replaceALL(
+            /<<[^a-z_<>][^<>]*>>/, function(str) {
+                let key = str.slice(2, -2);
+                return '<template content-key="' + key + '"></template>';
+            });
         this.eventSpecs = eventSpecs ?? [];
     }
 
@@ -41,17 +45,6 @@ export class ContentSpec {
     }
 }
 
-export class ContentSpecIndex(contentSpecs) {
-    constructor() {
-        this.isReady = false;
-        this.contentSpecs = contentSpecs ?? [];
-        this.contentSpecsLen = contentSpecs.length ?? 0;
-    }
-
-    ready() {
-        for each
-    }
-}
 
 
 /* Helper function to load the full HTML content from specification, where all
