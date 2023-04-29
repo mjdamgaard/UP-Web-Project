@@ -6,7 +6,10 @@
  **/
 
 export class ContentSpec {
-    constructor(tagName, attributes, htmlTemplate, eventSpecs) {
+    constructor(
+        tagName, attributes, htmlTemplate,
+        eventSpecs, inwardLoadCallbacks, outwardLoadCallbacks
+    ) {
         this.tagName = tagName;
         this.attributes = attributes ?? {};
         this.html = htmlTemplate.replaceALL(
@@ -15,6 +18,8 @@ export class ContentSpec {
                 return '<template content-key="' + key + '"></template>';
             });
         this.eventSpecs = eventSpecs ?? [];
+        this.inwardLoadCallbacks = inwardLoadCallbacks ?? [];
+        this.outwardLoadCallbacks = outwardLoadCallbacks ?? [];
     }
 
     set htmlTemplate(htmlTemplate) {
@@ -39,20 +44,11 @@ export class ContentSpec {
         );
     }
 
-    addLoadInwardEvent(handler) {
-        this.eventSpecs.push(
-            {method:"one", events:"inward", handler:handler}
-        );
+    addInwardLoadCallback(callback) {
+        this.inwardLoadCallbacks.push(callback);
     }
-    addLoadOutwardEvent(handler) {
-        this.eventSpecs.push(
-            {method:"one", events:"outward", handler:handler}
-        );
-    }
-    addLoadReadyEvent(handler) {
-        this.eventSpecs.push(
-            {method:"one", events:"ready", handler:handler}
-        );
+    addOutwardLoadCallback(callback) {
+        this.outwardLoadCallbacks.push(callback);
     }
 }
 
@@ -70,14 +66,30 @@ export function replaceWithContent(jqObj, contentSpecIndex, key) {
     let jqObj = parent.children('#RESERVED_TEMPORARY_ID')
         .removeAttr("id")
         .removeAttr("hidden")
-        .attr(contentSpec.attributes)
-        .trigger("inward") // No, I have to set the inward event first.. well,
-        // maybe I *should* use callbacks for this instead.. Or just call the
-        // handlers directly here..
-        .find('template[content-key]')
+        .attr(contentSpec.attributes);
+
+    let len = contentSpec.eventSpecs.length;
+    for (let i = 0; i < len; i++) {
+        let eventSpec = contentSpec.eventSpecs[i];
+        jqObj[eventSpec.method](eventSpec.events, eventSpec.handler);
+    }
+
+    let len = contentSpec.inwardLoadCallbacks.length;
+    for (let i = 0; i < len; i++) {
+        let callback = contentSpec.inwardLoadCallbacks[i];
+        callback(jqObj);
+    }
+
+    jqObj.find('template[content-key]')
         .each(function() {
             transformSingleContentTemplate($(this), contentSpecIndex);
         });
+
+    let len = contentSpec.outwardLoadCallbacks.length;
+    for (let i = 0; i < len; i++) {
+        let callback = contentSpec.outwardLoadCallbacks[i];
+        callback(jqObj);
+    }
 }
 
 /* Function to load content from content spec and append it to inner HTML */
@@ -89,7 +101,7 @@ export function appendContent(jqObj, contentSpecIndex, key) {
 
 /* A function to load the selected content template elements */
 // export function transformContentPlaceholders(jqObj) {
-export function transformContentTemplate(jqObj, contentSpecIndex) {
+export function transformContentTemplates(jqObj, contentSpecIndex) {
     jqObj.filter('template[content-key]').each(function() {
         transformSingleContentTemplate($(this), contentSpecIndex);
     });
