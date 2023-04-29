@@ -5,9 +5,13 @@
  * loader functions are supposed to be inserted (each with a "content key").
  **/
 
+export class ContentSpec {
+    contructor(tagName, attributes, htmlTemplate, eventListeners) {
 
+    }
+}
 
-function upa1_loadContent(jqObj) {
+function loadContent(jqObj) {
     // get the content key from the jQuery object, its id, and its context data.
     var contentKey = jqObj.attr("content-key");
     var id = jqObj.attr("id");
@@ -31,7 +35,7 @@ function upa1_loadContent(jqObj) {
         // set up an event listener for the child to load its own content.
         $(this).one("load-content", function() {
             // load the inner content of child.
-            upa1_loadContent($(this));
+            loadContent($(this));
             // set boolean attribute to signal that content is loaded.
             $(this).attr("is-loaded", "true");
         });

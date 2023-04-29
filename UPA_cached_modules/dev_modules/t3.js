@@ -1,6 +1,6 @@
 
 import {
-    ContentManager, ContentSpec,
+    ContentSpec, loadContent
 } from "/UPA_scripts.php?id=t2";
 
 /* This module defines some basic content loader functions and attaches them,
