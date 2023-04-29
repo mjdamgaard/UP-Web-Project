@@ -17,6 +17,14 @@ export class ContentSpec {
         this.eventSpecs = eventSpecs ?? [];
     }
 
+    set htmlTemplate(htmlTemplate) {
+        this.htmlTemplate = htmlTemplate.replaceALL(
+            /<<[^a-z_<>][^<>]*>>/, function(str) {
+                let key = str.slice(2, -2);
+                return '<template content-key="' + key + '"></template>';
+            });
+    }
+
     addOnEvent(events, handler) {
         this.eventSpecs.push(
             {method:"on", events:events, handler:handler}
@@ -47,28 +55,6 @@ export class ContentSpec {
 
 
 
-/* Helper function to load the full HTML content from specification, where all
- * "<< <Content Key> >>" occurances are replaces with their corresponding
- * <template> tag variant.
- **/
-function loadInnerHTML(jqObj, contentSpecIndex, key) {
-    let html = contentSpecIndex[key].htmlTemplate.replaceALL(
-        /<<[^a-z_<>][^<>]*>>/, function(str) {
-            let key = str.slice(2, -2);
-            return '<template content-key="' + key + '"></template>';
-        }
-    );
-    jqObj.html(html)
-}
-function loadOuterHTML(jqObj, contentSpecIndex, key) {
-    let html = contentSpecIndex[key].htmlTemplate.replaceALL(
-        /<<[^a-z_<>][^<>]*>>/, function(str) {
-            let key = str.slice(2, -2);
-            return '<template content-key="' + key + '"></template>';
-        }
-    );
-    jqObj.html(html)
-}
 
 /* The function to load and append content from content specification */
 export function loadAndAppendContent(jqObj, contentSpecIndex, key) {
