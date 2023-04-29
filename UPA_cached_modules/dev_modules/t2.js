@@ -60,25 +60,41 @@ export class ContentSpec {
 
 
 /* Function to load content from content spec and replace it as outer HTML */
-export function replaceByContent(jqObj, contentSpecIndex, key) {
-    // TODO..
+export function replaceWithContent(jqObj, contentSpecIndex, key) {
+    let contentSpec = contentSpecIndex[key];
+    let parent = jqObj.parent();
+    jqObj.replaceWith(
+        '<' + contentSpec.tagName + ' id="RESERVED_TEMPORARY_ID" hidden >' +
+        contentSpec.html + '</' + contentSpec.tagName + '>'
+    );
+    parent.children('#RESERVED_TEMPORARY_ID')
+        .removeAttr("id")
+        .removeAttr("hidden")
+        .attr(contentSpec.attributes)
+        .trigger("inward") // No, I have to set the inward event first.. well,
+        // maybe I *should* use callbacks for this instead.. Or just call the
+        // handlers directly here.. 
+        .find('template[content-key]')
+        .each(function() {
+            transformSingleContentTemplate($(this), contentSpecIndex);
+        });
 }
 
 /* Function to load content from content spec and append it to inner HTML */
 export function appendContent(jqObj, contentSpecIndex, key) {
     jqObj.append('<template></template>');
     let newChild = jqObj.children(':last-child');
-    replaceByContent(newChild, contentSpecIndex, key);
+    replaceWithContent(newChild, contentSpecIndex, key);
 }
 
 /* A function to load the selected content template elements */
 // export function transformContentPlaceholders(jqObj) {
-export function loadContent(jqObj, contentSpecIndex) {
+export function transformContentTemplate(jqObj, contentSpecIndex) {
     jqObj.filter('template[content-key]').each(function() {
-        loadContentOfSingleTemplate($(this), contentSpecIndex);
+        transformSingleContentTemplate($(this), contentSpecIndex);
     });
 }
-function loadContentOfSingleTemplate(jqObj, contentSpecIndex) {
+function transformSingleContentTemplate(jqObj, contentSpecIndex) {
     let key = jqObj.attr("content-key");
-    replaceByContent(jqObj, contentSpecIndex, key);
+    replaceWithContent(jqObj, contentSpecIndex, key);
 }
