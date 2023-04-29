@@ -15,7 +15,7 @@ import {
 // to load. (But such cases should be very rare, perhaps almost non-existing.)
 
 
-
+var upa1_contentSpecs = [];
 
 upa1_contentSpecs["categoryTerm"] = [
     "div", {class:"container"}, [
@@ -33,7 +33,7 @@ upa1_contentSpecs["categoryHeader"] = [
         '</ul>'
     ], [], [],
 ];
-upa1_contentSpecs["categoryHeader"][3].push(function(cm, jqObj)) {
+upa1_contentSpecs["categoryHeader"][3].push(function(cm, jqObj) {
     jqObj.find('li:first-of-type')
         .on("click", function() {
             $(this).siblings().attr("class", "inactive");

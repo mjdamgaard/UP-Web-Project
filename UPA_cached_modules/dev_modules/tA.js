@@ -10,7 +10,7 @@ export function upa_main(preferenceUserID, termID, userID) {
     }
 
     t1Mod.upaFind('main').append('<div id="upa1_0"></div>');
-    let upa1Frame = t1Mod.upaFind('#upa1_0');
+    let upa1Frame = t1Mod.upaFind('#upa1_0');console.log(upa1Frame);debugger;
     let contextData = JSON.stringify({termID: termID, userID: userID});
     upa1Frame.attr("contextData", contextData);
 

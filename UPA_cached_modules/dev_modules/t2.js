@@ -29,7 +29,7 @@ export class ContentManager {
         let attributes = childContentSpecs[1];
         let contents = childContentSpecs[2];
 
-        jqObj.append("<" + tagName "></" + tagName + ">");
+        jqObj.append("<" + tagName + "></" + tagName + ">");
         let newContentContainer = jqObj.children(':last-child')
             .attr("id", this.idArr.join("."))
             .attr("cm-sibling-id", this.idArr[this.idArr.length - 1])
@@ -37,15 +37,19 @@ export class ContentManager {
 
         let contentsLen = contents.length;
         for (let i = 0; i < contentsLen; i++) {
-            // if contents[i] starts with "html:", assume that the rest is
-            // HTML to be appended to the input jQuery object.
-            if (contents[i].substring(0, 5) === "html:") {
+            // if contents[i] starts with "<", assume that it is not a content
+            // key, but is instead HTML to be appended newContentContainer.
+            if (contents[i].substring(0, 1) === "<") {
+                newContentContainer.append(contents);
+            // else if it starts with "html:", assume that the rest is
+            // HTML to be appended to newContentContainer.
+            } else if (contents[i].substring(0, 5) === "html:") {
                 newContentContainer.append(contents.substring(5));
-            // else assume that it is a content key to contruct a new
-            // ContentManager child with.
+            // else assume that it is a content key with which to contruct a
+            // new child ContentManager.
             } else {
-                // initialize a new ContentManager instance as a "child" of
-                // this one.
+                // initialize a new ContentManager instance as a child of
+                // newContentContainer.
                 let cmChildIDArr = this.idArr.concat([this.cmChildrenCounter]);
                 let cmChild = new ContentManager(contents[i], this, childIDArr);
                 this.cmChildren.push(cmChild);
@@ -67,7 +71,6 @@ export class ContentSpec {
 
 }
 
-export var contentSpecs = [];
 
 // function upa1_loadContent(jqObj) {
 //     // get the content key from the jQuery object, its id, and its context data.
