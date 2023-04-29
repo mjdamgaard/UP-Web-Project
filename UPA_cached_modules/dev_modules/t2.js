@@ -41,7 +41,17 @@ export class ContentSpec {
     }
 }
 
+export class ContentSpecIndex(contentSpecs) {
+    constructor() {
+        this.isReady = false;
+        this.contentSpecs = contentSpecs ?? [];
+        this.contentSpecsLen = contentSpecs.length ?? 0;
+    }
 
+    ready() {
+        for each
+    }
+}
 
 
 /* Helper function to load the full HTML content from specification, where all
