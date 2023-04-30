@@ -104,6 +104,10 @@ export class ContentLoader {
         // repeat this process for each parentArr until a match is found (or
         // throw error if none is found).
     }
+
+    // TODO: add some functions to load content after/before/appended/prepended/
+    // replaced. (..by first inserting start and end <template> markers and
+    // then calling loadAfterStartMarker().)
 }
 
 
