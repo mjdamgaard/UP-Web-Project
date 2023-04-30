@@ -1,43 +1,117 @@
 
-/* This module exports the function to initialize new content loaders and
- * make them wait for activation. It also has the side-effect of attaching
- * a variable, upa1_contentSpecs, to the window, for which content
- * loader functions are supposed to be inserted (each with a "content key").
+/* This module ...
  **/
 
-export class ContentSpec {
+export class ContentLoader {
     constructor(
-        tagName, attributes, htmlTemplate, inwardCallbacks, outwardCallbacks
+        // these first two variables should not be undefined/null.
+        contentKey, htmlTemplate,
+        dataModifierFun,
+        inwardCallbacks, outwardCallbacks,
+        childLoaders, depGroups
     ) {
-        this.tagName = tagName;
-        this.attributes = attributes ?? {};
-        this.html = htmlTemplate.replaceALL(
-            /<<[^a-z_<>"][^<>"]*>>/, function(str) {
-                let key = str.slice(2, -2);
-                return '<template content-key="' + key + '"></template>';
-            });
+        this.contentKey = contentKey;
+        // this.tagName = tagName;
+        // this.attributes = attributes ?? {};
+        this.html = this.convertHTMLTemplate(htmlTemplate);
+        this.dataModifierFun = dataModifierFun ?? (
+            function(data) {
+                return data;
+            }
+        );
         this.inwardCallbacks = inwardCallbacks ?? [];
         this.outwardCallbacks = outwardCallbacks ?? [];
+        this.childLoaders = childLoaders ?? [];
+        this.depGroups = depGroups ?? [];
     }
 
     set htmlTemplate(htmlTemplate) {
-        this.html = htmlTemplate.replaceALL(
-            /<<[^a-z_<>][^<>]*>>/, function(str) {
-                let key = str.slice(2, -2);
-                return '<template content-key="' + key + '"></template>';
-            });
+        this.html = this.convertHTMLTemplate(htmlTemplate);
     }
     get htmlTemplate() {
         return this.html; // no need to convert back here.
     }
-
-    addInwardCallback(callback) {
-        this.inwardCallbacks.push(callback);
+    convertHTMLTemplate(htmlTemplate) {
+        return htmlTemplate.replaceALL(
+            /<<[A-Z\$][\w]*>>/,
+            function(str) {
+                let key = str.slice(2, -2);
+                return (
+                    '<template class="startMarker" data-key="' + key +
+                    '"></template>' +
+                    '<template class="endMarker" data-key="' + key +
+                    '"></template>' +
+                );
+            }
+        );
     }
-    addOutwardCallback(callback) {
-        this.outwardCallbacks.push(callback);
+
+    loadAfterStartMarker(startMarkerJQObj, uniqueIDPrefix, data, parentArr) {
+        parentArr = parentArr ?? [];
+
+        startMarkerJQObj.attr("id", uniqueIDPrefix + "-start");
+        startMarkerJQObj.next().attr("id", uniqueIDPrefix + "-end");
+
+        startMarkerJQObj.data("nextID", 0)
+            .on("increase-next-id", function() {
+                let $this = $(this);
+                $this.data("nextID", $this.data("nextID") + 1);
+            });
+
+        startMarkerJQObj.after(this.html);
+
+        let firstElement = startMarkerJQObj.next();
+        let len = this.inwardCallbacks.length;
+        for (let i = 0; i < len; i++) {
+            let callback = this.inwardCallbacks[i];
+            callback(firstElement, uniqueIDPrefix, data, parentArr);
+        }
+
+        let thisClass = this;
+        let newParentArr = parentArr.concat([this]);
+        let newData = this.dataModifierFun(data);
+        startMarkerJQObj.nextUntil('#' + uniqueIDPrefix + "-end")
+            .find('*')
+            .addBack()
+            .filter('template .startMarker')
+            .each(function() {
+                let newUniqueIDPrefix = uniqueIDPrefix + "-" +
+                    startMarkerJQObj.data("nextID");
+                startMarkerJQObj.trigger("increase-next-id");
+
+                $thisStartMarker = $(this);
+                let cl = thisClass.getRelatedContentLoader(
+                    $thisStartMarker.attr("data-key"), parentArr
+                );
+                cl.loadAfterStartMarker(
+                    $thisStartMarker, newUniqueIDPrefix, newData, newParentArr
+                );
+            });
+
+        let firstElement = startMarkerJQObj.next();
+        let len = this.outwardCallbacks.length;
+        for (let i = 0; i < len; i++) {
+            let callback = this.outwardCallbacks[i];
+            callback(firstElement, uniqueIDPrefix, data, parentArr);
+        }
+
+        startMarkerJQObj.addClass("loaded");
+    }
+
+    getRelatedContentLoader(contentKey, parentArr) {
+        // TODO: Get the first matching content loader by first searching in
+        // this.childLoaders for matching contentKeys, and if none is found,
+        // repeat this process for each parentArr until a match is found (or
+        // throw error if none is found).
     }
 }
+
+
+
+
+
+
+
 
 
 
