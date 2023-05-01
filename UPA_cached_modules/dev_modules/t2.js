@@ -24,23 +24,23 @@ export class ContentLoader {
     constructor(
         // these first two variables should not be undefined/null.
         contentKey, htmlTemplate,
-        dataModifierFun,
+        childLoaders, modSignals
         inwardCallbacks, outwardCallbacks,
-        childLoaders, modStages
+        dataModifierFun,
     ) {
         this.contentKey = contentKey;
         // this.tagName = tagName;
         // this.attributes = attributes ?? {};
         this.html = convertHTMLTemplate(htmlTemplate);
+        this.childLoaders = childLoaders ?? [];
+        this.modSignals = modSignals ?? [];
+        this.inwardCallbacks = inwardCallbacks ?? [];
+        this.outwardCallbacks = outwardCallbacks ?? [];
         this.dataModifierFun = dataModifierFun ?? (
             function(data) {
                 return data;
             }
         );
-        this.inwardCallbacks = inwardCallbacks ?? [];
-        this.outwardCallbacks = outwardCallbacks ?? [];
-        this.childLoaders = childLoaders ?? [];
-        this.modStages = modStages ?? [];
     }
 
     set htmlTemplate(htmlTemplate) {

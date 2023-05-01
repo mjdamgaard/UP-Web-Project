@@ -1,18 +1,53 @@
 
 import {
-    ContentSpec, loadContent
+    ContentLoader
 } from "/UPA_scripts.php?id=t2";
 
-/* This module defines some basic content loader functions and attaches them,
- * together with a content key each, to the upa1_contentSpecs object
- * initialized to the window by the t2 module.
- **/
 
-// For each content key definition, use only content keys that are defined
-// below the  current one. This makes it easier to prevent infinity recursion.
-// If a content key uses a content key from above itself, one should take great
-// care that the content is only loaded following a user input that commands it
-// to load. (But such cases should be very rare, perhaps almost non-existing.)
+
+
+export var upaCL = ContentLoader(
+    "ColumnBasedSDBInterface",
+    /* Initial HTML */
+    '<div id="upa1" class="container column-container">' +
+        '<<TermColumn>>' +
+    '</div>'
+);
+
+export var termColumnCL = ContentLoader(
+    "TermColumn",
+    /* Initial HTML */
+    "<<ColumnHeader>>" +
+    "<<ColumnMain>>" +
+    "<<ColumnFooter>>"
+);
+
+export var columnHeaderCL = ContentLoader(
+    "ColumnHeader",
+    /* Initial HTML */
+    '<header class="container"></header>'
+);
+export var columnMainCL = ContentLoader(
+    "ColumnMain",
+    /* Initial HTML */
+    '<main class="container"></main>'
+);
+export var columnFooterCL = ContentLoader(
+    "ColumnFooter",
+    /* Initial HTML */
+    '<footer class="container"></footer>'
+);
+
+// push the newly declared contant loaders into upaCL's children array. (These
+// children CLs will be modified below (and more children will also be pushed
+// to this array), but since they are reference types, these changes will also
+// take effect inside upaCL.)
+upaCL.push(termColumnCL)
+    .push(columnHeaderCL)
+    .push(columnMainCL)
+    .push(columnFooterCL);
+
+
 
 
 
