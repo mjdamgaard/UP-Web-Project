@@ -9,7 +9,7 @@ import {
 export var upaCL = ContentLoader(
     "ColumnBasedSDBInterface",
     /* Initial HTML */
-    '<div id="upa1" class="container column-container">' +
+    '<div id="upa1" class="container app-column-container">' +
         '<<TermColumn>>' +
     '</div>'
 );
@@ -17,7 +17,7 @@ export var upaCL = ContentLoader(
 export var termColumnCL = ContentLoader(
     "TermColumn",
     /* Initial HTML */
-    '<div class="container column">' +
+    '<div class="container app-column">' +
         "<<ColumnHeader>>" +
         "<<ColumnMain>>" +
         "<<ColumnFooter>>" +

@@ -77,7 +77,7 @@ export class ContentLoader {
         $startMarker.nextUntil('#' + uniqueIDPrefix + "-end")
             .find('*')
             .addBack()
-            .filter('template .startMarker')
+            .filter('template.startMarker')
             .each(function() {
                 let newUniqueIDPrefix = uniqueIDPrefix + "-" +
                     $startMarker.data("nextID");
