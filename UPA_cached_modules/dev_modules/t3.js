@@ -54,16 +54,36 @@ upaCL.childLoaders.push(columnHeaderCL);
 upaCL.childLoaders.push(columnMainCL);
 upaCL.childLoaders.push(columnFooterCL);
 
+export var categoryHeaderCL = new ContentLoader(
+    "CategoryColumnHeader",
+    /* Initial HTML */
+    '<<ColumnHeader>>'
+);
 
-// add an event listener to add tabs to the nav-tabs list.
-columnHeaderCL.outwardCallbacks.push(function($startMarker) {
-    $startMarker.next().find('.nav-tabs').data("tabCount", 0);
-    $startMarker.on("add-tab", function(event, tabTitle, mainCL) {
-        let $navTabList = $startMarker.next().find('.nav-tabs')
-            .append('<li> <a href="#">' + tabTitle + '</a> </li>');
-        ...
-    });
+
+
+columnHeaderCL.inwardCallbacks.push(function($startMarker) {
+    $startMarker.next().find('.nav-tabs')
+        .append(
+            '<li class="active"> <a href="#">Subcategories</a> </li>' +
+            '<li> <a href="#">Elements</a> </li>' +
+        )
+        ...;
 });
+
+
+
+
+
+// // add an event listener to add tabs to the nav-tabs list.
+// columnHeaderCL.outwardCallbacks.push(function($startMarker) {
+//     $startMarker.next().find('.nav-tabs').data("tabCount", 0);
+//     $startMarker.on("add-tab", function(event, tabTitle, mainCL) {
+//         let $navTabList = $startMarker.next().find('.nav-tabs')
+//             .append('<li> <a href="#">' + tabTitle + '</a> </li>');
+//         ...
+//     });
+// });
 
 // // test:
 // if (typeof window["t3Counter"] === "undefined") {
