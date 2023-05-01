@@ -10,8 +10,8 @@ export function getStartAndEndMarkersHTML(key) {
     );
 }
 export function convertHTMLTemplate(htmlTemplate) {
-    return htmlTemplate.replaceALL(
-        /<<[A-Z\$][\w]*>>/,
+    return htmlTemplate.replaceAll(
+        /<<[A-Z\$][\w]*>>/g,
         function(str) {
             let key = str.slice(2, -2);
             return getStartAndEndMarkersHTML(key);
@@ -24,7 +24,7 @@ export class ContentLoader {
     constructor(
         // these first two variables should not be undefined/null.
         contentKey, htmlTemplate,
-        childLoaders, modSignals
+        childLoaders, modSignals,
         inwardCallbacks, outwardCallbacks,
         dataModifierFun,
     ) {
@@ -83,7 +83,7 @@ export class ContentLoader {
                     $startMarker.data("nextID");
                 $startMarker.trigger("increase-next-id");
 
-                $childStartMarker = $(this);
+                let $childStartMarker = $(this);
                 let cl = thisClass.getRelatedContentLoader(
                     $childStartMarker.attr("data-key"), parentArr
                 );
@@ -92,8 +92,8 @@ export class ContentLoader {
                 );
             });
 
-        let firstElement = $startMarker.next();
-        let len = this.outwardCallbacks.length;
+        firstElement = $startMarker.next();
+        len = this.outwardCallbacks.length;
         for (let i = 0; i < len; i++) {
             let callback = this.outwardCallbacks[i];
             callback(firstElement, uniqueIDPrefix, data, parentArr);
