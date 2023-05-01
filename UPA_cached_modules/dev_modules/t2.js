@@ -11,7 +11,7 @@ export function getStartAndEndMarkersHTML(key) {
 }
 export function convertHTMLTemplate(htmlTemplate) {
     return htmlTemplate.replaceAll(
-        /<<[A-Z\$][\w]*>>/g,
+        /<<[A-Z\-][\w\-]*>>/g,
         function(str) {
             let key = str.slice(2, -2);
             return getStartAndEndMarkersHTML(key);
@@ -64,11 +64,10 @@ export class ContentLoader {
 
         $startMarker.after(this.html);
 
-        let firstElement = $startMarker.next();
         let len = this.inwardCallbacks.length;
         for (let i = 0; i < len; i++) {
             let callback = this.inwardCallbacks[i];
-            callback(firstElement, uniqueIDPrefix, data, parentArr);
+            callback($startMarker, uniqueIDPrefix, data, parentArr);
         }
 
         let thisClass = this;
@@ -92,14 +91,13 @@ export class ContentLoader {
                 );
             });
 
-        firstElement = $startMarker.next();
         len = this.outwardCallbacks.length;
         for (let i = 0; i < len; i++) {
             let callback = this.outwardCallbacks[i];
-            callback(firstElement, uniqueIDPrefix, data, parentArr);
+            callback($startMarker, uniqueIDPrefix, data, parentArr);
         }
 
-        $startMarker.addClass("loaded");
+        // $startMarker.addClass("loaded");
     }
 
     getRelatedContentLoader(contentKey, parentArr) {
