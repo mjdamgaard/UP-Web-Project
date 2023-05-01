@@ -17,9 +17,11 @@ export var upaCL = ContentLoader(
 export var termColumnCL = ContentLoader(
     "TermColumn",
     /* Initial HTML */
-    "<<ColumnHeader>>" +
-    "<<ColumnMain>>" +
-    "<<ColumnFooter>>"
+    '<div class="container column">' +
+        "<<ColumnHeader>>" +
+        "<<ColumnMain>>" +
+        "<<ColumnFooter>>" +
+    '</div>'
 );
 
 export var columnHeaderCL = ContentLoader(
