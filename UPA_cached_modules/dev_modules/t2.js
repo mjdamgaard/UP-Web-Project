@@ -5,13 +5,14 @@
 
 export function getStartAndEndMarkersHTML(key) {
     return (
-        '<template class="startMarker" data-key="' + key + '"></template>' +
+        // CI stands for 'content instance.'
+        '<template class="CI" data-key="' + key + '"></template>' +
         '<template class="endMarker" data-key="' + key + '"></template>'
     );
 }
 export function convertHTMLTemplate(htmlTemplate) {
     return htmlTemplate.replaceAll(
-        /<<[A-Z\-][\w\-]*>>/g,
+        /<<[A-Z][\w\-]*>>/g,
         function(str) {
             let key = str.slice(2, -2);
             return getStartAndEndMarkersHTML(key);
@@ -50,54 +51,54 @@ export class ContentLoader {
         return this.html; // no need to convert back here.
     }
 
-    loadAfterStartMarker($startMarker, uniqueIDPrefix, data, parentArr) {
+    loadContentInstance($ci, uniqueIDPrefix, data, parentArr) {
         parentArr = parentArr ?? [];
 
-        $startMarker.attr("id", uniqueIDPrefix + "-start");
-        $startMarker.next().attr("id", uniqueIDPrefix + "-end");
+        $ci.attr("id", uniqueIDPrefix + "-ci");
+        $ci.next().attr("id", uniqueIDPrefix + "-end");
 
-        $startMarker.data("nextID", 0)
+        $ci.data("nextID", 0)
             .on("increase-next-id", function() {
                 let $this = $(this);
                 $this.data("nextID", $this.data("nextID") + 1);
             });
 
-        $startMarker.after(this.html);
+        $ci.after(this.html);
 
         let len = this.inwardCallbacks.length;
         for (let i = 0; i < len; i++) {
             let callback = this.inwardCallbacks[i];
-            callback($startMarker, uniqueIDPrefix, data, parentArr);
+            callback($ci, uniqueIDPrefix, data, parentArr);
         }
 
         let thisClass = this;
         let newParentArr = parentArr.concat([this]);
         let newData = this.dataModifierFun(data);
-        $startMarker.nextUntil('#' + uniqueIDPrefix + "-end")
+        $ci.nextUntil('#' + uniqueIDPrefix + "-end")
             .find('*')
             .addBack()
             .filter('template.startMarker')
             .each(function() {
                 let newUniqueIDPrefix = uniqueIDPrefix + "-" +
-                    $startMarker.data("nextID");
-                $startMarker.trigger("increase-next-id");
+                    $ci.data("nextID");
+                $ci.trigger("increase-next-id");
 
-                let $childStartMarker = $(this);
+                let $childCI = $(this);
                 let cl = thisClass.getRelatedContentLoader(
-                    $childStartMarker.attr("data-key"), parentArr
+                    $childCI.attr("data-key"), parentArr
                 );
-                cl.loadAfterStartMarker(
-                    $childStartMarker, newUniqueIDPrefix, newData, newParentArr
+                cl.loadContentInstance(
+                    $childCI, newUniqueIDPrefix, newData, newParentArr
                 );
             });
 
         len = this.outwardCallbacks.length;
         for (let i = 0; i < len; i++) {
             let callback = this.outwardCallbacks[i];
-            callback($startMarker, uniqueIDPrefix, data, parentArr);
+            callback($ci, uniqueIDPrefix, data, parentArr);
         }
 
-        // $startMarker.addClass("loaded");
+        // $ci.addClass("loaded");
     }
 
     getRelatedContentLoader(contentKey, parentArr) {
@@ -129,34 +130,34 @@ export class ContentLoader {
     loadAfter($obj, uniqueIDPrefix, data, parentArr) {
         $obj.after(getStartAndEndMarkersHTML(this.contentKey));
         let $startMarker = $obj.next();
-        this.loadAfterStartMarker(
+        this.loadContentInstance(
             $startMarker, uniqueIDPrefix, data, parentArr
         );
     }
     loadBefore($obj, uniqueIDPrefix, data, parentArr) {
         $obj.before(getStartAndEndMarkersHTML(this.contentKey));
         let $startMarker = $obj.prev().prev();
-        this.loadAfterStartMarker(
+        this.loadContentInstance(
             $startMarker, uniqueIDPrefix, data, parentArr
         );
     }
     loadAppended($obj, uniqueIDPrefix, data, parentArr) {
         $obj.append(getStartAndEndMarkersHTML(this.contentKey));
         let $startMarker = $obj.children(':last-child').prev();
-        this.loadAfterStartMarker(
+        this.loadContentInstance(
             $startMarker, uniqueIDPrefix, data, parentArr
         );
     }
     loadPrepended($obj, uniqueIDPrefix, data, parentArr) {
         $obj.prepend(getStartAndEndMarkersHTML(this.contentKey));
         let $startMarker = $obj.children(':first-child');
-        this.loadAfterStartMarker(
+        this.loadContentInstance(
             $startMarker, uniqueIDPrefix, data, parentArr
         );
     }
 }
 
 
-export function getCIParent(htmlTemplate) {
-    
-}
+// export function getCIParent($obj) {
+//     return $obj.closest('template.CI');
+// }

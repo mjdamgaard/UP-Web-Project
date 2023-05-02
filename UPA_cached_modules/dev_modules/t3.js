@@ -1,6 +1,6 @@
 
 import {
-    ContentLoader
+    ContentLoader,
 } from "/UPA_scripts.php?id=t2";
 
 
@@ -69,14 +69,31 @@ upaCL.childLoaders.push(tabNavHeaderCL);
  * event coming from Column (e.g. to add or change tabs).
  **/
 
-// add an event listener to add tabs to the nav-tabs list.
-columnCL.outwardCallbacks.push(function($startMarker) {
-    $startMarker.data("headerTabCount", 0);
-    $startMarker.on("add-tab", function(event, tabTitle, mainCL) {
-        let $navTabList = $startMarker.next().find('.nav-tabs')
-            .append('<li> <a href="#">' + tabTitle + '</a> </li>');
-        ...
-    });
+tabNavHeaderCL.outwardCallbacks.push(function($ci) {
+    $ci
+        .on("add-tab", function(event, tabTitle, isActive) {
+            let $tabNav = $ci.next().find('.nav-tabs')
+                .append(
+                    '<li data-title="' + tabTitle + '"> <a href="#">' +
+                    tabTitle + '</a> </li>'
+                );
+            let $newTab = $tabNav.children(':last-child');
+            if (isActive ?? false) {
+                $newTab.attr("class", "active")
+            }
+            $newTab.on("click", function() {
+                $(this).closest('template.CI')
+                    .trigger("activate-tab", tabTitle)
+                    .closest('template.CI')
+                    .trigger("tab-selected", tabTitle)
+            });
+        })
+        .on("activate-tab", function(event, tabTitle) {
+            $ci.next().find('.nav-tabs > li')
+                .attr("class", "inactive");
+                .filter('[data-title="' + tabTitle + '"]')
+                .attr("class", "active");
+        });
 });
 
 
@@ -92,8 +109,8 @@ upaCL.childLoaders.push(categoryColumnCL);
 
 
 
-categoryColumnCL.inwardCallbacks.push(function($startMarker) {
-    $startMarker.next().find('header.nav-tabs')
+categoryColumnCL.inwardCallbacks.push(function($ci) {
+    $ci.next().find('header.nav-tabs')
         .append(
             '<li class="active"> <a href="#">Subcategories</a> </li>' +
             '<li> <a href="#">Elements</a> </li>' +
