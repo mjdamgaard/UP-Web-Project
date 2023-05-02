@@ -68,10 +68,10 @@ upaCL.childLoaders.push(tabNavHeaderCL);
  * event coming from Column (e.g. to add or change tabs).
  **/
 
-tabNavHeaderCL.outwardCallbacks.push(function($ci, idPrefix) {
+tabNavHeaderCL.outwardCallbacks.push(function($ci, id) {
     $ci
         .on("add-tab", function(event, tabTitle, isActive) {debugger;
-            let $tabNav = getContentDescendents($(this), idPrefix, '.nav-tabs')
+            let $tabNav = getContentDescendents($(this), id, '.nav-tabs')
                 .append(
                     '<li data-title="' + tabTitle + '"> <a href="#">' +
                     tabTitle + '</a> </li>'
@@ -88,17 +88,17 @@ tabNavHeaderCL.outwardCallbacks.push(function($ci, idPrefix) {
             });
         })
         .on("activate-tab", function(event, tabTitle) {
-            getContentDescendents($(this), idPrefix, '.nav-tabs > li')
+            getContentDescendents($(this), id, '.nav-tabs > li')
                 .attr("class", "inactive")
                 .filter('[data-title="' + tabTitle + '"]')
                 .attr("class", "active");
         });
 });
 
-columnHeaderCL.outwardCallbacks.push(function($ci, idPrefix) {
-    $ci.on("add-tab", function(event, tabTitle, isActive) {
-        getCIChildren($(this), idPrefix, '[data-key="TabNavHeader"]')
-            .trigger("add-tab", tabTitle, isActive);
+columnHeaderCL.outwardCallbacks.push(function($ci, id) {
+    $ci.on("add-tab", function(event, tabTitle, isActive) {debugger;console.log(
+        getCIChildren($(this), id, '[data-key="TabNavHeader"]')
+            .trigger("add-tab", tabTitle, isActive));
     });
 });
 
@@ -113,11 +113,11 @@ export var categoryColumnCL = new ContentLoader(
 upaCL.childLoaders.push(categoryColumnCL);
 
 
-categoryColumnCL.outwardCallbacks.push(function($ci, idPrefix) {
-    getCIDescendents($ci, idPrefix, 'data-key="ColumnHeader"').first()
+categoryColumnCL.outwardCallbacks.push(function($ci, id) {
+    getCIDescendents($ci, id, '[data-key="ColumnHeader"]').first()
         .trigger("add-tab", "Supercategories")
         .trigger("add-tab", "Subcategories", true)
-        .trigger("add-tab", "Elements") .append("Heeellooo");
+        .trigger("add-tab", "Elements");debugger;
 });
 
 

@@ -55,8 +55,8 @@ export class ContentLoader {
     loadContentInstance($ci, uniqueIDPrefix, data, parentArr) {
         parentArr = parentArr ?? [];
 
-        $ci.attr("id", uniqueIDPrefix + "-ci");
-        $ci.next().attr("id", uniqueIDPrefix + "-end");
+        $ci.attr("id", uniqueIDPrefix);
+        $ci.next().attr("id", uniqueIDPrefix + "_end");
 
         $ci.data("nextID", 0)
             .on("increase-next-id", function() {
@@ -75,7 +75,7 @@ export class ContentLoader {
         let thisClass = this;
         let newParentArr = parentArr.concat([this]);
         let newData = this.dataModifierFun(data);
-        $ci.nextUntil('#' + uniqueIDPrefix + "-end")
+        $ci.nextUntil('#' + uniqueIDPrefix + "_end")
             .find('*')
             .addBack()
             .filter('template.CI')
@@ -151,24 +151,25 @@ export class ContentLoader {
 }
 
 
-export function getContentChildren($ci, idPrefix, selector) {
-    return $ci.nextUntil('#' + idPrefix + '-end')
+export function getContentChildren($ci, id, selector) {
+    return $ci.nextUntil('#' + id + '_end')
         .filter(selector ?? '*');
 }
-export function getContentDescendents($ci, idPrefix, selector) {
-    return $ci.nextUntil('#' + idPrefix + '-end').find('*').addBack()
+export function getContentDescendents($ci, id, selector) {
+    return $ci.nextUntil('#' + id + '_end').find('*').addBack()
         .filter(selector ?? '*');
 }
-export function getCIChild($ci, idPrefix, index) {
-    return $ci.nextUntil('#' idPrefix '-' + index + '-ci').find('*').addBack()
-        .filter('#' idPrefix '-' + index + '-ci');
+export function getCIChild($ci, id, index) {
+    return $ci.nextUntil('#' + id + '_end').find('*').addBack()
+        .filter('#' + id + '-' + index);
 }
-export function getCIChildren($ci, idPrefix, selector) {
-    return $ci.nextUntil('#' + idPrefix + '-end').filter('template.CI')
+export function getCIChildren($ci, id, selector) {
+    return $ci.nextUntil('#' + id + '_end').find('*').addBack()
+    .filter('template.CI')
         .filter(selector ?? '*');
 }
-export function getCIDescendents($ci, idPrefix, selector) {
-    return $ci.nextUntil('#' + idPrefix + '-end').find('*').addBack()
+export function getCIDescendents($ci, id, selector) {
+    return $ci.nextUntil('#' + id + '_end').find('*').addBack()
         .filter('template.CI')
         .filter(selector ?? '*');
 }
