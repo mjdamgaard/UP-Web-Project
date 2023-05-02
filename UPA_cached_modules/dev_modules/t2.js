@@ -3,18 +3,15 @@
  **/
 
 
-export function getStartAndEndMarkerTags(key) {
-    return (
-        '<template class="startMarker" data-key="' + key + '"></template>' +
-        '<template class="endMarker"></template>'
-    );
+export function getPlaceholderTemplateTag(key) {
+    return '<template class="placeholder" data-key="' + key + '"></template>';
 }
 export function convertHTMLTemplate(htmlTemplate) {
     return htmlTemplate.replaceAll(
         /<<[A-Z][\w\-]*>>/g,
         function(str) {
             let key = str.slice(2, -2);
-            return getStartAndEndMarkerTags(key);
+            return getPlaceholderTemplateTag(key);
         }
     );
 }
@@ -55,55 +52,58 @@ export class ContentLoader {
     }
 
 
-    #loadBetweenMarkers($start, data, parentArr) {
-        // initialize some variables to use when loading the inner CIs (where
-        // 'CI' stands for 'content instance').
-        parentArr = parentArr ?? [];
-        let thisClassInstance = this;
-        let newParentArr = parentArr.concat([thisClassInstance]);
-        let newData = this.dataModifierFun(data);
-        // record the end marker.
-        let $end = $start.next();
+    loadAndReplacePlaceholder($placeholder, data, parentCLArr) {
+        // (Here 'CI' stands for 'content instance,' which are the live HTML
+        // elements, and CL stands for 'content loader' (instances of this
+        // class), which are responsible for loading and inserting the CIs.)
 
-        // first insert the new HTML after $obj.
-        $start.after(this.html);
+        // initialize some variables to use when loading the inner CIs.
+        parentCLArr = parentCLArr ?? [];
+        let thisClassInstance = this;
+        let newParentCLArr = parentCLArr.concat([thisClassInstance]);
+        let newData = this.dataModifierFun(data);
+
+        // first insert the new CI after $placeholder.
+        $placeholder.after(this.html);
         let $ci = $start.next();
-        $ci.attr("CI").addClass()
-        // apply all the inward callbacks (which can change the initial HTML).
+        // copy all classes from $placeholder onto the new CI, except of coure
+        // for the "placeholder" class.
+        let existingClasses = $placeholder.removeClass("placeholder")
+            .attr("class");
+        $ci.attr("class", existingClasses).addClass("CI")
+            .addClass(this.contentKey);
+        // remove the placeholder template tag.
+        $placeholder.remove();
+
+        // apply all the inward callbacks (which can change the initial HTML
+        // and also query and change dynamicData properties of the parent ).
         let len = this.inwardCallbacks.length;
         for (let i = 0; i < len; i++) {
             let callback = this.inwardCallbacks[i];
-            callback($obj, data, parentArr);
+            callback($ci, data, parentCLArr);
         }
 
-        $obj.nextUntil('#' + uniqueIDPrefix + "_end")
-            .find('*')
-            .addBack()
-            .filter('template.CI')
+        // load all the descendent CIs.
+        $ci.find('*').addBack()
+            .filter('template.placeholder')
             .each(function() {
-                let newUniqueIDPrefix = uniqueIDPrefix + "-" +
-                    $ci.data("nextID");
-                $ci.trigger("increase-next-id");
-
                 let $childCI = $(this);
+                let childContentKey = $childCI.attr("data-key");
                 let cl = thisClassInstance.getRelatedContentLoader(
-                    $childCI.attr("data-key"), parentArr
+                    childContentKey, parentCLArr
                 );
-                cl.loadContentInstance(
-                    $childCI, newUniqueIDPrefix, newData, newParentArr
-                );
+                cl.loadAndReplacePlaceholder($childCI, newData, newParentCLArr);
             });
 
+        // apply all the outward callbacks (after the inner content is loaded).
         len = this.outwardCallbacks.length;
         for (let i = 0; i < len; i++) {
             let callback = this.outwardCallbacks[i];
-            callback($ci, uniqueIDPrefix, data, parentArr);
+            callback($ci, data, parentCLArr);
         }
-
-        // $ci.addClass("loaded");
     }
 
-    getRelatedContentLoader(contentKey, parentArr) {
+    getRelatedContentLoader(contentKey, parentCLArr) {
         var ret = "";
         let len = this.childLoaders.length;
         for (let i = 0; i < len; i++) {
@@ -113,41 +113,41 @@ export class ContentLoader {
             }
         }
         if (ret === "") {
-            let parentArrLen = parentArr.length;
-            if (parentArrLen === 0) {
+            let parentCLArrLen = parentCLArr.length;
+            if (parentCLArrLen === 0) {
                 throw (
                     "ContentLoader.getRelatedContentLoader(): " +
                     'no content loader found with content key "' +
                     contentKey + '"'
                 );
             }
-            let parent = parentArr[parentArr.length - 1];
+            let parent = parentCLArr[parentCLArr.length - 1];
             ret = parent.getRelatedContentLoader(
-                contentKey, parentArr.slice(0, -1)
+                contentKey, parentCLArr.slice(0, -1)
             );
         }
         return ret;
     }
 
-    loadAfter($obj, uniqueIDPrefix, data, parentArr) {
-        $obj.after(getStartAndEndMarkersHTML(this.contentKey));
-        let $ci = $obj.next();
-        this.loadContentInstance($ci, uniqueIDPrefix, data, parentArr);
+    loadAfter($obj, data, parentCLArr) {
+        $obj.after(getPlaceholderTemplateTag(this.contentKey));
+        let $placeholder = $obj.next();
+        this.loadContentInstance($placeholder, data, parentCLArr);
     }
-    loadBefore($obj, uniqueIDPrefix, data, parentArr) {
-        $obj.before(getStartAndEndMarkersHTML(this.contentKey));
-        let $ci = $obj.prev().prev();
-        this.loadContentInstance($ci, uniqueIDPrefix, data, parentArr);
+    loadBefore($obj, data, parentCLArr) {
+        $obj.before(getPlaceholderTemplateTag(this.contentKey));
+        let $placeholder = $obj.prev();
+        this.loadContentInstance($placeholder, data, parentCLArr);
     }
-    loadAppended($obj, uniqueIDPrefix, data, parentArr) {
-        $obj.append(getStartAndEndMarkersHTML(this.contentKey));
-        let $ci = $obj.children(':last-child').prev();
-        this.loadContentInstance($ci, uniqueIDPrefix, data, parentArr);
+    loadAppended($obj, data, parentCLArr) {
+        $obj.append(getPlaceholderTemplateTag(this.contentKey));
+        let $placeholder = $obj.children(':last-child');
+        this.loadContentInstance($placeholder, data, parentCLArr);
     }
-    loadPrepended($obj, uniqueIDPrefix, data, parentArr) {
-        $obj.prepend(getStartAndEndMarkersHTML(this.contentKey));
-        let $ci = $obj.children(':first-child');
-        this.loadContentInstance($ci, uniqueIDPrefix, data, parentArr);
+    loadPrepended($obj, data, parentCLArr) {
+        $obj.prepend(getPlaceholderTemplateTag(this.contentKey));
+        let $placeholder = $obj.children(':first-child');
+        this.loadContentInstance($placeholder, data, parentCLArr);
     }
 }
 
