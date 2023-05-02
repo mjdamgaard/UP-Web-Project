@@ -129,31 +129,23 @@ export class ContentLoader {
 
     loadAfter($obj, uniqueIDPrefix, data, parentArr) {
         $obj.after(getStartAndEndMarkersHTML(this.contentKey));
-        let $startMarker = $obj.next();
-        this.loadContentInstance(
-            $startMarker, uniqueIDPrefix, data, parentArr
-        );
+        let $ci = $obj.next();
+        this.loadContentInstance($ci, uniqueIDPrefix, data, parentArr);
     }
     loadBefore($obj, uniqueIDPrefix, data, parentArr) {
         $obj.before(getStartAndEndMarkersHTML(this.contentKey));
-        let $startMarker = $obj.prev().prev();
-        this.loadContentInstance(
-            $startMarker, uniqueIDPrefix, data, parentArr
-        );
+        let $ci = $obj.prev().prev();
+        this.loadContentInstance($ci, uniqueIDPrefix, data, parentArr);
     }
     loadAppended($obj, uniqueIDPrefix, data, parentArr) {
         $obj.append(getStartAndEndMarkersHTML(this.contentKey));
-        let $startMarker = $obj.children(':last-child').prev();
-        this.loadContentInstance(
-            $startMarker, uniqueIDPrefix, data, parentArr
-        );
+        let $ci = $obj.children(':last-child').prev();
+        this.loadContentInstance($ci, uniqueIDPrefix, data, parentArr);
     }
     loadPrepended($obj, uniqueIDPrefix, data, parentArr) {
         $obj.prepend(getStartAndEndMarkersHTML(this.contentKey));
-        let $startMarker = $obj.children(':first-child');
-        this.loadContentInstance(
-            $startMarker, uniqueIDPrefix, data, parentArr
-        );
+        let $ci = $obj.children(':first-child');
+        this.loadContentInstance($ci, uniqueIDPrefix, data, parentArr);
     }
 }
 

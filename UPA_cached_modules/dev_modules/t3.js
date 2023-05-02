@@ -85,7 +85,7 @@ tabNavHeaderCL.outwardCallbacks.push(function($ci) {
                 $(this).closest('template.CI')
                     .trigger("activate-tab", tabTitle)
                     .closest('template.CI')
-                    .trigger("tab-selected", tabTitle)
+                    .trigger("tab-selected", tabTitle);console.log(tabTitle + " clicked");
             });
         })
         .on("activate-tab", function(event, tabTitle) {
@@ -96,6 +96,12 @@ tabNavHeaderCL.outwardCallbacks.push(function($ci) {
         });
 });
 
+columnHeaderCL.outwardCallbacks.push(function($ci) {
+    $ci.on("add-tab", function(event, tabTitle, isActive) {
+        $ci.first('template.CI')
+            .trigger("add-tab", tabTitle, isActive);
+    });
+});
 
 
 
@@ -108,14 +114,11 @@ export var categoryColumnCL = new ContentLoader(
 upaCL.childLoaders.push(categoryColumnCL);
 
 
-
 categoryColumnCL.inwardCallbacks.push(function($ci) {
-    $ci.next().find('header.nav-tabs')
-        .append(
-            '<li class="active"> <a href="#">Subcategories</a> </li>' +
-            '<li> <a href="#">Elements</a> </li>' +
-        )
-        ...;
+    $ci.first('header template.CI')
+        .trigger("add-tab", "Supercategories");
+        .trigger("add-tab", "Subcategories", true);
+        .trigger("add-tab", "Elements");
 });
 
 
