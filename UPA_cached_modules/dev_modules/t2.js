@@ -150,34 +150,3 @@ export class ContentLoader {
         this.loadContentInstance($placeholder, data, parentCLArr);
     }
 }
-
-
-export function getContentChildren($ci, id, selector) {
-    return $ci.nextUntil('#' + id + '_end')
-        .filter(selector ?? '*');
-}
-export function getContentDescendents($ci, id, selector) {
-    return $ci.nextUntil('#' + id + '_end').find('*').addBack()
-        .filter(selector ?? '*');
-}
-export function getCIChild($ci, id, index) {
-    return $ci.nextUntil('#' + id + '_end').find('*').addBack()
-        .filter('#' + id + '-' + index);
-}
-export function getCIChildren($ci, id, selector) {
-    return $ci.nextUntil('#' + id + '_end').find('*').addBack()
-    .filter('template.CI')
-        .filter(selector ?? '*');
-}
-export function getCIDescendents($ci, id, selector) {
-    return $ci.nextUntil('#' + id + '_end').find('*').addBack()
-        .filter('template.CI')
-        .filter(selector ?? '*');
-}
-export function getCIParent($obj) {
-    return $obj.closest('template.CI');
-}
-
-export function getFirstCIAncestor($obj, selector) {
-    return $obj.parents('template.CI').filter(selector ?? '*').first();
-}
