@@ -155,3 +155,8 @@ export class ContentLoader {
         );
     }
 }
+
+
+export function getCIParent(htmlTemplate) {
+    
+}
