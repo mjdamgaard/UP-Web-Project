@@ -1,8 +1,6 @@
 
 import {
     ContentLoader,
-    getContentChildren, getContentDescendents, getCIChild,
-    getCIChildren, getCIDescendents, getCIParent, getFirstCIAncestor,
 } from "/UPA_scripts.php?id=t2";
 
 
@@ -12,7 +10,7 @@ export var upaCL = new ContentLoader(
     "ColumnBasedSDBInterface",
     /* Initial HTML */
     '<div id="upa1" class="container app-column-container">' +
-        '<<CategoryColumn>>' +
+        '<<Column>>' +
     '</div>'
 );
 

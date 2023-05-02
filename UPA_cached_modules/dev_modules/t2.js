@@ -65,7 +65,7 @@ export class ContentLoader {
 
         // first insert the new CI after $placeholder.
         $placeholder.after(this.html);
-        let $ci = $start.next();
+        let $ci = $placeholder.next();
         // copy all classes from $placeholder onto the new CI, except of coure
         // for the "placeholder" class.
         let existingClasses = $placeholder.removeClass("placeholder")
@@ -129,24 +129,27 @@ export class ContentLoader {
         return ret;
     }
 
+    // (Inserting a simple '<div></div>' in the following functions could also
+    // work with the current implementation of loadAndReplacePlaceholder(),
+    // but let's just stick to the following for now.)
     loadAfter($obj, data, parentCLArr) {
         $obj.after(getPlaceholderTemplateTag(this.contentKey));
         let $placeholder = $obj.next();
-        this.loadContentInstance($placeholder, data, parentCLArr);
+        this.loadAndReplacePlaceholder($placeholder, data, parentCLArr);
     }
     loadBefore($obj, data, parentCLArr) {
         $obj.before(getPlaceholderTemplateTag(this.contentKey));
         let $placeholder = $obj.prev();
-        this.loadContentInstance($placeholder, data, parentCLArr);
+        this.loadAndReplacePlaceholder($placeholder, data, parentCLArr);
     }
     loadAppended($obj, data, parentCLArr) {
         $obj.append(getPlaceholderTemplateTag(this.contentKey));
         let $placeholder = $obj.children(':last-child');
-        this.loadContentInstance($placeholder, data, parentCLArr);
+        this.loadAndReplacePlaceholder($placeholder, data, parentCLArr);
     }
     loadPrepended($obj, data, parentCLArr) {
         $obj.prepend(getPlaceholderTemplateTag(this.contentKey));
         let $placeholder = $obj.children(':first-child');
-        this.loadContentInstance($placeholder, data, parentCLArr);
+        this.loadAndReplacePlaceholder($placeholder, data, parentCLArr);
     }
 }

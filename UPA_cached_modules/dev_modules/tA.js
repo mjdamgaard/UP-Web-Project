@@ -14,5 +14,5 @@ export function upa_main(preferenceUserID, termID, userID) {
         .children('#upa1');
     let contextData = JSON.stringify({termID: termID, userID: userID});
 
-    upaCL.loadAppended($upa1Frame, "upa1-0", contextData);
+    upaCL.loadAppended($upa1Frame, contextData);
 }
