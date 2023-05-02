@@ -7,7 +7,7 @@ export function getStartAndEndMarkersHTML(key) {
     return (
         // CI stands for 'content instance.'
         '<template class="CI" data-key="' + key + '"></template>' +
-        '<template class="endMarker" data-key="' + key + '"></template>'
+        '<template class="CIEndMarker" data-key="' + key + '"></template>'
     );
 }
 export function convertHTMLTemplate(htmlTemplate) {
@@ -42,6 +42,7 @@ export class ContentLoader {
                 return data;
             }
         );
+        this.dynamicData = {};
     }
 
     set htmlTemplate(htmlTemplate) {
@@ -77,7 +78,7 @@ export class ContentLoader {
         $ci.nextUntil('#' + uniqueIDPrefix + "-end")
             .find('*')
             .addBack()
-            .filter('template.startMarker')
+            .filter('template.CI')
             .each(function() {
                 let newUniqueIDPrefix = uniqueIDPrefix + "-" +
                     $ci.data("nextID");
@@ -150,6 +151,31 @@ export class ContentLoader {
 }
 
 
-// export function getCIParent($obj) {
-//     return $obj.closest('template.CI');
-// }
+export function getContentChildren($ci, idPrefix, selector) {
+    return $ci.nextUntil('#' + idPrefix + '-end')
+        .filter(selector ?? '*');
+}
+export function getContentDescendents($ci, idPrefix, selector) {
+    return $ci.nextUntil('#' + idPrefix + '-end').find('*').addBack()
+        .filter(selector ?? '*');
+}
+export function getCIChild($ci, idPrefix, index) {
+    return $ci.nextUntil('#' idPrefix '-' + index + '-ci').find('*').addBack()
+        .filter('#' idPrefix '-' + index + '-ci');
+}
+export function getCIChildren($ci, idPrefix, selector) {
+    return $ci.nextUntil('#' + idPrefix + '-end').filter('template.CI')
+        .filter(selector ?? '*');
+}
+export function getCIDescendents($ci, idPrefix, selector) {
+    return $ci.nextUntil('#' + idPrefix + '-end').find('*').addBack()
+        .filter('template.CI')
+        .filter(selector ?? '*');
+}
+export function getCIParent($obj) {
+    return $obj.closest('template.CI');
+}
+
+export function getFirstCIAncestor($obj, selector) {
+    return $obj.parents('template.CI').filter(selector ?? '*').first();
+}

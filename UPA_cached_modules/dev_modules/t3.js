@@ -1,6 +1,8 @@
 
 import {
     ContentLoader,
+    getContentChildren, getContentDescendents, getCIChild,
+    getCIChildren, getCIDescendents, getCIParent, getFirstCIAncestor,
 } from "/UPA_scripts.php?id=t2";
 
 
@@ -10,7 +12,7 @@ export var upaCL = new ContentLoader(
     "ColumnBasedSDBInterface",
     /* Initial HTML */
     '<div id="upa1" class="container app-column-container">' +
-        '<<Column>>' +
+        '<<CategoryColumn>>' +
     '</div>'
 );
 
@@ -27,7 +29,9 @@ export var columnCL = new ContentLoader(
 export var columnHeaderCL = new ContentLoader(
     "ColumnHeader",
     /* Initial HTML */
-    '<<TabNavHeader>>'
+    '<header class="container">' +
+        '<<TabNavHeader>>' +
+    '</header>'
 );
 export var columnMainCL = new ContentLoader(
     "ColumnMain",
@@ -44,12 +48,7 @@ export var columnFooterCL = new ContentLoader(
 export var tabNavHeaderCL = new ContentLoader(
     "TabNavHeader",
     /* Initial HTML */
-    '<header class="container">' +
-        '<ul class="nav nav-tabs">' +
-            // '<li class="active"> <a href="#">Subcategories</a> </li>' +
-            // '<li> <a href="#">Elements</a> </li>' +
-        '</ul>' +
-    '</header>'
+    '<ul class="nav nav-tabs"></ul>'
 );
 
 // push the newly declared contant loaders into upaCL's children array. (These
@@ -69,10 +68,10 @@ upaCL.childLoaders.push(tabNavHeaderCL);
  * event coming from Column (e.g. to add or change tabs).
  **/
 
-tabNavHeaderCL.outwardCallbacks.push(function($ci) {
+tabNavHeaderCL.outwardCallbacks.push(function($ci, idPrefix) {
     $ci
-        .on("add-tab", function(event, tabTitle, isActive) {
-            let $tabNav = $ci.next().find('.nav-tabs')
+        .on("add-tab", function(event, tabTitle, isActive) {debugger;
+            let $tabNav = getContentDescendents($(this), idPrefix, '.nav-tabs')
                 .append(
                     '<li data-title="' + tabTitle + '"> <a href="#">' +
                     tabTitle + '</a> </li>'
@@ -82,23 +81,23 @@ tabNavHeaderCL.outwardCallbacks.push(function($ci) {
                 $newTab.attr("class", "active")
             }
             $newTab.on("click", function() {
-                $(this).closest('template.CI')
+                getCIParent($(this)) // gets the TabNavHeader parent
                     .trigger("activate-tab", tabTitle)
-                    .closest('template.CI')
+                    .closest('template.CI') // gets the parent of TabNavHeader.
                     .trigger("tab-selected", tabTitle);console.log(tabTitle + " clicked");
             });
         })
         .on("activate-tab", function(event, tabTitle) {
-            $ci.next().find('.nav-tabs > li')
-                .attr("class", "inactive");
+            getContentDescendents($(this), idPrefix, '.nav-tabs > li')
+                .attr("class", "inactive")
                 .filter('[data-title="' + tabTitle + '"]')
                 .attr("class", "active");
         });
 });
 
-columnHeaderCL.outwardCallbacks.push(function($ci) {
+columnHeaderCL.outwardCallbacks.push(function($ci, idPrefix) {
     $ci.on("add-tab", function(event, tabTitle, isActive) {
-        $ci.first('template.CI')
+        getCIChildren($(this), idPrefix, '[data-key="TabNavHeader"]')
             .trigger("add-tab", tabTitle, isActive);
     });
 });
@@ -114,11 +113,11 @@ export var categoryColumnCL = new ContentLoader(
 upaCL.childLoaders.push(categoryColumnCL);
 
 
-categoryColumnCL.inwardCallbacks.push(function($ci) {
-    $ci.first('header template.CI')
-        .trigger("add-tab", "Supercategories");
-        .trigger("add-tab", "Subcategories", true);
-        .trigger("add-tab", "Elements");
+categoryColumnCL.outwardCallbacks.push(function($ci, idPrefix) {
+    getCIDescendents($ci, idPrefix, 'data-key="ColumnHeader"').first()
+        .trigger("add-tab", "Supercategories")
+        .trigger("add-tab", "Subcategories", true)
+        .trigger("add-tab", "Elements") .append("Heeellooo");
 });
 
 
@@ -127,118 +126,108 @@ categoryColumnCL.inwardCallbacks.push(function($ci) {
 
 
 
-// // test:
-// if (typeof window["t3Counter"] === "undefined") {
-//     window["t3Counter"] = 1;
-// } else {
-//     window["t3Counter"] += 1;
+
+
+
+
+
+// var upa1_contentSpecs = [];
+//
+// upa1_contentSpecs["categoryTerm"] = [
+//     "div", {class:"container"}, [
+//         "categoryHeader",
+//         "categoryMain",
+//         "categoryFooter",
+//     ], [], [],
+// ];
+//
+// upa1_contentSpecs["categoryHeader"] = [
+//     "header", {class:"container"}, [
+//         'html:<ul class="nav nav-tabs">' +
+//             '<li class="active"> <a href="#">Subcategories</a> </li>' +
+//             '<li> <a href="#">Elements</a> </li>' +
+//         '</ul>'
+//     ], [], [],
+// ];
+// upa1_contentSpecs["categoryHeader"][3].push(function(cm, jqObj) {
+//     jqObj.find('li:first-of-type')
+//         .on("click", function() {
+//             $(this).siblings().attr("class", "inactive");
+//             $(this).attr("class", "active")
+//                 .closest('[content-key="categoryTerm"]')
+//                 .trigger("show-subcategory-list");
+//         })
+//         .next()
+//         .on("click", function() {
+//             $(this).siblings().attr("class", "inactive");
+//             $(this).attr("class", "active")
+//                 .closest('[content-key="categoryTerm"]')
+//                 .trigger("show-element-list");
+//         });
+// });
+//
+//
+//
+//
+//
+//
+//
+// upa1_contentSpecs["categoryTerm"] = function(jqObj, contextData) {
+//     jqObj.html('<div content-key="categoryTermHeader" class="container"></div>')
+//         .append('<div content-key="subcategoryList" class="container"></div>')
+//         .append('<div content-key="elementList" wait class="container"></div>')
+//         .append('<div content-key="categoryTermFooter" class="container"></div>')
+//         // .on("hide-current-list", function() {
+//         //     $(this).children('[content-key$="List"]').hide();
+//         // })
+//         .on("show-subcategory-list", function() {
+//             $(this).children('[content-key$="List"]').hide();
+//             let jqObj = $(this).children('[content-key="subcategoryList"]');
+//             jqObj.show();
+//             if (jqObj.attr("is-loaded") !== "true") {
+//                 jqObj.trigger("load-content");
+//             }
+//         })
+//         .on("show-element-list", function() {
+//             $(this).children('[content-key$="List"]').hide();
+//             let jqObj = $(this).children('[content-key="elementList"]');
+//             jqObj.show();
+//             if (!jqObj.attr("is-loaded")) {
+//                 jqObj.trigger("load-content");
+//             }
+//         });
 // }
-// // Works as expected: t3Counter is still 1 even though the module is imported
-// // first by the main module, and then in a subsequent module imported
-// // afterwards.
-
-
-
-
-
-
-var upa1_contentSpecs = [];
-
-upa1_contentSpecs["categoryTerm"] = [
-    "div", {class:"container"}, [
-        "categoryHeader",
-        "categoryMain",
-        "categoryFooter",
-    ], [], [],
-];
-
-upa1_contentSpecs["categoryHeader"] = [
-    "header", {class:"container"}, [
-        'html:<ul class="nav nav-tabs">' +
-            '<li class="active"> <a href="#">Subcategories</a> </li>' +
-            '<li> <a href="#">Elements</a> </li>' +
-        '</ul>'
-    ], [], [],
-];
-upa1_contentSpecs["categoryHeader"][3].push(function(cm, jqObj) {
-    jqObj.find('li:first-of-type')
-        .on("click", function() {
-            $(this).siblings().attr("class", "inactive");
-            $(this).attr("class", "active")
-                .closest('[content-key="categoryTerm"]')
-                .trigger("show-subcategory-list");
-        })
-        .next()
-        .on("click", function() {
-            $(this).siblings().attr("class", "inactive");
-            $(this).attr("class", "active")
-                .closest('[content-key="categoryTerm"]')
-                .trigger("show-element-list");
-        });
-});
-
-
-
-
-
-
-
-upa1_contentSpecs["categoryTerm"] = function(jqObj, contextData) {
-    jqObj.html('<div content-key="categoryTermHeader" class="container"></div>')
-        .append('<div content-key="subcategoryList" class="container"></div>')
-        .append('<div content-key="elementList" wait class="container"></div>')
-        .append('<div content-key="categoryTermFooter" class="container"></div>')
-        // .on("hide-current-list", function() {
-        //     $(this).children('[content-key$="List"]').hide();
-        // })
-        .on("show-subcategory-list", function() {
-            $(this).children('[content-key$="List"]').hide();
-            let jqObj = $(this).children('[content-key="subcategoryList"]');
-            jqObj.show();
-            if (jqObj.attr("is-loaded") !== "true") {
-                jqObj.trigger("load-content");
-            }
-        })
-        .on("show-element-list", function() {
-            $(this).children('[content-key$="List"]').hide();
-            let jqObj = $(this).children('[content-key="elementList"]');
-            jqObj.show();
-            if (!jqObj.attr("is-loaded")) {
-                jqObj.trigger("load-content");
-            }
-        });
-}
-
-upa1_contentSpecs["categoryTermHeader"] = function(jqObj, contextData) {
-    jqObj.html('<ul class="nav nav-tabs"></ul>')
-        .find('ul')
-        .append('<li class="active"> <a href="#">Subcategories</a> </li>')
-        .append('<li> <a href="#">Elements</a> </li>')
-        .find('li:first-of-type')
-        .on("click", function() {
-            $(this).siblings().attr("class", "inactive");
-            $(this).attr("class", "active")
-                .closest('[content-key="categoryTerm"]')
-                .trigger("show-subcategory-list");
-        })
-        .next()
-        .on("click", function() {
-            $(this).siblings().attr("class", "inactive");
-            $(this).attr("class", "active")
-                .closest('[content-key="categoryTerm"]')
-                .trigger("show-element-list");
-        });
-}
-
-
-upa1_contentSpecs["subcategoryList"] = function(jqObj, contextData) {
-    jqObj.html('<div hidden content-key="setData"></div>');
-}
-upa1_contentSpecs["elementList"] = function(jqObj, contextData) {
-    jqObj.html('And I am gonna be a list of elements!');
-}
-
-
-upa1_contentSpecs["categoryTermFooter"] = function(jqObj, contextData) {
-    jqObj.html("I'm gonna be a footer.");
-}
+//
+// upa1_contentSpecs["categoryTermHeader"] = function(jqObj, contextData) {
+//     jqObj.html('<ul class="nav nav-tabs"></ul>')
+//         .find('ul')
+//         .append('<li class="active"> <a href="#">Subcategories</a> </li>')
+//         .append('<li> <a href="#">Elements</a> </li>')
+//         .find('li:first-of-type')
+//         .on("click", function() {
+//             $(this).siblings().attr("class", "inactive");
+//             $(this).attr("class", "active")
+//                 .closest('[content-key="categoryTerm"]')
+//                 .trigger("show-subcategory-list");
+//         })
+//         .next()
+//         .on("click", function() {
+//             $(this).siblings().attr("class", "inactive");
+//             $(this).attr("class", "active")
+//                 .closest('[content-key="categoryTerm"]')
+//                 .trigger("show-element-list");
+//         });
+// }
+//
+//
+// upa1_contentSpecs["subcategoryList"] = function(jqObj, contextData) {
+//     jqObj.html('<div hidden content-key="setData"></div>');
+// }
+// upa1_contentSpecs["elementList"] = function(jqObj, contextData) {
+//     jqObj.html('And I am gonna be a list of elements!');
+// }
+//
+//
+// upa1_contentSpecs["categoryTermFooter"] = function(jqObj, contextData) {
+//     jqObj.html("I'm gonna be a footer.");
+// }

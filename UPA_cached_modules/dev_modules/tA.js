@@ -4,7 +4,6 @@ import * as t1Mod from "/UPA_scripts.php?id=t1";
 import "/UPA_scripts.php?id=t2"; // request t2 immediately.
 import {upaCL} from "/UPA_scripts.php?id=t3";
 
-console.log({t3Counter: t3Counter});
 
 export function upa_main(preferenceUserID, termID, userID) {
     if (preferenceUserID !== "u1") {
