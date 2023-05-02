@@ -10,12 +10,12 @@ export var upaCL = new ContentLoader(
     "ColumnBasedSDBInterface",
     /* Initial HTML */
     '<div id="upa1" class="container app-column-container">' +
-        '<<TermColumn>>' +
+        '<<Column>>' +
     '</div>'
 );
 
-export var termColumnCL = new ContentLoader(
-    "TermColumn",
+export var columnCL = new ContentLoader(
+    "Column",
     /* Initial HTML */
     '<div class="container app-column">' +
         "<<ColumnHeader>>" +
@@ -27,12 +27,7 @@ export var termColumnCL = new ContentLoader(
 export var columnHeaderCL = new ContentLoader(
     "ColumnHeader",
     /* Initial HTML */
-    '<header class="container">' +
-        '<ul class="nav nav-tabs">' +
-            // '<li class="active"> <a href="#">Subcategories</a> </li>' +
-            // '<li> <a href="#">Elements</a> </li>' +
-        '</ul>' +
-    '</header>'
+    '<<TabNavHeader>>'
 );
 export var columnMainCL = new ContentLoader(
     "ColumnMain",
@@ -45,25 +40,60 @@ export var columnFooterCL = new ContentLoader(
     '<footer class="container"></footer>'
 );
 
+
+export var tabNavHeaderCL = new ContentLoader(
+    "TabNavHeader",
+    /* Initial HTML */
+    '<header class="container">' +
+        '<ul class="nav nav-tabs">' +
+            // '<li class="active"> <a href="#">Subcategories</a> </li>' +
+            // '<li> <a href="#">Elements</a> </li>' +
+        '</ul>' +
+    '</header>'
+);
+
 // push the newly declared contant loaders into upaCL's children array. (These
 // children CLs will be modified below (and more children will also be pushed
 // to this array), but since they are reference types, these changes will also
 // take effect inside upaCL.)
-upaCL.childLoaders.push(termColumnCL);
-upaCL.childLoaders.push(columnHeaderCL);
-upaCL.childLoaders.push(columnMainCL);
-upaCL.childLoaders.push(columnFooterCL);
+upaCL.childLoaders.push(columnCL);
+columnCL.childLoaders.push(columnHeaderCL);
+columnCL.childLoaders.push(columnMainCL);
+columnCL.childLoaders.push(columnFooterCL);
+upaCL.childLoaders.push(tabNavHeaderCL);
 
-export var categoryHeaderCL = new ContentLoader(
-    "CategoryColumnHeader",
+
+/* <<TabNavHeader>>
+ * This CL class is responsible for the apperance of a tab
+ * nav bar, and for sending click event signals to <<Column>> and handling
+ * event coming from Column (e.g. to add or change tabs).
+ **/
+
+// add an event listener to add tabs to the nav-tabs list.
+columnCL.outwardCallbacks.push(function($startMarker) {
+    $startMarker.data("headerTabCount", 0);
+    $startMarker.on("add-tab", function(event, tabTitle, mainCL) {
+        let $navTabList = $startMarker.next().find('.nav-tabs')
+            .append('<li> <a href="#">' + tabTitle + '</a> </li>');
+        ...
+    });
+});
+
+
+
+
+
+export var categoryColumnCL = new ContentLoader(
+    "CategoryColumn",
     /* Initial HTML */
-    '<<ColumnHeader>>'
+    '<<Column>>'
 );
+upaCL.childLoaders.push(categoryColumnCL);
 
 
 
-columnHeaderCL.inwardCallbacks.push(function($startMarker) {
-    $startMarker.next().find('.nav-tabs')
+categoryColumnCL.inwardCallbacks.push(function($startMarker) {
+    $startMarker.next().find('header.nav-tabs')
         .append(
             '<li class="active"> <a href="#">Subcategories</a> </li>' +
             '<li> <a href="#">Elements</a> </li>' +
@@ -75,15 +105,7 @@ columnHeaderCL.inwardCallbacks.push(function($startMarker) {
 
 
 
-// // add an event listener to add tabs to the nav-tabs list.
-// columnHeaderCL.outwardCallbacks.push(function($startMarker) {
-//     $startMarker.next().find('.nav-tabs').data("tabCount", 0);
-//     $startMarker.on("add-tab", function(event, tabTitle, mainCL) {
-//         let $navTabList = $startMarker.next().find('.nav-tabs')
-//             .append('<li> <a href="#">' + tabTitle + '</a> </li>');
-//         ...
-//     });
-// });
+
 
 // // test:
 // if (typeof window["t3Counter"] === "undefined") {
