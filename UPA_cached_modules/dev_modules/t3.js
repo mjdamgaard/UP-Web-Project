@@ -62,8 +62,8 @@ upaCL.childLoaders.push(tabNavHeaderCL);
 
 /* <<TabNavHeader>>
  * This CL class is responsible for the apperance of a tab
- * nav bar, and for sending click event signals to <<Column>> and handling
- * event coming from Column (e.g. to add or change tabs).
+ * nav bar, and for sending click event signals to its CI parent and handling
+ * events coming from its parent (e.g. to add or change tabs).
  **/
 
 tabNavHeaderCL.outwardCallbacks.push(function($ci, id) {
