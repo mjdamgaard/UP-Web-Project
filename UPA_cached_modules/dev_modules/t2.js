@@ -3,11 +3,10 @@
  **/
 
 
-export function getStartAndEndMarkersHTML(key) {
+export function getStartAndEndMarkerTags(key) {
     return (
-        // CI stands for 'content instance.'
-        '<template class="CI" data-key="' + key + '"></template>' +
-        '<template class="CIEndMarker" data-key="' + key + '"></template>'
+        '<template class="startMarker" data-key="' + key + '"></template>' +
+        '<template class="endMarker"></template>'
     );
 }
 export function convertHTMLTemplate(htmlTemplate) {
@@ -15,7 +14,7 @@ export function convertHTMLTemplate(htmlTemplate) {
         /<<[A-Z][\w\-]*>>/g,
         function(str) {
             let key = str.slice(2, -2);
-            return getStartAndEndMarkersHTML(key);
+            return getStartAndEndMarkerTags(key);
         }
     );
 }
@@ -42,6 +41,9 @@ export class ContentLoader {
                 return data;
             }
         );
+        // this.dynamicData can be used for storing arbritary data (primitive
+        // data types and objects), including data necessary to ensure unique
+        // ids.
         this.dynamicData = {};
     }
 
@@ -52,30 +54,29 @@ export class ContentLoader {
         return this.html; // no need to convert back here.
     }
 
-    loadContentInstance($ci, uniqueIDPrefix, data, parentArr) {
+
+    #loadBetweenMarkers($start, data, parentArr) {
+        // initialize some variables to use when loading the inner CIs (where
+        // 'CI' stands for 'content instance').
         parentArr = parentArr ?? [];
+        let thisClassInstance = this;
+        let newParentArr = parentArr.concat([thisClassInstance]);
+        let newData = this.dataModifierFun(data);
+        // record the end marker.
+        let $end = $start.next();
 
-        $ci.attr("id", uniqueIDPrefix);
-        $ci.next().attr("id", uniqueIDPrefix + "_end");
-
-        $ci.data("nextID", 0)
-            .on("increase-next-id", function() {
-                let $this = $(this);
-                $this.data("nextID", $this.data("nextID") + 1);
-            });
-
-        $ci.after(this.html);
-
+        // first insert the new HTML after $obj.
+        $start.after(this.html);
+        let $ci = $start.next();
+        $ci.attr("CI").addClass()
+        // apply all the inward callbacks (which can change the initial HTML).
         let len = this.inwardCallbacks.length;
         for (let i = 0; i < len; i++) {
             let callback = this.inwardCallbacks[i];
-            callback($ci, uniqueIDPrefix, data, parentArr);
+            callback($obj, data, parentArr);
         }
 
-        let thisClass = this;
-        let newParentArr = parentArr.concat([this]);
-        let newData = this.dataModifierFun(data);
-        $ci.nextUntil('#' + uniqueIDPrefix + "_end")
+        $obj.nextUntil('#' + uniqueIDPrefix + "_end")
             .find('*')
             .addBack()
             .filter('template.CI')
@@ -85,7 +86,7 @@ export class ContentLoader {
                 $ci.trigger("increase-next-id");
 
                 let $childCI = $(this);
-                let cl = thisClass.getRelatedContentLoader(
+                let cl = thisClassInstance.getRelatedContentLoader(
                     $childCI.attr("data-key"), parentArr
                 );
                 cl.loadContentInstance(
