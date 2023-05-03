@@ -88,7 +88,7 @@ upaCL.childLoaders.push(tabNavListCL);
 
 tabNavListCL.outwardCallbacks.push(function($ci, id) {
     $ci
-        .on("add-tab", function(event, tabTitle, isActive) {debugger;
+        .on("add-tab", function(event, tabTitle, isActive) {
             let $newTab = $(this).append(
                     '<li data-title="' + tabTitle + '"> <a href="#">' +
                     tabTitle + '</a> </li>'
@@ -97,16 +97,18 @@ tabNavListCL.outwardCallbacks.push(function($ci, id) {
             if (isActive ?? false) {
                 $newTab.addClass("active")
             }
-            $newTab.on("click", function() {
+            $newTab.on("click", function() {console.log($(this).closest('.CI'));
                 $(this).closest('.CI') // gets the TabNavList parent
-                    .trigger("activate-tab", tabTitle)
+                    .trigger("activate-tab", [tabTitle])
                     .closest('CI') // gets the parent of TabNavList.
-                    .trigger("tab-selected", tabTitle);console.log(tabTitle + " clicked");
+                    .trigger("tab-selected", [tabTitle]);
+                console.log(tabTitle + " clicked");
+                return false;
             });
             return false;
         })
         .on("activate-tab", function(event, tabTitle) {
-            $(this).find('.nav-tabs > li')
+            $(this).children('li')
                 .removeClass("active")
                 .filter('[data-title="' + tabTitle + '"]')
                 .addClass("active");
@@ -115,9 +117,9 @@ tabNavListCL.outwardCallbacks.push(function($ci, id) {
 });
 
 columnHeaderCL.outwardCallbacks.push(function($ci, id) {
-    $ci.on("add-tab", function(event, tabTitle, isActive) {debugger;
+    $ci.on("add-tab", function(event, tabTitle, isActive) {
         $(this).find('.CI.TabNavList')
-            .trigger("add-tab", tabTitle, isActive);
+            .trigger("add-tab", [tabTitle, isActive]);
         return false;
     });
 });
@@ -133,11 +135,11 @@ export var categoryColumnCL = new ContentLoader(
 upaCL.childLoaders.push(categoryColumnCL);
 
 
-categoryColumnCL.outwardCallbacks.push(function($ci, id) {debugger;
+categoryColumnCL.outwardCallbacks.push(function($ci, id) {
     $ci.find('.CI.ColumnHeader').first()
-        .trigger("add-tab", "Supercategories")
-        .trigger("add-tab", "Subcategories", true)
-        .trigger("add-tab", "Elements");
+        .trigger("add-tab", ["Supercategories"])
+        .trigger("add-tab", ["Subcategories", true])
+        .trigger("add-tab", ["Elements"]);
 });
 
 
