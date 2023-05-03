@@ -113,17 +113,47 @@ columnMainCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
 });
 
 columnCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
-    $ci
-        .on("open-main-page", function(event, tabTitle, contentKey, otherData) {
-            $(this).find('.CI.ColumnMain').first()
-                .trigger("open-page", tabTitle, contentKey, otherData);
+    $ci.data("content-key-store", {})
+        .on("add-main-page", function(event, tabTitle, contentKey, otherData) {
+            $(this).data("content-key-store")[tabTitle] = contentKey;
+            return false;
+        })
+        .on("open-main-page", function(event, tabTitle, otherData) {
+            let $this = $(this);
+            let contentKey = $this.data("content-key-store")[tabTitle];
+            $(this).children('.CI.ColumnMain')
+                .trigger("open-page", [tabTitle, contentKey, otherData]);
             return false;
         })
         .on("close-main-page", function(event, tabTitle) {
-            $(this).find('.CI.ColumnMain').first()
-                .trigger("open-page", tabTitle);
+            $(this).children('.CI.ColumnMain')
+                .trigger("open-page", [tabTitle]);
             return false;
         })
+        .on("add-header-tab", function(event, tabTitle) {
+            $(this).children('.CI.ColumnHeader')
+                .trigger("add-tab", [tabTitle]);
+            return false;
+        })
+        .on("activate-header-tab", function(event, tabTitle) {
+            $(this).children('.CI.ColumnHeader')
+                .trigger("activate-tab", [tabTitle]);
+            return false;
+        })
+        .on("add-tab-and-main-page", function(
+            event, tabTitle, contentKey, otherData
+        ) {
+            $(this)
+                .trigger("add-main-page", [tabTitle, contentKey, otherData])
+                .trigger("add-header-tab", [tabTitle]);
+            return false;
+        })
+        .on("open-tab-and-main-page", function(event, tabTitle, otherData) {
+            $(this)
+                .trigger("activate-header-tab", [tabTitle])
+                .trigger("open-main-page", [tabTitle, otherData]);
+            return false;
+        });
 });
 
 
@@ -137,15 +167,12 @@ columnCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
 
 tabNavListCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
     $ci
-        .on("add-tab", function(event, tabTitle, isActive) {
+        .on("add-tab", function(event, tabTitle) {
             let $newTab = $(this).append(
                     '<li data-title="' + tabTitle + '"> <a href="#">' +
                     tabTitle + '</a> </li>'
                 )
                 .children(':last-child');
-            if (isActive ?? false) {
-                $newTab.addClass("active")
-            }
             $newTab.on("click", function() {console.log($(this).closest('.CI'));
                 $(this).closest('.CI') // gets the TabNavList parent
                     .trigger("activate-tab", [tabTitle])
@@ -166,9 +193,9 @@ tabNavListCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
 
 columnHeaderCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
     $ci
-        .on("add-tab", function(event, tabTitle, isActive) {
+        .on("add-tab", function(event, tabTitle) {
             $(this).find('.CI.TabNavList')
-                .trigger("add-tab", [tabTitle, isActive]);
+                .trigger("add-tab", [tabTitle]);
             return false;
         })
         .on("tab-selected", function(event, tabTitle) {
@@ -192,7 +219,7 @@ upaCL.childLoaders.push(categoryColumnCL);
 categoryColumnCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
     $ci.find('.CI.ColumnHeader').first()
         .trigger("add-tab", ["Supercategories"])
-        .trigger("add-tab", ["Subcategories", true])
+        .trigger("add-tab", ["Subcategories"])
         .trigger("add-tab", ["Elements"]);
 });
 
