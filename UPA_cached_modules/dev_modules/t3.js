@@ -23,11 +23,7 @@ export var columnGroupCL = new ContentLoader(
 columnGroupCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
     switch (data.termID.substring(0, 1)) {
         case "c":
-            columnGroupCL.htmlTemplate = (
-                '<div class="container app-column-group">' +
-                    '<<CategoryColumn>>' +
-                '</div>'
-            );
+            $ci.find('.placeholder').attr("data-key", "CategoryColumn");
             break;
         default:
             throw (
