@@ -12,7 +12,7 @@ export function upa_main(preferenceUserID, termID, userID) {
 
     let $upa1Frame = t1Mod.upaFind('main').html('<div id="upa1"></div>')
         .children('#upa1');
-    let contextData = JSON.stringify({termID: termID, userID: userID});
+    let contextData = {termID: termID, userID: userID};
 
     upaCL.loadAppended($upa1Frame, contextData);
 }

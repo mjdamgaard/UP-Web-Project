@@ -9,10 +9,33 @@ import {
 export var upaCL = new ContentLoader(
     "ColumnBasedSDBInterface",
     /* Initial HTML */
-    '<div id="upa1" class="container app-column-container">' +
+    '<div id="upa1" class="container sdb-interface-app">' +
+        '<<ColumnGroup>>' +
+    '</div>'
+);
+export var columnGroupCL = new ContentLoader(
+    "ColumnGroup",
+    /* Initial HTML */
+    '<div class="container app-column-group">' +
         '<<Column>>' +
     '</div>'
 );
+columnGroupCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
+    switch (data.termID.substring(0, 1)) {
+        case "c":
+            columnGroupCL.htmlTemplate = (
+                '<div class="container app-column-group">' +
+                    '<<CategoryColumn>>' +
+                '</div>'
+            );
+            break;
+        default:
+            throw (
+                "Term type '" + data.termID.substring(0, 1) +
+                "' has not been implemented yet"
+            );
+    }debugger;
+});
 
 export var columnCL = new ContentLoader(
     "Column",
@@ -53,7 +76,8 @@ export var tabNavHeaderCL = new ContentLoader(
 // children CLs will be modified below (and more children will also be pushed
 // to this array), but since they are reference types, these changes will also
 // take effect inside upaCL.)
-upaCL.childLoaders.push(columnCL);
+upaCL.childLoaders.push(columnGroupCL);
+columnGroupCL.childLoaders.push(columnCL);
 columnCL.childLoaders.push(columnHeaderCL);
 columnCL.childLoaders.push(columnMainCL);
 columnCL.childLoaders.push(columnFooterCL);
