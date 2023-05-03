@@ -103,12 +103,14 @@ tabNavListCL.outwardCallbacks.push(function($ci, id) {
                     .closest('CI') // gets the parent of TabNavList.
                     .trigger("tab-selected", tabTitle);console.log(tabTitle + " clicked");
             });
+            return false;
         })
         .on("activate-tab", function(event, tabTitle) {
             $(this).find('.nav-tabs > li')
                 .removeClass("active")
                 .filter('[data-title="' + tabTitle + '"]')
                 .addClass("active");
+            return false;
         });
 });
 
@@ -116,6 +118,7 @@ columnHeaderCL.outwardCallbacks.push(function($ci, id) {
     $ci.on("add-tab", function(event, tabTitle, isActive) {debugger;
         $(this).find('.CI.TabNavList')
             .trigger("add-tab", tabTitle, isActive);
+        return false;
     });
 });
 
