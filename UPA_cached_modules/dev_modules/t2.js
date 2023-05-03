@@ -93,10 +93,9 @@ export class ContentLoader {
                 cl.loadAndReplacePlaceholder($childCI, newData, newParentCLArr);
             });
 
-        // It seems that $ci can have become corrupt at this point so we need
-        // to redefine it from the still uncorrupt $placeholder.
+        // in case $ci was a placeholder tag which is removed again at this
+        // point, redefine it as the new CI element.
         $ci = $placeholder.next();
-
         // apply all the outward callbacks (after the inner content is loaded).
         len = this.outwardCallbacks.length;
         for (let i = 0; i < len; i++) {
