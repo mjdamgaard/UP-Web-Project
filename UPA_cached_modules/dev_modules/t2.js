@@ -70,7 +70,7 @@ export class ContentLoader {
         // for the "placeholder" class.
         let existingClasses = $placeholder.removeClass("placeholder")
             .attr("class");
-        $ci.attr("class", existingClasses).addClass("CI")
+        $ci.addClass(existingClasses).addClass("CI")
             .addClass(this.contentKey);
         // remove the placeholder template tag.
         $placeholder.remove();
