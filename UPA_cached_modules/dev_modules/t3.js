@@ -47,7 +47,7 @@ export var columnHeaderCL = new ContentLoader(
     "ColumnHeader",
     /* Initial HTML */
     '<header class="container">' +
-        '<<TabNavHeader>>' +
+        '<<TabNavList>>' +
     '</header>'
 );
 export var columnMainCL = new ContentLoader(
@@ -62,8 +62,8 @@ export var columnFooterCL = new ContentLoader(
 );
 
 
-export var tabNavHeaderCL = new ContentLoader(
-    "TabNavHeader",
+export var tabNavListCL = new ContentLoader(
+    "TabNavList",
     /* Initial HTML */
     '<ul class="nav nav-tabs"></ul>'
 );
@@ -77,33 +77,32 @@ columnGroupCL.childLoaders.push(columnCL);
 columnCL.childLoaders.push(columnHeaderCL);
 columnCL.childLoaders.push(columnMainCL);
 columnCL.childLoaders.push(columnFooterCL);
-upaCL.childLoaders.push(tabNavHeaderCL);
+upaCL.childLoaders.push(tabNavListCL);
 
 
-/* <<TabNavHeader>>
+/* <<TabNavList>>
  * This CL class is responsible for the apperance of a tab
  * nav bar, and for sending click event signals to its CI parent and handling
  * events coming from its parent (e.g. to add or change tabs).
  **/
 
-tabNavHeaderCL.outwardCallbacks.push(function($ci, id) {
+tabNavListCL.outwardCallbacks.push(function($ci, id) {
     $ci
         .on("add-tab", function(event, tabTitle, isActive) {debugger;
-            let $newTab = $(this).find('.nav-tabs')
-                .append(
-                    '<li data-title="' + tabTitle + '"> <a href="#">' +
-                    tabTitle + '</a> </li>'
-                )
-                .children(':last-child');
-            if (isActive ?? false) {
-                $newTab.addClass("active")
-            }
-            $newTab.on("click", function() {
-                $(this).closest('.CI') // gets the TabNavHeader parent
-                    .trigger("activate-tab", tabTitle)
-                    .closest('CI') // gets the parent of TabNavHeader.
-                    .trigger("tab-selected", tabTitle);console.log(tabTitle + " clicked");
-            });
+            // let $newTab = $(this).append(
+            //         '<li data-title="' + tabTitle + '"> <a href="#">' +
+            //         tabTitle + '</a> </li>'
+            //     )
+            //     .children(':last-child');
+            // if (isActive ?? false) {
+            //     $newTab.addClass("active")
+            // }
+            // $newTab.on("click", function() {
+            //     $(this).closest('.CI') // gets the TabNavList parent
+            //         .trigger("activate-tab", tabTitle)
+            //         .closest('CI') // gets the parent of TabNavList.
+            //         .trigger("tab-selected", tabTitle);console.log(tabTitle + " clicked");
+            // });
         })
         .on("activate-tab", function(event, tabTitle) {
             $(this).find('.nav-tabs > li')
@@ -115,7 +114,7 @@ tabNavHeaderCL.outwardCallbacks.push(function($ci, id) {
 
 columnHeaderCL.outwardCallbacks.push(function($ci, id) {
     $ci.on("add-tab", function(event, tabTitle, isActive) {debugger;
-        $(this).find('.CI.TabNavHeader')
+        $(this).find('.CI.TabNavList')
             .trigger("add-tab", tabTitle, isActive);
     });
 });
@@ -131,8 +130,7 @@ export var categoryColumnCL = new ContentLoader(
 upaCL.childLoaders.push(categoryColumnCL);
 
 
-categoryColumnCL.outwardCallbacks.push(function($ci, id) {
-    console.log($ci.find('.CI.ColumnHeader'));
+categoryColumnCL.outwardCallbacks.push(function($ci, id) {debugger;
     $ci.find('.CI.ColumnHeader').first()
         .trigger("add-tab", "Supercategories")
         .trigger("add-tab", "Subcategories", true)
