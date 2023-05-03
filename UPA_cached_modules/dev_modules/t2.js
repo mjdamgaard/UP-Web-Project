@@ -72,8 +72,8 @@ export class ContentLoader {
             .attr("class");
         $ci.addClass(existingClasses).addClass("CI")
             .addClass(this.contentKey);
-        // remove the placeholder template tag.
-        $placeholder.remove();
+        // // remove the placeholder template tag.
+        // $placeholder.remove();
 
         // apply all the inward callbacks (which can change the initial HTML
         // and also query and change dynamicData properties of the parent ).
@@ -96,13 +96,15 @@ export class ContentLoader {
             });
 
         // apply all the outward callbacks (after the inner content is loaded).
+        $ci = $placeholder.next();
         len = this.outwardCallbacks.length;
         for (let i = 0; i < len; i++) {
-            let callback = this.outwardCallbacks[i];debugger;
+            let callback = this.outwardCallbacks[i];
             $ci.before("Heelloooooo");
             $ci.filter('.CI.CategoryColumn').remove();
             callback($ci, data, parentCLArr);
         }
+        $placeholder.remove();
     }
 
     getRelatedContentLoader(contentKey, parentCLArr) {
