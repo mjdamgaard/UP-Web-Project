@@ -88,35 +88,35 @@ upaCL.childLoaders.push(tabNavHeaderCL);
 
 tabNavHeaderCL.outwardCallbacks.push(function($ci, id) {
     $ci
-        .on("add-tab", function(event, tabTitle, isActive) {debugger;
-            let $tabNav = getContentDescendents($(this), id, '.nav-tabs')
+        .on("add-tab", function(event, tabTitle, isActive) {
+            let $newTab = $(this).find('.nav-tabs')
                 .append(
                     '<li data-title="' + tabTitle + '"> <a href="#">' +
                     tabTitle + '</a> </li>'
-                );
-            let $newTab = $tabNav.children(':last-child');
+                )
+                .children(':last-child');
             if (isActive ?? false) {
-                $newTab.attr("class", "active")
+                $newTab.addClass("active")
             }
             $newTab.on("click", function() {
-                getCIParent($(this)) // gets the TabNavHeader parent
+                $(this).closest('.CI') // gets the TabNavHeader parent
                     .trigger("activate-tab", tabTitle)
-                    .closest('template.CI') // gets the parent of TabNavHeader.
+                    .closest('CI') // gets the parent of TabNavHeader.
                     .trigger("tab-selected", tabTitle);console.log(tabTitle + " clicked");
             });
         })
         .on("activate-tab", function(event, tabTitle) {
-            getContentDescendents($(this), id, '.nav-tabs > li')
-                .attr("class", "inactive")
+            $(this).find('.nav-tabs > li')
+                .removeClass("active")
                 .filter('[data-title="' + tabTitle + '"]')
-                .attr("class", "active");
+                .addClass("active");
         });
 });
 
 columnHeaderCL.outwardCallbacks.push(function($ci, id) {
-    $ci.on("add-tab", function(event, tabTitle, isActive) {debugger;console.log(
-        getCIChildren($(this), id, '[data-key="TabNavHeader"]')
-            .trigger("add-tab", tabTitle, isActive));
+    $ci.on("add-tab", function(event, tabTitle, isActive) {
+        $(this).find('.CI[data-key="TabNavHeader"]')
+            .trigger("add-tab", tabTitle, isActive);
     });
 });
 
@@ -132,10 +132,10 @@ upaCL.childLoaders.push(categoryColumnCL);
 
 
 categoryColumnCL.outwardCallbacks.push(function($ci, id) {
-    getCIDescendents($ci, id, '[data-key="ColumnHeader"]').first()
+    $ci.find('.CI[data-key="ColumnHeader"]').first()
         .trigger("add-tab", "Supercategories")
         .trigger("add-tab", "Subcategories", true)
-        .trigger("add-tab", "Elements");debugger;
+        .trigger("add-tab", "Elements");
 });
 
 

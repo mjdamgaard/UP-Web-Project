@@ -65,7 +65,7 @@ export class ContentLoader {
 
         // first insert the new CI after $placeholder.
         $placeholder.after(this.html);
-        let $ci = $placeholder.next();
+        let $ci = $placeholder.next();debugger;
         // copy all classes from $placeholder onto the new CI, except of coure
         // for the "placeholder" class.
         let existingClasses = $placeholder.removeClass("placeholder")
@@ -84,9 +84,11 @@ export class ContentLoader {
         }
 
         // load all the descendent CIs.
+        debugger;console.log($ci);
+        console.log($ci.find('*').addBack());
         $ci.find('*').addBack()
             .filter('template.placeholder')
-            .each(function() {
+            .each(function() {debugger;
                 let $childCI = $(this);
                 let childContentKey = $childCI.attr("data-key");
                 let cl = thisClassInstance.getRelatedContentLoader(
