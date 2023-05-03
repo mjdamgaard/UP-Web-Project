@@ -80,13 +80,62 @@ columnCL.childLoaders.push(columnFooterCL);
 upaCL.childLoaders.push(tabNavListCL);
 
 
+
+
+columnMainCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+    $ci
+        .data("open-pages-title-arr", []);
+        .on("open-page", function(event, tabTitle, contentKey, otherData) {
+            let $this = $(this);
+            if ($this.data("open-pages-title-arr").includes(tabTitle)) {
+                $this.children().hide();
+                $this.children('[data-title="' + tabTitle +'"]').show();
+            } else {
+                let pageCL = columnMainCL.getRelatedContentLoader(
+                    contentKey, parentCLArr
+                );
+                $this.data("open-pages-title-arr")[];
+                $this.children().hide();
+                let pageData = otherData ?? data;
+                // note that the parentCLArr context will be that of the
+                // columnMain CI for the loaded page.
+                pageCL.loadAppended($this, pageData, parentCLArr);
+            }
+            return false;
+        })
+        .on("close-page", function(event, tabTitle) {
+            let $this = $(this);
+            let titleArr = $this.data("open-pages-title-arr");
+            titleArr[titleArr.indexOf(tabTitle)] = null;
+            $this.children('[data-title="' + tabTitle +'"]').remove();
+            return false;
+        })
+});
+
+columnCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+    $ci
+        .on("open-main-page", function(event, tabTitle, contentKey, otherData) {
+            $(this).find('.CI.ColumnMain').first()
+                .trigger("open-page", tabTitle, contentKey, otherData);
+            return false;
+        })
+        .on("close-main-page", function(event, tabTitle) {
+            $(this).find('.CI.ColumnMain').first()
+                .trigger("open-page", tabTitle);
+            return false;
+        })
+});
+
+
+
+
 /* <<TabNavList>>
  * This CL class is responsible for the apperance of a tab
  * nav bar, and for sending click event signals to its CI parent and handling
  * events coming from its parent (e.g. to add or change tabs).
  **/
 
-tabNavListCL.outwardCallbacks.push(function($ci, id) {
+tabNavListCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
     $ci
         .on("add-tab", function(event, tabTitle, isActive) {
             let $newTab = $(this).append(
@@ -102,7 +151,6 @@ tabNavListCL.outwardCallbacks.push(function($ci, id) {
                     .trigger("activate-tab", [tabTitle])
                     .closest('CI') // gets the parent of TabNavList.
                     .trigger("tab-selected", [tabTitle]);
-                console.log(tabTitle + " clicked");
                 return false;
             });
             return false;
@@ -116,12 +164,18 @@ tabNavListCL.outwardCallbacks.push(function($ci, id) {
         });
 });
 
-columnHeaderCL.outwardCallbacks.push(function($ci, id) {
-    $ci.on("add-tab", function(event, tabTitle, isActive) {
-        $(this).find('.CI.TabNavList')
-            .trigger("add-tab", [tabTitle, isActive]);
-        return false;
-    });
+columnHeaderCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+    $ci
+        .on("add-tab", function(event, tabTitle, isActive) {
+            $(this).find('.CI.TabNavList')
+                .trigger("add-tab", [tabTitle, isActive]);
+            return false;
+        })
+        .on("tab-selected", function(event, tabTitle) {
+            $(this).closest('.CI')
+                .trigger("tab-selected", [tabTitle]);
+            return false;
+        });
 });
 
 
@@ -135,13 +189,12 @@ export var categoryColumnCL = new ContentLoader(
 upaCL.childLoaders.push(categoryColumnCL);
 
 
-categoryColumnCL.outwardCallbacks.push(function($ci, id) {
+categoryColumnCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
     $ci.find('.CI.ColumnHeader').first()
         .trigger("add-tab", ["Supercategories"])
         .trigger("add-tab", ["Subcategories", true])
         .trigger("add-tab", ["Elements"]);
 });
-
 
 
 
