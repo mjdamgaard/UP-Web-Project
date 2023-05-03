@@ -88,22 +88,22 @@ upaCL.childLoaders.push(tabNavListCL);
 
 tabNavListCL.outwardCallbacks.push(function($ci, id) {
     $ci
-        // .on("add-tab", function(event, tabTitle, isActive) {debugger;
-        //     let $newTab = $(this).append(
-        //             '<li data-title="' + tabTitle + '"> <a href="#">' +
-        //             tabTitle + '</a> </li>'
-        //         )
-        //         .children(':last-child');
-        //     if (isActive ?? false) {
-        //         $newTab.addClass("active")
-        //     }
-        //     $newTab.on("click", function() {
-        //         $(this).closest('.CI') // gets the TabNavList parent
-        //             .trigger("activate-tab", tabTitle)
-        //             .closest('CI') // gets the parent of TabNavList.
-        //             .trigger("tab-selected", tabTitle);console.log(tabTitle + " clicked");
-        //     });
-        // })
+        .on("add-tab", function(event, tabTitle, isActive) {debugger;
+            let $newTab = $(this).append(
+                    '<li data-title="' + tabTitle + '"> <a href="#">' +
+                    tabTitle + '</a> </li>'
+                )
+                .children(':last-child');
+            if (isActive ?? false) {
+                $newTab.addClass("active")
+            }
+            $newTab.on("click", function() {
+                $(this).closest('.CI') // gets the TabNavList parent
+                    .trigger("activate-tab", tabTitle)
+                    .closest('CI') // gets the parent of TabNavList.
+                    .trigger("tab-selected", tabTitle);console.log(tabTitle + " clicked");
+            });
+        })
         .on("activate-tab", function(event, tabTitle) {
             $(this).find('.nav-tabs > li')
                 .removeClass("active")
