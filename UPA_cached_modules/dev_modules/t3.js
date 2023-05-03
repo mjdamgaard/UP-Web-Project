@@ -30,7 +30,7 @@ columnGroupCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
                 "Term type '" + data.termID.substring(0, 1) +
                 "' has not been implemented yet"
             );
-    }debugger;
+    }
 });
 
 export var columnCL = new ContentLoader(
@@ -88,7 +88,7 @@ upaCL.childLoaders.push(tabNavHeaderCL);
 
 tabNavHeaderCL.outwardCallbacks.push(function($ci, id) {
     $ci
-        .on("add-tab", function(event, tabTitle, isActive) {
+        .on("add-tab", function(event, tabTitle, isActive) {debugger;
             let $newTab = $(this).find('.nav-tabs')
                 .append(
                     '<li data-title="' + tabTitle + '"> <a href="#">' +
@@ -114,8 +114,8 @@ tabNavHeaderCL.outwardCallbacks.push(function($ci, id) {
 });
 
 columnHeaderCL.outwardCallbacks.push(function($ci, id) {
-    $ci.on("add-tab", function(event, tabTitle, isActive) {
-        $(this).find('.CI[data-key="TabNavHeader"]')
+    $ci.on("add-tab", function(event, tabTitle, isActive) {debugger;
+        $(this).find('.CI.TabNavHeader')
             .trigger("add-tab", tabTitle, isActive);
     });
 });
@@ -131,8 +131,8 @@ export var categoryColumnCL = new ContentLoader(
 upaCL.childLoaders.push(categoryColumnCL);
 
 
-categoryColumnCL.outwardCallbacks.push(function($ci, id) {
-    $ci.find('.CI[data-key="ColumnHeader"]').first()
+categoryColumnCL.outwardCallbacks.push(function($ci, id) {debugger;
+    $ci.find('.CI.ColumnHeader').first()
         .trigger("add-tab", "Supercategories")
         .trigger("add-tab", "Subcategories", true)
         .trigger("add-tab", "Elements");
