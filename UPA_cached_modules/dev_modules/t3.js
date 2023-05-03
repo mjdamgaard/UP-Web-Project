@@ -132,6 +132,7 @@ upaCL.childLoaders.push(categoryColumnCL);
 
 
 categoryColumnCL.outwardCallbacks.push(function($ci, id) {debugger;
+    console.log($ci.find('.CI.ColumnHeader'));
     $ci.find('.CI.ColumnHeader').first()
         .trigger("add-tab", "Supercategories")
         .trigger("add-tab", "Subcategories", true)

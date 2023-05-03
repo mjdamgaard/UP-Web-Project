@@ -72,8 +72,6 @@ export class ContentLoader {
             .attr("class");
         $ci.addClass(existingClasses).addClass("CI")
             .addClass(this.contentKey);
-        // // remove the placeholder template tag.
-        // $placeholder.remove();
 
         // apply all the inward callbacks (which can change the initial HTML
         // and also query and change dynamicData properties of the parent ).
@@ -95,15 +93,17 @@ export class ContentLoader {
                 cl.loadAndReplacePlaceholder($childCI, newData, newParentCLArr);
             });
 
-        // apply all the outward callbacks (after the inner content is loaded).
+        // It seems that $ci can have become corrupt at this point so we need
+        // to redefine it from the still uncorrupt $placeholder.
         $ci = $placeholder.next();
+
+        // apply all the outward callbacks (after the inner content is loaded).
         len = this.outwardCallbacks.length;
         for (let i = 0; i < len; i++) {
             let callback = this.outwardCallbacks[i];
-            $ci.before("Heelloooooo");
-            $ci.filter('.CI.CategoryColumn').remove();
             callback($ci, data, parentCLArr);
         }
+        // lastly, remove the placeholder template tag.
         $placeholder.remove();
     }
 
