@@ -83,8 +83,7 @@ upaCL.childLoaders.push(tabNavListCL);
 
 
 columnMainCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
-    $ci
-        .data("open-pages-title-arr", []);
+    $ci.data("open-pages-title-arr", [])
         .on("open-page", function(event, tabTitle, contentKey, otherData) {
             let $this = $(this);
             if ($this.data("open-pages-title-arr").includes(tabTitle)) {
@@ -207,13 +206,21 @@ columnHeaderCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
 
 
 
+export var mainPageCL = new ContentLoader(
+    "MainPage",
+    /* Initial HTML */
+    '<div>' +
+        '<<DataBaseQuerier>>' +
+    '</div>'
+);
+column.childLoaders.push(mainPageCL);
 
 export var categoryColumnCL = new ContentLoader(
     "CategoryColumn",
     /* Initial HTML */
     '<<Column>>'
 );
-upaCL.childLoaders.push(categoryColumnCL);
+columnGroupCL.childLoaders.push(categoryColumnCL);
 
 
 categoryColumnCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
