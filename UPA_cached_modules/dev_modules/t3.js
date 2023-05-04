@@ -82,7 +82,7 @@ upaCL.childLoaders.push(tabNavListCL);
 
 
 
-columnMainCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+columnMainCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
     $ci.data("open-pages-title-arr", [])
         .on("open-page", function(event, tabTitle, pageCL, pageData) {
             let $this = $(this);
@@ -106,7 +106,7 @@ columnMainCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
         })
 });
 
-columnCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+columnCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
     $ci.data("page-spec-store", {})
         .on("add-main-page", function(event, tabTitle, contentKey, pageData) {
             let pageCL = columnCL.getRelatedContentLoader(
@@ -167,7 +167,7 @@ columnCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
  * events coming from its parent (e.g. to add or change tabs).
  **/
 
-tabNavListCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+tabNavListCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
     $ci
         .on("add-tab", function(event, tabTitle) {
             let $newTab = $(this).append(
@@ -193,7 +193,7 @@ tabNavListCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
         });
 });
 
-columnHeaderCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+columnHeaderCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
     $ci
         .on("add-tab", function(event, tabTitle) {
             $(this).find('.CI.TabNavList')
