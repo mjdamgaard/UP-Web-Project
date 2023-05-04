@@ -21,18 +21,22 @@ export class ContentLoader {
     constructor(
         // these first two variables should not be undefined/null.
         contentKey, htmlTemplate,
-        childLoaders, modSignals,
+        parentLoader,
         inwardCallbacks, outwardCallbacks,
         dataModifierFun,
+        childLoaders, modSignals,
     ) {
         this.contentKey = contentKey;
         // this.tagName = tagName;
         // this.attributes = attributes ?? {};
         this.html = convertHTMLTemplate(htmlTemplate);
-        this.childLoaders = childLoaders ?? [];
-        this.modSignals = modSignals ?? [];
+        if (typeof parentLoader !== "undefined") {
+            parentLoader.childLoaders.push(this);
+        }
         this.inwardCallbacks = inwardCallbacks ?? [];
         this.outwardCallbacks = outwardCallbacks ?? [];
+        this.childLoaders = childLoaders ?? [];
+        this.modSignals = modSignals ?? [];
         this.dataModifierFun = dataModifierFun ?? (
             function(data) {
                 return data;

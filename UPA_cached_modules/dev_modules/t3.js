@@ -18,7 +18,8 @@ export var columnGroupCL = new ContentLoader(
     /* Initial HTML */
     '<div class="container app-column-group">' +
         '<<Column>>' +
-    '</div>'
+    '</div>',
+    upaCL
 );
 columnGroupCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
     switch (data.termID.substring(0, 1)) {
@@ -40,7 +41,8 @@ export var columnCL = new ContentLoader(
         "<<ColumnHeader>>" +
         "<<ColumnMain>>" +
         // "<<ColumnFooter>>" +
-    '</div>'
+    '</div>',
+    columnGroupCL
 );
 
 export var columnHeaderCL = new ContentLoader(
@@ -48,63 +50,25 @@ export var columnHeaderCL = new ContentLoader(
     /* Initial HTML */
     '<header class="container">' +
         '<<TabNavList>>' +
-    '</header>'
+    '</header>',
+    columnCL
 );
 export var columnMainCL = new ContentLoader(
     "ColumnMain",
     /* Initial HTML */
-    '<main class="container"></main>'
+    '<main class="container"></main>',
+    columnCL
 );
-export var columnFooterCL = new ContentLoader(
-    "ColumnFooter",
-    /* Initial HTML */
-    '<footer class="container"></footer>'
-);
-
 
 export var tabNavListCL = new ContentLoader(
     "TabNavList",
     /* Initial HTML */
-    '<ul class="nav nav-tabs"></ul>'
+    '<ul class="nav nav-tabs"></ul>',
+    upaCL
 );
 
-// push the newly declared contant loaders into upaCL's children array. (These
-// children CLs will be modified below (and more children will also be pushed
-// to this array), but since they are reference types, these changes will also
-// take effect inside upaCL.)
-upaCL.childLoaders.push(columnGroupCL);
-columnGroupCL.childLoaders.push(columnCL);
-columnCL.childLoaders.push(columnHeaderCL);
-columnCL.childLoaders.push(columnMainCL);
-columnCL.childLoaders.push(columnFooterCL);
-upaCL.childLoaders.push(tabNavListCL);
 
 
-
-
-columnMainCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
-    $ci.data("open-pages-title-arr", [])
-        .on("open-page", function(event, tabTitle, pageCL, pageData) {
-            let $this = $(this);
-            if ($this.data("open-pages-title-arr").includes(tabTitle)) {
-                $this.children().hide();
-                $this.children('[data-title="' + tabTitle +'"]').show();
-            } else {
-                $this.data("open-pages-title-arr").push(tabTitle);
-                $this.children().hide();
-                pageCL.loadAppended($this, pageData, parentCLArr);
-                $this.children(':last-child').attr("data-title", tabTitle);
-            }
-            return false;
-        })
-        .on("close-page", function(event, tabTitle) {
-            let $this = $(this);
-            let titleArr = $this.data("open-pages-title-arr");
-            titleArr[titleArr.indexOf(tabTitle)] = null;
-            $this.children('[data-title="' + tabTitle +'"]').remove();
-            return false;
-        })
-});
 
 columnCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
     $ci.data("page-spec-store", {})
@@ -161,11 +125,20 @@ columnCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
 
 
 
-/* <<TabNavList>>
- * This CL class is responsible for the apperance of a tab
- * nav bar, and for sending click event signals to its CI parent and handling
- * events coming from its parent (e.g. to add or change tabs).
- **/
+columnHeaderCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
+    $ci
+        .on("add-tab", function(event, tabTitle) {
+            $(this).find('.CI.TabNavList')
+                .trigger("add-tab", [tabTitle]);
+            return false;
+        })
+        .on("activate-tab", function(event, tabTitle) {
+            $(this).find('.CI.TabNavList')
+                .trigger("activate-tab", [tabTitle]);
+            return false;
+        });
+});
+
 
 tabNavListCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
     $ci
@@ -176,9 +149,8 @@ tabNavListCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
                 )
                 .children(':last-child');
             $newTab.on("click", function() {
-                $(this).parent().closest('.CI') // gets the TabNavList parent
+                $(this)
                     .trigger("activate-tab", [tabTitle])
-                    .parent().closest('.CI') // gets the parent of TabNavList.
                     .trigger("tab-selected", [tabTitle]);
                 return false;
             });
@@ -193,37 +165,68 @@ tabNavListCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
         });
 });
 
-columnHeaderCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
-    $ci
-        .on("add-tab", function(event, tabTitle) {
-            $(this).find('.CI.TabNavList')
-                .trigger("add-tab", [tabTitle]);
+
+
+
+columnMainCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
+    $ci.data("open-pages-title-arr", [])
+        .on("open-page", function(event, tabTitle, pageCL, pageData) {
+            let $this = $(this);
+            if ($this.data("open-pages-title-arr").includes(tabTitle)) {
+                $this.children().hide();
+                $this.children('[data-title="' + tabTitle +'"]').show();
+            } else {
+                $this.data("open-pages-title-arr").push(tabTitle);
+                $this.children().hide();
+                pageCL.loadAppended($this, pageData, parentCLArr);
+                $this.children(':last-child').attr("data-title", tabTitle);
+            }
             return false;
         })
-        .on("activate-tab", function(event, tabTitle) {
-            $(this).find('.CI.TabNavList')
-                .trigger("activate-tab", [tabTitle]);
+        .on("close-page", function(event, tabTitle) {
+            let $this = $(this);
+            let titleArr = $this.data("open-pages-title-arr");
+            titleArr[titleArr.indexOf(tabTitle)] = null;
+            $this.children('[data-title="' + tabTitle +'"]').remove();
             return false;
         })
-        .on("tab-selected", function(event, tabTitle) {
-            $(this).parent().closest('.CI')
-                .trigger("tab-selected", [tabTitle]);
-            return false;
-        });
 });
 
 
 
+export var subcategoryPageCL = new ContentLoader(
+    "SubcategoryPage",
+    /* Initial HTML */
+    '<<Column>>',
+    columnCL
+);
+subcategoryPageCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+    $ci.trigger(
+        "add-tab-and-main-page",
+        ["Defining supercategories", "DefSuperCatsPage", data]
+    );
+    $ci.trigger("open-tab-and-main-page", ["Defining supercategories"]);
+    // open the "DefSuperCatsPage" tab as the default one.
+    // TODO
+});
+
+export var defSuperCatsPageCL = new ContentLoader(
+    "DefSuperCatsPage",
+    /* Initial HTML */
+    '<<ExtensibleTermList>>',
+    columnCL
+);
+
+
+
+
+// test.
 export var mainPageCL = new ContentLoader(
     "MainPage",
     /* Initial HTML */
-    '<div>' +
-        '<<ColumnFooter>>' +
-    '</div>'
+    '<div></div>',
+    columnCL
 );
-columnCL.childLoaders.push(mainPageCL);
-
-// test.
 mainPageCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
     $ci.prepend(
         '<span>Hello, I will be a main page generated from: ' +
@@ -234,9 +237,9 @@ mainPageCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
 export var categoryColumnCL = new ContentLoader(
     "CategoryColumn",
     /* Initial HTML */
-    '<<Column>>'
+    '<<Column>>',
+    columnGroupCL
 );
-columnGroupCL.childLoaders.push(categoryColumnCL);
 
 
 categoryColumnCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
@@ -252,6 +255,6 @@ categoryColumnCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
     $ci.trigger(
         "add-tab-and-main-page", ["Elements", "MainPage", pageData]
     );
-
+    // open the "Subcategories" tab as the default one.
     $ci.trigger("open-tab-and-main-page", ["Subcategories"]);
 });
