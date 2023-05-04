@@ -244,8 +244,6 @@ termListCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
 });
 
 
-
-
 export var extensibleTermListCL = new ContentLoader(
     "ExtensibleTermList",
     /* Initial HTML */
@@ -256,6 +254,30 @@ export var extensibleTermListCL = new ContentLoader(
 // pressed, adds elements to the list, either cached ones or ones that are then
 // queried.
 
+
+
+export var termListElementCL = new ContentLoader(
+    "TermListElement",
+    /* Initial HTML */
+    '<div></div>',
+    columnCL
+);
+
+
+
+/* Test */
+
+export var categoryListElementCL = new ContentLoader(
+    "CategoryListElement",
+    /* Initial HTML */
+    '<<TermListElement>>',
+    columnCL
+);
+categoryListElementCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+    $ci.append(
+        '<span>Hello, I will become a category term list element</span>'
+    );
+}
 
 export var supercategoryPageCL = new ContentLoader(
     "SupercategoryPage",
@@ -279,9 +301,10 @@ export var defSuperCatsPageCL = new ContentLoader(
     '<<ExtensibleTermList>>',
     columnCL
 );
+defSuperCatsPageCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+    $ci.trigger("append-elements", []);
+}
 
-
-// test.
 export var mainPageCL = new ContentLoader(
     "MainPage",
     /* Initial HTML */
@@ -291,7 +314,7 @@ export var mainPageCL = new ContentLoader(
 mainPageCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
     $ci.prepend(
         '<span>Hello, I will be a main page generated from: ' +
-        JSON.stringify(data)
+        JSON.stringify(data) + '</span>'
     );
 });
 
