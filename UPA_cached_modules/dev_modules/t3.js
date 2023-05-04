@@ -1,5 +1,8 @@
 
 import {
+    DBRequestManager,
+} from "/UPA_scripts.php?id=t1";
+import {
     ContentLoader,
 } from "/UPA_scripts.php?id=t2";
 
@@ -194,20 +197,40 @@ columnMainCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
 
 
 
-
-
-export var extensibleTermListCL = new ContentLoader(
-    "ExtensibleTermList",
+export var pageFieldCL = new ContentLoader(
+    "PageField",
     /* Initial HTML */
-    '<<TermList>>',
+    '<div></div>',
     columnCL
 );
+pageFieldCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
+    $ci.data('db-request-manager', new DBRequestManager())
+        .on("query-db", function(event, reqData, cacheKey, callback) {
+            let $this = $(this);
+            let dbReqManager = $this.data('db-request-manager');
+            dbReqManager.query($this, reqData, cacheKey, callback);
+            return false;
+        })
+        .on("append-cis", function(event, cl, clDataArr, selector) {
+            let $obj = (typeof selector === "undefined") ?
+                $(this) : $(this).find(selector);
+            let len = clDataArr.length;
+            for (let i = 0; i < len; i++) {
+                cl.loadAppended($obj, clDataArr[i]);
+            }
+            return false;
+        });
+        // TODO: add a prepend-cis event also, after having debugged.
+});
 export var termListCL = new ContentLoader(
     "TermList",
     /* Initial HTML */
-    '<ul class="container"></ul>',
+    '<<PageField>>',
     columnCL
 );
+termListCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+    $ci.append('<ul class="container"></ul>');
+});
 termListCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
     $ci
         .on("append-elements", function(event, elemCL, elemDataArr) {
@@ -226,6 +249,13 @@ termListCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
 
 
 
+
+export var extensibleTermListCL = new ContentLoader(
+    "ExtensibleTermList",
+    /* Initial HTML */
+    '<<TermList>>',
+    columnCL
+);
 
 
 

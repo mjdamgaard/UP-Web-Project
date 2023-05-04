@@ -35,7 +35,39 @@ export function upa_queryAndSanitize(reqKey, reqDataArr, callback) {
     });
 }
 
+export class DBRequestManager {
+    constructor() {
+        this.cache = {};
+    }
 
+    query($obj, reqData, cacheKey, callback) {
+        if (typeof callback === "undefined") {
+            callback = cacheKey;
+            cacheKey = null;
+        }
+        var cache = this.cache;
+        $.getJSON("query_handler.php", reqData, function(result, textStatus) {
+            // unless reqKey == "Set", sanitize the first column of result.
+            if (reqData.type !== "S") {
+                let len = result.length;
+                for (let i = 0; i < len; i++) {
+                    result[i] = result[i]
+                        .replaceAll("&", "&amp;")
+                        .replaceAll("<", "&lt;")
+                        .replaceAll(">", "&gt;")
+                        .replaceAll('"', "&quot;")
+                        .replaceAll("'", "&apos;");
+                }
+            }
+            // if cacheKey is not nullish, store the result in this.cache.
+            if (typeof cacheKey !== "undefined") {
+                cache[cacheKey] = result;
+            }
+            // then call the callback function on the sanitized result.
+            callback($obj, result);
+        });
+    }
+}
 
 
 
