@@ -39,7 +39,7 @@ export var columnCL = new ContentLoader(
     '<div class="container app-column">' +
         "<<ColumnHeader>>" +
         "<<ColumnMain>>" +
-        "<<ColumnFooter>>" +
+        // "<<ColumnFooter>>" +
     '</div>'
 );
 
