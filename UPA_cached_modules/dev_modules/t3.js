@@ -234,11 +234,7 @@ termListCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
 termListCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
     $ci
         .on("append-elements", function(event, elemCL, elemDataArr) {
-            let $list = $(this).children('ul, ol');
-            let len = elemDataArr.length;
-            for (let i = 0; i < len; i++) {
-                elemCL.loadAppended($list, elemDataArr[i]);
-            }
+            $(this).trigger("append-cis", [elemCL, elemDataArr, 'ul, ol']);
             return false;
         })
         .on("empty", function(event, elemDataArr, elemCL) {
@@ -256,7 +252,9 @@ export var extensibleTermListCL = new ContentLoader(
     '<<TermList>>',
     columnCL
 );
-
+// TODO: Add a callback that adds a button at the bottom of the ci, which when
+// pressed, adds elements to the list, either cached ones or ones that are then
+// queried.
 
 
 export var supercategoryPageCL = new ContentLoader(
