@@ -72,7 +72,7 @@ export var tabNavListCL = new ContentLoader(
 
 columnCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
     $ci.data("page-spec-store", {})
-        .on("add-main-page", function(event, tabTitle, contentKey, pageData) {
+        .on("add-page", function(event, tabTitle, contentKey, pageData) {
             let pageCL = columnCL.getRelatedContentLoader(
                 contentKey, parentCLArr
             );
@@ -80,44 +80,44 @@ columnCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
                 {cl:pageCL, data:pageData};
             return false;
         })
-        .on("open-main-page", function(event, tabTitle) {
+        .on("open-page", function(event, tabTitle) {
             let $this = $(this);
             let pageSpec = $this.data("page-spec-store")[tabTitle];
             $(this).children('.CI.ColumnMain')
                 .trigger("open-page", [tabTitle, pageSpec.cl, pageSpec.data]);
             return false;
         })
-        .on("close-main-page", function(event, tabTitle) {
+        .on("close-page", function(event, tabTitle) {
             $(this).children('.CI.ColumnMain')
                 .trigger("open-page", [tabTitle]);
             return false;
         })
-        .on("add-header-tab", function(event, tabTitle) {
+        .on("add-tab", function(event, tabTitle) {
             $(this).children('.CI.ColumnHeader')
                 .trigger("add-tab", [tabTitle]);
             return false;
         })
-        .on("activate-header-tab", function(event, tabTitle) {
+        .on("activate-tab", function(event, tabTitle) {
             $(this).children('.CI.ColumnHeader')
                 .trigger("activate-tab", [tabTitle]);
             return false;
         })
-        .on("add-tab-and-main-page", function(
+        .on("add-tab-and-page", function(
             event, tabTitle, contentKey, pageData
         ) {
             $(this)
-                .trigger("add-main-page", [tabTitle, contentKey, pageData])
-                .trigger("add-header-tab", [tabTitle]);
+                .trigger("add-page", [tabTitle, contentKey, pageData])
+                .trigger("add-tab", [tabTitle]);
             return false;
         })
-        .on("open-tab-and-main-page", function(event, tabTitle) {
+        .on("open-tab-and-page", function(event, tabTitle) {
             $(this)
-                .trigger("activate-header-tab", [tabTitle])
-                .trigger("open-main-page", [tabTitle]);
+                .trigger("activate-tab", [tabTitle])
+                .trigger("open-page", [tabTitle]);
             return false;
         })
         .on("tab-selected", function(event, tabTitle) {
-            $(this).trigger("open-main-page", [tabTitle]);
+            $(this).trigger("open-page", [tabTitle]);
             return false;
         });
 });
@@ -237,10 +237,10 @@ export var supercategoryPageCL = new ContentLoader(
 );
 supercategoryPageCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
     $ci.trigger(
-        "add-tab-and-main-page",
+        "add-tab-and-page",
         ["Defining supercategories", "DefSuperCatsPage", data]
     );
-    $ci.trigger("open-tab-and-main-page", ["Defining supercategories"]);
+    $ci.trigger("open-tab-and-page", ["Defining supercategories"]);
     // open the "DefSuperCatsPage" tab as the default one.
     // TODO
 });
@@ -278,16 +278,16 @@ export var categoryColumnCL = new ContentLoader(
 categoryColumnCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
     var pageData = "Supercategories";
     $ci.trigger(
-        "add-tab-and-main-page", ["Supercategories", "MainPage", pageData]
+        "add-tab-and-page", ["Supercategories", "MainPage", pageData]
     );
     pageData = "Subcategories";
     $ci.trigger(
-        "add-tab-and-main-page", ["Subcategories", "MainPage", pageData]
+        "add-tab-and-page", ["Subcategories", "MainPage", pageData]
     );
     pageData = "Elements";
     $ci.trigger(
-        "add-tab-and-main-page", ["Elements", "MainPage", pageData]
+        "add-tab-and-page", ["Elements", "MainPage", pageData]
     );
     // open the "Subcategories" tab as the default one.
-    $ci.trigger("open-tab-and-main-page", ["Subcategories"]);
+    $ci.trigger("open-tab-and-page", ["Subcategories"]);
 });
