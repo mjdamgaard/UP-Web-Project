@@ -347,6 +347,24 @@ categoryColumnCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
     $ci.trigger(
         "add-tab-and-page", ["Elements", "MainPage", pageData]
     );
+    $ci.trigger(
+        "add-tab-and-page", ["Elements", "MainPage", pageData]
+    );
+    $ci.trigger(
+        "add-tab-and-page", ["Elements", "MainPage", pageData]
+    );
+    $ci.trigger(
+        "add-tab-and-page", ["Elements", "MainPage", pageData]
+    );
+    $ci.trigger(
+        "add-tab-and-page", ["Elements", "MainPage", pageData]
+    );
+    $ci.trigger(
+        "add-tab-and-page", ["Elements", "MainPage", pageData]
+    );
+    $ci.trigger(
+        "add-tab-and-page", ["Elements", "MainPage", pageData]
+    );
     // open the "Subcategories" tab as the default one.
     $ci.trigger("open-tab-and-page", ["Subcategories"]);
 });
