@@ -200,6 +200,11 @@ columnHeaderCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
                 .trigger("add-tab", [tabTitle]);
             return false;
         })
+        .on("activate-tab", function(event, tabTitle) {
+            $(this).find('.CI.TabNavList')
+                .trigger("activate-tab", [tabTitle]);
+            return false;
+        })
         .on("tab-selected", function(event, tabTitle) {
             $(this).parent().closest('.CI')
                 .trigger("tab-selected", [tabTitle]);
@@ -247,4 +252,6 @@ categoryColumnCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
     $ci.trigger(
         "add-tab-and-main-page", ["Elements", "MainPage", pageData]
     );
+
+    $ci.trigger("open-tab-and-main-page", ["Subcategories"]);
 });
