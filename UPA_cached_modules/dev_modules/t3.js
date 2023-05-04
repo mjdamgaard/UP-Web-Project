@@ -166,8 +166,6 @@ tabNavListCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
 });
 
 
-
-
 columnMainCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
     $ci.data("open-pages-title-arr", [])
         .on("open-page", function(event, tabTitle, pageCL, pageData) {
@@ -194,13 +192,18 @@ columnMainCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
 
 
 
-export var subcategoryPageCL = new ContentLoader(
-    "SubcategoryPage",
+
+
+
+
+
+export var supercategoryPageCL = new ContentLoader(
+    "SupercategoryPage",
     /* Initial HTML */
     '<<Column>>',
     columnCL
 );
-subcategoryPageCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+supercategoryPageCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
     $ci.trigger(
         "add-tab-and-main-page",
         ["Defining supercategories", "DefSuperCatsPage", data]
@@ -216,8 +219,33 @@ export var defSuperCatsPageCL = new ContentLoader(
     '<<ExtensibleTermList>>',
     columnCL
 );
-
-
+export var extensibleTermListCL = new ContentLoader(
+    "ExtensibleTermList",
+    /* Initial HTML */
+    '<<TermList>>',
+    columnCL
+);
+export var termListCL = new ContentLoader(
+    "TermList",
+    /* Initial HTML */
+    '<ul class="container"></ul>',
+    columnCL
+);
+termListCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
+    $ci
+        .on("append-elements", function(event, elemCL, elemDataArr) {
+            let $this = $(this);
+            let len = elemDataArr.length;
+            for (let i = 0; i < len; i++) {
+                elemCL.loadAppended($this, elemDataArr[i]);
+            }
+            return false;
+        })
+        .on("empty", function(event, elemDataArr, elemCL) {
+            $(this).empty();
+            return false;
+        });
+});
 
 
 // test.
