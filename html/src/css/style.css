@@ -15,6 +15,18 @@ div.length {
     /* background-color:  */
 }
 
+
+html {
+    margin: 0px;
+    padding: 0px;
+}
+body {
+    margin: 0px;
+    padding: 0px;
+}
 body > header {
     background-color: turquoise;
+}
+body > header > h2 {
+    padding: 10px 10px 5px 10px;
 }

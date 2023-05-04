@@ -12,14 +12,14 @@ import {
 export var upaCL = new ContentLoader(
     "ColumnBasedSDBInterface",
     /* Initial HTML */
-    '<div id="upa1" class="container sdb-interface-app">' +
+    '<div id="upa1" class="sdb-interface-app">' +
         '<<ColumnGroup>>' +
     '</div>'
 );
 export var columnGroupCL = new ContentLoader(
     "ColumnGroup",
     /* Initial HTML */
-    '<div class="container app-column-group">' +
+    '<div class="app-column-group">' +
         '<<Column>>' +
     '</div>',
     upaCL
@@ -36,22 +36,26 @@ columnGroupCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
             );
     }
 });
+columnGroupCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+    $ci.css({
+        padding: "0px 20px 0px 20px"
+    });
+});
 
 export var columnCL = new ContentLoader(
     "Column",
     /* Initial HTML */
-    '<div class="container app-column">' +
+    '<div class="app-column">' +
         "<<ColumnHeader>>" +
         "<<ColumnMain>>" +
         // "<<ColumnFooter>>" +
     '</div>',
     columnGroupCL
 );
-
 export var columnHeaderCL = new ContentLoader(
     "ColumnHeader",
     /* Initial HTML */
-    '<header class="container">' +
+    '<header class="">' +
         '<<TabNavList>>' +
     '</header>',
     columnCL
@@ -59,7 +63,7 @@ export var columnHeaderCL = new ContentLoader(
 export var columnMainCL = new ContentLoader(
     "ColumnMain",
     /* Initial HTML */
-    '<main class="container"></main>',
+    '<main class=""></main>',
     columnCL
 );
 
