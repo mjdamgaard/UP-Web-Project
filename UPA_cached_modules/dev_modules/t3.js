@@ -196,29 +196,6 @@ columnMainCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
 
 
 
-
-export var supercategoryPageCL = new ContentLoader(
-    "SupercategoryPage",
-    /* Initial HTML */
-    '<<Column>>',
-    columnCL
-);
-supercategoryPageCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
-    $ci.trigger(
-        "add-tab-and-main-page",
-        ["Defining supercategories", "DefSuperCatsPage", data]
-    );
-    $ci.trigger("open-tab-and-main-page", ["Defining supercategories"]);
-    // open the "DefSuperCatsPage" tab as the default one.
-    // TODO
-});
-
-export var defSuperCatsPageCL = new ContentLoader(
-    "DefSuperCatsPage",
-    /* Initial HTML */
-    '<<ExtensibleTermList>>',
-    columnCL
-);
 export var extensibleTermListCL = new ContentLoader(
     "ExtensibleTermList",
     /* Initial HTML */
@@ -246,6 +223,34 @@ termListCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
             return false;
         });
 });
+
+
+
+
+
+
+export var supercategoryPageCL = new ContentLoader(
+    "SupercategoryPage",
+    /* Initial HTML */
+    '<<Column>>',
+    columnCL
+);
+supercategoryPageCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+    $ci.trigger(
+        "add-tab-and-main-page",
+        ["Defining supercategories", "DefSuperCatsPage", data]
+    );
+    $ci.trigger("open-tab-and-main-page", ["Defining supercategories"]);
+    // open the "DefSuperCatsPage" tab as the default one.
+    // TODO
+});
+
+export var defSuperCatsPageCL = new ContentLoader(
+    "DefSuperCatsPage",
+    /* Initial HTML */
+    '<<ExtensibleTermList>>',
+    columnCL
+);
 
 
 // test.
