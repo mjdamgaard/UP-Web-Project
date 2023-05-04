@@ -231,7 +231,6 @@ mainPageCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
     );
 });
 
-
 export var categoryColumnCL = new ContentLoader(
     "CategoryColumn",
     /* Initial HTML */
