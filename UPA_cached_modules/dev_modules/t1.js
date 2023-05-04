@@ -45,7 +45,7 @@ export class DBRequestManager {
             callback = cacheKey;
             cacheKey = null;
         }
-        var cache = this.cache;
+        var thisClassInstance = this;
         $.getJSON("query_handler.php", reqData, function(result, textStatus) {
             // unless reqKey == "Set", sanitize the first column of result.
             if (reqData.type !== "S") {
@@ -61,10 +61,10 @@ export class DBRequestManager {
             }
             // if cacheKey is not nullish, store the result in this.cache.
             if (typeof cacheKey !== "undefined") {
-                cache[cacheKey] = result;
+                thisClassInstance.cache[cacheKey] = result;
             }
             // then call the callback function on the sanitized result.
-            callback($obj, result);
+            callback($obj, result, textStatus, cache);
         });
     }
 }
