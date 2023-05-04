@@ -30,3 +30,16 @@ body > header {
 body > header > h2 {
     padding: 10px 10px 5px 10px;
 }
+
+/* This doesn't work for whatever reason.. */
+#upaFrame {
+    .nav-tabs > li > a {
+        margin: 100px;
+        padding: 0px;
+    }
+}
+/* ..Ah but this does: */
+.nav-tabs > li > a {
+    margin: 100px;
+    padding: 0px;
+}
