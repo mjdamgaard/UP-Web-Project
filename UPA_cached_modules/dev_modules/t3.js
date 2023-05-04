@@ -302,7 +302,7 @@ export var defSuperCatsPageCL = new ContentLoader(
     columnCL
 );
 defSuperCatsPageCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
-    $ci.trigger("append-elements", []);
+    $ci.trigger("append-elements", []); 
 }
 
 export var mainPageCL = new ContentLoader(
