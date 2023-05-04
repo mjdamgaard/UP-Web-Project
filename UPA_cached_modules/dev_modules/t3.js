@@ -93,6 +93,7 @@ columnMainCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
                 $this.data("open-pages-title-arr").push(tabTitle);
                 $this.children().hide();
                 pageCL.loadAppended($this, pageData, parentCLArr);
+                $this.children(':last-child').attr("data-title", tabTitle);
             }
             return false;
         })
