@@ -195,14 +195,8 @@ export class ContentLoader {
         }
     }
     getCIClassSelector() {
-        if (typeof this.parentCL === "undefined") {
-            return ".CI." + this.contentKey;
-        } else {
-            let isMergedWithParent = (
-                this.parentCL.html.trim().substring(0, 29) ===
-                '<template class="placeholder"'
-            );
-            return this.parentCL.getCIClassSelector() + " .CI." + this.contentKey;
-        }
+        return (typeof this.parentCL === "undefined") ?
+            ".CI." + this.contentKey :
+            this.parentCL.getCIClassSelector() + " .CI." + this.contentKey;
     }
 }
