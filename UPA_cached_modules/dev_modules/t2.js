@@ -25,6 +25,7 @@ export class ContentLoader {
         // these first two variables should not be undefined/null.
         contentKey, htmlTemplate,
         parentCL,
+        nestedCSSRules,
         inwardCallbacks, outwardCallbacks,
         dataModifierFun,
         childCLs, modSignals,
@@ -37,6 +38,8 @@ export class ContentLoader {
         if (typeof parentCL !== "undefined") {
             parentCL.childCLs.push(this);
         }
+        this.nestedCSSRules = nestedCSSRules ?? [];
+        this.cssRulesAreAdded = false;
         this.inwardCallbacks = inwardCallbacks ?? [];
         this.outwardCallbacks = outwardCallbacks ?? [];
         this.childCLs = childCLs ?? [];
@@ -104,8 +107,13 @@ export class ContentLoader {
             let callback = this.outwardCallbacks[i];
             callback($ci, data);
         }
-        // lastly, remove the placeholder template tag.
+        // remove the placeholder template tag.
         $placeholder.remove();
+        // if this CL has no parent, call addNestedCSSRules() to add CSS styles
+        // to the document head.
+        if (this.parent) {
+            this.addNestedCSSRules()
+        }
     }
 
     getRelatedContentLoader(contentKey) {
