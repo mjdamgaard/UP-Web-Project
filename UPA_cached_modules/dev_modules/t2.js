@@ -28,6 +28,7 @@ export class ContentLoader {
         nestedCSSRules,
         inwardCallbacks, outwardCallbacks,
         dataModFuns,
+        
         childCLs, modSignals,
     ) {
         this.contentKey = contentKey;
