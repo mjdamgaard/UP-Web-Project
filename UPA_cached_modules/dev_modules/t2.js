@@ -196,7 +196,7 @@ export class ContentLoader {
     }
     getCIClassSelector() {
         if (typeof this.parentCL === "undefined") {
-            return ".CI." + this.contentKey; 
+            return ".CI." + this.contentKey;
         } else {
             let isMergedWithParent = (
                 this.parentCL.html.trim().substring(0, 29) ===
