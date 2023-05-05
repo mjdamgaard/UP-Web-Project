@@ -87,7 +87,7 @@ tabNavListCL.nestedCSSRules.push(
     '& > li > a { padding: 7px 12px; }'
 )
 outerColumnCL.nestedCSSRules.push(
-    '& .CI.TabNavList:odd { left-margin: 2px };'
+    '& .CI.TabNavList:odd { left-margin: 2px }'
 )
 // tests:
 // tabNavListCL.nestedCSSRules.push(

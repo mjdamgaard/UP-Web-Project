@@ -170,13 +170,13 @@ export class ContentLoader {
             // to their content keys).
             var ruleTail;
             let cssRule = this.nestedCSSRules[i].trim();
-            if (/^&?[^&\{\}]*\{[^&\{\}]*\}$/.test(cssRule)) {
-                if (cssRule.substring(0, 1) === "&") {
+            if (/^&?[^&\{\}]*\{[^&\{\}]*\}$/.test(cssRule)) {debugger;
+                if (cssRule.substring(0, 1) === "&") {debugger;
                     ruleTail = cssRule.substring(1);
-                } else {
+                } else {debugger;
                     ruleTail = " " + cssRule;
                 }
-            } else if (/[^&\{\}]*$/.test(cssRule)) {
+            } else if (/[^&\{\}]*$/.test(cssRule)) {debugger;
                 ruleTail = " {" + cssRule + "}";
             } else {
                 throw (
