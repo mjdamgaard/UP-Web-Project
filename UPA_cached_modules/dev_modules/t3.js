@@ -89,13 +89,13 @@ tabNavListCL.nestedCSSRules.push(
 outerColumnCL.nestedCSSRules.push(
     '& .CI.TabNavList.odd { left-margin: 2px }'
 );
-columnCL.dataModFuns.push(function(data) {debugger;
+columnCL.dataModFuns.push(function(data) {
     let parentColumnOddity = data.isOddNestedColumn ?? true;
     var newData = Object.assign({}, data);
     newData.isOddNestedColumn = !parentColumnOddity;
     return newData;
 });
-tabNavListCL.outwardCallbacks.push(function($ci, data) {debugger;
+tabNavListCL.outwardCallbacks.push(function($ci, data) {
     if (data.isOddNestedColumn) {
         $ci.addClass("odd");
     }
@@ -136,7 +136,7 @@ columnCL.outwardCallbacks.push(function($ci, data) {
         })
         .on("add-tab-and-page", function(
             event, tabTitle, contentKey, pageData
-        ) {debugger;
+        ) {
             $(this)
                 .trigger("add-page", [tabTitle, contentKey, pageData])
                 .trigger("add-tab", [tabTitle]);
@@ -315,7 +315,7 @@ export var supercategoryPageCL = new ContentLoader(
     '<<Column>>',
     columnCL
 );
-supercategoryPageCL.outwardCallbacks.push(function($ci, data) {debugger;
+supercategoryPageCL.outwardCallbacks.push(function($ci, data) {
     $ci.trigger(
         "add-tab-and-page",
         ["Defining supercategories", "DefSuperCatsPage", data]
