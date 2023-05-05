@@ -27,8 +27,8 @@ export class ContentLoader {
         parentCL,
         nestedCSSRules,
         inwardCallbacks, outwardCallbacks,
-        conextDataModFuns, // modifyReturnDataFuns,
-        childCLs, modSignals,
+        childCLs,
+        modSignals,
     ) {
         this.contentKey = contentKey;
         // this.tagName = tagName;
@@ -38,13 +38,12 @@ export class ContentLoader {
         if (typeof parentCL !== "undefined") {
             parentCL.childCLs.push(this);
         }
+        this.childCLs = childCLs ?? [];
         this.nestedCSSRules = nestedCSSRules ?? [];
         this.cssRulesAreAdded = false;
         this.inwardCallbacks = inwardCallbacks ?? [];
         this.outwardCallbacks = outwardCallbacks ?? [];
-        this.childCLs = childCLs ?? [];
         this.modSignals = modSignals ?? [];
-        this.childContextDataGetFuns = childContextDataGetFuns ?? [];
         // this.dynamicData can be used for storing arbritary data (primitive
         // data types and objects), including data necessary to ensure unique
         // ids (even accross several, distant-related CIs).
@@ -63,29 +62,23 @@ export class ContentLoader {
         // first insert the new CI after $placeholder.
         $placeholder.after(this.html);
         let $ci = $placeholder.next();
-        // copy all classes from $placeholder onto the new CI, except of coure
+        // copy all classes from $placeholder onto the new CI, except of course
         // for the "placeholder" class.
         let existingClasses = $placeholder.removeClass("placeholder")
             .attr("class");
         $ci.addClass(existingClasses).addClass("CI")
             .addClass(this.contentKey);
 
-        // apply all the inward callbacks (which can change the initial HTML
-        // and also query and change dynamicData properties of the parent ).
+        // apply all the inward callbacks, which can change the initial HTML,
+        // as well as the contextData given to the child CIs.
+        var childCIConextData = Object.assign({}, conextData);
         let len = this.inwardCallbacks.length;
         for (let i = 0; i < len; i++) {
-            this.inwardCallbacks[i]($ci, conextData);
-        }
-
-        // change the data to hand on to the inner CIs.
-        var childConextData = conextData;
-        len = this.childContextDataGetFuns.length;
-        for (let i = 0; i < len; i++) {
-            childConextData = this.childContextDataGetFuns[i](childConextData);
+            this.inwardCallbacks[i]($ci, conextData, childCIConextData);
         }
 
         // load all the descendent CIs.
-        var childReturnData = {};
+        var childCIReturnData = {};
         let thisClassInstance = this;
         $ci.find('*').addBack()
             .filter('template.placeholder')
@@ -96,28 +89,32 @@ export class ContentLoader {
                     childContentKey
                 );
                 cl.loadAndReplacePlaceholder(
-                    $childCI, childConextData, childReturnData
+                    $childCI, childCIConextData, childCIReturnData
                 );
             });
-        // in case $ci was a placeholder tag which is removed again at this
-        // point, redefine it as the new CI element.
+        // in case $ci was a placeholder element, which will then be have been
+        // removed at this point, redefine it as the new CI element.
         $ci = $placeholder.next();
-        // remove the placeholder template tag.
+        // remove the placeholder template element.
         $placeholder.remove();
 
-        // store the contents of contexData on the CI.
-        $ci.data(contexData);
-
         // apply all the outward callbacks (after the inner content is loaded).
+        // (Since $ci is no longer in danger of being replaced, these callbacks
+        // are now also free to set data and events for the CI.)
         len = this.outwardCallbacks.length;
         for (let i = 0; i < len; i++) {
-            // (Note that outward callbacks should read the context data from
-            // calls to $ci.data(), as opposed to the inward callback, since
-            // this makes the outward callbacks free to change this data as
-            // well.) 
-            this.outwardCallbacks[i](
-                $ci, childReturnData, returnData
+            // apply the outward callbacks and record any return value.
+            let res = this.outwardCallbacks[i](
+                $ci, conextData, childCIReturnData, returnData
             );
+            // (As an easy way to store data on the CI, any non-nullish return
+            // value from an outward callback is interpreted as a data object
+            // to be passed to jQuery.data(<obj>).)
+            // if the result is not null/undefined, store the result as data
+            // on the CI.
+            if (typeof res !== "undefined") {
+                $ci.data(res);
+            }
         }
 
         // if the this.nestedCSSRules has not yet been added to the document
