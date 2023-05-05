@@ -103,7 +103,7 @@ export class ContentLoader {
                 );
             });
 
-        // change the data to hand on to the inner CIs.
+        // change the data ...
         var outwardData = inwardData;
         len = this.outwardDataModFuns.length;
         for (let i = 0; i < len; i++) {
