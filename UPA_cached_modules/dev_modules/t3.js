@@ -89,11 +89,14 @@ tabNavListCL.nestedCSSRules.push(
 outerColumnCL.nestedCSSRules.push(
     '& .CI.TabNavList.odd { left-margin: 2px }'
 );
-columnCL.dataModFuns.push(function(data) {
+columnCL.inwardDataModFuns.push(function(data) {
     let parentColumnOddity = data.isOddNestedColumn ?? true;
     var newData = Object.assign({}, data);
     newData.isOddNestedColumn = !parentColumnOddity;
     return newData;
+});
+columnCL.outwardDataModFuns.push(function(data, childReturnData, returnData) {
+    ...
 });
 tabNavListCL.outwardCallbacks.push(function($ci, data) {
     if (data.isOddNestedColumn) {

@@ -27,8 +27,7 @@ export class ContentLoader {
         parentCL,
         nestedCSSRules,
         inwardCallbacks, outwardCallbacks,
-        dataModFuns,
-        
+        inwardDataModFuns, outwardDataModFuns,
         childCLs, modSignals,
     ) {
         this.contentKey = contentKey;
@@ -45,7 +44,8 @@ export class ContentLoader {
         this.outwardCallbacks = outwardCallbacks ?? [];
         this.childCLs = childCLs ?? [];
         this.modSignals = modSignals ?? [];
-        this.dataModFuns = dataModFuns ?? [];
+        this.inwardDataModFuns = inwardDataModFuns ?? [];
+        this.outwardDataModFuns = outwardDataModFuns ?? [];
         // this.dynamicData can be used for storing arbritary data (primitive
         // data types and objects), including data necessary to ensure unique
         // ids (even accross several, distant-related CIs).
@@ -60,7 +60,7 @@ export class ContentLoader {
     }
 
 
-    loadAndReplacePlaceholder($placeholder, data) {
+    loadAndReplacePlaceholder($placeholder, inwardData, returnData) {
         // first insert the new CI after $placeholder.
         $placeholder.after(this.html);
         let $ci = $placeholder.next();
@@ -76,18 +76,19 @@ export class ContentLoader {
         let len = this.inwardCallbacks.length;
         for (let i = 0; i < len; i++) {
             let callback = this.inwardCallbacks[i];
-            callback($ci, data);
+            callback($ci, inwardData);
         }
 
         // change the data to hand on to the inner CIs.
-        var newData = data;
-        len = this.dataModFuns.length;
+        var childInwardData = inwardData;
+        len = this.inwardDataModFuns.length;
         for (let i = 0; i < len; i++) {
-            let dataModFun = this.dataModFuns[i];
-            newData = dataModFun(newData);
+            let getModifiedData = this.inwardDataModFuns[i];
+            childInwardData = getModifiedData(childInwardData);
         }
 
         // load all the descendent CIs.
+        var childReturnData = {};
         let thisClassInstance = this;
         $ci.find('*').addBack()
             .filter('template.placeholder')
@@ -97,8 +98,20 @@ export class ContentLoader {
                 let cl = thisClassInstance.getRelatedContentLoader(
                     childContentKey
                 );
-                cl.loadAndReplacePlaceholder($childCI, newData);
+                cl.loadAndReplacePlaceholder(
+                    $childCI, childInwardData, childReturnData
+                );
             });
+
+        // change the data to hand on to the inner CIs.
+        var outwardData = inwardData;
+        len = this.outwardDataModFuns.length;
+        for (let i = 0; i < len; i++) {
+            let getModifiedDataAndSetReturnData = this.inwardDataModFuns[i];
+            outwardData = getModifiedDataAndSetReturnData(
+                outwardData, childReturnData, returnData
+            );
+        }
 
         // in case $ci was a placeholder tag which is removed again at this
         // point, redefine it as the new CI element.
@@ -107,7 +120,7 @@ export class ContentLoader {
         len = this.outwardCallbacks.length;
         for (let i = 0; i < len; i++) {
             let callback = this.outwardCallbacks[i];
-            callback($ci, data);
+            callback($ci, outwardData);
         }
         // remove the placeholder template tag.
         $placeholder.remove();
