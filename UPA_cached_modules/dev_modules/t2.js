@@ -109,10 +109,11 @@ export class ContentLoader {
         }
         // remove the placeholder template tag.
         $placeholder.remove();
-        // if this CL has no parent, call addNestedCSSRules() to add CSS styles
-        // to the document head.
-        if (this.parent) {
+        // if the this.nestedCSSRules has not yet been added to the document
+        // head, call addNestedCSSRules() to do so.
+        if (this.cssRulesAreAdded == false) {
             this.addNestedCSSRules()
+            this.cssRulesAreAdded = true;
         }
     }
 
@@ -159,5 +160,45 @@ export class ContentLoader {
         $obj.prepend(getPlaceholderTemplateTag(this.contentKey));
         let $placeholder = $obj.children(':first-child');
         this.loadAndReplacePlaceholder($placeholder, data);
+    }
+
+    addNestedCSSRules() {
+        let len = this.nestedCSSRules.length;
+        for (let i = 0; i < len; i++) {
+            // get the tail end of the rule which is supposed to be prepended
+            // with this CL's and its ancestor CLs' CI classes (which are equal
+            // to their content keys).
+            var ruleTail;
+            let cssRule = this.nestedCSSRules[i].trim();
+            if (/^&?[^&\{\}]*\{[^&\{\}]*\}$/.test(cssRule)) {
+                if (cssRule.substring(0, 1) === "&") {
+                    ruleTail = cssRule.substring(1);
+                } else {
+                    ruleTail = " " + cssRule;
+                }
+            } else if (/[^&\{\}]*$/.test(cssRule)) {
+                ruleTail = " {" + cssRule + "}";
+            } else {
+                throw (
+                    "ContentLoader.addNestedCSSRules(): nestedCSSRules " +
+                     "must each be single rules with no nested rules " +
+                     "inside, perhaps beginning with a '&', or they must be " +
+                     "a CSS declaration list (but received '" + cssRule + "')"
+                );
+            }
+            // construct the resulting rule to append to the document head by
+            // prepending CI classes to the rule tail.
+            let rule = this.getCIClassSelector() + ruleTail;
+            $('html > head').append(
+                '<style class="CI-style">' + rule + '</style>'
+            );
+        }
+    }
+    getCIClassSelector() {
+        if (typeof this.parentCL === "undefined") {
+            return "CI " + this.contentKey;
+        } else {
+            return this.parentCL.getCIClassSelector() + " " + this.contentKey;
+        }
     }
 }
