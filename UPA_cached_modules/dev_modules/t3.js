@@ -75,7 +75,20 @@ export var tabNavListCL = new ContentLoader(
 );
 tabNavListCL.nestedCSSRules.push(
     '& > li > a { padding: 7px 12px; }'
-);
+)
+// tests:
+// tabNavListCL.nestedCSSRules.push(
+//     'padding: 100px 100px; background-color: blue;'
+// ); // Works.
+// tabNavListCL.nestedCSSRules.push(
+//     '& > li > a { padding: 70px 12px; }'
+// ); // Works.
+// tabNavListCL.nestedCSSRules.push(
+//     'li > a { padding: 70px 12px; }'
+// ); // Works.
+tabNavListCL.nestedCSSRules.push(
+    '&:hover { padding: 70px 12px; }'
+); // Works.
 
 
 
