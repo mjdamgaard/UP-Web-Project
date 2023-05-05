@@ -104,17 +104,9 @@ export class ContentLoader {
         len = this.outwardCallbacks.length;
         for (let i = 0; i < len; i++) {
             // apply the outward callbacks and record any return value.
-            let res = this.outwardCallbacks[i](
+            this.outwardCallbacks[i](
                 $ci, conextData, childCIReturnData, returnData
             );
-            // (As an easy way to store data on the CI, any non-nullish return
-            // value from an outward callback is interpreted as a data object
-            // to be passed to jQuery.data(<obj>).)
-            // if the result is not null/undefined, store the result as data
-            // on the CI.
-            if (typeof res !== "undefined") {
-                $ci.data(res);
-            }
         }
 
         // if the this.nestedCSSRules has not yet been added to the document
