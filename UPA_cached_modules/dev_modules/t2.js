@@ -105,11 +105,18 @@ export class ContentLoader {
         // remove the placeholder template tag.
         $placeholder.remove();
 
+        // store the contents of contexData on the CI.
+        $ci.data(contexData);
+
         // apply all the outward callbacks (after the inner content is loaded).
         len = this.outwardCallbacks.length;
         for (let i = 0; i < len; i++) {
+            // (Note that outward callbacks should read the context data from
+            // calls to $ci.data(), as opposed to the inward callback, since
+            // this makes the outward callbacks free to change this data as
+            // well.) 
             this.outwardCallbacks[i](
-                $ci, conextData, childReturnData, returnData
+                $ci, childReturnData, returnData
             );
         }
 
