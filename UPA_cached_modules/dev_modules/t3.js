@@ -73,7 +73,9 @@ export var tabNavListCL = new ContentLoader(
     '<ul class="nav nav-tabs"></ul>',
     upaCL
 );
-
+tabNavListCL.nestedCSSRules.push(
+    '& > li > a { padding: 7px 12px; }'
+);
 
 
 
