@@ -20,14 +20,24 @@ export var columnGroupCL = new ContentLoader(
     "ColumnGroup",
     /* Initial HTML */
     '<div class="app-column-group">' +
-        '<<Column>>' +
+        '<<OuterColumn>>' +
     '</div>',
     upaCL
 );
-columnGroupCL.inwardCallbacks.push(function($ci, data) {
+
+export var outerColumnCL = new ContentLoader(
+    "OuterColumn",
+    /* Initial HTML */
+    '<<Column>>',
+    columnGroupCL,
+);
+outerColumnCL.nestedCSSRules.push(
+    'margin: 5px 5px;'
+)
+outerColumnCL.inwardCallbacks.push(function($ci, data) {
     switch (data.termID.substring(0, 1)) {
         case "c":
-            $ci.find('.placeholder').attr("data-key", "CategoryColumn");
+            $ci.attr("data-key", "CategoryColumn");
             break;
         default:
             throw (
@@ -76,6 +86,9 @@ export var tabNavListCL = new ContentLoader(
 tabNavListCL.nestedCSSRules.push(
     '& > li > a { padding: 7px 12px; }'
 )
+outerColumnCL.nestedCSSRules.push(
+    '& .CI.TabNavList:odd { left-margin: 2px };'
+)
 // tests:
 // tabNavListCL.nestedCSSRules.push(
 //     'padding: 100px 100px; background-color: blue;'
@@ -86,9 +99,9 @@ tabNavListCL.nestedCSSRules.push(
 // tabNavListCL.nestedCSSRules.push(
 //     'li > a { padding: 70px 12px; }'
 // ); // Works.
-tabNavListCL.nestedCSSRules.push(
-    '&:hover { padding: 70px 12px; }'
-); // Works.
+// tabNavListCL.nestedCSSRules.push(
+//     '&:hover { padding: 70px 12px; }'
+// ); // Works.
 
 
 
