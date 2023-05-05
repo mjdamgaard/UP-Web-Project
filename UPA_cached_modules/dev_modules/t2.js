@@ -104,7 +104,7 @@ export class ContentLoader {
             });
 
         // change the data ...
-        var outwardData = inwardData;
+        var outwardData = inwardData; // (..childInwardData..?)
         len = this.outwardDataModFuns.length;
         for (let i = 0; i < len; i++) {
             let getModifiedDataAndSetReturnData = this.inwardDataModFuns[i];
