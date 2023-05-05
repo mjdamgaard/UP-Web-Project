@@ -27,7 +27,7 @@ export class ContentLoader {
         parentCL,
         nestedCSSRules,
         inwardCallbacks, outwardCallbacks,
-        dataModifierFun,
+        dataModFuns,
         childCLs, modSignals,
     ) {
         this.contentKey = contentKey;
@@ -44,14 +44,10 @@ export class ContentLoader {
         this.outwardCallbacks = outwardCallbacks ?? [];
         this.childCLs = childCLs ?? [];
         this.modSignals = modSignals ?? [];
-        this.dataModifierFun = dataModifierFun ?? (
-            function(data) {
-                return data;
-            }
-        );
+        this.dataModFuns = dataModFuns ?? [];
         // this.dynamicData can be used for storing arbritary data (primitive
         // data types and objects), including data necessary to ensure unique
-        // ids.
+        // ids (even accross several, distant-related CIs).
         this.dynamicData = {};
     }
 
@@ -64,10 +60,6 @@ export class ContentLoader {
 
 
     loadAndReplacePlaceholder($placeholder, data) {
-        // initialize some variables to use when loading the inner CIs.
-        let thisClassInstance = this;
-        let newData = this.dataModifierFun(data);
-
         // first insert the new CI after $placeholder.
         $placeholder.after(this.html);
         let $ci = $placeholder.next();
@@ -86,7 +78,16 @@ export class ContentLoader {
             callback($ci, data);
         }
 
+        // change the data to hand on to the inner CIs.
+        var newData = data;
+        len = this.dataModFuns.length;
+        for (let i = 0; i < len; i++) {
+            let dataModFun = this.dataModFuns[i];
+            newData = dataModFun(newData);
+        }
+
         // load all the descendent CIs.
+        let thisClassInstance = this;
         $ci.find('*').addBack()
             .filter('template.placeholder')
             .each(function() {
@@ -170,14 +171,20 @@ export class ContentLoader {
             // to their content keys).
             var ruleTail;
             let cssRule = this.nestedCSSRules[i].trim();
-            if (/^&?[^&\{\}]*\{[^&\{\}]*\}$/.test(cssRule)) {debugger;
-                if (cssRule.substring(0, 1) === "&") {debugger;
+            if (/^&?[^&\{\}]*\{[^&\{\}]*\}$/.test(cssRule)) {
+                // if the rule starts with a &, let the rule tail be the rest.
+                if (cssRule.substring(0, 1) === "&") {
                     ruleTail = cssRule.substring(1);
-                } else {debugger;
+                // if it is a rule that does not start with "&", prepend a
+                // descendent combinator (" ") to make the rule tail.
+                } else {
                     ruleTail = " " + cssRule;
                 }
-            } else if (/^[^&\{\}]*$/.test(cssRule)) {debugger;
+            // if cssRule is instead a CSS declaration list, wrap it in "{}"
+            // for the rule tail.
+            } else if (/^[^&\{\}]*$/.test(cssRule)) {
                 ruleTail = " {" + cssRule + "}";
+            // else throw an error.
             } else {
                 throw (
                     "ContentLoader.addNestedCSSRules(): nestedCSSRules " +

@@ -85,37 +85,23 @@ export var tabNavListCL = new ContentLoader(
 );
 tabNavListCL.nestedCSSRules.push(
     '& > li > a { padding: 7px 12px; }'
-)
+);
 outerColumnCL.nestedCSSRules.push(
-    '& .CI.TabNavList:odd { left-margin: 2px };'
-)
-// tests:
-// tabNavListCL.nestedCSSRules.push(
-//     'padding: 100px 100px; background-color: blue;'
-// ); // Works.
-// tabNavListCL.nestedCSSRules.push(
-//     '& > li > a { padding: 70px 12px; }'
-// ); // Works.
-// tabNavListCL.nestedCSSRules.push(
-//     'li > a { padding: 70px 12px; }'
-// ); // Works.
-// tabNavListCL.nestedCSSRules.push(
-//     '&:hover { padding: 70px 12px; }'
-// ); // Works.
+    '& .CI.TabNavList.odd { left-margin: 2px }'
+);
+columnCL.dataModFuns.push(function(data) {debugger;
+    let parentColumnOddity = data.isOddNestedColumn ?? true;
+    var newData = Object.assign({}, data);
+    newData.isOddNestedColumn = !parentColumnOddity;
+    return newData;
+});
+tabNavListCL.outwardCallbacks.push(function($ci, data) {debugger;
+    if (data.isOddNestedColumn) {
+        $ci.addClass("odd");
+    }
+});
 
 
-// // if the rule starts with a &, let the rule tail be the rest.
-// if (/^&[^&\{\}]*\{[^&\{\}]*\}$/.test(cssRule)) {
-//     ruleTail = cssRule.substring(1);
-// // if it is a rule that does not start with "&", prepend a
-// // descendent combinator (" ") to make the rule tail.
-// } else if (/^[^&\{\}]*\{[^&\{\}]*\}$/.test(cssRule)) {
-//     ruleTail = " " + cssRule;
-// // if cssRule is instead a CSS declaration list, wrap it in "{}"
-// // for the rule tail.
-// } else if (/[^&\{\}]*$/.test(cssRule)) {
-//     ruleTail = " {" + cssRule + "}";
-// // else throw an error.
 
 
 columnCL.outwardCallbacks.push(function($ci, data) {
@@ -372,17 +358,14 @@ export var categoryColumnCL = new ContentLoader(
 
 
 categoryColumnCL.outwardCallbacks.push(function($ci, data) {
-    var pageData = "Supercategories";
     $ci.trigger(
-        "add-tab-and-page", ["Supercategories", "SupercategoryPage", pageData]
+        "add-tab-and-page", ["Supercategories", "SupercategoryPage", data]
     );
-    pageData = "Subcategories";
     $ci.trigger(
-        "add-tab-and-page", ["Subcategories", "MainPage", pageData]
+        "add-tab-and-page", ["Subcategories", "MainPage", data]
     );
-    pageData = "Elements";
     $ci.trigger(
-        "add-tab-and-page", ["Elements", "MainPage", pageData]
+        "add-tab-and-page", ["Elements", "MainPage", data]
     );
     // open the "Subcategories" tab as the default one.
     $ci.trigger("open-tab-and-page", ["Subcategories"]);
