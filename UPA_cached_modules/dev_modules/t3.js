@@ -89,18 +89,16 @@ tabNavListCL.nestedCSSRules.push(
 tabNavListCL.nestedCSSRules.push(
     '&.odd { left-margin: 2px }'
 );
-columnCL.getChildContextDataFuns.push(function(data) {
+columnCL.inwardCallbacks.push(function($ci, data, childData) {
     let parentColumnParity = data.columnParity ?? 1;
-    var newData = Object.assign({}, data);
-    newData.columnParity = !parentColumnOddity;
-    return newData;
+    childData.columnParity = !parentColumnOddity;
 });
-columnCL.outwardCallbacks.push(function($ci) {
-    let parentColumnParity = $ci.data("columnParity") ?? 1;
+columnCL.outwardCallbacks.push(function($ci, data) {
+    let parentColumnParity = data.columnParity ?? 1;
     $ci.data("columnParity", !parentColumnParity);
 });
 tabNavListCL.outwardCallbacks.push(function($ci, data) {
-    if (data.isOddNestedColumn) {
+    if (data.columnParity) {
         $ci.addClass("odd");
     }
 });

@@ -100,10 +100,10 @@ export class ContentLoader {
 
         // apply all the outward callbacks (after the inner content is loaded).
         // (Since $ci is no longer in danger of being replaced, these callbacks
-        // are now also free to set data and events for the CI.)
+        // are now also free to set data and events for the CI, among many
+        // things such as triggering events for their CI children.)
         len = this.outwardCallbacks.length;
         for (let i = 0; i < len; i++) {
-            // apply the outward callbacks and record any return value.
             this.outwardCallbacks[i](
                 $ci, conextData, childCIReturnData, returnData
             );
