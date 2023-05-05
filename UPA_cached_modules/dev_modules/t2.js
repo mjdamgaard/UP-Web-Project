@@ -176,7 +176,7 @@ export class ContentLoader {
                 } else {debugger;
                     ruleTail = " " + cssRule;
                 }
-            } else if (/[^&\{\}]*$/.test(cssRule)) {debugger;
+            } else if (/^[^&\{\}]*$/.test(cssRule)) {debugger;
                 ruleTail = " {" + cssRule + "}";
             } else {
                 throw (

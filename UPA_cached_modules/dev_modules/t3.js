@@ -87,7 +87,7 @@ tabNavListCL.nestedCSSRules.push(
     '& > li > a { padding: 7px 12px; }'
 )
 outerColumnCL.nestedCSSRules.push(
-    '& .CI.TabNavList:odd { left-margin: 2px }'
+    '& .CI.TabNavList:odd { left-margin: 2px };'
 )
 // tests:
 // tabNavListCL.nestedCSSRules.push(
@@ -103,6 +103,19 @@ outerColumnCL.nestedCSSRules.push(
 //     '&:hover { padding: 70px 12px; }'
 // ); // Works.
 
+
+// // if the rule starts with a &, let the rule tail be the rest.
+// if (/^&[^&\{\}]*\{[^&\{\}]*\}$/.test(cssRule)) {
+//     ruleTail = cssRule.substring(1);
+// // if it is a rule that does not start with "&", prepend a
+// // descendent combinator (" ") to make the rule tail.
+// } else if (/^[^&\{\}]*\{[^&\{\}]*\}$/.test(cssRule)) {
+//     ruleTail = " " + cssRule;
+// // if cssRule is instead a CSS declaration list, wrap it in "{}"
+// // for the rule tail.
+// } else if (/[^&\{\}]*$/.test(cssRule)) {
+//     ruleTail = " {" + cssRule + "}";
+// // else throw an error.
 
 
 columnCL.outwardCallbacks.push(function($ci, data) {
