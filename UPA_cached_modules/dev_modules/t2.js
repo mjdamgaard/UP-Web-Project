@@ -44,8 +44,7 @@ export class ContentLoader {
         this.outwardCallbacks = outwardCallbacks ?? [];
         this.childCLs = childCLs ?? [];
         this.modSignals = modSignals ?? [];
-        this.getChildContextDataFuns = getChildContextDataFuns ?? [];
-    // this.modifyReturnDataFuns = modifyReturnDataFuns ?? [];
+        this.childContextDataGetFuns = childContextDataGetFuns ?? [];
         // this.dynamicData can be used for storing arbritary data (primitive
         // data types and objects), including data necessary to ensure unique
         // ids (even accross several, distant-related CIs).
@@ -80,9 +79,9 @@ export class ContentLoader {
 
         // change the data to hand on to the inner CIs.
         var childConextData = conextData;
-        len = this.getChildContextDataFuns.length;
+        len = this.childContextDataGetFuns.length;
         for (let i = 0; i < len; i++) {
-            childConextData = this.getChildContextDataFuns[i](childConextData);
+            childConextData = this.childContextDataGetFuns[i](childConextData);
         }
 
         // load all the descendent CIs.
@@ -100,26 +99,20 @@ export class ContentLoader {
                     $childCI, childConextData, childReturnData
                 );
             });
-
-        // // modify the returnData pass-by-refernece input.
-        // len = this.modifyReturnDataFuns.length;
-        // for (let i = 0; i < len; i++) {
-        //     let getModifiedDataAndSetReturnData = this.modifyReturnDataFuns[i];
-        //     this.modifyReturnDataFuns[i](
-        //         returnData, conextData, childConextData
-        //     );
-        // }
-
         // in case $ci was a placeholder tag which is removed again at this
         // point, redefine it as the new CI element.
         $ci = $placeholder.next();
+        // remove the placeholder template tag.
+        $placeholder.remove();
+
         // apply all the outward callbacks (after the inner content is loaded).
         len = this.outwardCallbacks.length;
         for (let i = 0; i < len; i++) {
-            this.outwardCallbacks[i]($ci, conextData, returnData);
+            this.outwardCallbacks[i](
+                $ci, conextData, childReturnData, returnData
+            );
         }
-        // remove the placeholder template tag.
-        $placeholder.remove();
+
         // if the this.nestedCSSRules has not yet been added to the document
         // head, call addNestedCSSRules() to do so.
         if (this.cssRulesAreAdded == false) {

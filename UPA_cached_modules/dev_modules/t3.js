@@ -86,17 +86,14 @@ export var tabNavListCL = new ContentLoader(
 tabNavListCL.nestedCSSRules.push(
     '& > li > a { padding: 7px 12px; }'
 );
-outerColumnCL.nestedCSSRules.push(
-    '& .CI.TabNavList.odd { left-margin: 2px }'
+tabNavListCL.nestedCSSRules.push(
+    '&.odd { left-margin: 2px }'
 );
-columnCL.inwardDataModFuns.push(function(data) {
-    let parentColumnOddity = data.isOddNestedColumn ?? true;
+columnCL.getChildContextDataFuns.push(function(data) {
+    let parentColumnParity = data.columnParity ?? 0;
     var newData = Object.assign({}, data);
     newData.isOddNestedColumn = !parentColumnOddity;
     return newData;
-});
-columnCL.outwardDataModFuns.push(function(data, childReturnData, returnData) {
-    ...
 });
 tabNavListCL.outwardCallbacks.push(function($ci, data) {
     if (data.isOddNestedColumn) {
