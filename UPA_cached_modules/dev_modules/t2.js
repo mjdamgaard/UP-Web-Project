@@ -202,9 +202,7 @@ export class ContentLoader {
                 this.parentCL.html.trim().substring(0, 29) ===
                 '<template class="placeholder"'
             );
-            return isMergedWithParent ?
-                this.parentCL.getCIClassSelector() + "." + this.contentKey :
-                this.parentCL.getCIClassSelector() + " .CI." + this.contentKey;
+            return this.parentCL.getCIClassSelector() + " .CI." + this.contentKey;
         }
     }
 }
