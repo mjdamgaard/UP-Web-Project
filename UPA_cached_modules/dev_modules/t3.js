@@ -24,7 +24,7 @@ export var columnGroupCL = new ContentLoader(
     '</div>',
     upaCL
 );
-columnGroupCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
+columnGroupCL.inwardCallbacks.push(function($ci, data) {
     switch (data.termID.substring(0, 1)) {
         case "c":
             $ci.find('.placeholder').attr("data-key", "CategoryColumn");
@@ -36,7 +36,7 @@ columnGroupCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
             );
     }
 });
-columnGroupCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+columnGroupCL.outwardCallbacks.push(function($ci, data) {
     $ci.css({
         padding: "0px 20px 0px 20px"
     });
@@ -77,12 +77,10 @@ export var tabNavListCL = new ContentLoader(
 
 
 
-columnCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+columnCL.outwardCallbacks.push(function($ci, data) {
     $ci.data("page-spec-store", {})
         .on("add-page", function(event, tabTitle, contentKey, pageData) {
-            let pageCL = columnCL.getRelatedContentLoader(
-                contentKey, parentCLArr
-            );
+            let pageCL = columnCL.getRelatedContentLoader(contentKey);
             $(this).data("page-spec-store")[tabTitle] =
                 {cl:pageCL, data:pageData};
             return false;
@@ -132,7 +130,7 @@ columnCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
 
 
 
-columnHeaderCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+columnHeaderCL.outwardCallbacks.push(function($ci, data) {
     $ci
         .on("add-tab", function(event, tabTitle) {
             $(this).find('.CI.TabNavList')
@@ -147,7 +145,7 @@ columnHeaderCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
 });
 
 
-tabNavListCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+tabNavListCL.outwardCallbacks.push(function($ci, data) {
     $ci
         .on("add-tab", function(event, tabTitle) {
             let $newTab = $(this).append(
@@ -173,7 +171,7 @@ tabNavListCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
 });
 
 
-columnMainCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+columnMainCL.outwardCallbacks.push(function($ci, data) {
     $ci.data("open-pages-title-arr", [])
         .on("open-page", function(event, tabTitle, pageCL, pageData) {
             let $this = $(this);
@@ -183,7 +181,7 @@ columnMainCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
             } else {
                 $this.data("open-pages-title-arr").push(tabTitle);
                 $this.children().hide();
-                pageCL.loadAppended($this, pageData, parentCLArr);
+                pageCL.loadAppended($this, pageData);
                 $this.children(':last-child').attr("data-title", tabTitle);
             }
             return false;
@@ -207,7 +205,7 @@ export var pageFieldCL = new ContentLoader(
     '<div></div>',
     columnCL
 );
-pageFieldCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+pageFieldCL.outwardCallbacks.push(function($ci, data) {
     $ci.data('db-request-manager', new DBRequestManager())
         .on("query-db", function(event, reqData, cacheKey, callback) {
             let $this = $(this);
@@ -218,12 +216,10 @@ pageFieldCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
         .on("append-cis", function(event, contentKey, dataArr, selector) {
             let $obj = (typeof selector === "undefined") ?
                 $(this) : $(this).find(selector);
-            let cl = pageFieldCL.getRelatedContentLoader(
-                contentKey, parentCLArr
-            );
+            let cl = pageFieldCL.getRelatedContentLoader(contentKey);
             let len = dataArr.length;
             for (let i = 0; i < len; i++) {
-                cl.loadAppended($obj, dataArr[i], parentCLArr);
+                cl.loadAppended($obj, dataArr[i]);
             }
             return false;
         });
@@ -235,10 +231,10 @@ export var termListCL = new ContentLoader(
     '<<PageField>>',
     columnCL
 );
-termListCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+termListCL.outwardCallbacks.push(function($ci, data) {
     $ci.append('<ul class="container"></ul>');
 });
-termListCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+termListCL.outwardCallbacks.push(function($ci, data) {
     $ci
         .on("append-elements", function(event, contentKey, elemDataArr) {
             $(this).trigger("append-cis", [contentKey, elemDataArr, 'ul, ol']);
@@ -280,7 +276,7 @@ export var categoryListElementCL = new ContentLoader(
     '<<TermListElement>>',
     columnCL
 );
-categoryListElementCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+categoryListElementCL.outwardCallbacks.push(function($ci, data) {
     $ci.append(
         '<span>Hello, I will become a category term list element</span>'
     );
@@ -292,7 +288,7 @@ export var supercategoryPageCL = new ContentLoader(
     '<<Column>>',
     columnCL
 );
-supercategoryPageCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+supercategoryPageCL.outwardCallbacks.push(function($ci, data) {
     $ci.trigger(
         "add-tab-and-page",
         ["Defining supercategories", "DefSuperCatsPage", data]
@@ -308,7 +304,7 @@ export var defSuperCatsPageCL = new ContentLoader(
     '<<ExtensibleTermList>>',
     columnCL
 );
-defSuperCatsPageCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+defSuperCatsPageCL.outwardCallbacks.push(function($ci, data) {
     let elemDataArr = [{}, {}, {}];
     $ci.trigger("append-elements", ["CategoryListElement", elemDataArr]);
 });
@@ -319,7 +315,7 @@ export var mainPageCL = new ContentLoader(
     '<div></div>',
     columnCL
 );
-mainPageCL.inwardCallbacks.push(function($ci, data, parentCLArr) {
+mainPageCL.inwardCallbacks.push(function($ci, data) {
     $ci.prepend(
         '<span>Hello, I will be a main page generated from: ' +
         JSON.stringify(data) + '</span>'
@@ -334,7 +330,7 @@ export var categoryColumnCL = new ContentLoader(
 );
 
 
-categoryColumnCL.outwardCallbacks.push(function($ci, data, parentCLArr) {
+categoryColumnCL.outwardCallbacks.push(function($ci, data) {
     var pageData = "Supercategories";
     $ci.trigger(
         "add-tab-and-page", ["Supercategories", "SupercategoryPage", pageData]

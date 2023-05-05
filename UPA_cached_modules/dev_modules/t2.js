@@ -2,6 +2,9 @@
 /* This module ...
  **/
 
+// (Here 'CI' stands for 'content instance,' which are the live HTML
+// elements, and CL stands for 'content loader' (instances of this
+// class), which are responsible for loading and inserting the CIs.)
 
 export function getPlaceholderTemplateTag(key) {
     return '<template class="placeholder" data-key="' + key + '"></template>';
@@ -21,21 +24,22 @@ export class ContentLoader {
     constructor(
         // these first two variables should not be undefined/null.
         contentKey, htmlTemplate,
-        parentLoader,
+        parentCL,
         inwardCallbacks, outwardCallbacks,
         dataModifierFun,
-        childLoaders, modSignals,
+        childCLs, modSignals,
     ) {
         this.contentKey = contentKey;
         // this.tagName = tagName;
         // this.attributes = attributes ?? {};
         this.html = convertHTMLTemplate(htmlTemplate);
-        if (typeof parentLoader !== "undefined") {
-            parentLoader.childLoaders.push(this);
+        this.parentCL = parentCL;
+        if (typeof parentCL !== "undefined") {
+            parentCL.childCLs.push(this);
         }
         this.inwardCallbacks = inwardCallbacks ?? [];
         this.outwardCallbacks = outwardCallbacks ?? [];
-        this.childLoaders = childLoaders ?? [];
+        this.childCLs = childCLs ?? [];
         this.modSignals = modSignals ?? [];
         this.dataModifierFun = dataModifierFun ?? (
             function(data) {
@@ -56,15 +60,9 @@ export class ContentLoader {
     }
 
 
-    loadAndReplacePlaceholder($placeholder, data, parentCLArr) {
-        // (Here 'CI' stands for 'content instance,' which are the live HTML
-        // elements, and CL stands for 'content loader' (instances of this
-        // class), which are responsible for loading and inserting the CIs.)
-
+    loadAndReplacePlaceholder($placeholder, data) {
         // initialize some variables to use when loading the inner CIs.
-        parentCLArr = parentCLArr ?? [];
         let thisClassInstance = this;
-        let newParentCLArr = parentCLArr.concat([thisClassInstance]);
         let newData = this.dataModifierFun(data);
 
         // first insert the new CI after $placeholder.
@@ -82,7 +80,7 @@ export class ContentLoader {
         let len = this.inwardCallbacks.length;
         for (let i = 0; i < len; i++) {
             let callback = this.inwardCallbacks[i];
-            callback($ci, data, parentCLArr);
+            callback($ci, data);
         }
 
         // load all the descendent CIs.
@@ -92,9 +90,9 @@ export class ContentLoader {
                 let $childCI = $(this);
                 let childContentKey = $childCI.attr("data-key");
                 let cl = thisClassInstance.getRelatedContentLoader(
-                    childContentKey, parentCLArr
+                    childContentKey
                 );
-                cl.loadAndReplacePlaceholder($childCI, newData, newParentCLArr);
+                cl.loadAndReplacePlaceholder($childCI, newData);
             });
 
         // in case $ci was a placeholder tag which is removed again at this
@@ -104,59 +102,54 @@ export class ContentLoader {
         len = this.outwardCallbacks.length;
         for (let i = 0; i < len; i++) {
             let callback = this.outwardCallbacks[i];
-            callback($ci, data, parentCLArr);
+            callback($ci, data);
         }
         // lastly, remove the placeholder template tag.
         $placeholder.remove();
     }
 
-    getRelatedContentLoader(contentKey, parentCLArr) {
-        var ret = "";
-        let len = this.childLoaders.length;
+    getRelatedContentLoader(contentKey) {
+        var ret;
+        // first look for the content key in all the child CLs.
+        let len = this.childCLs.length;
         for (let i = 0; i < len; i++) {
-            if (this.childLoaders[i].contentKey === contentKey) {
-                ret = this.childLoaders[i];
-                break;
+            if (this.childCLs[i].contentKey === contentKey) {
+                return this.childCLs[i];
             }
         }
-        if (ret === "") {
-            let parentCLArrLen = parentCLArr.length;
-            if (parentCLArrLen === 0) {
-                throw (
-                    "ContentLoader.getRelatedContentLoader(): " +
-                    'no content loader found with content key "' +
-                    contentKey + '"'
-                );
-            }
-            let parent = parentCLArr[parentCLArr.length - 1];
-            ret = parent.getRelatedContentLoader(
-                contentKey, parentCLArr.slice(0, -1)
+        // if no matching child CL is found, go up to the parent CL and repeat
+        // the process recursively, or throw error if this CL has no parent.
+        if (typeof this.parentCL === "undefined") {
+            throw (
+                "ContentLoader.getRelatedContentLoader(): " +
+                'no content loader found with content key "' +
+                contentKey + '"'
             );
         }
-        return ret;
+        return this.parentCL.getRelatedContentLoader(contentKey);
     }
 
     // (Inserting a simple '<div></div>' in the following functions could also
     // work with the current implementation of loadAndReplacePlaceholder(),
     // but let's just stick to the following for now.)
-    loadAfter($obj, data, parentCLArr) {
+    loadAfter($obj, data) {
         $obj.after(getPlaceholderTemplateTag(this.contentKey));
         let $placeholder = $obj.next();
-        this.loadAndReplacePlaceholder($placeholder, data, parentCLArr);
+        this.loadAndReplacePlaceholder($placeholder, data);
     }
-    loadBefore($obj, data, parentCLArr) {
+    loadBefore($obj, data) {
         $obj.before(getPlaceholderTemplateTag(this.contentKey));
         let $placeholder = $obj.prev();
-        this.loadAndReplacePlaceholder($placeholder, data, parentCLArr);
+        this.loadAndReplacePlaceholder($placeholder, data);
     }
-    loadAppended($obj, data, parentCLArr) {
+    loadAppended($obj, data) {
         $obj.append(getPlaceholderTemplateTag(this.contentKey));
         let $placeholder = $obj.children(':last-child');
-        this.loadAndReplacePlaceholder($placeholder, data, parentCLArr);
+        this.loadAndReplacePlaceholder($placeholder, data);
     }
-    loadPrepended($obj, data, parentCLArr) {
+    loadPrepended($obj, data) {
         $obj.prepend(getPlaceholderTemplateTag(this.contentKey));
         let $placeholder = $obj.children(':first-child');
-        this.loadAndReplacePlaceholder($placeholder, data, parentCLArr);
+        this.loadAndReplacePlaceholder($placeholder, data);
     }
 }
