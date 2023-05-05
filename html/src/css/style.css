@@ -31,14 +31,19 @@ body > header > h2 {
     padding: 10px 10px 5px;
 }
 
-/* This doesn't work for whatever reason.. */
+/* This doesn't work for whatever reason.. * /
 #upaFrame {
     .nav-tabs > li > a {
         margin: 100px;
         padding: 0px;
     }
 }
-/* ..Ah but this does: */
+/* ..Ah but this does: * /
 .nav-tabs > li > a {
     padding: 7px 12px;
+} */
+/* Does this work..?: */
+#upaFrame .nav-tabs > li > a {
+    padding: 7px 12px;
 }
+/* ..Yes..(??..) */
