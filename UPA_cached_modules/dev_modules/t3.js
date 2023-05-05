@@ -136,7 +136,7 @@ columnCL.outwardCallbacks.push(function($ci, data) {
         })
         .on("add-tab-and-page", function(
             event, tabTitle, contentKey, pageData
-        ) {
+        ) {debugger;
             $(this)
                 .trigger("add-page", [tabTitle, contentKey, pageData])
                 .trigger("add-tab", [tabTitle]);
@@ -315,7 +315,7 @@ export var supercategoryPageCL = new ContentLoader(
     '<<Column>>',
     columnCL
 );
-supercategoryPageCL.outwardCallbacks.push(function($ci, data) {
+supercategoryPageCL.outwardCallbacks.push(function($ci, data) {debugger;
     $ci.trigger(
         "add-tab-and-page",
         ["Defining supercategories", "DefSuperCatsPage", data]
