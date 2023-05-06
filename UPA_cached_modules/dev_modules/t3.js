@@ -23,10 +23,7 @@ export var columnGroupCL = new ContentLoader(
     upaCL
 );
 columnGroupCL.inwardCallbacks.push(function($ci) {
-    $ci.data("childContextData").dbReqManager = new DBRequestManager();
-    // (Note that a CI can also access the data stored as "childContextData"
-    // itself, and therefore a ColumnGroup CI will also have access to this
-    // dbReqManager.)
+    $ci.data("contextData").dbReqManager = new DBRequestManager();
 });
 
 export var outerColumnCL = new ContentLoader(
@@ -308,9 +305,9 @@ export var supercategoryPageCL = new ContentLoader(
     columnCL
 );
 supercategoryPageCL.outwardCallbacks.push(function($ci) {
-    let childContextData = $ci.data("childContextData");
+    let contextData = $ci.data("contextData");
     $ci.trigger("add-tab-and-page",
-        ["Defining supercategories", "DefSuperCatsPage", childContextData]
+        ["Defining supercategories", "DefSuperCatsPage", contextData]
     );
     $ci.trigger("open-tab-and-page", ["Defining supercategories"]);
 });
@@ -322,8 +319,8 @@ export var defSuperCatsPageCL = new ContentLoader(
     columnCL
 );
 defSuperCatsPageCL.outwardCallbacks.push(function($ci) {
-    let ccd = $ci.data("childContextData");
-    let elemDataArr = [ccd, ccd, ccd];
+    let contextData = $ci.data("contextData");
+    let elemDataArr = [contextData, contextData, contextData];
     $ci.trigger("append-elements", ["CategoryListElement", elemDataArr]);
 });
 
@@ -350,15 +347,15 @@ export var categoryColumnCL = new ContentLoader(
 
 
 categoryColumnCL.outwardCallbacks.push(function($ci) {
-    let childContextData = $ci.data("childContextData");
+    let contextData = $ci.data("contextData");
     $ci.trigger("add-tab-and-page",
-        ["Supercategories", "SupercategoryPage", childContextData]
+        ["Supercategories", "SupercategoryPage", contextData]
     );
     $ci.trigger("add-tab-and-page",
-        ["Subcategories", "MainPage", childContextData]
+        ["Subcategories", "MainPage", contextData]
     );
     $ci.trigger("add-tab-and-page",
-        ["Elements", "MainPage", childContextData]
+        ["Elements", "MainPage", contextData]
     );
     // open the "Subcategories" tab as the default one.
     $ci.trigger("open-tab-and-page", ["Subcategories"]);
@@ -377,7 +374,7 @@ tabNavListCL.nestedCSSRules.push(
 );
 columnCL.inwardCallbacks.push(function($ci) {
     let parentColumnParity = $ci.data("contextData").columnParity ?? true;
-    $ci.data("childContextData").columnParity = !parentColumnParity;
+    $ci.data("contextData").columnParity = !parentColumnParity;
 });
 tabNavListCL.outwardCallbacks.push(function($ci) {
     if ($ci.data("contextData").columnParity) {
