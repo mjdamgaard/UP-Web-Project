@@ -58,39 +58,47 @@ export class ContentLoader {
     }
 
 
-    loadAndReplacePlaceholder($placeholder, conextData, returnData) {
+    loadAndReplacePlaceholder($placeholder, returnData) {
         // first insert the new CI after $placeholder.
         $placeholder.after(this.html);
         let $ci = $placeholder.next();
         // copy all classes from $placeholder onto the new CI, except of course
-        // for the "placeholder" class.
+        // for the "placeholder" class, and also copy contextData and
+        // childContextData onto the new CI.
         let existingClasses = $placeholder.removeClass("placeholder")
             .attr("class");
         $ci.addClass(existingClasses).addClass("CI")
             .addClass(this.contentKey);
+        $ci.data("contextData", $placeholder.data("contextData") ?? {})
+            .data(
+                "childContextData", $placeholder.data("childContextData") ?? {}
+            );
+        // (Storing the contextData and childContextData on the CI itself
+        // instead of passing them along as function parameters, means that
+        // a CI can change its own context, potentially, and not least it means
+        // that decorator CIs (which sits on the same element as its child) can
+        // have their childContextData changed by the CI(s) that they decorate.)
 
         // apply all the inward callbacks, which can change the initial HTML,
-        // as well as the contextData given to the child CIs.
-        var childCIConextData = Object.assign({}, conextData);
+        // as well as the contextData given to the child CIs, namely the data
+        // stored at $ci.data("childContextData").
+        var childContextData = Object.assign({}, contextData);
         let len = this.inwardCallbacks.length;
         for (let i = 0; i < len; i++) {
-            this.inwardCallbacks[i]($ci, conextData, childCIConextData);
+            this.inwardCallbacks[i]($ci);
         }
 
         // load all the descendent CIs.
-        var childCIReturnData = {};
-        let thisClassInstance = this;
+        var childReturnData = {};
+        var childContextData = $ci.data("childContextData");
+        let thisCL = this;
         $ci.find('*').addBack()
             .filter('template.placeholder')
             .each(function() {
-                let $childCI = $(this);
+                let $childCI = $(this).data("contextData", childContextData);
                 let childContentKey = $childCI.attr("data-key");
-                let cl = thisClassInstance.getRelatedContentLoader(
-                    childContentKey
-                );
-                cl.loadAndReplacePlaceholder(
-                    $childCI, childCIConextData, childCIReturnData
-                );
+                let cl = thisCL.getRelatedContentLoader(childContentKey);
+                cl.loadAndReplacePlaceholder($childCI, childReturnData);
             });
         // in case $ci was a placeholder element, which will then be have been
         // removed at this point, redefine it as the new CI element.
@@ -104,9 +112,7 @@ export class ContentLoader {
         // things such as triggering events for their CI children.)
         len = this.outwardCallbacks.length;
         for (let i = 0; i < len; i++) {
-            this.outwardCallbacks[i](
-                $ci, conextData, childCIReturnData, returnData
-            );
+            this.outwardCallbacks[i]($ci, childReturnData, returnData);
         }
 
         // if the this.nestedCSSRules has not yet been added to the document
@@ -141,25 +147,29 @@ export class ContentLoader {
     // (Inserting a simple '<div></div>' in the following functions could also
     // work with the current implementation of loadAndReplacePlaceholder(),
     // but let's just stick to the following for now.)
-    loadAfter($obj, data) {
+    loadAfter($obj, contextData, returnData) {
         $obj.after(getPlaceholderTemplateTag(this.contentKey));
-        let $placeholder = $obj.next();
-        this.loadAndReplacePlaceholder($placeholder, data);
+        let $placeholder = $obj.next()
+            .data("contextData", contextData);
+        this.loadAndReplacePlaceholder($placeholder, returnData ?? {});
     }
-    loadBefore($obj, data) {
+    loadBefore($obj, contextData, returnData) {
         $obj.before(getPlaceholderTemplateTag(this.contentKey));
-        let $placeholder = $obj.prev();
-        this.loadAndReplacePlaceholder($placeholder, data);
+        let $placeholder = $obj.prev()
+            .data("contextData", contextData);
+        this.loadAndReplacePlaceholder($placeholder, returnData ?? {});
     }
-    loadAppended($obj, data) {
+    loadAppended($obj, contextData, returnData) {
         $obj.append(getPlaceholderTemplateTag(this.contentKey));
-        let $placeholder = $obj.children(':last-child');
-        this.loadAndReplacePlaceholder($placeholder, data);
+        let $placeholder = $obj.children(':last-child')
+            .data("contextData", contextData);
+        this.loadAndReplacePlaceholder($placeholder, returnData ?? {});
     }
-    loadPrepended($obj, data) {
+    loadPrepended($obj, contextData, returnData) {
         $obj.prepend(getPlaceholderTemplateTag(this.contentKey));
-        let $placeholder = $obj.children(':first-child');
-        this.loadAndReplacePlaceholder($placeholder, data);
+        let $placeholder = $obj.children(':first-child')
+            .data("contextData", contextData);
+        this.loadAndReplacePlaceholder($placeholder, returnData ?? {});
     }
 
     addNestedCSSRules() {
