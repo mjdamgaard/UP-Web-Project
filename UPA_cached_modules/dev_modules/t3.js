@@ -318,7 +318,7 @@ export var defSuperCatsPageCL = new ContentLoader(
     '<<ExtensibleTermList>>',
     columnCL
 );
-defSuperCatsPageCL.outwardCallbacks.push(function($ci) {debugger;
+defSuperCatsPageCL.outwardCallbacks.push(function($ci) {
     let contextData = $ci.data("contextData");
     let elemDataArr = [contextData, contextData, contextData];
     $ci.trigger("append-elements", ["CategoryListElement", elemDataArr]);
@@ -329,7 +329,9 @@ defSuperCatsPageCL.inwardCallbacks.push(function($ci) {
 });
 termListCL.outwardCallbacks.push(function($ci) {
     if ($ci.data("contextData").ordered ?? false === true) {
-        $ci.find('ul').addClass("list-group-numbered");
+        $ci.empty();
+        $ci.append('<ol class="list-group list-group-numbered"></ol>');
+        // $ci.find('ul').addClass("list-group-numbered");
     }
 });
 
