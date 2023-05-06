@@ -156,8 +156,11 @@ tabNavListCL.outwardCallbacks.push(function($ci) {
     $ci
         .on("add-tab", function(event, tabTitle) {
             let $newTab = $(this).append(
-                    '<li data-title="' + tabTitle + '"> <a href="#">' +
-                    tabTitle + '</a> </li>'
+                    '<li data-title="' + tabTitle + '">' +
+                        '<a class="nav-link" href="#">' +
+                            tabTitle +
+                        '</a>' +
+                    '</li>'
                 )
                 .children(':last-child');
             $newTab.on("click", function() {
