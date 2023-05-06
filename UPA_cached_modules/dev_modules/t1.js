@@ -76,6 +76,9 @@ export class DBRequestManager {
             callback($obj, result, textStatus, thisDBReqManager.cache);
         });
     }
+
+    // TODO: Add more query methods, preferably some that gathers several
+    // requests into one, reading part of the request from the termType.. 
 }
 
 
