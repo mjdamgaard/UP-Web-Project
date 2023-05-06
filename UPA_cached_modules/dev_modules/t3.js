@@ -89,19 +89,15 @@ tabNavListCL.nestedCSSRules.push(
 tabNavListCL.nestedCSSRules.push(
     '&.odd { left-margin: 2px }'
 );
-// columnCL.inwardCallbacks.push(function($ci, data, childData) {
-//     let parentColumnParity = data.columnParity ?? 1;
-//     childData.columnParity = !parentColumnOddity;
-// });
-// columnCL.outwardCallbacks.push(function($ci, data) {
-//     let parentColumnParity = data.columnParity ?? 1;
-//     $ci.data("columnParity", !parentColumnParity);
-// });
-// tabNavListCL.outwardCallbacks.push(function($ci, data) {
-//     if (data.columnParity) {
-//         $ci.addClass("odd");
-//     }
-// });
+columnCL.inwardCallbacks.push(function($ci) {
+    let parentColumnParity = $ci.data("contextData").columnParity ?? true;
+    $ci.data("childContextData").columnParity = !parentColumnParity;
+});
+tabNavListCL.outwardCallbacks.push(function($ci) {
+    if ($ci.data("contextData").columnParity) {
+        $ci.addClass("odd");
+    }
+});
 
 
 
@@ -306,8 +302,10 @@ export var categoryListElementCL = new ContentLoader(
     columnCL
 );
 categoryListElementCL.outwardCallbacks.push(function($ci) {
+    let contextData = $ci.data("contextData");
     $ci.append(
-        '<span>Hello, I will become a category term list element</span>'
+        '<span>Hello, I will become a category term list element ' +
+        'generated from: ' + JSON.stringify(contextData) + '</span>'
     );
 });
 
