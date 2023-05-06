@@ -22,6 +22,9 @@ export var columnGroupCL = new ContentLoader(
     '</div>',
     upaCL
 );
+columnGroupCL.inwardCallbacks.push(function($ci) {
+    $ci.data("childContextData").dbReqManager = new DBRequestManager();
+});
 
 export var outerColumnCL = new ContentLoader(
     "OuterColumn",
@@ -31,7 +34,7 @@ export var outerColumnCL = new ContentLoader(
 );
 outerColumnCL.nestedCSSRules.push(
     'margin: 5px 5px;'
-)
+);
 outerColumnCL.inwardCallbacks.push(function($ci) {
     let termType = $ci.data("contextData").termID.substring(0, 1);
     switch (termType) {
@@ -86,16 +89,16 @@ export var tabNavListCL = new ContentLoader(
 
 
 columnCL.outwardCallbacks.push(function($ci) {
-    $ci.data("page-spec-store", {})
+    $ci.data("pageSpecs", {})
         .on("add-page", function(event, tabTitle, contentKey, pageData) {
             let pageCL = columnCL.getRelatedContentLoader(contentKey);
-            $(this).data("page-spec-store")[tabTitle] =
+            $(this).data("pageSpecs")[tabTitle] =
                 {cl:pageCL, data:pageData};
             return false;
         })
         .on("open-page", function(event, tabTitle) {
             let $this = $(this);
-            let pageSpec = $this.data("page-spec-store")[tabTitle];
+            let pageSpec = $this.data("pageSpecs")[tabTitle];
             $(this).children('.CI.ColumnMain')
                 .trigger("open-page", [tabTitle, pageSpec.cl, pageSpec.data]);
             return false;
@@ -180,14 +183,14 @@ tabNavListCL.outwardCallbacks.push(function($ci) {
 
 
 columnMainCL.outwardCallbacks.push(function($ci) {
-    $ci.data("open-pages-title-arr", [])
+    $ci.data("openPagesTitleArr", [])
         .on("open-page", function(event, tabTitle, pageCL, pageData) {
             let $this = $(this);
-            if ($this.data("open-pages-title-arr").includes(tabTitle)) {
+            if ($this.data("openPagesTitleArr").includes(tabTitle)) {
                 $this.children().hide();
                 $this.children('[data-title="' + tabTitle +'"]').show();
             } else {
-                $this.data("open-pages-title-arr").push(tabTitle);
+                $this.data("openPagesTitleArr").push(tabTitle);
                 $this.children().hide();
                 pageCL.loadAppended($this, pageData);
                 $this.children(':last-child').attr("data-title", tabTitle);
@@ -196,7 +199,7 @@ columnMainCL.outwardCallbacks.push(function($ci) {
         })
         .on("close-page", function(event, tabTitle) {
             let $this = $(this);
-            let titleArr = $this.data("open-pages-title-arr");
+            let titleArr = $this.data("openPagesTitleArr");
             titleArr[titleArr.indexOf(tabTitle)] = null;
             $this.children('[data-title="' + tabTitle +'"]').remove();
             return false;
@@ -214,10 +217,10 @@ export var pageFieldCL = new ContentLoader(
     columnCL
 );
 pageFieldCL.outwardCallbacks.push(function($ci) {
-    $ci.data('db-request-manager', new DBRequestManager())
+    $ci
         .on("query-db", function(event, reqData, cacheKey, callback) {
             let $this = $(this);
-            let dbReqManager = $this.data('db-request-manager');
+            let dbReqManager = $this.data('dbReqManager');
             dbReqManager.query($this, reqData, cacheKey, callback);
             return false;
         })
@@ -267,8 +270,6 @@ export var extensibleTermListCL = new ContentLoader(
 // pressed, adds elements to the list, either cached ones or ones that are then
 // queried.
 
-
-
 export var termListElementCL = new ContentLoader(
     "TermListElement",
     /* Initial HTML */
@@ -306,8 +307,6 @@ supercategoryPageCL.outwardCallbacks.push(function($ci) {
         ["Defining supercategories", "DefSuperCatsPage", childContextData]
     );
     $ci.trigger("open-tab-and-page", ["Defining supercategories"]);
-    // open the "DefSuperCatsPage" tab as the default one.
-    // TODO
 });
 
 export var defSuperCatsPageCL = new ContentLoader(
