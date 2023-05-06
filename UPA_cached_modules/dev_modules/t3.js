@@ -24,6 +24,9 @@ export var columnGroupCL = new ContentLoader(
 );
 columnGroupCL.inwardCallbacks.push(function($ci) {
     $ci.data("childContextData").dbReqManager = new DBRequestManager();
+    // (Note that a CI can also access the data stored as "childContextData"
+    // itself, and therefore a ColumnGroup CI will also have access to this
+    // dbReqManager.)
 });
 
 export var outerColumnCL = new ContentLoader(
@@ -37,6 +40,8 @@ outerColumnCL.nestedCSSRules.push(
 );
 outerColumnCL.inwardCallbacks.push(function($ci) {
     let termType = $ci.data("contextData").termID.substring(0, 1);
+    // test:
+    $ci.data("childContextData").dbReqManager.foo = "bar";
     switch (termType) {
         case "c":
             $ci.attr("data-key", "CategoryColumn");
