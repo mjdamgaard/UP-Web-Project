@@ -87,7 +87,7 @@ tabNavListCL.nestedCSSRules.push(
     '& > li > a { padding: 7px 12px; }'
 );
 tabNavListCL.nestedCSSRules.push(
-    '&.odd { left-margin: 2px }'
+    '&.odd { margin-left: 2px }'
 );
 columnCL.inwardCallbacks.push(function($ci) {
     let parentColumnParity = $ci.data("contextData").columnParity ?? true;
