@@ -40,8 +40,6 @@ outerColumnCL.nestedCSSRules.push(
 );
 outerColumnCL.inwardCallbacks.push(function($ci) {
     let termType = $ci.data("contextData").termID.substring(0, 1);
-    // test:
-    $ci.data("childContextData").dbReqManager.foo = "bar";
     switch (termType) {
         case "c":
             $ci.attr("data-key", "CategoryColumn");
@@ -82,7 +80,6 @@ export var columnMainCL = new ContentLoader(
     '<main class=""></main>',
     columnCL
 );
-
 export var tabNavListCL = new ContentLoader(
     "TabNavList",
     /* Initial HTML */
@@ -92,6 +89,7 @@ export var tabNavListCL = new ContentLoader(
 
 
 
+/* Events add tabs and add/load associated pages to these tabs in Columns */
 
 columnCL.outwardCallbacks.push(function($ci) {
     $ci.data("pageSpecs", {})
@@ -143,9 +141,6 @@ columnCL.outwardCallbacks.push(function($ci) {
         });
 });
 
-
-
-
 columnHeaderCL.outwardCallbacks.push(function($ci) {
     $ci
         .on("add-tab", function(event, tabTitle) {
@@ -159,7 +154,6 @@ columnHeaderCL.outwardCallbacks.push(function($ci) {
             return false;
         });
 });
-
 
 tabNavListCL.outwardCallbacks.push(function($ci) {
     $ci
@@ -185,7 +179,6 @@ tabNavListCL.outwardCallbacks.push(function($ci) {
             return false;
         });
 });
-
 
 columnMainCL.outwardCallbacks.push(function($ci) {
     $ci.data("openPagesTitleArr", [])
@@ -218,7 +211,7 @@ columnMainCL.outwardCallbacks.push(function($ci) {
 export var pageFieldCL = new ContentLoader(
     "PageField",
     /* Initial HTML */
-    '<div></div>',
+    '<div class="container"></div>',
     columnCL
 );
 pageFieldCL.outwardCallbacks.push(function($ci) {
@@ -238,8 +231,17 @@ pageFieldCL.outwardCallbacks.push(function($ci) {
                 cl.loadAppended($obj, dataArr[i]);
             }
             return false;
+        })
+        .on("prepend-contents", function(event, contentKey, dataArr, selector) {
+            let $obj = (typeof selector === "undefined") ?
+                $(this) : $(this).find(selector);
+            let cl = pageFieldCL.getRelatedContentLoader(contentKey);
+            let len = dataArr.length;
+            for (let i = 0; i < len; i++) {
+                cl.loadPrepended($obj, dataArr[i]);
+            }
+            return false;
         });
-        // TODO: add a prepend-cis event also, after having debugged.
 });
 export var termListCL = new ContentLoader(
     "TermList",
@@ -248,7 +250,7 @@ export var termListCL = new ContentLoader(
     columnCL
 );
 termListCL.outwardCallbacks.push(function($ci) {
-    $ci.append('<ul class="container"></ul>');
+    $ci.append('<ul class="list-group"></ul>');
 });
 termListCL.outwardCallbacks.push(function($ci) {
     $ci
@@ -278,11 +280,9 @@ export var extensibleTermListCL = new ContentLoader(
 export var termListElementCL = new ContentLoader(
     "TermListElement",
     /* Initial HTML */
-    '<div></div>',
+    '<li class="list-group-item"></li>',
     columnCL
 );
-
-
 
 /* Test */
 
