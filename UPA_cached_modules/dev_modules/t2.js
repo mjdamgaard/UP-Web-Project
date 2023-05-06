@@ -69,13 +69,6 @@ export class ContentLoader {
         $ci.addClass(existingClasses).addClass("CI")
             .addClass(this.contentKey);
 
-    // (Storing the contextData on the CI itself instead of passing them
-    // along as function parameters, means that a CI can change its own
-    // context, potentially, and not least it means that decorator CIs
-    // (which sits on the same element as its child) can have their
-    // contextData changed by the CI(s) that they decorate.)
-
-
         // store the context data on the CI.
         $ci.data("contextData", contextData)
         // apply all the inward callbacks, which can change the initial HTML,

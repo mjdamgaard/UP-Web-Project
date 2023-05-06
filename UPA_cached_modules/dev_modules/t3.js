@@ -318,10 +318,19 @@ export var defSuperCatsPageCL = new ContentLoader(
     '<<ExtensibleTermList>>',
     columnCL
 );
-defSuperCatsPageCL.outwardCallbacks.push(function($ci) {
+defSuperCatsPageCL.outwardCallbacks.push(function($ci) {debugger;
     let contextData = $ci.data("contextData");
     let elemDataArr = [contextData, contextData, contextData];
     $ci.trigger("append-elements", ["CategoryListElement", elemDataArr]);
+});
+defSuperCatsPageCL.inwardCallbacks.push(function($ci) {
+    // $ci.find('ul').addClass("list-group-numbered");
+    $ci.data("contextData").ordered = true;
+});
+termListCL.outwardCallbacks.push(function($ci) {
+    if ($ci.data("contextData").ordered ?? false === true) {
+        $ci.find('ul').addClass("list-group-numbered");
+    }
 });
 
 export var mainPageCL = new ContentLoader(
