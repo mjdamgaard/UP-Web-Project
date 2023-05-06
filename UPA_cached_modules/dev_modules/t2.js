@@ -163,7 +163,7 @@ export class ContentLoader {
     loadAppended($obj, contextData, returnData) {
         $obj.append(getPlaceholderTemplateTag(this.contentKey));
         let $placeholder = $obj.children(':last-child')
-            .data("contextData", contextData);
+            .data("contextData", contextData);console.log(contextData);
         this.loadAndReplacePlaceholder($placeholder, returnData ?? {});
     }
     loadPrepended($obj, contextData, returnData) {
