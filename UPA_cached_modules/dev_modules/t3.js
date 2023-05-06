@@ -7,8 +7,6 @@ import {
 } from "/UPA_scripts.php?id=t2";
 
 
-
-
 export var upaCL = new ContentLoader(
     "ColumnBasedSDBInterface",
     /* Initial HTML */
@@ -83,21 +81,6 @@ export var tabNavListCL = new ContentLoader(
     '<ul class="nav nav-tabs"></ul>',
     upaCL
 );
-tabNavListCL.nestedCSSRules.push(
-    '& > li > a { padding: 7px 12px; }'
-);
-tabNavListCL.nestedCSSRules.push(
-    '&.odd { margin-left: 2px }'
-);
-columnCL.inwardCallbacks.push(function($ci) {
-    let parentColumnParity = $ci.data("contextData").columnParity ?? true;
-    $ci.data("childContextData").columnParity = !parentColumnParity;
-});
-tabNavListCL.outwardCallbacks.push(function($ci) {
-    if ($ci.data("contextData").columnParity) {
-        $ci.addClass("odd");
-    }
-});
 
 
 
@@ -238,7 +221,7 @@ pageFieldCL.outwardCallbacks.push(function($ci) {
             dbReqManager.query($this, reqData, cacheKey, callback);
             return false;
         })
-        .on("append-cis", function(event, contentKey, dataArr, selector) {
+        .on("append-contents", function(event, contentKey, dataArr, selector) {
             let $obj = (typeof selector === "undefined") ?
                 $(this) : $(this).find(selector);
             let cl = pageFieldCL.getRelatedContentLoader(contentKey);
@@ -262,7 +245,9 @@ termListCL.outwardCallbacks.push(function($ci) {
 termListCL.outwardCallbacks.push(function($ci) {
     $ci
         .on("append-elements", function(event, contentKey, elemDataArr) {
-            $(this).trigger("append-cis", [contentKey, elemDataArr, 'ul, ol']);
+            $(this).trigger("append-contents",
+                [contentKey, elemDataArr, 'ul, ol']
+            );
             return false;
         })
         .on("empty", function(event, elemDataArr, elemCL) {
@@ -332,7 +317,8 @@ export var defSuperCatsPageCL = new ContentLoader(
     columnCL
 );
 defSuperCatsPageCL.outwardCallbacks.push(function($ci) {
-    let elemDataArr = [{}, {}, {}];
+    let ccd = $ci.data("childContextData");
+    let elemDataArr = [ccd, ccd, ccd];
     $ci.trigger("append-elements", ["CategoryListElement", elemDataArr]);
 });
 
@@ -371,4 +357,25 @@ categoryColumnCL.outwardCallbacks.push(function($ci) {
     );
     // open the "Subcategories" tab as the default one.
     $ci.trigger("open-tab-and-page", ["Subcategories"]);
+});
+
+
+
+
+
+
+tabNavListCL.nestedCSSRules.push(
+    '& > li > a { padding: 7px 12px; }'
+);
+tabNavListCL.nestedCSSRules.push(
+    '&.odd { margin-left: 2px }'
+);
+columnCL.inwardCallbacks.push(function($ci) {
+    let parentColumnParity = $ci.data("contextData").columnParity ?? true;
+    $ci.data("childContextData").columnParity = !parentColumnParity;
+});
+tabNavListCL.outwardCallbacks.push(function($ci) {
+    if ($ci.data("contextData").columnParity) {
+        $ci.addClass("odd");
+    }
 });
