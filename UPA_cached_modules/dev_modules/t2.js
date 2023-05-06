@@ -69,9 +69,11 @@ export class ContentLoader {
             .attr("class");
         $ci.addClass(existingClasses).addClass("CI")
             .addClass(this.contentKey);
-        $ci.data("contextData", $placeholder.data("contextData") ?? {})
+        let contextData = $placeholder.data("contextData");
+        $ci.data("contextData", contextData ?? {})
             .data(
-                "childContextData", $placeholder.data("childContextData") ?? {}
+                "childContextData",
+                $placeholder.data("childContextData") ?? contextData
             );
         // (Storing the contextData and childContextData on the CI itself
         // instead of passing them along as function parameters, means that
@@ -82,7 +84,6 @@ export class ContentLoader {
         // apply all the inward callbacks, which can change the initial HTML,
         // as well as the contextData given to the child CIs, namely the data
         // stored at $ci.data("childContextData").
-        var childContextData = Object.assign({}, contextData);
         let len = this.inwardCallbacks.length;
         for (let i = 0; i < len; i++) {
             this.inwardCallbacks[i]($ci);

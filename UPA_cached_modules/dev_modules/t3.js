@@ -34,19 +34,19 @@ export var outerColumnCL = new ContentLoader(
 outerColumnCL.nestedCSSRules.push(
     'margin: 5px 5px;'
 )
-outerColumnCL.inwardCallbacks.push(function($ci, data) {
-    switch (data.termID.substring(0, 1)) {
+outerColumnCL.inwardCallbacks.push(function($ci) {
+    let termType = $ci.data("contextData").termID.substring(0, 1);
+    switch (termType) {
         case "c":
             $ci.attr("data-key", "CategoryColumn");
             break;
         default:
             throw (
-                "Term type '" + data.termID.substring(0, 1) +
-                "' has not been implemented yet"
+                "Term type '" + termType + "' has not been implemented yet"
             );
     }
 });
-columnGroupCL.outwardCallbacks.push(function($ci, data) {
+columnGroupCL.outwardCallbacks.push(function($ci) {
     $ci.css({
         padding: "0px 20px 0px 20px"
     });
@@ -89,24 +89,24 @@ tabNavListCL.nestedCSSRules.push(
 tabNavListCL.nestedCSSRules.push(
     '&.odd { left-margin: 2px }'
 );
-columnCL.inwardCallbacks.push(function($ci, data, childData) {
-    let parentColumnParity = data.columnParity ?? 1;
-    childData.columnParity = !parentColumnOddity;
-});
-columnCL.outwardCallbacks.push(function($ci, data) {
-    let parentColumnParity = data.columnParity ?? 1;
-    $ci.data("columnParity", !parentColumnParity);
-});
-tabNavListCL.outwardCallbacks.push(function($ci, data) {
-    if (data.columnParity) {
-        $ci.addClass("odd");
-    }
-});
+// columnCL.inwardCallbacks.push(function($ci, data, childData) {
+//     let parentColumnParity = data.columnParity ?? 1;
+//     childData.columnParity = !parentColumnOddity;
+// });
+// columnCL.outwardCallbacks.push(function($ci, data) {
+//     let parentColumnParity = data.columnParity ?? 1;
+//     $ci.data("columnParity", !parentColumnParity);
+// });
+// tabNavListCL.outwardCallbacks.push(function($ci, data) {
+//     if (data.columnParity) {
+//         $ci.addClass("odd");
+//     }
+// });
 
 
 
 
-columnCL.outwardCallbacks.push(function($ci, data) {
+columnCL.outwardCallbacks.push(function($ci) {
     $ci.data("page-spec-store", {})
         .on("add-page", function(event, tabTitle, contentKey, pageData) {
             let pageCL = columnCL.getRelatedContentLoader(contentKey);
@@ -159,7 +159,7 @@ columnCL.outwardCallbacks.push(function($ci, data) {
 
 
 
-columnHeaderCL.outwardCallbacks.push(function($ci, data) {
+columnHeaderCL.outwardCallbacks.push(function($ci) {
     $ci
         .on("add-tab", function(event, tabTitle) {
             $(this).find('.CI.TabNavList')
@@ -174,7 +174,7 @@ columnHeaderCL.outwardCallbacks.push(function($ci, data) {
 });
 
 
-tabNavListCL.outwardCallbacks.push(function($ci, data) {
+tabNavListCL.outwardCallbacks.push(function($ci) {
     $ci
         .on("add-tab", function(event, tabTitle) {
             let $newTab = $(this).append(
@@ -200,7 +200,7 @@ tabNavListCL.outwardCallbacks.push(function($ci, data) {
 });
 
 
-columnMainCL.outwardCallbacks.push(function($ci, data) {
+columnMainCL.outwardCallbacks.push(function($ci) {
     $ci.data("open-pages-title-arr", [])
         .on("open-page", function(event, tabTitle, pageCL, pageData) {
             let $this = $(this);
@@ -234,7 +234,7 @@ export var pageFieldCL = new ContentLoader(
     '<div></div>',
     columnCL
 );
-pageFieldCL.outwardCallbacks.push(function($ci, data) {
+pageFieldCL.outwardCallbacks.push(function($ci) {
     $ci.data('db-request-manager', new DBRequestManager())
         .on("query-db", function(event, reqData, cacheKey, callback) {
             let $this = $(this);
@@ -260,10 +260,10 @@ export var termListCL = new ContentLoader(
     '<<PageField>>',
     columnCL
 );
-termListCL.outwardCallbacks.push(function($ci, data) {
+termListCL.outwardCallbacks.push(function($ci) {
     $ci.append('<ul class="container"></ul>');
 });
-termListCL.outwardCallbacks.push(function($ci, data) {
+termListCL.outwardCallbacks.push(function($ci) {
     $ci
         .on("append-elements", function(event, contentKey, elemDataArr) {
             $(this).trigger("append-cis", [contentKey, elemDataArr, 'ul, ol']);
@@ -305,7 +305,7 @@ export var categoryListElementCL = new ContentLoader(
     '<<TermListElement>>',
     columnCL
 );
-categoryListElementCL.outwardCallbacks.push(function($ci, data) {
+categoryListElementCL.outwardCallbacks.push(function($ci) {
     $ci.append(
         '<span>Hello, I will become a category term list element</span>'
     );
@@ -317,10 +317,10 @@ export var supercategoryPageCL = new ContentLoader(
     '<<Column>>',
     columnCL
 );
-supercategoryPageCL.outwardCallbacks.push(function($ci, data) {
-    $ci.trigger(
-        "add-tab-and-page",
-        ["Defining supercategories", "DefSuperCatsPage", data]
+supercategoryPageCL.outwardCallbacks.push(function($ci) {
+    let childContextData = $ci.data("childContextData");
+    $ci.trigger("add-tab-and-page",
+        ["Defining supercategories", "DefSuperCatsPage", childContextData]
     );
     $ci.trigger("open-tab-and-page", ["Defining supercategories"]);
     // open the "DefSuperCatsPage" tab as the default one.
@@ -333,7 +333,7 @@ export var defSuperCatsPageCL = new ContentLoader(
     '<<ExtensibleTermList>>',
     columnCL
 );
-defSuperCatsPageCL.outwardCallbacks.push(function($ci, data) {
+defSuperCatsPageCL.outwardCallbacks.push(function($ci) {
     let elemDataArr = [{}, {}, {}];
     $ci.trigger("append-elements", ["CategoryListElement", elemDataArr]);
 });
@@ -344,10 +344,11 @@ export var mainPageCL = new ContentLoader(
     '<div></div>',
     columnCL
 );
-mainPageCL.inwardCallbacks.push(function($ci, data) {
+mainPageCL.inwardCallbacks.push(function($ci) {
+    let contextData = $ci.data("contextData");
     $ci.prepend(
         '<span>Hello, I will be a main page generated from: ' +
-        JSON.stringify(data) + '</span>'
+        JSON.stringify(contextData) + '</span>'
     );
 });
 
@@ -359,15 +360,16 @@ export var categoryColumnCL = new ContentLoader(
 );
 
 
-categoryColumnCL.outwardCallbacks.push(function($ci, data) {
-    $ci.trigger(
-        "add-tab-and-page", ["Supercategories", "SupercategoryPage", data]
+categoryColumnCL.outwardCallbacks.push(function($ci) {
+    let childContextData = $ci.data("childContextData");
+    $ci.trigger("add-tab-and-page",
+        ["Supercategories", "SupercategoryPage", childContextData]
     );
-    $ci.trigger(
-        "add-tab-and-page", ["Subcategories", "MainPage", data]
+    $ci.trigger("add-tab-and-page",
+        ["Subcategories", "MainPage", childContextData]
     );
-    $ci.trigger(
-        "add-tab-and-page", ["Elements", "MainPage", data]
+    $ci.trigger("add-tab-and-page",
+        ["Elements", "MainPage", childContextData]
     );
     // open the "Subcategories" tab as the default one.
     $ci.trigger("open-tab-and-page", ["Subcategories"]);
