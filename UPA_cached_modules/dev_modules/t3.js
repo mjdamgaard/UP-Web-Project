@@ -11,18 +11,10 @@ export var upaCL = new ContentLoader(
     "ColumnBasedSDBInterface",
     /* Initial HTML */
     '<div id="upa1" class="sdb-interface-app">' +
-        '<<ColumnGroup>>' +
+        '<<OuterColumn>>' +
     '</div>'
 );
-export var columnGroupCL = new ContentLoader(
-    "ColumnGroup",
-    /* Initial HTML */
-    '<div class="app-column-group">' +
-        '<<OuterColumn>>' +
-    '</div>',
-    upaCL
-);
-columnGroupCL.inwardCallbacks.push(function($ci) {
+upaCL.inwardCallbacks.push(function($ci) {
     $ci.data("contextData").dbReqManager = new DBRequestManager();
 });
 
@@ -30,7 +22,7 @@ export var outerColumnCL = new ContentLoader(
     "OuterColumn",
     /* Initial HTML */
     '<<Column>>',
-    columnGroupCL,
+    upaCL,
 );
 outerColumnCL.nestedCSSRules.push(
     'margin: 5px 5px;'
@@ -47,7 +39,7 @@ outerColumnCL.inwardCallbacks.push(function($ci) {
             );
     }
 });
-columnGroupCL.outwardCallbacks.push(function($ci) {
+upaCL.outwardCallbacks.push(function($ci) {
     $ci.css({
         padding: "0px 20px 0px 20px"
     });
@@ -61,7 +53,7 @@ export var columnCL = new ContentLoader(
         "<<ColumnMain>>" +
         // "<<ColumnFooter>>" +
     '</div>',
-    columnGroupCL
+    upaCL
 );
 export var columnHeaderCL = new ContentLoader(
     "ColumnHeader",
@@ -283,7 +275,20 @@ export var termListElementCL = new ContentLoader(
     '<li class="list-group-item"></li>',
     columnCL
 );
+export var simpleTermListElementCL = new ContentLoader(
+    "SimpleTermListElement",
+    /* Initial HTML */
+    '<<TermListElement>>',
+    columnCL
+);
 
+simpleTermListElementCL.outwardCallbacks.push(function($ci) {
+    let termID = $ci.data("contextData").termID;
+    $ci.data("contextData").dbReqManager.query($ci, )...
+    $ci.append(
+        ''
+    );
+});
 
 /* Test */
 
@@ -356,7 +361,7 @@ export var categoryColumnCL = new ContentLoader(
     "CategoryColumn",
     /* Initial HTML */
     '<<Column>>',
-    columnGroupCL
+    upaCL
 );
 
 
