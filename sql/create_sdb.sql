@@ -63,16 +63,17 @@
 -- viser sig at være det mest effektive).
 
 CREATE TABLE Sets (
+    -- TODO: Change so that sets are homogeneous and thus carry one subj_t.
     -- set ID (which is not a term ID).
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     -- Sets are not Terms, so IDs take any value.
 
     -- user or user group who states the statement.
-    user_t CHAR(1) NOT NULL,
+    -- user_t CHAR(1) NOT NULL, ...
     user_id BIGINT UNSIGNED NOT NULL,
 
     -- subject of relation.
-    subj_t CHAR(1) NOT NULL,
+    -- subj_t CHAR(1) NOT NULL, ...
     subj_id BIGINT UNSIGNED NOT NULL,
 
     -- relation.
@@ -222,7 +223,7 @@ CREATE TABLE RecentInputs (
 );
 
 
-
+-- TODO: Remove this table and simply group all users and bots under "Users."
 CREATE TABLE UserGroups (
     -- user group ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -232,7 +233,7 @@ CREATE TABLE UserGroups (
     -- instead.
 
     -- id of the creating user group (or user or bot).
-    creator_t CHAR(1) NOT NULL,
+    -- creator_t CHAR(1) NOT NULL, ...
     creator_id BIGINT UNSIGNED NOT NULL,
 
     -- This is not the date at which the user group was created as a term.

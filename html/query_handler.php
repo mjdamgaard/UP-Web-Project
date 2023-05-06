@@ -73,7 +73,7 @@ switch ($reqType) {
         );
         // columns: ("ratVal"),
         break;
-    case "CD": //...
+    case "CD":
         $sql = "CALL selectCatDef (?)";
         $paramNameArr = array("id");
         $typeArr = array(
