@@ -282,13 +282,13 @@ export var simpleTermListElementCL = new ContentLoader(
     columnCL
 );
 
-simpleTermListElementCL.outwardCallbacks.push(function($ci) {
-    let termID = $ci.data("contextData").termID;
-    $ci.data("contextData").dbReqManager.query($ci, )...
-    $ci.append(
-        ''
-    );
-});
+// simpleTermListElementCL.outwardCallbacks.push(function($ci) {
+//     let termID = $ci.data("contextData").termID;
+//     $ci.data("contextData").dbReqManager.query($ci, )...
+//     $ci.append(
+//         ''
+//     );
+// });
 
 /* Test */
 

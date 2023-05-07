@@ -78,7 +78,6 @@ DELIMITER ;
 -- TODO: Change such that new sets are also added to Creations.
 DELIMITER //
 CREATE PROCEDURE findOrCreateSet (
-    IN userType CHAR(1),
     IN userID BIGINT UNSIGNED,
     IN subjType CHAR(1),
     IN subjID BIGINT UNSIGNED,
@@ -90,7 +89,6 @@ BEGIN
     SELECT id INTO newID
     FROM Sets
     WHERE (
-        user_t = userType AND
         user_id = userID AND
         subj_t = subjType AND
         subj_id = subjID AND
@@ -98,7 +96,6 @@ BEGIN
     );
     IF (newID IS NULL) THEN
         INSERT INTO Sets (
-            user_t,
             user_id,
             subj_t,
             subj_id,
@@ -106,7 +103,6 @@ BEGIN
             elem_num
         )
         VALUES (
-            userType,
             userID,
             subjType,
             subjID,
@@ -127,7 +123,6 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrUpdateRecentInput (
     IN setID BIGINT UNSIGNED,
-    IN objType CHAR(1),
     IN objID BIGINT UNSIGNED,
     IN ratingVal VARBINARY(255),
     IN previousRating VARBINARY(255)
@@ -141,12 +136,11 @@ BEGIN
         WHERE (
             set_id = setID AND
             changed_at = currentDate AND
-            obj_t = objType AND
             obj_id = objID
         )
         -- If this procedure is not called from any other procedures than
         -- inputOrChangeRating() below (as intended!), no race conditions
-        -- are possible due to the FOR UPDATE lock on (setID, objType, objID)
+        -- are possible due to the FOR UPDATE lock on (setID, objID)
         -- in that procedure.
     );
 
@@ -156,21 +150,18 @@ BEGIN
         WHERE (
             set_id = setID AND
             changed_at = currentDate AND
-            obj_t = objType AND
             obj_id = objID
         );
     ELSE
         INSERT INTO RecentInputs (
             set_id,
             changed_at,
-            obj_t,
             obj_id,
             old_rat_val,
             new_rat_val
         ) VALUES (
             setID,
             currentDate,
-            objType,
             objID,
             previousRating, -- possibly NULL.
             ratingVal  -- also possibly NULL.

@@ -22,18 +22,17 @@ CREATE PROCEDURE inputOrChangeRating (
     OUT exitCode TINYINT
 )
 BEGIN
-    DECLARE userType, subjType, objType CHAR(1);
+    DECLARE subjType, objType CHAR(1);
     DECLARE userID, subjID, relID, objID, setID BIGINT UNSIGNED;
     DECLARE previousRating, ratingVal VARBINARY(255);
     DECLARE ecFindOrCreateSet TINYINT;
 
-    CALL getTypeAndConvID (userCombID, userType, userID);
+    CALL getConvID (userCombID, userID);
     CALL getTypeAndConvID (subjCombID, subjType, subjID);
     CALL getConvID (relCombID, relID);
     CALL getTypeAndConvID (objCombID, objType, objID);
     SET ratingVal = UNHEX(ratingValHex);
     CALL findOrCreateSet (
-        userType,
         userID,
         subjType,
         subjID,

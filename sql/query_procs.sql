@@ -39,7 +39,7 @@ DROP PROCEDURE selectUserGroupInfo;
 
 DELIMITER //
 CREATE PROCEDURE selectSet (
-    IN setCombID VARCHAR(17),
+    IN setHexID VARCHAR(16),
     IN ratingRangeMinHex VARCHAR(510),
     IN ratingRangeMaxHex VARCHAR(510),
     IN num INT UNSIGNED,
@@ -50,13 +50,13 @@ BEGIN
     DECLARE setID BIGINT UNSIGNED;
     DECLARE ratMin, ratMax VARBINARY(255);
 
-    CALL getConvID (setCombID, setID);
+    SET setID = CONV(setHexID, 16, 10)
     SET ratMin = UNHEX(ratingRangeMinHex);
     SET ratMax = UNHEX(ratingRangeMaxHex);
 
     SELECT
         HEX(rat_val) AS ratVal,
-        CONCAT(obj_t, CONV(obj_id, 10, 16)) AS objID
+        CONV(obj_id, 10, 16) AS objID ...
     FROM SemanticInputs
     WHERE (
         set_id = setID AND
@@ -85,7 +85,7 @@ BEGIN
     CALL getConvID (setCombID, setID);
 
     SELECT
-        CONCAT(user_t, CONV(user_id, 10, 16)) AS userID,
+        CONCAT('u', CONV(user_id, 10, 16)) AS userID,
         CONCAT(subj_t, CONV(subj_id, 10, 16)) AS subjID,
         CONCAT('r', CONV(rel_id, 10, 16)) AS relID,
         elem_num AS elemNum
@@ -102,16 +102,15 @@ CREATE PROCEDURE selectSetInfoFromSecKey (
     IN relCombID VARCHAR(17)
 )
 BEGIN
-    DECLARE userType, subjType CHAR(1);
+    DECLARE subjType CHAR(1);
     DECLARE userID, subjID, relID, setID, elemNum BIGINT UNSIGNED;
 
-    CALL getTypeAndConvID (userCombID, userType, userID);
+    CALL getConvID (userCombID, userID);
     CALL getTypeAndConvID (subjCombID, subjType, subjID);
     CALL getConvID (relCombID, relID);
     SELECT id, elem_num INTO setID, elemNum
     FROM Sets
     WHERE (
-        user_t = userType AND
         user_id = userID AND
         subj_t = subjType AND
         subj_id = subjID AND
@@ -217,15 +216,14 @@ CREATE PROCEDURE selectRating (
     IN setCombID VARCHAR(17)
 )
 BEGIN
-    DECLARE objType CHAR(1);
     DECLARE objID, setID BIGINT UNSIGNED;
 
-    CALL getTypeAndConvID (objCombID, objType, objID);
+    CALL getConvID (objCombID, objID);
     CALL getConvID (setCombID, setID);
 
     SELECT HEX(rat_val) AS ratVal
     FROM SemanticInputs
-    WHERE (obj_t = objType AND obj_id = objID AND set_id = setID);
+    WHERE (obj_id = objID AND set_id = setID);
 END //
 DELIMITER ;
 

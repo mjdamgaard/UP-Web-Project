@@ -45,15 +45,15 @@ export class DBRequestManager {
             callback = cacheKey;
             cacheKey = null;
         }
-        // else {
-        //     let cachedValue = this.cache[cacheKey];
-        //     if (typeof cachedValue !== "undefined") {
-        //         callback($obj, cachedValue, "success: cached", this.cache);
-        //     }
-        //     // TODO: Consider a reimplementation where cacheKey can consist of
-        //     // several consequtive keys seperated by dots ('.'), where the
-        //     // lookup then becomes like this.cache[key1][key2]...[keyN].
-        // }
+    // else {
+    //     let cachedValue = this.cache[cacheKey];
+    //     if (typeof cachedValue !== "undefined") {
+    //         callback($obj, cachedValue, "success: cached", this.cache);
+    //     }
+    //     // TODO: Consider a reimplementation where cacheKey can consist of
+    //     // several consequtive keys seperated by dots ('.'), where the
+    //     // lookup then becomes like this.cache[key1][key2]...[keyN].
+    // }
         let thisDBReqManager = this;
         $.getJSON("query_handler.php", reqData, function(result, textStatus) {
             // unless reqKey == "Set", sanitize the first column of result.
@@ -78,7 +78,7 @@ export class DBRequestManager {
     }
 
     // TODO: Add more query methods, preferably some that gathers several
-    // requests into one, reading part of the request from the termType.. 
+    // requests into one, reading part of the request from the termType..
 }
 
 
