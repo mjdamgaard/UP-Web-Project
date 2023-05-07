@@ -30,6 +30,7 @@ DROP TABLE UserGroups;
 --
 DROP TABLE Categories;
 DROP TABLE ElementaryTerms;
+DROP TABLE Terms;
 DROP TABLE Relations;
 -- DROP TABLE KeywordStrings;
 -- DROP TABLE Patterns;
@@ -273,6 +274,31 @@ CREATE TABLE Relations (
 
 
 
+CREATE TABLE Texts (
+    /* text ID */
+    id BIGINT UNSIGNED PRIMARY KEY,
+    -- type = "a". -- or (= "x")..
+
+    /* data */
+    str TEXT NOT NULL
+);
+
+
+
+CREATE TABLE Binaries (
+    /* binary string ID */
+    id BIGINT UNSIGNED PRIMARY KEY,
+    -- type = "b".
+
+    /* data */
+    bin BLOB NOT NULL
+);
+
+
+
+
+
+
 CREATE TABLE KeywordStrings (
     /* keyword string ID */
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -310,28 +336,6 @@ CREATE TABLE Lists (
 
     -- tail_t not needed; it is always List type.
     tail_id BIGINT UNSIGNED
-);
-
-
-
-CREATE TABLE Texts (
-    /* text ID */
-    id BIGINT UNSIGNED PRIMARY KEY,
-    -- type = "a". -- or (= "x")..
-
-    /* data */
-    str TEXT NOT NULL
-);
-
-
-
-CREATE TABLE Binaries (
-    /* binary string ID */
-    id BIGINT UNSIGNED PRIMARY KEY,
-    -- type = "b".
-
-    /* data */
-    bin BLOB NOT NULL
 );
 
 

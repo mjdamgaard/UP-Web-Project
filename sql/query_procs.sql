@@ -155,15 +155,12 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectCatInfo (
-    IN catID VARCHAR(17)
+    IN catID BIGINT UNSIGNED
 )
 BEGIN
-    DECLARE catID BIGINT UNSIGNED;
-    CALL getConvID (catCombID, catID);
-
     SELECT
-        title AS catTitle,
-        CONCAT('c', CONV(super_cat_id, 10, 16)) AS superCatID
+        title AS title,
+        super_cat_id AS superCatID
     FROM Categories
     WHERE id = catID;
 END //
@@ -171,33 +168,29 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectETermDef (
-    IN eTermCombID VARCHAR(17)
+CREATE PROCEDURE selectTermInfo (
+    IN termID BIGINT UNSIGNED
 )
 BEGIN
-    DECLARE eTermID BIGINT UNSIGNED;
-    CALL getConvID (eTermCombID, eTermID);
-
     SELECT
-        title AS eTermTitle,
-        CONCAT('e', CONV(cat_id, 10, 16)) AS catID
-    FROM ElementaryTerms
-    WHERE id = eTermID;
+        title AS title,
+        cat_id AS catID
+    FROM Terms
+    WHERE id = termID;
 END //
 DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectRelDef (
-    IN relCombID VARCHAR(17)
+CREATE PROCEDURE selectRelInfo (
+    IN relID BIGINT UNSIGNED
 )
 BEGIN
-    DECLARE relID BIGINT UNSIGNED;
-    CALL getConvID (relCombID, relID);
-
     SELECT
+        subj_t AS subjType
+        obj_t AS objType
         obj_noun AS objNoun,
-        CONCAT('c', CONV(subj_cat_id, 10, 16)) AS subjCatID
+        subj_cat_id AS subjCatID
     FROM Relations
     WHERE id = relID;
 END //
@@ -205,17 +198,56 @@ DELIMITER ;
 
 
 
+DELIMITER //
+CREATE PROCEDURE selectCatIDFromSecKey (
+    IN title VARCHAR(255),
+    IN superCatID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT id AS catID
+    FROM Categories
+    WHERE (title = title AND super_cat_id = superCatID);
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectTermIDFromSecKey (
+    IN title VARCHAR(255),
+    IN catID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT id AS termID
+    FROM Terms
+    WHERE (title = title AND cat_id = catID);
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectRelIDFromSecKey (
+    IN subjType CHAR(1),
+    IN objType CHAR(1),
+    IN objNoun VARCHAR(255)
+)
+BEGIN
+    SELECT id AS relID
+    FROM Relations
+    WHERE (subj_t = subjType AND obj_t = objType AND obj_noun = objNoun);
+END //
+DELIMITER ;
+
+
+
+
 
 DELIMITER //
 CREATE PROCEDURE selectSuperCatDefs (
-    IN catCombID VARCHAR(17)
+    IN catID BIGINT UNSIGNED
 )
 BEGIN
-    DECLARE catID BIGINT UNSIGNED;
     DECLARE str VARCHAR(255);
     DECLARE n TINYINT UNSIGNED;
-
-    CALL getConvID (catCombID, catID);
 
     CREATE TEMPORARY TABLE ret
         SELECT title, super_cat_id
@@ -237,18 +269,12 @@ BEGIN
     END LOOP label1;
 
     SELECT
-        title AS catTitle,
-        CONCAT('c', CONV(super_cat_id, 10, 16)) AS superCatID
+        title AS title,
+        super_cat_id AS superCatID
     FROM ret
     ORDER BY super_cat_id DESC;
 END //
 DELIMITER ;
-
--- SHOW WARNINGS;
-
-
-
-
 
 
 
@@ -256,54 +282,49 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectText (
-    IN txtCombID VARCHAR(17)
+    IN textID BIGINT UNSIGNED
 )
 BEGIN
-    DECLARE txtID BIGINT UNSIGNED;
-    CALL getConvID (txtCombID, txtID);
-
     SELECT str as text
     FROM Texts
-    WHERE id = txtID;
+    WHERE id = textID;
 END //
 DELIMITER ;
 
+
 DELIMITER //
 CREATE PROCEDURE selectBinary (
-    IN binCombID VARCHAR(17)
+    IN binID BIGINT UNSIGNED
 )
 BEGIN
-    DECLARE binID BIGINT UNSIGNED;
-    CALL getConvID (binCombID, binID);
-
     SELECT bin as bin
     FROM Binaries
     WHERE id = binID;
 END //
 DELIMITER ;
 
+
+
+
+
+
 DELIMITER //
 CREATE PROCEDURE selectKeywordString (
-    IN kwsCombID VARCHAR(17)
+    IN kwsID BIGINT UNSIGNED
 )
 BEGIN
-    DECLARE kwsID BIGINT UNSIGNED;
-    CALL getConvID (kwsCombID, kwsID);
-
     SELECT str as str
     FROM KeywordStrings
     WHERE id = kwsID;
 END //
 DELIMITER ;
 
+
 DELIMITER //
 CREATE PROCEDURE selectPattern (
-    IN patCombID VARCHAR(17)
+    IN patID BIGINT UNSIGNED
 )
 BEGIN
-    DECLARE patID BIGINT UNSIGNED;
-    CALL getConvID (patCombID, patID);
-
     SELECT str as str
     FROM Patterns
     WHERE id = patID;
@@ -313,31 +334,38 @@ DELIMITER ;
 
 
 
--- TODO: Add data select procedures.
-
--- DELIMITER //
--- CREATE PROCEDURE selectData (
---     IN dataType CHAR(1),
---     IN dataIDHex VARCHAR(16)
--- )
--- BEGIN
---     DECLARE dataID BIGINT UNSIGNED;
---     SET dataID = CONV(dataIDHex, 16, 10);
---
---     CASE dataType
---         WHEN "t" THEN
---             SELECT str AS str FROM Texts WHERE (id = dataID);
---         -- TODO: Implement more data term types.
---         ELSE
---             SELECT NULL;
---     END CASE;
--- END //
--- DELIMITER ;
+DELIMITER //
+CREATE PROCEDURE searchForKeywordStrings (
+    IN kwsID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT str as str
+    FROM KeywordStrings
+    WHERE id = kwsID;
+END //
+DELIMITER ;
 
 
+DELIMITER //
+CREATE PROCEDURE searchForPatternIDFromSecKey (
+    IN str VARCHAR(768)
+)
+BEGIN
+    SELECT id as pattID
+    FROM Patterns
+    WHERE str = str;
+END //
+DELIMITER ;
 
 
--- TODO: Add selectRecentInputs()..
+
+
+
+
+
+
+
+
 
 
 
