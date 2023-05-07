@@ -53,24 +53,18 @@ CREATE TABLE Sets (
     user_id BIGINT UNSIGNED NOT NULL,
 
     -- subject of relation.
-    subj_t CHAR(1) NOT NULL,
     subj_id BIGINT UNSIGNED NOT NULL,
 
     -- relation.
     rel_id BIGINT UNSIGNED NOT NULL,
-
-    -- object type (sets are homogeneous).
-    obj_t CHAR(1) NOT NULL,
 
     -- number of elements.
     elem_num BIGINT UNSIGNED NOT NULL,
 
     UNIQUE INDEX (
         user_id,
-        subj_t,
         subj_id,
-        rel_id,
-        obj_t
+        rel_id
     )
 
 
@@ -150,7 +144,7 @@ CREATE TABLE RecentInputs (
 --     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 --     -- type = "grp".
 --
---     -- TODO: I think I will change (creator_t, creator_id) to just a set_id
+--     -- todo: I think I will change (creator_t, creator_id) to just a set_id
 --     -- instead.
 --
 --     -- id of the creating user group (or user or bot).
@@ -229,7 +223,6 @@ CREATE TABLE Categories (
     -- title of the category, preferably a plural noun describing/referencing
     -- the elements in the category.
     title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-    -- FULLTEXT idx (title),
 
     -- id of a defining super category.
     super_cat_id BIGINT UNSIGNED NOT NULL,
@@ -245,7 +238,6 @@ CREATE TABLE Terms (
 
     -- title of the term.
     title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-    -- FULLTEXT idx (title),
 
     -- id of a defining category.
     cat_id BIGINT UNSIGNED NOT NULL,
@@ -258,6 +250,9 @@ CREATE TABLE Relations (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     -- type = "r".
 
+    subj_t CHAR(1) NOT NULL,
+    obj_t CHAR(1) NOT NULL,
+
     -- noun describing the object in terms of what the object is to the
     -- subject of the relation. This is except (at least) in cases where the
     -- subject category is Categories: Then the obj_noun can also be an
@@ -265,7 +260,7 @@ CREATE TABLE Relations (
     -- in <subject>. Please capitilize nouns, but not adjectives. *No. I
     -- actually think that it is better if we do use only nouns, write
     -- "<adjective> elements" instead of "<adjective>." This allows us to
-    -- better parse whether parse the adjectives, without a very high risk
+    -- better parse the adjectives, without a very high risk
     -- of parsing an object noun as an adjective instead. And the "elements"
     -- can then just be removed client-side for adjective relations.
     -- *(And we should also have object nouns of the form "Elements <verb in
@@ -278,8 +273,7 @@ CREATE TABLE Relations (
     -- subj_cat_id BIGINT UNSIGNED NOT NULL,
     -- -- obj_cat_id BIGINT UNSIGNED NOT NULL,
 
-    -- UNIQUE INDEX (obj_noun, obj_cat_id, subj_cat_id)
-    UNIQUE INDEX (obj_noun, subj_cat_id)
+    UNIQUE INDEX (subj_t, obj_t, obj_noun)
 );
 
 
