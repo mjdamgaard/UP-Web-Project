@@ -56,7 +56,7 @@ BEGIN
 
     SELECT
         HEX(rat_val) AS ratVal,
-        CONV(obj_id, 10, 16) AS objID
+        CONV(obj_id, 10, 16) AS objID..
     FROM SemanticInputs
     WHERE (
         set_id = setID AND
