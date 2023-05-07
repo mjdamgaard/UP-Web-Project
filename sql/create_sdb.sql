@@ -253,7 +253,6 @@ CREATE TABLE ElementaryTerms (
     UNIQUE INDEX (title, cat_id)
 );
 
-
 CREATE TABLE Relations (
     -- relation ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
