@@ -398,7 +398,7 @@ BEGIN
 
     SET n = 0;
     label1: LOOP
-        IF (NOT catID <= 1 OR n >= maxNum) THEN
+        IF (catID = 0 OR n >= maxNum) THEN
             LEAVE label1;
         END IF;
         SELECT title, super_cat_id INTO str, catID
