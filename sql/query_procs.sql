@@ -42,7 +42,7 @@ CREATE PROCEDURE selectSet (
     IN setID BIGINT UNSIGNED,
     IN ratingRangeMinHex VARCHAR(510),
     IN ratingRangeMaxHex VARCHAR(510),
-    IN num INT UNSIGNED,
+    IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED,
     IN isAscOrder BOOL
 )
@@ -65,7 +65,7 @@ BEGIN
         CASE WHEN NOT isAscOrder THEN rat_val END DESC,
         CASE WHEN isAscOrder THEN obj_id END ASC,
         CASE WHEN NOT isAscOrder THEN obj_id END DESC
-    LIMIT numOffset, num;
+    LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
 
@@ -110,6 +110,22 @@ BEGIN
 END //
 DELIMITER ;
 
+DELIMITER //
+CREATE PROCEDURE selectSetID (
+    IN userID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
+    IN relID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT id AS setID
+    FROM Sets
+    WHERE (
+        user_id = userID AND
+        subj_id = subjID AND
+        rel_id = relID
+    );
+END //
+DELIMITER ;
 
 
 
@@ -199,27 +215,33 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectCatIDFromSecKey (
-    IN title VARCHAR(255),
-    IN superCatID BIGINT UNSIGNED
+CREATE PROCEDURE searchForCatIDs (
+    IN str VARCHAR(255),
+    IN superCatID BIGINT UNSIGNED,
+    IN maxNum INT,
+    IN numOffset INT
 )
 BEGIN
     SELECT id AS catID
     FROM Categories
-    WHERE (title = title AND super_cat_id = superCatID);
+    WHERE (title >= str AND super_cat_id = superCatID)
+    LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
 
 
 DELIMITER //
 CREATE PROCEDURE selectTermIDFromSecKey (
-    IN title VARCHAR(255),
-    IN catID BIGINT UNSIGNED
+    IN str VARCHAR(255),
+    IN catID BIGINT UNSIGNED,
+    IN maxNum INT,
+    IN numOffset INT
 )
 BEGIN
     SELECT id AS termID
     FROM Terms
-    WHERE (title = title AND cat_id = catID);
+    WHERE (title >= str AND cat_id = catID)
+    LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
 
@@ -228,12 +250,15 @@ DELIMITER //
 CREATE PROCEDURE selectRelIDFromSecKey (
     IN subjType CHAR(1),
     IN objType CHAR(1),
-    IN objNoun VARCHAR(255)
+    IN str VARCHAR(255),
+    IN maxNum INT,
+    IN numOffset INT
 )
 BEGIN
     SELECT id AS relID
     FROM Relations
-    WHERE (subj_t = subjType AND obj_t = objType AND obj_noun = objNoun);
+    WHERE (subj_t = subjType AND obj_t = objType AND obj_noun >= str)
+    LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
 
@@ -285,7 +310,7 @@ CREATE PROCEDURE selectText (
     IN textID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT str as text
+    SELECT str AS text
     FROM Texts
     WHERE id = textID;
 END //
@@ -297,7 +322,7 @@ CREATE PROCEDURE selectBinary (
     IN binID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT bin as bin
+    SELECT bin AS bin
     FROM Binaries
     WHERE id = binID;
 END //
@@ -313,7 +338,7 @@ CREATE PROCEDURE selectKeywordString (
     IN kwsID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT str as str
+    SELECT str AS str
     FROM KeywordStrings
     WHERE id = kwsID;
 END //
@@ -322,12 +347,12 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectPattern (
-    IN patID BIGINT UNSIGNED
+    IN pattID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT str as str
+    SELECT str AS str
     FROM Patterns
-    WHERE id = patID;
+    WHERE id = pattID;
 END //
 DELIMITER ;
 
@@ -336,24 +361,24 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE searchForKeywordStrings (
-    IN kwsID BIGINT UNSIGNED
+    IN s VARCHAR(768)
 )
 BEGIN
-    SELECT str as str
+    SELECT MATCH ... id  AS kwsID
     FROM KeywordStrings
-    WHERE id = kwsID;
+    WHERE MATCH ... str >= s;
 END //
 DELIMITER ;
 
 
 DELIMITER //
 CREATE PROCEDURE searchForPatternIDFromSecKey (
-    IN str VARCHAR(768)
+    IN s VARCHAR(768)
 )
 BEGIN
     SELECT id as pattID
     FROM Patterns
-    WHERE str = str;
+    WHERE str >= s;
 END //
 DELIMITER ;
 
