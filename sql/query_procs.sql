@@ -47,10 +47,7 @@ CREATE PROCEDURE selectSet (
     IN isAscOrder BOOL
 )
 BEGIN
-    DECLARE setID BIGINT UNSIGNED;
     DECLARE ratMin, ratMax VARBINARY(255);
-
-    SET setID = CONV(setHexID, 16, 10)
     SET ratMin = UNHEX(ratingRangeMinHex);
     SET ratMax = UNHEX(ratingRangeMaxHex);
 
@@ -66,8 +63,6 @@ BEGIN
     ORDER BY
         CASE WHEN isAscOrder THEN rat_val END ASC,
         CASE WHEN NOT isAscOrder THEN rat_val END DESC,
-        CASE WHEN isAscOrder THEN obj_t END ASC,
-        CASE WHEN NOT isAscOrder THEN obj_t END DESC,
         CASE WHEN isAscOrder THEN obj_id END ASC,
         CASE WHEN NOT isAscOrder THEN obj_id END DESC
     LIMIT numOffset, num;
@@ -78,15 +73,12 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectSetInfo (
-    IN setCombID VARCHAR(17)
+    IN setID BIGINT UNSIGNED
 )
 BEGIN
-    DECLARE setID BIGINT UNSIGNED;
-    CALL getConvID (setCombID, setID);
-
     SELECT
-        CONCAT('u', CONV(user_id, 10, 16)) AS userID,
-        CONCAT(subj_t, CONV(subj_id, 10, 16)) AS subjID,
+        user_id AS userID,
+        CONCAT(subj_t, subj_id) AS subjID,
         CONCAT('r', CONV(rel_id, 10, 16)) AS relID,
         elem_num AS elemNum
     FROM Sets
