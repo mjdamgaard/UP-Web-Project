@@ -238,10 +238,10 @@ CREATE TABLE Categories (
 
 );
 
-CREATE TABLE ElementaryTerms (
+CREATE TABLE Terms (
     -- term ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    -- type = "e".
+    -- type = "t".
 
     -- title of the term.
     title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
@@ -275,8 +275,8 @@ CREATE TABLE Relations (
     -- FULLTEXT idx (obj_noun),
 
 
-    subj_cat_id BIGINT UNSIGNED NOT NULL,
-    obj_cat_id BIGINT UNSIGNED NOT NULL,
+    -- subj_cat_id BIGINT UNSIGNED NOT NULL,
+    -- -- obj_cat_id BIGINT UNSIGNED NOT NULL,
 
     -- UNIQUE INDEX (obj_noun, obj_cat_id, subj_cat_id)
     UNIQUE INDEX (obj_noun, subj_cat_id)
@@ -330,7 +330,7 @@ CREATE TABLE Lists (
 CREATE TABLE Texts (
     /* text ID */
     id BIGINT UNSIGNED PRIMARY KEY,
-    -- type = "t".
+    -- type = "a". -- or (= "x")..
 
     /* data */
     str TEXT NOT NULL
@@ -352,11 +352,10 @@ CREATE TABLE Binaries (
 
 
 CREATE TABLE Creators (
-    term_t CHAR(1) NOT NULL,
-    term_id BIGINT UNSIGNED NOT NULL,
+    entity_t CHAR(1) NOT NULL,
+    entity_id BIGINT UNSIGNED NOT NULL,
     PRIMARY KEY (term_t, term_id),
 
-    -- creator (always has type = "usr").
     user_id BIGINT UNSIGNED NOT NULL,
     INDEX (user_id)
 );
