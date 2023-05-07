@@ -349,23 +349,33 @@ DELIMITER //
 CREATE PROCEDURE searchForKeywordStrings (
     IN s VARCHAR(768),
     IN maxNum INT,
-    IN numOffset INT,
-    IN mode VARCHAR(2)
+    IN numOffset INT
 )
 BEGIN
     SELECT
         str AS str,
         id AS kwsID
     FROM KeywordStrings
-    WHERE MATCH (str) AGAINST (
-        s
-        CASE WHEN mode = "NL" THEN IN NATURAL LANGUAGE MODE END
-        CASE WHEN mode = "B" THEN IN BOOLEAN MODE END
-    )
+    WHERE MATCH (str) AGAINST (s IN NATURAL LANGUAGE MODE)
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
 
+DELIMITER //
+CREATE PROCEDURE searchForKeywordStringsBooleanMode (
+    IN s VARCHAR(768),
+    IN maxNum INT,
+    IN numOffset INT
+)
+BEGIN
+    SELECT
+        str AS str,
+        id AS kwsID
+    FROM KeywordStrings
+    WHERE MATCH (str) AGAINST (s IN BOOLEAN MODE)
+    LIMIT numOffset, maxNum;
+END //
+DELIMITER ;
 
 
 
@@ -457,6 +467,19 @@ DELIMITER ;
 
 
 DELIMITER //
+CREATE PROCEDURE selectCreator (
+    IN entityType CHAR(1),
+    IN entityID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT user_id AS userID
+    FROM Creators
+    WHERE (entity_t = entityType AND entity_id = entityID);
+END //
+DELIMITER ;
+
+
+DELIMITER //
 CREATE PROCEDURE selectCreations (
     IN userID BIGINT UNSIGNED,
     IN entityType CHAR(1),
@@ -473,7 +496,11 @@ BEGIN
         user_id = userID AND
         (entityType IS NULL OR term_t = termType)
     )
-    ORDER BY   ...CASE... entity_t ASC, entity_id ASC
+    ORDER BY
+        CASE WHEN isAscOrder THEN entity_t END ASC,
+        CASE WHEN NOT isAscOrder THEN entity_t END DESC,
+        CASE WHEN isAscOrder THEN entity_id END ASC,
+        CASE WHEN NOT isAscOrder THEN entity_id END DESC
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
