@@ -77,142 +77,48 @@ CREATE PROCEDURE selectSetInfo (
 )
 BEGIN
     SELECT
-        user_id AS userID,
-        CONCAT(subj_t, subj_id) AS subjID,
-        CONCAT('r', CONV(rel_id, 10, 16)) AS relID,
-        elem_num AS elemNum
-    FROM Sets
-    WHERE id = setID;
+        Sets.id AS setID,
+        Sets.user_id AS userID,
+        Relations.subj_t AS subjType
+        Sets.subj_id AS subjID,
+        Sets.rel_id AS relID,
+        Relations.obj_noun AS relObjNoun
+        Relations.obj_t AS objType
+        Sets.elem_num AS elemNum
+    FROM Sets INNER JOIN Relations ON Sets.rel_id = Relations.id
+    WHERE Sets.id = setID;
 END //
 DELIMITER ;
 
 
 DELIMITER //
 CREATE PROCEDURE selectSetInfoFromSecKey (
-    IN userCombID VARCHAR(17),
-    IN subjCombID VARCHAR(17),
-    IN relCombID VARCHAR(17)
+    IN userID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
+    IN relID BIGINT UNSIGNED
 )
 BEGIN
-    DECLARE subjType CHAR(1);
-    DECLARE userID, subjID, relID, setID, elemNum BIGINT UNSIGNED;
-
-    CALL getConvID (userCombID, userID);
-    CALL getTypeAndConvID (subjCombID, subjType, subjID);
-    CALL getConvID (relCombID, relID);
-    SELECT id, elem_num INTO setID, elemNum
+    DECLARE setID BIGINT UNSIGNED;
+    SELECT id INTO setID
     FROM Sets
     WHERE (
         user_id = userID AND
-        subj_t = subjType AND
         subj_id = subjID AND
         rel_id = relID
     );
-
-    SELECT
-        CONCAT('s', CONV(setID, 10, 16)) AS setID,
-        elemNum;
+    CALL selectSetInfo (setID);
 END //
 DELIMITER ;
 
-
--- DELIMITER //
--- CREATE PROCEDURE selectSetElemNumFromID(
---     IN setIDHex VARCHAR(16)
--- )
--- BEGIN
---     DECLARE setID BIGINT UNSIGNED;
---     SET setID = CONV(setIDHex, 16, 10);
---     SELECT elem_num AS elemNum
---     FROM Sets
---     WHERE (id = setID);
--- END //
--- DELIMITER ;
-
-
--- DELIMITER //
--- CREATE PROCEDURE selectSetFromSecKey(
---     IN userType CHAR(1),
---     IN userIDHex VARCHAR(16),
---     IN subjType CHAR(1),
---     IN subjIDHex VARCHAR(16),
---     IN relIDHex VARCHAR(16),
---     IN ratingRangeMin VARBINARY(255),
---     IN ratingRangeMax VARBINARY(255),
---     IN num INT UNSIGNED,
---     IN numOffset INT UNSIGNED,
---     IN isAscOrder BOOL
--- )
--- BEGIN
---     DECLARE setID BIGINT UNSIGNED;
---     CALL getSetIntsFromSecKey (
---         userType,
---         userIDHex,
---         subjType,
---         subjIDHex,
---         relIDHex,
---         setID
---     );
---     CALL selectSetFromSetIDInt (
---         setID,
---         ratingRangeMin,
---         ratingRangeMax,
---         num,
---         numOffset,
---         isAscOrder
---     );
--- END //
--- DELIMITER ;
-
-
-
-
-
-
--- DELIMITER //
--- CREATE PROCEDURE selectRatingFromSecKey (
---     IN objCombID VARCHAR(17),
---     IN userCombID VARCHAR(17),
---     IN subjCombID VARCHAR(17),
---     IN relCombID VARCHAR(17)
--- )
--- BEGIN
---     DECLARE objType, userType, subjType CHAR(1);
---     DECLARE objID, userID, subjID, relID, setID BIGINT UNSIGNED;
---
---     CALL getTypeAndConvID (objCombID, objType, objID);
---     CALL getTypeAndConvID (userCombID, userType, userID);
---     CALL getTypeAndConvID (subjCombID, subjType, subjID);
---     CALL getConvID (relCombID, relID);
---     SELECT id INTO setID
---     FROM Sets
---     WHERE (
---         user_t = userType AND
---         user_id = userID AND
---         subj_t = subjType AND
---         subj_id = subjID AND
---         rel_id = relID
---     );
---
---     SELECT HEX(rat_val) AS ratVal
---     FROM SemanticInputs
---     WHERE (obj_t = objType AND obj_id = objID AND set_id = setID);
--- END //
--- DELIMITER ;
 
 
 
 DELIMITER //
 CREATE PROCEDURE selectRating (
-    IN objCombID VARCHAR(17),
-    IN setCombID VARCHAR(17)
+    IN objID BIGINT UNSIGNED,
+    IN setID BIGINT UNSIGNED
 )
 BEGIN
-    DECLARE objID, setID BIGINT UNSIGNED;
-
-    CALL getConvID (objCombID, objID);
-    CALL getConvID (setCombID, setID);
-
     SELECT HEX(rat_val) AS ratVal
     FROM SemanticInputs
     WHERE (obj_id = objID AND set_id = setID);
@@ -221,15 +127,9 @@ DELIMITER ;
 
 
 
-
-
-
-
-
-
 DELIMITER //
-CREATE PROCEDURE selectCatDef (
-    IN catCombID VARCHAR(17)
+CREATE PROCEDURE selectCatInfo (
+    IN catID VARCHAR(17)
 )
 BEGIN
     DECLARE catID BIGINT UNSIGNED;

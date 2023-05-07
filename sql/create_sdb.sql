@@ -28,9 +28,9 @@ DROP TABLE RecentInputs;
 DROP TABLE UserGroups;
 -- DROP TABLE Users;
 --
--- DROP TABLE Categories;
--- DROP TABLE ElementaryTerms;
--- DROP TABLE Relations;
+DROP TABLE Categories;
+DROP TABLE ElementaryTerms;
+DROP TABLE Relations;
 -- DROP TABLE KeywordStrings;
 -- DROP TABLE Patterns;
 -- DROP TABLE Lists;
@@ -51,10 +51,8 @@ CREATE TABLE Sets (
 
     -- user or user group who states the statement.
     user_id BIGINT UNSIGNED NOT NULL,
-
     -- subject of relation.
     subj_id BIGINT UNSIGNED NOT NULL,
-
     -- relation.
     rel_id BIGINT UNSIGNED NOT NULL,
 
@@ -66,7 +64,6 @@ CREATE TABLE Sets (
         subj_id,
         rel_id
     )
-
 
 );
 
@@ -118,9 +115,6 @@ CREATE TABLE RecentInputs (
     -- set id.
     set_id BIGINT UNSIGNED NOT NULL,
 
-    /* Member */
-    -- The members of sets include a rating value and a Term.
-
     -- old and new rating value (NULL means nonexistent or removed).
     old_rat_val VARBINARY(255),
     new_rat_val VARBINARY(255),
@@ -128,12 +122,19 @@ CREATE TABLE RecentInputs (
     -- object of the relation defining the set.
     obj_id BIGINT UNSIGNED NOT NULL,
 
-    changed_at DATE NOT NULL,
+    changed_on DATE NOT NULL,
+
+    -- this field should not be open to the public, and should also be set to
+    -- zero after a day, just as a good precaution. (Due to the PK, this means
+    -- that there can be only one RecentInput per day that is not today, which
+    -- is exactly how it should be.)
+    private_changed_at TIME,
 
     PRIMARY KEY (
         set_id,
-        changed_at,
-        obj_id
+        changed_on,
+        obj_id,
+        private_changed_at
     )
 
 );

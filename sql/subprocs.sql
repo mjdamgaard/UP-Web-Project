@@ -19,37 +19,37 @@ DROP PROCEDURE insertOrUpdateRecentInput;
 
 /* General */
 
-DELIMITER //
-CREATE PROCEDURE getTypeAndConvID (
-    IN combID VARCHAR(17),
-    OUT type CHAR(1),
-    OUT id BIGINT UNSIGNED
-)
-BEGIN
-    SET type = SUBSTRING(combID, 1, 1);
-    SET id = CONV(SUBSTRING(combID, 2) , 16, 10);
-END //
-DELIMITER ;
-
-DELIMITER //
-CREATE PROCEDURE getType (
-    IN combID VARCHAR(17),
-    OUT type CHAR(1)
-)
-BEGIN
-    SET type = SUBSTRING(combID, 1, 1);
-END //
-DELIMITER ;
-
-DELIMITER //
-CREATE PROCEDURE getConvID (
-    IN combID VARCHAR(17),
-    OUT id BIGINT UNSIGNED
-)
-BEGIN
-    SET id = CONV(SUBSTRING(combID, 2) , 16, 10);
-END //
-DELIMITER ;
+-- DELIMITER //
+-- CREATE PROCEDURE getTypeAndConvID (
+--     IN combID VARCHAR(17),
+--     OUT type CHAR(1),
+--     OUT id BIGINT UNSIGNED
+-- )
+-- BEGIN
+--     SET type = SUBSTRING(combID, 1, 1);
+--     SET id = CONV(SUBSTRING(combID, 2) , 16, 10);
+-- END //
+-- DELIMITER ;
+--
+-- DELIMITER //
+-- CREATE PROCEDURE getType (
+--     IN combID VARCHAR(17),
+--     OUT type CHAR(1)
+-- )
+-- BEGIN
+--     SET type = SUBSTRING(combID, 1, 1);
+-- END //
+-- DELIMITER ;
+--
+-- DELIMITER //
+-- CREATE PROCEDURE getConvID (
+--     IN combID VARCHAR(17),
+--     OUT id BIGINT UNSIGNED
+-- )
+-- BEGIN
+--     SET id = CONV(SUBSTRING(combID, 2) , 16, 10);
+-- END //
+-- DELIMITER ;
 
 
 -- DELIMITER //
@@ -68,7 +68,6 @@ DELIMITER ;
 
 /* Query */
 
--- TODO: Cut--paste existing helper procedures here.
 
 
 
