@@ -111,30 +111,22 @@ CREATE TABLE SemanticInputs (
 
 
 CREATE TABLE RecentInputs (
-    /* Set */
-    -- set id.
     set_id BIGINT UNSIGNED NOT NULL,
 
     -- old and new rating value (NULL means nonexistent or removed).
     old_rat_val VARBINARY(255),
     new_rat_val VARBINARY(255),
 
-    -- object of the relation defining the set.
     obj_id BIGINT UNSIGNED NOT NULL,
 
-    changed_on DATE NOT NULL, ...
+    counter INT NOT NULL,
 
-    -- this field should not be open to the public, and should also be set to
-    -- zero after a day, just as a good precaution. (Due to the PK, this means
-    -- that there can be only one RecentInput per day that is not today, which
-    -- is exactly how it should be.)
-    -- private_changed_at TIME,
+    -- private_changed_on DATE,
 
     PRIMARY KEY (
         set_id,
-        -- changed_on,
         obj_id,
-        -- private_changed_at
+        counter
     )
 
 );

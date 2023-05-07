@@ -126,6 +126,32 @@ END //
 DELIMITER ;
 
 
+DELIMITER //
+CREATE PROCEDURE selectRecentInputs (
+    IN setID BIGINT UNSIGNED
+    IN objID BIGINT UNSIGNED,
+)
+BEGIN
+    IF (objID IS NULL OR objID = 0) THEN
+        SELECT
+            obj_id AS objID,
+            counter AS counter,
+            HEX(old_rat_val) AS oldRatVal,
+            HEX(new_rat_val) AS newRatVal
+        FROM RecentInputs
+        WHERE (set_id = setID);
+    ELSE
+        SELECT
+            counter AS counter,
+            HEX(old_rat_val) AS oldRatVal,
+            HEX(new_rat_val) AS newRatVal
+        FROM RecentInputs
+        WHERE (set_id = setID AND obj_id = objID);
+    END IF;
+END //
+DELIMITER ;
+
+
 
 DELIMITER //
 CREATE PROCEDURE selectCatInfo (
