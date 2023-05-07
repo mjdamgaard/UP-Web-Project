@@ -184,16 +184,17 @@ CREATE TABLE Users (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     -- type = "u".
 
-    upload_vol_today BIGINT,
-    download_vol_today BIGINT,
-
-    upload_vol_this_month BIGINT,
-    download_vol_this_month BIGINT,
+    -- (I have out-commented these following columns, since they should rather
+    -- be part of another table, namely in a private (part of the) database.)
+    -- upload_vol_today BIGINT,
+    -- download_vol_today BIGINT,
+    -- upload_vol_this_month BIGINT,
+    -- download_vol_this_month BIGINT,
 
     -- In order for third parties to be able to copy the database and then
     -- be able to have users log on, without the need for exchanging
     -- passwords between (third) parties.
-    public_key_for_authentication VARBINARY(10000)
+    public_keys_for_authentication TEXT
 
     -- /* timestamp */
     -- not needed since one should rather just keep a rough(!) count on the
@@ -274,29 +275,6 @@ CREATE TABLE Relations (
 
 
 
-CREATE TABLE Texts (
-    /* text ID */
-    id BIGINT UNSIGNED PRIMARY KEY,
-    -- type = "a". -- or (= "x")..
-
-    /* data */
-    str TEXT NOT NULL
-);
-
-
-
-CREATE TABLE Binaries (
-    /* binary string ID */
-    id BIGINT UNSIGNED PRIMARY KEY,
-    -- type = "b".
-
-    /* data */
-    bin BLOB NOT NULL
-);
-
-
-
-
 
 
 CREATE TABLE KeywordStrings (
@@ -319,6 +297,30 @@ CREATE TABLE Patterns (
     str VARCHAR(768) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL UNIQUE
 );
 
+
+
+
+
+
+CREATE TABLE Texts (
+    /* text ID */
+    id BIGINT UNSIGNED PRIMARY KEY,
+    -- type = "a". -- or (= "x")..
+
+    /* data */
+    str TEXT NOT NULL
+);
+
+
+
+CREATE TABLE Binaries (
+    /* binary string ID */
+    id BIGINT UNSIGNED PRIMARY KEY,
+    -- type = "b".
+
+    /* data */
+    bin BLOB NOT NULL
+);
 
 
 

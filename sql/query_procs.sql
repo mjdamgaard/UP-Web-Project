@@ -169,6 +169,21 @@ DELIMITER ;
 
 
 
+
+DELIMITER //
+CREATE PROCEDURE selectUserInfo (
+    IN userID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT public_keys_for_authentication AS publicKeys
+    FROM Users
+    WHERE id = userID;
+END //
+DELIMITER ;
+
+
+
+
 DELIMITER //
 CREATE PROCEDURE selectCatInfo (
     IN catID BIGINT UNSIGNED
@@ -215,6 +230,32 @@ DELIMITER ;
 
 
 DELIMITER //
+CREATE PROCEDURE selectKeywordString (
+    IN kwsID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT str AS str
+    FROM KeywordStrings
+    WHERE id = kwsID;
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectPattern (
+    IN pattID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT str AS str
+    FROM Patterns
+    WHERE id = pattID;
+END //
+DELIMITER ;
+
+
+
+
+DELIMITER //
 CREATE PROCEDURE searchForCatIDs (
     IN str VARCHAR(255),
     IN superCatID BIGINT UNSIGNED,
@@ -222,7 +263,9 @@ CREATE PROCEDURE searchForCatIDs (
     IN numOffset INT
 )
 BEGIN
-    SELECT id AS catID
+    SELECT
+        title AS title,
+        id AS catID
     FROM Categories
     WHERE (title >= str AND super_cat_id = superCatID)
     LIMIT numOffset, maxNum;
@@ -231,14 +274,16 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectTermIDFromSecKey (
+CREATE PROCEDURE selectTermIDs (
     IN str VARCHAR(255),
     IN catID BIGINT UNSIGNED,
     IN maxNum INT,
     IN numOffset INT
 )
 BEGIN
-    SELECT id AS termID
+    SELECT
+        title AS title,
+        id AS termID
     FROM Terms
     WHERE (title >= str AND cat_id = catID)
     LIMIT numOffset, maxNum;
@@ -247,7 +292,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectRelIDFromSecKey (
+CREATE PROCEDURE selectRelIDs (
     IN subjType CHAR(1),
     IN objType CHAR(1),
     IN str VARCHAR(255),
@@ -255,12 +300,67 @@ CREATE PROCEDURE selectRelIDFromSecKey (
     IN numOffset INT
 )
 BEGIN
-    SELECT id AS relID
+    SELECT
+        obj_noun AS objNoun,
+        id AS relID
     FROM Relations
     WHERE (subj_t = subjType AND obj_t = objType AND obj_noun >= str)
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectKeywordStringIDs (
+    IN s VARCHAR(768)
+)
+BEGIN
+    SELECT
+        str AS str,
+        id AS kwsID
+    FROM KeywordStrings
+    WHERE str >= s;
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectPatternIDs (
+    IN s VARCHAR(768)
+)
+BEGIN
+    SELECT
+        str AS str,
+        id as pattID
+    FROM Patterns
+    WHERE str >= s;
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE searchForKeywordStrings (
+    IN s VARCHAR(768),
+    IN mode VARCHAR(2)
+)
+BEGIN
+    SELECT
+        str AS str,
+        id AS kwsID
+    FROM KeywordStrings
+    WHERE MATCH (str) AGAINST (
+        s
+        CASE WHEN mode = "NL" THEN IN NATURAL LANGUAGE MODE END
+        CASE WHEN mode = "B" THEN IN BOOLEAN MODE END
+    );
+END //
+DELIMITER ;
+
+
+
+
+
 
 
 
@@ -327,64 +427,6 @@ BEGIN
     WHERE id = binID;
 END //
 DELIMITER ;
-
-
-
-
-
-
-DELIMITER //
-CREATE PROCEDURE selectKeywordString (
-    IN kwsID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT str AS str
-    FROM KeywordStrings
-    WHERE id = kwsID;
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE selectPattern (
-    IN pattID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT str AS str
-    FROM Patterns
-    WHERE id = pattID;
-END //
-DELIMITER ;
-
-
-
-
-DELIMITER //
-CREATE PROCEDURE searchForKeywordStrings (
-    IN s VARCHAR(768)
-)
-BEGIN
-    SELECT MATCH ... id  AS kwsID
-    FROM KeywordStrings
-    WHERE MATCH ... str >= s;
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE searchForPatternIDFromSecKey (
-    IN s VARCHAR(768)
-)
-BEGIN
-    SELECT id as pattID
-    FROM Patterns
-    WHERE str >= s;
-END //
-DELIMITER ;
-
-
-
-
 
 
 
