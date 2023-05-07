@@ -275,9 +275,9 @@ CREATE TABLE Relations (
     obj_noun VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
     -- FULLTEXT idx (obj_noun),
 
-    -- obj_cat_id BIGINT UNSIGNED NOT NULL,
 
     subj_cat_id BIGINT UNSIGNED NOT NULL,
+    obj_cat_id BIGINT UNSIGNED NOT NULL,
 
     -- UNIQUE INDEX (obj_noun, obj_cat_id, subj_cat_id)
     UNIQUE INDEX (obj_noun, subj_cat_id)
