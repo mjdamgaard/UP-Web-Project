@@ -225,6 +225,7 @@ CREATE TABLE Categories (
     -- category ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     -- type = "c".
+    
 
     -- title of the category, preferably a plural noun describing/referencing
     -- the elements in the category.
