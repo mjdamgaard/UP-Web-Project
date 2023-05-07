@@ -39,7 +39,7 @@ DROP PROCEDURE selectUserGroupInfo;
 
 DELIMITER //
 CREATE PROCEDURE selectSet (
-    IN setHexID VARCHAR(16),
+    IN setID BIGINT UNSIGNED,
     IN ratingRangeMinHex VARCHAR(510),
     IN ratingRangeMaxHex VARCHAR(510),
     IN num INT UNSIGNED,
@@ -56,7 +56,7 @@ BEGIN
 
     SELECT
         HEX(rat_val) AS ratVal,
-        CONV(obj_id, 10, 16) AS objID
+        obj_id AS objID
     FROM SemanticInputs
     WHERE (
         set_id = setID AND
