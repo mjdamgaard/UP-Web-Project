@@ -26,7 +26,7 @@ DROP TABLE RecentInputs;
 --
 -- /* Terms */
 DROP TABLE UserGroups;
--- DROP TABLE Users;
+DROP TABLE Users;
 --
 DROP TABLE Categories;
 DROP TABLE ElementaryTerms;
@@ -39,7 +39,7 @@ DROP TABLE Relations;
 -- DROP TABLE Binaries;
 --
 -- /* Meta data */
--- DROP TABLE Creators;
+DROP TABLE Creators;
 
 
 
@@ -129,53 +129,52 @@ CREATE TABLE RecentInputs (
         obj_id,
         counter
     )
-
 );
 
 
 -- CREATE TABLE UserGroups (
---     -- user group ID.
---     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
---     -- type = "grp".
+--  -- user group ID.
+--   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+--  -- type = "grp".
 --
---     -- todo: I think I will change (creator_t, creator_id) to just a set_id
---     -- instead.
+--  -- todo: I think I will change (creator_t, creator_id) to just a set_id
+--  -- instead.
 --
---     -- id of the creating user group (or user or bot).
---     -- creator_t CHAR(1) NOT NULL, ...
---     creator_id BIGINT UNSIGNED NOT NULL,
+--  -- id of the creating user group (or user or bot).
+--  -- creator_t CHAR(1) NOT NULL, ...
+--   creator_id BIGINT UNSIGNED NOT NULL,
 --
---     -- This is not the date at which the user group was created as a term.
---     -- Rather, it is the date at which the weights within the creating user
---     -- group are measured (if creator is not a single user or bot). Thus, if
---     -- the creating user group is dynamic and its weights thus changes after
---     -- this "effective creation date," these changes will then not affect this
---     -- user group.
+--  -- This is not the date at which the user group was created as a term.
+--  -- Rather, it is the date at which the weights within the creating user
+--  -- group are measured (if creator is not a single user or bot). Thus, if
+--  -- the creating user group is dynamic and its weights thus changes after
+--  -- this "effective creation date," these changes will then not affect this
+--  -- user group.
 --     effective_creation_date DATE,
---     -- If effective_creation_date is a date in the future, or if it is NULL,
---     -- it might mean (if this functionality is implemented) that the creating
---     -- group is also allowed change in time. But this functionality will
---     -- probably not be useful enough compared to the cost to be implemented,
---     -- however. (But I just wanted to note the possibility, should we realize
---     -- that it will be useful at some point.)
+--  -- If effective_creation_date is a date in the future, or if it is NULL,
+--  -- it might mean (if this functionality is implemented) that the creating
+--  -- group is also allowed change in time. But this functionality will
+--  -- probably not be useful enough compared to the cost to be implemented,
+--  -- however. (But I just wanted to note the possibility, should we realize
+--  -- that it will be useful at some point.)
 --
 --
---     -- date after which, if it is not NULL, all ratings are frozen and no new
---     -- ratings are recorded for the user group. The end date can start out as
---     -- NULL and then be set to a value at a later date, if the group decides
---     -- to stop being active. It might also happen that the server decides to
---     -- discontinue a group due to cost of maintaining, in which case an end
---     -- date will also be set.
---     end_date DATE,
+--  -- date after which, if it is not NULL, all ratings are frozen and no new
+--  -- ratings are recorded for the user group. The end date can start out as
+--  -- NULL and then be set to a value at a later date, if the group decides
+--  -- to stop being active. It might also happen that the server decides to
+--  -- discontinue a group due to cost of maintaining, in which case an end
+--  -- date will also be set.
+--   end_date DATE,
 --
---     -- Flag (interpreted as a BOOL) that tells if the user group is dynamic,
---     -- meaning that the creating user group (which will probably either be a
---     -- "constant" user group, or will be effectively constant due to the
---     -- effective_creation_date) is allowed to continously change the weights
---     -- of this user group. A "constant" user group (with is_dynamic = FALSE),
---     -- on the other hand, has constant weights which are set at the "effective
---     -- creation date" and not changed after that.
---     is_dynamic TINYINT NOT NULL -- BOOL
+--  -- Flag (interpreted as a BOOL) that tells if the user group is dynamic,
+--  -- meaning that the creating user group (which will probably either be a
+--  -- "constant" user group, or will be effectively constant due to the
+--  -- effective_creation_date) is allowed to continously change the weights
+--  -- of this user group. A "constant" user group (with is_dynamic = FALSE),
+--  -- on the other hand, has constant weights which are set at the "effective
+--  -- creation date" and not changed after that.
+--   is_dynamic TINYINT NOT NULL -- BOOL
 -- );
 
 
@@ -195,16 +194,7 @@ CREATE TABLE Users (
     -- be able to have users log on, without the need for exchanging
     -- passwords between (third) parties.
     public_keys_for_authentication TEXT
-
-    -- /* timestamp */
-    -- not needed since one should rather just keep a rough(!) count on the
-    -- id--date correspondance.
-    -- created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-
-
-
 
 
 
@@ -274,9 +264,6 @@ CREATE TABLE Relations (
 
 
 
-
-
-
 CREATE TABLE KeywordStrings (
     /* keyword string ID */
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -300,8 +287,6 @@ CREATE TABLE Patterns (
 
 
 
-
-
 CREATE TABLE Texts (
     /* text ID */
     id BIGINT UNSIGNED PRIMARY KEY,
@@ -311,8 +296,6 @@ CREATE TABLE Texts (
     str TEXT NOT NULL
 );
 
-
-
 CREATE TABLE Binaries (
     /* binary string ID */
     id BIGINT UNSIGNED PRIMARY KEY,
@@ -321,8 +304,6 @@ CREATE TABLE Binaries (
     /* data */
     bin BLOB NOT NULL
 );
-
-
 
 
 CREATE TABLE Lists (
@@ -336,7 +317,6 @@ CREATE TABLE Lists (
     elem_ts VARCHAR(31) NOT NULL,
     elem_ids VARBINARY(248) NOT NULL,
 
-    -- tail_t not needed; it is always List type.
     tail_id BIGINT UNSIGNED
 );
 
@@ -347,7 +327,7 @@ CREATE TABLE Lists (
 CREATE TABLE Creators (
     entity_t CHAR(1) NOT NULL,
     entity_id BIGINT UNSIGNED NOT NULL,
-    PRIMARY KEY (term_t, term_id),
+    PRIMARY KEY (entity_t, entity_id),
 
     user_id BIGINT UNSIGNED NOT NULL,
     INDEX (user_id)

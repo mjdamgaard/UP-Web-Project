@@ -312,28 +312,34 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectKeywordStringIDs (
-    IN s VARCHAR(768)
+    IN s VARCHAR(768),
+    IN maxNum INT,
+    IN numOffset INT
 )
 BEGIN
     SELECT
         str AS str,
         id AS kwsID
     FROM KeywordStrings
-    WHERE str >= s;
+    WHERE str >= s
+    LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
 
 
 DELIMITER //
 CREATE PROCEDURE selectPatternIDs (
-    IN s VARCHAR(768)
+    IN s VARCHAR(768),
+    IN maxNum INT,
+    IN numOffset INT
 )
 BEGIN
     SELECT
         str AS str,
         id as pattID
     FROM Patterns
-    WHERE str >= s;
+    WHERE str >= s
+    LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
 
@@ -342,6 +348,8 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE searchForKeywordStrings (
     IN s VARCHAR(768),
+    IN maxNum INT,
+    IN numOffset INT,
     IN mode VARCHAR(2)
 )
 BEGIN
@@ -353,7 +361,8 @@ BEGIN
         s
         CASE WHEN mode = "NL" THEN IN NATURAL LANGUAGE MODE END
         CASE WHEN mode = "B" THEN IN BOOLEAN MODE END
-    );
+    )
+    LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
 
@@ -363,16 +372,14 @@ DELIMITER ;
 
 
 
-
-
-
 DELIMITER //
 CREATE PROCEDURE selectSuperCatDefs (
-    IN catID BIGINT UNSIGNED
+    IN catID BIGINT UNSIGNED,
+    IN maxNum INT
 )
 BEGIN
     DECLARE str VARCHAR(255);
-    DECLARE n TINYINT UNSIGNED;
+    DECLARE n INT UNSIGNED;
 
     CREATE TEMPORARY TABLE ret
         SELECT title, super_cat_id
@@ -381,7 +388,7 @@ BEGIN
 
     SET n = 0;
     label1: LOOP
-        IF (NOT catID > 0 OR n >= 255) THEN
+        IF (NOT catID <= 1 OR n >= maxNum) THEN
             LEAVE label1;
         END IF;
         SELECT title, super_cat_id INTO str, catID
@@ -429,39 +436,44 @@ END //
 DELIMITER ;
 
 
+DELIMITER //
+CREATE PROCEDURE selectList (
+    IN listID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT
+        len AS len,
+        elem_ts AS elemTypes,
+        elem_ids AS elemIDs,
+        tail_id AS tailID
+    FROM Lists
+    WHERE id = listID;
+END //
+DELIMITER ;
 
 
 
 
 
 
-
--- TODO: Correct and add selectCreations() procedure below (out-commented).
-
--- DELIMITER //
--- CREATE PROCEDURE selectCreations (
---     IN userIDHex VARCHAR(16),
---     IN termType CHAR(1),
---     IN num INT UNSIGNED,
---     IN numOffset INT UNSIGNED,
---     IN isAscOrder BOOL
--- )
--- BEGIN
---     DECLARE userID BIGINT UNSIGNED;
---     SET userID = CONV(userIDHex, 16, 10);
---
---     IF (isAscOrder) THEN
---         SELECT CONV(term_id, 10, 16) AS termID
---         FROM Creators
---         WHERE (user_id = userID AND term_t = termType)
---         ORDER BY term_id ASC
---         LIMIT numOffset, num;
---     ELSE
---         SELECT CONV(term_id, 10, 16) AS termID
---         FROM Creators
---         WHERE (user_id = userID AND term_t = termType)
---         ORDER BY term_id DESC
---         LIMIT numOffset, num;
---     END IF;
--- END //
--- DELIMITER ;
+DELIMITER //
+CREATE PROCEDURE selectCreations (
+    IN userID BIGINT UNSIGNED,
+    IN entityType CHAR(1),
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED,
+    IN isAscOrder BOOL
+)
+BEGIN
+    SELECT
+        entity_t AS entityType,
+        entity_id AS entityID
+    FROM Creators
+    WHERE (
+        user_id = userID AND
+        (entityType IS NULL OR term_t = termType)
+    )
+    ORDER BY   ...CASE... entity_t ASC, entity_id ASC
+    LIMIT numOffset, maxNum;
+END //
+DELIMITER ;
