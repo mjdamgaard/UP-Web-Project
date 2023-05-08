@@ -53,27 +53,27 @@ switch ($reqType) {
         $sql = "CALL selectSetInfo (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [setID, userID, subjType, subjID, relID, relObjNoun,
-        //     objType, elemNum].
+        // output: [[setID, userID, subjType, subjID, relID, relObjNoun,
+        //     objType, elemNum]].
         break;
     case "SInfoSK":
         $sql = "CALL selectSetInfoFromSecKey (?, ?, ?)";
         $paramNameArr = array("uid", "sid", "rid");
         $typeArr = array("id", "id", "id");
-        // output: [setID, userID, subjType, subjID, relID, relObjNoun,
-        //     objType, elemNum].
+        // output: [[setID, userID, subjType, subjID, relID, relObjNoun,
+        //     objType, elemNum]].
         break;
     case "SID":
         $sql = "CALL selectSetID (?, ?, ?)";
         $paramNameArr = array("uid", "sid", "rid");
         $typeArr = array("id", "id", "id");
-        // output: [setID].
+        // output: [[setID]].
         break;
     case "R":
         $sql = "CALL selectRating (?, ?)";
         $paramNameArr = array("oid", "sid");
         $typeArr = array("id", "id");
-        // output: [ratVal].
+        // output: [[ratVal]].
         break;
     case "RIs":
         $sql = "CALL selectRecentInputs (?, ?)";
@@ -85,37 +85,37 @@ switch ($reqType) {
         $sql = "CALL selectUserInfo (?, ?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [publicKeys].
+        // output: [[publicKeys]].
         break;
     case "C":
         $sql = "CALL selectCat (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [title, superCatID].
+        // output: [[title, superCatID]].
         break;
     case "T":
         $sql = "CALL selectTerm (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [title, catID].
+        // output: [[title, catID]].
         break;
     case "R":
         $sql = "CALL selectRel (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [subjType, objType, objNoun].
+        // output: [[subjType, objType, objNoun]].
         break;
     case "K":
         $sql = "CALL selectKeywordString (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [str].
+        // output: [[str]].
         break;
     case "P":
         $sql = "CALL selectPattern (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [str].
+        // output: [[str]].
         break;
     case "CIDs":
         $sql = "CALL selectCatIDs (?, ?, ?, ?)";
@@ -169,19 +169,19 @@ switch ($reqType) {
         $sql = "CALL selectText (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [text].
+        // output: [[text]].
         break;
     case "B":
         $sql = "CALL selectBinary (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [bin].
+        // output: [[bin]].
         break;
     case "L":
         $sql = "CALL selectList (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [len, elemTypes, elemIDs, tailID].
+        // output: [[len, elemTypes, elemIDs, tailID]].
         break;
     case "Creator":
         $sql = "CALL selectCreator (?, ?)";
@@ -212,11 +212,6 @@ $stmt = $conn->prepare($sql);
 DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 // fetch the result as a numeric array.
 $res = $stmt->get_result()->fetch_all();
-// if res included only one row, return the inner, single-dimensional array
-// instead.
-if (count($res) === 1) {
-    $res = $res[0];
-}
 // finally echo the JSON-encoded numeric array, containing e.g. the
 // columns: ("ratVal", "objID") for $reqType == "S", etc., so look at
 // the comments above for what the resulting arrays will contain.
