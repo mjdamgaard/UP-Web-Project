@@ -27,23 +27,26 @@ class InputVerifier {
                 break;
             case "id":
                 $pattern = "/^[1-9][0-9]*|0$/";
-                if (!preg_match($pattern, $paramVal)) {
-                    echoTypeErrorJSONAndExit($paramName, $pattern);
+                if (
+                    !preg_match($pattern, $paramVal) ||
+                    strlen($paramVal) > 20 ||
+                    strlen($paramVal) == 20 && $paramVal > 18446744073709551615
+                ) {
+                    echoTypeErrorJSONAndExit($paramName, "ULONG");
                 }
                 break;
             case "uint":
                 $pattern = "/^[1-9][0-9]*|0$/";
-                $n = intval($paramVal);
                 if (
                     !preg_match($pattern, $paramVal) ||
-                    $n < 0 ||
-                    $n > 4294967295
+                    strlen($paramVal) > 10 ||
+                    strlen($paramVal) == 10 && $paramVal > 4294967295
                 ) {
                     echoTypeErrorJSONAndExit($paramName, "UINT");
                 }
                 break;
             case "int":
-                $pattern = "/^-?[1-9][0-9]*|0$/"; // this allows "-0", why not?..
+                $pattern = "/^-?[1-9][0-9]*|0$/";
                 $n = intval($paramVal);
                 if (
                     !preg_match($pattern, $paramVal) ||
@@ -54,7 +57,7 @@ class InputVerifier {
                 }
                 break;
             case "tint":
-                $pattern = "/^-?[1-9][0-9]*|0$/"; // this allows "-0", why not?..
+                $pattern = "/^-?[1-9][0-9]*|0$/";
                 $n = intval($paramVal);
                 if (
                     !preg_match($pattern, $paramVal) ||
@@ -91,7 +94,7 @@ class InputVerifier {
                     echoTypeErrorJSONAndExit($paramName, "TEXT");
                 }
                 break;
-            case "bin":
+            case "tvarbinhex":
                 $pattern = "/^([0-9A-F]{2}){0,255}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
