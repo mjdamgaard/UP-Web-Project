@@ -288,7 +288,7 @@ CREATE TABLE Patterns (
 CREATE TABLE Texts (
     /* text ID */
     id BIGINT UNSIGNED PRIMARY KEY,
-    -- type = "a". -- or (= "x")..
+    -- type = "x".
 
     /* data */
     str TEXT NOT NULL

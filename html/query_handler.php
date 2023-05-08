@@ -49,7 +49,7 @@ switch ($reqType) {
         );
         // columns: ("ratVal", "objID"),
         break;
-    case "SI":
+    case "SInfo":
         $sql = "CALL selectSetInfo (?)";
         $paramNameArr = array("id");
         $typeArr = array(
@@ -57,7 +57,15 @@ switch ($reqType) {
         );
         // columns: ("userID", "subjID", "relID", "elemNum"),
         break;
-    case "SISK":
+    case "SInfoSK":
+        $sql = "CALL selectSetInfoFromSecKey (?, ?, ?)";
+        $paramNameArr = array("uid", "sid", "rid");
+        $typeArr = array(
+            "userOrGroupID", "termID", "relID"
+        );
+        // columns: ("setID", "elemNum"),
+        break;
+    case "SID":
         $sql = "CALL selectSetInfoFromSecKey (?, ?, ?)";
         $paramNameArr = array("uid", "sid", "rid");
         $typeArr = array(
@@ -73,7 +81,23 @@ switch ($reqType) {
         );
         // columns: ("ratVal"),
         break;
-    case "CD":
+    case "RI":
+        $sql = "CALL selectRating (?, ?)";
+        $paramNameArr = array("oid", "sid");
+        $typeArr = array(
+            "termID", "setID"
+        );
+        // columns: ("ratVal"),
+        break;
+    case "UInfo":
+        $sql = "CALL selectRating (?, ?)";
+        $paramNameArr = array("oid", "sid");
+        $typeArr = array(
+            "termID", "setID"
+        );
+        // columns: ("ratVal"),
+        break;
+    case "C":
         $sql = "CALL selectCatDef (?)";
         $paramNameArr = array("id");
         $typeArr = array(
@@ -81,7 +105,7 @@ switch ($reqType) {
         );
         // columns: ("catTitle", "superCatID"),
         break;
-    case "ED":
+    case "T":
         $sql = "CALL selectETermDef (?)";
         $paramNameArr = array("id");
         $typeArr = array(
@@ -89,37 +113,13 @@ switch ($reqType) {
         );
         // columns: ("eTermTitle", "catID"),
         break;
-    case "RD":
+    case "R":
         $sql = "CALL selectRelDef (?)";
         $paramNameArr = array("id");
         $typeArr = array(
             "relID"
         );
         // columns: ("objNoun", "subjCatID"),
-        break;
-    case "SCD":
-        $sql = "CALL selectSuperCatDefs (?)";
-        $paramNameArr = array("id");
-        $typeArr = array(
-            "catID"
-        );
-        // columns: ("catTitle", "superCatID"),
-        break;
-    case "T":
-        $sql = "CALL selectText (?)";
-        $paramNameArr = array("id");
-        $typeArr = array(
-            "textID"
-        );
-        // columns: ("text"),
-        break;
-    case "B":
-        $sql = "CALL selectBinary (?)";
-        $paramNameArr = array("id");
-        $typeArr = array(
-            "binID"
-        );
-        // columns: ("binary"),
         break;
     case "K":
         $sql = "CALL selectKeywordString (?)";
@@ -136,6 +136,110 @@ switch ($reqType) {
             "pattID"
         );
         // columns: ("pattern"),
+        break;
+    case "CIDs":
+        $sql = "CALL selectCatDef (?)";
+        $paramNameArr = array("id");
+        $typeArr = array(
+            "catID"
+        );
+        // columns: ("catTitle", "superCatID"),
+        break;
+    case "TIDs":
+        $sql = "CALL selectETermDef (?)";
+        $paramNameArr = array("id");
+        $typeArr = array(
+            "eTermID"
+        );
+        // columns: ("eTermTitle", "catID"),
+        break;
+    case "RIDs":
+        $sql = "CALL selectRelDef (?)";
+        $paramNameArr = array("id");
+        $typeArr = array(
+            "relID"
+        );
+        // columns: ("objNoun", "subjCatID"),
+        break;
+    case "KIDs":
+        $sql = "CALL selectKeywordString (?)";
+        $paramNameArr = array("id");
+        $typeArr = array(
+            "kwsID"
+        );
+        // columns: ("keywordString"),
+        break;
+    case "PIDs":
+        $sql = "CALL selectPattern (?)";
+        $paramNameArr = array("id");
+        $typeArr = array(
+            "pattID"
+        );
+        // columns: ("pattern"),
+        break;
+    case "KSearch":
+        $sql = "CALL selectKeywordString (?)";
+        $paramNameArr = array("id");
+        $typeArr = array(
+            "kwsID"
+        );
+        // columns: ("keywordString"),
+        break;
+    case "KSearchB":
+        $sql = "CALL selectKeywordString (?)";
+        $paramNameArr = array("id");
+        $typeArr = array(
+            "kwsID"
+        );
+        // columns: ("keywordString"),
+        break;
+    case "SCDefs":
+        $sql = "CALL selectSuperCatDefs (?)";
+        $paramNameArr = array("id");
+        $typeArr = array(
+            "catID"
+        );
+        // columns: ("catTitle", "superCatID"),
+        break;
+    case "X":
+        $sql = "CALL selectText (?)";
+        $paramNameArr = array("id");
+        $typeArr = array(
+            "textID"
+        );
+        // columns: ("text"),
+        break;
+    case "B":
+        $sql = "CALL selectBinary (?)";
+        $paramNameArr = array("id");
+        $typeArr = array(
+            "binID"
+        );
+        // columns: ("binary"),
+        break;
+    case "L":
+        $sql = "CALL selectBinary (?)";
+        $paramNameArr = array("id");
+        $typeArr = array(
+            "binID"
+        );
+        // columns: ("binary"),
+        break;
+    case "Creator":
+        $sql = "CALL selectBinary (?)";
+        $paramNameArr = array("id");
+        $typeArr = array(
+            "binID"
+        );
+        // columns: ("binary"),
+        break;
+    case "Creations":
+        $sql = "CALL selectBinary (?)";
+        $paramNameArr = array("id");
+        $typeArr = array(
+            "binID"
+        );
+        // columns: ("binary"),
         break;
     default:
         header("Content-Type: text/json");
