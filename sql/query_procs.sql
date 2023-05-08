@@ -224,10 +224,9 @@ CREATE PROCEDURE selectRel (
 )
 BEGIN
     SELECT
-        subj_t AS subjType
-        obj_t AS objType
-        obj_noun AS objNoun,
-        subj_cat_id AS subjCatID
+        subj_t AS subjType,
+        obj_t AS objType,
+        obj_noun AS objNoun
     FROM Relations
     WHERE id = relID;
 END //
