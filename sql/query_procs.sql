@@ -144,25 +144,31 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectRecentInputs (
-    IN setID BIGINT UNSIGNED
+    IN setID BIGINT UNSIGNED,
     IN objID BIGINT UNSIGNED,
+    IN maxNum INT,
+    IN numOffset INT
 )
 BEGIN
-    IF (objID IS NULL OR objID = 0) THEN
+    IF (objID = 0) THEN
         SELECT
             obj_id AS objID,
-            counter AS counter,
+            changed_at AS changedAt,
             HEX(old_rat_val) AS oldRatVal,
             HEX(new_rat_val) AS newRatVal
         FROM RecentInputs
-        WHERE (set_id = setID);
+        WHERE set_id = setID
+        ORDER BY obj_id DESC, changed_at DESC
+        LIMIT numOffset, maxNum;
     ELSE
         SELECT
-            counter AS counter,
+            changed_at AS changedAt,
             HEX(old_rat_val) AS oldRatVal,
             HEX(new_rat_val) AS newRatVal
         FROM RecentInputs
-        WHERE (set_id = setID AND obj_id = objID);
+        WHERE (set_id = setID AND obj_id = objID)
+        ORDER BY changed_at DESC
+        LIMIT numOffset, maxNum;
     END IF;
 END //
 DELIMITER ;
@@ -268,6 +274,7 @@ BEGIN
         id AS catID
     FROM Categories
     WHERE (title >= str AND super_cat_id = superCatID)
+    ORDER BY title ASC
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
@@ -286,6 +293,7 @@ BEGIN
         id AS termID
     FROM Terms
     WHERE (title >= str AND cat_id = catID)
+    ORDER BY title ASC
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
@@ -305,6 +313,7 @@ BEGIN
         id AS relID
     FROM Relations
     WHERE (subj_t = subjType AND obj_t = objType AND obj_noun >= str)
+    ORDER BY obj_noun ASC
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
@@ -322,6 +331,7 @@ BEGIN
         id AS kwsID
     FROM KeywordStrings
     WHERE str >= s
+    ORDER BY str ASC
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
@@ -339,6 +349,7 @@ BEGIN
         id as pattID
     FROM Patterns
     WHERE str >= s
+    ORDER BY str ASC
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;

@@ -120,14 +120,12 @@ CREATE TABLE RecentInputs (
 
     obj_id BIGINT UNSIGNED NOT NULL,
 
-    counter INT NOT NULL,
-
-    -- private_changed_on DATE,
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (
         set_id,
         obj_id,
-        counter
+        changed_at
     )
 );
 
