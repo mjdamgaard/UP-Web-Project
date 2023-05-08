@@ -27,6 +27,10 @@ if (!isset($_POST["type"])) {
 $reqType = $_POST["type"];
 
 
+// TODO: Also implement some limits on the "n"s below (other than just the
+// maximal int).. (Well, I *think* I need to do this..) ..But it will surely
+// have to wait until after/during when I implement authentication and such..
+
 // match $reqType against any of the following single-query request types
 // and execute the corresponding query if a match is found.
 $sql = "";
