@@ -24,7 +24,7 @@ export var appColumnCL = new ContentLoader(
     '<div></div>',
     sdbInterfaceCL,
 );
-appColumnCL.nestedCSSRules.push(
+appColumnCL.cssRules.push(
     'margin: 5px 5px; width: 300px'
 );
 
@@ -32,14 +32,50 @@ appColumnCL.nestedCSSRules.push(
 // in the first outward callback.
 appColumnCL.outwardCallbacks.push(function($ci) {
     let contextData = $ci.data("contextData");
-    let cl = appColumnCL.getRelatedContentLoader(contextData.columnContentKey);
+    let cl = appColumnCL.relatedCL(contextData.columnContentKey);
     delete contextData.columnContentKey;
     cl.loadAppended($ci, contextData);
 });
 
 
-/* Events to open and close app columns */
+/* Events to open new app columns */
 
+sdbInterfaceCL.outwardCallbacks.push(function($ci) {
+    $ci
+        .on("open-colum", function(event, contextData, dir, isOverwritable) {
+            let $callingColumn = $(event.target);
+            if (dir === "right") {
+                let $existingColumn = $callingColumn.next();
+                if ($existingColumn.data("localData").isOverwritable ?? false) {
+                    $existingColumn.remove();
+                }
+                appColumnCL.loadAfter($callingColumn, contextData);
+                $callingColumn.next().data("localData").isOverwritable =
+                    isOverwritable ?? false;
+            } else if (dir === "left") {
+                let $existingColumn = $callingColumn.prev();
+                if ($existingColumn.data("localData").isOverwritable ?? false) {
+                    $existingColumn.remove();
+                }
+                appColumnCL.loadBefore($callingColumn, contextData);
+                $callingColumn.prev().data("localData").isOverwritable =
+                    isOverwritable ?? false;
+            }
+            return false;
+        });
+});
+appColumnCL.outwardCallbacks.push(function($ci) {
+    $ci
+        .on("open-colum", function(event, contextData, dir, isOverwritable) {
+            $(this).parent().trigger("open-colum",
+                [contextData, dir, isOverwritable]
+            );
+            return false;
+        })
+        .one("click", function() {
+            $(this).data("localData").isOverwritable = false;
+        });
+});
 
 
 
@@ -75,13 +111,16 @@ export var columnMainCL = new ContentLoader(
 );
 
 
+
+
+
+
 /* Events that add tabs and add/load associated pages to these */
 
 pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
     $ci.data("pageSpecs", {})
         .on("add-page", function(event, tabTitle, contentKey, pageData) {
-            let pageCL =
-                pagesWithTabHeaderCL.getRelatedContentLoader(contentKey);
+            let pageCL = pagesWithTabHeaderCL.relatedCL(contentKey);
             $(this).data("pageSpecs")[tabTitle] =
                 {cl:pageCL, data:pageData};
             return false;
@@ -215,7 +254,7 @@ pageFieldCL.outwardCallbacks.push(function($ci) {
         .on("append-contents", function(event, contentKey, dataArr, selector) {
             let $obj = (typeof selector === "undefined") ?
                 $(this) : $(this).find(selector);
-            let cl = pageFieldCL.getRelatedContentLoader(contentKey);
+            let cl = pageFieldCL.relatedCL(contentKey);
             let len = dataArr.length;
             for (let i = 0; i < len; i++) {
                 cl.loadAppended($obj, dataArr[i]);
@@ -225,7 +264,7 @@ pageFieldCL.outwardCallbacks.push(function($ci) {
         .on("prepend-contents", function(event, contentKey, dataArr, selector) {
             let $obj = (typeof selector === "undefined") ?
                 $(this) : $(this).find(selector);
-            let cl = pageFieldCL.getRelatedContentLoader(contentKey);
+            let cl = pageFieldCL.relatedCL(contentKey);
             let len = dataArr.length;
             for (let i = 0; i < len; i++) {
                 cl.loadPrepended($obj, dataArr[i]);
@@ -383,10 +422,10 @@ categoryColumnCL.outwardCallbacks.push(function($ci) {
 
 
 
-tabNavListCL.nestedCSSRules.push(
+tabNavListCL.cssRules.push(
     '& > li > a { padding: 7px 12px; }'
 );
-tabNavListCL.nestedCSSRules.push(
+tabNavListCL.cssRules.push(
     '&.odd { margin-left: 2px }'
 );
 columnCL.inwardCallbacks.push(function($ci) {
