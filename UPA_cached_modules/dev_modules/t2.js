@@ -25,7 +25,7 @@ export class ContentLoader {
         // these first two variables should not be undefined/null.
         contentKey, htmlTemplate,
         parentCL,
-        nestedCSSRules,
+        cssRules,
         inwardCallbacks, outwardCallbacks,
         childCLs,
         modSignals,
@@ -39,7 +39,7 @@ export class ContentLoader {
             parentCL.childCLs.push(this);
         }
         this.childCLs = childCLs ?? [];
-        this.nestedCSSRules = nestedCSSRules ?? [];
+        this.cssRules = cssRules ?? [];
         this.cssRulesAreAdded = false;
         this.inwardCallbacks = inwardCallbacks ?? [];
         this.outwardCallbacks = outwardCallbacks ?? [];
@@ -90,7 +90,7 @@ export class ContentLoader {
             .each(function() {
                 let $childCI = $(this);
                 let childContentKey = $childCI.attr("data-key");
-                let cl = thisCL.getRelatedContentLoader(childContentKey);
+                let cl = thisCL.relatedCL(childContentKey);
                 cl.loadAndReplacePlaceholder(
                     $childCI, childContextData, childReturnData
                 );
@@ -118,15 +118,15 @@ export class ContentLoader {
             this.outwardCallbacks[i]($ci, childReturnData, returnData);
         }
 
-        // if the this.nestedCSSRules has not yet been added to the document
-        // head, call addNestedCSSRules() to do so.
+        // if the this.cssRules has not yet been added to the document
+        // head, call addCSSRulesToDocument() to do so.
         if (this.cssRulesAreAdded == false) {
-            this.addNestedCSSRules()
+            this.addCSSRulesToDocument()
             this.cssRulesAreAdded = true;
         }
     }
 
-    getRelatedContentLoader(contentKey) {
+    relatedCL(contentKey) {
         var ret;
         // first look for the content key in all the child CLs.
         let len = this.childCLs.length;
@@ -139,12 +139,12 @@ export class ContentLoader {
         // the process recursively, or throw error if this CL has no parent.
         if (typeof this.parentCL === "undefined") {
             throw (
-                "ContentLoader.getRelatedContentLoader(): " +
+                "ContentLoader.relatedCL(): " +
                 'no content loader found with content key "' +
                 contentKey + '"'
             );
         }
-        return this.parentCL.getRelatedContentLoader(contentKey);
+        return this.parentCL.relatedCL(contentKey);
     }
 
     // (Inserting a simple '<div></div>' in the following functions could also
@@ -175,14 +175,14 @@ export class ContentLoader {
         this.loadAndReplacePlaceholder($placeholder, contextData, returnData);
     }
 
-    addNestedCSSRules() {
-        let len = this.nestedCSSRules.length;
+    addCSSRulesToDocument() {
+        let len = this.cssRules.length;
         for (let i = 0; i < len; i++) {
             // get the tail end of the rule which is supposed to be prepended
             // with this CL's and its ancestor CLs' CI classes (which are equal
             // to their content keys).
             var ruleTail;
-            let cssRule = this.nestedCSSRules[i].trim();
+            let cssRule = this.cssRules[i].trim();
             if (/^&?[^&\{\}]*\{[^&\{\}]*\}$/.test(cssRule)) {
                 // if the rule starts with a &, let the rule tail be the rest.
                 if (cssRule.substring(0, 1) === "&") {
@@ -199,7 +199,7 @@ export class ContentLoader {
             // else throw an error.
             } else {
                 throw (
-                    "ContentLoader.addNestedCSSRules(): nestedCSSRules " +
+                    "ContentLoader.addCSSRulesToDocument(): cssRules " +
                      "must each be single rules with no nested rules " +
                      "inside, perhaps beginning with a '&', or they must be " +
                      "a CSS declaration list (but received '" + cssRule + "')"
