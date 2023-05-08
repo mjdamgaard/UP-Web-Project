@@ -25,7 +25,7 @@ export var appColumnCL = new ContentLoader(
     sdbInterfaceCL,
 );
 appColumnCL.cssRules.push(
-    'margin: 5px 5px; width: 300px'
+    'margin: 5px 5px; width: 300px;'
 );
 
 // make the AppColumn load the CL pointed to by contextData.columnContentKey
@@ -42,7 +42,7 @@ appColumnCL.outwardCallbacks.push(function($ci) {
 
 sdbInterfaceCL.outwardCallbacks.push(function($ci) {
     $ci
-        .on("open-colum", function(event, contextData, dir, isOverwritable) {
+        .on("open-column", function(event, contextData, dir, isOverwritable) {
             let $callingColumn = $(event.target);
             if (dir === "right") {
                 let $existingColumn = $callingColumn.next();
@@ -66,10 +66,14 @@ sdbInterfaceCL.outwardCallbacks.push(function($ci) {
 });
 appColumnCL.outwardCallbacks.push(function($ci) {
     $ci
-        .on("open-colum", function(event, contextData, dir, isOverwritable) {
+        .on("open-column", function(event, contextData, dir, isOverwritable) {
             $(this).parent().trigger("open-colum",
                 [contextData, dir, isOverwritable]
             );
+            return false;
+        })
+        .on("close-column", function() {
+            $(this).remove();
             return false;
         })
         .one("click", function() {
