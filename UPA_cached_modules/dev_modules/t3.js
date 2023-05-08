@@ -7,39 +7,33 @@ import {
 } from "/UPA_scripts.php?id=t2";
 
 
-export var upaCL = new ContentLoader(
+export var sdbInterfaceCL = new ContentLoader(
     "ColumnBasedSDBInterface",
     /* Initial HTML */
-    '<div id="upa1" class="sdb-interface-app">' +
-        '<<OuterColumn>>' +
+    '<div>' +
+        '<<AppColumn>>' +
     '</div>'
 );
-upaCL.inwardCallbacks.push(function($ci) {
+sdbInterfaceCL.inwardCallbacks.push(function($ci) {
     $ci.data("contextData").dbReqManager = new DBRequestManager();
 });
 
-export var outerColumnCL = new ContentLoader(
-    "OuterColumn",
+export var appColumnCL = new ContentLoader(
+    "AppColumn",
     /* Initial HTML */
-    '<<Column>>',
-    upaCL,
+    '<div></div>',
+    sdbInterfaceCL,
 );
-outerColumnCL.nestedCSSRules.push(
-    'margin: 5px 5px;'
+appColumnCL.nestedCSSRules.push(
+    'margin: 5px 5px; width: 300px'
 );
-outerColumnCL.inwardCallbacks.push(function($ci) {
-    let termType = $ci.data("contextData").termID.substring(0, 1);
-    switch (termType) {
-        case "c":
-            $ci.attr("data-key", "CategoryColumn");
-            break;
-        default:
-            throw (
-                "Term type '" + termType + "' has not been implemented yet"
-            );
-    }
+appColumnCL.inwardCallbacks.push(function($ci) {
+    let contextData = $ci.data("contextData");
+    let columnCL = contextData.nextCL
+    delete contextData.nextCL;
+    columnCL.loadAppended($ci, contextData);
 });
-upaCL.outwardCallbacks.push(function($ci) {
+sdbInterfaceCL.outwardCallbacks.push(function($ci) {
     $ci.css({
         padding: "0px 20px 0px 20px"
     });
@@ -53,7 +47,7 @@ export var columnCL = new ContentLoader(
         "<<ColumnMain>>" +
         // "<<ColumnFooter>>" +
     '</div>',
-    upaCL
+    sdbInterfaceCL
 );
 export var columnHeaderCL = new ContentLoader(
     "ColumnHeader",
@@ -73,7 +67,7 @@ export var tabNavListCL = new ContentLoader(
     "TabNavList",
     /* Initial HTML */
     '<ul class="nav nav-tabs"></ul>',
-    upaCL
+    sdbInterfaceCL
 );
 
 
@@ -361,7 +355,7 @@ export var categoryColumnCL = new ContentLoader(
     "CategoryColumn",
     /* Initial HTML */
     '<<Column>>',
-    upaCL
+    sdbInterfaceCL
 );
 
 

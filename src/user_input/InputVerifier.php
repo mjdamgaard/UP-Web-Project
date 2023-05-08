@@ -30,7 +30,8 @@ class InputVerifier {
                 if (
                     !preg_match($pattern, $paramVal) ||
                     strlen($paramVal) > 20 ||
-                    strlen($paramVal) == 20 && $paramVal > 18446744073709551615
+                    strlen($paramVal) == 20 &&
+                        $paramVal > "18446744073709551615"
                 ) {
                     echoTypeErrorJSONAndExit($paramName, "ULONG");
                 }
@@ -40,7 +41,7 @@ class InputVerifier {
                 if (
                     !preg_match($pattern, $paramVal) ||
                     strlen($paramVal) > 10 ||
-                    strlen($paramVal) == 10 && $paramVal > 4294967295
+                    strlen($paramVal) == 10 && $paramVal > "4294967295"
                 ) {
                     echoTypeErrorJSONAndExit($paramName, "UINT");
                 }
