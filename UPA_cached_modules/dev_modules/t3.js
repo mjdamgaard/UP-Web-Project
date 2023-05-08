@@ -27,57 +27,61 @@ export var appColumnCL = new ContentLoader(
 appColumnCL.nestedCSSRules.push(
     'margin: 5px 5px; width: 300px'
 );
-appColumnCL.inwardCallbacks.push(function($ci) {
+
+// make the AppColumn load the CL pointed to by contextData.columnContentKey
+// in the first outward callback.
+appColumnCL.outwardCallbacks.push(function($ci) {
     let contextData = $ci.data("contextData");
-    let columnCL = contextData.nextCL
-    delete contextData.nextCL;
-    columnCL.loadAppended($ci, contextData);
-});
-sdbInterfaceCL.outwardCallbacks.push(function($ci) {
-    $ci.css({
-        padding: "0px 20px 0px 20px"
-    });
+    let cl = appColumnCL.getRelatedContentLoader(contextData.columnContentKey);
+    delete contextData.columnContentKey;
+    cl.loadAppended($ci, contextData);
 });
 
-export var columnCL = new ContentLoader(
-    "Column",
+
+/* Events to open and close app columns */
+
+
+
+
+
+
+
+
+export var pagesWithTabHeaderCL = new ContentLoader(
+    "PagesWithTabHeader",
     /* Initial HTML */
-    '<div class="app-column">' +
-        "<<ColumnHeader>>" +
-        "<<ColumnMain>>" +
+    '<div>' +
+        "<<TabHeader>>" +
+        "<<PageArea>>" +
         // "<<ColumnFooter>>" +
     '</div>',
-    sdbInterfaceCL
+    appColumnCL
 );
-export var columnHeaderCL = new ContentLoader(
-    "ColumnHeader",
+
+
+export var tabHeaderCL = new ContentLoader(
+    "TabHeader",
     /* Initial HTML */
-    '<header class="">' +
-        '<<TabNavList>>' +
+    '<header>' +
+        '<ul class="nav nav-tabs"></ul>' +
     '</header>',
-    columnCL
+    appColumnCL
 );
 export var columnMainCL = new ContentLoader(
-    "ColumnMain",
+    "PageArea",
     /* Initial HTML */
-    '<main class=""></main>',
-    columnCL
-);
-export var tabNavListCL = new ContentLoader(
-    "TabNavList",
-    /* Initial HTML */
-    '<ul class="nav nav-tabs"></ul>',
-    sdbInterfaceCL
+    '<main></main>',
+    appColumnCL
 );
 
 
+/* Events that add tabs and add/load associated pages to these */
 
-/* Events add tabs and add/load associated pages to these tabs in Columns */
-
-columnCL.outwardCallbacks.push(function($ci) {
+pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
     $ci.data("pageSpecs", {})
         .on("add-page", function(event, tabTitle, contentKey, pageData) {
-            let pageCL = columnCL.getRelatedContentLoader(contentKey);
+            let pageCL =
+                pagesWithTabHeaderCL.getRelatedContentLoader(contentKey);
             $(this).data("pageSpecs")[tabTitle] =
                 {cl:pageCL, data:pageData};
             return false;
