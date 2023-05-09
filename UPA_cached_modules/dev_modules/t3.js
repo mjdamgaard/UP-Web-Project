@@ -174,7 +174,7 @@ pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
                 .trigger("open-page", [tabTitle]);
             return false;
         })
-        .on("add-tab", function(event, tabTitle) {
+        .on("add-tab", function(event, tabTitle) {debugger;
             $(this).children('.CI.TabHeader')
                 .trigger("add-tab", [tabTitle]);
             return false;
@@ -186,7 +186,7 @@ pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
         })
         .on("add-tab-and-page", function(
             event, tabTitle, contentKey, pageData
-        ) {
+        ) {debugger;
             $(this)
                 .trigger("add-page", [tabTitle, contentKey, pageData])
                 .trigger("add-tab", [tabTitle]);
@@ -199,7 +199,8 @@ pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
             return false;
         })
         .on("tab-selected", function(event, tabTitle) {
-            $(this).trigger("open-page", [tabTitle]);
+            $(this)
+                .trigger("open-page", [tabTitle]);
             return false;
         });
 });
@@ -214,13 +215,14 @@ tabHeaderCL.outwardCallbacks.push(function($ci) {
                     '</li>'
                 )
                 .children(':last-child');
-            tabHeaderCL.loadPrepended($newTab, "CloseButton").hide();
+            tabHeaderCL.loadPrepended($newTab, "CloseButton");
+            $newTab.find('.CI.CloseButton').hide();
             $newTab
                 .on("click", function() {
                     $(this)
                         .trigger("activate-tab", [tabTitle])
                         .trigger("tab-selected", [tabTitle]);
-                    return false;
+                    return true; // makes the click event bubble up.
                 })
                 .on("close", function() {
                     $(this)
@@ -228,7 +230,7 @@ tabHeaderCL.outwardCallbacks.push(function($ci) {
                         .find('.CI.CloseButton').hide();
                     return false;
                 });
-            return true; // makes the click event bubble up to the Column.
+            return false;
         })
         .on("activate-tab", function(event, tabTitle) {
             $(this).children('li')
@@ -272,13 +274,78 @@ pageAreaCL.outwardCallbacks.push(function($ci) {
 
 
 
-//
-//
+
+/* Test */
+
+export var testColumnCL = new ContentLoader(
+    "TestColumn",
+    /* Initial HTML */
+    '<div>' +
+        '<<PagesWithTabHeader>>' +
+    '</div>',
+    appColumnCL
+);
+
+
+testColumnCL.outwardCallbacks.push(function($ci) {debugger;
+    let contextData = $ci.data("contextData");
+    $ci.find('*').addBack().filter('.CI.PagesWithTabHeader')
+        .trigger("add-tab-and-page",
+            ["Supercategories", "TestPage", contextData]
+        )
+        .trigger("add-tab-and-page",
+            ["Subcategories", "TestPage", contextData]
+        )
+        .trigger("add-tab-and-page",
+            ["Elements", "TestPage", contextData]
+        );
+    // open the "Subcategories" tab as the default one.
+    $ci.trigger("open-tab-and-page", ["Subcategories"]);
+});
+
+export var testPageCL = new ContentLoader(
+    "TestPage",
+    /* Initial HTML */
+    '<div></div>',
+    appColumnCL
+);
+testPageCL.inwardCallbacks.push(function($ci) {
+    let contextData = $ci.data("contextData");
+    $ci.prepend(
+        '<span>Hello, I will be a main page generated from: ' +
+        JSON.stringify(contextData) + '</span>'
+    );
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // export var pageFieldCL = new ContentLoader(
 //     "PageField",
 //     /* Initial HTML */
 //     '<div class="container"></div>',
-//     columnCL
+//     appColumnCL
 // );
 // pageFieldCL.outwardCallbacks.push(function($ci) {
 //     $ci
@@ -311,7 +378,7 @@ pageAreaCL.outwardCallbacks.push(function($ci) {
 //     "TermList",
 //     /* Initial HTML */
 //     '<<PageField>>',
-//     columnCL
+//     appColumnCL
 // );
 // termListCL.outwardCallbacks.push(function($ci) {
 //     $ci.append('<ul class="list-group"></ul>');
@@ -335,7 +402,7 @@ pageAreaCL.outwardCallbacks.push(function($ci) {
 //     "ExtensibleTermList",
 //     /* Initial HTML */
 //     '<<TermList>>',
-//     columnCL
+//     appColumnCL
 // );
 // // TODO: Add a callback that adds a button at the bottom of the ci, which when
 // // pressed, adds elements to the list, either cached ones or ones that are then
@@ -345,13 +412,13 @@ pageAreaCL.outwardCallbacks.push(function($ci) {
 //     "TermListElement",
 //     /* Initial HTML */
 //     '<li class="list-group-item"></li>',
-//     columnCL
+//     appColumnCL
 // );
 // export var simpleTermListElementCL = new ContentLoader(
 //     "SimpleTermListElement",
 //     /* Initial HTML */
 //     '<<TermListElement>>',
-//     columnCL
+//     appColumnCL
 // );
 //
 // // simpleTermListElementCL.outwardCallbacks.push(function($ci) {
@@ -368,7 +435,7 @@ pageAreaCL.outwardCallbacks.push(function($ci) {
 //     "CategoryListElement",
 //     /* Initial HTML */
 //     '<<TermListElement>>',
-//     columnCL
+//     appColumnCL
 // );
 // categoryListElementCL.outwardCallbacks.push(function($ci) {
 //     let contextData = $ci.data("contextData");
@@ -382,7 +449,7 @@ pageAreaCL.outwardCallbacks.push(function($ci) {
 //     "SupercategoryPage",
 //     /* Initial HTML */
 //     '<<Column>>',
-//     columnCL
+//     appColumnCL
 // );
 // supercategoryPageCL.outwardCallbacks.push(function($ci) {
 //     let contextData = $ci.data("contextData");
@@ -396,7 +463,7 @@ pageAreaCL.outwardCallbacks.push(function($ci) {
 //     "DefSuperCatsPage",
 //     /* Initial HTML */
 //     '<<ExtensibleTermList>>',
-//     columnCL
+//     appColumnCL
 // );
 // defSuperCatsPageCL.outwardCallbacks.push(function($ci) {
 //     let contextData = $ci.data("contextData");
@@ -419,7 +486,7 @@ pageAreaCL.outwardCallbacks.push(function($ci) {
 //     "MainPage",
 //     /* Initial HTML */
 //     '<div></div>',
-//     columnCL
+//     appColumnCL
 // );
 // mainPageCL.inwardCallbacks.push(function($ci) {
 //     let contextData = $ci.data("contextData");
@@ -430,10 +497,10 @@ pageAreaCL.outwardCallbacks.push(function($ci) {
 // });
 //
 // export var categoryColumnCL = new ContentLoader(
-//     "CategoryColumn",
+//     "CategoryPage",
 //     /* Initial HTML */
-//     '<<Column>>',
-//     sdbInterfaceCL
+//     '<<PagesWithTabHeader>>',
+//     appColumnCL
 // );
 //
 //
@@ -457,17 +524,17 @@ pageAreaCL.outwardCallbacks.push(function($ci) {
 //
 //
 //
-// tabNavListCL.cssRules.push(
-//     '& > li > a { padding: 7px 12px; }'
+// tabHeaderCL.cssRules.push(
+//     '& li > a { padding: 7px 12px; }'
 // );
-// tabNavListCL.cssRules.push(
-//     '&.odd { margin-left: 2px }'
+// tabHeaderCL.cssRules.push(
+//     '& .nav-tabs.odd { margin-left: 2px }'
 // );
-// columnCL.inwardCallbacks.push(function($ci) {
+// appColumnCL.inwardCallbacks.push(function($ci) {
 //     let parentColumnParity = $ci.data("contextData").columnParity ?? true;
 //     $ci.data("contextData").columnParity = !parentColumnParity;
 // });
-// tabNavListCL.outwardCallbacks.push(function($ci) {
+// tabHeaderCL.outwardCallbacks.push(function($ci) {
 //     if ($ci.data("contextData").columnParity) {
 //         $ci.addClass("odd");
 //     }

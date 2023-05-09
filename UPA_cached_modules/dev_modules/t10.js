@@ -13,10 +13,11 @@ export function upa_main(preferenceUserID, termID, userID) {
     let $upa1Frame = t1Mod.upaFind('main').html('<div id="upa1"></div>')
         .children('#upa1');
     let contextData = {
-        columnContentKey: "PagesWithTabHeader",
+        columnContentKey: "TestColumn",
         termID: termID,
         userID: userID
     };
 
-    sdbInterfaceCL.loadAppended($upa1Frame, contextData);
+    let contentKey = sdbInterfaceCL.contentKey;
+    sdbInterfaceCL.loadAppended($upa1Frame, contentKey, contextData);
 }

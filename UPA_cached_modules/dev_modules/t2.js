@@ -138,8 +138,12 @@ export class ContentLoader {
             }
         }
         // if no matching child CL is found, go up to the parent CL and repeat
-        // the process recursively, or throw error if this CL has no parent.
+        // the process recursively until reaching the root CL, recognized by
+        // having no parentCL itself.
         if (typeof this.parentCL === "undefined") {
+            if (this.contentKey === contentKey) {
+                return this;
+            }
             throw (
                 "ContentLoader.getRelatedContentLoader(): " +
                 'no content loader found with content key "' +
@@ -155,28 +159,28 @@ export class ContentLoader {
         let cl = this.getRelatedContentLoader(contentKey)
         $obj.after(getPlaceholderTemplateTag(cl.contentKey));
         let $placeholder = $obj.next();
-        this.loadAndReplacePlaceholder($placeholder, contextData, returnData);
+        cl.loadAndReplacePlaceholder($placeholder, contextData, returnData);
     }
     loadBefore($obj, contentKey, contextData, returnData) {
         returnData = returnData ?? {};
         let cl = this.getRelatedContentLoader(contentKey)
         $obj.before(getPlaceholderTemplateTag(cl.contentKey));
         let $placeholder = $obj.prev();
-        this.loadAndReplacePlaceholder($placeholder, contextData, returnData);
+        cl.loadAndReplacePlaceholder($placeholder, contextData, returnData);
     }
     loadAppended($obj, contentKey, contextData, returnData) {
         returnData = returnData ?? {};
         let cl = this.getRelatedContentLoader(contentKey)
         $obj.append(getPlaceholderTemplateTag(cl.contentKey));
         let $placeholder = $obj.children(':last-child');
-        this.loadAndReplacePlaceholder($placeholder, contextData, returnData);
+        cl.loadAndReplacePlaceholder($placeholder, contextData, returnData);
     }
     loadPrepended($obj, contentKey, contextData, returnData) {
         returnData = returnData ?? {};
         let cl = this.getRelatedContentLoader(contentKey)
         $obj.prepend(getPlaceholderTemplateTag(cl.contentKey));
         let $placeholder = $obj.children(':first-child');
-        this.loadAndReplacePlaceholder($placeholder, contextData, returnData);
+        cl.loadAndReplacePlaceholder($placeholder, contextData, returnData);
     }
 
     addCSSRulesToDocument() {
