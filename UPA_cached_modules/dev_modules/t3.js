@@ -69,7 +69,8 @@ sdbInterfaceCL.outwardCallbacks.push(function($ci) {
             let $callingColumn = $(event.target);
             if (dir === "right") {
                 let $existingColumn = $callingColumn.next();
-                if ($existingColumn.data("localData").isOverwritable ?? false) {
+                let existingLocalData = $existingColumn.data("localData") ?? {};
+                if (existingLocalData.isOverwritable ?? false) {
                     $existingColumn.remove();
                 }
                 sdbInterfaceCL.loadAfter(
@@ -79,7 +80,8 @@ sdbInterfaceCL.outwardCallbacks.push(function($ci) {
                     isOverwritable ?? false;
             } else if (dir === "left") {
                 let $existingColumn = $callingColumn.prev();
-                if ($existingColumn.data("localData").isOverwritable ?? false) {
+                let existingLocalData = $existingColumn.data("localData") ?? {};
+                if (existingLocalData.isOverwritable ?? false) {
                     $existingColumn.remove();
                 }
                 sdbInterfaceCL.loadBefore(
@@ -105,7 +107,7 @@ sdbInterfaceCL.outwardCallbacks.push(function($ci) {
 appColumnCL.outwardCallbacks.push(function($ci) {
     $ci
         .on("open-column", function(event, contextData, dir, isOverwritable) {
-            $(this).parent().trigger("open-colum",
+            $(this).parent().trigger("open-column",
                 [contextData, dir, isOverwritable]
             );
             return false;
@@ -146,9 +148,6 @@ export var pageAreaCL = new ContentLoader(
     /* Initial HTML */
     '<main></main>',
     appColumnCL
-);
-pageAreaCL.cssRules.push(
-    'border-left 1px solid #ccc; border-right 1px solid #ccc;' // doesn't work..
 );
 // Since we want to use the close button for tabs with their own click event,
 // we should make the bubbling-up of the click event jump straight to the
@@ -212,6 +211,18 @@ pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
             return false;
         });
 });
+pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
+    $ci
+        .on("open-tab-in-new-column", function(event, tabTitle) {
+            let $this = $(this);
+            let pageSpec = $this.data("pageSpecs")[tabTitle];
+            var contextData = Object.assign({}, pageSpec.data);
+            contextData.columnContentKey = pageSpec.key;
+            $(this)
+                .trigger("open-column", [contextData, "right", false]);
+            return false;
+        });
+});
 tabHeaderCL.outwardCallbacks.push(function($ci) {
     $ci
         .on("add-tab", function(event, tabTitle) {
@@ -226,7 +237,7 @@ tabHeaderCL.outwardCallbacks.push(function($ci) {
             tabHeaderCL.loadPrepended($newTab, "CloseButton");
             $newTab.find('.CI.CloseButton').hide();
             $newTab
-                .on("click", function() {
+                .on("click", function(event) {
                     $(this)
                         .trigger("activate-tab", [tabTitle])
                         .trigger("tab-selected", [tabTitle]);
@@ -238,6 +249,14 @@ tabHeaderCL.outwardCallbacks.push(function($ci) {
                         .removeClass("active")
                         .find('.CI.CloseButton').hide();
                     return false;
+                })
+                .on("click dblclick", function(event) {
+                    if (event.type === "click" && event.which != 2) {
+                        return true;
+                    }
+                    $(this)
+                        .trigger("open-tab-in-new-column", [tabTitle]);
+                    return true; // makes the click event bubble up.
                 });
             return false;
         })
@@ -285,8 +304,8 @@ pageAreaCL.outwardCallbacks.push(function($ci) {
 
 /* Test */
 
-export var testColumnCL = new ContentLoader(
-    "TestColumn",
+export var testPagesCL = new ContentLoader(
+    "TestPages",
     /* Initial HTML */
     '<div>' +
         '<<PagesWithTabHeader>>' +
@@ -295,7 +314,7 @@ export var testColumnCL = new ContentLoader(
 );
 
 
-testColumnCL.outwardCallbacks.push(function($ci) {
+testPagesCL.outwardCallbacks.push(function($ci) {
     let contextData = $ci.data("contextData");
     $ci.find('*').addBack().filter('.CI.PagesWithTabHeader')
         .trigger("add-tab-and-page",
@@ -329,6 +348,9 @@ testPageCL.inwardCallbacks.push(function($ci) {
 
 
 
+pageAreaCL.cssRules.push(
+    'border-left 1px solid #ccc; border-right 1px solid #ccc;' // doesn't work..
+);
 
 
 

@@ -13,7 +13,7 @@ export function upa_main(preferenceUserID, termID, userID) {
     let $upa1Frame = t1Mod.upaFind('main').html('<div id="upa1"></div>')
         .children('#upa1');
     let contextData = {
-        columnContentKey: "TestColumn",
+        columnContentKey: "TestPages",
         termID: termID,
         userID: userID
     };
