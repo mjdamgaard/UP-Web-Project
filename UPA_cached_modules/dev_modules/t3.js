@@ -27,7 +27,7 @@ export var appColumnCL = new ContentLoader(
     sdbInterfaceCL,
 );
 appColumnCL.cssRules.push(
-    'margin: 5px 5px; width: 300px;'
+    'margin: 5px 5px; width: 600px;'
 );
 
 // make the AppColumn load the CL pointed to by contextData.columnContentKey
@@ -46,6 +46,9 @@ export var closeButtonCL = new ContentLoader(
         '<span aria-hidden="true">&times;</span>' +
     '</button>',
     sdbInterfaceCL,
+);
+closeButtonCL.cssRules.push(
+    'z-index: 100;'
 );
 closeButtonCL.outwardCallbacks.push(function($ci) {
     $ci.on("click", function() {
@@ -174,7 +177,7 @@ pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
                 .trigger("open-page", [tabTitle]);
             return false;
         })
-        .on("add-tab", function(event, tabTitle) {debugger;
+        .on("add-tab", function(event, tabTitle) {
             $(this).children('.CI.TabHeader')
                 .trigger("add-tab", [tabTitle]);
             return false;
@@ -186,7 +189,7 @@ pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
         })
         .on("add-tab-and-page", function(
             event, tabTitle, contentKey, pageData
-        ) {debugger;
+        ) {
             $(this)
                 .trigger("add-page", [tabTitle, contentKey, pageData])
                 .trigger("add-tab", [tabTitle]);
@@ -233,18 +236,11 @@ tabHeaderCL.outwardCallbacks.push(function($ci) {
             return false;
         })
         .on("activate-tab", function(event, tabTitle) {
-            $(this).children('li')
+            $(this).find('li')
                 .removeClass("active")
                 .filter('[data-title="' + tabTitle + '"]')
                 .addClass("active")
                 .find('.CI.CloseButton').show();
-            return false;
-        })
-        .on("close", function(event, tabTitle) {
-            $(this).children('li')
-                .removeClass("active")
-                .filter('[data-title="' + tabTitle + '"]')
-                .addClass("active");
             return false;
         });
 });
@@ -287,7 +283,7 @@ export var testColumnCL = new ContentLoader(
 );
 
 
-testColumnCL.outwardCallbacks.push(function($ci) {debugger;
+testColumnCL.outwardCallbacks.push(function($ci) {
     let contextData = $ci.data("contextData");
     $ci.find('*').addBack().filter('.CI.PagesWithTabHeader')
         .trigger("add-tab-and-page",
