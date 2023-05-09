@@ -49,7 +49,7 @@ export var closeButtonCL = new ContentLoader(
     sdbInterfaceCL,
 );
 closeButtonCL.cssRules.push(
-    'padding: 4px 2px; z-index: 1;'
+    'padding: 0px 4px; position: absolute; z-index: 2; right: 1px; top: 1px; '
 );
 closeButtonCL.outwardCallbacks.push(function($ci) {
     $ci.on("click", function() {
@@ -169,13 +169,13 @@ pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
         .on("open-page", function(event, tabTitle) {
             let $this = $(this);
             let pageSpec = $this.data("pageSpecs")[tabTitle];
-            $(this).children('.CI.PageArea')
+            $this.children('.CI.PageArea')
                 .trigger("open-page", [tabTitle, pageSpec.key, pageSpec.data]);
             return false;
         })
         .on("close-page", function(event, tabTitle) {
             $(this).children('.CI.PageArea')
-                .trigger("open-page", [tabTitle]);
+                .trigger("close-page", [tabTitle]);
             return false;
         })
         .on("add-tab", function(event, tabTitle) {
@@ -231,6 +231,7 @@ tabHeaderCL.outwardCallbacks.push(function($ci) {
                 .on("close", function() {
                     $(this)
                         .trigger("close-page", [tabTitle])
+                        .removeClass("active")
                         .find('.CI.CloseButton').hide();
                     return false;
                 });
@@ -244,10 +245,13 @@ tabHeaderCL.outwardCallbacks.push(function($ci) {
                 .find('.CI.CloseButton').show();
             return false;
         });
+        // .on("deactivate-tab", function(event, tabTitle) {
+        //     $(this).find('li')
+        //         .filter('[data-title="' + tabTitle + '"]')
+        //         .removeClass("active");
+        //     return false;
+        // });
 });
-tabHeaderCL.cssRules.push(
-    '& li > a { z-index: -1; }'
-);
 pageAreaCL.outwardCallbacks.push(function($ci) {
     $ci.data("openPagesTitleArr", [])
         .on("open-page", function(event, tabTitle, contentKey, pageData) {
