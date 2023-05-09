@@ -23,7 +23,10 @@ html {
 body {
     margin: 0px;
     padding: 0px;
+    height: 100vh;
+    width: 100vw;
 }
+
 body > header {
     background-color: turquoise;
 }

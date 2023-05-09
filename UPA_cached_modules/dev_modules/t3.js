@@ -27,8 +27,9 @@ export var appColumnCL = new ContentLoader(
     sdbInterfaceCL,
 );
 appColumnCL.cssRules.push(
-    'margin: 5px 5px; width: 600px;'
+    'margin: 5px 20px; width: 600px;'
 );
+
 
 // make the AppColumn load the CL pointed to by contextData.columnContentKey
 // in the first outward callback.
@@ -145,6 +146,9 @@ export var pageAreaCL = new ContentLoader(
     /* Initial HTML */
     '<main></main>',
     appColumnCL
+);
+pageAreaCL.cssRules.push(
+    'border-left 1px solid #ccc; border-right 1px solid #ccc;' // doesn't work..
 );
 // Since we want to use the close button for tabs with their own click event,
 // we should make the bubbling-up of the click event jump straight to the
