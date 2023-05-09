@@ -34,9 +34,9 @@ appColumnCL.cssRules.push(
 // in the first outward callback.
 appColumnCL.outwardCallbacks.push(function($ci) {
     let contextData = $ci.data("contextData");
-    let cl = appColumnCL.relatedCL(contextData.columnContentKey);
+    let contentKey = contextData.columnContentKey;
     delete contextData.columnContentKey;
-    cl.loadAppended($ci, contextData);
+    appColumnCL.loadAppended($ci, contentKey, contextData);
 });
 
 export var closeButtonCL = new ContentLoader(
@@ -47,10 +47,17 @@ export var closeButtonCL = new ContentLoader(
     '</button>',
     sdbInterfaceCL,
 );
+closeButtonCL.outwardCallbacks.push(function($ci) {
+    $ci.on("click", function() {
+        $(this).trigger("close");
+    });
+});
 
 
 /* Events to open new app columns */
 
+// add event for columns to call to the ColumnBasedSDBInterface and open new
+// columns next to them, to the right or to the left.
 sdbInterfaceCL.outwardCallbacks.push(function($ci) {
     $ci
         .on("open-column", function(event, contextData, dir, isOverwritable) {
@@ -60,7 +67,9 @@ sdbInterfaceCL.outwardCallbacks.push(function($ci) {
                 if ($existingColumn.data("localData").isOverwritable ?? false) {
                     $existingColumn.remove();
                 }
-                appColumnCL.loadAfter($callingColumn, contextData);
+                sdbInterfaceCL.loadAfter(
+                    $callingColumn, "AppColumn", contextData
+                );
                 $callingColumn.next().data("localData").isOverwritable =
                     isOverwritable ?? false;
             } else if (dir === "left") {
@@ -68,7 +77,9 @@ sdbInterfaceCL.outwardCallbacks.push(function($ci) {
                 if ($existingColumn.data("localData").isOverwritable ?? false) {
                     $existingColumn.remove();
                 }
-                appColumnCL.loadBefore($callingColumn, contextData);
+                sdbInterfaceCL.loadBefore(
+                    $callingColumn, "AppColumn", contextData
+                );
                 $callingColumn.prev().data("localData").isOverwritable =
                     isOverwritable ?? false;
             }
@@ -76,6 +87,16 @@ sdbInterfaceCL.outwardCallbacks.push(function($ci) {
         });
         // TODO: Add event to open the default ("This SDB") column.
 });
+// make all the initial columns non-overwritable from the beginning.
+sdbInterfaceCL.outwardCallbacks.push(function($ci) {
+    $ci.children('.CI.AppColumn').each(function() {
+        $(this).data("localData").isOverwritable = false;
+    });
+});
+// make Columns handle and send on "open-column" events coming from inside them
+// such that the ColumnBasedSDBInterface parent sees the event coming from them.
+// Also add a close event, and make the Columns turn themselves non-overwritable
+// on first click interaction with them.
 appColumnCL.outwardCallbacks.push(function($ci) {
     $ci
         .on("open-column", function(event, contextData, dir, isOverwritable) {
@@ -84,7 +105,7 @@ appColumnCL.outwardCallbacks.push(function($ci) {
             );
             return false;
         })
-        .on("close-column", function() {
+        .on("close", function() {
             $(this).remove();
             return false;
         })
@@ -95,9 +116,7 @@ appColumnCL.outwardCallbacks.push(function($ci) {
 
 
 
-
-
-
+/* Pages with tab headers */
 
 export var pagesWithTabHeaderCL = new ContentLoader(
     "PagesWithTabHeader",
@@ -109,7 +128,6 @@ export var pagesWithTabHeaderCL = new ContentLoader(
     appColumnCL
 );
 
-
 export var tabHeaderCL = new ContentLoader(
     "TabHeader",
     /* Initial HTML */
@@ -118,137 +136,141 @@ export var tabHeaderCL = new ContentLoader(
     '</header>',
     appColumnCL
 );
-export var columnMainCL = new ContentLoader(
+export var pageAreaCL = new ContentLoader(
     "PageArea",
     /* Initial HTML */
     '<main></main>',
     appColumnCL
 );
+// Since we want to use the close button for tabs with their own click event,
+// we should make the bubbling-up of the click event jump straight to the
+// ancestor Column.
+closeButtonCL.outwardCallbacks.push(function($ci) {
+    $ci.on("click", function() {
+        $(this).closest('.CI.AppColumn').trigger("click");
+        return false;
+    });
+});
 
 
-//
-//
-//
-// /* Events that add tabs and add/load associated pages to these */
-//
-// pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
-//     $ci.data("pageSpecs", {})
-//         .on("add-page", function(event, tabTitle, contentKey, pageData) {
-//             let pageCL = pagesWithTabHeaderCL.relatedCL(contentKey);
-//             $(this).data("pageSpecs")[tabTitle] =
-//                 {cl:pageCL, data:pageData};
-//             return false;
-//         })
-//         .on("open-page", function(event, tabTitle) {
-//             let $this = $(this);
-//             let pageSpec = $this.data("pageSpecs")[tabTitle];
-//             $(this).children('.CI.ColumnMain')
-//                 .trigger("open-page", [tabTitle, pageSpec.cl, pageSpec.data]);
-//             return false;
-//         })
-//         .on("close-page", function(event, tabTitle) {
-//             $(this).children('.CI.ColumnMain')
-//                 .trigger("open-page", [tabTitle]);
-//             return false;
-//         })
-//         .on("add-tab", function(event, tabTitle) {
-//             $(this).children('.CI.ColumnHeader')
-//                 .trigger("add-tab", [tabTitle]);
-//             return false;
-//         })
-//         .on("activate-tab", function(event, tabTitle) {
-//             $(this).children('.CI.ColumnHeader')
-//                 .trigger("activate-tab", [tabTitle]);
-//             return false;
-//         })
-//         .on("add-tab-and-page", function(
-//             event, tabTitle, contentKey, pageData
-//         ) {
-//             $(this)
-//                 .trigger("add-page", [tabTitle, contentKey, pageData])
-//                 .trigger("add-tab", [tabTitle]);
-//             return false;
-//         })
-//         .on("open-tab-and-page", function(event, tabTitle) {
-//             $(this)
-//                 .trigger("activate-tab", [tabTitle])
-//                 .trigger("open-page", [tabTitle]);
-//             return false;
-//         })
-//         .on("tab-selected", function(event, tabTitle) {
-//             $(this).trigger("open-page", [tabTitle]);
-//             return false;
-//         });
-// });
-//
-// columnHeaderCL.outwardCallbacks.push(function($ci) {
-//     $ci
-//         .on("add-tab", function(event, tabTitle) {
-//             $(this).find('.CI.TabNavList')
-//                 .trigger("add-tab", [tabTitle]);
-//             return false;
-//         })
-//         .on("activate-tab", function(event, tabTitle) {
-//             $(this).find('.CI.TabNavList')
-//                 .trigger("activate-tab", [tabTitle]);
-//             return false;
-//         });
-// });
-//
-// tabNavListCL.outwardCallbacks.push(function($ci) {
-//     $ci
-//         .on("add-tab", function(event, tabTitle) {
-//             let $newTab = $(this).append(
-//                     '<li data-title="' + tabTitle + '">' +
-//                         '<a class="nav-link" href="#">' +
-//                             tabTitle +
-//                         '</a>' +
-//                     '</li>'
-//                 )
-//                 .children(':last-child');
-//             $newTab.on("click", function() {
-//                 $(this)
-//                     .trigger("activate-tab", [tabTitle])
-//                     .trigger("tab-selected", [tabTitle]);
-//                 return false;
-//             });
-//             return false;
-//         })
-//         .on("activate-tab", function(event, tabTitle) {
-//             $(this).children('li')
-//                 .removeClass("active")
-//                 .filter('[data-title="' + tabTitle + '"]')
-//                 .addClass("active");
-//             return false;
-//         });
-// });
-//
-// columnMainCL.outwardCallbacks.push(function($ci) {
-//     $ci.data("openPagesTitleArr", [])
-//         .on("open-page", function(event, tabTitle, pageCL, pageData) {
-//             let $this = $(this);
-//             if ($this.data("openPagesTitleArr").includes(tabTitle)) {
-//                 $this.children().hide();
-//                 $this.children('[data-title="' + tabTitle +'"]').show();
-//             } else {
-//                 $this.data("openPagesTitleArr").push(tabTitle);
-//                 $this.children().hide();
-//                 pageCL.loadAppended($this, pageData);
-//                 $this.children(':last-child').attr("data-title", tabTitle);
-//             }
-//             return false;
-//         })
-//         .on("close-page", function(event, tabTitle) {
-//             let $this = $(this);
-//             let titleArr = $this.data("openPagesTitleArr");
-//             titleArr[titleArr.indexOf(tabTitle)] = null;
-//             $this.children('[data-title="' + tabTitle +'"]').remove();
-//             return false;
-//         })
-// });
-//
-//
-//
+/* Events that add tabs and add/load associated pages to these */
+
+pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
+    $ci.data("pageSpecs", {})
+        .on("add-page", function(event, tabTitle, contentKey, pageData) {
+            $(this).data("pageSpecs")[tabTitle] =
+                {key:contentKey, data:pageData};
+            return false;
+        })
+        .on("open-page", function(event, tabTitle) {
+            let $this = $(this);
+            let pageSpec = $this.data("pageSpecs")[tabTitle];
+            $(this).children('.CI.PageArea')
+                .trigger("open-page", [tabTitle, pageSpec.key, pageSpec.data]);
+            return false;
+        })
+        .on("close-page", function(event, tabTitle) {
+            $(this).children('.CI.PageArea')
+                .trigger("open-page", [tabTitle]);
+            return false;
+        })
+        .on("add-tab", function(event, tabTitle) {
+            $(this).children('.CI.TabHeader')
+                .trigger("add-tab", [tabTitle]);
+            return false;
+        })
+        .on("activate-tab", function(event, tabTitle) {
+            $(this).children('.CI.TabHeader')
+                .trigger("activate-tab", [tabTitle]);
+            return false;
+        })
+        .on("add-tab-and-page", function(
+            event, tabTitle, contentKey, pageData
+        ) {
+            $(this)
+                .trigger("add-page", [tabTitle, contentKey, pageData])
+                .trigger("add-tab", [tabTitle]);
+            return false;
+        })
+        .on("open-tab-and-page", function(event, tabTitle) {
+            $(this)
+                .trigger("activate-tab", [tabTitle])
+                .trigger("open-page", [tabTitle]);
+            return false;
+        })
+        .on("tab-selected", function(event, tabTitle) {
+            $(this).trigger("open-page", [tabTitle]);
+            return false;
+        });
+});
+tabHeaderCL.outwardCallbacks.push(function($ci) {
+    $ci
+        .on("add-tab", function(event, tabTitle) {
+            let $newTab = $(this).find('.nav-tabs').append(
+                    '<li data-title="' + tabTitle + '">' +
+                        '<a class="nav-link" href="#">' +
+                            tabTitle +
+                        '</a>' +
+                    '</li>'
+                )
+                .children(':last-child');
+            tabHeaderCL.loadPrepended($newTab, )
+            $newTab
+                .on("click", function() {
+                    $(this)
+                        .trigger("activate-tab", [tabTitle])
+                        .trigger("tab-selected", [tabTitle]);
+                    return false;
+                })
+                .on("close", function() {
+                    $(this)
+                        .trigger("activate-tab", [tabTitle])
+                        .trigger("tab-selected", [tabTitle]);
+                    return false;
+                });
+            return true; // makes the click event bubble up to the Column.
+        })
+        .on("activate-tab", function(event, tabTitle) {
+            $(this).children('li')
+                .removeClass("active")
+                .filter('[data-title="' + tabTitle + '"]')
+                .addClass("active");
+            return false;
+        })
+        .on("close", function(event, tabTitle) {
+            $(this).children('li')
+                .removeClass("active")
+                .filter('[data-title="' + tabTitle + '"]')
+                .addClass("active");
+            return false;
+        });
+});
+pageAreaCL.outwardCallbacks.push(function($ci) {
+    $ci.data("openPagesTitleArr", [])
+        .on("open-page", function(event, tabTitle, contentKey, pageData) {
+            let $this = $(this);
+            if ($this.data("openPagesTitleArr").includes(tabTitle)) {
+                $this.children().hide();
+                $this.children('[data-title="' + tabTitle +'"]').show();
+            } else {
+                $this.data("openPagesTitleArr").push(tabTitle);
+                $this.children().hide();
+                pageAreaCL.loadAppended($this, contentKey, pageData);
+                $this.children(':last-child').attr("data-title", tabTitle);
+            }
+            return false;
+        })
+        .on("close-page", function(event, tabTitle) {
+            let $this = $(this);
+            let titleArr = $this.data("openPagesTitleArr");
+            titleArr[titleArr.indexOf(tabTitle)] = null;
+            $this.children('[data-title="' + tabTitle +'"]').remove();
+            return false;
+        });
+});
+
+
+
 //
 //
 // export var pageFieldCL = new ContentLoader(
@@ -268,20 +290,18 @@ export var columnMainCL = new ContentLoader(
 //         .on("append-contents", function(event, contentKey, dataArr, selector) {
 //             let $obj = (typeof selector === "undefined") ?
 //                 $(this) : $(this).find(selector);
-//             let cl = pageFieldCL.relatedCL(contentKey);
 //             let len = dataArr.length;
 //             for (let i = 0; i < len; i++) {
-//                 cl.loadAppended($obj, dataArr[i]);
+//                 pageFieldCL.loadAppended($obj, contentKey, dataArr[i]);
 //             }
 //             return false;
 //         })
 //         .on("prepend-contents", function(event, contentKey, dataArr, selector) {
 //             let $obj = (typeof selector === "undefined") ?
 //                 $(this) : $(this).find(selector);
-//             let cl = pageFieldCL.relatedCL(contentKey);
 //             let len = dataArr.length;
 //             for (let i = 0; i < len; i++) {
-//                 cl.loadPrepended($obj, dataArr[i]);
+//                 pageFieldCL.loadPrepended($obj, contentKey, dataArr[i]);
 //             }
 //             return false;
 //         });
