@@ -42,13 +42,14 @@ appColumnCL.outwardCallbacks.push(function($ci) {
 export var closeButtonCL = new ContentLoader(
     "CloseButton",
     /* Initial HTML */
+    // (Source: https://getbootstrap.com/docs/4.0/utilities/close-icon/)
     '<button type="button" class="close" aria-label="Close">' +
         '<span aria-hidden="true">&times;</span>' +
     '</button>',
     sdbInterfaceCL,
 );
 closeButtonCL.cssRules.push(
-    'z-index: 100;'
+    'padding: 4px 2px; z-index: 1;'
 );
 closeButtonCL.outwardCallbacks.push(function($ci) {
     $ci.on("click", function() {
@@ -244,6 +245,9 @@ tabHeaderCL.outwardCallbacks.push(function($ci) {
             return false;
         });
 });
+tabHeaderCL.cssRules.push(
+    '& li > a { z-index: -1; }'
+);
 pageAreaCL.outwardCallbacks.push(function($ci) {
     $ci.data("openPagesTitleArr", [])
         .on("open-page", function(event, tabTitle, contentKey, pageData) {
