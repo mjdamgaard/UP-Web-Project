@@ -214,7 +214,7 @@ tabHeaderCL.outwardCallbacks.push(function($ci) {
                     '</li>'
                 )
                 .children(':last-child');
-            tabHeaderCL.loadPrepended($newTab, )
+            tabHeaderCL.loadPrepended($newTab, "CloseButton").hide();
             $newTab
                 .on("click", function() {
                     $(this)
@@ -224,8 +224,8 @@ tabHeaderCL.outwardCallbacks.push(function($ci) {
                 })
                 .on("close", function() {
                     $(this)
-                        .trigger("activate-tab", [tabTitle])
-                        .trigger("tab-selected", [tabTitle]);
+                        .trigger("close-page", [tabTitle])
+                        .find('.CI.CloseButton').hide();
                     return false;
                 });
             return true; // makes the click event bubble up to the Column.
@@ -234,7 +234,8 @@ tabHeaderCL.outwardCallbacks.push(function($ci) {
             $(this).children('li')
                 .removeClass("active")
                 .filter('[data-title="' + tabTitle + '"]')
-                .addClass("active");
+                .addClass("active")
+                .find('.CI.CloseButton').show();
             return false;
         })
         .on("close", function(event, tabTitle) {
