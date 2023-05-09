@@ -226,7 +226,8 @@ pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
 tabHeaderCL.outwardCallbacks.push(function($ci) {
     $ci
         .on("add-tab", function(event, tabTitle) {
-            let $newTab = $(this).find('.nav-tabs').append(
+            let $newTab = $(this).find('.nav-tabs')
+                .append(
                     '<li data-title="' + tabTitle + '">' +
                         '<a class="nav-link" href="#">' +
                             tabTitle +
@@ -251,13 +252,16 @@ tabHeaderCL.outwardCallbacks.push(function($ci) {
                     return false;
                 })
                 .children('a')
+                .on("click", function(event) {
+                    event.preventDefault();
+                    return true;
+                })
                 .on("click dblclick", function(event) {
                     if (
                         event.type === "click" && event.which == 2 ||
                         event.type === "dblclick"
                     ) {
-                        // event.preventDefault();
-                        // $(this).trigger("open-tab-in-new-column", [tabTitle]);
+                        $(this).trigger("open-tab-in-new-column", [tabTitle]);
                     }
                     return true;
                 });
