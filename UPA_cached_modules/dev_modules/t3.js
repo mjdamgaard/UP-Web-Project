@@ -249,18 +249,18 @@ tabHeaderCL.outwardCallbacks.push(function($ci) {
                         .removeClass("active")
                         .find('.CI.CloseButton').hide();
                     return false;
+                })
+                .children('a')
+                .on("click dblclick", function(event) {
+                    if (
+                        event.type === "click" && event.which == 2 ||
+                        event.type === "dblclick"
+                    ) {
+                        // event.preventDefault();
+                        // $(this).trigger("open-tab-in-new-column", [tabTitle]);
+                    }
+                    return true;
                 });
-                // .children('a')
-                // .on("click dblclick", function(event) {
-                //     if (
-                //         event.type === "click" && event.which == 2 ||
-                //         event.type === "dblclick"
-                //     ) {
-                //         // event.preventDefault();
-                //         // $(this).trigger("open-tab-in-new-column", [tabTitle]);
-                //     }
-                //     return false;
-                // });
             return false;
         })
         .on("activate-tab", function(event, tabTitle) {
