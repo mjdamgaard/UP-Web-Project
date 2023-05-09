@@ -251,13 +251,9 @@ tabHeaderCL.outwardCallbacks.push(function($ci) {
                         .find('.CI.CloseButton').hide();
                     return false;
                 })
-                .children('a')
-                .on("click", function(event) {
-                    event.preventDefault();
-                    return true;
-                })
                 .on("click dblclick", function(event) {
                     if (
+                        // this middle mouse click does not work (in firefox)..
                         event.type === "click" && event.which == 2 ||
                         event.type === "dblclick"
                     ) {
