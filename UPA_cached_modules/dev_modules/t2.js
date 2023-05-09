@@ -71,6 +71,8 @@ export class ContentLoader {
 
         // store the context data on the CI.
         $ci.data("contextData", Object.assign({}, contextData));
+        // initialize a local data object for the CI.
+        $ci.data("localData", {});
         // apply all the inward callbacks, which can change the initial HTML,
         // as well as the contextData , namely the data stored at
         // $ci.data("contextData").
