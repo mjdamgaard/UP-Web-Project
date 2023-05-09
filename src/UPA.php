@@ -16,8 +16,8 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 
 
 // get and verify the required inputs.
-$paramNameArr = array("tid", "uid", "pid");
-$typeArr = array("termID", "userID", "userOrGroupID");
+$paramNameArr = array("et", "eid", "uid", "pid");
+$typeArr = array("type", "id", "id", "id");
 $paramValArr = InputGetter::getParams($paramNameArr);
 InputVerifier::verifyTypes($paramValArr, $typeArr, $paramNameArr);
 $termID = $paramValArr[0];
@@ -49,7 +49,7 @@ $preferenceUserID = $paramValArr[2];
 // chosen user/user group.
 //TODO: For now I am just loading a module in the UPA_dev_modules folder. Change
 // this such that the user (group) is queried for their preference instead.
-$mainModuleID = "t10";
+$mainModuleID = "10";
 
 
 // The safety of the main module should not be verified here! That is the

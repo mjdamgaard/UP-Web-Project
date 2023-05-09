@@ -30,22 +30,20 @@ $_POST = $_GET;
 
 $sql = "CALL selectText (?)";
 $paramNameArr = array("id");
-$typeArr = array(
-    "textID"
-);
+$typeArr = array("id");
 
 // get inputs.
 $paramValArr = InputGetter::getParams($paramNameArr);
 // verify inputs.
 InputVerifier::verifyTypes($paramValArr, $typeArr, $paramNameArr);
 // store input in appropriate variable.
-$textID = $paramValArr[0];
+$textID = "t" . $paramValArr[0];
 
 
 
 // array of text IDs of legal developer-made modules.
 $devModuleIDs = array (
-    "t[1-5]", "tA"
+    "t[1-5]", "t10"
     //TODO: Change these to match the text IDs in the database of the
     // developer-made modules.
 );
