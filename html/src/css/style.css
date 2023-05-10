@@ -22,7 +22,7 @@ html, body, body > main, #upaFrame, #upaFrame > *, #upaFrame > * > * {
     height: 100%;
 }
 body {
-    background-color: #F9F9F9;
+    background-color: #F8F8FB;
 }
 
 body > header {
