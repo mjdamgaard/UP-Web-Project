@@ -65,7 +65,9 @@ closeButtonCL.outwardCallbacks.push(function($ci) {
 // columns next to them, to the right or to the left.
 sdbInterfaceCL.outwardCallbacks.push(function($ci) {
     $ci
-        .on("open-column", function(event, contextData, dir, isOverwritable) {
+        .on("open-column-next-to-caller", function(
+            event, contextData, dir, isOverwritable
+        ) {
             let $callingColumn = $(event.target);
             if (dir === "right") {
                 let $existingColumn = $callingColumn.next();
@@ -107,7 +109,7 @@ sdbInterfaceCL.outwardCallbacks.push(function($ci) {
 appColumnCL.outwardCallbacks.push(function($ci) {
     $ci
         .on("open-column", function(event, contextData, dir, isOverwritable) {
-            $(this).trigger("open-column",
+            $(this).trigger("open-column-next-to-caller",
                 [contextData, dir, isOverwritable]
             );
             return false;
