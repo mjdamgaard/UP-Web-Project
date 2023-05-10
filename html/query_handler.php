@@ -185,7 +185,13 @@ switch ($reqType) {
         $sql = "CALL selectList (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [[len, elemTypes, elemIDs, tailID]].
+        // output: [[elemTypeStr, elemIDHexStr, tailID]].
+        break;
+    case "LID":
+        $sql = "CALL selectListID (?)";
+        $paramNameArr = array("ts", "ids", "t");
+        $typeArr = array("elemTypeStr", "elemIDHexStr", "id");
+        // output: [[listID,]].
         break;
     case "Creator":
         $sql = "CALL selectCreator (?, ?)";

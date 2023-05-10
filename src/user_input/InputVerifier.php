@@ -86,6 +86,24 @@ class InputVerifier {
                     echoTypeErrorJSONAndExit($paramName, "VARCHAR(768)");
                 }
                 break;
+            case "elemTypeStr":
+                if (
+                    !is_string($paramVal) ||
+                    !ctype_print($paramVal) ||
+                    strlen($paramVal) > 31
+                ) {
+                    echoTypeErrorJSONAndExit($paramName, "VARCHAR(31)");
+                }
+                break;
+            case "elemIDHexStr":
+                if (
+                    !is_string($paramVal) ||
+                    !ctype_print($paramVal) ||
+                    strlen($paramVal) > 496
+                ) {
+                    echoTypeErrorJSONAndExit($paramName, "VARCHAR(496)");
+                }
+                break;
             case "text":
                 if (
                     !is_string($paramVal) ||

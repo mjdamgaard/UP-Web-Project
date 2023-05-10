@@ -286,7 +286,7 @@ CREATE TABLE Patterns (
 
 CREATE TABLE Texts (
     /* text ID */
-    id BIGINT UNSIGNED PRIMARY KEY,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     -- type = "x".
 
     /* data */
@@ -295,7 +295,7 @@ CREATE TABLE Texts (
 
 CREATE TABLE Binaries (
     /* binary string ID */
-    id BIGINT UNSIGNED PRIMARY KEY,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     -- type = "b".
 
     /* data */
@@ -305,16 +305,16 @@ CREATE TABLE Binaries (
 
 CREATE TABLE Lists (
     /* list ID */
-    id BIGINT UNSIGNED PRIMARY KEY,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     -- type = "l".
 
     /* data */
-    len SMALLINT UNSIGNED NOT NULL,
-
     elem_ts VARCHAR(31) NOT NULL,
     elem_ids VARBINARY(248) NOT NULL,
 
-    tail_id BIGINT UNSIGNED
+    tail_id BIGINT UNSIGNED,
+
+    UNIQUE INDEX (elem_ts, elem_ids, tail_id)
 );
 
 

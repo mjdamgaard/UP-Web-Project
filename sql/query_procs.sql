@@ -462,15 +462,31 @@ CREATE PROCEDURE selectList (
 )
 BEGIN
     SELECT
-        len AS len,
-        elem_ts AS elemTypes,
-        elem_ids AS elemIDs,
+        elem_ts AS elemTypeStr,
+        HEX(elem_ids) AS elemIDHexStr,
         tail_id AS tailID
     FROM Lists
     WHERE id = listID;
 END //
 DELIMITER ;
 
+
+DELIMITER //
+CREATE PROCEDURE selectListID (
+    IN elemTypeStr VARCHAR(31),
+    IN elemIDHexStr VARCHAR(496),
+    tailID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT id AS listID
+    FROM Lists
+    WHERE (
+        elem_ts = elemTypeStr AND
+        elem_ids = UNHEX(elemIDHexStr) AND
+        tail_id = tailID
+    );
+END //
+DELIMITER ;
 
 
 
