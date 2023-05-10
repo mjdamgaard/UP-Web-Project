@@ -144,7 +144,7 @@ export var tabHeaderCL = new ContentLoader(
     appColumnCL
 );
 tabHeaderCL.cssRules.push(
-    '& ul > li > a { pointer-events: none; }'
+    '& ul > li > a { pointer-events: none; background-color: blue; }'
 );
 export var pageAreaCL = new ContentLoader(
     "PageArea",
