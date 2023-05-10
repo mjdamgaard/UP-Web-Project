@@ -114,9 +114,8 @@ CREATE TABLE SemanticInputs (
 CREATE TABLE RecentInputs (
     set_id BIGINT UNSIGNED NOT NULL,
 
-    -- old and new rating value (NULL means nonexistent or removed).
-    old_rat_val VARBINARY(255),
-    new_rat_val VARBINARY(255),
+    -- new rating value.
+    rat_val VARBINARY(255),
 
     obj_id BIGINT UNSIGNED NOT NULL,
 

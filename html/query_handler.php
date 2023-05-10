@@ -83,7 +83,7 @@ switch ($reqType) {
         $sql = "CALL selectRecentInputs (?, ?)";
         $paramNameArr = array("sid", "oid", "n", "o");
         $typeArr = array("id", "id", "int", "int");
-        // output: [[objID, changedAt, oldRatVal, newRatVal], ...].
+        // output: [[objID, changedAt, ratVal], ...].
         break;
     case "UInfo":
         $sql = "CALL selectUserInfo (?, ?)";

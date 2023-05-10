@@ -162,9 +162,9 @@ BEGIN
         LIMIT numOffset, maxNum;
     ELSE
         SELECT
+            objID AS objID,
             changed_at AS changedAt,
-            HEX(old_rat_val) AS oldRatVal,
-            HEX(new_rat_val) AS newRatVal
+            HEX(rat_val) AS ratVal
         FROM RecentInputs
         WHERE (set_id = setID AND obj_id = objID)
         ORDER BY changed_at DESC
