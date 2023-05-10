@@ -314,22 +314,26 @@ pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
         });
     }
 });
-
+pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
+    $ci.data("localData").afterDecCallbacks.push(function($ci) {
+        $ci.trigger("open-default-tab");
+    });
+});
 
 
 /* Let us define the CSS all together for this module */
 
 sdbInterfaceCL.cssRules.push(
     'height: 100%;' +
-    'overflow-x: auto;' +
+    // 'overflow-x: auto;' +
     'white-space: nowrap;'
 );
 appColumnCL.cssRules.push(
-    'height: 600px;' +
+    'height: 200px;' +
     'display: inline-block;' +
     'margin: 5px 10px;' +
-    'width: 600px;' +
-    'overflow-y: scroll;'
+    'width: 600px;'
+    // 'overflow-y: scroll;'
 );
 closeButtonCL.cssRules.push(
     'padding: 0px 4px;' +
@@ -372,8 +376,6 @@ testPagesCL.outwardCallbacks.push(function($ci) {
         .trigger("add-tab-and-page",
             ["Elements", "TestPage", contextData]
         );
-    // open the "Subcategories" tab as the default one.
-    $ci.trigger("open-default-tab", ["Subcategories"]);
 });
 
 export var testPageCL = new ContentLoader(

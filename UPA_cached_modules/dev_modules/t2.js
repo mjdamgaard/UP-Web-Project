@@ -64,9 +64,10 @@ export class ContentLoader {
         let $ci = $placeholder.next();
         // copy all classes from $placeholder onto the new CI, except of course
         // for the "placeholder" class.
-        let existingClasses = $placeholder.removeClass("placeholder")
-            .attr("class");
-        $ci.addClass(existingClasses).addClass("CI")
+        let existingClasses = $placeholder.attr("class")
+            .replaceAll("placeholder", "");
+        $ci.addClass(existingClasses)
+            .addClass("CI")
             .addClass(this.contentKey);
         // copy the "localData" object from placeholder to onto the new CI, or
         // initialize a new one if the placeholder does not hold any.
@@ -75,6 +76,8 @@ export class ContentLoader {
         // (from a decorating CL), set the (outer) content key of this CI as
         // the one of this CL.
         $ci.data("localData").contentKey ??= this.contentKey;
+        // also initialize an "afterDecCallbacks" array to use below.
+        $ci.data("localData").afterDecCallbacks ??= [];
 
         // store the context data on the CI.
         $ci.data("contextData", Object.assign({}, contextData ?? {}));
@@ -123,6 +126,18 @@ export class ContentLoader {
         len = this.outwardCallbacks.length;
         for (let i = 0; i < len; i++) {
             this.outwardCallbacks[i]($ci, childReturnData, returnData);
+        }
+
+        // check if this CI is not decorated by a parent (if the contentKey
+        // property of $ci.data("localData") is the same as this.contentKey),
+        // and if so, run any "afterDecCallbacks" that a child decorated by
+        // this CI might have stored.
+        let localData = $ci.data("localData");
+        if (localData.contentKey === this.contentKey) {
+            let len = localData.afterDecCallbacks.length;
+            for (let i = 0; i < len; i++) {
+                localData.afterDecCallbacks[i]($ci);
+            }
         }
     }
 
