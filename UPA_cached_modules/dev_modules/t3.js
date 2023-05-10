@@ -325,15 +325,17 @@ pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
 
 sdbInterfaceCL.cssRules.push(
     'height: 100%;' +
-    // 'overflow-x: auto;' +
+    'overflow-x: auto;' +
     'white-space: nowrap;'
 );
 appColumnCL.cssRules.push(
-    'height: 200px;' +
+    'overflow-x: initial;' +
+    'white-space: initial;' +
+    'height: 100px;' +
     'display: inline-block;' +
     'margin: 5px 10px;' +
     'width: 600px;'
-    // 'overflow-y: scroll;'
+    // 'overflow: initial;'
 );
 closeButtonCL.cssRules.push(
     'padding: 0px 4px;' +
