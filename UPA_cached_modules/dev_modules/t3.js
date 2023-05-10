@@ -143,6 +143,9 @@ export var tabHeaderCL = new ContentLoader(
     '</header>',
     appColumnCL
 );
+tabHeaderCL.cssRules.push(
+    '& ul > li > a { pointer-events: none; }'
+);
 export var pageAreaCL = new ContentLoader(
     "PageArea",
     /* Initial HTML */
@@ -310,7 +313,6 @@ pagesWithTabHeaderCL.inwardCallbacks.push(function($ci) {
     delete contextData.defaultTab;
 });
 pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
-    console.log($ci.data("localData").defaultTab);
     let defaultTab = $ci.data("localData").defaultTab;
     if (defaultTab) {
         $ci.on("open-default-tab", function() {
