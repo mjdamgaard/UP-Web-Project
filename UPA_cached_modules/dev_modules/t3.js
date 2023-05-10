@@ -334,7 +334,7 @@ appColumnCL.cssRules.push(
     'height: 100px;' +
     'display: inline-block;' +
     'margin: 5px 10px;' +
-    'width: 600px;'
+    'width: 600px;' 
     // 'overflow: initial;'
 );
 closeButtonCL.cssRules.push(
