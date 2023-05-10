@@ -68,18 +68,23 @@ export class ContentLoader {
             .attr("class");
         $ci.addClass(existingClasses).addClass("CI")
             .addClass(this.contentKey);
+        // copy the "localData" object from placeholder to onto the new CI, or
+        // initialize a new one if the placeholder does not hold any.
+        $ci.data("localData", $placeholder.data("localData") ?? {});
+        // if the the "localData" object does not contain a content key already
+        // (from a decorating CL), set the (outer) content key of this CI as
+        // the one of this CL.
+        $ci.data("localData").contentKey ??= this.contentKey;
 
         // store the context data on the CI.
         $ci.data("contextData", Object.assign({}, contextData ?? {}));
-        // initialize a local data object for the CI.
-        var localData = {};
         // apply all the inward callbacks, which can change the initial HTML,
         // as well as the contextData, namely the data stored at
         // $ci.data("contextData"), and change the localData input, which will
         // be stored on the CI before the outward callbacks are called.
         let len = this.inwardCallbacks.length;
         for (let i = 0; i < len; i++) {
-            this.inwardCallbacks[i]($ci, localData);
+            this.inwardCallbacks[i]($ci);
         }
         // read of the now potentially changed context data for handing it on
         // to any child CIs.
@@ -110,9 +115,6 @@ export class ContentLoader {
         $ci = $placeholder.next();
         // remove the placeholder template element.
         $placeholder.remove();
-        // store the local data object, recorded by the inward callbacks, at
-        // $ci.data("localData").
-        $ci.data("localData", localData);
 
         // apply all the outward callbacks (after the inner content is loaded).
         // (Since $ci is no longer in danger of being replaced, these callbacks

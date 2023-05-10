@@ -303,9 +303,9 @@ pageAreaCL.outwardCallbacks.push(function($ci) {
 });
 
 // make PagesWithTabHeader open a specified default tab automatically.
-pagesWithTabHeaderCL.inwardCallbacks.push(function($ci, localData) {
+pagesWithTabHeaderCL.inwardCallbacks.push(function($ci) {
     var contextData = $ci.data("contextData");
-    localData.defaultTab = contextData.defaultTab ?? false;
+    $ci.data("localData").defaultTab = contextData.defaultTab ?? false;
     delete contextData.defaultTab;
 });
 pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
