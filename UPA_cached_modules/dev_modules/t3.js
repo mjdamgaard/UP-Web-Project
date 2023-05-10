@@ -72,7 +72,7 @@ sdbInterfaceCL.outwardCallbacks.push(function($ci) {
                 let existingLocalData = $existingColumn.data("localData") ?? {};
                 if (existingLocalData.isOverwritable ?? false) {
                     $existingColumn.remove();
-                }debugger;
+                }
                 sdbInterfaceCL.loadAfter(
                     $callingColumn, "AppColumn", contextData
                 );
@@ -107,7 +107,7 @@ sdbInterfaceCL.outwardCallbacks.push(function($ci) {
 appColumnCL.outwardCallbacks.push(function($ci) {
     $ci
         .on("open-column", function(event, contextData, dir, isOverwritable) {
-            $(this).parent().trigger("open-column",
+            $(this).trigger("open-column",
                 [contextData, dir, isOverwritable]
             );
             return false;
