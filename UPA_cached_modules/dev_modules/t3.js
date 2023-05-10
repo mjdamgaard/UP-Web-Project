@@ -215,11 +215,12 @@ pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
     $ci
         .on("open-tab-in-new-column", function(event, tabTitle) {
             let $this = $(this);
-            let pageSpec = $this.data("pageSpecs")[tabTitle];
-            var contextData = Object.assign({}, pageSpec.data);
-            contextData.columnContentKey = pageSpec.key;
-            $(this)
-                .trigger("open-column", [contextData, "right", false]);
+            let outerContentKey = $this.data("localData").contentKey;
+            let contextData = Object.assign(
+                {columnContentKey: outerContentKey, defaultTab: tabTitle},
+                $this.data("contextData")
+            );
+            $(this).trigger("open-column", [contextData, "right", false]);
             return false;
         });
 });
