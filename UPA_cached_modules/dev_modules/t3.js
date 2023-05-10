@@ -26,9 +26,6 @@ export var appColumnCL = new ContentLoader(
     '</div>',
     sdbInterfaceCL,
 );
-appColumnCL.cssRules.push(
-    'margin: 5px 20px; width: 600px;'
-);
 
 
 // make the AppColumn load the CL pointed to by contextData.columnContentKey
@@ -48,9 +45,6 @@ export var closeButtonCL = new ContentLoader(
         '<span aria-hidden="true">&times;</span>' +
     '</button>',
     sdbInterfaceCL,
-);
-closeButtonCL.cssRules.push(
-    'padding: 0px 4px; position: absolute; z-index: 2; right: 1px; top: 1px; '
 );
 closeButtonCL.outwardCallbacks.push(function($ci) {
     $ci.on("click", function() {
@@ -144,9 +138,6 @@ export var tabHeaderCL = new ContentLoader(
         '<ul class="nav nav-tabs"></ul>' +
     '</header>',
     appColumnCL
-);
-tabHeaderCL.cssRules.push(
-    '& ul > li > a { pointer-events: none; }'
 );
 export var pageAreaCL = new ContentLoader(
     "PageArea",
@@ -323,6 +314,39 @@ pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
         });
     }
 });
+
+
+
+/* Let us define the CSS all together for this module */
+
+sdbInterfaceCL.cssRules.push(
+    'height: 100%;' +
+    'overflow-x: auto;' +
+    'white-space: nowrap;'
+);
+appColumnCL.cssRules.push(
+    'height: 600px;' +
+    'display: inline-block;' +
+    'margin: 5px 10px;' +
+    'width: 600px;' +
+    'overflow-y: scroll;'
+);
+closeButtonCL.cssRules.push(
+    'padding: 0px 4px;' +
+    'position: absolute;' +
+    'z-index: 2;' +
+    'right: 1px; top: 1px;'
+);
+tabHeaderCL.cssRules.push(
+    '& ul > li .nav-link { pointer-events: none; background-color: #fdfdfd; }'
+);
+tabHeaderCL.cssRules.push(
+    '& ul > li.active .nav-link { background-color: #ffffff; }'
+);
+pageAreaCL.outwardCallbacks.push(function($ci) {
+    $ci.addClass("panel panel-content");
+});
+
 
 
 
