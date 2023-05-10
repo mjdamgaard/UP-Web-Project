@@ -331,11 +331,14 @@ sdbInterfaceCL.cssRules.push(
 appColumnCL.cssRules.push(
     'overflow-x: initial;' +
     'white-space: initial;' +
-    'height: 100px;' +
-    'display: inline-block;' +
+    'height: 100%;' +
+    // 'display: inline-block;' +
     'margin: 5px 10px;' +
     'width: 600px;'
     // 'overflow: initial;'
+);
+appColumnCL.cssRules.push(
+    '& > * { height: 100%; }'
 );
 closeButtonCL.cssRules.push(
     'padding: 0px 4px;' +
@@ -352,6 +355,12 @@ tabHeaderCL.cssRules.push(
 pageAreaCL.outwardCallbacks.push(function($ci) {
     $ci.addClass("panel panel-content");
 });
+pageAreaCL.cssRules.push(
+    'height: 100%;'
+);
+pageAreaCL.cssRules.push(
+    '& > * { height: 100%; }'
+);
 
 
 

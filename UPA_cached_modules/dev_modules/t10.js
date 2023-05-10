@@ -5,20 +5,20 @@ import "/UPA_scripts.php?id=2"; // request t2 immediately.
 import {sdbInterfaceCL} from "/UPA_scripts.php?id=3";
 
 
-export function upa_main(preferenceUserID, termID, userID) {
+export function upa_main(preferenceUserID, termType, termID, userID) {
     if (preferenceUserID !== "1") {
         throw "Unrecognized preference user";
     }
 
-    let $upa1Frame = t1Mod.upaFind('main').html('<div id="upa1"></div>')
-        .children('#upa1');
+    let $upa1Frame = $('#upaFrame');
     let contextData = {
         columnContentKey: "TestPages",
         defaultTab: "Subcategories",
+        preferenceUser: preferenceUserID,
+        termType: termType,
         termID: termID,
-        userID: userID
+        user: userID,
     };
-
     let contentKey = sdbInterfaceCL.contentKey;
     sdbInterfaceCL.loadAppended($upa1Frame, contentKey, contextData);
 }

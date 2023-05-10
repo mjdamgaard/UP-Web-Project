@@ -16,9 +16,12 @@ div.length {
 }
 
 
-html, body, body > main, #upaFrame, #upaFrame > *, #upaFrame > * > * {
+html, body, body > main {
     margin: 0px;
     padding: 0px;
+    height: 100%;
+}
+body > main .full-height {
     height: 100%;
 }
 body {

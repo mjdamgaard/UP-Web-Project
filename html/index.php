@@ -33,7 +33,6 @@
 </header>
 
 <main>
-    <div id="protectedRatingBuffer"></div>
     <?php
     if (!isset($_GET["tid"])) {
         $_GET["et"] = "c";

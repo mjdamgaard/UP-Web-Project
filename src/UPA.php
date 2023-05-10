@@ -20,9 +20,10 @@ $paramNameArr = array("et", "eid", "uid", "pid");
 $typeArr = array("type", "id", "id", "id");
 $paramValArr = InputGetter::getParams($paramNameArr);
 InputVerifier::verifyTypes($paramValArr, $typeArr, $paramNameArr);
-$termID = $paramValArr[0];
-$userID = $paramValArr[1];
-$preferenceUserID = $paramValArr[2];
+$termType = $paramValArr[0];
+$termID = $paramValArr[1];
+$userID = $paramValArr[2];
+$preferenceUserID = $paramValArr[3];
 
 
 // authenticate the user make sure that the uid is either one that user
@@ -65,14 +66,17 @@ $mainModuleID = "10";
 // Also place the script that imports and runs the chosen UPA main module in
 // this div.
 ?>
-<div id="upaFrame">
-    <main></main>
-</div>
+<div id="upaFrame" class="full-height"></div>
 <script id="upaMainFunLoader" type="module">
     import {
         upa_main
     } from "./UPA_scripts.php?id=<?php echo $mainModuleID; ?>";
     upa_main(<?php
-        echo '"' . $preferenceUserID . '", "' . $termID.'", "' . $userID . '"';
+        echo '"' .
+            $preferenceUserID . '", "' .
+            $termType.'", "' .
+            $termID.'", "' .
+            $userID .
+        '"';
     ?>);
 </script>
