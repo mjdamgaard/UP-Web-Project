@@ -72,13 +72,14 @@ export class ContentLoader {
         // store the context data on the CI.
         $ci.data("contextData", Object.assign({}, contextData ?? {}));
         // initialize a local data object for the CI.
-        $ci.data("localData", {});
+        var localData = {};
         // apply all the inward callbacks, which can change the initial HTML,
-        // as well as the contextData , namely the data stored at
-        // $ci.data("contextData").
+        // as well as the contextData, namely the data stored at
+        // $ci.data("contextData"), and change the localData input, which will
+        // be stored on the CI before the outward callbacks are called.
         let len = this.inwardCallbacks.length;
         for (let i = 0; i < len; i++) {
-            this.inwardCallbacks[i]($ci);
+            this.inwardCallbacks[i]($ci, localData);
         }
         // read of the now potentially changed context data for handing it on
         // to any child CIs.
@@ -107,16 +108,11 @@ export class ContentLoader {
         // in case $ci was a placeholder element, which will then be have been
         // removed at this point, redefine it as the new CI element.
         $ci = $placeholder.next();
-        // move any potential data stored at $ci.data("localData") by the
-        // inward callback functions above from the $placeholder (which was
-        // equal to $ci when those callbacks were called) and on to the
-        // redefined $ci.
-        let localData = $placeholder.data("localData");
-        if (typeof localData !== "undefined") {
-            $ci.data("localData", localData);
-        }
         // remove the placeholder template element.
         $placeholder.remove();
+        // store the local data object, recorded by the inward callbacks, at
+        // $ci.data("localData").
+        $ci.data("localData", localData);
 
         // apply all the outward callbacks (after the inner content is loaded).
         // (Since $ci is no longer in danger of being replaced, these callbacks

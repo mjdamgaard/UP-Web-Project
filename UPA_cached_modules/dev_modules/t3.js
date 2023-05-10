@@ -302,6 +302,22 @@ pageAreaCL.outwardCallbacks.push(function($ci) {
         });
 });
 
+// make PagesWithTabHeader open a specified default tab automatically.
+pagesWithTabHeaderCL.inwardCallbacks.push(function($ci, localData) {
+    var contextData = $ci.data("contextData");
+    localData.defaultTab = contextData.defaultTab ?? false;
+    delete contextData.defaultTab;
+});
+pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
+    console.log($ci.data("localData").defaultTab);
+    let defaultTab = $ci.data("localData").defaultTab;
+    if (defaultTab) {
+        $ci.on("open-default-tab", function() {
+            $(this).trigger("open-tab-and-page", [defaultTab]);
+            return false;
+        });
+    }
+});
 
 
 
@@ -310,16 +326,14 @@ pageAreaCL.outwardCallbacks.push(function($ci) {
 export var testPagesCL = new ContentLoader(
     "TestPages",
     /* Initial HTML */
-    '<div>' +
-        '<<PagesWithTabHeader>>' +
-    '</div>',
+    '<<PagesWithTabHeader>>',
     appColumnCL
 );
 
 
 testPagesCL.outwardCallbacks.push(function($ci) {
     let contextData = $ci.data("contextData");
-    $ci.find('*').addBack().filter('.CI.PagesWithTabHeader')
+    $ci
         .trigger("add-tab-and-page",
             ["Supercategories", "TestPage", contextData]
         )
@@ -330,7 +344,7 @@ testPagesCL.outwardCallbacks.push(function($ci) {
             ["Elements", "TestPage", contextData]
         );
     // open the "Subcategories" tab as the default one.
-    $ci.trigger("open-tab-and-page", ["Subcategories"]);
+    $ci.trigger("open-default-tab", ["Subcategories"]);
 });
 
 export var testPageCL = new ContentLoader(

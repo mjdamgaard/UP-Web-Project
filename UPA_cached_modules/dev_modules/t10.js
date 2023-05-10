@@ -14,6 +14,7 @@ export function upa_main(preferenceUserID, termID, userID) {
         .children('#upa1');
     let contextData = {
         columnContentKey: "TestPages",
+        defaultTab: "Subcategories",
         termID: termID,
         userID: userID
     };
