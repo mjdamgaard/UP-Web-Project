@@ -72,7 +72,7 @@ sdbInterfaceCL.outwardCallbacks.push(function($ci) {
                 let existingLocalData = $existingColumn.data("localData") ?? {};
                 if (existingLocalData.isOverwritable ?? false) {
                     $existingColumn.remove();
-                }
+                }debugger;
                 sdbInterfaceCL.loadAfter(
                     $callingColumn, "AppColumn", contextData
                 );

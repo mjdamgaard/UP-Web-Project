@@ -127,8 +127,11 @@ export class ContentLoader {
     }
 
     getRelatedContentLoader(contentKey) {
-        var ret;
-        // first look for the content key in all the child CLs.
+        // if contentKey is that of this CL, return this CL.
+        if (this.contentKey === contentKey) {
+            return this;
+        }
+        // else, first look for the content key in all the child CLs.
         let len = this.childCLs.length;
         for (let i = 0; i < len; i++) {
             if (this.childCLs[i].contentKey === contentKey) {
@@ -136,12 +139,8 @@ export class ContentLoader {
             }
         }
         // if no matching child CL is found, go up to the parent CL and repeat
-        // the process recursively until reaching the root CL, recognized by
-        // having no parentCL itself.
+        // the process recursively, or throw and error this is the root CL.
         if (typeof this.parentCL === "undefined") {
-            if (this.contentKey === contentKey) {
-                return this;
-            }
             throw (
                 "ContentLoader.getRelatedContentLoader(): " +
                 'no content loader found with content key "' +
