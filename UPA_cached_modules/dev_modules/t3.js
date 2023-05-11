@@ -239,12 +239,6 @@ tabHeaderCL.outwardCallbacks.push(function($ci) {
                 )
                 .children(':last-child');
             tabHeaderCL.loadPrepended($newTab, "CloseButton");
-            $newTab.find('.CI.CloseButton').css({
-                "position": "absolute",
-                "z-index": "2",
-                "right": "1px",
-                "top": "1px",
-            });
             $newTab.find('.CI.CloseButton').hide();
             $newTab
                 .on("click", function(event) {
@@ -359,6 +353,14 @@ closeButtonCL.cssRules.push(
     'position: relative;' +
     'z-index: 2;' +
     ''
+);
+tabHeaderCL.cssRules.push(
+    '& .CI.CloseButton {' +
+        "position: absolute;" +
+        "z-index: 2;" +
+        "right: 1px;" +
+        "top: 1px;" +
+    '}'
 );
 tabHeaderCL.cssRules.push(
     '& ul > li .nav-link { pointer-events: none; background-color: #fdfdfd; }'
