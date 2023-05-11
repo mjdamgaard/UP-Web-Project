@@ -113,7 +113,7 @@ BEGIN
         ELSEIF (ratVal IS NULL AND prevRatVal IS NOT NULL) THEN
             INSERT INTO RecentInputs (set_id, rat_val, obj_id)
             VALUES (setID, ratVal, objID);
-            ...
+            ... 
         END IF;
     END IF;
 END //
