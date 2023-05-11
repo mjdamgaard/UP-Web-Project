@@ -331,37 +331,32 @@ pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
 
 sdbInterfaceCL.cssRules.push(
     'height: 100%;' +
-    'display: flex;' +
-    'flex-direction: row;' +
     'overflow-x: auto;' +
     'white-space: nowrap;' +
-    'background-color: #F8F8FB;' +
+    'background-color: #F4F7F0;' +
     ''
 );
 appColumnCL.cssRules.push(
+    'height: 100%;' +
     'overflow-x: initial;' +
     'white-space: initial;' +
-    // 'height: 100%;' +
-    'flex-grow: 1;' +
     'display: inline-block;' +
-    'display: flex;' +
-    'margin: 5px 10px;' +
+    'margin: 0px 10px;' +
     'width: 600px;' +
-    'overflow: initial;'
+    'overflow: initial;' +
+    'border: 1px solid #DDD;' +
+    'border-radius: 8px;' +
+    'background-color: #FFF;'
 );
-appColumnCL.outwardCallbacks.push(function($ci) {
-    $ci.after('<div style="flex-grow: 0;"></div>');
-});
 closeButtonCL.cssRules.push(
     'padding: 0px 4px;' +
     'position: relative;' +
     'z-index: 2;' +
     ''
 );
-pagesWithTabHeaderCL.cssRules.push(
-    'display: flex;' +
-    'flex-direction: column;' +
-    ''
+tabHeaderCL.cssRules.push(
+    'padding: 4px 0px 0px;' +
+    'background-color: #F0F0F0;'
 );
 tabHeaderCL.cssRules.push(
     '& .CI.CloseButton {' +
@@ -376,18 +371,6 @@ tabHeaderCL.cssRules.push(
 );
 tabHeaderCL.cssRules.push(
     '& ul > li.active .nav-link { background-color: #ffffff; }'
-);
-pageAreaCL.outwardCallbacks.push(function($ci) {
-    $ci.addClass("panel panel-content");
-});
-pageAreaCL.cssRules.push(
-    'flex-grow: 1;'
-);
-pageAreaCL.outwardCallbacks.push(function($ci) {
-    $ci.after('<div style="flex-grow: 0;"></div>');
-});
-pageAreaCL.cssRules.push(
-    '& > div { height: 100%; }'
 );
 
 
