@@ -56,7 +56,8 @@ CREATE PROCEDURE inputOrChangeRating (
     IN objID BIGINT UNSIGNED,
     IN setID BIGINT UNSIGNED,
     IN ratValHex VARCHAR(510),
-    IN delaySigma TIME,
+    IN delayTimeMin TIME,
+    IN delayTimeSigma TIME,
     OUT newID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
@@ -68,7 +69,7 @@ BEGIN
     IF NOT EXISTS (
         SELECT id FROM Sets WHERE (id = setID AND user_id = userID)
     ) THEN
-        SET exitCode = 1; -- user does not own the set (or set doesn't exist).
+        SET exitCode = 2; -- user does not own the set (or set doesn't exist).
     ELSE
         IF (ratValHex = "") THEN
             SET ratValHex = NULL;
@@ -96,19 +97,21 @@ BEGIN
 
         -- TODO: Change this to update PrivateRecentInputs instead, make a
         -- scheduled event to move private recent inputs into (the public)
-        -- RecentInputs, and at some point also makes an event to record
-        -- recent inputs into RecordedInputs, if there are long enough time
+        -- RecentInputs, and at some point also make an event to record
+        -- recent inputs into RecordedInputs when there is long enough time
         -- between the last last recent input before that.
+        SET delayTimeMin = NULL; -- (not implemented yet)
+        SET delayTimeSigma = NULL; -- (not implemented yet)
         INSERT INTO RecentInputs (set_id, rat_val, obj_id)
-        VALUES (setID, ratVal, objID);
+        VALUES (setID, ratVal, objID); -- (This can in theory fail if to
+        -- changes can happen at the same millisecond, so let's keep it here
+        -- above the following updates, for aesthetics if nothing else.)
 
         IF (ratVal IS NOT NULL AND prevRatVal IS NULL) THEN
             INSERT INTO SemanticInputs (set_id, rat_val, obj_id)
             VALUES (setID, ratVal, objID);
             SET exitCode = 0; -- success(ful insertion of new rating).
         ELSEIF (ratVal IS NOT NULL AND prevRatVal IS NOT NULL) THEN
-            INSERT INTO RecentInputs (set_id, rat_val, obj_id)
-            VALUES (setID, ratVal, objID);
             UPDATE SemanticInputs
             SET rat_val = ratVal
             WHERE (
@@ -117,9 +120,14 @@ BEGIN
             );
             SET exitCode = 0; -- success(ful update of previous rating).
         ELSEIF (ratVal IS NULL AND prevRatVal IS NOT NULL) THEN
-            INSERT INTO RecentInputs (set_id, rat_val, obj_id)
-            VALUES (setID, ratVal, objID);
-            ...
+            DELETE FROM SemanticInputs
+            WHERE (
+                obj_id = objID AND
+                set_id = setID
+            );
+            SET exitCode = 0; -- success(ful deletion of previous rating).
+        ELSE
+            SET exitCode = 1; -- trying to delete a non-existing rating.
         END IF;
     END IF;
 END //
