@@ -22,10 +22,37 @@ export var appColumnCL = new ContentLoader(
     "AppColumn",
     /* Initial HTML */
     '<div>' +
-        '<<CloseButton>>' +
+        '<<ColumnButtonContainer>>' +
     '</div>',
     sdbInterfaceCL,
 );
+export var columnButtonContainerCL = new ContentLoader(
+    "ColumnButtonContainer",
+    /* Initial HTML */
+    '<div>' +
+        // '<<PinButton>>' +
+        '<<CloseButton>>' +
+    '<div>',
+    sdbInterfaceCL,
+);
+export var closeButtonCL = new ContentLoader(
+    "CloseButton",
+    /* Initial HTML */
+    '<button type="button" class="close">' +
+        '<span>&times;</span>' +
+    '</button>',
+    sdbInterfaceCL,
+);
+// Since we want to use the close button for tabs with their own click event,
+// we should make the bubbling-up of the click event jump straight to the
+// ancestor Column.
+closeButtonCL.outwardCallbacks.push(function($ci) {
+    $ci.on("click", function() {
+        $(this).trigger("close")
+            .closest('.CI.AppColumn').trigger("click");
+        return false;
+    });
+});
 
 
 // make the AppColumn load the CL pointed to by contextData.columnContentKey
@@ -37,20 +64,6 @@ appColumnCL.outwardCallbacks.push(function($ci) {
     appColumnCL.loadAppended($ci, contentKey, contextData);
 });
 
-export var closeButtonCL = new ContentLoader(
-    "CloseButton",
-    /* Initial HTML */
-    // (Source: https://getbootstrap.com/docs/4.0/utilities/close-icon/)
-    '<button type="button" class="close" aria-label="Close">' +
-        '<span aria-hidden="true">&times;</span>' +
-    '</button>',
-    sdbInterfaceCL,
-);
-closeButtonCL.outwardCallbacks.push(function($ci) {
-    $ci.on("click", function() {
-        $(this).trigger("close");
-    });
-});
 
 
 /* Events to open new app columns */
@@ -145,15 +158,8 @@ export var pageAreaCL = new ContentLoader(
     '<main></main>',
     appColumnCL
 );
-// Since we want to use the close button for tabs with their own click event,
-// we should make the bubbling-up of the click event jump straight to the
-// ancestor Column.
-closeButtonCL.outwardCallbacks.push(function($ci) {
-    $ci.on("click", function() {
-        $(this).closest('.CI.AppColumn').trigger("click");
-        return false;
-    });
-});
+
+
 
 
 /* Events that add tabs and add/load associated pages to these */
@@ -233,6 +239,12 @@ tabHeaderCL.outwardCallbacks.push(function($ci) {
                 )
                 .children(':last-child');
             tabHeaderCL.loadPrepended($newTab, "CloseButton");
+            $newTab.find('.CI.CloseButton').css({
+                "position": "absolute",
+                "z-index": "2",
+                "right": "1px",
+                "top": "1px",
+            });
             $newTab.find('.CI.CloseButton').hide();
             $newTab
                 .on("click", function(event) {
@@ -332,19 +344,21 @@ appColumnCL.cssRules.push(
     'overflow-x: initial;' +
     'white-space: initial;' +
     'height: 100%;' +
-    // 'display: inline-block;' +
+    'display: inline-block;' +
     'margin: 5px 10px;' +
-    'width: 600px;'
-    // 'overflow: initial;'
+    'width: 600px;' +
+    'overflow: initial;'
 );
-appColumnCL.cssRules.push(
-    '& > * { height: 100%; }'
-);
+// tabButtonContainerCL.cssRules.push(
+//     // 'position: relative;' +
+//     // 'z-index: 2;' +
+//     'float: left;'
+// );
 closeButtonCL.cssRules.push(
     'padding: 0px 4px;' +
-    'position: absolute;' +
+    'position: relative;' +
     'z-index: 2;' +
-    'right: 1px; top: 1px;'
+    ''
 );
 tabHeaderCL.cssRules.push(
     '& ul > li .nav-link { pointer-events: none; background-color: #fdfdfd; }'
@@ -359,7 +373,7 @@ pageAreaCL.cssRules.push(
     'height: 100%;'
 );
 pageAreaCL.cssRules.push(
-    '& > * { height: 100%; }'
+    '& > div { height: 100%; }'
 );
 
 
