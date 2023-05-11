@@ -130,7 +130,7 @@ CREATE TABLE RecentInputs (
     rat_val VARBINARY(255),
     obj_id BIGINT UNSIGNED NOT NULL,
 
-    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    -- changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
     -- UNIQUE INDEX (
     --     set_id,
@@ -144,7 +144,9 @@ CREATE TABLE RecordedInputs (
     rat_val VARBINARY(255),
     obj_id BIGINT UNSIGNED NOT NULL,
 
-    changed_at TIMESTAMP,
+    -- This needs to be calculated from the RecentInputs table's id, so a rough
+    -- record of how this id counter corresponds to time needs to be kept.
+    changed_at DATETIME,
 
     PRIMARY KEY (
         set_id,
