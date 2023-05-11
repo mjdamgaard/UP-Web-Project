@@ -25,7 +25,7 @@
 
 <!-- TODO: Add functionalities to this bar; login etc.. -->
 <header>
-    <h2> openSDB </h2>
+    <h1> openSDB </h1>
 </header>
 
 <main>

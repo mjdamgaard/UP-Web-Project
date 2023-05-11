@@ -27,6 +27,6 @@ body > footer {
 body > header {
     background-color: turquoise;
 }
-body > header > h2 {
-    padding: 10px 10px 5px;
+body > header > h1 {
+    margin: 15px 10px;
 }
