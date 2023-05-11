@@ -121,6 +121,8 @@ CREATE TABLE RecentInputs (
 
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
+    random_delay_sigma TIME,
+
     PRIMARY KEY (
         set_id,
         obj_id,

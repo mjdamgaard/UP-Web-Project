@@ -15,66 +15,8 @@ DROP PROCEDURE insertOrUpdateRecentInput;
 
 
 
-
-
-/* General */
-
--- DELIMITER //
--- CREATE PROCEDURE getTypeAndConvID (
---     IN combID VARCHAR(17),
---     OUT type CHAR(1),
---     OUT id BIGINT UNSIGNED
--- )
--- BEGIN
---     SET type = SUBSTRING(combID, 1, 1);
---     SET id = CONV(SUBSTRING(combID, 2) , 16, 10);
--- END //
--- DELIMITER ;
---
--- DELIMITER //
--- CREATE PROCEDURE getType (
---     IN combID VARCHAR(17),
---     OUT type CHAR(1)
--- )
--- BEGIN
---     SET type = SUBSTRING(combID, 1, 1);
--- END //
--- DELIMITER ;
---
--- DELIMITER //
--- CREATE PROCEDURE getConvID (
---     IN combID VARCHAR(17),
---     OUT id BIGINT UNSIGNED
--- )
--- BEGIN
---     SET id = CONV(SUBSTRING(combID, 2) , 16, 10);
--- END //
--- DELIMITER ;
-
-
--- DELIMITER //
--- CREATE FUNCTION getCombID (
---     type CHAR(1),
---     id BIGINT UNSIGNED
--- )
--- RETURNS VARCHAR(17) DETERMINISTIC
--- BEGIN
---     RETURN CONCAT(type, CONV(id, 10, 16));
--- END //
--- DELIMITER ;
-
-
-
-
-/* Query */
-
-
-
-
 /* Rating inputs */
 
-
--- TODO: Change such that new sets are also added to Creations.
 DELIMITER //
 CREATE PROCEDURE findOrCreateSet (
     IN userID BIGINT UNSIGNED,
@@ -138,7 +80,7 @@ BEGIN
             obj_id = objID
         )
         -- If this procedure is not called from any other procedures than
-        -- inputOrChangeRating() below (as intended!), no race conditions
+        -- inputOrChangeRating() (as intended!), no race conditions
         -- are possible due to the FOR UPDATE lock on (setID, objID)
         -- in that procedure.
     );

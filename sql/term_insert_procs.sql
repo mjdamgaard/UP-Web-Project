@@ -12,6 +12,42 @@ DROP PROCEDURE insertText;
 
 
 
+DELIMITER //
+CREATE PROCEDURE createOrFindSet (
+    IN userID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
+    IN relID BIGINT UNSIGNED,
+    OUT newID BIGINT UNSIGNED,
+    OUT exitCode TINYINT
+)
+BEGIN
+    SELECT id INTO newID
+    FROM Sets
+    WHERE (
+        user_id = userID AND
+        subj_id = subjID AND
+        rel_id = relID
+    );
+    IF (newID IS NULL) THEN
+        INSERT INTO Sets (
+            user_id,
+            subj_id,
+            rel_id,
+            elem_num
+        )
+        VALUES (
+            userID,
+            subjID,
+            relID,
+            0
+        );
+        SELECT LAST_INSERT_ID() INTO newID;
+        SET exitCode = 0; -- create.
+    ELSE
+        SET exitCode = 1; -- find.
+    END IF;
+END //
+DELIMITER ;
 
 
 DELIMITER //
