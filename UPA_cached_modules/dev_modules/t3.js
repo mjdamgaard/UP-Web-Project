@@ -333,7 +333,7 @@ sdbInterfaceCL.cssRules.push(
     'height: 100%;' +
     'overflow-x: auto;' +
     'white-space: nowrap;' +
-    'background-color: #F4F7F0;' +
+    'background-color: #f9fef5;' +
     ''
 );
 appColumnCL.cssRules.push(
@@ -380,7 +380,7 @@ tabHeaderCL.cssRules.push(
     '}'
 );
 pageAreaCL.cssRules.push(
-    'margin: 0px 4px;'
+    'margin: 6px 6px;'
 );
 
 
