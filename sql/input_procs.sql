@@ -94,9 +94,15 @@ BEGIN
         )
         FOR UPDATE;
 
+        -- TODO: Change this to update PrivateRecentInputs instead, make a
+        -- scheduled event to move private recent inputs into (the public)
+        -- RecentInputs, and at some point also makes an event to record
+        -- recent inputs into RecordedInputs, if there are long enough time
+        -- between the last last recent input before that.
+        INSERT INTO RecentInputs (set_id, rat_val, obj_id)
+        VALUES (setID, ratVal, objID);
+
         IF (ratVal IS NOT NULL AND prevRatVal IS NULL) THEN
-            INSERT INTO RecentInputs (set_id, rat_val, obj_id)
-            VALUES (setID, ratVal, objID);
             INSERT INTO SemanticInputs (set_id, rat_val, obj_id)
             VALUES (setID, ratVal, objID);
             SET exitCode = 0; -- success(ful insertion of new rating).
@@ -113,7 +119,7 @@ BEGIN
         ELSEIF (ratVal IS NULL AND prevRatVal IS NOT NULL) THEN
             INSERT INTO RecentInputs (set_id, rat_val, obj_id)
             VALUES (setID, ratVal, objID);
-            ... 
+            ...
         END IF;
     END IF;
 END //

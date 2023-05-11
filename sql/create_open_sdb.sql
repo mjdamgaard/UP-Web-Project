@@ -111,17 +111,40 @@ CREATE TABLE SemanticInputs (
 );
 
 
-CREATE TABLE RecentInputs (
-    set_id BIGINT UNSIGNED NOT NULL,
+CREATE TABLE PrivateRecentInputs (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
+    set_id BIGINT UNSIGNED NOT NULL,
     -- new rating value.
     rat_val VARBINARY(255),
-
     obj_id BIGINT UNSIGNED NOT NULL,
 
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    delay_time TIME
+);
+CREATE TABLE RecentInputs (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    random_delay_sigma TIME,
+    set_id BIGINT UNSIGNED NOT NULL,
+    -- new rating value.
+    rat_val VARBINARY(255),
+    obj_id BIGINT UNSIGNED NOT NULL,
+
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+    -- UNIQUE INDEX (
+    --     set_id,
+    --     obj_id,
+    --     changed_at
+    -- )
+);
+CREATE TABLE RecordedInputs (
+    set_id BIGINT UNSIGNED NOT NULL,
+    -- new rating value.
+    rat_val VARBINARY(255),
+    obj_id BIGINT UNSIGNED NOT NULL,
+
+    changed_at TIMESTAMP,
 
     PRIMARY KEY (
         set_id,
@@ -129,8 +152,6 @@ CREATE TABLE RecentInputs (
         changed_at
     )
 );
-
-
 -- CREATE TABLE UserGroups (
 --  -- user group ID.
 --   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
