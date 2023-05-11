@@ -367,12 +367,21 @@ tabHeaderCL.cssRules.push(
     '}'
 );
 tabHeaderCL.cssRules.push(
-    '& ul > li .nav-link { pointer-events: none; background-color: #fdfdfd; }'
+    '& ul > li .nav-link {' +
+        'pointer-events: none;' +
+        'border-bottom: 1px solid #ddd;' +
+        'background-color: #fdfdfd;' +
+    '}'
 );
 tabHeaderCL.cssRules.push(
-    '& ul > li.active .nav-link { background-color: #ffffff; }'
+    '& ul > li.active .nav-link {' +
+        'border-bottom: 1px solid #fff;' +
+        'background-color: #fff;' +
+    '}'
 );
-
+pageAreaCL.cssRules.push(
+    'margin: 0px 4px;'
+);
 
 
 
