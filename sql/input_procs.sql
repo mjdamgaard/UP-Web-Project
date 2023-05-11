@@ -150,17 +150,13 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE insertOrFindCat (
-    IN userCombID VARCHAR(17),
-    IN superCatCombID VARCHAR(17),
+    IN userID BIGINT UNSIGNED,
+    IN superCatID BIGINT UNSIGNED,
     IN catTitle VARCHAR(255),
-    OUT newCombID VARCHAR(17),
+    OUT newID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 BEGIN
-    DECLARE superCatID, userID, newID BIGINT UNSIGNED;
-    CALL getConvID (superCatCombID, superCatID);
-    CALL getConvID (userCombID, userID);
-
     SELECT id INTO newID
     FROM Categories
     WHERE (title = catTitle AND super_cat_id = superCatID);
@@ -181,7 +177,7 @@ BEGIN
         END IF;
         SET exitCode = 0; -- insert.
     END IF;
-    SET newCombID = CONCAT('c', CONV(newID, 10, 16));
+    SET newID = CONCAT('c', CONV(newID, 10, 16));
 END //
 DELIMITER ;
 
@@ -189,16 +185,16 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE insertOrFindETerm (
-    IN userCombID VARCHAR(17),
-    IN catCombID VARCHAR(17),
+    IN userID BIGINT UNSIGNED,
+    IN catID BIGINT UNSIGNED,
     IN eTermTitle VARCHAR(255),
-    OUT newCombID VARCHAR(17),
+    OUT newID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 BEGIN
     DECLARE catID, userID, newID BIGINT UNSIGNED;
-    CALL getConvID (catCombID, catID);
-    CALL getConvID (userCombID, userID);
+    CALL getConvID (catID, catID);
+    CALL getConvID (userID, userID);
 
     SELECT id INTO newID
     FROM ElementaryTerms
@@ -220,7 +216,7 @@ BEGIN
         END IF;
         SET exitCode = 0; -- insert.
     END IF;
-    SET newCombID = CONCAT('e', CONV(newID, 10, 16));
+    SET newID = CONCAT('e', CONV(newID, 10, 16));
 END //
 DELIMITER ;
 
@@ -229,16 +225,16 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE insertOrFindRel (
-    IN userCombID VARCHAR(17),
-    IN subjCatCombID VARCHAR(17),
+    IN userID BIGINT UNSIGNED,
+    IN subjCatID BIGINT UNSIGNED,
     IN objNoun VARCHAR(255),
-    OUT newCombID VARCHAR(17),
+    OUT newID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 BEGIN
     DECLARE subjCatID, userID, newID BIGINT UNSIGNED;
-    CALL getConvID (subjCatCombID, subjCatID);
-    CALL getConvID (userCombID, userID);
+    CALL getConvID (subjCatID, subjCatID);
+    CALL getConvID (userID, userID);
 
     SELECT id INTO newID
     FROM Relations
@@ -260,7 +256,7 @@ BEGIN
         END IF;
         SET exitCode = 0; -- insert.
     END IF;
-    SET newCombID = CONCAT('r', CONV(newID, 10, 16));
+    SET newID = CONCAT('r', CONV(newID, 10, 16));
 END //
 DELIMITER ;
 
@@ -273,14 +269,14 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE insertText (
-    IN userCombID VARCHAR(17),
+    IN userID BIGINT UNSIGNED,
     IN inStr TEXT,
-    OUT newCombID VARCHAR(17),
+    OUT newID BIGINT UNSIGNED,
     OUT exitCode TINYINT -- 0 is successful insertion.
 )
 BEGIN
     DECLARE userID, newID BIGINT UNSIGNED;
-    CALL getConvID (userCombID, userID);
+    CALL getConvID (userID, userID);
 
     SELECT id INTO newID
     FROM Texts
@@ -299,20 +295,20 @@ BEGIN
         END IF;
         SET exitCode = 0; -- insert.
     END IF;
-    SET newCombID = CONCAT('t', CONV(newID, 10, 16));
+    SET newID = CONCAT('t', CONV(newID, 10, 16));
 END //
 DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE insertBinary (
-    IN userCombID VARCHAR(17),
+    IN userID BIGINT UNSIGNED,
     IN inBin BLOB,
-    OUT newCombID VARCHAR(17),
+    OUT newID BIGINT UNSIGNED,
     OUT exitCode TINYINT -- 0 is successful insertion.
 )
 BEGIN
     DECLARE userID, newID BIGINT UNSIGNED;
-    CALL getConvID (userCombID, userID);
+    CALL getConvID (userID, userID);
 
     SELECT id INTO newID
     FROM Binaries
@@ -331,6 +327,6 @@ BEGIN
         END IF;
         SET exitCode = 0; -- insert.
     END IF;
-    SET newCombID = CONCAT('t', CONV(newID, 10, 16));
+    SET newID = CONCAT('t', CONV(newID, 10, 16));
 END //
 DELIMITER ;

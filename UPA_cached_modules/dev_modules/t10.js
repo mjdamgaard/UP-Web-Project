@@ -10,7 +10,6 @@ export function upa_main(preferenceUserID, termType, termID, userID) {
         throw "Unrecognized preference user";
     }
 
-    let $upa1Frame = $('#upaFrame');
     let contextData = {
         columnContentKey: "TestPages",
         defaultTab: "Subcategories",
@@ -20,5 +19,5 @@ export function upa_main(preferenceUserID, termType, termID, userID) {
         user: userID,
     };
     let contentKey = sdbInterfaceCL.contentKey;
-    sdbInterfaceCL.loadAppended($upa1Frame, contentKey, contextData);
+    sdbInterfaceCL.loadAppended($('body'), contentKey, contextData);
 }

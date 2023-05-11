@@ -1,32 +1,27 @@
-div.universalQuantifierFormula,
-div.existentialQuantifierFormula,
-div.negationFormula,
-div.conjunctionFormula,
-div.disjunctionFormula,
-div.implicationFormula,
-div.biconditionalFormula,
-div.atomicFormula,
-div.compoundElement,
-div.atomicElement,
-div.anonymousFunction,
-div.list,
-div.length {
-    display: inline;
-    /* background-color:  */
-}
-
 
 html, body, body > main {
     margin: 0px;
     padding: 0px;
     height: 100%;
 }
-body > main .full-height {
-    height: 100%;
-}
 body {
+    display: flex;
+    flex-direction: column;
+}
+body > header {
     background-color: #F8F8FB;
 }
+body > main {
+    flex-grow: 1;
+}
+body > main > iframe {
+    height: 100%;
+    width: 100%;
+}
+body > footer {
+    flex-grow: 0;
+}
+
 
 body > header {
     background-color: turquoise;

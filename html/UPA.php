@@ -1,3 +1,18 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+<!-- <script src="/lib/jquery-3.6.4.js"></script> -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+<!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous"> -->
+
+
+</head>
+<body>
 <?php
 
 
@@ -14,6 +29,19 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
     $_POST = $_GET;
 }
 
+
+if (!isset($_POST["tid"])) {
+    $_POST["et"] = "c";
+}
+if (!isset($_POST["tid"])) {
+    $_POST["eid"] = "3";
+}
+if (!isset($_POST["uid"])) {
+    $_POST["uid"] = "1";
+}
+if (!isset($_POST["pid"])) {
+    $_POST["pid"] = "1";
+}
 
 // get and verify the required inputs.
 $paramNameArr = array("et", "eid", "uid", "pid");
@@ -66,7 +94,6 @@ $mainModuleID = "10";
 // Also place the script that imports and runs the chosen UPA main module in
 // this div.
 ?>
-<div id="upaFrame" class="full-height"></div>
 <script id="upaMainFunLoader" type="module">
     import {
         upa_main
@@ -80,3 +107,4 @@ $mainModuleID = "10";
         '"';
     ?>);
 </script>
+</body>

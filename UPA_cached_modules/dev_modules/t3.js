@@ -331,27 +331,36 @@ pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
 
 sdbInterfaceCL.cssRules.push(
     'height: 100%;' +
+    'display: flex;' +
+    'flex-direction: row;' +
     'overflow-x: auto;' +
-    'white-space: nowrap;'
+    'white-space: nowrap;' +
+    'background-color: #F8F8FB;' +
+    ''
 );
 appColumnCL.cssRules.push(
     'overflow-x: initial;' +
     'white-space: initial;' +
-    'height: 100%;' +
+    // 'height: 100%;' +
+    'flex-grow: 1;' +
     'display: inline-block;' +
+    'display: flex;' +
     'margin: 5px 10px;' +
     'width: 600px;' +
     'overflow: initial;'
 );
-// tabButtonContainerCL.cssRules.push(
-//     // 'position: relative;' +
-//     // 'z-index: 2;' +
-//     'float: left;'
-// );
+appColumnCL.outwardCallbacks.push(function($ci) {
+    $ci.after('<div style="flex-grow: 0;"></div>');
+});
 closeButtonCL.cssRules.push(
     'padding: 0px 4px;' +
     'position: relative;' +
     'z-index: 2;' +
+    ''
+);
+pagesWithTabHeaderCL.cssRules.push(
+    'display: flex;' +
+    'flex-direction: column;' +
     ''
 );
 tabHeaderCL.cssRules.push(
@@ -372,8 +381,11 @@ pageAreaCL.outwardCallbacks.push(function($ci) {
     $ci.addClass("panel panel-content");
 });
 pageAreaCL.cssRules.push(
-    'height: 100%;'
+    'flex-grow: 1;'
 );
+pageAreaCL.outwardCallbacks.push(function($ci) {
+    $ci.after('<div style="flex-grow: 0;"></div>');
+});
 pageAreaCL.cssRules.push(
     '& > div { height: 100%; }'
 );
