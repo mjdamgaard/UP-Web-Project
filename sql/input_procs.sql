@@ -136,6 +136,7 @@ BEGIN
         ELSE
             SET exitCode = 1; -- trying to delete a non-existing rating.
         END IF;
+        elem_num -- TODO: Update it..
     END IF;
 END //
 DELIMITER ;
