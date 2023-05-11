@@ -212,10 +212,10 @@ CREATE TABLE Users (
     -- upload_vol_this_month BIGINT,
     -- download_vol_this_month BIGINT,
 
-    -- In order for third parties to be able to copy the database and then
-    -- be able to have users log on, without the need for exchanging
-    -- passwords between (third) parties.
     public_keys_for_authentication TEXT
+    -- (In order for third parties to be able to copy the database and then
+    -- be able to have users log on, without the need to exchange passwords
+    -- between databases.)
 );
 
 

@@ -9,6 +9,14 @@ DROP PROCEDURE inputOrChangeRating;
 
 
 
+DROP PROCEDURE insertOrFindCat;
+DROP PROCEDURE insertOrFindETerm;
+DROP PROCEDURE insertOrFindRel;
+
+DROP PROCEDURE insertText;
+
+
+
 
 DELIMITER //
 CREATE PROCEDURE createOrFindSet (
@@ -65,7 +73,6 @@ BEGIN
     DECLARE prevRatVal, ratVal VARBINARY(255);
     DECLARE setUserID, prevElemNum BIGINT UNSIGNED;
 
-    -- if userID does not match set's user_id, fail.
     IF NOT EXISTS (
         SELECT id FROM Sets WHERE (id = setID AND user_id = userID)
     ) THEN
@@ -100,8 +107,8 @@ BEGIN
         -- RecentInputs, and at some point also make an event to record
         -- recent inputs into RecordedInputs when there is long enough time
         -- between the last last recent input before that.
-        SET delayTimeMin = NULL; -- (not implemented yet)
-        SET delayTimeSigma = NULL; -- (not implemented yet)
+        SET delayTimeMin = 0; -- (not implemented yet)
+        SET delayTimeSigma = 0; -- (not implemented yet)
         INSERT INTO RecentInputs (set_id, rat_val, obj_id)
         VALUES (setID, ratVal, objID); -- (This can in theory fail if to
         -- changes can happen at the same millisecond, so let's keep it here
@@ -137,114 +144,192 @@ DELIMITER ;
 
 
 
--- DELIMITER //
--- CREATE PROCEDURE inputOrChangeRating (
---     IN userCombID VARCHAR(17),
---     IN setCombID VARCHAR(17),
---     IN objCombID VARCHAR(17),
---     IN ratValHex VARCHAR(510),
---     -- OUT newCombID VARCHAR(17),
---     OUT exitCode TINYINT
--- )
--- BEGIN
---     DECLARE userType, objType CHAR(1);
---     DECLARE userID, setID, objID BIGINT UNSIGNED;
---     DECLARE prevRatVal, ratVal VARBINARY(255);
---     DECLARE eccreateOrFindSet TINYINT;
---
---     CALL getTypeAndConvID (userCombID, userType, userID);
---     CALL getConvID (setCombID, setID);
---     CALL getTypeAndConvID (objCombID, objType, objID);
---     SET ratVal = UNHEX(ratValHex);
---     IF NOT EXISTS (
---         SELECT * FROM Sets
---         WHERE id = setID AND user_t = userType AND user_id = userID
---     ) THEN
---         SET exitCode = 4; -- set with that id and user does not exist.
---     ELSE
---         SELECT rat_val INTO prevRatVal
---         FROM SemanticInputs
---         WHERE (
---             obj_t = objType AND
---             obj_id = objID AND
---             set_id = setID
---         );
---         -- FOR UPDATE; -- Since this search only touches one row, only that row will
---         -- be locked. *No, this might cause some weird next-key locking.. Let me
---         -- see what to do.. ...Wait no, that actually shouldn't hurt much..
---         -- ..Yes, it might hurt (by beeing slow), who knows. I think I will
---         -- actually just query the Users table FOR UPDATE, which might actually
---         -- be reasonable in the future as well to check if the user is allowed
---         -- to make more inputs today, and thereby we will then also create a
---         -- mutex lock to ensure that a user (or user group (bot)) can only input/
---         -- update one rating at a time even when using several server clients at
---         -- the same time. ..But let me implement all this at a later time..
---         IF (prevRatVal IS NULL AND ratVal IS NOT NULL) THEN
---             INSERT INTO SemanticInputs (
---                 set_id,
---                 rat_val,
---                 obj_t,
---                 obj_id
---             )
---             VALUES (
---                 setID,
---                 ratVal,
---                 objType,
---                 objID
---             ); -- This might throw error due to race condition, but only if several
---             -- clients are logged in as the same user and rates at the same time.
---             -- ...(At least I think so, because FOR SHARE shouldn't lock indices..)
---             -- If the insert succeeds, we can then update elem_num.
---             UPDATE Sets
---             SET elem_num = elem_num + 1
---             WHERE id = setID;
---             CALL insertOrUpdateRecentInput (
---                 setID,
---                 objType,
---                 objID,
---                 ratVal,
---                 prevRatVal
---             );
---             SET exitCode = 0; -- no prior rating.
---         -- nothing happens if (prevRatVal IS NULL AND ratVal IS NULL).
---         ELSEIF (prevRatVal IS NOT NULL AND ratVal IS NOT NULL) THEN
---             CALL insertOrUpdateRecentInput (
---                 setID,
---                 objType,
---                 objID,
---                 ratVal,
---                 prevRatVal
---             );
---             UPDATE SemanticInputs
---             SET rat_val = ratVal
---             WHERE (
---                 obj_t = objType AND
---                 obj_id = objID AND
---                 set_id = setID
---             );
---             SET exitCode = 2; -- overwriting an old rating.
---         ELSEIF (prevRatVal IS NOT NULL AND ratVal IS NULL) THEN
---             CALL insertOrUpdateRecentInput (
---                 setID,
---                 objType,
---                 objID,
---                 ratVal,
---                 prevRatVal
---             );
---             DELETE FROM SemanticInputs
---             WHERE (
---                 set_id = setID AND
---                 obj_t = objType AND
---                 obj_id = objID
---
---             );
---             -- This UPDATE statement might cause a harmful race condition until
---             -- I reimplement this procedure more correctly at some point.
---             UPDATE Sets
---             SET elem_num = elem_num - 1
---             WHERE id = setID;
---             SET exitCode = 2; -- overwriting an old rating.
---         END IF;
---     END IF;
--- END //
--- DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertOrFindCat (
+    IN userCombID VARCHAR(17),
+    IN superCatCombID VARCHAR(17),
+    IN catTitle VARCHAR(255),
+    OUT newCombID VARCHAR(17),
+    OUT exitCode TINYINT
+)
+BEGIN
+    DECLARE superCatID, userID, newID BIGINT UNSIGNED;
+    CALL getConvID (superCatCombID, superCatID);
+    CALL getConvID (userCombID, userID);
+
+    SELECT id INTO newID
+    FROM Categories
+    WHERE (title = catTitle AND super_cat_id = superCatID);
+    IF (newID IS NOT NULL) THEN
+        SET exitCode = 1; -- find.
+    ELSEIF (NOT EXISTS (SELECT id FROM Categories WHERE id = superCatID)) THEN
+        SET newID = NULL;
+        SET exitCode = 2; -- super category doesn't exist.
+    ELSE
+        -- TODO: Insert a check that the user is part of a set and with a
+        -- non-negative rating denoting that the user is allowed to insert.
+        INSERT INTO Categories (title, super_cat_id)
+        VALUES (catTitle, superCatID);
+        SELECT LAST_INSERT_ID() INTO newID;
+        IF (userID != 0) THEN
+            INSERT INTO Creators (term_t, term_id, user_id)
+            VALUES ("c", newID, userID);
+        END IF;
+        SET exitCode = 0; -- insert.
+    END IF;
+    SET newCombID = CONCAT('c', CONV(newID, 10, 16));
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertOrFindETerm (
+    IN userCombID VARCHAR(17),
+    IN catCombID VARCHAR(17),
+    IN eTermTitle VARCHAR(255),
+    OUT newCombID VARCHAR(17),
+    OUT exitCode TINYINT
+)
+BEGIN
+    DECLARE catID, userID, newID BIGINT UNSIGNED;
+    CALL getConvID (catCombID, catID);
+    CALL getConvID (userCombID, userID);
+
+    SELECT id INTO newID
+    FROM ElementaryTerms
+    WHERE (title = eTermTitle AND cat_id = catID);
+    IF (newID IS NOT NULL) THEN
+        SET exitCode = 1; -- find.
+    ELSEIF (NOT EXISTS (SELECT id FROM Categories WHERE id = catID)) THEN
+        SET newID = NULL;
+        SET exitCode = 2; -- category doesn't exist.
+    ELSE
+        -- TODO: Insert a check that the user is part of a set and with a
+        -- non-negative rating denoting that the user is allowed to insert.
+        INSERT INTO ElementaryTerms (title, cat_id)
+        VALUES (eTermTitle, catID);
+        SELECT LAST_INSERT_ID() INTO newID;
+        IF (userID != 0) THEN
+            INSERT INTO Creators (term_t, term_id, user_id)
+            VALUES ("e", newID, userID);
+        END IF;
+        SET exitCode = 0; -- insert.
+    END IF;
+    SET newCombID = CONCAT('e', CONV(newID, 10, 16));
+END //
+DELIMITER ;
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertOrFindRel (
+    IN userCombID VARCHAR(17),
+    IN subjCatCombID VARCHAR(17),
+    IN objNoun VARCHAR(255),
+    OUT newCombID VARCHAR(17),
+    OUT exitCode TINYINT
+)
+BEGIN
+    DECLARE subjCatID, userID, newID BIGINT UNSIGNED;
+    CALL getConvID (subjCatCombID, subjCatID);
+    CALL getConvID (userCombID, userID);
+
+    SELECT id INTO newID
+    FROM Relations
+    WHERE (obj_noun = objNoun AND subj_cat_id = subjCatID);
+    IF (newID IS NOT NULL) THEN
+        SET exitCode = 1; -- find.
+    ELSEIF (NOT EXISTS (SELECT id FROM Categories WHERE id = subjCatID)) THEN
+        SET newID = NULL;
+        SET exitCode = 2; -- subject category doesn't exist.
+    ELSE
+        -- TODO: Insert a check that the user is part of a set and with a
+        -- non-negative rating denoting that the user is allowed to insert.
+        INSERT INTO Relations (obj_noun, subj_cat_id)
+        VALUES (objNoun, subjCatID);
+        SELECT LAST_INSERT_ID() INTO newID;
+        IF (userID != 0) THEN
+            INSERT INTO Creators (term_t, term_id, user_id)
+            VALUES ("r", newID, userID);
+        END IF;
+        SET exitCode = 0; -- insert.
+    END IF;
+    SET newCombID = CONCAT('r', CONV(newID, 10, 16));
+END //
+DELIMITER ;
+
+
+
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertText (
+    IN userCombID VARCHAR(17),
+    IN inStr TEXT,
+    OUT newCombID VARCHAR(17),
+    OUT exitCode TINYINT -- 0 is successful insertion.
+)
+BEGIN
+    DECLARE userID, newID BIGINT UNSIGNED;
+    CALL getConvID (userCombID, userID);
+
+    SELECT id INTO newID
+    FROM Texts
+    WHERE (str = inStr);
+    IF (newID IS NOT NULL) THEN
+        SET exitCode = 1; -- find.
+    ELSE
+        -- TODO: Insert a check that the user is part of a set and with a
+        -- non-negative rating denoting that the user is allowed to insert.
+        INSERT INTO Texts (str)
+        VALUES (inStr);
+        SELECT LAST_INSERT_ID() INTO newID;
+        IF (userID != 0) THEN
+            INSERT INTO Creators (term_t, term_id, user_id)
+            VALUES ("t", newID, userID);
+        END IF;
+        SET exitCode = 0; -- insert.
+    END IF;
+    SET newCombID = CONCAT('t', CONV(newID, 10, 16));
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE insertBinary (
+    IN userCombID VARCHAR(17),
+    IN inBin BLOB,
+    OUT newCombID VARCHAR(17),
+    OUT exitCode TINYINT -- 0 is successful insertion.
+)
+BEGIN
+    DECLARE userID, newID BIGINT UNSIGNED;
+    CALL getConvID (userCombID, userID);
+
+    SELECT id INTO newID
+    FROM Binaries
+    WHERE (bin = inBin);
+    IF (newID IS NOT NULL) THEN
+        SET exitCode = 1; -- find.
+    ELSE
+        -- TODO: Insert a check that the user is part of a set and with a
+        -- non-negative rating denoting that the user is allowed to insert.
+        INSERT INTO Binaries (bin)
+        VALUES (inBin);
+        SELECT LAST_INSERT_ID() INTO newID;
+        IF (userID != 0) THEN
+            INSERT INTO Creators (term_t, term_id, user_id)
+            VALUES ("b", newID, userID);
+        END IF;
+        SET exitCode = 0; -- insert.
+    END IF;
+    SET newCombID = CONCAT('t', CONV(newID, 10, 16));
+END //
+DELIMITER ;
