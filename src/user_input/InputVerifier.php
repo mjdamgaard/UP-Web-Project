@@ -68,7 +68,7 @@ class InputVerifier {
                     echoTypeErrorJSONAndExit($paramName, "TINYINT");
                 }
                 break;
-            case "tvarchar":
+            case "tstr":
                 if (
                     !is_string($paramVal) ||
                     !ctype_print($paramVal) ||
@@ -96,12 +96,15 @@ class InputVerifier {
                 }
                 break;
             case "elemIDHexStr":
-                if (
-                    !is_string($paramVal) ||
-                    !ctype_print($paramVal) ||
-                    strlen($paramVal) > 496
-                ) {
-                    echoTypeErrorJSONAndExit($paramName, "VARCHAR(496)");
+                $pattern = "/^([0-9A-F]{2}){0,248}$/";
+                if (!preg_match($pattern, $paramVal)) {
+                    echoTypeErrorJSONAndExit($paramName, $pattern);
+                }
+                break;
+            case "rat":
+                $pattern = "/^([0-9A-F]{2}){0,255}$/";
+                if (!preg_match($pattern, $paramVal)) {
+                    echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
                 break;
             case "text":
@@ -111,12 +114,6 @@ class InputVerifier {
                     strlen($paramVal) > 65535
                 ) {
                     echoTypeErrorJSONAndExit($paramName, "TEXT");
-                }
-                break;
-            case "rat":
-                $pattern = "/^([0-9A-F]{2}){0,255}$/";
-                if (!preg_match($pattern, $paramVal)) {
-                    echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
                 break;
             case "blob":

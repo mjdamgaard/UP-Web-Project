@@ -48,60 +48,40 @@ switch ($reqType) {
         $paramNameArr = array("uid", "oid", "sid", "r", "tmin", "tsig");
         $typeArr = array("id", "id", "id", "rat", "time", "time");
         break;
-    case "C":
+    case "cat":
         $sql = "CALL insertOrFindCat (?, ?, ?, @outID, @ec)";
-        $paramNameArr = array(
-            "uid", "scid",
-            "t"
-        );
-        $typeArr = array(
-            "userID", "catID",
-            "str"
-        );
+        $paramNameArr = array("uid", "scid", "t");
+        $typeArr = array("id", "id", "tstr");
         break;
-    case "E":
-        $sql = "CALL insertOrFindETerm (?, ?, ?, @outID, @ec)";
-        $paramNameArr = array(
-            "uid", "cid",
-            "t"
-        );
-        $typeArr = array(
-            "userID", "catID",
-            "str"
-        );
+    case "term":
+        $sql = "CALL insertOrFindTerm (?, ?, ?, @outID, @ec)";
+        $paramNameArr = array("uid", "cid", "t");
+        $typeArr = array("id", "id", "tstr");
         break;
-    case "R":
-        $sql = "CALL insertOrFindRel (?, ?, ?, @outID, @ec)";
-        $paramNameArr = array(
-            "uid", "scid",
-            "n"
-        );
-        $typeArr = array(
-            "userID", "catID",
-            "str"
-        );
+    case "rel":
+        $sql = "CALL insertOrFindRel (?, ?, ?, ?, @outID, @ec)";
+        $paramNameArr = array("uid", "st", "ot", "on");
+        $typeArr = array("id", "type", "type", "tstr");
         break;
-    case "T":
+    case "kws":
+        $sql = "CALL insertOrFindKeywordString (?, ?, @outID, @ec)";
+        $paramNameArr = array("uid", "s");
+        $typeArr = array("id", "str");
+        break;
+    case "patt":
+        $sql = "CALL insertOrFindPattern (?, ?, @outID, @ec)";
+        $paramNameArr = array("uid", "s");
+        $typeArr = array("id", "str");
+        break;
+    case "text":
         $sql = "CALL insertText (?, ?, @outID, @ec)";
-        $paramNameArr = array(
-            "uid",
-            "t"
-        );
-        $typeArr = array(
-            "userID",
-            "text"
-        );
+        $paramNameArr = array("uid", "s");
+        $typeArr = array("id", "text");
         break;
-    case "B":
+    case "bin":
         $sql = "CALL insertBinary (?, ?, @outID, @ec)";
-        $paramNameArr = array(
-            "uid",
-            "b"
-        );
-        $typeArr = array(
-            "userID",
-            "blob"
-        );
+        $paramNameArr = array("uid", "b");
+        $typeArr = array("id", "blob");
         break;
     default:
         header("Content-Type: text/json");
