@@ -327,18 +327,18 @@ pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
 sdbInterfaceCL.cssRules.push(
     'height: 100%;' +
     'overflow-x: auto;' +
+    'overflow-y: hidden;' +
     'white-space: nowrap;' +
     'background-color: #f9fef5;' +
     ''
 );
 appColumnCL.cssRules.push(
-    'height: 100%;' +
-    'overflow-x: initial;' +
+    'height: 101%;' +
+    'overflow: initial;' +
     'white-space: initial;' +
     'display: inline-block;' +
     'margin: 0px 10px;' +
     'width: 600px;' +
-    'overflow: initial;' +
     'border: 1px solid #DDD;' +
     'border-radius: 8px;' +
     'background-color: #FFF;'
@@ -366,6 +366,20 @@ tabHeaderCL.cssRules.push(
         'pointer-events: none;' +
         'border-bottom: 1px solid #ddd;' +
         'background-color: #fdfdfd;' +
+    '}'
+);
+tabHeaderCL.cssRules.push(
+    '& ul {' +
+        'display: flex;' +
+        // 'justify-content: flex-end;' +
+        'flex-wrap: wrap-reverse;' +
+        'flex-direction: row;' +
+        'margin: 0px 0px 0px 3px;' +
+    '}'
+);
+tabHeaderCL.cssRules.push(
+    '& ul > li {' +
+        'margin: 1px 1px 0px 0px;' +
     '}'
 );
 tabHeaderCL.cssRules.push(

@@ -20,6 +20,9 @@ export var inputFieldCL = new ContentLoader(
     '<div></div>',
     pageAreaCL
 );
+pageAreaCL.cssRules.push(
+    'margin: 15px 15px;'
+);
 export var categoryInputFieldCL = new ContentLoader(
     "CategoryInputField",
     /* Initial HTML */
@@ -28,20 +31,24 @@ export var categoryInputFieldCL = new ContentLoader(
 );
 categoryInputFieldCL.outwardCallbacks.push(function($ci) {
     $ci.append(
-       '<form action="javascript:void(0);">' +
-          '<div class="form-group">' +
-              '<label>Email address:</label>' +
-              '<input type="email" class="form-control">' +
-          '</div>' +
-          '<div class="form-group">' +
-              '<label>Password:</label>' +
-              '<input type="password" class="form-control">' +
-          '</div>' +
-          '<div class="checkbox">' +
-              '<label><input type="checkbox"> Remember me</label>' +
-          '</div>' +
-          '<button type="submit" class="btn btn-default">Submit</button>' +
-      '</form>'
+        '<form action="javascript:void(0);">' +
+            '<div class="form-group">' +
+                '<label>Email address:</label>' +
+                '<input type="email" class="form-control">' +
+            '</div>' +
+            '<div class="form-group">' +
+                '<label>Password:</label>' +
+                '<input type="password" class="form-control">' +
+            '</div>' +
+            '<div class="form-group">' +
+                '<label>Comment:</label>' +
+                '<textarea class="form-control" rows="2"></textarea>' +
+            '</div>' +
+            '<div class="checkbox">' +
+                '<label><input type="checkbox"> Remember me</label>' +
+            '</div>' +
+            '<button type="submit" class="btn btn-default">Submit</button>' +
+        '</form>'
     );
 });
 
@@ -67,6 +74,15 @@ testPagesCL.outwardCallbacks.push(function($ci) {
         )
         .trigger("add-tab-and-page",
             ["Elements", "TestPage", contextData]
+        )
+        .trigger("add-tab-and-page",
+            ["Elementss", "TestPage", contextData]
+        )
+        .trigger("add-tab-and-page",
+            ["Elementsss", "TestPage", contextData]
+        )
+        .trigger("add-tab-and-page",
+            ["Element", "TestPage", contextData]
         );
 });
 
