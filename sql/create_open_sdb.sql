@@ -154,6 +154,7 @@ CREATE TABLE RecordedInputs (
         changed_at
     )
 );
+
 -- CREATE TABLE UserGroups (
 --  -- user group ID.
 --   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

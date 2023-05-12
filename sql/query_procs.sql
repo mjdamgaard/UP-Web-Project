@@ -142,21 +142,39 @@ END //
 DELIMITER ;
 
 
+
 DELIMITER //
 CREATE PROCEDURE selectRecentInputs (
+    IN startID BIGINT UNSIGNED,
+    IN maxNum INT
+)
+BEGIN
+    SELECT
+        set_id AS setID,
+        obj_id AS objID,
+        HEX(rat_val) AS ratVal
+    FROM RecentInputs
+    WHERE id >= startID
+    ORDER BY id ASC
+    LIMIT maxNum;
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectRecordedInputs (
     IN setID BIGINT UNSIGNED,
     IN objID BIGINT UNSIGNED,
     IN maxNum INT,
     IN numOffset INT
 )
 BEGIN
-    IF (objID = 0) THEN
+    IF (objID IS NULL OR objID = 0) THEN
         SELECT
             obj_id AS objID,
             changed_at AS changedAt,
-            HEX(old_rat_val) AS oldRatVal,
-            HEX(new_rat_val) AS newRatVal
-        FROM RecentInputs
+            HEX(rat_val) AS ratVal
+        FROM RecordedInputs
         WHERE set_id = setID
         ORDER BY obj_id DESC, changed_at DESC
         LIMIT numOffset, maxNum;
@@ -165,13 +183,14 @@ BEGIN
             objID AS objID,
             changed_at AS changedAt,
             HEX(rat_val) AS ratVal
-        FROM RecentInputs
+        FROM RecordedInputs
         WHERE (set_id = setID AND obj_id = objID)
         ORDER BY changed_at DESC
         LIMIT numOffset, maxNum;
     END IF;
 END //
 DELIMITER ;
+
 
 
 
