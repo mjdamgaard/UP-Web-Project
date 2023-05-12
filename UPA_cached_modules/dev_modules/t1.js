@@ -67,6 +67,22 @@ export class DBRequestManager {
             callback($obj, result, textStatus, thisDBReqManager.cache);
         });
     }
+
+    input($obj, reqData, cacheKey, callback) {
+        if (typeof callback === "undefined") {
+            callback = cacheKey;
+            cacheKey = null;
+        }
+        let thisDBReqManager = this;
+        $.getJSON("input_handler.php", reqData, function(result, textStatus) {
+            // if cacheKey is not nullish, store the result in this.cache.
+            if (typeof cacheKey !== "undefined") {
+                thisDBReqManager.cache[cacheKey] = result;
+            }
+            // then call the callback function on result.
+            callback($obj, result, textStatus, thisDBReqManager.cache);
+        });
+    }
 }
 
 
