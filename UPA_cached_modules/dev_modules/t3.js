@@ -379,7 +379,7 @@ tabHeaderCL.cssRules.push(
 );
 tabHeaderCL.cssRules.push(
     '& ul > li {' +
-        'margin: 1px 1px 0px 0px;' +
+        'margin: 2px 1px -1px 0px;' +
     '}'
 );
 tabHeaderCL.cssRules.push(
