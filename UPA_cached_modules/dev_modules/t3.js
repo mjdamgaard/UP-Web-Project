@@ -160,6 +160,7 @@ export var pageAreaCL = new ContentLoader(
 );
 
 
+// TODO: Remove all the unused events below and above.
 
 
 /* Events that add tabs and add/load associated pages to these */
@@ -274,12 +275,6 @@ tabHeaderCL.outwardCallbacks.push(function($ci) {
                 .find('.CI.CloseButton').show();
             return false;
         });
-        // .on("deactivate-tab", function(event, tabTitle) {
-        //     $(this).find('li')
-        //         .filter('[data-title="' + tabTitle + '"]')
-        //         .removeClass("active");
-        //     return false;
-        // });
 });
 pageAreaCL.outwardCallbacks.push(function($ci) {
     $ci.data("openPagesTitleArr", [])
@@ -354,11 +349,6 @@ closeButtonCL.cssRules.push(
     'z-index: 2;' +
     ''
 );
-// appColumnCL.cssRules.push(
-//     '&:only-of-type .CI.ColumnButtonContainer .CI.CloseButton {' +
-//         'display-style: none;' +
-//     '}'
-// );
 tabHeaderCL.cssRules.push(
     'padding: 4px 0px 0px;' +
     'background-color: #F0F0F0;'
@@ -429,12 +419,6 @@ testPageCL.inwardCallbacks.push(function($ci) {
 });
 
 
-
-
-
-pageAreaCL.cssRules.push(
-    'border-left 1px solid #ccc; border-right 1px solid #ccc;' // doesn't work..
-);
 
 
 

@@ -96,13 +96,13 @@ class InputVerifier {
                 }
                 break;
             case "elemIDHexStr":
-                $pattern = "/^([0-9A-F]{2}){0,248}$/";
+                $pattern = "/^([0-9A-Fa-f]{2}){0,248}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
                 break;
             case "rat":
-                $pattern = "/^([0-9A-F]{2}){0,255}$/";
+                $pattern = "/^([0-9A-Fa-f]{2}){0,255}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
