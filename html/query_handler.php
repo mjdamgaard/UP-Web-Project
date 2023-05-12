@@ -199,6 +199,12 @@ switch ($reqType) {
         $typeArr = array("elemTypeStr", "elemIDHexStr", "id");
         // output: [[listID,]].
         break;
+    case "listRec":
+        $sql = "CALL selectList (?, ?)";
+        $paramNameArr = array("id", "n");
+        $typeArr = array("id", "int");
+        // output: [[NULL]] (not implemented yet.).
+        break;
     case "creator":
         $sql = "CALL selectCreator (?, ?)";
         $paramNameArr = array("t", "id");

@@ -508,6 +508,16 @@ END //
 DELIMITER ;
 
 
+-- TODO: Implement this procedure.
+DELIMITER //
+CREATE PROCEDURE selectListRecursive (
+    IN listID BIGINT UNSIGNED,
+    IN maxNum INT -- number of list heads (/ concatenations + 1) not elements.
+)
+BEGIN
+    SELECT NULL;
+END //
+DELIMITER ;
 
 
 
