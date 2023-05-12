@@ -3,6 +3,7 @@
 import * as t1Mod from "/UPA_scripts.php?id=1";
 import "/UPA_scripts.php?id=2"; // request t2 immediately.
 import {sdbInterfaceCL} from "/UPA_scripts.php?id=3";
+import * as t4Mod from "/UPA_scripts.php?id=4";
 
 
 export function upa_main(preferenceUserID, termType, termID, userID) {

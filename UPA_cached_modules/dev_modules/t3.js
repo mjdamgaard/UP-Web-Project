@@ -380,248 +380,70 @@ pageAreaCL.cssRules.push(
 
 
 
-/* Test */
-
-export var testPagesCL = new ContentLoader(
-    "TestPages",
-    /* Initial HTML */
-    '<<PagesWithTabHeader>>',
-    appColumnCL
-);
-
-
-testPagesCL.outwardCallbacks.push(function($ci) {
-    let contextData = $ci.data("contextData");
-    $ci
-        .trigger("add-tab-and-page",
-            ["Supercategories", "TestPage", contextData]
-        )
-        .trigger("add-tab-and-page",
-            ["Subcategories", "TestPage", contextData]
-        )
-        .trigger("add-tab-and-page",
-            ["Elements", "TestPage", contextData]
-        );
-});
-
-export var testPageCL = new ContentLoader(
-    "TestPage",
-    /* Initial HTML */
-    '<div></div>',
-    appColumnCL
-);
-testPageCL.inwardCallbacks.push(function($ci) {
-    let contextData = $ci.data("contextData");
-    $ci.prepend(
-        '<span>Hello, I will be a main page generated from: ' +
-        JSON.stringify(contextData) + '</span>'
-    );
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// export var pageFieldCL = new ContentLoader(
-//     "PageField",
-//     /* Initial HTML */
-//     '<div class="container"></div>',
-//     appColumnCL
-// );
-// pageFieldCL.outwardCallbacks.push(function($ci) {
-//     $ci
-//         .on("query-db", function(event, reqData, cacheKey, callback) {
-//             let $this = $(this);
-//             let dbReqManager = $this.data('dbReqManager');
-//             dbReqManager.query($this, reqData, cacheKey, callback);
-//             return false;
-//         })
-//         .on("append-contents", function(event, contentKey, dataArr, selector) {
-//             let $obj = (typeof selector === "undefined") ?
-//                 $(this) : $(this).find(selector);
-//             let len = dataArr.length;
-//             for (let i = 0; i < len; i++) {
-//                 pageFieldCL.loadAppended($obj, contentKey, dataArr[i]);
-//             }
-//             return false;
-//         })
-//         .on("prepend-contents", function(event, contentKey, dataArr, selector) {
-//             let $obj = (typeof selector === "undefined") ?
-//                 $(this) : $(this).find(selector);
-//             let len = dataArr.length;
-//             for (let i = 0; i < len; i++) {
-//                 pageFieldCL.loadPrepended($obj, contentKey, dataArr[i]);
-//             }
-//             return false;
-//         });
-// });
-// export var termListCL = new ContentLoader(
-//     "TermList",
-//     /* Initial HTML */
-//     '<<PageField>>',
-//     appColumnCL
-// );
-// termListCL.outwardCallbacks.push(function($ci) {
-//     $ci.append('<ul class="list-group"></ul>');
-// });
-// termListCL.outwardCallbacks.push(function($ci) {
-//     $ci
-//         .on("append-elements", function(event, contentKey, elemDataArr) {
-//             $(this).trigger("append-contents",
-//                 [contentKey, elemDataArr, 'ul, ol']
-//             );
-//             return false;
-//         })
-//         .on("empty", function(event, elemDataArr, elemCL) {
-//             $(this).children('ul, ol').empty();
-//             return false;
-//         });
-// });
-//
-//
-// export var extensibleTermListCL = new ContentLoader(
-//     "ExtensibleTermList",
-//     /* Initial HTML */
-//     '<<TermList>>',
-//     appColumnCL
-// );
-// // TODO: Add a callback that adds a button at the bottom of the ci, which when
-// // pressed, adds elements to the list, either cached ones or ones that are then
-// // queried.
-//
-// export var termListElementCL = new ContentLoader(
-//     "TermListElement",
-//     /* Initial HTML */
-//     '<li class="list-group-item"></li>',
-//     appColumnCL
-// );
-// export var simpleTermListElementCL = new ContentLoader(
-//     "SimpleTermListElement",
-//     /* Initial HTML */
-//     '<<TermListElement>>',
-//     appColumnCL
-// );
-//
-// // simpleTermListElementCL.outwardCallbacks.push(function($ci) {
-// //     let termID = $ci.data("contextData").termID;
-// //     $ci.data("contextData").dbReqManager.query($ci, )...
-// //     $ci.append(
-// //         ''
-// //     );
-// // });
-//
 // /* Test */
 //
-// export var categoryListElementCL = new ContentLoader(
-//     "CategoryListElement",
-//     /* Initial HTML */
-//     '<<TermListElement>>',
-//     appColumnCL
-// );
-// categoryListElementCL.outwardCallbacks.push(function($ci) {
-//     let contextData = $ci.data("contextData");
-//     $ci.append(
-//         '<span>Hello, I will become a category term list element ' +
-//         'generated from: ' + JSON.stringify(contextData) + '</span>'
-//     );
-// });
-//
-// export var supercategoryPageCL = new ContentLoader(
-//     "SupercategoryPage",
-//     /* Initial HTML */
-//     '<<Column>>',
-//     appColumnCL
-// );
-// supercategoryPageCL.outwardCallbacks.push(function($ci) {
-//     let contextData = $ci.data("contextData");
-//     $ci.trigger("add-tab-and-page",
-//         ["Defining supercategories", "DefSuperCatsPage", contextData]
-//     );
-//     $ci.trigger("open-tab-and-page", ["Defining supercategories"]);
-// });
-//
-// export var defSuperCatsPageCL = new ContentLoader(
-//     "DefSuperCatsPage",
-//     /* Initial HTML */
-//     '<<ExtensibleTermList>>',
-//     appColumnCL
-// );
-// defSuperCatsPageCL.outwardCallbacks.push(function($ci) {
-//     let contextData = $ci.data("contextData");
-//     let elemDataArr = [contextData, contextData, contextData];
-//     $ci.trigger("append-elements", ["CategoryListElement", elemDataArr]);
-// });
-// defSuperCatsPageCL.inwardCallbacks.push(function($ci) {
-//     // $ci.find('ul').addClass("list-group-numbered");
-//     $ci.data("contextData").ordered = true;
-// });
-// termListCL.outwardCallbacks.push(function($ci) {
-//     if ($ci.data("contextData").ordered ?? false === true) {
-//         $ci.empty();
-//         $ci.append('<ol class="list-group list-group-numbered"></ol>');
-//         // $ci.find('ul').addClass("list-group-numbered");
-//     }
-// });
-//
-// export var mainPageCL = new ContentLoader(
-//     "MainPage",
-//     /* Initial HTML */
-//     '<div></div>',
-//     appColumnCL
-// );
-// mainPageCL.inwardCallbacks.push(function($ci) {
-//     let contextData = $ci.data("contextData");
-//     $ci.prepend(
-//         '<span>Hello, I will be a main page generated from: ' +
-//         JSON.stringify(contextData) + '</span>'
-//     );
-// });
-//
-// export var categoryColumnCL = new ContentLoader(
-//     "CategoryPage",
+// export var testPagesCL = new ContentLoader(
+//     "TestPages",
 //     /* Initial HTML */
 //     '<<PagesWithTabHeader>>',
 //     appColumnCL
 // );
 //
 //
-// categoryColumnCL.outwardCallbacks.push(function($ci) {
+// testPagesCL.outwardCallbacks.push(function($ci) {
 //     let contextData = $ci.data("contextData");
-//     $ci.trigger("add-tab-and-page",
-//         ["Supercategories", "SupercategoryPage", contextData]
-//     );
-//     $ci.trigger("add-tab-and-page",
-//         ["Subcategories", "MainPage", contextData]
-//     );
-//     $ci.trigger("add-tab-and-page",
-//         ["Elements", "MainPage", contextData]
-//     );
-//     // open the "Subcategories" tab as the default one.
-//     $ci.trigger("open-tab-and-page", ["Subcategories"]);
+//     $ci
+//         .trigger("add-tab-and-page",
+//             ["Supercategories", "TestPage", contextData]
+//         )
+//         .trigger("add-tab-and-page",
+//             ["Subcategories", "TestPage", contextData]
+//         )
+//         .trigger("add-tab-and-page",
+//             ["Elements", "TestPage", contextData]
+//         );
 // });
 //
-//
-//
-//
-//
-//
+// export var testPageCL = new ContentLoader(
+//     "TestPage",
+//     /* Initial HTML */
+//     '<div></div>',
+//     appColumnCL
+// );
+// testPageCL.inwardCallbacks.push(function($ci) {
+//     let contextData = $ci.data("contextData");
+//     $ci.prepend(
+//         '<span>Hello, I will be a main page generated from: ' +
+//         JSON.stringify(contextData) + '</span>'
+//     );
+// });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// defSuperCatsPageCL.outwardCallbacks.push(function($ci) {
+//     let contextData = $ci.data("contextData");
+//     let elemDataArr = [contextData, contextData, contextData];
+//     $ci.trigger("append-elements", ["CategoryListElement", elemDataArr]);
+// });
+
+
+
+
+
 // tabHeaderCL.cssRules.push(
 //     '& li > a { padding: 7px 12px; }'
 // );
