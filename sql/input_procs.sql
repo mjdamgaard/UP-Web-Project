@@ -48,6 +48,8 @@ BEGIN
             0
         );
         SELECT LAST_INSERT_ID() INTO newID;
+        -- INSERT INTO Creators (term_t, term_id, user_id)
+        -- VALUES ("s", newID, userID);
         SET exitCode = 0; -- create.
     ELSE
         SET exitCode = 1; -- find.
@@ -117,6 +119,9 @@ BEGIN
         IF (ratVal IS NOT NULL AND prevRatVal IS NULL) THEN
             INSERT INTO SemanticInputs (set_id, rat_val, obj_id)
             VALUES (setID, ratVal, objID);
+            UPDATE Sets
+            SET elem_num = prevElemNum + 1
+            WHERE id = setID;
             SET exitCode = 0; -- success(ful insertion of new rating).
         ELSEIF (ratVal IS NOT NULL AND prevRatVal IS NOT NULL) THEN
             UPDATE SemanticInputs
@@ -132,11 +137,13 @@ BEGIN
                 obj_id = objID AND
                 set_id = setID
             );
+            UPDATE Sets
+            SET elem_num = prevElemNum - 1
+            WHERE id = setID;
             SET exitCode = 0; -- success(ful deletion of previous rating).
         ELSE
             SET exitCode = 1; -- trying to delete a non-existing rating.
         END IF;
-        elem_num -- TODO: Update it..
     END IF;
 END //
 DELIMITER ;
@@ -163,21 +170,15 @@ BEGIN
     IF (newID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
     ELSEIF (NOT EXISTS (SELECT id FROM Categories WHERE id = superCatID)) THEN
-        SET newID = NULL;
-        SET exitCode = 2; -- super category doesn't exist.
+        SET exitCode = 2; -- super category does not exist.
     ELSE
-        -- TODO: Insert a check that the user is part of a set and with a
-        -- non-negative rating denoting that the user is allowed to insert.
         INSERT INTO Categories (title, super_cat_id)
         VALUES (catTitle, superCatID);
         SELECT LAST_INSERT_ID() INTO newID;
-        IF (userID != 0) THEN
-            INSERT INTO Creators (term_t, term_id, user_id)
-            VALUES ("c", newID, userID);
-        END IF;
+        INSERT INTO Creators (term_t, term_id, user_id)
+        VALUES ("c", newID, userID);
         SET exitCode = 0; -- insert.
     END IF;
-    SET newID = CONCAT('c', CONV(newID, 10, 16));
 END //
 DELIMITER ;
 
@@ -187,36 +188,26 @@ DELIMITER //
 CREATE PROCEDURE insertOrFindETerm (
     IN userID BIGINT UNSIGNED,
     IN catID BIGINT UNSIGNED,
-    IN eTermTitle VARCHAR(255),
+    IN termTitle VARCHAR(255),
     OUT newID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 BEGIN
-    DECLARE catID, userID, newID BIGINT UNSIGNED;
-    CALL getConvID (catID, catID);
-    CALL getConvID (userID, userID);
-
     SELECT id INTO newID
-    FROM ElementaryTerms
-    WHERE (title = eTermTitle AND cat_id = catID);
+    FROM Terms
+    WHERE (title = termTitle AND cat_id = catID);
     IF (newID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
     ELSEIF (NOT EXISTS (SELECT id FROM Categories WHERE id = catID)) THEN
-        SET newID = NULL;
         SET exitCode = 2; -- category doesn't exist.
     ELSE
-        -- TODO: Insert a check that the user is part of a set and with a
-        -- non-negative rating denoting that the user is allowed to insert.
-        INSERT INTO ElementaryTerms (title, cat_id)
-        VALUES (eTermTitle, catID);
+        INSERT INTO Terms (title, cat_id)
+        VALUES (termTitle, catID);
         SELECT LAST_INSERT_ID() INTO newID;
-        IF (userID != 0) THEN
-            INSERT INTO Creators (term_t, term_id, user_id)
-            VALUES ("e", newID, userID);
-        END IF;
+        INSERT INTO Creators (term_t, term_id, user_id)
+        VALUES ("t", newID, userID);
         SET exitCode = 0; -- insert.
     END IF;
-    SET newID = CONCAT('e', CONV(newID, 10, 16));
 END //
 DELIMITER ;
 
@@ -226,40 +217,83 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindRel (
     IN userID BIGINT UNSIGNED,
-    IN subjCatID BIGINT UNSIGNED,
+    IN subjType CHAR(1),
+    IN objType CHAR(1),
     IN objNoun VARCHAR(255),
     OUT newID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 BEGIN
-    DECLARE subjCatID, userID, newID BIGINT UNSIGNED;
-    CALL getConvID (subjCatID, subjCatID);
-    CALL getConvID (userID, userID);
-
     SELECT id INTO newID
     FROM Relations
-    WHERE (obj_noun = objNoun AND subj_cat_id = subjCatID);
+    WHERE (subj_t = subjType AND obj_t = objType AND obj_noun = objNoun);
     IF (newID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
-    ELSEIF (NOT EXISTS (SELECT id FROM Categories WHERE id = subjCatID)) THEN
-        SET newID = NULL;
-        SET exitCode = 2; -- subject category doesn't exist.
     ELSE
-        -- TODO: Insert a check that the user is part of a set and with a
-        -- non-negative rating denoting that the user is allowed to insert.
-        INSERT INTO Relations (obj_noun, subj_cat_id)
-        VALUES (objNoun, subjCatID);
+        INSERT INTO Relations (subj_t, obj_t, obj_noun)
+        VALUES (subjType, objType, objNoun);
         SELECT LAST_INSERT_ID() INTO newID;
-        IF (userID != 0) THEN
-            INSERT INTO Creators (term_t, term_id, user_id)
-            VALUES ("r", newID, userID);
-        END IF;
+        INSERT INTO Creators (term_t, term_id, user_id)
+        VALUES ("r", newID, userID);
         SET exitCode = 0; -- insert.
     END IF;
-    SET newID = CONCAT('r', CONV(newID, 10, 16));
 END //
 DELIMITER ;
 
+
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertOrFindKeywordString (
+    IN userID BIGINT UNSIGNED,
+    IN s VARCHAR(768),
+    OUT newID BIGINT UNSIGNED,
+    OUT exitCode TINYINT
+)
+BEGIN
+    SELECT id INTO newID
+    FROM KeywordStrings
+    WHERE str = s;
+    IF (newID IS NOT NULL) THEN
+        SET exitCode = 1; -- find.
+    ELSE
+        INSERT INTO KeywordStrings (str)
+        VALUES (s);
+        SELECT LAST_INSERT_ID() INTO newID;
+        INSERT INTO Creators (term_t, term_id, user_id)
+        VALUES ("k", newID, userID);
+        SET exitCode = 0; -- insert.
+    END IF;
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE insertOrFindPattern (
+    IN userID BIGINT UNSIGNED,
+    IN s VARCHAR(768),
+    OUT newID BIGINT UNSIGNED,
+    OUT exitCode TINYINT
+)
+BEGIN
+    SELECT id INTO newID
+    FROM Patterns
+    WHERE str = s;
+    IF (newID IS NOT NULL) THEN
+        SET exitCode = 1; -- find.
+    ELSE
+        INSERT INTO Patterns (str)
+        VALUES (s);
+        SELECT LAST_INSERT_ID() INTO newID;
+        INSERT INTO Creators (term_t, term_id, user_id)
+        VALUES ("p", newID, userID);
+        SET exitCode = 0; -- insert.
+    END IF;
+END //
+DELIMITER ;
 
 
 
@@ -270,63 +304,67 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertText (
     IN userID BIGINT UNSIGNED,
-    IN inStr TEXT,
+    IN s TEXT,
     OUT newID BIGINT UNSIGNED,
-    OUT exitCode TINYINT -- 0 is successful insertion.
+    OUT exitCode TINYINT
 )
 BEGIN
-    DECLARE userID, newID BIGINT UNSIGNED;
-    CALL getConvID (userID, userID);
-
-    SELECT id INTO newID
-    FROM Texts
-    WHERE (str = inStr);
-    IF (newID IS NOT NULL) THEN
-        SET exitCode = 1; -- find.
-    ELSE
-        -- TODO: Insert a check that the user is part of a set and with a
-        -- non-negative rating denoting that the user is allowed to insert.
-        INSERT INTO Texts (str)
-        VALUES (inStr);
-        SELECT LAST_INSERT_ID() INTO newID;
-        IF (userID != 0) THEN
-            INSERT INTO Creators (term_t, term_id, user_id)
-            VALUES ("t", newID, userID);
-        END IF;
-        SET exitCode = 0; -- insert.
-    END IF;
-    SET newID = CONCAT('t', CONV(newID, 10, 16));
+    INSERT INTO Texts (str)
+    VALUES (s);
+    SELECT LAST_INSERT_ID() INTO newID;
+    INSERT INTO Creators (term_t, term_id, user_id)
+    VALUES ("x", newID, userID);
+    SET exitCode = 0; -- insert.
 END //
 DELIMITER ;
+
 
 DELIMITER //
 CREATE PROCEDURE insertBinary (
     IN userID BIGINT UNSIGNED,
-    IN inBin BLOB,
+    IN b TEXT,
     OUT newID BIGINT UNSIGNED,
-    OUT exitCode TINYINT -- 0 is successful insertion.
+    OUT exitCode TINYINT
 )
 BEGIN
-    DECLARE userID, newID BIGINT UNSIGNED;
-    CALL getConvID (userID, userID);
+    INSERT INTO Binaries (bin)
+    VALUES (b);
+    SELECT LAST_INSERT_ID() INTO newID;
+    INSERT INTO Creators (term_t, term_id, user_id)
+    VALUES ("b", newID, userID);
+    SET exitCode = 0; -- insert.
+END //
+DELIMITER ;
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertOrFindList (
+    IN userID BIGINT UNSIGNED,
+    IN elemTypeStr VARCHAR(31),
+    IN elemIDHexStr VARCHAR(496),
+    IN tailID BIGINT UNSIGNED,
+    OUT newID BIGINT UNSIGNED,
+    OUT exitCode TINYINT
+)
+BEGIN
+    DECLARE elemIDs VARBINARY(248);
+    SET elemIDs = UNHEX(elemIDHexStr);
 
     SELECT id INTO newID
-    FROM Binaries
-    WHERE (bin = inBin);
+    FROM Lists
+    WHERE (elem_ts = elemTypeStr AND elem_ids = elemIDs AND tail_id = tailID);
     IF (newID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
     ELSE
-        -- TODO: Insert a check that the user is part of a set and with a
-        -- non-negative rating denoting that the user is allowed to insert.
-        INSERT INTO Binaries (bin)
-        VALUES (inBin);
+        INSERT INTO Lists (elem_ts, elem_ids, tail_id)
+        VALUES (elemTypeStr, elemIDs, tailID);
         SELECT LAST_INSERT_ID() INTO newID;
-        IF (userID != 0) THEN
-            INSERT INTO Creators (term_t, term_id, user_id)
-            VALUES ("b", newID, userID);
-        END IF;
+        INSERT INTO Creators (term_t, term_id, user_id)
+        VALUES ("l", newID, userID);
         SET exitCode = 0; -- insert.
     END IF;
-    SET newID = CONCAT('t', CONV(newID, 10, 16));
 END //
 DELIMITER ;

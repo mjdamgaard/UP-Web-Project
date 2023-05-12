@@ -252,6 +252,7 @@ CREATE TABLE Terms (
     UNIQUE INDEX (title, cat_id)
 );
 
+
 CREATE TABLE Relations (
     -- relation ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -274,11 +275,6 @@ CREATE TABLE Relations (
     -- adjective form>", e.g. "Elements related to so and so". Then the app
     -- can also remove the "Elements" in front and only print the rest.)
     obj_noun VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-    -- FULLTEXT idx (obj_noun),
-
-
-    -- subj_cat_id BIGINT UNSIGNED NOT NULL,
-    -- -- obj_cat_id BIGINT UNSIGNED NOT NULL,
 
     UNIQUE INDEX (subj_t, obj_t, obj_noun)
 );

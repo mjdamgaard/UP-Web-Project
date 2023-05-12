@@ -354,6 +354,11 @@ closeButtonCL.cssRules.push(
     'z-index: 2;' +
     ''
 );
+// appColumnCL.cssRules.push(
+//     '&:only-of-type .CI.ColumnButtonContainer .CI.CloseButton {' +
+//         'display-style: none;' +
+//     '}'
+// );
 tabHeaderCL.cssRules.push(
     'padding: 4px 0px 0px;' +
     'background-color: #F0F0F0;'
