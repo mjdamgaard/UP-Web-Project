@@ -169,7 +169,7 @@ CREATE PROCEDURE selectRecordedInputs (
     IN numOffset INT
 )
 BEGIN
-    IF (objID IS NULL OR objID = 0) THEN
+    IF (objID = 0 OR objID IS NULL) THEN
         SELECT
             obj_id AS objID,
             changed_at AS changedAt,
@@ -543,6 +543,10 @@ CREATE PROCEDURE selectCreations (
     IN isAscOrder BOOL
 )
 BEGIN
+    IF entityType = "" THEN
+        SET entityType = NULL;
+    END IF;
+
     SELECT
         entity_t AS entityType,
         entity_id AS entityID

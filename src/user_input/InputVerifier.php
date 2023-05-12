@@ -113,7 +113,7 @@ class InputVerifier {
                     echoTypeErrorJSONAndExit($paramName, "TEXT");
                 }
                 break;
-            case "tvarbinhex":
+            case "rat":
                 $pattern = "/^([0-9A-F]{2}){0,255}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $pattern);
@@ -125,6 +125,13 @@ class InputVerifier {
                     strlen($paramVal) > 65535
                 ) {
                     echoTypeErrorJSONAndExit($paramName, "BLOB");
+                }
+                break;
+            case "time":
+                $pattern =
+            "/^([12]?[0-9] |3[0-4] )?([01][0-9]|2[0-3]):[0-9]{2}:[0-9]{2}$/";
+                if (!preg_match($pattern, $paramVal)) {
+                    echoTypeErrorJSONAndExit($paramName, $pattern);
                 }
                 break;
             default:

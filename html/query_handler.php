@@ -47,7 +47,7 @@ switch ($reqType) {
         );
         $typeArr = array(
             "id",
-            "tvarbinhex", "tvarbinhex",
+            "rat", "rat",
             "uint", "uint",
             "tint"
         );

@@ -120,7 +120,7 @@ CREATE TABLE PrivateRecentInputs (
     obj_id BIGINT UNSIGNED NOT NULL,
 
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    delay_time TIME
+    live_at DATETIME
 );
 CREATE TABLE RecentInputs (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

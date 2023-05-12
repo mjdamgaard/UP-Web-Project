@@ -23,18 +23,18 @@ CREATE PROCEDURE createOrFindSet (
     IN userID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN relID BIGINT UNSIGNED,
-    OUT newID BIGINT UNSIGNED,
+    OUT outID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 BEGIN
-    SELECT id INTO newID
+    SELECT id INTO outID
     FROM Sets
     WHERE (
         user_id = userID AND
         subj_id = subjID AND
         rel_id = relID
     );
-    IF (newID IS NULL) THEN
+    IF (outID IS NULL) THEN
         INSERT INTO Sets (
             user_id,
             subj_id,
@@ -47,9 +47,7 @@ BEGIN
             relID,
             0
         );
-        SELECT LAST_INSERT_ID() INTO newID;
-        -- INSERT INTO Creators (term_t, term_id, user_id)
-        -- VALUES ("s", newID, userID);
+        SELECT LAST_INSERT_ID() INTO outID;
         SET exitCode = 0; -- create.
     ELSE
         SET exitCode = 1; -- find.
@@ -68,7 +66,7 @@ CREATE PROCEDURE inputOrChangeRating (
     IN ratValHex VARCHAR(510),
     IN delayTimeMin TIME,
     IN delayTimeSigma TIME,
-    OUT newID BIGINT UNSIGNED,
+    OUT outID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 BEGIN
@@ -160,23 +158,23 @@ CREATE PROCEDURE insertOrFindCat (
     IN userID BIGINT UNSIGNED,
     IN superCatID BIGINT UNSIGNED,
     IN catTitle VARCHAR(255),
-    OUT newID BIGINT UNSIGNED,
+    OUT outID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 BEGIN
-    SELECT id INTO newID
+    SELECT id INTO outID
     FROM Categories
     WHERE (title = catTitle AND super_cat_id = superCatID);
-    IF (newID IS NOT NULL) THEN
+    IF (outID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
     ELSEIF (NOT EXISTS (SELECT id FROM Categories WHERE id = superCatID)) THEN
         SET exitCode = 2; -- super category does not exist.
     ELSE
         INSERT INTO Categories (title, super_cat_id)
         VALUES (catTitle, superCatID);
-        SELECT LAST_INSERT_ID() INTO newID;
+        SELECT LAST_INSERT_ID() INTO outID;
         INSERT INTO Creators (term_t, term_id, user_id)
-        VALUES ("c", newID, userID);
+        VALUES ("c", outID, userID);
         SET exitCode = 0; -- insert.
     END IF;
 END //
@@ -189,23 +187,23 @@ CREATE PROCEDURE insertOrFindETerm (
     IN userID BIGINT UNSIGNED,
     IN catID BIGINT UNSIGNED,
     IN termTitle VARCHAR(255),
-    OUT newID BIGINT UNSIGNED,
+    OUT outID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 BEGIN
-    SELECT id INTO newID
+    SELECT id INTO outID
     FROM Terms
     WHERE (title = termTitle AND cat_id = catID);
-    IF (newID IS NOT NULL) THEN
+    IF (outID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
     ELSEIF (NOT EXISTS (SELECT id FROM Categories WHERE id = catID)) THEN
         SET exitCode = 2; -- category doesn't exist.
     ELSE
         INSERT INTO Terms (title, cat_id)
         VALUES (termTitle, catID);
-        SELECT LAST_INSERT_ID() INTO newID;
+        SELECT LAST_INSERT_ID() INTO outID;
         INSERT INTO Creators (term_t, term_id, user_id)
-        VALUES ("t", newID, userID);
+        VALUES ("t", outID, userID);
         SET exitCode = 0; -- insert.
     END IF;
 END //
@@ -220,21 +218,21 @@ CREATE PROCEDURE insertOrFindRel (
     IN subjType CHAR(1),
     IN objType CHAR(1),
     IN objNoun VARCHAR(255),
-    OUT newID BIGINT UNSIGNED,
+    OUT outID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 BEGIN
-    SELECT id INTO newID
+    SELECT id INTO outID
     FROM Relations
     WHERE (subj_t = subjType AND obj_t = objType AND obj_noun = objNoun);
-    IF (newID IS NOT NULL) THEN
+    IF (outID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
     ELSE
         INSERT INTO Relations (subj_t, obj_t, obj_noun)
         VALUES (subjType, objType, objNoun);
-        SELECT LAST_INSERT_ID() INTO newID;
+        SELECT LAST_INSERT_ID() INTO outID;
         INSERT INTO Creators (term_t, term_id, user_id)
-        VALUES ("r", newID, userID);
+        VALUES ("r", outID, userID);
         SET exitCode = 0; -- insert.
     END IF;
 END //
@@ -250,21 +248,21 @@ DELIMITER //
 CREATE PROCEDURE insertOrFindKeywordString (
     IN userID BIGINT UNSIGNED,
     IN s VARCHAR(768),
-    OUT newID BIGINT UNSIGNED,
+    OUT outID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 BEGIN
-    SELECT id INTO newID
+    SELECT id INTO outID
     FROM KeywordStrings
     WHERE str = s;
-    IF (newID IS NOT NULL) THEN
+    IF (outID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
     ELSE
         INSERT INTO KeywordStrings (str)
         VALUES (s);
-        SELECT LAST_INSERT_ID() INTO newID;
+        SELECT LAST_INSERT_ID() INTO outID;
         INSERT INTO Creators (term_t, term_id, user_id)
-        VALUES ("k", newID, userID);
+        VALUES ("k", outID, userID);
         SET exitCode = 0; -- insert.
     END IF;
 END //
@@ -275,21 +273,21 @@ DELIMITER //
 CREATE PROCEDURE insertOrFindPattern (
     IN userID BIGINT UNSIGNED,
     IN s VARCHAR(768),
-    OUT newID BIGINT UNSIGNED,
+    OUT outID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 BEGIN
-    SELECT id INTO newID
+    SELECT id INTO outID
     FROM Patterns
     WHERE str = s;
-    IF (newID IS NOT NULL) THEN
+    IF (outID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
     ELSE
         INSERT INTO Patterns (str)
         VALUES (s);
-        SELECT LAST_INSERT_ID() INTO newID;
+        SELECT LAST_INSERT_ID() INTO outID;
         INSERT INTO Creators (term_t, term_id, user_id)
-        VALUES ("p", newID, userID);
+        VALUES ("p", outID, userID);
         SET exitCode = 0; -- insert.
     END IF;
 END //
@@ -305,15 +303,15 @@ DELIMITER //
 CREATE PROCEDURE insertText (
     IN userID BIGINT UNSIGNED,
     IN s TEXT,
-    OUT newID BIGINT UNSIGNED,
+    OUT outID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 BEGIN
     INSERT INTO Texts (str)
     VALUES (s);
-    SELECT LAST_INSERT_ID() INTO newID;
+    SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Creators (term_t, term_id, user_id)
-    VALUES ("x", newID, userID);
+    VALUES ("x", outID, userID);
     SET exitCode = 0; -- insert.
 END //
 DELIMITER ;
@@ -323,15 +321,15 @@ DELIMITER //
 CREATE PROCEDURE insertBinary (
     IN userID BIGINT UNSIGNED,
     IN b TEXT,
-    OUT newID BIGINT UNSIGNED,
+    OUT outID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 BEGIN
     INSERT INTO Binaries (bin)
     VALUES (b);
-    SELECT LAST_INSERT_ID() INTO newID;
+    SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Creators (term_t, term_id, user_id)
-    VALUES ("b", newID, userID);
+    VALUES ("b", outID, userID);
     SET exitCode = 0; -- insert.
 END //
 DELIMITER ;
@@ -346,24 +344,24 @@ CREATE PROCEDURE insertOrFindList (
     IN elemTypeStr VARCHAR(31),
     IN elemIDHexStr VARCHAR(496),
     IN tailID BIGINT UNSIGNED,
-    OUT newID BIGINT UNSIGNED,
+    OUT outID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 BEGIN
     DECLARE elemIDs VARBINARY(248);
     SET elemIDs = UNHEX(elemIDHexStr);
 
-    SELECT id INTO newID
+    SELECT id INTO outID
     FROM Lists
     WHERE (elem_ts = elemTypeStr AND elem_ids = elemIDs AND tail_id = tailID);
-    IF (newID IS NOT NULL) THEN
+    IF (outID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
     ELSE
         INSERT INTO Lists (elem_ts, elem_ids, tail_id)
         VALUES (elemTypeStr, elemIDs, tailID);
-        SELECT LAST_INSERT_ID() INTO newID;
+        SELECT LAST_INSERT_ID() INTO outID;
         INSERT INTO Creators (term_t, term_id, user_id)
-        VALUES ("l", newID, userID);
+        VALUES ("l", outID, userID);
         SET exitCode = 0; -- insert.
     END IF;
 END //

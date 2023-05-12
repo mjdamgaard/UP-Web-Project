@@ -38,19 +38,15 @@ $sql = "";
 $paramNameArr = "";
 $typeArr = "";
 switch ($reqType) {
-    // case "RSK":
-    case "R":
-        $sql = "CALL inputOrChangeRating (?, ?, ?, ?, @ec)";
-        $paramNameArr = array(
-            "uid", "sid", "rid",
-            "oid",
-            "r"
-        );
-        $typeArr = array(
-            "userID", "termID", "relID",
-            "termID",
-            "bin"
-        );
+    case "set":
+        $sql = "CALL createOrFindSet (?, ?, ?, @outID, @ec)";
+        $paramNameArr = array("uid", "sid", "rid");
+        $typeArr = array("id", "id", "id",);
+        break;
+    case "rat":
+        $sql = "CALL inputOrChangeRating (?, ?, ?, ?, ?, ?, @outID, @ec)";
+        $paramNameArr = array("uid", "oid", "sid", "r", "tmin", "tsig");
+        $typeArr = array("id", "id", "id", "rat", "time", "time");
         break;
     case "C":
         $sql = "CALL insertOrFindCat (?, ?, ?, @outID, @ec)";
