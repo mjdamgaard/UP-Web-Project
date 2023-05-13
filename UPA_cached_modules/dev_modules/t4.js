@@ -43,7 +43,7 @@ categoryInputFieldCL.addCallback(function($ci) {
         '<form action="javascript:void(0);">' +
             '<div class="form-group">' +
                 '<label>Supercategory:</label>' +
-                '<input type="number" class="form-control catID">' +
+                '<input type="text" class="form-control catID">' +
             '</div>' +
             '<div class="form-group">' +
                 '<label>Title:</label>' +
@@ -67,6 +67,9 @@ categoryInputFieldCL.addCallback(function($ci) {
         });
 });
 
+inputFieldCL.addCallback("afterDec", function($ci) {debugger;
+    $ci.find('input.catID').attr("placeholder", "c123");
+});
 
 
 pageAreaCL.addCSS(
