@@ -20,9 +20,18 @@ export var inputFieldCL = new ContentLoader(
     '<div></div>',
     pageAreaCL
 );
-pageAreaCL.addCSS(
-    'margin: 15px 15px;'
-);
+inputFieldCL.addCallback(function($ci) {
+    $ci
+        .on("input-req-data", function(event, reqData) {
+            let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+            dbReqManager.input($(this), reqData, function($obj, result) {
+                $obj.find('.response-field').append(result);
+            });
+        })
+        .find('button[type="submit"]').on("click", function() {
+            $(this).trigger("submit");
+        });
+});
 export var categoryInputFieldCL = new ContentLoader(
     "CategoryInputField",
     /* Initial HTML */
@@ -34,16 +43,35 @@ categoryInputFieldCL.addCallback(function($ci) {
         '<form action="javascript:void(0);">' +
             '<div class="form-group">' +
                 '<label>Supercategory:</label>' +
-                '<input type="email" class="form-control">' +
+                '<input type="number" class="form-control catID">' +
             '</div>' +
             '<div class="form-group">' +
                 '<label>Title:</label>' +
-                '<textarea class="form-control" rows="1"></textarea>' +
+                '<textarea type="text" class="form-control title" rows="1">' +
+                '</textarea>' +
             '</div>' +
             '<button type="submit" class="btn btn-default">Submit</button>' +
-        '</form>'
+        '</form>' +
+        '<div class="response-field"></div>'
     );
 });
+categoryInputFieldCL.addCallback(function($ci) {
+    $ci
+        .on("submit", function() {
+            let $this =  $(this);
+            var regData = {type: "cat"};
+            regData.uid = $this.data("contextData").userID;
+            regData.scid = $this.find('input.catID').val();
+            regData.t = $this.find('input.title').val();
+            $this.trigger("input-req-data", [regData]);
+        });
+});
+
+
+
+pageAreaCL.addCSS(
+    'margin: 15px 15px;'
+);
 
 
 /* Test */
