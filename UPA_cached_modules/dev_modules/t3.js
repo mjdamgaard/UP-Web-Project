@@ -14,9 +14,10 @@ export var sdbInterfaceCL = new ContentLoader(
         '<<AppColumn>>' +
     '</div>'
 );
-sdbInterfaceCL.inwardCallbacks.push(function($ci) {
-    $ci.data("contextData").dbReqManager = new DBRequestManager();
-});
+// sdbInterfaceCL.addCallback("inward", function($ci) {
+//     $ci.data("contextData").dbReqManager = new DBRequestManager();
+// });
+sdbInterfaceCL.dynamicData.dbReqManager = new DBRequestManager();
 
 export var appColumnCL = new ContentLoader(
     "AppColumn",
@@ -46,7 +47,7 @@ export var closeButtonCL = new ContentLoader(
 // Since we want to use the close button for tabs with their own click event,
 // we should make the bubbling-up of the click event jump straight to the
 // ancestor Column.
-closeButtonCL.outwardCallbacks.push(function($ci) {
+closeButtonCL.addCallback(function($ci) {
     $ci.on("click", function() {
         $(this).trigger("close")
             .closest('.CI.AppColumn').trigger("click");
@@ -57,7 +58,7 @@ closeButtonCL.outwardCallbacks.push(function($ci) {
 
 // make the AppColumn load the CL pointed to by contextData.columnContentKey
 // in the first outward callback.
-appColumnCL.outwardCallbacks.push(function($ci) {
+appColumnCL.addCallback(function($ci) {
     let contextData = $ci.data("contextData");
     let contentKey = contextData.columnContentKey;
     delete contextData.columnContentKey;
@@ -70,7 +71,7 @@ appColumnCL.outwardCallbacks.push(function($ci) {
 
 // add event for columns to call to the ColumnBasedSDBInterface and open new
 // columns next to them, to the right or to the left.
-sdbInterfaceCL.outwardCallbacks.push(function($ci) {
+sdbInterfaceCL.addCallback(function($ci) {
     $ci
         .on("open-column-next-to-caller", function(
             event, contextData, dir, isOverwritable
@@ -104,7 +105,7 @@ sdbInterfaceCL.outwardCallbacks.push(function($ci) {
         // TODO: Add event to open the default ("This SDB") column.
 });
 // make all the initial columns non-overwritable from the beginning.
-sdbInterfaceCL.outwardCallbacks.push(function($ci) {
+sdbInterfaceCL.addCallback(function($ci) {
     $ci.children('.CI.AppColumn').each(function() {
         $(this).data("localData").isOverwritable = false;
     });
@@ -113,7 +114,7 @@ sdbInterfaceCL.outwardCallbacks.push(function($ci) {
 // such that the ColumnBasedSDBInterface parent sees the event coming from them.
 // Also add a close event, and make the Columns turn themselves non-overwritable
 // on first click interaction with them.
-appColumnCL.outwardCallbacks.push(function($ci) {
+appColumnCL.addCallback(function($ci) {
     $ci
         .on("open-column", function(event, contextData, dir, isOverwritable) {
             $(this).trigger("open-column-next-to-caller",
@@ -165,7 +166,7 @@ export var pageAreaCL = new ContentLoader(
 
 /* Events that add tabs and add/load associated pages to these */
 
-pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
+pagesWithTabHeaderCL.addCallback(function($ci) {
     $ci.data("pageSpecs", {})
         .on("add-page", function(event, tabTitle, contentKey, pageData) {
             $(this).data("pageSpecs")[tabTitle] =
@@ -214,7 +215,7 @@ pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
             return false;
         });
 });
-pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
+pagesWithTabHeaderCL.addCallback(function($ci) {
     $ci
         .on("open-tab-in-new-column", function(event, tabTitle) {
             let $this = $(this);
@@ -227,7 +228,7 @@ pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
             return false;
         });
 });
-tabHeaderCL.outwardCallbacks.push(function($ci) {
+tabHeaderCL.addCallback(function($ci) {
     $ci
         .on("add-tab", function(event, tabTitle) {
             let $newTab = $(this).find('.nav-tabs')
@@ -276,7 +277,7 @@ tabHeaderCL.outwardCallbacks.push(function($ci) {
             return false;
         });
 });
-pageAreaCL.outwardCallbacks.push(function($ci) {
+pageAreaCL.addCallback(function($ci) {
     $ci.data("openPagesTitleArr", [])
         .on("open-page", function(event, tabTitle, contentKey, pageData) {
             let $this = $(this);
@@ -301,12 +302,12 @@ pageAreaCL.outwardCallbacks.push(function($ci) {
 });
 
 // make PagesWithTabHeader open a specified default tab automatically.
-pagesWithTabHeaderCL.inwardCallbacks.push(function($ci) {
+pagesWithTabHeaderCL.addCallback("inward", function($ci) {
     var contextData = $ci.data("contextData");
     $ci.data("localData").defaultTab = contextData.defaultTab ?? false;
     delete contextData.defaultTab;
 });
-pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
+pagesWithTabHeaderCL.addCallback(function($ci) {
     let defaultTab = $ci.data("localData").defaultTab;
     if (defaultTab) {
         $ci.on("open-default-tab", function() {
@@ -315,7 +316,7 @@ pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
         });
     }
 });
-pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
+pagesWithTabHeaderCL.addCallback(function($ci) {
     $ci.data("localData").afterDecCallbacks.push(function($ci) {
         $ci.trigger("open-default-tab");
     });
@@ -324,7 +325,7 @@ pagesWithTabHeaderCL.outwardCallbacks.push(function($ci) {
 
 /* Let us define the CSS all together for this module */
 
-sdbInterfaceCL.cssRules.push(
+sdbInterfaceCL.addCSS(
     'height: 100%;' +
     'overflow-x: auto;' +
     'overflow-y: hidden;' +
@@ -332,7 +333,7 @@ sdbInterfaceCL.cssRules.push(
     'background-color: #f9fef5;' +
     ''
 );
-appColumnCL.cssRules.push(
+appColumnCL.addCSS(
     'height: 101%;' +
     'overflow: initial;' +
     'white-space: initial;' +
@@ -343,17 +344,17 @@ appColumnCL.cssRules.push(
     'border-radius: 8px;' +
     'background-color: #FFF;'
 );
-closeButtonCL.cssRules.push(
+closeButtonCL.addCSS(
     'padding: 0px 4px;' +
     'position: relative;' +
     'z-index: 2;' +
     ''
 );
-tabHeaderCL.cssRules.push(
+tabHeaderCL.addCSS(
     'padding: 4px 0px 0px;' +
     'background-color: #F0F0F0;'
 );
-tabHeaderCL.cssRules.push(
+tabHeaderCL.addCSS(
     '& .CI.CloseButton {' +
         "position: absolute;" +
         "z-index: 2;" +
@@ -361,14 +362,14 @@ tabHeaderCL.cssRules.push(
         "top: 1px;" +
     '}'
 );
-tabHeaderCL.cssRules.push(
+tabHeaderCL.addCSS(
     '& ul > li .nav-link {' +
         'pointer-events: none;' +
         'border-bottom: 1px solid #ddd;' +
         'background-color: #fdfdfd;' +
     '}'
 );
-tabHeaderCL.cssRules.push(
+tabHeaderCL.addCSS(
     '& ul {' +
         'display: flex;' +
         // 'justify-content: flex-end;' +
@@ -377,18 +378,18 @@ tabHeaderCL.cssRules.push(
         'margin: 0px 0px 0px 3px;' +
     '}'
 );
-tabHeaderCL.cssRules.push(
+tabHeaderCL.addCSS(
     '& ul > li {' +
         'margin: 2px 1px -1px 0px;' +
     '}'
 );
-tabHeaderCL.cssRules.push(
+tabHeaderCL.addCSS(
     '& ul > li.active .nav-link {' +
         'border-bottom: 1px solid #fff;' +
         'background-color: #fff;' +
     '}'
 );
-pageAreaCL.cssRules.push(
+pageAreaCL.addCSS(
     'margin: 6px 6px;'
 );
 
@@ -404,7 +405,7 @@ pageAreaCL.cssRules.push(
 // );
 //
 //
-// testPagesCL.outwardCallbacks.push(function($ci) {
+// testPagesCL.addCallback(function($ci) {
 //     let contextData = $ci.data("contextData");
 //     $ci
 //         .trigger("add-tab-and-page",
@@ -424,7 +425,7 @@ pageAreaCL.cssRules.push(
 //     '<div></div>',
 //     appColumnCL
 // );
-// testPageCL.inwardCallbacks.push(function($ci) {
+// testPageCL.addCallback("inward", function($ci) {
 //     let contextData = $ci.data("contextData");
 //     $ci.prepend(
 //         '<span>Hello, I will be a main page generated from: ' +
@@ -448,7 +449,7 @@ pageAreaCL.cssRules.push(
 
 
 
-// defSuperCatsPageCL.outwardCallbacks.push(function($ci) {
+// defSuperCatsPageCL.addCallback(function($ci) {
 //     let contextData = $ci.data("contextData");
 //     let elemDataArr = [contextData, contextData, contextData];
 //     $ci.trigger("append-elements", ["CategoryListElement", elemDataArr]);
@@ -458,17 +459,17 @@ pageAreaCL.cssRules.push(
 
 
 
-// tabHeaderCL.cssRules.push(
+// tabHeaderCL.addCSS(
 //     '& li > a { padding: 7px 12px; }'
 // );
-// tabHeaderCL.cssRules.push(
+// tabHeaderCL.addCSS(
 //     '& .nav-tabs.odd { margin-left: 2px }'
 // );
-// appColumnCL.inwardCallbacks.push(function($ci) {
+// appColumnCL.addCallback("inward", function($ci) {
 //     let parentColumnParity = $ci.data("contextData").columnParity ?? true;
 //     $ci.data("contextData").columnParity = !parentColumnParity;
 // });
-// tabHeaderCL.outwardCallbacks.push(function($ci) {
+// tabHeaderCL.addCallback(function($ci) {
 //     if ($ci.data("contextData").columnParity) {
 //         $ci.addClass("odd");
 //     }

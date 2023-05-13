@@ -43,7 +43,7 @@ export class ContentLoader {
         this.cssRulesAreAdded = false;
         this.inwardCallbacks = inwardCallbacks ?? [];
         this.outwardCallbacks = outwardCallbacks ?? [];
-        this.modSignals = modSignals ?? [];
+        this.modSignals = modSignals ?? {};
         // this.dynamicData can be used for storing arbritary data (primitive
         // data types and objects), including data necessary to ensure unique
         // ids (even accross several, distant-related CIs).
@@ -57,6 +57,72 @@ export class ContentLoader {
         return this.html; // no need to convert back here.
     }
 
+    // this.modSignals and this.dynamicData are also meant to be treated as
+    // public properties, like this.htmlTemplate. (The rest of the fields are
+    // also public in principle, but not really meant for setting and getting
+    // except in special cases where one needs to do some advanced
+    // restructuring and/or repurposing.)
+
+    loadAfter($obj, contentKey, contextData, returnData) {
+        returnData = returnData ?? {};
+        let cl = this.getRelatedContentLoader(contentKey)
+        $obj.after(getPlaceholderTemplateTag(cl.contentKey));
+        let $placeholder = $obj.next();
+        cl.loadAndReplacePlaceholder($placeholder, contextData, returnData);
+    }
+    loadBefore($obj, contentKey, contextData, returnData) {
+        returnData = returnData ?? {};
+        let cl = this.getRelatedContentLoader(contentKey)
+        $obj.before(getPlaceholderTemplateTag(cl.contentKey));
+        let $placeholder = $obj.prev();
+        cl.loadAndReplacePlaceholder($placeholder, contextData, returnData);
+    }
+    loadAppended($obj, contentKey, contextData, returnData) {
+        returnData = returnData ?? {};
+        let cl = this.getRelatedContentLoader(contentKey)
+        $obj.append(getPlaceholderTemplateTag(cl.contentKey));
+        let $placeholder = $obj.children(':last-child');
+        cl.loadAndReplacePlaceholder($placeholder, contextData, returnData);
+    }
+    loadPrepended($obj, contentKey, contextData, returnData) {
+        returnData = returnData ?? {};
+        let cl = this.getRelatedContentLoader(contentKey)
+        $obj.prepend(getPlaceholderTemplateTag(cl.contentKey));
+        let $placeholder = $obj.children(':first-child');
+        cl.loadAndReplacePlaceholder($placeholder, contextData, returnData);
+    }
+
+    addCallback(method, callback) {
+        if (typeof callback === "undefined") {
+            callback = method;
+            method = "outward";
+        }
+        switch (method) {
+            case "outward":
+                this.outwardCallbacks.push(callback);
+                break;
+            case "inward":
+                this.inwardCallbacks.push(callback);
+                break;
+            case "afterDec":
+                this.outwardCallbacks.push(function($ci) {
+                    $ci.data("localData").afterDecCallbacks.push(callback);
+                });
+                break;
+            default:
+                throw (
+                    'ContentLoader.addCallback(): Unrecognized method: "' +
+                    method + '"'
+                );
+        }
+    }
+
+    addCSS(css) {
+        this.cssRules.push(css);
+    }
+
+
+    /* Semi-private methods (not meant as much for public use) */
 
     loadAndReplacePlaceholder($placeholder, contextData, returnData) {
         // first insert the new CI after $placeholder.
@@ -165,35 +231,6 @@ export class ContentLoader {
         return this.parentCL.getRelatedContentLoader(contentKey);
     }
 
-
-    loadAfter($obj, contentKey, contextData, returnData) {
-        returnData = returnData ?? {};
-        let cl = this.getRelatedContentLoader(contentKey)
-        $obj.after(getPlaceholderTemplateTag(cl.contentKey));
-        let $placeholder = $obj.next();
-        cl.loadAndReplacePlaceholder($placeholder, contextData, returnData);
-    }
-    loadBefore($obj, contentKey, contextData, returnData) {
-        returnData = returnData ?? {};
-        let cl = this.getRelatedContentLoader(contentKey)
-        $obj.before(getPlaceholderTemplateTag(cl.contentKey));
-        let $placeholder = $obj.prev();
-        cl.loadAndReplacePlaceholder($placeholder, contextData, returnData);
-    }
-    loadAppended($obj, contentKey, contextData, returnData) {
-        returnData = returnData ?? {};
-        let cl = this.getRelatedContentLoader(contentKey)
-        $obj.append(getPlaceholderTemplateTag(cl.contentKey));
-        let $placeholder = $obj.children(':last-child');
-        cl.loadAndReplacePlaceholder($placeholder, contextData, returnData);
-    }
-    loadPrepended($obj, contentKey, contextData, returnData) {
-        returnData = returnData ?? {};
-        let cl = this.getRelatedContentLoader(contentKey)
-        $obj.prepend(getPlaceholderTemplateTag(cl.contentKey));
-        let $placeholder = $obj.children(':first-child');
-        cl.loadAndReplacePlaceholder($placeholder, contextData, returnData);
-    }
 
     addCSSRulesToDocument() {
         let len = this.cssRules.length;

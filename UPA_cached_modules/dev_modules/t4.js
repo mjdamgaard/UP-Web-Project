@@ -20,7 +20,7 @@ export var inputFieldCL = new ContentLoader(
     '<div></div>',
     pageAreaCL
 );
-pageAreaCL.cssRules.push(
+pageAreaCL.addCSS(
     'margin: 15px 15px;'
 );
 export var categoryInputFieldCL = new ContentLoader(
@@ -29,23 +29,16 @@ export var categoryInputFieldCL = new ContentLoader(
     '<<InputField>>',
     pageAreaCL
 );
-categoryInputFieldCL.outwardCallbacks.push(function($ci) {
+categoryInputFieldCL.addCallback(function($ci) {
     $ci.append(
         '<form action="javascript:void(0);">' +
             '<div class="form-group">' +
-                '<label>Email address:</label>' +
+                '<label>Supercategory:</label>' +
                 '<input type="email" class="form-control">' +
             '</div>' +
             '<div class="form-group">' +
-                '<label>Password:</label>' +
-                '<input type="password" class="form-control">' +
-            '</div>' +
-            '<div class="form-group">' +
-                '<label>Comment:</label>' +
-                '<textarea class="form-control" rows="2"></textarea>' +
-            '</div>' +
-            '<div class="checkbox">' +
-                '<label><input type="checkbox"> Remember me</label>' +
+                '<label>Title:</label>' +
+                '<textarea class="form-control" rows="1"></textarea>' +
             '</div>' +
             '<button type="submit" class="btn btn-default">Submit</button>' +
         '</form>'
@@ -63,26 +56,20 @@ export var testPagesCL = new ContentLoader(
 );
 
 
-testPagesCL.outwardCallbacks.push(function($ci) {
+testPagesCL.addCallback(function($ci) {
     let contextData = $ci.data("contextData");
     $ci
         .trigger("add-tab-and-page",
-            ["Supercategories", "TestPage", contextData]
+            ["Insert category", "TestPage", contextData]
         )
         .trigger("add-tab-and-page",
-            ["Subcategories", "TestPage", contextData]
+            ["Insert term", "TestPage", contextData]
         )
         .trigger("add-tab-and-page",
-            ["Elements", "TestPage", contextData]
+            ["Insert relation", "TestPage", contextData]
         )
         .trigger("add-tab-and-page",
-            ["Elementss", "TestPage", contextData]
-        )
-        .trigger("add-tab-and-page",
-            ["Elementsss", "TestPage", contextData]
-        )
-        .trigger("add-tab-and-page",
-            ["Element", "TestPage", contextData]
+            ["Insert list", "TestPage", contextData]
         );
 });
 
@@ -108,7 +95,7 @@ export var testPageCL = new ContentLoader(
 //     '<div class="container"></div>',
 //     appColumnCL
 // );
-// pageFieldCL.outwardCallbacks.push(function($ci) {
+// pageFieldCL.addCallback(function($ci) {
 //     $ci
 //         .on("query-db", function(event, reqData, cacheKey, callback) {
 //             let $this = $(this);
@@ -141,10 +128,10 @@ export var testPageCL = new ContentLoader(
 //     '<<PageField>>',
 //     appColumnCL
 // );
-// termListCL.outwardCallbacks.push(function($ci) {
+// termListCL.addCallback(function($ci) {
 //     $ci.append('<ul class="list-group"></ul>');
 // });
-// termListCL.outwardCallbacks.push(function($ci) {
+// termListCL.addCallback(function($ci) {
 //     $ci
 //         .on("append-elements", function(event, contentKey, elemDataArr) {
 //             $(this).trigger("append-contents",
@@ -182,7 +169,7 @@ export var testPageCL = new ContentLoader(
 //     appColumnCL
 // );
 //
-// // simpleTermListElementCL.outwardCallbacks.push(function($ci) {
+// // simpleTermListElementCL.addCallback(function($ci) {
 // //     let termID = $ci.data("contextData").termID;
 // //     $ci.data("contextData").dbReqManager.query($ci, )...
 // //     $ci.append(

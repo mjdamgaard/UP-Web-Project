@@ -103,7 +103,7 @@ $stmt = $conn->prepare("SELECT @outID AS outID, @ec AS exitCode");
 // execute this select statement.
 DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 // fetch the result as a numeric array.
-$res = $stmt->get_result()->fetch_row();
+$res = $stmt->get_result()->fetch_assoc();
 // set the Content-Type header to json.
 header("Content-Type: text/json");
 // finally echo the JSON-encoded result array (containing outID and exitCode).
