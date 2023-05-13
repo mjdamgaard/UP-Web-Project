@@ -22,9 +22,9 @@ export var inputFieldCL = new ContentLoader(
 );
 inputFieldCL.addCallback(function($ci) {
     $ci
-        .on("input-req-data", function(event, reqData) {
+        .on("input-req-data", function(event, reqData) {debugger;
             let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-            dbReqManager.input($(this), reqData, function($obj, result) {
+            dbReqManager.input($(this), reqData, function($obj, result) {debugger;
                 $obj.find('.response-field').append(result);
             });
         })
@@ -47,7 +47,7 @@ categoryInputFieldCL.addCallback(function($ci) {
             '</div>' +
             '<div class="form-group">' +
                 '<label>Title:</label>' +
-                '<textarea type="text" class="form-control title" rows="1">' +
+                '<textarea class="form-control title" rows="1">' +
                 '</textarea>' +
             '</div>' +
             '<button type="submit" class="btn btn-default">Submit</button>' +
@@ -60,15 +60,16 @@ categoryInputFieldCL.addCallback(function($ci) {
         .on("submit", function() {
             let $this =  $(this);
             var regData = {type: "cat"};
-            regData.uid = $this.data("contextData").userID;
+            regData.uid = $this.data("contextData").user;debugger;
             regData.scid = $this.find('input.catID').val();
-            regData.t = $this.find('input.title').val();
+            regData.t = $this.find('textarea.title').val();
             $this.trigger("input-req-data", [regData]);
         });
 });
 
-inputFieldCL.addCallback("afterDec", function($ci) {debugger;
-    $ci.find('input.catID').attr("placeholder", "c123");
+inputFieldCL.addCallback("afterDec", function($ci) {
+    $ci.find('input[type="number"]').attr("placeholder", "1234");
+    $ci.find('textarea').attr("placeholder", "Text");
 });
 
 

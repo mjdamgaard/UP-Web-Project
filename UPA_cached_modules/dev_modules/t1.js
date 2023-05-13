@@ -74,7 +74,7 @@ export class DBRequestManager {
             cacheKey = null;
         }
         let thisDBReqManager = this;
-        $.getJSON("input_handler.php", reqData, function(result, textStatus) {
+        $.post("input_handler.php", reqData, function(result, textStatus) {
             // if cacheKey is not nullish, store the result in this.cache.
             if (typeof cacheKey !== "undefined") {
                 thisDBReqManager.cache[cacheKey] = result;
