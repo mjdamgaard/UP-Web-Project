@@ -1,39 +1,34 @@
 
-SELECT "queries_lib";
+SELECT "Query procedures";
 
-DROP PROCEDURE selectSet;
-DROP PROCEDURE selectSetInfo;
-DROP PROCEDURE selectSetInfoFromSecKey;
-
-DROP PROCEDURE selectRating;
-
-DROP PROCEDURE selectCatDef;
-DROP PROCEDURE selectETermDef;
-DROP PROCEDURE selectRelDef;
-
-DROP PROCEDURE selectCatInfoFromSecKey;
-DROP PROCEDURE selectETermInfoFromSecKey;
-DROP PROCEDURE selectRelInfoFromSecKey;
-
-DROP PROCEDURE selectSuperCatDefs;
-
-DROP PROCEDURE selectText;
-DROP PROCEDURE selectBinary;
-DROP PROCEDURE selectList;
-DROP PROCEDURE selectKeywordString;
-DROP PROCEDURE selectKeywordIDFromSearch;
-DROP PROCEDURE selectPattern;
-DROP PROCEDURE selectPatternInfoFromSecKey;
-
-DROP PROCEDURE selectCreator;
-DROP PROCEDURE selectCreations;
-
-DROP PROCEDURE selectRecentInputs;
-
-DROP PROCEDURE selectPublicUserKey;
-
-DROP PROCEDURE selectUserGroupInfo;
-
+-- DROP PROCEDURE selectSet;
+-- DROP PROCEDURE selectSetInfo;
+-- DROP PROCEDURE selectSetInfoFromSecKey;
+-- DROP PROCEDURE selectSetID;
+-- DROP PROCEDURE selectRating;
+-- DROP PROCEDURE selectRecentInputs;
+-- DROP PROCEDURE selectRecordedInputs;
+-- DROP PROCEDURE selectUserInfo;
+-- DROP PROCEDURE selectCat;
+-- DROP PROCEDURE selectTerm;
+-- DROP PROCEDURE selectRel;
+-- DROP PROCEDURE selectKeywordString;
+-- DROP PROCEDURE selectPattern;
+-- DROP PROCEDURE selectCatIDs;
+-- DROP PROCEDURE selectTermIDs;
+-- DROP PROCEDURE selectRelIDs;
+-- DROP PROCEDURE selectKeywordStringIDs;
+-- DROP PROCEDURE selectPatternIDs;
+-- DROP PROCEDURE searchForKeywordStrings;
+-- DROP PROCEDURE searchForKeywordStringsBooleanMode;
+-- DROP PROCEDURE selectSuperCatDefs;
+-- DROP PROCEDURE selectText;
+-- DROP PROCEDURE selectBinary;
+-- DROP PROCEDURE selectList;
+-- DROP PROCEDURE selectListID;
+-- DROP PROCEDURE selectListRecursive;
+-- DROP PROCEDURE selectCreator;
+-- DROP PROCEDURE selectCreations;
 
 
 
@@ -79,13 +74,15 @@ BEGIN
     SELECT
         Sets.id AS setID,
         Sets.user_id AS userID,
-        Relations.subj_t AS subjType
+        Relations.subj_t AS subjType,
         Sets.subj_id AS subjID,
         Sets.rel_id AS relID,
-        Relations.obj_noun AS relObjNoun
-        Relations.obj_t AS objType
+        Relations.obj_noun AS relObjNoun,
+        Relations.obj_t AS objType,
         Sets.elem_num AS elemNum
-    FROM Sets INNER JOIN Relations ON Sets.rel_id = Relations.id
+    FROM Sets
+    INNER JOIN Relations
+    ON Sets.rel_id = Relations.id
     WHERE Sets.id = setID;
 END //
 DELIMITER ;

@@ -20,26 +20,25 @@
 -- DELETE FROM Creators;
 
 -- /* Semantic inputs */
-DROP TABLE Sets;
-DROP TABLE SemanticInputs;
-DROP TABLE RecentInputs;
+-- DROP TABLE Sets;
+-- DROP TABLE SemanticInputs;
+-- DROP TABLE PrivateRecentInputs;
+-- DROP TABLE RecentInputs;
+-- DROP TABLE RecordedInputs;
 --
 -- /* Terms */
-DROP TABLE UserGroups;
-DROP TABLE Users;
---
-DROP TABLE Categories;
-DROP TABLE ElementaryTerms;
-DROP TABLE Terms;
-DROP TABLE Relations;
+-- DROP TABLE Users;
+-- DROP TABLE Categories;
+-- DROP TABLE Terms;
+-- DROP TABLE Relations;
 -- DROP TABLE KeywordStrings;
 -- DROP TABLE Patterns;
--- DROP TABLE Lists;
 -- DROP TABLE Texts;
 -- DROP TABLE Binaries;
+-- DROP TABLE Lists;
 --
 -- /* Meta data */
-DROP TABLE Creators;
+-- DROP TABLE Creators;
 
 
 
@@ -128,7 +127,7 @@ CREATE TABLE RecentInputs (
     set_id BIGINT UNSIGNED NOT NULL,
     -- new rating value.
     rat_val VARBINARY(255),
-    obj_id BIGINT UNSIGNED NOT NULL,
+    obj_id BIGINT UNSIGNED NOT NULL
 
     -- changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 

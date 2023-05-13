@@ -83,6 +83,11 @@ switch ($reqType) {
         $paramNameArr = array("uid", "b");
         $typeArr = array("id", "blob");
         break;
+    case "list":
+        $sql = "CALL insertOrFindList (?, ?, ?, ?, @outID, @ec)";
+        $paramNameArr = array("uid", "ts", "ids", "tid");
+        $typeArr = array("id", "elemTypeStr", "elemIDHexStr", "id");
+        break;
     default:
         header("Content-Type: text/json");
         echoErrorJSONAndExit("Unrecognized request type");

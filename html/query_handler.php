@@ -195,12 +195,12 @@ switch ($reqType) {
         break;
     case "listID":
         $sql = "CALL selectListID (?)";
-        $paramNameArr = array("ts", "ids", "t");
+        $paramNameArr = array("ts", "ids", "tid");
         $typeArr = array("elemTypeStr", "elemIDHexStr", "id");
         // output: [[listID,]].
         break;
     case "listRec":
-        $sql = "CALL selectList (?, ?)";
+        $sql = "CALL selectListRecursive (?, ?)";
         $paramNameArr = array("id", "n");
         $typeArr = array("id", "int");
         // output: [[NULL]] (not implemented yet.).

@@ -1,20 +1,16 @@
 
-SELECT "rating_inputs";
+SELECT "Input procedures";
 
-
-
-
-DROP PROCEDURE inputOrChangeRatingSecKey;
-DROP PROCEDURE inputOrChangeRating;
-
-
-
-DROP PROCEDURE insertOrFindCat;
-DROP PROCEDURE insertOrFindETerm;
-DROP PROCEDURE insertOrFindRel;
-
-DROP PROCEDURE insertText;
-
+-- DROP PROCEDURE createOrFindSet;
+-- DROP PROCEDURE inputOrChangeRating;
+-- DROP PROCEDURE insertOrFindCat;
+-- DROP PROCEDURE insertOrFindTerm;
+-- DROP PROCEDURE insertOrFindRel;
+-- DROP PROCEDURE insertOrFindKeywordString;
+-- DROP PROCEDURE insertOrFindPattern;
+-- DROP PROCEDURE insertText;
+-- DROP PROCEDURE insertBinary;
+-- DROP PROCEDURE insertOrFindList;
 
 
 
@@ -350,6 +346,10 @@ CREATE PROCEDURE insertOrFindList (
 BEGIN
     DECLARE elemIDs VARBINARY(248);
     SET elemIDs = UNHEX(elemIDHexStr);
+
+    IF (tailID = 0) THEN
+        SET tailID = NULL;
+    END IF;
 
     SELECT id INTO outID
     FROM Lists
