@@ -1,16 +1,16 @@
 
 SELECT "Input procedures";
 
--- DROP PROCEDURE createOrFindSet;
--- DROP PROCEDURE inputOrChangeRating;
+DROP PROCEDURE createOrFindSet;
+DROP PROCEDURE inputOrChangeRating;
 DROP PROCEDURE insertOrFindCat;
--- DROP PROCEDURE insertOrFindTerm;
--- DROP PROCEDURE insertOrFindRel;
--- DROP PROCEDURE insertOrFindKeywordString;
--- DROP PROCEDURE insertOrFindPattern;
--- DROP PROCEDURE insertText;
--- DROP PROCEDURE insertBinary;
--- DROP PROCEDURE insertOrFindList;
+DROP PROCEDURE insertOrFindTerm;
+DROP PROCEDURE insertOrFindRel;
+DROP PROCEDURE insertOrFindKeywordString;
+DROP PROCEDURE insertOrFindPattern;
+DROP PROCEDURE insertText;
+DROP PROCEDURE insertBinary;
+DROP PROCEDURE insertOrFindList;
 
 
 
@@ -18,11 +18,12 @@ DELIMITER //
 CREATE PROCEDURE createOrFindSet (
     IN userID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN relID BIGINT UNSIGNED,
-    OUT outID BIGINT UNSIGNED,
-    OUT exitCode TINYINT
+    IN relID BIGINT UNSIGNED
 )
 BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
+
     SELECT id INTO outID
     FROM Sets
     WHERE (
@@ -48,6 +49,7 @@ BEGIN
     ELSE
         SET exitCode = 1; -- find.
     END IF;
+    SELECT outID, exitCode;
 END //
 DELIMITER ;
 
@@ -61,11 +63,11 @@ CREATE PROCEDURE inputOrChangeRating (
     IN setID BIGINT UNSIGNED,
     IN ratValHex VARCHAR(510),
     IN delayTimeMin TIME,
-    IN delayTimeSigma TIME,
-    OUT outID BIGINT UNSIGNED,
-    OUT exitCode TINYINT
+    IN delayTimeSigma TIME
 )
 BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
     DECLARE prevRatVal, ratVal VARBINARY(255);
     DECLARE setUserID, prevElemNum BIGINT UNSIGNED;
 
@@ -139,6 +141,7 @@ BEGIN
             SET exitCode = 1; -- trying to delete a non-existing rating.
         END IF;
     END IF;
+    SELECT outID, exitCode;
 END //
 DELIMITER ;
 
@@ -154,8 +157,6 @@ CREATE PROCEDURE insertOrFindCat (
     IN userID BIGINT UNSIGNED,
     IN superCatID BIGINT UNSIGNED,
     IN catTitle VARCHAR(255)
-    -- OUT outID BIGINT UNSIGNED,
-    -- OUT exitCode TINYINT
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
@@ -186,11 +187,12 @@ DELIMITER //
 CREATE PROCEDURE insertOrFindTerm (
     IN userID BIGINT UNSIGNED,
     IN catID BIGINT UNSIGNED,
-    IN termTitle VARCHAR(255),
-    OUT outID BIGINT UNSIGNED,
-    OUT exitCode TINYINT
+    IN termTitle VARCHAR(255)
 )
 BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
+
     SELECT id INTO outID
     FROM Terms
     WHERE (title = termTitle AND cat_id = catID);
@@ -206,6 +208,7 @@ BEGIN
         VALUES ("t", outID, userID);
         SET exitCode = 0; -- insert.
     END IF;
+    SELECT outID, exitCode;
 END //
 DELIMITER ;
 
@@ -217,11 +220,12 @@ CREATE PROCEDURE insertOrFindRel (
     IN userID BIGINT UNSIGNED,
     IN subjType CHAR(1),
     IN objType CHAR(1),
-    IN objNoun VARCHAR(255),
-    OUT outID BIGINT UNSIGNED,
-    OUT exitCode TINYINT
+    IN objNoun VARCHAR(255)
 )
 BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
+
     SELECT id INTO outID
     FROM Relations
     WHERE (subj_t = subjType AND obj_t = objType AND obj_noun = objNoun);
@@ -235,6 +239,7 @@ BEGIN
         VALUES ("r", outID, userID);
         SET exitCode = 0; -- insert.
     END IF;
+    SELECT outID, exitCode;
 END //
 DELIMITER ;
 
@@ -247,11 +252,12 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindKeywordString (
     IN userID BIGINT UNSIGNED,
-    IN s VARCHAR(768),
-    OUT outID BIGINT UNSIGNED,
-    OUT exitCode TINYINT
+    IN s VARCHAR(768)
 )
 BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
+
     SELECT id INTO outID
     FROM KeywordStrings
     WHERE str = s;
@@ -265,6 +271,7 @@ BEGIN
         VALUES ("k", outID, userID);
         SET exitCode = 0; -- insert.
     END IF;
+    SELECT outID, exitCode;
 END //
 DELIMITER ;
 
@@ -272,11 +279,12 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindPattern (
     IN userID BIGINT UNSIGNED,
-    IN s VARCHAR(768),
-    OUT outID BIGINT UNSIGNED,
-    OUT exitCode TINYINT
+    IN s VARCHAR(768)
 )
 BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
+
     SELECT id INTO outID
     FROM Patterns
     WHERE str = s;
@@ -290,6 +298,7 @@ BEGIN
         VALUES ("p", outID, userID);
         SET exitCode = 0; -- insert.
     END IF;
+    SELECT outID, exitCode;
 END //
 DELIMITER ;
 
@@ -302,17 +311,19 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertText (
     IN userID BIGINT UNSIGNED,
-    IN s TEXT,
-    OUT outID BIGINT UNSIGNED,
-    OUT exitCode TINYINT
+    IN s TEXT
 )
 BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
+
     INSERT INTO Texts (str)
     VALUES (s);
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Creators (entity_t, entity_id, user_id)
     VALUES ("x", outID, userID);
     SET exitCode = 0; -- insert.
+    SELECT outID, exitCode;
 END //
 DELIMITER ;
 
@@ -325,12 +336,16 @@ CREATE PROCEDURE insertBinary (
     OUT exitCode TINYINT
 )
 BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
+
     INSERT INTO Binaries (bin)
     VALUES (b);
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Creators (entity_t, entity_id, user_id)
     VALUES ("b", outID, userID);
     SET exitCode = 0; -- insert.
+    SELECT outID, exitCode;
 END //
 DELIMITER ;
 
@@ -343,11 +358,11 @@ CREATE PROCEDURE insertOrFindList (
     IN userID BIGINT UNSIGNED,
     IN elemTypeStr VARCHAR(31),
     IN elemIDHexStr VARCHAR(496),
-    IN tailID BIGINT UNSIGNED,
-    OUT outID BIGINT UNSIGNED,
-    OUT exitCode TINYINT
+    IN tailID BIGINT UNSIGNED
 )
 BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
     DECLARE elemIDs VARBINARY(248);
     SET elemIDs = UNHEX(elemIDHexStr);
 
@@ -368,5 +383,6 @@ BEGIN
         VALUES ("l", outID, userID);
         SET exitCode = 0; -- insert.
     END IF;
+    SELECT outID, exitCode;
 END //
 DELIMITER ;

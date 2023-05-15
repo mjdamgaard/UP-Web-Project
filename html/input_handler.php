@@ -39,53 +39,53 @@ $paramNameArr = "";
 $typeArr = "";
 switch ($reqType) {
     case "set":
-        $sql = "CALL createOrFindSet (?, ?, ?, @outID, @ec)";
+        $sql = "CALL createOrFindSet (?, ?, ?)";
         $paramNameArr = array("uid", "sid", "rid");
         $typeArr = array("id", "id", "id",);
         break;
     case "rat":
-        $sql = "CALL inputOrChangeRating (?, ?, ?, ?, ?, ?, @outID, @ec)";
+        $sql = "CALL inputOrChangeRating (?, ?, ?, ?, ?, ?)";
         $paramNameArr = array("uid", "oid", "sid", "r", "tmin", "tsig");
         $typeArr = array("id", "id", "id", "rat", "time", "time");
         break;
     case "cat":
-        // $sql = "CALL insertOrFindCat (?, ?, ?, @outID, @ec)";
+        // $sql = "CALL insertOrFindCat (?, ?, ?)";
         $sql = "CALL insertOrFindCat (?, ?, ?)";
         $paramNameArr = array("uid", "scid", "t");
         $typeArr = array("id", "id", "tstr");
         break;
     case "term":
-        $sql = "CALL insertOrFindTerm (?, ?, ?, @outID, @ec)";
+        $sql = "CALL insertOrFindTerm (?, ?, ?)";
         $paramNameArr = array("uid", "cid", "t");
         $typeArr = array("id", "id", "tstr");
         break;
     case "rel":
-        $sql = "CALL insertOrFindRel (?, ?, ?, ?, @outID, @ec)";
+        $sql = "CALL insertOrFindRel (?, ?, ?, ?)";
         $paramNameArr = array("uid", "st", "ot", "on");
         $typeArr = array("id", "type", "type", "tstr");
         break;
     case "kws":
-        $sql = "CALL insertOrFindKeywordString (?, ?, @outID, @ec)";
+        $sql = "CALL insertOrFindKeywordString (?, ?)";
         $paramNameArr = array("uid", "s");
         $typeArr = array("id", "str");
         break;
     case "patt":
-        $sql = "CALL insertOrFindPattern (?, ?, @outID, @ec)";
+        $sql = "CALL insertOrFindPattern (?, ?)";
         $paramNameArr = array("uid", "s");
         $typeArr = array("id", "str");
         break;
     case "text":
-        $sql = "CALL insertText (?, ?, @outID, @ec)";
+        $sql = "CALL insertText (?, ?)";
         $paramNameArr = array("uid", "s");
         $typeArr = array("id", "text");
         break;
     case "bin":
-        $sql = "CALL insertBinary (?, ?, @outID, @ec)";
+        $sql = "CALL insertBinary (?, ?)";
         $paramNameArr = array("uid", "b");
         $typeArr = array("id", "blob");
         break;
     case "list":
-        $sql = "CALL insertOrFindList (?, ?, ?, ?, @outID, @ec)";
+        $sql = "CALL insertOrFindList (?, ?, ?, ?)";
         $paramNameArr = array("uid", "ts", "ids", "tid");
         $typeArr = array("id", "elemTypeStr", "elemIDHexStr", "id");
         break;
@@ -104,10 +104,6 @@ $conn = DBConnector::getConnectionOrDie();
 $stmt = $conn->prepare($sql);
 // execute input statement.
 DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
-// // prepare statement to select outID and exitCode.
-// $stmt = $conn->prepare("SELECT @outID AS outID, @ec AS exitCode");
-// // execute this select statement.
-// DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 // fetch the result as a numeric array.
 $res = $stmt->get_result()->fetch_assoc();
 // set the Content-Type header to json.

@@ -27,9 +27,6 @@ inputFieldCL.addCallback(function($ci) {
             dbReqManager.input($(this), reqData, function($obj, result) {
                 $obj.find('.response-field').append(JSON.stringify(result));
             });
-            // dbReqManager.query($(this), {type: "cat", id:1}, function($obj, result) {
-            //     $obj.find('.response-field').append(JSON.stringify(result));
-            // });
         })
         .find('button[type="submit"]').on("click", function() {
             $(this).trigger("submit");
