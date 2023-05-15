@@ -49,7 +49,8 @@ switch ($reqType) {
         $typeArr = array("id", "id", "id", "rat", "time", "time");
         break;
     case "cat":
-        $sql = "CALL insertOrFindCat (?, ?, ?, @outID, @ec)";
+        // $sql = "CALL insertOrFindCat (?, ?, ?, @outID, @ec)";
+        $sql = "CALL insertOrFindCat (?, ?, ?)";
         $paramNameArr = array("uid", "scid", "t");
         $typeArr = array("id", "id", "tstr");
         break;
@@ -103,10 +104,10 @@ $conn = DBConnector::getConnectionOrDie();
 $stmt = $conn->prepare($sql);
 // execute input statement.
 DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
-// prepare statement to select outID and exitCode.
-$stmt = $conn->prepare("SELECT @outID AS outID, @ec AS exitCode");
-// execute this select statement.
-DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
+// // prepare statement to select outID and exitCode.
+// $stmt = $conn->prepare("SELECT @outID AS outID, @ec AS exitCode");
+// // execute this select statement.
+// DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 // fetch the result as a numeric array.
 $res = $stmt->get_result()->fetch_assoc();
 // set the Content-Type header to json.

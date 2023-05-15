@@ -22,11 +22,14 @@ export var inputFieldCL = new ContentLoader(
 );
 inputFieldCL.addCallback(function($ci) {
     $ci
-        .on("input-req-data", function(event, reqData) {debugger;
+        .on("input-req-data", function(event, reqData) {
             let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-            dbReqManager.input($(this), reqData, function($obj, result) {debugger;
-                $obj.find('.response-field').append(result);
+            dbReqManager.input($(this), reqData, function($obj, result) {
+                $obj.find('.response-field').append(JSON.stringify(result));
             });
+            // dbReqManager.query($(this), {type: "cat", id:1}, function($obj, result) {
+            //     $obj.find('.response-field').append(JSON.stringify(result));
+            // });
         })
         .find('button[type="submit"]').on("click", function() {
             $(this).trigger("submit");
@@ -60,7 +63,7 @@ categoryInputFieldCL.addCallback(function($ci) {
         .on("submit", function() {
             let $this =  $(this);
             var regData = {type: "cat"};
-            regData.uid = $this.data("contextData").user;debugger;
+            regData.uid = $this.data("contextData").user;
             regData.scid = $this.find('input.catID').val();
             regData.t = $this.find('textarea.title').val();
             $this.trigger("input-req-data", [regData]);

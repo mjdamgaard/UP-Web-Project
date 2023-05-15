@@ -3,7 +3,7 @@ SELECT "Input procedures";
 
 -- DROP PROCEDURE createOrFindSet;
 -- DROP PROCEDURE inputOrChangeRating;
--- DROP PROCEDURE insertOrFindCat;
+DROP PROCEDURE insertOrFindCat;
 -- DROP PROCEDURE insertOrFindTerm;
 -- DROP PROCEDURE insertOrFindRel;
 -- DROP PROCEDURE insertOrFindKeywordString;
@@ -153,11 +153,14 @@ DELIMITER //
 CREATE PROCEDURE insertOrFindCat (
     IN userID BIGINT UNSIGNED,
     IN superCatID BIGINT UNSIGNED,
-    IN catTitle VARCHAR(255),
-    OUT outID BIGINT UNSIGNED,
-    OUT exitCode TINYINT
+    IN catTitle VARCHAR(255)
+    -- OUT outID BIGINT UNSIGNED,
+    -- OUT exitCode TINYINT
 )
 BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
+
     SELECT id INTO outID
     FROM Categories
     WHERE (title = catTitle AND super_cat_id = superCatID);
@@ -169,10 +172,11 @@ BEGIN
         INSERT INTO Categories (title, super_cat_id)
         VALUES (catTitle, superCatID);
         SELECT LAST_INSERT_ID() INTO outID;
-        INSERT INTO Creators (term_t, term_id, user_id)
+        INSERT INTO Creators (entity_t, entity_id, user_id)
         VALUES ("c", outID, userID);
         SET exitCode = 0; -- insert.
     END IF;
+    SELECT outID, exitCode;
 END //
 DELIMITER ;
 
@@ -198,7 +202,7 @@ BEGIN
         INSERT INTO Terms (title, cat_id)
         VALUES (termTitle, catID);
         SELECT LAST_INSERT_ID() INTO outID;
-        INSERT INTO Creators (term_t, term_id, user_id)
+        INSERT INTO Creators (entity_t, entity_id, user_id)
         VALUES ("t", outID, userID);
         SET exitCode = 0; -- insert.
     END IF;
@@ -227,7 +231,7 @@ BEGIN
         INSERT INTO Relations (subj_t, obj_t, obj_noun)
         VALUES (subjType, objType, objNoun);
         SELECT LAST_INSERT_ID() INTO outID;
-        INSERT INTO Creators (term_t, term_id, user_id)
+        INSERT INTO Creators (entity_t, entity_id, user_id)
         VALUES ("r", outID, userID);
         SET exitCode = 0; -- insert.
     END IF;
@@ -257,7 +261,7 @@ BEGIN
         INSERT INTO KeywordStrings (str)
         VALUES (s);
         SELECT LAST_INSERT_ID() INTO outID;
-        INSERT INTO Creators (term_t, term_id, user_id)
+        INSERT INTO Creators (entity_t, entity_id, user_id)
         VALUES ("k", outID, userID);
         SET exitCode = 0; -- insert.
     END IF;
@@ -282,7 +286,7 @@ BEGIN
         INSERT INTO Patterns (str)
         VALUES (s);
         SELECT LAST_INSERT_ID() INTO outID;
-        INSERT INTO Creators (term_t, term_id, user_id)
+        INSERT INTO Creators (entity_t, entity_id, user_id)
         VALUES ("p", outID, userID);
         SET exitCode = 0; -- insert.
     END IF;
@@ -306,7 +310,7 @@ BEGIN
     INSERT INTO Texts (str)
     VALUES (s);
     SELECT LAST_INSERT_ID() INTO outID;
-    INSERT INTO Creators (term_t, term_id, user_id)
+    INSERT INTO Creators (entity_t, entity_id, user_id)
     VALUES ("x", outID, userID);
     SET exitCode = 0; -- insert.
 END //
@@ -324,7 +328,7 @@ BEGIN
     INSERT INTO Binaries (bin)
     VALUES (b);
     SELECT LAST_INSERT_ID() INTO outID;
-    INSERT INTO Creators (term_t, term_id, user_id)
+    INSERT INTO Creators (entity_t, entity_id, user_id)
     VALUES ("b", outID, userID);
     SET exitCode = 0; -- insert.
 END //
@@ -360,7 +364,7 @@ BEGIN
         INSERT INTO Lists (elem_ts, elem_ids, tail_id)
         VALUES (elemTypeStr, elemIDs, tailID);
         SELECT LAST_INSERT_ID() INTO outID;
-        INSERT INTO Creators (term_t, term_id, user_id)
+        INSERT INTO Creators (entity_t, entity_id, user_id)
         VALUES ("l", outID, userID);
         SET exitCode = 0; -- insert.
     END IF;

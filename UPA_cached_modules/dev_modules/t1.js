@@ -51,7 +51,7 @@ export class DBRequestManager {
             if (reqData.type !== "S") {
                 let len = result.length;
                 for (let i = 0; i < len; i++) {
-                    result[i] = result[i]
+                    result[i][0] = result[i][0]
                         .replaceAll("&", "&amp;")
                         .replaceAll("<", "&lt;")
                         .replaceAll(">", "&gt;")

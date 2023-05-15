@@ -33,7 +33,7 @@ class InputVerifier {
                     strlen($paramVal) == 20 &&
                         $paramVal > "18446744073709551615"
                 ) {
-                    echoTypeErrorJSONAndExit($paramName, "ULONG");
+                    echoTypeErrorJSONAndExit($paramName, "BIGINT UNSIGNED");
                 }
                 break;
             case "uint":
@@ -43,7 +43,7 @@ class InputVerifier {
                     strlen($paramVal) > 10 ||
                     strlen($paramVal) == 10 && $paramVal > "4294967295"
                 ) {
-                    echoTypeErrorJSONAndExit($paramName, "UINT");
+                    echoTypeErrorJSONAndExit($paramName, "INT UNSIGNED");
                 }
                 break;
             case "int":
