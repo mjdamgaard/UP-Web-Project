@@ -352,7 +352,7 @@ closeButtonCL.addCSS(
 );
 tabHeaderCL.addCSS(
     'padding: 4px 0px 0px;' +
-    'background-color: #F0F0F0;'
+    'background-color: #f7f7f7;'
 );
 tabHeaderCL.addCSS(
     '& .CI.CloseButton {' +
@@ -366,7 +366,7 @@ tabHeaderCL.addCSS(
     '& ul > li .nav-link {' +
         'pointer-events: none;' +
         'border-bottom: 1px solid #ddd;' +
-        'background-color: #fdfdfd;' +
+        'background-color: #fefefe;' +
     '}'
 );
 tabHeaderCL.addCSS(
