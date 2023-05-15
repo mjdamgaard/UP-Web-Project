@@ -15,7 +15,7 @@ export var sdbInterfaceCL = new ContentLoader(
     '</div>'
 );
 // sdbInterfaceCL.addCallback("inward", function($ci) {
-//     $ci.data("contextData").dbReqManager = new DBRequestManager();
+//     $ci.data("data").dbReqManager = new DBRequestManager();
 // });
 sdbInterfaceCL.dynamicData.dbReqManager = new DBRequestManager();
 
@@ -56,13 +56,10 @@ closeButtonCL.addCallback(function($ci) {
 });
 
 
-// make the AppColumn load the CL pointed to by contextData.columnContentKey
-// in the first outward callback.
-appColumnCL.addCallback(function($ci) {
-    let contextData = $ci.data("contextData");
-    let contentKey = contextData.columnContentKey;
-    delete contextData.columnContentKey;
-    appColumnCL.loadAppended($ci, contentKey, contextData);
+// make the AppColumn load the CL pointed to by data.columnContentKey
+// in the first (outward) callback.
+appColumnCL.addCallback(function($ci, data) {
+    appColumnCL.loadAppended($ci, data.columnContentKey, data);
 });
 
 
@@ -74,30 +71,26 @@ appColumnCL.addCallback(function($ci) {
 sdbInterfaceCL.addCallback(function($ci) {
     $ci
         .on("open-column-next-to-caller", function(
-            event, contextData, dir, isOverwritable
+            event, data, dir, isOverwritable
         ) {
             let $callingColumn = $(event.target);
             if (dir === "right") {
                 let $existingColumn = $callingColumn.next();
-                let existingLocalData = $existingColumn.data("localData") ?? {};
+                let existingLocalData = $existingColumn.data("data") ?? {};
                 if (existingLocalData.isOverwritable ?? false) {
                     $existingColumn.remove();
                 }
-                sdbInterfaceCL.loadAfter(
-                    $callingColumn, "AppColumn", contextData
-                );
-                $callingColumn.next().data("localData").isOverwritable =
+                sdbInterfaceCL.loadAfter($callingColumn, "AppColumn", data);
+                $callingColumn.next().data("data").isOverwritable =
                     isOverwritable ?? false;
             } else if (dir === "left") {
                 let $existingColumn = $callingColumn.prev();
-                let existingLocalData = $existingColumn.data("localData") ?? {};
+                let existingLocalData = $existingColumn.data("data") ?? {};
                 if (existingLocalData.isOverwritable ?? false) {
                     $existingColumn.remove();
                 }
-                sdbInterfaceCL.loadBefore(
-                    $callingColumn, "AppColumn", contextData
-                );
-                $callingColumn.prev().data("localData").isOverwritable =
+                sdbInterfaceCL.loadBefore($callingColumn, "AppColumn", data);
+                $callingColumn.prev().data("data").isOverwritable =
                     isOverwritable ?? false;
             }
             return false;
@@ -107,7 +100,7 @@ sdbInterfaceCL.addCallback(function($ci) {
 // make all the initial columns non-overwritable from the beginning.
 sdbInterfaceCL.addCallback(function($ci) {
     $ci.children('.CI.AppColumn').each(function() {
-        $(this).data("localData").isOverwritable = false;
+        $(this).data("data").isOverwritable = false;
     });
 });
 // make Columns handle and send on "open-column" events coming from inside them
@@ -116,9 +109,9 @@ sdbInterfaceCL.addCallback(function($ci) {
 // on first click interaction with them.
 appColumnCL.addCallback(function($ci) {
     $ci
-        .on("open-column", function(event, contextData, dir, isOverwritable) {
+        .on("open-column", function(event, data, dir, isOverwritable) {
             $(this).trigger("open-column-next-to-caller",
-                [contextData, dir, isOverwritable]
+                [data, dir, isOverwritable]
             );
             return false;
         })
@@ -127,7 +120,7 @@ appColumnCL.addCallback(function($ci) {
             return false;
         })
         .one("click", function() {
-            $(this).data("localData").isOverwritable = false;
+            $(this).data("data").isOverwritable = false;
         });
 });
 
@@ -219,12 +212,12 @@ pagesWithTabHeaderCL.addCallback(function($ci) {
     $ci
         .on("open-tab-in-new-column", function(event, tabTitle) {
             let $this = $(this);
-            let outerContentKey = $this.data("localData").contentKey;
-            let contextData = Object.assign(
+            let outerContentKey = $this.data("data").contentKey;
+            let data = Object.assign(
                 {columnContentKey: outerContentKey, defaultTab: tabTitle},
-                $this.data("contextData")
+                $this.data("data")
             );
-            $(this).trigger("open-column", [contextData, "right", false]);
+            $(this).trigger("open-column", [data, "right", false]);
             return false;
         });
 });
@@ -302,24 +295,21 @@ pageAreaCL.addCallback(function($ci) {
 });
 
 // make PagesWithTabHeader open a specified default tab automatically.
-pagesWithTabHeaderCL.addCallback("inward", function($ci) {
-    var contextData = $ci.data("contextData");
-    $ci.data("localData").defaultTab = contextData.defaultTab ?? false;
-    delete contextData.defaultTab;
+pagesWithTabHeaderCL.addCallback("data", function(data, childData) {
+    data.defaultTab ??= false;
+    delete childData.defaultTab;
 });
-pagesWithTabHeaderCL.addCallback(function($ci) {
-    let defaultTab = $ci.data("localData").defaultTab;
-    if (defaultTab) {
+pagesWithTabHeaderCL.addCallback(function($ci, data) {
+    if (data.defaultTab) {
         $ci.on("open-default-tab", function() {
-            $(this).trigger("open-tab-and-page", [defaultTab]);
+            let $this = $(this);
+            $this.trigger("open-tab-and-page", [$this.data("data").defaultTab]);
             return false;
         });
     }
 });
-pagesWithTabHeaderCL.addCallback(function($ci) {
-    $ci.data("localData").afterDecCallbacks.push(function($ci) {
-        $ci.trigger("open-default-tab");
-    });
+pagesWithTabHeaderCL.addCallback("afterDec", function($ci) {
+    $ci.trigger("open-default-tab");
 });
 
 
@@ -406,16 +396,16 @@ pageAreaCL.addCSS(
 //
 //
 // testPagesCL.addCallback(function($ci) {
-//     let contextData = $ci.data("contextData");
+//     let data = $ci.data("data");
 //     $ci
 //         .trigger("add-tab-and-page",
-//             ["Supercategories", "TestPage", contextData]
+//             ["Supercategories", "TestPage", data]
 //         )
 //         .trigger("add-tab-and-page",
-//             ["Subcategories", "TestPage", contextData]
+//             ["Subcategories", "TestPage", data]
 //         )
 //         .trigger("add-tab-and-page",
-//             ["Elements", "TestPage", contextData]
+//             ["Elements", "TestPage", data]
 //         );
 // });
 //
@@ -426,10 +416,10 @@ pageAreaCL.addCSS(
 //     appColumnCL
 // );
 // testPageCL.addCallback("inward", function($ci) {
-//     let contextData = $ci.data("contextData");
+//     let data = $ci.data("data");
 //     $ci.prepend(
 //         '<span>Hello, I will be a main page generated from: ' +
-//         JSON.stringify(contextData) + '</span>'
+//         JSON.stringify(data) + '</span>'
 //     );
 // });
 
@@ -450,8 +440,8 @@ pageAreaCL.addCSS(
 
 
 // defSuperCatsPageCL.addCallback(function($ci) {
-//     let contextData = $ci.data("contextData");
-//     let elemDataArr = [contextData, contextData, contextData];
+//     let data = $ci.data("data");
+//     let elemDataArr = [data, data, data];
 //     $ci.trigger("append-elements", ["CategoryListElement", elemDataArr]);
 // });
 
@@ -466,11 +456,11 @@ pageAreaCL.addCSS(
 //     '& .nav-tabs.odd { margin-left: 2px }'
 // );
 // appColumnCL.addCallback("inward", function($ci) {
-//     let parentColumnParity = $ci.data("contextData").columnParity ?? true;
-//     $ci.data("contextData").columnParity = !parentColumnParity;
+//     let parentColumnParity = $ci.data("data").columnParity ?? true;
+//     $ci.data("data").columnParity = !parentColumnParity;
 // });
 // tabHeaderCL.addCallback(function($ci) {
-//     if ($ci.data("contextData").columnParity) {
+//     if ($ci.data("data").columnParity) {
 //         $ci.addClass("odd");
 //     }
 // });

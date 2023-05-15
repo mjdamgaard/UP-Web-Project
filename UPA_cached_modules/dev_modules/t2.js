@@ -26,7 +26,7 @@ export class ContentLoader {
         contentKey, htmlTemplate,
         parentCL,
         cssRules,
-        inwardCallbacks, outwardCallbacks,
+        dataSetterCallbacks, inwardCallbacks, outwardCallbacks,
         childCLs,
         modSignals,
     ) {
@@ -41,6 +41,7 @@ export class ContentLoader {
         this.childCLs = childCLs ?? [];
         this.cssRules = cssRules ?? [];
         this.cssRulesAreAdded = false;
+        this.dataSetterCallbacks = dataSetterCallbacks ?? [];
         this.inwardCallbacks = inwardCallbacks ?? [];
         this.outwardCallbacks = outwardCallbacks ?? [];
         this.modSignals = modSignals ?? {};
@@ -63,33 +64,33 @@ export class ContentLoader {
     // except in special cases where one needs to do some advanced
     // restructuring and/or repurposing.)
 
-    loadAfter($obj, contentKey, contextData, returnData) {
+    loadAfter($obj, contentKey, data, returnData) {
         returnData = returnData ?? {};
         let cl = this.getRelatedContentLoader(contentKey)
         $obj.after(getPlaceholderTemplateTag(cl.contentKey));
         let $placeholder = $obj.next();
-        cl.loadAndReplacePlaceholder($placeholder, contextData, returnData);
+        cl.loadAndReplacePlaceholder($placeholder, data, returnData);
     }
-    loadBefore($obj, contentKey, contextData, returnData) {
+    loadBefore($obj, contentKey, data, returnData) {
         returnData = returnData ?? {};
         let cl = this.getRelatedContentLoader(contentKey)
         $obj.before(getPlaceholderTemplateTag(cl.contentKey));
         let $placeholder = $obj.prev();
-        cl.loadAndReplacePlaceholder($placeholder, contextData, returnData);
+        cl.loadAndReplacePlaceholder($placeholder, data, returnData);
     }
-    loadAppended($obj, contentKey, contextData, returnData) {
+    loadAppended($obj, contentKey, data, returnData) {
         returnData = returnData ?? {};
         let cl = this.getRelatedContentLoader(contentKey)
         $obj.append(getPlaceholderTemplateTag(cl.contentKey));
         let $placeholder = $obj.children(':last-child');
-        cl.loadAndReplacePlaceholder($placeholder, contextData, returnData);
+        cl.loadAndReplacePlaceholder($placeholder, data, returnData);
     }
-    loadPrepended($obj, contentKey, contextData, returnData) {
+    loadPrepended($obj, contentKey, data, returnData) {
         returnData = returnData ?? {};
         let cl = this.getRelatedContentLoader(contentKey)
         $obj.prepend(getPlaceholderTemplateTag(cl.contentKey));
         let $placeholder = $obj.children(':first-child');
-        cl.loadAndReplacePlaceholder($placeholder, contextData, returnData);
+        cl.loadAndReplacePlaceholder($placeholder, data, returnData);
     }
 
     addCallback(method, callback) {
@@ -104,9 +105,12 @@ export class ContentLoader {
             case "inward":
                 this.inwardCallbacks.push(callback);
                 break;
+            case "data":
+                this.dataSetterCallbacks.push(callback);
+                break;
             case "afterDec":
                 this.outwardCallbacks.push(function($ci) {
-                    $ci.data("localData").afterDecCallbacks.push(callback);
+                    $ci.data("data").afterDecCallbacks.push(callback);
                 });
                 break;
             default:
@@ -131,33 +135,37 @@ export class ContentLoader {
         // copy all classes from $placeholder onto the new CI, except of course
         // for the "placeholder" class.
         let existingClasses = $placeholder.attr("class")
-            .replaceAll("placeholder", "");
+            .replaceAll("placeholder", "").replaceAll("  ", " ");
         $ci.addClass(existingClasses)
             .addClass("CI")
             .addClass(this.contentKey);
-        // copy the "localData" object from placeholder to onto the new CI, or
-        // initialize a new one if the placeholder does not hold any.
-        $ci.data("localData", $placeholder.data("localData") ?? {});
-        // if the the "localData" object does not contain a content key already
+        // store a reference to the data (input) object on the CI.
+        $ci.data("data", data ?? {});
+        // if the the "data" object does not contain a content key already
         // (from a decorating CL), set the (outer) content key of this CI as
         // the one of this CL.
-        $ci.data("localData").contentKey ??= this.contentKey;
+        data.contentKey ??= this.contentKey;
         // also initialize an "afterDecCallbacks" array to use below.
-        $ci.data("localData").afterDecCallbacks ??= [];
+        data.afterDecCallbacks ??= [];
 
-        // store the context data on the CI.
-        $ci.data("contextData", Object.assign({}, contextData ?? {}));
-        // apply all the inward callbacks, which can change the initial HTML,
-        // as well as the contextData, namely the data stored at
-        // $ci.data("contextData"), and change the localData input, which will
-        // be stored on the CI before the outward callbacks are called.
+        // apply all the data setter callbacks, which can change the "data"
+        // object, namely the data stored as a reference at $ci.data("data").
+        // If this array is empty, the child CIs will get a reference to the
+        // same "data" object as their parent (this one).
+        let len = this.dataSetterCallbacks.length;
+        var childData = (len == 0) ? data : Object.assign({}, data);
+        for (let i = 0; i < len; i++) {
+            this.dataSetterCallbacks[i](data, childData);
+        }
+
+        // apply any and all of the inward callbacks, which can change the
+        // initial HTML of the CI, and also make changes to the data object in
+        // priciple, but not too much else (they should generally NOT be used
+        // for setting up events).
         let len = this.inwardCallbacks.length;
         for (let i = 0; i < len; i++) {
-            this.inwardCallbacks[i]($ci);
+            this.inwardCallbacks[i]($ci, data);
         }
-        // read of the now potentially changed context data for handing it on
-        // to any child CIs.
-        var childContextData = $ci.data("contextData");
 
         // if the this.cssRules has not yet been added to the document
         // head, call addCSSRulesToDocument() to do so.
@@ -176,7 +184,7 @@ export class ContentLoader {
                 let childContentKey = $childCI.attr("data-key");
                 let cl = thisCL.getRelatedContentLoader(childContentKey);
                 cl.loadAndReplacePlaceholder(
-                    $childCI, childContextData, childReturnData
+                    $childCI, childData, childReturnData
                 );
             });
         // in case $ci was a placeholder element, which will then be have been
@@ -187,22 +195,21 @@ export class ContentLoader {
 
         // apply all the outward callbacks (after the inner content is loaded).
         // (Since $ci is no longer in danger of being replaced, these callbacks
-        // are now also free to set data and events for the CI, as weel as to
-        // anything alse with the now loaded CI children.)
+        // are now also free to set data and events for the CI, as well as
+        // anything else with the now loaded CI children.)
         len = this.outwardCallbacks.length;
         for (let i = 0; i < len; i++) {
-            this.outwardCallbacks[i]($ci, childReturnData, returnData);
+            this.outwardCallbacks[i]($ci, data, childReturnData, returnData);
         }
 
         // check if this CI is not decorated by a parent (if the contentKey
-        // property of $ci.data("localData") is the same as this.contentKey),
+        // property of of the "data" object is the same as this.contentKey),
         // and if so, run any "afterDecCallbacks" that a child decorated by
         // this CI might have stored.
-        let localData = $ci.data("localData");
-        if (localData.contentKey === this.contentKey) {
-            let len = localData.afterDecCallbacks.length;
+        if (data.contentKey === this.contentKey) {
+            let len = data.afterDecCallbacks.length;
             for (let i = 0; i < len; i++) {
-                localData.afterDecCallbacks[i]($ci);
+                data.afterDecCallbacks[i]($ci);
             }
         }
     }
