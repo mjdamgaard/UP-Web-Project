@@ -1,16 +1,16 @@
 
 SELECT "Input procedures";
 
-DROP PROCEDURE createOrFindSet;
-DROP PROCEDURE inputOrChangeRating;
-DROP PROCEDURE insertOrFindCat;
-DROP PROCEDURE insertOrFindTerm;
-DROP PROCEDURE insertOrFindRel;
-DROP PROCEDURE insertOrFindKeywordString;
-DROP PROCEDURE insertOrFindPattern;
-DROP PROCEDURE insertText;
-DROP PROCEDURE insertBinary;
-DROP PROCEDURE insertOrFindList;
+-- DROP PROCEDURE createOrFindSet;
+-- DROP PROCEDURE inputOrChangeRating;
+-- DROP PROCEDURE insertOrFindCat;
+-- DROP PROCEDURE insertOrFindTerm;
+-- DROP PROCEDURE insertOrFindRel;
+-- DROP PROCEDURE insertOrFindKeywordString;
+-- DROP PROCEDURE insertOrFindPattern;
+-- DROP PROCEDURE insertText;
+-- DROP PROCEDURE insertBinary;
+-- DROP PROCEDURE insertOrFindList;
 
 
 
@@ -46,6 +46,8 @@ BEGIN
         );
         SELECT LAST_INSERT_ID() INTO outID;
         SET exitCode = 0; -- create.
+        INSERT INTO Creators (entity_t, entity_id, user_id)
+        VALUES ("s", outID, userID);
     ELSE
         SET exitCode = 1; -- find.
     END IF;
@@ -66,7 +68,6 @@ CREATE PROCEDURE inputOrChangeRating (
     IN delayTimeSigma TIME
 )
 BEGIN
-    DECLARE outID BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
     DECLARE prevRatVal, ratVal VARBINARY(255);
     DECLARE setUserID, prevElemNum BIGINT UNSIGNED;
@@ -141,7 +142,7 @@ BEGIN
             SET exitCode = 1; -- trying to delete a non-existing rating.
         END IF;
     END IF;
-    SELECT outID, exitCode;
+    SELECT NULL, exitCode;
 END //
 DELIMITER ;
 
