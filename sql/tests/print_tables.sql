@@ -15,6 +15,14 @@ SELECT
 FROM Categories
 ORDER BY id;
 
+SELECT "Terms:";
+SELECT
+    id AS termID,
+    title,
+    cat_id AS catID
+FROM Terms
+ORDER BY id;
+
 SELECT "Relations:";
 SELECT
     id AS relID,

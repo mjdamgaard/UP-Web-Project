@@ -375,7 +375,7 @@ tabHeaderCL.addCSS(
         // 'justify-content: flex-end;' +
         'flex-wrap: wrap-reverse;' +
         'flex-direction: row;' +
-        'margin: 0px 0px 0px 3px;' +
+        'margin: 0px 0px 0px 2px;' +
     '}'
 );
 tabHeaderCL.addCSS(
