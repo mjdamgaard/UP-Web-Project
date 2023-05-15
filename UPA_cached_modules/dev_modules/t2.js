@@ -124,7 +124,7 @@ export class ContentLoader {
 
     /* Semi-private methods (not meant as much for public use) */
 
-    loadAndReplacePlaceholder($placeholder, contextData, returnData) {
+    loadAndReplacePlaceholder($placeholder, data, returnData) {
         // first insert the new CI after $placeholder.
         $placeholder.after(this.html);
         let $ci = $placeholder.next();
