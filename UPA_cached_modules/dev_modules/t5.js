@@ -22,7 +22,7 @@ export var inputFieldCL = new ContentLoader(
     "InputField",
     /* Initial HTML */
     '<div></div>',
-    pageAreaCL
+    columnMainCL
 );
 inputFieldCL.addCallback(function($ci) {
     $ci
@@ -41,7 +41,7 @@ export var categoryInputFieldCL = new ContentLoader(
     "CategoryInputField",
     /* Initial HTML */
     '<<InputField>>',
-    pageAreaCL
+    columnMainCL
 );
 categoryInputFieldCL.addCallback(function($ci) {
     $ci.append(
@@ -76,7 +76,7 @@ export var termInputFieldCL = new ContentLoader(
     "TermInputField",
     /* Initial HTML */
     '<<InputField>>',
-    pageAreaCL
+    columnMainCL
 );
 termInputFieldCL.addCallback(function($ci) {
     $ci.append(
@@ -112,7 +112,7 @@ export var relationInputFieldCL = new ContentLoader(
     "RelationInputField",
     /* Initial HTML */
     '<<InputField>>',
-    pageAreaCL
+    columnMainCL
 );
 relationInputFieldCL.addCallback(function($ci) {
     $ci.append(
@@ -178,7 +178,7 @@ export var categoryInputPageCL = new ContentLoader(
     '<div>' +
         '<<CategoryInputField>>' +
     '</div>',
-    pageAreaCL
+    columnMainCL
 );
 export var termInputPageCL = new ContentLoader(
     "TermInputPage",
@@ -186,7 +186,7 @@ export var termInputPageCL = new ContentLoader(
     '<div>' +
         '<<TermInputField>>' +
     '</div>',
-    pageAreaCL
+    columnMainCL
 );
 export var relationInputPageCL = new ContentLoader(
     "RelationInputPage",
@@ -194,7 +194,7 @@ export var relationInputPageCL = new ContentLoader(
     '<div>' +
         '<<RelationInputField>>' +
     '</div>',
-    pageAreaCL
+    columnMainCL
 );
 
 
@@ -210,6 +210,6 @@ termInputPageCL.addCallback("afterDec", function($ci) {
     $ci.find('textarea').attr("placeholder", "Title");
 });
 
-pageAreaCL.addCSS(
+columnMainCL.addCSS(
     'margin: 15px 15px;'
 );

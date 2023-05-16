@@ -179,13 +179,6 @@ export class ContentLoader {
             this.inwardCallbacks[i]($ci, data);
         }
 
-        // if the this.cssRules has not yet been added to the document
-        // head, call addCSSRulesToDocument() to do so.
-        if (this.cssRulesAreAdded == false) {
-            this.addCSSRulesToDocument()
-            this.cssRulesAreAdded = true;
-        }
-
         // load all the descendent CIs.
         var childReturnData = {};
         let thisCL = this;
@@ -224,6 +217,13 @@ export class ContentLoader {
             for (let i = 0; i < len; i++) {
                 afterDecCallbacks[i]($ci, data, childReturnData, returnData);
             }
+        }
+
+        // if the this.cssRules has not yet been added to the document
+        // head, call addCSSRulesToDocument() to do so.
+        if (this.cssRulesAreAdded == false) {
+            this.addCSSRulesToDocument();
+            this.cssRulesAreAdded = true;
         }
     }
 

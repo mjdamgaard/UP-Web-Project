@@ -17,9 +17,7 @@ export var sdbInterfaceCL = new ContentLoader(
         '<<ColumnInterfaceHeader>>' +
         '<main>' +
             '<div class="left-margin"></div>' +
-            '<div class="app-column-container">' +
-                '<<AppColumn>>' +
-            '</div>' +
+            '<div class="app-column-container"></div>' +
             '<div class="right-margin"></div>' +
         '</main>' +
     '</div>',
@@ -38,7 +36,7 @@ export var appColumnCL = new ContentLoader(
     /* Initial HTML */
     '<div>' +
         '<<ColumnHeader>>' +
-        '<<PageArea>>' +
+        '<<ColumnMain>>' +
     '</div>',
     sdbInterfaceCL,
 );
@@ -79,8 +77,8 @@ closeButtonCL.addCallback(function($ci) {
         return false;
     });
 });
-export var pageAreaCL = new ContentLoader(
-    "PageArea",
+export var columnMainCL = new ContentLoader(
+    "ColumnMain",
     /* Initial HTML */
     '<div>' +
     '</div>',
@@ -88,10 +86,29 @@ export var pageAreaCL = new ContentLoader(
 );
 
 
-// make the AppColumn load the CL pointed to by data.columnContentKey
-// in the first (outward) callback.
-appColumnCL.addCallback(function($ci, data) {
-    appColumnCL.loadAppended($ci, data.columnContentKey, data);
+// make the ColumnBasedSDBInterface automatically load a column with a CL
+// pointed to by data.columnContentKey in the first (outward) callback.
+sdbInterfaceCL.addCallback(function($ci, data) {
+    appColumnCL.loadAppended(
+        $ci.find('.app-column-container'),
+        data.columnContentKey,
+        data.columnData
+    );
+});
+// make the AppColumn also load its header and main according to the input data.
+appColumnCL.addCallback(function($ci, data) {debugger;
+    let $columnHeader = $ci.find('.CI.ColumnHeader');
+    appColumnCL.loadAppended(
+        $columnHeader,
+        data.headerSpecs.contentKey,
+        data.headerSpecs.data ?? {}
+    );
+    let $columnMain = $ci.find('.CI.ColumnMain');
+    appColumnCL.loadAppended(
+        $columnMain,
+        data.mainSpecs.contentKey,
+        data.mainSpecs.data ?? {}
+    );
 });
 
 
@@ -165,12 +182,10 @@ export var tabHeaderCL = new ContentLoader(
 export var pagesContainerCL = new ContentLoader(
     "PagesContainer",
     /* Initial HTML */
-    '<dic></div>',
+    '<div></div>',
     pagesWithTabsCL
 );
 
-
-// TODO: Remove all the unused events below and above.
 
 
 /* Events that add tabs and add/load associated pages to these */
@@ -314,6 +329,23 @@ pagesWithTabsCL.addCallback(function($ci, data) {
 });
 
 
+
+
+export var pagesFieldCL = new ContentLoader(
+    "PageField",
+    /* Initial HTML */
+    '<div></div>',
+    appColumnCL
+);
+
+
+
+
+
+
+
+
+
 /* Let us define the CSS all together for this module */
 
 sdbInterfaceCL.addCSS(
@@ -380,7 +412,7 @@ tabHeaderCL.addCSS(
         'pointer-events: none;' +
         'border-bottom: 1px solid #ddd;' +
         'background-color: #fefefe;' +
-        // 'box-shadow: 10px 10px 5px lightblue;' +
+        'box-shadow: 10px 10px 5px lightblue;' +
     '}'
 );
 tabHeaderCL.addCSS(
@@ -404,11 +436,12 @@ tabHeaderCL.addCSS(
     '}'
 );
 pagesContainerCL.addCSS(
-    // 'position: absolute;' +
-    // 'z-index: 1;' +
-    // // 'margin: 6px 6px;' +
-    // 'min-height: 10px;' +
-    // 'color: #fff;' +
+    'min-height: 30px;' +
+    'width: 100%;' +
+    'position: absolute;' +
+    'z-index: 1;' +
+    // 'margin: 6px 6px;' +
+    'background-color: #fff;' +
     ''
 );
 

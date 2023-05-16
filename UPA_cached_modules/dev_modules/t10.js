@@ -11,7 +11,7 @@ export function upa_main(preferenceUserID, termType, termID, userID) {
         throw "Unrecognized preference user";
     }
 
-    let contextData = {
+    let data = {
         columnContentKey: "CategoryColumn",
         preferenceUser: preferenceUserID,
         termType: termType,
@@ -19,5 +19,5 @@ export function upa_main(preferenceUserID, termType, termID, userID) {
         user: userID,
     };
     let contentKey = sdbInterfaceCL.contentKey;
-    sdbInterfaceCL.loadAppended($('body'), contentKey, contextData);
+    sdbInterfaceCL.loadAppended($('body'), contentKey, data);
 }

@@ -7,7 +7,7 @@ import {
 } from "/UPA_scripts.php?id=2";
 
 import {
-    sdbInterfaceCL, appColumnCL, pagesWithTabsCL, pageAreaCL,
+    sdbInterfaceCL, appColumnCL, pagesWithTabsCL, columnMainCL,
 } from "/UPA_scripts.php?id=3";
 
 
@@ -19,22 +19,28 @@ import {
 export var categoryColumnCL = new ContentLoader(
     "CategoryColumn",
     /* Initial HTML */
+    '<<AppColumn>>',
+    appColumnCL
+);
+categoryColumnCL.addCallback("data", function(data) {
+    var childData = Object.assign({}, data);
+    childData.headerSpecs = {
+        contentKey: "CategoryHeaderContent",
+        data: data, // TODO: change this..
+    };
+    childData.mainSpecs = {
+        contentKey: "CategoryMainContent",
+        data: data, // TODO: change this..
+    };
+    return childData;
+});
+export var categoryMainContentCL = new ContentLoader(
+    "CategoryMainContent",
+    /* Initial HTML */
     '<<PagesWithTabs>>',
     appColumnCL
 );
-// categoryColumnCL.addCallback(function($ci, data) {
-//     $ci
-//         .trigger("add-tab-and-page",
-//             ["Info", "CategoryInfoPage", data]
-//         )
-//         .trigger("add-tab-and-page",
-//             ["Subategories", "SubcategoriesPage", data]
-//         )
-//         .trigger("add-tab-and-page",
-//             ["Elements", "ElementsPage", data]
-//         );
-// });
-categoryColumnCL.addCallback("data", function(data) {
+categoryMainContentCL.addCallback("data", function(data) {
     data.pageDataArr = [
         ["Info", "CategoryInfoPage", data],
         ["Subategories", "SubcategoriesPage", data],
@@ -49,9 +55,14 @@ export var categoryInfoPageCL = new ContentLoader(
     appColumnCL
 );
 
-categoryColumnCL.addCallback(function($ci) {
-    $ci.prepend('<h3>Category: <span class="title"></span><h3>');
-});
+export var categoryHeaderContentCL = new ContentLoader(
+    "CategoryHeaderContent",
+    /* Initial HTML */
+    '<div>' +
+        '<h3>Category: <span class="title"></span><h3>' +
+    '</div>',
+    appColumnCL,
+);
 
 
 
