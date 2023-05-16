@@ -18,7 +18,7 @@ import {
 
 export var categoryColumnCL = new ContentLoader(
     "CategoryColumn",
-    /* Initial HTML */
+    /* Initial HTML template */
     '<<AppColumn>>',
     appColumnCL
 );
@@ -37,7 +37,7 @@ categoryColumnCL.addCallback("data", function(data) {
 
 export var categoryHeaderContentCL = new ContentLoader(
     "CategoryHeaderContent",
-    /* Initial HTML */
+    /* Initial HTML template */
     '<div>' +
         '<h3>Category: <span class="title"></span><h3>' +
     '</div>',
@@ -46,7 +46,7 @@ export var categoryHeaderContentCL = new ContentLoader(
 
 export var categoryMainContentCL = new ContentLoader(
     "CategoryMainContent",
-    /* Initial HTML */
+    /* Initial HTML template */
     '<<PagesWithTabs>>',
     appColumnCL
 );
@@ -56,11 +56,17 @@ categoryMainContentCL.addCallback("data", function(data) {
         ["Subategories", "SubcategoriesPage", data],
         ["Elements", "ElementsPage", data],
     ];
-    data.defaultTab = "Info";
+    data.defaultTab = "Subategories";
 });
 export var categoryInfoPageCL = new ContentLoader(
     "CategoryInfoPage",
-    /* Initial HTML */
+    /* Initial HTML template */
+    '<div>Not implemented yet.</div>',
+    appColumnCL
+);
+export var categorySubategoriesPageCL = new ContentLoader(
+    "CategorySubategoriesPage",
+    /* Initial HTML template */
     '<div>Not implemented yet.</div>',
     appColumnCL
 );
@@ -69,10 +75,9 @@ export var categoryInfoPageCL = new ContentLoader(
 
 
 
-
 // export var pageFieldCL = new ContentLoader(
 //     "PageField",
-//     /* Initial HTML */
+//     /* Initial HTML template */
 //     '<div class="container"></div>',
 //     appColumnCL
 // );
@@ -105,7 +110,7 @@ export var categoryInfoPageCL = new ContentLoader(
 // });
 // export var termListCL = new ContentLoader(
 //     "TermList",
-//     /* Initial HTML */
+//     /* Initial HTML template */
 //     '<<PageField>>',
 //     appColumnCL
 // );
@@ -129,7 +134,7 @@ export var categoryInfoPageCL = new ContentLoader(
 //
 // export var extensibleTermListCL = new ContentLoader(
 //     "ExtensibleTermList",
-//     /* Initial HTML */
+//     /* Initial HTML template */
 //     '<<TermList>>',
 //     appColumnCL
 // );
@@ -139,13 +144,13 @@ export var categoryInfoPageCL = new ContentLoader(
 //
 // export var termListElementCL = new ContentLoader(
 //     "TermListElement",
-//     /* Initial HTML */
+//     /* Initial HTML template */
 //     '<li class="list-group-item"></li>',
 //     appColumnCL
 // );
 // export var simpleTermListElementCL = new ContentLoader(
 //     "SimpleTermListElement",
-//     /* Initial HTML */
+//     /* Initial HTML template */
 //     '<<TermListElement>>',
 //     appColumnCL
 // );

@@ -12,7 +12,7 @@ import {
 // the content keys.
 export var sdbInterfaceCL = new ContentLoader(
     "ColumnBasedSDBInterface",
-    /* Initial HTML */
+    /* Initial HTML template */
     '<div>' +
         '<<ColumnInterfaceHeader>>' +
         '<main>' +
@@ -26,14 +26,14 @@ sdbInterfaceCL.dynamicData.dbReqManager = new DBRequestManager();
 
 export var columnInterfaceHeaderCL = new ContentLoader(
     "ColumnInterfaceHeader",
-    /* Initial HTML */
+    /* Initial HTML template */
     '<header>' +
     '</header>',
     sdbInterfaceCL,
 );
 export var appColumnCL = new ContentLoader(
     "AppColumn",
-    /* Initial HTML */
+    /* Initial HTML template */
     '<div>' +
         '<<ColumnHeader>>' +
         '<<ColumnMain>>' +
@@ -43,7 +43,7 @@ export var appColumnCL = new ContentLoader(
 
 export var columnHeaderCL = new ContentLoader(
     "ColumnHeader",
-    /* Initial HTML */
+    /* Initial HTML template */
     '<div>' +
         // '<<ColumnButtonContainer>>' +
         '<<CloseButton>>' +
@@ -52,7 +52,7 @@ export var columnHeaderCL = new ContentLoader(
 );
 // export var columnButtonContainerCL = new ContentLoader(
 //     "ColumnButtonContainer",
-//     /* Initial HTML */
+//     /* Initial HTML template */
 //     '<div>' +
 //         // '<<PinButton>>' +
 //         '<<CloseButton>>' +
@@ -61,7 +61,7 @@ export var columnHeaderCL = new ContentLoader(
 // );
 export var closeButtonCL = new ContentLoader(
     "CloseButton",
-    /* Initial HTML */
+    /* Initial HTML template */
     '<button type="button" class="close">' +
         '<span>&times;</span>' +
     '</button>',
@@ -79,7 +79,7 @@ closeButtonCL.addCallback(function($ci) {
 });
 export var columnMainCL = new ContentLoader(
     "ColumnMain",
-    /* Initial HTML */
+    /* Initial HTML template */
     '<div>' +
     '</div>',
     appColumnCL,
@@ -155,7 +155,7 @@ sdbInterfaceCL.addCallback(function($ci) {
 
 export var pagesWithTabsCL = new ContentLoader(
     "PagesWithTabs",
-    /* Initial HTML */
+    /* Initial HTML template */
     '<div>' +
         "<<TabHeader>>" +
         "<<PagesContainer>>" +
@@ -165,7 +165,7 @@ export var pagesWithTabsCL = new ContentLoader(
 
 export var tabHeaderCL = new ContentLoader(
     "TabHeader",
-    /* Initial HTML */
+    /* Initial HTML template */
     '<div>' +
         '<ul class="nav nav-tabs"></ul>' +
     '</div>',
@@ -173,7 +173,7 @@ export var tabHeaderCL = new ContentLoader(
 );
 export var pagesContainerCL = new ContentLoader(
     "PagesContainer",
-    /* Initial HTML */
+    /* Initial HTML template */
     '<div></div>',
     pagesWithTabsCL
 );
@@ -323,78 +323,95 @@ pagesWithTabsCL.addCallback(function($ci, data) {
 
 
 
-export var pageFieldCL = new ContentLoader(
-    "PageField",
-    /* Initial HTML */
-    '<div></div>',
+//
+// export var pageFieldCL = new ContentLoader(
+//     "PageField",
+//     /* Initial HTML template */
+//     '<div></div>',
+//     appColumnCL
+// );
+// pageFieldCL.addCallback(function($ci) {
+//     $ci
+//         .on("append-contents", function(event, contentSpecsArr, selector) {
+//             let $obj = (typeof selector === "undefined") ?
+//                 $(this) : $(this).find(selector);
+//             let len = contentSpecsArr.length;
+//             for (let i = 0; i < len; i++) {
+//                 pageFieldCL.loadAppended($obj, contentSpecsArr[i]);
+//             }
+//             return false;
+//         })
+//         .on("prepend-contents", function(event, contentSpecsArr, selector) {
+//             let $obj = (typeof selector === "undefined") ?
+//                 $(this) : $(this).find(selector);
+//             let len = contentSpecsArr.length;
+//             for (let i = 0; i < len; i++) {
+//                 pageFieldCL.loadPrepended($obj, contentSpecsArr[i]);
+//             }
+//             return false;
+//         });
+// });
+// // make PageField automatically look for contentSpecs in the "data" object.
+// pagesWithTabsCL.addCallback(function($ci, data) {
+//     let len = (data.contentSpecsArr ?? []).length;
+//     for (let i = 0; i < len; i++) {
+//         $ci.trigger("append-contents", data.contentSpecsArr[i]);
+//     }
+// });
+//
+// export var listCL = new ContentLoader(
+//     "List",
+//     /* Initial HTML template */
+//     '<div></div>',
+//     appColumnCL
+// );
+// listCL.addCallback(function($ci) {
+//     $ci
+//         .on("append-elements", function(event, contentKey, dataArr, selector) {
+//             let $obj = (typeof selector === "undefined") ?
+//                 $(this) : $(this).find(selector);
+//             let len = dataArr.length;
+//             for (let i = 0; i < len; i++) {
+//                 pageFieldCL.loadAppended($obj, contentKey, dataArr[i]);
+//             }
+//             return false;
+//         })
+//         .on("prepend-elements", function(event, contentKey, dataArr, selector){
+//             let $obj = (typeof selector === "undefined") ?
+//                 $(this) : $(this).find(selector);
+//             let len = dataArr.length;
+//             for (let i = 0; i < len; i++) {
+//                 pageFieldCL.loadPrepended($obj, contentKey, dataArr[i]);
+//             }
+//             return false;
+//         });
+// });
+// // make ListField automatically look for a dataArr in the "data" object.
+// listCL.addCallback(function($ci, data) {
+//     let len = (data.dataArr ?? []).length;
+//     for (let i = 0; i < len; i++) {
+//         $ci.trigger("append-elements", data.dataArr[i]);
+//     }
+// });
+//
+
+export var setFieldCL = new ContentLoader(
+    "SetField",
+    /* Initial HTML template */
+    '<div>' +
+        '<<SetHeader>>' +
+        '<div class="element-container"></div>' +
+    '</div>',
     appColumnCL
 );
-pageFieldCL.addCallback(function($ci) {
-    $ci
-        .on("append-contents", function(event, contentSpecsArr, selector) {
-            let $obj = (typeof selector === "undefined") ?
-                $(this) : $(this).find(selector);
-            let len = contentSpecsArr.length;
-            for (let i = 0; i < len; i++) {
-                pageFieldCL.loadAppended($obj, contentSpecsArr[i]);
-            }
-            return false;
-        })
-        .on("prepend-contents", function(event, contentSpecsArr, selector) {
-            let $obj = (typeof selector === "undefined") ?
-                $(this) : $(this).find(selector);
-            let len = contentSpecsArr.length;
-            for (let i = 0; i < len; i++) {
-                pageFieldCL.loadPrepended($obj, contentSpecsArr[i]);
-            }
-            return false;
-        });
-});
-// make PageField automatically look for contentSpecs in the "data" object.
-pagesWithTabsCL.addCallback(function($ci, data) {
-    let len = (data.contentSpecsArr ?? []).length;
-    for (let i = 0; i < len; i++) {
-        $ci.trigger("append-contents", data.contentSpecsArr[i]);
-    }
-});
-
-export var pageFieldCL = new ContentLoader(
-    "ListField",
-    /* Initial HTML */
-    '<<PageField>>',
+export var setHeaderCL = new ContentLoader(
+    "SetHeader",
+    /* Initial HTML template */
+    '<div>' +
+        //TODO: add a bar with user weight buttons and a refresh button.
+    '</div>',
     appColumnCL
 );
-pageFieldCL.addCallback(function($ci) {
-    $ci
-        .on("append-elements", function(event, contentKey, dataArr, selector) {
-            let $obj = (typeof selector === "undefined") ?
-                $(this) : $(this).find(selector);
-            let len = dataArr.length;
-            for (let i = 0; i < len; i++) {
-                pageFieldCL.loadAppended($obj, contentKey, dataArr[i]);
-            }
-            return false;
-        })
-        .on("prepend-elements", function(event, contentKey, dataArr, selector){
-            let $obj = (typeof selector === "undefined") ?
-                $(this) : $(this).find(selector);
-            let len = dataArr.length;
-            for (let i = 0; i < len; i++) {
-                pageFieldCL.loadPrepended($obj, contentKey, dataArr[i]);
-            }
-            return false;
-        });
-});
-// make ListField automatically look for a dataArr in the "data" object.
-pagesWithTabsCL.addCallback(function($ci, data) {
-    let len = (data.dataArr ?? []).length;
-    for (let i = 0; i < len; i++) {
-        $ci.trigger("append-elements", data.dataArr[i]);
-    }
-});
-
-
-
 
 
 /* Let us define the CSS all together for this module */
@@ -502,7 +519,7 @@ pagesContainerCL.addCSS(
 //
 // export var testPagesCL = new ContentLoader(
 //     "TestPages",
-//     /* Initial HTML */
+//     /* Initial HTML template */
 //     '<<PagesWithTabs>>',
 //     appColumnCL
 // );
@@ -524,7 +541,7 @@ pagesContainerCL.addCSS(
 //
 // export var testPageCL = new ContentLoader(
 //     "TestPage",
-//     /* Initial HTML */
+//     /* Initial HTML template */
 //     '<div></div>',
 //     appColumnCL
 // );

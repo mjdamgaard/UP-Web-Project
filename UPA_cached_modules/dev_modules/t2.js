@@ -231,7 +231,6 @@ export class ContentLoader {
         // head, call addCSSRulesToDocument() to do so.
         if (this.cssRulesAreAdded == false) {
             this.addCSSRulesToDocument();
-            this.cssRulesAreAdded = true;
         }
     }
 
@@ -297,6 +296,9 @@ export class ContentLoader {
                 '<style class="CI-style">' + rule + '</style>'
             );
         }
+        // finally set this.cssRulesAreAdded = true such that subsequently
+        // loaded CLs will not also add these CSS rules.
+        this.cssRulesAreAdded = true;
     }
     getCIClassSelector() {
         return (typeof this.parentCL === "undefined") ?

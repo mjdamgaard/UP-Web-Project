@@ -20,7 +20,7 @@ import {
 
 export var inputFieldCL = new ContentLoader(
     "InputField",
-    /* Initial HTML */
+    /* Initial HTML template */
     '<div></div>',
     columnMainCL
 );
@@ -39,7 +39,7 @@ inputFieldCL.addCallback(function($ci) {
 
 export var categoryInputFieldCL = new ContentLoader(
     "CategoryInputField",
-    /* Initial HTML */
+    /* Initial HTML template */
     '<<InputField>>',
     columnMainCL
 );
@@ -74,7 +74,7 @@ categoryInputFieldCL.addCallback(function($ci) {
 });
 export var termInputFieldCL = new ContentLoader(
     "TermInputField",
-    /* Initial HTML */
+    /* Initial HTML template */
     '<<InputField>>',
     columnMainCL
 );
@@ -110,7 +110,7 @@ termInputFieldCL.addCallback(function($ci) {
 
 export var relationInputFieldCL = new ContentLoader(
     "RelationInputField",
-    /* Initial HTML */
+    /* Initial HTML template */
     '<<InputField>>',
     columnMainCL
 );
@@ -149,7 +149,7 @@ relationInputFieldCL.addCallback(function($ci) {
 
 export var inputColumnCL = new ContentLoader(
     "InputColumn",
-    /* Initial HTML */
+    /* Initial HTML template */
     '<<PagesWithTabHeader>>',
     appColumnCL
 );
@@ -174,7 +174,7 @@ inputColumnCL.addCallback(function($ci) {
 
 export var categoryInputPageCL = new ContentLoader(
     "CategoryInputPage",
-    /* Initial HTML */
+    /* Initial HTML template */
     '<div>' +
         '<<CategoryInputField>>' +
     '</div>',
@@ -182,7 +182,7 @@ export var categoryInputPageCL = new ContentLoader(
 );
 export var termInputPageCL = new ContentLoader(
     "TermInputPage",
-    /* Initial HTML */
+    /* Initial HTML template */
     '<div>' +
         '<<TermInputField>>' +
     '</div>',
@@ -190,7 +190,7 @@ export var termInputPageCL = new ContentLoader(
 );
 export var relationInputPageCL = new ContentLoader(
     "RelationInputPage",
-    /* Initial HTML */
+    /* Initial HTML template */
     '<div>' +
         '<<RelationInputField>>' +
     '</div>',
