@@ -96,19 +96,11 @@ sdbInterfaceCL.addCallback(function($ci, data) {
     );
 });
 // make the AppColumn also load its header and main according to the input data.
-appColumnCL.addCallback(function($ci, data) {debugger;
+appColumnCL.addCallback(function($ci, data) {
     let $columnHeader = $ci.find('.CI.ColumnHeader');
-    appColumnCL.loadAppended(
-        $columnHeader,
-        data.headerSpecs.contentKey,
-        data.headerSpecs.data ?? {}
-    );
+    appColumnCL.loadAppended($columnHeader, data.headerSpecs);
     let $columnMain = $ci.find('.CI.ColumnMain');
-    appColumnCL.loadAppended(
-        $columnMain,
-        data.mainSpecs.contentKey,
-        data.mainSpecs.data ?? {}
-    );
+    appColumnCL.loadAppended($columnMain, data.mainSpecs);
 });
 
 
@@ -331,14 +323,34 @@ pagesWithTabsCL.addCallback(function($ci, data) {
 
 
 
-export var pagesFieldCL = new ContentLoader(
+export var pageFieldCL = new ContentLoader(
     "PageField",
     /* Initial HTML */
     '<div></div>',
     appColumnCL
 );
 
-
+pageFieldCL.addCallback(function($ci) {
+    $ci
+        .on("append-contents", function(event, contentSpecsArr, selector) {
+            let $obj = (typeof selector === "undefined") ?
+                $(this) : $(this).find(selector);
+            let len = contentSpecsArr.length;
+            for (let i = 0; i < len; i++) {
+                pageFieldCL.loadAppended($obj, contentSpecsArr[i]);
+            }
+            return false;
+        })
+        .on("prepend-contents", function(event, contentSpecsArr, selector) {
+            let $obj = (typeof selector === "undefined") ?
+                $(this) : $(this).find(selector);
+            let len = contentSpecsArr.length;
+            for (let i = 0; i < len; i++) {
+                pageFieldCL.loadPrepended($obj, contentSpecsArr[i]);
+            }
+            return false;
+        });
+});
 
 
 
@@ -412,7 +424,7 @@ tabHeaderCL.addCSS(
         'pointer-events: none;' +
         'border-bottom: 1px solid #ddd;' +
         'background-color: #fefefe;' +
-        'box-shadow: 10px 10px 5px lightblue;' +
+        // 'box-shadow: 10px 10px 5px lightblue;' +
     '}'
 );
 tabHeaderCL.addCSS(
@@ -436,12 +448,12 @@ tabHeaderCL.addCSS(
     '}'
 );
 pagesContainerCL.addCSS(
-    'min-height: 30px;' +
-    'width: 100%;' +
-    'position: absolute;' +
-    'z-index: 1;' +
-    // 'margin: 6px 6px;' +
-    'background-color: #fff;' +
+    // 'min-height: 30px;' +
+    // 'width: 100%;' +
+    // 'position: absolute;' +
+    // 'z-index: 1;' +
+    // // 'margin: 6px 6px;' +
+    // 'background-color: #fff;' +
     ''
 );
 

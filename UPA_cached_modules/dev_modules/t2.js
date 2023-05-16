@@ -67,33 +67,41 @@ export class ContentLoader {
     // except in special cases where one needs to do some advanced
     // restructuring and/or repurposing.)
 
-    loadAfter($obj, contentKey, data, returnData) {
-        returnData = returnData ?? {};
-        let cl = this.getRelatedContentLoader(contentKey)
-        $obj.after(getPlaceholderTemplateTag(cl.contentKey));
-        let $placeholder = $obj.next();
+    loadReplaced($placeholder, contentKey, data, returnData) {
+        if (typeof contentKey === "object") {
+            data = contentKey.data ?? {};
+            contentKey = contentKey.contentKey;
+            returnData = data ?? {};
+        } else {
+            data = data ?? {};
+            returnData = returnData ?? {};
+        }
+        let cl = this.getRelatedContentLoader(contentKey);
         cl.loadAndReplacePlaceholder($placeholder, data, returnData);
+    }
+    loadAfter($obj, contentKey, data, returnData) {
+        let $placeholder = $obj
+            .after('<template class="placeholder"></template>')
+            .next();
+        this.loadReplaced($placeholder, contentKey, data, returnData);
     }
     loadBefore($obj, contentKey, data, returnData) {
-        returnData = returnData ?? {};
-        let cl = this.getRelatedContentLoader(contentKey)
-        $obj.before(getPlaceholderTemplateTag(cl.contentKey));
-        let $placeholder = $obj.prev();
-        cl.loadAndReplacePlaceholder($placeholder, data, returnData);
+        let $placeholder = $obj
+            .before('<template class="placeholder"></template>')
+            .prev();
+        this.loadReplaced($placeholder, contentKey, data, returnData);
     }
     loadAppended($obj, contentKey, data, returnData) {
-        returnData = returnData ?? {};
-        let cl = this.getRelatedContentLoader(contentKey)
-        $obj.append(getPlaceholderTemplateTag(cl.contentKey));
-        let $placeholder = $obj.children(':last-child');
-        cl.loadAndReplacePlaceholder($placeholder, data, returnData);
+        let $placeholder = $obj
+            .append('<template class="placeholder"></template>')
+            .children(':last-child');
+        this.loadReplaced($placeholder, contentKey, data, returnData);
     }
     loadPrepended($obj, contentKey, data, returnData) {
-        returnData = returnData ?? {};
-        let cl = this.getRelatedContentLoader(contentKey)
-        $obj.prepend(getPlaceholderTemplateTag(cl.contentKey));
-        let $placeholder = $obj.children(':first-child');
-        cl.loadAndReplacePlaceholder($placeholder, data, returnData);
+        let $placeholder = $obj
+            .prepend('<template class="placeholder"></template>')
+            .children(':first-child');
+        this.loadReplaced($placeholder, contentKey, data, returnData);
     }
 
     addCallback(method, callback) {
