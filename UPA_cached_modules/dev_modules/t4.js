@@ -7,7 +7,7 @@ import {
 } from "/UPA_scripts.php?id=2";
 
 import {
-    sdbInterfaceCL, appColumnCL, pagesWithTabHeaderCL, pageAreaCL,
+    sdbInterfaceCL, appColumnCL, pagesWithTabsCL, pageAreaCL,
 } from "/UPA_scripts.php?id=3";
 
 
@@ -19,21 +19,28 @@ import {
 export var categoryColumnCL = new ContentLoader(
     "CategoryColumn",
     /* Initial HTML */
-    '<<PagesWithTabHeader>>',
+    '<<PagesWithTabs>>',
     appColumnCL
 );
-categoryColumnCL.addCallback(function($ci) {
-    let contextData = $ci.data("contextData");
-    $ci
-        .trigger("add-tab-and-page",
-            ["Info", "CategoryInfoPage", contextData]
-        )
-        .trigger("add-tab-and-page",
-            ["Subategories", "SubcategoriesPage", contextData]
-        )
-        .trigger("add-tab-and-page",
-            ["Elements", "ElementsPage", contextData]
-        );
+// categoryColumnCL.addCallback(function($ci, data) {
+//     $ci
+//         .trigger("add-tab-and-page",
+//             ["Info", "CategoryInfoPage", data]
+//         )
+//         .trigger("add-tab-and-page",
+//             ["Subategories", "SubcategoriesPage", data]
+//         )
+//         .trigger("add-tab-and-page",
+//             ["Elements", "ElementsPage", data]
+//         );
+// });
+categoryColumnCL.addCallback("data", function(data) {
+    data.pageDataArr = [
+        ["Info", "CategoryInfoPage", data],
+        ["Subategories", "SubcategoriesPage", data],
+        ["Elements", "ElementsPage", data],
+    ];
+    data.defaultTab = "Info";
 });
 export var categoryInfoPageCL = new ContentLoader(
     "CategoryInfoPage",

@@ -13,7 +13,6 @@ export function upa_main(preferenceUserID, termType, termID, userID) {
 
     let contextData = {
         columnContentKey: "CategoryColumn",
-        defaultTab: "Info",
         preferenceUser: preferenceUserID,
         termType: termType,
         termID: termID,

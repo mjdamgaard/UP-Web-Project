@@ -7,35 +7,60 @@ import {
 } from "/UPA_scripts.php?id=2";
 
 
+
+// Note that exporting modules can rename the variable names, but not (really)
+// the content keys.
 export var sdbInterfaceCL = new ContentLoader(
     "ColumnBasedSDBInterface",
     /* Initial HTML */
     '<div>' +
-        '<<AppColumn>>' +
-    '</div>'
+        '<<ColumnInterfaceHeader>>' +
+        '<main>' +
+            '<div class="left-margin"></div>' +
+            '<div class="app-column-container">' +
+                '<<AppColumn>>' +
+            '</div>' +
+            '<div class="right-margin"></div>' +
+        '</main>' +
+    '</div>',
 );
-// sdbInterfaceCL.addCallback("inward", function($ci) {
-//     $ci.data("data").dbReqManager = new DBRequestManager();
-// });
 sdbInterfaceCL.dynamicData.dbReqManager = new DBRequestManager();
 
+export var columnInterfaceHeaderCL = new ContentLoader(
+    "ColumnInterfaceHeader",
+    /* Initial HTML */
+    '<header>' +
+    '</header>',
+    sdbInterfaceCL,
+);
 export var appColumnCL = new ContentLoader(
     "AppColumn",
     /* Initial HTML */
     '<div>' +
-        '<<ColumnButtonContainer>>' +
+        '<<ColumnHeader>>' +
+        '<<PageArea>>' +
     '</div>',
     sdbInterfaceCL,
 );
-export var columnButtonContainerCL = new ContentLoader(
-    "ColumnButtonContainer",
+
+export var columnHeaderCL = new ContentLoader(
+    "ColumnHeader",
     /* Initial HTML */
     '<div>' +
-        // '<<PinButton>>' +
+        // '<<ColumnButtonContainer>>' +
         '<<CloseButton>>' +
-    '<div>',
-    sdbInterfaceCL,
+    '</div>',
+    appColumnCL,
 );
+// export var columnButtonContainerCL = new ContentLoader(
+//     "ColumnButtonContainer",
+//     /* Initial HTML */
+//     '<div>' +
+//         // '<<PinButton>>' +
+//         '<<CloseButton>>' +
+//     '<div>',
+//     columnHeaderCL,
+// );
 export var closeButtonCL = new ContentLoader(
     "CloseButton",
     /* Initial HTML */
@@ -54,6 +79,13 @@ closeButtonCL.addCallback(function($ci) {
         return false;
     });
 });
+export var pageAreaCL = new ContentLoader(
+    "PageArea",
+    /* Initial HTML */
+    '<div>' +
+    '</div>',
+    appColumnCL,
+);
 
 
 // make the AppColumn load the CL pointed to by data.columnContentKey
@@ -66,53 +98,32 @@ appColumnCL.addCallback(function($ci, data) {
 
 /* Events to open new app columns */
 
-// add event for columns to call to the ColumnBasedSDBInterface and open new
-// columns next to them, to the right or to the left.
-sdbInterfaceCL.addCallback(function($ci) {
-    $ci
-        .on("open-column-next-to-caller", function(
-            event, data, dir, isOverwritable
-        ) {
-            let $callingColumn = $(event.target);
-            if (dir === "right") {
-                let $existingColumn = $callingColumn.next();
-                let existingLocalData = $existingColumn.data("data") ?? {};
-                if (existingLocalData.isOverwritable ?? false) {
-                    $existingColumn.remove();
-                }
-                sdbInterfaceCL.loadAfter($callingColumn, "AppColumn", data);
-                $callingColumn.next().data("data").isOverwritable =
-                    isOverwritable ?? false;
-            } else if (dir === "left") {
-                let $existingColumn = $callingColumn.prev();
-                let existingLocalData = $existingColumn.data("data") ?? {};
-                if (existingLocalData.isOverwritable ?? false) {
-                    $existingColumn.remove();
-                }
-                sdbInterfaceCL.loadBefore($callingColumn, "AppColumn", data);
-                $callingColumn.prev().data("data").isOverwritable =
-                    isOverwritable ?? false;
-            }
-            return false;
-        });
-        // TODO: Add event to open the default ("This SDB") column.
-});
-// make all the initial columns non-overwritable from the beginning.
-sdbInterfaceCL.addCallback(function($ci) {
-    $ci.children('.CI.AppColumn').each(function() {
-        $(this).data("data").isOverwritable = false;
-    });
-});
-// make Columns handle and send on "open-column" events coming from inside them
-// such that the ColumnBasedSDBInterface parent sees the event coming from them.
-// Also add a close event, and make the Columns turn themselves non-overwritable
-// on first click interaction with them.
+// make Columns handle the "open-column" events coming from inside them, add a
+// close event, and make the Columns turn themselves non-overwritable on first
+// click interaction with them.
 appColumnCL.addCallback(function($ci) {
     $ci
         .on("open-column", function(event, data, dir, isOverwritable) {
-            $(this).trigger("open-column-next-to-caller",
-                [data, dir, isOverwritable]
-            );
+            let $this = $(this);
+            if (dir === "right") {
+                let $existingColumn = $this.next();
+                let existingData = $existingColumn.data("data") ?? {};
+                if (existingData.isOverwritable ?? false) {
+                    $existingColumn.remove();
+                }
+                sdbInterfaceCL.loadAfter($this, "AppColumn", data);
+                $this.next().data("data").isOverwritable =
+                    isOverwritable ?? false;
+            } else if (dir === "left") {
+                let $existingColumn = $this.prev();
+                let existingData = $existingColumn.data("data") ?? {};
+                if (existingData.isOverwritable ?? false) {
+                    $existingColumn.remove();
+                }
+                sdbInterfaceCL.loadBefore($this, "AppColumn", data);
+                $this.prev().data("data").isOverwritable =
+                    isOverwritable ?? false;
+            }
             return false;
         })
         .on("close", function() {
@@ -123,17 +134,22 @@ appColumnCL.addCallback(function($ci) {
             $(this).data("data").isOverwritable = false;
         });
 });
-
+// make all the initial columns non-overwritable from the beginning.
+sdbInterfaceCL.addCallback(function($ci) {
+    $ci.children('.CI.AppColumn').each(function() {
+        $(this).data("data").isOverwritable = false;
+    });
+});
 
 
 /* Pages with tab headers */
 
-export var pagesWithTabHeaderCL = new ContentLoader(
-    "PagesWithTabHeader",
+export var pagesWithTabsCL = new ContentLoader(
+    "PagesWithTabs",
     /* Initial HTML */
     '<div>' +
         "<<TabHeader>>" +
-        "<<PageArea>>" +
+        "<<PagesContainer>>" +
     '</div>',
     appColumnCL
 );
@@ -141,16 +157,16 @@ export var pagesWithTabHeaderCL = new ContentLoader(
 export var tabHeaderCL = new ContentLoader(
     "TabHeader",
     /* Initial HTML */
-    '<header>' +
+    '<div>' +
         '<ul class="nav nav-tabs"></ul>' +
-    '</header>',
+    '</div>',
     appColumnCL
 );
-export var pageAreaCL = new ContentLoader(
-    "PageArea",
+export var pagesContainerCL = new ContentLoader(
+    "PagesContainer",
     /* Initial HTML */
-    '<main></main>',
-    appColumnCL
+    '<dic></div>',
+    pagesWithTabsCL
 );
 
 
@@ -159,7 +175,7 @@ export var pageAreaCL = new ContentLoader(
 
 /* Events that add tabs and add/load associated pages to these */
 
-pagesWithTabHeaderCL.addCallback(function($ci) {
+pagesWithTabsCL.addCallback(function($ci) {
     $ci.data("pageSpecs", {})
         .on("add-page", function(event, tabTitle, contentKey, pageData) {
             $(this).data("pageSpecs")[tabTitle] =
@@ -169,12 +185,12 @@ pagesWithTabHeaderCL.addCallback(function($ci) {
         .on("open-page", function(event, tabTitle) {
             let $this = $(this);
             let pageSpec = $this.data("pageSpecs")[tabTitle];
-            $this.children('.CI.PageArea')
+            $this.children('.CI.PagesContainer')
                 .trigger("open-page", [tabTitle, pageSpec.key, pageSpec.data]);
             return false;
         })
         .on("close-page", function(event, tabTitle) {
-            $(this).children('.CI.PageArea')
+            $(this).children('.CI.PagesContainer')
                 .trigger("close-page", [tabTitle]);
             return false;
         })
@@ -208,19 +224,6 @@ pagesWithTabHeaderCL.addCallback(function($ci) {
             return false;
         });
 });
-pagesWithTabHeaderCL.addCallback(function($ci) {
-    $ci
-        .on("open-tab-in-new-column", function(event, tabTitle) {
-            let $this = $(this);
-            let outerContentKey = $this.data("data").contentKey;
-            let data = Object.assign(
-                {columnContentKey: outerContentKey, defaultTab: tabTitle},
-                $this.data("data")
-            );
-            $(this).trigger("open-column", [data, "right", false]);
-            return false;
-        });
-});
 tabHeaderCL.addCallback(function($ci) {
     $ci
         .on("add-tab", function(event, tabTitle) {
@@ -248,16 +251,6 @@ tabHeaderCL.addCallback(function($ci) {
                         .removeClass("active")
                         .find('.CI.CloseButton').hide();
                     return false;
-                })
-                .on("click auxclick dblclick", function(event) {
-                    if (
-                        event.type === "click" && event.ctrlKey ||
-                        event.type === "auxclick" && event.button == 1 ||
-                        event.type === "dblclick"
-                    ) {
-                        $(this).trigger("open-tab-in-new-column", [tabTitle]);
-                    }
-                    return true;
                 });
             return false;
         })
@@ -270,7 +263,7 @@ tabHeaderCL.addCallback(function($ci) {
             return false;
         });
 });
-pageAreaCL.addCallback(function($ci) {
+pagesContainerCL.addCallback(function($ci) {
     $ci.data("openPagesTitleArr", [])
         .on("open-page", function(event, tabTitle, contentKey, pageData) {
             let $this = $(this);
@@ -280,7 +273,7 @@ pageAreaCL.addCallback(function($ci) {
             } else {
                 $this.data("openPagesTitleArr").push(tabTitle);
                 $this.children().hide();
-                pageAreaCL.loadAppended($this, contentKey, pageData);
+                pagesContainerCL.loadAppended($this, contentKey, pageData);
                 $this.children(':last-child').attr("data-title", tabTitle);
             }
             return false;
@@ -294,22 +287,30 @@ pageAreaCL.addCallback(function($ci) {
         });
 });
 
-// make PagesWithTabHeader open a specified default tab automatically.
-pagesWithTabHeaderCL.addCallback("data", function(data, childData) {
-    data.defaultTab ??= false;
-    delete childData.defaultTab;
-});
-pagesWithTabHeaderCL.addCallback(function($ci, data) {
-    if (data.defaultTab) {
-        $ci.on("open-default-tab", function() {
-            let $this = $(this);
-            $this.trigger("open-tab-and-page", [$this.data("data").defaultTab]);
-            return false;
-        });
+
+
+
+// make PagesWithTabs automatically look for tab titles and associated
+// pageSpecs in the "data" object.
+pagesWithTabsCL.addCallback(function($ci, data) {
+    let len = (data.pageDataArr ?? []).length;
+    for (let i = 0; i < len; i++) {
+        $ci.trigger("add-tab-and-page", data.pageDataArr[i]);
     }
 });
-pagesWithTabHeaderCL.addCallback("afterDec", function($ci) {
-    $ci.trigger("open-default-tab");
+
+// make PagesWithTabs open a specified default tab automatically.
+pagesWithTabsCL.addCallback("data", function(data) {
+    data.defaultTab ??= false;
+    var childData = Object.assign({}, data);
+    delete childData.defaultTab;
+    return childData;
+});
+pagesWithTabsCL.addCallback(function($ci, data) {
+    if (data.defaultTab) {
+        $ci.trigger("open-tab-and-page", [data.defaultTab]);
+        return false;
+    }
 });
 
 
@@ -317,14 +318,34 @@ pagesWithTabHeaderCL.addCallback("afterDec", function($ci) {
 
 sdbInterfaceCL.addCSS(
     'height: 100%;' +
-    'overflow-x: auto;' +
-    'overflow-y: hidden;' +
-    'white-space: nowrap;' +
-    'background-color: #f9fef5;' +
+    'display: grid;' +
+    'grid-template-columns: auto;' +
+    'grid-template-rows: 20px auto;' +
     ''
 );
+columnInterfaceHeaderCL.addCSS(
+    'height: 10px;' +
+    'background-color: blue;'
+);
+sdbInterfaceCL.addCSS(
+    '& main {' +
+        'display: grid;' +
+        'grid-template-columns: 30px auto 30px;' +
+        'grid-template-rows: auto;' +
+    '}'
+);
+sdbInterfaceCL.addCSS(
+    '& .app-column-container {' +
+        'display: flex;' +
+        'flex-direction: column;' +
+        'overflow-x: auto;' +
+        'overflow-y: hidden;' +
+        'white-space: nowrap;' +
+        'background-color: #f9fef5;' +
+    '}'
+);
 appColumnCL.addCSS(
-    'height: 101%;' +
+    'flex-grow: 1;' +
     'overflow: initial;' +
     'white-space: initial;' +
     'display: inline-block;' +
@@ -332,7 +353,8 @@ appColumnCL.addCSS(
     'width: 600px;' +
     'border: 1px solid #DDD;' +
     'border-radius: 8px;' +
-    'background-color: #FFF;'
+    'background-color: #FFF;' +
+    ''
 );
 closeButtonCL.addCSS(
     'padding: 0px 4px;' +
@@ -342,7 +364,8 @@ closeButtonCL.addCSS(
 );
 tabHeaderCL.addCSS(
     'padding: 4px 0px 0px;' +
-    'background-color: #f7f7f7;'
+    // 'background-color: #f7f7f7;' +
+    ''
 );
 tabHeaderCL.addCSS(
     '& .CI.CloseButton {' +
@@ -357,6 +380,7 @@ tabHeaderCL.addCSS(
         'pointer-events: none;' +
         'border-bottom: 1px solid #ddd;' +
         'background-color: #fefefe;' +
+        // 'box-shadow: 10px 10px 5px lightblue;' +
     '}'
 );
 tabHeaderCL.addCSS(
@@ -379,8 +403,13 @@ tabHeaderCL.addCSS(
         'background-color: #fff;' +
     '}'
 );
-pageAreaCL.addCSS(
-    'margin: 6px 6px;'
+pagesContainerCL.addCSS(
+    // 'position: absolute;' +
+    // 'z-index: 1;' +
+    // // 'margin: 6px 6px;' +
+    // 'min-height: 10px;' +
+    // 'color: #fff;' +
+    ''
 );
 
 
@@ -390,7 +419,7 @@ pageAreaCL.addCSS(
 // export var testPagesCL = new ContentLoader(
 //     "TestPages",
 //     /* Initial HTML */
-//     '<<PagesWithTabHeader>>',
+//     '<<PagesWithTabs>>',
 //     appColumnCL
 // );
 //

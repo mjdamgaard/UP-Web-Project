@@ -26,7 +26,9 @@ export class ContentLoader {
         contentKey, htmlTemplate,
         parentCL,
         cssRules,
-        dataSetterCallbacks, inwardCallbacks, outwardCallbacks,
+        dataSetterCallbacks,
+        inwardCallbacks, outwardCallbacks,
+        afterDecCallbacks,
         childCLs,
         modSignals,
     ) {
@@ -44,6 +46,7 @@ export class ContentLoader {
         this.dataSetterCallbacks = dataSetterCallbacks ?? [];
         this.inwardCallbacks = inwardCallbacks ?? [];
         this.outwardCallbacks = outwardCallbacks ?? [];
+        this.afterDecCallbacks = afterDecCallbacks ?? [];
         this.modSignals = modSignals ?? {};
         // this.dynamicData can be used for storing arbritary data (primitive
         // data types and objects), including data necessary to ensure unique
@@ -109,9 +112,7 @@ export class ContentLoader {
                 this.dataSetterCallbacks.push(callback);
                 break;
             case "afterDec":
-                this.outwardCallbacks.push(function($ci) {
-                    $ci.data("data").afterDecCallbacks.push(callback);
-                });
+                this.afterDecCallbacks.push(callback);
                 break;
             default:
                 throw (
@@ -129,6 +130,7 @@ export class ContentLoader {
     /* Semi-private methods (not meant as much for public use) */
 
     loadAndReplacePlaceholder($placeholder, data, returnData) {
+        data ??= {};
         // first insert the new CI after $placeholder.
         $placeholder.after(this.html);
         let $ci = $placeholder.next();
@@ -140,29 +142,39 @@ export class ContentLoader {
             .addClass("CI")
             .addClass(this.contentKey);
         // store a reference to the data (input) object on the CI.
-        $ci.data("data", data ?? {});
-        // if the the "data" object does not contain a content key already
+        $ci.data("data", data);
+        // if the the placeholder does not contain a "contentKey" already
         // (from a decorating CL), set the (outer) content key of this CI as
         // the one of this CL.
-        data.contentKey ??= this.contentKey;
-        // also initialize an "afterDecCallbacks" array to use below.
-        data.afterDecCallbacks ??= [];
+        $ci.data(
+            "contentKey",
+            $placeholder.data("contentKey") ?? this.contentKey
+        );
+        // also copy any and all "afterDecCallbacks" from the placeholder, and
+        // all afterDecCallbacks of this CL into this array as well.
+        $ci.data(
+            "afterDecCallbacks",
+            this.afterDecCallbacks.concat(
+                $placeholder.data("afterDecCallbacks") ?? []
+            )
+        );
 
         // apply all the data setter callbacks, which can change the "data"
         // object, namely the data stored as a reference at $ci.data("data").
         // If this array is empty, the child CIs will get a reference to the
         // same "data" object as their parent (this one).
         let len = this.dataSetterCallbacks.length;
-        var childData = (len == 0) ? data : Object.assign({}, data);
+        var childData = data;
         for (let i = 0; i < len; i++) {
-            this.dataSetterCallbacks[i](data, childData);
+            childData = this.dataSetterCallbacks[i](data, childData) ??
+                childData;
         }
 
         // apply any and all of the inward callbacks, which can change the
         // initial HTML of the CI, and also make changes to the data object in
         // priciple, but not too much else (they should generally NOT be used
         // for setting up events).
-        let len = this.inwardCallbacks.length;
+        len = this.inwardCallbacks.length;
         for (let i = 0; i < len; i++) {
             this.inwardCallbacks[i]($ci, data);
         }
@@ -206,10 +218,11 @@ export class ContentLoader {
         // property of of the "data" object is the same as this.contentKey),
         // and if so, run any "afterDecCallbacks" that a child decorated by
         // this CI might have stored.
-        if (data.contentKey === this.contentKey) {
-            let len = data.afterDecCallbacks.length;
+        if ($ci.data("contentKey") === this.contentKey) {
+            let afterDecCallbacks = $ci.data("afterDecCallbacks")
+            let len = afterDecCallbacks.length;
             for (let i = 0; i < len; i++) {
-                data.afterDecCallbacks[i]($ci);
+                afterDecCallbacks[i]($ci, data, childReturnData, returnData);
             }
         }
     }

@@ -7,7 +7,7 @@ import {
 } from "/UPA_scripts.php?id=2";
 
 import {
-    sdbInterfaceCL, appColumnCL, pagesWithTabHeaderCL, pageAreaCL,
+    sdbInterfaceCL, appColumnCL, pagesWithTabsCL,
 } from "/UPA_scripts.php?id=3";
 
 
