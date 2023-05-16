@@ -34,6 +34,16 @@ categoryColumnCL.addCallback("data", function(data) {
     };
     return childData;
 });
+
+export var categoryHeaderContentCL = new ContentLoader(
+    "CategoryHeaderContent",
+    /* Initial HTML */
+    '<div>' +
+        '<h3>Category: <span class="title"></span><h3>' +
+    '</div>',
+    appColumnCL,
+);
+
 export var categoryMainContentCL = new ContentLoader(
     "CategoryMainContent",
     /* Initial HTML */
@@ -41,7 +51,7 @@ export var categoryMainContentCL = new ContentLoader(
     appColumnCL
 );
 categoryMainContentCL.addCallback("data", function(data) {
-    data.pageDataArr = [
+    data.tabAndPageDataArr = [
         ["Info", "CategoryInfoPage", data],
         ["Subategories", "SubcategoriesPage", data],
         ["Elements", "ElementsPage", data],
@@ -55,14 +65,6 @@ export var categoryInfoPageCL = new ContentLoader(
     appColumnCL
 );
 
-export var categoryHeaderContentCL = new ContentLoader(
-    "CategoryHeaderContent",
-    /* Initial HTML */
-    '<div>' +
-        '<h3>Category: <span class="title"></span><h3>' +
-    '</div>',
-    appColumnCL,
-);
 
 
 

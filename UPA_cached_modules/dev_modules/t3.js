@@ -300,9 +300,9 @@ pagesContainerCL.addCallback(function($ci) {
 // make PagesWithTabs automatically look for tab titles and associated
 // pageSpecs in the "data" object.
 pagesWithTabsCL.addCallback(function($ci, data) {
-    let len = (data.pageDataArr ?? []).length;
+    let len = (data.tabAndPageDataArr ?? []).length;
     for (let i = 0; i < len; i++) {
-        $ci.trigger("add-tab-and-page", data.pageDataArr[i]);
+        $ci.trigger("add-tab-and-page", data.tabAndPageDataArr[i]);
     }
 });
 
@@ -329,7 +329,6 @@ export var pageFieldCL = new ContentLoader(
     '<div></div>',
     appColumnCL
 );
-
 pageFieldCL.addCallback(function($ci) {
     $ci
         .on("append-contents", function(event, contentSpecsArr, selector) {
@@ -351,8 +350,48 @@ pageFieldCL.addCallback(function($ci) {
             return false;
         });
 });
+// make PageField automatically look for contentSpecs in the "data" object.
+pagesWithTabsCL.addCallback(function($ci, data) {
+    let len = (data.contentSpecsArr ?? []).length;
+    for (let i = 0; i < len; i++) {
+        $ci.trigger("append-contents", data.contentSpecsArr[i]);
+    }
+});
 
-
+export var pageFieldCL = new ContentLoader(
+    "ListField",
+    /* Initial HTML */
+    '<<PageField>>',
+    appColumnCL
+);
+pageFieldCL.addCallback(function($ci) {
+    $ci
+        .on("append-elements", function(event, contentKey, dataArr, selector) {
+            let $obj = (typeof selector === "undefined") ?
+                $(this) : $(this).find(selector);
+            let len = dataArr.length;
+            for (let i = 0; i < len; i++) {
+                pageFieldCL.loadAppended($obj, contentKey, dataArr[i]);
+            }
+            return false;
+        })
+        .on("prepend-elements", function(event, contentKey, dataArr, selector){
+            let $obj = (typeof selector === "undefined") ?
+                $(this) : $(this).find(selector);
+            let len = dataArr.length;
+            for (let i = 0; i < len; i++) {
+                pageFieldCL.loadPrepended($obj, contentKey, dataArr[i]);
+            }
+            return false;
+        });
+});
+// make ListField automatically look for a dataArr in the "data" object.
+pagesWithTabsCL.addCallback(function($ci, data) {
+    let len = (data.dataArr ?? []).length;
+    for (let i = 0; i < len; i++) {
+        $ci.trigger("append-elements", data.dataArr[i]);
+    }
+});
 
 
 
