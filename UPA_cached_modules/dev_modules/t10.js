@@ -6,7 +6,7 @@ import {sdbInterfaceCL} from "/UPA_scripts.php?id=3";
 import * as t4Mod from "/UPA_scripts.php?id=4";
 
 
-export function upa_main(preferenceUserID, termType, termID, userID) {
+export function upa_main(preferenceUserID, entityType, entityID, userID) {
     if (preferenceUserID !== "1") {
         throw "Unrecognized preference user";
     }
@@ -14,8 +14,8 @@ export function upa_main(preferenceUserID, termType, termID, userID) {
     let data = {
         columnContentKey: "CategoryColumn",
         preferenceUser: preferenceUserID,
-        termType: termType,
-        termID: termID,
+        entityType: entityType,
+        entityID: entityID,
         user: userID,
     };
     let contentKey = sdbInterfaceCL.contentKey;

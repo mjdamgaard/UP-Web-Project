@@ -54,8 +54,8 @@ $paramNameArr = array("et", "eid", "uid", "pid");
 $typeArr = array("type", "id", "id", "id");
 $paramValArr = InputGetter::getParams($paramNameArr);
 InputVerifier::verifyTypes($paramValArr, $typeArr, $paramNameArr);
-$termType = $paramValArr[0];
-$termID = $paramValArr[1];
+$entityType = $paramValArr[0];
+$entityID = $paramValArr[1];
 $userID = $paramValArr[2];
 $preferenceUserID = $paramValArr[3];
 
@@ -107,8 +107,8 @@ $mainModuleID = "10";
     upa_main(<?php
         echo '"' .
             $preferenceUserID . '", "' .
-            $termType.'", "' .
-            $termID.'", "' .
+            $entityType.'", "' .
+            $entityID.'", "' .
             $userID .
         '"';
     ?>);

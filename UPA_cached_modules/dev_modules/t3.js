@@ -465,6 +465,7 @@ setFieldCL.addCallback(function($ci, data) {
         let $this = $(this);
         let set = $this.data("set");
         let setInfo = $this.data("setInfo");
+        let elemContentKey = $this.data("data").elemContentKey;
         if ((set ?? false) && (setInfo ?? false)) {
             let len = set.length;
             for (let i = 0; i < len; i++) {
@@ -474,7 +475,7 @@ setFieldCL.addCallback(function($ci, data) {
                     objID: set[i][1]
                 };
                 let $obj = $this.children('.element-container');
-                setFieldCL.loadPrepended($obj, "SetElement", data);
+                setFieldCL.loadPrepended($obj, "elemContentKey", data);
             }
         }
     });

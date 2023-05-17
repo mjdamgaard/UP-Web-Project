@@ -67,9 +67,42 @@ export var categoryInfoPageCL = new ContentLoader(
 export var categorySubategoriesPageCL = new ContentLoader(
     "CategorySubategoriesPage",
     /* Initial HTML template */
-    '<div>Not implemented yet.</div>',
+    '<div>' +
+        '<<ElementsSetField>>' +
+    '</div>',
     appColumnCL
 );
+export var elementsSetFieldCL = new ContentLoader(
+    "ElementsSetField",
+    /* Initial HTML template */
+    '<<SetField>>',
+    appColumnCL
+);
+elementsSetFieldCL.addCallback("data", function(data) {
+    return {
+        user: data.user,
+        subjID: data.entityID,
+        relID: 2,
+        elemContentKey: "CategoryElement",
+    };
+});
+export var categoryElementCL = new ContentLoader(
+    "CategoryElement",
+    /* Initial HTML template */
+    '<<Element>>',
+    appColumnCL
+);
+export var elementCL = new ContentLoader(
+    "Element",
+    /* Initial HTML template */
+    '<div></div>',
+    appColumnCL
+);
+
+
+
+
+
 
 
 
