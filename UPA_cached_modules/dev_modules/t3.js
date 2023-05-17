@@ -393,7 +393,7 @@ pagesWithTabsCL.addCallback(function($ci, data) {
 //         $ci.trigger("append-elements", data.dataArr[i]);
 //     }
 // });
-//
+
 
 export var setFieldCL = new ContentLoader(
     "SetField",
@@ -408,23 +408,82 @@ export var setHeaderCL = new ContentLoader(
     "SetHeader",
     /* Initial HTML template */
     '<div>' +
-        //TODO: add a bar with user weight buttons and a refresh button.
+        // TODO: add a bar with user weight buttons and a refresh button. *(This
+        // bar should also turn into a drop-down menu for some decorating CLs.
     '</div>',
     appColumnCL
 );
 setFieldCL.addCallback(function($ci, data) {
     let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-    let regData = {
-        type: "set",
-        uid: data.user,
-        sid: data.subjID,
-        rid: data.relID,
+    let setReqData, infoReqData;
+    if (typeof data.setID !== "undefined") {
+        setReqData = {
+            type: "set",
+            id: data.setID,
+            rl: "", rh: "",
+            n: 10000, o: 0,
+            a: 0,
+        };
+        infoReqData = {
+            type: "setInfo",
+            id: data.setID,
+        };
+    } else {
+        setReqData = {
+            type: "setSK",
+            uid: data.user, // TODO: Change (add more options).
+            sid: data.subjID,
+            rid: data.relID,
+            rl: "", rh: "",
+            n: 10000, o: 0,
+            a: 0,
+        };
+        infoReqData = {
+            type: "setInfoSK",
+            uid: data.user,
+            sid: data.subjID,
+            rid: data.relID,
+        };
+    }
 
-    };
-    dbReqManager.input($ci, reqData, function($obj, result) {
-        $obj.find('.response-field').append(JSON.stringify(result));
+    if (typeof $ci.data("set") === "undefined") {
+        dbReqManager.input($ci, setReqData, function($ci, result) {
+            $ci.data("set", result)
+                .trigger("append-elements-if-ready");
+        });
+    }
+    if (typeof $ci.data("setInfo") === "undefined") {
+        dbReqManager.input($ci, infoReqData, function($ci, result) {
+            $ci.data("setInfo", result)
+                .trigger("append-elements-if-ready");
+        });
+    }
+    $ci.trigger("append-elements-if-ready");
+});
+setFieldCL.addCallback(function($ci, data) {
+    $ci.on("append-elements-if-ready", function() {
+        let $this = $(this);
+        let set = $this.data("set");
+        let setInfo = $this.data("setInfo");
+        if ((set ?? false) && (setInfo ?? false)) {
+            let len = set.length;
+            for (let i = 0; i < len; i++) {
+                let data = {
+                    setInfo: setInfo,
+                    ratVal: set[i][0],
+                    objID: set[i][1]
+                };
+                let $obj = $this.children('.element-container');
+                setFieldCL.loadPrepended($obj, "SetElement", data);
+            }
+        }
     });
 });
+
+
+
+
+
 
 /* Let us define the CSS all together for this module */
 
