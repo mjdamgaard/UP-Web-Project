@@ -53,6 +53,22 @@ switch ($reqType) {
         );
         // output: [[ratVal, objID], ...].
         break;
+        case "setSK":
+            $sql = "CALL selectSetFromSecKey (?, ?, ?, ?, ?, ?, ?, ?)";
+            $paramNameArr = array(
+                "uid", "sid", "rid",
+                "rl", "rh",
+                "n", "o",
+                "a"
+            );
+            $typeArr = array(
+                "id",
+                "rat", "rat",
+                "uint", "uint",
+                "tint"
+            );
+            // output: [[ratVal, objID], ...].
+            break;
     case "setInfo":
         $sql = "CALL selectSetInfo (?)";
         $paramNameArr = array("id");

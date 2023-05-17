@@ -412,7 +412,19 @@ export var setHeaderCL = new ContentLoader(
     '</div>',
     appColumnCL
 );
+setFieldCL.addCallback(function($ci, data) {
+    let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+    let regData = {
+        type: "set",
+        uid: data.user,
+        sid: data.subjID,
+        rid: data.relID,
 
+    };
+    dbReqManager.input($ci, reqData, function($obj, result) {
+        $obj.find('.response-field').append(JSON.stringify(result));
+    });
+});
 
 /* Let us define the CSS all together for this module */
 

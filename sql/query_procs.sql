@@ -2,6 +2,7 @@
 SELECT "Query procedures";
 
 -- DROP PROCEDURE selectSet;
+-- DROP PROCEDURE selectSetFromSecKey;
 -- DROP PROCEDURE selectSetInfo;
 -- DROP PROCEDURE selectSetInfoFromSecKey;
 -- DROP PROCEDURE selectSetID;
@@ -64,6 +65,37 @@ BEGIN
 END //
 DELIMITER ;
 
+
+DELIMITER //
+CREATE PROCEDURE selectSetFromSecKey (
+    IN userID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
+    IN relID BIGINT UNSIGNED,
+    IN ratingRangeMinHex VARCHAR(510),
+    IN ratingRangeMaxHex VARCHAR(510),
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED,
+    IN isAscOrder BOOL
+)
+BEGIN
+    DECLARE setID BIGINT UNSIGNED;
+    SELECT id INTO setID
+    FROM Sets
+    WHERE (
+        user_id = userID AND
+        subj_id = subjID AND
+        rel_id = relID
+    );
+    CALL selectSet (
+        setID,
+        ratingRangeMinHex,
+        ratingRangeMaxHex,
+        maxNum,
+        numOffset,
+        isAscOrder
+    );
+END //
+DELIMITER ;
 
 
 DELIMITER //

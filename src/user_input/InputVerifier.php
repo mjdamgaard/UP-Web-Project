@@ -119,9 +119,9 @@ class InputVerifier {
             case "blob":
                 if (
                     !is_string($paramVal) ||
-                    strlen($paramVal) > 65535
+                    strlen($paramVal) > 4294967295
                 ) {
-                    echoTypeErrorJSONAndExit($paramName, "BLOB");
+                    echoTypeErrorJSONAndExit($paramName, "MEDIUMBLOB");
                 }
                 break;
             case "time":

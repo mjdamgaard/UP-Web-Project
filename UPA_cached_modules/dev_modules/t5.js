@@ -66,7 +66,7 @@ categoryInputFieldCL.addCallback(function($ci) {
         .on("submit", function() {
             let $this =  $(this);
             var regData = {type: "cat"};
-            regData.uid = $this.data("contextData").user;
+            regData.uid = $this.data("data").user;
             regData.scid = $this.find('input.catID').val();
             regData.t = $this.find('textarea.title').val();
             $this.trigger("input-req-data", [regData]);
@@ -101,7 +101,7 @@ termInputFieldCL.addCallback(function($ci) {
         .on("submit", function() {
             let $this =  $(this);
             var regData = {type: "term"};
-            regData.uid = $this.data("contextData").user;
+            regData.uid = $this.data("data").user;
             regData.cid = $this.find('input.catID').val();
             regData.t = $this.find('textarea.title').val();
             $this.trigger("input-req-data", [regData]);
@@ -137,7 +137,7 @@ relationInputFieldCL.addCallback(function($ci) {
         .on("submit", function() {
             let $this =  $(this);
             var regData = {type: "rel"};
-            regData.uid = $this.data("contextData").user;
+            regData.uid = $this.data("data").user;
             regData.cid = $this.find('input.catID').val();
             regData.t = $this.find('textarea.title').val();
             $this.trigger("input-req-data", [regData]);
@@ -156,19 +156,19 @@ export var inputColumnCL = new ContentLoader(
 
 
 inputColumnCL.addCallback(function($ci) {
-    let contextData = $ci.data("contextData");
+    let data = $ci.data("data");
     $ci
         .trigger("add-tab-and-page",
-            ["Input category", "CategoryInputPage", contextData]
+            ["Input category", "CategoryInputPage", data]
         )
         .trigger("add-tab-and-page",
-            ["Input term", "TermInputPage", contextData]
+            ["Input term", "TermInputPage", data]
         )
         .trigger("add-tab-and-page",
-            ["Input relation", "RelationInputPage", contextData]
+            ["Input relation", "RelationInputPage", data]
         )
         // .trigger("add-tab-and-page",
-        //     ["Input list", "TestPage", contextData]
+        //     ["Input list", "TestPage", data]
         // );
 });
 

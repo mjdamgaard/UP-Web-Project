@@ -320,7 +320,7 @@ CREATE TABLE Binaries (
     -- type = "b".
 
     /* data */
-    bin BLOB NOT NULL
+    bin LONGBLOB NOT NULL
 );
 
 
