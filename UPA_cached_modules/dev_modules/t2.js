@@ -247,13 +247,21 @@ export class ContentLoader {
             }
         }
         // if no matching child CL is found, go up to the parent CL and repeat
-        // the process recursively, or throw and error this is the root CL.
+        // the process recursively, or return a CL dummy if this is the root CL.
         if (typeof this.parentCL === "undefined") {
-            throw (
+            console.warn(
                 "ContentLoader.getRelatedContentLoader(): " +
                 'no content loader found with content key "' +
                 contentKey + '"'
             );
+            return {
+                loadAndReplacePlaceholder: function($placeholder) {
+                    $placeholder.replaceWith(
+                        '<template class="Not-implemented CI ' +
+                        contentKey + '"></template>'
+                    );
+                }
+            };
         }
         return this.parentCL.getRelatedContentLoader(contentKey);
     }

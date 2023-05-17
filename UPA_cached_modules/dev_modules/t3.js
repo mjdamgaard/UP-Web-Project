@@ -464,6 +464,9 @@ setFieldCL.addCallback(function($ci, data) {
 setFieldCL.addCallback(function($ci, data) {
     // TODO: Change this such that a number of initially appended elements are
     // looked up in data.
+    // TODO: Add a dropdown content key as well to the inut data for SetFields,
+    // as well as a boolean telling whether the dropdown should be shown already
+    // as default for all elements in the list.
     $ci.on("append-elements-if-ready", function() {
         let $this = $(this);
         let set = $this.data("set");

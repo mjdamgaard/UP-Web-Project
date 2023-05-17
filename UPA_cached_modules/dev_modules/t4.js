@@ -53,7 +53,7 @@ export var categoryMainContentCL = new ContentLoader(
 categoryMainContentCL.addCallback("data", function(data) {
     data.tabAndPageDataArr = [
         ["Info", "CategoryInfoPage", data],
-        ["Subategories", "SubcategoriesPage", data],
+        ["Subategories", "CategorySubategoriesPage", data],
         ["Elements", "ElementsPage", data],
     ];
     data.defaultTab = "Subategories";
@@ -89,16 +89,21 @@ elementsSetFieldCL.addCallback("data", function(data) {
 export var categoryElementCL = new ContentLoader(
     "CategoryElement",
     /* Initial HTML template */
-    '<<Element>>',
+    '<div class="set-element">' +
+        '<<SupercategoryNav>>' +
+        '<<CategoryTitle>>' +
+        '<<SetRatingContainer>>' +
+    '</div>',
     appColumnCL
 );
-export var elementCL = new ContentLoader(
-    "Element",
+export var categoryTitleCL = new ContentLoader(
+    "CategoryTitle",
     /* Initial HTML template */
-    '<div></div>',
+    '<div>' +
+        'Category title test placeholder' +
+    '</div>',
     appColumnCL
 );
-
 
 
 
