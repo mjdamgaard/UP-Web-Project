@@ -421,7 +421,7 @@ setFieldCL.addCallback(function($ci, data) {
             type: "set",
             id: data.setID,
             rl: "", rh: "",
-            n: 10000, o: 0,
+            n: 10000, o: 0, // TODO: Change to look all this up (using ?? op.).
             a: 0,
         };
         infoReqData = {
@@ -446,21 +446,24 @@ setFieldCL.addCallback(function($ci, data) {
         };
     }
 
-    if (typeof $ci.data("set") === "undefined") {
-        dbReqManager.input($ci, setReqData, function($ci, result) {
-            $ci.data("set", result)
-                .trigger("append-elements-if-ready");
-        });
-    }
     if (typeof $ci.data("setInfo") === "undefined") {
         dbReqManager.input($ci, infoReqData, function($ci, result) {
             $ci.data("setInfo", result)
                 .trigger("append-elements-if-ready");
         });
     }
-    $ci.trigger("append-elements-if-ready");
+    if (typeof $ci.data("set") === "undefined") {
+        dbReqManager.input($ci, setReqData, function($ci, result) {
+            $ci.data("set", result)
+                .trigger("append-elements-if-ready");
+        });
+    } else {
+        $ci.trigger("append-elements-if-ready");
+    }
 });
 setFieldCL.addCallback(function($ci, data) {
+    // TODO: Change this such that a number of initially appended elements are
+    // looked up in data.
     $ci.on("append-elements-if-ready", function() {
         let $this = $(this);
         let set = $this.data("set");
