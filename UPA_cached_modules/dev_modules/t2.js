@@ -26,9 +26,7 @@ export class ContentLoader {
         contentKey, htmlTemplate,
         parentCL,
         cssRules,
-        dataSetterCallbacks,
-        inwardCallbacks, outwardCallbacks,
-        afterDecCallbacks,
+        dataSetterCallbacks, outwardCallbacks, afterDecCallbacks,
         childCLs,
         modSignals,
     ) {
@@ -44,7 +42,7 @@ export class ContentLoader {
         this.cssRules = cssRules ?? [];
         this.cssRulesAreAdded = false;
         this.dataSetterCallbacks = dataSetterCallbacks ?? [];
-        this.inwardCallbacks = inwardCallbacks ?? [];
+        // this.inwardCallbacks = inwardCallbacks ?? [];
         this.outwardCallbacks = outwardCallbacks ?? [];
         this.afterDecCallbacks = afterDecCallbacks ?? [];
         this.modSignals = modSignals ?? {};
@@ -113,9 +111,9 @@ export class ContentLoader {
             case "outward":
                 this.outwardCallbacks.push(callback);
                 break;
-            case "inward":
-                this.inwardCallbacks.push(callback);
-                break;
+            // case "inward":
+            //     this.inwardCallbacks.push(callback);
+            //     break;
             case "data":
                 this.dataSetterCallbacks.push(callback);
                 break;
@@ -178,14 +176,14 @@ export class ContentLoader {
                 childData;
         }
 
-        // apply any and all of the inward callbacks, which can change the
-        // initial HTML of the CI, and also make changes to the data object in
-        // priciple, but not too much else (they should generally NOT be used
-        // for setting up events).
-        len = this.inwardCallbacks.length;
-        for (let i = 0; i < len; i++) {
-            this.inwardCallbacks[i]($ci, data);
-        }
+        // // apply any and all of the inward callbacks, which can change the
+        // // initial HTML of the CI, and also make changes to the data object in
+        // // priciple, but not too much else (they should generally NOT be used
+        // // for setting up events).
+        // len = this.inwardCallbacks.length;
+        // for (let i = 0; i < len; i++) {
+        //     this.inwardCallbacks[i]($ci, data);
+        // }
 
         // load all the descendent CIs.
         var childReturnData = {};

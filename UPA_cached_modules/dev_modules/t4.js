@@ -82,7 +82,7 @@ elementsSetFieldCL.addCallback("data", function(data) {
     return {
         user: data.user,
         subjID: data.entityID,
-        relID: 2,
+        relID: 1,
         elemContentKey: "CategoryElement",
     };
 });

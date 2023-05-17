@@ -92,7 +92,7 @@ sdbInterfaceCL.addCallback(function($ci, data) {
     appColumnCL.loadAppended(
         $ci.find('.app-column-container'),
         data.columnContentKey,
-        data.columnData
+        data
     );
 });
 // make the AppColumn also load its header and main according to the input data.
@@ -413,7 +413,7 @@ export var setHeaderCL = new ContentLoader(
     '</div>',
     appColumnCL
 );
-setFieldCL.addCallback(function($ci, data) {debugger;
+setFieldCL.addCallback(function($ci, data) {
     let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
     let setReqData, infoReqData;
     if (typeof data.setID !== "undefined") {
@@ -447,13 +447,13 @@ setFieldCL.addCallback(function($ci, data) {debugger;
     }
 
     if (typeof $ci.data("setInfo") === "undefined") {
-        dbReqManager.input($ci, infoReqData, function($ci, result) {
+        dbReqManager.query($ci, infoReqData, function($ci, result) {
             $ci.data("setInfo", result)
                 .trigger("append-elements-if-ready");
         });
     }
     if (typeof $ci.data("set") === "undefined") {
-        dbReqManager.input($ci, setReqData, function($ci, result) {
+        dbReqManager.query($ci, setReqData, function($ci, result) {
             $ci.data("set", result)
                 .trigger("append-elements-if-ready");
         });

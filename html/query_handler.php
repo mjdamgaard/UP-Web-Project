@@ -62,7 +62,7 @@ switch ($reqType) {
                 "a"
             );
             $typeArr = array(
-                "id",
+                "id", "id", "id",
                 "rat", "rat",
                 "uint", "uint",
                 "tint"
