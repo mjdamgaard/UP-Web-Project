@@ -413,7 +413,7 @@ export var setHeaderCL = new ContentLoader(
     '</div>',
     appColumnCL
 );
-setFieldCL.addCallback(function($ci, data) {
+setFieldCL.addCallback(function($ci, data) {debugger;
     let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
     let setReqData, infoReqData;
     if (typeof data.setID !== "undefined") {

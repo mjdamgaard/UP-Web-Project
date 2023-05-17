@@ -1,39 +1,5 @@
 
-// import {
-//     getJQueryObj, upaf_runResultingFunction
-// } from "/UPA_scripts.php?id=t1";
 
-
-/* Function to upload and query ratings, terms and other info */
-
-export function upa_upload(reqKey, reqDataArr, callback) {
-    let reqData = new InputDataConstructors[reqKey + "ReqData"](
-        reqDataArr[0], reqDataArr[1], reqDataArr[2], reqDataArr[3],
-        reqDataArr[4], reqDataArr[5],
-    );
-    $.getJSON("input_handler.php", reqData, callback);
-}
-
-export function upa_queryAndSanitize(reqKey, reqDataArr, callback) {
-    let reqData = new QueryDataConstructors[reqKey + "ReqData"](
-        reqDataArr[0], reqDataArr[1], reqDataArr[2], reqDataArr[3],
-        reqDataArr[4], reqDataArr[5],
-    );
-    $.getJSON("query_handler.php", reqData, function(result){
-        // unless reqKey == "Set", sanitize the first column of result.
-        let resultLen = result.length;
-        for (let i = 0; i < resultLen; i++) {
-            result[i] = result[i]
-                .replaceAll("&", "&amp;")
-                .replaceAll("<", "&lt;")
-                .replaceAll(">", "&gt;")
-                .replaceAll('"', "&quot;")
-                .replaceAll("'", "&apos;");
-        }
-        // then call the callback function on the sanitized result.
-        callback(result);
-    });
-}
 
 export class DBRequestManager {
     constructor() {
@@ -68,13 +34,13 @@ export class DBRequestManager {
         });
     }
 
-    input($obj, reqData, cacheKey, callback) {
+    input($obj, reqData, cacheKey, callback) {debugger;
         if (typeof callback === "undefined") {
             callback = cacheKey;
             cacheKey = null;
         }
         let thisDBReqManager = this;
-        $.post("input_handler.php", reqData, function(result, textStatus) {
+        $.post("input_handler.php", reqData, function(result, textStatus) {debugger;
             // if cacheKey is not nullish, store the result in this.cache.
             if (typeof cacheKey !== "undefined") {
                 thisDBReqManager.cache[cacheKey] = result;
