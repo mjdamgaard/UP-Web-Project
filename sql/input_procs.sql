@@ -154,8 +154,7 @@ CREATE PROCEDURE inputOrChangeRatingFromSecKey (
     IN relID BIGINT UNSIGNED,
     IN objID BIGINT UNSIGNED,
     IN ratValHex VARCHAR(510),
-    IN delayTimeMin TIME,
-    IN delayTimeSigma TIME
+    IN delayTimeMin TIME..
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
