@@ -147,6 +147,58 @@ END //
 DELIMITER ;
 
 
+DELIMITER //
+CREATE PROCEDURE inputOrChangeRatingFromSecKey (
+    IN userID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
+    IN relID BIGINT UNSIGNED,
+    IN objID BIGINT UNSIGNED,
+    IN ratValHex VARCHAR(510),
+    IN delayTimeMin TIME,
+    IN delayTimeSigma TIME
+)
+BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
+    SET exitCode = 1; -- means that set was found (perhaps overwritten below).
+
+    SELECT id INTO outID
+    FROM Sets
+    WHERE (
+        user_id = userID AND
+        subj_id = subjID AND
+        rel_id = relID
+    );
+    IF (outID IS NOT NULL) THEN
+        INSERT INTO Sets (
+            user_id,
+            subj_id,
+            rel_id,
+            elem_num
+        )
+        VALUES (
+            userID,
+            subjID,
+            relID,
+            0
+        );
+        SELECT LAST_INSERT_ID() INTO outID;
+        SET exitCode = 0; -- set was created.
+        INSERT INTO Creators (entity_t, entity_id, user_id)
+        VALUES ("s", outID, userID);
+    END IF;
+    CALL inputOrChangeRating (
+        userID,
+        objID,
+        outID,
+        ratValHex,
+        delayTimeMin,
+        delayTimeSigma
+    );
+    SELECT outID, exitCode;
+END //
+DELIMITER ;
+
 
 
 
@@ -316,15 +368,13 @@ CREATE PROCEDURE insertText (
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
-    DECLARE exitCode TINYINT;
 
     INSERT INTO Texts (str)
     VALUES (s);
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Creators (entity_t, entity_id, user_id)
     VALUES ("x", outID, userID);
-    SET exitCode = 0; -- insert.
-    SELECT outID, exitCode;
+    SELECT outID, 0; -- insert.
 END //
 DELIMITER ;
 
@@ -338,15 +388,13 @@ CREATE PROCEDURE insertBinary (
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
-    DECLARE exitCode TINYINT;
 
     INSERT INTO Binaries (bin)
     VALUES (b);
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Creators (entity_t, entity_id, user_id)
     VALUES ("b", outID, userID);
-    SET exitCode = 0; -- insert.
-    SELECT outID, exitCode;
+    SELECT outID, 0; -- insert.
 END //
 DELIMITER ;
 
