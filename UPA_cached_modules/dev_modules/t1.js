@@ -3,13 +3,19 @@
 
 export class DBRequestManager {
     constructor() {
-        this.cache = {};
+        this.cache = {
+            local: ...,
+            session: ...,
+            memory: {},
+            manual: {},
+            ..
+        };
     }
 
-    query($obj, reqData, cacheKey, callback) {
+    query($obj, reqData, cacheMethod, callback) {
         if (typeof callback === "undefined") {
-            callback = cacheKey;
-            cacheKey = null;
+            callback = cacheMethod;
+            cacheMethod = null;
         }
         let thisDBReqManager = this;
         $.getJSON("query_handler.php", reqData, function(result, textStatus) {
@@ -34,32 +40,20 @@ export class DBRequestManager {
         });
     }
 
-    input($obj, reqData, cacheKey, callback) {
-        if (typeof callback === "undefined") {
-            callback = cacheKey;
-            cacheKey = null;
-        }
+    input($obj, reqData, callback) {
         let thisDBReqManager = this;
         $.post("input_handler.php", reqData, function(result, textStatus) {
-            // if cacheKey is not nullish, store the result in this.cache.
-            if (typeof cacheKey !== "undefined") {
-                thisDBReqManager.cache[cacheKey] = result;
-            }
-            // then call the callback function on result.
+            // call the callback function on result.
             callback($obj, result, textStatus, thisDBReqManager.cache);
         });
     }
 }
 
+export class RequestResponseCache {
+    constructor(cache) {
 
+    }
 
-
-
-
-
-export function upaFind(selector) {
-    // return the descendents of #upaFrame that matches the selector.
-    return $("#upaFrame").find(selector);
 }
 
 
@@ -68,6 +62,14 @@ export function upaFind(selector) {
 
 
 
+
+
+
+
+
+
+
+/* Old code (that I don't wanna throw out yet..) */
 
 
 /* Functions to verify and load hyperlinks into the UPA, and to follow them */
