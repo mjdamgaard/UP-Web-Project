@@ -3,6 +3,7 @@ SELECT "Input procedures";
 
 -- DROP PROCEDURE createOrFindSet;
 -- DROP PROCEDURE inputOrChangeRating;
+-- DROP PROCEDURE inputOrChangeRatingFromSecKey;
 -- DROP PROCEDURE insertOrFindCat;
 -- DROP PROCEDURE insertOrFindTerm;
 -- DROP PROCEDURE insertOrFindRel;
@@ -61,11 +62,10 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE inputOrChangeRating (
     IN userID BIGINT UNSIGNED,
-    IN objID BIGINT UNSIGNED,
     IN setID BIGINT UNSIGNED,
+    IN objID BIGINT UNSIGNED,
     IN ratValHex VARCHAR(510),
-    IN delayTimeMin TIME,
-    IN delayTimeSigma TIME
+    IN delayTime TIME
 )
 BEGIN
     DECLARE exitCode TINYINT;
@@ -85,7 +85,6 @@ BEGIN
         SELECT rat_val INTO prevRatVal
         FROM SemanticInputs
         WHERE (
-            obj_t = objType AND
             obj_id = objID AND
             set_id = setID
         );
@@ -106,8 +105,7 @@ BEGIN
         -- RecentInputs, and at some point also make an event to record
         -- recent inputs into RecordedInputs when there is long enough time
         -- between the last last recent input before that.
-        SET delayTimeMin = 0; -- (not implemented yet)
-        SET delayTimeSigma = 0; -- (not implemented yet)
+        SET delayTime = 0; -- (not implemented yet)
         INSERT INTO RecentInputs (set_id, rat_val, obj_id)
         VALUES (setID, ratVal, objID); -- (This can in theory fail if to
         -- changes can happen at the same millisecond, so let's keep it here
@@ -142,7 +140,7 @@ BEGIN
             SET exitCode = 1; -- trying to delete a non-existing rating.
         END IF;
     END IF;
-    SELECT NULL, exitCode;
+    SELECT setID AS outID, exitCode;
 END //
 DELIMITER ;
 
@@ -154,21 +152,21 @@ CREATE PROCEDURE inputOrChangeRatingFromSecKey (
     IN relID BIGINT UNSIGNED,
     IN objID BIGINT UNSIGNED,
     IN ratValHex VARCHAR(510),
-    IN delayTimeMin TIME..
+    IN delayTime TIME
 )
 BEGIN
-    DECLARE outID BIGINT UNSIGNED;
+    DECLARE setID BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
     SET exitCode = 1; -- means that set was found (perhaps overwritten below).
 
-    SELECT id INTO outID
+    SELECT id INTO setID
     FROM Sets
     WHERE (
         user_id = userID AND
         subj_id = subjID AND
         rel_id = relID
     );
-    IF (outID IS NOT NULL) THEN
+    IF (setID IS NULL) THEN
         INSERT INTO Sets (
             user_id,
             subj_id,
@@ -181,20 +179,18 @@ BEGIN
             relID,
             0
         );
-        SELECT LAST_INSERT_ID() INTO outID;
+        SELECT LAST_INSERT_ID() INTO setID;
         SET exitCode = 0; -- set was created.
         INSERT INTO Creators (entity_t, entity_id, user_id)
-        VALUES ("s", outID, userID);
+        VALUES ("s", setID, userID);
     END IF;
     CALL inputOrChangeRating (
         userID,
+        setID,
         objID,
-        outID,
         ratValHex,
-        delayTimeMin,
-        delayTimeSigma
+        delayTime
     );
-    SELECT outID, exitCode;
 END //
 DELIMITER ;
 

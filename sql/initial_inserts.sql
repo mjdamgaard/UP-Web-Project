@@ -1,11 +1,18 @@
 
--- DELETE FROM Categories;
--- ALTER TABLE Categories AUTO_INCREMENT=1;
--- DELETE FROM Terms;
--- ALTER TABLE Terms AUTO_INCREMENT=1;
--- DELETE FROM Relations;
--- ALTER TABLE Relations AUTO_INCREMENT=1;
--- DELETE FROM Creators;
+DELETE FROM Sets;
+ALTER TABLE Sets AUTO_INCREMENT=1;
+DELETE FROM SemanticInputs;
+DELETE FROM RecentInputs;
+ALTER TABLE RecentInputs AUTO_INCREMENT=1;
+
+DELETE FROM Categories;
+ALTER TABLE Categories AUTO_INCREMENT=1;
+DELETE FROM Terms;
+ALTER TABLE Terms AUTO_INCREMENT=1;
+DELETE FROM Relations;
+ALTER TABLE Relations AUTO_INCREMENT=1;
+
+DELETE FROM Creators;
 
 
 
@@ -40,12 +47,10 @@ CALL insertOrFindCat(1, 3, "Artists"); -- id: 5
 
 CALL insertOrFindTerm (1, 4, "Led Zeppelin"); -- id: 2
 
-CALL inputOrChangeRatingFromSecKey (
-    1, 1, 1, 2, "70", "00", "00"
-);
-CALL inputOrChangeRatingFromSecKey (
-    1, 4, , "Led Zeppelin"
-);
+CALL createOrFindSet(1, 1, 1); -- id: 1
+CALL inputOrChangeRating (1, 1, 2, "70", "00");
+CALL inputOrChangeRating (1, 1, 2, "7F", "00");
+CALL inputOrChangeRatingFromSecKey (1, 1, 1, 2, "71", "00");
 
 
 

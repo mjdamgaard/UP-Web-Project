@@ -48,4 +48,13 @@ SELECT
     rat_val AS ratVal,
     obj_id AS objID
 FROM SemanticInputs
-ORDER BY set_id DESC, rat_val DESC;
+ORDER BY set_id ASC, rat_val DESC;
+
+SELECT "RecentInputs:";
+SELECT
+    id AS id,
+    set_id AS setID,
+    rat_val AS ratVal,
+    obj_id AS objID
+FROM RecentInputs
+ORDER BY set_id ASC, id ASC;

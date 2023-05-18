@@ -45,13 +45,13 @@ switch ($reqType) {
         break;
     case "rat":
         $sql = "CALL inputOrChangeRating (?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("uid", "oid", "sid", "r", "tmin", "tsig");
-        $typeArr = array("id", "id", "id", "rat", "time", "time");
+        $paramNameArr = array("uid", "sid", "oid", "r", "t");
+        $typeArr = array("id", "id", "id", "rat", "time");
         break;
     case "ratSK":
         $sql = "CALL inputOrChangeRatingFromSecKey (?, ?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("uid", "sid", "rid", "oid", "r", "tmin", "tsig");
-        $typeArr = array("id", "id", "id", "id", "rat", "time", "time");
+        $paramNameArr = array("uid", "sid", "rid", "oid", "r", "t");
+        $typeArr = array("id", "id", "id", "id", "rat", "time");
         break;
     case "cat":
         // $sql = "CALL insertOrFindCat (?, ?, ?)";
