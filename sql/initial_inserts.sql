@@ -39,3 +39,15 @@ CALL insertOrFindCat(1, 2, "Artists"); -- id: 4
 CALL insertOrFindCat(1, 3, "Artists"); -- id: 5
 
 CALL insertOrFindTerm (1, 4, "Led Zeppelin"); -- id: 2
+
+CALL inputOrChangeRatingFromSecKey (
+    1, 1, 1, 2, "70", "00", "00"
+);
+CALL inputOrChangeRatingFromSecKey (
+    1, 4, , "Led Zeppelin"
+);
+
+
+
+
+--
