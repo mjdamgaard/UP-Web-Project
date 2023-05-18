@@ -6,15 +6,28 @@
 // elements, and CL stands for 'content loader' (instances of this
 // class), which are responsible for loading and inserting the CIs.)
 
-export function getPlaceholderTemplateTag(key) {
-    return '<template class="placeholder" data-key="' + key + '"></template>';
+export function getPlaceholderTemplateTag(contentKey, dataKey) {
+    return (
+        '<template class="placeholder" ' +
+            'data-content-key="' + (contentKey ?? '') + '" ' +
+            'data-data-key="' + (dataKey ?? '') + '" ' +
+        '></template>'
+    );
 }
 export function convertHTMLTemplate(htmlTemplate) {
     return htmlTemplate.replaceAll(
-        /<<[A-Z][\w\-]*>>/g,
+        /<<[A-Z][\w\-]*( \$[\w\-\$]*)?>>/g,
         function(str) {
-            let key = str.slice(2, -2);
-            return getPlaceholderTemplateTag(key);
+            let keyStr = str.slice(2, -2);
+            let spaceIndex = keyStr.indexOf(" ");
+            if (spaceIndex === -1) {
+                return getPlaceholderTemplateTag(keyStr);
+            } else {
+                return getPlaceholderTemplateTag(
+                    keyStr.substring(0, spaceIndex),
+                    keyStr.substring(spaceIndex + 1)
+                );
+            }
         }
     );
 }
@@ -42,7 +55,6 @@ export class ContentLoader {
         this.cssRules = cssRules ?? [];
         this.cssRulesAreAdded = false;
         this.dataSetterCallbacks = dataSetterCallbacks ?? [];
-        // this.inwardCallbacks = inwardCallbacks ?? [];
         this.outwardCallbacks = outwardCallbacks ?? [];
         this.afterDecCallbacks = afterDecCallbacks ?? [];
         this.modSignals = modSignals ?? {};
@@ -79,25 +91,25 @@ export class ContentLoader {
     }
     loadAfter($obj, contentKey, data, returnData) {
         let $placeholder = $obj
-            .after('<template class="placeholder"></template>')
+            .after(getPlaceholderTemplateTag(contentKey))
             .next();
         this.loadReplaced($placeholder, contentKey, data, returnData);
     }
     loadBefore($obj, contentKey, data, returnData) {
         let $placeholder = $obj
-            .before('<template class="placeholder"></template>')
+            .before(getPlaceholderTemplateTag(contentKey))
             .prev();
         this.loadReplaced($placeholder, contentKey, data, returnData);
     }
     loadAppended($obj, contentKey, data, returnData) {
         let $placeholder = $obj
-            .append('<template class="placeholder"></template>')
+            .append(getPlaceholderTemplateTag(contentKey))
             .children(':last-child');
         this.loadReplaced($placeholder, contentKey, data, returnData);
     }
     loadPrepended($obj, contentKey, data, returnData) {
         let $placeholder = $obj
-            .prepend('<template class="placeholder"></template>')
+            .prepend(getPlaceholderTemplateTag(contentKey))
             .children(':first-child');
         this.loadReplaced($placeholder, contentKey, data, returnData);
     }
@@ -111,9 +123,6 @@ export class ContentLoader {
             case "outward":
                 this.outwardCallbacks.push(callback);
                 break;
-            // case "inward":
-            //     this.inwardCallbacks.push(callback);
-            //     break;
             case "data":
                 this.dataSetterCallbacks.push(callback);
                 break;
@@ -176,15 +185,6 @@ export class ContentLoader {
                 childData;
         }
 
-        // // apply any and all of the inward callbacks, which can change the
-        // // initial HTML of the CI, and also make changes to the data object in
-        // // priciple, but not too much else (they should generally NOT be used
-        // // for setting up events).
-        // len = this.inwardCallbacks.length;
-        // for (let i = 0; i < len; i++) {
-        //     this.inwardCallbacks[i]($ci, data);
-        // }
-
         // load all the descendent CIs.
         var childReturnData = {};
         let thisCL = this;
@@ -192,11 +192,18 @@ export class ContentLoader {
             .filter('template.placeholder')
             .each(function() {
                 let $childCI = $(this);
-                let childContentKey = $childCI.attr("data-key");
+                let childContentKey = $childCI.attr("data-content-key");
+                let childDataKey = $childCI.attr("data-data-key");
                 let cl = thisCL.getRelatedContentLoader(childContentKey);
-                cl.loadAndReplacePlaceholder(
-                    $childCI, childData, childReturnData
-                );
+                if (childDataKey === "") {
+                    cl.loadAndReplacePlaceholder(
+                        $childCI, childData, childReturnData
+                    );
+                } else {
+                    cl.loadAndReplacePlaceholder(
+                        $childCI, childData[childDataKey], childReturnData
+                    );
+                }
             });
         // in case $ci was a placeholder element, which will then be have been
         // removed at this point, redefine it as the new CI element.
