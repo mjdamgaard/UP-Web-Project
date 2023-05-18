@@ -3,40 +3,74 @@
 
 export class DBRequestManager {
     constructor() {
-        this.cache = {
-            local: ...,
-            session: ...,
-            memory: {},
-            manual: {},
-            ..
-        };
+        this.cache = {};
+        this.ongoingQueries = {};
     }
 
-    query($obj, reqData, cacheMethod, callback) {
+    query($obj, reqData, cacheKey, callback) {
         if (typeof callback === "undefined") {
-            callback = cacheMethod;
-            cacheMethod = null;
+            callback = cacheKey;
+            cacheKey = null;
         }
+        // if there is already an ongoing query with this reqData object, simply
+        // push the input data and return.
+        let reqDataKey = JSON.stringify(reqData);
+        let queryQueue = this.ongoingQueries[reqDataKey];
+        if (typeof queryQueue !== "undefined") {
+            queryQueue.push([$obj, callback]);
+            return;
+        }
+        // else initialize an ongoing query data queue, and make a $.getJSON()
+        // call, which runs all the callbacks in the queue on at a time upon
+        // receiving the response from the server.
+        this.ongoingQueries[reqDataKey] = [[$obj, callback]];
         let thisDBReqManager = this;
         $.getJSON("query_handler.php", reqData, function(result, textStatus) {
-            // unless reqKey == "Set", sanitize the first column of result.
-            if (reqData.type !== "S") {
-                let len = result.length;
-                for (let i = 0; i < len; i++) {
-                    result[i][0] = result[i][0]
-                        .replaceAll("&", "&amp;")
-                        .replaceAll("<", "&lt;")
-                        .replaceAll(">", "&gt;")
-                        .replaceAll('"', "&quot;")
-                        .replaceAll("'", "&apos;");
+            // get and then delete the ongiong query queue.
+            let ongoingQueries = thisDBReqManager.ongoingQueries;
+            let queryQueue = ongoingQueries[reqDataKey];
+            delete ongoingQueries[reqDataKey];
+            // for multi-row results, unless reqData.type equals "set" or
+            // "setSK", sanitize the first column of the result.
+            let len = result.length;
+            if (len > 1) {
+                if (reqData.type !== "set" && reqData.type !== "setSK") {
+                    for (let i = 0; i < len; i++) {
+                        result[i][0] = result[i][0]
+                            .replaceAll("&", "&amp;")
+                            .replaceAll("<", "&lt;")
+                            .replaceAll(">", "&gt;")
+                            .replaceAll('"', "&quot;")
+                            .replaceAll("'", "&apos;");
+                    }
                 }
-            }
+            // else for single-row results, unless unless reqData.type equals
+            // "bin", sanitize all columns.
+            } else {
+                let len = result[0].length;
+                if (reqData.type !== "bin") {
+                    for (let i = 0; i < len; i++) {
+                        result[0][i] = result[0][i]
+                            .replaceAll("&", "&amp;")
+                            .replaceAll("<", "&lt;")
+                            .replaceAll(">", "&gt;")
+                            .replaceAll('"', "&quot;")
+                            .replaceAll("'", "&apos;");
+                    }
+                }
+            } // TODO: consider using a switch--case stmt. to reduce unecessary
+            // sanitation.
+
             // if cacheKey is not nullish, store the result in this.cache.
             if (typeof cacheKey !== "undefined") {
                 thisDBReqManager.cache[cacheKey] = result;
             }
-            // then call the callback function on the sanitized result.
-            callback($obj, result, textStatus, thisDBReqManager.cache);
+            // then call all callbacks in queryQueue with their associated data.
+            for (let i = 0; i < queryQueue.length; i++) {
+                let $obj = queryQueue[i][0];
+                let callback = queryQueue[i][1];
+                callback($obj, result, textStatus, thisDBReqManager.cache);
+            }
         });
     }
 
@@ -49,12 +83,6 @@ export class DBRequestManager {
     }
 }
 
-export class RequestResponseCache {
-    constructor(cache) {
-
-    }
-
-}
 
 
 
