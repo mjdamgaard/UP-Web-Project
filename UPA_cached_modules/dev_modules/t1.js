@@ -6,7 +6,7 @@ export class DBRequestManager {
         this.cache = {};
     }
 
-    query($obj, reqData, cacheKey, callback) {
+    query($obj, reqData, cacheKey, callback) { 
         if (typeof callback === "undefined") {
             callback = cacheKey;
             cacheKey = null;
