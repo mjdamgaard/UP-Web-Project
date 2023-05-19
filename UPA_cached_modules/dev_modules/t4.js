@@ -83,10 +83,11 @@ subategoriesSetFieldCL.addCallback("data", function(data) {
 export var categoryElementCL = new ContentLoader(
     "CategoryElement",
     /* Initial HTML template */
-    '<div class="set-element">' +
+    '<div class="element">' +
         '<<SupercategoryNav>>' +
         '<<CategoryTitle>>' +
         '<<SetRatingContainer>>' +
+        '<<CategoryElementDropdown>>' +
     '</div>',
     appColumnCL
 );

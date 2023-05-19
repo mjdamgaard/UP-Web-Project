@@ -333,7 +333,7 @@ export var listCL = new ContentLoader(
     '</div>',
     sdbInterfaceCL
 );
-export var listCL = new ContentLoader(
+export var selfReplacerCL = new ContentLoader(
     "SelfReplacer",
     /* Initial HTML template */
     '<template></template>',
@@ -373,7 +373,7 @@ setFieldCL.addCallback(function($ci, data) {
             let elemContentKey = $this.data("data").elemContentKey ?? "Element";
             let elemCL = setFieldCL.getRelatedCL(elemContentKey)
             let len = set.length;
-            let elemDataArr = set.map(function(row) {
+            let listElemDataArr = set.map(function(row) {
                 return {
                     setInfo: setInfo,
                     ratVal: row[0],
@@ -381,10 +381,10 @@ setFieldCL.addCallback(function($ci, data) {
                     cl: elemCL,
                 };
             });
-            let childData = {elemDataArr: elemDataArr};
+            let childData = {listElemDataArr: listElemDataArr};
             // reload the ElementList, with the potentially new elemDataArr.
-            let $obj = $this.children('.CI.ElementList');
-            elementListCL.loadReplaced($obj, elemContentKey, childData);
+            let $obj = $this.children('.CI.List');
+            listCL.loadReplaced($obj, "self", childData);
         })
         .on("append-elements-if-ready", function() {
             let $this = $(this);

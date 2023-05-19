@@ -242,7 +242,8 @@ export class ContentLoader {
                     // parse childDataKey of the path to a nested data object
                     // in childData to use for the new data input(s).
                     let dataKeyArray = childDataKey.replaceAll("[...]", "")
-                        .split(".");
+                        .split(".")
+                        .slice(1); // since (".foo").split(".") == ["", "foo"].
                     var nestedChildData = childData;
                     let len = dataKeyArray.length;
                     for (let i = 0; i < len; i++) {
@@ -251,7 +252,7 @@ export class ContentLoader {
                     // if childDataKey does not end in "[...]", simply call
                     // cl.loadAndReplacePlaceholder() with the nestedChildData
                     // as the input data.
-                    if (childDataKey.slice(-5) !== "[...]")
+                    if (childDataKey.slice(-5) !== "[...]") {
                         cl.loadAndReplacePlaceholder(
                             $childCI, nestedChildData, childReturnData
                         );
