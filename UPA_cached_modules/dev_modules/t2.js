@@ -1,6 +1,7 @@
 
-/* This module ...
- **/
+/**
+ * This module ...
+ */
 
 // (Here 'CI' stands for 'content instance,' which are the live HTML
 // elements, and CL stands for 'content loader' (instances of this
@@ -16,7 +17,8 @@ export function getPlaceholderTemplateTag(contentKey, dataKey) {
 }
 export function convertHTMLTemplate(htmlTemplate) {
     return htmlTemplate.replaceAll(
-        /<<[A-Z][\w\-]*( \$[\w\-\$]*)?>>/g,
+        // /<<[A-Z][\w\-]*( data(\.[\w\$])*(\[\.\.\.\])?)?>>/g,
+        /<<[A-Z][\w\-]*( data[\.\w\$\[\]]*)?>>/g,
         function(str) {
             let keyStr = str.slice(2, -2);
             let spaceIndex = keyStr.indexOf(" ");
@@ -25,7 +27,7 @@ export function convertHTMLTemplate(htmlTemplate) {
             } else {
                 return getPlaceholderTemplateTag(
                     keyStr.substring(0, spaceIndex),
-                    keyStr.substring(spaceIndex + 1)
+                    keyStr.substring(spaceIndex + 5) // leaves out " data".
                 );
             }
         }
@@ -196,12 +198,54 @@ export class ContentLoader {
                 let childDataKey = $childCI.attr("data-data-key");
                 let cl = thisCL.getRelatedContentLoader(childContentKey);
                 if (childDataKey === "") {
+                    // let childData be the new data input in a recursive call
+                    // to loadAndReplacePlaceholder() (now with a new CL).
                     cl.loadAndReplacePlaceholder(
                         $childCI, childData, childReturnData
                     );
+                } else if (/^(\.[\w\$]+)+(\[\.\.\.\])?$/.test(childDataKey)) {
+                    // parse childDataKey of the path to a nested data object
+                    // in childData to use for the new data input(s).
+                    let dataKeyArray = childDataKey.replaceAll("[...]", "")
+                        .split(".");
+                    var nestedChildData = childData;
+                    let len = dataKeyArray.length;
+                    for (let i = 0; i < len; i++) {
+                        nestedChildData = nestedChildData[dataKeyArray[i]];
+                    }
+                    // if childDataKey does not end in "[...]", simply call
+                    // cl.loadAndReplacePlaceholder() with the nestedChildData
+                    // as the input data.
+                    if (childDataKey.slice(-5) !== "[...]")
+                        cl.loadAndReplacePlaceholder(
+                            $childCI, nestedChildData, childReturnData
+                        );
+                    // else, expect that nestedChildData is an array and load
+                    // n CI children, where n is the length of the array, such
+                    // that each child is given one of the data inputs held in
+                    // the array.
+                    } else {
+                        var $nthChildCI = $childCI;
+                        len = nestedChildData.length;
+                        for (let i = 0; i < len; i++) {
+                            cl.loadAfter(
+                                $nthChildCI, cl.contentKey,
+                                nestedChildData[i], childReturnData
+                            );
+                            $nthChildCI = $nthChildCI.next();
+                        }
+                        $childCI.remove();
+                        // NOTE: One should not make decorator CLs of these list
+                        // template keys. That is, do not use htmlTemplates of
+                        // the form "<<Example data.example.example[...]>>";
+                        // always make sure to have these list template keys
+                        // nested (e.g. inside a <div></div>).
+                    }
                 } else {
-                    cl.loadAndReplacePlaceholder(
-                        $childCI, childData[childDataKey], childReturnData
+                    throw (
+                        "ContentLoader.loadAndReplacePlaceholder(): " +
+                        'ill-formed childDataKey: "' + childDataKey +
+                        '" (in ' + childContentKey + ')'
                     );
                 }
             });
