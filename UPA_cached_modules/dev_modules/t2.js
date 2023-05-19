@@ -91,7 +91,7 @@ export class ContentLoader {
         if (contentKey === "self") {
             contentKey = this.contentKey;
         }
-        let cl = this.getRelatedContentLoader(contentKey);
+        let cl = this.getRelatedCL(contentKey);
         cl.loadAndReplacePlaceholder($placeholder, data, returnData);
     }
     loadAfter($obj, contentKey, data, returnData) {
@@ -144,6 +144,38 @@ export class ContentLoader {
 
     addCSS(css) {
         this.cssRules.push(css);
+    }
+
+    getRelatedCL(contentKey) {
+        // if contentKey is that of this CL, return this CL.
+        if (this.contentKey === contentKey) {
+            return this;
+        }
+        // else, first look for the content key in all the child CLs.
+        let len = this.childCLs.length;
+        for (let i = 0; i < len; i++) {
+            if (this.childCLs[i].contentKey === contentKey) {
+                return this.childCLs[i];
+            }
+        }
+        // if no matching child CL is found, go up to the parent CL and repeat
+        // the process recursively, or return a CL dummy if this is the root CL.
+        if (typeof this.parentCL === "undefined") {
+            console.warn(
+                "ContentLoader.getRelatedCL(): " +
+                'no content loader found with content key "' +
+                contentKey + '"'
+            );
+            return {
+                loadAndReplacePlaceholder: function($placeholder) {
+                    $placeholder.replaceWith(
+                        '<template class="Not-implemented CI ' +
+                        contentKey + '"></template>'
+                    );
+                }
+            };
+        }
+        return this.parentCL.getRelatedCL(contentKey);
     }
 
 
@@ -199,7 +231,7 @@ export class ContentLoader {
                 let $childCI = $(this);
                 let childContentKey = $childCI.attr("data-content-key");
                 let childDataKey = $childCI.attr("data-data-key");
-                let cl = thisCL.getRelatedContentLoader(childContentKey);
+                let cl = thisCL.getRelatedCL(childContentKey);
                 if (childDataKey === "") {
                     // let childData be the new data input in a recursive call
                     // to loadAndReplacePlaceholder() (now with a new CL).
@@ -284,38 +316,6 @@ export class ContentLoader {
         if (this.cssRulesAreAdded == false) {
             this.addCSSRulesToDocument();
         }
-    }
-
-    getRelatedContentLoader(contentKey) {
-        // if contentKey is that of this CL, return this CL.
-        if (this.contentKey === contentKey) {
-            return this;
-        }
-        // else, first look for the content key in all the child CLs.
-        let len = this.childCLs.length;
-        for (let i = 0; i < len; i++) {
-            if (this.childCLs[i].contentKey === contentKey) {
-                return this.childCLs[i];
-            }
-        }
-        // if no matching child CL is found, go up to the parent CL and repeat
-        // the process recursively, or return a CL dummy if this is the root CL.
-        if (typeof this.parentCL === "undefined") {
-            console.warn(
-                "ContentLoader.getRelatedContentLoader(): " +
-                'no content loader found with content key "' +
-                contentKey + '"'
-            );
-            return {
-                loadAndReplacePlaceholder: function($placeholder) {
-                    $placeholder.replaceWith(
-                        '<template class="Not-implemented CI ' +
-                        contentKey + '"></template>'
-                    );
-                }
-            };
-        }
-        return this.parentCL.getRelatedContentLoader(contentKey);
     }
 
 

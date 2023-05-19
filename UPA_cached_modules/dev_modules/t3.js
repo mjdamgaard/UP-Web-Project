@@ -325,43 +325,66 @@ pagesWithTabsCL.addCallback(function($ci, data) {
 
 
 
-export var elementListCL = new ContentLoader(
-    "ElementList",
+export var listCL = new ContentLoader(
+    "List",
     /* Initial HTML template */
     '<div>' +
-        '<<Element data.elemDataArr[...]>>' +
+        '<<SelfReplacer data.listElemDataArr[...]>>' +
     '</div>',
-    appColumnCL
+    sdbInterfaceCL
 );
+export var listCL = new ContentLoader(
+    "SelfReplacer",
+    /* Initial HTML template */
+    '<template></template>',
+    sdbInterfaceCL
+);
+listCL.addCallback(function($ci, data, childReturnData, returnData) {
+    data.cl.loadReplaced($ci, "self", data, returnData);
+});
+
+
+
 export var setFieldCL = new ContentLoader(
     "SetField",
     /* Initial HTML template */
     '<div>' +
         '<<SetHeader>>' +
-        '<<ElementList>>' +
+        '<<List>>' +
     '</div>',
     appColumnCL
 );
 setFieldCL.addCallback("data", function(data) {
     if (typeof data.elemDataArr === "undefined") {
-        data.elemDataArr = [{setInfo: data.setInfo}];
+        data.listElemDataArr = [{
+            cl: setFieldCL.getRelatedCL("Element"),
+            setInfo: data.setInfo,
+        }];
     }
 });
 setFieldCL.addCallback(function($ci, data) {
+    // TODO: Change this such that a number of initially appended elements are
+    // looked up in data.
     $ci
         .on("append-elements", function() {
             let $this = $(this);
             let set = $this.data("set");
             let setInfo = $this.data("setInfo");
-            let elemContentKey = $this.data("data").elemContentKey;
+            let elemContentKey = $this.data("data").elemContentKey ?? "Element";
+            let elemCL = setFieldCL.getRelatedCL(elemContentKey)
             let len = set.length;
             let elemDataArr = set.map(function(row) {
-                return {setInfo: setInfo, ratVal: row[0], objID: row[1]};
+                return {
+                    setInfo: setInfo,
+                    ratVal: row[0],
+                    objID: row[1],
+                    cl: elemCL,
+                };
             });
             let childData = {elemDataArr: elemDataArr};
             // reload the ElementList, with the potentially new elemDataArr.
             let $obj = $this.children('.CI.ElementList');
-            elementListCL.loadReplaced($obj, self, childData);
+            elementListCL.loadReplaced($obj, elemContentKey, childData);
         })
         .on("append-elements-if-ready", function() {
             let $this = $(this);

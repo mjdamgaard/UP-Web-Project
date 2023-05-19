@@ -58,27 +58,21 @@ categoryMainContentCL.addCallback("data", function(data) {
     ];
     data.defaultTab = "Subategories";
 });
-export var categoryInfoPageCL = new ContentLoader(
-    "CategoryInfoPage",
-    /* Initial HTML template */
-    '<div>Not implemented yet.</div>',
-    appColumnCL
-);
 export var categorySubategoriesPageCL = new ContentLoader(
     "CategorySubategoriesPage",
     /* Initial HTML template */
     '<div>' +
-        '<<ElementsSetField>>' +
+        '<<SubategoriesSetField>>' +
     '</div>',
     appColumnCL
 );
-export var elementsSetFieldCL = new ContentLoader(
-    "ElementsSetField",
+export var subategoriesSetFieldCL = new ContentLoader(
+    "SubategoriesSetField",
     /* Initial HTML template */
     '<<SetField>>',
     appColumnCL
 );
-elementsSetFieldCL.addCallback("data", function(data) {
+subategoriesSetFieldCL.addCallback("data", function(data) {
     return {
         user: data.user,
         subjID: data.entityID,
