@@ -325,7 +325,7 @@ pagesWithTabsCL.addCallback(function($ci, data) {
 
 
 
-export var setFieldCL = new ContentLoader(
+export var elementListCL = new ContentLoader(
     "ElementList",
     /* Initial HTML template */
     '<div>' +
@@ -344,9 +344,100 @@ export var setFieldCL = new ContentLoader(
 );
 setFieldCL.addCallback("data", function(data) {
     if (typeof data.elemDataArr === "undefined") {
-        data.elemDataArr = [{ setInfo: data.setInfo }];
+        data.elemDataArr = [{setInfo: data.setInfo}];
     }
 });
+setFieldCL.addCallback(function($ci, data) {
+    $ci
+        .on("append-elements", function() {
+            let $this = $(this);
+            let set = $this.data("set");
+            let setInfo = $this.data("setInfo");
+            let elemContentKey = $this.data("data").elemContentKey;
+            let len = set.length;
+            let elemDataArr = set.map(function(row) {
+                return {setInfo: setInfo, ratVal: row[0], objID: row[1]};
+            });
+            let childData = {elemDataArr: elemDataArr};
+            // reload the ElementList, with the potentially new elemDataArr.
+            let $obj = $this.children('.CI.ElementList');
+            elementListCL.loadReplaced($obj, self, childData);
+        })
+        .on("append-elements-if-ready", function() {
+            let $this = $(this);
+            let set = $this.data("set");
+            let setInfo = $this.data("setInfo");
+            if ((set ?? false) && (setInfo ?? false)) {
+                $this.off("append-elements-if-ready")
+                    .trigger("append-elements");
+            }
+        });
+});
+setFieldCL.addCallback(function($ci, data) {
+    let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+    if (typeof data.set === "undefined") {
+        let reqData;
+        if (typeof data.setID === "undefined") {
+            reqData = {
+                type: "setSK",
+                uid: data.user, // TODO: Change (add more options).
+                sid: data.subjID,
+                rid: data.relID,
+                rl: "", rh: "",
+                n: 10000, o: 0,
+                a: 0,
+            };
+        } else {
+            reqData = {
+                type: "set",
+                id: data.setID,
+                rl: "", rh: "",
+                n: 10000, o: 0,
+                a: 0,
+            }; // TODO: Change to look all this up (using ?? op.).
+        }
+        dbReqManager.query($ci, reqData, function($ci, result) {
+            $ci.data("set", result)
+                .trigger("append-elements-if-ready");
+        });
+    } else {
+        $ci.data("set", data.set);
+        $ci.trigger("append-elements-if-ready");
+    }
+    if (typeof data.setInfo === "undefined") {
+        let reqData;
+        if (typeof data.setID === "undefined") {
+            reqData = {
+                type: "setInfoSK",
+                uid: data.user,
+                sid: data.subjID,
+                rid: data.relID,
+            };
+        } else {
+            reqData = {
+                type: "setInfo",
+                id: data.setID,
+            };
+        }
+        dbReqManager.query($ci, reqData, function($ci, result) {
+            $ci.data("setInfo", result)
+                .trigger("append-elements-if-ready");
+        });
+    } else {
+        $ci.data("setInfo", data.setInfo);
+        $ci.trigger("append-elements-if-ready");
+    }
+});
+// TODO: Change this such that a number of initially appended elements are
+// looked up in data.
+// TODO: Add a dropdown content key as well to the inut data for SetFields,
+// as well as a boolean telling whether the dropdown should be shown already
+// as default for all elements in the list.
+
+
+
+
+
 export var setHeaderCL = new ContentLoader(
     "SetHeader",
     /* Initial HTML template */
@@ -356,82 +447,6 @@ export var setHeaderCL = new ContentLoader(
     '</div>',
     appColumnCL
 );
-setFieldCL.addCallback(function($ci, data) {
-    let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-    let setReqData, infoReqData;
-    if (typeof data.setID !== "undefined") {
-        setReqData = {
-            type: "set",
-            id: data.setID,
-            rl: "", rh: "",
-            n: 10000, o: 0, // TODO: Change to look all this up (using ?? op.).
-            a: 0,
-        };
-        infoReqData = {
-            type: "setInfo",
-            id: data.setID,
-        };
-    } else {
-        setReqData = {
-            type: "setSK",
-            uid: data.user, // TODO: Change (add more options).
-            sid: data.subjID,
-            rid: data.relID,
-            rl: "", rh: "",
-            n: 10000, o: 0,
-            a: 0,
-        };
-        infoReqData = {
-            type: "setInfoSK",
-            uid: data.user,
-            sid: data.subjID,
-            rid: data.relID,
-        };
-    }
-
-    if (typeof $ci.data("setInfo") === "undefined") {
-        dbReqManager.query($ci, infoReqData, function($ci, result) {
-            $ci.data("setInfo", result)
-                .trigger("append-elements-if-ready");
-        });
-    }
-    if (typeof $ci.data("set") === "undefined") {
-        dbReqManager.query($ci, setReqData, function($ci, result) {
-            $ci.data("set", result)
-                .trigger("append-elements-if-ready");
-        });
-    } else {
-        $ci.trigger("append-elements-if-ready");
-    }
-});
-setFieldCL.addCallback(function($ci, data) {
-    // TODO: Change this such that a number of initially appended elements are
-    // looked up in data.
-    // TODO: Add a dropdown content key as well to the inut data for SetFields,
-    // as well as a boolean telling whether the dropdown should be shown already
-    // as default for all elements in the list.
-    $ci.on("append-elements-if-ready", function() {
-        let $this = $(this);
-        let set = $this.data("set");
-        let setInfo = $this.data("setInfo");
-        let elemContentKey = $this.data("data").elemContentKey;
-        if ((set ?? false) && (setInfo ?? false)) {
-            let len = set.length;
-            for (let i = 0; i < len; i++) {
-                let data = {
-                    setInfo: setInfo,
-                    ratVal: set[i][0],
-                    objID: set[i][1]
-                };
-                let $obj = $this.children('.element-container');
-                setFieldCL.loadPrepended($obj, "elemContentKey", data);
-            }
-        }
-    });
-});
-
-
-
 
 
 

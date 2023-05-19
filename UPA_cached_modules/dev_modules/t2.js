@@ -88,6 +88,9 @@ export class ContentLoader {
             data = data ?? {};
             returnData = returnData ?? {};
         }
+        if (contentKey === "self") {
+            contentKey = this.contentKey;
+        }
         let cl = this.getRelatedContentLoader(contentKey);
         cl.loadAndReplacePlaceholder($placeholder, data, returnData);
     }
@@ -229,8 +232,8 @@ export class ContentLoader {
                         len = nestedChildData.length;
                         for (let i = 0; i < len; i++) {
                             cl.loadAfter(
-                                $nthChildCI, cl.contentKey,
-                                nestedChildData[i], childReturnData
+                                $nthChildCI, "self", nestedChildData[i],
+                                childReturnData
                             );
                             $nthChildCI = $nthChildCI.next();
                         }
