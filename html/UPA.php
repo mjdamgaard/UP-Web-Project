@@ -40,7 +40,7 @@ if (!isset($_POST["tid"])) {
     $_POST["et"] = "c";
 }
 if (!isset($_POST["tid"])) {
-    $_POST["eid"] = "3";
+    $_POST["eid"] = "1";
 }
 if (!isset($_POST["uid"])) {
     $_POST["uid"] = "1";

@@ -30,37 +30,31 @@ export class DBRequestManager {
             let ongoingQueries = thisDBReqManager.ongoingQueries;
             let queryQueue = ongoingQueries[reqDataKey];
             delete ongoingQueries[reqDataKey];
-            // for multi-row results, unless reqData.type equals "set" or
-            // "setSK", sanitize the first column of the result.
-            let len = result.length;
-            if (len > 1) {
-                if (reqData.type !== "set" && reqData.type !== "setSK") {
-                    for (let i = 0; i < len; i++) {
-                        result[i][0] = result[i][0]
-                            .replaceAll("&", "&amp;")
-                            .replaceAll("<", "&lt;")
-                            .replaceAll(">", "&gt;")
-                            .replaceAll('"', "&quot;")
-                            .replaceAll("'", "&apos;");
+            // unless reqData.type equals "set", "setSK" or "bin", sanitize all
+            // cells in the result table containing string values.
+            if (
+                reqData.type !== "set" &&
+                reqData.type !== "setSK" &&
+                reqData.type !== "bin"
+            ) {
+                // TODO: Investigate how jQuery's automatic JSON-parsing of the
+                // numerical data as number types works for BIGINT outputs (will
+                // this cause overflow bugs??).
+                let colLen = result.length;
+                let rowLen = (result[0] ?? []).length;
+                for (let i = 0; i < colLen; i++) {
+                    for (let j = 0; j < rowLen; j++) {
+                        if (typeof result[i][j] === "string") {
+                            result[i][j] = result[i][j]
+                                .replaceAll("&", "&amp;")
+                                .replaceAll("<", "&lt;")
+                                .replaceAll(">", "&gt;")
+                                .replaceAll('"', "&quot;")
+                                .replaceAll("'", "&apos;");
+                        }
                     }
                 }
-            // else for single-row results, unless unless reqData.type equals
-            // "bin", sanitize all columns.
-            } else {
-                let len = result[0].length;
-                if (reqData.type !== "bin") {
-                    for (let i = 0; i < len; i++) {
-                        result[0][i] = result[0][i]
-                            .replaceAll("&", "&amp;")
-                            .replaceAll("<", "&lt;")
-                            .replaceAll(">", "&gt;")
-                            .replaceAll('"', "&quot;")
-                            .replaceAll("'", "&apos;");
-                    }
-                }
-            } // TODO: consider using a switch--case stmt. to reduce unecessary
-            // sanitation.
-
+            }
             // if cacheKey is not nullish, store the result in this.cache.
             if (typeof cacheKey !== "undefined") {
                 thisDBReqManager.cache[cacheKey] = result;

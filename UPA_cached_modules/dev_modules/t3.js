@@ -339,7 +339,7 @@ export var selfReplacerCL = new ContentLoader(
     '<template></template>',
     sdbInterfaceCL
 );
-listCL.addCallback(function($ci, data, childReturnData, returnData) {
+selfReplacerCL.addCallback(function($ci, data, childReturnData, returnData) {
     data.cl.loadReplaced($ci, "self", data, returnData);
 });
 

@@ -76,7 +76,7 @@ subategoriesSetFieldCL.addCallback("data", function(data) {
     return {
         user: data.user,
         subjID: data.entityID,
-        relID: 1,
+        relID: "1",
         elemContentKey: "CategoryElement",
     };
 });

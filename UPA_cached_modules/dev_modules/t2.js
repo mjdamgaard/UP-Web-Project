@@ -166,14 +166,10 @@ export class ContentLoader {
                 'no content loader found with content key "' +
                 contentKey + '"'
             );
-            return {
-                loadAndReplacePlaceholder: function($placeholder) {
-                    $placeholder.replaceWith(
-                        '<template class="Not-implemented CI ' +
-                        contentKey + '"></template>'
-                    );
-                }
-            };
+            return new ContentLoader(
+                contentKey,
+                '<template class="Not-implemented-yet"></template>',
+            );
         }
         return this.parentCL.getRelatedCL(contentKey);
     }
@@ -260,7 +256,7 @@ export class ContentLoader {
                     // n CI children, where n is the length of the array, such
                     // that each child is given one of the data inputs held in
                     // the array.
-                    } else {
+                } else {
                         var $nthChildCI = $childCI;
                         len = nestedChildData.length;
                         for (let i = 0; i < len; i++) {
