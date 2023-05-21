@@ -214,7 +214,7 @@ supercategoryNavCL.addCallback(function($ci, data) {
                 return Object.assign(
                     Object.assign({}, data),
                     {title: row[0], catID: row[1]}
-                ); 
+                );
             });
         $ci.trigger("reload");
     });
