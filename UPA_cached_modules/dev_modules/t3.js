@@ -17,12 +17,42 @@ export var sdbInterfaceCL = new ContentLoader(
         '<<ColumnInterfaceHeader>>' +
         '<main>' +
             '<div class="left-margin"></div>' +
-            '<div class="app-column-container"></div>' +
+            '<<AppColumnList>>' +
             '<div class="right-margin"></div>' +
         '</main>' +
     '</div>',
 );
 sdbInterfaceCL.dynamicData.dbReqManager = new DBRequestManager();
+
+export var appColumnListCL = new ContentLoader(
+    "AppColumnList",
+    /* Initial HTML template */
+    '<<List>>',
+    sdbInterfaceCL
+);
+
+export var listCL = new ContentLoader(
+    "List",
+    /* Initial HTML template */
+    '<div>' +
+        '<<SelfReplacer data.listElemDataArr[...]>>' +
+    '</div>',
+    sdbInterfaceCL
+);
+export var selfReplacerCL = new ContentLoader(
+    "SelfReplacer",
+    /* Initial HTML template */
+    '<template></template>',
+    sdbInterfaceCL
+);
+selfReplacerCL.addCallback(function($ci, data, childReturnData, returnData) {
+    data.cl.loadReplaced($ci, "self", data.data ?? data, returnData);
+});
+
+appColumnListCL.addCallback("data", function(data) {
+    data.columnSpecs.data ??= data;
+    data.listElemDataArr = data.columnSpecs;
+});
 
 export var columnInterfaceHeaderCL = new ContentLoader(
     "ColumnInterfaceHeader",
@@ -45,20 +75,19 @@ export var columnHeaderCL = new ContentLoader(
     "ColumnHeader",
     /* Initial HTML template */
     '<div>' +
-        // '<<ColumnButtonContainer>>' +
-        '<<CloseButton>>' +
+        '<<ColumnButtonContainer>>' +
     '</div>',
     appColumnCL,
 );
-// export var columnButtonContainerCL = new ContentLoader(
-//     "ColumnButtonContainer",
-//     /* Initial HTML template */
-//     '<div>' +
-//         // '<<PinButton>>' +
-//         '<<CloseButton>>' +
-//     '<div>',
-//     columnHeaderCL,
-// );
+export var columnButtonContainerCL = new ContentLoader(
+    "ColumnButtonContainer",
+    /* Initial HTML template */
+    '<div>' +
+        // '<<PinButton>>' +
+        '<<CloseButton>>' +
+    '<div>',
+    columnHeaderCL,
+);
 export var closeButtonCL = new ContentLoader(
     "CloseButton",
     /* Initial HTML template */
@@ -86,15 +115,15 @@ export var columnMainCL = new ContentLoader(
 );
 
 
-// make the ColumnBasedSDBInterface automatically load a column with a CL
-// pointed to by data.columnContentKey in the first (outward) callback.
-sdbInterfaceCL.addCallback(function($ci, data) {
-    appColumnCL.loadAppended(
-        $ci.find('.app-column-container'),
-        data.columnContentKey,
-        data
-    );
-});
+// // make the ColumnBasedSDBInterface automatically load a column with a CL
+// // pointed to by data.columnContentKey in the first (outward) callback.
+// sdbInterfaceCL.addCallback(function($ci, data) {
+//     appColumnCL.loadAppended(
+//         $ci.find('.app-column-container'),
+//         data.columnContentKey,
+//         data
+//     );
+// });
 // make the AppColumn also load its header and main according to the input data.
 appColumnCL.addCallback(function($ci, data) {
     let $columnHeader = $ci.find('.CI.ColumnHeader');
@@ -326,25 +355,6 @@ pagesWithTabsCL.addCallback(function($ci, data) {
 
 
 
-export var listCL = new ContentLoader(
-    "List",
-    /* Initial HTML template */
-    '<div>' +
-        '<<SelfReplacer data.listElemDataArr[...]>>' +
-    '</div>',
-    sdbInterfaceCL
-);
-export var selfReplacerCL = new ContentLoader(
-    "SelfReplacer",
-    /* Initial HTML template */
-    '<template></template>',
-    sdbInterfaceCL
-);
-selfReplacerCL.addCallback(function($ci, data, childReturnData, returnData) {
-    data.cl.loadReplaced($ci, "self", data, returnData);
-});
-
-
 
 export var setFieldCL = new ContentLoader(
     "SetField",
@@ -356,12 +366,10 @@ export var setFieldCL = new ContentLoader(
     appColumnCL
 );
 setFieldCL.addCallback("data", function(data) {
-    if (typeof data.elemDataArr === "undefined") {
-        data.listElemDataArr = [{
-            cl: setFieldCL.getRelatedCL("Element"),
-            setInfo: data.setInfo,
-        }];
-    }
+    data.listElemDataArr ??= [{
+        cl: setFieldCL.getRelatedCL("Element"),
+        data: data,
+    }];
 });
 setFieldCL.addCallback(function($ci, data) {
     // TODO: Change this such that a number of initially appended elements are
@@ -380,6 +388,8 @@ setFieldCL.addCallback(function($ci, data) {
                     ratVal: row[0],
                     objID: row[1],
                     cl: elemCL,
+                    user: data.user,
+                    preferenceUser: data.preferenceUser,
                 };
             });
             let childData = {listElemDataArr: listElemDataArr};

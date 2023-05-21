@@ -20,7 +20,7 @@ export var categoryColumnCL = new ContentLoader(
     "CategoryColumn",
     /* Initial HTML template */
     '<<AppColumn>>',
-    appColumnCL
+    sdbInterfaceCL
 );
 categoryColumnCL.addCallback("data", function(data) {
     var childData = Object.assign({}, data);
@@ -72,7 +72,7 @@ export var subategoriesSetFieldCL = new ContentLoader(
     '<<SetField>>',
     appColumnCL
 );
-subategoriesSetFieldCL.addCallback("data", function(data) {
+subategoriesSetFieldCL.addCallback("data", function(data) {debugger;
     return {
         user: data.user,
         subjID: data.entityID,

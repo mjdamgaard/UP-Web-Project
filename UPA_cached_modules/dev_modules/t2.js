@@ -80,18 +80,19 @@ export class ContentLoader {
     // restructuring and/or repurposing.)
 
     loadReplaced($placeholder, contentKey, data, returnData) {
+        let cl;
         if (typeof contentKey === "object") {
             data = contentKey.data ?? {};
-            contentKey = contentKey.contentKey;
+            cl = contentKey.cl ?? this.getRelatedCL(contentKey.contentKey);
             returnData = data ?? {};
         } else {
+            if (contentKey === "self") {
+                contentKey = this.contentKey;
+            }
             data = data ?? {};
+            cl = this.getRelatedCL(contentKey);
             returnData = returnData ?? {};
         }
-        if (contentKey === "self") {
-            contentKey = this.contentKey;
-        }
-        let cl = this.getRelatedCL(contentKey);
         cl.loadAndReplacePlaceholder($placeholder, data, returnData);
     }
     loadAfter($obj, contentKey, data, returnData) {
