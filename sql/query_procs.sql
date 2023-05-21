@@ -23,6 +23,7 @@ SELECT "Query procedures";
 -- DROP PROCEDURE searchForKeywordStrings;
 -- DROP PROCEDURE searchForKeywordStringsBooleanMode;
 -- DROP PROCEDURE selectSuperCatDefs;
+-- DROP PROCEDURE selectSuperCatTitleAndIDs;
 -- DROP PROCEDURE selectText;
 -- DROP PROCEDURE selectBinary;
 -- DROP PROCEDURE selectList;
@@ -532,6 +533,44 @@ BEGIN
 END //
 DELIMITER ;
 
+
+DELIMITER //
+CREATE PROCEDURE selectSuperCatTitleAndIDs (
+    IN catID BIGINT UNSIGNED,
+    IN maxNum INT
+)
+BEGIN
+    DECLARE str VARCHAR(255);
+    DECLARE superCatID BIGINT UNSIGNED;
+    DECLARE n INT UNSIGNED;
+
+    CREATE TEMPORARY TABLE ret
+        SELECT title, id
+        FROM Categories
+        WHERE id = NULL;
+
+    SET n = 0;
+    label1: LOOP
+        IF (catID = 0 OR n >= maxNum) THEN
+            LEAVE label1;
+        END IF;
+        SELECT title, super_cat_id INTO str, superCatID
+        FROM Categories
+        WHERE id = catID;
+        INSERT INTO ret (title, id)
+        VALUES (str, catID);
+        SET catID = superCatID;
+        SET n = n + 1;
+        ITERATE label1;
+    END LOOP label1;
+
+    SELECT
+        title AS title,
+        id AS catID
+    FROM ret
+    ORDER BY id DESC;
+END //
+DELIMITER ;
 
 
 

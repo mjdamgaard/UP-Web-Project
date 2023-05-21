@@ -191,6 +191,12 @@ switch ($reqType) {
         $typeArr = array("id", "int");
         // output: [[title, superCatID], ...].
         break;
+    case "superCatTitles":
+        $sql = "CALL selectSuperCatTitleAndIDs (?, ?)";
+        $paramNameArr = array("id", "n");
+        $typeArr = array("id", "int");
+        // output: [[title, catID], ...].
+        break;
     case "text":
         $sql = "CALL selectText (?)";
         $paramNameArr = array("id");
