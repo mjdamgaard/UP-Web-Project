@@ -141,6 +141,7 @@ appColumnCL.addCallback(function($ci) {
         })
         .one("click", function() {
             $(this).data("data").isOverwritable = false;
+            return false;
         });
 });
 // make all the initial columns non-overwritable from the beginning.
@@ -385,6 +386,7 @@ setFieldCL.addCallback(function($ci, data) {
             // reload the ElementList, with the potentially new elemDataArr.
             let $obj = $this.children('.CI.List');
             listCL.loadReplaced($obj, "self", childData);
+            return false;
         })
         .on("append-elements-if-ready", function() {
             let $this = $(this);
@@ -394,6 +396,7 @@ setFieldCL.addCallback(function($ci, data) {
                 $this.off("append-elements-if-ready")
                     .trigger("append-elements");
             }
+            return false;
         });
 });
 setFieldCL.addCallback(function($ci, data) {

@@ -36,10 +36,10 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 }
 
 
-if (!isset($_POST["tid"])) {
+if (!isset($_POST["et"])) {
     $_POST["et"] = "c";
 }
-if (!isset($_POST["tid"])) {
+if (!isset($_POST["eid"])) {
     $_POST["eid"] = "1";
 }
 if (!isset($_POST["uid"])) {
@@ -103,7 +103,7 @@ $mainModuleID = "10";
 <script id="upaMainFunLoader" type="module">
     import {
         upa_main
-    } from "./UPA_scripts.php?id=<?php echo $mainModuleID; ?>";
+    } from "/UPA_scripts.php?id=<?php echo $mainModuleID; ?>";
     upa_main(<?php
         echo '"' .
             $preferenceUserID . '", "' .

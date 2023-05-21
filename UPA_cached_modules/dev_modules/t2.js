@@ -255,10 +255,12 @@ export class ContentLoader {
                     // else, expect that nestedChildData is an array and load
                     // n CI children, where n is the length of the array, such
                     // that each child is given one of the data inputs held in
-                    // the array.
+                    // the array. If the array is null/undefined, simply do not
+                    // load any CI children, similar to what is done if the
+                    // array is empty.
                 } else {
                         var $nthChildCI = $childCI;
-                        len = nestedChildData.length;
+                        len = (nestedChildData ?? []).length;
                         for (let i = 0; i < len; i++) {
                             cl.loadAfter(
                                 $nthChildCI, "self", nestedChildData[i],

@@ -91,18 +91,24 @@ export var categoryElementCL = new ContentLoader(
     '</div>',
     appColumnCL
 );
+categoryElementCL.addCallback("data", function(data) {
+    data.catID = data.objID;
+});
 export var categoryTitleCL = new ContentLoader(
     "CategoryTitle",
     /* Initial HTML template */
-    '<span>' +
-    '</span>',
+    '<a href="#">' +
+    '</a>',
     appColumnCL
 );
 categoryTitleCL.addCallback(function($ci, data) {
+    if (typeof data.title === "string") {
+        $ci.append(data.title);
+    }
     let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
     let reqData = {
         type: "cat",
-        id: data.objID,
+        id: data.catID,
     };
     dbReqManager.query($ci, reqData, function($ci, result) {
         $ci.append(
@@ -113,6 +119,22 @@ categoryTitleCL.addCallback(function($ci, data) {
         );
     });
 });
+categoryTitleCL.addCallback(function($ci, data) {
+    $ci
+        .on("click", function(event) {
+            let columnData = {
+                columnContentKey: "CategoryColumn",
+                preferenceUser: data.preferenceUser,
+                entityType: "c",
+                entityID: data.catID,
+                user: data.user,
+            };
+            $(this).trigger("open-column", [
+                columnData, "right", true
+            ]);
+        });
+});
+
 // At some point, we'll have composite sets as well, for which we'll need to
 // display several ratings in the list.
 export var setRatingContainerCL = new ContentLoader(
@@ -167,15 +189,45 @@ export var elementCL = new ContentLoader(
 export var supercategoryNavCL = new ContentLoader(
     "SupercategoryNav",
     /* Initial HTML template */
-    '<div class="element">' +
-        '<<SupercategoryNav>>' +
-        '<<CategoryTitle>>' +
-        '<<SetRatingContainer>>' +
-        '<<CategoryElementDropdown>>' +
-    '</div>',
+    '<ul>' +
+        '<<SupercategoryNavItem data.reversedSuperCatDefs[...]>>' +
+    '</ul>',
     appColumnCL
 );
-
+export var supercategoryNavItemCL = new ContentLoader(
+    "SupercategoryNavItem",
+    /* Initial HTML template */
+    '<li>' +
+        '<<CategoryTitle>>' +
+    '</li>',
+    appColumnCL
+);
+supercategoryNavCL.addCallback(function($ci, data) {
+    $ci
+        .on("reload", function(event) {
+            let data = $ci.data("data");
+            supercategoryNavCL.loadReplaced($(this), "self", data)
+            return false;
+        });
+});
+supercategoryNavCL.addCallback(function($ci, data) {
+    if (typeof data.reversedSuperCatDefs !== "undefined") {
+        return;
+    }
+    let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+    let reqData = {
+        type: "superCatDefs",
+        id: data.catID,
+        n: 20,
+    };
+    dbReqManager.query($ci, reqData, function($ci, result) {
+        $ci.data("data").reversedSuperCatDefs = result.reverse()
+            .map(function(row) {
+                return {title: row[0], catID: row[1]};
+            });
+        $ci.trigger("reload");
+    });
+});
 
 
 
