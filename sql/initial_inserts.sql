@@ -34,8 +34,6 @@ CALL insertOrFindRel (1, 'c', 't', "Elements");
 CALL insertOrFindRel (1, 'c', 'c', "Duplicates");
 CALL insertOrFindRel (1, 't', 't', "Duplicates");
 
-CALL insertOrFindRel (1, 'c', 'c', "Duplicate that is better to use");
-CALL insertOrFindRel (1, 't', 't', "Duplicate that is better to use");
 
 
 -- insert some example inputs of all kinds to use for development.

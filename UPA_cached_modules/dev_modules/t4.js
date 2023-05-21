@@ -86,6 +86,14 @@ export var categoryElementCL = new ContentLoader(
     '<div class="element">' +
         '<<SupercategoryNav>>' +
         '<<CategoryTitle>>' +
+            // test:
+            '<<CategoryTitle>>' +
+            '<<CategoryTitle>>' +
+            '<<CategoryTitle>>' +
+            '<<CategoryTitle>>' +
+            '<<CategoryTitle>>' +
+            '<<CategoryTitle>>' +
+            '<<CategoryTitle>>' +
         '<<SetRatingContainer>>' +
         '<<CategoryElementDropdown>>' +
     '</div>',
@@ -94,16 +102,56 @@ export var categoryElementCL = new ContentLoader(
 export var categoryTitleCL = new ContentLoader(
     "CategoryTitle",
     /* Initial HTML template */
+    '<span>' +
+    '</span>',
+    appColumnCL
+);
+categoryTitleCL.addCallback(function($ci, data) {
+    let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+    let reqData = {
+        type: "cat",
+        id: data.objID,
+    };
+    dbReqManager.query($ci, reqData, function($ci, result) {
+        $ci.append(
+            (
+                result[0] ??
+                ['<span class="missing-title">Title is missing</span>']
+            )[0]
+        );
+    });
+});
+// At some point, we'll have composite sets as well, for which we'll need to
+// display several ratings in the list.
+export var setRatingContainerCL = new ContentLoader(
+    "SetRatingContainer",
+    /* Initial HTML template */
     '<div>' +
-        'Category title test placeholder' +
+        '<<RatingInfoDisplay>>' +
     '</div>',
     appColumnCL
 );
 
+export var ratingInfoDisplayCL = new ContentLoader(
+    "RatingInfoDisplay",
+    /* Initial HTML template */
+    '<div>' +
+        '<<RatingBar>>' +
+        '<<RatingValue>>' +
+    '</div>',
+    appColumnCL
+);
 
-
-
-
+export var ratingValueCL = new ContentLoader(
+    "RatingValue",
+    /* Initial HTML template */
+    '<span>' +
+    '</span>',
+    appColumnCL
+);
+ratingValueCL.addCallback(function($ci, data) {
+    $ci.append(data.ratVal);
+});
 
 
 
