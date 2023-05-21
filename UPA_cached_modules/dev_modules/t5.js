@@ -117,16 +117,15 @@ categoryTitleCL.addCallback(function($ci, data) {
 });
 categoryTitleCL.addCallback(function($ci, data) {
     $ci
-        .on("click", function(event) {
+        .on("click", function(event) {debugger;
             let columnData = {
-                columnContentKey: "CategoryColumn",
                 preferenceUser: data.preferenceUser,
                 entityType: "c",
                 entityID: data.catID,
                 user: data.user,
             };
             $(this).trigger("open-column", [
-                columnData, "right", true
+                "CategoryColumn", columnData, "right", true
             ]);
         });
 });
@@ -209,9 +208,13 @@ supercategoryNavCL.addCallback(function($ci, data) {
         n: 20,
     };
     dbReqManager.query($ci, reqData, function($ci, result) {
-        $ci.data("data").reversedSuperCatDefs = result.reverse()
+        let data = $ci.data("data");
+        data.reversedSuperCatDefs = result.reverse()
             .map(function(row) {
-                return {title: row[0], catID: row[1]};
+                return Object.assign(
+                    Object.assign({}, data),
+                    {title: row[0], catID: row[1]}
+                );
             });
         $ci.trigger("reload");
     });

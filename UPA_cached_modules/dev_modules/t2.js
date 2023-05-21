@@ -179,7 +179,7 @@ export class ContentLoader {
     /* Semi-private methods (not meant as much for public use) */
 
     loadAndReplacePlaceholder($placeholder, data, returnData) {
-        // console.log(this.contentKey);console.log(data);
+        console.log(this.contentKey);console.log(data);
         data ??= {};
         // first insert the new CI after $placeholder.
         $placeholder.after(this.html);

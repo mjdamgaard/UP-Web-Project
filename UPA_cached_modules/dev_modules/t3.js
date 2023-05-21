@@ -123,7 +123,9 @@ export var columnMainCL = new ContentLoader(
 // click interaction with them.
 appColumnCL.addCallback(function($ci) {
     $ci
-        .on("open-column", function(event, data, dir, isOverwritable) {
+        .on("open-column", function(
+            event, contentKey, data, dir, isOverwritable
+        ) {
             let $this = $(this);
             if (dir === "right") {
                 let $existingColumn = $this.next();
@@ -131,7 +133,7 @@ appColumnCL.addCallback(function($ci) {
                 if (existingData.isOverwritable ?? false) {
                     $existingColumn.remove();
                 }
-                sdbInterfaceCL.loadAfter($this, "AppColumn", data);
+                sdbInterfaceCL.loadAfter($this, contentKey, data);
                 $this.next().data("data").isOverwritable =
                     isOverwritable ?? false;
             } else if (dir === "left") {
@@ -140,7 +142,7 @@ appColumnCL.addCallback(function($ci) {
                 if (existingData.isOverwritable ?? false) {
                     $existingColumn.remove();
                 }
-                sdbInterfaceCL.loadBefore($this, "AppColumn", data);
+                sdbInterfaceCL.loadBefore($this, contentKey, data);
                 $this.prev().data("data").isOverwritable =
                     isOverwritable ?? false;
             }
