@@ -43,7 +43,7 @@ $textID = "t" . $paramValArr[0];
 
 // array of text IDs of legal developer-made modules.
 $devModuleIDs = array (
-    "t[1-5]", "t10"
+    "t[1-9]", "t10"
     //TODO: Change these to match the text IDs in the database of the
     // developer-made modules.
 );

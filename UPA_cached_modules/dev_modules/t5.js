@@ -177,17 +177,17 @@ ratingValueCL.addCallback(function($ci, data) {
 export var supercategoryNavCL = new ContentLoader(
     "SupercategoryNav",
     /* Initial HTML template */
-    '<ul>' +
+    '<div>' +
         '<<SupercategoryNavItem data.reversedSuperCatDefs[...]>>' +
-    '</ul>',
+    '</div>',
     appColumnCL
 );
 export var supercategoryNavItemCL = new ContentLoader(
     "SupercategoryNavItem",
     /* Initial HTML template */
-    '<li>' +
+    '<span>' +
         '<<CategoryTitle>>' +
-    '</li>',
+    '</span>',
     appColumnCL
 );
 supercategoryNavCL.addCallback(function($ci, data) {

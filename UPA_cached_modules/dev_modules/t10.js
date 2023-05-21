@@ -6,6 +6,8 @@ import {sdbInterfaceCL} from "/UPA_scripts.php?id=3";
 import * as t4Mod from "/UPA_scripts.php?id=4";
 import * as t5Mod from "/UPA_scripts.php?id=5";
 
+import * as t9Mod from "/UPA_scripts.php?id=9";
+
 
 export function upa_main(preferenceUserID, entityType, entityID, userID) {
     if (preferenceUserID !== "1") {
