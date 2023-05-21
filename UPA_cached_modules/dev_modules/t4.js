@@ -133,6 +133,8 @@ export var ratingInfoDisplayCL = new ContentLoader(
     '</div>',
     appColumnCL
 );
+// TODO: Make a RatingInfoDisplay look its own data up iff the rating value is
+// not found in the input data object.
 
 export var ratingValueCL = new ContentLoader(
     "RatingValue",
@@ -152,10 +154,27 @@ ratingValueCL.addCallback(function($ci, data) {
 });
 
 
+export var elementCL = new ContentLoader(
+    "Element",
+    /* Initial HTML template */
+    '<div>' +
+    '</div>',
+    appColumnCL
+);
 
 
 
-
+export var supercategoryNavCL = new ContentLoader(
+    "SupercategoryNav",
+    /* Initial HTML template */
+    '<div class="element">' +
+        '<<SupercategoryNav>>' +
+        '<<CategoryTitle>>' +
+        '<<SetRatingContainer>>' +
+        '<<CategoryElementDropdown>>' +
+    '</div>',
+    appColumnCL
+);
 
 
 

@@ -317,13 +317,24 @@ CREATE PROCEDURE selectCatIDs (
     IN numOffset INT
 )
 BEGIN
-    SELECT
-        title AS title,
-        id AS catID
-    FROM Categories
-    WHERE (title >= str AND super_cat_id = superCatID)
-    ORDER BY title ASC
-    LIMIT numOffset, maxNum;
+    (
+        SELECT
+            title AS title,
+            id AS catID
+        FROM Categories
+        WHERE (title < str AND (super_cat_id = superCatID OR superCatID = 0))
+        ORDER BY title DESC
+        LIMIT 1
+    ) UNION (
+        SELECT
+            title AS title,
+            id AS catID
+        FROM Categories
+        WHERE (title >= str AND (super_cat_id = superCatID OR superCatID = 0))
+        ORDER BY title ASC
+        LIMIT numOffset, maxNum
+    )
+    ORDER BY title ASC;
 END //
 DELIMITER ;
 
@@ -336,13 +347,24 @@ CREATE PROCEDURE selectTermIDs (
     IN numOffset INT
 )
 BEGIN
-    SELECT
-        title AS title,
-        id AS termID
-    FROM Terms
-    WHERE (title >= str AND cat_id = catID)
-    ORDER BY title ASC
-    LIMIT numOffset, maxNum;
+    (
+        SELECT
+            title AS title,
+            id AS termID
+        FROM Terms
+        WHERE (title < str AND (cat_id = catID OR catID = 0))
+        ORDER BY title DESC
+        LIMIT 1
+    ) UNION (
+        SELECT
+            title AS title,
+            id AS termID
+        FROM Terms
+        WHERE (title >= str AND (cat_id = catID OR catID = 0))
+        ORDER BY title ASC
+        LIMIT numOffset, maxNum
+    )
+    ORDER BY title ASC;
 END //
 DELIMITER ;
 
@@ -356,13 +378,24 @@ CREATE PROCEDURE selectRelIDs (
     IN numOffset INT
 )
 BEGIN
-    SELECT
-        obj_noun AS objNoun,
-        id AS relID
-    FROM Relations
-    WHERE (subj_t = subjType AND obj_t = objType AND obj_noun >= str)
-    ORDER BY obj_noun ASC
-    LIMIT numOffset, maxNum;
+    (
+        SELECT
+            obj_noun AS objNoun,
+            id AS relID
+        FROM Relations
+        WHERE (subj_t = subjType AND obj_t = objType AND obj_noun < str)
+        ORDER BY obj_noun DESC
+        LIMIT 1
+    ) UNION (
+        SELECT
+            obj_noun AS objNoun,
+            id AS relID
+        FROM Relations
+        WHERE (subj_t = subjType AND obj_t = objType AND obj_noun >= str)
+        ORDER BY obj_noun ASC
+        LIMIT numOffset, maxNum
+    )
+    ORDER BY obj_noun ASC;
 END //
 DELIMITER ;
 
@@ -374,13 +407,24 @@ CREATE PROCEDURE selectKeywordStringIDs (
     IN numOffset INT
 )
 BEGIN
-    SELECT
-        str AS str,
-        id AS kwsID
-    FROM KeywordStrings
-    WHERE str >= s
-    ORDER BY str ASC
-    LIMIT numOffset, maxNum;
+    (
+        SELECT
+            str AS str,
+            id AS kwsID
+        FROM KeywordStrings
+        WHERE str < s
+        ORDER BY str DESC
+        LIMIT 1
+    ) UNION (
+        SELECT
+            str AS str,
+            id AS kwsID
+        FROM KeywordStrings
+        WHERE str >= s
+        ORDER BY str ASC
+        LIMIT numOffset, maxNum
+    )
+    ORDER BY str ASC;
 END //
 DELIMITER ;
 
@@ -392,13 +436,24 @@ CREATE PROCEDURE selectPatternIDs (
     IN numOffset INT
 )
 BEGIN
-    SELECT
-        str AS str,
-        id as pattID
-    FROM Patterns
-    WHERE str >= s
-    ORDER BY str ASC
-    LIMIT numOffset, maxNum;
+    (
+        SELECT
+            str AS str,
+            id AS pattID
+        FROM Patterns
+        WHERE str < s
+        ORDER BY str DESC
+        LIMIT 1
+    ) UNION (
+        SELECT
+            str AS str,
+            id AS pattID
+        FROM Patterns
+        WHERE str >= s
+        ORDER BY str ASC
+        LIMIT numOffset, maxNum
+    )
+    ORDER BY str ASC;
 END //
 DELIMITER ;
 
