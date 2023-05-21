@@ -33,7 +33,7 @@ export var categoryHeaderContentCL = new ContentLoader(
     "CategoryHeaderContent",
     /* Initial HTML template */
     '<div>' +
-        '<h3>Category: <span class="title"></span><h3>' +
+        '<h3>Category: <<CategoryTitle>> <h3>' +
     '</div>',
     appColumnCL,
 );

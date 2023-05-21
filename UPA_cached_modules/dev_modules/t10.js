@@ -21,7 +21,7 @@ export function upa_main(preferenceUserID, entityType, entityID, userID) {
         columnSpecs: [
             {
                 cl: sdbInterfaceCL.getRelatedCL("CategoryColumn"),
-                data: initialData,
+                data: Object.assign(initialData, {catID: entityID}),
             },
         ],
     };
