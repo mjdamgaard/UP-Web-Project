@@ -86,14 +86,6 @@ export var categoryElementCL = new ContentLoader(
     '<div class="element">' +
         '<<SupercategoryNav>>' +
         '<<CategoryTitle>>' +
-            // test:
-            '<<CategoryTitle>>' +
-            '<<CategoryTitle>>' +
-            '<<CategoryTitle>>' +
-            '<<CategoryTitle>>' +
-            '<<CategoryTitle>>' +
-            '<<CategoryTitle>>' +
-            '<<CategoryTitle>>' +
         '<<SetRatingContainer>>' +
         '<<CategoryElementDropdown>>' +
     '</div>',
@@ -150,8 +142,28 @@ export var ratingValueCL = new ContentLoader(
     appColumnCL
 );
 ratingValueCL.addCallback(function($ci, data) {
-    $ci.append(data.ratVal);
+    if (data.ratVal.length == 2) {
+        let score = parseInt(data.ratVal, 16) * 10 / 127;
+        $ci.append(score.toFixed(2));
+    } else {
+        let score = parseInt(data.ratVal.substring(0, 4), 16) * 10 / 32767;
+        $ci.append(score.toFixed(2));
+    }
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
