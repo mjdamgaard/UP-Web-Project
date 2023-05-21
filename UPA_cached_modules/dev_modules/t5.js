@@ -230,63 +230,6 @@ supercategoryNavCL.addCallback(function($ci, data) {
 
 
 
-
-// export var pageFieldCL = new ContentLoader(
-//     "PageField",
-//     /* Initial HTML template */
-//     '<div class="container"></div>',
-//     appColumnCL
-// );
-// pageFieldCL.addCallback(function($ci) {
-//     $ci
-//         .on("query-db", function(event, reqData, cacheKey, callback) {
-//             let $this = $(this);
-//             let dbReqManager = $this.data('dbReqManager');
-//             dbReqManager.query($this, reqData, cacheKey, callback);
-//             return false;
-//         })
-//         .on("append-contents", function(event, contentKey, dataArr, selector) {
-//             let $obj = (typeof selector === "undefined") ?
-//                 $(this) : $(this).find(selector);
-//             let len = dataArr.length;
-//             for (let i = 0; i < len; i++) {
-//                 pageFieldCL.loadAppended($obj, contentKey, dataArr[i]);
-//             }
-//             return false;
-//         })
-//         .on("prepend-contents", function(event, contentKey, dataArr, selector) {
-//             let $obj = (typeof selector === "undefined") ?
-//                 $(this) : $(this).find(selector);
-//             let len = dataArr.length;
-//             for (let i = 0; i < len; i++) {
-//                 pageFieldCL.loadPrepended($obj, contentKey, dataArr[i]);
-//             }
-//             return false;
-//         });
-// });
-// export var termListCL = new ContentLoader(
-//     "TermList",
-//     /* Initial HTML template */
-//     '<<PageField>>',
-//     appColumnCL
-// );
-// termListCL.addCallback(function($ci) {
-//     $ci.append('<ul class="list-group"></ul>');
-// });
-// termListCL.addCallback(function($ci) {
-//     $ci
-//         .on("append-elements", function(event, contentKey, elemDataArr) {
-//             $(this).trigger("append-contents",
-//                 [contentKey, elemDataArr, 'ul, ol']
-//             );
-//             return false;
-//         })
-//         .on("empty", function(event, elemDataArr, elemCL) {
-//             $(this).children('ul, ol').empty();
-//             return false;
-//         });
-// });
-//
 //
 // export var extensibleTermListCL = new ContentLoader(
 //     "ExtensibleTermList",
