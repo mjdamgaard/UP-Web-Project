@@ -104,6 +104,7 @@ export var categoryTitleCL = new ContentLoader(
 categoryTitleCL.addCallback(function($ci, data) {
     if (typeof data.title === "string") {
         $ci.append(data.title);
+        return;
     }
     let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
     let reqData = {
@@ -205,7 +206,7 @@ export var supercategoryNavItemCL = new ContentLoader(
 supercategoryNavCL.addCallback(function($ci, data) {
     $ci
         .on("reload", function(event) {
-            let data = $ci.data("data");debugger;
+            let data = $ci.data("data");
             supercategoryNavCL.loadReplaced($(this), "self", data)
             return false;
         });
@@ -219,7 +220,7 @@ supercategoryNavCL.addCallback(function($ci, data) {
         type: "superCatTitles",
         id: data.catID,
         n: 20,
-    };debugger;
+    };
     dbReqManager.query($ci, reqData, function($ci, result) {
         $ci.data("data").reversedSuperCatDefs = result.reverse()
             .map(function(row) {
