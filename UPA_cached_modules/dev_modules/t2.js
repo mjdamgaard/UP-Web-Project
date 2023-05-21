@@ -323,36 +323,26 @@ export class ContentLoader {
     addCSSRulesToDocument() {
         let len = this.cssRules.length;
         for (let i = 0; i < len; i++) {
-            // get the tail end of the rule which is supposed to be prepended
-            // with this CL's and its ancestor CLs' CI classes (which are equal
-            // to their content keys).
-            var ruleTail;
-            let cssRule = this.cssRules[i].trim();
-            if (/^&?[^&\{\}]*\{[^&\{\}]*\}$/.test(cssRule)) {
-                // if the rule starts with a &, let the rule tail be the rest.
-                if (cssRule.substring(0, 1) === "&") {
-                    ruleTail = cssRule.substring(1);
-                // if it is a rule that does not start with "&", prepend a
-                // descendent combinator (" ") to make the rule tail.
-                } else {
-                    ruleTail = " " + cssRule;
-                }
-            // if cssRule is instead a CSS declaration list, wrap it in "{}"
-            // for the rule tail.
-            } else if (/^[^&\{\}]*$/.test(cssRule)) {
-                ruleTail = " {" + cssRule + "}";
-            // else throw an error.
-            } else {
+            let rule = this.cssRules[i].trim();
+            // if rule is a declaration list, wrap it in "& {...}".
+            if (/^[^&\{\}]*$/.test(rule)) {
+                rule = "& {" + rule + "}";
+            }
+            // if rule is a declaration list inside curly braces with no
+            // selector, append "& " to it.
+            if (/^\{[^&\{\}]*\}$/.test(rule)) {
+                rule = "& " + rule;
+            }
+            if (!/^[^\{\}]*\{[^&\{\}]*\}$/.test(rule)) {
                 throw (
                     "ContentLoader.addCSSRulesToDocument(): cssRules " +
-                     "must each be single rules with no nested rules " +
-                     "inside, perhaps beginning with a '&', or they must be " +
-                     "a CSS declaration list (but received '" + cssRule + "')"
+                     "must either be single rules or single CSS declaration " +
+                     "lists (but received '" + this.cssRules[i] + "')"
                 );
             }
-            // construct the resulting rule to append to the document head by
-            // prepending CI classes to the rule tail.
-            let rule = this.getCIClassSelector() + ruleTail;
+            // replace all &'s in the selector with the CLs automatic CI class.
+            rule = rule.replaceAll("&", this.getCIClassSelector());
+            // append the rule to the document head.
             $('html > head').append(
                 '<style class="CI-style">' + rule + '</style>'
             );
