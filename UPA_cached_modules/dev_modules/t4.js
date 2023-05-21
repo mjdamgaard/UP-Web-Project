@@ -22,17 +22,11 @@ export var categoryColumnCL = new ContentLoader(
     '<<AppColumn>>',
     sdbInterfaceCL
 );
-categoryColumnCL.addCallback("data", function(data) {
-    var childData = Object.assign({}, data);
-    childData.headerSpecs = {
-        contentKey: "CategoryHeaderContent",
-        data: data, // TODO: change this..
-    };
-    childData.mainSpecs = {
-        contentKey: "CategoryMainContent",
-        data: data, // TODO: change this..
-    };
-    return childData;
+categoryColumnCL.addCallback(function($ci, data) {
+    let $columnHeader = $ci.find('.CI.ColumnHeader');
+    appColumnCL.loadAppended($columnHeader, "CategoryHeaderContent", data);
+    let $columnMain = $ci.find('.CI.ColumnMain');
+    appColumnCL.loadAppended($columnMain, "CategoryMainContent", data);
 });
 
 export var categoryHeaderContentCL = new ContentLoader(
@@ -72,7 +66,7 @@ export var subategoriesSetFieldCL = new ContentLoader(
     '<<SetField>>',
     appColumnCL
 );
-subategoriesSetFieldCL.addCallback("data", function(data) {debugger;
+subategoriesSetFieldCL.addCallback("data", function(data) {
     return {
         user: data.user,
         subjID: data.entityID,

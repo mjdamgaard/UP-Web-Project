@@ -11,18 +11,19 @@ export function upa_main(preferenceUserID, entityType, entityID, userID) {
         throw "Unrecognized preference user";
     }
 
-    let data;
-    data = {
-        columnSpecs: [
-            {
-                cl: sdbInterfaceCL.getRelatedCL("CategoryColumn"),
-                data: data,
-            },
-        ],
+    let initialData = {
         preferenceUser: preferenceUserID,
         entityType: entityType,
         entityID: entityID,
         user: userID,
+    };
+    let data = {
+        columnSpecs: [
+            {
+                cl: sdbInterfaceCL.getRelatedCL("CategoryColumn"),
+                data: initialData,
+            },
+        ],
     };
     let contentKey = sdbInterfaceCL.contentKey;
     sdbInterfaceCL.loadAppended($('body'), contentKey, data);

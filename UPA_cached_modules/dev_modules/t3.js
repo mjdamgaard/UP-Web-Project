@@ -50,7 +50,6 @@ selfReplacerCL.addCallback(function($ci, data, childReturnData, returnData) {
 });
 
 appColumnListCL.addCallback("data", function(data) {
-    data.columnSpecs.data ??= data;
     data.listElemDataArr = data.columnSpecs;
 });
 
@@ -114,23 +113,6 @@ export var columnMainCL = new ContentLoader(
     appColumnCL,
 );
 
-
-// // make the ColumnBasedSDBInterface automatically load a column with a CL
-// // pointed to by data.columnContentKey in the first (outward) callback.
-// sdbInterfaceCL.addCallback(function($ci, data) {
-//     appColumnCL.loadAppended(
-//         $ci.find('.app-column-container'),
-//         data.columnContentKey,
-//         data
-//     );
-// });
-// make the AppColumn also load its header and main according to the input data.
-appColumnCL.addCallback(function($ci, data) {
-    let $columnHeader = $ci.find('.CI.ColumnHeader');
-    appColumnCL.loadAppended($columnHeader, data.headerSpecs);
-    let $columnMain = $ci.find('.CI.ColumnMain');
-    appColumnCL.loadAppended($columnMain, data.mainSpecs);
-});
 
 
 
