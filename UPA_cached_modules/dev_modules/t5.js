@@ -36,7 +36,7 @@ export var categoryHeaderContentCL = new ContentLoader(
     /* Initial HTML template */
     '<div>' +
         '<<SupercategoryNav>>' +
-        '<h3>Category: <<CategoryTitle>> <h3>' +
+        '<h3>Category: <<SemEntityTitle>> <h3>' +
     '</div>',
     appColumnCL,
 );
@@ -80,17 +80,17 @@ export var categoryElementCL = new ContentLoader(
     /* Initial HTML template */
     '<div class="element">' +
         '<<SupercategoryNav>>' +
-        '<<CategoryTitle>>' +
+        '<<SemEntityTitle>>' +
         '<<SetRatingContainer>>' +
         '<<CategoryElementDropdown>>' +
     '</div>',
     appColumnCL
 );
-categoryElementCL.addCallback("data", function(newData, data) {
-    newData.catID = data.objID;
-});
+// categoryElementCL.addCallback("data", function(newData, data) {
+//     newData.catID = data.objID;
+// });
 export var categoryTitleCL = new ContentLoader(
-    "CategoryTitle",
+    "SemEntityTitle",
     /* Initial HTML template */
     '<a href="#">' +
     '</a>',
@@ -103,8 +103,11 @@ categoryTitleCL.addCallback(function($ci, data) {
     }
     let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
     let reqData = {
-        type: "cat",
-        id: data.catID,
+        type: (data.entityType === "c") ? "cat" :
+            (data.entityType === "t") ? "term" :
+            (data.entityType === "r") ? "rel" :
+            "error: data.entityType == " + data.entityType,
+        id: data.entityID,
     };
     dbReqManager.query($ci, reqData, function($ci, result) {
         $ci.append(
@@ -118,9 +121,12 @@ categoryTitleCL.addCallback(function($ci, data) {
 categoryTitleCL.addCallback(function($ci, data) {
     $ci
         .on("click", function(event) {
-            var columnData = Object.assign({}, data);
-            columnData.entityType = "c";
-            columnData.entityID = data.catID;
+            var columnData = {
+                preferenceUser: data.preferenceUser,
+                entityType: data.entityType,
+                entityID: data.entityID,
+                user: data.user,
+            };
             $(this).trigger("open-column", [
                 "CategoryColumn", columnData, "right", true
             ]);
@@ -182,7 +188,7 @@ export var supercategoryNavItemCL = new ContentLoader(
     "SupercategoryNavItem",
     /* Initial HTML template */
     '<span>' +
-        '<<CategoryTitle>>' +
+        '<<SemEntityTitle>>' +
     '</span>',
     appColumnCL
 );
@@ -201,7 +207,7 @@ supercategoryNavCL.addCallback(function($ci, data) {
     let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
     let reqData = {
         type: "superCatTitles",
-        id: data.catID,
+        id: data.entityID,
         n: 20,
     };
     dbReqManager.query($ci, reqData, function($ci, result) {
@@ -210,7 +216,7 @@ supercategoryNavCL.addCallback(function($ci, data) {
             .map(function(row) {
                 return Object.assign(
                     Object.assign({}, data),
-                    {title: row[0], catID: row[1]}
+                    {title: row[0], entityID: row[1], entityType: "c"}
                 );
             });
         $ci.trigger("reload");
@@ -249,52 +255,12 @@ export var termElementCL = new ContentLoader(
     /* Initial HTML template */
     '<div class="element">' +
         '<<CategoryNav>>' +
-        '<<TermTitle>>' +
+        '<<SemEntityTitle>>' +
         '<<SetRatingContainer>>' +
         '<<TermElementDropdown>>' +
     '</div>',
     appColumnCL
 );
-termElementCL.addCallback("data", function(newData, data) {
-    newData.termID = data.objID;
-});
-export var termTitleCL = new ContentLoader(
-    "TermTitle",
-    /* Initial HTML template */
-    '<a href="#">' +
-    '</a>',
-    appColumnCL
-);
-termTitleCL.addCallback(function($ci, data) {
-    if (typeof data.title === "string") {
-        $ci.append(data.title);
-        return;
-    }
-    let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-    let reqData = {
-        type: "term",
-        id: data.termID,
-    };
-    dbReqManager.query($ci, reqData, function($ci, result) {
-        $ci.append(
-            (
-                result[0] ??
-                ['<span class="missing-title">Title is missing</span>']
-            )[0]
-        );
-    });
-});
-termTitleCL.addCallback(function($ci, data) {
-    $ci
-        .on("click", function(event) {
-            var columnData = Object.assign({}, data);
-            columnData.entityType = "t";
-            columnData.entityID = data.termID;
-            $(this).trigger("open-column", [
-                "TermColumn", columnData, "right", true
-            ]);
-        });
-});
 
 
 

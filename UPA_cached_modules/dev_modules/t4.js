@@ -44,10 +44,9 @@ setFieldCL.addCallback(function($ci, data) {
                 return {
                     setInfo: setInfo,
                     ratVal: row[0],
-                    objID: row[1],
+                    entityID: row[1],
+                    entityType: setInfo[6],
                     cl: elemCL,
-                    user: data.user,
-                    preferenceUser: data.preferenceUser,
                 };
             });
             let childData = {listElemDataArr: listElemDataArr};
@@ -114,7 +113,7 @@ setFieldCL.addCallback(function($ci, data) {
             };
         }
         dbReqManager.query($ci, reqData, function($ci, result) {
-            $ci.data("setInfo", result)
+            $ci.data("setInfo", result[0] ?? result)
                 .trigger("append-elements-if-ready");
         });
     } else {
