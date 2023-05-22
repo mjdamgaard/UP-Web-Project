@@ -23,8 +23,8 @@ export var setFieldCL = new ContentLoader(
     '</div>',
     appColumnCL
 );
-setFieldCL.addCallback("data", function(data) {
-    data.listElemDataArr ??= [{
+setFieldCL.addCallback("data", function(newData, data) {
+    newData.listElemDataArr = [{
         cl: setFieldCL.getRelatedCL("Element"),
         data: data,
     }];

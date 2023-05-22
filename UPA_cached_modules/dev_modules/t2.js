@@ -211,8 +211,6 @@ export class ContentLoader {
         $ci.addClass(existingClasses)
             .addClass("CI")
             .addClass(this.contentKey);
-        // store a reference to the data (input) object on the CI.
-        $ci.data("data", data);
         // if the the placeholder does not contain a "contentKey" already
         // (from a decorating CL), set the (outer) content key of this CI as
         // the one of this CL.
@@ -234,82 +232,25 @@ export class ContentLoader {
         // If this array is empty, the child CIs will get a reference to the
         // same "data" object as their parent (this one).
         let len = this.dataSetterCallbacks.length;
-        var childData = data;
+        var newData = {};
         for (let i = 0; i < len; i++) {
-            childData = this.dataSetterCallbacks[i](data, childData) ??
-                childData;
+            newData = this.dataSetterCallbacks[i](newData, data) ?? newData;
+        }
+        if (len > 0) {
+            data = Object.assign(Object.assign({}, data), newData);
         }
 
         // load all the descendent CIs.
         var childReturnData = {};
-        let thisCL = this;
-        $ci.find('*').addBack()
-            .filter('template.placeholder')
-            .each(function() {
-                let $childCI = $(this);
-                let childContentKey = $childCI.attr("data-content-key");
-                let childDataKey = $childCI.attr("data-data-key");
-                let cl = thisCL.getRelatedCL(childContentKey);
-                if (childDataKey === "") {
-                    // let childData be the new data input in a recursive call
-                    // to loadAndReplacePlaceholder() (now with a new CL).
-                    cl.loadAndReplacePlaceholder(
-                        $childCI, childData, childReturnData
-                    );
-                } else if (/^(\.[\w\$]+)+(\[\.\.\.\])?$/.test(childDataKey)) {
-                    // parse childDataKey of the path to a nested data object
-                    // in childData to use for the new data input(s).
-                    let dataKeyArray = childDataKey.replaceAll("[...]", "")
-                        .split(".")
-                        .slice(1); // since (".foo").split(".") == ["", "foo"].
-                    var nestedChildData = childData;
-                    let len = dataKeyArray.length;
-                    for (let i = 0; i < len; i++) {
-                        nestedChildData = nestedChildData[dataKeyArray[i]];
-                    }
-                    // if childDataKey does not end in "[...]", simply call
-                    // cl.loadAndReplacePlaceholder() with the nestedChildData
-                    // as the input data.
-                    if (childDataKey.slice(-5) !== "[...]") {
-                        cl.loadAndReplacePlaceholder(
-                            $childCI, nestedChildData, childReturnData
-                        );
-                    // else, expect that nestedChildData is an array and load
-                    // n CI children, where n is the length of the array, such
-                    // that each child is given one of the data inputs held in
-                    // the array. If the array is null/undefined, simply do not
-                    // load any CI children, similar to what is done if the
-                    // array is empty.
-                } else {
-                        var $nthChildCI = $childCI;
-                        len = (nestedChildData ?? []).length;
-                        for (let i = 0; i < len; i++) {
-                            cl.loadAfter(
-                                $nthChildCI, "self", nestedChildData[i],
-                                childReturnData
-                            );
-                            $nthChildCI = $nthChildCI.next();
-                        }
-                        $childCI.remove();
-                        // NOTE: One should not make decorator CLs of these list
-                        // template keys. That is, do not use htmlTemplates of
-                        // the form "<<Example data.example.example[...]>>";
-                        // always make sure to have these list template keys
-                        // nested (e.g. inside a <div></div>).
-                    }
-                } else {
-                    throw (
-                        "ContentLoader.loadAndReplacePlaceholder(): " +
-                        'ill-formed childDataKey: "' + childDataKey +
-                        '" (in ' + childContentKey + ')'
-                    );
-                }
-            });
+        this.loadDescendents($ci, data, childReturnData);
+
         // in case $ci was a placeholder element, which will then be have been
         // removed at this point, redefine it as the new CI element.
         $ci = $placeholder.next();
         // remove the placeholder template element.
         $placeholder.remove();
+        // store a reference to the data (input) object on the CI.
+        $ci.data("data", data);
 
         // apply all the outward callbacks (after the inner content is loaded).
         // (Since $ci is no longer in danger of being replaced, these callbacks
@@ -339,6 +280,79 @@ export class ContentLoader {
         }
     }
 
+    loadDescendents($ci, data, childReturnData) {
+        let thisCL = this;
+        $ci.find('*').addBack()
+            .filter('template.placeholder')
+            .each(function() {
+                let $childCI = $(this);
+                let childContentKey = $childCI.attr("data-content-key");
+                let childDataKey = $childCI.attr("data-data-key");
+                let cl = thisCL.getRelatedCL(childContentKey);
+                if (childDataKey === "") {
+                    // let childData be the new data input in a recursive call
+                    // to loadAndReplacePlaceholder() (now with a new CL).
+                    cl.loadAndReplacePlaceholder(
+                        $childCI, data, childReturnData
+                    );
+                } else if (/^(\.[\w\$]+)+(\[\.\.\.\])?$/.test(childDataKey)) {
+                    // parse childDataKey of the path to a nested data object
+                    // in childData to use for the new data input(s).
+                    let dataKeyArray = childDataKey.replaceAll("[...]", "")
+                        .split(".")
+                        .slice(1); // since (".foo").split(".") == ["", "foo"].
+                    var nestedChildData = data;
+                    let len = dataKeyArray.length;
+                    for (let i = 0; i < len; i++) {
+                        nestedChildData = nestedChildData[dataKeyArray[i]];
+                    }
+                    // if childDataKey does not end in "[...]", simply call
+                    // cl.loadAndReplacePlaceholder() with the nestedChildData
+                    // as the input data.
+                    if (childDataKey.slice(-5) !== "[...]") {
+                        let resultingData = Object.assign(
+                            Object.assign({}, data),
+                            nestedChildData
+                        );
+                        cl.loadAndReplacePlaceholder(
+                            $childCI, resultingData, childReturnData
+                        );
+                    // else, expect that nestedChildData is an array and load
+                    // n CI children, where n is the length of the array, such
+                    // that each child is given one of the data inputs held in
+                    // the array. If the array is null/undefined, simply do not
+                    // load any CI children, similar to what is done if the
+                    // array is empty.
+                } else {
+                        var $nthChildCI = $childCI;
+                        len = (nestedChildData ?? []).length;
+                        for (let i = 0; i < len; i++) {
+                            let resultingData = Object.assign(
+                                Object.assign({}, data),
+                                nestedChildData[i]
+                            );
+                            cl.loadAfter(
+                                $nthChildCI, "self", resultingData,
+                                childReturnData
+                            );
+                            $nthChildCI = $nthChildCI.next();
+                        }
+                        $childCI.remove();
+                        // NOTE: One should not make decorator CLs of these list
+                        // template keys. That is, do not use htmlTemplates of
+                        // the form "<<Example data.example.example[...]>>";
+                        // always make sure to have these list template keys
+                        // nested (e.g. inside a <div></div>).
+                    }
+                } else {
+                    throw (
+                        "ContentLoader.loadDescendents(): " +
+                        'ill-formed childDataKey: "' + childDataKey +
+                        '" (in ' + childContentKey + ')'
+                    );
+                }
+            });
+    }
 
     addCSSRulesToDocument() {
         let len = this.cssRules.length;
@@ -375,13 +389,5 @@ export class ContentLoader {
         return (typeof this.parentCL === "undefined") ?
             ".CI." + this.contentKey :
             this.parentCL.getCIClassSelector() + " .CI." + this.contentKey;
-    }
-}
-
-
-
-export class ContentData {
-    constructor(parentCD, newData) {
-
     }
 }

@@ -45,13 +45,13 @@ export var categoryMainContentCL = new ContentLoader(
     '<<PagesWithTabs>>',
     appColumnCL
 );
-categoryMainContentCL.addCallback("data", function(data) {
-    data.tabAndPageDataArr = [
+categoryMainContentCL.addCallback("data", function(newData, data) {
+    newData.tabAndPageDataArr = [
         ["Info", "CategoryInfoPage", data],
         ["Subategories", "CategorySubategoriesPage", data],
         ["Elements", "ElementsPage", data],
     ];
-    data.defaultTab = "Subategories";
+    newData.defaultTab = "Subategories";
 });
 export var categorySubategoriesPageCL = new ContentLoader(
     "CategorySubategoriesPage",
@@ -67,9 +67,8 @@ export var subategoriesSetFieldCL = new ContentLoader(
     '<<SetField>>',
     appColumnCL
 );
-subategoriesSetFieldCL.addCallback("data", function(data) {
+subategoriesSetFieldCL.addCallback("data", function(newData, data) {
     return {
-        user: data.user,
         subjID: data.entityID,
         relID: "1",
         elemContentKey: "CategoryElement",
@@ -86,8 +85,8 @@ export var categoryElementCL = new ContentLoader(
     '</div>',
     appColumnCL
 );
-categoryElementCL.addCallback("data", function(data) {
-    data.catID = data.objID;
+categoryElementCL.addCallback("data", function(newData, data) {
+    newData.catID = data.objID;
 });
 export var categoryTitleCL = new ContentLoader(
     "CategoryTitle",

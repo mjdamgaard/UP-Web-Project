@@ -49,8 +49,8 @@ selfReplacerCL.addCallback(function($ci, data, childReturnData, returnData) {
     data.cl.loadReplaced($ci, "self", data.data ?? data, returnData);
 });
 
-appColumnListCL.addCallback("data", function(data) {
-    data.listElemDataArr = data.columnSpecs;
+appColumnListCL.addCallback("data", function(newData, data) {
+    newData.listElemDataArr = data.columnSpecs;
 });
 
 export var columnInterfaceHeaderCL = new ContentLoader(
@@ -321,11 +321,8 @@ pagesWithTabsCL.addCallback(function($ci, data) {
 });
 
 // make PagesWithTabs open a specified default tab automatically.
-pagesWithTabsCL.addCallback("data", function(data) {
-    data.defaultTab ??= false;
-    var childData = Object.assign({}, data);
-    delete childData.defaultTab;
-    return childData;
+pagesWithTabsCL.addCallback("data", function(newData, data) {
+    newData.defaultTab = data.defaultTab ??= false;
 });
 pagesWithTabsCL.addCallback(function($ci, data) {
     if (data.defaultTab) {
