@@ -41,6 +41,9 @@ export class ContentLoader {
         contentKey, htmlTemplate,
         parentCL, // this parameter should also generally be given, except in
         // the case of an outer CL (without a parent).
+        decorateeCL, // this parameter should be given, whenever the CL is a
+        // decorator CL, i.e. when the htmlTemplate contains only one content
+        // placeholder.
         dataSetterCallbacks, outwardCallbacks, afterDecCallbacks,
         cssRules,
         childCLs,
@@ -54,6 +57,7 @@ export class ContentLoader {
         if (typeof parentCL !== "undefined") {
             parentCL.childCLs.push(this);
         }
+        this.decorateeCL = decorateeCL;
         this.childCLs = childCLs ?? [];
         this.dataSetterCallbacks = dataSetterCallbacks ?? [];
         this.outwardCallbacks = outwardCallbacks ?? [];
@@ -121,7 +125,7 @@ export class ContentLoader {
         this.loadReplaced($placeholder, contentKey, data, returnData);
     }
 
-    addCallback(method, callback, html) {
+    addCallback(method, callback, htmlTemplate) {
         if (typeof callback === "undefined") {
             callback = method;
             method = "outward";
@@ -137,21 +141,26 @@ export class ContentLoader {
                 this.afterDecCallbacks.push(callback);
                 break;
             case "append":
+            case "prepend":
                 // I'll continue this later, 'cause I need to figure out how
                 // the data is propagated first..
                 var selector = "";
-                if (typeof html === "undefined") {
-                    html = callback;
+                if (typeof htmlTemplate === "undefined") {
+                    htmlTemplate = callback;
                 } else {
                     selector = callback;
                 }
+                let html = convertHTMLTemplate(htmlTemplate);
+                let thisCL = this;
                 if (selector === "") {
-                    this.outwardCallbacks.push(function($ci) {
-                        $ci.append('...');
+                    this.outwardCallbacks.push(function($ci, data) {
+                        $ci[method](html);
+                        thisCL.loadDescendents($ci, data, {})
                     });
                 } else {
-                    this.outwardCallbacks.push(function($ci) {
-                        $ci.find(selector).append('...');
+                    this.outwardCallbacks.push(function($ci, data) {
+                        $ci.find(selector)[method](html);
+                        thisCL.loadDescendents($ci, data, {})
                     });
                 }
                 break;
@@ -179,20 +188,25 @@ export class ContentLoader {
                 return this.childCLs[i];
             }
         }
-        // if no matching child CL is found, go up to the parent CL and repeat
-        // the process recursively, or return a CL dummy if this is the root CL.
-        if (typeof this.parentCL === "undefined") {
-            console.warn(
-                "ContentLoader.getRelatedCL(): " +
-                'no content loader found with content key "' +
-                contentKey + '"'
-            );
-            return new ContentLoader(
-                contentKey,
-                '<template class="Not-implemented-yet"></template>',
-            );
+        // if no match is found, either go to the parentCL and repeat the
+        // process, or if the CL is a decorator, go to the decoratee instead.
+        // in the end if the algorithm halts on the outer CL, print a warning
+        // and return a temporary "Not-implemented-yet" CL instead.
+        if (typeof this.decorateeCL !== "undefined") {
+            return this.decorateeCL.getRelatedCL(contentKey);
         }
-        return this.parentCL.getRelatedCL(contentKey);
+        if (typeof this.parentCL !== "undefined") {
+            return this.parentCL.getRelatedCL(contentKey);
+        }
+        console.warn(
+            "ContentLoader.getRelatedCL(): " +
+            'no content loader found with content key "' +
+            contentKey + '"'
+        );
+        return new ContentLoader(
+            contentKey,
+            '<template class="Not-implemented-yet"></template>',
+        );
     }
 
 
@@ -249,8 +263,11 @@ export class ContentLoader {
         $ci = $placeholder.next();
         // remove the placeholder template element.
         $placeholder.remove();
-        // store a reference to the data (input) object on the CI.
-        $ci.data("data", data);
+        // store a reference to the data object on the CI, unless a child
+        // decorated by this CL has already done so.
+        if (typeof $ci.data("data") === "undefined") {
+            $ci.data("data", data);
+        }
 
         // apply all the outward callbacks (after the inner content is loaded).
         // (Since $ci is no longer in danger of being replaced, these callbacks

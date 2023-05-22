@@ -22,12 +22,20 @@ export var categoryColumnCL = new ContentLoader(
     '<<AppColumn>>',
     sdbInterfaceCL
 );
-categoryColumnCL.addCallback(function($ci, data) {
-    let $columnHeader = $ci.find('.CI.ColumnHeader');
-    appColumnCL.loadAppended($columnHeader, "CategoryHeaderContent", data);
-    let $columnMain = $ci.find('.CI.ColumnMain');
-    appColumnCL.loadAppended($columnMain, "CategoryMainContent", data);
-});
+categoryColumnCL.addCallback("append",
+    '.CI.ColumnHeader',
+    "<<CategoryHeaderContent>>"
+);
+categoryColumnCL.addCallback("append",
+    '.CI.ColumnMain',
+    "<<CategoryMainContent>>"
+);
+// categoryColumnCL.addCallback("append" function($ci, data) {
+//     let $columnHeader = $ci.find('.CI.ColumnHeader');
+//     appColumnCL.loadAppended($columnHeader, "CategoryHeaderContent", data);
+//     let $columnMain = $ci.find('.CI.ColumnMain');
+//     appColumnCL.loadAppended($columnMain, "CategoryMainContent", data);
+// });
 
 export var categoryHeaderContentCL = new ContentLoader(
     "CategoryHeaderContent",
