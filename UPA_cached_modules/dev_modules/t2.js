@@ -39,9 +39,10 @@ export class ContentLoader {
     constructor(
         // these first two variables should not be undefined/null.
         contentKey, htmlTemplate,
-        parentCL,
-        cssRules,
+        parentCL, // this parameter should also generally be given, except in
+        // the case of an outer CL (without a parent).
         dataSetterCallbacks, outwardCallbacks, afterDecCallbacks,
+        cssRules,
         childCLs,
         modSignals,
     ) {
@@ -54,11 +55,11 @@ export class ContentLoader {
             parentCL.childCLs.push(this);
         }
         this.childCLs = childCLs ?? [];
-        this.cssRules = cssRules ?? [];
-        this.cssRulesAreAdded = false;
         this.dataSetterCallbacks = dataSetterCallbacks ?? [];
         this.outwardCallbacks = outwardCallbacks ?? [];
         this.afterDecCallbacks = afterDecCallbacks ?? [];
+        this.cssRules = cssRules ?? [];
+        this.cssRulesAreAdded = false;
         this.modSignals = modSignals ?? {};
         // this.dynamicData can be used for storing arbritary data (primitive
         // data types and objects), including data necessary to ensure unique
@@ -120,7 +121,7 @@ export class ContentLoader {
         this.loadReplaced($placeholder, contentKey, data, returnData);
     }
 
-    addCallback(method, callback) {
+    addCallback(method, callback, html) {
         if (typeof callback === "undefined") {
             callback = method;
             method = "outward";
@@ -134,6 +135,25 @@ export class ContentLoader {
                 break;
             case "afterDec":
                 this.afterDecCallbacks.push(callback);
+                break;
+            case "append":
+                // I'll continue this later, 'cause I need to figure out how
+                // the data is propagated first..
+                var selector = "";
+                if (typeof html === "undefined") {
+                    html = callback;
+                } else {
+                    selector = callback;
+                }
+                if (selector === "") {
+                    this.outwardCallbacks.push(function($ci) {
+                        $ci.append('...');
+                    });
+                } else {
+                    this.outwardCallbacks.push(function($ci) {
+                        $ci.find(selector).append('...');
+                    });
+                }
                 break;
             default:
                 throw (
@@ -179,7 +199,7 @@ export class ContentLoader {
     /* Semi-private methods (not meant as much for public use) */
 
     loadAndReplacePlaceholder($placeholder, data, returnData) {
-        console.log(this.contentKey);console.log(data);
+        // console.log(this.contentKey);console.log(data);
         data ??= {};
         // first insert the new CI after $placeholder.
         $placeholder.after(this.html);
@@ -355,5 +375,13 @@ export class ContentLoader {
         return (typeof this.parentCL === "undefined") ?
             ".CI." + this.contentKey :
             this.parentCL.getCIClassSelector() + " .CI." + this.contentKey;
+    }
+}
+
+
+
+export class ContentData {
+    constructor(parentCD, newData) {
+
     }
 }
