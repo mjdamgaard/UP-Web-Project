@@ -51,7 +51,6 @@ export class ContentLoader {
             parentCL.childCLs.push(this);
         }
         this.decorateeContentKey = false;
-        this.decorateeCL = false;
         this.childCLs = [];
         this.dataSetterCallbacks = [];
         this.outwardCallbacks = [];
@@ -70,8 +69,8 @@ export class ContentLoader {
 
     set htmlTemplate(htmlTemplate) {
         this.html = convertHTMLTemplate(htmlTemplate);
-        // if htmlTemplate contains only one content placeholder, then look up
-        // the CL of the relevant content key and record it in this.decorateeCL.
+        // if htmlTemplate contains only one content placeholder, then record
+        // relevant content key in this.decorateeContentKey.
         if (/^<<[^<>]*>>$/.test(htmlTemplate)) {
             let keyStr = htmlTemplate.slice(2, -2);
             let spaceIndex = keyStr.indexOf(" ");
@@ -198,22 +197,16 @@ export class ContentLoader {
             }
         }
         // if no match is found, either go to the parentCL and repeat the
-        // process, or if the CL is a decorator, go to the decoratee instead.
-        // in the end if the algorithm halts on the outer CL, print a warning
-        // and return a temporary "Not-implemented-yet" CL instead.
+        // process, or if the CL is a decorator, go to the decoratee CL
+        // instead, which is assumed to always be a sibling of the CL itself.
         if (this.decorateeContentKey) {
-            // set the decoratee CL from the decorateeContentKey (if this has
-            // not already been done).
-            this.decorateeCL =
-                this.parentCL.getRelatedCL(this.decorateeContentKey);
-            this.decorateeContentKey = false;
-        }
-        if (this.decorateeCL) {
-            return this.decorateeCL.getRelatedCL(contentKey);
+            return this.parentCL.getRelatedCL(this.decorateeContentKey);
         }
         if (this.parentCL) {
             return this.parentCL.getRelatedCL(contentKey);
         }
+        // in the end if the algorithm halts on the outer CL, print a warning
+        // and return a temporary "Not-implemented-yet" CL instead.
         console.warn(
             "ContentLoader.getRelatedCL(): " +
             'no content loader found with content key "' +
