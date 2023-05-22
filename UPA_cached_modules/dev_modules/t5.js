@@ -30,12 +30,6 @@ categoryColumnCL.addCallback("append",
     '.CI.ColumnMain',
     "<<CategoryMainContent>>"
 );
-// categoryColumnCL.addCallback("append" function($ci, data) {
-//     let $columnHeader = $ci.find('.CI.ColumnHeader');
-//     appColumnCL.loadAppended($columnHeader, "CategoryHeaderContent", data);
-//     let $columnMain = $ci.find('.CI.ColumnMain');
-//     appColumnCL.loadAppended($columnMain, "CategoryMainContent", data);
-// });
 
 export var categoryHeaderContentCL = new ContentLoader(
     "CategoryHeaderContent",
@@ -55,9 +49,8 @@ export var categoryMainContentCL = new ContentLoader(
 );
 categoryMainContentCL.addCallback("data", function(newData, data) {
     newData.tabAndPageDataArr = [
-        ["Info", "CategoryInfoPage", data],
         ["Subategories", "CategorySubategoriesPage", data],
-        ["Elements", "ElementsPage", data],
+        ["Elements", "CategoryElementsPage", data],
     ];
     newData.defaultTab = "Subategories";
 });
@@ -124,13 +117,10 @@ categoryTitleCL.addCallback(function($ci, data) {
 });
 categoryTitleCL.addCallback(function($ci, data) {
     $ci
-        .on("click", function(event) {debugger;
-            let columnData = {
-                preferenceUser: data.preferenceUser,
-                entityType: "c",
-                entityID: data.catID,
-                user: data.user,
-            };
+        .on("click", function(event) {
+            var columnData = Object.assign({}, data);
+            columnData.entityType = "c";
+            columnData.entityID = data.catID;
             $(this).trigger("open-column", [
                 "CategoryColumn", columnData, "right", true
             ]);
@@ -231,6 +221,80 @@ supercategoryNavCL.addCallback(function($ci, data) {
 
 
 
+
+
+export var categoryElementsPageCL = new ContentLoader(
+    "CategoryElementsPage",
+    /* Initial HTML template */
+    '<div>' +
+        '<<ElementsSetField>>' +
+    '</div>',
+    appColumnCL
+);
+export var elementsSetFieldCL = new ContentLoader(
+    "ElementsSetField",
+    /* Initial HTML template */
+    '<<SetField>>',
+    appColumnCL
+);
+elementsSetFieldCL.addCallback("data", function(newData, data) {
+    return {
+        subjID: data.entityID,
+        relID: "2",
+        elemContentKey: "TermElement",
+    };
+});
+export var termElementCL = new ContentLoader(
+    "TermElement",
+    /* Initial HTML template */
+    '<div class="element">' +
+        '<<CategoryNav>>' +
+        '<<TermTitle>>' +
+        '<<SetRatingContainer>>' +
+        '<<TermElementDropdown>>' +
+    '</div>',
+    appColumnCL
+);
+termElementCL.addCallback("data", function(newData, data) {
+    newData.termID = data.objID;
+});
+export var termTitleCL = new ContentLoader(
+    "TermTitle",
+    /* Initial HTML template */
+    '<a href="#">' +
+    '</a>',
+    appColumnCL
+);
+termTitleCL.addCallback(function($ci, data) {
+    if (typeof data.title === "string") {
+        $ci.append(data.title);
+        return;
+    }
+    let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+    let reqData = {
+        type: "term",
+        id: data.termID,
+    };
+    dbReqManager.query($ci, reqData, function($ci, result) {
+        $ci.append(
+            (
+                result[0] ??
+                ['<span class="missing-title">Title is missing</span>']
+            )[0]
+        );
+    });
+});
+termTitleCL.addCallback(function($ci, data) {
+    $ci
+        .on("click", function(event) {
+            var columnData = Object.assign({}, data);
+            columnData.entityType = "t";
+            columnData.entityID = data.termID;
+            $(this).trigger("open-column", [
+                "TermColumn", columnData, "right", true
+            ]);
+        });
+});
 
 
 

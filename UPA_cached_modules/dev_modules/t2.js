@@ -199,7 +199,8 @@ export class ContentLoader {
         }
         // if no match is found, either go to the parentCL and repeat the
         // process, or if the CL is a decorator, go to the decoratee CL
-        // instead, which is assumed to always be a sibling of the CL itself.
+        // instead, which is assumed to always be a sibling or an ancestor of
+        // the CL itself.
         if (this.decorateeContentKey) {
             // set the decoratee CL from the decorateeContentKey (if this has
             // not already been done).

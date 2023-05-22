@@ -496,6 +496,8 @@ DELIMITER ;
 
 
 
+-- TODO: I think I will remove the two following procs and just use selectCat
+-- instead.
 
 DELIMITER //
 CREATE PROCEDURE selectSuperCatDefs (

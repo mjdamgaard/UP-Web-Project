@@ -37,7 +37,7 @@ setFieldCL.addCallback(function($ci, data) {
             let $this = $(this);
             let set = $this.data("set");
             let setInfo = $this.data("setInfo");
-            let elemContentKey = $this.data("data").elemContentKey ?? "Element";
+            let elemContentKey = $this.data("data").elemContentKey;
             let elemCL = setFieldCL.getRelatedCL(elemContentKey)
             let len = set.length;
             let listElemDataArr = set.map(function(row) {

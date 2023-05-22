@@ -54,6 +54,8 @@ CALL inputOrChangeRatingFromSecKey (1, 1, 1, 3, "71", "00");
 
 CALL inputOrChangeRatingFromSecKey (1, 1, 1, 2, "7A", "00");
 
+CALL inputOrChangeRatingFromSecKey (1, 1, 2, 1, "7F", "00");
+
 
 
 --
