@@ -51,6 +51,7 @@ export class ContentLoader {
             parentCL.childCLs.push(this);
         }
         this.decorateeContentKey = false;
+        this.decorateeCL = false;
         this.childCLs = [];
         this.dataSetterCallbacks = [];
         this.outwardCallbacks = [];
@@ -200,7 +201,14 @@ export class ContentLoader {
         // process, or if the CL is a decorator, go to the decoratee CL
         // instead, which is assumed to always be a sibling of the CL itself.
         if (this.decorateeContentKey) {
-            return this.parentCL.getRelatedCL(this.decorateeContentKey);
+            // set the decoratee CL from the decorateeContentKey (if this has
+            // not already been done).
+            this.decorateeCL =
+                this.parentCL.getRelatedCL(this.decorateeContentKey);
+            this.decorateeContentKey = false;
+        }
+        if (this.decorateeCL) {
+            return this.decorateeCL.getRelatedCL(contentKey);
         }
         if (this.parentCL) {
             return this.parentCL.getRelatedCL(contentKey);
@@ -241,21 +249,13 @@ export class ContentLoader {
             "contentKey",
             $placeholder.data("contentKey") ?? this.contentKey
         );
-        // also copy any and all "afterDecCallbacks" from the placeholder, and
-        // all afterDecCallbacks of this CL into this array as well.
-        $ci.data(
-            "afterDecCallbacks",
-            this.afterDecCallbacks.concat(
-                $placeholder.data("afterDecCallbacks") ?? []
-            )
-        );
 
         // apply all the data setter callbacks, which can change the "data"
         // object, namely the data stored as a reference at $ci.data("data").
         // If this array is empty, the child CIs will get a reference to the
         // same "data" object as their parent (this one).
-        let len = this.dataSetterCallbacks.length;
         var newData = {};
+        let len = this.dataSetterCallbacks.length;
         for (let i = 0; i < len; i++) {
             newData = this.dataSetterCallbacks[i](newData, data) ?? newData;
         }
@@ -287,12 +287,17 @@ export class ContentLoader {
             this.outwardCallbacks[i]($ci, data, childReturnData, returnData);
         }
 
+        // if this CL has any after decoration callbacks, append them to a
+        // property of the returnData object.
+        returnData.afterDecCallbacks = (childReturnData.afterDecCallbacks ?? [])
+            .concat(this.afterDecCallbacks);
+
         // check if this CI is not decorated by a parent (if the contentKey
         // property of of the "data" object is the same as this.contentKey),
         // and if so, run any "afterDecCallbacks" that a child decorated by
         // this CI might have stored.
         if ($ci.data("contentKey") === this.contentKey) {
-            let afterDecCallbacks = $ci.data("afterDecCallbacks")
+            let afterDecCallbacks = returnData.afterDecCallbacks;
             let len = afterDecCallbacks.length;
             for (let i = 0; i < len; i++) {
                 afterDecCallbacks[i]($ci, data, childReturnData, returnData);
