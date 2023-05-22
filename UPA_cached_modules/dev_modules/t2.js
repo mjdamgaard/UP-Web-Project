@@ -41,38 +41,47 @@ export class ContentLoader {
         contentKey, htmlTemplate,
         parentCL, // this parameter should also generally be given, except in
         // the case of an outer CL (without a parent).
-        decorateeCL, // this parameter should be given, whenever the CL is a
-        // decorator CL, i.e. when the htmlTemplate contains only one content
-        // placeholder.
-        dataSetterCallbacks, outwardCallbacks, afterDecCallbacks,
-        cssRules,
-        childCLs,
-        modSignals,
     ) {
         this.contentKey = contentKey;
         // this.tagName = tagName;
         // this.attributes = attributes ?? {};
-        this.html = convertHTMLTemplate(htmlTemplate);
-        this.parentCL = parentCL;
-        if (typeof parentCL !== "undefined") {
+        this.html;
+        this.parentCL = parentCL ?? false;
+        if (parentCL) {
             parentCL.childCLs.push(this);
         }
-        this.decorateeCL = decorateeCL;
-        this.childCLs = childCLs ?? [];
-        this.dataSetterCallbacks = dataSetterCallbacks ?? [];
-        this.outwardCallbacks = outwardCallbacks ?? [];
-        this.afterDecCallbacks = afterDecCallbacks ?? [];
-        this.cssRules = cssRules ?? [];
+        this.decorateeContentKey = false;
+        this.decorateeCL = false;
+        this.childCLs = [];
+        this.dataSetterCallbacks = [];
+        this.outwardCallbacks = [];
+        this.afterDecCallbacks = [];
+        this.cssRules = [];
         this.cssRulesAreAdded = false;
-        this.modSignals = modSignals ?? {};
+        this.modSignals = {};
         // this.dynamicData can be used for storing arbritary data (primitive
         // data types and objects), including data necessary to ensure unique
         // ids (even accross several, distant-related CIs).
         this.dynamicData = {};
+
+        // set this.html via the setter below.
+        this.htmlTemplate = htmlTemplate;
     }
 
     set htmlTemplate(htmlTemplate) {
         this.html = convertHTMLTemplate(htmlTemplate);
+        // if htmlTemplate contains only one content placeholder, then look up
+        // the CL of the relevant content key and record it in this.decorateeCL.
+        if (/^<<[^<>]*>>$/.test(htmlTemplate)) {
+            let keyStr = htmlTemplate.slice(2, -2);
+            let spaceIndex = keyStr.indexOf(" ");
+            if (spaceIndex === -1) {
+                this.decorateeContentKey = keyStr;
+            } else {
+                this.decorateeContentKey =
+                    keyStr.slice(0, contentKey.indexOf(" "));
+            }
+        }
     }
     get htmlTemplate() {
         return this.html; // no need to convert back here.
@@ -192,10 +201,17 @@ export class ContentLoader {
         // process, or if the CL is a decorator, go to the decoratee instead.
         // in the end if the algorithm halts on the outer CL, print a warning
         // and return a temporary "Not-implemented-yet" CL instead.
-        if (typeof this.decorateeCL !== "undefined") {
+        if (this.decorateeContentKey) {
+            // set the decoratee CL from the decorateeContentKey (if this has
+            // not already been done).
+            this.decorateeCL =
+                this.parentCL.getRelatedCL(this.decorateeContentKey);
+            this.decorateeContentKey = false;
+        }
+        if (this.decorateeCL) {
             return this.decorateeCL.getRelatedCL(contentKey);
         }
-        if (typeof this.parentCL !== "undefined") {
+        if (this.parentCL) {
             return this.parentCL.getRelatedCL(contentKey);
         }
         console.warn(
@@ -403,8 +419,11 @@ export class ContentLoader {
         this.cssRulesAreAdded = true;
     }
     getCIClassSelector() {
-        return (typeof this.parentCL === "undefined") ?
-            ".CI." + this.contentKey :
-            this.parentCL.getCIClassSelector() + " .CI." + this.contentKey;
+        if (this.parentCL) {
+            return this.parentCL.getCIClassSelector() +
+                " .CI." + this.contentKey;
+        } else {
+            return ".CI." + this.contentKey;
+        }
     }
 }
