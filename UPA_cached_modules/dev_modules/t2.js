@@ -56,8 +56,10 @@ export class ContentLoader {
         this.dataSetterCallbacks = [];
         this.outwardCallbacks = [];
         this.afterDecCallbacks = [];
-        this.cssRules = [];
-        this.cssRulesAreAdded = false;
+        this.inwardCSSRules = [];
+        this.outwardCSSRules = [];
+        this.inwardCSSRulesAreAdded = false;
+        this.outwardCSSRulesAreAdded = false;
         this.modSignals = {};
         // this.dynamicData can be used for storing arbritary data (primitive
         // data types and objects), including data necessary to ensure unique
@@ -181,8 +183,21 @@ export class ContentLoader {
         }
     }
 
-    addCSS(css) {
-        this.cssRules.push(css);
+    addCSS(method, css) {
+        if (typeof css === "undefined") {
+            css = method;
+            method = "inward";
+        }
+        if (method === "inward") {
+            this.inwardCSSRules.push(css);
+        } else if (method === "outward") {
+            this.outwardCSSRules.push(css);
+        } else {
+            throw (
+                'ContentLoader.addCSS(): Unrecognized method: "' +
+                method + '"'
+            );
+        }
     }
 
     getRelatedCL(contentKey) {
@@ -264,6 +279,13 @@ export class ContentLoader {
             data = Object.assign(Object.assign({}, data), newData);
         }
 
+        // if the this.inwardCSSRules has not yet been added to the document
+        // head, call addCSSRulesToDocument() to do so.
+        if (this.inwardCSSRulesAreAdded == false) {
+            this.addCSSRulesToDocument(this.inwardCSSRules);
+            this.inwardCSSRulesAreAdded = true;
+        }
+
         // load all the descendent CIs.
         var childReturnData = {};
         this.loadDescendents($ci, data, childReturnData);
@@ -305,10 +327,11 @@ export class ContentLoader {
             }
         }
 
-        // if the this.cssRules has not yet been added to the document
+        // if the this.outwardCSSRules has not yet been added to the document
         // head, call addCSSRulesToDocument() to do so.
-        if (this.cssRulesAreAdded == false) {
-            this.addCSSRulesToDocument();
+        if (this.outwardCSSRulesAreAdded == false) {
+            this.addCSSRulesToDocument(this.outwardCSSRules);
+            this.outwardCSSRulesAreAdded = true;
         }
     }
 
@@ -389,10 +412,10 @@ export class ContentLoader {
             });
     }
 
-    addCSSRulesToDocument() {
-        let len = this.cssRules.length;
+    addCSSRulesToDocument(cssRules) {
+        let len = cssRules.length;
         for (let i = 0; i < len; i++) {
-            let rule = this.cssRules[i].trim();
+            let rule = cssRules[i].trim();
             // if rule is a declaration list, wrap it in "& {...}".
             if (/^[^&\{\}]*$/.test(rule)) {
                 rule = "& {" + rule + "}";
@@ -406,7 +429,7 @@ export class ContentLoader {
                 throw (
                     "ContentLoader.addCSSRulesToDocument(): cssRules " +
                      "must either be single rules or single CSS declaration " +
-                     "lists (but received '" + this.cssRules[i] + "')"
+                     "lists (but received '" + cssRules[i] + "')"
                 );
             }
             // replace all &'s in the selector with the CLs automatic CI class.
@@ -416,9 +439,6 @@ export class ContentLoader {
                 '<style class="CI-style">' + rule + '</style>'
             );
         }
-        // finally set this.cssRulesAreAdded = true such that subsequently
-        // loaded CLs will not also add these CSS rules.
-        this.cssRulesAreAdded = true;
     }
     getCIClassSelector() {
         if (this.parentCL) {
