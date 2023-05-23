@@ -166,12 +166,12 @@ export class ContentLoader {
                 if (selector === "") {
                     this.outwardCallbacks.push(function($ci, data) {
                         $ci[method](html);
-                        thisCL.loadDescendents($ci, data, {})
+                        thisCL.loadDescendants($ci, data, {})
                     });
                 } else {
                     this.outwardCallbacks.push(function($ci, data) {
                         $ci.find(selector)[method](html);
-                        thisCL.loadDescendents($ci, data, {})
+                        thisCL.loadDescendants($ci, data, {})
                     });
                 }
                 break;
@@ -289,7 +289,7 @@ export class ContentLoader {
 
         // load all the descendent CIs.
         var childReturnData = {};
-        this.loadDescendents($ci, data, childReturnData);
+        this.loadDescendants($ci, data, childReturnData);
 
 
         // in case $ci was a placeholder element, which will then be have been
@@ -337,7 +337,7 @@ export class ContentLoader {
         }
     }
 
-    loadDescendents($ci, data, childReturnData) {
+    loadDescendants($ci, data, childReturnData) {
         let thisCL = this;
         $ci.find('*').addBack()
             .filter('template.placeholder')
@@ -362,7 +362,7 @@ export class ContentLoader {
                 // check that the first part of this split conform to the
                 // pattern /^data(.[\w\$]+)*(\[\.\.\.\])?$/.
                 let error = (
-                    "ContentLoader.loadDescendents(): " +
+                    "ContentLoader.loadDescendants(): " +
                     'ill-formed childDataKey "' + childDataKey +
                     '" in ' + childContentKey
                 );
@@ -497,10 +497,11 @@ function loadChildCIWithNestedDataAndSignal(
             // nested (e.g. inside a <div></div>). // TODO: Move this up to the
             // top (i.e. have always one outer element in any htmlTemplate).
         }
-    } else {debugger;
+    } else {
         $childCI
             .addClass('CI ' + cl.contentKey)
-            .one(signal, function() {debugger;
+            .removeClass('placeholder')
+            .one(signal, function() {
                 loadChildCIWithNestedDataAndSignal(
                     $childCI, cl, data, dataKeyArr, isAnArrayDataKey, "",
                     childReturnData
