@@ -195,35 +195,37 @@ export var supercategoryNavItemCL = new ContentLoader(
     '</span>',
     appColumnCL
 );
-supercategoryNavCL.addCallback(function($ci, data) {
-    $ci
-        .on("reload", function(event) {
+// supercategoryNavCL.addCallback(function($ci, data) {
+//     $ci
+//         .on("reload", function(event) {
+//             let data = $ci.data("data");
+//             supercategoryNavCL.loadReplaced($(this), "self", data)
+//             return false;
+//         });
+// });
+supercategoryNavCL.addCallback("fetch",
+    ["reversedSuperCatDefs"],
+    function($ci, data, nestedData) {
+        if (typeof data.reversedSuperCatDefs !== "undefined") {
+            return;
+        }
+        let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+        let reqData = {
+            type: "superCatTitles",
+            id: data.entityID,
+            n: 20,
+        };
+        dbReqManager.query($ci, reqData, function($ci, result) {
             let data = $ci.data("data");
-            supercategoryNavCL.loadReplaced($(this), "self", data)
-            return false;
+            data.reversedSuperCatDefs = result.reverse()
+                .map(function(row) {
+                    return Object.assign(
+                        Object.assign({}, data),
+                        {title: row[0], entityID: row[1], entityType: "c"}
+                    );
+                });
+            $ci.trigger("reload");
         });
-});
-supercategoryNavCL.addCallback(function($ci, data) {
-    if (typeof data.reversedSuperCatDefs !== "undefined") {
-        return;
-    }
-    let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-    let reqData = {
-        type: "superCatTitles",
-        id: data.entityID,
-        n: 20,
-    };
-    dbReqManager.query($ci, reqData, function($ci, result) {
-        let data = $ci.data("data");
-        data.reversedSuperCatDefs = result.reverse()
-            .map(function(row) {
-                return Object.assign(
-                    Object.assign({}, data),
-                    {title: row[0], entityID: row[1], entityType: "c"}
-                );
-            });
-        $ci.trigger("reload");
-    });
 });
 
 

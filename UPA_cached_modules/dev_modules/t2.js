@@ -136,7 +136,7 @@ export class ContentLoader {
         this.loadReplaced($placeholder, contentKey, data, returnData);
     }
 
-    addCallback(method, callback, htmlTemplate) {
+    addCallback(method, callback, var3) {
         if (typeof callback === "undefined") {
             callback = method;
             method = "outward";
@@ -155,7 +155,8 @@ export class ContentLoader {
             case "prepend":
                 // I'll continue this later, 'cause I need to figure out how
                 // the data is propagated first..
-                var selector = "";
+                let selector = "";
+                let htmlTemplate = var3;
                 if (typeof htmlTemplate === "undefined") {
                     htmlTemplate = callback;
                 } else {
@@ -174,6 +175,26 @@ export class ContentLoader {
                         thisCL.loadDescendents($ci, data, {})
                     });
                 }
+                break;
+            case "fetch":
+                let dataKeyArr = callback;
+                callback = var3;
+                this.outwardCallbacks.push(function($ci, data) {
+                    let nestedData = data;
+                    let len = dataKeyArr.length;
+                    for (let i = 0; i < len; i++) {
+                        let key = dataKeyArr[i];
+                        nestedData[key] ??= {}
+                        nestedData = nestedData[key];
+                    }
+                    let signal = callback($ci, data, nestedData);
+                    if (typeof signal === "undefined") {
+                        signal = dataKeyArr.join("-");
+                    }
+                    $ci.children().each(function() {
+                        $(this).trigger(signal);
+                    });
+                });
                 break;
             default:
                 throw (
@@ -286,9 +307,11 @@ export class ContentLoader {
             this.inwardCSSRulesAreAdded = true;
         }
 
+
         // load all the descendent CIs.
         var childReturnData = {};
         this.loadDescendents($ci, data, childReturnData);
+
 
         // in case $ci was a placeholder element, which will then be have been
         // removed at this point, redefine it as the new CI element.
@@ -375,7 +398,7 @@ export class ContentLoader {
                     isAnArrayDataKey = true;
                     splitDataKey[0] = splitDataKey[0].slice(0, -5);
                 }
-                let dataKeyArray = splitDataKey[0].split(".");
+                let dataKeyArr = splitDataKey[0].split(".").slice(1);
 
                 // parse the optional waitfor signal from the end of the data
                 // key.
@@ -393,20 +416,20 @@ export class ContentLoader {
                     signal = splitDataKey[2];
                 // else if the data key ends in ":wait", let the signal be the
                 // first part of the data key, only with dashes instead of dots
-                // (e.g. "data-myKey1-myKey2").
+                // and without the leading data (so e.g. "myKey1-myKey2").
                 } else if (splitDataKey[1] === "wait") {
                     if (typeof splitDataKey[2] !== "undefined") {
                         throw error;
                     }
-                    signal = dataKeyArray.join("-");
+                    signal = dataKeyArr.join("-");
                 } else {
                     throw error;
                 }
 
                 // finally, call loadChildCIWithNestedDataAndSignal() with the
-                // obtained dataKeyArray, isAnArrayDataKey and signal as inputs.
+                // obtained dataKeyArr, isAnArrayDataKey and signal as inputs.
                 loadChildCIWithNestedDataAndSignal(
-                    $childCI, cl, data, dataKeyArray, isAnArrayDataKey, signal,
+                    $childCI, cl, data, dataKeyArr, isAnArrayDataKey, signal,
                     childReturnData
                 );
             });
@@ -451,36 +474,36 @@ export class ContentLoader {
 }
 
 function loadChildCIWithNestedDataAndSignal(
-    $childCI, cl, data, dataKeyArray, isAnArrayDataKey, signal, childReturnData
+    $childCI, cl, data, dataKeyArr, isAnArrayDataKey, signal, childReturnData
 ) {
     if (signal === "") {
-        var nestedChildData = data;
-        var len = dataKeyArray.length;
-        for (let i = 1; i < len; i++) {
-            let key = dataKeyArray[i];
+        var nestedData = data;
+        var len = dataKeyArr.length;
+        for (let i = 0; i < len; i++) {
+            let key = dataKeyArr[i];
             if (!/^[\w\$]+$/.test(key)) {
                 throw (
                     "loadChildCIWithNestedDataAndSignal(): " +
-                    'ill-formed childDataKey "' + dataKeyArray.join(".")
+                    'ill-formed childDataKey "data.' + dataKeyArr.join(".")
                 );
             }
-            nestedChildData = nestedChildData[key];
+            nestedData = nestedData[key];
         }
         if (!isAnArrayDataKey) {
             var resultingData = Object.assign(
                 Object.assign({}, data),
-                nestedChildData
+                nestedData
             );
             cl.loadAndReplacePlaceholder(
                 $childCI, resultingData, childReturnData
             );
         } else {
             var $nthChildCI = $childCI;
-            var len = nestedChildData.length;
+            var len = nestedData.length;
             for (let i = 0; i < len; i++) {
                 let resultingData = Object.assign(
                     Object.assign({}, data),
-                    nestedChildData[i]
+                    nestedData[i]
                 );
                 cl.loadAfter(
                     $nthChildCI, "self", resultingData,
@@ -499,7 +522,7 @@ function loadChildCIWithNestedDataAndSignal(
     } else {
         $childCI.one(signal, function() {
             loadChildCIWithNestedDataAndSignal(
-                $childCI, cl, data, dataKeyArray, isAnArrayDataKey, "",
+                $childCI, cl, data, dataKeyArr, isAnArrayDataKey, "",
                 childReturnData
             )
             return false;
