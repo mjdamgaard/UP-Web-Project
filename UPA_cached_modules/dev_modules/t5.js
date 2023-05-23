@@ -183,7 +183,7 @@ export var supercategoryNavCL = new ContentLoader(
     "SupercategoryNav",
     /* Initial HTML template */
     '<div>' +
-        '<<SupercategoryNavItem data.reversedSuperCatDefs[...]>>' +
+        '<<SupercategoryNavItem data.reversedSuperCatDefs[...]:wait>>' +
     '</div>',
     appColumnCL
 );

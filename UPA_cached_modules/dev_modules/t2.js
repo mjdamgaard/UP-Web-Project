@@ -18,7 +18,7 @@ export function getPlaceholderTemplateTag(contentKey, dataKey) {
 export function convertHTMLTemplate(htmlTemplate) {
     return htmlTemplate.replaceAll(
         // /<<[A-Z][\w\-]*( data(\.[\w\$])*(\[\.\.\.\])?)?>>/g,
-        /<<[A-Z][\w\-]*( data[\.\w\$\[\]]*)?>>/g,
+        /<<[A-Z][\w\-]*( data[\.\w\$\[\]:\-]*)?>>/g,
         function(str) {
             let keyStr = str.slice(2, -2);
             let spaceIndex = keyStr.indexOf(" ");
@@ -27,7 +27,7 @@ export function convertHTMLTemplate(htmlTemplate) {
             } else {
                 return getPlaceholderTemplateTag(
                     keyStr.substring(0, spaceIndex),
-                    keyStr.substring(spaceIndex + 5) // leaves out " data".
+                    keyStr.substring(spaceIndex + 1)
                 );
             }
         }
@@ -321,68 +321,71 @@ export class ContentLoader {
                 let childContentKey = $childCI.attr("data-content-key");
                 let childDataKey = $childCI.attr("data-data-key");
                 let cl = thisCL.getRelatedCL(childContentKey);
+                // if their is no data-key, simply load the child CI with the
+                // same data object that the parent holds (assuming that this
+                // method is called by loadAndReplacePlaceholder()).
                 if (childDataKey === "") {
-                    // let childData be the new data input in a recursive call
-                    // to loadAndReplacePlaceholder() (now with a new CL).
                     cl.loadAndReplacePlaceholder(
                         $childCI, data, childReturnData
                     );
-                } else if (/^(\.[\w\$]+)+(\[\.\.\.\])?$/.test(childDataKey)) {
-                    // parse childDataKey of the path to a nested data object
-                    // in childData to use for the new data input(s).
-                    let dataKeyArray = childDataKey.replaceAll("[...]", "")
-                        .split(".")
-                        .slice(1); // since (".foo").split(".") == ["", "foo"].
-                    var nestedChildData = data;
-                    let len = dataKeyArray.length;
-                    for (let i = 0; i < len; i++) {
-                        nestedChildData = nestedChildData[dataKeyArray[i]];
-                    }
-                    // if childDataKey does not end in "[...]", simply call
-                    // cl.loadAndReplacePlaceholder() with the nestedChildData
-                    // as the input data.
-                    if (childDataKey.slice(-5) !== "[...]") {
-                        let resultingData = Object.assign(
-                            Object.assign({}, data),
-                            nestedChildData
-                        );
-                        cl.loadAndReplacePlaceholder(
-                            $childCI, resultingData, childReturnData
-                        );
-                    // else, expect that nestedChildData is an array and load
-                    // n CI children, where n is the length of the array, such
-                    // that each child is given one of the data inputs held in
-                    // the array. If the array is null/undefined, simply do not
-                    // load any CI children, similar to what is done if the
-                    // array is empty.
-                } else {
-                        var $nthChildCI = $childCI;
-                        len = (nestedChildData ?? []).length;
-                        for (let i = 0; i < len; i++) {
-                            let resultingData = Object.assign(
-                                Object.assign({}, data),
-                                nestedChildData[i]
-                            );
-                            cl.loadAfter(
-                                $nthChildCI, "self", resultingData,
-                                childReturnData
-                            );
-                            $nthChildCI = $nthChildCI.next();
-                        }
-                        $childCI.remove();
-                        // NOTE: One should not make decorator CLs of these list
-                        // template keys. That is, do not use htmlTemplates of
-                        // the form "<<Example data.example.example[...]>>";
-                        // always make sure to have these list template keys
-                        // nested (e.g. inside a <div></div>).
-                    }
-                } else {
-                    throw (
-                        "ContentLoader.loadDescendents(): " +
-                        'ill-formed childDataKey: "' + childDataKey +
-                        '" (in ' + childContentKey + ')'
-                    );
+                    return;
                 }
+
+                // else, first split childDataKey into an array with ":" as the
+                // seperator.
+                let splitDataKey = childDataKey.split(":");
+                // check that the first part of this split conform to the
+                // pattern /^data(.[\w\$]+)*(\[\.\.\.\])?$/.
+                let error = (
+                    "ContentLoader.loadDescendents(): " +
+                    'ill-formed childDataKey "' + childDataKey +
+                    '" in ' + childContentKey
+                );
+                if (!/^data(.[\w\$]+)*(\[\.\.\.\])?$/.test(splitDataKey[0])) {
+                    throw error;
+                }
+                // record if the "[...]" is present or not, and record the keys
+                // of this first part of the data key without the "[...]" in an
+                // array.
+                let isAnArrayDataKey = false;
+                if (splitDataKey[0].slice(-5) === "[...]") {
+                    isAnArrayDataKey = true;
+                    splitDataKey[0] = splitDataKey[0].slice(0, -5);
+                }
+                let dataKeyArray = splitDataKey[0].split(".");
+
+                // parse the optional waitfor signal from the end of the data
+                // key.
+                let signal;
+                if (typeof splitDataKey[1] === "undefined") {
+                    signal = ""
+                // if the data key ends in /:waitfor:[\.\w\$\[\]:\-]*/ (where
+                // the symbols in the last square bracket conforms to the RegEx
+                // of convertHTMLTemplate()), parse the final part as the
+                // signal.
+                } else if (splitDataKey[1] === "waitfor") {
+                    if (typeof splitDataKey[2] === "undefined") {
+                        throw error;
+                    }
+                    signal = splitDataKey[2];
+                // else if the data key ends in ":wait", let the signal be the
+                // first part of the data key, only with dashes instead of dots
+                // (e.g. "data-myKey1-myKey2").
+                } else if (splitDataKey[1] === "wait") {
+                    if (typeof splitDataKey[2] !== "undefined") {
+                        throw error;
+                    }
+                    signal = dataKeyArray.join("-");
+                } else {
+                    throw error;
+                }
+
+                // finally, call loadChildCIWithNestedDataAndSignal() with the
+                // obtained dataKeyArray, isAnArrayDataKey and signal as inputs.
+                loadChildCIWithNestedDataAndSignal(
+                    $childCI, cl, data, dataKeyArray, isAnArrayDataKey, signal,
+                    childReturnData
+                );
             });
     }
 
@@ -424,5 +427,62 @@ export class ContentLoader {
         } else {
             return ".CI." + this.contentKey;
         }
+    }
+}
+
+function loadChildCIWithNestedDataAndSignal(
+    $childCI, cl, data, dataKeyArray, isAnArrayDataKey, signal, childReturnData
+) {
+    if (signal === "") {
+        var nestedChildData = data;
+        var len = dataKeyArray.length;
+        for (let i = 1; i < len; i++) {
+            let key = dataKeyArray[i];
+            if (!/^[\w\$]+$/.test(key)) {
+                throw (
+                    "loadChildCIWithNestedDataAndSignal(): " +
+                    'ill-formed childDataKey "' + dataKeyArray.join(".")
+                );
+            }
+            nestedChildData = nestedChildData[key];
+        }
+        if (!isAnArrayDataKey) {
+            var resultingData = Object.assign(
+                Object.assign({}, data),
+                nestedChildData
+            );
+            cl.loadAndReplacePlaceholder(
+                $childCI, resultingData, childReturnData
+            );
+        } else {
+            var $nthChildCI = $childCI;
+            var len = nestedChildData.length;
+            for (let i = 0; i < len; i++) {
+                let resultingData = Object.assign(
+                    Object.assign({}, data),
+                    nestedChildData[i]
+                );
+                cl.loadAfter(
+                    $nthChildCI, "self", resultingData,
+                    childReturnData
+                );
+                $nthChildCI = $nthChildCI.next();
+            }
+            $childCI.remove();
+            // NOTE: One should not make decorator CLs of these list
+            // template keys. That is, do not use htmlTemplates of
+            // the form "<<Example data.example.example[...]>>";
+            // always make sure to have these list template keys
+            // nested (e.g. inside a <div></div>). // TODO: Move this up to the
+            // top (i.e. have always one outer element in any htmlTemplate).
+        }
+    } else {
+        $childCI.one(signal, function() {
+            loadChildCIWithNestedDataAndSignal(
+                $childCI, cl, data, dataKeyArray, isAnArrayDataKey, "",
+                childReturnData
+            )
+            return false;
+        });
     }
 }
