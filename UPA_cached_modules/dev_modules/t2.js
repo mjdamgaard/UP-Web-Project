@@ -136,7 +136,7 @@ export class ContentLoader {
         this.loadReplaced($placeholder, contentKey, data, returnData);
     }
 
-    addCallback(method, callback, var3) {
+    addCallback(method, callback, htmlTemplate) {
         if (typeof callback === "undefined") {
             callback = method;
             method = "outward";
@@ -156,7 +156,6 @@ export class ContentLoader {
                 // I'll continue this later, 'cause I need to figure out how
                 // the data is propagated first..
                 let selector = "";
-                let htmlTemplate = var3;
                 if (typeof htmlTemplate === "undefined") {
                     htmlTemplate = callback;
                 } else {
@@ -175,26 +174,6 @@ export class ContentLoader {
                         thisCL.loadDescendents($ci, data, {})
                     });
                 }
-                break;
-            case "fetch":
-                let dataKeyArr = callback;
-                callback = var3;
-                this.outwardCallbacks.push(function($ci, data) {
-                    let nestedData = data;
-                    let len = dataKeyArr.length;
-                    for (let i = 0; i < len; i++) {
-                        let key = dataKeyArr[i];
-                        nestedData[key] ??= {}
-                        nestedData = nestedData[key];
-                    }
-                    let signal = callback($ci, data, nestedData);
-                    if (typeof signal === "undefined") {
-                        signal = dataKeyArr.join("-");
-                    }
-                    $ci.children().each(function() {
-                        $(this).trigger(signal);
-                    });
-                });
                 break;
             default:
                 throw (
@@ -414,14 +393,13 @@ export class ContentLoader {
                         throw error;
                     }
                     signal = splitDataKey[2];
-                // else if the data key ends in ":wait", let the signal be the
-                // first part of the data key, only with dashes instead of dots
-                // and without the leading data (so e.g. "myKey1-myKey2").
+                // else if the data key ends in ":wait", let the signal simply
+                // be "load".
                 } else if (splitDataKey[1] === "wait") {
                     if (typeof splitDataKey[2] !== "undefined") {
                         throw error;
                     }
-                    signal = dataKeyArr.join("-");
+                    signal = "load";
                 } else {
                     throw error;
                 }
@@ -519,13 +497,15 @@ function loadChildCIWithNestedDataAndSignal(
             // nested (e.g. inside a <div></div>). // TODO: Move this up to the
             // top (i.e. have always one outer element in any htmlTemplate).
         }
-    } else {
-        $childCI.one(signal, function() {
-            loadChildCIWithNestedDataAndSignal(
-                $childCI, cl, data, dataKeyArr, isAnArrayDataKey, "",
-                childReturnData
-            )
-            return false;
-        });
+    } else {debugger;
+        $childCI
+            .addClass('CI ' + cl.contentKey)
+            .one(signal, function() {debugger;
+                loadChildCIWithNestedDataAndSignal(
+                    $childCI, cl, data, dataKeyArr, isAnArrayDataKey, "",
+                    childReturnData
+                )
+                return false;
+            });
     }
 }
