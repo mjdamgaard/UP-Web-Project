@@ -89,14 +89,14 @@ export var categoryElementCL = new ContentLoader(
 // categoryElementCL.addCallback("data", function(newData, data) {
 //     newData.catID = data.objID;
 // });
-export var categoryTitleCL = new ContentLoader(
+export var semEntityTitleCL = new ContentLoader(
     "SemEntityTitle",
     /* Initial HTML template */
-    '<a href="#">' +
-    '</a>',
+    '<span>' +
+    '</span>',
     appColumnCL
 );
-categoryTitleCL.addCallback(function($ci, data) {
+semEntityTitleCL.addCallback(function($ci, data) {
     if (typeof data.title === "string") {
         $ci.append(data.title);
         return;
@@ -118,18 +118,21 @@ categoryTitleCL.addCallback(function($ci, data) {
         );
     });
 });
-categoryTitleCL.addCallback(function($ci, data) {
+semEntityTitleCL.addCallback(function($ci, data) {
     $ci
         .on("click", function(event) {
             var columnData = {
-                preferenceUser: data.preferenceUser,
+                queryUserID: data.queryUserID,
                 entityType: data.entityType,
                 entityID: data.entityID,
-                user: data.user,
+                inputUserID: data.inputUserID,
             };
-            $(this).trigger("open-column", [
-                "CategoryColumn", columnData, "right", true
-            ]);
+            $(this)
+                .trigger("open-column", [
+                    "CategoryColumn", columnData, "right", true
+                ])
+                .trigger("column-click");
+            return false;
         });
 });
 

@@ -5,7 +5,7 @@ import {
 } from "/UPA_scripts.php?id=3";
 
 import {
-    supercategoryNavItemCL,
+    supercategoryNavItemCL, semEntityTitleCL,
 } from "/UPA_scripts.php?id=5";
 
 
@@ -121,3 +121,13 @@ supercategoryNavItemCL.addCSS(
         'margin: 0px 2px;' +
     '}'
 );
+
+semEntityTitleCL.addCSS(
+    '&:hover {' +
+        'cursor: pointer;' +
+        'text-decoration: underline;' +
+    '}'
+);
+semEntityTitleCL.addCallback(function($ci) {
+    $ci.addClass("text-primary");
+});

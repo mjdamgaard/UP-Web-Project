@@ -73,7 +73,7 @@ setFieldCL.addCallback(function($ci, data) {
         if (typeof data.setID === "undefined") {
             reqData = {
                 type: "setSK",
-                uid: data.user, // TODO: Change (add more options).
+                uid: data.queryUserID, // TODO: Change (add more options).
                 sid: data.subjID,
                 rid: data.relID,
                 rl: "", rh: "",
@@ -102,7 +102,7 @@ setFieldCL.addCallback(function($ci, data) {
         if (typeof data.setID === "undefined") {
             reqData = {
                 type: "setInfoSK",
-                uid: data.user,
+                uid: data.queryUserID,
                 sid: data.subjID,
                 rid: data.relID,
             };
@@ -143,6 +143,16 @@ export var setHeaderCL = new ContentLoader(
     '<div>' +
         // TODO: add a bar with user weight buttons and a refresh button. *(This
         // bar should also turn into a drop-down menu for some decorating CLs.
+        '<<ClassHeading>>' +
+    '</div>',
+    appColumnCL
+);
+
+export var classHeadingCL = new ContentLoader(
+    "ClassHeading",
+    /* Initial HTML template */
+    '<div>' +
+        '<span>Class: </span>' +
     '</div>',
     appColumnCL
 );

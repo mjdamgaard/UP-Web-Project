@@ -56,8 +56,8 @@ $paramValArr = InputGetter::getParams($paramNameArr);
 InputVerifier::verifyTypes($paramValArr, $typeArr, $paramNameArr);
 $entityType = $paramValArr[0];
 $entityID = $paramValArr[1];
-$userID = $paramValArr[2];
-$preferenceUserID = $paramValArr[3];
+$inputUserID = $paramValArr[2];
+$queryUserID = $paramValArr[3];
 
 
 // authenticate the user make sure that the uid is either one that user
@@ -106,10 +106,10 @@ $mainModuleID = "10";
     } from "/UPA_scripts.php?id=<?php echo $mainModuleID; ?>";
     upa_main(<?php
         echo '"' .
-            $preferenceUserID . '", "' .
+            $queryUserID . '", "' .
             $entityType.'", "' .
             $entityID.'", "' .
-            $userID .
+            $inputUserID .
         '"';
     ?>);
 </script>

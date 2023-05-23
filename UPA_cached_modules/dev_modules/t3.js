@@ -95,13 +95,11 @@ export var closeButtonCL = new ContentLoader(
     '</button>',
     sdbInterfaceCL,
 );
-// Since we want to use the close button for tabs with their own click event,
-// we should make the bubbling-up of the click event jump straight to the
-// ancestor Column.
 closeButtonCL.addCallback(function($ci) {
     $ci.on("click", function() {
-        $(this).trigger("close")
-            .closest('.CI.AppColumn').trigger("click");
+        $(this)
+            .trigger("close")
+            .trigger("column-click");
         return false;
     });
 });
@@ -154,6 +152,10 @@ appColumnCL.addCallback(function($ci) {
         })
         .one("click", function() {
             $(this).data("data").isOverwritable = false;
+            return false;
+        })
+        .one("column-click", function() {
+            $(this).trigger("click");
             return false;
         });
 });

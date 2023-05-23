@@ -9,16 +9,16 @@ import * as t5Mod from "/UPA_scripts.php?id=5";
 import * as t9Mod from "/UPA_scripts.php?id=9";
 
 
-export function upa_main(preferenceUserID, entityType, entityID, userID) {
-    if (preferenceUserID !== "1") {
-        throw "Unrecognized preference user";
+export function upa_main(queryUserID, entityType, entityID, inputUserID) {
+    if (queryUserID !== "1") {
+        throw "Unrecognized query user";
     }
 
     let initialData = {
-        preferenceUser: preferenceUserID,
+        queryUserID: queryUserID,
         entityType: entityType,
         entityID: entityID,
-        user: userID,
+        inputUserID: inputUserID,
     };
     let data = {
         columnSpecs: [
