@@ -4,10 +4,11 @@ import {
     columnInterfaceHeaderCL, closeButtonCL, tabHeaderCL, pagesContainerCL,
 } from "/UPA_scripts.php?id=3";
 import {
-    predicateRelationTextCL, predicateSubjectRepresentationCL,
-    entityTitleCL,
+    predicateRepresentationCL,
+    entityTitleCL, entityRepresentationCL,
 } from "/UPA_scripts.php?id=4";
 import {
+    entityHeaderContentCL,
     supercategoryNavItemCL,
 } from "/UPA_scripts.php?id=5";
 
@@ -120,19 +121,12 @@ sdbInterfaceCL.addCSS(
     '}'
 );
 
-predicateRelationTextCL.addCallback(function($ci) {
-    $ci.addClass("clickable-text text-primary");
-});
-
-predicateSubjectRepresentationCL.addCSS(
-    '&:before { content: " ("; }'
+predicateRepresentationCL.addCSS(
+    '& > .CI.SubjectTitle:before { content: " ("; }'
 );
-predicateSubjectRepresentationCL.addCSS(
-    '&:after { content: ")"; }'
+predicateRepresentationCL.addCSS(
+    '& > .CI.SubjectTitle:after { content: ")"; }'
 );
-predicateSubjectRepresentationCL.addCallback(function($ci) {
-    $ci.children('span').addClass("clickable-text text-primary");
-});
 
 
 
@@ -140,6 +134,14 @@ entityTitleCL.addCallback(function($ci) {
     $ci.addClass("clickable-text text-primary");
 });
 
+
+
+entityHeaderContentCL.addCSS(
+    '& .CI.EntityRepresentation {' +
+        'font-size: 25px;' +
+        'margin: 10px 5px;' +
+    '}'
+);
 
 supercategoryNavItemCL.addCSS(
     '&::after {' +

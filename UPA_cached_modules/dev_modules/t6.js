@@ -5,10 +5,70 @@ import {
 import {
     ContentLoader,
 } from "/UPA_scripts.php?id=2";
-
 import {
-    sdbInterfaceCL, appColumnCL, pagesWithTabsCL,
+    sdbInterfaceCL, appColumnCL, columnMainCL, pagesWithTabsCL,
 } from "/UPA_scripts.php?id=3";
+
+
+
+
+export var predicateColumnCL = new ContentLoader(
+    "PredicateColumn",
+    /* Initial HTML template */
+    '<<AppColumn>>',
+    sdbInterfaceCL
+);
+predicateColumnCL.addCallback("append",
+    '.CI.ColumnHeader',
+    "<<PredicateHeaderContent>>"
+);
+predicateColumnCL.addCallback("append",
+    '.CI.ColumnMain',
+    "<<PredicateMainContent>>"
+);
+
+export var predicateHeaderContentCL = new ContentLoader(
+    "PredicateHeaderContent",
+    /* Initial HTML template */
+    '<div>' +
+        '<<SupercategoryNav>>' +
+        '<h3>Predicate: <<EntityTitle>> <h3>' +
+    '</div>',
+    appColumnCL,
+);
+
+export var predicateMainContentCL = new ContentLoader(
+    "PredicateMainContent",
+    /* Initial HTML template */
+    '<<PagesWithTabs>>',
+    appColumnCL
+);
+predicateMainContentCL.addCallback("data", function(newData, data) {
+    newData.tabAndPageDataArr = [
+        ["Subategories", "PredicateSubategoriesPage", data],
+        ["Elements", "PredicateElementsPage", data],
+    ];
+    newData.defaultTab = "Subategories";
+});
+export var predicateSubategoriesPageCL = new ContentLoader(
+    "PredicateSubategoriesPage",
+    /* Initial HTML template */
+    '<div>' +
+        '<<SubategoriesSetField>>' +
+    '</div>',
+    appColumnCL
+);
+
+
+
+
+
+
+
+
+
+
+
 
 
 

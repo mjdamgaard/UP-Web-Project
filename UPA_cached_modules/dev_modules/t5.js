@@ -17,62 +17,53 @@ import {
 export var entityColumnCL = new ContentLoader(
     "EntityColumn",
     /* Initial HTML template */
-    '<<SelfReplacer>>',
-    sdbInterfaceCL
-);
-entityColumnCL.addCallback("data", function(newData, data) {
-    switch (data.entityType) {
-        case "c":
-            newData.cl = categoryColumnCL;
-            break;
-        // case "t":
-        //     newData.cl = termColumnCL;
-        //     break;
-        // case "r":
-        //     newData.cl = relationColumnCL;
-        //     break;
-        default:
-            throw "entityType " + data.entityType + " not implemented";
-    }
-});
-
-export var categoryColumnCL = new ContentLoader(
-    "CategoryColumn",
-    /* Initial HTML template */
     '<<AppColumn>>',
     sdbInterfaceCL
 );
-categoryColumnCL.addCallback("append",
+entityColumnCL.addCallback("append",
     '.CI.ColumnHeader',
-    "<<CategoryHeaderContent>>"
+    "<<EntityHeaderContent>>"
 );
-categoryColumnCL.addCallback("append",
+entityColumnCL.addCallback("append",
     '.CI.ColumnMain',
-    "<<CategoryMainContent>>"
+    "<<EntityMainContent>>"
 );
 
-export var categoryHeaderContentCL = new ContentLoader(
-    "CategoryHeaderContent",
+export var entityHeaderContentCL = new ContentLoader(
+    "EntityHeaderContent",
     /* Initial HTML template */
     '<div>' +
-        '<<SupercategoryNav>>' +
-        '<h3>Category: <<EntityTitle>> <h3>' +
+        '<div class="supercat-nav-container"></div>' +
+        '<<EntityRepresentation>>' +
     '</div>',
     appColumnCL,
 );
-
-export var categoryMainContentCL = new ContentLoader(
-    "CategoryMainContent",
+entityHeaderContentCL.addCallback(function($ci, data) {
+    $ci.children('.CI.EntityRepresentation').prepend(
+        (data.entityType === "c") ? 'Category: ' :
+            (data.entityType === "t") ? 'Term: ' :
+                'Relation: '
+    );
+});
+export var entityMainContentCL = new ContentLoader(
+    "EntityMainContent",
     /* Initial HTML template */
     '<<PagesWithTabs>>',
     appColumnCL
 );
-categoryMainContentCL.addCallback("data", function(newData, data) {
-    newData.tabAndPageDataArr = [
-        ["Subategories", "CategorySubategoriesPage", data],
-        ["Elements", "CategoryElementsPage", data],
-    ];
-    newData.defaultTab = "Subategories";
+
+
+
+
+
+entityMainContentCL.addCallback("data", function(newData, data) {
+    if (data.entityType === "c") {
+        newData.tabAndPageDataArr = [
+            ["Subategories", "CategorySubategoriesPage", data],
+            ["Elements", "CategoryElementsPage", data],
+        ];
+        newData.defaultTab = "Subategories";
+    }
 });
 export var categorySubategoriesPageCL = new ContentLoader(
     "CategorySubategoriesPage",

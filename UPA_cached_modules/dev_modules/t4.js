@@ -143,58 +143,35 @@ export var predicateRepresentationCL = new ContentLoader(
     "PredicateRepresentation",
     /* Initial HTML template */
     '<div>' +
-        '<<PredicateRelationText>>' +
-        '<<PredicateSubjectRepresentation>>' +
+        '<<RelationTitle>>' +
+        '<<SubjectTitle>>' +
     '</div>',
     appColumnCL
 );
-export var predicateRelationTextCL = new ContentLoader(
-    "PredicateRelationText",
+export var relationTitleCL = new ContentLoader(
+    "RelationTitle",
     /* Initial HTML template */
-    '<span></span>',
+    '<<EntityTitle>>',
     appColumnCL
 );
-predicateRelationTextCL.addCallback(function($ci, data) {
-    $ci.append(data.relText)
-        .on("click", function() {
-            // TODO: open a Predicate Column.
-            let columnData = {
-                queryUserID: data.queryUserID,
-                inputUserID: data.inputUserID,
-                subjType: data.subjType,
-                subjID: data.subjID,
-                subjType: data.subjType,
-                subjID: data.subjID,
-                relID: data.relID,
-                relText: data.relText,
-                objType: data.objType,
-            };
-            $(this)
-                .trigger("open-column", [
-                    "PredicateColumn", columnData, "right", true
-                ])
-                .trigger("column-click");
-        });
+relationTitleCL.addCallback("data", function(newData, data) {
+    newData.entityType = "r";
+    newData.entityID = data.relID;
+    newData.title = data.relText;
 });
-
-export var predicateSubjectRepresentationCL = new ContentLoader(
-    "PredicateSubjectRepresentation",
+export var subjectTitleCL = new ContentLoader(
+    "SubjectTitle",
     /* Initial HTML template */
-    '<span></span>',
+    '<span>' +
+        '<<EntityTitle>>' +
+    '</span>',
     appColumnCL
 );
-predicateSubjectRepresentationCL.addCallback("data", function(newData, data) {
+subjectTitleCL.addCallback("data", function(newData, data) {
     newData.entityType = data.subjType;
     newData.entityID = data.subjID;
 });
-predicateSubjectRepresentationCL.addCallback(function($ci, data) {
-    let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-    if (/^[ctr]$/.test(data.subjType)) {
-        predicateSubjectRepresentationCL.loadAppended(
-            $ci, "EntityTitle", data
-        );
-    }
-});
+
 
 
 
@@ -236,9 +213,11 @@ entityTitleCL.addCallback(function($ci, data) {
         .on("click", function() {
             let columnData = {
                 queryUserID: data.queryUserID,
+                inputUserID: data.inputUserID,
                 entityType: data.entityType,
                 entityID: data.entityID,
-                inputUserID: data.inputUserID,
+                subjType: data.subjType,
+                subjID: data.subjID,
             };
             $(this)
                 .trigger("open-column", [
@@ -249,6 +228,16 @@ entityTitleCL.addCallback(function($ci, data) {
         });
 });
 
+
+
+export var entityRepresentationCL = new ContentLoader(
+    "EntityRepresentation",
+    /* Initial HTML template */
+    '<div>' +
+        '<<EntityTitle>>' +
+    '</div>',
+    appColumnCL
+);
 
 
 //
