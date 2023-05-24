@@ -14,7 +14,27 @@ import {
 
 
 
-
+export var entityColumnCL = new ContentLoader(
+    "EntityColumn",
+    /* Initial HTML template */
+    '<<SelfReplacer>>',
+    sdbInterfaceCL
+);
+entityColumnCL.addCallback("data", function(newData, data) {
+    switch (data.entityType) {
+        case "c":
+            newData.cl = categoryColumnCL;
+            break;
+        // case "t":
+        //     newData.cl = termColumnCL;
+        //     break;
+        // case "r":
+        //     newData.cl = relationColumnCL;
+        //     break;
+        default:
+            throw "entityType " + data.entityType + " not implemented";
+    }
+});
 
 export var categoryColumnCL = new ContentLoader(
     "CategoryColumn",
@@ -36,7 +56,7 @@ export var categoryHeaderContentCL = new ContentLoader(
     /* Initial HTML template */
     '<div>' +
         '<<SupercategoryNav>>' +
-        '<h3>Category: <<SemEntityTitle>> <h3>' +
+        '<h3>Category: <<EntityTitle>> <h3>' +
     '</div>',
     appColumnCL,
 );
@@ -80,7 +100,7 @@ export var categoryElementCL = new ContentLoader(
     /* Initial HTML template */
     '<div class="element">' +
         '<<SupercategoryNav>>' +
-        '<<SemEntityTitle>>' +
+        '<<EntityTitle>>' +
         '<<SetRatingContainer>>' +
         '<<CategoryElementDropdown>>' +
     '</div>',
@@ -142,7 +162,7 @@ export var supercategoryNavItemCL = new ContentLoader(
     "SupercategoryNavItem",
     /* Initial HTML template */
     '<span>' +
-        '<<SemEntityTitle>>' +
+        '<<EntityTitle>>' +
     '</span>',
     appColumnCL
 );
@@ -210,7 +230,7 @@ export var termElementCL = new ContentLoader(
     /* Initial HTML template */
     '<div class="element">' +
         '<<CategoryNav>>' +
-        '<<SemEntityTitle>>' +
+        '<<EntityTitle>>' +
         '<<SetRatingContainer>>' +
         '<<TermElementDropdown>>' +
     '</div>',

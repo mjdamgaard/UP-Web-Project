@@ -5,7 +5,7 @@ import {
 } from "/UPA_scripts.php?id=3";
 import {
     predicateRelationTextCL, predicateSubjectRepresentationCL,
-    semEntityTitleCL,
+    entityTitleCL,
 } from "/UPA_scripts.php?id=4";
 import {
     supercategoryNavItemCL,
@@ -132,12 +132,11 @@ predicateSubjectRepresentationCL.addCSS(
 );
 predicateSubjectRepresentationCL.addCallback(function($ci) {
     $ci.children('span').addClass("clickable-text text-primary");
-    console.log($ci);
 });
 
 
 
-semEntityTitleCL.addCallback(function($ci) {
+entityTitleCL.addCallback(function($ci) {
     $ci.addClass("clickable-text text-primary");
 });
 
@@ -148,7 +147,7 @@ supercategoryNavItemCL.addCSS(
     '}'
 );
 supercategoryNavItemCL.addCSS(
-    '& .CI.CategoryTitle {' +
+    '& .CI.EntityTitle {' +
         'margin: 0px 2px;' +
     '}'
 );

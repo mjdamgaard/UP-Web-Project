@@ -165,7 +165,7 @@ export var predicateSubjectRepresentationCL = new ContentLoader(
     "PredicateSubjectRepresentation",
     /* Initial HTML template */
     '<span>' +
-        // ' (<<SemEntityTitle>>)'
+        // ' (<<EntityTitle>>)'
     '</span>',
     appColumnCL
 );
@@ -177,43 +177,47 @@ predicateSubjectRepresentationCL.addCallback(function($ci, data) {
     let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
     if (data.subjType === "c" || data.subjType === "t") {
         predicateSubjectRepresentationCL.loadAppended(
-            $ci, "SemEntityTitle", data
+            $ci, "EntityTitle", data
         );
     }
 });
 
 
 
-export var semEntityTitleCL = new ContentLoader(
-    "SemEntityTitle",
+export var entityTitleCL = new ContentLoader(
+    "EntityTitle",
     /* Initial HTML template */
     '<span>' +
     '</span>',
     appColumnCL
 );
-semEntityTitleCL.addCallback(function($ci, data) {
+entityTitleCL.addCallback(function($ci, data) {
     if (typeof data.title === "string") {
         $ci.append(data.title);
         return;
     }
     let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
     let reqData = {
-        type: (data.entityType === "c") ? "cat" :
-            (data.entityType === "t") ? "term" :
-            (data.entityType === "r") ? "rel" :
-            "error: data.entityType == " + data.entityType,
         id: data.entityID,
     };
+    switch (data.entityType) {
+        case "c":
+            reqData.type = "cat"
+            break;
+        case "t":
+            reqData.type = "term"
+            break;
+        case "r":
+            reqData.type = "rel"
+            break;
+        default:
+            throw "entityType " + data.entityType + " not implemented";
+    }
     dbReqManager.query($ci, reqData, function($ci, result) {
-        $ci.append(
-            (
-                result[0] ??
-                ['<span class="missing-title">Title is missing</span>']
-            )[0]
-        );
+        $ci.append(result[0][0]);
     });
 });
-semEntityTitleCL.addCallback(function($ci, data) {
+entityTitleCL.addCallback(function($ci, data) {
     $ci
         .on("click", function(event) {
             var columnData = {

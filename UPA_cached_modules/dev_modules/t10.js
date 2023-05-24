@@ -14,18 +14,13 @@ export function upa_main(queryUserID, entityType, entityID, inputUserID) {
         throw "Unrecognized query user";
     }
 
-    let initialData = {
+    let data = {
         queryUserID: queryUserID,
         entityType: entityType,
         entityID: entityID,
         inputUserID: inputUserID,
-    };
-    let data = {
         columnSpecs: [
-            {
-                cl: sdbInterfaceCL.getRelatedCL("CategoryColumn"),
-                data: Object.assign(initialData, {catID: entityID}),
-            },
+            {cl: sdbInterfaceCL.getRelatedCL("EntityColumn")},
         ],
     };
     let contentKey = sdbInterfaceCL.contentKey;
