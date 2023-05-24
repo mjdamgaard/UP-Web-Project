@@ -158,15 +158,29 @@ predicateRelationTextCL.addCallback(function($ci, data) {
     $ci.append(data.relText)
         .on("click", function() {
             // TODO: open a Predicate Column.
+            let columnData = {
+                queryUserID: data.queryUserID,
+                inputUserID: data.inputUserID,
+                subjType: data.subjType,
+                subjID: data.subjID,
+                subjType: data.subjType,
+                subjID: data.subjID,
+                relID: data.relID,
+                relText: data.relText,
+                objType: data.objType,
+            };
+            $(this)
+                .trigger("open-column", [
+                    "PredicateColumn", columnData, "right", true
+                ])
+                .trigger("column-click");
         });
 });
 
 export var predicateSubjectRepresentationCL = new ContentLoader(
     "PredicateSubjectRepresentation",
     /* Initial HTML template */
-    '<span>' +
-        // ' (<<EntityTitle>>)'
-    '</span>',
+    '<span></span>',
     appColumnCL
 );
 predicateSubjectRepresentationCL.addCallback("data", function(newData, data) {
@@ -175,7 +189,7 @@ predicateSubjectRepresentationCL.addCallback("data", function(newData, data) {
 });
 predicateSubjectRepresentationCL.addCallback(function($ci, data) {
     let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-    if (data.subjType === "c" || data.subjType === "t") {
+    if (/^[ctr]$/.test(data.subjType)) {
         predicateSubjectRepresentationCL.loadAppended(
             $ci, "EntityTitle", data
         );
@@ -219,8 +233,8 @@ entityTitleCL.addCallback(function($ci, data) {
 });
 entityTitleCL.addCallback(function($ci, data) {
     $ci
-        .on("click", function(event) {
-            var columnData = {
+        .on("click", function() {
+            let columnData = {
                 queryUserID: data.queryUserID,
                 entityType: data.entityType,
                 entityID: data.entityID,
@@ -228,7 +242,7 @@ entityTitleCL.addCallback(function($ci, data) {
             };
             $(this)
                 .trigger("open-column", [
-                    "CategoryColumn", columnData, "right", true
+                    "EntityColumn", columnData, "right", true
                 ])
                 .trigger("column-click");
             return false;
