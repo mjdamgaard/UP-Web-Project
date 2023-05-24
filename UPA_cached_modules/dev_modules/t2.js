@@ -146,7 +146,11 @@ export class ContentLoader {
                 this.outwardCallbacks.push(callback);
                 break;
             case "data":
-                this.dataSetterCallbacks.push(callback);
+                if (callback === "copy") {
+                    this.dataSetterCallbacks.push(function(){});
+                } else {
+                    this.dataSetterCallbacks.push(callback);
+                }
                 break;
             case "afterDec":
                 this.afterDecCallbacks.push(callback);

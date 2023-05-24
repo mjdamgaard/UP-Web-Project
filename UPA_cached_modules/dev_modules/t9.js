@@ -3,12 +3,12 @@ import {
     sdbInterfaceCL, appColumnCL,
     columnInterfaceHeaderCL, closeButtonCL, tabHeaderCL, pagesContainerCL,
 } from "/UPA_scripts.php?id=3";
-
+import {
+    predicateRelationTextCL, predicateSubjectRepresentationCL,
+} from "/UPA_scripts.php?id=4";
 import {
     supercategoryNavItemCL, semEntityTitleCL,
 } from "/UPA_scripts.php?id=5";
-
-
 
 
 
@@ -111,6 +111,40 @@ tabHeaderCL.addCSS(
 
 
 
+
+sdbInterfaceCL.addCSS(
+    '& .clickable-text:hover {' +
+        'cursor: pointer;' +
+        'text-decoration: underline;' +
+    '}'
+);
+
+predicateRelationTextCL.addCallback(function($ci) {
+    $ci.addClass("clickable-text text-primary");
+});
+
+predicateSubjectRepresentationCL.addCallback(function($ci) {
+    $ci.addClass("clickable-text text-primary");
+});
+predicateSubjectRepresentationCL.addCSS(
+    '&:before {' +
+        'content: " (";' +
+    '}'
+);
+predicateSubjectRepresentationCL.addCSS(
+    '&:after {' +
+        'content: ")";' +
+    '}'
+);
+
+
+
+
+semEntityTitleCL.addCallback(function($ci) {
+    $ci.addClass("clickable-text text-primary");
+});
+
+
 supercategoryNavItemCL.addCSS(
     '&::after {' +
         'content: "/";' +
@@ -121,13 +155,3 @@ supercategoryNavItemCL.addCSS(
         'margin: 0px 2px;' +
     '}'
 );
-
-semEntityTitleCL.addCSS(
-    '&:hover {' +
-        'cursor: pointer;' +
-        'text-decoration: underline;' +
-    '}'
-);
-semEntityTitleCL.addCallback(function($ci) {
-    $ci.addClass("text-primary");
-});

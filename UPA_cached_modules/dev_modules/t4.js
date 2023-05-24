@@ -18,49 +18,39 @@ export var setFieldCL = new ContentLoader(
     "SetField",
     /* Initial HTML template */
     '<div>' +
-        '<<SetHeader>>' +
-        '<<List>>' +
+        '<<SetHeader data:wait>>' +
+        '<<List data:wait>>' +
     '</div>',
     appColumnCL
 );
-setFieldCL.addCallback("data", function(newData, data) {
-    newData.listElemDataArr = [{
-        cl: setFieldCL.getRelatedCL("Element"),
-        data: data,
-    }];
-});
+setFieldCL.addCallback("data", "copy"); // No, just remember to add "data"
+// to: "<<SetField data>>", since this will have the same effect. // *No,
+// it's actually nice that SetField always has its own data copy..
 setFieldCL.addCallback(function($ci, data) {
     // TODO: Change this such that a number of initially appended elements are
     // looked up in data.
     $ci
         .on("append-elements", function() {
-            let $this = $(this);
-            let set = $this.data("set");
-            let setInfo = $this.data("setInfo");
-            let elemContentKey = $this.data("data").elemContentKey;
-            let elemCL = setFieldCL.getRelatedCL(elemContentKey)
-            let len = set.length;
-            let listElemDataArr = set.map(function(row) {
+            let elemCL = setFieldCL.getRelatedCL(data.elemContentKey)
+            let len = data.set.length;
+            let entityType = data.setInfo[6];
+            let setInfo = data.setInfo;
+            data.listElemDataArr = data.set.map(function(row) {
                 return {
                     setInfo: setInfo,
                     ratVal: row[0],
                     entityID: row[1],
-                    entityType: setInfo[6],
+                    entityType: entityType,
                     cl: elemCL,
                 };
             });
-            let childData = {listElemDataArr: listElemDataArr};
             // reload the ElementList, with the potentially new elemDataArr.
-            let $obj = $this.children('.CI.List');
-            setFieldCL.loadReplaced($obj, "List", childData);
+            $(this).children('.CI.List').trigger("load");
             return false;
         })
         .on("append-elements-if-ready", function() {
-            let $this = $(this);
-            let set = $this.data("set");
-            let setInfo = $this.data("setInfo");
-            if ((set ?? false) && (setInfo ?? false)) {
-                $this.off("append-elements-if-ready")
+            if ((data.set ?? false) && (data.setInfo ?? false)) {
+                $(this).off("append-elements-if-ready")
                     .trigger("append-elements");
             }
             return false;
@@ -90,11 +80,11 @@ setFieldCL.addCallback(function($ci, data) {
             }; // TODO: Change to look all this up (using ?? op.).
         }
         dbReqManager.query($ci, reqData, function($ci, result) {
-            $ci.data("set", result)
-                .trigger("append-elements-if-ready");
+            $ci.data("data").set = result;
+            $ci.trigger("append-elements-if-ready");
         });
     } else {
-        $ci.data("set", data.set);
+        $ci.data("data").set = data.set;
         $ci.trigger("append-elements-if-ready");
     }
     if (typeof data.setInfo === "undefined") {
@@ -113,12 +103,14 @@ setFieldCL.addCallback(function($ci, data) {
             };
         }
         dbReqManager.query($ci, reqData, function($ci, result) {
-            $ci.data("setInfo", result[0] ?? result)
-                .trigger("append-elements-if-ready");
+            $ci.data("data").setInfo = result[0] ?? result;
+            $ci.trigger("append-elements-if-ready");
+            $ci.children('.CI.SetHeader').trigger("load");
         });
     } else {
-        $ci.data("setInfo", data.setInfo);
+        $ci.data("data").setInfo = data.setInfo;
         $ci.trigger("append-elements-if-ready");
+        $ci.children('.CI.SetHeader').trigger("load");
     }
 });
 // TODO: Change this such that a number of initially appended elements are
@@ -128,14 +120,6 @@ setFieldCL.addCallback(function($ci, data) {
 // as default for all elements in the list.
 
 
-export var elementCL = new ContentLoader(
-    "Element",
-    /* Initial HTML template */
-    '<div>' +
-    '</div>',
-    appColumnCL
-);
-
 
 export var setHeaderCL = new ContentLoader(
     "SetHeader",
@@ -143,16 +127,65 @@ export var setHeaderCL = new ContentLoader(
     '<div>' +
         // TODO: add a bar with user weight buttons and a refresh button. *(This
         // bar should also turn into a drop-down menu for some decorating CLs.
-        '<<ClassHeading>>' +
+        '<<PredicateRepresentation>>' +
     '</div>',
     appColumnCL
 );
-
-export var classHeadingCL = new ContentLoader(
-    "ClassHeading",
+setHeaderCL.addCallback("data", function(newData, data) {
+    let setInfo = data.setInfo;
+    newData.subjType = setInfo[2];
+    newData.subjID = setInfo[3];
+    newData.relID = setInfo[4];
+    newData.relText = setInfo[5];
+    newData.objType = setInfo[6];
+});
+export var predicateRepresentationCL = new ContentLoader(
+    "PredicateRepresentation",
     /* Initial HTML template */
     '<div>' +
-        '<span>Class: </span>' +
+        '<<PredicateRelationText>>' +
+        '<<PredicateSubjectRepresentation>>' +
     '</div>',
     appColumnCL
 );
+export var predicateRelationTextCL = new ContentLoader(
+    "PredicateRelationText",
+    /* Initial HTML template */
+    '<span></span>',
+    appColumnCL
+);
+predicateRelationTextCL.addCallback(function($ci, data) {
+    $ci.append(data.relText)
+        .on("click", function() {
+            // TODO: open a Predicate Column.
+        });
+});
+
+export var predicateSubjectRepresentationCL = new ContentLoader(
+    "PredicateSubjectRepresentation",
+    /* Initial HTML template */
+    '<span></span>',
+    appColumnCL
+);
+predicateSubjectRepresentationCL.addCallback(function($ci, data) {
+    let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+    // if (data.subjType === "c" && data.subjID != "1") {
+    if (data.subjType === "c" || data.subjType === "t") {
+        let reqData = {
+            type: (data.subjType === "c") ? "cat" : "term",
+            id: data.subjID,
+        };
+        dbReqManager.query($ci, reqData, function($ci, result) {
+            // $ci.data("data").subjTitle = result[0];
+            // $ci.append('(<span>' + result[0] + '</span>)'); // No, let us
+            // insert the parentheses with CSS instead.
+            $ci.append(result[0][0]);
+        });
+    }
+});
+
+
+
+
+
+//
