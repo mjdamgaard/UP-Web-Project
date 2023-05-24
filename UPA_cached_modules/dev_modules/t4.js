@@ -164,27 +164,72 @@ predicateRelationTextCL.addCallback(function($ci, data) {
 export var predicateSubjectRepresentationCL = new ContentLoader(
     "PredicateSubjectRepresentation",
     /* Initial HTML template */
-    '<span></span>',
+    '<span>' +
+        // ' (<<SemEntityTitle>>)'
+    '</span>',
     appColumnCL
 );
+predicateSubjectRepresentationCL.addCallback("data", function(newData, data) {
+    newData.entityType = data.subjType;
+    newData.entityID = data.subjID;
+});
 predicateSubjectRepresentationCL.addCallback(function($ci, data) {
     let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-    // if (data.subjType === "c" && data.subjID != "1") {
     if (data.subjType === "c" || data.subjType === "t") {
-        let reqData = {
-            type: (data.subjType === "c") ? "cat" : "term",
-            id: data.subjID,
-        };
-        dbReqManager.query($ci, reqData, function($ci, result) {
-            // $ci.data("data").subjTitle = result[0];
-            // $ci.append('(<span>' + result[0] + '</span>)'); // No, let us
-            // insert the parentheses with CSS instead.
-            $ci.append(result[0][0]);
-        });
+        predicateSubjectRepresentationCL.loadAppended(
+            $ci, "SemEntityTitle", data
+        );
     }
 });
 
 
+
+export var semEntityTitleCL = new ContentLoader(
+    "SemEntityTitle",
+    /* Initial HTML template */
+    '<span>' +
+    '</span>',
+    appColumnCL
+);
+semEntityTitleCL.addCallback(function($ci, data) {
+    if (typeof data.title === "string") {
+        $ci.append(data.title);
+        return;
+    }
+    let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+    let reqData = {
+        type: (data.entityType === "c") ? "cat" :
+            (data.entityType === "t") ? "term" :
+            (data.entityType === "r") ? "rel" :
+            "error: data.entityType == " + data.entityType,
+        id: data.entityID,
+    };
+    dbReqManager.query($ci, reqData, function($ci, result) {
+        $ci.append(
+            (
+                result[0] ??
+                ['<span class="missing-title">Title is missing</span>']
+            )[0]
+        );
+    });
+});
+semEntityTitleCL.addCallback(function($ci, data) {
+    $ci
+        .on("click", function(event) {
+            var columnData = {
+                queryUserID: data.queryUserID,
+                entityType: data.entityType,
+                entityID: data.entityID,
+                inputUserID: data.inputUserID,
+            };
+            $(this)
+                .trigger("open-column", [
+                    "CategoryColumn", columnData, "right", true
+                ])
+                .trigger("column-click");
+            return false;
+        });
+});
 
 
 

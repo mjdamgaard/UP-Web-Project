@@ -5,9 +5,10 @@ import {
 } from "/UPA_scripts.php?id=3";
 import {
     predicateRelationTextCL, predicateSubjectRepresentationCL,
+    semEntityTitleCL,
 } from "/UPA_scripts.php?id=4";
 import {
-    supercategoryNavItemCL, semEntityTitleCL,
+    supercategoryNavItemCL,
 } from "/UPA_scripts.php?id=5";
 
 
@@ -123,20 +124,16 @@ predicateRelationTextCL.addCallback(function($ci) {
     $ci.addClass("clickable-text text-primary");
 });
 
+predicateSubjectRepresentationCL.addCSS(
+    '&:before { content: " ("; }'
+);
+predicateSubjectRepresentationCL.addCSS(
+    '&:after { content: ")"; }'
+);
 predicateSubjectRepresentationCL.addCallback(function($ci) {
-    $ci.addClass("clickable-text text-primary");
+    $ci.children('span').addClass("clickable-text text-primary");
+    console.log($ci);
 });
-predicateSubjectRepresentationCL.addCSS(
-    '&:before {' +
-        'content: " (";' +
-    '}'
-);
-predicateSubjectRepresentationCL.addCSS(
-    '&:after {' +
-        'content: ")";' +
-    '}'
-);
-
 
 
 

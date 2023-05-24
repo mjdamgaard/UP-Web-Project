@@ -86,55 +86,6 @@ export var categoryElementCL = new ContentLoader(
     '</div>',
     appColumnCL
 );
-// categoryElementCL.addCallback("data", function(newData, data) {
-//     newData.catID = data.objID;
-// });
-export var semEntityTitleCL = new ContentLoader(
-    "SemEntityTitle",
-    /* Initial HTML template */
-    '<span>' +
-    '</span>',
-    appColumnCL
-);
-semEntityTitleCL.addCallback(function($ci, data) {
-    if (typeof data.title === "string") {
-        $ci.append(data.title);
-        return;
-    }
-    let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-    let reqData = {
-        type: (data.entityType === "c") ? "cat" :
-            (data.entityType === "t") ? "term" :
-            (data.entityType === "r") ? "rel" :
-            "error: data.entityType == " + data.entityType,
-        id: data.entityID,
-    };
-    dbReqManager.query($ci, reqData, function($ci, result) {
-        $ci.append(
-            (
-                result[0] ??
-                ['<span class="missing-title">Title is missing</span>']
-            )[0]
-        );
-    });
-});
-semEntityTitleCL.addCallback(function($ci, data) {
-    $ci
-        .on("click", function(event) {
-            var columnData = {
-                queryUserID: data.queryUserID,
-                entityType: data.entityType,
-                entityID: data.entityID,
-                inputUserID: data.inputUserID,
-            };
-            $(this)
-                .trigger("open-column", [
-                    "CategoryColumn", columnData, "right", true
-                ])
-                .trigger("column-click");
-            return false;
-        });
-});
 
 // At some point, we'll have composite sets as well, for which we'll need to
 // display several ratings in the list.

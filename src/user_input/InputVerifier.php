@@ -22,7 +22,7 @@ class InputVerifier {
             case "type":
                 $pattern = "/^[suctrkpxbl]$/";
                 if (!preg_match($pattern, $paramVal)) {
-                    echoTypeErrorJSONAndExit($paramName, $pattern);
+                    echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
                 }
                 break;
             case "id":
@@ -33,7 +33,9 @@ class InputVerifier {
                     strlen($paramVal) == 20 &&
                         $paramVal > "18446744073709551615"
                 ) {
-                    echoTypeErrorJSONAndExit($paramName, "BIGINT UNSIGNED");
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "BIGINT UNSIGNED"
+                    );
                 }
                 break;
             case "uint":
@@ -43,7 +45,9 @@ class InputVerifier {
                     strlen($paramVal) > 10 ||
                     strlen($paramVal) == 10 && $paramVal > "4294967295"
                 ) {
-                    echoTypeErrorJSONAndExit($paramName, "INT UNSIGNED");
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "INT UNSIGNED"
+                    );
                 }
                 break;
             case "int":
@@ -54,7 +58,7 @@ class InputVerifier {
                     $n < -2147483648 ||
                     $n > 2147483647
                 ) {
-                    echoTypeErrorJSONAndExit($paramName, "INT");
+                    echoTypeErrorJSONAndExit($paramName, $paramVal, "INT");
                 }
                 break;
             case "tint":
@@ -65,7 +69,7 @@ class InputVerifier {
                     $n < -128 ||
                     $n > 127
                 ) {
-                    echoTypeErrorJSONAndExit($paramName, "TINYINT");
+                    echoTypeErrorJSONAndExit($paramName, $paramVal, "TINYINT");
                 }
                 break;
             case "tstr":
@@ -74,7 +78,9 @@ class InputVerifier {
                     !ctype_print($paramVal) ||
                     strlen($paramVal) > 255
                 ) {
-                    echoTypeErrorJSONAndExit($paramName, "VARCHAR(225)");
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "VARCHAR(225)"
+                    );
                 }
                 break;
             case "str":
@@ -83,7 +89,9 @@ class InputVerifier {
                     !ctype_print($paramVal) ||
                     strlen($paramVal) > 768
                 ) {
-                    echoTypeErrorJSONAndExit($paramName, "VARCHAR(768)");
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "VARCHAR(768)"
+                    );
                 }
                 break;
             case "elemTypeStr":
@@ -92,19 +100,21 @@ class InputVerifier {
                     !ctype_print($paramVal) ||
                     strlen($paramVal) > 31
                 ) {
-                    echoTypeErrorJSONAndExit($paramName, "VARCHAR(31)");
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "VARCHAR(31)"
+                    );
                 }
                 break;
             case "elemIDHexStr":
                 $pattern = "/^([0-9A-Fa-f]{2}){0,248}$/";
                 if (!preg_match($pattern, $paramVal)) {
-                    echoTypeErrorJSONAndExit($paramName, $pattern);
+                    echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
                 }
                 break;
             case "rat":
                 $pattern = "/^([0-9A-Fa-f]{2}){0,255}$/";
                 if (!preg_match($pattern, $paramVal)) {
-                    echoTypeErrorJSONAndExit($paramName, $pattern);
+                    echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
                 }
                 break;
             case "text":
@@ -113,7 +123,7 @@ class InputVerifier {
                     !ctype_print($paramVal) ||
                     strlen($paramVal) > 65535
                 ) {
-                    echoTypeErrorJSONAndExit($paramName, "TEXT");
+                    echoTypeErrorJSONAndExit($paramName, $paramVal, "TEXT");
                 }
                 break;
             case "blob":
@@ -121,14 +131,16 @@ class InputVerifier {
                     !is_string($paramVal) ||
                     strlen($paramVal) > 4294967295
                 ) {
-                    echoTypeErrorJSONAndExit($paramName, "MEDIUMBLOB");
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "MEDIUMBLOB"
+                    );
                 }
                 break;
             case "time":
                 $pattern =
             "/^([12]?[0-9] |3[0-4] )?([01][0-9]|2[0-3]):[0-9]{2}:[0-9]{2}$/";
                 if (!preg_match($pattern, $paramVal)) {
-                    echoTypeErrorJSONAndExit($paramName, $pattern);
+                    echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
                 }
                 break;
             default:
