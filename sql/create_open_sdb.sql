@@ -206,7 +206,7 @@ CREATE TABLE Contexts (
 
     -- parent context.
     parent_context_id BIGINT UNSIGNED NOT NULL,
-    -- a category title for the context.
+    -- a category title for the context (preferable to use plural nouns).
     title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
     -- description of the semantic interpretation of terms defined in this
     -- context.

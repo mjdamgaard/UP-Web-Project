@@ -22,7 +22,7 @@ INSERT INTO Contexts (
     id, parent_context_id, title, description_text_id, spec_entity_t
 )
 VALUES (
-    1, 0, "Anything", 1, "0"
+    1, 0, "Terms", 1, "0"
 );
 INSERT INTO Creators (entity_t, entity_id, user_id)
 VALUES ('c', 1, 1);
@@ -34,7 +34,7 @@ VALUES (CONCAT(
 
 
     "This is a description of any Term with a Context equal to this one, ",
-    "i.e. the Context with id=1, title=""Anything"", or equal to a ",
+    "i.e. the Context with id=1, title=""Terms"", or equal to a ",
     "descendant Context. ",
     "All Contexts hold an ID of a so-called 'parent context' in the ",
     "database, and a 'descendant context' is thus one that has the relevant ",
@@ -52,13 +52,23 @@ VALUES (CONCAT(
     "child/descendent of another Context, by which the statements of that ",
     "Context is inherited by the child/descendant, unless an inherited ",
     "is explicitely amended. Since all Contexts are descendant of this ",
-    """Anything"" Context, all Terms an Contexts will inherit these ",
+    """Terms"" Context, all Terms an Contexts will inherit these ",
     "fundamental rules."
 ));
 INSERT INTO Creators (entity_t, entity_id, user_id)
 VALUES ('t', 1, 1);
 
 -- insert basic contexts, terms and realtions meant for common use.
+
+
+CALL insertText(CONCAT(
+    -- TODO..
+    "..Hm, måske jeg godt bare kan starte med en grundlæggende Prædikatklasse,",
+    " hvor titlen bare kan være enten navneord, verber.. Hm.. Eller måske en ",
+    "netop hvor ordklassen parses fra et indledende n.s., n.pl., v.s., v.pl., ",
+    "adj. ..."
+)); -- id: 2
+CALL insertOrFindContext(1, 1, 1, "Predicates", 2, "t"); -- id: 2
 
 
 
