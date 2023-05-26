@@ -40,42 +40,42 @@ $typeArr = "";
 switch ($reqType) {
     case "set":
         $sql = "CALL createOrFindSet (?, ?, ?)";
-        $paramNameArr = array("uid", "sid", "rid");
-        $typeArr = array("id", "id", "id",);
+        $paramNameArr = array("uid", "pid", "st");
+        $typeArr = array("id", "id", "type",);
         break;
     case "rat":
-        $sql = "CALL inputOrChangeRating (?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("uid", "sid", "oid", "r", "t");
+        $sql = "CALL inputOrChangeRating (?, ?, ?, ?, ?)";
+        $paramNameArr = array("uid", "seid", "suid", "r", "t");
         $typeArr = array("id", "id", "id", "rat", "time");
         break;
     case "ratSK":
-        $sql = "CALL inputOrChangeRatingFromSecKey (?, ?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("uid", "sid", "rid", "oid", "r", "t");
-        $typeArr = array("id", "id", "id", "id", "rat", "time");
+        $sql = "CALL inputOrChangeRatingFromSecKey (?, ?, ?, ?, ?, ?)";
+        $paramNameArr = array("uid", "pid", "st", "sid", "r", "t");
+        $typeArr = array("id", "id", "type", "id", "rat", "time");
         break;
-    case "cat":
+    case "cxt":
         // $sql = "CALL insertOrFindCat (?, ?, ?)";
-        $sql = "CALL insertOrFindCat (?, ?, ?)";
-        $paramNameArr = array("uid", "scid", "t");
-        $typeArr = array("id", "id", "tstr");
+        $sql = "CALL insertOrFindContext (?, ?, ?, ?, ?)";
+        $paramNameArr = array("uid", "pid", "t", "did", "st");
+        $typeArr = array("id", "id", "tstr", "id", "type");
         break;
     case "term":
-        $sql = "CALL insertOrFindTerm (?, ?, ?)";
-        $paramNameArr = array("uid", "cid", "t");
-        $typeArr = array("id", "id", "tstr");
+        $sql = "CALL insertOrFindTerm (?, ?, ?, ?)";
+        $paramNameArr = array("uid", "cid", "t", "sid");
+        $typeArr = array("id", "id", "tstr", "id");
         break;
-    case "rel":
-        $sql = "CALL insertOrFindRel (?, ?, ?, ?)";
-        $paramNameArr = array("uid", "st", "ot", "on");
-        $typeArr = array("id", "type", "type", "tstr");
-        break;
-    case "kws":
-        $sql = "CALL insertOrFindKeywordString (?, ?)";
-        $paramNameArr = array("uid", "s");
-        $typeArr = array("id", "str");
+    case "list":
+        $sql = "CALL insertOrFindList (?, ?, ?, ?)";
+        $paramNameArr = array("uid", "ts", "ids", "tid");
+        $typeArr = array("id", "elemTypeStr", "elemIDHexStr", "id");
         break;
     case "patt":
         $sql = "CALL insertOrFindPattern (?, ?)";
+        $paramNameArr = array("uid", "s");
+        $typeArr = array("id", "str");
+        break;
+    case "kws":
+        $sql = "CALL insertOrFindKeywordString (?, ?)";
         $paramNameArr = array("uid", "s");
         $typeArr = array("id", "str");
         break;
@@ -88,11 +88,6 @@ switch ($reqType) {
         $sql = "CALL insertBinary (?, ?)";
         $paramNameArr = array("uid", "b");
         $typeArr = array("id", "blob");
-        break;
-    case "list":
-        $sql = "CALL insertOrFindList (?, ?, ?, ?)";
-        $paramNameArr = array("uid", "ts", "ids", "tid");
-        $typeArr = array("id", "elemTypeStr", "elemIDHexStr", "id");
         break;
     default:
         header("Content-Type: text/json");

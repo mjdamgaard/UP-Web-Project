@@ -367,9 +367,6 @@ DELIMITER ;
 
 
 
-
-
-
 DELIMITER //
 CREATE PROCEDURE selectPattern (
     IN pattID BIGINT UNSIGNED
