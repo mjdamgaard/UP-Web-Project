@@ -38,7 +38,7 @@ $paramNameArr = "";
 $typeArr = "";
 switch ($reqType) {
     case "set":
-        $sql = "CALL selectSet (?, ?, ?, ?, ?, ?)";
+        $sql = "CALL selectSetMembers (?, ?, ?, ?, ?, ?)";
         $paramNameArr = array(
             "id",
             "rl", "rh",

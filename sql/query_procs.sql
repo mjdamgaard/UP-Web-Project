@@ -70,8 +70,8 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectSetFromSecKey (
     IN userID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED,
-    IN relID BIGINT UNSIGNED,
+    IN predID BIGINT UNSIGNED,
+    IN subjType CHAR(1),
     IN ratingRangeMinHex VARCHAR(510),
     IN ratingRangeMaxHex VARCHAR(510),
     IN maxNum INT UNSIGNED,
@@ -84,8 +84,8 @@ BEGIN
     FROM Sets
     WHERE (
         user_id = userID AND
-        subj_id = subjID AND
-        rel_id = relID
+        pred_id = predID AND
+        subj_t = subjType
     );
     CALL selectSet (
         setID,
@@ -105,18 +105,12 @@ CREATE PROCEDURE selectSetInfo (
 )
 BEGIN
     SELECT
-        Sets.id AS setID,
-        Sets.user_id AS userID,
-        Relations.subj_t AS subjType,
-        Sets.subj_id AS subjID,
-        Sets.rel_id AS relID,
-        Relations.obj_noun AS relObjNoun,
-        Relations.obj_t AS objType,
-        Sets.elem_num AS elemNum
-    FROM Sets
-    INNER JOIN Relations
-    ON Sets.rel_id = Relations.id
-    WHERE Sets.id = setID;
+        id AS setID,
+        user_id AS userID,
+        pred_id AS predID,
+        subj_t AS subjType,
+        elem_num AS elemNum
+    FROM Sets;
 END //
 DELIMITER ;
 
@@ -124,8 +118,8 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectSetInfoFromSecKey (
     IN userID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED,
-    IN relID BIGINT UNSIGNED
+    IN predID BIGINT UNSIGNED,
+    IN subjType CHAR(1)
 )
 BEGIN
     DECLARE setID BIGINT UNSIGNED;
@@ -133,8 +127,8 @@ BEGIN
     FROM Sets
     WHERE (
         user_id = userID AND
-        subj_id = subjID AND
-        rel_id = relID
+        pred_id = predID AND
+        subj_t = subjType
     );
     CALL selectSetInfo (setID);
 END //
@@ -142,18 +136,18 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectSetID (
+CREATE PROCEDURE selectSetInfoFromSecKey (
     IN userID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED,
-    IN relID BIGINT UNSIGNED
+    IN predID BIGINT UNSIGNED,
+    IN subjType CHAR(1)
 )
 BEGIN
     SELECT id AS setID
     FROM Sets
     WHERE (
         user_id = userID AND
-        subj_id = subjID AND
-        rel_id = relID
+        pred_id = predID AND
+        subj_t = subjType
     );
 END //
 DELIMITER ;
@@ -162,13 +156,13 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectRating (
-    IN objID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
     IN setID BIGINT UNSIGNED
 )
 BEGIN
     SELECT HEX(rat_val) AS ratVal
     FROM SemanticInputs
-    WHERE (obj_id = objID AND set_id = setID);
+    WHERE (subj_id = subjID AND set_id = setID);
 END //
 DELIMITER ;
 
