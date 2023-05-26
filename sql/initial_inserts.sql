@@ -28,6 +28,11 @@ INSERT INTO Creators (entity_t, entity_id, user_id)
 VALUES ('c', 1, 1);
 INSERT INTO Texts (str)
 VALUES (CONCAT(
+    "This text desribes the fundamental semantics of the so-called Contexts ",
+    "and Terms of the database. ", -- TODO: Continue this text.. (And only start
+    -- making it bootstrap its own meaning towards the end of it.)
+
+
     "This is a description of any Term with a Context equal to this one, ",
     "i.e. the Context with id=1, title=""Anything"", or equal to a ",
     "descendant Context. ",
@@ -51,7 +56,7 @@ VALUES (CONCAT(
     "fundamental rules."
 ));
 INSERT INTO Creators (entity_t, entity_id, user_id)
-VALUES ('c', 1, 1);
+VALUES ('t', 1, 1);
 
 -- insert basic contexts, terms and realtions meant for common use.
 
