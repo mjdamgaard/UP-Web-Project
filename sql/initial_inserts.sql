@@ -66,7 +66,7 @@ CALL insertText(CONCAT(
     "..Hm, måske jeg godt bare kan starte med en grundlæggende Prædikatklasse,",
     " hvor titlen bare kan være enten navneord, verber.. Hm.. Eller måske en ",
     "netop hvor ordklassen parses fra et indledende n.s., n.pl., v.s., v.pl., ",
-    "adj. ..."
+    "adj. ..." -- ..Yes..
 )); -- id: 2
 CALL insertOrFindContext(1, 1, 1, "Predicates", 2, "t"); -- id: 2
 
