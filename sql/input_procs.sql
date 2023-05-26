@@ -1,25 +1,24 @@
 
 SELECT "Input procedures";
 
--- DROP PROCEDURE createOrFindSet;
--- DROP PROCEDURE inputOrChangeRating;
--- DROP PROCEDURE inputOrChangeRatingFromSecKey;
--- DROP PROCEDURE insertOrFindCat;
--- DROP PROCEDURE insertOrFindTerm;
--- DROP PROCEDURE insertOrFindRel;
--- DROP PROCEDURE insertOrFindKeywordString;
--- DROP PROCEDURE insertOrFindPattern;
--- DROP PROCEDURE insertText;
--- DROP PROCEDURE insertBinary;
--- DROP PROCEDURE insertOrFindList;
+DROP PROCEDURE createOrFindSet;
+DROP PROCEDURE inputOrChangeRating;
+DROP PROCEDURE inputOrChangeRatingFromSecKey;
+DROP PROCEDURE insertOrFindContext;
+DROP PROCEDURE insertOrFindTerm;
+DROP PROCEDURE insertOrFindKeywordString;
+DROP PROCEDURE insertOrFindPattern;
+DROP PROCEDURE insertText;
+DROP PROCEDURE insertBinary;
+DROP PROCEDURE insertOrFindList;
 
 
 
 DELIMITER //
 CREATE PROCEDURE createOrFindSet (
     IN userID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED,
-    IN relID BIGINT UNSIGNED
+    IN predID BIGINT UNSIGNED,
+    IN subjType CHAR(1)
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
@@ -29,20 +28,20 @@ BEGIN
     FROM Sets
     WHERE (
         user_id = userID AND
-        subj_id = subjID AND
-        rel_id = relID
+        pred_id = predID AND
+        subj_t = subjType
     );
     IF (outID IS NULL) THEN
         INSERT INTO Sets (
             user_id,
-            subj_id,
-            rel_id,
+            pred_id,
+            subj_t,
             elem_num
         )
         VALUES (
             userID,
-            subjID,
-            relID,
+            predID,
+            subjType,
             0
         );
         SELECT LAST_INSERT_ID() INTO outID;
@@ -63,7 +62,7 @@ DELIMITER //
 CREATE PROCEDURE inputOrChangeRating (
     IN userID BIGINT UNSIGNED,
     IN setID BIGINT UNSIGNED,
-    IN objID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
     IN ratValHex VARCHAR(510),
     IN delayTime TIME
 )
@@ -85,7 +84,7 @@ BEGIN
         SELECT rat_val INTO prevRatVal
         FROM SemanticInputs
         WHERE (
-            obj_id = objID AND
+            subj_id = subjID AND
             set_id = setID
         );
         SELECT elem_num INTO prevElemNum
@@ -95,7 +94,7 @@ BEGIN
         SELECT rat_val INTO prevRatVal
         FROM SemanticInputs
         WHERE (
-            obj_id = objID AND
+            subj_id = subjID AND
             set_id = setID
         )
         FOR UPDATE;
@@ -106,14 +105,14 @@ BEGIN
         -- recent inputs into RecordedInputs when there is long enough time
         -- between the last last recent input before that.
         SET delayTime = 0; -- (not implemented yet)
-        INSERT INTO RecentInputs (set_id, rat_val, obj_id)
-        VALUES (setID, ratVal, objID); -- (This can in theory fail if to
+        INSERT INTO RecentInputs (set_id, rat_val, subj_id)
+        VALUES (setID, ratVal, subjID); -- (This can in theory fail if to
         -- changes can happen at the same millisecond, so let's keep it here
         -- above the following updates, for aesthetics if nothing else.)
 
         IF (ratVal IS NOT NULL AND prevRatVal IS NULL) THEN
-            INSERT INTO SemanticInputs (set_id, rat_val, obj_id)
-            VALUES (setID, ratVal, objID);
+            INSERT INTO SemanticInputs (set_id, rat_val, subj_id)
+            VALUES (setID, ratVal, subjID);
             UPDATE Sets
             SET elem_num = prevElemNum + 1
             WHERE id = setID;
@@ -122,14 +121,14 @@ BEGIN
             UPDATE SemanticInputs
             SET rat_val = ratVal
             WHERE (
-                obj_id = objID AND
+                subj_id = subjID AND
                 set_id = setID
             );
             SET exitCode = 0; -- success(ful update of previous rating).
         ELSEIF (ratVal IS NULL AND prevRatVal IS NOT NULL) THEN
             DELETE FROM SemanticInputs
             WHERE (
-                obj_id = objID AND
+                subj_id = subjID AND
                 set_id = setID
             );
             UPDATE Sets
@@ -148,9 +147,9 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE inputOrChangeRatingFromSecKey (
     IN userID BIGINT UNSIGNED,
+    IN predID BIGINT UNSIGNED,
+    IN subjType CHAR(1),
     IN subjID BIGINT UNSIGNED,
-    IN relID BIGINT UNSIGNED,
-    IN objID BIGINT UNSIGNED,
     IN ratValHex VARCHAR(510),
     IN delayTime TIME
 )
@@ -163,20 +162,20 @@ BEGIN
     FROM Sets
     WHERE (
         user_id = userID AND
-        subj_id = subjID AND
-        rel_id = relID
+        pred_id = predID AND
+        subj_t = subjType
     );
     IF (setID IS NULL) THEN
         INSERT INTO Sets (
             user_id,
-            subj_id,
-            rel_id,
+            pred_id,
+            subj_t,
             elem_num
         )
         VALUES (
             userID,
-            subjID,
-            relID,
+            predID,
+            subjType,
             0
         );
         SELECT LAST_INSERT_ID() INTO setID;
@@ -187,7 +186,7 @@ BEGIN
     CALL inputOrChangeRating (
         userID,
         setID,
-        objID,
+        subjID,
         ratValHex,
         delayTime
     );
@@ -199,27 +198,37 @@ DELIMITER ;
 
 
 
-
 DELIMITER //
-CREATE PROCEDURE insertOrFindCat (
+CREATE PROCEDURE insertOrFindContext (
     IN userID BIGINT UNSIGNED,
-    IN superCatID BIGINT UNSIGNED,
-    IN catTitle VARCHAR(255)
+    IN parentCxtID BIGINT UNSIGNED,
+    IN cxtTitle VARCHAR(255),
+    IN desTextID BIGINT UNSIGNED,
+    IN specType CHAR(1)
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
 
     SELECT id INTO outID
-    FROM Categories
-    WHERE (title = catTitle AND super_cat_id = superCatID);
+    FROM Contexts
+    WHERE (
+        parent_context_id = parentCxtID AND
+        description_text_id = desTextID AND
+        spec_entity_t = specType AND
+        title = cxtTitle
+    );
     IF (outID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
-    ELSEIF (NOT EXISTS (SELECT id FROM Categories WHERE id = superCatID)) THEN
-        SET exitCode = 2; -- super category does not exist.
+    ELSEIF (NOT EXISTS (SELECT id FROM Contexts WHERE id = parentCxtID)) THEN
+        SET exitCode = 2; -- parent context does not exist.
     ELSE
-        INSERT INTO Categories (title, super_cat_id)
-        VALUES (catTitle, superCatID);
+        INSERT INTO Contexts (
+            parent_context_id, title, description_text_id, spec_entity_t
+        )
+        VALUES (
+            parentCxtID, cxtTitle, desTextID, specType
+        );
         SELECT LAST_INSERT_ID() INTO outID;
         INSERT INTO Creators (entity_t, entity_id, user_id)
         VALUES ("c", outID, userID);
@@ -234,8 +243,9 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindTerm (
     IN userID BIGINT UNSIGNED,
-    IN catID BIGINT UNSIGNED,
-    IN termTitle VARCHAR(255)
+    IN cxtID BIGINT UNSIGNED,
+    IN termTitle VARCHAR(255),
+    IN specID BIGINT UNSIGNED
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
@@ -243,14 +253,22 @@ BEGIN
 
     SELECT id INTO outID
     FROM Terms
-    WHERE (title = termTitle AND cat_id = catID);
+    WHERE (
+        context_id = cxtID AND
+        spec_entity_id = specID AND
+        title = termTitle
+    );
     IF (outID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
-    ELSEIF (NOT EXISTS (SELECT id FROM Categories WHERE id = catID)) THEN
-        SET exitCode = 2; -- category doesn't exist.
+    ELSEIF (NOT EXISTS (SELECT id FROM Contexts WHERE id = cxtID)) THEN
+        SET exitCode = 2; -- context does not exist.
     ELSE
-        INSERT INTO Terms (title, cat_id)
-        VALUES (termTitle, catID);
+        INSERT INTO Terms (
+            context_id, title, spec_entity_id
+        )
+        VALUES (
+            cxtID, termTitle, specID
+        );
         SELECT LAST_INSERT_ID() INTO outID;
         INSERT INTO Creators (entity_t, entity_id, user_id)
         VALUES ("t", outID, userID);
@@ -263,28 +281,36 @@ DELIMITER ;
 
 
 
+
+
 DELIMITER //
-CREATE PROCEDURE insertOrFindRel (
+CREATE PROCEDURE insertOrFindList (
     IN userID BIGINT UNSIGNED,
-    IN subjType CHAR(1),
-    IN objType CHAR(1),
-    IN objNoun VARCHAR(255)
+    IN elemTypeStr VARCHAR(31),
+    IN elemIDHexStr VARCHAR(496),
+    IN tailID BIGINT UNSIGNED
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
+    DECLARE elemIDs VARBINARY(248);
+    SET elemIDs = UNHEX(elemIDHexStr);
+
+    IF (tailID = 0) THEN
+        SET tailID = NULL;
+    END IF;
 
     SELECT id INTO outID
-    FROM Relations
-    WHERE (subj_t = subjType AND obj_t = objType AND obj_noun = objNoun);
+    FROM Lists
+    WHERE (elem_ts = elemTypeStr AND elem_ids = elemIDs AND tail_id = tailID);
     IF (outID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
     ELSE
-        INSERT INTO Relations (subj_t, obj_t, obj_noun)
-        VALUES (subjType, objType, objNoun);
+        INSERT INTO Lists (elem_ts, elem_ids, tail_id)
+        VALUES (elemTypeStr, elemIDs, tailID);
         SELECT LAST_INSERT_ID() INTO outID;
         INSERT INTO Creators (entity_t, entity_id, user_id)
-        VALUES ("r", outID, userID);
+        VALUES ("l", outID, userID);
         SET exitCode = 0; -- insert.
     END IF;
     SELECT outID, exitCode;
@@ -294,34 +320,6 @@ DELIMITER ;
 
 
 
-
-
-
-DELIMITER //
-CREATE PROCEDURE insertOrFindKeywordString (
-    IN userID BIGINT UNSIGNED,
-    IN s VARCHAR(768)
-)
-BEGIN
-    DECLARE outID BIGINT UNSIGNED;
-    DECLARE exitCode TINYINT;
-
-    SELECT id INTO outID
-    FROM KeywordStrings
-    WHERE str = s;
-    IF (outID IS NOT NULL) THEN
-        SET exitCode = 1; -- find.
-    ELSE
-        INSERT INTO KeywordStrings (str)
-        VALUES (s);
-        SELECT LAST_INSERT_ID() INTO outID;
-        INSERT INTO Creators (entity_t, entity_id, user_id)
-        VALUES ("k", outID, userID);
-        SET exitCode = 0; -- insert.
-    END IF;
-    SELECT outID, exitCode;
-END //
-DELIMITER ;
 
 
 DELIMITER //
@@ -350,6 +348,32 @@ BEGIN
 END //
 DELIMITER ;
 
+
+DELIMITER //
+CREATE PROCEDURE insertOrFindKeywordString (
+    IN userID BIGINT UNSIGNED,
+    IN s VARCHAR(768)
+)
+BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
+
+    SELECT id INTO outID
+    FROM KeywordStrings
+    WHERE str = s;
+    IF (outID IS NOT NULL) THEN
+        SET exitCode = 1; -- find.
+    ELSE
+        INSERT INTO KeywordStrings (str)
+        VALUES (s);
+        SELECT LAST_INSERT_ID() INTO outID;
+        INSERT INTO Creators (entity_t, entity_id, user_id)
+        VALUES ("k", outID, userID);
+        SET exitCode = 0; -- insert.
+    END IF;
+    SELECT outID, exitCode;
+END //
+DELIMITER ;
 
 
 
@@ -390,43 +414,5 @@ BEGIN
     INSERT INTO Creators (entity_t, entity_id, user_id)
     VALUES ("b", outID, userID);
     SELECT outID, 0; -- insert.
-END //
-DELIMITER ;
-
-
-
-
-
-DELIMITER //
-CREATE PROCEDURE insertOrFindList (
-    IN userID BIGINT UNSIGNED,
-    IN elemTypeStr VARCHAR(31),
-    IN elemIDHexStr VARCHAR(496),
-    IN tailID BIGINT UNSIGNED
-)
-BEGIN
-    DECLARE outID BIGINT UNSIGNED;
-    DECLARE exitCode TINYINT;
-    DECLARE elemIDs VARBINARY(248);
-    SET elemIDs = UNHEX(elemIDHexStr);
-
-    IF (tailID = 0) THEN
-        SET tailID = NULL;
-    END IF;
-
-    SELECT id INTO outID
-    FROM Lists
-    WHERE (elem_ts = elemTypeStr AND elem_ids = elemIDs AND tail_id = tailID);
-    IF (outID IS NOT NULL) THEN
-        SET exitCode = 1; -- find.
-    ELSE
-        INSERT INTO Lists (elem_ts, elem_ids, tail_id)
-        VALUES (elemTypeStr, elemIDs, tailID);
-        SELECT LAST_INSERT_ID() INTO outID;
-        INSERT INTO Creators (entity_t, entity_id, user_id)
-        VALUES ("l", outID, userID);
-        SET exitCode = 0; -- insert.
-    END IF;
-    SELECT outID, exitCode;
 END //
 DELIMITER ;

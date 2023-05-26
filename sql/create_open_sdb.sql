@@ -214,7 +214,7 @@ CREATE TABLE Contexts (
     -- the type of specifying entities held by terms of this context.
     spec_entity_t CHAR(1),
 
-    UNIQUE INDEX (parent_context_id, description_text_id, title)
+    UNIQUE INDEX (parent_context_id, description_text_id, spec_entity_t, title)
 );
 
 CREATE TABLE Terms (
@@ -275,7 +275,7 @@ CREATE TABLE KeywordStrings (
     -- type = "k".
 
     -- keyword string.
-    str VARCHAR(768) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    str VARCHAR(768) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL UNIQUE,
     FULLTEXT idx (str)
 );
 

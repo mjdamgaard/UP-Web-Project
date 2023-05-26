@@ -1,28 +1,28 @@
 
 SELECT "Query procedures";
 
-DROP PROCEDURE selectSet;
-DROP PROCEDURE selectSetFromSecKey;
-DROP PROCEDURE selectSetInfo;
-DROP PROCEDURE selectSetInfoFromSecKey;
-DROP PROCEDURE selectRating;
-DROP PROCEDURE selectRecentInputs;
-DROP PROCEDURE selectRecordedInputs;
-DROP PROCEDURE selectUserInfo;
-DROP PROCEDURE selectContext;
-DROP PROCEDURE selectTerm;
-DROP PROCEDURE selectContextIDs;
-DROP PROCEDURE selectTermIDs;
-DROP PROCEDURE selectList;
-DROP PROCEDURE selectListID;
-DROP PROCEDURE selectPattern;
-DROP PROCEDURE selectPatternIDs;
-DROP PROCEDURE searchForKeywordStrings;
-DROP PROCEDURE searchForKeywordStringsBooleanMode;
-DROP PROCEDURE selectText;
-DROP PROCEDURE selectBinary;
-DROP PROCEDURE selectCreator;
-DROP PROCEDURE selectCreations;
+-- DROP PROCEDURE selectSet;
+-- DROP PROCEDURE selectSetFromSecKey;
+-- DROP PROCEDURE selectSetInfo;
+-- DROP PROCEDURE selectSetInfoFromSecKey;
+-- DROP PROCEDURE selectRating;
+-- DROP PROCEDURE selectRecentInputs;
+-- DROP PROCEDURE selectRecordedInputs;
+-- DROP PROCEDURE selectUserInfo;
+-- DROP PROCEDURE selectContext;
+-- DROP PROCEDURE selectTerm;
+-- DROP PROCEDURE selectContextIDs;
+-- DROP PROCEDURE selectTermIDs;
+-- DROP PROCEDURE selectList;
+-- DROP PROCEDURE selectListID;
+-- DROP PROCEDURE selectPattern;
+-- DROP PROCEDURE selectPatternIDs;
+-- DROP PROCEDURE searchForKeywordStrings;
+-- DROP PROCEDURE searchForKeywordStringsBooleanMode;
+-- DROP PROCEDURE selectText;
+-- DROP PROCEDURE selectBinary;
+-- DROP PROCEDURE selectCreator;
+-- DROP PROCEDURE selectCreations;
 
 
 
@@ -247,6 +247,7 @@ DELIMITER //
 CREATE PROCEDURE selectContextIDs (
     IN parentCxtID BIGINT UNSIGNED,
     IN desTextID BIGINT UNSIGNED,
+    IN specType CHAR(1),
     IN str VARCHAR(255),
     IN maxNum INT,
     IN numOffset INT
@@ -260,6 +261,7 @@ BEGIN
         WHERE (
             parent_context_id = parentCxtID AND
             description_text_id = desTextID AND
+            spec_entity_t = specType AND
             title < str
         )
         ORDER BY title DESC
@@ -272,6 +274,7 @@ BEGIN
         WHERE (
             parent_context_id = parentCxtID AND
             description_text_id = desTextID AND
+            spec_entity_t = specType AND
             title >= str
         )
         ORDER BY title ASC
