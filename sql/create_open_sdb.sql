@@ -214,7 +214,7 @@ CREATE TABLE Contexts (
     -- the type of specifying entities held by terms of this context.
     spec_entity_t CHAR(1),
 
-    UNIQUE INDEX (description_text_id, parent_context_id, title)
+    UNIQUE INDEX (parent_context_id, description_text_id, title)
 );
 
 CREATE TABLE Terms (
@@ -237,7 +237,7 @@ CREATE TABLE Terms (
     -- (The type of the specifying entity is given by the context.)
     spec_entity_id BIGINT UNSIGNED NOT NULL,
 
-    UNIQUE INDEX (spec_entity_id, context_id, title)
+    UNIQUE INDEX (context_id, spec_entity_id, title)
 );
 
 
@@ -259,6 +259,16 @@ CREATE TABLE Lists (
 
 
 
+CREATE TABLE Patterns (
+    /* RegEx pattern string ID */
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    -- type = "p".
+
+    -- pattern string.
+    str VARCHAR(768) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL UNIQUE
+);
+
+
 CREATE TABLE KeywordStrings (
     /* keyword string ID */
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -269,15 +279,6 @@ CREATE TABLE KeywordStrings (
     FULLTEXT idx (str)
 );
 
-
-CREATE TABLE Patterns (
-    /* RegEx pattern string ID */
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    -- type = "p".
-
-    -- pattern string.
-    str VARCHAR(768) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL UNIQUE
-);
 
 
 
