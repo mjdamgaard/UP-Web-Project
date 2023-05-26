@@ -2,15 +2,15 @@
 import {
     sdbInterfaceCL, appColumnCL,
     columnInterfaceHeaderCL, closeButtonCL, tabHeaderCL, pagesContainerCL,
-} from "/UPA_scripts.php?id=3";
+} from "/UPA_scripts.php?id=13";
 import {
     predicateRepresentationCL,
     entityTitleCL, entityRepresentationCL,
-} from "/UPA_scripts.php?id=4";
+} from "/UPA_scripts.php?id=14";
 import {
     entityHeaderContentCL,
     supercategoryNavItemCL,
-} from "/UPA_scripts.php?id=5";
+} from "/UPA_scripts.php?id=15";
 
 
 

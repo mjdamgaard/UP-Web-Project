@@ -1,10 +1,10 @@
 
 import {
     DBRequestManager,
-} from "/UPA_scripts.php?id=1";
+} from "/UPA_scripts.php?id=11";
 import {
     ContentLoader,
-} from "/UPA_scripts.php?id=2";
+} from "/UPA_scripts.php?id=12";
 
 
 
