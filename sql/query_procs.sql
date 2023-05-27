@@ -2,9 +2,9 @@
 SELECT "Query procedures";
 
 -- DROP PROCEDURE selectSet;
-DROP PROCEDURE selectSetFromSecKey;
+-- DROP PROCEDURE selectSetFromSecKey;
 -- DROP PROCEDURE selectSetInfo;
-DROP PROCEDURE selectSetInfoFromSecKey;
+-- DROP PROCEDURE selectSetInfoFromSecKey;
 -- DROP PROCEDURE selectRating;
 -- DROP PROCEDURE selectRecentInputs;
 -- DROP PROCEDURE selectRecordedInputs;
@@ -123,7 +123,7 @@ CREATE PROCEDURE selectSetInfoFromSecKey (
 )
 BEGIN
     DECLARE setID BIGINT UNSIGNED;
-    
+
     IF (ratValDefID = 0) THEN
         SET ratValDefID = NULL;
     END IF;

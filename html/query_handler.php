@@ -54,15 +54,15 @@ switch ($reqType) {
         // output: [[ratVal, subjID], ...].
         break;
         case "setSK":
-            $sql = "CALL selectSetFromSecKey (?, ?, ?, ?, ?, ?, ?, ?)";
+            $sql = "CALL selectSetFromSecKey (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $paramNameArr = array(
-                "uid", "pid", "st",
+                "uid", "pid", "st", "rdid"
                 "rl", "rh",
                 "n", "o",
                 "a"
             );
             $typeArr = array(
-                "id", "id", "type",
+                "id", "id", "type", "id",
                 "rat", "rat",
                 "uint", "uint",
                 "tint"
