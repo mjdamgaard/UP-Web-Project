@@ -28,17 +28,21 @@ VALUES ('c', 1, 1);
 -- Ah, maybe the specType should just be part of Terms instead. And also, maybe
 -- Sets should hold a Context as well, and while we're at it, why not a rating
 -- value description?.(!) (11:44)
-CALL insertOrFindContext(1, 1, 1, "Predicates", "t"); -- id: 2
+CALL insertOrFindContext(1, 1, "Predicates"); -- id: 2
 
 
 
 
 
--- CALL insertOrFindCat(1, 1, "openSDB"); -- id: 2
--- CALL insertOrFindTerm (1, 1, "openSDB"); -- id: 1
+CALL insertOrFindTerm(1, 1, "openSDB"); -- id: 1
 --
--- CALL insertOrFindRel (1, 'c', 'c', "Subcategories");
--- CALL insertOrFindRel (1, 'c', 't', "Elements");
+CALL insertOrFindPattern(1, "General info");
+CALL insertOrFindPattern(1, "Superclasses");
+CALL insertOrFindPattern(1, "Instances");
+CALL insertOrFindPattern(1, "Subclasses");
+CALL insertOrFindPattern(1, "Related entities");
+CALL insertOrFindPattern(1, "Related classes");
+CALL insertOrFindPattern(1, "Appendices");
 --
 -- CALL insertOrFindRel (1, 'c', 'c', "Duplicates");
 -- CALL insertOrFindRel (1, 't', 't', "Duplicates");
