@@ -109,24 +109,24 @@ switch ($reqType) {
         $sql = "CALL selectContext (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [[parentCxtID, title, specType]].
+        // output: [[parentCxtID, title]].
         break;
     case "term":
         $sql = "CALL selectTerm (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [[cxtID, title, specID]].
+        // output: [[cxtID, title, specType, specID]].
         break;
     case "cxtIDs":
-        $sql = "CALL selectContextIDs (?, ?, ?, ?, ?)";
-        $paramNameArr = array("pid", "st", "s", "n", "o");
-        $typeArr = array("id", "type", "tvarchar", "int", "int");
+        $sql = "CALL selectContextIDs (?, ?, ?, ?)";
+        $paramNameArr = array("pid", "s", "n", "o");
+        $typeArr = array("id", "tvarchar", "int", "int");
         // output: [[title, cxtID], ...].
         break;
     case "termIDs":
-        $sql = "CALL selectTermIDs (?, ?, ?, ?, ?)";
-        $paramNameArr = array("cid", "sid", "s", "n", "o");
-        $typeArr = array("id", "id", "tvarchar", "int", "int");
+        $sql = "CALL selectTermIDs (?, ?, ?, ?, ?, ?)";
+        $paramNameArr = array("cid", "st", "sid", "s", "n", "o");
+        $typeArr = array("id", "type", "id", "tvarchar", "int", "int");
         // output: [[title, termID], ...].
         break;
     case "list":

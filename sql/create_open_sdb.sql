@@ -208,8 +208,6 @@ CREATE TABLE Contexts (
     parent_context_id BIGINT UNSIGNED NOT NULL,
     -- a category title for the context (preferable to use plural nouns).
     title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-    -- the type of specifying entities held by terms of this context.
-    spec_entity_t CHAR(1),
 
     UNIQUE INDEX (parent_context_id, spec_entity_t, title)
 );
@@ -232,9 +230,10 @@ CREATE TABLE Terms (
     -- predicates from relation--object pairs, which is of course a central
     -- usage in a semantic system: implementing relations.
     -- (The type of the specifying entity is given by the context.)
-    spec_entity_id BIGINT UNSIGNED NOT NULL,
+    spec_entity_t CHAR(1),
+    spec_entity_id BIGINT UNSIGNED,
 
-    UNIQUE INDEX (context_id, spec_entity_id, title)
+    UNIQUE INDEX (context_id, spec_entity_t, spec_entity_id, title)
 );
 
 

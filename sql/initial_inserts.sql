@@ -18,23 +18,17 @@ DELETE FROM Creators;
 
 
 -- insert the fundamental context of all terms (with no parent context).
-INSERT INTO Contexts (
-    id, parent_context_id, title, description_text_id, spec_entity_t
-)
-VALUES (
-    1, 0, "Terms", 1, "0"
-);
+INSERT INTO Contexts (id, parent_context_id, title)
+VALUES (1, 0, "Terms");
 INSERT INTO Creators (entity_t, entity_id, user_id)
 VALUES ('c', 1, 1);
 
 -- insert basic contexts, terms and realtions meant for common use.
 
-
-CALL insertOrFindContext(
-    1, 1, 1,
-    "{Predicates} \\(holding an optional term ..\\)",
-    "t"
-); -- id: 2
+-- Ah, maybe the specType should just be part of Terms instead. And also, maybe
+-- Sets should hold a Context as well, and while we're at it, why not a rating
+-- value description?.(!) (11:44)
+CALL insertOrFindContext(1, 1, 1, "Predicates", "t"); -- id: 2
 
 
 

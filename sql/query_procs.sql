@@ -9,10 +9,10 @@ SELECT "Query procedures";
 -- DROP PROCEDURE selectRecentInputs;
 -- DROP PROCEDURE selectRecordedInputs;
 -- DROP PROCEDURE selectUserInfo;
--- DROP PROCEDURE selectContext;
--- DROP PROCEDURE selectTerm;
--- DROP PROCEDURE selectContextIDs;
--- DROP PROCEDURE selectTermIDs;
+DROP PROCEDURE selectContext;
+DROP PROCEDURE selectTerm;
+DROP PROCEDURE selectContextIDs;
+DROP PROCEDURE selectTermIDs;
 -- DROP PROCEDURE selectList;
 -- DROP PROCEDURE selectListID;
 -- DROP PROCEDURE selectPattern;
@@ -219,8 +219,7 @@ CREATE PROCEDURE selectContext (
 BEGIN
     SELECT
         parent_context_id AS parentCxtID,
-        title AS title,
-        spec_entity_t AS specType
+        title AS title
     FROM Contexts
     WHERE id = cxtID;
 END //
@@ -235,6 +234,7 @@ BEGIN
     SELECT
         context_id AS cxtID,
         title AS title,
+        spec_entity_t AS specType,
         spec_entity_id AS specID
     FROM Terms
     WHERE id = termID;
@@ -245,7 +245,6 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectContextIDs (
     IN parentCxtID BIGINT UNSIGNED,
-    IN specType CHAR(1),
     IN str VARCHAR(255),
     IN maxNum INT,
     IN numOffset INT
@@ -258,7 +257,6 @@ BEGIN
         FROM Contexts
         WHERE (
             parent_context_id = parentCxtID AND
-            spec_entity_t = specType AND
             title < str
         )
         ORDER BY title DESC
@@ -270,7 +268,6 @@ BEGIN
         FROM Contexts
         WHERE (
             parent_context_id = parentCxtID AND
-            spec_entity_t = specType AND
             title >= str
         )
         ORDER BY title ASC
@@ -284,6 +281,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectTermIDs (
     IN cxtID BIGINT UNSIGNED,
+    IN specType CHAR(1),
     IN specID BIGINT UNSIGNED,
     IN str VARCHAR(255),
     IN maxNum INT,
@@ -297,6 +295,7 @@ BEGIN
         FROM Terms
         WHERE (
             context_id = cxtID AND
+            spec_entity_t = specType AND
             spec_entity_id = specID AND
             title < str
         )
@@ -309,6 +308,7 @@ BEGIN
         FROM Terms
         WHERE (
             context_id = cxtID AND
+            spec_entity_t = specType AND
             spec_entity_id = specID AND
             title >= str
         )

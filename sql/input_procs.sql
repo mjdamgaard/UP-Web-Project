@@ -4,8 +4,8 @@ SELECT "Input procedures";
 -- DROP PROCEDURE createOrFindSet;
 -- DROP PROCEDURE inputOrChangeRating;
 -- DROP PROCEDURE inputOrChangeRatingFromSecKey;
--- DROP PROCEDURE insertOrFindContext;
--- DROP PROCEDURE insertOrFindTerm;
+DROP PROCEDURE insertOrFindContext;
+DROP PROCEDURE insertOrFindTerm;
 -- DROP PROCEDURE insertOrFindKeywordString;
 -- DROP PROCEDURE insertOrFindPattern;
 -- DROP PROCEDURE insertText;
@@ -202,8 +202,7 @@ DELIMITER //
 CREATE PROCEDURE insertOrFindContext (
     IN userID BIGINT UNSIGNED,
     IN parentCxtID BIGINT UNSIGNED,
-    IN cxtTitle VARCHAR(255),
-    IN specType CHAR(1)
+    IN cxtTitle VARCHAR(255)
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
@@ -213,7 +212,6 @@ BEGIN
     FROM Contexts
     WHERE (
         parent_context_id = parentCxtID AND
-        spec_entity_t = specType AND
         title = cxtTitle
     );
     IF (outID IS NOT NULL) THEN
@@ -221,12 +219,8 @@ BEGIN
     ELSEIF (NOT EXISTS (SELECT id FROM Contexts WHERE id = parentCxtID)) THEN
         SET exitCode = 2; -- parent context does not exist.
     ELSE
-        INSERT INTO Contexts (
-            parent_context_id, title, spec_entity_t
-        )
-        VALUES (
-            parentCxtID, cxtTitle, specType
-        );
+        INSERT INTO Contexts (parent_context_id, title)
+        VALUES (parentCxtID, cxtTitle);
         SELECT LAST_INSERT_ID() INTO outID;
         INSERT INTO Creators (entity_t, entity_id, user_id)
         VALUES ("c", outID, userID);
@@ -243,16 +237,22 @@ CREATE PROCEDURE insertOrFindTerm (
     IN userID BIGINT UNSIGNED,
     IN cxtID BIGINT UNSIGNED,
     IN termTitle VARCHAR(255),
+    IN specType CHAR(1),
     IN specID BIGINT UNSIGNED
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
 
+    IF (specID = 0) THEN
+        SET specID = NULL;
+    END IF;
+
     SELECT id INTO outID
     FROM Terms
     WHERE (
         context_id = cxtID AND
+        spec_entity_t = specType AND
         spec_entity_id = specID AND
         title = termTitle
     );
@@ -261,12 +261,8 @@ BEGIN
     ELSEIF (NOT EXISTS (SELECT id FROM Contexts WHERE id = cxtID)) THEN
         SET exitCode = 2; -- context does not exist.
     ELSE
-        INSERT INTO Terms (
-            context_id, title, spec_entity_id
-        )
-        VALUES (
-            cxtID, termTitle, specID
-        );
+        INSERT INTO Terms (context_id, title, spec_entity_t, spec_entity_id)
+        VALUES (cxtID, termTitle, specType, specID);
         SELECT LAST_INSERT_ID() INTO outID;
         INSERT INTO Creators (entity_t, entity_id, user_id)
         VALUES ("t", outID, userID);
