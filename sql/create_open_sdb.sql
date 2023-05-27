@@ -10,12 +10,11 @@
 -- DROP TABLE Users;
 -- DROP TABLE Contexts;
 -- DROP TABLE Terms;
--- DROP TABLE Relations;
--- DROP TABLE KeywordStrings;
+-- DROP TABLE Lists;
 -- DROP TABLE Patterns;
+-- DROP TABLE KeywordStrings;
 -- DROP TABLE Texts;
 -- DROP TABLE Binaries;
--- DROP TABLE Lists;
 --
 -- /* Meta data */
 -- DROP TABLE Creators;
@@ -33,8 +32,12 @@ CREATE TABLE Sets (
     user_id BIGINT UNSIGNED NOT NULL,
     -- predicate.
     pred_id BIGINT UNSIGNED NOT NULL,
+    -- text defining the interpretation of the rating values in the set.
+    rat_val_definition_text_id BIGINT UNSIGNED NOT NULL,
     -- type of the subjects of the predicate.
-    subj_t CHAR(1),
+    subj_t CHAR(1) NOT NULL,
+    -- context of the subjects of the predicate.
+    subj_cxt BIGINT UNSIGNED,
 
     -- number of elements.
     elem_num BIGINT UNSIGNED NOT NULL,
@@ -42,7 +45,9 @@ CREATE TABLE Sets (
     UNIQUE INDEX (
         user_id,
         pred_id,
-        subj_t
+        rat_val_definition_text_id,
+        subj_t,
+        subj_cxt
     )
 
 );
@@ -209,7 +214,7 @@ CREATE TABLE Contexts (
     -- a category title for the context (preferable to use plural nouns).
     title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
-    UNIQUE INDEX (parent_context_id, spec_entity_t, title)
+    UNIQUE INDEX (parent_context_id, title)
 );
 
 CREATE TABLE Terms (
