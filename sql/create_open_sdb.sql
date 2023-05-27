@@ -36,8 +36,6 @@ CREATE TABLE Sets (
     rat_val_definition_text_id BIGINT UNSIGNED NOT NULL,
     -- type of the subjects of the predicate.
     subj_t CHAR(1) NOT NULL,
-    -- context of the subjects of the predicate.
-    subj_cxt BIGINT UNSIGNED,
 
     -- number of elements.
     elem_num BIGINT UNSIGNED NOT NULL,
@@ -46,8 +44,7 @@ CREATE TABLE Sets (
         user_id,
         pred_id,
         rat_val_definition_text_id,
-        subj_t,
-        subj_cxt
+        subj_t
     )
 
 );
