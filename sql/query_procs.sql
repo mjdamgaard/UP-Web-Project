@@ -2,9 +2,9 @@
 SELECT "Query procedures";
 
 -- DROP PROCEDURE selectSet;
--- DROP PROCEDURE selectSetFromSecKey;
+DROP PROCEDURE selectSetFromSecKey;
 -- DROP PROCEDURE selectSetInfo;
--- DROP PROCEDURE selectSetInfoFromSecKey;
+DROP PROCEDURE selectSetInfoFromSecKey;
 -- DROP PROCEDURE selectRating;
 -- DROP PROCEDURE selectRecentInputs;
 -- DROP PROCEDURE selectRecordedInputs;
@@ -64,6 +64,7 @@ CREATE PROCEDURE selectSetFromSecKey (
     IN userID BIGINT UNSIGNED,
     IN predID BIGINT UNSIGNED,
     IN subjType CHAR(1),
+    IN ratValDefID BIGINT UNSIGNED,
     IN ratingRangeMinHex VARCHAR(510),
     IN ratingRangeMaxHex VARCHAR(510),
     IN maxNum INT UNSIGNED,
@@ -72,12 +73,18 @@ CREATE PROCEDURE selectSetFromSecKey (
 )
 BEGIN
     DECLARE setID BIGINT UNSIGNED;
+
+    IF (ratValDefID = 0) THEN
+        SET ratValDefID = NULL;
+    END IF;
+
     SELECT id INTO setID
     FROM Sets
     WHERE (
         user_id = userID AND
         pred_id = predID AND
-        subj_t = subjType
+        subj_t = subjType AND
+        rat_val_definition_text_id <=> ratValDefID
     );
     CALL selectSet (
         setID,
@@ -111,16 +118,22 @@ DELIMITER //
 CREATE PROCEDURE selectSetInfoFromSecKey (
     IN userID BIGINT UNSIGNED,
     IN predID BIGINT UNSIGNED,
-    IN subjType CHAR(1)
+    IN subjType CHAR(1),
+    IN ratValDefID BIGINT UNSIGNED
 )
 BEGIN
+    IF (ratValDefID = 0) THEN
+        SET ratValDefID = NULL;
+    END IF;
+
     DECLARE setID BIGINT UNSIGNED;
     SELECT id INTO setID
     FROM Sets
     WHERE (
         user_id = userID AND
         pred_id = predID AND
-        subj_t = subjType
+        subj_t = subjType AND
+        rat_val_definition_text_id <=> ratValDefID
     );
     CALL selectSetInfo (setID);
 END //
@@ -288,6 +301,10 @@ CREATE PROCEDURE selectTermIDs (
     IN numOffset INT
 )
 BEGIN
+    IF (specID = 0) THEN
+        SET specID = NULL;
+    END IF;
+
     (
         SELECT
             title AS title,
@@ -296,7 +313,7 @@ BEGIN
         WHERE (
             context_id = cxtID AND
             spec_entity_t = specType AND
-            spec_entity_id = specID AND
+            spec_entity_id <=> specID AND
             title < str
         )
         ORDER BY title DESC
@@ -309,7 +326,7 @@ BEGIN
         WHERE (
             context_id = cxtID AND
             spec_entity_t = specType AND
-            spec_entity_id = specID AND
+            spec_entity_id <=> specID AND
             title >= str
         )
         ORDER BY title ASC
@@ -346,12 +363,16 @@ CREATE PROCEDURE selectListID (
     tailID BIGINT UNSIGNED
 )
 BEGIN
+    IF (tailID = 0) THEN
+        SET tailID = NULL;
+    END IF;
+
     SELECT id AS listID
     FROM Lists
     WHERE (
         elem_ts = elemTypeStr AND
         elem_ids = UNHEX(elemIDHexStr) AND
-        tail_id = tailID
+        tail_id <=> tailID
     );
 END //
 DELIMITER ;
@@ -492,7 +513,7 @@ CREATE PROCEDURE selectCreations (
     IN isAscOrder BOOL
 )
 BEGIN
-    IF entityType = "" THEN
+    IF (entityType = "") THEN
         SET entityType = NULL;
     END IF;
 

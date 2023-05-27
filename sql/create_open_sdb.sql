@@ -232,7 +232,7 @@ CREATE TABLE Terms (
     -- predicates from relation--object pairs, which is of course a central
     -- usage in a semantic system: implementing relations.
     -- (The type of the specifying entity is given by the context.)
-    spec_entity_t CHAR(1),
+    spec_entity_t CHAR(1) NOT NULL,
     spec_entity_id BIGINT UNSIGNED,
 
     UNIQUE INDEX (context_id, spec_entity_t, spec_entity_id, title)
