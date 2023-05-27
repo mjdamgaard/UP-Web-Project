@@ -1,16 +1,16 @@
 
 SELECT "Input procedures";
 
-DROP PROCEDURE createOrFindSet;
-DROP PROCEDURE inputOrChangeRating;
-DROP PROCEDURE inputOrChangeRatingFromSecKey;
-DROP PROCEDURE insertOrFindContext;
-DROP PROCEDURE insertOrFindTerm;
-DROP PROCEDURE insertOrFindKeywordString;
-DROP PROCEDURE insertOrFindPattern;
-DROP PROCEDURE insertText;
-DROP PROCEDURE insertBinary;
-DROP PROCEDURE insertOrFindList;
+-- DROP PROCEDURE createOrFindSet;
+-- DROP PROCEDURE inputOrChangeRating;
+-- DROP PROCEDURE inputOrChangeRatingFromSecKey;
+-- DROP PROCEDURE insertOrFindContext;
+-- DROP PROCEDURE insertOrFindTerm;
+-- DROP PROCEDURE insertOrFindKeywordString;
+-- DROP PROCEDURE insertOrFindPattern;
+-- DROP PROCEDURE insertText;
+-- DROP PROCEDURE insertBinary;
+-- DROP PROCEDURE insertOrFindList;
 
 
 
@@ -203,7 +203,6 @@ CREATE PROCEDURE insertOrFindContext (
     IN userID BIGINT UNSIGNED,
     IN parentCxtID BIGINT UNSIGNED,
     IN cxtTitle VARCHAR(255),
-    IN desTextID BIGINT UNSIGNED,
     IN specType CHAR(1)
 )
 BEGIN
@@ -214,7 +213,6 @@ BEGIN
     FROM Contexts
     WHERE (
         parent_context_id = parentCxtID AND
-        description_text_id = desTextID AND
         spec_entity_t = specType AND
         title = cxtTitle
     );
@@ -224,10 +222,10 @@ BEGIN
         SET exitCode = 2; -- parent context does not exist.
     ELSE
         INSERT INTO Contexts (
-            parent_context_id, title, description_text_id, spec_entity_t
+            parent_context_id, title, spec_entity_t
         )
         VALUES (
-            parentCxtID, cxtTitle, desTextID, specType
+            parentCxtID, cxtTitle, specType
         );
         SELECT LAST_INSERT_ID() INTO outID;
         INSERT INTO Creators (entity_t, entity_id, user_id)

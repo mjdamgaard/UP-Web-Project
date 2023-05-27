@@ -220,7 +220,6 @@ BEGIN
     SELECT
         parent_context_id AS parentCxtID,
         title AS title,
-        description_text_id AS desTextID,
         spec_entity_t AS specType
     FROM Contexts
     WHERE id = cxtID;
@@ -246,7 +245,6 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectContextIDs (
     IN parentCxtID BIGINT UNSIGNED,
-    IN desTextID BIGINT UNSIGNED,
     IN specType CHAR(1),
     IN str VARCHAR(255),
     IN maxNum INT,
@@ -260,7 +258,6 @@ BEGIN
         FROM Contexts
         WHERE (
             parent_context_id = parentCxtID AND
-            description_text_id = desTextID AND
             spec_entity_t = specType AND
             title < str
         )
@@ -273,7 +270,6 @@ BEGIN
         FROM Contexts
         WHERE (
             parent_context_id = parentCxtID AND
-            description_text_id = desTextID AND
             spec_entity_t = specType AND
             title >= str
         )

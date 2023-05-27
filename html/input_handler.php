@@ -55,9 +55,9 @@ switch ($reqType) {
         break;
     case "cxt":
         // $sql = "CALL insertOrFindCat (?, ?, ?)";
-        $sql = "CALL insertOrFindContext (?, ?, ?, ?, ?)";
-        $paramNameArr = array("uid", "pid", "t", "did", "st");
-        $typeArr = array("id", "id", "tstr", "id", "type");
+        $sql = "CALL insertOrFindContext (?, ?, ?, ?)";
+        $paramNameArr = array("uid", "pid", "t", "st");
+        $typeArr = array("id", "id", "tstr", "type");
         break;
     case "term":
         $sql = "CALL insertOrFindTerm (?, ?, ?, ?)";
