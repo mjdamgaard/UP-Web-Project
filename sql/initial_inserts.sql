@@ -26,49 +26,15 @@ VALUES (
 );
 INSERT INTO Creators (entity_t, entity_id, user_id)
 VALUES ('c', 1, 1);
-INSERT INTO Texts (str)
-VALUES (CONCAT(
-    "This text desribes the fundamental semantics of the so-called Contexts ",
-    "and Terms of the database. ", -- TODO: Continue this text.. (And only start
-    -- making it bootstrap its own meaning towards the end of it.)
-
-
-    "This is a description of any Term with a Context equal to this one, ",
-    "i.e. the Context with id=1, title=""Terms"", or equal to a ",
-    "descendant Context. ",
-    "All Contexts hold an ID of a so-called 'parent context' in the ",
-    "database, and a 'descendant context' is thus one that has the relevant ",
-    "Context as an ancestor. All Contexts in the database will have this ",
-    "Context (i.e. the one that this text descibes) as their greatest ",
-    "ancestor. Apart from a parent context ID and a title, the Contexts holds ",
-    "an ID of a description text, such as this one, as well as ",
-    "a 'specifying entity type,' which will be explained shortly.\n\t",
-        "All Terms of this Context, meaning all Terms in the database since ",
-    "this is the outermost Context, is defined by the following data that ",
-    "they hold in the database. They hold an ID of their Context, a title, ",
-    "and an ID of a so-called 'specifying entity.' The Context of a Term ",
-    "defines how the data of the Term is to be interpreted, just as this text ",
-    "is trying to do for all Terms. The held Context can be a ",
-    "child/descendent of another Context, by which the statements of that ",
-    "Context is inherited by the child/descendant, unless an inherited ",
-    "is explicitely amended. Since all Contexts are descendant of this ",
-    """Terms"" Context, all Terms an Contexts will inherit these ",
-    "fundamental rules."
-));
-INSERT INTO Creators (entity_t, entity_id, user_id)
-VALUES ('t', 1, 1);
 
 -- insert basic contexts, terms and realtions meant for common use.
 
 
-CALL insertText(CONCAT(
-    -- TODO..
-    "..Hm, måske jeg godt bare kan starte med en grundlæggende Prædikatklasse,",
-    " hvor titlen bare kan være enten navneord, verber.. Hm.. Eller måske en ",
-    "netop hvor ordklassen parses fra et indledende n.s., n.pl., v.s., v.pl., ",
-    "adj. ..." -- ..Yes..
-)); -- id: 2
-CALL insertOrFindContext(1, 1, 1, "Predicates", 2, "t"); -- id: 2
+CALL insertOrFindContext(
+    1, 1, 1,
+    "{Predicates} \\(holding an optional term ..\\)",
+    "t"
+); -- id: 2
 
 
 

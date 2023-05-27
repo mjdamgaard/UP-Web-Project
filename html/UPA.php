@@ -84,7 +84,7 @@ $queryUserID = $paramValArr[3];
 // chosen user/user group.
 //TODO: For now I am just loading a module in the UPA_dev_modules folder. Change
 // this such that the user (group) is queried for their preference instead.
-$mainModuleID = "10";
+$mainModuleID = "20";
 
 
 // The safety of the main module should not be verified here! That is the
