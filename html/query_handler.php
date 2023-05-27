@@ -54,9 +54,9 @@ switch ($reqType) {
         // output: [[ratVal, subjID], ...].
         break;
         case "setSK":
-            $sql = "CALL selectSetFromSecKey (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $sql = "CALL selectSetFromSecKey (?, ?, ?, ?, ?, ?, ?, ?)";
             $paramNameArr = array(
-                "uid", "pid", "st", "rdid"
+                "uid", "pid", "st",
                 "rl", "rh",
                 "n", "o",
                 "a"

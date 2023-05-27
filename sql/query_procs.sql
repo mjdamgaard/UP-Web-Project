@@ -64,7 +64,6 @@ CREATE PROCEDURE selectSetFromSecKey (
     IN userID BIGINT UNSIGNED,
     IN predID BIGINT UNSIGNED,
     IN subjType CHAR(1),
-    IN ratValDefID BIGINT UNSIGNED,
     IN ratingRangeMinHex VARCHAR(510),
     IN ratingRangeMaxHex VARCHAR(510),
     IN maxNum INT UNSIGNED,
@@ -73,18 +72,12 @@ CREATE PROCEDURE selectSetFromSecKey (
 )
 BEGIN
     DECLARE setID BIGINT UNSIGNED;
-
-    IF (ratValDefID = 0) THEN
-        SET ratValDefID = NULL;
-    END IF;
-
     SELECT id INTO setID
     FROM Sets
     WHERE (
         user_id = userID AND
         pred_id = predID AND
-        subj_t = subjType AND
-        rat_val_definition_text_id <=> ratValDefID
+        subj_t = subjType
     );
     CALL selectSet (
         setID,
@@ -118,23 +111,16 @@ DELIMITER //
 CREATE PROCEDURE selectSetInfoFromSecKey (
     IN userID BIGINT UNSIGNED,
     IN predID BIGINT UNSIGNED,
-    IN subjType CHAR(1),
-    IN ratValDefID BIGINT UNSIGNED
+    IN subjType CHAR(1)
 )
 BEGIN
     DECLARE setID BIGINT UNSIGNED;
-
-    IF (ratValDefID = 0) THEN
-        SET ratValDefID = NULL;
-    END IF;
-
     SELECT id INTO setID
     FROM Sets
     WHERE (
         user_id = userID AND
         pred_id = predID AND
-        subj_t = subjType AND
-        rat_val_definition_text_id <=> ratValDefID
+        subj_t = subjType
     );
     CALL selectSetInfo (setID);
 END //
