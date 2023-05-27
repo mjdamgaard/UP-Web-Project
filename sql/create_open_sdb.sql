@@ -32,10 +32,10 @@ CREATE TABLE Sets (
     user_id BIGINT UNSIGNED NOT NULL,
     -- predicate.
     pred_id BIGINT UNSIGNED NOT NULL,
-    -- text defining the interpretation of the rating values in the set.
-    rat_val_definition_text_id BIGINT UNSIGNED NOT NULL,
     -- type of the subjects of the predicate.
     subj_t CHAR(1) NOT NULL,
+    -- text defining the interpretation of the rating values in the set.
+    rat_val_definition_text_id BIGINT UNSIGNED,
 
     -- number of elements.
     elem_num BIGINT UNSIGNED NOT NULL,
@@ -43,8 +43,8 @@ CREATE TABLE Sets (
     UNIQUE INDEX (
         user_id,
         pred_id,
-        rat_val_definition_text_id,
-        subj_t
+        subj_t,
+        rat_val_definition_text_id
     )
 
 );
