@@ -122,11 +122,12 @@ CREATE PROCEDURE selectSetInfoFromSecKey (
     IN ratValDefID BIGINT UNSIGNED
 )
 BEGIN
+    DECLARE setID BIGINT UNSIGNED;
+    
     IF (ratValDefID = 0) THEN
         SET ratValDefID = NULL;
     END IF;
 
-    DECLARE setID BIGINT UNSIGNED;
     SELECT id INTO setID
     FROM Sets
     WHERE (
