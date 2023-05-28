@@ -8,7 +8,7 @@
 --
 -- /* Terms */
 -- DROP TABLE Users;
--- DROP TABLE Contexts;
+-- DROP TABLE SemanticContexts;
 -- DROP TABLE Terms;
 -- DROP TABLE Lists;
 -- DROP TABLE Patterns;
@@ -198,7 +198,7 @@ CREATE TABLE Users (
 
 
 
-CREATE TABLE Contexts (
+CREATE TABLE SemanticContexts (
     -- context ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     -- type = "c".

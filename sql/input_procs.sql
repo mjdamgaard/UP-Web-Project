@@ -209,17 +209,19 @@ BEGIN
     DECLARE exitCode TINYINT;
 
     SELECT id INTO outID
-    FROM Contexts
+    FROM SemanticContexts
     WHERE (
         parent_context_id = parentCxtID AND
         title = cxtTitle
     );
     IF (outID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
-    ELSEIF (NOT EXISTS (SELECT id FROM Contexts WHERE id = parentCxtID)) THEN
+    ELSEIF (
+        NOT EXISTS (SELECT id FROM SemanticContexts WHERE id = parentCxtID)
+    ) THEN
         SET exitCode = 2; -- parent context does not exist.
     ELSE
-        INSERT INTO Contexts (parent_context_id, title)
+        INSERT INTO SemanticContexts (parent_context_id, title)
         VALUES (parentCxtID, cxtTitle);
         SELECT LAST_INSERT_ID() INTO outID;
         INSERT INTO Creators (entity_t, entity_id, user_id)
@@ -258,7 +260,9 @@ BEGIN
     );
     IF (outID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
-    ELSEIF (NOT EXISTS (SELECT id FROM Contexts WHERE id = cxtID)) THEN
+    ELSEIF (
+        NOT EXISTS (SELECT id FROM SemanticContexts WHERE id = cxtID)
+    ) THEN
         SET exitCode = 2; -- context does not exist.
     ELSE
         INSERT INTO Terms (context_id, title, spec_entity_t, spec_entity_id)

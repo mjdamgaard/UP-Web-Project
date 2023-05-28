@@ -220,7 +220,7 @@ BEGIN
     SELECT
         parent_context_id AS parentCxtID,
         title AS title
-    FROM Contexts
+    FROM SemanticContexts
     WHERE id = cxtID;
 END //
 DELIMITER ;
@@ -254,7 +254,7 @@ BEGIN
         SELECT
             title AS title,
             id AS cxtID
-        FROM Contexts
+        FROM SemanticContexts
         WHERE (
             parent_context_id = parentCxtID AND
             title < str
@@ -265,7 +265,7 @@ BEGIN
         SELECT
             title AS title,
             id AS cxtID
-        FROM Contexts
+        FROM SemanticContexts
         WHERE (
             parent_context_id = parentCxtID AND
             title >= str

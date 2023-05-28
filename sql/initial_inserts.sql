@@ -36,13 +36,15 @@ CALL insertOrFindContext(1, 1, "Predicates"); -- id: 2
 
 CALL insertOrFindTerm(1, 1, "openSDB"); -- id: 1
 --
-CALL insertOrFindPattern(1, "General info");
-CALL insertOrFindPattern(1, "Superclasses");
+-- CALL insertOrFindPattern(1, "About");
+CALL insertOrFindPattern(1, "Supercategories");
+CALL insertOrFindPattern(1, "Subcategories");
+CALL insertOrFindPattern(1, "Related categories");
 CALL insertOrFindPattern(1, "Instances");
-CALL insertOrFindPattern(1, "Subclasses");
-CALL insertOrFindPattern(1, "Related entities");
-CALL insertOrFindPattern(1, "Related classes");
-CALL insertOrFindPattern(1, "Appendices");
+--
+-- CALL insertOrFindPattern(1, "General info");
+CALL insertOrFindPattern(1, "Related terms");
+CALL insertOrFindPattern(1, "Comments");
 --
 -- CALL insertOrFindRel (1, 'c', 'c', "Duplicates");
 -- CALL insertOrFindRel (1, 't', 't', "Duplicates");
