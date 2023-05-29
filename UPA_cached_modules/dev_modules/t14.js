@@ -27,8 +27,8 @@ import {
      * data.initialNum,
      * data.incrementNum (can be changed before appending a new list).
  * And it sets/updates data:
-     * data.listElemDataArr,
-     * data.currentLen.
+     * newData.listElemDataArr = [{ratVal, subjID}, ...],
+     * newData.currentLen.
  */
 export var setListCL = new ContentLoader(
     "SetList",

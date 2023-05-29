@@ -117,6 +117,18 @@ switch ($reqType) {
         $typeArr = array("id");
         // output: [[cxtID, title, specType, specID]].
         break;
+    case "cxtID":
+        $sql = "CALL selectContextID (?, ?)";
+        $paramNameArr = array("pid", "s");
+        $typeArr = array("id", "tvarchar");
+        // output: [[title, cxtID]].
+        break;
+    case "termID":
+        $sql = "CALL selectTermID (?, ?, ?, ?)";
+        $paramNameArr = array("cid", "st", "sid", "s");
+        $typeArr = array("id", "type", "id", "tvarchar");
+        // output: [[title, termID]].
+        break;
     case "cxtIDs":
         $sql = "CALL selectContextIDs (?, ?, ?, ?)";
         $paramNameArr = array("pid", "s", "n", "o");

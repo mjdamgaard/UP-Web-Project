@@ -11,6 +11,8 @@ SELECT "Query procedures";
 -- DROP PROCEDURE selectUserInfo;
 -- DROP PROCEDURE selectContext;
 -- DROP PROCEDURE selectTerm;
+-- DROP PROCEDURE selectContextID;
+-- DROP PROCEDURE selectTermID;
 -- DROP PROCEDURE selectContextIDs;
 -- DROP PROCEDURE selectTermIDs;
 -- DROP PROCEDURE selectList;
@@ -240,6 +242,47 @@ BEGIN
         spec_entity_id AS specID
     FROM Terms
     WHERE id = termID;
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectContextID (
+    IN parentCxtID BIGINT UNSIGNED,
+    IN str VARCHAR(255)
+)
+BEGIN
+    SELECT
+        title AS title,
+        id AS cxtID
+    FROM SemanticContexts
+    WHERE (
+        parent_context_id = parentCxtID AND
+        title = str
+    );
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectTermID (
+    IN cxtID BIGINT UNSIGNED,
+    IN specType CHAR(1),
+    IN specID BIGINT UNSIGNED,
+    IN str VARCHAR(255)
+)
+BEGIN
+    SELECT
+        title AS title,
+        id AS termID
+    FROM Terms
+    WHERE (
+        context_id = cxtID AND
+        spec_entity_t = specType AND
+        spec_entity_id <=> specID AND
+        title = str
+    );
 END //
 DELIMITER ;
 
