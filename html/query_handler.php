@@ -99,11 +99,11 @@ switch ($reqType) {
         $typeArr = array("id", "id", "int", "int");
         // output: [[subjID, changedAt, ratVal], ...].
         break;
-    case "userInfo":
+    case "user":
         $sql = "CALL selectUserInfo (?, ?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [[publicKeys]].
+        // output: [[username, publicKeys]].
         break;
     case "cxt":
         $sql = "CALL selectContext (?)";

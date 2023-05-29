@@ -141,6 +141,8 @@ CREATE TABLE Users (
     -- upload_vol_this_month BIGINT,
     -- download_vol_this_month BIGINT,
 
+    username VARCHAR(50),
+
     public_keys_for_authentication TEXT
     -- (In order for third parties to be able to copy the database and then
     -- be able to have users log on, without the need to exchange passwords

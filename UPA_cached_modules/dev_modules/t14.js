@@ -73,11 +73,17 @@ setListCL.addCallback(function($ci, data) {
      * data.objType,
      * data.objID,
      * data.predTitle,
+     * data.subjType,
+     * data.queryUserArr,
      * data.elemCL,
      * data.initialNum,
      * data.incrementNum.
  * And it sets/updates data:
-     * 
+     * data.cl = <element CL>,
+     * data.set = [[ratVal, subjID], ...],
+     * data.setLen,
+     * data.setID,
+     * data.elemNum,
  */
 export var setFieldCL = new ContentLoader(
     "SetField",

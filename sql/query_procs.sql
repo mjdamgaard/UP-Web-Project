@@ -201,7 +201,9 @@ CREATE PROCEDURE selectUserInfo (
     IN userID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT public_keys_for_authentication AS publicKeys
+    SELECT
+        username AS username,
+        public_keys_for_authentication AS publicKeys
     FROM Users
     WHERE id = userID;
 END //
