@@ -72,8 +72,8 @@ export class ContentLoader {
 
     set htmlTemplate(htmlTemplate) {
         this.html = convertHTMLTemplate(htmlTemplate);
-        // if htmlTemplate contains only one content placeholder, then record
-        // relevant content key in this.decorateeContentKey.
+        // if htmlTemplate consists of only one content placeholder, then
+        // record relevant content key in this.decorateeContentKey.
         if (/^<<[^<>]*>>$/.test(htmlTemplate)) {
             let keyStr = htmlTemplate.slice(2, -2);
             let spaceIndex = keyStr.indexOf(" ");

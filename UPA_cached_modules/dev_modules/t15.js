@@ -59,22 +59,22 @@ export var entityMainContentCL = new ContentLoader(
 entityMainContentCL.addCallback("data", function(newData, data) {
     if (data.entityType === "c") {
         newData.tabAndPageDataArr = [
-            ["Subategories", "CategorySubategoriesPage", data],
+            ["Subcategories", "CategorySubcategoriesPage", data],
             ["Elements", "CategoryElementsPage", data],
         ];
-        newData.defaultTab = "Subategories";
+        newData.defaultTab = "Subcategories";
     }
 });
-export var categorySubategoriesPageCL = new ContentLoader(
-    "CategorySubategoriesPage",
+export var categorySubcategoriesPageCL = new ContentLoader(
+    "CategorySubcategoriesPage",
     /* Initial HTML template */
     '<div>' +
-        '<<SubategoriesSetField>>' +
+        '<<SubcategoriesSetField>>' +
     '</div>',
     appColumnCL
 );
 export var subategoriesSetFieldCL = new ContentLoader(
-    "SubategoriesSetField",
+    "SubcategoriesSetField",
     /* Initial HTML template */
     '<<SetField>>',
     appColumnCL

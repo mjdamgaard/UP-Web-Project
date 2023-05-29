@@ -1,4 +1,4 @@
-
+Subcategor
 import {
     DBRequestManager,
 } from "/UPA_scripts.php?id=11";
@@ -45,16 +45,16 @@ export var predicateMainContentCL = new ContentLoader(
 );
 predicateMainContentCL.addCallback("data", function(newData, data) {
     newData.tabAndPageDataArr = [
-        ["Subategories", "PredicateSubategoriesPage", data],
+        ["Subcategories", "PredicateSubcategoriesPage", data],
         ["Elements", "PredicateElementsPage", data],
     ];
-    newData.defaultTab = "Subategories";
+    newData.defaultTab = "Subcategories";
 });
-export var predicateSubategoriesPageCL = new ContentLoader(
-    "PredicateSubategoriesPage",
+export var predicateSubcategoriesPageCL = new ContentLoader(
+    "PredicateSubcategoriesPage",
     /* Initial HTML template */
     '<div>' +
-        '<<SubategoriesSetField>>' +
+        '<<SubcategoriesSetField>>' +
     '</div>',
     appColumnCL
 );

@@ -37,8 +37,8 @@ CALL insertOrFindContext(1, 1, "Predicates"); -- id: 2
 CALL insertOrFindTerm(1, 1, "openSDB"); -- id: 1
 --
 -- CALL insertOrFindPattern(1, "About");
-CALL insertOrFindPattern(1, "Supercategories");
 CALL insertOrFindPattern(1, "Subcategories");
+CALL insertOrFindPattern(1, "Supercategories");
 CALL insertOrFindPattern(1, "Related categories");
 CALL insertOrFindPattern(1, "Instances");
 --

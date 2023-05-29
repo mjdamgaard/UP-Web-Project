@@ -14,18 +14,67 @@ import {
 
 
 
+
+
+/**
+ * SetList requires data:
+ * data.subjType,
+ * data.cl = <element CL>,
+ * data.set = [[ratVal, subjID], ...],
+ * data.setLen,
+ * data.setID,
+ * data.elemNum,
+ * data.initialNum,
+ * data.incrementNum,
+ */
+export var setListCL = new ContentLoader(
+    "SetList",
+    /* Initial HTML template */
+    '<div>' +
+        '<<List>>' +
+    '</div>',
+    appColumnCL
+);
+setListCL.addCallback("data", function(newData, data) {
+    newData.listElemDataArr = data.set
+        .slice(0, data.initialNum)
+        .map(function(row) {
+            return {
+                ratVal: row[0],
+                subjID: row[1],
+            };
+        });
+    newData.currentLen = data.initialNum;
+});
+setListCL.addCallback(function($ci, data) {
+    $ci.on("append-list", function() {
+        let $this = $(this);
+        let data = $(this).data("data");
+        data.listElemDataArr = data.set
+            .slice(data.currentLen, data.currentLen + data.incrementNum)
+            .map(function(row) {
+                return {
+                    ratVal: row[0],
+                    subjID: row[1],
+                };
+            });
+        data.currentLen += data.incrementNum;
+        setListCL.loadAppended($this, 'List', data);
+    });
+});
+
+
+
 export var setFieldCL = new ContentLoader(
     "SetField",
     /* Initial HTML template */
     '<div>' +
         '<<SetHeader data:wait>>' +
-        '<<List data:wait>>' +
+        '<<SetList data:wait>>' +
     '</div>',
     appColumnCL
 );
-setFieldCL.addCallback("data", "copy"); // No, just remember to add "data"
-// to: "<<SetField data>>", since this will have the same effect. // *No,
-// it's actually nice that SetField always has its own data copy..
+setFieldCL.addCallback("data", "copy");
 setFieldCL.addCallback(function($ci, data) {
     // TODO: Change this such that a number of initially appended elements are
     // looked up in data.
@@ -33,7 +82,7 @@ setFieldCL.addCallback(function($ci, data) {
         .on("append-elements", function() {
             let elemCL = setFieldCL.getRelatedCL(data.elemContentKey)
             let len = data.set.length;
-            let entityType = data.setInfo[6];
+            let entityType = data.setInfo[3];
             let setInfo = data.setInfo;
             data.listElemDataArr = data.set.map(function(row) {
                 return {
@@ -64,7 +113,7 @@ setFieldCL.addCallback(function($ci, data) {
             reqData = {
                 type: "setSK",
                 uid: data.queryUserID, // TODO: Change (add more options).
-                sid: data.subjID,
+                pid: data.predID,
                 rid: data.relID,
                 rl: "", rh: "",
                 n: 10000, o: 0,
