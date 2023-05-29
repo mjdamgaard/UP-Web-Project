@@ -18,14 +18,17 @@ import {
 
 /**
  * SetList requires data:
- * data.subjType,
- * data.cl = <element CL>,
- * data.set = [[ratVal, subjID], ...],
- * data.setLen,
- * data.setID,
- * data.elemNum,
- * data.initialNum,
- * data.incrementNum,
+     * data.subjType,
+     * data.cl = <element CL>,
+     * data.set = [[ratVal, subjID], ...],
+     * data.setLen,
+     * data.setID,
+     * data.elemNum,
+     * data.initialNum,
+     * data.incrementNum (can be changed before appending a new list).
+ * And it sets/updates data:
+     * data.listElemDataArr,
+     * data.currentLen.
  */
 export var setListCL = new ContentLoader(
     "SetList",
@@ -64,7 +67,18 @@ setListCL.addCallback(function($ci, data) {
 });
 
 
-
+/**
+ * SetField requires data:
+     * data.predCxtID,
+     * data.objType,
+     * data.objID,
+     * data.predTitle,
+     * data.elemCL,
+     * data.initialNum,
+     * data.incrementNum.
+ * And it sets/updates data:
+     * 
+ */
 export var setFieldCL = new ContentLoader(
     "SetField",
     /* Initial HTML template */
