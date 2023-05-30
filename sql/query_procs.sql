@@ -253,9 +253,7 @@ CREATE PROCEDURE selectContextID (
     IN str VARCHAR(255)
 )
 BEGIN
-    SELECT
-        title AS title,
-        id AS cxtID
+    SELECT id AS cxtID
     FROM SemanticContexts
     WHERE (
         parent_context_id = parentCxtID AND
@@ -273,9 +271,7 @@ CREATE PROCEDURE selectTermID (
     IN str VARCHAR(255)
 )
 BEGIN
-    SELECT
-        title AS title,
-        id AS termID
+    SELECT id AS termID
     FROM Terms
     WHERE (
         context_id = cxtID AND
