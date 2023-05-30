@@ -83,11 +83,11 @@ setListCL.addCallback(function($ci, data) {
  * And it sets/updates data:
      * data.cl = <element CL>,
      * data.set = [[combRatVal, subjID, ratValArr], ...],
-     * data.predIDUserIDWeightSetArr,
+     * data.weightsAndSetObjArr = [{predID, predWFun, userID, userW, set}, ...],
      * data.setLen,
      * data.setID,
      * data.elemNum,
-     * TODO: make it so that users can adjust the parameters, rl, rh, n, o, a.
+     * TODO: make it so that users can adjust the parameters, rl, rh, n, and o.
  */
 export var setFieldCL = new ContentLoader(
     "SetField",
@@ -104,10 +104,10 @@ setFieldCL.addCallback(function($ci, data) {
             let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
             let $this = $(this);
             let data = $this.data("data");
-            data.predIDUserIDWeightSetArr = [];
+            data.Subcategor = [];
             let len = data.queryUserArr.length;
             for (let i = 0; i < len; i++) {
-                data.predIDUserIDWeightSetArr[i] = {
+                data.weightsAndSetObjArr[i] = {
                     predID: predID,
                     userID: data.queryUserWeightArr[i].userID,
                     weight: data.queryUserWeightArr[i].weight,
@@ -123,7 +123,7 @@ setFieldCL.addCallback(function($ci, data) {
                     a: 0,
                 };
                 dbReqManager.query($this, reqData, function($ci, result) {
-                    data.predIDUserIDWeightSetArr[i].set = result;
+                    data.weightsAndSetObjArr[i].set = result;
                     $ci.trigger("load-set-if-ready");
                 });
             }
@@ -134,19 +134,40 @@ setFieldCL.addCallback(function($ci, data) {
             let data = $this.data("data");
             let len = data.queryUserArr.length;
             for (let i = 0; i < len; i++) {
-                if (!data.predIDUserIDWeightSetArr[i].set) {
+                if (!data.weightsAndSetObjArr[i].set) {
                     return false;
                 }
             }
-            data.set = getCombinedSet(predIDUserIDWeightSetArr);
+            data.setUnion = getSetUnion(data.weightsAndSetObjArr);
+            data.set = getCombinedSet(data.setUnion, data.weightsAndSetObjArr);
             $this.children('.CI.SetList').trigger("load");
             return false;
         });
 });
-export function getCombinedSet(predIDUserIDWeightSetArr) {
-    let len = predIDUserIDWeightSetArr.length;
+// data.weightsAndSetObjArr = {predID, predWFun, userID, userW, set},
+export function getSetUnion(weightsAndSetObjArr) {
+    let ret = [];
+    let retLen = 0;
+    let setNum = weightsAndSetObjArr.length;
+    let sortedSets = weightsAndSetObjArr.map(function(obj) {
+        return obj.set.toSorted(function(row1, row2) {
+            return row1[1] - row1[2];
+        });
+    });
+    for (let i = 0; i < setNum; i++) {
+        weightsAndSetObjArr[i].currentIndex = 0;
+    }
+    let continueLoop = true;
+    while (continueLoop) {
+        ret[retLen] = weightsAndSetObjArr.map(i => sets)
+
+        retLen++;
+    }
+}
+export function getCombinedSet(weightsAndSetObjArr) {
+    let len = weightsAndSetObjArr.length;
     if (len === 1) {
-        return predIDUserIDWeightSetArr[0].set
+        return weightsAndSetObjArr[0].set
             .map(function(row) {
                 return [
                     row[0],

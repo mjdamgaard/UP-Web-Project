@@ -270,6 +270,9 @@ export class ContentLoader {
             $placeholder.data("contentKey") ?? this.contentKey
         );
 
+        // TODO: Implement that thing about parentData after all; that feels a
+        // lot cleaner..
+
         // apply all the data setter callbacks, which can change the "data"
         // object, namely the data stored as a reference at $ci.data("data").
         // If this array is empty, the child CIs will get a reference to the
