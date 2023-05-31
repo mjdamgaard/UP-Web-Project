@@ -63,11 +63,11 @@ export class DBRequestManager {
         });
     }
 
-    input($obj, reqData, callback) {
+    input($obj, reqData, callbackData, callback) {
         let thisDBReqManager = this;
         $.post("input_handler.php", reqData, function(result, textStatus) {
             // call the callback function on result.
-            callback($obj, result, textStatus, thisDBReqManager.cache);
+            callback($obj, result, callbackData, textStatus);
         });
     }
 }

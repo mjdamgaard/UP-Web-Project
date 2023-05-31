@@ -103,29 +103,44 @@ setFieldCL.addCallback(function($ci, data) {
 // unioned set containing the weighted averaged ratings for any subjects that
 // appear in one or more of the sets.
 export function getAveragedSet(userSetsObj) {
-    // if there is only one user and one set, simply return the set as is.
-    if (userSetsObj.sets.length === 1) {
-        return userSetsObj.sets[0];
+    // if there is only one set, simply return the set as is.
+    let sets = userSetsObj.sets
+    let setNum = sets.length;
+    if (setNum === 1) {
+        return sets[0];
     }
-    // else, first sort each array in terms of..
+    // else, first sort each array in terms of the subject IDs.
+    for (let i = 0; i < setNum; i++) {
+        sets[i].sort(row1, row2 => row1[1] - row2[1]);
+    }
     // ..TODO..
 
-    let ret = [];
+    let ret = new Array(sets.reduce((acc, currVal) => acc + currVal.length, 0));
     let retLen = 0;
-    let setNum = userSetsArr.length;
-    let sortedSets = userSetsArr.map(function(obj) {
-        return obj.set.toSorted(function(row1, row2) {
-            return row1[1] - row1[2];
-        });
-    });
+    let indices = new Array(setNum);
     for (let i = 0; i < setNum; i++) {
-        userSetsArr[i].currentIndex = 0;
+        indices[i] = [i, 0];
     }
-    let continueLoop = true;
-    while (continueLoop) {
-        ret[retLen] = userSetsArr.map(i => sets)
-
-        retLen++;
+    let continue = true;
+    let weights = userSetsObj.weights;
+    while (continue) {
+        let minSubjID = indices.reduce(
+            (acc, currVal) => Math.min(acc, sets[currVal[0]][currVal[1]][1]),
+            0
+        );
+        let weightSum = 0;
+        for (let i = 0; i < setNum; i++) {
+            if (sets[i][indices[i][1]][1] === minSubjID) {
+                weightSum += weights[i];
+            }
+        }
+        // ret[retLen] = indices.reduce(
+        //     (acc, currVal) => acc +
+        //         sets[currVal[0]][currVal[1]][0] * weights[currVal[0]] /
+        //             weightSum,
+        //     0
+        // );
+        // retLen++;
     }
 }
 export function getCombinedSet(userSetsArr) {
