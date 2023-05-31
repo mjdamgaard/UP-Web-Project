@@ -3,14 +3,13 @@
 
 export class DBRequestManager {
     constructor() {
-        this.cache = {};
         this.ongoingQueries = {};
     }
 
-    query($obj, reqData, cacheKey, callback) {
+    query($obj, reqData, callbackData, callback) {
         if (typeof callback === "undefined") {
-            callback = cacheKey;
-            cacheKey = null;
+            callback = callbackData;
+            callbackData = null;
         }
         // if there is already an ongoing query with this reqData object, simply
         // push the input data and return.
@@ -55,15 +54,11 @@ export class DBRequestManager {
                     }
                 }
             }
-            // if cacheKey is not nullish, store the result in this.cache.
-            if (typeof cacheKey !== "undefined") {
-                thisDBReqManager.cache[cacheKey] = result;
-            }
             // then call all callbacks in queryQueue with their associated data.
             for (let i = 0; i < queryQueue.length; i++) {
                 let $obj = queryQueue[i][0];
                 let callback = queryQueue[i][1];
-                callback($obj, result, textStatus, thisDBReqManager.cache);
+                callback($obj, result, callbackData, textStatus);
             }
         });
     }

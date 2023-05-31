@@ -51,7 +51,7 @@ switch ($reqType) {
         break;
     case "term":
         $sql = "CALL insertOrFindTerm (?, ?, ?, ?, ?)";
-        $paramNameArr = array("uid", "cid", "t", "st", "sid");
+        $paramNameArr = array("uid", "cid", "t", "spt", "spid");
         $typeArr = array("id", "id", "tstr", "type", "id");
         break;
     case "list":

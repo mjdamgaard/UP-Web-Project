@@ -16,18 +16,150 @@ import {
 
 
 
+
+/**
+ * SetField requires data:
+     * data.predCxtID,
+     * data.objType,
+     * data.objID,
+     * data.predTitle,
+     * data.subjType,
+     * data.queryNum,
+     * data.userWeights = [{userID, weight}, ...],
+     * data.elemCL,
+     * data.initialNum,
+     * data.incrementNum.
+ * And it sets/updates data:
+     * data.cl = <element CL>,
+     * data.set = [[combRatVal, subjID, ratValArr], ...],
+     * data.userSetsArr = [{predID, factorFun, userSetsObj}, ...],
+         * userSetsObj = {userWeights, sets},
+     * data.setLen,
+     * TODO: make it so that users can adjust the parameters, rl, rh, o and a.
+     * data.ratingLow,
+     * data.ratingHigh,
+     * data.queryOffset,
+     * data.queryAscending.
+ */
+export var setFieldCL = new ContentLoader(
+    "SetField",
+    /* Initial HTML template */
+    '<div>' +
+        '<<SetHeader data:wait>>' +
+        '<<SetList data:wait>>' +
+    '</div>',
+    appColumnCL
+);
+setFieldCL.addCallback(function($ci, data) {
+    $ci
+        .one("query-initial-sets", function(event, predID) {
+            let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+            let $this = $(this);
+            let data = $this.data("data");
+            data.userSetsArr = [{
+                predID: predID,
+                factorFun: x => 1,
+                userSetsObj: {
+                    userWeights: data.userWeights,
+                    sets: [],
+                },
+            }];
+            let len = data.userWeights.length;
+            for (let i = 0; i < len; i++) {
+                reqData = {
+                    type: "set",
+                    uid: data.userWeights[i].userID,
+                    pid: predID,
+                    st: data.subjType,
+                    rl: "", rh: "",
+                    n: data.queryNum, o: 0,
+                    a: 0,
+                };
+                dbReqManager.query($this, reqData, i, function($ci, result, i) {
+                    data.userSetsArr[0].userSetsObj.sets[i] = result;
+                    $ci.trigger("load-set-if-ready");
+                });
+            }
+            return false;
+        })
+        .on("load-set-if-ready", function() {
+            let $this = $(this);
+            let data = $this.data("data");
+            let len = data.userWeights.length;
+            for (let i = 0; i < len; i++) {
+                if (
+                    typeof data.userSetsArr[0].userSetsObj.sets[i] ===
+                        "undefined"
+                ) {
+                    return false;
+                }
+            }
+            data.set = getAveragedSet(data.userSetsArr[0].userSetsObj);
+            $this.children('.CI.SetList').trigger("load");
+            return false;
+        });
+});
+export function getAveragedSet(userSetsObj) {
+    let ret = [];
+    let retLen = 0;
+    let setNum = userSetsArr.length;
+    let sortedSets = userSetsArr.map(function(obj) {
+        return obj.set.toSorted(function(row1, row2) {
+            return row1[1] - row1[2];
+        });
+    });
+    for (let i = 0; i < setNum; i++) {
+        userSetsArr[i].currentIndex = 0;
+    }
+    let continueLoop = true;
+    while (continueLoop) {
+        ret[retLen] = userSetsArr.map(i => sets)
+
+        retLen++;
+    }
+}
+export function getCombinedSet(userSetsArr) {
+    let len = userSetsArr.length;
+    if (len === 1) {
+        return userSetsArr[0].set
+            .map(function(row) {
+                return [
+                    row[0],
+                    row[1],
+                    [],
+                ];
+            });
+    }
+    // TODO: Implement this function for non-trivial cases as well.
+}
+setFieldCL.addCallback(function($ci, data) {
+    let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+    reqData = {
+        type: "termID",
+        cid: data.predCxtID,
+        spt: data.objType,
+        spid: data.objID,
+        t: data.predTitle,
+    };
+    dbReqManager.query($ci, reqData, function($ci, result) {
+        let predID = (result[0] ?? [])[0];
+        $ci.trigger("query-initial-sets", [predID]);
+    });
+});
+
+
+
+
 /**
  * SetList requires data:
      * data.subjType,
      * data.cl = <element CL>,
      * data.set = [[ratVal, subjID], ...],
      * data.setLen,
-     * data.setID,
-     * data.elemNum,
      * data.initialNum,
      * data.incrementNum (can be changed before appending a new list).
-     * TODO: Add filter set IDs (to potentially collapse elements before
-     * loading).
+     * TODO: Add filter set IDs (meaning userID + predID) to potentially
+         * collapse elements before loading.
  * And it sets/updates data:
      * newData.listElemDataArr = [{ratVal, subjID}, ...],
      * newData.currentLen.
@@ -69,129 +201,17 @@ setListCL.addCallback(function($ci, data) {
 });
 
 
-/**
- * SetField requires data:
-     * data.predCxtID,
-     * data.objType,
-     * data.objID,
-     * data.predTitle,
-     * data.subjType,
-     * data.queryUserWeightArr,
-     * data.elemCL,
-     * data.initialNum,
-     * data.incrementNum.
- * And it sets/updates data:
-     * data.cl = <element CL>,
-     * data.set = [[combRatVal, subjID, ratValArr], ...],
-     * data.weightsAndSetObjArr = [{predID, predWFun, userID, userW, set}, ...],
-     * data.setLen,
-     * data.setID,
-     * data.elemNum,
-     * TODO: make it so that users can adjust the parameters, rl, rh, n, and o.
- */
-export var setFieldCL = new ContentLoader(
-    "SetField",
-    /* Initial HTML template */
-    '<div>' +
-        '<<SetHeader data:wait>>' +
-        '<<SetList data:wait>>' +
-    '</div>',
-    appColumnCL
-);
-setFieldCL.addCallback(function($ci, data) {
-    $ci
-        .one("query-initial-sets", function(event, predID) {
-            let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-            let $this = $(this);
-            let data = $this.data("data");
-            data.Subcategor = [];
-            let len = data.queryUserArr.length;
-            for (let i = 0; i < len; i++) {
-                data.weightsAndSetObjArr[i] = {
-                    predID: predID,
-                    userID: data.queryUserWeightArr[i].userID,
-                    weight: data.queryUserWeightArr[i].weight,
-                    set: false,
-                };
-                reqData = {
-                    type: "setSK",
-                    uid: data.predCxtID,
-                    pid: data.objType,
-                    st: data.objID,
-                    rl: "", rh: "",
-                    n: 40000, o: 0,
-                    a: 0,
-                };
-                dbReqManager.query($this, reqData, function($ci, result) {
-                    data.weightsAndSetObjArr[i].set = result;
-                    $ci.trigger("load-set-if-ready");
-                });
-            }
-            return false;
-        })
-        .on("load-set-if-ready", function() {
-            let $this = $(this);
-            let data = $this.data("data");
-            let len = data.queryUserArr.length;
-            for (let i = 0; i < len; i++) {
-                if (!data.weightsAndSetObjArr[i].set) {
-                    return false;
-                }
-            }
-            data.setUnion = getSetUnion(data.weightsAndSetObjArr);
-            data.set = getCombinedSet(data.setUnion, data.weightsAndSetObjArr);
-            $this.children('.CI.SetList').trigger("load");
-            return false;
-        });
-});
-// data.weightsAndSetObjArr = {predID, predWFun, userID, userW, set},
-export function getSetUnion(weightsAndSetObjArr) {
-    let ret = [];
-    let retLen = 0;
-    let setNum = weightsAndSetObjArr.length;
-    let sortedSets = weightsAndSetObjArr.map(function(obj) {
-        return obj.set.toSorted(function(row1, row2) {
-            return row1[1] - row1[2];
-        });
-    });
-    for (let i = 0; i < setNum; i++) {
-        weightsAndSetObjArr[i].currentIndex = 0;
-    }
-    let continueLoop = true;
-    while (continueLoop) {
-        ret[retLen] = weightsAndSetObjArr.map(i => sets)
 
-        retLen++;
-    }
-}
-export function getCombinedSet(weightsAndSetObjArr) {
-    let len = weightsAndSetObjArr.length;
-    if (len === 1) {
-        return weightsAndSetObjArr[0].set
-            .map(function(row) {
-                return [
-                    row[0],
-                    row[1],
-                    [],
-                ];
-            });
-    }
-    // TODO: Implement this function for non-trivial cases as well.
-}
-setFieldCL.addCallback(function($ci, data) {
-    let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-    reqData = {
-        type: "termID",
-        cid: data.predCxtID,
-        st: data.objType,
-        sid: data.objID,
-        s: data.predTitle,
-    };
-    dbReqManager.query($ci, reqData, function($ci, result) {
-        let predID = (result[0] ?? [])[0];
-        $ci.trigger("query-initial-sets", [predID]);
-    });
-});
+
+
+
+
+
+
+
+
+
+
 
 
 

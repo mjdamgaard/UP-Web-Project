@@ -103,7 +103,7 @@ switch ($reqType) {
         break;
     case "termID":
         $sql = "CALL selectTermID (?, ?, ?, ?)";
-        $paramNameArr = array("cid", "st", "sid", "s");
+        $paramNameArr = array("cid", "spt", "spid", "t");
         $typeArr = array("id", "type", "id", "tvarchar");
         // output: [[termID]].
         break;

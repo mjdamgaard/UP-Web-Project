@@ -5,7 +5,7 @@ SELECT "Query procedures";
 -- DROP PROCEDURE selectRating;
 -- DROP PROCEDURE selectUsersAndRatings;
 -- DROP PROCEDURE selectRecentInputs;
-DROP PROCEDURE selectRecordedInputs;
+-- DROP PROCEDURE selectRecordedInputs;
 -- DROP PROCEDURE selectUserInfo;
 -- DROP PROCEDURE selectContext;
 -- DROP PROCEDURE selectTerm;

@@ -86,6 +86,8 @@ CREATE TABLE SemanticInputs (
     -- -- w = 2^(- inv_w_exp / 32).
     -- inv_w_exp_t32 TINYINT UNSIGNED NOT NULL
 );
+-- TODO: Compress this table and its sec. index, as well as some other tables
+-- below (at least RecordedInputs).
 
 
 CREATE TABLE PrivateRecentInputs (
@@ -123,7 +125,7 @@ CREATE TABLE RecordedInputs (
     subj_id BIGINT UNSIGNED NOT NULL,
 
     changed_at DATETIME,
-    
+
     rat_val VARBINARY(255),
 
     PRIMARY KEY (
