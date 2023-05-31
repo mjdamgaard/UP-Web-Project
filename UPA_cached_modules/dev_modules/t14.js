@@ -99,7 +99,17 @@ setFieldCL.addCallback(function($ci, data) {
             return false;
         });
 });
+// getAveragedSet() takes a userSetsObj = {userWeights, sets} and returns a
+// unioned set containing the weighted averaged ratings for any subjects that
+// appear in one or more of the sets.
 export function getAveragedSet(userSetsObj) {
+    // if there is only one user and one set, simply return the set as is.
+    if (userSetsObj.sets.length === 1) {
+        return userSetsObj.sets[0];
+    }
+    // else, first sort each array in terms of..
+    // ..TODO..
+
     let ret = [];
     let retLen = 0;
     let setNum = userSetsArr.length;
@@ -119,17 +129,18 @@ export function getAveragedSet(userSetsObj) {
     }
 }
 export function getCombinedSet(userSetsArr) {
-    let len = userSetsArr.length;
-    if (len === 1) {
-        return userSetsArr[0].set
-            .map(function(row) {
-                return [
-                    row[0],
-                    row[1],
-                    [],
-                ];
-            });
-    }
+    // TODO..
+    // let len = userSetsArr.length;
+    // if (len === 1) {
+    //     return userSetsArr[0].set
+    //         .map(function(row) {
+    //             return [
+    //                 row[0],
+    //                 row[1],
+    //                 [],
+    //             ];
+    //         });
+    // }
     // TODO: Implement this function for non-trivial cases as well.
 }
 setFieldCL.addCallback(function($ci, data) {
