@@ -23,28 +23,28 @@
 
 
 
-CREATE TABLE Sets (
-    -- set ID.
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    -- type = "s".
-
-    -- user or user group who states the statement.
-    user_id BIGINT UNSIGNED NOT NULL,
-    -- predicate.
-    pred_id BIGINT UNSIGNED NOT NULL,
-    -- type of the subjects of the predicate.
-    subj_t CHAR(1) NOT NULL,
-
-    -- number of elements.
-    elem_num BIGINT UNSIGNED NOT NULL,
-
-    UNIQUE INDEX (
-        user_id,
-        pred_id,
-        subj_t
-    )
-
-);
+-- CREATE TABLE Sets (
+--     -- set ID.
+--     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+--     -- type = "s".
+--
+--     -- user or user group who states the statement.
+--     user_id BIGINT UNSIGNED NOT NULL,
+--     -- predicate.
+--     pred_id BIGINT UNSIGNED NOT NULL,
+--     -- type of the subjects of the predicate.
+--     subj_t CHAR(1) NOT NULL,
+--
+--     -- number of elements.
+--     elem_num BIGINT UNSIGNED NOT NULL,
+--
+--     UNIQUE INDEX (
+--         user_id,
+--         pred_id,
+--         subj_t
+--     )
+--
+-- );
 
 
 
@@ -55,55 +55,60 @@ CREATE TABLE Sets (
  * that the statement is correct (like when answering a survey).
  **/
 CREATE TABLE SemanticInputs (
-    /* Set */
-    -- set id.
-    set_id BIGINT UNSIGNED NOT NULL,
+    -- user (or bot) who states the statement.
+    user_id BIGINT UNSIGNED NOT NULL,
+    -- predicate.
+    pred_id BIGINT UNSIGNED NOT NULL,
+    -- type of the subject of the predicate.
+    subj_t CHAR(1) NOT NULL,
 
-    /* Member */
-    -- The members of sets include a rating value and an object term.
-    -- rating value.
+    /* The "input set" */
+    -- given some constants for the above three column, the input sets contains
+    -- pairs of rating values and the IDs of the predicate subjects.
     rat_val VARBINARY(255) NOT NULL,
-
-    -- subject of the relation defining the set (i.e. the primary part of the
-    -- member which the rating is about). (Since the set include info on what
-    -- type of objects it contains, only the numerical id is needed.)
     subj_id BIGINT UNSIGNED NOT NULL,
 
     PRIMARY KEY (
-        set_id,
+        user_id,
+        pred_id,
+        subj_t,
         rat_val,
         subj_id
     ),
 
-    -- (subj_id and set_id will not be redundantly repeated in this
-    -- secondary index. The size of the index will thus be the same as the
-    -- clustered index.)
-    INDEX (subj_id, set_id) -- This index is already unique due to the PK.
+    UNIQUE INDEX (subj_t, subj_id, pred_id, user_id)
+    -- INDEX (subj_t, subj_id, pred_id, user_id)
+    -- -- (This index is already unique due to the PK.)
 
     -- -- w_exp is a nummerical value which gives the weight of the rating
     -- -- when plugged into the equation w = 2^(w_exp / 32).
     -- -- inv_w_exp is the multiplicational inverse of w_exp, meaning that
     -- -- w = 2^(- inv_w_exp / 32).
     -- inv_w_exp_t32 TINYINT UNSIGNED NOT NULL
-
 );
 
 
 CREATE TABLE PrivateRecentInputs (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    set_id BIGINT UNSIGNED NOT NULL,
+    user_id BIGINT UNSIGNED NOT NULL,
+    pred_id BIGINT UNSIGNED NOT NULL,
+    subj_t CHAR(1) NOT NULL,
     -- new rating value.
     rat_val VARBINARY(255),
     subj_id BIGINT UNSIGNED NOT NULL,
 
-    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    live_at DATETIME
+    live_after TIME
+    -- TODO: Make a recurring scheduled event that decrements to days of this
+    -- time, and one that continously moves the private RIs to the public table
+    -- when the time is up (and when the day part of the time is at 0).
 );
 CREATE TABLE RecentInputs (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    set_id BIGINT UNSIGNED NOT NULL,
+    user_id BIGINT UNSIGNED NOT NULL,
+    pred_id BIGINT UNSIGNED NOT NULL,
+    subj_t CHAR(1) NOT NULL,
     -- new rating value.
     rat_val VARBINARY(255),
     subj_id BIGINT UNSIGNED NOT NULL,
@@ -111,15 +116,20 @@ CREATE TABLE RecentInputs (
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TABLE RecordedInputs (
-    set_id BIGINT UNSIGNED NOT NULL,
-    -- new rating value.
-    rat_val VARBINARY(255),
+    user_id BIGINT UNSIGNED NOT NULL,
+    pred_id BIGINT UNSIGNED NOT NULL,
+    subj_t CHAR(1) NOT NULL,
+    -- recorded rating value.
     subj_id BIGINT UNSIGNED NOT NULL,
 
     changed_at DATETIME,
+    
+    rat_val VARBINARY(255),
 
     PRIMARY KEY (
-        set_id,
+        user_id,
+        pred_id,
+        subj_t,
         subj_id,
         changed_at
     )

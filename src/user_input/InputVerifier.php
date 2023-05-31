@@ -138,11 +138,14 @@ class InputVerifier {
                 break;
             case "time":
                 $pattern =
-            "/^([12]?[0-9] |3[0-4] )?([01][0-9]|2[0-3]):[0-9]{2}:[0-9]{2}$/";
+                    "/^([12]?[0-9] |3[0-4] )?([01][0-9]|2[0-3])(:[0-5][0-9]){2}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
                 }
                 break;
+            // case "datetime":
+            // //     $pattern = ...
+            //     break;
             default:
                 throw new \Exception(
                     'verifyAndSetParams(): unknown type ' .

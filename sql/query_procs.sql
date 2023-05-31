@@ -1,13 +1,11 @@
 
 SELECT "Query procedures";
 
--- DROP PROCEDURE selectSet;
--- DROP PROCEDURE selectSetFromSecKey;
--- DROP PROCEDURE selectSetInfo;
--- DROP PROCEDURE selectSetInfoFromSecKey;
+-- DROP PROCEDURE selectInputSet;
 -- DROP PROCEDURE selectRating;
+-- DROP PROCEDURE selectUsersAndRatings;
 -- DROP PROCEDURE selectRecentInputs;
--- DROP PROCEDURE selectRecordedInputs;
+DROP PROCEDURE selectRecordedInputs;
 -- DROP PROCEDURE selectUserInfo;
 -- DROP PROCEDURE selectContext;
 -- DROP PROCEDURE selectTerm;
@@ -29,8 +27,10 @@ SELECT "Query procedures";
 
 
 DELIMITER //
-CREATE PROCEDURE selectSet (
-    IN setID BIGINT UNSIGNED,
+CREATE PROCEDURE selectInputSet (
+    IN userID BIGINT UNSIGNED,
+    IN predID BIGINT UNSIGNED,
+    IN subjType CHAR(1),
     IN ratingRangeMinHex VARCHAR(510),
     IN ratingRangeMaxHex VARCHAR(510),
     IN maxNum INT UNSIGNED,
@@ -44,118 +44,89 @@ BEGIN
 
     SELECT
         HEX(rat_val) AS ratVal,
-        obj_id AS objID
+        subj_id AS subjID
     FROM SemanticInputs
     WHERE (
-        set_id = setID AND
+        user_id = userID AND
+        pred_id = predID AND
+        subj_t = subjType AND
         (ratMin = "" OR rat_val >= ratMin) AND
         (ratMax = "" OR rat_val <= ratMax)
     )
     ORDER BY
         CASE WHEN isAscOrder THEN rat_val END ASC,
         CASE WHEN NOT isAscOrder THEN rat_val END DESC,
-        CASE WHEN isAscOrder THEN obj_id END ASC,
-        CASE WHEN NOT isAscOrder THEN obj_id END DESC
+        CASE WHEN isAscOrder THEN subj_id END ASC,
+        CASE WHEN NOT isAscOrder THEN subj_id END DESC
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
 
 
-DELIMITER //
-CREATE PROCEDURE selectSetFromSecKey (
-    IN userID BIGINT UNSIGNED,
-    IN predID BIGINT UNSIGNED,
-    IN subjType CHAR(1),
-    IN ratingRangeMinHex VARCHAR(510),
-    IN ratingRangeMaxHex VARCHAR(510),
-    IN maxNum INT UNSIGNED,
-    IN numOffset INT UNSIGNED,
-    IN isAscOrder BOOL
-)
-BEGIN
-    DECLARE setID BIGINT UNSIGNED;
-    SELECT id INTO setID
-    FROM Sets
-    WHERE (
-        user_id = userID AND
-        pred_id = predID AND
-        subj_t = subjType
-    );
-    CALL selectSet (
-        setID,
-        ratingRangeMinHex,
-        ratingRangeMaxHex,
-        maxNum,
-        numOffset,
-        isAscOrder
-    );
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE selectSetInfo (
-    IN setID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT
-        id AS setID,
-        user_id AS userID,
-        pred_id AS predID,
-        subj_t AS subjType,
-        elem_num AS elemNum
-    FROM Sets;
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE selectSetInfoFromSecKey (
-    IN userID BIGINT UNSIGNED,
-    IN predID BIGINT UNSIGNED,
-    IN subjType CHAR(1)
-)
-BEGIN
-    DECLARE setID BIGINT UNSIGNED;
-    SELECT id INTO setID
-    FROM Sets
-    WHERE (
-        user_id = userID AND
-        pred_id = predID AND
-        subj_t = subjType
-    );
-    CALL selectSetInfo (setID);
-END //
-DELIMITER ;
-
-
-
-
 
 DELIMITER //
 CREATE PROCEDURE selectRating (
+    IN subjType CHAR(1),
     IN subjID BIGINT UNSIGNED,
-    IN setID BIGINT UNSIGNED
+    IN predID BIGINT UNSIGNED,
+    IN userID BIGINT UNSIGNED
 )
 BEGIN
     SELECT HEX(rat_val) AS ratVal
     FROM SemanticInputs
-    WHERE (subj_id = subjID AND set_id = setID);
+    WHERE (
+        subj_t = subjType AND
+        subj_id = subjID AND
+        pred_id = predID AND
+        user_id = userID
+    );
 END //
 DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectUsersAndRatings (
+    IN subjType CHAR(1),
+    IN subjID BIGINT UNSIGNED,
+    IN predID BIGINT UNSIGNED,
+    IN startUserID BIGINT UNSIGNED,
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED
+)
+BEGIN
+    SELECT
+        user_id AS userID,
+        HEX(rat_val) AS ratVal
+    FROM SemanticInputs
+    WHERE (
+        subj_t = subjType AND
+        subj_id = subjID AND
+        pred_id = predID AND
+        user_id >= userID
+    )
+    ORDER BY user_id ASC
+    LIMIT numOffset, maxNum;
+END //
+DELIMITER ;
+
+
+
 
 
 
 DELIMITER //
 CREATE PROCEDURE selectRecentInputs (
     IN startID BIGINT UNSIGNED,
-    IN maxNum INT
+    IN maxNum INT UNSIGNED
 )
 BEGIN
     SELECT
-        set_id AS setID,
+        user_id AS userID,
+        pred_id AS predID,
+        subj_t AS subjType,
+        HEX(rat_val) AS ratVal,
         subj_id AS subjID,
-        HEX(rat_val) AS ratVal
+        changed_at AS changedAt
     FROM RecentInputs
     WHERE id >= startID
     ORDER BY id ASC
@@ -164,12 +135,15 @@ END //
 DELIMITER ;
 
 
+
 DELIMITER //
 CREATE PROCEDURE selectRecordedInputs (
-    IN setID BIGINT UNSIGNED,
+    IN userID BIGINT UNSIGNED,
+    IN predID BIGINT UNSIGNED,
+    IN subjType CHAR(1),
     IN subjID BIGINT UNSIGNED,
-    IN maxNum INT,
-    IN numOffset INT
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED
 )
 BEGIN
     IF (subjID = 0 OR subjID IS NULL) THEN
@@ -178,7 +152,11 @@ BEGIN
             changed_at AS changedAt,
             HEX(rat_val) AS ratVal
         FROM RecordedInputs
-        WHERE set_id = setID
+        WHERE (
+            user_id = userID AND
+            pred_id = predID AND
+            subj_t = subjType
+        )
         ORDER BY subj_id DESC, changed_at DESC
         LIMIT numOffset, maxNum;
     ELSE
@@ -187,12 +165,19 @@ BEGIN
             changed_at AS changedAt,
             HEX(rat_val) AS ratVal
         FROM RecordedInputs
-        WHERE (set_id = setID AND subj_id = subjID)
+        WHERE (
+            user_id = userID AND
+            pred_id = predID AND
+            subj_t = subjType AND
+            subj_id = subjID
+        )
         ORDER BY changed_at DESC
         LIMIT numOffset, maxNum;
     END IF;
 END //
 DELIMITER ;
+
+
 
 
 
@@ -287,8 +272,8 @@ DELIMITER //
 CREATE PROCEDURE selectContextIDs (
     IN parentCxtID BIGINT UNSIGNED,
     IN str VARCHAR(255),
-    IN maxNum INT,
-    IN numOffset INT
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED
 )
 BEGIN
     (
@@ -325,8 +310,8 @@ CREATE PROCEDURE selectTermIDs (
     IN specType CHAR(1),
     IN specID BIGINT UNSIGNED,
     IN str VARCHAR(255),
-    IN maxNum INT,
-    IN numOffset INT
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED
 )
 BEGIN
     IF (specID = 0) THEN
@@ -428,8 +413,8 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectPatternIDs (
     IN s VARCHAR(768),
-    IN maxNum INT,
-    IN numOffset INT
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED
 )
 BEGIN
     (
@@ -458,8 +443,8 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE searchForKeywordStrings (
     IN s VARCHAR(768),
-    IN maxNum INT,
-    IN numOffset INT
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED
 )
 BEGIN
     SELECT
@@ -474,8 +459,8 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE searchForKeywordStringsBooleanMode (
     IN s VARCHAR(768),
-    IN maxNum INT,
-    IN numOffset INT
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED
 )
 BEGIN
     SELECT

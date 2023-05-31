@@ -38,20 +38,10 @@ $sql = "";
 $paramNameArr = "";
 $typeArr = "";
 switch ($reqType) {
-    case "set":
-        $sql = "CALL createOrFindSet (?, ?, ?)";
-        $paramNameArr = array("uid", "pid", "st");
-        $typeArr = array("id", "id", "type",);
-        break;
     case "rat":
-        $sql = "CALL inputOrChangeRating (?, ?, ?, ?, ?)";
-        $paramNameArr = array("uid", "seid", "suid", "r", "t");
-        $typeArr = array("id", "id", "id", "rat", "time");
-        break;
-    case "ratSK":
-        $sql = "CALL inputOrChangeRatingFromSecKey (?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("uid", "pid", "st", "sid", "r", "t");
-        $typeArr = array("id", "id", "type", "id", "rat", "time");
+        $sql = "CALL inputOrChangeRating (?, ?, ?, ?, ?, ?)";
+        $paramNameArr = array("uid", "pid", "st", "sid", "r", "l");
+        $typeArr = array("id", "id", "type", "id", "rat", "datetime");
         break;
     case "cxt":
         // $sql = "CALL insertOrFindCat (?, ?, ?)";

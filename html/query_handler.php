@@ -38,65 +38,43 @@ $paramNameArr = "";
 $typeArr = "";
 switch ($reqType) {
     case "set":
-        $sql = "CALL selectSet (?, ?, ?, ?, ?, ?)";
+        $sql = "CALL selectInputSet (?, ?, ?, ?, ?, ?, ?, ?)";
         $paramNameArr = array(
-            "id",
+            "uid", "pid", "st",
             "rl", "rh",
             "n", "o",
             "a"
         );
         $typeArr = array(
-            "id",
+            "id", "id", "id",
             "rat", "rat",
             "uint", "uint",
             "tint"
         );
         // output: [[ratVal, subjID], ...].
         break;
-        case "setSK":
-            $sql = "CALL selectSetFromSecKey (?, ?, ?, ?, ?, ?, ?, ?)";
-            $paramNameArr = array(
-                "uid", "pid", "st",
-                "rl", "rh",
-                "n", "o",
-                "a"
-            );
-            $typeArr = array(
-                "id", "id", "type", "id",
-                "rat", "rat",
-                "uint", "uint",
-                "tint"
-            );
-            // output: [[ratVal, subjID], ...].
-            break;
-    case "setInfo":
-        $sql = "CALL selectSetInfo (?)";
-        $paramNameArr = array("id");
-        $typeArr = array("id");
-        // output: [[setID, userID, predID, subjType, elemNum]].
-        break;
-    case "setInfoSK":
-        $sql = "CALL selectSetInfoFromSecKey (?, ?, ?)";
-        $paramNameArr = array("uid", "pid", "st");
-        $typeArr = array("id", "id", "type");
-        // output: [[setID, userID, predID, subjType, elemNum]].
-        break;
     case "rat":
         $sql = "CALL selectRating (?, ?)";
-        $paramNameArr = array("suid", "seid");
-        $typeArr = array("id", "id");
+        $paramNameArr = array("st", "sid", "pid", "uid");
+        $typeArr = array("type", "id", "id", "id");
         // output: [[ratVal]].
+        break;
+    case "userRats":
+        $sql = "CALL selectUsersAndRatings (?, ?)";
+        $paramNameArr = array("st", "sid", "pid", "uid", "n", "o");
+        $typeArr = array("type", "id", "id", "id", "uint", "unit");
+        // output: [[userID, ratVal], ...].
         break;
     case "recentInputs":
         $sql = "CALL selectRecentInputs (?, ?)";
         $paramNameArr = array("id", "n");
-        $typeArr = array("id", "int");
-        // output: [[setID, subjID, ratVal], ...].
+        $typeArr = array("id", "uint");
+        // output: [[userID, predID, subjType, ratVal, subjID, changedAt], ...].
         break;
     case "recordedtInputs":
-        $sql = "CALL selectRecordedInputs (?, ?, ?, ?)";
-        $paramNameArr = array("seid", "suid", "n", "o");
-        $typeArr = array("id", "id", "int", "int");
+        $sql = "CALL selectRecordedInputs (?, ?, ?, ?, ?, ?)";
+        $paramNameArr = array("uid", "pid", "st", "sid", "n", "o");
+        $typeArr = array("id", "id", "type", "id", "uint", "uint");
         // output: [[subjID, changedAt, ratVal], ...].
         break;
     case "user":
@@ -132,13 +110,13 @@ switch ($reqType) {
     case "cxtIDs":
         $sql = "CALL selectContextIDs (?, ?, ?, ?)";
         $paramNameArr = array("pid", "s", "n", "o");
-        $typeArr = array("id", "tvarchar", "int", "int");
+        $typeArr = array("id", "tvarchar", "uint", "uint");
         // output: [[title, cxtID], ...].
         break;
     case "termIDs":
         $sql = "CALL selectTermIDs (?, ?, ?, ?, ?, ?)";
         $paramNameArr = array("cid", "st", "sid", "s", "n", "o");
-        $typeArr = array("id", "type", "id", "tvarchar", "int", "int");
+        $typeArr = array("id", "type", "id", "tvarchar", "uint", "uint");
         // output: [[title, termID], ...].
         break;
     case "list":
@@ -162,19 +140,19 @@ switch ($reqType) {
     case "pattIDs":
         $sql = "CALL selectPatternIDs (?, ?, ?)";
         $paramNameArr = array("s", "n", "o");
-        $typeArr = array("str", "int", "int");
+        $typeArr = array("str", "uint", "uint");
         // output: [[str, pattID], ...].
         break;
     case "kws":
         $sql = "CALL searchForKeywordStrings (?, ?, ?)";
         $paramNameArr = array("s", "n", "o");
-        $typeArr = array("str", "int", "int");
+        $typeArr = array("str", "uint", "uint");
         // output: [[str, kwsID], ...].
         break;
     case "kwsB":
         $sql = "CALL searchForKeywordStringsBooleanMode (?, ?, ?)";
         $paramNameArr = array("s", "n", "o");
-        $typeArr = array("str", "int", "int");
+        $typeArr = array("str", "uint", "uint");
         // output: [[str, kwsID], ...].
         break;
     case "text":
@@ -198,7 +176,7 @@ switch ($reqType) {
     case "creations":
         $sql = "CALL selectCreations (?, ?, ?, ?, ?)";
         $paramNameArr = array("id", "t", "n", "o", "a");
-        $typeArr = array("id", "type", "int", "int", "tint");
+        $typeArr = array("id", "type", "uint", "uint", "tint");
         // output: [[entityType, entityID], ...].
         break;
     default:
