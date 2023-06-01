@@ -242,101 +242,101 @@ setListCL.addCallback(function($ci, data) {
 
 
 
-
-
-setFieldCL.addCallback("data", "copy");
-setFieldCL.addCallback(function($ci, data) {
-    // TODO: Change this such that a number of initially appended elements are
-    // looked up in data.
-    $ci
-        .on("append-elements", function() {
-            let elemCL = setFieldCL.getRelatedCL(data.elemContentKey)
-            let len = data.set.length;
-            let entityType = data.setInfo[3];
-            let setInfo = data.setInfo;
-            data.listElemDataArr = data.set.map(function(row) {
-                return {
-                    setInfo: setInfo,
-                    ratVal: row[0],
-                    entityID: row[1],
-                    entityType: entityType,
-                    cl: elemCL,
-                };
-            });
-            // reload the ElementList, with the potentially new elemDataArr.
-            $(this).children('.CI.List').trigger("load");
-            return false;
-        })
-        .on("append-elements-if-ready", function() {
-            if ((data.set ?? false) && (data.setInfo ?? false)) {
-                $(this).off("append-elements-if-ready")
-                    .trigger("append-elements");
-            }
-            return false;
-        });
-});
-setFieldCL.addCallback(function($ci, data) {
-    let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-    if (typeof data.set === "undefined") {
-        let reqData;
-        if (typeof data.setID === "undefined") {
-            reqData = {
-                type: "setSK",
-                uid: data.queryUserID, // TODO: Change (add more options).
-                pid: data.predID,
-                rid: data.relID,
-                rl: "", rh: "",
-                n: 10000, o: 0,
-                a: 0,
-            };
-        } else {
-            reqData = {
-                type: "set",
-                id: data.setID,
-                rl: "", rh: "",
-                n: 10000, o: 0,
-                a: 0,
-            }; // TODO: Change to look all this up (using ?? op.).
-        }
-        dbReqManager.query($ci, reqData, function($ci, result) {
-            $ci.data("data").set = result;
-            $ci.trigger("append-elements-if-ready");
-        });
-    } else {
-        $ci.data("data").set = data.set;
-        $ci.trigger("append-elements-if-ready");
-    }
-    if (typeof data.setInfo === "undefined") {
-        let reqData;
-        if (typeof data.setID === "undefined") {
-            reqData = {
-                type: "setInfoSK",
-                uid: data.queryUserID,
-                sid: data.subjID,
-                rid: data.relID,
-            };
-        } else {
-            reqData = {
-                type: "setInfo",
-                id: data.setID,
-            };
-        }
-        dbReqManager.query($ci, reqData, function($ci, result) {
-            $ci.data("data").setInfo = result[0] ?? result;
-            $ci.trigger("append-elements-if-ready");
-            $ci.children('.CI.SetHeader').trigger("load");
-        });
-    } else {
-        $ci.data("data").setInfo = data.setInfo;
-        $ci.trigger("append-elements-if-ready");
-        $ci.children('.CI.SetHeader').trigger("load");
-    }
-});
-// TODO: Change this such that a number of initially appended elements are
-// looked up in data.
-// TODO: Add a dropdown content key as well to the inut data for SetFields,
-// as well as a boolean telling whether the dropdown should be shown already
-// as default for all elements in the list.
+//
+//
+// setFieldCL.addCallback("data", "copy");
+// setFieldCL.addCallback(function($ci, data) {
+//     // TODO: Change this such that a number of initially appended elements are
+//     // looked up in data.
+//     $ci
+//         .on("append-elements", function() {
+//             let elemCL = setFieldCL.getRelatedCL(data.elemContentKey)
+//             let len = data.set.length;
+//             let entityType = data.setInfo[3];
+//             let setInfo = data.setInfo;
+//             data.listElemDataArr = data.set.map(function(row) {
+//                 return {
+//                     setInfo: setInfo,
+//                     ratVal: row[0],
+//                     entityID: row[1],
+//                     entityType: entityType,
+//                     cl: elemCL,
+//                 };
+//             });
+//             // reload the ElementList, with the potentially new elemDataArr.
+//             $(this).children('.CI.List').trigger("load");
+//             return false;
+//         })
+//         .on("append-elements-if-ready", function() {
+//             if ((data.set ?? false) && (data.setInfo ?? false)) {
+//                 $(this).off("append-elements-if-ready")
+//                     .trigger("append-elements");
+//             }
+//             return false;
+//         });
+// });
+// setFieldCL.addCallback(function($ci, data) {
+//     let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+//     if (typeof data.set === "undefined") {
+//         let reqData;
+//         if (typeof data.setID === "undefined") {
+//             reqData = {
+//                 type: "setSK",
+//                 uid: data.queryUserID, // TODO: Change (add more options).
+//                 pid: data.predID,
+//                 rid: data.relID,
+//                 rl: "", rh: "",
+//                 n: 10000, o: 0,
+//                 a: 0,
+//             };
+//         } else {
+//             reqData = {
+//                 type: "set",
+//                 id: data.setID,
+//                 rl: "", rh: "",
+//                 n: 10000, o: 0,
+//                 a: 0,
+//             }; // TODO: Change to look all this up (using ?? op.).
+//         }
+//         dbReqManager.query($ci, reqData, function($ci, result) {
+//             $ci.data("data").set = result;
+//             $ci.trigger("append-elements-if-ready");
+//         });
+//     } else {
+//         $ci.data("data").set = data.set;
+//         $ci.trigger("append-elements-if-ready");
+//     }
+//     if (typeof data.setInfo === "undefined") {
+//         let reqData;
+//         if (typeof data.setID === "undefined") {
+//             reqData = {
+//                 type: "setInfoSK",
+//                 uid: data.queryUserID,
+//                 sid: data.subjID,
+//                 rid: data.relID,
+//             };
+//         } else {
+//             reqData = {
+//                 type: "setInfo",
+//                 id: data.setID,
+//             };
+//         }
+//         dbReqManager.query($ci, reqData, function($ci, result) {
+//             $ci.data("data").setInfo = result[0] ?? result;
+//             $ci.trigger("append-elements-if-ready");
+//             $ci.children('.CI.SetHeader').trigger("load");
+//         });
+//     } else {
+//         $ci.data("data").setInfo = data.setInfo;
+//         $ci.trigger("append-elements-if-ready");
+//         $ci.children('.CI.SetHeader').trigger("load");
+//     }
+// });
+// // TODO: Change this such that a number of initially appended elements are
+// // looked up in data.
+// // TODO: Add a dropdown content key as well to the inut data for SetFields,
+// // as well as a boolean telling whether the dropdown should be shown already
+// // as default for all elements in the list.
 
 
 

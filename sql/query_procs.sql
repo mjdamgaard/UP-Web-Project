@@ -13,6 +13,7 @@ SELECT "Query procedures";
 -- DROP PROCEDURE selectTermID;
 -- DROP PROCEDURE selectContextIDs;
 -- DROP PROCEDURE selectTermIDs;
+-- -- DROP PROCEDURE selectTermIDFromSimilarTerm;
 -- DROP PROCEDURE selectList;
 -- DROP PROCEDURE selectListID;
 -- DROP PROCEDURE selectPattern;
@@ -256,6 +257,10 @@ CREATE PROCEDURE selectTermID (
     IN str VARCHAR(255)
 )
 BEGIN
+    IF (specID = 0) THEN
+        SET specID = NULL;
+    END IF;
+
     SELECT id AS termID
     FROM Terms
     WHERE (
@@ -350,6 +355,35 @@ END //
 DELIMITER ;
 
 
+-- DELIMITER //
+-- CREATE PROCEDURE selectTermIDFromSimilarTerm (
+--     IN termID BIGINT UNSIGNED,
+--     IN specType CHAR(1),
+--     IN specID BIGINT UNSIGNED
+-- )
+-- BEGIN
+--     DECLARE cxtID BIGINT UNSIGNED;
+--     DECLARE str VARCHAR(255);
+--
+--     IF (specID = 0) THEN
+--         SET specID = NULL;
+--     END IF;
+--
+--     SELECT context_id, title
+--     INTO cxtID, str
+--     FROM Terms
+--     WHERE id = termID;
+--
+--     SELECT id AS termID
+--     FROM Terms
+--     WHERE (
+--         context_id = cxtID AND
+--         spec_entity_t = specType AND
+--         spec_entity_id <=> specID AND
+--         title = str
+--     );
+-- END //
+-- DELIMITER ;
 
 
 
