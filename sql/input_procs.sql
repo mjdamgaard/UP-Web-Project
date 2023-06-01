@@ -162,6 +162,9 @@ BEGIN
     IF (specID = 0) THEN
         SET specID = NULL;
     END IF;
+    -- IF (specType = "0") THEN
+    --     SET specType = NULL; -- No, cause spec_t is not nullable.
+    -- END IF;
 
     SELECT id INTO outID
     FROM Terms

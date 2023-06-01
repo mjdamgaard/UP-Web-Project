@@ -22,29 +22,114 @@ INSERT INTO Contexts (id, parent_context_id, title)
 VALUES (1, 0, "Terms");
 INSERT INTO Creators (entity_t, entity_id, user_id)
 VALUES ('c', 1, 1);
+-- insert the Term "Term," referencing (the category of) all terms/Terms.
+CALL insertOrFindTerm(1, 1, "Terms", "0", 0); -- id: 1
 
 -- insert basic contexts, terms and realtions meant for common use.
 
--- Ah, maybe the specType should just be part of Terms instead. And also, maybe
--- Sets should hold a Context as well, and while we're at it, why not a rating
--- value description?.(!) (11:44)
+
 CALL insertOrFindContext(1, 1, "Predicates"); -- id: 2
 
+-- Terms of this Semantic Context is just the Predicate titles without the
+-- objects (so with only ("0", 0) as their spect_t/id's). Thus, "Predicate term
+-- titles" is a more precise title for this Context, but let us call it
+-- "Relations" for simplicity.
+CALL insertOrFindContext(1, 1, "Relations"); -- id: 3
+
+
+CALL insertOrFindTerm(1, 1, "openSDB", "0", 0); -- id: 2
+
+CALL insertOrFindTerm(1, 1, "Music", "0", 0); -- id: 3
+CALL insertOrFindContext(1, 1, "Music"); -- id: 4
+CALL insertOrFindTerm(1, 4, "Rock", "0", 0); -- id: 4
+CALL insertOrFindTerm(1, 4, "Jazz", "0", 0); -- id: 5
+CALL insertOrFindTerm(1, 4, "Hip hop", "0", 0); -- id: 6
+
+CALL insertOrFindTerm(1, 1, "Movies", "0", 0); -- id: 7
+CALL insertOrFindContext(1, 1, "Movies"); -- id: 5
+CALL insertOrFindTerm(1, 5, "The Lord of the Rings", "0", 0); -- id: 8
+CALL insertOrFindTerm(1, 5, "The Two Towers", "0", 0); -- id: 9
+-- (Note that the Semantic Context "Music" here is only used for disambiguating
+-- what e.g. "Rock" refers to (i.e. not the geological kind). But the Context
+-- is still  )
+
+CALL insertOrFindTerm(
+    1, 3,
+    "is a useful instance of the {Subcategories} of the term $",
+    "0", 0
+);
+CALL insertOrFindTerm(
+    1, 3,
+    "is a useful instance of the {Supercategories} of the term $",
+    "0", 0
+);
+CALL insertOrFindTerm(
+    1, 3,
+    "is a useful instance of the {Related categories} of the term $",
+    "0", 0
+);
+CALL insertOrFindTerm(
+    1, 3,
+    "is a useful part of the {Instances} of the term $",
+    "0", 0
+);
+CALL insertOrFindTerm(
+    1, 3,
+    "is a useful instance of the {Related terms} of the term $",
+    "0", 0
+);
+CALL insertOrFindTerm(
+    1, 3,
+    "is a useful instance of the {Comments} to the term $",
+    "0", 0
+);
+-- I intend for the Comments on Related terms to be a subtab of a tab "About."
+-- And I expect that they will get more sibling tabs in the future, like
+-- "Annotations" for instance (and/or perhaps they will get I supercategory,
+-- which might be called "Appendices" or something to that effect).
+
+
+-- insert some Subcategories, Supercategories and Instances predicates.
+
+BEGIN
+    SET @termID = 1;
+    loop1: LOOP
+        SET @termID = @termID + 1;
+        IF @termID < 10 THEN
+            ITERATE loop1;
+        END IF;
+        LEAVE loop1;
+    END LOOP loop1;
+END;
+
+CALL insertOrFindTerm(
+    1, 2,
+    "is a useful instance of the {Subcategories} of the term $",
+    "t", 1
+);
+CALL insertOrFindTerm(
+    1, 2,
+    "is a useful instance of the {Subcategories} of the term $",
+    "t", 2
+);
+CALL insertOrFindTerm(
+    1, 2,
+    "is a useful instance of the {Subcategories} of the term $",
+    "t", 3
+);
 
 
 
-
-CALL insertOrFindTerm(1, 1, "openSDB"); -- id: 1
 --
 -- CALL insertOrFindPattern(1, "About");
-CALL insertOrFindPattern(1, "Subcategories");
-CALL insertOrFindPattern(1, "Supercategories");
-CALL insertOrFindPattern(1, "Related categories");
-CALL insertOrFindPattern(1, "Instances");
---
+-- CALL insertOrFindPattern(1, "Subcategories");
+-- CALL insertOrFindPattern(1, "Supercategories");
+-- CALL insertOrFindPattern(1, "Related categories");
+-- CALL insertOrFindPattern(1, "Instances");
+-- --
 -- CALL insertOrFindPattern(1, "General info");
-CALL insertOrFindPattern(1, "Related terms");
-CALL insertOrFindPattern(1, "Comments");
+-- CALL insertOrFindPattern(1, "Related terms");
+-- CALL insertOrFindPattern(1, "Comments");
 --
 -- CALL insertOrFindRel (1, 'c', 'c', "Duplicates");
 -- CALL insertOrFindRel (1, 't', 't', "Duplicates");
