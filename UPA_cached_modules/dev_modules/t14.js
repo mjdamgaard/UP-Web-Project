@@ -22,7 +22,7 @@ import {
      * data.predCxtID,
      * data.objType,
      * data.objID,
-     * data.predTitle,
+     * data.relID,
      * data.subjType,
      * data.queryNum,
      * data.userWeights = [{userID, weight}, ...],
@@ -30,7 +30,8 @@ import {
      * data.initialNum,
      * data.incrementNum.
  * And it sets/updates data:
-     * data.cl = <element CL>,
+     * data.predTitle,
+     * data.predID,
      * data.set = [[combRatVal, subjID, ratValArr], ...],
      * data.userSetsArr = [{predID, factorFun, userSetsObj}, ...],
          * userSetsObj = {userWeights, sets},
@@ -52,12 +53,37 @@ export var setFieldCL = new ContentLoader(
 );
 setFieldCL.addCallback(function($ci, data) {
     $ci
-        .one("query-initial-sets", function(event, predID) {
+        .one("query-initial-pred-title", function() {
             let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-            let $this = $(this);
-            let data = $this.data("data");
+            reqData = {
+                type: "term",
+                id: data.relID,
+            };
+            dbReqManager.query($ci, reqData, function($ci, result) {
+                data.predtitle = (result[0] ?? [])[1];
+                $ci.trigger("query-initial-pred-id");
+            });
+            return false;
+        })
+        .one("query-initial-pred-id", function() {
+            let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+            reqData = {
+                type: "termID",
+                cid: data.predCxtID,
+                spt: data.objType,
+                spid: data.objID,
+                t: data.predTitle,
+            };
+            dbReqManager.query($ci, reqData, function($ci, result) {
+                data.predID = (result[0] ?? [])[0];
+                $ci.trigger("query-initial-sets");
+            });
+            return false;
+        })
+        .one("query-initial-sets", function() {
+            let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
             data.userSetsArr = [{
-                predID: predID,
+                predID: data.predID,
                 factorFun: x => 1,
                 userSetsObj: {
                     userWeights: data.userWeights,
@@ -69,22 +95,20 @@ setFieldCL.addCallback(function($ci, data) {
                 reqData = {
                     type: "set",
                     uid: data.userWeights[i].userID,
-                    pid: predID,
+                    pid: data.predID,
                     st: data.subjType,
                     rl: "", rh: "",
                     n: data.queryNum, o: 0,
                     a: 0,
                 };
-                dbReqManager.query($this, reqData, i, function($ci, result, i) {
+                dbReqManager.query($ci, reqData, i, function($ci, result, i) {
                     data.userSetsArr[0].userSetsObj.sets[i] = result;
-                    $ci.trigger("load-set-if-ready");
+                    $ci.trigger("load-initial-set-list-if-ready");
                 });
             }
             return false;
         })
-        .on("load-set-if-ready", function() {
-            let $this = $(this);
-            let data = $this.data("data");
+        .on("load-initial-set-list-if-ready", function() {
             let len = data.userWeights.length;
             for (let i = 0; i < len; i++) {
                 if (
@@ -95,10 +119,16 @@ setFieldCL.addCallback(function($ci, data) {
                 }
             }
             data.set = getAveragedSet(data.userSetsArr[0].userSetsObj);
-            $this.children('.CI.SetList').trigger("load");
+            $ci.children('.CI.SetList').trigger("load");
+            $ci.off("load-initial-set-list-if-ready");
             return false;
         });
 });
+setFieldCL.addCallback(function($ci, data) {
+    $ci.trigger("query-initial-pred-title");
+});
+
+
 // getAveragedSet() takes a userSetsObj = {userWeights, sets} and returns a
 // unioned set containing the weighted averaged ratings for any subjects that
 // appear in one or more of the sets.
@@ -158,20 +188,6 @@ export function getCombinedSet(userSetsArr) {
     // }
     // TODO: Implement this function for non-trivial cases as well.
 }
-setFieldCL.addCallback(function($ci, data) {
-    let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-    reqData = {
-        type: "termID",
-        cid: data.predCxtID,
-        spt: data.objType,
-        spid: data.objID,
-        t: data.predTitle,
-    };
-    dbReqManager.query($ci, reqData, function($ci, result) {
-        let predID = (result[0] ?? [])[0];
-        $ci.trigger("query-initial-sets", [predID]);
-    });
-});
 
 
 
@@ -242,101 +258,10 @@ setListCL.addCallback(function($ci, data) {
 
 
 
-//
-//
-// setFieldCL.addCallback("data", "copy");
-// setFieldCL.addCallback(function($ci, data) {
-//     // TODO: Change this such that a number of initially appended elements are
-//     // looked up in data.
-//     $ci
-//         .on("append-elements", function() {
-//             let elemCL = setFieldCL.getRelatedCL(data.elemContentKey)
-//             let len = data.set.length;
-//             let entityType = data.setInfo[3];
-//             let setInfo = data.setInfo;
-//             data.listElemDataArr = data.set.map(function(row) {
-//                 return {
-//                     setInfo: setInfo,
-//                     ratVal: row[0],
-//                     entityID: row[1],
-//                     entityType: entityType,
-//                     cl: elemCL,
-//                 };
-//             });
-//             // reload the ElementList, with the potentially new elemDataArr.
-//             $(this).children('.CI.List').trigger("load");
-//             return false;
-//         })
-//         .on("append-elements-if-ready", function() {
-//             if ((data.set ?? false) && (data.setInfo ?? false)) {
-//                 $(this).off("append-elements-if-ready")
-//                     .trigger("append-elements");
-//             }
-//             return false;
-//         });
-// });
-// setFieldCL.addCallback(function($ci, data) {
-//     let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-//     if (typeof data.set === "undefined") {
-//         let reqData;
-//         if (typeof data.setID === "undefined") {
-//             reqData = {
-//                 type: "setSK",
-//                 uid: data.queryUserID, // TODO: Change (add more options).
-//                 pid: data.predID,
-//                 rid: data.relID,
-//                 rl: "", rh: "",
-//                 n: 10000, o: 0,
-//                 a: 0,
-//             };
-//         } else {
-//             reqData = {
-//                 type: "set",
-//                 id: data.setID,
-//                 rl: "", rh: "",
-//                 n: 10000, o: 0,
-//                 a: 0,
-//             }; // TODO: Change to look all this up (using ?? op.).
-//         }
-//         dbReqManager.query($ci, reqData, function($ci, result) {
-//             $ci.data("data").set = result;
-//             $ci.trigger("append-elements-if-ready");
-//         });
-//     } else {
-//         $ci.data("data").set = data.set;
-//         $ci.trigger("append-elements-if-ready");
-//     }
-//     if (typeof data.setInfo === "undefined") {
-//         let reqData;
-//         if (typeof data.setID === "undefined") {
-//             reqData = {
-//                 type: "setInfoSK",
-//                 uid: data.queryUserID,
-//                 sid: data.subjID,
-//                 rid: data.relID,
-//             };
-//         } else {
-//             reqData = {
-//                 type: "setInfo",
-//                 id: data.setID,
-//             };
-//         }
-//         dbReqManager.query($ci, reqData, function($ci, result) {
-//             $ci.data("data").setInfo = result[0] ?? result;
-//             $ci.trigger("append-elements-if-ready");
-//             $ci.children('.CI.SetHeader').trigger("load");
-//         });
-//     } else {
-//         $ci.data("data").setInfo = data.setInfo;
-//         $ci.trigger("append-elements-if-ready");
-//         $ci.children('.CI.SetHeader').trigger("load");
-//     }
-// });
-// // TODO: Change this such that a number of initially appended elements are
-// // looked up in data.
-// // TODO: Add a dropdown content key as well to the inut data for SetFields,
-// // as well as a boolean telling whether the dropdown should be shown already
-// // as default for all elements in the list.
+
+
+
+
 
 
 

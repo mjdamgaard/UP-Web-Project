@@ -43,6 +43,6 @@ SELECT
     pred_id AS predID,
     subj_t AS subjType,
     rat_val AS ratVal,
-    obj_id AS objID
+    subj_id AS subjID
 FROM RecentInputs
 ORDER BY user_id ASC, pred_id ASC, subj_t ASC, id ASC;

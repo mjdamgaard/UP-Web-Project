@@ -44,8 +44,8 @@ CALL insertOrFindTerm(1, 1, "Hip hop", "0", 0); -- id: 6
 
 CALL insertOrFindTerm(1, 1, "Movies", "0", 0); -- id: 7
 CALL insertOrFindContext(1, 1, "Movies"); -- id: 4
-CALL insertOrFindTerm(1, 5, "The Lord of the Rings", "0", 0); -- id: 8
-CALL insertOrFindTerm(1, 5, "The Two Towers", "0", 0); -- id: 9
+CALL insertOrFindTerm(1, 4, "The Lord of the Rings", "0", 0); -- id: 8
+CALL insertOrFindTerm(1, 4, "The Two Towers", "0", 0); -- id: 9
 -- (Note that the Semantic Context "Movies" is here used as the context of the
 -- two movie examples, since these two terms are not meant to be interpreted as
 -- categories, which will (as I foresee) usually be the case for Terms that
@@ -58,32 +58,32 @@ CALL insertOrFindTerm(
     1, 3,
     "is a useful instance of the {Subcategories of} the term {$}",
     "0", 0
-);
+); -- id: 10
 CALL insertOrFindTerm(
     1, 3,
     "is a useful instance of the {Supercategories of} the term {$}",
     "0", 0
-);
+); -- id: 11
 CALL insertOrFindTerm(
     1, 3,
     "is a useful instance of the {Related categories of} the term {$}",
     "0", 0
-);
+); -- id: 12
 CALL insertOrFindTerm(
     1, 3,
     "is a useful part of the {Instances of} the term {$}",
     "0", 0
-);
+); -- id: 13
 CALL insertOrFindTerm(
     1, 3,
     "is a useful instance of the {Related terms of} the term {$}",
     "0", 0
-);
+); -- id: 14
 CALL insertOrFindTerm(
     1, 3,
     "is a useful instance of the {Comments to} the term {$}",
     "0", 0
-);
+); -- id: 15
 -- I intend for the Comments on Related terms to be a subtab of a tab "About."
 -- And I expect that they will get more sibling tabs in the future, like
 -- "Annotations" for instance (and/or perhaps they will get I supercategory,
@@ -100,7 +100,7 @@ CREATE PROCEDURE insertPredicates (
 )
 BEGIN
     loop1: LOOP
-        IF (@startTermID <= endTermID) THEN
+        IF (startTermID <= endTermID) THEN
             CALL insertOrFindTerm(
                 1, 2,
                 title,
@@ -120,6 +120,12 @@ CALL insertPredicates(
     1, 7
 );
 
+
+-- rate some statements.
+
+CALL inputOrChangeRating(1, 16, "t", 2, "FF", "00");
+CALL inputOrChangeRating(1, 16, "t", 3, "CF", "00");
+CALL inputOrChangeRating(1, 16, "t", 4, "90", "00");
 
 
 --
