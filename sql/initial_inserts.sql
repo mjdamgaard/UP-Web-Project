@@ -56,32 +56,32 @@ CALL insertOrFindTerm(1, 5, "The Two Towers", "0", 0); -- id: 9
 
 CALL insertOrFindTerm(
     1, 3,
-    "is a useful instance of the {Subcategories} of the term $",
+    "is a useful instance of the {Subcategories of} the term {$}",
     "0", 0
 );
 CALL insertOrFindTerm(
     1, 3,
-    "is a useful instance of the {Supercategories} of the term $",
+    "is a useful instance of the {Supercategories of} the term {$}",
     "0", 0
 );
 CALL insertOrFindTerm(
     1, 3,
-    "is a useful instance of the {Related categories} of the term $",
+    "is a useful instance of the {Related categories of} the term {$}",
     "0", 0
 );
 CALL insertOrFindTerm(
     1, 3,
-    "is a useful part of the {Instances} of the term $",
+    "is a useful part of the {Instances of} the term {$}",
     "0", 0
 );
 CALL insertOrFindTerm(
     1, 3,
-    "is a useful instance of the {Related terms} of the term $",
+    "is a useful instance of the {Related terms of} the term {$}",
     "0", 0
 );
 CALL insertOrFindTerm(
     1, 3,
-    "is a useful instance of the {Comments} to the term $",
+    "is a useful instance of the {Comments to} the term {$}",
     "0", 0
 );
 -- I intend for the Comments on Related terms to be a subtab of a tab "About."
@@ -116,7 +116,7 @@ END //
 DELIMITER ;
 
 CALL insertPredicates(
-    "is a useful instance of the {Subcategories} of the term $",
+    "is a useful instance of the {Subcategories of} the term {$}",
     1, 7
 );
 
