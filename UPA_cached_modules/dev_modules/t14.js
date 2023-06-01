@@ -54,24 +54,24 @@ setFieldCL.addCallback(function($ci, data) {
     $ci
         .one("query-initial-pred-title", function() {
             let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-            reqData = {
+            let reqData = {
                 type: "term",
                 id: data.relID,
             };
             dbReqManager.query($ci, reqData, function($ci, result) {
-                data.predtitle = (result[0] ?? [])[1];
+                data.predTitle = (result[0] ?? [])[1];
                 $ci.trigger("query-initial-pred-id");
             });
             return false;
         })
         .one("query-initial-pred-id", function() {
             let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-            reqData = {
+            let reqData = {
                 type: "termID",
                 cid: "2", // the ID of the Predicate Context
                 spt: data.objType,
                 spid: data.objID,
-                t: data.predTitle,
+                t: encodeURI(data.predTitle),
             };
             dbReqManager.query($ci, reqData, function($ci, result) {
                 data.predID = (result[0] ?? [])[0];
@@ -91,7 +91,7 @@ setFieldCL.addCallback(function($ci, data) {
             }];
             let len = data.userWeights.length;
             for (let i = 0; i < len; i++) {
-                reqData = {
+                let reqData = {
                     type: "set",
                     uid: data.userWeights[i].userID,
                     pid: data.predID,
@@ -150,9 +150,9 @@ export function getAveragedSet(userSetsObj) {
     for (let i = 0; i < setNum; i++) {
         indices[i] = [i, 0];
     }
-    let continue = true;
+    let continueLoop = true;
     let weights = userSetsObj.weights;
-    while (continue) {
+    while (continueLoop) {
         let minSubjID = indices.reduce(
             (acc, currVal) => Math.min(acc, sets[currVal[0]][currVal[1]][1]),
             0
@@ -170,6 +170,7 @@ export function getAveragedSet(userSetsObj) {
         //     0
         // );
         // retLen++;
+        continueLoop = false;
     }
 }
 export function getCombinedSet(userSetsArr) {
