@@ -7,54 +7,42 @@ SELECT
 FROM Creators
 ORDER BY entity_t ASC, entity_id ASC, user_id ASC;
 
-SELECT "Categories:";
+SELECT "SemanticContexts:";
 SELECT
     id AS catID,
-    title,
-    super_cat_id AS superCatID
-FROM Categories
+    parent_context_id AS parentCxtID,
+    title
+FROM SemanticContexts
 ORDER BY id;
 
 SELECT "Terms:";
 SELECT
     id AS termID,
+    context_id AS cxtID,
     title,
-    cat_id AS catID
+    spec_entity_t AS specType,
+    spec_entity_id AS specID
 FROM Terms
 ORDER BY id;
-
-SELECT "Relations:";
-SELECT
-    id AS relID,
-    subj_t AS subjType,
-    obj_t AS objType,
-    obj_noun AS objNoun
-FROM Relations
-ORDER BY id;
-
-SELECT "Sets:";
-SELECT
-    id AS id,
-    user_id AS userID,
-    subj_id AS subjID,
-    rel_id AS relID
-FROM Sets
-ORDER BY user_id, subj_id, rel_id;
 
 
 SELECT "SemanticInputs:";
 SELECT
-    set_id AS setID,
+    user_id AS userID,
+    pred_id AS predID,
+    subj_t AS subjType,
     rat_val AS ratVal,
-    obj_id AS objID
+    subj_id AS subjID
 FROM SemanticInputs
-ORDER BY set_id ASC, rat_val DESC;
+ORDER BY user_id ASC, pred_id ASC, subj_t ASC, rat_val DESC;
 
 SELECT "RecentInputs:";
 SELECT
     id AS id,
-    set_id AS setID,
+    user_id AS userID,
+    pred_id AS predID,
+    subj_t AS subjType,
     rat_val AS ratVal,
     obj_id AS objID
 FROM RecentInputs
-ORDER BY set_id ASC, id ASC;
+ORDER BY user_id ASC, pred_id ASC, subj_t ASC, id ASC;

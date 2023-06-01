@@ -1,24 +1,22 @@
 
-DELETE FROM Sets;
-ALTER TABLE Sets AUTO_INCREMENT=1;
 DELETE FROM SemanticInputs;
 DELETE FROM RecentInputs;
 ALTER TABLE RecentInputs AUTO_INCREMENT=1;
 
-DELETE FROM Contexts;
-ALTER TABLE Contexts AUTO_INCREMENT=1;
+DELETE FROM SemanticContexts;
+ALTER TABLE SemanticContexts AUTO_INCREMENT=1;
 DELETE FROM Terms;
 ALTER TABLE Terms AUTO_INCREMENT=1;
 
-DELETE FROM Texts;
-ALTER TABLE Texts AUTO_INCREMENT=1;
+-- DELETE FROM Texts;
+-- ALTER TABLE Texts AUTO_INCREMENT=1;
 
 DELETE FROM Creators;
 
 
 
 -- insert the fundamental context of all terms (with no parent context).
-INSERT INTO Contexts (id, parent_context_id, title)
+INSERT INTO SemanticContexts (id, parent_context_id, title)
 VALUES (1, 0, "Terms");
 INSERT INTO Creators (entity_t, entity_id, user_id)
 VALUES ('c', 1, 1);
@@ -40,18 +38,21 @@ CALL insertOrFindContext(1, 1, "Relations"); -- id: 3
 CALL insertOrFindTerm(1, 1, "openSDB", "0", 0); -- id: 2
 
 CALL insertOrFindTerm(1, 1, "Music", "0", 0); -- id: 3
-CALL insertOrFindContext(1, 1, "Music"); -- id: 4
-CALL insertOrFindTerm(1, 4, "Rock", "0", 0); -- id: 4
-CALL insertOrFindTerm(1, 4, "Jazz", "0", 0); -- id: 5
-CALL insertOrFindTerm(1, 4, "Hip hop", "0", 0); -- id: 6
+CALL insertOrFindTerm(1, 1, "{Rock} (musical genre)", "0", 0); -- id: 4
+CALL insertOrFindTerm(1, 1, "Jazz", "0", 0); -- id: 5
+CALL insertOrFindTerm(1, 1, "Hip hop", "0", 0); -- id: 6
 
 CALL insertOrFindTerm(1, 1, "Movies", "0", 0); -- id: 7
-CALL insertOrFindContext(1, 1, "Movies"); -- id: 5
+CALL insertOrFindContext(1, 1, "Movies"); -- id: 4
 CALL insertOrFindTerm(1, 5, "The Lord of the Rings", "0", 0); -- id: 8
 CALL insertOrFindTerm(1, 5, "The Two Towers", "0", 0); -- id: 9
--- (Note that the Semantic Context "Music" here is only used for disambiguating
--- what e.g. "Rock" refers to (i.e. not the geological kind). But the Context
--- is still  )
+-- (Note that the Semantic Context "Movies" is here used as the context of the
+-- two movie examples, since these two terms are not meant to be interpreted as
+-- categories, which will (as I foresee) usually be the case for Terms that
+-- simply has "Terms" as their Semantic Context. Rather they are meant to be
+-- iterpreted as refering to the movies themselves, and we therefore expect
+-- that the userbase might want to attach special rendering options when such
+-- Terms are viewed, either in their own Column or as a SetList element.)
 
 CALL insertOrFindTerm(
     1, 3,
@@ -91,31 +92,32 @@ CALL insertOrFindTerm(
 
 -- insert some Subcategories, Supercategories and Instances predicates.
 
+DELIMITER //
+CREATE PROCEDURE insertPredicates (
+    IN title VARCHAR(255),
+    IN startTermID BIGINT UNSIGNED,
+    IN endTermID BIGINT UNSIGNED
+)
 BEGIN
-    SET @termID = 1;
     loop1: LOOP
-        SET @termID = @termID + 1;
-        IF @termID < 10 THEN
+        IF (@startTermID <= endTermID) THEN
+            CALL insertOrFindTerm(
+                1, 2,
+                title,
+                "t", startTermID
+            );
+
+            SET startTermID = startTermID + 1;
             ITERATE loop1;
         END IF;
         LEAVE loop1;
     END LOOP loop1;
-END;
+END //
+DELIMITER ;
 
-CALL insertOrFindTerm(
-    1, 2,
+CALL insertPredicates(
     "is a useful instance of the {Subcategories} of the term $",
-    "t", 1
-);
-CALL insertOrFindTerm(
-    1, 2,
-    "is a useful instance of the {Subcategories} of the term $",
-    "t", 2
-);
-CALL insertOrFindTerm(
-    1, 2,
-    "is a useful instance of the {Subcategories} of the term $",
-    "t", 3
+    1, 7
 );
 
 
@@ -159,4 +161,4 @@ CALL insertOrFindTerm(
 
 
 
---
+DROP PROCEDURE insertPredicates;
