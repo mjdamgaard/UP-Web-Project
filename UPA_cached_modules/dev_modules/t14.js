@@ -19,7 +19,6 @@ import {
 
 /**
  * SetField requires data:
-     * data.predCxtID,
      * data.objType,
      * data.objID,
      * data.relID,
@@ -69,7 +68,7 @@ setFieldCL.addCallback(function($ci, data) {
             let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
             reqData = {
                 type: "termID",
-                cid: data.predCxtID,
+                cid: "2", // the ID of the Predicate Context
                 spt: data.objType,
                 spid: data.objID,
                 t: data.predTitle,

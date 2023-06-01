@@ -10,15 +10,15 @@ import * as t15Mod from "/UPA_scripts.php?id=15";
 import * as t19Mod from "/UPA_scripts.php?id=19";
 
 
-export function upa_main(queryUserID, entityType, entityID, inputUserID) {
+export function upa_main(entityType, entityID, queryUserID, inputUserID) {
     if (queryUserID !== "1") {
         throw "Unrecognized query user";
     }
 
     let data = {
-        queryUserID: queryUserID,
         entityType: entityType,
         entityID: entityID,
+        queryUserID: queryUserID,
         inputUserID: inputUserID,
         columnSpecs: [
             {cl: sdbInterfaceCL.getRelatedCL("EntityColumn")},

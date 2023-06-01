@@ -33,18 +33,19 @@ export var entityHeaderContentCL = new ContentLoader(
     "EntityHeaderContent",
     /* Initial HTML template */
     '<div>' +
-        '<div class="supercat-nav-container"></div>' +
-        '<<EntityRepresentation>>' +
+        // '<div class="supercat-nav-container"></div>' +
+        // '<<EntityRepresentation>>' +
     '</div>',
     appColumnCL,
 );
-entityHeaderContentCL.addCallback(function($ci, data) {
-    $ci.children('.CI.EntityRepresentation').prepend(
-        (data.entityType === "c") ? 'Category: ' :
-            (data.entityType === "t") ? 'Term: ' :
-                'Relation: '
-    );
-});
+// entityHeaderContentCL.addCallback(function($ci, data) {
+//     $ci.children('.CI.EntityRepresentation').prepend(
+//         (data.entityType === "c") ? 'Category: ' :
+//             (data.entityType === "t") ? 'Term: ' :
+//                 'Relation: '
+//     );
+// });
+
 export var entityMainContentCL = new ContentLoader(
     "EntityMainContent",
     /* Initial HTML template */
@@ -57,35 +58,44 @@ export var entityMainContentCL = new ContentLoader(
 
 
 entityMainContentCL.addCallback("data", function(newData, data) {
-    if (data.entityType === "c") {
+    if (data.entityType === "t") {
         newData.tabAndPageDataArr = [
-            ["Subcategories", "CategorySubcategoriesPage", data],
-            ["Elements", "CategoryElementsPage", data],
+            ["Subcategories", "SubcategoriesPage", data],
+            ["Instances", "InstancesPage", data],
         ];
         newData.defaultTab = "Subcategories";
     }
 });
-export var categorySubcategoriesPageCL = new ContentLoader(
-    "CategorySubcategoriesPage",
+export var subcategoriesPageCL = new ContentLoader(
+    "SubcategoriesPage",
     /* Initial HTML template */
     '<div>' +
-        '<<SubcategoriesSetField>>' +
+        '<<SetField>>' +
     '</div>',
     appColumnCL
 );
-export var subategoriesSetFieldCL = new ContentLoader(
-    "SubcategoriesSetField",
-    /* Initial HTML template */
-    '<<SetField>>',
-    appColumnCL
-);
-subategoriesSetFieldCL.addCallback("data", function(newData, data) {
+subcategoriesPageCL.addCallback("data", function(newData, data) {
     return {
-        subjID: data.entityID,
-        relID: "1",
+        objType: "t", // the Subcategories page is only for Term Columns.
+        objID: data.entityID,
+        relID: "10", // ID of the "Subcategories" Relation.
         elemContentKey: "CategoryElement",
     };
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 export var categoryElementCL = new ContentLoader(
     "CategoryElement",
     /* Initial HTML template */

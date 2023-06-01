@@ -37,27 +37,27 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 
 
 if (!isset($_POST["et"])) {
-    $_POST["et"] = "c";
+    $_POST["et"] = "t";
 }
 if (!isset($_POST["eid"])) {
     $_POST["eid"] = "1";
 }
-if (!isset($_POST["uid"])) {
-    $_POST["uid"] = "1";
+if (!isset($_POST["quid"])) {
+    $_POST["quid"] = "1";
 }
-if (!isset($_POST["pid"])) {
-    $_POST["pid"] = "1";
+if (!isset($_POST["iuid"])) {
+    $_POST["iuid"] = "1";
 }
 
 // get and verify the required inputs.
-$paramNameArr = array("et", "eid", "uid", "pid");
+$paramNameArr = array("et", "eid", "quid", "iuid");
 $typeArr = array("type", "id", "id", "id");
 $paramValArr = InputGetter::getParams($paramNameArr);
 InputVerifier::verifyTypes($paramValArr, $typeArr, $paramNameArr);
 $entityType = $paramValArr[0];
 $entityID = $paramValArr[1];
-$inputUserID = $paramValArr[2];
-$queryUserID = $paramValArr[3];
+$queryUserID = $paramValArr[2];
+$inputUserID = $paramValArr[3];
 
 
 // authenticate the user make sure that the uid is either one that user
@@ -106,9 +106,9 @@ $mainModuleID = "20";
     } from "/UPA_scripts.php?id=<?php echo $mainModuleID; ?>";
     upa_main(<?php
         echo '"' .
-            $queryUserID . '", "' .
             $entityType.'", "' .
             $entityID.'", "' .
+            $queryUserID . '", "' .
             $inputUserID .
         '"';
     ?>);
