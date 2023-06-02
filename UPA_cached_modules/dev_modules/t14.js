@@ -19,13 +19,13 @@ import {
 
 /**
  * SetField requires data:
+     * data.elemContentKey,
      * data.objType,
      * data.objID,
      * data.relID,
      * data.subjType,
      * data.queryNum,
      * data.userWeights = [{userID, weight}, ...],
-     * data.elemContentKey,
      * data.initialNum,
      * data.incrementNum.
  * And it sets/updates data:
@@ -116,7 +116,7 @@ setFieldCL.addCallback(function($ci, data) {
                 ) {
                     return false;
                 }
-            }
+            }debugger;
             data.set = getAveragedSet(data.userSetsArr[0].userSetsObj);
             $ci.children('.CI.SetList').trigger("load");
             $ci.off("load-initial-set-list-if-ready");
@@ -215,7 +215,7 @@ export var setListCL = new ContentLoader(
     appColumnCL
 );
 setListCL.addCallback("data", function(newData, data) {
-    newData.cl = setListCL.getRelatedCL(data.elemContentKey);debugger;
+    newData.cl = setListCL.getRelatedCL(data.elemContentKey);
     newData.listElemDataArr = data.set
         .slice(0, data.initialNum)
         .map(function(row) {

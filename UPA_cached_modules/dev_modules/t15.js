@@ -76,10 +76,15 @@ export var subcategoriesPageCL = new ContentLoader(
 );
 subcategoriesPageCL.addCallback("data", function(newData, data) {
     return {
+        elemContentKey: "CategoryElement",
         objType: "t", // the Subcategories page is only for Term Columns.
         objID: data.entityID,
         relID: "10", // ID of the "Subcategories" Relation.
-        elemContentKey: "CategoryElement",
+        subjType: "t",
+        queryNum: 40000,
+        userWeights: [{userID: 1, weight: 1}],
+        initialNum: 50,
+        incrementNum: 50,
     };
 });
 
@@ -100,6 +105,7 @@ export var categoryElementCL = new ContentLoader(
     "CategoryElement",
     /* Initial HTML template */
     '<div class="element">' +
+        'test..' +
         '<<SupercategoryNav>>' +
         '<<EntityTitle>>' +
         '<<SetRatingContainer>>' +
