@@ -13,13 +13,11 @@ SELECT "Query procedures";
 -- DROP PROCEDURE selectTermID;
 -- DROP PROCEDURE selectContextIDs;
 -- DROP PROCEDURE selectTermIDs;
--- -- DROP PROCEDURE selectTermIDFromSimilarTerm;
 -- DROP PROCEDURE selectList;
 -- DROP PROCEDURE selectListID;
--- DROP PROCEDURE selectPattern;
--- DROP PROCEDURE selectPatternIDs;
 -- DROP PROCEDURE searchForKeywordStrings;
 -- DROP PROCEDURE searchForKeywordStringsBooleanMode;
+-- DROP PROCEDURE selectKeywordStringIDs;
 -- DROP PROCEDURE selectText;
 -- DROP PROCEDURE selectBinary;
 -- DROP PROCEDURE selectCreator;
@@ -355,35 +353,6 @@ END //
 DELIMITER ;
 
 
--- DELIMITER //
--- CREATE PROCEDURE selectTermIDFromSimilarTerm (
---     IN termID BIGINT UNSIGNED,
---     IN specType CHAR(1),
---     IN specID BIGINT UNSIGNED
--- )
--- BEGIN
---     DECLARE cxtID BIGINT UNSIGNED;
---     DECLARE str VARCHAR(255);
---
---     IF (specID = 0) THEN
---         SET specID = NULL;
---     END IF;
---
---     SELECT context_id, title
---     INTO cxtID, str
---     FROM Terms
---     WHERE id = termID;
---
---     SELECT id AS termID
---     FROM Terms
---     WHERE (
---         context_id = cxtID AND
---         spec_entity_t = specType AND
---         spec_entity_id <=> specID AND
---         title = str
---     );
--- END //
--- DELIMITER ;
 
 
 
@@ -432,49 +401,6 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectPattern (
-    IN pattID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT str AS str
-    FROM Patterns
-    WHERE id = pattID;
-END //
-DELIMITER ;
-
-
-
-DELIMITER //
-CREATE PROCEDURE selectPatternIDs (
-    IN s VARCHAR(768),
-    IN maxNum INT UNSIGNED,
-    IN numOffset INT UNSIGNED
-)
-BEGIN
-    (
-        SELECT
-            str AS str,
-            id AS pattID
-        FROM Patterns
-        WHERE str < s
-        ORDER BY str DESC
-        LIMIT 1
-    ) UNION (
-        SELECT
-            str AS str,
-            id AS pattID
-        FROM Patterns
-        WHERE str >= s
-        ORDER BY str ASC
-        LIMIT numOffset, maxNum
-    )
-    ORDER BY str ASC;
-END //
-DELIMITER ;
-
-
-
-DELIMITER //
 CREATE PROCEDURE searchForKeywordStrings (
     IN s VARCHAR(768),
     IN maxNum INT UNSIGNED,
@@ -506,6 +432,34 @@ BEGIN
 END //
 DELIMITER ;
 
+
+DELIMITER //
+CREATE PROCEDURE selectKeywordStringIDs (
+    IN s VARCHAR(768),
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED
+)
+BEGIN
+    (
+        SELECT
+            str AS str,
+            id AS kwsID
+        FROM KeywordStrings
+        WHERE str < s
+        ORDER BY str DESC
+        LIMIT 1
+    ) UNION (
+        SELECT
+            str AS str,
+            id AS kwsID
+        FROM KeywordStrings
+        WHERE str >= s
+        ORDER BY str ASC
+        LIMIT numOffset, maxNum
+    )
+    ORDER BY str ASC;
+END //
+DELIMITER ;
 
 
 

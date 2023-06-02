@@ -11,7 +11,6 @@
 -- DROP TABLE SemanticContexts;
 -- DROP TABLE Terms;
 -- DROP TABLE Lists;
--- DROP TABLE Patterns;
 -- DROP TABLE KeywordStrings;
 -- DROP TABLE Texts;
 -- DROP TABLE Binaries;
@@ -268,14 +267,6 @@ CREATE TABLE Lists (
 
 
 
-CREATE TABLE Patterns (
-    /* RegEx pattern string ID */
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    -- type = "p".
-
-    -- pattern string.
-    str VARCHAR(768) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL UNIQUE
-);
 
 
 CREATE TABLE KeywordStrings (

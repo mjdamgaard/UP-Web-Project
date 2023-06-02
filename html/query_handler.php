@@ -131,18 +131,6 @@ switch ($reqType) {
         $typeArr = array("elemTypeStr", "elemIDHexStr", "id");
         // output: [[listID]].
         break;
-    case "patt":
-        $sql = "CALL selectPattern (?)";
-        $paramNameArr = array("id");
-        $typeArr = array("id");
-        // output: [[str]].
-        break;
-    case "pattIDs":
-        $sql = "CALL selectPatternIDs (?, ?, ?)";
-        $paramNameArr = array("s", "n", "o");
-        $typeArr = array("str", "uint", "uint");
-        // output: [[str, pattID], ...].
-        break;
     case "kws":
         $sql = "CALL searchForKeywordStrings (?, ?, ?)";
         $paramNameArr = array("s", "n", "o");
@@ -151,6 +139,12 @@ switch ($reqType) {
         break;
     case "kwsB":
         $sql = "CALL searchForKeywordStringsBooleanMode (?, ?, ?)";
+        $paramNameArr = array("s", "n", "o");
+        $typeArr = array("str", "uint", "uint");
+        // output: [[str, kwsID], ...].
+        break;
+    case "kwsIDs":
+        $sql = "CALL selectKeywordStringIDs (?, ?, ?)";
         $paramNameArr = array("s", "n", "o");
         $typeArr = array("str", "uint", "uint");
         // output: [[str, kwsID], ...].

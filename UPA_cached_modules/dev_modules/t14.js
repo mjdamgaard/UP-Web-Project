@@ -25,7 +25,7 @@ import {
      * data.subjType,
      * data.queryNum,
      * data.userWeights = [{userID, weight}, ...],
-     * data.elemCL,
+     * data.elemContentKey,
      * data.initialNum,
      * data.incrementNum.
  * And it sets/updates data:
@@ -195,7 +195,7 @@ export function getCombinedSet(userSetsArr) {
 /**
  * SetList requires data:
      * data.subjType,
-     * data.cl = <element CL>,
+     * data.elemContentKey = <element CL>,
      * data.set = [[ratVal, subjID], ...],
      * data.setLen,
      * data.initialNum,
@@ -215,6 +215,7 @@ export var setListCL = new ContentLoader(
     appColumnCL
 );
 setListCL.addCallback("data", function(newData, data) {
+    newData.cl = setListCL.getRelatedCL(data.elemContentKey);debugger;
     newData.listElemDataArr = data.set
         .slice(0, data.initialNum)
         .map(function(row) {

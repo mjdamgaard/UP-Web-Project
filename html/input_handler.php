@@ -59,11 +59,6 @@ switch ($reqType) {
         $paramNameArr = array("uid", "ts", "ids", "tid");
         $typeArr = array("id", "elemTypeStr", "elemIDHexStr", "id");
         break;
-    case "patt":
-        $sql = "CALL insertOrFindPattern (?, ?)";
-        $paramNameArr = array("uid", "s");
-        $typeArr = array("id", "str");
-        break;
     case "kws":
         $sql = "CALL insertOrFindKeywordString (?, ?)";
         $paramNameArr = array("uid", "s");

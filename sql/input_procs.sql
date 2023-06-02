@@ -5,7 +5,6 @@ SELECT "Input procedures";
 -- DROP PROCEDURE insertOrFindContext;
 -- DROP PROCEDURE insertOrFindTerm;
 -- DROP PROCEDURE insertOrFindKeywordString;
--- DROP PROCEDURE insertOrFindPattern;
 -- DROP PROCEDURE insertText;
 -- DROP PROCEDURE insertBinary;
 -- DROP PROCEDURE insertOrFindList;
@@ -235,32 +234,6 @@ DELIMITER ;
 
 
 
-
-DELIMITER //
-CREATE PROCEDURE insertOrFindPattern (
-    IN userID BIGINT UNSIGNED,
-    IN s VARCHAR(768)
-)
-BEGIN
-    DECLARE outID BIGINT UNSIGNED;
-    DECLARE exitCode TINYINT;
-
-    SELECT id INTO outID
-    FROM Patterns
-    WHERE str = s;
-    IF (outID IS NOT NULL) THEN
-        SET exitCode = 1; -- find.
-    ELSE
-        INSERT INTO Patterns (str)
-        VALUES (s);
-        SELECT LAST_INSERT_ID() INTO outID;
-        INSERT INTO Creators (entity_t, entity_id, user_id)
-        VALUES ("p", outID, userID);
-        SET exitCode = 0; -- insert.
-    END IF;
-    SELECT outID, exitCode;
-END //
-DELIMITER ;
 
 
 DELIMITER //
