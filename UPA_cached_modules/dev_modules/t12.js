@@ -34,6 +34,34 @@ export function convertHTMLTemplate(htmlTemplate) {
     );
 }
 
+export class ChildData {
+    constructor(parentData, obj) {
+        if (typeof obj !== "undefined") {
+            Object.assign(this, obj);
+        }
+        this.parentData = parentData;
+    }
+
+    getFromParent(key, searchHeight) {
+        if (searchHeight > 0) {
+            if (typeof this.parentData === "undefined") {
+                throw: (
+                    "ChildData.getFromParent(): searchHeight input was " +
+                    "larger than the height of the data tree."
+                );
+            } else if (typeof this.parentData[key] !== "undefined") {
+                return this.parentData[key];
+            } else {
+                return this.parentData.getFromParent(key, searchHeight - 1);
+            }
+        } else {
+            return null;
+        }
+    }
+}
+
+
+
 
 export class ContentLoader {
     constructor(
@@ -146,11 +174,7 @@ export class ContentLoader {
                 this.outwardCallbacks.push(callback);
                 break;
             case "data":
-                if (callback === "copy") {
-                    this.dataSetterCallbacks.push(function(){});
-                } else {
-                    this.dataSetterCallbacks.push(callback);
-                }
+                this.dataSetterCallbacks.push(callback);
                 break;
             case "afterDec":
                 this.afterDecCallbacks.push(callback);
@@ -249,9 +273,9 @@ export class ContentLoader {
 
     /* Semi-private methods (not meant as much for public use) */
 
-    loadAndReplacePlaceholder($placeholder, data, returnData) {
-        // console.log(this.contentKey);console.log(data);
-        data ??= {};
+    loadAndReplacePlaceholder($placeholder, parentData, returnData) {
+        // console.log(this.contentKey);console.log(parentData); // (for debug.)
+        parentData ??= {};
         // first insert the new CI after $placeholder.
         $placeholder.after(this.html);
         let $ci = $placeholder.next();
@@ -270,20 +294,12 @@ export class ContentLoader {
             $placeholder.data("contentKey") ?? this.contentKey
         );
 
-        // TODO: Implement that thing about parentData after all; that feels a
-        // lot cleaner..
-
         // apply all the data setter callbacks, which can change the "data"
-        // object, namely the data stored as a reference at $ci.data("data").
-        // If this array is empty, the child CIs will get a reference to the
-        // same "data" object as their parent (this one).
-        var newData = {};
+        // object, which will also be stored at $ci.data("data").
+        let data = new ChildData(parentData);
         let len = this.dataSetterCallbacks.length;
         for (let i = 0; i < len; i++) {
-            newData = this.dataSetterCallbacks[i](newData, data) ?? newData;
-        }
-        if (len > 0) {
-            data = Object.assign(Object.assign({}, data), newData);
+            this.dataSetterCallbacks[i](data);
         }
 
         // if the this.inwardCSSRules has not yet been added to the document
@@ -475,6 +491,7 @@ function loadChildCIWithNestedDataAndSignal(
             nestedData = nestedData[key];
         }
         if (!isAnArrayDataKey) {
+            var resultingData = new ChildData(data, nestedData);
             var resultingData = Object.assign(
                 Object.assign({}, data),
                 nestedData
