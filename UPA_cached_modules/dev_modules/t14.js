@@ -34,8 +34,6 @@ import {
      * data.set = [[combRatVal, subjID, ratValArr], ...],
      * data.userSetsArr = [{predID, factorFun, userSetsObj}, ...],
          * userSetsObj = {userWeights, sets},
-     * data.setLen,
-     * TODO: make it so that users can adjust the parameters, rl, rh, o and a.
      * data.ratingLow,
      * data.ratingHigh,
      * data.queryOffset,
@@ -210,7 +208,6 @@ export function getCombinedSet(userSetsArr) {
      * data.elemContentKey,
      * data.subjType,
      * data.set = [[ratVal, subjID], ...],
-     * data.setLen,
      * data.initialNum,
      * data.incrementNum (can be changed before appending a new list).
      * TODO: Add filter set IDs (meaning userID + predID) to potentially
@@ -232,7 +229,6 @@ setListCL.addCallback("data", function(data) {
         "elemContentKey",
         "subjType",
         "set",
-        // "setLen",
         "initialNum",
         "incrementNum",
     ]);

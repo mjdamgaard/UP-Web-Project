@@ -48,8 +48,11 @@ export var selfReplacerCL = new ContentLoader(
     '<template></template>',
     sdbInterfaceCL
 );
+selfReplacerCL.addCallback("data", function(data) {
+    data.copyFromAncestor("cl");
+});
 selfReplacerCL.addCallback(function($ci, data, childReturnData, returnData) {
-    data.get("cl").loadReplaced($ci, "self", data.data ?? data, returnData);
+    data.cl.loadReplaced($ci, "self", data.data ?? data, returnData);
 });
 
 appColumnListCL.addCallback("data", function(data) {
