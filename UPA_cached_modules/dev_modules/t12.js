@@ -42,20 +42,42 @@ export class ChildData {
         this.parentData = parentData;
     }
 
-    getFromParent(key, searchHeight) {
-        if (searchHeight > 0) {
+    get(key, searchHeight) {
+        if (typeof this[key] !== "undefined") {
+            return this[key];
+        } else {
+            return this.getFromAncestor(key, searchHeight);
+        }
+    }
+
+    getFromAncestor(key, searchHeight) {
+        if (typeof searchHeight !== "number") {
+            searchHeight = -1;
+        }
+        if (searchHeight !== 0) {
             if (typeof this.parentData === "undefined") {
-                throw: (
-                    "ChildData.getFromParent(): searchHeight input was " +
+                throw (
+                    "ChildData.getFromAncestor(): searchHeight input was " +
                     "larger than the height of the data tree."
                 );
             } else if (typeof this.parentData[key] !== "undefined") {
                 return this.parentData[key];
             } else {
-                return this.parentData.getFromParent(key, searchHeight - 1);
+                return this.parentData.getFromAncestor(key, searchHeight - 1);
             }
         } else {
             return null;
+        }
+    }
+
+    copyFromAncestor(key, searchHeight) {
+        if (typeof key === "string") {
+            return this[key] = this.getFromAncestor(key, searchHeight);
+        }
+        // else, assume that key is an array of keys to be copied.
+        let len = key.length;
+        for (let i = 0; i < len; i++) {
+            this[key[i]] = this.getFromAncestor(key[i], searchHeight);
         }
     }
 }
@@ -492,10 +514,6 @@ function loadChildCIWithNestedDataAndSignal(
         }
         if (!isAnArrayDataKey) {
             var resultingData = new ChildData(data, nestedData);
-            var resultingData = Object.assign(
-                Object.assign({}, data),
-                nestedData
-            );
             cl.loadAndReplacePlaceholder(
                 $childCI, resultingData, childReturnData
             );
@@ -503,10 +521,7 @@ function loadChildCIWithNestedDataAndSignal(
             var $nthChildCI = $childCI;
             var len = nestedData.length;
             for (let i = 0; i < len; i++) {
-                let resultingData = Object.assign(
-                    Object.assign({}, data),
-                    nestedData[i]
-                );
+                let resultingData = new ChildData(data, nestedData[i]);
                 cl.loadAfter(
                     $nthChildCI, "self", resultingData,
                     childReturnData

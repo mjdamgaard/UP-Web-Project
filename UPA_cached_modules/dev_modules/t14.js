@@ -50,6 +50,19 @@ export var setFieldCL = new ContentLoader(
     '</div>',
     appColumnCL
 );
+setFieldCL.addCallback("data", function(data) {
+    data.copyFromAncestor([
+        "elemContentKey",
+        "objType",
+        "objID",
+        "relID",
+        "subjType",
+        "queryNum",
+        "userWeights",
+        "initialNum",
+        "incrementNum",
+    ]);
+});
 setFieldCL.addCallback(function($ci, data) {
     $ci
         .one("query-initial-pred-title", function() {
@@ -85,7 +98,7 @@ setFieldCL.addCallback(function($ci, data) {
                 predID: data.predID,
                 factorFun: x => 1,
                 userSetsObj: {
-                    userWeights: data.userWeights,
+                    userWeights: data.get("userWeights"),
                     sets: [],
                 },
             }];
@@ -116,7 +129,7 @@ setFieldCL.addCallback(function($ci, data) {
                 ) {
                     return false;
                 }
-            }debugger;
+            }
             data.set = getAveragedSet(data.userSetsArr[0].userSetsObj);
             $ci.children('.CI.SetList').trigger("load");
             $ci.off("load-initial-set-list-if-ready");
@@ -194,8 +207,8 @@ export function getCombinedSet(userSetsArr) {
 
 /**
  * SetList requires data:
+     * data.elemContentKey,
      * data.subjType,
-     * data.elemContentKey = <element CL>,
      * data.set = [[ratVal, subjID], ...],
      * data.setLen,
      * data.initialNum,
@@ -214,9 +227,20 @@ export var setListCL = new ContentLoader(
     '</div>',
     appColumnCL
 );
-setListCL.addCallback("data", function(newData, data) {
-    newData.cl = setListCL.getRelatedCL(data.elemContentKey);
-    newData.listElemDataArr = data.set
+setListCL.addCallback("data", function(data) {
+    data.copyFromAncestor([
+        "elemContentKey",
+        "subjType",
+        "set",
+        // "setLen",
+        "initialNum",
+        "incrementNum",
+    ]);
+});
+setListCL.addCallback("data", function(data) {
+    data.cl = setListCL.getRelatedCL(data.getFromAncestor("elemContentKey"));
+    data.copyFromAncestor("initialNum");
+    data.listElemDataArr = data.getFromAncestor("set")
         .slice(0, data.initialNum)
         .map(function(row) {
             return {
@@ -224,7 +248,7 @@ setListCL.addCallback("data", function(newData, data) {
                 subjID: row[1],
             };
         });
-    newData.currentLen = data.initialNum;
+    data.currentLen = data.initialNum;
 });
 setListCL.addCallback(function($ci, data) {
     $ci.on("append-list", function() {
@@ -276,13 +300,13 @@ export var setHeaderCL = new ContentLoader(
     '</div>',
     appColumnCL
 );
-setHeaderCL.addCallback("data", function(newData, data) {
-    let setInfo = data.setInfo;
-    newData.subjType = setInfo[2];
-    newData.subjID = setInfo[3];
-    newData.relID = setInfo[4];
-    newData.relText = setInfo[5];
-    newData.objType = setInfo[6];
+setHeaderCL.addCallback("data", function(data) {
+    let setInfo = data.getFromAncestor("setInfo");
+    data.subjType = setInfo[2];
+    data.subjID = setInfo[3];
+    data.relID = setInfo[4];
+    data.relText = setInfo[5];
+    data.objType = setInfo[6];
 });
 export var predicateRepresentationCL = new ContentLoader(
     "PredicateRepresentation",
@@ -299,10 +323,10 @@ export var relationTitleCL = new ContentLoader(
     '<<EntityTitle>>',
     appColumnCL
 );
-relationTitleCL.addCallback("data", function(newData, data) {
-    newData.entityType = "r";
-    newData.entityID = data.relID;
-    newData.title = data.relText;
+relationTitleCL.addCallback("data", function(data) {
+    data.entityType = "r";
+    data.entityID = data.getFromAncestor("relID");
+    data.title = data.getFromAncestor("relText");
 });
 export var subjectTitleCL = new ContentLoader(
     "SubjectTitle",
@@ -312,9 +336,9 @@ export var subjectTitleCL = new ContentLoader(
     '</span>',
     appColumnCL
 );
-subjectTitleCL.addCallback("data", function(newData, data) {
-    newData.entityType = data.subjType;
-    newData.entityID = data.subjID;
+subjectTitleCL.addCallback("data", function(data) {
+    data.entityType = data.getFromAncestor("subjType");
+    data.entityID = data.getFromAncestor("subjID");
 });
 
 

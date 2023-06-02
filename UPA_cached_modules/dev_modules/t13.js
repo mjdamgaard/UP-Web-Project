@@ -39,6 +39,9 @@ export var listCL = new ContentLoader(
     '</div>',
     sdbInterfaceCL
 );
+listCL.addCallback("data", function(data) {
+    data.copyFromAncestor("listElemDataArr");
+});
 export var selfReplacerCL = new ContentLoader(
     "SelfReplacer",
     /* Initial HTML template */
@@ -46,11 +49,11 @@ export var selfReplacerCL = new ContentLoader(
     sdbInterfaceCL
 );
 selfReplacerCL.addCallback(function($ci, data, childReturnData, returnData) {
-    data.cl.loadReplaced($ci, "self", data.data ?? data, returnData);
+    data.get("cl").loadReplaced($ci, "self", data.data ?? data, returnData);
 });
 
-appColumnListCL.addCallback("data", function(newData, data) {
-    newData.listElemDataArr = data.columnSpecs;
+appColumnListCL.addCallback("data", function(data) {
+    data.listElemDataArr = data.getFromAncestor("columnSpecs");
 });
 
 export var columnInterfaceHeaderCL = new ContentLoader(
@@ -165,6 +168,11 @@ sdbInterfaceCL.addCallback(function($ci) {
         $(this).data("data").isOverwritable = false;
     });
 });
+
+
+
+
+
 
 
 /* Pages with tab headers */
@@ -316,6 +324,7 @@ pagesContainerCL.addCallback(function($ci) {
 // make PagesWithTabs automatically look for tab titles and associated
 // pageSpecs in the "data" object.
 pagesWithTabsCL.addCallback(function($ci, data) {
+    data.tabAndPageDataArr ??= data.getFromAncestor("tabAndPageDataArr");
     let len = (data.tabAndPageDataArr ?? []).length;
     for (let i = 0; i < len; i++) {
         $ci.trigger("add-tab-and-page", data.tabAndPageDataArr[i]);
@@ -323,8 +332,8 @@ pagesWithTabsCL.addCallback(function($ci, data) {
 });
 
 // make PagesWithTabs open a specified default tab automatically.
-pagesWithTabsCL.addCallback("data", function(newData, data) {
-    newData.defaultTab = data.defaultTab ??= false;
+pagesWithTabsCL.addCallback("data", function(data) {
+    data.defaultTab = data.getFromAncestor("defaultTab") ?? false;
 });
 pagesWithTabsCL.addCallback(function($ci, data) {
     if (data.defaultTab) {

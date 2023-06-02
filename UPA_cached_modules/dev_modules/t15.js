@@ -57,13 +57,14 @@ export var entityMainContentCL = new ContentLoader(
 
 
 
-entityMainContentCL.addCallback("data", function(newData, data) {
+entityMainContentCL.addCallback("data", function(data) {
+    data.copyFromAncestor("entityType")
     if (data.entityType === "t") {
-        newData.tabAndPageDataArr = [
+        data.tabAndPageDataArr = [
             ["Subcategories", "SubcategoriesPage", data],
             ["Instances", "InstancesPage", data],
         ];
-        newData.defaultTab = "Subcategories";
+        data.defaultTab = "Subcategories";
     }
 });
 export var subcategoriesPageCL = new ContentLoader(
@@ -74,18 +75,18 @@ export var subcategoriesPageCL = new ContentLoader(
     '</div>',
     appColumnCL
 );
-subcategoriesPageCL.addCallback("data", function(newData, data) {
-    return {
+subcategoriesPageCL.addCallback("data", function(data) {
+    Object.assign(data, {
         elemContentKey: "CategoryElement",
         objType: "t", // the Subcategories page is only for Term Columns.
-        objID: data.entityID,
+        objID: data.getFromAncestor("entityID"),
         relID: "10", // ID of the "Subcategories" Relation.
         subjType: "t",
         queryNum: 40000,
         userWeights: [{userID: 1, weight: 1}],
         initialNum: 50,
         incrementNum: 50,
-    };
+    });
 });
 
 
@@ -106,9 +107,9 @@ export var categoryElementCL = new ContentLoader(
     /* Initial HTML template */
     '<div class="element">' +
         'test..' +
-        '<<SupercategoryNav>>' +
-        '<<EntityTitle>>' +
-        '<<SetRatingContainer>>' +
+        // '<<SupercategoryNav>>' +
+        // '<<EntityTitle>>' +
+        // '<<SetRatingContainer>>' +
         '<<CategoryElementDropdown>>' +
     '</div>',
     appColumnCL
@@ -225,12 +226,12 @@ export var elementsSetFieldCL = new ContentLoader(
     '<<SetField>>',
     appColumnCL
 );
-elementsSetFieldCL.addCallback("data", function(newData, data) {
-    return {
-        subjID: data.entityID,
+elementsSetFieldCL.addCallback("data", function(data) {
+    Object.assign(data, {
+        subjID: data.getFromAncestor("entityID"),
         relID: "2",
         elemContentKey: "TermElement",
-    };
+    });
 });
 export var termElementCL = new ContentLoader(
     "TermElement",
