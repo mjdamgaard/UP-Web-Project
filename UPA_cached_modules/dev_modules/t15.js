@@ -71,7 +71,7 @@ export var subcategoriesPageCL = new ContentLoader(
     "SubcategoriesPage",
     /* Initial HTML template */
     '<div>' +
-        '<<SetField>>' +
+        '<<RelationSetField>>' +
     '</div>',
     appColumnCL
 );

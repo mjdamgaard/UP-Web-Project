@@ -84,7 +84,8 @@ relationSetFieldCL.addCallback(function($ci, data) {
                 $ci.trigger("load");
             });
             return false;
-        });
+        })
+        .trigger("query-pred-title-then-pred-id-then-load");
 });
 export var predicateSetFieldCL = new ContentLoader(
     "PredicateSetField",
@@ -96,6 +97,7 @@ export var predicateSetFieldCL = new ContentLoader(
     appColumnCL
 );
 predicateSetFieldCL.addCallback("data", function(data) {
+    data.copyFromAncestor("predTitle", 1); // copy only from own parent.
     data.copyFromAncestor([
         "elemContentKey",
         "objType",
@@ -109,8 +111,24 @@ predicateSetFieldCL.addCallback("data", function(data) {
     ]);
 });
 predicateSetFieldCL.addCallback(function($ci, data) {
+    if (typeof data.predTitle === "undefined") {
+        let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+        let reqData = {
+            type: "term",
+            id: data.predID,
+        };
+        dbReqManager.query($ci, reqData, function($ci, result) {
+            data.predTitle = (result[0] ?? [])[1];
+            $ci.children('.CI.SetHeader').trigger("load");
+        });
+        return false;
+    } else {
+        $ci.children('.CI.SetHeader').trigger("load");
+    }
+});
+predicateSetFieldCL.addCallback(function($ci, data) {
     $ci
-        .one("query-initial-sets", function() {
+        .one("query-initial-sets-then-load", function() {
             let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
             data.userSetsArr = [{
                 predID: data.predID,
@@ -150,12 +168,11 @@ predicateSetFieldCL.addCallback(function($ci, data) {
             }
             data.set = getAveragedSet(data.userSetsArr[0].userSetsObj);
             $ci.children('.CI.SetList').trigger("load");
+            // off this event.
             $ci.off("load-initial-set-list-if-ready");
             return false;
-        });
-});
-predicateSetFieldCL.addCallback(function($ci, data) {
-    $ci.trigger("query-initial-pred-title");
+        })
+        .trigger("query-initial-pred-title-then-load");
 });
 
 
