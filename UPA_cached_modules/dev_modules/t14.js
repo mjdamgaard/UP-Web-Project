@@ -269,27 +269,28 @@ export var predicateTitleCL = new ContentLoader(
     appColumnCL
 );
 predicateTitleCL.addCallback("data", function(data) {
-    data.termID = data.getFromAncestor("predID");
+    data.entityID = data.getFromAncestor("predID");
     data.titleCutOutLevels = [1, 1];
 });
 
 export var termTitleCL = new ContentLoader(
     "TermTitle",
     /* Initial HTML template */
-    '<div></div>',
+    '<span></span>',
     appColumnCL
 );
 termTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
-        "termID",
+        "entityID",
         "titleCutOutLevels",
     ]);
+    data.entityType = "t";
 });
 termTitleCL.addCallback(function($ci, data) {
     // if data.titleCutOutLevels == [], simply load the term's (combined)
     // entity ID as the title.
     if (data.titleCutOutLevels.length === 0) {
-        $ci.append('t' + data.termID.toString());
+        $ci.append('t' + data.entityID.toString());
     }
     // else query the database for the title (and spec. entity), and append
     // a title with cut-out level given by data.titleCutOutLevels[0]. And if
@@ -300,7 +301,7 @@ termTitleCL.addCallback(function($ci, data) {
     let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
     let reqData = {
         type: "term",
-        id: data.termID,
+        id: data.entityID,
     };
     dbReqManager.query($ci, reqData, function($ci, result) {
         data.termTitle = (result[0] ?? [])[1];
@@ -327,39 +328,29 @@ specEntityTitleCL.addCallback("data", function(data) {
     data.titleCutOutLevels = data.getFromAncestor("titleCutOutLevels").slice(1);
 });
 
-
 export var entityTitleCL = new ContentLoader(
     "EntityTitle",
     /* Initial HTML template */
-    '<span>' +
-    '</span>',
+    '<span></span>',
     appColumnCL
 );
+entityTitleCL.addCallback("data", function(data) {
+    // data.copyFromAncestor("predTitle", 1);
+    data.copyFromAncestor([
+        "entityType",
+        "entityID",
+        "titleCutOutLevels",
+    ]);
+    data.titleCutOutLevels ??= [];
+});
 entityTitleCL.addCallback(function($ci, data) {
-    if (typeof data.title === "string") {
-        $ci.append(data.title);
-        return;
+    if (typeof data.entityType === "t") {
+        entityTitleCL.loadAppended($ci, "TermTitle", data);
+    } else if (typeof data.entityType === "c") {
+        entityTitleCL.loadAppended($ci, "ContextTitle", data);
+    } else {
+        $ci.append(data.entityType + data.entityID.toString());
     }
-    let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-    let reqData = {
-        id: data.entityID,
-    };
-    switch (data.entityType) {
-        case "c":
-            reqData.type = "cat"
-            break;
-        case "t":
-            reqData.type = "term"
-            break;
-        case "r":
-            reqData.type = "rel"
-            break;
-        default:
-            throw "entityType " + data.entityType + " not implemented";
-    }
-    dbReqManager.query($ci, reqData, function($ci, result) {
-        $ci.append(result[0][0]);
-    });
 });
 entityTitleCL.addCallback(function($ci, data) {
     $ci
