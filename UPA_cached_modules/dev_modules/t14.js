@@ -291,6 +291,7 @@ termTitleCL.addCallback(function($ci, data) {
     // entity ID as the title.
     if (data.titleCutOutLevels.length === 0) {
         $ci.append('t' + data.entityID.toString());
+        return;
     }
     // else query the database for the title (and spec. entity), and append
     // a title with cut-out level given by data.titleCutOutLevels[0]. And if
@@ -311,8 +312,9 @@ termTitleCL.addCallback(function($ci, data) {
             data.termTitle, data.titleCutOutLevels[0]
         );
         $ci.append(reducedTitle);
-        let $specEntitySpan = $ci.find('.spec-entity');
-        termTitleCL.loadAppended($specEntitySpan, "SpecEntityTitle", data);
+        $ci.find('.spec-entity').each(function() {
+            termTitleCL.loadAppended($(this), "SpecEntityTitle", data);
+        });
     });
     return false;
 });
@@ -344,9 +346,9 @@ entityTitleCL.addCallback("data", function(data) {
     data.titleCutOutLevels ??= [];
 });
 entityTitleCL.addCallback(function($ci, data) {
-    if (typeof data.entityType === "t") {
+    if (data.entityType === "t") {
         entityTitleCL.loadAppended($ci, "TermTitle", data);
-    } else if (typeof data.entityType === "c") {
+    } else if (data.entityType === "c") {
         entityTitleCL.loadAppended($ci, "ContextTitle", data);
     } else {
         $ci.append(data.entityType + data.entityID.toString());
@@ -355,17 +357,9 @@ entityTitleCL.addCallback(function($ci, data) {
 entityTitleCL.addCallback(function($ci, data) {
     $ci
         .on("click", function() {
-            let columnData = {
-                queryUserID: data.queryUserID,
-                inputUserID: data.inputUserID,
-                entityType: data.entityType,
-                entityID: data.entityID,
-                subjType: data.subjType,
-                subjID: data.subjID,
-            };
             $(this)
                 .trigger("open-column", [
-                    "EntityColumn", columnData, "right", true
+                    "EntityColumn", data, "right", true
                 ])
                 .trigger("column-click");
             return false;
