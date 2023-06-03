@@ -4,8 +4,7 @@ import {
     columnInterfaceHeaderCL, closeButtonCL, tabHeaderCL, pagesContainerCL,
 } from "/UPA_scripts.php?id=13";
 import {
-    predicateRepresentationCL,
-    entityTitleCL, entityRepresentationCL,
+    entityTitleCL,
 } from "/UPA_scripts.php?id=14";
 import {
     entityHeaderContentCL,
@@ -121,12 +120,12 @@ sdbInterfaceCL.addCSS(
     '}'
 );
 
-predicateRepresentationCL.addCSS(
-    '& > .CI.SubjectTitle:before { content: " ("; }'
-);
-predicateRepresentationCL.addCSS(
-    '& > .CI.SubjectTitle:after { content: ")"; }'
-);
+// predicateRepresentationCL.addCSS(
+//     '& > .CI.SubjectTitle:before { content: " ("; }'
+// );
+// predicateRepresentationCL.addCSS(
+//     '& > .CI.SubjectTitle:after { content: ")"; }'
+// );
 
 
 

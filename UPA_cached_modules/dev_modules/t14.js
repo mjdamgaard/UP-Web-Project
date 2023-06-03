@@ -16,7 +16,6 @@ import {
 
 
 
-
 /**
  * SetField requires data:
      * RelationSetField:
@@ -94,7 +93,7 @@ export var predicateSetFieldCL = new ContentLoader(
     "PredicateSetField",
     /* Initial HTML template */
     '<div>' +
-        '<<SetHeader data:wait>>' +
+        '<<SetHeader>>' +
         '<<SetList data:wait>>' +
     '</div>',
     appColumnCL
@@ -177,68 +176,6 @@ predicateSetFieldCL.addCallback(function($ci, data) {
         })
         .trigger("query-initial-sets-then-load");
 });
-
-
-// getAveragedSet() takes a userSetsObj = {userWeights, sets} and returns a
-// unioned set containing the weighted averaged ratings for any subjects that
-// appear in one or more of the sets.
-export function getAveragedSet(userSetsObj) {
-    // if there is only one set, simply return the set as is.
-    let sets = userSetsObj.sets
-    let setNum = sets.length;
-    if (setNum === 1) {
-        return sets[0];
-    }
-    // else, first sort each array in terms of the subject IDs.
-    for (let i = 0; i < setNum; i++) {
-        sets[i].sort(row1, row2 => row1[1] - row2[1]);
-    }
-    // ..TODO..
-
-    let ret = new Array(sets.reduce((acc, currVal) => acc + currVal.length, 0));
-    let retLen = 0;
-    let indices = new Array(setNum);
-    for (let i = 0; i < setNum; i++) {
-        indices[i] = [i, 0];
-    }
-    let continueLoop = true;
-    let weights = userSetsObj.weights;
-    while (continueLoop) {
-        let minSubjID = indices.reduce(
-            (acc, currVal) => Math.min(acc, sets[currVal[0]][currVal[1]][1]),
-            0
-        );
-        let weightSum = 0;
-        for (let i = 0; i < setNum; i++) {
-            if (sets[i][indices[i][1]][1] === minSubjID) {
-                weightSum += weights[i];
-            }
-        }
-        // ret[retLen] = indices.reduce(
-        //     (acc, currVal) => acc +
-        //         sets[currVal[0]][currVal[1]][0] * weights[currVal[0]] /
-        //             weightSum,
-        //     0
-        // );
-        // retLen++;
-        continueLoop = false;
-    }
-}
-export function getCombinedSet(userSetsArr) {
-    // TODO..
-    // let len = userSetsArr.length;
-    // if (len === 1) {
-    //     return userSetsArr[0].set
-    //         .map(function(row) {
-    //             return [
-    //                 row[0],
-    //                 row[1],
-    //                 [],
-    //             ];
-    //         });
-    // }
-    // TODO: Implement this function for non-trivial cases as well.
-}
 
 
 
@@ -328,12 +265,12 @@ setHeaderCL.addCallback("data", function(data) {
 export var predicateTitleCL = new ContentLoader(
     "PredicateTitle",
     /* Initial HTML template */
-    '<<TermTitle>>'
+    '<<TermTitle>>',
     appColumnCL
 );
 predicateTitleCL.addCallback("data", function(data) {
     data.termID = data.getFromAncestor("predID");
-    data.titleDetailLevels = [1, 1];
+    data.titleCutOutLevels = [1, 1];
 });
 
 export var termTitleCL = new ContentLoader(
@@ -345,11 +282,49 @@ export var termTitleCL = new ContentLoader(
 termTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "termID",
-        "titleDetailLevels",
+        "titleCutOutLevels",
     ]);
 });
 termTitleCL.addCallback(function($ci, data) {
-    
+    // if data.titleCutOutLevels == [], simply load the term's (combined)
+    // entity ID as the title.
+    if (data.titleCutOutLevels.length === 0) {
+        $ci.append('t' + data.termID.toString());
+    }
+    // else query the database for the title (and spec. entity), and append
+    // a title with cut-out level given by data.titleCutOutLevels[0]. And if
+    // data.titleCutOutLevels cotains more elements, load the EntityTitles of
+    // the specifying entities as well, and if these are Terms, cut out part
+    // of their title as well, depending on the cut-out levels (or just append
+    // their entity ID, if the data.titleCutOutLevels array is at its end).
+    let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+    let reqData = {
+        type: "term",
+        id: data.termID,
+    };
+    dbReqManager.query($ci, reqData, function($ci, result) {
+        data.termTitle = (result[0] ?? [])[1];
+        data.specType = (result[0] ?? [])[2];
+        data.specID = (result[0] ?? [])[3];
+        let reducedTitle = getReducedTitle(
+            data.termTitle, data.titleCutOutLevels[0]
+        );
+        $ci.append(reducedTitle);
+        let $specEntitySpan = $ci.find('.spec-entity');
+        termTitleCL.loadAppended($specEntitySpan, "SpecEntityTitle", data);
+    });
+    return false;
+});
+export var specEntityTitleCL = new ContentLoader(
+    "SpecEntityTitle",
+    /* Initial HTML template */
+    '<<EntityTitle>>',
+    appColumnCL
+);
+specEntityTitleCL.addCallback("data", function(data) {
+    data.entityType = data.getFromAncestor("specType");
+    data.entityID = data.getFromAncestor("specID");
+    data.titleCutOutLevels = data.getFromAncestor("titleCutOutLevels").slice(1);
 });
 
 
@@ -408,14 +383,119 @@ entityTitleCL.addCallback(function($ci, data) {
 
 
 
-export var entityRepresentationCL = new ContentLoader(
-    "EntityRepresentation",
-    /* Initial HTML template */
-    '<div>' +
-        '<<EntityTitle>>' +
-    '</div>',
-    appColumnCL
-);
 
 
-//
+
+
+//TODO: Reimplement this function should that '{', '}' and '$' can all be
+// escaped (using backslash).
+export function getReducedTitle(title, cutOutLevel) {
+    let retArray = [];
+    let retArrayLen = 0;
+    let titleLen = title.length;
+    let pos = 0;
+    let currentLevel = 0;
+    while (pos < titleLen) {
+        let nextLeftParPos = title.indexOf('{', pos);
+        if (nextLeftParPos === -1) {
+            nextLeftParPos = titleLen;
+        }
+        let nextRightParPos = title.indexOf('}', pos);
+        if (nextRightParPos === -1) {
+            nextRightParPos = titleLen;
+        }
+        if (nextLeftParPos < nextRightParPos) {
+            if (currentLevel >= cutOutLevel) {
+                retArray[retArrayLen] = title.slice(pos, nextLeftParPos);
+                retArrayLen++;
+            }
+            pos = nextLeftParPos + 1;
+            currentLevel += 1;
+        } else {
+            if (currentLevel >= cutOutLevel) {
+                retArray[retArrayLen] = title.slice(pos, nextRightParPos);
+                retArrayLen++;
+            }
+            pos = nextRightParPos + 1;
+            currentLevel -= 1;
+
+        }
+        // simply return the title as is if the curly brackets are ill-formed.
+        if (currentLevel < 0) {
+            return title;
+        }
+    }
+    // simply return the title as is if the curly brackets are ill-formed.
+    if (currentLevel !== 0) {
+        return title;
+    }
+    return retArray.join('')
+        .replaceAll('$', '<span class="spec-entity"><span>');
+}
+
+
+
+
+
+
+
+// getAveragedSet() takes a userSetsObj = {userWeights, sets} and returns a
+// unioned set containing the weighted averaged ratings for any subjects that
+// appear in one or more of the sets.
+export function getAveragedSet(userSetsObj) {
+    // if there is only one set, simply return the set as is.
+    let sets = userSetsObj.sets
+    let setNum = sets.length;
+    if (setNum === 1) {
+        return sets[0];
+    }
+    // else, first sort each array in terms of the subject IDs.
+    for (let i = 0; i < setNum; i++) {
+        sets[i].sort(row1, row2 => row1[1] - row2[1]);
+    }
+    // ..TODO..
+
+    let ret = new Array(sets.reduce((acc, currVal) => acc + currVal.length, 0));
+    let retLen = 0;
+    let indices = new Array(setNum);
+    for (let i = 0; i < setNum; i++) {
+        indices[i] = [i, 0];
+    }
+    let continueLoop = true;
+    let weights = userSetsObj.weights;
+    while (continueLoop) {
+        let minSubjID = indices.reduce(
+            (acc, currVal) => Math.min(acc, sets[currVal[0]][currVal[1]][1]),
+            0
+        );
+        let weightSum = 0;
+        for (let i = 0; i < setNum; i++) {
+            if (sets[i][indices[i][1]][1] === minSubjID) {
+                weightSum += weights[i];
+            }
+        }
+        // ret[retLen] = indices.reduce(
+        //     (acc, currVal) => acc +
+        //         sets[currVal[0]][currVal[1]][0] * weights[currVal[0]] /
+        //             weightSum,
+        //     0
+        // );
+        // retLen++;
+        continueLoop = false;
+    }
+}
+export function getCombinedSet(userSetsArr) {
+    // TODO..
+    // let len = userSetsArr.length;
+    // if (len === 1) {
+    //     return userSetsArr[0].set
+    //         .map(function(row) {
+    //             return [
+    //                 row[0],
+    //                 row[1],
+    //                 [],
+    //             ];
+    //         });
+    // }
+    // TODO: Implement this function for non-trivial cases as well.
+}
