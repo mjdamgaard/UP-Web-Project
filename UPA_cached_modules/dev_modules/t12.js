@@ -110,7 +110,6 @@ export class ContentLoader {
         this.outwardCSSRules = [];
         this.inwardCSSRulesAreAdded = false;
         this.outwardCSSRulesAreAdded = false;
-        this.modSignals = {};
         // this.dynamicData can be used for storing arbritary data (primitive
         // data types and objects), including data necessary to ensure unique
         // ids (even accross several, distant-related CIs).
@@ -139,11 +138,10 @@ export class ContentLoader {
         return this.html; // no need to convert back here.
     }
 
-    // this.modSignals and this.dynamicData are also meant to be treated as
-    // public properties, like this.htmlTemplate. (The rest of the fields are
-    // also public in principle, but not really meant for setting and getting
-    // except in special cases where one needs to do some advanced
-    // restructuring and/or repurposing.)
+    // this.dynamicData, like this.htmlTemplate, is also meant to be treated as
+    // a public property. (The rest of the fields are also public in principle,
+    // but not really meant for setting and getting except in special cases
+    // where one needs to do some advanced restructuring and/or repurposing.)
 
     loadReplaced($placeholder, contentKey, data, returnData) {
         let cl;

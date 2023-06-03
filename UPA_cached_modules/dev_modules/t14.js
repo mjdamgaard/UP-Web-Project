@@ -19,17 +19,21 @@ import {
 
 /**
  * SetField requires data:
+     * RelationSetField:
+         * data.relID,
+         * data.objType,
+         * data.objID,
+     * PredicateSetField:
+         * data.predID,
      * data.elemContentKey,
-     * data.objType,
-     * data.objID,
-     * data.relID,
      * data.subjType,
      * data.queryNum,
      * data.userWeights = [{userID, weight}, ...],
      * data.initialNum,
      * data.incrementNum.
- * And it sets/updates data:
-     * data.predTitle,
+ * It either receives or obtains by itself:
+     * data.predTitle.
+ * And it also sets/updates data:
      * data.predID,
      * data.set = [[combRatVal, subjID, ratValArr], ...],
      * data.userSetsArr = [{predID, factorFun, userSetsObj}, ...],
@@ -39,8 +43,51 @@ import {
      * data.queryOffset,
      * data.queryAscending.
  */
-export var setFieldCL = new ContentLoader(
-    "SetField",
+export var relationSetFieldCL = new ContentLoader(
+    "RelationSetField",
+    /* Initial HTML template */
+    '<<PredicateSetField data:wait>>',
+    appColumnCL
+);
+relationSetFieldCL.addCallback("data", function(data) {
+    data.copyFromAncestor([
+        "objType",
+        "objID",
+        "relID",
+    ]);
+});
+relationSetFieldCL.addCallback(function($ci, data) {
+    $ci
+        .one("query-pred-title-then-pred-id-then-load", function() {
+            let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+            let reqData = {
+                type: "term",
+                id: data.relID,
+            };
+            dbReqManager.query($ci, reqData, function($ci, result) {
+                data.predTitle = (result[0] ?? [])[1];
+                $ci.trigger("query-pred-id-then-load");
+            });
+            return false;
+        })
+        .one("query-pred-id-then-load", function() {
+            let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+            let reqData = {
+                type: "termID",
+                cid: "2", // the ID of the Predicate Context
+                spt: data.objType,
+                spid: data.objID,
+                t: encodeURI(data.predTitle),
+            };
+            dbReqManager.query($ci, reqData, function($ci, result) {
+                data.predID = (result[0] ?? [])[0];
+                $ci.trigger("load");
+            });
+            return false;
+        });
+});
+export var predicateSetFieldCL = new ContentLoader(
+    "PredicateSetField",
     /* Initial HTML template */
     '<div>' +
         '<<SetHeader data:wait>>' +
@@ -48,7 +95,7 @@ export var setFieldCL = new ContentLoader(
     '</div>',
     appColumnCL
 );
-setFieldCL.addCallback("data", function(data) {
+predicateSetFieldCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "elemContentKey",
         "objType",
@@ -61,35 +108,8 @@ setFieldCL.addCallback("data", function(data) {
         "incrementNum",
     ]);
 });
-setFieldCL.addCallback(function($ci, data) {
+predicateSetFieldCL.addCallback(function($ci, data) {
     $ci
-        .one("query-initial-pred-title", function() {
-            let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-            let reqData = {
-                type: "term",
-                id: data.relID,
-            };
-            dbReqManager.query($ci, reqData, function($ci, result) {
-                data.predTitle = (result[0] ?? [])[1];
-                $ci.trigger("query-initial-pred-id");
-            });
-            return false;
-        })
-        .one("query-initial-pred-id", function() {
-            let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-            let reqData = {
-                type: "termID",
-                cid: "2", // the ID of the Predicate Context
-                spt: data.objType,
-                spid: data.objID,
-                t: encodeURI(data.predTitle),
-            };
-            dbReqManager.query($ci, reqData, function($ci, result) {
-                data.predID = (result[0] ?? [])[0];
-                $ci.trigger("query-initial-sets");
-            });
-            return false;
-        })
         .one("query-initial-sets", function() {
             let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
             data.userSetsArr = [{
@@ -134,7 +154,7 @@ setFieldCL.addCallback(function($ci, data) {
             return false;
         });
 });
-setFieldCL.addCallback(function($ci, data) {
+predicateSetFieldCL.addCallback(function($ci, data) {
     $ci.trigger("query-initial-pred-title");
 });
 
