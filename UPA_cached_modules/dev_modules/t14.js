@@ -49,6 +49,10 @@ export var relationSetFieldCL = new ContentLoader(
     '<<PredicateSetField data:wait>>',
     appColumnCL
 );
+// NOTE: Since RelationSetField does not try set up any lasting events, this
+// works. But do not decorate a CL that then waits for data, like here, and then
+// try to have the decorator add events to the CI, since these will just be
+// removed when the waiting decoratee finally loads. 
 relationSetFieldCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "objType",
@@ -334,12 +338,12 @@ export var setHeaderCL = new ContentLoader(
     appColumnCL
 );
 setHeaderCL.addCallback("data", function(data) {
-    let setInfo = data.getFromAncestor("setInfo");
-    data.subjType = setInfo[2];
-    data.subjID = setInfo[3];
-    data.relID = setInfo[4];
-    data.relText = setInfo[5];
-    data.objType = setInfo[6];
+    // let setInfo = data.getFromAncestor("setInfo");
+    // data.subjType = setInfo[2];
+    // data.subjID = setInfo[3];
+    // data.relID = setInfo[4];
+    // data.relText = setInfo[5];
+    // data.objType = setInfo[6];
 });
 export var predicateRepresentationCL = new ContentLoader(
     "PredicateRepresentation",
