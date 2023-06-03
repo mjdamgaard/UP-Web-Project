@@ -30,12 +30,11 @@ export function getAveragedSet(userSetsObj) {
     for (let i = 0; i < setNum; i++) {
         sets[i].sort(row1, row2 => row1[1] - row2[1]);
     }
-    // ..TODO..
 
-    let setLenSum = sets.reduce((acc, val) => acc + val.length, 0);
+    let setLengths = sets.map(val => val.length);
+    let setLenSum = setLengths.reduce((acc, val) => acc + val, 0);
     let ret = new Array(setLenSum);
     let retLen = 0;
-    let weightSums = new Array(setLenSum);
     let positions = new Array(setNum).fill(0);
     let userWeights = userSetsObj.weights;
     let continueLoop = true;
@@ -43,34 +42,39 @@ export function getAveragedSet(userSetsObj) {
         let minSubjID = positions.reduce(
             (acc, val, ind) => Math.min(acc, sets[ind][val][1]), 0
         );
-        let ratValOfMinSubjArray = positions.map(
+        let weightedRatValOfMinSubjArray = positions.map(
             (val, ind) => (sets[ind][val][1] !== minSubjID) ? "" :
-                getScore(sets[ind][val][0]) * userWeights[ind]
+                sets[ind][val][0] * userWeights[ind]
         );
-        let weightSum = 0;
+        let weightSum = weightedRatValOfMinSubjArray.reduce(
+            (acc, val, ind) => acc + ((val === "") ? 0 : userWeights[ind]), 0
+        );
+
+        let averagedRatVal = weightedRatValOfMinSubjArray
+            .reduce((acc, val) => acc + val, 0) /
+                weightSum;
+        ret[retLen] = [
+            averagedRatVal, minSubjID, [averagedRatVal]
+        ];
+        retLen++;
+        // increase the positions.
         for (let i = 0; i < setNum; i++) {
-            if (sets[i][positions[i][1]][1] === minSubjID) {
-                weightSum += weights[i];
+            if (weightedRatValOfMinSubjArray[i] !== "") {
+                positions[i] += 1;
             }
         }
-        // ret[retLen] = positions.reduce(
-        //     (acc, val) => acc +
-        //         sets[val[0]][val[1]][0] * weights[val[0]] /
-        //             weightSum,
-        //     0
-        // );
-        // retLen++;
         continueLoop = false;
+        for (let i = 0; i < setNum; i++) {
+            if (positions[i] === setLengths) {
+                positions[i] -= 1;
+            } else {
+                continueLoop = true;
+            }
+        }
     }
+    return ret;
 }
-export function getScore(ratValHex) {
-    if (ratValHex.length == 2) {
-        return parseInt(ratValHex, 16) / 127;
-    } else {
-        let score = parseInt(data.ratVal.substring(0, 4), 16) * 10 / 32767;
-        $ci.append(score.toFixed(2));
-    }
-}
+
 export function getCombinedSet(userSetsArr) {
     // TODO..
     // let len = userSetsArr.length;
