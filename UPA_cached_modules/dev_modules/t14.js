@@ -31,9 +31,8 @@ import {
      * data.userWeights = [{userID, weight}, ...],
      * data.initialNum,
      * data.incrementNum.
- * It either receives or obtains by itself:
-     * data.predTitle.
  * And it also sets/updates data:
+     * data.predTitle,
      * data.predID,
      * data.set = [[combRatVal, subjID, ratValArr], ...],
      * data.userSetsArr = [{predID, factorFun, userSetsObj}, ...],
@@ -101,7 +100,7 @@ export var predicateSetFieldCL = new ContentLoader(
     appColumnCL
 );
 predicateSetFieldCL.addCallback("data", function(data) {
-    data.copyFromAncestor("predTitle", 1); // copy only from own parent.
+    // data.copyFromAncestor("predTitle", 1); // copy only from own parent.
     data.copyFromAncestor([
         "elemContentKey",
         "predID",
@@ -112,22 +111,24 @@ predicateSetFieldCL.addCallback("data", function(data) {
         "incrementNum",
     ]);
 });
-predicateSetFieldCL.addCallback(function($ci, data) {
-    if (typeof data.predTitle === "undefined") {
-        let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-        let reqData = {
-            type: "term",
-            id: data.predID,
-        };
-        dbReqManager.query($ci, reqData, function($ci, result) {
-            data.predTitle = (result[0] ?? [])[1];
-            $ci.children('.CI.SetHeader').trigger("load");
-        });
-        return false;
-    } else {
-        $ci.children('.CI.SetHeader').trigger("load");
-    }
-});
+// No to the following, as I will rather just let the CI children query for
+// the predTitle via the predID, rather than try to prevent this redundancy.
+// predicateSetFieldCL.addCallback(function($ci, data) {
+//     if (typeof data.predTitle === "undefined") {
+//         let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+//         let reqData = {
+//             type: "term",
+//             id: data.predID,
+//         };
+//         dbReqManager.query($ci, reqData, function($ci, result) {
+//             data.predTitle = (result[0] ?? [])[1];
+//             $ci.children('.CI.SetHeader').trigger("load");
+//         });
+//         return false;
+//     } else {
+//         $ci.children('.CI.SetHeader').trigger("load");
+//     }
+// });
 predicateSetFieldCL.addCallback(function($ci, data) {
     $ci
         .one("query-initial-sets-then-load", function() {
@@ -312,54 +313,44 @@ export var setHeaderCL = new ContentLoader(
     "SetHeader",
     /* Initial HTML template */
     '<div>' +
-        // TODO: add a bar with user weight buttons and a refresh button. *(This
-        // bar should also turn into a drop-down menu for some decorating CLs.
-        '<<PredicateRepresentation>>' +
+        // TODO: add a bar with user weight buttons and a refresh button.
+        '<<PredicateTitle>>' +
     '</div>',
     appColumnCL
 );
 setHeaderCL.addCallback("data", function(data) {
-    // let setInfo = data.getFromAncestor("setInfo");
-    // data.subjType = setInfo[2];
-    // data.subjID = setInfo[3];
-    // data.relID = setInfo[4];
-    // data.relText = setInfo[5];
-    // data.objType = setInfo[6];
-});
-export var predicateRepresentationCL = new ContentLoader(
-    "PredicateRepresentation",
-    /* Initial HTML template */
-    '<div>' +
-        // '<<RelationTitle>>' +
-        // '<<SubjectTitle>>' +
-    '</div>',
-    appColumnCL
-);
-export var relationTitleCL = new ContentLoader(
-    "RelationTitle",
-    /* Initial HTML template */
-    '<<EntityTitle>>',
-    appColumnCL
-);
-relationTitleCL.addCallback("data", function(data) {
-    data.entityType = "r";
-    data.entityID = data.getFromAncestor("relID");
-    data.title = data.getFromAncestor("predTitle");
-});
-export var subjectTitleCL = new ContentLoader(
-    "SubjectTitle",
-    /* Initial HTML template */
-    '<span>' +
-        '<<EntityTitle>>' +
-    '</span>',
-    appColumnCL
-);
-subjectTitleCL.addCallback("data", function(data) {
-    data.entityType = data.getFromAncestor("subjType");
-    data.entityID = data.getFromAncestor("subjID");
+    // data.copyFromAncestor("predTitle", 1);
+    data.copyFromAncestor([
+        "predID",
+    ]);
 });
 
+export var predicateTitleCL = new ContentLoader(
+    "PredicateTitle",
+    /* Initial HTML template */
+    '<<TermTitle>>'
+    appColumnCL
+);
+predicateTitleCL.addCallback("data", function(data) {
+    data.termID = data.getFromAncestor("predID");
+    data.titleDetailLevels = [1, 1];
+});
 
+export var termTitleCL = new ContentLoader(
+    "TermTitle",
+    /* Initial HTML template */
+    '<div></div>',
+    appColumnCL
+);
+termTitleCL.addCallback("data", function(data) {
+    data.copyFromAncestor([
+        "termID",
+        "titleDetailLevels",
+    ]);
+});
+termTitleCL.addCallback(function($ci, data) {
+    
+});
 
 
 export var entityTitleCL = new ContentLoader(
