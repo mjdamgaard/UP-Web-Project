@@ -64,7 +64,7 @@ CREATE TABLE SemanticInputs (
     /* The "input set" */
     -- given some constants for the above three column, the input sets contains
     -- pairs of rating values and the IDs of the predicate subjects.
-    rat_val VARBINARY(255) NOT NULL,
+    rat_val SMALLINT NOT NULL,
     subj_id BIGINT UNSIGNED NOT NULL,
 
     PRIMARY KEY (
@@ -96,7 +96,7 @@ CREATE TABLE PrivateRecentInputs (
     pred_id BIGINT UNSIGNED NOT NULL,
     subj_t CHAR(1) NOT NULL,
     -- new rating value.
-    rat_val VARBINARY(255),
+    rat_val SMALLINT,
     subj_id BIGINT UNSIGNED NOT NULL,
 
     live_after TIME
@@ -111,7 +111,7 @@ CREATE TABLE RecentInputs (
     pred_id BIGINT UNSIGNED NOT NULL,
     subj_t CHAR(1) NOT NULL,
     -- new rating value.
-    rat_val VARBINARY(255),
+    rat_val SMALLINT,
     subj_id BIGINT UNSIGNED NOT NULL,
 
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -125,7 +125,7 @@ CREATE TABLE RecordedInputs (
 
     changed_at DATETIME,
 
-    rat_val VARBINARY(255),
+    rat_val SMALLINT,
 
     PRIMARY KEY (
         user_id,

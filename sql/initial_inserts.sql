@@ -125,9 +125,9 @@ CALL insertPredicates(
 
 -- TODO: correct these ratVals to 7F etc., but not before debugging how they
 -- are converted in the app.
-CALL inputOrChangeRating(1, 16, "t", 2, "FF", "00");
-CALL inputOrChangeRating(1, 16, "t", 3, "CF", "00");
-CALL inputOrChangeRating(1, 16, "t", 4, "90", "00");
+CALL inputOrChangeRating(1, 16, "t", 2, 32767, "00");
+CALL inputOrChangeRating(1, 16, "t", 3, 30000, "00");
+CALL inputOrChangeRating(1, 16, "t", 4, 10000, "00");
 
 
 --

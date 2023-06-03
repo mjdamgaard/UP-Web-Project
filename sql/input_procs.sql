@@ -4,10 +4,10 @@ SELECT "Input procedures";
 -- DROP PROCEDURE inputOrChangeRating;
 -- DROP PROCEDURE insertOrFindContext;
 -- DROP PROCEDURE insertOrFindTerm;
+-- DROP PROCEDURE insertOrFindList;
 -- DROP PROCEDURE insertOrFindKeywordString;
 -- DROP PROCEDURE insertText;
 -- DROP PROCEDURE insertBinary;
--- DROP PROCEDURE insertOrFindList;
 
 
 
@@ -18,17 +18,16 @@ CREATE PROCEDURE inputOrChangeRating (
     IN predID BIGINT UNSIGNED,
     IN subjType CHAR(1),
     IN subjID BIGINT UNSIGNED,
-    IN ratValHex VARCHAR(510),
+    IN ratVal SMALLINT,
     IN live_after TIME
 )
 BEGIN
     DECLARE exitCode TINYINT;
-    DECLARE prevRatVal, ratVal VARBINARY(255);
+    DECLARE prevRatVal SMALLINT;
 
-    IF (ratValHex = "") THEN
-        SET ratValHex = NULL;
+    IF (ratVal = -32768) THEN
+        SET ratVal = NULL;
     END IF;
-    SET ratVal = UNHEX(ratValHex);
 
     SELECT rat_val INTO prevRatVal
     FROM SemanticInputs
@@ -71,8 +70,7 @@ BEGIN
             subj_t = subjType AND
             subj_id = subjID AND
             pred_id = predID AND
-            user_id = userID AND
-            rat_val = ratVal
+            user_id = userID
         );
         SET exitCode = 2; -- a previous rating was deleted.
     ELSE
@@ -101,7 +99,7 @@ BEGIN
         subjID
     );
 
-    SELECT NULL AS outID, exitCode;
+    SELECT subjID AS outID, exitCode;
     -- SELECT HEX(prevRatVal) AS prevRatVal, exitCode;
 END //
 DELIMITER ;
