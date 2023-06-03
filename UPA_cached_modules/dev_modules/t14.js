@@ -52,7 +52,7 @@ export var relationSetFieldCL = new ContentLoader(
 // NOTE: Since RelationSetField does not try set up any lasting events, this
 // works. But do not decorate a CL that then waits for data, like here, and then
 // try to have the decorator add events to the CI, since these will just be
-// removed when the waiting decoratee finally loads. 
+// removed when the waiting decoratee finally loads.
 relationSetFieldCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "objType",
@@ -104,9 +104,7 @@ predicateSetFieldCL.addCallback("data", function(data) {
     data.copyFromAncestor("predTitle", 1); // copy only from own parent.
     data.copyFromAncestor([
         "elemContentKey",
-        "objType",
-        "objID",
-        "relID",
+        "predID",
         "subjType",
         "queryNum",
         "userWeights",
@@ -176,7 +174,7 @@ predicateSetFieldCL.addCallback(function($ci, data) {
             $ci.off("load-initial-set-list-if-ready");
             return false;
         })
-        .trigger("query-initial-pred-title-then-load");
+        .trigger("query-initial-sets-then-load");
 });
 
 
@@ -310,23 +308,6 @@ setListCL.addCallback(function($ci, data) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 export var setHeaderCL = new ContentLoader(
     "SetHeader",
     /* Initial HTML template */
@@ -349,8 +330,8 @@ export var predicateRepresentationCL = new ContentLoader(
     "PredicateRepresentation",
     /* Initial HTML template */
     '<div>' +
-        '<<RelationTitle>>' +
-        '<<SubjectTitle>>' +
+        // '<<RelationTitle>>' +
+        // '<<SubjectTitle>>' +
     '</div>',
     appColumnCL
 );
@@ -363,7 +344,7 @@ export var relationTitleCL = new ContentLoader(
 relationTitleCL.addCallback("data", function(data) {
     data.entityType = "r";
     data.entityID = data.getFromAncestor("relID");
-    data.title = data.getFromAncestor("relText");
+    data.title = data.getFromAncestor("predTitle");
 });
 export var subjectTitleCL = new ContentLoader(
     "SubjectTitle",
