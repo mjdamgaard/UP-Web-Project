@@ -16,6 +16,78 @@ import {
 
 
 
+// getAveragedSet() takes a userSetsObj = {userWeights, sets} and returns a
+// unioned set containing the weighted averaged ratings for any subjects that
+// appear in one or more of the sets.
+export function getAveragedSet(userSetsObj) {
+    // if there is only one set, simply return the set as is.
+    let sets = userSetsObj.sets
+    let setNum = sets.length;
+    if (setNum === 1) {
+        return sets[0];
+    }
+    // else, first sort each array in terms of the subject IDs.
+    for (let i = 0; i < setNum; i++) {
+        sets[i].sort(row1, row2 => row1[1] - row2[1]);
+    }
+    // ..TODO..
+
+    let setLenSum = sets.reduce((acc, val) => acc + val.length, 0);
+    let ret = new Array(setLenSum);
+    let retLen = 0;
+    let weightSums = new Array(setLenSum);
+    let positions = new Array(setNum).fill(0);
+    let userWeights = userSetsObj.weights;
+    let continueLoop = true;
+    while (continueLoop) {
+        let minSubjID = positions.reduce(
+            (acc, val, ind) => Math.min(acc, sets[ind][val][1]), 0
+        );
+        let ratValOfMinSubjArray = positions.map(
+            (val, ind) => (sets[ind][val][1] !== minSubjID) ? "" :
+                getScore(sets[ind][val][0]) * userWeights[ind]
+        );
+        let weightSum = 0;
+        for (let i = 0; i < setNum; i++) {
+            if (sets[i][positions[i][1]][1] === minSubjID) {
+                weightSum += weights[i];
+            }
+        }
+        // ret[retLen] = positions.reduce(
+        //     (acc, val) => acc +
+        //         sets[val[0]][val[1]][0] * weights[val[0]] /
+        //             weightSum,
+        //     0
+        // );
+        // retLen++;
+        continueLoop = false;
+    }
+}
+export function getScore(ratValHex) {
+    if (ratValHex.length == 2) {
+        return parseInt(ratValHex, 16) / 127;
+    } else {
+        let score = parseInt(data.ratVal.substring(0, 4), 16) * 10 / 32767;
+        $ci.append(score.toFixed(2));
+    }
+}
+export function getCombinedSet(userSetsArr) {
+    // TODO..
+    // let len = userSetsArr.length;
+    // if (len === 1) {
+    //     return userSetsArr[0].set
+    //         .map(function(row) {
+    //             return [
+    //                 row[0],
+    //                 row[1],
+    //                 [],
+    //             ];
+    //         });
+    // }
+    // TODO: Implement this function for non-trivial cases as well.
+}
+
+
 /**
  * SetField requires data:
      * RelationSetField:
@@ -250,17 +322,19 @@ export var setHeaderCL = new ContentLoader(
     "SetHeader",
     /* Initial HTML template */
     '<div>' +
-        // TODO: add a bar with user weight buttons and a refresh button.
+        '<<PredicateBox>>' +
+        '<<AddPredicateButton>>' +
+    '</div>',
+    appColumnCL
+);
+export var predicateBoxCL = new ContentLoader(
+    "PredicateBox",
+    /* Initial HTML template */
+    '<div>' +
         '<<PredicateTitle>>' +
     '</div>',
     appColumnCL
 );
-setHeaderCL.addCallback("data", function(data) {
-    // data.copyFromAncestor("predTitle", 1);
-    data.copyFromAncestor([
-        "predID",
-    ]);
-});
 
 export var predicateTitleCL = new ContentLoader(
     "PredicateTitle",
@@ -337,7 +411,6 @@ export var entityTitleCL = new ContentLoader(
     appColumnCL
 );
 entityTitleCL.addCallback("data", function(data) {
-    // data.copyFromAncestor("predTitle", 1);
     data.copyFromAncestor([
         "entityType",
         "entityID",
@@ -416,71 +489,4 @@ export function getReducedTitle(title, cutOutLevel) {
     }
     return retArray.join('')
         .replaceAll('$', '<span class="spec-entity"><span>');
-}
-
-
-
-
-
-
-
-// getAveragedSet() takes a userSetsObj = {userWeights, sets} and returns a
-// unioned set containing the weighted averaged ratings for any subjects that
-// appear in one or more of the sets.
-export function getAveragedSet(userSetsObj) {
-    // if there is only one set, simply return the set as is.
-    let sets = userSetsObj.sets
-    let setNum = sets.length;
-    if (setNum === 1) {
-        return sets[0];
-    }
-    // else, first sort each array in terms of the subject IDs.
-    for (let i = 0; i < setNum; i++) {
-        sets[i].sort(row1, row2 => row1[1] - row2[1]);
-    }
-    // ..TODO..
-
-    let ret = new Array(sets.reduce((acc, currVal) => acc + currVal.length, 0));
-    let retLen = 0;
-    let indices = new Array(setNum);
-    for (let i = 0; i < setNum; i++) {
-        indices[i] = [i, 0];
-    }
-    let continueLoop = true;
-    let weights = userSetsObj.weights;
-    while (continueLoop) {
-        let minSubjID = indices.reduce(
-            (acc, currVal) => Math.min(acc, sets[currVal[0]][currVal[1]][1]),
-            0
-        );
-        let weightSum = 0;
-        for (let i = 0; i < setNum; i++) {
-            if (sets[i][indices[i][1]][1] === minSubjID) {
-                weightSum += weights[i];
-            }
-        }
-        // ret[retLen] = indices.reduce(
-        //     (acc, currVal) => acc +
-        //         sets[currVal[0]][currVal[1]][0] * weights[currVal[0]] /
-        //             weightSum,
-        //     0
-        // );
-        // retLen++;
-        continueLoop = false;
-    }
-}
-export function getCombinedSet(userSetsArr) {
-    // TODO..
-    // let len = userSetsArr.length;
-    // if (len === 1) {
-    //     return userSetsArr[0].set
-    //         .map(function(row) {
-    //             return [
-    //                 row[0],
-    //                 row[1],
-    //                 [],
-    //             ];
-    //         });
-    // }
-    // TODO: Implement this function for non-trivial cases as well.
 }
