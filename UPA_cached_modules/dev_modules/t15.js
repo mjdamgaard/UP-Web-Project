@@ -1,14 +1,11 @@
 
 import {
-    DBRequestManager,
-} from "/UPA_scripts.php?id=11";
-import {
     ContentLoader,
-} from "/UPA_scripts.php?id=12";
+} from "/src/ContentLoader.js";
 
 import {
     sdbInterfaceCL, appColumnCL,
-} from "/UPA_scripts.php?id=13";
+} from "/src/Columns.js";
 
 
 

@@ -1,9 +1,11 @@
 /* A main function */
 
-import * as t11Mod from "/UPA_scripts.php?id=11";
-import "/UPA_scripts.php?id=12"; // request t2 immediately.
-import {sdbInterfaceCL} from "/UPA_scripts.php?id=13";
-import * as t14Mod from "/UPA_scripts.php?id=14";
+import "/src/DBRequestManager.js";
+import "/src/ContentLoader.js";
+import {sdbInterfaceCL} from "/src/Columns.js";
+import "/src/PagesWithTabs.js";
+import "/src/SetFields.js";
+import "/src/Titles.js";
 import * as t15Mod from "/UPA_scripts.php?id=15";
 // import * as t16Mod from "/UPA_scripts.php?id=16";
 

@@ -1,11 +1,14 @@
 
 import {
     sdbInterfaceCL, appColumnCL,
-    columnInterfaceHeaderCL, closeButtonCL, tabHeaderCL, pagesContainerCL,
-} from "/UPA_scripts.php?id=13";
+    columnInterfaceHeaderCL, closeButtonCL,
+} from "/src/Columns.js";
+import {
+    tabHeaderCL, pagesContainerCL,
+} from "/src/PagesWithTabs.js";
 import {
     entityTitleCL,
-} from "/UPA_scripts.php?id=14";
+} from "/src/Titles.js";
 import {
     entityHeaderContentCL,
     supercategoryNavItemCL,
