@@ -150,6 +150,7 @@ predicateSetFieldCL.addCallback(function($ci, data) {
                     return false;
                 }
             }
+            //TODO: Change to getCombinedSet() so that avgRatValArr will be set.
             data.set = getAveragedSet(data.userSetsArr[0].userSetsObj);
             $ci.children('.CI.SetList').trigger("load");
             // off this event.
@@ -213,8 +214,9 @@ setListCL.addCallback(function($ci, data) {
             .slice(data.currentLen, data.currentLen + data.incrementNum)
             .map(function(row) {
                 return {
-                    ratVal: row[0],
+                    combRatVal: row[0],
                     subjID: row[1],
+                    avgRatValArr: row[3] ?? [],
                 };
             });
         data.currentLen += data.incrementNum;

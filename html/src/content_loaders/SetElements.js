@@ -8,26 +8,40 @@ import {
 
 
 
-export var categoryElementCL = new ContentLoader(
-    "CategoryElement",
+export var setElementCL = new ContentLoader(
+    "SetElement",
     /* Initial HTML template */
-    '<div class="element">' +
-        'test..' +
-        // '<<SupercategoryNav>>' +
-        // '<<EntityTitle>>' +
-        // '<<SetRatingContainer>>' +
-        '<<CategoryElementDropdown>>' +
+    '<div>' +
+        "test.." +
+        '<<ElementMainArea>>' +
+        '<<ElementRatingContainer>>' +
     '</div>',
     appColumnCL
 );
-
+setElementCL.addCallback("data", function(data) {
+    data.entityType = data.getFromAncestor("subjType");
+    data.entityID = data.getFromAncestor("subjID");
+});
+export var termElementCL = new ContentLoader(
+    "TermElement",
+    /* Initial HTML template */
+    '<<SetElement>>' +
+    appColumnCL
+);debugger;
+termElementCL.addCallback("append",
+    '.CI.ElementMainArea',
+    '</div>' +
+        '<<ContextNav>>' +
+        '<<TermTitle>>' +
+    '</div>'
+);
 // At some point, we'll have composite sets as well, for which we'll need to
 // display several ratings in the list.
-export var setRatingContainerCL = new ContentLoader(
-    "SetRatingContainer",
+export var elementRatingContainerCL = new ContentLoader(
+    "ElementRatingContainer",
     /* Initial HTML template */
     '<div>' +
-        '<<RatingInfoDisplay>>' +
+        // '<<RatingInfoDisplay>>' +
     '</div>',
     appColumnCL
 );
@@ -111,79 +125,3 @@ supercategoryNavCL.addCallback(function($ci, data) {
             .trigger("load");
     });
 });
-
-
-
-
-
-
-
-export var categoryElementsPageCL = new ContentLoader(
-    "CategoryElementsPage",
-    /* Initial HTML template */
-    '<div>' +
-        '<<ElementsSetField>>' +
-    '</div>',
-    appColumnCL
-);
-export var elementsSetFieldCL = new ContentLoader(
-    "ElementsSetField",
-    /* Initial HTML template */
-    '<<SetField>>',
-    appColumnCL
-);
-elementsSetFieldCL.addCallback("data", function(data) {
-    Object.assign(data, {
-        subjID: data.getFromAncestor("entityID"),
-        relID: "2",
-        elemContentKey: "TermElement",
-    });
-});
-export var termElementCL = new ContentLoader(
-    "TermElement",
-    /* Initial HTML template */
-    '<div class="element">' +
-        '<<CategoryNav>>' +
-        '<<EntityTitle>>' +
-        '<<SetRatingContainer>>' +
-        '<<TermElementDropdown>>' +
-    '</div>',
-    appColumnCL
-);
-
-
-
-
-
-
-//
-// export var extensibleTermListCL = new ContentLoader(
-//     "ExtensibleTermList",
-//     /* Initial HTML template */
-//     '<<TermList>>',
-//     appColumnCL
-// );
-// // TODO: Add a callback that adds a button at the bottom of the ci, which when
-// // pressed, adds elements to the list, either cached ones or ones that are then
-// // queried.
-//
-// export var termListElementCL = new ContentLoader(
-//     "TermListElement",
-//     /* Initial HTML template */
-//     '<li class="list-group-item"></li>',
-//     appColumnCL
-// );
-// export var simpleTermListElementCL = new ContentLoader(
-//     "SimpleTermListElement",
-//     /* Initial HTML template */
-//     '<<TermListElement>>',
-//     appColumnCL
-// );
-//
-// // simpleTermListElementCL.addCallback(function($ci) {
-// //     let termID = $ci.data("contextData").termID;
-// //     $ci.data("contextData").dbReqManager.query($ci, )...
-// //     $ci.append(
-// //         ''
-// //     );
-// // });

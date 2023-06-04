@@ -73,7 +73,7 @@ export var subcategoriesPageCL = new ContentLoader(
 );
 subcategoriesPageCL.addCallback("data", function(data) {
     Object.assign(data, {
-        elemContentKey: "CategoryElement",
+        elemContentKey: "TermElement",
         objType: "t", // the Subcategories page is only for Term Columns.
         objID: data.getFromAncestor("entityID"),
         relID: "10", // ID of the "Subcategories" Relation.
