@@ -1,11 +1,11 @@
 
 SELECT "Query procedures";
 
-DROP PROCEDURE selectInputSet;
-DROP PROCEDURE selectRating;
-DROP PROCEDURE selectUsersAndRatings;
-DROP PROCEDURE selectRecentInputs;
-DROP PROCEDURE selectRecordedInputs;
+-- DROP PROCEDURE selectInputSet;
+-- DROP PROCEDURE selectRating;
+-- DROP PROCEDURE selectUsersAndRatings;
+-- DROP PROCEDURE selectRecentInputs;
+-- DROP PROCEDURE selectRecordedInputs;
 -- DROP PROCEDURE selectUserInfo;
 -- DROP PROCEDURE selectContext;
 -- DROP PROCEDURE selectTerm;
@@ -30,27 +30,23 @@ CREATE PROCEDURE selectInputSet (
     IN userID BIGINT UNSIGNED,
     IN predID BIGINT UNSIGNED,
     IN subjType CHAR(1),
-    IN ratingRangeMinHex VARCHAR(510),
-    IN ratingRangeMaxHex VARCHAR(510),
+    IN ratingRangeMin SMALLINT,
+    IN ratingRangeMax SMALLINT,
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED,
     IN isAscOrder BOOL
 )
 BEGIN
-    DECLARE ratMin, ratMax VARBINARY(255);
-    SET ratMin = UNHEX(ratingRangeMinHex);
-    SET ratMax = UNHEX(ratingRangeMaxHex);
-
     SELECT
-        HEX(rat_val) AS ratVal,
+        rat_val AS ratVal,
         subj_id AS subjID
     FROM SemanticInputs
     WHERE (
         user_id = userID AND
         pred_id = predID AND
         subj_t = subjType AND
-        (ratMin = "" OR rat_val >= ratMin) AND
-        (ratMax = "" OR rat_val <= ratMax)
+        rat_val >= ratingRangeMin AND
+        rat_val <= ratingRangeMax
     )
     ORDER BY
         CASE WHEN isAscOrder THEN rat_val END ASC,
@@ -71,7 +67,7 @@ CREATE PROCEDURE selectRating (
     IN userID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT HEX(rat_val) AS ratVal
+    SELECT rat_val AS ratVal
     FROM SemanticInputs
     WHERE (
         subj_t = subjType AND
@@ -95,7 +91,7 @@ CREATE PROCEDURE selectUsersAndRatings (
 BEGIN
     SELECT
         user_id AS userID,
-        HEX(rat_val) AS ratVal
+        rat_val AS ratVal
     FROM SemanticInputs
     WHERE (
         subj_t = subjType AND
@@ -123,7 +119,7 @@ BEGIN
         user_id AS userID,
         pred_id AS predID,
         subj_t AS subjType,
-        HEX(rat_val) AS ratVal,
+        rat_val AS ratVal,
         subj_id AS subjID,
         changed_at AS changedAt
     FROM RecentInputs
@@ -149,7 +145,7 @@ BEGIN
         SELECT
             subj_id AS subjID,
             changed_at AS changedAt,
-            HEX(rat_val) AS ratVal
+            rat_val AS ratVal
         FROM RecordedInputs
         WHERE (
             user_id = userID AND
@@ -162,7 +158,7 @@ BEGIN
         SELECT
             subjID AS subjID,
             changed_at AS changedAt,
-            HEX(rat_val) AS ratVal
+            rat_val AS ratVal
         FROM RecordedInputs
         WHERE (
             user_id = userID AND

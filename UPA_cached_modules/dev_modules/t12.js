@@ -53,23 +53,13 @@ export class ChildData {
     getFromAncestor(key, searchHeight) {
         if (searchHeight === 0) {
             return null;
-        }
-        // TODO: Consider out-commenting the following informative error throws.
-        if (typeof this.parentData === "undefined") {
-            throw (
-                "ChildData.getFromAncestor(): searchHeight input was " +
-                "larger than the height of the data tree."
-            );
-        }
-        if (typeof this.parentData[key] !== "undefined") {
+        } else if (typeof this.parentData === "undefined") {
+            return null;
+        } else if (typeof this.parentData[key] !== "undefined") {
             return this.parentData[key];
+        } else if (typeof this.parentData.getFromAncestor === "undefined") {
+            return null;
         } else {
-            if (typeof this.parentData.getFromAncestor === "undefined") {
-                throw (
-                    "ChildData.getFromAncestor(): searchHeight input was " +
-                    "larger than the height of the data tree."
-                );
-            }
             if (typeof searchHeight !== "number") {
                 searchHeight = -1;
             }

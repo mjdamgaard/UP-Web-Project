@@ -19,7 +19,7 @@ import {
 // getAveragedSet() takes a userSetsObj = {userWeights, sets} and returns a
 // unioned set containing the weighted averaged ratings for any subjects that
 // appear in one or more of the sets.
-export function getAveragedSet(userSetsObj) {
+export function getAveragedSet(userSetsObj, sortFlag) {
     // if there is only one set, simply return the set as is.
     let sets = userSetsObj.sets
     let setNum = sets.length;
@@ -53,9 +53,8 @@ export function getAveragedSet(userSetsObj) {
         let averagedRatVal = weightedRatValOfMinSubjArray
             .reduce((acc, val) => acc + val, 0) /
                 weightSum;
-        ret[retLen] = [
-            averagedRatVal, minSubjID, [averagedRatVal]
-        ];
+        ret[retLen] = [averagedRatVal, minSubjID];
+            // .sort(row1, row2 => row2[0] - row1[0]); ..
         retLen++;
         // increase the positions.
         for (let i = 0; i < setNum; i++) {
@@ -90,6 +89,9 @@ export function getCombinedSet(userSetsArr) {
     // }
     // TODO: Implement this function for non-trivial cases as well.
 }
+
+
+
 
 
 /**
@@ -133,6 +135,7 @@ relationSetFieldCL.addCallback("data", function(data) {
         "objID",
         "relID",
     ]);
+    data.titleCutOutLevels = [2, 1];
 });
 relationSetFieldCL.addCallback(function($ci, data) {
     $ci
@@ -186,24 +189,6 @@ predicateSetFieldCL.addCallback("data", function(data) {
         "incrementNum",
     ]);
 });
-// No to the following, as I will rather just let the CI children query for
-// the predTitle via the predID, rather than try to prevent this redundancy.
-// predicateSetFieldCL.addCallback(function($ci, data) {
-//     if (typeof data.predTitle === "undefined") {
-//         let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
-//         let reqData = {
-//             type: "term",
-//             id: data.predID,
-//         };
-//         dbReqManager.query($ci, reqData, function($ci, result) {
-//             data.predTitle = (result[0] ?? [])[1];
-//             $ci.children('.CI.SetHeader').trigger("load");
-//         });
-//         return false;
-//     } else {
-//         $ci.children('.CI.SetHeader').trigger("load");
-//     }
-// });
 predicateSetFieldCL.addCallback(function($ci, data) {
     $ci
         .one("query-initial-sets-then-load", function() {
@@ -223,7 +208,7 @@ predicateSetFieldCL.addCallback(function($ci, data) {
                     uid: data.userWeights[i].userID,
                     pid: data.predID,
                     st: data.subjType,
-                    rl: "", rh: "",
+                    rl: -32767, rh: 32767,
                     n: data.queryNum, o: 0,
                     a: 0,
                 };
@@ -348,7 +333,8 @@ export var predicateTitleCL = new ContentLoader(
 );
 predicateTitleCL.addCallback("data", function(data) {
     data.entityID = data.getFromAncestor("predID");
-    data.titleCutOutLevels = [1, 1];
+    data.titleCutOutLevels = data.getFromAncestor("titleCutOutLevels") ??
+        [1, 1];
 });
 
 export var termTitleCL = new ContentLoader(
@@ -491,6 +477,10 @@ export function getReducedTitle(title, cutOutLevel) {
     if (currentLevel !== 0) {
         return title;
     }
-    return retArray.join('')
-        .replaceAll('$', '<span class="spec-entity"><span>');
+    if (cutOutLevel > 0 && retArray.length === 0) {
+        return getReducedTitle(title, cutOutLevel - 1)
+    } else {
+        return retArray.join('')
+            .replaceAll('$', '<span class="spec-entity"><span>');
+    }
 }
