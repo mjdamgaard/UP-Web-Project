@@ -25,9 +25,9 @@ setElementCL.addCallback("data", function(data) {
 export var termElementCL = new ContentLoader(
     "TermElement",
     /* Initial HTML template */
-    '<<SetElement>>' +
+    '<<SetElement>>',
     appColumnCL
-);debugger;
+);
 termElementCL.addCallback("append",
     '.CI.ElementMainArea',
     '</div>' +
