@@ -106,15 +106,12 @@ entityTitleCL.addCallback(function($ci, data) {
     }
 });
 entityTitleCL.addCallback(function($ci, data) {
-    $ci
-        .on("click", function() {
-            $(this)
-                .trigger("open-column", [
-                    "EntityColumn", data, "right"
-                ])
-                .trigger("column-click");
-            return false;
-        });
+    $ci.on("click", function() {
+        $(this).trigger("open-column", [
+            "EntityColumn", data, "right"
+        ]);
+        return false;
+    });
 });
 
 

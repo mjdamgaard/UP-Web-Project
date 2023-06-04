@@ -221,7 +221,7 @@ setListCL.addCallback(function($ci, data) {
                     combRatVal: row[0],
                     entityID: row[1],
                     entityType: subjType,
-                    avgRatValArr: row[3] ?? [],
+                    avgRatValArr: row[3] ?? [row[0]],
                 };
             });
         data.currentLen += data.incrementNum;

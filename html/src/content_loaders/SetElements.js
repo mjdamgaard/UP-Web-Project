@@ -82,9 +82,6 @@ export var setRatingContainerCL = new ContentLoader(
 
 
 
-
-
-
 export var ratingInfoDisplayCL = new ContentLoader(
     "RatingInfoDisplay",
     /* Initial HTML template */
@@ -104,15 +101,15 @@ export var ratingValueCL = new ContentLoader(
     '</span>',
     appColumnCL
 );
-ratingValueCL.addCallback(function($ci, data) {
-    if (data.ratVal.length == 2) {
-        let score = parseInt(data.ratVal, 16) * 10 / 127;
-        $ci.append(score.toFixed(2));
-    } else {
-        let score = parseInt(data.ratVal.substring(0, 4), 16) * 10 / 32767;
-        $ci.append(score.toFixed(2));
-    }
-});
+// ratingValueCL.addCallback(function($ci, data) {
+//     if (data.ratVal.length == 2) {
+//         let score = parseInt(data.ratVal, 16) * 10 / 127;
+//         $ci.append(score.toFixed(2));
+//     } else {
+//         let score = parseInt(data.ratVal.substring(0, 4), 16) * 10 / 32767;
+//         $ci.append(score.toFixed(2));
+//     }
+// });
 
 
 
