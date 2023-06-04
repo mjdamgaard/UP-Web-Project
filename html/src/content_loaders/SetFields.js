@@ -4,10 +4,7 @@ import {
 } from "/src/ContentLoader.js";
 import {
     sdbInterfaceCL, appColumnCL,
-} from "/src/Columns.js";
-
-
-
+} from "/src/content_loaders/ColumnInterface.js";
 
 
 

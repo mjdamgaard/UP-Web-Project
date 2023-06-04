@@ -2,18 +2,19 @@
 import {
     sdbInterfaceCL, appColumnCL,
     columnInterfaceHeaderCL, closeButtonCL,
-} from "/src/Columns.js";
+} from "/src/content_loaders/ColumnInterface.js";
 import {
     tabHeaderCL, pagesContainerCL,
-} from "/src/PagesWithTabs.js";
+} from "/src/content_loaders/PagesWithTabs.js";
 import {
     entityTitleCL,
-} from "/src/Titles.js";
+} from "/src/content_loaders/Titles.js";
 import {
     entityHeaderContentCL,
+} from "/src/content_loaders/EntityColumns.js";
+import {
     supercategoryNavItemCL,
-} from "/UPA_scripts.php?id=15";
-
+} from "/src/content_loaders/SetElements.js";
 
 
 sdbInterfaceCL.addCSS(

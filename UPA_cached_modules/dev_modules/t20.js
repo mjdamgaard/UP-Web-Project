@@ -2,11 +2,12 @@
 
 import "/src/DBRequestManager.js";
 import "/src/ContentLoader.js";
-import {sdbInterfaceCL} from "/src/Columns.js";
-import "/src/PagesWithTabs.js";
-import "/src/SetFields.js";
-import "/src/Titles.js";
-import * as t15Mod from "/UPA_scripts.php?id=15";
+import {sdbInterfaceCL} from "/src/content_loaders/ColumnInterface.js";
+import "/src/content_loaders/PagesWithTabs.js";
+import "/src/content_loaders/SetFields.js";
+import "/src/content_loaders/Titles.js";
+import "/src/content_loaders/EntityColumns.js";
+import "/src/content_loaders/SetElements.js";
 // import * as t16Mod from "/UPA_scripts.php?id=16";
 
 import * as t19Mod from "/UPA_scripts.php?id=19";
