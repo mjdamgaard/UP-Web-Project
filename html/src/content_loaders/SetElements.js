@@ -15,10 +15,16 @@ export var setElementCL = new ContentLoader(
         '<<ElementHeading>>' +
         '<<ElementCombRatingDisplay>>' +
         '<<DropdownButton>>' +
-        '<<ElementDropdownPage>>' +
+        '<<ElementDropdownPage data:wait>>' +
     '</div>',
     appColumnCL
 );
+setElementCL.addCallback(function($ci, data) {
+    $ci.on("click", function() {
+        $(this).children('.CI.ElementDropdownPage').trigger("load");
+        return false;
+    });
+});
 export var elementHeadingCL = new ContentLoader(
     "ElementHeading",
     /* Initial HTML template */
@@ -41,7 +47,7 @@ elementCombRatingDisplayCL.addCallback(function($ci, data) {
 export var elementDropdownPageCL = new ContentLoader(
     "ElementDropdownPage",
     /* Initial HTML template */
-    '<div hidden="true">' +
+    '<div>' +
         '<<SetRatingsContainer>>' +
     '</div>',
     appColumnCL
