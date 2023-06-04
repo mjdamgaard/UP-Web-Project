@@ -161,8 +161,14 @@ relationSetFieldCL.addCallback(function($ci, data) {
                 t: encodeURI(data.predTitle),
             };
             dbReqManager.query($ci, reqData, function($ci, result) {
-                data.predID = (result[0] ?? [])[0];
-                $ci.trigger("load");
+                data.predID = (result[0] ?? [0])[0]; // predID = 0 if missing.
+                if (data.predID === 0) {
+                    relationSetFieldCL.loadReplaced(
+                        $ci, "InsertPredicateField", data
+                    );
+                } else {
+                    $ci.trigger("load");
+                }
             });
             return false;
         })
