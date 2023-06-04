@@ -27,6 +27,10 @@ export var termTitleCL = new ContentLoader(
     '<span></span>',
     appColumnCL
 );
+// termTitleCL.addCallback("data", function(data) {
+//     data.titleCutOutLevels = data.getFromAncestor("titleCutOutLevels") ??
+//         [1, 1];
+// });
 termTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "entityID",
@@ -143,23 +147,26 @@ export function getReducedTitle(title, cutOutLevel) {
             }
             pos = nextLeftParPos + 1;
             currentLevel += 1;
-        } else {
+        } else if (nextLeftParPos > nextRightParPos) {
             if (currentLevel >= cutOutLevel) {
                 retArray[retArrayLen] = title.slice(pos, nextRightParPos);
                 retArrayLen++;
             }
             pos = nextRightParPos + 1;
             currentLevel -= 1;
-
+        } else {
+            if (currentLevel !== 0) {
+                return title;
+            }
+            if (cutOutLevel === 0) {
+                retArray[retArrayLen] = title.slice(pos);
+            }
+            break;
         }
         // simply return the title as is if the curly brackets are ill-formed.
         if (currentLevel < 0) {
             return title;
         }
-    }
-    // simply return the title as is if the curly brackets are ill-formed.
-    if (currentLevel !== 0) {
-        return title;
     }
     if (cutOutLevel > 0 && retArray.length === 0) {
         return getReducedTitle(title, cutOutLevel - 1)

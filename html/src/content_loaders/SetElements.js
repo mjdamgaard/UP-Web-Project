@@ -12,31 +12,27 @@ export var setElementCL = new ContentLoader(
     "SetElement",
     /* Initial HTML template */
     '<div>' +
-        "test.." +
-        '<<ElementMainArea>>' +
         '<<ElementRatingContainer>>' +
     '</div>',
     appColumnCL
 );
-setElementCL.addCallback("data", function(data) {
-    data.entityType = data.getFromAncestor("subjType");
-    data.entityID = data.getFromAncestor("subjID");
-});
 export var termElementCL = new ContentLoader(
     "TermElement",
     /* Initial HTML template */
     '<<SetElement>>',
     appColumnCL
 );
-termElementCL.addCallback("append",
-    '.CI.ElementMainArea',
+termElementCL.addCallback("prepend",
     '</div>' +
         '<<ContextNav>>' +
         '<<TermTitle>>' +
     '</div>'
 );
-// At some point, we'll have composite sets as well, for which we'll need to
-// display several ratings in the list.
+termElementCL.addCallback("data", function(data) {
+    data.titleCutOutLevels = [1, 1];
+});
+
+
 export var elementRatingContainerCL = new ContentLoader(
     "ElementRatingContainer",
     /* Initial HTML template */

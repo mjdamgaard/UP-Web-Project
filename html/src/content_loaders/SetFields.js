@@ -196,12 +196,15 @@ setListCL.addCallback("data", function(data) {
 setListCL.addCallback("data", function(data) {
     data.cl = setListCL.getRelatedCL(data.getFromAncestor("elemContentKey"));
     data.copyFromAncestor("initialNum");
+    let subjType = data.subjType;
     data.listElemDataArr = data.getFromAncestor("set")
         .slice(0, data.initialNum)
         .map(function(row) {
             return {
-                ratVal: row[0],
-                subjID: row[1],
+                combRatVal: row[0],
+                entityID: row[1],
+                entityType: subjType,
+                avgRatValArr: row[3] ?? [],
             };
         });
     data.currentLen = data.initialNum;
@@ -210,12 +213,14 @@ setListCL.addCallback(function($ci, data) {
     $ci.on("append-list", function() {
         let $this = $(this);
         let data = $(this).data("data");
+        let subjType = data.subjType;
         data.listElemDataArr = data.set
             .slice(data.currentLen, data.currentLen + data.incrementNum)
             .map(function(row) {
                 return {
                     combRatVal: row[0],
-                    subjID: row[1],
+                    entityID: row[1],
+                    entityType: subjType,
                     avgRatValArr: row[3] ?? [],
                 };
             });
