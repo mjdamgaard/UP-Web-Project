@@ -110,7 +110,7 @@ entityTitleCL.addCallback(function($ci, data) {
         .on("click", function() {
             $(this)
                 .trigger("open-column", [
-                    "EntityColumn", data, "right", true
+                    "EntityColumn", data, "right"
                 ])
                 .trigger("column-click");
             return false;

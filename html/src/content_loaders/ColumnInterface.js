@@ -103,9 +103,7 @@ export var closeButtonCL = new ContentLoader(
 );
 closeButtonCL.addCallback(function($ci) {
     $ci.on("click", function() {
-        $(this)
-            .trigger("close")
-            .trigger("column-click");
+        $(this).trigger("close");
         return false;
     });
 });
@@ -128,46 +126,24 @@ export var columnMainCL = new ContentLoader(
 appColumnCL.addCallback(function($ci) {
     $ci
         .on("open-column", function(
-            event, contentKey, data, dir, isOverwritable
+            event, contentKey, data, dir
         ) {
             let $this = $(this);
             if (dir === "right") {
-                let $existingColumn = $this.next();
-                let existingData = $existingColumn.data("data") ?? {};
-                if (existingData.isOverwritable ?? false) {
-                    $existingColumn.remove();
-                }
+                // TODO: Add a lookup to a variable deciding if the existing
+                // column should be removed or not.
+                let $existingColumn = $this.next('.CI.AppColumn').remove();
                 sdbInterfaceCL.loadAfter($this, contentKey, data);
-                $this.next().data("data").isOverwritable =
-                    isOverwritable ?? false;
             } else if (dir === "left") {
-                let $existingColumn = $this.prev();
-                let existingData = $existingColumn.data("data") ?? {};
-                if (existingData.isOverwritable ?? false) {
-                    $existingColumn.remove();
-                }
+                // TODO: Add a lookup to another variable deciding if the
+                // existing column should be removed or not.
+                let $existingColumn = $this.prev('.CI.AppColumn').remove();
                 sdbInterfaceCL.loadBefore($this, contentKey, data);
-                $this.prev().data("data").isOverwritable =
-                    isOverwritable ?? false;
             }
             return false;
         })
         .on("close", function() {
             $(this).remove();
             return false;
-        })
-        .one("click", function() {
-            $(this).data("data").isOverwritable = false;
-            return false;
-        })
-        .one("column-click", function() {
-            $(this).trigger("click");
-            return false;
         });
-});
-// make all the initial columns non-overwritable from the beginning.
-sdbInterfaceCL.addCallback(function($ci) {
-    $ci.children('.CI.AppColumn').each(function() {
-        $(this).data("data").isOverwritable = false;
-    });
 });

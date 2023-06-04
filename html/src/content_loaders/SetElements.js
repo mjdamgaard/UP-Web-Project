@@ -12,10 +12,41 @@ export var setElementCL = new ContentLoader(
     "SetElement",
     /* Initial HTML template */
     '<div>' +
-        '<<ElementRatingContainer>>' +
+        '<<ElementHeading>>' +
+        '<<ElementCombRatingDisplay>>' +
+        '<<DropdownButton>>' +
+        '<<ElementDropdownPage>>' +
     '</div>',
     appColumnCL
 );
+export var elementHeadingCL = new ContentLoader(
+    "ElementHeading",
+    /* Initial HTML template */
+    '<div></div>', // content is appended by decorators.
+    appColumnCL
+);
+export var elementCombRatingDisplayCL = new ContentLoader(
+    "ElementCombRatingDisplay",
+    /* Initial HTML template */
+    '<div></div>',
+    appColumnCL
+);
+elementCombRatingDisplayCL.addCallback(function($ci, data) {
+    let combRatVal = data.getFromAncestor("combRatVal");
+    let score = (combRatVal / 32767 * 10).toFixed(2);
+    $ci.append(score.toString());
+});
+
+
+export var elementDropdownPageCL = new ContentLoader(
+    "ElementDropdownPage",
+    /* Initial HTML template */
+    '<div hidden="true">' +
+        '<<SetRatingsContainer>>' +
+    '</div>',
+    appColumnCL
+);
+
 export var termElementCL = new ContentLoader(
     "TermElement",
     /* Initial HTML template */
@@ -23,6 +54,7 @@ export var termElementCL = new ContentLoader(
     appColumnCL
 );
 termElementCL.addCallback("prepend",
+    '.CI.ElementHeading',
     '</div>' +
         '<<ContextNav>>' +
         '<<TermTitle>>' +
@@ -33,14 +65,19 @@ termElementCL.addCallback("data", function(data) {
 });
 
 
-export var elementRatingContainerCL = new ContentLoader(
-    "ElementRatingContainer",
+export var setRatingContainerCL = new ContentLoader(
+    "SetRatingsContainer",
     /* Initial HTML template */
     '<div>' +
         // '<<RatingInfoDisplay>>' +
     '</div>',
     appColumnCL
 );
+
+
+
+
+
 
 export var ratingInfoDisplayCL = new ContentLoader(
     "RatingInfoDisplay",
