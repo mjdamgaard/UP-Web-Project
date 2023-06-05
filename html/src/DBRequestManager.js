@@ -64,6 +64,10 @@ export class DBRequestManager {
     }
 
     input($obj, reqData, callbackData, callback) {
+        if (typeof callback === "undefined") {
+            callback = callbackData;
+            callbackData = null;
+        }
         let thisDBReqManager = this;
         $.post("input_handler.php", reqData, function(result, textStatus) {
             // call the callback function on result.

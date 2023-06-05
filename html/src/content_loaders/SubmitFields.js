@@ -56,6 +56,12 @@ sumbitPredicateFieldCL.addCallback(function($ci, data) {
             $ci.find('.title').val(relTitle);
         });
     }
+    if (typeof data.objType !== "undefined") {
+        $ci.find('.specType').val(data.objType);
+    }
+    if (typeof data.objID !== "undefined") {
+        $ci.find('.specID').val(data.objID.toString());
+    }
 });
 sumbitPredicateFieldCL.addCallback(function($ci, data) {
     $ci.on("submit", function() {
@@ -69,14 +75,18 @@ sumbitPredicateFieldCL.addCallback(function($ci, data) {
             return false;
         }
 
-        let regData = {type: "term"};
-        regData.uid = inputUserID;
-        regData.cid = 2; // the Semantic Context of "Predicates".
-        regData.t = $this.find('.title').val();
+        let reqData = {type: "term"};
+        reqData.uid = inputUserID;
+        reqData.cid = 2; // the Semantic Context of "Predicates".
+        reqData.t = $this.find('.title').val();
+        reqData.spt = $this.find('.specType').val();
+        reqData.spid = $this.find('.specID').val();
         dbReqManager.input($ci, reqData, function($ci, result) {
+            $ci.find('input , textarea').val("");
             $ci.find('.response-display').empty().append(
-                JSON.stringify(result[0])
+                JSON.stringify(result)
             );
+
         });
         return false;
     });

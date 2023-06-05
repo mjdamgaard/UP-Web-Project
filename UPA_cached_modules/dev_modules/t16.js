@@ -125,11 +125,11 @@ categoryInputFieldCL.addCallback(function($ci) {
     $ci
         .on("submit", function() {
             let $this =  $(this);
-            var regData = {type: "cat"};
-            regData.uid = $this.data("data").user;
-            regData.scid = $this.find('input.catID').val();
-            regData.t = $this.find('textarea.title').val();
-            $this.trigger("input-req-data", [regData]);
+            var reqData = {type: "cat"};
+            reqData.uid = $this.data("data").user;
+            reqData.scid = $this.find('input.catID').val();
+            reqData.t = $this.find('textarea.title').val();
+            $this.trigger("input-req-data", [reqData]);
         });
 });
 export var termInputFieldCL = new ContentLoader(
@@ -160,11 +160,11 @@ termInputFieldCL.addCallback(function($ci) {
     $ci
         .on("submit", function() {
             let $this =  $(this);
-            var regData = {type: "term"};
-            regData.uid = $this.data("data").user;
-            regData.cid = $this.find('input.catID').val();
-            regData.t = $this.find('textarea.title').val();
-            $this.trigger("input-req-data", [regData]);
+            var reqData = {type: "term"};
+            reqData.uid = $this.data("data").user;
+            reqData.cid = $this.find('input.catID').val();
+            reqData.t = $this.find('textarea.title').val();
+            $this.trigger("input-req-data", [reqData]);
         });
 });
 
@@ -196,11 +196,11 @@ relationInputFieldCL.addCallback(function($ci) {
     $ci
         .on("submit", function() {
             let $this =  $(this);
-            var regData = {type: "rel"};
-            regData.uid = $this.data("data").user;
-            regData.cid = $this.find('input.catID').val();
-            regData.t = $this.find('textarea.title').val();
-            $this.trigger("input-req-data", [regData]);
+            var reqData = {type: "rel"};
+            reqData.uid = $this.data("data").user;
+            reqData.cid = $this.find('input.catID').val();
+            reqData.t = $this.find('textarea.title').val();
+            $this.trigger("input-req-data", [reqData]);
         });
 });
 
