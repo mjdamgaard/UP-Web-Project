@@ -17,7 +17,7 @@ export var predicateTitleCL = new ContentLoader(
 );
 predicateTitleCL.addCallback("data", function(data) {
     data.entityID = data.getFromAncestor("predID");
-    data.titleCutOutLevels = data.getFromAncestor("titleCutOutLevels");
+    data.copyFromAncestor("titleCutOutLevels");
     data.titleCutOutLevels ||= [1, 1];
 });
 
@@ -28,14 +28,11 @@ export var termTitleCL = new ContentLoader(
     appColumnCL
 );
 termTitleCL.addCallback("data", function(data) {
-    data.titleCutOutLevels = data.getFromAncestor("titleCutOutLevels");
-    data.titleCutOutLevels ||= [1, 1];
-});
-termTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "entityID",
         "titleCutOutLevels",
     ]);
+    data.titleCutOutLevels ||= [1, 1];
     data.entityType = "t";
 });
 termTitleCL.addCallback(function($ci, data) {
@@ -101,9 +98,8 @@ entityTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "entityType",
         "entityID",
-        "titleCutOutLevels",
+        // "titleCutOutLevels",
     ]);
-    data.titleCutOutLevels ??= [];
 });
 entityTitleCL.addCallback(function($ci, data) {
     if (data.entityType === "t") {

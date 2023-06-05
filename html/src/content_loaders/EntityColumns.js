@@ -29,8 +29,7 @@ export var entityHeaderContentCL = new ContentLoader(
     "EntityHeaderContent",
     /* Initial HTML template */
     '<div>' +
-        // '<div class="supercat-nav-container"></div>' +
-        // '<<EntityRepresentation>>' +
+        '<h3><<EntityTitle>></h3>' +
     '</div>',
     appColumnCL,
 );
