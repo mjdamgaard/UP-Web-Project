@@ -79,6 +79,12 @@ relationSetFieldCL.addCallback(function($ci, data) {
             dbReqManager.query($ci, reqData, function($ci, result) {
                 data.predID = (result[0] ?? [0])[0]; // predID = 0 if missing.
                 if (data.predID === 0) {
+                    relationSetFieldCL.loadBefore(
+                        $ci, "MissingPredicateText", data
+                    );
+                    // $ci.before(
+                    //     '<span>Predicate not found. Create predicate?</span>'
+                    // );
                     relationSetFieldCL.loadReplaced(
                         $ci, "SubmitPredicateField", data
                     );
@@ -90,6 +96,14 @@ relationSetFieldCL.addCallback(function($ci, data) {
         })
         .trigger("query-pred-title-then-pred-id-then-load");
 });
+export var missingPredicateTextCL = new ContentLoader(
+    "MissingPredicateText",
+    /* Initial HTML template */
+    '<span>Predicate not found. Create predicate?</span>',
+    appColumnCL
+);
+
+
 export var predicateSetFieldCL = new ContentLoader(
     "PredicateSetField",
     /* Initial HTML template */

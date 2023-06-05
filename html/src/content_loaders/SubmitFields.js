@@ -45,7 +45,17 @@ sumbitPredicateFieldCL.addCallback("data", function(data) {
     ]);
 });
 sumbitPredicateFieldCL.addCallback(function($ci, data) {
-    // TODO: try to fill out input fields automatically.
+    if (typeof data.relID !== "undefined") {
+        let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
+        let reqData = {
+            type: "term",
+            id: data.relID,
+        };
+        dbReqManager.query($ci, reqData, function($ci, result) {
+            let relTitle = (result[0] ?? [""])[1];
+            $ci.find('.title').val(relTitle);
+        });
+    }
 });
 sumbitPredicateFieldCL.addCallback(function($ci, data) {
     $ci.on("submit", function() {
@@ -63,7 +73,7 @@ sumbitPredicateFieldCL.addCallback(function($ci, data) {
         regData.uid = inputUserID;
         regData.cid = 2; // the Semantic Context of "Predicates".
         regData.t = $this.find('.title').val();
-        dbReqManager.query($ci, reqData, function($ci, result) {
+        dbReqManager.input($ci, reqData, function($ci, result) {
             $ci.find('.response-display').empty().append(
                 JSON.stringify(result[0])
             );
