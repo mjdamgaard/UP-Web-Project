@@ -17,8 +17,8 @@ export var predicateTitleCL = new ContentLoader(
 );
 predicateTitleCL.addCallback("data", function(data) {
     data.entityID = data.getFromAncestor("predID");
-    data.titleCutOutLevels = data.getFromAncestor("titleCutOutLevels") ??
-        [1, 1];
+    data.titleCutOutLevels = data.getFromAncestor("titleCutOutLevels");
+    data.titleCutOutLevels ||= [1, 1];
 });
 
 export var termTitleCL = new ContentLoader(
@@ -27,10 +27,10 @@ export var termTitleCL = new ContentLoader(
     '<span></span>',
     appColumnCL
 );
-// termTitleCL.addCallback("data", function(data) {
-//     data.titleCutOutLevels = data.getFromAncestor("titleCutOutLevels") ??
-//         [1, 1];
-// });
+termTitleCL.addCallback("data", function(data) {
+    data.titleCutOutLevels = data.getFromAncestor("titleCutOutLevels");
+    data.titleCutOutLevels ||= [1, 1];
+});
 termTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "entityID",
@@ -70,6 +70,15 @@ termTitleCL.addCallback(function($ci, data) {
     });
     return false;
 });
+termTitleCL.addCallback(function($ci, data) {
+    $ci.on("click", function() {
+        $(this).trigger("open-column", [
+            "EntityColumn", data, "right"
+        ]);
+        return false;
+    });
+});
+
 export var specEntityTitleCL = new ContentLoader(
     "SpecEntityTitle",
     /* Initial HTML template */
@@ -103,15 +112,13 @@ entityTitleCL.addCallback(function($ci, data) {
         entityTitleCL.loadAppended($ci, "ContextTitle", data);
     } else {
         $ci.append(data.entityType + data.entityID.toString());
+        $ci.on("click", function() {
+            $(this).trigger("open-column", [
+                "EntityColumn", data, "right"
+            ]);
+            return false;
+        });
     }
-});
-entityTitleCL.addCallback(function($ci, data) {
-    $ci.on("click", function() {
-        $(this).trigger("open-column", [
-            "EntityColumn", data, "right"
-        ]);
-        return false;
-    });
 });
 
 
@@ -168,7 +175,16 @@ export function getReducedTitle(title, cutOutLevel) {
     if (cutOutLevel > 0 && retArray.length === 0) {
         return getReducedTitle(title, cutOutLevel - 1)
     } else {
-        return retArray.join('')
-            .replaceAll('$', '<span class="spec-entity"><span>');
+        return (
+            '<span class="clickable-text text-primary">' +
+                retArray.join('')
+                .replaceAll(
+                    '$',
+                    '</span>' +
+                        '<span class="spec-entity"></span>' +
+                    '<span class="clickable-text text-primary">'
+                ) +
+            '</span>'
+        );
     }
 }

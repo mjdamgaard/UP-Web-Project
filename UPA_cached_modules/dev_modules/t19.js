@@ -7,7 +7,7 @@ import {
     tabHeaderCL, pagesContainerCL,
 } from "/src/content_loaders/PagesWithTabs.js";
 import {
-    entityTitleCL,
+    termTitleCL, entityTitleCL,
 } from "/src/content_loaders/Titles.js";
 import {
     entityHeaderContentCL,
@@ -117,12 +117,19 @@ tabHeaderCL.addCSS(
 
 
 
+
 sdbInterfaceCL.addCSS(
     '& .clickable-text:hover {' +
         'cursor: pointer;' +
         'text-decoration: underline;' +
+        'color: blue;' +
     '}'
 );
+// sdbInterfaceCL.addCSS(
+//     '& .clickable-text {' +
+//         'text-decoration: initial;' +
+//     '}'
+// );
 
 // predicateRepresentationCL.addCSS(
 //     '& > .CI.SubjectTitle:before { content: " ("; }'
@@ -133,10 +140,12 @@ sdbInterfaceCL.addCSS(
 
 
 
-entityTitleCL.addCallback(function($ci) {
-    $ci.addClass("clickable-text text-primary");
-});
-
+// entityTitleCL.addCallback(function($ci) {
+//     $ci.addClass("clickable-text text-primary");
+// });
+// termTitleCL.addCallback(function($ci) {
+//     $ci.addClass("clickable-text text-primary");
+// });
 
 
 entityHeaderContentCL.addCSS(

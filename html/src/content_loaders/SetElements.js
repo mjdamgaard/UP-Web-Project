@@ -13,7 +13,7 @@ export var setElementCL = new ContentLoader(
     /* Initial HTML template */
     '<div>' +
         '<<ElementHeading>>' +
-        '<<ElementCombRatingDisplay>>' +
+        '<<SetRatingsContainer>>' +
         '<<DropdownButton>>' +
         '<<ElementDropdownPage data:wait>>' +
     '</div>',
@@ -29,27 +29,6 @@ export var elementHeadingCL = new ContentLoader(
     "ElementHeading",
     /* Initial HTML template */
     '<div></div>', // content is appended by decorators.
-    appColumnCL
-);
-export var elementCombRatingDisplayCL = new ContentLoader(
-    "ElementCombRatingDisplay",
-    /* Initial HTML template */
-    '<div></div>',
-    appColumnCL
-);
-elementCombRatingDisplayCL.addCallback(function($ci, data) {
-    let combRatVal = data.getFromAncestor("combRatVal");
-    let score = (combRatVal / 32767 * 10).toFixed(2);
-    $ci.append(score.toString());
-});
-
-
-export var elementDropdownPageCL = new ContentLoader(
-    "ElementDropdownPage",
-    /* Initial HTML template */
-    '<div>' +
-        '<<SetRatingsContainer>>' +
-    '</div>',
     appColumnCL
 );
 
@@ -71,15 +50,21 @@ termElementCL.addCallback("data", function(data) {
 });
 
 
-export var setRatingContainerCL = new ContentLoader(
+
+
+
+
+export var setRatingsContainerCL = new ContentLoader(
     "SetRatingsContainer",
     /* Initial HTML template */
-    '<div>' +
-        // '<<RatingInfoDisplay>>' +
-    '</div>',
+    '<div></div>',
     appColumnCL
 );
-
+setRatingsContainerCL.addCallback(function($ci, data) {
+    let combRatVal = data.getFromAncestor("combRatVal");
+    let score = (combRatVal / 32767 * 10).toFixed(2);
+    $ci.append('<div>' + score + '</div>');
+});
 
 
 export var ratingInfoDisplayCL = new ContentLoader(
@@ -91,8 +76,6 @@ export var ratingInfoDisplayCL = new ContentLoader(
     '</div>',
     appColumnCL
 );
-// TODO: Make a RatingInfoDisplay look its own data up iff the rating value is
-// not found in the input data object.
 
 export var ratingValueCL = new ContentLoader(
     "RatingValue",
@@ -101,15 +84,6 @@ export var ratingValueCL = new ContentLoader(
     '</span>',
     appColumnCL
 );
-// ratingValueCL.addCallback(function($ci, data) {
-//     if (data.ratVal.length == 2) {
-//         let score = parseInt(data.ratVal, 16) * 10 / 127;
-//         $ci.append(score.toFixed(2));
-//     } else {
-//         let score = parseInt(data.ratVal.substring(0, 4), 16) * 10 / 32767;
-//         $ci.append(score.toFixed(2));
-//     }
-// });
 
 
 
@@ -161,3 +135,13 @@ supercategoryNavCL.addCallback(function($ci, data) {
             .trigger("load");
     });
 });
+
+
+
+export var elementDropdownPageCL = new ContentLoader(
+    "ElementDropdownPage",
+    /* Initial HTML template */
+    '<div>' +
+    '</div>',
+    appColumnCL
+);
