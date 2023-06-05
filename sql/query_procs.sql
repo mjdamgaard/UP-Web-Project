@@ -13,13 +13,11 @@ SELECT "Query procedures";
 -- DROP PROCEDURE selectTermID;
 -- DROP PROCEDURE selectContextIDs;
 -- DROP PROCEDURE selectTermIDs;
--- DROP PROCEDURE selectList;
--- DROP PROCEDURE selectListID;
+-- DROP PROCEDURE selectText;
+-- DROP PROCEDURE selectBinary;
 -- DROP PROCEDURE searchForKeywordStrings;
 -- DROP PROCEDURE searchForKeywordStringsBooleanMode;
 -- DROP PROCEDURE selectKeywordStringIDs;
--- DROP PROCEDURE selectText;
--- DROP PROCEDURE selectBinary;
 -- DROP PROCEDURE selectCreator;
 -- DROP PROCEDURE selectCreations;
 
@@ -352,46 +350,28 @@ DELIMITER ;
 
 
 
-
 DELIMITER //
-CREATE PROCEDURE selectList (
-    IN listID BIGINT UNSIGNED
+CREATE PROCEDURE selectText (
+    IN textID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT
-        elem_ts AS elemTypeStr,
-        HEX(elem_ids) AS elemIDHexStr,
-        tail_id AS tailID
-    FROM Lists
-    WHERE id = listID;
+    SELECT str AS text
+    FROM Texts
+    WHERE id = textID;
 END //
 DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectListID (
-    IN elemTypeStr VARCHAR(31),
-    IN elemIDHexStr VARCHAR(496),
-    tailID BIGINT UNSIGNED
+CREATE PROCEDURE selectBinary (
+    IN binID BIGINT UNSIGNED
 )
 BEGIN
-    IF (tailID = 0) THEN
-        SET tailID = NULL;
-    END IF;
-
-    SELECT id AS listID
-    FROM Lists
-    WHERE (
-        elem_ts = elemTypeStr AND
-        elem_ids = UNHEX(elemIDHexStr) AND
-        tail_id <=> tailID
-    );
+    SELECT bin AS bin
+    FROM Binaries
+    WHERE id = binID;
 END //
 DELIMITER ;
-
-
-
-
 
 
 
@@ -458,31 +438,6 @@ END //
 DELIMITER ;
 
 
-
-
-
-DELIMITER //
-CREATE PROCEDURE selectText (
-    IN textID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT str AS text
-    FROM Texts
-    WHERE id = textID;
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE selectBinary (
-    IN binID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT bin AS bin
-    FROM Binaries
-    WHERE id = binID;
-END //
-DELIMITER ;
 
 
 

@@ -119,17 +119,17 @@ switch ($reqType) {
         $typeArr = array("id", "type", "id", "tstr", "uint", "uint");
         // output: [[title, termID], ...].
         break;
-    case "list":
-        $sql = "CALL selectList (?)";
+    case "text":
+        $sql = "CALL selectText (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [[elemTypeStr, elemIDHexStr, tailID]].
+        // output: [[text]].
         break;
-    case "listID":
-        $sql = "CALL selectListID (?, ?, ?)";
-        $paramNameArr = array("ts", "ids", "tid");
-        $typeArr = array("elemTypeStr", "elemIDHexStr", "id");
-        // output: [[listID]].
+    case "bin":
+        $sql = "CALL selectBinary (?)";
+        $paramNameArr = array("id");
+        $typeArr = array("id");
+        // output: [[bin]].
         break;
     case "kws":
         $sql = "CALL searchForKeywordStrings (?, ?, ?)";
@@ -148,18 +148,6 @@ switch ($reqType) {
         $paramNameArr = array("s", "n", "o");
         $typeArr = array("str", "uint", "uint");
         // output: [[str, kwsID], ...].
-        break;
-    case "text":
-        $sql = "CALL selectText (?)";
-        $paramNameArr = array("id");
-        $typeArr = array("id");
-        // output: [[text]].
-        break;
-    case "bin":
-        $sql = "CALL selectBinary (?)";
-        $paramNameArr = array("id");
-        $typeArr = array("id");
-        // output: [[bin]].
         break;
     case "creator":
         $sql = "CALL selectCreator (?, ?)";

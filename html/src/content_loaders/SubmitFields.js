@@ -91,3 +91,8 @@ sumbitPredicateFieldCL.addCallback(function($ci, data) {
         return false;
     });
 });
+
+sumbitPredicateFieldCL.addCallback(function($ci, data) {
+    // TODO: create events that upon change in the input fields, looks up
+    // either the ID of the Relation, or the title of the spec. entity.
+});

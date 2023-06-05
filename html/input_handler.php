@@ -54,16 +54,6 @@ switch ($reqType) {
         $paramNameArr = array("uid", "cid", "t", "spt", "spid");
         $typeArr = array("id", "id", "tstr", "type", "id");
         break;
-    case "list":
-        $sql = "CALL insertOrFindList (?, ?, ?, ?)";
-        $paramNameArr = array("uid", "ts", "ids", "tid");
-        $typeArr = array("id", "elemTypeStr", "elemIDHexStr", "id");
-        break;
-    case "kws":
-        $sql = "CALL insertOrFindKeywordString (?, ?)";
-        $paramNameArr = array("uid", "s");
-        $typeArr = array("id", "str");
-        break;
     case "text":
         $sql = "CALL insertText (?, ?)";
         $paramNameArr = array("uid", "s");
@@ -73,6 +63,11 @@ switch ($reqType) {
         $sql = "CALL insertBinary (?, ?)";
         $paramNameArr = array("uid", "b");
         $typeArr = array("id", "blob");
+        break;
+    case "kws":
+        $sql = "CALL insertOrFindKeywordString (?, ?)";
+        $paramNameArr = array("uid", "s");
+        $typeArr = array("id", "str");
         break;
     default:
         header("Content-Type: text/json");

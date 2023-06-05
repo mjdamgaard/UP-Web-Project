@@ -4,10 +4,9 @@ SELECT "Input procedures";
 -- DROP PROCEDURE inputOrChangeRating;
 -- DROP PROCEDURE insertOrFindContext;
 -- DROP PROCEDURE insertOrFindTerm;
--- DROP PROCEDURE insertOrFindList;
--- DROP PROCEDURE insertOrFindKeywordString;
 -- DROP PROCEDURE insertText;
 -- DROP PROCEDURE insertBinary;
+-- DROP PROCEDURE insertOrFindKeywordString;
 
 
 
@@ -194,75 +193,6 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE insertOrFindList (
-    IN userID BIGINT UNSIGNED,
-    IN elemTypeStr VARCHAR(31),
-    IN elemIDHexStr VARCHAR(496),
-    IN tailID BIGINT UNSIGNED
-)
-BEGIN
-    DECLARE outID BIGINT UNSIGNED;
-    DECLARE exitCode TINYINT;
-    DECLARE elemIDs VARBINARY(248);
-    SET elemIDs = UNHEX(elemIDHexStr);
-
-    IF (tailID = 0) THEN
-        SET tailID = NULL;
-    END IF;
-
-    SELECT id INTO outID
-    FROM Lists
-    WHERE (elem_ts = elemTypeStr AND elem_ids = elemIDs AND tail_id = tailID);
-    IF (outID IS NOT NULL) THEN
-        SET exitCode = 1; -- find.
-    ELSE
-        INSERT INTO Lists (elem_ts, elem_ids, tail_id)
-        VALUES (elemTypeStr, elemIDs, tailID);
-        SELECT LAST_INSERT_ID() INTO outID;
-        INSERT INTO Creators (entity_t, entity_id, user_id)
-        VALUES ("l", outID, userID);
-        SET exitCode = 0; -- insert.
-    END IF;
-    SELECT outID, exitCode;
-END //
-DELIMITER ;
-
-
-
-
-
-
-
-DELIMITER //
-CREATE PROCEDURE insertOrFindKeywordString (
-    IN userID BIGINT UNSIGNED,
-    IN s VARCHAR(768)
-)
-BEGIN
-    DECLARE outID BIGINT UNSIGNED;
-    DECLARE exitCode TINYINT;
-
-    SELECT id INTO outID
-    FROM KeywordStrings
-    WHERE str = s;
-    IF (outID IS NOT NULL) THEN
-        SET exitCode = 1; -- find.
-    ELSE
-        INSERT INTO KeywordStrings (str)
-        VALUES (s);
-        SELECT LAST_INSERT_ID() INTO outID;
-        INSERT INTO Creators (entity_t, entity_id, user_id)
-        VALUES ("k", outID, userID);
-        SET exitCode = 0; -- insert.
-    END IF;
-    SELECT outID, exitCode;
-END //
-DELIMITER ;
-
-
-
-
 
 
 DELIMITER //
@@ -299,5 +229,35 @@ BEGIN
     INSERT INTO Creators (entity_t, entity_id, user_id)
     VALUES ("b", outID, userID);
     SELECT outID, 0; -- insert.
+END //
+DELIMITER ;
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertOrFindKeywordString (
+    IN userID BIGINT UNSIGNED,
+    IN s VARCHAR(768)
+)
+BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
+
+    SELECT id INTO outID
+    FROM KeywordStrings
+    WHERE str = s;
+    IF (outID IS NOT NULL) THEN
+        SET exitCode = 1; -- find.
+    ELSE
+        INSERT INTO KeywordStrings (str)
+        VALUES (s);
+        SELECT LAST_INSERT_ID() INTO outID;
+        INSERT INTO Creators (entity_t, entity_id, user_id)
+        VALUES ("k", outID, userID);
+        SET exitCode = 0; -- insert.
+    END IF;
+    SELECT outID, exitCode;
 END //
 DELIMITER ;

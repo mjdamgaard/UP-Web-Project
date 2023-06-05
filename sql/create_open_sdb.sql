@@ -10,40 +10,15 @@
 -- DROP TABLE Users;
 -- DROP TABLE SemanticContexts;
 -- DROP TABLE Terms;
--- DROP TABLE Lists;
--- DROP TABLE KeywordStrings;
 -- DROP TABLE Texts;
 -- DROP TABLE Binaries;
+-- DROP TABLE KeywordStrings;
 --
 -- /* Meta data */
 -- DROP TABLE Creators;
 
 
 
-
-
--- CREATE TABLE Sets (
---     -- set ID.
---     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
---     -- type = "s".
---
---     -- user or user group who states the statement.
---     user_id BIGINT UNSIGNED NOT NULL,
---     -- predicate.
---     pred_id BIGINT UNSIGNED NOT NULL,
---     -- type of the subjects of the predicate.
---     subj_t CHAR(1) NOT NULL,
---
---     -- number of elements.
---     elem_num BIGINT UNSIGNED NOT NULL,
---
---     UNIQUE INDEX (
---         user_id,
---         pred_id,
---         subj_t
---     )
---
--- );
 
 
 
@@ -76,14 +51,6 @@ CREATE TABLE SemanticInputs (
     ),
 
     UNIQUE INDEX (subj_t, subj_id, pred_id, user_id)
-    -- INDEX (subj_t, subj_id, pred_id, user_id)
-    -- -- (This index is already unique due to the PK.)
-
-    -- -- w_exp is a nummerical value which gives the weight of the rating
-    -- -- when plugged into the equation w = 2^(w_exp / 32).
-    -- -- inv_w_exp is the multiplicational inverse of w_exp, meaning that
-    -- -- w = 2^(- inv_w_exp / 32).
-    -- inv_w_exp_t32 TINYINT UNSIGNED NOT NULL
 );
 -- TODO: Compress this table and its sec. index, as well as some other tables
 -- below (at least RecordedInputs).
@@ -162,52 +129,6 @@ CREATE TABLE Users (
 
 
 
--- CREATE TABLE UserGroups (
---  -- user group ID.
---   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
---  -- type = "grp".
---
---  -- todo: I think I will change (creator_t, creator_id) to just a set_id
---  -- instead.
---
---  -- id of the creating user group (or user or bot).
---  -- creator_t CHAR(1) NOT NULL, ...
---  creator_id BIGINT UNSIGNED NOT NULL,
---
---  -- This is not the date at which the user group was created as a term.
---  -- Rather, it is the date at which the weights within the creating user
---  -- group are measured (if creator is not a single user or bot). Thus, if
---  -- the creating user group is dynamic and its weights thus changes after
---  -- this "effective creation date," these changes will then not affect this
---  -- user group.
---  effective_creation_date DATE,
---  -- If effective_creation_date is a date in the future, or if it is NULL,
---  -- it might mean (if this functionality is implemented) that the creating
---  -- group is also allowed change in time. But this functionality will
---  -- probably not be useful enough compared to the cost to be implemented,
---  -- however. (But I just wanted to note the possibility, should we realize
---  -- that it will be useful at some point.)
---
---
---  -- date after which, if it is not NULL, all ratings are frozen and no new
---  -- ratings are recorded for the user group. The end date can start out as
---  -- NULL and then be set to a value at a later date, if the group decides
---  -- to stop being active. It might also happen that the server decides to
---  -- discontinue a group due to cost of maintaining, in which case an end
---  -- date will also be set.
---  end_date DATE,
---
---  -- Flag (interpreted as a BOOL) that tells if the user group is dynamic,
---  -- meaning that the creating user group (which will probably either be a
---  -- "constant" user group, or will be effectively constant due to the
---  -- effective_creation_date) is allowed to continously change the weights
---  -- of this user group. A "constant" user group (with is_dynamic = FALSE),
---  -- on the other hand, has constant weights which are set at the "effective
---  -- creation date" and not changed after that.
---  is_dynamic TINYINT NOT NULL -- BOOL
--- );
-
-
 
 
 
@@ -249,36 +170,6 @@ CREATE TABLE Terms (
 );
 
 
-CREATE TABLE Lists (
-    /* list ID */
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    -- type = "l".
-
-    /* data */
-    elem_ts VARCHAR(31) NOT NULL,
-    elem_ids VARBINARY(248) NOT NULL,
-
-    tail_id BIGINT UNSIGNED,
-
-    UNIQUE INDEX (elem_ts, elem_ids, tail_id)
-);
-
-
-
-
-
-
-
-CREATE TABLE KeywordStrings (
-    /* keyword string ID */
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    -- type = "k".
-
-    -- keyword string.
-    str VARCHAR(768) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL UNIQUE,
-    FULLTEXT idx (str)
-);
-
 
 
 
@@ -301,6 +192,19 @@ CREATE TABLE Binaries (
     bin LONGBLOB NOT NULL
 );
 
+
+
+
+
+CREATE TABLE KeywordStrings (
+    /* keyword string ID */
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    -- type = "k".
+
+    -- keyword string.
+    str VARCHAR(768) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL UNIQUE,
+    FULLTEXT idx (str)
+);
 
 
 
