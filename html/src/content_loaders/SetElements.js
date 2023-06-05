@@ -116,7 +116,7 @@ supercategoryNavCL.addCallback(function($ci, data) {
     if (typeof data.reversedSuperCatDefs !== "undefined") {
         return;
     }
-    let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+    let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
     let reqData = {
         type: "superCatTitles",
         id: data.entityID,

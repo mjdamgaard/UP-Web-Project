@@ -56,7 +56,7 @@ relationSetFieldCL.addCallback("data", function(data) {
 relationSetFieldCL.addCallback(function($ci, data) {
     $ci
         .one("query-pred-title-then-pred-id-then-load", function() {
-            let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+            let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
             let reqData = {
                 type: "term",
                 id: data.relID,
@@ -68,7 +68,7 @@ relationSetFieldCL.addCallback(function($ci, data) {
             return false;
         })
         .one("query-pred-id-then-load", function() {
-            let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+            let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
             let reqData = {
                 type: "termID",
                 cid: "2", // the ID of the Predicate Context
@@ -80,7 +80,7 @@ relationSetFieldCL.addCallback(function($ci, data) {
                 data.predID = (result[0] ?? [0])[0]; // predID = 0 if missing.
                 if (data.predID === 0) {
                     relationSetFieldCL.loadReplaced(
-                        $ci, "InsertPredicateField", data
+                        $ci, "SubmitPredicateField", data
                     );
                 } else {
                     $ci.trigger("load");
@@ -114,7 +114,7 @@ predicateSetFieldCL.addCallback("data", function(data) {
 predicateSetFieldCL.addCallback(function($ci, data) {
     $ci
         .one("query-initial-sets-then-load", function() {
-            let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+            let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
             data.userSetsArr = [{
                 predID: data.predID,
                 factorFun: x => 1,

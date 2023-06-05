@@ -22,7 +22,7 @@ export var sdbInterfaceCL = new ContentLoader(
         '</main>' +
     '</div>',
 );
-sdbInterfaceCL.dynamicData.dbReqManager = new DBRequestManager();
+sdbInterfaceCL.globalData.dbReqManager = new DBRequestManager();
 
 export var appColumnListCL = new ContentLoader(
     "AppColumnList",

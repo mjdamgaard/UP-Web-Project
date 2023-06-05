@@ -48,7 +48,7 @@ termTitleCL.addCallback(function($ci, data) {
     // the specifying entities as well, and if these are Terms, cut out part
     // of their title as well, depending on the cut-out levels (or just append
     // their entity ID, if the data.titleCutOutLevels array is at its end).
-    let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+    let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
     let reqData = {
         type: "term",
         id: data.entityID,
@@ -107,7 +107,11 @@ entityTitleCL.addCallback(function($ci, data) {
     } else if (data.entityType === "c") {
         entityTitleCL.loadAppended($ci, "ContextTitle", data);
     } else {
-        $ci.append(data.entityType + data.entityID.toString());
+        $ci.append(
+            '<span class="clickable-text text-primary">' +
+                data.entityType + data.entityID.toString() +
+            '</span>'
+        );
         $ci.on("click", function() {
             $(this).trigger("open-column", [
                 "EntityColumn", data, "right"

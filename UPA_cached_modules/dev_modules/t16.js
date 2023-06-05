@@ -87,7 +87,7 @@ export var inputFieldCL = new ContentLoader(
 inputFieldCL.addCallback(function($ci) {
     $ci
         .on("input-req-data", function(event, reqData) {
-            let dbReqManager = sdbInterfaceCL.dynamicData.dbReqManager;
+            let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
             dbReqManager.input($(this), reqData, function($obj, result) {
                 $obj.find('.response-field').append(JSON.stringify(result));
             });
