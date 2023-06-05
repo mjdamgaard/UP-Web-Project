@@ -119,7 +119,10 @@ CALL insertPredicates(
     "is a useful instance of the {{Subcategories} of }the term {$}",
     1, 7
 );
-
+CALL insertPredicates(
+    "is a useful part of the {{Instances} of }the term {$}",
+    1, 3
+);
 
 -- rate some statements.
 

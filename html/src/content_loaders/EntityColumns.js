@@ -33,13 +33,7 @@ export var entityHeaderContentCL = new ContentLoader(
     '</div>',
     appColumnCL,
 );
-// entityHeaderContentCL.addCallback(function($ci, data) {
-//     $ci.children('.CI.EntityRepresentation').prepend(
-//         (data.entityType === "c") ? 'Category: ' :
-//             (data.entityType === "t") ? 'Term: ' :
-//                 'Relation: '
-//     );
-// });
+
 
 export var entityMainContentCL = new ContentLoader(
     "EntityMainContent",
@@ -47,10 +41,6 @@ export var entityMainContentCL = new ContentLoader(
     '<<PagesWithTabs>>',
     appColumnCL
 );
-
-
-
-
 
 entityMainContentCL.addCallback("data", function(data) {
     data.copyFromAncestor("entityType")
@@ -65,17 +55,37 @@ entityMainContentCL.addCallback("data", function(data) {
 export var subcategoriesPageCL = new ContentLoader(
     "SubcategoriesPage",
     /* Initial HTML template */
+    '<<TermSetPage>>',
+    appColumnCL
+);
+subcategoriesPageCL.addCallback("data", function(data) {
+    data.relID = "10"; // ID of the "Subcategories" Relation.
+});
+export var instancesPageCL = new ContentLoader(
+    "InstancesPage",
+    /* Initial HTML template */
+    '<<TermSetPage>>',
+    appColumnCL
+);
+instancesPageCL.addCallback("data", function(data) {
+    data.relID = "13"; // ID of the "Instances" Relation.
+});
+
+
+
+export var termSetPageCL = new ContentLoader(
+    "TermSetPage",
+    /* Initial HTML template */
     '<div>' +
         '<<RelationSetField>>' +
     '</div>',
     appColumnCL
 );
-subcategoriesPageCL.addCallback("data", function(data) {
+termSetPageCL.addCallback("data", function(data) {
     Object.assign(data, {
         elemContentKey: "TermElement",
         objType: "t", // the Subcategories page is only for Term Columns.
         objID: data.getFromAncestor("entityID"),
-        relID: "10", // ID of the "Subcategories" Relation.
         subjType: "t",
         queryNum: 40000,
         userWeights: [{userID: 1, weight: 1}],

@@ -51,6 +51,7 @@ relationSetFieldCL.addCallback("data", function(data) {
         "relID",
     ]);
     data.titleCutOutLevels = [2, 1];
+    // data.titleCutOutLevels = [1, 1];
 });
 relationSetFieldCL.addCallback(function($ci, data) {
     $ci
