@@ -379,19 +379,21 @@ export function getCombinedSet(userSetsArr, boolArr, sortFlag) {
     // column of ret. Also store the same averaged ratVal as is in the array in
     // the third column of ret.
     let retLen = ret.length;
-    let positions = new Array(predNum).fill(0);
     for (let i = 1; i < predNum; i++) {
         let ratTransFun = userSetsArr[i].ratTransFun;
         let avgSet = userSetsArr[i].avgSet;
-        let pos = positions[i];
+        let avgSetLen = avgSet.length;
+        let pos = 0;
         for (let j = 0; j < retLen; j++) {
-        let subjID = ret[j][1];
-            // let row = userSetsArr[j].avgSet[positions[j]];
-            // while (userSetsArr[j].avgSet[pos])
-            // if (row[1] === subjID) {
-            //     ret[i][0] += ratTransFun(row[0]);
-            //     positions[j]
-            // }
+            let subjID = ret[j][1];
+            let row = avgSet[pos];
+            while (avgSet[pos][1] < subjID && pos < avgSetLen - 1) {
+                pos++;
+            }
+            let row = avgSet[pos];
+            if (row[1] == subjID) {
+                ret[j][0] += ratTransFun(row[0]);
+            }
         }
     }
     return ret;
