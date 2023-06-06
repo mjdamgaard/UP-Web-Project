@@ -344,7 +344,7 @@ export function getAveragedSet(sets, userWeights, sortFlag) {
  * other entities, these will then not be used for the combined set. And for
  * all the entities of the first set that are not present in a given other set,
  * their averaged rating value will then be set to 0 (before applying the
- * factor function).. 
+ * factor function)..
  *
  */
 export function getCombinedSet(userSetsArr) {
