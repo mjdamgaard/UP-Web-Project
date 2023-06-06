@@ -359,8 +359,7 @@ export function setAveragedSets(userSetsArr, boolArr, sortFlag) {
  * other entities, these will then not be used for the combined set. And for
  * all the entities of the first set that are not present in a given other set,
  * their averaged rating value will then be set to 0 (before applying the
- * rating transformer function). (If a ratTransFun is a number, that number
- * is simply factored on the given ratings, treating the function as x => a*x).
+ * rating transformer function).
  */
 export function getCombinedSet(userSetsArr, boolArr, sortFlag) {
     // first compute the averaged sets for each predicate (where the ratings
@@ -375,30 +374,27 @@ export function getCombinedSet(userSetsArr, boolArr, sortFlag) {
         row => [row[0], row[1], new Array(predNum).fill(row[0])]
     );
     // for each subsequent avgSet, look for any subjID contained in the first
-    // set, and for each one found, apply the userSetsArr.ratTransFun to the
+    // set, and for each one found, apply the userSetsArr[j].ratTransFun to the
     // averaged ratVal and add the result to the combRatVal located in the first
     // column of ret. Also store the same averaged ratVal as is in the array in
     // the third column of ret.
     let retLen = ret.length;
-    for (let i = 0; i < predNum; i++) {
-        let avgSet = userSetsArr[i].avgSet;
-        let ratTransFun = userSetsArr[i].ratTransFun;
-        let pos = 0;
-        if (typeof ratTransFun === "number") {
-            for (let j = 0; j < retLen; j++) {
-                let retSubjID = ret[pos][1];
-                let setSubjID = avgSet[j][1];
-                if (setSubjID == retSubjID) {
-                    ret[j][0] += ratTransFun * avgSet[j][0];
-                    pos += 1;
-                } else if (setSubjID > retSubjID) {
-                    while (ret[pos][1] < setSubjID && pos < retLen - 2) {
-                        pos++;..
-                    }
-                }
-            }
+    let positions = new Array(predNum).fill(0);
+    for (let i = 0; i < retLen; i++) {
+        let subjID = ret[i][1];
+        for (let j = 1; j < predNum; j++) {
+            let ratTransFun = userSetsArr[j].ratTransFun;
+            let avgSet = userSetsArr[j].avgSet;
+            let pos = positions[j];
+            // let row = userSetsArr[j].avgSet[positions[j]];
+            // while (userSetsArr[j].avgSet[pos])
+            // if (row[1] === subjID) {
+            //     ret[i][0] += ratTransFun(row[0]);
+            //     positions[j]
+            // }
         }
     }
+    return ret;
 }
 
 
