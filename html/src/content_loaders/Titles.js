@@ -123,6 +123,14 @@ entityTitleCL.addCallback(function($ci, data) {
 
 
 
+export var userTitleCL = new ContentLoader(
+    "UserTitle",
+    /* Initial HTML template */
+    '<<EntityTitle>>', // TODO: change to look up the username.
+    appColumnCL
+);
+
+
 
 
 

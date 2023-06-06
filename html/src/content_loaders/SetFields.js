@@ -290,8 +290,21 @@ export var userWeightsMenuCL = new ContentLoader(
     '</div>',
     appColumnCL
 );
-
-
+export var userWeightMenuPointCL = new ContentLoader(
+    "UserWeightMenuPoint",
+    /* Initial HTML template */
+    '<div>' +
+        '<div class="form-group">' +
+            '<label><<UserTitle>> weight:</label>' +
+            '<input type="text" class="form-control">' +
+        '</div>' +
+    '</div>',
+    appColumnCL
+);
+userWeightMenuPointCL.addCallback("data", function(data) {
+    data.entityType = "u";
+    data.entityID = data.getFromAncestor("userID");
+});
 
 
 
