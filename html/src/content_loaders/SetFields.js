@@ -393,11 +393,9 @@ export function getCombinedSet(userSetsArr, boolArr, sortFlag) {
             let row = avgSet[pos];
             if (row[1] == subjID) {
                 ret[j][0] += ratTransFun(row[0]);
+                ret[j][1][i] = row[0];
             }
         }
     }
     return ret;
 }
-
-
-//
