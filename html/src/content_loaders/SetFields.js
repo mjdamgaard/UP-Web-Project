@@ -374,18 +374,18 @@ export function getCombinedSet(userSetsArr, boolArr, sortFlag) {
         row => [row[0], row[1], new Array(predNum).fill(row[0])]
     );
     // for each subsequent avgSet, look for any subjID contained in the first
-    // set, and for each one found, apply the userSetsArr[j].ratTransFun to the
+    // set, and for each one found, apply the userSetsArr[i].ratTransFun to the
     // averaged ratVal and add the result to the combRatVal located in the first
     // column of ret. Also store the same averaged ratVal as is in the array in
     // the third column of ret.
     let retLen = ret.length;
     let positions = new Array(predNum).fill(0);
-    for (let i = 0; i < retLen; i++) {
-        let subjID = ret[i][1];
-        for (let j = 1; j < predNum; j++) {
-            let ratTransFun = userSetsArr[j].ratTransFun;
-            let avgSet = userSetsArr[j].avgSet;
-            let pos = positions[j];
+    for (let i = 1; i < predNum; i++) {
+        let ratTransFun = userSetsArr[i].ratTransFun;
+        let avgSet = userSetsArr[i].avgSet;
+        let pos = positions[i];
+        for (let j = 0; j < retLen; j++) {
+        let subjID = ret[j][1];
             // let row = userSetsArr[j].avgSet[positions[j]];
             // while (userSetsArr[j].avgSet[pos])
             // if (row[1] === subjID) {
