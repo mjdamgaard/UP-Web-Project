@@ -162,6 +162,8 @@ predicateSetFieldCL.addCallback(function($ci, data) {
         $ci.children('.CI.SetList').trigger("load");
         // off this event.
         $ci.off("load-initial-set-list-if-ready");
+        // trigger event to make header responsive to click event.
+        $ci.children('.CI.SetHeader').trigger("userSetsArr-is-ready");
         return false;
     });
     $ci.trigger("query-initial-sets-then-load");
@@ -241,7 +243,6 @@ setListCL.addCallback(function($ci, data) {
 
 
 
-
 export var setHeaderCL = new ContentLoader(
     "SetHeader",
     /* Initial HTML template */
@@ -253,6 +254,15 @@ export var setHeaderCL = new ContentLoader(
     '</div>',
     appColumnCL
 );
+setHeaderCL.addCallback(function($ci, data) {
+    $ci.one("userSetsArr-is-ready", function() {
+        $(this).on("click", function() {
+            $(this).find('.CI.SetPredicatesDropdownMenu')
+                .trigger("load")
+                .show();
+        });
+    });
+});
 export var setPredicatesDropdownMenuCL = new ContentLoader(
     "SetPredicatesDropdownMenu",
     /* Initial HTML template */
@@ -271,6 +281,8 @@ export var setPredicateMenuPointCL = new ContentLoader(
     '</div>',
     appColumnCL
 );
+
+
 
 
 
@@ -361,6 +373,8 @@ export function setAveragedSets(userSetsArr, boolArr, sortFlag) {
  * their averaged rating value will then be set to 0 (before applying the
  * rating transformer function).
  */
+// TODO: Figure out about the sortFlag, and what should happen when predNum ==
+// 1..
 export function getCombinedSet(userSetsArr, boolArr, sortFlag) {
     // first compute the averaged sets for each predicate (where the ratings
     // from each user for that predicate is combined as a weighted average).
@@ -386,7 +400,6 @@ export function getCombinedSet(userSetsArr, boolArr, sortFlag) {
         let pos = 0;
         for (let j = 0; j < retLen; j++) {
             let subjID = ret[j][1];
-            let row = avgSet[pos];
             while (avgSet[pos][1] < subjID && pos < avgSetLen - 1) {
                 pos++;
             }
