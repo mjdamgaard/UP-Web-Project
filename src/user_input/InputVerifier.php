@@ -105,23 +105,6 @@ class InputVerifier {
                     );
                 }
                 break;
-            case "elemTypeStr":
-                if (
-                    !is_string($paramVal) ||
-                    !ctype_print($paramVal) ||
-                    strlen($paramVal) > 31
-                ) {
-                    echoTypeErrorJSONAndExit(
-                        $paramName, $paramVal, "VARCHAR(31)"
-                    );
-                }
-                break;
-            case "elemIDHexStr":
-                $pattern = "/^([0-9A-Fa-f]{2}){0,248}$/";
-                if (!preg_match($pattern, $paramVal)) {
-                    echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
-                }
-                break;
             case "text":
                 if (
                     !is_string($paramVal) ||
@@ -143,7 +126,8 @@ class InputVerifier {
                 break;
             case "time":
                 $pattern =
-                    "/^([12]?[0-9] |3[0-4] )?([01][0-9]|2[0-3])(:[0-5][0-9]){2}$/";
+                    "/^([12]?[0-9] |3[0-4] )?" .
+                        "([01][0-9]|2[0-3])(:[0-5][0-9]){2}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
                 }
