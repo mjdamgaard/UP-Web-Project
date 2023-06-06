@@ -257,6 +257,8 @@ export var setHeaderCL = new ContentLoader(
 setHeaderCL.addCallback(function($ci, data) {
     $ci.one("userSetsArr-is-ready", function() {
         $(this).on("click", function() {
+            // let $this = $(this);
+            // $this.data("data").copyFromAncestor("userSetsArr");
             $(this).find('.CI.SetPredicatesDropdownMenu')
                 .trigger("load")
                 .show();

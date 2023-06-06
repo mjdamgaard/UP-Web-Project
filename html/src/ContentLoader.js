@@ -505,7 +505,11 @@ function loadChildCIWithNestedDataAndSignal(
                     'ill-formed childDataKey "data.' + dataKeyArr.join(".")
                 );
             }
-            nestedData = nestedData[key];
+            if (i === 0) {
+                nestedData = nestedData.get(key);
+            } else {
+                nestedData = nestedData[key];
+            }
         }
         if (!isAnArrayDataKey) {
             var resultingData = new ChildData(data, nestedData);
