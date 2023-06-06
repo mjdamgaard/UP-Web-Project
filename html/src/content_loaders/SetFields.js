@@ -257,8 +257,6 @@ export var setHeaderCL = new ContentLoader(
 setHeaderCL.addCallback(function($ci, data) {
     $ci.one("userSetsArr-is-ready", function() {
         $(this).on("click", function() {
-            // let $this = $(this);
-            // $this.data("data").copyFromAncestor("userSetsArr");
             $(this).find('.CI.SetPredicatesDropdownMenu')
                 .trigger("load")
                 .show();
@@ -278,12 +276,20 @@ export var setPredicateMenuPointCL = new ContentLoader(
     /* Initial HTML template */
     '<div>' +
         '<<PredicateTitle>>' +
-        '<<DropdownButton>>' +
-        '<<FactorFunAndUserWeightMenu data:wait>>' +
+        '<<RatingTransformerFunctionMenu>>' +
+        '<<UserWeightsMenu>>' +
     '</div>',
     appColumnCL
 );
 
+export var userWeightsMenuCL = new ContentLoader(
+    "UserWeightsMenu",
+    /* Initial HTML template */
+    '<div>' +
+        '<<UserWeightMenuPoint data.userWeights[...]>>' +
+    '</div>',
+    appColumnCL
+);
 
 
 
