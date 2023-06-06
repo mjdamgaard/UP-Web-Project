@@ -28,7 +28,7 @@ import {
      * data.predID,
      * data.combSet = [[combRatVal, subjID, ratValArr], ...],
      * data.userSetsArr =
-     *     [{predID, ratTransFun, userWeights, sets, avgSets}, ...],
+     *     [{predID, ratTransFun, userWeights, sets, avgSet}, ...],
      * data.ratingLow,
      * data.ratingHigh,
      * data.queryOffset,
@@ -332,19 +332,21 @@ export function getAveragedSet(sets, userWeights, sortFlag) {
 }
 
 export function setAveragedSets(userSetsArr, boolArr, sortFlag) {
-    let setNum = userSetsArr.sets.length;
+    let predNum = userSetsArr.length;
     if (!boolArr) {
-        boolArr = new Array(setNum).fill(true);
+        boolArr = new Array(predNum).fill(true);
     }
-    for (let i = 0; i < setNum; i++) {
+    for (let i = 0; i < predNum; i++) {
         if (boolArr[0]) {
-            userSetsArr.avgSets[i] = getAveragedSet(
+            userSetsArr[i].avgSet = getAveragedSet(
                 userSetsArr.sets, userSetsArr.userWeights, sortFlag
             );
         }
     }
 }
 
+
+// (userSetsArr = [{predID, ratTransFun, userWeights, sets, avgSet}, ...].)
 
 /**
  * getCombinedSet(userSetsArr) returns a combined set,
@@ -361,6 +363,43 @@ export function setAveragedSets(userSetsArr, boolArr, sortFlag) {
  * is simply factored on the given ratings, treating the function as x => a*x).
  */
 export function getCombinedSet(userSetsArr, boolArr, sortFlag) {
-    setAveragedSets(userSetsArr, boolArr); // an undefined sortFlag means that
-    // the averaged sets will be sorted in terms of subjID.
+    // first compute the averaged sets for each predicate (where the ratings
+    // from each user for that predicate is combined as a weighted average).
+    setAveragedSets(userSetsArr, boolArr); // (An undefined sortFlag means that
+    // the averaged sets will be sorted in terms of subjID.)
+    // then initialize the return array to the first averaged set, but with an
+    // extra third column meant to contain all the averaged ratings before this
+    // combination
+    let predNum = userSetsArr.length;
+    let ret = userSetsArr[0].avgSet.map(
+        row => [row[0], row[1], new Array(predNum).fill(row[0])]
+    );
+    // for each subsequent avgSet, look for any subjID contained in the first
+    // set, and for each one found, apply the userSetsArr.ratTransFun to the
+    // averaged ratVal and add the result to the combRatVal located in the first
+    // column of ret. Also store the same averaged ratVal as is in the array in
+    // the third column of ret.
+    let retLen = ret.length;
+    for (let i = 0; i < predNum; i++) {
+        let avgSet = userSetsArr[i].avgSet;
+        let ratTransFun = userSetsArr[i].ratTransFun;
+        let pos = 0;
+        if (typeof ratTransFun === "number") {
+            for (let j = 0; j < retLen; j++) {
+                let retSubjID = ret[pos][1];
+                let setSubjID = avgSet[j][1];
+                if (setSubjID == retSubjID) {
+                    ret[j][0] += ratTransFun * avgSet[j][0];
+                    pos += 1;
+                } else if (setSubjID > retSubjID) {
+                    while (ret[pos][1] < setSubjID && pos < retLen - 2) {
+                        pos++;..
+                    }
+                }
+            }
+        }
+    }
 }
+
+
+//
