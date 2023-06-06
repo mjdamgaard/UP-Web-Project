@@ -27,7 +27,8 @@ import {
      * data.predTitle,
      * data.predID,
      * data.combSet = [[combRatVal, subjID, ratValArr], ...],
-     * data.userSetsArr = [{predID, factorFun, userWeights, sets}, ...],
+     * data.userSetsArr =
+     *     [{predID, ratTransFun, userWeights, sets, avgSets}, ...],
      * data.ratingLow,
      * data.ratingHigh,
      * data.queryOffset,
@@ -53,44 +54,43 @@ relationSetFieldCL.addCallback("data", function(data) {
     // data.titleCutOutLevels = [1, 1];
 });
 relationSetFieldCL.addCallback(function($ci, data) {
-    $ci
-        .one("query-pred-title-then-pred-id-then-load", function() {
-            let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
-            let reqData = {
-                type: "term",
-                id: data.relID,
-            };
-            dbReqManager.query($ci, reqData, function($ci, result) {
-                data.predTitle = (result[0] ?? [])[1];
-                $ci.trigger("query-pred-id-then-load");
-            });
-            return false;
-        })
-        .one("query-pred-id-then-load", function() {
-            let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
-            let reqData = {
-                type: "termID",
-                cid: "2", // the ID of the Predicate Context
-                spt: data.objType,
-                spid: data.objID,
-                t: encodeURI(data.predTitle),
-            };
-            dbReqManager.query($ci, reqData, function($ci, result) {
-                data.predID = (result[0] ?? [0])[0]; // predID = 0 if missing.
-                if (data.predID === 0) {
-                    relationSetFieldCL.loadBefore(
-                        $ci, "MissingPredicateText", data
-                    );
-                    relationSetFieldCL.loadReplaced(
-                        $ci, "SubmitPredicateField", data
-                    );
-                } else {
-                    $ci.trigger("load");
-                }
-            });
-            return false;
-        })
-        .trigger("query-pred-title-then-pred-id-then-load");
+    $ci.one("query-pred-title-then-pred-id-then-load", function() {
+        let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
+        let reqData = {
+            type: "term",
+            id: data.relID,
+        };
+        dbReqManager.query($ci, reqData, function($ci, result) {
+            data.predTitle = (result[0] ?? [])[1];
+            $ci.trigger("query-pred-id-then-load");
+        });
+        return false;
+    });
+    $ci.one("query-pred-id-then-load", function() {
+        let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
+        let reqData = {
+            type: "termID",
+            cid: "2", // the ID of the Predicate Context
+            spt: data.objType,
+            spid: data.objID,
+            t: encodeURI(data.predTitle),
+        };
+        dbReqManager.query($ci, reqData, function($ci, result) {
+            data.predID = (result[0] ?? [0])[0]; // predID = 0 if missing.
+            if (data.predID === 0) {
+                relationSetFieldCL.loadBefore(
+                    $ci, "MissingPredicateText", data
+                );
+                relationSetFieldCL.loadReplaced(
+                    $ci, "SubmitPredicateField", data
+                );
+            } else {
+                $ci.trigger("load");
+            }
+        });
+        return false;
+    });
+    $ci.trigger("query-pred-title-then-pred-id-then-load");
 });
 export var missingPredicateTextCL = new ContentLoader(
     "MissingPredicateText",
@@ -128,7 +128,7 @@ predicateSetFieldCL.addCallback(function($ci, data) {
         let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
         data.userSetsArr = [{
             predID: data.predID,
-            factorFun: x => 1,
+            ratTransFun: 1,
             userWeights: data.get("userWeights"),
             sets: [],
         }];
@@ -331,27 +331,36 @@ export function getAveragedSet(sets, userWeights, sortFlag) {
     return ret;
 }
 
-// data.userSetsArr = [{predID, factorFun, userWeights, sets}, ...],
+export function setAveragedSets(userSetsArr, boolArr, sortFlag) {
+    let setNum = userSetsArr.sets.length;
+    if (!boolArr) {
+        boolArr = new Array(setNum).fill(true);
+    }
+    for (let i = 0; i < setNum; i++) {
+        if (boolArr[0]) {
+            userSetsArr.avgSets[i] = getAveragedSet(
+                userSetsArr.sets, userSetsArr.userWeights, sortFlag
+            );
+        }
+    }
+}
+
 
 /**
  * getCombinedSet(userSetsArr) returns a combined set,
  * combSet = [[combRatVal, subjID, ratValArr], ...]. This is done by first
- * using getAveragedSet to get averaged sets for each predicate. Then these
- * sets are further combined into one by factoring on the individual factorFuns
- * and then averaging the values. The first predicate in userSetsArr and the
+ * using setAveragedSets() to get averaged sets for each predicate. Then these
+ * sets are further combined into one by applying the individual ratTransFuns
+ * and then adding up the values. The first predicate in userSetsArr and the
  * corresponding averaged set is treated specially in that the combined will
  * contain all the entities of that set and no more. If the other sets contain
  * other entities, these will then not be used for the combined set. And for
  * all the entities of the first set that are not present in a given other set,
  * their averaged rating value will then be set to 0 (before applying the
- * factor function)..
- *
+ * rating transformer function). (If a ratTransFun is a number, that number
+ * is simply factored on the given ratings, treating the function as x => a*x).
  */
-export function getCombinedSet(userSetsArr) {
-    let predNum = userSetsArr.length;
-    let avgSets = new Array(predNum);
-    for (let i = 0; i < predNum; i++) {
-        avgSets[i] = getAveragedSet(userSetsArr.sets, userSetsArr.userWeights);
-    }
-    // we assu
+export function getCombinedSet(userSetsArr, boolArr, sortFlag) {
+    setAveragedSets(userSetsArr, boolArr); // an undefined sortFlag means that
+    // the averaged sets will be sorted in terms of subjID.
 }
