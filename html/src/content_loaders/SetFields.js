@@ -8,7 +8,9 @@ import {
 
 
 
-
+// TODO: Remove PredicateSetField, and make RelationSetField->SetField be able
+// to start with a whole array of relIDs, (comb.) objIDs. Also make it so that
+// if objID --- or relID --- is a string instead of a.. no.. Hm.. 
 /**
  * SetField requires data:
      * RelationSetField:
