@@ -248,7 +248,7 @@ export var setHeaderCL = new ContentLoader(
     /* Initial HTML template */
     '<div>' +
         '<<PredicateTitle>>' +
-        '<<AddButton>>' +
+        '<<AddButton>>' + // Button to add predicate (menu point) in dd. menu.
         '<<DropdownButton>>' +
         '<<SetPredicatesDropdownMenu data:wait>>' +
     '</div>',
@@ -276,35 +276,55 @@ export var setPredicateMenuPointCL = new ContentLoader(
     /* Initial HTML template */
     '<div>' +
         '<<PredicateTitle>>' +
-        '<<RatingTransformerFunctionMenu>>' +
-        '<<UserWeightsMenu>>' +
+        '<<RatingTransformFunctionMenu>>' +
+        // '<<UserWeightsMenu>>' +
     '</div>',
     appColumnCL
 );
-
-export var userWeightsMenuCL = new ContentLoader(
-    "UserWeightsMenu",
+export var ratingTransformFunctionMenuCL = new ContentLoader(
+    "RatingTransformFunctionMenu",
     /* Initial HTML template */
     '<div>' +
-        '<<UserWeightMenuPoint data.userWeights[...]>>' +
-    '</div>',
-    appColumnCL
-);
-export var userWeightMenuPointCL = new ContentLoader(
-    "UserWeightMenuPoint",
-    /* Initial HTML template */
-    '<div>' +
+        // TODO: CHange this to add more options for the function, and also so
+        // that the user can set rl and rh for the set query, as well as decide
+        // if the predicate set should be a superset the combined set
+        // (filtering away all other elements).
         '<div class="form-group">' +
-            '<label><<UserTitle>> weight:</label>' +
-            '<input type="text" class="form-control">' +
+            '<label>factor:</label>' +
+            '<input type="number" class="form-control">' +
         '</div>' +
     '</div>',
     appColumnCL
 );
-userWeightMenuPointCL.addCallback("data", function(data) {
-    data.entityType = "u";
-    data.entityID = data.getFromAncestor("userID");
-});
+
+
+// TODO: Make the user weight menu a global one, changed for the whole
+// sdbInterface at once.
+// export var userWeightsMenuCL = new ContentLoader(
+//     "UserWeightsMenu",
+//     /* Initial HTML template */
+//     '<div>' +
+//         '<<UserWeightMenuPoint data.userWeights[...]>>' +
+//     '</div>',
+//     appColumnCL
+// );
+// export var userWeightMenuPointCL = new ContentLoader(
+//     "UserWeightMenuPoint",
+//     /* Initial HTML template */
+//     '<div>' +
+//         '<div class="form-group">' +
+//             '<label><<UserTitle>> weight:</label>' +
+//             '<input type="text" class="form-control">' +
+//         '</div>' +
+//     '</div>',
+//     appColumnCL
+// );
+// userWeightMenuPointCL.addCallback("data", function(data) {
+//     data.entityType = "u";
+//     data.entityID = data.getFromAncestor("userID");
+// });
+
+
 
 
 
@@ -428,6 +448,9 @@ export function getCombinedSet(userSetsArr, boolArr, sortFlag) {
             if (row[1] == subjID) {
                 ret[j][0] += ratTransFun(row[0]);
                 ret[j][1][i] = row[0];
+            } else {
+                ret[j][0] += ratTransFun(0);
+                ret[j][1][i] = null;
             }
         }
     }
