@@ -25,7 +25,8 @@ import {
      * data.queryNum,
      * data.userWeights = [{userID, weight}, ...],
      * data.initialNum,
-     * data.incrementNum.
+     * data.incrementNum,
+     * data.showHeader.
  * And it also sets/updates data:
      * data.predTitle,
      * data.predID,
