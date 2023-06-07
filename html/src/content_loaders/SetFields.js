@@ -248,6 +248,7 @@ export var setHeaderCL = new ContentLoader(
     /* Initial HTML template */
     '<div>' +
         '<<PredicateTitle>>' +
+        '<<RefreshButton>>' +
         '<<AddButton>>' + // Button to add predicate (menu point) in dd. menu.
         '<<DropdownButton>>' +
         '<<SetPredicatesDropdownMenu data:wait>>' +
@@ -298,6 +299,24 @@ export var ratingTransformFunctionMenuCL = new ContentLoader(
     '</div>',
     appColumnCL
 );
+ratingTransformFunctionMenuCL.addCallback("data", function(data) {
+    let userSetsArr = getFromAncestor("userSetsArr");
+    data.copyFromAncestor("predID");
+    let len = userSetsArr.length;
+    // find the userSets object corresponing to the relevant predicate.
+    for (let i = 0; i < len; i++) {
+        if (userSetsArr[i].predID = data.predID) {
+            data.userSets = userSetsArr[i];
+            break;
+        }
+    }
+});
+ratingTransformFunctionMenuCL.addCallback(function($ci, data) {
+    $ci
+});
+
+
+
 
 
 // TODO: Make the user weight menu a global one, changed for the whole
