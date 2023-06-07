@@ -256,10 +256,12 @@ export var setHeaderCL = new ContentLoader(
 );
 setHeaderCL.addCallback(function($ci, data) {
     $ci.one("userSetsArr-is-ready", function() {
-        $(this).on("click", function() {
-            $(this).find('.CI.SetPredicatesDropdownMenu')
-                .trigger("load")
-                .show();
+        $(this).one("click", function() {
+            let $this = $(this);
+            $this.find('.CI.SetPredicatesDropdownMenu').trigger("load");
+            $this.on("click", function() {
+                $(this).find('.CI.SetPredicatesDropdownMenu').toggle();
+            })
         });
     });
 });
