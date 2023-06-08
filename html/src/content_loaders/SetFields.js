@@ -12,7 +12,8 @@ import {
 SetList requires data:
     data.setDataArr = [setData, ...],
         setData = {
-            predKeys, ratTransFun, userWeightArr, setArr, avgSet, queryParams
+            predKeys, ratTransFun, userWeightArr, setArr, avgSet, queryParams,
+            refresh
         },
         predKeys =
             {relID, objType, objID} |
@@ -58,7 +59,14 @@ setFieldCL.addCallback(function($ci, data) {
 });
 
 export function queryAndSetAvgSetAndSignalCI(setData, $ci, signal) {
-    
+    // if setData.avgSet is already set and setData.refresh is not true, simply
+    // send the ready signal immediatly
+    if (!!setData.avgSet && !setData.refresh) {
+        $ci.trigger(signal, [setData.title]);
+        return;
+    }
+    // else, we should first..
+
 }
 
 
