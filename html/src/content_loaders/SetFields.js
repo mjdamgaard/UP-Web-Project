@@ -54,19 +54,29 @@ setFieldCL.addCallback("data", function(data) {
 setFieldCL.addCallback(function($ci, data) {
     let len = data.setDataArr.length;
     for (let i = 0; i < len; i++) {
-        queryAndSetAvgSetAndSignalCI(setDataArr[i], $ci, signal);
+        queryAndSetAvgSetAndSignalCI(setDataArr[i], i, $ci, signal);
     }
 });
 
-export function queryAndSetAvgSetAndSignalCI(setData, $ci, signal) {
+export function queryAndSetAvgSetAndSignalCI(setData, i, $ci, signal) {
     // if setData.avgSet is already set and setData.refresh is not true, simply
     // send the ready signal immediatly
     if (!!setData.avgSet && !setData.refresh) {
         $ci.trigger(signal, [setData.title]);
         return;
     }
-    // else, we should first.. ..
-
+    // else if setArr is not empty and setData.refresh is not true, simply
+    // compute the avgSet from setArr and send the ready signal.
+    setData.setArr ??= [];
+    if (setData.setArr.length !== 0 && !setData.refresh) {
+        setData.avgSet = getAveragedSet(setData.setArr, setData.userWeightArr);
+        $ci.trigger(signal, [setData.title]);
+        return;
+    }
+    // else set up and event to query the sets to load into setData.setArr.
+    $ci.one("query-sets-" + i.toString(), function() {
+        
+    })
 }
 
 
