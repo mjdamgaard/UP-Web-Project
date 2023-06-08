@@ -14,12 +14,14 @@ import {
 // it as a data key instead and look it up via ChildData.get().
 /**
  * SetField requires data:
-     * RelationSetField:
-         * data.relID,
-         * data.objType,
-         * data.objID,
-     * PredicateSetField:
-         * data.predID,
+     data.userSetsArr =
+     *     [{predKeys, ratTransFun, userWeights, sets, avgSet}, ...],
+     *     predKeys =
+     *         {relIDKey, objType, objIDKey} |
+     *         {predTitle, objType, objIDKey} |
+     *         {predIDKey} |
+     *         {title, (objType, objIDKey)?}. (requires sets prop. to be given)
+     *
      * data.elemContentKey,
      * data.subjType,
      * data.queryNum,
@@ -31,15 +33,14 @@ import {
      * data.predTitle,
      * data.predID,
      * data.combSet = [[combRatVal, subjID, ratValArr], ...],
-     * data.userSetsArr =
-     *     [{predID, ratTransFun, userWeights, sets, avgSet}, ...],
+     *
      * data.ratingLow,
      * data.ratingHigh,
      * data.queryOffset,
      * data.queryAscending.
  */
 export var relationSetFieldCL = new ContentLoader(
-    "RelationSetField",
+    "SetField",
     /* Initial HTML template */
     '<<PredicateSetField data:wait>>',
     appColumnCL
