@@ -65,7 +65,7 @@ export function queryAndSetAvgSetAndSignalCI(setData, $ci, signal) {
         $ci.trigger(signal, [setData.title]);
         return;
     }
-    // else, we should first..
+    // else, we should first.. ..
 
 }
 
