@@ -14,14 +14,18 @@ import {
 // it as a data key instead and look it up via ChildData.get(). *(->SetList..?
 // ..Yeah..)
 /**
- * SetField requires data:
-     data.setDataArr =
-     *     [{predKeys, ratTransFun, userWeights, sets, avgSet}, ...],
+ * SetList requires data:
+     data.setDataArr = [setData, ...],
+     *     setData = {
+               predKeys, ratTransFun, userWeightArr, setArr, avgSet, queryParams
+           },
      *     predKeys =
      *         {relIDKey, objType, objIDKey} |
      *         {predTitle, objType, objIDKey} |
      *         {predIDKey} |
-     *         {title, (objType, objIDKey)?}. (requires sets prop. to be given)
+     *         {title, (objType, objIDKey)?}, (requires setArr to be given)
+     *     userWeightArr = [{userID, weight}, ...],
+     *     queryParams = {ratingLow, ratingHigh, queryOffset, queryAscending},
      * data.elemContentKey,
      * data.subjType,
      * data.queryNum,
@@ -31,21 +35,33 @@ import {
      * data.applySortingOptions.
      * data.sortingOptions. (if applySortingOptions == true.)
  * And it also sets/updates data:
-     * data.predTitle,
-     * data.predID,
-     * data.combSet = [[combRatVal, subjID, ratValArr], ...],
-     *
-     * data.ratingLow,
-     * data.ratingHigh,
-     * data.queryOffset,
-     * data.queryAscending.
+     * data.combSet = [[combRatVal, subjID, ratValArr], ...].
  */
-export var setFieldCL = new ContentLoader(
-    "SetField",
+export var setListCL = new ContentLoader(
+    "SetList",
     /* Initial HTML template */
     '<<PredicateSetField data:wait>>',
     appColumnCL
 );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // NOTE: Since RelationSetField does not try set up any lasting events, this
 // works. But do not decorate a CL that then waits for data, like here, and then
 // try to have the decorator add events to the CI, since these will just be
@@ -124,7 +140,7 @@ predicateSetFieldCL.addCallback("data", function(data) {
         "predID",
         "subjType",
         "queryNum",
-        "userWeights",
+        "userWeightArr",
         "initialNum",
         "incrementNum",
     ]);
@@ -135,14 +151,14 @@ predicateSetFieldCL.addCallback(function($ci, data) {
         data.setDataArr = [{
             predID: data.predID,
             ratTransFun: 1,
-            userWeights: data.get("userWeights"),
-            sets: [],
+            userWeightArr: data.get("userWeightArr"),
+            setArr: [],
         }];
-        let len = data.userWeights.length;
+        let len = data.userWeightArr.length;
         for (let i = 0; i < len; i++) {
             let reqData = {
                 type: "set",
-                uid: data.userWeights[i].userID,
+                uid: data.userWeightArr[i].userID,
                 pid: data.predID,
                 st: data.subjType,
                 rl: data.ratingLow ?? -32767,
@@ -152,21 +168,21 @@ predicateSetFieldCL.addCallback(function($ci, data) {
                 a: data.queryAscending ?? 0,
             };
             dbReqManager.query($ci, reqData, i, function($ci, result, i) {
-                data.setDataArr[0].sets[i] = result;
+                data.setDataArr[0].setArr[i] = result;
                 $ci.trigger("load-initial-set-list-if-ready");
             });
         }
         return false;
     });
     $ci.on("load-initial-set-list-if-ready", function() {
-        let len = data.userWeights.length;
+        let len = data.userWeightArr.length;
         for (let i = 0; i < len; i++) {
-            if (typeof data.setDataArr[0].sets[i] === "undefined") {
+            if (typeof data.setDataArr[0].setArr[i] === "undefined") {
                 return false;
             }
         }
         let userSets = data.setDataArr[0];
-        data.combSet = getAveragedSet(userSets.sets, userSets.userWeights);
+        data.combSet = getAveragedSet(userSets.setArr, userSets.userWeightArr);
         $ci.children('.CI.SetList').trigger("load");
         // off this event.
         $ci.off("load-initial-set-list-if-ready");
@@ -329,11 +345,11 @@ ratingTransformFunctionMenuCL.addCallback(function($ci, data) {
 
 // TODO: Make the user weight menu a global one, changed for the whole
 // sdbInterface at once.
-// export var userWeightsMenuCL = new ContentLoader(
+// export var userWeightArrMenuCL = new ContentLoader(
 //     "UserWeightsMenu",
 //     /* Initial HTML template */
 //     '<div>' +
-//         '<<UserWeightMenuPoint data.userWeights[...]>>' +
+//         '<<UserWeightMenuPoint data.userWeightArr[...]>>' +
 //     '</div>',
 //     appColumnCL
 // );
@@ -357,21 +373,21 @@ ratingTransformFunctionMenuCL.addCallback(function($ci, data) {
 
 
 
-// getAveragedSet() takes a two arrays, sets and userWeights, and returns a
+// getAveragedSet() takes a two arrays, setArr and userWeightArr, and returns a
 // unioned set containing the weighted averaged ratings for any subjects that
-// appear in one or more of the sets.
-export function getAveragedSet(sets, userWeights, sortFlag) {
+// appear in one or more of the setArr.
+export function getAveragedSet(setArr, userWeightArr, sortFlag) {
     // if there is only one set, simply return the set as is.
-    let setNum = sets.length;
+    let setNum = setArr.length;
     if (setNum === 1) {
-        return sets[0];
+        return setArr[0];
     }
     // else, first sort each array in terms of the subject IDs.
     for (let i = 0; i < setNum; i++) {
-        sets[i].sort(row1, row2 => row1[1] - row2[1]);
+        setArr[i].sort(row1, row2 => row1[1] - row2[1]);
     }
 
-    let setLengths = sets.map(val => val.length);
+    let setLengths = setArr.map(val => val.length);
     let setLenSum = setLengths.reduce((acc, val) => acc + val, 0);
     let ret = new Array(setLenSum);
     let retLen = 0;
@@ -379,14 +395,14 @@ export function getAveragedSet(sets, userWeights, sortFlag) {
     let continueLoop = true;
     while (continueLoop) {
         let minSubjID = positions.reduce(
-            (acc, val, ind) => Math.min(acc, sets[ind][val][1]), 0
+            (acc, val, ind) => Math.min(acc, setArr[ind][val][1]), 0
         );
         let weightedRatValOfMinSubjArray = positions.map(
-            (val, ind) => (sets[ind][val][1] !== minSubjID) ? "" :
-                sets[ind][val][0] * userWeights[ind]
+            (val, ind) => (setArr[ind][val][1] !== minSubjID) ? "" :
+                setArr[ind][val][0] * userWeightArr[ind]
         );
         let weightSum = weightedRatValOfMinSubjArray.reduce(
-            (acc, val, ind) => acc + ((val === "") ? 0 : userWeights[ind]), 0
+            (acc, val, ind) => acc + ((val === "") ? 0 : userWeightArr[ind]), 0
         );
 
         let averagedRatVal = weightedRatValOfMinSubjArray
@@ -421,14 +437,14 @@ export function setAveragedSets(setDataArr, boolArr, sortFlag) {
     for (let i = 0; i < predNum; i++) {
         if (boolArr[0]) {
             setDataArr[i].avgSet = getAveragedSet(
-                setDataArr.sets, setDataArr.userWeights, sortFlag
+                setDataArr.setArr, setDataArr.userWeightArr, sortFlag
             );
         }
     }
 }
 
 
-// (setDataArr = [{predID, ratTransFun, userWeights, sets, avgSet}, ...].)
+// (setDataArr = [{predID, ratTransFun, userWeightArr, setArr, avgSet}, ...].)
 
 /**
  * getCombinedSet(setDataArr) returns a combined set,
