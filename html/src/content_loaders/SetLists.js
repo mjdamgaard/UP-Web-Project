@@ -13,7 +13,7 @@ SetList requires data:
     data.setDataArr = [setData, ...],
         setData = {
             predKeys, ratTransFun, userWeightArr, setArr, avgSet, queryParams,
-            refresh
+            isReadyArr, refresh
         },
         predKeys =
             {relID, objType, objID} |
