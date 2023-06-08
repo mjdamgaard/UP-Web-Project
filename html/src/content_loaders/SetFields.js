@@ -8,43 +8,58 @@ import {
 
 
 
-// TODO: Remove PredicateSetField, and make RelationSetField->SetField be able
-// to start with a whole array of relIDs, (comb.) objIDs. Also make it so that
-// if objID --- or relID --- is a string starting with a word character, treat
-// it as a data key instead and look it up via ChildData.get(). *(->SetList..?
-// ..Yeah..)
-/**
- * SetList requires data:
-     data.setDataArr = [setData, ...],
-     *     setData = {
-               predKeys, ratTransFun, userWeightArr, setArr, avgSet, queryParams
-           },
-     *     predKeys =
-     *         {relIDKey, objType, objIDKey} |
-     *         {predTitle, objType, objIDKey} |
-     *         {predIDKey} |
-     *         {title, (objType, objIDKey)?}, (requires setArr to be given)
-     *     userWeightArr = [{userID, weight}, ...],
-     *     queryParams = {ratingLow, ratingHigh, queryOffset, queryAscending},
-     * data.elemContentKey,
-     * data.subjType,
-     * data.queryNum,
-     * data.initialNum,
-     * data.incrementNum,
-     * data.showHeader,
-     * data.applySortingOptions.
-     * data.sortingOptions. (if applySortingOptions == true.)
- * And it also sets/updates data:
-     * data.combSet = [[combRatVal, subjID, ratValArr], ...].
- */
+/*
+SetList requires data:
+    data.setDataArr = [setData, ...],
+        setData = {
+            predKeys, ratTransFun, userWeightArr, setArr, avgSet, queryParams
+        },
+        predKeys =
+            {relID, objType, objID} |
+            {predTitle, objType, objID} |
+            {predID} |
+            {title, (objType, objID)?}, (requires setArr to be given)
+        userWeightArr = [{userID, weight}, ...],
+        queryParams = {
+            num, ratingLow, ratingHigh, queryOffset, queryAscending
+        },
+    data.elemContentKey,
+    data.subjType,
+    data.initialNum,
+    data.incrementNum,
+    // data.showHeader,
+    // data.applySortingOptions.
+    // data.sortingOptions. (if applySortingOptions == true.)
+And it also sets/updates data:
+    data.combSet = [[combRatVal, subjID, ratValArr], ...].
+*/
 export var setListCL = new ContentLoader(
     "SetList",
     /* Initial HTML template */
     '<<PredicateSetField data:wait>>',
     appColumnCL
 );
+setFieldCL.addCallback("data", function(data) {
+    data.copyFromAncestor([
+        "setDataArr",
+        "elemContentKey",
+        "subjType",
+        "initialNum",
+        "incrementNum",
+    ]);
+    data.titleCutOutLevels = [2, 1];
+    // data.titleCutOutLevels = [1, 1];
+});
+setFieldCL.addCallback(function($ci, data) {
+    let len = data.setDataArr.length;
+    for (let i = 0; i < len; i++) {
+        queryAndSetAvgSetAndSignalCI(setDataArr[i], $ci, signal);
+    }
+});
 
-
+export function queryAndSetAvgSetAndSignalCI(setData, $ci, signal) {
+    
+}
 
 
 
