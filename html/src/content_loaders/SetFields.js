@@ -14,21 +14,21 @@ import {
 // it as a data key instead and look it up via ChildData.get().
 /**
  * SetField requires data:
-     data.userSetsArr =
+     data.setDataArr =
      *     [{predKeys, ratTransFun, userWeights, sets, avgSet}, ...],
      *     predKeys =
      *         {relIDKey, objType, objIDKey} |
      *         {predTitle, objType, objIDKey} |
      *         {predIDKey} |
      *         {title, (objType, objIDKey)?}. (requires sets prop. to be given)
-     *
      * data.elemContentKey,
      * data.subjType,
      * data.queryNum,
-     * data.userWeights = [{userID, weight}, ...],
      * data.initialNum,
      * data.incrementNum,
-     * data.showHeader.
+     * data.showHeader,
+     * data.applySortingOptions.
+     * data.sortingOptions. (if applySortingOptions == true.)
  * And it also sets/updates data:
      * data.predTitle,
      * data.predID,
@@ -39,7 +39,7 @@ import {
      * data.queryOffset,
      * data.queryAscending.
  */
-export var relationSetFieldCL = new ContentLoader(
+export var setFieldCL = new ContentLoader(
     "SetField",
     /* Initial HTML template */
     '<<PredicateSetField data:wait>>',
@@ -49,7 +49,7 @@ export var relationSetFieldCL = new ContentLoader(
 // works. But do not decorate a CL that then waits for data, like here, and then
 // try to have the decorator add events to the CI, since these will just be
 // removed when the waiting decoratee finally loads.
-relationSetFieldCL.addCallback("data", function(data) {
+setFieldCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "objType",
         "objID",
@@ -58,7 +58,7 @@ relationSetFieldCL.addCallback("data", function(data) {
     data.titleCutOutLevels = [2, 1];
     // data.titleCutOutLevels = [1, 1];
 });
-relationSetFieldCL.addCallback(function($ci, data) {
+setFieldCL.addCallback(function($ci, data) {
     $ci.one("query-pred-title-then-pred-id-then-load", function() {
         let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
         let reqData = {
@@ -131,7 +131,7 @@ predicateSetFieldCL.addCallback("data", function(data) {
 predicateSetFieldCL.addCallback(function($ci, data) {
     $ci.one("query-initial-sets-then-load", function() {
         let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
-        data.userSetsArr = [{
+        data.setDataArr = [{
             predID: data.predID,
             ratTransFun: 1,
             userWeights: data.get("userWeights"),
@@ -144,12 +144,14 @@ predicateSetFieldCL.addCallback(function($ci, data) {
                 uid: data.userWeights[i].userID,
                 pid: data.predID,
                 st: data.subjType,
-                rl: -32767, rh: 32767,
-                n: data.queryNum, o: 0,
-                a: 0,
+                rl: data.ratingLow ?? -32767,
+                rh: data.ratingHigh ?? 32767,
+                n: data.queryNum,
+                o: data.queryOffset ?? 0,
+                a: data.queryAscending ?? 0,
             };
             dbReqManager.query($ci, reqData, i, function($ci, result, i) {
-                data.userSetsArr[0].sets[i] = result;
+                data.setDataArr[0].sets[i] = result;
                 $ci.trigger("load-initial-set-list-if-ready");
             });
         }
@@ -158,17 +160,17 @@ predicateSetFieldCL.addCallback(function($ci, data) {
     $ci.on("load-initial-set-list-if-ready", function() {
         let len = data.userWeights.length;
         for (let i = 0; i < len; i++) {
-            if (typeof data.userSetsArr[0].sets[i] === "undefined") {
+            if (typeof data.setDataArr[0].sets[i] === "undefined") {
                 return false;
             }
         }
-        let userSets = data.userSetsArr[0];
+        let userSets = data.setDataArr[0];
         data.combSet = getAveragedSet(userSets.sets, userSets.userWeights);
         $ci.children('.CI.SetList').trigger("load");
         // off this event.
         $ci.off("load-initial-set-list-if-ready");
         // trigger event to make header responsive to click event.
-        $ci.children('.CI.SetHeader').trigger("userSetsArr-is-ready");
+        $ci.children('.CI.SetHeader').trigger("setDataArr-is-ready");
         return false;
     });
     $ci.trigger("query-initial-sets-then-load");
@@ -261,7 +263,7 @@ export var setHeaderCL = new ContentLoader(
     appColumnCL
 );
 setHeaderCL.addCallback(function($ci, data) {
-    $ci.one("userSetsArr-is-ready", function() {
+    $ci.one("setDataArr-is-ready", function() {
         $(this).one("click", function() {
             let $this = $(this);
             $this.find('.CI.SetPredicatesDropdownMenu').trigger("load");
@@ -275,7 +277,7 @@ export var setPredicatesDropdownMenuCL = new ContentLoader(
     "SetPredicatesDropdownMenu",
     /* Initial HTML template */
     '<div>' +
-        '<<SetPredicateMenuPoint data.userSetsArr[...]>>' +
+        '<<SetPredicateMenuPoint data.setDataArr[...]>>' +
     '</div>',
     appColumnCL
 );
@@ -305,13 +307,13 @@ export var ratingTransformFunctionMenuCL = new ContentLoader(
     appColumnCL
 );
 ratingTransformFunctionMenuCL.addCallback("data", function(data) {
-    let userSetsArr = getFromAncestor("userSetsArr");
+    let setDataArr = getFromAncestor("setDataArr");
     data.copyFromAncestor("predID");
-    let len = userSetsArr.length;
+    let len = setDataArr.length;
     // find the userSets object corresponing to the relevant predicate.
     for (let i = 0; i < len; i++) {
-        if (userSetsArr[i].predID = data.predID) {
-            data.userSets = userSetsArr[i];
+        if (setDataArr[i].predID = data.predID) {
+            data.userSets = setDataArr[i];
             break;
         }
     }
@@ -410,29 +412,29 @@ export function getAveragedSet(sets, userWeights, sortFlag) {
     return ret;
 }
 
-export function setAveragedSets(userSetsArr, boolArr, sortFlag) {
-    let predNum = userSetsArr.length;
+export function setAveragedSets(setDataArr, boolArr, sortFlag) {
+    let predNum = setDataArr.length;
     if (!boolArr) {
         boolArr = new Array(predNum).fill(true);
     }
     for (let i = 0; i < predNum; i++) {
         if (boolArr[0]) {
-            userSetsArr[i].avgSet = getAveragedSet(
-                userSetsArr.sets, userSetsArr.userWeights, sortFlag
+            setDataArr[i].avgSet = getAveragedSet(
+                setDataArr.sets, setDataArr.userWeights, sortFlag
             );
         }
     }
 }
 
 
-// (userSetsArr = [{predID, ratTransFun, userWeights, sets, avgSet}, ...].)
+// (setDataArr = [{predID, ratTransFun, userWeights, sets, avgSet}, ...].)
 
 /**
- * getCombinedSet(userSetsArr) returns a combined set,
+ * getCombinedSet(setDataArr) returns a combined set,
  * combSet = [[combRatVal, subjID, ratValArr], ...]. This is done by first
  * using setAveragedSets() to get averaged sets for each predicate. Then these
  * sets are further combined into one by applying the individual ratTransFuns
- * and then adding up the values. The first predicate in userSetsArr and the
+ * and then adding up the values. The first predicate in setDataArr and the
  * corresponding averaged set is treated specially in that the combined will
  * contain all the entities of that set and no more. If the other sets contain
  * other entities, these will then not be used for the combined set. And for
@@ -442,27 +444,27 @@ export function setAveragedSets(userSetsArr, boolArr, sortFlag) {
  */
 // TODO: Figure out about the sortFlag, and what should happen when predNum ==
 // 1..
-export function getCombinedSet(userSetsArr, boolArr, sortFlag) {
+export function getCombinedSet(setDataArr, boolArr, sortFlag) {
     // first compute the averaged sets for each predicate (where the ratings
     // from each user for that predicate is combined as a weighted average).
-    setAveragedSets(userSetsArr, boolArr); // (An undefined sortFlag means that
+    setAveragedSets(setDataArr, boolArr); // (An undefined sortFlag means that
     // the averaged sets will be sorted in terms of subjID.)
     // then initialize the return array to the first averaged set, but with an
     // extra third column meant to contain all the averaged ratings before this
     // combination
-    let predNum = userSetsArr.length;
-    let ret = userSetsArr[0].avgSet.map(
+    let predNum = setDataArr.length;
+    let ret = setDataArr[0].avgSet.map(
         row => [row[0], row[1], new Array(predNum).fill(row[0])]
     );
     // for each subsequent avgSet, look for any subjID contained in the first
-    // set, and for each one found, apply the userSetsArr[i].ratTransFun to the
+    // set, and for each one found, apply the setDataArr[i].ratTransFun to the
     // averaged ratVal and add the result to the combRatVal located in the first
     // column of ret. Also store the same averaged ratVal as is in the array in
     // the third column of ret.
     let retLen = ret.length;
     for (let i = 1; i < predNum; i++) {
-        let ratTransFun = userSetsArr[i].ratTransFun;
-        let avgSet = userSetsArr[i].avgSet;
+        let ratTransFun = setDataArr[i].ratTransFun;
+        let avgSet = setDataArr[i].avgSet;
         let avgSetLen = avgSet.length;
         let pos = 0;
         for (let j = 0; j < retLen; j++) {
