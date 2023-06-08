@@ -21,9 +21,7 @@ SetList requires data:
             {predID} |
             {title, (objType, objID)?}, (requires setArr to be given)
         userWeightArr = [{userID, weight}, ...],
-        queryParams = {
-            num, ratingLow, ratingHigh, queryOffset, queryAscending
-        },
+        queryParams = {num, ratingLow, ratingHigh, offset, isAscending},
     data.elemContentKey,
     data.subjType,
     data.initialNum,
@@ -58,6 +56,7 @@ setFieldCL.addCallback(function($ci, data) {
     }
 });
 
+
 export function queryAndSetAvgSetAndSignalCI(setData, i, $ci, signal) {
     // if setData.avgSet is already set and setData.refresh is not true, simply
     // send the ready signal immediatly
@@ -73,10 +72,30 @@ export function queryAndSetAvgSetAndSignalCI(setData, i, $ci, signal) {
         $ci.trigger(signal, [setData.title]);
         return;
     }
-    // else set up and event to query the sets to load into setData.setArr.
+    // else set up an event to query the sets to load into setData.setArr.
+    // (This event will be triggered as soon as we have gotten the predID.)
     $ci.one("query-sets-" + i.toString(), function() {
-        
-    })
+        let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
+        let len = setData.userWeightArr.length;
+        for (let j = 0; j < len; j++) {
+            let reqData = {
+                type: "set",
+                uid: setData.userWeightArr[j].userID,
+                pid: setData.predKeys.predID,
+                st: data.subjType,
+                rl: setData.queryParams.ratingLow ?? -32767,
+                rh: setData.queryParams.ratingHigh ?? 32767,
+                n: setData.queryParams.num,
+                o: setData.queryParams.offset ?? 0,
+                a: setData.queryParams.isAscending ?? 0,
+            };
+            dbReqManager.query($ci, reqData, j, function($ci, result, j) {
+                setData.setArr[j] = result;
+                $ci.trigger("signal-ci-if-ready");
+            });
+        }
+        return false;
+    });
 }
 
 
