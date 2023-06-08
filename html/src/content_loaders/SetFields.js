@@ -11,7 +11,8 @@ import {
 // TODO: Remove PredicateSetField, and make RelationSetField->SetField be able
 // to start with a whole array of relIDs, (comb.) objIDs. Also make it so that
 // if objID --- or relID --- is a string starting with a word character, treat
-// it as a data key instead and look it up via ChildData.get(). *(->SetList..?)
+// it as a data key instead and look it up via ChildData.get(). *(->SetList..?
+// ..Yeah..)
 /**
  * SetField requires data:
      data.setDataArr =
