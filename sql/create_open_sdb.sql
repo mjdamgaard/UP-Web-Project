@@ -179,6 +179,8 @@ CREATE TABLE Strings (
     usability_rank CHAR(2) DEFAULT 'Da', -- rank D, any (no subdivision).
     -- string.
     str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    -- (COLLATE utf8mb4_bin means that the application automatically has to
+    -- try to capitalize the first letter in a search.)
 
     UNIQUE INDEX (usability_rank, str)
 );
