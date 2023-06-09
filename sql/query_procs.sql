@@ -321,7 +321,7 @@ DELIMITER ;
 
 
 
-
+-- TODO: Remove the Creator procs below, and make Creators a private table..
 
 DELIMITER //
 CREATE PROCEDURE selectCreator (
