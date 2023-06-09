@@ -31,7 +31,7 @@ SELECT
     user_id AS userID,
     pred_id AS predID,
     context_id AS ctxID,
-    rat_val AS ratVal,
+    CONV(rat_val, 10, 16) AS ratVal,
     subj_id AS subjID
 FROM SemanticInputs
 ORDER BY user_id ASC, pred_id ASC, context_id ASC, rat_val DESC;
@@ -42,7 +42,7 @@ SELECT
     user_id AS userID,
     pred_id AS predID,
     context_id AS ctxID,
-    rat_val AS ratVal,
+    CONV(rat_val, 10, 16) AS ratVal,
     subj_id AS subjID
 FROM RecentInputs
 ORDER BY user_id ASC, pred_id ASC, context_id ASC, id ASC;

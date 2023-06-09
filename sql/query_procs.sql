@@ -34,7 +34,7 @@ BEGIN
     SET ratingRangeHi = CONV(ratingRangeHiHex, 16, 10);
 
     SELECT
-        HEX(rat_val) AS ratVal,
+        CONV(rat_val, 10, 16) AS ratVal,
         subj_id AS subjID
     FROM SemanticInputs
     WHERE (
@@ -63,7 +63,7 @@ CREATE PROCEDURE selectRating (
     IN userID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT HEX(rat_val) AS ratVal
+    SELECT CONV(rat_val, 10, 16) AS ratVal
     FROM SemanticInputs
     WHERE (
         user_id = userID AND
@@ -92,7 +92,7 @@ BEGIN
         user_id AS userID,
         pred_id AS predID,
         context_id AS cxtID,
-        HEX(rat_val) AS ratVal,
+        CONV(rat_val, 10, 16) AS ratVal,
         subj_id AS subjID,
         changed_at AS changedAt
     FROM RecentInputs
@@ -118,7 +118,7 @@ BEGIN
         SELECT
             subj_id AS subjID,
             changed_at AS changedAt,
-            HEX(rat_val) AS ratVal
+            CONV(rat_val, 10, 16) AS ratVal
         FROM RecordedInputs
         WHERE (
             user_id = userID AND
@@ -131,7 +131,7 @@ BEGIN
         SELECT
             subjID AS subjID,
             changed_at AS changedAt,
-            HEX(rat_val) AS ratVal
+            CONV(rat_val, 10, 16) AS ratVal
         FROM RecordedInputs
         WHERE (
             user_id = userID AND
