@@ -14,7 +14,7 @@ DELIMITER //
 CREATE PROCEDURE inputOrChangeRating (
     IN userID BIGINT UNSIGNED,
     IN predID BIGINT UNSIGNED,
-    IN subjType CHAR(1),
+    IN cxtID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN ratVal SMALLINT,
     IN live_after TIME
@@ -30,7 +30,7 @@ BEGIN
     SELECT rat_val INTO prevRatVal
     FROM SemanticInputs
     WHERE (
-        subj_t = subjType AND
+        context_id = cxtID AND
         subj_id = subjID AND
         pred_id = predID AND
         user_id = userID
@@ -40,14 +40,14 @@ BEGIN
         INSERT INTO SemanticInputs (
             user_id,
             pred_id,
-            subj_t,
+            context_id,
             rat_val,
             subj_id
         )
         VALUES (
             userID,
             predID,
-            subjType,
+            cxtID,
             ratVal,
             subjID
         );
@@ -56,7 +56,7 @@ BEGIN
         UPDATE SemanticInputs
         SET rat_val = ratVal
         WHERE (
-            subj_t = subjType AND
+            context_id = cxtID AND
             subj_id = subjID AND
             pred_id = predID AND
             user_id = userID
@@ -65,7 +65,7 @@ BEGIN
     ELSEIF (ratVal IS NULL AND prevRatVal IS NOT NULL) THEN
         DELETE FROM SemanticInputs
         WHERE (
-            subj_t = subjType AND
+            context_id = cxtID AND
             subj_id = subjID AND
             pred_id = predID AND
             user_id = userID
@@ -85,14 +85,14 @@ BEGIN
     INSERT INTO RecentInputs (
         user_id,
         pred_id,
-        subj_t,
+        context_id,
         rat_val,
         subj_id
     )
     VALUES (
         userID,
         predID,
-        subjType,
+        cxtID,
         ratVal,
         subjID
     );
@@ -101,7 +101,10 @@ BEGIN
     -- SELECT HEX(prevRatVal) AS prevRatVal, exitCode;
 END //
 DELIMITER ;
-
+-- TODO: When moving the ratings from PrivateRecentInputs to the public ones
+-- also implement an automatic procedure to rate a "this user has rated this
+-- statement" relation with user 1 (where the rating then matches the user's
+-- rating)..
 
 
 
@@ -173,6 +176,9 @@ BEGIN
     ) THEN
         SET exitCode = 2; -- context does not exist.
     ELSE
+        -- TODO: Insert a check here to see if the Context is not owned by
+        -- another user..
+
         INSERT INTO Terms (context_id, def_str, def_entity_t, def_entity_id)
         VALUES (cxtID, str, defEntType, defEntID);
         SELECT LAST_INSERT_ID() INTO outID;

@@ -17,7 +17,7 @@ DELETE FROM Creators;
 
 -- insert the fundamental context of all terms (with no parent context).
 INSERT INTO SemanticContexts (id, parent_context_id, title)
-VALUES (1, 0, "Terms");
+VALUES (1, 0, "Terms"); -- id: 1
 INSERT INTO Creators (entity_t, entity_id, user_id)
 VALUES ('c', 1, 1);
 -- insert the Term "Term," referencing (the category of) all terms/Terms.
@@ -25,13 +25,17 @@ CALL insertOrFindTerm(1, 1, "Terms", "0", 0); -- id: 1
 
 -- insert basic contexts, terms and realtions meant for common use.
 
+CALL insertOrFindContext(1, 1, "Contexts"); -- id: 2
+CALL insertOrFindContext(1, 1, "Users"); -- id: 3
+CALL insertOrFindContext(1, 1, "Texts"); -- id: 4
+CALL insertOrFindContext(1, 1, "Binaries"); -- id: 5
 
-CALL insertOrFindContext(1, 1, "Predicates"); -- id: 2
-CALL insertOrFindContext(1, 2, "Verbs, s."); -- id: 3
+CALL insertOrFindContext(1, 1, "Predicates"); -- id: 6
+CALL insertOrFindContext(1, 2, "Verbs, s."); -- id: 7
 
-CALL insertOrFindContext(1, 1, "Nouns for predicate definitions"); -- id: 4
+CALL insertOrFindContext(1, 1, "Nouns for predicate definitions"); -- id: 8
 
-CALL insertOrFindContext(1, 1, "Entity lists"); -- id: 5
+CALL insertOrFindContext(1, 1, "Entity lists"); -- id: 9
 
 
 CALL insertOrFindTerm(1, 1, "openSDB", "0", 0); -- id: 2
@@ -42,12 +46,12 @@ CALL insertOrFindTerm(1, 1, "Jazz", "0", 0); -- id: 5
 CALL insertOrFindTerm(1, 1, "Hip hop", "0", 0); -- id: 6
 
 CALL insertOrFindTerm(1, 1, "Movies", "0", 0); -- id: 7
-CALL insertOrFindContext(1, 1, "Movies"); -- id: 6
-CALL insertOrFindTerm(1, 5,
+CALL insertOrFindContext(1, 1, "Movies"); -- id: 10
+CALL insertOrFindTerm(1, 10,
     "{The Lord of the Rings: The Fellowship of the Ring} (2001)",
     "0", 0
 );-- id: 8
-CALL insertOrFindTerm(1, 5,
+CALL insertOrFindTerm(1, 10,
     "{The Lord of the Rings: The Two Towers} (2002)",
     "0", 0
 ); -- id: 9
@@ -63,7 +67,7 @@ CALL insertOrFindTerm(1, 5,
 CALL insertOrFindContext(
     1, 3,
     "(as a term) is a useful instance of the {$s of }the term, {$e}"
-); -- id: 6
+); -- id: 11
 
 
 
@@ -141,9 +145,9 @@ CALL insertPredicates(
 
 -- TODO: correct these ratVals to 7F etc., but not before debugging how they
 -- are converted in the app.
-CALL inputOrChangeRating(1, 16, "t", 2, 32767, "00");
-CALL inputOrChangeRating(1, 16, "t", 3, 30000, "00");
-CALL inputOrChangeRating(1, 16, "t", 4, 10000, "00");
+CALL inputOrChangeRating(1, 16, 1, 2, 32767, "00");
+CALL inputOrChangeRating(1, 16, 1, 3, 30000, "00");
+CALL inputOrChangeRating(1, 16, 1, 4, 10000, "00");
 
 
 --

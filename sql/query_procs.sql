@@ -3,7 +3,6 @@ SELECT "Query procedures";
 
 -- DROP PROCEDURE selectInputSet;
 -- DROP PROCEDURE selectRating;
--- DROP PROCEDURE selectUsersAndRatings;
 -- DROP PROCEDURE selectRecentInputs;
 -- DROP PROCEDURE selectRecordedInputs;
 -- DROP PROCEDURE selectUserInfo;
@@ -24,7 +23,7 @@ DELIMITER //
 CREATE PROCEDURE selectInputSet (
     IN userID BIGINT UNSIGNED,
     IN predID BIGINT UNSIGNED,
-    IN subjType CHAR(1),
+    IN cxtID BIGINT UNSIGNED,
     IN ratingRangeMin SMALLINT,
     IN ratingRangeMax SMALLINT,
     IN maxNum INT UNSIGNED,
@@ -39,7 +38,7 @@ BEGIN
     WHERE (
         user_id = userID AND
         pred_id = predID AND
-        subj_t = subjType AND
+        context_id = cxtID AND
         rat_val >= ratingRangeMin AND
         rat_val <= ratingRangeMax
     )
@@ -56,7 +55,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectRating (
-    IN subjType CHAR(1),
+    IN cxtID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN predID BIGINT UNSIGNED,
     IN userID BIGINT UNSIGNED
@@ -65,39 +64,16 @@ BEGIN
     SELECT rat_val AS ratVal
     FROM SemanticInputs
     WHERE (
-        subj_t = subjType AND
-        subj_id = subjID AND
+        user_id = userID AND
         pred_id = predID AND
-        user_id = userID
+        context_id = cxtID AND
+        subj_id = subjID
+
     );
 END //
 DELIMITER ;
 
 
-DELIMITER //
-CREATE PROCEDURE selectUsersAndRatings (
-    IN subjType CHAR(1),
-    IN subjID BIGINT UNSIGNED,
-    IN predID BIGINT UNSIGNED,
-    IN startUserID BIGINT UNSIGNED,
-    IN maxNum INT UNSIGNED,
-    IN numOffset INT UNSIGNED
-)
-BEGIN
-    SELECT
-        user_id AS userID,
-        rat_val AS ratVal
-    FROM SemanticInputs
-    WHERE (
-        subj_t = subjType AND
-        subj_id = subjID AND
-        pred_id = predID AND
-        user_id >= userID
-    )
-    ORDER BY user_id ASC
-    LIMIT numOffset, maxNum;
-END //
-DELIMITER ;
 
 
 
@@ -113,7 +89,7 @@ BEGIN
     SELECT
         user_id AS userID,
         pred_id AS predID,
-        subj_t AS subjType,
+        context_id AS cxtID,
         rat_val AS ratVal,
         subj_id AS subjID,
         changed_at AS changedAt
@@ -130,7 +106,7 @@ DELIMITER //
 CREATE PROCEDURE selectRecordedInputs (
     IN userID BIGINT UNSIGNED,
     IN predID BIGINT UNSIGNED,
-    IN subjType CHAR(1),
+    IN cxtID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED
@@ -145,7 +121,7 @@ BEGIN
         WHERE (
             user_id = userID AND
             pred_id = predID AND
-            subj_t = subjType
+            context_id = cxtID
         )
         ORDER BY subj_id DESC, changed_at DESC
         LIMIT numOffset, maxNum;
@@ -158,7 +134,7 @@ BEGIN
         WHERE (
             user_id = userID AND
             pred_id = predID AND
-            subj_t = subjType AND
+            context_id = cxtID AND
             subj_id = subjID
         )
         ORDER BY changed_at DESC

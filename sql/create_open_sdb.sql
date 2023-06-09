@@ -1,6 +1,5 @@
 
 -- /* Semantic inputs */
--- DROP TABLE Sets;
 -- DROP TABLE SemanticInputs;
 -- DROP TABLE PrivateRecentInputs;
 -- DROP TABLE RecentInputs;
@@ -32,14 +31,11 @@ CREATE TABLE SemanticInputs (
     user_id BIGINT UNSIGNED NOT NULL,
     -- predicate.
     pred_id BIGINT UNSIGNED NOT NULL,
-    -- type of the subject of the predicate.
-    subj_t CHAR(1) NOT NULL,
     -- context or ancestor context of all the subjects if these are terms.
     context_id BIGINT UNSIGNED NOT NULL,
-    -- (if subj_t is not 't', cxt_id should just be 0).
 
     /* The "input set" */
-    -- given some constants for the above four column, the input sets contains
+    -- given some constants for the above four columns, the input sets contains
     -- pairs of rating values and the IDs of the predicate subjects.
     rat_val SMALLINT NOT NULL,
     subj_id BIGINT UNSIGNED NOT NULL,
@@ -47,12 +43,12 @@ CREATE TABLE SemanticInputs (
     PRIMARY KEY (
         user_id,
         pred_id,
-        subj_t,
+        context_id,
         rat_val,
         subj_id
     ),
 
-    UNIQUE INDEX (subj_t, subj_id, pred_id, user_id)
+    UNIQUE INDEX (user_id, pred_id, context_id, subj_id)
 );
 -- TODO: Compress this table and its sec. index, as well as some other tables
 -- below (at least RecordedInputs). (But compression is a must for this table.)
@@ -63,7 +59,7 @@ CREATE TABLE PrivateRecentInputs (
 
     user_id BIGINT UNSIGNED NOT NULL,
     pred_id BIGINT UNSIGNED NOT NULL,
-    subj_t CHAR(1) NOT NULL,
+    context_id BIGINT UNSIGNED NOT NULL,
     -- new rating value.
     rat_val SMALLINT,
     subj_id BIGINT UNSIGNED NOT NULL,
@@ -78,7 +74,7 @@ CREATE TABLE RecentInputs (
 
     user_id BIGINT UNSIGNED NOT NULL,
     pred_id BIGINT UNSIGNED NOT NULL,
-    subj_t CHAR(1) NOT NULL,
+    context_id BIGINT UNSIGNED NOT NULL,
     -- new rating value.
     rat_val SMALLINT,
     subj_id BIGINT UNSIGNED NOT NULL,
@@ -88,7 +84,7 @@ CREATE TABLE RecentInputs (
 CREATE TABLE RecordedInputs (
     user_id BIGINT UNSIGNED NOT NULL,
     pred_id BIGINT UNSIGNED NOT NULL,
-    subj_t CHAR(1) NOT NULL,
+    context_id BIGINT UNSIGNED NOT NULL,
     -- recorded rating value.
     subj_id BIGINT UNSIGNED NOT NULL,
 
@@ -99,7 +95,7 @@ CREATE TABLE RecordedInputs (
     PRIMARY KEY (
         user_id,
         pred_id,
-        subj_t,
+        context_id,
         subj_id,
         changed_at
     )
