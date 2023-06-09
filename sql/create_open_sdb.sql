@@ -10,9 +10,9 @@
 -- DROP TABLE Users;
 -- DROP TABLE SemanticContexts;
 -- DROP TABLE Terms;
--- DROP TABLE Strings;
 -- DROP TABLE Texts;
 -- DROP TABLE Binaries;
+-- DROP TABLE RankedStrings;
 DROP TABLE KeywordStrings;
 --
 -- /* Meta data */
@@ -170,18 +170,6 @@ CREATE TABLE Terms (
 );
 
 
-CREATE TABLE RankedStrings (
-    /* string ID */
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    -- type = "s".
-
-    -- rank.
-    usability_rank CHAR(2), -- DEFAULT 'Da', -- rank D, any (no subdivision).
-    -- string.
-    str VARCHAR(255) CHARACTER SET utf8mb4 NOT NULL,
-
-    UNIQUE INDEX (usability_rank, str)
-);
 
 
 
@@ -206,6 +194,19 @@ CREATE TABLE Binaries (
 
 
 
+
+CREATE TABLE RankedStrings (
+    /* string ID */
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    -- type = "s".
+
+    -- rank.
+    usability_rank CHAR(2) DEFAULT 'Ca', -- rank C, any (no subdivision).
+    -- string.
+    str VARCHAR(255) CHARACTER SET utf8mb4 NOT NULL,
+
+    UNIQUE INDEX (usability_rank, str)
+);
 
 -- CREATE TABLE KeywordStrings (
 --     /* keyword string ID */
