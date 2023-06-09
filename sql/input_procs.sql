@@ -6,7 +6,7 @@ SELECT "Input procedures";
 -- DROP PROCEDURE insertOrFindTerm;
 -- DROP PROCEDURE insertText;
 -- DROP PROCEDURE insertBinary;
--- DROP PROCEDURE insertOrFindKeywordString;
+-- DROP PROCEDURE insertOrFindRankedString;
 
 
 

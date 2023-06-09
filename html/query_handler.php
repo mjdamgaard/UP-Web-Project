@@ -107,14 +107,14 @@ switch ($reqType) {
         $typeArr = array("id", "type", "id", "tstr");
         // output: [[termID]].
         break;
-    case "cxtIDs":
-        $sql = "CALL selectContextIDs (?, ?, ?, ?)";
+    case "cxtStrs":
+        $sql = "CALL selectContextStrings (?, ?, ?, ?)";
         $paramNameArr = array("pid", "s", "n", "o");
         $typeArr = array("id", "tstr", "uint", "uint");
         // output: [[title, cxtID], ...].
         break;
-    case "termIDs":
-        $sql = "CALL selectTermIDs (?, ?, ?, ?, ?, ?)";
+    case "termStrs":
+        $sql = "CALL selectTermStrings (?, ?, ?, ?, ?, ?)";
         $paramNameArr = array("cid", "et", "eid", "s", "n", "o");
         $typeArr = array("id", "type", "id", "tstr", "uint", "uint");
         // output: [[title, termID], ...].
@@ -131,20 +131,14 @@ switch ($reqType) {
         $typeArr = array("id");
         // output: [[bin]].
         break;
-    case "kws":
-        $sql = "CALL searchForKeywordStrings (?, ?, ?)";
+    case "str":
+        $sql = "CALL selectRankedString (?, ?, ?)";
         $paramNameArr = array("s", "n", "o");
         $typeArr = array("str", "uint", "uint");
         // output: [[str, kwsID], ...].
         break;
-    case "kwsB":
-        $sql = "CALL searchForKeywordStringsBooleanMode (?, ?, ?)";
-        $paramNameArr = array("s", "n", "o");
-        $typeArr = array("str", "uint", "uint");
-        // output: [[str, kwsID], ...].
-        break;
-    case "kwsIDs":
-        $sql = "CALL selectKeywordStringIDs (?, ?, ?)";
+    case "strs":
+        $sql = "CALL selectRankedStrings (?, ?, ?)";
         $paramNameArr = array("s", "n", "o");
         $typeArr = array("str", "uint", "uint");
         // output: [[str, kwsID], ...].

@@ -20,7 +20,7 @@ class InputVerifier {
         switch($type) {
             /* Type and ID input */
             case "type":
-                $pattern = "/^[uctxbr]$/";
+                $pattern = "/^[uctxbs]$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
                 }

@@ -12,7 +12,7 @@
 -- DROP TABLE Terms;
 -- DROP TABLE Texts;
 -- DROP TABLE Binaries;
--- DROP TABLE RankedStrings;
+DROP TABLE RankedStrings;
 --
 -- /* Meta data */
 -- DROP TABLE Creators;
@@ -195,16 +195,12 @@ CREATE TABLE Binaries (
 
 
 CREATE TABLE RankedStrings (
-    /* string ID */
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    -- type = "s".
-
     -- rank.
-    usability_rank CHAR(2) DEFAULT 'Ca', -- rank C, any (no subdivision).
+    usability_rank CHAR(2) NOT NULL DEFAULT 'Ca', -- rank C, any (no subdivision).
     -- string.
     str VARCHAR(255) CHARACTER SET utf8mb4 NOT NULL,
 
-    UNIQUE INDEX (usability_rank, str)
+    PRIMARY KEY (usability_rank, str)
 );
 
 -- CREATE TABLE KeywordStrings (

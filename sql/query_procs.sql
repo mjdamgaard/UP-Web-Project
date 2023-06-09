@@ -11,13 +11,11 @@ SELECT "Query procedures";
 -- DROP PROCEDURE selectTerm;
 -- DROP PROCEDURE selectContextID;
 -- DROP PROCEDURE selectTermID;
--- DROP PROCEDURE selectContextIDs;
--- DROP PROCEDURE selectTermIDs;
+-- DROP PROCEDURE selectContextStrings;
+-- DROP PROCEDURE selectTermStrings;
 -- DROP PROCEDURE selectText;
 -- DROP PROCEDURE selectBinary;
--- DROP PROCEDURE searchForKeywordStrings;
--- DROP PROCEDURE searchForKeywordStringsBooleanMode;
--- DROP PROCEDURE selectKeywordStringIDs;
+DROP PROCEDURE selectRankedStrings;
 -- DROP PROCEDURE selectCreator;
 -- DROP PROCEDURE selectCreations;
 
@@ -266,43 +264,29 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectContextIDs (
+CREATE PROCEDURE selectContextStrings (
     IN parentCxtID BIGINT UNSIGNED,
     IN str VARCHAR(255),
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED
 )
 BEGIN
-    (
-        SELECT
-            def_str AS str,
-            id AS cxtID
-        FROM SemanticContexts
-        WHERE (
-            parent_context_id = parentCxtID AND
-            def_str < str
-        )
-        ORDER BY def_str DESC
-        LIMIT 1
-    ) UNION (
-        SELECT
-            def_str AS str,
-            id AS cxtID
-        FROM SemanticContexts
-        WHERE (
-            parent_context_id = parentCxtID AND
-            def_str >= str
-        )
-        ORDER BY def_str ASC
-        LIMIT numOffset, maxNum
+    SELECT
+        def_str AS str,
+        id AS cxtID
+    FROM SemanticContexts
+    WHERE (
+        parent_context_id = parentCxtID AND
+        def_str >= str
     )
-    ORDER BY def_str ASC;
+    ORDER BY def_str ASC
+    LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectTermIDs (
+CREATE PROCEDURE selectTermStrings (
     IN cxtID BIGINT UNSIGNED,
     IN defEntType CHAR(1),
     IN defEntID BIGINT UNSIGNED,
@@ -315,34 +299,18 @@ BEGIN
         SET defEntID = NULL;
     END IF;
 
-    (
-        SELECT
-            def_str AS str,
-            id AS termID
-        FROM Terms
-        WHERE (
-            context_id = cxtID AND
-            def_entity_t = defEntType AND
-            def_entity_id <=> defEntID AND
-            def_str < str
-        )
-        ORDER BY def_str DESC
-        LIMIT 1
-    ) UNION (
-        SELECT
-            def_str AS str,
-            id AS termID
-        FROM Terms
-        WHERE (
-            context_id = cxtID AND
-            def_entity_t = defEntType AND
-            def_entity_id <=> defEntID AND
-            def_str >= str
-        )
-        ORDER BY def_str ASC
-        LIMIT numOffset, maxNum
+    SELECT
+        def_str AS str,
+        id AS termID
+    FROM Terms
+    WHERE (
+        context_id = cxtID AND
+        def_entity_t = defEntType AND
+        def_entity_id <=> defEntID AND
+        def_str >= str
     )
-    ORDER BY def_str ASC;
+    ORDER BY def_str ASC
+    LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
 
@@ -376,8 +344,9 @@ DELIMITER ;
 
 
 
+
 DELIMITER //
-CREATE PROCEDURE searchForKeywordStrings (
+CREATE PROCEDURE selectRankedStrings (
     IN s VARCHAR(768),
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED
@@ -391,53 +360,6 @@ BEGIN
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
-
-DELIMITER //
-CREATE PROCEDURE searchForKeywordStringsBooleanMode (
-    IN s VARCHAR(768),
-    IN maxNum INT UNSIGNED,
-    IN numOffset INT UNSIGNED
-)
-BEGIN
-    SELECT
-        str AS str,
-        id AS kwsID
-    FROM KeywordStrings
-    WHERE MATCH (str) AGAINST (s IN BOOLEAN MODE)
-    LIMIT numOffset, maxNum;
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE selectKeywordStringIDs (
-    IN s VARCHAR(768),
-    IN maxNum INT UNSIGNED,
-    IN numOffset INT UNSIGNED
-)
-BEGIN
-    (
-        SELECT
-            str AS str,
-            id AS kwsID
-        FROM KeywordStrings
-        WHERE str < s
-        ORDER BY str DESC
-        LIMIT 1
-    ) UNION (
-        SELECT
-            str AS str,
-            id AS kwsID
-        FROM KeywordStrings
-        WHERE str >= s
-        ORDER BY str ASC
-        LIMIT numOffset, maxNum
-    )
-    ORDER BY str ASC;
-END //
-DELIMITER ;
-
-
 
 
 
