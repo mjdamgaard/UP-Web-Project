@@ -170,17 +170,15 @@ CREATE TABLE Terms (
 );
 
 
-CREATE TABLE Strings (
+CREATE TABLE RankedStrings (
     /* string ID */
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     -- type = "s".
 
     -- rank.
-    usability_rank CHAR(2) DEFAULT 'Da', -- rank D, any (no subdivision).
+    usability_rank CHAR(2), -- DEFAULT 'Da', -- rank D, any (no subdivision).
     -- string.
-    str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-    -- (COLLATE utf8mb4_bin means that the application automatically has to
-    -- try to capitalize the first letter in a search.)
+    str VARCHAR(255) CHARACTER SET utf8mb4 NOT NULL,
 
     UNIQUE INDEX (usability_rank, str)
 );
