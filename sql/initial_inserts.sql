@@ -63,7 +63,7 @@ CALL insertOrFindTerm(1, 5,
 
 CALL insertOrFindContext(
     1, 2,
-    "is a useful instance of the $t of the term, $s"
+    "(as a term) is a useful instance of the {$t of }the term, {$s}"
 ); -- id: 6
 
 
