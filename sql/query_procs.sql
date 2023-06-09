@@ -10,8 +10,6 @@ SELECT "Query procedures";
 -- DROP PROCEDURE selectTerm;
 -- DROP PROCEDURE selectContextID;
 -- DROP PROCEDURE selectTermID;
--- DROP PROCEDURE selectContextStrings;
--- DROP PROCEDURE selectTermStrings;
 -- DROP PROCEDURE selectText;
 -- DROP PROCEDURE selectBinary;
 -- DROP PROCEDURE selectCreator;
@@ -24,23 +22,27 @@ CREATE PROCEDURE selectInputSet (
     IN userID BIGINT UNSIGNED,
     IN predID BIGINT UNSIGNED,
     IN cxtID BIGINT UNSIGNED,
-    IN ratingRangeMin SMALLINT,
-    IN ratingRangeMax SMALLINT,
+    IN ratingRangeLoHex VARCHAR(510),
+    IN ratingRangeHiHex VARCHAR(510),
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED,
     IN isAscOrder BOOL
 )
 BEGIN
+    DECLARE ratingRangeLo, ratingRangeHi VARBINARY(255);
+    SET ratingRangeLo = CONV(ratingRangeLoHex, 16, 10);
+    SET ratingRangeHi = CONV(ratingRangeHiHex, 16, 10);
+
     SELECT
-        rat_val AS ratVal,
+        HEX(rat_val) AS ratVal,
         subj_id AS subjID
     FROM SemanticInputs
     WHERE (
         user_id = userID AND
         pred_id = predID AND
         context_id = cxtID AND
-        rat_val >= ratingRangeMin AND
-        rat_val <= ratingRangeMax
+        (ratingRangeLo IS NULL OR rat_val >= ratingRangeLo) AND
+        (ratingRangeHi IS NULL OR rat_val <= ratingRangeHi)
     )
     ORDER BY
         CASE WHEN isAscOrder THEN rat_val END ASC,
@@ -61,7 +63,7 @@ CREATE PROCEDURE selectRating (
     IN userID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT rat_val AS ratVal
+    SELECT HEX(rat_val) AS ratVal
     FROM SemanticInputs
     WHERE (
         user_id = userID AND
@@ -90,7 +92,7 @@ BEGIN
         user_id AS userID,
         pred_id AS predID,
         context_id AS cxtID,
-        rat_val AS ratVal,
+        HEX(rat_val) AS ratVal,
         subj_id AS subjID,
         changed_at AS changedAt
     FROM RecentInputs
@@ -112,11 +114,11 @@ CREATE PROCEDURE selectRecordedInputs (
     IN numOffset INT UNSIGNED
 )
 BEGIN
-    IF (subjID = 0 OR subjID IS NULL) THEN
+    IF (subjID = 0) THEN
         SELECT
             subj_id AS subjID,
             changed_at AS changedAt,
-            rat_val AS ratVal
+            HEX(rat_val) AS ratVal
         FROM RecordedInputs
         WHERE (
             user_id = userID AND
@@ -129,7 +131,7 @@ BEGIN
         SELECT
             subjID AS subjID,
             changed_at AS changedAt,
-            rat_val AS ratVal
+            HEX(rat_val) AS ratVal
         FROM RecordedInputs
         WHERE (
             user_id = userID AND
@@ -238,56 +240,56 @@ END //
 DELIMITER ;
 
 
-DELIMITER //
-CREATE PROCEDURE selectContextStrings (
-    IN parentCxtID BIGINT UNSIGNED,
-    IN str VARCHAR(255),
-    IN maxNum INT UNSIGNED,
-    IN numOffset INT UNSIGNED
-)
-BEGIN
-    SELECT
-        def_str AS str,
-        id AS cxtID
-    FROM SemanticContexts
-    WHERE (
-        parent_context_id = parentCxtID AND
-        def_str >= str
-    )
-    ORDER BY def_str ASC
-    LIMIT numOffset, maxNum;
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE selectTermStrings (
-    IN cxtID BIGINT UNSIGNED,
-    IN defEntType CHAR(1),
-    IN defEntID BIGINT UNSIGNED,
-    IN str VARCHAR(255),
-    IN maxNum INT UNSIGNED,
-    IN numOffset INT UNSIGNED
-)
-BEGIN
-    IF (defEntID = 0) THEN
-        SET defEntID = NULL;
-    END IF;
-
-    SELECT
-        def_str AS str,
-        id AS termID
-    FROM Terms
-    WHERE (
-        context_id = cxtID AND
-        def_entity_t = defEntType AND
-        def_entity_id <=> defEntID AND
-        def_str >= str
-    )
-    ORDER BY def_str ASC
-    LIMIT numOffset, maxNum;
-END //
-DELIMITER ;
+-- DELIMITER //
+-- CREATE PROCEDURE selectContextStrings (
+--     IN parentCxtID BIGINT UNSIGNED,
+--     IN str VARCHAR(255),
+--     IN maxNum INT UNSIGNED,
+--     IN numOffset INT UNSIGNED
+-- )
+-- BEGIN
+--     SELECT
+--         def_str AS str,
+--         id AS cxtID
+--     FROM SemanticContexts
+--     WHERE (
+--         parent_context_id = parentCxtID AND
+--         def_str >= str
+--     )
+--     ORDER BY def_str ASC
+--     LIMIT numOffset, maxNum;
+-- END //
+-- DELIMITER ;
+--
+--
+-- DELIMITER //
+-- CREATE PROCEDURE selectTermStrings (
+--     IN cxtID BIGINT UNSIGNED,
+--     IN defEntType CHAR(1),
+--     IN defEntID BIGINT UNSIGNED,
+--     IN str VARCHAR(255),
+--     IN maxNum INT UNSIGNED,
+--     IN numOffset INT UNSIGNED
+-- )
+-- BEGIN
+--     IF (defEntID = 0) THEN
+--         SET defEntID = NULL;
+--     END IF;
+--
+--     SELECT
+--         def_str AS str,
+--         id AS termID
+--     FROM Terms
+--     WHERE (
+--         context_id = cxtID AND
+--         def_entity_t = defEntType AND
+--         def_entity_id <=> defEntID AND
+--         def_str >= str
+--     )
+--     ORDER BY def_str ASC
+--     LIMIT numOffset, maxNum;
+-- END //
+-- DELIMITER ;
 
 
 
@@ -330,7 +332,7 @@ CREATE PROCEDURE selectCreator (
 )
 BEGIN
     SELECT user_id AS userID
-    FROM Creators
+    FROM PrivateCreators
     WHERE (entity_t = entityType AND entity_id = entityID);
 END //
 DELIMITER ;
@@ -352,7 +354,7 @@ BEGIN
     SELECT
         entity_t AS entityType,
         entity_id AS entityID
-    FROM Creators
+    FROM PrivateCreators
     WHERE (
         user_id = userID AND
         (entityType IS NULL OR term_t = termType)

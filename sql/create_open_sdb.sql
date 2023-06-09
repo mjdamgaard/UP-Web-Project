@@ -13,7 +13,7 @@
 -- DROP TABLE Binaries;
 --
 -- /* Meta data */
--- DROP TABLE Creators;
+-- DROP TABLE PrivateCreators;
 
 
 
@@ -37,7 +37,7 @@ CREATE TABLE SemanticInputs (
     /* The "input set" */
     -- given some constants for the above four columns, the input sets contains
     -- pairs of rating values and the IDs of the predicate subjects.
-    rat_val SMALLINT NOT NULL,
+    rat_val VARBINARY(255) NOT NULL,
     subj_id BIGINT UNSIGNED NOT NULL,
 
     PRIMARY KEY (
@@ -61,7 +61,7 @@ CREATE TABLE PrivateRecentInputs (
     pred_id BIGINT UNSIGNED NOT NULL,
     context_id BIGINT UNSIGNED NOT NULL,
     -- new rating value.
-    rat_val SMALLINT,
+    rat_val VARBINARY(255),
     subj_id BIGINT UNSIGNED NOT NULL,
 
     live_after TIME
@@ -76,7 +76,7 @@ CREATE TABLE RecentInputs (
     pred_id BIGINT UNSIGNED NOT NULL,
     context_id BIGINT UNSIGNED NOT NULL,
     -- new rating value.
-    rat_val SMALLINT,
+    rat_val VARBINARY(255),
     subj_id BIGINT UNSIGNED NOT NULL,
 
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -90,7 +90,7 @@ CREATE TABLE RecordedInputs (
 
     changed_at DATETIME,
 
-    rat_val SMALLINT,
+    rat_val VARBINARY(255),
 
     PRIMARY KEY (
         user_id,
@@ -214,7 +214,7 @@ CREATE TABLE Binaries (
 
 
 
-CREATE TABLE Creators (
+CREATE TABLE PrivateCreators (
     entity_t CHAR(1) NOT NULL,
     entity_id BIGINT UNSIGNED NOT NULL,
     PRIMARY KEY (entity_t, entity_id),

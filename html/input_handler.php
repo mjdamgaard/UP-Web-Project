@@ -40,8 +40,8 @@ $typeArr = "";
 switch ($reqType) {
     case "rat":
         $sql = "CALL inputOrChangeRating (?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("uid", "pid", "st", "sid", "r", "l");
-        $typeArr = array("id", "id", "type", "id", "sint", "datetime");
+        $paramNameArr = array("uid", "pid", "cid", "sid", "r", "l");
+        $typeArr = array("id", "id", "id", "id", "rat", "datetime");
         break;
     case "cxt":
         // $sql = "CALL insertOrFindCat (?, ?, ?)";
@@ -63,11 +63,6 @@ switch ($reqType) {
         $sql = "CALL insertBinary (?, ?)";
         $paramNameArr = array("uid", "b");
         $typeArr = array("id", "blob");
-        break;
-    case "kws":
-        $sql = "CALL insertOrFindKeywordString (?, ?)";
-        $paramNameArr = array("uid", "s");
-        $typeArr = array("id", "str");
         break;
     default:
         header("Content-Type: text/json");

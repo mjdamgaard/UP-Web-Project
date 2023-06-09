@@ -40,14 +40,14 @@ switch ($reqType) {
     case "set":
         $sql = "CALL selectInputSet (?, ?, ?, ?, ?, ?, ?, ?)";
         $paramNameArr = array(
-            "uid", "pid", "st",
+            "uid", "pid", "cid",
             "rl", "rh",
             "n", "o",
             "a"
         );
         $typeArr = array(
-            "id", "id", "type",
-            "sint", "sint",
+            "id", "id", "id",
+            "rat", "rat",
             "uint", "uint",
             "tint"
         );
@@ -55,15 +55,9 @@ switch ($reqType) {
         break;
     case "rat":
         $sql = "CALL selectRating (?, ?)";
-        $paramNameArr = array("st", "sid", "pid", "uid");
-        $typeArr = array("type", "id", "id", "id");
+        $paramNameArr = array("cid", "sid", "pid", "uid");
+        $typeArr = array("id", "id", "id", "id");
         // output: [[ratVal]].
-        break;
-    case "userRats":
-        $sql = "CALL selectUsersAndRatings (?, ?)";
-        $paramNameArr = array("st", "sid", "pid", "uid", "n", "o");
-        $typeArr = array("type", "id", "id", "id", "uint", "unit");
-        // output: [[userID, ratVal], ...].
         break;
     case "recentInputs":
         $sql = "CALL selectRecentInputs (?, ?)";
@@ -71,10 +65,10 @@ switch ($reqType) {
         $typeArr = array("id", "uint");
         // output: [[userID, predID, subjType, ratVal, subjID, changedAt], ...].
         break;
-    case "recordedtInputs":
+    case "recordedInputs":
         $sql = "CALL selectRecordedInputs (?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("uid", "pid", "st", "sid", "n", "o");
-        $typeArr = array("id", "id", "type", "id", "uint", "uint");
+        $paramNameArr = array("uid", "pid", "cid", "sid", "n", "o");
+        $typeArr = array("id", "id", "is", "id", "uint", "uint");
         // output: [[subjID, changedAt, ratVal], ...].
         break;
     case "user":
@@ -107,18 +101,6 @@ switch ($reqType) {
         $typeArr = array("id", "type", "id", "tstr");
         // output: [[termID]].
         break;
-    case "cxtStrs":
-        $sql = "CALL selectContextStrings (?, ?, ?, ?)";
-        $paramNameArr = array("pid", "s", "n", "o");
-        $typeArr = array("id", "tstr", "uint", "uint");
-        // output: [[title, cxtID], ...].
-        break;
-    case "termStrs":
-        $sql = "CALL selectTermStrings (?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("cid", "et", "eid", "s", "n", "o");
-        $typeArr = array("id", "type", "id", "tstr", "uint", "uint");
-        // output: [[title, termID], ...].
-        break;
     case "text":
         $sql = "CALL selectText (?)";
         $paramNameArr = array("id");
@@ -131,30 +113,18 @@ switch ($reqType) {
         $typeArr = array("id");
         // output: [[bin]].
         break;
-    case "str":
-        $sql = "CALL selectRankedString (?, ?, ?)";
-        $paramNameArr = array("s", "n", "o");
-        $typeArr = array("str", "uint", "uint");
-        // output: [[str, kwsID], ...].
-        break;
-    case "strs":
-        $sql = "CALL selectRankedStrings (?, ?, ?)";
-        $paramNameArr = array("s", "n", "o");
-        $typeArr = array("str", "uint", "uint");
-        // output: [[str, kwsID], ...].
-        break;
-    case "creator":
-        $sql = "CALL selectCreator (?, ?)";
-        $paramNameArr = array("t", "id");
-        $typeArr = array("type", "id");
-        // output: [[userID]].
-        break;
-    case "creations":
-        $sql = "CALL selectCreations (?, ?, ?, ?, ?)";
-        $paramNameArr = array("id", "t", "n", "o", "a");
-        $typeArr = array("id", "type", "uint", "uint", "tint");
-        // output: [[entityType, entityID], ...].
-        break;
+    // case "creator":
+    //     $sql = "CALL selectCreator (?, ?)";
+    //     $paramNameArr = array("t", "id");
+    //     $typeArr = array("type", "id");
+    //     // output: [[userID]].
+    //     break;
+    // case "creations":
+    //     $sql = "CALL selectCreations (?, ?, ?, ?, ?)";
+    //     $paramNameArr = array("id", "t", "n", "o", "a");
+    //     $typeArr = array("id", "type", "uint", "uint", "tint");
+    //     // output: [[entityType, entityID], ...].
+    //     break;
     default:
         header("Content-Type: text/json");
         echoErrorJSONAndExit("Unrecognized request type");

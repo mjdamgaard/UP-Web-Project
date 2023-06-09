@@ -16,16 +16,13 @@ CREATE PROCEDURE inputOrChangeRating (
     IN predID BIGINT UNSIGNED,
     IN cxtID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN ratVal SMALLINT,
+    IN ratValHex VARCHAR(510),
     IN live_after TIME
 )
 BEGIN
     DECLARE exitCode TINYINT;
-    DECLARE prevRatVal SMALLINT;
-
-    IF (ratVal = -32768) THEN
-        SET ratVal = NULL;
-    END IF;
+    DECLARE ratVal, prevRatVal VARBINARY(255);
+    SET ratVal = CONV(ratValHex, 16, 10);
 
     SELECT rat_val INTO prevRatVal
     FROM SemanticInputs
@@ -135,7 +132,7 @@ BEGIN
         INSERT INTO SemanticContexts (parent_context_id, def_str)
         VALUES (parentCxtID, str);
         SELECT LAST_INSERT_ID() INTO outID;
-        INSERT INTO Creators (entity_t, entity_id, user_id)
+        INSERT INTO PrivateCreators (entity_t, entity_id, user_id)
         VALUES ("c", outID, userID);
         SET exitCode = 0; -- insert.
     END IF;
@@ -182,7 +179,7 @@ BEGIN
         INSERT INTO Terms (context_id, def_str, def_entity_t, def_entity_id)
         VALUES (cxtID, str, defEntType, defEntID);
         SELECT LAST_INSERT_ID() INTO outID;
-        INSERT INTO Creators (entity_t, entity_id, user_id)
+        INSERT INTO PrivateCreators (entity_t, entity_id, user_id)
         VALUES ("t", outID, userID);
         SET exitCode = 0; -- insert.
     END IF;
@@ -208,7 +205,7 @@ BEGIN
     INSERT INTO Texts (str)
     VALUES (s);
     SELECT LAST_INSERT_ID() INTO outID;
-    INSERT INTO Creators (entity_t, entity_id, user_id)
+    INSERT INTO PrivateCreators (entity_t, entity_id, user_id)
     VALUES ("x", outID, userID);
     SELECT outID, 0; -- insert.
 END //
@@ -228,7 +225,7 @@ BEGIN
     INSERT INTO Binaries (bin)
     VALUES (b);
     SELECT LAST_INSERT_ID() INTO outID;
-    INSERT INTO Creators (entity_t, entity_id, user_id)
+    INSERT INTO PrivateCreators (entity_t, entity_id, user_id)
     VALUES ("b", outID, userID);
     SELECT outID, 0; -- insert.
 END //
