@@ -35,11 +35,11 @@ CREATE TABLE SemanticInputs (
     -- type of the subject of the predicate.
     subj_t CHAR(1) NOT NULL,
     -- context or ancestor context of all the subjects if these are terms.
-    cxt_id BIGINT UNSIGNED NOT NULL,
+    context_id BIGINT UNSIGNED NOT NULL,
     -- (if subj_t is not 't', cxt_id should just be 0).
 
     /* The "input set" */
-    -- given some constants for the above three column, the input sets contains
+    -- given some constants for the above four column, the input sets contains
     -- pairs of rating values and the IDs of the predicate subjects.
     rat_val SMALLINT NOT NULL,
     subj_id BIGINT UNSIGNED NOT NULL,
