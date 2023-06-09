@@ -1,4 +1,4 @@
-
+term
 import {
     ContentLoader,
 } from "/src/ContentLoader.js";
@@ -16,7 +16,7 @@ export var predicateTitleCL = new ContentLoader(
     appColumnCL
 );
 predicateTitleCL.addCallback("data", function(data) {
-    data.entityID = data.getFromAncestor("predID");
+    data.termID = data.getFromAncestor("predID");
     data.copyFromAncestor("titleCutOutLevels");
     data.titleCutOutLevels ||= [1, 1];
 });
@@ -29,29 +29,28 @@ export var termTitleCL = new ContentLoader(
 );
 termTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
-        "entityID",
+        "termID",
         "titleCutOutLevels",
     ]);
     data.titleCutOutLevels ||= [1, 1];
-    data.entityType = "t";
 });
 termTitleCL.addCallback(function($ci, data) {
     // if data.titleCutOutLevels == [], simply load the term's (combined)
-    // entity ID as the title.
+    // term ID as the title.
     if (data.titleCutOutLevels.length === 0) {
-        $ci.append('t' + data.entityID.toString());
+        $ci.append('t' + data.termID.toString());
         return;
     }
     // else query the database for the title (and spec. entity), and append
     // a title with cut-out level given by data.titleCutOutLevels[0]. And if
-    // data.titleCutOutLevels cotains more elements, load the EntityTitles of
+    // data.titleCutOutLevels cotains more elements, load the TermTitles of
     // the specifying entities as well, and if these are Terms, cut out part
     // of their title as well, depending on the cut-out levels (or just append
-    // their entity ID, if the data.titleCutOutLevels array is at its end).
+    // their term ID, if the data.titleCutOutLevels array is at its end).
     let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
     let reqData = {
         type: "term",
-        id: data.entityID,
+        id: data.termID,
     };
     dbReqManager.query($ci, reqData, function($ci, result) {
         data.termTitle = (result[0] ?? [])[1];
@@ -70,7 +69,7 @@ termTitleCL.addCallback(function($ci, data) {
 termTitleCL.addCallback(function($ci, data) {
     $ci.on("click", function() {
         $(this).trigger("open-column", [
-            "EntityColumn", data, "right"
+            "TermColumn", data, "right"
         ]);
         return false;
     });
@@ -101,25 +100,25 @@ entityTitleCL.addCallback("data", function(data) {
         // "titleCutOutLevels",
     ]);
 });
-entityTitleCL.addCallback(function($ci, data) {
-    if (data.entityType === "t") {
-        entityTitleCL.loadAppended($ci, "TermTitle", data);
-    } else if (data.entityType === "c") {
-        entityTitleCL.loadAppended($ci, "ContextTitle", data);
-    } else {
-        $ci.append(
-            '<span class="clickable-text text-primary">' +
-                data.entityType + data.entityID.toString() +
-            '</span>'
-        );
-        $ci.on("click", function() {
-            $(this).trigger("open-column", [
-                "EntityColumn", data, "right"
-            ]);
-            return false;
-        });
-    }
-});
+// entityTitleCL.addCallback(function($ci, data) {
+//     if (data.entityType === "t") {
+//         entityTitleCL.loadAppended($ci, "TermTitle", data);
+//     } else if (data.entityType === "c") {
+//         entityTitleCL.loadAppended($ci, "ContextTitle", data);
+//     } else {
+//         $ci.append(
+//             '<span class="clickable-text text-primary">' +
+//                 data.entityType + data.entityID.toString() +
+//             '</span>'
+//         );
+//         $ci.on("click", function() {
+//             $(this).trigger("open-column", [
+//                 "EntityColumn", data, "right"
+//             ]);
+//             return false;
+//         });
+//     }
+// });
 
 
 

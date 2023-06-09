@@ -287,8 +287,7 @@ setListCL.addCallback("data", function(data) {
         .map(function(row) {
             return {
                 combRatVal: row[0],
-                entityID: row[1],
-                entityType: subjType,
+                termID: row[1],
                 avgRatValArr: row[3] ?? [],
             };
         });
@@ -304,8 +303,7 @@ setListCL.addCallback(function($ci, data) {
             .map(function(row) {
                 return {
                     combRatVal: row[0],
-                    entityID: row[1],
-                    entityType: subjType,
+                    termID: row[1],
                     avgRatValArr: row[3] ?? [row[0]],
                 };
             });

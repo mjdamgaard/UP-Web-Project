@@ -4,14 +4,14 @@ SELECT
     entity_t AS entityType,
     entity_id AS entityID,
     user_id AS userID
-FROM Creators
+FROM PrivateCreators
 ORDER BY entity_t ASC, entity_id ASC, user_id ASC;
 
 SELECT "SemanticContexts:";
 SELECT
     id AS catID,
     parent_context_id AS parentCxtID,
-    title
+    def_str AS str
 FROM SemanticContexts
 ORDER BY id;
 
@@ -19,9 +19,9 @@ SELECT "Terms:";
 SELECT
     id AS termID,
     context_id AS cxtID,
-    title,
-    spec_entity_t AS specType,
-    spec_entity_id AS specID
+    def_str AS str,
+    def_entity_t AS defEntType,
+    def_entity_id AS defEntID
 FROM Terms
 ORDER BY id;
 
@@ -30,19 +30,19 @@ SELECT "SemanticInputs:";
 SELECT
     user_id AS userID,
     pred_id AS predID,
-    subj_t AS subjType,
+    context_id AS ctxID,
     rat_val AS ratVal,
     subj_id AS subjID
 FROM SemanticInputs
-ORDER BY user_id ASC, pred_id ASC, subj_t ASC, rat_val DESC;
+ORDER BY user_id ASC, pred_id ASC, context_id ASC, rat_val DESC;
 
 SELECT "RecentInputs:";
 SELECT
     id AS id,
     user_id AS userID,
     pred_id AS predID,
-    subj_t AS subjType,
+    context_id AS ctxID,
     rat_val AS ratVal,
     subj_id AS subjID
 FROM RecentInputs
-ORDER BY user_id ASC, pred_id ASC, subj_t ASC, id ASC;
+ORDER BY user_id ASC, pred_id ASC, context_id ASC, id ASC;

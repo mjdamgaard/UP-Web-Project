@@ -11,14 +11,14 @@ ALTER TABLE Terms AUTO_INCREMENT=1;
 -- DELETE FROM Texts;
 -- ALTER TABLE Texts AUTO_INCREMENT=1;
 
-DELETE FROM Creators;
+DELETE FROM PrivateCreators;
 
 
 
 -- insert the fundamental context of all terms (with no parent context).
-INSERT INTO SemanticContexts (id, parent_context_id, title)
+INSERT INTO SemanticContexts (id, parent_context_id, def_str)
 VALUES (1, 0, "Terms"); -- id: 1
-INSERT INTO Creators (entity_t, entity_id, user_id)
+INSERT INTO PrivateCreators (entity_t, entity_id, user_id)
 VALUES ('c', 1, 1);
 -- insert the Term "Term," referencing (the category of) all terms/Terms.
 CALL insertOrFindTerm(1, 1, "Terms", "0", 0); -- id: 1
@@ -66,52 +66,18 @@ CALL insertOrFindTerm(1, 10,
 
 CALL insertOrFindContext(
     1, 3,
-    "(as a term) is a useful instance of the {$s of }the term, {$e}"
+    "is a useful instance of the {$s of }the term, {$e}"
 ); -- id: 11
 
 
-
-CALL insertOrFindTerm(
-    1, 3,
-    "is a useful instance of the {{Subcategories} of }the term {$}",
-    "0", 0
-); -- id: 10
-CALL insertOrFindTerm(
-    1, 3,
-    "is a useful instance of the {{Supercategories} of }the term {$}",
-    "0", 0
-); -- id: 11
-CALL insertOrFindTerm(
-    1, 3,
-    "is a useful instance of the {{Related categories} of }the term {$}",
-    "0", 0
-); -- id: 12
-CALL insertOrFindTerm(
-    1, 3,
-    "is a useful part of the {{Instances} of }the term {$}",
-    "0", 0
-); -- id: 13
-CALL insertOrFindTerm(
-    1, 3,
-    "is a useful instance of the {{Related terms} of }the term {$}",
-    "0", 0
-); -- id: 14
-CALL insertOrFindTerm(
-    1, 3,
-    "is a useful instance of the {{Comments} to }the term {$}",
-    "0", 0
-); -- id: 15
--- I intend for the Comments on Related terms to be a subtab of a tab "About."
--- And I expect that they will get more sibling tabs in the future, like
--- "Annotations" for instance (and/or perhaps they will get I supercategory,
--- which might be called "Appendices" or something to that effect).
 
 
 -- insert some Subcategories, Supercategories and Instances predicates.
 
 DELIMITER //
 CREATE PROCEDURE insertPredicates (
-    IN title VARCHAR(255),
+    IN predCxt BIGINT UNSIGNED,
+    IN str VARCHAR(255),
     IN startTermID BIGINT UNSIGNED,
     IN endTermID BIGINT UNSIGNED
 )
@@ -119,8 +85,8 @@ BEGIN
     loop1: LOOP
         IF (startTermID <= endTermID) THEN
             CALL insertOrFindTerm(
-                1, 2,
-                title,
+                1, predCxt,
+                str,
                 "t", startTermID
             );
 
@@ -132,22 +98,61 @@ BEGIN
 END //
 DELIMITER ;
 
-CALL insertPredicates(
-    "is a useful instance of the {{Subcategories} of }the term {$}",
-    1, 7
-);
-CALL insertPredicates(
-    "is a useful part of the {{Instances} of }the term {$}",
-    1, 3
-);
+CALL insertOrFindTerm(1, 8, "Subcategories", "0", 0);
+CALL insertPredicates(11, "Subcategories", 1, 7);
+CALL insertOrFindTerm(1, 8, "Instances", "0", 0);
+CALL insertPredicates(11, "Instances", 1, 3);
 
 -- rate some statements.
 
--- TODO: correct these ratVals to 7F etc., but not before debugging how they
--- are converted in the app.
-CALL inputOrChangeRating(1, 16, 1, 2, 32767, "00");
-CALL inputOrChangeRating(1, 16, 1, 3, 30000, "00");
-CALL inputOrChangeRating(1, 16, 1, 4, 10000, "00");
+
+CALL inputOrChangeRating(1, 16, 1, 2, "FF", "00");
+CALL inputOrChangeRating(1, 16, 1, 3, "E0", "00");
+CALL inputOrChangeRating(1, 16, 1, 4, "90", "00");
+
+
+
+
+
+
+
+
+
+
+-- CALL insertOrFindTerm(
+--     1, 3,
+--     "is a useful instance of the {{Subcategories} of }the term {$}",
+--     "0", 0
+-- ); -- id: 10
+-- CALL insertOrFindTerm(
+--     1, 3,
+--     "is a useful instance of the {{Supercategories} of }the term {$}",
+--     "0", 0
+-- ); -- id: 11
+-- CALL insertOrFindTerm(
+--     1, 3,
+--     "is a useful instance of the {{Related categories} of }the term {$}",
+--     "0", 0
+-- ); -- id: 12
+-- CALL insertOrFindTerm(
+--     1, 3,
+--     "is a useful part of the {{Instances} of }the term {$}",
+--     "0", 0
+-- ); -- id: 13
+-- CALL insertOrFindTerm(
+--     1, 3,
+--     "is a useful instance of the {{Related terms} of }the term {$}",
+--     "0", 0
+-- ); -- id: 14
+-- CALL insertOrFindTerm(
+--     1, 3,
+--     "is a useful instance of the {{Comments} to }the term {$}",
+--     "0", 0
+-- ); -- id: 15
+-- -- I intend for the Comments on Related terms to be a subtab of a tab "About."
+-- -- And I expect that they will get more sibling tabs in the future, like
+-- -- "Annotations" for instance (and/or perhaps they will get I supercategory,
+-- -- which might be called "Appendices" or something to that effect).
 
 
 --

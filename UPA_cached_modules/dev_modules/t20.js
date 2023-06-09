@@ -14,18 +14,17 @@ import "/src/content_loaders/SubmitFields.js";
 import * as t19Mod from "/UPA_scripts.php?id=19";
 
 
-export function upa_main(entityType, entityID, queryUserID, inputUserID) {
+export function upa_main(termID, queryUserID, inputUserID) {
     if (queryUserID !== "1") {
         throw "Unrecognized query user";
     }
 
     let data = {
-        entityType: entityType,
-        entityID: entityID,
+        termID: termID,
         queryUserID: queryUserID,
         inputUserID: inputUserID,
         columnSpecs: [
-            {cl: sdbInterfaceCL.getRelatedCL("EntityColumn")},
+            {cl: sdbInterfaceCL.getRelatedCL("TermColumn")},
         ],
     };
     let contentKey = sdbInterfaceCL.contentKey;
