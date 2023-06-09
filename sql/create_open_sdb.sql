@@ -10,9 +10,10 @@
 -- DROP TABLE Users;
 -- DROP TABLE SemanticContexts;
 -- DROP TABLE Terms;
+-- DROP TABLE Strings;
 -- DROP TABLE Texts;
 -- DROP TABLE Binaries;
--- DROP TABLE KeywordStrings;
+DROP TABLE KeywordStrings;
 --
 -- /* Meta data */
 -- DROP TABLE Creators;
@@ -139,7 +140,7 @@ CREATE TABLE SemanticContexts (
 
     -- parent context.
     parent_context_id BIGINT UNSIGNED NOT NULL,
-    -- a category title for the context (preferable to use plural nouns).
+    -- ...
     title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
     UNIQUE INDEX (parent_context_id, title)
@@ -162,7 +163,6 @@ CREATE TABLE Terms (
     -- Oh, and more importantly, the specifying entities are used to make
     -- predicates from relation--object pairs, which is of course a central
     -- usage in a semantic system: implementing relations.
-    -- (The type of the specifying entity is given by the context.)
     spec_entity_t CHAR(1) NOT NULL,
     spec_entity_id BIGINT UNSIGNED,
 
@@ -170,7 +170,18 @@ CREATE TABLE Terms (
 );
 
 
+CREATE TABLE Strings (
+    /* string ID */
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    -- type = "s".
 
+    -- rank.
+    usability_rank CHAR(2) DEFAULT 'Da', -- rank D, any (no subdivision).
+    -- string.
+    str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+
+    UNIQUE INDEX (usability_rank, str)
+);
 
 
 
@@ -196,15 +207,15 @@ CREATE TABLE Binaries (
 
 
 
-CREATE TABLE KeywordStrings (
-    /* keyword string ID */
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    -- type = "k".
-
-    -- keyword string.
-    str VARCHAR(768) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL UNIQUE,
-    FULLTEXT idx (str)
-);
+-- CREATE TABLE KeywordStrings (
+--     /* keyword string ID */
+--     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+--     -- type = "k".
+--
+--     -- keyword string.
+--     str VARCHAR(768) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL UNIQUE,
+--     FULLTEXT idx (str)
+-- );
 
 
 

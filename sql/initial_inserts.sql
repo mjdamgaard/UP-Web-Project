@@ -62,6 +62,14 @@ CALL insertOrFindTerm(1, 5,
 -- that the userbase might want to attach special rendering options when such
 -- Terms are viewed, either in their own Column or as a SetList element.)
 
+
+CALL insertOrFindContext(
+    1, 2,
+    "is a useful instance of the {{$t} of }the term {$d}"
+); -- id: 6
+
+
+
 CALL insertOrFindTerm(
     1, 3,
     "is a useful instance of the {{Subcategories} of }the term {$}",
