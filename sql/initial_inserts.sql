@@ -27,14 +27,12 @@ CALL insertOrFindTerm(1, 1, "Terms", "0", 0); -- id: 1
 
 
 CALL insertOrFindContext(1, 1, "Predicates"); -- id: 2
+CALL insertOrFindContext(1, 2, "Verbs, s."); -- id: 3
 
--- Terms of this Semantic Context is just the Predicate titles without the
--- objects (so with only ("0", 0) as their spect_t/id's). Thus, "Predicate term
--- titles" is a more precise title for this Context, but let us call it
--- "Relations" for simplicity.
-CALL insertOrFindContext(1, 1, "Relations"); -- id: 3
+-- Nouns are important, since they are used for
+CALL insertOrFindContext(1, 1, "Nouns"); -- id: 4
 
-CALL insertOrFindContext(1, 1, "Lists"); -- id: 4
+CALL insertOrFindContext(1, 1, "Entity lists"); -- id: 5
 
 
 CALL insertOrFindTerm(1, 1, "openSDB", "0", 0); -- id: 2
@@ -45,7 +43,7 @@ CALL insertOrFindTerm(1, 1, "Jazz", "0", 0); -- id: 5
 CALL insertOrFindTerm(1, 1, "Hip hop", "0", 0); -- id: 6
 
 CALL insertOrFindTerm(1, 1, "Movies", "0", 0); -- id: 7
-CALL insertOrFindContext(1, 1, "Movies"); -- id: 5
+CALL insertOrFindContext(1, 1, "Movies"); -- id: 6
 CALL insertOrFindTerm(1, 5,
     "{The Lord of the Rings: The Fellowship of the Ring} (2001)",
     "0", 0
