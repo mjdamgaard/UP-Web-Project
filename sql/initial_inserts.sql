@@ -34,7 +34,6 @@ CALL insertOrFindContext(1, 1, "Nouns for predicate definitions"); -- id: 4
 CALL insertOrFindContext(1, 1, "Entity lists"); -- id: 5
 
 
-
 CALL insertOrFindTerm(1, 1, "openSDB", "0", 0); -- id: 2
 
 CALL insertOrFindTerm(1, 1, "Music", "0", 0); -- id: 3
