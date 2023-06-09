@@ -6,7 +6,6 @@ SELECT "Input procedures";
 -- DROP PROCEDURE insertOrFindTerm;
 -- DROP PROCEDURE insertText;
 -- DROP PROCEDURE insertBinary;
--- DROP PROCEDURE insertOrFindRankedString;
 
 
 
@@ -226,35 +225,5 @@ BEGIN
     INSERT INTO Creators (entity_t, entity_id, user_id)
     VALUES ("b", outID, userID);
     SELECT outID, 0; -- insert.
-END //
-DELIMITER ;
-
-
-
-
-
-DELIMITER //
-CREATE PROCEDURE insertOrFindKeywordString (
-    IN userID BIGINT UNSIGNED,
-    IN s VARCHAR(768)
-)
-BEGIN
-    DECLARE outID BIGINT UNSIGNED;
-    DECLARE exitCode TINYINT;
-
-    SELECT id INTO outID
-    FROM KeywordStrings
-    WHERE str = s;
-    IF (outID IS NOT NULL) THEN
-        SET exitCode = 1; -- find.
-    ELSE
-        INSERT INTO KeywordStrings (str)
-        VALUES (s);
-        SELECT LAST_INSERT_ID() INTO outID;
-        INSERT INTO Creators (entity_t, entity_id, user_id)
-        VALUES ("k", outID, userID);
-        SET exitCode = 0; -- insert.
-    END IF;
-    SELECT outID, exitCode;
 END //
 DELIMITER ;

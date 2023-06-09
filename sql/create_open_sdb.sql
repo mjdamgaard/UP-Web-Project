@@ -12,7 +12,6 @@
 -- DROP TABLE Terms;
 -- DROP TABLE Texts;
 -- DROP TABLE Binaries;
-DROP TABLE RankedStrings;
 --
 -- /* Meta data */
 -- DROP TABLE Creators;
@@ -35,6 +34,9 @@ CREATE TABLE SemanticInputs (
     pred_id BIGINT UNSIGNED NOT NULL,
     -- type of the subject of the predicate.
     subj_t CHAR(1) NOT NULL,
+    -- context or ancestor context of all the subjects if these are terms.
+    cxt_id BIGINT UNSIGNED NOT NULL,
+    -- (if subj_t is not 't', cxt_id should just be 0).
 
     /* The "input set" */
     -- given some constants for the above three column, the input sets contains
@@ -53,7 +55,7 @@ CREATE TABLE SemanticInputs (
     UNIQUE INDEX (subj_t, subj_id, pred_id, user_id)
 );
 -- TODO: Compress this table and its sec. index, as well as some other tables
--- below (at least RecordedInputs).
+-- below (at least RecordedInputs). (But compression is a must for this table.)
 
 
 CREATE TABLE PrivateRecentInputs (
@@ -194,14 +196,14 @@ CREATE TABLE Binaries (
 
 
 
-CREATE TABLE RankedStrings (
-    -- rank.
-    usability_rank CHAR(2) NOT NULL DEFAULT 'Ca', -- rank C, any (no subdivision).
-    -- string.
-    str VARCHAR(255) CHARACTER SET utf8mb4 NOT NULL,
-
-    PRIMARY KEY (usability_rank, str)
-);
+-- CREATE TABLE RankedStrings (
+--     -- rank.
+--     usability_rank CHAR(2) NOT NULL DEFAULT 'Ca', -- rank C, any (no subdivision).
+--     -- string.
+--     str VARCHAR(255) CHARACTER SET utf8mb4 NOT NULL,
+--
+--     PRIMARY KEY (usability_rank, str)
+-- );
 
 -- CREATE TABLE KeywordStrings (
 --     /* keyword string ID */

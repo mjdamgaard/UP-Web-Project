@@ -15,7 +15,6 @@ SELECT "Query procedures";
 -- DROP PROCEDURE selectTermStrings;
 -- DROP PROCEDURE selectText;
 -- DROP PROCEDURE selectBinary;
-DROP PROCEDURE selectRankedStrings;
 -- DROP PROCEDURE selectCreator;
 -- DROP PROCEDURE selectCreations;
 
@@ -343,23 +342,6 @@ DELIMITER ;
 
 
 
-
-
-DELIMITER //
-CREATE PROCEDURE selectRankedStrings (
-    IN s VARCHAR(768),
-    IN maxNum INT UNSIGNED,
-    IN numOffset INT UNSIGNED
-)
-BEGIN
-    SELECT
-        str AS str,
-        id AS kwsID
-    FROM KeywordStrings
-    WHERE MATCH (str) AGAINST (s IN NATURAL LANGUAGE MODE)
-    LIMIT numOffset, maxNum;
-END //
-DELIMITER ;
 
 
 
