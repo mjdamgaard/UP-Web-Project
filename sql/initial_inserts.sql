@@ -29,8 +29,7 @@ CALL insertOrFindTerm(1, 1, "Terms", "0", 0); -- id: 1
 CALL insertOrFindContext(1, 1, "Predicates"); -- id: 2
 CALL insertOrFindContext(1, 2, "Verbs, s."); -- id: 3
 
--- Nouns are important, since they are used for
-CALL insertOrFindContext(1, 1, "Nouns"); -- id: 4
+CALL insertOrFindContext(1, 1, "Nouns for predicate definitions"); -- id: 4
 
 CALL insertOrFindContext(1, 1, "Entity lists"); -- id: 5
 
@@ -62,8 +61,8 @@ CALL insertOrFindTerm(1, 5,
 
 
 CALL insertOrFindContext(
-    1, 2,
-    "(as a term) is a useful instance of the {$t of }the term, {$s}"
+    1, 3,
+    "(as a term) is a useful instance of the {$s of }the term, {$e}"
 ); -- id: 6
 
 

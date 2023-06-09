@@ -111,7 +111,7 @@ DELIMITER //
 CREATE PROCEDURE insertOrFindContext (
     IN userID BIGINT UNSIGNED,
     IN parentCxtID BIGINT UNSIGNED,
-    IN cxtTitle VARCHAR(255)
+    IN str VARCHAR(255)
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
@@ -121,7 +121,7 @@ BEGIN
     FROM SemanticContexts
     WHERE (
         parent_context_id = parentCxtID AND
-        title = cxtTitle
+        def_str = str
     );
     IF (outID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
@@ -130,8 +130,8 @@ BEGIN
     ) THEN
         SET exitCode = 2; -- parent context does not exist.
     ELSE
-        INSERT INTO SemanticContexts (parent_context_id, title)
-        VALUES (parentCxtID, cxtTitle);
+        INSERT INTO SemanticContexts (parent_context_id, def_str)
+        VALUES (parentCxtID, str);
         SELECT LAST_INSERT_ID() INTO outID;
         INSERT INTO Creators (entity_t, entity_id, user_id)
         VALUES ("c", outID, userID);
@@ -147,28 +147,25 @@ DELIMITER //
 CREATE PROCEDURE insertOrFindTerm (
     IN userID BIGINT UNSIGNED,
     IN cxtID BIGINT UNSIGNED,
-    IN termTitle VARCHAR(255),
-    IN specType CHAR(1),
-    IN specID BIGINT UNSIGNED
+    IN str VARCHAR(255),
+    IN defEntType CHAR(1),
+    IN defEntID BIGINT UNSIGNED
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
 
-    IF (specID = 0) THEN
-        SET specID = NULL;
+    IF (defEntID = 0) THEN
+        SET defEntID = NULL;
     END IF;
-    -- IF (specType = "0") THEN
-    --     SET specType = NULL; -- No, cause spec_t is not nullable.
-    -- END IF;
 
     SELECT id INTO outID
     FROM Terms
     WHERE (
         context_id = cxtID AND
-        spec_entity_t = specType AND
-        spec_entity_id = specID AND
-        title = termTitle
+        def_entity_t = defEntType AND
+        def_entity_id = defEntID AND
+        def_str = str
     );
     IF (outID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
@@ -177,8 +174,8 @@ BEGIN
     ) THEN
         SET exitCode = 2; -- context does not exist.
     ELSE
-        INSERT INTO Terms (context_id, title, spec_entity_t, spec_entity_id)
-        VALUES (cxtID, termTitle, specType, specID);
+        INSERT INTO Terms (context_id, def_str, def_entity_t, def_entity_id)
+        VALUES (cxtID, str, defEntType, defEntID);
         SELECT LAST_INSERT_ID() INTO outID;
         INSERT INTO Creators (entity_t, entity_id, user_id)
         VALUES ("t", outID, userID);

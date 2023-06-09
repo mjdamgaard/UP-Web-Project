@@ -201,7 +201,7 @@ CREATE PROCEDURE selectContext (
 BEGIN
     SELECT
         parent_context_id AS parentCxtID,
-        title AS title
+        def_str AS str
     FROM SemanticContexts
     WHERE id = cxtID;
 END //
@@ -215,9 +215,9 @@ CREATE PROCEDURE selectTerm (
 BEGIN
     SELECT
         context_id AS cxtID,
-        title AS title,
-        spec_entity_t AS specType,
-        spec_entity_id AS specID
+        def_str AS str,
+        def_entity_t AS defEntType,
+        def_entity_id AS defEntID
     FROM Terms
     WHERE id = termID;
 END //
@@ -235,7 +235,7 @@ BEGIN
     FROM SemanticContexts
     WHERE (
         parent_context_id = parentCxtID AND
-        title = str
+        def_str = str
     );
 END //
 DELIMITER ;
@@ -244,22 +244,22 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectTermID (
     IN cxtID BIGINT UNSIGNED,
-    IN specType CHAR(1),
-    IN specID BIGINT UNSIGNED,
+    IN defEntType CHAR(1),
+    IN defEntID BIGINT UNSIGNED,
     IN str VARCHAR(255)
 )
 BEGIN
-    IF (specID = 0) THEN
-        SET specID = NULL;
+    IF (defEntID = 0) THEN
+        SET defEntID = NULL;
     END IF;
 
     SELECT id AS termID
     FROM Terms
     WHERE (
         context_id = cxtID AND
-        spec_entity_t = specType AND
-        spec_entity_id <=> specID AND
-        title = str
+        def_entity_t = defEntType AND
+        def_entity_id <=> defEntID AND
+        def_str = str
     );
 END //
 DELIMITER ;
@@ -275,28 +275,28 @@ CREATE PROCEDURE selectContextIDs (
 BEGIN
     (
         SELECT
-            title AS title,
+            def_str AS str,
             id AS cxtID
         FROM SemanticContexts
         WHERE (
             parent_context_id = parentCxtID AND
-            title < str
+            def_str < str
         )
-        ORDER BY title DESC
+        ORDER BY def_str DESC
         LIMIT 1
     ) UNION (
         SELECT
-            title AS title,
+            def_str AS str,
             id AS cxtID
         FROM SemanticContexts
         WHERE (
             parent_context_id = parentCxtID AND
-            title >= str
+            def_str >= str
         )
-        ORDER BY title ASC
+        ORDER BY def_str ASC
         LIMIT numOffset, maxNum
     )
-    ORDER BY title ASC;
+    ORDER BY def_str ASC;
 END //
 DELIMITER ;
 
@@ -304,45 +304,45 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectTermIDs (
     IN cxtID BIGINT UNSIGNED,
-    IN specType CHAR(1),
-    IN specID BIGINT UNSIGNED,
+    IN defEntType CHAR(1),
+    IN defEntID BIGINT UNSIGNED,
     IN str VARCHAR(255),
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED
 )
 BEGIN
-    IF (specID = 0) THEN
-        SET specID = NULL;
+    IF (defEntID = 0) THEN
+        SET defEntID = NULL;
     END IF;
 
     (
         SELECT
-            title AS title,
+            def_str AS str,
             id AS termID
         FROM Terms
         WHERE (
             context_id = cxtID AND
-            spec_entity_t = specType AND
-            spec_entity_id <=> specID AND
-            title < str
+            def_entity_t = defEntType AND
+            def_entity_id <=> defEntID AND
+            def_str < str
         )
-        ORDER BY title DESC
+        ORDER BY def_str DESC
         LIMIT 1
     ) UNION (
         SELECT
-            title AS title,
+            def_str AS str,
             id AS termID
         FROM Terms
         WHERE (
             context_id = cxtID AND
-            spec_entity_t = specType AND
-            spec_entity_id <=> specID AND
-            title >= str
+            def_entity_t = defEntType AND
+            def_entity_id <=> defEntID AND
+            def_str >= str
         )
-        ORDER BY title ASC
+        ORDER BY def_str ASC
         LIMIT numOffset, maxNum
     )
-    ORDER BY title ASC;
+    ORDER BY def_str ASC;
 END //
 DELIMITER ;
 

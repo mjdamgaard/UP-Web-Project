@@ -13,7 +13,6 @@
 -- DROP TABLE Texts;
 -- DROP TABLE Binaries;
 -- DROP TABLE RankedStrings;
-DROP TABLE KeywordStrings;
 --
 -- /* Meta data */
 -- DROP TABLE Creators;
@@ -141,9 +140,9 @@ CREATE TABLE SemanticContexts (
     -- parent context.
     parent_context_id BIGINT UNSIGNED NOT NULL,
     -- ...
-    title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    def_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
-    UNIQUE INDEX (parent_context_id, title)
+    UNIQUE INDEX (parent_context_id, def_str)
 );
 
 CREATE TABLE Terms (
@@ -154,19 +153,19 @@ CREATE TABLE Terms (
     -- id of the context which tells how the subsequent columns are to be
     -- interpreted.
     context_id BIGINT UNSIGNED NOT NULL,
-    -- title of the term.
-    title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    -- defining string of the term.
+    def_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
     -- the specifying entity (nullable), which can define the term more than
-    -- just the context and the title does (useful for specifying instances of
+    -- just the context and the def_str does (useful for specifying instances of
     -- very broad classes of objects, such as texts, images, comments, and so
     -- on, where it is hard to specify the objects using contexts alone).
     -- Oh, and more importantly, the specifying entities are used to make
     -- predicates from relation--object pairs, which is of course a central
     -- usage in a semantic system: implementing relations.
-    spec_entity_t CHAR(1) NOT NULL,
-    spec_entity_id BIGINT UNSIGNED,
+    def_entity_t CHAR(1) NOT NULL,
+    def_entity_id BIGINT UNSIGNED,
 
-    UNIQUE INDEX (context_id, spec_entity_t, spec_entity_id, title)
+    UNIQUE INDEX (context_id, def_entity_t, def_entity_id, def_str)
 );
 
 
