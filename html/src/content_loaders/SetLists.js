@@ -10,18 +10,15 @@ import {
 
 /*
 SetList requires data:
+    data.defaultQueryNum,
+    data.defaultUserWeightArr,
     data.setDataArr = [setData, ...],
         setData = {
-            predKeys, ratTransFun, userWeightArr, setArr, avgSet, queryParams,
-            isReadyArr, refresh
+            predStr, objID, userWeightArr?, queryParams?, ratTransFun?,
+            setArr?, avgSet?, isReadyArr?
         },
-        predKeys =
-            {relID, objType, objID} |
-            {predTitle, objType, objID} |
-            {predID} |
-            {title, (objType, objID)?}, (requires setArr to be given)
         userWeightArr = [{userID, weight}, ...],
-        queryParams = {num, ratingLow, ratingHigh, offset, isAscending},
+        queryParams = {num?, ratingLo?, ratingHi?, offset?, isAscending?},
     data.elemContentKey,
     data.subjType,
     data.initialNum,
@@ -35,7 +32,9 @@ And it also sets/updates data:
 export var setListCL = new ContentLoader(
     "SetList",
     /* Initial HTML template */
-    '<<PredicateSetField data:wait>>',
+    '<div>' +
+        '<<List>>' +
+    '</div>',
     appColumnCL
 );
 setFieldCL.addCallback("data", function(data) {
@@ -81,10 +80,10 @@ export function queryAndSetAvgSetAndSignalCI(setData, i, $ci, signal) {
             let reqData = {
                 type: "set",
                 uid: setData.userWeightArr[j].userID,
-                pid: setData.predKeys.predID,
+                pid: setData.predKey.predID,
                 st: data.subjType,
-                rl: setData.queryParams.ratingLow ?? -32767,
-                rh: setData.queryParams.ratingHigh ?? 32767,
+                rl: setData.queryParams.ratingLo ?? "",
+                rh: setData.queryParams.ratingHi ?? "",
                 n: setData.queryParams.num,
                 o: setData.queryParams.offset ?? 0,
                 a: setData.queryParams.isAscending ?? 0,
@@ -213,8 +212,8 @@ predicateSetFieldCL.addCallback(function($ci, data) {
                 uid: data.userWeightArr[i].userID,
                 pid: data.predID,
                 st: data.subjType,
-                rl: data.ratingLow ?? -32767,
-                rh: data.ratingHigh ?? 32767,
+                rl: data.ratingLo ?? "",
+                rh: data.ratingHi ?? "",
                 n: data.queryNum,
                 o: data.queryOffset ?? 0,
                 a: data.queryAscending ?? 0,
