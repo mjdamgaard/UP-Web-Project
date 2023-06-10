@@ -168,26 +168,23 @@ CREATE TABLE Terms (
 
     UNIQUE INDEX (context_id, def_str, def_entity_id),
 
-    -- If this Term is a Context, the def_entity_t is the type of the def_entity
-    -- that Terms of this Context holds (and the def_entity if this Context
-    -- Term itself will always be the parent Context Term). If not, the
-    -- def_entity_t is simply the type of the def_entity that this Term itself
-    -- holds. Thus, in other words, all descendent Contexts and Non-Contexts of
-    -- the fundamental Contexts: Users, Texts and Binaries, will have a
-    -- def_entity_t equal to 'u', 'x' and 'b', respectively, and all other Terms
-    -- will have a def_entity_t equal to 't'. *(No, they can also hold '0',
-    -- which all ancestor Contexts of Users, Texts and Binaries will do.)
-    def_entity_t CHAR(1) NOT NULL,
-    -- a boolean denoting if the term is a Context or a Non-Context Term.
-    is_a_context BOOL NOT NULL DEFAULT 0
+    -- the type of the term, which is automatically set given the context (and
+    -- which is thus only meant for speeding up certain queries).
+    -- Context Terms have one of the capital letters: 'C', 'T', 'U', 'X', 'B'.
+    -- The last four is used for Contexts whose derived Terms always have a
+    -- defining entity of type corresponding to that letter (i.e. Term, User,
+    -- Text or Binary, respectively). 'C' is used whenever this is open/
+    -- undecided. Non-Context terms can have the lower-case letters: '0', 't',
+    -- 'u', 'x', 'b', depending on the existance and type of their def_entity,
+    -- where '0' then denotes that the def_entity(_id) is null.
+    type CHAR(1) NOT NULL
 );
 
-INSERT INTO Terms (
-    context_id, def_str, def_entity_id, def_entity_t, is_a_context
-)
+INSERT INTO Terms (context_id, def_str, def_entity_id, type)
 VALUES
-    (0, "Terms", 0, '0', 1), -- id: 1
-    (1, "Contexts", 2, '0', 1), -- id: 2
+    (0, "Terms", NULL, 'C'), -- id: 1
+    -- (1, "Contexts", 1, 'C'), -- id: 2
+    (1, "Users", 1, 'C'), -- id: 2
 
 
 
