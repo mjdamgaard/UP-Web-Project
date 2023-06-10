@@ -166,7 +166,7 @@ CREATE TABLE Terms (
     -- usage in a semantic system: implementing relations.
     def_entity_id BIGINT UNSIGNED,
 
-    UNIQUE INDEX (context_id, def_str, def_entity_id),
+    UNIQUE INDEX (context_id, def_str, def_entity_id)
 
     -- the type of the term, which is automatically set given the context (and
     -- which is thus only meant for speeding up certain queries).
@@ -177,14 +177,16 @@ CREATE TABLE Terms (
     -- undecided. Non-Context terms can have the lower-case letters: '0', 't',
     -- 'u', 'x', 'b', depending on the existance and type of their def_entity,
     -- where '0' then denotes that the def_entity(_id) is null.
-    type CHAR(1) NOT NULL
+    -- type CHAR(1) NOT NULL
 );
 
-INSERT INTO Terms (context_id, def_str, def_entity_id, type)
+INSERT INTO Terms (context_id, def_str, def_entity_id)
 VALUES
-    (0, "Terms", NULL, 'C'), -- id: 1
-    -- (1, "Contexts", 1, 'C'), -- id: 2
-    (1, "Users", 1, 'C'), -- id: 2
+    (0, "Terms", NULL), -- id: 1
+    (0, "Contexts", 1), -- id: 2
+    (2, "Users", 1), -- id: 3
+    (2, "Texts", 1), -- id: 4
+    (2, "Binaries", 1), -- id: 5
 
 
 
