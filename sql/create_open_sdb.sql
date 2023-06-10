@@ -140,6 +140,8 @@ CREATE TABLE SemanticContexts (
     -- ...
     def_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
+    def_entity_t CHAR(1) NOT NULL, -- generally the same as parent's.
+
     UNIQUE INDEX (parent_context_id, def_str)
 );
 
@@ -160,7 +162,7 @@ CREATE TABLE Terms (
     -- Oh, and more importantly, the specifying entities are used to make
     -- predicates from relation--object pairs, which is of course a central
     -- usage in a semantic system: implementing relations.
-    def_entity_t CHAR(1) NOT NULL,
+    def_entity_t CHAR(1) NOT NULL, -- the same as context's.
     def_entity_id BIGINT UNSIGNED,
 
     UNIQUE INDEX (context_id, def_entity_t, def_entity_id, def_str)
