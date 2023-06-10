@@ -186,7 +186,13 @@ VALUES
     (0, "Contexts", 1), -- id: 2
     (2, "Users", 1), -- id: 3
     (2, "Texts", 1), -- id: 4
-    (2, "Binaries", 1), -- id: 5
+    (2, "Binaries", 1); -- id: 5
+-- Here, context_id = 0 defines the "default semantic context", which says that
+-- Terms with this context should generally not have any def_entity, and should
+-- have their semantics understood from the word given by the def_str alone,
+-- with one notable exception of the Term, (0, "Contexts", 1) (having id = 2),
+-- which is to be understood as the fundamental "Context of Contexts" in the
+-- database. It holds a def_entity of (0, "Terms", NULL).. hm.. 
 
 
 
