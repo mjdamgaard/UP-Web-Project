@@ -167,7 +167,7 @@ CREATE TABLE Terms (
     def_entity_t CHAR(1) NOT NULL,
     def_entity_id BIGINT UNSIGNED,
 
-    UNIQUE INDEX (context_id, def_str, def_entity_t, def_entity_id)
+    UNIQUE INDEX (context_id, def_str, def_entity_t, def_entity_id) 
 
     -- the type of the term, which is automatically set given the context (and
     -- which is thus only meant for speeding up certain queries).
