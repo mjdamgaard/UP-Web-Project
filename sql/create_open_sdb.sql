@@ -168,6 +168,17 @@ CREATE TABLE Terms (
     def_entity_id BIGINT UNSIGNED,
 
     UNIQUE INDEX (context_id, def_str, def_entity_t, def_entity_id)
+
+    -- the type of the term, which is automatically set given the context (and
+    -- which is thus only meant for speeding up certain queries).
+    -- Context Terms have one of the capital letters: 'C', 'T', 'U', 'X', 'B'.
+    -- The last four is used for Contexts whose derived Terms always have a
+    -- defining entity of type corresponding to that letter (i.e. Term, User,
+    -- Text or Binary, respectively). 'C' is used whenever this is open/
+    -- undecided. Non-Context terms can have the lower-case letters: '0', 't',
+    -- 'u', 'x', 'b', depending on the existance and type of their def_entity,
+    -- where '0' then denotes that the def_entity(_id) is null.
+    -- type CHAR(1) NOT NULL
 );
 
 INSERT INTO Terms (context_id, def_str, def_entity_id, id)
