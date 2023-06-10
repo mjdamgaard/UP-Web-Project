@@ -164,34 +164,32 @@ CREATE TABLE Terms (
     -- Oh, and more importantly, the specifying entities are used to make
     -- predicates from relation--object pairs, which is of course a central
     -- usage in a semantic system: implementing relations.
+    def_entity_t CHAR(1) NOT NULL,
     def_entity_id BIGINT UNSIGNED,
 
-    UNIQUE INDEX (context_id, def_str, def_entity_id)
-
-    -- the type of the term, which is automatically set given the context (and
-    -- which is thus only meant for speeding up certain queries).
-    -- Context Terms have one of the capital letters: 'C', 'T', 'U', 'X', 'B'.
-    -- The last four is used for Contexts whose derived Terms always have a
-    -- defining entity of type corresponding to that letter (i.e. Term, User,
-    -- Text or Binary, respectively). 'C' is used whenever this is open/
-    -- undecided. Non-Context terms can have the lower-case letters: '0', 't',
-    -- 'u', 'x', 'b', depending on the existance and type of their def_entity,
-    -- where '0' then denotes that the def_entity(_id) is null.
-    -- type CHAR(1) NOT NULL
+    UNIQUE INDEX (context_id, def_str, def_entity_t, def_entity_id)
 );
 
-INSERT INTO Terms (context_id, def_str, def_entity_id)
-VALUES
-    (0, "Terms", NULL), -- id: 1
-    (0, "Contexts that builds on their parent Context, $e, with the string, $s",
-        NULL), -- id: 2
-    (2, "Users", 1), -- id: 3
-    (2, "Texts", 1), -- id: 4
-    (2, "Binaries", 1); -- id: 5
+INSERT INTO Terms (context_id, def_str, def_entity_id, id)
+VALUES (
+    0, "Terms", NULL, 1
+), (
+    0,
+    "{Subcontexts} that build on their parent Context, $e, with the string, $s",
+    NULL,
+    2
+), (
+    2, "Users", 1, 3
+), (
+    2, "Texts", 1, 4
+), (
+    2, "Binaries", 1, 5
+);
 -- Here, context_id = 0 defines the "default semantic context", and it should
--- used for only two Terms: (0, "Terms", NULL) and (0, "Contexts", NULL).
--- All subsequent Terms can choose any previously existing Terms as its Context
--- (in principle).
+-- used for only two Terms: (0, "Terms", NULL) and (0, "{Subcontexts} ...",
+-- NULL). All subsequent Terms can choose any previously existing Terms as its
+-- Context, including (0, "Terms", NULL) (even though this Term is not defined
+-- as a Context specifically).
 
 
 
