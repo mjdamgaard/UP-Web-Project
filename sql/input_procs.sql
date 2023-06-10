@@ -202,16 +202,23 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertText (
     IN userID BIGINT UNSIGNED,
-    IN s TEXT
+    IN metaStr VARCHAR(255),
+    IN textStr TEXT
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
-    INSERT INTO Texts (str)
-    VALUES (s);
+    INSERT INTO Terms (
+        context_id, def_str, def_entity_id, derived_term_def_entity_t
+    )
+    VALUES (
+        4, metaStr, NULL, '0'
+    );
     SELECT LAST_INSERT_ID() INTO outID;
-    INSERT INTO PrivateCreators (entity_t, entity_id, user_id)
-    VALUES ("x", outID, userID);
+    INSERT INTO Texts (id, str)
+    VALUES (outID, textStr);
+    INSERT INTO PrivateCreators (term_id, user_id)
+    VALUES (outID, userID);
     SELECT outID, 0; -- insert.
 END //
 DELIMITER ;
@@ -232,6 +239,24 @@ BEGIN
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO PrivateCreators (entity_t, entity_id, user_id)
     VALUES ("b", outID, userID);
+    SELECT outID, 0; -- insert.
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE privateInsertUser (
+    IN userID BIGINT UNSIGNED,
+    IN s TEXT
+)
+BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+
+    INSERT INTO Texts (str)
+    VALUES (s);
+    SELECT LAST_INSERT_ID() INTO outID;
+    INSERT INTO PrivateCreators (entity_t, entity_id, user_id)
+    VALUES ("x", outID, userID);
     SELECT outID, 0; -- insert.
 END //
 DELIMITER ;
