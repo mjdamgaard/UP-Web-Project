@@ -153,6 +153,8 @@ CREATE TABLE Terms (
     -- id of the context which tells how the subsequent columns are to be
     -- interpreted.
     context_id BIGINT UNSIGNED NOT NULL,
+
+
     -- defining string of the term.
     def_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
     -- the specifying entity (nullable), which can define the term more than
@@ -162,11 +164,29 @@ CREATE TABLE Terms (
     -- Oh, and more importantly, the specifying entities are used to make
     -- predicates from relation--object pairs, which is of course a central
     -- usage in a semantic system: implementing relations.
-    def_entity_t CHAR(1) NOT NULL, -- the same as context's.
-    def_entity_id BIGINT UNSIGNED, 
+    def_entity_id BIGINT UNSIGNED,
 
-    UNIQUE INDEX (context_id, def_entity_t, def_entity_id, def_str)
+    UNIQUE INDEX (context_id, def_str, def_entity_id),
+
+    -- If this Term is a Context, the def_entity_t is the type of the def_entity
+    -- that Terms of this Context holds (and the def_entity if this Context
+    -- Term itself will always be the parent Context Term). If not, the
+    -- def_entity_t is simply the type of the def_entity that this Term itself
+    -- holds. Thus, in other words, all descendent Contexts and Non-Contexts of
+    -- the fundamental Contexts: Users, Texts and Binaries, will have a
+    -- def_entity_t equal to 'u', 'x' and 'b', respectively, and all other Terms
+    -- will have a def_entity_t equal to 't'.
+    def_entity_t CHAR(1) NOT NULL,
+    -- a boolean denoting if the term is a Context or a Non-Context Term.
+    is_a_context BOOL NOT NULL DEFAULT 0
 );
+
+INSERT INTO Terms (id, context_id, def_str,)
+VALUES (1, 0, "Terms"); -- id: 1
+
+
+
+
 
 
 
