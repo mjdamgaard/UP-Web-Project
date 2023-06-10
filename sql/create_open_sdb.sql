@@ -182,7 +182,7 @@ CREATE TABLE Terms (
 
 INSERT INTO Terms (context_id, def_str, def_entity_id, type)
 VALUES
-    -- (0, "Terms", NULL, 'C'), -- id: 1
+    (0, "Terms", NULL, 'C'), -- id: 1
     -- (1, "Contexts", 1, 'C'), -- id: 2
     (1, "Users", 1, 'C'), -- id: 2
 
