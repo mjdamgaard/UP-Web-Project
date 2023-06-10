@@ -164,10 +164,12 @@ CREATE TABLE Terms (
     -- Oh, and more importantly, the specifying entities are used to make
     -- predicates from relation--object pairs, which is of course a central
     -- usage in a semantic system: implementing relations.
-    def_entity_t CHAR(1) NOT NULL,
     def_entity_id BIGINT UNSIGNED,
 
-    UNIQUE INDEX (context_id, def_str, def_entity_t, def_entity_id) 
+
+    derived_def_entity_type CHAR(1) NOT NULL,
+
+    UNIQUE INDEX (context_id, def_str, def_entity_t, def_entity_id)
 
     -- the type of the term, which is automatically set given the context (and
     -- which is thus only meant for speeding up certain queries).
