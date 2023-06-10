@@ -160,6 +160,8 @@ BEGIN
             VALUES (outID, userID);
             SET exitCode = 0; -- insert.
         END IF;
+    ELSEIF (cxtID >= 3 AND cxtID <= 5) THEN
+        SET exitCode = 3; -- user is not permitted to add to this context.
     ELSE
         INSERT INTO Terms (
             context_id, def_str, def_entity_id, derived_term_def_entity_t
@@ -175,8 +177,6 @@ BEGIN
     SELECT outID, exitCode;
 END //
 DELIMITER ;
-
-
 
 
 
