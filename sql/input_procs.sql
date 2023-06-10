@@ -96,7 +96,6 @@ BEGIN
     );
 
     SELECT subjID AS outID, exitCode;
-    -- SELECT HEX(prevRatVal) AS prevRatVal, exitCode;
 END //
 DELIMITER ;
 -- TODO: When moving the ratings from PrivateRecentInputs to the public ones
@@ -112,40 +111,65 @@ CREATE PROCEDURE insertOrFindTerm (
     IN userID BIGINT UNSIGNED,
     IN cxtID BIGINT UNSIGNED,
     IN str VARCHAR(255),
-    IN defEntType CHAR(1),
-    IN defEntID BIGINT UNSIGNED
+    IN entID BIGINT UNSIGNED,
+    IN derivedEntType CHAR(1)
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
+    DECLARE cxtStr VARCHAR(255),
+    DECLARE entType CHAR(1);
+    DECLARE username VARCHAR(50);
 
-    IF (defEntID = 0) THEN
-        SET defEntID = NULL;
+    SELECT (def_str, derived_term_def_entity_t)
+    INTO (cxtStr, entType)
+    FROM Terms
+    WHERE id = cxtID;
+
+    IF (entID = 0 OR entType = '0') THEN
+        SET entID = NULL;
     END IF;
 
     SELECT id INTO outID
     FROM Terms
     WHERE (
         context_id = cxtID AND
-        def_entity_t = defEntType AND
-        def_entity_id = defEntID AND
-        def_str = str
+        def_str = str AND
+        def_entity_id = entID AND
+        derived_term_def_entity_t = derivedEntType
     );
     IF (outID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
-    ELSEIF (
-        NOT EXISTS (SELECT id FROM SemanticContexts WHERE id = cxtID)
-    ) THEN
+    ELSEIF (entType IS NULL) THEN
         SET exitCode = 2; -- context does not exist.
+    ELSEIF (cxtStr > "Added by user: " AND cxtStr < "Added by user:!") THEN
+        SELECT username INTO username
+        FROM Users
+        WHERE id = userID;
+        IF (cxtStr != CONCAT("Added by user: ", username)) THEN
+            SET exitCode = 3; -- user is not permitted to add to this context.
+        ELSE
+            INSERT INTO Terms (
+                context_id, def_str, def_entity_id, derived_term_def_entity_t
+            )
+            VALUES (
+                cxtID, str, entID, derivedEntType
+            );
+            SELECT LAST_INSERT_ID() INTO outID;
+            INSERT INTO PrivateCreators (term_id, user_id)
+            VALUES (outID, userID);
+            SET exitCode = 0; -- insert.
+        END IF;
     ELSE
-        -- TODO: Insert a check here to see if the Context is not owned by
-        -- another user..
-
-        INSERT INTO Terms (context_id, def_str, def_entity_t, def_entity_id)
-        VALUES (cxtID, str, defEntType, defEntID);
+        INSERT INTO Terms (
+            context_id, def_str, def_entity_id, derived_term_def_entity_t
+        )
+        VALUES (
+            cxtID, str, entID, derivedEntType
+        );
         SELECT LAST_INSERT_ID() INTO outID;
-        INSERT INTO PrivateCreators (entity_t, entity_id, user_id)
-        VALUES ("t", outID, userID);
+        INSERT INTO PrivateCreators (term_id, user_id)
+        VALUES (outID, userID);
         SET exitCode = 0; -- insert.
     END IF;
     SELECT outID, exitCode;

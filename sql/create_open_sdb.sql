@@ -165,16 +165,16 @@ CREATE TABLE Terms (
     def_entity_id BIGINT UNSIGNED,
 
 
-    derived_def_entity_type CHAR(1) NOT NULL,
+    derived_term_def_entity_t CHAR(1) NOT NULL,
 
-    UNIQUE INDEX (context_id, def_str, def_entity_id, derived_def_entity_type)
+    UNIQUE INDEX (context_id, def_str, def_entity_id, derived_term_def_entity_t)
 );
 
 INSERT INTO Terms (
-    context_id, def_str, def_entity_id, derived_def_entity_type, id
+    context_id, def_str, def_entity_id, derived_term_def_entity_t, id
 )
 VALUES (
-    0, "{Terms} of the SDB", NULL, '0', 1
+    0, "Terms", NULL, '0', 1
 ), (
     0,
     "{Subcontexts} that build on their parent Context, $e, with the string, $s",
@@ -188,7 +188,7 @@ VALUES (
 ), (
     2, "{Binaries} of the SDB", 1, 'b', 5
 );
--- Here, context_id = 0 defines the "default semantic context", and it should
+-- Here, context_id = 0 defines the default semantic context, and it should
 -- used for only for the two first Terms here ("Terms" and "{Subcontexts} ...").
 
 
@@ -244,9 +244,7 @@ CREATE TABLE Binaries (
 
 
 CREATE TABLE PrivateCreators (
-    entity_t CHAR(1) NOT NULL,
-    entity_id BIGINT UNSIGNED NOT NULL,
-    PRIMARY KEY (entity_t, entity_id),
+    term_id BIGINT UNSIGNED PRIMARY KEY,
 
     user_id BIGINT UNSIGNED NOT NULL,
     INDEX (user_id)

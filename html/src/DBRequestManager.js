@@ -1,5 +1,7 @@
 
-
+// (If it turns out that we'll need manual caching (for more than just
+// collapsed forwarding), I will just use a LRU library, e.g.
+// https://github.com/rsms/js-lru, to implement that pretty easily.)
 
 export class DBRequestManager {
     constructor() {
