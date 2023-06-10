@@ -107,7 +107,7 @@ CREATE TABLE RecordedInputs (
 
 CREATE TABLE Users (
     -- user ID.
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT UNSIGNED PRIMARY KEY,
     -- type = "u".
 
     -- (I have out-commented these following columns, since they should rather
@@ -172,18 +172,18 @@ CREATE TABLE Terms (
 
 INSERT INTO Terms (context_id, def_str, def_entity_id, id)
 VALUES (
-    0, "Terms", NULL, 1
+    0, "{Terms} of the SDB", NULL, 1
 ), (
     0,
     "{Subcontexts} that build on their parent Context, $e, with the string, $s",
     NULL,
     2
 ), (
-    2, "Users", 1, 3
+    2, "{Users} of the SDB", 1, 3
 ), (
-    2, "Texts", 1, 4
+    2, "{Texts} of the SDB", 1, 4
 ), (
-    2, "Binaries", 1, 5
+    2, "{Binaries} of the SDB", 1, 5
 );
 -- Here, context_id = 0 defines the "default semantic context", and it should
 -- used for only two Terms: (0, "Terms", NULL) and (0, "{Subcontexts} ...",
@@ -201,7 +201,7 @@ VALUES (
 
 CREATE TABLE Texts (
     /* text ID */
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT UNSIGNED PRIMARY KEY,
     -- type = "x".
 
     /* data */
@@ -210,7 +210,7 @@ CREATE TABLE Texts (
 
 CREATE TABLE Binaries (
     /* binary string ID */
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT UNSIGNED PRIMARY KEY,
     -- type = "b".
 
     /* data */

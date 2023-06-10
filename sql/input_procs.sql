@@ -2,8 +2,9 @@
 SELECT "Input procedures";
 
 -- DROP PROCEDURE inputOrChangeRating;
--- DROP PROCEDURE insertOrFindContext;
 -- DROP PROCEDURE insertOrFindTerm;
+DROP PROCEDURE insertOrFindContext;
+-- DROP PROCEDURE insertOrFindSubcontext;
 -- DROP PROCEDURE insertText;
 -- DROP PROCEDURE insertBinary;
 
@@ -107,42 +108,6 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE insertOrFindContext (
-    IN userID BIGINT UNSIGNED,
-    IN parentCxtID BIGINT UNSIGNED,
-    IN str VARCHAR(255)
-)
-BEGIN
-    DECLARE outID BIGINT UNSIGNED;
-    DECLARE exitCode TINYINT;
-
-    SELECT id INTO outID
-    FROM SemanticContexts
-    WHERE (
-        parent_context_id = parentCxtID AND
-        def_str = str
-    );
-    IF (outID IS NOT NULL) THEN
-        SET exitCode = 1; -- find.
-    ELSEIF (
-        NOT EXISTS (SELECT id FROM SemanticContexts WHERE id = parentCxtID)
-    ) THEN
-        SET exitCode = 2; -- parent context does not exist.
-    ELSE
-        INSERT INTO SemanticContexts (parent_context_id, def_str)
-        VALUES (parentCxtID, str);
-        SELECT LAST_INSERT_ID() INTO outID;
-        INSERT INTO PrivateCreators (entity_t, entity_id, user_id)
-        VALUES ("c", outID, userID);
-        SET exitCode = 0; -- insert.
-    END IF;
-    SELECT outID, exitCode;
-END //
-DELIMITER ;
-
-
-
-DELIMITER //
 CREATE PROCEDURE insertOrFindTerm (
     IN userID BIGINT UNSIGNED,
     IN cxtID BIGINT UNSIGNED,
@@ -181,6 +146,44 @@ BEGIN
         SELECT LAST_INSERT_ID() INTO outID;
         INSERT INTO PrivateCreators (entity_t, entity_id, user_id)
         VALUES ("t", outID, userID);
+        SET exitCode = 0; -- insert.
+    END IF;
+    SELECT outID, exitCode;
+END //
+DELIMITER ;
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertOrFindSubcontext (
+    IN userID BIGINT UNSIGNED,
+    IN parentCxtID BIGINT UNSIGNED,
+    IN str VARCHAR(255)
+)
+BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
+
+    SELECT id INTO outID
+    FROM SemanticContexts
+    WHERE (
+        parent_context_id = parentCxtID AND
+        def_str = str
+    );
+    IF (outID IS NOT NULL) THEN
+        SET exitCode = 1; -- find.
+    ELSEIF (
+        NOT EXISTS (SELECT id FROM SemanticContexts WHERE id = parentCxtID)
+    ) THEN
+        SET exitCode = 2; -- parent context does not exist.
+    ELSE
+        INSERT INTO SemanticContexts (parent_context_id, def_str)
+        VALUES (parentCxtID, str);
+        SELECT LAST_INSERT_ID() INTO outID;
+        INSERT INTO PrivateCreators (entity_t, entity_id, user_id)
+        VALUES ("c", outID, userID);
         SET exitCode = 0; -- insert.
     END IF;
     SELECT outID, exitCode;
