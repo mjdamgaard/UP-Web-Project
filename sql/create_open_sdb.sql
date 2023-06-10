@@ -103,27 +103,6 @@ CREATE TABLE RecordedInputs (
 
 
 
-CREATE TABLE Users (
-    -- user ID.
-    id BIGINT UNSIGNED PRIMARY KEY,
-    -- type = "u".
-
-    -- (I have out-commented these following columns, since they should rather
-    -- be part of another table, namely in a private (part of the) database.)
-    -- upload_vol_today BIGINT,
-    -- download_vol_today BIGINT,
-    -- upload_vol_this_month BIGINT,
-    -- download_vol_this_month BIGINT,
-
-    username VARCHAR(50),
-
-    public_keys_for_authentication TEXT
-    -- (In order for third parties to be able to copy the database and then
-    -- be able to have users log on, without the need to exchange passwords
-    -- between databases.)
-);
-
-
 
 
 
@@ -182,17 +161,41 @@ VALUES (
     't',
     2
 ), (
-    2, "{Users} of the SDB", 1, 'u', 3
+    -- since the def_entity_id would always be the same as the id otherwise,
+    -- there is no need for it not to be null, which is why we use '0' here:
+    2, "{Users} of the SDB", 1, '0', 3
 ), (
-    2, "{Texts} of the SDB", 1, 'x', 4
+    2, "{Texts} of the SDB", 1, '0', 4
 ), (
-    2, "{Binaries} of the SDB", 1, 'b', 5
+    2, "{Binaries} of the SDB", 1, '0', 5
+-- ), (
+--     3, "admin", NULL, '0', 6
 );
 -- Here, context_id = 0 defines the default semantic context, and it should
 -- used for only for the two first Terms here ("Terms" and "{Subcontexts} ...").
 
 
+CREATE TABLE Users (
+    -- user ID.
+    id BIGINT UNSIGNED PRIMARY KEY,
+    -- type = "u".
 
+    -- (I have out-commented these following columns, since they should rather
+    -- be part of another table, namely in a private (part of the) database.)
+    -- upload_vol_today BIGINT,
+    -- download_vol_today BIGINT,
+    -- upload_vol_this_month BIGINT,
+    -- download_vol_this_month BIGINT,
+
+    username VARCHAR(50),
+
+    public_keys_for_authentication TEXT
+    -- (In order for third parties to be able to copy the database and then
+    -- be able to have users log on, without the need to exchange passwords
+    -- between databases.)
+);
+-- INSERT INTO Users (username, id)
+-- VALUES ("admin", 6);
 
 
 CREATE TABLE Texts (
@@ -212,6 +215,9 @@ CREATE TABLE Binaries (
     /* data */
     bin LONGBLOB NOT NULL
 );
+
+
+
 
 
 

@@ -196,6 +196,27 @@ DELIMITER ;
 
 
 
+DELIMITER //
+CREATE PROCEDURE privateInsertUser (
+    IN username VARCHAR(255),
+    IN textStr TEXT
+)
+BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+
+    INSERT INTO Terms (
+        context_id, def_str, def_entity_id, derived_term_def_entity_t
+    )
+    VALUES (
+        3, username, NULL, '0'
+    );
+    SELECT LAST_INSERT_ID() INTO outID;
+    INSERT INTO Users (id, username)
+    VALUES (outID, username);
+    SELECT outID, 0; -- insert.
+END //
+DELIMITER ;
+
 
 
 
@@ -227,36 +248,23 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertBinary (
     IN userID BIGINT UNSIGNED,
-    IN b TEXT,
-    OUT outID BIGINT UNSIGNED,
-    OUT exitCode TINYINT
+    IN metaStr VARCHAR(255),
+    IN bin TEXT
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
-    INSERT INTO Binaries (bin)
-    VALUES (b);
+    INSERT INTO Terms (
+        context_id, def_str, def_entity_id, derived_term_def_entity_t
+    )
+    VALUES (
+        5, metaStr, NULL, '0'
+    );
     SELECT LAST_INSERT_ID() INTO outID;
-    INSERT INTO PrivateCreators (entity_t, entity_id, user_id)
-    VALUES ("b", outID, userID);
-    SELECT outID, 0; -- insert.
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE privateInsertUser (
-    IN userID BIGINT UNSIGNED,
-    IN s TEXT
-)
-BEGIN
-    DECLARE outID BIGINT UNSIGNED;
-
-    INSERT INTO Texts (str)
-    VALUES (s);
-    SELECT LAST_INSERT_ID() INTO outID;
-    INSERT INTO PrivateCreators (entity_t, entity_id, user_id)
-    VALUES ("x", outID, userID);
+    INSERT INTO Binaries (id, bin)
+    VALUES (outID, bin);
+    INSERT INTO PrivateCreators (term_id, user_id)
+    VALUES (outID, userID);
     SELECT outID, 0; -- insert.
 END //
 DELIMITER ;
