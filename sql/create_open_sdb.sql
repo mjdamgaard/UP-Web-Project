@@ -183,16 +183,15 @@ CREATE TABLE Terms (
 INSERT INTO Terms (context_id, def_str, def_entity_id)
 VALUES
     (0, "Terms", NULL), -- id: 1
-    (0, "Contexts", 1), -- id: 2
+    (0, "Contexts that builds on their parent Context, $e, with the string, $s",
+        NULL), -- id: 2
     (2, "Users", 1), -- id: 3
     (2, "Texts", 1), -- id: 4
     (2, "Binaries", 1); -- id: 5
--- Here, context_id = 0 defines the "default semantic context", which says that
--- Terms with this context should generally not have any def_entity, and should
--- have their semantics understood from the word given by the def_str alone,
--- with one notable exception of the Term, (0, "Contexts", 1) (having id = 2),
--- which is to be understood as the fundamental "Context of Contexts" in the
--- database. It holds a def_entity of (0, "Terms", NULL).. hm.. 
+-- Here, context_id = 0 defines the "default semantic context", and it should
+-- used for only two Terms: (0, "Terms", NULL) and (0, "Contexts", NULL).
+-- All subsequent Terms can choose any previously existing Terms as its Context
+-- (in principle).
 
 
 
