@@ -195,10 +195,6 @@ VALUES (
 
 
 
-
-
-
-
 CREATE TABLE Texts (
     /* text ID */
     id BIGINT UNSIGNED PRIMARY KEY,
@@ -219,26 +215,6 @@ CREATE TABLE Binaries (
 
 
 
-
-
--- CREATE TABLE RankedStrings (
---     -- rank.
---     usability_rank CHAR(2) NOT NULL DEFAULT 'Ca', -- rank C, any (no subdivision).
---     -- string.
---     str VARCHAR(255) CHARACTER SET utf8mb4 NOT NULL,
---
---     PRIMARY KEY (usability_rank, str)
--- );
-
--- CREATE TABLE KeywordStrings (
---     /* keyword string ID */
---     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
---     -- type = "k".
---
---     -- keyword string.
---     str VARCHAR(768) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL UNIQUE,
---     FULLTEXT idx (str)
--- );
 
 
 
