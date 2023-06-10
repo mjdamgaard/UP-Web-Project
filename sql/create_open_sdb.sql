@@ -130,20 +130,20 @@ CREATE TABLE Users (
 
 
 
-CREATE TABLE SemanticContexts (
-    -- context ID.
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    -- type = "c".
-
-    -- parent context.
-    parent_context_id BIGINT UNSIGNED NOT NULL,
-    -- ...
-    def_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-
-    def_entity_t CHAR(1) NOT NULL, -- generally the same as parent's.
-
-    UNIQUE INDEX (parent_context_id, def_str)
-);
+-- CREATE TABLE SemanticContexts (
+--     -- context ID.
+--     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+--     -- type = "c".
+--
+--     -- parent context.
+--     parent_context_id BIGINT UNSIGNED NOT NULL,
+--     -- ...
+--     def_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+--
+--     def_entity_t CHAR(1) NOT NULL, -- generally the same as parent's.
+--
+--     UNIQUE INDEX (parent_context_id, def_str)
+-- );
 
 CREATE TABLE Terms (
     -- term ID.
@@ -175,14 +175,19 @@ CREATE TABLE Terms (
     -- holds. Thus, in other words, all descendent Contexts and Non-Contexts of
     -- the fundamental Contexts: Users, Texts and Binaries, will have a
     -- def_entity_t equal to 'u', 'x' and 'b', respectively, and all other Terms
-    -- will have a def_entity_t equal to 't'.
+    -- will have a def_entity_t equal to 't'. *(No, they can also hold '0',
+    -- which all ancestor Contexts of Users, Texts and Binaries will do.)
     def_entity_t CHAR(1) NOT NULL,
     -- a boolean denoting if the term is a Context or a Non-Context Term.
     is_a_context BOOL NOT NULL DEFAULT 0
 );
 
-INSERT INTO Terms (id, context_id, def_str,)
-VALUES (1, 0, "Terms"); -- id: 1
+INSERT INTO Terms (
+    context_id, def_str, def_entity_id, def_entity_t, is_a_context
+)
+VALUES
+    (0, "Terms", 0, '0', 1), -- id: 1
+    (1, "Contexts", 2, '0', 1), -- id: 2
 
 
 
