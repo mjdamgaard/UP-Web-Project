@@ -102,47 +102,31 @@ DELIMITER //
 CREATE PROCEDURE insertOrFindTerm (
     IN userID BIGINT UNSIGNED,
     IN cxtID BIGINT UNSIGNED,
-    IN str VARCHAR(255),
-    IN entID BIGINT UNSIGNED,
-    IN derivedEntType CHAR(1)
+    IN defStr VARCHAR(255),
+    IN defTermID BIGINT UNSIGNED
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
-    DECLARE cxtStr VARCHAR(255),
-    DECLARE entType CHAR(1);
-    DECLARE username VARCHAR(50);
 
-    SELECT (def_str, derived_term_def_entity_t)
-    INTO (cxtStr, entType)
-    FROM Terms
-    WHERE id = cxtID;
-
-    IF (entID = 0 OR entType = '0') THEN
-        SET entID = NULL;
+    IF (defTermID = 0) THEN
+        SET defTermID = NULL;
     END IF;
 
     SELECT id INTO outID
     FROM Terms
     WHERE (
         context_id = cxtID AND
-        def_str = str AND
-        def_entity_id = entID AND
-        derived_term_def_entity_t = derivedEntType
+        def_str = defStr AND
+        def_term_id <=> defTermID
     );
     IF (outID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
-    ELSEIF (entType IS NULL) THEN
-        SET exitCode = 2; -- context does not exist.
     ELSEIF (cxtID >= 3 AND cxtID <= 5) THEN
-        SET exitCode = 3; -- user is not permitted to add to this context.
+        SET exitCode = 2; -- user is not permitted to add to this context.
     ELSE
-        INSERT INTO Terms (
-            context_id, def_str, def_entity_id, derived_term_def_entity_t
-        )
-        VALUES (
-            cxtID, str, entID, derivedEntType
-        );
+        INSERT INTO Terms (context_id, def_str, def_term_id)
+        VALUES (cxtID, defStr, defTermID);
         SELECT LAST_INSERT_ID() INTO outID;
         INSERT INTO PrivateCreators (term_id, user_id)
         VALUES (outID, userID);
@@ -158,11 +142,10 @@ DELIMITER //
 CREATE PROCEDURE insertOrFindSubcontext (
     IN userID BIGINT UNSIGNED,
     IN parentCxtID BIGINT UNSIGNED,
-    IN str VARCHAR(255),
-    IN derivedEntType CHAR(1)
+    IN defStr VARCHAR(255)
 )
 BEGIN
-    CALL insertOrFindTerm(userID, 2, str, parentCxtID, derivedEntType);
+    CALL insertOrFindTerm(userID, 2, defStr, parentCxtID);
 END //
 DELIMITER ;
 
@@ -171,19 +154,15 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE privateInsertUser (
+CREATE PROCEDURE private_insertUser (
     IN username VARCHAR(255),
     IN textStr TEXT
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
-    INSERT INTO Terms (
-        context_id, def_str, def_entity_id, derived_term_def_entity_t
-    )
-    VALUES (
-        3, username, NULL, '0'
-    );
+    INSERT INTO Terms (context_id, def_str, def_term_id)
+    VALUES (3, username, NULL);
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Users (id, username)
     VALUES (outID, username);
@@ -203,12 +182,8 @@ CREATE PROCEDURE insertText (
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
-    INSERT INTO Terms (
-        context_id, def_str, def_entity_id, derived_term_def_entity_t
-    )
-    VALUES (
-        4, metaStr, NULL, '0'
-    );
+    INSERT INTO Terms (context_id, def_str, def_term_id)
+    VALUES (4, metaStr, NULL);
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Texts (id, str)
     VALUES (outID, textStr);
@@ -228,12 +203,8 @@ CREATE PROCEDURE insertBinary (
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
-    INSERT INTO Terms (
-        context_id, def_str, def_entity_id, derived_term_def_entity_t
-    )
-    VALUES (
-        5, metaStr, NULL, '0'
-    );
+    INSERT INTO Terms (context_id, def_str, def_term_id)
+    VALUES (5, metaStr, NULL);
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Binaries (id, bin)
     VALUES (outID, bin);

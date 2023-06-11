@@ -134,33 +134,27 @@ CREATE TABLE Terms (
     -- Oh, and more importantly, the specifying entities are used to make
     -- predicates from relation--object pairs, which is of course a central
     -- usage in a semantic system: implementing relations.
-    def_entity_id BIGINT UNSIGNED,
+    def_term_id BIGINT UNSIGNED,
 
-
-    derived_term_def_entity_t CHAR(1) NOT NULL,
-
-    UNIQUE INDEX (context_id, def_str, def_entity_id, derived_term_def_entity_t)
+    UNIQUE INDEX (context_id, def_str, def_term_id)
 );
 
 INSERT INTO Terms (
-    context_id, def_str, def_entity_id, derived_term_def_entity_t, id
+    context_id, def_str, def_term_id, id
 )
 VALUES (
-    0, "Terms", NULL, '0', 1
+    0, "Terms", NULL, 1
 ), (
     0,
     "{Subcontexts} that build on their parent Context, $e, with the string, $s",
     NULL,
-    't',
     2
 ), (
-    -- since the def_entity_id would always be the same as the id otherwise,
-    -- there is no need for it not to be null, which is why we use '0' here:
-    2, "{Users} of the SDB", 1, '0', 3
+    2, "{Users} of the SDB", 1, 3
 ), (
-    2, "{Texts} of the SDB", 1, '0', 4
+    2, "{Texts} of the SDB", 1, 4
 ), (
-    2, "{Binaries} of the SDB", 1, '0', 5
+    2, "{Binaries} of the SDB", 1, 5
 -- ), (
 --     3, "admin", NULL, '0', 6
 );
