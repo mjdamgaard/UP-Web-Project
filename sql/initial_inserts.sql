@@ -3,8 +3,6 @@ DELETE FROM SemanticInputs;
 DELETE FROM RecentInputs;
 ALTER TABLE RecentInputs AUTO_INCREMENT=1;
 
-DELETE FROM SemanticContexts;
-ALTER TABLE SemanticContexts AUTO_INCREMENT=1;
 DELETE FROM Terms;
 ALTER TABLE Terms AUTO_INCREMENT=1;
 
@@ -15,43 +13,52 @@ DELETE FROM PrivateCreators;
 
 
 
--- insert the fundamental context of all terms (with no parent context).
-INSERT INTO SemanticContexts (id, parent_context_id, def_str)
-VALUES (1, 0, "Terms"); -- id: 1
-INSERT INTO PrivateCreators (entity_t, entity_id, user_id)
-VALUES ('c', 1, 1);
--- insert the Term "Term," referencing (the category of) all terms/Terms.
-CALL insertOrFindTerm(1, 1, "Terms", "0", 0); -- id: 1
+-- From create_open_sdb:
+-- INSERT INTO Terms (
+--     context_id, def_str, def_term_id, id
+-- )
+-- VALUES (
+--     0, "Terms", NULL, 1
+-- ), (
+--     0,
+-- "{Subcontexts} that build on their parent Context, $e, with the string, $s",
+--     NULL,
+--     2
+-- ), (
+--     2, "{Users} of the SDB", 1, 3
+-- ), (
+--     2, "{Texts} of the SDB", 1, 4
+-- ), (
+--     2, "{Binaries} of the SDB", 1, 5
+-- ), (
+--     3, "admin_1", NULL, 6
+-- );
 
--- insert basic contexts, terms and realtions meant for common use.
+CALL insertOrFindTerm(6, 2, "Predicates", 1); -- id: 7
+CALL insertOrFindTerm(6, 2, "Verbs, s.", 7); -- id: 8
 
-CALL insertOrFindContext(1, 1, "Contexts"); -- id: 2
-CALL insertOrFindContext(1, 1, "Users"); -- id: 3
-CALL insertOrFindContext(1, 1, "Texts"); -- id: 4
-CALL insertOrFindContext(1, 1, "Binaries"); -- id: 5
+CALL insertOrFindTerm(6, 2, "Nouns for predicate definitions", 1); -- id: 9
 
-CALL insertOrFindContext(1, 1, "Predicates"); -- id: 6
-CALL insertOrFindContext(1, 2, "Verbs, s."); -- id: 7
+CALL insertOrFindTerm(
+    6, 2,
+    "is a useful instance of the {$s of }the term, {$t}",
+    8
+); -- id: 10
 
-CALL insertOrFindContext(1, 1, "Nouns for predicate definitions"); -- id: 8
+CALL insertOrFindTerm(6, 1, "openSDB", 0); -- id: 11
 
-CALL insertOrFindContext(1, 1, "Entity lists"); -- id: 9
+CALL insertOrFindTerm(6, 1, "Music", 0); -- id: 12
+CALL insertOrFindTerm(6, 1, "{Rock} (musical genre)", 0); -- id: 13
+CALL insertOrFindTerm(6, 1, "Jazz", 0); -- id: 14
+CALL insertOrFindTerm(6, 1, "Hip hop", 0); -- id: 15
 
-
-CALL insertOrFindTerm(1, 1, "openSDB", "0", 0); -- id: 2
-
-CALL insertOrFindTerm(1, 1, "Music", "0", 0); -- id: 3
-CALL insertOrFindTerm(1, 1, "{Rock} (musical genre)", "0", 0); -- id: 4
-CALL insertOrFindTerm(1, 1, "Jazz", "0", 0); -- id: 5
-CALL insertOrFindTerm(1, 1, "Hip hop", "0", 0); -- id: 6
-
-CALL insertOrFindTerm(1, 1, "Movies", "0", 0); -- id: 7
-CALL insertOrFindContext(1, 1, "Movies"); -- id: 10
-CALL insertOrFindTerm(1, 10,
+CALL insertOrFindTerm(6, 1, "Movies", 0); -- id: 16
+-- CALL insertOrFindTerm(1, 2, "Movies", 1); -- id: 17
+CALL insertOrFindTerm(1, 16,
     "{The Lord of the Rings: The Fellowship of the Ring} (2001)",
     "0", 0
 );-- id: 8
-CALL insertOrFindTerm(1, 10,
+CALL insertOrFindTerm(1, 16,
     "{The Lord of the Rings: The Two Towers} (2002)",
     "0", 0
 ); -- id: 9
@@ -64,10 +71,6 @@ CALL insertOrFindTerm(1, 10,
 -- Terms are viewed, either in their own Column or as a SetList element.)
 
 
-CALL insertOrFindContext(
-    1, 3,
-    "is a useful instance of the {$s of }the term, {$e}"
-); -- id: 11
 
 
 
@@ -98,9 +101,9 @@ BEGIN
 END //
 DELIMITER ;
 
-CALL insertOrFindTerm(1, 8, "Subcategories", "0", 0);
+CALL insertOrFindTerm(1, 8, "Subcategories", 0);
 CALL insertPredicates(11, "Subcategories", 1, 7);
-CALL insertOrFindTerm(1, 8, "Instances", "0", 0);
+CALL insertOrFindTerm(1, 8, "Instances", 0);
 CALL insertPredicates(11, "Instances", 1, 3);
 
 -- rate some statements.
@@ -112,47 +115,6 @@ CALL inputOrChangeRating(1, 16, 1, 4, "90", "00");
 
 
 
-
-
-
-
-
-
-
--- CALL insertOrFindTerm(
---     1, 3,
---     "is a useful instance of the {{Subcategories} of }the term {$}",
---     "0", 0
--- ); -- id: 10
--- CALL insertOrFindTerm(
---     1, 3,
---     "is a useful instance of the {{Supercategories} of }the term {$}",
---     "0", 0
--- ); -- id: 11
--- CALL insertOrFindTerm(
---     1, 3,
---     "is a useful instance of the {{Related categories} of }the term {$}",
---     "0", 0
--- ); -- id: 12
--- CALL insertOrFindTerm(
---     1, 3,
---     "is a useful part of the {{Instances} of }the term {$}",
---     "0", 0
--- ); -- id: 13
--- CALL insertOrFindTerm(
---     1, 3,
---     "is a useful instance of the {{Related terms} of }the term {$}",
---     "0", 0
--- ); -- id: 14
--- CALL insertOrFindTerm(
---     1, 3,
---     "is a useful instance of the {{Comments} to }the term {$}",
---     "0", 0
--- ); -- id: 15
--- -- I intend for the Comments on Related terms to be a subtab of a tab "About."
--- -- And I expect that they will get more sibling tabs in the future, like
--- -- "Annotations" for instance (and/or perhaps they will get I supercategory,
--- -- which might be called "Appendices" or something to that effect).
 
 
 --
