@@ -29,8 +29,6 @@ CREATE TABLE SemanticInputs (
     user_id BIGINT UNSIGNED NOT NULL,
     -- predicate.
     pred_id BIGINT UNSIGNED NOT NULL,
-    -- context of all the subjects if these are terms (0 means unrestricted).
-    context_id BIGINT UNSIGNED NOT NULL,
 
     /* The "input set" */
     -- given some constants for the above four columns, the input sets contains
@@ -41,15 +39,14 @@ CREATE TABLE SemanticInputs (
     PRIMARY KEY (
         user_id,
         pred_id,
-        context_id,
         rat_val,
         subj_id
     ),
 
-    UNIQUE INDEX (user_id, pred_id, context_id, subj_id)
+    UNIQUE INDEX (user_id, pred_id, subj_id)
 );
 -- TODO: Compress this table and its sec. index, as well as some other tables
--- below (at least RecordedInputs). (But compression is a must for this table.)
+-- below. (But compression is a must for this table.)
 
 
 CREATE TABLE PrivateRecentInputs (
@@ -57,7 +54,6 @@ CREATE TABLE PrivateRecentInputs (
 
     user_id BIGINT UNSIGNED NOT NULL,
     pred_id BIGINT UNSIGNED NOT NULL,
-    context_id BIGINT UNSIGNED NOT NULL,
     -- new rating value.
     rat_val VARBINARY(255),
     subj_id BIGINT UNSIGNED NOT NULL,
@@ -72,32 +68,29 @@ CREATE TABLE RecentInputs (
 
     user_id BIGINT UNSIGNED NOT NULL,
     pred_id BIGINT UNSIGNED NOT NULL,
-    context_id BIGINT UNSIGNED NOT NULL,
     -- new rating value.
     rat_val VARBINARY(255),
     subj_id BIGINT UNSIGNED NOT NULL,
 
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-CREATE TABLE RecordedInputs (
-    user_id BIGINT UNSIGNED NOT NULL,
-    pred_id BIGINT UNSIGNED NOT NULL,
-    context_id BIGINT UNSIGNED NOT NULL,
-    -- recorded rating value.
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    changed_at DATETIME,
-
-    rat_val VARBINARY(255),
-
-    PRIMARY KEY (
-        user_id,
-        pred_id,
-        context_id,
-        subj_id,
-        changed_at
-    )
-);
+-- CREATE TABLE RecordedInputs (
+--     user_id BIGINT UNSIGNED NOT NULL,
+--     pred_id BIGINT UNSIGNED NOT NULL,
+--     -- recorded rating value.
+--     subj_id BIGINT UNSIGNED NOT NULL,
+--
+--     changed_at DATETIME,
+--
+--     rat_val VARBINARY(255),
+--
+--     PRIMARY KEY (
+--         user_id,
+--         pred_id,
+--         subj_id,
+--         changed_at
+--     )
+-- );
 
 
 

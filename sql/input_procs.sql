@@ -15,7 +15,6 @@ DELIMITER //
 CREATE PROCEDURE inputOrChangeRating (
     IN userID BIGINT UNSIGNED,
     IN predID BIGINT UNSIGNED,
-    IN cxtID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN ratValHex VARCHAR(510),
     IN live_after TIME
@@ -28,7 +27,6 @@ BEGIN
     SELECT rat_val INTO prevRatVal
     FROM SemanticInputs
     WHERE (
-        context_id = cxtID AND
         subj_id = subjID AND
         pred_id = predID AND
         user_id = userID
@@ -38,14 +36,12 @@ BEGIN
         INSERT INTO SemanticInputs (
             user_id,
             pred_id,
-            context_id,
             rat_val,
             subj_id
         )
         VALUES (
             userID,
             predID,
-            cxtID,
             ratVal,
             subjID
         );
@@ -54,7 +50,6 @@ BEGIN
         UPDATE SemanticInputs
         SET rat_val = ratVal
         WHERE (
-            context_id = cxtID AND
             subj_id = subjID AND
             pred_id = predID AND
             user_id = userID
@@ -63,7 +58,6 @@ BEGIN
     ELSEIF (ratVal IS NULL AND prevRatVal IS NOT NULL) THEN
         DELETE FROM SemanticInputs
         WHERE (
-            context_id = cxtID AND
             subj_id = subjID AND
             pred_id = predID AND
             user_id = userID
@@ -83,14 +77,12 @@ BEGIN
     INSERT INTO RecentInputs (
         user_id,
         pred_id,
-        context_id,
         rat_val,
         subj_id
     )
     VALUES (
         userID,
         predID,
-        cxtID,
         ratVal,
         subjID
     );

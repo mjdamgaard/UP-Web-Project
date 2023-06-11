@@ -4,7 +4,7 @@ SELECT "Query procedures";
 -- DROP PROCEDURE selectInputSet;
 -- DROP PROCEDURE selectRating;
 -- DROP PROCEDURE selectRecentInputs;
--- DROP PROCEDURE selectRecordedInputs;
+-- -- DROP PROCEDURE selectRecordedInputs;
 -- DROP PROCEDURE selectUserInfo;
 -- DROP PROCEDURE selectContext;
 -- DROP PROCEDURE selectTerm;
@@ -21,7 +21,6 @@ DELIMITER //
 CREATE PROCEDURE selectInputSet (
     IN userID BIGINT UNSIGNED,
     IN predID BIGINT UNSIGNED,
-    IN cxtID BIGINT UNSIGNED,
     IN ratingRangeLoHex VARCHAR(510),
     IN ratingRangeHiHex VARCHAR(510),
     IN maxNum INT UNSIGNED,
@@ -40,7 +39,6 @@ BEGIN
     WHERE (
         user_id = userID AND
         pred_id = predID AND
-        context_id = cxtID AND
         (ratingRangeLo IS NULL OR rat_val >= ratingRangeLo) AND
         (ratingRangeHi IS NULL OR rat_val <= ratingRangeHi)
     )
@@ -57,7 +55,6 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectRating (
-    IN cxtID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN predID BIGINT UNSIGNED,
     IN userID BIGINT UNSIGNED
@@ -68,7 +65,6 @@ BEGIN
     WHERE (
         user_id = userID AND
         pred_id = predID AND
-        context_id = cxtID AND
         subj_id = subjID
 
     );
@@ -91,7 +87,6 @@ BEGIN
     SELECT
         user_id AS userID,
         pred_id AS predID,
-        context_id AS cxtID,
         CONV(rat_val, 10, 16) AS ratVal,
         subj_id AS subjID,
         changed_at AS changedAt
@@ -104,46 +99,43 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE selectRecordedInputs (
-    IN userID BIGINT UNSIGNED,
-    IN predID BIGINT UNSIGNED,
-    IN cxtID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED,
-    IN maxNum INT UNSIGNED,
-    IN numOffset INT UNSIGNED
-)
-BEGIN
-    IF (subjID = 0) THEN
-        SELECT
-            subj_id AS subjID,
-            changed_at AS changedAt,
-            CONV(rat_val, 10, 16) AS ratVal
-        FROM RecordedInputs
-        WHERE (
-            user_id = userID AND
-            pred_id = predID AND
-            context_id = cxtID
-        )
-        ORDER BY subj_id DESC, changed_at DESC
-        LIMIT numOffset, maxNum;
-    ELSE
-        SELECT
-            subjID AS subjID,
-            changed_at AS changedAt,
-            CONV(rat_val, 10, 16) AS ratVal
-        FROM RecordedInputs
-        WHERE (
-            user_id = userID AND
-            pred_id = predID AND
-            context_id = cxtID AND
-            subj_id = subjID
-        )
-        ORDER BY changed_at DESC
-        LIMIT numOffset, maxNum;
-    END IF;
-END //
-DELIMITER ;
+-- DELIMITER //
+-- CREATE PROCEDURE selectRecordedInputs (
+--     IN userID BIGINT UNSIGNED,
+--     IN predID BIGINT UNSIGNED,
+--     IN subjID BIGINT UNSIGNED,
+--     IN maxNum INT UNSIGNED,
+--     IN numOffset INT UNSIGNED
+-- )
+-- BEGIN
+--     IF (subjID = 0) THEN
+--         SELECT
+--             subj_id AS subjID,
+--             changed_at AS changedAt,
+--             CONV(rat_val, 10, 16) AS ratVal
+--         FROM RecordedInputs
+--         WHERE (
+--             user_id = userID AND
+--             pred_id = predID
+--         )
+--         ORDER BY subj_id DESC, changed_at DESC
+--         LIMIT numOffset, maxNum;
+--     ELSE
+--         SELECT
+--             subjID AS subjID,
+--             changed_at AS changedAt,
+--             CONV(rat_val, 10, 16) AS ratVal
+--         FROM RecordedInputs
+--         WHERE (
+--             user_id = userID AND
+--             pred_id = predID AND
+--             subj_id = subjID
+--         )
+--         ORDER BY changed_at DESC
+--         LIMIT numOffset, maxNum;
+--     END IF;
+-- END //
+-- DELIMITER ;
 
 
 
