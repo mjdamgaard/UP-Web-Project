@@ -22,7 +22,7 @@ DELETE FROM PrivateCreators;
 -- ), (
 --     0,
 -- "{Subcontexts} that build on their parent Context, $e, with the string, $s",
---     NULL,
+--     NULL, 
 --     2
 -- ), (
 --     2, "{Users} of the SDB", 1, 3
