@@ -19,7 +19,7 @@
 
 
 
-/* Statements which the users (or bots) give as input to the semantic network.
+/* Statements that the users (or bots) give as input to the semantic network.
  * A central feature of this semantic system is that all such statements come
  * with a numerical value which represents the degree to which the user deems
  * that the statement is correct (like when answering a survey).
