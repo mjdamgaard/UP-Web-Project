@@ -29,7 +29,7 @@ CREATE TABLE SemanticInputs (
     user_id BIGINT UNSIGNED NOT NULL,
     -- predicate.
     pred_id BIGINT UNSIGNED NOT NULL,
-    -- context or ancestor context of all the subjects if these are terms.
+    -- context of all the subjects if these are terms (0 means unrestricted).
     context_id BIGINT UNSIGNED NOT NULL,
 
     /* The "input set" */
