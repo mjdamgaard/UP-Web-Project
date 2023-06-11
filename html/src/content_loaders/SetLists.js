@@ -55,15 +55,44 @@ setFieldCL.addCallback(function($ci, data) {
         $ci.trigger("append-initial-elements");
         return;
     }
-    let len = data.setDataArr.length;
-    for (let i = 0; i < len; i++) {
-        queryAndSetAvgSetThenSignalCI(setDataArr[i], i, $ci, signal);
+
+
+    let predNum = data.setDataArr.length;
+    for (let i = 0; i < predNum; i++) {
+        let setData = data.setDataArr[i];
+        setData.userWeightArr ??= data.defaultUserWeightArr;
+
+        let ithAvgSetSignal = "compute-avg-set-" + i.toString() + "-if-ready";
+        $ci.on(ithAvgSetSignal) {
+            setData.avgSet = getAveragedSet(setData);
+        }
+
+        let userNum = userWeightArr.length;
+        setData.isReadyArr ??= new Array(userNum).fill(false);
+        for (let j = 0; j < userNum; j++) {
+            if (setData.isReadyArr[j]) {
+                queryAndStoreSetThenSignalCI(setData, j, $ci, ithAvgSetSignal);
+            }
+        }
+        $ci.trigger(ithAvgSetSignal);
     }
 });
 
-export function queryAndSetAvgSetThenSignalCI(setData, i, $ci, signal) {
+
+
+
+export function queryAndSetAvgSetThenSignalCI(data, i, $ci, signal) {
+    let setData = data.setDataArr[i];
+    let userWeightArr = setData.userWeightArr ?? data.defaultUserWeightArr;
+    let userNum = userWeightArr.length;
+    setData.isReadyArr ??= new Array(userNum).fill(false);
+    for (let j = 0; j < userNum; j++) {
+
+    }
+
+
     // if setData.avgSet is already set and setData.refresh is not true, simply
-    // send the ready signal immediatly
+    // send the ready signal immediately
     if (setData.avgSet && !setData.refresh) {
         $ci.trigger(signal, [setData.title]);
         return;
