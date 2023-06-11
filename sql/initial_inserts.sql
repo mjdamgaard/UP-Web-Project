@@ -26,9 +26,9 @@ INSERT INTO Terms (context_id, def_str, def_term_id, id)
 VALUES
     (NULL, "Terms", NULL, 5),
     (NULL, "Predicates", NULL, 6),
-    (6, "Verbs, s.", NULL, 7),
+    (6, ">Verbs, s.", NULL, 7),
     (NULL, "Nouns for predicate definitions", NULL, 8),
-    (7, "is a useful instance of the {$s of }the term, {$t}", NULL, 9),
+    (7, ">is a useful instance of the {$s of }the term, {$t}", NULL, 9),
     (NULL, "openSDB", NULL, 10);
 
 
