@@ -3,8 +3,7 @@ SELECT "Input procedures";
 
 -- DROP PROCEDURE inputOrChangeRating;
 -- DROP PROCEDURE insertOrFindTerm;
-DROP PROCEDURE insertOrFindContext;
--- DROP PROCEDURE insertOrFindSubcontext;
+-- DROP PROCEDURE private_insertUser;
 -- DROP PROCEDURE insertText;
 -- DROP PROCEDURE insertBinary;
 
@@ -27,9 +26,9 @@ BEGIN
     SELECT rat_val INTO prevRatVal
     FROM SemanticInputs
     WHERE (
-        subj_id = subjID AND
+        user_id = userID AND
         pred_id = predID AND
-        user_id = userID
+        subj_id = subjID
     );
 
     IF (ratVal IS NOT NULL AND prevRatVal IS NULL) THEN
@@ -50,17 +49,17 @@ BEGIN
         UPDATE SemanticInputs
         SET rat_val = ratVal
         WHERE (
-            subj_id = subjID AND
+            user_id = userID AND
             pred_id = predID AND
-            user_id = userID
+            subj_id = subjID
         );
         SET exitCode = 1; -- a previous rating was updated.
     ELSEIF (ratVal IS NULL AND prevRatVal IS NOT NULL) THEN
         DELETE FROM SemanticInputs
         WHERE (
-            subj_id = subjID AND
+            user_id = userID AND
             pred_id = predID AND
-            user_id = userID
+            subj_id = subjID
         );
         SET exitCode = 2; -- a previous rating was deleted.
     ELSE
@@ -138,16 +137,16 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE insertOrFindSubcontext (
-    IN userID BIGINT UNSIGNED,
-    IN parentCxtID BIGINT UNSIGNED,
-    IN defStr VARCHAR(255)
-)
-BEGIN
-    CALL insertOrFindTerm(userID, 2, defStr, parentCxtID);
-END //
-DELIMITER ;
+-- DELIMITER //
+-- CREATE PROCEDURE insertOrFindSubcontext (
+--     IN userID BIGINT UNSIGNED,
+--     IN parentCxtID BIGINT UNSIGNED,
+--     IN defStr VARCHAR(255)
+-- )
+-- BEGIN
+--     CALL insertOrFindTerm(userID, 2, defStr, parentCxtID);
+-- END //
+-- DELIMITER ;
 
 
 

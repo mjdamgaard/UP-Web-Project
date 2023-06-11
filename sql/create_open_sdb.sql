@@ -3,12 +3,12 @@
 -- DROP TABLE SemanticInputs;
 -- DROP TABLE PrivateRecentInputs;
 -- DROP TABLE RecentInputs;
--- DROP TABLE RecordedInputs;
 --
 -- /* Terms */
--- DROP TABLE Users;
--- DROP TABLE SemanticContexts;
 -- DROP TABLE Terms;
+--
+-- /* Data */
+-- DROP TABLE Users;
 -- DROP TABLE Texts;
 -- DROP TABLE Binaries;
 --
@@ -97,28 +97,9 @@ CREATE TABLE RecentInputs (
 
 
 
-
-
-
--- CREATE TABLE SemanticContexts (
---     -- context ID.
---     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
---     -- type = "c".
---
---     -- parent context.
---     parent_context_id BIGINT UNSIGNED NOT NULL,
---     -- ...
---     def_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
---
---     def_entity_t CHAR(1) NOT NULL, -- generally the same as parent's.
---
---     UNIQUE INDEX (parent_context_id, def_str)
--- );
-
 CREATE TABLE Terms (
     -- term ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    -- type = "t".
 
     -- id of the context which tells how the subsequent columns are to be
     -- interpreted.
@@ -155,8 +136,8 @@ VALUES (
     2, "{Texts} of the SDB", 1, 4
 ), (
     2, "{Binaries} of the SDB", 1, 5
--- ), (
---     3, "admin", NULL, '0', 6
+), (
+    3, "admin_1", NULL, 6
 );
 -- Here, context_id = 0 defines the default semantic context, and it should
 -- used for only for the two first Terms here ("Terms" and "{Subcontexts} ...").
@@ -165,30 +146,32 @@ VALUES (
 CREATE TABLE Users (
     -- user ID.
     id BIGINT UNSIGNED PRIMARY KEY,
-    -- type = "u".
-
-    -- (I have out-commented these following columns, since they should rather
-    -- be part of another table, namely in a private (part of the) database.)
-    -- upload_vol_today BIGINT,
-    -- download_vol_today BIGINT,
-    -- upload_vol_this_month BIGINT,
-    -- download_vol_this_month BIGINT,
 
     username VARCHAR(50) UNIQUE,
 
-    public_keys_for_authentication TEXT
+    public_keys_for_authentication TEXT,
     -- (In order for third parties to be able to copy the database and then
     -- be able to have users log on, without the need to exchange passwords
-    -- between databases.)
+    -- between databases.) (This could also be other data than encryption keys,
+    -- and in principle it could even just be some ID to use for authenticating
+    -- the user via a third party.)
+
+    -- TODO: Implement managing of and restrictions on these fields when/if it
+    -- becomes relevant:
+    private_upload_vol_today BIGINT DEFAULT 0,
+    private_download_vol_today BIGINT DEFAULT 0,
+    private_upload_vol_this_month BIGINT DEFAULT 0,
+    private_download_vol_this_month BIGINT DEFAULT 0
 );
--- INSERT INTO Users (username, id)
--- VALUES ("admin", 6);
+
+INSERT INTO Users (username, id)
+VALUES ("admin_1", 6);
+
 
 
 CREATE TABLE Texts (
     /* text ID */
     id BIGINT UNSIGNED PRIMARY KEY,
-    -- type = "x".
 
     /* data */
     str TEXT NOT NULL
@@ -197,7 +180,6 @@ CREATE TABLE Texts (
 CREATE TABLE Binaries (
     /* binary string ID */
     id BIGINT UNSIGNED PRIMARY KEY,
-    -- type = "b".
 
     /* data */
     bin LONGBLOB NOT NULL
@@ -205,10 +187,20 @@ CREATE TABLE Binaries (
 
 
 
-
-
-
-
+-- CREATE TABLE SemanticContexts (
+--     -- context ID.
+--     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+--     -- type = "c".
+--
+--     -- parent context.
+--     parent_context_id BIGINT UNSIGNED NOT NULL,
+--     -- ...
+--     def_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+--
+--     def_entity_t CHAR(1) NOT NULL, -- generally the same as parent's.
+--
+--     UNIQUE INDEX (parent_context_id, def_str)
+-- );
 
 
 

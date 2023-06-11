@@ -4,16 +4,19 @@ SELECT "Query procedures";
 -- DROP PROCEDURE selectInputSet;
 -- DROP PROCEDURE selectRating;
 -- DROP PROCEDURE selectRecentInputs;
--- -- DROP PROCEDURE selectRecordedInputs;
--- DROP PROCEDURE selectUserInfo;
--- DROP PROCEDURE selectContext;
+--
 -- DROP PROCEDURE selectTerm;
--- DROP PROCEDURE selectContextID;
 -- DROP PROCEDURE selectTermID;
+--
+-- DROP PROCEDURE selectUsername;
+-- DROP PROCEDURE selectUserInfo;
 -- DROP PROCEDURE selectText;
+-- DROP PROCEDURE selectTextSubstring;
 -- DROP PROCEDURE selectBinary;
--- DROP PROCEDURE selectCreator;
--- DROP PROCEDURE selectCreations;
+-- DROP PROCEDURE selectBinarySubstring;
+--
+-- DROP PROCEDURE private_selectCreator;
+-- DROP PROCEDURE private_selectCreations;
 
 
 
@@ -55,9 +58,9 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectRating (
-    IN subjID BIGINT UNSIGNED,
+    IN userID BIGINT UNSIGNED,
     IN predID BIGINT UNSIGNED,
-    IN userID BIGINT UNSIGNED
+    IN subjID BIGINT UNSIGNED
 )
 BEGIN
     SELECT CONV(rat_val, 10, 16) AS ratVal
@@ -66,7 +69,6 @@ BEGIN
         user_id = userID AND
         pred_id = predID AND
         subj_id = subjID
-
     );
 END //
 DELIMITER ;
@@ -142,6 +144,60 @@ DELIMITER ;
 
 
 
+DELIMITER //
+CREATE PROCEDURE selectTerm (
+    IN termID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT
+        context_id AS cxtID,
+        def_str AS defStr,
+        def_term_id AS defTermID
+    FROM Terms
+    WHERE id = termID;
+END //
+DELIMITER ;
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectTermID (
+    IN cxtID BIGINT UNSIGNED,
+    IN defStr VARCHAR(255),
+    IN defTermID BIGINT UNSIGNED
+)
+BEGIN
+    IF (defTermID = 0) THEN
+        SET defTermID = NULL;
+    END IF;
+
+    SELECT id AS termID
+    FROM Terms
+    WHERE (
+        context_id = cxtID AND
+        def_str = defStr AND
+        def_term_id <=> defTermID
+    );
+END //
+DELIMITER ;
+
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectUsername (
+    IN userID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT username AS username
+    FROM Users
+    WHERE id = userID;
+END //
+DELIMITER ;
+
 
 DELIMITER //
 CREATE PROCEDURE selectUserInfo (
@@ -160,143 +216,31 @@ DELIMITER ;
 
 
 
-
-DELIMITER //
-CREATE PROCEDURE selectContext (
-    IN cxtID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT
-        parent_context_id AS parentCxtID,
-        def_str AS str
-    FROM SemanticContexts
-    WHERE id = cxtID;
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE selectTerm (
-    IN termID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT
-        context_id AS cxtID,
-        def_str AS str,
-        def_entity_t AS defEntType,
-        def_entity_id AS defEntID
-    FROM Terms
-    WHERE id = termID;
-END //
-DELIMITER ;
-
-
-
-DELIMITER //
-CREATE PROCEDURE selectContextID (
-    IN parentCxtID BIGINT UNSIGNED,
-    IN str VARCHAR(255)
-)
-BEGIN
-    SELECT id AS cxtID
-    FROM SemanticContexts
-    WHERE (
-        parent_context_id = parentCxtID AND
-        def_str = str
-    );
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE selectTermID (
-    IN cxtID BIGINT UNSIGNED,
-    IN defEntType CHAR(1),
-    IN defEntID BIGINT UNSIGNED,
-    IN str VARCHAR(255)
-)
-BEGIN
-    IF (defEntID = 0) THEN
-        SET defEntID = NULL;
-    END IF;
-
-    SELECT id AS termID
-    FROM Terms
-    WHERE (
-        context_id = cxtID AND
-        def_entity_t = defEntType AND
-        def_entity_id <=> defEntID AND
-        def_str = str
-    );
-END //
-DELIMITER ;
-
-
--- DELIMITER //
--- CREATE PROCEDURE selectContextStrings (
---     IN parentCxtID BIGINT UNSIGNED,
---     IN str VARCHAR(255),
---     IN maxNum INT UNSIGNED,
---     IN numOffset INT UNSIGNED
--- )
--- BEGIN
---     SELECT
---         def_str AS str,
---         id AS cxtID
---     FROM SemanticContexts
---     WHERE (
---         parent_context_id = parentCxtID AND
---         def_str >= str
---     )
---     ORDER BY def_str ASC
---     LIMIT numOffset, maxNum;
--- END //
--- DELIMITER ;
---
---
--- DELIMITER //
--- CREATE PROCEDURE selectTermStrings (
---     IN cxtID BIGINT UNSIGNED,
---     IN defEntType CHAR(1),
---     IN defEntID BIGINT UNSIGNED,
---     IN str VARCHAR(255),
---     IN maxNum INT UNSIGNED,
---     IN numOffset INT UNSIGNED
--- )
--- BEGIN
---     IF (defEntID = 0) THEN
---         SET defEntID = NULL;
---     END IF;
---
---     SELECT
---         def_str AS str,
---         id AS termID
---     FROM Terms
---     WHERE (
---         context_id = cxtID AND
---         def_entity_t = defEntType AND
---         def_entity_id <=> defEntID AND
---         def_str >= str
---     )
---     ORDER BY def_str ASC
---     LIMIT numOffset, maxNum;
--- END //
--- DELIMITER ;
-
-
-
-
-
 DELIMITER //
 CREATE PROCEDURE selectText (
     IN textID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT str AS text
+    SELECT str AS textStr
     FROM Texts
     WHERE id = textID;
 END //
 DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectTextSubstring (
+    IN textID BIGINT UNSIGNED,
+    IN length SMALLINT UNSIGNED,
+    IN start INT
+)
+BEGIN
+    SELECT SUBSTRING(str, start, length) AS textStr
+    FROM Texts
+    WHERE id = textID;
+END //
+DELIMITER ;
+
 
 
 DELIMITER //
@@ -311,51 +255,50 @@ END //
 DELIMITER ;
 
 
+DELIMITER //
+CREATE PROCEDURE selectBinarySubstring (
+    IN binID BIGINT UNSIGNED,
+    IN length SMALLINT UNSIGNED,
+    IN start INT
+)
+BEGIN
+    SELECT SUBSTRING(bin, start, length) AS bin
+    FROM Binaries
+    WHERE id = binID;
+END //
+DELIMITER ;
 
 
 
 
--- TODO: Remove the Creator procs below, and make Creators a private table..
+
 
 DELIMITER //
-CREATE PROCEDURE selectCreator (
-    IN entityType CHAR(1),
-    IN entityID BIGINT UNSIGNED
+CREATE PROCEDURE private_selectCreator (
+    IN termID BIGINT UNSIGNED
 )
 BEGIN
     SELECT user_id AS userID
     FROM PrivateCreators
-    WHERE (entity_t = entityType AND entity_id = entityID);
+    WHERE term_id = termID;
 END //
 DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectCreations (
+CREATE PROCEDURE private_selectCreations (
     IN userID BIGINT UNSIGNED,
-    IN entityType CHAR(1),
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED,
     IN isAscOrder BOOL
 )
 BEGIN
-    IF (entityType = "") THEN
-        SET entityType = NULL;
-    END IF;
-
-    SELECT
-        entity_t AS entityType,
-        entity_id AS entityID
+    SELECT term_id AS termID
     FROM PrivateCreators
-    WHERE (
-        user_id = userID AND
-        (entityType IS NULL OR term_t = termType)
-    )
+    WHERE user_id = userID
     ORDER BY
-        CASE WHEN isAscOrder THEN entity_t END ASC,
-        CASE WHEN NOT isAscOrder THEN entity_t END DESC,
-        CASE WHEN isAscOrder THEN entity_id END ASC,
-        CASE WHEN NOT isAscOrder THEN entity_id END DESC
+        CASE WHEN isAscOrder THEN term_id END ASC,
+        CASE WHEN NOT isAscOrder THEN term_id END DESC
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
