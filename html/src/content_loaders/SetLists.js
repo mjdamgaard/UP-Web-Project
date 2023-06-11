@@ -24,6 +24,7 @@ SetList requires data:
     data.subjType,
     data.initialNum,
     data.incrementNum,
+    data.combSet?
     // data.showHeader,
     // data.applySortingOptions.
     // data.sortingOptions. (if applySortingOptions == true.)
@@ -47,21 +48,23 @@ setFieldCL.addCallback("data", function(data) {
         "initialNum",
         "incrementNum",
     ]);
-    data.titleCutOutLevels = [2, 1];
-    // data.titleCutOutLevels = [1, 1];
+    data.copyFromAncestor("combSet", 1);
 });
 setFieldCL.addCallback(function($ci, data) {
+    if (data.combSet) {
+        $ci.trigger("append-initial-elements");
+        return;
+    }
     let len = data.setDataArr.length;
     for (let i = 0; i < len; i++) {
-        queryAndSetAvgSetAndSignalCI(setDataArr[i], i, $ci, signal);
+        queryAndSetAvgSetThenSignalCI(setDataArr[i], i, $ci, signal);
     }
 });
 
-
-export function queryAndSetAvgSetAndSignalCI(setData, i, $ci, signal) {
+export function queryAndSetAvgSetThenSignalCI(setData, i, $ci, signal) {
     // if setData.avgSet is already set and setData.refresh is not true, simply
     // send the ready signal immediatly
-    if (!!setData.avgSet && !setData.refresh) {
+    if (setData.avgSet && !setData.refresh) {
         $ci.trigger(signal, [setData.title]);
         return;
     }

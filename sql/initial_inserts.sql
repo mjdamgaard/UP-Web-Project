@@ -22,15 +22,20 @@ DELETE FROM PrivateCreators;
 --     (1, "admin_1", NULL, 4);
 
 
+/* Some other important initial inserts */
 INSERT INTO Terms (context_id, def_str, def_term_id, id)
 VALUES
     (NULL, "Terms", NULL, 5),
     (NULL, "Predicates", NULL, 6),
     (6, "Verbs, s.", NULL, 7),
     (NULL, "Nouns for predicate definitions", NULL, 8),
-    (7, "is a useful instance of the {{$s} of }the term, {$t}", NULL, 9),
-    (NULL, "openSDB", NULL, 10);
+    (7, "is a useful instance of the {{$s} of }the term, {$t}", NULL, 9);
 
+
+
+/* More inserts for testing */
+
+CALL insertOrFindTerm(4, 0, "openSDB", 0); -- id: 10
 
 CALL insertOrFindTerm(4, 0, "Science", 0); -- id: 11
 CALL insertOrFindTerm(4, 0, "Music", 0); -- id: 12
@@ -47,6 +52,10 @@ CALL insertOrFindTerm(4, 16,
     "{The Lord of the Rings: The Two Towers} (2002)", 0
 ); -- id: 18
 
+CALL insertOrFindTerm(4, 11, "Music", 0); -- id: 19
+CALL insertOrFindTerm(4, 11, "Cinematography", 0); -- id: 20
+CALL insertOrFindTerm(4, 11, "Physics", 0); -- id: 21
+CALL insertOrFindTerm(4, 11, "Mathematics", 0); -- id: 22
 
 
 
@@ -93,7 +102,9 @@ CALL inputOrChangeRating(4, 24, 14, "A0", "00");
 CALL inputOrChangeRating(4, 31, 13, "E1", "00");
 CALL inputOrChangeRating(4, 31, 14, "E0", "00");
 CALL inputOrChangeRating(4, 31, 15, "E0", "00");
+CALL inputOrChangeRating(4, 31, 19, "F0", "00");
 
+CALL inputOrChangeRating(4, 52, 19, "F0", "00");
 
 
 
