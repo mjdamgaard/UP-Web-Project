@@ -14,7 +14,8 @@ SetList requires data:
     data.defaultUserWeightArr,
     data.setDataArr = [setData, ...],
         setData = {
-            predStr, objID, userWeightArr?, queryParams?, ratTransFun?,
+            predCxtID, predStr, objID,
+            userWeightArr?, queryParams?, ratTransFun?,
             setArr?, avgSet?, isReadyArr?
         },
         userWeightArr = [{userID, weight}, ...],
@@ -39,9 +40,10 @@ export var setListCL = new ContentLoader(
 );
 setFieldCL.addCallback("data", function(data) {
     data.copyFromAncestor([
+        "defaultQueryNum",
+        "defaultUserWeightArr",
         "setDataArr",
         "elemContentKey",
-        "subjType",
         "initialNum",
         "incrementNum",
     ]);
