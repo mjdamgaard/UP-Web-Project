@@ -37,23 +37,15 @@ CALL insertOrFindTerm(6, 12, "Rock", 0); -- id: 13
 CALL insertOrFindTerm(6, 12, "Jazz", 0); -- id: 14
 CALL insertOrFindTerm(6, 12, "Hip hop", 0); -- id: 15
 
-CALL insertOrFindTerm(6, 1, "Movies", 0); -- id: 16
--- CALL insertOrFindTerm(1, 2, "Movies", 1); -- id: 17
+CALL insertOrFindTerm(6, 0, "Movies", 0); -- id: 16
 CALL insertOrFindTerm(1, 16,
     "{The Lord of the Rings: The Fellowship of the Ring} (2001)",
     "0", 0
-);-- id: 8
+);-- id: 17
 CALL insertOrFindTerm(1, 16,
     "{The Lord of the Rings: The Two Towers} (2002)",
     "0", 0
-); -- id: 9
--- (Note that the Semantic Context "Movies" is here used as the context of the
--- two movie examples, since these two terms are not meant to be interpreted as
--- categories, which will (as I foresee) usually be the case for Terms that
--- simply has "Terms" as their Semantic Context. Rather they are meant to be
--- iterpreted as refering to the movies themselves, and we therefore expect
--- that the userbase might want to attach special rendering options when such
--- Terms are viewed, either in their own Column or as a SetList element.)
+); -- id: 18
 
 
 
