@@ -108,6 +108,9 @@ BEGIN
     DECLARE outID BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
 
+    IF (cxtID = 0) THEN
+        SET cxtID = NULL;
+    END IF;
     IF (defTermID = 0) THEN
         SET defTermID = NULL;
     END IF;
@@ -115,13 +118,13 @@ BEGIN
     SELECT id INTO outID
     FROM Terms
     WHERE (
-        context_id = cxtID AND
+        context_id <=> cxtID AND
         def_str = defStr AND
         def_term_id <=> defTermID
     );
     IF (outID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
-    ELSEIF (cxtID >= 3 AND cxtID <= 5) THEN
+    ELSEIF (cxtID <= 3) THEN
         SET exitCode = 2; -- user is not permitted to add to this context.
     ELSE
         INSERT INTO Terms (context_id, def_str, def_term_id)
@@ -134,19 +137,6 @@ BEGIN
     SELECT outID, exitCode;
 END //
 DELIMITER ;
-
-
-
--- DELIMITER //
--- CREATE PROCEDURE insertOrFindSubcontext (
---     IN userID BIGINT UNSIGNED,
---     IN parentCxtID BIGINT UNSIGNED,
---     IN defStr VARCHAR(255)
--- )
--- BEGIN
---     CALL insertOrFindTerm(userID, 2, defStr, parentCxtID);
--- END //
--- DELIMITER ;
 
 
 

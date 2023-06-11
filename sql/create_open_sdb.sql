@@ -103,7 +103,7 @@ CREATE TABLE Terms (
 
     -- id of the context which tells how the subsequent columns are to be
     -- interpreted.
-    context_id BIGINT UNSIGNED NOT NULL,
+    context_id BIGINT UNSIGNED,
 
 
     -- defining string of the term.
@@ -120,27 +120,14 @@ CREATE TABLE Terms (
     UNIQUE INDEX (context_id, def_str, def_term_id)
 );
 
-INSERT INTO Terms (
-    context_id, def_str, def_term_id, id
-)
-VALUES (
-    0, "Terms", NULL, 1
-), (
-    0,
-    "{Subcontexts} that build on their parent Context, $e, with the string, $s",
-    NULL,
-    2
-), (
-    2, "{Users} of the SDB", 1, 3
-), (
-    2, "{Texts} of the SDB", 1, 4
-), (
-    2, "{Binaries} of the SDB", 1, 5
-), (
-    3, "admin_1", NULL, 6
-);
+INSERT INTO Terms (context_id, def_str, def_term_id, id)
+VALUES
+    (NULL, "{Users} of the SDB", 1, 1),
+    (NULL, "{Texts} of the SDB", 1, 2),
+    (NULL, "{Binaries} of the SDB", 1, 3),
+    (1, "admin_1", NULL, 4);
 -- Here, context_id = 0 defines the default semantic context, and it should
--- used for only for the two first Terms here ("Terms" and "{Subcontexts} ...").
+-- used for only for (0, "Terms", NULL, 1).
 
 
 CREATE TABLE Users (

@@ -168,6 +168,9 @@ CREATE PROCEDURE selectTermID (
     IN defTermID BIGINT UNSIGNED
 )
 BEGIN
+    IF (cxtID = 0) THEN
+        SET cxtID = NULL;
+    END IF;
     IF (defTermID = 0) THEN
         SET defTermID = NULL;
     END IF;
@@ -175,7 +178,7 @@ BEGIN
     SELECT id AS termID
     FROM Terms
     WHERE (
-        context_id = cxtID AND
+        context_id <=> cxtID AND
         def_str = defStr AND
         def_term_id <=> defTermID
     );

@@ -14,38 +14,34 @@ DELETE FROM PrivateCreators;
 
 
 -- From create_open_sdb:
--- INSERT INTO Terms (
---     context_id, def_str, def_term_id, id
--- )
--- VALUES (
---     0, "Terms", NULL, 1
--- ), (
---     0,
--- "{Subcontexts} that build on their parent Context, $e, with the string, $s",
---     NULL, 
---     2
--- ), (
---     2, "{Users} of the SDB", 1, 3
--- ), (
---     2, "{Texts} of the SDB", 1, 4
--- ), (
---     2, "{Binaries} of the SDB", 1, 5
--- ), (
---     3, "admin_1", NULL, 6
--- );
+-- INSERT INTO Terms (context_id, def_str, def_term_id, id)
+-- VALUES
+--     (NULL, "{Users} of the SDB", 1, 1),
+--     (NULL, "{Texts} of the SDB", 1, 2),
+--     (NULL, "{Binaries} of the SDB", 1, 3),
+--     (1, "admin_1", NULL, 4);
 
-CALL insertOrFindTerm(6, 2, "Predicates", 1); -- id: 7
-CALL insertOrFindTerm(6, 2, "Verbs, s.", 7); -- id: 8
 
-CALL insertOrFindTerm(6, 2, "Nouns for predicate definitions", 1); -- id: 9
+INSERT INTO Terms (context_id, def_str, def_term_id, id)
+VALUES
+    (NULL, "Predicates", NULL), -- id: 7
+    (7, ">Verbs, s.", NULL), -- id: 8
+    (NULL, "Nouns for predicate definitions", NULL), -- id: 9
+    (8, "is a useful instance of the {$s of }the term, {$t}", NULL), -- id: 10
+    (NULL, "openSDB", NULL), -- id: 11
 
-CALL insertOrFindTerm(
-    6, 2,
-    "is a useful instance of the {$s of }the term, {$t}",
-    8
-); -- id: 10
-
-CALL insertOrFindTerm(6, 1, "openSDB", 0); -- id: 11
+-- CALL insertOrFindTerm(6, 2, "Predicates", 1); -- id: 7
+-- CALL insertOrFindTerm(6, 2, "Verbs, s.", 7); -- id: 8
+--
+-- CALL insertOrFindTerm(6, 2, "Nouns for predicate definitions", 1); -- id: 9
+--
+-- CALL insertOrFindTerm(
+--     6, 2,
+--     "is a useful instance of the {$s of }the term, {$t}",
+--     8
+-- ); -- id: 10
+--
+-- CALL insertOrFindTerm(6, 1, "openSDB", 0); -- id: 11
 
 CALL insertOrFindTerm(6, 1, "Music", 0); -- id: 12
 CALL insertOrFindTerm(6, 1, "{Rock} (musical genre)", 0); -- id: 13
