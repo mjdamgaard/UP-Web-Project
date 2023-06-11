@@ -142,24 +142,6 @@ BEGIN
         SET exitCode = 1; -- find.
     ELSEIF (entType IS NULL) THEN
         SET exitCode = 2; -- context does not exist.
-    ELSEIF (cxtStr > "Added by user: " AND cxtStr < "Added by user:!") THEN
-        SELECT username INTO username
-        FROM Users
-        WHERE id = userID;
-        IF (cxtStr != CONCAT("Added by user: ", username)) THEN
-            SET exitCode = 3; -- user is not permitted to add to this context.
-        ELSE
-            INSERT INTO Terms (
-                context_id, def_str, def_entity_id, derived_term_def_entity_t
-            )
-            VALUES (
-                cxtID, str, entID, derivedEntType
-            );
-            SELECT LAST_INSERT_ID() INTO outID;
-            INSERT INTO PrivateCreators (term_id, user_id)
-            VALUES (outID, userID);
-            SET exitCode = 0; -- insert.
-        END IF;
     ELSEIF (cxtID >= 3 AND cxtID <= 5) THEN
         SET exitCode = 3; -- user is not permitted to add to this context.
     ELSE
