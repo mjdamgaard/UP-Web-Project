@@ -25,9 +25,9 @@ DELETE FROM PrivateCreators;
 INSERT INTO Terms (context_id, def_str, def_term_id, id)
 VALUES
     (NULL, "Predicates", NULL, 7),
-    (7, ">Verbs, s.", NULL, 8),
+    (7, "Verbs, s.", NULL, 8),
     (NULL, "Nouns for predicate definitions", NULL, 9),
-    (8, ">is a useful instance of the {$s of }the term, {$t}", NULL, 10),
+    (8, "is a useful instance of the {$s of }the term, {$t}", NULL, 10),
     (NULL, "openSDB", NULL, 11);
 
 
