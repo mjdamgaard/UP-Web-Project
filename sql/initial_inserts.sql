@@ -13,7 +13,7 @@ DELETE FROM PrivateCreators;
 
 
 
--- From create_open_sdb:
+/* From create_open_sdb.sql */
 -- INSERT INTO Terms (context_id, def_str, def_term_id, id)
 -- VALUES
 --     (NULL, "{Users} of the SDB", 1, 1),
@@ -24,29 +24,18 @@ DELETE FROM PrivateCreators;
 
 INSERT INTO Terms (context_id, def_str, def_term_id, id)
 VALUES
-    (NULL, "Predicates", NULL), -- id: 7
-    (7, ">Verbs, s.", NULL), -- id: 8
-    (NULL, "Nouns for predicate definitions", NULL), -- id: 9
-    (8, "is a useful instance of the {$s of }the term, {$t}", NULL), -- id: 10
-    (NULL, "openSDB", NULL), -- id: 11
+    (NULL, "Predicates", NULL, 7),
+    (7, ">Verbs, s.", NULL, 8),
+    (NULL, "Nouns for predicate definitions", NULL, 9),
+    (8, ">is a useful instance of the {$s of }the term, {$t}", NULL, 10),
+    (NULL, "openSDB", NULL, 11);
 
--- CALL insertOrFindTerm(6, 2, "Predicates", 1); -- id: 7
--- CALL insertOrFindTerm(6, 2, "Verbs, s.", 7); -- id: 8
---
--- CALL insertOrFindTerm(6, 2, "Nouns for predicate definitions", 1); -- id: 9
---
--- CALL insertOrFindTerm(
---     6, 2,
---     "is a useful instance of the {$s of }the term, {$t}",
---     8
--- ); -- id: 10
---
--- CALL insertOrFindTerm(6, 1, "openSDB", 0); -- id: 11
 
-CALL insertOrFindTerm(6, 1, "Music", 0); -- id: 12
-CALL insertOrFindTerm(6, 1, "{Rock} (musical genre)", 0); -- id: 13
-CALL insertOrFindTerm(6, 1, "Jazz", 0); -- id: 14
-CALL insertOrFindTerm(6, 1, "Hip hop", 0); -- id: 15
+CALL insertOrFindTerm(6, 0, "Music", 0); -- id: 12
+-- CALL insertOrFindTerm(6, 0, "{Rock} (musical genre)", 0); -- id: 13
+CALL insertOrFindTerm(6, 12, "Rock", 0); -- id: 13
+CALL insertOrFindTerm(6, 12, "Jazz", 0); -- id: 14
+CALL insertOrFindTerm(6, 12, "Hip hop", 0); -- id: 15
 
 CALL insertOrFindTerm(6, 1, "Movies", 0); -- id: 16
 -- CALL insertOrFindTerm(1, 2, "Movies", 1); -- id: 17
