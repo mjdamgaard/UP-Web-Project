@@ -68,15 +68,27 @@ class InputVerifier {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, "INT");
                 }
                 break;
-            case "sint":
-                $pattern = "/^-?[1-9][0-9]{0,4}|0$/";
+            // case "sint":
+            //     $pattern = "/^-?[1-9][0-9]{0,4}|0$/";
+            //     $n = intval($paramVal);
+            //     if (
+            //         !preg_match($pattern, $paramVal) ||
+            //         $n < -32768 ||
+            //         $n > 32767
+            //     ) {
+            //         echoTypeErrorJSONAndExit($paramName, $paramVal, "SMALLINT");
+            //     }
+            //     break;
+            case "usint":
+                $pattern = "/^[1-9][0-9]{0,4}|0$/";
                 $n = intval($paramVal);
                 if (
                     !preg_match($pattern, $paramVal) ||
-                    $n < -32768 ||
-                    $n > 32767
+                    $n > 65535
                 ) {
-                    echoTypeErrorJSONAndExit($paramName, $paramVal, "SMALLINT");
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "SMALLINT UNSIGNED"
+                    );
                 }
                 break;
             case "tint":

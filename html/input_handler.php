@@ -39,29 +39,23 @@ $paramNameArr = "";
 $typeArr = "";
 switch ($reqType) {
     case "rat":
-        $sql = "CALL inputOrChangeRating (?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("uid", "pid", "cid", "sid", "r", "l");
-        $typeArr = array("id", "id", "id", "id", "rat", "datetime");
-        break;
-    case "cxt":
-        // $sql = "CALL insertOrFindCat (?, ?, ?)";
-        $sql = "CALL insertOrFindContext (?, ?, ?)";
-        $paramNameArr = array("uid", "pid", "t");
-        $typeArr = array("id", "id", "tstr");
+        $sql = "CALL inputOrChangeRating (?, ?, ?, ?, ?)";
+        $paramNameArr = array("u", "p", "s", "r", "l");
+        $typeArr = array("id", "id", "id", "rat", "datetime");
         break;
     case "term":
-        $sql = "CALL insertOrFindTerm (?, ?, ?, ?, ?)";
-        $paramNameArr = array("uid", "cid", "t", "spt", "spid");
-        $typeArr = array("id", "id", "tstr", "type", "id");
+        $sql = "CALL insertOrFindTerm (?, ?, ?, ?)";
+        $paramNameArr = array("u", "c", "s", "t");
+        $typeArr = array("id", "id", "str", "id");
         break;
     case "text":
         $sql = "CALL insertText (?, ?)";
-        $paramNameArr = array("uid", "s");
+        $paramNameArr = array("u", "s");
         $typeArr = array("id", "text");
         break;
     case "bin":
         $sql = "CALL insertBinary (?, ?)";
-        $paramNameArr = array("uid", "b");
+        $paramNameArr = array("u", "b");
         $typeArr = array("id", "blob");
         break;
     default:

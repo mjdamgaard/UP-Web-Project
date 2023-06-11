@@ -38,15 +38,15 @@ $paramNameArr = "";
 $typeArr = "";
 switch ($reqType) {
     case "set":
-        $sql = "CALL selectInputSet (?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "CALL selectInputSet (?, ?, ?, ?, ?, ?, ?)";
         $paramNameArr = array(
-            "uid", "pid", "cid",
+            "u", "p",
             "rl", "rh",
             "n", "o",
             "a"
         );
         $typeArr = array(
-            "id", "id", "id",
+            "id", "id",
             "rat", "rat",
             "uint", "uint",
             "tint"
@@ -54,9 +54,9 @@ switch ($reqType) {
         // output: [[ratVal, subjID], ...].
         break;
     case "rat":
-        $sql = "CALL selectRating (?, ?)";
-        $paramNameArr = array("cid", "sid", "pid", "uid");
-        $typeArr = array("id", "id", "id", "id");
+        $sql = "CALL selectRating (?, ?, ?)";
+        $paramNameArr = array("u", "p", "s");
+        $typeArr = array("id", "id", "id");
         // output: [[ratVal]].
         break;
     case "recentInputs":
@@ -65,41 +65,29 @@ switch ($reqType) {
         $typeArr = array("id", "uint");
         // output: [[userID, predID, subjType, ratVal, subjID, changedAt], ...].
         break;
-    case "recordedInputs":
-        $sql = "CALL selectRecordedInputs (?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("uid", "pid", "cid", "sid", "n", "o");
-        $typeArr = array("id", "id", "is", "id", "uint", "uint");
-        // output: [[subjID, changedAt, ratVal], ...].
-        break;
-    case "user":
-        $sql = "CALL selectUserInfo (?, ?)";
-        $paramNameArr = array("id");
-        $typeArr = array("id");
-        // output: [[username, publicKeys]].
-        break;
-    case "cxt":
-        $sql = "CALL selectContext (?)";
-        $paramNameArr = array("id");
-        $typeArr = array("id");
-        // output: [[parentCxtID, str]].
-        break;
     case "term":
         $sql = "CALL selectTerm (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
         // output: [[cxtID, str, defEntType, defEntID]].
         break;
-    case "cxtID":
-        $sql = "CALL selectContextID (?, ?)";
-        $paramNameArr = array("pid", "s");
-        $typeArr = array("id", "tstr");
-        // output: [[cxtID]].
-        break;
     case "termID":
-        $sql = "CALL selectTermID (?, ?, ?, ?)";
-        $paramNameArr = array("cid", "et", "eid", "s");
-        $typeArr = array("id", "type", "id", "tstr");
+        $sql = "CALL selectTermID (?, ?, ?)";
+        $paramNameArr = array("c", "s", "t");
+        $typeArr = array("id", "str", "id");
         // output: [[termID]].
+        break;
+    case "username":
+        $sql = "CALL selectUsername (?)";
+        $paramNameArr = array("id");
+        $typeArr = array("id");
+        // output: [[username]].
+        break;
+    case "userInfo":
+        $sql = "CALL selectUserInfo (?)";
+        $paramNameArr = array("id");
+        $typeArr = array("id");
+        // output: [[username, publicKeys]].
         break;
     case "text":
         $sql = "CALL selectText (?)";
@@ -107,10 +95,22 @@ switch ($reqType) {
         $typeArr = array("id");
         // output: [[text]].
         break;
+    case "textSub":
+        $sql = "CALL selectTextSubstring (?, ?, ?)";
+        $paramNameArr = array("id", "l", "s");
+        $typeArr = array("id", "usint", "int");
+        // output: [[text]].
+        break;
     case "bin":
         $sql = "CALL selectBinary (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
+        // output: [[bin]].
+        break;
+    case "binSub":
+        $sql = "CALL selectBinarySubstring (?, ?, ?)";
+        $paramNameArr = array("id", "l", "s");
+        $typeArr = array("id", "usint", "int");
         // output: [[bin]].
         break;
     // case "creator":
