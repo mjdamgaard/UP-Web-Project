@@ -24,27 +24,27 @@ DELETE FROM PrivateCreators;
 
 INSERT INTO Terms (context_id, def_str, def_term_id, id)
 VALUES
-    (NULL, "Predicates", NULL, 7),
-    (7, "Verbs, s.", NULL, 8),
-    (NULL, "Nouns for predicate definitions", NULL, 9),
-    (8, "is a useful instance of the {$s of }the term, {$t}", NULL, 10),
-    (NULL, "openSDB", NULL, 11);
+    (NULL, "Terms", NULL, 5),
+    (NULL, "Predicates", NULL, 6),
+    (6, "Verbs, s.", NULL, 7),
+    (NULL, "Nouns for predicate definitions", NULL, 8),
+    (7, "is a useful instance of the {$s of }the term, {$t}", NULL, 9),
+    (NULL, "openSDB", NULL, 10);
 
 
-CALL insertOrFindTerm(6, 0, "Music", 0); -- id: 12
--- CALL insertOrFindTerm(6, 0, "{Rock} (musical genre)", 0); -- id: 13
-CALL insertOrFindTerm(6, 12, "Rock", 0); -- id: 13
-CALL insertOrFindTerm(6, 12, "Jazz", 0); -- id: 14
-CALL insertOrFindTerm(6, 12, "Hip hop", 0); -- id: 15
+CALL insertOrFindTerm(4, 0, "Science", 0); -- id: 11
+CALL insertOrFindTerm(4, 0, "Music", 0); -- id: 12
+-- CALL insertOrFindTerm(4, 0, "{Rock} (musical genre)", 0); -- id: 13
+CALL insertOrFindTerm(4, 12, "Rock", 0); -- id: 13
+CALL insertOrFindTerm(4, 12, "Jazz", 0); -- id: 14
+CALL insertOrFindTerm(4, 12, "Hip hop", 0); -- id: 15
 
-CALL insertOrFindTerm(6, 0, "Movies", 0); -- id: 16
-CALL insertOrFindTerm(1, 16,
-    "{The Lord of the Rings: The Fellowship of the Ring} (2001)",
-    "0", 0
+CALL insertOrFindTerm(4, 0, "Movies", 0); -- id: 16
+CALL insertOrFindTerm(4, 16,
+    "{The Lord of the Rings: The Fellowship of the Ring} (2001)", 0
 );-- id: 17
-CALL insertOrFindTerm(1, 16,
-    "{The Lord of the Rings: The Two Towers} (2002)",
-    "0", 0
+CALL insertOrFindTerm(4, 16,
+    "{The Lord of the Rings: The Two Towers} (2002)", 0
 ); -- id: 18
 
 
@@ -56,7 +56,6 @@ CALL insertOrFindTerm(1, 16,
 
 DELIMITER //
 CREATE PROCEDURE insertPredicates (
-    IN predCxt BIGINT UNSIGNED,
     IN str VARCHAR(255),
     IN startTermID BIGINT UNSIGNED,
     IN endTermID BIGINT UNSIGNED
@@ -65,9 +64,9 @@ BEGIN
     loop1: LOOP
         IF (startTermID <= endTermID) THEN
             CALL insertOrFindTerm(
-                1, predCxt,
+                4, 10,
                 str,
-                "t", startTermID
+                startTermID
             );
 
             SET startTermID = startTermID + 1;
@@ -78,18 +77,22 @@ BEGIN
 END //
 DELIMITER ;
 
-CALL insertOrFindTerm(1, 8, "Subcategories", 0);
-CALL insertPredicates(11, "Subcategories", 1, 7);
-CALL insertOrFindTerm(1, 8, "Instances", 0);
-CALL insertPredicates(11, "Instances", 1, 3);
+CALL insertOrFindTerm(4, 9, "Subcategories", 0);
+CALL insertPredicates("Subcategories", 1, 18);
+CALL insertOrFindTerm(4, 9, "Instances", 0);
+CALL insertPredicates("Instances", 1, 12);
 
 -- rate some statements.
 
 
-CALL inputOrChangeRating(1, 16, 1, 2, "FF", "00");
-CALL inputOrChangeRating(1, 16, 1, 3, "E0", "00");
-CALL inputOrChangeRating(1, 16, 1, 4, "90", "00");
+CALL inputOrChangeRating(4, 24, 11, "FF", "00");
+CALL inputOrChangeRating(4, 24, 12, "F0", "00");
+CALL inputOrChangeRating(4, 24, 13, "A1", "00");
+CALL inputOrChangeRating(4, 24, 14, "A0", "00");
 
+CALL inputOrChangeRating(4, 31, 13, "E1", "00");
+CALL inputOrChangeRating(4, 31, 14, "E0", "00");
+CALL inputOrChangeRating(4, 31, 15, "E0", "00");
 
 
 
