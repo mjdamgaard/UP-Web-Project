@@ -4,7 +4,7 @@ import "/src/DBRequestManager.js";
 import "/src/ContentLoader.js";
 import {sdbInterfaceCL} from "/src/content_loaders/ColumnInterface.js";
 import "/src/content_loaders/PagesWithTabs.js";
-import "/src/content_loaders/SetFields.js";
+import "/src/content_loaders/SetLists.js";
 import "/src/content_loaders/Titles.js";
 import "/src/content_loaders/EntityColumns.js";
 import "/src/content_loaders/SetElements.js";
