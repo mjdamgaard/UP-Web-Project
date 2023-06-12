@@ -79,6 +79,7 @@ export class SetManager {
     predSetDataArr = [predSetData, ...],
         predSetData = {
             predCxtID, predStr, objID,
+            predID?,
             userWeightArr?, queryParams?, ratTransFun?,
             setArr?, avgSet?, isReadyArr?
         },
@@ -106,46 +107,72 @@ export class SetManager {
                 predSetData.userWeightArr ??= this.defaultUserWeightArr;
                 let userNum = predSetDataArr.userWeightArr.length;
                 predSetData.isReadyArr ??= new Array(userNum).fill(false);
-                for (let j = 0; j < userNum; j++) {
-                    if (predSetData.isReadyArr[j]) {
-                        continue;
-                    }
-                    let reqData = {
-                        type: "set",
-                        u: predSetData.userWeightArr[j].userID,
-                        p: predSetData.predKey.predID,
-                        rl: queryParams.ratingLo,
-                        rh: queryParams.ratingHi,
-                        n: queryParams.num,
-                        o: queryParams.offset,
-                        a: queryParams.isAscending,
-                    };
-                    let indices = {i: i, j: j};
-                    dbReqManager.query(
-                        $ci, reqData, indices, function($ci, result, indices) {
-                            predSetData.setArr[indices.j] = result;
-                            this.computeAvgSetIfReadyAndThenCombineIfReady(
-                                indices.i, callback, data
-                            );
-                        }
+                // if...
+                if (predSetData.predID) {
+                    this.querySetsAndCombineIfReady(
+                        predSetData, i, data, callback
                     );
+                    continue;
                 }
-                this.computeAvgSetIfReadyAndThenCombineIfReady(i);
+                // else...
+                let reqData = {
+                    type: "termID",
+                    c: predSetData.predCxtID,
+                    s: predSetData.predStr,
+                    t: predSetData.objID,
+                };
+                dbReqManager.query($ci, reqData, i, function($ci, result, i) {
+                    predSetData.predID = (result[0] ?? [0])[0];
+                    this.querySetsAndCombineIfReady(
+                        predSetData, i, data, callback
+                    );
+                });
             }
         }
     }
 
-    computeAvgSetIfReadyAndThenCombineIfReady(i, callback, data) {
-        let isReady = this.predSetDataArr[i].isReadyArr.reduce(
+    querySetsAndCombineIfReady(predSetData, i, data, callback) {
+        let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
+        let queryParams = predSetData.queryParams;
+        for (let j = 0; j < userNum; j++) {
+            if (predSetData.isReadyArr[j]) {
+                continue;
+            }
+            let reqData = {
+                type: "set",
+                u: predSetData.userWeightArr[j].userID,
+                p: predSetData.predID,
+                rl: queryParams.ratingLo,
+                rh: queryParams.ratingHi,
+                n: queryParams.num,
+                o: queryParams.offset,
+                a: queryParams.isAscending,
+            };
+            dbReqManager.query(
+                $ci, reqData, j, function($ci, result, j) {
+                    predSetData.setArr[j] = result;
+                    this.computeAvgSetIfReadyAndCombineSetsIfReady(
+                        predSetData, data, callback
+                    );
+                }
+            );
+        }
+        this.computeAvgSetIfReadyAndCombineSetsIfReady(
+            predSetData, data, callback
+        );
+    }
+
+    computeAvgSetIfReadyAndCombineSetsIfReady(predSetData, data, callback) {
+        let isReady = predSetData.isReadyArr.reduce(
             (acc, val) => acc && val, true
         );
         if (isReady) {
-            this.computeAveragedSet(i);
-            this.combineSetsIfReady(callback, data);
+            this.computeAveragedSet(predSetData);
+            this.combineSetsIfReady(data, callback);
         }
     }
 
-    combineSetsIfReady(callback, data) {
+    combineSetsIfReady(data, callback) {
         let isReady = this.predSetDataArr.reduce(
             (acc, val) => acc && val.avgSet, true
         );
@@ -158,8 +185,8 @@ export class SetManager {
     // computeAveragedSet() sorts the avgSet after subjID, only if setNum (i.e.
     // this.predSetDataArr[i].setArr.length) is larger than 1. Otherwise the
     // avgSet will just be result of the single set query.
-    computeAveragedSet(i) {
-        let predSetData = this.predSetDataArr[i];
+    computeAveragedSet(predSetData) {
+        // TODO: Implement immediate return also if only one set is non-empty.
         let setArr = predSetData.setArr;
         // if there is only one set, simply return the set as is.
         let setNum = setArr.length;
