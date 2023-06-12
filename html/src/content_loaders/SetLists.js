@@ -46,15 +46,23 @@ setFieldCL.addCallback("data", function(data) {
         "defaultQueryNum",
         "defaultUserWeightArr",
         "predSetDataArr",
+        "sortAscending", // optional.
         "elemContentKey",
         "initialNum",
         "incrementNum",
     ]);
-    data.copyFromAncestor("combSet", 1);
+    data.copyFromAncestor("combSet", 1);  // optional.
 });
 setFieldCL.addCallback(function($ci, data) {
-
+    data.setManager = new SetManager(
+        data.defaultQueryNum, data.defaultUserWeightArr, data.predSetDataArr,
+        data.sortAscending, data.combSet,
+    );
+    data.setManager.queryAndCombineSets(function(combSet) {
+        $ci.trigger("comb-set-is-ready", [combSet]);
+    });
 });
+
 
 
 export class SetManager {
@@ -79,7 +87,12 @@ export class SetManager {
         queryParams = {num?, ratingLo?, ratingHi?, offset?, isAscending?},
     */
 
-    queryAndCombineSets() {
+    queryAndCombineSets(data, callback) {
+        if (!callback) {
+            callback = data;
+            data = null;
+        }
+        let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
         let predNum = this.predSetDataArr.length;
         for (let i = 0; i < predNum; i++) {
             let predSetData = this.predSetDataArr[i];
@@ -95,51 +108,51 @@ export class SetManager {
                 let userNum = predSetDataArr.userWeightArr.length;
                 predSetData.isReadyArr ??= new Array(userNum).fill(false);
                 for (let j = 0; j < userNum; j++) {
-                    if (!predSetData.isReadyArr[j]) {
-                        this.querySet(predSetData, i, j);
+                    if (predSetData.isReadyArr[j]) {
+                        continue;
                     }
+                    let reqData = {
+                        type: "set",
+                        u: predSetData.userWeightArr[j].userID,
+                        p: predSetData.predKey.predID,
+                        rl: queryParams.ratingLo,
+                        rh: queryParams.ratingHi,
+                        n: queryParams.num,
+                        o: queryParams.offset,
+                        a: queryParams.isAscending,
+                    };
+                    let indices = {i: i, j: j};
+                    dbReqManager.query(
+                        $ci, reqData, indices, function($ci, result, indices) {
+                            predSetData.setArr[indices.j] = result;
+                            this.computeAvgSetIfReadyAndThenCombineIfReady(
+                                indices.i, callback, data
+                            );
+                        }
+                    );
                 }
-                $ci.trigger(ithAvgSetSignal);
+                this.computeAvgSetIfReadyAndThenCombineIfReady(i);
             }
         }
     }
 
-    querySet(predSetData, i, j) {
-        let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
-        let queryParams = predSetData.queryParams;
-        let reqData = {
-            type: "set",
-            u: predSetData.userWeightArr[j].userID,
-            p: predSetData.predKey.predID,
-            rl: queryParams.ratingLo,
-            rh: queryParams.ratingHi,
-            n: queryParams.num,
-            o: queryParams.offset,
-            a: queryParams.isAscending,
-        };
-        dbReqManager.query($ci, reqData, j, function($ci, result, j) {
-            predSetData.setArr[j] = result;
-            this.computeAvgSetIfReadyAndThenCombineIfReady(i);
-        });
-
-    }
-
-    computeAvgSetIfReadyAndThenCombineIfReady(i) {
+    computeAvgSetIfReadyAndThenCombineIfReady(i, callback, data) {
         let isReady = this.predSetDataArr[i].isReadyArr.reduce(
             (acc, val) => acc && val, true
         );
         if (isReady) {
             this.computeAveragedSet(i);
-            this.combineSetsIfReady();
+            this.combineSetsIfReady(callback, data);
         }
     }
 
-    combineSetsIfReady() {
+    combineSetsIfReady(callback, data) {
         let isReady = this.predSetDataArr.reduce(
             (acc, val) => acc && val.avgSet, true
         );
         if (isReady) {
-            this.computeCombinedSet();
+            let combSet = this.computeCombinedSet();
+            callback(combSet, data);
         }
     }
 
@@ -223,11 +236,11 @@ export class SetManager {
         let ret = predSetDataArr[0].avgSet.map(
             row => [row[0], row[1], new Array(predNum).fill(row[0])]
         );
-        // for each subsequent avgSet, look for any subjID contained in the first
-        // set, and for each one found, apply the setDataArr[i].ratTransFun to the
-        // averaged ratVal and add the result to the combRatVal located in the first
-        // column of ret. Also store the same averaged ratVal as is in the array in
-        // the third column of ret.
+        // for each subsequent avgSet, look for any subjID contained in the
+        // first set, and for each one found, apply the setDataArr[i]
+        // .ratTransFun to the averaged ratVal and add the result to the
+        // combRatVal located in the first column of ret. Also store the same
+        // averaged ratVal as is in the array in the third column of ret.
         let retLen = ret.length;
         for (let i = 1; i < predNum; i++) {
             let ratTransFun = predSetDataArr[i].ratTransFun;
@@ -257,83 +270,6 @@ export class SetManager {
     }
 }
 
-
-
-
-
-//
-// // getAveragedSet() takes a two arrays, setArr and userWeightArr, and returns a
-// // unioned set containing the weighted averaged ratings for any subjects that
-// // appear in one or more of the setArr.
-// export function getAveragedSet(setArr, userWeightArr, sortFlag) {
-//     // if there is only one set, simply return the set as is.
-//     let setNum = setArr.length;
-//     if (setNum === 1) {
-//         return setArr[0];
-//     }
-//     // else, first sort each array in terms of the subject IDs.
-//     for (let i = 0; i < setNum; i++) {
-//         setArr[i].sort((row1, row2) => row1[1] - row2[1]);
-//     }
-//
-//     let setLengths = setArr.map(val => val.length);
-//     let setLenSum = setLengths.reduce((acc, val) => acc + val, 0);
-//     let ret = new Array(setLenSum);
-//     let retLen = 0;
-//     let positions = new Array(setNum).fill(0);
-//     let continueLoop = true;
-//     while (continueLoop) {
-//         let minSubjID = positions.reduce(
-//             (acc, val, ind) => Math.min(acc, setArr[ind][val][1]), 0
-//         );
-//         let weightedRatValOfMinSubjArray = positions.map(
-//             (val, ind) => (setArr[ind][val][1] !== minSubjID) ? "" :
-//                 setArr[ind][val][0] * userWeightArr[ind]
-//         );
-//         let weightSum = weightedRatValOfMinSubjArray.reduce(
-//             (acc, val, ind) => acc + ((val === "") ? 0 : userWeightArr[ind]), 0
-//         );
-//
-//         let averagedRatVal = weightedRatValOfMinSubjArray
-//             .reduce((acc, val) => acc + val, 0) /
-//                 weightSum;
-//         ret[retLen] = [averagedRatVal, minSubjID];
-//             // .sort((row1, row2) => row2[0] - row1[0]); ..
-//         retLen++;
-//         // increase the positions.
-//         for (let i = 0; i < setNum; i++) {
-//             if (weightedRatValOfMinSubjArray[i] !== "") {
-//                 positions[i] += 1;
-//             }
-//         }
-//         continueLoop = false;
-//         for (let i = 0; i < setNum; i++) {
-//             if (positions[i] === setLengths) {
-//                 positions[i] -= 1;
-//             } else {
-//                 continueLoop = true;
-//             }
-//         }
-//     }
-//     return ret;
-// }
-
-export function setAveragedSets(predSetDataArr, boolArr, sortFlag) {
-    let predNum = predSetDataArr.length;
-    if (!boolArr) {
-        boolArr = new Array(predNum).fill(true);
-    }
-    for (let i = 0; i < predNum; i++) {
-        if (boolArr[0]) {
-            predSetDataArr[i].avgSet = getAveragedSet(
-                predSetDataArr.setArr, predSetDataArr.userWeightArr, sortFlag
-            );
-        }
-    }
-}
-
-
-
 /**
  * getCombinedSet(predSetDataArr) returns a combined set,
  * combSet = [[combRatVal, subjID, ratValArr], ...]. This is done by first
@@ -347,49 +283,6 @@ export function setAveragedSets(predSetDataArr, boolArr, sortFlag) {
  * their averaged rating value will then be set to 0 (before applying the
  * rating transformer function).
  */
-// TODO: Figure out about the sortFlag, and what should happen when predNum ==
-// 1..
-export function getCombinedSet(predSetDataArr, boolArr, sortFlag) {
-    // first compute the averaged sets for each predicate (where the ratings
-    // from each user for that predicate is combined as a weighted average).
-    setAveragedSets(predSetDataArr, boolArr); // (An undefined sortFlag means that
-    // the averaged sets will be sorted in terms of subjID.)
-    // then initialize the return array to the first averaged set, but with an
-    // extra third column meant to contain all the averaged ratings before this
-    // combination.
-    let predNum = predSetDataArr.length;
-    let ret = predSetDataArr[0].avgSet.map(
-        row => [row[0], row[1], new Array(predNum).fill(row[0])]
-    );
-    // for each subsequent avgSet, look for any subjID contained in the first
-    // set, and for each one found, apply the setDataArr[i].ratTransFun to the
-    // averaged ratVal and add the result to the combRatVal located in the first
-    // column of ret. Also store the same averaged ratVal as is in the array in
-    // the third column of ret.
-    let retLen = ret.length;
-    for (let i = 1; i < predNum; i++) {
-        let ratTransFun = predSetDataArr[i].ratTransFun;
-        let avgSet = predSetDataArr[i].avgSet;
-        let avgSetLen = avgSet.length;
-        let pos = 0;
-        for (let j = 0; j < retLen; j++) {
-            let subjID = ret[j][1];
-            while (avgSet[pos][1] < subjID && pos < avgSetLen - 1) {
-                pos++;
-            }
-            let row = avgSet[pos];
-            if (row[1] == subjID) {
-                ret[j][0] += ratTransFun(row[0]);
-                ret[j][1][i] = row[0];
-            } else {
-                ret[j][0] += ratTransFun(0);
-                ret[j][1][i] = null;
-            }
-        }
-    }
-    return ret;
-}
-
 
 
 
