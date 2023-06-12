@@ -23,7 +23,6 @@ SetList requires data:
         userWeightArr = [{userID, weight}, ...],
         queryParams = {num?, ratingLo?, ratingHi?, offset?, isAscending?},
     data.elemContentKey,
-    data.subjType,
     data.initialNum,
     data.incrementNum,
     data.combSet?
@@ -41,7 +40,7 @@ export var setListCL = new ContentLoader(
     '</div>',
     appColumnCL
 );
-setFieldCL.addCallback("data", function(data) {
+setListCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "defaultQueryNum",
         "defaultUserWeightArr",
@@ -53,7 +52,7 @@ setFieldCL.addCallback("data", function(data) {
     ]);
     data.copyFromAncestor("combSet", 1);  // optional.
 });
-setFieldCL.addCallback(function($ci, data) {
+setListCL.addCallback(function($ci, data) {
     data.setManager = new SetManager(
         data.defaultQueryNum, data.defaultUserWeightArr, data.predSetDataArr,
         data.sortAscending, data.combSet,
@@ -243,7 +242,7 @@ export class SetManager {
         // averaged ratVal as is in the array in the third column of ret.
         let retLen = ret.length;
         for (let i = 1; i < predNum; i++) {
-            let ratTransFun = predSetDataArr[i].ratTransFun;
+            let ratTransFun = predSetDataArr[i].ratTransFun ?? (x => x);
             let avgSet = predSetDataArr[i].avgSet;
             let avgSetLen = avgSet.length;
             let pos = 0;
@@ -284,95 +283,6 @@ export class SetManager {
  * rating transformer function).
  */
 
-
-
-
-
-
-
-
-
-
-// setFieldCL.addCallback(function($ci, data) {
-//     if (data.combSet) {
-//         $ci.trigger("append-initial-elements");
-//         return;
-//     }
-//
-//
-//     let predNum = data.predSetDataArr.length;
-//     for (let i = 0; i < predNum; i++) {
-//         let setData = data.predSetDataArr[i];
-//         setData.userWeightArr ??= data.defaultUserWeightArr;
-//
-//         let ithAvgSetSignal = "compute-avg-set-" + i.toString() + "-if-ready";
-//         $ci.on(ithAvgSetSignal) {
-//             setData.avgSet = getAveragedSet(setData);
-//         }
-//
-//         let userNum = userWeightArr.length;
-//         setData.isReadyArr ??= new Array(userNum).fill(false);
-//         for (let j = 0; j < userNum; j++) {
-//             if (setData.isReadyArr[j]) {
-//                 queryAndStoreSetThenSignalCI(setData, j, $ci, ithAvgSetSignal);
-//             }
-//         }
-//         $ci.trigger(ithAvgSetSignal);
-//     }
-// });
-
-
-
-
-export function queryAndSetAvgSetThenSignalCI(data, i, $ci, signal) {
-    let setData = data.predSetDataArr[i];
-    let userWeightArr = setData.userWeightArr ?? data.defaultUserWeightArr;
-    let userNum = userWeightArr.length;
-    setData.isReadyArr ??= new Array(userNum).fill(false);
-    for (let j = 0; j < userNum; j++) {
-
-    }
-
-
-    // if setData.avgSet is already set and setData.refresh is not true, simply
-    // send the ready signal immediately
-    if (setData.avgSet && !setData.refresh) {
-        $ci.trigger(signal, [setData.title]);
-        return;
-    }
-    // else if setArr is not empty and setData.refresh is not true, simply
-    // compute the avgSet from setArr and send the ready signal.
-    setData.setArr ??= [];
-    if (setData.setArr.length !== 0 && !setData.refresh) {
-        setData.avgSet = getAveragedSet(setData.setArr, setData.userWeightArr);
-        $ci.trigger(signal, [setData.title]);
-        return;
-    }
-    // else set up an event to query the sets to load into setData.setArr.
-    // (This event will be triggered as soon as we have gotten the predID.)
-    $ci.one("query-sets-" + i.toString(), function() {
-        let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
-        let len = setData.userWeightArr.length;
-        for (let j = 0; j < len; j++) {
-            let reqData = {
-                type: "set",
-                uid: setData.userWeightArr[j].userID,
-                pid: setData.predKey.predID,
-                st: data.subjType,
-                rl: setData.queryParams.ratingLo ?? "",
-                rh: setData.queryParams.ratingHi ?? "",
-                n: setData.queryParams.num,
-                o: setData.queryParams.offset ?? 0,
-                a: setData.queryParams.isAscending ?? 0,
-            };
-            dbReqManager.query($ci, reqData, j, function($ci, result, j) {
-                setData.setArr[j] = result;
-                $ci.trigger("signal-ci-if-ready");
-            });
-        }
-        return false;
-    });
-}
 
 
 
