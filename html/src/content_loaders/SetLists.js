@@ -36,7 +36,7 @@ export var setListCL = new ContentLoader(
     "SetList",
     /* Initial HTML template */
     '<div>' +
-        '<<List>>' +
+        '<<List data:wait>>' +
     '</div>',
     appColumnCL
 );
@@ -53,12 +53,27 @@ setListCL.addCallback("data", function(data) {
     data.copyFromAncestor("combSet", 1);  // optional.
 });
 setListCL.addCallback(function($ci, data) {
+    data.cl = setListCL.getRelatedCL(data.elemContentKey));
+    $ci.one("load-initial-elements", function(event, combSet) {
+        data.listElemDataArr = data.combSet
+            .slice(0, data.initialNum)
+            .map(function(row) {
+                return {
+                    combRatVal: row[0],
+                    termID: row[1],
+                    avgRatValArr: row[3] ?? [],
+                };
+            });
+        data.currentLen = data.initialNum;
+        $ci.find('.CI.List').trigger("load");
+        return false;
+    });
     data.setManager = new SetManager(
         data.defaultQueryNum, data.defaultUserWeightArr, data.predSetDataArr,
         data.sortAscending, data.combSet,
     );
     data.setManager.queryAndCombineSets(function(combSet) {
-        $ci.trigger("comb-set-is-ready", [combSet]);
+        $ci.trigger("load-initial-elements", [combSet]);
     });
 });
 
@@ -186,7 +201,6 @@ export class SetManager {
     // this.predSetDataArr[i].setArr.length) is larger than 1. Otherwise the
     // avgSet will just be result of the single set query.
     computeAveragedSet(predSetData) {
-        // TODO: Implement immediate return also if only one set is non-empty.
         let setArr = predSetData.setArr;
         // if there is only one set, simply return the set as is.
         let setNum = setArr.length;
@@ -323,6 +337,36 @@ export class SetManager {
 
 
 
+// TODO: Correct the following event method if needed and add more event methods
+// to query for more elements of the sets. I imagine a method that simply adds
+// the same number of predSetData to the predSetDataArr, with the same
+// predicates (use the predIDs) but with a different offset for all the query-
+// Params. Then one should be able to run queryAndCombineSets() pretty much
+// straight away. But one might also want to add an event method that simply
+// creates a new SetManager with those new offsets and appends a new List.. hm,
+// then again no, cause that will result in potential repititions of elements..
+// But if needed, one *could* perhaps do this, and then simply filter the
+// elements of the previous lists away, if we really want an update method that
+// does not change the order of the already loaded elements..
+
+setListCL.addCallback(function($ci, data) {
+    $ci.on("append-list", function() {
+        let $this = $(this);
+        let data = $(this).data("data");
+        let subjType = data.subjType;
+        data.listElemDataArr = data.set
+            .slice(data.currentLen, data.currentLen + data.incrementNum)
+            .map(function(row) {
+                return {
+                    combRatVal: row[0],
+                    termID: row[1],
+                    avgRatValArr: row[3] ?? [row[0]],
+                };
+            });
+        data.currentLen += data.incrementNum;
+        setListCL.loadAppended($this, 'List', data);
+    });
+});
 
 
 
