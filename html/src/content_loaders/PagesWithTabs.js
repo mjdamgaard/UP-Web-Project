@@ -1,6 +1,6 @@
 
 import {
-    ContentLoader,
+    ContentLoader, ChildData
 } from "/src/ContentLoader.js";
 import {
     sdbInterfaceCL, appColumnCL,
@@ -36,6 +36,7 @@ export var pagesContainerCL = new ContentLoader(
     pagesWithTabsCL
 );
 
+// TODO: Refactor the code below..
 
 
 /* Events that add tabs and add/load associated pages to these */
@@ -136,9 +137,14 @@ pagesContainerCL.addCallback(function($ci) {
                 $this.children().hide();
                 $this.children('[data-title="' + tabTitle +'"]').show();
             } else {
+                let resultingPageData = new ChildData(
+                    $this.data("data"), pageData
+                );
                 $this.data("openPagesTitleArr").push(tabTitle);
                 $this.children().hide();
-                pagesContainerCL.loadAppended($this, contentKey, pageData);
+                pagesContainerCL.loadAppended(
+                    $this, contentKey, resultingPageData
+                );
                 $this.children(':last-child').attr("data-title", tabTitle);
             }
             return false;

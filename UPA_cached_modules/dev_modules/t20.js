@@ -23,6 +23,7 @@ export function upa_main(termID, queryUserID, inputUserID) {
         termID: termID,
         queryUserID: queryUserID,
         inputUserID: inputUserID,
+        defaultUserWeightArr: [{userID: 1, weight: 1}],
         columnSpecs: [
             {cl: sdbInterfaceCL.getRelatedCL("TermColumn")},
         ],

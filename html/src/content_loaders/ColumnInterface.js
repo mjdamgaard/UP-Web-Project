@@ -66,23 +66,16 @@ export var columnInterfaceHeaderCL = new ContentLoader(
     '</header>',
     sdbInterfaceCL,
 );
+
+
+
 export var appColumnCL = new ContentLoader(
     "AppColumn",
     /* Initial HTML template */
     '<div>' +
-        '<<ColumnHeader>>' +
-        '<<ColumnMain>>' +
-    '</div>',
-    sdbInterfaceCL,
-);
-
-export var columnHeaderCL = new ContentLoader(
-    "ColumnHeader",
-    /* Initial HTML template */
-    '<div>' +
         '<<ColumnButtonContainer>>' +
     '</div>',
-    appColumnCL,
+    sdbInterfaceCL,
 );
 export var columnButtonContainerCL = new ContentLoader(
     "ColumnButtonContainer",
@@ -107,13 +100,6 @@ closeButtonCL.addCallback(function($ci) {
         return false;
     });
 });
-export var columnMainCL = new ContentLoader(
-    "ColumnMain",
-    /* Initial HTML template */
-    '<div>' +
-    '</div>',
-    appColumnCL,
-);
 
 
 
@@ -124,26 +110,23 @@ export var columnMainCL = new ContentLoader(
 // close event, and make the Columns turn themselves non-overwritable on first
 // click interaction with them.
 appColumnCL.addCallback(function($ci) {
-    $ci
-        .on("open-column", function(
-            event, contentKey, data, dir
-        ) {
-            let $this = $(this);
-            if (dir === "right") {
-                // TODO: Add a lookup to a variable deciding if the existing
-                // column should be removed or not.
-                let $existingColumn = $this.next('.CI.AppColumn').remove();
-                sdbInterfaceCL.loadAfter($this, contentKey, data);
-            } else if (dir === "left") {
-                // TODO: Add a lookup to another variable deciding if the
-                // existing column should be removed or not.
-                let $existingColumn = $this.prev('.CI.AppColumn').remove();
-                sdbInterfaceCL.loadBefore($this, contentKey, data);
-            }
-            return false;
-        })
-        .on("close", function() {
-            $(this).remove();
-            return false;
-        });
+    $ci.on("open-column", function(event, contentKey, data, dir) {
+        let $this = $(this);
+        if (dir === "right") {
+            // TODO: Add a lookup to a variable deciding if the existing
+            // column should be removed or not.
+            let $existingColumn = $this.next('.CI.AppColumn').remove();
+            sdbInterfaceCL.loadAfter($this, contentKey, data);
+        } else if (dir === "left") {
+            // TODO: Add a lookup to another variable deciding if the
+            // existing column should be removed or not.
+            let $existingColumn = $this.prev('.CI.AppColumn').remove();
+            sdbInterfaceCL.loadBefore($this, contentKey, data);
+        }
+        return false;
+    });
+    $ci.on("close", function() {
+        $(this).remove();
+        return false;
+    });
 });

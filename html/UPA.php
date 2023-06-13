@@ -37,13 +37,13 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 
 
 if (!isset($_POST["t"])) {
-    $_POST["t"] = "1";
+    $_POST["t"] = "5";
 }
 if (!isset($_POST["qu"])) {
-    $_POST["qu"] = "1";
+    $_POST["qu"] = "4";
 }
 if (!isset($_POST["iu"])) {
-    $_POST["iu"] = "1";
+    $_POST["iu"] = "4";
 }
 
 // get and verify the required inputs.

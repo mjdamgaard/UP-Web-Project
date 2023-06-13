@@ -18,7 +18,7 @@ termNavigationSetPageCL.addCallback("data", function(data) {
     data.elemContentKey = "TermNavigationSetElement";
     data.copyFromAncestor("defaultUserWeightArr");
     data.predSetDataArr = [{
-        predCxtID: 9, // ID of "">is a useful instance of ..." Context.
+        predCxtID: 9, // ID of the ">is a useful instance of ..." Context.
         predStr: data.getFromAncestor("predNoun"),
         objID: data.getFromAncestor("termID"),
     }];
@@ -27,3 +27,12 @@ termNavigationSetPageCL.addCallback("data", function(data) {
     data.initialNum = 50;
     data.incrementNum = 25;
 });
+
+export var termNavigationSetElementCL = new ContentLoader(
+    "TermNavigationSetElement",
+    /* Initial HTML template */
+    '<div>' +
+        'test..' +
+    '</div>',
+    appColumnCL
+);
