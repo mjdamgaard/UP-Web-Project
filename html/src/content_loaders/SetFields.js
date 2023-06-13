@@ -9,8 +9,10 @@ import {
 
 
 
-export var setListCL = new ContentLoader(
-    "SetField",
+
+
+export var setCL = new ContentLoader(
+    "Set",
     /* Initial HTML template */
     '<div>' +
         '<<SetHeader>>' +
@@ -20,29 +22,32 @@ export var setListCL = new ContentLoader(
 );
 
 
-
-
-
-
-
-
-
-
-
-
-
 export var setHeaderCL = new ContentLoader(
     "SetHeader",
     /* Initial HTML template */
     '<div>' +
-        '<<PredicateTitle>>' +
-        '<<RefreshButton>>' +
-        '<<AddButton>>' + // Button to add predicate (menu point) in dd. menu.
-        '<<DropdownButton>>' +
-        '<<SetPredicatesDropdownMenu data:wait>>' +
+        '<div hidden>' +
+            '<<InformativePredicateTitle>>' +
+            '<<DefaultQueryParamsMenu>>' +
+            '<<SortingOptionsSelectionMenu>>' +
+            '<<RefreshButton>>' +
+            '<<AddButton>>' + // Button to go to Predicate Column.
+        '</div>',
+        '<<HeaderDropdownButtonBar>>' +
     '</div>',
     appColumnCL
 );
+
+
+
+
+
+
+
+
+
+
+
 setHeaderCL.addCallback(function($ci, data) {
     $ci.one("predSetDataArr-is-ready", function() {
         $(this).one("click", function() {

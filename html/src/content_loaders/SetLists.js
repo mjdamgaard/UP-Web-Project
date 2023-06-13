@@ -12,7 +12,7 @@ import {
 
 /*
 SetList requires data:
-    data.defaultQueryNum,
+    data.elemContentKey,
     data.defaultUserWeightArr,
     data.predSetDataArr = [predSetData, ...],
         predSetData = {
@@ -22,10 +22,14 @@ SetList requires data:
         },
         userWeightArr = [{userID, weight}, ...],
         queryParams = {num?, ratingLo?, ratingHi?, offset?, isAscending?},
-    data.elemContentKey,
+    data.defaultQueryNum,
+    data.defaultRatingLo?,
+    data.defaultRatingHi?,
+    data.defaultOffset?,
+    data.defaultIsAscending?,
+    data.combSet?
     data.initialNum,
     data.incrementNum,
-    data.combSet?
     // data.showHeader,
     // data.applySortingOptions.
     // data.sortingOptions. (if applySortingOptions == true.)
@@ -42,11 +46,14 @@ export var setListCL = new ContentLoader(
 );
 setListCL.addCallback("data", function(data) {
     data.copyFromAncestor([
-        "defaultQueryNum",
+        "elemContentKey",
         "defaultUserWeightArr",
         "predSetDataArr",
-        "sortAscending", // optional (default is descending).
-        "elemContentKey",
+        "defaultQueryNum",
+        "defaultRatingLo",  // optional.
+        "defaultRatingHi",  // optional.
+        "defaultOffset",  // optional.
+        "defaultIsAscending",  // optional.
         "initialNum",
         "incrementNum",
     ]);
@@ -70,7 +77,7 @@ setListCL.addCallback(function($ci, data) {
     });
     data.setManager = new SetManager(
         data.defaultQueryNum, data.defaultUserWeightArr, data.predSetDataArr,
-        data.sortAscending, data.combSet,
+        data.defaultIsAscending, data.combSet,
     );
     data.setManager.queryAndCombineSets(function(combSet) {
         $ci.trigger("load-initial-elements", [combSet]);
@@ -112,10 +119,11 @@ export class SetManager {
         for (let i = 0; i < predNum; i++) {
             let predSetData = this.predSetDataArr[i];
             let queryParams = (predSetData.queryParams ??= {});
+            // (Using ;; here is just for making Atom syntax highlighting work.)
             queryParams.num ??= this.defaultQueryNum;;
-            queryParams.ratingLo ??= "";; // hack for Atom syntax HL. to work.
-            queryParams.ratingHi ??= "";;
-            queryParams.offset ??= 0;;
+            queryParams.ratingLo ??= this.defaultRatingLo ?? "";;
+            queryParams.ratingHi ??= this.defaultRatingHi ?? "";;
+            queryParams.offset ??= this.defaultOffset ?? 0;;
             queryParams.isAscending ??= this.sortAscending ? 1 : 0;;
 
             if (!predSetData.avgSet) {
