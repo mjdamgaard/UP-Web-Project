@@ -193,13 +193,22 @@ export class SetManager {
         if (setNum === 1) {
             return predSetData.avgSet = setArr[0];
         }
+        // if only one set is non-empty, simply return that set.
+        let setLengths = setArr.map(val => val.length);
+        let nonEmptyNum = setLengths.reduce(
+            (acc, val) => acc + (val === 0 ? 0 : 1), 0
+        );
+        if (nonEmptyNum === 1) {
+            return predSetData.avgSet = setArr.reduce(
+                (acc, val) => acc.length > 0 ? acc : val, []
+            );
+        }
         // else, first sort each array in terms of the subject IDs.
         for (let i = 0; i < setNum; i++) {
             setArr[i].sort((row1, row2) => row1[1] - row2[1]);
         }
         // then... TODO: make comments for the rest of the code.
         let userWeightArr = predSetData.userWeightArr;
-        let setLengths = setArr.map(val => val.length);
         let setLenSum = setLengths.reduce((acc, val) => acc + val, 0);
         let ret = new Array(setLenSum);
         let retLen = 0;
