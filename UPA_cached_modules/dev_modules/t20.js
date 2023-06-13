@@ -5,17 +5,17 @@ import "/src/ContentLoader.js";
 import {sdbInterfaceCL} from "/src/content_loaders/ColumnInterface.js";
 import "/src/content_loaders/PagesWithTabs.js";
 import "/src/content_loaders/SetLists.js";
-import "/src/content_loaders/Titles.js";
-import "/src/content_loaders/EntityColumns.js";
-import "/src/content_loaders/SetElements.js";
-import "/src/content_loaders/SubmitFields.js";
+import "/src/content_loaders/TermColumns.js";
+// import "/src/content_loaders/Titles.js";
+// import "/src/content_loaders/SetElements.js";
+// import "/src/content_loaders/SubmitFields.js";
 // import * as t16Mod from "/UPA_scripts.php?id=16";
 
 import * as t19Mod from "/UPA_scripts.php?id=19";
 
 
 export function upa_main(termID, queryUserID, inputUserID) {
-    if (queryUserID !== "1") {
+    if (queryUserID !== "4") {
         throw "Unrecognized query user";
     }
 

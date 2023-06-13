@@ -60,7 +60,7 @@ setListCL.addCallback("data", function(data) {
     data.copyFromAncestor("combSet", 1);  // optional.
 });
 setListCL.addCallback(function($ci, data) {
-    data.cl = setListCL.getRelatedCL(data.elemContentKey));
+    data.cl = setListCL.getRelatedCL(data.elemContentKey);
     $ci.one("load-initial-elements", function(event, combSet) {
         data.listElemDataArr = data.combSet
             .slice(0, data.initialNum)

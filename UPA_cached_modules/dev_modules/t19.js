@@ -10,8 +10,8 @@ import {
     termTitleCL, entityTitleCL,
 } from "/src/content_loaders/Titles.js";
 import {
-    entityHeaderContentCL,
-} from "/src/content_loaders/EntityColumns.js";
+    
+} from "/src/content_loaders/TermColumns.js";
 import {
     supercategoryNavItemCL,
 } from "/src/content_loaders/SetElements.js";
@@ -136,12 +136,6 @@ sdbInterfaceCL.addCSS(
 
 
 
-entityHeaderContentCL.addCSS(
-    '& .CI.EntityRepresentation {' +
-        'font-size: 25px;' +
-        'margin: 10px 5px;' +
-    '}'
-);
 
 supercategoryNavItemCL.addCSS(
     '&::after {' +

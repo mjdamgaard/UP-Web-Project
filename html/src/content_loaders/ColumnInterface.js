@@ -84,7 +84,7 @@ export var columnButtonContainerCL = new ContentLoader(
         // '<<PinButton>>' +
         '<<CloseButton>>' +
     '<div>',
-    columnHeaderCL,
+    sdbInterfaceCL,
 );
 export var closeButtonCL = new ContentLoader(
     "CloseButton",
