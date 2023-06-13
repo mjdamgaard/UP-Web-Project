@@ -28,7 +28,7 @@ class InputVerifier {
             case "rat":
                 $pattern =
                     "/^[0-9A-F]{2}{0,255}$/";
-                if (!preg_match($pattern, $paramVal)) {
+                if (!preg_match($pattern, $paramVal) && $paramVal !== "") {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
                 }
                 break;

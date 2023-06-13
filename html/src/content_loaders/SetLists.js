@@ -62,7 +62,7 @@ setListCL.addCallback("data", function(data) {
 setListCL.addCallback(function($ci, data) {
     data.cl = setListCL.getRelatedCL(data.elemContentKey);
     $ci.one("load-initial-elements", function(event, combSet) {
-        data.listElemDataArr = data.combSet
+        data.listElemDataArr = combSet
             .slice(0, data.initialNum)
             .map(function(row) {
                 return {
@@ -121,14 +121,14 @@ export class SetManager {
             let queryParams = (predSetData.queryParams ??= {});
             // (Using ;; here is just for making Atom syntax highlighting work.)
             queryParams.num ??= this.defaultQueryNum;;
-            queryParams.ratingLo ??= this.defaultRatingLo ?? "";;
-            queryParams.ratingHi ??= this.defaultRatingHi ?? "";;
-            queryParams.offset ??= this.defaultOffset ?? 0;;
-            queryParams.isAscending ??= this.sortAscending ? 1 : 0;;
+            queryParams.ratingLo ??= (this.defaultRatingLo ?? "");;
+            queryParams.ratingHi ??= (this.defaultRatingHi ?? "");;
+            queryParams.offset ??= (this.defaultOffset ?? 0);;
+            queryParams.isAscending ??= (this.sortAscending ? 1 : 0);;
 
             if (!predSetData.avgSet) {
                 predSetData.userWeightArr ??= this.defaultUserWeightArr;
-                let userNum = predSetDataArr.userWeightArr.length;
+                let userNum = predSetData.userWeightArr.length;
                 predSetData.isReadyArr ??= new Array(userNum).fill(false);
                 // if...
                 if (predSetData.predID) {
@@ -141,12 +141,13 @@ export class SetManager {
                 let reqData = {
                     type: "termID",
                     c: predSetData.predCxtID,
-                    s: predSetData.predStr,
+                    s: encodeURI(predSetData.predStr),
                     t: predSetData.objID,
                 };
-                dbReqManager.query($ci, reqData, i, function($ci, result, i) {
+                let thisSetManger = this;
+                dbReqManager.query(null, reqData, i, function($ci, result, i) {
                     predSetData.predID = (result[0] ?? [0])[0];
-                    this.querySetsAndCombineIfReady(
+                    thisSetManger.querySetsAndCombineIfReady(
                         predSetData, i, data, callback
                     );
                 });
@@ -156,7 +157,9 @@ export class SetManager {
 
     querySetsAndCombineIfReady(predSetData, i, data, callback) {
         let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
+        predSetData.setArr ??= [];
         let queryParams = predSetData.queryParams;
+        let userNum = predSetData.userWeightArr.length;
         for (let j = 0; j < userNum; j++) {
             if (predSetData.isReadyArr[j]) {
                 continue;
@@ -171,14 +174,14 @@ export class SetManager {
                 o: queryParams.offset,
                 a: queryParams.isAscending,
             };
-            dbReqManager.query(
-                $ci, reqData, j, function($ci, result, j) {
-                    predSetData.setArr[j] = result;
-                    this.computeAvgSetIfReadyAndCombineSetsIfReady(
-                        predSetData, data, callback
-                    );
-                }
-            );
+            let thisSetManger = this;
+            dbReqManager.query(null, reqData, j, function($ci, result, j) {
+                predSetData.setArr[j] = result;
+                predSetData.isReadyArr[j] = true;
+                thisSetManger.computeAvgSetIfReadyAndCombineSetsIfReady(
+                    predSetData, data, callback
+                );
+            });
         }
         this.computeAvgSetIfReadyAndCombineSetsIfReady(
             predSetData, data, callback

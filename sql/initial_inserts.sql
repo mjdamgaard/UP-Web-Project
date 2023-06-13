@@ -73,7 +73,7 @@ BEGIN
     loop1: LOOP
         IF (startTermID <= endTermID) THEN
             CALL insertOrFindTerm(
-                4, 10,
+                4, 9,
                 str,
                 startTermID
             );
@@ -94,10 +94,10 @@ CALL insertPredicates("Instances", 1, 12);
 -- rate some statements.
 
 
-CALL inputOrChangeRating(4, 24, 11, "FF", "00");
-CALL inputOrChangeRating(4, 24, 12, "F0", "00");
-CALL inputOrChangeRating(4, 24, 13, "A1", "00");
-CALL inputOrChangeRating(4, 24, 14, "A0", "00");
+CALL inputOrChangeRating(4, 28, 11, "FF", "00");
+CALL inputOrChangeRating(4, 28, 12, "F0", "00");
+CALL inputOrChangeRating(4, 28, 13, "A1", "00");
+CALL inputOrChangeRating(4, 28, 14, "A0", "00");
 
 CALL inputOrChangeRating(4, 31, 13, "E1", "00");
 CALL inputOrChangeRating(4, 31, 14, "E0", "00");

@@ -5,8 +5,10 @@ import "/src/ContentLoader.js";
 import {sdbInterfaceCL} from "/src/content_loaders/ColumnInterface.js";
 import "/src/content_loaders/PagesWithTabs.js";
 import "/src/content_loaders/SetLists.js";
+import "/src/content_loaders/SetView.js";
+import "/src/content_loaders/TermNavigationSetPages.js";
 import "/src/content_loaders/TermColumns.js";
-// import "/src/content_loaders/Titles.js";
+import "/src/content_loaders/Titles.js";
 // import "/src/content_loaders/SetElements.js";
 // import "/src/content_loaders/SubmitFields.js";
 // import * as t16Mod from "/UPA_scripts.php?id=16";
@@ -23,7 +25,7 @@ export function upa_main(termID, queryUserID, inputUserID) {
         termID: termID,
         queryUserID: queryUserID,
         inputUserID: inputUserID,
-        defaultUserWeightArr: [{userID: 1, weight: 1}],
+        defaultUserWeightArr: [{userID: 4, weight: 1}],
         columnSpecs: [
             {cl: sdbInterfaceCL.getRelatedCL("TermColumn")},
         ],
