@@ -29,7 +29,11 @@ VALUES
     (NULL, "Predicates", NULL, 6),
     (6, ">Adjectives and Verbs, s.", NULL, 7), -- (s.: singular)
     (NULL, "Nouns for predicate definitions", NULL, 8),
-    (7, ">is a useful instance of the {{$s} of }the term, {$t}", NULL, 9);
+    (7, ">is a useful instance of the {{$s} of }the term, {$t}", NULL, 9),
+    (NULL, CONCAT(
+        "The {Statement} formed by applying the predicate with ID{: $s, }",
+        "(a decimal integer number) to the term, {$t}" -- Hm...
+    ), NULL, 10);
 
 
 

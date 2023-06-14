@@ -26,18 +26,32 @@ export var setHeaderCL = new ContentLoader(
     "SetHeader",
     /* Initial HTML template */
     '<div>' +
-        '<div hidden>' +
-            '<<InformativePredicateTitle>>' +
-            '<<DefaultQueryParamsMenu>>' +
-            '<<SortingOptionsSelectionMenu>>' +
-            '<<RefreshButton>>' +
-            '<<AddButton>>' + // Button to go to Predicate Column.
-        '</div>' +
-        '<<HeaderDropdownButtonBar>>' +
+        '<<SetMenu>>' +
+        '<<DropdownButtonBar>>' +
     '</div>',
     appColumnCL
 );
-// TODO: Implement this SetHeader.
+export var setMenurCL = new ContentLoader(
+    "SetMenu",
+    /* Initial HTML template */
+    '<div hidden>' +
+        // <-- PredicateSettingsBars will be prepended here.
+        '<<SetMenuFooter>>' +
+    '</div>',
+    appColumnCL
+);
+export var setMenurCL = new ContentLoader(
+    "PredicateSettingsBar",
+    /* Initial HTML template */
+    '<div>' +
+        '<<InformativePredicateTitle>>' +
+        '<<QueryParamsMenu>>' +
+        '<<SortingOptionsSelectionMenu>>' +
+        '<<RefreshButton>>' +
+        '<<AddButton>>' + // Button to go to Predicate Column.
+    '</div>',
+    appColumnCL
+);
 
 
 
