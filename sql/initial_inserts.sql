@@ -14,12 +14,12 @@ DELETE FROM PrivateCreators;
 
 
 /* From create_open_sdb.sql */
--- INSERT INTO Terms (context_id, def_str, def_term_id, id)
--- VALUES
---     (NULL, "{Users} of the SDB", 1, 1),
---     (NULL, "{Texts} of the SDB", 1, 2),
---     (NULL, "{Binaries} of the SDB", 1, 3),
---     (1, "admin_1", NULL, 4);
+INSERT INTO Terms (context_id, def_str, def_term_id, id)
+VALUES
+    (NULL, "{Users} of the SDB", 1, 1),
+    (NULL, "{Texts} of the SDB", 1, 2),
+    (NULL, "{Binaries} of the SDB", 1, 3),
+    (1, "admin_1", NULL, 4);
 
 
 /* Some other important initial inserts */
@@ -30,36 +30,36 @@ VALUES
     (6, ">Adjectives and Verbs, s.", NULL, 7), -- (s.: singular)
     (NULL, "Nouns for predicate definitions", NULL, 8),
     (7, ">is a useful instance of the {{$s} of }the term, {$t}", NULL, 9),
-    (NULL, CONCAT(
-        "The {Statement} formed by applying the predicate with ID{: $s, }",
-        "(a decimal integer number) to the term, {$t}" -- Hm...
-    ), NULL, 10);
+    (NULL, "Statements", NULL, 10),
+    (10, ">{$s[0] applies to $t}", NULL, 11);
+    -- (NULL, CONCAT(
+    --     "The statement formed by applying the predicate, $s[0], to the term, ",
+    --     "$t, abbreviate it as: {$s[0] applies to $t}"
+    -- ), NULL, 10);
 
 
 
 /* More inserts for testing */
 
-CALL insertOrFindTerm(4, 0, "openSDB", 0); -- id: 10
+CALL insertOrFindTerm(4, 0, "Science", 0); -- id: 12
+CALL insertOrFindTerm(4, 0, "Music", 0); -- id: 13
+-- CALL insertOrFindTerm(4, 0, "{Rock} (musical genre)", 0); -- id: 14
+CALL insertOrFindTerm(4, 13, "Rock", 0); -- id: 14
+CALL insertOrFindTerm(4, 13, "Jazz", 0); -- id: 15
+CALL insertOrFindTerm(4, 13, "Hip hop", 0); -- id: 16
 
-CALL insertOrFindTerm(4, 0, "Science", 0); -- id: 11
-CALL insertOrFindTerm(4, 0, "Music", 0); -- id: 12
--- CALL insertOrFindTerm(4, 0, "{Rock} (musical genre)", 0); -- id: 13
-CALL insertOrFindTerm(4, 12, "Rock", 0); -- id: 13
-CALL insertOrFindTerm(4, 12, "Jazz", 0); -- id: 14
-CALL insertOrFindTerm(4, 12, "Hip hop", 0); -- id: 15
-
-CALL insertOrFindTerm(4, 0, "Movies", 0); -- id: 16
-CALL insertOrFindTerm(4, 16,
+CALL insertOrFindTerm(4, 0, "Movies", 0); -- id: 17
+CALL insertOrFindTerm(4, 17,
     "{The Lord of the Rings: The Fellowship of the Ring} (2001)", 0
-);-- id: 17
-CALL insertOrFindTerm(4, 16,
+);-- id: 18
+CALL insertOrFindTerm(4, 17,
     "{The Lord of the Rings: The Two Towers} (2002)", 0
-); -- id: 18
+); -- id: 19
 
-CALL insertOrFindTerm(4, 11, "Music", 0); -- id: 19
-CALL insertOrFindTerm(4, 11, "Cinematography", 0); -- id: 20
-CALL insertOrFindTerm(4, 11, "Physics", 0); -- id: 21
-CALL insertOrFindTerm(4, 11, "Mathematics", 0); -- id: 22
+CALL insertOrFindTerm(4, 12, "Music", 0); -- id: 20
+CALL insertOrFindTerm(4, 12, "Cinematography", 0); -- id: 21
+CALL insertOrFindTerm(4, 12, "Physics", 0); -- id: 22
+CALL insertOrFindTerm(4, 12, "Mathematics", 0); -- id: 23
 
 
 
@@ -91,24 +91,24 @@ END //
 DELIMITER ;
 
 CALL insertOrFindTerm(4, 9, "Subcategories", 0);
-CALL insertPredicates("Subcategories", 1, 18);
+CALL insertPredicates("Subcategories", 1, 19);
 CALL insertOrFindTerm(4, 9, "Instances", 0);
-CALL insertPredicates("Instances", 1, 12);
+CALL insertPredicates("Instances", 1, 13);
 
 -- rate some statements.
 
 
-CALL inputOrChangeRating(4, 28, 11, "FF", "00");
-CALL inputOrChangeRating(4, 28, 12, "F0", "00");
-CALL inputOrChangeRating(4, 28, 13, "A1", "00");
-CALL inputOrChangeRating(4, 28, 14, "A0", "00");
+CALL inputOrChangeRating(4, 29, 12, "FF", "00");
+CALL inputOrChangeRating(4, 29, 13, "F0", "00");
+CALL inputOrChangeRating(4, 29, 14, "A1", "00");
+CALL inputOrChangeRating(4, 29, 15, "A0", "00");
 
-CALL inputOrChangeRating(4, 31, 13, "E1", "00");
-CALL inputOrChangeRating(4, 31, 14, "E0", "00");
-CALL inputOrChangeRating(4, 31, 15, "E0", "00");
-CALL inputOrChangeRating(4, 31, 19, "F0", "00");
+CALL inputOrChangeRating(4, 37, 14, "E1", "00");
+CALL inputOrChangeRating(4, 37, 15, "E0", "00");
+CALL inputOrChangeRating(4, 37, 16, "E0", "00");
+CALL inputOrChangeRating(4, 37, 20, "F0", "00");
 
-CALL inputOrChangeRating(4, 52, 19, "F0", "00");
+CALL inputOrChangeRating(4, 56, 20, "F0", "00");
 
 
 
