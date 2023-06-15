@@ -17,7 +17,7 @@ export var sdbInterfaceCL = new ContentLoader(
         '<<ColumnInterfaceHeader>>' +
         '<main>' +
             '<div class="left-margin"></div>' +
-            '<<AppColumnList>>' +
+            '<<AppColumn>>' +
             '<div class="right-margin"></div>' +
         '</main>' +
     '</div>',
@@ -32,52 +32,17 @@ export var columnInterfaceHeaderCL = new ContentLoader(
     sdbInterfaceCL,
 );
 
-export var appColumnListCL = new ContentLoader(
-    "AppColumnList",
-    /* Initial HTML template */
-    '<<List>>',
-    sdbInterfaceCL
-);
-appColumnListCL.addCallback("data", function(data) {
-    data.listElemDataArr = data.getFromAncestor("columnSpecs");
-});
-
-export var listCL = new ContentLoader(
-    "List",
-    /* Initial HTML template */
-    '<div>' +
-        '<<AppColumn data.listElemDataArr[...]>>' +
-    '</div>',
-    sdbInterfaceCL
-);
-listCL.addCallback("data", function(data) {
-    data.copyFromAncestor("listElemDataArr");
-});
 
 
 export var appColumnCL = new ContentLoader(
     "AppColumn",
     /* Initial HTML template */
     '<div>' +
-        '<<SelfReplacer>>' +
         '<<ColumnButtonContainer>>' +
+        '<<SelfReplacer>>' +
     '</div>',
     sdbInterfaceCL,
 );
-
-export var selfReplacerCL = new ContentLoader(
-    "SelfReplacer",
-    /* Initial HTML template */
-    '<template></template>',
-    sdbInterfaceCL
-);
-selfReplacerCL.addCallback("data", function(data) {
-    data.copyFromAncestor("cl");
-});
-selfReplacerCL.addCallback(function($ci, data, childReturnData, returnData) {
-    data.cl.loadReplaced($ci, "self", data.data ?? data, returnData);
-});
-
 
 
 
@@ -134,4 +99,34 @@ appColumnCL.addCallback(function($ci) {
         $(this).remove();
         return false;
     });
+});
+
+
+
+
+/* A List CL that automatically loads a list of child CIs */
+
+export var listCL = new ContentLoader(
+    "List",
+    /* Initial HTML template */
+    '<div>' +
+        '<<SelfReplacer data.listElemDataArr[...]>>' +
+    '</div>',
+    sdbInterfaceCL
+);
+listCL.addCallback("data", function(data) {
+    data.copyFromAncestor("listElemDataArr");
+});
+
+export var selfReplacerCL = new ContentLoader(
+    "SelfReplacer",
+    /* Initial HTML template */
+    '<template></template>',
+    sdbInterfaceCL
+);
+selfReplacerCL.addCallback("data", function(data) {
+    data.copyFromAncestor("cl");
+});
+selfReplacerCL.addCallback(function($ci, data, childReturnData, returnData) {
+    data.cl.loadReplaced($ci, "self", data.data ?? data, returnData);
 });

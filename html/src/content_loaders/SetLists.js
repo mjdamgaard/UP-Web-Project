@@ -3,7 +3,7 @@ import {
     ContentLoader,
 } from "/src/ContentLoader.js";
 import {
-    sdbInterfaceCL, appColumnCL,
+    sdbInterfaceCL,
 } from "/src/content_loaders/ColumnInterface.js";
 
 
@@ -42,7 +42,7 @@ export var setListCL = new ContentLoader(
     '<div>' +
         '<<List data:wait>>' +
     '</div>',
-    appColumnCL
+    sdbInterfaceCL
 );
 setListCL.addCallback("data", function(data) {
     data.copyFromAncestor([

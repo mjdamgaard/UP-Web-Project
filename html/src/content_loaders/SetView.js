@@ -3,7 +3,7 @@ import {
     ContentLoader,
 } from "/src/ContentLoader.js";
 import {
-    sdbInterfaceCL, appColumnCL,
+    sdbInterfaceCL,
 } from "/src/content_loaders/ColumnInterface.js";
 
 
@@ -19,7 +19,7 @@ export var setViewCL = new ContentLoader(
         '<<SetList>>' +
         '<<AppendMoreButtonOrPagination>>' +
     '</div>',
-    appColumnCL
+    sdbInterfaceCL
 );
 
 export var setHeaderCL = new ContentLoader(
@@ -29,7 +29,7 @@ export var setHeaderCL = new ContentLoader(
         '<<SetMenu>>' +
         '<<DropdownButtonBar>>' +
     '</div>',
-    appColumnCL
+    sdbInterfaceCL
 );
 export var setMenurCL = new ContentLoader(
     "SetMenu",
@@ -38,7 +38,7 @@ export var setMenurCL = new ContentLoader(
         // <-- PredicateSettingsBars will be prepended here.
         '<<SetMenuFooter>>' +
     '</div>',
-    appColumnCL
+    sdbInterfaceCL
 );
 export var predicateSettingsBarCL = new ContentLoader(
     "PredicateSettingsBar",
@@ -50,7 +50,7 @@ export var predicateSettingsBarCL = new ContentLoader(
         '<<RefreshButton>>' +
         '<<AddButton>>' + // Button to go to Predicate Column.
     '</div>',
-    appColumnCL
+    sdbInterfaceCL
 );
 
 

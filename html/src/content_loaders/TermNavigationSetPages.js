@@ -3,7 +3,7 @@ import {
     ContentLoader,
 } from "/src/ContentLoader.js";
 import {
-    sdbInterfaceCL, appColumnCL,
+    sdbInterfaceCL,
 } from "/src/content_loaders/ColumnInterface.js";
 
 
@@ -12,10 +12,10 @@ export var termNavigationSetPageCL = new ContentLoader(
     "TermNavigationSetPage",
     /* Initial HTML template */
     '<<SetView>>',
-    appColumnCL
+    sdbInterfaceCL
 );
 termNavigationSetPageCL.addCallback("data", function(data) {
-    data.elemContentKey = "TermNavigationSetElement";
+    data.elemContentKey = "TermElement";
     data.copyFromAncestor("defaultUserWeightArr");
     data.predSetDataArr = [{
         predCxtID: 9, // ID of the ">is a useful instance of ..." Context.
@@ -29,10 +29,10 @@ termNavigationSetPageCL.addCallback("data", function(data) {
 });
 
 export var termNavigationSetElementCL = new ContentLoader(
-    "TermNavigationSetElement",
+    "TermElement",
     /* Initial HTML template */
     '<div>' +
         'test..' +
     '</div>',
-    appColumnCL
+    sdbInterfaceCL
 );

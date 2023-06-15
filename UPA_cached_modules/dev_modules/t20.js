@@ -26,9 +26,7 @@ export function upa_main(termID, queryUserID, inputUserID) {
         queryUserID: queryUserID,
         inputUserID: inputUserID,
         defaultUserWeightArr: [{userID: 4, weight: 1}],
-        columnSpecs: [
-            {cl: sdbInterfaceCL.getRelatedCL("TermPage")},
-        ],
+        cl: sdbInterfaceCL.getRelatedCL("TermPage"),
     };
     let contentKey = sdbInterfaceCL.contentKey;
     sdbInterfaceCL.loadAppended($('body'), contentKey, data);

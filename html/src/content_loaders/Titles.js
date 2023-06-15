@@ -3,7 +3,7 @@ import {
     ContentLoader,
 } from "/src/ContentLoader.js";
 import {
-    sdbInterfaceCL, appColumnCL,
+    sdbInterfaceCL,
 } from "/src/content_loaders/ColumnInterface.js";
 
 
@@ -13,7 +13,7 @@ export var predicateTitleCL = new ContentLoader(
     "PredicateTitle",
     /* Initial HTML template */
     '<<TermTitle>>',
-    appColumnCL
+    sdbInterfaceCL
 );
 predicateTitleCL.addCallback("data", function(data) {
     data.termID = data.getFromAncestor("predID");
@@ -25,7 +25,7 @@ export var termTitleCL = new ContentLoader(
     "TermTitle",
     /* Initial HTML template */
     '<span></span>',
-    appColumnCL
+    sdbInterfaceCL
 );
 termTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
@@ -79,7 +79,7 @@ export var specEntityTitleCL = new ContentLoader(
     "SpecEntityTitle",
     /* Initial HTML template */
     '<<EntityTitle>>',
-    appColumnCL
+    sdbInterfaceCL
 );
 specEntityTitleCL.addCallback("data", function(data) {
     data.entityType = data.getFromAncestor("specType");
@@ -91,7 +91,7 @@ export var entityTitleCL = new ContentLoader(
     "EntityTitle",
     /* Initial HTML template */
     '<span></span>',
-    appColumnCL
+    sdbInterfaceCL
 );
 entityTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
@@ -126,7 +126,7 @@ export var userTitleCL = new ContentLoader(
     "UserTitle",
     /* Initial HTML template */
     '<<EntityTitle>>', // TODO: change to look up the username.
-    appColumnCL
+    sdbInterfaceCL
 );
 
 
