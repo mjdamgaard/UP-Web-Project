@@ -3,7 +3,7 @@ import {
     ContentLoader, ChildData
 } from "/src/ContentLoader.js";
 import {
-    sdbInterfaceCL, appColumnCL,
+    sdbInterfaceCL,
 } from "/src/content_loaders/ColumnInterface.js";
 
 
@@ -18,7 +18,7 @@ export var pagesWithTabsCL = new ContentLoader(
         "<<TabHeader>>" +
         "<<PagesContainer>>" +
     '</div>',
-    appColumnCL
+    sdbInterfaceCL
 );
 
 export var tabHeaderCL = new ContentLoader(
@@ -27,7 +27,7 @@ export var tabHeaderCL = new ContentLoader(
     '<div>' +
         '<ul class="nav nav-tabs"></ul>' +
     '</div>',
-    appColumnCL
+    pagesWithTabsCL
 );
 export var pagesContainerCL = new ContentLoader(
     "PagesContainer",

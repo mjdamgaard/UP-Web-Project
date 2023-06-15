@@ -24,24 +24,47 @@ export var sdbInterfaceCL = new ContentLoader(
 );
 sdbInterfaceCL.globalData.dbReqManager = new DBRequestManager();
 
+export var columnInterfaceHeaderCL = new ContentLoader(
+    "ColumnInterfaceHeader",
+    /* Initial HTML template */
+    '<header>' +
+    '</header>',
+    sdbInterfaceCL,
+);
+
 export var appColumnListCL = new ContentLoader(
     "AppColumnList",
     /* Initial HTML template */
     '<<List>>',
     sdbInterfaceCL
 );
+appColumnListCL.addCallback("data", function(data) {
+    data.listElemDataArr = data.getFromAncestor("columnSpecs");
+});
 
 export var listCL = new ContentLoader(
     "List",
     /* Initial HTML template */
     '<div>' +
-        '<<SelfReplacer data.listElemDataArr[...]>>' +
+        '<<AppColumn data.listElemDataArr[...]>>' +
     '</div>',
     sdbInterfaceCL
 );
 listCL.addCallback("data", function(data) {
     data.copyFromAncestor("listElemDataArr");
 });
+
+
+export var appColumnCL = new ContentLoader(
+    "AppColumn",
+    /* Initial HTML template */
+    '<div>' +
+        '<<SelfReplacer>>' +
+        '<<ColumnButtonContainer>>' +
+    '</div>',
+    sdbInterfaceCL,
+);
+
 export var selfReplacerCL = new ContentLoader(
     "SelfReplacer",
     /* Initial HTML template */
@@ -55,28 +78,10 @@ selfReplacerCL.addCallback(function($ci, data, childReturnData, returnData) {
     data.cl.loadReplaced($ci, "self", data.data ?? data, returnData);
 });
 
-appColumnListCL.addCallback("data", function(data) {
-    data.listElemDataArr = data.getFromAncestor("columnSpecs");
-});
-
-export var columnInterfaceHeaderCL = new ContentLoader(
-    "ColumnInterfaceHeader",
-    /* Initial HTML template */
-    '<header>' +
-    '</header>',
-    sdbInterfaceCL,
-);
 
 
 
-export var appColumnCL = new ContentLoader(
-    "AppColumn",
-    /* Initial HTML template */
-    '<div>' +
-        '<<ColumnButtonContainer>>' +
-    '</div>',
-    sdbInterfaceCL,
-);
+
 export var columnButtonContainerCL = new ContentLoader(
     "ColumnButtonContainer",
     /* Initial HTML template */

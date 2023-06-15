@@ -69,7 +69,7 @@ termTitleCL.addCallback(function($ci, data) {
 termTitleCL.addCallback(function($ci, data) {
     $ci.on("click", function() {
         $(this).trigger("open-column", [
-            "TermColumn", data, "right"
+            "TermPage", data, "right"
         ]);
         return false;
     });

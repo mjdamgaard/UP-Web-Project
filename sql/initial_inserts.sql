@@ -29,7 +29,7 @@ VALUES
     (NULL, "Predicates", NULL, 6),
     (6, ">Adjectives and Verbs, s.", NULL, 7), -- (s.: singular)
     (NULL, "Nouns for predicate definitions", NULL, 8),
-    (7, ">is a useful instance of the {{$s} of }the term, {$t}", NULL, 9),
+    (7, ">is a useful instance of the {{$s} of }the Term, {$t}", NULL, 9),
     (NULL, "Statements", NULL, 10),
     (10, ">{$s[0] applies to $t}", NULL, 11);
     -- (NULL, CONCAT(

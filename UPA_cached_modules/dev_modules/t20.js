@@ -7,7 +7,7 @@ import "/src/content_loaders/PagesWithTabs.js";
 import "/src/content_loaders/SetLists.js";
 import "/src/content_loaders/SetView.js";
 import "/src/content_loaders/TermNavigationSetPages.js";
-import "/src/content_loaders/TermColumns.js";
+import "/src/content_loaders/TermPages.js";
 import "/src/content_loaders/Titles.js";
 // import "/src/content_loaders/SetElements.js";
 // import "/src/content_loaders/SubmitFields.js";
@@ -27,7 +27,7 @@ export function upa_main(termID, queryUserID, inputUserID) {
         inputUserID: inputUserID,
         defaultUserWeightArr: [{userID: 4, weight: 1}],
         columnSpecs: [
-            {cl: sdbInterfaceCL.getRelatedCL("TermColumn")},
+            {cl: sdbInterfaceCL.getRelatedCL("TermPage")},
         ],
     };
     let contentKey = sdbInterfaceCL.contentKey;

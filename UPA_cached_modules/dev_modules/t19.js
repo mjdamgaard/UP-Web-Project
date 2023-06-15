@@ -10,8 +10,8 @@ import {
     termTitleCL, entityTitleCL,
 } from "/src/content_loaders/Titles.js";
 import {
-    
-} from "/src/content_loaders/TermColumns.js";
+
+} from "/src/content_loaders/TermPages.js";
 import {
     supercategoryNavItemCL,
 } from "/src/content_loaders/SetElements.js";

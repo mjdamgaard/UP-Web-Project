@@ -3,24 +3,23 @@ import {
     ContentLoader,
 } from "/src/ContentLoader.js";
 import {
-    sdbInterfaceCL, appColumnCL,
+    sdbInterfaceCL,
 } from "/src/content_loaders/ColumnInterface.js";
 
 
 
 
 
-export var termColumnCL = new ContentLoader(
-    "TermColumn",
+export var termPageCL = new ContentLoader(
+    "TermPage",
     /* Initial HTML template */
-    '<<AppColumn>>',
+    '<div>' +
+        '<h3><<TermTitle>></h3>' +
+         "<<PagesWithTabs>>" +
+     '</div>',
     sdbInterfaceCL
 );
-termColumnCL.addCallback("append",
-    '<h3><<TermTitle>></h3>' +
-     "<<PagesWithTabs>>"
-);
-termColumnCL.addCallback("data", function(data) {
+termPageCL.addCallback("data", function(data) {
     data.tabAndPageDataArr = [
         ["Subcategories", "TermNavigationSetPage", {
             predNoun: "Subcategories",

@@ -40,7 +40,7 @@ export var setMenurCL = new ContentLoader(
     '</div>',
     appColumnCL
 );
-export var setMenurCL = new ContentLoader(
+export var predicateSettingsBarCL = new ContentLoader(
     "PredicateSettingsBar",
     /* Initial HTML template */
     '<div>' +
