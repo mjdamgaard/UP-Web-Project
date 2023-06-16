@@ -21,12 +21,45 @@ export var termPageCL = new ContentLoader(
 );
 termPageCL.addCallback("data", function(data) {
     data.tabAndPageDataArr = [
-        ["Subcategories", "TermNavigationSetPage", {
+        ["Info", "TermInfoPage", {}],
+        ["Ratings", "TermRatingsPage", {}],
+        ["Subcategories", "TermNounPredicatePage", {
             predNoun: "Subcategories",
         }],
-        ["Instances", "TermNavigationSetPage", {
-            predNoun: "Instances",
+        ["Applies to", "TermAppliesToPage", {}],
+        ["Related to", "TermNounPredicatePage", {
+            predNoun: "Related terms",
         }],
+        ["Supercategories", "TermNounPredicatePage", {
+            predNoun: "Supercategories",
+        }],
+        ["Context", "TermContextPage", {}],
+        // TODO: Implement the following two tabs as well.
+        // ["Comments", "TermCommentsPage", {}],
+        // ["Discussions", "TermDiscussionsPage", {}],
     ];
-    data.defaultTab = data.getFromAncestor("defaultTab", 1) ?? "Subcategories";
+    data.defaultTab = data.getFromAncestor("defaultTab", 1) ?? "Applies to";
+});
+
+
+
+
+export var termNounPredicatePageCL = new ContentLoader(
+    "TermNounPredicatePage",
+    /* Initial HTML template */
+    '<<SetView>>',
+    sdbInterfaceCL
+);
+termNounPredicatePageCL.addCallback("data", function(data) {
+    data.elemContentKey = "TermElement";
+    data.copyFromAncestor("defaultUserWeightArr");
+    data.predSetDataArr = [{
+        predCxtID: 9, // ID of the ">is a useful instance of ..." Context.
+        predStr: data.getFromAncestor("predNoun"),
+        objID: data.getFromAncestor("termID"),
+    }];
+    data.defaultQueryNum = 4000;
+    data.defaultRatingLo = "";
+    data.initialNum = 50;
+    data.incrementNum = 25;
 });
