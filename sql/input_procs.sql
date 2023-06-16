@@ -124,7 +124,7 @@ BEGIN
     );
     IF (outID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
-    ELSEIF (cxtID <= 3) THEN
+    ELSEIF (cxtID <= 4) THEN
         SET exitCode = 2; -- user is not permitted to add to this context.
     ELSE
         INSERT INTO Terms (context_id, def_str, def_term_id)

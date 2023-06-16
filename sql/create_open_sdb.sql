@@ -122,12 +122,12 @@ CREATE TABLE Terms (
 
 INSERT INTO Terms (context_id, def_str, def_term_id, id)
 VALUES
-    (NULL, "{Users} of the SDB", 1, 1),
-    (NULL, "{Texts} of the SDB", 1, 2),
-    (NULL, "{Binaries} of the SDB", 1, 3),
-    (1, "admin_1", NULL, 4);
--- Here, context_id = 0 defines the default semantic context, and it should
--- used for only for (0, "Terms", NULL, 1).
+    (NULL, "Data and users of the SDB", NULL, 1),
+    (1, "Users", NULL, 2),
+    (1, "Texts", NULL, 3),
+    (1, "Binaries", NULL, 4),
+    (2, "admin_1", NULL, 5);
+
 
 
 CREATE TABLE Users (
@@ -197,3 +197,7 @@ CREATE TABLE PrivateCreators (
     user_id BIGINT UNSIGNED NOT NULL,
     INDEX (user_id)
 );
+-- (These should generally be deleted quite quickly, and instead a special bot
+-- should rate which Term is created by which user, if and only if the given
+-- user has declared that they are the creater themselves (via rating the same
+-- predicate before the bot).)

@@ -54,12 +54,12 @@ switch ($reqType) {
         $typeArr = array("id", "text");
         break;
     case "bin":
-        $sql = "CALL insertBinary (?, ?)";
-        $paramNameArr = array("u", "b");
-        $typeArr = array("id", "blob");
+        // $sql = "CALL insertBinary (?, ?)";
+        // $paramNameArr = array("u", "b");
+        // $typeArr = array("id", "blob");
+        echoErrorJSONAndExit('The "bin" request type is not implemented yet');
         break;
     default:
-        header("Content-Type: text/json");
         echoErrorJSONAndExit("Unrecognized request type");
 }
 
@@ -75,8 +75,6 @@ $stmt = $conn->prepare($sql);
 DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 // fetch the result as a numeric array.
 $res = $stmt->get_result()->fetch_assoc();
-// set the Content-Type header to json.
-header("Content-Type: text/json");
 // finally echo the JSON-encoded result array (containing outID and exitCode).
 echo json_encode($res);
 
