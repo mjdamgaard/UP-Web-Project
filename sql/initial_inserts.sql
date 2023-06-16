@@ -91,10 +91,7 @@ DELIMITER ;
 
 CALL insertOrFindTerm(5, 10, "Subcategories", 0);
 CALL insertPredicates("Subcategories", 6, 12);
-CALL insertPredicates("Subcategories", 21, 29);
-CALL insertOrFindTerm(5, 10, "Instances", 0);
-CALL insertPredicates("Instances", 6, 12);
-CALL insertPredicates("Instances", 21, 23);
+CALL insertPredicates("Subcategories", 22, 29);
 
 -- rate some statements.
 
@@ -104,13 +101,13 @@ CALL inputOrChangeRating(5, 35, 23, "F0", "00");
 CALL inputOrChangeRating(5, 35, 24, "A1", "00");
 CALL inputOrChangeRating(5, 35, 25, "A0", "00");
 
-CALL inputOrChangeRating(5, 44, 24, "E1", "00");
-CALL inputOrChangeRating(5, 44, 25, "E0", "00");
-CALL inputOrChangeRating(5, 44, 26, "E0", "00");
-CALL inputOrChangeRating(5, 44, 21, "00", "00");
-CALL inputOrChangeRating(5, 44, 30, "F0", "00");
-
+CALL inputOrChangeRating(5, 43, 24, "E1", "00");
+CALL inputOrChangeRating(5, 43, 25, "E0", "00");
+CALL inputOrChangeRating(5, 43, 26, "E0", "00");
+CALL inputOrChangeRating(5, 43, 21, "00", "00");
 CALL inputOrChangeRating(5, 43, 30, "F0", "00");
+
+CALL inputOrChangeRating(5, 42, 30, "F0", "00");
 
 
 

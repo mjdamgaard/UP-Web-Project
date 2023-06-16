@@ -35,23 +35,26 @@ export var setMenurCL = new ContentLoader(
     "SetMenu",
     /* Initial HTML template */
     '<div hidden>' +
-        // <-- PredicateSettingsBars will be prepended here.
-        '<<SetMenuFooter>>' +
+        '<<InitialPredicatesSettingsMenu>>' +
+        '<<SortingPredicatesSettingsMenu>>' +
+        // TODO: Implement the following two CLs at some point:
+        // '<<FilterPredicatesSettingsMenu>>' +
+        // '<<UserWeightSettingsMenu>>' +
     '</div>',
     sdbInterfaceCL
 );
-export var predicateSettingsBarCL = new ContentLoader(
-    "PredicateSettingsBar",
-    /* Initial HTML template */
-    '<div>' +
-        '<<InformativePredicateTitle>>' +
-        '<<QueryParamsMenu>>' +
-        '<<SortingOptionsSelectionMenu>>' +
-        '<<RefreshButton>>' +
-        '<<AddButton>>' + // Button to go to Predicate Column.
-    '</div>',
-    sdbInterfaceCL
-);
+
+// export var predicateSettingsBarCL = new ContentLoader(
+//     "PredicateSettingsBar",
+//     /* Initial HTML template */
+//     '<div>' +
+//         '<<InformativePredicateTitle>>' +
+//         '<<QueryParamsMenu>>' +
+//         '<<SortingOptionsSelectionMenu>>' +
+//         '<<RefreshButton>>' +
+//     '</div>',
+//     sdbInterfaceCL
+// );
 
 
 

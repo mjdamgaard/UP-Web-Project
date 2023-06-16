@@ -291,9 +291,6 @@ export class SetManager {
                 return this.combSet = predSetDataArr[0].avgSet.toReversed();
             }
         }
-        // TODO: Change so that combSet elements potentially don't have to be
-        // part of the first set..
-
         // else if predNum is larger than 1, then initialize first the return
         // array to the first averaged set, but with an extra third column
         // meant to contain all the averaged ratings before this combination.

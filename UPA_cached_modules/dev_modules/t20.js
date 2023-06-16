@@ -6,7 +6,7 @@ import {sdbInterfaceCL} from "/src/content_loaders/ColumnInterface.js";
 import "/src/content_loaders/PagesWithTabs.js";
 import "/src/content_loaders/SetLists.js";
 import "/src/content_loaders/SetView.js";
-import "/src/content_loaders/TermNavigationSetPages.js";
+import "/src/content_loaders/TermElements.js";
 import "/src/content_loaders/TermPages.js";
 import "/src/content_loaders/Titles.js";
 // import "/src/content_loaders/SetElements.js";
@@ -17,7 +17,7 @@ import * as t19Mod from "/UPA_scripts.php?id=19";
 
 
 export function upa_main(termID, queryUserID, inputUserID) {
-    if (queryUserID !== "4") {
+    if (queryUserID !== "5") {
         throw "Unrecognized query user";
     }
 
@@ -25,7 +25,7 @@ export function upa_main(termID, queryUserID, inputUserID) {
         termID: termID,
         queryUserID: queryUserID,
         inputUserID: inputUserID,
-        defaultUserWeightArr: [{userID: 4, weight: 1}],
+        defaultUserWeightArr: [{userID: 5, weight: 1}],
         cl: sdbInterfaceCL.getRelatedCL("TermPage"),
     };
     let contentKey = sdbInterfaceCL.contentKey;
