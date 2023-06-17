@@ -18,10 +18,9 @@ SetList requires data:
         setData = {
             predCxtID, predStr, objID,
             predID?,
-            ratTransFun,
-            userID, weight
-            queryParams,
-            setArr?, avgSet?, isReadyArr?
+            userID, weight, ratTransFun, queryParams,
+            set?,
+            isReady?,
         },
         queryParams = {num, ratingLo, ratingHi, offset?, isAscending},
     data.combSet?
@@ -89,7 +88,6 @@ export class SetManager {
         sortAscending, combSet // optional
     ) {
         this.setDataArr = setDataArr;
-        this.setNum = setDataArr.length;
         this.sortAscending = sortAscending ?? 0; // false;
         this.combSet = combSet;
     }
@@ -100,30 +98,27 @@ export class SetManager {
             predCxtID, predStr, objID,
             predID?,
             userID, weight, ratTransFun, queryParams,
-            set,
-            isReady? ...
+            set?,
+            isReady?,
         },
         queryParams = {num, ratingLo, ratingHi, offset?, isAscending}.
     */
 
-    queryAndCombineSets(data, callback) {
+    queryAndCombineSets(callbackData, callback) {
         if (!callback) {
-            callback = data;
-            data = null;
+            callback = callbackData;
+            callbackData = null;
         }
         let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
         let setNum = this.setDataArr.length;
         for (let i = 0; i < setNum; i++) {
             let setData = this.setDataArr[i];
-            setData.queryParams.offset ??= 0;
-
-            if (!setData.avgSet) {
-                setData.userWeightArr ??= this.defaultUserWeightArr;
-                let userNum = setData.userWeightArr.length;
-                setData.isReadyArr ??= new Array(userNum).fill(false);
+            if (!setData.set) {
                 // if...
                 if (setData.predID) {
-                    this.querySetsAndCombineIfReady(setData, i, data, callback);
+                    this.querySetAndCombineIfReady(
+                        setData, callbackData, callback
+                    );
                     continue;
                 }
                 // else...
@@ -134,64 +129,88 @@ export class SetManager {
                     t: setData.objID,
                 };
                 let thisSetManger = this;
-                dbReqManager.query(null, reqData, i, function($ci, result, i) {
+                dbReqManager.query(null, reqData, function($ci, result) {
                     setData.predID = (result[0] ?? [0])[0];
-                    thisSetManger.querySetsAndCombineIfReady(
-                        setData, i, data, callback
+                    thisSetManger.querySetAndCombineIfReady(
+                        setData, callbackData, callback
                     );
                 });
+            } else {
+                if (!setData.isReady) {
+                    this.transformSetAndCombineIfReady(
+                        setData, callbackData, callback
+                    );
+                } else {
+                    this.combineSetsIfReady(callbackData, callback);
+                }
             }
         }
     }
 
-    querySetsAndCombineIfReady(setData, i, data, callback) {
+    querySetAndCombineIfReady(setData, callbackData, callback) {
         let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
-        setData.setArr ??= [];
+        setData.set = [];
         let queryParams = setData.queryParams;
-        let userNum = setData.userWeightArr.length;
-        for (let j = 0; j < userNum; j++) {
-            if (setData.isReadyArr[j]) {
-                continue;
-            }
-            let reqData = {
-                type: "set",
-                u: setData.userWeightArr[j].userID,
-                p: setData.predID,
-                rl: queryParams.ratingLo,
-                rh: queryParams.ratingHi,
-                n: queryParams.num,
-                o: queryParams.offset,
-                a: queryParams.isAscending,
-            };
-            let thisSetManger = this;
-            dbReqManager.query(null, reqData, j, function($ci, result, j) {
-                setData.setArr[j] = result;
-                setData.isReadyArr[j] = true;
-                thisSetManger.computeAvgSetIfReadyAndCombineSetsIfReady(
-                    setData, data, callback
-                );
-            });
-        }
-        this.computeAvgSetIfReadyAndCombineSetsIfReady(setData, data, callback);
+        queryParams.offset ??= 0;
+        let reqData = {
+            type: "set",
+            u: setData.userID,
+            p: setData.predID,
+            rl: queryParams.ratingLo,
+            rh: queryParams.ratingHi,
+            n: queryParams.num,
+            o: queryParams.offset,
+            a: queryParams.isAscending,
+        };
+        let thisSetManger = this;
+        dbReqManager.query(null, reqData, function($ci, result) {
+            setData.set = result;
+            thisSetManger.transformSetAndCombineIfReady(
+                setData, callbackData, callback
+            );
+        });
     }
 
-    computeAvgSetIfReadyAndCombineSetsIfReady(setData, data, callback) {
+    transformSetAndCombineIfReady(setData, callbackData, callback) {
+        let set = setData.set;
+        if (set.length === 0) {
+            setData.isReady = true;
+            this.combineSetsIfReady(callbackData, callback);
+        } else if (!this.dataOfFirstNonEmptySet) {
+            this.dataOfFirstNonEmptySet = setData;
+        } else {
+
+            // since the first non-empty set might not be transformed at this ...
+            if (!this.dataOfFirstNonEmptySet.isReady) {
+                transformSetAndCombineIfReady(
+                    this.dataOfFirstNonEmptySet, callbackData, callback
+                );
+            }
+        }
+    }
+
+
+
+
+
+
+    computeAvgSetIfReadyAndCombineSetsIfReady(setData, callbackData, callback) {
         let isReady = setData.isReadyArr.reduce(
             (acc, val) => acc && val, true
         );
         if (isReady) {
             this.computeAveragedSet(setData);
-            this.combineSetsIfReady(data, callback);
+            this.combineSetsIfReady(callbackData, callback);
         }
     }
 
-    combineSetsIfReady(data, callback) {
+    combineSetsIfReady(callbackData, callback) {
         let isReady = this.setDataArr.reduce(
             (acc, val) => acc && val.avgSet, true
         );
         if (isReady) {
             let combSet = this.computeCombinedSet();
-            callback(combSet, data);
+            callback(combSet, callbackData);
         }
     }
 
