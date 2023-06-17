@@ -135,16 +135,12 @@ export class SetManager {
                         setData, callbackData, callback
                     );
                 });
-            } else {
-                if (!setData.isReady) {
-                    this.transformSetAndCombineIfReady(
-                        setData, callbackData, callback
-                    );
-                } else {
-                    this.combineSetsIfReady(callbackData, callback);
-                }
+            } else if (!setData.isReady) {
+                this.transformSet(setData.set, setData.ratTransFun);
+                setData.isReady = true;
             }
         }
+        this.combineSetsIfReady(callbackData, callback);
     }
 
     querySetAndCombineIfReady(setData, callbackData, callback) {
@@ -163,55 +159,39 @@ export class SetManager {
         };
         let thisSetManger = this;
         dbReqManager.query(null, reqData, function($ci, result) {
-            setData.set = result;
-            thisSetManger.transformSetAndCombineIfReady(
-                setData, callbackData, callback
-            );
+            setData.set = this.transformSet(result, setData.ratTransFun);
+            setData.isReady = true;
+            this.combineSetsIfReady(callbackData, callback);
         });
     }
 
-    transformSetAndCombineIfReady(setData, callbackData, callback) {
-        let set = setData.set;
-        if (set.length === 0) {
-            setData.isReady = true;
-            this.combineSetsIfReady(callbackData, callback);
-        } else if (!this.dataOfFirstNonEmptySet) {
-            this.dataOfFirstNonEmptySet = setData;
-        } else {
-
-            // since the first non-empty set might not be transformed at this ...
-            if (!this.dataOfFirstNonEmptySet.isReady) {
-                transformSetAndCombineIfReady(
-                    this.dataOfFirstNonEmptySet, callbackData, callback
-                );
-            }
-        }
-    }
-
-
-
-
-
-
-    computeAvgSetIfReadyAndCombineSetsIfReady(setData, callbackData, callback) {
-        let isReady = setData.isReadyArr.reduce(
-            (acc, val) => acc && val, true
-        );
-        if (isReady) {
-            this.computeAveragedSet(setData);
-            this.combineSetsIfReady(callbackData, callback);
-        }
+    transformSet(set, ratTransFun) {
+        set.forEach(function(row) {
+            row[2] = ratTransFun(row[0]);
+            row[3] = setData;
+        });
     }
 
     combineSetsIfReady(callbackData, callback) {
         let isReady = this.setDataArr.reduce(
-            (acc, val) => acc && val.avgSet, true
+            (acc, val) => acc && val.isReady, true
         );
         if (isReady) {
             let combSet = this.computeCombinedSet();
             callback(combSet, callbackData);
         }
     }
+
+    computeCombinedSet() {
+        let setArr = this.setDataArr.map(val => val.set);
+        let setN = setArr.pop();
+        let ret = setN.concat(...setArr);
+    }
+
+
+
+
+
 
     // computeAveragedSet() sorts the avgSet after subjID, only if setNum (i.e.
     // this.setDataArr[i].setArr.length) is larger than 1. Otherwise the
