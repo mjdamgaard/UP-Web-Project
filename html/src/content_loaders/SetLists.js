@@ -149,7 +149,6 @@ export class SetManager {
 
     querySetAndCombineIfReady(setData, callbackData, callback) {
         let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
-        setData.set = [];
         let queryParams = setData.queryParams;
         queryParams.offset ??= 0;
         let reqData = {
