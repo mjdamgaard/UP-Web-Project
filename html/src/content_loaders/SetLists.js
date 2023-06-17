@@ -85,10 +85,11 @@ setListCL.addCallback(function($ci, data) {
 export class SetManager {
     constructor(
         setDataArr,
-        sortAscending, combSet // optional
+        sortAscending, concatSet, combSet // optional
     ) {
         this.setDataArr = setDataArr;
         this.sortAscending = sortAscending ?? 0; // false;
+        this.concatSet = concatSet;
         this.combSet = combSet;
     }
     /*
@@ -177,17 +178,45 @@ export class SetManager {
             (acc, val) => acc && val.isReady, true
         );
         if (isReady) {
+            this.computeConcatenatedSet();
             let combSet = this.computeCombinedSet();
             callback(combSet, callbackData);
         }
     }
 
-    computeCombinedSet() {
+    computeConcatenatedSet() {
         let setArr = this.setDataArr.map(val => val.set);
-        let ret = [].concat(...setArr);
+        return this.concatSet = [].concat(...setArr).sort(
+            (a, b) => a[1] - b[1]
+        );
+    }
+
+    computeCombinedSet() {
+        let ret = new Array(this.concatSet.length);
+        let retLen = 0;
+        this.concatSet.forEach(function(val, ind, arr) {
+            if (val[1] !== (arr[ind - 1] ?? [])[1]) {
+                ret[retLen] = [val[2], val[1], val[3].weight, ind];
+                retLen++;
+            } else {
+                let row = ret[retLen];
+                let currWeight = val[3].weight;
+                let newWeight = row[2] + currWeight;
+                row[0] = (row[0] * row[2] + val[2] * currWeight) / newWeight;
+                row[2] = newWeight;
+            }
+        });
+        ret.length = retLen;
+        return this.combSet = ret;
     }
 
 
+    // This method utilized the fact that concatSet is formed by shallow copies,
+    // making it possible to change all row[2]'s by changing them in each
+    // setData.set.
+    retransformUnreadySetsAndRecombine() {
+        // TODO: Implement.
+    }
 
 
 
