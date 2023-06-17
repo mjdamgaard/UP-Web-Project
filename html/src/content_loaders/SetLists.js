@@ -184,8 +184,7 @@ export class SetManager {
 
     computeCombinedSet() {
         let setArr = this.setDataArr.map(val => val.set);
-        let setN = setArr.pop();
-        let ret = setN.concat(...setArr);
+        let ret = [].concat(...setArr);
     }
 
 
