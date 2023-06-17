@@ -179,8 +179,8 @@ export class SetManager {
         );
         if (isReady) {
             this.computeConcatenatedSet();
-            let combSet = this.computeCombinedSet();
-            callback(combSet, callbackData);
+            this.computeCombinedSet();
+            callback(this.combSet, callbackData);
         }
     }
 
@@ -207,11 +207,15 @@ export class SetManager {
             }
         });
         ret.length = retLen;
-        return this.combSet = ret;
+        if (this.sortAscending) {
+            return this.combSet = ret.sort((row1, row2) => row1[0] - row2[0]);
+        } else {
+            return this.combSet = ret.sort((row1, row2) => row2[0] - row1[0]);
+        }
     }
 
 
-    // This method utilized the fact that concatSet is formed by shallow copies,
+    // This method utilizes the fact that concatSet is formed by shallow copies,
     // making it possible to change all row[2]'s by changing them in each
     // setData.set.
     retransformUnreadySetsAndRecombine() {
