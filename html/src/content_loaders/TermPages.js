@@ -50,16 +50,35 @@ export var termNounPredicatePageCL = new ContentLoader(
     '<<SetView>>',
     sdbInterfaceCL
 );
+
+termNounPredicatePageCL.addCallback("data", function(data) {
+    data.copyFromAncestor([
+        // "elemContentKey",
+    ]);
+});
 termNounPredicatePageCL.addCallback("data", function(data) {
     data.elemContentKey = "TermElement";
-    data.copyFromAncestor("defaultUserWeightArr");
-    data.predSetDataArr = [{
+    data.setDataArr = [{
         predCxtID: 9, // ID of the ">is a useful instance of ..." Context.
         predStr: data.getFromAncestor("predNoun"),
         objID: data.getFromAncestor("termID"),
+        userID: 5,
+        weight: 1,
+        ratTransFun: getLinearRatTransFun(1),
+        queryParams: {
+            num: 4000,
+            ratingLo: "",
+            ratingHi: "",
+        },
     }];
-    data.defaultQueryNum = 4000;
-    data.defaultRatingLo = "";
     data.initialNum = 50;
     data.incrementNum = 25;
 });
+
+export function getLinearRatTransFun(factor) {
+    return function(ratValHex) {
+        let shortNum = parseInt(ratValHex.padEnd("0", 4).substring(0, 4), 16);
+        let score = (shortNum - 32767.5) * 10 / 65535;
+        return factor * score;
+    };
+}

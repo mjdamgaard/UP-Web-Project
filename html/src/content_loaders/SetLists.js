@@ -13,7 +13,6 @@ import {
 /*
 SetList requires data:
     data.elemContentKey,
-    data.defaultUserWeightArr,
     data.setDataArr = [setData, ...],
         setData = {
             predCxtID, predStr, objID,
@@ -22,15 +21,17 @@ SetList requires data:
             set?,
             isReady?,
         },
-        queryParams = {num, ratingLo, ratingHi, offset?, isAscending},
+        queryParams = {num, ratingLo, ratingHi, offset?, isAscending?},
     data.combSet?
+    data.sortAscending?,
     data.initialNum,
     data.incrementNum,
     // data.showHeader,
     // data.applySortingOptions.
     // data.sortingOptions. (if applySortingOptions == true.)
 And it also sets/updates data:
-    data.combSet = [[combRatVal, subjID, ratValArr], ...].
+    data.concatSet = [[ratVal, subjID, transRatVal, setData], ...].
+    data.combSet = [[combRatVal, subjID, weight, concatSetIndex], ...].
 */
 export var setListCL = new ContentLoader(
     "SetList",
@@ -43,37 +44,25 @@ export var setListCL = new ContentLoader(
 setListCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "elemContentKey",
-        "defaultUserWeightArr",
         "setDataArr",
-        "defaultQueryNum",
-        "defaultRatingLo",  // optional.
-        "defaultRatingHi",  // optional.
-        "defaultOffset",  // optional.
-        "defaultIsAscending",  // optional.
+        "sortAscending",  // optional.
         "initialNum",
         "incrementNum",
     ]);
+    data.copyFromAncestor("concatSet", 1);  // optional.
     data.copyFromAncestor("combSet", 1);  // optional.
 });
 setListCL.addCallback(function($ci, data) {
     data.cl = setListCL.getRelatedCL(data.elemContentKey);
     $ci.one("load-initial-elements", function(event, combSet) {
-        data.listElemDataArr = combSet
-            .slice(0, data.initialNum)
-            .map(function(row) {
-                return {
-                    combRatVal: row[0],
-                    termID: row[1],
-                    avgRatValArr: row[3] ?? [],
-                };
-            });
+        data.listElemDataArr = combSet.slice(0, data.initialNum);
         data.currentLen = data.initialNum;
         $ci.find('.CI.List').trigger("load");
         return false;
     });
     data.setManager = new SetManager(
-        data.defaultQueryNum, data.defaultUserWeightArr, data.setDataArr,
-        data.defaultIsAscending, data.combSet,
+        data.setDataArr,
+        data.sortAscending, data.combSet,
     );
     data.setManager.queryAndCombineSets(function(combSet) {
         $ci.trigger("load-initial-elements", [combSet]);
@@ -92,6 +81,11 @@ export class SetManager {
         this.concatSet = concatSet;
         this.combSet = combSet;
     }
+
+    // TODO: Add some more methods where SetManager is provided an concatSet
+    // and/or a combSet to begin with, and then extends these in a smart way.
+    // (And perhaps change queryAndCombineSets() to handle such cases.)
+
     /*
     Recall:
     data.setDataArr = [setData, ...],
@@ -115,29 +109,29 @@ export class SetManager {
         for (let i = 0; i < setNum; i++) {
             let setData = this.setDataArr[i];
             if (!setData.set) {
-                // if...
+                // if setData.predID is already known, query for the set
+                // immediately.
                 if (setData.predID) {
                     this.querySetAndCombineIfReady(
                         setData, callbackData, callback
                     );
                     continue;
                 }
-                // else...
+                // else, first query for the predID, and then the set.
                 let reqData = {
                     type: "termID",
                     c: setData.predCxtID,
                     s: encodeURI(setData.predStr),
                     t: setData.objID,
                 };
-                let thisSetManger = this;
-                dbReqManager.query(null, reqData, function($ci, result) {
+                dbReqManager.query(this, reqData, function(thisSM, result) {
                     setData.predID = (result[0] ?? [0])[0];
-                    thisSetManger.querySetAndCombineIfReady(
+                    thisSM.querySetAndCombineIfReady(
                         setData, callbackData, callback
                     );
                 });
             } else if (!setData.isReady) {
-                this.transformSet(setData.set, setData.ratTransFun);
+                setData.set = this.transformSet(setData.set, setData);
                 setData.isReady = true;
             }
         }
@@ -147,7 +141,8 @@ export class SetManager {
     querySetAndCombineIfReady(setData, callbackData, callback) {
         let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
         let queryParams = setData.queryParams;
-        queryParams.offset ??= 0;
+        queryParams.offset ??= 0;;
+        queryParams.isAscending ??= 0;;
         let reqData = {
             type: "set",
             u: setData.userID,
@@ -158,19 +153,20 @@ export class SetManager {
             o: queryParams.offset,
             a: queryParams.isAscending,
         };
-        let thisSetManger = this;
-        dbReqManager.query(null, reqData, function($ci, result) {
-            setData.set = this.transformSet(result, setData.ratTransFun);
+        dbReqManager.query(this, reqData, function(thisSM, result) {
+            setData.set = thisSM.transformSet(result, setData);
             setData.isReady = true;
-            this.combineSetsIfReady(callbackData, callback);
+            thisSM.combineSetsIfReady(callbackData, callback);
         });
     }
 
-    transformSet(set, ratTransFun) {
+    transformSet(set, setData) {
+        let ratTransFun = setData.ratTransFun;
         set.forEach(function(row) {
             row[2] = ratTransFun(row[0]);
             row[3] = setData;
         });
+        return set;
     }
 
     combineSetsIfReady(callbackData, callback) {
@@ -244,19 +240,6 @@ export class SetManager {
 
 setListCL.addCallback(function($ci, data) {
     $ci.on("append-list", function() {
-        let $this = $(this);
-        let data = $(this).data("data");
-        let subjType = data.subjType;
-        data.listElemDataArr = data.set
-            .slice(data.currentLen, data.currentLen + data.incrementNum)
-            .map(function(row) {
-                return {
-                    combRatVal: row[0],
-                    termID: row[1],
-                    avgRatValArr: row[3] ?? [row[0]],
-                };
-            });
-        data.currentLen += data.incrementNum;
-        setListCL.loadAppended($this, 'List', data);
+
     });
 });
