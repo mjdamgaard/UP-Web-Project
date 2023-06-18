@@ -81,6 +81,7 @@ export function getLinearRatTransFun(factor) {
         if (ratValHex.length <= 2) {
             num *= 65535 / 255;
         }
+        // TODO: Reconsider what should be the standard score range. 0-10? -5-5?
         let score = (num - 32767.5) * 20 / 65535;
         return factor * score;
     };
