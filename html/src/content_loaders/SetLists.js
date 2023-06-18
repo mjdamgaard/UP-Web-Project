@@ -30,8 +30,9 @@ SetList requires data:
     // data.applySortingOptions.
     // data.sortingOptions. (if applySortingOptions == true.)
 And it also sets/updates data:
-    data.concatSet = [[ratVal, subjID, transRatVal, setData], ...].
-    data.combSet = [[combRatVal, subjID, weight, concatSetIndex], ...].
+    data.concatSet = [[ratVal, subjID, transRatVal, setData], ...],
+    data.combSet = [[combRatVal, subjID, concatSetIndex], ...],
+    data.listElemDataArr = [{combRatVal, termID, concatSetIndex}, ...].
 */
 export var setListCL = new ContentLoader(
     "SetList",
@@ -55,7 +56,11 @@ setListCL.addCallback("data", function(data) {
 setListCL.addCallback(function($ci, data) {
     data.cl = setListCL.getRelatedCL(data.elemContentKey);
     $ci.one("load-initial-elements", function(event, combSet) {
-        data.listElemDataArr = combSet.slice(0, data.initialNum);
+        data.listElemDataArr = combSet.slice(0, data.initialNum).map(val => ({
+            combRatVal: val[0],
+            termID: val[1],
+            concatSetIndex: val[2],
+        }));
         data.currentLen = data.initialNum;
         $ci.find('.CI.List').trigger("load");
         return false;
@@ -191,18 +196,26 @@ export class SetManager {
         let ret = new Array(this.concatSet.length);
         let retLen = 0;
         this.concatSet.forEach(function(val, ind, arr) {
-            if (val[1] !== (arr[ind - 1] ?? [])[1]) {
-                ret[retLen] = [val[2], val[1], val[3].weight, ind];
+            if (ind === 0) {
+                ret[retLen] = [val[2], val[1], ind, val[3].weight];
                 retLen++;
+            } else if (val[1] !== arr[ind - 1][1]) {
+                ret[retLen] = [val[2], val[1], ind, val[3].weight];
+                retLen++;
+                // delete the weight column of the previous row.
+                arr[ind - 1].length = 3;
             } else {
                 let row = ret[retLen];
                 let currWeight = val[3].weight;
-                let newWeight = row[2] + currWeight;
-                row[0] = (row[0] * row[2] + val[2] * currWeight) / newWeight;
-                row[2] = newWeight;
+                let newWeight = row[3] + currWeight;
+                row[0] = (row[0] * row[3] + val[2] * currWeight) / newWeight;
+                row[3] = newWeight;
             }
         });
+        // delete the weight column of the last row and delete the empty slots.
+        ret[retLen - 1].length = 3;
         ret.length = retLen;
+        // set and return this.combSet as ret sorted after the combRatVal.
         if (this.sortAscending) {
             return this.combSet = ret.sort((row1, row2) => row1[0] - row2[0]);
         } else {

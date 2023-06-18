@@ -14,8 +14,8 @@ export var generalTermElementCL = new ContentLoader(
     /* Initial HTML template */
     '<div>' +
         'test..' +
-        '<<CombinedRatValDisplay>>' +
         '<<TermTitleDisplay>>' +
+        '<<CombinedRatingDisplay>>' +
         '<<DropdownBox>>' +
     '</div>',
     sdbInterfaceCL
@@ -25,18 +25,31 @@ generalTermElementCL.addCallback("data", function(data) {
         "GeneralTermElementDropdownPage"
     );
 });
-
-
-
-
-
-
-
 export var generalTermElementDropdownPageCL = new ContentLoader(
     "GeneralTermElementDropdownPage",
     /* Initial HTML template */
     '<div>' +
-        'TermElementDropdownPage..' +
+        'test text..' +
+        '<<TermShortDescriptionField>>' +
+        '<<SetPredicatesRatingsDisplay>>' +
     '</div>',
     sdbInterfaceCL
 );
+
+
+export var combinedRatingDisplayCL = new ContentLoader(
+    "CombinedRatingDisplay",
+    /* Initial HTML template */
+    '<div>' +
+    '</div>',
+    sdbInterfaceCL
+);
+
+combinedRatingDisplayCL.addCallback(function($ci, data) {
+    $ci.html(data.combRatVal.toFixed(2));
+});
+
+
+
+
+//
