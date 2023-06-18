@@ -10,29 +10,6 @@ import {
 
 
 
-export var termTitleDisplayCL = new ContentLoader(
-    "TermTitleDisplay",
-    /* Initial HTML template */
-    '<div>' +
-        '<<TermTitle>>' +
-    '</div>',
-    sdbInterfaceCL
-);
-
-
-
-export var predicateTitleCL = new ContentLoader(
-    "PredicateTitle",
-    /* Initial HTML template */
-    '<<TermTitle>>',
-    sdbInterfaceCL
-);
-predicateTitleCL.addCallback("data", function(data) {
-    data.termID = data.getFromAncestor("predID");
-    data.copyFromAncestor("titleCutOutLevels");
-    data.titleCutOutLevels ||= [1, 1];
-});
-
 export var termTitleCL = new ContentLoader(
     "TermTitle",
     /* Initial HTML template */
@@ -42,42 +19,51 @@ export var termTitleCL = new ContentLoader(
 termTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "termID",
-        "titleCutOutLevels",
     ]);
-    data.titleCutOutLevels ||= [1, 1];
 });
 termTitleCL.addCallback(function($ci, data) {
-    // if data.titleCutOutLevels == [], simply load the term's (combined)
-    // term ID as the title.
-    if (data.titleCutOutLevels.length === 0) {
-        $ci.append('t' + data.termID.toString());
-        return;
-    }
-    // else query the database for the title (and spec. entity), and append
-    // a title with cut-out level given by data.titleCutOutLevels[0]. And if
-    // data.titleCutOutLevels cotains more elements, load the TermTitles of
-    // the specifying entities as well, and if these are Terms, cut out part
-    // of their title as well, depending on the cut-out levels (or just append
-    // their term ID, if the data.titleCutOutLevels array is at its end).
     let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
     let reqData = {
         type: "term",
         id: data.termID,
     };
-    dbReqManager.query($ci, reqData, function($ci, result) {
-        data.termTitle = (result[0] ?? [])[1];
-        data.specType = (result[0] ?? [])[2];
-        data.specID = (result[0] ?? [])[3];
-        let reducedTitle = getReducedTitle(
-            data.termTitle, data.titleCutOutLevels[0]
-        );
-        $ci.append(reducedTitle);
-        $ci.find('.spec-entity').each(function() {
-            termTitleCL.loadAppended($(this), "SpecEntityTitle", data);
+    dbReqManager.query($ci, reqData, data, function($ci, result, data) {
+        data.cxtID = (result[0] ?? [])[0];
+        data.defStr = (result[0] ?? [])[1];
+        data.defTermID = (result[0] ?? [])[2];
+        // data.redDefStr = getReducedString(data.defStr);
+        // $ci.append(reducedTitle);
+        // $ci.find('.spec-entity').each(function() {
+        //     termTitleCL.loadAppended($(this), "SpecEntityTitle", data);
+        // });
+        let reqData = {
+            type: "term",
+            id: data.cxtID,
+        };
+        dbReqManager.query($ci, reqData, data, function($ci, result, data) {
+            data.cxtDefStr = (result[0] ?? [])[1];
+            appendTermTitle($ci, data);
         });
     });
     return false;
 });
+
+export function appendTermTitle($ci, data) {
+    data = data ?? $ci.data("data");
+    if (data.defTermID) {
+        // ...
+    }
+}
+
+
+
+
+
+
+
+
+
+
 termTitleCL.addCallback(function($ci, data) {
     $ci.on("click", function() {
         $(this).trigger("open-column", [

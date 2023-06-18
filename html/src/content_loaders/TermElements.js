@@ -14,7 +14,7 @@ export var generalTermElementCL = new ContentLoader(
     /* Initial HTML template */
     '<div>' +
         'test..' +
-        '<<TermTitleDisplay>>' +
+        '<<TermTitle>>' +
         '<<CombinedRatingDisplay>>' +
         '<<DropdownBox>>' +
     '</div>',
@@ -29,7 +29,7 @@ export var generalTermElementDropdownPageCL = new ContentLoader(
     "GeneralTermElementDropdownPage",
     /* Initial HTML template */
     '<div>' +
-        '<<FullContextField>>' +
+        '<<FullContextAndTitleField>>' +
         '<<TermShortDescriptionField>>' +
         '<<SetPredicatesRatingsDisplay>>' +
     '</div>',

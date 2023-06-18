@@ -63,13 +63,13 @@ switch ($reqType) {
         $sql = "CALL selectRecentInputs (?, ?)";
         $paramNameArr = array("id", "n");
         $typeArr = array("id", "uint");
-        // output: [[userID, predID, subjType, ratVal, subjID, changedAt], ...].
+        // output: [[userID, predID, ratVal, subjID, changedAt], ...].
         break;
     case "term":
         $sql = "CALL selectTerm (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [[cxtID, str, defEntType, defEntID]].
+        // output: [[cxtID, defStr, defTermID]].
         break;
     case "termID":
         $sql = "CALL selectTermID (?, ?, ?)";
