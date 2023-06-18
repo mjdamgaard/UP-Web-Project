@@ -46,7 +46,7 @@ export var combinedRatingDisplayCL = new ContentLoader(
 );
 
 combinedRatingDisplayCL.addCallback(function($ci, data) {
-    $ci.html(data.combRatVal.toFixed(2));
+    $ci.html(data.getFromAncestor("combRatVal").toFixed(2));
 });
 
 
