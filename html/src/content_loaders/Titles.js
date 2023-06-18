@@ -9,6 +9,19 @@ import {
 
 
 
+
+export var termTitleDisplayCL = new ContentLoader(
+    "TermTitleDisplay",
+    /* Initial HTML template */
+    '<div>' +
+        '<<ContextNav>>' +
+        '<<TermTitle>>' +
+    '</div>',
+    sdbInterfaceCL
+);
+
+
+
 export var predicateTitleCL = new ContentLoader(
     "PredicateTitle",
     /* Initial HTML template */
