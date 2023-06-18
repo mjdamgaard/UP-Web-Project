@@ -209,7 +209,9 @@ export class SetManager {
             }
         });
         // delete the weight column of the last row and delete the empty slots.
-        ret[retLen - 1].length = 3;
+        if (retLen > 0) {
+            ret[retLen - 1].length = 3;
+        }
         ret.length = retLen;
         // set and return this.combSet as ret sorted after the combRatVal.
         if (this.sortAscending) {

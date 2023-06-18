@@ -77,9 +77,12 @@ termNounPredicatePageCL.addCallback("data", function(data) {
 
 export function getLinearRatTransFun(factor) {
     return function(ratValHex) {
-        let shortNum = parseInt(ratValHex.padEnd(4, "0").substring(0, 4), 16);
-console.log(ratValHex.padEnd(4, "0").substring(0, 4));
-        let score = (shortNum - 32767.5) * 20 / 65535;
+        // let lenDiv2 = ratValHex.length >>> 1;
+        let num = parseInt(ratValHex.substring(0, 4), 16);
+        if (ratValHex.length <= 2) {
+            num *= 65535 / 255;
+        }
+        let score = (num - 32767.5) * 20 / 65535;
         return factor * score;
     };
 }

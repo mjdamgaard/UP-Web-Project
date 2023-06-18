@@ -38,8 +38,8 @@ BEGIN
     WHERE (
         user_id = userID AND
         pred_id = predID AND
-        (ratingRangeLo IS NULL OR rat_val >= ratingRangeLo) AND
-        (ratingRangeHi IS NULL OR rat_val <= ratingRangeHi)
+        (ratingRangeLo = "" OR rat_val >= ratingRangeLo) AND
+        (ratingRangeHi = "" OR rat_val <= ratingRangeHi)
     )
     ORDER BY
         CASE WHEN isAscOrder THEN rat_val END ASC,
