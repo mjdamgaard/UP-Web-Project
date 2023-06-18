@@ -57,7 +57,7 @@ termNounPredicatePageCL.addCallback("data", function(data) {
     ]);
 });
 termNounPredicatePageCL.addCallback("data", function(data) {
-    data.elemContentKey = "TermElement";
+    data.elemContentKey = "GeneralTermElement";
     data.setDataArr = [{
         predCxtID: 9, // ID of the ">is a useful instance of ..." Context.
         predStr: data.getFromAncestor("predNoun"),
