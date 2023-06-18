@@ -78,10 +78,7 @@ termNounPredicatePageCL.addCallback("data", function(data) {
 export function getLinearRatTransFun(factor) {
     return function(ratValHex) {
         let num = parseInt(ratValHex.substring(0, 4), 16);
-        if (ratValHex.length <= 2) {
-            num *= 65535 / 255;
-        }
-        let score = num * 10 / 65535;
+        let score = (ratValHex.length <= 2) ? num / 25.5 : num / 6553.5;
         return factor * score;
     };
 }
