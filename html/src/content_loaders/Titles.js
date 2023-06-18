@@ -14,7 +14,6 @@ export var termTitleDisplayCL = new ContentLoader(
     "TermTitleDisplay",
     /* Initial HTML template */
     '<div>' +
-        '<<ContextNav>>' +
         '<<TermTitle>>' +
     '</div>',
     sdbInterfaceCL

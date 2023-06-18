@@ -17,9 +17,9 @@ DELETE FROM PrivateCreators;
 INSERT INTO Terms (context_id, def_str, def_term_id, id)
 VALUES
     (NULL, "Data and users of the SDB", NULL, 1),
-    (1, "Users", NULL, 2),
-    (1, "Texts", NULL, 3),
-    (1, "Binaries", NULL, 4),
+    (1, ">Users", NULL, 2),
+    (1, ">Texts", NULL, 3),
+    (1, ">Binaries", NULL, 4),
     (2, "admin_1", NULL, 5);
 
 
@@ -29,7 +29,7 @@ VALUES
     (NULL, "Terms", NULL, 6),
     (NULL, "Predicates", NULL, 7),
     (7, ">Adjectives and Verbs, s.", NULL, 8), -- (s.: singular)
-    (8, ">is a useful instance of the {{$s} of }the Term, {$t}", NULL, 9),
+    (8, ">is a useful instance of the {$s of }the Term, {$t}", NULL, 9),
     (NULL, "Nouns for predicate definitions", NULL, 10),
     (NULL, "Statements", NULL, 11),
     (11, ">$s[0] applies to $t", NULL, 12),
