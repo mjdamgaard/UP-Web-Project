@@ -96,19 +96,19 @@ CALL insertPredicates("Subcategories", 22, 29);
 -- rate some statements.
 
 
-CALL inputOrChangeRating(5, 35, 22, "FF", "00");
-CALL inputOrChangeRating(5, 35, 23, "F03", "00");
-CALL inputOrChangeRating(5, 35, 24, "A130", "00");
-CALL inputOrChangeRating(5, 35, 25, "A03", "00");
-CALL inputOrChangeRating(5, 35, 21, "003", "00");
+CALL inputOrChangeRating(5, 35, 22, 0xFF, "00");
+CALL inputOrChangeRating(5, 35, 23, 0xF030, "00");
+CALL inputOrChangeRating(5, 35, 24, 0xA1, "00");
+CALL inputOrChangeRating(5, 35, 25, 0xA030, "00");
+CALL inputOrChangeRating(5, 35, 21, 0x0103, "00");
 
-CALL inputOrChangeRating(5, 43, 24, "E1", "00");
-CALL inputOrChangeRating(5, 43, 25, "E0", "00");
-CALL inputOrChangeRating(5, 43, 26, "E0", "00");
-CALL inputOrChangeRating(5, 43, 21, "00", "00");
-CALL inputOrChangeRating(5, 43, 30, "F0", "00");
+CALL inputOrChangeRating(5, 43, 24, 0xE1, "00");
+CALL inputOrChangeRating(5, 43, 25, 0xE0, "00");
+CALL inputOrChangeRating(5, 43, 26, 0xE0, "00");
+CALL inputOrChangeRating(5, 43, 21, 0x00, "00");
+CALL inputOrChangeRating(5, 43, 30, 0xF0, "00");
 
-CALL inputOrChangeRating(5, 42, 30, "F0", "00");
+CALL inputOrChangeRating(5, 42, 30, 0xF0, "00");
 
 
 
