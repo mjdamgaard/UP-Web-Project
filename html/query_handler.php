@@ -16,7 +16,7 @@ require_once $db_io_path . "DBConnector.php";
 
 // queries can also be GET-gotten.
 if ($_SERVER["REQUEST_METHOD"] != "POST") {
-    $_POST = $_GET;
+    $_POST = array_map('urldecode', $_GET);
 }
 
 

@@ -21,7 +21,7 @@ class InputGetter {
                 );
             }
             // append parameter to output array.
-            $paramValArr[] = urldecode($_POST[$paramName]);
+            $paramValArr[] = $_POST[$paramName];
         }
 
         return $paramValArr;
