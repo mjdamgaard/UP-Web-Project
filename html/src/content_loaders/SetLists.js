@@ -196,16 +196,17 @@ export class SetManager {
         let ret = new Array(this.concatSet.length);
         let retLen = 0;
         this.concatSet.forEach(function(val, ind, arr) {
-            let currWeight, row, newWeight;
+            let row, accWeight, currWeight, newWeight;
             if (val[1] !== (arr[ind - 1] ?? [])[1]) {
                 ret[retLen] = [val[2], val[1], ind];
                 retLen++;
-                currWeight = val[3].weight;
+                accWeight = val[3].weight;
             } else {
                 row = ret[retLen];
-                newWeight = row[3] + currWeight;
-                row[0] = (row[0] * row[3] + val[2] * currWeight) / newWeight;
-                currWeight = newWeight;
+                currWeight = val[3].weight;
+                newWeight = accWeight + currWeight;
+                row[0] = (row[0] * accWeight + val[2] * currWeight) / newWeight;
+                accWeight = newWeight;
             }
         });
         // delete the weight column of the last row and delete the empty slots.
