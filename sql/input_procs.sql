@@ -21,7 +21,7 @@ CREATE PROCEDURE inputOrChangeRating (
 BEGIN
     DECLARE exitCode TINYINT;
     DECLARE ratVal, prevRatVal VARBINARY(255);
-    SET ratVal = CONV(ratValHex, 16, 10);
+    SET ratVal = CONV(ratValHex, 16, 10); 
 
     SELECT rat_val INTO prevRatVal
     FROM SemanticInputs
