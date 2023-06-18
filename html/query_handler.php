@@ -47,7 +47,7 @@ switch ($reqType) {
         );
         $typeArr = array(
             "id", "id",
-            "rat", "rat",
+            "bin", "bin",
             "uint", "uint",
             "tint"
         );

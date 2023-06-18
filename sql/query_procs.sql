@@ -24,17 +24,13 @@ DELIMITER //
 CREATE PROCEDURE selectInputSet (
     IN userID BIGINT UNSIGNED,
     IN predID BIGINT UNSIGNED,
-    IN ratingRangeLoHex VARCHAR(510),
-    IN ratingRangeHiHex VARCHAR(510),
+    IN ratingRangeLo VARBINARY(255),
+    IN ratingRangeHi VARBINARY(255),
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED,
     IN isAscOrder BOOL
 )
 BEGIN
-    DECLARE ratingRangeLo, ratingRangeHi VARBINARY(255);
-    SET ratingRangeLo = CONV(ratingRangeLoHex, 16, 10);
-    SET ratingRangeHi = CONV(ratingRangeHiHex, 16, 10);
-
     SELECT
         CONV(rat_val, 10, 16) AS ratVal,
         subj_id AS subjID
@@ -98,46 +94,6 @@ BEGIN
     LIMIT maxNum;
 END //
 DELIMITER ;
-
-
-
--- DELIMITER //
--- CREATE PROCEDURE selectRecordedInputs (
---     IN userID BIGINT UNSIGNED,
---     IN predID BIGINT UNSIGNED,
---     IN subjID BIGINT UNSIGNED,
---     IN maxNum INT UNSIGNED,
---     IN numOffset INT UNSIGNED
--- )
--- BEGIN
---     IF (subjID = 0) THEN
---         SELECT
---             subj_id AS subjID,
---             changed_at AS changedAt,
---             CONV(rat_val, 10, 16) AS ratVal
---         FROM RecordedInputs
---         WHERE (
---             user_id = userID AND
---             pred_id = predID
---         )
---         ORDER BY subj_id DESC, changed_at DESC
---         LIMIT numOffset, maxNum;
---     ELSE
---         SELECT
---             subjID AS subjID,
---             changed_at AS changedAt,
---             CONV(rat_val, 10, 16) AS ratVal
---         FROM RecordedInputs
---         WHERE (
---             user_id = userID AND
---             pred_id = predID AND
---             subj_id = subjID
---         )
---         ORDER BY changed_at DESC
---         LIMIT numOffset, maxNum;
---     END IF;
--- END //
--- DELIMITER ;
 
 
 

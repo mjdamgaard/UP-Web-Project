@@ -15,13 +15,12 @@ CREATE PROCEDURE inputOrChangeRating (
     IN userID BIGINT UNSIGNED,
     IN predID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN ratValHex VARCHAR(510),
+    IN ratVal VARBINARY(255),
     IN live_after TIME
 )
 BEGIN
     DECLARE exitCode TINYINT;
-    DECLARE ratVal, prevRatVal VARBINARY(255);
-    SET ratVal = CONV(ratValHex, 16, 10); 
+    DECLARE prevRatVal VARBINARY(255);
 
     SELECT rat_val INTO prevRatVal
     FROM SemanticInputs

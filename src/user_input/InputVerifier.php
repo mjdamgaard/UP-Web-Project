@@ -25,11 +25,18 @@ class InputVerifier {
             //         echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
             //     }
             //     break;
-            case "rat":
-                $pattern =
-                    "/^[0-9A-F]{2}{0,255}$/";
-                if (!preg_match($pattern, $paramVal) && $paramVal !== "") {
-                    echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
+            // case "rat":
+            //     $pattern =
+            //         "/^[0-9A-F]{2}{0,255}$/";
+            //     if (!preg_match($pattern, $paramVal) && $paramVal !== "") {
+            //         echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
+            //     }
+            //     break;
+            case "bin":
+                if (strlen($paramVal) > 255) {
+                    echoTypeErrorJSONAndExit(
+                        $paramName, "0x" . bin2hex($paramVal), "VARBINARY(255)"
+                    );
                 }
                 break;
             case "id":
