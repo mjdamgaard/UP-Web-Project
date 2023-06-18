@@ -64,7 +64,7 @@ termNounPredicatePageCL.addCallback("data", function(data) {
         objID: data.getFromAncestor("termID"),
         userID: 5,
         weight: 1,
-        ratTransFun: getLinearRatTransFun(1),
+        ratTransFun: getStandardScore,
         queryParams: {
             num: 4000,
             ratingLo: "",
@@ -75,10 +75,7 @@ termNounPredicatePageCL.addCallback("data", function(data) {
     data.incrementNum = 25;
 });
 
-export function getLinearRatTransFun(factor) {
-    return function(ratValHex) {
-        let num = parseInt(ratValHex.substring(0, 4), 16);
-        let score = (ratValHex.length <= 2) ? num / 25.5 : num / 6553.5;
-        return factor * score;
-    };
+export function getStandardScore(ratValHex) {
+    let num = parseInt(ratValHex.substring(0, 4), 16);
+    return (ratValHex.length <= 2) ? num / 25.5 : num / 6553.5;
 }
