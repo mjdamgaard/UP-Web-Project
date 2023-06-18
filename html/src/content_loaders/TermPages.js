@@ -77,8 +77,9 @@ termNounPredicatePageCL.addCallback("data", function(data) {
 
 export function getLinearRatTransFun(factor) {
     return function(ratValHex) {
-        let shortNum = parseInt(ratValHex.padEnd("0", 4).substring(0, 4), 16);
-        let score = (shortNum - 32767.5) * 10 / 65535;
+        let shortNum = parseInt(ratValHex.padEnd(4, "0").substring(0, 4), 16);
+console.log(ratValHex.padEnd(4, "0").substring(0, 4));
+        let score = (shortNum - 32767.5) * 20 / 65535;
         return factor * score;
     };
 }

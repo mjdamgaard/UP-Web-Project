@@ -97,9 +97,10 @@ CALL insertPredicates("Subcategories", 22, 29);
 
 
 CALL inputOrChangeRating(5, 35, 22, "FF", "00");
-CALL inputOrChangeRating(5, 35, 23, "F0", "00");
-CALL inputOrChangeRating(5, 35, 24, "A1", "00");
-CALL inputOrChangeRating(5, 35, 25, "A0", "00");
+CALL inputOrChangeRating(5, 35, 23, "F03", "00");
+CALL inputOrChangeRating(5, 35, 24, "A130", "00");
+CALL inputOrChangeRating(5, 35, 25, "A03", "00");
+CALL inputOrChangeRating(5, 35, 21, "003", "00");
 
 CALL inputOrChangeRating(5, 43, 24, "E1", "00");
 CALL inputOrChangeRating(5, 43, 25, "E0", "00");
