@@ -37,7 +37,18 @@ termTitleCL.addCallback(function($ci, data) {
         };
         dbReqManager.query($ci, reqData, data, function($ci, result, data) {
             data.cxtDefStr = (result[0] ?? [])[1];
-            $ci.html(getTermTitleHTML(data));
+            let cxtDefTermID = (result[0] ?? [])[2];
+            if (
+                cxtDefTermID ||
+                data.defTermID && (
+                    data.cxtDefStr.substring(0, 1) !== ":" ||
+                    !/[^\\]\$t/.test(data.cxtDefStr.replaceAll("\\\\", ""))
+                )
+            ) {
+                termTitleCL.loadAppended($ci, "IllFormedTitle", data);
+            } else {
+                $ci.html(getTermTitleHTML(data));
+            }
         });
     });
     return false;
