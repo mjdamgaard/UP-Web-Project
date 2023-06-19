@@ -31,11 +31,6 @@ termTitleCL.addCallback(function($ci, data) {
         data.cxtID = (result[0] ?? [])[0];
         data.defStr = (result[0] ?? [])[1];
         data.defTermID = (result[0] ?? [])[2];
-        // data.redDefStr = getReducedString(data.defStr);
-        // $ci.append(reducedTitle);
-        // $ci.find('.spec-entity').each(function() {
-        //     termTitleCL.loadAppended($(this), "SpecEntityTitle", data);
-        // });
         let reqData = {
             type: "term",
             id: data.cxtID,
@@ -50,8 +45,21 @@ termTitleCL.addCallback(function($ci, data) {
 
 export function getTermTitleHTML(data) {
     data = data ?? $ci.data("data");
-    if (data.defTermID) {
-        // ...
+    if (data.defStr.substring(0, 1) === "/") {
+        if (!data.defTermID) {
+            return (
+                '<span class="def-str">' +
+                    getReducedString(data.defStr) +
+                '</span>' +
+                '(' +
+                    '<span class="cxt-def-str">' +
+                        getReducedString(data.cxtDefStr) +
+                    '</span>' +
+                ')'
+            );
+        } else {
+            // ...
+        }
     }
 }
 
