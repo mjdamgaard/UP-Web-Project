@@ -37,45 +37,55 @@ termTitleCL.addCallback(function($ci, data) {
         };
         dbReqManager.query($ci, reqData, data, function($ci, result, data) {
             data.cxtDefStr = (result[0] ?? [])[1];
-            let cxtDefTermID = (result[0] ?? [])[2];
-            if (
-                cxtDefTermID ||
-                data.defTermID && (
-                    data.cxtDefStr.substring(0, 1) !== ":" ||
-                    !/[^\\]\$t/.test(data.cxtDefStr.replaceAll("\\\\", ""))
-                )
-            ) {
-                termTitleCL.loadAppended($ci, "IllFormedTitle", data);
-            } else {
-                $ci.html(getTermTitleHTML(data));
-            }
+            data.cxtDefTermID = (result[0] ?? [])[2];
+            loadTermTitleHTML($ci, data);
         });
     });
     return false;
 });
 
-export function getTermTitleHTML(data) {
+export function loadTermTitleHTML($ci, data) {
     data = data ?? $ci.data("data");
-    if (data.defStr.substring(0, 1) === "/") {
-        if (!data.defTermID) {
-            return (
-                '<span class="def-str">' +
-                    getReducedString(data.defStr) +
-                '</span>' +
-                '(' +
-                    '<span class="cxt-def-str">' +
-                        getReducedString(data.cxtDefStr) +
-                    '</span>' +
-                ')'
-            );
-        } else {
-            // ...
-        }
+    if (data.cxtDefTermID) {
+        termTitleCL.loadAppended($ci, "IllFormedTitle", data);
+        return;
+    }
+    let cxtLeadChar = data.cxtDefStr.substring(0, 1);
+    if (data.defTermID && cxtLeadChar !== ":") {
+        termTitleCL.loadAppended($ci, "IllFormedTitle", data);
+        return;
+    }
+    if (cxtLeadChar === ":") {
+        termTitleCL.loadAppended($ci, "TemplateInstanceTitle", data);
+        return;
+    }
+    let termLeadChar = data.defStr.substring(0, 1);
+    if (termLeadChar === "/") {
+        termTitleCL.loadAppended($ci, "SubcontextTitle", data);
+        return;
+    }
+    if (termLeadChar === "+") {
+        termTitleCL.loadAppended($ci, "ConcatenatedStringTitle", data);
+        return;
+    }
+    if (termLeadChar === "!") {
+        termTitleCL.loadAppended($ci, "StringTitle", data);
+        return;
     }
 }
 
+// return (
+//     '<span class="def-str">' +
+//         getReducedString(data.defStr) +
+//     '</span>' +
+//     '(' +
+//         '<span class="cxt-def-str">' +
+//             getReducedString(data.cxtDefStr) +
+//         '</span>' +
+//     ')'
+// );
 
-
+// !/[^\\]\$t/.test(data.cxtDefStr.replaceAll("\\\\", ""))
 
 
 
