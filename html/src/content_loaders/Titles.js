@@ -58,7 +58,7 @@ export function getTermTitleHTML(data) {
                 ')'
             );
         } else {
-            // ... 
+            // ...
         }
     }
 }
