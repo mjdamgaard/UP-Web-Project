@@ -16,7 +16,7 @@ DELETE FROM PrivateCreators;
 /* From create_open_sdb.sql */
 INSERT INTO Terms (context_id, def_str, def_term_id, id)
 VALUES
-    (NULL, "_Data{ and users of the SDB}", NULL, 1),
+    (NULL, "_{Data} and users of the SDB", NULL, 1),
     (1, "/Users", NULL, 2),
     (1, "/Texts", NULL, 3),
     (1, "/Binaries", NULL, 4),
