@@ -44,7 +44,6 @@ export var combinedRatingDisplayCL = new ContentLoader(
     '</div>',
     sdbInterfaceCL
 );
-
 combinedRatingDisplayCL.addCallback(function($ci, data) {
     $ci.html(data.getFromAncestor("combRatVal").toFixed(2));
 });

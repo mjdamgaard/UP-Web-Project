@@ -192,6 +192,8 @@ export class SetManager {
         );
     }
 
+    // TODO: Reimplement such that 5 * weight is added each time a subj is
+    // missing in a set.
     computeCombinedSet() {
         let ret = new Array(this.concatSet.length);
         let retLen = 0;

@@ -112,8 +112,8 @@ export var simpleTitleCL = new ContentLoader(
     '<span></span>',
     sdbInterfaceCL
 );
-standardTitleCL.addCallback(function($ci, data) {
-    $ci.append(data.getFromAncestor("defStr"));
+simpleTitleCL.addCallback(function($ci, data) {
+    $ci.append(getReducedTitle(data.getFromAncestor("defStr")));
     $ci.on("click", function() {
         // TODO: implement..
     })
@@ -129,12 +129,31 @@ export var subcontextTitleCL = new ContentLoader(
 // }); // Do this with CSS instead.
 
 
+
 export var templateInstanceTitleCL = new ContentLoader(
     "TemplateInstanceTitle",
     /* Initial HTML template */
     '<span></span>',
     sdbInterfaceCL
 );
+templateInstanceTitleCL.addCallback(function($ci, data) {
+    
+});
+
+
+export var stringTitleCL = new ContentLoader(
+    "StringTitle",
+    /* Initial HTML template */
+    '<span></span>',
+    sdbInterfaceCL
+);
+standardTitleCL.addCallback(function($ci, data) {
+    $ci.append(data.getFromAncestor("defStr").substring(1));
+    $ci.on("click", function() {
+        // TODO: implement..
+    })
+});
+
 
 // return (
 //     '<span class="def-str">' +
