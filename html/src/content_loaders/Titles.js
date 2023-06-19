@@ -60,6 +60,10 @@ export function loadTermTitleHTML($ci, data) {
         return;
     }
     let termLeadChar = data.defStr.substring(0, 1);
+    if (!data.cxtDefStr && (termLeadChar === "/" || termLeadChar === "+")) {
+        termTitleCL.loadAppended($ci, "IllFormedTitle", data);
+        return;
+    }
     if (termLeadChar === "/") {
         termTitleCL.loadAppended($ci, "SubcontextTitle", data);
         return;
@@ -72,7 +76,65 @@ export function loadTermTitleHTML($ci, data) {
         termTitleCL.loadAppended($ci, "StringTitle", data);
         return;
     }
+    termTitleCL.loadAppended($ci, "StandardTitle", data);
 }
+
+export var illFormedTitleCL = new ContentLoader(
+    "IllFormedTitle",
+    /* Initial HTML template */
+    '<span>Ill-formed title</span>',
+    sdbInterfaceCL
+);
+export var standardTitleCL = new ContentLoader(
+    "StandardTitle",
+    /* Initial HTML template */
+    '<span></span>',
+    sdbInterfaceCL
+);
+standardTitleCL.addCallback(function($ci, data) {
+    termTitleCL.loadAppended($ci, "SimpleTitle", data);
+    let cxtDefStr = data.getFromAncestor("cxtDefStr");
+    if (cxtDefStr) {
+        $ci.append('(<span class="cxt-title">');
+        termTitleCL.loadAppended(
+            $ci, "SimpleTitle", new ChildData(data, {
+                defStr: cxtDefStr,
+                termID: data.getFromAncestor("cxtID"),
+                cxtID: false,
+            })
+        );
+        $ci.append('</span>)');
+    }
+});
+export var simpleTitleCL = new ContentLoader(
+    "SimpleTitle",
+    /* Initial HTML template */
+    '<span></span>',
+    sdbInterfaceCL
+);
+standardTitleCL.addCallback(function($ci, data) {
+    $ci.append(data.getFromAncestor("defStr"));
+    $ci.on("click", function() {
+        // TODO: implement..
+    })
+});
+export var subcontextTitleCL = new ContentLoader(
+    "SubcontextTitle",
+    /* Initial HTML template */
+    '<<StandardTitle>>',
+    sdbInterfaceCL
+);
+// subcontextTitleCL.addCallback(function($ci, data) {
+//     $ci.find('.cxt-title').after('/');
+// }); // Do this with CSS instead.
+
+
+export var templateInstanceTitleCL = new ContentLoader(
+    "TemplateInstanceTitle",
+    /* Initial HTML template */
+    '<span></span>',
+    sdbInterfaceCL
+);
 
 // return (
 //     '<span class="def-str">' +
