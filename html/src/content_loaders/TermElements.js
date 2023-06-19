@@ -30,7 +30,7 @@ export var generalTermElementDropdownPageCL = new ContentLoader(
     /* Initial HTML template */
     '<div>' +
         '<<FullContextAndTitleField>>' +
-        '<<TermShortDescriptionField>>' +
+        // '<<TermShortDescriptionField>>' +
         '<<SetPredicatesRatingsDisplay>>' +
     '</div>',
     sdbInterfaceCL

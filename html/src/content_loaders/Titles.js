@@ -42,13 +42,13 @@ termTitleCL.addCallback(function($ci, data) {
         };
         dbReqManager.query($ci, reqData, data, function($ci, result, data) {
             data.cxtDefStr = (result[0] ?? [])[1];
-            appendTermTitle($ci, data);
+            $ci.html(getTermTitleHTML(data));
         });
     });
     return false;
 });
 
-export function appendTermTitle($ci, data) {
+export function getTermTitleHTML(data) {
     data = data ?? $ci.data("data");
     if (data.defTermID) {
         // ...
