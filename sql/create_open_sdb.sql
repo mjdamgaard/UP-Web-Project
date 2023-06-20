@@ -152,7 +152,7 @@ CREATE TABLE Users (
 );
 
 INSERT INTO Users (username, id)
-VALUES ("admin_1", 6);
+VALUES ("admin_1", 5);
 
 
 

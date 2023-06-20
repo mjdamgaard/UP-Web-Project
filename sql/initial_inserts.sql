@@ -6,6 +6,8 @@ ALTER TABLE RecentInputs AUTO_INCREMENT=1;
 DELETE FROM Terms;
 ALTER TABLE Terms AUTO_INCREMENT=1;
 
+DELETE FROM Users;
+ALTER TABLE Users AUTO_INCREMENT=1;
 -- DELETE FROM Texts;
 -- ALTER TABLE Texts AUTO_INCREMENT=1;
 
@@ -21,7 +23,8 @@ VALUES
     (1, "/Texts", NULL, 3),
     (1, "/Binaries", NULL, 4),
     (2, "admin_1", NULL, 5);
-
+INSERT INTO Users (username, id)
+VALUES ("admin_1", 5);
 
 /* Some other important initial inserts */
 INSERT INTO Terms (context_id, def_str, def_term_id, id)
