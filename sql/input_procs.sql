@@ -15,14 +15,14 @@ CREATE PROCEDURE inputOrChangeRating (
     IN userID BIGINT UNSIGNED,
     IN predID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN ratVal SMALLINT,
+    IN ratVal SMALLINT UNSIGNED,
     IN live_after TIME
 )
 BEGIN
     DECLARE exitCode TINYINT;
-    DECLARE prevRatVal SMALLINT;
+    DECLARE prevRatVal SMALLINT UNSIGNED;
 
-    IF (ratVal = -32768) THEN
+    IF (ratVal = 0) THEN
         SET ratVal = NULL;
     END IF;
 

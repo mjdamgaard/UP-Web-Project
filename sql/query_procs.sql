@@ -24,8 +24,8 @@ DELIMITER //
 CREATE PROCEDURE selectInputSet (
     IN userID BIGINT UNSIGNED,
     IN predID BIGINT UNSIGNED,
-    IN ratingRangeLo SMALLINT,
-    IN ratingRangeHi SMALLINT,
+    IN ratingRangeLo SMALLINT UNSIGNED,
+    IN ratingRangeHi SMALLINT UNSIGNED,
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED,
     IN isAscOrder BOOL
@@ -38,8 +38,8 @@ BEGIN
     WHERE (
         user_id = userID AND
         pred_id = predID AND
-        (ratingRangeLo = -32768 OR rat_val >= ratingRangeLo) AND
-        (ratingRangeHi = -32768 OR rat_val <= ratingRangeHi)
+        (ratingRangeLo = 0 OR rat_val >= ratingRangeLo) AND
+        (ratingRangeHi = 0 OR rat_val <= ratingRangeHi)
     )
     ORDER BY
         CASE WHEN isAscOrder THEN rat_val END ASC,
