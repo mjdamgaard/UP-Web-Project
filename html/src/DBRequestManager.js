@@ -18,13 +18,13 @@ export class DBRequestManager {
         let reqDataKey = JSON.stringify(reqData);
         let queryQueue = this.ongoingQueries[reqDataKey];
         if (typeof queryQueue !== "undefined") {
-            queryQueue.push([$obj, callback]);
+            queryQueue.push([$obj, callback, callbackData]);
             return;
         }
         // else initialize an ongoing query data queue, and make a $.getJSON()
         // call, which runs all the callbacks in the queue on at a time upon
         // receiving the response from the server.
-        this.ongoingQueries[reqDataKey] = [[$obj, callback]];
+        this.ongoingQueries[reqDataKey] = [[$obj, callback, callbackData]];
         let thisDBReqManager = this;
         $.getJSON("query_handler.php", reqData, function(result, textStatus) {
             // get and then delete the ongiong query queue.
@@ -35,7 +35,6 @@ export class DBRequestManager {
             // cells in the result table containing string values.
             if (
                 reqData.type !== "set" &&
-                reqData.type !== "setSK" &&
                 reqData.type !== "bin"
             ) {
                 // TODO: Investigate how jQuery's automatic JSON-parsing of the
@@ -60,6 +59,7 @@ export class DBRequestManager {
             for (let i = 0; i < queryQueue.length; i++) {
                 let $obj = queryQueue[i][0];
                 let callback = queryQueue[i][1];
+                let callbackData = queryQueue[i][2];
                 callback($obj, result, callbackData, textStatus);
             }
         });

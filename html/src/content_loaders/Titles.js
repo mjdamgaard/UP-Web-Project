@@ -38,10 +38,10 @@ termTitleCL.addCallback(function($ci, data) {
         let reqData = {
             type: "term",
             id: data.cxtID,
-        };console.log(data);
+        };
         dbReqManager.query($ci, reqData, data, function($ci, result, data) {
             data.cxtDefStr = (result[0] ?? [])[1];
-            data.cxtDefTermID = (result[0] ?? [])[2];console.log(data);
+            data.cxtDefTermID = (result[0] ?? [])[2];
             loadTermTitleHTML($ci, data);
         });
     });
