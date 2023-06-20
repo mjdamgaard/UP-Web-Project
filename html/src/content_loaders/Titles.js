@@ -19,7 +19,7 @@ export var termTitleCL = new ContentLoader(
 termTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "termID",
-    ]);debugger;
+    ]);
 });
 termTitleCL.addCallback(function($ci, data) {
     let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
@@ -38,10 +38,10 @@ termTitleCL.addCallback(function($ci, data) {
         let reqData = {
             type: "term",
             id: data.cxtID,
-        };
+        };console.log(data);
         dbReqManager.query($ci, reqData, data, function($ci, result, data) {
             data.cxtDefStr = (result[0] ?? [])[1];
-            data.cxtDefTermID = (result[0] ?? [])[2];
+            data.cxtDefTermID = (result[0] ?? [])[2];console.log(data);
             loadTermTitleHTML($ci, data);
         });
     });

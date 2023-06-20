@@ -292,7 +292,6 @@ export class ContentLoader {
     /* Semi-private methods (not meant as much for public use) */
 
     loadAndReplacePlaceholder($placeholder, parentData, returnData) {
-        console.log(this.contentKey);console.log(parentData); // (for debug.)
         parentData ??= {};
         // first insert the new CI after $placeholder.
         $placeholder.after(this.html);
@@ -376,6 +375,10 @@ export class ContentLoader {
             this.addCSSRulesToDocument(this.outwardCSSRules);
             this.outwardCSSRulesAreAdded = true;
         }
+        /* These console log calls are useful for debugging: */
+        // console.log(this.contentKey);
+        // console.log(parentData);
+        // console.log($ci);
     }
 
     loadDescendants($ci, data, childReturnData) {
