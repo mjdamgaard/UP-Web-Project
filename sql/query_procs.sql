@@ -24,22 +24,22 @@ DELIMITER //
 CREATE PROCEDURE selectInputSet (
     IN userID BIGINT UNSIGNED,
     IN predID BIGINT UNSIGNED,
-    IN ratingRangeLo VARBINARY(255),
-    IN ratingRangeHi VARBINARY(255),
+    IN ratingRangeLo SMALLINT,
+    IN ratingRangeHi SMALLINT,
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED,
     IN isAscOrder BOOL
 )
 BEGIN
     SELECT
-        CONV(rat_val, 10, 16) AS ratVal,
+        rat_val AS ratVal,
         subj_id AS subjID
     FROM SemanticInputs
     WHERE (
         user_id = userID AND
         pred_id = predID AND
-        (ratingRangeLo = "" OR rat_val >= ratingRangeLo) AND
-        (ratingRangeHi = "" OR rat_val <= ratingRangeHi)
+        (ratingRangeLo = -32768 OR rat_val >= ratingRangeLo) AND
+        (ratingRangeHi = -32768 OR rat_val <= ratingRangeHi)
     )
     ORDER BY
         CASE WHEN isAscOrder THEN rat_val END ASC,
@@ -59,7 +59,7 @@ CREATE PROCEDURE selectRating (
     IN subjID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT CONV(rat_val, 10, 16) AS ratVal
+    SELECT rat_val AS ratVal
     FROM SemanticInputs
     WHERE (
         user_id = userID AND
@@ -85,7 +85,7 @@ BEGIN
     SELECT
         user_id AS userID,
         pred_id AS predID,
-        CONV(rat_val, 10, 16) AS ratVal,
+        rat_val AS ratVal,
         subj_id AS subjID,
         changed_at AS changedAt
     FROM RecentInputs

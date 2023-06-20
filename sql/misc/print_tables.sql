@@ -21,7 +21,7 @@ SELECT "SemanticInputs:";
 SELECT
     user_id AS userID,
     pred_id AS predID,
-    CONV(rat_val, 10, 16) AS ratVal,
+    rat_val AS ratVal,
     subj_id AS subjID
 FROM SemanticInputs
 ORDER BY user_id ASC, pred_id ASC, rat_val DESC;
@@ -31,7 +31,7 @@ SELECT
     id AS id,
     user_id AS userID,
     pred_id AS predID,
-    CONV(rat_val, 10, 16) AS ratVal,
+    rat_val AS ratVal,
     subj_id AS subjID
 FROM RecentInputs
 ORDER BY user_id ASC, pred_id ASC, id ASC;
