@@ -1,6 +1,6 @@
 
 import {
-    ContentLoader,
+    ContentLoader, ChildData
 } from "/src/ContentLoader.js";
 import {
     sdbInterfaceCL,
@@ -31,6 +31,10 @@ termTitleCL.addCallback(function($ci, data) {
         data.cxtID = (result[0] ?? [])[0];
         data.defStr = (result[0] ?? [])[1];
         data.defTermID = (result[0] ?? [])[2];
+        if (!data.cxtID) {
+            loadTermTitleHTML($ci, data);
+            return;
+        }
         let reqData = {
             type: "term",
             id: data.cxtID,
@@ -46,6 +50,14 @@ termTitleCL.addCallback(function($ci, data) {
 
 export function loadTermTitleHTML($ci, data) {
     data = data ?? $ci.data("data");
+    if (!data.cxtID) {
+        if (!data.defTermID) {
+            termTitleCL.loadAppended($ci, "SimpleTitle", data);
+        } else {
+            termTitleCL.loadAppended($ci, "IllFormedTitle", data);
+        }
+        return;
+    }
     if (data.cxtDefTermID) {
         termTitleCL.loadAppended($ci, "IllFormedTitle", data);
         return;
@@ -95,7 +107,7 @@ standardTitleCL.addCallback(function($ci, data) {
     termTitleCL.loadAppended($ci, "SimpleTitle", data);
     let cxtDefStr = data.getFromAncestor("cxtDefStr");
     if (cxtDefStr) {
-        $ci.append('(<span class="cxt-title">');
+        $ci.append(' (<span class="cxt-title">');
         termTitleCL.loadAppended(
             $ci, "SimpleTitle", new ChildData(data, {
                 defStr: cxtDefStr,
@@ -113,7 +125,8 @@ export var simpleTitleCL = new ContentLoader(
     sdbInterfaceCL
 );
 simpleTitleCL.addCallback(function($ci, data) {
-    $ci.append(getReducedTitle(data.getFromAncestor("defStr")));
+    // $ci.append(getReducedTitle(data.getFromAncestor("defStr")));
+            $ci.append(data.getFromAncestor("defStr"));
     $ci.on("click", function() {
         // TODO: implement..
     })
@@ -137,7 +150,7 @@ export var templateInstanceTitleCL = new ContentLoader(
     sdbInterfaceCL
 );
 templateInstanceTitleCL.addCallback(function($ci, data) {
-    
+
 });
 
 
@@ -149,9 +162,6 @@ export var stringTitleCL = new ContentLoader(
 );
 standardTitleCL.addCallback(function($ci, data) {
     $ci.append(data.getFromAncestor("defStr").substring(1));
-    $ci.on("click", function() {
-        // TODO: implement..
-    })
 });
 
 

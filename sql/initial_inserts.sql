@@ -28,11 +28,10 @@ INSERT INTO Terms (context_id, def_str, def_term_id, id)
 VALUES
     (NULL, "Terms", NULL, 6),
     (NULL, "Predicates", NULL, 7),
-    (7, "/Adjectives and Verbs, s.", NULL, 8), -- (s.: singular)
-    (8, ":is an important/useful instance of the {$s of }the Term, {$t}", NULL, 9),
-    (NULL, "Nouns for predicate definitions", NULL, 10),
-    (NULL, "Statements", NULL, 11),
-    (11, ":$s[0] applies to $t", NULL, 12),
+    (7, ":is an important/useful instance of the {$s of }the Term, {$t}", NULL, 8),
+    (NULL, "Noun lexemes for predicate definitions", NULL, 9),
+    (NULL, "Statements", NULL, 10),
+    (10, ":$s[0] applies to $t", NULL, 11),
     -- some room for more important inserts..
     (NULL, "ExAmPlE oF a NoT vErY uSeFuL tErM", NULL, 21);
 
@@ -76,7 +75,7 @@ BEGIN
     loop1: LOOP
         IF (startTermID <= endTermID) THEN
             CALL insertOrFindTerm(
-                5, 9,
+                5, 8,
                 str,
                 startTermID
             );
@@ -89,7 +88,7 @@ BEGIN
 END //
 DELIMITER ;
 
-CALL insertOrFindTerm(5, 10, "Subcategories", 0);
+CALL insertOrFindTerm(5, 9, "Subcategories", 0);
 CALL insertPredicates("Subcategories", 6, 12);
 CALL insertPredicates("Subcategories", 22, 29);
 

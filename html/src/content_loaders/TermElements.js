@@ -13,7 +13,6 @@ export var generalTermElementCL = new ContentLoader(
     "GeneralTermElement",
     /* Initial HTML template */
     '<div>' +
-        'test..' +
         '<<TermTitle>>' +
         '<<CombinedRatingDisplay>>' +
         '<<DropdownBox>>' +

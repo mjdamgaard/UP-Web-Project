@@ -59,7 +59,7 @@ termNounPredicatePageCL.addCallback("data", function(data) {
 termNounPredicatePageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralTermElement";
     data.setDataArr = [{
-        predCxtID: 9, // ID of the ">is a useful instance of ..." Context.
+        predCxtID: 8, // ID of the ">is a useful instance of ..." Context.
         predStr: data.getFromAncestor("predNoun"),
         objID: data.getFromAncestor("termID"),
         userID: 5,
