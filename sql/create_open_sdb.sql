@@ -3,6 +3,7 @@
 -- DROP TABLE SemanticInputs;
 -- DROP TABLE PrivateRecentInputs;
 -- DROP TABLE RecentInputs;
+-- DROP TABLE Indexes;
 --
 -- /* Terms */
 -- DROP TABLE Terms;
@@ -33,7 +34,7 @@ CREATE TABLE SemanticInputs (
     /* The "input set" */
     -- given some constants for the above four columns, the input sets contains
     -- pairs of rating values and the IDs of the predicate subjects.
-    rat_val VARBINARY(255) NOT NULL,
+    rat_val SMALLINT NOT NULL,
     subj_id BIGINT UNSIGNED NOT NULL,
 
     PRIMARY KEY (
@@ -55,7 +56,7 @@ CREATE TABLE PrivateRecentInputs (
     user_id BIGINT UNSIGNED NOT NULL,
     pred_id BIGINT UNSIGNED NOT NULL,
     -- new rating value.
-    rat_val VARBINARY(255),
+    rat_val SMALLINT,
     subj_id BIGINT UNSIGNED NOT NULL,
 
     live_after TIME
@@ -69,7 +70,7 @@ CREATE TABLE RecentInputs (
     user_id BIGINT UNSIGNED NOT NULL,
     pred_id BIGINT UNSIGNED NOT NULL,
     -- new rating value.
-    rat_val VARBINARY(255),
+    rat_val SMALLINT,
     subj_id BIGINT UNSIGNED NOT NULL,
 
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -82,7 +83,7 @@ CREATE TABLE RecentInputs (
 --
 --     changed_at DATETIME,
 --
---     rat_val VARBINARY(255),
+--     rat_val SMALLINT,
 --
 --     PRIMARY KEY (
 --         user_id,
@@ -91,6 +92,29 @@ CREATE TABLE RecentInputs (
 --         changed_at
 --     )
 -- );
+
+CREATE TABLE Indexes (
+    -- user (or bot) who states the statement.
+    user_id BIGINT UNSIGNED NOT NULL,
+    -- predicate.
+    pred_id BIGINT UNSIGNED NOT NULL,
+
+    /* The "input set" */
+    -- given some constants for the above four columns, the input sets contains
+    -- pairs of rating values and the IDs of the predicate subjects.
+    subj_def_str VARCHAR(255) NOT NULL,
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (
+        user_id,
+        pred_id,
+        subj_def_str,
+        subj_id
+    ),
+
+    UNIQUE INDEX (user_id, pred_id, subj_id)
+);
+
 
 
 
