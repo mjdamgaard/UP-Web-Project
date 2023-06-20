@@ -19,7 +19,7 @@ export var termTitleCL = new ContentLoader(
 termTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "termID",
-    ]);
+    ]);debugger;
 });
 termTitleCL.addCallback(function($ci, data) {
     let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
@@ -105,14 +105,15 @@ export var standardTitleCL = new ContentLoader(
 );
 standardTitleCL.addCallback(function($ci, data) {
     termTitleCL.loadAppended($ci, "SimpleTitle", data);
-    let cxtDefStr = data.getFromAncestor("cxtDefStr");
-    if (cxtDefStr) {
+    let cxtID = data.getFromAncestor("cxtID");
+    if (cxtID) {
         $ci.append(' (<span class="cxt-title">');
         termTitleCL.loadAppended(
             $ci, "SimpleTitle", new ChildData(data, {
-                defStr: cxtDefStr,
+                defStr: data.getFromAncestor("cxtDefStr"),
                 termID: data.getFromAncestor("cxtID"),
                 cxtID: false,
+                cxtDefStr: false,
             })
         );
         $ci.append('</span>)');
@@ -160,7 +161,7 @@ export var stringTitleCL = new ContentLoader(
     '<span></span>',
     sdbInterfaceCL
 );
-standardTitleCL.addCallback(function($ci, data) {
+stringTitleCL.addCallback(function($ci, data) {
     $ci.append(data.getFromAncestor("defStr").substring(1));
 });
 

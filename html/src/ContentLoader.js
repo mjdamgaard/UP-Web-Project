@@ -154,6 +154,7 @@ export class ContentLoader {
             cl = this.getRelatedCL(contentKey);
             returnData = returnData ?? {};
         }
+        $placeholder.attr("class", "");
         cl.loadAndReplacePlaceholder($placeholder, parentData, returnData);
     }
     loadAfter($obj, contentKey, parentData, returnData) {
@@ -291,7 +292,7 @@ export class ContentLoader {
     /* Semi-private methods (not meant as much for public use) */
 
     loadAndReplacePlaceholder($placeholder, parentData, returnData) {
-        // console.log(this.contentKey);console.log(parentData); // (for debug.)
+        console.log(this.contentKey);console.log(parentData); // (for debug.)
         parentData ??= {};
         // first insert the new CI after $placeholder.
         $placeholder.after(this.html);
