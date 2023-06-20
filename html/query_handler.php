@@ -47,7 +47,7 @@ switch ($reqType) {
         );
         $typeArr = array(
             "id", "id",
-            "bin", "bin",
+            "ushort", "ushort",
             "uint", "uint",
             "tint"
         );
@@ -98,7 +98,7 @@ switch ($reqType) {
     case "textSub":
         $sql = "CALL selectTextSubstring (?, ?, ?)";
         $paramNameArr = array("id", "l", "s");
-        $typeArr = array("id", "usint", "int");
+        $typeArr = array("id", "ushort", "int");
         // output: [[text]].
         break;
     case "bin":
@@ -110,7 +110,7 @@ switch ($reqType) {
     case "binSub":
         $sql = "CALL selectBinarySubstring (?, ?, ?)";
         $paramNameArr = array("id", "l", "s");
-        $typeArr = array("id", "usint", "int");
+        $typeArr = array("id", "ushort", "int");
         // output: [[bin]].
         break;
     // case "creator":

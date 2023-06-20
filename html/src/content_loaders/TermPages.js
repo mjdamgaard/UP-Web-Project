@@ -67,15 +67,14 @@ termNounPredicatePageCL.addCallback("data", function(data) {
         ratTransFun: getStandardScore,
         queryParams: {
             num: 4000,
-            ratingLo: "",
-            ratingHi: "",
+            ratingLo: 0,
+            ratingHi: 0,
         },
     }];
     data.initialNum = 50;
     data.incrementNum = 25;
 });
 
-export function getStandardScore(ratValHex) {
-    let num = parseInt(ratValHex.substring(0, 4), 16);
-    return (ratValHex.length <= 2) ? num / 25.5 : num / 6553.5;
+export function getStandardScore(ratVal) {
+    return ratVal / 6553.5;
 }

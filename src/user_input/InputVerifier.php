@@ -32,13 +32,13 @@ class InputVerifier {
             //         echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
             //     }
             //     break;
-            case "bin":
-                if (strlen($paramVal) > 255) {
-                    echoTypeErrorJSONAndExit(
-                        $paramName, "0x" . bin2hex($paramVal), "VARBINARY(255)"
-                    );
-                }
-                break;
+            // case "bin":
+            //     if (strlen($paramVal) > 255) {
+            //         echoTypeErrorJSONAndExit(
+            //             $paramName, "0x" . bin2hex($paramVal), "VARBINARY(255)"
+            //         );
+            //     }
+            //     break;
             case "id":
                 $pattern = "/^[1-9][0-9]*|0$/";
                 if (
@@ -86,7 +86,7 @@ class InputVerifier {
             //         echoTypeErrorJSONAndExit($paramName, $paramVal, "SMALLINT");
             //     }
             //     break;
-            case "usint":
+            case "ushort":
                 $pattern = "/^[1-9][0-9]{0,4}|0$/";
                 $n = intval($paramVal);
                 if (

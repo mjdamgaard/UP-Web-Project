@@ -98,19 +98,19 @@ CALL insertPredicates("Subcategories", 22, 29);
 -- rate some statements.
 
 
-CALL inputOrChangeRating(5, 35, 22, CONV("FF", 16, 10), "00");
+CALL inputOrChangeRating(5, 35, 22, CONV("FFFF", 16, 10), "00");
 CALL inputOrChangeRating(5, 35, 23, CONV("F030", 16, 10), "00");
 CALL inputOrChangeRating(5, 35, 24, CONV("A130", 16, 10), "00");
-CALL inputOrChangeRating(5, 35, 25, CONV("A0", 16, 10), "00");
+CALL inputOrChangeRating(5, 35, 25, CONV("A000", 16, 10), "00");
 CALL inputOrChangeRating(5, 35, 21, CONV("0103", 16, 10), "00");
 
-CALL inputOrChangeRating(5, 43, 24, CONV("E1", 16, 10), "00");
-CALL inputOrChangeRating(5, 43, 25, CONV("E0", 16, 10), "00");
-CALL inputOrChangeRating(5, 43, 26, CONV("E0", 16, 10), "00");
-CALL inputOrChangeRating(5, 43, 21, CONV("00", 16, 10), "00");
-CALL inputOrChangeRating(5, 43, 30, CONV("F0", 16, 10), "00");
+CALL inputOrChangeRating(5, 43, 24, CONV("E100", 16, 10), "00");
+CALL inputOrChangeRating(5, 43, 25, CONV("E000", 16, 10), "00");
+CALL inputOrChangeRating(5, 43, 26, CONV("E000", 16, 10), "00");
+CALL inputOrChangeRating(5, 43, 21, CONV("0001", 16, 10), "00");
+CALL inputOrChangeRating(5, 43, 30, CONV("F000", 16, 10), "00");
 
-CALL inputOrChangeRating(5, 42, 30, CONV("F0", 16, 10), "00");
+CALL inputOrChangeRating(5, 42, 30, CONV("F000", 16, 10), "00");
 
 
 
