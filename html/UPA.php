@@ -40,10 +40,10 @@ if (!isset($_POST["t"])) {
     $_POST["t"] = "6";
 }
 if (!isset($_POST["qu"])) {
-    $_POST["qu"] = "5";
+    $_POST["qu"] = "4";
 }
 if (!isset($_POST["iu"])) {
-    $_POST["iu"] = "5";
+    $_POST["iu"] = "4";
 }
 
 // get and verify the required inputs.

@@ -18,22 +18,23 @@ DELETE FROM PrivateCreators;
 /* From create_open_sdb.sql */
 INSERT INTO Terms (context_id, def_str, def_term_id, id)
 VALUES
-    (NULL, "Data and users of the SDB", NULL, 1),
-    (1, "Users", NULL, 2),
-    (1, "Texts", NULL, 3),
-    (1, "Binaries", NULL, 4),
-    (2, "admin_1", NULL, 5);
+    (NULL, "Contexts", NULL, 1),
+    (1, "{Data} and users of the SDB", NULL, 2),
+    (1, "Users", 2, 3),
+    (2, "admin_1", 3, 4),
+    (1, "Texts", 2, 5),
+    (1, "Binaries", 2, 6);
 INSERT INTO Users (username, id)
-VALUES ("admin_1", 5);
+VALUES ("admin_1", 4);
 
 /* Some other important initial inserts */
 INSERT INTO Terms (context_id, def_str, def_term_id, id)
 VALUES
-    (NULL, "Terms", NULL, 6),
-    (NULL, "Predicates", NULL, 7),
-    (7, ":is an important/useful instance of the {$s of }the Term, {$t}", NULL, 8),
-    (NULL, "Statements", NULL, 9),
-    (9, ":$s[0] applies to $t", NULL, 10),
+    (NULL, "Terms", NULL, 7),
+    (1, "Predicates", NULL, 8),
+    (1, ":is an important/useful instance of the {$s of }the Term, {$t}", 8, 9),
+    (1, "Statements", NULL, 10),
+    (1, ":$r applies to $t", 10, 11),
     -- some room for more important inserts..
     (NULL, "ExAmPlE oF a NoT vErY uSeFuL tErM", NULL, 21);
 

@@ -48,6 +48,11 @@ switch ($reqType) {
         $paramNameArr = array("u", "c", "s", "t");
         $typeArr = array("id", "id", "str", "id");
         break;
+    case "cxt":
+        $sql = "CALL insertOrFindContext (?, ?, ?)";
+        $paramNameArr = array("u", "p", "s");
+        $typeArr = array("id", "id", "str");
+        break;
     case "text":
         $sql = "CALL insertText (?, ?)";
         $paramNameArr = array("u", "s");

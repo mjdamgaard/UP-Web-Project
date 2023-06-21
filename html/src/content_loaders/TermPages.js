@@ -62,7 +62,7 @@ termNounPredicatePageCL.addCallback("data", function(data) {
         predCxtID: 8, // ID of the ">is a useful instance of ..." Context.
         predStr: data.getFromAncestor("predNoun"),
         objID: data.getFromAncestor("termID"),
-        userID: 5,
+        userID: 4,
         weight: 1,
         ratTransFun: getStandardScore,
         queryParams: {

@@ -7,6 +7,8 @@ SELECT "Query procedures";
 --
 -- DROP PROCEDURE selectTerm;
 -- DROP PROCEDURE selectTermID;
+-- DROP PROCEDURE selectContext;
+-- DROP PROCEDURE selectContextID;
 --
 -- DROP PROCEDURE selectUsername;
 -- DROP PROCEDURE selectUserInfo;
@@ -115,8 +117,6 @@ END //
 DELIMITER ;
 
 
-
-
 DELIMITER //
 CREATE PROCEDURE selectTermID (
     IN cxtID BIGINT UNSIGNED,
@@ -136,6 +136,42 @@ BEGIN
     WHERE (
         context_id <=> cxtID AND
         def_term_id <=> defTermID AND
+        def_str = defStr
+    );
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectContext (
+    IN cxtID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT
+        def_term_id AS parentCxtID,
+        def_str AS defStr
+    FROM Terms
+    WHERE (id = cxtID AND context_id = 1);
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectContextID (
+    IN parentCxtID BIGINT UNSIGNED,
+    IN defStr VARCHAR(255)
+)
+BEGIN
+    IF (parentCxtID = 0) THEN
+        SET parentCxtID = NULL;
+    END IF;
+
+    SELECT id AS termID
+    FROM Terms
+    WHERE (
+        context_id = 1 AND
+        def_term_id <=> parentCxtID AND
         def_str = defStr
     );
 END //

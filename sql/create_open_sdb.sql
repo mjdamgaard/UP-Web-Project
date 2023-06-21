@@ -145,11 +145,12 @@ CREATE TABLE Terms (
 
 INSERT INTO Terms (context_id, def_str, def_term_id, id)
 VALUES
-    (NULL, "Data and users of the SDB", NULL, 1),
-    (1, "Users", NULL, 2),
-    (1, "Texts", NULL, 3),
-    (1, "Binaries", NULL, 4),
-    (2, "admin_1", NULL, 5);
+    (NULL, "Contexts", NULL, 1),
+    (1, "Data and users of the SDB", NULL, 2),
+    (1, "Users", 2, 3),
+    (2, "admin_1", 3, 4),
+    (1, "Texts", 2, 5),
+    (1, "Binaries", 2, 6);
 
 
 
@@ -175,7 +176,7 @@ CREATE TABLE Users (
 );
 
 INSERT INTO Users (username, id)
-VALUES ("admin_1", 5);
+VALUES ("admin_1", 4);
 
 
 

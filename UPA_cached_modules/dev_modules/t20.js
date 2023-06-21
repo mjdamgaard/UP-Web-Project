@@ -17,7 +17,7 @@ import * as t19Mod from "/UPA_scripts.php?id=19";
 
 
 export function upa_main(termID, queryUserID, inputUserID) {
-    if (queryUserID !== "5") {
+    if (queryUserID !== "4") {
         throw "Unrecognized query user";
     }
 
@@ -25,7 +25,7 @@ export function upa_main(termID, queryUserID, inputUserID) {
         termID: termID,
         queryUserID: queryUserID,
         inputUserID: inputUserID,
-        defaultUserWeightArr: [{userID: 5, weight: 1}],
+        defaultUserWeightArr: [{userID: 4, weight: 1}],
         cl: sdbInterfaceCL.getRelatedCL("TermPage"),
     };
     let contentKey = sdbInterfaceCL.contentKey;
