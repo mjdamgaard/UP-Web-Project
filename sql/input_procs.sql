@@ -156,49 +156,49 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE insertOrFindContext (
-    IN userID BIGINT UNSIGNED,
-    IN parentCxtID BIGINT UNSIGNED,
-    IN defStr VARCHAR(255)
-)
-BEGIN
-    DECLARE outID BIGINT UNSIGNED;
-    DECLARE exitCode TINYINT;
-
-    IF (parentCxtID = 0) THEN
-        SET parentCxtID = NULL;
-    END IF;
-
-    SELECT id INTO outID
-    FROM Terms
-    WHERE (
-        context_id = 1 AND
-        def_term_id <=> parentCxtID AND
-        def_str = defStr
-    );
-    IF (outID IS NOT NULL) THEN
-        SET exitCode = 1; -- find.
-    ELSEIF (parentCxtID IS NOT NULL) THEN
-        SELECT context_id INTO outID -- temporary value.
-        FROM Terms
-        WHERE id = parentCxtID;
-        IF (outID != 1) THEN
-            SET exitCode = 2; -- parentCxtID is not the ID of a Context Term.
-        END IF;
-    END IF;
-
-    IF (exitCode IS NULL) THEN
-        INSERT INTO Terms (context_id, def_str, def_term_id)
-        VALUES (1, defStr, parentCxtID);
-        SELECT LAST_INSERT_ID() INTO outID;
-        INSERT INTO PrivateCreators (term_id, user_id)
-        VALUES (outID, userID);
-        SET exitCode = 0; -- insert.
-    END IF;
-    SELECT outID, exitCode;
-END //
-DELIMITER ;
+-- DELIMITER //
+-- CREATE PROCEDURE insertOrFindContext (
+--     IN userID BIGINT UNSIGNED,
+--     IN parentCxtID BIGINT UNSIGNED,
+--     IN defStr VARCHAR(255)
+-- )
+-- BEGIN
+--     DECLARE outID BIGINT UNSIGNED;
+--     DECLARE exitCode TINYINT;
+--
+--     IF (parentCxtID = 0) THEN
+--         SET parentCxtID = NULL;
+--     END IF;
+--
+--     SELECT id INTO outID
+--     FROM Terms
+--     WHERE (
+--         context_id = 1 AND
+--         def_term_id <=> parentCxtID AND
+--         def_str = defStr
+--     );
+--     IF (outID IS NOT NULL) THEN
+--         SET exitCode = 1; -- find.
+--     ELSEIF (parentCxtID IS NOT NULL) THEN
+--         SELECT context_id INTO outID -- temporary value.
+--         FROM Terms
+--         WHERE id = parentCxtID;
+--         IF (outID != 1) THEN
+--             SET exitCode = 2; -- parentCxtID is not the ID of a Context Term.
+--         END IF;
+--     END IF;
+--
+--     IF (exitCode IS NULL) THEN
+--         INSERT INTO Terms (context_id, def_str, def_term_id)
+--         VALUES (1, defStr, parentCxtID);
+--         SELECT LAST_INSERT_ID() INTO outID;
+--         INSERT INTO PrivateCreators (term_id, user_id)
+--         VALUES (outID, userID);
+--         SET exitCode = 0; -- insert.
+--     END IF;
+--     SELECT outID, exitCode;
+-- END //
+-- DELIMITER ;
 
 
 
@@ -216,7 +216,7 @@ BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
     INSERT INTO Terms (context_id, def_str, def_term_id)
-    VALUES (3, username, NULL);
+    VALUES (2, username, NULL);
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Users (id, username)
     VALUES (outID, username);

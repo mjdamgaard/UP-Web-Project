@@ -18,23 +18,22 @@ DELETE FROM PrivateCreators;
 /* From create_open_sdb.sql */
 INSERT INTO Terms (context_id, def_str, def_term_id, id)
 VALUES
-    (NULL, "Contexts", NULL, 1),
-    (1, "{Data} and users of the SDB", NULL, 2),
-    (1, "Users", 2, 3),
-    (2, "admin_1", 3, 4),
-    (1, "Texts", 2, 5),
-    (1, "Binaries", 2, 6);
+    (NULL, "{Data} and users of the SDB", NULL, 1),
+    (1, "Users", NULL, 2),
+    (2, "admin_1", NULL, 3),
+    (1, "Texts", NULL, 4),
+    (1, "Binaries", NULL, 5);
 INSERT INTO Users (username, id)
-VALUES ("admin_1", 4);
+VALUES ("admin_1", 3);
 
 /* Some other important initial inserts */
 INSERT INTO Terms (context_id, def_str, def_term_id, id)
 VALUES
-    (NULL, "Terms", NULL, 7),
-    (1, "Predicates", NULL, 8),
-    (1, ":is an important/useful instance of the {$s of }the Term, {$t}", 8, 9),
-    (1, "Statements", NULL, 10),
-    (1, ":$r applies to $t", 10, 11),
+    (NULL, "Terms", NULL, 6),
+    (NULL, "Predicates", NULL, 7),
+    (7, ":is an important/useful instance of the {$s of }the Term, {$t}", NULL, 8),
+    (NULL, "Statements", NULL, 9),
+    (9, ":$r applies to $t", NULL, 10),
     -- some room for more important inserts..
     (NULL, "ExAmPlE oF a NoT vErY uSeFuL tErM", NULL, 21);
 
@@ -42,25 +41,25 @@ VALUES
 
 /* More inserts for testing */
 
-CALL insertOrFindTerm(4, 0, "Science", 0); -- id: 22
-CALL insertOrFindTerm(4, 0, "Music", 0); -- id: 23
--- CALL insertOrFindTerm(4, 0, "{Rock} (musical genre)", 0); -- id: 24
-CALL insertOrFindTerm(4, 23, "Rock", 0); -- id: 24
-CALL insertOrFindTerm(4, 23, "Jazz", 0); -- id: 25
-CALL insertOrFindTerm(4, 23, "Hip hop", 0); -- id: 26
+CALL insertOrFindTerm(3, 0, "Science", 0); -- id: 22
+CALL insertOrFindTerm(3, 0, "Music", 0); -- id: 23
+-- CALL insertOrFindTerm(3, 0, "{Rock} (musical genre)", 0); -- id: 24
+CALL insertOrFindTerm(3, 23, "Rock", 0); -- id: 24
+CALL insertOrFindTerm(3, 23, "Jazz", 0); -- id: 25
+CALL insertOrFindTerm(3, 23, "Hip hop", 0); -- id: 26
 
-CALL insertOrFindContext(4, 0, "Movies", 0); -- id: 27
-CALL insertOrFindTerm(4, 27,
+CALL insertOrFindTerm(3, 0, "Movies", 0); -- id: 27
+CALL insertOrFindTerm(3, 27,
     "The Lord of the Rings: The Fellowship of the Ring (2001)", 0
 );-- id: 28
-CALL insertOrFindTerm(4, 27,
+CALL insertOrFindTerm(3, 27,
     "The Lord of the Rings: The Two Towers (2002)", 0
 ); -- id: 29
 
-CALL insertOrFindTerm(4, 22, "Music", 0); -- id: 30
-CALL insertOrFindTerm(4, 22, "Cinematography", 0); -- id: 31
-CALL insertOrFindTerm(4, 22, "Physics", 0); -- id: 32
-CALL insertOrFindTerm(4, 22, "Mathematics", 0); -- id: 33
+CALL insertOrFindTerm(3, 22, "Music", 0); -- id: 30
+CALL insertOrFindTerm(3, 22, "Cinematography", 0); -- id: 31
+CALL insertOrFindTerm(3, 22, "Physics", 0); -- id: 32
+CALL insertOrFindTerm(3, 22, "Mathematics", 0); -- id: 33
 
 
 
@@ -78,7 +77,7 @@ BEGIN
     loop1: LOOP
         IF (startTermID <= endTermID) THEN
             CALL insertOrFindTerm(
-                4, 9,
+                3, 8,
                 str,
                 startTermID
             );
@@ -91,26 +90,26 @@ BEGIN
 END //
 DELIMITER ;
 
-CALL insertOrFindTerm(4, 0, "Subcategories", 0);
+CALL insertOrFindTerm(3, NULL, "Subcategories", 0);
 CALL insertPredicates("Subcategories", 6, 12);
 CALL insertPredicates("Subcategories", 22, 29);
 
 -- rate some statements.
 
 
-CALL inputOrChangeRating(4, 35, 22, CONV("FFFF", 16, 10), "00");
-CALL inputOrChangeRating(4, 35, 23, CONV("F030", 16, 10), "00");
-CALL inputOrChangeRating(4, 35, 24, CONV("A130", 16, 10), "00");
-CALL inputOrChangeRating(4, 35, 25, CONV("A000", 16, 10), "00");
-CALL inputOrChangeRating(4, 35, 21, CONV("0103", 16, 10), "00");
+CALL inputOrChangeRating(3, 35, 22, CONV("FFFF", 16, 10), "00");
+CALL inputOrChangeRating(3, 35, 23, CONV("F030", 16, 10), "00");
+CALL inputOrChangeRating(3, 35, 24, CONV("A130", 16, 10), "00");
+CALL inputOrChangeRating(3, 35, 25, CONV("A000", 16, 10), "00");
+CALL inputOrChangeRating(3, 35, 21, CONV("0103", 16, 10), "00");
 
-CALL inputOrChangeRating(4, 43, 24, CONV("E100", 16, 10), "00");
-CALL inputOrChangeRating(4, 43, 25, CONV("E000", 16, 10), "00");
-CALL inputOrChangeRating(4, 43, 26, CONV("E000", 16, 10), "00");
-CALL inputOrChangeRating(4, 43, 21, CONV("0001", 16, 10), "00");
-CALL inputOrChangeRating(4, 43, 30, CONV("F000", 16, 10), "00");
+CALL inputOrChangeRating(3, 43, 24, CONV("E100", 16, 10), "00");
+CALL inputOrChangeRating(3, 43, 25, CONV("E000", 16, 10), "00");
+CALL inputOrChangeRating(3, 43, 26, CONV("E000", 16, 10), "00");
+CALL inputOrChangeRating(3, 43, 21, CONV("0001", 16, 10), "00");
+CALL inputOrChangeRating(3, 43, 30, CONV("F000", 16, 10), "00");
 
-CALL inputOrChangeRating(4, 42, 30, CONV("F000", 16, 10), "00");
+CALL inputOrChangeRating(3, 42, 30, CONV("F000", 16, 10), "00");
 
 
 
