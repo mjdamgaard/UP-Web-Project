@@ -47,7 +47,7 @@ CREATE TABLE SemanticInputs (
     UNIQUE INDEX (user_id, pred_id, subj_id)
 );
 -- TODO: Compress this table and its sec. index, as well as some other tables
--- below. (But compression is a must for this table.)
+-- and sec. indexes below. (But compression is a must for this table.)
 
 
 CREATE TABLE PrivateRecentInputs (
@@ -129,10 +129,7 @@ CREATE TABLE Terms (
     -- interpreted.
     context_id BIGINT UNSIGNED,
 
-
-    -- defining string of the term.
-    def_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-    -- the specifying entity (nullable), which can define the term more than
+    -- the defining term (nullable), which can define the term more than
     -- just the context and the def_str does (useful for specifying instances of
     -- very broad classes of objects, such as texts, images, comments, and so
     -- on, where it is hard to specify the objects using contexts alone).
@@ -140,8 +137,10 @@ CREATE TABLE Terms (
     -- predicates from relation--object pairs, which is of course a central
     -- usage in a semantic system: implementing relations.
     def_term_id BIGINT UNSIGNED,
+    -- defining string of the term.
+    def_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
-    UNIQUE INDEX (context_id, def_str, def_term_id)
+    UNIQUE INDEX (context_id, def_term_id, def_str)
 );
 
 INSERT INTO Terms (context_id, def_str, def_term_id, id)

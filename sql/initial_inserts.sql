@@ -18,10 +18,10 @@ DELETE FROM PrivateCreators;
 /* From create_open_sdb.sql */
 INSERT INTO Terms (context_id, def_str, def_term_id, id)
 VALUES
-    (NULL, "{Data} and users of the SDB", NULL, 1),
-    (1, "/Users", NULL, 2),
-    (1, "/Texts", NULL, 3),
-    (1, "/Binaries", NULL, 4),
+    (NULL, "Data and users of the SDB", NULL, 1),
+    (1, "Users", NULL, 2),
+    (1, "Texts", NULL, 3),
+    (1, "Binaries", NULL, 4),
     (2, "admin_1", NULL, 5);
 INSERT INTO Users (username, id)
 VALUES ("admin_1", 5);
@@ -32,9 +32,8 @@ VALUES
     (NULL, "Terms", NULL, 6),
     (NULL, "Predicates", NULL, 7),
     (7, ":is an important/useful instance of the {$s of }the Term, {$t}", NULL, 8),
-    (NULL, "Noun lexemes for predicate definitions", NULL, 9),
-    (NULL, "Statements", NULL, 10),
-    (10, ":$s[0] applies to $t", NULL, 11),
+    (NULL, "Statements", NULL, 9),
+    (9, ":$s[0] applies to $t", NULL, 10),
     -- some room for more important inserts..
     (NULL, "ExAmPlE oF a NoT vErY uSeFuL tErM", NULL, 21);
 
@@ -51,10 +50,10 @@ CALL insertOrFindTerm(5, 23, "Hip hop", 0); -- id: 26
 
 CALL insertOrFindTerm(5, 0, "Movies", 0); -- id: 27
 CALL insertOrFindTerm(5, 27,
-    "{The Lord of the Rings: The Fellowship of the Ring} (2001)", 0
+    "The Lord of the Rings: The Fellowship of the Ring (2001)", 0
 );-- id: 28
 CALL insertOrFindTerm(5, 27,
-    "{The Lord of the Rings: The Two Towers} (2002)", 0
+    "The Lord of the Rings: The Two Towers (2002)", 0
 ); -- id: 29
 
 CALL insertOrFindTerm(5, 22, "Music", 0); -- id: 30
@@ -91,7 +90,7 @@ BEGIN
 END //
 DELIMITER ;
 
-CALL insertOrFindTerm(5, 9, "Subcategories", 0);
+CALL insertOrFindTerm(5, NULL, "Subcategories", 0);
 CALL insertPredicates("Subcategories", 6, 12);
 CALL insertPredicates("Subcategories", 22, 29);
 

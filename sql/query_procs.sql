@@ -135,8 +135,8 @@ BEGIN
     FROM Terms
     WHERE (
         context_id <=> cxtID AND
-        def_str = defStr AND
-        def_term_id <=> defTermID
+        def_term_id <=> defTermID AND
+        def_str = defStr
     );
 END //
 DELIMITER ;
