@@ -42,25 +42,25 @@ VALUES
 
 /* More inserts for testing */
 
-CALL insertOrFindTerm(5, 0, "Science", 0); -- id: 22
-CALL insertOrFindTerm(5, 0, "Music", 0); -- id: 23
--- CALL insertOrFindTerm(5, 0, "{Rock} (musical genre)", 0); -- id: 24
-CALL insertOrFindTerm(5, 23, "Rock", 0); -- id: 24
-CALL insertOrFindTerm(5, 23, "Jazz", 0); -- id: 25
-CALL insertOrFindTerm(5, 23, "Hip hop", 0); -- id: 26
+CALL insertOrFindTerm(4, 0, "Science", 0); -- id: 22
+CALL insertOrFindTerm(4, 0, "Music", 0); -- id: 23
+-- CALL insertOrFindTerm(4, 0, "{Rock} (musical genre)", 0); -- id: 24
+CALL insertOrFindTerm(4, 23, "Rock", 0); -- id: 24
+CALL insertOrFindTerm(4, 23, "Jazz", 0); -- id: 25
+CALL insertOrFindTerm(4, 23, "Hip hop", 0); -- id: 26
 
-CALL insertOrFindTerm(5, 0, "Movies", 0); -- id: 27
-CALL insertOrFindTerm(5, 27,
+CALL insertOrFindContext(4, 0, "Movies", 0); -- id: 27
+CALL insertOrFindTerm(4, 27,
     "The Lord of the Rings: The Fellowship of the Ring (2001)", 0
 );-- id: 28
-CALL insertOrFindTerm(5, 27,
+CALL insertOrFindTerm(4, 27,
     "The Lord of the Rings: The Two Towers (2002)", 0
 ); -- id: 29
 
-CALL insertOrFindTerm(5, 22, "Music", 0); -- id: 30
-CALL insertOrFindTerm(5, 22, "Cinematography", 0); -- id: 31
-CALL insertOrFindTerm(5, 22, "Physics", 0); -- id: 32
-CALL insertOrFindTerm(5, 22, "Mathematics", 0); -- id: 33
+CALL insertOrFindTerm(4, 22, "Music", 0); -- id: 30
+CALL insertOrFindTerm(4, 22, "Cinematography", 0); -- id: 31
+CALL insertOrFindTerm(4, 22, "Physics", 0); -- id: 32
+CALL insertOrFindTerm(4, 22, "Mathematics", 0); -- id: 33
 
 
 
@@ -78,7 +78,7 @@ BEGIN
     loop1: LOOP
         IF (startTermID <= endTermID) THEN
             CALL insertOrFindTerm(
-                5, 8,
+                4, 9,
                 str,
                 startTermID
             );
@@ -91,26 +91,26 @@ BEGIN
 END //
 DELIMITER ;
 
-CALL insertOrFindTerm(5, NULL, "Subcategories", 0);
+CALL insertOrFindTerm(4, 0, "Subcategories", 0);
 CALL insertPredicates("Subcategories", 6, 12);
 CALL insertPredicates("Subcategories", 22, 29);
 
 -- rate some statements.
 
 
-CALL inputOrChangeRating(5, 35, 22, CONV("FFFF", 16, 10), "00");
-CALL inputOrChangeRating(5, 35, 23, CONV("F030", 16, 10), "00");
-CALL inputOrChangeRating(5, 35, 24, CONV("A130", 16, 10), "00");
-CALL inputOrChangeRating(5, 35, 25, CONV("A000", 16, 10), "00");
-CALL inputOrChangeRating(5, 35, 21, CONV("0103", 16, 10), "00");
+CALL inputOrChangeRating(4, 35, 22, CONV("FFFF", 16, 10), "00");
+CALL inputOrChangeRating(4, 35, 23, CONV("F030", 16, 10), "00");
+CALL inputOrChangeRating(4, 35, 24, CONV("A130", 16, 10), "00");
+CALL inputOrChangeRating(4, 35, 25, CONV("A000", 16, 10), "00");
+CALL inputOrChangeRating(4, 35, 21, CONV("0103", 16, 10), "00");
 
-CALL inputOrChangeRating(5, 43, 24, CONV("E100", 16, 10), "00");
-CALL inputOrChangeRating(5, 43, 25, CONV("E000", 16, 10), "00");
-CALL inputOrChangeRating(5, 43, 26, CONV("E000", 16, 10), "00");
-CALL inputOrChangeRating(5, 43, 21, CONV("0001", 16, 10), "00");
-CALL inputOrChangeRating(5, 43, 30, CONV("F000", 16, 10), "00");
+CALL inputOrChangeRating(4, 43, 24, CONV("E100", 16, 10), "00");
+CALL inputOrChangeRating(4, 43, 25, CONV("E000", 16, 10), "00");
+CALL inputOrChangeRating(4, 43, 26, CONV("E000", 16, 10), "00");
+CALL inputOrChangeRating(4, 43, 21, CONV("0001", 16, 10), "00");
+CALL inputOrChangeRating(4, 43, 30, CONV("F000", 16, 10), "00");
 
-CALL inputOrChangeRating(5, 42, 30, CONV("F000", 16, 10), "00");
+CALL inputOrChangeRating(4, 42, 30, CONV("F000", 16, 10), "00");
 
 
 
