@@ -17,7 +17,9 @@ export var sdbInterfaceCL = new ContentLoader(
         '<<ColumnInterfaceHeader>>' +
         '<main>' +
             '<div class="left-margin"></div>' +
-            '<<AppColumn>>' +
+            '<div class="app-column-container">' +
+                '<<AppColumn>>' +
+            '</div>' +
             '<div class="right-margin"></div>' +
         '</main>' +
     '</div>',

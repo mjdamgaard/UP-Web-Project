@@ -31,14 +31,15 @@ columnInterfaceHeaderCL.addCSS(
 sdbInterfaceCL.addCSS(
     '& main {' +
         'display: grid;' +
-        'grid-template-columns: 30px auto 30px;' +
+        'grid-template-columns: 60px auto 60px;' +
         'grid-template-rows: auto;' +
     '}'
 );
 sdbInterfaceCL.addCSS(
     '& .app-column-container {' +
-        'display: flex;' +
-        'flex-direction: column;' +
+        'display: grid;' +
+        'grid-template-columns: auto auto;' +
+        'grid-template-rows: auto;' +
         'overflow-x: auto;' +
         'overflow-y: hidden;' +
         'white-space: nowrap;' +
@@ -46,12 +47,12 @@ sdbInterfaceCL.addCSS(
     '}'
 );
 appColumnCL.addCSS(
-    'flex-grow: 1;' +
+    // 'flex-grow: 1;' +
     'overflow: initial;' +
     'white-space: initial;' +
     'display: inline-block;' +
     'margin: 0px 10px;' +
-    'width: 600px;' +
+    // 'width: 600px;' +
     'border: 1px solid #DDD;' +
     'border-radius: 8px;' +
     'background-color: #FFF;' +

@@ -96,8 +96,9 @@ simpleTitleCL.addCallback(function($ci, data) {
     $ci.addClass("clickable-text text-primary");
     $ci.append(data.getFromAncestor("defStr"));
     $ci.on("click", function() {
+        data.cl = sdbInterfaceCL.getRelatedCL("TermPage");
         $(this).trigger("open-column", [
-            "TermPage", data, "right"
+            "AppColumn", data, "right"
         ]);
         return false;
     })
@@ -113,8 +114,9 @@ termIDTitleCL.addCallback(function($ci, data) {
     $ci.addClass("clickable-text text-primary");
     $ci.append(data.getFromAncestor("termID"));
     $ci.on("click", function() {
+        data.cl = sdbInterfaceCL.getRelatedCL("TermPage");
         $(this).trigger("open-column", [
-            "TermPage", data, "right"
+            "AppColumn", data, "right"
         ]);
         return false;
     })
