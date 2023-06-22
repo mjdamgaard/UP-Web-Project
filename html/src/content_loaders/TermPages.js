@@ -15,33 +15,51 @@ export var termPageCL = new ContentLoader(
     /* Initial HTML template */
     '<div>' +
         '<h3><<TermTitle>></h3>' +
-         "<<PagesWithTabs>>" +
+         "<<PagesWithTabs data:wait>>" +
      '</div>',
     sdbInterfaceCL
 );
 termPageCL.addCallback("data", function(data) {
-    data.tabAndPageDataArr = [
-        ["Info", "TermInfoPage", {}],
-        ["Ratings", "TermRatingsPage", {}],
-        ["Subcategories", "TermNounPredicatePage", {
-            predNoun: "Subcategories",
-        }],
-        ["Applies to", "TermAppliesToPage", {}],
-        ["Related to", "TermNounPredicatePage", {
-            predNoun: "Related terms",
-        }],
-        ["Supercategories", "TermNounPredicatePage", {
-            predNoun: "Supercategories",
-        }],
-        ["Context", "TermContextPage", {}],
-        // TODO: Implement the following two tabs as well.
-        // ["Comments", "TermCommentsPage", {}],
-        // ["Discussions", "TermDiscussionsPage", {}],
-    ];
-    data.defaultTab = data.getFromAncestor("defaultTab", 1) ?? "Applies to";
+    data.copyFromAncestor([
+        "termID",
+    ]);
 });
-
-
+termPageCL.addCallback(function($ci, data) {
+    let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
+    let reqData = {
+        type: "term",
+        id: data.termID,
+    };
+    let $this = $(this);
+    dbReqManager.query($ci, reqData, data, function($ci, result, data) {
+        data.cxtID = (result[0] ?? [])[0];
+        if (!data.cxtID || data.cxtID > 5) {
+            data.tabAndPageDataArr = [
+                ["Info", "TermInfoPage", {}],
+                ["Ratings", "TermRatingsPage", {}],
+                ["Subcategories", "TermNounPredicatePage", {
+                    predNoun: "Subcategories",
+                }],
+                ["Applies to", "TermAppliesToPage", {}],
+                ["Related to", "TermNounPredicatePage", {
+                    predNoun: "Related terms",
+                }],
+                ["Supercategories", "TermNounPredicatePage", {
+                    predNoun: "Supercategories",
+                }],
+                ["Context", "TermContextPage", {}],
+                // TODO: Implement the following two tabs as well.
+                // ["Comments", "TermCommentsPage", {}],
+                // ["Discussions", "TermDiscussionsPage", {}],
+            ];
+            data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
+                "Subcategories";
+            $ci.children('.CI.PagesWithTabs').trigger("load");
+            return;
+        }
+        // TODO: Implement other cases.
+    });
+});
 
 
 export var termNounPredicatePageCL = new ContentLoader(

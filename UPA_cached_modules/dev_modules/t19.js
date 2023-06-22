@@ -59,8 +59,8 @@ appColumnCL.addCSS(
 );
 closeButtonCL.addCSS(
     'padding: 0px 4px;' +
-    'position: relative;' +
-    'z-index: 2;' +
+    // 'position: relative;' +
+    // 'z-index: 2;' +
     ''
 );
 tabHeaderCL.addCSS(

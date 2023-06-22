@@ -45,7 +45,6 @@ termTitleCL.addCallback(function($ci, data) {
             loadTermTitleHTML($ci, data);
         });
     });
-    return false;
 });
 
 export function loadTermTitleHTML($ci, data) {
@@ -139,6 +138,7 @@ templateInstanceTitleCL.addCallback(function($ci, data) {
         templateInstanceTitleCL.loadReplaced($ci, "SimpleTitle", data);
     });
     $ci.find('.def-term').first(function() {
+        let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
         let reqData = {
             type: "term",
             id: data.defTermID,
@@ -168,6 +168,7 @@ templateInstanceTitleCL.addCallback(function($ci, data) {
             }
             idArr = data.defStr.split(',');
         }
+        let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
         let reqData = {
             type: "term",
             id: idArr[n],
@@ -213,5 +214,5 @@ export var userTitleCL = new ContentLoader(
     '<<EntityTitle>>', // TODO: change to look up the username.
     sdbInterfaceCL
 );
-
-//
+// TODO: Implement to fetch and display the username (perhaps like:
+// "User: username (id)").
