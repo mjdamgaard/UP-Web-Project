@@ -33,7 +33,7 @@ VALUES
     (NULL, "Predicates", NULL, 7),
     (7, ":is an important/useful instance of the {$s of }the Term, {$t}", NULL, 8),
     (NULL, "Statements", NULL, 9),
-    (9, ":$r applies to $t", NULL, 10),
+    (9, ":$l[0] applies to $t", NULL, 10),
     -- some room for more important inserts..
     (NULL, "ExAmPlE oF a NoT vErY uSeFuL tErM", NULL, 21);
 
@@ -43,7 +43,6 @@ VALUES
 
 CALL insertOrFindTerm(3, 0, "Science", 0); -- id: 22
 CALL insertOrFindTerm(3, 0, "Music", 0); -- id: 23
--- CALL insertOrFindTerm(3, 0, "{Rock} (musical genre)", 0); -- id: 24
 CALL insertOrFindTerm(3, 23, "Rock", 0); -- id: 24
 CALL insertOrFindTerm(3, 23, "Jazz", 0); -- id: 25
 CALL insertOrFindTerm(3, 23, "Hip hop", 0); -- id: 26

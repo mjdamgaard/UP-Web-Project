@@ -54,71 +54,38 @@ export function loadTermTitleHTML($ci, data) {
         if (!data.defTermID) {
             termTitleCL.loadAppended($ci, "SimpleTitle", data);
         } else {
-            termTitleCL.loadAppended($ci, "IllFormedTitle", data);
+            $ci.append(',');
+            termTitleCL.loadAppended($ci, "TermIDTitle", new ChildData(data, {
+                termID: data.defTermID
+            }));
         }
-        return;
-    }
-    if (data.cxtDefTermID) {
-        termTitleCL.loadAppended($ci, "IllFormedTitle", data);
-        return;
-    }
-    let cxtLeadChar = data.cxtDefStr.substring(0, 1);
-    if (data.defTermID && cxtLeadChar !== ":") {
-        termTitleCL.loadAppended($ci, "IllFormedTitle", data);
-        return;
-    }
-    if (cxtLeadChar === ":") {
+
+    } else if (data.cxtID === 2) {
+        termTitleCL.loadAppended($ci, "UserTitle", data);
+
+    } else if (data.cxtID === 4) {
+        $ci.append('Text: ');
+        termTitleCL.loadAppended($ci, "SimpleTitle", data);
+
+    } else if (data.cxtID === 5) {
+        $ci.append('Binary resource: ');
+        termTitleCL.loadAppended($ci, "SimpleTitle", data);
+
+    } else if (data.cxtDefStr.substring(0, 1) === ":") {
         termTitleCL.loadAppended($ci, "TemplateInstanceTitle", data);
-        return;
+
+    } else {
+        termTitleCL.loadAppended($ci, "SimpleTitle", data);
+        $ci.append(' (');
+        termTitleCL.loadAppended($ci, "SimpleTitle", new ChildData(data, {
+            defStr: data.cxtDefStr,
+            termID: data.cxtID,
+            cxtID: false,
+            cxtDefStr: false,
+        }));
     }
-    let termLeadChar = data.defStr.substring(0, 1);
-    if (!data.cxtDefStr && (termLeadChar === "/" || termLeadChar === "+")) {
-        termTitleCL.loadAppended($ci, "IllFormedTitle", data);
-        return;
-    }
-    if (termLeadChar === "/") {
-        termTitleCL.loadAppended($ci, "SubcontextTitle", data);
-        return;
-    }
-    if (termLeadChar === "+") {
-        termTitleCL.loadAppended($ci, "ConcatenatedStringTitle", data);
-        return;
-    }
-    if (termLeadChar === "!") {
-        termTitleCL.loadAppended($ci, "StringTitle", data);
-        return;
-    }
-    termTitleCL.loadAppended($ci, "StandardTitle", data);
 }
 
-export var illFormedTitleCL = new ContentLoader(
-    "IllFormedTitle",
-    /* Initial HTML template */
-    '<span>Ill-formed title</span>',
-    sdbInterfaceCL
-);
-export var standardTitleCL = new ContentLoader(
-    "StandardTitle",
-    /* Initial HTML template */
-    '<span></span>',
-    sdbInterfaceCL
-);
-standardTitleCL.addCallback(function($ci, data) {
-    termTitleCL.loadAppended($ci, "SimpleTitle", data);
-    let cxtID = data.getFromAncestor("cxtID");
-    if (cxtID) {
-        $ci.append(' (<span class="cxt-title">');
-        termTitleCL.loadAppended(
-            $ci, "SimpleTitle", new ChildData(data, {
-                defStr: data.getFromAncestor("cxtDefStr"),
-                termID: data.getFromAncestor("cxtID"),
-                cxtID: false,
-                cxtDefStr: false,
-            })
-        );
-        $ci.append('</span>)');
-    }
-});
 export var simpleTitleCL = new ContentLoader(
     "SimpleTitle",
     /* Initial HTML template */
@@ -126,23 +93,32 @@ export var simpleTitleCL = new ContentLoader(
     sdbInterfaceCL
 );
 simpleTitleCL.addCallback(function($ci, data) {
-    // $ci.append(getReducedTitle(data.getFromAncestor("defStr")));
-            $ci.append(data.getFromAncestor("defStr"));
+    $ci.addClass("clickable-text text-primary");
+    $ci.append(data.getFromAncestor("defStr"));
     $ci.on("click", function() {
-        // TODO: implement..
+        $(this).trigger("open-column", [
+            "TermPage", data, "right"
+        ]);
+        return false;
     })
 });
-export var subcontextTitleCL = new ContentLoader(
-    "SubcontextTitle",
+
+export var termIDTitleCL = new ContentLoader(
+    "TermIDTitle",
     /* Initial HTML template */
-    '<<StandardTitle>>',
+    '<span></span>',
     sdbInterfaceCL
 );
-// subcontextTitleCL.addCallback(function($ci, data) {
-//     $ci.find('.cxt-title').after('/');
-// }); // Do this with CSS instead.
-
-
+termIDTitleCL.addCallback(function($ci, data) {
+    $ci.addClass("clickable-text text-primary");
+    $ci.append(data.getFromAncestor("termID"));
+    $ci.on("click", function() {
+        $(this).trigger("open-column", [
+            "TermPage", data, "right"
+        ]);
+        return false;
+    })
+});
 
 export var templateInstanceTitleCL = new ContentLoader(
     "TemplateInstanceTitle",
@@ -150,94 +126,83 @@ export var templateInstanceTitleCL = new ContentLoader(
     '<span></span>',
     sdbInterfaceCL
 );
+termNounPredicatePageCL.addCallback("data", function(data) {
+    data.copyFromAncestor([
+        "defStr",
+        "defTermID",
+    ]);
+});
 templateInstanceTitleCL.addCallback(function($ci, data) {
-
-});
-
-
-export var stringTitleCL = new ContentLoader(
-    "StringTitle",
-    /* Initial HTML template */
-    '<span></span>',
-    sdbInterfaceCL
-);
-stringTitleCL.addCallback(function($ci, data) {
-    $ci.append(data.getFromAncestor("defStr").substring(1));
-});
-
-
-// return (
-//     '<span class="def-str">' +
-//         getReducedString(data.defStr) +
-//     '</span>' +
-//     '(' +
-//         '<span class="cxt-def-str">' +
-//             getReducedString(data.cxtDefStr) +
-//         '</span>' +
-//     ')'
-// );
-
-// !/[^\\]\$t/.test(data.cxtDefStr.replaceAll("\\\\", ""))
-
-
-
-
-
-
-
-termTitleCL.addCallback(function($ci, data) {
-    $ci.on("click", function() {
-        $(this).trigger("open-column", [
-            "TermPage", data, "right"
-        ]);
-        return false;
+    $ci.append(getTransformedTitleTemplate(data.defStr));
+    $ci.find('.def-string').first(function() {
+        templateInstanceTitleCL.loadReplaced($ci, "SimpleTitle", data);
+    });
+    $ci.find('.def-term').first(function() {
+        let reqData = {
+            type: "term",
+            id: data.defTermID,
+        };
+        let $this = $(this);
+        dbReqManager.query($this, reqData, data, function($obj, result, data) {
+            templateInstanceTitleCL.loadReplaced($obj, "SimpleTitle",
+                new ChildData(data, {
+                    termID: data.defTermID,
+                    cxtID: (result[0] ?? [])[0],
+                    defStr: (result[0] ?? [])[1],
+                    defTermID: (result[0] ?? [])[2],
+                })
+            );
+        });
+    });
+    // there can only be '.list-item-n' templates let, so lets grab them all by
+    // their template tag and replace each one.
+    let idArr;
+    $ci.find('template').each(function() {
+        let $this = $(this);
+        let n = parseInt($this.attr("class").slice(-1));
+        if (!idArr) {
+            if (!/^[1-9][0-9]*(,[1-9][0-9]*)*$/.test(data.defStr)) {
+                $this.replace('$l[' + n.toString() + ']');
+                return;
+            }
+            idArr = data.defStr.split(',');
+        }
+        let reqData = {
+            type: "term",
+            id: idArr[n],
+        };
+        dbReqManager.query($this, reqData, data, function($obj, result, data) {
+            templateInstanceTitleCL.loadReplaced($obj, "SimpleTitle",
+                new ChildData(data, {
+                    termID: idArr[n],
+                    cxtID: (result[0] ?? [])[0],
+                    defStr: (result[0] ?? [])[1],
+                    defTermID: (result[0] ?? [])[2],
+                })
+            );
+        });
     });
 });
 
-export var specEntityTitleCL = new ContentLoader(
-    "SpecEntityTitle",
-    /* Initial HTML template */
-    '<<EntityTitle>>',
-    sdbInterfaceCL
-);
-specEntityTitleCL.addCallback("data", function(data) {
-    data.entityType = data.getFromAncestor("specType");
-    data.entityID = data.getFromAncestor("specID");
-    data.titleCutOutLevels = data.getFromAncestor("titleCutOutLevels").slice(1);
-});
+export function getTransformedTitleTemplate(title) {
+    return title
+        .replaceAll("\\\\", "&bsol;")
+        .replaceAll("\\$", "&dollar;")
+        .replaceAll("\\{", "&#x2774;")
+        .replaceAll("\\}", "&#x2775;")
+        .replace(/^[^\{]*\{/, "")
+        .replace(/\}[^\{]*$/, "")
+        .replaceAll(/\}[^\{]*\{/, "")
+        .replaceAll("$s", '<template class="def-string"></template>')
+        .replaceAll("$t", '<template class="def-term"></template>')
+        .replaceAll(/\$l\[[0-9]\]/, s =>
+            '<template class="list-item-' +
+            s.substring(3, 4) +
+            '"></template>'
+        );
+}
 
-export var entityTitleCL = new ContentLoader(
-    "EntityTitle",
-    /* Initial HTML template */
-    '<span></span>',
-    sdbInterfaceCL
-);
-entityTitleCL.addCallback("data", function(data) {
-    data.copyFromAncestor([
-        "entityType",
-        "entityID",
-        // "titleCutOutLevels",
-    ]);
-});
-// entityTitleCL.addCallback(function($ci, data) {
-//     if (data.entityType === "t") {
-//         entityTitleCL.loadAppended($ci, "TermTitle", data);
-//     } else if (data.entityType === "c") {
-//         entityTitleCL.loadAppended($ci, "ContextTitle", data);
-//     } else {
-//         $ci.append(
-//             '<span class="clickable-text text-primary">' +
-//                 data.entityType + data.entityID.toString() +
-//             '</span>'
-//         );
-//         $ci.on("click", function() {
-//             $(this).trigger("open-column", [
-//                 "EntityColumn", data, "right"
-//             ]);
-//             return false;
-//         });
-//     }
-// });
+
 
 
 
@@ -248,69 +213,4 @@ export var userTitleCL = new ContentLoader(
     sdbInterfaceCL
 );
 
-
-
-
-
-
-//TODO: Reimplement this function should that '{', '}' and '$' can all be
-// escaped (using backslash).
-export function getReducedTitle(title, cutOutLevel) {
-    let retArray = [];
-    let retArrayLen = 0;
-    let titleLen = title.length;
-    let pos = 0;
-    let currentLevel = 0;
-    while (pos < titleLen) {
-        let nextLeftParPos = title.indexOf('{', pos);
-        if (nextLeftParPos === -1) {
-            nextLeftParPos = titleLen;
-        }
-        let nextRightParPos = title.indexOf('}', pos);
-        if (nextRightParPos === -1) {
-            nextRightParPos = titleLen;
-        }
-        if (nextLeftParPos < nextRightParPos) {
-            if (currentLevel >= cutOutLevel) {
-                retArray[retArrayLen] = title.slice(pos, nextLeftParPos);
-                retArrayLen++;
-            }
-            pos = nextLeftParPos + 1;
-            currentLevel += 1;
-        } else if (nextLeftParPos > nextRightParPos) {
-            if (currentLevel >= cutOutLevel) {
-                retArray[retArrayLen] = title.slice(pos, nextRightParPos);
-                retArrayLen++;
-            }
-            pos = nextRightParPos + 1;
-            currentLevel -= 1;
-        } else {
-            if (currentLevel !== 0) {
-                return title;
-            }
-            if (cutOutLevel === 0) {
-                retArray[retArrayLen] = title.slice(pos);
-            }
-            break;
-        }
-        // simply return the title as is if the curly brackets are ill-formed.
-        if (currentLevel < 0) {
-            return title;
-        }
-    }
-    if (cutOutLevel > 0 && retArray.length === 0) {
-        return getReducedTitle(title, cutOutLevel - 1)
-    } else {
-        return (
-            '<span class="clickable-text text-primary">' +
-                retArray.join('')
-                .replaceAll(
-                    '$',
-                    '</span>' +
-                        '<span class="spec-entity"></span>' +
-                    '<span class="clickable-text text-primary">'
-                ) +
-            '</span>'
-        );
-    }
-}
+//
