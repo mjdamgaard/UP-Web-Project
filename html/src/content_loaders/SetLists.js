@@ -219,7 +219,7 @@ export class SetManager {
                     (acc, val, ind) => acc + (val ? 0 : weightArr[weightIndex]),
                     0
                 );
-                row[0] += (row[0] * accWeight + 5 * missingWeight) /
+                row[0] = (row[0] * accWeight + 5 * missingWeight) /
                     (accWeight + missingWeight);
                 // then move on to the next subj and start computing the
                 // combined ratVal of that.
