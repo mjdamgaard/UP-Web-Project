@@ -221,6 +221,9 @@ export class SetManager {
                 );
                 row[0] += (row[0] * accWeight + 5 * missingWeight) /
                     (accWeight + missingWeight);
+                weightIsAddedArrArr.forEach(function(val) {
+                    val[1] = false;
+                });
                 // then move on to the next subj and start computing the
                 // combined ratVal of that.
                 currSubjID = val[1];
