@@ -83,6 +83,7 @@ export function loadTermTitleHTML($ci, data) {
             cxtID: false,
             cxtDefStr: false,
         }));
+        $ci.append(')');
     }
 }
 
@@ -126,7 +127,7 @@ export var templateInstanceTitleCL = new ContentLoader(
     '<span></span>',
     sdbInterfaceCL
 );
-termNounPredicatePageCL.addCallback("data", function(data) {
+templateInstanceTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "defStr",
         "defTermID",
