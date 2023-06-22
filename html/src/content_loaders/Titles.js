@@ -50,10 +50,9 @@ termTitleCL.addCallback(function($ci, data) {
 export function loadTermTitleHTML($ci, data) {
     data = data ?? $ci.data("data");
     if (!data.cxtID) {
-        if (!data.defTermID) {
-            termTitleCL.loadAppended($ci, "SimpleTitle", data);
-        } else {
-            $ci.append(',');
+        termTitleCL.loadAppended($ci, "SimpleTitle", data);
+        if (data.defTermID) {
+            $ci.append(', ');
             termTitleCL.loadAppended($ci, "TermIDTitle", new ChildData(data, {
                 termID: data.defTermID
             }));
@@ -74,6 +73,8 @@ export function loadTermTitleHTML($ci, data) {
         termTitleCL.loadAppended($ci, "TemplateInstanceTitle", data);
 
     } else {
+        // TODO: Change such that the Context title is in its own span, and
+        // possibly remove the parenthises and let CSS add whatever instead.
         termTitleCL.loadAppended($ci, "SimpleTitle", data);
         $ci.append(' (');
         termTitleCL.loadAppended($ci, "SimpleTitle", new ChildData(data, {
@@ -213,8 +214,20 @@ export function getTransformedTitleTemplate(title) {
 export var userTitleCL = new ContentLoader(
     "UserTitle",
     /* Initial HTML template */
-    '<<EntityTitle>>', // TODO: change to look up the username.
+    '<span></span>', // TODO: change to look up the username.
     sdbInterfaceCL
 );
 // TODO: Implement to fetch and display the username (perhaps like:
 // "User: username (id)").
+
+
+
+export var fullContextAndTitleFieldCL = new ContentLoader(
+    "FullContextAndTitleField",
+    /* Initial HTML template */
+    '<span></span>', // TODO: change to look up the username.
+    sdbInterfaceCL
+);
+// TODO, just fetch and load paragraphs of SimpleTitles and TermIDTitles (of
+// the defTerms) one after the other until a NULL Context is reached and
+// prepend each one.

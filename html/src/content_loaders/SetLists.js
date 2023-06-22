@@ -129,21 +129,23 @@ export class SetManager {
                     s: encodeURI(setData.predStr),
                     t: setData.objID,
                 };
-                dbReqManager.query(this, reqData, function(thisSM, result) {
-                    setData.predID = (result[0] ?? [0])[0];
-                    thisSM.querySetAndCombineIfReady(
-                        setData, callbackData, callback
-                    );
-                });
+                dbReqManager.query(
+                    this, reqData, i, function(thisSM, result, i) {
+                        setData.predID = (result[0] ?? [0])[0];
+                        thisSM.querySetAndCombineIfReady(
+                            setData, i, callbackData, callback
+                        );
+                    }
+                );
             } else if (!setData.isReady) {
-                setData.set = this.transformSet(setData.set, setData);
+                setData.set = this.transformSet(setData.set, setData, i);
                 setData.isReady = true;
             }
         }
         this.combineSetsIfReady(callbackData, callback);
     }
 
-    querySetAndCombineIfReady(setData, callbackData, callback) {
+    querySetAndCombineIfReady(setData, i, callbackData, callback) {
         let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
         let queryParams = setData.queryParams;
         queryParams.offset ??= 0;;
@@ -158,18 +160,18 @@ export class SetManager {
             o: queryParams.offset,
             a: queryParams.isAscending,
         };
-        dbReqManager.query(this, reqData, function(thisSM, result) {
-            setData.set = thisSM.transformSet(result, setData);
+        dbReqManager.query(this, reqData, i, function(thisSM, result, i) {
+            setData.set = thisSM.transformSet(result, setData, i);
             setData.isReady = true;
             thisSM.combineSetsIfReady(callbackData, callback);
         });
     }
 
-    transformSet(set, setData) {
+    transformSet(set, setData, i) {
         let ratTransFun = setData.ratTransFun;
         set.forEach(function(row) {
             row[2] = ratTransFun(row[0]);
-            row[3] = setData;
+            row[3] = i;
         });
         return set;
     }
@@ -192,23 +194,41 @@ export class SetManager {
         );
     }
 
-    // TODO: Reimplement such that 5 * weight is added each time a subj is
-    // missing in a set.
     computeCombinedSet() {
         let ret = new Array(this.concatSet.length);
         let retLen = 0;
+        let weightIsAddedArrArr = this.setDataArr.map(
+            val => [val.weight, false]
+        );
+        let currSubjID = (this.concatSet[0] ?? [])[1];// 0;
+        let row, weightIsAddedArr, currWeight, newWeight, missingWeight;
+        ret[0] = (row = [0, (this.concatSet[0] ?? [])[1], 0]);
+        retLen++;
+        let accWeight = 0;
         this.concatSet.forEach(function(val, ind, arr) {
-            let row, accWeight, currWeight, newWeight;
-            if (val[1] !== (arr[ind - 1] ?? [])[1]) {
-                ret[retLen] = [val[2], val[1], ind];
-                retLen++;
-                accWeight = val[3].weight;
-            } else {
-                row = ret[retLen];
-                currWeight = val[3].weight;
+            if (val[1] === currSubjID) {
+                weightIsAddedArr = weightIsAddedArrArr[val[3]];
+                currWeight = weightIsAddedArr[0];
                 newWeight = accWeight + currWeight;
                 row[0] = (row[0] * accWeight + val[2] * currWeight) / newWeight;
                 accWeight = newWeight;
+                weightIsAddedArr[1] = true;
+            } else {
+                // first add the missing weight times 5 (the neutral score) to
+                // the combined ratVal of the last row in ret.
+                missingWeight = weightIsAddedArrArr.reduce(
+                    (acc, val) => acc + (val[1] ? 0 : val[0]), 0
+                );
+                row[0] += (row[0] * accWeight + 5 * missingWeight) /
+                    (accWeight + missingWeight);
+                // then move on to the next subj and start computing the
+                // combined ratVal of that.
+                currSubjID = val[1];
+                ret[retLen] = (row = [val[2], val[1], ind]);
+                retLen++;
+                weightIsAddedArr = weightIsAddedArrArr[val[3]];
+                accWeight = weightIsAddedArr[0];
+                weightIsAddedArr[1] = true;
             }
         });
         // delete the weight column of the last row and delete the empty slots.

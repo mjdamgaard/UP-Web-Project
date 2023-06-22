@@ -38,7 +38,7 @@ sdbInterfaceCL.addCSS(
 sdbInterfaceCL.addCSS(
     '& .app-column-container {' +
         'display: grid;' +
-        'grid-template-columns: auto auto;' +
+        'grid-template-columns: auto auto auto;' +
         'grid-template-rows: auto;' +
         'overflow-x: auto;' +
         'overflow-y: hidden;' +
