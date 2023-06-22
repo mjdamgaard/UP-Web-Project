@@ -197,41 +197,39 @@ export class SetManager {
     computeCombinedSet() {
         let ret = new Array(this.concatSet.length);
         let retLen = 0;
-        let weightIsAddedArrArr = this.setDataArr.map(
-            val => [val.weight, false]
-        );
+        let weightArr = this.setDataArr.map(val => val.weight);
+        let isAddedArr = this.setDataArr.map(val => false);
         let currSubjID = (this.concatSet[0] ?? [])[1];// 0;
-        let row, weightIsAddedArr, currWeight, newWeight, missingWeight;
+        let row, weightIndex, currWeight, newWeight, missingWeight;
         ret[0] = (row = [0, (this.concatSet[0] ?? [])[1], 0]);
         retLen++;
         let accWeight = 0;
-        this.concatSet.forEach(function(val, ind, arr) {
+        this.concatSet.forEach(function(val, ind) {
             if (val[1] === currSubjID) {
-                weightIsAddedArr = weightIsAddedArrArr[val[3]];
-                currWeight = weightIsAddedArr[0];
+                weightIndex = val[3];
+                currWeight = weightArr[weightIndex];
                 newWeight = accWeight + currWeight;
                 row[0] = (row[0] * accWeight + val[2] * currWeight) / newWeight;
                 accWeight = newWeight;
-                weightIsAddedArr[1] = true;
+                isAddedArr[weightIndex] = true;
             } else {
                 // first add the missing weight times 5 (the neutral score) to
                 // the combined ratVal of the last row in ret.
-                missingWeight = weightIsAddedArrArr.reduce(
-                    (acc, val) => acc + (val[1] ? 0 : val[0]), 0
+                missingWeight = isAddedArr.reduce(
+                    (acc, val, ind) => acc + (val ? 0 : weightArr[weightIndex]),
+                    0
                 );
                 row[0] += (row[0] * accWeight + 5 * missingWeight) /
                     (accWeight + missingWeight);
-                weightIsAddedArrArr.forEach(function(val) {
-                    val[1] = false;
-                });
                 // then move on to the next subj and start computing the
                 // combined ratVal of that.
                 currSubjID = val[1];
                 ret[retLen] = (row = [val[2], val[1], ind]);
                 retLen++;
-                weightIsAddedArr = weightIsAddedArrArr[val[3]];
-                accWeight = weightIsAddedArr[0];
-                weightIsAddedArr[1] = true;
+                isAddedArr.fill(false);
+                weightIndex = val[3];
+                isAddedArr[weightIndex] = true;
+                accWeight = weightArr[weightIndex];
             }
         });
         // delete the weight column of the last row and delete the empty slots.
