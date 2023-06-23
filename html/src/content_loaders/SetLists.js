@@ -194,6 +194,7 @@ export class SetManager {
         );
     }
 
+    // ...
     computeCombinedSet() {
         let ret = new Array(this.concatSet.length);
         let retLen = 0;

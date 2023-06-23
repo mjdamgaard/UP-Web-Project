@@ -228,6 +228,37 @@ export var fullContextAndTitleFieldCL = new ContentLoader(
     '<span></span>', // TODO: change to look up the username.
     sdbInterfaceCL
 );
+
+fullContextAndTitleFieldCL.addCallback(prependAllTermInfo);
+
+export function prependAllTermInfo($ci, data) {
+    let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
+    let reqData = {
+        type: "term",
+        id: data.termID,
+    };
+    // ...
+    dbReqManager.query($ci, reqData, data, function($ci, result, data) {
+        data.cxtID = (result[0] ?? [])[0];
+        data.defStr = (result[0] ?? [])[1];
+        data.defTermID = (result[0] ?? [])[2];
+        if (!data.cxtID) {
+            loadTermTitleHTML($ci, data);
+            return;
+        }
+        let reqData = {
+            type: "term",
+            id: data.cxtID,
+        };
+        dbReqManager.query($ci, reqData, data, function($ci, result, data) {
+            data.cxtDefStr = (result[0] ?? [])[1];
+            data.cxtDefTermID = (result[0] ?? [])[2];
+            loadTermTitleHTML($ci, data);
+        });
+    });
+
+}
+
 // TODO, just fetch and load paragraphs of SimpleTitles and TermIDTitles (of
 // the defTerms) one after the other until a NULL Context is reached and
 // prepend each one.
