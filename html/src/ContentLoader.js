@@ -36,7 +36,7 @@ export function convertHTMLTemplate(htmlTemplate) {
 
 export class ChildData {
     constructor(parentData, obj) {
-        if (typeof obj !== "undefined") {
+        if (obj) {
             Object.assign(this, obj);
         }
         this.parentData = parentData;
@@ -53,11 +53,11 @@ export class ChildData {
     getFromAncestor(key, searchHeight) {
         if (searchHeight === 0) {
             return null;
-        } else if (typeof this.parentData === "undefined") {
+        } else if (!this.parentData) {
             return null;
         } else if (typeof this.parentData[key] !== "undefined") {
             return this.parentData[key];
-        } else if (typeof this.parentData.getFromAncestor === "undefined") {
+        } else if (!this.parentData.getFromAncestor) {
             return null;
         } else {
             if (typeof searchHeight !== "number") {
@@ -184,7 +184,7 @@ export class ContentLoader {
     }
 
     addCallback(method, callback, htmlTemplate) {
-        if (typeof callback === "undefined") {
+        if (!callback) {
             callback = method;
             method = "outward";
         }
@@ -231,7 +231,7 @@ export class ContentLoader {
     }
 
     addCSS(method, css) {
-        if (typeof css === "undefined") {
+        if (!css) {
             css = method;
             method = "inward";
         }
@@ -340,7 +340,7 @@ export class ContentLoader {
         $placeholder.remove();
         // store a reference to the data object on the CI, unless a child
         // decorated by this CL has already done so.
-        if (typeof $ci.data("data") === "undefined") {
+        if (!$ci.data("data")) {
             $ci.data("data", data);
         }
 
