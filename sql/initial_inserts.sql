@@ -125,6 +125,8 @@ CALL insertPredicates("Related terms", 27, 31);
 
 CALL inputOrChangeRating(3, 49, 31, CONV("F000", 16, 10), "00");
 CALL inputOrChangeRating(3, 53, 27, CONV("FF00", 16, 10), "00");
+CALL inputOrChangeRating(3, 50, 29, CONV("FFFF", 16, 10), "00");
+CALL inputOrChangeRating(3, 51, 28, CONV("FFF0", 16, 10), "00");
 
 
 DROP PROCEDURE insertPredicates;

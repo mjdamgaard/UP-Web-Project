@@ -87,10 +87,6 @@ export class SetManager {
         this.combSet = combSet;
     }
 
-    // TODO: Add some more methods where SetManager is provided an concatSet
-    // and/or a combSet to begin with, and then extends these in a smart way.
-    // (And perhaps change queryAndCombineSets() to handle such cases.)
-
     /*
     Recall:
     data.setDataArr = [setData, ...],
