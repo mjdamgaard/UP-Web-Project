@@ -111,6 +111,7 @@ export class ContentLoader {
         // data types and objects), including data necessary to ensure unique
         // ids (even accross several, distant-related CIs).
         this.globalData = {};
+        // this.modSignals = {};
 
         // set this.html via the setter below.
         this.htmlTemplate = htmlTemplate;

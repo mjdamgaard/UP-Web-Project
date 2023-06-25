@@ -194,43 +194,23 @@ export class SetManager {
         );
     }
 
-    // ...
     computeCombinedSet() {
         let ret = new Array(this.concatSet.length);
         let retLen = 0;
         let weightArr = this.setDataArr.map(val => val.weight);
-        let isAddedArr = this.setDataArr.map(val => false);
-        let currSubjID = (this.concatSet[0] ?? [])[1];// 0;
-        let row, weightIndex, currWeight, newWeight, missingWeight;
-        ret[0] = (row = [0, (this.concatSet[0] ?? [])[1], 0]);
-        retLen++;
-        let accWeight = 0;
+        let currSubjID = 0;
+        let row, currWeight, newWeight;
         this.concatSet.forEach(function(val, ind) {
-            if (val[1] === currSubjID) {
-                weightIndex = val[3];
-                currWeight = weightArr[weightIndex];
-                newWeight = accWeight + currWeight;
-                row[0] = (row[0] * accWeight + val[2] * currWeight) / newWeight;
-                accWeight = newWeight;
-                isAddedArr[weightIndex] = true;
-            } else {
-                // first add the missing weight times 5 (the neutral score) to
-                // the combined ratVal of the last row in ret.
-                missingWeight = isAddedArr.reduce(
-                    (acc, val, ind) => acc + (val ? 0 : weightArr[weightIndex]),
-                    0
-                );
-                row[0] = (row[0] * accWeight + 5 * missingWeight) /
-                    (accWeight + missingWeight);
-                // then move on to the next subj and start computing the
-                // combined ratVal of that.
+            if (val[1] !== currSubjID) {
                 currSubjID = val[1];
                 ret[retLen] = (row = [val[2], val[1], ind]);
                 retLen++;
-                isAddedArr.fill(false);
-                weightIndex = val[3];
-                isAddedArr[weightIndex] = true;
-                accWeight = weightArr[weightIndex];
+                accWeight = weightArr[val[3]];
+            } else {
+                currWeight = weightArr[val[3]];
+                newWeight = accWeight + currWeight;
+                row[0] = (row[0] * accWeight + val[2] * currWeight) / newWeight;
+                accWeight = newWeight;
             }
         });
         // delete the weight column of the last row and delete the empty slots.
