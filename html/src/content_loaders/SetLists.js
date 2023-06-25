@@ -118,7 +118,7 @@ export class SetManager {
                 // immediately.
                 if (setData.predID) {
                     this.querySetAndCombineIfReady(
-                        setData, callbackData, callback
+                        setData, i, callbackData, callback
                     );
                     continue;
                 }

@@ -195,12 +195,12 @@ export function getTransformedTitleTemplate(title) {
         .replaceAll("\\$", "&dollar;")
         .replaceAll("\\{", "&#x2774;")
         .replaceAll("\\}", "&#x2775;")
-        .replace(/^[^\{]*\{/, "")
-        .replace(/\}[^\{]*$/, "")
-        .replaceAll(/\}[^\{]*\{/, "")
+        .replace(/^[^\{]*\{/g, "")
+        .replace(/\}[^\{]*$/g, "")
+        .replaceAll(/\}[^\{]*\{/g, "")
         .replaceAll("$s", '<template class="def-string"></template>')
         .replaceAll("$t", '<template class="def-term"></template>')
-        .replaceAll(/\$l\[[0-9]\]/, s =>
+        .replaceAll(/\$l\[[0-9]\]/g, s =>
             '<template class="list-item-' +
             s.substring(3, 4) +
             '"></template>'

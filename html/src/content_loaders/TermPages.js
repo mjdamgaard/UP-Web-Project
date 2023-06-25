@@ -7,7 +7,6 @@ import {
 } from "/src/content_loaders/SDBInterfaces.js";
 
 
-console.log("hello?");
 
 
 export var termPageCL = new ContentLoader(
@@ -40,7 +39,7 @@ termPageCL.addCallback(function($ci, data) {
                 ["Subcategories", "TermNounPredicatePage", {
                     predNoun: "Subcategories",
                 }],
-                ["Applies to", "TermAppliesToPage", {}],
+                ["Instances", "TermAppliesToPage", {}],
                 ["Related to", "TermNounPredicatePage", {
                     predNoun: "Related terms",
                 }],
@@ -69,11 +68,7 @@ export var termNounPredicatePageCL = new ContentLoader(
     sdbInterfaceCL
 );
 
-termNounPredicatePageCL.addCallback("data", function(data) {
-    data.copyFromAncestor([
-        // "elemContentKey",
-    ]);
-});
+
 termNounPredicatePageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralTermElement";
     data.setDataArr = [{
@@ -90,9 +85,34 @@ termNounPredicatePageCL.addCallback("data", function(data) {
         },
     }];
     data.initialNum = 50;
-    data.incrementNum = 25;
+    data.incrementNum = 50;
 });
 
 export function getStandardScore(ratVal) {
     return ratVal / 6553.5;
 }
+
+
+
+export var termAppliesToPageCL = new ContentLoader(
+    "TermAppliesToPage",
+    /* Initial HTML template */
+    '<<SetView>>',
+    sdbInterfaceCL
+);
+termAppliesToPageCL.addCallback("data", function(data) {
+    data.elemContentKey = "GeneralTermElement";
+    data.setDataArr = [{
+        predID: data.getFromAncestor("termID"),
+        userID: 3,
+        weight: 1,
+        ratTransFun: getStandardScore,
+        queryParams: {
+            num: 4000,
+            ratingLo: 0,
+            ratingHi: 0,
+        },
+    }];
+    data.initialNum = 50;
+    data.incrementNum = 50;
+});

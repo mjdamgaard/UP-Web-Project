@@ -102,53 +102,29 @@ CALL inputOrChangeRating(3, 35, 24, CONV("A130", 16, 10), "00");
 CALL inputOrChangeRating(3, 35, 25, CONV("A000", 16, 10), "00");
 CALL inputOrChangeRating(3, 35, 21, CONV("0103", 16, 10), "00");
 
-CALL inputOrChangeRating(3, 43, 24, CONV("E100", 16, 10), "00");
-CALL inputOrChangeRating(3, 43, 25, CONV("E000", 16, 10), "00");
-CALL inputOrChangeRating(3, 43, 26, CONV("E000", 16, 10), "00");
-CALL inputOrChangeRating(3, 43, 21, CONV("0001", 16, 10), "00");
-CALL inputOrChangeRating(3, 43, 30, CONV("F000", 16, 10), "00");
+CALL inputOrChangeRating(3, 41, 24, CONV("E100", 16, 10), "00");
+CALL inputOrChangeRating(3, 41, 25, CONV("E000", 16, 10), "00");
+CALL inputOrChangeRating(3, 41, 26, CONV("E000", 16, 10), "00");
+CALL inputOrChangeRating(3, 41, 21, CONV("0001", 16, 10), "00");
+CALL inputOrChangeRating(3, 41, 30, CONV("F000", 16, 10), "00");
 
-CALL inputOrChangeRating(3, 42, 30, CONV("F000", 16, 10), "00");
+CALL inputOrChangeRating(3, 40, 30, CONV("F000", 16, 10), "00");
 
 
+CALL inputOrChangeRating(3, 6, 26, CONV("A000", 16, 10), "00");
+CALL inputOrChangeRating(3, 6, 27, CONV("A400", 16, 10), "00");
+CALL inputOrChangeRating(3, 6, 28, CONV("9003", 16, 10), "00");
+CALL inputOrChangeRating(3, 6, 29, CONV("9002", 16, 10), "00");
 
---
--- CALL insertOrFindPattern(1, "About");
--- CALL insertOrFindPattern(1, "Subcategories");
--- CALL insertOrFindPattern(1, "Supercategories");
--- CALL insertOrFindPattern(1, "Related categories");
--- CALL insertOrFindPattern(1, "Instances");
--- --
--- CALL insertOrFindPattern(1, "General info");
--- CALL insertOrFindPattern(1, "Related terms");
--- CALL insertOrFindPattern(1, "Comments");
---
--- CALL insertOrFindRel (1, 'c', 'c', "Duplicates");
--- CALL insertOrFindRel (1, 't', 't', "Duplicates");
---
--- CALL insertOrFindRel (1, 't', 't', "Duplicate to draw ratings from");
---
---
--- -- insert some example inputs of all kinds to use for development.
---
--- CALL insertOrFindCat(1, 1, "Music"); -- id: 3
--- CALL insertOrFindCat(1, 3, "Rock"); -- id: 4
--- CALL insertOrFindCat(1, 3, "Artists"); -- id: 5
--- CALL insertOrFindCat(1, 4, "Artists"); -- id: 6
---
--- CALL insertOrFindTerm (1, 5, "Led Zeppelin"); -- id: 2
---
--- CALL createOrFindSet(1, 1, 1); -- id: 1
--- CALL inputOrChangeRating (1, 1, 3, "70", "00");
--- CALL inputOrChangeRating (1, 1, 3, "7F", "00");
--- CALL inputOrChangeRatingFromSecKey (1, 1, 1, 3, "71", "00");
---
--- CALL inputOrChangeRatingFromSecKey (1, 1, 1, 2, "7A", "00");
---
--- CALL inputOrChangeRatingFromSecKey (1, 1, 2, 1, "7F", "00");
---
--- CALL inputOrChangeRatingFromSecKey (1, 1, 2, 2, "6F", "00");
+CALL inputOrChangeRating(3, 27, 28, CONV("FF03", 16, 10), "00");
+CALL inputOrChangeRating(3, 27, 29, CONV("FF02", 16, 10), "00");
 
+
+CALL insertOrFindTerm(3, NULL, "Related terms", 0);
+CALL insertPredicates("Related terms", 27, 31);
+
+CALL inputOrChangeRating(3, 49, 31, CONV("F000", 16, 10), "00");
+CALL inputOrChangeRating(3, 53, 27, CONV("FF00", 16, 10), "00");
 
 
 DROP PROCEDURE insertPredicates;
