@@ -20,7 +20,7 @@ export function upa_main(termID, queryUserID, inputUserID) {
     if (queryUserID !== "3") {
         throw "Unrecognized query user";
     }
-    console.log(sdbInterfaceCL);
+
     let data = {
         termID: termID,
         queryUserID: queryUserID,

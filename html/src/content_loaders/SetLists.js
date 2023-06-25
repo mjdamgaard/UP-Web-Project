@@ -199,7 +199,7 @@ export class SetManager {
         let retLen = 0;
         let weightArr = this.setDataArr.map(val => val.weight);
         let currSubjID = 0;
-        let row, currWeight, newWeight;
+        let row, accWeight, currWeight, newWeight;
         this.concatSet.forEach(function(val, ind) {
             if (val[1] !== currSubjID) {
                 currSubjID = val[1];
