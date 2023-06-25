@@ -9,8 +9,6 @@ import {
 
 
 
-
-
 export var setViewCL = new ContentLoader(
     "SetView",
     /* Initial HTML template */
