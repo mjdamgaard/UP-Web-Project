@@ -2,10 +2,10 @@
 
 import "/src/DBRequestManager.js";
 import "/src/ContentLoader.js";
-import {sdbInterfaceCL} from "/src/content_loaders/ColumnInterface.js";
+import {sdbInterfaceCL} from "/src/content_loaders/SDBInterfaces.js";
 import "/src/content_loaders/PagesWithTabs.js";
 import "/src/content_loaders/SetLists.js";
-import "/src/content_loaders/SetView.js";
+import "/src/content_loaders/SetViews.js";
 import "/src/content_loaders/TermElements.js";
 import "/src/content_loaders/TermPages.js";
 import "/src/content_loaders/Titles.js";
@@ -20,7 +20,7 @@ export function upa_main(termID, queryUserID, inputUserID) {
     if (queryUserID !== "3") {
         throw "Unrecognized query user";
     }
-
+    console.log(sdbInterfaceCL);
     let data = {
         termID: termID,
         queryUserID: queryUserID,

@@ -4,10 +4,10 @@ import {
 } from "/src/ContentLoader.js";
 import {
     sdbInterfaceCL,
-} from "/src/content_loaders/ColumnInterface.js";
+} from "/src/content_loaders/SDBInterfaces.js";
 
 
-
+console.log("hello?");
 
 
 export var termPageCL = new ContentLoader(

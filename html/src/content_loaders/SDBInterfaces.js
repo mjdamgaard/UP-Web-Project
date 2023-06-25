@@ -14,7 +14,7 @@ export var sdbInterfaceCL = new ContentLoader(
     "ColumnBasedSDBInterface",
     /* Initial HTML template */
     '<div>' +
-        '<<ColumnInterfaceHeader>>' +
+        '<<InterfaceHeader>>' +
         '<main>' +
             '<div class="left-margin"></div>' +
             '<div class="app-column-container">' +
@@ -26,8 +26,8 @@ export var sdbInterfaceCL = new ContentLoader(
 );
 sdbInterfaceCL.globalData.dbReqManager = new DBRequestManager();
 
-export var columnInterfaceHeaderCL = new ContentLoader(
-    "ColumnInterfaceHeader",
+export var interfaceHeaderCL = new ContentLoader(
+    "InterfaceHeader",
     /* Initial HTML template */
     '<header>' +
     '</header>',

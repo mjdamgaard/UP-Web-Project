@@ -1,8 +1,8 @@
 
 import {
     sdbInterfaceCL, appColumnCL,
-    columnInterfaceHeaderCL, closeButtonCL,
-} from "/src/content_loaders/ColumnInterface.js";
+    interfaceHeaderCL, closeButtonCL,
+} from "/src/content_loaders/SDBInterfaces.js";
 import {
     tabHeaderCL, pagesContainerCL,
 } from "/src/content_loaders/PagesWithTabs.js";
@@ -13,8 +13,11 @@ import {
 
 } from "/src/content_loaders/TermPages.js";
 import {
-    supercategoryNavItemCL,
-} from "/src/content_loaders/SetElements.js";
+    generalTermElementCL,
+} from "/src/content_loaders/TermElements.js";
+import {
+    dropdownButtonBarCL,
+} from "/src/content_loaders/SetViews.js";
 
 
 sdbInterfaceCL.addCSS(
@@ -24,7 +27,7 @@ sdbInterfaceCL.addCSS(
     'grid-template-rows: 20px auto;' +
     ''
 );
-columnInterfaceHeaderCL.addCSS(
+interfaceHeaderCL.addCSS(
     'height: 10px;' +
     'background-color: blue;'
 );
@@ -116,9 +119,6 @@ tabHeaderCL.addCSS(
 // );
 
 
-
-
-
 sdbInterfaceCL.addCSS(
     '& .clickable-text:hover {' +
         'cursor: pointer;' +
@@ -127,24 +127,24 @@ sdbInterfaceCL.addCSS(
     '}'
 );
 
-// predicateRepresentationCL.addCSS(
-//     '& > .CI.SubjectTitle:before { content: " ("; }'
-// );
-// predicateRepresentationCL.addCSS(
-//     '& > .CI.SubjectTitle:after { content: ")"; }'
-// );
 
-
-
-
-
-supercategoryNavItemCL.addCSS(
-    '&::after {' +
-        'content: "/";' +
+dropdownButtonBarCL.addCSS(
+    '&:hover {' +
+        'cursor: pointer;' +
+        'background-color: #eee;' +
     '}'
 );
-supercategoryNavItemCL.addCSS(
-    '& .CI.EntityTitle {' +
-        'margin: 0px 2px;' +
-    '}'
+dropdownButtonBarCL.addCSS(
+    'display: flex;' +
+    'justify-content: center;'
 );
+// generalTermElementCL.addCSS(
+//     '&:hover {' +
+//         'cursor: pointer;' +
+//     '}'
+// );
+// generalTermElementCL.addCSS(
+//     '&:hover > .CI.DropdownBox > DropdownButtonBar {' +
+//         'background-color: #888;' +
+//     '}'
+// );

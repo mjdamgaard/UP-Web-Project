@@ -4,7 +4,7 @@ import {
 } from "/src/ContentLoader.js";
 import {
     sdbInterfaceCL,
-} from "/src/content_loaders/ColumnInterface.js";
+} from "/src/content_loaders/SDBInterfaces.js";
 
 
 
@@ -47,7 +47,13 @@ combinedRatingDisplayCL.addCallback(function($ci, data) {
     $ci.html(data.getFromAncestor("combRatVal").toFixed(2));
 });
 
-
+export var setPredicatesRatingsDisplayCL = new ContentLoader(
+    "SetPredicatesRatingsDisplay",
+    /* Initial HTML template */
+    '<div>' +
+    '</div>',
+    sdbInterfaceCL
+);
 
 
 //
