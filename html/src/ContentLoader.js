@@ -57,7 +57,7 @@ export class ChildData {
             return null;
         } else if (typeof this.parentData === "undefined") {
             return null;
-        } else if (typeof this.parentData[key] !== "undefined") {
+        } else if (typeof this.parentData[key] !== "undefined") {console.log(typeof this.parentData[key]);
             let ret = this.parentData[key];
             return ret === ChildData.nullValue ? null : ret;
         } else if (typeof this.parentData.getFromAncestor === "undefined") {

@@ -41,10 +41,31 @@ export var appColumnCL = new ContentLoader(
     /* Initial HTML template */
     '<div>' +
         '<<ColumnButtonContainer>>' +
-        '<<SelfReplacer>>' +
+        '<<SelfReplacer data:wait>>' +
     '</div>',
     sdbInterfaceCL,
 );
+appColumnCL.addCallback("data", function(data) {
+    data.copyFromAncestor([
+        "termID",
+        "cxtID",  // optional.
+    ]);
+});
+appColumnCL.addCallback(function($ci, data) {
+    if (data.cxtID) {
+        $ci.children('.CI.SelfReplacer').trigger("load");
+        return;
+    };
+    let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
+    let reqData = {
+        type: "term",
+        id: data.termID,
+    };
+    dbReqManager.query($ci, reqData, data, function($ci, result, data) {
+        data.cxtID = (result[0] ?? [])[0] ?? 6;
+        $ci.children('.CI.SelfReplacer').trigger("load");
+    });
+});
 
 
 

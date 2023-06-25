@@ -120,47 +120,36 @@ termAppliesToPageCL.addCallback("data", function(data) {
 export var termRatingsPageCL = new ContentLoader(
     "TermRatingsPage",
     /* Initial HTML template */
-    '<<SetView data:wait>>',
+    '<<SetView>>',
     sdbInterfaceCL
 );
-termRatingsPageCL.addCallback(function($ci, data) {
-    data.copyFromAncestor("termID");
-    let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
-    let reqData = {
-        type: "term",
-        id: data.termID,
-    };
-    dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-        data.cxtID = (result[0] ?? [])[0] ?? 6; // If Context is null, use
-        // "Terms", id=6, as a substitute Context.
-        data.elemContentKey = "RatingElement";
-        data.setDataArr = [{
-            predCxtID: 8, // ID of the ">is a useful instance of ..." Context.
-            predStr: "Relevant ratings",
-            objID: data.termID,
-            userID: 3,
-            weight: 1,
-            ratTransFun: getStandardScore,
-            queryParams: {
-                num: 4000,
-                ratingLo: 0,
-                ratingHi: 0,
-            }
-        }, {
-            predCxtID: 8, // ID of the ">is a useful instance of ..." Context.
-            predStr: "Relevant ratings for derived terms",
-            objID: data.cxtID,
-            userID: 3,
-            weight: 2,
-            ratTransFun: getStandardScore,
-            queryParams: {
-                num: 4000,
-                ratingLo: 0,
-                ratingHi: 0,
-            },
-        }];
-        data.initialNum = 50;
-        data.incrementNum = 50;
-        $ci.trigger("load");
-    });
+termRatingsPageCL.addCallback("data", function(data) {
+    data.elemContentKey = "RatingElement";debugger;
+    data.setDataArr = [{
+        predCxtID: 8, // ID of the ">is a useful instance of ..." Context.
+        predStr: "Relevant ratings",
+        objID: data.getFromAncestor("termID"),
+        userID: 3,
+        weight: 1,
+        ratTransFun: getStandardScore,
+        queryParams: {
+            num: 4000,
+            ratingLo: 0,
+            ratingHi: 0,
+        }
+    }, {
+        predCxtID: 8, // ID of the ">is a useful instance of ..." Context.
+        predStr: "Relevant ratings for derived terms",
+        objID: data.getFromAncestor("cxtID"),
+        userID: 3,
+        weight: 2,
+        ratTransFun: getStandardScore,
+        queryParams: {
+            num: 4000,
+            ratingLo: 0,
+            ratingHi: 0,
+        },
+    }];debugger;
+    data.initialNum = 50;
+    data.incrementNum = 50;
 });
