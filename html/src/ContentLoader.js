@@ -42,8 +42,6 @@ export class ChildData {
         this.parentData = parentData;
     }
 
-    static nullValue = {};
-
     get(key, searchHeight) {
         if (typeof this[key] !== "undefined") {
             return this[key];
@@ -57,9 +55,8 @@ export class ChildData {
             return null;
         } else if (typeof this.parentData === "undefined") {
             return null;
-        } else if (typeof this.parentData[key] !== "undefined") {console.log(typeof this.parentData[key]);
-            let ret = this.parentData[key];
-            return ret === ChildData.nullValue ? null : ret;
+        } else if (typeof this.parentData[key] !== "undefined") {
+            return this.parentData[key];
         } else if (typeof this.parentData.getFromAncestor === "undefined") {
             return null;
         } else {

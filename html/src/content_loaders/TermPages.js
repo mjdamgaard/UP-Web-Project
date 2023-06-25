@@ -21,9 +21,14 @@ export var termPageCL = new ContentLoader(
 termPageCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "termID",
+        "cxtID",  // optional.
     ]);
 });
 termPageCL.addCallback(function($ci, data) {
+    if (data.cxtID) {
+        $ci.children('.CI.PagesWithTabs').trigger("load");
+        return;
+    };
     let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
     let reqData = {
         type: "term",
@@ -31,7 +36,7 @@ termPageCL.addCallback(function($ci, data) {
     };
     let $this = $(this);
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-        data.cxtID = (result[0] ?? [])[0];
+        data.cxtID = (result[0] ?? [])[0] ?? 6;
         if (!data.cxtID || data.cxtID > 5) {
             data.tabAndPageDataArr = [
                 ["Info", "TermInfoPage", {}],
@@ -124,7 +129,7 @@ export var termRatingsPageCL = new ContentLoader(
     sdbInterfaceCL
 );
 termRatingsPageCL.addCallback("data", function(data) {
-    data.elemContentKey = "RatingElement";debugger;
+    data.elemContentKey = "RatingElement";
     data.setDataArr = [{
         predCxtID: 8, // ID of the ">is a useful instance of ..." Context.
         predStr: "Relevant ratings",
@@ -149,7 +154,7 @@ termRatingsPageCL.addCallback("data", function(data) {
             ratingLo: 0,
             ratingHi: 0,
         },
-    }];debugger;
+    }];
     data.initialNum = 50;
     data.incrementNum = 50;
 });

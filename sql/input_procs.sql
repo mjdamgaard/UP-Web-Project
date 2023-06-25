@@ -132,7 +132,7 @@ BEGIN
         NOT EXISTS (SELECT id FROM Terms WHERE id = cxtID)
     ) THEN
         SET exitCode = 2; -- cxtID is not the ID of an existing Term.
-    ELSEIF (0 < cxtID AND cxtID <= 5) THEN
+    ELSEIF (0 < cxtID AND cxtID <= 6) THEN
         SET exitCode = 3; -- cxtID is not permitted for this procedure.
     ELSEIF (
         defTermID IS NOT NULL AND

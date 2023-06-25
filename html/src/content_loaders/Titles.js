@@ -80,8 +80,8 @@ export function loadTermTitleHTML($ci, data) {
         termTitleCL.loadAppended($ci, "SimpleTitle", new ChildData(data, {
             defStr: data.cxtDefStr,
             termID: data.cxtID,
-            cxtID: false,
-            cxtDefStr: false,
+            cxtID: null,
+            cxtDefStr: null,
         }));
         $ci.append(')');
     }
