@@ -5,6 +5,9 @@ import {
 import {
     sdbInterfaceCL,
 } from "/src/content_loaders/SDBInterfaces.js";
+import {
+    SetQuerier,
+} from "/src/content_loaders/SetLists.js";
 
 
 
@@ -69,7 +72,7 @@ termPageCL.addCallback(function($ci, data) {
 export var termNounPredicatePageCL = new ContentLoader(
     "TermNounPredicatePage",
     /* Initial HTML template */
-    '<<SetView>>',
+    '<<SetDisplay>>',
     sdbInterfaceCL
 );
 
@@ -98,7 +101,7 @@ export function getStandardScore(ratVal) {
 export var termAppliesToPageCL = new ContentLoader(
     "TermAppliesToPage",
     /* Initial HTML template */
-    '<<SetView>>',
+    '<<SetDisplay>>',
     sdbInterfaceCL
 );
 termAppliesToPageCL.addCallback("data", function(data) {
@@ -121,7 +124,7 @@ termAppliesToPageCL.addCallback("data", function(data) {
 export var termRatingsPageCL = new ContentLoader(
     "TermRatingsPage",
     /* Initial HTML template */
-    '<<SetView>>',
+    '<<SetDisplay>>',
     sdbInterfaceCL
 );
 termRatingsPageCL.addCallback("data", function(data) {

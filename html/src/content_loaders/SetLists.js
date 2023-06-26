@@ -61,7 +61,7 @@ setListCL.addCallback(function($ci, data) {
         setListCL.loadAppended($ci, "List", data);
         return false;
     });
-    data.setGenerator.generateSet($ci, callbackData, function($ci, set) {
+    data.setGenerator.generateSet($ci, function($ci, set) {
         $ci.trigger("load-initial-elements", [set]);
     });
 });
@@ -91,10 +91,11 @@ export class SetQuerier extends SetGenerator {
         setData,
         set, replaceExistingSet, // optional.
     ) {
+        super();
         this.setData = setData;
         setData.offset ??= 0;;
         setData.isAscending ??= 0;;
-        this.set = set;
+        this.set = set ?? [];
         this.replaceExistingSet = replaceExistingSet ?? false;
     }
 
@@ -158,6 +159,7 @@ export class SetCombiner extends SetGenerator {
         setGeneratorArr,
         setArr, isReadyArr, // optional.
     ) {
+        super();
         // this.setDataArr = setDataArr ?? [];
         // this.setQuerierArr = setDataArr.map(val => new SetQuerier(val));
         // let setNum = setDataArr.length;
