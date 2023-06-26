@@ -89,11 +89,15 @@ export class SetQuerier {
         this.replaceExistingSet = replaceExistingSet ?? false;
     }
 
-    queryAndTrigger(obj, signal) {
+    queryAndTrigger(obj, callbackData, callback) {
+        if (!callback) {
+            callback = callbackData;
+            callbackData = undefined;
+        }
         let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
         let setData = this.setData;
         if (setData.predID) {
-            this.queryWithPredIDAndTrigger(obj, signal);
+            this.queryWithPredIDAndCallBack(obj, callbackData, callback);
         } else {
             let reqData = {
                 type: "termID",
@@ -101,16 +105,19 @@ export class SetQuerier {
                 s: encodeURI(setData.predStr),
                 t: setData.objID,
             };
-            dbReqManager.query(this, reqData, signal,
-                function(obj, result, signal) {
+            dbReqManager.query(this, reqData, function(sq, result) {
                     setData.predID = (result[0] ?? [0])[0];
-                    obj.queryWithPredIDAndTrigger(obj, signal);
+                    sq.queryWithPredIDAndCallBack(obj, callbackData, callback);
                 }
             );
         }
     }
 
-    queryWithPredIDAndTrigger(obj, signal) {
+    queryWithPredIDAndCallBack(obj, callbackData, callback) {
+        if (!callback) {
+            callback = callbackData;
+            callbackData = undefined;
+        }
         let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
         let setData = this.setData;
         let reqData = {
@@ -131,7 +138,7 @@ export class SetQuerier {
             }
             let setData = sq.setData;
             setData.offset += setData.num; // default for a subsequent query.
-            obj.trigger(signal, [sq.set]);
+            callback(obj, sq.set, callbackData);
         });
     }
 }
@@ -139,27 +146,33 @@ export class SetQuerier {
 export class SetCombiner {
     constructor(
         setDataArr,
+        setCombinerArr,
+        setArr, isReadyArr, // optional.
     ) {
         // this.setDataArr = setDataArr ?? [];
         this.setQuerierArr = setDataArr.map(val => new SetQuerier(val));
-        this.isReadyArr = new Array(setDataArr.length).fill(false);
+        let setNum = setDataArr.length;
+        this.setArr = setArr ?? new Array(setNum);
+        this.isReadyArr = isReadyArr ?? new Array(setNum).fill(false);
     }
 
     queryAndCombineSets(callbackData, callback) {
         if (!callback) {
             callback = callbackData;
-            callbackData = null;
+            callbackData = undefined;
         }
         let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
         setQuerierArr.forEach(function(val, ind) {
-            val.queryAndTrigger(this, ind); // calls this.trigger(ind).
+            val.queryWithPredIDAndCallBack(this, ind, function(obj, set, ind) {
+                obj.setArr[ind] = set;
+                obj.isReadyArr[ind] = true;
+                obj.transformAndCombineSetsIfReady();
+            });
         });
     }
 
-    trigger(ind, setArr) {
-        let isReadyArr = this.isReadyArr;
-        isReadyArr[ind] = true;
-        let isReady = isReadyArr.reduce(
+    transformAndCombineSetsIfReady() {
+        let isReady = this.isReadyArr.reduce(
             (acc, val) => acc && val, true
         );
         if (isReady) {
@@ -270,7 +283,7 @@ export class SetCombiner {
 //     queryAndCombineSets(callbackData, callback) {
 //         if (!callback) {
 //             callback = callbackData;
-//             callbackData = null;
+//             callbackData = undefined;
 //         }
 //         let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
 //         let setNum = this.setDataArr.length;
