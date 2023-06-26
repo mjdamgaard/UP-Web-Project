@@ -157,14 +157,14 @@ export class SetQuerier extends SetGenerator {
 export class SetCombiner extends SetGenerator {
     constructor(
         setGeneratorArr,
-        setArr, isReadyArr, // optional.
+        sortAscending, setArr, isReadyArr, // optional.
     ) {
         super();
-        // this.setDataArr = setDataArr ?? [];
-        // this.setQuerierArr = setDataArr.map(val => new SetQuerier(val));
-        // let setNum = setDataArr.length;
+        this.setGeneratorArr = setGeneratorArr ?? [];
+        let setNum = this.setGeneratorArr.length;
         this.setArr = setArr ?? new Array(setNum);
         this.isReadyArr = isReadyArr ?? new Array(setNum).fill(false);
+        this.sortAscending = sortAscending ?? 0;
     }
 
     generateSet(obj, callbackData, callback) {
@@ -174,7 +174,7 @@ export class SetCombiner extends SetGenerator {
         }
         let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
         let thisSG = this;
-        setGeneratorArr.forEach(function(val, ind) {
+        this.setGeneratorArr.forEach(function(val, ind) {
             val.generateSet(thisSG, ind, function(sg, set, ind) {
                 sg.setArr[ind] = (sg.transformSet(set) ?? set);
                 sg.isReadyArr[ind] = true;
@@ -203,6 +203,53 @@ export class SetCombiner extends SetGenerator {
     }
 }
 
+
+/* An example of a class that implements SetCombiner */
+export class MaxRatingSetCombiner extends SetCombiner {
+    constructor(
+        setGeneratorArr,
+        sortAscending, setArr, isReadyArr, // optional.
+    ) {
+        super(
+            setGeneratorArr,
+            sortAscending, setArr, isReadyArr,
+        );
+    }
+
+    combineSets() {
+        // setArr is imploded into concatArr, which is then sorted by subjID.
+        let concatSet = [].concat(...this.setArr).sort(
+            (a, b) => a[1] - b[1]
+        );
+        // construct a return array by recording only the maximal rating for
+        // each group of elements with the same subjID in the concatArr.
+        let ret = new Array(concatSet.length);
+        let retLen = 0;
+        let currSubjID = 0;
+        let row, maxRat, currRat;
+        concatSet.forEach(function(val, ind) {
+            if (val[1] !== currSubjID) {
+                currSubjID = val[1];
+                maxRat = val[0];
+                ret[retLen] = (row = [maxRat, currSubjID]);
+                retLen++;
+            } else {
+                currRat = val[0];
+                if (currRat > maxRat) {
+                    row[0] = (maxRat = currRat);
+                }
+            }
+        });
+        // delete the empty slots of ret.
+        ret.length = retLen;
+        // set and return this.combSet as ret sorted after the combRatVal.
+        if (this.sortAscending) {
+            return this.combSet = ret.sort((row1, row2) => row1[0] - row2[0]);
+        } else {
+            return this.combSet = ret.sort((row1, row2) => row2[0] - row1[0]);
+        }
+    }
+}
 
 
 

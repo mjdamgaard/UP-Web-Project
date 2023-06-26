@@ -6,7 +6,7 @@ import {
     sdbInterfaceCL,
 } from "/src/content_loaders/SDBInterfaces.js";
 import {
-    SetQuerier,
+    SetQuerier, SetCombiner, MaxRatingSetCombiner,
 } from "/src/content_loaders/SetLists.js";
 
 
@@ -106,17 +106,13 @@ export var termAppliesToPageCL = new ContentLoader(
 );
 termAppliesToPageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralTermElement";
-    data.setDataArr = [{
+    data.setGenerator = new SetQuerier({
         predID: data.getFromAncestor("termID"),
         userID: 3,
-        weight: 1,
-        ratTransFun: getStandardScore,
-        queryParams: {
-            num: 4000,
-            ratingLo: 0,
-            ratingHi: 0,
-        },
-    }];
+        num: 4000,
+        ratingLo: 0,
+        ratingHi: 0,
+    });
     data.initialNum = 50;
     data.incrementNum = 50;
 });
@@ -129,31 +125,25 @@ export var termRatingsPageCL = new ContentLoader(
 );
 termRatingsPageCL.addCallback("data", function(data) {
     data.elemContentKey = "RatingElement";
-    data.setDataArr = [{
+    let sg1 = new SetQuerier({
         predCxtID: 8, // ID of the ">is a useful instance of ..." Context.
         predStr: "Relevant ratings",
         objID: data.getFromAncestor("termID"),
         userID: 3,
-        weight: 1,
-        ratTransFun: getStandardScore,
-        queryParams: {
-            num: 4000,
-            ratingLo: 0,
-            ratingHi: 0,
-        }
-    }, {
+        num: 4000,
+        ratingLo: 0,
+        ratingHi: 0,
+    });
+    let sg2 = new SetQuerier({
         predCxtID: 8, // ID of the ">is a useful instance of ..." Context.
         predStr: "Relevant ratings for derived terms",
         objID: data.getFromAncestor("cxtID"),
         userID: 3,
-        weight: 2,
-        ratTransFun: getStandardScore,
-        queryParams: {
-            num: 4000,
-            ratingLo: 0,
-            ratingHi: 0,
-        },
-    }];
+        num: 4000,
+        ratingLo: 0,
+        ratingHi: 0,
+    });
+    data.setGenerator = new MaxRatingSetCombiner([sg1, sg2]);
     data.initialNum = 50;
     data.incrementNum = 50;
 });
