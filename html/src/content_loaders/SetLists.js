@@ -68,6 +68,16 @@ setListCL.addCallback(function($ci, data) {
 });
 
 
+/* SetGenerator is just a completely abstract class */
+export class SetGenerator {
+    constructor() {
+        // to be redefined by descendant classes.
+    }
+
+    generateSet(obj, callbackData, callback) {
+        // to be redefined by descendant classes.
+    }
+}
 
 /*
 setData = {
@@ -76,8 +86,7 @@ setData = {
     num, ratingLo, ratingHi, offset?, isAscending?,
 }
 */
-
-export class SetQuerier {
+export class SetQuerier extends SetGenerator {
     constructor(
         setData,
         set, replaceExistingSet, // optional.
@@ -89,7 +98,7 @@ export class SetQuerier {
         this.replaceExistingSet = replaceExistingSet ?? false;
     }
 
-    queryAndTrigger(obj, callbackData, callback) {
+    generateSet(obj, callbackData, callback) {
         if (!callback) {
             callback = callbackData;
             callbackData = undefined;
@@ -97,7 +106,7 @@ export class SetQuerier {
         let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
         let setData = this.setData;
         if (setData.predID) {
-            this.queryWithPredIDAndCallBack(obj, callbackData, callback);
+            this.queryWithPredID(obj, callbackData, callback);
         } else {
             let reqData = {
                 type: "termID",
@@ -105,15 +114,15 @@ export class SetQuerier {
                 s: encodeURI(setData.predStr),
                 t: setData.objID,
             };
-            dbReqManager.query(this, reqData, function(sq, result) {
+            dbReqManager.query(this, reqData, function(sg, result) {
                     setData.predID = (result[0] ?? [0])[0];
-                    sq.queryWithPredIDAndCallBack(obj, callbackData, callback);
+                    sg.queryWithPredID(obj, callbackData, callback);
                 }
             );
         }
     }
 
-    queryWithPredIDAndCallBack(obj, callbackData, callback) {
+    queryWithPredID(obj, callbackData, callback) {
         if (!callback) {
             callback = callbackData;
             callbackData = undefined;
@@ -130,123 +139,66 @@ export class SetQuerier {
             o: setData.offset,
             a: setData.isAscending,
         };
-        dbReqManager.query(this, reqData, function(sq, result) {
-            if (sq.replaceExistingSet) {
-                sq.set = result;
+        dbReqManager.query(this, reqData, function(sg, result) {
+            if (sg.replaceExistingSet) {
+                sg.set = result;
             } else {
-                sq.set = sq.set.concat(result);
+                sg.set = sg.set.concat(result);
             }
-            let setData = sq.setData;
+            let setData = sg.setData;
             setData.offset += setData.num; // default for a subsequent query.
-            callback(obj, sq.set, callbackData);
+            callback(obj, sg.set, callbackData);
         });
     }
 }
 
-export class SetCombiner {
+/* SetCombiner is also an abstract class, since e.g. combineSets() is missing */
+export class SetCombiner extends SetGenerator {
     constructor(
-        setDataArr,
-        setCombinerArr,
+        setGeneratorArr,
         setArr, isReadyArr, // optional.
     ) {
         // this.setDataArr = setDataArr ?? [];
-        this.setQuerierArr = setDataArr.map(val => new SetQuerier(val));
-        let setNum = setDataArr.length;
+        // this.setQuerierArr = setDataArr.map(val => new SetQuerier(val));
+        // let setNum = setDataArr.length;
         this.setArr = setArr ?? new Array(setNum);
         this.isReadyArr = isReadyArr ?? new Array(setNum).fill(false);
     }
 
-    queryAndCombineSets(callbackData, callback) {
+    generateSet(obj, callbackData, callback) {
         if (!callback) {
             callback = callbackData;
             callbackData = undefined;
         }
         let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
-        setQuerierArr.forEach(function(val, ind) {
-            val.queryWithPredIDAndCallBack(this, ind, function(obj, set, ind) {
-                obj.setArr[ind] = set;
-                obj.isReadyArr[ind] = true;
-                obj.transformAndCombineSetsIfReady();
+        let thisSG = this;
+        setGeneratorArr.forEach(function(val, ind) {
+            val.generateSet(thisSG, ind, function(sg, set, ind) {
+                sg.setArr[ind] = (sg.transformSet(set) ?? set);
+                sg.isReadyArr[ind] = true;
+                sg.combineSetsIfReady(obj, callbackData, callback);
             });
         });
     }
 
-    transformAndCombineSetsIfReady() {
+    combineSetsIfReady(obj, callbackData, callback) {
         let isReady = this.isReadyArr.reduce(
             (acc, val) => acc && val, true
         );
         if (isReady) {
-            // ..
+            let combSet = this.combineSets();
+            callback(obj, combSet, callbackData);
         }
     }
 
-    transformSet(set, setData, i) {
-        let ratTransFun = setData.ratTransFun;
-        set.forEach(function(row) {
-            row[2] = ratTransFun(row[0]);
-            row[3] = i;
-        });
-        return set;
+    transformSet(set) {
+        // can be redefined by descendant classes.
+        // (transformSet() might also store additional data for combineSets().)
     }
 
-    combineSetsIfReady(callbackData, callback) {
-        let isReady = this.setDataArr.reduce(
-            (acc, val) => acc && val.isReady, true
-        );
-        if (isReady) {
-            this.computeConcatenatedSet();
-            this.computeCombinedSet();
-            callback(this.combSet, callbackData);
-        }
+    combineSets() {
+        // to be redefined by descendant classes.
     }
-
-    computeConcatenatedSet() {
-        let setArr = this.setDataArr.map(val => val.set);
-        return this.concatSet = [].concat(...setArr).sort(
-            (a, b) => a[1] - b[1]
-        );
-    }
-
-    computeCombinedSet() {
-        let ret = new Array(this.concatSet.length);
-        let retLen = 0;
-        let weightArr = this.setDataArr.map(val => val.weight);
-        let currSubjID = 0;
-        let row, accWeight, currWeight, newWeight;
-        this.concatSet.forEach(function(val, ind) {
-            if (val[1] !== currSubjID) {
-                currSubjID = val[1];
-                ret[retLen] = (row = [val[2], val[1], ind]);
-                retLen++;
-                accWeight = weightArr[val[3]];
-            } else {
-                currWeight = weightArr[val[3]];
-                newWeight = accWeight + currWeight;
-                row[0] = (row[0] * accWeight + val[2] * currWeight) / newWeight;
-                accWeight = newWeight;
-            }
-        });
-        // delete the weight column of the last row and delete the empty slots.
-        if (retLen > 0) {
-            ret[retLen - 1].length = 3;
-        }
-        ret.length = retLen;
-        // set and return this.combSet as ret sorted after the combRatVal.
-        if (this.sortAscending) {
-            return this.combSet = ret.sort((row1, row2) => row1[0] - row2[0]);
-        } else {
-            return this.combSet = ret.sort((row1, row2) => row2[0] - row1[0]);
-        }
-    }
-
-
-    // This method utilizes the fact that concatSet is formed by shallow copies,
-    // making it possible to change all row[2]'s by changing them in each
-    // setData.set.
-    retransformUnreadySetsAndRecombine() {
-        // TODO: Implement.
-    }
-
 }
 
 
