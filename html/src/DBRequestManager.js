@@ -8,7 +8,7 @@ export class DBRequestManager {
         this.ongoingQueries = {};
     }
 
-    query($obj, reqData, callbackData, callback) {
+    query(obj, reqData, callbackData, callback) {
         if (!callback) {
             callback = callbackData;
             callbackData = null;
@@ -18,13 +18,13 @@ export class DBRequestManager {
         let reqDataKey = JSON.stringify(reqData);
         let queryQueue = this.ongoingQueries[reqDataKey];
         if (queryQueue) {
-            queryQueue.push([$obj, callback, callbackData]);
+            queryQueue.push([obj, callback, callbackData]);
             return;
         }
         // else initialize an ongoing query data queue, and make a $.getJSON()
         // call, which runs all the callbacks in the queue on at a time upon
         // receiving the response from the server.
-        this.ongoingQueries[reqDataKey] = [[$obj, callback, callbackData]];
+        this.ongoingQueries[reqDataKey] = [[obj, callback, callbackData]];
         let thisDBReqManager = this;
         $.getJSON("query_handler.php", reqData, function(result, textStatus) {
             // get and then delete the ongiong query queue.
@@ -57,15 +57,15 @@ export class DBRequestManager {
             }
             // then call all callbacks in queryQueue with their associated data.
             for (let i = 0; i < queryQueue.length; i++) {
-                let $obj = queryQueue[i][0];
+                let obj = queryQueue[i][0];
                 let callback = queryQueue[i][1];
                 let callbackData = queryQueue[i][2];
-                callback($obj, result, callbackData, textStatus);
+                callback(obj, result, callbackData, textStatus);
             }
         });
     }
 
-    input($obj, reqData, callbackData, callback) {
+    input(obj, reqData, callbackData, callback) {
         if (!callback) {
             callback = callbackData;
             callbackData = null;
@@ -73,7 +73,7 @@ export class DBRequestManager {
         let thisDBReqManager = this;
         $.post("input_handler.php", reqData, function(result, textStatus) {
             // call the callback function on result.
-            callback($obj, result, callbackData, textStatus);
+            callback(obj, result, callbackData, textStatus);
         });
     }
 }

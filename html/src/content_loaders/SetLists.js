@@ -76,29 +76,104 @@ setListCL.addCallback(function($ci, data) {
 
 
 
+/*
+setData = {
+    (predCxtID, predStr, objID, | predID,)
+    userID,
+    num, ratingLo, ratingHi, offset?, isAscending?,
+}
+*/
+
+export class SetQuerier {
+    constructor(
+        setData,
+        set, replaceExistingSet, // optional.
+    ) {
+        this.setData = setData;
+        setData.offset ??= 0;;
+        setData.isAscending ??= 0;;
+        this.set = set;
+        this.replaceExistingSet = replaceExistingSet ?? false;
+    }
+
+    queryAndTrigger(obj, signal) {
+        let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
+        let setData = this.setData;
+        if (setData.predID) {
+            this.queryWithPredIDAndTrigger(obj, signal);
+        } else {
+            let reqData = {
+                type: "termID",
+                c: setData.predCxtID,
+                s: encodeURI(setData.predStr),
+                t: setData.objID,
+            };
+            dbReqManager.query(this, reqData, signal,
+                function(obj, result, signal) {
+                    setData.predID = (result[0] ?? [0])[0];
+                    obj.queryWithPredIDAndTrigger(obj, signal);
+                }
+            );
+        }
+    }
+
+    queryWithPredIDAndTrigger(obj, signal) {
+        let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
+        let setData = this.setData;
+        let reqData = {
+            type: "set",
+            u: setData.userID,
+            p: setData.predID,
+            rl: setData.ratingLo,
+            rh: setData.ratingHi,
+            n: setData.num,
+            o: setData.offset,
+            a: setData.isAscending,
+        };
+        dbReqManager.query(this, reqData, function(sq, result) {
+            if (sq.replaceExistingSet) {
+                sq.set = result;
+            } else {
+                sq.set = sq.set.concat(result);
+            }
+            let setData = sq.setData;
+            setData.offset += setData.num; // default for a subsequent query.
+            obj.trigger(signal, [sq.set]);
+        });
+    }
+}
+
+
+
+
+
+/*
+data.setDataArr = [setData, ...],
+    setData = {
+        predCxtID, predStr, objID,
+        predID?,
+        userID,
+        // weight, queryParams, ratTransFun?,
+        set?,
+        concatWithExistingSet?,
+        isReady?,
+    },
+    queryParams = {num, ratingLo, ratingHi, offset?, isAscending}.
+*/
+
 export class SetManager {
     constructor(
         setDataArr,
-        sortAscending, concatSet, combSet // optional
+        parentManager, childManagerArr,
+        sortAscending, combSet
     ) {
-        this.setDataArr = setDataArr;
+        this.setDataArr = setDataArr ?? [];
+        this.parentManager = parentManager;
+        this.childManagerArr = childManagerArr ?? [];
         this.sortAscending = sortAscending ?? 0; // false;
-        this.concatSet = concatSet;
+        // this.concatSet = concatSet;
         this.combSet = combSet;
     }
-
-    /*
-    Recall:
-    data.setDataArr = [setData, ...],
-        setData = {
-            predCxtID, predStr, objID,
-            predID?,
-            userID, weight, ratTransFun, queryParams,
-            set?,
-            isReady?,
-        },
-        queryParams = {num, ratingLo, ratingHi, offset?, isAscending}.
-    */
 
     queryAndCombineSets(callbackData, callback) {
         if (!callback) {
@@ -125,14 +200,12 @@ export class SetManager {
                     s: encodeURI(setData.predStr),
                     t: setData.objID,
                 };
-                dbReqManager.query(
-                    this, reqData, i, function(thisSM, result, i) {
-                        setData.predID = (result[0] ?? [0])[0];
-                        thisSM.querySetAndCombineIfReady(
-                            setData, i, callbackData, callback
-                        );
-                    }
-                );
+                dbReqManager.query(this, reqData, i, function(obj, result, i) {
+                    setData.predID = (result[0] ?? [0])[0];
+                    obj.querySetAndCombineIfReady(
+                        setData, i, callbackData, callback
+                    );
+                });
             } else if (!setData.isReady) {
                 setData.set = this.transformSet(setData.set, setData, i);
                 setData.isReady = true;
@@ -156,10 +229,10 @@ export class SetManager {
             o: queryParams.offset,
             a: queryParams.isAscending,
         };
-        dbReqManager.query(this, reqData, i, function(thisSM, result, i) {
-            setData.set = thisSM.transformSet(result, setData, i);
+        dbReqManager.query(this, reqData, i, function(obj, result, i) {
+            setData.set = obj.transformSet(result, setData, i);
             setData.isReady = true;
-            thisSM.combineSetsIfReady(callbackData, callback);
+            obj.combineSetsIfReady(callbackData, callback);
         });
     }
 
