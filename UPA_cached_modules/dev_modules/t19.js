@@ -17,7 +17,7 @@ import {
 } from "/src/content_loaders/TermElements.js";
 import {
     dropdownButtonBarCL,
-} from "/src/content_loaders/SetViews.js";
+} from "/src/content_loaders/SetDisplays.js";
 
 
 sdbInterfaceCL.addCSS(

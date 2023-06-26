@@ -9,8 +9,8 @@ import {
 
 
 
-export var setViewCL = new ContentLoader(
-    "SetView",
+export var setDisplayCL = new ContentLoader(
+    "SetDisplay",
     /* Initial HTML template */
     '<div>' +
         '<<SetHeader>>' +
