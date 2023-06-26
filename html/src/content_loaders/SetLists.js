@@ -13,20 +13,14 @@ import {
 /*
 SetList requires data:
     data.elemContentKey,
-    data.setDataArr = [setData, ...],
-        setData = {
-            (predCxtID, predStr, objID, | predID,)
-            userID,
-            num, ratingLo, ratingHi, offset?, isAscending?,
-        },
-        queryParams = {num, ratingLo, ratingHi, offset?, isAscending?},
-    data.combSet?
+    data.setGenerator,
     data.sortAscending?,
     data.initialNum,
     data.incrementNum,
 And it also sets/updates data:
-    data.combSet = [[ratVal, subjID], ...],
-    data.listElemDataArr = [{ratVal, termID}, ...].
+    data.set,
+    data.listElemDataArr = [{ratVal, termID}, ...],
+    data.currentNum,
 */
 export var setListCL = new ContentLoader(
     "SetList",
@@ -39,8 +33,7 @@ export var setListCL = new ContentLoader(
 setListCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "elemContentKey",
-        "setDataArr",
-        "sortAscending",  // optional.
+        "setGenerator",
         "initialNum",
         "incrementNum",
     ]);
@@ -48,22 +41,28 @@ setListCL.addCallback("data", function(data) {
 });
 setListCL.addCallback(function($ci, data) {
     data.cl = setListCL.getRelatedCL(data.elemContentKey);
-    $ci.one("load-initial-elements", function(event, combSet) {
-        data.listElemDataArr = combSet.slice(0, data.initialNum).map(val => ({
-            combRatVal: val[0],
+    $ci.one("load-initial-elements", function(event, set) {
+        data.listElemDataArr = set.slice(0, data.initialNum).map(val => ({
+            ratVal: val[0],
             termID: val[1],
-            concatSetIndex: val[2],
         }));
-        data.currentLen = data.initialNum;
+        data.currentNum = data.initialNum;
         $ci.find('.CI.List').trigger("load");
         return false;
     });
-    data.setManager = new SetManager(
-        data.setDataArr,
-        data.sortAscending, data.combSet,
-    );
-    data.setManager.queryAndCombineSets(function(combSet) {
-        $ci.trigger("load-initial-elements", [combSet]);
+    $ci.on("append-elements", function(event, set) {
+        let currNum = data.currentNum;
+        let newNum = currNum + data.incrementNum;
+        data.listElemDataArr = set.slice(currNum, newNum).map(val => ({
+            ratVal: val[0],
+            termID: val[1],
+        }));
+        data.currentNum = newNum;
+        setListCL.loadAppended($ci, "List", data);
+        return false;
+    });
+    data.setGenerator.generateSet($ci, callbackData, function($ci, set) {
+        $ci.trigger("load-initial-elements", [set]);
     });
 });
 
@@ -83,7 +82,8 @@ export class SetGenerator {
 setData = {
     (predCxtID, predStr, objID, | predID,)
     userID,
-    num, ratingLo, ratingHi, offset?, isAscending?,
+    num, ratingLo, ratingHi,
+    offset?, isAscending?,
 }
 */
 export class SetQuerier extends SetGenerator {
@@ -152,7 +152,7 @@ export class SetQuerier extends SetGenerator {
     }
 }
 
-/* SetCombiner is also an abstract class, since e.g. combineSets() is missing */
+/* SetCombiner is also an abstract class, as combineSets() needs implementing */
 export class SetCombiner extends SetGenerator {
     constructor(
         setGeneratorArr,

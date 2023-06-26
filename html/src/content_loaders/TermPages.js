@@ -76,19 +76,15 @@ export var termNounPredicatePageCL = new ContentLoader(
 
 termNounPredicatePageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralTermElement";
-    data.setDataArr = [{
+    data.setGenerator = new SetQuerier({
         predCxtID: 8, // ID of the ">is a useful instance of ..." Context.
         predStr: data.getFromAncestor("predNoun"),
         objID: data.getFromAncestor("termID"),
         userID: 3,
-        weight: 1,
-        ratTransFun: getStandardScore,
-        queryParams: {
-            num: 4000,
-            ratingLo: 0,
-            ratingHi: 0,
-        },
-    }];
+        num: 4000,
+        ratingLo: 0,
+        ratingHi: 0,
+    });
     data.initialNum = 50;
     data.incrementNum = 50;
 });

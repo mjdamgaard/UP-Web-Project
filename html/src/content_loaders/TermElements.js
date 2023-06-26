@@ -14,7 +14,7 @@ export var generalTermElementCL = new ContentLoader(
     /* Initial HTML template */
     '<div>' +
         '<<TermTitle>>' +
-        '<<CombinedRatingDisplay>>' +
+        '<<ElementRatingDisplay>>' +
         '<<DropdownBox>>' +
     '</div>',
     sdbInterfaceCL
@@ -36,15 +36,16 @@ export var generalTermElementDropdownPageCL = new ContentLoader(
 );
 
 
-export var combinedRatingDisplayCL = new ContentLoader(
-    "CombinedRatingDisplay",
+export var elementRatingDisplayCL = new ContentLoader(
+    "ElementRatingDisplay",
     /* Initial HTML template */
     '<div>' +
     '</div>',
     sdbInterfaceCL
 );
-combinedRatingDisplayCL.addCallback(function($ci, data) {
-    $ci.html(data.getFromAncestor("combRatVal").toFixed(2));
+elementRatingDisplayCL.addCallback(function($ci, data) {
+    let ratVal = data.getFromAncestor("ratVal");
+    $ci.html((ratVal / 6553.5).toFixed(2));
 });
 
 export var setPredicatesRatingsDisplayCL = new ContentLoader(
