@@ -147,3 +147,6 @@ termRatingsPageCL.addCallback("data", function(data) {
     data.initialNum = 50;
     data.incrementNum = 50;
 });
+termRatingsPageCL.addCallback("data", function(data) {
+    data.ratingSliderSubjID = data.getFromAncestor("termID");
+});
