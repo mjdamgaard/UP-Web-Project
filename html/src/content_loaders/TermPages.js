@@ -149,4 +149,5 @@ termRatingsPageCL.addCallback("data", function(data) {
 });
 termRatingsPageCL.addCallback("data", function(data) {
     data.ratingSliderSubjID = data.getFromAncestor("termID");
+    data.copyFromAncestor("queryUserID");
 });

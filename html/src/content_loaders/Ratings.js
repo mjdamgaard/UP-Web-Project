@@ -17,6 +17,28 @@ export var ratingElementCL = new ContentLoader(
     '</div>',
     sdbInterfaceCL
 );
+ratingElementCL.addCallback("data", function(data) {
+    data.copyFromAncestor([
+        "queryUserID",
+        "termID",
+        "ratingSliderSubjID",
+    ]);
+});
+ratingElementCL.addCallback(function($ci, data) {
+    let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
+    let reqData = {
+        type: "rat",
+        u: data.queryUserID,
+        p: data.termID,
+        s: data.ratingSliderSubjID,
+    };
+    dbReqManager.query($ci, reqData, data, function($ci, result, data) {
+        data.initRatVal = (result[0] ?? [0])[0];
+        $ci.children('.CI.RatingSlider').trigger("load");
+    });
+});
+
+
 
 export var ratingSliderCL = new ContentLoader(
     "RatingSlider",
@@ -28,6 +50,11 @@ export var ratingSliderCL = new ContentLoader(
     '</div>',
     sdbInterfaceCL
 );
+ratingSliderCL.addCallback("data", function(data) {
+    data.copyFromAncestor([
+        "initRatVal",
+    ]);
+});
 ratingSliderCL.addCallback(function($ci, data) {
-
+    $ci.find('input[type="range"]').attr("value", data.initRatVal);
 });

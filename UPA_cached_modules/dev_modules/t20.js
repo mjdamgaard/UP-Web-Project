@@ -9,6 +9,7 @@ import "/src/content_loaders/SetDisplays.js";
 import "/src/content_loaders/TermElements.js";
 import "/src/content_loaders/TermPages.js";
 import "/src/content_loaders/Titles.js";
+import "/src/content_loaders/Ratings.js";
 // import "/src/content_loaders/SetElements.js";
 // import "/src/content_loaders/SubmitFields.js";
 // import * as t16Mod from "/UPA_scripts.php?id=16";

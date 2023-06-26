@@ -116,10 +116,9 @@ export class SetQuerier extends SetGenerator {
                 t: setData.objID,
             };
             dbReqManager.query(this, reqData, function(sg, result) {
-                    setData.predID = (result[0] ?? [0])[0];
-                    sg.queryWithPredID(obj, callbackData, callback);
-                }
-            );
+                setData.predID = (result[0] ?? [0])[0];
+                sg.queryWithPredID(obj, callbackData, callback);
+            });
         }
     }
 
