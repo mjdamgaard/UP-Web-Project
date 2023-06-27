@@ -139,4 +139,5 @@ CALL insertPredicates("Relevant ratings for derived terms", 22, 33);
 
 
 
+
 DROP PROCEDURE insertPredicates;
