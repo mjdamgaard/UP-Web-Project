@@ -117,9 +117,11 @@ inputRatingSliderCL.addCallback(function($ci, data) {
                 $ci.find('button.clear').hide();
             });
         }
+        return false;
     });
-    $ci.find('input[type="range"]').one("change", function() {
-        let $ci = $(this).closest('.CI.InputRatingSlider');
+    $ci.find('input[type="range"]').one("change input", function() {
+        let $this = $(this);
+        let $ci = $this.closest('.CI.InputRatingSlider');
         $ci.find('button.submit').show().on("click", function() {
             let $ci = $(this).closest('.CI.InputRatingSlider');
             let data = $ci.data("data");
@@ -138,6 +140,16 @@ inputRatingSliderCL.addCallback(function($ci, data) {
             dbReqManager.input($ci, reqData, data, function($ci, result, data) {
                 $ci.find('button.clear').show();
             });
+            return false;
         });
+        $this.on("change input", function() {
+            let $this = $(this);
+            let sliderVal = $this.val();
+            let $ci = $this.closest('.CI.InputRatingSlider');
+            $ci.find('.value-display').html(sliderVal);
+            return false;
+        });
+        $ci.trigger("input");
+        return false;
     });
 });
