@@ -46,7 +46,7 @@ ratingElementCL.addCallback(function($ci, data) {
     };
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
         data.prevInputRatVal = (result[0] ?? [0])[0];
-        $ci.find('.CI.RatingSlider').trigger("load");
+        $ci.find('.CI.InputRatingSlider').trigger("load");
     });
 });
 
@@ -73,7 +73,8 @@ export var inputRatingSliderCL = new ContentLoader(
     "InputRatingSlider",
     /* Initial HTML template */
     '<div>' +
-        '<input type="range" min="0.01" max="10.00" step="0.01"> value="5">' +
+        '<input type="range" min="0.01" max="10.00" step="0.01" value="5">' +
+        '<div class="value-display"></div>' +
         '<div class="button-container">' +
             '<button class="btn btn-default">Clear</button>' +
             '<button type="submit" class="btn btn-default">Submit</button>' +
@@ -92,7 +93,7 @@ inputRatingSliderCL.addCallback(function($ci, data) {
     if (prevInputRatVal) { // ratVal cannot be 0 (only null or positive).
         data.hasPrevRatVal = true;
         $ci.find('input[type="range"]').attr(
-            "value", (initRatVal / 6553.5).toFixed(2)
+            "value", (prevInputRatVal / 6553.5).toFixed(2)
         );
     } else {
         data.hasPrevRatVal = false;
