@@ -37,7 +37,7 @@ ratingElementCL.addCallback(function($ci, data) {
         data.queryUserRatVal = (result[0] ?? [0])[0];
         $ci.find('.CI.QueryUserRatingDisplay').trigger("load");
     });
-    let reqData = {
+    reqData = {
         type: "rat",
         u: data.inputUserID,
         p: data.termID,

@@ -129,4 +129,14 @@ CALL inputOrChangeRating(3, 50, 29, CONV("FFFF", 16, 10), "00");
 CALL inputOrChangeRating(3, 51, 28, CONV("FFF0", 16, 10), "00");
 
 
+
+CALL insertOrFindTerm(3, NULL, "Relevant ratings", 0);
+CALL insertPredicates("Relevant ratings", 28, 29);
+CALL insertOrFindTerm(3, NULL, "Relevant ratings for derived terms", 0);
+CALL insertPredicates("Relevant ratings for derived terms", 6, 8);
+CALL insertPredicates("Relevant ratings for derived terms", 22, 33);
+
+
+
+
 DROP PROCEDURE insertPredicates;
