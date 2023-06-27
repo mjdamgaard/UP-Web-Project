@@ -13,7 +13,8 @@ export var ratingElementCL = new ContentLoader(
     /* Initial HTML template */
     '<div>' +
         '<<TermTitle>>' +
-        '<<RatingSlider data:wait>>' +
+        '<<QueryUserRatingDisplay data:wait>>' +
+        '<<InputRatingSlider data:wait>>' +
     '</div>',
     sdbInterfaceCL
 );
@@ -33,28 +34,63 @@ ratingElementCL.addCallback(function($ci, data) {
         s: data.ratingSliderSubjID,
     };
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-        data.initRatVal = (result[0] ?? [0])[0];
-        $ci.children('.CI.RatingSlider').trigger("load");
+        data.queryUserRatVal = (result[0] ?? [0])[0];
+        $ci.find('.CI.QueryUserRatingDisplay').trigger("load");
+    });
+    let reqData = {
+        type: "rat",
+        u: data.inputUserID,
+        p: data.termID,
+        s: data.ratingSliderSubjID,
+    };
+    dbReqManager.query($ci, reqData, data, function($ci, result, data) {
+        data.prevInputRatVal = (result[0] ?? [0])[0];
+        $ci.find('.CI.RatingSlider').trigger("load");
     });
 });
 
 
-
-export var ratingSliderCL = new ContentLoader(
-    "RatingSlider",
+export var queryUserRatingDisplayCL = new ContentLoader(
+    "QueryUserRatingDisplay",
     /* Initial HTML template */
     '<div>' +
-        '<input type="range" min="0.01" max="10.00" step="0.01"> value="5">' +
-        '<button class="btn btn-default">Clear</button>' +
-        '<button type="submit" class="btn btn-default">Submit</button>' +
     '</div>',
     sdbInterfaceCL
 );
-ratingSliderCL.addCallback("data", function(data) {
-    data.copyFromAncestor([
-        "initRatVal",
-    ]);
+queryUserRatingDisplayCL.addCallback(function($ci, data) {
+    let ratVal = data.getFromAncestor("queryUserRatVal");
+    $ci.html((ratVal / 6553.5).toFixed(2));
 });
-ratingSliderCL.addCallback(function($ci, data) {
-    $ci.find('input[type="range"]').attr("value", data.initRatVal);
+
+
+
+export var inputRatingSliderCL = new ContentLoader(
+    "InputRatingSlider",
+    /* Initial HTML template */
+    '<div>' +
+        '<input type="range" min="0.01" max="10.00" step="0.01"> value="5">' +
+        '<div class="button-container">' +
+            '<button class="btn btn-default">Clear</button>' +
+            '<button type="submit" class="btn btn-default">Submit</button>' +
+        '</div>' +
+    '</div>',
+    sdbInterfaceCL
+);
+inputRatingSliderCL.addCallback("data", function(data) {
+    data.copyFromAncestor([
+        "prevInputRatVal",
+    ]);
+    data.sliderHasBeenChanged = false;
+});
+inputRatingSliderCL.addCallback(function($ci, data) {
+    let prevInputRatVal = data.prevInputRatVal;
+    if (prevInputRatVal) { // ratVal cannot be 0 (only null or positive).
+        data.hasPrevRatVal = true;
+        $ci.find('input[type="range"]').attr(
+            "value", (initRatVal / 6553.5).toFixed(2)
+        );
+    } else {
+        data.hasPrevRatVal = false;
+        // $ci.find('input[type="range"]').attr("value", "5");
+    }
 });

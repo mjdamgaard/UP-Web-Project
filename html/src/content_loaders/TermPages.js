@@ -92,10 +92,6 @@ termNounPredicatePageCL.addCallback("data", function(data) {
     data.incrementNum = 50;
 });
 
-export function getStandardScore(ratVal) {
-    return ratVal / 6553.5;
-}
-
 
 
 export var termAppliesToPageCL = new ContentLoader(
