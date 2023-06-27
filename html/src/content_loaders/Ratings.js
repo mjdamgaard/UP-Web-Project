@@ -90,9 +90,9 @@ inputRatingSliderCL.addCallback("data", function(data) {
 inputRatingSliderCL.addCallback(function($ci, data) {
     let prevInputRatVal = data.prevInputRatVal;
     if (prevInputRatVal) { // value cannot be 0 (only null or positive).
-        $ci.find('input[type="range"]').attr(
-            "value", (prevInputRatVal / 6553.5).toFixed(2)
-        );
+        let sliderVal = (prevInputRatVal / 6553.5).toFixed(2);
+        $ci.find('input[type="range"]').val(sliderVal);
+        $ci.find('.value-display').html(sliderVal);
     } else {
         $ci.find('button.clear').hide();
     }
@@ -147,6 +147,7 @@ inputRatingSliderCL.addCallback(function($ci, data) {
             let sliderVal = $this.val();
             let $ci = $this.closest('.CI.InputRatingSlider');
             $ci.find('.value-display').html(sliderVal);
+            $ci.find('button.clear').hide();
             return false;
         });
         $ci.trigger("input");
