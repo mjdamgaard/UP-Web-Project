@@ -21,6 +21,7 @@ export var ratingElementCL = new ContentLoader(
 ratingElementCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "queryUserID",
+        "inputUserID",
         "termID",
         "ratingSliderSubjID",
     ]);

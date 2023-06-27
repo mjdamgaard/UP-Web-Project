@@ -34,6 +34,7 @@ VALUES
     (7, ":is an important/useful instance of the {$s of }the Term, {$t}", NULL, 8),
     (NULL, "Statements", NULL, 9),
     (9, ":$l[0] applies to $t", NULL, 10),
+    (7, ":is {$s}", NULL, 11),
     -- some room for more important inserts..
     (NULL, "ExAmPlE oF a NoT vErY uSeFuL tErM", NULL, 21);
 
@@ -90,7 +91,7 @@ END //
 DELIMITER ;
 
 CALL insertOrFindTerm(3, NULL, "Subcategories", 0);
-CALL insertPredicates("Subcategories", 6, 12);
+CALL insertPredicates("Subcategories", 6, 10);
 CALL insertPredicates("Subcategories", 22, 29);
 
 -- rate some statements.
@@ -137,7 +138,29 @@ CALL insertPredicates("Relevant ratings for derived terms", 6, 8);
 CALL insertPredicates("Relevant ratings for derived terms", 22, 33);
 
 
+CALL inputOrChangeRating(3, 58, 6, CONV("A000", 16, 10), "00");
+CALL inputOrChangeRating(3, 61, 22, CONV("A000", 16, 10), "00");
+CALL inputOrChangeRating(3, 62, 23, CONV("A000", 16, 10), "00");
+CALL inputOrChangeRating(3, 66, 27, CONV("A000", 16, 10), "00");
 
+CALL insertOrFindTerm(3, 11, "good", 0); -- id: 73
+CALL insertOrFindTerm(3, 11, "funny", 0); -- id: 74
+CALL insertOrFindTerm(3, 11, "scary", 0); -- id: 75
+CALL insertOrFindTerm(3, 11, "popular", 0); -- id: 76
+CALL insertOrFindTerm(3, 7, "has a long playtime", 0); -- id: 77
+
+CALL inputOrChangeRating(3, 66, 73, CONV("FF00", 16, 10), "00");
+CALL inputOrChangeRating(3, 66, 74, CONV("E000", 16, 10), "00");
+CALL inputOrChangeRating(3, 66, 75, CONV("E000", 16, 10), "00");
+CALL inputOrChangeRating(3, 66, 76, CONV("DA00", 16, 10), "00");
+CALL inputOrChangeRating(3, 66, 77, CONV("C000", 16, 10), "00");
+
+CALL inputOrChangeRating(3, 62, 73, CONV("FF00", 16, 10), "00");
+
+CALL inputOrChangeRating(3, 55, 76, CONV("F000", 16, 10), "00");
+CALL insertOrFindTerm(3, 0, "Genres", 0); -- id: 78
+CALL insertOrFindTerm(3, 78, "Fantasy", 0); -- id: 79
+CALL inputOrChangeRating(3, 55, 79, CONV("E400", 16, 10), "00");
 
 
 DROP PROCEDURE insertPredicates;
