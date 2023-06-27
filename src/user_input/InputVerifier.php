@@ -141,8 +141,15 @@ class InputVerifier {
                 break;
             case "time":
                 $pattern =
-                    "/^([12]?[0-9] |3[0-4] )?" .
-                        "([01][0-9]|2[0-3])(:[0-5][0-9]){2}$/";
+                    "/^(" .
+                        "([12]?[0-9]|3[0-4]) ".
+                        "([01][0-9]|2[0-3])" .
+                        "(:[0-5][0-9]){0,2}" .
+                    ")|(" .
+                        "([01][0-9]|2[0-3]:)?" .
+                        "([0-5][0-9])" .
+                        "(:[0-5][0-9])?" .
+                    ")$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
                 }
