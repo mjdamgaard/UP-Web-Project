@@ -55,6 +55,13 @@ export var setPredicatesRatingsDisplayCL = new ContentLoader(
     '</div>',
     sdbInterfaceCL
 );
+setPredicatesRatingsDisplayCL.addCallback("data", function(data) {
+    data.copyFromAncestor([
+        "setGenerator", // ..
+    ]);
+});
+setPredicatesRatingsDisplayCL.addCallback(function($ci, data) {
 
+});
 
 //
