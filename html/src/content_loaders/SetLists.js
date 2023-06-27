@@ -215,7 +215,7 @@ export class MaxRatingSetCombiner extends SetCombiner {
         );
     }
 
-    combineSets() {
+    combineSets() { 
         // setArr is imploded into concatArr, which is then sorted by subjID.
         let concatSet = [].concat(...this.setArr).sort(
             (a, b) => a[1] - b[1]
