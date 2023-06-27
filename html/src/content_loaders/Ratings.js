@@ -60,7 +60,11 @@ export var queryUserRatingDisplayCL = new ContentLoader(
 );
 queryUserRatingDisplayCL.addCallback(function($ci, data) {
     let ratVal = data.getFromAncestor("queryUserRatVal");
-    $ci.html((ratVal / 6553.5).toFixed(2));
+    if (ratVal) {
+        $ci.html((ratVal / 6553.5).toFixed(2));
+    } else {
+        $ci.html("no rating");
+    }
 });
 
 

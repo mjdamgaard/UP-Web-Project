@@ -136,6 +136,7 @@ templateInstanceTitleCL.addCallback("data", function(data) {
     ]);
 });
 templateInstanceTitleCL.addCallback(function($ci, data) {
+    $ci.addClass("clickable-text text-primary");
     $ci.append(getTransformedTitleTemplate(data.defStr));
     $ci.find('.def-string').first(function() {
         templateInstanceTitleCL.loadReplaced($ci, "SimpleTitle", data);
@@ -187,6 +188,13 @@ templateInstanceTitleCL.addCallback(function($ci, data) {
             );
         });
     });
+    $ci.on("click", function() {
+        data.cl = sdbInterfaceCL.getRelatedCL("TermPage");
+        $(this).trigger("open-column", [
+            "AppColumn", data, "right"
+        ]);
+        return false;
+    })
 });
 
 export function getTransformedTitleTemplate(title) {
