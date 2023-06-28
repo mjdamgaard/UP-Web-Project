@@ -241,12 +241,13 @@ export var fullContextAndTitleFieldCL = new ContentLoader(
 fullContextAndTitleFieldCL.addCallback(prependAllTermInfo);
 
 export function prependAllTermInfo($ci, data) {
+    // TODO: Implement.
+    return;
     let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
     let reqData = {
         type: "term",
         id: data.termID,
     };
-    return;
     // ...
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
         data.cxtID = (result[0] ?? [])[0];

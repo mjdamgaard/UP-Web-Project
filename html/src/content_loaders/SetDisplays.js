@@ -23,7 +23,7 @@ export var setDisplayCL = new ContentLoader(
 export var setHeaderCL = new ContentLoader(
     "SetHeader",
     /* Initial HTML template */
-    '<DropdownBox>',
+    '<<DropdownBox>>',
     sdbInterfaceCL
 );
 setHeaderCL.addCallback("data", function(data) {
@@ -86,11 +86,11 @@ export var setMenurCL = new ContentLoader(
     "SetMenu",
     /* Initial HTML template */
     '<div>' +
-        '<<InitialPredicatesSettingsMenu>>' +
-        '<<SortingPredicatesSettingsMenu>>' +
-        // TODO: Implement the following two CLs at some point:
-        // '<<FilterPredicatesSettingsMenu>>' +
-        // '<<UserWeightSettingsMenu>>' +
+        '<<PredicatesSettingsMenu>>' +
+        // '<<SortingPredicatesSettingsMenu>>' +
+        // // TODO: Implement the following two CLs at some point:
+        // // '<<FilterPredicatesSettingsMenu>>' +
+        // // '<<UserWeightSettingsMenu>>' +
     '</div>',
     sdbInterfaceCL
 );

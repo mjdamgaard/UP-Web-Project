@@ -16,7 +16,7 @@ import {
     generalTermElementCL,
 } from "/src/content_loaders/TermElements.js";
 import {
-    dropdownButtonBarCL,
+    dropdownButtonBarCL, setHeaderCL
 } from "/src/content_loaders/SetDisplays.js";
 
 
@@ -138,13 +138,8 @@ dropdownButtonBarCL.addCSS(
     'display: flex;' +
     'justify-content: center;'
 );
-// generalTermElementCL.addCSS(
-//     '&:hover {' +
-//         'cursor: pointer;' +
-//     '}'
-// );
-// generalTermElementCL.addCSS(
-//     '&:hover > .CI.DropdownBox > DropdownButtonBar {' +
-//         'background-color: #888;' +
-//     '}'
-// );
+setHeaderCL.addCSS(
+    '& .CI.DropdownButtonBar:not(:hover) {' +
+        'background-color: #f4f9ff;' +
+    '}'
+);
