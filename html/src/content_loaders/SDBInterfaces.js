@@ -8,8 +8,7 @@ import {
 
 
 
-// Note that exporting modules can rename the variable names, but not (really)
-// the content keys.
+
 export var sdbInterfaceCL = new ContentLoader(
     "ColumnBasedSDBInterface",
     /* Initial HTML template */

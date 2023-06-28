@@ -9,19 +9,6 @@ import {
 
 
 
-
-/*
-SetList requires data:
-    data.elemContentKey,
-    data.setGenerator,
-    data.sortAscending?,
-    data.initialNum,
-    data.incrementNum,
-And it also sets/updates data:
-    data.set,
-    data.listElemDataArr = [{ratVal, termID}, ...],
-    data.currentNum,
-*/
 export var setListCL = new ContentLoader(
     "SetList",
     /* Initial HTML template */
@@ -430,11 +417,5 @@ export class MaxRatingSetCombiner extends SetCombiner {
 //     }
 //
 //
-//     // This method utilizes the fact that concatSet is formed by shallow copies,
-//     // making it possible to change all row[2]'s by changing them in each
-//     // setData.set.
-//     retransformUnreadySetsAndRecombine() {
-//         // TODO: Implement.
-//     }
 //
 // }
