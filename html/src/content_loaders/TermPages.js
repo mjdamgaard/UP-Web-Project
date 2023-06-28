@@ -59,6 +59,7 @@ termPageCL.addCallback(function($ci, data) {
                 // TODO: Implement the following two tabs as well.
                 // ["Comments", "TermCommentsPage", {}],
                 // ["Discussions", "TermDiscussionsPage", {}],
+                // ["Insert", "TermInsertPage", {}],
             ];
             data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
                 "Instances";

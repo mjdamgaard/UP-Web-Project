@@ -18,27 +18,6 @@ class InputVerifier {
 
     public static function verifyType($paramVal, $type, $paramName) {
         switch($type) {
-            /* Type and ID input */
-            // case "type":
-            //     $pattern = "/^[uctxbs]$/";
-            //     if (!preg_match($pattern, $paramVal)) {
-            //         echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
-            //     }
-            //     break;
-            // case "rat":
-            //     $pattern =
-            //         "/^[0-9A-F]{2}{0,255}$/";
-            //     if (!preg_match($pattern, $paramVal) && $paramVal !== "") {
-            //         echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
-            //     }
-            //     break;
-            // case "bin":
-            //     if (strlen($paramVal) > 255) {
-            //         echoTypeErrorJSONAndExit(
-            //             $paramName, "0x" . bin2hex($paramVal), "VARBINARY(255)"
-            //         );
-            //     }
-            //     break;
             case "id":
                 $pattern = "/^[1-9][0-9]*|0$/";
                 if (
@@ -75,17 +54,6 @@ class InputVerifier {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, "INT");
                 }
                 break;
-            // case "sint":
-            //     $pattern = "/^-?[1-9][0-9]{0,4}|0$/";
-            //     $n = intval($paramVal);
-            //     if (
-            //         !preg_match($pattern, $paramVal) ||
-            //         $n < -32768 ||
-            //         $n > 32767
-            //     ) {
-            //         echoTypeErrorJSONAndExit($paramName, $paramVal, "SMALLINT");
-            //     }
-            //     break;
             case "ushort":
                 $pattern = "/^[1-9][0-9]{0,4}|0$/";
                 $n = intval($paramVal);
@@ -154,9 +122,6 @@ class InputVerifier {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
                 }
                 break;
-            // case "datetime":
-            // //     $pattern = ...
-            //     break;
             default:
                 throw new \Exception(
                     'verifyAndSetParams(): unknown type ' .
@@ -164,8 +129,5 @@ class InputVerifier {
                 );
         }
     }
-
 }
-
-
 ?>
