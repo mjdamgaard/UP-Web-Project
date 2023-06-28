@@ -73,8 +73,29 @@ export class SetGenerator {
         // to be redefined by descendant classes.
     }
 
+    // generateSet() queries and combines sets, then calls
+    // callback(obj, set, callbackData).
     generateSet(obj, callbackData, callback) {
         // to be redefined by descendant classes.
+    }
+
+    // getSetPredicates() returns an array of all predicates that are important
+    // to the formation of the set (which we can then show on the drop-down
+    // pages of the set elements). These predicates come in the form of {predID}
+    // objects (meaning that getSetPredicates() returns [{predID}, ...]), which
+    // makes it possible for future subclasses to also include other data in
+    // these objects, along with the predID (such as e.g. rating values).
+    getSetPredicates() {
+        // to be redefined by descendant classes.
+    }
+
+    // getFilterSpecs() returns an array of filter specs (or null), which
+    // each consists of a predicate ID, threshold and a flag to denote either
+    // the interval below or above the threshold for which all set elements
+    // with a rating in that interval should collapse itself automatically (in
+    // a future version of this web app).
+    getFilterSpecs() {
+        // can be redefined by descendant classes.
     }
 }
 
@@ -149,6 +170,10 @@ export class SetQuerier extends SetGenerator {
             setData.offset += setData.num; // default for a subsequent query.
             callback(obj, sg.set, callbackData);
         });
+    }
+
+    getSetPredicates() {
+        return this.setData.predID;
     }
 }
 
