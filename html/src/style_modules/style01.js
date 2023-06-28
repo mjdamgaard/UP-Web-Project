@@ -23,6 +23,7 @@ import {
 } from "/src/content_loaders/Ratings.js";
 
 
+
 sdbInterfaceCL.addCSS(
     'height: 100%;' +
     'display: grid;' +
@@ -111,15 +112,6 @@ tabHeaderCL.addCSS(
         'background-color: #fff;' +
     '}'
 );
-// pagesContainerCL.addCSS(
-//     // 'min-height: 30px;' +
-//     // 'width: 100%;' +
-//     // 'position: absolute;' +
-//     // 'z-index: 1;' +
-//     // // 'margin: 6px 6px;' +
-//     // 'background-color: #fff;' +
-//     ''
-// );
 
 
 sdbInterfaceCL.addCSS(

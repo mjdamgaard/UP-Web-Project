@@ -61,7 +61,7 @@ termPageCL.addCallback(function($ci, data) {
                 // ["Discussions", "TermDiscussionsPage", {}],
             ];
             data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
-                "Categories";
+                "Instances";
             $ci.children('.CI.PagesWithTabs').trigger("load");
             return;
         }
