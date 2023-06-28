@@ -1,6 +1,6 @@
 
 import {
-    ContentLoader,
+    ContentLoader, ChildData,
 } from "/src/ContentLoader.js";
 import {
     sdbInterfaceCL,
@@ -61,7 +61,14 @@ setPredicatesRatingsDisplayCL.addCallback("data", function(data) {
     ]);
 });
 setPredicatesRatingsDisplayCL.addCallback(function($ci, data) {
-
+    let predIDArr = data.setGenerator.getSetPredicates();
+    let subjID = data.getFromAncestor("columnTermID");
+    predIDArr.forEach(function(val) {
+        setPredicatesRatingsDisplayCL.loadAppended(
+            $ci, "RatingDisplay", new ChildData(data, {
+                predID: val,
+                subjID: subjID,
+            })
+        );
+    });
 });
-
-//

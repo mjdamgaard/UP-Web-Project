@@ -26,6 +26,7 @@ termPageCL.addCallback("data", function(data) {
         "termID",
         "cxtID",  // optional.
     ]);
+    data.columnTermID = data.termID;
 });
 termPageCL.addCallback(function($ci, data) {
     if (data.cxtID) {
@@ -144,6 +145,6 @@ termRatingsPageCL.addCallback("data", function(data) {
     data.incrementNum = 50;
 });
 termRatingsPageCL.addCallback("data", function(data) {
-    data.ratingSliderSubjID = data.getFromAncestor("termID");
+    data.subjID = data.getFromAncestor("columnTermID");
     data.copyFromAncestor("queryUserID");
 });

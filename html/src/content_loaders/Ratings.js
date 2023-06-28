@@ -7,9 +7,21 @@ import {
 } from "/src/content_loaders/SDBInterfaces.js";
 
 
-
 export var ratingElementCL = new ContentLoader(
     "RatingElement",
+    /* Initial HTML template */
+    '<div>' +
+        '<<RatingDisplay>>' +
+    '</div>',
+    sdbInterfaceCL
+);
+ratingElementCL.addCallback("data", function(data) {
+    data.predID = data.getFromAncestor("termID");
+    data.copyFromAncestor("subjID");
+});
+
+export var ratingDisplayCL = new ContentLoader(
+    "RatingDisplay",
     /* Initial HTML template */
     '<div>' +
         '<<TermTitle>>' +
@@ -18,21 +30,22 @@ export var ratingElementCL = new ContentLoader(
     '</div>',
     sdbInterfaceCL
 );
-ratingElementCL.addCallback("data", function(data) {
+ratingDisplayCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "queryUserID",
         "inputUserID",
-        "termID",
-        "ratingSliderSubjID",
+        "predID",
+        "subjID",
     ]);
+    data.termID = data.predID;
 });
-ratingElementCL.addCallback(function($ci, data) {
+ratingDisplayCL.addCallback(function($ci, data) {
     let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
     let reqData = {
         type: "rat",
         u: data.queryUserID,
-        p: data.termID,
-        s: data.ratingSliderSubjID,
+        p: data.predID,
+        s: data.subjID,
     };
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
         data.queryUserRatVal = (result[0] ?? [0])[0];
@@ -41,8 +54,8 @@ ratingElementCL.addCallback(function($ci, data) {
     reqData = {
         type: "rat",
         u: data.inputUserID,
-        p: data.termID,
-        s: data.ratingSliderSubjID,
+        p: data.predID,
+        s: data.subjID,
     };
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
         data.prevInputRatVal = (result[0] ?? [0])[0];
@@ -107,8 +120,8 @@ inputRatingSliderCL.addCallback(function($ci, data) {
             let reqData = {
                 type: "rat",
                 u: data.getFromAncestor("inputUserID"),
-                p: data.getFromAncestor("termID"),
-                s: data.getFromAncestor("ratingSliderSubjID"),
+                p: data.getFromAncestor("predID"),
+                s: data.getFromAncestor("subjID"),
                 r: 0,
                 l: "00"
             };
@@ -132,8 +145,8 @@ inputRatingSliderCL.addCallback(function($ci, data) {
             let reqData = {
                 type: "rat",
                 u: data.getFromAncestor("inputUserID"),
-                p: data.getFromAncestor("termID"),
-                s: data.getFromAncestor("ratingSliderSubjID"),
+                p: data.getFromAncestor("predID"),
+                s: data.getFromAncestor("subjID"),
                 r: inputRatVal,
                 l: "00"
             };
