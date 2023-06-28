@@ -28,8 +28,7 @@ $reqType = $_POST["type"];
 
 
 // TODO: Also implement some limits on the "n"s below (other than just the
-// maximal int).. (Well, I *think* I need to do this..) ..But it will surely
-// have to wait until after/during when I implement authentication and such..
+// maximal int).. (Well, I *think* we will need to do this...)
 
 // match $reqType against any of the following single-query request types
 // and execute the corresponding query if a match is found.
@@ -143,7 +142,7 @@ DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 // fetch the result as a numeric array.
 $res = $stmt->get_result()->fetch_all();
 // finally echo the JSON-encoded numeric array, containing e.g. the
-// columns: ("ratVal", "objID") for $reqType == "S", etc., so look at
+// columns: ("ratVal", "subjID") for $reqType == "set", etc., so look at
 // the comments above for what the resulting arrays will contain.
 echo json_encode($res);
 

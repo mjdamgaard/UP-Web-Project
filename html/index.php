@@ -1,6 +1,6 @@
 <?php
 
-// TODO: Implement an index page where the user can login and so on..
+// TODO: Implement an index page where the user can login and so on.
 
 
 $err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";

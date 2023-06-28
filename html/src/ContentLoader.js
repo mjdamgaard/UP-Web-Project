@@ -17,7 +17,6 @@ export function getPlaceholderTemplateTag(contentKey, dataKey) {
 }
 export function convertHTMLTemplate(htmlTemplate) {
     return htmlTemplate.replaceAll(
-        // /<<[A-Z][\w\-]*( data(\.[\w\$])*(\[\.\.\.\])?)?>>/g,
         /<<[A-Z][\w\-]*( data[\.\w\$\[\]:\-]*)?>>/g,
         function(str) {
             let keyStr = str.slice(2, -2);
@@ -90,8 +89,6 @@ export class ContentLoader {
         // the case of an outer CL (without a parent).
     ) {
         this.contentKey = contentKey;
-        // this.tagName = tagName;
-        // this.attributes = attributes ?? {};
         this.html;
         this.parentCL = parentCL ?? false;
         if (parentCL) {
@@ -200,8 +197,6 @@ export class ContentLoader {
                 break;
             case "append":
             case "prepend":
-                // I'll continue this later, 'cause I need to figure out how
-                // the data is propagated first..
                 let selector = "";
                 if (typeof htmlTemplate === "undefined") {
                     htmlTemplate = callback;
@@ -376,6 +371,7 @@ export class ContentLoader {
             this.addCSSRulesToDocument(this.outwardCSSRules);
             this.outwardCSSRulesAreAdded = true;
         }
+        
         /* These console log calls are useful for debugging: */
         // console.log(this.contentKey);
         // console.log(parentData);

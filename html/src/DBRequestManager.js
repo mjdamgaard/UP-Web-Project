@@ -31,7 +31,7 @@ export class DBRequestManager {
             let ongoingQueries = thisDBReqManager.ongoingQueries;
             let queryQueue = ongoingQueries[reqDataKey];
             delete ongoingQueries[reqDataKey];
-            // unless reqData.type equals "set", "setSK" or "bin", sanitize all
+            // unless reqData.type equals "set", or "bin", sanitize all
             // cells in the result table containing string values.
             if (
                 reqData.type !== "set" &&
