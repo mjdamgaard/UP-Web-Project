@@ -62,7 +62,7 @@ setPredicatesRatingsDisplayCL.addCallback("data", function(data) {
 });
 setPredicatesRatingsDisplayCL.addCallback(function($ci, data) {
     let predIDArr = data.setGenerator.getSetPredicates();
-    let subjID = data.getFromAncestor("columnTermID");
+    let subjID = data.getFromAncestor("termID");
     predIDArr.forEach(function(val) {
         setPredicatesRatingsDisplayCL.loadAppended(
             $ci, "RatingDisplay", new ChildData(data, {
