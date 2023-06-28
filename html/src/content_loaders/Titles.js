@@ -73,8 +73,9 @@ export function loadTermTitleHTML($ci, data) {
         termTitleCL.loadAppended($ci, "TemplateInstanceTitle", data);
 
     } else {
-        // TODO: Change such that the Context title is in its own span, and
-        // possibly remove the parenthises and let CSS add whatever instead.
+        // TODO: Change such that the Context title is in its own span (that
+        // can then be hidden if one wants to), and possibly remove the
+        // parenthises and let CSS add whatever instead.
         termTitleCL.loadAppended($ci, "SimpleTitle", data);
         $ci.append(' (');
         termTitleCL.loadAppended($ci, "SimpleTitle", new ChildData(data, {
@@ -159,11 +160,9 @@ templateInstanceTitleCL.addCallback(function($ci, data) {
                 })
             );
         });
-    });return;
-    // there can only be '.list-item-n' templates left, so lets grab them all by
-    // their template tag and replace each one.
+    });
     let idArr;
-    $ci.find('template').each(function() {
+    $ci.find('.list-item').each(function() {
         let $this = $(this);
         let n = parseInt($this.attr("class").slice(-1));
         if (!idArr) {
@@ -210,7 +209,7 @@ export function getTransformedTitleTemplate(title) {
         .replaceAll("$s", '<template class="def-string"></template>')
         .replaceAll("$t", '<template class="def-term"></template>')
         .replaceAll(/\$l\[[0-9]\]/g, s =>
-            '<template class="list-item-' +
+            '<template class="list-item ' +
             s.substring(3, 4) +
             '"></template>'
         );
@@ -242,34 +241,31 @@ fullContextAndTitleFieldCL.addCallback(prependAllTermInfo);
 
 export function prependAllTermInfo($ci, data) {
     // TODO: Implement.
-    return;
-    let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
-    let reqData = {
-        type: "term",
-        id: data.termID,
-    };
-    // ...
-    dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-        data.cxtID = (result[0] ?? [])[0];
-        data.defStr = (result[0] ?? [])[1];
-        data.defTermID = (result[0] ?? [])[2];
-        if (!data.cxtID) {
-            loadTermTitleHTML($ci, data);
-            return;
-        }
-        let reqData = {
-            type: "term",
-            id: data.cxtID,
-        };
-        dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-            data.cxtDefStr = (result[0] ?? [])[1];
-            data.cxtDefTermID = (result[0] ?? [])[2];
-            loadTermTitleHTML($ci, data);
-        });
-    });
-
+    // let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
+    // let reqData = {
+    //     type: "term",
+    //     id: data.termID,
+    // };
+    // // ...
+    // dbReqManager.query($ci, reqData, data, function($ci, result, data) {
+    //     data.cxtID = (result[0] ?? [])[0];
+    //     data.defStr = (result[0] ?? [])[1];
+    //     data.defTermID = (result[0] ?? [])[2];
+    //     if (!data.cxtID) {
+    //         loadTermTitleHTML($ci, data);
+    //         return;
+    //     }
+    //     let reqData = {
+    //         type: "term",
+    //         id: data.cxtID,
+    //     };
+    //     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
+    //         data.cxtDefStr = (result[0] ?? [])[1];
+    //         data.cxtDefTermID = (result[0] ?? [])[2];
+    //         loadTermTitleHTML($ci, data);
+    //     });
+    // });
 }
-
 // TODO, just fetch and load paragraphs of SimpleTitles and TermIDTitles (of
 // the defTerms) one after the other until a NULL Context is reached and
 // prepend each one.
