@@ -132,16 +132,17 @@ export var templateInstanceTitleCL = new ContentLoader(
 templateInstanceTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "defStr",
+        "cxtDefStr",
         "defTermID",
     ]);
 });
 templateInstanceTitleCL.addCallback(function($ci, data) {
     $ci.addClass("clickable-text text-primary");
-    $ci.append(getTransformedTitleTemplate(data.defStr));
-    $ci.find('.def-string').first(function() {
-        templateInstanceTitleCL.loadReplaced($ci, "SimpleTitle", data);
+    $ci.append(getTransformedTitleTemplate(data.cxtDefStr));
+    $ci.find('.def-string').each(function() {
+        templateInstanceTitleCL.loadReplaced($(this), "SimpleTitle", data);
     });
-    $ci.find('.def-term').first(function() {
+    $ci.find('.def-term').each(function() {
         let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
         let reqData = {
             type: "term",
@@ -158,8 +159,8 @@ templateInstanceTitleCL.addCallback(function($ci, data) {
                 })
             );
         });
-    });
-    // there can only be '.list-item-n' templates let, so lets grab them all by
+    });return;
+    // there can only be '.list-item-n' templates left, so lets grab them all by
     // their template tag and replace each one.
     let idArr;
     $ci.find('template').each(function() {
@@ -167,7 +168,7 @@ templateInstanceTitleCL.addCallback(function($ci, data) {
         let n = parseInt($this.attr("class").slice(-1));
         if (!idArr) {
             if (!/^[1-9][0-9]*(,[1-9][0-9]*)*$/.test(data.defStr)) {
-                $this.replace('$l[' + n.toString() + ']');
+                $this.replaceWith('$l[' + n.toString() + ']');
                 return;
             }
             idArr = data.defStr.split(',');
@@ -245,6 +246,7 @@ export function prependAllTermInfo($ci, data) {
         type: "term",
         id: data.termID,
     };
+    return;
     // ...
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
         data.cxtID = (result[0] ?? [])[0];
