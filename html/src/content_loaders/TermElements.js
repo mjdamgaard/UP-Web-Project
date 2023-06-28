@@ -57,7 +57,7 @@ export var setPredicatesRatingsDisplayCL = new ContentLoader(
 );
 setPredicatesRatingsDisplayCL.addCallback("data", function(data) {
     data.copyFromAncestor([
-        "setGenerator", // ..
+        "setGenerator",
     ]);
 });
 setPredicatesRatingsDisplayCL.addCallback(function($ci, data) {

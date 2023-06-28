@@ -79,12 +79,9 @@ export class SetGenerator {
         // to be redefined by descendant classes.
     }
 
-    // getSetPredicates() returns an array of all predicates that are important
-    // to the formation of the set (which we can then show on the drop-down
-    // pages of the set elements). These predicates come in the form of {predID}
-    // objects (meaning that getSetPredicates() returns [{predID}, ...]), which
-    // makes it possible for future subclasses to also include other data in
-    // these objects, along with the predID (such as e.g. rating values).
+    // getSetPredicates() returns an array of all predicate IDs that are
+    // important to the formation of the set (which we can then show on the
+    // drop-down pages of the set elements).
     getSetPredicates() {
         // to be redefined by descendant classes.
     }
@@ -173,7 +170,7 @@ export class SetQuerier extends SetGenerator {
     }
 
     getSetPredicates() {
-        return this.setData.predID;
+        return [this.setData.predID];
     }
 }
 
@@ -224,6 +221,13 @@ export class SetCombiner extends SetGenerator {
 
     combineSets() {
         // to be redefined by descendant classes.
+    }
+
+    getSetPredicates() {
+        let predIDArrArr = setGeneratorArr.map(
+            val => val.getSetPredicates()
+        );
+        return [].concat(...predIDArrArr);
     }
 }
 
