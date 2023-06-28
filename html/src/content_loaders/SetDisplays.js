@@ -86,11 +86,9 @@ export var setMenurCL = new ContentLoader(
     "SetMenu",
     /* Initial HTML template */
     '<div>' +
-        '<<PredicatesSettingsMenu>>' +
-        // '<<SortingPredicatesSettingsMenu>>' +
-        // // TODO: Implement the following two CLs at some point:
-        // // '<<FilterPredicatesSettingsMenu>>' +
-        // // '<<UserWeightSettingsMenu>>' +
+        '<<SetPredicatesDisplay>>' +
+        '<<SortingMenu>>' +
+        // TODO: Extend.
     '</div>',
     sdbInterfaceCL
 );

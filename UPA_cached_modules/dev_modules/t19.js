@@ -18,6 +18,9 @@ import {
 import {
     dropdownButtonBarCL, setHeaderCL
 } from "/src/content_loaders/SetDisplays.js";
+import {
+    ratingElementCL,
+} from "/src/content_loaders/Ratings.js";
 
 
 sdbInterfaceCL.addCSS(
@@ -126,6 +129,21 @@ sdbInterfaceCL.addCSS(
         'color: blue;' +
     '}'
 );
+
+
+
+generalTermElementCL.addCSS(
+    'border-bottom: 1px solid gray;' +
+    // 'border-top: 1px solid gray;' +
+    ''
+);
+ratingElementCL.addCSS(
+    'border-bottom: 1px solid gray;' +
+    // 'border-top: 1px solid gray;' +
+    ''
+);
+
+
 
 
 dropdownButtonBarCL.addCSS(
