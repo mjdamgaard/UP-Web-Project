@@ -19,7 +19,7 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 }
 
 
-// authenticate the user and match with uid.
+// authenticate the user and match with the "u" (userID) parameter.
 // TODO: Implement this such that user is actually authenticated!
 ;
 
