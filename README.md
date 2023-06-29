@@ -3,11 +3,11 @@
 ## Summary
 
 openSDB is an open source Semantic Database, interfaced through a web
-application, which I intend to host at [...] once it is ready.
+application, which I intend to host at www.opensdb.com once it is ready.
 
 The term 'semantic' here refers to the fact that the data is structured in terms
 of subject-relation-object connections, much similar to core concepts of the
-Semantic Web, a vision proposed by Tim Berners-Lee (see e.g.
+Semantic Web, a vision originally proposed by Tim Berners-Lee (see e.g.
 [www.wikipedia.org/wiki/Semantic_Web](https://en.wikipedia.org/wiki/Semantic_Web) or [www.w3.org/RDF/Metalog/docs/sw-easy](https://www.w3.org/RDF/Metalog/docs/sw-easy)).
 
 And in fact, this project actually hopes to breathe new life into this vision,
