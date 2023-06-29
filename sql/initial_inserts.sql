@@ -22,20 +22,20 @@ VALUES
     (1, "Users", NULL, 2),
     (2, "admin_1", NULL, 3),
     (1, "Texts", NULL, 4),
-    (1, "Binaries", NULL, 5);
+    (1, "Binaries", NULL, 5),
+    (NULL, "Terms", NULL, 6);
 INSERT INTO Users (username, id)
 VALUES ("admin_1", 3);
 
 /* Some other important initial inserts */
 INSERT INTO Terms (context_id, def_str, def_term_id, id)
 VALUES
-    (NULL, "Terms", NULL, 6),
     (NULL, "Predicates", NULL, 7),
     (7, ":is an important/useful instance of the {$s of }the Term, {$t}", NULL, 8),
     (NULL, "Statements", NULL, 9),
     (9, ":$l[0] applies to $t", NULL, 10),
     (7, ":is {$s}", NULL, 11),
-    -- some room for more important inserts..
+    -- some room for more of these important inserts...
     (NULL, "ExAmPlE oF a NoT vErY uSeFuL tErM", NULL, 21);
 
 

@@ -71,10 +71,7 @@ BEGIN
 
     -- TODO: Change this to update PrivateRecentInputs instead, make a
     -- scheduled event to move private recent inputs into (the public)
-    -- RecentInputs --- and update SemanticInputs only then! ---
-    -- and at some point also make an event to record
-    -- recent inputs into RecordedInputs when there is long enough time
-    -- between the last last recent input before that.
+    -- RecentInputs, and update SemanticInputs only then.
     SET live_after = NULL; -- (not implemented yet)
     INSERT INTO RecentInputs (
         user_id,
@@ -94,8 +91,8 @@ END //
 DELIMITER ;
 -- TODO: When moving the ratings from PrivateRecentInputs to the public ones
 -- also implement an automatic procedure to rate a "this user has rated this
--- statement" relation with user 1 (where the rating then matches the user's
--- rating)..
+-- statement" relation with a special bot (where the rating then matches the
+-- user's rating)..
 
 
 

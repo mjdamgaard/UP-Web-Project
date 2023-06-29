@@ -22,8 +22,7 @@ class DBConnector {
         // create connection.
         $conn = self::getConnection();
 
-        //TODO: Change this back into a die() call at some point.
-        // verify connection (or die).
+        // verify connection (or throw).
         if ($conn->connect_error) {
             throw new \Exception("Connection failed: " . $conn->connect_error);
         }
@@ -34,7 +33,6 @@ class DBConnector {
     public static function executeSuccessfulOrDie($stmt, $paramValArr) {
         $stmt->execute($paramValArr);
 
-        //TODO: Change this back into a die() call at some point.
         $error = \mysqli_stmt_error($stmt);
         if ($error) {
             throw new \Exception("MySQLi stmt error: " . $error);
@@ -42,6 +40,4 @@ class DBConnector {
     }
 
 }
-
-
 ?>

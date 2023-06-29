@@ -1,7 +1,5 @@
 <?php
 
-
-
 function getErrorJSON($msg) {
     return '{"error":"' . $msg . '"}';
 }
@@ -22,9 +20,5 @@ function echoTypeErrorJSONAndExit($paramName, $paramVal, $expectedType) {
         "expected type is " . $expectedType
     );
 }
-
-
-
-
 
 ?>
