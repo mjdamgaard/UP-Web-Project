@@ -211,7 +211,7 @@ export class SetCombiner extends SetGenerator {
     }
 
     getSetPredicates() {
-        let predIDArrArr = setGeneratorArr.map(
+        let predIDArrArr = this.setGeneratorArr.map(
             val => val.getSetPredicates()
         );
         return [].concat(...predIDArrArr);
