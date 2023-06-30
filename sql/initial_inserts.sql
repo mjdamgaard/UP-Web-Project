@@ -28,14 +28,14 @@ INSERT INTO Users (username, id)
 VALUES ("admin_1", 3);
 
 /* Some other important initial inserts */
-INSERT INTO Terms (context_id, def_str, def_term_id, id)
+INSERT INTO Terms (context_id, def_str, id)
 VALUES
     (NULL, "Template contexts", 7),
     (7, "is an important/useful instance of the {<Noun phrase> of <Term>}", 8),
     (7, "<Predicate> applies to <Term>", 9),
     (7, "is {<Adjective phrase>}", 10),
     -- (some room for more inserts)
-    (NULL, "ExAmPlE oF a NoT vErY uSeFuL tErM", NULL, 21);
+    (NULL, "ExAmPlE oF a NoT vErY uSeFuL tErM", 21);
 
 
 
@@ -49,7 +49,7 @@ CALL insertOrFindTerm(3, 23, "Hip hop"); -- id: 26
 
 CALL insertOrFindTerm(3, 7, "Movie: <Title>, <Year>"); -- id: 27
 CALL insertOrFindTerm(3, 27,
-    "The Lord of the Rings: The Fellowship of the Ring;2001)"
+    "The Lord of the Rings: The Fellowship of the Ring;2001"
 ); -- id: 28
 CALL insertOrFindTerm(3, 27,
     "The Lord of the Rings: The Two Towers;2002"
@@ -77,8 +77,7 @@ BEGIN
         IF (startTermID <= endTermID) THEN
             CALL insertOrFindTerm(
                 3, 8,
-                str,
-                startTermID
+                CONCAT(str, ';#', startTermID)
             );
 
             SET startTermID = startTermID + 1;

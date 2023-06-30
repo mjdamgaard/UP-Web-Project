@@ -77,14 +77,17 @@ export var termNounPredicatePageCL = new ContentLoader(
     '<<SetDisplay>>',
     sdbInterfaceCL
 );
-
-
+termNounPredicatePageCL.addCallback("data", function(data) {
+    data.copyFromAncestor([
+        "predNoun",
+        "termID",  // optional.
+    ]);
+});
 termNounPredicatePageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralTermElement";
     data.setGenerator = new SetQuerier({
         predCxtID: 8, // ID of the ">is a useful instance of ..." Context.
-        predStr: data.getFromAncestor("predNoun"),
-        objID: data.getFromAncestor("termID"),
+        predStr: data.predNoun + ";#" + data.termID,
         userID: 3,
         num: 4000,
         ratingLo: 0,
@@ -121,12 +124,17 @@ export var termRatingsPageCL = new ContentLoader(
     '<<SetDisplay>>',
     sdbInterfaceCL
 );
+termNounPredicatePageCL.addCallback("data", function(data) {
+    data.copyFromAncestor([
+        "termID",
+        "cxtID",  // optional.
+    ]);
+});
 termRatingsPageCL.addCallback("data", function(data) {
     data.elemContentKey = "RatingElement";
     let sg1 = new SetQuerier({
         predCxtID: 8, // ID of the ">is a useful instance of ..." Context.
-        predStr: "Relevant ratings",
-        objID: data.getFromAncestor("termID"),
+        predStr: "Relevant ratings;#" + data.termID,
         userID: 3,
         num: 4000,
         ratingLo: 0,
@@ -134,8 +142,8 @@ termRatingsPageCL.addCallback("data", function(data) {
     });
     let sg2 = new SetQuerier({
         predCxtID: 8, // ID of the ">is a useful instance of ..." Context.
-        predStr: "Relevant ratings for derived terms",
-        objID: data.getFromAncestor("cxtID"),
+        predStr: "Relevant ratings for derived terms;#" + data.cxtID,
+        objID: ,
         userID: 3,
         num: 4000,
         ratingLo: 0,

@@ -98,6 +98,9 @@ export var inputRatingSliderCL = new ContentLoader(
 inputRatingSliderCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "prevInputRatVal",
+        "inputUserID",
+        "predID".
+        "subjID",
     ]);
 });
 inputRatingSliderCL.addCallback(function($ci, data) {
@@ -119,9 +122,9 @@ inputRatingSliderCL.addCallback(function($ci, data) {
             let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
             let reqData = {
                 type: "rat",
-                u: data.getFromAncestor("inputUserID"),
-                p: data.getFromAncestor("predID"),
-                s: data.getFromAncestor("subjID"),
+                u: data.inputUserID,
+                p: data.predID,
+                s: data.subjID,
                 r: 0,
                 l: "00"
             };
@@ -144,9 +147,9 @@ inputRatingSliderCL.addCallback(function($ci, data) {
             let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
             let reqData = {
                 type: "rat",
-                u: data.getFromAncestor("inputUserID"),
-                p: data.getFromAncestor("predID"),
-                s: data.getFromAncestor("subjID"),
+                u: data.inputUserID,
+                p: data.predID,
+                s: data.subjID,
                 r: inputRatVal,
                 l: "00"
             };

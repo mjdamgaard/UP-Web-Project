@@ -68,12 +68,12 @@ switch ($reqType) {
         $sql = "CALL selectTerm (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [[cxtID, defStr, defTermID]].
+        // output: [[cxtID, defStr]].
         break;
     case "termID":
-        $sql = "CALL selectTermID (?, ?, ?)";
-        $paramNameArr = array("c", "s", "t");
-        $typeArr = array("id", "str", "id");
+        $sql = "CALL selectTermID (?, ?)";
+        $paramNameArr = array("c", "s");
+        $typeArr = array("id", "str");
         // output: [[termID]].
         break;
     case "username":

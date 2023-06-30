@@ -44,9 +44,9 @@ switch ($reqType) {
         $typeArr = array("id", "id", "id", "ushort", "time");
         break;
     case "term":
-        $sql = "CALL insertOrFindTerm (?, ?, ?, ?)";
-        $paramNameArr = array("u", "c", "s", "t");
-        $typeArr = array("id", "id", "str", "id");
+        $sql = "CALL insertOrFindTerm (?, ?, ?)";
+        $paramNameArr = array("u", "c", "s");
+        $typeArr = array("id", "id", "str");
         break;
     case "text":
         $sql = "CALL insertText (?, ?)";

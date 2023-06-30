@@ -30,7 +30,6 @@ termTitleCL.addCallback(function($ci, data) {
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
         data.cxtID = (result[0] ?? [])[0];
         data.defStr = (result[0] ?? [])[1];
-        data.defTermID = (result[0] ?? [])[2];
         if (!data.cxtID) {
             loadTermTitleHTML($ci, data);
             return;
@@ -41,7 +40,6 @@ termTitleCL.addCallback(function($ci, data) {
         };
         dbReqManager.query($ci, reqData, data, function($ci, result, data) {
             data.cxtDefStr = (result[0] ?? [])[1];
-            data.cxtDefTermID = (result[0] ?? [])[2];
             loadTermTitleHTML($ci, data);
         });
     });

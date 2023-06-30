@@ -11,8 +11,7 @@ SELECT "Terms:";
 SELECT
     id AS termID,
     context_id AS cxtID,
-    def_str AS str,
-    def_term_id AS defTermID
+    def_str AS str
 FROM Terms
 ORDER BY id;
 
