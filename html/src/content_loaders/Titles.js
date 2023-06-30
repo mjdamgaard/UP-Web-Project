@@ -190,24 +190,38 @@ templateInstanceTitleCL.addCallback(function($ci, data) {
 
 export function getTransformedTitleTemplate(title) {
     return title
+        .replaceAll("&gt;", ">")
+        .replaceAll("&lt;", "<")
         .replaceAll("\\\\", "&bsol;")
-        .replaceAll("\\$", "&dollar;")
+        .replaceAll("\\<", "&lt;")
+        .replaceAll("\\>", "&gt;")
         .replaceAll("\\{", "&#x2774;")
         .replaceAll("\\}", "&#x2775;")
         .replace(/^[^\{]*\{/g, "")
         .replace(/\}[^\{]*$/g, "")
         .replaceAll(/\}[^\{]*\{/g, "")
-        .replaceAll("$s", '<template class="def-string"></template>')
-        .replaceAll("$t", '<template class="def-term"></template>')
-        .replaceAll(/\$l\[[0-9]\]/g, s =>
-            '<template class="list-item ' +
-            s.substring(3, 4) +
-            '"></template>'
-        );
+        .replaceAll(/<[^<>]>/g, '<span class="def-item"></span>')
+        .replaceAll("<", '<span class="ill-formed">&lt;</span>')
+        .replaceAll(">", '<span class="ill-formed">&gt;</span>');
 }
 
 
-
+export function sanitize(string) {
+    return string = string
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&apos;");
+}
+export function reverseSanitize(string) {
+    return string = string
+        .replaceAll("&apos;", "'")
+        .replaceAll("&quot;", '"')
+        .replaceAll("&gt;", ">")
+        .replaceAll("&lt;", "<")
+        .replaceAll("&amp;", "&");
+}
 
 
 export var userTitleCL = new ContentLoader(
