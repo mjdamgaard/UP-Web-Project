@@ -8,11 +8,7 @@ export class DBRequestManager {
         this.ongoingQueries = {};
     }
 
-    queryUnsafe(obj, reqData, callbackData, callback) {
-        return this.query(obj, reqData, callbackData, callback, "unsafe");
-    }
-
-    query(obj, reqData, callbackData, callback, sanitizeFlag) {
+    query(obj, reqData, callbackData, callback) {
         if (!callback) {
             callback = callbackData;
             callbackData = null;
@@ -44,19 +40,17 @@ export class DBRequestManager {
                 // TODO: Investigate how jQuery's automatic JSON-parsing of the
                 // numerical data as number types works for BIGINT outputs (will
                 // this cause overflow bugs??).
-                if (sanitizeFlag !== "unsafe") {
-                    let colLen = result.length;
-                    let rowLen = (result[0] ?? []).length;
-                    for (let i = 0; i < colLen; i++) {
-                        for (let j = 0; j < rowLen; j++) {
-                            if (typeof result[i][j] === "string") {
-                                result[i][j] = result[i][j]
-                                    .replaceAll("&", "&amp;")
-                                    .replaceAll("<", "&lt;")
-                                    .replaceAll(">", "&gt;")
-                                    .replaceAll('"', "&quot;")
-                                    .replaceAll("'", "&apos;");
-                            }
+                let colLen = result.length;
+                let rowLen = (result[0] ?? []).length;
+                for (let i = 0; i < colLen; i++) {
+                    for (let j = 0; j < rowLen; j++) {
+                        if (typeof result[i][j] === "string") {
+                            result[i][j] = result[i][j]
+                                .replaceAll("&", "&amp;")
+                                .replaceAll("<", "&lt;")
+                                .replaceAll(">", "&gt;")
+                                .replaceAll('"', "&quot;")
+                                .replaceAll("'", "&apos;");
                         }
                     }
                 }
