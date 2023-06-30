@@ -19,7 +19,12 @@ export var termTitleCL = new ContentLoader(
 termTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "termID",
+        "recLevel",
+        "maxRecLevel",
     ]);
+    data.recLevel ??= -1;;
+    data.recLevel++;
+    data.maxRecLevel ??= 2;;
 });
 termTitleCL.addCallback(function($ci, data) {
     let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
@@ -131,53 +136,23 @@ templateInstanceTitleCL.addCallback("data", function(data) {
 templateInstanceTitleCL.addCallback(function($ci, data) {
     $ci.addClass("clickable-text text-primary");
     $ci.append(getTransformedTitleTemplate(data.cxtDefStr));
-    $ci.find('.def-string').each(function() {
-        templateInstanceTitleCL.loadReplaced($(this), "SimpleTitle", data);
-    });
-    $ci.find('.def-term').each(function() {
-        let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
-        let reqData = {
-            type: "term",
-            id: data.defTermID,
-        };
-        let $this = $(this);
-        dbReqManager.query($this, reqData, data, function($obj, result, data) {
-            templateInstanceTitleCL.loadReplaced($obj, "SimpleTitle",
+    let defItemStrArr = data.defStr.split(';');
+    let nextDefItemStr = 0;
+    $ci.find('.def-item').each(function() {
+        let defItemStr = defItemStrArr[nextDefItemStr];
+        nextDefItemStr++;
+        if (/^#[1-9][0-9]*$/.test(defItemStr)) {
+            templateInstanceTitleCL.loadReplaced($(this), "TermTitle",
                 new ChildData(data, {
-                    termID: data.defTermID,
-                    cxtID: (result[0] ?? [])[0],
-                    defStr: (result[0] ?? [])[1],
-                    defTermID: (result[0] ?? [])[2],
+                    termID: defItemStr.substring(1),
                 })
             );
-        });
-    });
-    let idArr;
-    $ci.find('.list-item').each(function() {
-        let $this = $(this);
-        let n = parseInt($this.attr("class").slice(-1));
-        if (!idArr) {
-            if (!/^[1-9][0-9]*(,[1-9][0-9]*)*$/.test(data.defStr)) {
-                $this.replaceWith('$l[' + n.toString() + ']');
-                return;
+        } else {
+            if (defItemStr.substring(0, 1) === "\\") {
+                defItemStr = defItemStr.substring(1);
             }
-            idArr = data.defStr.split(',');
+            $(this).append(defItemStr);
         }
-        let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
-        let reqData = {
-            type: "term",
-            id: idArr[n],
-        };
-        dbReqManager.query($this, reqData, data, function($obj, result, data) {
-            templateInstanceTitleCL.loadReplaced($obj, "SimpleTitle",
-                new ChildData(data, {
-                    termID: idArr[n],
-                    cxtID: (result[0] ?? [])[0],
-                    defStr: (result[0] ?? [])[1],
-                    defTermID: (result[0] ?? [])[2],
-                })
-            );
-        });
     });
     $ci.on("click", function() {
         data.cl = sdbInterfaceCL.getRelatedCL("TermPage");
@@ -192,7 +167,8 @@ export function getTransformedTitleTemplate(title) {
     return title
         .replaceAll("&gt;", ">")
         .replaceAll("&lt;", "<")
-        // .replaceAll("\\\\", "&bsol;")
+        .replaceAll("\\\\", "&bsol;")
+        .replaceAll("\\;", "&#59;")
         // .replaceAll("\\{", "&#x2774;")
         // .replaceAll("\\}", "&#x2775;")
         .replace(/^[^\{]*\{/g, "")
