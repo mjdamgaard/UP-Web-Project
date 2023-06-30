@@ -39,6 +39,7 @@ termTitleCL.addCallback(function($ci, data) {
             id: data.cxtID,
         };
         dbReqManager.query($ci, reqData, data, function($ci, result, data) {
+            data.cxtCxtID = (result[0] ?? [])[0];
             data.cxtDefStr = (result[0] ?? [])[1];
             loadTermTitleHTML($ci, data);
         });
@@ -49,25 +50,17 @@ export function loadTermTitleHTML($ci, data) {
     data = data ?? $ci.data("data");
     if (!data.cxtID) {
         termTitleCL.loadAppended($ci, "SimpleTitle", data);
-        if (data.defTermID) {
-            $ci.append(', ');
-            termTitleCL.loadAppended($ci, "TermIDTitle", new ChildData(data, {
-                termID: data.defTermID
-            }));
-        }
 
     } else if (data.cxtID === 2) {
         termTitleCL.loadAppended($ci, "UserTitle", data);
 
     } else if (data.cxtID === 4) {
-        $ci.append('Text: ');
-        termTitleCL.loadAppended($ci, "SimpleTitle", data);
+        termTitleCL.loadAppended($ci, "TextTitle", data);
 
     } else if (data.cxtID === 5) {
-        $ci.append('Binary resource: ');
-        termTitleCL.loadAppended($ci, "SimpleTitle", data);
+        termTitleCL.loadAppended($ci, "BinaryTitle", data);
 
-    } else if (data.cxtDefStr.substring(0, 1) === ":") {
+    } else if (data.cxtCxtID === 7) {
         termTitleCL.loadAppended($ci, "TemplateInstanceTitle", data);
 
     } else {
@@ -79,7 +72,7 @@ export function loadTermTitleHTML($ci, data) {
         termTitleCL.loadAppended($ci, "SimpleTitle", new ChildData(data, {
             defStr: data.cxtDefStr,
             termID: data.cxtID,
-            cxtID: null,
+            cxtID: data.cxtCxtID,
             cxtDefStr: null,
         }));
         $ci.append(')');
