@@ -117,7 +117,7 @@ export class SetQuerier extends SetGenerator {
             let reqData = {
                 type: "termID",
                 c: setData.predCxtID,
-                s: encodeURI(setData.predStr),
+                s: setData.predStr,
             };
             dbReqManager.query(this, reqData, function(sg, result) {
                 setData.predID = (result[0] ?? [0])[0];
@@ -317,7 +317,7 @@ export class MaxRatingSetCombiner extends SetCombiner {
 //                 let reqData = {
 //                     type: "termID",
 //                     c: setData.predCxtID,
-//                     s: encodeURI(setData.predStr),
+//                     s: setData.predStr,
 //                     t: setData.objID,
 //                 };
 //                 dbReqManager.query(this, reqData, i, function(obj, result, i) {

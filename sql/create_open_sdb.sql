@@ -124,7 +124,10 @@ CREATE TABLE Terms (
     -- term ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- context string of the term, which can be used to clear up ambiguity, and...
+    -- id of the context which tells how the subsequent columns are to be
+    -- interpreted. (Null implies the default context of the SDB, and terms
+    -- with null as their context will use "Terms", id = 6, as a substitute for
+    -- their context. Note that context IDs of 1--6 are not allowed.)
     context_id BIGINT UNSIGNED,
 
     -- defining string of the term. This can be a lexical item, understood in

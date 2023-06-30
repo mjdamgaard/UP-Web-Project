@@ -13,7 +13,7 @@ export class DBRequestManager {
             callback = callbackData;
             callbackData = null;
         }
-        // url-encode the request data.
+        // URL-encode the request data.
         Object.keys(reqData).forEach(function(key) {
             reqData[key] = encodeURIComponent(reqData[key]);
         });
