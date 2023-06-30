@@ -13,6 +13,10 @@ export class DBRequestManager {
             callback = callbackData;
             callbackData = null;
         }
+        // url-encode the request data.
+        Object.keys(reqData).forEach(function(key) {
+            reqData[key] = encodeURIComponent(reqData[key]);
+        });
         // if there is already an ongoing query with this reqData object, simply
         // push the input data and return.
         let reqDataKey = JSON.stringify(reqData);
@@ -25,10 +29,11 @@ export class DBRequestManager {
         // call, which runs all the callbacks in the queue on at a time upon
         // receiving the response from the server.
         this.ongoingQueries[reqDataKey] = [[obj, callback, callbackData]];
-        let thisDBReqManager = this;
-        $.getJSON("query_handler.php", reqData, function(result, textStatus) {
+        let thisDBRM = this;
+        let method = reqDataKey < 2048 - 100 ? "getJSON" : "post";
+        $[method]("query_handler.php", reqData, function(result, textStatus) {
             // get and then delete the ongiong query queue.
-            let ongoingQueries = thisDBReqManager.ongoingQueries;
+            let ongoingQueries = thisDBRM.ongoingQueries;
             let queryQueue = ongoingQueries[reqDataKey];
             delete ongoingQueries[reqDataKey];
             // unless reqData.type equals "set", or "bin", sanitize all
@@ -70,7 +75,6 @@ export class DBRequestManager {
             callback = callbackData;
             callbackData = null;
         }
-        let thisDBReqManager = this;
         $.post("input_handler.php", reqData, function(result, textStatus) {
             // call the callback function on result.
             callback(obj, result, callbackData, textStatus);
