@@ -101,8 +101,7 @@ DELIMITER //
 CREATE PROCEDURE insertOrFindTerm (
     IN userID BIGINT UNSIGNED,
     IN cxtID BIGINT UNSIGNED,
-    IN defStr VARCHAR(255),
-    IN defTermID BIGINT UNSIGNED
+    IN defStr VARCHAR(255)
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
@@ -111,15 +110,11 @@ BEGIN
     IF (cxtID = 0) THEN
         SET cxtID = NULL;
     END IF;
-    IF (defTermID = 0) THEN
-        SET defTermID = NULL;
-    END IF;
 
     SELECT id INTO outID
     FROM Terms
     WHERE (
         context_id <=> cxtID AND
-        def_term_id <=> defTermID AND
         def_str = defStr
     );
     IF (outID IS NOT NULL) THEN
@@ -131,16 +126,11 @@ BEGIN
         SET exitCode = 2; -- cxtID is not the ID of an existing Term.
     ELSEIF (0 < cxtID AND cxtID <= 6) THEN
         SET exitCode = 3; -- cxtID is not permitted for this procedure.
-    ELSEIF (
-        defTermID IS NOT NULL AND
-        NOT EXISTS (SELECT id FROM Terms WHERE id = defTermID)
-    ) THEN
-        SET exitCode = 4; -- defTermID is not the ID of an existing Term.
     END IF;
 
     IF (exitCode IS NULL) THEN
-        INSERT INTO Terms (context_id, def_str, def_term_id)
-        VALUES (cxtID, defStr, defTermID);
+        INSERT INTO Terms (context_id, def_str)
+        VALUES (cxtID, defStr);
         SELECT LAST_INSERT_ID() INTO outID;
         INSERT INTO PrivateCreators (term_id, user_id)
         VALUES (outID, userID);
@@ -163,8 +153,8 @@ CREATE PROCEDURE private_insertUser (
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
-    INSERT INTO Terms (context_id, def_str, def_term_id)
-    VALUES (2, username, NULL);
+    INSERT INTO Terms (context_id, def_str)
+    VALUES (2, username);
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Users (id, username)
     VALUES (outID, username);
@@ -184,8 +174,8 @@ CREATE PROCEDURE insertText (
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
-    INSERT INTO Terms (context_id, def_str, def_term_id)
-    VALUES (4, metaStr, NULL);
+    INSERT INTO Terms (context_id, def_str)
+    VALUES (4, metaStr);
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Texts (id, str)
     VALUES (outID, textStr);
@@ -205,8 +195,8 @@ CREATE PROCEDURE insertBinary (
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
-    INSERT INTO Terms (context_id, def_str, def_term_id)
-    VALUES (5, metaStr, NULL);
+    INSERT INTO Terms (context_id, def_str)
+    VALUES (5, metaStr);
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Binaries (id, bin)
     VALUES (outID, bin);

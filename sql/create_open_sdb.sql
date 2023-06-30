@@ -130,28 +130,29 @@ CREATE TABLE Terms (
     -- their context. Note that context IDs of 1--6 are not allowed.)
     context_id BIGINT UNSIGNED,
 
-    -- the defining term (nullable), which can define the term more than
-    -- just the context and the def_str does (useful for specifying instances of
-    -- very broad classes of objects, such as texts, images, comments, and so
-    -- on, where it is hard to specify the objects using contexts alone).
-    -- Oh, and more importantly, the specifying entities are used to make
-    -- predicates from relation--object pairs, which is of course a central
-    -- usage in a semantic system: implementing relations.
-    def_term_id BIGINT UNSIGNED,
-    -- defining string of the term.
+    -- defining string of the term. This can be a lexical item, understood in
+    -- the context of the term with id = context_id. Or it can be a list of
+    -- term IDs, separated by commas, whose interpretation will then typically
+    -- be given by a "Template context", see initial_inserts.sql for how these
+    -- "Template contexts" work. Predicate terms, which are an important part
+    -- of this system, will also often be formed this way, namely where at
+    -- least one ID in the list represent a relation, and where one ID
+    -- represents the object. This is how we are able to implement semantic
+    -- relations; via compound predicates made from such "Template contexts."
+    -- Again, see initial_inserts.sql for how this works.
     def_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
-    UNIQUE INDEX (context_id, def_term_id, def_str)
+    UNIQUE INDEX (context_id, def_str)
 );
 
-INSERT INTO Terms (context_id, def_str, def_term_id, id)
+INSERT INTO Terms (context_id, def_str, id)
 VALUES
-    (NULL, "{Data} and users of the SDB", NULL, 1),
-    (1, "Users", NULL, 2),
-    (2, "admin_1", NULL, 3),
-    (1, "Texts", NULL, 4),
-    (1, "Binaries", NULL, 5),
-    (NULL, "Terms", NULL, 6);
+    (NULL, "{Data} and users of the SDB", 1),
+    (1, "Users", 2),
+    (2, "admin_1", 3),
+    (1, "Texts", 4),
+    (1, "Binaries", 5),
+    (NULL, "Terms", 6);
 
 
 

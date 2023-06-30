@@ -16,50 +16,49 @@ DELETE FROM PrivateCreators;
 
 
 /* From create_open_sdb.sql */
-INSERT INTO Terms (context_id, def_str, def_term_id, id)
+INSERT INTO Terms (context_id, def_str, id)
 VALUES
-    (NULL, "{Data} and users of the SDB", NULL, 1),
-    (1, "Users", NULL, 2),
-    (2, "admin_1", NULL, 3),
-    (1, "Texts", NULL, 4),
-    (1, "Binaries", NULL, 5),
-    (NULL, "Terms", NULL, 6);
+    (NULL, "{Data} and users of the SDB", 1),
+    (1, "Users", 2),
+    (2, "admin_1", 3),
+    (1, "Texts", 4),
+    (1, "Binaries", 5),
+    (NULL, "Terms", 6);
 INSERT INTO Users (username, id)
 VALUES ("admin_1", 3);
 
 /* Some other important initial inserts */
 INSERT INTO Terms (context_id, def_str, def_term_id, id)
 VALUES
-    (NULL, "Predicates", NULL, 7),
-    (7, ":is an important/useful instance of the {$s of }the Term, {$t}", NULL, 8),
-    (NULL, "Statements", NULL, 9),
-    (9, ":$l[0] applies to $t", NULL, 10),
-    (7, ":is {$s}", NULL, 11),
-    -- some room for more of these important inserts...
+    (NULL, "Template contexts", 7),
+    (7, "is an important/useful instance of the {<Noun phrase> of <Term>}", 8),
+    (7, "<Predicate> applies to <Term>", 9),
+    (7, "is {<Adjective phrase}", 10),
+    -- (some room for more inserts)
     (NULL, "ExAmPlE oF a NoT vErY uSeFuL tErM", NULL, 21);
 
 
 
 /* More inserts for testing */
 
-CALL insertOrFindTerm(3, 0, "Science", 0); -- id: 22
-CALL insertOrFindTerm(3, 0, "Music", 0); -- id: 23
-CALL insertOrFindTerm(3, 23, "Rock", 0); -- id: 24
-CALL insertOrFindTerm(3, 23, "Jazz", 0); -- id: 25
-CALL insertOrFindTerm(3, 23, "Hip hop", 0); -- id: 26
+CALL insertOrFindTerm(3, 0, "Science"); -- id: 22
+CALL insertOrFindTerm(3, 0, "Music"); -- id: 23
+CALL insertOrFindTerm(3, 23, "Rock"); -- id: 24
+CALL insertOrFindTerm(3, 23, "Jazz"); -- id: 25
+CALL insertOrFindTerm(3, 23, "Hip hop"); -- id: 26
 
-CALL insertOrFindTerm(3, 0, "Movies", 0); -- id: 27
+CALL insertOrFindTerm(3, 7, "Movie: <Title>, <Year>"); -- id: 27
 CALL insertOrFindTerm(3, 27,
-    "The Lord of the Rings: The Fellowship of the Ring (2001)", 0
+    "The Lord of the Rings: The Fellowship of the Ring (2001)"
 );-- id: 28
 CALL insertOrFindTerm(3, 27,
-    "The Lord of the Rings: The Two Towers (2002)", 0
+    "The Lord of the Rings: The Two Towers (2002)"
 ); -- id: 29
 
-CALL insertOrFindTerm(3, 22, "Music", 0); -- id: 30
-CALL insertOrFindTerm(3, 22, "Cinematography", 0); -- id: 31
-CALL insertOrFindTerm(3, 22, "Physics", 0); -- id: 32
-CALL insertOrFindTerm(3, 22, "Mathematics", 0); -- id: 33
+CALL insertOrFindTerm(3, 22, "Music"); -- id: 30
+CALL insertOrFindTerm(3, 22, "Cinematography"); -- id: 31
+CALL insertOrFindTerm(3, 22, "Physics"); -- id: 32
+CALL insertOrFindTerm(3, 22, "Mathematics"); -- id: 33
 
 
 
@@ -90,7 +89,7 @@ BEGIN
 END //
 DELIMITER ;
 
-CALL insertOrFindTerm(3, NULL, "Subcategories", 0);
+CALL insertOrFindTerm(3, NULL, "Subcategories");
 CALL insertPredicates("Subcategories", 6, 10);
 CALL insertPredicates("Subcategories", 22, 29);
 
@@ -121,7 +120,7 @@ CALL inputOrChangeRating(3, 27, 28, CONV("FF03", 16, 10), "00");
 CALL inputOrChangeRating(3, 27, 29, CONV("FF02", 16, 10), "00");
 
 
-CALL insertOrFindTerm(3, NULL, "Related terms", 0);
+CALL insertOrFindTerm(3, NULL, "Related terms");
 CALL insertPredicates("Related terms", 27, 31);
 
 CALL inputOrChangeRating(3, 49, 31, CONV("F000", 16, 10), "00");
@@ -131,9 +130,9 @@ CALL inputOrChangeRating(3, 51, 28, CONV("FFF0", 16, 10), "00");
 
 
 
-CALL insertOrFindTerm(3, NULL, "Relevant ratings", 0);
+CALL insertOrFindTerm(3, NULL, "Relevant ratings");
 CALL insertPredicates("Relevant ratings", 28, 29);
-CALL insertOrFindTerm(3, NULL, "Relevant ratings for derived terms", 0);
+CALL insertOrFindTerm(3, NULL, "Relevant ratings for derived terms");
 CALL insertPredicates("Relevant ratings for derived terms", 6, 8);
 CALL insertPredicates("Relevant ratings for derived terms", 22, 33);
 
@@ -143,11 +142,11 @@ CALL inputOrChangeRating(3, 61, 22, CONV("A000", 16, 10), "00");
 CALL inputOrChangeRating(3, 62, 23, CONV("A000", 16, 10), "00");
 CALL inputOrChangeRating(3, 66, 27, CONV("A000", 16, 10), "00");
 
-CALL insertOrFindTerm(3, 11, "good", 0); -- id: 73
-CALL insertOrFindTerm(3, 11, "funny", 0); -- id: 74
-CALL insertOrFindTerm(3, 11, "scary", 0); -- id: 75
-CALL insertOrFindTerm(3, 11, "popular", 0); -- id: 76
-CALL insertOrFindTerm(3, 7, "has a long playtime", 0); -- id: 77
+CALL insertOrFindTerm(3, 10, "good"); -- id: 73
+CALL insertOrFindTerm(3, 10, "funny"); -- id: 74
+CALL insertOrFindTerm(3, 10, "scary"); -- id: 75
+CALL insertOrFindTerm(3, 10, "popular"); -- id: 76
+CALL insertOrFindTerm(3, 7, "has a long playtime"); -- id: 77
 
 CALL inputOrChangeRating(3, 66, 73, CONV("FF00", 16, 10), "00");
 CALL inputOrChangeRating(3, 66, 74, CONV("E000", 16, 10), "00");
@@ -158,8 +157,8 @@ CALL inputOrChangeRating(3, 66, 77, CONV("C000", 16, 10), "00");
 CALL inputOrChangeRating(3, 62, 73, CONV("FF00", 16, 10), "00");
 
 CALL inputOrChangeRating(3, 55, 76, CONV("F000", 16, 10), "00");
-CALL insertOrFindTerm(3, 0, "Genres", 0); -- id: 78
-CALL insertOrFindTerm(3, 78, "Fantasy", 0); -- id: 79
+CALL insertOrFindTerm(3, 0, "Genres"); -- id: 78
+CALL insertOrFindTerm(3, 78, "Fantasy"); -- id: 79
 CALL inputOrChangeRating(3, 55, 79, CONV("E400", 16, 10), "00");
 
 

@@ -107,8 +107,7 @@ CREATE PROCEDURE selectTerm (
 BEGIN
     SELECT
         context_id AS cxtID,
-        def_str AS defStr,
-        def_term_id AS defTermID
+        def_str AS defStr
     FROM Terms
     WHERE id = termID;
 END //
@@ -118,22 +117,17 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectTermID (
     IN cxtID BIGINT UNSIGNED,
-    IN defStr VARCHAR(255),
-    IN defTermID BIGINT UNSIGNED
+    IN defStr VARCHAR(255)
 )
 BEGIN
     IF (cxtID = 0) THEN
         SET cxtID = NULL;
-    END IF;
-    IF (defTermID = 0) THEN
-        SET defTermID = NULL;
     END IF;
 
     SELECT id AS termID
     FROM Terms
     WHERE (
         context_id <=> cxtID AND
-        def_term_id <=> defTermID AND
         def_str = defStr
     );
 END //
