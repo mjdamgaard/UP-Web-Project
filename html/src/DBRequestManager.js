@@ -14,8 +14,9 @@ export class DBRequestManager {
             callbackData = null;
         }
         // URL-encode the request data.
+        let encodedReqData = {};
         Object.keys(reqData).forEach(function(key) {
-            reqData[key] = encodeURIComponent(reqData[key]);
+            encodedReqData[key] = encodeURIComponent(reqData[key]);
         });
         // if there is already an ongoing query with this reqData object, simply
         // push the input data and return.
@@ -30,8 +31,7 @@ export class DBRequestManager {
         // receiving the response from the server.
         this.ongoingQueries[reqDataKey] = [[obj, callback, callbackData]];
         let thisDBRM = this;
-        let method = reqDataKey < 2048 - 100 ? "getJSON" : "post";
-        $[method]("query_handler.php", reqData, function(result, textStatus) {
+        $.getJSON("query_handler.php", encodedReqData, function(result) {
             // get and then delete the ongiong query queue.
             let ongoingQueries = thisDBRM.ongoingQueries;
             let queryQueue = ongoingQueries[reqDataKey];
@@ -65,7 +65,7 @@ export class DBRequestManager {
                 let obj = queryQueue[i][0];
                 let callback = queryQueue[i][1];
                 let callbackData = queryQueue[i][2];
-                callback(obj, result, callbackData, textStatus);
+                callback(obj, result, callbackData);
             }
         });
     }
@@ -75,9 +75,9 @@ export class DBRequestManager {
             callback = callbackData;
             callbackData = null;
         }
-        $.post("input_handler.php", reqData, function(result, textStatus) {
+        $.post("input_handler.php", reqData, function(result) {
             // call the callback function on result.
-            callback(obj, result, callbackData, textStatus);
+            callback(obj, result, callbackData);
         });
     }
 }
