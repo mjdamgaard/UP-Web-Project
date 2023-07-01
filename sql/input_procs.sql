@@ -104,7 +104,7 @@ CREATE PROCEDURE insertOrFindTerm (
     IN defStr VARCHAR(255)
 )
 BEGIN
-    DECLARE outID BIGINT UNSIGNED;
+    DECLARE outID, cxtCxtID, tempID BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
 
     IF (cxtID = 0) THEN
@@ -119,13 +119,17 @@ BEGIN
     );
     IF (outID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
-    ELSEIF (
-        cxtID IS NOT NULL AND
-        NOT EXISTS (SELECT id FROM Terms WHERE id = cxtID)
-    ) THEN
-        SET exitCode = 2; -- cxtID is not the ID of an existing Term.
+    ELSEIF (cxtID IS NOT NULL) THEN
+        SELECT id, context_id INTO tempID, cxtCxtID
+        FROM Terms
+        WHERE id = context_id;
+        IF (tempID IS NULL) THEN
+            SET exitCode = 2; -- cxtID is not the ID of an existing Term.
+        ELSEIF (cxtCxtID IS NOT NULL) THEN
+            SET exitCode = 3; -- context_id of the context must be null.
+        END IF;
     ELSEIF (0 < cxtID AND cxtID <= 6) THEN
-        SET exitCode = 3; -- cxtID is not permitted for this procedure.
+        SET exitCode = 4; -- cxtID is not permitted for this procedure.
     END IF;
 
     IF (exitCode IS NULL) THEN

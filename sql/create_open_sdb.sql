@@ -6,7 +6,7 @@
 -- DROP TABLE Indexes;
 --
 -- /* Terms */
-DROP TABLE Terms;
+-- DROP TABLE Terms;
 --
 -- /* Data */
 -- DROP TABLE Users;

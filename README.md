@@ -17,7 +17,7 @@ For instance we could have the lexical item: "is the director of", which a user
 might want to use as a relation to express e.g. that Peter Jackson is the
 director of The Lord of the Rings: The Fellowship of the Ring. That user can
 then upload or find the Terms "is the director of", "Peter Jackson" and "The
-Lord of the Rings: The Fellowship of the Ring" and subsequently use the to
+Lord of the Rings: The Fellowship of the Ring" and subsequently use these to
 construct the statement: "Peter Jackson is the director of Lord of the Rings:
 The Fellowship of the Ring."
 
@@ -40,7 +40,7 @@ in time.
 Now, on the other hand, the approach of trying to reach Tim Berners-Lee's dream
 via SDBs, which is indeed the goal of this project, might very well also have
 some major advantages over what has been the conventional approach so far.
-To motivate the argument for why this is...
+To motivate the argument for why this is, let
 
 
 
