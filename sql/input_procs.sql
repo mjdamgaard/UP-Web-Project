@@ -128,7 +128,7 @@ BEGIN
         ELSEIF (cxtCxtID IS NOT NULL) THEN
             SET exitCode = 3; -- context_id of the context must be null.
         END IF;
-    ELSEIF (0 < cxtID AND cxtID <= 6) THEN
+    ELSEIF (0 < cxtID AND cxtID <= 5) THEN
         SET exitCode = 4; -- cxtID is not permitted for this procedure.
     END IF;
 

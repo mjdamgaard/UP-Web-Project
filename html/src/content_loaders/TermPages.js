@@ -86,7 +86,7 @@ termNounPredicatePageCL.addCallback("data", function(data) {
 termNounPredicatePageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralTermElement";
     data.setGenerator = new SetQuerier({
-        predCxtID: 8, // ID of the ">is a useful instance of ..." Context.
+        predCxtID: 6, // ID of the "is an important/useful inst..." Context.
         predStr: data.predNoun + ";#" + data.termID,
         userID: 3,
         num: 4000,
@@ -133,7 +133,7 @@ termNounPredicatePageCL.addCallback("data", function(data) {
 termRatingsPageCL.addCallback("data", function(data) {
     data.elemContentKey = "RatingElement";
     let sg1 = new SetQuerier({
-        predCxtID: 8, // ID of the ">is a useful instance of ..." Context.
+        predCxtID: 6, // ID of the "is an important/useful inst..." Context.
         predStr: "Relevant ratings;#" + data.termID,
         userID: 3,
         num: 4000,
@@ -141,7 +141,7 @@ termRatingsPageCL.addCallback("data", function(data) {
         ratingHi: 0,
     });
     let sg2 = new SetQuerier({
-        predCxtID: 8, // ID of the ">is a useful instance of ..." Context.
+        predCxtID: 6, // ID of the "is an important/useful inst..." Context.
         predStr: "Relevant ratings for derived terms;#" + data.cxtID,
         objID: ,
         userID: 3,

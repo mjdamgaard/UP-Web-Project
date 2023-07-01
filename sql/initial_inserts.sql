@@ -18,22 +18,20 @@ DELETE FROM PrivateCreators;
 /* From create_open_sdb.sql */
 INSERT INTO Terms (context_id, def_str, id)
 VALUES
-    (NULL, "{Data} and users of the SDB", 1),
-    (1, "Users", 2),
+    (NULL, "Terms", 1),
+    (NULL, "Users of the SDB", 2),
     (2, "admin_1", 3),
-    (1, "Texts", 4),
-    (1, "Binaries", 5),
-    (NULL, "Terms", 6);
+    (NULL, "Texts of the SDB", 4),
+    (NULL, "Binaries of the SDB", 5);
 INSERT INTO Users (username, id)
 VALUES ("admin_1", 3);
 
 /* Some other important initial inserts */
 INSERT INTO Terms (context_id, def_str, id)
 VALUES
-    (NULL, "Template contexts", 7),
-    (7, "is an important/useful instance of the {<Noun phrase> of <Term>}", 8),
-    (7, "<Predicate> applies to <Term>", 9),
-    (7, "is {<Adjective phrase>}", 10),
+    (NULL, "is an important/useful instance of the {<Noun phrase> of <Term>}", 6),
+    (NULL, "<Predicate> applies to <Term>", 7),
+    (NULL, "is {<Adjective phrase>}", 8),
     -- (some room for more inserts)
     (NULL, "ExAmPlE oF a NoT vErY uSeFuL tErM", 21);
 
@@ -76,7 +74,7 @@ BEGIN
     loop1: LOOP
         IF (startTermID <= endTermID) THEN
             CALL insertOrFindTerm(
-                3, 8,
+                3, 6,
                 CONCAT(str, ';#', startTermID)
             );
 
@@ -87,6 +85,8 @@ BEGIN
     END LOOP loop1;
 END //
 DELIMITER ;
+
+-- TODO: Change:
 
 CALL insertOrFindTerm(3, NULL, "Subcategories");
 CALL insertPredicates("Subcategories", 6, 10);

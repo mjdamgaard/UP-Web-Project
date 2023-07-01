@@ -126,8 +126,8 @@ CREATE TABLE Terms (
 
     -- id of the context which tells how the subsequent columns are to be
     -- interpreted. (Null implies the default context of the SDB, and terms
-    -- with null as their context will use "Terms", id = 6, as a substitute for
-    -- their context. Note that context IDs of 1--6 are not allowed.)
+    -- with null as their context will use "Terms", id = 1, as a substitute for
+    -- their context. Note that context IDs of 1--5 are not allowed.)
     context_id BIGINT UNSIGNED,
 
     -- defining string of the term. This can be a lexical item, understood in
@@ -147,12 +147,11 @@ CREATE TABLE Terms (
 
 INSERT INTO Terms (context_id, def_str, id)
 VALUES
-    (NULL, "{Data} and users of the SDB", 1),
-    (1, "Users", 2),
+    (NULL, "Terms", 1),
+    (NULL, "{Users} of the SDB", 2),
     (2, "admin_1", 3),
-    (1, "Texts", 4),
-    (1, "Binaries", 5),
-    (NULL, "Terms", 6);
+    (NULL, "{Texts} of the SDB", 4),
+    (NULL, "{Binaries} of the SDB", 5);
 
 
 

@@ -76,7 +76,6 @@ export class DBRequestManager {
             callbackData = null;
         }
         $.post("input_handler.php", reqData, function(result) {
-            // call the callback function on result.
             callback(obj, result, callbackData);
         });
     }

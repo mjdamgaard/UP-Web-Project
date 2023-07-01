@@ -18,7 +18,7 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 
 
 if (!isset($_POST["t"])) {
-    $_POST["t"] = "6";
+    $_POST["t"] = "1";
 }
 if (!isset($_POST["qu"])) {
     $_POST["qu"] = "3";

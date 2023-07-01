@@ -38,9 +38,9 @@ in the future, this approach can also yield a completely decentralized system
 in time.
 
 Now, on the other hand, the approach of trying to reach Tim Berners-Lee's dream
-via SDBs, which is indeed the goal of this project, might very well also have
-some major advantages over what has been the conventional approach so far.
-To motivate the argument for why this is, let
+via SDBs, which is indeed the ultimate goal of this project, might very well
+also have some major advantages over what has been the conventional approach so
+far. To motivate the argument for why this is, let
 
 
 

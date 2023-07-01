@@ -19,12 +19,7 @@ export var termTitleCL = new ContentLoader(
 termTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "termID",
-        "recLevel",
-        "maxRecLevel",
     ]);
-    data.recLevel ??= -1;;
-    data.recLevel++;
-    data.maxRecLevel ??= 2;;
 });
 termTitleCL.addCallback(function($ci, data) {
     let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
@@ -44,7 +39,6 @@ termTitleCL.addCallback(function($ci, data) {
             id: data.cxtID,
         };
         dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-            data.cxtCxtID = (result[0] ?? [])[0];
             data.cxtDefStr = (result[0] ?? [])[1];
             loadTermTitleHTML($ci, data);
         });
@@ -54,45 +48,34 @@ termTitleCL.addCallback(function($ci, data) {
 export function loadTermTitleHTML($ci, data) {
     data = data ?? $ci.data("data");
     if (!data.cxtID) {
-        termTitleCL.loadAppended($ci, "SimpleTitle", data);
-
+        data.linkContent = data.defStr;
+        termTitleCL.loadAppended($ci, "TermLink", data);
     } else if (data.cxtID === 2) {
         termTitleCL.loadAppended($ci, "UserTitle", data);
-
     } else if (data.cxtID === 4) {
         termTitleCL.loadAppended($ci, "TextTitle", data);
-
     } else if (data.cxtID === 5) {
         termTitleCL.loadAppended($ci, "BinaryTitle", data);
-
-    } else if (data.cxtCxtID === 7) {
+    } else  {
         termTitleCL.loadAppended($ci, "TemplateInstanceTitle", data);
-
-    } else {
-        // TODO: Change such that the Context title is in its own span (that
-        // can then be hidden if one wants to), and possibly remove the
-        // parenthises and let CSS add whatever instead.
-        termTitleCL.loadAppended($ci, "SimpleTitle", data);
-        $ci.append(' (');
-        termTitleCL.loadAppended($ci, "SimpleTitle", new ChildData(data, {
-            defStr: data.cxtDefStr,
-            termID: data.cxtID,
-            cxtID: data.cxtCxtID,
-            cxtDefStr: null,
-        }));
-        $ci.append(')');
     }
 }
 
-export var simpleTitleCL = new ContentLoader(
-    "SimpleTitle",
+export var termLinkCL = new ContentLoader(
+    "TermLink",
     /* Initial HTML template */
     '<span></span>',
     sdbInterfaceCL
 );
-simpleTitleCL.addCallback(function($ci, data) {
+termLinkCL.addCallback("data", function(data) {
+    data.copyFromAncestor([
+        "termID",
+        "linkContent",
+    ]);
+});
+termLinkCL.addCallback(function($ci, data) {
     $ci.addClass("clickable-text text-primary");
-    $ci.append(data.getFromAncestor("defStr"));
+    $ci.append(data.linkContent);
     $ci.on("click", function() {
         data.cl = sdbInterfaceCL.getRelatedCL("TermPage");
         $(this).trigger("open-column", [
@@ -102,23 +85,6 @@ simpleTitleCL.addCallback(function($ci, data) {
     })
 });
 
-export var termIDTitleCL = new ContentLoader(
-    "TermIDTitle",
-    /* Initial HTML template */
-    '<span></span>',
-    sdbInterfaceCL
-);
-termIDTitleCL.addCallback(function($ci, data) {
-    $ci.addClass("clickable-text text-primary");
-    $ci.append(data.getFromAncestor("termID"));
-    $ci.on("click", function() {
-        data.cl = sdbInterfaceCL.getRelatedCL("TermPage");
-        $(this).trigger("open-column", [
-            "AppColumn", data, "right"
-        ]);
-        return false;
-    })
-});
 
 export var templateInstanceTitleCL = new ContentLoader(
     "TemplateInstanceTitle",
@@ -130,12 +96,11 @@ templateInstanceTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "defStr",
         "cxtDefStr",
-        "defTermID",
     ]);
 });
 templateInstanceTitleCL.addCallback(function($ci, data) {
-    $ci.addClass("clickable-text text-primary");
-    $ci.append(getTransformedTitleTemplate(data.cxtDefStr));
+    data.linkContent = getTransformedTitleTemplate(data.cxtDefStr);
+    templateInstanceTitleCL.loadAppended($ci, "TermLink", data);
     let defItemStrArr = data.defStr.split(';');
     let nextDefItemStr = 0;
     $ci.find('.def-item').each(function() {
@@ -154,15 +119,7 @@ templateInstanceTitleCL.addCallback(function($ci, data) {
             $(this).append(defItemStr);
         }
     });
-    $ci.on("click", function() {
-        data.cl = sdbInterfaceCL.getRelatedCL("TermPage");
-        $(this).trigger("open-column", [
-            "AppColumn", data, "right"
-        ]);
-        return false;
-    })
 });
-
 export function getTransformedTitleTemplate(title) {
     return title
         .replaceAll("&gt;", ">")
