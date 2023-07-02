@@ -27,6 +27,11 @@ termTitleCL.addCallback("data", function(data) {
     data.maxRecLevel ??= 2;;
 });
 termTitleCL.addCallback(function($ci, data) {
+    if (data.recLevel > data.maxRecLevel) {
+        data.linkContent = data.termID;
+        termTitleCL.loadAppended($ci, "TermLink", data);
+        return;
+    }
     let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
     let reqData = {
         type: "term",
@@ -48,20 +53,23 @@ termTitleCL.addCallback(function($ci, data) {
             loadTermTitleHTML($ci, data);
         });
         // parse the defItem string array from defStr, then prefetch all Terms
-        // referenced by IDs (with the syntax pattern /^#[1-9][0-9]*$/).
-        data.defItemStrArr = data.defStr
-            .replaceAll("\\\\", "&bsol;")
-            .replaceAll("\\|", "&#124;")
-            .split("|");
-        data.defItemStrArr.forEach(function(val) {
-            if (/^#[1-9][0-9]*$/.test(val)) {
-                let reqData = {
-                    type: "term",
-                    id: val.substring(1),
-                };
-                dbReqManager.query($ci, reqData, function($ci, result) {});
-            }
-        });
+        // referenced by IDs (with the syntax pattern /^#[1-9][0-9]*$/), but
+        // only if the current recLevel is less than maxRecLevel.
+        if (data.recLevel < data.maxRecLevel) {
+            data.defItemStrArr = data.defStr
+                .replaceAll("\\\\", "&bsol;")
+                .replaceAll("\\|", "&#124;")
+                .split("|");
+            data.defItemStrArr.forEach(function(val) {
+                if (/^#[1-9][0-9]*$/.test(val)) {
+                    let reqData = {
+                        type: "term",
+                        id: val.substring(1),
+                    };
+                    dbReqManager.query($ci, reqData, function($ci, result) {});
+                }
+            });
+        }
     });
 });
 
@@ -121,7 +129,7 @@ templateInstanceTitleCL.addCallback("data", function(data) {
 templateInstanceTitleCL.addCallback(function($ci, data) {
     data.linkContent = getTransformedTitleTemplate(data.cxtDefStr);
     templateInstanceTitleCL.loadAppended($ci, "TermLink", data);
-    let defItemStrArr = data.defStr.split(';');
+    let defItemStrArr = data.defItemStrArr;
     let nextDefItemStr = 0;
     $ci.find('.def-item').each(function() {
         let defItemStr = defItemStrArr[nextDefItemStr];
