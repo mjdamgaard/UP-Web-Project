@@ -105,10 +105,12 @@ termLinkCL.addCallback(function($ci, data) {
     $ci.addClass("clickable-text text-primary");
     $ci.append(data.linkContent);
     $ci.on("click", function() {
-        data.cl = sdbInterfaceCL.getRelatedCL("TermPage");
-        $(this).trigger("open-column", [
-            "AppColumn", data, "right"
-        ]);
+        let childData = new ChildData (data, {
+            cl: sdbInterfaceCL.getRelatedCL("TermPage"),
+            recLevel: null,
+            maxRecLevel: null,
+        });
+        $(this).trigger("open-column", ["AppColumn", childData, "right"]);
         return false;
     })
 });
@@ -134,20 +136,34 @@ templateInstanceTitleCL.addCallback(function($ci, data) {
     $ci.find('.def-item').each(function() {
         let defItemStr = defItemStrArr[nextDefItemStr];
         nextDefItemStr++;
-        if (/^#[1-9][0-9]*$/.test(defItemStr)) {
-            templateInstanceTitleCL.loadReplaced($(this), "TermTitle",
-                new ChildData(data, {
-                    termID: defItemStr.substring(1),
-                })
-            );
-        } else {
-            if (defItemStr.substring(0, 1) === "\\") {
-                defItemStr = defItemStr.substring(1);
-            }
-            $(this).append(defItemStr);
-        }
+        loadDefItemAppended($(this), defItemStr, data);
     });
+    let len = defItemStrArr.length;
+    if (nextDefItemStr < len - 1) {
+        $ci.append('<span class="extra-def-items">');
+        let $obj = $ci.find('.extra-def-items');
+        for (let i = nextDefItemStr; i < len - 1; i++) {
+            loadDefItemAppended($obj, defItemStrArr[i], data);
+            $obj.append(', ');
+        }
+        loadDefItemAppended($obj, defItemStrArr[len - 1], data);
+        $ci.append('</span>');
+    }
 });
+export function loadDefItemAppended($obj, defItemStr, data) {
+    if (/^#[1-9][0-9]*$/.test(defItemStr)) {
+        templateInstanceTitleCL.loadAppended($obj, "TermTitle",
+            new ChildData(data, {
+                termID: defItemStr.substring(1),
+            })
+        );
+    } else {
+        if (defItemStr.substring(0, 1) === "\\") {
+            defItemStr = defItemStr.substring(1);
+        }
+        $obj.append(defItemStr);
+    }
+}
 export function getTransformedTitleTemplate(title) {
     return title
         .replaceAll("&gt;", ">")
