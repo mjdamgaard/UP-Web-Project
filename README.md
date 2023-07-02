@@ -1,4 +1,5 @@
 # openSDB (prototype)
+*Status: in development*
 
 ## Introduction to the project
 
@@ -35,6 +36,9 @@ applications on top of databases instead (i.e. SDBs), being accessed through
 a limited number of web domains, instead of having these applications run on top
 of the entire web at once.
 
+*If the reader is not already familiar with (or interested in) the Semantic*
+*Web beforehand, they might want to skip (or skim) down to the next section.*
+
 This approach has the drawback that it is not immediately as decentralized as
 the conventional Semantic Web: If the latter would have ever taken off, it
 would have immediately been as decentralized as the World Wide Web. But the
@@ -66,33 +70,35 @@ And yet the "average users," i.e. the non-developers, add so much to the web
 in its present state. Nowadays when we use the web, we often go to the same
 websites that we have visited many times before, not to see what new content
 the developers have added to the site, but instead to see what other users of
-the site have uploaded. This revolution in how we use is what is known as the
-Web 2.0.
+the site have uploaded. This revolution of the web in terms of how we use it is
+what is known as the Web 2.0.
+
+<Paragraphs about the need for users to be able to add semantic links, not just
+devs>
+
+But of course, arguing why one approach for reaching the dream of the Semantic
+Web might be more promising than a previous one is not of much if you do not
+already share in that dream, which is something that most readers probably will
+not. We will therefore in the following section discuss some useful
+applications, which I believe can garner a wide userbase. The first goal of
+the openSDB project is then to create a website that implements these
+applications and then to prove its usefulness be attracting a considerable
+amount of users. And only once this is achieved begins the further task of
+getting other parties to join in and together develop the system into a
+distributed and decentralized one. ...
+
+
+## The "killer application" of openSDB
+
+The first application of openSDB that I am currently in the process of
+developing (currently alone, but I hope that I can attract others to the
+project), and which I believe...
 
 
 
 
 
 
-starting perhaps with just
-one such database: openSDB. This database will then be accessed through a single
-web page (at www.opensdb.com once the application is ready).
-
-We can therefore
-see that the conventional approach has the immediate advantage over the approach
-of using SDBs that it is quite decentralized from the beginning, namely as
-decentralized as the World Wide Web.
-But by having SDBs that are open source and open data,
-
-and which also subscribes
-to a common goal of combining all such SDBs into a decentralized distributed
-database the future, this approach can also yield a completely decentralized
-system in time.
-
-Now, on the other hand, the approach of trying to reach Tim Berners-Lee's dream
-via SDBs, which is indeed the ultimate goal of this project, might very well
-also have some major advantages over what has been the conventional approach so
-far. To motivate the argument for why this is, let
 
 
 
@@ -100,22 +106,9 @@ far. To motivate the argument for why this is, let
 
 
 
-, interfaced through a web
-application, which I intend to host at www.opensdb.com once it is ready.
-
-The term 'semantic' here refers to the fact that the data is structured in terms
-of subject-relation-object connections, much similar to core concepts of the
-Semantic Web, a vision originally proposed by Tim Berners-Lee (see e.g.
-[www.wikipedia.org/wiki/Semantic_Web](https://en.wikipedia.org/wiki/Semantic_Web) or [www.w3.org/RDF/Metalog/docs/sw-easy](https://www.w3.org/RDF/Metalog/docs/sw-easy)).
-
-And in fact, this project actually hopes to breathe new life into this vision,
-and hopefully be able to lay the way for a new web: the Semantic Web.
-
+<!--
 But now we are getting ahead of ourselves. The first goal of openSDB should not
 be to revolutionize how the web is used. The first goal should be create at
 least just one useful application of a Semantic Database (SDB), and then prove
 its usefulness by being able to attract a significant number of users.
-
-Now, I have a lot applications in mind for this SDB that I think could
-potentially attract users once they are built, and which I do not expect will
-take me too long to build (even on my own). But there is definitely one ...
+-->
