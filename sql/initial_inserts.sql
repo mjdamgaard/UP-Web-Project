@@ -47,10 +47,10 @@ CALL insertOrFindTerm(3, 23, "Hip hop"); -- id: 26
 
 CALL insertOrFindTerm(3, 7, "Movie: <Title>, <Year>"); -- id: 27
 CALL insertOrFindTerm(3, 27,
-    "The Lord of the Rings: The Fellowship of the Ring;2001"
+    "The Lord of the Rings: The Fellowship of the Ring|2001"
 ); -- id: 28
 CALL insertOrFindTerm(3, 27,
-    "The Lord of the Rings: The Two Towers;2002"
+    "The Lord of the Rings: The Two Towers|2002"
 ); -- id: 29
 
 CALL insertOrFindTerm(3, 22, "Music"); -- id: 30

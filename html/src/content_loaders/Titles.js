@@ -51,8 +51,8 @@ termTitleCL.addCallback(function($ci, data) {
         // referenced by IDs (with the syntax pattern /^#[1-9][0-9]*$/).
         data.defItemStrArr = data.defStr
             .replaceAll("\\\\", "&bsol;")
-            .replaceAll("\\;", "&#59;")
-            .split(";");
+            .replaceAll("\\|", "&#124;")
+            .split("|");
         data.defItemStrArr.forEach(function(val) {
             if (/^#[1-9][0-9]*$/.test(val)) {
                 let reqData = {
@@ -144,10 +144,6 @@ export function getTransformedTitleTemplate(title) {
     return title
         .replaceAll("&gt;", ">")
         .replaceAll("&lt;", "<")
-        // .replaceAll("\\\\", "&bsol;")
-        // .replaceAll("\\;", "&#59;")
-        // .replaceAll("\\{", "&#x2774;")
-        // .replaceAll("\\}", "&#x2775;")
         .replace(/^[^\{]*\{/g, "")
         .replace(/\}[^\{]*$/g, "")
         .replaceAll(/\}[^\{]*\{/g, "")
