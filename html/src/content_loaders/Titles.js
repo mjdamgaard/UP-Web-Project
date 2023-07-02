@@ -19,7 +19,12 @@ export var termTitleCL = new ContentLoader(
 termTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "termID",
+        "recLevel",
+        "maxRecLevel",
     ]);
+    data.recLevel ??= -1;;
+    data.recLevel++;
+    data.maxRecLevel ??= 2;;
 });
 termTitleCL.addCallback(function($ci, data) {
     let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
@@ -41,6 +46,21 @@ termTitleCL.addCallback(function($ci, data) {
         dbReqManager.query($ci, reqData, data, function($ci, result, data) {
             data.cxtDefStr = (result[0] ?? [])[1];
             loadTermTitleHTML($ci, data);
+        });
+        // parse the defItem string array from defStr, then prefetch all Terms
+        // referenced by IDs (with the syntax pattern /^#[1-9][0-9]*$/).
+        data.defItemStrArr = data.defStr
+            .replaceAll("\\\\", "&bsol;")
+            .replaceAll("\\;", "&#59;")
+            .split(";");
+        data.defItemStrArr.forEach(function(val) {
+            if (/^#[1-9][0-9]*$/.test(val)) {
+                let reqData = {
+                    type: "term",
+                    id: val.substring(1),
+                };
+                dbReqManager.query($ci, reqData, function($ci, result) {});
+            }
         });
     });
 });
@@ -124,8 +144,8 @@ export function getTransformedTitleTemplate(title) {
     return title
         .replaceAll("&gt;", ">")
         .replaceAll("&lt;", "<")
-        .replaceAll("\\\\", "&bsol;")
-        .replaceAll("\\;", "&#59;")
+        // .replaceAll("\\\\", "&bsol;")
+        // .replaceAll("\\;", "&#59;")
         // .replaceAll("\\{", "&#x2774;")
         // .replaceAll("\\}", "&#x2775;")
         .replace(/^[^\{]*\{/g, "")
