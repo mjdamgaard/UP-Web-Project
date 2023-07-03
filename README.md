@@ -27,7 +27,7 @@ Web, as envisioned by Tim Berners-Lee in 1999 (see e.g.
 [www.wikipedia.org/wiki/Semantic_Web](https://en.wikipedia.org/wiki/Semantic_Web)).
 The main difference, however, is that the Semantic Web (so far) has mainly been
 intended to run across the whole World Wide Web, by having web developers add
-subject-relation-object statements (referred to as 'triplets') as metadata to
+subject–relation–object statements (referred to as 'triplets') as metadata to
 their web pages. Semantic Web applications are then supposed to read this
 metadata from across the web to get its data structures.
 
@@ -86,6 +86,58 @@ applications and then to prove its usefulness be attracting a considerable
 amount of users. And only once this is achieved begins the further task of
 getting other parties to join in and together develop the system into a
 distributed and decentralized one. ...
+
+
+## Overview of the semantic system of openSDB
+
+The example from before with "Peter Jackson" + "is the director of" + "Lord of
+the Rings: The Fellowship of the Ring" explains the general concept of a
+semantic system, but openSDB does not actually store semantic links directly as
+triplets like this. Instead the system stores semantic statements as
+predicate–subject pairs, but allows Terms to be compound, meaning that a
+predicate can be formed from a relation and an object. One could for example
+form a predicate from "is the director of" and "Lord of the Rings: The
+Fellowship of the Ring" put together. This choice makes queries faster by a
+considerable amount, but it does come with the downside that relations are not
+automatically two-way, and subject–relation–object statements thus need to be
+stored two ways: as Predicate(relation, object) + subject and as
+Predicate(relation, subject) + object to make them work both ways. I believe
+this trade-off will be worth it.
+
+More importantly, each semantic statement is also stored together with the ID
+of the user who states the statement, and with a rating value running from 0 to
+10 (in small steps of 10 divided by 65535) which denotes the degree to which
+the user deems the statement to be true, like when answering a survey. A rating
+value of five thus means a neutral degree; meaning that the statement is deemed
+neither to be particularly right/fitting for the subject nor wrong/unfitting. A
+rating value towards 0 then of course means very wrong/unfitting and a rating
+value towards 10 means very true/fitting.
+
+These combinations of user + predicate + subject + rating is referred as
+'semantic inputs' in the terminology of openSDB, and for any constant pair of
+user and predicate, the set of relevant rating–pairs stored in the database as
+part of semantic inputs are referred to as 'input sets' (or sometimes just
+'sets' for brevity). Due to a uniqueness constraint any subject can only appear
+once in such sets (i.e. a user can only give one rating to any given statement),
+and the input sets are stored as ordered in terms of the rating value. openSDB
+also aims to store these input sets as compactly as possible, meaning that
+retrieval of these sets can be done very efficiently. In fact, retrieval of
+input sets is seen as the most central type of query of the database, and
+therefore one that should be optimized as much as possible (hence the choice
+mentioned in the first paragraph of this section).  
+
+When using the database, however, users will mostly not want to query for one
+particular users ratings, but instead to query for an average of ratings from
+all users. openSDB intends to also implement such queries as queries for input
+sets, only where the user ID is replaced for the ID of an averaging algorithm.
+Furthermore, for each such algorithm, openSDB intends to actually store the
+averaged (or otherwise aggregated) ratings in the same way as other semantic
+inputs such that these averages can be retrieved as efficiently as the
+single-user input sets. Thus, the averaging/aggregation algorithms will be
+implemented as what we might refer to as 'bots,' namely since they take the
+place of users in the user ID column of the semantic inputs table. The input
+sets of these "bots" will then be maintained via continuous scheduled events
+that update the ratings according to recent user inputs.
 
 
 ## The "killer application" of openSDB
