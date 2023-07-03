@@ -72,10 +72,18 @@ websites that we have visited many times before, not to see what new content
 the developers have added to the site, but instead to see what other users of
 the site have uploaded. This revolution of the web in terms of how we use it is
 what is known as the Web 2.0.
+It means that the "average" (non-developer) users now makes up a huge source
+of input data flowing into the web,
+and there is no question in my mind that if we want to truly reach the vision
+of the Semantic Web, we *have* to first develop a system the can tap into this
+huge data source. More precisely, we need a semantic system where it is easy
+and intuitive for users to upload and up-rate the semantic links, and preferably
+just as easy as it is currently for users to upload and up-rate resources on
+the various Web 2.0 sites that are currently popular.
 
-<Paragraphs about the need for users to be able to add semantic links, not just
-devs>
+This is the goal that openSDB tries to achieve.
 
+<!--
 But of course, arguing why one approach for reaching the dream of the Semantic
 Web might be more promising than a previous one is not of much if you do not
 already share in that dream, which is something that most readers probably will
@@ -86,7 +94,7 @@ applications and then to prove its usefulness be attracting a considerable
 amount of users. And only once this is achieved begins the further task of
 getting other parties to join in and together develop the system into a
 distributed and decentralized one. ...
-
+ -->
 
 ## Overview of the semantic system of openSDB
 
@@ -173,7 +181,7 @@ them in curly brackets. For instance we could wrap \<Title\> in the Movie
 template from before, giving us "Movie: {\<Title\>}, \<Year\>". This then tells
 any application that runs on top of the SDB that the "\<Title\>" part is the
 important part to print out when referencing the Term, whereas the rest of the
-template instance can be considered as "clarifying details." 
+template instance can be considered as "clarifying details."
 
 
 ## The "killer application" of openSDB
