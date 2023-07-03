@@ -184,11 +184,26 @@ important part to print out when referencing the Term, whereas the rest of the
 template instance can be considered as "clarifying details."
 
 
-## The "killer application" of openSDB
+## The "killer applications" of openSDB
 
-The first application of openSDB that I am currently in the process of
-developing (currently alone, but I hope that I can attract others to the
-project), and which I believe...
+Apart from the obvious application of searching for information semantically,
+a topic that will be known by any reader already familiar with the vision of
+the Semantic Web, there are some even more important applications that I wish
+to highlight, which especially show the usefulness of the fact that openSDB
+allows all semantic inputs to be bend in degrees of how right/fitting they are.
+I thus see these as the so-called "killer applications" of openSDB.
+
+The applications described in this section is what I am currently working on in
+terms of the front-end source code of this GitHub repository. I thus intend to
+implement these applications as part of a web app, which I intend to host at
+www.opensdb.com. And apart from the web app, some of the applications described
+in this section will also need a browser extension to function optimally (which
+I have not yet begun working on at the moment of writing).
+
+First and foremost, openSDB hopes to create an application..
+
+
+
 
 
 
