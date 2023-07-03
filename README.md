@@ -155,14 +155,25 @@ template could be one that had "The Lord of the Rings: The Fellowship of the
 Ring|2001" as its defining string. Note that '|' is thus used as a delimiter for
 dividing a defining string up into several parts.
 
-To give another example, let us say this "Movie: \<Title\>, \<Year\>" + "The Lord of
-the Rings: The Fellowship of the Ring|2001" Term is given the ID of 28 in the
-SDB. Take then the following template: "is an important/useful instance of the
-{\<Noun phrase\> of \<Term\>}", which can be used to construct predicates from just
-a noun phrase and any given object term. If we then want to construct the
-statement that Peter Jackson is the director of this Movie, we can first of all
-create the desired predicate, by defining a Term of this template Context and
-with "Director|\#28" as its defining string. Here, "\#28" will ..
+To give another example, let us say this "Movie: \<Title\>, \<Year\>" + "The
+Lord of the Rings: The Fellowship of the Ring|2001" Term is given the ID of 28
+in the SDB. Take then the following template: "is an important/useful instance
+of the \<Noun phrase\> of \<Term\>", which can be used to construct
+predicates from just a noun phrase and any given object term. If we then want
+to construct the statement that Peter Jackson is the director of this Movie, we
+can first of all create the desired predicate, by defining a Term of this
+template Context and with "Director|\#28" as its defining string. Here "\#28"
+will then be interpreted as the Term with ID = 28, giving us the exactly the
+predicate we wanted. And with another Term defining Peter Jackson (the right
+one), we can then create the desired statement.
+
+And an additional syntactic feature of these template Contexts that is also
+worth mentioning is that parts of the template can be emphasized by wrapping
+them in curly brackets. For instance we could wrap \<Title\> in the Movie
+template from before, giving us "Movie: {\<Title\>}, \<Year\>". This then tells
+any application that runs on top of the SDB that the "\<Title\>" part is the
+important part to print out when referencing the Term, whereas the rest of the
+template instance can be considered as "clarifying details." 
 
 
 ## The "killer application" of openSDB
