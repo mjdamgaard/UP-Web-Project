@@ -90,6 +90,8 @@ distributed and decentralized one. ...
 
 ## Overview of the semantic system of openSDB
 
+### Semantic inputs
+
 The example from before with "Peter Jackson" + "is the director of" + "Lord of
 the Rings: The Fellowship of the Ring" explains the general concept of a
 semantic system, but openSDB does not actually store semantic links directly as
@@ -138,6 +140,29 @@ implemented as what we might refer to as 'bots,' namely since they take the
 place of users in the user ID column of the semantic inputs table. The input
 sets of these "bots" will then be maintained via continuous scheduled events
 that update the ratings according to recent user inputs.
+
+### Terms
+
+Terms are what denoted the semantic units of the system, including the
+relations and predicates, and even the users themselves since each new user of
+the SDB will get their own Term representing them. All Terms have a unique ID,
+first of all, and are defined by two fields/columns: An ID of a so-called
+Context, which are themselves a kind of Term, and then a defining string. The
+Context defines, typically via a template, how the defining string is to be
+interpreted semantically. An example of such a template could be: "Movie:
+<Title>, <Year>", and an example of a Term that defines an instance of this
+template could be one that had "The Lord of the Rings: The Fellowship of the
+Ring|2001" as its defining string. Note that '|' is thus used as a delimiter for
+dividing a defining string up into several parts.
+
+To give another example, let us say this "Movie: <Title>, <Year>" + "The Lord of
+the Rings: The Fellowship of the Ring|2001" Term is given the ID of 28 in the
+SDB. Take then the following template: "is an important/useful instance of the
+{<Noun phrase> of <Term>}", which can be used to construct predicates from just
+a noun phrase and any given object term. If we then want to construct the
+statement that Peter Jackson is the director of this Movie, we can first of all
+create the desired predicate, by defining a Term of this template Context and
+with "Director|#28" as its defining string. Here, "\#28" will ..
 
 
 ## The "killer application" of openSDB
