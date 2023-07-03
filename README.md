@@ -150,19 +150,19 @@ first of all, and are defined by two fields/columns: An ID of a so-called
 Context, which are themselves a kind of Term, and then a defining string. The
 Context defines, typically via a template, how the defining string is to be
 interpreted semantically. An example of such a template could be: "Movie:
-<Title>, <Year>", and an example of a Term that defines an instance of this
+\<Title\>, \<Year\>", and an example of a Term that defines an instance of this
 template could be one that had "The Lord of the Rings: The Fellowship of the
 Ring|2001" as its defining string. Note that '|' is thus used as a delimiter for
 dividing a defining string up into several parts.
 
-To give another example, let us say this "Movie: <Title>, <Year>" + "The Lord of
+To give another example, let us say this "Movie: \<Title\>, \<Year\>" + "The Lord of
 the Rings: The Fellowship of the Ring|2001" Term is given the ID of 28 in the
 SDB. Take then the following template: "is an important/useful instance of the
-{<Noun phrase> of <Term>}", which can be used to construct predicates from just
+{\<Noun phrase\> of \<Term\>}", which can be used to construct predicates from just
 a noun phrase and any given object term. If we then want to construct the
 statement that Peter Jackson is the director of this Movie, we can first of all
 create the desired predicate, by defining a Term of this template Context and
-with "Director|#28" as its defining string. Here, "\#28" will ..
+with "Director|\#28" as its defining string. Here, "\#28" will ..
 
 
 ## The "killer application" of openSDB
