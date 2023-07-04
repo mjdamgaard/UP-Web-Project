@@ -122,7 +122,7 @@ BEGIN
     ELSEIF (cxtID IS NOT NULL) THEN
         SELECT id, context_id INTO tempID, cxtCxtID
         FROM Terms
-        WHERE id = context_id;
+        WHERE id = cxtID;
         IF (tempID IS NULL) THEN
             SET exitCode = 2; -- cxtID is not the ID of an existing Term.
         ELSEIF (cxtCxtID IS NOT NULL) THEN

@@ -48,7 +48,9 @@ termPageCL.addCallback(function($ci, data) {
                 ["Categories", "TermNounPredicatePage", {
                     predNoun: "Subcategories",
                 }],
-                ["Instances", "TermAppliesToPage", {}],
+                ["Instances", "TermNounPredicatePage", {
+                    predNoun: "Instances",
+                }],
                 ["Related to", "TermNounPredicatePage", {
                     predNoun: "Related terms",
                 }],
@@ -143,7 +145,6 @@ termRatingsPageCL.addCallback("data", function(data) {
     let sg2 = new SetQuerier({
         predCxtID: 6, // ID of the "is an important/useful inst..." Context.
         predStr: "Relevant ratings for derived terms;#" + data.cxtID,
-        objID: ,
         userID: 3,
         num: 4000,
         ratingLo: 0,

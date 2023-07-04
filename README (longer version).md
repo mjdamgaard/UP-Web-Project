@@ -278,6 +278,7 @@ not belong to the SDBs involved, but will be in the public domain, free for all
 to use (as opposed to belonging to just one or a few companies as well as those
 they sell that data on to).
 
+<Short paragraph mentioning that one can go to the web app for searches..>
 
 
 

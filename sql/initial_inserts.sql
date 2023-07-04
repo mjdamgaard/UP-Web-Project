@@ -40,12 +40,12 @@ VALUES
 /* More inserts for testing */
 
 CALL insertOrFindTerm(3, 0, "Music"); -- id: 22
-CALL insertOrFindTerm(3, 0, "<Music genre>"); -- id: 23
+CALL insertOrFindTerm(3, 0, "Music genre: {<Title>}"); -- id: 23
 CALL insertOrFindTerm(3, 23, "Rock"); -- id: 24
 CALL insertOrFindTerm(3, 23, "Jazz"); -- id: 25
 CALL insertOrFindTerm(3, 23, "Hip hop"); -- id: 26
 
-CALL insertOrFindTerm(3, 7, "Movie: {<Title>}, <Year>"); -- id: 27
+CALL insertOrFindTerm(3, 0, "Movie: {<Title>}, <Year>"); -- id: 27
 CALL insertOrFindTerm(3, 27,
     "The Lord of the Rings: The Fellowship of the Ring|2001"
 ); -- id: 28
@@ -54,7 +54,7 @@ CALL insertOrFindTerm(3, 27,
 ); -- id: 29
 
 CALL insertOrFindTerm(3, 0, "Science"); -- id: 30
-CALL insertOrFindTerm(3, 0, "<Feild of science>"); -- id: 31
+CALL insertOrFindTerm(3, 0, "Feild of science: {<Title>}"); -- id: 31
 CALL insertOrFindTerm(3, 31, "Music"); -- id: 32
 CALL insertOrFindTerm(3, 31, "Cinematography"); -- id: 33
 CALL insertOrFindTerm(3, 31, "Physics"); -- id: 34
@@ -64,101 +64,75 @@ CALL insertOrFindTerm(3, 31, "Mathematics"); -- id: 35
 
 
 
--- insert some Subcategories, Supercategories and Instances predicates.
-
--- DELIMITER //
--- CREATE PROCEDURE insertPredicates (
---     IN str VARCHAR(255),
---     IN startTermID BIGINT UNSIGNED,
---     IN endTermID BIGINT UNSIGNED
--- )
--- BEGIN
---     loop1: LOOP
---         IF (startTermID <= endTermID) THEN
---             CALL insertOrFindTerm(
---                 3, 6,
---                 CONCAT(str, ';#', startTermID)
---             );
---
---             SET startTermID = startTermID + 1;
---             ITERATE loop1;
---         END IF;
---         LEAVE loop1;
---     END LOOP loop1;
--- END //
--- DELIMITER ;
-
-
-CALL insertPredicates("Subcategories", 6, 10);
-CALL insertPredicates("Subcategories", 22, 29);
-
 -- rate some statements.
 
+CALL insertOrFindTerm(3, 6, "Subcategories|#1"); -- id: 36
+CALL inputOrChangeRating(3, 36, 22, CONV("FFFF", 16, 10), "00");
+CALL inputOrChangeRating(3, 36, 24, CONV("A130", 16, 10), "00");
+CALL inputOrChangeRating(3, 36, 25, CONV("A000", 16, 10), "00");
+CALL inputOrChangeRating(3, 36, 21, CONV("0103", 16, 10), "00");
 
-CALL inputOrChangeRating(3, 35, 22, CONV("FFFF", 16, 10), "00");
-CALL inputOrChangeRating(3, 35, 23, CONV("F030", 16, 10), "00");
-CALL inputOrChangeRating(3, 35, 24, CONV("A130", 16, 10), "00");
-CALL inputOrChangeRating(3, 35, 25, CONV("A000", 16, 10), "00");
-CALL inputOrChangeRating(3, 35, 21, CONV("0103", 16, 10), "00");
+CALL insertOrFindTerm(3, 6, "Subcategories|#22"); -- id: 37
+CALL inputOrChangeRating(3, 37, 24, CONV("E100", 16, 10), "00");
+CALL inputOrChangeRating(3, 37, 25, CONV("E000", 16, 10), "00");
+CALL inputOrChangeRating(3, 37, 26, CONV("E000", 16, 10), "00");
+CALL inputOrChangeRating(3, 37, 21, CONV("0001", 16, 10), "00");
+CALL inputOrChangeRating(3, 37, 32, CONV("F000", 16, 10), "00");
 
-CALL inputOrChangeRating(3, 41, 24, CONV("E100", 16, 10), "00");
-CALL inputOrChangeRating(3, 41, 25, CONV("E000", 16, 10), "00");
-CALL inputOrChangeRating(3, 41, 26, CONV("E000", 16, 10), "00");
-CALL inputOrChangeRating(3, 41, 21, CONV("0001", 16, 10), "00");
-CALL inputOrChangeRating(3, 41, 30, CONV("F000", 16, 10), "00");
-
-CALL inputOrChangeRating(3, 40, 30, CONV("F000", 16, 10), "00");
-
-
-CALL inputOrChangeRating(3, 6, 26, CONV("A000", 16, 10), "00");
-CALL inputOrChangeRating(3, 6, 27, CONV("A400", 16, 10), "00");
-CALL inputOrChangeRating(3, 6, 28, CONV("9003", 16, 10), "00");
-CALL inputOrChangeRating(3, 6, 29, CONV("9002", 16, 10), "00");
-
-CALL inputOrChangeRating(3, 27, 28, CONV("FF03", 16, 10), "00");
-CALL inputOrChangeRating(3, 27, 29, CONV("FF02", 16, 10), "00");
+CALL insertOrFindTerm(3, 6, "Subcategories|#30"); -- id: 38
+CALL inputOrChangeRating(3, 38, 32, CONV("F000", 16, 10), "00");
 
 
-CALL insertOrFindTerm(3, NULL, "Related terms");
-CALL insertPredicates("Related terms", 27, 31);
+CALL insertOrFindTerm(3, 6, "Instances|#1"); -- id: 39
+CALL inputOrChangeRating(3, 39, 26, CONV("A000", 16, 10), "00");
+CALL inputOrChangeRating(3, 39, 27, CONV("A400", 16, 10), "00");
+CALL inputOrChangeRating(3, 39, 28, CONV("9003", 16, 10), "00");
+CALL inputOrChangeRating(3, 39, 29, CONV("9002", 16, 10), "00");
 
-CALL inputOrChangeRating(3, 49, 31, CONV("F000", 16, 10), "00");
-CALL inputOrChangeRating(3, 53, 27, CONV("FF00", 16, 10), "00");
-CALL inputOrChangeRating(3, 50, 29, CONV("FFFF", 16, 10), "00");
-CALL inputOrChangeRating(3, 51, 28, CONV("FFF0", 16, 10), "00");
-
-
-
-CALL insertOrFindTerm(3, NULL, "Relevant ratings");
-CALL insertPredicates("Relevant ratings", 28, 29);
-CALL insertOrFindTerm(3, NULL, "Relevant ratings for derived terms");
-CALL insertPredicates("Relevant ratings for derived terms", 6, 8);
-CALL insertPredicates("Relevant ratings for derived terms", 22, 33);
+CALL insertOrFindTerm(3, 0, "Movies"); -- id: 40
+CALL insertOrFindTerm(3, 6, "Instances|#54"); -- id: 41
+CALL inputOrChangeRating(3, 41, 28, CONV("FF03", 16, 10), "00");
+CALL inputOrChangeRating(3, 41, 29, CONV("FF02", 16, 10), "00");
 
 
-CALL inputOrChangeRating(3, 58, 6, CONV("A000", 16, 10), "00");
-CALL inputOrChangeRating(3, 61, 22, CONV("A000", 16, 10), "00");
-CALL inputOrChangeRating(3, 62, 23, CONV("A000", 16, 10), "00");
-CALL inputOrChangeRating(3, 66, 27, CONV("A000", 16, 10), "00");
-
-CALL insertOrFindTerm(3, 10, "good"); -- id: 73
-CALL insertOrFindTerm(3, 10, "funny"); -- id: 74
-CALL insertOrFindTerm(3, 10, "scary"); -- id: 75
-CALL insertOrFindTerm(3, 10, "popular"); -- id: 76
-CALL insertOrFindTerm(3, 7, "has a long playtime"); -- id: 77
-
-CALL inputOrChangeRating(3, 66, 73, CONV("FF00", 16, 10), "00");
-CALL inputOrChangeRating(3, 66, 74, CONV("E000", 16, 10), "00");
-CALL inputOrChangeRating(3, 66, 75, CONV("E000", 16, 10), "00");
-CALL inputOrChangeRating(3, 66, 76, CONV("DA00", 16, 10), "00");
-CALL inputOrChangeRating(3, 66, 77, CONV("C000", 16, 10), "00");
-
-CALL inputOrChangeRating(3, 62, 73, CONV("FF00", 16, 10), "00");
-
-CALL inputOrChangeRating(3, 55, 76, CONV("F000", 16, 10), "00");
-CALL insertOrFindTerm(3, 0, "Genres"); -- id: 78
-CALL insertOrFindTerm(3, 78, "Fantasy"); -- id: 79
-CALL inputOrChangeRating(3, 55, 79, CONV("E400", 16, 10), "00");
+CALL insertOrFindTerm(3, 6, "Related terms|#28"); -- id: 42
+CALL inputOrChangeRating(3, 42, 29, CONV("FFFF", 16, 10), "00");
+CALL insertOrFindTerm(3, 6, "Related terms|#29"); -- id: 43
+CALL inputOrChangeRating(3, 43, 28, CONV("FFF0", 16, 10), "00");
+CALL insertOrFindTerm(3, 6, "Related terms|#22"); -- id: 44
+CALL inputOrChangeRating(3, 44, 32, CONV("F000", 16, 10), "00");
+CALL insertOrFindTerm(3, 6, "Related terms|#32"); -- id: 45
+CALL inputOrChangeRating(3, 45, 22, CONV("FF00", 16, 10), "00");
 
 
-DROP PROCEDURE insertPredicates;
+
+-- CALL insertOrFindTerm(3, NULL, "Relevant ratings");
+-- CALL insertPredicates("Relevant ratings", 28, 29);
+-- CALL insertOrFindTerm(3, NULL, "Relevant ratings for derived terms");
+-- CALL insertPredicates("Relevant ratings for derived terms", 6, 8);
+-- CALL insertPredicates("Relevant ratings for derived terms", 22, 33);
+--
+--
+-- CALL inputOrChangeRating(3, 58, 6, CONV("A000", 16, 10), "00");
+-- CALL inputOrChangeRating(3, 61, 22, CONV("A000", 16, 10), "00");
+-- CALL inputOrChangeRating(3, 62, 23, CONV("A000", 16, 10), "00");
+-- CALL inputOrChangeRating(3, 66, 27, CONV("A000", 16, 10), "00");
+--
+-- CALL insertOrFindTerm(3, 10, "good"); -- id: 73
+-- CALL insertOrFindTerm(3, 10, "funny"); -- id: 74
+-- CALL insertOrFindTerm(3, 10, "scary"); -- id: 75
+-- CALL insertOrFindTerm(3, 10, "popular"); -- id: 76
+-- CALL insertOrFindTerm(3, 7, "has a long playtime"); -- id: 77
+--
+-- CALL inputOrChangeRating(3, 66, 73, CONV("FF00", 16, 10), "00");
+-- CALL inputOrChangeRating(3, 66, 74, CONV("E000", 16, 10), "00");
+-- CALL inputOrChangeRating(3, 66, 75, CONV("E000", 16, 10), "00");
+-- CALL inputOrChangeRating(3, 66, 76, CONV("DA00", 16, 10), "00");
+-- CALL inputOrChangeRating(3, 66, 77, CONV("C000", 16, 10), "00");
+--
+-- CALL inputOrChangeRating(3, 62, 73, CONV("FF00", 16, 10), "00");
+--
+-- CALL inputOrChangeRating(3, 55, 76, CONV("F000", 16, 10), "00");
+-- CALL insertOrFindTerm(3, 0, "Genres"); -- id: 78
+-- CALL insertOrFindTerm(3, 78, "Fantasy"); -- id: 79
+-- CALL inputOrChangeRating(3, 55, 79, CONV("E400", 16, 10), "00");

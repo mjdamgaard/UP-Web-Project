@@ -99,7 +99,7 @@ inputRatingSliderCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "prevInputRatVal",
         "inputUserID",
-        "predID".
+        "predID",
         "subjID",
     ]);
 });
