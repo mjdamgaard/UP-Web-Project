@@ -24,7 +24,7 @@ The Fellowship of the Ring."
 
 This concept of an SDB is thus very much related to the concept of the Semantic
 Web, as envisioned by Tim Berners-Lee in 1999 (see e.g.
-[www.wikipedia.org/wiki/Semantic_Web](https://en.wikipedia.org/wiki/Semantic_Web)).
+www.wikipedia.org/wiki/Semantic_Web).
 The main difference, however, is that the Semantic Web (so far) has mainly been
 intended to run across the whole World Wide Web, by having web developers add
 subject–relation–object statements (referred to as 'triplets') as metadata to
@@ -184,8 +184,74 @@ important part to print out when referencing the Term, whereas the rest of the
 template instance can be considered as "clarifying details."
 
 
-## The "killer applications" of openSDB
+## The "killer application" of openSDB
 
+The first application of a semantic system such as openSDB that comes to mind,
+at least if one is already familiar with the vision of the Semantic Web, is
+that of semantic searches. And though this application might potentially become
+very useful in a future when the network around SDBs has grown large enough, it
+will take a long time before it can compete with modern-day search engines.
+But there is another application that I believe can become extremely useful
+fast, and which does not have the same competition against it from existing
+technologies. Since this application also very much utilizes some of the traits
+that st openSDB apart from conventional semantic systems, I therefore see it as
+the (so-called) killer application of openSDB.
+
+The application is to implement a web app, possibly with the assistance of a
+browser extension, that can become a hub for ratings for all kinds of resources
+on the web, as well as any other thing that one can imagine. And since the
+system allows for ratings of arbitrary predicates, these ratings can potentially
+be so much more than just the conventional good-versus-bad ratings.
+
+There are many instances where such semantic ratings can be useful. Users
+browsing for products to buy might want to not just see a satisfaction rating,
+but also see more specific ratings such as for durability, how easy they are to
+operate, if the price is low compared to similar products, and also potentially
+factors concerning manufacturing such as if it is environment-friendly, if there
+is slave labor involved, if workers are paid a fair portion of the money earned,
+and so on. And users browsing a movie to watch, as another example, might want
+to see predicates such as how scary the movie is, how funny it is, how wholesome
+or cute it is, how much it deals with certain theme, how good the acting is, how
+well the plot or the dialog is written, how similar to is to certain other
+iconic movies, and so on.
+
+It is worth noting here that folksonomies (i.e. systems of user-provided tags)
+already goes some way into being able to see some of these qualities. But with
+these systems, users can only get an idea e.g. if the movie is scary or not, or
+if it deals with a certain theme or belongs to a certain genre or not. They can
+not see the *degree* to which these predicates are true/fitting.
+
+Furthermore, the conventional folksonomy systems takes a lot of user actions
+when users want to contribute to them. But if, on the other hand, the users were
+able to just click on any existing "tag," which would be associated with a
+predicate in our case, and immediately add their own rating to that predicate
+with just one or two more clicks, the system could attract so much more valuable
+user data hereby, I believe.
+
+Now, in order to implement such an application, we could first of all have a
+web app through which the users can access the SDB. This is what I am currently
+working on in the front-end part of this GitHub repository. When users wants to
+look up ratings for a certain resource or product, or whatever thing that they
+are interested in, the can go to the web app at a certain website (e.g.
+www.opensdb.com) and search for that thing (either through a conventional search
+bar or through a "semantic walk"). And upon finding the match, they can then
+access the various ratings.
+
+What would be an even better way to access the ratings, however, would be if a
+browser extension was developed for openSDB, which could read the URLs that the
+user visits with their browser, or potentially even those that they hover over
+with the mouse, and then search for matches against those URLs (or other kinds
+of URIs for that matter) to immediately get the relevant user ratings of the SDB
+to show the user. If this can be realized, it means that openSDB, together with
+any other SDB that might join the network and work together with the likes of
+openSD, can implement what can essentially become a hub for all ratings on the
+web.
+
+
+
+
+
+<!--
 Apart from the obvious application of searching for information semantically,
 a topic that will be known by any reader already familiar with the vision of
 the Semantic Web, there are some even more important applications that I wish
@@ -200,8 +266,8 @@ www.opensdb.com. And apart from the web app, some of the applications described
 in this section will also need a browser extension to function optimally (which
 I have not yet begun working on at the moment of writing).
 
-First and foremost, openSDB hopes to create an application..
-
+First and foremost, openSDB aims to create an application..
+ -->
 
 
 
