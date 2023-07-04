@@ -172,9 +172,10 @@ export function getTransformedTitleTemplate(title) {
         .replace(/^[^\{]*\{/g, "")
         .replace(/\}[^\{]*$/g, "")
         .replaceAll(/\}[^\{]*\{/g, "")
-        .replaceAll(/<[^<>]>/g, '<span class="def-item"></span>')
+        .replaceAll(/<[^<>]*>/g, '<>')
         .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;");
+        .replaceAll(">", "&gt;")
+        .replaceAll(/&lt;&gt;/g, '<span class="def-item"></span>');
 }
 
 // export function sanitize(string) {
