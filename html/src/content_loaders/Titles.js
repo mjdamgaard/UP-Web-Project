@@ -126,6 +126,7 @@ templateInstanceTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "defStr",
         "cxtDefStr",
+        "defItemStrArr",
     ]);
 });
 templateInstanceTitleCL.addCallback(function($ci, data) {

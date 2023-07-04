@@ -89,7 +89,7 @@ termNounPredicatePageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralTermElement";
     data.setGenerator = new SetQuerier({
         predCxtID: 6, // ID of the "is an important/useful inst..." Context.
-        predStr: data.predNoun + ";#" + data.termID,
+        predStr: data.predNoun + "|#" + data.termID,
         userID: 3,
         num: 4000,
         ratingLo: 0,
@@ -136,7 +136,7 @@ termRatingsPageCL.addCallback("data", function(data) {
     data.elemContentKey = "RatingElement";
     let sg1 = new SetQuerier({
         predCxtID: 6, // ID of the "is an important/useful inst..." Context.
-        predStr: "Relevant ratings;#" + data.termID,
+        predStr: "Relevant ratings|#" + data.termID,
         userID: 3,
         num: 4000,
         ratingLo: 0,
@@ -144,7 +144,7 @@ termRatingsPageCL.addCallback("data", function(data) {
     });
     let sg2 = new SetQuerier({
         predCxtID: 6, // ID of the "is an important/useful inst..." Context.
-        predStr: "Relevant ratings for derived terms;#" + data.cxtID,
+        predStr: "Relevant ratings for derived terms|#" + data.cxtID,
         userID: 3,
         num: 4000,
         ratingLo: 0,
