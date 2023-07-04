@@ -261,6 +261,23 @@ any other SDB that might join the network and work together with the likes of
 openSD, can implement what can essentially become a hub for all ratings on the
 web.
 
+And in this regard, as a last point, it is also worth mentioning that openSDB
+will be completely anonymous (unless users actively disclose their identity to
+other users somehow) and completely without tracking. The protocol used will be
+purely HTTPS and the database will not record anything about its users other
+than username, password, potentially a backup key, and also potentially the
+rough amount of data downloaded and/or uploaded by the user in the last week or
+month. The database might also store the e-mail of the user but will not link
+this to the user. It will at most instead just record the number of user
+accounts that each e-mail address has created, but not which ones. openSDB will
+also not allow any adds in its web app or its browser extension such that no
+third party will be able to track the user either. Thus, if openSDB, and SDBs
+like it, in the future will achieve to become this "hub for all ratings on the
+web," it will be as high a degree of anonymity as possible, and the data will
+not belong to the SDBs involved, but will be in the public domain, free for all
+to use (as opposed to belonging to just one or a few companies as well as those
+they sell that data on to).
+
 
 
 
