@@ -186,6 +186,8 @@ template instance can be considered as "clarifying details."
 
 ## The "killer application" of openSDB
 
+### A system of continuous ratings for arbitrary predicates
+
 The first application of a semantic system such as openSDB that comes to mind,
 at least if one is already familiar with the vision of the Semantic Web, is
 that of semantic searches. And though this application might potentially become
@@ -227,6 +229,18 @@ able to just click on any existing "tag," which would be associated with a
 predicate in our case, and immediately add their own rating to that predicate
 with just one or two more clicks, the system could attract so much more valuable
 user data hereby, I believe.
+
+Having continuous ratings rather than binary tags, which is either there or not
+there, also means that the data is of much higher quality when it comes to
+using that data to provide good search results (and feeds for that matter).
+Therefore, if a user for instance wants to search though all movies and order
+then such that, say, the movies that are both the most funny and at the same
+time the most wholesome appears on the top of the list of search results, the
+data of an application using continuous ratings will be much more than say
+folksonomy data in terms ordering search result this way.
+
+
+### How such an application might be implemented
 
 Now, in order to implement such an application, we could first of all have a
 web app through which the users can access the SDB. This is what I am currently
