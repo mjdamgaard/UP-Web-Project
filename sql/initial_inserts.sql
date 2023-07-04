@@ -39,8 +39,8 @@ VALUES
 
 /* More inserts for testing */
 
-CALL insertOrFindTerm(3, 0, "Science"); -- id: 22
-CALL insertOrFindTerm(3, 0, "Music"); -- id: 23
+CALL insertOrFindTerm(3, 0, "Music"); -- id: 22
+CALL insertOrFindTerm(3, 0, "<Music genre>"); -- id: 23
 CALL insertOrFindTerm(3, 23, "Rock"); -- id: 24
 CALL insertOrFindTerm(3, 23, "Jazz"); -- id: 25
 CALL insertOrFindTerm(3, 23, "Hip hop"); -- id: 26
@@ -53,10 +53,12 @@ CALL insertOrFindTerm(3, 27,
     "The Lord of the Rings: The Two Towers|2002"
 ); -- id: 29
 
-CALL insertOrFindTerm(3, 22, "Music"); -- id: 30
-CALL insertOrFindTerm(3, 22, "Cinematography"); -- id: 31
-CALL insertOrFindTerm(3, 22, "Physics"); -- id: 32
-CALL insertOrFindTerm(3, 22, "Mathematics"); -- id: 33
+CALL insertOrFindTerm(3, 0, "Science"); -- id: 30
+CALL insertOrFindTerm(3, 0, "<Feild of science>"); -- id: 31
+CALL insertOrFindTerm(3, 31, "Music"); -- id: 32
+CALL insertOrFindTerm(3, 31, "Cinematography"); -- id: 33
+CALL insertOrFindTerm(3, 31, "Physics"); -- id: 34
+CALL insertOrFindTerm(3, 31, "Mathematics"); -- id: 35
 
 
 
@@ -64,31 +66,29 @@ CALL insertOrFindTerm(3, 22, "Mathematics"); -- id: 33
 
 -- insert some Subcategories, Supercategories and Instances predicates.
 
-DELIMITER //
-CREATE PROCEDURE insertPredicates (
-    IN str VARCHAR(255),
-    IN startTermID BIGINT UNSIGNED,
-    IN endTermID BIGINT UNSIGNED
-)
-BEGIN
-    loop1: LOOP
-        IF (startTermID <= endTermID) THEN
-            CALL insertOrFindTerm(
-                3, 6,
-                CONCAT(str, ';#', startTermID)
-            );
+-- DELIMITER //
+-- CREATE PROCEDURE insertPredicates (
+--     IN str VARCHAR(255),
+--     IN startTermID BIGINT UNSIGNED,
+--     IN endTermID BIGINT UNSIGNED
+-- )
+-- BEGIN
+--     loop1: LOOP
+--         IF (startTermID <= endTermID) THEN
+--             CALL insertOrFindTerm(
+--                 3, 6,
+--                 CONCAT(str, ';#', startTermID)
+--             );
+--
+--             SET startTermID = startTermID + 1;
+--             ITERATE loop1;
+--         END IF;
+--         LEAVE loop1;
+--     END LOOP loop1;
+-- END //
+-- DELIMITER ;
 
-            SET startTermID = startTermID + 1;
-            ITERATE loop1;
-        END IF;
-        LEAVE loop1;
-    END LOOP loop1;
-END //
-DELIMITER ;
 
--- TODO: Change:
-
-CALL insertOrFindTerm(3, NULL, "Subcategories");
 CALL insertPredicates("Subcategories", 6, 10);
 CALL insertPredicates("Subcategories", 22, 29);
 
