@@ -241,7 +241,7 @@ determined with much higher precision.
 
 So not only will the volume of user data potentially be higher for a rating hub
 running on top of an SDB, the quality of that data will certainly be much
-higher.
+higher. This in turn means... TODO: write.
 
 
 ### How such an application might be implemented
