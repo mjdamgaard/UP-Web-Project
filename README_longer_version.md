@@ -36,9 +36,6 @@ applications on top of databases instead (i.e. SDBs). These applications will
 then be accessed through limited number of web domains, instead of having them
 run on top of the entire web at once.
 
-*If the reader is not already familiar with (or interested in) the Semantic*
-*Web beforehand, they might want to skip (or skim) down to the next section.*
-
 This approach has the drawback that it is not immediately as decentralized as
 the conventional Semantic Web: If the latter would have ever taken off, it
 would have immediately been as decentralized as the World Wide Web. But the
