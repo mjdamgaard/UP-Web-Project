@@ -197,14 +197,14 @@ therefore see it as the (so-called) killer application of openSDB.
 
 The application is to implement a web app, possibly with the assistance of a
 browser extension, that can become a hub for ratings for all kinds of resources
-on the web, as well as any other thing that one can imagine.
-And key reasons why such a rating hub running on top of a semantic system might
-supersede more conventional rating hubs is first of all the fact that the
+on the web, as well as any other things that one can imagine.
+And the key reasons why such a rating hub running on top of a semantic system
+might supersede more conventional rating hubs is first of all the fact that the
 semantic system allows for arbitrary kinds of ratings, i.e. ratings with respect
 to arbitrary predicates, instead of having just the usual good-versus-bad axis
 to rate entities along. And combined with the fact that, in the case of openSDB,
 all predicates can be rated on a continuous scale, this is what I believe will
-make the application far more useful than existing systems. 
+make the application far more useful than existing ones.
 
 There are many instances where such semantic ratings can be useful. Users
 browsing for products to buy might want to not just see a satisfaction rating,
@@ -234,11 +234,17 @@ more valuable user data hereby, compared to the conventional systems.
 Having continuous ratings rather than binary tags, which is either there or not
 there, also means that the data is of much higher quality when it comes to
 using that data to provide good search results (and feeds for that matter).
-Therefore, if a user for instance wants to search though all movies and order
-then such that, say, the movies that are both the most funny and at the same
+Therefore, if a user for instance wants to search through all movies and order
+them such that, say, the movies that are both the most funny and at the same
 time the most wholesome appears on the top of the list of search results, the
 data of an application using continuous ratings will be much more useful than,
-say, folksonomy data in terms ordering search result this way.
+say, folksonomy data in terms ordering search result this way, since the degree
+of how much the tags/predicates apply (according to the users) can be
+determined with much higher precision.
+
+So not only will the volume of user data potentially be higher for a rating hub
+running on top of an SDB, the quality of that data will certainly be much
+higher.
 
 
 ### How such an application might be implemented
@@ -247,13 +253,13 @@ Now, in order to implement such an application, we could first of all have a
 web app through which the users can access the SDB. This is what I am currently
 working on in the front-end part of this GitHub repository. When users want to
 look up ratings for a certain resource or product, or whatever thing that they
-are interested in, the can go to the web app at a certain website (e.g.
+are interested in, they can go to the web app at a certain website (e.g.
 www.opensdb.com) and search for that thing (either through a conventional search
 bar or through a "semantic walk"). And upon finding the match, they can then
 access the various ratings.
 
 What would be an even better way to access the ratings, however, would be if a
-browser extension was developed for openSDB which could read the URLs that the
+browser extension was developed for openSDB designed to read the URLs that the
 user visits with their browser, or potentially even those that they hover over
 with the mouse, and then search for matches against those URLs (or other kinds
 of URIs for that matter) to immediately get the relevant user ratings of the SDB
@@ -262,21 +268,33 @@ any other SDB that might join the network and work together with the likes of
 openSD, can implement what can essentially become a hub for all ratings on the
 web.
 
-And in this regard, as a last point, it is also worth mentioning that openSDB
-will be completely anonymous (unless users actively disclose their identity to
-other users somehow) and completely without tracking. The protocol used will be
-purely HTTPS and the database will not record anything about its users other
-than username, password, potentially a backup key, and also potentially the
-rough amount of data downloaded and/or uploaded by the user in the last week or
-month. The database might also store the e-mail of the user but will not link
-this to the user. It will at most instead just record the number of user
-accounts that each e-mail address has created, but not which ones. openSDB will
-also not allow any adds in its web app or its browser extension such that no
-third party will be able to track the user either. Thus, if openSDB, and SDBs
-like it, in the future will achieve to become this "hub for all ratings on the
-web," it will be as high a degree of anonymity as possible, and the data will
-not belong to the SDBs involved, but will be in the public domain, free for all
-to use (as opposed to belonging to just one or a few companies as well as those
-they sell that data on to).
+And in this regard, it is also very much worth mentioning that openSDB will be
+completely anonymous (unless users actively disclose their identity to other
+users) and completely without tracking. The protocol used will be purely HTTPS
+and the database will not record anything about its users other than username,
+password, potentially a backup key, and also potentially the rough amount of
+data downloaded and/or uploaded by the user in the last week or month.
+The database might also store the e-mail of the user but will not link this to
+the user. It will at most instead just record the number of user accounts that
+each e-mail address has created, but not which ones.
+openSDB will also not allow any adds in its web app or its browser extension
+such that no third party will be able to track the user either.
+Thus, if openSDB, and SDBs like it, in the future will achieve to become this
+"hub for all ratings on the web," it will be as high a degree of anonymity as
+possible, and the data will not belong to the SDBs involved, but will be in the
+public domain, free for all to use (as opposed to belonging to just one or a
+few companies as well as those they sell that data on to).
 
-<Short paragraph mentioning that one can go to the web app for searches..>
+### Funding of the project
+
+The funding for openSDB (and any SDB that wants to join the network and follow
+the same principles) should come purely from sponsors and donors. These will
+then get separate pages on the website(s) where users can see them listed. If
+the system will indeed become as widely used as I think it can, there will
+certainly be enough interested sponsors that want to be associated with the
+project in order to fund the maintenance of the web services (and perhaps also
+some of the development if we are lucky). And individual users might also want
+to contribute some.
+
+Furthermore, the project might also be able to attract funding on the grounds
+..
