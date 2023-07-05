@@ -271,19 +271,20 @@ web.
 And in this regard, it is also very much worth mentioning that openSDB will be
 completely anonymous (unless users actively disclose their identity to other
 users) and completely without tracking. The protocol used will be purely HTTPS
-and the database will not record anything about its users other than username,
+and the database will not record anything about its users other than: username,
 password, potentially a backup key, and also potentially the rough amount of
 data downloaded and/or uploaded by the user in the last week or month.
 The database might also store the e-mail of the user but will not link this to
-the user. It will at most instead just record the number of user accounts that
+the user. It will instead at most just record the number of user accounts that
 each e-mail address has created, but not which ones.
 openSDB will also not allow any adds in its web app or its browser extension
 such that no third party will be able to track the user either.
-Thus, if openSDB, and SDBs like it, in the future will achieve to become this
-"hub for all ratings on the web," it will be as high a degree of anonymity as
-possible, and the data will not belong to the SDBs involved, but will be in the
-public domain, free for all to use (as opposed to belonging to just one or a
-few companies as well as those they sell that data on to).
+Thus, if openSDB, and SDBs like it, in the future will achieve to make up this
+"hub for all ratings on the web," it will be with as high a degree of anonymity
+as possible. And the data will not belong to the SDBs involved, but will be in
+the public domain, free for all to use (as opposed to belonging to just one or
+a few companies as well as those they sell that data on to).
+
 
 ### Funding of the project
 
@@ -296,5 +297,16 @@ project in order to fund the maintenance of the web services (and perhaps also
 some of the development if we are lucky). And individual users might also want
 to contribute some.
 
-Furthermore, the project might also be able to attract funding on the grounds
-..
+Another potential reason that this project might be able to attract funding
+could also be due the fact that, if it really takes off, it could become a giant
+source of very high-quality user data, and one which all companies will be able
+to use completely free of charge. This might especially be attractive to a lot
+of smaller companies that wish to have access to user data (e.g. data of how
+users rate their various products and services, and more importantly of what
+users want for future products and services) in order to better compete with
+other companies, but which do not want to pay high prices for that data. For
+such companies it might thus be considered worth it to help fund a project that
+can potentially yield them free access to a continuous source of user data of
+very high quality in the near future. And the fact that this user data is
+guaranteed to anonymous and non-infringent on the users' privacy will most
+likely only help in attracting that kind of support for the project.
