@@ -33,16 +33,37 @@ metadata from across the web to get its data structures.
 
 *For more on how this project relates to the Semantic Web, and what it tries*
 *do differently than the conventional Semantic Web and why, see*
-*[the longer version of the README](https://github.com/mjdamgaard/openSDB/blob/master/README_longer_version.md).*
+*[the longer version of this README](https://github.com/mjdamgaard/openSDB/blob/master/README_longer_version.md).*
 
 
 ## Key points of semantic system of openSDB
 
-...
+In
+[the longer version of this README](https://github.com/mjdamgaard/openSDB/blob/master/README_longer_version.md),
+the basics of the semantic system that openSDB uses is explained. For this
+shorter version, let us instead just talk about the key points of the system,
+enough that the following sections below can be understood.
 
-*For a quick overview of the semantic system of openSDB, see*
-*[the longer version of the README](https://github.com/mjdamgaard/openSDB/blob/master/README_longer_version.md).*
+One point is that relation–object pairs, such as e.g. "is the director of" +
+"The Lord of the Rings: The Fellowship of the Ring" can be gathered to form a
+predicate: "is the director of The Lord of the Rings: The Fellowship of the
+Ring." This is an example of a compound predicate, but one can also make more
+simple (atomic) predicates, such as e.g. "is funny," "is good," "is
+well-written," and "belongs the the fantasy genre." In short, the system allows
+for users to form all kinds of predicates, both relational and atomic.
 
+And more importantly, all Terms in the database can be rated by each user with
+respect to any predicate with a continuous rating value running from 0 to 10
+(with floating point values in between).
+
+As an example, a user could choose to rate the previously mentioned movie with
+respect to "is good" and submit a rating value of, say, 9 for that, and also
+rate the movie as "belonging to the the fantasy genre" with, let us say, a
+value of 10.
+
+This should be enough to understand the following sections. For some more basic
+properties of the semantic system of openSDB, see
+[the longer version](https://github.com/mjdamgaard/openSDB/blob/master/README_longer_version.md).
 
 
 ## The "killer application" of openSDB
