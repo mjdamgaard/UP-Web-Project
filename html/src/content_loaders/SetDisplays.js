@@ -93,33 +93,33 @@ export var setMenurCL = new ContentLoader(
     sdbInterfaceCL
 );
 
-export var setPredicatesDisplayCL = new ContentLoader(
-    "SetPredicatesDisplay",
-    /* Initial HTML template */
-    '<div>' +
-    '</div>',
-    sdbInterfaceCL
-);
-setPredicatesDisplayCL.addCallback("data", function(data) {
-    data.copyFromAncestor([
-        "setGenerator",
-    ]);
-});
-setPredicatesDisplayCL.addCallback(function($ci, data) {
-    let predIDArr = data.setGenerator.getSetPredicates();
-    predIDArr.forEach(function(val) {
-        setPredicatesDisplayCL.loadAppended(
-            $ci, "PredicateDisplay", new ChildData(data, {
-                termID: val,
-            })
-        );
-    });
-});
-export var predicateDisplayCL = new ContentLoader(
-    "PredicateDisplay",
-    /* Initial HTML template */
-    '<div>' +
-        '<<TermTitle>>' +
-    '</div>',
-    sdbInterfaceCL
-);
+// export var setPredicatesDisplayCL = new ContentLoader(
+//     "SetPredicatesDisplay",
+//     /* Initial HTML template */
+//     '<div>' +
+//     '</div>',
+//     sdbInterfaceCL
+// );
+// setPredicatesDisplayCL.addCallback("data", function(data) {
+//     data.copyFromAncestor([
+//         "setGenerator",
+//     ]);
+// });
+// setPredicatesDisplayCL.addCallback(function($ci, data) {
+//     let predIDArr = data.setGenerator.getSetPredicates();
+//     predIDArr.forEach(function(val) {
+//         setPredicatesDisplayCL.loadAppended(
+//             $ci, "PredicateDisplay", new ChildData(data, {
+//                 termID: val,
+//             })
+//         );
+//     });
+// });
+// export var predicateDisplayCL = new ContentLoader(
+//     "PredicateDisplay",
+//     /* Initial HTML template */
+//     '<div>' +
+//         '<<TermTitle>>' +
+//     '</div>',
+//     sdbInterfaceCL
+// );
