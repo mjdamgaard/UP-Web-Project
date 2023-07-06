@@ -259,9 +259,9 @@ web app through which the users can access the SDB. This is what I am currently
 working on in the front-end part of this GitHub repository. When users want to
 look up ratings for a certain resource or product, or whatever thing that they
 are interested in, they can go to the web app at a certain website (e.g.
-www.opensdb.com) and search for that thing (either through a conventional search
-bar or through a "semantic walk"). And upon finding the match, they can then
-access the various ratings.
+called opensdb.com) and search for that thing (either through a conventional
+search bar or through a "semantic walk"). And upon finding the match, they can
+then access the various ratings.
 
 What would be an even better way to access the ratings, however, would be if a
 browser extension was developed as well, designed to read the URLs that the

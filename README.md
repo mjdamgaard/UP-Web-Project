@@ -58,7 +58,7 @@ for users to form all kinds of predicates, both relational and atomic.
 
 And the most important point for understanding the sections below is then that
 all semantic statements, which consist of a predicate and a subject Term, can
-be rated by each user on continuous rating scale, namely with values running
+be rated by each user on a continuous rating scale, namely with values running
 from 0 to 10 (with floating point values in between).
 
 As an example, a user could choose to rate the previously mentioned movie with
@@ -145,9 +145,9 @@ web app through which the users can access the SDB. This is what I am currently
 working on in the front-end part of this GitHub repository. When users want to
 look up ratings for a certain resource or product, or whatever thing that they
 are interested in, they can go to the web app at a certain website (e.g.
-www.opensdb.com) and search for that thing (either through a conventional search
-bar or through a "semantic walk"). And upon finding the match, they can then
-access the various ratings.
+called opensdb.com) and search for that thing (either through a conventional
+search bar or through a "semantic walk"). And upon finding the match, they can
+then access the various ratings.
 
 What would be an even better way to access the ratings, however, would be if a
 browser extension was developed as well, designed to read the URLs that the
@@ -165,7 +165,7 @@ users) and completely without tracking. The protocol used will be purely HTTPS
 and the database will not record anything about its users other than: username,
 password, potentially a backup key, and also potentially the rough amount of
 data downloaded and/or uploaded by the user in the last week or month.
-The database might also store the e-mails of a user but will not link this to
+The database might also store the e-mail of a user but will not link this to
 the user's account (unless asked to). It will instead at most just record the
 number of user accounts that each e-mail address has created, but not which
 ones.
@@ -184,10 +184,10 @@ The funding for openSDB (and any SDB that wants to join the network and follow
 the same principles) should come purely from sponsors and donors. These will
 then get separate pages on the website(s) where users can see them listed. If
 the system will indeed become as widely used as I think it can, there will
-certainly be enough interested sponsors that want to be associated with the
-project in order to fund the maintenance of the web services (and perhaps also
-some of the development if we are lucky). And individual users might also want
-to contribute some.
+certainly be enough interested sponsors that would want to be associated with
+the project in order to fund the maintenance of the web services (and perhaps
+also some of the development if we are lucky). And individual users might also
+want to contribute some.
 
 Another potential reason that this project might be able to attract funding
 could also be due the fact that, if it really takes off, it could become a giant
