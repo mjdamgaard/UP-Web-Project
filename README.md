@@ -31,6 +31,11 @@ subject–relation–object statements (referred to as 'triplets') as metadata t
 their web pages. Semantic Web applications are then supposed to read this
 metadata from across the web to get its data structures.
 
+This is opposed to approach of this project, which aims to develop such
+applications on top of databases instead (i.e. SDBs). These applications will
+then be accessed through limited number of web domains, instead of having them
+run on top of the entire web at once.
+
 *For more on how this project relates to the Semantic Web, and what it tries*
 *do differently than the conventional Semantic Web and why, see*
 *[the longer version of this README](https://github.com/mjdamgaard/openSDB/blob/master/README_longer_version.md).*

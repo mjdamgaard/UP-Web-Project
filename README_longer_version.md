@@ -48,7 +48,7 @@ centralized, the fact that openSDB encourages other organizations/parties to
 copy the source code and data and start their own databases means that we can
 create a network of independent SDBs that can end up forming a big decentralized
 distributed database. And on top of this decentralized and distributed SDB, a
-new Semantic Web might be formed.
+new kind of Semantic Web might be formed.
 
 Now, the reason why the approach of SDBs might have a big advantage over the
 conventional approach, is that, as I see it, the conventional approach is a bit
@@ -58,11 +58,11 @@ thinking, the gab between what was considered "users" and what was considered
 surf the web and visit web pages, and if you wanted to add something to the web
 yourself, you could "simply" make your own website and host it from a domain.
 But this way of thinking about the users of the web is far from the reality
-today, where there *is* quite a wide gab between the developers and the average
-users of the web. Thus the average user today is *not* going to write any HTML
-when they want to add something to the web (and they are especially not going
-to write semantic metadata triplets, as this takes even more advanced knowledge
-than for just writing simple HTML).
+today, where there is indeed quite a wide gab between the developers and the
+average users of the web. Thus the average user today is realistically not ever
+going to write any HTML when they want to add something to the web (and they
+are especially not going to write semantic metadata triplets, as this takes
+even more advanced knowledge than for just writing simple HTML).
 
 And yet the "average users," i.e. the non-developers, add *so much* to the web
 in its present state. Nowadays when we use the web, we often go to the same
