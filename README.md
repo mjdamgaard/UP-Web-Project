@@ -43,10 +43,10 @@ run on top of the entire web at once.
 
 ## Key points of semantic system of openSDB
 
-[The longer version of this README](https://github.com/mjdamgaard/openSDB/blob/master/README_longer_version.md),
-explains semantic system that openSDB uses in broad terms. But for this shorter
-version, let us instead just talk about the key points of the system, enough
-that the following sections below can be understood.
+[The longer version of this README](https://github.com/mjdamgaard/openSDB/blob/master/README_longer_version.md)
+explains the fundamentals of the semantic system of openSDB. But for this
+shorter version, let us instead just talk about the key points of the system,
+enough that the following sections below can be understood.
 
 One point is that relation–object pairs, such as e.g. "is the director of" +
 "The Lord of the Rings: The Fellowship of the Ring" can be gathered to form a
@@ -56,18 +56,15 @@ simple (atomic) predicates, such as e.g. "is funny," "is good," "is
 well-written," and "belongs the the fantasy genre." In short, the system allows
 for users to form all kinds of predicates, both relational and atomic.
 
-And more importantly, all Terms in the database can be rated by each user with
-respect to any predicate with a continuous rating value running from 0 to 10
-(with floating point values in between).
+And the most important point for understanding the sections below is then that
+all semantic statements, which consist of a predicate and a subject Term, can
+be rated by each user on continuous rating scale, namely with values running
+from 0 to 10 (with floating point values in between).
 
 As an example, a user could choose to rate the previously mentioned movie with
-respect to "is good" and submit a rating value of, say, 9 for that, and also
+respect to "is good" and submit a rating value of, say, 9.2 for that, and also
 rate the movie as "belonging to the the fantasy genre" with, let us say, a
-value of 10.
-
-This should be enough to understand the following sections. For some more basic
-properties of the semantic system of openSDB, see
-[the longer version](https://github.com/mjdamgaard/openSDB/blob/master/README_longer_version.md).
+value of 10.0.
 
 
 ## The "killer application" of openSDB
