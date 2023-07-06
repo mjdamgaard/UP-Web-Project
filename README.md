@@ -128,9 +128,11 @@ say, folksonomy data in terms ordering search result this way, since the degree
 of how much the tags/predicates apply (according to the users) can be
 determined with much higher precision.
 
-So not only will the volume of user data potentially be higher for a rating hub
-running on top of an SDB, the quality of that data will certainly be much
-higher.
+This application can thus potentially open up a whole new world of search and
+feed algorithms, since it will not *need* to rely on advanced machine learning
+algorithms in order to analyze the user data and make meaningful connections;
+the data flowing into an SDB will already have a high degree of "meaning" to
+begin with.
 
 
 ### How such an application might be implemented
