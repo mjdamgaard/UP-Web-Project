@@ -1,5 +1,5 @@
 # openSDB (prototype)
-*Status: in development*
+*Status: in early-stage development.*
 
 ## Introduction to the project
 
