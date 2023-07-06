@@ -48,7 +48,7 @@ centralized, the fact that openSDB encourages other organizations/parties to
 copy the source code and data and start their own databases means that we can
 create a network of independent SDBs that can end up forming a big decentralized
 distributed database. And on top of this decentralized and distributed SDB, a
-new kind of Semantic Web might be formed.
+new kind of Semantic Web might be formed.[^1]
 
 Now, the reason why the approach of SDBs might have a big advantage over the
 conventional approach, is that, as I see it, the conventional approach is a bit
@@ -81,6 +81,8 @@ Web 2.0 sites that are popular today.
 
 To implement such an intuitive and easy-to-use system is the goal of openSDB.
 
+[^1]: Although a more appropriate term in that case might be 'the Semantic
+Net(work)'.
 
 ## Overview of the semantic system of openSDB
 
