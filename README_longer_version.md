@@ -246,7 +246,7 @@ degree of *how much* the tags/predicates apply (according to the users) can be
 determined with much higher precision.
 
 This application can thus potentially open up a whole new world of search and
-feed algorithms, since it will not *need* to rely on advanced machine learning
+feed algorithms, since it will not need to rely on advanced machine learning
 algorithms in order to analyze the user data and make meaningful connections;
 the data flowing into an SDB will already have a high degree of "meaning" to
 begin with.
@@ -254,7 +254,7 @@ begin with.
 
 ### How such an application might be implemented
 
-Now, in order to implement such an application, we could first of all have a
+In order to implement such an application, we could first of all have a
 web app through which the users can access the SDB. This is what I am currently
 working on in the front-end part of this GitHub repository. When users want to
 look up ratings for a certain resource or product, or whatever thing that they
@@ -264,25 +264,26 @@ bar or through a "semantic walk"). And upon finding the match, they can then
 access the various ratings.
 
 What would be an even better way to access the ratings, however, would be if a
-browser extension was developed for openSDB designed to read the URLs that the
+browser extension was developed as well, designed to read the URLs that the
 user visits with their browser, or potentially even those that they hover over
 with the mouse, and then search for matches against those URLs (or other kinds
 of URIs for that matter) to immediately get the relevant user ratings of the SDB
 to show the user. If this can be realized, it means that openSDB, together with
 any other SDB that might join the network and work together with the likes of
 openSD, can implement what can essentially become a hub for all ratings on the
-web.
+web, and one that is always right at hand when users browse the web.
 
 And in this regard, it is also very much worth mentioning that openSDB will be
-completely anonymous (unless users actively disclose their identity to other
+completely anonymous (unless a user actively disclose their identity to other
 users) and completely without tracking. The protocol used will be purely HTTPS
 and the database will not record anything about its users other than: username,
 password, potentially a backup key, and also potentially the rough amount of
 data downloaded and/or uploaded by the user in the last week or month.
-The database might also store the e-mail of the user but will not link this to
-the user. It will instead at most just record the number of user accounts that
-each e-mail address has created, but not which ones.
-openSDB will also not allow any adds in its web app or its browser extension
+The database might also store the e-mails of a user but will not link this to
+the user's account (unless asked to). It will instead at most just record the
+number of user accounts that each e-mail address has created, but not which
+ones.
+openSDB will also not allow any ads in its web app or its browser extension
 such that no third party will be able to track the user either.
 Thus, if openSDB, and SDBs like it, in the future will achieve to make up this
 "hub for all ratings on the web," it will be with as high a degree of anonymity
@@ -313,5 +314,5 @@ other companies, but which do not want to pay high prices for that data. For
 such companies it might thus be considered worth it to help fund a project that
 can potentially yield them free access to a continuous source of user data of
 very high quality in the near future. And the fact that this user data is
-guaranteed to anonymous and non-infringent on the users' privacy will most
+guaranteed to be anonymous and non-infringent on the users' privacy will most
 likely only help in attracting that kind of support for the project.
