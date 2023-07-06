@@ -71,15 +71,15 @@ the developers have added to the site, but instead to see what other users of
 the site have uploaded. This revolution of the web in terms of how we use it is
 what is known as the Web 2.0.
 It means that the "average" (non-developer) users now makes up a huge source
-of input data flowing into the web, and there is no question in my mind that if
+of input data flowing into the web. And there is no question in my mind that if
 we want to truly reach the vision of the Semantic Web, we *have* to first
 develop a system the can tap into this huge data source.
-More precisely, we need a semantic system where it is easy and intuitive for
-users to upload and up-rate the semantic links, and preferably just as easy as
-it is currently for users to upload and up-rate resources on the various Web
-2.0 sites that are currently popular.
+More precisely, we need a semantic system where it is both easy and intuitive
+for users to upload and up-rate the semantic links, and preferably just as easy
+as it is for users to upload and up-rate resources currently on the various
+Web 2.0 sites that are popular today.
 
-This is the goal of openSDB.
+To implement such an intuitive and easy-to-use system is the goal of openSDB.
 
 
 ## Overview of the semantic system of openSDB
@@ -96,8 +96,8 @@ form a predicate from "is the director of" and "Lord of the Rings: The
 Fellowship of the Ring" put together. This choice makes queries faster by a
 considerable amount, but it does come with the downside that relations are not
 automatically two-way, and subject–relation–object statements thus need to be
-stored two ways: as Predicate(relation, object) + subject and as
-Predicate(reverse relation, subject) + object to make them work both ways.
+stored two ways, namely as Predicate(relation, object) + subject and as
+Predicate(reverse relation, subject) + object, to make them work both ways.
 I believe this trade-off will be well worth it.
 
 More importantly, each semantic statement is also stored together with the ID
@@ -124,9 +124,10 @@ therefore one that should be optimized as much as possible (hence the choice
 mentioned in the first paragraph of this section).  
 
 When using the database, however, users will mostly not want to query for one
-particular user's ratings, but instead to query for an average of ratings from
-all users. openSDB intends to also implement such queries as queries for input
-sets, only where the user ID is replaced for the ID of an averaging algorithm.
+particular user's ratings, but instead want to query for an average of ratings
+from all users. openSDB intends to also implement such queries as queries for
+input sets, only where the user ID is replaced for the ID of an averaging
+algorithm.
 Furthermore, for each such algorithm, openSDB intends to actually store the
 averaged (or otherwise aggregated) ratings in the same way as other semantic
 inputs such that these averages can be retrieved as efficiently as the

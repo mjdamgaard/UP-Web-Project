@@ -43,11 +43,10 @@ run on top of the entire web at once.
 
 ## Key points of semantic system of openSDB
 
-In
-[the longer version of this README](https://github.com/mjdamgaard/openSDB/blob/master/README_longer_version.md),
-the basics of the semantic system that openSDB uses is explained. For this
-shorter version, let us instead just talk about the key points of the system,
-enough that the following sections below can be understood.
+[The longer version of this README](https://github.com/mjdamgaard/openSDB/blob/master/README_longer_version.md),
+explains semantic system that openSDB uses in broad terms. But for this shorter
+version, let us instead just talk about the key points of the system, enough
+that the following sections below can be understood.
 
 One point is that relation–object pairs, such as e.g. "is the director of" +
 "The Lord of the Rings: The Fellowship of the Ring" can be gathered to form a
