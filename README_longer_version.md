@@ -33,7 +33,7 @@ metadata from across the web to get its data structures.
 
 This is opposed to approach of this project, which aims to develop such
 applications on top of databases instead (i.e. SDBs). These applications will
-then be accessed through limited number of web domains, instead of having them
+then be accessed through a limited number of web domains, instead of having them
 run on top of the entire web at once.
 
 This approach has the drawback that it is not immediately as decentralized as
@@ -73,7 +73,7 @@ websites that we have visited many times before, not to see what new content
 the developers have added to the site, but instead to see what other users of
 the site have uploaded. This revolution of the web in terms of how we use it is
 what is known as the Web 2.0.
-It means that the "average" (non-developer) users now makes up a huge source
+It means that the "average" (non-developer) users now make up a huge source
 of input data flowing into the web. And there is no question in my mind that if
 we want to truly reach the vision of the Semantic Web, we *have* to first
 develop a system the can tap into this huge data source.
@@ -107,7 +107,7 @@ More importantly, each semantic statement is also stored together with the ID
 of the user who states the statement, and with a rating value running from 0 to
 10 (in small steps of 10 divided by 65535) which denotes the degree to which
 the user deems the statement to be true, like when answering a survey. A rating
-value of five thus means a neutral degree; meaning that the statement is deemed
+value of 5 thus signifies a neutral degree, meaning that the statement is deemed
 neither to be particularly true/fitting for the subject nor false/unfitting. A
 rating value towards 0 then of course means 'very false/unfitting' and a rating
 value towards 10 means 'very true/fitting.'
@@ -164,7 +164,7 @@ can first of all create the desired predicate by defining a Term of this
 template Context and with "Director|\#28" as its defining string. Here "\#28"
 will then be interpreted as the Term with ID = 28, giving us the exactly the
 predicate we wanted (only formulated a bit differently: "is an important/useful
-instance of the Director of *Movie: The Lord of the Rings: The Fellowship of*
+instance of the *Director* of *Movie: The Lord of the Rings: The Fellowship of*
 *the Ring, 2001*").
 And with another Term defining Peter Jackson (the right one), we can then
 create the desired statement.

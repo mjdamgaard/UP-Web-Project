@@ -33,7 +33,7 @@ metadata from across the web to get its data structures.
 
 This is opposed to approach of this project, which aims to develop such
 applications on top of databases instead (i.e. SDBs). These applications will
-then be accessed through limited number of web domains, instead of having them
+then be accessed through a limited number of web domains, instead of having them
 run on top of the entire web at once.
 
 *For more on how this project relates to the Semantic Web, and what it tries*
@@ -60,6 +60,12 @@ And the most important point for understanding the sections below is then that
 all semantic statements, which consist of a predicate and a subject Term, can
 be rated by each user on a continuous rating scale, namely with values running
 from 0 to 10 (with floating point values in between).
+This value denotes the degree to which
+the user deems the statement to be true, like when answering a survey. A rating
+value of 5 thus signifies a neutral degree, meaning that the statement is deemed
+neither to be particularly true/fitting for the subject nor false/unfitting. A
+rating value towards 0 then of course means 'very false/unfitting' and a rating
+value towards 10 means 'very true/fitting.'
 
 As an example, a user could choose to rate the previously mentioned movie with
 respect to "is good" and submit a rating value of, say, 9.2 for that, and also
