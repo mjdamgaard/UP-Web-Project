@@ -50,6 +50,9 @@ create a network of independent SDBs that can end up forming a big decentralized
 distributed database. And on top of this decentralized and distributed SDB, a
 new kind of Semantic Web might be formed.[^1]
 
+[^1]: Although a more appropriate term in that case might be 'Semantic
+Net(work).'
+
 Now, the reason why the approach of SDBs might have a big advantage over the
 conventional approach, is that, as I see it, the conventional approach is a bit
 stuck in an old and outdated way of thinking about the web. In this old way of
@@ -81,8 +84,6 @@ Web 2.0 sites that are popular today.
 
 To implement such an intuitive and easy-to-use system is the goal of openSDB.
 
-[^1]: Although a more appropriate term in that case might be 'the Semantic
-Net(work)'.
 
 ## Overview of the semantic system of openSDB
 
@@ -141,12 +142,12 @@ that update the ratings according to recent user inputs.
 
 ### Terms
 
-Terms are what denotes the semantic units of the system, including the
-relations and predicates, and even the users themselves since each new user of
+'Terms' refers to the semantic units of the system, including the relations and
+predicates, and even including the users themselves since each new user of
 the SDB will get their own Term representing them. All Terms have a unique ID,
-first of all, and are defined by two fields/columns: An ID of a so-called
-Context, which are themselves a kind of Term, and then a defining string. The
-Context defines, typically via a template, how the defining string is to be
+first of all, and are defined by two fields: an ID of a so-called
+'Context,'' which are themselves a kind of Terms, and then a 'defining string.'
+The Context defines, typically via a template, how the defining string is to be
 interpreted semantically. An example of such a template could be: "Movie:
 \<Title\>, \<Year\>", and an example of a Term that defines an instance of this
 template could be one that had "The Lord of the Rings: The Fellowship of the
@@ -170,7 +171,7 @@ create the desired statement.
 
 An additional syntactic feature of these template Contexts that is then also
 worth mentioning is that parts of the template can be emphasized by wrapping
-them in curly brackets. For instance we could wrap \<Title\> in the Movie
+them in curly brackets. For instance we could wrap \<Title\> in the movie
 template from before, giving us "Movie: {\<Title\>}, \<Year\>". This then tells
 any application that runs on top of the SDB that the "\<Title\>" part is the
 important part to print out when referencing the Term, whereas the rest of the
@@ -188,7 +189,7 @@ The first application of a semantic system such as openSDB that comes to mind,
 at least if one is already familiar with the vision of the Semantic Web, is
 that of semantic searches. And though this application might potentially become
 very useful in a future when the network around SDBs has grown large enough, it
-will take a long time before it can compete with modern-day search engines.
+will take a while before it can start to compete with modern-day search engines.
 But there is another application that I believe can become extremely useful
 quite fast, and which does not have the same competition against it from
 existing technologies. Since this application also very much utilizes some of
@@ -201,8 +202,10 @@ on the web, as well as any other things that one can imagine.
 And the key reasons why such a rating hub running on top of a semantic system
 might supersede more conventional rating hubs is first of all the fact that the
 semantic system allows for arbitrary kinds of ratings, i.e. ratings with respect
-to arbitrary predicates, instead of having just the usual good-versus-bad axis
-to rate entities along. And combined with the fact that, in the case of openSDB,
+to arbitrary predicates.
+This is opposed to having just the usual good-versus-bad axis to rate
+entities along that we see everywhere.
+And combined with the fact that, in the case of openSDB,
 all predicates can be rated on a continuous scale, this is what I believe will
 make the application far more useful than existing ones.
 
@@ -211,7 +214,7 @@ browsing for products to buy might want to not just see a satisfaction rating,
 but also see more specific ratings such as for durability, how easy they are to
 operate, if the price is low compared to similar products, and also potentially
 factors concerning manufacturing such as if it is environment-friendly, if there
-is slave labor involved, if workers are paid a fair portion of the money earned,
+is slave labor involved, if workers are paid a fair portion of the money made,
 and so on. And users browsing a movie to watch, as another example, might want
 to see predicates such as how scary the movie is, how funny it is, how wholesome
 or cute it is, how much it deals with a certain theme, how good the acting is,
@@ -224,12 +227,12 @@ with these systems, users can only get an idea e.g. if the movie is scary or
 not, or if it deals with a certain theme or belongs to a certain genre or not.
 They can not see the *degree* to which these predicates are true/fitting.
 
-Furthermore, the conventional folksonomy systems takes a lot of user actions
+Furthermore, the conventional folksonomy systems take a lot of user actions
 when users want to contribute to them. But if, on the other hand, the users were
 able to just click on any existing "tag," which would be associated with a
 predicate in our case, and immediately add their own rating to that predicate
 with just one or two more clicks, I believe the system could attract so much
-more valuable user data hereby, compared to the conventional systems.
+more (valuable) user data hereby, compared to the conventional systems.
 
 Having continuous ratings rather than binary tags, which is either there or not
 there, also means that the data is of much higher quality when it comes to
@@ -238,8 +241,8 @@ Therefore, if a user for instance wants to search through all movies and order
 them such that, say, the movies that are both the most funny and at the same
 time the most wholesome appears on the top of the list of search results, the
 data of an application using continuous ratings will be much more useful than,
-say, folksonomy data in terms ordering search result this way, since the degree
-of how much the tags/predicates apply (according to the users) can be
+say, folksonomy data in terms ordering search result this way, namely since the
+degree of *how much* the tags/predicates apply (according to the users) can be
 determined with much higher precision.
 
 This application can thus potentially open up a whole new world of search and
