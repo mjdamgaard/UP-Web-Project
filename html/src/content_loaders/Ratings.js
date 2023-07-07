@@ -170,3 +170,6 @@ inputRatingSliderCL.addCallback(function($ci, data) {
         return false;
     });
 });
+
+// TODO: Fix the clear button; it seems buggy as well (and I get a server error
+// when submitting, strangely)..
