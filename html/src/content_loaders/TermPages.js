@@ -40,8 +40,8 @@ termPageCL.addCallback(function($ci, data) {
     };
     let $this = $(this);
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-        data.cxtID = (result[0] ?? [])[0] ?? 6;
-        if (!data.cxtID || data.cxtID > 5) {
+        data.cxtID = (result[0] ?? [])[0] ?? 1;
+        if (data.cxtID == 1 || data.cxtID > 5) {
             data.tabAndPageDataArr = [
                 ["Info", "TermInfoPage", {}],
                 ["Ratings", "TermRatingsPage", {}],
@@ -120,16 +120,17 @@ termAppliesToPageCL.addCallback("data", function(data) {
     data.incrementNum = 50;
 });
 
+
 export var termRatingsPageCL = new ContentLoader(
     "TermRatingsPage",
     /* Initial HTML template */
     '<<SetDisplay>>',
     sdbInterfaceCL
 );
-termNounPredicatePageCL.addCallback("data", function(data) {
+termRatingsPageCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "termID",
-        "cxtID",  // optional.
+        "cxtID",
     ]);
 });
 termRatingsPageCL.addCallback("data", function(data) {

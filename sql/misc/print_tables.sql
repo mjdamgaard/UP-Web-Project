@@ -33,4 +33,4 @@ SELECT
     rat_val AS ratVal,
     subj_id AS subjID
 FROM RecentInputs
-ORDER BY user_id ASC, pred_id ASC, id ASC;
+ORDER BY id ASC;
