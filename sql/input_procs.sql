@@ -32,7 +32,8 @@ BEGIN
         user_id = userID AND
         pred_id = predID AND
         subj_id = subjID
-    );
+    )
+    FOR UPDATE;
 
     IF (ratVal IS NOT NULL AND prevRatVal IS NULL) THEN
         INSERT INTO SemanticInputs (
