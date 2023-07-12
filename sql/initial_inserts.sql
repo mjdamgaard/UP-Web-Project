@@ -54,7 +54,7 @@ CALL insertOrFindTerm(3, 27,
 ); -- id: 29
 
 CALL insertOrFindTerm(3, 0, "Science"); -- id: 30
-CALL insertOrFindTerm(3, 0, "Field of science: {<Title>}"); -- id: 31
+CALL insertOrFindTerm(3, 0, "<Title> (field of science)"); -- id: 31
 CALL insertOrFindTerm(3, 31, "Music"); -- id: 32
 CALL insertOrFindTerm(3, 31, "Cinematography"); -- id: 33
 CALL insertOrFindTerm(3, 31, "Physics"); -- id: 34

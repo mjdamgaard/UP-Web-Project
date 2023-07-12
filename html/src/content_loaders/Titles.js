@@ -25,6 +25,7 @@ termTitleCL.addCallback("data", function(data) {
     data.recLevel ??= -1;;
     data.recLevel++;
     data.maxRecLevel ??= 2;;
+    data.isFullTitle = data.getFromAncestor("isFullTitle", 1) ?? false;
 });
 termTitleCL.addCallback(function($ci, data) {
     if (data.recLevel > data.maxRecLevel) {
@@ -127,10 +128,15 @@ templateInstanceTitleCL.addCallback("data", function(data) {
         "defStr",
         "cxtDefStr",
         "defItemStrArr",
+        "isFullTitle",
     ]);
 });
 templateInstanceTitleCL.addCallback(function($ci, data) {
-    data.linkContent = getTransformedTitleTemplate(data.cxtDefStr);
+    if (data.isFullTitle) {
+        data.linkContent = getTransformedFullTitleTemplate(data.cxtDefStr);
+    } else {
+        data.linkContent = getTransformedTitleTemplate(data.cxtDefStr);
+    }
     templateInstanceTitleCL.loadAppended($ci, "TermLink", data);
     let defItemStrArr = data.defItemStrArr;
     let nextDefItemStr = 0;
@@ -177,23 +183,31 @@ export function getTransformedTitleTemplate(title) {
         .replaceAll(">", "&gt;")
         .replaceAll(/&lt;&gt;/g, '<span class="def-item"></span>');
 }
+export function getTransformedFullTitleTemplate(title) {
+    return title
+        .replaceAll("&gt;", ">")
+        .replaceAll("&lt;", "<")
+        .replaceAll(/\{/g, "")
+        .replaceAll(/\}/g, "")
+        .replaceAll(/<[^<>]*>/g, '<>')
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll(/&lt;&gt;/g, '<span class="def-item"></span>');
+}
 
-// export function sanitize(string) {
-//     return string = string
-//         .replaceAll("&", "&amp;")
-//         .replaceAll("<", "&lt;")
-//         .replaceAll(">", "&gt;")
-//         .replaceAll('"', "&quot;")
-//         .replaceAll("'", "&apos;");
-// }
-// export function reverseSanitize(string) {
-//     return string = string
-//         .replaceAll("&apos;", "'")
-//         .replaceAll("&quot;", '"')
-//         .replaceAll("&gt;", ">")
-//         .replaceAll("&lt;", "<")
-//         .replaceAll("&amp;", "&");
-// }
+
+
+export var fullTermTitleCL = new ContentLoader(
+    "FullTermTitle",
+    /* Initial HTML template */
+    '<<TermTitle>>', // TODO: change to look up the username.
+    sdbInterfaceCL
+);
+fullTermTitleCL.addCallback("data", function(data) {
+    data.isFullTitle = true;
+});
+
+
 
 
 export var userTitleCL = new ContentLoader(
@@ -204,45 +218,3 @@ export var userTitleCL = new ContentLoader(
 );
 // TODO: Implement to fetch and display the username (perhaps like:
 // "User: username (id)").
-
-
-
-export var fullContextAndTitleFieldCL = new ContentLoader(
-    "FullContextAndTitleField",
-    /* Initial HTML template */
-    '<span></span>', // TODO: change to look up the username.
-    sdbInterfaceCL
-);
-
-fullContextAndTitleFieldCL.addCallback(prependAllTermInfo);
-
-export function prependAllTermInfo($ci, data) {
-    // TODO: Implement.
-    // let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
-    // let reqData = {
-    //     type: "term",
-    //     id: data.termID,
-    // };
-    // // ...
-    // dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-    //     data.cxtID = (result[0] ?? [])[0];
-    //     data.defStr = (result[0] ?? [])[1];
-    //     data.defTermID = (result[0] ?? [])[2];
-    //     if (!data.cxtID) {
-    //         loadTermTitleHTML($ci, data);
-    //         return;
-    //     }
-    //     let reqData = {
-    //         type: "term",
-    //         id: data.cxtID,
-    //     };
-    //     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-    //         data.cxtDefStr = (result[0] ?? [])[1];
-    //         data.cxtDefTermID = (result[0] ?? [])[2];
-    //         loadTermTitleHTML($ci, data);
-    //     });
-    // });
-}
-// TODO, just fetch and load paragraphs of SimpleTitles and TermIDTitles (of
-// the defTerms) one after the other until a NULL Context is reached and
-// prepend each one.
