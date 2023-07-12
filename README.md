@@ -106,7 +106,7 @@ browsing for products to buy might want to not just see a satisfaction rating,
 but also see more specific ratings such as for durability, how easy they are to
 operate, if the price is low compared to similar products, and also potentially
 factors concerning manufacturing such as if it is environment-friendly, if there
-is slave labor involved, if workers are paid a fair portion of the money made,
+is child labor involved, if workers are paid a fair portion of the money made,
 and so on. And users browsing a movie to watch, as another example, might want
 to see predicates such as how scary the movie is, how funny it is, how wholesome
 or cute it is, how much it deals with a certain theme, how good the acting is,
