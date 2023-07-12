@@ -3,7 +3,7 @@ import {
     ContentLoader,
 } from "/src/ContentLoader.js";
 import {
-    sdbInterfaceCL, appColumnCL,
+    sdbInterfaceCL,
 } from "/src/content_loaders/SDBInterfaces.js";
 
 

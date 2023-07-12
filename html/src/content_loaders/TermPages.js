@@ -16,8 +16,9 @@ export var termPageCL = new ContentLoader(
     "TermPage",
     /* Initial HTML template */
     '<div>' +
-        '<h3><<TermTitle>></h3>' +
+        '<h2><<TermTitle>></h2>' +
         '<span class="full-title">Full title: <<FullTermTitle>></span>' +
+        '<div><<TermIDDisplay>></div>' +
          "<<PagesWithTabs data:wait>>" +
      '</div>',
     sdbInterfaceCL
@@ -60,7 +61,6 @@ termPageCL.addCallback(function($ci, data) {
                 // TODO: Implement the following two tabs as well.
                 // ["Comments", "TermCommentsPage", {}],
                 // ["Discussions", "TermDiscussionsPage", {}],
-                // ["Insert", "TermInsertPage", {}],
             ];
             data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
                 "Applies to";
@@ -69,6 +69,16 @@ termPageCL.addCallback(function($ci, data) {
         }
         // TODO: Implement the other cases.
     });
+});
+
+export var termIDDisplayCL = new ContentLoader(
+    "TermIDDisplay",
+    /* Initial HTML template */
+    '<span>ID: </span>',
+    sdbInterfaceCL
+);
+termIDDisplayCL.addCallback(function($ci, data) {
+    $ci.append(data.getFromAncestor("termID"));
 });
 
 
@@ -157,4 +167,42 @@ termRatingsPageCL.addCallback("data", function(data) {
 termRatingsPageCL.addCallback("data", function(data) {
     data.subjID = data.getFromAncestor("columnTermID");
     data.copyFromAncestor("queryUserID");
+});
+
+
+
+
+export var termContextPageCL = new ContentLoader(
+    "TermContextPage",
+    /* Initial HTML template */
+    '<div>' +
+        '<<ContextDisplay>>' +
+        '<<SubmitDerivedTermField>>' +
+        '<<RelevantRatingsDisplay>>' +
+        '<<RelevantRelationsDisplay>>' +
+    '</div>',
+    sdbInterfaceCL
+);
+termContextPageCL.addCallback("data", function(data) {
+    data.termID = data.getFromAncestor("cxtID") ?? 1;
+    data.cxtID = null;
+});
+
+export var contextDisplayCL = new ContentLoader(
+    "ContextDisplay",
+    /* Initial HTML template */
+    '<h3>' +
+        'Context: <<TermTitle>>' +
+    '</h3>',
+    sdbInterfaceCL
+);
+
+export var submitDerivedTermFieldCL = new ContentLoader(
+    "SubmitDerivedTermField",
+    /* Initial HTML template */
+    '<<SubmitTermField>>',
+    sdbInterfaceCL
+);
+submitDerivedTermFieldCL.addCallback("data", function(data) {
+    data.cxtID = data.getFromAncestor("termID");
 });

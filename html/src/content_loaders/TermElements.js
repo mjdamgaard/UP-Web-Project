@@ -29,7 +29,7 @@ export var generalTermElementDropdownPageCL = new ContentLoader(
     /* Initial HTML template */
     '<div>' +
         '<div>Full title: <<FullTermTitle>></div>' +
-        // '<<TermShortDescriptionField>>' +
+        '<div><<TermIDDisplay>></div>' +
         '<<SetPredicatesRatingsDisplay>>' +
     '</div>',
     sdbInterfaceCL
