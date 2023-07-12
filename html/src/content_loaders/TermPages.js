@@ -48,9 +48,7 @@ termPageCL.addCallback(function($ci, data) {
                 ["Categories", "TermNounPredicatePage", {
                     predNoun: "Subcategories",
                 }],
-                ["Instances", "TermNounPredicatePage", {
-                    predNoun: "Instances",
-                }],
+                ["Applies to", "TermAppliesToPage", {}],
                 ["Related to", "TermNounPredicatePage", {
                     predNoun: "Related terms",
                 }],
@@ -64,11 +62,11 @@ termPageCL.addCallback(function($ci, data) {
                 // ["Insert", "TermInsertPage", {}],
             ];
             data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
-                "Instances";
+                "Applies to";
             $ci.children('.CI.PagesWithTabs').trigger("load");
             return;
         }
-        // TODO: Implement other cases.
+        // TODO: Implement the other cases.
     });
 });
 

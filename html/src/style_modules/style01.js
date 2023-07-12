@@ -19,7 +19,7 @@ import {
     dropdownButtonBarCL, setHeaderCL
 } from "/src/content_loaders/SetDisplays.js";
 import {
-    ratingElementCL,
+    ratingElementCL, ratingDisplayCL,
 } from "/src/content_loaders/Ratings.js";
 
 
@@ -135,6 +135,11 @@ ratingElementCL.addCSS(
     ''
 );
 
+ratingDisplayCL.addCSS(
+    '& .applies-to-subj {' +
+        'font-size: 10px;' +
+    '}'
+);
 
 
 

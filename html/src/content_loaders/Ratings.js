@@ -24,7 +24,12 @@ export var ratingDisplayCL = new ContentLoader(
     "RatingDisplay",
     /* Initial HTML template */
     '<div>' +
-        '<<TermTitle>>' +
+        '<div class="statement">' +
+            '<<TermTitle>> ' +
+            '<span class="applies-to-subj">' +
+                '(applies to <<TermTitle data.subjData:wait>>)' +
+            '</span>' +
+        '</div>' +
         '<<QueryUserRatingDisplay data:wait>>' +
         '<<InputRatingSlider data:wait>>' +
     '</div>',
@@ -38,6 +43,10 @@ ratingDisplayCL.addCallback("data", function(data) {
         "subjID",
     ]);
     data.termID = data.predID;
+    data.subjData = {termID: data.subjID};
+});
+ratingDisplayCL.addCallback(function($ci, data) {
+    $ci.find('.statement .CI.TermTitle:last-of-type').trigger("load");
 });
 ratingDisplayCL.addCallback(function($ci, data) {
     let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
@@ -169,22 +178,3 @@ inputRatingSliderCL.addCallback(function($ci, data) {
         return false;
     });
 });
-
-// TODO: Fix the clear button; it seems buggy as well (and I get a server error
-// when submitting, strangely)..
-// Okay, the bug was actually very simple to find out and fix; I can see that I
-// send two input requests instead of one (not yet fixed), and then there was a
-// race condition, that I think I've actually deliberately left there, but now
-// I've decided to remove it, as I should.. ..Okay, but why on earth do that
-// on "click" event above trigger twice?.. ..Beacause it is set twice, but why
-// is that..(?) ..Oh, probs because of "change" and "input" fires seperately..
-// ..Oh, or rather because of '$ci.trigger("input");'.. ...Fixed that bug now
-// (it was because of .one() firing for each action). Now I'm debugging clear,
-// which first of all does not work when I have just rated, and I would also
-// like it to return to "no rating" when clicking it.. ..Ah, just needed to
-// remove an if statement.. ..Ah, and I shouldn't mess with "no rating", but
-// should instead just automatically input a rating of 5 when clearing.. ..Oh,
-// which I have already tried to before, but it didn't work.. ..Okay, using
-// .val() instead of .attr() indeed does the trick, but now I need to set the
-// .one() event again after.. ..No, I just needed to show() the submit button
-// on "change input," and now it seems to all work just as intended.  
