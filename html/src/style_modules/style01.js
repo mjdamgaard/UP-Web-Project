@@ -134,6 +134,11 @@ ratingElementCL.addCSS(
     // 'border-top: 1px solid gray;' +
     ''
 );
+ratingDisplayCL.addCSS(
+    // 'border-bottom: 1px solid gray;' +
+    'border-top: 1px solid lightgray;' +
+    ''
+);
 
 ratingDisplayCL.addCSS(
     '& .applies-to-subj {' +

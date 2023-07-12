@@ -58,7 +58,8 @@ ratingDisplayCL.addCallback(function($ci, data) {
     };
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
         data.queryUserRatVal = (result[0] ?? [0])[0];
-        $ci.find('.CI.QueryUserRatingDisplay').trigger("load");
+        // I'll out-comment this for now:
+        // $ci.find('.CI.QueryUserRatingDisplay').trigger("load");
     });
     reqData = {
         type: "rat",
@@ -178,3 +179,5 @@ inputRatingSliderCL.addCallback(function($ci, data) {
         return false;
     });
 });
+// TODO: Maybe add a Reset button to get the previous rating back after having
+// changed the slider.

@@ -40,7 +40,7 @@ VALUES
 /* More inserts for testing */
 
 CALL insertOrFindTerm(3, 0, "Music"); -- id: 22
-CALL insertOrFindTerm(3, 0, "Music genre: {<Title>}"); -- id: 23
+CALL insertOrFindTerm(3, 0, "<Title> (music genre)"); -- id: 23
 CALL insertOrFindTerm(3, 23, "Rock"); -- id: 24
 CALL insertOrFindTerm(3, 23, "Jazz"); -- id: 25
 CALL insertOrFindTerm(3, 23, "Hip hop"); -- id: 26
@@ -82,7 +82,7 @@ CALL insertOrFindTerm(3, 6, "Subcategories|#30"); -- id: 39
 CALL inputOrChangeRating(3, 39, 32, CONV("F000", 16, 10), "00");
 
 
-CALL inputOrChangeRating(3, 1, 26, CONV("A000", 16, 10), "00");
+CALL inputOrChangeRating(3, 1, 24, CONV("A000", 16, 10), "00");
 CALL inputOrChangeRating(3, 1, 36, CONV("A400", 16, 10), "00");
 CALL inputOrChangeRating(3, 1, 28, CONV("9003", 16, 10), "00");
 CALL inputOrChangeRating(3, 1, 29, CONV("9002", 16, 10), "00");

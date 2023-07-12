@@ -17,6 +17,7 @@ export var termPageCL = new ContentLoader(
     /* Initial HTML template */
     '<div>' +
         '<h3><<TermTitle>></h3>' +
+        '<span class="full-title">Full title: <<FullTermTitle>></span>' +
          "<<PagesWithTabs data:wait>>" +
      '</div>',
     sdbInterfaceCL
