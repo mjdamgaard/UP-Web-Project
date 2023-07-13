@@ -146,16 +146,21 @@ templateInstanceTitleCL.addCallback(function($ci, data) {
         nextDefItemStr++;
         loadDefItemAppended($(this), defItemStr, data);
     });
-    // append any extra def items that are not expected by the template.
-    let len = defItemStrArr.length;
-    if (nextDefItemStr < len - 1) {
-        $ci.append('<span class="extra-def-items"></span>');
-        let $obj = $ci.find('.extra-def-items');
-        for (let i = nextDefItemStr; i < len - 1; i++) {
-            loadDefItemAppended($obj, defItemStrArr[i], data);
-            $obj.append(', ');
+    // for full titles, append any extra def items that are not expected by the
+    // template.
+    if (data.isFullTitle) {
+        let len = defItemStrArr.length;
+        if (nextDefItemStr < len) {
+            $ci.find('.CI.TermLink').append(
+                '; <span class="extra-def-items"></span>'
+            );
+            let $obj = $ci.find('.extra-def-items');
+            for (let i = nextDefItemStr; i < len - 1; i++) {
+                loadDefItemAppended($obj, defItemStrArr[i], data);
+                $obj.append(', ');
+            }
+            loadDefItemAppended($obj, defItemStrArr[len - 1], data);
         }
-        loadDefItemAppended($obj, defItemStrArr[len - 1], data);
     }
 });
 export function loadDefItemAppended($obj, defItemStr, data) {

@@ -108,6 +108,7 @@ CALL insertOrFindTerm(3, 8, "iconic"); -- id: 47
 
 CALL insertOrFindTerm(3, 6, "Relevant ratings for derived terms|#1"); -- id: 48
 CALL inputOrChangeRating(3, 48, 44, CONV("F000", 16, 10), "00");
+CALL inputOrChangeRating(3, 48, 1, CONV("F000", 16, 10), "00");
 
 CALL insertOrFindTerm(3, 6, "Relevant ratings for derived terms|#27"); -- id: 49
 CALL inputOrChangeRating(3, 49, 44, CONV("F000", 16, 10), "00");
