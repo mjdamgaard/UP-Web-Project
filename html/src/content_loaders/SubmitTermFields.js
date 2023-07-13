@@ -214,6 +214,9 @@ extraInputFormGroupCL.addCallback(function($ci, data) {
         return false;
     });
 });
+// TODO: Consider dropping the label.. ..or perhaps just make the colon syntax
+// standard, and then make sure that IDs can be used instead of strings after
+// the (first) colon..
 
 
 
