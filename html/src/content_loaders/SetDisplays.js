@@ -86,40 +86,50 @@ export var setMenurCL = new ContentLoader(
     "SetMenu",
     /* Initial HTML template */
     '<div>' +
-        '<<SetPredicatesDisplay>>' +
+        '<<SetPredicatesList>>' +
         '<<SortingMenu>>' +
         // TODO: Extend.
     '</div>',
     sdbInterfaceCL
 );
 
-// export var setPredicatesDisplayCL = new ContentLoader(
-//     "SetPredicatesDisplay",
-//     /* Initial HTML template */
-//     '<div>' +
-//     '</div>',
-//     sdbInterfaceCL
-// );
-// setPredicatesDisplayCL.addCallback("data", function(data) {
-//     data.copyFromAncestor([
-//         "setGenerator",
-//     ]);
-// });
-// setPredicatesDisplayCL.addCallback(function($ci, data) {
-//     let predIDArr = data.setGenerator.getSetPredicates();
-//     predIDArr.forEach(function(val) {
-//         setPredicatesDisplayCL.loadAppended(
-//             $ci, "PredicateDisplay", new ChildData(data, {
-//                 termID: val,
-//             })
-//         );
-//     });
-// });
-// export var predicateDisplayCL = new ContentLoader(
-//     "PredicateDisplay",
-//     /* Initial HTML template */
-//     '<div>' +
-//         '<<TermTitle>>' +
-//     '</div>',
-//     sdbInterfaceCL
-// );
+export var setPredicatesListCL = new ContentLoader(
+    "SetPredicatesList",
+    /* Initial HTML template */
+    '<div>' +
+    '</div>',
+    sdbInterfaceCL
+);
+setPredicatesListCL.addCallback("data", function(data) {
+    data.copyFromAncestor([
+        "setGenerator",
+    ]);
+});
+setPredicatesListCL.addCallback(function($ci, data) {
+    let predIDArr = data.setGenerator.getSetPredicates();
+    predIDArr.forEach(function(val) {
+        setPredicatesListCL.loadAppended(
+            $ci, "PredicateDisplay", new ChildData(data, {
+                termID: val,
+            })
+        );
+    });
+});
+export var predicateDisplayCL = new ContentLoader(
+    "PredicateDisplay",
+    /* Initial HTML template */
+    '<div>' +
+        '<<TermTitle>>' +
+    '</div>',
+    sdbInterfaceCL
+);
+// I'm considering how to add Terms to sets, and to add missing predicates. I
+// think that I will just add.. well, either add a submission field in Applies
+// to, or perhaps it's better to add this in a separate tab.. But anyway, the
+// secod question is harder: How to add missing predicates. A solution could be
+// to just use dialog boxes, or whatever they're called, as temporary solution,
+// but I would rather not do that.. I feel like the longer-term solution is to
+// have a queue of such missing predicates, where the user can go to that queue
+// and add as many of the recently encountered predicates as they want.. But do
+// I implement this now?
+// TODO: Figure this question out.

@@ -171,8 +171,8 @@ export function loadDefItemAppended($obj, defItemStr, data) {
             })
         );
     } else {
-        if (defItemStr.substring(0, 1) === "\\") {
-            defItemStr = defItemStr.substring(1);
+        if (defItemStr.substring(0, 2) === "\\#") {
+            defItemStr = "#" + defItemStr.substring(2);
         }
         $obj.append(defItemStr);
     }
