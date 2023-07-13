@@ -92,7 +92,7 @@ submitTermFieldCL.addCallback(function($ci, data) {
             if (valInput) {
                 let input = "";
                 if (labelInput) {
-                    input = labelInput + ": ";
+                    input = labelInput + ":";
                 }
                 input += valInput;
                 defStrParts.push(input);
@@ -193,8 +193,6 @@ textAreaFormGroupCL.addCallback("data", function(data) {
 textAreaFormGroupCL.addCallback(function($ci, data) {
     $ci.find('label').append(data.label + ":");
 });
-// TODO: Make it so that inputs of the form /#[1-9][0-9]*/ are automatically
-// looked up and that the title is shown next to the field if a match is found.
 
 export var extraInputFormGroupCL = new ContentLoader(
     "ExtraInputFormGroup",

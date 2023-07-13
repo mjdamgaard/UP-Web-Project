@@ -156,10 +156,10 @@ templateInstanceTitleCL.addCallback(function($ci, data) {
             );
             let $obj = $ci.find('.extra-def-items');
             for (let i = nextDefItemStr; i < len - 1; i++) {
-                loadDefItemAppended($obj, defItemStrArr[i], data);
+                loadExtraDefItemAppended($obj, defItemStrArr[i], data);
                 $obj.append(', ');
             }
-            loadDefItemAppended($obj, defItemStrArr[len - 1], data);
+            loadExtraDefItemAppended($obj, defItemStrArr[len - 1], data);
         }
     }
 });
@@ -175,6 +175,15 @@ export function loadDefItemAppended($obj, defItemStr, data) {
             defItemStr = defItemStr.substring(1);
         }
         $obj.append(defItemStr);
+    }
+}
+export function loadExtraDefItemAppended($obj, defItemStr, data) {
+    let colonIndex = defItemStr.indexOf(':');
+    if (colonIndex == -1) {
+        loadDefItemAppended($obj, defItemStr, data);
+    } else {
+        $obj.append(defItemStr.substring(0, colonIndex + 1) + " ");
+        loadDefItemAppended($obj, defItemStr.substring(colonIndex + 1), data);
     }
 }
 export function getTransformedTitleTemplate(title) {
