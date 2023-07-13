@@ -45,6 +45,7 @@ termTitleCL.addCallback(function($ci, data) {
             loadTermTitleHTML($ci, data);
             return;
         }
+        let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
         let reqData = {
             type: "term",
             id: data.cxtID,

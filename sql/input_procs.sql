@@ -120,17 +120,17 @@ BEGIN
     );
     IF (outID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
+    ELSEIF (cxtID < 5) THEN
+        SET exitCode = 2; -- cxtID is not permitted for this procedure.
     ELSEIF (cxtID IS NOT NULL) THEN
         SELECT id, context_id INTO tempID, cxtCxtID
         FROM Terms
         WHERE id = cxtID;
         IF (tempID IS NULL) THEN
-            SET exitCode = 2; -- cxtID is not the ID of an existing Term.
+            SET exitCode = 3; -- cxtID is not the ID of an existing Term.
         ELSEIF (cxtCxtID IS NOT NULL) THEN
-            SET exitCode = 3; -- context_id of the context must be null.
+            SET exitCode = 4; -- context_id of the context must be null.
         END IF;
-    ELSEIF (0 < cxtID AND cxtID <= 5) THEN
-        SET exitCode = 4; -- cxtID is not permitted for this procedure.
     END IF;
 
     IF (exitCode IS NULL) THEN
