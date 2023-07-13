@@ -19,6 +19,7 @@ export var termPageCL = new ContentLoader(
         '<h2><<TermTitle>></h2>' +
         '<span class="full-title">Full title: <<FullTermTitle>></span>' +
         '<div><<TermIDDisplay>></div>' +
+        '<div><<ContextDisplay>></div>' +
          "<<PagesWithTabs data:wait>>" +
      '</div>',
     sdbInterfaceCL
@@ -176,7 +177,7 @@ export var termContextPageCL = new ContentLoader(
     "TermContextPage",
     /* Initial HTML template */
     '<div>' +
-        '<<ContextDisplay>>' +
+        '<h3><<ContextDisplay>></h3>' +
         '<<SubmitDerivedTermField>>' +
         '<<RelevantRatingsDisplay>>' +
         '<<RelevantPropertiesDisplay>>' +
@@ -184,19 +185,8 @@ export var termContextPageCL = new ContentLoader(
     '</div>',
     sdbInterfaceCL
 );
-termContextPageCL.addCallback("data", function(data) {
-    data.termID = data.getFromAncestor("cxtID") ?? 1;
-    data.cxtID = null;
-});
 
-export var contextDisplayCL = new ContentLoader(
-    "ContextDisplay",
-    /* Initial HTML template */
-    '<h3>' +
-        'Context: <<TermTitle>>' +
-    '</h3>',
-    sdbInterfaceCL
-);
+
 
 export var submitDerivedTermFieldCL = new ContentLoader(
     "SubmitDerivedTermField",
@@ -205,7 +195,7 @@ export var submitDerivedTermFieldCL = new ContentLoader(
     sdbInterfaceCL
 );
 submitDerivedTermFieldCL.addCallback("data", function(data) {
-    data.cxtID = data.getFromAncestor("termID");
+    data.copyFromAncestor("cxtID");
 });
 
 
@@ -219,13 +209,13 @@ export var relevantRatingsDisplayCL = new ContentLoader(
     sdbInterfaceCL
 );
 relevantRatingsDisplayCL.addCallback("data", function(data) {
-    data.copyFromAncestor("termID");
+    data.copyFromAncestor("cxtID");
 });
 relevantRatingsDisplayCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralTermElement";
     data.setGenerator = new SetQuerier({
         predCxtID: 6, // ID of the "is an important/useful inst..." Context.
-        predStr: "Relevant ratings for derived terms|#" + data.termID,
+        predStr: "Relevant ratings for derived terms|#" + data.cxtID,
         userID: 3,
         num: 4000,
         ratingLo: 0,
@@ -246,13 +236,13 @@ export var relevantPropertiesDisplayCL = new ContentLoader(
     sdbInterfaceCL
 );
 relevantPropertiesDisplayCL.addCallback("data", function(data) {
-    data.copyFromAncestor("termID");
+    data.copyFromAncestor("cxtID");
 });
 relevantPropertiesDisplayCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralTermElement";
     data.setGenerator = new SetQuerier({
         predCxtID: 6, // ID of the "is an important/useful inst..." Context.
-        predStr: "Relevant properties for derived terms|#" + data.termID,
+        predStr: "Relevant properties for derived terms|#" + data.cxtID,
         userID: 3,
         num: 4000,
         ratingLo: 0,
@@ -272,13 +262,13 @@ export var relevantListsDisplayCL = new ContentLoader(
     sdbInterfaceCL
 );
 relevantListsDisplayCL.addCallback("data", function(data) {
-    data.copyFromAncestor("termID");
+    data.copyFromAncestor("cxtID");
 });
 relevantListsDisplayCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralTermElement";
     data.setGenerator = new SetQuerier({
         predCxtID: 6, // ID of the "is an important/useful inst..." Context.
-        predStr: "Relevant lists for derived terms|#" + data.termID,
+        predStr: "Relevant lists for derived terms|#" + data.cxtID,
         userID: 3,
         num: 4000,
         ratingLo: 0,

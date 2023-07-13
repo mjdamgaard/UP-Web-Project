@@ -213,7 +213,18 @@ fullTermTitleCL.addCallback("data", function(data) {
     data.isFullTitle = true;
 });
 
-
+export var contextDisplayCL = new ContentLoader(
+    "ContextDisplay",
+    /* Initial HTML template */
+    '<span>' +
+        'Context: <<TermTitle>>' +
+    '</span>',
+    sdbInterfaceCL
+);
+contextDisplayCL.addCallback("data", function(data) {
+    data.termID = data.getFromAncestor("cxtID") ?? 1;
+    data.cxtID = null;
+});
 
 
 export var userTitleCL = new ContentLoader(
