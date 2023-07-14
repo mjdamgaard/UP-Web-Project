@@ -111,6 +111,11 @@ termNounPredicatePageCL.addCallback("data", function(data) {
 });
 
 
+// TODO: Obvoiusly gather the repeated code above and below at some point, and
+// probably gather it into a BasicSetQuerier class (subclass of SetQuerier).
+// Make that class take the CI data as an input parameter, from which to get the
+// input and query user IDs.
+
 
 export var termAppliesToPageCL = new ContentLoader(
     "TermAppliesToPage",
@@ -294,3 +299,72 @@ export var termSubmitInstancePageCL = new ContentLoader(
     '</div>',
     sdbInterfaceCL
 );
+
+
+
+
+export var termInfoPageCL = new ContentLoader(
+    "TermInfoPage",
+    /* Initial HTML template */
+    '<div>' +
+        '<h3>One-to-one properties</h3>' +
+        '<<SetDisplay data.propsData>>' +
+        '<h3>One-to-many properties</h3>' +
+        '<<SetDisplay data.listsData>>' +
+    '</div>',
+    sdbInterfaceCL
+);
+termInfoPageCL.addCallback("data", function(data) {
+    data.copyFromAncestor([
+        "termID",
+        "cxtID",
+    ]);
+});
+termInfoPageCL.addCallback("data", function(data) {
+    // Relevant properties:
+    data.propsData = {elemContentKey: "SemanticPropertyElement"};
+    let propSG1 = new SetQuerier({
+        predCxtID: 6, // ID of the "is an important/useful inst..." Context.
+        predStr: "Relevant properties|#" + data.termID,
+        queryUserID: 3,
+        inputUserID: 3,
+        num: 100,
+        ratingLo: 0,
+        ratingHi: 0,
+    });
+    let propSG2 = new SetQuerier({
+        predCxtID: 6, // ID of the "is an important/useful inst..." Context.
+        predStr: "Relevant properties for derived terms|#" + data.cxtID,
+        queryUserID: 3,
+        inputUserID: 3,
+        num: 100,
+        ratingLo: 0,
+        ratingHi: 0,
+    });
+    data.propsData.setGenerator = new MaxRatingSetCombiner([propSG1, propSG2]);
+    data.propsData.initialNum = 1;
+    data.propsData.incrementNum = 1;
+    // Relevant lists:
+    data.listsData = {elemContentKey: "SemanticListElement"};
+    let listSG1 = new SetQuerier({
+        predCxtID: 6, // ID of the "is an important/useful inst..." Context.
+        predStr: "Relevant lists|#" + data.termID,
+        queryUserID: 3,
+        inputUserID: 3,
+        num: 4000,
+        ratingLo: 0,
+        ratingHi: 0,
+    });
+    let listSG2 = new SetQuerier({
+        predCxtID: 6, // ID of the "is an important/useful inst..." Context.
+        predStr: "Relevant lists for derived terms|#" + data.cxtID,
+        queryUserID: 3,
+        inputUserID: 3,
+        num: 4000,
+        ratingLo: 0,
+        ratingHi: 0,
+    });
+    data.listsData.setGenerator = new MaxRatingSetCombiner([listSG1, listSG2]);
+    data.listsData.initialNum = 5;
+    data.listsData.incrementNum = 10;
+});
