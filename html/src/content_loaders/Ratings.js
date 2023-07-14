@@ -3,7 +3,7 @@ import {
     ContentLoader,
 } from "/src/ContentLoader.js";
 import {
-    sdbInterfaceCL,
+    sdbInterfaceCL, dbReqManager,
 } from "/src/content_loaders/SDBInterfaces.js";
 
 
@@ -49,7 +49,6 @@ ratingDisplayCL.addCallback(function($ci, data) {
     $ci.find('.statement .CI.TermTitle:last-of-type').trigger("load");
 });
 ratingDisplayCL.addCallback(function($ci, data) {
-    let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
     let reqData = {
         type: "rat",
         u: data.queryUserID,
@@ -128,7 +127,6 @@ inputRatingSliderCL.addCallback(function($ci, data) {
     $ci.find('button.clear').on("click", function() {
         let $ci = $(this).closest('.CI.InputRatingSlider');
         let data = $ci.data("data");
-        let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
         let reqData = {
             type: "rat",
             u: data.inputUserID,
@@ -152,7 +150,6 @@ inputRatingSliderCL.addCallback(function($ci, data) {
             let inputRatVal = Math.round(
                 $ci.find('input[type="range"]').val() * 6553.5
             );
-            let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
             let reqData = {
                 type: "rat",
                 u: data.inputUserID,

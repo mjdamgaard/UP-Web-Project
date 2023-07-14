@@ -3,7 +3,7 @@ import {
     ContentLoader,
 } from "/src/ContentLoader.js";
 import {
-    sdbInterfaceCL,
+    sdbInterfaceCL, dbReqManager,
 } from "/src/content_loaders/SDBInterfaces.js";
 
 
@@ -109,7 +109,6 @@ export class SetQuerier extends SetGenerator {
             callback = callbackData;
             callbackData = undefined;
         }
-        let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
         let setData = this.setData;
         if (setData.predID) {
             this.queryWithPredID(obj, callbackData, callback);
@@ -131,7 +130,6 @@ export class SetQuerier extends SetGenerator {
             callback = callbackData;
             callbackData = undefined;
         }
-        let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
         let setData = this.setData;
         let reqData = {
             type: "set",
@@ -179,7 +177,6 @@ export class SetCombiner extends SetGenerator {
             callback = callbackData;
             callbackData = undefined;
         }
-        let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
         let thisSG = this;
         this.setGeneratorArr.forEach(function(val, ind) {
             val.generateSet(thisSG, ind, function(sg, set, ind) {
@@ -300,7 +297,6 @@ export class MaxRatingSetCombiner extends SetCombiner {
 //             callback = callbackData;
 //             callbackData = undefined;
 //         }
-//         let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
 //         let setNum = this.setDataArr.length;
 //         for (let i = 0; i < setNum; i++) {
 //             let setData = this.setDataArr[i];
@@ -335,7 +331,6 @@ export class MaxRatingSetCombiner extends SetCombiner {
 //     }
 //
 //     querySetAndCombineIfReady(setData, i, callbackData, callback) {
-//         let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
 //         let queryParams = setData.queryParams;
 //         queryParams.offset ??= 0;;
 //         queryParams.isAscending ??= 0;;

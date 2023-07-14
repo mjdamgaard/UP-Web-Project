@@ -3,7 +3,7 @@ import {
     ContentLoader, ChildData,
 } from "/src/ContentLoader.js";
 import {
-    sdbInterfaceCL,
+    sdbInterfaceCL, dbReqManager,
 } from "/src/content_loaders/SDBInterfaces.js";
 
 
@@ -133,3 +133,5 @@ export var predicateDisplayCL = new ContentLoader(
 // and add as many of the recently encountered predicates as they want.. But do
 // I implement this now?
 // TODO: Figure this question out.
+// Okay, I'm actually just gonna make inserting the missing predicates automatic
+// in the beginning (even though this has to change).

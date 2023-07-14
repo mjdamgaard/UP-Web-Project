@@ -2,7 +2,7 @@ import {
     ContentLoader, ChildData,
 } from "/src/ContentLoader.js";
 import {
-    sdbInterfaceCL,
+    sdbInterfaceCL, dbReqManager,
 } from "/src/content_loaders/SDBInterfaces.js";
 
 
@@ -42,7 +42,6 @@ submitTermFieldCL.addCallback(function($ci, data) {
         $ci.trigger("append-input-fields", [labelArr]);
         return;
     }
-    let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
     let reqData = {
         type: "term",
         id: data.cxtID,
@@ -121,7 +120,6 @@ submitTermFieldCL.addCallback(function($ci, data) {
             return;
         }
         // upload the new Term.
-        let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
         let reqData = {
             type: "term",
             u: data.getFromAncestor("inputUserID"),

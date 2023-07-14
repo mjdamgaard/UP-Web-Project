@@ -3,7 +3,7 @@ import {
     ContentLoader, ChildData,
 } from "/src/ContentLoader.js";
 import {
-    sdbInterfaceCL,
+    sdbInterfaceCL, dbReqManager,
 } from "/src/content_loaders/SDBInterfaces.js";
 
 

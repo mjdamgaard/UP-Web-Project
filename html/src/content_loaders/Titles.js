@@ -3,7 +3,7 @@ import {
     ContentLoader, ChildData
 } from "/src/ContentLoader.js";
 import {
-    sdbInterfaceCL,
+    sdbInterfaceCL, dbReqManager,
 } from "/src/content_loaders/SDBInterfaces.js";
 
 
@@ -33,7 +33,6 @@ termTitleCL.addCallback(function($ci, data) {
         termTitleCL.loadAppended($ci, "TermLink", data);
         return;
     }
-    let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
     let reqData = {
         type: "term",
         id: data.termID,
@@ -45,7 +44,6 @@ termTitleCL.addCallback(function($ci, data) {
             loadTermTitleHTML($ci, data);
             return;
         }
-        let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
         let reqData = {
             type: "term",
             id: data.cxtID,

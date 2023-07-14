@@ -23,7 +23,7 @@ export var sdbInterfaceCL = new ContentLoader(
         '</main>' +
     '</div>',
 );
-sdbInterfaceCL.globalData.dbReqManager = new DBRequestManager();
+export var dbReqManager = new DBRequestManager();
 
 export var interfaceHeaderCL = new ContentLoader(
     "InterfaceHeader",

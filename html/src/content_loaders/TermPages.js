@@ -3,7 +3,7 @@ import {
     ContentLoader,
 } from "/src/ContentLoader.js";
 import {
-    sdbInterfaceCL,
+    sdbInterfaceCL, dbReqManager,
 } from "/src/content_loaders/SDBInterfaces.js";
 import {
     SetQuerier, SetCombiner, MaxRatingSetCombiner,
@@ -36,7 +36,6 @@ termPageCL.addCallback(function($ci, data) {
         $ci.children('.CI.PagesWithTabs').trigger("load");
         return;
     };
-    let dbReqManager = sdbInterfaceCL.globalData.dbReqManager;
     let reqData = {
         type: "term",
         id: data.termID,

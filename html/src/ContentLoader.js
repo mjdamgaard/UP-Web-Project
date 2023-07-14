@@ -118,9 +118,9 @@ export class ChildData {
 
 export class ContentLoader {
     constructor(
-        // these first two variables should not be undefined/null.
+        // These first two variables should not be undefined/null.
         contentKey, htmlTemplate,
-        parentCL, // this parameter should also generally be given, except in
+        parentCL, // This parameter should also generally be given, except in
         // the case of an outer CL (without a parent).
     ) {
         this.contentKey = contentKey;
@@ -139,13 +139,10 @@ export class ContentLoader {
         this.outwardCSSRules = [];
         this.inwardCSSRulesAreAdded = false;
         this.outwardCSSRulesAreAdded = false;
-        // this.globalData can be used for storing arbritary data (primitive
-        // data types and objects), including data necessary to ensure unique
-        // ids (even accross several, distant-related CIs).
-        this.globalData = {};
+        // this.globalData = {};
         // this.modSignals = {};
 
-        // set this.html via the setter below.
+        // Set this.html via the setter below.
         this.htmlTemplate = htmlTemplate;
     }
 
