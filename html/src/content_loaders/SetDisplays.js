@@ -123,15 +123,3 @@ export var predicateDisplayCL = new ContentLoader(
     '</div>',
     sdbInterfaceCL
 );
-// I'm considering how to add Terms to sets, and to add missing predicates. I
-// think that I will just add.. well, either add a submission field in Applies
-// to, or perhaps it's better to add this in a separate tab.. But anyway, the
-// secod question is harder: How to add missing predicates. A solution could be
-// to just use dialog boxes, or whatever they're called, as temporary solution,
-// but I would rather not do that.. I feel like the longer-term solution is to
-// have a queue of such missing predicates, where the user can go to that queue
-// and add as many of the recently encountered predicates as they want.. But do
-// I implement this now?
-// TODO: Figure this question out.
-// Okay, I'm actually just gonna make inserting the missing predicates automatic
-// in the beginning (even though this has to change).

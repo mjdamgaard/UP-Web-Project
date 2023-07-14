@@ -86,7 +86,8 @@ export class SetGenerator {
 /*
 setData = {
     (predCxtID, predStr, | predID,)
-    userID,
+    queryUserID,
+    inputUserID?, // (This property is only part of a temporary solution.)
     num, ratingLo, ratingHi,
     offset?, isAscending?,
 }
@@ -121,6 +122,20 @@ export class SetQuerier extends SetGenerator {
             dbReqManager.query(this, reqData, function(sg, result) {
                 setData.predID = (result[0] ?? [0])[0];
                 sg.queryWithPredID(obj, callbackData, callback);
+
+                // As a temporary solution for adding missing predicates, all
+                // predicates are just automatically submitted to the database,
+                // if they are missing in this query.
+                if (setData.predID || !setData.inputUserID) {
+                    return;
+                }
+                let reqData = {
+                    type: "term",
+                    u: setData.inputUserID,
+                    c: setData.predCxtID,
+                    s: setData.predStr,
+                };
+                dbReqManager.input(this, reqData, function() {});
             });
         }
     }
@@ -133,7 +148,7 @@ export class SetQuerier extends SetGenerator {
         let setData = this.setData;
         let reqData = {
             type: "set",
-            u: setData.userID,
+            u: setData.queryUserID,
             p: setData.predID,
             rl: setData.ratingLo,
             rh: setData.ratingHi,
@@ -269,7 +284,7 @@ export class MaxRatingSetCombiner extends SetCombiner {
 //     setData = {
 //         predCxtID, predStr, objID,
 //         predID?,
-//         userID,
+//         queryUserID,
 //         // weight, queryParams, ratTransFun?,
 //         set?,
 //         concatWithExistingSet?,
@@ -336,7 +351,7 @@ export class MaxRatingSetCombiner extends SetCombiner {
 //         queryParams.isAscending ??= 0;;
 //         let reqData = {
 //             type: "set",
-//             u: setData.userID,
+//             u: setData.queryUserID,
 //             p: setData.predID,
 //             rl: queryParams.ratingLo,
 //             rh: queryParams.ratingHi,

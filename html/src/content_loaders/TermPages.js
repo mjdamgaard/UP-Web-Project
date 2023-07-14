@@ -99,7 +99,8 @@ termNounPredicatePageCL.addCallback("data", function(data) {
     data.setGenerator = new SetQuerier({
         predCxtID: 6, // ID of the "is an important/useful inst..." Context.
         predStr: data.predNoun + "|#" + data.termID,
-        userID: 3,
+        queryUserID: 3,
+        inputUserID: 3,
         num: 4000,
         ratingLo: 0,
         ratingHi: 0,
@@ -120,7 +121,8 @@ termAppliesToPageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralTermElement";
     data.setGenerator = new SetQuerier({
         predID: data.getFromAncestor("termID"),
-        userID: 3,
+        queryUserID: 3,
+        inputUserID: 3,
         num: 4000,
         ratingLo: 0,
         ratingHi: 0,
@@ -147,7 +149,8 @@ termRatingsPageCL.addCallback("data", function(data) {
     let sg1 = new SetQuerier({
         predCxtID: 6, // ID of the "is an important/useful inst..." Context.
         predStr: "Relevant ratings|#" + data.termID,
-        userID: 3,
+        queryUserID: 3,
+        inputUserID: 3,
         num: 4000,
         ratingLo: 0,
         ratingHi: 0,
@@ -155,7 +158,8 @@ termRatingsPageCL.addCallback("data", function(data) {
     let sg2 = new SetQuerier({
         predCxtID: 6, // ID of the "is an important/useful inst..." Context.
         predStr: "Relevant ratings for derived terms|#" + data.cxtID,
-        userID: 3,
+        queryUserID: 3,
+        inputUserID: 3,
         num: 4000,
         ratingLo: 0,
         ratingHi: 0,
@@ -215,7 +219,8 @@ relevantRatingsDisplayCL.addCallback("data", function(data) {
     data.setGenerator = new SetQuerier({
         predCxtID: 6, // ID of the "is an important/useful inst..." Context.
         predStr: "Relevant ratings for derived terms|#" + data.cxtID,
-        userID: 3,
+        queryUserID: 3,
+        inputUserID: 3,
         num: 4000,
         ratingLo: 0,
         ratingHi: 0,
@@ -242,7 +247,8 @@ relevantPropertiesDisplayCL.addCallback("data", function(data) {
     data.setGenerator = new SetQuerier({
         predCxtID: 6, // ID of the "is an important/useful inst..." Context.
         predStr: "Relevant properties for derived terms|#" + data.cxtID,
-        userID: 3,
+        queryUserID: 3,
+        inputUserID: 3,
         num: 4000,
         ratingLo: 0,
         ratingHi: 0,
@@ -268,7 +274,8 @@ relevantListsDisplayCL.addCallback("data", function(data) {
     data.setGenerator = new SetQuerier({
         predCxtID: 6, // ID of the "is an important/useful inst..." Context.
         predStr: "Relevant lists for derived terms|#" + data.cxtID,
-        userID: 3,
+        queryUserID: 3,
+        inputUserID: 3,
         num: 4000,
         ratingLo: 0,
         ratingHi: 0,

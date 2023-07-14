@@ -38,10 +38,7 @@ export class DBRequestManager {
             delete ongoingQueries[reqDataKey];
             // unless reqData.type equals "set", or "bin", sanitize all
             // cells in the result table containing string values.
-            if (
-                reqData.type !== "set" &&
-                reqData.type !== "bin"
-            ) {
+            if (reqData.type !== "set" && reqData.type !== "bin") {
                 // TODO: Investigate how jQuery's automatic JSON-parsing of the
                 // numerical data as number types works for BIGINT outputs (will
                 // this cause overflow bugs??).
