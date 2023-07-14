@@ -58,6 +58,7 @@ termPageCL.addCallback(function($ci, data) {
                     predNoun: "Supercategories",
                 }],
                 ["Context", "TermContextPage", {}],
+                ["Submit instance", "TermSubmitInstancePage", {}],
                 // TODO: Implement the following two tabs as well.
                 // ["Comments", "TermCommentsPage", {}],
                 // ["Discussions", "TermDiscussionsPage", {}],
@@ -283,3 +284,13 @@ relevantListsDisplayCL.addCallback("data", function(data) {
     data.initialNum = 50;
     data.incrementNum = 50;
 });
+
+
+export var termSubmitInstancePageCL = new ContentLoader(
+    "TermSubmitInstancePage",
+    /* Initial HTML template */
+    '<div>' +
+        '<<SubmitInstanceField>>' +
+    '</div>',
+    sdbInterfaceCL
+);

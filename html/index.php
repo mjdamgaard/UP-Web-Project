@@ -74,7 +74,7 @@ $inputUserID = $paramValArr[2];
     import "/src/content_loaders/TermPages.js";
     import "/src/content_loaders/Titles.js";
     import "/src/content_loaders/Ratings.js";
-    import "/src/content_loaders/SubmitTermFields.js";
+    import "/src/content_loaders/SubmissionFields.js";
 
     import "/src/style_modules/style01.js";
 

@@ -216,26 +216,65 @@ extraInputFormGroupCL.addCallback(function($ci, data) {
 
 
 
-// '<div>' +
-//     '<h4>Submit a Predicate</h4>' +
-//     '<form action="javascript:void(0);">' +
-//         '<div class="form-group">' +
-//             '<label>Relation text:</label>' +
-//             '<textarea rows="1" class="form-control title"></textarea>' +
-//         '</div>' +
-//         '<div class="relation-id-display"></div>' +
-//
-//         '<div class="form-group">' +
-//             '<label>Object type:</label>' +
-//             '<input type="text" class="form-control specType">' +
-//         '</div>' +
-//         '<div class="form-group">' +
-//             '<label>Object ID:</label>' +
-//             '<input type="text" class="form-control specID">' +
-//         '</div>' +
-//         '<div class="object-title-display"></div>' +
-//
-//         '<button type="submit" class="btn btn-default">Submit</button>' +
-//     '</form>' +
-//     '<div class="response-display"></div>' +
-// '</div>',
+
+
+
+
+
+export var submitInstanceFieldCL = new ContentLoader(
+    "SubmitInstanceField",
+    /* Initial HTML template */
+    '<div>' +
+        '<h4>Submit an instance the <<TermTitle>> applies to</h4>' +
+        '<<SubmitInstanceForm>>' +
+    '</div>',
+    sdbInterfaceCL
+);
+export var submitInstanceFormCL = new ContentLoader(
+    "SubmitInstanceForm",
+    /* Initial HTML template */
+    '<div>' +
+        '<form action="javascript:void(0);">' +
+            '<div class="form-group">' +
+                '<label>ID:</label>' +
+                '<input type="text" class="form-control id"></input>' +
+            '</div>' +
+            '<button class="btn btn-default submit">Submit</button>' +
+        '</form>' +
+        '<div class="response-display"></div>' +
+    '</div>',
+    sdbInterfaceCL
+);
+submitInstanceFormCL.addCallback(function($ci, data) {
+    $ci.find('button.submit').on("click", function() {
+        $(this).trigger("submit-id");
+    });
+    $ci.on("submit-id", function() {
+        let $ci = $(this);
+        let inputVal = $ci.find('input.id').val();
+        // get the ID from the input field.
+        let id;
+        if (/^#[1-9][0-9]*$/.test(inputVal)) {
+            id = inputVal.substring(1);
+        } else if (/^[1-9][0-9]*$/.test(inputVal)) {
+            id = inputVal;
+        } else {
+            $ci.children('.response-display').html(
+                '<span class="text-warning">' +
+                    'Please insert a decimal number (w/wo a # in front)' +
+                '</span>'
+            );
+            return false;
+        }
+        // generate a rating display with this ID as the subjID.
+        data.subjID = id;
+        data.predID = data.getFromAncestor("termID");
+        data.prevInputRatVal = null;
+        submitInstanceFormCL.loadAfter($ci, "RatingDisplay", data);
+        $ci.find('button.submit').hide();
+        let $ratingDisplay = $ci.next();
+        submitInstanceFormCL.loadAfter($ratingDisplay, "self", data);
+        $ratingDisplay.after('<br>');
+        return false;
+    });
+});

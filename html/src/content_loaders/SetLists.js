@@ -169,7 +169,10 @@ export class SetQuerier extends SetGenerator {
     }
 
     getSetPredicates() {
-        return [this.setData.predID];
+        // There is a race condition here, so take heed of it and try not to
+        // call getSetPredicates() before the first termID queries.
+        // TODO: Consider if this race condition should be eliminated somehow. 
+        return [this.setData.predID ?? null];
     }
 }
 

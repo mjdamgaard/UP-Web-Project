@@ -25,9 +25,17 @@ termTitleCL.addCallback("data", function(data) {
     data.recLevel ??= -1;;
     data.recLevel++;
     data.maxRecLevel ??= 2;;
+    // TODO: This solution does not seem robust since a TermTitle might inherit
+    // a too high (not reset) recLevel (right?). So figure this out and then
+    // find an altered solution if this is indeed needed.
     data.isFullTitle = data.getFromAncestor("isFullTitle", 1) ?? false;
 });
 termTitleCL.addCallback(function($ci, data) {
+    if (!data.termID) {
+        return;
+        // TODO: Solve a current bug where the last Term is displayed when
+        // termID is a non-existing positive ID.
+    }
     if (data.recLevel > data.maxRecLevel) {
         data.linkContent = data.termID;
         termTitleCL.loadAppended($ci, "TermLink", data);

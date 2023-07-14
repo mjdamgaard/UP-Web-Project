@@ -126,16 +126,16 @@ sdbInterfaceCL.addCSS(
 
 generalTermElementCL.addCSS(
     'border-bottom: 1px solid gray;' +
-    // 'border-top: 1px solid gray;' +
+    'border-top: 1px solid gray;' +
     ''
 );
 ratingElementCL.addCSS(
     'border-bottom: 1px solid gray;' +
-    // 'border-top: 1px solid gray;' +
+    'border-top: 1px solid gray;' +
     ''
 );
 ratingDisplayCL.addCSS(
-    // 'border-bottom: 1px solid gray;' +
+    'border-bottom: 1px solid lightgray;' +
     'border-top: 1px solid lightgray;' +
     ''
 );

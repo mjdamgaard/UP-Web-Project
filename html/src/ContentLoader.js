@@ -84,6 +84,14 @@ export class ChildData {
         }
     }
 
+    copy(key, searchHeight) {
+        if (typeof this[key] !== "undefined") {
+            return this[key];
+        } else {
+            return this.copyFromAncestor(key, searchHeight);
+        }
+    }
+
     getFromAncestor(key, searchHeight) {
         if (searchHeight === 0) {
             return null;
