@@ -71,11 +71,6 @@ DELIMITER ;
 
 
 
-
-
-
-
-
 DELIMITER //
 CREATE PROCEDURE selectRecentInputs (
     IN startID BIGINT UNSIGNED,
@@ -94,8 +89,6 @@ BEGIN
     LIMIT maxNum;
 END //
 DELIMITER ;
-
-
 
 
 
@@ -139,8 +132,6 @@ DELIMITER ;
 
 
 
-
-
 DELIMITER //
 CREATE PROCEDURE selectUsername (
     IN userID BIGINT UNSIGNED
@@ -165,8 +156,6 @@ BEGIN
     WHERE id = userID;
 END //
 DELIMITER ;
-
-
 
 
 
@@ -196,7 +185,6 @@ END //
 DELIMITER ;
 
 
-
 DELIMITER //
 CREATE PROCEDURE selectBinary (
     IN binID BIGINT UNSIGNED
@@ -221,7 +209,6 @@ BEGIN
     WHERE id = binID;
 END //
 DELIMITER ;
-
 
 
 

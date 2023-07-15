@@ -3,7 +3,7 @@
 -- DROP TABLE SemanticInputs;
 -- DROP TABLE PrivateRecentInputs;
 -- DROP TABLE RecentInputs;
--- DROP TABLE Indexes;
+-- DROP TABLE EntityIndexKeys;
 --
 -- /* Entities */
 -- DROP TABLE Entities;
@@ -32,7 +32,7 @@ CREATE TABLE SemanticInputs (
     pred_id BIGINT UNSIGNED NOT NULL,
 
     /* The "input set" */
-    -- Given some constants for the above four columns, the input sets contains
+    -- Given some constants for the above two columns, the input sets contain
     -- pairs of rating values and the IDs of the predicate subjects.
     rat_val SMALLINT UNSIGNED NOT NULL,
     subj_id BIGINT UNSIGNED NOT NULL,
@@ -91,27 +91,29 @@ CREATE TABLE RecentInputs (
 --     )
 -- );
 
-CREATE TABLE Indexes (
-    -- User (or bot) who states the statement.
+CREATE TABLE EntityIndexKeys (
+    -- User (or bot) who governs the index.
     user_id BIGINT UNSIGNED NOT NULL,
-    -- Index.
+    -- Index entity which defines the restrictions on the entity keys.
     idx_id BIGINT UNSIGNED NOT NULL,
 
-    -- rat_val is changed for the subject's def_str in Indexes, when comparing
-    -- to SemanticInputs.
-    subj_def_str VARCHAR(255) NOT NULL,
-    subj_id BIGINT UNSIGNED NOT NULL,
+    /* The "entity index" */
+    -- Given some constants for the above two columns, the entity indexes
+    -- contain the "entity keys," which are each just the secondary index of an
+    -- entity.
+    ent_type CHAR(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    ent_tmpl_id BIGINT UNSIGNED,
+    ent_def_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
     PRIMARY KEY (
         user_id,
-        pred_id,
-        subj_def_str,
-        subj_id
-    ),
-
-    UNIQUE INDEX (user_id, pred_id, subj_id)
+        idx_id,
+        ent_type,
+        ent_tmpl_id,
+        ent_def_str
+    )
 );
-
+-- (Also needs compressing.)
 
 
 
@@ -129,6 +131,7 @@ CREATE TABLE Entities (
     -- All these types can have subclasses (and especially Objects), which is
     -- essentially what the Templates are used for defineing.
     type CHAR(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    
     -- ID of the template which defines how the defining string is to be
     -- interprested.
     tmpl_id BIGINT UNSIGNED,
@@ -158,7 +161,7 @@ VALUES
     (NULL, 'c', "Texts", 8),
     (NULL, 'c', "Binaries", 9),
     (NULL, 'c', "Aggregation algorithms (Bots)", 10),
-    (NULL, 'u', "admin_1", 11),
+    (NULL, 'u', "admin_1", 11);
 
 
 
@@ -166,7 +169,7 @@ CREATE TABLE Users (
     -- User ID.
     id BIGINT UNSIGNED PRIMARY KEY,
 
-    username VARCHAR(50) UNIQUE,
+    username VARCHAR(50) UNIQUE, -- TODO: Consider adding more restrictions.
 
     public_keys_for_authentication TEXT,
     -- (In order for third parties to be able to copy the database and then
