@@ -26,13 +26,13 @@
  * that the statement is correct (like when answering a survey).
  **/
 CREATE TABLE SemanticInputs (
-    -- user (or bot) who states the statement.
+    -- User (or bot) who states the statement.
     user_id BIGINT UNSIGNED NOT NULL,
-    -- predicate.
+    -- Predicate of the statement.
     pred_id BIGINT UNSIGNED NOT NULL,
 
     /* The "input set" */
-    -- given some constants for the above four columns, the input sets contains
+    -- Given some constants for the above four columns, the input sets contains
     -- pairs of rating values and the IDs of the predicate subjects.
     rat_val SMALLINT UNSIGNED NOT NULL,
     subj_id BIGINT UNSIGNED NOT NULL,
@@ -55,8 +55,7 @@ CREATE TABLE PrivateRecentInputs (
 
     user_id BIGINT UNSIGNED NOT NULL,
     pred_id BIGINT UNSIGNED NOT NULL,
-    -- new rating value.
-    rat_val SMALLINT UNSIGNED,
+    rat_val SMALLINT UNSIGNED, -- new rating value:
     subj_id BIGINT UNSIGNED NOT NULL,
 
     live_after TIME
@@ -69,8 +68,7 @@ CREATE TABLE RecentInputs (
 
     user_id BIGINT UNSIGNED NOT NULL,
     pred_id BIGINT UNSIGNED NOT NULL,
-    -- new rating value.
-    rat_val SMALLINT UNSIGNED,
+    rat_val SMALLINT UNSIGNED, -- new rating value.
     subj_id BIGINT UNSIGNED NOT NULL,
 
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -94,10 +92,10 @@ CREATE TABLE RecentInputs (
 -- );
 
 CREATE TABLE Indexes (
-    -- user (or bot) who states the statement.
+    -- User (or bot) who states the statement.
     user_id BIGINT UNSIGNED NOT NULL,
-    -- predicate.
-    pred_id BIGINT UNSIGNED NOT NULL,
+    -- Index.
+    idx_id BIGINT UNSIGNED NOT NULL,
 
     -- rat_val is changed for the subject's def_str in Indexes, when comparing
     -- to SemanticInputs.
@@ -118,45 +116,64 @@ CREATE TABLE Indexes (
 
 
 
-
-
-CREATE TABLE Terms (
-    -- term ID.
+CREATE TABLE Templates (
+    -- Template ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- id of the context which tells how the subsequent columns are to be
-    -- interpreted. (Null implies the default context of the SDB, and terms
-    -- with null as their context will use "Terms", id = 1, as a substitute for
-    -- their context. Note that context IDs of 1--5 are not allowed.)
-    context_id BIGINT UNSIGNED,
+    -- String defining the term template (see initial_inserts.sql for some
+    -- examples).
+    tmpl_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
-    -- defining string of the term. This can be a lexical item, understood in
-    -- the context of the term with id = context_id. Or it can be a list of
-    -- term IDs, separated by commas, whose interpretation will then typically
-    -- be given by a "Template context", see initial_inserts.sql for how these
-    -- "Template contexts" work. Predicate terms, which are an important part
-    -- of this system, will also often be formed this way, namely where at
-    -- least one ID in the list represent a relation, and where one ID
-    -- represents the object. This is how we are able to implement semantic
-    -- relations; via compound predicates made from such "Template contexts."
-    -- Again, see initial_inserts.sql for how this works.
-    def_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-
-    UNIQUE INDEX (context_id, def_str)
+    UNIQUE INDEX (tmpl_str)
 );
 
-INSERT INTO Terms (context_id, def_str, id)
+CREATE TABLE Terms (
+    -- Term ID.
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    -- Type of the term. Can be 'p' for Predicate, 'c' for Category, 'o' for
+    -- Object, 'i' for Index, 'u' for User, 't' for Text, 'b' for Binary, or
+    -- 'a' for Aggregation algorithms (Bots).
+    -- Note that 'Object' here is used as a very broad term. So for any kind of
+    -- Term that does not fit any of the other types, simply choose 'Object' as
+    -- its type.
+    -- All these types can have subclasses (and especially Objects), which is
+    -- essentially what the Templates are used for defineing.
+    type CHAR(1),
+    -- ID of the template which defines how the defining string is to be
+    -- interprested.
+    tmpl_id BIGINT UNSIGNED,
+
+    -- Defining string of the term. This can be a lexical item, understood in
+    -- the context of the type alone if tmpl_id is null. If the tmpl_id is not
+    -- null, the def_str can be a series of inputs separated by '|' of either
+    -- IDs of the form "#<number>" (e.g. "#100") or any other string (e.g.
+    -- "Physics"). These inputs is then plugged into the placeholders of the
+    -- template in order of appearence and the resulting string is then
+    -- interpreted in the context of the type to yield the definition of the
+    -- Term.
+    def_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+
+    UNIQUE INDEX (type, tmpl_id, def_str)
+);
+
+INSERT INTO Terms (tmpl_id, type, def_str, id)
 VALUES
-    (NULL, "Terms", 1),
-    (NULL, "{Users} of the SDB", 2),
-    (2, "admin_1", 3),
-    (NULL, "{Texts} of the SDB", 4),
-    (NULL, "{Binaries} of the SDB", 5);
+    (NULL, 'c', "Terms", 1),
+    (NULL, 'c', "Categories", 2),
+    (NULL, 'c', "Predicates", 3),
+    (NULL, 'c', "Objects", 4),
+    (NULL, 'c', "Indexes", 5),
+    (NULL, 'c', "Users", 6),
+    (NULL, 'c', "Texts", 7),
+    (NULL, 'c', "Binaries", 8),
+    (NULL, 'c', "Aggregation algorithms (Bots)", 9),
+    (NULL, 'u', "admin_1", 10),
 
 
 
 CREATE TABLE Users (
-    -- user ID.
+    -- User ID.
     id BIGINT UNSIGNED PRIMARY KEY,
 
     username VARCHAR(50) UNIQUE,
@@ -177,23 +194,23 @@ CREATE TABLE Users (
 );
 
 INSERT INTO Users (username, id)
-VALUES ("admin_1", 3);
+VALUES ("admin_1", 10);
 
 
 
 CREATE TABLE Texts (
-    /* text ID */
+    /* Text ID */
     id BIGINT UNSIGNED PRIMARY KEY,
 
-    /* data */
+    /* Data */
     str TEXT NOT NULL
 );
 
 CREATE TABLE Binaries (
-    /* binary string ID */
+    /* Binary string ID */
     id BIGINT UNSIGNED PRIMARY KEY,
 
-    /* data */
+    /* Data */
     bin LONGBLOB NOT NULL
 );
 

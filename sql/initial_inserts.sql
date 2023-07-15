@@ -16,29 +16,33 @@ DELETE FROM PrivateCreators;
 
 
 /* From create_open_sdb.sql */
-INSERT INTO Terms (context_id, def_str, id)
+INSERT INTO Terms (tmpl_id, type, def_str, id)
 VALUES
-    (NULL, "Terms", 1),
-    (NULL, "Users of the SDB", 2),
-    (2, "admin_1", 3),
-    (NULL, "Texts of the SDB", 4),
-    (NULL, "Binaries of the SDB", 5);
+    (NULL, 'c', "Terms", 1),
+    (NULL, 'c', "Categories", 2),
+    (NULL, 'c', "Predicates", 3),
+    (NULL, 'c', "Objects", 4),
+    (NULL, 'c', "Indexes", 5),
+    (NULL, 'c', "Users", 6),
+    (NULL, 'c', "Texts", 7),
+    (NULL, 'c', "Binaries", 8),
+    (NULL, 'c', "Aggregation algorithms (Bots)", 9),
+    (NULL, 'u', "admin_1", 10),
 INSERT INTO Users (username, id)
-VALUES ("admin_1", 3);
+VALUES ("admin_1", 10);
 
-/* Some other important initial inserts */
-INSERT INTO Terms (context_id, def_str, id)
+/* Some important templates */
+INSERT INTO Templates (tmpl_str, id)
 VALUES
-    (NULL, "is an important/useful instance of the {<Noun phrase> of <Term>}", 6),
-    (NULL, "<Predicate> applies to <Term>", 7),
-    (NULL, "is {<Adjective phrase>}", 8),
-    -- (some room for more inserts)
-    (NULL, "ExAmPlE oF a NoT vErY uSeFuL tErM", 21);
+    (NULL, "is an important/useful instance of the {<Noun phrase> of <Term>}", 1),
+    (NULL, "Statement: {<Predicate> applies to <Term>}", 2),
+    (NULL, "is {<Adjective phrase>}", 3);
 
 
 
 /* More inserts for testing */
 
+CALL insertOrFindTerm(3, 0, "ExAmPlE oF a NoT vErY uSeFuL tErM"); -- id: 22
 CALL insertOrFindTerm(3, 0, "Music"); -- id: 22
 CALL insertOrFindTerm(3, 0, "Music genre: {<Title>}"); -- id: 23
 CALL insertOrFindTerm(3, 23, "Rock"); -- id: 24
