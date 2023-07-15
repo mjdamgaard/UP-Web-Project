@@ -5,8 +5,8 @@
 -- DROP TABLE RecentInputs;
 -- DROP TABLE Indexes;
 --
--- /* Terms */
--- DROP TABLE Terms;
+-- /* Entities */
+-- DROP TABLE Entities;
 --
 -- /* Data */
 -- DROP TABLE Users;
@@ -116,59 +116,49 @@ CREATE TABLE Indexes (
 
 
 
-CREATE TABLE Templates (
-    -- Template ID.
+CREATE TABLE Entities (
+    -- Entity ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- String defining the term template (see initial_inserts.sql for some
-    -- examples).
-    tmpl_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-
-    UNIQUE INDEX (tmpl_str)
-);
-
-CREATE TABLE Terms (
-    -- Term ID.
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
-    -- Type of the term. Can be 'p' for Predicate, 'c' for Category, 'o' for
-    -- Object, 'i' for Index, 'u' for User, 't' for Text, 'b' for Binary, or
-    -- 'a' for Aggregation algorithms (Bots).
+    -- Type of the entity. This can be 'c' for Category, 'm' for Template, 'p'
+    -- for Predicate, 'o' for Object, 'i' for Index, 'u' for User, 'x' for Text,
+    -- 'b' for Binary, or 'a' for Aggregation algorithm (Bot).
     -- Note that 'Object' here is used as a very broad term. So for any kind of
-    -- Term that does not fit any of the other types, simply choose 'Object' as
-    -- its type.
+    -- entity that does not fit any of the other types, simply choose 'Object'
+    -- as its type.
     -- All these types can have subclasses (and especially Objects), which is
     -- essentially what the Templates are used for defineing.
-    type CHAR(1),
+    type CHAR(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
     -- ID of the template which defines how the defining string is to be
     -- interprested.
     tmpl_id BIGINT UNSIGNED,
 
-    -- Defining string of the term. This can be a lexical item, understood in
+    -- Defining string of the entity. This can be a lexical item, understood in
     -- the context of the type alone if tmpl_id is null. If the tmpl_id is not
     -- null, the def_str can be a series of inputs separated by '|' of either
     -- IDs of the form "#<number>" (e.g. "#100") or any other string (e.g.
     -- "Physics"). These inputs is then plugged into the placeholders of the
     -- template in order of appearence and the resulting string is then
     -- interpreted in the context of the type to yield the definition of the
-    -- Term.
+    -- entity.
     def_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
     UNIQUE INDEX (type, tmpl_id, def_str)
 );
 
-INSERT INTO Terms (tmpl_id, type, def_str, id)
+INSERT INTO Entities (tmpl_id, type, def_str, id)
 VALUES
-    (NULL, 'c', "Terms", 1),
+    (NULL, 'c', "Entities", 1),
     (NULL, 'c', "Categories", 2),
-    (NULL, 'c', "Predicates", 3),
-    (NULL, 'c', "Objects", 4),
-    (NULL, 'c', "Indexes", 5),
-    (NULL, 'c', "Users", 6),
-    (NULL, 'c', "Texts", 7),
-    (NULL, 'c', "Binaries", 8),
-    (NULL, 'c', "Aggregation algorithms (Bots)", 9),
-    (NULL, 'u', "admin_1", 10),
+    (NULL, 'c', "Templates", 3),
+    (NULL, 'c', "Predicates", 4),
+    (NULL, 'c', "Objects", 5),
+    (NULL, 'c', "Indexes", 6),
+    (NULL, 'c', "Users", 7),
+    (NULL, 'c', "Texts", 8),
+    (NULL, 'c', "Binaries", 9),
+    (NULL, 'c', "Aggregation algorithms (Bots)", 10),
+    (NULL, 'u', "admin_1", 11),
 
 
 
@@ -194,7 +184,7 @@ CREATE TABLE Users (
 );
 
 INSERT INTO Users (username, id)
-VALUES ("admin_1", 10);
+VALUES ("admin_1", 11);
 
 
 
@@ -221,12 +211,12 @@ CREATE TABLE Binaries (
 
 
 CREATE TABLE PrivateCreators (
-    term_id BIGINT UNSIGNED PRIMARY KEY,
+    ent_id BIGINT UNSIGNED PRIMARY KEY,
 
     user_id BIGINT UNSIGNED NOT NULL,
     INDEX (user_id)
 );
 -- (These should generally be deleted quite quickly, and instead a special bot
--- should rate which Term is created by which user, if and only if the given
+-- should rate which entity is created by which user, if and only if the given
 -- user has declared that they are the creater themselves (by rating the same
 -- predicate before the bot).)

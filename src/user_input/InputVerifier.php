@@ -18,6 +18,22 @@ class InputVerifier {
 
     public static function verifyType($paramVal, $type, $paramName) {
         switch($type) {
+            case "type":
+                $pattern = "/^[cmpoiuxba]$/";
+                if (!preg_match($pattern, $paramVal)) {
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, $pattern
+                    );
+                }
+                break;
+            case "termtype":
+                $pattern = "/^[cpo]$/";
+                if (!preg_match($pattern, $paramVal)) {
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, $pattern
+                    );
+                }
+                break;
             case "id":
                 $pattern = "/^[1-9][0-9]*|0$/";
                 if (

@@ -64,17 +64,17 @@ switch ($reqType) {
         $typeArr = array("id", "uint");
         // output: [[userID, predID, ratVal, subjID, changedAt], ...].
         break;
-    case "term":
-        $sql = "CALL selectTerm (?)";
+    case "ent":
+        $sql = "CALL selectEntity (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [[cxtID, defStr]].
+        // output: [[type, tmplID, defStr]].
         break;
-    case "termID":
-        $sql = "CALL selectTermID (?, ?)";
-        $paramNameArr = array("c", "s");
-        $typeArr = array("id", "str");
-        // output: [[termID]].
+    case "entID":
+        $sql = "CALL selectEntityID (?, ?, ?)";
+        $paramNameArr = array("ty", "tm", "s");
+        $typeArr = array("type", "id", "str");
+        // output: [[entID]].
         break;
     case "username":
         $sql = "CALL selectUsername (?)";

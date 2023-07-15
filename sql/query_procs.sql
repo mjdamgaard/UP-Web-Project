@@ -5,8 +5,8 @@ SELECT "Query procedures";
 -- DROP PROCEDURE selectRating;
 -- DROP PROCEDURE selectRecentInputs;
 --
--- DROP PROCEDURE selectTerm;
--- DROP PROCEDURE selectTermID;
+-- DROP PROCEDURE selectEntity;
+-- DROP PROCEDURE selectEntityID;
 --
 -- DROP PROCEDURE selectUsername;
 -- DROP PROCEDURE selectUserInfo;
@@ -101,33 +101,36 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectTerm (
-    IN termID BIGINT UNSIGNED
+CREATE PROCEDURE selectEntity (
+    IN entID BIGINT UNSIGNED
 )
 BEGIN
     SELECT
-        context_id AS cxtID,
+        type AS type,
+        tmpl_id AS tmplID,
         def_str AS defStr
-    FROM Terms
-    WHERE id = termID;
+    FROM Entities
+    WHERE id = entID;
 END //
 DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectTermID (
-    IN cxtID BIGINT UNSIGNED,
+CREATE PROCEDURE selectEntityID (
+    IN t CHAR(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN tmplID BIGINT UNSIGNED,
     IN defStr VARCHAR(255)
 )
 BEGIN
-    IF (cxtID = 0) THEN
-        SET cxtID = NULL;
+    IF (tmplID = 0) THEN
+        SET tmplID = NULL;
     END IF;
 
-    SELECT id AS termID
-    FROM Terms
+    SELECT id AS entID
+    FROM Entities
     WHERE (
-        context_id <=> cxtID AND
+        type = t AND
+        tmpl_id <=> tmplID AND
         def_str = defStr
     );
 END //
@@ -226,12 +229,12 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE private_selectCreator (
-    IN termID BIGINT UNSIGNED
+    IN entID BIGINT UNSIGNED
 )
 BEGIN
     SELECT user_id AS userID
     FROM PrivateCreators
-    WHERE term_id = termID;
+    WHERE ent_id = entID;
 END //
 DELIMITER ;
 
@@ -244,12 +247,12 @@ CREATE PROCEDURE private_selectCreations (
     IN isAscOrder BOOL
 )
 BEGIN
-    SELECT term_id AS termID
+    SELECT ent_id AS entID
     FROM PrivateCreators
     WHERE user_id = userID
     ORDER BY
-        CASE WHEN isAscOrder THEN term_id END ASC,
-        CASE WHEN NOT isAscOrder THEN term_id END DESC
+        CASE WHEN isAscOrder THEN ent_id END ASC,
+        CASE WHEN NOT isAscOrder THEN ent_id END DESC
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;

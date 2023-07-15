@@ -44,19 +44,24 @@ switch ($reqType) {
         $typeArr = array("id", "id", "id", "ushort", "time");
         break;
     case "term":
-        $sql = "CALL insertOrFindTerm (?, ?, ?)";
-        $paramNameArr = array("u", "c", "s");
-        $typeArr = array("id", "id", "str");
+        $sql = "CALL insertOrFindTerm (?, ?, ?, ?)";
+        $paramNameArr = array("u", "ty", "tm" "s");
+        $typeArr = array("id", "termtype", "id", "str");
+        break;
+    case "tmpl":
+        $sql = "CALL insertOrFindTemplate (?, ?)";
+        $paramNameArr = array("u", "s");
+        $typeArr = array("id", "str");
         break;
     case "text":
-        $sql = "CALL insertText (?, ?)";
-        $paramNameArr = array("u", "s");
-        $typeArr = array("id", "text");
+        $sql = "CALL insertText (?, ?, ?)";
+        $paramNameArr = array("u", "n", "s");
+        $typeArr = array("id", "str", "text");
         break;
     case "bin":
-        // $sql = "CALL insertBinary (?, ?)";
-        // $paramNameArr = array("u", "b");
-        // $typeArr = array("id", "blob");
+        // $sql = "CALL insertBinary (?, ?, ?)";
+        // $paramNameArr = array("u", "n", "b");
+        // $typeArr = array("id", "str", "blob");
         echoErrorJSONAndExit('The "bin" request type is not implemented yet');
         break;
     default:
