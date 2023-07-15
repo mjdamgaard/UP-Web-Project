@@ -40,7 +40,7 @@ VALUES
 /* More inserts for testing */
 
 CALL insertOrFindTerm(3, 0, "Music"); -- id: 22
-CALL insertOrFindTerm(3, 0, "<Title> (music genre)"); -- id: 23
+CALL insertOrFindTerm(3, 0, "Music genre: {<Title>}"); -- id: 23
 CALL insertOrFindTerm(3, 23, "Rock"); -- id: 24
 CALL insertOrFindTerm(3, 23, "Jazz"); -- id: 25
 CALL insertOrFindTerm(3, 23, "Hip hop"); -- id: 26
@@ -54,7 +54,7 @@ CALL insertOrFindTerm(3, 27,
 ); -- id: 29
 
 CALL insertOrFindTerm(3, 0, "Science"); -- id: 30
-CALL insertOrFindTerm(3, 0, "<Title> (field of science)"); -- id: 31
+CALL insertOrFindTerm(3, 0, "Field of science: {<Title>}"); -- id: 31
 CALL insertOrFindTerm(3, 31, "Music"); -- id: 32
 CALL insertOrFindTerm(3, 31, "Cinematography"); -- id: 33
 CALL insertOrFindTerm(3, 31, "Physics"); -- id: 34

@@ -141,7 +141,12 @@ termAppliesToPageCL.addCallback("data", function(data) {
 export var termRatingsPageCL = new ContentLoader(
     "TermRatingsPage",
     /* Initial HTML template */
-    '<<SetDisplay>>',
+    '<div>' +
+        '<h4>Relevant predicates</h4>' +
+        '<<SetDisplay data.predData>>' +
+        '<h4>Relevant categories</h4>' +
+        '<<SetDisplay data.catData>>' +
+    '</div>',
     sdbInterfaceCL
 );
 termRatingsPageCL.addCallback("data", function(data) {
@@ -151,7 +156,8 @@ termRatingsPageCL.addCallback("data", function(data) {
     ]);
 });
 termRatingsPageCL.addCallback("data", function(data) {
-    data.elemContentKey = "RatingElement";
+    // Relevant predicates:
+    data.predData = {elemContentKey: "RatingElement"};
     let sg1 = new SetQuerier({
         predCxtID: 6, // ID of the "is an important/useful inst..." Context.
         predStr: "Relevant ratings|#" + data.termID,
@@ -170,9 +176,22 @@ termRatingsPageCL.addCallback("data", function(data) {
         ratingLo: 0,
         ratingHi: 0,
     });
-    data.setGenerator = new MaxRatingSetCombiner([sg1, sg2]);
-    data.initialNum = 50;
-    data.incrementNum = 50;
+    data.predData.setGenerator = new MaxRatingSetCombiner([sg1, sg2]);
+    data.predData.initialNum = 50;
+    data.predData.incrementNum = 50;
+        // Relevant categories:
+    data.catData = {elemContentKey: "RatingElement"};
+    data.catData.setGenerator = new SetQuerier({
+        predCxtID: 6, // ID of the "is an important/useful inst..." Context.
+        predStr: "Relevant categories for derived terms|#" + data.cxtID,
+        queryUserID: 3,
+        inputUserID: 3,
+        num: 4000,
+        ratingLo: 0,
+        ratingHi: 0,
+    });
+    data.catData.initialNum = 50;
+    data.catData.incrementNum = 50;
 });
 termRatingsPageCL.addCallback("data", function(data) {
     data.subjID = data.getFromAncestor("columnTermID");
@@ -188,9 +207,10 @@ export var termContextPageCL = new ContentLoader(
     '<div>' +
         '<h3><<ContextDisplay>></h3>' +
         '<<SubmitDerivedTermField>>' +
-        '<<RelevantRatingsDisplay>>' +
-        '<<RelevantPropertiesDisplay>>' +
-        '<<RelevantListsDisplay>>' +
+        '<<RelevantPredicatesField>>' +
+        '<<RelevantCategoriesField>>' +
+        '<<RelevantPropertiesField>>' +
+        '<<RelevantListsField>>' +
     '</div>',
     sdbInterfaceCL
 );
@@ -208,8 +228,8 @@ submitDerivedTermFieldCL.addCallback("data", function(data) {
 });
 
 
-export var relevantRatingsDisplayCL = new ContentLoader(
-    "RelevantRatingsDisplay",
+export var relevantPredicatesFieldCL = new ContentLoader(
+    "RelevantPredicatesField",
     /* Initial HTML template */
     '<div>' +
         '<h4>Relevant ratings for derived terms</h4>' +
@@ -217,10 +237,10 @@ export var relevantRatingsDisplayCL = new ContentLoader(
     '</div>',
     sdbInterfaceCL
 );
-relevantRatingsDisplayCL.addCallback("data", function(data) {
+relevantPredicatesFieldCL.addCallback("data", function(data) {
     data.copyFromAncestor("cxtID");
 });
-relevantRatingsDisplayCL.addCallback("data", function(data) {
+relevantPredicatesFieldCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralTermElement";
     data.setGenerator = new SetQuerier({
         predCxtID: 6, // ID of the "is an important/useful inst..." Context.
@@ -234,10 +254,36 @@ relevantRatingsDisplayCL.addCallback("data", function(data) {
     data.initialNum = 50;
     data.incrementNum = 50;
 });
+export var relevantCategoriesFieldCL = new ContentLoader(
+    "RelevantCategoriesField",
+    /* Initial HTML template */
+    '<div>' +
+        '<h4>Relevant categories for derived terms</h4>' +
+        '<<SetDisplay>>' +
+    '</div>',
+    sdbInterfaceCL
+);
+relevantCategoriesFieldCL.addCallback("data", function(data) {
+    data.copyFromAncestor("cxtID");
+});
+relevantCategoriesFieldCL.addCallback("data", function(data) {
+    data.elemContentKey = "GeneralTermElement";
+    data.setGenerator = new SetQuerier({
+        predCxtID: 6, // ID of the "is an important/useful inst..." Context.
+        predStr: "Relevant categories for derived terms|#" + data.cxtID,
+        queryUserID: 3,
+        inputUserID: 3,
+        num: 4000,
+        ratingLo: 0,
+        ratingHi: 0,
+    });
+    data.initialNum = 50;
+    data.incrementNum = 50;
+});
 
 
-export var relevantPropertiesDisplayCL = new ContentLoader(
-    "RelevantPropertiesDisplay",
+export var relevantPropertiesFieldCL = new ContentLoader(
+    "RelevantPropertiesField",
     /* Initial HTML template */
     '<div>' +
         '<h4>Relevant properties for derived terms</h4>' +
@@ -245,10 +291,10 @@ export var relevantPropertiesDisplayCL = new ContentLoader(
     '</div>',
     sdbInterfaceCL
 );
-relevantPropertiesDisplayCL.addCallback("data", function(data) {
+relevantPropertiesFieldCL.addCallback("data", function(data) {
     data.copyFromAncestor("cxtID");
 });
-relevantPropertiesDisplayCL.addCallback("data", function(data) {
+relevantPropertiesFieldCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralTermElement";
     data.setGenerator = new SetQuerier({
         predCxtID: 6, // ID of the "is an important/useful inst..." Context.
@@ -263,8 +309,8 @@ relevantPropertiesDisplayCL.addCallback("data", function(data) {
     data.incrementNum = 50;
 });
 
-export var relevantListsDisplayCL = new ContentLoader(
-    "RelevantListsDisplay",
+export var relevantListsFieldCL = new ContentLoader(
+    "RelevantListsField",
     /* Initial HTML template */
     '<div>' +
         '<h4>Relevant lists for derived terms</h4>' +
@@ -272,10 +318,10 @@ export var relevantListsDisplayCL = new ContentLoader(
     '</div>',
     sdbInterfaceCL
 );
-relevantListsDisplayCL.addCallback("data", function(data) {
+relevantListsFieldCL.addCallback("data", function(data) {
     data.copyFromAncestor("cxtID");
 });
-relevantListsDisplayCL.addCallback("data", function(data) {
+relevantListsFieldCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralTermElement";
     data.setGenerator = new SetQuerier({
         predCxtID: 6, // ID of the "is an important/useful inst..." Context.
