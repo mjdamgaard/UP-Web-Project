@@ -8,16 +8,15 @@ other parties to copy, at least for a majority of the (non-sensitive) data.
 
 By 'semantic' we refer to the fact that entities in the database can be linked
 via (user-provided) relations that can carry any meaning. Thus, if we take the
-fundamental entities inhabiting the database, which openSDB calls 'Terms' and
-which can represent everything from web resources to real-life objects, places
-and persons, the users of the SDB can then upload links between all these Terms
-in the form of relations, expressed as lexical items in a natural language
-(such as English).
+fundamental entities inhabiting the database, which can represent everything
+from web resources to real-life objects, places and persons, the users of the
+SDB can then upload links between all these entities in the form of relations,
+expressed as lexical items in a natural language (such as English).
 
 For instance we could have the lexical item: "is the director of", which a user
 might want to use as a relation to express e.g. that Peter Jackson is the
 director of The Lord of the Rings: The Fellowship of the Ring. That user can
-then upload or find the Terms "is the director of", "Peter Jackson" and "The
+then upload or find the entities "is the director of", "Peter Jackson" and "The
 Lord of the Rings: The Fellowship of the Ring" and subsequently use these to
 construct the statement: "Peter Jackson is the director of Lord of the Rings:
 The Fellowship of the Ring."

@@ -8,16 +8,15 @@ other parties to copy, at least for a majority of the (non-sensitive) data.
 
 By 'semantic' we refer to the fact that entities in the database can be linked
 via (user-provided) relations that can carry any meaning. Thus, if we take the
-fundamental entities inhabiting the database, which openSDB calls 'Terms' and
-which can represent everything from web resources to real-life objects, places
-and persons, the users of the SDB can then upload links between all these Terms
-in the form of relations, expressed as lexical items in a natural language
-(such as English).
+fundamental entities inhabiting the database, which can represent everything
+from web resources to real-life objects, places and persons, the users of the
+SDB can then upload links between all these entities in the form of relations,
+expressed as lexical items in a natural language (such as English).
 
 For instance we could have the lexical item: "is the director of", which a user
 might want to use as a relation to express e.g. that Peter Jackson is the
 director of The Lord of the Rings: The Fellowship of the Ring. That user can
-then upload or find the Terms "is the director of", "Peter Jackson" and "The
+then upload or find the entities "is the director of", "Peter Jackson" and "The
 Lord of the Rings: The Fellowship of the Ring" and subsequently use these to
 construct the statement: "Peter Jackson is the director of Lord of the Rings:
 The Fellowship of the Ring."
@@ -93,7 +92,7 @@ The example from before with "Peter Jackson" + "is the director of" + "Lord of
 the Rings: The Fellowship of the Ring" explains the general concept of a
 semantic system, but openSDB does not actually store semantic links directly as
 triplets like this. Instead the system stores semantic statements as
-predicate–subject pairs, but allows Terms to be compound, meaning that a
+predicate–subject pairs, but allows entities to be compound, meaning that a
 predicate can be formed from a relation and an object. One could for example
 form a predicate from "is the director of" and "Lord of the Rings: The
 Fellowship of the Ring" put together. This choice makes queries faster by a
@@ -140,41 +139,41 @@ place of users in the user ID column of the semantic inputs table. The input
 sets of these "bots" will then be maintained via continuous scheduled events
 that update the ratings according to recent user inputs.
 
-### Terms
+### Enities
 
-'Terms' refers to the semantic units of the system, including the relations and
-predicates, and even including the users themselves since each new user of
-the SDB will get their own Term representing them. All Terms have a unique ID,
-first of all, and are defined by two fields: an ID of a so-called
-'Context,'' which are themselves a kind of Terms, and then a 'defining string.'
-The Context defines, typically via a template, how the defining string is to be
-interpreted semantically. An example of such a template could be: "Movie:
-\<Title\>, \<Year\>", and an example of a Term that defines an instance of this
-template could be one that had "The Lord of the Rings: The Fellowship of the
-Ring|2001" as its defining string. Note that '|' is thus used as a delimiter for
-dividing a defining string up into several parts.
+'Enities' refers to the semantic units of the system, including the relations
+and predicates, and even including the users themselves since each new user of
+the SDB will get their own entity representing them. All entities have a unique
+ID, first of all, and are defined by two fields: an ID of a 'template,' which
+are themselves a kind of entity, and then a 'defining string.'
+The template defines how the defining string is to be interpreted semantically.
+An example of such a template could be: "Movie: \<Title\>, \<Year\>", and an
+example of an entity that defines an instance of this template could be one
+that had "The Lord of the Rings: The Fellowship of the Ring|2001" as its
+defining string. Note that '|' is thus used as a delimiter for dividing a
+defining string up into several parts.
 
 To give another example, let us say this "Movie: \<Title\>, \<Year\>" + "The
-Lord of the Rings: The Fellowship of the Ring|2001" Term is given the ID of 28
+Lord of the Rings: The Fellowship of the Ring|2001" entity is given the ID of 28
 in the SDB. Take then the following template: "is an important/useful instance
-of the \<Noun phrase\> of \<Term\>", which can be used to construct
-predicates from just a noun phrase and any given object term. If we then want
+of the \<Noun phrase\> of \<Entity\>", which can be used to construct
+predicates from just a noun phrase and any given object entity. If we then want
 to construct the statement that Peter Jackson is the director of this Movie, we
-can first of all create the desired predicate by defining a Term of this
-template Context and with "Director|\#28" as its defining string. Here "\#28"
-will then be interpreted as the Term with ID = 28, giving us the exactly the
+can first of all create the desired predicate by defining a entity of this
+template and with "Director|\#28" as its defining string. Here "\#28"
+will then be interpreted as the entity with ID = 28, giving us the exactly the
 predicate we wanted (only formulated a bit differently: "is an important/useful
 instance of the *Director* of *Movie: The Lord of the Rings: The Fellowship of*
 *the Ring, 2001*").
-And with another Term defining Peter Jackson (the right one), we can then
+And with another entity defining Peter Jackson (the right one), we can then
 create the desired statement.
 
-An additional syntactic feature of these template Contexts that is then also
+An additional syntactic feature of these templates that is then also
 worth mentioning is that parts of the template can be emphasized by wrapping
 them in curly brackets. For instance we could wrap \<Title\> in the movie
 template from before, giving us "Movie: {\<Title\>}, \<Year\>". This then tells
 any application that runs on top of the SDB that the "\<Title\>" part is the
-important part to print out when referencing the Term, whereas the rest of the
+important part to print out when referencing the entity, whereas the rest of the
 template instance can be considered as "clarifying details." So instead of
 "Movie: The Lord of the Rings: The Fellowship of the Ring, 2001", if we take
 the same example, the application can instead just print out "The Lord of the
