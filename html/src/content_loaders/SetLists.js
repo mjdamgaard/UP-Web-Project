@@ -31,7 +31,7 @@ setListCL.addCallback(function($ci, data) {
     $ci.one("load-initial-elements", function(event, set) {
         data.listElemDataArr = set.slice(0, data.initialNum).map(val => ({
             ratVal: val[0],
-            termID: val[1],
+            entID: val[1],
         }));
         data.currentNum = data.initialNum;
         $ci.find('.CI.List').trigger("load");
@@ -42,7 +42,7 @@ setListCL.addCallback(function($ci, data) {
         let newNum = currNum + data.incrementNum;
         data.listElemDataArr = set.slice(currNum, newNum).map(val => ({
             ratVal: val[0],
-            termID: val[1],
+            entID: val[1],
         }));
         data.currentNum = newNum;
         setListCL.loadAppended($ci, "List", data);
@@ -85,7 +85,7 @@ export class SetGenerator {
 
 /*
 setData = {
-    (predCxtID, predStr, | predID,)
+    (predTmplID, predStr, | predID,)
     queryUserID,
     inputUserID?, // (This property is only part of a temporary solution.)
     num, ratingLo, ratingHi,
@@ -115,8 +115,8 @@ export class SetQuerier extends SetGenerator {
             this.queryWithPredID(obj, callbackData, callback);
         } else {
             let reqData = {
-                type: "termID",
-                c: setData.predCxtID,
+                type: "entID",
+                c: setData.predTmplID,
                 s: setData.predStr,
             };
             dbReqManager.query(this, reqData, function(sg, result) {
@@ -132,7 +132,7 @@ export class SetQuerier extends SetGenerator {
                 let reqData = {
                     type: "term",
                     u: setData.inputUserID,
-                    c: setData.predCxtID,
+                    c: setData.predTmplID,
                     s: setData.predStr,
                 };
                 dbReqManager.input(this, reqData, function() {});
@@ -170,8 +170,8 @@ export class SetQuerier extends SetGenerator {
 
     getSetPredicates() {
         // There is a race condition here, so take heed of it and try not to
-        // call getSetPredicates() before the first termID queries.
-        // TODO: Consider if this race condition should be eliminated somehow. 
+        // call getSetPredicates() before the first entID queries.
+        // TODO: Consider if this race condition should be eliminated somehow.
         return [this.setData.predID ?? null];
     }
 }
@@ -285,7 +285,7 @@ export class MaxRatingSetCombiner extends SetCombiner {
 // /*
 // data.setDataArr = [setData, ...],
 //     setData = {
-//         predCxtID, predStr, objID,
+//         predTmplID, predStr, objID,
 //         predID?,
 //         queryUserID,
 //         // weight, queryParams, ratTransFun?,
@@ -329,8 +329,8 @@ export class MaxRatingSetCombiner extends SetCombiner {
 //                 }
 //                 // else, first query for the predID, and then the set.
 //                 let reqData = {
-//                     type: "termID",
-//                     c: setData.predCxtID,
+//                     type: "entID",
+//                     c: setData.predTmplID,
 //                     s: setData.predStr,
 //                     t: setData.objID,
 //                 };

@@ -16,7 +16,7 @@ export var ratingElementCL = new ContentLoader(
     sdbInterfaceCL
 );
 ratingElementCL.addCallback("data", function(data) {
-    data.predID = data.getFromAncestor("termID");
+    data.predID = data.getFromAncestor("entID");
     data.copyFromAncestor("subjID");
 });
 
@@ -25,9 +25,9 @@ export var ratingDisplayCL = new ContentLoader(
     /* Initial HTML template */
     '<div>' +
         '<div class="statement">' +
-            '<<TermTitle>> ' +
+            '<<EntityTitle>> ' +
             '<span class="applies-to-subj">' +
-                '(applies to <<TermTitle data.subjData:wait>>)' +
+                '(applies to <<EntityTitle data.subjData:wait>>)' +
             '</span>' +
         '</div>' +
         '<<QueryUserRatingDisplay data:wait>>' +
@@ -42,11 +42,11 @@ ratingDisplayCL.addCallback("data", function(data) {
         "predID",
         "subjID",
     ]);
-    data.termID = data.predID;
-    data.subjData = {termID: data.subjID};
+    data.entID = data.predID;
+    data.subjData = {entID: data.subjID};
 });
 ratingDisplayCL.addCallback(function($ci, data) {
-    $ci.find('.statement .CI.TermTitle:last-of-type').trigger("load");
+    $ci.find('.statement .CI.EntityTitle:last-of-type').trigger("load");
 });
 ratingDisplayCL.addCallback(function($ci, data) {
     let reqData = {

@@ -110,7 +110,7 @@ setPredicatesListCL.addCallback(function($ci, data) {
     predIDArr.forEach(function(val) {
         setPredicatesListCL.loadAppended(
             $ci, "PredicateDisplay", new ChildData(data, {
-                termID: val,
+                entID: val,
             })
         );
     });
@@ -119,7 +119,7 @@ export var predicateDisplayCL = new ContentLoader(
     "PredicateDisplay",
     /* Initial HTML template */
     '<div>' +
-        '<<TermTitle>>' +
+        '<<EntityTitle>>' +
     '</div>',
     sdbInterfaceCL
 );

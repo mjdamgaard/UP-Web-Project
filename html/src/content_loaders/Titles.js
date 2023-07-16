@@ -10,59 +10,59 @@ import {
 
 
 
-export var termTitleCL = new ContentLoader(
-    "TermTitle",
+export var entityTitleCL = new ContentLoader(
+    "EntityTitle",
     /* Initial HTML template */
     '<span></span>',
     sdbInterfaceCL
 );
-termTitleCL.addCallback("data", function(data) {
+entityTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
-        "termID",
+        "entID",
         "recLevel",
         "maxRecLevel",
     ]);
     data.recLevel ??= -1;;
     data.recLevel++;
     data.maxRecLevel ??= 2;;
-    // TODO: This solution does not seem robust since a TermTitle might inherit
+    // TODO: This solution does not seem robust since a EntityTitle might inherit
     // a too high (not reset) recLevel (right?). So figure this out and then
     // find an altered solution if this is indeed needed.
     data.isFullTitle = data.getFromAncestor("isFullTitle", 1) ?? false;
 });
-termTitleCL.addCallback(function($ci, data) {
-    if (!data.termID) {
+entityTitleCL.addCallback(function($ci, data) {
+    if (!data.entID) {
         return;
-        // TODO: Solve a current bug where the last Term is displayed when
-        // termID is a non-existing positive ID.
+        // TODO: Solve a current bug where the last Entity is displayed when
+        // entID is a non-existing positive ID.
     }
     if (data.recLevel > data.maxRecLevel) {
-        data.linkContent = data.termID;
-        termTitleCL.loadAppended($ci, "TermLink", data);
+        data.linkContent = data.entID;
+        entityTitleCL.loadAppended($ci, "EntityLink", data);
         return;
     }
     let reqData = {
-        type: "term",
-        id: data.termID,
+        type: "ent",
+        id: data.entID,
     };
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-        data.cxtID = (result[0] ?? [])[0];
+        data.tmplID = (result[0] ?? [])[0];
         data.defStr = (result[0] ?? [])[1];
-        if (!data.cxtID) {
-            loadTermTitleHTML($ci, data);
+        if (!data.tmplID) {
+            loadEntityTitleHTML($ci, data);
             return;
         }
         let reqData = {
-            type: "term",
-            id: data.cxtID,
+            type: "ent",
+            id: data.tmplID,
         };
         dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-            data.cxtDefStr = (result[0] ?? [])[1];
-            loadTermTitleHTML($ci, data);
+            data.tmplDefStr = (result[0] ?? [])[1];
+            loadEntityTitleHTML($ci, data);
         });
-        // parse the defItem string array from defStr, then prefetch all Terms
-        // referenced by IDs (with the syntax pattern /^#[1-9][0-9]*$/), but
-        // only if the current recLevel is less than maxRecLevel.
+        // parse the defItem string array from defStr, then prefetch all
+        // enitities referenced by IDs (with syntax pattern /^#[1-9][0-9]*$/),
+        // but only if the current recLevel is less than maxRecLevel.
         if (data.recLevel < data.maxRecLevel) {
             data.defItemStrArr = data.defStr
                 .replaceAll("\\\\", "&bsol;")
@@ -71,7 +71,7 @@ termTitleCL.addCallback(function($ci, data) {
             data.defItemStrArr.forEach(function(val) {
                 if (/^#[1-9][0-9]*$/.test(val)) {
                     let reqData = {
-                        type: "term",
+                        type: "ent",
                         id: val.substring(1),
                     };
                     dbReqManager.query($ci, reqData, function($ci, result) {});
@@ -81,40 +81,40 @@ termTitleCL.addCallback(function($ci, data) {
     });
 });
 
-export function loadTermTitleHTML($ci, data) {
+export function loadEntityTitleHTML($ci, data) {
     data = data ?? $ci.data("data");
-    if (!data.cxtID) {
+    if (!data.tmplID) {
         data.linkContent = data.defStr;
-        termTitleCL.loadAppended($ci, "TermLink", data);
-    } else if (data.cxtID === 2) {
-        termTitleCL.loadAppended($ci, "UserTitle", data);
-    } else if (data.cxtID === 4) {
-        termTitleCL.loadAppended($ci, "TextTitle", data);
-    } else if (data.cxtID === 5) {
-        termTitleCL.loadAppended($ci, "BinaryTitle", data);
+        entityTitleCL.loadAppended($ci, "EntityLink", data);
+    } else if (data.tmplID === 2) {
+        entityTitleCL.loadAppended($ci, "UserTitle", data);
+    } else if (data.tmplID === 4) {
+        entityTitleCL.loadAppended($ci, "TextTitle", data);
+    } else if (data.tmplID === 5) {
+        entityTitleCL.loadAppended($ci, "BinaryTitle", data);
     } else  {
-        termTitleCL.loadAppended($ci, "TemplateInstanceTitle", data);
+        entityTitleCL.loadAppended($ci, "TemplateInstanceTitle", data);
     }
 }
 
-export var termLinkCL = new ContentLoader(
-    "TermLink",
+export var entityLinkCL = new ContentLoader(
+    "EntityLink",
     /* Initial HTML template */
     '<span></span>',
     sdbInterfaceCL
 );
-termLinkCL.addCallback("data", function(data) {
+entityLinkCL.addCallback("data", function(data) {
     data.copyFromAncestor([
-        "termID",
+        "entID",
         "linkContent",
     ]);
 });
-termLinkCL.addCallback(function($ci, data) {
+entityLinkCL.addCallback(function($ci, data) {
     $ci.addClass("clickable-text text-primary");
     $ci.append(data.linkContent);
     $ci.on("click", function() {
         let childData = new ChildData (data, {
-            cl: sdbInterfaceCL.getRelatedCL("TermPage"),
+            cl: sdbInterfaceCL.getRelatedCL("EntityPage"),
             recLevel: null,
             maxRecLevel: null,
         });
@@ -133,18 +133,18 @@ export var templateInstanceTitleCL = new ContentLoader(
 templateInstanceTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "defStr",
-        "cxtDefStr",
+        "tmplDefStr",
         "defItemStrArr",
         "isFullTitle",
     ]);
 });
 templateInstanceTitleCL.addCallback(function($ci, data) {
     if (data.isFullTitle) {
-        data.linkContent = getTransformedFullTitleTemplate(data.cxtDefStr);
+        data.linkContent = getTransformedFullTitleTemplate(data.tmplDefStr);
     } else {
-        data.linkContent = getTransformedTitleTemplate(data.cxtDefStr);
+        data.linkContent = getTransformedTitleTemplate(data.tmplDefStr);
     }
-    templateInstanceTitleCL.loadAppended($ci, "TermLink", data);
+    templateInstanceTitleCL.loadAppended($ci, "EntityLink", data);
     let defItemStrArr = data.defItemStrArr;
     let nextDefItemStr = 0;
     $ci.find('.def-item').each(function() {
@@ -157,7 +157,7 @@ templateInstanceTitleCL.addCallback(function($ci, data) {
     if (data.isFullTitle) {
         let len = defItemStrArr.length;
         if (nextDefItemStr < len) {
-            $ci.find('.CI.TermLink').append(
+            $ci.find('.CI.EntityLink').append(
                 '; <span class="extra-def-items"></span>'
             );
             let $obj = $ci.find('.extra-def-items');
@@ -171,9 +171,9 @@ templateInstanceTitleCL.addCallback(function($ci, data) {
 });
 export function loadDefItemAppended($obj, defItemStr, data) {
     if (/^#[1-9][0-9]*$/.test(defItemStr)) {
-        templateInstanceTitleCL.loadAppended($obj, "TermTitle",
+        templateInstanceTitleCL.loadAppended($obj, "EntityTitle",
             new ChildData(data, {
-                termID: defItemStr.substring(1),
+                entID: defItemStr.substring(1),
             })
         );
     } else {
@@ -218,27 +218,27 @@ export function getTransformedFullTitleTemplate(title) {
 
 
 
-export var fullTermTitleCL = new ContentLoader(
-    "FullTermTitle",
+export var fullEntityTitleCL = new ContentLoader(
+    "FullEntityTitle",
     /* Initial HTML template */
-    '<<TermTitle>>', // TODO: change to look up the username.
+    '<<EntityTitle>>', // TODO: change to look up the username.
     sdbInterfaceCL
 );
-fullTermTitleCL.addCallback("data", function(data) {
+fullEntityTitleCL.addCallback("data", function(data) {
     data.isFullTitle = true;
 });
 
-export var contextDisplayCL = new ContentLoader(
-    "ContextDisplay",
+export var templateDisplayCL = new ContentLoader(
+    "TemplateDisplay",
     /* Initial HTML template */
     '<span>' +
-        'Context: <<TermTitle>>' +
+        'Template: <<EntityTitle>>' +
     '</span>',
     sdbInterfaceCL
 );
-contextDisplayCL.addCallback("data", function(data) {
-    data.termID = data.getFromAncestor("cxtID") ?? 1;
-    data.cxtID = null;
+templateDisplayCL.addCallback("data", function(data) {
+    data.entID = data.getFromAncestor("tmplID") ?? 1;
+    data.tmplID = null;
 });
 
 

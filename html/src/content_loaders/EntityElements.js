@@ -9,27 +9,27 @@ import {
 
 
 
-export var generalTermElementCL = new ContentLoader(
-    "GeneralTermElement",
+export var generalEntityElementCL = new ContentLoader(
+    "GeneralEntityElement",
     /* Initial HTML template */
     '<div>' +
-        '<<TermTitle>>' +
+        '<<EntityTitle>>' +
         '<<ElementRatingDisplay>>' +
         '<<DropdownBox>>' +
     '</div>',
     sdbInterfaceCL
 );
-generalTermElementCL.addCallback("data", function(data) {
-    data.dropdownCL = generalTermElementCL.getRelatedCL(
-        "GeneralTermElementDropdownPage"
+generalEntityElementCL.addCallback("data", function(data) {
+    data.dropdownCL = generalEntityElementCL.getRelatedCL(
+        "GeneralEntityElementDropdownPage"
     );
 });
-export var generalTermElementDropdownPageCL = new ContentLoader(
-    "GeneralTermElementDropdownPage",
+export var generalEntityElementDropdownPageCL = new ContentLoader(
+    "GeneralEntityElementDropdownPage",
     /* Initial HTML template */
     '<div>' +
-        '<div>Full title: <<FullTermTitle>></div>' +
-        '<div><<TermIDDisplay>></div>' +
+        '<div>Full title: <<FullEntityTitle>></div>' +
+        '<div><<EntityIDDisplay>></div>' +
         '<<SetPredicatesRatingsDisplay>>' +
     '</div>',
     sdbInterfaceCL
@@ -62,7 +62,7 @@ setPredicatesRatingsDisplayCL.addCallback("data", function(data) {
 });
 setPredicatesRatingsDisplayCL.addCallback(function($ci, data) {
     let predIDArr = data.setGenerator.getSetPredicates();
-    let subjID = data.getFromAncestor("termID");
+    let subjID = data.getFromAncestor("entID");
     predIDArr.forEach(function(val) {
         setPredicatesRatingsDisplayCL.loadAppended(
             $ci, "RatingDisplay", new ChildData(data, {

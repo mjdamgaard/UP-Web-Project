@@ -7,11 +7,11 @@ import {
 
 
 
-export var submitTermFieldCL = new ContentLoader(
-    "SubmitTermField",
+export var submitEntityFieldCL = new ContentLoader(
+    "SubmitEntityField",
     /* Initial HTML template */
     '<div>' +
-        '<h4>Submit a Term</h4>' +
+        '<h4>Submit a Entity</h4>' +
         '<form action="javascript:void(0);">' +
             '<div class="std-field-container"></div>' +
             '<div class="extra-field-container"></div>' +
@@ -22,55 +22,56 @@ export var submitTermFieldCL = new ContentLoader(
     '</div>',
     sdbInterfaceCL
 );
-submitTermFieldCL.addCallback("data", function(data) {
-    data.cxtID = data.getFromAncestor("cxtID") ?? 1;
+submitEntityFieldCL.addCallback("data", function(data) {
+    data.tmplID = data.getFromAncestor("tmplID") ?? 1;
 });
-submitTermFieldCL.addCallback(function($ci, data) {
+submitEntityFieldCL.addCallback(function($ci, data) {
     $ci.one("append-input-fields", function(event, labelArr) {
         let $obj = $(this).find('.std-field-container');
         labelArr.forEach(function(label) {
-            submitTermFieldCL.loadAppended(
+            submitEntityFieldCL.loadAppended(
                 $obj, "TextAreaFormGroup", new ChildData(data, {label:label})
             );
         });
         return false;
     });
 });
-submitTermFieldCL.addCallback(function($ci, data) {
-    if (data.cxtID == 1) {
+submitEntityFieldCL.addCallback(function($ci, data) {
+    if (data.tmplID == 1) {
         let labelArr = ["Title/Defining text"];
         $ci.trigger("append-input-fields", [labelArr]);
         return;
     }
     let reqData = {
-        type: "term",
-        id: data.cxtID,
+        type: "ent",
+        id: data.tmplID,
     };
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-        let cxtDefStr = (result[0] ?? [""])[1];
-        if (cxtDefStr === "") {
+        let tmplDefStr = (result[0] ?? [""])[1];
+        if (tmplDefStr === "") {
             console.warn(
-                "Context #" + data.cxtID + " has been removed from the database"
+                "Template #" + data.tmplID +
+                " has been removed from the database"
             );
             return;
         }
-        let labelArr = getLabelArr(cxtDefStr);
+        let labelArr = getLabelArr(tmplDefStr);
         $ci.trigger("append-input-fields", [labelArr]);
     });
 });
-export function getLabelArr(cxtDefStr) {
-    return cxtDefStr
+export function getLabelArr(tmplDefStr) {
+    return tmplDefStr
         .replaceAll("&gt;", ">")
         .replaceAll("&lt;", "<")
         .match(/<[^<>]*>/g)
         .map(val => val.slice(1, -1));
 }
 
-submitTermFieldCL.addCallback(function($ci, data) {
+submitEntityFieldCL.addCallback(function($ci, data) {
     $ci.find('button.submit').on("click", function() {
-        $(this).trigger("submit-term"); // "submit" event fires for all buttons.
+        $(this).trigger("submit-entity");
     });
-    $ci.on("submit-term", function() {
+    $ci.on("submit-entity", function() {
         let $this = $(this);
         let $standardInputFields = $this
             .find('.std-field-container')
@@ -119,21 +120,21 @@ submitTermFieldCL.addCallback(function($ci, data) {
             );
             return;
         }
-        // upload the new Term.
+        // upload the new Entity.
         let reqData = {
             type: "term",
             u: data.getFromAncestor("inputUserID"),
-            c: data.cxtID == 1 ? 0 : data.cxtID,
+            c: data.tmplID == 1 ? 0 : data.tmplID,
             s: defStr,
         };
         dbReqManager.input($this, reqData, data, function($ci, result, data) {
             let exitCode = result.exitCode;
             let outID = result.outID;
-            let newData = new ChildData(data, {termID: outID});
+            let newData = new ChildData(data, {entID: outID});
             if (exitCode == 0) {
                 $ci.children('.response-display').html(
                     '<span class="text-success">' +
-                        'Term was successfully uploaded!' +
+                        'Entity was successfully uploaded!' +
                     '</span>' +
                     '<div>' +
                         'New ID: #' + outID +
@@ -143,7 +144,7 @@ submitTermFieldCL.addCallback(function($ci, data) {
             } else if (exitCode == 1) {
                 $ci.children('.response-display').html(
                     '<span class="text-info">' +
-                        'Term already exists' +
+                        'Entity already exists' +
                     '</span>' +
                     '<div>' +
                         'ID: #' + outID +
@@ -152,15 +153,15 @@ submitTermFieldCL.addCallback(function($ci, data) {
                 $ci.trigger("open-column", ["AppColumn", newData, "right"]);
             } else {
                 // throw error since this should not happen.
-                throw "Recieved exitCode=" + exitCode + " from Term submission";
+                throw "Recieved exitCode=" + exitCode + " from Entity submission";
             }
         });
         return false;
     });
 });
 
-submitTermFieldCL.addCallback(function($ci, data) {
-    if (data.cxtID == 1) {
+submitEntityFieldCL.addCallback(function($ci, data) {
+    if (data.tmplID == 1) {
         $ci.find('button.add-field').hide();
         return;
     }
@@ -169,7 +170,7 @@ submitTermFieldCL.addCallback(function($ci, data) {
     });
     $ci.on("add-field", function() {
         let $obj = $(this).find('.extra-field-container');
-        submitTermFieldCL.loadAppended($obj, "ExtraInputFormGroup", data);
+        submitEntityFieldCL.loadAppended($obj, "ExtraInputFormGroup", data);
         return false;
     });
 });
@@ -225,7 +226,7 @@ export var submitInstanceFieldCL = new ContentLoader(
     "SubmitInstanceField",
     /* Initial HTML template */
     '<div>' +
-        '<h4>Submit an instance the <<TermTitle>> applies to</h4>' +
+        '<h4>Submit an instance the <<EntityTitle>> applies to</h4>' +
         '<<SubmitInstanceForm>>' +
     '</div>',
     sdbInterfaceCL
@@ -268,7 +269,7 @@ submitInstanceFormCL.addCallback(function($ci, data) {
         }
         // generate a rating display with this ID as the subjID.
         data.subjID = id;
-        data.predID = data.getFromAncestor("termID");
+        data.predID = data.getFromAncestor("entID");
         data.prevInputRatVal = null;
         submitInstanceFormCL.loadAfter($ci, "RatingDisplay", data);
         $ci.find('button.submit').hide();

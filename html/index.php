@@ -21,10 +21,10 @@ if (!isset($_POST["t"])) {
     $_POST["t"] = "1";
 }
 if (!isset($_POST["qu"])) {
-    $_POST["qu"] = "3";
+    $_POST["qu"] = "11";
 }
 if (!isset($_POST["iu"])) {
-    $_POST["iu"] = "3";
+    $_POST["iu"] = "11";
 }
 
 // get and verify the required inputs.
@@ -32,7 +32,7 @@ $paramNameArr = array("t", "qu", "iu");
 $typeArr = array("id", "id", "id");
 $paramValArr = InputGetter::getParams($paramNameArr);
 InputVerifier::verifyTypes($paramValArr, $typeArr, $paramNameArr);
-$termID = $paramValArr[0];
+$entID = $paramValArr[0];
 $queryUserID = $paramValArr[1];
 $inputUserID = $paramValArr[2];
 
@@ -70,8 +70,8 @@ $inputUserID = $paramValArr[2];
     import "/src/content_loaders/PagesWithTabs.js";
     import "/src/content_loaders/SetLists.js";
     import "/src/content_loaders/SetDisplays.js";
-    import "/src/content_loaders/TermElements.js";
-    import "/src/content_loaders/TermPages.js";
+    import "/src/content_loaders/EntityElements.js";
+    import "/src/content_loaders/EntityPages.js";
     import "/src/content_loaders/Titles.js";
     import "/src/content_loaders/Ratings.js";
     import "/src/content_loaders/SubmissionFields.js";
@@ -79,10 +79,10 @@ $inputUserID = $paramValArr[2];
     import "/src/style_modules/style01.js";
 
     let data = {
-        termID: <?php echo $termID; ?>,
+        entID: <?php echo $entID; ?>,
         queryUserID: <?php echo $queryUserID; ?>,
         inputUserID: <?php echo $inputUserID; ?>,
-        cl: sdbInterfaceCL.getRelatedCL("TermPage"),
+        cl: sdbInterfaceCL.getRelatedCL("EntityPage"),
     };
     sdbInterfaceCL.loadAppended($('#upa'), "self", data);
 </script>
