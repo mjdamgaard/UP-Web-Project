@@ -11,7 +11,7 @@ export var submitEntityFieldCL = new ContentLoader(
     "SubmitEntityField",
     /* Initial HTML template */
     '<div>' +
-        '<h4>Submit a Entity</h4>' +
+        '<h4>Submit an entity</h4>' +
         '<form action="javascript:void(0);">' +
             '<div class="std-field-container"></div>' +
             '<div class="extra-field-container"></div>' +
@@ -47,7 +47,7 @@ submitEntityFieldCL.addCallback(function($ci, data) {
         id: data.tmplID,
     };
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-        let tmplDefStr = (result[0] ?? [""])[1];
+        let tmplDefStr = (result[0] ?? [""])[2];
         if (tmplDefStr === "") {
             console.warn(
                 "Template #" + data.tmplID +
@@ -120,11 +120,12 @@ submitEntityFieldCL.addCallback(function($ci, data) {
             );
             return;
         }
-        // upload the new Entity.
+        // upload the new entity.
         let reqData = {
             type: "term",
             u: data.getFromAncestor("inputUserID"),
-            c: data.tmplID == 1 ? 0 : data.tmplID,
+            ty: 'o', // TODO: add an input field for the term type.
+            tm: data.tmplID == 1 ? 0 : data.tmplID,
             s: defStr,
         };
         dbReqManager.input($this, reqData, data, function($ci, result, data) {
@@ -153,7 +154,9 @@ submitEntityFieldCL.addCallback(function($ci, data) {
                 $ci.trigger("open-column", ["AppColumn", newData, "right"]);
             } else {
                 // throw error since this should not happen.
-                throw "Recieved exitCode=" + exitCode + " from Entity submission";
+                throw (
+                    "Recieved exitCode=" + exitCode + " from entity submission"
+                );
             }
         });
         return false;

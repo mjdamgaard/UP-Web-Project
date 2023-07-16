@@ -46,8 +46,10 @@ entityTitleCL.addCallback(function($ci, data) {
         id: data.entID,
     };
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-        data.tmplID = (result[0] ?? [])[0];
-        data.defStr = (result[0] ?? [])[1];
+        data.entType = (result[0] ?? [])[0]; // TODO: Display the type as well,
+        // at least for full titles.
+        data.tmplID = (result[0] ?? [])[1];
+        data.defStr = (result[0] ?? [])[2];
         if (!data.tmplID) {
             loadEntityTitleHTML($ci, data);
             return;
@@ -57,7 +59,7 @@ entityTitleCL.addCallback(function($ci, data) {
             id: data.tmplID,
         };
         dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-            data.tmplDefStr = (result[0] ?? [])[1];
+            data.tmplDefStr = (result[0] ?? [])[2];
             loadEntityTitleHTML($ci, data);
         });
         // parse the defItem string array from defStr, then prefetch all

@@ -7,14 +7,14 @@ import {
     tabHeaderCL, pagesContainerCL,
 } from "/src/content_loaders/PagesWithTabs.js";
 import {
-    termTitleCL,
+    entityTitleCL,
 } from "/src/content_loaders/Titles.js";
 import {
 
-} from "/src/content_loaders/TermPages.js";
+} from "/src/content_loaders/EntityPages.js";
 import {
-    generalTermElementCL,
-} from "/src/content_loaders/TermElements.js";
+    generalEntityElementCL,
+} from "/src/content_loaders/EntityElements.js";
 import {
     dropdownButtonBarCL, setHeaderCL
 } from "/src/content_loaders/SetDisplays.js";
@@ -124,7 +124,7 @@ sdbInterfaceCL.addCSS(
 
 
 
-generalTermElementCL.addCSS(
+generalEntityElementCL.addCSS(
     'border-bottom: 1px solid gray;' +
     'border-top: 1px solid gray;' +
     ''

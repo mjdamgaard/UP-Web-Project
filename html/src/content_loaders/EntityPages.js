@@ -42,13 +42,16 @@ entityPageCL.addCallback(function($ci, data) {
     };
     let $this = $(this);
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-        data.tmplID = (result[0] ?? [])[0] ?? 1;
-        if (data.tmplID == 1 || data.tmplID > 5) {
+        data.entType = (result[0] ?? [""])[0];
+        if (true) { // TODO: Branch according to type.
             data.tabAndPageDataArr = [
                 ["Info", "EntityInfoPage", {}],
                 ["Ratings", "EntityRatingsPage", {}],
                 ["Categories", "EntityNounPredicatePage", {
                     predNoun: "Subcategories",
+                }],
+                ["Instances", "EntityNounPredicatePage", {
+                    predNoun: "Instances",
                 }],
                 ["Applies to", "EntityAppliesToPage", {}],
                 ["Related to", "EntityNounPredicatePage", {
@@ -64,7 +67,7 @@ entityPageCL.addCallback(function($ci, data) {
                 // ["Discussions", "EntityDiscussionsPage", {}],
             ];
             data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
-                "Applies to";
+                "Categories";
             $ci.children('.CI.PagesWithTabs').trigger("load");
             return;
         }
