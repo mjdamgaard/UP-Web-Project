@@ -7,12 +7,13 @@ FROM PrivateCreators
 ORDER BY entity_id ASC, user_id ASC;
 
 
-SELECT "Terms:";
+SELECT "Entities:";
 SELECT
-    id AS termID,
-    context_id AS cxtID,
-    def_str AS str
-FROM Terms
+    id AS entID,
+    type AS type,
+    tmpl_id AS tmplID,
+    def_str AS defStr
+FROM Entities
 ORDER BY id;
 
 
