@@ -1,6 +1,6 @@
 
 // TODO: Implement.
-export class MissingPredQueue {
+export class MissingCategoryQueue {
     constructor() {
         // this.queue = new List ...
     }
@@ -9,5 +9,5 @@ export class MissingPredQueue {
         // this.queue.push(termData);
     }
 }
-// Implement a queue of missing predicates, where the user can go to that queue
-// and add as many of the recently encountered predicates as they want.
+// Implement a queue of missing categories, where the user can go to that queue
+// and add as many of the recently encountered categories as they want.

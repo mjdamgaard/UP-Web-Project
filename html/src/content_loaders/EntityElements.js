@@ -30,7 +30,7 @@ export var generalEntityElementDropdownPageCL = new ContentLoader(
     '<div>' +
         '<div>Full title: <<FullEntityTitle>></div>' +
         '<div><<EntityIDDisplay>></div>' +
-        '<<SetPredicatesRatingsDisplay>>' +
+        '<<SetCategoriesRatingsDisplay>>' +
     '</div>',
     sdbInterfaceCL
 );
@@ -48,26 +48,26 @@ elementRatingDisplayCL.addCallback(function($ci, data) {
     $ci.html((ratVal / 6553.5).toFixed(2));
 });
 
-export var setPredicatesRatingsDisplayCL = new ContentLoader(
-    "SetPredicatesRatingsDisplay",
+export var setCategoriesRatingsDisplayCL = new ContentLoader(
+    "SetCategoriesRatingsDisplay",
     /* Initial HTML template */
     '<div>' +
     '</div>',
     sdbInterfaceCL
 );
-setPredicatesRatingsDisplayCL.addCallback("data", function(data) {
+setCategoriesRatingsDisplayCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "setGenerator",
     ]);
 });
-setPredicatesRatingsDisplayCL.addCallback(function($ci, data) {
-    let predIDArr = data.setGenerator.getSetPredicates();
-    let subjID = data.getFromAncestor("entID");
-    predIDArr.forEach(function(val) {
-        setPredicatesRatingsDisplayCL.loadAppended(
+setCategoriesRatingsDisplayCL.addCallback(function($ci, data) {
+    let catIDArr = data.setGenerator.getSetCategories();
+    let instID = data.getFromAncestor("entID");
+    catIDArr.forEach(function(val) {
+        setCategoriesRatingsDisplayCL.loadAppended(
             $ci, "RatingDisplay", new ChildData(data, {
-                predID: val,
-                subjID: subjID,
+                catID: val,
+                instID: instID,
             })
         );
     });

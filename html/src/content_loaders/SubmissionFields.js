@@ -270,9 +270,9 @@ submitInstanceFormCL.addCallback(function($ci, data) {
             );
             return false;
         }
-        // generate a rating display with this ID as the subjID.
-        data.subjID = id;
-        data.predID = data.getFromAncestor("entID");
+        // generate a rating display with this ID as the instID.
+        data.instID = id;
+        data.catID = data.getFromAncestor("entID");
         data.prevInputRatVal = null;
         submitInstanceFormCL.loadAfter($ci, "RatingDisplay", data);
         $ci.find('button.submit').hide();

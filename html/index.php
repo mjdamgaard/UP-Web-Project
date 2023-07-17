@@ -18,13 +18,13 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 
 
 if (!isset($_POST["t"])) {
-    $_POST["t"] = "1";
+    $_POST["t"] = "10";
 }
 if (!isset($_POST["qu"])) {
-    $_POST["qu"] = "11";
+    $_POST["qu"] = "9";
 }
 if (!isset($_POST["iu"])) {
-    $_POST["iu"] = "11";
+    $_POST["iu"] = "9";
 }
 
 // get and verify the required inputs.

@@ -16,8 +16,8 @@ export var ratingElementCL = new ContentLoader(
     sdbInterfaceCL
 );
 ratingElementCL.addCallback("data", function(data) {
-    data.predID = data.getFromAncestor("entID");
-    data.copyFromAncestor("subjID");
+    data.catID = data.getFromAncestor("entID");
+    data.copyFromAncestor("instID");
 });
 
 export var ratingDisplayCL = new ContentLoader(
@@ -26,8 +26,8 @@ export var ratingDisplayCL = new ContentLoader(
     '<div>' +
         '<div class="statement">' +
             '<<EntityTitle>> ' +
-            '<span class="applies-to-subj">' +
-                '(applies to <<EntityTitle data.subjData:wait>>)' +
+            '<span class="applies-to-inst">' +
+                '(applies to <<EntityTitle data.instData:wait>>)' +
             '</span>' +
         '</div>' +
         '<<QueryUserRatingDisplay data:wait>>' +
@@ -39,11 +39,11 @@ ratingDisplayCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "queryUserID",
         "inputUserID",
-        "predID",
-        "subjID",
+        "catID",
+        "instID",
     ]);
-    data.entID = data.predID;
-    data.subjData = {entID: data.subjID};
+    data.entID = data.catID;
+    data.instData = {entID: data.instID};
 });
 ratingDisplayCL.addCallback(function($ci, data) {
     $ci.find('.statement .CI.EntityTitle:last-of-type').trigger("load");
@@ -52,8 +52,8 @@ ratingDisplayCL.addCallback(function($ci, data) {
     let reqData = {
         type: "rat",
         u: data.queryUserID,
-        p: data.predID,
-        s: data.subjID,
+        p: data.catID,
+        s: data.instID,
     };
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
         data.queryUserRatVal = (result[0] ?? [0])[0];
@@ -63,8 +63,8 @@ ratingDisplayCL.addCallback(function($ci, data) {
     reqData = {
         type: "rat",
         u: data.inputUserID,
-        p: data.predID,
-        s: data.subjID,
+        p: data.catID,
+        s: data.instID,
     };
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
         data.prevInputRatVal = (result[0] ?? [0])[0];
@@ -108,8 +108,8 @@ inputRatingSliderCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "prevInputRatVal",
         "inputUserID",
-        "predID",
-        "subjID",
+        "catID",
+        "instID",
     ]);
 });
 inputRatingSliderCL.addCallback(function($ci, data) {
@@ -130,8 +130,8 @@ inputRatingSliderCL.addCallback(function($ci, data) {
         let reqData = {
             type: "rat",
             u: data.inputUserID,
-            p: data.predID,
-            s: data.subjID,
+            p: data.catID,
+            s: data.instID,
             r: 0,
             l: "00"
         };
@@ -153,8 +153,8 @@ inputRatingSliderCL.addCallback(function($ci, data) {
             let reqData = {
                 type: "rat",
                 u: data.inputUserID,
-                p: data.predID,
-                s: data.subjID,
+                p: data.catID,
+                s: data.instID,
                 r: inputRatVal,
                 l: "00"
             };

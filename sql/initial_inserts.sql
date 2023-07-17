@@ -128,17 +128,17 @@ CALL insertOrFindEntity(9, 2, 23, "iconic"); -- id: 50
 
 -- TODO: Redo the last part of this file as well:
 
--- CALL insertOrFindEntity(9, 'p', 12, "Relevant ratings for derived entities|#1"); -- id: 50
+-- CALL insertOrFindEntity(9, 'p', 12, "Relevant categories for derived entities|#1"); -- id: 50
 -- CALL inputOrChangeRating(9, 50, 46, CONV("F000", 16, 10), "00");
 -- CALL inputOrChangeRating(9, 50, 40, CONV("F000", 16, 10), "00");
 --
--- CALL insertOrFindEntity(9, 'p', 12, "Relevant ratings for derived entities|#27"); -- id: 51
+-- CALL insertOrFindEntity(9, 'p', 12, "Relevant categories for derived entities|#27"); -- id: 51
 -- CALL inputOrChangeRating(9, 51, 46, CONV("F000", 16, 10), "00");
 -- CALL inputOrChangeRating(9, 51, 47, CONV("E100", 16, 10), "00");
 -- CALL inputOrChangeRating(9, 51, 48, CONV("E000", 16, 10), "00");
 --
 --
--- CALL insertOrFindEntity(9, 'p', 12, "Relevant ratings|#28"); -- id: 52
+-- CALL insertOrFindEntity(9, 'p', 12, "Relevant categories|#28"); -- id: 52
 -- CALL inputOrChangeRating(9, 52, 46, CONV("F000", 16, 10), "00");
 -- CALL inputOrChangeRating(9, 52, 47, CONV("E100", 16, 10), "00");
 -- CALL inputOrChangeRating(9, 52, 48, CONV("EAAA", 16, 10), "00");

@@ -86,37 +86,37 @@ export var setMenurCL = new ContentLoader(
     "SetMenu",
     /* Initial HTML template */
     '<div>' +
-        '<<SetPredicatesList>>' +
+        '<<SetCategoriesList>>' +
         '<<SortingMenu>>' +
         // TODO: Extend.
     '</div>',
     sdbInterfaceCL
 );
 
-export var setPredicatesListCL = new ContentLoader(
-    "SetPredicatesList",
+export var setCategoriesListCL = new ContentLoader(
+    "SetCategoriesList",
     /* Initial HTML template */
     '<div>' +
     '</div>',
     sdbInterfaceCL
 );
-setPredicatesListCL.addCallback("data", function(data) {
+setCategoriesListCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "setGenerator",
     ]);
 });
-setPredicatesListCL.addCallback(function($ci, data) {
-    let predIDArr = data.setGenerator.getSetPredicates();
-    predIDArr.forEach(function(val) {
-        setPredicatesListCL.loadAppended(
-            $ci, "PredicateDisplay", new ChildData(data, {
+setCategoriesListCL.addCallback(function($ci, data) {
+    let catIDArr = data.setGenerator.getSetCategories();
+    catIDArr.forEach(function(val) {
+        setCategoriesListCL.loadAppended(
+            $ci, "CategoryDisplay", new ChildData(data, {
                 entID: val,
             })
         );
     });
 });
-export var predicateDisplayCL = new ContentLoader(
-    "PredicateDisplay",
+export var categoryDisplayCL = new ContentLoader(
+    "CategoryDisplay",
     /* Initial HTML template */
     '<div>' +
         '<<EntityTitle>>' +

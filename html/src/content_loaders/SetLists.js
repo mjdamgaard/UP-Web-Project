@@ -66,15 +66,15 @@ export class SetGenerator {
         // to be redefined by descendant classes.
     }
 
-    // getSetPredicates() returns an array of all predicate IDs that are
+    // getSetCategories() returns an array of all category IDs that are
     // important to the formation of the set (which we can then show on the
     // drop-down pages of the set elements).
-    getSetPredicates() {
+    getSetCategories() {
         // to be redefined by descendant classes.
     }
 
     // getFilterSpecs() returns an array of filter specs (or null), which
-    // each consists of a predicate ID, threshold and a flag to denote either
+    // each consists of a category ID, threshold and a flag to denote either
     // the interval below or above the threshold for which all set elements
     // with a rating in that interval should collapse itself automatically (in
     // a future version of this web app).
@@ -85,7 +85,7 @@ export class SetGenerator {
 
 /*
 setData = {
-    (predTmplID, predStr, | predID,)
+    (catTmplID, catStr, | catID,)
     queryUserID,
     inputUserID?, // (This property is only part of a temporary solution.)
     num, ratingLo, ratingHi,
@@ -111,38 +111,38 @@ export class SetQuerier extends SetGenerator {
             callbackData = undefined;
         }
         let setData = this.setData;
-        if (setData.predID) {
-            this.queryWithPredID(obj, callbackData, callback);
+        if (setData.catID) {
+            this.queryWithCatID(obj, callbackData, callback);
         } else {
             let reqData = {
                 type: "entID",
                 ty: "p",
-                tm: setData.predTmplID,
-                s: setData.predStr,
+                tm: setData.catTmplID,
+                s: setData.catStr,
             };
             dbReqManager.query(this, reqData, function(sg, result) {
-                setData.predID = (result[0] ?? [0])[0];
-                sg.queryWithPredID(obj, callbackData, callback);
+                setData.catID = (result[0] ?? [0])[0];
+                sg.queryWithCatID(obj, callbackData, callback);
 
-                // As a temporary solution for adding missing predicates, all
-                // predicates are just automatically submitted to the database,
+                // As a temporary solution for adding missing categories, all
+                // categories are just automatically submitted to the database,
                 // if they are missing in this query.
-                if (setData.predID || !setData.inputUserID) {
+                if (setData.catID || !setData.inputUserID) {
                     return;
                 }
                 let reqData = {
                     type: "term",
                     u: setData.inputUserID,
                     ty: "p",
-                    tm: setData.predTmplID,
-                    s: setData.predStr,
+                    tm: setData.catTmplID,
+                    s: setData.catStr,
                 };
                 dbReqManager.input(this, reqData, function() {});
             });
         }
     }
 
-    queryWithPredID(obj, callbackData, callback) {
+    queryWithCatID(obj, callbackData, callback) {
         if (!callback) {
             callback = callbackData;
             callbackData = undefined;
@@ -151,7 +151,7 @@ export class SetQuerier extends SetGenerator {
         let reqData = {
             type: "set",
             u: setData.queryUserID,
-            p: setData.predID,
+            p: setData.catID,
             rl: setData.ratingLo,
             rh: setData.ratingHi,
             n: setData.num,
@@ -170,11 +170,11 @@ export class SetQuerier extends SetGenerator {
         });
     }
 
-    getSetPredicates() {
+    getSetCategories() {
         // There is a race condition here, so take heed of it and try not to
-        // call getSetPredicates() before the first entID queries.
+        // call getSetCategories() before the first entID queries.
         // TODO: Consider if this race condition should be eliminated somehow.
-        return [this.setData.predID ?? null];
+        return [this.setData.catID ?? null];
     }
 }
 
@@ -226,11 +226,11 @@ export class SetCombiner extends SetGenerator {
         // to be redefined by descendant classes.
     }
 
-    getSetPredicates() {
-        let predIDArrArr = this.setGeneratorArr.map(
-            val => val.getSetPredicates()
+    getSetCategories() {
+        let catIDArrArr = this.setGeneratorArr.map(
+            val => val.getSetCategories()
         );
-        return [].concat(...predIDArrArr);
+        return [].concat(...catIDArrArr);
     }
 }
 
@@ -248,21 +248,21 @@ export class MaxRatingSetCombiner extends SetCombiner {
     }
 
     combineSets() {
-        // setArr is imploded into concatArr, which is then sorted by subjID.
+        // setArr is imploded into concatArr, which is then sorted by instID.
         let concatSet = [].concat(...this.setArr).sort(
             (a, b) => a[1] - b[1]
         );
         // construct a return array by recording only the maximal rating for
-        // each group of elements with the same subjID in the concatArr.
+        // each group of elements with the same instID in the concatArr.
         let ret = new Array(concatSet.length);
         let retLen = 0;
-        let currSubjID = 0;
+        let currInstID = 0;
         let row, maxRat, currRat;
         concatSet.forEach(function(val, ind) {
-            if (val[1] !== currSubjID) {
-                currSubjID = val[1];
+            if (val[1] !== currInstID) {
+                currInstID = val[1];
                 maxRat = val[0];
-                ret[retLen] = (row = [maxRat, currSubjID]);
+                ret[retLen] = (row = [maxRat, currInstID]);
                 retLen++;
             } else {
                 currRat = val[0];
@@ -287,8 +287,8 @@ export class MaxRatingSetCombiner extends SetCombiner {
 // /*
 // data.setDataArr = [setData, ...],
 //     setData = {
-//         predTmplID, predStr, objID,
-//         predID?,
+//         catTmplID, catStr, objID,
+//         catID?,
 //         queryUserID,
 //         // weight, queryParams, ratTransFun?,
 //         set?,
@@ -321,23 +321,23 @@ export class MaxRatingSetCombiner extends SetCombiner {
 //         for (let i = 0; i < setNum; i++) {
 //             let setData = this.setDataArr[i];
 //             if (!setData.set) {
-//                 // if setData.predID is already known, query for the set
+//                 // if setData.catID is already known, query for the set
 //                 // immediately.
-//                 if (setData.predID) {
+//                 if (setData.catID) {
 //                     this.querySetAndCombineIfReady(
 //                         setData, i, callbackData, callback
 //                     );
 //                     continue;
 //                 }
-//                 // else, first query for the predID, and then the set.
+//                 // else, first query for the catID, and then the set.
 //                 let reqData = {
 //                     type: "entID",
-//                     c: setData.predTmplID,
-//                     s: setData.predStr,
+//                     c: setData.catTmplID,
+//                     s: setData.catStr,
 //                     t: setData.objID,
 //                 };
 //                 dbReqManager.query(this, reqData, i, function(obj, result, i) {
-//                     setData.predID = (result[0] ?? [0])[0];
+//                     setData.catID = (result[0] ?? [0])[0];
 //                     obj.querySetAndCombineIfReady(
 //                         setData, i, callbackData, callback
 //                     );
@@ -357,7 +357,7 @@ export class MaxRatingSetCombiner extends SetCombiner {
 //         let reqData = {
 //             type: "set",
 //             u: setData.queryUserID,
-//             p: setData.predID,
+//             p: setData.catID,
 //             rl: queryParams.ratingLo,
 //             rh: queryParams.ratingHi,
 //             n: queryParams.num,
@@ -402,11 +402,11 @@ export class MaxRatingSetCombiner extends SetCombiner {
 //         let ret = new Array(this.concatSet.length);
 //         let retLen = 0;
 //         let weightArr = this.setDataArr.map(val => val.weight);
-//         let currSubjID = 0;
+//         let currInstID = 0;
 //         let row, accWeight, currWeight, newWeight;
 //         this.concatSet.forEach(function(val, ind) {
-//             if (val[1] !== currSubjID) {
-//                 currSubjID = val[1];
+//             if (val[1] !== currInstID) {
+//                 currInstID = val[1];
 //                 ret[retLen] = (row = [val[2], val[1], ind]);
 //                 retLen++;
 //                 accWeight = weightArr[val[3]];
