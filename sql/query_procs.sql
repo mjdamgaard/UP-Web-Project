@@ -23,7 +23,7 @@ SELECT "Query procedures";
 DELIMITER //
 CREATE PROCEDURE selectInputSet (
     IN userID BIGINT UNSIGNED,
-    IN predID BIGINT UNSIGNED,
+    IN catID BIGINT UNSIGNED,
     IN ratingRangeLo SMALLINT UNSIGNED,
     IN ratingRangeHi SMALLINT UNSIGNED,
     IN maxNum INT UNSIGNED,
@@ -33,19 +33,19 @@ CREATE PROCEDURE selectInputSet (
 BEGIN
     SELECT
         rat_val AS ratVal,
-        subj_id AS subjID
+        inst_id AS instID
     FROM SemanticInputs
     WHERE (
         user_id = userID AND
-        pred_id = predID AND
+        cat_id = catID AND
         (ratingRangeLo = 0 OR rat_val >= ratingRangeLo) AND
         (ratingRangeHi = 0 OR rat_val <= ratingRangeHi)
     )
     ORDER BY
         CASE WHEN isAscOrder THEN rat_val END ASC,
         CASE WHEN NOT isAscOrder THEN rat_val END DESC,
-        CASE WHEN isAscOrder THEN subj_id END ASC,
-        CASE WHEN NOT isAscOrder THEN subj_id END DESC
+        CASE WHEN isAscOrder THEN inst_id END ASC,
+        CASE WHEN NOT isAscOrder THEN inst_id END DESC
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
@@ -55,16 +55,16 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectRating (
     IN userID BIGINT UNSIGNED,
-    IN predID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED
+    IN catID BIGINT UNSIGNED,
+    IN instID BIGINT UNSIGNED
 )
 BEGIN
     SELECT rat_val AS ratVal
     FROM SemanticInputs
     WHERE (
         user_id = userID AND
-        pred_id = predID AND
-        subj_id = subjID
+        cat_id = catID AND
+        inst_id = instID
     );
 END //
 DELIMITER ;
@@ -79,9 +79,9 @@ CREATE PROCEDURE selectRecentInputs (
 BEGIN
     SELECT
         user_id AS userID,
-        pred_id AS predID,
+        cat_id AS catID,
         rat_val AS ratVal,
-        subj_id AS subjID,
+        inst_id AS instID,
         changed_at AS changedAt
     FROM RecentInputs
     WHERE id >= startID
@@ -99,7 +99,7 @@ CREATE PROCEDURE selectEntity (
 )
 BEGIN
     SELECT
-        type AS type,
+        type_id AS typeID,
         tmpl_id AS tmplID,
         def_str AS defStr
     FROM Entities
@@ -110,7 +110,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectEntityID (
-    IN t CHAR(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN typeID BIGINT UNSIGNED,
     IN tmplID BIGINT UNSIGNED,
     IN defStr VARCHAR(255)
 )
@@ -122,7 +122,7 @@ BEGIN
     SELECT id AS entID
     FROM Entities
     WHERE (
-        type = t AND
+        type = typeID AND
         tmpl_id <=> tmplID AND
         def_str = defStr
     );

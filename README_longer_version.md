@@ -141,11 +141,20 @@ that update the ratings according to recent user inputs.
 
 ### Enities
 
-'Enities' refers to the semantic units of the system, including the relations
-and predicates, and even including the users themselves since each new user of
-the SDB will get their own entity representing them. All entities have a unique
-ID, first of all, and are defined by two fields: an ID of a 'template,' which
-are themselves a kind of entity, and then a 'defining string.'
+'Enities' refers to the semantic units of the system. These can be anything,
+including things that are associated specifically with the database itself
+such as its users, or the stored texts and binaries within it. But the entities
+can also be any kind of term that refers to something outside of the database,
+e.g. places, persons, web resources, etc.  
+
+All entities have a unique ID, first of all, and are defined by three fields:
+an entity type (represented by a char), an ID of a 'template,' which are
+themselves a kind of entity, and then a 'defining string.'
+
+The entity's type, represented by a char, can be e.g. User, Text, Binary,
+Template, Term, Category and Predicate. The first three here are examples of
+entities specifically associated with the database. Here the defining string is
+simply the name of the user/text/binary. The Template entities are ...
 The template defines how the defining string is to be interpreted semantically.
 An example of such a template could be: "Movie: \<Title\>, \<Year\>", and an
 example of an entity that defines an instance of this template could be one

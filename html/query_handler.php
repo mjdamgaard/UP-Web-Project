@@ -39,7 +39,7 @@ switch ($reqType) {
     case "set":
         $sql = "CALL selectInputSet (?, ?, ?, ?, ?, ?, ?)";
         $paramNameArr = array(
-            "u", "p",
+            "u", "c",
             "rl", "rh",
             "n", "o",
             "a"
@@ -50,11 +50,11 @@ switch ($reqType) {
             "uint", "uint",
             "tint"
         );
-        // output: [[ratVal, subjID], ...].
+        // output: [[ratVal, instID], ...].
         break;
     case "rat":
         $sql = "CALL selectRating (?, ?, ?)";
-        $paramNameArr = array("u", "p", "s");
+        $paramNameArr = array("u", "c", "i");
         $typeArr = array("id", "id", "id");
         // output: [[ratVal]].
         break;
@@ -62,18 +62,18 @@ switch ($reqType) {
         $sql = "CALL selectRecentInputs (?, ?)";
         $paramNameArr = array("id", "n");
         $typeArr = array("id", "uint");
-        // output: [[userID, predID, ratVal, subjID, changedAt], ...].
+        // output: [[userID, catID, ratVal, instID, changedAt], ...].
         break;
     case "ent":
         $sql = "CALL selectEntity (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [[entType, tmplID, defStr]].
+        // output: [[typeID, tmplID, defStr]].
         break;
     case "entID":
         $sql = "CALL selectEntityID (?, ?, ?)";
         $paramNameArr = array("ty", "tm", "s");
-        $typeArr = array("type", "id", "str");
+        $typeArr = array("id", "id", "str");
         // output: [[entID]].
         break;
     case "username":
@@ -142,7 +142,7 @@ DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 // fetch the result as a numeric array.
 $res = $stmt->get_result()->fetch_all();
 // finally echo the JSON-encoded numeric array, containing e.g. the
-// columns: ("ratVal", "subjID") for $reqType == "set", etc., so look at
+// columns: ("ratVal", "instID") for $reqType == "set", etc., so look at
 // the comments above for what the resulting arrays will contain.
 echo json_encode($res);
 

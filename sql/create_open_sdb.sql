@@ -20,31 +20,43 @@
 
 
 
-/* Statements that the users (or bots) give as input to the semantic network.
- * A central feature of this semantic system is that all such statements come
- * with a numerical value which represents the degree to which the user deems
- * that the statement is correct (like when answering a survey).
+/* Semantic inputs are the statements that the users (or aggregation bots) give
+ * as input to the semantic network. A central feature of this semantic system
+ * is that all such statements come with a numerical value which represents the
+ * degree to which the user deems that the statement is correct (like when
+ * answering a survey).
+ * The statements in this system are aways formed from a category entity and a
+ * instance entity. The user thus states that the latter is an instance of the
+ * given category. The rating then tells how important/useful the user deems
+ * the instance to be in that category.
+ * Note that all predicates can be reformulated as categories. For instance,
+ * the predicate "is a scary movie" can be reformulated as the category "Scary
+ * movies."
  **/
 CREATE TABLE SemanticInputs (
     -- User (or bot) who states the statement.
     user_id BIGINT UNSIGNED NOT NULL,
-    -- Predicate of the statement.
-    pred_id BIGINT UNSIGNED NOT NULL,
+    -- Category of the statement.
+    cat_id BIGINT UNSIGNED NOT NULL,
 
-    /* The "input set" */
-    -- Given some constants for the above two columns, the input sets contain
-    -- pairs of rating values and the IDs of the predicate subjects.
+    /* The input set */
+    -- Given some constants for the above two columns, the "input sets" contain
+    -- pairs of rating values and the IDs of the category instances.
     rat_val SMALLINT UNSIGNED NOT NULL,
-    subj_id BIGINT UNSIGNED NOT NULL,
+    inst_id BIGINT UNSIGNED NOT NULL,
+
+    -- Resulting semantic input: "User #<user_id> states that entity #<inst_id>
+    -- is an instance of category #<cat_id> with importantance/usefulness given
+    -- on a scale from 0 to 10 (with 5 being neutral) by <rat_val> / 6553.5."
 
     PRIMARY KEY (
         user_id,
-        pred_id,
+        cat_id,
         rat_val,
-        subj_id
+        inst_id
     ),
 
-    UNIQUE INDEX (user_id, pred_id, subj_id)
+    UNIQUE INDEX (user_id, cat_id, inst_id)
 );
 -- TODO: Compress this table and its sec. index, as well as some other tables
 -- and sec. indexes below. (But compression is a must for this table.)
@@ -54,9 +66,9 @@ CREATE TABLE PrivateRecentInputs (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     user_id BIGINT UNSIGNED NOT NULL,
-    pred_id BIGINT UNSIGNED NOT NULL,
+    cat_id BIGINT UNSIGNED NOT NULL,
     rat_val SMALLINT UNSIGNED, -- new rating value:
-    subj_id BIGINT UNSIGNED NOT NULL,
+    inst_id BIGINT UNSIGNED NOT NULL,
 
     live_after TIME
     -- TODO: Make a recurring scheduled event that decrements the days of this
@@ -67,17 +79,17 @@ CREATE TABLE RecentInputs (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     user_id BIGINT UNSIGNED NOT NULL,
-    pred_id BIGINT UNSIGNED NOT NULL,
+    cat_id BIGINT UNSIGNED NOT NULL,
     rat_val SMALLINT UNSIGNED, -- new rating value.
-    subj_id BIGINT UNSIGNED NOT NULL,
+    inst_id BIGINT UNSIGNED NOT NULL,
 
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 -- CREATE TABLE RecordedInputs (
 --     user_id BIGINT UNSIGNED NOT NULL,
---     pred_id BIGINT UNSIGNED NOT NULL,
+--     cat_id BIGINT UNSIGNED NOT NULL,
 --     -- recorded rating value.
---     subj_id BIGINT UNSIGNED NOT NULL,
+--     inst_id BIGINT UNSIGNED NOT NULL,
 --
 --     changed_at DATETIME,
 --
@@ -85,8 +97,8 @@ CREATE TABLE RecentInputs (
 --
 --     PRIMARY KEY (
 --         user_id,
---         pred_id,
---         subj_id,
+--         cat_id,
+--         inst_id,
 --         changed_at
 --     )
 -- );
@@ -97,8 +109,8 @@ CREATE TABLE EntityIndexKeys (
     -- Index entity which defines the restrictions on the entity keys.
     idx_id BIGINT UNSIGNED NOT NULL,
 
-    /* The "entity index" */
-    -- Given some constants for the above two columns, the entity indexes
+    /* The entity index */
+    -- Given some constants for the above two columns, the "entity indexes"
     -- contain the "entity keys," which are each just the secondary index of an
     -- entity.
     ent_type CHAR(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
@@ -122,18 +134,14 @@ CREATE TABLE Entities (
     -- Entity ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- Type of the entity. This can be 'c' for Category, 'm' for Template, 'p'
-    -- for Predicate, 'o' for Object, 'i' for Index, 'u' for User, 'x' for Text,
-    -- 'b' for Binary, or 'a' for Aggregation algorithm (Bot).
-    -- Note that 'Object' here is used as a very broad term. So for any kind of
-    -- entity that does not fit any of the other types, simply choose 'Object'
-    -- as its type.
-    -- All these types can have subclasses (and especially Objects), which is
-    -- essentially what the Templates are used for defineing.
-    type CHAR(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-    
+    -- Type of the entity. This can for instance be: Type, Category, Template,
+    -- Index, User, Text data, Binary data, Aggregation bot, as well as any
+    -- user-submitted type.
+    type_id BIGINT UNSIGNED NOT NULL,
+
     -- ID of the template which defines how the defining string is to be
-    -- interprested.
+    -- interpreted. If the template ID is null, the defining string is just
+    -- interpreted as is.
     tmpl_id BIGINT UNSIGNED,
 
     -- Defining string of the entity. This can be a lexical item, understood in
@@ -146,22 +154,20 @@ CREATE TABLE Entities (
     -- entity.
     def_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
-    UNIQUE INDEX (type, tmpl_id, def_str)
+    UNIQUE INDEX (type_id, tmpl_id, def_str)
 );
 
-INSERT INTO Entities (tmpl_id, type, def_str, id)
+INSERT INTO Entities (type_id, tmpl_id, def_str, id)
 VALUES
-    (NULL, 'c', "Entities", 1),
-    (NULL, 'c', "Categories", 2),
-    (NULL, 'c', "Templates", 3),
-    (NULL, 'c', "Predicates", 4),
-    (NULL, 'c', "Objects", 5),
-    (NULL, 'c', "Indexes", 6),
-    (NULL, 'c', "Users", 7),
-    (NULL, 'c', "Texts", 8),
-    (NULL, 'c', "Binaries", 9),
-    (NULL, 'c', "Aggregation algorithms (Bots)", 10),
-    (NULL, 'u', "admin_1", 11);
+    (1, NULL, "Type", 1), -- The type of this "Type" entity is itself.
+    (1, NULL, "Category", 2), -- This is then "Category" type entity and so on.
+    (1, NULL, "Template", 3),
+    (1, NULL, "Index", 4),
+    (1, NULL, "User", 5),
+    (1, NULL, "Aggregation bot", 6),
+    (1, NULL, "Text data", 7),
+    (1, NULL, "Binary data", 8),
+    (5, NULL, "admin_1", 9);
 
 
 
@@ -187,7 +193,7 @@ CREATE TABLE Users (
 );
 
 INSERT INTO Users (username, id)
-VALUES ("admin_1", 11);
+VALUES ("admin_1", 9);
 
 
 

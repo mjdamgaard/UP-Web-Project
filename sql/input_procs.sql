@@ -2,10 +2,7 @@
 SELECT "Input procedures";
 
 -- DROP PROCEDURE inputOrChangeRating;
---
--- DROP PROCEDURE insertOrFindTerm;
--- DROP PROCEDURE insertOrFindTemplate;
---
+-- DROP PROCEDURE insertOrFindEntity;
 -- DROP PROCEDURE private_insertUser;
 -- DROP PROCEDURE insertText;
 -- DROP PROCEDURE insertBinary;
@@ -16,47 +13,47 @@ SELECT "Input procedures";
 DELIMITER //
 CREATE PROCEDURE inputOrChangeRating (
     IN userID BIGINT UNSIGNED,
-    IN predID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED,
+    IN catID BIGINT UNSIGNED,
+    IN instID BIGINT UNSIGNED,
     IN ratVal SMALLINT UNSIGNED,
     IN live_after TIME
 )
 BEGIN
     DECLARE exitCode TINYINT;
-    DECLARE t CHAR(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+    DECLARE typeID BIGINT UNSIGNED;
     DECLARE prevRatVal SMALLINT UNSIGNED;
 
     IF (ratVal = 0) THEN
         SET ratVal = NULL;
     END IF;
 
-    SELECT type INTO t
+    SELECT type_id INTO typeID
     FROM Entities
-    WHERE id = predID;
-    IF (t != 'p') THEN
-        SET exitCode = 4; -- predID is not the ID of a predicate.
+    WHERE id = catID;
+    IF (typeID != 2) THEN
+        SET exitCode = 4; -- catID is not the ID of a category.
     ELSE
         SELECT rat_val INTO prevRatVal
         FROM SemanticInputs
         WHERE (
             user_id = userID AND
-            pred_id = predID AND
-            subj_id = subjID
+            cat_id = catID AND
+            inst_id = instID
         )
         FOR UPDATE;
 
         IF (ratVal IS NOT NULL AND prevRatVal IS NULL) THEN
             INSERT INTO SemanticInputs (
                 user_id,
-                pred_id,
+                cat_id,
                 rat_val,
-                subj_id
+                inst_id
             )
             VALUES (
                 userID,
-                predID,
+                catID,
                 ratVal,
-                subjID
+                instID
             );
             SET exitCode = 0; -- no previous rating.
         ELSEIF (ratVal IS NOT NULL AND prevRatVal IS NOT NULL) THEN
@@ -64,16 +61,16 @@ BEGIN
             SET rat_val = ratVal
             WHERE (
                 user_id = userID AND
-                pred_id = predID AND
-                subj_id = subjID
+                cat_id = catID AND
+                inst_id = instID
             );
             SET exitCode = 1; -- a previous rating was updated.
         ELSEIF (ratVal IS NULL AND prevRatVal IS NOT NULL) THEN
             DELETE FROM SemanticInputs
             WHERE (
                 user_id = userID AND
-                pred_id = predID AND
-                subj_id = subjID
+                cat_id = catID AND
+                inst_id = instID
             );
             SET exitCode = 2; -- a previous rating was deleted.
         ELSE
@@ -87,19 +84,19 @@ BEGIN
         SET live_after = NULL; -- (not implemented yet)
         INSERT INTO RecentInputs (
             user_id,
-            pred_id,
+            cat_id,
             rat_val,
-            subj_id
+            inst_id
         )
         VALUES (
             userID,
-            predID,
+            catID,
             ratVal,
-            subjID
+            instID
         );
     END IF;
 
-    SELECT subjID AS outID, exitCode;
+    SELECT instID AS outID, exitCode;
 END //
 DELIMITER ;
 -- TODO: When moving the ratings from PrivateRecentInputs to the public ones
@@ -111,42 +108,46 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE insertOrFindTerm (
+CREATE PROCEDURE insertOrFindEntity (
     IN userID BIGINT UNSIGNED,
-    IN entType CHAR(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN typeID BIGINT UNSIGNED,
     IN tmplID BIGINT UNSIGNED,
     IN defStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
 BEGIN
     DECLARE outID, varID BIGINT UNSIGNED;
-    DECLARE t CHAR(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+    DECLARE tmplType BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
 
     IF (tmplID = 0) THEN
         SET tmplID = NULL;
     END IF;
 
-    SELECT id INTO outID
-    FROM Entities
-    WHERE (
-        type = entType AND
-        tmpl_id <=> tmplID AND
-        def_str = defStr
-    );
-    IF (outID IS NOT NULL) THEN
-        SET exitCode = 1; -- find.
-    ELSEIF (tmplID IS NOT NULL) THEN
-        SELECT type INTO t
+    IF (typeID = 0 OR 4 <= typeID AND typeID <= 8) THEN
+        SET exitCode = 3; -- typeID is not allowed for this procedure.
+    ELSE
+        SELECT id INTO outID
         FROM Entities
-        WHERE id = tmplID;
-        IF (t != 'm') THEN
-            SET exitCode = 2; -- tmplID is not the ID of an existing template.
+        WHERE (
+            type_id = typeID AND
+            tmpl_id <=> tmplID AND
+            def_str = defStr
+        );
+        IF (outID IS NOT NULL) THEN
+            SET exitCode = 1; -- find.
+        ELSEIF (tmplID IS NOT NULL) THEN
+            SELECT type_id INTO tmplType
+            FROM Entities
+            WHERE id = tmplID;
+            IF (tmplType != 3) THEN
+                SET exitCode = 2; -- tmplID entity is not an existing template.
+            END IF;
         END IF;
     END IF;
 
     IF (exitCode IS NULL) THEN
-        INSERT INTO Entities (type, tmpl_id, def_str)
-        VALUES (entType, tmplID, defStr);
+        INSERT INTO Entities (type_id, tmpl_id, def_str)
+        VALUES (typeID, tmplID, defStr);
         SELECT LAST_INSERT_ID() INTO outID;
         INSERT INTO PrivateCreators (ent_id, user_id)
         VALUES (outID, userID);
@@ -155,38 +156,6 @@ BEGIN
     SELECT outID, exitCode;
 END //
 DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE insertOrFindTemplate (
-    IN userID BIGINT UNSIGNED,
-    IN defStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
-)
-BEGIN
-    DECLARE outID, varID BIGINT UNSIGNED;
-    DECLARE exitCode TINYINT;
-
-    SELECT id INTO outID
-    FROM Entities
-    WHERE (
-        type = 'm' AND
-        tmpl_id IS NULL AND
-        def_str = defStr
-    );
-    IF (outID IS NOT NULL) THEN
-        SET exitCode = 1; -- find.
-    ELSE
-        INSERT INTO Entities (type, tmpl_id, def_str)
-        VALUES ('m', NULL, defStr);
-        SELECT LAST_INSERT_ID() INTO outID;
-        INSERT INTO PrivateCreators (ent_id, user_id)
-        VALUES (outID, userID);
-        SET exitCode = 0; -- insert.
-    END IF;
-    SELECT outID, exitCode;
-END //
-DELIMITER ;
-
 
 
 DELIMITER //
@@ -197,8 +166,8 @@ CREATE PROCEDURE private_insertUser (
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
-    INSERT INTO Entities (type, tmpl_id, def_str)
-    VALUES ('u', NULL, username);
+    INSERT INTO Entities (type_id, tmpl_id, def_str)
+    VALUES (5, NULL, username);
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Users (id, username)
     VALUES (outID, username);
@@ -218,8 +187,8 @@ CREATE PROCEDURE insertText (
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
-    INSERT INTO Entities (type, tmpl_id, def_str)
-    VALUES ('x', NULL, name);
+    INSERT INTO Entities (type_id, tmpl_id, def_str)
+    VALUES (7, NULL, name);
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Texts (id, str)
     VALUES (outID, textStr);
@@ -239,8 +208,8 @@ CREATE PROCEDURE insertBinary (
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
-    INSERT INTO Entities (type, tmpl_id, def_str)
-    VALUES ('b', NULL, name);
+    INSERT INTO Entities (type_id, tmpl_id, def_str)
+    VALUES (8, NULL, name);
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Binaries (id, bin)
     VALUES (outID, bin);
