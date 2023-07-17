@@ -42,7 +42,7 @@ entityTitleCL.addCallback(function($ci, data) {
         return;
     }
     let reqData = {
-        type: "ent",
+        req: "ent",
         id: data.entID,
     };
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
@@ -55,7 +55,7 @@ entityTitleCL.addCallback(function($ci, data) {
             return;
         }
         let reqData = {
-            type: "ent",
+            req: "ent",
             id: data.tmplID,
         };
         dbReqManager.query($ci, reqData, data, function($ci, result, data) {
@@ -73,7 +73,7 @@ entityTitleCL.addCallback(function($ci, data) {
             data.defItemStrArr.forEach(function(val) {
                 if (/^#[1-9][0-9]*$/.test(val)) {
                     let reqData = {
-                        type: "ent",
+                        req: "ent",
                         id: val.substring(1),
                     };
                     dbReqManager.query($ci, reqData, function($ci, result) {});

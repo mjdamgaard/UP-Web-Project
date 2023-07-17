@@ -50,10 +50,10 @@ ratingDisplayCL.addCallback(function($ci, data) {
 });
 ratingDisplayCL.addCallback(function($ci, data) {
     let reqData = {
-        type: "rat",
+        req: "rat",
         u: data.queryUserID,
-        p: data.catID,
-        s: data.instID,
+        c: data.catID,
+        i: data.instID,
     };
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
         data.queryUserRatVal = (result[0] ?? [0])[0];
@@ -61,10 +61,10 @@ ratingDisplayCL.addCallback(function($ci, data) {
         // $ci.find('.CI.QueryUserRatingDisplay').trigger("load");
     });
     reqData = {
-        type: "rat",
+        req: "rat",
         u: data.inputUserID,
-        p: data.catID,
-        s: data.instID,
+        c: data.catID,
+        i: data.instID,
     };
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
         data.prevInputRatVal = (result[0] ?? [0])[0];
@@ -128,10 +128,10 @@ inputRatingSliderCL.addCallback(function($ci, data) {
         let $ci = $(this).closest('.CI.InputRatingSlider');
         let data = $ci.data("data");
         let reqData = {
-            type: "rat",
+            req: "rat",
             u: data.inputUserID,
-            p: data.catID,
-            s: data.instID,
+            c: data.catID,
+            i: data.instID,
             r: 0,
             l: "00"
         };
@@ -151,10 +151,10 @@ inputRatingSliderCL.addCallback(function($ci, data) {
                 $ci.find('input[type="range"]').val() * 6553.5
             );
             let reqData = {
-                type: "rat",
+                req: "rat",
                 u: data.inputUserID,
-                p: data.catID,
-                s: data.instID,
+                c: data.catID,
+                i: data.instID,
                 r: inputRatVal,
                 l: "00"
             };

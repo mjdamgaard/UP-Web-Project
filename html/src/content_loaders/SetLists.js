@@ -115,8 +115,8 @@ export class SetQuerier extends SetGenerator {
             this.queryWithCatID(obj, callbackData, callback);
         } else {
             let reqData = {
-                type: "entID",
-                ty: "p",
+                req: "entID",
+                ty: 2,
                 tm: setData.catTmplID,
                 s: setData.catStr,
             };
@@ -131,9 +131,9 @@ export class SetQuerier extends SetGenerator {
                     return;
                 }
                 let reqData = {
-                    type: "term",
+                    req: "ent",
                     u: setData.inputUserID,
-                    ty: "p",
+                    ty: 2,
                     tm: setData.catTmplID,
                     s: setData.catStr,
                 };
@@ -149,9 +149,9 @@ export class SetQuerier extends SetGenerator {
         }
         let setData = this.setData;
         let reqData = {
-            type: "set",
+            req: "set",
             u: setData.queryUserID,
-            p: setData.catID,
+            c: setData.catID,
             rl: setData.ratingLo,
             rh: setData.ratingHi,
             n: setData.num,
@@ -331,7 +331,7 @@ export class MaxRatingSetCombiner extends SetCombiner {
 //                 }
 //                 // else, first query for the catID, and then the set.
 //                 let reqData = {
-//                     type: "entID",
+//                     req: "entID",
 //                     c: setData.catTmplID,
 //                     s: setData.catStr,
 //                     t: setData.objID,
@@ -355,9 +355,9 @@ export class MaxRatingSetCombiner extends SetCombiner {
 //         queryParams.offset ??= 0;;
 //         queryParams.isAscending ??= 0;;
 //         let reqData = {
-//             type: "set",
+//             req: "set",
 //             u: setData.queryUserID,
-//             p: setData.catID,
+//             c: setData.catID,
 //             rl: queryParams.ratingLo,
 //             rh: queryParams.ratingHi,
 //             n: queryParams.num,

@@ -122,7 +122,7 @@ BEGIN
     SELECT id AS entID
     FROM Entities
     WHERE (
-        type = typeID AND
+        type_id = typeID AND
         tmpl_id <=> tmplID AND
         def_str = defStr
     );

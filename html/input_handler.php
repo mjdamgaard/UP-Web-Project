@@ -26,10 +26,10 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 
 
 // get request type.
-if (!isset($_POST["type"])) {
+if (!isset($_POST["req"])) {
     echoErrorJSONAndExit("No request type specified");
 }
-$reqType = $_POST["type"];
+$reqType = $_POST["req"];
 
 
 // match $reqType against any of the following single-query request types
@@ -43,8 +43,8 @@ switch ($reqType) {
         $paramNameArr = array("u", "c", "i", "r", "l");
         $typeArr = array("id", "id", "id", "ushort", "time");
         break;
-    case "term":
-        $sql = "CALL insertOrFindTerm (?, ?, ?, ?)";
+    case "ent":
+        $sql = "CALL insertOrFindEntity (?, ?, ?, ?)";
         $paramNameArr = array("u", "ty", "tm", "s");
         $typeArr = array("id", "id", "id", "str");
         break;

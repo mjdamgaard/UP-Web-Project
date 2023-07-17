@@ -43,7 +43,7 @@ submitEntityFieldCL.addCallback(function($ci, data) {
         return;
     }
     let reqData = {
-        type: "ent",
+        req: "ent",
         id: data.tmplID,
     };
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
@@ -122,9 +122,9 @@ submitEntityFieldCL.addCallback(function($ci, data) {
         }
         // upload the new entity.
         let reqData = {
-            type: "term",
+            req: "term",
             u: data.getFromAncestor("inputUserID"),
-            ty: 'o', // TODO: add an input field for the term type.
+            ty: 2, // TODO: add an input field for the term type.
             tm: data.tmplID == 1 ? 0 : data.tmplID,
             s: defStr,
         };

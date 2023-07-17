@@ -37,28 +37,26 @@ entityPageCL.addCallback(function($ci, data) {
         return;
     };
     let reqData = {
-        type: "ent",
+        req: "ent",
         id: data.entID,
     };
     let $this = $(this);
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-        data.entType = (result[0] ?? [""])[0];
+        data.typeID = (result[0] ?? [0])[0];
         if (true) { // TODO: Branch according to type.
             data.tabAndPageDataArr = [
                 ["Info", "EntityInfoPage", {}],
                 ["Ratings", "EntityRatingsPage", {}],
-                ["Categories", "PropertyCategoryPage", {
-                    catNoun: "Subcategories",
+                ["Subcategories", "PropertyCategoryPage", {
+                    propID: 37,
                 }],
-                ["Instances", "PropertyCategoryPage", {
-                    catNoun: "Instances",
-                }],
+                ["Instances", "CategoryInstancesPage", {}],
                 ["Applies to", "EntityAppliesToPage", {}],
                 ["Related to", "PropertyCategoryPage", {
-                    catNoun: "Related entities",
+                    propID: 42,
                 }],
                 ["Supercategories", "PropertyCategoryPage", {
-                    catNoun: "Supercategories",
+                    propID: 47,
                 }],
                 ["Template", "EntityTemplatePage", {}],
                 ["Submit instance", "EntitySubmitInstancePage", {}],
@@ -67,7 +65,7 @@ entityPageCL.addCallback(function($ci, data) {
                 // ["Discussions", "EntityDiscussionsPage", {}],
             ];
             data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
-                "Categories";
+                "Subcategories";
             $ci.children('.CI.PagesWithTabs').trigger("load");
             return;
         }
@@ -94,17 +92,17 @@ export var propertyCategoryPageCL = new ContentLoader(
 );
 propertyCategoryPageCL.addCallback("data", function(data) {
     data.copyFromAncestor([
-        "catNoun",
+        "propID",
         "entID",  // optional.
     ]);
 });
 propertyCategoryPageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
     data.setGenerator = new SetQuerier({
-        catTmplID: 12, // ID of the "is an important/useful inst..." template.
-        catStr: data.catNoun + "|#" + data.entID,
-        queryUserID: 11,
-        inputUserID: 11,
+        catTmplID: 21, // ID of the "<Property> of <Entity>" template.
+        catStr: "#" + data.propID + "|#" + data.entID,
+        queryUserID: 9,
+        inputUserID: 9,
         num: 4000,
         ratingLo: 0,
         ratingHi: 0,
@@ -120,18 +118,18 @@ propertyCategoryPageCL.addCallback("data", function(data) {
 // input and query user IDs.
 
 
-export var entityAppliesToPageCL = new ContentLoader(
-    "EntityAppliesToPage",
+export var categoryInstancesPageCL = new ContentLoader(
+    "CategoryInstancesPage",
     /* Initial HTML template */
     '<<SetDisplay>>',
     sdbInterfaceCL
 );
-entityAppliesToPageCL.addCallback("data", function(data) {
+categoryInstancesPageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
     data.setGenerator = new SetQuerier({
         catID: data.getFromAncestor("entID"),
-        queryUserID: 11,
-        inputUserID: 11,
+        queryUserID: 9,
+        inputUserID: 9,
         num: 4000,
         ratingLo: 0,
         ratingHi: 0,
@@ -160,19 +158,19 @@ entityRatingsPageCL.addCallback("data", function(data) {
     // Relevant categories:
     data.elemContentKey = "RatingElement";
     let sg1 = new SetQuerier({
-        catTmplID: 12, // ID of the "is an important/useful inst..." template.
+        catTmplID: 21, // ID of the "<Property> of <Entity>" template.
         catStr: "Relevant categories|#" + data.entID,
-        queryUserID: 11,
-        inputUserID: 11,
+        queryUserID: 9,
+        inputUserID: 9,
         num: 4000,
         ratingLo: 0,
         ratingHi: 0,
     });
     let sg2 = new SetQuerier({
-        catTmplID: 12, // ID of the "is an important/useful inst..." template.
+        catTmplID: 21, // ID of the "<Property> of <Entity>" template.
         catStr: "Relevant categories for derived entities|#" + data.tmplID,
-        queryUserID: 11,
-        inputUserID: 11,
+        queryUserID: 9,
+        inputUserID: 9,
         num: 4000,
         ratingLo: 0,
         ratingHi: 0,
@@ -230,10 +228,10 @@ relevantCategoriesFieldCL.addCallback("data", function(data) {
 relevantCategoriesFieldCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
     data.setGenerator = new SetQuerier({
-        catTmplID: 12, // ID of the "is an important/useful inst..." template.
+        catTmplID: 21, // ID of the "<Property> of <Entity>" template.
         catStr: "Relevant categories for derived entities|#" + data.tmplID,
-        queryUserID: 11,
-        inputUserID: 11,
+        queryUserID: 9,
+        inputUserID: 9,
         num: 4000,
         ratingLo: 0,
         ratingHi: 0,
@@ -258,10 +256,10 @@ relevantPropertiesFieldCL.addCallback("data", function(data) {
 relevantPropertiesFieldCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
     data.setGenerator = new SetQuerier({
-        catTmplID: 12, // ID of the "is an important/useful inst..." template.
+        catTmplID: 21, // ID of the "<Property> of <Entity>" template.
         catStr: "Relevant properties for derived entities|#" + data.tmplID,
-        queryUserID: 11,
-        inputUserID: 11,
+        queryUserID: 9,
+        inputUserID: 9,
         num: 4000,
         ratingLo: 0,
         ratingHi: 0,
@@ -285,10 +283,10 @@ relevantListsFieldCL.addCallback("data", function(data) {
 relevantListsFieldCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
     data.setGenerator = new SetQuerier({
-        catTmplID: 12, // ID of the "is an important/useful inst..." template.
+        catTmplID: 21, // ID of the "<Property> of <Entity>" template.
         catStr: "Relevant lists for derived entities|#" + data.tmplID,
-        queryUserID: 11,
-        inputUserID: 11,
+        queryUserID: 9,
+        inputUserID: 9,
         num: 4000,
         ratingLo: 0,
         ratingHi: 0,
@@ -331,19 +329,19 @@ entityInfoPageCL.addCallback("data", function(data) {
     // Relevant properties:
     data.propsData = {elemContentKey: "SemanticPropertyElement"};
     let propSG1 = new SetQuerier({
-        catTmplID: 12, // ID of the "is an important/useful inst..." template.
+        catTmplID: 21, // ID of the "<Property> of <Entity>" template.
         catStr: "Relevant properties|#" + data.entID,
-        queryUserID: 11,
-        inputUserID: 11,
+        queryUserID: 9,
+        inputUserID: 9,
         num: 100,
         ratingLo: 0,
         ratingHi: 0,
     });
     let propSG2 = new SetQuerier({
-        catTmplID: 12, // ID of the "is an important/useful inst..." template.
+        catTmplID: 21, // ID of the "<Property> of <Entity>" template.
         catStr: "Relevant properties for derived entities|#" + data.tmplID,
-        queryUserID: 11,
-        inputUserID: 11,
+        queryUserID: 9,
+        inputUserID: 9,
         num: 100,
         ratingLo: 0,
         ratingHi: 0,
@@ -354,19 +352,19 @@ entityInfoPageCL.addCallback("data", function(data) {
     // Relevant lists:
     data.listsData = {elemContentKey: "SemanticListElement"};
     let listSG1 = new SetQuerier({
-        catTmplID: 12, // ID of the "is an important/useful inst..." template.
+        catTmplID: 21, // ID of the "<Property> of <Entity>" template.
         catStr: "Relevant lists|#" + data.entID,
-        queryUserID: 11,
-        inputUserID: 11,
+        queryUserID: 9,
+        inputUserID: 9,
         num: 4000,
         ratingLo: 0,
         ratingHi: 0,
     });
     let listSG2 = new SetQuerier({
-        catTmplID: 12, // ID of the "is an important/useful inst..." template.
+        catTmplID: 21, // ID of the "<Property> of <Entity>" template.
         catStr: "Relevant lists for derived entities|#" + data.tmplID,
-        queryUserID: 11,
-        inputUserID: 11,
+        queryUserID: 9,
+        inputUserID: 9,
         num: 4000,
         ratingLo: 0,
         ratingHi: 0,

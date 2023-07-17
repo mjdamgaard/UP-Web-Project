@@ -21,10 +21,10 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 
 
 // get request type.
-if (!isset($_POST["type"])) {
+if (!isset($_POST["req"])) {
     echoErrorJSONAndExit("No request type specified");
 }
-$reqType = $_POST["type"];
+$reqType = $_POST["req"];
 
 
 // TODO: Also implement some limits on the "n"s below (other than just the
