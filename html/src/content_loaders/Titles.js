@@ -101,8 +101,12 @@ export function loadEntityTitleHTML($ci, data) {
                 }
             );
         }
-    } else  {
-        entityTitleCL.loadAppended($ci, "TemplateInstanceTitle", data);
+    } else {
+        if (data.isFullTitle) {
+            entityTitleCL.loadAppended($ci, "FullTemplateInstanceTitle", data);
+        } else {
+            entityTitleCL.loadAppended($ci, "TemplateInstanceTitle", data);
+        }
     }
 }
 
@@ -132,7 +136,6 @@ entityLinkCL.addCallback(function($ci, data) {
     })
 });
 
-
 export var templateInstanceTitleCL = new ContentLoader(
     "TemplateInstanceTitle",
     /* Initial HTML template */
@@ -141,35 +144,12 @@ export var templateInstanceTitleCL = new ContentLoader(
 );
 templateInstanceTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
-        "typeID",
-        "defStr",
         "tmplDefStr",
         "defItemStrArr",
-        "isFullTitle",
-        "recLevel", // used in order to hand this on to def item EntityTitles.
     ]);
 });
 templateInstanceTitleCL.addCallback(function($ci, data) {
-    if (data.isFullTitle) {
-        let reqData = {
-            req: "ent",
-            id: data.typeID,
-        };
-        dbReqManager.query($ci, reqData, data, true,
-            function($ci, result, data) {
-                let typeDefStr = (result[0] ?? [])[2];
-                entityTitleCL.loadAppended($ci, "EntityLink", new ChildData(
-                    data, {entID: data.typeID, linkContent: typeDefStr}
-                ));
-                $ci.append(' &blacktriangleright; ');
-                data.linkContent = getTransformedFullTitleTemplate(
-                    data.tmplDefStr
-                );
-            }
-        );
-    } else {
-        data.linkContent = getTransformedTitleTemplate(data.tmplDefStr);
-    }
+    data.linkContent = getTransformedTitleTemplate(data.tmplDefStr);
     templateInstanceTitleCL.loadAppended($ci, "EntityLink", data);
     let defItemStrArr = data.defItemStrArr;
     let nextDefItemStr = 0;
@@ -178,22 +158,61 @@ templateInstanceTitleCL.addCallback(function($ci, data) {
         nextDefItemStr++;
         loadDefItemAppended($(this), defItemStr, data);
     });
-    // for full titles, append any extra def items that are not expected by the
-    // template.
-    if (data.isFullTitle) {debugger;
-        let len = defItemStrArr.length;
-        if (nextDefItemStr < len) {
-            $ci.find('.CI.EntityLink').append(
-                '&blacktriangleright; <span class="extra-def-items"></span>'
+});
+
+export var fullTemplateInstanceTitleCL = new ContentLoader(
+    "FullTemplateInstanceTitle",
+    /* Initial HTML template */
+    '<span></span>',
+    sdbInterfaceCL
+);
+fullTemplateInstanceTitleCL.addCallback("data", function(data) {
+    data.copyFromAncestor([
+        "typeID",
+        "defStr",
+        "tmplDefStr",
+        "defItemStrArr",
+        "recLevel", // used in order to hand this on to def item EntityTitles.
+    ]);
+});
+fullTemplateInstanceTitleCL.addCallback(function($ci, data) {
+    let reqData = {
+        req: "ent",
+        id: data.typeID,
+    };
+    dbReqManager.query($ci, reqData, data, true,
+        function($ci, result, data) {
+            let typeDefStr = (result[0] ?? [])[2];
+            entityTitleCL.loadAppended($ci, "EntityLink", new ChildData(
+                data, {entID: data.typeID, linkContent: typeDefStr}
+            ));
+            $ci.append(' &blacktriangleright; ');
+            data.linkContent = getTransformedFullTitleTemplate(
+                data.tmplDefStr
             );
-            let $obj = $ci.find('.extra-def-items');
-            for (let i = nextDefItemStr; i < len - 1; i++) {
-                loadExtraDefItemAppended($obj, defItemStrArr[i], data);
-                $obj.append(', ');
+            templateInstanceTitleCL.loadAppended($ci, "EntityLink", data);
+            let defItemStrArr = data.defItemStrArr;
+            let nextDefItemStr = 0;
+            $ci.find('.def-item').each(function() {
+                let defItemStr = defItemStrArr[nextDefItemStr];
+                nextDefItemStr++;
+                loadDefItemAppended($(this), defItemStr, data);
+            });
+            // append any extra def items that are not expected by the template.
+            let len = defItemStrArr.length;
+            if (nextDefItemStr < len) {
+                $ci.find('.CI.EntityLink').append(
+                    '&blacktriangleright; <span class="extra-def-items"></span>'
+                );
+                let $obj = $ci.find('.extra-def-items');
+                for (let i = nextDefItemStr; i < len - 1; i++) {
+                    loadExtraDefItemAppended($obj, defItemStrArr[i], data);
+                    $obj.append(', ');
+                }
+                loadExtraDefItemAppended($obj, defItemStrArr[len - 1], data);
             }
-            loadExtraDefItemAppended($obj, defItemStrArr[len - 1], data);
         }
-    }
+    );
 });
 export function loadDefItemAppended($obj, defItemStr, data) {
     if (/^#[1-9][0-9]*$/.test(defItemStr)) {
