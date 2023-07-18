@@ -6,12 +6,19 @@
 export class DBRequestManager {
     constructor() {
         this.ongoingQueries = {};
+        this.cache = {}; // Consider replacing with an LRU list, or consider
+        // just telling users that a disabled browser cache will slow the app
+        // down.
     }
 
-    query(obj, reqData, callbackData, callback) {
+    query(obj, reqData, callbackData, cacheQuery, callback) {
         if (!callback) {
-            callback = callbackData;
-            callbackData = null;
+            callback = cacheQuery;
+            cacheQuery = false;
+            if (!callback) {
+                callback = callbackData;
+                callbackData = null;
+            }
         }
         // URL-encode the request data.
         let encodedReqData = {};
@@ -24,6 +31,12 @@ export class DBRequestManager {
         let queryQueue = this.ongoingQueries[reqDataKey];
         if (queryQueue) {
             queryQueue.push([obj, callback, callbackData]);
+            return;
+        }
+        // else if the query is already cached, use that result and return.
+        let cachedResult = this.cache[reqDataKey];
+        if (cachedResult) {
+            callback(obj, cachedResult, callbackData);
             return;
         }
         // else initialize an ongoing query data queue, and make a $.getJSON()
@@ -63,6 +76,10 @@ export class DBRequestManager {
                 let callback = queryQueue[i][1];
                 let callbackData = queryQueue[i][2];
                 callback(obj, result, callbackData);
+            }
+            // if cacheQuery is true, cache the query.
+            if (cacheQuery) {
+                thisDBRM.cache[reqDataKey] = result;
             }
         });
     }

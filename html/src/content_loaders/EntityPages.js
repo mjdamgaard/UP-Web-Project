@@ -27,7 +27,7 @@ export var entityPageCL = new ContentLoader(
 entityPageCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "entID",
-        "tmplID",  // optional.
+        // "tmplID",  // optional.
     ]);
     data.columnEntityID = data.entID;
 });

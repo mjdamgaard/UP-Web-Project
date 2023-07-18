@@ -19,21 +19,18 @@ export var entityTitleCL = new ContentLoader(
 entityTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "entID",
-        "recLevel",
         "maxRecLevel",
     ]);
+    data.copyFromAncestor("recLevel", 1);
     data.recLevel ??= -1;;
     data.recLevel++;
     data.maxRecLevel ??= 2;;
-    // TODO: This solution does not seem robust since a EntityTitle might inherit
-    // a too high (not reset) recLevel (right?). So figure this out and then
-    // find an altered solution if this is indeed needed.
     data.isFullTitle = data.getFromAncestor("isFullTitle", 1) ?? false;
 });
 entityTitleCL.addCallback(function($ci, data) {
     if (!data.entID) {
         return;
-        // TODO: Solve a current bug where the last Entity is displayed when
+        // TODO: Solve a current bug where the last entity is displayed when
         // entID is a non-existing positive ID.
     }
     if (data.recLevel > data.maxRecLevel) {
@@ -46,8 +43,7 @@ entityTitleCL.addCallback(function($ci, data) {
         id: data.entID,
     };
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-        data.entType = (result[0] ?? [])[0]; // TODO: Display the type as well,
-        // at least for full titles.
+        data.typeID = (result[0] ?? [])[0];
         data.tmplID = (result[0] ?? [])[1];
         data.defStr = (result[0] ?? [])[2];
         if (!data.tmplID) {
@@ -84,16 +80,27 @@ entityTitleCL.addCallback(function($ci, data) {
 });
 
 export function loadEntityTitleHTML($ci, data) {
-    data = data ?? $ci.data("data");
     if (!data.tmplID) {
-        data.linkContent = data.defStr;
-        entityTitleCL.loadAppended($ci, "EntityLink", data);
-    } else if (data.tmplID === 2) {
-        entityTitleCL.loadAppended($ci, "UserTitle", data);
-    } else if (data.tmplID === 4) {
-        entityTitleCL.loadAppended($ci, "TextTitle", data);
-    } else if (data.tmplID === 5) {
-        entityTitleCL.loadAppended($ci, "BinaryTitle", data);
+        if (!data.isFullTitle) {
+            data.linkContent = data.defStr;
+            entityTitleCL.loadAppended($ci, "EntityLink", data);
+        } else {
+            let reqData = {
+                req: "ent",
+                id: data.typeID,
+            };
+            dbReqManager.query($ci, reqData, data, true,
+                function($ci, result, data) {
+                    let typeDefStr = (result[0] ?? [])[2];
+                    entityTitleCL.loadAppended($ci, "EntityLink", new ChildData(
+                        data, {entID: data.typeID, linkContent: typeDefStr}
+                    ));
+                    $ci.append(' &blacktriangleright; ');
+                    data.linkContent = data.defStr;
+                    entityTitleCL.loadAppended($ci, "EntityLink", data);
+                }
+            );
+        }
     } else  {
         entityTitleCL.loadAppended($ci, "TemplateInstanceTitle", data);
     }
@@ -134,15 +141,32 @@ export var templateInstanceTitleCL = new ContentLoader(
 );
 templateInstanceTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
+        "typeID",
         "defStr",
         "tmplDefStr",
         "defItemStrArr",
         "isFullTitle",
+        "recLevel", // used in order to hand this on to def item EntityTitles.
     ]);
 });
 templateInstanceTitleCL.addCallback(function($ci, data) {
     if (data.isFullTitle) {
-        data.linkContent = getTransformedFullTitleTemplate(data.tmplDefStr);
+        let reqData = {
+            req: "ent",
+            id: data.typeID,
+        };
+        dbReqManager.query($ci, reqData, data, true,
+            function($ci, result, data) {
+                let typeDefStr = (result[0] ?? [])[2];
+                entityTitleCL.loadAppended($ci, "EntityLink", new ChildData(
+                    data, {entID: data.typeID, linkContent: typeDefStr}
+                ));
+                $ci.append(' &blacktriangleright; ');
+                data.linkContent = getTransformedFullTitleTemplate(
+                    data.tmplDefStr
+                );
+            }
+        );
     } else {
         data.linkContent = getTransformedTitleTemplate(data.tmplDefStr);
     }
@@ -160,7 +184,7 @@ templateInstanceTitleCL.addCallback(function($ci, data) {
         let len = defItemStrArr.length;
         if (nextDefItemStr < len) {
             $ci.find('.CI.EntityLink').append(
-                '; <span class="extra-def-items"></span>'
+                '&blacktriangleright; <span class="extra-def-items"></span>'
             );
             let $obj = $ci.find('.extra-def-items');
             for (let i = nextDefItemStr; i < len - 1; i++) {
@@ -234,21 +258,26 @@ export var templateDisplayCL = new ContentLoader(
     "TemplateDisplay",
     /* Initial HTML template */
     '<span>' +
-        'Template: <<EntityTitle>>' +
+        'Template: ' +
     '</span>',
     sdbInterfaceCL
 );
 templateDisplayCL.addCallback("data", function(data) {
-    data.entID = data.getFromAncestor("tmplID") ?? 1;
-    data.tmplID = null;
+    data.copyFromAncestor("entID");
 });
-
-
-export var userTitleCL = new ContentLoader(
-    "UserTitle",
-    /* Initial HTML template */
-    '<span></span>', // TODO: change to look up the username.
-    sdbInterfaceCL
-);
-// TODO: Implement to fetch and display the username (perhaps like:
-// "User: username (id)").
+templateDisplayCL.addCallback(function($ci, data) {
+    let reqData = {
+        req: "ent",
+        id: data.entID,
+    };
+    dbReqManager.query($ci, reqData, data, function($ci, result, data) {
+        let tmplID = (result[0] ?? [])[1];
+        if (tmplID) {
+            templateDisplayCL.loadAppended($ci, "EntityTitle", new ChildData(
+                data, {entID: tmplID}
+            ));
+        } else {
+            $ci.append('<i>none</i>');
+        }
+    });
+});

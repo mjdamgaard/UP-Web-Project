@@ -59,8 +59,8 @@ VALUES
 /* More inserts for testing */
 
 CALL insertOrFindEntity(9, 2, 0, "Music"); -- id: 24
-CALL insertOrFindEntity(9, 2, 22, "Rock|#23"); -- id: 25
-CALL insertOrFindEntity(9, 2, 22, "Jazz|#23"); -- id: 26
+CALL insertOrFindEntity(9, 2, 22, "Rock|#24"); -- id: 25
+CALL insertOrFindEntity(9, 2, 22, "Jazz|#24"); -- id: 26
 
 CALL insertOrFindEntity(9, 1, 0, "Movie"); -- id: 27
 CALL insertOrFindEntity(9, 3, 0, "{<Title>}, <Year>"); -- id: 28
