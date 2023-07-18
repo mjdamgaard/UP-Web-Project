@@ -141,7 +141,9 @@ CREATE TABLE Entities (
 
     -- ID of the template which defines how the defining string is to be
     -- interpreted. If the template ID is null, the defining string is just
-    -- interpreted as is.
+    -- interpreted as is. In the special case when type_id is that of "Template"
+    -- (i.e. type_id = 3), the tmpl_id is replaced for the ID of the template's
+    -- intended type. (See initial_inserts.sql for examples.)
     tmpl_id BIGINT UNSIGNED,
 
     -- Defining string of the entity. This can be a lexical item, understood in

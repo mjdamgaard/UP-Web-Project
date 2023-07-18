@@ -42,34 +42,43 @@ entityPageCL.addCallback(function($ci, data) {
     };
     let $this = $(this);
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-        data.typeID = (result[0] ?? [0])[0];
-        if (true) { // TODO: Branch according to type.
-            data.tabAndPageDataArr = [
-                ["Info", "EntityInfoPage", {}],
-                ["Ratings", "EntityRatingsPage", {}],
-                ["Subcategories", "PropertyCategoryPage", {
-                    propID: 37,
-                }],
-                ["Instances", "CategoryInstancesPage", {}],
-                ["Applies to", "EntityAppliesToPage", {}],
-                ["Related to", "PropertyCategoryPage", {
-                    propID: 42,
-                }],
-                ["Supercategories", "PropertyCategoryPage", {
-                    propID: 47,
-                }],
-                ["Template", "EntityTemplatePage", {}],
-                ["Submit instance", "EntitySubmitInstancePage", {}],
-                // TODO: Implement the following two tabs as well.
-                // ["Comments", "EntityCommentsPage", {}],
-                // ["Discussions", "EntityDiscussionsPage", {}],
-            ];
-            data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
-                "Subcategories";
-            $ci.children('.CI.PagesWithTabs').trigger("load");
-            return;
+        data.typeID = result[0][0];
+        data.tabAndPageDataArr = [
+            ["Info", "EntityInfoPage", {}],
+            ["Ratings", "EntityRatingsPage", {}],
+            ["Related to", "PropertyCategoryPage", {
+                propID: 42,
+            }],
+        ];
+        switch (data.typeID) {
+            case 2:
+                data.tabAndPageDataArr.push(
+                    ["Subcategories", "PropertyCategoryPage", {propID: 37,}],
+                    ["Instances", "CategoryInstancesPage"],
+                    ["Supercategories", "PropertyCategoryPage", {propID: 47,}],
+                    ["Submit category instance", "SubmitCategoryInstancePage"],
+                );
+                data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
+                    "Subcategories";
+                break;
+            case 3:
+                data.tabAndPageDataArr.push(
+                    ["Submit template instance", "SubmitTemplateInstancePage"],
+                );
+                data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
+                    "Submit template instance";
+                break;
+            default:
+                data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
+                    "Info";
+                break;
         }
-        // TODO: Implement the other cases.
+        // TODO: Implement the following two tabs as well.
+        // data.tabAndPageDataArr.push(
+        //     ["Comments", "EntityCommentsPage", {}],
+        //     ["Discussions", "EntityDiscussionsPage", {}],
+        // );
+        $ci.children('.CI.PagesWithTabs').trigger("load");
     });
 });
 
@@ -187,8 +196,8 @@ entityRatingsPageCL.addCallback("data", function(data) {
 
 
 
-export var entityTemplatePageCL = new ContentLoader(
-    "EntityTemplatePage",
+export var submitTemplateInstancePageCL = new ContentLoader(
+    "SubmitTemplateInstancePage",
     /* Initial HTML template */
     '<div>' +
         '<h3><<TemplateDisplay>></h3>' +
@@ -296,7 +305,7 @@ relevantListsFieldCL.addCallback("data", function(data) {
 });
 
 
-export var entitySubmitInstancePageCL = new ContentLoader(
+export var submitCategoryInstancePageCL = new ContentLoader(
     "EntitySubmitInstancePage",
     /* Initial HTML template */
     '<div>' +

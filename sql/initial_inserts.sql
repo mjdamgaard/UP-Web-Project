@@ -46,13 +46,13 @@ VALUES
     -- Property type:
     (1, NULL, "Property", 19),
     -- Property template:
-    (3, NULL, "{<Title>}, one-to-<Quantity word (e.g. 'one,' 'few,' or 'many')>", 20),
+    (3, 19, "{<Title>}, one-to-<Quantity word (e.g. 'one,' 'few,' or 'many')>", 20),
     -- Property category template:
-    (3, NULL, "<Property> of <Entity>", 21),
+    (3, 2, "<Property> of <Entity>", 21),
     -- Subcategory template:
-    (3, NULL, "{<Title>} (<Supercategory>)", 22),
+    (3, 2, "{<Title>} (<Supercategory>)", 22),
     -- Adjective subcategory template:
-    (3, NULL, "<Adjective phrase> <Category>", 23);
+    (3, 2, "<Adjective phrase> <Category>", 23);
 
 
 
@@ -63,7 +63,7 @@ CALL insertOrFindEntity(9, 2, 22, "Rock|#24"); -- id: 25
 CALL insertOrFindEntity(9, 2, 22, "Jazz|#24"); -- id: 26
 
 CALL insertOrFindEntity(9, 1, 0, "Movie"); -- id: 27
-CALL insertOrFindEntity(9, 3, 0, "{<Title>}, <Year>"); -- id: 28
+CALL insertOrFindEntity(9, 3, 27, "{<Title>}, <Year>"); -- id: 28
 CALL insertOrFindEntity(9, 27, 28,
     "The Lord of the Rings: The Fellowship of the Ring|2001"
 ); -- id: 29

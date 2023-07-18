@@ -116,7 +116,8 @@ CREATE PROCEDURE insertOrFindEntity (
 )
 BEGIN
     DECLARE outID, varID BIGINT UNSIGNED;
-    DECLARE tmplType BIGINT UNSIGNED;
+    DECLARE tmplTypeID BIGINT UNSIGNED;
+    DECLARE tmplTmplID BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
 
     IF (tmplID = 0) THEN
@@ -124,7 +125,7 @@ BEGIN
     END IF;
 
     IF (typeID = 0 OR 4 <= typeID AND typeID <= 8) THEN
-        SET exitCode = 3; -- typeID is not allowed for this procedure.
+        SET exitCode = 4; -- typeID is not allowed for this procedure.
     ELSE
         SELECT id INTO outID
         FROM Entities
@@ -135,12 +136,15 @@ BEGIN
         );
         IF (outID IS NOT NULL) THEN
             SET exitCode = 1; -- find.
-        ELSEIF (tmplID IS NOT NULL) THEN
-            SELECT type_id INTO tmplType
+        ELSEIF (tmplID IS NOT NULL AND typeID != 3) THEN
+            SELECT type_id, tmpl_id INTO tmplTypeID, tmplTmplID
             FROM Entities
             WHERE id = tmplID;
-            IF (tmplType != 3) THEN
+            IF (tmplTypeID != 3) THEN
                 SET exitCode = 2; -- tmplID entity is not an existing template.
+            ELSEIF (tmplTmplID != typeID) THEN
+                SET exitCode = 3; -- tmpl_id of the tmplID entity is not the
+                -- same as the input typeID.
             END IF;
         END IF;
     END IF;

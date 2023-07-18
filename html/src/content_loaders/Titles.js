@@ -80,7 +80,7 @@ entityTitleCL.addCallback(function($ci, data) {
 });
 
 export function loadEntityTitleHTML($ci, data) {
-    if (!data.tmplID) {
+    if (!data.tmplID || data.typeID == 3) {
         if (!data.isFullTitle) {
             data.linkContent = data.defStr;
             entityTitleCL.loadAppended($ci, "EntityLink", data);
@@ -180,7 +180,7 @@ templateInstanceTitleCL.addCallback(function($ci, data) {
     });
     // for full titles, append any extra def items that are not expected by the
     // template.
-    if (data.isFullTitle) {
+    if (data.isFullTitle) {debugger;
         let len = defItemStrArr.length;
         if (nextDefItemStr < len) {
             $ci.find('.CI.EntityLink').append(

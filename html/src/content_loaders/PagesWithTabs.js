@@ -138,7 +138,7 @@ pagesContainerCL.addCallback(function($ci) {
                 $this.children('[data-title="' + tabTitle +'"]').show();
             } else {
                 let resultingPageData = new ChildData(
-                    $this.data("data"), pageData
+                    $this.data("data"), pageData ?? {}
                 );
                 $this.data("openPagesTitleArr").push(tabTitle);
                 $this.children().hide();
