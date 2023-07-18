@@ -160,7 +160,7 @@ export var entityRatingsPageCL = new ContentLoader(
 entityRatingsPageCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "entID",
-        "tmplID",
+        "typeID",
     ]);
 });
 entityRatingsPageCL.addCallback("data", function(data) {
@@ -168,7 +168,7 @@ entityRatingsPageCL.addCallback("data", function(data) {
     data.elemContentKey = "RatingElement";
     let sg1 = new SetQuerier({
         catTmplID: 21, // ID of the "<Property> of <Entity>" template.
-        catStr: "Relevant categories|#" + data.entID,
+        catStr: "#54|#" + data.entID,
         queryUserID: 9,
         inputUserID: 9,
         num: 4000,
@@ -177,7 +177,7 @@ entityRatingsPageCL.addCallback("data", function(data) {
     });
     let sg2 = new SetQuerier({
         catTmplID: 21, // ID of the "<Property> of <Entity>" template.
-        catStr: "Relevant categories for derived entities|#" + data.tmplID,
+        catStr: "#52|#" + data.typeID,
         queryUserID: 9,
         inputUserID: 9,
         num: 4000,

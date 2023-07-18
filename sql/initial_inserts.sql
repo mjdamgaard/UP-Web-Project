@@ -52,7 +52,7 @@ VALUES
     -- Subcategory template:
     (3, 2, "{<Title>} (<Supercategory>)", 22),
     -- Adjective subcategory template:
-    (3, 2, "<Adjective phrase> <Category>", 23);
+    (3, 2, "{<Adjective phrase>} <Category>", 23);
 
 
 
@@ -125,25 +125,28 @@ CALL inputOrChangeRating(9, 46, 24, CONV("FF00", 16, 10), "00");
 
 CALL insertOrFindEntity(9, 19, 20, "Supercategories|many"); -- id: 47
 
-CALL insertOrFindEntity(9, 2, 23, "good"); -- id: 48
-CALL insertOrFindEntity(9, 2, 23, "funny"); -- id: 49
-CALL insertOrFindEntity(9, 2, 23, "scary"); -- id: 50
-CALL insertOrFindEntity(9, 2, 23, "iconic"); -- id: 51
 
--- TODO: Redo the last part of this file as well:
+CALL insertOrFindEntity(9, 2, 23, "good|#31"); -- id: 48
+CALL insertOrFindEntity(9, 2, 23, "funny|#31"); -- id: 49
+CALL insertOrFindEntity(9, 2, 23, "scary|#31"); -- id: 50
+CALL insertOrFindEntity(9, 2, 23, "iconic|#31"); -- id: 51
 
--- CALL insertOrFindEntity(9, 'p', 12, "Relevant categories for derived entities|#1"); -- id: 50
--- CALL inputOrChangeRating(9, 50, 46, CONV("F000", 16, 10), "00");
--- CALL inputOrChangeRating(9, 50, 40, CONV("F000", 16, 10), "00");
---
--- CALL insertOrFindEntity(9, 'p', 12, "Relevant categories for derived entities|#27"); -- id: 51
--- CALL inputOrChangeRating(9, 51, 46, CONV("F000", 16, 10), "00");
--- CALL inputOrChangeRating(9, 51, 47, CONV("E100", 16, 10), "00");
--- CALL inputOrChangeRating(9, 51, 48, CONV("E000", 16, 10), "00");
---
---
--- CALL insertOrFindEntity(9, 'p', 12, "Relevant categories|#28"); -- id: 52
--- CALL inputOrChangeRating(9, 52, 46, CONV("F000", 16, 10), "00");
--- CALL inputOrChangeRating(9, 52, 47, CONV("E100", 16, 10), "00");
--- CALL inputOrChangeRating(9, 52, 48, CONV("EAAA", 16, 10), "00");
--- CALL inputOrChangeRating(9, 52, 49, CONV("E000", 16, 10), "00");
+CALL insertOrFindEntity(9, 19, 20,
+    "Relevant categories to rate for entities|many"); -- id: 52
+CALL insertOrFindEntity(9, 2, 21, "#52|#27"); -- id: 53
+CALL inputOrChangeRating(9, 53, 48, CONV("F000", 16, 10), "00");
+CALL inputOrChangeRating(9, 53, 49, CONV("E100", 16, 10), "00");
+CALL inputOrChangeRating(9, 53, 50, CONV("E000", 16, 10), "00");
+
+CALL insertOrFindEntity(9, 19, 20,
+    "Relevant categories to rate|many"); -- id: 54
+CALL insertOrFindEntity(9, 2, 21, "#54|#29"); -- id: 55
+CALL inputOrChangeRating(9, 55, 48, CONV("F000", 16, 10), "00");
+CALL inputOrChangeRating(9, 55, 49, CONV("E100", 16, 10), "00");
+CALL inputOrChangeRating(9, 55, 50, CONV("EAAA", 16, 10), "00");
+CALL inputOrChangeRating(9, 55, 51, CONV("E000", 16, 10), "00");
+
+CALL insertOrFindEntity(9, 2, 23, "well-formed|#10"); -- id: 56
+CALL insertOrFindEntity(9, 2, 21, "#54|#10"); -- id: 57
+CALL inputOrChangeRating(9, 57, 54, CONV("F000", 16, 10), "00");
+CALL inputOrChangeRating(9, 57, 10, CONV("F000", 16, 10), "00");

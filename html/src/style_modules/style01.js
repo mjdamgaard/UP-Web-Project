@@ -7,7 +7,7 @@ import {
     tabHeaderCL, pagesContainerCL,
 } from "/src/content_loaders/PagesWithTabs.js";
 import {
-    entityTitleCL,
+    entityTitleCL, entityLinkCL
 } from "/src/content_loaders/Titles.js";
 import {
 
