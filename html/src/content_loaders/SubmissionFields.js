@@ -13,9 +13,7 @@ export var submitEntityFieldCL = new ContentLoader(
     '<div>' +
         '<h4>Submit an entity</h4>' +
         '<form action="javascript:void(0);">' +
-            '<div class="std-field-container"></div>' +
-            '<div class="extra-field-container"></div>' +
-            '<button class="btn btn-default add-field">Add field</button>' +
+            '<div class="def-item-field-container"></div>' +
             '<button class="btn btn-default submit">Submit</button>' +
         '</form>' +
         '<div class="response-display"></div>' +
@@ -23,80 +21,78 @@ export var submitEntityFieldCL = new ContentLoader(
     sdbInterfaceCL
 );
 submitEntityFieldCL.addCallback("data", function(data) {
-    data.tmplID = data.getFromAncestor("tmplID") ?? 1;
+    data.copyFromAncestor([
+        "entID",
+        "typeID",
+    ]);
 });
 submitEntityFieldCL.addCallback(function($ci, data) {
     $ci.one("append-input-fields", function(event, labelArr) {
-        let $obj = $(this).find('.std-field-container');
+        let $obj = $(this).find('.def-item-field-container');
         labelArr.forEach(function(label) {
             submitEntityFieldCL.loadAppended(
                 $obj, "TextAreaFormGroup", new ChildData(data, {label:label})
             );
+            data.readyForSubmission = true;
         });
         return false;
     });
-});
-submitEntityFieldCL.addCallback(function($ci, data) {
-    if (data.tmplID == 1) {
-        let labelArr = ["Title/Defining text"];
+    if (data.typeID == 1) {
+        data.newEntityType = data.entID;
+        data.newEntityCxt = 0;
+        let labelArr = ["Title"];
         $ci.trigger("append-input-fields", [labelArr]);
         return;
     }
-    let reqData = {
-        req: "ent",
-        id: data.tmplID,
-    };
-    dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-        let tmplDefStr = (result[0] ?? [""])[2];
-        if (tmplDefStr === "") {
-            console.warn(
-                "Template #" + data.tmplID +
-                " has been removed from the database"
-            );
-            return;
-        }
-        let labelArr = getLabelArr(tmplDefStr);
-        $ci.trigger("append-input-fields", [labelArr]);
-    });
+    if (data.typeID == 3) {
+        let reqData = {
+            req: "ent",
+            id: data.entID,
+        };
+        dbReqManager.query($ci, reqData, data, function($ci, result, data) {
+            let tmplCxtID = (result[0] ?? [])[1];
+            let tmplDefStr = (result[0] ?? [])[2];
+            if (!tmplDefStr) {
+                console.warn(
+                    "Template #" + data.entID +
+                    " has been removed from the database"
+                );
+                return;
+            }
+            data.newEntityType = tmplCxtID;
+            data.newEntityCxt = data.entID;
+            let labelArr = getLabelArr(tmplDefStr);
+            $ci.trigger("append-input-fields", [labelArr]);
+        });
+    }
 });
 export function getLabelArr(tmplDefStr) {
-    return tmplDefStr
+    let placeholderTitleArr = tmplDefStr
         .replaceAll("&gt;", ">")
         .replaceAll("&lt;", "<")
-        .match(/<[^<>]*>/g)
-        .map(val => val.slice(1, -1));
+        .match(/<[^<>]*>/g) ?? [];
+    return placeholderTitleArr.map(val => val.slice(1, -1));
 }
 
 submitEntityFieldCL.addCallback(function($ci, data) {
-    $ci.find('button.submit').on("click", function() {
-        $(this).trigger("submit-entity");
-    });
-    $ci.on("submit-entity", function() {
+    $ci.on("submit", function() {
         let $this = $(this);
-        let $standardInputFields = $this
-            .find('.std-field-container')
+        if (!data.readyForSubmission) {
+            $this.children('.response-display').html(
+                '<span class="text-warning">' +
+                    'Wait until the submission field is fully loaded' +
+                '</span>'
+            );
+            return;
+        }
+        let $inputFields = $this
+            .find('.def-item-field-container')
             .children('.CI.TextAreaFormGroup');
-        let $extraInputFields = $this
-            .find('.extra-field-container')
-            .children('.CI.ExtraInputFormGroup');
         // extract inputs from which to contruct the defining string.
         let defStrParts = [];
-        $standardInputFields.each(function() {
-            let input = $(this).find('.form-control').val().trim();
+        $inputFields.each(function() {
+            let input = ($(this).find('.form-control').val() ?? "").trim();
             defStrParts.push(input);
-        });
-        $extraInputFields.each(function() {
-            let $this = $(this);
-            let labelInput = $this.find('label .label-input').val().trim();
-            let valInput = $this.children('.form-control').val().trim();
-            if (valInput) {
-                let input = "";
-                if (labelInput) {
-                    input = labelInput + ":";
-                }
-                input += valInput;
-                defStrParts.push(input);
-            }
         });
         // contruct the defining string.
         let defStr = defStrParts
@@ -112,10 +108,10 @@ submitEntityFieldCL.addCallback(function($ci, data) {
             console.log("Too long defining string: " + defStr);
             return;
         }
-        if (defStr.length == 0) {
+        if (/^[\|]*$/.test(defStr)) {
             $this.children('.response-display').html(
                 '<span class="text-warning">' +
-                    'No defining text was supplied' +
+                    'No input was supplied' +
                 '</span>'
             );
             return;
@@ -124,8 +120,8 @@ submitEntityFieldCL.addCallback(function($ci, data) {
         let reqData = {
             req: "ent",
             u: data.getFromAncestor("inputUserID"),
-            t: 2, // TODO: add an input field for the entity type.
-            c: data.tmplID ?? 0, // TODO: Change..
+            t: data.newEntityType,
+            c: data.newEntityCxt,
             s: defStr,
         };
         dbReqManager.input($this, reqData, data, function($ci, result, data) {
@@ -163,20 +159,6 @@ submitEntityFieldCL.addCallback(function($ci, data) {
     });
 });
 
-submitEntityFieldCL.addCallback(function($ci, data) {
-    if (data.tmplID == 1) {
-        $ci.find('button.add-field').hide();
-        return;
-    }
-    $ci.find('button.add-field').on("click", function() {
-        $(this).trigger("add-field"); // "submit" event fires for all buttons.
-    });
-    $ci.on("add-field", function() {
-        let $obj = $(this).find('.extra-field-container');
-        submitEntityFieldCL.loadAppended($obj, "ExtraInputFormGroup", data);
-        return false;
-    });
-});
 
 export var textAreaFormGroupCL = new ContentLoader(
     "TextAreaFormGroup",

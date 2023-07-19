@@ -27,12 +27,11 @@ export var entityPageCL = new ContentLoader(
 entityPageCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "entID",
-        // "tmplID",  // optional.
     ]);
     data.columnEntityID = data.entID;
 });
 entityPageCL.addCallback(function($ci, data) {
-    if (data.tmplID) {
+    if (data.cxtID) {
         $ci.children('.CI.PagesWithTabs').trigger("load");
         return;
     };
@@ -42,7 +41,9 @@ entityPageCL.addCallback(function($ci, data) {
     };
     let $this = $(this);
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-        data.typeID = result[0][0];
+        data.typeID = (result[0] ?? [])[0];
+        data.cxtID = (result[0] ?? [])[1];
+        data.defStr = (result[0] ?? [])[2];
         data.tabAndPageDataArr = [
             ["Info", "EntityInfoPage", {}],
             ["Ratings", "EntityRatingsPage", {}],
@@ -55,6 +56,7 @@ entityPageCL.addCallback(function($ci, data) {
                 data.tabAndPageDataArr.push(
                     ["Relevant ratings", "RelevantRatingsTypePage"],
                     ["Relevant properties", "RelevantPropertiesTypePage"],
+                    ["Submit entity", "SubmitEntityPage"],
                 );
                 data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
                     "Relevant ratings";
@@ -71,10 +73,10 @@ entityPageCL.addCallback(function($ci, data) {
                 break;
             case 3:
                 data.tabAndPageDataArr.push(
-                    ["Submit template instance", "SubmitTemplateInstancePage"],
+                    ["Submit entity", "SubmitEntityPage"],
                 );
                 data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
-                    "Submit template instance";
+                    "Submit entity";
                 break;
             default:
                 data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
@@ -118,7 +120,7 @@ propertyCategoryPageCL.addCallback("data", function(data) {
 propertyCategoryPageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
     data.setGenerator = new SetQuerier({
-        catTmplID: 21, // ID of the "<Property> of <Entity>" template.
+        catCxtID: 21, // ID of the "<Property> of <Entity>" template.
         catStr: "#" + data.propID + "|#" + data.entID,
         queryUserID: 9,
         inputUserID: 9,
@@ -192,7 +194,7 @@ entityRatingsPageCL.addCallback("data", function(data) {
     // Relevant categories:
     data.elemContentKey = "RatingElement";
     let sg1 = new SetQuerier({
-        catTmplID: 21, // ID of the "<Property> of <Entity>" template.
+        catCxtID: 21, // ID of the "<Property> of <Entity>" template.
         catStr: "#54|#" + data.entID,
         queryUserID: 9,
         inputUserID: 9,
@@ -201,7 +203,7 @@ entityRatingsPageCL.addCallback("data", function(data) {
         ratingHi: 0,
     });
     let sg2 = new SetQuerier({
-        catTmplID: 21, // ID of the "<Property> of <Entity>" template.
+        catCxtID: 21, // ID of the "<Property> of <Entity>" template.
         catStr: "#52|#" + data.typeID,
         queryUserID: 9,
         inputUserID: 9,
@@ -220,18 +222,14 @@ entityRatingsPageCL.addCallback("data", function(data) {
 
 
 
-
-export var submitTemplateInstancePageCL = new ContentLoader(
-    "SubmitTemplateInstancePage",
+export var submitEntityPageCL = new ContentLoader(
+    "SubmitEntityPage",
     /* Initial HTML template */
     '<div>' +
         '<<SubmitEntityField>>' +
     '</div>',
     sdbInterfaceCL
 );
-submitTemplateInstancePageCL.addCallback("data", function(data) {
-    data.tmplID = data.getFromAncestor("entID");
-});
 
 
 
@@ -250,7 +248,7 @@ relevantRatingsTypePageCL.addCallback("data", function(data) {
 relevantRatingsTypePageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
     data.setGenerator = new SetQuerier({
-        catTmplID: 21, // ID of the "<Property> of <Entity>" template.
+        catCxtID: 21, // ID of the "<Property> of <Entity>" template.
         catStr: "#52|#" + data.entID,
         queryUserID: 9,
         inputUserID: 9,
@@ -277,7 +275,7 @@ relevantPropertiesTypePageCL.addCallback("data", function(data) {
 relevantPropertiesTypePageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
     data.setGenerator = new SetQuerier({
-        catTmplID: 21, // ID of the "<Property> of <Entity>" template.
+        catCxtID: 21, // ID of the "<Property> of <Entity>" template.
         catStr: "#58|#" + data.entID,
         queryUserID: 9,
         inputUserID: 9,
@@ -310,7 +308,7 @@ entityInfoPageCL.addCallback("data", function(data) {
 entityInfoPageCL.addCallback("data", function(data) {
     data.elemContentKey = "SemanticPropertyElement";
     let sg1 = new SetQuerier({
-        catTmplID: 21, // ID of the "<Property> of <Entity>" template.
+        catCxtID: 21, // ID of the "<Property> of <Entity>" template.
         catStr: "#58|#" + data.entID,
         queryUserID: 9,
         inputUserID: 9,
@@ -319,7 +317,7 @@ entityInfoPageCL.addCallback("data", function(data) {
         ratingHi: 0,
     });
     let sg2 = new SetQuerier({
-        catTmplID: 21, // ID of the "<Property> of <Entity>" template.
+        catCxtID: 21, // ID of the "<Property> of <Entity>" template.
         catStr: "#59|#" + data.typeID,
         queryUserID: 9,
         inputUserID: 9,

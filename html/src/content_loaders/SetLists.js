@@ -85,7 +85,7 @@ export class SetGenerator {
 
 /*
 setData = {
-    (catTmplID, catStr, | catID,)
+    (catCxtID, catStr, | catID,)
     queryUserID,
     inputUserID?, // (This property is only part of a temporary solution.)
     num, ratingLo, ratingHi,
@@ -117,7 +117,7 @@ export class SetQuerier extends SetGenerator {
             let reqData = {
                 req: "entID",
                 t: 2,
-                c: setData.catTmplID,
+                c: setData.catCxtID,
                 s: setData.catStr,
             };
             dbReqManager.query(this, reqData, function(sg, result) {
@@ -134,7 +134,7 @@ export class SetQuerier extends SetGenerator {
                     req: "ent",
                     u: setData.inputUserID,
                     t: 2,
-                    c: setData.catTmplID,
+                    c: setData.catCxtID,
                     s: setData.catStr,
                 };
                 dbReqManager.input(this, reqData, function() {});
@@ -287,7 +287,7 @@ export class MaxRatingSetCombiner extends SetCombiner {
 // /*
 // data.setDataArr = [setData, ...],
 //     setData = {
-//         catTmplID, catStr, objID,
+//         catCxtID, catStr, objID,
 //         catID?,
 //         queryUserID,
 //         // weight, queryParams, ratTransFun?,
@@ -332,7 +332,7 @@ export class MaxRatingSetCombiner extends SetCombiner {
 //                 // else, first query for the catID, and then the set.
 //                 let reqData = {
 //                     req: "entID",
-//                     c: setData.catTmplID,
+//                     c: setData.catCxtID,
 //                     s: setData.catStr,
 //                     t: setData.objID,
 //                 };

@@ -44,18 +44,18 @@ entityTitleCL.addCallback(function($ci, data) {
     };
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
         data.typeID = (result[0] ?? [])[0];
-        data.tmplID = (result[0] ?? [])[1];
+        data.cxtID = (result[0] ?? [])[1];
         data.defStr = (result[0] ?? [])[2];
-        if (!data.tmplID) {
+        if (!data.cxtID) {
             loadEntityTitleHTML($ci, data);
             return;
         }
         let reqData = {
             req: "ent",
-            id: data.tmplID,
+            id: data.cxtID,
         };
         dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-            data.tmplDefStr = (result[0] ?? [])[2];
+            data.cxtDefStr = (result[0] ?? [])[2];
             loadEntityTitleHTML($ci, data);
         });
         // parse the defItem string array from defStr, then prefetch all
@@ -80,7 +80,7 @@ entityTitleCL.addCallback(function($ci, data) {
 });
 
 export function loadEntityTitleHTML($ci, data) {
-    if (!data.tmplID || data.typeID == 3) {
+    if (!data.cxtID || data.typeID == 3) {
         if (!data.isFullTitle) {
             data.linkContent = data.defStr;
             entityTitleCL.loadAppended($ci, "EntityLink", data);
@@ -144,12 +144,12 @@ export var templateInstanceTitleCL = new ContentLoader(
 );
 templateInstanceTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
-        "tmplDefStr",
+        "cxtDefStr",
         "defItemStrArr",
     ]);
 });
 templateInstanceTitleCL.addCallback(function($ci, data) {
-    data.linkContent = getTransformedTitleTemplate(data.tmplDefStr);
+    data.linkContent = getTransformedTitleTemplate(data.cxtDefStr);
     templateInstanceTitleCL.loadAppended($ci, "EntityLink", data);
     let defItemStrArr = data.defItemStrArr;
     let nextDefItemStr = 0;
@@ -170,7 +170,7 @@ fullTemplateInstanceTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "typeID",
         "defStr",
-        "tmplDefStr",
+        "cxtDefStr",
         "defItemStrArr",
         "recLevel", // used in order to hand this on to def item EntityTitles.
     ]);
@@ -188,7 +188,7 @@ fullTemplateInstanceTitleCL.addCallback(function($ci, data) {
             ));
             $ci.append(' &blacktriangleright; ');
             data.linkContent = getTransformedFullTitleTemplate(
-                data.tmplDefStr
+                data.cxtDefStr
             );
             templateInstanceTitleCL.loadAppended($ci, "EntityLink", data);
             let defItemStrArr = data.defItemStrArr;
