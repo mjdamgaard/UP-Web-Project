@@ -51,12 +51,20 @@ entityPageCL.addCallback(function($ci, data) {
             }],
         ];
         switch (data.typeID) {
+            case 1:
+                data.tabAndPageDataArr.push(
+                    ["Relevant ratings", "RelevantRatingsTypePage"],
+                    ["Relevant properties", "RelevantPropertiesTypePage"],
+                );
+                data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
+                    "Relevant ratings";
+                break;
             case 2:
                 data.tabAndPageDataArr.push(
                     ["Subcategories", "PropertyCategoryPage", {propID: 37,}],
                     ["Instances", "CategoryInstancesPage"],
                     ["Supercategories", "PropertyCategoryPage", {propID: 47,}],
-                    ["Submit category instance", "SubmitCategoryInstancePage"],
+                    ["Submit instance", "SubmitCategoryInstancePage"],
                 );
                 data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
                     "Subcategories";
@@ -96,7 +104,9 @@ entIDDisplayCL.addCallback(function($ci, data) {
 export var propertyCategoryPageCL = new ContentLoader(
     "PropertyCategoryPage",
     /* Initial HTML template */
-    '<<SetDisplay>>',
+    '<div>' +
+        '<<SetDisplay>>' +
+    '</div>',
     sdbInterfaceCL
 );
 propertyCategoryPageCL.addCallback("data", function(data) {
@@ -130,7 +140,9 @@ propertyCategoryPageCL.addCallback("data", function(data) {
 export var categoryInstancesPageCL = new ContentLoader(
     "CategoryInstancesPage",
     /* Initial HTML template */
-    '<<SetDisplay>>',
+    '<div>' +
+        '<<SetDisplay>>' +
+    '</div>',
     sdbInterfaceCL
 );
 categoryInstancesPageCL.addCallback("data", function(data) {
@@ -148,11 +160,24 @@ categoryInstancesPageCL.addCallback("data", function(data) {
 });
 
 
+export var submitCategoryInstancePageCL = new ContentLoader(
+    "SubmitCategoryInstancePage",
+    /* Initial HTML template */
+    '<div>' +
+        '<<SubmitInstanceField>>' +
+    '</div>',
+    sdbInterfaceCL
+);
+
+
+
+
+
 export var entityRatingsPageCL = new ContentLoader(
     "EntityRatingsPage",
     /* Initial HTML template */
     '<div>' +
-        '<h4>Relevant categories</h4>' +
+        '<h4>Relevant ratings</h4>' +
         '<<SetDisplay>>' +
     '</div>',
     sdbInterfaceCL
@@ -200,44 +225,33 @@ export var submitTemplateInstancePageCL = new ContentLoader(
     "SubmitTemplateInstancePage",
     /* Initial HTML template */
     '<div>' +
-        '<<SubmitDerivedEntityField>>' +
-        '<<RelevantCategoriesField>>' +
-        '<<RelevantPropertiesField>>' +
-        '<<RelevantListsField>>' +
+        '<<SubmitEntityField>>' +
     '</div>',
     sdbInterfaceCL
 );
-
-
-
-export var submitDerivedEntityFieldCL = new ContentLoader(
-    "SubmitDerivedEntityField",
-    /* Initial HTML template */
-    '<<SubmitEntityField>>',
-    sdbInterfaceCL
-);
-submitDerivedEntityFieldCL.addCallback("data", function(data) {
-    data.copyFromAncestor("tmplID");
+submitTemplateInstancePageCL.addCallback("data", function(data) {
+    data.tmplID = data.getFromAncestor("entID");
 });
 
 
-export var relevantCategoriesFieldCL = new ContentLoader(
-    "RelevantCategoriesField",
+
+export var relevantRatingsTypePageCL = new ContentLoader(
+    "RelevantRatingsTypePage",
     /* Initial HTML template */
     '<div>' +
-        '<h4>Relevant categories for derived entities</h4>' +
+        '<h4>Relevant categories to rate for entities of this type</h4>' +
         '<<SetDisplay>>' +
     '</div>',
     sdbInterfaceCL
 );
-relevantCategoriesFieldCL.addCallback("data", function(data) {
-    data.copyFromAncestor("tmplID");
+relevantRatingsTypePageCL.addCallback("data", function(data) {
+    data.copyFromAncestor("entID");
 });
-relevantCategoriesFieldCL.addCallback("data", function(data) {
+relevantRatingsTypePageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
     data.setGenerator = new SetQuerier({
         catTmplID: 21, // ID of the "<Property> of <Entity>" template.
-        catStr: "Relevant categories for derived entities|#" + data.tmplID,
+        catStr: "#52|#" + data.entID,
         queryUserID: 9,
         inputUserID: 9,
         num: 4000,
@@ -248,24 +262,23 @@ relevantCategoriesFieldCL.addCallback("data", function(data) {
     data.incrementNum = 50;
 });
 
-
-export var relevantPropertiesFieldCL = new ContentLoader(
-    "RelevantPropertiesField",
+export var relevantPropertiesTypePageCL = new ContentLoader(
+    "RelevantPropertiesTypePage",
     /* Initial HTML template */
     '<div>' +
-        '<h4>Relevant properties for derived entities</h4>' +
+        '<h4>Relevant categories to rate for entities of this type</h4>' +
         '<<SetDisplay>>' +
     '</div>',
     sdbInterfaceCL
 );
-relevantPropertiesFieldCL.addCallback("data", function(data) {
-    data.copyFromAncestor("tmplID");
+relevantPropertiesTypePageCL.addCallback("data", function(data) {
+    data.copyFromAncestor("entID");
 });
-relevantPropertiesFieldCL.addCallback("data", function(data) {
+relevantPropertiesTypePageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
     data.setGenerator = new SetQuerier({
         catTmplID: 21, // ID of the "<Property> of <Entity>" template.
-        catStr: "Relevant properties for derived entities|#" + data.tmplID,
+        catStr: "#58|#" + data.entID,
         queryUserID: 9,
         inputUserID: 9,
         num: 4000,
@@ -276,42 +289,6 @@ relevantPropertiesFieldCL.addCallback("data", function(data) {
     data.incrementNum = 50;
 });
 
-export var relevantListsFieldCL = new ContentLoader(
-    "RelevantListsField",
-    /* Initial HTML template */
-    '<div>' +
-        '<h4>Relevant lists for derived entities</h4>' +
-        '<<SetDisplay>>' +
-    '</div>',
-    sdbInterfaceCL
-);
-relevantListsFieldCL.addCallback("data", function(data) {
-    data.copyFromAncestor("tmplID");
-});
-relevantListsFieldCL.addCallback("data", function(data) {
-    data.elemContentKey = "GeneralEntityElement";
-    data.setGenerator = new SetQuerier({
-        catTmplID: 21, // ID of the "<Property> of <Entity>" template.
-        catStr: "Relevant lists for derived entities|#" + data.tmplID,
-        queryUserID: 9,
-        inputUserID: 9,
-        num: 4000,
-        ratingLo: 0,
-        ratingHi: 0,
-    });
-    data.initialNum = 50;
-    data.incrementNum = 50;
-});
-
-
-export var submitCategoryInstancePageCL = new ContentLoader(
-    "EntitySubmitInstancePage",
-    /* Initial HTML template */
-    '<div>' +
-        '<<SubmitInstanceField>>' +
-    '</div>',
-    sdbInterfaceCL
-);
 
 
 
@@ -320,64 +297,37 @@ export var entityInfoPageCL = new ContentLoader(
     "EntityInfoPage",
     /* Initial HTML template */
     '<div>' +
-        '<h3>One-to-one properties</h3>' +
-        '<<SetDisplay data.propsData>>' +
-        '<h3>One-to-many properties</h3>' +
-        '<<SetDisplay data.listsData>>' +
+        '<<SetDisplay>>' +
     '</div>',
     sdbInterfaceCL
 );
 entityInfoPageCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "entID",
-        "tmplID",
+        "typeID",
     ]);
 });
 entityInfoPageCL.addCallback("data", function(data) {
-    // Relevant properties:
-    data.propsData = {elemContentKey: "SemanticPropertyElement"};
-    let propSG1 = new SetQuerier({
+    data.elemContentKey = "SemanticPropertyElement";
+    let sg1 = new SetQuerier({
         catTmplID: 21, // ID of the "<Property> of <Entity>" template.
-        catStr: "Relevant properties|#" + data.entID,
+        catStr: "#58|#" + data.entID,
         queryUserID: 9,
         inputUserID: 9,
         num: 100,
         ratingLo: 0,
         ratingHi: 0,
     });
-    let propSG2 = new SetQuerier({
+    let sg2 = new SetQuerier({
         catTmplID: 21, // ID of the "<Property> of <Entity>" template.
-        catStr: "Relevant properties for derived entities|#" + data.tmplID,
+        catStr: "#59|#" + data.typeID,
         queryUserID: 9,
         inputUserID: 9,
         num: 100,
         ratingLo: 0,
         ratingHi: 0,
     });
-    data.propsData.setGenerator = new MaxRatingSetCombiner([propSG1, propSG2]);
-    data.propsData.initialNum = 1;
-    data.propsData.incrementNum = 1;
-    // Relevant lists:
-    data.listsData = {elemContentKey: "SemanticListElement"};
-    let listSG1 = new SetQuerier({
-        catTmplID: 21, // ID of the "<Property> of <Entity>" template.
-        catStr: "Relevant lists|#" + data.entID,
-        queryUserID: 9,
-        inputUserID: 9,
-        num: 4000,
-        ratingLo: 0,
-        ratingHi: 0,
-    });
-    let listSG2 = new SetQuerier({
-        catTmplID: 21, // ID of the "<Property> of <Entity>" template.
-        catStr: "Relevant lists for derived entities|#" + data.tmplID,
-        queryUserID: 9,
-        inputUserID: 9,
-        num: 4000,
-        ratingLo: 0,
-        ratingHi: 0,
-    });
-    data.listsData.setGenerator = new MaxRatingSetCombiner([listSG1, listSG2]);
-    data.listsData.initialNum = 5;
-    data.listsData.incrementNum = 10;
+    data.setGenerator = new MaxRatingSetCombiner([sg1, sg2]);
+    data.initialNum = 50;
+    data.incrementNum = 50;
 });

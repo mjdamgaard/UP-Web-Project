@@ -56,14 +56,14 @@ VALUES
 
 
 
-/* More inserts for testing */
+/* Some more inserts and also ratings, now using the input_procs API */
 
 CALL insertOrFindEntity(9, 2, 0, "Music"); -- id: 24
 CALL insertOrFindEntity(9, 2, 22, "Rock|#24"); -- id: 25
 CALL insertOrFindEntity(9, 2, 22, "Jazz|#24"); -- id: 26
 
-CALL insertOrFindEntity(9, 1, 0, "Movie"); -- id: 27
-CALL insertOrFindEntity(9, 3, 27, "{<Title>}, <Year>"); -- id: 28
+CALL insertOrFindType(9, "Movie"); -- id: 27
+CALL insertOrFindTemplate(9, 27, "{<Title>}, <Year>"); -- id: 28
 CALL insertOrFindEntity(9, 27, 28,
     "The Lord of the Rings: The Fellowship of the Ring|2001"
 ); -- id: 29
@@ -79,8 +79,6 @@ CALL insertOrFindEntity(9, 2, 22, "Physics|#31"); -- id: 35
 CALL insertOrFindEntity(9, 2, 22, "Mathematics|#31"); -- id: 36
 
 
-
--- rate some statements.
 
 CALL insertOrFindEntity(9, 19, 20, "Subcategories|many"); -- id: 37
 CALL insertOrFindEntity(9, 2, 21, "#37|#10"); -- id: 38
@@ -138,8 +136,7 @@ CALL inputOrChangeRating(9, 53, 48, CONV("F000", 16, 10), "00");
 CALL inputOrChangeRating(9, 53, 49, CONV("E100", 16, 10), "00");
 CALL inputOrChangeRating(9, 53, 50, CONV("E000", 16, 10), "00");
 
-CALL insertOrFindEntity(9, 19, 20,
-    "Relevant categories to rate|many"); -- id: 54
+CALL insertOrFindEntity(9, 19, 20, "Relevant categories to rate|many"); -- id: 54
 CALL insertOrFindEntity(9, 2, 21, "#54|#29"); -- id: 55
 CALL inputOrChangeRating(9, 55, 48, CONV("F000", 16, 10), "00");
 CALL inputOrChangeRating(9, 55, 49, CONV("E100", 16, 10), "00");
@@ -150,3 +147,7 @@ CALL insertOrFindEntity(9, 2, 23, "well-formed|#10"); -- id: 56
 CALL insertOrFindEntity(9, 2, 21, "#54|#10"); -- id: 57
 CALL inputOrChangeRating(9, 57, 54, CONV("F000", 16, 10), "00");
 CALL inputOrChangeRating(9, 57, 10, CONV("9000", 16, 10), "00");
+
+
+CALL insertOrFindEntity(9, 19, 20, "Relevant properties|many"); -- id: 58
+CALL insertOrFindEntity(9, 19, 20, "Relevant properties for entities|many"); -- id: 59

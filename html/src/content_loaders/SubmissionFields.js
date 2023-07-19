@@ -229,11 +229,14 @@ export var submitInstanceFieldCL = new ContentLoader(
     "SubmitInstanceField",
     /* Initial HTML template */
     '<div>' +
-        '<h4>Submit an instance the <<EntityTitle>> applies to</h4>' +
+        '<h4>Submit an instance of <<EntityTitle>></h4>' +
         '<<SubmitInstanceForm>>' +
     '</div>',
     sdbInterfaceCL
 );
+submitInstanceFieldCL.addCallback("data", function(data) {
+    data.catID = data.getFromAncestor("entID");
+});
 export var submitInstanceFormCL = new ContentLoader(
     "SubmitInstanceForm",
     /* Initial HTML template */
@@ -272,13 +275,21 @@ submitInstanceFormCL.addCallback(function($ci, data) {
         }
         // generate a rating display with this ID as the instID.
         data.instID = id;
-        data.catID = data.getFromAncestor("entID");
         data.prevInputRatVal = null;
+        if (!data.rateMsgIsAppended) {
+            $ci.append(
+                '<h5>' +
+                    'Rate the new instance(s) in order to complete the ' +
+                    'submission:' +
+                '</h5>'
+            );
+            data.rateMsgIsAppended = true;
+        }
         submitInstanceFormCL.loadAfter($ci, "RatingDisplay", data);
-        $ci.find('button.submit').hide();
-        let $ratingDisplay = $ci.next();
-        submitInstanceFormCL.loadAfter($ratingDisplay, "self", data);
-        $ratingDisplay.after('<br>');
+        // $ci.find('button.submit').hide();
+        // let $ratingDisplay = $ci.next();
+        // submitInstanceFormCL.loadAfter($ratingDisplay, "self", data);
+        // $ratingDisplay.after('<br>');
         return false;
     });
 });
