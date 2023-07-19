@@ -273,27 +273,33 @@ fullEntityTitleCL.addCallback("data", function(data) {
     data.isFullTitle = true;
 });
 
-export var templateDisplayCL = new ContentLoader(
-    "TemplateDisplay",
+export var contextDisplayCL = new ContentLoader(
+    "ContextDisplay",
     /* Initial HTML template */
-    '<span>' +
-        'Template: ' +
-    '</span>',
+    '<span></span>',
     sdbInterfaceCL
 );
-templateDisplayCL.addCallback("data", function(data) {
+contextDisplayCL.addCallback("data", function(data) {
     data.copyFromAncestor("entID");
 });
-templateDisplayCL.addCallback(function($ci, data) {
+contextDisplayCL.addCallback(function($ci, data) {
     let reqData = {
         req: "ent",
         id: data.entID,
     };
     dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-        let tmplID = (result[0] ?? [])[1];
-        if (tmplID) {
-            templateDisplayCL.loadAppended($ci, "EntityTitle", new ChildData(
-                data, {entID: tmplID}
+        let typeID = (result[0] ?? [])[0];
+        let cxtID = (result[0] ?? [])[1];
+        if (typeID == 1 || 4 <= typeID && typeID <= 8) {
+            return;
+        } else if (typeID == 3) {
+            $ci.append('Type of derived entities: ');
+        } else {
+            $ci.append('Template: ');
+        }
+        if (cxtID) {
+            contextDisplayCL.loadAppended($ci, "EntityTitle", new ChildData(
+                data, {entID: cxtID}
             ));
         } else {
             $ci.append('<i>none</i>');

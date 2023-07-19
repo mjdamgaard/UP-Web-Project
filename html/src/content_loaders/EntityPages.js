@@ -19,7 +19,7 @@ export var entityPageCL = new ContentLoader(
         '<h2><<EntityTitle>></h2>' +
         '<span class="full-title">Full title: <<FullEntityTitle>></span>' +
         '<div><<EntityIDDisplay>></div>' +
-        '<div><<TemplateDisplay>></div>' +
+        '<div><<ContextDisplay>></div>' +
          "<<PagesWithTabs data:wait>>" +
      '</div>',
     sdbInterfaceCL
