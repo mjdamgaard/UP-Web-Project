@@ -268,10 +268,6 @@ submitInstanceFormCL.addCallback(function($ci, data) {
             data.rateMsgIsAppended = true;
         }
         submitInstanceFormCL.loadAfter($ci, "RatingDisplay", data);
-        // $ci.find('button.submit').hide();
-        // let $ratingDisplay = $ci.next();
-        // submitInstanceFormCL.loadAfter($ratingDisplay, "self", data);
-        // $ratingDisplay.after('<br>');
         return false;
     });
 });

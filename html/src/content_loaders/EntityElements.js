@@ -72,3 +72,45 @@ setCategoriesRatingsDisplayCL.addCallback(function($ci, data) {
         );
     });
 });
+
+
+
+
+export var semanticPropertyElementCL = new ContentLoader(
+    "SemanticPropertyElement",
+    /* Initial HTML template */
+    '<div>' +
+        '<<SemanticPropertyTitle>>' +
+        '<<SetDisplay data:wait>>' +
+    '</div>',
+    sdbInterfaceCL
+);
+semanticPropertyElementCL.addCallback(function($ci, data) {
+    $ci.on("toggle", function() {
+        let $this = $(this);
+        if (!data.setDisplayIsLoaded) {
+            $this.children('.CI.SetDisplay').trigger("load");
+            data.setDisplayIsLoaded = true;
+        } else {
+            $this.children('.CI.SetDisplay').toggle();
+        }
+        return false;
+    });
+});
+export var semanticPropertyTitleCL = new ContentLoader(
+    "SemanticPropertyTitle",
+    /* Initial HTML template */
+    '<span>' +
+        '<<DropdownButton>>' +
+        '<<EntityTitle>>' + // Hm, so should I make a version w/o a link?..
+    '<span>',
+    sdbInterfaceCL
+);
+semanticPropertyTitleCL.addCallback(function($ci, data) {
+    $ci.on("click", function() {
+        let $this = $(this);
+        $this.children('.CI.DropdownButton').trigger("toggle-button-symbol");
+        $this.trigger("toggle");
+        return false;
+    });
+});

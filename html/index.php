@@ -72,7 +72,7 @@ $inputUserID = $paramValArr[2];
     import "/src/content_loaders/SetDisplays.js";
     import "/src/content_loaders/EntityElements.js";
     import "/src/content_loaders/EntityPages.js";
-    import "/src/content_loaders/Titles.js";
+    import "/src/content_loaders/EntityTitles.js";
     import "/src/content_loaders/Ratings.js";
     import "/src/content_loaders/SubmissionFields.js";
 

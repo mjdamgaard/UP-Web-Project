@@ -45,11 +45,11 @@ dropdownBoxCL.addCallback("data", function(data) {
 dropdownBoxCL.addCallback(function($ci, data) {
     $ci.one("click", function() {
         let $this = $(this);
-        $this.find('.CI.DropdownButtonBar')
+        $this.find('.CI.DropdownButton')
             .trigger("toggle-button-symbol")
             .on("click", function() {
                 $(this).trigger("toggle-button-symbol")
-                    .prev().toggle();
+                    .closest('.CI.DropdownBox').children().first().toggle();
                 return false;
             });
         $this.find('.CI.SelfReplacer').trigger("load");
@@ -60,14 +60,22 @@ export var dropdownButtonBarCL = new ContentLoader(
     "DropdownButtonBar",
     /* Initial HTML template */
     '<div>' +
+        '<<DropdownButton>>' +
+    '</div>',
+    sdbInterfaceCL
+);
+export var dropdownButtonCL = new ContentLoader(
+    "DropdownButton",
+    /* Initial HTML template */
+    '<div>' +
         '<span class="symbol">&#8964</span>' +
     '</div>',
     sdbInterfaceCL
 );
-dropdownButtonBarCL.addCallback("data", function(data) {
+dropdownButtonCL.addCallback("data", function(data) {
     data.symbolIsDown = true;
 });
-dropdownButtonBarCL.addCallback(function($ci, data) {
+dropdownButtonCL.addCallback(function($ci, data) {
     $ci.on("toggle-button-symbol", function() {
         let $this = $(this);
         let data = $this.data("data");

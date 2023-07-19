@@ -8,7 +8,7 @@ import {
 } from "/src/content_loaders/PagesWithTabs.js";
 import {
     entityTitleCL, entityLinkCL
-} from "/src/content_loaders/Titles.js";
+} from "/src/content_loaders/EntityTitles.js";
 import {
 
 } from "/src/content_loaders/EntityPages.js";
@@ -16,7 +16,7 @@ import {
     generalEntityElementCL,
 } from "/src/content_loaders/EntityElements.js";
 import {
-    dropdownButtonBarCL, setHeaderCL
+    dropdownButtonBarCL, dropdownButtonCL, setHeaderCL
 } from "/src/content_loaders/SetDisplays.js";
 import {
     ratingElementCL, ratingDisplayCL,
@@ -157,6 +157,11 @@ dropdownButtonBarCL.addCSS(
 dropdownButtonBarCL.addCSS(
     'display: flex;' +
     'justify-content: center;'
+);
+dropdownButtonCL.addCSS(
+    '&:hover {' +
+        'cursor: pointer;' +
+    '}'
 );
 setHeaderCL.addCSS(
     '& .CI.DropdownButtonBar:not(:hover) {' +
