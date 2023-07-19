@@ -124,8 +124,8 @@ submitEntityFieldCL.addCallback(function($ci, data) {
         let reqData = {
             req: "ent",
             u: data.getFromAncestor("inputUserID"),
-            ty: 2, // TODO: add an input field for the entity type.
-            tm: data.tmplID ?? 0, // TODO: Change..
+            t: 2, // TODO: add an input field for the entity type.
+            c: data.tmplID ?? 0, // TODO: Change..
             s: defStr,
         };
         dbReqManager.input($this, reqData, data, function($ci, result, data) {

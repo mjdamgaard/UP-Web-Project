@@ -45,7 +45,17 @@ switch ($reqType) {
         break;
     case "ent":
         $sql = "CALL insertOrFindEntity (?, ?, ?, ?)";
-        $paramNameArr = array("u", "ty", "tm", "s");
+        $paramNameArr = array("u", "t", "c", "s");
+        $typeArr = array("id", "id", "id", "str");
+        break;
+    case "tmpl":
+        $sql = "CALL insertOrFindTemplate (?, ?, ?)";
+        $paramNameArr = array("u", "c", "s");
+        $typeArr = array("id", "id", "str");
+        break;
+    case "type":
+        $sql = "CALL insertOrFindType (?, ?)";
+        $paramNameArr = array("u", "s");
         $typeArr = array("id", "id", "id", "str");
         break;
     case "text":

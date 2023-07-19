@@ -16,22 +16,22 @@ DELETE FROM PrivateCreators;
 
 
 /* From create_open_sdb.sql */
-INSERT INTO Entities (type_id, tmpl_id, def_str, id)
+INSERT INTO Entities (type_id, cxt_id, def_str, id)
 VALUES
     (1, NULL, "Type", 1), -- The type of this "Type" entity is itself.
-    (1, NULL, "Category", 2), -- This is then "Category" type entity and so on.
-    (1, NULL, "Template", 3),
+    (1, NULL, "Category", 2), -- This is then the "Category" type entity...
+    (1, NULL, "Template", 3), -- ... and so on.
     (1, NULL, "Index", 4),
     (1, NULL, "User", 5),
     (1, NULL, "Aggregation bot", 6),
     (1, NULL, "Text data", 7),
     (1, NULL, "Binary data", 8),
-    (5, NULL, "admin_1", 9);
+    (5, NULL, "admin_1", 9); -- This is the first user.
 INSERT INTO Users (username, id)
 VALUES ("admin_1", 9);
 
 /* Some more useful types and some useful templates and categories */
-INSERT INTO Entities (type_id, tmpl_id, def_str, id)
+INSERT INTO Entities (type_id, cxt_id, def_str, id)
 VALUES
     -- Fundamental categories:
     (2, NULL, "Entities", 10),
@@ -149,4 +149,4 @@ CALL inputOrChangeRating(9, 55, 51, CONV("E000", 16, 10), "00");
 CALL insertOrFindEntity(9, 2, 23, "well-formed|#10"); -- id: 56
 CALL insertOrFindEntity(9, 2, 21, "#54|#10"); -- id: 57
 CALL inputOrChangeRating(9, 57, 54, CONV("F000", 16, 10), "00");
-CALL inputOrChangeRating(9, 57, 10, CONV("F000", 16, 10), "00");
+CALL inputOrChangeRating(9, 57, 10, CONV("9000", 16, 10), "00");

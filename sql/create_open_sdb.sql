@@ -114,14 +114,14 @@ CREATE TABLE EntityIndexKeys (
     -- contain the "entity keys," which are each just the secondary index of an
     -- entity.
     ent_type CHAR(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-    ent_tmpl_id BIGINT UNSIGNED,
+    ent_cxt_id BIGINT UNSIGNED,
     ent_def_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
     PRIMARY KEY (
         user_id,
         idx_id,
         ent_type,
-        ent_tmpl_id,
+        ent_cxt_id,
         ent_def_str
     )
 );
@@ -139,37 +139,38 @@ CREATE TABLE Entities (
     -- user-submitted type.
     type_id BIGINT UNSIGNED NOT NULL,
 
-    -- ID of the template which defines how the defining string is to be
-    -- interpreted. If the template ID is null, the defining string is just
-    -- interpreted as is. In the special case when type_id is that of "Template"
-    -- (i.e. type_id = 3), the tmpl_id is replaced for the ID of the template's
+    -- ID of the entity's context entity. This will typically be that of a
+    -- Template entity (i.e. with the type 'Template'), in which case it defines
+    -- how the last field, the 'defining string,' is to be interpreted.
+    -- For Template entities themselves, however (i.e. when type_id is that of
+    -- the 'Template' type entity), the cxt_id is the ID of the template's
     -- intended type. (See initial_inserts.sql for examples.)
-    tmpl_id BIGINT UNSIGNED,
+    cxt_id BIGINT UNSIGNED,
 
     -- Defining string of the entity. This can be a lexical item, understood in
-    -- the context of the type alone if tmpl_id is null. If the tmpl_id is not
-    -- null, the def_str can be a series of inputs separated by '|' of either
-    -- IDs of the form "#<number>" (e.g. "#100") or any other string (e.g.
-    -- "Physics"). These inputs is then plugged into the placeholders of the
-    -- template in order of appearence and the resulting string is then
-    -- interpreted in the context of the type to yield the definition of the
-    -- entity.
+    -- the context of the type alone if cxt_id is null. If the cxt_id is the ID
+    -- of a Template entity, on the other hand, the def_str can be a series of
+    -- inputs separated by '|' of either IDs of the form "#<number>" (e.g.
+    -- "#100") or any other string (e.g. "Physics"). These inputs is then
+    -- plugged into the placeholders of the template in order of appearence and
+    -- the resulting string is then interpreted in the context of the type to
+    -- yield the definition of the entity.
     def_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
-    UNIQUE INDEX (type_id, tmpl_id, def_str)
+    UNIQUE INDEX (type_id, cxt_id, def_str)
 );
 
-INSERT INTO Entities (type_id, tmpl_id, def_str, id)
+INSERT INTO Entities (type_id, cxt_id, def_str, id)
 VALUES
     (1, NULL, "Type", 1), -- The type of this "Type" entity is itself.
-    (1, NULL, "Category", 2), -- This is then "Category" type entity and so on.
-    (1, NULL, "Template", 3),
+    (1, NULL, "Category", 2), -- This is then the "Category" type entity...
+    (1, NULL, "Template", 3), -- ... and so on.
     (1, NULL, "Index", 4),
     (1, NULL, "User", 5),
     (1, NULL, "Aggregation bot", 6),
     (1, NULL, "Text data", 7),
     (1, NULL, "Binary data", 8),
-    (5, NULL, "admin_1", 9);
+    (5, NULL, "admin_1", 9); -- This is the first user.
 
 
 

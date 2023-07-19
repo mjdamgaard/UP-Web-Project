@@ -116,8 +116,8 @@ export class SetQuerier extends SetGenerator {
         } else {
             let reqData = {
                 req: "entID",
-                ty: 2,
-                tm: setData.catTmplID,
+                t: 2,
+                c: setData.catTmplID,
                 s: setData.catStr,
             };
             dbReqManager.query(this, reqData, function(sg, result) {
@@ -133,8 +133,8 @@ export class SetQuerier extends SetGenerator {
                 let reqData = {
                     req: "ent",
                     u: setData.inputUserID,
-                    ty: 2,
-                    tm: setData.catTmplID,
+                    t: 2,
+                    c: setData.catTmplID,
                     s: setData.catStr,
                 };
                 dbReqManager.input(this, reqData, function() {});

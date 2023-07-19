@@ -78,13 +78,15 @@ class InputVerifier {
                 }
                 break;
             case "str":
-                if (
-                    !is_string($paramVal) ||
-                    !ctype_print($paramVal) ||
-                    strlen($paramVal) > 255
-                ) {
+                if (!is_string($paramVal) || !ctype_print($paramVal)) {
                     echoTypeErrorJSONAndExit(
-                        $paramName, $paramVal, "VARCHAR(225)"
+                        $paramName, $paramVal, "VARCHAR(1,225)"
+                    );
+                }
+                $len = strlen($paramVal);
+                if ($len > 255  || $len == 0) {
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "VARCHAR(1,225)"
                     );
                 }
                 break;

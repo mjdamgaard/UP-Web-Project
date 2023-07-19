@@ -11,7 +11,7 @@ SELECT "Entities:";
 SELECT
     id AS entID,
     type_id AS typeID,
-    tmpl_id AS tmplID,
+    cxt_id AS cxtID,
     def_str AS defStr
 FROM Entities
 ORDER BY id;

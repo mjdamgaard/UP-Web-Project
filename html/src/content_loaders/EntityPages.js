@@ -200,7 +200,6 @@ export var submitTemplateInstancePageCL = new ContentLoader(
     "SubmitTemplateInstancePage",
     /* Initial HTML template */
     '<div>' +
-        '<h3><<TemplateDisplay>></h3>' +
         '<<SubmitDerivedEntityField>>' +
         '<<RelevantCategoriesField>>' +
         '<<RelevantPropertiesField>>' +

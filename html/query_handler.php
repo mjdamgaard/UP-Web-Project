@@ -68,11 +68,11 @@ switch ($reqType) {
         $sql = "CALL selectEntity (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [[typeID, tmplID, defStr]].
+        // output: [[typeID, cxtID, defStr]].
         break;
     case "entID":
         $sql = "CALL selectEntityID (?, ?, ?)";
-        $paramNameArr = array("ty", "tm", "s");
+        $paramNameArr = array("t", "c", "s");
         $typeArr = array("id", "id", "str");
         // output: [[entID]].
         break;

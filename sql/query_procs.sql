@@ -100,7 +100,7 @@ CREATE PROCEDURE selectEntity (
 BEGIN
     SELECT
         type_id AS typeID,
-        tmpl_id AS tmplID,
+        cxt_id AS cxtID,
         def_str AS defStr
     FROM Entities
     WHERE id = entID;
@@ -111,19 +111,19 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectEntityID (
     IN typeID BIGINT UNSIGNED,
-    IN tmplID BIGINT UNSIGNED,
+    IN cxtID BIGINT UNSIGNED,
     IN defStr VARCHAR(255)
 )
 BEGIN
-    IF (tmplID = 0) THEN
-        SET tmplID = NULL;
+    IF (cxtID = 0) THEN
+        SET cxtID = NULL;
     END IF;
 
     SELECT id AS entID
     FROM Entities
     WHERE (
         type_id = typeID AND
-        tmpl_id <=> tmplID AND
+        cxt_id <=> cxtID AND
         def_str = defStr
     );
 END //
