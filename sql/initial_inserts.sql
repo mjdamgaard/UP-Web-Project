@@ -46,7 +46,8 @@ VALUES
     -- Property type:
     (1, NULL, "Property", 19),
     -- Property template:
-    (3, 19, "{<Title>}, one-to-<Quantity word (e.g. 'one,' 'few,' or 'many')>", 20),
+    (3, 19,
+      "{<Title>}, <Type>, one-to-<Quantity word (e.g. 'one,' 'few,' or 'many')>", 20),
     -- Property category template:
     (3, 2, "<Property> of <Entity>", 21),
     -- Subcategory template:
@@ -80,7 +81,7 @@ CALL insertOrFindEntity(9, 2, 22, "Mathematics|#31"); -- id: 36
 
 
 
-CALL insertOrFindEntity(9, 19, 20, "Subcategories|many"); -- id: 37
+CALL insertOrFindEntity(9, 19, 20, "Subcategories|#2|many"); -- id: 37
 CALL insertOrFindEntity(9, 2, 21, "#37|#10"); -- id: 38
 CALL inputOrChangeRating(9, 38, 32, CONV("FFFF", 16, 10), "00");
 CALL inputOrChangeRating(9, 38, 31, CONV("F000", 16, 10), "00");
@@ -111,7 +112,7 @@ CALL inputOrChangeRating(9, 31, 29, CONV("FF03", 16, 10), "00");
 CALL inputOrChangeRating(9, 31, 30, CONV("FF02", 16, 10), "00");
 
 
-CALL insertOrFindEntity(9, 19, 20, "Related entities|many"); -- id: 42
+CALL insertOrFindEntity(9, 19, 20, "Related entities|any type|many"); -- id: 42
 CALL insertOrFindEntity(9, 2, 21, "#42|#29"); -- id: 43
 CALL inputOrChangeRating(9, 43, 30, CONV("FFFF", 16, 10), "00");
 CALL insertOrFindEntity(9, 2, 21, "#42|#30"); -- id: 44
@@ -121,7 +122,7 @@ CALL inputOrChangeRating(9, 45, 33, CONV("F000", 16, 10), "00");
 CALL insertOrFindEntity(9, 2, 21, "#42|#33"); -- id: 46
 CALL inputOrChangeRating(9, 46, 24, CONV("FF00", 16, 10), "00");
 
-CALL insertOrFindEntity(9, 19, 20, "Supercategories|many"); -- id: 47
+CALL insertOrFindEntity(9, 19, 20, "Supercategories|#2|many"); -- id: 47
 
 
 CALL insertOrFindEntity(9, 2, 23, "good|#31"); -- id: 48
@@ -130,13 +131,13 @@ CALL insertOrFindEntity(9, 2, 23, "scary|#31"); -- id: 50
 CALL insertOrFindEntity(9, 2, 23, "iconic|#31"); -- id: 51
 
 CALL insertOrFindEntity(9, 19, 20,
-    "Relevant categories to rate for type instances|many"); -- id: 52
+    "Relevant categories to rate for type instances|#2|many"); -- id: 52
 CALL insertOrFindEntity(9, 2, 21, "#52|#27"); -- id: 53
 CALL inputOrChangeRating(9, 53, 48, CONV("F000", 16, 10), "00");
 CALL inputOrChangeRating(9, 53, 49, CONV("E100", 16, 10), "00");
 CALL inputOrChangeRating(9, 53, 50, CONV("E000", 16, 10), "00");
 
-CALL insertOrFindEntity(9, 19, 20, "Relevant categories to rate|many"); -- id: 54
+CALL insertOrFindEntity(9, 19, 20, "Relevant categories to rate|#2|many"); -- id: 54
 CALL insertOrFindEntity(9, 2, 21, "#54|#29"); -- id: 55
 CALL inputOrChangeRating(9, 55, 48, CONV("F000", 16, 10), "00");
 CALL inputOrChangeRating(9, 55, 49, CONV("E100", 16, 10), "00");
@@ -149,13 +150,15 @@ CALL inputOrChangeRating(9, 57, 54, CONV("F000", 16, 10), "00");
 CALL inputOrChangeRating(9, 57, 10, CONV("9000", 16, 10), "00");
 
 
-CALL insertOrFindEntity(9, 19, 20, "Relevant properties|many"); -- id: 58
+CALL insertOrFindEntity(9, 19, 20, "Relevant properties|#19|many"); -- id: 58
 CALL insertOrFindEntity(9, 19, 20,
-    "Relevant properties for type instances|many"); -- id: 59
+    "Relevant properties for type instances|#19|many"); -- id: 59
 CALL insertOrFindEntity(9, 2, 21, "#59|#27"); -- id: 60
-CALL insertOrFindEntity(9, 19, 20, "Actors|many"); -- id: 61
-CALL insertOrFindEntity(9, 19, 20, "Director(s)|few"); -- id: 62
-CALL insertOrFindEntity(9, 19, 20, "Running time|one"); -- id: 63
-CALL inputOrChangeRating(9, 60, 61, CONV("FF00", 16, 10), "00");
-CALL inputOrChangeRating(9, 60, 62, CONV("FE00", 16, 10), "00");
-CALL inputOrChangeRating(9, 60, 63, CONV("FC00", 16, 10), "00");
+CALL insertOrFindType(9, "Persons"); -- id: 61
+CALL insertOrFindEntity(9, 19, 20, "Actors|#61|many"); -- id: 62
+CALL insertOrFindEntity(9, 19, 20, "Director(s)|#61|few"); -- id: 63
+CALL insertOrFindType(9, "Time"); -- id: 64
+CALL insertOrFindEntity(9, 19, 20, "Running time|#64|one"); -- id: 65
+CALL inputOrChangeRating(9, 60, 62, CONV("FF00", 16, 10), "00");
+CALL inputOrChangeRating(9, 60, 63, CONV("FE00", 16, 10), "00");
+CALL inputOrChangeRating(9, 60, 65, CONV("FC00", 16, 10), "00");
