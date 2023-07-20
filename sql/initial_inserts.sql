@@ -154,11 +154,39 @@ CALL insertOrFindEntity(9, 19, 20, "Relevant properties|#19|many"); -- id: 58
 CALL insertOrFindEntity(9, 19, 20,
     "Relevant properties for type instances|#19|many"); -- id: 59
 CALL insertOrFindEntity(9, 2, 21, "#59|#27"); -- id: 60
-CALL insertOrFindType(9, "Persons"); -- id: 61
-CALL insertOrFindEntity(9, 19, 20, "Actors|#61|many"); -- id: 62
-CALL insertOrFindEntity(9, 19, 20, "Director(s)|#61|few"); -- id: 63
+CALL insertOrFindType(9, "Person"); -- id: 61
+CALL insertOrFindEntity(9, 19, 20, "Director(s)|#61|few"); -- id: 62
+CALL insertOrFindEntity(9, 19, 20, "Actors|#61|many"); -- id: 63
 CALL insertOrFindType(9, "Time"); -- id: 64
 CALL insertOrFindEntity(9, 19, 20, "Running time|#64|one"); -- id: 65
 CALL inputOrChangeRating(9, 60, 62, CONV("FF00", 16, 10), "00");
 CALL inputOrChangeRating(9, 60, 63, CONV("FE00", 16, 10), "00");
 CALL inputOrChangeRating(9, 60, 65, CONV("FC00", 16, 10), "00");
+
+
+CALL insertOrFindTemplate(9, 61, CONCAT(
+    "{<Popular name>}, <Full name>, <Year of birth>, ",
+    "<What the person is known for being>"
+)); -- id: 66
+CALL insertOrFindEntity(9, 61, 66,
+    "Peter Jackson|Peter Robert Jackson|1961|Film director"); -- id: 67
+CALL insertOrFindEntity(9, 61, 66,
+    "Ian McKellen|Ian Murray McKellen|1939|Actor"); -- id: 68
+CALL insertOrFindEntity(9, 61, 66,
+    "Viggo Mortensen|Viggo Peter Mortensen Jr.|1958|Actor"); -- id: 69
+CALL insertOrFindEntity(9, 61, 66,
+    "Elijah Wood|Elijah Jordan Wood|1981|Actor"); -- id: 70
+CALL insertOrFindEntity(9, 64, 0,"2 h 59 min"); -- id: 71
+
+CALL insertOrFindEntity(9, 2, 21, "#62|#29"); -- id: 72
+CALL insertOrFindEntity(9, 2, 21, "#63|#29"); -- id: 73
+CALL insertOrFindEntity(9, 2, 21, "#65|#29"); -- id: 74
+CALL inputOrChangeRating(9, 72, 67, CONV("FFFF", 16, 10), "00");
+CALL inputOrChangeRating(9, 73, 68, CONV("FFFA", 16, 10), "00");
+CALL inputOrChangeRating(9, 73, 69, CONV("FFFA", 16, 10), "00");
+CALL inputOrChangeRating(9, 73, 70, CONV("FFFA", 16, 10), "00");
+CALL inputOrChangeRating(9, 74, 71, CONV("FFFF", 16, 10), "00");
+
+CALL inputOrChangeRating(9, 72, 39, CONV("9001", 16, 10), "00"); -- for testing.
+-- CALL inputOrChangeRating(9, 73, 39, CONV("8FFF", 16, 10), "00"); -- for testing.
+-- CALL inputOrChangeRating(9, 73, 39, CONV("9001", 16, 10), "00"); -- for testing.

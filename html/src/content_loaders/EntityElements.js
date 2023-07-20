@@ -98,20 +98,66 @@ semanticPropertyElementCL.addCallback(function($ci, data) {
     $ci.on("toggle", function() {
         let $this = $(this);
         if (!data.setDisplayIsLoaded) {
-                data.elemContentKey = "GeneralEntityElement";
+            data.setDisplayIsLoaded = true;
+            let reqData = {
+                req: "ent",
+                id: data.entID,
+            };
+            dbReqManager.query($ci, reqData, data, function($ci, result, data) {
+                let defStr = (result[0] ?? [""])[2];
+                let defItemStrArr = defStr
+                    .replaceAll("\\\\", "&bsol;")
+                    .replaceAll("\\|", "&#124;")
+                    .split("|");
+                let type = defItemStrArr[1];
+                let quantityWord = defItemStrArr[2];
+                switch (type) {
+                    case "#7": // the "Text data" type.
+                        data.elemContentKey = "TextDataDisplayElement";
+                    break;
+                    case "#64": // the "Time" type.
+                        data.elemContentKey = "DefStrDisplayElement";
+                    break;
+                    // TODO: Add more of these type--CL pairings when needed.
+                    default:
+                        data.elemContentKey = "GeneralEntityElement";
+                    break;
+                }
+                switch (quantityWord) {
+                    case "one":
+                        data.initialNum = 1;
+                        data.incrementNum = 1;
+                        // This doesn't work for some reason. TODO: Solve.
+                    break;
+                    case "few":
+                        data.initialNum = 6;
+                        data.incrementNum = 6;
+                    break;
+                    case "many":
+                        data.initialNum = 50;
+                        data.incrementNum = 50;
+                    break;
+                    default:
+                        if (/^[1-9][0-9]{0,2}$/.test(quantityWord)) {
+                            data.initialNum = parseInt(quantityWord);
+                            data.incrementNum = parseInt(quantityWord);
+                        } else {
+                            data.initialNum = 50;
+                            data.incrementNum = 50;
+                        }
+                    break;
+                }
                 data.setGenerator = new SetQuerier({
                     catCxtID: 21,
                     catStr: "#" + data.entID + "|#" + data.columnEntityID,
                     queryUserID: 9,
                     inputUserID: 9,
                     num: 4000,
-                    ratingLo: 0,
+                    ratingLo: 36864, // (= CONV("9000", 16, 10))
                     ratingHi: 0,
                 });
-                data.initialNum = 50;
-                data.incrementNum = 50;
-            $this.children('.CI.SetDisplay').trigger("load");
-            data.setDisplayIsLoaded = true;
+                $this.children('.CI.SetDisplay').trigger("load");
+            });
         } else {
             $this.children('.CI.SetDisplay').toggle();
         }
@@ -136,5 +182,27 @@ semanticPropertyTitleCL.addCallback(function($ci, data) {
         $this.children('.CI.DropdownButton').trigger("toggle-button-symbol");
         $this.trigger("toggle");
         return false;
+    });
+});
+
+
+
+export var defStrDisplayElementCL = new ContentLoader(
+    "DefStrDisplayElement",
+    /* Initial HTML template */
+    '<span><span>',
+    sdbInterfaceCL
+);
+defStrDisplayElementCL.addCallback("data", function(data) {
+    data.copyFromAncestor("entID");
+});
+defStrDisplayElementCL.addCallback(function($ci, data) {
+    let reqData = {
+        req: "ent",
+        id: data.entID,
+    };
+    dbReqManager.query($ci, reqData, data, function($ci, result, data) {
+        let defStr = (result[0] ?? [""])[2];
+        $ci.append(defStr);
     });
 });

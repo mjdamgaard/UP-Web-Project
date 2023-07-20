@@ -29,13 +29,6 @@ entityTitleCL.addCallback("data", function(data) {
     data.isFullTitle = data.getFromAncestor("isFullTitle", 1) ?? false;
 });
 entityTitleCL.addCallback(function($ci, data) {
-    if (!data.entID) {
-        return;
-        // TODO: Solve a current bug where the last entity is displayed when
-        // entID is a non-existing positive ID. *Hm, now '()' seems to be
-        // displayed as the title for some reason, which is fine for now, but
-        // do look into this at some point.
-    }
     if (data.recLevel > data.maxRecLevel) {
         data.linkContent = "#" + data.entID;
         let contentKey = data.isLinkArr[data.recLevel] ?
@@ -51,6 +44,15 @@ entityTitleCL.addCallback(function($ci, data) {
         data.typeID = (result[0] ?? [])[0];
         data.cxtID = (result[0] ?? [])[1];
         data.defStr = (result[0] ?? [])[2];
+        if (!data.defStr) {
+            // TODO: Change to insert a text with a button to insert the missing
+            // entity if the defStr and cxt is given (which means that the
+            // SetGenerators/SetDisplays should now make sure to hand over this
+            // information, I guess)..! ...Oh, or maybe just do this with a
+            // separate ContentLoader that SetDisplay can then use.
+            $ci.append('<i class="text-warning">missing entity<i>')
+            return;
+        }
         if (!data.cxtID) {
             loadEntityTitleHTML($ci, data);
             return;
