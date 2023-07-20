@@ -21,10 +21,11 @@ entityTitleCL.addCallback("data", function(data) {
         "entID",
         "maxRecLevel",
     ]);
-    data.copyFromAncestor("recLevel", 1);
+    data.copyFromAncestor(["recLevel", "isLinkArr"], 1);
     data.recLevel ??= -1;;
     data.recLevel++;
     data.maxRecLevel ??= 2;;
+    data.isLinkArr ??= [true];;
     data.isFullTitle = data.getFromAncestor("isFullTitle", 1) ?? false;
 });
 entityTitleCL.addCallback(function($ci, data) {
@@ -35,7 +36,9 @@ entityTitleCL.addCallback(function($ci, data) {
     }
     if (data.recLevel > data.maxRecLevel) {
         data.linkContent = data.entID;
-        entityTitleCL.loadAppended($ci, "EntityLink", data);
+        let contentKey = data.isLinkArr[data.recLevel] ?
+            "EntityLink" : "EntityText";
+        entityTitleCL.loadAppended($ci, contentKey, data);
         return;
     }
     let reqData = {
@@ -83,7 +86,9 @@ export function loadEntityTitleHTML($ci, data) {
     if (!data.cxtID || data.typeID == 3) {
         if (!data.isFullTitle) {
             data.linkContent = data.defStr;
-            entityTitleCL.loadAppended($ci, "EntityLink", data);
+            let contentKey = data.isLinkArr[data.recLevel] ?
+                "EntityLink" : "EntityText";
+            entityTitleCL.loadAppended($ci, contentKey, data);
         } else {
             let reqData = {
                 req: "ent",
@@ -97,16 +102,16 @@ export function loadEntityTitleHTML($ci, data) {
                     ));
                     $ci.append(' &blacktriangleright; ');
                     data.linkContent = data.defStr;
-                    entityTitleCL.loadAppended($ci, "EntityLink", data);
+                    let contentKey = data.isLinkArr[data.recLevel] ?
+                        "EntityLink" : "EntityText";
+                    entityTitleCL.loadAppended($ci, contentKey, data);
                 }
             );
         }
     } else {
-        if (data.isFullTitle) {
-            entityTitleCL.loadAppended($ci, "FullTemplateInstanceTitle", data);
-        } else {
-            entityTitleCL.loadAppended($ci, "TemplateInstanceTitle", data);
-        }
+        let contentKey = data.isFullTitle ?
+            "FullTemplateInstanceTitle" : "TemplateInstanceTitle";
+        entityTitleCL.loadAppended($ci, contentKey, data);
     }
 }
 
@@ -133,7 +138,19 @@ entityLinkCL.addCallback(function($ci, data) {
         });
         $(this).trigger("open-column", ["AppColumn", childData, "right"]);
         return false;
-    })
+    });
+});
+export var entityTextCL = new ContentLoader(
+    "EntityText",
+    /* Initial HTML template */
+    '<span></span>',
+    sdbInterfaceCL
+);
+entityTextCL.addCallback("data", function(data) {
+    data.copyFromAncestor("linkContent");
+});
+entityTextCL.addCallback(function($ci, data) {
+    $ci.append(data.linkContent);
 });
 
 export var templateInstanceTitleCL = new ContentLoader(
@@ -146,11 +163,15 @@ templateInstanceTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "cxtDefStr",
         "defItemStrArr",
+        "recLevel", // used in order to hand this on to def item EntityTitles.
+        "isLinkArr", // same.
     ]);
 });
 templateInstanceTitleCL.addCallback(function($ci, data) {
     data.linkContent = getTransformedTitleTemplate(data.cxtDefStr);
-    templateInstanceTitleCL.loadAppended($ci, "EntityLink", data);
+    let contentKey = data.isLinkArr[data.recLevel] ?
+        "EntityLink" : "EntityText";
+    templateInstanceTitleCL.loadAppended($ci, contentKey, data);
     let defItemStrArr = data.defItemStrArr;
     let nextDefItemStr = 0;
     $ci.find('.def-item').each(function() {
@@ -173,6 +194,7 @@ fullTemplateInstanceTitleCL.addCallback("data", function(data) {
         "cxtDefStr",
         "defItemStrArr",
         "recLevel", // used in order to hand this on to def item EntityTitles.
+        "isLinkArr", // same.
     ]);
 });
 fullTemplateInstanceTitleCL.addCallback(function($ci, data) {
@@ -190,7 +212,9 @@ fullTemplateInstanceTitleCL.addCallback(function($ci, data) {
             data.linkContent = getTransformedFullTitleTemplate(
                 data.cxtDefStr
             );
-            templateInstanceTitleCL.loadAppended($ci, "EntityLink", data);
+            let contentKey = data.isLinkArr[data.recLevel] ?
+                "EntityLink" : "EntityText";
+            fullTemplateInstanceTitleCL.loadAppended($ci, contentKey, data);
             let defItemStrArr = data.defItemStrArr;
             let nextDefItemStr = 0;
             $ci.find('.def-item').each(function() {
@@ -201,7 +225,7 @@ fullTemplateInstanceTitleCL.addCallback(function($ci, data) {
             // append any extra def items that are not expected by the template.
             let len = defItemStrArr.length;
             if (nextDefItemStr < len) {
-                $ci.find('.CI.EntityLink').append(
+                $ci.append(
                     '&blacktriangleright; <span class="extra-def-items"></span>'
                 );
                 let $obj = $ci.find('.extra-def-items');
@@ -219,6 +243,8 @@ export function loadDefItemAppended($obj, defItemStr, data) {
         templateInstanceTitleCL.loadAppended($obj, "EntityTitle",
             new ChildData(data, {
                 entID: defItemStr.substring(1),
+                recLevel: data.recLevel,
+                isLinkArr: data.isLinkArr,
             })
         );
     } else {
@@ -271,6 +297,7 @@ export var fullEntityTitleCL = new ContentLoader(
 );
 fullEntityTitleCL.addCallback("data", function(data) {
     data.isFullTitle = true;
+    data.isLinkArr = [false, true];
 });
 
 export var contextDisplayCL = new ContentLoader(
