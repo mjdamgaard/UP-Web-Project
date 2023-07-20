@@ -159,6 +159,16 @@ dropdownButtonBarCL.addCSS(
     'justify-content: center;'
 );
 dropdownButtonCL.addCSS(
+    'font-size: 10px;' +
+    'position: relative;' +
+    'bottom: 3px;'
+);
+dropdownButtonBarCL.addCSS(
+    '& .CI.DropdownButton {' +
+        'bottom: 0px;' +
+    '}'
+);
+dropdownButtonCL.addCSS(
     '&:hover {' +
         'cursor: pointer;' +
     '}'

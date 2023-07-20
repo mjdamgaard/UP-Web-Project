@@ -67,9 +67,12 @@ export var dropdownButtonBarCL = new ContentLoader(
 export var dropdownButtonCL = new ContentLoader(
     "DropdownButton",
     /* Initial HTML template */
-    '<div>' +
-        '<span class="symbol">&#8964</span>' +
-    '</div>',
+    '<span>' +
+        // '<span class="symbol">&#8964;</span>' +
+        // '<span class="symbol">&#9663;</span>' +
+        // '<span class="symbol">&or;</span>' +
+        '&or;' +
+    '</span>',
     sdbInterfaceCL
 );
 dropdownButtonCL.addCallback("data", function(data) {
@@ -80,10 +83,11 @@ dropdownButtonCL.addCallback(function($ci, data) {
         let $this = $(this);
         let data = $this.data("data");
         if (data.symbolIsDown) {
-            $this.children('.symbol').html('&#8963');
+            // $this.children('.symbol').html('&#8963;');
+            $this.html('&and;');
             data.symbolIsDown = false;
         } else {
-            $this.children('.symbol').html('&#8964');
+            $this.html('&or;');
             data.symbolIsDown = true;
         }
         return false;

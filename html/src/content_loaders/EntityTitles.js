@@ -24,7 +24,7 @@ entityTitleCL.addCallback("data", function(data) {
     data.copyFromAncestor(["recLevel", "isLinkArr"], 1);
     data.recLevel ??= -1;;
     data.recLevel++;
-    data.maxRecLevel ??= 2;;
+    data.maxRecLevel ??= 3;;
     data.isLinkArr ??= [true];;
     data.isFullTitle = data.getFromAncestor("isFullTitle", 1) ?? false;
 });
@@ -32,10 +32,12 @@ entityTitleCL.addCallback(function($ci, data) {
     if (!data.entID) {
         return;
         // TODO: Solve a current bug where the last entity is displayed when
-        // entID is a non-existing positive ID.
+        // entID is a non-existing positive ID. *Hm, now '()' seems to be
+        // displayed as the title for some reason, which is fine for now, but
+        // do look into this at some point.
     }
     if (data.recLevel > data.maxRecLevel) {
-        data.linkContent = data.entID;
+        data.linkContent = "#" + data.entID;
         let contentKey = data.isLinkArr[data.recLevel] ?
             "EntityLink" : "EntityText";
         entityTitleCL.loadAppended($ci, contentKey, data);

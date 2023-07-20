@@ -5,6 +5,9 @@ import {
 import {
     sdbInterfaceCL, dbReqManager,
 } from "/src/content_loaders/SDBInterfaces.js";
+import {
+    SetQuerier, SetCombiner, MaxRatingSetCombiner,
+} from "/src/content_loaders/SetLists.js";
 
 
 
@@ -85,10 +88,28 @@ export var semanticPropertyElementCL = new ContentLoader(
     '</div>',
     sdbInterfaceCL
 );
+semanticPropertyElementCL.addCallback("data", function(data) {
+    data.copyFromAncestor([
+        "entID",
+        "columnEntityID",
+    ]);
+});
 semanticPropertyElementCL.addCallback(function($ci, data) {
     $ci.on("toggle", function() {
         let $this = $(this);
         if (!data.setDisplayIsLoaded) {
+                data.elemContentKey = "GeneralEntityElement";
+                data.setGenerator = new SetQuerier({
+                    catCxtID: 21,
+                    catStr: "#" + data.entID + "|#" + data.columnEntityID,
+                    queryUserID: 9,
+                    inputUserID: 9,
+                    num: 4000,
+                    ratingLo: 0,
+                    ratingHi: 0,
+                });
+                data.initialNum = 50;
+                data.incrementNum = 50;
             $this.children('.CI.SetDisplay').trigger("load");
             data.setDisplayIsLoaded = true;
         } else {
@@ -102,10 +123,13 @@ export var semanticPropertyTitleCL = new ContentLoader(
     /* Initial HTML template */
     '<span>' +
         '<<DropdownButton>>' +
-        '<<EntityTitle>>' + // Hm, so should I make a version w/o a link?..
+        '<<EntityTitle>>' +
     '<span>',
     sdbInterfaceCL
 );
+semanticPropertyTitleCL.addCallback("data", function(data) {
+    data.isLinkArr = [];
+});
 semanticPropertyTitleCL.addCallback(function($ci, data) {
     $ci.on("click", function() {
         let $this = $(this);

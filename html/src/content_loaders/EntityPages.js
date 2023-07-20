@@ -237,7 +237,7 @@ export var relevantRatingsTypePageCL = new ContentLoader(
     "RelevantRatingsTypePage",
     /* Initial HTML template */
     '<div>' +
-        '<h4>Relevant categories to rate for entities of this type</h4>' +
+        '<h4>Relevant categories to rate for type instances of this type</h4>' +
         '<<SetDisplay>>' +
     '</div>',
     sdbInterfaceCL
@@ -264,7 +264,7 @@ export var relevantPropertiesTypePageCL = new ContentLoader(
     "RelevantPropertiesTypePage",
     /* Initial HTML template */
     '<div>' +
-        '<h4>Relevant categories to rate for entities of this type</h4>' +
+        '<h4>Relevant categories to rate for type instances of this type</h4>' +
         '<<SetDisplay>>' +
     '</div>',
     sdbInterfaceCL
