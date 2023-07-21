@@ -29,11 +29,32 @@ setDisplayCL.addCallback("data", function(data) {
     data.incrementNum ??= 50;
 });
 setDisplayCL.addCallback(function($ci, data) {
+    $ci.one("initial-elements-loaded", function() {
+        let $this = $(this);
+        $this.on("append-elements", function(event, set) {
+            let $this = $(this);
+            let data = $this.data("data");
+            let currNum = data.currentNum;
+            if (currNum >= data.set.length) {
+                return;
+            }
+            let newNum = currNum + data.incrementNum;
+            data.listElemDataArr = data.set.slice(currNum, newNum).map(val => ({
+                ratVal: val[0],
+                entID: val[1],
+            }));
+            data.currentNum = currNum + data.listElemDataArr.length;
+            let $setContainer = $this.children('.set-container');
+            setDisplayCL.loadAppended($setContainer, "List", data);
+            return false;
+        });
+        return false;
+    });
     data.cl = setDisplayCL.getRelatedCL(data.elemContentKey);
     $ci.one("load-initial-elements", function(event, set) {
         let $this = $(this);
         let data = $this.data("data");
-        data.setLen = set.length;
+        data.set = set;
         data.listElemDataArr = set.slice(0, data.initialNum).map(val => ({
             ratVal: val[0],
             entID: val[1],
@@ -41,23 +62,7 @@ setDisplayCL.addCallback(function($ci, data) {
         data.currentNum = data.listElemDataArr.length;
         let $setContainer = $this.children('.set-container');
         setDisplayCL.loadAppended($setContainer, "List", data);
-        return false;
-    });
-    $ci.on("append-elements", function(event, set) {
-        let $this = $(this);
-        let data = $this.data("data");
-        let currNum = data.currentNum;
-        if (currNum >= data.setLen) {
-            return;
-        }
-        let newNum = currNum + data.incrementNum;
-        data.listElemDataArr = set.slice(currNum, newNum).map(val => ({
-            ratVal: val[0],
-            entID: val[1],
-        }));
-        data.currentNum = currNum + data.listElemDataArr.length;
-        let $setContainer = $this.children('.set-container');
-        setDisplayCL.loadAppended($setContainer, "List", data);
+        $this.trigger("initial-elements-loaded");
         return false;
     });
     data.setGenerator.generateSet($ci, function($ci, set) {
@@ -65,6 +70,19 @@ setDisplayCL.addCallback(function($ci, data) {
     });
 });
 
+
+export var appendMoreElementsButtonCL = new ContentLoader(
+    "AppendMoreElementsButton",
+    /* Initial HTML template */
+    '<<DropdownButtonBar>>',
+    sdbInterfaceCL
+);
+appendMoreElementsButtonCL.addCallback(function($ci, data) {
+    $ci.on("click", function() {
+        $(this).trigger("append-elements");
+        return false;
+    });
+});
 
 
 export var setHeaderCL = new ContentLoader(
