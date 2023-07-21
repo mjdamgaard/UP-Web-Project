@@ -120,18 +120,11 @@ propertyCategoryPageCL.addCallback("data", function(data) {
 propertyCategoryPageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
     data.setGenerator = new SetQuerier(
-        [21, "#" + data.propID + "|#" + data.entID], // catKey
+        [21, "#" + data.propID + "|#" + data.entID], // catKey.
         // (21 is the ID of the "<Property> of <Entity>" template.)
-        9, // queryUserID
-        9, // inputUserID
+        data, // dataNode.
     );
 });
-
-
-// TODO: Obvoiusly gather the repeated code above and below at some point, and
-// probably gather it into a BasicSetQuerier class (subclass of SetQuerier).
-// Make that class take the CI data as an input parameter, from which to get the
-// input and query user IDs.
 
 
 export var categoryInstancesPageCL = new ContentLoader(
@@ -145,9 +138,8 @@ export var categoryInstancesPageCL = new ContentLoader(
 categoryInstancesPageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
     data.setGenerator = new SetQuerier(
-        data.getFromAncestor("entID"), // catKey
-        9, // queryUserID
-        9, // inputUserID
+        data.getFromAncestor("entID"), // catKey.
+        data, // dataNode.
     );
 });
 
@@ -184,20 +176,17 @@ entityRatingsPageCL.addCallback("data", function(data) {
     // Relevant categories:
     data.elemContentKey = "RatingElement";
     let sg1 = new SetQuerier(
-        [21, "#54|#" + data.entID], // catKey
-        9, // queryUserID
-        9, // inputUserID
+        [21, "#54|#" + data.entID], // catKey.
+        data, // dataNode.
     );
     let sg2 = new SetQuerier(
-        [21, "#52|#" + data.typeID], // catKey
-        9, // queryUserID
-        9, // inputUserID
+        [21, "#52|#" + data.typeID], // catKey.
+        data, // dataNode.
     );
     data.setGenerator = new MaxRatingSetCombiner([sg1, sg2]);
 });
 entityRatingsPageCL.addCallback("data", function(data) {
     data.instID = data.getFromAncestor("columnEntityID");
-    data.copyFromAncestor("queryUserID");
 });
 
 
@@ -228,9 +217,8 @@ relevantRatingsTypePageCL.addCallback("data", function(data) {
 relevantRatingsTypePageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
     data.setGenerator = new SetQuerier(
-        [21, "#52|#" + data.entID], // catKey
-        9, // queryUserID
-        9, // inputUserID
+        [21, "#52|#" + data.entID], // catKey.
+        data, // dataNode.
     );
 });
 
@@ -249,9 +237,8 @@ relevantPropertiesTypePageCL.addCallback("data", function(data) {
 relevantPropertiesTypePageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
     data.setGenerator = new SetQuerier(
-        [21, "#58|#" + data.entID], // catKey
-        9, // queryUserID
-        9, // inputUserID
+        [21, "#58|#" + data.entID], // catKey.
+        data, // dataNode.
     );
 });
 
@@ -276,16 +263,14 @@ entityInfoPageCL.addCallback("data", function(data) {
 entityInfoPageCL.addCallback("data", function(data) {
     data.elemContentKey = "SemanticPropertyElement";
     let sg1 = new SetQuerier(
-        [21, "#58|#" + data.entID], // catKey
-        9, // queryUserID
-        9, // inputUserID
-        100, // num
+        [21, "#58|#" + data.entID], // catKey.
+        data, // dataNode.
+        100, // num,
     );
     let sg2 = new SetQuerier(
-        [21, "#59|#" + data.typeID], // catKey
-        9, // queryUserID
-        9, // inputUserID
-        100, // num
+        [21, "#59|#" + data.typeID], // catKey.
+        data, // dataNode.
+        100, // num.
     );
     data.setGenerator = new MaxRatingSetCombiner([sg1, sg2]);
 });

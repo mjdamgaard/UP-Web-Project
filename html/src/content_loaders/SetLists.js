@@ -87,9 +87,8 @@ export class SetGenerator {
 
 export class SetQuerier extends SetGenerator {
     constructor(
-        catKey, // = catID | [catCxtID, catDefStr]
-        queryUserID,
-        inputUserID, // (This property is only part of a temporary solution.)
+        catKey, // = catID | [catCxtID, catDefStr].
+        dataNode, // (from which to get the queryUserID).
         num, ratingLo, ratingHi, // optional.
         isAscending, offset, // optional.
         set, replaceExistingSet, // optional.
@@ -101,8 +100,11 @@ export class SetQuerier extends SetGenerator {
         } else {
             this.catID = catKey;
         }
-        this.queryUserID = queryUserID;
-        this.inputUserID = inputUserID;
+        this.dataNode = dataNode;
+        this.dataNode.copy([
+            "queryUserID",
+            "inputUserID", // (This is only part of a temporary solution.)
+        ]);
         this.num = num ?? 300;
         this.ratingLo = ratingLo ?? 0;
         this.ratingHi = ratingHi ?? 0;
@@ -135,12 +137,12 @@ export class SetQuerier extends SetGenerator {
                 // As a temporary solution for adding missing categories, all
                 // categories are just automatically submitted to the database,
                 // if they are missing in this query.
-                if (sg.catID || !sg.inputUserID) {
+                if (sg.catID || !sg.dataNode.inputUserID) {
                     return;
                 }
                 let reqData = {
                     req: "ent",
-                    u: sg.inputUserID,
+                    u: sg.dataNode.inputUserID,
                     t: 2,
                     c: sg.catCxtID,
                     s: sg.catDefStr,
@@ -157,7 +159,7 @@ export class SetQuerier extends SetGenerator {
         }
         let reqData = {
             req: "set",
-            u: this.queryUserID,
+            u: this.dataNode.queryUserID,
             c: this.catID,
             rl: this.ratingLo,
             rh: this.ratingHi,

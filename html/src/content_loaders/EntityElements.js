@@ -148,10 +148,9 @@ semanticPropertyElementCL.addCallback(function($ci, data) {
                 }
                 data.setGenerator = new SetQuerier(
                     [21, "#" + data.entID + "|#" + data.columnEntityID], //
-                    // catKey
-                    9, // queryUserID
-                    9, // inputUserID
-                    null, // num
+                    // catKey.
+                    data, // dataNode.
+                    null, // num.
                     36864, // ratingLo (= CONV("9000", 16, 10)).
                 );
                 $this.children('.CI.SetDisplay').trigger("load");

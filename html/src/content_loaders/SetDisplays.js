@@ -20,10 +20,14 @@ export var setDisplayCL = new ContentLoader(
     sdbInterfaceCL
 );
 setDisplayCL.addCallback("data", function(data) {
+    data.copyFromAncestor("setGenerator");
     data.copyFromAncestor(["initialNum", "incrementNum"], 1);
     data.initialNum ??= 50;
     data.incrementNum ??= 50;
+    // get the queryNum from the SetGenerator.
+    data.queryNum = data.setGenerator.num;
 });
+
 
 export var setHeaderCL = new ContentLoader(
     "SetHeader",
