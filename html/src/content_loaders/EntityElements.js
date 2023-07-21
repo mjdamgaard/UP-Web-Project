@@ -127,7 +127,6 @@ semanticPropertyElementCL.addCallback(function($ci, data) {
                     case "one":
                         data.initialNum = 1;
                         data.incrementNum = 1;
-                        // This doesn't work for some reason. TODO: Solve.
                     break;
                     case "few":
                         data.initialNum = 6;
@@ -147,15 +146,14 @@ semanticPropertyElementCL.addCallback(function($ci, data) {
                         }
                     break;
                 }
-                data.setGenerator = new SetQuerier({
-                    catCxtID: 21,
-                    catStr: "#" + data.entID + "|#" + data.columnEntityID,
-                    queryUserID: 9,
-                    inputUserID: 9,
-                    num: 4000,
-                    ratingLo: 36864, // (= CONV("9000", 16, 10))
-                    ratingHi: 0,
-                });
+                data.setGenerator = new SetQuerier(
+                    [21, "#" + data.entID + "|#" + data.columnEntityID], //
+                    // catKey
+                    9, // queryUserID
+                    9, // inputUserID
+                    null, // num
+                    36864, // ratingLo (= CONV("9000", 16, 10)).
+                );
                 $this.children('.CI.SetDisplay').trigger("load");
             });
         } else {
@@ -167,10 +165,10 @@ semanticPropertyElementCL.addCallback(function($ci, data) {
 export var semanticPropertyTitleCL = new ContentLoader(
     "SemanticPropertyTitle",
     /* Initial HTML template */
-    '<span>' +
+    '<h3>' +
         '<<DropdownButton>>' +
         '<<EntityTitle>>' +
-    '<span>',
+    '<h3>',
     sdbInterfaceCL
 );
 semanticPropertyTitleCL.addCallback("data", function(data) {

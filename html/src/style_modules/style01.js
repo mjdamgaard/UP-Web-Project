@@ -142,7 +142,7 @@ ratingDisplayCL.addCSS(
 
 ratingDisplayCL.addCSS(
     '& .applies-to-subj {' +
-        'font-size: 10px;' +
+        'font-size: 80%;' +
     '}'
 );
 
@@ -158,14 +158,16 @@ dropdownButtonBarCL.addCSS(
     'display: flex;' +
     'justify-content: center;'
 );
-dropdownButtonCL.addCSS(
-    'font-size: 10px;' +
-    'position: relative;' +
-    'bottom: 3px;'
-);
+// dropdownButtonCL.addCSS(
+//     'font-size: 80%;' +
+//     'position: relative;' +
+//     'bottom: 10%;' // CSS is still weird to me sometimes (why does this not
+//      // work?)..
+// );
 dropdownButtonBarCL.addCSS(
     '& .CI.DropdownButton {' +
-        'bottom: 0px;' +
+        'font-size: 80%;' +
+        // 'bottom: 0%;' +
     '}'
 );
 dropdownButtonCL.addCSS(

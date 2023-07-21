@@ -119,17 +119,12 @@ propertyCategoryPageCL.addCallback("data", function(data) {
 });
 propertyCategoryPageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
-    data.setGenerator = new SetQuerier({
-        catCxtID: 21, // ID of the "<Property> of <Entity>" template.
-        catStr: "#" + data.propID + "|#" + data.entID,
-        queryUserID: 9,
-        inputUserID: 9,
-        num: 4000,
-        ratingLo: 0,
-        ratingHi: 0,
-    });
-    data.initialNum = 50;
-    data.incrementNum = 50;
+    data.setGenerator = new SetQuerier(
+        [21, "#" + data.propID + "|#" + data.entID], // catKey
+        // (21 is the ID of the "<Property> of <Entity>" template.)
+        9, // queryUserID
+        9, // inputUserID
+    );
 });
 
 
@@ -149,16 +144,11 @@ export var categoryInstancesPageCL = new ContentLoader(
 );
 categoryInstancesPageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
-    data.setGenerator = new SetQuerier({
-        catID: data.getFromAncestor("entID"),
-        queryUserID: 9,
-        inputUserID: 9,
-        num: 4000,
-        ratingLo: 0,
-        ratingHi: 0,
-    });
-    data.initialNum = 50;
-    data.incrementNum = 50;
+    data.setGenerator = new SetQuerier(
+        data.getFromAncestor("entID"), // catKey
+        9, // queryUserID
+        9, // inputUserID
+    );
 });
 
 
@@ -193,27 +183,17 @@ entityRatingsPageCL.addCallback("data", function(data) {
 entityRatingsPageCL.addCallback("data", function(data) {
     // Relevant categories:
     data.elemContentKey = "RatingElement";
-    let sg1 = new SetQuerier({
-        catCxtID: 21, // ID of the "<Property> of <Entity>" template.
-        catStr: "#54|#" + data.entID,
-        queryUserID: 9,
-        inputUserID: 9,
-        num: 4000,
-        ratingLo: 0,
-        ratingHi: 0,
-    });
-    let sg2 = new SetQuerier({
-        catCxtID: 21, // ID of the "<Property> of <Entity>" template.
-        catStr: "#52|#" + data.typeID,
-        queryUserID: 9,
-        inputUserID: 9,
-        num: 4000,
-        ratingLo: 0,
-        ratingHi: 0,
-    });
+    let sg1 = new SetQuerier(
+        [21, "#54|#" + data.entID], // catKey
+        9, // queryUserID
+        9, // inputUserID
+    );
+    let sg2 = new SetQuerier(
+        [21, "#52|#" + data.typeID], // catKey
+        9, // queryUserID
+        9, // inputUserID
+    );
     data.setGenerator = new MaxRatingSetCombiner([sg1, sg2]);
-    data.initialNum = 50;
-    data.incrementNum = 50;
 });
 entityRatingsPageCL.addCallback("data", function(data) {
     data.instID = data.getFromAncestor("columnEntityID");
@@ -247,17 +227,11 @@ relevantRatingsTypePageCL.addCallback("data", function(data) {
 });
 relevantRatingsTypePageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
-    data.setGenerator = new SetQuerier({
-        catCxtID: 21, // ID of the "<Property> of <Entity>" template.
-        catStr: "#52|#" + data.entID,
-        queryUserID: 9,
-        inputUserID: 9,
-        num: 4000,
-        ratingLo: 0,
-        ratingHi: 0,
-    });
-    data.initialNum = 50;
-    data.incrementNum = 50;
+    data.setGenerator = new SetQuerier(
+        [21, "#52|#" + data.entID], // catKey
+        9, // queryUserID
+        9, // inputUserID
+    );
 });
 
 export var relevantPropertiesTypePageCL = new ContentLoader(
@@ -274,17 +248,11 @@ relevantPropertiesTypePageCL.addCallback("data", function(data) {
 });
 relevantPropertiesTypePageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
-    data.setGenerator = new SetQuerier({
-        catCxtID: 21, // ID of the "<Property> of <Entity>" template.
-        catStr: "#58|#" + data.entID,
-        queryUserID: 9,
-        inputUserID: 9,
-        num: 4000,
-        ratingLo: 0,
-        ratingHi: 0,
-    });
-    data.initialNum = 50;
-    data.incrementNum = 50;
+    data.setGenerator = new SetQuerier(
+        [21, "#58|#" + data.entID], // catKey
+        9, // queryUserID
+        9, // inputUserID
+    );
 });
 
 
@@ -307,25 +275,17 @@ entityInfoPageCL.addCallback("data", function(data) {
 });
 entityInfoPageCL.addCallback("data", function(data) {
     data.elemContentKey = "SemanticPropertyElement";
-    let sg1 = new SetQuerier({
-        catCxtID: 21, // ID of the "<Property> of <Entity>" template.
-        catStr: "#58|#" + data.entID,
-        queryUserID: 9,
-        inputUserID: 9,
-        num: 100,
-        ratingLo: 0,
-        ratingHi: 0,
-    });
-    let sg2 = new SetQuerier({
-        catCxtID: 21, // ID of the "<Property> of <Entity>" template.
-        catStr: "#59|#" + data.typeID,
-        queryUserID: 9,
-        inputUserID: 9,
-        num: 100,
-        ratingLo: 0,
-        ratingHi: 0,
-    });
+    let sg1 = new SetQuerier(
+        [21, "#58|#" + data.entID], // catKey
+        9, // queryUserID
+        9, // inputUserID
+        100, // num
+    );
+    let sg2 = new SetQuerier(
+        [21, "#59|#" + data.typeID], // catKey
+        9, // queryUserID
+        9, // inputUserID
+        100, // num
+    );
     data.setGenerator = new MaxRatingSetCombiner([sg1, sg2]);
-    data.initialNum = 50;
-    data.incrementNum = 50;
 });

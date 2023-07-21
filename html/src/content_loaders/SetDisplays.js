@@ -15,10 +15,15 @@ export var setDisplayCL = new ContentLoader(
     '<div>' +
         '<<SetHeader>>' +
         '<<SetList>>' +
-        '<<AppendMoreButtonOrPagination>>' +
+        '<<AppendMoreElementsButton>>' +
     '</div>',
     sdbInterfaceCL
 );
+setDisplayCL.addCallback("data", function(data) {
+    data.copyFromAncestor(["initialNum", "incrementNum"], 1);
+    data.initialNum ??= 50;
+    data.incrementNum ??= 50;
+});
 
 export var setHeaderCL = new ContentLoader(
     "SetHeader",

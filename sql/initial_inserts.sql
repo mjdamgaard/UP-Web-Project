@@ -189,6 +189,6 @@ CALL inputOrChangeRating(9, 73, 69, CONV("FFFA", 16, 10), "00");
 CALL inputOrChangeRating(9, 73, 70, CONV("FFFA", 16, 10), "00");
 CALL inputOrChangeRating(9, 74, 71, CONV("FFFF", 16, 10), "00");
 
-CALL inputOrChangeRating(9, 72, 39, CONV("9001", 16, 10), "00"); -- for testing.
 -- CALL inputOrChangeRating(9, 73, 39, CONV("8FFF", 16, 10), "00"); -- for testing.
 -- CALL inputOrChangeRating(9, 73, 39, CONV("9001", 16, 10), "00"); -- for testing.
+CALL inputOrChangeRating(9, 74, 39, CONV("9001", 16, 10), "00"); -- for testing.

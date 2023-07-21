@@ -24,7 +24,6 @@ setListCL.addCallback("data", function(data) {
         "initialNum",
         "incrementNum",
     ]);
-    data.copyFromAncestor("combSet", 1);  // optional.
 });
 setListCL.addCallback(function($ci, data) {
     data.cl = setListCL.getRelatedCL(data.elemContentKey);
@@ -57,7 +56,8 @@ setListCL.addCallback(function($ci, data) {
 /* SetGenerator is just a completely abstract class */
 export class SetGenerator {
     constructor() {
-        // to be redefined by descendant classes.
+        this.set = null;
+        // To be redefined by descendant classes.
     }
 
     // generateSet() queries and combines sets, then calls
@@ -70,7 +70,7 @@ export class SetGenerator {
     // important to the formation of the set (which we can then show on the
     // drop-down pages of the set elements).
     getSetCategories() {
-        // to be redefined by descendant classes.
+        // To be redefined by descendant classes.
     }
 
     // getFilterSpecs() returns an array of filter specs (or null), which
@@ -79,65 +79,73 @@ export class SetGenerator {
     // with a rating in that interval should collapse itself automatically (in
     // a future version of this web app).
     getFilterSpecs() {
-        // can be redefined by descendant classes.
+        // Can be redefined by descendant classes.
     }
 }
 
-/*
-setData = {
-    (catCxtID, catStr, | catID,)
-    queryUserID,
-    inputUserID?, // (This property is only part of a temporary solution.)
-    num, ratingLo, ratingHi,
-    offset?, isAscending?,
-}
-*/
+
+
 export class SetQuerier extends SetGenerator {
     constructor(
-        setData,
+        catKey, // = catID | [catCxtID, catDefStr]
+        queryUserID,
+        inputUserID, // (This property is only part of a temporary solution.)
+        num, ratingLo, ratingHi, // optional.
+        isAscending, offset, // optional.
         set, replaceExistingSet, // optional.
     ) {
         super();
-        this.setData = setData;
-        setData.offset ??= 0;;
-        setData.isAscending ??= 0;;
-        this.set = set ?? [];
-        this.replaceExistingSet = replaceExistingSet ?? false;
+        if (typeof catKey === "object") {
+            this.catCxtID = catKey[0];
+            this.catDefStr = catKey[1];
+        } else {
+            this.catID = catKey;
+        }
+        this.queryUserID = queryUserID;
+        this.inputUserID = inputUserID;
+        this.num = num ?? 300;
+        this.ratingLo = ratingLo ?? 0;
+        this.ratingHi = ratingHi ?? 0;
+        this.isAscending = isAscending ?? 0;
+        this.offset = offset ?? 0;
     }
 
     generateSet(obj, callbackData, callback) {
+        if (this.set) {
+            callback(obj, this.set, callbackData);
+            return;
+        }
         if (!callback) {
             callback = callbackData;
             callbackData = undefined;
         }
-        let setData = this.setData;
-        if (setData.catID) {
+        if (this.catID) {
             this.queryWithCatID(obj, callbackData, callback);
         } else {
             let reqData = {
                 req: "entID",
                 t: 2,
-                c: setData.catCxtID,
-                s: setData.catStr,
+                c: this.catCxtID,
+                s: this.catDefStr,
             };
             dbReqManager.query(this, reqData, function(sg, result) {
-                setData.catID = (result[0] ?? [0])[0];
+                sg.catID = (result[0] ?? [0])[0];
                 sg.queryWithCatID(obj, callbackData, callback);
 
                 // As a temporary solution for adding missing categories, all
                 // categories are just automatically submitted to the database,
                 // if they are missing in this query.
-                if (setData.catID || !setData.inputUserID) {
+                if (sg.catID || !sg.inputUserID) {
                     return;
                 }
                 let reqData = {
                     req: "ent",
-                    u: setData.inputUserID,
+                    u: sg.inputUserID,
                     t: 2,
-                    c: setData.catCxtID,
-                    s: setData.catStr,
+                    c: sg.catCxtID,
+                    s: sg.catDefStr,
                 };
-                dbReqManager.input(this, reqData, function() {});
+                dbReqManager.input(sg, reqData, function() {});
             });
         }
     }
@@ -147,25 +155,18 @@ export class SetQuerier extends SetGenerator {
             callback = callbackData;
             callbackData = undefined;
         }
-        let setData = this.setData;
         let reqData = {
             req: "set",
-            u: setData.queryUserID,
-            c: setData.catID,
-            rl: setData.ratingLo,
-            rh: setData.ratingHi,
-            n: setData.num,
-            o: setData.offset,
-            a: setData.isAscending,
+            u: this.queryUserID,
+            c: this.catID,
+            rl: this.ratingLo,
+            rh: this.ratingHi,
+            n: this.num,
+            o: this.offset,
+            a: this.isAscending,
         };
         dbReqManager.query(this, reqData, function(sg, result) {
-            if (sg.replaceExistingSet) {
-                sg.set = result;
-            } else {
-                sg.set = sg.set.concat(result);
-            }
-            let setData = sg.setData;
-            setData.offset += setData.num; // default for a subsequent query.
+            sg.set = result;
             callback(obj, sg.set, callbackData);
         });
     }
@@ -174,7 +175,7 @@ export class SetQuerier extends SetGenerator {
         // There is a race condition here, so take heed of it and try not to
         // call getSetCategories() before the first entID queries.
         // TODO: Consider if this race condition should be eliminated somehow.
-        return [this.setData.catID ?? null];
+        return [this.catID ?? null];
     }
 }
 
@@ -193,6 +194,10 @@ export class SetCombiner extends SetGenerator {
     }
 
     generateSet(obj, callbackData, callback) {
+        if (this.set) {
+            callback(obj, this.set, callbackData);
+            return;
+        }
         if (!callback) {
             callback = callbackData;
             callbackData = undefined;
@@ -275,9 +280,9 @@ export class MaxRatingSetCombiner extends SetCombiner {
         ret.length = retLen;
         // set and return this.combSet as ret sorted after the combRatVal.
         if (this.sortAscending) {
-            return this.combSet = ret.sort((row1, row2) => row1[0] - row2[0]);
+            return ret.sort((row1, row2) => row1[0] - row2[0]);
         } else {
-            return this.combSet = ret.sort((row1, row2) => row2[0] - row1[0]);
+            return ret.sort((row1, row2) => row2[0] - row1[0]);
         }
     }
 }
@@ -287,7 +292,7 @@ export class MaxRatingSetCombiner extends SetCombiner {
 // /*
 // data.setDataArr = [setData, ...],
 //     setData = {
-//         catCxtID, catStr, objID,
+//         catCxtID, catDefStr, objID,
 //         catID?,
 //         queryUserID,
 //         // weight, queryParams, ratTransFun?,
@@ -333,7 +338,7 @@ export class MaxRatingSetCombiner extends SetCombiner {
 //                 let reqData = {
 //                     req: "entID",
 //                     c: setData.catCxtID,
-//                     s: setData.catStr,
+//                     s: setData.catDefStr,
 //                     t: setData.objID,
 //                 };
 //                 dbReqManager.query(this, reqData, i, function(obj, result, i) {
