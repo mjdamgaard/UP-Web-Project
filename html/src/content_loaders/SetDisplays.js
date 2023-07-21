@@ -14,19 +14,57 @@ export var setDisplayCL = new ContentLoader(
     /* Initial HTML template */
     '<div>' +
         '<<SetHeader>>' +
-        '<<SetList>>' +
+        '<div class="set-container"></div>' +
         '<<AppendMoreElementsButton>>' +
     '</div>',
     sdbInterfaceCL
 );
 setDisplayCL.addCallback("data", function(data) {
-    data.copyFromAncestor("setGenerator");
+    data.copyFromAncestor([
+        "elemContentKey",
+        "setGenerator",
+    ]);
     data.copyFromAncestor(["initialNum", "incrementNum"], 1);
     data.initialNum ??= 50;
     data.incrementNum ??= 50;
-    // get the queryNum from the SetGenerator.
-    data.queryNum = data.setGenerator.num;
 });
+setDisplayCL.addCallback(function($ci, data) {
+    data.cl = setDisplayCL.getRelatedCL(data.elemContentKey);
+    $ci.one("load-initial-elements", function(event, set) {
+        let $this = $(this);
+        let data = $this.data("data");
+        data.setLen = set.length;
+        data.listElemDataArr = set.slice(0, data.initialNum).map(val => ({
+            ratVal: val[0],
+            entID: val[1],
+        }));
+        data.currentNum = data.listElemDataArr.length;
+        let $setContainer = $this.children('.set-container');
+        setDisplayCL.loadAppended($setContainer, "List", data);
+        return false;
+    });
+    $ci.on("append-elements", function(event, set) {
+        let $this = $(this);
+        let data = $this.data("data");
+        let currNum = data.currentNum;
+        if (currNum >= data.setLen) {
+            return;
+        }
+        let newNum = currNum + data.incrementNum;
+        data.listElemDataArr = set.slice(currNum, newNum).map(val => ({
+            ratVal: val[0],
+            entID: val[1],
+        }));
+        data.currentNum = currNum + data.listElemDataArr.length;
+        let $setContainer = $this.children('.set-container');
+        setDisplayCL.loadAppended($setContainer, "List", data);
+        return false;
+    });
+    data.setGenerator.generateSet($ci, function($ci, set) {
+        $ci.trigger("load-initial-elements", [set]);
+    });
+});
+
 
 
 export var setHeaderCL = new ContentLoader(

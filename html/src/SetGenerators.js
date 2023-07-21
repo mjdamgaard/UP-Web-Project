@@ -9,50 +9,6 @@ import {
 
 
 
-export var setListCL = new ContentLoader(
-    "SetList",
-    /* Initial HTML template */
-    '<div>' +
-        '<<List data:wait>>' +
-    '</div>',
-    sdbInterfaceCL
-);
-setListCL.addCallback("data", function(data) {
-    data.copyFromAncestor([
-        "elemContentKey",
-        "setGenerator",
-        "initialNum",
-        "incrementNum",
-    ]);
-});
-setListCL.addCallback(function($ci, data) {
-    data.cl = setListCL.getRelatedCL(data.elemContentKey);
-    $ci.one("load-initial-elements", function(event, set) {
-        data.listElemDataArr = set.slice(0, data.initialNum).map(val => ({
-            ratVal: val[0],
-            entID: val[1],
-        }));
-        data.currentNum = data.initialNum;
-        $ci.find('.CI.List').trigger("load");
-        return false;
-    });
-    $ci.on("append-elements", function(event, set) {
-        let currNum = data.currentNum;
-        let newNum = currNum + data.incrementNum;
-        data.listElemDataArr = set.slice(currNum, newNum).map(val => ({
-            ratVal: val[0],
-            entID: val[1],
-        }));
-        data.currentNum = newNum;
-        setListCL.loadAppended($ci, "List", data);
-        return false;
-    });
-    data.setGenerator.generateSet($ci, function($ci, set) {
-        $ci.trigger("load-initial-elements", [set]);
-    });
-});
-
-
 /* SetGenerator is just a completely abstract class */
 export class SetGenerator {
     constructor() {
