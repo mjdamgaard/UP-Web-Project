@@ -15,7 +15,7 @@
  * CLs might use the same CL in their templates.
  *
  * A "parent CL" will then have to provide the "child CL" with the data it
- * needs. For this we use the ChildData class below, which makes sure that a
+ * needs. For this we use the DataNode class below, which makes sure that a
  * child CL, or rather its CIs, can look up data properties of its parent. This
  * saves a lot of code and makes things a lot easier.
  * CL can also "decorate" other CLs, which is what happens when the HTML
@@ -70,7 +70,7 @@ export function convertHTMLTemplate(htmlTemplate) {
     );
 }
 
-export class ChildData {
+export class DataNode {
     constructor(parentData, obj) {
         if (obj) {
             Object.assign(this, obj);
@@ -351,7 +351,7 @@ export class ContentLoader {
 
         // apply all the data setter callbacks, which can change the "data"
         // object, which will also be stored at $ci.data("data").
-        let data = new ChildData(parentData);
+        let data = new DataNode(parentData);
         let len = this.dataSetterCallbacks.length;
         for (let i = 0; i < len; i++) {
             this.dataSetterCallbacks[i](data);
@@ -555,7 +555,7 @@ function loadChildCIWithNestedDataAndSignal(
             }
         }
         if (!isAnArrayDataKey) {
-            var resultingData = new ChildData(data, nestedData);
+            var resultingData = new DataNode(data, nestedData);
             cl.loadAndReplacePlaceholder(
                 $childCI, resultingData, childReturnData
             );
@@ -563,7 +563,7 @@ function loadChildCIWithNestedDataAndSignal(
             var $nthChildCI = $childCI;
             var len = nestedData.length;
             for (let i = 0; i < len; i++) {
-                let resultingData = new ChildData(data, nestedData[i]);
+                let resultingData = new DataNode(data, nestedData[i]);
                 cl.loadAfter(
                     $nthChildCI, "self", resultingData,
                     childReturnData

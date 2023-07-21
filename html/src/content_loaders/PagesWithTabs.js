@@ -1,6 +1,6 @@
 
 import {
-    ContentLoader, ChildData
+    ContentLoader, DataNode
 } from "/src/ContentLoader.js";
 import {
     sdbInterfaceCL, dbReqManager,
@@ -137,7 +137,7 @@ pagesContainerCL.addCallback(function($ci) {
                 $this.children().hide();
                 $this.children('[data-title="' + tabTitle +'"]').show();
             } else {
-                let resultingPageData = new ChildData(
+                let resultingPageData = new DataNode(
                     $this.data("data"), pageData ?? {}
                 );
                 $this.data("openPagesTitleArr").push(tabTitle);

@@ -1,6 +1,6 @@
 
 import {
-    ContentLoader, ChildData,
+    ContentLoader, DataNode,
 } from "/src/ContentLoader.js";
 import {
     sdbInterfaceCL, dbReqManager,
@@ -121,7 +121,7 @@ setCategoriesListCL.addCallback(function($ci, data) {
     let catIDArr = data.setGenerator.getSetCategories();
     catIDArr.forEach(function(val) {
         setCategoriesListCL.loadAppended(
-            $ci, "CategoryDisplay", new ChildData(data, {
+            $ci, "CategoryDisplay", new DataNode(data, {
                 entID: val,
             })
         );

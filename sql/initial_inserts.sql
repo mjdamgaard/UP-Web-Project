@@ -167,6 +167,8 @@ CALL inputOrChangeRating(9, 60, 65, CONV("FC00", 16, 10), "00");
 CALL insertOrFindTemplate(9, 61, CONCAT(
     "{<Popular name>}, <Full name>, <Year of birth>, ",
     "<What the person is known for being>"
+    -- (Could have written "is/was" here instead, but maybe it's best to just
+    -- keep away from the past tense in general.)
 )); -- id: 66
 CALL insertOrFindEntity(9, 61, 66,
     "Peter Jackson|Peter Robert Jackson|1961|Film director"); -- id: 67

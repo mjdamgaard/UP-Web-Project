@@ -1,5 +1,5 @@
 import {
-    ContentLoader, ChildData,
+    ContentLoader, DataNode,
 } from "/src/ContentLoader.js";
 import {
     sdbInterfaceCL, dbReqManager,
@@ -31,7 +31,7 @@ submitEntityFieldCL.addCallback(function($ci, data) {
         let $obj = $(this).find('.def-item-field-container');
         labelArr.forEach(function(label) {
             submitEntityFieldCL.loadAppended(
-                $obj, "TextAreaFormGroup", new ChildData(data, {label:label})
+                $obj, "TextAreaFormGroup", new DataNode(data, {label:label})
             );
             data.readyForSubmission = true;
         });
@@ -127,7 +127,7 @@ submitEntityFieldCL.addCallback(function($ci, data) {
         dbReqManager.input($this, reqData, data, function($ci, result, data) {
             let exitCode = result.exitCode;
             let outID = result.outID;
-            let newData = new ChildData(data, {entID: outID});
+            let newData = new DataNode(data, {entID: outID});
             if (exitCode == 0) {
                 $ci.children('.response-display').html(
                     '<span class="text-success">' +

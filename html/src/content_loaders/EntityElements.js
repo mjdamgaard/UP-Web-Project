@@ -1,6 +1,6 @@
 
 import {
-    ContentLoader, ChildData,
+    ContentLoader, DataNode,
 } from "/src/ContentLoader.js";
 import {
     sdbInterfaceCL, dbReqManager,
@@ -68,7 +68,7 @@ setCategoriesRatingsDisplayCL.addCallback(function($ci, data) {
     let instID = data.getFromAncestor("entID");
     catIDArr.forEach(function(val) {
         setCategoriesRatingsDisplayCL.loadAppended(
-            $ci, "RatingDisplay", new ChildData(data, {
+            $ci, "RatingDisplay", new DataNode(data, {
                 catID: val,
                 instID: instID,
             })

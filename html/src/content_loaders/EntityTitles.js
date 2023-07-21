@@ -1,6 +1,6 @@
 
 import {
-    ContentLoader, ChildData
+    ContentLoader, DataNode
 } from "/src/ContentLoader.js";
 import {
     sdbInterfaceCL, dbReqManager,
@@ -101,7 +101,7 @@ export function loadEntityTitleHTML($ci, data) {
             dbReqManager.query($ci, reqData, data, true,
                 function($ci, result, data) {
                     let typeDefStr = (result[0] ?? [])[2];
-                    entityTitleCL.loadAppended($ci, "EntityLink", new ChildData(
+                    entityTitleCL.loadAppended($ci, "EntityLink", new DataNode(
                         data, {entID: data.typeID, linkContent: typeDefStr}
                     ));
                     $ci.append(' &blacktriangleright; ');
@@ -135,7 +135,7 @@ entityLinkCL.addCallback(function($ci, data) {
     $ci.addClass("clickable-text text-primary");
     $ci.append(data.linkContent);
     $ci.on("click", function() {
-        let childData = new ChildData (data, {
+        let childData = new DataNode (data, {
             cl: sdbInterfaceCL.getRelatedCL("EntityPage"),
             recLevel: null,
             maxRecLevel: null,
@@ -209,7 +209,7 @@ fullTemplateInstanceTitleCL.addCallback(function($ci, data) {
     dbReqManager.query($ci, reqData, data, true,
         function($ci, result, data) {
             let typeDefStr = (result[0] ?? [])[2];
-            entityTitleCL.loadAppended($ci, "EntityLink", new ChildData(
+            entityTitleCL.loadAppended($ci, "EntityLink", new DataNode(
                 data, {entID: data.typeID, linkContent: typeDefStr}
             ));
             $ci.append(' &blacktriangleright; ');
@@ -245,7 +245,7 @@ fullTemplateInstanceTitleCL.addCallback(function($ci, data) {
 export function loadDefItemAppended($obj, defItemStr, data) {
     if (/^#[1-9][0-9]*$/.test(defItemStr)) {
         templateInstanceTitleCL.loadAppended($obj, "EntityTitle",
-            new ChildData(data, {
+            new DataNode(data, {
                 entID: defItemStr.substring(1),
                 recLevel: data.recLevel,
                 isLinkArr: data.isLinkArr,
@@ -329,7 +329,7 @@ contextDisplayCL.addCallback(function($ci, data) {
             $ci.append('Template: ');
         }
         if (cxtID) {
-            contextDisplayCL.loadAppended($ci, "EntityTitle", new ChildData(
+            contextDisplayCL.loadAppended($ci, "EntityTitle", new DataNode(
                 data, {entID: cxtID}
             ));
         } else {
