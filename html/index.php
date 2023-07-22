@@ -8,7 +8,7 @@ require_once $err_path . "errors.php";
 
 $user_input_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/user_input/";
 require_once $user_input_path . "InputGetter.php";
-require_once $user_input_path . "InputVerifier.php";
+require_once $user_input_path . "InputValidator.php";
 
 
 
@@ -27,11 +27,11 @@ if (!isset($_POST["iu"])) {
     $_POST["iu"] = "9";
 }
 
-// get and verify the required inputs.
+// get and validate the required inputs.
 $paramNameArr = array("t", "qu", "iu");
 $typeArr = array("id", "id", "id");
 $paramValArr = InputGetter::getParams($paramNameArr);
-InputVerifier::verifyTypes($paramValArr, $typeArr, $paramNameArr);
+InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
 $entID = $paramValArr[0];
 $queryUserID = $paramValArr[1];
 $inputUserID = $paramValArr[2];

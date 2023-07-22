@@ -5,18 +5,20 @@ $err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";
 require_once $err_path . "errors.php";
 
 
-class InputVerifier {
+class InputValidator {
 
-    public static function verifyTypes($paramValArr, $typeArr, $paramNameArr) {
+    public static function validateParams(
+        $paramValArr, $typeArr, $paramNameArr
+    ) {
         $len = count($paramValArr);
         for ($i = 0; $i < $len; $i++) {
-            InputVerifier::verifyType(
+            InputValidator::validateParam(
                 $paramValArr[$i], $typeArr[$i], $paramNameArr[$i]
             );
         }
     }
 
-    public static function verifyType($paramVal, $type, $paramName) {
+    public static function validateParam($paramVal, $type, $paramName) {
         switch($type) {
             case "id":
                 $pattern = "/^[1-9][0-9]*|0$/";
@@ -124,9 +126,11 @@ class InputVerifier {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
                 }
                 break;
+            case "any":
+                break;
             default:
                 throw new \Exception(
-                    'verifyAndSetParams(): unknown type ' .
+                    'validateParam(): unknown type ' .
                     $type . ' for ' . $paramName
                 );
         }

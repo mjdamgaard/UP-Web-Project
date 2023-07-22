@@ -7,11 +7,10 @@ require_once $err_path . "errors.php";
 
 $user_input_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/user_input/";
 require_once $user_input_path . "InputGetter.php";
-require_once $user_input_path . "InputVerifier.php";
+require_once $user_input_path . "InputValidator.php";
 
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
 require_once $db_io_path . "DBConnector.php";
-require_once $db_io_path . "sdb_config.php";
 
 
 
@@ -21,15 +20,22 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 }
 
 
+// TODO: Consider implementing some limits on the "n"s below (other than just
+// the maximal int).. (Well, I *think* we will need to do this...)
+
+// NOTE: When we want to implement queries for private information, which should
+// then require a valid session ID, let us create a seperate query handler
+// program for this (e.g. "private_query_handler.php").
+
+
+/* Handling of the qeury request */
+
 // get request type.
 if (!isset($_POST["req"])) {
     echoErrorJSONAndExit("No request type specified");
 }
 $reqType = $_POST["req"];
 
-
-// TODO: Also implement some limits on the "n"s below (other than just the
-// maximal int).. (Well, I *think* we will need to do this...)
 
 // match $reqType against any of the following single-query request types
 // and execute the corresponding query if a match is found.
@@ -132,9 +138,10 @@ switch ($reqType) {
 
 // get inputs.
 $paramValArr = InputGetter::getParams($paramNameArr);
-// verify inputs.
-InputVerifier::verifyTypes($paramValArr, $typeArr, $paramNameArr);
+// validate inputs.
+InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
 // get connection.
+require $db_io_path . "sdb_config.php";
 $conn = DBConnector::getConnectionOrDie(
     $servername, $dbname, $username, $password
 );
