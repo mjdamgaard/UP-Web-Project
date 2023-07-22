@@ -181,12 +181,12 @@ export class SetCombiner extends SetGenerator {
     }
 
     transformSet(set) {
-        // can be redefined by descendant classes.
+        // Can be redefined by descendant classes.
         // (transformSet() might also store additional data for combineSets().)
     }
 
     combineSets() {
-        // to be redefined by descendant classes.
+        // To be redefined by descendant classes.
     }
 
     getSetCategories() {
@@ -244,6 +244,65 @@ export class MaxRatingSetCombiner extends SetCombiner {
         }
     }
 }
+
+
+export class PrioritySetCombiner extends SetCombiner {
+    constructor(
+        setGeneratorArr,
+        sortAscending, setArr, isReadyArr, // optional.
+    ) {
+        super(
+            setGeneratorArr,
+            sortAscending, setArr, isReadyArr,
+        );
+    }
+
+    combineSets() {
+        // TODO: Implement.
+        // // sort each set in setArr by instID.
+        // this.setArr.forEach(function(set) {
+        //     set.sort(
+        //         (a, b) => a[1] - b[1]
+        //     );
+        // });
+        // // TODO: Implement further.
+        // // setArr is imploded into concatArr, which is then sorted by instID.
+        // let concatSet = [].concat(...this.setArr).sort(
+        //     (a, b) => a[1] - b[1]
+        // );
+        // // construct a return array by recording only the maximal rating for
+        // // each group of elements with the same instID in the concatArr.
+        // let ret = new Array(concatSet.length);
+        // let retLen = 0;
+        // let currInstID = 0;
+        // let row, maxRat, currRat;
+        // concatSet.forEach(function(val, ind) {
+        //     if (val[1] !== currInstID) {
+        //         currInstID = val[1];
+        //         maxRat = val[0];
+        //         ret[retLen] = (row = [maxRat, currInstID]);
+        //         retLen++;
+        //     } else {
+        //         currRat = val[0];
+        //         if (currRat > maxRat) {
+        //             row[0] = (maxRat = currRat);
+        //         }
+        //     }
+        // });
+        // // delete the empty slots of ret.
+        // ret.length = retLen;
+        // // set and return this.combSet as ret sorted after the combRatVal.
+        // if (this.sortAscending) {
+        //     return ret.sort((row1, row2) => row1[0] - row2[0]);
+        // } else {
+        //     return ret.sort((row1, row2) => row2[0] - row1[0]);
+        // }
+    }
+}
+
+
+
+
 
 
 

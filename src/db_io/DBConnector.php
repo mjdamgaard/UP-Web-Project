@@ -2,15 +2,9 @@
 
 class DBConnector {
 
-    public static function getConnection() {
-        // TODO: Make it so that these values are read from a config file
-        // instead.
-        $servername = "localhost";
-        $username = "mads";
-        $password = "lemmein";
-        $dbname = "mydatabase";
-
-
+    public static function getConnection(
+        $servername, $dbname, $username, $password
+    ) {
         // create connection.
         $conn = new \mysqli($servername, $username, $password, $dbname);
 
