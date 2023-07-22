@@ -12,9 +12,11 @@ class DBConnector {
     }
 
 
-    public static function getConnectionOrDie() {
+    public static function getConnectionOrDie(
+        $servername, $dbname, $username, $password
+    ) {
         // create connection.
-        $conn = self::getConnection();
+        $conn = self::getConnection($servername, $dbname, $username, $password);
 
         // verify connection (or throw).
         if ($conn->connect_error) {

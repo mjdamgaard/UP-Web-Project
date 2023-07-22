@@ -11,6 +11,7 @@ require_once $user_input_path . "InputVerifier.php";
 
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
 require_once $db_io_path . "DBConnector.php";
+require_once $db_io_path . "sdb_config.php";
 
 
 
@@ -134,7 +135,9 @@ $paramValArr = InputGetter::getParams($paramNameArr);
 // verify inputs.
 InputVerifier::verifyTypes($paramValArr, $typeArr, $paramNameArr);
 // get connection.
-$conn = DBConnector::getConnectionOrDie();
+$conn = DBConnector::getConnectionOrDie(
+    $servername, $dbname, $username, $password
+);
 // prepare input MySQLi statement.
 $stmt = $conn->prepare($sql);
 // execute query statement.
