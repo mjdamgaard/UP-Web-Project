@@ -56,17 +56,13 @@ $inputUserID = $paramValArr[2];
 </head>
 <body>
 
-<!-- TODO: Add functionalities to this bar; login etc.. -->
-<header>
-    <h1> openSDB </h1>
-</header>
 
-<main id="upa">
+<main id="sdb-interface-app">
 </main>
 <script type="module">
     import "/src/DBRequestManager.js";
     import "/src/ContentLoader.js";
-    import {sdbInterfaceCL} from "/src/content_loaders/SDBInterfaces.js";
+    import {sdbInterfaceCL} from "/src/content_loaders/SDBInterface.js";
     import "/src/content_loaders/PagesWithTabs.js";
     import "/src/SetGenerators.js";
     import "/src/content_loaders/SetDisplays.js";
@@ -84,7 +80,7 @@ $inputUserID = $paramValArr[2];
         inputUserID: <?php echo $inputUserID; ?>,
         cl: sdbInterfaceCL.getRelatedCL("EntityPage"),
     };
-    sdbInterfaceCL.loadAppended($('#upa'), "self", data);
+    sdbInterfaceCL.loadAppended($('#sdb-interface-app'), "self", data);
 </script>
 
 </body>

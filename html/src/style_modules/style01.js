@@ -2,7 +2,7 @@
 import {
     sdbInterfaceCL, appColumnCL,
     interfaceHeaderCL, closeButtonCL,
-} from "/src/content_loaders/SDBInterfaces.js";
+} from "/src/content_loaders/SDBInterface.js";
 import {
     tabHeaderCL, pagesContainerCL,
 } from "/src/content_loaders/PagesWithTabs.js";
@@ -28,12 +28,18 @@ sdbInterfaceCL.addCSS(
     'height: 100%;' +
     'display: grid;' +
     'grid-template-columns: auto;' +
-    'grid-template-rows: 20px auto;' +
+    'grid-template-rows: auto 1fr;' +
     ''
 );
 interfaceHeaderCL.addCSS(
-    'height: 10px;' +
-    'background-color: blue;'
+    'background-color: #40E0E9;' +
+    'margin-bottom: 10px;'
+);
+interfaceHeaderCL.addCSS(
+    '& .navbar-brand {' +
+        'color: black;' +
+        'font-size: 25px;' +
+    '}'
 );
 sdbInterfaceCL.addCSS(
     '& main {' +
@@ -50,7 +56,7 @@ sdbInterfaceCL.addCSS(
         'overflow-x: auto;' +
         'overflow-y: hidden;' +
         'white-space: nowrap;' +
-        'background-color: #f9fef5;' +
+        // 'background-color: #f9fef5;' +
     '}'
 );
 appColumnCL.addCSS(

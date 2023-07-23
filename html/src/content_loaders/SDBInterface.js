@@ -28,10 +28,51 @@ export var dbReqManager = new DBRequestManager();
 export var interfaceHeaderCL = new ContentLoader(
     "InterfaceHeader",
     /* Initial HTML template */
-    '<header>' +
+    '<header class="navbar navbar-default">' +
+        '<div class="container-fluid">' +
+                '<<SuperCoolLogoTBA>>' +
+                '<span class="navbar-brand">openSDB</span>' +// will do for now.
+            // '</div>' +
+            '<<StartColumnButtonsContainer>>' +
+            '<<AccountButtonsContainer>>' +
+        '</div>' +
     '</header>',
     sdbInterfaceCL,
 );
+
+export var startColumnButtonsContainerCL = new ContentLoader(
+    "StartColumnButtonsContainer",
+    /* Initial HTML template */
+    '<ul class="nav navbar-nav">' +
+        '<li class="entities"><a href="#">' +
+            'Entities' +
+        '</a></li>' +
+        // TODO: Add one or a few more.
+    '</ul>',
+    sdbInterfaceCL,
+);
+
+export var accountButtonsContainerCL = new ContentLoader(
+    "AccountButtonsContainer",
+    /* Initial HTML template */
+    '<ul class="nav navbar-nav navbar-right">' +
+        '<li class="log-in"><a href="#">' +
+            '<span class="glyphicon glyphicon-log-in"></span> Sing in' +
+        '</a></li>' +
+        '<li class="user"><a href="#">' +
+            '<span class="glyphicon glyphicon-user"></span> Sign Up' +
+        '</a></li>' +
+        '<li class="log-out"><a href="#">' +
+            '<span class="glyphicon glyphicon-log-out"></span> Sign out' +
+        '</a></li>' +
+    '</ul>',
+    sdbInterfaceCL,
+);
+accountButtonsContainerCL.addCallback(function($ci, data) {
+    $ci.children('.log-out').hide();
+});
+
+
 
 
 

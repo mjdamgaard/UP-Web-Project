@@ -1,32 +1,5 @@
 
-html, body, main, main > iframe {
-    margin: 0px;
-    padding: 0px;
-    border: 0px;
+html, body, body > main {
     height: 100%;
     width: 100%;
-}
-html {
-    height: 99.2%;
-}
-body {
-    display: flex;
-    flex-direction: column;
-}
-body > header {
-    background-color: #F8F8FB;
-}
-body > main {
-    flex-grow: 1;
-}
-body > footer {
-    flex-grow: 0;
-}
-
-
-body > header {
-    background-color: turquoise;
-}
-body > header > h1 {
-    margin: 15px 10px;
 }
