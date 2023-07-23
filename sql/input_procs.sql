@@ -5,7 +5,7 @@ SELECT "Input procedures";
 -- DROP PROCEDURE insertOrFindEntity;
 -- DROP PROCEDURE insertOrFindTemplate;
 -- DROP PROCEDURE insertOrFindType;
--- DROP PROCEDURE private_insertUser;
+-- -- DROP PROCEDURE private_insertUser;
 -- DROP PROCEDURE insertText;
 -- DROP PROCEDURE insertBinary;
 
@@ -80,7 +80,7 @@ BEGIN
         END IF;
     END IF;
     IF (exitCode <= 2) THEN
-        -- TODO: Change this to update PrivateRecentInputs instead, make a
+        -- TODO: Change this to update Private_RecentInputs instead, make a
         -- scheduled event to move private recent inputs into (the public)
         -- RecentInputs, and update SemanticInputs only then.
         SET live_after = NULL; -- (not implemented yet)
@@ -101,7 +101,7 @@ BEGIN
     SELECT instID AS outID, exitCode;
 END //
 DELIMITER ;
--- TODO: When moving the ratings from PrivateRecentInputs to the public ones
+-- TODO: When moving the ratings from Private_RecentInputs to the public ones
 -- also implement an automatic procedure to rate a "this user has rated this
 -- statement" relation with a special bot (where the rating then matches the
 -- user's rating)..
@@ -173,7 +173,7 @@ BEGIN proc: BEGIN
     INSERT INTO Entities (type_id, cxt_id, def_str)
     VALUES (typeID, cxtID, defStr);
     SELECT LAST_INSERT_ID() INTO outID;
-    INSERT INTO PrivateCreators (ent_id, user_id)
+    INSERT INTO Private_Creators (ent_id, user_id)
     VALUES (outID, userID);
     SET exitCode = 0; -- insert.
     SELECT outID, exitCode;
@@ -216,7 +216,7 @@ BEGIN proc: BEGIN
     INSERT INTO Entities (type_id, cxt_id, def_str)
     VALUES (3, cxtID, defStr);
     SELECT LAST_INSERT_ID() INTO outID;
-    INSERT INTO PrivateCreators (ent_id, user_id)
+    INSERT INTO Private_Creators (ent_id, user_id)
     VALUES (outID, userID);
     SET exitCode = 0; -- insert.
     SELECT outID, exitCode;
@@ -247,7 +247,7 @@ BEGIN
         INSERT INTO Entities (type_id, cxt_id, def_str)
         VALUES (1, NULL, defStr);
         SELECT LAST_INSERT_ID() INTO outID;
-        INSERT INTO PrivateCreators (ent_id, user_id)
+        INSERT INTO Private_Creators (ent_id, user_id)
         VALUES (outID, userID);
         SET exitCode = 0; -- insert.
     END IF;
@@ -260,22 +260,22 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE private_insertUser (
-    IN username VARCHAR(50),
-    IN textStr TEXT
-)
-BEGIN
-    DECLARE outID BIGINT UNSIGNED;
-
-    INSERT INTO Entities (type_id, cxt_id, def_str)
-    VALUES (5, NULL, username);
-    SELECT LAST_INSERT_ID() INTO outID;
-    INSERT INTO Users (id, username)
-    VALUES (outID, username);
-    SELECT outID, 0; -- insert.
-END //
-DELIMITER ;
+-- DELIMITER //
+-- CREATE PROCEDURE private_insertUser (
+--     IN username VARCHAR(50),
+--     IN textStr TEXT
+-- )
+-- BEGIN
+--     DECLARE outID BIGINT UNSIGNED;
+--
+--     INSERT INTO Entities (type_id, cxt_id, def_str)
+--     VALUES (5, NULL, username);
+--     SELECT LAST_INSERT_ID() INTO outID;
+--     INSERT INTO Users (id, username)
+--     VALUES (outID, username);
+--     SELECT outID, 0 AS exitCode; -- insert.
+-- END //
+-- DELIMITER ;
 
 
 
@@ -294,9 +294,9 @@ BEGIN
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Texts (id, str)
     VALUES (outID, textStr);
-    INSERT INTO PrivateCreators (ent_id, user_id)
+    INSERT INTO Private_Creators (ent_id, user_id)
     VALUES (outID, userID);
-    SELECT outID, 0; -- insert.
+    SELECT outID, 0 AS exitCode; -- insert.
 END //
 DELIMITER ;
 
@@ -315,8 +315,8 @@ BEGIN
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Binaries (id, bin)
     VALUES (outID, bin);
-    INSERT INTO PrivateCreators (ent_id, user_id)
+    INSERT INTO Private_Creators (ent_id, user_id)
     VALUES (outID, userID);
-    SELECT outID, 0; -- insert.
+    SELECT outID, 0 AS exitCode; -- insert.
 END //
 DELIMITER ;

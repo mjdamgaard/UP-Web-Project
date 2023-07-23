@@ -220,7 +220,7 @@ CREATE PROCEDURE private_selectCreator (
 )
 BEGIN
     SELECT user_id AS userID
-    FROM PrivateCreators
+    FROM Private_Creators
     WHERE ent_id = entID;
 END //
 DELIMITER ;
@@ -235,7 +235,7 @@ CREATE PROCEDURE private_selectCreations (
 )
 BEGIN
     SELECT ent_id AS entID
-    FROM PrivateCreators
+    FROM Private_Creators
     WHERE user_id = userID
     ORDER BY
         CASE WHEN isAscOrder THEN ent_id END ASC,

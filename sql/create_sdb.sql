@@ -1,7 +1,7 @@
 
 -- /* Semantic inputs */
 -- DROP TABLE SemanticInputs;
--- DROP TABLE PrivateRecentInputs;
+-- DROP TABLE Private_RecentInputs;
 -- DROP TABLE RecentInputs;
 -- DROP TABLE EntityIndexKeys;
 --
@@ -14,7 +14,11 @@
 -- DROP TABLE Binaries;
 --
 -- /* Meta data */
--- DROP TABLE PrivateCreators;
+-- DROP TABLE Private_Creators;
+-- /* Private user data */
+-- DROP TABLE Private_PasswordHashes;
+-- DROP TABLE Private_Sessions;
+-- DROP TABLE Private_EMails;
 
 
 
@@ -62,7 +66,7 @@ CREATE TABLE SemanticInputs (
 -- and sec. indexes below. (But compression is a must for this table.)
 
 
-CREATE TABLE PrivateRecentInputs (
+CREATE TABLE Private_RecentInputs (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     user_id BIGINT UNSIGNED NOT NULL,
@@ -222,7 +226,7 @@ CREATE TABLE Binaries (
 
 
 
-CREATE TABLE PrivateCreators (
+CREATE TABLE Private_Creators (
     ent_id BIGINT UNSIGNED PRIMARY KEY,
 
     user_id BIGINT UNSIGNED NOT NULL,
@@ -232,3 +236,24 @@ CREATE TABLE PrivateCreators (
 -- should rate which entity is created by which user, if and only if the given
 -- user has declared that they are the creater themselves (by rating the same
 -- predicate before the bot).)
+
+
+
+
+
+
+CREATE TABLE Private_PasswordHashes (
+    user_id BIGINT UNSIGNED PRIMARY KEY,
+    pw_hash VARBINARY(2000)
+);
+
+CREATE TABLE Private_Sessions (
+    user_id BIGINT UNSIGNED PRIMARY KEY,
+    session_id VARBINARY(2000) NOT NULL,
+    expiration_date DATETIME NOT NULL
+);
+
+CREATE TABLE Private_EMails (
+    e_mail_address VARCHAR(255) PRIMARY KEY,
+    number_of_accounts TINYINT UNSIGNED NOT NULL
+);
