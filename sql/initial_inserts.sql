@@ -1,4 +1,7 @@
 
+-- TODO: Create a database dump as well, such that the whole installation can be
+-- done more quickly and with a single SQL file.
+
 DELETE FROM SemanticInputs;
 DELETE FROM RecentInputs;
 ALTER TABLE RecentInputs AUTO_INCREMENT=1;

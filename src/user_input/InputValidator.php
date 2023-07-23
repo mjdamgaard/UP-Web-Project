@@ -126,6 +126,35 @@ class InputValidator {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
                 }
                 break;
+            case "username":
+                if (!is_string($paramVal) || !ctype_print($paramVal)) {
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "VARCHAR(1,50)"
+                    );
+                }
+                $pattern = "/^[\S]+$/";
+                if (!preg_match($pattern, $paramVal)) {
+                    echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
+                }
+                if (strlen($paramVal) > 50) {
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "VARCHAR(1,50)"
+                    );
+                }
+                break;
+            case "password":
+                if (!is_string($paramVal) || !ctype_print($paramVal)) {
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "VARCHAR(8,1000)"
+                    );
+                }
+                $len = strlen($paramVal);
+                if ($len < 8  || $len > 1000) {
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "VARCHAR(8,1000)"
+                    );
+                }
+                break;
             case "any":
                 break;
             default:

@@ -11,10 +11,16 @@ CREATE TABLE Sessions (
     expiration_date DATETIME NOT NULL
 );
 
+CREATE TABLE EMails (
+    e_mail_address VARCHAR(255) PRIMARY KEY,
+    number_of_accounts NOT NULL
+);
+
+
 DELIMITER //
 CREATE PROCEDURE createOrUpdateSession (
     IN userID BIGINT UNSIGNED,
-    IN session_id VARBINARY(2000),
+    IN sessionID VARBINARY(2000),
     IN expirationDate DATETIME
 )
 BEGIN
