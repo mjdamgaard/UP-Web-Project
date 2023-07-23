@@ -27,8 +27,8 @@ $typeArr = array("id", "str");
 $paramValArr = InputGetter::getParams($paramNameArr);
 InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
 
-// get connection to the userDB.
-require $db_io_path . "userdb_config.php";
+// get connection to the database.
+require $db_io_path . "sdb_config.php";
 $conn = DBConnector::getConnectionOrDie(
     $servername, $dbname, $username, $password
 );
@@ -54,7 +54,14 @@ $expDate = date("Y-m-d", strtotime("+14 days"));
 DBConnector::executeSuccessfulOrDie($stmt, array($u, $sesID, $expDate));
 // fetch the result as a numeric array.
 $res = $stmt->get_result()->fetch_assoc();
-// finally echo the JSON-encoded result array (containing the exitCode).
+
+
+/* Output the results */
+
+// add the session ID to $res.
+$res["sesID"] = $sesID;
+// finally echo the JSON-encoded result array (containing the session ID and
+// the exitCode).
 echo json_encode($res);
 
 // The program exits here, which also closes $conn.

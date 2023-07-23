@@ -1,11 +1,15 @@
 
+SELECT "User data procedures";
+
+-- DROP PROCEDURE createOrUpdateSession;
+-- DROP PROCEDURE createNewUser;
 
 
 DELIMITER //
 CREATE PROCEDURE createOrUpdateSession (
     IN userID BIGINT UNSIGNED,
     IN sessionID VARBINARY(2000),
-    IN expirationDate DATETIME
+    IN expirationDate DATE
 )
 BEGIN
     INSERT INTO Private_Sessions (user_id, session_id, expiration_date)

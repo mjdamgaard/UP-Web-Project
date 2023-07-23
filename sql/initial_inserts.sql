@@ -14,7 +14,7 @@ ALTER TABLE Users AUTO_INCREMENT=1;
 -- DELETE FROM Texts;
 -- ALTER TABLE Texts AUTO_INCREMENT=1;
 
-DELETE FROM PrivateCreators;
+DELETE FROM Private_Creators;
 
 
 

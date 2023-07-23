@@ -27,7 +27,7 @@ $typeArr = array("id", "any");
 $paramValArr = InputGetter::getParams($paramNameArr);
 InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
 
-// get connection to the userDB.
+// get connection to the database.
 require $db_io_path . "sdb_config.php";
 $conn = DBConnector::getConnectionOrDie(
     $servername, $dbname, $username, $password
