@@ -133,26 +133,21 @@ export var dropdownButtonCL = new ContentLoader(
     "DropdownButton",
     /* Initial HTML template */
     '<span>' +
-        // '<span class="symbol">&#8964;</span>' +
-        // '<span class="symbol">&#9663;</span>' +
-        // '<span class="symbol">&or;</span>' +
-        '&or;' +
+        '<span class="caret"></span>' +
+        // '<span class="glyphicon glyphicon-triangle-bottom"></span>' +
     '</span>',
     sdbInterfaceCL
 );
-dropdownButtonCL.addCallback("data", function(data) {
-    data.symbolIsDown = true;
-});
 dropdownButtonCL.addCallback(function($ci, data) {
+    data.symbolIsDown = true;
     $ci.on("toggle-button-symbol", function() {
         let $this = $(this);
         let data = $this.data("data");
         if (data.symbolIsDown) {
-            // $this.children('.symbol').html('&#8963;');
-            $this.html('&and;');
+            $this.addClass('dropup');
             data.symbolIsDown = false;
         } else {
-            $this.html('&or;');
+            $this.removeClass('dropup');
             data.symbolIsDown = true;
         }
         return false;

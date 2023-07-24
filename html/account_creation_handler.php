@@ -47,9 +47,10 @@ $stmt = $conn->prepare($sql);
 DBConnector::executeSuccessfulOrDie($stmt, array($u, $em, $pwHash));
 // fetch the result as a numeric array.
 $res = $stmt->get_result()->fetch_assoc();
-// die with an error message if the user could not be created.
+// die with $res if the user could not be created.
 if ($res["exitCode"] != 0) {
-    echoErrorJSONAndExit("User could not be created");
+    echo json_encode($res);
+    exit;
 }
 
 

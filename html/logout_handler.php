@@ -50,9 +50,9 @@ $stmt = $conn->prepare($sql);
 
 // execute input statement.
 DBConnector::executeSuccessfulOrDie($stmt, array($u));
-// fetch the result as a numeric array.
+
+// output array("exitCode"=>"0") on success (JSON-encoded).
 $res = array("exitCode"=>"0");
-// finally echo the JSON-encoded result array (containing the exitCode).
 echo json_encode($res);
 
 // The program exits here, which also closes $conn.

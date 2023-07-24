@@ -59,8 +59,8 @@ export var accountButtonsContainerCL = new ContentLoader(
         '<li class="log-in"><a href="#">' +
             '<span class="glyphicon glyphicon-log-in"></span> Sing in' +
         '</a></li>' +
-        '<li class="user"><a href="#">' +
-            '<span class="glyphicon glyphicon-user"></span> Sign Up' +
+        '<li class="new-account"><a href="#">' +
+            '<span class="glyphicon glyphicon-user"></span> Sign up' +
         '</a></li>' +
         '<li class="log-out"><a href="#">' +
             '<span class="glyphicon glyphicon-log-out"></span> Sign out' +
@@ -69,7 +69,21 @@ export var accountButtonsContainerCL = new ContentLoader(
     sdbInterfaceCL,
 );
 accountButtonsContainerCL.addCallback(function($ci, data) {
-    $ci.children('.log-out').hide();
+    if (typeof(Storage) === "undefined") {
+        return;
+    }
+    if (!localStorage.session) {
+        $ci.children('.log-out').hide();
+    } else {
+        // ... I'm considering whether to switch to time since epoch in order
+        // to be able to check expDate client-side (so that users can see that
+        // they need log in again immideately if so) without dealing with time
+        // zones (across all layers).. ..But maybe I should just wait with this
+        // for now..
+        if (localStorage.session.expDate) {
+            
+        }
+    }
 });
 
 

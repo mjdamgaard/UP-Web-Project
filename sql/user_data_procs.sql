@@ -24,7 +24,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE createNewUser (
-    IN username VARCHAR(50),
+    IN uName VARCHAR(50),
     IN eMailAddress VARCHAR(50),
     IN pwHash VARBINARY(2000)
 )
@@ -33,13 +33,22 @@ BEGIN proc: BEGIN
     DECLARE exitCode TINYINT;
     DECLARE accountNum TINYINT UNSIGNED;
 
+    SELECT id INTO outID
+    FROM Users
+    WHERE username = uName
+    FOR UPDATE;
+    IF (outID IS NOT NULL) THEN
+        SET exitCode = 1; -- username already exists.
+        SELECT outID, exitCode;
+        LEAVE proc;
+    END IF;
+
     SELECT number_of_accounts INTO accountNum
     FROM Private_EMails
     WHERE e_mail_address = eMailAddress
     FOR UPDATE;
-    IF (accountNum IS NULL OR accountNum >= 2) THEN -- TODO: Change 2 to a
-    -- higher number.
-        SET exitCode = 1; -- e-mail address cannot get more accounts currently.
+    IF (accountNum IS NULL OR accountNum >= 3) THEN
+        SET exitCode = 2; -- e-mail address cannot get more accounts currently.
         SELECT outID, exitCode;
         LEAVE proc;
     END IF;
@@ -49,10 +58,10 @@ BEGIN proc: BEGIN
     ON DUPLICATE KEY UPDATE number_of_accounts = number_of_accounts + 1;
 
     INSERT INTO Entities (type_id, cxt_id, def_str)
-    VALUES (5, NULL, username);
+    VALUES (5, NULL, uName);
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Users (id, username)
-    VALUES (outID, username);
+    VALUES (outID, uName);
     INSERT INTO Private_PasswordHashes (user_id, pw_hash)
     VALUES (outID, pwHash);
 

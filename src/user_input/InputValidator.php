@@ -127,12 +127,14 @@ class InputValidator {
                 }
                 break;
             case "username":
-                if (!is_string($paramVal) || !ctype_print($paramVal)) {
-                    echoTypeErrorJSONAndExit(
-                        $paramName, $paramVal, "VARCHAR(1,50)"
-                    );
-                }
-                $pattern = "/^[\S]+$/";
+                // if (!is_string($paramVal) || !ctype_print($paramVal)) {
+                //     echoTypeErrorJSONAndExit(
+                //         $paramName, $paramVal, "VARCHAR(1,50)"
+                //     );
+                // }
+                // $pattern = "/^[\S]+$/";
+                $pattern = "/^[a-zA-Z][\w\-]*$/"; // TODO: Make this a lot less
+                // restrictive.
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
                 }
