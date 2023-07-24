@@ -13,9 +13,10 @@ $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
 require_once $db_io_path . "DBConnector.php";
 
 
-
 if ($_SERVER["REQUEST_METHOD"] != "POST") {
-    echoErrorJSONAndExit("Only the POST HTTP method is allowed for inputs");
+    echoErrorJSONAndExit(
+        "Only the POST HTTP method is allowed for this request"
+    );
 }
 
 
@@ -28,7 +29,7 @@ $typeArr = array("username", "str", "password"); // TODO: Implement e-mail
 $paramValArr = InputGetter::getParams($paramNameArr);
 InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
 
-// create the password hash.
+// compute the password hash.
 $pwHash = password_hash($pw);
 
 
@@ -54,30 +55,9 @@ if ($res["exitCode"] != 0) {
 }
 
 
-/* Creating a session ID for the new user account */
+/* Creating a new session ID and outputting the sesID and expTime */
 
-// prepare input MySQLi statement to create the session.
-$sql = "CALL createOrUpdateSession (?, ?, ?)";
-$stmt = $conn->prepare($sql);
-
-// generate the session ID.
-$sesID = random_bytes(50);
-// generate the expiration date.
-$expDate = date("Y-m-d", strtotime("+14 days"));
-
-// execute input statement.
-DBConnector::executeSuccessfulOrDie($stmt, array($u, $sesID, $expDate));
-// fetch the result as a numeric array.
-$res = $stmt->get_result()->fetch_assoc();
-
-
-/* Output the results */
-
-// add the session ID to $res.
-$res["sesID"] = $sesID;
-// finally echo the JSON-encoded result array (containing the new user ID, the
-// session ID and the exitCode).
-echo json_encode($res);
+require $auth_path . "create_or_update_session.php";
 
 // The program exits here, which also closes $conn.
 

@@ -13,9 +13,10 @@ $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
 require_once $db_io_path . "DBConnector.php";
 
 
-
 if ($_SERVER["REQUEST_METHOD"] != "POST") {
-    echoErrorJSONAndExit("Only the POST HTTP method is allowed for inputs");
+    echoErrorJSONAndExit(
+        "Only the POST HTTP method is allowed for this request"
+    );
 }
 
 
@@ -38,8 +39,6 @@ $conn = DBConnector::getConnectionOrDie(
 $auth_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/auth/";
 require $auth_path . "verify_session_id.php";
 
-// close the connection to the userDB.
-$conn->close();
 
 
 /* Destroying the session */

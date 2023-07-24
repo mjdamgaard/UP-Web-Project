@@ -13,9 +13,10 @@ $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
 require_once $db_io_path . "DBConnector.php";
 
 
-
 if ($_SERVER["REQUEST_METHOD"] != "POST") {
-    echoErrorJSONAndExit("Only the POST HTTP method is allowed for inputs");
+    echoErrorJSONAndExit(
+        "Only the POST HTTP method is allowed for this request"
+    );
 }
 
 
@@ -39,30 +40,9 @@ $auth_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/auth/";
 require $auth_path . "verify_password.php";
 
 
-/* Creating or updating the session */
+/* Creating or updating the session and outputting the sesID and expTime */
 
-// prepare input MySQLi statement to create or update the session.
-$sql = "CALL createOrUpdateSession (?, ?, ?)";
-$stmt = $conn->prepare($sql);
-
-// generate the session ID.
-$sesID = random_bytes(50);
-// generate the expiration date.
-$expDate = date("Y-m-d", strtotime("+14 days"));
-
-// execute input statement.
-DBConnector::executeSuccessfulOrDie($stmt, array($u, $sesID, $expDate));
-// fetch the result as a numeric array.
-$res = $stmt->get_result()->fetch_assoc();
-
-
-/* Output the results */
-
-// add the session ID to $res.
-$res["sesID"] = $sesID;
-// finally echo the JSON-encoded result array (containing the session ID and
-// the exitCode).
-echo json_encode($res);
+require $auth_path . "create_or_update_session.php";
 
 // The program exits here, which also closes $conn.
 

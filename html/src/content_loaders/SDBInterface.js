@@ -75,16 +75,45 @@ accountButtonsContainerCL.addCallback(function($ci, data) {
     if (!localStorage.session) {
         $ci.children('.log-out').hide();
     } else {
-        // ... I'm considering whether to switch to time since epoch in order
-        // to be able to check expDate client-side (so that users can see that
-        // they need log in again immideately if so) without dealing with time
-        // zones (across all layers).. ..But maybe I should just wait with this
-        // for now..
-        if (localStorage.session.expDate) {
-            
+        if (localStorage.session.expTime > Date.now()) {
+            $ci.children('.log-out').hide();
+        } else {
+            $ci.children('.log-in, .new-account').hide();
         }
     }
 });
+accountButtonsContainerCL.addCallback(function($ci, data) {
+    $ci.children('.log-in').on("click", function() {
+        $(this).trigger("log-in");
+        return false;
+    });
+    $ci.children('.new-account').on("click", function() {
+        $(this).trigger("new-account");
+        return false;
+    });
+    $ci.children('.log-out').on("click", function() {
+        $(this).trigger("log-out");
+        return false;
+    });
+});
+
+sdbInterfaceCL.addCallback(function($ci, data) {
+    $ci.on("log-in", function() {
+        // TODO: Implement.
+        return false;
+    });
+    $ci.on("new-account", function() {
+        // TODO: Implement.
+        return false;
+    });
+    $ci.on("log-out", function() {
+        // TODO: Implement.
+        dbReqManager;
+        return false;
+    });
+});
+
+
 
 
 

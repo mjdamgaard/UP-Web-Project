@@ -9,14 +9,14 @@ DELIMITER //
 CREATE PROCEDURE createOrUpdateSession (
     IN userID BIGINT UNSIGNED,
     IN sessionID VARBINARY(2000),
-    IN expirationDate DATE
+    IN expTime BIGINT UNSIGNED
 )
 BEGIN
-    INSERT INTO Private_Sessions (user_id, session_id, expiration_date)
-    VALUES (userID, sessionID, expirationDate)
+    INSERT INTO Private_Sessions (user_id, session_id, expiration_time)
+    VALUES (userID, sessionID, expTime)
     ON DUPLICATE KEY UPDATE
         session_id = sessionID,
-        expiration_date = expirationDate;
+        expiration_time = expTime;
     SELECT 0 AS exitCode;
 END //
 DELIMITER ;

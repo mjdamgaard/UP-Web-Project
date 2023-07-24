@@ -2,7 +2,7 @@
 
 // This subprocedure assumes that userID is stored in $u and that the provided
 // password is stored in $pw. It also assumed that $conn holds on open
-// connection to the userDB.
+// connection to the database.
 
 $err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";
 require_once $err_path . "errors.php";

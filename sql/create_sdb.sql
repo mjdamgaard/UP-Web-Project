@@ -250,7 +250,7 @@ CREATE TABLE Private_PasswordHashes (
 CREATE TABLE Private_Sessions (
     user_id BIGINT UNSIGNED PRIMARY KEY,
     session_id VARBINARY(2000) NOT NULL,
-    expiration_date DATE NOT NULL
+    expiration_time BIGINT UNSIGNED NOT NULL -- unix timestamp.
 );
 
 CREATE TABLE Private_EMails (
