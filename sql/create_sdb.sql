@@ -3,6 +3,7 @@
 -- DROP TABLE SemanticInputs;
 -- DROP TABLE Private_RecentInputs;
 -- DROP TABLE RecentInputs;
+-- /* Indexes */
 -- DROP TABLE EntityIndexKeys;
 --
 -- /* Entities */
@@ -13,8 +14,10 @@
 -- DROP TABLE Texts;
 -- DROP TABLE Binaries;
 --
--- /* Meta data */
+-- /* Meta data and ancillary data for aggregation bots */
 -- DROP TABLE Private_Creators;
+-- DROP TABLE Aggregates;
+
 -- /* Private user data */
 -- DROP TABLE Private_PasswordHashes;
 -- DROP TABLE Private_Sessions;
@@ -22,7 +25,7 @@
 
 
 
-
+/* Semantic inputs */
 
 /* Semantic inputs are the statements that the users (or aggregation bots) give
  * as input to the semantic network. A central feature of this semantic system
@@ -107,6 +110,9 @@ CREATE TABLE RecentInputs (
 --     )
 -- );
 
+
+/* Indexes */
+
 CREATE TABLE EntityIndexKeys (
     -- User (or bot) who governs the index.
     user_id BIGINT UNSIGNED NOT NULL,
@@ -133,6 +139,7 @@ CREATE TABLE EntityIndexKeys (
 
 
 
+/* Entities */
 
 CREATE TABLE Entities (
     -- Entity ID.
@@ -174,7 +181,7 @@ VALUES
     (1, NULL, "Aggregation bot", 6),
     (1, NULL, "Text data", 7),
     (1, NULL, "Binary data", 8),
-    (5, NULL, "admin_1", 9); -- This is the first user.
+    (5, NULL, "initial_user", 9); -- This is the first user.
 
 
 
@@ -200,7 +207,7 @@ CREATE TABLE Users (
 );
 
 INSERT INTO Users (username, id)
-VALUES ("admin_1", 9);
+VALUES ("initial_user", 9);
 
 
 
@@ -224,7 +231,7 @@ CREATE TABLE Binaries (
 
 
 
-
+/* Meta data and ancillary data for aggregation bots */
 
 CREATE TABLE Private_Creators (
     ent_id BIGINT UNSIGNED PRIMARY KEY,
@@ -238,9 +245,24 @@ CREATE TABLE Private_Creators (
 -- predicate before the bot).)
 
 
+CREATE TABLE Aggregates (
+    -- Aggregate definition entity which defines what the data means.
+    def_id BIGINT UNSIGNED,
+    -- Object entity which the data is about.
+    obj_id BIGINT UNSIGNED,
+    -- The aggregate (data).
+    data BIGINT UNSIGNED,
+
+    PRIMARY KEY (
+        def_id,
+        obj_id
+    )
+);
 
 
 
+
+/* Private user data */
 
 CREATE TABLE Private_PasswordHashes (
     user_id BIGINT UNSIGNED PRIMARY KEY,

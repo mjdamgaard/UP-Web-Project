@@ -60,8 +60,8 @@ $inputUserID = $paramValArr[2];
 <main id="sdb-interface-app">
 </main>
 <script type="module">
-    import "/src/DBRequestManager.js";
     import "/src/ContentLoader.js";
+    import "/src/DBRequestManager.js";
     import {sdbInterfaceCL} from "/src/content_loaders/SDBInterface.js";
     import "/src/content_loaders/PagesWithTabs.js";
     import "/src/SetGenerators.js";

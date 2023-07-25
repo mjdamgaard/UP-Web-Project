@@ -29,9 +29,9 @@ VALUES
     (1, NULL, "Aggregation bot", 6),
     (1, NULL, "Text data", 7),
     (1, NULL, "Binary data", 8),
-    (5, NULL, "admin_1", 9); -- This is the first user.
+    (5, NULL, "initial_user", 9); -- This is the first user.
 INSERT INTO Users (username, id)
-VALUES ("admin_1", 9);
+VALUES ("initial_user", 9);
 
 /* Some more useful types and some useful templates and categories */
 INSERT INTO Entities (type_id, cxt_id, def_str, id)
@@ -192,6 +192,7 @@ CALL inputOrChangeRating(9, 73, 69, CONV("FFFA", 16, 10), "00");
 CALL inputOrChangeRating(9, 73, 70, CONV("FFFA", 16, 10), "00");
 CALL inputOrChangeRating(9, 74, 71, CONV("FFFF", 16, 10), "00");
 
--- CALL inputOrChangeRating(9, 73, 39, CONV("8FFF", 16, 10), "00"); -- for testing.
--- CALL inputOrChangeRating(9, 73, 39, CONV("9001", 16, 10), "00"); -- for testing.
-CALL inputOrChangeRating(9, 74, 39, CONV("9001", 16, 10), "00"); -- for testing.
+
+CALL insertOrFindType(9, "Statement"); -- id: 75
+CALL insertOrFindTemplate(9, 75,
+    "{<Entity> is an} important/useful{ instance of <Category>}"); -- id: 76

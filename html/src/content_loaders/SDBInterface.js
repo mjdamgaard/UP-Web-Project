@@ -8,6 +8,10 @@ import {
 
 
 
+export var dbReqManager = new DBRequestManager();
+// export var userIDStore = new UserIDStore();
+export var userIDStore = {};
+
 
 export var sdbInterfaceCL = new ContentLoader(
     "ColumnBasedSDBInterface",
@@ -23,7 +27,14 @@ export var sdbInterfaceCL = new ContentLoader(
         '</main>' +
     '</div>',
 );
-export var dbReqManager = new DBRequestManager();
+sdbInterfaceCL.addCallback("data", function(data) {
+    userIDStore.inputUserID = data.get("inputUserID");
+    userIDStore.queryUserPriorityArr = [
+        data.get("queryUserID"),
+        9,
+    ];
+});
+
 
 export var interfaceHeaderCL = new ContentLoader(
     "InterfaceHeader",
@@ -70,6 +81,11 @@ export var accountButtonsContainerCL = new ContentLoader(
 );
 accountButtonsContainerCL.addCallback(function($ci, data) {
     if (typeof(Storage) === "undefined") {
+        alert(
+            "This web application requires browser support for local storage " +
+            "in order to function correctly. It seems that your browser does " +
+            "not support local storage."
+        );
         return;
     }
     if (!localStorage.session) {
@@ -81,8 +97,6 @@ accountButtonsContainerCL.addCallback(function($ci, data) {
             $ci.children('.log-in, .new-account').hide();
         }
     }
-});
-accountButtonsContainerCL.addCallback(function($ci, data) {
     $ci.children('.log-in').on("click", function() {
         $(this).trigger("log-in");
         return false;
