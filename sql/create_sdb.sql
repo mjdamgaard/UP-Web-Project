@@ -77,10 +77,7 @@ CREATE TABLE Private_RecentInputs (
     rat_val SMALLINT UNSIGNED, -- new rating value:
     inst_id BIGINT UNSIGNED NOT NULL,
 
-    live_after TIME
-    -- TODO: Make a recurring scheduled event that decrements the days of this
-    -- time, and one that continously moves the private RIs to the public table
-    -- when the time is up (and when the day part of the time is at 0).
+    live_at_time BIGINT UNSIGNED NOT NULL
 );
 CREATE TABLE RecentInputs (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -92,23 +89,6 @@ CREATE TABLE RecentInputs (
 
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
--- CREATE TABLE RecordedInputs (
---     user_id BIGINT UNSIGNED NOT NULL,
---     cat_id BIGINT UNSIGNED NOT NULL,
---     -- recorded rating value.
---     inst_id BIGINT UNSIGNED NOT NULL,
---
---     changed_at DATETIME,
---
---     rat_val SMALLINT UNSIGNED,
---
---     PRIMARY KEY (
---         user_id,
---         cat_id,
---         inst_id,
---         changed_at
---     )
--- );
 
 
 /* Indexes */
@@ -247,9 +227,9 @@ CREATE TABLE Private_Creators (
 
 CREATE TABLE Aggregates (
     -- Aggregate definition entity which defines what the data means.
-    def_id BIGINT UNSIGNED,
+    def_id BIGINT UNSIGNED NOT NULL,
     -- Object entity which the data is about.
-    obj_id BIGINT UNSIGNED,
+    obj_id BIGINT UNSIGNED NOT NULL,
     -- The aggregate (data).
     data BIGINT UNSIGNED,
 

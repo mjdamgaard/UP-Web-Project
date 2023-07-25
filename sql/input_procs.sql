@@ -18,12 +18,13 @@ CREATE PROCEDURE inputOrChangeRating (
     IN catID BIGINT UNSIGNED,
     IN instID BIGINT UNSIGNED,
     IN ratVal SMALLINT UNSIGNED,
-    IN live_after TIME
+    IN liveAtTime BIGINT UNSIGNED
 )
 BEGIN
     DECLARE exitCode TINYINT;
     DECLARE typeID BIGINT UNSIGNED;
     DECLARE prevRatVal SMALLINT UNSIGNED;
+    -- DECLARE now BIGINT UNSIGNED;
 
     IF (ratVal = 0) THEN
         SET ratVal = NULL;
@@ -33,19 +34,55 @@ BEGIN
     FROM Entities
     WHERE id = catID;
     IF (typeID != 2) THEN
-        SET exitCode = 4; -- catID is not the ID of a category.
+        SET exitCode = 1; -- catID is not the ID of a category.
     ELSE
-        SELECT rat_val INTO prevRatVal
-        FROM SemanticInputs
-        WHERE (
-            user_id = userID AND
-            cat_id = catID AND
-            inst_id = instID
-        )
-        FOR UPDATE;
+        -- SELECT rat_val INTO prevRatVal
+        -- FROM SemanticInputs
+        -- WHERE (
+        --     user_id = userID AND
+        --     cat_id = catID AND
+        --     inst_id = instID
+        -- )
+        -- FOR UPDATE;
+        --
+        -- IF (ratVal IS NOT NULL AND prevRatVal IS NULL) THEN
+        --     INSERT INTO SemanticInputs (
+        --         user_id,
+        --         cat_id,
+        --         rat_val,
+        --         inst_id
+        --     )
+        --     VALUES (
+        --         userID,
+        --         catID,
+        --         ratVal,
+        --         instID
+        --     );
+        --     SET exitCode = 0; -- no previous rating.
+        -- ELSEIF (ratVal IS NOT NULL AND prevRatVal IS NOT NULL) THEN
+        --     UPDATE SemanticInputs
+        --     SET rat_val = ratVal
+        --     WHERE (
+        --         user_id = userID AND
+        --         cat_id = catID AND
+        --         inst_id = instID
+        --     );
+        --     SET exitCode = 1; -- a previous rating was updated.
+        -- ELSEIF (ratVal IS NULL AND prevRatVal IS NOT NULL) THEN
+        --     DELETE FROM SemanticInputs
+        --     WHERE (
+        --         user_id = userID AND
+        --         cat_id = catID AND
+        --         inst_id = instID
+        --     );
+        --     SET exitCode = 2; -- a previous rating was deleted.
+        -- ELSE
+        --     SET exitCode = 3; -- trying to delete a non-existing rating.
+        -- END IF;
 
-        IF (ratVal IS NOT NULL AND prevRatVal IS NULL) THEN
-            INSERT INTO SemanticInputs (
+        SET now = UNIX_TIMESTAMP();
+        IF (now >= liveAtTime) THEN
+            INSERT INTO RecentInputs (
                 user_id,
                 cat_id,
                 rat_val,
@@ -57,45 +94,23 @@ BEGIN
                 ratVal,
                 instID
             );
-            SET exitCode = 0; -- no previous rating.
-        ELSEIF (ratVal IS NOT NULL AND prevRatVal IS NOT NULL) THEN
-            UPDATE SemanticInputs
-            SET rat_val = ratVal
-            WHERE (
-                user_id = userID AND
-                cat_id = catID AND
-                inst_id = instID
-            );
-            SET exitCode = 1; -- a previous rating was updated.
-        ELSEIF (ratVal IS NULL AND prevRatVal IS NOT NULL) THEN
-            DELETE FROM SemanticInputs
-            WHERE (
-                user_id = userID AND
-                cat_id = catID AND
-                inst_id = instID
-            );
-            SET exitCode = 2; -- a previous rating was deleted.
         ELSE
-            SET exitCode = 3; -- trying to delete a non-existing rating.
+            INSERT INTO Private_RecentInputs (
+                user_id,
+                cat_id,
+                rat_val,
+                inst_id,
+                live_at_time
+            )
+            VALUES (
+                userID,
+                catID,
+                ratVal,
+                instID,
+                liveAtTime
+            );
         END IF;
-    END IF;
-    IF (exitCode <= 2) THEN
-        -- TODO: Change this to update Private_RecentInputs instead, make a
-        -- scheduled event to move private recent inputs into (the public)
-        -- RecentInputs, and update SemanticInputs only then.
-        SET live_after = NULL; -- (not implemented yet)
-        INSERT INTO RecentInputs (
-            user_id,
-            cat_id,
-            rat_val,
-            inst_id
-        )
-        VALUES (
-            userID,
-            catID,
-            ratVal,
-            instID
-        );
+        SET exitCode = 0; -- rating insert/update is pending.
     END IF;
 
     SELECT instID AS outID, exitCode;

@@ -196,3 +196,11 @@ CALL inputOrChangeRating(9, 74, 71, CONV("FFFF", 16, 10), "00");
 CALL insertOrFindType(9, "Statement"); -- id: 75
 CALL insertOrFindTemplate(9, 75,
     "{<Entity> is an} important/useful{ instance of <Category>}"); -- id: 76
+
+CALL insertOrFindType(9, "Aggregate definition"); -- id: 77
+CALL insertOrFindEntity(9, 77, 0,
+    "ID of the last row in RecentInputs that was transported to SemanticInputs"
+); -- id: 78
+
+INSERT INTO Aggregates (def_id, obj_id, data)
+VALUES (78, 0, 0);
