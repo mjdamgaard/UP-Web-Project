@@ -3,14 +3,16 @@ import {
     DBRequestManager,
 } from "/src/DBRequestManager.js";
 import {
+    AccountManager,
+} from "/src/AccountManager.js";
+import {
     ContentLoader,
 } from "/src/ContentLoader.js";
 
 
 
 export var dbReqManager = new DBRequestManager();
-// export var userIDStore = new UserIDStore();
-export var userIDStore = {};
+export var accountManager = new AccountManager();
 
 
 export var sdbInterfaceCL = new ContentLoader(
@@ -28,11 +30,22 @@ export var sdbInterfaceCL = new ContentLoader(
     '</div>',
 );
 sdbInterfaceCL.addCallback("data", function(data) {
-    userIDStore.inputUserID = data.get("inputUserID");
-    userIDStore.queryUserPriorityArr = [
-        data.get("queryUserID"),
-        9,
-    ];
+    // ...
+});
+sdbInterfaceCL.addCallback(function($ci, data) {
+    $ci.on("log-in", function() {
+        // TODO: Implement.
+        return false;
+    });
+    $ci.on("new-account", function() {
+        // TODO: Implement.
+        return false;
+    });
+    $ci.on("log-out", function() {
+        // TODO: Implement.
+        dbReqManager;
+        return false;
+    });
 });
 
 
@@ -110,23 +123,6 @@ accountButtonsContainerCL.addCallback(function($ci, data) {
         return false;
     });
 });
-
-sdbInterfaceCL.addCallback(function($ci, data) {
-    $ci.on("log-in", function() {
-        // TODO: Implement.
-        return false;
-    });
-    $ci.on("new-account", function() {
-        // TODO: Implement.
-        return false;
-    });
-    $ci.on("log-out", function() {
-        // TODO: Implement.
-        dbReqManager;
-        return false;
-    });
-});
-
 
 
 

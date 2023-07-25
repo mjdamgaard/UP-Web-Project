@@ -62,9 +62,10 @@ $inputUserID = $paramValArr[2];
 <script type="module">
     import "/src/ContentLoader.js";
     import "/src/DBRequestManager.js";
+    import "/src/AccountManager.js";
     import {sdbInterfaceCL} from "/src/content_loaders/SDBInterface.js";
     import "/src/content_loaders/PagesWithTabs.js";
-    import "/src/SetGenerators.js";
+    import "/src/SetGenerator.js";
     import "/src/content_loaders/SetDisplays.js";
     import "/src/content_loaders/EntityElements.js";
     import "/src/content_loaders/EntityPages.js";

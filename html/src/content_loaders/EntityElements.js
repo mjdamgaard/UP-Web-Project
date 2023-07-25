@@ -7,7 +7,7 @@ import {
 } from "/src/content_loaders/SDBInterface.js";
 import {
     SetQuerier, SetCombiner, MaxRatingSetCombiner,
-} from "/src/SetGenerators.js";
+} from "/src/SetGenerator.js";
 
 
 
