@@ -27,23 +27,47 @@ export var sdbInterfaceCL = new ContentLoader(
             '</div>' +
             '<div class="right-margin"></div>' +
         '</main>' +
+        '<div class="login-page-container"></div>' +
     '</div>',
 );
 sdbInterfaceCL.addCallback("data", function(data) {
     // ...
 });
 sdbInterfaceCL.addCallback(function($ci, data) {
+    $ci.children('.login-page-container').hide();
     $ci.on("log-in", function() {
-        // TODO: Implement.
+        let $this = $(this);
+        let $obj = $this.children('.login-page-container');
+        $obj.empty();
+        sdbInterfaceCL.loadAppended($obj, "LoginPage", data);
+        $this.children('main').hide();
+        $obj.show();
         return false;
     });
     $ci.on("new-account", function() {
-        // TODO: Implement.
+        let $this = $(this);
+        let $obj = $this.children('.login-page-container');
+        $obj.empty();
+        sdbInterfaceCL.loadAppended($obj, "CreateAccountPage", data);
+        $this.children('main').hide();
+        $obj.show();
         return false;
     });
     $ci.on("log-out", function() {
         // TODO: Implement.
-        dbReqManager;
+        accountManager.logout();
+        return false;
+    });
+    $ci.on("back-to-main", function() {
+        let $this = $(this);
+        let $obj = $this.children('.login-page-container');
+        $obj.hide().empty();
+        $this.children('main').show();
+        return false;
+    });
+    $ci.on("logged-in", function() {
+        $(this).find('.CI.InterfaceHeader .CI.AccountButtonsContainer')
+            .trigger("logged-in");
         return false;
     });
 });
@@ -119,7 +143,16 @@ accountButtonsContainerCL.addCallback(function($ci, data) {
         return false;
     });
     $ci.children('.log-out').on("click", function() {
-        $(this).trigger("log-out");
+        let $this = $(this);
+        $this.trigger("log-out");
+        $this.children('.log-out').hide();
+        $this.children('.log-in, .new-account').show();
+        return false;
+    });
+    $ci.on("logged-in", function() {
+        let $this = $(this);
+        $this.children('.log-in, .new-account').hide();
+        $this.children('.log-out').show();
         return false;
     });
 });

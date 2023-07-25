@@ -17,6 +17,8 @@ SELECT "Query procedures";
 --
 -- DROP PROCEDURE private_selectCreator;
 -- DROP PROCEDURE private_selectCreations;
+--
+-- DROP PROCEDURE selectAggregate;
 
 
 
@@ -241,5 +243,22 @@ BEGIN
         CASE WHEN isAscOrder THEN ent_id END ASC,
         CASE WHEN NOT isAscOrder THEN ent_id END DESC
     LIMIT numOffset, maxNum;
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectAggregate (
+    IN defID BIGINT UNSIGNED,
+    IN objID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT data AS data
+    FROM Aggregates
+    WHERE (
+        def_id = defID AND
+        obj_id = objID
+    );
 END //
 DELIMITER ;

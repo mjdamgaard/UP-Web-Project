@@ -18,7 +18,7 @@ $stmt = $conn->prepare($sql);
 // generate the session ID.
 $sesID = random_bytes(50);
 // generate the expiration date.
-$expTime = strtotime("+14 days");
+$expTime = strtotime("+2 months");
 
 // execute input statement.
 DBConnector::executeSuccessfulOrDie($stmt, array($u, $sesID, $expTime));
