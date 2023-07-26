@@ -1,6 +1,11 @@
 # openSDB (prototype)
 *Status: in early-stage development.*
 
+*I've pushed some changes to input_procs.sql and initial_insert.sql which*
+*means that the current build does not work. Go back to the*
+*"Prepared to make the Login and CreateAccount Pages." commit for a build*
+*that works.*
+
 ## Introduction to the project
 
 openSDB is a Semantic Database (SDB) that is both open source and open for any
