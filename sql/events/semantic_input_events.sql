@@ -30,7 +30,7 @@ DELIMITER //
 CREATE EVENT update_semantic_inputs
     ON SCHEDULE EVERY 3 SECOND DO
 BEGIN proc: BEGIN
-    DECLARE lastInput, newestInput, i BIGINT UNSIGNED;
+    DECLARE lastInput, newestInput, i, stmtID BIGINT UNSIGNED;
     DECLARE ratVal SMALLINT UNSIGNED;
     DECLARE userID, catID, instID BIGINT UNSIGNED;
 
@@ -69,6 +69,32 @@ BEGIN proc: BEGIN
         )
         FROM RecentInputs
         WHERE id = i;
+        -- select Statement entity.
+        SELECT id INTO stmtID
+        FROM Entities
+        WHERE (
+            type_id = 75 AND
+            cxt_id <=> 76 AND
+            def_str = CONCAT("#", instID, "|#", catID)
+        );
+        -- if it does not exist, insert it and get the ID.
+        IF (stmtID IS NULL) THEN
+            INSERT IGNORE INTO Entities (type_id, cxt_id, def_str)
+            VALUES (75, 76, CONCAT("#", instID, "|#", catID));
+            SELECT LAST_INSERT_ID() INTO stmtID;
+            -- if a race condition means that the insert is ignored and stmtID
+            -- is null, select the now added (by another process) Statement.
+            IF (stmtID IS NULL) THEN
+                SELECT id INTO stmtID
+                FROM Entities
+                WHERE (
+                    type_id = 75 AND
+                    cxt_id <=> 76 AND
+                    def_str = CONCAT("#", instID, "|#", catID)
+                );
+            END IF;
+        END IF;
+
         -- if the input's rat_val is null, delete the corresponding SemInput.
         IF (ratVal IS NULL) THEN
             DELETE FROM SemanticInputs
@@ -76,7 +102,13 @@ BEGIN proc: BEGIN
                 user_id = userID AND
                 cat_id = catID AND
                 inst_id = instID
-            )
+            );
+            DELETE FROM SemanticInputs
+            WHERE (
+                user_id = "TODO: Insert right bot ID here!" AND
+                cat_id = stmtID AND
+                inst_id = userID
+            );
         -- else update the corresponding SemInput with the new rat_val.
         ELSE
             REPLACE INTO SemanticInputs (
@@ -90,6 +122,11 @@ BEGIN proc: BEGIN
                 catID,
                 ratVal,
                 instID
+            ), (
+                "TODO: Insert right bot ID here!",
+                stmtID,
+                ratVal,
+                userID
             );
         END IF;
 

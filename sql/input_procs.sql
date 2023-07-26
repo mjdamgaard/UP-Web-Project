@@ -5,7 +5,6 @@ SELECT "Input procedures";
 -- DROP PROCEDURE insertOrFindEntity;
 -- DROP PROCEDURE insertOrFindTemplate;
 -- DROP PROCEDURE insertOrFindType;
--- -- DROP PROCEDURE private_insertUser;
 -- DROP PROCEDURE insertText;
 -- DROP PROCEDURE insertBinary;
 
@@ -229,24 +228,6 @@ DELIMITER ;
 
 
 
-
-
--- DELIMITER //
--- CREATE PROCEDURE private_insertUser (
---     IN username VARCHAR(50),
---     IN textStr TEXT
--- )
--- BEGIN
---     DECLARE outID BIGINT UNSIGNED;
---
---     INSERT INTO Entities (type_id, cxt_id, def_str)
---     VALUES (5, NULL, username);
---     SELECT LAST_INSERT_ID() INTO outID;
---     INSERT INTO Users (id, username)
---     VALUES (outID, username);
---     SELECT outID, 0 AS exitCode; -- insert.
--- END //
--- DELIMITER ;
 
 
 
