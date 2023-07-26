@@ -24,7 +24,7 @@ BEGIN
     DECLARE exitCode TINYINT;
     DECLARE typeID BIGINT UNSIGNED;
     DECLARE prevRatVal SMALLINT UNSIGNED;
-    -- DECLARE now BIGINT UNSIGNED;
+    DECLARE now BIGINT UNSIGNED;
 
     IF (ratVal = 0) THEN
         SET ratVal = NULL;
@@ -36,50 +36,6 @@ BEGIN
     IF (typeID != 2) THEN
         SET exitCode = 1; -- catID is not the ID of a category.
     ELSE
-        -- SELECT rat_val INTO prevRatVal
-        -- FROM SemanticInputs
-        -- WHERE (
-        --     user_id = userID AND
-        --     cat_id = catID AND
-        --     inst_id = instID
-        -- )
-        -- FOR UPDATE;
-        --
-        -- IF (ratVal IS NOT NULL AND prevRatVal IS NULL) THEN
-        --     INSERT INTO SemanticInputs (
-        --         user_id,
-        --         cat_id,
-        --         rat_val,
-        --         inst_id
-        --     )
-        --     VALUES (
-        --         userID,
-        --         catID,
-        --         ratVal,
-        --         instID
-        --     );
-        --     SET exitCode = 0; -- no previous rating.
-        -- ELSEIF (ratVal IS NOT NULL AND prevRatVal IS NOT NULL) THEN
-        --     UPDATE SemanticInputs
-        --     SET rat_val = ratVal
-        --     WHERE (
-        --         user_id = userID AND
-        --         cat_id = catID AND
-        --         inst_id = instID
-        --     );
-        --     SET exitCode = 1; -- a previous rating was updated.
-        -- ELSEIF (ratVal IS NULL AND prevRatVal IS NOT NULL) THEN
-        --     DELETE FROM SemanticInputs
-        --     WHERE (
-        --         user_id = userID AND
-        --         cat_id = catID AND
-        --         inst_id = instID
-        --     );
-        --     SET exitCode = 2; -- a previous rating was deleted.
-        -- ELSE
-        --     SET exitCode = 3; -- trying to delete a non-existing rating.
-        -- END IF;
-
         SET now = UNIX_TIMESTAMP();
         IF (now >= liveAtTime) THEN
             INSERT INTO RecentInputs (

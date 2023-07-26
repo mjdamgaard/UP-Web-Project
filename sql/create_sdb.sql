@@ -85,9 +85,9 @@ CREATE TABLE RecentInputs (
     user_id BIGINT UNSIGNED NOT NULL,
     cat_id BIGINT UNSIGNED NOT NULL,
     rat_val SMALLINT UNSIGNED, -- new rating value.
-    inst_id BIGINT UNSIGNED NOT NULL,
+    inst_id BIGINT UNSIGNED NOT NULL
 
-    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    -- changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
