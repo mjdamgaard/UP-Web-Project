@@ -137,15 +137,23 @@ BEGIN proc: BEGIN
         END IF;
     END IF;
 
-    -- (There is a race condition here, which we will allow. In order to remove
-    -- it if this becomes desirable at some point, insert another SELECT
-    -- statement here, this time FOR UPDATE.)
-    INSERT INTO Entities (type_id, cxt_id, def_str)
+    INSERT IGNORE INTO Entities (type_id, cxt_id, def_str)
     VALUES (typeID, cxtID, defStr);
     SELECT LAST_INSERT_ID() INTO outID;
-    INSERT INTO Private_Creators (ent_id, user_id)
-    VALUES (outID, userID);
-    SET exitCode = 0; -- insert.
+    IF (outID IS NULL) THEN
+        SELECT id INTO outID
+        FROM Entities
+        WHERE (
+            type_id = typeID AND
+            cxt_id <=> cxtID AND
+            def_str = defStr
+        );
+        SET exitCode = 1; -- find.
+    ELSE
+        INSERT INTO Private_Creators (ent_id, user_id)
+        VALUES (outID, userID);
+        SET exitCode = 0; -- insert.
+    END IF;
     SELECT outID, exitCode;
 END proc; END //
 DELIMITER ;
@@ -183,12 +191,23 @@ BEGIN proc: BEGIN
         LEAVE proc;
     END IF;
 
-    INSERT INTO Entities (type_id, cxt_id, def_str)
+    INSERT IGNORE INTO Entities (type_id, cxt_id, def_str)
     VALUES (3, cxtID, defStr);
     SELECT LAST_INSERT_ID() INTO outID;
-    INSERT INTO Private_Creators (ent_id, user_id)
-    VALUES (outID, userID);
-    SET exitCode = 0; -- insert.
+    IF (outID IS NULL) THEN
+        SELECT id INTO outID
+        FROM Entities
+        WHERE (
+            type_id = 3 AND
+            cxt_id <=> cxtID AND
+            def_str = defStr
+        );
+        SET exitCode = 1; -- find.
+    ELSE
+        INSERT INTO Private_Creators (ent_id, user_id)
+        VALUES (outID, userID);
+        SET exitCode = 0; -- insert.
+    END IF;
     SELECT outID, exitCode;
 END proc; END //
 DELIMITER ;
@@ -214,12 +233,23 @@ BEGIN
     IF (outID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
     ELSE
-        INSERT INTO Entities (type_id, cxt_id, def_str)
+        INSERT IGNORE INTO Entities (type_id, cxt_id, def_str)
         VALUES (1, NULL, defStr);
         SELECT LAST_INSERT_ID() INTO outID;
-        INSERT INTO Private_Creators (ent_id, user_id)
-        VALUES (outID, userID);
-        SET exitCode = 0; -- insert.
+        IF (outID IS NULL) THEN
+            SELECT id INTO outID
+            FROM Entities
+            WHERE (
+                type_id = 1 AND
+                cxt_id <=> NULL AND
+                def_str = defStr
+            );
+            SET exitCode = 1; -- find.
+        ELSE
+            INSERT INTO Private_Creators (ent_id, user_id)
+            VALUES (outID, userID);
+            SET exitCode = 0; -- insert.
+        END IF;
     END IF;
     SELECT outID, exitCode;
 END //
@@ -230,7 +260,9 @@ DELIMITER ;
 
 
 
-
+-- TODO: Reimplement insertText() and insertBinary() to handle the case where
+-- name already exists (and think about if.. Hm, if the name shouldn't just be
+-- randomly generated (or, better, the same as the ID)...).
 
 DELIMITER //
 CREATE PROCEDURE insertText (

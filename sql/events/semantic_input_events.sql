@@ -3,7 +3,7 @@ SET GLOBAL event_scheduler = ON;
 
 DELIMITER //
 CREATE EVENT publicize_recent_inputs
-    ON SCHEDULE EVERY 3 HOUR DO
+    ON SCHEDULE EVERY 30 MINUTE DO
 BEGIN proc: BEGIN
     DECLARE now BIGINT UNSIGNED;
     SET now = UNIX_TIMESTAMP();
