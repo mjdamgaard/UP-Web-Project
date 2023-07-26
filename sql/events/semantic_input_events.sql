@@ -39,7 +39,7 @@ BEGIN proc: BEGIN
     END IF;
 
     -- get lastInput and newestInput.
-    SELECT data INTO lastInput
+    SELECT data_1 INTO lastInput
     FROM Aggregates
     WHERE (
         def_id = 78 AND
@@ -98,7 +98,7 @@ BEGIN proc: BEGIN
     END LOOP loop;
 
     UPDATE Aggregates
-    SET data = newestInput
+    SET data_1 = newestInput
     WHERE (
         def_id = 78 AND
         obj_id = 0

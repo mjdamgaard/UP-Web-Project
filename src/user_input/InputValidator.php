@@ -21,6 +21,7 @@ class InputValidator {
     public static function validateParam($paramVal, $type, $paramName) {
         switch($type) {
             case "id":
+            case "ulong":
                 $pattern = "/^[1-9][0-9]*|0$/";
                 if (
                     !preg_match($pattern, $paramVal) ||
@@ -56,6 +57,7 @@ class InputValidator {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, "INT");
                 }
                 break;
+            case "rat":
             case "ushort":
                 $pattern = "/^[1-9][0-9]{0,4}|0$/";
                 $n = intval($paramVal);
@@ -147,13 +149,13 @@ class InputValidator {
             case "password":
                 if (!is_string($paramVal) || !ctype_print($paramVal)) {
                     echoTypeErrorJSONAndExit(
-                        $paramName, $paramVal, "VARCHAR(8,1000)"
+                        $paramName, $paramVal, "VARCHAR(8,72)"
                     );
                 }
                 $len = strlen($paramVal);
-                if ($len < 8  || $len > 1000) {
+                if ($len < 8  || $len > 72) {
                     echoTypeErrorJSONAndExit(
-                        $paramName, $paramVal, "VARCHAR(8,1000)"
+                        $paramName, $paramVal, "VARCHAR(8,72)"
                     );
                 }
                 break;

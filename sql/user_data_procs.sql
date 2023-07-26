@@ -8,7 +8,7 @@ SELECT "User data procedures";
 DELIMITER //
 CREATE PROCEDURE createOrUpdateSession (
     IN userID BIGINT UNSIGNED,
-    IN sessionID VARBINARY(2000),
+    IN sessionID VARBINARY(255),
     IN expTime BIGINT UNSIGNED
 )
 BEGIN
@@ -26,7 +26,7 @@ DELIMITER //
 CREATE PROCEDURE createNewUser (
     IN uName VARCHAR(50),
     IN eMailAddress VARCHAR(50),
-    IN pwHash VARBINARY(2000)
+    IN pwHash VARBINARY(255)
 )
 BEGIN proc: BEGIN
     DECLARE outID BIGINT UNSIGNED;
@@ -62,7 +62,7 @@ BEGIN proc: BEGIN
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Users (id, username)
     VALUES (outID, uName);
-    INSERT INTO Private_PasswordHashes (user_id, pw_hash)
+    INSERT INTO Private_UserData (user_id, password_hash)
     VALUES (outID, pwHash);
 
     SET exitCode = 0; -- insert.

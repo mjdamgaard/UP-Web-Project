@@ -16,7 +16,7 @@ $sql = "CALL createOrUpdateSession (?, ?, ?)";
 $stmt = $conn->prepare($sql);
 
 // generate the session ID.
-$sesID = random_bytes(50);
+$sesID = random_bytes(60);
 // generate the expiration date.
 $expTime = strtotime("+2 months");
 

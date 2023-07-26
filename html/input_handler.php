@@ -58,7 +58,7 @@ switch ($reqType) {
     case "rat":
         $sql = "CALL inputOrChangeRating (?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "c", "i", "r", "l");
-        $typeArr = array("id", "id", "id", "ushort", "time");
+        $typeArr = array("id", "id", "id", "rat", "time");
         break;
     case "ent":
         $sql = "CALL insertOrFindEntity (?, ?, ?, ?)";

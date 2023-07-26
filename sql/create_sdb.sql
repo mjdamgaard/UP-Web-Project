@@ -19,7 +19,7 @@
 -- DROP TABLE Aggregates;
 
 -- /* Private user data */
--- DROP TABLE Private_PasswordHashes;
+-- DROP TABLE Private_UserData;
 -- DROP TABLE Private_Sessions;
 -- DROP TABLE Private_EMails;
 
@@ -178,12 +178,6 @@ CREATE TABLE Users (
     -- and in principle it could even just be some ID to use for authenticating
     -- the user via a third party.)
 
-    -- TODO: Implement managing of and restrictions on these fields when/if it
-    -- becomes relevant:
-    private_upload_vol_today BIGINT DEFAULT 0,
-    private_download_vol_today BIGINT DEFAULT 0,
-    private_upload_vol_this_month BIGINT DEFAULT 0,
-    private_download_vol_this_month BIGINT DEFAULT 0
 );
 
 INSERT INTO Users (username, id)
@@ -231,28 +225,43 @@ CREATE TABLE Aggregates (
     -- Object entity which the data is about.
     obj_id BIGINT UNSIGNED NOT NULL,
     -- The aggregate (data).
-    data BIGINT UNSIGNED,
+    data_1 BIGINT UNSIGNED,
+    data_2 BIGINT UNSIGNED,
+    data_3 BIGINT UNSIGNED,
+    data_4 BIGINT UNSIGNED,
 
     PRIMARY KEY (
         def_id,
         obj_id
     )
 );
-
+-- TODO: Compress.
 
 
 
 /* Private user data */
 
-CREATE TABLE Private_PasswordHashes (
+CREATE TABLE Private_UserData (
     user_id BIGINT UNSIGNED PRIMARY KEY,
-    pw_hash VARBINARY(2000)
+    password_hash VARBINARY(255),
+
+    -- TODO: Implement managing of and restrictions on these fields when it
+    -- becomes relevant:
+    private_upload_vol_today BIGINT NOT NULL DEFAULT 0,
+    private_download_vol_today BIGINT NOT NULL DEFAULT 0,
+    private_upload_vol_this_month BIGINT NOT NULL DEFAULT 0,
+    private_download_vol_this_month BIGINT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE Private_Sessions (
     user_id BIGINT UNSIGNED PRIMARY KEY,
-    session_id VARBINARY(2000) NOT NULL,
+    session_id VARBINARY(255) NOT NULL,
     expiration_time BIGINT UNSIGNED NOT NULL -- unix timestamp.
+);
+
+CREATE TABLE Private_EMails (
+    e_mail_address VARCHAR(255) PRIMARY KEY,
+    number_of_accounts TINYINT UNSIGNED NOT NULL
 );
 
 CREATE TABLE Private_EMails (

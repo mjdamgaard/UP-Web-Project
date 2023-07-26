@@ -12,7 +12,7 @@ require_once $db_io_path . "DBConnector.php";
 
 
 // prepare input MySQLi statement to get the correct password hash.
-$sql = "SELECT pw_hash FROM UserCredentials WHERE user_id <=> ?";
+$sql = "SELECT password_hash FROM Private_UserData WHERE user_id <=> ?";
 $stmt = $conn->prepare($sql);
 // execute the statement with $u as the input parameter.
 DBConnector::executeSuccessfulOrDie($stmt, array($u));
@@ -20,7 +20,7 @@ DBConnector::executeSuccessfulOrDie($stmt, array($u));
 $res = $stmt->get_result()->fetch_assoc();
 
 // verify the password.
-if (!password_verify($pw, $res["pw_hash"])) {
+if (!password_verify($pw, $res["password_hash"])) {
     header("Content-Type: text/json");
     echoErrorJSONAndExit("Password was incorrect!");
 }

@@ -86,44 +86,44 @@ CALL insertOrFindEntity(9, 2, 22, "Mathematics|#31"); -- id: 36
 
 CALL insertOrFindEntity(9, 19, 20, "Subcategories|#2|many"); -- id: 37
 CALL insertOrFindEntity(9, 2, 21, "#37|#10"); -- id: 38
-CALL inputOrChangeRating(9, 38, 32, CONV("FFFF", 16, 10), "00");
-CALL inputOrChangeRating(9, 38, 31, CONV("F000", 16, 10), "00");
-CALL inputOrChangeRating(9, 38, 24, CONV("F000", 16, 10), "00");
-CALL inputOrChangeRating(9, 38, 25, CONV("A130", 16, 10), "00");
-CALL inputOrChangeRating(9, 38, 26, CONV("A000", 16, 10), "00");
+CALL inputOrChangeRating(9, 38, 32, CONV("FFFF", 16, 10), 0);
+CALL inputOrChangeRating(9, 38, 31, CONV("F000", 16, 10), 0);
+CALL inputOrChangeRating(9, 38, 24, CONV("F000", 16, 10), 0);
+CALL inputOrChangeRating(9, 38, 25, CONV("A130", 16, 10), 0);
+CALL inputOrChangeRating(9, 38, 26, CONV("A000", 16, 10), 0);
 CALL insertOrFindEntity(9, 27, 0, "ExAmPlE oF a NoT vErY uSeFuL eNtItY"); -- id: 39
-CALL inputOrChangeRating(9, 38, 39, CONV("0103", 16, 10), "00");
+CALL inputOrChangeRating(9, 38, 39, CONV("0103", 16, 10), 0);
 
 CALL insertOrFindEntity(9, 2, 21, "#37|#24"); -- id: 40
-CALL inputOrChangeRating(9, 40, 25, CONV("E100", 16, 10), "00");
-CALL inputOrChangeRating(9, 40, 26, CONV("E000", 16, 10), "00");
-CALL inputOrChangeRating(9, 40, 39, CONV("0001", 16, 10), "00");
-CALL inputOrChangeRating(9, 40, 33, CONV("F000", 16, 10), "00");
+CALL inputOrChangeRating(9, 40, 25, CONV("E100", 16, 10), 0);
+CALL inputOrChangeRating(9, 40, 26, CONV("E000", 16, 10), 0);
+CALL inputOrChangeRating(9, 40, 39, CONV("0001", 16, 10), 0);
+CALL inputOrChangeRating(9, 40, 33, CONV("F000", 16, 10), 0);
 
 CALL insertOrFindEntity(9, 2, 21, "#37|#32"); -- id: 41
-CALL inputOrChangeRating(9, 41, 33, CONV("F000", 16, 10), "00");
-CALL inputOrChangeRating(9, 41, 34, CONV("F010", 16, 10), "00");
-CALL inputOrChangeRating(9, 41, 35, CONV("F050", 16, 10), "00");
-CALL inputOrChangeRating(9, 41, 36, CONV("F100", 16, 10), "00");
+CALL inputOrChangeRating(9, 41, 33, CONV("F000", 16, 10), 0);
+CALL inputOrChangeRating(9, 41, 34, CONV("F010", 16, 10), 0);
+CALL inputOrChangeRating(9, 41, 35, CONV("F050", 16, 10), 0);
+CALL inputOrChangeRating(9, 41, 36, CONV("F100", 16, 10), 0);
 
-CALL inputOrChangeRating(9, 10, 25, CONV("A000", 16, 10), "00");
-CALL inputOrChangeRating(9, 10, 31, CONV("A400", 16, 10), "00");
-CALL inputOrChangeRating(9, 10, 29, CONV("9003", 16, 10), "00");
-CALL inputOrChangeRating(9, 10, 30, CONV("9002", 16, 10), "00");
+CALL inputOrChangeRating(9, 10, 25, CONV("A000", 16, 10), 0);
+CALL inputOrChangeRating(9, 10, 31, CONV("A400", 16, 10), 0);
+CALL inputOrChangeRating(9, 10, 29, CONV("9003", 16, 10), 0);
+CALL inputOrChangeRating(9, 10, 30, CONV("9002", 16, 10), 0);
 
-CALL inputOrChangeRating(9, 31, 29, CONV("FF03", 16, 10), "00");
-CALL inputOrChangeRating(9, 31, 30, CONV("FF02", 16, 10), "00");
+CALL inputOrChangeRating(9, 31, 29, CONV("FF03", 16, 10), 0);
+CALL inputOrChangeRating(9, 31, 30, CONV("FF02", 16, 10), 0);
 
 
 CALL insertOrFindEntity(9, 19, 20, "Related entities|any type|many"); -- id: 42
 CALL insertOrFindEntity(9, 2, 21, "#42|#29"); -- id: 43
-CALL inputOrChangeRating(9, 43, 30, CONV("FFFF", 16, 10), "00");
+CALL inputOrChangeRating(9, 43, 30, CONV("FFFF", 16, 10), 0);
 CALL insertOrFindEntity(9, 2, 21, "#42|#30"); -- id: 44
-CALL inputOrChangeRating(9, 44, 29, CONV("FFF0", 16, 10), "00");
+CALL inputOrChangeRating(9, 44, 29, CONV("FFF0", 16, 10), 0);
 CALL insertOrFindEntity(9, 2, 21, "#42|#24"); -- id: 45
-CALL inputOrChangeRating(9, 45, 33, CONV("F000", 16, 10), "00");
+CALL inputOrChangeRating(9, 45, 33, CONV("F000", 16, 10), 0);
 CALL insertOrFindEntity(9, 2, 21, "#42|#33"); -- id: 46
-CALL inputOrChangeRating(9, 46, 24, CONV("FF00", 16, 10), "00");
+CALL inputOrChangeRating(9, 46, 24, CONV("FF00", 16, 10), 0);
 
 CALL insertOrFindEntity(9, 19, 20, "Supercategories|#2|many"); -- id: 47
 
@@ -136,21 +136,21 @@ CALL insertOrFindEntity(9, 2, 23, "iconic|#31"); -- id: 51
 CALL insertOrFindEntity(9, 19, 20,
     "Relevant categories to rate for type instances|#2|many"); -- id: 52
 CALL insertOrFindEntity(9, 2, 21, "#52|#27"); -- id: 53
-CALL inputOrChangeRating(9, 53, 48, CONV("F000", 16, 10), "00");
-CALL inputOrChangeRating(9, 53, 49, CONV("E100", 16, 10), "00");
-CALL inputOrChangeRating(9, 53, 50, CONV("E000", 16, 10), "00");
+CALL inputOrChangeRating(9, 53, 48, CONV("F000", 16, 10), 0);
+CALL inputOrChangeRating(9, 53, 49, CONV("E100", 16, 10), 0);
+CALL inputOrChangeRating(9, 53, 50, CONV("E000", 16, 10), 0);
 
 CALL insertOrFindEntity(9, 19, 20, "Relevant categories to rate|#2|many"); -- id: 54
 CALL insertOrFindEntity(9, 2, 21, "#54|#29"); -- id: 55
-CALL inputOrChangeRating(9, 55, 48, CONV("F000", 16, 10), "00");
-CALL inputOrChangeRating(9, 55, 49, CONV("E100", 16, 10), "00");
-CALL inputOrChangeRating(9, 55, 50, CONV("EAAA", 16, 10), "00");
-CALL inputOrChangeRating(9, 55, 51, CONV("E000", 16, 10), "00");
+CALL inputOrChangeRating(9, 55, 48, CONV("F000", 16, 10), 0);
+CALL inputOrChangeRating(9, 55, 49, CONV("E100", 16, 10), 0);
+CALL inputOrChangeRating(9, 55, 50, CONV("EAAA", 16, 10), 0);
+CALL inputOrChangeRating(9, 55, 51, CONV("E000", 16, 10), 0);
 
 CALL insertOrFindEntity(9, 2, 23, "well-formed|#10"); -- id: 56
 CALL insertOrFindEntity(9, 2, 21, "#54|#10"); -- id: 57
-CALL inputOrChangeRating(9, 57, 54, CONV("F000", 16, 10), "00");
-CALL inputOrChangeRating(9, 57, 10, CONV("9000", 16, 10), "00");
+CALL inputOrChangeRating(9, 57, 54, CONV("F000", 16, 10), 0);
+CALL inputOrChangeRating(9, 57, 10, CONV("9000", 16, 10), 0);
 
 
 CALL insertOrFindEntity(9, 19, 20, "Relevant properties|#19|many"); -- id: 58
@@ -162,9 +162,9 @@ CALL insertOrFindEntity(9, 19, 20, "Director(s)|#61|few"); -- id: 62
 CALL insertOrFindEntity(9, 19, 20, "Actors|#61|many"); -- id: 63
 CALL insertOrFindType(9, "Time"); -- id: 64
 CALL insertOrFindEntity(9, 19, 20, "Running time|#64|one"); -- id: 65
-CALL inputOrChangeRating(9, 60, 62, CONV("FF00", 16, 10), "00");
-CALL inputOrChangeRating(9, 60, 63, CONV("FE00", 16, 10), "00");
-CALL inputOrChangeRating(9, 60, 65, CONV("FC00", 16, 10), "00");
+CALL inputOrChangeRating(9, 60, 62, CONV("FF00", 16, 10), 0);
+CALL inputOrChangeRating(9, 60, 63, CONV("FE00", 16, 10), 0);
+CALL inputOrChangeRating(9, 60, 65, CONV("FC00", 16, 10), 0);
 
 
 CALL insertOrFindTemplate(9, 61, CONCAT(
@@ -186,11 +186,11 @@ CALL insertOrFindEntity(9, 64, 0,"2 h 59 min"); -- id: 71
 CALL insertOrFindEntity(9, 2, 21, "#62|#29"); -- id: 72
 CALL insertOrFindEntity(9, 2, 21, "#63|#29"); -- id: 73
 CALL insertOrFindEntity(9, 2, 21, "#65|#29"); -- id: 74
-CALL inputOrChangeRating(9, 72, 67, CONV("FFFF", 16, 10), "00");
-CALL inputOrChangeRating(9, 73, 68, CONV("FFFA", 16, 10), "00");
-CALL inputOrChangeRating(9, 73, 69, CONV("FFFA", 16, 10), "00");
-CALL inputOrChangeRating(9, 73, 70, CONV("FFFA", 16, 10), "00");
-CALL inputOrChangeRating(9, 74, 71, CONV("FFFF", 16, 10), "00");
+CALL inputOrChangeRating(9, 72, 67, CONV("FFFF", 16, 10), 0);
+CALL inputOrChangeRating(9, 73, 68, CONV("FFFA", 16, 10), 0);
+CALL inputOrChangeRating(9, 73, 69, CONV("FFFA", 16, 10), 0);
+CALL inputOrChangeRating(9, 73, 70, CONV("FFFA", 16, 10), 0);
+CALL inputOrChangeRating(9, 74, 71, CONV("FFFF", 16, 10), 0);
 
 
 CALL insertOrFindType(9, "Statement"); -- id: 75
@@ -198,9 +198,23 @@ CALL insertOrFindTemplate(9, 75,
     "{<Entity> is an} important/useful{ instance of <Category>}"); -- id: 76
 
 CALL insertOrFindType(9, "Aggregate definition"); -- id: 77
-CALL insertOrFindEntity(9, 77, 0,
-    "ID of the last row in RecentInputs that was transported to SemanticInputs"
-); -- id: 78
+CALL insertOrFindEntity(9, 77, 0, CONCAT(
+    "obj: 0; ",
+    "data_1: ID of the last row in RecentInputs that was transported to ",
+    "SemanticInputs;"
+)); -- id: 78
 
-INSERT INTO Aggregates (def_id, obj_id, data)
+INSERT INTO Aggregates (def_id, obj_id, data_1)
 VALUES (78, 0, 0);
+
+CALL insertOrFindTemplate(9, 77, CONCAT(
+    "obj: <Statement>; ",
+    "data_1: Current averaged rating value scaled up as a ulong (for more",
+    "precision), with a neutral rating (of 5/10) as the initial value; ",
+    "data_2: Number of users that have rated obj, plus an offset of 10;"
+)); -- id: 79
+CALL insertOrFindTemplate(9, 77, CONCAT(
+    "obj: 0; ",
+    "data_1: ID of the last row in RecentInputs handled by <Aggregation bot>;"
+)); -- id: 80
+-- CALL insertOrFindEntity(9, 6, 0, "mean_with_offset_10_bot"); -- id: 81
