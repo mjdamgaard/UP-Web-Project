@@ -47,21 +47,23 @@ BEGIN proc: BEGIN
     FROM Private_EMails
     WHERE e_mail_address = eMailAddress
     FOR UPDATE;
-    IF (accountNum IS NULL OR accountNum >= 3) THEN
+    IF (accountNum IS NOT NULL AND accountNum >= 1) THEN -- TODO: Increase this
+    -- maximum account number.
         SET exitCode = 2; -- e-mail address cannot get more accounts currently.
         SELECT outID, exitCode;
         LEAVE proc;
     END IF;
-
-    INSERT INTO Private_EMails (e_mail_address, number_of_accounts)
-    VALUES (eMailAddress, 1)
-    ON DUPLICATE KEY UPDATE number_of_accounts = number_of_accounts + 1;
 
     INSERT INTO Entities (type_id, cxt_id, def_str)
     VALUES (5, NULL, uName);
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Users (id, username)
     VALUES (outID, uName);
+
+    INSERT INTO Private_EMails
+        (e_mail_address, number_of_accounts, account_1_user_id)
+    VALUES (eMailAddress, 1, outID)
+    ON DUPLICATE KEY UPDATE number_of_accounts = number_of_accounts + 1;
     INSERT INTO Private_UserData (user_id, password_hash)
     VALUES (outID, pwHash);
 

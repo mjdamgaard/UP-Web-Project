@@ -1,40 +1,54 @@
 
-SET GLOBAL event_scheduler = ON;
+
+-- DROP PROCEDURE publicizeRecentInputs;
+-- DROP EVENT publicize_recent_inputs;
+--
+DROP PROCEDURE updateSemanticInputs;
+-- DROP EVENT update_semantic_inputs;
+
 
 DELIMITER //
-CREATE EVENT publicize_recent_inputs
-    ON SCHEDULE EVERY 30 MINUTE DO
+CREATE PROCEDURE publicizeRecentInputs ()
 BEGIN proc: BEGIN
     DECLARE now BIGINT UNSIGNED;
     SET now = UNIX_TIMESTAMP();
 
-    IF (NOT GET_LOCK("publicize_recent_inputs_lock", 0)) THEN
+    IF (NOT GET_LOCK("publicize_recent_inputs_lock", 20)) THEN
         LEAVE proc;
     END IF;
 
-    INSERT INTO RecentInputs
-    SELECT (user_id, cat_id, rat_val, inst_id)
+    INSERT INTO RecentInputs (user_id, cat_id, rat_val, inst_id)
+    SELECT user_id, cat_id, rat_val, inst_id
     FROM Private_RecentInputs
     WHERE live_at_time <= now;
 
     DELETE FROM Private_RecentInputs
     WHERE live_at_time <= now;
 
-    RELEASE_LOCK("publicize_recent_inputs_lock");
+    SELECT RELEASE_LOCK("publicize_recent_inputs_lock");
 END proc; END //
 DELIMITER ;
 
 
+DELIMITER //
+CREATE EVENT publicize_recent_inputs
+    ON SCHEDULE EVERY 30 MINUTE DO
+BEGIN
+    CALL publicizeRecentInputs ();
+END //
+DELIMITER ;
+
+
+
 
 DELIMITER //
-CREATE EVENT update_semantic_inputs
-    ON SCHEDULE EVERY 3 SECOND DO
+CREATE PROCEDURE updateSemanticInputs ()
 BEGIN proc: BEGIN
-    DECLARE lastInput, newestInput, i, stmtID BIGINT UNSIGNED;
+    DECLARE lastInput, newestInput, i, stmtID, stmtUsersCatID BIGINT UNSIGNED;
     DECLARE ratVal SMALLINT UNSIGNED;
     DECLARE userID, catID, instID BIGINT UNSIGNED;
 
-    IF (NOT GET_LOCK("update_semantic_inputs_lock", 0)) THEN
+    IF (NOT GET_LOCK("update_semantic_inputs_lock", 2)) THEN
         LEAVE proc;
     END IF;
 
@@ -42,31 +56,30 @@ BEGIN proc: BEGIN
     SELECT data_1 INTO lastInput
     FROM EventData
     WHERE (
-        def_id = 78 AND
+        def_id = 83 AND
         obj_id = 0
     );
     SELECT MAX(id) INTO newestInput
     FROM RecentInputs;
 
     SET i = lastInput + 1;
-    loop: LOOP
-        IF (newestInput IS NULL OR lastInput > newestInput) THEN
-            LEAVE loop;
+    LEAVE proc;
+    loop_1: LOOP
+        IF (newestInput IS NULL OR i > newestInput) THEN
+            LEAVE loop_1;
         END IF;
 
         -- select the ith latest input.
-        SELECT (
+        SELECT
             user_id,
             cat_id,
             rat_val,
             inst_id
-        )
-        INTO (
+        INTO
             userID,
             catID,
             ratVal,
             instID
-        )
         FROM RecentInputs
         WHERE id = i;
         -- select Statement entity.
@@ -94,6 +107,29 @@ BEGIN proc: BEGIN
                 );
             END IF;
         END IF;
+        -- select the statement's Users category.
+        SELECT id INTO stmtUsersCatID
+        FROM Entities
+        WHERE (
+            type_id = 2 AND
+            cxt_id <=> 77 AND
+            def_str = CONCAT("#", stmtID)
+        );
+        -- if it does not exist, also insert it and get the ID.
+        IF (stmtUsersCatID IS NULL) THEN
+            INSERT IGNORE INTO Entities (type_id, cxt_id, def_str)
+            VALUES (2, 77, CONCAT("#", stmtID));
+            SELECT LAST_INSERT_ID() INTO stmtUsersCatID;
+            IF (stmtUsersCatID IS NULL) THEN
+                SELECT id INTO stmtUsersCatID
+                FROM Entities
+                WHERE (
+                    type_id = 2 AND
+                    cxt_id <=> 77 AND
+                    def_str = CONCAT("#", stmtID)
+                );
+            END IF;
+        END IF;
 
         -- if the input's rat_val is null, delete the corresponding SemInput.
         IF (ratVal IS NULL) THEN
@@ -105,8 +141,8 @@ BEGIN proc: BEGIN
             );
             DELETE FROM SemanticInputs
             WHERE (
-                user_id = "TODO: Insert right bot ID here!" AND
-                cat_id = stmtID AND
+                user_id = 79 AND
+                cat_id = stmtUsersCatID AND
                 inst_id = userID
             );
         -- else update the corresponding SemInput with the new rat_val.
@@ -123,25 +159,34 @@ BEGIN proc: BEGIN
                 ratVal,
                 instID
             ), (
-                "TODO: Insert right bot ID here!",
-                stmtID,
+                79,
+                stmtUsersCatID,
                 ratVal,
                 userID
             );
         END IF;
 
         SET i = i + 1;
-        ITERATE loop;
-    END LOOP loop;
+        ITERATE loop_1;
+    END LOOP loop_1;
 
     UPDATE EventData
     SET data_1 = newestInput
     WHERE (
-        def_id = 78 AND
+        def_id = 83 AND
         obj_id = 0
     );
 
-    RELEASE_LOCK("update_semantic_inputs_lock");
+    SELECT RELEASE_LOCK("update_semantic_inputs_lock");
+END proc; END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE EVENT update_semantic_inputs
+    ON SCHEDULE EVERY 3 SECOND DO
+BEGIN proc: BEGIN
+    CALL updateSemanticInputs ();
 END proc; END //
 DELIMITER ;
 

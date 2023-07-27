@@ -1,14 +1,14 @@
 
 
 DELIMITER //
-CREATE EVENT mean_with_offset_10_bot
+CREATE EVENT mean_with_offset_3_bot
     ON SCHEDULE EVERY 3 SECOND DO
 BEGIN proc: BEGIN
     DECLARE lastInput, newestInput, i BIGINT UNSIGNED;
     DECLARE ratVal SMALLINT UNSIGNED;
     DECLARE userID, catID, instID BIGINT UNSIGNED;
 
-    IF (NOT GET_LOCK("mean_with_offset_10_bot_lock", 0)) THEN
+    IF (NOT GET_LOCK("mean_with_offset_3_bot_lock", 20)) THEN
         LEAVE proc;
     END IF;
 
@@ -78,6 +78,6 @@ BEGIN proc: BEGIN
         obj_id = 0
     );
 
-    RELEASE_LOCK("mean_with_offset_10_bot_lock");
+    SELECT RELEASE_LOCK("mean_with_offset_3_bot_lock");
 END proc; END //
 DELIMITER ;

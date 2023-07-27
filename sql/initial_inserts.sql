@@ -196,70 +196,71 @@ CALL inputOrChangeRating(9, 74, 71, CONV("FFFF", 16, 10), 0);
 CALL insertOrFindType(9, "Statement"); -- id: 75
 CALL insertOrFindTemplate(9, 75,
     "{<Entity> is an} important/useful{ instance of <Category>}"); -- id: 76
+CALL insertOrFindTemplate(9, 2,
+    "Users that have rated <Statement> positively"); -- id: 77
 
 
 CALL insertOrFindTemplate(9, 6,
-    "<Name>; <Overall description>; <Event data documentation>;"); -- id: 77
-CALL insertOrFindEntity(9, 6, 77, CONCAT(
+    "<Name>; <Overall description>; <Event data documentation>;"); -- id: 78
+CALL insertOrFindEntity(9, 6, 78, CONCAT(
     "statement_user_rater_bot|",
     "...",
     "uses no event data"
-)); -- id: 78
+)); -- id: 79
 
-CALL insertOrFindType(9, "Scheduled event"); -- id: 79
-CALL insertOrFindTemplate(9, 79,
-    "<Name>; <Overall description>; <Event data documentation>;"); -- id: 80
-CALL insertOrFindEntity(9, 6, 77, CONCAT(
+CALL insertOrFindType(9, "Scheduled event"); -- id: 80
+CALL insertOrFindTemplate(9, 80,
+    "<Name>; <Overall description>; <Event data documentation>;"); -- id: 81
+CALL insertOrFindEntity(9, 80, 81, CONCAT(
     "publicize_recent_inputs|",
     "Moves recent inputs from the Private_RecentInputs table to the ",
     "RecentInputs table once the live_at_time is reached.|"
     "uses no event data"
-)); -- id: 78
-CALL insertOrFindEntity(9, 6, 77, CONCAT(
+)); -- id: 82
+CALL insertOrFindEntity(9, 80, 81, CONCAT(
     "update_semantic_inputs|",
     "Copies recent inputs from the RecentInputs and moves them into the ",
-    "SemanticInputs table. It also implements the statement_user_rater_bot ",
-    "(#77), which rates ...|"
+    "SemanticInputs table. It also implements the bot: #79.|",
+    "obj: None; ",
     "data_1: The last recent input from RecentInputs that was handled."
-)); -- id: 78
+)); -- id: 83
+
+-- CALL insertOrFindTemplate(9, 6, CONCAT(
+--     "obj: <Statement>; ",
+--     "data_1: Current averaged rating value scaled up as a ulong (for more",
+--     "precision), with a neutral rating (of 5/10) as the initial value; ",
+--     "data_2: Number of users that have rated obj, plus an offset of 10;"
+-- )); -- id: 79
 
 
-CALL insertOrFindTemplate(9, 6, CONCAT(
-    "obj: <Statement>; ",
-    "data_1: Current averaged rating value scaled up as a ulong (for more",
-    "precision), with a neutral rating (of 5/10) as the initial value; ",
-    "data_2: Number of users that have rated obj, plus an offset of 10;"
-)); -- id: 79
 
 
-
-
-CALL insertOrFindType(9, "Event struct definition"); -- id: 77
-CALL insertOrFindEntity(9, 77, 0, CONCAT(
-    "obj: 0; ",
-    "data_1: ID of the last row in RecentInputs that was transported to ",
-    "SemanticInputs;"
-)); -- id: 78
-
-INSERT INTO EventData (def_id, obj_id, data_1)
-VALUES (78, 0, 0);
-
-CALL insertOrFindTemplate(9, 77, CONCAT(
-    "obj: <Statement>; ",
-    "data_1: Current averaged rating value scaled up as a ulong (for more",
-    "precision), with a neutral rating (of 5/10) as the initial value; ",
-    "data_2: Number of users that have rated obj, plus an offset of 10;"
-)); -- id: 79
-CALL insertOrFindTemplate(9, 77, CONCAT(
-    "obj: 0; ",
-    "data_1: ID of the last row in RecentInputs handled by <Aggregation bot>;"
-)); -- id: 80
-
-CALL insertOrFindTemplate(9, 6,
-    "{<Name>}, <Description>"
-); -- id: 81
-INSERT INTO Entities (type_id, cxt_id, def_str)
-VALUES (6, 81, CONCAT(
-    "mean_with_offset_10_bot|",
-    ""
-)); -- id: 82
+-- CALL insertOrFindType(9, "Event struct definition"); -- id: 77
+-- CALL insertOrFindEntity(9, 77, 0, CONCAT(
+--     "obj: 0; ",
+--     "data_1: ID of the last row in RecentInputs that was transported to ",
+--     "SemanticInputs;"
+-- )); -- id: 78
+--
+-- INSERT INTO EventData (def_id, obj_id, data_1)
+-- VALUES (78, 0, 0);
+--
+-- CALL insertOrFindTemplate(9, 77, CONCAT(
+--     "obj: <Statement>; ",
+--     "data_1: Current averaged rating value scaled up as a ulong (for more",
+--     "precision), with a neutral rating (of 5/10) as the initial value; ",
+--     "data_2: Number of users that have rated obj, plus an offset of 10;"
+-- )); -- id: 79
+-- CALL insertOrFindTemplate(9, 77, CONCAT(
+--     "obj: 0; ",
+--     "data_1: ID of the last row in RecentInputs handled by <Aggregation bot>;"
+-- )); -- id: 80
+--
+-- CALL insertOrFindTemplate(9, 6,
+--     "{<Name>}, <Description>"
+-- ); -- id: 81
+-- INSERT INTO Entities (type_id, cxt_id, def_str)
+-- VALUES (6, 81, CONCAT(
+--     "mean_with_offset_10_bot|",
+--     ""
+-- )); -- id: 82

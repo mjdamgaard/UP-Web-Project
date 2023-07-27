@@ -18,7 +18,7 @@ SELECT "Query procedures";
 -- DROP PROCEDURE private_selectCreator;
 -- DROP PROCEDURE private_selectCreations;
 --
--- DROP PROCEDURE selectAggregate;
+-- DROP PROCEDURE selectEventData;
 
 
 
@@ -249,13 +249,13 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectAggregate (
+CREATE PROCEDURE selectEventData (
     IN defID BIGINT UNSIGNED,
     IN objID BIGINT UNSIGNED
 )
 BEGIN
     SELECT data AS data
-    FROM Aggregates
+    FROM EventData
     WHERE (
         def_id = defID AND
         obj_id = objID

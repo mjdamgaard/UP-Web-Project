@@ -17,7 +17,7 @@
 -- /* Meta data and ancillary data for aggregation bots */
 -- DROP TABLE Private_Creators;
 -- DROP TABLE EventData;
-
+--
 -- /* Private user data */
 -- DROP TABLE Private_UserData;
 -- DROP TABLE Private_Sessions;
@@ -171,7 +171,7 @@ CREATE TABLE Users (
 
     username VARCHAR(50) UNIQUE, -- TODO: Consider adding more restrictions.
 
-    public_keys_for_authentication TEXT,
+    public_keys_for_authentication TEXT
     -- (In order for third parties to be able to copy the database and then
     -- be able to have users log on, without the need to exchange passwords
     -- between databases.) (This could also be other data than encryption keys,
@@ -261,7 +261,10 @@ CREATE TABLE Private_Sessions (
 
 CREATE TABLE Private_EMails (
     e_mail_address VARCHAR(255) PRIMARY KEY,
-    number_of_accounts TINYINT UNSIGNED NOT NULL
+    number_of_accounts TINYINT UNSIGNED NOT NULL,
+    -- This field is only temporary, until the e-mail address holder has
+    -- confirmed the new account:
+    account_1_user_id BIGINT UNSIGNED
 );
 
 CREATE TABLE Private_EMails (
