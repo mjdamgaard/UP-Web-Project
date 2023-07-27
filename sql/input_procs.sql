@@ -107,7 +107,7 @@ BEGIN proc: BEGIN
         LEAVE proc;
     END IF;
 
-    IF (typeID != 2 AND typeID <= 8) THEN
+    IF (typeID != 2 AND typeID != 6 AND typeID <= 8) THEN
         SET exitCode = 2; -- typeID is not allowed for this procedure.
         SELECT outID, exitCode;
         LEAVE proc;

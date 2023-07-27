@@ -16,7 +16,7 @@
 --
 -- /* Meta data and ancillary data for aggregation bots */
 -- DROP TABLE Private_Creators;
--- DROP TABLE Aggregates;
+-- DROP TABLE EventData;
 
 -- /* Private user data */
 -- DROP TABLE Private_UserData;
@@ -219,12 +219,12 @@ CREATE TABLE Private_Creators (
 -- predicate before the bot).)
 
 
-CREATE TABLE Aggregates (
-    -- Aggregate definition entity which defines what the data means.
+CREATE TABLE EventData (
+    -- Bot entity or event entity which defines what the data means.
     def_id BIGINT UNSIGNED NOT NULL,
     -- Object entity which the data is about.
     obj_id BIGINT UNSIGNED NOT NULL,
-    -- The aggregate (data).
+    -- Data.
     data_1 BIGINT UNSIGNED,
     data_2 BIGINT UNSIGNED,
     data_3 BIGINT UNSIGNED,

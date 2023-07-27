@@ -40,7 +40,7 @@ BEGIN proc: BEGIN
 
     -- get lastInput and newestInput.
     SELECT data_1 INTO lastInput
-    FROM Aggregates
+    FROM EventData
     WHERE (
         def_id = 78 AND
         obj_id = 0
@@ -134,7 +134,7 @@ BEGIN proc: BEGIN
         ITERATE loop;
     END LOOP loop;
 
-    UPDATE Aggregates
+    UPDATE EventData
     SET data_1 = newestInput
     WHERE (
         def_id = 78 AND
