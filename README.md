@@ -1,10 +1,6 @@
 # openSDB (prototype)
-*Status: in early-stage development.*
+*Status: in development.*
 
-*I've pushed some changes to input_procs.sql and initial_insert.sql which*
-*means that the current build does not work. Go back to the*
-*"Prepared to make the Login and CreateAccount Pages." commit for a build*
-*that works.*
 
 ## Introduction to the project
 

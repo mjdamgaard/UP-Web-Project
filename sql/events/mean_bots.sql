@@ -8,7 +8,7 @@ BEGIN proc: BEGIN
     DECLARE ratVal SMALLINT UNSIGNED;
     DECLARE userID, catID, instID BIGINT UNSIGNED;
 
-    IF (NOT GET_LOCK("mean_with_offset_3_bot_lock", 20)) THEN
+    IF (NOT GET_LOCK("mean_with_offset_3_bot_lock", 0)) THEN
         LEAVE proc;
     END IF;
 

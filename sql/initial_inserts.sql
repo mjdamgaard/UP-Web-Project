@@ -225,6 +225,9 @@ CALL insertOrFindEntity(9, 80, 81, CONCAT(
     "data_1: The last recent input from RecentInputs that was handled."
 )); -- id: 83
 
+INSERT INTO EventData (def_id, obj_id, data_1)
+VALUES (83, 0, 0);
+
 -- CALL insertOrFindTemplate(9, 6, CONCAT(
 --     "obj: <Statement>; ",
 --     "data_1: Current averaged rating value scaled up as a ulong (for more",
