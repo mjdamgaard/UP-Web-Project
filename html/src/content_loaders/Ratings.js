@@ -90,7 +90,8 @@ queryUserRatingDisplayCL.addCallback(function($ci, data) {
 });
 
 
-
+// TODO: Insert ten starts above the rating slider that fills up with yellow
+// according to the position of the slider.
 export var inputRatingSliderCL = new ContentLoader(
     "InputRatingSlider",
     /* Initial HTML template */

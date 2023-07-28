@@ -13,9 +13,10 @@ BEGIN proc: BEGIN
     DECLARE now BIGINT UNSIGNED;
     SET now = UNIX_TIMESTAMP();
 
-    IF (GET_LOCK("publicize_recent_inputs_lock", 0) != 1) THEN
-        LEAVE proc;
-    END IF;
+    -- TODO: In-comment:
+    -- IF (GET_LOCK("publicize_recent_inputs_lock", 0) != 1) THEN
+    --     LEAVE proc;
+    -- END IF;
 
     INSERT INTO RecentInputs (user_id, cat_id, rat_val, inst_id)
     SELECT user_id, cat_id, rat_val, inst_id
@@ -25,7 +26,8 @@ BEGIN proc: BEGIN
     DELETE FROM Private_RecentInputs
     WHERE live_at_time <= now;
 
-    DO RELEASE_LOCK("publicize_recent_inputs_lock");
+    -- TODO: In-comment:
+    -- DO RELEASE_LOCK("publicize_recent_inputs_lock");
 END proc; END //
 DELIMITER ;
 
@@ -48,9 +50,10 @@ BEGIN proc: BEGIN
     DECLARE ratVal SMALLINT UNSIGNED;
     DECLARE userID, catID, instID BIGINT UNSIGNED;
 
-    IF (GET_LOCK("update_semantic_inputs_lock", 0) != 1) THEN
-        LEAVE proc;
-    END IF;
+    -- TODO: In-comment:
+    -- IF (GET_LOCK("update_semantic_inputs_lock", 0) != 1) THEN
+    --     LEAVE proc;
+    -- END IF;
 
     -- get lastInput and newestInput.
     SELECT data_1 INTO lastInput
@@ -176,7 +179,8 @@ BEGIN proc: BEGIN
         obj_id = 0
     );
 
-    DO RELEASE_LOCK("update_semantic_inputs_lock");
+    -- TODO: In-comment:
+    -- DO RELEASE_LOCK("update_semantic_inputs_lock");
 END proc; END //
 DELIMITER ;
 
@@ -188,6 +192,12 @@ BEGIN proc: BEGIN
     CALL updateSemanticInputs ();
 END proc; END //
 DELIMITER ;
+
+
+-- TODO: Remove:
+DROP EVENT publicize_recent_inputs;
+DROP EVENT update_semantic_inputs;
+
 
 
 -- -- write the latest inputs with rat_val != NULL into SemanticInputs.

@@ -204,8 +204,9 @@ CALL insertOrFindTemplate(9, 6,
     "<Name>; <Overall description>; <Event data documentation>;"); -- id: 78
 CALL insertOrFindEntity(9, 6, 78, CONCAT(
     "statement_user_rater_bot|",
-    "...",
-    "uses no event data"
+    "Rates users as instances categories of the #77 template, with ratings ",
+    "equal to those of the users regarding the given statement.|"
+    "Uses no event data"
 )); -- id: 79
 
 CALL insertOrFindType(9, "Scheduled event"); -- id: 80
@@ -215,7 +216,7 @@ CALL insertOrFindEntity(9, 80, 81, CONCAT(
     "publicize_recent_inputs|",
     "Moves recent inputs from the Private_RecentInputs table to the ",
     "RecentInputs table once the live_at_time is reached.|"
-    "uses no event data"
+    "Uses no event data"
 )); -- id: 82
 CALL insertOrFindEntity(9, 80, 81, CONCAT(
     "update_semantic_inputs|",
@@ -228,42 +229,28 @@ CALL insertOrFindEntity(9, 80, 81, CONCAT(
 INSERT INTO EventData (def_id, obj_id, data_1)
 VALUES (83, 0, 0);
 
--- CALL insertOrFindTemplate(9, 6, CONCAT(
---     "obj: <Statement>; ",
---     "data_1: Current averaged rating value scaled up as a ulong (for more",
---     "precision), with a neutral rating (of 5/10) as the initial value; ",
---     "data_2: Number of users that have rated obj, plus an offset of 10;"
--- )); -- id: 79
 
+CALL insertOrFindType(9, "Event data documentation"); -- id: 84
+CALL insertOrFindEntity(9, 84, NULL, CONCAT(
+    "obj: Statement; ",
+    "data_1: Current averaged rating value scaled up as a ulong (for more ",
+    "precision), with a neutral rating (of 5/10) as the initial value; ",
+    "data_2: Number of users that have rated obj, plus an offset of 3;"
+)); -- id: 85
+CALL insertOrFindEntity(9, 6, 78, CONCAT(
+    "mean_with_offset_3_bot|",
+    "Rates all statments according to an arithmetic mean of all users, biased",
+    "towards a neutral rating (5/10) by using an offset of 3 neutral ratings.|",
+    "#85;"
+)); -- id: 86
 
+CALL insertOrFindEntity(9, 80, 81, CONCAT(
+    "update_mean_bot_inputs|",
+    "Takes recent inputs from the RecentInputs and executes the procedures ",
+    "that updates the mean bots.|",
+    "obj: None; ",
+    "data_1: The last recent input from RecentInputs that was handled."
+)); -- id: 87
 
-
--- CALL insertOrFindType(9, "Event struct definition"); -- id: 77
--- CALL insertOrFindEntity(9, 77, 0, CONCAT(
---     "obj: 0; ",
---     "data_1: ID of the last row in RecentInputs that was transported to ",
---     "SemanticInputs;"
--- )); -- id: 78
---
--- INSERT INTO EventData (def_id, obj_id, data_1)
--- VALUES (78, 0, 0);
---
--- CALL insertOrFindTemplate(9, 77, CONCAT(
---     "obj: <Statement>; ",
---     "data_1: Current averaged rating value scaled up as a ulong (for more",
---     "precision), with a neutral rating (of 5/10) as the initial value; ",
---     "data_2: Number of users that have rated obj, plus an offset of 10;"
--- )); -- id: 79
--- CALL insertOrFindTemplate(9, 77, CONCAT(
---     "obj: 0; ",
---     "data_1: ID of the last row in RecentInputs handled by <Aggregation bot>;"
--- )); -- id: 80
---
--- CALL insertOrFindTemplate(9, 6,
---     "{<Name>}, <Description>"
--- ); -- id: 81
--- INSERT INTO Entities (type_id, cxt_id, def_str)
--- VALUES (6, 81, CONCAT(
---     "mean_with_offset_10_bot|",
---     ""
--- )); -- id: 82
+INSERT INTO EventData (def_id, obj_id, data_1)
+VALUES (87, 0, 0);
