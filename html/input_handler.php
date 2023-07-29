@@ -56,7 +56,7 @@ $paramNameArr = "";
 $typeArr = "";
 switch ($reqType) {
     case "rat":
-        $sql = "CALL inputOrChangeRating (?, ?, ?, ?, ?)";
+        $sql = "CALL insertOrUpdateRating (?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "c", "i", "r", "l");
         $typeArr = array("id", "id", "id", "rat", "time");
         break;

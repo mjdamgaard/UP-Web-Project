@@ -2,7 +2,6 @@
 -- /* Semantic inputs */
 -- DROP TABLE SemanticInputs;
 -- DROP TABLE Private_RecentInputs;
--- DROP TABLE RecentInputs;
 -- /* Indexes */
 -- DROP TABLE EntityIndexKeys;
 --
@@ -16,7 +15,7 @@
 --
 -- /* Meta data and ancillary data for aggregation bots */
 -- DROP TABLE Private_Creators;
--- DROP TABLE EventData;
+-- DROP TABLE BotData;
 --
 -- /* Private user data */
 -- DROP TABLE Private_UserData;
@@ -74,8 +73,8 @@ CREATE TABLE Private_RecentInputs (
 
     user_id BIGINT UNSIGNED NOT NULL,
     cat_id BIGINT UNSIGNED NOT NULL,
-    rat_val SMALLINT UNSIGNED, -- new rating value:
     inst_id BIGINT UNSIGNED NOT NULL,
+    rat_val SMALLINT UNSIGNED,
 
     live_at_time BIGINT UNSIGNED NOT NULL
 );
@@ -85,8 +84,8 @@ CREATE TABLE Private_RecentInputs (
 --
 --     user_id BIGINT UNSIGNED NOT NULL,
 --     cat_id BIGINT UNSIGNED NOT NULL,
---     rat_val SMALLINT UNSIGNED, -- new rating value.
---     inst_id BIGINT UNSIGNED NOT NULL
+--     inst_id BIGINT UNSIGNED NOT NULL,
+--     rat_val SMALLINT UNSIGNED
 --
 --     -- changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 --
@@ -102,8 +101,21 @@ CREATE TABLE Private_RecentInputs (
 -- safety), then RecentInputs can just be added once again --- also with an
 -- index like the secondary one of SemanticInputs and with the changed_at
 -- column again, which should then also be the last column of that index. I
--- think this is what I'll do.."
+-- think this is what I'll do.." *Alternatively, one could also use:
+-- CREATE TABLE RecordedInputs (
+--     user_id BIGINT UNSIGNED NOT NULL,
+--     cat_id BIGINT UNSIGNED NOT NULL,
+--     inst_id BIGINT UNSIGNED NOT NULL,
+--
+--     changed_at_time BIGINT UNSIGNED,
 
+--     rat_val SMALLINT UNSIGNED,
+--
+--     PRIMARY KEY (user_id, cat_id, inst_id, changed_at)
+-- );
+-- for helping third-party aggregation bots --- and other SDBs... Hm.. ...Yeah,
+-- so one of these tables will probably be needed at some point, but, again,
+-- not really at the beginning so we we can leave them out for now.
 
 
 /* Indexes */
@@ -234,7 +246,7 @@ CREATE TABLE Private_Creators (
 -- predicate before the bot).)
 
 
-CREATE TABLE EventData (
+CREATE TABLE BotData (
     -- Bot entity or event entity which defines what the data means.
     def_id BIGINT UNSIGNED NOT NULL,
     -- Object entity which the data is about.

@@ -1,7 +1,9 @@
 
 SELECT "Input procedures";
 
--- DROP PROCEDURE inputOrChangeRating;
+-- DROP PROCEDURE insertOrUpdateRating;
+-- DROP PROCEDURE private_insertOrUpdateRatingAndRunBots;
+--
 -- DROP PROCEDURE insertOrFindEntity;
 -- DROP PROCEDURE insertOrFindTemplate;
 -- DROP PROCEDURE insertOrFindType;
@@ -12,7 +14,7 @@ SELECT "Input procedures";
 
 
 DELIMITER //
-CREATE PROCEDURE inputOrChangeRating (
+CREATE PROCEDURE insertOrUpdateRating (
     IN userID BIGINT UNSIGNED,
     IN catID BIGINT UNSIGNED,
     IN instID BIGINT UNSIGNED,
@@ -22,8 +24,7 @@ CREATE PROCEDURE inputOrChangeRating (
 BEGIN
     DECLARE exitCode TINYINT;
     DECLARE typeID BIGINT UNSIGNED;
-    DECLARE prevRatVal SMALLINT UNSIGNED;
-    DECLARE now BIGINT UNSIGNED;
+    -- DECLARE now BIGINT UNSIGNED DEFAULT UNIX_TIMESTAMP();
 
     IF (ratVal = 0) THEN
         SET ratVal = NULL;
@@ -35,21 +36,7 @@ BEGIN
     IF (typeID != 2) THEN
         SET exitCode = 1; -- catID is not the ID of a category.
     ELSE
-        SET now = UNIX_TIMESTAMP();
-        IF (now >= liveAtTime) THEN
-            INSERT INTO RecentInputs (
-                user_id,
-                cat_id,
-                rat_val,
-                inst_id
-            )
-            VALUES (
-                userID,
-                catID,
-                ratVal,
-                instID
-            );
-        ELSE
+        IF (liveAtTime > 0) THEN
             INSERT INTO Private_RecentInputs (
                 user_id,
                 cat_id,
@@ -64,17 +51,112 @@ BEGIN
                 instID,
                 liveAtTime
             );
+        ELSE
+            CALL private_insertOrUpdateRatingAndRunBots (
+                userID, catID, instID, ratVal
+            );
         END IF;
-        SET exitCode = 0; -- rating insert/update is pending.
+        SET exitCode = 0; -- rating insert/update is done or is pending.
     END IF;
 
     SELECT instID AS outID, exitCode;
 END //
 DELIMITER ;
--- TODO: When moving the ratings from Private_RecentInputs to the public ones
--- also implement an automatic procedure to rate a "this user has rated this
--- statement" relation with a special bot (where the rating then matches the
--- user's rating)..
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE private_insertOrUpdateRatingAndRunBots (
+    IN userID BIGINT UNSIGNED,
+    IN catID BIGINT UNSIGNED,
+    IN instID BIGINT UNSIGNED,
+    IN ratVal SMALLINT UNSIGNED
+)
+BEGIN
+    DECLARE stmtID BIGINT UNSIGNED;
+    DECLARE prevRatVal SMALLINT UNSIGNED;
+
+
+    /* Retrieval of the previous rating the statement entity */
+
+    -- get the previous rating value (might be null).
+    SELECT rat_val INTO prevRatVal
+    FROM SemanticInputs
+    WHERE (
+        user_id = userID AND
+        cat_id = catID AND
+        inst_id = instID
+    );
+
+    -- get the statement entity.
+    SELECT id INTO stmtID
+    FROM Entities
+    WHERE (
+        type_id = 75 AND
+        cxt_id <=> 76 AND
+        def_str = CONCAT("#", instID, "|#", catID)
+    );
+    -- if it does not exist, insert it and get the ID.
+    IF (stmtID IS NULL) THEN
+        INSERT IGNORE INTO Entities (type_id, cxt_id, def_str)
+        VALUES (75, 76, CONCAT("#", instID, "|#", catID));
+        SELECT LAST_INSERT_ID() INTO stmtID;
+        -- if a race condition means that the insert is ignored and stmtID
+        -- is null, select the now added (by another process) Statement.
+        IF (stmtID IS NULL) THEN
+            SELECT id INTO stmtID
+            FROM Entities
+            WHERE (
+                type_id = 75 AND
+                cxt_id <=> 76 AND
+                def_str = CONCAT("#", instID, "|#", catID)
+            );
+        END IF;
+    END IF;
+
+
+    /* Updating the user's own input set */
+
+    -- if the input's rat_val is null, delete the corresponding SemInput.
+    IF (ratVal IS NULL) THEN
+        DELETE FROM SemanticInputs
+        WHERE (
+            user_id = userID AND
+            cat_id = catID AND
+            inst_id = instID
+        );
+    -- else update the corresponding SemInput with the new rat_val.
+    ELSE
+        REPLACE INTO SemanticInputs (
+            user_id,
+            cat_id,
+            rat_val,
+            inst_id
+        )
+        VALUES (
+            userID,
+            catID,
+            ratVal,
+            instID
+        );
+    END IF;
+
+
+    /* Run procedures to update the various aggregation bots */
+
+    CALL updateStatementUserRaterBot (userID, stmtID, ratVal);
+    CALL updateMeanBots (
+        userID, catID, instID, ratVal, prevRatVal, stmtID
+    );
+
+END //
+DELIMITER ;
+
+
+
+
+
 
 
 
@@ -89,6 +171,7 @@ CREATE PROCEDURE insertOrFindEntity (
 BEGIN proc: BEGIN
     DECLARE outID, typeTypeID, cxtTypeID, cxtCxtID BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
+    DECLARE userCreationsCatID BIGINT UNSIGNED;
 
     IF (cxtID = 0) THEN
         SET cxtID = NULL;
@@ -152,6 +235,32 @@ BEGIN proc: BEGIN
     ELSE
         INSERT INTO Private_Creators (ent_id, user_id)
         VALUES (outID, userID);
+
+        -- -- get the user's Creations category.
+        -- SELECT id INTO userCreationsCatID
+        -- FROM Entities
+        -- WHERE (
+        --     type_id = 2 AND
+        --     cxt_id <=> 80 AND
+        --     def_str = CONCAT("#", userID)
+        -- );
+        -- -- if it does not exist, also insert it and get the ID.
+        -- IF (userCreationsCatID IS NULL) THEN
+        --     INSERT IGNORE INTO Entities (type_id, cxt_id, def_str)
+        --     VALUES (2, 80, CONCAT("#", userID));
+        --     SELECT LAST_INSERT_ID() INTO userCreationsCatID;
+        --     IF (userCreationsCatID IS NULL) THEN
+        --         SELECT id INTO userCreationsCatID
+        --         FROM Entities
+        --         WHERE (
+        --             type_id = 2 AND
+        --             cxt_id <=> 80 AND
+        --             def_str = CONCAT("#", userID)
+        --         );
+        --     END IF;
+        -- END IF;
+        -- -- ...
+
         SET exitCode = 0; -- insert.
     END IF;
     SELECT outID, exitCode;

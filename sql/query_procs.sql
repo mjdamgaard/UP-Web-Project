@@ -3,7 +3,6 @@ SELECT "Query procedures";
 
 -- DROP PROCEDURE selectInputSet;
 -- DROP PROCEDURE selectRating;
--- DROP PROCEDURE selectRecentInputs;
 --
 -- DROP PROCEDURE selectEntity;
 -- DROP PROCEDURE selectEntityID;
@@ -73,24 +72,24 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE selectRecentInputs (
-    IN startID BIGINT UNSIGNED,
-    IN maxNum INT UNSIGNED
-)
-BEGIN
-    SELECT
-        user_id AS userID,
-        cat_id AS catID,
-        rat_val AS ratVal,
-        inst_id AS instID,
-        changed_at AS changedAt
-    FROM RecentInputs
-    WHERE id >= startID
-    ORDER BY id ASC
-    LIMIT maxNum;
-END //
-DELIMITER ;
+-- DELIMITER //
+-- CREATE PROCEDURE selectRecentInputs (
+--     IN startID BIGINT UNSIGNED,
+--     IN maxNum INT UNSIGNED
+-- )
+-- BEGIN
+--     SELECT
+--         user_id AS userID,
+--         cat_id AS catID,
+--         inst_id AS instID,
+--         rat_val AS ratVal,
+--         changed_at AS changedAt
+--     FROM RecentInputs
+--     WHERE id >= startID
+--     ORDER BY id ASC
+--     LIMIT maxNum;
+-- END //
+-- DELIMITER ;
 
 
 

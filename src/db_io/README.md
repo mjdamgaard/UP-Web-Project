@@ -12,14 +12,7 @@ And when you have your MySQL server installed, create a databases and change
 the config files of this folder
 to match the passwords and names that you choose.
 
-Install the SDB in that database by running create_sdb.sql, input_procs.sql,
-query_procs.sql and user_data_procs.sql followed by initial_inserts.sql at last.
-(One way to do this, at least with Linux, is to run
-$ `mysql -u your_username -p -D your_database_name`
-to select your database, after which the SQL programs can be run with commands
-like `\. your_path/sql/create_sdb.sql`.)
-
-Also run semantic_input_events.sql in order to be able to input ratings via the
-app, either by also running `SET GLOBAL event_scheduler = ON;`, or otherwise
-simply run `\. your_path/sql/misc/execute_all_events.sql` whenever you submit
-(or clear) a rating.
+Install the SDB in that database by first running
+$ `mysql -u YOUR_USERNAME -p -D YOUR_DATABASE_NAME`,
+followed by
+mysql> `\. YOUR_FULL_PATH/sql/install/compile_sdb.sql`.
