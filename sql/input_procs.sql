@@ -164,6 +164,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindEntity (
     IN userID BIGINT UNSIGNED,
+    IN recordCreator BOOL,
     IN typeID BIGINT UNSIGNED,
     IN cxtID BIGINT UNSIGNED,
     IN defStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
@@ -233,34 +234,9 @@ BEGIN proc: BEGIN
         );
         SET exitCode = 1; -- find.
     ELSE
-        INSERT INTO Private_Creators (ent_id, user_id)
-        VALUES (outID, userID);
-
-        -- -- get the user's Creations category.
-        -- SELECT id INTO userCreationsCatID
-        -- FROM Entities
-        -- WHERE (
-        --     type_id = 2 AND
-        --     cxt_id <=> 80 AND
-        --     def_str = CONCAT("#", userID)
-        -- );
-        -- -- if it does not exist, also insert it and get the ID.
-        -- IF (userCreationsCatID IS NULL) THEN
-        --     INSERT IGNORE INTO Entities (type_id, cxt_id, def_str)
-        --     VALUES (2, 80, CONCAT("#", userID));
-        --     SELECT LAST_INSERT_ID() INTO userCreationsCatID;
-        --     IF (userCreationsCatID IS NULL) THEN
-        --         SELECT id INTO userCreationsCatID
-        --         FROM Entities
-        --         WHERE (
-        --             type_id = 2 AND
-        --             cxt_id <=> 80 AND
-        --             def_str = CONCAT("#", userID)
-        --         );
-        --     END IF;
-        -- END IF;
-        -- -- ...
-
+        IF (recordCreator) THEN
+            CALL creatorRaterBot (outID, userID);
+        END IF;
         SET exitCode = 0; -- insert.
     END IF;
     SELECT outID, exitCode;
@@ -271,6 +247,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindTemplate (
     IN userID BIGINT UNSIGNED,
+    IN recordCreator BOOL,
     IN cxtID BIGINT UNSIGNED,
     IN defStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
@@ -313,8 +290,9 @@ BEGIN proc: BEGIN
         );
         SET exitCode = 1; -- find.
     ELSE
-        INSERT INTO Private_Creators (ent_id, user_id)
-        VALUES (outID, userID);
+        IF (recordCreator) THEN
+            CALL creatorRaterBot (outID, userID);
+        END IF;
         SET exitCode = 0; -- insert.
     END IF;
     SELECT outID, exitCode;
@@ -325,6 +303,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindType (
     IN userID BIGINT UNSIGNED,
+    IN recordCreator BOOL,
     IN defStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
 BEGIN
@@ -355,8 +334,9 @@ BEGIN
             );
             SET exitCode = 1; -- find.
         ELSE
-            INSERT INTO Private_Creators (ent_id, user_id)
-            VALUES (outID, userID);
+            IF (recordCreator) THEN
+                CALL creatorRaterBot (outID, userID);
+            END IF;
             SET exitCode = 0; -- insert.
         END IF;
     END IF;
@@ -387,8 +367,8 @@ BEGIN
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Texts (id, str)
     VALUES (outID, textStr);
-    INSERT INTO Private_Creators (ent_id, user_id)
-    VALUES (outID, userID);
+    -- INSERT INTO Private_Creators (ent_id, user_id)
+    -- VALUES (outID, userID);
     SELECT outID, 0 AS exitCode; -- insert.
 END //
 DELIMITER ;
@@ -408,8 +388,8 @@ BEGIN
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Binaries (id, bin)
     VALUES (outID, bin);
-    INSERT INTO Private_Creators (ent_id, user_id)
-    VALUES (outID, userID);
+    -- INSERT INTO Private_Creators (ent_id, user_id)
+    -- VALUES (outID, userID);
     SELECT outID, 0 AS exitCode; -- insert.
 END //
 DELIMITER ;

@@ -21,6 +21,7 @@ BEGIN
 END //
 DELIMITER ;
 
+
 DELIMITER //
 CREATE PROCEDURE updateMeanWithOffset3Bot (
     IN userID BIGINT UNSIGNED,
@@ -40,7 +41,7 @@ BEGIN proc: BEGIN
     SELECT data_1, data_2 INTO prevMeanHP, userNum
     FROM BotData
     WHERE (
-        def_id = 83 AND
+        def_id = 82 AND
         obj_id = stmtID
     )
     FOR UPDATE;
@@ -50,17 +51,18 @@ BEGIN proc: BEGIN
         SET prevMeanHP =  9223372036854775807;
         SET userNum = 3;
         INSERT INTO BotData (def_id, obj_id, data_1, data_2)
-        VALUES (83, stmtID, prevMeanHP, userNum);
+        VALUES (82, stmtID, prevMeanHP, userNum);
         SELECT data_1, data_2 INTO prevMeanHP, userNum
         FROM BotData
         WHERE (
-            def_id = 83 AND
+            def_id = 82 AND
             obj_id = stmtID
         )
         FOR UPDATE;
     END IF;
     -- compute the high-precision rating values.
     SET ratValHP = ratVal << (6 * 8);
+    --TODO: Correct this: Branch according to 3 different cases for prevRatVal.
     SET prevRatValHP = prevRatVal << (6 * 8);
     -- compute the high-precision new mean.
     SET newMeanHP = prevMeanHP DIV (userNum + 1) * userNum +
@@ -76,14 +78,14 @@ BEGIN proc: BEGIN
         inst_id
     )
     VALUES (
-        83,
+        82,
         catID,
         newMean,
         instID
     );
     -- update the bot's data for the statement.
     REPLACE INTO BotData (def_id, obj_id, data_1, data_2)
-    VALUES (83, stmtID, newMeanHP, userNum + 1);
+    VALUES (82, stmtID, newMeanHP, userNum + 1);
 
 END proc; END //
 DELIMITER ;

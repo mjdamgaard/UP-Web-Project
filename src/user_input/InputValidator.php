@@ -21,6 +21,7 @@ class InputValidator {
     public static function validateParam($paramVal, $type, $paramName) {
         switch($type) {
             case "id":
+            case "unix_time":
             case "ulong":
                 $pattern = "/^[1-9][0-9]*|0$/";
                 if (
@@ -113,21 +114,21 @@ class InputValidator {
                     );
                 }
                 break;
-            case "time":
-                $pattern =
-                    "/^(" .
-                        "([12]?[0-9]|3[0-4]) ".
-                        "([01][0-9]|2[0-3])" .
-                        "(:[0-5][0-9]){0,2}" .
-                    ")|(" .
-                        "([01][0-9]|2[0-3]:)?" .
-                        "([0-5][0-9])" .
-                        "(:[0-5][0-9])?" .
-                    ")$/";
-                if (!preg_match($pattern, $paramVal)) {
-                    echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
-                }
-                break;
+            // case "time":
+            //     $pattern =
+            //         "/^(" .
+            //             "([12]?[0-9]|3[0-4]) ".
+            //             "([01][0-9]|2[0-3])" .
+            //             "(:[0-5][0-9]){0,2}" .
+            //         ")|(" .
+            //             "([01][0-9]|2[0-3]:)?" .
+            //             "([0-5][0-9])" .
+            //             "(:[0-5][0-9])?" .
+            //         ")$/";
+            //     if (!preg_match($pattern, $paramVal)) {
+            //         echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
+            //     }
+            //     break;
             case "username":
                 // if (!is_string($paramVal) || !ctype_print($paramVal)) {
                 //     echoTypeErrorJSONAndExit(

@@ -13,8 +13,7 @@
 -- DROP TABLE Texts;
 -- DROP TABLE Binaries;
 --
--- /* Meta data and ancillary data for aggregation bots */
--- DROP TABLE Private_Creators;
+-- /* Ancillary data for aggregation bots */
 -- DROP TABLE BotData;
 --
 -- /* Private user data */
@@ -232,19 +231,7 @@ CREATE TABLE Binaries (
 
 
 
-/* Meta data and ancillary data for aggregation bots */
-
-CREATE TABLE Private_Creators (
-    ent_id BIGINT UNSIGNED PRIMARY KEY,
-
-    user_id BIGINT UNSIGNED NOT NULL,
-    INDEX (user_id)
-);
--- (These should generally be deleted quite quickly, and instead a special bot
--- should rate which entity is created by which user, if and only if the given
--- user has declared that they are the creater themselves (by rating the same
--- predicate before the bot).)
-
+/* Ancillary data for aggregation bots */
 
 CREATE TABLE BotData (
     -- Bot entity or event entity which defines what the data means.

@@ -8,5 +8,6 @@
 
 \. YOUR_FULL_PATH/sql/bots/mean_bots.sql
 \. YOUR_FULL_PATH/sql/bots/statement_user_rater_bot.sql
+\. YOUR_FULL_PATH/sql/bots/creator_rater_bot.sql
 
 \. YOUR_FULL_PATH/sql/initial_inserts.sql

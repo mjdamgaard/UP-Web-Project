@@ -58,28 +58,29 @@ switch ($reqType) {
     case "rat":
         $sql = "CALL insertOrUpdateRating (?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "c", "i", "r", "l");
-        $typeArr = array("id", "id", "id", "rat", "time");
+        $typeArr = array("id", "id", "id", "rat", "unix_time");
         break;
     case "ent":
-        $sql = "CALL insertOrFindEntity (?, ?, ?, ?)";
-        $paramNameArr = array("u", "t", "c", "s");
-        $typeArr = array("id", "id", "id", "str");
+        $sql = "CALL insertOrFindEntity (?, ?, ?, ?, ?)";
+        $paramNameArr = array("u", "r", "t", "c", "s");
+        $typeArr = array("id", "tint", "id", "id", "str");
         break;
     case "tmpl":
-        $sql = "CALL insertOrFindTemplate (?, ?, ?)";
-        $paramNameArr = array("u", "c", "s");
-        $typeArr = array("id", "id", "str");
+        $sql = "CALL insertOrFindTemplate (?, ?, ?, ?)";
+        $paramNameArr = array("u", "r", "c", "s");
+        $typeArr = array("id", "tint", "id", "str");
         break;
     case "type":
-        $sql = "CALL insertOrFindType (?, ?)";
-        $paramNameArr = array("u", "s");
-        $typeArr = array("id", "id", "id", "str");
+        $sql = "CALL insertOrFindType (?, ?, ?)";
+        $paramNameArr = array("u", "r", "s");
+        $typeArr = array("id", "tint", "id", "id", "str");
         break;
     case "text":
-        $sql = "CALL insertText (?, ?, ?)";
-        $paramNameArr = array("u", "n", "s");
-        $typeArr = array("id", "str", "text");
-        break;
+        // $sql = "CALL insertText (?, ?, ?)";
+        // $paramNameArr = array("u", "n", "s");
+        // $typeArr = array("id", "str", "text");
+        // break;
+        echoErrorJSONAndExit('The "text" request type is not implemented yet');
     case "bin":
         // $sql = "CALL insertBinary (?, ?, ?)";
         // $paramNameArr = array("u", "n", "b");

@@ -1,5 +1,12 @@
 
-SELECT "Private_RecentInputs:";
+SELECT "Creators:";
+SELECT
+    ent_id AS entID,
+    user_id AS userID
+FROM Private_Creators
+ORDER BY ent_id ASC, user_id ASC;
+
+SELECT "RecentInputs:";
 SELECT
     id AS id,
     user_id AS userID,

@@ -62,45 +62,45 @@ VALUES
 
 /* Some more inserts and also ratings, now using the input_procs API */
 
-CALL insertOrFindEntity(9, 2, 0, "Music"); -- id: 24
-CALL insertOrFindEntity(9, 2, 22, "Rock|#24"); -- id: 25
-CALL insertOrFindEntity(9, 2, 22, "Jazz|#24"); -- id: 26
+CALL insertOrFindEntity(9, 0, 2, 0, "Music"); -- id: 24
+CALL insertOrFindEntity(9, 0, 2, 22, "Rock|#24"); -- id: 25
+CALL insertOrFindEntity(9, 0, 2, 22, "Jazz|#24"); -- id: 26
 
-CALL insertOrFindType(9, "Movie"); -- id: 27
-CALL insertOrFindTemplate(9, 27, "{<Title>}, <Year>"); -- id: 28
-CALL insertOrFindEntity(9, 27, 28,
+CALL insertOrFindType(9, 0, "Movie"); -- id: 27
+CALL insertOrFindTemplate(9, 0, 27, "{<Title>}, <Year>"); -- id: 28
+CALL insertOrFindEntity(9, 0, 27, 28,
     "The Lord of the Rings: The Fellowship of the Ring|2001"
 ); -- id: 29
-CALL insertOrFindEntity(9, 27, 28,
+CALL insertOrFindEntity(9, 0, 27, 28,
     "The Lord of the Rings: The Two Towers|2002"
 ); -- id: 30
 
-CALL insertOrFindEntity(9, 2, 0, "Movies"); -- id: 31
-CALL insertOrFindEntity(9, 2, 0, "Science"); -- id: 32
-CALL insertOrFindEntity(9, 2, 22, "Music|#31"); -- id: 33
-CALL insertOrFindEntity(9, 2, 22, "Cinematography|#31"); -- id: 34
-CALL insertOrFindEntity(9, 2, 22, "Physics|#31"); -- id: 35
-CALL insertOrFindEntity(9, 2, 22, "Mathematics|#31"); -- id: 36
+CALL insertOrFindEntity(9, 0, 2, 0, "Movies"); -- id: 31
+CALL insertOrFindEntity(9, 0, 2, 0, "Science"); -- id: 32
+CALL insertOrFindEntity(9, 0, 2, 22, "Music|#31"); -- id: 33
+CALL insertOrFindEntity(9, 0, 2, 22, "Cinematography|#31"); -- id: 34
+CALL insertOrFindEntity(9, 0, 2, 22, "Physics|#31"); -- id: 35
+CALL insertOrFindEntity(9, 0, 2, 22, "Mathematics|#31"); -- id: 36
 
 
 
-CALL insertOrFindEntity(9, 19, 20, "Subcategories|#2|many"); -- id: 37
-CALL insertOrFindEntity(9, 2, 21, "#37|#10"); -- id: 38
+CALL insertOrFindEntity(9, 0, 19, 20, "Subcategories|#2|many"); -- id: 37
+CALL insertOrFindEntity(9, 0, 2, 21, "#37|#10"); -- id: 38
 CALL insertOrUpdateRating(9, 38, 32, CONV("FFFF", 16, 10), 1);
 CALL insertOrUpdateRating(9, 38, 31, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(9, 38, 24, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(9, 38, 25, CONV("A130", 16, 10), 1);
 CALL insertOrUpdateRating(9, 38, 26, CONV("A000", 16, 10), 1);
-CALL insertOrFindEntity(9, 27, 0, "ExAmPlE oF a NoT vErY uSeFuL eNtItY"); -- id: 39
+CALL insertOrFindEntity(9, 0, 27, 0, "ExAmPlE oF a NoT vErY uSeFuL eNtItY"); -- id: 39
 CALL insertOrUpdateRating(9, 38, 39, CONV("0103", 16, 10), 1);
 
-CALL insertOrFindEntity(9, 2, 21, "#37|#24"); -- id: 40
+CALL insertOrFindEntity(9, 0, 2, 21, "#37|#24"); -- id: 40
 CALL insertOrUpdateRating(9, 40, 25, CONV("E100", 16, 10), 1);
 CALL insertOrUpdateRating(9, 40, 26, CONV("E000", 16, 10), 1);
 CALL insertOrUpdateRating(9, 40, 39, CONV("0001", 16, 10), 1);
 CALL insertOrUpdateRating(9, 40, 33, CONV("F000", 16, 10), 1);
 
-CALL insertOrFindEntity(9, 2, 21, "#37|#32"); -- id: 41
+CALL insertOrFindEntity(9, 0, 2, 21, "#37|#32"); -- id: 41
 CALL insertOrUpdateRating(9, 41, 33, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(9, 41, 34, CONV("F010", 16, 10), 1);
 CALL insertOrUpdateRating(9, 41, 35, CONV("F050", 16, 10), 1);
@@ -115,77 +115,77 @@ CALL insertOrUpdateRating(9, 31, 29, CONV("FF03", 16, 10), 1);
 CALL insertOrUpdateRating(9, 31, 30, CONV("FF02", 16, 10), 1);
 
 
-CALL insertOrFindEntity(9, 19, 20, "Related entities|any type|many"); -- id: 42
-CALL insertOrFindEntity(9, 2, 21, "#42|#29"); -- id: 43
+CALL insertOrFindEntity(9, 0, 19, 20, "Related entities|any type|many"); -- id: 42
+CALL insertOrFindEntity(9, 0, 2, 21, "#42|#29"); -- id: 43
 CALL insertOrUpdateRating(9, 43, 30, CONV("FFFF", 16, 10), 1);
-CALL insertOrFindEntity(9, 2, 21, "#42|#30"); -- id: 44
+CALL insertOrFindEntity(9, 0, 2, 21, "#42|#30"); -- id: 44
 CALL insertOrUpdateRating(9, 44, 29, CONV("FFF0", 16, 10), 1);
-CALL insertOrFindEntity(9, 2, 21, "#42|#24"); -- id: 45
+CALL insertOrFindEntity(9, 0, 2, 21, "#42|#24"); -- id: 45
 CALL insertOrUpdateRating(9, 45, 33, CONV("F000", 16, 10), 1);
-CALL insertOrFindEntity(9, 2, 21, "#42|#33"); -- id: 46
+CALL insertOrFindEntity(9, 0, 2, 21, "#42|#33"); -- id: 46
 CALL insertOrUpdateRating(9, 46, 24, CONV("FF00", 16, 10), 1);
 
-CALL insertOrFindEntity(9, 19, 20, "Supercategories|#2|many"); -- id: 47
+CALL insertOrFindEntity(9, 0, 19, 20, "Supercategories|#2|many"); -- id: 47
 
 
-CALL insertOrFindEntity(9, 2, 23, "good|#31"); -- id: 48
-CALL insertOrFindEntity(9, 2, 23, "funny|#31"); -- id: 49
-CALL insertOrFindEntity(9, 2, 23, "scary|#31"); -- id: 50
-CALL insertOrFindEntity(9, 2, 23, "iconic|#31"); -- id: 51
+CALL insertOrFindEntity(9, 0, 2, 23, "good|#31"); -- id: 48
+CALL insertOrFindEntity(9, 0, 2, 23, "funny|#31"); -- id: 49
+CALL insertOrFindEntity(9, 0, 2, 23, "scary|#31"); -- id: 50
+CALL insertOrFindEntity(9, 0, 2, 23, "iconic|#31"); -- id: 51
 
-CALL insertOrFindEntity(9, 19, 20,
+CALL insertOrFindEntity(9, 0, 19, 20,
     "Relevant categories to rate for type instances|#2|many"); -- id: 52
-CALL insertOrFindEntity(9, 2, 21, "#52|#27"); -- id: 53
+CALL insertOrFindEntity(9, 0, 2, 21, "#52|#27"); -- id: 53
 CALL insertOrUpdateRating(9, 53, 48, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(9, 53, 49, CONV("E100", 16, 10), 1);
 CALL insertOrUpdateRating(9, 53, 50, CONV("E000", 16, 10), 1);
 
-CALL insertOrFindEntity(9, 19, 20, "Relevant categories to rate|#2|many"); -- id: 54
-CALL insertOrFindEntity(9, 2, 21, "#54|#29"); -- id: 55
+CALL insertOrFindEntity(9, 0, 19, 20, "Relevant categories to rate|#2|many"); -- id: 54
+CALL insertOrFindEntity(9, 0, 2, 21, "#54|#29"); -- id: 55
 CALL insertOrUpdateRating(9, 55, 48, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(9, 55, 49, CONV("E100", 16, 10), 1);
 CALL insertOrUpdateRating(9, 55, 50, CONV("EAAA", 16, 10), 1);
 CALL insertOrUpdateRating(9, 55, 51, CONV("E000", 16, 10), 1);
 
-CALL insertOrFindEntity(9, 2, 23, "well-formed|#10"); -- id: 56
-CALL insertOrFindEntity(9, 2, 21, "#54|#10"); -- id: 57
+CALL insertOrFindEntity(9, 0, 2, 23, "well-formed|#10"); -- id: 56
+CALL insertOrFindEntity(9, 0, 2, 21, "#54|#10"); -- id: 57
 CALL insertOrUpdateRating(9, 57, 54, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(9, 57, 10, CONV("9000", 16, 10), 1);
 
 
-CALL insertOrFindEntity(9, 19, 20, "Relevant properties|#19|many"); -- id: 58
-CALL insertOrFindEntity(9, 19, 20,
+CALL insertOrFindEntity(9, 0, 19, 20, "Relevant properties|#19|many"); -- id: 58
+CALL insertOrFindEntity(9, 0, 19, 20,
     "Relevant properties for type instances|#19|many"); -- id: 59
-CALL insertOrFindEntity(9, 2, 21, "#59|#27"); -- id: 60
-CALL insertOrFindType(9, "Person"); -- id: 61
-CALL insertOrFindEntity(9, 19, 20, "Director(s)|#61|few"); -- id: 62
-CALL insertOrFindEntity(9, 19, 20, "Actors|#61|many"); -- id: 63
-CALL insertOrFindType(9, "Time"); -- id: 64
-CALL insertOrFindEntity(9, 19, 20, "Running time|#64|one"); -- id: 65
+CALL insertOrFindEntity(9, 0, 2, 21, "#59|#27"); -- id: 60
+CALL insertOrFindType(9, 0, "Person"); -- id: 61
+CALL insertOrFindEntity(9, 0, 19, 20, "Director(s)|#61|few"); -- id: 62
+CALL insertOrFindEntity(9, 0, 19, 20, "Actors|#61|many"); -- id: 63
+CALL insertOrFindType(9, 0, "Time"); -- id: 64
+CALL insertOrFindEntity(9, 0, 19, 20, "Running time|#64|one"); -- id: 65
 CALL insertOrUpdateRating(9, 60, 62, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(9, 60, 63, CONV("FE00", 16, 10), 1);
 CALL insertOrUpdateRating(9, 60, 65, CONV("FC00", 16, 10), 1);
 
 
-CALL insertOrFindTemplate(9, 61, CONCAT(
+CALL insertOrFindTemplate(9, 0, 61, CONCAT(
     "{<Popular name>}, <Full name>, <Year of birth>, ",
     "<What the person is known for being>"
     -- (Could have written "is/was" here instead, but maybe it's best to just
     -- keep away from the past tense in general.)
 )); -- id: 66
-CALL insertOrFindEntity(9, 61, 66,
+CALL insertOrFindEntity(9, 0, 61, 66,
     "Peter Jackson|Peter Robert Jackson|1961|Film director"); -- id: 67
-CALL insertOrFindEntity(9, 61, 66,
+CALL insertOrFindEntity(9, 0, 61, 66,
     "Ian McKellen|Ian Murray McKellen|1939|Actor"); -- id: 68
-CALL insertOrFindEntity(9, 61, 66,
+CALL insertOrFindEntity(9, 0, 61, 66,
     "Viggo Mortensen|Viggo Peter Mortensen Jr.|1958|Actor"); -- id: 69
-CALL insertOrFindEntity(9, 61, 66,
+CALL insertOrFindEntity(9, 0, 61, 66,
     "Elijah Wood|Elijah Jordan Wood|1981|Actor"); -- id: 70
-CALL insertOrFindEntity(9, 64, 0,"2 h 59 min"); -- id: 71
+CALL insertOrFindEntity(9, 0, 64, 0,"2 h 59 min"); -- id: 71
 
-CALL insertOrFindEntity(9, 2, 21, "#62|#29"); -- id: 72
-CALL insertOrFindEntity(9, 2, 21, "#63|#29"); -- id: 73
-CALL insertOrFindEntity(9, 2, 21, "#65|#29"); -- id: 74
+CALL insertOrFindEntity(9, 0, 2, 21, "#62|#29"); -- id: 72
+CALL insertOrFindEntity(9, 0, 2, 21, "#63|#29"); -- id: 73
+CALL insertOrFindEntity(9, 0, 2, 21, "#65|#29"); -- id: 74
 CALL insertOrUpdateRating(9, 72, 67, CONV("FFFF", 16, 10), 1);
 CALL insertOrUpdateRating(9, 73, 68, CONV("FFFA", 16, 10), 1);
 CALL insertOrUpdateRating(9, 73, 69, CONV("FFFA", 16, 10), 1);
@@ -193,16 +193,16 @@ CALL insertOrUpdateRating(9, 73, 70, CONV("FFFA", 16, 10), 1);
 CALL insertOrUpdateRating(9, 74, 71, CONV("FFFF", 16, 10), 1);
 
 
-CALL insertOrFindType(9, "Statement"); -- id: 75
-CALL insertOrFindTemplate(9, 75,
+CALL insertOrFindType(9, 0, "Statement"); -- id: 75
+CALL insertOrFindTemplate(9, 0, 75,
     "{<Entity> is an} important/useful{ instance of <Category>}"); -- id: 76
-CALL insertOrFindTemplate(9, 2,
+CALL insertOrFindTemplate(9, 0, 2,
     "Users that have rated <Statement> positively"); -- id: 77
 
 
-CALL insertOrFindTemplate(9, 6,
+CALL insertOrFindTemplate(9, 0, 6,
     "<Name>; <Overall description>; <Event data documentation>;"); -- id: 78
-CALL insertOrFindEntity(9, 6, 78, CONCAT(
+CALL insertOrFindEntity(9, 0, 6, 78, CONCAT(
     "statement_user_rater_bot|",
     "Rates users as instances categories of the #77 template, with ratings ",
     "equal to those of the users regarding the given statement.|"
@@ -210,55 +210,33 @@ CALL insertOrFindEntity(9, 6, 78, CONCAT(
 )); -- id: 79
 
 
-CALL insertOrFindTemplate(9, 2, "Creations of <User>"); -- id: 80
 
 
-
--- CALL insertOrFindType(9, "Scheduled event"); -- id: 80
--- CALL insertOrFindTemplate(9, 80,
---     "<Name>; <Overall description>; <Event data documentation>;"); -- id: 81
--- CALL insertOrFindEntity(9, 80, 81, CONCAT(
---     "publicize_recent_inputs|",
---     "Moves recent inputs from the Private_RecentInputs table to the ",
---     "RecentInputs table once the live_at_time is reached.|"
---     "Uses no event data"
--- )); -- id: 82
--- CALL insertOrFindEntity(9, 80, 81, CONCAT(
---     "update_semantic_inputs|",
---     "Copies recent inputs from the RecentInputs and moves them into the ",
---     "SemanticInputs table. It also implements the bot: #79.|",
---     "obj: None; ",
---     "data_1: The last recent input from RecentInputs that was handled."
--- )); -- id: 83
---
--- INSERT INTO EventData (def_id, obj_id, data_1)
--- VALUES (83, 0, 0);
-
-
-CALL insertOrFindType(9, "Event data documentation"); -- id: 81
-CALL insertOrFindEntity(9, 81, NULL, CONCAT(
+CALL insertOrFindType(9, 0, "Event data documentation"); -- id: 80
+CALL insertOrFindEntity(9, 0, 80, NULL, CONCAT(
     "obj: Statement; ",
     "data_1: Current averaged rating value scaled up as a ulong (for more ",
     "precision), with a neutral rating (of 5/10) as the initial value; ",
     "data_2: Number of users that have rated obj, plus an offset of 3;"
-)); -- id: 82
-CALL insertOrFindEntity(9, 6, 78, CONCAT(
+)); -- id: 81
+CALL insertOrFindEntity(9, 0, 6, 78, CONCAT(
     "mean_with_offset_3_bot|",
     "Rates all statments according to an arithmetic mean of all users, biased",
     "towards a neutral rating (5/10) by using an offset of 3 neutral ratings.|",
-    "#82;"
+    "#81;"
+)); -- id: 82
+
+
+CALL insertOrFindTemplate(9, 0, 2, "Creations of <User>"); -- id: 83
+
+CALL insertOrFindEntity(9, 0, 6, 78, CONCAT(
+    "creator_rater_bot|",
+    "Rates entities as instances of categories of the #83 template (with ",
+    "maximal rating values) if the relevant users have chosen to be recorded ",
+    "as the creators.|"
+    "Uses no event data"
 )); -- id: 83
 
--- CALL insertOrFindEntity(9, 80, 81, CONCAT(
---     "update_mean_bot_inputs|",
---     "Takes recent inputs from the RecentInputs and executes the procedures ",
---     "that updates the mean bots.|",
---     "obj: None; ",
---     "data_1: The last recent input from RecentInputs that was handled."
--- )); -- id: 87
---
--- INSERT INTO EventData (def_id, obj_id, data_1)
--- VALUES (87, 0, 0);
 
 
 

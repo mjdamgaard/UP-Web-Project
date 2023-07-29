@@ -134,7 +134,7 @@ inputRatingSliderCL.addCallback(function($ci, data) {
             c: data.catID,
             i: data.instID,
             r: 0,
-            l: "00"
+            l: 0,
         };
         dbReqManager.input($ci, reqData, data, function($ci, result, data) {
             $ci.find('input[type="range"]').val(5);
@@ -157,7 +157,7 @@ inputRatingSliderCL.addCallback(function($ci, data) {
                 c: data.catID,
                 i: data.instID,
                 r: inputRatVal,
-                l: "00"
+                l: 0,
             };
             $ci.find('button.submit').hide();
             dbReqManager.input($ci, reqData, data, function($ci, result, data) {

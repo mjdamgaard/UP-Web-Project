@@ -120,6 +120,7 @@ submitEntityFieldCL.addCallback(function($ci, data) {
         let reqData = {
             req: "ent",
             u: data.getFromAncestor("inputUserID"),
+            r: 1,
             t: data.newEntityType,
             c: data.newEntityCxt,
             s: defStr,
