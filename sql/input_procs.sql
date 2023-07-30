@@ -178,6 +178,7 @@ BEGIN proc: BEGIN
         SET cxtID = NULL;
     END IF;
 
+    -- check if entity already exists and return its ID as outID if so.
     SELECT id INTO outID
     FROM Entities
     WHERE (
@@ -191,11 +192,15 @@ BEGIN proc: BEGIN
         LEAVE proc;
     END IF;
 
-    IF (typeID != 2 AND typeID != 6 AND typeID <= 8) THEN
+    -- check that typeID is not the "User", "Text data", or "Binary data" types,
+    -- and also that it's not the "Index" type as this is not implemented yet.
+    IF (typeID != 6 AND 4 <= typeID AND typeID <= 8) THEN
         SET exitCode = 2; -- typeID is not allowed for this procedure.
         SELECT outID, exitCode;
         LEAVE proc;
     END IF;
+
+    -- check that typeID is indeed that of a type entity.
     SELECT type_id INTO typeTypeID
     FROM Entities
     WHERE id = typeID;
@@ -205,16 +210,40 @@ BEGIN proc: BEGIN
         LEAVE proc;
     END IF;
 
+    -- if cxtID is not null, fetch that entity's own type and context.
     IF (cxtID IS NOT NULL) THEN
         SELECT type_id, cxt_id INTO cxtTypeID, cxtCxtID
         FROM Entities
         WHERE id = cxtID;
+    END IF;
+
+    -- if typeID is the "Type" type entity, check this cxtID is null.
+    -- (Types might be allowed to have other (super)types as their context in
+    -- the future, but it is not allowed at this point.)
+    IF (typeID = 1) THEN
+        IF (cxtID IS NOT NULL) THEN
+            SET exitCode = 4; -- trying to give a type entity a context.
+            SELECT outID, exitCode;
+            LEAVE proc;
+        END IF;
+    -- else if typeID is the "Template" type entity, check that cxtID is that
+    -- of a type entity itself.
+    ELSEIF (typeID = 3) THEN
+        IF (cxtTypeID != 1) THEN
+            SET exitCode = 5; -- cxtID is not of an existing type entity.
+            SELECT outID, exitCode;
+            LEAVE proc;
+        END IF;
+    -- else the context has to be either null or that of a template entity, in
+    -- which case the context of that template entity has to also match typeID,
+    -- so check these things.
+    ELSEIF (cxtID IS NOT NULL) THEN
         IF (cxtTypeID != 3) THEN
-            SET exitCode = 4; -- cxtID is not of an existing Template entity.
+            SET exitCode = 6; -- cxtID is not of an existing template entity.
             SELECT outID, exitCode;
             LEAVE proc;
         ELSEIF (cxtCxtID != typeID) THEN
-            SET exitCode = 5; -- cxt_id of the cxtID entity is not the
+            SET exitCode = 7; -- cxt_id of the cxtID entity is not the
             -- same as the input typeID.
             SELECT outID, exitCode;
             LEAVE proc;
@@ -239,6 +268,7 @@ BEGIN proc: BEGIN
         END IF;
         SET exitCode = 0; -- insert.
     END IF;
+
     SELECT outID, exitCode;
 END proc; END //
 DELIMITER ;
@@ -251,52 +281,9 @@ CREATE PROCEDURE insertOrFindTemplate (
     IN cxtID BIGINT UNSIGNED,
     IN defStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
-BEGIN proc: BEGIN
-    DECLARE outID, cxtTypeID BIGINT UNSIGNED;
-    DECLARE exitCode TINYINT;
-
-    SELECT id INTO outID
-    FROM Entities
-    WHERE (
-        type_id = 3 AND
-        cxt_id = cxtID AND
-        def_str = defStr
-    );
-    IF (outID IS NOT NULL) THEN
-        SET exitCode = 1; -- find.
-        SELECT outID, exitCode;
-        LEAVE proc;
-    END IF;
-
-    SELECT type_id INTO cxtTypeID
-    FROM Entities
-    WHERE id = cxtID;
-    IF (cxtTypeID != 1) THEN
-        SET exitCode = 2; -- cxtID is not of an existing Type entity.
-        SELECT outID, exitCode;
-        LEAVE proc;
-    END IF;
-
-    INSERT IGNORE INTO Entities (type_id, cxt_id, def_str)
-    VALUES (3, cxtID, defStr);
-    SELECT LAST_INSERT_ID() INTO outID;
-    IF (outID IS NULL) THEN
-        SELECT id INTO outID
-        FROM Entities
-        WHERE (
-            type_id = 3 AND
-            cxt_id <=> cxtID AND
-            def_str = defStr
-        );
-        SET exitCode = 1; -- find.
-    ELSE
-        IF (recordCreator) THEN
-            CALL creatorRaterBot (outID, userID);
-        END IF;
-        SET exitCode = 0; -- insert.
-    END IF;
-    SELECT outID, exitCode;
-END proc; END //
+BEGIN
+    CALL insertOrFindEntity (userID, recordCreator, 3, cxtID, defStr);
+END //
 DELIMITER ;
 
 
@@ -307,40 +294,7 @@ CREATE PROCEDURE insertOrFindType (
     IN defStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
 BEGIN
-    DECLARE outID BIGINT UNSIGNED;
-    DECLARE exitCode TINYINT;
-
-    SELECT id INTO outID
-    FROM Entities
-    WHERE (
-        type_id = 1 AND
-        cxt_id IS NULL AND -- Types might be allowed to have other (super)types
-        -- as their context in the future.
-        def_str = defStr
-    );
-    IF (outID IS NOT NULL) THEN
-        SET exitCode = 1; -- find.
-    ELSE
-        INSERT IGNORE INTO Entities (type_id, cxt_id, def_str)
-        VALUES (1, NULL, defStr);
-        SELECT LAST_INSERT_ID() INTO outID;
-        IF (outID IS NULL) THEN
-            SELECT id INTO outID
-            FROM Entities
-            WHERE (
-                type_id = 1 AND
-                cxt_id <=> NULL AND
-                def_str = defStr
-            );
-            SET exitCode = 1; -- find.
-        ELSE
-            IF (recordCreator) THEN
-                CALL creatorRaterBot (outID, userID);
-            END IF;
-            SET exitCode = 0; -- insert.
-        END IF;
-    END IF;
-    SELECT outID, exitCode;
+    CALL insertOrFindEntity (userID, recordCreator, 1, 0, defStr);
 END //
 DELIMITER ;
 
@@ -367,8 +321,6 @@ BEGIN
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Texts (id, str)
     VALUES (outID, textStr);
-    -- INSERT INTO Private_Creators (ent_id, user_id)
-    -- VALUES (outID, userID);
     SELECT outID, 0 AS exitCode; -- insert.
 END //
 DELIMITER ;
@@ -388,8 +340,6 @@ BEGIN
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Binaries (id, bin)
     VALUES (outID, bin);
-    -- INSERT INTO Private_Creators (ent_id, user_id)
-    -- VALUES (outID, userID);
     SELECT outID, 0 AS exitCode; -- insert.
 END //
 DELIMITER ;

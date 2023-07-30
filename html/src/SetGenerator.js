@@ -96,6 +96,7 @@ export class SetQuerier extends SetGenerator {
                 let reqData = {
                     req: "ent",
                     u: sg.dataNode.inputUserID,
+                    r: 0,
                     t: 2,
                     c: sg.catCxtID,
                     s: sg.catDefStr,

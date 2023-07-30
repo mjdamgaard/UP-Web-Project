@@ -40,7 +40,7 @@ submitEntityFieldCL.addCallback(function($ci, data) {
     if (data.typeID == 1) {
         data.newEntityType = data.entID;
         data.newEntityCxt = 0;
-        let labelArr = ["Title"];
+        let labelArr = data.entID == 3 ? ["Template", "Type ID"] : ["Title"];
         $ci.trigger("append-input-fields", [labelArr]);
         return;
     }
@@ -76,6 +76,11 @@ export function getLabelArr(tmplDefStr) {
 
 submitEntityFieldCL.addCallback(function($ci, data) {
     $ci.on("submit", function() {
+        $(this).trigger("construct-new-entity");
+        $(this).trigger("submit-new-entity");
+        return false;
+    });
+    $ci.on("construct-new-entity", function() {
         let $this = $(this);
         if (!data.readyForSubmission) {
             $this.children('.response-display').html(
@@ -83,7 +88,7 @@ submitEntityFieldCL.addCallback(function($ci, data) {
                     'Wait until the submission field is fully loaded' +
                 '</span>'
             );
-            return;
+            return false;
         }
         let $inputFields = $this
             .find('.def-item-field-container')
@@ -94,28 +99,37 @@ submitEntityFieldCL.addCallback(function($ci, data) {
             let input = ($(this).find('.form-control').val() ?? "").trim();
             defStrParts.push(input);
         });
-        // contruct the defining string.
-        let defStr = defStrParts
-            .map(val => val.replaceAll("|", "\\|").replaceAll("\\", "\\\\"))
-            .join("|");
-        // test if defStr is not too long or too short, and submit if not.
-        if (defStr.length > 255) {
-            $this.children('.response-display').html(
-                '<span class="text-warning">' +
-                    'Defining text is too long' +
-                '</span>'
-            );
-            console.log("Too long defining string: " + defStr);
-            return;
+        // if entID is the "Template" type entity, ...
+        if (data.entID == 3) {
+            // ...
+        // else ...
+        } else {
+            // contruct the defining string.
+            data.defStr = defStrParts
+                .map(val => val.replaceAll("|", "\\|").replaceAll("\\", "\\\\"))
+                .join("|");
+            // test if defStr is not too long or too short, and submit if not.
+            if (data.defStr.length > 255) {
+                $this.children('.response-display').html(
+                    '<span class="text-warning">' +
+                        'Defining text is too long' +
+                    '</span>'
+                );
+                console.log("Too long defining string: " + data.defStr);
+                return;
+            }
+            if (/^[\|]*$/.test(data.defStr)) {
+                $this.children('.response-display').html(
+                    '<span class="text-warning">' +
+                        'No input was supplied' +
+                    '</span>'
+                );
+                return;
+            }
         }
-        if (/^[\|]*$/.test(defStr)) {
-            $this.children('.response-display').html(
-                '<span class="text-warning">' +
-                    'No input was supplied' +
-                '</span>'
-            );
-            return;
-        }
+        return false;
+    });
+    $ci.on("submit-new-entity", function() {
         // upload the new entity.
         let reqData = {
             req: "ent",
@@ -123,9 +137,9 @@ submitEntityFieldCL.addCallback(function($ci, data) {
             r: 1,
             t: data.newEntityType,
             c: data.newEntityCxt,
-            s: defStr,
+            s: data.defStr,
         };
-        dbReqManager.input($this, reqData, data, function($ci, result, data) {
+        dbReqManager.input($(this), reqData, data, function($ci, result, data) {
             let exitCode = result.exitCode;
             let outID = result.outID;
             let newData = new DataNode(data, {entID: outID});
