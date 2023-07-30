@@ -31,14 +31,14 @@ CREATE PROCEDURE updateMeanWithOffset3Bot (
     IN prevRatVal SMALLINT UNSIGNED,
     IN stmtID BIGINT UNSIGNED
 )
-BEGIN proc: BEGIN
+BEGIN
     DECLARE prevMeanHP, newMeanHP, ratValHP, prevRatValHP BIGINT UNSIGNED;
-    DECLARE userNum BIGINT UNSIGNED;
+    DECLARE prevUserNum, newUserNum BIGINT UNSIGNED;
     DECLARE newMean SMALLINT UNSIGNED;
 
     -- get previous high-precision mean and the number of users for the
     -- statement.
-    SELECT data_1, data_2 INTO prevMeanHP, userNum
+    SELECT data_1, data_2 INTO prevMeanHP, prevUserNum
     FROM BotData
     WHERE (
         def_id = 82 AND
@@ -49,10 +49,10 @@ BEGIN proc: BEGIN
     -- with an offset of what amounts to 3 neutral ratings.
     IF (prevMeanHP IS NULL) THEN
         SET prevMeanHP =  9223372036854775807;
-        SET userNum = 3;
+        SET prevUserNum = 3;
         INSERT INTO BotData (def_id, obj_id, data_1, data_2)
-        VALUES (82, stmtID, prevMeanHP, userNum);
-        SELECT data_1, data_2 INTO prevMeanHP, userNum
+        VALUES (82, stmtID, prevMeanHP, prevUserNum);
+        SELECT data_1, data_2 INTO prevMeanHP, prevUserNum
         FROM BotData
         WHERE (
             def_id = 82 AND
@@ -62,12 +62,37 @@ BEGIN proc: BEGIN
     END IF;
     -- compute the high-precision rating values.
     SET ratValHP = ratVal << (6 * 8);
-    --TODO: Correct this: Branch according to 3 different cases for prevRatVal.
     SET prevRatValHP = prevRatVal << (6 * 8);
-    -- compute the high-precision new mean.
-    SET newMeanHP = prevMeanHP DIV (userNum + 1) * userNum +
-        ratValHP DIV (userNum + 1);
-    -- compute the normal-precision new mean.
+    -- branch and compute the new high-precision mean and the new user number.
+    IF (prevRatVal IS NULL AND ratVal IS NOT NULL) THEN
+        -- compute newMeanHP as the new arithmetic mean from the previous one.
+        SET newMeanHP = prevMeanHP DIV (prevUserNum + 1) * prevUserNum +
+            ratValHP DIV (prevUserNum + 1);
+        -- increase the user number by one.
+        SET newUserNum = prevUserNum + 1;
+    ELSEIF (prevRatVal IS NULL AND ratVal IS NULL) THEN
+        -- make no changes to newMeanHP and the user number.
+        SET newMeanHP = prevMeanHP;
+        SET newUserNum = prevUserNum;
+    ELSEIF (prevRatVal IS NOT NULL AND ratVal IS NOT NULL) THEN
+        -- compute newMeanHP as the new arithmetic mean from the previous one.
+        IF (ratVal >= prevRatVal) THEN
+            SET newMeanHP = prevMeanHP +
+                (ratValHP - prevRatValHP) DIV prevUserNum;
+        ELSE
+            SET newMeanHP = prevMeanHP -
+                (prevRatValHP - ratValHP) DIV prevUserNum;
+        END IF;
+        -- make no changes to the user number.
+        SET newUserNum = prevUserNum;
+    ELSE -- IF (prevRatVal IS NOT NULL AND ratVal IS NULL) THEN
+        -- compute newMeanHP as the new arithmetic mean from the previous one.
+        SET newMeanHP = (prevMeanHP - prevRatValHP DIV prevUserNum)
+            DIV (prevUserNum - 1) * prevUserNum;
+        -- decrease the user number by one.
+        SET newUserNum = prevUserNum - 1;
+    END IF;
+    -- compute the new normal-precision mean.
     SET newMean = newMeanHP >> (6 * 8);
 
     -- update the bot's input set.
@@ -85,7 +110,6 @@ BEGIN proc: BEGIN
     );
     -- update the bot's data for the statement.
     REPLACE INTO BotData (def_id, obj_id, data_1, data_2)
-    VALUES (82, stmtID, newMeanHP, userNum + 1);
-
-END proc; END //
+    VALUES (82, stmtID, newMeanHP, newUserNum);
+END //
 DELIMITER ;

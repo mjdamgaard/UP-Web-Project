@@ -86,10 +86,10 @@ CALL insertOrFindEntity(9, 0, 2, 22, "Mathematics|#31"); -- id: 36
 
 CALL insertOrFindEntity(9, 0, 19, 20, "Subcategories|#2|many"); -- id: 37
 CALL insertOrFindEntity(9, 0, 2, 21, "#37|#10"); -- id: 38
-CALL insertOrUpdateRating(9, 38, 32, CONV("FFFF", 16, 10), 1);
+CALL insertOrUpdateRating(9, 38, 32, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(9, 38, 31, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(9, 38, 24, CONV("F000", 16, 10), 1);
-CALL insertOrUpdateRating(9, 38, 25, CONV("A130", 16, 10), 1);
+CALL insertOrUpdateRating(9, 38, 25, CONV("A100", 16, 10), 1);
 CALL insertOrUpdateRating(9, 38, 26, CONV("A000", 16, 10), 1);
 CALL insertOrFindEntity(9, 0, 27, 0, "ExAmPlE oF a NoT vErY uSeFuL eNtItY"); -- id: 39
 CALL insertOrUpdateRating(9, 38, 39, CONV("0103", 16, 10), 1);
@@ -97,19 +97,19 @@ CALL insertOrUpdateRating(9, 38, 39, CONV("0103", 16, 10), 1);
 CALL insertOrFindEntity(9, 0, 2, 21, "#37|#24"); -- id: 40
 CALL insertOrUpdateRating(9, 40, 25, CONV("E100", 16, 10), 1);
 CALL insertOrUpdateRating(9, 40, 26, CONV("E000", 16, 10), 1);
-CALL insertOrUpdateRating(9, 40, 39, CONV("0001", 16, 10), 1);
+CALL insertOrUpdateRating(9, 40, 39, CONV("0100", 16, 10), 1);
 CALL insertOrUpdateRating(9, 40, 33, CONV("F000", 16, 10), 1);
 
 CALL insertOrFindEntity(9, 0, 2, 21, "#37|#32"); -- id: 41
 CALL insertOrUpdateRating(9, 41, 33, CONV("F000", 16, 10), 1);
-CALL insertOrUpdateRating(9, 41, 34, CONV("F010", 16, 10), 1);
-CALL insertOrUpdateRating(9, 41, 35, CONV("F050", 16, 10), 1);
+CALL insertOrUpdateRating(9, 41, 34, CONV("F100", 16, 10), 1);
+CALL insertOrUpdateRating(9, 41, 35, CONV("F200", 16, 10), 1);
 CALL insertOrUpdateRating(9, 41, 36, CONV("F100", 16, 10), 1);
 
-CALL insertOrUpdateRating(9, 10, 25, CONV("A000", 16, 10), 1);
+CALL insertOrUpdateRating(9, 10, 25, CONV("A100", 16, 10), 1);
 CALL insertOrUpdateRating(9, 10, 31, CONV("A400", 16, 10), 1);
-CALL insertOrUpdateRating(9, 10, 29, CONV("9003", 16, 10), 1);
-CALL insertOrUpdateRating(9, 10, 30, CONV("9002", 16, 10), 1);
+CALL insertOrUpdateRating(9, 10, 29, CONV("A000", 16, 10), 1);
+CALL insertOrUpdateRating(9, 10, 30, CONV("9000", 16, 10), 1);
 
 CALL insertOrUpdateRating(9, 31, 29, CONV("FF03", 16, 10), 1);
 CALL insertOrUpdateRating(9, 31, 30, CONV("FF02", 16, 10), 1);
@@ -117,9 +117,9 @@ CALL insertOrUpdateRating(9, 31, 30, CONV("FF02", 16, 10), 1);
 
 CALL insertOrFindEntity(9, 0, 19, 20, "Related entities|any type|many"); -- id: 42
 CALL insertOrFindEntity(9, 0, 2, 21, "#42|#29"); -- id: 43
-CALL insertOrUpdateRating(9, 43, 30, CONV("FFFF", 16, 10), 1);
+CALL insertOrUpdateRating(9, 43, 30, CONV("FF00", 16, 10), 1);
 CALL insertOrFindEntity(9, 0, 2, 21, "#42|#30"); -- id: 44
-CALL insertOrUpdateRating(9, 44, 29, CONV("FFF0", 16, 10), 1);
+CALL insertOrUpdateRating(9, 44, 29, CONV("FF00", 16, 10), 1);
 CALL insertOrFindEntity(9, 0, 2, 21, "#42|#24"); -- id: 45
 CALL insertOrUpdateRating(9, 45, 33, CONV("F000", 16, 10), 1);
 CALL insertOrFindEntity(9, 0, 2, 21, "#42|#33"); -- id: 46
@@ -144,7 +144,7 @@ CALL insertOrFindEntity(9, 0, 19, 20, "Relevant categories to rate|#2|many"); --
 CALL insertOrFindEntity(9, 0, 2, 21, "#54|#29"); -- id: 55
 CALL insertOrUpdateRating(9, 55, 48, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(9, 55, 49, CONV("E100", 16, 10), 1);
-CALL insertOrUpdateRating(9, 55, 50, CONV("EAAA", 16, 10), 1);
+CALL insertOrUpdateRating(9, 55, 50, CONV("EA00", 16, 10), 1);
 CALL insertOrUpdateRating(9, 55, 51, CONV("E000", 16, 10), 1);
 
 CALL insertOrFindEntity(9, 0, 2, 23, "well-formed|#10"); -- id: 56
@@ -186,11 +186,11 @@ CALL insertOrFindEntity(9, 0, 64, 0,"2 h 59 min"); -- id: 71
 CALL insertOrFindEntity(9, 0, 2, 21, "#62|#29"); -- id: 72
 CALL insertOrFindEntity(9, 0, 2, 21, "#63|#29"); -- id: 73
 CALL insertOrFindEntity(9, 0, 2, 21, "#65|#29"); -- id: 74
-CALL insertOrUpdateRating(9, 72, 67, CONV("FFFF", 16, 10), 1);
-CALL insertOrUpdateRating(9, 73, 68, CONV("FFFA", 16, 10), 1);
-CALL insertOrUpdateRating(9, 73, 69, CONV("FFFA", 16, 10), 1);
-CALL insertOrUpdateRating(9, 73, 70, CONV("FFFA", 16, 10), 1);
-CALL insertOrUpdateRating(9, 74, 71, CONV("FFFF", 16, 10), 1);
+CALL insertOrUpdateRating(9, 72, 67, CONV("FF00", 16, 10), 1);
+CALL insertOrUpdateRating(9, 73, 68, CONV("FF00", 16, 10), 1);
+CALL insertOrUpdateRating(9, 73, 69, CONV("FF00", 16, 10), 1);
+CALL insertOrUpdateRating(9, 73, 70, CONV("FF00", 16, 10), 1);
+CALL insertOrUpdateRating(9, 74, 71, CONV("FF00", 16, 10), 1);
 
 
 CALL insertOrFindType(9, 0, "Statement"); -- id: 75
