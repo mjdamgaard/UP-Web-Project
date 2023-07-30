@@ -138,13 +138,14 @@ export class SetQuerier extends SetGenerator {
 export class SetCombiner extends SetGenerator {
     constructor(
         setGeneratorArr,
-        sortAscending, setArr, isReadyArr, // optional.
+        sort, sortAscending, setArr, isReadyArr, // optional.
     ) {
         super();
         this.setGeneratorArr = setGeneratorArr ?? [];
         let setNum = this.setGeneratorArr.length;
         this.setArr = setArr ?? new Array(setNum);
         this.isReadyArr = isReadyArr ?? new Array(setNum).fill(false);
+        this.sort = sort ?? 1;
         this.sortAscending = sortAscending ?? 0;
     }
 
@@ -160,7 +161,7 @@ export class SetCombiner extends SetGenerator {
         let thisSG = this;
         this.setGeneratorArr.forEach(function(val, ind) {
             val.generateSet(thisSG, ind, function(sg, set, ind) {
-                sg.setArr[ind] = (sg.transformSet(set) ?? set);
+                sg.setArr[ind] = (sg.transformSet(set, ind) ?? set);
                 sg.isReadyArr[ind] = true;
                 sg.combineSetsIfReady(obj, callbackData, callback);
             });
@@ -173,11 +174,20 @@ export class SetCombiner extends SetGenerator {
         );
         if (isReady) {
             let combSet = this.combineSets();
+            // sort combSet if this.sort is truthful.
+            if (this.sort) {
+                if (this.sortAscending) {
+                    combSet = combSet.sort((row1, row2) => row1[0] - row2[0]);
+                } else {
+                    combSet = combSet.sort((row1, row2) => row2[0] - row1[0]);
+                }
+            }
+            // finally call the callback with the resulting combSet.
             callback(obj, combSet, callbackData);
         }
     }
 
-    transformSet(set) {
+    transformSet(set, sgIndex) {
         // Can be redefined by descendant classes.
         // (transformSet() might also store additional data for combineSets().)
     }
@@ -199,11 +209,11 @@ export class SetCombiner extends SetGenerator {
 export class MaxRatingSetCombiner extends SetCombiner {
     constructor(
         setGeneratorArr,
-        sortAscending, setArr, isReadyArr, // optional.
+        sort, sortAscending, setArr, isReadyArr, // optional.
     ) {
         super(
             setGeneratorArr,
-            sortAscending, setArr, isReadyArr,
+            sort, sortAscending, setArr, isReadyArr,
         );
     }
 
@@ -217,28 +227,28 @@ export class MaxRatingSetCombiner extends SetCombiner {
         let ret = new Array(concatSet.length);
         let retLen = 0;
         let currInstID = 0;
-        let row, maxRat, currRat;
+        let row, maxRatVal, currRatVal;
         concatSet.forEach(function(val, ind) {
+            // if val is the first in a group with the same instID, record its
+            // ratVal as the maxRatVal and add a copy of val to the return
+            // array.
             if (val[1] !== currInstID) {
                 currInstID = val[1];
-                maxRat = val[0];
-                ret[retLen] = (row = [maxRat, currInstID]);
+                maxRatVal = val[0];
+                ret[retLen] = (row = [maxRatVal, currInstID]);
                 retLen++;
+            // else compare the ratVal to the previous maxRatVal and change the
+            // last row of the return array if it is larger.
             } else {
-                currRat = val[0];
-                if (currRat > maxRat) {
-                    row[0] = (maxRat = currRat);
+                currRatVal = val[0];
+                if (currRatVal > maxRatVal) {
+                    row[0] = (maxRatVal = currRatVal);
                 }
             }
         });
-        // delete the empty slots of ret.
+        // delete the empty slots of ret and return it.
         ret.length = retLen;
-        // set and return this.combSet as ret sorted after the combRatVal.
-        if (this.sortAscending) {
-            return ret.sort((row1, row2) => row1[0] - row2[0]);
-        } else {
-            return ret.sort((row1, row2) => row2[0] - row1[0]);
-        }
+        return ret;
     }
 }
 
@@ -246,209 +256,108 @@ export class MaxRatingSetCombiner extends SetCombiner {
 export class PrioritySetCombiner extends SetCombiner {
     constructor(
         setGeneratorArr,
-        sortAscending, setArr, isReadyArr, // optional.
+        sort, sortAscending, setArr, isReadyArr, // optional.
     ) {
         super(
             setGeneratorArr,
-            sortAscending, setArr, isReadyArr,
+            sort, sortAscending, setArr, isReadyArr,
         );
     }
 
+    transformSet(set, sgIndex) {
+        return set.map(function(val) {
+            val[2] = sgIndex;
+        });
+    }
+
     combineSets() {
-        // TODO: Implement.
-        // // sort each set in setArr by instID.
-        // this.setArr.forEach(function(set) {
-        //     set.sort(
-        //         (a, b) => a[1] - b[1]
-        //     );
-        // });
-        // // TODO: Implement further.
-        // // setArr is imploded into concatArr, which is then sorted by instID.
-        // let concatSet = [].concat(...this.setArr).sort(
-        //     (a, b) => a[1] - b[1]
-        // );
-        // // construct a return array by recording only the maximal rating for
-        // // each group of elements with the same instID in the concatArr.
-        // let ret = new Array(concatSet.length);
-        // let retLen = 0;
-        // let currInstID = 0;
-        // let row, maxRat, currRat;
-        // concatSet.forEach(function(val, ind) {
-        //     if (val[1] !== currInstID) {
-        //         currInstID = val[1];
-        //         maxRat = val[0];
-        //         ret[retLen] = (row = [maxRat, currInstID]);
-        //         retLen++;
-        //     } else {
-        //         currRat = val[0];
-        //         if (currRat > maxRat) {
-        //             row[0] = (maxRat = currRat);
-        //         }
-        //     }
-        // });
-        // // delete the empty slots of ret.
-        // ret.length = retLen;
-        // // set and return this.combSet as ret sorted after the combRatVal.
-        // if (this.sortAscending) {
-        //     return ret.sort((row1, row2) => row1[0] - row2[0]);
-        // } else {
-        //     return ret.sort((row1, row2) => row2[0] - row1[0]);
-        // }
+        // setArr is imploded into concatArr, which is then sorted by instID.
+        let concatSet = [].concat(...this.setArr).sort(
+            (a, b) => a[1] - b[1]
+        );
+        // construct a return array by recording only the one rating for each
+        // group of elements with the same instID in the concatArr, namely the
+        // one with the smallest set generator index (val[2]).
+        let ret = new Array(concatSet.length);
+        let retLen = 0;
+        let currInstID = 0;
+        let row, minSGIndex, currSGIndex;
+        concatSet.forEach(function(val, ind) {
+            // if val is the first in a group with the same instID, record its
+            // sgIndex and add a copy of val to the return array.
+            if (val[1] !== currInstID) {
+                currInstID = val[1];
+                minSGIndex = val[2];
+                ret[retLen] = (row = [val[0], currInstID, minSGIndex]);
+                retLen++;
+            // else compare the val[2] to the previous minSGIndex and change the
+            // last row of the return array if it is smaller.
+            } else {
+                currSGIndex = val[2];
+                if (currSGIndex > minSGIndex) {
+                    row[2] = (minSGIndex = currSGIndex);
+                }
+            }
+        });
+        // delete the empty slots of ret and return it.
+        ret.length = retLen;
+        return ret;
     }
 }
 
 
+export class WeightedAverageSetCombiner extends SetCombiner {
+    constructor(
+        setGeneratorArr,
+        weightArr,
+        sort, sortAscending, setArr, isReadyArr, // optional.
+    ) {
+        super(
+            setGeneratorArr,
+            sort, sortAscending, setArr, isReadyArr,
+        );
+        this.weightArr = weightArr;
+    }
 
+    transformSet(set, sgIndex) {
+        let weight = this.weightArr[sgIndex];
+        return set.map(function(val) {
+            val[2] = weight;
+        });
+    }
 
-
-
-
-// /*
-// data.setDataArr = [setData, ...],
-//     setData = {
-//         catCxtID, catDefStr, objID,
-//         catID?,
-//         queryUserID,
-//         // weight, queryParams, ratTransFun?,
-//         set?,
-//         concatWithExistingSet?,
-//         isReady?,
-//     },
-//     queryParams = {num, ratingLo, ratingHi, offset?, isAscending}.
-// */
-//
-// export class SetManager {
-//     constructor(
-//         setDataArr,
-//         parentManager, childManagerArr,
-//         sortAscending, combSet
-//     ) {
-//         this.setDataArr = setDataArr ?? [];
-//         this.parentManager = parentManager;
-//         this.childManagerArr = childManagerArr ?? [];
-//         this.sortAscending = sortAscending ?? 0; // false;
-//         // this.concatSet = concatSet;
-//         this.combSet = combSet;
-//     }
-//
-//     queryAndCombineSets(callbackData, callback) {
-//         if (!callback) {
-//             callback = callbackData;
-//             callbackData = undefined;
-//         }
-//         let setNum = this.setDataArr.length;
-//         for (let i = 0; i < setNum; i++) {
-//             let setData = this.setDataArr[i];
-//             if (!setData.set) {
-//                 // if setData.catID is already known, query for the set
-//                 // immediately.
-//                 if (setData.catID) {
-//                     this.querySetAndCombineIfReady(
-//                         setData, i, callbackData, callback
-//                     );
-//                     continue;
-//                 }
-//                 // else, first query for the catID, and then the set.
-//                 let reqData = {
-//                     req: "entID",
-//                     c: setData.catCxtID,
-//                     s: setData.catDefStr,
-//                     t: setData.objID,
-//                 };
-//                 dbReqManager.query(this, reqData, i, function(obj, result, i) {
-//                     setData.catID = (result[0] ?? [0])[0];
-//                     obj.querySetAndCombineIfReady(
-//                         setData, i, callbackData, callback
-//                     );
-//                 });
-//             } else if (!setData.isReady) {
-//                 setData.set = this.transformSet(setData.set, setData, i);
-//                 setData.isReady = true;
-//             }
-//         }
-//         this.combineSetsIfReady(callbackData, callback);
-//     }
-//
-//     querySetAndCombineIfReady(setData, i, callbackData, callback) {
-//         let queryParams = setData.queryParams;
-//         queryParams.offset ??= 0;;
-//         queryParams.isAscending ??= 0;;
-//         let reqData = {
-//             req: "set",
-//             u: setData.queryUserID,
-//             c: setData.catID,
-//             rl: queryParams.ratingLo,
-//             rh: queryParams.ratingHi,
-//             n: queryParams.num,
-//             o: queryParams.offset,
-//             a: queryParams.isAscending,
-//         };
-//         dbReqManager.query(this, reqData, i, function(obj, result, i) {
-//             setData.set = obj.transformSet(result, setData, i);
-//             setData.isReady = true;
-//             obj.combineSetsIfReady(callbackData, callback);
-//         });
-//     }
-//
-//     transformSet(set, setData, i) {
-//         let ratTransFun = setData.ratTransFun;
-//         set.forEach(function(row) {
-//             row[2] = ratTransFun(row[0]);
-//             row[3] = i;
-//         });
-//         return set;
-//     }
-//
-//     combineSetsIfReady(callbackData, callback) {
-//         let isReady = this.setDataArr.reduce(
-//             (acc, val) => acc && val.isReady, true
-//         );
-//         if (isReady) {
-//             this.computeConcatenatedSet();
-//             this.computeCombinedSet();
-//             callback(this.combSet, callbackData);
-//         }
-//     }
-//
-//     computeConcatenatedSet() {
-//         let setArr = this.setDataArr.map(val => val.set);
-//         return this.concatSet = [].concat(...setArr).sort(
-//             (a, b) => a[1] - b[1]
-//         );
-//     }
-//
-//     computeCombinedSet() {
-//         let ret = new Array(this.concatSet.length);
-//         let retLen = 0;
-//         let weightArr = this.setDataArr.map(val => val.weight);
-//         let currInstID = 0;
-//         let row, accWeight, currWeight, newWeight;
-//         this.concatSet.forEach(function(val, ind) {
-//             if (val[1] !== currInstID) {
-//                 currInstID = val[1];
-//                 ret[retLen] = (row = [val[2], val[1], ind]);
-//                 retLen++;
-//                 accWeight = weightArr[val[3]];
-//             } else {
-//                 currWeight = weightArr[val[3]];
-//                 newWeight = accWeight + currWeight;
-//                 row[0] = (row[0] * accWeight + val[2] * currWeight) / newWeight;
-//                 accWeight = newWeight;
-//             }
-//         });
-//         // delete the weight column of the last row and delete the empty slots.
-//         if (retLen > 0) {
-//             ret[retLen - 1].length = 3;
-//         }
-//         ret.length = retLen;
-//         // set and return this.combSet as ret sorted after the combRatVal.
-//         if (this.sortAscending) {
-//             return this.combSet = ret.sort((row1, row2) => row1[0] - row2[0]);
-//         } else {
-//             return this.combSet = ret.sort((row1, row2) => row2[0] - row1[0]);
-//         }
-//     }
-//
-//
-//
-// }
+    combineSets() {
+        // setArr is imploded into concatArr, which is then sorted by instID.
+        let concatSet = [].concat(...this.setArr).sort(
+            (a, b) => a[1] - b[1]
+        );
+        // construct a return array by ...
+        let ret = new Array(concatSet.length);
+        let retLen = 0;
+        let weightArr = this.weightArr;
+        let currInstID = 0;
+        let row, accWeight, currWeight, newWeight;
+        concatSet.forEach(function(val, ind) {
+            // if val is the first in a group with the same instID, write its
+            // weight (val[2]) to the accumulated weight (accWeight) and add a
+            // copy of val to the return array.
+            if (val[1] !== currInstID) {
+                currInstID = val[1];
+                ret[retLen] = (row = [val[0], val[1]]);
+                retLen++;
+                accWeight = val[2];
+            // else combine the last row with val by computing a combined,
+            // ratVal, namely a weighted average, and also add the weight to
+            // accWeight.
+            } else {
+                currWeight = val[2];
+                newWeight = accWeight + currWeight;
+                row[0] = (row[0] * accWeight + val[0] * currWeight) / newWeight;
+                accWeight = newWeight;
+            }
+        });
+        // delete the empty slots of ret and return it.
+        ret.length = retLen;
+        return ret;
+    }
+}
