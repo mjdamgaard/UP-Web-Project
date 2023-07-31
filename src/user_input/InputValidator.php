@@ -137,7 +137,8 @@ class InputValidator {
                 // }
                 // $pattern = "/^[\S]+$/";
                 $pattern = "/^[a-zA-Z][\w\-]*$/"; // TODO: Make this a lot less
-                // restrictive.
+                // restrictive. (But do not include integers, as these are
+                // reserved for IDs.)
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
                 }

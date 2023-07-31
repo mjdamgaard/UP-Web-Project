@@ -20,19 +20,38 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 }
 
 
-/* Validation of the password */
+/* Getting password and either username or user ID */
 
 // get the userID and the password.
 $paramNameArr = array("u", "pw");
-$typeArr = array("id", "str");
 $paramValArr = InputGetter::getParams($paramNameArr);
-InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
+$u = $paramValArr[0];
+$pw = $paramValArr[1];
+
+
+/* Getting the user ID if a username was provided */
 
 // get connection to the database.
 require $db_io_path . "sdb_config.php";
 $conn = DBConnector::getConnectionOrDie(
     $servername, $dbname, $username, $password
 );
+
+if (!preg_match("/^[1-9][0-9]*$/", $u)) {
+    InputValidator::validateParam($u, "username", "u");
+
+    // TODO: Look up the ID and overwrite it to $u. Handle if user ID lookup
+    // failed.
+
+    $paramValArr[0] = $u;
+}
+
+$typeArr = array("id", "str");
+InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
+
+
+
+/* Verification of the password */
 
 // authenticate the user by verifying the password (requires $u, $pw and $conn,
 // and sets/overwrites $sql, $stmt and $res).

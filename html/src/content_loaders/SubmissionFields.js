@@ -14,7 +14,10 @@ export var submitEntityFieldCL = new ContentLoader(
         '<h4>Submit an entity</h4>' +
         '<form action="javascript:void(0);">' +
             '<div class="def-item-field-container"></div>' +
-            '<button class="btn btn-default submit">Submit</button>' +
+            '<span>' +
+                '<button class="btn btn-default search">Search</button>' +
+                '<button class="btn btn-default submit">Submit</button>' +
+            '</span>' +
         '</form>' +
         '<div class="response-display"></div>' +
     '</div>',
@@ -40,7 +43,7 @@ submitEntityFieldCL.addCallback(function($ci, data) {
     if (data.typeID == 1) {
         data.newEntityType = data.entID;
         data.newEntityCxt = 0;
-        let labelArr = data.entID == 3 ? ["Template", "Type ID"] : ["Title"];
+        let labelArr = data.entID == 3 ? ["Type #", "Template"] : ["Title"];
         $ci.trigger("append-input-fields", [labelArr]);
         return;
     }
@@ -75,12 +78,17 @@ export function getLabelArr(tmplDefStr) {
 }
 
 submitEntityFieldCL.addCallback(function($ci, data) {
-    $ci.on("submit", function() {
-        $(this).trigger("construct-new-entity");
-        $(this).trigger("submit-new-entity");
+    $ci.find("button.submit").on("click", function() {
+        $(this).trigger("construct-entity");
+        $(this).trigger("submit-entity");
         return false;
     });
-    $ci.on("construct-new-entity", function() {
+    $ci.find("button.search").on("click", function() {
+        $(this).trigger("construct-entity");
+        $(this).trigger("search-for-entity");
+        return false;
+    });
+    $ci.on("construct-entity", function() {
         let $this = $(this);
         if (!data.readyForSubmission) {
             $this.children('.response-display').html(
@@ -99,16 +107,20 @@ submitEntityFieldCL.addCallback(function($ci, data) {
             let input = ($(this).find('.form-control').val() ?? "").trim();
             defStrParts.push(input);
         });
-        // if entID is the "Template" type entity, ...
+        // if entID is the "Template" type entity, let newEntityCxt be the
+        // input of the first ("Type #") input field, and let defStr be that of
+        // the following "Template" field.
         if (data.entID == 3) {
-            // ...
-        // else ...
+            data.newEntityCxt = defStrParts[0];
+            data.defStr = defStrParts[1];
+        // else construct defStr from all the input fields given by the
+        // template.
         } else {
             // contruct the defining string.
             data.defStr = defStrParts
                 .map(val => val.replaceAll("|", "\\|").replaceAll("\\", "\\\\"))
                 .join("|");
-            // test if defStr is not too long or too short, and submit if not.
+            // test if defStr is not too long or too short.
             if (data.defStr.length > 255) {
                 $this.children('.response-display').html(
                     '<span class="text-warning">' +
@@ -118,6 +130,7 @@ submitEntityFieldCL.addCallback(function($ci, data) {
                 console.log("Too long defining string: " + data.defStr);
                 return;
             }
+            // test any input was supplied to it.
             if (/^[\|]*$/.test(data.defStr)) {
                 $this.children('.response-display').html(
                     '<span class="text-warning">' +
@@ -129,7 +142,7 @@ submitEntityFieldCL.addCallback(function($ci, data) {
         }
         return false;
     });
-    $ci.on("submit-new-entity", function() {
+    $ci.on("submit-entity", function() {
         // upload the new entity.
         let reqData = {
             req: "ent",
@@ -167,6 +180,41 @@ submitEntityFieldCL.addCallback(function($ci, data) {
                 // throw error since this should not happen.
                 throw (
                     "Recieved exitCode=" + exitCode + " from entity submission"
+                );
+            }
+        });
+        return false;
+    });
+    $ci.on("search-for-entity", function() {
+        let $this = $(this);
+        // remove previous response text.
+        $ci.children('.response-display').empty();
+        // upload the new entity.
+        let reqData = {
+            req: "entID",
+            u: data.getFromAncestor("inputUserID"),
+            t: data.newEntityType,
+            c: data.newEntityCxt,
+            s: data.defStr,
+        };
+        dbReqManager.query($this, reqData, data, function($ci, result, data) {
+            let entID = (result[0] ?? [0])[0];
+            let newData = new DataNode(data, {entID: entID});
+            if (entID) {
+                $ci.children('.response-display').html(
+                    '<span class="text-success">' +
+                        'Entity was found!' +
+                    '</span>' +
+                    '<div>' +
+                        'ID: #' + outID +
+                    '</div>'
+                );
+                $ci.trigger("open-column", ["AppColumn", newData, "right"]);
+            } else {
+                $ci.children('.response-display').html(
+                    '<span class="text-info">' +
+                        'Entity was not found' +
+                    '</span>'
                 );
             }
         });

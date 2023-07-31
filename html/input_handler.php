@@ -18,13 +18,15 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 }
 
 // TODO: In-comment.
-// /* Validation of the session ID  */
+// /* Verification of the session ID  */
 //
 // // get the userID and the session ID.
 // $paramNameArr = array("u", "sesID");
 // $typeArr = array("id", "any");
 // $paramValArr = InputGetter::getParams($paramNameArr);
 // InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
+// $u = $paramValArr[0];
+// $sesID = $paramValArr[1];
 
 // get connection to the database.
 require $db_io_path . "sdb_config.php";

@@ -28,6 +28,9 @@ $typeArr = array("username", "str", "password"); // TODO: Implement e-mail
 // validation.
 $paramValArr = InputGetter::getParams($paramNameArr);
 InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
+$u = $paramValArr[0];
+$em = $paramValArr[1];
+$pw = $paramValArr[2];
 
 // compute the password hash.
 $pwHash = password_hash($pw);
