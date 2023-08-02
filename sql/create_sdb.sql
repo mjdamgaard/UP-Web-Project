@@ -79,45 +79,9 @@ CREATE TABLE Private_RecentInputs (
     live_at_time BIGINT UNSIGNED NOT NULL
 );
 
--- CREATE TABLE RecentInputs (
---     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
---
---     user_id BIGINT UNSIGNED NOT NULL,
---     cat_id BIGINT UNSIGNED NOT NULL,
---     inst_id BIGINT UNSIGNED NOT NULL,
---     rat_val SMALLINT UNSIGNED
---
---     -- changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
---
---     -- UNIQUE INDEX (user_id, cat_id, inst_id, changed_at)
--- );
--- "I think I actually will use that solution, i.e. to just let all the bots
--- and (what was) events run immediately for every new input, and I think that
--- I might even out-comment RecentInputs from the database, then. The reasoning
--- is that, if RecentInputs again becomes useful at some point, either to
--- better allow for third-party bots, and/or to prevent users from being able
--- to troll by changing ratings back and forth quickly (which might be
--- important in some special cases, e.g. when it comes to ratings of code
--- safety), then RecentInputs can just be added once again --- also with an
--- index like the secondary one of SemanticInputs and with the changed_at
--- column again, which should then also be the last column of that index. I
--- think this is what I'll do.." *Alternatively, one could also use:
--- CREATE TABLE RecordedInputs (
---     user_id BIGINT UNSIGNED NOT NULL,
---     cat_id BIGINT UNSIGNED NOT NULL,
---     inst_id BIGINT UNSIGNED NOT NULL,
---
---     changed_at_time BIGINT UNSIGNED,
-
---     rat_val SMALLINT UNSIGNED,
---
---     PRIMARY KEY (user_id, cat_id, inst_id, changed_at)
--- );
--- for helping third-party aggregation bots --- and other SDBs... Hm.. ...Yeah,
--- so one of these tables will probably be needed at some point, but, again,
--- not really at the beginning so we we can leave them out for now.
--- (02.08.23) I think I will actually include RecordedInputs like follows, since
--- we will probably need it for time-dependent aggregates.
+-- RecordedInputs can first of all be used by time-dependent bots (e.g. a mean-
+-- of-recent-inputs bot), and can also potentially used by bots that update on
+-- scheduled events rather than immediately when the input is recieved.
 CREATE TABLE RecordedInputs (
     changed_at_time BIGINT UNSIGNED NOT NULL,
 
