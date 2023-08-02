@@ -8,6 +8,9 @@ import {
 import {
     ContentLoader,
 } from "/src/ContentLoader.js";
+import {
+    sdbInterfaceCL, dbReqManager,
+} from "/src/content_loaders/SDBInterface.js";
 
 
 export var loginPageCL = new ContentLoader(

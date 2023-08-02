@@ -2,6 +2,7 @@
 -- /* Semantic inputs */
 -- DROP TABLE SemanticInputs;
 -- DROP TABLE Private_RecentInputs;
+-- DROP TABLE RecordedInputs;
 -- /* Indexes */
 -- DROP TABLE EntityIndexKeys;
 --
@@ -115,6 +116,22 @@ CREATE TABLE Private_RecentInputs (
 -- for helping third-party aggregation bots --- and other SDBs... Hm.. ...Yeah,
 -- so one of these tables will probably be needed at some point, but, again,
 -- not really at the beginning so we we can leave them out for now.
+-- (02.08.23) I think I will actually include RecordedInputs like follows, since
+-- we will probably need it for time-dependent aggregates.
+CREATE TABLE RecordedInputs (
+    changed_at_time BIGINT UNSIGNED NOT NULL,
+
+    user_id BIGINT UNSIGNED NOT NULL,
+    cat_id BIGINT UNSIGNED NOT NULL,
+    inst_id BIGINT UNSIGNED NOT NULL,
+
+    rat_val SMALLINT UNSIGNED,
+
+    PRIMARY KEY (changed_at_time, user_id, cat_id, inst_id)
+
+    -- TODO: Consider creating this index as well:
+    -- UNIQUE INDEX (user_id, cat_id, inst_id, changed_at_time)
+);
 
 
 /* Indexes */
