@@ -154,7 +154,7 @@ of only being able to submit if they think the product is durable or not.
 And in a similar vein as this, we could also imagine that users might want to
 compare competing websites in order to figure out which option suits them best
 (by utilizing the predicates that they are especially interested in), as well
-as comparing programs/apps, operating systems, programming
+as comparing competing programs/apps, operating systems, programming
 APIs, etc.
 
 
@@ -180,8 +180,85 @@ searching for news articles, books of fiction, videos, games, music, and so on.
 There are in principle infinite possibilities.
 
 
-<!-- Do I actually make and append this section now?: -->
+<!--
+Do I actually make and append this section now?:
 ## Comparing to folksonomies (tags) ...
+*(Yeah, and I might combine it with the following section, which I want to be
+the Semantic Data one..)
+-->
+
+<!--
+## Semantic data *is* the future!
+-->
+
+<!--
+## Disp:
+- Folksonomies..
+- The problem of what you leave out..
+- YT as an example. Mention the positive feedback loops..
+-
+-->
+
+
+## Comparing with conventional folksonomy systems
+
+If we think about [folksomies](https://en.wikipedia.org/wiki/Folksonomy),
+i.e. the systems that are pretty widespread today
+where users can add [tags](https://en.wikipedia.org/wiki/Tag_(metadata)
+to the entities of a site, we can note that such systems also allow users to
+categorize entities according to arbitrary predicates.
+<!--
+But these systems need
+an important upgrade, one that openSDB will offer: Each tag has to come with
+a rating scale where users can quickly and easily give their own opinion of how
+well the tags fits the entity.
+-->
+But the big problem with these systems is that they are binary: A user can only
+state if a given tag fits an entity, or they can leave that tag out when they
+add their tags.
+
+This, as the reader might have experienced as well, means that conventional
+folksonomy systems are quite unreliable: Entities often get tags that does not
+fit them at all, and far from all entities for which a given tag might be
+relevant for will have that tag.
+
+Furthermore, the conventional folksonomy systems are not at all able to give
+the users a good idea of the *degree* to which the tags fit en entity. For
+instance, while the tags of a movie entity might correctly show the a given
+movie is scary, it does not allow users to get an idea of *how* scary the movie
+is.
+
+This also means that conventional folksonomy systems cannot really be used to
+order entities after a given predicate, e.g. in searches or in feeds, the way
+that the system of openSDB will. Sure, the conventional system can be used to
+add more scary movies to your search results, if that is what you are after,
+but it cannot really be used to change the order of those movies according to
+how scary they are.
+
+
+What is more, if all tags instead come with a rating scale, which is what
+openSDB will offer, it might not just mean a higher quality of user data, but
+this system might also be able to attract *more* of this data!
+
+For if we first of all consider the case where a user wants to.. Hm..
+
+
+<!--
+The only reason for not wanting to eventually exchange the conventional
+folksonomy systems with a system of rateable tags/predicates instead would be a
+concern that users might not be
+-->
+
+
+<!--
+This first of all has the advantage that more users will likely contribute
+their opinions about the tags. The current folksonomy systems are typically not
+very easy to
+-->
+
+
+## High-quality semantic user data *is* the future!
+
 
 ...
 
@@ -197,15 +274,13 @@ There are in principle infinite possibilities.
 Shorten the first section and end this section here.
 
 Then:
-- A section with a few examples. End with mentioning feeds/searches.
-    (Draw this section into the last one?..)
-    *Mention durability: Not an opinion but still on a spectrum..
-- A section explaining the browser extension and a hub for all ratings.
+- A section with a few examples. End with mentioning feeds/searches. (check)
 - A section about how semantic data is much better than conventional data.
     - compare with folksonomies also.
 - ..No tracking and open source.. *Voluntary data.
     *(Maybe mention why this means that other sites can't copy.)
-- A section about user groups and they will mean.
+- A section explaining the browser extension and a hub for all ratings.
+- A section about user groups and what they will mean.
 - ..About overviews of relevant entities/categories and graph discussions etc...
     - ...And perhaps template documents (decentralized collaboration) and code
     verification...
