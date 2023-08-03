@@ -127,7 +127,8 @@ be combined such that the search results are ordered with the movies most
 fitting of this combination first in the list.  
 
 
-## Examples where this could be useful
+
+## Some examples where rateable predicates can be useful
 
 The fact that creating and using these predicates are completely in the hands
 of the users, and that they can thus use any predicates they want, opens up
@@ -254,6 +255,56 @@ Semantic user data *is* the future, and it is only a matter time before it will
 be the standard on the web.
 
 
+
+## Open source, no ads, no tracking, and no gathering of involuntary data!
+
+If openSDB manages to attract a sizable network of users and show they way for
+semantic user data on the web, other sites could of course try to copy the
+principles of its system. This is especially possible due to the fact that it
+is completely open-source.
+
+However, being open source hopefully also turns out to be the advantage that
+will ultimately make users prefer it over any potential not-so-open competitors.
+
+If you submit your data to closed-source website, you run the risk that when
+the site has grown big enough, it owners will try to milk its users for more
+money (e.g. by running more ads or collecting and selling more metadata about
+them), even if this comes at the cost of less user satisfaction.
+
+But an open source site like openSDB will not have this luxury, especially not
+if the site has maintained a policy that all submitted user data is supplied
+to any third party that asks for it. This way third parties will be able to
+continuously back up the data of the site, and if the site ever starts acting
+selfishly towards its userbase, others will just be able to make a copy of the
+site, complete with user data and all, and start hosting it at another domain.
+
+Not only will openSDB indeed commit itself to such a policy, it will even
+commit itself to working together with other parties that copies it (and its
+policies), namely with the goal of creating a distributed and decentralized
+(semantic) database.
+
+This means that openSDB will always be forced to work best in the interests of
+its users, or it will simply be replaced.
+
+And to further cement the point of being for the users, openSDB will also
+promise not to show any ads (unless perhaps as something that users can opt
+into). It will also not try to collect any data about the users other than the
+data that is necessary for the site to work.
+
+
+
+## A browser extension to make openSDB[^2] a hub for all ratings on the web!
+
+[^2]: As well as its potential open-source peers in a future distributed
+database.
+
+...
+
+
+
+
+
+<!--
 ## Semantic user groups
 
 In the semantic system of openSDB, even the users themselves will get an entity
@@ -262,7 +313,7 @@ able to make statements about each other. This opens up further possibilities
 in long run since it means that users will also able to classify each other.
 
 ...
-
+ -->
 
 
 
@@ -287,11 +338,12 @@ in long run since it means that users will also able to classify each other.
 - A section with a few examples. End with mentioning feeds/searches. (check)
 - A section about how semantic data is much better than conventional data.
     - compare with folksonomies also.
-- A section about user groups and what they will mean.
 - ..No tracking and open source.. *Voluntary data.
     *Give data securely with anonymous account..
     *(Maybe mention why this means that other sites can't copy.)
 - A section explaining the browser extension and a hub for all ratings.
+- A section about user groups and what they will mean.
+    *(I may actaully leave these points out..)
 - ..About overviews of relevant entities/categories and graph discussions etc...
     - ...And perhaps template documents (decentralized collaboration) and code
     verification...
