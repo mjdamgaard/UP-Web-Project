@@ -151,11 +151,6 @@ might be considered factual (and not a matter of opinion), but where it is
 nonetheless still useful that users can submit their rating on a scale, instead
 of only being able to submit if they think the product is durable or not.
 
-And in a similar vein as this, we could also imagine that users might want to
-compare competing websites in order to figure out which option suits them best
-(by utilizing the predicates that they are especially interested in), as well
-as comparing competing programs/apps, operating systems, programming
-APIs, etc.
 
 
 We could also think of users wishing to find information and reading material
@@ -176,20 +171,10 @@ to the user's needs.
 
 And to end this section with a few more examples where being able to tailor
 searches after specific predicates might be very helpful, we could imagine
-searching for news articles, books of fiction, videos, games, music, and so on.
-There are in principle infinite possibilities.
+searching for news articles, books of fiction, videos, games, music,
+programs/apps, websites, and so on.
+There are a myriad of possibilities.
 
-
-<!--
-Do I actually make and append this section now?:
-## Comparing to folksonomies (tags) ...
-*(Yeah, and I might combine it with the following section, which I want to be
-the Semantic Data one..)
--->
-
-<!--
-## Semantic data *is* the future!
--->
 
 <!--
 ## Disp:
@@ -200,7 +185,8 @@ the Semantic Data one..)
 -->
 
 
-## Comparing with conventional folksonomy systems
+<!-- ## Comparing with conventional folksonomy systems -->
+## High-quality semantic user data *is* the future!
 
 If we think about [folksomies](https://en.wikipedia.org/wiki/Folksonomy),
 i.e. the systems that are pretty widespread today
@@ -228,39 +214,64 @@ instance, while the tags of a movie entity might correctly show the a given
 movie is scary, it does not allow users to get an idea of *how* scary the movie
 is.
 
-This also means that conventional folksonomy systems cannot really be used to
-order entities after a given predicate, e.g. in searches or in feeds, the way
-that the system of openSDB will. Sure, the conventional system can be used to
-add more scary movies to your search results, if that is what you are after,
-but it cannot really be used to change the order of those movies according to
-how scary they are.
+This also means that these systems cannot really be used to order entities
+after a given predicate, e.g. in searches or in feeds, the way that the system
+of openSDB will.
+Sure, the conventional system can be used to add more scary movies to your
+search results, if that is what you are after, but it cannot really be used to
+change the order of those movies among themselves according to how scary they
+are.
 
 
 What is more, if all tags instead come with a rating scale, which is what
 openSDB will offer, it might not just mean a higher quality of user data, but
 this system might also be able to attract *more* of this data!
 
-For if we first of all consider the case where a user wants to.. Hm..
+This is first of all because being able to add your own opinion immediately to
+whatever tags you see on a site might turn out to be much easier to use than
+the conventional systems, where users how to go to separate site and manually
+search for new tags to add. (*Clarify*)
+
+But more importantly, the fact that users can express there opinions much more
+precisely when using rating scales might better the experience submitting those
+opinions. And this is not least because they might also feel that the opinions
+that they submit matters more in terms of how it betters the search results and
+feeds of others when each opinion is given on a scale, and they would be right
+about that!
+
+Thus, when the user data is of much higher quality, its usefulness to the
+community is higher as well, giving better search and feed algorithms on the
+site. And the feeling of one's data mattering more might make it so much more
+attractive to submit said data. This might thus increase the influx of user
+data as well, which furthers enhances the potential of the algorithms on the
+site.
+
+And better algorithms inevitably means that more users will be attracted to the
+site, migrating away from sites that does not upgrade to systems utilizing this
+kind of semantic user data.
+
+Semantic user data *is* the future, and it is only a matter time before it will
+be the standard on the web.
 
 
-<!--
-The only reason for not wanting to eventually exchange the conventional
-folksonomy systems with a system of rateable tags/predicates instead would be a
-concern that users might not be
--->
+## Semantic user groups
 
-
-<!--
-This first of all has the advantage that more users will likely contribute
-their opinions about the tags. The current folksonomy systems are typically not
-very easy to
--->
-
-
-## High-quality semantic user data *is* the future!
-
+In the semantic system of openSDB, even the users themselves will get an entity
+each in the database that represents them, which means that users will also be
+able to make statements about each other. This opens up further possibilities
+in long run since it means that users will also able to classify each other.
 
 ...
+
+
+
+
+
+<!--
+## High-quality semantic user data *is* the future!
+-->
+
+
 
 
 
@@ -271,16 +282,16 @@ very easy to
 <!--
 ## Disp:
 
-Shorten the first section and end this section here.
 
-Then:
+- [...]
 - A section with a few examples. End with mentioning feeds/searches. (check)
 - A section about how semantic data is much better than conventional data.
     - compare with folksonomies also.
+- A section about user groups and what they will mean.
 - ..No tracking and open source.. *Voluntary data.
+    *Give data securely with anonymous account..
     *(Maybe mention why this means that other sites can't copy.)
 - A section explaining the browser extension and a hub for all ratings.
-- A section about user groups and what they will mean.
 - ..About overviews of relevant entities/categories and graph discussions etc...
     - ...And perhaps template documents (decentralized collaboration) and code
     verification...

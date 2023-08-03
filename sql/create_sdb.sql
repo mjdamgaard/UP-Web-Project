@@ -81,7 +81,9 @@ CREATE TABLE Private_RecentInputs (
 
 -- RecordedInputs can first of all be used by time-dependent bots (e.g. a mean-
 -- of-recent-inputs bot), and can also potentially used by bots that update on
--- scheduled events rather than immediately when the input is recieved.
+-- scheduled events rather than immediately when the input is recieved. And
+-- furthermore, they can also potentially be used by third-party bots and by
+-- SDB peers.
 CREATE TABLE RecordedInputs (
     changed_at_time BIGINT UNSIGNED NOT NULL,
 
