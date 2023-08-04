@@ -284,22 +284,71 @@ policies), namely with the goal of creating a distributed and decentralized
 (semantic) database.
 
 This means that openSDB will always be forced to work best in the interests of
-its users, or it will simply be replaced.
+its users, or else it will simply be replaced.
 
-And to further cement the point of being for the users, openSDB will also
+And to further cement the point of being "for the users," openSDB will also
 promise not to show any ads (unless perhaps as something that users can opt
 into). It will also not try to collect any data about the users other than the
 data that is necessary for the site to work.
 
+Instead openSDB will seek to fund its services through donations alone.
 
 
-## A browser extension to make openSDB[^2] a hub for all ratings on the web!
 
-[^2]: As well as its potential open-source peers in a future distributed
-database.
+## A potential hub for all ratings on the web
 
-...
+With its semantic system and its open-source nature, openSDB hopes to create
+what can become a hub of all ratings on the web. And in order to better achieve
+this goal, openSDB seeks to create a browser extension such that users can
+access the ratings in the SDB at any time when they browse the web.
 
+The idea is to have a browser extension that can query for rating data about
+any website/web page that a user visits, and also potentially for links that
+the user hovers over with the mouse. Can browser extension can then note the
+user about when there is rating data available for the site, and when the user
+opens the tab of the extension, they can view the entity in the SDB that best
+matches (also determined by ratings the users) the given URL, and see the
+relevant ratings for that entity.
+
+For instance, if a user browses a video on YouTube, the extension can link to
+the corresponding entity in the SDB, and the user can then see, and contribute
+to, all the ratings regarding that video in the browser extension tab.
+This first of all means that the user will be able see much more nuanced ratings
+(and the dislikes; not just the likes). And when the user contributes to the
+various ratings, the submitted data goes to a more general community than
+YouTube, meaning that it can be used not just to enhance other users searches
+and feeds when browsing for videos *on YouTube*, but can be used to enhance
+searches and feeds where users are interested in all videos on the web.
+
+A similar example could be made for any site where users can browse a collection
+of entities of a certain type (e.g. products, media, etc.). And while the users
+could also just browse these things at the web application of openSDB
+(www.opensdb.com (*not live just yet!*)), having a browser extension that can
+be used accross the web will likely make it much easier for users to use the
+SDB, and will thus likely help attract much more user activity.
+
+
+And since the connection to the SDB will be encrypted (HTTPS), and, more
+importantly, since openSDB will never log anything about these queries save for
+maybe an the overall data usage of a user in that week or month, the queries
+that the browser extension makes will not be tracked by openSDB and also cannot
+be tracked by any other parties.
+
+
+
+
+
+
+## Balanced and fair algorithms, and an end to clickbait!
+
+
+## A more user-driven web
+
+
+
+## Funding for the project
+
+## Conclusion
 
 
 
@@ -317,19 +366,6 @@ in long run since it means that users will also able to classify each other.
 
 
 
-
-<!--
-## High-quality semantic user data *is* the future!
--->
-
-
-
-
-
-
-
-
-
 <!--
 ## Disp:
 
@@ -343,14 +379,16 @@ in long run since it means that users will also able to classify each other.
     *(Maybe mention why this means that other sites can't copy.)
 - A section explaining the browser extension and a hub for all ratings.
 - A section about user groups and what they will mean.
-    *(I may actaully leave these points out..)
+    *(I may actually leave these points out..)
+    *Yeah, I think I might actually leave the discussion of semantic user groups
+    out.. 
 - ..About overviews of relevant entities/categories and graph discussions etc...
     - ...And perhaps template documents (decentralized collaboration) and code
     verification...
 - A section about this Semantic Net not just being an index for things, but
-- can develop into any web app really. Already the info page has a structure
-- that depends on the users. This can be taken further ... ..And user groups
-- enhances this... ...And open source means security..
+can develop into any web app really. Already the info page has a structure
+that depends on the users. This can be taken further ... ..And user groups
+enhances this... ...And open source means security..
 
 
 
