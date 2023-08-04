@@ -336,21 +336,25 @@ be tracked by any other parties.
 
 
 
-
-
-
+<!--
 ## Balanced and fair algorithms, and an end to clickbait!
 
+We have touched on the fact that conventional folksonomy systems are binary:
+Either a tag is there or not. Another type of binary input that is prevalent
+on the web is like/dislike buttons. (Well, technically that would be a ternary
+input if we also count the option of not rating something). These kinds of
+input are good for quickly get an idea of what users think overall. But this
+project builds on the (not unfounded) assumption that such kinds of inputs
+are not enough to reach the full potential of the web.
 
-## A more user-driven web
+To support this argument further, ...
 
+*I wanted to make a section here about eliminating clickbait and also
+eliminating the positive feedback loops of entities (and creators) getting more
+likes when they are already popular, but I think I won't include this after
+all.*
 
-
-## Funding for the project
-
-## Conclusion
-
-
+ -->
 
 
 <!--
@@ -363,6 +367,22 @@ in long run since it means that users will also able to classify each other.
 
 ...
  -->
+
+
+
+## A more user-driven web
+
+Apart from giving users the ability to create any kind of entity in the SDB,
+and to create and subsequently rate predicates about these entitities, the
+semantic system also allows users to create and rate any kind of relation
+between entities. This means first of all that for any given entity, users can
+submit and upvote ...
+
+...
+
+*Hm, maybe I will even leave this section out as well..!..*
+
+
 
 
 
@@ -381,7 +401,7 @@ in long run since it means that users will also able to classify each other.
 - A section about user groups and what they will mean.
     *(I may actually leave these points out..)
     *Yeah, I think I might actually leave the discussion of semantic user groups
-    out.. 
+    out..
 - ..About overviews of relevant entities/categories and graph discussions etc...
     - ...And perhaps template documents (decentralized collaboration) and code
     verification...
@@ -394,6 +414,38 @@ enhances this... ...And open source means security..
 
 -->
 
+
+
+
+
+## Funding for the project
+
+The funding for openSDB (and any SDB that wants to join the network and follow
+the same principles) should come purely from sponsors and donors. These will
+then get separate pages on the website(s) where users can see them listed. If
+the system will indeed become as widely used as I think it can, there will
+certainly be enough interested sponsors that would want to be associated with
+the project in order to fund the maintenance of the web services (and perhaps
+also some of the development if we are lucky). And individual users might also
+want to contribute some.
+
+Another potential reason that this project might be able to attract funding
+could also be due the fact that, if it really takes off, it could become a giant
+source of very high-quality user data, and one which all companies will be able
+to use completely free of charge. This might especially be attractive to a lot
+of smaller companies that wish to have access to user data (e.g. data of how
+users rate their various products and services, and more importantly of what
+users want for future products and services) in order to better compete with
+other companies, but which do not want to pay high prices for that data. For
+such companies it might thus be considered worth it to help fund a project that
+can potentially yield them free access to a continuous source of user data of
+very high quality in the near future. And the fact that this user data is
+guaranteed to be anonymous and non-infringent on the users' privacy will most
+likely only help in attracting that kind of support for the project.
+
+(*Edit*)
+
+## Conclusion
 
 
 
@@ -411,17 +463,6 @@ So in order to achieve this extended vision, we have to first do what openSDB
 seeks to do and make a semantic system that is accessible to all and easy to
 use.
  -->
-
-
-
-
-
-
-
-
-
-
-
 
 
 <!--  -->
