@@ -173,7 +173,7 @@ to the user's needs.
 And to end this section with a few more examples where being able to tailor
 searches after specific predicates might be very helpful, we could imagine
 searching for news articles, books of fiction, videos, games, music,
-programs/apps, websites, and so on.
+programs/apps, websites, recipes, health/lifestyle recommendations, and so on.
 There are a myriad of possibilities.
 
 
@@ -335,6 +335,110 @@ that the browser extension makes will not be tracked by openSDB and also cannot
 be tracked by any other parties.
 
 
+## Open-source algorithms
+
+At the beginning, the algorithms of openSDB for ordering searches (or feeds)
+will be based on taking rating averages from the predicates that a users selects
+and produce a combined score from them. This might take us quite far in terms
+of the users ability to search and find the things they want.
+
+One of the potential next steps from there is for the community to start
+utilizing ratings that users give to other users, in particular in terms of
+their trustworthiness. This can further refine the algorithms by filtering out
+spammers and trolls, and, on the other hand, elevating the inputs of users
+who has a history making of valuable contributions to the community.  
+
+And as the open-source project evolves, we can potentially get even more
+advanced algorithms as well. The fact that the project is open-source sets no
+limit on the sophistication of the algorithms when compared to closed-source
+companies. The only argument for why an open-source project might be more
+limited would be that it might not be able to make as much money to fund
+the development and the computational resources for its algorithms. But if the
+project takes off, it will become a giant source of high-quality user data
+that any company can use free of charge, instead of having to pay closed-source
+tech companies a high price for that kind of data. This will mean that there
+will be plenty of stakeholders in the project, and more than enough to aid its
+development and fund its combined data analysis sub-projects.
+
+Moreover, the fact that the project is open-source also means that it can
+potentially attract a great number of participants who wants to help its
+development. More people means more ideas, and thus more creativity. And it is
+hard to overstate the enormous potential that this gives the project. It might
+give the project the potential to completely revolutionize how we use the web.
+
+
+
+## Funding for the project and for its participants
+
+The funding for openSDB's services, as well as any other SDB hosts that wants to
+join the network, should come purely from sponsors and donors. These will
+then get separate pages on the website(s) where users can see them listed. If
+the project really takes off, it will certainly be good PR for the early
+sponsors that helped the project in the early stages.
+
+And as mentioned in the previous section, the project might be able to attract
+a lot of funding from companies due to the fact that it can become a giant
+source of high-quality data for them, which they can then tab into free of
+charge.
+
+And the fact that this user data is completely voluntary and does not infringe
+on the privacy of the users will most likely only help in attracting support
+for the project, including monetary support.
+
+And in terms of the contributions to the project coming from the users,
+e.g. content creators as well as other kinds of contributors, openSDB actually
+also seeks to implement a user-to-user donor system. Here the user-to-user
+ratings mentioned in the previous section might be useful, since they can
+potentially allow the site to create a collection of user ranks, where the rank
+is meant to represent the value of their combined contributions (as deemed by
+other users).
+Any donating user should them be able to choose a set of user ranks that best
+fits their opinions how much much different kinds of contributions are worth.
+And when the donation is finalized, it should result in a kind of credits for
+the receiving users, proportional to how they are ranked in the chosen set,
+which they should then be able to redeem the money that has been donated to
+them.
+
+This user-to-user donating system will hopefully create a good alternative to
+the current state the web where content creators get their revenue from ads,
+and it will hopefully help attract more contributors to the project, including
+not just content creators but also open-source programmers and front-end
+designers.
+
+
+
+
+## Conclusion
+
+openSDB hopes to be a pioneer in an open-source project of creating what is a
+slightly altered and in some ways extended version the Semantic Web.
+
+The first goal of this projet is to create a hub of ratings on the web, where
+the ratings can be anything that the users want.
+
+We have argued that semantic user data like what openSDB gathers will be more
+useful in terms of creating search and feed algorithms. And since such
+algorithms are very important for the user experience of web applications, we
+state that such semantic data *is* the future: It is only a matter of time
+before we will used everywhere on the web.
+
+And by being completely open-source and encouraging hosts to join the network
+as peers, it is likely that users will be attracted to this project rather than
+any similar closed-source project, since it means security that the providers
+of the service will not be able to turn their back to the community when they
+eye an opportunity to make more money at the cost of its users.
+
+So there is plenty of reason to be excited and wanting to support and take part
+in this project. Both simply for the thrill of it, but also because having been
+an early contributor will be valuable in terms of PR (for sponsors) or in terms
+of recognition (for open-source contributors).
+And in the case of open-source contributors, if the project takes off and
+people start donating via the mentioned user-to-user donating system, it might
+also pay to have been part of giving the early contributions to the project
+that made it take off in the first place! 
+
+
+
 
 <!--
 ## Balanced and fair algorithms, and an end to clickbait!
@@ -368,7 +472,7 @@ in long run since it means that users will also able to classify each other.
 ...
  -->
 
-
+<!--
 
 ## A more user-driven web
 
@@ -381,7 +485,7 @@ submit and upvote ...
 ...
 
 *Hm, maybe I will even leave this section out as well..!..*
-
+ -->
 
 
 
@@ -414,38 +518,6 @@ enhances this... ...And open source means security..
 
 -->
 
-
-
-
-
-## Funding for the project
-
-The funding for openSDB (and any SDB that wants to join the network and follow
-the same principles) should come purely from sponsors and donors. These will
-then get separate pages on the website(s) where users can see them listed. If
-the system will indeed become as widely used as I think it can, there will
-certainly be enough interested sponsors that would want to be associated with
-the project in order to fund the maintenance of the web services (and perhaps
-also some of the development if we are lucky). And individual users might also
-want to contribute some.
-
-Another potential reason that this project might be able to attract funding
-could also be due the fact that, if it really takes off, it could become a giant
-source of very high-quality user data, and one which all companies will be able
-to use completely free of charge. This might especially be attractive to a lot
-of smaller companies that wish to have access to user data (e.g. data of how
-users rate their various products and services, and more importantly of what
-users want for future products and services) in order to better compete with
-other companies, but which do not want to pay high prices for that data. For
-such companies it might thus be considered worth it to help fund a project that
-can potentially yield them free access to a continuous source of user data of
-very high quality in the near future. And the fact that this user data is
-guaranteed to be anonymous and non-infringent on the users' privacy will most
-likely only help in attracting that kind of support for the project.
-
-(*Edit*)
-
-## Conclusion
 
 
 

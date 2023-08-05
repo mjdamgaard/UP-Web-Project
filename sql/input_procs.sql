@@ -76,6 +76,7 @@ CREATE PROCEDURE private_insertOrUpdateRatingAndRunBots (
 BEGIN
     DECLARE stmtID BIGINT UNSIGNED;
     DECLARE prevRatVal SMALLINT UNSIGNED;
+    DECLARE now BIGINT UNSIGNED DEFAULT UNIX_TIMESTAMP();
 
 
     /* Retrieval of the previous rating the statement entity */
@@ -141,6 +142,24 @@ BEGIN
             instID
         );
     END IF;
+
+
+    /* Updating RecordedInputs */
+
+    REPLACE INTO RecordedInputs (
+        changed_at_time,
+        user_id,
+        cat_id,
+        inst_id,
+        rat_val
+    )
+    VALUES (
+        now,
+        userID,
+        catID,
+        instID,
+        ratVal
+    );
 
 
     /* Run procedures to update the various aggregation bots */
