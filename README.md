@@ -1,210 +1,382 @@
-# openSDB (prototype)
+# openSDB
 *Status: in development.*
 
 
 ## Introduction to the project
 
-openSDB is a Semantic Database (SDB) that is both open source and open for any
-other parties to copy, at least for a majority of the (non-sensitive) data.
+openSDB is an open source Semantic Database (SDB), interfaced via
+www.opensdb.com
+(*not live just yet, but a prototype/beta version will be so very soon!*).
 
 By 'semantic' we refer to the fact that entities in the database can be linked
-via (user-provided) relations that can carry any meaning. Thus, if we take the
-fundamental entities inhabiting the database, which can represent everything
-from web resources to real-life objects, places and persons, the users of the
-SDB can then upload links between all these entities in the form of relations,
-expressed as lexical items in a natural language (such as English).
+via relations that can be created freely by the users and can carry any meaning.
+This is thus similar to the fundamental concept of the
+[Semantic Web](https://www.wikipedia.org/wiki/Semantic_Web).
 
-For instance we could have the lexical item: "is the director of", which a user
-might want to use as a relation to express e.g. that Peter Jackson is the
-director of The Lord of the Rings: The Fellowship of the Ring. That user can
-then upload or find the entities "is the director of", "Peter Jackson" and "The
-Lord of the Rings: The Fellowship of the Ring" and subsequently use these to
-construct the statement: "Peter Jackson is the director of Lord of the Rings:
-The Fellowship of the Ring."
+And in fact, this project seeks to revitalize the idea of the Semantic Web, but
+with a different approach than the conventional one. Rather than trying to
+extend the World Wide Web itself, this project instead aims to launch an open
+source [Web 2.0](https://www.wikipedia.org/wiki/Web_2.0) site that utilizes
+semantic data structures, not just as part of its data processing, but where
+the users are actively engaged in building these structures.
 
-This concept of an SDB is thus very much related to the concept of the Semantic
-Web, as envisioned by Tim Berners-Lee in 1999 (see e.g.
-www.wikipedia.org/wiki/Semantic_Web).
-The main difference, however, is that the Semantic Web (so far) has mainly been
-intended to run across the whole World Wide Web, by having web developers add
-subject–relation–object statements (referred to as 'triplets') as metadata to
-their web pages. Semantic Web applications are then supposed to read this
-metadata from across the web to get its data structures.
+The point of this is to make it way easier for the average user of the web to
+take part in building the semantic data structures when compared to the
+conventional Semantic Web, which requires users to write special
+[RDF triples](https://www.wikipedia.org/wiki/Semantic_triple) in order to be
+able to contribute.
+These are fairly complicated HTML entities that web developers then have to
+add as metadata to their web pages. So not only does the conventional approach
+require its users to have specialized knowledge of RDF triples, it also
+requires them to have access to editing web pages!
 
-This is opposed to approach of this project, which aims to develop such
-applications on top of databases instead (i.e. SDBs). These applications will
-then be accessed through a limited number of web domains, instead of having them
-run on top of the entire web at once.
+It is thus not particularly hard to see why the Semantic Web never really took
+off with this approach: It never managed to become very accessible for its
+users, not in terms of them being able to participate actively in it.
 
-*For more on how this project relates to the Semantic Web, and what it tries*
-*do differently than the conventional Semantic Web and why, see*
-*[the longer version of this README](https://github.com/mjdamgaard/openSDB/blob/master/README_longer_version.md).*
+The project of openSDB seeks to do this better by making a website where it is
+very easy to create semantic entities and to submit statements about their
+properties and relations to each other.
 
 
-## Key points of semantic system of openSDB
 
-[The longer version of this README](https://github.com/mjdamgaard/openSDB/blob/master/README_longer_version.md)
-explains the fundamentals of the semantic system of openSDB. But for this
-shorter version, let us instead just talk about the key points of the system,
-enough that the following sections below can be understood.
+## Not just facts; opinions as well!
 
-One point is that relation–object pairs, such as e.g. "is the director of" +
-"The Lord of the Rings: The Fellowship of the Ring" can be gathered to form a
-predicate: "is the director of The Lord of the Rings: The Fellowship of the
-Ring." This is an example of a compound predicate, but one can also make more
-simple (atomic) predicates, such as e.g. "is funny," "is good," "is
-well-written," and "belongs the the fantasy genre." In short, the system allows
-for users to form all kinds of predicates, both relational and atomic.
+One of the prospects of the Semantic Web is to be able to easily search for
+specific facts on the internet, such as "who was the successor of Julius
+Caesar?" or "what is the air-speed velocity of an unladen swallow?"
 
-And the most important point for understanding the sections below is then that
-all semantic statements, which consist of a predicate and a subject Term, can
-be rated by each user on a continuous rating scale, namely with values running
-from 0 to 10 (with floating point values in between).
-This value denotes the degree to which
-the user deems the statement to be true, like when answering a survey. A rating
-value of 5 thus signifies a neutral degree, meaning that the statement is deemed
-neither to be particularly true/fitting for the subject nor false/unfitting. A
-rating value towards 0 then of course means 'very false/unfitting' and a rating
-value towards 10 means 'very true/fitting.'
+If openSDB succeeds in making a sizable Web 2.0 site where the users can easily
+participate in building semantic structures, it will first of all mean that
+more such facts can be recorded. There are in principle an infinite amount of
+facts about our world, and we cannot record them all, but the more users a
+semantic system has, and who are able to participate actively, the more facts
+can be submitted and validated by this userbase.
 
-As an example, a user could choose to rate the previously mentioned movie with
-respect to "is good" and submit a rating value of, say, 9.2 for that, and also
-rate the movie as "belonging to the the fantasy genre" with, let us say, a
-value of 10.0.
+However, conventional search engines, such as Google's, are already quite useful
+for finding out facts, and it will take a while before a semantic network
+could start to compete with those. And although AI is still quite unreliable
+at this point in time, it is not unreasonable to think such technology will
+make it even easier to search (reliably) for facts in the near future.
 
+But the vision of openSDB actually extends the vision of the Semantic Web to
+include, not only searching for facts, but also to be able to search for the
+*opinions* of other users, in particular the averaged opinions of the userbase.
 
-## The "killer application" of openSDB
+The semantic system of openSDB first of all entails that users can create any
+kind of predicate that they want (which is true for any 'semantic' system).
+Moreover, every semantic statement that a user submits includes a rating, on a
+scale from 0 to 10, which tells to which degree the user deems the statement to
+be true.
+So for all questions where there is no definitive answer, but where the answer
+is subjective, like for example how scary or how funny a given movie is, each
+user can give their own opinion on said scale. The averages of all these user
+ratings can then be computed (continuously) and shown at the page of the entity
+in question (which would be the page of the given movie in this example).
 
-### A system of continuous ratings for arbitrary predicates
-
-The first application of a semantic system such as openSDB that comes to mind,
-at least if one is already familiar with the vision of the Semantic Web, is
-that of semantic searches. And though this application might potentially become
-very useful in a future when the network around SDBs has grown large enough, it
-will take a while before it can start to compete with modern-day search engines.
-But there is another application that I believe can become extremely useful
-quite fast, and which does not have the same competition against it from
-existing technologies. Since this application also very much utilizes some of
-the traits that sets openSDB apart from conventional semantic systems, I
-therefore see it as the (so-called) killer application of openSDB.
-
-The application is to implement a web app, possibly with the assistance of a
-browser extension, that can become a hub for ratings for all kinds of resources
-on the web, as well as any other things that one can imagine.
-And the key reasons why such a rating hub running on top of a semantic system
-might supersede more conventional rating hubs is first of all the fact that the
-semantic system allows for arbitrary kinds of ratings, i.e. ratings with respect
-to arbitrary predicates.
-This is opposed to having just the usual good-versus-bad axis to rate
-entities along that we see everywhere.
-And combined with the fact that, in the case of openSDB,
-all predicates can be rated on a continuous scale, this is what I believe will
-make the application far more useful than existing ones.
-
-There are many instances where such semantic ratings can be useful. Users
-browsing for products to buy might want to not just see a satisfaction rating,
-but also see more specific ratings such as for durability, how easy they are to
-operate, if the price is low compared to similar products, and also potentially
-factors concerning manufacturing such as if it is environment-friendly, if there
-is child labor involved, if workers are paid a fair portion of the money made,
-and so on. And users browsing a movie to watch, as another example, might want
-to see predicates such as how scary the movie is, how funny it is, how wholesome
-or cute it is, how much it deals with a certain theme, how good the acting is,
-how well the plot or the dialog is written, how similar to is to certain other
-iconic movies, and so on.
-
-It is worth noting here that folksonomies (i.e. systems of user-provided tags)
-already goes some way to make users able to see some of these qualities. But
-with these systems, users can only get an idea e.g. if the movie is scary or
-not, or if it deals with a certain theme or belongs to a certain genre or not.
-They can not see the *degree* to which these predicates are true/fitting.
-
-Furthermore, the conventional folksonomy systems take a lot of user actions
-when users want to contribute to them. But if, on the other hand, the users were
-able to just click on any existing "tag," which would be associated with a
-predicate in our case, and immediately add their own rating to that predicate
-with just one or two more clicks, I believe the system could attract so much
-more (valuable) user data hereby, compared to the conventional systems.
-
-Having continuous ratings rather than binary tags, which is either there or not
-there, also means that the data is of much higher quality when it comes to
-using that data to provide good search results (and feeds for that matter).
-Therefore, if a user for instance wants to search through all movies and order
-them such that, say, the movies that are both the most funny and at the same
-time the most wholesome appears on the top of the list of search results, the
-data of an application using continuous ratings will be much more useful than,
-say, folksonomy data in terms ordering search result this way, namely since the
-degree of *how much* the tags/predicates apply (according to the users) can be
-determined with much higher precision.
-
-This application can thus potentially open up a whole new world of search and
-feed algorithms, since it will not need to rely on advanced machine learning
-algorithms in order to analyze the user data and make meaningful connections;
-the data flowing into an SDB will already have a high degree of "meaning" to
-begin with.
+And what is more, the site can then also afford the users with the possibility
+to search among entities and sorting the search result according to any
+predicates that they desire. As an example, a user might want to search for
+movies and apart from an overall score of how "well-liked" they are, the user
+might also want to use the predicates "funny" and "wholesome," if the user
+wishes to find a good movie that is both of these things.
+The averaged ratings of these three predicates can then be combined such that
+the search results are ordered with the movies most fitting of this combination
+first in the list.  
 
 
-### How such an application might be implemented
 
-In order to implement such an application, we could first of all have a
-web app through which the users can access the SDB. This is what I am currently
-working on in the front-end part of this GitHub repository. When users want to
-look up ratings for a certain resource or product, or whatever thing that they
-are interested in, they can go to the web app at a certain website (e.g.
-called opensdb.com) and search for that thing (either through a conventional
-search bar or through a "semantic walk"). And upon finding the match, they can
-then access the various ratings.
+## Some examples where rateable predicates can be useful
 
-What would be an even better way to access the ratings, however, would be if a
-browser extension was developed as well, designed to read the URLs that the
-user visits with their browser, or potentially even those that they hover over
-with the mouse, and then search for matches against those URLs (or other kinds
-of URIs for that matter) to immediately get the relevant user ratings of the SDB
-to show the user. If this can be realized, it means that openSDB, together with
-any other SDB that might join the network and work together with the likes of
-openSD, can implement what can essentially become a hub for all ratings on the
-web, and one that is always right at hand when users browse the web.
+The fact that creating and using these predicates are completely in the hands
+of the users, and that they can thus use any predicates they want, opens up
+countless possibilities. But let us try to think of a few examples of what it
+could be used for. We already have the one about movies that are scary, funny,
+and/or wholesome. To add to this example, one could also imagine using
+more detailed predicates like: how much the movie deals with a certain theme,
+how good the acting in it is, how well the plot or the dialog is written, how
+similar it is to is to certain other iconic movies, and so on.
 
-And in this regard, it is also very much worth mentioning that openSDB will be
-completely anonymous (unless a user actively disclose their identity to other
-users) and completely without tracking. The protocol used will be purely HTTPS
-and the database will not record anything about its users other than: username,
-password, potentially a backup key, and also potentially the rough amount of
-data downloaded and/or uploaded by the user in the last week or month.
-The database might also store the e-mail of a user but will not link this to
-the user's account (unless asked to). It will instead at most just record the
-number of user accounts that each e-mail address has created, but not which
-ones.
-openSDB will also not allow any ads in its web app or its browser extension
-such that no third party will be able to track the user either.
-Thus, if openSDB, and SDBs like it, in the future will achieve to make up this
-"hub for all ratings on the web," it will be with as high a degree of anonymity
-as possible. And the data will not belong to the SDBs involved, but will be in
-the public domain, free for all to use (as opposed to belonging to just one or
-a few companies as well as those they sell that data on to).
+As another example, we could imagine that users from time to time might want to
+browse for products to buy, and then not just want see an overall satisfaction
+rating, but also more specific ratings such the durability[^1] of the product,
+how easy it is to operate, if the price is low compared to similar products,
+and also potentially predicates concerning manufacturing such as if this is
+environment-friendly, if there is child labor involved or not, if workers are
+paid a fair portion of the money made, and so on.
+
+[^1]: It is worth to note that this is actually one example of a predicate that
+can be considered as factual (and not a matter of opinion), but where it is
+nonetheless still useful that users can submit their rating on a scale, instead
+of only being able to submit if they think the product is durable or not.
 
 
-### Funding of the project
+We could also think of users wishing to find information and reading material
+on a certain subject. This could for instance be a user wanting to learn more
+about AI and the current advancements of that technology. There is a lot of
+material to be found on the web on this subject, but simply rating this material
+according to reader satisfaction is not enough to meet all needs. Some users
+might specifically want texts that are very brief and easy to understand, others
+might want more extensive texts that are nonetheless still easy to understand,
+others still might want texts that are as brief as possible, yet goes into
+some of the advanced details of the subject, and others still might want texts
+that are both extensive and advanced. Having the predicates "brief," "easy to
+understand" and "advanced" can thus greatly help tailor the search for the
+specific user. Additionally, predicates like "humorous," "well-aided by
+graphics," "includes good exercises," "includes challenging exercises,"
+"well-sourced," and so on, might be helpful in tailoring the searches further
+to the user's needs.
 
-The funding for openSDB (and any SDB that wants to join the network and follow
-the same principles) should come purely from sponsors and donors. These will
+And to end this section with a few more examples where being able to tailor
+searches after specific predicates might be very helpful, we could also imagine
+searching for: news articles, books, videos, games, music, programs/apps,
+websites, recipes, health/lifestyle recommendations, and so on.
+There are a myriad of possibilities.
+
+
+
+## High-quality semantic user data *is* the future!
+
+If we think about [folksomies](https://en.wikipedia.org/wiki/Folksonomy),
+i.e. the systems that are pretty widespread today
+where users can add [tags](https://en.wikipedia.org/wiki/Tag_(metadata)
+to the entities of a site, we can note that such systems also allow users to
+categorize entities according to arbitrary predicates.
+But the big problem with these systems is that they are binary: A user can only
+state if a given tag fits an entity, or they can leave that tag out when they
+add their tags.
+
+This, as the reader might have experienced as well, means that conventional
+folksonomy systems are quite unreliable: Entities often get tags that does not
+fit them at all, and far from all entities for which a given tag might be
+relevant for will have that tag.
+
+Furthermore, the conventional folksonomy systems are not at all able to give
+the users a good idea of the *degree* to which the tags fit en entity. For
+instance, while the tags of a movie entity might correctly show the a given
+movie is scary, it does not allow users to get an idea of *how* scary the movie
+is.
+
+This also means that these systems cannot really be used to order entities
+after a given predicate, e.g. in searches or in feeds, the way that the system
+of openSDB will.
+Sure, the conventional system can be used to add more scary movies to your
+search results, if that is what you are after, but it cannot really be used to
+change the order of those movies among themselves according to how scary they
+are.
+
+
+What is more, if all tags instead come with a rating scale, which is what
+openSDB will offer, it might not just mean a higher quality of user data, but
+perhaps the system will also be able to attract *more* of this data!
+
+This is first of all because being able to add your own opinion immediately to
+a tags when you see it on the site, with just one or two clicks, might turn out
+to be much easier to use than the conventional systems, where users have to go
+to a separate page and manually search for new tags to add.
+
+But more importantly, the fact that users can express there opinions much more
+precisely when using rating scales might enhance the experience submitting those
+opinions, due to the fact that they might feel to a greater extent that their
+opinions matters for rest of the community. And they would indeed be right about
+this feeling: When each submitted opinion is given on a scale, it is much more
+useful in terms of its effect on the search and feed algorithms.
+
+Thus, when the user data is of much higher quality, its usefulness to the
+community is higher as well, giving better search and feed algorithms on the
+site. And the resulting feeling that one's data matters more might also make it
+much more attractive to submit said data. This might thus increase the influx
+of user data as well, which furthers enhances the potential of the algorithms
+on the site.
+
+And better algorithms inevitably means that more users will be attracted to the
+site, migrating away from sites that does not upgrade to systems utilizing this
+kind of semantic user data.
+
+Semantic user data thus *is* the future, and it is only a matter time before it
+will become the standard on the web.
+
+
+
+## Open source, no ads, no tracking, and no gathering of involuntary data!
+
+If openSDB manages to attract a sizable network of users and show the way for
+semantic user data on the web, other sites could of course try to copy the
+principles of its system. This is especially possible due to the fact that it
+is completely open-source.
+
+However, being open source hopefully also turns out to be the advantage that
+will ultimately make users prefer it over any potential not-so-open competitors.
+
+If you submit your data to closed-source website, you run the risk that when
+the site has grown big enough, it owners will try to milk its users for more
+money (e.g. by running more ads or collecting and selling more metadata about
+them), even if this comes at the cost of less user satisfaction.
+
+But an open source site like openSDB will not have this luxury, especially not
+if the site has maintained a policy that all submitted user data is supplied
+to any third party that asks for it. This way third parties will be able to
+continuously back up the data of the site, and if the site ever starts acting
+selfishly towards its userbase, others will just be able to make a copy of the
+site, complete with user data and all, and start hosting it at another domain.
+
+Not only will openSDB indeed commit itself to such a policy, it will even
+commit itself to working together with other parties that copies it (and its
+policies), namely with the goal of creating a distributed and decentralized
+(semantic) database.
+
+This means that openSDB will always be forced to work best in the interests of
+its users, or else it will simply be replaced.
+
+And to further cement the point of being "for the users," openSDB will also
+promise not to show any ads (unless perhaps as something that users can opt
+into). It will also not try to collect any data about the users other than the
+data that is necessary for the site to work and the semantic data that they
+actively and voluntarily submits.
+
+Instead openSDB will seek to fund its services through donations alone.
+
+
+
+## A potential hub for all ratings on the web
+
+With its semantic system and its open-source nature, openSDB hopes to create
+what can become a hub of all ratings on the web. And in order to better achieve
+this goal, openSDB seeks to create a browser extension such that users can
+access the ratings in the SDB at any time when they browse the web.
+
+The idea is to have a browser extension that can query for rating data about
+any website/web page that a user visits, and also potentially for links that
+the user hovers over with the mouse. The browser extension can then note the
+user about when there is rating data available for the site, and when the user
+opens the tab of the extension, they can view the entity in the SDB that best
+matches (also determined by user ratings) the given URL, and see the relevant
+ratings for that entity.
+
+For instance, if a user browses a video on YouTube, the extension can link to
+the corresponding entity in the SDB, and the user can then see, and contribute
+to, all the ratings regarding that video in the browser extension tab.
+This first of all means that the user will be able see much more nuanced ratings
+(and the dislikes; not just the likes). And when the user contributes to the
+various ratings, the submitted data goes to a more general community than
+YouTube, meaning that it can be used not just to enhance other users searches
+and feeds when browsing for videos *on YouTube*, but can be used to enhance
+searches and feeds where users are interested in all videos on the web.
+
+A similar example could be made for any site where users can browse a collection
+of entities of a certain type (e.g. products, media, etc.). And while the users
+could also just browse these things at the web application of openSDB
+(www.opensdb.com (*not live just yet!*)), having a browser extension that can
+be used across the web will likely make it much easier for users to use the
+SDB, and will thus likely help attract much more user activity.
+
+
+And since the connection to the SDB will be encrypted (HTTPS), and, more
+importantly, since openSDB will never log anything about these queries save for
+maybe an the overall data usage of a user in that week or month, the queries
+that the browser extension makes will not be tracked by openSDB and also cannot
+be tracked by any other parties.
+
+
+
+## Open-source algorithms
+
+At the beginning, the algorithms of openSDB for ordering searches (or feeds)
+will be based on taking rating averages from the predicates that a users selects
+and produce a combined score from them. This might take us quite far in terms
+of the users ability to search and find the things they want.
+
+One of the potential next steps from there is for the community to start
+utilizing ratings that users give to other users, in particular in terms of
+their trustworthiness. This can further refine the algorithms by filtering out
+spammers and trolls, and, on the other hand, elevating the inputs of users
+who has a history making of valuable contributions to the community.  
+
+As the open-source project evolves, we can potentially get even more advanced
+algorithms as well, and the fact that the project is open-source sets no limit
+on the sophistication of the algorithms when compared to closed-source
+companies. The only argument for why an open-source project might be more
+limited would be that it might not be able to make as much money to fund
+the development and the computational resources for its algorithms. But if the
+project takes off, it will become a giant source of high-quality user data
+that any company can use free of charge, instead of having to pay closed-source
+tech companies a high price for that kind of data. This will mean that there
+will be plenty of stakeholders in the project, and more than enough to aid its
+development and fund its combined data analysis sub-projects.
+
+Moreover, the fact that the project is open-source also means that it can
+potentially attract a great number of participants who wants to help its
+development. More people means more ideas, and thus more creativity. And it is
+hard to overstate the enormous potential that this gives the project. It might
+give the project the potential to completely revolutionize how we use the web.
+
+
+
+## Funding for the project and for its participants
+
+The funding for openSDB's services, as well as any other SDB hosts that wants to
+join the network, should come purely from sponsors and donors. These will
 then get separate pages on the website(s) where users can see them listed. If
-the system will indeed become as widely used as I think it can, there will
-certainly be enough interested sponsors that would want to be associated with
-the project in order to fund the maintenance of the web services (and perhaps
-also some of the development if we are lucky). And individual users might also
-want to contribute some.
+the project really takes off, it will certainly be good PR for the sponsors
+that helped the project early on.
 
-Another potential reason that this project might be able to attract funding
-could also be due the fact that, if it really takes off, it could become a giant
-source of very high-quality user data, and one which all companies will be able
-to use completely free of charge. This might especially be attractive to a lot
-of smaller companies that wish to have access to user data (e.g. data of how
-users rate their various products and services, and more importantly of what
-users want for future products and services) in order to better compete with
-other companies, but which do not want to pay high prices for that data. For
-such companies it might thus be considered worth it to help fund a project that
-can potentially yield them free access to a continuous source of user data of
-very high quality in the near future. And the fact that this user data is
-guaranteed to be anonymous and non-infringent on the users' privacy will most
-likely only help in attracting that kind of support for the project.
+And as mentioned in the previous section, the project might be able to attract
+a lot of funding from companies due to the fact that it can become a giant
+source of high-quality data for them, which they can subsequently tab into free
+of charge.
+
+It is also worth noting that the fact that this user data is completely
+voluntary and does not infringe on the privacy of the users will most likely
+only help in attracting support for the project, including that of sponsors.
+
+
+And in terms of the contributions to the project coming from the user community,
+e.g. from content creators and from open-source programmers and front-end
+designers), openSDB actually also seeks to implement a user-to-user donor
+system.
+Here the user-to-user ratings mentioned in the previous section might be useful,
+since they can potentially allow the site to create a collection of user ranks,
+where the rank is meant to represent the value of the user's combined
+contributions (as deemed by other users).
+Any donating user should them be able to choose a set of user ranks that best
+fits their opinions of how much different kinds of contributions are worth.
+And when the donation is finalized, it should result in a kind of credits for
+the receiving users, proportional to how they are ranked in the chosen set,
+which they should then be able to redeem for the money that has been donated to
+them.
+
+This user-to-user donating system will hopefully create a good alternative to
+the current state of the web where content creators get their revenue from ads,
+and it will hopefully help attract more contributors to the project, including
+content creators as well as open-source programmers and front-end designers.
+
+
+
+## Conclusion
+
+openSDB hopes to be a pioneer in an open-source project to create what is a
+slightly altered and in some ways extended version of the Semantic Web.
+
+The first goal of this project is to create a hub of ratings on the web, where
+the ratings can be anything that the users want.
+
+We have argued that semantic user data like what openSDB gathers will be more
+useful in terms of creating search and feed algorithms. And since such
+algorithms are very important for the user experience of web applications, we
+state that such semantic data *is* the future: It is only a matter of time
+before we will used everywhere on the web.
+
+And by being completely open-source and encouraging hosts to join the network
+as peers, it is likely that users will be attracted to this project rather than
+any similar closed-source project, since it means security that the providers
+of the service will not be able to turn their back to the community when they
+eye an opportunity to make more money at the cost of its users.
+
+So there is plenty of reasons to be excited and wanting to support and take part
+in this project. Both simply for the thrill of it, but also because having been
+an early contributor will be valuable in terms of PR (for sponsors) or in terms
+of recognition (for individual contributors).
+And in the case of individual contributors, if the project really takes off and
+people start donating via the mentioned user-to-user donating system, it might
+also pay to have been part of giving the early contributions to the project
+that made it take off in the first place!
