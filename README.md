@@ -130,7 +130,8 @@ to the user's needs.
 And to end this section with a few more examples where being able to tailor
 searches after specific predicates might be very helpful, we could also imagine
 searching for: news articles, books, videos, games, music, programs/apps,
-websites, recipes, health/lifestyle recommendations, and so on.
+websites, recipes, health/lifestyle recommendations, activity recommendations,
+and so on.
 There are a myriad of possibilities.
 
 
@@ -238,7 +239,7 @@ Instead openSDB will seek to fund its services through donations alone.
 
 
 
-## A potential hub for all ratings on the web
+## A potential hub for all ratings on the web!
 
 With its semantic system and its open-source nature, openSDB hopes to create
 what can become a hub of all ratings on the web. And in order to better achieve
@@ -266,7 +267,7 @@ searches and feeds where users are interested in all videos on the web.
 A similar example could be made for any site where users can browse a collection
 of entities of a certain type (e.g. products, media, etc.). And while the users
 could also just browse these things at the web application of openSDB
-(www.opensdb.com (*not live just yet!*)), having a browser extension that can
+(www.opensdb.com *(not live just yet!)*), having a browser extension that can
 be used across the web will likely make it much easier for users to use the
 SDB, and will thus likely help attract much more user activity.
 
@@ -278,10 +279,71 @@ that the browser extension makes will not be tracked by openSDB and also cannot
 be tracked by any other parties.
 
 
+## Related entities, comments and discussions
+
+The browser extension will also be able to query for related entities to the
+the given entity that matches an URL. (And the same things can be browsed on the
+SDB's own website.)
+This includes related entities of the same type as the given one (e.g. similar
+movies if the entity is of that type) as well as related categories (e.g.
+"Horror movies" or "Fantasy movies"), and of course facts (e.g. who the director
+is or what actors is in it). It also includes comments to that entity.
+
+<!--
+With the semantic system of openSDB, all this is completely in the hands of the
+users, meaning that it is they who collectively decide e.g. what categories
+and what facts should be related to movies ...
+-->
+
+Again we can predict, similarly to the ratings, that users might be more willing
+to use the comment sections implemented via the browser extension rather than
+the comment sections at the visited website, namely since their comments can
+thereby reach a broader, more general community.  
+
+Furthermore, the semantic system of openSDB allows us to afford the users with
+the ability to group comments into subcategories. So for example, if you have
+just watched a movie/video or read an article or post and you are interested in
+a particular discussion about that it, you can first of all go to a section of
+related discussions for the entity. If you find the discussion that you are
+interested in there, you can then go to that discussion and see what other users
+have written about it. Or if the given discussion cannot be found, you can
+submit it yourself, posing it as a question.
+
+Not only does this mean that users looking for a particular kind of comments for
+and entity will be able to better find what they are looking for, rather than
+having to scan the whole combined comment section, but it also means any users
+who just want to see what kind of comments an entity has, with no particular
+query in mind, can get a quick overview of the relevant discussions to the
+given entity. Since users can rate the discussions themselves in terms of how
+interesting and relevant they are for the given entity, it means that the
+related discussions can be ordered according to these predicates, showing the
+most interesting and relevant discussions first.
+
+And what is more, the semantic system of openSDB means that discussions
+themselves can be ordered into substructures. This means that any discussion
+that is complicated enough to include several points and/or several
+sub-arguments can be structured into a whole tree of branching points and
+counterpoints!
+
+So for any kind of discussion we can think of, the users will be able to
+collaborate on mapping out all the relevant arguments and counterarguments for
+that discussion. And since the semantic system of openSDB also allows users to
+give their opinions as ratings, it means that the users will even be able to
+rate each statement making up the discussion of how likely they think the
+statement is to be true. This includes any "facts" that the various
+sub-conclusions are based on, as well as any conditional statement that says
+that "if statements *P<sub>1</sub>*, *P<sub>2</sub>*, *P<sub>3</sub>*, *...*
+are true, then statement *Q* follows."
+
+Thus, the user community will not only potentially be able to map out various
+discussions, they might also even be able to reach conclusions for those
+discussions!
+
+
 
 ## Open-source algorithms
 
-At the beginning, the algorithms of openSDB for ordering searches (or feeds)
+At the beginning, the algorithms of openSDB for ordering searches or feeds
 will be based on taking rating averages from the predicates that a users selects
 and produce a combined score from them. This might take us quite far in terms
 of the users ability to search and find the things they want.
