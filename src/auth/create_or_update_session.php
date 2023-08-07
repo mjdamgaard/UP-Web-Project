@@ -24,7 +24,7 @@ $expTime = strtotime("+2 months");
 // $res["sesID"] = $sesID;
 // $res["expTime"] = $expTime;
 $res = array("sesID"=>$sesID, "expTime"=>$expTime);
-throw new Exception(">>>" . json_encode($res) . "<<<");
+throw new Exception(">>>" . json_encode($sesID) . "<<<");
 
 // execute input statement.
 DBConnector::executeSuccessfulOrDie($stmt, array($u, $sesID, $expTime));
