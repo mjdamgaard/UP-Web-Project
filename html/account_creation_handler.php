@@ -62,7 +62,7 @@ $u = $res["outID"];
 $stmt->close();
 
 
-/* Creating a new session ID and, setting $sesID and $expTime in the process */
+/* Creating a new session ID and appending $sesID and $expTime to $res */
 
 $auth_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/auth/";
 require $auth_path . "create_or_update_session.php";
@@ -70,13 +70,9 @@ require $auth_path . "create_or_update_session.php";
 
 /* Output the results */
 
-// add the session ID and expiration time to $res.
-throw new Exception(">>>" . json_encode(array($sesID, $expTime)) . "<<<");
-throw new Exception(">>>" . json_encode(array("sesID"=>$sesID, "expTime"=>$expTime)) . "<<<");
-$res += array("sesID"=>$sesID, "expTime"=>$expTime);
-throw new Exception(">>>" . json_encode($res) . "<<<");
-// finally echo the JSON-encoded result array (containing the session ID and
-// the exitCode).
+// finally echo the JSON-encoded result array containing the exitCode, the
+// outID (user ID), the session ID and the expiration time.
+// throw new Exception(">>>" . json_encode($res) . "<<<");
 echo json_encode($res);
 
 

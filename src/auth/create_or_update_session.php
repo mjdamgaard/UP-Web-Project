@@ -19,6 +19,12 @@ $stmt = $conn->prepare($sql);
 $sesID = random_bytes(60);
 // generate the expiration date.
 $expTime = strtotime("+2 months");
+// append these to $res.
+//     $res = array();
+// $res["sesID"] = $sesID;
+// $res["expTime"] = $expTime;
+$res = array("sesID"=>$sesID, "expTime"=>$expTime);
+throw new Exception(">>>" . json_encode($res) . "<<<");
 
 // execute input statement.
 DBConnector::executeSuccessfulOrDie($stmt, array($u, $sesID, $expTime));

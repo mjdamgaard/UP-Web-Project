@@ -59,13 +59,16 @@ $auth_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/auth/";
 require $auth_path . "verify_password.php";
 
 
-/* Creating or updating the session and outputting the sesID and expTime */
+/* Creating a new session ID and appending $sesID and $expTime to $res */
 
+$res = array();
 require $auth_path . "create_or_update_session.php";
 
 
 /* Output the results */
 
-echo json_encode(array("sesID"=>$sesID, "expTime"=>$expTime));
+// finally echo the JSON-encoded result array containing the session ID and
+// the expiration time.
+echo json_encode($res);
 
 ?>
