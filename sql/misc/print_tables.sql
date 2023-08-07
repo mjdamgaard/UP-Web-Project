@@ -32,9 +32,9 @@ ORDER BY user_id ASC, cat_id ASC, rat_val DESC;
 -- SELECT *
 -- FROM Private_UserData
 -- ORDER BY user_id;
-SELECT "Sessions:";
-SELECT *
-FROM Private_Sessions
+-- SELECT "Sessions:";
+-- SELECT *
+-- FROM Private_Sessions
 ORDER BY user_id;
 SELECT "EMails:";
 SELECT *

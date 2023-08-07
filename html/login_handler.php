@@ -63,6 +63,9 @@ require $auth_path . "verify_password.php";
 
 require $auth_path . "create_or_update_session.php";
 
-// The program exits here, which also closes $conn.
+
+/* Output the results */
+
+echo json_encode(array("sesID"=>$sesID, "expTime"=>$expTime));
 
 ?>

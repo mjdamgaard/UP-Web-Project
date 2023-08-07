@@ -45,7 +45,7 @@ export class AccountManager {
             callback = callbackData ?? (x => void(0));
             callbackData = null;
         }
-        if (!this.isLoggedIn) {debugger;
+        if (!this.isLoggedIn) {
             callback(obj, false, callbackData);
             return;
         }

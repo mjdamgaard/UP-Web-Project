@@ -52,7 +52,7 @@ DBConnector::executeSuccessfulOrDie($stmt, array($u, $em, $pwHash));
 // fetch the result as a numeric array.
 $res = $stmt->get_result()->fetch_assoc();
 // die with $res if the user could not be created.
-if ($res["exitCode"] != 0) {
+if ($res["exitCode"]) {
     echo json_encode($res);
     exit;
 }
@@ -62,12 +62,21 @@ $u = $res["outID"];
 $stmt->close();
 
 
-/* Creating a new session ID and outputting the sesID and expTime */
+/* Creating a new session ID and, setting $sesID and $expTime in the process */
 
 $auth_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/auth/";
 require $auth_path . "create_or_update_session.php";
 
-// The program exits here, which also closes $conn.
+
+/* Output the results */
+
+// add the session ID and expiration time to $res.
+$res["sesID"] = $sesID;
+$res["expTime"] = $expTime;
+// finally echo the JSON-encoded result array (containing the session ID and
+// the exitCode).
+echo json_encode($res);
+
 
 
 // TODO: Make a class with a createOrUpdateSession() and verifyPassword() ect.

@@ -17,7 +17,6 @@ BEGIN
     ON DUPLICATE KEY UPDATE
         session_id = sessionID,
         expiration_time = expTime;
-    SELECT 0 AS exitCode;
 END //
 DELIMITER ;
 

@@ -41,7 +41,7 @@ loginPageCL.addCallback(function($ci, data) {
         let pw = $this.find('.pw').val();
         // TODO: Validate input client-side first.
         accountManager.login(user, pw, $ci, function($ci, result) {
-            if (result.exitCode !== 0) {
+            if (result.exitCode != 0) {
                 $ci.find('.response-display').html(result.exitCode); // TODO..
             } else {
                 $ci.trigger("logged-in");
@@ -92,8 +92,8 @@ createAccountPageCL.addCallback(function($ci, data) {
         let pw = $this.find('.pw').val();
         // TODO: Validate input client-side first.
         accountManager.createNewAccount(username, email, pw, $ci,
-            function($ci, result) {
-                if (result.exitCode !== 0) {
+            function($ci, result) {debugger;
+                if (result.exitCode != 0) {
                     $ci.find('.response-display').html(result.exitCode);//TODO..
                 } else {
                     $ci.trigger("logged-in");

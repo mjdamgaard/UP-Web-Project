@@ -22,18 +22,5 @@ $expTime = strtotime("+2 months");
 
 // execute input statement.
 DBConnector::executeSuccessfulOrDie($stmt, array($u, $sesID, $expTime));
-// fetch the result as a numeric array.
-$res = $stmt->get_result()->fetch_assoc();
-
-
-/* Output the results */
-
-// add the session ID and expiration time to $res.
-$res["sesID"] = $sesID;
-$res["expTime"] = $expTime;
-// finally echo the JSON-encoded result array (containing the session ID and
-// the exitCode).
-header("Content-Type: text/json");
-echo json_encode($res);
 
 ?>
