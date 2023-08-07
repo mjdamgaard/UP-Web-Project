@@ -17,15 +17,6 @@ SELECT
 FROM Private_RecentInputs
 ORDER BY id ASC;
 
-SELECT "Entities:";
-SELECT
-    id AS entID,
-    type_id AS typeID,
-    cxt_id AS cxtID,
-    SUBSTRING(def_str, 1, 80) AS defStr_substring
-FROM Entities
-ORDER BY id;
-
 
 SELECT "SemanticInputs:";
 SELECT
@@ -35,3 +26,32 @@ SELECT
     inst_id AS instID
 FROM SemanticInputs
 ORDER BY user_id ASC, cat_id ASC, rat_val DESC;
+
+
+-- SELECT "UserData:";
+-- SELECT *
+-- FROM Private_UserData
+-- ORDER BY user_id;
+SELECT "Sessions:";
+SELECT *
+FROM Private_Sessions
+ORDER BY user_id;
+SELECT "EMails:";
+SELECT *
+FROM Private_EMails;
+
+
+
+SELECT "Users:";
+SELECT *
+FROM Users
+ORDER BY id;
+
+SELECT "Entities:";
+SELECT
+    id AS entID,
+    type_id AS typeID,
+    cxt_id AS cxtID,
+    SUBSTRING(def_str, 1, 80) AS defStr_substring
+FROM Entities
+ORDER BY id;

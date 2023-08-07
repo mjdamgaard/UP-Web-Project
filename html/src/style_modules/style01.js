@@ -22,7 +22,7 @@ import {
     ratingElementCL, ratingDisplayCL,
 } from "/src/content_loaders/Ratings.js";
 import {
-    loginPageCL,
+    loginPageCL, createAccountPageCL,
 } from "/src/content_loaders/LoginPages.js";
 
 
@@ -196,16 +196,23 @@ setDisplayCL.addCSS(
 );
 
 
-// loginPageCL.addCSS(
-//     'display: grid;' +
-//     'grid-template-columns: auto auto auto;' +
-//     // 'grid-template-rows: auto;' +
-//     ''
-//     // 'display: flex;' +
-//     // 'justify-content: center;'
-// );
-// loginPageCL.addCSS(
-//     '& > .content-container {' +
-//         'max-width: 500px;' +
-//     '}'
-// );
+loginPageCL.addCSS(
+    'display: grid;' +
+    'grid-template-columns: auto auto auto;' +
+    'grid-template-rows: 20px auto;'
+);
+loginPageCL.addCSS(
+    '& > .content-container {' +
+        'max-width: 600px;' +
+    '}'
+);
+createAccountPageCL.addCSS(
+    'display: grid;' +
+    'grid-template-columns: auto auto auto;' +
+    'grid-template-rows: 20px auto;'
+);
+createAccountPageCL.addCSS(
+    '& > .content-container {' +
+        'max-width: 600px;' +
+    '}'
+);

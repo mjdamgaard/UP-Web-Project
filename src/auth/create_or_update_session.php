@@ -28,9 +28,8 @@ $res = $stmt->get_result()->fetch_assoc();
 
 /* Output the results */
 
-// add the userID, session ID and expiration time to $res.
-$res["userID"] = $u;
-$res["expTime"] = $expTime;
+// add the session ID and expiration time to $res.
+$res["sesID"] = $sesID;
 $res["expTime"] = $expTime;
 // finally echo the JSON-encoded result array (containing the session ID and
 // the exitCode).

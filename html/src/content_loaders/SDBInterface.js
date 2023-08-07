@@ -53,11 +53,10 @@ sdbInterfaceCL.addCallback(function($ci, data) {
         $obj.show();
         return false;
     });
-    $ci.on("log-out", function() {
-        // TODO: Implement.
-        accountManager.logout();
-        return false;
-    });
+    // $ci.on("log-out", function() {
+    //     accountManager.logout();
+    //     return false;
+    // });
     $ci.on("back-to-main", function() {
         let $this = $(this);
         let $obj = $this.children('.login-page-container');
@@ -148,6 +147,7 @@ accountButtonsContainerCL.addCallback(function($ci, data) {
     });
     $ci.children('.log-out').on("click", function() {
         let $this = $(this);
+        accountManager.logout();
         $this.trigger("log-out");
         $this.children('.log-out').hide();
         $this.children('.log-in, .new-account').show();

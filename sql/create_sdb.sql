@@ -263,8 +263,3 @@ CREATE TABLE Private_EMails (
     -- confirmed the new account:
     account_1_user_id BIGINT UNSIGNED
 );
-
-CREATE TABLE Private_EMails (
-    e_mail_address VARCHAR(255) PRIMARY KEY,
-    number_of_accounts TINYINT UNSIGNED NOT NULL
-);

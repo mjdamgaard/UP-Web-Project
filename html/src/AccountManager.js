@@ -26,7 +26,7 @@ export class AccountManager {
     }
 
     get isLoggedIn() {
-        return !this.session || this.expTime + 10 > Date.now();
+        return this.session && this.expTime + 10 < Date.now();
     }
 
     get inputUserID() {
@@ -45,7 +45,7 @@ export class AccountManager {
             callback = callbackData ?? (x => void(0));
             callbackData = null;
         }
-        if (!this.isLoggedIn) {
+        if (!this.isLoggedIn) {debugger;
             callback(obj, false, callbackData);
             return;
         }
@@ -58,19 +58,19 @@ export class AccountManager {
         });
     }
 
-    login(userID, password, obj, callbackData, callback) {
+    login(userNameOrID, password, obj, callbackData, callback) {
         if (!callback) {
             callback = callbackData ?? (x => void(0));
             callbackData = null;
         }
         let reqData = {
-            u: userID,
+            u: userNameOrID,
             pw: password,
         };
         $.post("login_handler.php", reqData, function(result) {
             if (result.exitCode == 0) {
                 localStorage.session = {
-                    userID: result.userID,
+                    userID: result.outID,
                     sesID: result.sesID,
                     expTime: result.expTime,
                 };
@@ -83,20 +83,20 @@ export class AccountManager {
     // updateSession() method here, such that users can in priciple stay logged
     // in if they keep visiting the site.
 
-    createNewAccount(userID, eMail, password, obj, callbackData, callback) {
+    createNewAccount(username, email, password, obj, callbackData, callback) {
         if (!callback) {
             callback = callbackData ?? (x => void(0));
             callbackData = null;
         }
         let reqData = {
-            u: userID,
-            em: userID,
+            n: username,
+            em: email,
             pw: password,
         };
         $.post("account_creation_handler.php", reqData, function(result) {
             if (result.exitCode == 0) {
                 localStorage.session = {
-                    userID: result.userID,
+                    userID: result.outID,
                     sesID: result.sesID,
                     expTime: result.expTime,
                 };

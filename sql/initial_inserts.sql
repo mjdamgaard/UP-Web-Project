@@ -5,17 +5,19 @@
 DELETE FROM SemanticInputs;
 DELETE FROM Private_RecentInputs;
 ALTER TABLE Private_RecentInputs AUTO_INCREMENT=1;
+DELETE FROM RecordedInputs;
+DELETE FROM EntityIndexKeys;
 
 DELETE FROM Entities;
 ALTER TABLE Entities AUTO_INCREMENT=1;
-
 DELETE FROM Users;
-ALTER TABLE Users AUTO_INCREMENT=1;
--- DELETE FROM Texts;
--- ALTER TABLE Texts AUTO_INCREMENT=1;
+DELETE FROM Texts;
+DELETE FROM Binaries;
 
-DELETE FROM Private_Creators;
-
+DELETE FROM BotData;
+DELETE FROM Private_UserData;
+DELETE FROM Private_Sessions;
+DELETE FROM Private_EMails;
 
 
 /* From create_open_sdb.sql */
@@ -240,6 +242,6 @@ CALL insertOrFindEntity(9, 0, 6, 78, CONCAT(
 
 
 
-SELECT "Calling publicizeRecentInputs() takes a while (~a minute):";
+SELECT "Calling publicizeRecentInputs() can take a while (~a minute):";
 -- (It takes roughly 30 seconds on my laptop.)
 CALL publicizeRecentInputs ();

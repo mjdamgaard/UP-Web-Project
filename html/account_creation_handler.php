@@ -33,7 +33,7 @@ $em = $paramValArr[1];
 $pw = $paramValArr[2];
 
 // compute the password hash.
-$pwHash = password_hash($pw);
+$pwHash = password_hash($pw,  PASSWORD_DEFAULT);
 
 
 /* Trying to create a new user account */
@@ -56,12 +56,21 @@ if ($res["exitCode"] != 0) {
     echo json_encode($res);
     exit;
 }
+// get the new user ID.
+$u = $res["outID"];
+// Close the MySQLi statement so another can be prepared.
+$stmt->close();
 
 
 /* Creating a new session ID and outputting the sesID and expTime */
 
+$auth_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/auth/";
 require $auth_path . "create_or_update_session.php";
 
 // The program exits here, which also closes $conn.
+
+
+// TODO: Make a class with a createOrUpdateSession() and verifyPassword() ect.
+// methods instead of inserting these "makros."
 
 ?>
