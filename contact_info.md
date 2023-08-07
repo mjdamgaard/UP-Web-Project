@@ -1,9 +1,10 @@
-## Any help is appreciated
+## Any help is appreciated!
 
 If you think that this project sounds interesting and you want to support it in
-any way, also including simply giving some comments to it, please feel free to
-contact me, if not via GitHub then on my e-mail at fxn318@alumni.ku.dk.
+any way, also including simply giving some comments and points of critique,
+please feel free to contact me, if not via GitHub then on my e-mail at
+fxn318@alumni.ku.dk.
 
-And please do contact me if you want to help me turn those Is in the
-[README](https://github.com/mjdamgaard/openSDB/blob/master/README_longer_version.md)
-into *we*s instead.
+As of the time of writing, I am only one person working on this project, but I
+really hope to attract some others soon who could be interested in joining it
+to some capacity.

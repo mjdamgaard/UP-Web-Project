@@ -206,7 +206,7 @@ submitEntityFieldCL.addCallback(function($ci, data) {
                         'Entity was found!' +
                     '</span>' +
                     '<div>' +
-                        'ID: #' + outID +
+                        'ID: #' + entID +
                     '</div>'
                 );
                 $ci.trigger("open-column", ["AppColumn", newData, "right"]);

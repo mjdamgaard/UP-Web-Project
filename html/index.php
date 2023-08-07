@@ -17,8 +17,8 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 }
 
 
-if (!isset($_POST["t"])) {
-    $_POST["t"] = "10";
+if (!isset($_POST["e"])) {
+    $_POST["e"] = "10";
 }
 if (!isset($_POST["qu"])) {
     $_POST["qu"] = "9";
@@ -28,7 +28,7 @@ if (!isset($_POST["iu"])) {
 }
 
 // get and validate the required inputs.
-$paramNameArr = array("t", "qu", "iu");
+$paramNameArr = array("e", "qu", "iu");
 $typeArr = array("id", "id", "id");
 $paramValArr = InputGetter::getParams($paramNameArr);
 InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
@@ -48,9 +48,6 @@ $inputUserID = $paramValArr[2];
 <!-- <script src="/lib/jquery-3.6.4.js"></script> -->
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
 <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous"> -->
-
-<!-- TODO: Remove: -->
-<script src="lib/jquery.min.js"></script>
 
 
 

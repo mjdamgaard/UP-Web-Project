@@ -72,6 +72,10 @@ sdbInterfaceCL.addCallback(function($ci, data) {
     });
 });
 
+// TODO: There is a style bug with the sign-in etc. buttons when the width of
+// the screen gets small enough (they jump down from the bar). I can see that
+// it has to do with how BS displays columns as rows instead of there is limited
+// space. Fix this bug.
 
 export var interfaceHeaderCL = new ContentLoader(
     "InterfaceHeader",

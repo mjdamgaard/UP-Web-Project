@@ -16,11 +16,14 @@ import {
     generalEntityElementCL,
 } from "/src/content_loaders/EntityElements.js";
 import {
-    dropdownButtonBarCL, dropdownButtonCL, setHeaderCL
+    setDisplayCL, dropdownButtonBarCL, dropdownButtonCL, setHeaderCL
 } from "/src/content_loaders/SetDisplays.js";
 import {
     ratingElementCL, ratingDisplayCL,
 } from "/src/content_loaders/Ratings.js";
+import {
+    loginPageCL,
+} from "/src/content_loaders/LoginPages.js";
 
 
 
@@ -182,7 +185,27 @@ dropdownButtonCL.addCSS(
     '}'
 );
 setHeaderCL.addCSS(
-    '& .CI.DropdownButtonBar:not(:hover) {' +
+    '& > .CI.DropdownButtonBar:not(:hover) {' +
         'background-color: #f4f9ff;' +
     '}'
 );
+setDisplayCL.addCSS(
+    '& > .CI.DropdownButtonBar:not(:hover) {' +
+        'background-color: #ddd;' +
+    '}'
+);
+
+
+// loginPageCL.addCSS(
+//     'display: grid;' +
+//     'grid-template-columns: auto auto auto;' +
+//     // 'grid-template-rows: auto;' +
+//     ''
+//     // 'display: flex;' +
+//     // 'justify-content: center;'
+// );
+// loginPageCL.addCSS(
+//     '& > .content-container {' +
+//         'max-width: 500px;' +
+//     '}'
+// );

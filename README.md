@@ -435,10 +435,10 @@ of the service will not be able to turn their back to the community when they
 eye an opportunity to make more money at the cost of its users.
 
 So there is plenty of reasons to be excited and wanting to support and take part
-in this project. Both simply for the thrill of it, but also because having been
-an early contributor will be valuable in terms of PR (for sponsors) or in terms
-of recognition (for individual contributors).
+in this project. First of all simply for the thrill of it, but also because
+having been an early contributor will be valuable in terms of PR (for sponsors)
+or in terms of recognition (for individual contributors).
 And in the case of individual contributors, if the project really takes off and
 people start donating via the mentioned user-to-user donating system, it might
-also pay to have been part of giving the early contributions to the project
-that made it take off in the first place!
+also pay to have been part of the early contributors that made the project take
+off in the first place!
