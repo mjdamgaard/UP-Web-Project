@@ -28,7 +28,7 @@ $typeArr = array("username", "str", "password"); // TODO: Implement e-mail
 // validation.
 $paramValArr = InputGetter::getParams($paramNameArr);
 InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
-$u = $paramValArr[0];
+$n = $paramValArr[0];
 $em = $paramValArr[1];
 $pw = $paramValArr[2];
 
@@ -48,7 +48,7 @@ $conn = DBConnector::getConnectionOrDie(
 $sql = "CALL createNewUser (?, ?, ?)";
 $stmt = $conn->prepare($sql);
 // execute input statement.
-DBConnector::executeSuccessfulOrDie($stmt, array($u, $em, $pwHash));
+DBConnector::executeSuccessfulOrDie($stmt, array($n, $em, $pwHash));
 // fetch the result as a numeric array.
 $res = $stmt->get_result()->fetch_assoc();
 // die with $res if the user could not be created.
@@ -71,8 +71,10 @@ require $auth_path . "create_or_update_session.php";
 /* Output the results */
 
 // add the session ID and expiration time to $res.
-$res["sesID"] = $sesID;
-$res["expTime"] = $expTime;
+throw new Exception(">>>" . json_encode(array($sesID, $expTime)) . "<<<");
+throw new Exception(">>>" . json_encode(array("sesID"=>$sesID, "expTime"=>$expTime)) . "<<<");
+$res += array("sesID"=>$sesID, "expTime"=>$expTime);
+throw new Exception(">>>" . json_encode($res) . "<<<");
 // finally echo the JSON-encoded result array (containing the session ID and
 // the exitCode).
 echo json_encode($res);
