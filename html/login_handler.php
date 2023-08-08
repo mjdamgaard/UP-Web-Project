@@ -61,7 +61,8 @@ $userID = $u;
 
 
 // verify password, login, and get the sesIDHex and expTime.
-$res = Authenticator::login($conn, $userID, $pw);
+$res = Authenticator::login($conn, $userID, $pw) +
+    array("exitCode"=>0, "outID"=>$userID);
 
 // finally echo the JSON-encoded result containing the expTime (expiration time)
 // and sesIDHex (hex string of the session ID).

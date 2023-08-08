@@ -153,9 +153,9 @@ accountButtonsContainerCL.addCallback(function($ci, data) {
         return false;
     });
     $ci.on("logged-in", function() {
-        let $this = $(this);
-        $this.children('.log-in, .new-account').hide();
-        $this.children('.log-out').show();
+    let $ci = $(this).closest('.CI.AccountButtonsContainer');
+        $ci.children('.log-in, .new-account').hide();
+        $ci.children('.log-out').show();
         return false;
     });
 });

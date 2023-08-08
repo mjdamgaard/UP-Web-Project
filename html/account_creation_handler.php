@@ -31,9 +31,6 @@ $n = $paramValArr[0];
 $em = $paramValArr[1];
 $pw = $paramValArr[2];
 
-// compute the password hash.
-$pwHash = password_hash($pw,  PASSWORD_DEFAULT);
-
 
 // get connection to the database.
 require $db_io_path . "sdb_config.php";

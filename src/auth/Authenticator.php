@@ -14,7 +14,11 @@ class Authenticator {
     // creates a new session as well and returns the outID (user ID), sesIDHex
     // (hexed session ID) and expTime (expiration time) in an associative array.
     // If not successful, the exitCode is returned in the associative array.
-    public static function createNewAccount($conn, $username, $email, $pwHash) {
+    public static function createNewAccount(
+        $conn, $username, $email, $password
+    ) {
+        // compute the password hash.
+        $pwHash = password_hash($password, PASSWORD_DEFAULT);
         // prepare input MySQLi statement to create the new user.
         $sql = "CALL createNewUser (?, ?, ?)";
         $stmt = $conn->prepare($sql);
@@ -56,6 +60,7 @@ class Authenticator {
         // return the expiration time and a hex string of the session ID.
         return array("sesIDHex"=>bin2hex($sesID), "expTime"=>$expTime);
     }
+
 
     // login() tries to login, and return sesIDHex (hexed session ID) and
     // expTime (expiration time) in an associative array.

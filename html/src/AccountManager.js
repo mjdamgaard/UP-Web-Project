@@ -53,8 +53,8 @@ export class AccountManager {
             u: this.inputUserID,
             sesIDHex: this.sesIDHex,
         };
+        localStorage.removeItem("session");
         $.post("logout_handler.php", reqData, function(result) {
-            localStorage.removeItem("session");
             callback(obj, result, callbackData);
         });
     }
