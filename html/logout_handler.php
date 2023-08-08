@@ -22,7 +22,7 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 
 
 // get the userID and the session ID.
-$paramNameArr = array("u", "s");
+$paramNameArr = array("u", "sesIDHex");
 $typeArr = array("id", "session_id_hex");
 $paramValArr = InputGetter::getParams($paramNameArr);
 InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
@@ -32,20 +32,14 @@ $sesIDHex = $paramValArr[1];
 // get connection to the database.
 require $db_io_path . "sdb_config.php";
 $conn = DBConnector::getConnectionOrDie(
-    $servername, $dbname, $username, $password
+    DB_SERVER_NAME, DB_DATABASE_NAME, DB_USERNAME, DB_PASSWORD
 );
 
-// authenticate the user by verifying the session ID.
+
+// verify the session ID, then destroy it on success.
 $sesID = hex2bin($sesIDHex);
-Authenticator::verifySessionID($conn, $userID, $sesID);
+Authenticator::logout($conn, $userID, $sesID);
 
-
-// prepare input MySQLi statement to destroy the session.
-$sql = "DELETE FROM Sessions WHERE user_id <=> ?";
-$stmt = $conn->prepare($sql);
-
-// execute that statement.
-DBConnector::executeSuccessfulOrDie($stmt, array($userID));
 
 // output array("exitCode"=>"0") on success (JSON-encoded).
 header("Content-Type: text/json");

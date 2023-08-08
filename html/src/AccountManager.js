@@ -13,7 +13,7 @@ export class AccountManager {
     }
 
     get session() {
-        return localStorage.session ?? false;
+        return JSON.parse(localStorage.session) ?? false;
     }
     get userID() {
         return this.session.userID;
@@ -51,12 +51,18 @@ export class AccountManager {
         }
         let reqData = {
             u: this.inputUserID,
-            s: this.sesIDHex,
+            sesIDHex: this.sesIDHex,
         };
         $.post("logout_handler.php", reqData, function(result) {
+            localStorage.removeItem("session");
             callback(obj, result, callbackData);
         });
     }
+
+    // TODO: Consider hashing passwords (with a constant salt) before sending
+    // to server, just so that a user don't reveal their password to others
+    // if looking at past HTTPs requests in the browser's network monitor, while
+    // others look on.
 
     login(userNameOrID, password, obj, callbackData, callback) {
         if (!callback) {
@@ -69,11 +75,11 @@ export class AccountManager {
         };
         $.post("login_handler.php", reqData, function(result) {
             if (result.exitCode == 0) {
-                localStorage.session = {
+                localStorage.session = JSON.stringify({
                     userID: result.outID,
                     sesIDHex: result.sesIDHex,
                     expTime: result.expTime,
-                };
+                });
             }
             callback(obj, result, callbackData);
         });
@@ -95,11 +101,11 @@ export class AccountManager {
         };
         $.post("account_creation_handler.php", reqData, function(result) {
             if (result.exitCode == 0) {
-                localStorage.session = {
+                localStorage.session = JSON.stringify({
                     userID: result.outID,
                     sesIDHex: result.sesIDHex,
                     expTime: result.expTime,
-                };
+                });
             }
             callback(obj, result, callbackData);
         });

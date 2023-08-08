@@ -162,7 +162,7 @@ class InputValidator {
                 }
                 break;
             case "session_id_hex":
-                $pattern = "/^([0-9A-Z]{2}){60}$/";
+                $pattern = "/^([0-9a-zA-Z]{2}){60}$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
                 }

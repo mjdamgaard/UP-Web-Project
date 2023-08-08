@@ -9,6 +9,7 @@ SELECT "Query procedures";
 --
 -- DROP PROCEDURE selectUsername;
 -- DROP PROCEDURE selectUserInfo;
+-- DROP PROCEDURE selectUserID;
 -- DROP PROCEDURE selectText;
 -- DROP PROCEDURE selectTextSubstring;
 -- DROP PROCEDURE selectBinary;
@@ -155,6 +156,18 @@ BEGIN
         public_keys_for_authentication AS publicKeys
     FROM Users
     WHERE id = userID;
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectUserID (
+    IN uName VARCHAR(50)
+)
+BEGIN
+    SELECT id AS userID
+    FROM Users
+    WHERE username = uName;
 END //
 DELIMITER ;
 

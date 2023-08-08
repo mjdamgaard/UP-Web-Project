@@ -146,11 +146,10 @@ accountButtonsContainerCL.addCallback(function($ci, data) {
         return false;
     });
     $ci.children('.log-out').on("click", function() {
-        let $this = $(this);
         accountManager.logout();
-        $this.trigger("log-out");
-        $this.children('.log-out').hide();
-        $this.children('.log-in, .new-account').show();
+        let $ci = $(this).closest('.CI.AccountButtonsContainer');
+        $ci.children('.log-out').hide();
+        $ci.children('.log-in, .new-account').show();
         return false;
     });
     $ci.on("logged-in", function() {

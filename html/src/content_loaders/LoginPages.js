@@ -92,7 +92,7 @@ createAccountPageCL.addCallback(function($ci, data) {
         let pw = $this.find('.pw').val();
         // TODO: Validate input client-side first.
         accountManager.createNewAccount(username, email, pw, $ci,
-            function($ci, result) {debugger;
+            function($ci, result) {
                 if (result.exitCode != 0) {
                     $ci.find('.response-display').html(result.exitCode);//TODO..
                 } else {

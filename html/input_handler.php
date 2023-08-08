@@ -26,16 +26,17 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 // $typeArr = array("id", "session_id_hex");
 // $paramValArr = InputGetter::getParams($paramNameArr);
 // InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
-// $u = $paramValArr[0];
+// $userID = $paramValArr[0];
 // $sesIDHex = $paramValArr[1];
 
 // get connection to the database.
 require $db_io_path . "sdb_config.php";
 $conn = DBConnector::getConnectionOrDie(
-    $servername, $dbname, $username, $password
+    DB_SERVER_NAME, DB_DATABASE_NAME, DB_USERNAME, DB_PASSWORD
 );
 
 // // authenticate the user by verifying the session ID.
+// $sesID = hex2bin($sesIDHex);
 // $res = Authenticator::verifySessionID($conn, $userID, $sesID);
 
 

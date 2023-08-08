@@ -96,6 +96,12 @@ switch ($reqType) {
         $typeArr = array("id");
         // output: [[username, publicKeys]].
         break;
+    case "userID":
+        $sql = "CALL selectUserID (?)";
+        $paramNameArr = array("n");
+        $typeArr = array("username");
+        // output: [[userID]].
+        break;
     case "text":
         $sql = "CALL selectText (?)";
         $paramNameArr = array("id");
@@ -143,7 +149,7 @@ InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
 // get connection.
 require $db_io_path . "sdb_config.php";
 $conn = DBConnector::getConnectionOrDie(
-    $servername, $dbname, $username, $password
+    DB_SERVER_NAME, DB_DATABASE_NAME, DB_USERNAME, DB_PASSWORD
 );
 // prepare input MySQLi statement.
 $stmt = $conn->prepare($sql);

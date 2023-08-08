@@ -23,7 +23,7 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 
 // get the username and password.
 $paramNameArr = array("n", "em", "pw");
-$typeArr = array("username", "str", "password"); // TODO: Implement e-mail
+$typeArr = array("username", "str", "password"); // TODO: Implement email valid.
 // validation.
 $paramValArr = InputGetter::getParams($paramNameArr);
 InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
@@ -38,13 +38,13 @@ $pwHash = password_hash($pw,  PASSWORD_DEFAULT);
 // get connection to the database.
 require $db_io_path . "sdb_config.php";
 $conn = DBConnector::getConnectionOrDie(
-    $servername, $dbname, $username, $password
+    DB_SERVER_NAME, DB_DATABASE_NAME, DB_USERNAME, DB_PASSWORD
 );
 
 // try to create new user account and get the outID (user ID), sesIDHex (hexed
 // session ID) and expTime (expiration time) on succuss and get the exitCode
 // on failure.
-$res = Authenticator::createNewAccount($conn, $userID);
+$res = Authenticator::createNewAccount($conn, $n, $em, $pw);
 
 
 // finally echo the JSON-encoded result array containing the exitCode, the
