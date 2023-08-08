@@ -1,7 +1,5 @@
 <?php
 
-header("Content-Type: text/json");
-
 $err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";
 require_once $err_path . "errors.php";
 
@@ -12,6 +10,9 @@ require_once $user_input_path . "InputValidator.php";
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
 require_once $db_io_path . "DBConnector.php";
 
+$auth_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/auth/";
+require_once $auth_path . "Authenticator.php";
+
 
 if ($_SERVER["REQUEST_METHOD"] != "POST") {
     echoErrorJSONAndExit(
@@ -20,8 +21,6 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 }
 
 
-/* Getting password and either username or user ID */
-
 // get the userID and the password.
 $paramNameArr = array("u", "pw");
 $paramValArr = InputGetter::getParams($paramNameArr);
@@ -29,14 +28,13 @@ $u = $paramValArr[0];
 $pw = $paramValArr[1];
 
 
-/* Getting the user ID if a username was provided */
-
 // get connection to the database.
 require $db_io_path . "sdb_config.php";
 $conn = DBConnector::getConnectionOrDie(
     $servername, $dbname, $username, $password
 );
 
+// get the user ID if a username was provided.
 if (!preg_match("/^[1-9][0-9]*$/", $u)) {
     InputValidator::validateParam($u, "username", "u");
 
@@ -46,29 +44,18 @@ if (!preg_match("/^[1-9][0-9]*$/", $u)) {
     $paramValArr[0] = $u;
 }
 
+// validate types and rename $u as $userID now that can only hold that.
 $typeArr = array("id", "str");
 InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
+$userID = $u;
 
 
+// verify password, login, and get the sesIDHex and expTime.
+$res = Authenticator::login($conn, $userID, $pw);
 
-/* Verification of the password */
-
-// authenticate the user by verifying the password (requires $u, $pw and $conn,
-// and sets/overwrites $sql, $stmt and $res).
-$auth_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/auth/";
-require $auth_path . "verify_password.php";
-
-
-/* Creating a new session ID and appending $sesID and $expTime to $res */
-
-$res = array();
-require $auth_path . "create_or_update_session.php";
-
-
-/* Output the results */
-
-// finally echo the JSON-encoded result array containing the session ID and
-// the expiration time.
+// finally echo the JSON-encoded result containing the expTime (expiration time)
+// and sesIDHex (hex string of the session ID).
+header("Content-Type: text/json");
 echo json_encode($res);
 
 ?>

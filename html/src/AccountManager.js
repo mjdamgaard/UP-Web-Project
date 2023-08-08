@@ -18,8 +18,8 @@ export class AccountManager {
     get userID() {
         return this.session.userID;
     }
-    get sesID() {
-        return this.session.sesID;
+    get sesIDHex() {
+        return this.session.sesIDHex;
     }
     get expTime() {
         return this.session.expTime;
@@ -51,7 +51,7 @@ export class AccountManager {
         }
         let reqData = {
             u: this.inputUserID,
-            sesID: this.sesID,
+            s: this.sesIDHex,
         };
         $.post("logout_handler.php", reqData, function(result) {
             callback(obj, result, callbackData);
@@ -71,7 +71,7 @@ export class AccountManager {
             if (result.exitCode == 0) {
                 localStorage.session = {
                     userID: result.outID,
-                    sesID: result.sesID,
+                    sesIDHex: result.sesIDHex,
                     expTime: result.expTime,
                 };
             }
@@ -97,7 +97,7 @@ export class AccountManager {
             if (result.exitCode == 0) {
                 localStorage.session = {
                     userID: result.outID,
-                    sesID: result.sesID,
+                    sesIDHex: result.sesIDHex,
                     expTime: result.expTime,
                 };
             }

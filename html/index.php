@@ -74,7 +74,7 @@ $inputUserID = $paramValArr[2];
     import "/src/content_loaders/SubmissionFields.js";
     import "/src/content_loaders/LoginPages.js";
 
-    import "/src/style_modules/style01.js";
+    import "/src/style/style_modules/style01.js";
 
     let data = {
         entID: <?php echo $entID; ?>,

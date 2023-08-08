@@ -1,7 +1,5 @@
 <?php
 
-header("Content-Type: text/json");
-
 $err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";
 require_once $err_path . "errors.php";
 
@@ -12,6 +10,9 @@ require_once $user_input_path . "InputValidator.php";
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
 require_once $db_io_path . "DBConnector.php";
 
+$auth_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/auth/";
+require_once $auth_path . "Authenticator.php";
+
 
 if ($_SERVER["REQUEST_METHOD"] != "POST") {
     echoErrorJSONAndExit(
@@ -19,8 +20,6 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
     );
 }
 
-
-/* Getting the input */
 
 // get the username and password.
 $paramNameArr = array("n", "em", "pw");
@@ -36,48 +35,21 @@ $pw = $paramValArr[2];
 $pwHash = password_hash($pw,  PASSWORD_DEFAULT);
 
 
-/* Trying to create a new user account */
-
 // get connection to the database.
 require $db_io_path . "sdb_config.php";
 $conn = DBConnector::getConnectionOrDie(
     $servername, $dbname, $username, $password
 );
 
-// prepare input MySQLi statement to create the new user.
-$sql = "CALL createNewUser (?, ?, ?)";
-$stmt = $conn->prepare($sql);
-// execute input statement.
-DBConnector::executeSuccessfulOrDie($stmt, array($n, $em, $pwHash));
-// fetch the result as a numeric array.
-$res = $stmt->get_result()->fetch_assoc();
-// die with $res if the user could not be created.
-if ($res["exitCode"]) {
-    echo json_encode($res);
-    exit;
-}
-// get the new user ID.
-$u = $res["outID"];
-// Close the MySQLi statement so another can be prepared.
-$stmt->close();
+// try to create new user account and get the outID (user ID), sesIDHex (hexed
+// session ID) and expTime (expiration time) on succuss and get the exitCode
+// on failure.
+$res = Authenticator::createNewAccount($conn, $userID);
 
-
-/* Creating a new session ID and appending $sesID and $expTime to $res */
-
-$auth_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/auth/";
-require $auth_path . "create_or_update_session.php";
-
-
-/* Output the results */
 
 // finally echo the JSON-encoded result array containing the exitCode, the
-// outID (user ID), the session ID and the expiration time.
-// throw new Exception(">>>" . json_encode($res) . "<<<");
+// outID (user ID), sesIDHex (hexed session ID) and expTime (expiration time).
+header("Content-Type: text/json");
 echo json_encode($res);
-
-
-
-// TODO: Make a class with a createOrUpdateSession() and verifyPassword() ect.
-// methods instead of inserting these "makros."
 
 ?>

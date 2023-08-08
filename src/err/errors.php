@@ -4,11 +4,8 @@ function getErrorJSON($msg) {
     return '{"error":"' . $msg . '"}';
 }
 
-function echoErrorJSON($msg) {
-    echo getErrorJSON($msg);
-}
-
 function echoErrorJSONAndExit($msg) {
+    header("Content-Type: text/json");
     http_response_code(400); // 400 Bad Request.
     echo getErrorJSON($msg);
     exit;

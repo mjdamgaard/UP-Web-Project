@@ -1,7 +1,5 @@
 <?php
 
-header("Content-Type: text/json");
-
 $err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";
 require_once $err_path . "errors.php";
 
@@ -11,6 +9,9 @@ require_once $user_input_path . "InputValidator.php";
 
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
 require_once $db_io_path . "DBConnector.php";
+
+$auth_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/auth/";
+require_once $auth_path . "Authenticator.php";
 
 
 
@@ -132,7 +133,6 @@ switch ($reqType) {
     //     // output: [[entityType, entityID], ...].
     //     break;
     default:
-        header("Content-Type: text/json");
         echoErrorJSONAndExit("Unrecognized request type");
 }
 
@@ -154,8 +154,8 @@ $res = $stmt->get_result()->fetch_all();
 // finally echo the JSON-encoded numeric array, containing e.g. the
 // columns: ("ratVal", "instID") for $reqType == "set", etc., so look at
 // the comments above for what the resulting arrays will contain.
+header("Content-Type: text/json");
 echo json_encode($res);
 
 // The program exits here, which also closes $conn.
-
 ?>
