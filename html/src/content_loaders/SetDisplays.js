@@ -3,7 +3,7 @@ import {
     ContentLoader, DataNode,
 } from "/src/ContentLoader.js";
 import {
-    sdbInterfaceCL, dbReqManager,
+    sdbInterfaceCL, dbReqManager, accountManager,
 } from "/src/content_loaders/SDBInterface.js";
 
 
@@ -178,13 +178,20 @@ setCategoriesListCL.addCallback("data", function(data) {
     ]);
 });
 setCategoriesListCL.addCallback(function($ci, data) {
-    let catIDArr = data.setGenerator.getSetCategories();
+    let catIDArr = data.setGenerator.getSetCategoryKeys();
     catIDArr.forEach(function(val) {
-        setCategoriesListCL.loadAppended(
-            $ci, "CategoryDisplay", new DataNode(data, {
-                entID: val,
-            })
-        );
+        if (!isNaN(parseInt(val))) {
+            setCategoriesListCL.loadAppended(
+                $ci, "CategoryDisplay", new DataNode(data, {
+                    entID: val,
+                })
+            );
+        } else {
+            let catKey = JSON.parse(val);
+            setCategoriesListCL.loadAppended(
+                $ci, "MissingCategoryDisplay", new DataNode(data, catKey)
+            );
+        }
     });
 });
 export var categoryDisplayCL = new ContentLoader(
@@ -195,3 +202,69 @@ export var categoryDisplayCL = new ContentLoader(
     '</div>',
     sdbInterfaceCL
 );
+
+export var missingCategoryDisplayCL = new ContentLoader(
+    "MissingCategoryDisplay",
+    /* Initial HTML template */
+    '<div>' +
+        '<span class="text-info">Missing category.</span>' +
+    '</div>',
+    sdbInterfaceCL
+);
+missingCategoryDisplayCL.addCallback("data", function(data) {
+    data.copyFromAncestor([
+        "cxtID",
+        "defStr",
+    ]);
+});
+missingCategoryDisplayCL.addCallback(function($ci, data) {
+    data.inputUserID = accountManager.inputUserID;
+    if (data.inputUserID) {
+        $ci.append(
+            ' <span class="text-info">' +
+                'Want to submit it? ' +
+                '<button class="btn btn-default submit">Submit</button>' +
+            '</span>'
+        );
+        $ci.find('button.submit').on("click", function() {
+            $(this).trigger("submit-missing-cat");
+            return false;
+        });
+        $ci.on("submit-missing-cat", function() {
+            let reqData = {
+                req: "ent",
+                sidh: accountManager.sesIDHex,
+                u: data.inputUserID,
+                r: 1,
+                t: 2,
+                c: data.cxtID,
+                s: data.defStr,
+            };
+            let $ci = $(this);
+            dbReqManager.input($ci, reqData, data, function($ci, result, data) {
+                if (result.exitCode == 0) {
+                    $ci.html(
+                        '<span class="text-success">' +
+                            'Category successfully submitted!' +
+                        '</span>'
+                    );
+                    let newData = new DataNode(data, {entID: result.outID});
+                    $ci.trigger("open-column", ["AppColumn", newData, "right"]);
+                } else {
+                    $ci.html(
+                        '<span class="text-warning">' +
+                            'An error occurred' +
+                        '</span>'
+                    );
+                }
+            });
+            return false;
+        });
+    } else {
+        $ci.append(
+            ' <span class="text-warning">' +
+                '(Log in or sign up in order to submit it.)' +
+            '</span>'
+        );
+    }
+});

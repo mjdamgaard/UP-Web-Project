@@ -19,10 +19,11 @@ export class SetGenerator {
         // to be redefined by descendant classes.
     }
 
-    // getSetCategories() returns an array of all category IDs that are
+    // getSetCategoryKeys() returns an array of all category keys, which are
+    // either numeric IDs or JSON'ed {cxtID, defStr} objects, that are
     // important to the formation of the set (which we can then show on the
     // drop-down pages of the set elements).
-    getSetCategories() {
+    getSetCategoryKeys() {
         // To be redefined by descendant classes.
     }
 
@@ -48,8 +49,8 @@ export class SetQuerier extends SetGenerator {
     ) {
         super();
         if (typeof catKey === "object") {
-            this.catCxtID = catKey[0];
-            this.catDefStr = catKey[1];
+            this.catCxtID = catKey.cxtID;
+            this.catDefStr = catKey.defStr;
         } else {
             this.catID = catKey;
         }
@@ -80,24 +81,13 @@ export class SetQuerier extends SetGenerator {
                 s: this.catDefStr,
             };
             dbReqManager.query(this, reqData, function(sg, result) {
-                sg.catID = (result[0] ?? [0])[0];
-                sg.queryWithCatID(obj, callbackData, callback);
-                //
-                // // As a temporary solution for adding missing categories, all
-                // // categories are just automatically submitted to the database,
-                // // if they are missing in this query.
-                // if (sg.catID || !sg.dataNode.inputUserID) {
-                //     return;
-                // }
-                // let reqData = {
-                //     req: "ent",
-                //     u: sg.dataNode.inputUserID,
-                //     r: 0,
-                //     t: 2,
-                //     c: sg.catCxtID,
-                //     s: sg.catDefStr,
-                // };
-                // dbReqManager.input(sg, reqData, function() {});
+                sg.catID = (result[0] ?? [null])[0];
+                if (sg.catID) {
+                    sg.queryWithCatID(obj, callbackData, callback);
+                } else {
+                    sg.set = [];
+                    callback(obj, sg.set, callbackData);
+                }
             });
         }
     }
@@ -123,11 +113,16 @@ export class SetQuerier extends SetGenerator {
         });
     }
 
-    getSetCategories() {
+    getSetCategoryKeys() {
         // There is a race condition here, so beware of it and try not to
-        // call getSetCategories() before the first entID queries.
+        // call getSetCategoryKeys() before the first entID queries.
         // TODO: Consider if this race condition should be eliminated somehow.
-        return [this.catID ?? null];
+        return [
+            this.catID ?? JSON.stringify({
+                cxtID: this.catCxtID,
+                defStr: this.catDefStr,
+            })
+        ];
     }
 }
 
@@ -193,9 +188,9 @@ export class SetCombiner extends SetGenerator {
         // To be redefined by descendant classes.
     }
 
-    getSetCategories() {
+    getSetCategoryKeys() {
         let catIDArrArr = this.setGeneratorArr.map(
-            val => val.getSetCategories()
+            val => val.getSetCategoryKeys()
         );
         let catIDArr = [].concat(...catIDArrArr);
         // filter out repeated categories.

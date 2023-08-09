@@ -120,7 +120,7 @@ propertyCategoryPageCL.addCallback("data", function(data) {
 propertyCategoryPageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
     data.setGenerator = new SimpleSetGenerator(
-        [21, "#" + data.propID + "|#" + data.entID], // catKey.
+        {cxtID: 21, defStr: "#" + data.propID + "|#" + data.entID}, // catKey.
         // (21 is the ID of the "<Property> of <Entity>" template.)
     );
 });
@@ -174,10 +174,10 @@ entityRatingsPageCL.addCallback("data", function(data) {
     // Relevant categories:
     data.elemContentKey = "RatingElement";
     let sg1 = new SimpleSetGenerator(
-        [21, "#54|#" + data.entID], // catKey.
+        {cxtID: 21, defStr: "#54|#" + data.entID}, // catKey.
     );
     let sg2 = new SimpleSetGenerator(
-        [21, "#52|#" + data.typeID], // catKey.
+        {cxtID: 21, defStr: "#52|#" + data.typeID}, // catKey.
     );
     data.setGenerator = new MaxRatingSetCombiner([sg1, sg2]);
 });
@@ -213,7 +213,7 @@ relevantRatingsTypePageCL.addCallback("data", function(data) {
 relevantRatingsTypePageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
     data.setGenerator = new SimpleSetGenerator(
-        [21, "#52|#" + data.entID], // catKey.
+        {cxtID: 21, defStr: "#52|#" + data.entID}, // catKey.
     );
 });
 
@@ -232,7 +232,7 @@ relevantPropertiesTypePageCL.addCallback("data", function(data) {
 relevantPropertiesTypePageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
     data.setGenerator = new SimpleSetGenerator(
-        [21, "#58|#" + data.entID], // catKey.
+        {cxtID: 21, defStr: "#58|#" + data.entID}, // catKey.
     );
 });
 
@@ -257,11 +257,11 @@ entityInfoPageCL.addCallback("data", function(data) {
 entityInfoPageCL.addCallback("data", function(data) {
     data.elemContentKey = "SemanticPropertyElement";
     let sg1 = new SimpleSetGenerator(
-        [21, "#58|#" + data.entID], // catKey.
+        {cxtID: 21, defStr: "#58|#" + data.entID}, // catKey.
         100, // num,
     );
     let sg2 = new SimpleSetGenerator(
-        [21, "#59|#" + data.typeID], // catKey.
+        {cxtID: 21, defStr: "#59|#" + data.typeID}, // catKey.
         100, // num.
     );
     data.setGenerator = new MaxRatingSetCombiner([sg1, sg2]);
