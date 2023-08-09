@@ -33,7 +33,7 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 
 // get request type.
 if (!isset($_POST["req"])) {
-    echoErrorJSONAndExit("No request type specified");
+    echoBadErrorJSONAndExit("No request type specified");
 }
 $reqType = $_POST["req"];
 
@@ -139,7 +139,7 @@ switch ($reqType) {
     //     // output: [[entityType, entityID], ...].
     //     break;
     default:
-        echoErrorJSONAndExit("Unrecognized request type");
+        echoBadErrorJSONAndExit("Unrecognized request type");
 }
 
 // get inputs.

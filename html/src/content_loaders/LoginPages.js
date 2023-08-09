@@ -28,7 +28,7 @@ export var loginPageCL = new ContentLoader(
                     '<button class="btn btn-default login">Log in</button>' +
                 '</span>' +
             '</form>' +
-            '<div class="response-display"></div>' +
+            '<div class="response-display text-warning"></div>' +
         '</div>' +
         '<div class="right-margin"></div>' +
     '</div>',
@@ -37,12 +37,13 @@ export var loginPageCL = new ContentLoader(
 loginPageCL.addCallback(function($ci, data) {
     $ci.on("submit", function() {
         let $this = $(this);
+        $this.find('.response-display').empty();
         let user = $this.find('.user').val();
         let pw = $this.find('.pw').val();
-        // TODO: Validate input client-side first.
-        accountManager.login(user, pw, $ci, function($ci, result) {
+        // TODO: Validate input client-side first!
+        accountManager.login(user, pw, $this, function($ci, result) {
             if (result.exitCode != 0) {
-                $ci.find('.response-display').html(result.exitCode); // TODO..
+                $ci.find('.response-display').text(result.error);
             } else {
                 $ci.trigger("logged-in");
                 $ci.trigger("back-to-main");
@@ -78,7 +79,7 @@ export var createAccountPageCL = new ContentLoader(
                     '<button class="btn btn-default login">Submit</button>' +
                 '</span>' +
             '</form>' +
-            '<div class="response-display"></div>' +
+            '<div class="response-display text-warning"></div>' +
         '</div>' +
         '<div class="right-margin"></div>' +
     '</div>',
@@ -90,11 +91,11 @@ createAccountPageCL.addCallback(function($ci, data) {
         let username = $this.find('.username').val();
         let email = $this.find('.email').val();
         let pw = $this.find('.pw').val();
-        // TODO: Validate input client-side first.
+        // TODO: Validate input client-side first!
         accountManager.createNewAccount(username, email, pw, $ci,
             function($ci, result) {
                 if (result.exitCode != 0) {
-                    $ci.find('.response-display').html(result.exitCode);//TODO..
+                    $ci.find('.response-display').text(result.error);
                 } else {
                     $ci.trigger("logged-in");
                     $ci.trigger("back-to-main");

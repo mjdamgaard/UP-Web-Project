@@ -15,7 +15,7 @@ require_once $auth_path . "Authenticator.php";
 
 
 if ($_SERVER["REQUEST_METHOD"] != "POST") {
-    echoErrorJSONAndExit(
+    echoBadErrorJSONAndExit(
         "Only the POST HTTP method is allowed for this request"
     );
 }

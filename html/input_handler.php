@@ -15,14 +15,14 @@ require_once $auth_path . "Authenticator.php";
 
 
 if ($_SERVER["REQUEST_METHOD"] != "POST") {
-    echoErrorJSONAndExit("Only the POST HTTP method is allowed for inputs");
+    echoBadErrorJSONAndExit("Only the POST HTTP method is allowed for inputs");
 }
 
 // TODO: In-comment.
 // /* Verification of the session ID  */
 //
 // // get the userID and the session ID.
-// $paramNameArr = array("u", "sesIDHex");
+// $paramNameArr = array("u", "sidh");
 // $typeArr = array("id", "session_id_hex");
 // $paramValArr = InputGetter::getParams($paramNameArr);
 // InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
@@ -46,7 +46,7 @@ $conn = DBConnector::getConnectionOrDie(
 
 // get request type.
 if (!isset($_POST["req"])) {
-    echoErrorJSONAndExit("No request type specified");
+    echoBadErrorJSONAndExit("No request type specified");
 }
 $reqType = $_POST["req"];
 
@@ -90,7 +90,7 @@ switch ($reqType) {
         echoErrorJSONAndExit('The "bin" request type is not implemented yet');
         break;
     default:
-        echoErrorJSONAndExit("Unrecognized request type");
+        echoBadErrorJSONAndExit("Unrecognized request type");
 }
 
 // get inputs.

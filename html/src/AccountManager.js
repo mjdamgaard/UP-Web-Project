@@ -13,7 +13,7 @@ export class AccountManager {
     }
 
     get session() {
-        return JSON.parse(localStorage.session) ?? false;
+        return JSON.parse(localStorage.session ?? "null");
     }
     get userID() {
         return this.session.userID;
@@ -33,10 +33,10 @@ export class AccountManager {
         return this.isLoggedIn ? this.userID : false;
     }
 
-    // TODO: Reimplement, first with initial_user changed for 5-baised mean bot,
-    // and later on with other, user-specific, possibilities.
+    // TODO: Reimplement at some point to allow for other user-specific
+    // possibilities.
     get queryUserPriorityArr() {
-        return [this.inputUserID, 9];
+        return [this.inputUserID, 82];
     }
 
 
@@ -51,7 +51,7 @@ export class AccountManager {
         }
         let reqData = {
             u: this.inputUserID,
-            sesIDHex: this.sesIDHex,
+            sidh: this.sesIDHex,
         };
         localStorage.removeItem("session");
         $.post("logout_handler.php", reqData, function(result) {
@@ -60,9 +60,9 @@ export class AccountManager {
     }
 
     // TODO: Consider hashing passwords (with a constant salt) before sending
-    // to server, just so that a user don't reveal their password to others
-    // if looking at past HTTPs requests in the browser's network monitor, while
-    // others look on.
+    // to server, just so that a user don't accidentally reveal their password
+    // to others if looking at past HTTP(s) requests in the browser's network
+    // monitor, while others look on.
 
     login(userNameOrID, password, obj, callbackData, callback) {
         if (!callback) {

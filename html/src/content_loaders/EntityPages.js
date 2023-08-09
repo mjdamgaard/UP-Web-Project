@@ -6,7 +6,7 @@ import {
     sdbInterfaceCL, dbReqManager,
 } from "/src/content_loaders/SDBInterface.js";
 import {
-    SetQuerier, SetCombiner, MaxRatingSetCombiner,
+    SetQuerier, SetCombiner, MaxRatingSetCombiner, SimpleSetGenerator,
 } from "/src/SetGenerator.js";
 
 
@@ -119,10 +119,9 @@ propertyCategoryPageCL.addCallback("data", function(data) {
 });
 propertyCategoryPageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
-    data.setGenerator = new SetQuerier(
+    data.setGenerator = new SimpleSetGenerator(
         [21, "#" + data.propID + "|#" + data.entID], // catKey.
         // (21 is the ID of the "<Property> of <Entity>" template.)
-        data, // dataNode.
     );
 });
 
@@ -137,9 +136,8 @@ export var categoryInstancesPageCL = new ContentLoader(
 );
 categoryInstancesPageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
-    data.setGenerator = new SetQuerier(
+    data.setGenerator = new SimpleSetGenerator(
         data.getFromAncestor("entID"), // catKey.
-        data, // dataNode.
     );
 });
 
@@ -175,13 +173,11 @@ entityRatingsPageCL.addCallback("data", function(data) {
 entityRatingsPageCL.addCallback("data", function(data) {
     // Relevant categories:
     data.elemContentKey = "RatingElement";
-    let sg1 = new SetQuerier(
+    let sg1 = new SimpleSetGenerator(
         [21, "#54|#" + data.entID], // catKey.
-        data, // dataNode.
     );
-    let sg2 = new SetQuerier(
+    let sg2 = new SimpleSetGenerator(
         [21, "#52|#" + data.typeID], // catKey.
-        data, // dataNode.
     );
     data.setGenerator = new MaxRatingSetCombiner([sg1, sg2]);
 });
@@ -216,9 +212,8 @@ relevantRatingsTypePageCL.addCallback("data", function(data) {
 });
 relevantRatingsTypePageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
-    data.setGenerator = new SetQuerier(
+    data.setGenerator = new SimpleSetGenerator(
         [21, "#52|#" + data.entID], // catKey.
-        data, // dataNode.
     );
 });
 
@@ -236,9 +231,8 @@ relevantPropertiesTypePageCL.addCallback("data", function(data) {
 });
 relevantPropertiesTypePageCL.addCallback("data", function(data) {
     data.elemContentKey = "GeneralEntityElement";
-    data.setGenerator = new SetQuerier(
+    data.setGenerator = new SimpleSetGenerator(
         [21, "#58|#" + data.entID], // catKey.
-        data, // dataNode.
     );
 });
 
@@ -262,14 +256,12 @@ entityInfoPageCL.addCallback("data", function(data) {
 });
 entityInfoPageCL.addCallback("data", function(data) {
     data.elemContentKey = "SemanticPropertyElement";
-    let sg1 = new SetQuerier(
+    let sg1 = new SimpleSetGenerator(
         [21, "#58|#" + data.entID], // catKey.
-        data, // dataNode.
         100, // num,
     );
-    let sg2 = new SetQuerier(
+    let sg2 = new SimpleSetGenerator(
         [21, "#59|#" + data.typeID], // catKey.
-        data, // dataNode.
         100, // num.
     );
     data.setGenerator = new MaxRatingSetCombiner([sg1, sg2]);

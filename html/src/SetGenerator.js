@@ -1,6 +1,6 @@
 
 import {
-    dbReqManager,
+    dbReqManager, accountManager,
 } from "/src/content_loaders/SDBInterface.js";
 
 
@@ -41,7 +41,7 @@ export class SetGenerator {
 export class SetQuerier extends SetGenerator {
     constructor(
         catKey, // = catID | [catCxtID, catDefStr].
-        dataNode, // (from which to get the queryUserID).
+        queryUserID,
         num, ratingLo, ratingHi, // optional.
         isAscending, offset, // optional.
         set, replaceExistingSet, // optional.
@@ -53,11 +53,7 @@ export class SetQuerier extends SetGenerator {
         } else {
             this.catID = catKey;
         }
-        this.dataNode = dataNode;
-        this.dataNode.copy([
-            "queryUserID",
-            "inputUserID", // (This is only part of a temporary solution.)
-        ]);
+        this.queryUserID = queryUserID;
         this.num = num ?? 300;
         this.ratingLo = ratingLo ?? 0;
         this.ratingHi = ratingHi ?? 0;
@@ -86,22 +82,22 @@ export class SetQuerier extends SetGenerator {
             dbReqManager.query(this, reqData, function(sg, result) {
                 sg.catID = (result[0] ?? [0])[0];
                 sg.queryWithCatID(obj, callbackData, callback);
-
-                // As a temporary solution for adding missing categories, all
-                // categories are just automatically submitted to the database,
-                // if they are missing in this query.
-                if (sg.catID || !sg.dataNode.inputUserID) {
-                    return;
-                }
-                let reqData = {
-                    req: "ent",
-                    u: sg.dataNode.inputUserID,
-                    r: 0,
-                    t: 2,
-                    c: sg.catCxtID,
-                    s: sg.catDefStr,
-                };
-                dbReqManager.input(sg, reqData, function() {});
+                //
+                // // As a temporary solution for adding missing categories, all
+                // // categories are just automatically submitted to the database,
+                // // if they are missing in this query.
+                // if (sg.catID || !sg.dataNode.inputUserID) {
+                //     return;
+                // }
+                // let reqData = {
+                //     req: "ent",
+                //     u: sg.dataNode.inputUserID,
+                //     r: 0,
+                //     t: 2,
+                //     c: sg.catCxtID,
+                //     s: sg.catDefStr,
+                // };
+                // dbReqManager.input(sg, reqData, function() {});
             });
         }
     }
@@ -113,7 +109,7 @@ export class SetQuerier extends SetGenerator {
         }
         let reqData = {
             req: "set",
-            u: this.dataNode.queryUserID,
+            u: this.queryUserID,
             c: this.catID,
             rl: this.ratingLo,
             rh: this.ratingHi,
@@ -128,7 +124,7 @@ export class SetQuerier extends SetGenerator {
     }
 
     getSetCategories() {
-        // There is a race condition here, so take heed of it and try not to
+        // There is a race condition here, so beware of it and try not to
         // call getSetCategories() before the first entID queries.
         // TODO: Consider if this race condition should be eliminated somehow.
         return [this.catID ?? null];
@@ -206,7 +202,10 @@ export class SetCombiner extends SetGenerator {
 }
 
 
-/* An example of a class that implements SetCombiner */
+// MaxRatingSetCombiner is an example of a class that implements SetCombiner.
+// It takes an array of SetGenerators and constructs a combined set by letting
+// each instance in the union of the sets get its maximum rating value from
+// across the sets.
 export class MaxRatingSetCombiner extends SetCombiner {
     constructor(
         setGeneratorArr,
@@ -253,7 +252,9 @@ export class MaxRatingSetCombiner extends SetCombiner {
     }
 }
 
-
+// PrioritySetCombiner takes an array of SetGenerators and constructs a combined
+// set by letting each instance get the rating of the first set in which they
+// appeared in the generated sets of the setGeneratorArr.
 export class PrioritySetCombiner extends SetCombiner {
     constructor(
         setGeneratorArr,
@@ -268,6 +269,7 @@ export class PrioritySetCombiner extends SetCombiner {
     transformSet(set, sgIndex) {
         return set.map(function(val) {
             val[2] = sgIndex;
+            return val;
         });
     }
 
@@ -306,7 +308,9 @@ export class PrioritySetCombiner extends SetCombiner {
     }
 }
 
-
+// WeightedAverageSetCombiner takes an array of SetGenerators and constructs a
+// combined where each instance gets a rating that is a weighted average of all
+// their ratings in each set (of those in which they appear).
 export class WeightedAverageSetCombiner extends SetCombiner {
     constructor(
         setGeneratorArr,
@@ -324,6 +328,7 @@ export class WeightedAverageSetCombiner extends SetCombiner {
         let weight = this.weightArr[sgIndex];
         return set.map(function(val) {
             val[2] = weight;
+            return val;
         });
     }
 
@@ -360,5 +365,29 @@ export class WeightedAverageSetCombiner extends SetCombiner {
         // delete the empty slots of ret and return it.
         ret.length = retLen;
         return ret;
+    }
+}
+
+
+
+export class SimpleSetGenerator extends PrioritySetCombiner {
+    constructor(
+        catKey,
+        num, ratingLo, ratingHi, // optional.
+        isAscending, offset, // optional.
+        sort, sortAscending, setArr, isReadyArr, // optional.
+    ) {
+        let setGeneratorArr = accountManager.queryUserPriorityArr
+            .filter(x => x)
+            .map(id => new SetQuerier(
+                catKey,
+                id,
+                num, ratingLo, ratingHi,
+                isAscending, offset,
+            ));
+        super(
+            setGeneratorArr,
+            sort, sortAscending, setArr, isReadyArr, // optional.
+        );
     }
 }

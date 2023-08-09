@@ -190,7 +190,7 @@ export class ContentLoader {
             if (contentKey === "self") {
                 contentKey = this.contentKey;
             }
-            parentData ??= {};
+            parentData ??= {};;
             cl = this.getRelatedCL(contentKey);
             returnData = returnData ?? {};
         }

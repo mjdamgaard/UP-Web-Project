@@ -15,14 +15,14 @@ require_once $auth_path . "Authenticator.php";
 
 
 if ($_SERVER["REQUEST_METHOD"] != "POST") {
-    echoErrorJSONAndExit(
+    echoBadErrorJSONAndExit(
         "Only the POST HTTP method is allowed for this request"
     );
 }
 
 
 // get the userID and the session ID.
-$paramNameArr = array("u", "sesIDHex");
+$paramNameArr = array("u", "sidh");
 $typeArr = array("id", "session_id_hex");
 $paramValArr = InputGetter::getParams($paramNameArr);
 InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
