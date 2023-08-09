@@ -227,5 +227,6 @@ goBackButtonCL.addCSS(
 goBackButtonCL.addCSS(
     '&:hover {' +
         'cursor: pointer;' +
+        // 'background-color: #eee;' +
     '}'
 );

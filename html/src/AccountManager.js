@@ -38,6 +38,11 @@ export class AccountManager {
     get queryUserPriorityArr() {
         return [this.inputUserID, 82];
     }
+    // TODO: Reimplement at some point to allow for other user-specific
+    // possibilities.
+    get stdQueryUserID() {
+        return 82;
+    }
 
 
     logout(obj, callbackData, callback) {

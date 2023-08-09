@@ -51,7 +51,7 @@ ratingDisplayCL.addCallback(function($ci, data) {
 ratingDisplayCL.addCallback(function($ci, data) {
     let reqData = {
         req: "rat",
-        u: data.queryUserID,
+        u: accountManager.stdQueryUserID,
         c: data.catID,
         i: data.instID,
     };
@@ -60,17 +60,33 @@ ratingDisplayCL.addCallback(function($ci, data) {
         // I'll out-comment this for now:
         // $ci.find('.CI.QueryUserRatingDisplay').trigger("load");
     });
-    reqData = {
-        req: "rat",
-        u: data.inputUserID,
-        c: data.catID,
-        i: data.instID,
-    };
-    dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-        data.prevInputRatVal = (result[0] ?? [0])[0];
-        $ci.find('.CI.InputRatingSlider').trigger("load");
-    });
+    data.inputUserID = accountManager.inputUserID;
+    if (data.inputUserID) {
+        reqData = {
+            req: "rat",
+            u: data.inputUserID,
+            c: data.catID,
+            i: data.instID,
+        };
+        dbReqManager.query($ci, reqData, data, function($ci, result, data) {
+            data.prevInputRatVal = (result[0] ?? [0])[0];
+            $ci.find('.CI.InputRatingSlider').trigger("load");
+        });
+    } else {
+        let $obj = $ci.find('.CI.InputRatingSlider');
+        ratingDisplayCL.loadReplaced($obj, "LogInToRateText", data);
+    }
 });
+
+
+export var logInToRateTextCL = new ContentLoader(
+    "LogInToRateText",
+    /* Initial HTML template */
+    '<span class="text-warning">' +
+        'Log in or sign up in order to submit own rating.' +
+    '</span>',
+    sdbInterfaceCL
+);
 
 
 export var queryUserRatingDisplayCL = new ContentLoader(
@@ -130,6 +146,7 @@ inputRatingSliderCL.addCallback(function($ci, data) {
         let data = $ci.data("data");
         let reqData = {
             req: "rat",
+            sidh: accountManager.sesIDHex,
             u: accountManager.inputUserID,
             c: data.catID,
             i: data.instID,
@@ -153,6 +170,7 @@ inputRatingSliderCL.addCallback(function($ci, data) {
             );
             let reqData = {
                 req: "rat",
+                sidh: accountManager.sesIDHex,
                 u: accountManager.inputUserID,
                 c: data.catID,
                 i: data.instID,

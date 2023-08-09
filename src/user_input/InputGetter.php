@@ -16,7 +16,7 @@ class InputGetter {
             // get ith parameter.
             $paramName = $paramNameArr[$i];
             if (!isset($_POST[$paramName])) {
-                echoErrorJSONAndExit(
+                echoBadErrorJSONAndExit(
                     "Parameter " . $paramName . " is not specified"
                 );
             }

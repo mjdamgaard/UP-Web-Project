@@ -146,6 +146,7 @@ submitEntityFieldCL.addCallback(function($ci, data) {
         // upload the new entity.
         let reqData = {
             req: "ent",
+            sidh: accountManager.sesIDHex,
             u: accountManager.inputUserID,
             r: 1,
             t: data.newEntityType,

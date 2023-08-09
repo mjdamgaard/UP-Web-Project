@@ -197,7 +197,12 @@ export class SetCombiner extends SetGenerator {
         let catIDArrArr = this.setGeneratorArr.map(
             val => val.getSetCategories()
         );
-        return [].concat(...catIDArrArr);
+        let catIDArr = [].concat(...catIDArrArr);
+        // filter out repeated categories.
+        catIDArr = catIDArr.filter(
+            (val, ind, arr) => !arr.slice(0, ind).includes(val)
+        );
+        return catIDArr;
     }
 }
 
