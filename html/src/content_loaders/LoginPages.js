@@ -11,8 +11,7 @@ export var loginPageCL = new ContentLoader(
     "LoginPage",
     /* Initial HTML template */
     '<div>' +
-        '<<GoBackButton>>' +
-        '<div class="left-margin"></div>' +
+        '<div class="left-margin"><<GoBackButton>></div>' +
         '<div class="content-container">' +
             '<h3>Log in</h3>' +
             '<form action="javascript:void(0);">' +
@@ -58,8 +57,7 @@ export var createAccountPageCL = new ContentLoader(
     "CreateAccountPage",
     /* Initial HTML template */
     '<div>' +
-        '<<GoBackButton>>' +
-        '<div class="left-margin"></div>' +
+        '<div class="left-margin"><<GoBackButton>></div>' +
         '<div class="content-container">' +
             '<h3>Create new account</h3>' +
             '<form action="javascript:void(0);">' +
@@ -102,6 +100,21 @@ createAccountPageCL.addCallback(function($ci, data) {
                 }
             }
         );
+        return false;
+    });
+});
+
+export var goBackButtonCL = new ContentLoader(
+    "GoBackButton",
+    /* Initial HTML template */
+    '<span>' +
+        '&#10094;' +
+    '</span>',
+    sdbInterfaceCL
+);
+goBackButtonCL.addCallback(function($ci, data) {
+    $ci.on("click", function() {
+        $(this).trigger("back-to-main");
         return false;
     });
 });

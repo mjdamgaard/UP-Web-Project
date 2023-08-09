@@ -3,7 +3,7 @@ import {
     ContentLoader,
 } from "/src/ContentLoader.js";
 import {
-    sdbInterfaceCL, dbReqManager,
+    sdbInterfaceCL, dbReqManager, accountManager,
 } from "/src/content_loaders/SDBInterface.js";
 
 
@@ -130,7 +130,7 @@ inputRatingSliderCL.addCallback(function($ci, data) {
         let data = $ci.data("data");
         let reqData = {
             req: "rat",
-            u: data.inputUserID,
+            u: accountManager.inputUserID,
             c: data.catID,
             i: data.instID,
             r: 0,
@@ -153,7 +153,7 @@ inputRatingSliderCL.addCallback(function($ci, data) {
             );
             let reqData = {
                 req: "rat",
-                u: data.inputUserID,
+                u: accountManager.inputUserID,
                 c: data.catID,
                 i: data.instID,
                 r: inputRatVal,

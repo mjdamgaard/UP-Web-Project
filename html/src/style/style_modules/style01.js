@@ -22,7 +22,7 @@ import {
     ratingElementCL, ratingDisplayCL,
 } from "/src/content_loaders/Ratings.js";
 import {
-    loginPageCL, createAccountPageCL,
+    loginPageCL, createAccountPageCL, goBackButtonCL,
 } from "/src/content_loaders/LoginPages.js";
 
 
@@ -214,5 +214,18 @@ createAccountPageCL.addCSS(
 createAccountPageCL.addCSS(
     '& > .content-container {' +
         'max-width: 600px;' +
+    '}'
+);
+
+
+goBackButtonCL.addCSS(
+    'font-size: 20px;' +
+    'padding: 10px;' +
+    'margin: 2px 7px;' +
+    ''
+);
+goBackButtonCL.addCSS(
+    '&:hover {' +
+        'cursor: pointer;' +
     '}'
 );

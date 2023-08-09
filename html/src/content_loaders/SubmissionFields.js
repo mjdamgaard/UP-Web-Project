@@ -2,7 +2,7 @@ import {
     ContentLoader, DataNode,
 } from "/src/ContentLoader.js";
 import {
-    sdbInterfaceCL, dbReqManager,
+    sdbInterfaceCL, dbReqManager, accountManager,
 } from "/src/content_loaders/SDBInterface.js";
 
 
@@ -146,7 +146,7 @@ submitEntityFieldCL.addCallback(function($ci, data) {
         // upload the new entity.
         let reqData = {
             req: "ent",
-            u: data.getFromAncestor("inputUserID"),
+            u: accountManager.inputUserID,
             r: 1,
             t: data.newEntityType,
             c: data.newEntityCxt,

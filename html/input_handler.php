@@ -18,16 +18,16 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
     echoBadErrorJSONAndExit("Only the POST HTTP method is allowed for inputs");
 }
 
-// TODO: In-comment.
-// /* Verification of the session ID  */
-//
-// // get the userID and the session ID.
-// $paramNameArr = array("u", "sidh");
-// $typeArr = array("id", "session_id_hex");
-// $paramValArr = InputGetter::getParams($paramNameArr);
-// InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
-// $userID = $paramValArr[0];
-// $sesIDHex = $paramValArr[1];
+
+/* Verification of the session ID  */
+
+// get the userID and the session ID.
+$paramNameArr = array("u", "sidh");
+$typeArr = array("id", "session_id_hex");
+$paramValArr = InputGetter::getParams($paramNameArr);
+InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
+$userID = $paramValArr[0];
+$sesIDHex = $paramValArr[1];
 
 // get connection to the database.
 require $db_io_path . "sdb_config.php";
@@ -35,9 +35,9 @@ $conn = DBConnector::getConnectionOrDie(
     DB_SERVER_NAME, DB_DATABASE_NAME, DB_USERNAME, DB_PASSWORD
 );
 
-// // authenticate the user by verifying the session ID.
-// $sesID = hex2bin($sesIDHex);
-// $res = Authenticator::verifySessionID($conn, $userID, $sesID);
+// authenticate the user by verifying the session ID.
+$sesID = hex2bin($sesIDHex);
+$res = Authenticator::verifySessionID($conn, $userID, $sesID);
 
 
 
