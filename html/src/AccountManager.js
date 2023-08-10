@@ -56,7 +56,7 @@ export class AccountManager {
         }
         let reqData = {
             u: this.inputUserID,
-            sidh: this.sesIDHex,
+            ses: this.sesIDHex,
         };
         localStorage.removeItem("session");
         $.post("logout_handler.php", reqData, function(result) {

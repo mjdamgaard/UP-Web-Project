@@ -135,12 +135,12 @@ entityLinkCL.addCallback(function($ci, data) {
     $ci.addClass("clickable-text text-primary");
     $ci.append(data.linkContent);
     $ci.on("click", function() {
-        let childData = new DataNode (data, {
-            cl: sdbInterfaceCL.getRelatedCL("EntityPage"),
-            recLevel: null,
-            maxRecLevel: null,
-        });
-        $(this).trigger("open-column", ["AppColumn", childData, "right"]);
+        // let newData = new DataNode (data, {
+        //     cl: sdbInterfaceCL.getRelatedCL("EntityPage"),
+        //     recLevel: null,
+        //     maxRecLevel: null,
+        // });
+        $(this).trigger("open-column", ["AppColumn", data, "right"]);
         return false;
     });
 });

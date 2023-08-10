@@ -174,7 +174,12 @@ export var appColumnCL = new ContentLoader(
     '</div>',
     sdbInterfaceCL,
 );
-
+appColumnCL.addCallback("data", function(data) {
+    data.copyFromAncestor("cl", 1);
+    data.cl ??= appColumnCL.getRelatedCL("EntityPage");;
+    data.recLevel = null;
+    data.maxRecLevel = null;
+});
 
 
 

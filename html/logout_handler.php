@@ -22,7 +22,7 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 
 
 // get the userID and the session ID.
-$paramNameArr = array("u", "sidh");
+$paramNameArr = array("u", "ses");
 $typeArr = array("id", "session_id_hex");
 $paramValArr = InputGetter::getParams($paramNameArr);
 InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);

@@ -60,12 +60,7 @@ export class DBRequestManager {
                 for (let i = 0; i < colLen; i++) {
                     for (let j = 0; j < rowLen; j++) {
                         if (typeof result[i][j] === "string") {
-                            result[i][j] = result[i][j]
-                                .replaceAll("&", "&amp;")
-                                .replaceAll("<", "&lt;")
-                                .replaceAll(">", "&gt;")
-                                .replaceAll('"', "&quot;")
-                                .replaceAll("'", "&apos;");
+                            result[i][j] = sanitize(result[i][j]);
                         }
                     }
                 }
@@ -93,4 +88,13 @@ export class DBRequestManager {
             callback(obj, result, callbackData);
         });
     }
+}
+
+export function sanitize(str) {
+    return str
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&apos;");
 }

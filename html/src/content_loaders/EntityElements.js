@@ -48,7 +48,7 @@ export var elementRatingDisplayCL = new ContentLoader(
 );
 elementRatingDisplayCL.addCallback(function($ci, data) {
     let ratVal = data.getFromAncestor("ratVal");
-    $ci.html((ratVal / 6553.5).toFixed(2));
+    $ci.html((ratVal / 6553.5).toFixed(1));
 });
 
 export var setCategoriesRatingsDisplayCL = new ContentLoader(
@@ -61,18 +61,25 @@ export var setCategoriesRatingsDisplayCL = new ContentLoader(
 setCategoriesRatingsDisplayCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "setGenerator",
+        "entID",
     ]);
 });
 setCategoriesRatingsDisplayCL.addCallback(function($ci, data) {
-    let catIDArr = data.setGenerator.getSetCategories();
-    let instID = data.getFromAncestor("entID");
-    catIDArr.forEach(function(val) {
-        setCategoriesRatingsDisplayCL.loadAppended(
-            $ci, "RatingDisplay", new DataNode(data, {
-                catID: val,
-                instID: instID,
-            })
-        );
+    let catKeyArr = data.setGenerator.getSetCategoryKeys();
+    catKeyArr.forEach(function(val) {
+        if (!isNaN(parseInt(val))) {
+            setCategoriesRatingsDisplayCL.loadAppended(
+                $ci, "RatingDisplay", new DataNode(data, {
+                    catID: val,
+                    instID: data.entID,
+                })
+            );
+        } else {
+            let catKey = JSON.parse(val);
+            setCategoriesListCL.loadAppended(
+                $ci, "MissingCategoryDisplay", new DataNode(data, catKey)
+            );
+        }
     });
 });
 

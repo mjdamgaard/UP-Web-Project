@@ -5,7 +5,9 @@ import {
 import {
     sdbInterfaceCL, dbReqManager, accountManager,
 } from "/src/content_loaders/SDBInterface.js";
-
+// import {
+//     sanitize
+// } from "/src/DBRequestManager.js";
 
 
 
@@ -207,7 +209,10 @@ export var missingCategoryDisplayCL = new ContentLoader(
     "MissingCategoryDisplay",
     /* Initial HTML template */
     '<div>' +
-        '<span class="text-info">Missing category.</span>' +
+        '<span class="text-info">' +
+            // 'Missing category with context: <<EntityTitle data.cxtData:wait>>' +
+            'Missing category.' +
+        '</span>' +
     '</div>',
     sdbInterfaceCL
 );
@@ -217,6 +222,11 @@ missingCategoryDisplayCL.addCallback("data", function(data) {
         "defStr",
     ]);
 });
+// missingCategoryDisplayCL.addCallback(function($ci, data) {
+//     data.cxtData = {entID: data.cxtID};
+//     $ci.find('.CI.EntityTitle').trigger("load");
+//     $ci.append(', and defining text: ' + sanitize(data.defStr));
+// });
 missingCategoryDisplayCL.addCallback(function($ci, data) {
     data.inputUserID = accountManager.inputUserID;
     if (data.inputUserID) {
@@ -227,13 +237,13 @@ missingCategoryDisplayCL.addCallback(function($ci, data) {
             '</span>'
         );
         $ci.find('button.submit').on("click", function() {
-            $(this).trigger("submit-missing-cat");
+            $(this).trigger("submit-category");
             return false;
         });
-        $ci.on("submit-missing-cat", function() {
+        $ci.on("submit-category", function() {
             let reqData = {
                 req: "ent",
-                sidh: accountManager.sesIDHex,
+                ses: accountManager.sesIDHex,
                 u: data.inputUserID,
                 r: 1,
                 t: 2,

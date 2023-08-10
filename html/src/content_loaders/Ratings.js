@@ -37,8 +37,6 @@ export var ratingDisplayCL = new ContentLoader(
 );
 ratingDisplayCL.addCallback("data", function(data) {
     data.copyFromAncestor([
-        "queryUserID",
-        "inputUserID",
         "catID",
         "instID",
     ]);
@@ -99,7 +97,7 @@ export var queryUserRatingDisplayCL = new ContentLoader(
 queryUserRatingDisplayCL.addCallback(function($ci, data) {
     let ratVal = data.getFromAncestor("queryUserRatVal");
     if (ratVal) {
-        $ci.html((ratVal / 6553.5).toFixed(2));
+        $ci.html((ratVal / 6553.5).toFixed(1));
     } else {
         $ci.html("no rating");
     }
@@ -112,7 +110,7 @@ export var inputRatingSliderCL = new ContentLoader(
     "InputRatingSlider",
     /* Initial HTML template */
     '<div>' +
-        '<input type="range" min="0.01" max="10.00" step="0.01" value="5">' +
+        '<input type="range" min="0.1" max="10.0" step="0.1" value="5">' +
         '<div class="value-display"></div>' +
         '<div class="button-container">' +
             '<button class="btn btn-default clear">Clear</button>' +
@@ -132,7 +130,7 @@ inputRatingSliderCL.addCallback("data", function(data) {
 inputRatingSliderCL.addCallback(function($ci, data) {
     let prevInputRatVal = data.prevInputRatVal;
     if (prevInputRatVal) { // value cannot be 0 (only null or positive).
-        let sliderVal = (prevInputRatVal / 6553.5).toFixed(2);
+        let sliderVal = (prevInputRatVal / 6553.5).toFixed(1);
         $ci.find('input[type="range"]').val(sliderVal);
         $ci.find('.value-display').html(sliderVal);
     } else {
@@ -146,7 +144,7 @@ inputRatingSliderCL.addCallback(function($ci, data) {
         let data = $ci.data("data");
         let reqData = {
             req: "rat",
-            sidh: accountManager.sesIDHex,
+            ses: accountManager.sesIDHex,
             u: accountManager.inputUserID,
             c: data.catID,
             i: data.instID,
@@ -165,16 +163,15 @@ inputRatingSliderCL.addCallback(function($ci, data) {
         $ci.find('button.submit').show().on("click", function() {
             let $ci = $(this).closest('.CI.InputRatingSlider');
             let data = $ci.data("data");
-            let inputRatVal = Math.round(
-                $ci.find('input[type="range"]').val() * 6553.5
-            );
+            let inputVal = $ci.find('input[type="range"]').val();
+            let roundedRatVal = Math.max(Math.round(inputVal * 25.5), 1) * 256;
             let reqData = {
                 req: "rat",
-                sidh: accountManager.sesIDHex,
+                ses: accountManager.sesIDHex,
                 u: accountManager.inputUserID,
                 c: data.catID,
                 i: data.instID,
-                r: inputRatVal,
+                r: roundedRatVal,
                 l: 0,
             };
             $ci.find('button.submit').hide();
