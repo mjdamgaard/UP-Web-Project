@@ -81,7 +81,7 @@ export var interfaceHeaderCL = new ContentLoader(
     /* Initial HTML template */
     '<header class="navbar navbar-default">' +
         '<div class="container-fluid">' +
-                '<<SuperCoolLogoTBA>>' +
+                '<<SuperCoolLogoTBD>>' +
                 '<span class="navbar-brand">openSDB</span>' +// will do for now.
             // '</div>' +
             '<<StartColumnButtonsContainer>>' +

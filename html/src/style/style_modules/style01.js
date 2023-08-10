@@ -16,7 +16,8 @@ import {
     generalEntityElementCL,
 } from "/src/content_loaders/EntityElements.js";
 import {
-    setDisplayCL, dropdownButtonBarCL, dropdownButtonCL, setHeaderCL
+    setDisplayCL, dropdownButtonBarCL, dropdownButtonCL, setHeaderCL,
+    sortingCategoriesMenuCL,
 } from "/src/content_loaders/SetDisplays.js";
 import {
     ratingElementCL, ratingDisplayCL,
@@ -194,6 +195,12 @@ setDisplayCL.addCSS(
         'background-color: #ddd;' +
     '}'
 );
+
+sortingCategoriesMenuCL.addCSS(
+    'border-top:    1px solid #ddd;' +
+    'border-bottom: 1px solid #ddd;'
+);
+
 
 
 loginPageCL.addCSS(

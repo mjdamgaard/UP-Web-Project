@@ -6,7 +6,7 @@ import {
     sdbInterfaceCL, dbReqManager,
 } from "/src/content_loaders/SDBInterface.js";
 import {
-    SetQuerier, SetCombiner, MaxRatingSetCombiner, SimpleSetGenerator,
+    MaxRatingSetCombiner, SimpleSetGenerator,
 } from "/src/SetGenerator.js";
 
 

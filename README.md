@@ -423,10 +423,12 @@ The first goal of this project is to create a hub of ratings on the web, where
 the ratings can be anything that the users want.
 
 We have argued that semantic user data like what openSDB gathers will be more
-useful in terms of creating search and feed algorithms. And since such
-algorithms are very important for the user experience of web applications, we
-state that such semantic data *is* the future: It is only a matter of time
-before we will used everywhere on the web.
+useful in terms of creating search and feed algorithms, namely because such data
+will be of a much higher quality (and users might even be inclined to submit
+more of this type of data, potentially).
+And since such algorithms are very important for the user experience of web
+applications, we state that such semantic data *is* the future: It is only a
+matter of time before we will used everywhere on the web.
 
 And by being completely open-source and encouraging hosts to join the network
 as peers, it is likely that users will be attracted to this project rather than

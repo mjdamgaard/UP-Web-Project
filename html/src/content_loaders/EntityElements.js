@@ -174,7 +174,7 @@ export var semanticPropertyTitleCL = new ContentLoader(
     '<h3>' +
         '<<DropdownButton>>' +
         '<<EntityTitle>>' +
-    '<h3>',
+    '</h3>',
     sdbInterfaceCL
 );
 semanticPropertyTitleCL.addCallback("data", function(data) {
@@ -194,7 +194,7 @@ semanticPropertyTitleCL.addCallback(function($ci, data) {
 export var defStrDisplayElementCL = new ContentLoader(
     "DefStrDisplayElement",
     /* Initial HTML template */
-    '<span><span>',
+    '<div></div>',
     sdbInterfaceCL
 );
 defStrDisplayElementCL.addCallback("data", function(data) {
@@ -210,3 +210,15 @@ defStrDisplayElementCL.addCallback(function($ci, data) {
         $ci.append(defStr);
     });
 });
+
+
+
+
+export var categoryForSortingElementCL = new ContentLoader(
+    "CategoryForSortingElement",
+    /* Initial HTML template */
+    '<div>' +
+        '<<EntityTitle>>' +
+    '</div>',
+    sdbInterfaceCL
+);

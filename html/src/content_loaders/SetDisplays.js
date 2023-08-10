@@ -5,6 +5,9 @@ import {
 import {
     sdbInterfaceCL, dbReqManager, accountManager,
 } from "/src/content_loaders/SDBInterface.js";
+import {
+    MaxRatingSetCombiner, SimpleSetGenerator,
+} from "/src/SetGenerator.js";
 // import {
 //     sanitize
 // } from "/src/DBRequestManager.js";
@@ -161,8 +164,8 @@ export var setMenurCL = new ContentLoader(
     /* Initial HTML template */
     '<div>' +
         '<<SetCategoriesList>>' +
-        '<<SortingMenu>>' +
-        // TODO: Extend.
+        '<<SortingCategoriesMenu>>' +
+        '<<RelevantCategoriesSetDisplay>>' +
     '</div>',
     sdbInterfaceCL
 );
@@ -277,4 +280,43 @@ missingCategoryDisplayCL.addCallback(function($ci, data) {
             '</span>'
         );
     }
+});
+
+
+export var sortingCategoriesMenuCL = new ContentLoader(
+    "SortingCategoriesMenu",
+    /* Initial HTML template */
+    '<div>' +
+    '</div>',
+    sdbInterfaceCL
+);
+
+
+export var relevantCategoriesSetDisplayCL = new ContentLoader(
+    "RelevantCategoriesSetDisplay",
+    /* Initial HTML template */
+    '<<DropdownBox>>',
+    sdbInterfaceCL
+);
+relevantCategoriesSetDisplayCL.addCallback("data", function(data) {
+    data.copyFromAncestor([
+        "entID",
+        "typeID",
+    ]);
+    data.dropdownCL = relevantCategoriesSetDisplayCL.getRelatedCL(
+        "SetDisplay"
+    );
+});
+relevantCategoriesSetDisplayCL.addCallback("data", function(data) {
+    // Relevant categories:
+    data.elemContentKey = "CategoryForSortingElement";
+    // TODO: This is wrong. Find out what it should be and also consider making
+    // a SetDisplay w/o the header (like my former "SetList")..
+    let sg1 = new SimpleSetGenerator(
+        {cxtID: 21, defStr: "#54|#" + data.entID}, // catKey.
+    );
+    let sg2 = new SimpleSetGenerator(
+        {cxtID: 21, defStr: "#52|#" + data.typeID}, // catKey.
+    );
+    data.setGenerator = new MaxRatingSetCombiner([sg1, sg2]);
 });
