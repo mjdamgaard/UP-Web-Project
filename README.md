@@ -289,12 +289,6 @@ movies if the entity is of that type) as well as related categories (e.g.
 "Horror movies" or "Fantasy movies"), and of course facts (e.g. who the director
 is or what actors is in it). It also includes comments to that entity.
 
-<!--
-With the semantic system of openSDB, all this is completely in the hands of the
-users, meaning that it is they who collectively decide e.g. what categories
-and what facts should be related to movies ...
--->
-
 Again we can predict, similarly to the ratings, that users might be more willing
 to use the comment sections implemented via the browser extension rather than
 the comment sections at the visited website, namely since their comments can

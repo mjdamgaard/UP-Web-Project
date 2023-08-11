@@ -16,20 +16,20 @@ BEGIN proc: BEGIN
     FROM Entities
     WHERE (
         type_id = 2 AND
-        cxt_id <=> 83 AND
+        cxt_id <=> 84 AND
         def_str = CONCAT("#", userID)
     );
     -- if it does not exist, also insert it and get the ID.
     IF (userCreationsCatID IS NULL) THEN
         INSERT IGNORE INTO Entities (type_id, cxt_id, def_str)
-        VALUES (2, 83, CONCAT("#", userID));
+        VALUES (2, 84, CONCAT("#", userID));
         SELECT LAST_INSERT_ID() INTO userCreationsCatID;
         IF (userCreationsCatID IS NULL) THEN
             SELECT id INTO userCreationsCatID
             FROM Entities
             WHERE (
                 type_id = 2 AND
-                cxt_id <=> 83 AND
+                cxt_id <=> 84 AND
                 def_str = CONCAT("#", userID)
             );
         END IF;
@@ -43,7 +43,7 @@ BEGIN proc: BEGIN
         inst_id
     )
     VALUES (
-        83,
+        84,
         userCreationsCatID,
         65535,
         entID

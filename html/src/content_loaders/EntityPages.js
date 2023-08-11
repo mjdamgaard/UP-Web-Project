@@ -56,6 +56,7 @@ entityPageCL.addCallback(function($ci, data) {
                 data.tabAndPageDataArr.push(
                     ["Relevant ratings", "RelevantRatingsTypePage"],
                     ["Relevant properties", "RelevantPropertiesTypePage"],
+                    ["Templates", "PropertyCategoryPage", {propID: 85}],
                     ["Submit entity", "SubmitEntityPage"],
                 );
                 data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
@@ -63,9 +64,9 @@ entityPageCL.addCallback(function($ci, data) {
                 break;
             case 2:
                 data.tabAndPageDataArr.push(
-                    ["Subcategories", "PropertyCategoryPage", {propID: 37,}],
+                    ["Subcategories", "PropertyCategoryPage", {propID: 37}],
                     ["Instances", "CategoryInstancesPage"],
-                    ["Supercategories", "PropertyCategoryPage", {propID: 47,}],
+                    ["Supercategories", "PropertyCategoryPage", {propID: 47}],
                     ["Submit instance", "SubmitCategoryInstancePage"],
                 );
                 data.defaultTab = data.getFromAncestor("defaultTab", 1) ??

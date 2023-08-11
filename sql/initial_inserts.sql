@@ -237,7 +237,10 @@ CALL insertOrFindEntity(9, 0, 6, 78, CONCAT(
     "maximal rating values) if the relevant users have chosen to be recorded ",
     "as the creators.|"
     "Uses no event data"
-)); -- id: 83
+)); -- id: 84
+
+
+CALL insertOrFindEntity(9, 0, 19, 20, "Templates|#3|many"); -- id: 85
 
 
 
