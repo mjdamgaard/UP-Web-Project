@@ -24,7 +24,7 @@ import {
 } from "/src/content_loaders/Ratings.js";
 import {
     loginPageCL, createAccountPageCL, goBackButtonCL,
-} from "/src/content_loaders/LoginPages.js";
+} from "/src/content_loaders/OverlayPages.js";
 
 
 
@@ -41,7 +41,7 @@ interfaceHeaderCL.addCSS(
 );
 superCoolLogoCL.addCSS(
     'color: black;' +
-    'font-size: 25px;'
+    'font-size: 25pt;'
 );
 superCoolLogoCL.addCSS(
     '&:hover {' +

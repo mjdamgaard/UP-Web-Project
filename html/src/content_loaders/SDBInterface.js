@@ -21,15 +21,11 @@ export var sdbInterfaceCL = new ContentLoader(
     '<div>' +
         '<<InterfaceHeader>>' +
         '<main>' +
-            '<div class="left-margin">' +
-                '<span></span><span>&#10094;</span><span></span>' +
-            '</div>' +
+            '<div class="left-margin"><br><span>&#10094;</span><br></div>' +
             '<<AppColumnContainer>>' +
-            '<div class="right-margin">' +
-                '<span></span><span>&#10095;</span><span></span>' +
-            '</div>' +
+            '<div class="right-margin"><br><span>&#10095;</span><br></div>' +
         '</main>' +
-        '<div class="login-page-container"></div>' +
+        '<div class="overlay-page-container"></div>' +
     '</div>',
 );
 export var appColumnContainerCL = new ContentLoader(
@@ -41,10 +37,10 @@ export var appColumnContainerCL = new ContentLoader(
     sdbInterfaceCL
 );
 sdbInterfaceCL.addCallback(function($ci, data) {
-    $ci.children('.login-page-container').hide();
+    $ci.children('.overlay-page-container').hide();
     $ci.on("log-in", function() {
         let $this = $(this);
-        let $obj = $this.children('.login-page-container');
+        let $obj = $this.children('.overlay-page-container');
         $obj.empty();
         sdbInterfaceCL.loadAppended($obj, "LoginPage", data);
         $this.children('main').hide();
@@ -53,20 +49,16 @@ sdbInterfaceCL.addCallback(function($ci, data) {
     });
     $ci.on("new-account", function() {
         let $this = $(this);
-        let $obj = $this.children('.login-page-container');
+        let $obj = $this.children('.overlay-page-container');
         $obj.empty();
         sdbInterfaceCL.loadAppended($obj, "CreateAccountPage", data);
         $this.children('main').hide();
         $obj.show();
         return false;
     });
-    // $ci.on("log-out", function() {
-    //     accountManager.logout();
-    //     return false;
-    // });
     $ci.on("back-to-main", function() {
         let $this = $(this);
-        let $obj = $this.children('.login-page-container');
+        let $obj = $this.children('.overlay-page-container');
         $obj.hide().empty();
         $this.children('main').show();
         return false;
@@ -74,6 +66,17 @@ sdbInterfaceCL.addCallback(function($ci, data) {
     $ci.on("logged-in", function() {
         $(this).find('.CI.InterfaceHeader .CI.AccountButtonsContainer')
             .trigger("logged-in");
+        return false;
+    });
+});
+sdbInterfaceCL.addCallback(function($ci, data) {
+    $ci.on("show-tutorial", function() {
+        let $this = $(this);
+        let $obj = $this.children('.overlay-page-container');
+        $obj.empty();
+        sdbInterfaceCL.loadAppended($obj, "TutorialPage", data);
+        $this.children('main').hide();
+        $obj.show();
         return false;
     });
 });
@@ -90,24 +93,37 @@ export var interfaceHeaderCL = new ContentLoader(
     '<header class="navbar navbar-default">' +
         '<div class="container-fluid">' +
             '<<SuperCoolLogoTBD>>' +
-            '<<StartColumnButtonsContainer>>' +
+            '<<HeaderButtonsContainer>>' +
             '<<AccountButtonsContainer>>' +
         '</div>' +
     '</header>',
     sdbInterfaceCL,
 );
 
-export var startColumnButtonsContainerCL = new ContentLoader(
-    "StartColumnButtonsContainer",
+export var headerButtonsContainerCL = new ContentLoader(
+    "HeaderButtonsContainer",
     /* Initial HTML template */
     '<ul class="nav navbar-nav">' +
-        '<li class="entities"><a href="#">' +
+        '<li class="tutorial"><a href="#">' +
             'Tutorial' +
+        '</a></li>' +
+        '<li class="minus"><a href="#">' +
+            '<span style="font-size: 18pt;">-</span>' +
+        '</a></li>' +
+        '<li class="plus"><a href="#">' +
+            '<span style="font-size: 18pt;">+</span>' +
         '</a></li>' +
         // TODO: Add one or a few more.
     '</ul>',
     sdbInterfaceCL,
 );
+headerButtonsContainerCL.addCallback(function($ci, data) {
+    $ci.children('.tutorial').on("click", function() {
+        $(this).trigger("show-tutorial");
+        return false;
+    });
+    // (See below for the actions of the + and - buttons.)
+});
 
 export var accountButtonsContainerCL = new ContentLoader(
     "AccountButtonsContainer",
@@ -362,6 +378,20 @@ sdbInterfaceCL.addCallback(function($ci, data) {
     });
     $ci.children('main').children('.right-margin').on("click", function() {
         $(this).prev().trigger("cycle-right");
+        return false;
+    });
+});
+headerButtonsContainerCL.addCallback(function($ci, data) {
+    $ci.children('.minus').on("click", function() {
+        $(this).closest('.CI.ColumnBasedSDBInterface')
+            .find('.CI.AppColumnContainer')
+            .trigger("decrease-column-number");
+        return false;
+    });
+    $ci.children('.plus').on("click", function() {
+        $(this).closest('.CI.ColumnBasedSDBInterface')
+            .find('.CI.AppColumnContainer')
+            .trigger("increase-column-number");
         return false;
     });
 });

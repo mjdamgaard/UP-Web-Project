@@ -7,6 +7,24 @@ import {
 } from "/src/content_loaders/SDBInterface.js";
 
 
+
+export var goBackButtonCL = new ContentLoader(
+    "GoBackButton",
+    /* Initial HTML template */
+    '<span>' +
+        '&#10094;' +
+    '</span>',
+    sdbInterfaceCL
+);
+goBackButtonCL.addCallback(function($ci, data) {
+    $ci.on("click", function() {
+        $(this).trigger("back-to-main");
+        return false;
+    });
+});
+
+
+
 export var loginPageCL = new ContentLoader(
     "LoginPage",
     /* Initial HTML template */
@@ -104,17 +122,18 @@ createAccountPageCL.addCallback(function($ci, data) {
     });
 });
 
-export var goBackButtonCL = new ContentLoader(
-    "GoBackButton",
+
+
+export var tutorialPageCL = new ContentLoader(
+    "TutorialPage",
     /* Initial HTML template */
-    '<span>' +
-        '&#10094;' +
-    '</span>',
+    '<div>' +
+        '<div class="left-margin"><<GoBackButton>></div>' +
+        '<div class="content-container"></div>' +
+        '<div class="right-margin"></div>' +
+    '</div>',
     sdbInterfaceCL
 );
-goBackButtonCL.addCallback(function($ci, data) {
-    $ci.on("click", function() {
-        $(this).trigger("back-to-main");
-        return false;
-    });
+tutorialPageCL.addCallback(function($ci, data) {
+    // TODO: Append tutorial from file.
 });
