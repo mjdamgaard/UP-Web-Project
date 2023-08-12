@@ -23,7 +23,7 @@ import {
     ratingElementCL, ratingDisplayCL,
 } from "/src/content_loaders/Ratings.js";
 import {
-    loginPageCL, createAccountPageCL, goBackButtonCL,
+    overlayPageCL, goBackButtonCL,
 } from "/src/content_loaders/OverlayPages.js";
 
 
@@ -67,7 +67,7 @@ sdbInterfaceCL.addCSS(
 sdbInterfaceCL.addCSS(
     '& > main {' +
         'display: grid;' +
-        'grid-template-columns: 60px auto 60px;' +
+        'grid-template-columns: 70px auto 70px;' +
         'grid-template-rows: auto;' +
     '}'
 );
@@ -221,22 +221,12 @@ sortingCategoriesMenuCL.addCSS(
 
 
 
-loginPageCL.addCSS(
+overlayPageCL.addCSS(
     'display: grid;' +
     'grid-template-columns: auto auto auto;' +
     'grid-template-rows: 20px auto;'
 );
-loginPageCL.addCSS(
-    '& > .content-container {' +
-        'max-width: 600px;' +
-    '}'
-);
-createAccountPageCL.addCSS(
-    'display: grid;' +
-    'grid-template-columns: auto auto auto;' +
-    'grid-template-rows: 20px auto;'
-);
-createAccountPageCL.addCSS(
+overlayPageCL.addCSS(
     '& > .content-container {' +
         'max-width: 600px;' +
     '}'

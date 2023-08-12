@@ -84,8 +84,7 @@ sdbInterfaceCL.addCallback(function($ci, data) {
 // TODO: There is a style bug with the sign-in etc. buttons when the width of
 // the screen gets small enough (they jump down from the bar). I can see that
 // it has to do with how BS displays columns as rows instead of there is limited
-// space. Fix this bug. *(It doesn't break the application when it happens so
-// I'm actually not in a great hurry to fix it.)
+// space. Fix this bug.
 
 export var interfaceHeaderCL = new ContentLoader(
     "InterfaceHeader",
@@ -347,14 +346,15 @@ appColumnContainerCL.addCallback(function($ci, data) {
             case 39: // right arrow key
                 $ci.trigger("cycle-right");
                 break;
-            case 38: // up arrow key
-                $ci.trigger("increase-column-number");
-                break;
-            case 40: // down arrow key
-                $ci.trigger("decrease-column-number");
-                break;
+            // I commented this out, cause it weird when you can also scroll:
+            // case 38: // up arrow key
+            //     $ci.trigger("increase-column-number");
+            //     break;
+            // case 40: // down arrow key
+            //     $ci.trigger("decrease-column-number");
+            //     break;
         }
-        return false;
+        return true;
     });
     $ci.on("prepend-home-column", function() {
         let $this = $(this);

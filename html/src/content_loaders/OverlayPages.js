@@ -8,6 +8,19 @@ import {
 
 
 
+
+
+export var overlayPageCL = new ContentLoader(
+    "OverlayPage",
+    /* Initial HTML template */
+    '<div>' +
+        '<div class="left-margin"><<GoBackButton>></div>' +
+        '<div class="content-container"></div>' +
+        '<div class="right-margin"></div>' +
+    '</div>',
+    sdbInterfaceCL
+);
+
 export var goBackButtonCL = new ContentLoader(
     "GoBackButton",
     /* Initial HTML template */
@@ -28,28 +41,25 @@ goBackButtonCL.addCallback(function($ci, data) {
 export var loginPageCL = new ContentLoader(
     "LoginPage",
     /* Initial HTML template */
-    '<div>' +
-        '<div class="left-margin"><<GoBackButton>></div>' +
-        '<div class="content-container">' +
-            '<h3>Log in</h3>' +
-            '<form action="javascript:void(0);">' +
-                '<div class="form-group">' +
-                    '<label>Username or ID</label>' +
-                    '<input type="text" class="form-control user"></input>' +
-                '</div>' +
-                '<div class="form-group">' +
-                    '<label>Password</label>' +
-                    '<input type="password" class="form-control pw"></input>' +
-                '</div>' +
-                '<span>' +
-                    '<button class="btn btn-default login">Log in</button>' +
-                '</span>' +
-            '</form>' +
-            '<div class="response-display text-warning"></div>' +
-        '</div>' +
-        '<div class="right-margin"></div>' +
-    '</div>',
+    '<<OverlayPage>>',
     sdbInterfaceCL
+);
+loginPageCL.addCallback("append", ".content-container",
+    '<h3>Log in</h3>' +
+    '<form action="javascript:void(0);">' +
+        '<div class="form-group">' +
+            '<label>Username or ID</label>' +
+            '<input type="text" class="form-control user"></input>' +
+        '</div>' +
+        '<div class="form-group">' +
+            '<label>Password</label>' +
+            '<input type="password" class="form-control pw"></input>' +
+        '</div>' +
+        '<span>' +
+            '<button class="btn btn-default">Log in</button>' +
+        '</span>' +
+    '</form>' +
+    '<div class="response-display text-warning"></div>'
 );
 loginPageCL.addCallback(function($ci, data) {
     $ci.on("submit", function() {
@@ -74,32 +84,29 @@ loginPageCL.addCallback(function($ci, data) {
 export var createAccountPageCL = new ContentLoader(
     "CreateAccountPage",
     /* Initial HTML template */
-    '<div>' +
-        '<div class="left-margin"><<GoBackButton>></div>' +
-        '<div class="content-container">' +
-            '<h3>Create new account</h3>' +
-            '<form action="javascript:void(0);">' +
-                '<div class="form-group">' +
-                    '<label>Username</label>' +
-                    '<input type="text" class="form-control username"></input>' +
-                '</div>' +
-                '<div class="form-group">' +
-                    '<label>E-mail address</label>' +
-                    '<input type="email" class="form-control email"></input>' +
-                '</div>' +
-                '<div class="form-group">' +
-                    '<label>Password</label>' +
-                    '<input type="password" class="form-control pw"></input>' +
-                '</div>' +
-                '<span>' +
-                    '<button class="btn btn-default login">Submit</button>' +
-                '</span>' +
-            '</form>' +
-            '<div class="response-display text-warning"></div>' +
-        '</div>' +
-        '<div class="right-margin"></div>' +
-    '</div>',
+    '<<OverlayPage>>',
     sdbInterfaceCL
+);
+createAccountPageCL.addCallback("append", ".content-container",
+    '<h3>Create new account</h3>' +
+    '<form action="javascript:void(0);">' +
+        '<div class="form-group">' +
+            '<label>Username</label>' +
+            '<input type="text" class="form-control username"></input>' +
+        '</div>' +
+        '<div class="form-group">' +
+            '<label>E-mail address</label>' +
+            '<input type="email" class="form-control email"></input>' +
+        '</div>' +
+        '<div class="form-group">' +
+            '<label>Password</label>' +
+            '<input type="password" class="form-control pw"></input>' +
+        '</div>' +
+        '<span>' +
+            '<button class="btn btn-default">Submit</button>' +
+        '</span>' +
+    '</form>' +
+    '<div class="response-display text-warning"></div>'
 );
 createAccountPageCL.addCallback(function($ci, data) {
     $ci.on("submit", function() {
@@ -127,13 +134,9 @@ createAccountPageCL.addCallback(function($ci, data) {
 export var tutorialPageCL = new ContentLoader(
     "TutorialPage",
     /* Initial HTML template */
-    '<div>' +
-        '<div class="left-margin"><<GoBackButton>></div>' +
-        '<div class="content-container"></div>' +
-        '<div class="right-margin"></div>' +
-    '</div>',
+    '<<OverlayPage>>',
     sdbInterfaceCL
 );
-tutorialPageCL.addCallback(function($ci, data) {
-    // TODO: Append tutorial from file.
-});
+tutorialPageCL.addCallback("append", ".content-container",
+    '<iframe src="tutorial.html" style="border:none;"></iframe>'
+);
