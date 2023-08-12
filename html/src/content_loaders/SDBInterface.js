@@ -404,12 +404,15 @@ export var superCoolLogoCL = new ContentLoader(
     '<span class="navbar-brand">openSDB</span>',
     sdbInterfaceCL,
 );
-
 superCoolLogoCL.addCallback(function($ci, data) {
     $ci.on("click", function() {
-        $(this).closest('.CI.ColumnBasedSDBInterface')
-            .find('.CI.AppColumnContainer')
-            .trigger("prepend-home-column");
+        let $obj = $(this).closest('.CI.ColumnBasedSDBInterface')
+            .find('.CI.AppColumnContainer');
+        if ($obj.filter(':visible').length > 0) {
+            $obj.trigger("prepend-home-column");
+        } else {
+            $obj.trigger("back-to-main");
+        }
         return false;
     });
 });
