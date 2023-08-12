@@ -1,6 +1,6 @@
 
 import {
-    sdbInterfaceCL, appColumnCL,
+    sdbInterfaceCL, appColumnContainerCL, appColumnCL,
     interfaceHeaderCL, closeButtonCL,
 } from "/src/content_loaders/SDBInterface.js";
 import {
@@ -46,22 +46,21 @@ interfaceHeaderCL.addCSS(
     '}'
 );
 sdbInterfaceCL.addCSS(
-    '& main {' +
+    '& > main {' +
         'display: grid;' +
         'grid-template-columns: 60px auto 60px;' +
         'grid-template-rows: auto;' +
     '}'
 );
-sdbInterfaceCL.addCSS(
-    '& .app-column-container {' +
-        'display: grid;' +
-        'grid-template-columns: auto auto auto;' +
-        'grid-template-rows: auto;' +
-        'overflow-x: auto;' +
-        'overflow-y: hidden;' +
-        'white-space: nowrap;' +
-        // 'background-color: #f9fef5;' +
-    '}'
+appColumnContainerCL.addCSS(
+    'display: grid;' +
+    'grid-template-columns: auto auto;' +
+    'grid-template-rows: auto;' +
+    // 'overflow-x: auto;' +
+    // 'overflow-y: hidden;' +
+    'white-space: nowrap;' +
+    // 'background-color: #f9fef5;' +
+    ''
 );
 appColumnCL.addCSS(
     // 'flex-grow: 1;' +

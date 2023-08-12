@@ -22,17 +22,20 @@ export var sdbInterfaceCL = new ContentLoader(
         '<<InterfaceHeader>>' +
         '<main>' +
             '<div class="left-margin"></div>' +
-            '<div class="app-column-container">' +
-                '<<AppColumn>>' +
-            '</div>' +
+            '<<AppColumnContainer>>' +
             '<div class="right-margin"></div>' +
         '</main>' +
         '<div class="login-page-container"></div>' +
     '</div>',
 );
-sdbInterfaceCL.addCallback("data", function(data) {
-    // ...
-});
+export var appColumnContainerCL = new ContentLoader(
+    "AppColumnContainer",
+    /* Initial HTML template */
+    '<div>' +
+        '<<AppColumn>>' +
+    '</div>',
+    sdbInterfaceCL
+);
 sdbInterfaceCL.addCallback(function($ci, data) {
     $ci.children('.login-page-container').hide();
     $ci.on("log-in", function() {
@@ -74,7 +77,8 @@ sdbInterfaceCL.addCallback(function($ci, data) {
 // TODO: There is a style bug with the sign-in etc. buttons when the width of
 // the screen gets small enough (they jump down from the bar). I can see that
 // it has to do with how BS displays columns as rows instead of there is limited
-// space. Fix this bug.
+// space. Fix this bug. *(It doesn't break the application when it happens so
+// I'm actually not in a great hurry to fix it.)
 
 export var interfaceHeaderCL = new ContentLoader(
     "InterfaceHeader",
@@ -83,7 +87,6 @@ export var interfaceHeaderCL = new ContentLoader(
         '<div class="container-fluid">' +
                 '<<SuperCoolLogoTBD>>' +
                 '<span class="navbar-brand">openSDB</span>' +// will do for now.
-            // '</div>' +
             '<<StartColumnButtonsContainer>>' +
             '<<AccountButtonsContainer>>' +
         '</div>' +
@@ -96,7 +99,7 @@ export var startColumnButtonsContainerCL = new ContentLoader(
     /* Initial HTML template */
     '<ul class="nav navbar-nav">' +
         '<li class="entities"><a href="#">' +
-            'Entities' +
+            'Tutorial' +
         '</a></li>' +
         // TODO: Add one or a few more.
     '</ul>',
@@ -210,33 +213,131 @@ closeButtonCL.addCallback(function($ci) {
 
 
 
-/* Events to open new app columns */
+/* Events to open new app columns and to cycle between them etc. */
 
-// make Columns handle the "open-column" events coming from inside them, add a
-// close event, and make the Columns turn themselves non-overwritable on first
-// click interaction with them.
 appColumnCL.addCallback(function($ci) {
     $ci.on("open-column", function(event, contentKey, data, dir) {
         let $this = $(this);
         if (dir === "right") {
-            // TODO: Add a lookup to a variable deciding if the existing
-            // column should be removed or not.
-            let $existingColumn = $this.next('.CI.AppColumn').remove();
             sdbInterfaceCL.loadAfter($this, contentKey, data);
+            $this.trigger("adjust-right");
         } else if (dir === "left") {
-            // TODO: Add a lookup to another variable deciding if the
-            // existing column should be removed or not.
-            let $existingColumn = $this.prev('.CI.AppColumn').remove();
             sdbInterfaceCL.loadBefore($this, contentKey, data);
+            $this.trigger("adjust-left");
         }
         return false;
     });
     $ci.on("close", function() {
-        $(this).remove();
+        let $this = $(this);
+        let $parent = $this.parent();
+        $this.remove();
+        $parent.trigger("adjust-left").trigger("adjust-right");
         return false;
     });
 });
 
+// TODO: Make the columns move smoothly sideways in a future implementation. 
+appColumnContainerCL.addCallback(function($ci, data) {
+    data.activeColumnNum = 2;
+    $ci.on("cycle-left", function() {
+        let $columns = $(this).children();
+        let $colBefore = $columns.filter(':visible').first().prev();
+        if ($colBefore.length == 1) {
+            let $colLast = $columns.filter(':visible').last();
+            $colBefore.show(30);
+            $colLast.hide(30);
+        }
+        return false;
+    });
+    $ci.on("cycle-right", function() {
+        let $columns = $(this).children();
+        let $colAfter = $columns.filter(':visible').last().next();
+        if ($colAfter.length == 1) {
+            let $colFirst = $columns.filter(':visible').first();
+            $colAfter.show(30);
+            $colFirst.hide(30);
+        }
+        return false;
+    });
+    $ci.on("adjust-left", function() {
+        let $columns = $(this).children();
+        let len = $columns.filter(':visible').length;
+        while (len > data.activeColumnNum) {
+            let $colLast = $columns.filter(':visible').last();
+            $colLast.hide(); // (Setting a delay time here will cause bugs.)
+            len--;
+        }
+        while (len < data.activeColumnNum) {
+            let $colBefore = $columns.filter(':visible').first().prev();
+            if ($colBefore.length != 1) {
+                break;
+            }
+            $colBefore.show(); // (Setting a delay time here will cause bugs.)
+            len++;
+        }
+        return false;
+    });
+    $ci.on("adjust-right", function() {
+        let $columns = $(this).children();
+        let len = $columns.filter(':visible').length;
+        while (len > data.activeColumnNum) {
+            let $colFirst = $columns.filter(':visible').first();
+            $colFirst.hide(); // (Setting a delay time here will cause bugs.)
+            len--;
+        }
+        while (len < data.activeColumnNum) {
+            let $colAfter = $columns.filter(':visible').last().next();
+            if ($colAfter.length != 1) {
+                break;
+            }
+            $colAfter.show(); // (Setting a delay time here will cause bugs.)
+            len++;
+        }
+        return false;
+    });
+    $ci.on("increase-column-number", function() {
+        let $this = $(this);
+        let data = $this.data("data");
+        if (data.activeColumnNum < 3) {
+            data.activeColumnNum++;
+        }
+        $this.css(
+            'grid-template-columns',
+            'auto '.repeat(data.activeColumnNum)
+        );
+        $this.trigger("adjust-left").trigger("adjust-right");
+        return false;
+    });
+    $ci.on("decrease-column-number", function() {
+        let $this = $(this);
+        let data = $this.data("data");
+        if (data.activeColumnNum > 1) {
+            data.activeColumnNum--;
+        }
+        $this.css(
+            'grid-template-columns', 'auto '.repeat(data.activeColumnNum)
+        );
+        $this.trigger("adjust-left").trigger("adjust-right");
+        return false;
+    });
+    $(document).on("keydown", function(event) {
+        switch(event.which) {
+            case 37: // left arrow key
+                $ci.trigger("cycle-left");
+                break;
+            case 39: // right arrow key
+                $ci.trigger("cycle-right");
+                break;
+            case 38: // up arrow key
+                $ci.trigger("increase-column-number");
+                break;
+            case 40: // down arrow key
+                $ci.trigger("decrease-column-number");
+                break;
+        }
+        return false;
+    });
+});
 
 
 

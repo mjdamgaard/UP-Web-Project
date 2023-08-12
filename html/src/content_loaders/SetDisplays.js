@@ -164,8 +164,9 @@ export var setMenurCL = new ContentLoader(
     /* Initial HTML template */
     '<div>' +
         '<<SetCategoriesList>>' +
-        '<<SortingCategoriesMenu>>' +
-        '<<RelevantCategoriesSetDisplay>>' +
+        // TODO: Implement these:
+        // '<<SortingCategoriesMenu>>' +
+        // '<<RelevantCategoriesSetDisplay>>' +
     '</div>',
     sdbInterfaceCL
 );
@@ -213,7 +214,6 @@ export var missingCategoryDisplayCL = new ContentLoader(
     /* Initial HTML template */
     '<div>' +
         '<span class="text-info">' +
-            // 'Missing category with context: <<EntityTitle data.cxtData:wait>>' +
             'Missing category.' +
         '</span>' +
     '</div>',
@@ -225,11 +225,6 @@ missingCategoryDisplayCL.addCallback("data", function(data) {
         "defStr",
     ]);
 });
-// missingCategoryDisplayCL.addCallback(function($ci, data) {
-//     data.cxtData = {entID: data.cxtID};
-//     $ci.find('.CI.EntityTitle').trigger("load");
-//     $ci.append(', and defining text: ' + sanitize(data.defStr));
-// });
 missingCategoryDisplayCL.addCallback(function($ci, data) {
     data.inputUserID = accountManager.inputUserID;
     if (data.inputUserID) {
@@ -308,15 +303,5 @@ relevantCategoriesSetDisplayCL.addCallback("data", function(data) {
     );
 });
 relevantCategoriesSetDisplayCL.addCallback("data", function(data) {
-    // Relevant categories:
-    data.elemContentKey = "CategoryForSortingElement";
-    // TODO: This is wrong. Find out what it should be and also consider making
-    // a SetDisplay w/o the header (like my former "SetList")..
-    let sg1 = new SimpleSetGenerator(
-        {cxtID: 21, defStr: "#54|#" + data.entID}, // catKey.
-    );
-    let sg2 = new SimpleSetGenerator(
-        {cxtID: 21, defStr: "#52|#" + data.typeID}, // catKey.
-    );
-    data.setGenerator = new MaxRatingSetCombiner([sg1, sg2]);
+    // TODO: Implement this.
 });
