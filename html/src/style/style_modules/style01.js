@@ -1,7 +1,7 @@
 
 import {
     sdbInterfaceCL, appColumnContainerCL, appColumnCL,
-    interfaceHeaderCL, closeButtonCL,
+    interfaceHeaderCL, closeButtonCL, superCoolLogoCL,
 } from "/src/content_loaders/SDBInterface.js";
 import {
     tabHeaderCL, pagesContainerCL,
@@ -39,12 +39,31 @@ interfaceHeaderCL.addCSS(
     'background-color: #40E0E9;' +
     'margin-bottom: 10px;'
 );
-interfaceHeaderCL.addCSS(
-    '& .navbar-brand {' +
-        'color: black;' +
-        'font-size: 25px;' +
+superCoolLogoCL.addCSS(
+    'color: black;' +
+    'font-size: 25px;'
+);
+superCoolLogoCL.addCSS(
+    '&:hover {' +
+        'cursor: pointer;' +
     '}'
 );
+sdbInterfaceCL.addCSS(
+    '& main > :not(.CI.AppColumnContainer) {' +
+        'text-align: center;' +
+        'display: grid;' +
+        'grid-template-columns: auto;' +
+        'grid-template-rows: 1fr auto 1fr;' +
+        'opacity: 0.5;' +
+    '}'
+);
+sdbInterfaceCL.addCSS(
+    '& main > :not(.CI.AppColumnContainer):hover {' +
+        'cursor: pointer;' +
+        'opacity: 1;' +
+    '}'
+);
+
 sdbInterfaceCL.addCSS(
     '& > main {' +
         'display: grid;' +

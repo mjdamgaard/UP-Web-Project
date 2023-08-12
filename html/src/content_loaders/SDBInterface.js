@@ -6,7 +6,7 @@ import {
     AccountManager,
 } from "/src/AccountManager.js";
 import {
-    ContentLoader,
+    ContentLoader, DataNode
 } from "/src/ContentLoader.js";
 
 
@@ -21,9 +21,13 @@ export var sdbInterfaceCL = new ContentLoader(
     '<div>' +
         '<<InterfaceHeader>>' +
         '<main>' +
-            '<div class="left-margin"></div>' +
+            '<div class="left-margin">' +
+                '<span></span><span>&#10094;</span><span></span>' +
+            '</div>' +
             '<<AppColumnContainer>>' +
-            '<div class="right-margin"></div>' +
+            '<div class="right-margin">' +
+                '<span></span><span>&#10095;</span><span></span>' +
+            '</div>' +
         '</main>' +
         '<div class="login-page-container"></div>' +
     '</div>',
@@ -85,8 +89,7 @@ export var interfaceHeaderCL = new ContentLoader(
     /* Initial HTML template */
     '<header class="navbar navbar-default">' +
         '<div class="container-fluid">' +
-                '<<SuperCoolLogoTBD>>' +
-                '<span class="navbar-brand">openSDB</span>' +// will do for now.
+            '<<SuperCoolLogoTBD>>' +
             '<<StartColumnButtonsContainer>>' +
             '<<AccountButtonsContainer>>' +
         '</div>' +
@@ -236,7 +239,7 @@ appColumnCL.addCallback(function($ci) {
     });
 });
 
-// TODO: Make the columns move smoothly sideways in a future implementation. 
+// TODO: Make the columns move smoothly sideways in a future implementation.
 appColumnContainerCL.addCallback(function($ci, data) {
     data.activeColumnNum = 2;
     $ci.on("cycle-left", function() {
@@ -337,7 +340,50 @@ appColumnContainerCL.addCallback(function($ci, data) {
         }
         return false;
     });
+    $ci.on("prepend-home-column", function() {
+        let $this = $(this);
+        let data = $this.data("data");
+        let $visibleColumns = $this.children().filter(':visible');
+        let newData = new DataNode(data, {entID: 10});
+        if ($visibleColumns.length > 0) {
+            $visibleColumns.first().trigger(
+                "open-column", ["AppColumn", newData, "left"]
+            );
+        } else {
+            appColumnContainerCL.loadPrepended($this, "AppColumn", newData);
+        }
+        return false;
+    });
 });
+sdbInterfaceCL.addCallback(function($ci, data) {
+    $ci.children('main').children('.left-margin').on("click", function() {
+        $(this).next().trigger("cycle-left");
+        return false;
+    });
+    $ci.children('main').children('.right-margin').on("click", function() {
+        $(this).prev().trigger("cycle-right");
+        return false;
+    });
+});
+
+
+
+export var superCoolLogoCL = new ContentLoader(
+    "SuperCoolLogoTBD",
+    /* Initial HTML template */
+    '<span class="navbar-brand">openSDB</span>',
+    sdbInterfaceCL,
+);
+
+superCoolLogoCL.addCallback(function($ci, data) {
+    $ci.on("click", function() {
+        $(this).closest('.CI.ColumnBasedSDBInterface')
+            .find('.CI.AppColumnContainer')
+            .trigger("prepend-home-column");
+        return false;
+    });
+});
+
 
 
 
