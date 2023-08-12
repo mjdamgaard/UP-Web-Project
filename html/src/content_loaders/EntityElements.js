@@ -16,8 +16,10 @@ export var generalEntityElementCL = new ContentLoader(
     "GeneralEntityElement",
     /* Initial HTML template */
     '<div>' +
-        '<<EntityTitle>>' +
-        '<<ElementRatingDisplay>>' +
+        '<div>' +
+            '<h4><<EntityTitle>></h4>' +
+            '<<ElementRatingDisplay>>' +
+        '</div>' +
         '<<DropdownBox>>' +
     '</div>',
     sdbInterfaceCL

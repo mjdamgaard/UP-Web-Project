@@ -13,7 +13,7 @@ import {
 
 } from "/src/content_loaders/EntityPages.js";
 import {
-    generalEntityElementCL,
+    generalEntityElementCL, elementRatingDisplayCL,
 } from "/src/content_loaders/EntityElements.js";
 import {
     setDisplayCL, dropdownButtonBarCL, dropdownButtonCL, setHeaderCL,
@@ -87,10 +87,10 @@ appColumnCL.addCSS(
     'white-space: initial;' +
     'display: inline-block;' +
     'margin: 0px 10px;' +
-    // 'width: 600px;' +
     'border: 1px solid #DDD;' +
     'border-radius: 8px;' +
     'background-color: #FFF;' +
+    'max-width: 800px;' +
     ''
 );
 closeButtonCL.addCSS(
@@ -167,6 +167,19 @@ ratingDisplayCL.addCSS(
     'border-top: 1px solid lightgray;' +
     ''
 );
+
+generalEntityElementCL.addCSS(
+    '& > div:first-of-type {' +
+        'display: grid;' +
+        'grid-template-columns: 1fr 50px;' +
+        'grid-template-rows: auto;' +
+    '}'
+);
+elementRatingDisplayCL.addCSS(
+    'font-size: 15pt;' +
+    'padding: 10px 10px 2px;'
+);
+
 
 ratingDisplayCL.addCSS(
     '& .applies-to-subj {' +
