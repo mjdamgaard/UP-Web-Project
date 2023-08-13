@@ -79,7 +79,7 @@ CALL insertOrFindEntity(9, 0, 27, 28,
 
 CALL insertOrFindEntity(9, 0, 2, 0, "Movies"); -- id: 31
 CALL insertOrFindEntity(9, 0, 2, 0, "Science"); -- id: 32
-CALL insertOrFindEntity(9, 0, 2, 22, "Music|#31"); -- id: 33
+CALL insertOrFindEntity(9, 0, 2, 22, "Music|#32"); -- id: 33
 CALL insertOrFindEntity(9, 0, 2, 22, "Cinematography|#31"); -- id: 34
 CALL insertOrFindEntity(9, 0, 2, 22, "Physics|#31"); -- id: 35
 CALL insertOrFindEntity(9, 0, 2, 22, "Mathematics|#31"); -- id: 36
@@ -97,10 +97,10 @@ CALL insertOrFindEntity(9, 0, 27, 0, "ExAmPlE oF a NoT vErY uSeFuL eNtItY"); -- 
 CALL insertOrUpdateRating(9, 38, 39, CONV("0103", 16, 10), 1);
 
 CALL insertOrFindEntity(9, 0, 2, 21, "#37|#24"); -- id: 40
-CALL insertOrUpdateRating(9, 40, 25, CONV("E100", 16, 10), 1);
-CALL insertOrUpdateRating(9, 40, 26, CONV("E000", 16, 10), 1);
+CALL insertOrUpdateRating(9, 40, 25, CONV("F100", 16, 10), 1);
+CALL insertOrUpdateRating(9, 40, 26, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(9, 40, 39, CONV("0100", 16, 10), 1);
-CALL insertOrUpdateRating(9, 40, 33, CONV("F000", 16, 10), 1);
+CALL insertOrUpdateRating(9, 40, 33, CONV("E000", 16, 10), 1);
 
 CALL insertOrFindEntity(9, 0, 2, 21, "#37|#32"); -- id: 41
 CALL insertOrUpdateRating(9, 41, 33, CONV("F000", 16, 10), 1);
@@ -242,6 +242,13 @@ CALL insertOrFindEntity(9, 0, 6, 78, CONCAT(
 
 CALL insertOrFindEntity(9, 0, 19, 20, "Templates|#3|many"); -- id: 85
 
+
+CALL insertOrFindEntity(9, 0, 2, 22, "Hip hop|#24"); -- id: 86
+CALL insertOrFindEntity(9, 0, 2, 22, "Pop|#24"); -- id: 87
+CALL insertOrFindEntity(9, 0, 2, 22, "Classic|#24"); -- id: 88
+CALL insertOrUpdateRating(9, 40, 86, CONV("F000", 16, 10), 1);
+CALL insertOrUpdateRating(9, 40, 87, CONV("F000", 16, 10), 1);
+CALL insertOrUpdateRating(9, 40, 88, CONV("F000", 16, 10), 1);
 
 
 

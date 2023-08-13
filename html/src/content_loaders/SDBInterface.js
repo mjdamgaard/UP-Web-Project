@@ -28,14 +28,6 @@ export var sdbInterfaceCL = new ContentLoader(
         '<div class="overlay-page-container"></div>' +
     '</div>',
 );
-export var appColumnContainerCL = new ContentLoader(
-    "AppColumnContainer",
-    /* Initial HTML template */
-    '<div>' +
-        '<<AppColumn>>' +
-    '</div>',
-    sdbInterfaceCL
-);
 sdbInterfaceCL.addCallback(function($ci, data) {
     $ci.children('.overlay-page-container').hide();
     $ci.on("log-in", function() {
@@ -230,6 +222,14 @@ closeButtonCL.addCallback(function($ci) {
 
 
 
+export var appColumnContainerCL = new ContentLoader(
+    "AppColumnContainer",
+    /* Initial HTML template */
+    '<div>' +
+        '<<AppColumn>>' +
+    '</div>',
+    sdbInterfaceCL
+);
 
 /* Events to open new app columns and to cycle between them etc. */
 
@@ -321,7 +321,7 @@ appColumnContainerCL.addCallback(function($ci, data) {
         }
         $this.css(
             'grid-template-columns',
-            'auto '.repeat(data.activeColumnNum)
+            '1fr '.repeat(data.activeColumnNum)
         );
         $this.trigger("adjust-left").trigger("adjust-right");
         return false;
@@ -333,7 +333,7 @@ appColumnContainerCL.addCallback(function($ci, data) {
             data.activeColumnNum--;
         }
         $this.css(
-            'grid-template-columns', 'auto '.repeat(data.activeColumnNum)
+            'grid-template-columns', '1fr '.repeat(data.activeColumnNum)
         );
         $this.trigger("adjust-left").trigger("adjust-right");
         return false;

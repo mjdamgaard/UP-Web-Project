@@ -197,5 +197,7 @@ export var tutorialPageCL = new ContentLoader(
     sdbInterfaceCL
 );
 tutorialPageCL.addCallback("append", ".content-container",
-    '<iframe src="tutorial.html" style="border:none;"></iframe>'
+    '<iframe src="tutorial.html" ' +
+        'style="border:none; width: 100%; height: 100%;">'+
+    '</iframe>'
 );

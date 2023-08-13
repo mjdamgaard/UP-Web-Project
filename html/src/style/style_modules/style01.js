@@ -73,8 +73,9 @@ sdbInterfaceCL.addCSS(
 );
 appColumnContainerCL.addCSS(
     'display: grid;' +
-    'grid-template-columns: auto auto;' +
-    'grid-template-rows: auto;' +
+    'grid-template-columns: 1fr 1fr;' +
+    'grid-template-rows: 1fr;' +
+    // 'justify-items: center;' +
     // 'overflow-x: auto;' +
     // 'overflow-y: hidden;' +
     'white-space: nowrap;' +
@@ -235,9 +236,11 @@ sortingCategoriesMenuCL.addCSS(
 
 
 overlayPageCL.addCSS(
+    'width: 100%;' +
+    'height: 100%;' +
     'display: grid;' +
-    'grid-template-columns: auto auto auto;' +
-    'grid-template-rows: 20px auto;'
+    'grid-template-columns: 1fr 1fr 1fr;' +
+    'grid-template-rows: 1fr;'
 );
 overlayPageCL.addCSS(
     '& > .content-container {' +
