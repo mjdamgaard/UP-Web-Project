@@ -239,7 +239,7 @@ overlayPageCL.addCSS(
     'width: 100%;' +
     'height: 100%;' +
     'display: grid;' +
-    'grid-template-columns: 1fr 1fr 1fr;' +
+    'grid-template-columns: 1fr minmax(500px, 800px) 1fr;' +
     'grid-template-rows: 1fr;'
 );
 overlayPageCL.addCSS(

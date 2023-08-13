@@ -80,9 +80,9 @@ CALL insertOrFindEntity(9, 0, 27, 28,
 CALL insertOrFindEntity(9, 0, 2, 0, "Movies"); -- id: 31
 CALL insertOrFindEntity(9, 0, 2, 0, "Science"); -- id: 32
 CALL insertOrFindEntity(9, 0, 2, 22, "Music|#32"); -- id: 33
-CALL insertOrFindEntity(9, 0, 2, 22, "Cinematography|#31"); -- id: 34
-CALL insertOrFindEntity(9, 0, 2, 22, "Physics|#31"); -- id: 35
-CALL insertOrFindEntity(9, 0, 2, 22, "Mathematics|#31"); -- id: 36
+CALL insertOrFindEntity(9, 0, 2, 22, "Cinematography|#32"); -- id: 34
+CALL insertOrFindEntity(9, 0, 2, 22, "Physics|#32"); -- id: 35
+CALL insertOrFindEntity(9, 0, 2, 22, "Mathematics|#32"); -- id: 36
 
 
 

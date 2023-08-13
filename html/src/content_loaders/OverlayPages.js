@@ -126,7 +126,7 @@ createAccountPageCL.addCallback("append", ".content-container",
         '</div>' +
         '<p class="text-info"><i>' +
             '(For testing purposes, you can make a temporary account by ' +
-            'choosing a fake e-mail address.) ' +
+            'choosing a fake e-mail address.)<br>' +
             'The e-mail address\' connection to this account will be erased ' +
             'upon confirmation. So save your password!' +
         '</i></p>' +

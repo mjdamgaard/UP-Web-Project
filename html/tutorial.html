@@ -3,49 +3,96 @@
 <head>
 
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+<style>
+    p {
+        font-size: 13pt;
+        margin-right: 4px;
+        margin-bottom: 15px;
+    }
+</style>
+
+<base href="index.php" target="_parent">
 
 </head>
 <body>
 
 <h1>Tutorial</h1>
 
-<h2>Lession 0</h2>
+<h3>Lesson 0</h3>
 <p>
     Press the plus and minus buttons in the navigation bar (next to the
     Tutorial button) and see what it means for the number of columns on the
     screen.
-
+</p>
+<p>
     (If using a very thin screen, click the minus button while on this tutorial
     page to get only one column on the screen.)
-
+</p>
+<p>
     Try to open some columns by clicking on the various links in the columns.
-
+</p>
+<p>
     Try to open more columns than can fit inside the screen at once and then
     cycle through them using either the left and right arrow keys or by clicking
     the margins of the page (with the arrow symbols in them).
 </p>
 
-<h2>Lession 1</h2>
+
+<h3>Lesson 1</h3>
 <p>
     First create an account. (You can use a fake e-mail address to make a
     temporary account for testing purposes.) Click on 'Sign Up' and fill out
     the form.
-
-    Once this is done, refresh the page to get only one column called
-    "Entities."
-
-    This is the fundamental entity in the database which represents the
-    category of all entities in the database. It is the "category of all things"
-    in other words.
-
+</p>
+<p>
+    Once this is done, open <a href="index.php">this website</a> in a new tab.
+    Note that you can switch easily between tabs using Ctrl+Tab, especially if
+    you have only two tabs open.
+</p>
+<p>
+    View the initial column with the title "Entities." This is the fundamental
+    entity in the database which represents the category of all entities
+    (including itself). It is the "category of all things" in other words.
+</p>
+<p>
     Note that the 'Full title' says: "Category ▸ Entities." This means that the
-    entity in question is of the type "Category" and has the title "Entities".
-
+    entity in question is of the type "Category."
+</p>
+<p>
     In the Subcategories tab, select the category called "Music" (by clicking
     on that word).
-
+</p>
+<p>
+    Note that its 'Full title' says: "Category ▸ Music," This entity thus
+    represents the category of things related to music.
+</p>
+<p>
+    In the Subcategories tab of the "Music" column, select "Rock" (by clicking
+    on that word).
+</p>
+<p>
+    Note that its 'Full title' says: "Category ▸ Rock (Music)." The parentheses
+    are thus used here to disambiguate what "Rock" refers to. It refers to the
+    genre of music, not to stone, nor to a certain kind of motion, nor to a tool
+    used for spinning.
 </p>
 
+
+<h3>Lesson 2</h3>
+<p>
+    Resume or repeat lesson 1 such that you have opened the "Category ▸ Rock
+    (Music)" entity.
+</p>
+<p>
+    Note that under its ID, it says: "Template: {&lt;Title&gt;}
+    (&lt;Supercategory&gt;)."
+</p>
+<p>
+    ...
+</p>
 
 </body>
 </html>
