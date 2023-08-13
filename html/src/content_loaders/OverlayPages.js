@@ -93,7 +93,8 @@ export function hasAcceptedStorage() {
     } else {
         if (
             confirm(
-                'This site only uses necessary local storage. Press OK to ' +
+                'This site uses only necessary local storage (for storing ' +
+                'user ID and login session data). Press OK to ' +
                 'accept this and be able to log in or create an account.'
             )
         ) {
@@ -125,8 +126,8 @@ createAccountPageCL.addCallback("append", ".content-container",
         '</div>' +
         '<p class="text-info"><i>' +
             '(For testing purposes, you can make a temporary account by ' +
-            'choosing a fake e-mail address.) The e-mail address will be ' +
-            'stored but it connection to this account will be erased ' +
+            'choosing a fake e-mail address.) ' +
+            'The e-mail address\' connection to this account will be erased ' +
             'upon confirmation. So save your password!' +
         '</i></p>' +
         '<div class="form-group">' +
@@ -137,11 +138,14 @@ createAccountPageCL.addCallback("append", ".content-container",
         '<div class="checkbox" style="font-size: 11pt;">' +
             '<label><input type="checkbox" class="terms" value="">' +
                 'I accept that the entities and ratings that I submit with ' +
-                'this account will be available to the public, and that it ' +
+                'this account will be available to the public, and that they ' +
                 'will be shared upon request with any third party that ' +
                 'wishes to copy the SDB. This includes a user entity with ' +
-                'the username chosen here. (But it of course does not ' +
-                'include any data like the e-mail address or password etc.).' +
+                'the username chosen here. (But it of course <b>does not ' +
+                'include</b> any data like the <b>e-mail address or ' +
+                'password</b> etc. ' +
+                'Nor does it include any data about what you search for or ' +
+                'what you view on the site and when.)' +
             '</label>' +
         '</div>' +
         '<span>' +
