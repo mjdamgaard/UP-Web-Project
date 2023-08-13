@@ -64,6 +64,9 @@ loginPageCL.addCallback("append", ".content-container",
 loginPageCL.addCallback(function($ci, data) {
     $ci.on("submit", function() {
         let $this = $(this);
+        if (!hasAcceptedStorage()) {
+            return;
+        }
         $this.find('.response-display').empty();
         let user = $this.find('.user').val();
         let pw = $this.find('.pw').val();
@@ -79,7 +82,28 @@ loginPageCL.addCallback(function($ci, data) {
         return false;
     });
 });
-
+loginPageCL.addCallback(function($ci, data) {
+    if (!hasAcceptedStorage()) {
+        return;
+    }
+});
+export function hasAcceptedStorage() {
+    if (localStorage.hasAcceptedStorage) {
+        return true;
+    } else {
+        if (
+            confirm(
+                'This site only uses necessary local storage. Press OK to ' +
+                'accept this and be able to log in or create an account.'
+            )
+        ) {
+            localStorage.hasAcceptedStorage = true;
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
 
 export var createAccountPageCL = new ContentLoader(
     "CreateAccountPage",
@@ -135,6 +159,9 @@ createAccountPageCL.addCallback(function($ci, data) {
             );
             return;
         }
+        if (!hasAcceptedStorage()) {
+            return;
+        }
         let username = $this.find('.username').val();
         let email = $this.find('.email').val();
         let pw = $this.find('.pw').val();
@@ -152,7 +179,11 @@ createAccountPageCL.addCallback(function($ci, data) {
         return false;
     });
 });
-
+createAccountPageCL.addCallback(function($ci, data) {
+    if (!hasAcceptedStorage()) {
+        return;
+    }
+});
 
 
 export var tutorialPageCL = new ContentLoader(
