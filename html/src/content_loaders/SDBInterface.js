@@ -135,7 +135,7 @@ export var accountButtonsContainerCL = new ContentLoader(
             '<span class="glyphicon glyphicon-user"></span> Sign up' +
         '</a></li>' +
         '<li class="log-out"><a href="#">' +
-            '<span class="glyphicon glyphicon-log-out"></span> Sign out' +
+            '<span class="glyphicon glyphicon-log-out"></span> Log out' +
         '</a></li>' +
     '</ul>',
     sdbInterfaceCL,

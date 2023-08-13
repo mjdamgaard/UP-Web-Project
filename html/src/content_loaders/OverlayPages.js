@@ -94,13 +94,31 @@ createAccountPageCL.addCallback("append", ".content-container",
             '<label>Username</label>' +
             '<input type="text" class="form-control username"></input>' +
         '</div>' +
+        '<p class="text-info"><i>(Anonymous usernames are prefered.)</i></p>' +
         '<div class="form-group">' +
             '<label>E-mail address</label>' +
             '<input type="email" class="form-control email"></input>' +
         '</div>' +
+        '<p class="text-info"><i>' +
+            '(For testing purposes, you can make a temporary account by ' +
+            'choosing a fake e-mail address.) The e-mail address will be ' +
+            'stored but it connection to this account will be erased ' +
+            'upon confirmation. So save your password!' +
+        '</i></p>' +
         '<div class="form-group">' +
             '<label>Password</label>' +
             '<input type="password" class="form-control pw"></input>' +
+        '</div>' +
+        '<p class="text-info"><i>Choose a unique password!</i></p>' +
+        '<div class="checkbox" style="font-size: 11pt;">' +
+            '<label><input type="checkbox" class="terms" value="">' +
+                'I accept that the entities and ratings that I submit with ' +
+                'this account will be available to the public, and that it ' +
+                'will be shared upon request with any third party that ' +
+                'wishes to copy the SDB. This includes a user entity with ' +
+                'the username chosen here. (But it of course does not ' +
+                'include any data like the e-mail address or password etc.).' +
+            '</label>' +
         '</div>' +
         '<span>' +
             '<button class="btn btn-default">Submit</button>' +
@@ -111,11 +129,17 @@ createAccountPageCL.addCallback("append", ".content-container",
 createAccountPageCL.addCallback(function($ci, data) {
     $ci.on("submit", function() {
         let $this = $(this);
+        if (!$this.find('input.terms').is(':checked')) {
+            $this.find('.response-display').text(
+                'You need to accept the terms before creating an account.'
+            );
+            return;
+        }
         let username = $this.find('.username').val();
         let email = $this.find('.email').val();
         let pw = $this.find('.pw').val();
         // TODO: Validate input client-side first!
-        accountManager.createNewAccount(username, email, pw, $ci,
+        accountManager.createNewAccount(username, email, pw, $this,
             function($ci, result) {
                 if (result.exitCode != 0) {
                     $ci.find('.response-display').text(result.error);

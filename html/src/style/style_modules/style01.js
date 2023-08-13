@@ -90,7 +90,7 @@ appColumnCL.addCSS(
     'border: 1px solid #DDD;' +
     'border-radius: 8px;' +
     'background-color: #FFF;' +
-    'max-width: 800px;' +
+    'max-width: 900px;' +
     ''
 );
 closeButtonCL.addCSS(
