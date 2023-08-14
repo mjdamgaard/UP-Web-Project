@@ -51,7 +51,7 @@ sdbInterfaceCL.addCallback(function($ci, data) {
     $ci.on("back-to-main", function() {
         let $this = $(this);
         let $obj = $this.children('.overlay-page-container');
-        $obj.hide().empty();
+        $obj.hide();
         $this.children('main').show();
         return false;
     });
@@ -65,8 +65,10 @@ sdbInterfaceCL.addCallback(function($ci, data) {
     $ci.on("show-tutorial", function() {
         let $this = $(this);
         let $obj = $this.children('.overlay-page-container');
-        $obj.empty();
-        sdbInterfaceCL.loadAppended($obj, "TutorialPage", data);
+        if (!$obj.children().hasClass("TutorialPage")) {
+            $obj.empty();
+            sdbInterfaceCL.loadAppended($obj, "TutorialPage", data);
+        }
         $this.children('main').hide();
         $obj.show();
         return false;
@@ -114,6 +116,18 @@ headerButtonsContainerCL.addCallback(function($ci, data) {
         return false;
     });
     // (See below for the actions of the + and - buttons.)
+});
+headerButtonsContainerCL.addCallback(function($ci, data) {
+    if (!localStorage.hasAcceptedStorage) {
+        $ci.find('.tutorial').css({
+            "font-size": "17pt",
+            "text-shadow": "0px 0px 5px #afa, 0px 0px 13px #3f2",
+        });
+        // $ci.find('.tutorial').prepend('<mark>');
+        // $ci.find('.tutorial').append('</mark>');
+        // ..No. This text shadow is the best I can do for highlighting now
+        // (without spending too much time on it).
+    }
 });
 
 export var accountButtonsContainerCL = new ContentLoader(
@@ -256,7 +270,7 @@ appColumnCL.addCallback(function($ci) {
 
 // TODO: Make the columns move smoothly sideways in a future implementation.
 appColumnContainerCL.addCallback(function($ci, data) {
-    data.activeColumnNum = 2;
+    data.activeColumnNum = 1;
     $ci.on("cycle-left", function() {
         let $columns = $(this).children();
         let $colBefore = $columns.filter(':visible').first().prev();
