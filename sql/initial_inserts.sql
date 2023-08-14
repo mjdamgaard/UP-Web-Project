@@ -79,7 +79,7 @@ CALL insertOrFindEntity(9, 0, 27, 28,
 
 CALL insertOrFindEntity(9, 0, 2, 0, "Movies"); -- id: 31
 CALL insertOrFindEntity(9, 0, 2, 0, "Science"); -- id: 32
-CALL insertOrFindEntity(9, 0, 2, 22, "Music|#32"); -- id: 33
+CALL insertOrFindEntity(9, 0, 2, 22, "Musicology|#32"); -- id: 33
 CALL insertOrFindEntity(9, 0, 2, 22, "Cinematography|#32"); -- id: 34
 CALL insertOrFindEntity(9, 0, 2, 22, "Physics|#32"); -- id: 35
 CALL insertOrFindEntity(9, 0, 2, 22, "Mathematics|#32"); -- id: 36
@@ -250,6 +250,8 @@ CALL insertOrUpdateRating(9, 40, 86, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(9, 40, 87, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(9, 40, 88, CONV("F000", 16, 10), 1);
 
+CALL insertOrFindEntity(9, 0, 2, 22, "Geology|#32"); -- id: 89
+CALL insertOrUpdateRating(9, 41, 89, CONV("F000", 16, 10), 1);
 
 
 SELECT "Calling publicizeRecentInputs() can take a while (~a minute):";

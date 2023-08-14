@@ -12,6 +12,9 @@
         margin-right: 4px;
         margin-bottom: 15px;
     }
+    h3 {
+        margin-top: 30px;
+    }
 </style>
 
 <base href="index.php" target="_parent">
@@ -21,24 +24,37 @@
 
 <h1>Tutorial</h1>
 
-<h3>About</h3>
+<h3>About the website</h3>
 <p>
-    ...
+    This website is open source! To view the source code (and to fork it!),
+    visit <a href="https://github.com/mjdamgaard/openSDB">
+    github.com/mjdamgaard/openSDB</a>.
+</p>
+<p>
+    On that site, one can also read a desciption about the point of this
+    website; its purpose and the ideas behind it. (See the README.md.)
+</p>
+
+<h3>About the tutorial</h3>
+<p>
+    The following action suggestions in this tutorial will all be things to do
+    on the main page of this site, not this tutorial page. You will thus need
+    to switch back and forth between this page and the main page in order to
+    follow the tutorial.
+</p>
+<p>
+    Tip:
+    If using a computer (recommended), open <a href="index.php">this website</a>
+    in a new tab such that you can easily switch between this tutorial tab on
+    one where you try out the site. (Note that Ctrl+Tab swiches easily between
+    tabs, especially if you have only two tabs open.)
 </p>
 
 
 <h3>Lesson 0</h3>
 <p>
-    Open <a href="index.php">this website</a> in a new tab such that you can
-    easily switch between this tutorial tab on one where you try out the site.
-</p>
-<p>
-    Note that you can switch easily between tabs using Ctrl+Tab, especially if
-    you have only two tabs open.
-    (If using a mobile device, this might not be quite as easy, but its ...)
-</p>
-<p>
-    The following action suggestions will all
+    Try to open some columns by clicking on the various links in the columns
+    (on the main page).
 </p>
 <p>
     Press the plus and minus buttons in the navigation bar (next to the
@@ -50,9 +66,6 @@
     forget these plus and minus buttons for now, or go to a computer instead.)
 </p>
 <p>
-    Try to open some columns by clicking on the various links in the columns.
-</p>
-<p>
     Try to open more columns than can fit inside the screen at once and then
     cycle through them using either the left and right arrow keys or by clicking
     the margins of the page (with the arrow symbols in them).
@@ -61,9 +74,25 @@
 
 <h3>Lesson 1</h3>
 <p>
-    First create an account. (You can use a fake e-mail address to make a
-    temporary account for testing purposes.) Click on 'Sign Up' and fill out
-    the form.
+    View the initial column with the title "Entities" and close all other
+    columns (by pressing the close button in the top right of each column).
+    If you have closed the "Entities" column, press "openSDB" in the top left
+    of the page to add an "Entities" column.
+</p>
+<p>
+    Close this column such that you have zero columns open, then open it again
+    by clicking on "openSDB" in the top left of the page.
+</p>
+<p>
+    Each column represents an <i>entity</i> in the database. And each entity
+    is essentially a word: it <i>references something</i>, either some concrete
+    object, place or person in the world, or a more abstract concept.
+</p>
+<p>
+    The "Entities" entity you have on your screen on the main page is an
+    abstract entity that represents the category of all entities in the
+    database (including itself).
+    It is essentially the "category of all things" in other words.
 </p>
 <p>
     View the initial column with the title "Entities." This is the fundamental
@@ -75,7 +104,7 @@
     entity in question is of the type "Category."
 </p>
 <p>
-    In the Subcategories tab, select the category called "Music" (by clicking
+    In the "Subcategories" tab, select the category called "Music" (by clicking
     on that word).
 </p>
 <p>
@@ -92,9 +121,19 @@
     genre of music, not to stone, nor to a certain kind of motion, nor to a tool
     used for spinning.
 </p>
+<p>
+    Finally, go back to the "Music" column and press the little downward
+    arrowhead under "Rock" in the Subcategories tab. Note that in the dropdown
+    menu, one can also read the full title of this "Rock" entity.
+</p>
 
 
 <h3>Lesson 2</h3>
+<p>
+    Create an account. (You can use a fake e-mail address to make a
+    temporary account for testing purposes.) Click on 'Sign Up' and fill out
+    the form.
+</p>
 <p>
     Resume or repeat lesson 1 such that you have opened the "Category ▸ Rock
     (Music)" entity.
@@ -104,8 +143,91 @@
     (&lt;Supercategory&gt;)."
 </p>
 <p>
-    ...
+    Click on said text to open a new column for this template entity, whose
+    full title can be seen to be: "Template ▸ {&lt;Title&gt;}
+    (&lt;Supercategory&gt;)." Note that the "Template ▸" in front means that
+    the entity is of the type "Template."
+</p>
+<p>
+    A template like this is used to create entities whose semantics (i.e. their
+    meaning) can depend on several individual parts. This particular template
+    was used to create the "Rock" category entity with "Music" as its
+    supercategory to disambiguate it from other possible interpretations of the
+    word "Rock."
+</p>
+<p>
+    Try to submit another entity with the title "Rock," but with another
+    supercategory! (This is done under the "Submit entity" tab.)
+    For instance choose the supercategory "Geology" to make the entity refer to
+    stone rather than a genre of music. Click submit to upload this entity.
+</p>
+<p>
+    If you have remained logged in, a new column should now have opened with
+    your submitted entity! Although somebody else might have submitted this
+    entity before you. Go back to the previous column where you clicked "Submit"
+    and read the text underneath the button. It should either say that the
+    "Entity was successfully uploaded!" or that the "Entity already exists"
+    depending on whether you were the first to upload it or not.
+</p>
+<p>
+    You can also click "Search" to search on the entity exists (without
+    submitting it). Click "Search" with the same values in the form. Now that
+    we know that the relevant entity already exists, it will surely open it in
+    a new column and write: "Entity was found!"
+</p>
+<p>
+    With one of the "Rock (Geology)" columns open (if "Geology" was what you
+    chose), note that only the "Category ▸" part of the full title is clickable.
+    This is opposed to the "Rock (Music)" column before, where "Music" can be
+    clicked to open the "Music" column from before. (Try this.)
+</p>
+<p>
+    In order to create (or search for) an entity where "Geology" is also
+    clickable in the full title, go to the "Template ▸ {&lt;Title&gt;}
+    (&lt;Supercategory&gt;)" column again and type in "Rock" as the title again,
+    but with "#89" (without the quotation marks) as the supercategory now.
+</p>
+<p>
+    Submit this entity and see that the full title of the resulting entity
+    now has a clickable version of "Geology" in it!
+</p>
+<p>
+    We are thus able to use, not just plain words, but also <i>other
+    entities</i> when we construct new entities!
+    Whenever you choose to fill in an entity ID of the form "#1234" (i.e. with
+    "#" followed by decimal digits) in a submission field of such a template,
+    the entity whose ID it is will be inserted instead.
+</p>
+<p>
+    This fact is also what makes us able to construct statements about entities,
+    which can then be rated on a scale from 0 to 10 as we will see in the next
+    lesson.
+</p>
+<p>
+    As some final points of this lesson, note that the first of all that all
+    your newly created (or successfully searched for) entities have "Category ▸"
+    as the first part of their full title, meaning that they have the type
+    "Category." Note also that in the column of the "{&lt;Title&gt;}
+    (&lt;Supercategory&gt;)" template, it says: "Type of derived entities:
+    Category." This indeed means that all the entities created from (or
+    "derived" from) this template will get the type "Category," like yours did.
+    All templates have an associated type like this.
+</p>
+<p>
+    And second of all, note that the "{&lt;Title&gt;} (&lt;Supercategory&gt;)"
+    template has curly brackets around "&lt;Title&gt;." This tells the web
+    application that it should only print out the "&lt;Title&gt;" part as the
+    entity's title, except when it comes to the so-called "full title."
+</p>
+<p>
+    This is why we for instance only see "Rock" printed out in the Subcategories
+    tab of music, rather than "Rock (Music)," and it is also why the full title
+    of the most recently submitted "Rock (Geology)" entity (the one with the
+    clickable "Geology") is printed out as "Category ▸ Rock (Geology)," and not
+    "Category ▸ Rock (Geology (Science))."
 </p>
 
+
+<h3>Lesson 3</h3>
 </body>
 </html>

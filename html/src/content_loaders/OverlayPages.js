@@ -146,9 +146,9 @@ createAccountPageCL.addCallback("append", ".content-container",
                 'wishes to copy the SDB. This includes a user entity with ' +
                 'the username chosen here. (But it of course <b>does not ' +
                 'include</b> any data like the <b>e-mail address or ' +
-                'password</b> etc. ' +
-                'Nor does it include any data about what you search for or ' +
-                'what you view on the site and when.)' +
+                'password</b> etc.)' +
+                // 'Nor does it include any data about what you search for or ' +
+                // 'what you view on the site and when.)' +
             '</label>' +
         '</div>' +
         '<span>' +
