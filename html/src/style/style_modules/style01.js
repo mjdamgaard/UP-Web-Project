@@ -13,7 +13,7 @@ import {
 
 } from "/src/content_loaders/EntityPages.js";
 import {
-    generalEntityElementCL, elementRatingDisplayCL,
+    generalEntityElementCL, elementRatingDisplayCL, semanticPropertyTitleCL,
 } from "/src/content_loaders/EntityElements.js";
 import {
     setDisplayCL, dropdownButtonBarCL, dropdownButtonCL, setHeaderCL,
@@ -259,5 +259,12 @@ goBackButtonCL.addCSS(
     '&:hover {' +
         'cursor: pointer;' +
         // 'background-color: #eee;' +
+    '}'
+);
+
+
+semanticPropertyTitleCL.addCSS(
+    '&:hover {' +
+        'cursor: pointer;' +
     '}'
 );

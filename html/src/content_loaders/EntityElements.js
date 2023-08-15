@@ -6,7 +6,7 @@ import {
     sdbInterfaceCL, dbReqManager,
 } from "/src/content_loaders/SDBInterface.js";
 import {
-    SetQuerier, SetCombiner, MaxRatingSetCombiner,
+    SetQuerier, MaxRatingSetCombiner, SimpleSetGenerator,
 } from "/src/SetGenerator.js";
 
 
@@ -155,10 +155,11 @@ semanticPropertyElementCL.addCallback(function($ci, data) {
                         }
                     break;
                 }
-                data.setGenerator = new SetQuerier(
-                    [21, "#" + data.entID + "|#" + data.columnEntityID], //
-                    // catKey.
-                    data, // dataNode.
+                data.setGenerator = new SimpleSetGenerator(
+                    {
+                        cxtID: 21,
+                        defStr: "#" + data.entID + "|#" + data.columnEntityID,
+                    },
                     null, // num.
                     36864, // ratingLo (= CONV("9000", 16, 10)).
                 );
