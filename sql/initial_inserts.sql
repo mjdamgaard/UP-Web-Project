@@ -58,7 +58,7 @@ VALUES
     -- Subcategory template:
     (3, 2, "{<Title>} (<Supercategory>)", 22),
     -- Adjective subcategory template:
-    (3, 2, "{<Adjective phrase>} <Category>", 23);
+    (3, 2, "<Adjective phrase> <Category>", 23);
 
 
 
@@ -130,10 +130,10 @@ CALL insertOrUpdateRating(9, 46, 24, CONV("FF00", 16, 10), 1);
 CALL insertOrFindEntity(9, 0, 19, 20, "Supercategories|#2|many"); -- id: 47
 
 
-CALL insertOrFindEntity(9, 0, 2, 23, "good|#31"); -- id: 48
-CALL insertOrFindEntity(9, 0, 2, 23, "funny|#31"); -- id: 49
-CALL insertOrFindEntity(9, 0, 2, 23, "scary|#31"); -- id: 50
-CALL insertOrFindEntity(9, 0, 2, 23, "iconic|#31"); -- id: 51
+CALL insertOrFindEntity(9, 0, 2, 23, "Good|#31"); -- id: 48
+CALL insertOrFindEntity(9, 0, 2, 23, "Funny|#31"); -- id: 49
+CALL insertOrFindEntity(9, 0, 2, 23, "Scary|#31"); -- id: 50
+CALL insertOrFindEntity(9, 0, 2, 23, "Iconic|#31"); -- id: 51
 
 CALL insertOrFindEntity(9, 0, 19, 20,
     "Relevant categories to rate for type instances|#2|many"); -- id: 52
