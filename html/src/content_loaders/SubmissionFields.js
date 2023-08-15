@@ -27,7 +27,9 @@ submitEntityFieldCL.addCallback("data", function(data) {
     data.copyFromAncestor([
         "entID",
         "typeID",
+        "isTemplate",
     ]);
+    data.copyFromAncestor("isTemplate", 1);
 });
 submitEntityFieldCL.addCallback(function($ci, data) {
     $ci.one("append-input-fields", function(event, labelArr) {
@@ -41,10 +43,18 @@ submitEntityFieldCL.addCallback(function($ci, data) {
         return false;
     });
     if (data.typeID == 1) {
-        data.newEntityType = data.entID;
-        data.newEntityCxt = 0;
-        let labelArr = data.entID == 3 ? ["Type #", "Template"] : ["Title"];
-        $ci.trigger("append-input-fields", [labelArr]);
+        if (!data.isTemplate) {
+            data.newEntityType = data.entID;
+            data.newEntityCxt = 0;
+            let labelArr = data.entID == 3 ?
+                ["Type ID #", "Template"] : ["Title"];
+            $ci.trigger("append-input-fields", [labelArr]);
+        } else {
+            data.newEntityType = 3;
+            data.newEntityCxt = data.entID;
+            let labelArr = ["Template"];
+            $ci.trigger("append-input-fields", [labelArr]);
+        }
         return;
     }
     if (data.typeID == 3) {
@@ -67,6 +77,7 @@ submitEntityFieldCL.addCallback(function($ci, data) {
             let labelArr = getLabelArr(tmplDefStr);
             $ci.trigger("append-input-fields", [labelArr]);
         });
+        return;
     }
 });
 export function getLabelArr(tmplDefStr) {
@@ -289,7 +300,7 @@ export var submitInstanceFormCL = new ContentLoader(
     '<div>' +
         '<form action="javascript:void(0);">' +
             '<div class="form-group">' +
-                '<label>ID:</label>' +
+                '<label>ID #:</label>' +
                 '<input type="text" class="form-control id"></input>' +
             '</div>' +
             '<button class="btn btn-default submit">Submit</button>' +

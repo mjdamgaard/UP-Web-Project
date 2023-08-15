@@ -58,6 +58,7 @@ entityPageCL.addCallback(function($ci, data) {
                     ["Relevant properties", "RelevantPropertiesTypePage"],
                     ["Templates", "PropertyCategoryPage", {propID: 85}],
                     ["Submit entity", "SubmitEntityPage"],
+                    ["Submit template", "SubmitTemplatePage"],
                 );
                 data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
                     "Relevant ratings";
@@ -197,6 +198,17 @@ export var submitEntityPageCL = new ContentLoader(
     sdbInterfaceCL
 );
 
+export var submitTemplatePageCL = new ContentLoader(
+    "SubmitTemplatePage",
+    /* Initial HTML template */
+    '<div>' +
+        '<<SubmitEntityField>>' +
+    '</div>',
+    sdbInterfaceCL
+);
+submitTemplatePageCL.addCallback("data", function(data) {
+    data.isTemplate = true;
+});
 
 
 export var relevantRatingsTypePageCL = new ContentLoader(

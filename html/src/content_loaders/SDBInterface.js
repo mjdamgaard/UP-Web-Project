@@ -80,6 +80,8 @@ sdbInterfaceCL.addCallback(function($ci, data) {
 // it has to do with how BS displays columns as rows instead of there is limited
 // space. Fix this bug.
 
+//TODO: Display the username next to the Log Out button when logged in.
+
 export var interfaceHeaderCL = new ContentLoader(
     "InterfaceHeader",
     /* Initial HTML template */
@@ -352,24 +354,26 @@ appColumnContainerCL.addCallback(function($ci, data) {
         $this.trigger("adjust-left").trigger("adjust-right");
         return false;
     });
-    $(document).on("keydown", function(event) {
-        switch(event.which) {
-            case 37: // left arrow key
-                $ci.trigger("cycle-left");
-                break;
-            case 39: // right arrow key
-                $ci.trigger("cycle-right");
-                break;
-            // I commented this out, cause it weird when you can also scroll:
-            // case 38: // up arrow key
-            //     $ci.trigger("increase-column-number");
-            //     break;
-            // case 40: // down arrow key
-            //     $ci.trigger("decrease-column-number");
-            //     break;
-        }
-        return true;
-    });
+    // Oh, and even worse: If I don't comment out the left and right buttons
+    // also, one will not be able to move the text cursor in input fields!
+    // $(document).on("keydown", function(event) {
+    //     switch(event.which) {
+    //         case 37: // left arrow key
+    //             $ci.trigger("cycle-left");
+    //             break;
+    //         case 39: // right arrow key
+    //             $ci.trigger("cycle-right");
+    //             break;
+    //         // I commented this out, cause it weird when you can also scroll:
+    //         // case 38: // up arrow key
+    //         //     $ci.trigger("increase-column-number");
+    //         //     break;
+    //         // case 40: // down arrow key
+    //         //     $ci.trigger("decrease-column-number");
+    //         //     break;
+    //     }
+    //     return true;
+    // });
     $ci.on("prepend-home-column", function() {
         let $this = $(this);
         let data = $this.data("data");
