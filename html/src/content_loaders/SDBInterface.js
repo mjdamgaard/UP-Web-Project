@@ -87,7 +87,9 @@ export var interfaceHeaderCL = new ContentLoader(
     /* Initial HTML template */
     '<header class="navbar navbar-default">' +
         '<div class="container-fluid">' +
-            '<<SuperCoolLogoTBD>>' +
+            '<div class="navbar-header">' +
+                '<<SuperCoolLogoTBD>>' +
+            '</div>' +
             '<<HeaderButtonsContainer>>' +
             '<<AccountButtonsContainer>>' +
         '</div>' +

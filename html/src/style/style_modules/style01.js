@@ -27,16 +27,23 @@ import {
 } from "/src/content_loaders/OverlayPages.js";
 
 
-// TODO: Fix the bug where the buttons jump down under the header (but the
-// header bar stays the same height)!
 
 sdbInterfaceCL.addCSS(
     'height: 100%;' +
     'display: grid;' +
     'grid-template-columns: auto;' +
-    'grid-template-rows: auto 1fr;' +
-    ''
+    'grid-template-rows: auto auto;'
 );
+// A temporary solution that patches the thin-screen header navbar bug:
+if (window.innerWidth <= 767) {
+  sdbInterfaceCL.addCSS(
+      'height: 100%;' +
+      'display: grid;' +
+      'grid-template-columns: auto;' +
+      'grid-template-rows: 290px auto;'
+  );
+}
+
 interfaceHeaderCL.addCSS(
     'background-color: #40E0E9;' +
     'margin-bottom: 10px;'
