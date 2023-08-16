@@ -27,6 +27,8 @@ import {
 } from "/src/content_loaders/OverlayPages.js";
 
 
+// TODO: Fix the bug where the buttons jump down under the header (but the
+// header bar stays the same height)!
 
 sdbInterfaceCL.addCSS(
     'height: 100%;' +

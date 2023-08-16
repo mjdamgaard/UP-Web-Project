@@ -302,7 +302,11 @@ appColumnContainerCL.addCallback(function($ci, data) {
             len--;
         }
         while (len < data.activeColumnNum) {
-            let $colBefore = $columns.filter(':visible').first().prev();
+            let $visibleColumns = $columns.filter(':visible');
+            if ($visibleColumns.length == 0) {
+                $columns.first().show();
+            }
+            let $colBefore = $visibleColumns.first().prev();
             if ($colBefore.length != 1) {
                 break;
             }
@@ -320,7 +324,11 @@ appColumnContainerCL.addCallback(function($ci, data) {
             len--;
         }
         while (len < data.activeColumnNum) {
-            let $colAfter = $columns.filter(':visible').last().next();
+            let $visibleColumns = $columns.filter(':visible');
+            if ($visibleColumns.length == 0) {
+                $columns.last().show();
+            }
+            let $colAfter = $visibleColumns.last().next();
             if ($colAfter.length != 1) {
                 break;
             }

@@ -1,5 +1,9 @@
 <?php
 
+// TODO: Set a higher "Cache-Control: max-age" than the ones below, and make
+// the application control when requests need to have "Cache-Control: no-cache"
+// when expecting changes (such as when the user has just submitted an input).
+
 $err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";
 require_once $err_path . "errors.php";
 

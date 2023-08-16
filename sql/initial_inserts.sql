@@ -254,6 +254,11 @@ CALL insertOrFindEntity(9, 0, 2, 22, "Geology|#32"); -- id: 89
 CALL insertOrUpdateRating(9, 41, 89, CONV("F000", 16, 10), 1);
 
 
+
+-- Make some room for some other initial inserts in the future (where we must
+-- just remap the IDs, if these entities have already been inserted by users):
+ALTER TABLE Entities AUTO_INCREMENT=200;
+
 SELECT "Calling publicizeRecentInputs() can take a while (~a minute):";
 -- (It takes roughly 30 seconds on my laptop.)
 CALL publicizeRecentInputs ();
