@@ -32,7 +32,7 @@ sdbInterfaceCL.addCSS(
     'height: 100%;' +
     'display: grid;' +
     'grid-template-columns: auto;' +
-    'grid-template-rows: auto auto;'
+    'grid-template-rows: auto 1fr;'
 );
 // A temporary solution that patches the thin-screen header navbar bug:
 if (window.innerWidth <= 767) {
