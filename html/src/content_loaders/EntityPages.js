@@ -58,8 +58,12 @@ entityPageCL.addCallback(function($ci, data) {
                     ["Relevant properties", "RelevantPropertiesTypePage"],
                     ["Templates", "PropertyCategoryPage", {propID: 85}],
                     ["Submit entity", "SubmitEntityPage"],
-                    ["Submit template", "SubmitTemplatePage"],
                 );
+                if (![1, 3, 4, 5, 7, 8].includes(data.entID)) {
+                    data.tabAndPageDataArr.push(
+                        ["Submit template", "SubmitTemplatePage"],
+                    );
+                }
                 data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
                     "Relevant ratings";
                 break;
