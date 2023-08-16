@@ -1,7 +1,6 @@
 <?php
 
-// TODO: Implement an index page where the user can login and so on.
-
+header("Cache-Control: max-age=3600");
 
 $err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";
 require_once $err_path . "errors.php";
@@ -17,24 +16,22 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 }
 
 
-if (!isset($_POST["e"])) {
-    $_POST["e"] = "10";
-}
-if (!isset($_POST["qu"])) {
-    $_POST["qu"] = "9";
-}
-if (!isset($_POST["iu"])) {
-    $_POST["iu"] = "9";
-}
+// TODO: Change the code just below such that the URLs can determine the start
+// column's entity. Also made it so that the URL of the window changes everytime
+// the user clicks an EntityLink (not by turning these into <a> elements, but
+// by just changing the value of the URL when they are clicked).
+
+// if (!isset($_POST["e"])) {
+//     $_POST["e"] = "10";
+// }
+$_POST["e"] = "10";
 
 // get and validate the required inputs.
-$paramNameArr = array("e", "qu", "iu");
-$typeArr = array("id", "id", "id");
+$paramNameArr = array("e");
+$typeArr = array("id");
 $paramValArr = InputGetter::getParams($paramNameArr);
 InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
 $entID = $paramValArr[0];
-$queryUserID = $paramValArr[1];
-$inputUserID = $paramValArr[2];
 
 
 ?>
@@ -78,8 +75,6 @@ $inputUserID = $paramValArr[2];
 
     let data = {
         entID: <?php echo $entID; ?>,
-        queryUserID: <?php echo $queryUserID; ?>,
-        inputUserID: <?php echo $inputUserID; ?>,
         cl: sdbInterfaceCL.getRelatedCL("EntityPage"),
     };
     sdbInterfaceCL.loadAppended($('#sdb-interface-app'), "self", data);

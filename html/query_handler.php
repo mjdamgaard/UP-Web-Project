@@ -45,6 +45,7 @@ $paramNameArr = "";
 $typeArr = "";
 switch ($reqType) {
     case "set":
+        header("Cache-Control: max-age=3");
         $sql = "CALL selectInputSet (?, ?, ?, ?, ?, ?, ?)";
         $paramNameArr = array(
             "u", "c",
@@ -61,12 +62,14 @@ switch ($reqType) {
         // output: [[ratVal, instID], ...].
         break;
     case "rat":
+        header("Cache-Control: max-age=3");
         $sql = "CALL selectRating (?, ?, ?)";
         $paramNameArr = array("u", "c", "i");
         $typeArr = array("id", "id", "id");
         // output: [[ratVal]].
         break;
     case "recentInputs":
+        header("Cache-Control: max-age=3");
         $sql = "CALL selectRecentInputs (?, ?)";
         $paramNameArr = array("id", "n");
         $typeArr = array("id", "uint");

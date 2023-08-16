@@ -135,11 +135,6 @@ entityLinkCL.addCallback(function($ci, data) {
     $ci.addClass("clickable-text text-primary");
     $ci.append(data.linkContent);
     $ci.on("click", function() {
-        // let newData = new DataNode (data, {
-        //     cl: sdbInterfaceCL.getRelatedCL("EntityPage"),
-        //     recLevel: null,
-        //     maxRecLevel: null,
-        // });
         $(this).trigger("open-column", ["AppColumn", data, "right"]);
         return false;
     });
@@ -172,16 +167,23 @@ templateInstanceTitleCL.addCallback("data", function(data) {
     ]);
 });
 templateInstanceTitleCL.addCallback(function($ci, data) {
-    data.linkContent = getTransformedTitleTemplate(data.cxtDefStr);
+    data.linkContent = getTitle(data.cxtDefStr, data.defItemStrArr);
     let contentKey = data.isLinkArr[data.recLevel] ?
         "EntityLink" : "EntityText";
     templateInstanceTitleCL.loadAppended($ci, contentKey, data);
-    let defItemStrArr = data.defItemStrArr;
-    let nextDefItemStr = 0;
     $ci.find('.def-item').each(function() {
-        let defItemStr = defItemStrArr[nextDefItemStr];
-        nextDefItemStr++;
-        loadDefItemAppended($(this), defItemStr, data);
+        let $this = $(this);
+        let defItemStr = $this.html();
+        if (/^#[1-9][0-9]*$/.test(defItemStr)) {
+            $this.empty();
+            templateInstanceTitleCL.loadAppended($this, "EntityTitle",
+                new DataNode(data, {
+                    entID: defItemStr.substring(1),
+                    recLevel: data.recLevel,
+                    isLinkArr: data.isLinkArr,
+                })
+            );
+        }
     });
 });
 
@@ -212,83 +214,75 @@ fullTemplateInstanceTitleCL.addCallback(function($ci, data) {
             entityTitleCL.loadAppended($ci, "EntityLink", new DataNode(
                 data, {entID: data.typeID, linkContent: typeDefStr}
             ));
-            $ci.append(' &blacktriangleright; ');
-            data.linkContent = getTransformedFullTitleTemplate(
-                data.cxtDefStr
-            );
+            $ci.append('<span class="separator"> &blacktriangleright; </span>');
+            data.linkContent = getFullTitle(data.cxtDefStr, data.defItemStrArr);
             let contentKey = data.isLinkArr[data.recLevel] ?
                 "EntityLink" : "EntityText";
             fullTemplateInstanceTitleCL.loadAppended($ci, contentKey, data);
-            let defItemStrArr = data.defItemStrArr;
-            let nextDefItemStr = 0;
             $ci.find('.def-item').each(function() {
-                let defItemStr = defItemStrArr[nextDefItemStr];
-                nextDefItemStr++;
-                loadDefItemAppended($(this), defItemStr, data);
-            });
-            // append any extra def items that are not expected by the template.
-            let len = defItemStrArr.length;
-            if (nextDefItemStr < len) {
-                $ci.append(
-                    '&blacktriangleright; <span class="extra-def-items"></span>'
-                );
-                let $obj = $ci.find('.extra-def-items');
-                for (let i = nextDefItemStr; i < len - 1; i++) {
-                    loadExtraDefItemAppended($obj, defItemStrArr[i], data);
-                    $obj.append(', ');
+                let $this = $(this);
+                let defItemStr = $this.html();
+                if (/^#[1-9][0-9]*$/.test(defItemStr)) {
+                    $this.empty();
+                    templateInstanceTitleCL.loadAppended($this, "EntityTitle",
+                        new DataNode(data, {
+                            entID: defItemStr.substring(1),
+                            recLevel: data.recLevel,
+                            isLinkArr: data.isLinkArr,
+                        })
+                    );
+                } else {
+                    if (defItemStr.substring(0, 2) === "\\#") {
+                        $this.html("#" + defItemStr.substring(2));
+                    }
                 }
-                loadExtraDefItemAppended($obj, defItemStrArr[len - 1], data);
-            }
+            });
         }
     );
 });
-export function loadDefItemAppended($obj, defItemStr, data) {
-    if (/^#[1-9][0-9]*$/.test(defItemStr)) {
-        templateInstanceTitleCL.loadAppended($obj, "EntityTitle",
-            new DataNode(data, {
-                entID: defItemStr.substring(1),
-                recLevel: data.recLevel,
-                isLinkArr: data.isLinkArr,
-            })
-        );
-    } else {
-        if (defItemStr.substring(0, 2) === "\\#") {
-            defItemStr = "#" + defItemStr.substring(2);
-        }
-        $obj.append(defItemStr);
-    }
-}
-export function loadExtraDefItemAppended($obj, defItemStr, data) {
-    let colonIndex = defItemStr.indexOf(':');
-    if (colonIndex == -1) {
-        loadDefItemAppended($obj, defItemStr, data);
-    } else {
-        $obj.append(defItemStr.substring(0, colonIndex + 1) + " ");
-        loadDefItemAppended($obj, defItemStr.substring(colonIndex + 1), data);
-    }
-}
-export function getTransformedTitleTemplate(title) {
-    return title
+
+export function getTransformedTemplate(tmpl, defItemStrArr) {
+    let ret = tmpl
         .replaceAll("&gt;", ">")
         .replaceAll("&lt;", "<")
+        .replaceAll(/<[^<>]*>/g, '<>')
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    let regex = /&lt;&gt;/;
+    let i = 0;
+    while (regex.test(ret)) {
+        ret = ret.replace('&lt;&gt;',
+            '<span class="def-item">' +
+                (defItemStrArr[i] ?? '<i>missing item</i>') +
+            '</span>'
+        );
+        i++;
+    }
+    // append any extra def items that are not expected by the template.
+    let len = defItemStrArr.length;
+    if (i < len - 1) {
+        ret += '&blacktriangleright; <span class="extra-def-items">'
+            + defItemStrArr[i];
+        i++;
+        while (i < len - 1) {
+            ret += '<span class="separator">; </span>' +
+                '<span class="def-item">' + defItemStrArr[i] + '</span>'
+            i++;
+        }
+        ret += '</span>'
+    }
+    return ret;
+}
+export function getTitle(tmpl, defItemStrArr) {
+    return getTransformedTemplate(tmpl, defItemStrArr)
         .replace(/^[^\{]*\{/g, "")
         .replace(/\}[^\{]*$/g, "")
-        .replaceAll(/\}[^\{]*\{/g, "")
-        .replaceAll(/<[^<>]*>/g, '<>')
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll(/&lt;&gt;/g, '<span class="def-item"></span>');
+        .replaceAll(/\}[^\{]*\{/g, "");
 }
-export function getTransformedFullTitleTemplate(title) {
-    return title
-        .replaceAll("&gt;", ">")
-        .replaceAll("&lt;", "<")
-        .replaceAll(/\{/g, "")
-        .replaceAll(/\}/g, "")
-        .replaceAll(/<[^<>]*>/g, '<>')
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll(/&lt;&gt;/g, '<span class="def-item"></span>');
+export function getFullTitle(tmpl, defItemStrArr) {
+    return getTransformedTemplate(tmpl, defItemStrArr)
+        .replaceAll('{', "")
+        .replaceAll('}', "");
 }
 
 
