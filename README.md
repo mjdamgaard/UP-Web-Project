@@ -1,5 +1,5 @@
 # openSDB
-*Status: A prototype is live at www.opensdb.com!*
+*Status: A prototype is now live at www.opensdb.com!*
 
 
 ## Introduction to the project
@@ -149,7 +149,7 @@ add their tags.
 This, as the reader might have experienced as well, means that conventional
 folksonomy systems are quite unreliable: Entities often get tags that does not
 fit them at all, and far from all entities for which a given tag might be
-relevant for will have that tag.
+relevant will have that tag.
 
 Furthermore, the conventional folksonomy systems are not at all able to give
 the users a good idea of the *degree* to which the tags fit en entity. For
@@ -205,7 +205,7 @@ semantic user data on the web, other sites could of course try to copy the
 principles of its system. This is especially possible due to the fact that it
 is completely open-source.
 
-However, being open source hopefully also turns out to be the advantage that
+However, being open-source hopefully also turns out to be the advantage that
 will ultimately make users prefer it over any potential not-so-open competitors.
 
 If you submit your data to closed-source website, you run the risk that when
@@ -222,7 +222,7 @@ site, complete with user data and all, and start hosting it at another domain.
 
 Not only will openSDB indeed commit itself to such a policy, it will even
 commit itself to working together with other parties that copies it (and its
-policies), namely with the goal of creating a distributed and decentralized
+policies) with the goal of creating a distributed and decentralized
 (semantic) database.
 
 This means that openSDB will always be forced to work best in the interests of
@@ -259,14 +259,14 @@ to, all the ratings regarding that video in the browser extension tab.
 This first of all means that the user will be able see much more nuanced ratings
 (and the dislikes; not just the likes). And when the user contributes to the
 various ratings, the submitted data goes to a more general community than
-YouTube, meaning that it can be used not just to enhance other users searches
+YouTube, meaning that it can be used not just to enhance other users' searches
 and feeds when browsing for videos *on YouTube*, but can be used to enhance
 searches and feeds where users are interested in all videos on the web.
 
 A similar example could be made for any site where users can browse a collection
 of entities of a certain type (e.g. products, media, etc.). And while the users
 could also just browse these things at the web application of openSDB
-(www.opensdb.com, having a browser extension that can
+(www.opensdb.com), having a browser extension that can
 be used across the web will likely make it much easier for users to use the
 SDB, and will thus likely help attract much more user activity.
 
@@ -296,7 +296,7 @@ thereby reach a broader, more general community.
 Furthermore, the semantic system of openSDB allows us to afford the users with
 the ability to group comments into subcategories. So for example, if you have
 just watched a movie/video or read an article or post and you are interested in
-a particular discussion about that it, you can first of all go to a section of
+a particular discussion about that, you can first of all go to a section of
 related discussions for the entity. If you find the discussion that you are
 interested in there, you can then go to that discussion and see what other users
 have written about it. Or if the given discussion cannot be found, you can
@@ -387,7 +387,7 @@ only help in attracting support for the project, including that of sponsors.
 
 And in terms of the contributions to the project coming from the user community,
 e.g. from content creators and from open-source programmers and front-end
-designers), openSDB actually also seeks to implement a user-to-user donor
+designers, openSDB actually also seeks to implement a user-to-user donor
 system.
 Here the user-to-user ratings mentioned in the previous section might be useful,
 since they can potentially allow the site to create a collection of user ranks,
