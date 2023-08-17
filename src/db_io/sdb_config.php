@@ -1,9 +1,10 @@
 <?php
 
-$servername = "localhost"; // Change when the database is running on another 
-// server.
-$username = "Insert SDB usename here!";
-$password = "Insert SDB password here!";
-$dbname = "Insert name of the SDB here!";
+// NOTE: Change all these to your own correct values!
+
+define("DB_SERVER_NAME", "localhost");
+define("DB_DATABASE_NAME", "mydatabase");
+define("DB_USERNAME", "mads");
+define("DB_PASSWORD", "lemmein");
 
 ?>
