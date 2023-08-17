@@ -436,4 +436,4 @@ or in terms of recognition (for individual contributors).
 And in the case of individual contributors, if the project really takes off and
 people start donating via the mentioned user-to-user donating system, it might
 also pay to have been part of the early contributors that made the project take
-off in the first place!
+off.
