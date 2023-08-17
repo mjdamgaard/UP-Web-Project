@@ -139,7 +139,7 @@ There are a myriad of possibilities.
 
 If we think about [folksomies](https://en.wikipedia.org/wiki/Folksonomy),
 i.e. the systems that are pretty widespread today
-where users can add [tags](https://en.wikipedia.org/wiki/Tag_(metadata)
+where users can add [tags](https://en.wikipedia.org/wiki/Tag_(metadata))
 to the entities of a site, we can note that such systems also allow users to
 categorize entities according to arbitrary predicates.
 But the big problem with these systems is that they are binary: A user can only
