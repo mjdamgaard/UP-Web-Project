@@ -19,6 +19,7 @@ DELETE FROM Private_UserData;
 DELETE FROM Private_Sessions;
 DELETE FROM Private_EMails;
 
+-- SET FOREIGN_KEY_CHECKS = 0;
 
 /* From create_open_sdb.sql */
 INSERT INTO Entities (type_id, cxt_id, def_str, id)
@@ -61,6 +62,7 @@ VALUES
     (3, 2, "<Adjective phrase> <Category>", 23);
 
 
+-- SELECT SLEEP(1);
 
 /* Some more inserts and also ratings, now using the input_procs API */
 
@@ -84,6 +86,7 @@ CALL insertOrFindEntity(9, 0, 2, 22, "Cinematography|#32"); -- id: 34
 CALL insertOrFindEntity(9, 0, 2, 22, "Physics|#32"); -- id: 35
 CALL insertOrFindEntity(9, 0, 2, 22, "Mathematics|#32"); -- id: 36
 
+-- SELECT SLEEP(1);
 
 
 CALL insertOrFindEntity(9, 0, 19, 20, "Subcategories|#2|many"); -- id: 37
@@ -95,6 +98,8 @@ CALL insertOrUpdateRating(9, 38, 25, CONV("A100", 16, 10), 1);
 CALL insertOrUpdateRating(9, 38, 26, CONV("A000", 16, 10), 1);
 CALL insertOrFindEntity(9, 0, 27, 0, "ExAmPlE oF a NoT vErY uSeFuL eNtItY"); -- id: 39
 CALL insertOrUpdateRating(9, 38, 39, CONV("0103", 16, 10), 1);
+
+-- SELECT SLEEP(1);
 
 CALL insertOrFindEntity(9, 0, 2, 21, "#37|#24"); -- id: 40
 CALL insertOrUpdateRating(9, 40, 25, CONV("F100", 16, 10), 1);
@@ -116,6 +121,7 @@ CALL insertOrUpdateRating(9, 10, 30, CONV("9000", 16, 10), 1);
 CALL insertOrUpdateRating(9, 31, 29, CONV("FF03", 16, 10), 1);
 CALL insertOrUpdateRating(9, 31, 30, CONV("FF02", 16, 10), 1);
 
+-- SELECT SLEEP(1);
 
 CALL insertOrFindEntity(9, 0, 19, 20, "Related entities|any type|many"); -- id: 42
 CALL insertOrFindEntity(9, 0, 2, 21, "#42|#29"); -- id: 43
@@ -129,6 +135,7 @@ CALL insertOrUpdateRating(9, 46, 24, CONV("FF00", 16, 10), 1);
 
 CALL insertOrFindEntity(9, 0, 19, 20, "Supercategories|#2|many"); -- id: 47
 
+-- SELECT SLEEP(1);
 
 CALL insertOrFindEntity(9, 0, 2, 23, "Good|#31"); -- id: 48
 CALL insertOrFindEntity(9, 0, 2, 23, "Funny|#31"); -- id: 49
@@ -154,6 +161,7 @@ CALL insertOrFindEntity(9, 0, 2, 21, "#54|#10"); -- id: 57
 CALL insertOrUpdateRating(9, 57, 54, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(9, 57, 10, CONV("9000", 16, 10), 1);
 
+-- SELECT SLEEP(1);
 
 CALL insertOrFindEntity(9, 0, 19, 20, "Relevant properties|#19|many"); -- id: 58
 CALL insertOrFindEntity(9, 0, 19, 20,
@@ -168,6 +176,7 @@ CALL insertOrUpdateRating(9, 60, 62, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(9, 60, 63, CONV("FE00", 16, 10), 1);
 CALL insertOrUpdateRating(9, 60, 65, CONV("FC00", 16, 10), 1);
 
+-- SELECT SLEEP(1);
 
 CALL insertOrFindTemplate(9, 0, 61, CONCAT(
     "{<Popular name>}, <Full name>, <Year of birth>, ",
@@ -194,6 +203,7 @@ CALL insertOrUpdateRating(9, 73, 69, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(9, 73, 70, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(9, 74, 71, CONV("FF00", 16, 10), 1);
 
+-- SELECT SLEEP(1);
 
 CALL insertOrFindType(9, 0, "Statement"); -- id: 75
 CALL insertOrFindTemplate(9, 0, 75,
@@ -239,6 +249,7 @@ CALL insertOrFindEntity(9, 0, 6, 78, CONCAT(
     "Uses no event data"
 )); -- id: 84
 
+-- SELECT SLEEP(1);
 
 CALL insertOrFindEntity(9, 0, 19, 20, "Templates|#3|many"); -- id: 85
 
@@ -253,7 +264,7 @@ CALL insertOrUpdateRating(9, 40, 88, CONV("F000", 16, 10), 1);
 CALL insertOrFindEntity(9, 0, 2, 22, "Geology|#32"); -- id: 89
 CALL insertOrUpdateRating(9, 41, 89, CONV("F000", 16, 10), 1);
 
-
+-- SELECT SLEEP(1);
 
 -- Make some room for some other initial inserts in the future (where we must
 -- just remap the IDs, if these entities have already been inserted by users):
@@ -262,3 +273,5 @@ ALTER TABLE Entities AUTO_INCREMENT=200;
 SELECT "Calling publicizeRecentInputs() can take a while (~a minute):";
 -- (It takes roughly 30 seconds on my laptop.)
 CALL publicizeRecentInputs ();
+
+-- SET FOREIGN_KEY_CHECKS = 1;

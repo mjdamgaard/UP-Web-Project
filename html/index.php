@@ -1,6 +1,6 @@
 <?php
 
-header("Cache-Control: max-age=3600");
+header("Cache-Control: max-age=300");
 
 $err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";
 require_once $err_path . "errors.php";
