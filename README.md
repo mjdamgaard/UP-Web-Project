@@ -1,12 +1,11 @@
 # openSDB
-*Status: in development.*
+*Status: A prototype is live at www.opensdb.com!*
 
 
 ## Introduction to the project
 
 openSDB is an open source Semantic Database (SDB), interfaced via
-www.opensdb.com
-(*not live just yet, but a prototype/beta version will be so very soon!*).
+www.opensdb.com.
 
 By 'semantic' we refer to the fact that entities in the database can be linked
 via relations that can be created freely by the users and can carry any meaning.
@@ -267,7 +266,7 @@ searches and feeds where users are interested in all videos on the web.
 A similar example could be made for any site where users can browse a collection
 of entities of a certain type (e.g. products, media, etc.). And while the users
 could also just browse these things at the web application of openSDB
-(www.opensdb.com *(not live just yet!)*), having a browser extension that can
+(www.opensdb.com, having a browser extension that can
 be used across the web will likely make it much easier for users to use the
 SDB, and will thus likely help attract much more user activity.
 
