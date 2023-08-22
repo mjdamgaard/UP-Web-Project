@@ -44,6 +44,14 @@
  * are not nested inside another element).
 **/
 
+
+// TODO: I just discovered React, which seems to be a developed version of this
+// idea (also designed such that the users write templates!)! This is such a
+// good thing in so many ways, and it will be very benefecial in the long run
+// for this project, but it means that I now need to (learn it first, and then)
+// refactor all my front-end code using React instead of my ContentLoaders.
+
+
 export function getPlaceholderTemplateTag(contentKey, dataKey) {
     return (
         '<template class="placeholder" ' +
