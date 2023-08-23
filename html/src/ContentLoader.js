@@ -50,7 +50,13 @@
 // good thing in so many ways, and it will be very benefecial in the long run
 // for this project, but it means that I now need to (learn it first, and then)
 // refactor all my front-end code using React instead of my ContentLoaders.
-
+// ...(But it does seem like very good news, just to be clear.)
+// TODO: Yes: Refactor the whole front end with React, which is basically a much
+// more developed version of my system of ContentLoaders, with better syntax
+// (especially due to JSX!). (It also includes the option to render (fully or
+// partly) server-side, which is also nice, and I bet it excells in more ways
+// as well.)
+ 
 
 export function getPlaceholderTemplateTag(contentKey, dataKey) {
     return (
