@@ -4,17 +4,17 @@
 // the application control when requests need to have "Cache-Control: no-cache"
 // when expecting changes (such as when the user has just submitted an input).
 
-$err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/err/";
+$err_path = $_SERVER['DOCUMENT_ROOT'] . "/../php_src/err/";
 require_once $err_path . "errors.php";
 
-$user_input_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/user_input/";
+$user_input_path = $_SERVER['DOCUMENT_ROOT'] . "/../php_src/user_input/";
 require_once $user_input_path . "InputGetter.php";
 require_once $user_input_path . "InputValidator.php";
 
-$db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/db_io/";
+$db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../php_src/db_io/";
 require_once $db_io_path . "DBConnector.php";
 
-$auth_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/auth/";
+$auth_path = $_SERVER['DOCUMENT_ROOT'] . "/../php_src/auth/";
 require_once $auth_path . "Authenticator.php";
 
 
