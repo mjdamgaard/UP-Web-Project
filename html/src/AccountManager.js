@@ -1,7 +1,9 @@
 
 
 export class AccountManager {
-    constructor() {
+    constructor(setSession) {
+        this.setSession = setSession;
+        
         if (typeof(Storage) === "undefined") {
             alert(
                 "This web application requires browser support for local " +
@@ -54,11 +56,14 @@ export class AccountManager {
             callback(obj, false, callbackData);
             return;
         }
+
+        localStorage.removeItem("session");
+        this.setSession(false);
+
         let reqData = {
             u: this.inputUserID,
             ses: this.sesIDHex,
         };
-        localStorage.removeItem("session");
         $.post("logout_handler.php", reqData, function(result) {
             callback(obj, result, callbackData);
         });
@@ -80,11 +85,12 @@ export class AccountManager {
         };
         $.post("login_handler.php", reqData, function(result) {
             if (result.exitCode == 0) {
-                localStorage.session = JSON.stringify({
+                let session = localStorage.session = JSON.stringify({
                     userID: result.outID,
                     sesIDHex: result.sesIDHex,
                     expTime: result.expTime,
                 });
+                this.setSession(session);
             }
             callback(obj, result, callbackData);
         });
@@ -106,11 +112,12 @@ export class AccountManager {
         };
         $.post("account_creation_handler.php", reqData, function(result) {
             if (result.exitCode == 0) {
-                localStorage.session = JSON.stringify({
+                let session = localStorage.session = JSON.stringify({
                     userID: result.outID,
                     sesIDHex: result.sesIDHex,
                     expTime: result.expTime,
                 });
+                this.setSession(session);
             }
             callback(obj, result, callbackData);
         });
