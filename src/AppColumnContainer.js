@@ -5,53 +5,74 @@ import {useState, createContext, useContext} from "react";
 
 
 
-const initColKey = {entID: 10, n: 0};
+const initColKey = JSON.stringify({entID: 10, n: 0});
 export var ColumnManager;
 export const ColumnManagerContext = createContext();
 
-const AppColumnContainer = () => {
-  const [colKeys, setColKeys] = useState([initColKey]);
-  const [visibleColNum, setVisibleColNum] = useState(1);
-  const [fstVisibleCol, setFstVisibleCol] = useState(0);
+const AppColumnContainer = ({colNum}) => {
+  const [columns, setColumns] = useState({
+    keys: [initColKey],
+    fst: 0, // first visible column from the left.
+  });
 
   ColumnManager.openColumn = (callerKey, newEntID, isToTheLeft) => {
     // find caller column's index.
-    let ind = colKeys.findIndex(
-      val => JSON.stringify(val) == JSON.stringify(callerKey)
-    )
+    let callerInd = columns.keys.findIndex(val => val == callerKey);
     // get the new n for the new key if one or more columns with the same entID
     // already exists.
-    let newN = colKeys.reduce(
+    let newN = columns.keys.reduce(
       (acc, val) => val.entID != newEntID ? acc : (val.n > acc ? val.n : acc),
       0
     );
-    // create and insert the new column key in colKeys.
-    let r = isToTheLeft ? 0 : 1;
-    setColKeys(
-      colKeys.slice(0, ind + r).concat(
+    // create and insert the new column key in columns.keys, and potentially
+    // increase fst.
+    let fst = columns.fst;
+    if (!isToTheLeft && fst + num - 1 == callerInd) {
+      fst++;
+    }
+    let newInd = isToTheLeft ? callerInd : callerInd + 1;
+    setColumns({
+      keys: columns.keys.slice(0, newInd).concat(
         [{entID: newEntID, n: newN}],
-        colKeys.slice(ind + r)
-      )
-    );
+        columns.keys.slice(newInd)
+      ),
+      fst: fst,
+    });
   }
   ColumnManager.closeColumn = (callerKey) => {
     // find caller column's index.
-    let ind = colKeys.findIndex(
-      val => JSON.stringify(val) == JSON.stringify(callerKey)
-    )
-    // remove the column key in colKeys.
-    setColKeys(
-      colKeys.slice(0, ind).concat(
-        colKeys.slice(ind + 1)
-      )
-    );
+    let callerInd = columns.keys.findIndex(val => val == callerKey);
+    // remove the column key in columns.keys, and potentially reduce fst.
+    let fst = columns.fst;
+    while (fst > 0 && fst + num > columns.keys.length) {
+      fst--;
+    }
+    setColumns({
+      keys: columns.keys.slice(0, callerInd).concat(
+        columns.keys.slice(callerInd + 1)
+      ),
+      fst: fst,
+    });
   }
-  ColumnManager.cycleLeft = (callerKey) => {
-    
+  ColumnManager.cycleLeft = () => {
+    setColumns({
+      keys: columns.keys,
+      fst: columns.fst <= 0 ? 0 : columns.fst - 1,
+    });
+  }
+  ColumnManager.cycleRight = () => {
+    let max = Math.max(columns.keys.length - colNum, 0);
+    setColumns({
+      keys: columns.keys,
+      fst: columns.fst >= max ? max : columns.fst + 1,
+    });
   }
 
-  const appColumns = colKeys.map((val) => 
-    <AppColumn key={val}/>
+  let fst = columns.fst;
+  const appColumns = columns.keys.map((val, ind) => 
+    <AppColumn key={val}
+      style={fst <= ind && ind < fst + colNum ? {} : {display: "none"}}
+    />
   );
   return (
     <div>
@@ -64,94 +85,73 @@ const AppColumnContainer = () => {
 
 /* Events to open new app columns and to cycle between them etc. */
 
-appColumnCL.addCallback(function($ci) {
-  $ci.on("open-column", function(event, contentKey, data, dir) {
-    let $this = $(this);
-    if (dir === "right") {
-      sdbInterfaceCL.loadAfter($this, contentKey, data);
-      $this.trigger("adjust-right");
-    } else if (dir === "left") {
-      sdbInterfaceCL.loadBefore($this, contentKey, data);
-      $this.trigger("adjust-left");
-    }
-    return false;
-  });
-  $ci.on("close", function() {
-    let $this = $(this);
-    let $parent = $this.parent();
-    $this.remove();
-    $parent.trigger("adjust-left").trigger("adjust-right");
-    return false;
-  });
-});
-
 // TODO: Make the columns move smoothly sideways in a future implementation.
 appColumnContainerCL.addCallback(function($ci, data) {
   data.activeColumnNum = 1;
-  $ci.on("cycle-left", function() {
-    let $columns = $(this).children();
-    let $colBefore = $columns.filter(':visible').first().prev();
-    if ($colBefore.length == 1) {
-      let $colLast = $columns.filter(':visible').last();
-      $colBefore.show(30);
-      $colLast.hide(30);
-    }
-    return false;
-  });
-  $ci.on("cycle-right", function() {
-    let $columns = $(this).children();
-    let $colAfter = $columns.filter(':visible').last().next();
-    if ($colAfter.length == 1) {
-      let $colFirst = $columns.filter(':visible').first();
-      $colAfter.show(30);
-      $colFirst.hide(30);
-    }
-    return false;
-  });
-  $ci.on("adjust-left", function() {
-    let $columns = $(this).children();
-    let len = $columns.filter(':visible').length;
-    while (len > data.activeColumnNum) {
-      let $colLast = $columns.filter(':visible').last();
-      $colLast.hide(); // (Setting a delay time here will cause bugs.)
-      len--;
-    }
-    while (len < data.activeColumnNum) {
-      let $visibleColumns = $columns.filter(':visible');
-      if ($visibleColumns.length == 0) {
-        $columns.first().show();
-      }
-      let $colBefore = $visibleColumns.first().prev();
-      if ($colBefore.length != 1) {
-        break;
-      }
-      $colBefore.show(); // (Setting a delay time here will cause bugs.)
-      len++;
-    }
-    return false;
-  });
-  $ci.on("adjust-right", function() {
-    let $columns = $(this).children();
-    let len = $columns.filter(':visible').length;
-    while (len > data.activeColumnNum) {
-      let $colFirst = $columns.filter(':visible').first();
-      $colFirst.hide(); // (Setting a delay time here will cause bugs.)
-      len--;
-    }
-    while (len < data.activeColumnNum) {
-      let $visibleColumns = $columns.filter(':visible');
-      if ($visibleColumns.length == 0) {
-        $columns.last().show();
-      }
-      let $colAfter = $visibleColumns.last().next();
-      if ($colAfter.length != 1) {
-        break;
-      }
-      $colAfter.show(); // (Setting a delay time here will cause bugs.)
-      len++;
-    }
-    return false;
-  });
+  // $ci.on("cycle-left", function() {
+  //   let $columns = $(this).children();
+  //   let $colBefore = $columns.filter(':visible').first().prev();
+  //   if ($colBefore.length == 1) {
+  //     let $colLast = $columns.filter(':visible').last();
+  //     $colBefore.show(30);
+  //     $colLast.hide(30);
+  //   }
+  //   return false;
+  // });
+  // $ci.on("cycle-right", function() {
+  //   let $columns = $(this).children();
+  //   let $colAfter = $columns.filter(':visible').last().next();
+  //   if ($colAfter.length == 1) {
+  //     let $colFirst = $columns.filter(':visible').first();
+  //     $colAfter.show(30);
+  //     $colFirst.hide(30);
+  //   }
+  //   return false;
+  // });
+  // $ci.on("adjust-left", function() {
+  //   let $columns = $(this).children();
+  //   let len = $columns.filter(':visible').length;
+  //   while (len > data.activeColumnNum) {
+  //     let $colLast = $columns.filter(':visible').last();
+  //     $colLast.hide(); // (Setting a delay time here will cause bugs.)
+  //     len--;
+  //   }
+  //   while (len < data.activeColumnNum) {
+  //     let $visibleColumns = $columns.filter(':visible');
+  //     if ($visibleColumns.length == 0) {
+  //       $columns.first().show();
+  //     }
+  //     let $colBefore = $visibleColumns.first().prev();
+  //     if ($colBefore.length != 1) {
+  //       break;
+  //     }
+  //     $colBefore.show(); // (Setting a delay time here will cause bugs.)
+  //     len++;
+  //   }
+  //   return false;
+  // });
+  // $ci.on("adjust-right", function() {
+  //   let $columns = $(this).children();
+  //   let len = $columns.filter(':visible').length;
+  //   while (len > data.activeColumnNum) {
+  //     let $colFirst = $columns.filter(':visible').first();
+  //     $colFirst.hide(); // (Setting a delay time here will cause bugs.)
+  //     len--;
+  //   }
+  //   while (len < data.activeColumnNum) {
+  //     let $visibleColumns = $columns.filter(':visible');
+  //     if ($visibleColumns.length == 0) {
+  //       $columns.last().show();
+  //     }
+  //     let $colAfter = $visibleColumns.last().next();
+  //     if ($colAfter.length != 1) {
+  //       break;
+  //     }
+  //     $colAfter.show(); // (Setting a delay time here will cause bugs.)
+  //     len++;
+  //   }
+  //   return false;
+  // });
   $ci.on("increase-column-number", function() {
     let $this = $(this);
     let data = $this.data("data");
