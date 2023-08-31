@@ -1,9 +1,9 @@
-import { useState, createContext, useContext } from "react";
+import {useState, createContext, useContext } from "react";
 
 
-import { DBRequestManager } from "/src/DBRequestManager.js";
-import { AccountManager } from "/src/AccountManager.js";
-import { ContentLoader, DataNode } from "/src/ContentLoader.js";
+import {DBRequestManager } from "/src/DBRequestManager.js";
+import {AccountManager } from "/src/AccountManager.js";
+import {ContentLoader, DataNode } from "/src/ContentLoader.js";
 
 
 
@@ -11,14 +11,18 @@ export const dbReqManager = new DBRequestManager();
 // export const accountManager = new AccountManager();
 // const IOContext = createContext();
 
-const AppPageContext = createContext();
-const AccountContext = createContext();
+export const AppPageContext = createContext();
+var appPage;
+export var setAppPage;
+export const SessionContext = createContext();
+export var accountManager;
 
 
 export const SDBInterface = () => {
-  const [appPage, setAppPage] = useState("main");
+  [appPage, setAppPage] = useState("main");
   const [session, setSession] = useState(localStorage.session ?? false);
-  let accountManager = new AccountManager(setSession);
+
+  accountManager = new AccountManager(setSession);
 
   if (typeof(Storage) === "undefined") {
     alert(
@@ -29,16 +33,16 @@ export const SDBInterface = () => {
   }
 
   return (
-    <AccountContext.Provider value={ [session, accountManager] }>
-    <AppPageContext.Provider value={ [appPage, setAppPage] }>
+    <SessionContext.Provider value={session}>
+    <AppPageContext.Provider value={appPage}>
       <div>
-        <MainPage     style={ page == "main" ? {} : {display: none} } />
-        <TutorialPage style={ page == "tutorial" ? {} : {display: none} } />
-        <LoginPage    style={ page == "login" ? {} : {display: none} } />
-        <SignupPage   style={ page == "signup" ? {} : {display: none} } />
+        <MainPage     style={appPage == "main" ? {} : {display: none}} />
+        <TutorialPage style={appPage == "tutorial" ? {} : {display: none}} />
+        <LoginPage    style={appPage == "login" ? {} : {display: none}} />
+        <SignupPage   style={appPage == "signup" ? {} : {display: none}} />
       </div>
     </AppPageContext.Provider>
-    </AccountContext.Provider>
+    </SessionContext.Provider>
   );
 };
 
@@ -67,7 +71,7 @@ const MainPage = () => {
 
 
 
-const InterfaceHeader = ({ setPage }) => {
+const InterfaceHeader = () => {
   return (
     <header class="navbar navbar-default">
     <div class="container-fluid">
@@ -82,17 +86,15 @@ const InterfaceHeader = ({ setPage }) => {
 };
 
 const HeaderButtonsContainer = () => {
-  const [, setAppPage] = useContext(AppPageContext);
-
   return (
     <ul class="nav navbar-nav">
       <li class="tutorial"
-        onClick={ () => setAppPage("tutorial") }
-        style={ localStorage.hasAcceptedStorage ? {} : {
+        onClick={() => setAppPage("tutorial")}
+        style={localStorage.hasAcceptedStorage ? {} : {
           fontSize: "17pt",
           textShadow: "0px 0px 5px #afa, 0px 0px 13px #3f2",
           // TODO: Try .focus() instead and see if that is better.
-        } }
+        }}
       >
         <a href="#">Tutorial</a>
       </li>
@@ -108,26 +110,25 @@ const HeaderButtonsContainer = () => {
 };
 
 const AccountButtonsContainer = () => {
-  const [session, accountManager] = useContext(AccountContext).session;
-  const [, setAppPage] = useContext(AppPageContext);
+  const session = useContext(SessionContext);
 
   return (
   <ul class="nav navbar-nav navbar-right">
     <li class="log-in"
-      onClick={ () => setAppPage("login") }
-      style={ !session || session.expTime > Date.now() ? {display: none} : {} } 
+      onClick={() => setAppPage("login")}
+      style={!session || session.expTime > Date.now() ? {display: none} : {}} 
     >
       <a href="#"><span class="glyphicon glyphicon-log-in"></span> Sing in</a>
     </li>
     <li class="new-account"
-      onClick={ () => setAppPage("signup") }
-      style={ !session || session.expTime > Date.now() ?{} : {display: none} } 
+      onClick={() => setAppPage("signup")}
+      style={!session || session.expTime > Date.now() ?{} : {display: none}} 
     >
       <a href="#"><span class="glyphicon glyphicon-user"></span> Sign up</a>
     </li>
     <li class="log-out"
-      onClick={ () => accountManager.logout() }
-      style={ !session || session.expTime > Date.now() ?{} : {display: none} } 
+      onClick={() => accountManager.logout()}
+      style={!session || session.expTime > Date.now() ?{} : {display: none}} 
     >
       <a href="#"><span class="glyphicon glyphicon-log-out"></span> Log out</a>
     </li>
@@ -177,55 +178,53 @@ const AccountButtonsContainer = () => {
 
 
 
-
-
-
-const AppColumn = () => {
-  return (
-    <div>
-      <ColumnButtonContainer />
-      <SelfReplacer />
-    </div>
-  );
-};
-appColumnCL.addCallback("data", function(data) {
-  data.copyFromAncestor("cl", 1);
-  data.cl ??= appColumnCL.getRelatedCL("EntityPage");;
-  data.recLevel = null;
-  data.maxRecLevel = null;
-});
-
-
-
-const ColumnButtonContainer = () => {
-  return (
-    <div>
-      {/* <PinButton /> */}
-      <CloseButton />
-    </div>
-  );
-};
-export var closeButtonCL = new ContentLoader(
-  "CloseButton",
-  /* Initial HTML template */
-  <button type="button" class="close">
-    <span>&times;</span>
-  </button>,
-  sdbInterfaceCL,
-);
-closeButtonCL.addCallback(function($ci) {
-  $ci.on("click", function() {
-    $(this).trigger("close");
-    return false;
-  });
-});
-
-
+const initColKey = {entID: 10, n: 0};
+export function openColumn(callerKey, newEntID, isToTheLeft);
+export function closeColumn(callerKey);
 
 const AppColumnContainer = () => {
+  const [colKeys, setColKeys] = useState([initColKey]);
+
+  openColumn = (callerKey, newEntID, isToTheLeft) => {
+    // find caller column's index.
+    let ind = colKeys.findIndex(
+      val => JSON.stringify(val) == JSON.stringify(callerKey)
+    )
+    // get the new n for the new key if one or more columns with the same entID
+    // already exists.
+    let newN = colKeys.reduce(
+      (acc, val) => val.entID != newEntID ? acc : (val.n > acc ? val.n : acc),
+      0
+    );
+    // create and insert the new column key in colKeys.
+    let r = isToTheLeft ? 0 : 1;
+    setColKeys(
+      colKeys.slice(0, ind + r).concat(
+        [{entID: newEntID, n: newN}],
+        colKeys.slice(ind + r)
+      )
+    );
+  }
+
+  closeColumn = (callerKey) => {
+    // find caller column's index.
+    let ind = colKeys.findIndex(
+      val => JSON.stringify(val) == JSON.stringify(callerKey)
+    )
+    // remove the column key in colKeys.
+    setColKeys(
+      colKeys.slice(0, ind).concat(
+        colKeys.slice(ind + 1)
+      )
+    );
+  }
+
+  const appColumns = colKeys.map((val) => 
+    <AppColumn key={val}/>
+  );
   return (
     <div>
-      <AppColumn />
+        {appColumns}
     </div>
   );
 };
@@ -384,6 +383,58 @@ headerButtonsContainerCL.addCallback(function($ci, data) {
     return false;
   });
 });
+
+
+
+
+
+
+
+
+
+
+
+const AppColumn = ({children}) => {
+  return (
+    <div>
+      <ColumnButtonContainer />
+      {children}
+    </div>
+  );
+};
+appColumnCL.addCallback("data", function(data) {
+  data.copyFromAncestor("cl", 1);
+  data.cl ??= appColumnCL.getRelatedCL("EntityPage");;
+  data.recLevel = null;
+  data.maxRecLevel = null;
+});
+
+
+
+const ColumnButtonContainer = () => {
+  return (
+    <div>
+      {/* <PinButton /> */}
+      <CloseButton />
+    </div>
+  );
+};
+const CloseButton = () => {
+  return (
+    <button type="button" class="close">
+      <span>&times;</span>
+    </button>
+  );
+};
+closeButtonCL.addCallback(function($ci) {
+  $ci.on("click", function() {
+    $(this).trigger("close");
+    return false;
+  });
+});
+
+
+
 
 
 
