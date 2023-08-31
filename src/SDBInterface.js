@@ -14,12 +14,14 @@ export const dbReqManager = new DBRequestManager();
 export const AppPageContext = createContext();
 var appPage;
 export var setAppPage;
+// export const ColumnNumberContext = createContext();
 export const SessionContext = createContext();
 export var accountManager;
 
 
 export const SDBInterface = () => {
   [appPage, setAppPage] = useState("main");
+  [colNum, setColNum] = useState(1);
   const [session, setSession] = useState(localStorage.session ?? false);
 
   accountManager = new AccountManager(setSession);
@@ -34,25 +36,29 @@ export const SDBInterface = () => {
 
   return (
     <SessionContext.Provider value={session}>
+    {/* <ColumnNumberContext.Provider value={colNum}> */}
     <AppPageContext.Provider value={appPage}>
       <div>
-        <MainPage     style={appPage == "main" ? {} : {display: none}} />
+        <MainPage colNum={colNum}
+                      style={appPage == "main" ? {} : {display: none}}
+        />
         <TutorialPage style={appPage == "tutorial" ? {} : {display: none}} />
         <LoginPage    style={appPage == "login" ? {} : {display: none}} />
         <SignupPage   style={appPage == "signup" ? {} : {display: none}} />
       </div>
     </AppPageContext.Provider>
+    {/* </ColumnNumberContext.Provider> */}
     </SessionContext.Provider>
   );
 };
 
-const MainPage = () => {
+const MainPage = ({colNum}) => {
   return (
     <div>
       <InterfaceHeader />
       <main>
         <div class="left-margin"><br/><span>&#10094;</span><br/></div>
-        <AppColumnContainer />
+        <AppColumnContainer colNum={colNum} />
         <div class="right-margin"><br/><span>&#10095;</span><br/></div>
       </main>
       {/* <div class="overlay-page-container"></div> */}
