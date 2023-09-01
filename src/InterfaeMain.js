@@ -9,7 +9,7 @@ const initColKey = JSON.stringify({entID: 10, n: 0});
 export var ColumnManager;
 export const ColumnManagerContext = createContext();
 
-const AppColumnContainer = ({colNum}) => {
+const InterfaceMain = ({colNum}) => {
   const [columns, setColumns] = useState({
     keys: [initColKey],
     fst: 0, // first visible column from the left.
@@ -77,7 +77,15 @@ const AppColumnContainer = ({colNum}) => {
   return (
     <div>
         <ColumnManagerContext.Provider value={ColumnManager}>
-          {appColumns}
+          <div class="left-margin" onclick={ColumnManager.cycleLeft}>
+            <br/><span>&#10094;</span><br/>
+          </div>
+          <div class="column-container">
+            {appColumns}
+          </div>
+          <div class="right-margin" onclick={ColumnManager.cycleRight}>
+            <br/><span>&#10095;</span><br/>
+          </div>
         </ColumnManagerContext.Provider>
     </div>
   );
@@ -86,8 +94,8 @@ const AppColumnContainer = ({colNum}) => {
 /* Events to open new app columns and to cycle between them etc. */
 
 // TODO: Make the columns move smoothly sideways in a future implementation.
-appColumnContainerCL.addCallback(function($ci, data) {
-  data.activeColumnNum = 1;
+// appColumnContainerCL.addCallback(function($ci, data) {
+//   data.activeColumnNum = 1;
   // $ci.on("cycle-left", function() {
   //   let $columns = $(this).children();
   //   let $colBefore = $columns.filter(':visible').first().prev();
@@ -152,31 +160,31 @@ appColumnContainerCL.addCallback(function($ci, data) {
   //   }
   //   return false;
   // });
-  $ci.on("increase-column-number", function() {
-    let $this = $(this);
-    let data = $this.data("data");
-    if (data.activeColumnNum < 3) {
-      data.activeColumnNum++;
-    }
-    $this.css(
-      'grid-template-columns',
-      '1fr '.repeat(data.activeColumnNum)
-    );
-    $this.trigger("adjust-left").trigger("adjust-right");
-    return false;
-  });
-  $ci.on("decrease-column-number", function() {
-    let $this = $(this);
-    let data = $this.data("data");
-    if (data.activeColumnNum > 1) {
-      data.activeColumnNum--;
-    }
-    $this.css(
-      'grid-template-columns', '1fr '.repeat(data.activeColumnNum)
-    );
-    $this.trigger("adjust-left").trigger("adjust-right");
-    return false;
-  });
+  // $ci.on("increase-column-number", function() {
+  //   let $this = $(this);
+  //   let data = $this.data("data");
+  //   if (data.activeColumnNum < 3) {
+  //     data.activeColumnNum++;
+  //   }
+  //   $this.css(
+  //     'grid-template-columns',
+  //     '1fr '.repeat(data.activeColumnNum)
+  //   );
+  //   $this.trigger("adjust-left").trigger("adjust-right");
+  //   return false;
+  // });
+  // $ci.on("decrease-column-number", function() {
+  //   let $this = $(this);
+  //   let data = $this.data("data");
+  //   if (data.activeColumnNum > 1) {
+  //     data.activeColumnNum--;
+  //   }
+  //   $this.css(
+  //     'grid-template-columns', '1fr '.repeat(data.activeColumnNum)
+  //   );
+  //   $this.trigger("adjust-left").trigger("adjust-right");
+  //   return false;
+  // });
   $ci.on("prepend-home-column", function() {
     let $this = $(this);
     let data = $this.data("data");
@@ -191,31 +199,17 @@ appColumnContainerCL.addCallback(function($ci, data) {
     }
     return false;
   });
-});
-sdbInterfaceCL.addCallback(function($ci, data) {
-  $ci.children('main').children('.left-margin').on("click", function() {
-    $(this).next().trigger("cycle-left");
-    return false;
-  });
-  $ci.children('main').children('.right-margin').on("click", function() {
-    $(this).prev().trigger("cycle-right");
-    return false;
-  });
-});
-headerButtonsContainerCL.addCallback(function($ci, data) {
-  $ci.children('.minus').on("click", function() {
-    $(this).closest('.CI.ColumnBasedSDBInterface')
-      .find('.CI.AppColumnContainer')
-      .trigger("decrease-column-number");
-    return false;
-  });
-  $ci.children('.plus').on("click", function() {
-    $(this).closest('.CI.ColumnBasedSDBInterface')
-      .find('.CI.AppColumnContainer')
-      .trigger("increase-column-number");
-    return false;
-  });
-});
+// });
+// sdbInterfaceCL.addCallback(function($ci, data) {
+//   $ci.children('main').children('.left-margin').on("click", function() {
+//     $(this).next().trigger("cycle-left");
+//     return false;
+//   });
+//   $ci.children('main').children('.right-margin').on("click", function() {
+//     $(this).prev().trigger("cycle-right");
+//     return false;
+//   });
+// });
 
 
 
