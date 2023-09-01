@@ -33,7 +33,7 @@ const SuperCoolLogoTBD = ({setAppPage, setColNum}) => {
   const [columns, columnManager] = useContext(ColumnsContext);
 
   return (
-    <span class="navbar-brand" onclick={() => {
+    <span class="navbar-brand" onClick={() => {
       columnManager.openColumn(columns.keys[columns.fst], 10, true);
     }}>
       openSDB
@@ -46,7 +46,7 @@ const HeaderButtonsContainer = ({setAppPage, setColNum}) => {
   return (
     <ul class="nav navbar-nav">
       <li class="tutorial"
-        onclick={() => setAppPage("tutorial")}
+        onClick={() => setAppPage("tutorial")}
         style={localStorage.hasAcceptedStorage ? {} : {
           fontSize: "17pt",
           textShadow: "0px 0px 5px #afa, 0px 0px 13px #3f2",
@@ -55,12 +55,12 @@ const HeaderButtonsContainer = ({setAppPage, setColNum}) => {
       >
         <a href="#">Tutorial</a>
       </li>
-      <li class="minus" onclick={() => setColNum(
+      <li class="minus" onClick={() => setColNum(
         prev => prev <= 0 ? 0 : prev - 1
       )}>
         <a href="#"><span style="font-size: 18pt;">-</span></a>
       </li>
-      <li class="plus" onclick={() => setColNum(
+      <li class="plus" onClick={() => setColNum(
         prev => prev >= 3 ? 3 : prev + 1
       )}>
         <a href="#"><span style="font-size: 18pt;">+</span></a>
@@ -77,19 +77,19 @@ const AccountButtonsContainer = () => {
   return (
   <ul class="nav navbar-nav navbar-right">
     <li class="log-in"
-      onclick={() => setAppPage("login")}
+      onClick={() => setAppPage("login")}
       style={!session || session.expTime > Date.now() ? {display: none} : {}} 
     >
       <a href="#"><span class="glyphicon glyphicon-log-in"></span> Sing in</a>
     </li>
     <li class="new-account"
-      onclick={() => setAppPage("signup")}
+      onClick={() => setAppPage("signup")}
       style={!session || session.expTime > Date.now() ?{} : {display: none}} 
     >
       <a href="#"><span class="glyphicon glyphicon-user"></span> Sign up</a>
     </li>
     <li class="log-out"
-      onclick={() => accountManager.logout()}
+      onClick={() => accountManager.logout()}
       style={!session || session.expTime > Date.now() ?{} : {display: none}} 
     >
       <a href="#"><span class="glyphicon glyphicon-log-out"></span> Log out</a>

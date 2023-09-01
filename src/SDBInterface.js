@@ -7,6 +7,9 @@ import {
 import {
   ColumnsContext, ColumnManager,
 } from "/src/contexts/ColumnsContext.js";
+import {
+  LoginPage, SignupPage, TutorialPage
+} from "/src/OverlayPages.js";
 
 
 export const dbReqManager = new DBRequestManager();
@@ -23,10 +26,6 @@ export const SDBInterface = () => {
           setAppPage={setAppPage}
           style={appPage == "home" ? {} : {display: none}}
         />
-        <TutorialPage
-          setAppPage={setAppPage}
-          style={appPage == "tutorial" ? {} : {display: none}}
-        />
         <LoginPage
           setAppPage={setAppPage}
           style={appPage == "login" ? {} : {display: none}}
@@ -34,6 +33,10 @@ export const SDBInterface = () => {
         <SignupPage
           setAppPage={setAppPage}
           style={appPage == "signup" ? {} : {display: none}}
+        />
+        <TutorialPage
+          setAppPage={setAppPage}
+          style={appPage == "tutorial" ? {} : {display: none}}
         />
       </div>
     {/* </AppPageContext.Provider> */}

@@ -14,13 +14,13 @@ const InterfaceMain = () => {
   );
   return (
     <div>
-      <div class="left-margin" onclick={columnManager.cycleLeft}>
+      <div class="left-margin" onClick={columnManager.cycleLeft}>
         <br/><span>&#10094;</span><br/>
       </div>
       <div class="column-container">
         {appColumns}
       </div>
-      <div class="right-margin" onclick={columnManager.cycleRight}>
+      <div class="right-margin" onClick={columnManager.cycleRight}>
         <br/><span>&#10095;</span><br/>
       </div>
     </div>
@@ -33,43 +33,39 @@ const InterfaceMain = () => {
 
 
 
-// TODO: Correct:
-
-const AppColumn = ({children}) => {
+const AppColumn = ({key}) => {
   return (
     <div>
-      <ColumnButtonContainer />
-      {children}
+      <ColumnButtonContainer colKey={key} />
+      <EntityPage />
     </div>
   );
 };
-appColumnCL.addCallback("data", function(data) {
-  data.copyFromAncestor("cl", 1);
-  data.cl ??= appColumnCL.getRelatedCL("EntityPage");;
-  data.recLevel = null;
-  data.maxRecLevel = null;
-});
+// appColumnCL.addCallback("data", function(data) {
+//   data.copyFromAncestor("cl", 1);
+//   data.cl ??= appColumnCL.getRelatedCL("EntityPage");;
+//   data.recLevel = null;
+//   data.maxRecLevel = null;
+// });
 
 
 
-const ColumnButtonContainer = () => {
+const ColumnButtonContainer = ({colKey}) => {
+  const [, columnManager] = useContext(ColumnsContext);
+
   return (
     <div>
       {/* <PinButton /> */}
-      <CloseButton />
+      <CloseButton colKey={colKey} />
     </div>
   );
 };
-const CloseButton = () => {
+const CloseButton = ({colKey}) => {
   return (
-    <button type="button" class="close">
+    <button type="button" class="close"onClick={() => {
+      columnManager.closeColumn(colKey);
+    }}>
       <span>&times;</span>
     </button>
   );
 };
-closeButtonCL.addCallback(function($ci) {
-  $ci.on("click", function() {
-    $(this).trigger("close");
-    return false;
-  });
-});
