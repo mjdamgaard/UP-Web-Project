@@ -2,6 +2,9 @@
 import {useState, createContext, useContext} from "react";
 
 import {SessionContext, AccountManagerContext} from "/src/AccountContext.js";
+import {ColumnsContext} from "/src/contexts/ColumnsContext.js";
+
+
 
 // TODO: There is a style bug with the sign-in etc. buttons when the width of
 // the screen gets small enough (they jump down from the bar). I can see that
@@ -25,6 +28,19 @@ const InterfaceHeader = ({setAppPage, setColNum}) => {
   </header>
   );
 };
+
+const SuperCoolLogoTBD = ({setAppPage, setColNum}) => {
+  const [columns, columnManager] = useContext(ColumnsContext);
+
+  return (
+    <span class="navbar-brand" onclick={() => {
+      columnManager.openColumn(columns.keys[columns.fst], 10, true);
+    }}>
+      openSDB
+    </span>
+  );
+};
+
 
 const HeaderButtonsContainer = ({setAppPage, setColNum}) => {
   return (

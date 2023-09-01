@@ -3,28 +3,17 @@ import {useState, createContext, useContext} from "react";
 import {DBRequestManager} from "/src/DBRequestManager.js";
 import {
   AccountContextProvider, SessionContext, AccountManagerContext
-} from "/src/AccountContext.js";
+} from "/src/contexts/AccountContext.js";
+import {
+  ColumnsContext, ColumnManager,
+} from "/src/contexts/ColumnsContext.js";
 
 
 export const dbReqManager = new DBRequestManager();
-// export const accountManager = new AccountManager(null);
-
-// export const SessionContext = createContext();
 
 
 export const SDBInterface = () => {
   const [appPage, setAppPage] = useState("home");
-  const [colNum, setColNum] = useState(1);
-
-  accountManager.setSession = setSession;
-
-  if (typeof(Storage) === "undefined") {
-    alert(
-      "This web application requires browser support for local storage " +
-      "in order to function correctly. It seems that your browser does " +
-      "not support local storage."
-    );
-  }
 
   return (
     <AccountContextProvider>
@@ -32,7 +21,6 @@ export const SDBInterface = () => {
       <div>
         <InterfacePage
           setAppPage={setAppPage}
-          colNum={colNum} setColNum={setColNum}
           style={appPage == "home" ? {} : {display: none}}
         />
         <TutorialPage
@@ -53,11 +41,25 @@ export const SDBInterface = () => {
   );
 };
 
+
+const initColKey = JSON.stringify({entID: 10, n: 0});
+
 const InterfacePage = ({colNum, setColNum}) => {
+  const [columns, setColumns] = useState({
+    keys: [initColKey],
+    fst: 0, // first visible column from the left.
+    num: 1, // number of visible columns on the screen.
+    focus: 0, // The column currently in focus. (TODO: Implement further.)
+  });
+
+  const columnManager = new ColumnManager(columns, setColumns);
+
   return (
-    <div>
-      <InterfaceHeader setAppPage={setAppPage} setColNum={setColNum} />
-      <InterfaceMain colNum={colNum} />
-    </div>
+    <ColumnsContext.Provider value={[columns, columnManager]}>
+      <div>
+        <InterfaceHeader setAppPage={setAppPage} setColNum={setColNum} />
+        <InterfaceMain colNum={colNum} />
+      </div>
+    </ColumnsContext.Provider>
   );
 };
