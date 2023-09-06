@@ -1,15 +1,11 @@
 import {useState, createContext, useContext} from "react";
 
-import {DBRequestManager} from "/src/DBRequestManager.js";
-import {
-  AccountContextProvider, SessionContext, AccountManagerContext
-} from "/src/contexts/AccountContext.js";
-import {
-  ColumnsContext, ColumnManager,
-} from "/src/contexts/ColumnsContext.js";
-import {
-  LoginPage, SignupPage, TutorialPage
-} from "/src/OverlayPages.js";
+import {DBRequestManager} from "./DBRequestManager.js";
+import {AccountContextProvider} from "./contexts/AccountContext.js";
+import {ColumnsContext, ColumnManager} from "./contexts/ColumnsContext.js";
+import {InterfaceHeader} from "./InterfaceHeader.js";
+import {InterfaceMain} from "./InterfaceMain.js";
+import {LoginPage, SignupPage, TutorialPage} from "./OverlayPages.js";
 
 
 export const dbReqManager = new DBRequestManager();
@@ -19,24 +15,23 @@ export const SDBInterface = () => {
   const [appPage, setAppPage] = useState("home");
 
   return (
-    <AccountContextProvider>
-    {/* <AppPageContext.Provider value={[appPage, setAppPage]}> */}
+    <AccountContextProvider> {/* yeilds: session, accountManager.*/}
       <div>
         <InterfacePage
           setAppPage={setAppPage}
-          style={appPage == "home" ? {} : {display: none}}
+          style={appPage === "home" ? {} : {display: "none"}}
         />
         <LoginPage
           setAppPage={setAppPage}
-          style={appPage == "login" ? {} : {display: none}}
+          style={{backgroundColor: "black"}}
         />
         <SignupPage
           setAppPage={setAppPage}
-          style={appPage == "signup" ? {} : {display: none}}
+          style={appPage === "signup" ? {} : {display: "none"}}
         />
         <TutorialPage
           setAppPage={setAppPage}
-          style={appPage == "tutorial" ? {} : {display: none}}
+          style={appPage === "tutorial" ? {} : {display: "none"}}
         />
       </div>
     {/* </AppPageContext.Provider> */}
@@ -47,7 +42,7 @@ export const SDBInterface = () => {
 
 const initColKey = JSON.stringify({entID: 10, n: 0});
 
-const InterfacePage = ({colNum, setColNum}) => {
+const InterfacePage = ({setAppPage}) => {
   const [columns, setColumns] = useState({
     keys: [initColKey],
     fst: 0, // first visible column from the left.
@@ -60,8 +55,10 @@ const InterfacePage = ({colNum, setColNum}) => {
   return (
     <ColumnsContext.Provider value={[columns, columnManager]}>
       <div>
-        <InterfaceHeader setAppPage={setAppPage} setColNum={setColNum} />
-        <InterfaceMain colNum={colNum} />
+        <InterfaceHeader
+          setAppPage={setAppPage} className="interface-header"
+        />
+        <InterfaceMain className="interface-main" />
       </div>
     </ColumnsContext.Provider>
   );

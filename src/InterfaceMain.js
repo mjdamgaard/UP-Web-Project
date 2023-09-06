@@ -1,26 +1,27 @@
 import {useState, createContext, useContext} from "react";
 
-import {ColumnsContext} from "/src/contexts/ColumnsContext.js";
+import {ColumnsContext} from "./contexts/ColumnsContext.js";
 
 
-const InterfaceMain = () => {
+export const InterfaceMain = () => {
   const [columns, columnManager] = useContext(ColumnsContext);
 
   let fst = columns.fst;
   const appColumns = columns.keys.map((val, ind) => 
-    <AppColumn key={val}
+    <AppColumn key={val} colKey={val}
       style={(fst <= ind && ind < fst + columns.num) ? {} : {display: "none"}}
+      className="app-column"
     />
   );
   return (
     <div>
-      <div class="left-margin" onClick={columnManager.cycleLeft}>
+      <div className="interface-margin" onClick={columnManager.cycleLeft}>
         <br/><span>&#10094;</span><br/>
       </div>
-      <div class="column-container">
+      <div className="column-container">
         {appColumns}
       </div>
-      <div class="right-margin" onClick={columnManager.cycleRight}>
+      <div className="interface-margin" onClick={columnManager.cycleRight}>
         <br/><span>&#10095;</span><br/>
       </div>
     </div>
@@ -33,11 +34,11 @@ const InterfaceMain = () => {
 
 
 
-const AppColumn = ({key}) => {
+const AppColumn = ({colKey}) => {
   return (
     <div>
-      <ColumnButtonContainer colKey={key} />
-      <EntityPage />
+      <ColumnButtonContainer colKey={colKey} />
+      {/* <EntityPage /> */}
     </div>
   );
 };
@@ -51,18 +52,18 @@ const AppColumn = ({key}) => {
 
 
 const ColumnButtonContainer = ({colKey}) => {
-  const [, columnManager] = useContext(ColumnsContext);
-
   return (
     <div>
       {/* <PinButton /> */}
-      <CloseButton colKey={colKey} />
+      <CloseButton colKey={colKey} className="close-button" />
     </div>
   );
 };
 const CloseButton = ({colKey}) => {
+  const [, columnManager] = useContext(ColumnsContext);
+
   return (
-    <button type="button" class="close"onClick={() => {
+    <button type="button" className="close" onClick={() => {
       columnManager.closeColumn(colKey);
     }}>
       <span>&times;</span>

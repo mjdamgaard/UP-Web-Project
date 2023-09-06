@@ -1,25 +1,16 @@
-
-import {
-  ContentLoader,
-} from "/src/ContentLoader.js";
-import {
-  sdbInterfaceCL, dbReqManager, accountManager,
-} from "/src/content_loaders/SDBInterface.js";
-
-
-
+import {useState, createContext, useContext} from "react";
 
 
 export const OverlayPage = ({children, setAppPage}) => {
   return (
     <div>
-      <div class="left-margin">
+      <div className="overlay-page-margin">
         <GoBackButton setAppPage={setAppPage} />
       </div>
-      <div class="content-container">
+      <div className="content-container">
         {children}
       </div>
-      <div class="right-margin"></div>
+      <div className="overlay-page-margin"></div>
     </div>
   );
 };
@@ -37,22 +28,22 @@ export const GoBackButton = ({setAppPage}) => {
 
 export const LoginPage = ({setAppPage}) => {
   return (
-    <OverlayPage>
+    <OverlayPage className="overlay-page">
       <h3>Log in</h3>
-      <form action="javascript:void(0);">
-        <div class="form-group">
+      <form>
+        <div className="form-group">
           <label>Username or ID</label>
-          <input type="text" class="form-control user"></input>
+          <input type="text" className="form-control user"></input>
         </div>
-        <div class="form-group">
+        <div className="form-group">
           <label>Password</label>
-          <input type="password" class="form-control pw"></input>
+          <input type="password" className="form-control pw"></input>
         </div>
         <span>
-          <button class="btn btn-default">Log in</button>
+          <button className="btn btn-default">Log in</button>
         </span>
       </form>
-      <div class="response-display text-warning"></div>
+      <div className="response-display text-warning"></div>
     </OverlayPage>
   );
 };
@@ -87,7 +78,7 @@ export function hasAcceptedStorage() {
     return true;
   } else {
     if (
-      confirm(
+      window.confirm(
         'This site uses only necessary local storage (for storing ' +
         'user ID and login session data). Press OK to ' +
         'accept this and be able to log in or create an account.'
@@ -102,21 +93,21 @@ export function hasAcceptedStorage() {
 }
 
 
-export const CreateAccountPage = ({setAppPage}) => {
+export const SignupPage = ({setAppPage}) => {
   return (
     <OverlayPage>
       <h3>Create new account</h3>
-      <form action="javascript:void(0);">
-        <div class="form-group">
+      <form>
+        <div className="form-group">
           <label>Username</label>
-          <input type="text" class="form-control username"></input>
+          <input type="text" className="form-control username"></input>
         </div>
-        <p class="text-info"><i>(Anonymous usernames are prefered.)</i></p>
-        <div class="form-group">
+        <p className="text-info"><i>(Anonymous usernames are prefered.)</i></p>
+        <div className="form-group">
           <label>E-mail address</label>
-          <input type="email" class="form-control email"></input>
+          <input type="email" className="form-control email"></input>
         </div>
-        <p class="text-info"><i>
+        <p className="text-info"><i>
           (For testing purposes, you can make a temporary account by 
           choosing a fake e-mail address.)<br/>
           The e-mail address' connection to this account will be erased 
@@ -125,13 +116,13 @@ export const CreateAccountPage = ({setAppPage}) => {
             'changing forgotten passwords will only be added later. */}
           'So save your password!
         </i></p>
-        <div class="form-group">
+        <div className="form-group">
           <label>Password</label>
-          <input type="password" class="form-control pw"></input>
+          <input type="password" className="form-control pw"></input>
         </div>
-        <p class="text-info"><i>Choose a unique password!</i></p>
-        <div class="checkbox" style="font-size: 11pt;">
-          <label><input type="checkbox" class="terms" value="" />
+        <p className="text-info"><i>Choose a unique password!</i></p>
+        <div className="checkbox" style={{fontSize: "11pt"}}>
+          <label><input type="checkbox" className="terms" value="" />
             I accept that the entities and ratings that I submit with 
             this account will be available to the public, and that they 
             will be shared upon request with any third party that 
@@ -144,10 +135,10 @@ export const CreateAccountPage = ({setAppPage}) => {
           </label>
         </div>
         <span>
-          <button class="btn btn-default">Submit</button>
+          <button className="btn btn-default">Submit</button>
         </span>
       </form>
-      <div class="response-display text-warning"></div>
+      <div className="response-display text-warning"></div>
     </OverlayPage>
   );
 };
@@ -191,7 +182,7 @@ export const TutorialPage = ({setAppPage}) => {
   return (
     <OverlayPage>
       <iframe src="tutorial.html" 
-        style="border:none; width: 100%; height: 100%;"
+        style={{border: "none", width: "100%", height: "100%"}}
       >
       </iframe>
     </OverlayPage>

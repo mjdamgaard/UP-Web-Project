@@ -1,8 +1,8 @@
-
 import {useState, createContext, useContext} from "react";
 
-import {SessionContext, AccountManagerContext} from "/src/AccountContext.js";
-import {ColumnsContext} from "/src/contexts/ColumnsContext.js";
+import {SessionContext, AccountManagerContext}
+  from "./contexts/AccountContext.js";
+import {ColumnsContext} from "./contexts/ColumnsContext.js";
 
 
 
@@ -15,15 +15,15 @@ import {ColumnsContext} from "/src/contexts/ColumnsContext.js";
 
 
 
-const InterfaceHeader = ({setAppPage, setColNum}) => {
+export const InterfaceHeader = ({setAppPage, setColNum}) => {
   return (
-    <header class="navbar navbar-default">
-    <div class="container-fluid">
-      <div class="navbar-header">
+    <header className="navbar navbar-default">
+    <div className="container-fluid">
+      <div className="navbar-header">
         <SuperCoolLogoTBD />
       </div>
       <HeaderButtonsContainer setAppPage={setAppPage} setColNum={setColNum} />
-      <AccountButtonsContainer />
+      <AccountButtonsContainer setAppPage={setAppPage} />
     </div>
   </header>
   );
@@ -33,7 +33,7 @@ const SuperCoolLogoTBD = ({setAppPage, setColNum}) => {
   const [columns, columnManager] = useContext(ColumnsContext);
 
   return (
-    <span class="navbar-brand" onClick={() => {
+    <span className="navbar-brand" onClick={() => {
       columnManager.openColumn(columns.keys[columns.fst], 10, true);
     }}>
       openSDB
@@ -44,8 +44,8 @@ const SuperCoolLogoTBD = ({setAppPage, setColNum}) => {
 
 const HeaderButtonsContainer = ({setAppPage, setColNum}) => {
   return (
-    <ul class="nav navbar-nav">
-      <li class="tutorial"
+    <ul className="nav navbar-nav">
+      <li className="tutorial"
         onClick={() => setAppPage("tutorial")}
         style={localStorage.hasAcceptedStorage ? {} : {
           fontSize: "17pt",
@@ -55,44 +55,50 @@ const HeaderButtonsContainer = ({setAppPage, setColNum}) => {
       >
         <a href="#">Tutorial</a>
       </li>
-      <li class="minus" onClick={() => setColNum(
+      <li className="minus" onClick={() => setColNum(
         prev => prev <= 0 ? 0 : prev - 1
       )}>
-        <a href="#"><span style="font-size: 18pt;">-</span></a>
+        <a href="#"><span style={{fontSize: "18pt"}}>-</span></a>
       </li>
-      <li class="plus" onClick={() => setColNum(
+      <li className="plus" onClick={() => setColNum(
         prev => prev >= 3 ? 3 : prev + 1
       )}>
-        <a href="#"><span style="font-size: 18pt;">+</span></a>
+        <a href="#"><span style={{fontSize: "18pt"}}>+</span></a>
       </li>
       {/* TODO: Add one or a few more. */}
     </ul>
   );
 };
 
-const AccountButtonsContainer = () => {
+const AccountButtonsContainer = ({setAppPage}) => {
   const session = useContext(SessionContext);
   const accountManager = useContext(AccountManagerContext);
 
   return (
-  <ul class="nav navbar-nav navbar-right">
-    <li class="log-in"
+  <ul className="nav navbar-nav navbar-right">
+    <li className="log-in"
       onClick={() => setAppPage("login")}
-      style={!session || session.expTime > Date.now() ? {display: none} : {}} 
+      style={!session || session.expTime > Date.now() ? {display: "none"} : {}} 
     >
-      <a href="#"><span class="glyphicon glyphicon-log-in"></span> Sing in</a>
+      <a href="#">
+        <span className="glyphicon glyphicon-log-in"></span> Sing in
+      </a>
     </li>
-    <li class="new-account"
+    <li className="new-account"
       onClick={() => setAppPage("signup")}
-      style={!session || session.expTime > Date.now() ?{} : {display: none}} 
+      style={!session || session.expTime > Date.now() ? {} : {display: "none"}} 
     >
-      <a href="#"><span class="glyphicon glyphicon-user"></span> Sign up</a>
+      <a href="#">
+        <span className="glyphicon glyphicon-user"></span> Sign up
+      </a>
     </li>
-    <li class="log-out"
+    <li className="log-out"
       onClick={() => accountManager.logout()}
-      style={!session || session.expTime > Date.now() ?{} : {display: none}} 
+      style={!session || session.expTime > Date.now() ? {} : {display: "none"}} 
     >
-      <a href="#"><span class="glyphicon glyphicon-log-out"></span> Log out</a>
+      <a href="#">
+        <span className="glyphicon glyphicon-log-out"></span> Log out
+      </a>
     </li>
   </ul>
   );

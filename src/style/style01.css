@@ -1,0 +1,222 @@
+
+html, body, .root {
+    height: 100%;
+    width: 100%;
+}
+
+
+.sdb-interface {
+    height: 100%;
+    display: grid;
+    grid-template-columns: auto;
+    grid-template-rows: auto 1fr;
+}
+/* A temporary solution that patches the thin-screen header navbar bug: */
+/* if (window.innerWidth <= 767) {
+  sdbInterface {
+      height: 100%;
+      display: grid;
+      grid-template-columns: auto;
+      grid-template-rows: 290px auto;
+  }
+} */
+
+.interface-header {
+    background-color: #40E0E9;
+    margin-bottom: 10px;
+}
+.logo {
+    color: black;
+    font-size: 25pt;
+}
+.logo:hover {
+    cursor: pointer;
+}
+.interface-margin  {
+    text-align: center;
+    display: grid;
+    grid-template-columns: auto;
+    grid-template-rows: 1fr auto 1fr;
+    opacity: 0.5;
+}
+.interface-margin:hover {
+    cursor: pointer;
+    opacity: 1;
+}
+
+.interface-main {
+    display: grid;
+    grid-template-columns: 70px auto 70px;
+    grid-template-rows: auto;
+}
+.column-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+    /* justify-items: center;
+    overflow-x: auto;
+    overflow-y: hidden; */
+    white-space: nowrap;
+    /* background-color: #f9fef5; */
+    
+}
+.app-column {
+    overflow: initial;
+    white-space: initial;
+    display: inline-block;
+    margin: 0px 10px;
+    border: 1px solid #DDD;
+    border-radius: 8px;
+    background-color: #FFF;
+    max-width: 900px;
+    
+}
+.close-button {
+    padding: 0px 4px;
+    /* position: relative;
+    z-index: 2; */
+    
+}
+
+.tab-header {
+    padding: 4px 0px 0px;
+    /* background-color: #f7f7f7; */
+    
+}
+.tab-header .close-button {
+    position: absolute;
+    z-index: 2;
+    right: 1px;
+    top: 1px;
+}
+.tab-header ul > li .nav-link {
+    pointer-events: none;
+    border-bottom: 1px solid #ddd;
+    background-color: #fefefe;
+    /* box-shadow: 10px 10px 5px lightblue; */
+}
+.tab-header ul {
+    display: flex;
+    /* justify-content: flex-end; */
+    flex-wrap: wrap-reverse;
+    flex-direction: row;
+    margin: 0px 0px 0px 2px;
+}
+.tab-header ul > li {
+    margin: 2px 1px -1px 0px;
+}
+.tab-header ul > li.active .nav-link {
+    border-bottom: 1px solid #fff;
+    background-color: #fff;
+}
+
+
+.clickable-text:hover {
+    cursor: pointer;
+    text-decoration: underline;
+    color: blue;
+}
+
+
+
+.generalEntityElement {
+    border-bottom: 1px solid gray;
+    border-top: 1px solid gray;  
+}
+.ratingElement {
+    border-bottom: 1px solid gray;
+    border-top: 1px solid gray;
+ 
+}
+.ratingDisplay {
+    border-bottom: 1px solid lightgray;
+    border-top: 1px solid lightgray;
+    
+}
+
+.generalEntityElement {
+    & > div:first-of-type {
+        display: grid;
+        grid-template-columns: 1fr 50px;
+        grid-template-rows: auto;
+    }
+}
+.elementRatingDisplay {
+    font-size: 15pt;
+    padding: 10px 10px 2px;
+}
+
+
+.ratingDisplay {
+    & .applies-to-subj {
+        font-size: 80%;
+    }
+}
+
+
+
+.dropdownButtonBar {
+    &:hover {
+        cursor: pointer;
+        background-color: #eee;
+    }
+}
+.dropdownButtonBar {
+    display: flex;
+    justify-content: center;
+}
+/* // dropdownButton {
+//     font-size: 80%;
+//     position: relative;
+//     bottom: 10%; // CSS is still weird to me sometimes (why does this not
+//      // work?)..
+// } */
+.dropdownButtonBar .DropdownButton {
+    font-size: 80%;
+    /* bottom: 0%; */
+}
+.dropdownButton:hover {
+    cursor: pointer;
+}
+.setHeader .DropdownButtonBar:not(:hover) {
+    background-color: #f4f9ff;
+}
+.setDisplay > .DropdownButtonBar:not(:hover) {
+    background-color: #ddd;
+}
+
+.sortingCategoriesMenu {
+    border-top:    1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+}
+
+
+
+
+.overlay-page {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr minmax(500px, 800px) 1fr;
+    grid-template-rows: 1fr;
+}
+.overlay-page > .content-container {
+    max-width: 600px;
+}
+
+
+.goBackButton {
+    font-size: 20px;
+    padding: 10px;
+    margin: 2px 7px;
+    
+}
+.goBackButton:hover {
+    cursor: pointer;
+    /* background-color: #eee; */
+}
+
+
+.semanticPropertyTitle:hover {
+    cursor: pointer;
+}

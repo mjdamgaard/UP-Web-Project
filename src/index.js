@@ -1,15 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
-import Car from './Car.js';
+import {SDBInterface} from './SDBInterface.js';
 
+import './style/style01.css';
 
 const myElement = (
-  <>
-  <p>I am a paragraph.</p>
-  <p>I am a paragraph too.</p>
-  <Car color="red"/>
-  </>
+  <SDBInterface className="sdb-interface"/>
 );
 
 

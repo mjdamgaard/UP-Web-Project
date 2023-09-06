@@ -21,11 +21,11 @@ export class ColumnManager {
     // create and insert the new column key in columns.keys, and potentially
     // increase fst.
     let fst = this.columns.fst;
-    if (!isToTheLeft && fst + num - 1 == callerInd) {
+    if (!isToTheLeft && fst + this.columns.num - 1 == callerInd) {
       fst++;
     }
     let newInd = isToTheLeft ? callerInd : callerInd + 1;
-    setColumns(prev => ({
+    this.setColumns(prev => ({
       ...prev,
       keys: this.columns.keys.slice(0, newInd).concat(
         [{entID: newEntID, n: newN}],
@@ -40,10 +40,10 @@ export class ColumnManager {
     let callerInd = this.columns.keys.findIndex(val => val == callerKey);
     // remove the column key in columns.keys, and potentially reduce fst.
     let fst = this.columns.fst;
-    while (fst > 0 && fst + num > this.columns.keys.length) {
+    while (fst > 0 && fst + this.columns.num > this.columns.keys.length) {
       fst--;
     }
-    setColumns(prev => ({
+    this.setColumns(prev => ({
       ...prev,
       keys: this.columns.keys.slice(0, callerInd).concat(
         this.columns.keys.slice(callerInd + 1)
@@ -53,7 +53,7 @@ export class ColumnManager {
   }
 
   cycleLeft() {
-    setColumns(prev => ({
+    this.setColumns(prev => ({
       ...prev,
       keys: this.columns.keys,
       fst: this.columns.fst <= 0 ? 0 : this.columns.fst - 1,
@@ -62,8 +62,8 @@ export class ColumnManager {
     }));
   }
   cycleRight() {
-    let max = Math.max(columns.keys.length - this.columns.num, 0);
-    setColumns(prev => ({
+    let max = Math.max(this.columns.keys.length - this.columns.num, 0);
+    this.setColumns(prev => ({
       ...prev,
       keys: this.columns.keys,
       fst: this.columns.fst >= max ? max : this.columns.fst + 1,
