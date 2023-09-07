@@ -1,16 +1,15 @@
 import {useState, createContext, useContext} from "react";
 
-import {ColumnsContext} from "./contexts/ColumnsContext.js";
-
+import {ColumnListContext, ColumnContext} from "./contexts/ColumnContext.js";
 
 export const InterfaceMain = () => {
-  const [columns, columnManager] = useContext(ColumnsContext);
+  const [columns, columnManager] = useContext(ColumnListContext);
 
   let fst = columns.fst;
   const appColumns = columns.keys.map((val, ind) => 
     <div key={val}
       style={{display: fst <= ind && ind < fst + columns.num ? null : "none"}}
-    >
+  >
       <AppColumn colKey={val} />
     </div>
   );
@@ -36,10 +35,13 @@ export const InterfaceMain = () => {
 
 
 const AppColumn = ({colKey}) => {
+  const columnEntID = JSON.parse(colKey).entID;
   return (
     <div className="app-column">
       <ColumnButtonContainer colKey={colKey} />
-      {/* <EntityPage /> */}
+      <ColumnContext.Provider value={columnEntID}>
+        <EntityPage entID={entID} />
+      </ColumnContext.Provider>
     </div>
   );
 };
@@ -61,7 +63,7 @@ const ColumnButtonContainer = ({colKey}) => {
   );
 };
 const CloseButton = ({colKey}) => {
-  const [, columnManager] = useContext(ColumnsContext);
+  const [, columnManager] = useContext(ColumnListContext);
 
   return (
     <button type="button" className="close" onClick={() => {

@@ -1,31 +1,44 @@
-import {useState, createContext, useContext} from "react";
+import {useState, createContext, useContext, useEffect} from "react";
 
-import {DBRequestManager} from "./DBRequestManager.js";
+import {useQuery} from "./DBRequests.js";
 import {
   MaxRatingSetCombiner, SimpleSetGenerator,
 } from "/src/SetGenerator.js";
 
 
 
+export const EntityPage = ({entID}) => {
+  const [results, setResults] = useState([]);
+  useQuery(setResults, 0, {
+    req: "ent",
+    id: data.entID,
+  });
 
-export var entityPageCL = new ContentLoader(
-  "EntityPage",
-  /* Initial HTML template */
-  '<div>' +
-      '<h2><<EntityTitle>></h2>' +
-      '<span class="full-title">Full title: <<FullEntityTitle>></span>' +
-      '<div><<EntityIDDisplay>></div>' +
-      '<div><<ContextDisplay>></div>' +
-       "<<PagesWithTabs data:wait>>" +
-   '</div>',
-  sdbInterfaceCL
-);
-entityPageCL.addCallback("data", function(data) {
-  data.copyFromAncestor([
-      "entID",
-  ]);
-  data.columnEntityID = data.entID;
-});
+  if (typeof results[0] === "undefined") {
+    return (
+      <div className="entity-page">
+        <div className="entity-page-header"> {/* TODO: make a component. */}
+          {/* <h2><EntityTitle entID={entID} /></h2> */}
+          {/* <span class="full-title">Full title: <FullEntityTitle /></span>*/}
+        </div>
+      </div>
+    );
+  } else {
+    return (
+      <div className="entity-page">
+        <div className="entity-page-header">
+          {/* <h2><EntityTitle entID={entID} /></h2> */}
+          {/* <span class="full-title">Full title: <FullEntityTitle /></span>*/}
+          {/* <div><EntityIDDisplay entID={entID} /></div> */}
+          {/* <div><ContextDisplay entID={entID} /></div> */}
+        </div>
+        {/* <PagesWithTabs /> */}
+      </div>
+    );
+  }
+};
+
+
 entityPageCL.addCallback(function($ci, data) {
   if (data.cxtID) {
       $ci.children('.CI.PagesWithTabs').trigger("load");
@@ -36,7 +49,7 @@ entityPageCL.addCallback(function($ci, data) {
       id: data.entID,
   };
   let $this = $(this);
-  dbReqManager.query($ci, reqData, data, function($ci, result, data) {
+  DBRequestManager.query($ci, reqData, data, function($ci, result, data) {
       data.typeID = (result[0] ?? [])[0];
       data.cxtID = (result[0] ?? [])[1];
       data.defStr = (result[0] ?? [])[2];

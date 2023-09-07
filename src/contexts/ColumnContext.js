@@ -1,9 +1,10 @@
-
 import {createContext} from "react";
 
-export const ColumnsContext = createContext();
+export const ColumnContext = createContext();
 
-export class ColumnManager {
+export const ColumnListContext = createContext();
+
+export class ColumnListManager {
   constructor(columns, setColumns) {
     this.columns = columns;
     this.setColumns = setColumns;

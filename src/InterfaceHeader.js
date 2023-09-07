@@ -2,7 +2,7 @@ import {useState, createContext, useContext} from "react";
 
 import {SessionContext, AccountManagerContext}
   from "./contexts/AccountContext.js";
-import {ColumnsContext} from "./contexts/ColumnsContext.js";
+import {ColumnsContext} from "./contexts/ColumnContext.js";
 
 
 

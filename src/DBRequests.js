@@ -1,4 +1,16 @@
+import {useState} from "react";
 import $ from 'jquery';
+
+export const useQuery = (reqData, setResults, ind) => {
+  useEffect(() => {
+    DBRequestManager.query(reqData, setResults, ind);
+  }, []);
+};
+export const useInput = (reqData, setResults, ind) => {
+  useEffect(() => {
+    DBRequestManager.input(reqData, setResults, ind);
+  }, []);
+};
 
 // (If it turns out that we'll need manual caching (for more than just
 // collapsed forwarding), I will just use a LRU library, e.g.
@@ -6,19 +18,11 @@ import $ from 'jquery';
 
 export class DBRequestManager {
   static ongoingQueries = {};
-  static cache = {}; // Consider replacing with an LRU list, or consider
-  // just telling users that a disabled browser cache will slow the app
-  // down.
+  // static cache = {}; // Consider replacing with an LRU list, or consider
+  // // just telling users that a disabled browser cache will slow the app
+  // // down.
 
-  static query(obj, reqData, callbackData, cacheQuery, callback) {
-    if (!callback) {
-      callback = cacheQuery;
-      cacheQuery = false;
-      if (!callback) {
-        callback = callbackData;
-        callbackData = null;
-      }
-    }
+  static query(setResults, ind, reqData) {
     // URL-encode the request data.
     let encodedReqData = {};
     Object.keys(reqData).forEach(function(key) {
@@ -29,23 +33,24 @@ export class DBRequestManager {
     let reqDataKey = JSON.stringify(reqData);
     let queryQueue = this.ongoingQueries[reqDataKey];
     if (queryQueue) {
-      queryQueue.push([obj, callback, callbackData]);
+      queryQueue.push([setResults, ind]);
       return;
     }
-    // else if the query is already cached, use that result and return.
-    let cachedResult = this.cache[reqDataKey];
-    if (cachedResult) {
-      callback(obj, cachedResult, callbackData);
-      return;
-    }
+    // // else if the query is already cached, use that result and return.
+    // let cachedResult = this.cache[reqDataKey];
+    // if (cachedResult) {
+    //   callback(obj, cachedResult, callbackData);
+    //   return;
+    // }
+
     // else initialize an ongoing query data queue, and make an AJAX HTTP
     // call, which runs all the callbacks in the queue on at a time upon
     // receiving the response from the server.
-    this.ongoingQueries[reqDataKey] = [[obj, callback, callbackData]];
-    let thisDBRM = this;
-    $.getJSON("query_handler.php", encodedReqData, function(result) {
+    this.ongoingQueries[reqDataKey] = [[setResults, ind]];
+    // let thisDBRM = this;
+    $.getJSON("query_handler.php", encodedReqData, result => {
       // get and then delete the ongiong query queue.
-      let ongoingQueries = thisDBRM.ongoingQueries;
+      let ongoingQueries = this.ongoingQueries;
       let queryQueue = ongoingQueries[reqDataKey];
       delete ongoingQueries[reqDataKey];
       // unless reqData.type equals "set", or "bin", sanitize all
@@ -64,27 +69,32 @@ export class DBRequestManager {
           }
         }
       }
-      // then call all callbacks in queryQueue with their associated data.
-      for (let i = 0; i < queryQueue.length; i++) {
-        let obj = queryQueue[i][0];
-        let callback = queryQueue[i][1];
-        let callbackData = queryQueue[i][2];
-        callback(obj, result, callbackData);
+      // then call all setResults callbacks in queryQueue to change the ind'th
+      // entry of the associated results state.
+      let len = queryQueue.length;
+      for (let i = 0; i < len; i++) {
+        let setResults = queryQueue[i][0];
+        let ind = queryQueue[i][1];
+        setResults(prev => {
+          let ret = [...prev];
+          ret[ind] = result;
+          return ret;
+        });
       }
-      // if cacheQuery is true, cache the query.
-      if (cacheQuery) {
-        thisDBRM.cache[reqDataKey] = result;
-      }
+      // // if cacheQuery is true, cache the query.
+      // if (cacheQuery) {
+      //   this.cache[reqDataKey] = result;
+      // }
     });
   }
 
-  static input(obj, reqData, callbackData, callback) {
-    if (!callback) {
-      callback = callbackData;
-      callbackData = null;
-    }
-    $.post("input_handler.php", reqData, function(result) {
-      callback(obj, result, callbackData);
+  static input(setResults, ind, reqData) {
+    $.post("input_handler.php", reqData, result => {
+      setResults(prev => {
+        let ret = [...prev];
+        ret[ind] = result;
+        return ret;
+      });
     });
   }
 }

@@ -1,7 +1,7 @@
 import {useState, createContext, useContext} from "react";
 
 import {AccountContextProvider} from "./contexts/AccountContext.js";
-import {ColumnsContext, ColumnManager} from "./contexts/ColumnsContext.js";
+import {ColumnListContext, ColumnListManager} from "./contexts/ColumnListContext.js";
 import {InterfaceHeader} from "./InterfaceHeader.js";
 import {InterfaceMain} from "./InterfaceMain.js";
 import {LoginPage, SignupPage, TutorialPage} from "./OverlayPages.js";
@@ -47,16 +47,16 @@ const InterfacePage = ({setAppPage, isHidden}) => {
     focus: 0, // The column currently in focus. (TODO: Implement further.)
   });
 
-  const columnManager = new ColumnManager(columns, setColumns);
+  const columnManager = new ColumnListManager(columns, setColumns);
 
   return (
-    <ColumnsContext.Provider value={[columns, columnManager]}>
+    <ColumnListContext.Provider value={[columns, columnManager]}>
       <div className="interface-page"
         style={{display: isHidden ? "none" : ""}}
       >
         <InterfaceHeader setAppPage={setAppPage} />
         <InterfaceMain />
       </div>
-    </ColumnsContext.Provider>
+    </ColumnListContext.Provider>
   );
 };
