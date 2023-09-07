@@ -9,7 +9,7 @@ import {LoginPage, SignupPage, TutorialPage} from "./OverlayPages.js";
 
 
 export const SDBInterface = () => {
-  const [appPage, setAppPage] = useState("home");debugger;
+  const [appPage, setAppPage] = useState("home");
 
   return (
     <AccountContextProvider> {/* yeilds: session, accountManager.*/}
@@ -52,7 +52,7 @@ const InterfacePage = ({setAppPage, isHidden}) => {
   return (
     <ColumnsContext.Provider value={[columns, columnManager]}>
       <div className="interface-page"
-        style={{display: isHidden ? "none" : "block"}}
+        style={{display: isHidden ? "none" : ""}}
       >
         <InterfaceHeader setAppPage={setAppPage} />
         <InterfaceMain />

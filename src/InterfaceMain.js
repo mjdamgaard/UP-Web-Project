@@ -8,10 +8,10 @@ export const InterfaceMain = () => {
 
   let fst = columns.fst;
   const appColumns = columns.keys.map((val, ind) => 
-    <div style={{
-      display: fst <= ind && ind < fst + columns.num ? "block" : "none"
-    }}>
-      <AppColumn key={val} colKey={val} />
+    <div key={val}
+      style={{display: fst <= ind && ind < fst + columns.num ? null : "none"}}
+    >
+      <AppColumn colKey={val} />
     </div>
   );
   return (

@@ -1,10 +1,10 @@
 import {useState, createContext, useContext} from "react";
 
 
-export const OverlayPage = ({children, setAppPage, isHidden}) => {debugger;
+export const OverlayPage = ({children, setAppPage, isHidden}) => {
   return (
     <div className="overlay-page"
-      style={{display: isHidden ? "none" : "block"}}
+      style={{display: isHidden ? "none" : null}}
     >
       <div className="overlay-page-margin">
         <GoBackButton setAppPage={setAppPage} />
@@ -20,7 +20,9 @@ export const OverlayPage = ({children, setAppPage, isHidden}) => {debugger;
 
 export const GoBackButton = ({setAppPage}) => {
   return (
-    <span onClick={() => setAppPage("home")}>
+    <span className="go-back-button"
+      onClick={() => setAppPage("home")}
+    >
       &#10094;
     </span>
   );

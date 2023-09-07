@@ -1,11 +1,14 @@
 
-html, body, .root {
+html, body, #root {
     height: 100%;
     width: 100%;
 }
 
 
 .sdb-interface {
+    height: 100%;
+}
+.interface-page {
     height: 100%;
     display: grid;
     grid-template-columns: auto;
@@ -205,13 +208,13 @@ button.close {
 }
 
 
-.goBackButton {
+.go-back-button {
     font-size: 20px;
     padding: 10px;
     margin: 2px 7px;
     
 }
-.goBackButton:hover {
+.go-back-button:hover {
     cursor: pointer;
     /* background-color: #eee; */
 }
