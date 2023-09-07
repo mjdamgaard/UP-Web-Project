@@ -8,13 +8,14 @@ export const InterfaceMain = () => {
 
   let fst = columns.fst;
   const appColumns = columns.keys.map((val, ind) => 
-    <AppColumn key={val} colKey={val}
-      style={(fst <= ind && ind < fst + columns.num) ? {} : {display: "none"}}
-      className="app-column"
-    />
+    <div style={{
+      display: fst <= ind && ind < fst + columns.num ? "block" : "none"
+    }}>
+      <AppColumn key={val} colKey={val} />
+    </div>
   );
   return (
-    <div>
+    <div className="interface-main">
       <div className="interface-margin" onClick={columnManager.cycleLeft}>
         <br/><span>&#10094;</span><br/>
       </div>
@@ -36,7 +37,7 @@ export const InterfaceMain = () => {
 
 const AppColumn = ({colKey}) => {
   return (
-    <div>
+    <div className="app-column">
       <ColumnButtonContainer colKey={colKey} />
       {/* <EntityPage /> */}
     </div>
@@ -55,7 +56,7 @@ const ColumnButtonContainer = ({colKey}) => {
   return (
     <div>
       {/* <PinButton /> */}
-      <CloseButton colKey={colKey} className="close-button" />
+      <CloseButton colKey={colKey} />
     </div>
   );
 };

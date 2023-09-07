@@ -1,6 +1,5 @@
 import {useState, createContext, useContext} from "react";
 
-import {DBRequestManager} from "./DBRequestManager.js";
 import {AccountContextProvider} from "./contexts/AccountContext.js";
 import {ColumnsContext, ColumnManager} from "./contexts/ColumnsContext.js";
 import {InterfaceHeader} from "./InterfaceHeader.js";
@@ -8,30 +7,28 @@ import {InterfaceMain} from "./InterfaceMain.js";
 import {LoginPage, SignupPage, TutorialPage} from "./OverlayPages.js";
 
 
-export const dbReqManager = new DBRequestManager();
-
 
 export const SDBInterface = () => {
-  const [appPage, setAppPage] = useState("home");
+  const [appPage, setAppPage] = useState("home");debugger;
 
   return (
     <AccountContextProvider> {/* yeilds: session, accountManager.*/}
-      <div>
+      <div className="sdb-interface">
         <InterfacePage
           setAppPage={setAppPage}
-          style={appPage === "home" ? {} : {display: "none"}}
+          isHidden={appPage !== "home"}
         />
         <LoginPage
           setAppPage={setAppPage}
-          style={{backgroundColor: "black"}}
+          isHidden={appPage !== "login"}
         />
         <SignupPage
           setAppPage={setAppPage}
-          style={appPage === "signup" ? {} : {display: "none"}}
+          isHidden={appPage !== "signup"}
         />
         <TutorialPage
           setAppPage={setAppPage}
-          style={appPage === "tutorial" ? {} : {display: "none"}}
+          isHidden={appPage !== "tutorial"}
         />
       </div>
     {/* </AppPageContext.Provider> */}
@@ -42,7 +39,7 @@ export const SDBInterface = () => {
 
 const initColKey = JSON.stringify({entID: 10, n: 0});
 
-const InterfacePage = ({setAppPage}) => {
+const InterfacePage = ({setAppPage, isHidden}) => {
   const [columns, setColumns] = useState({
     keys: [initColKey],
     fst: 0, // first visible column from the left.
@@ -54,11 +51,11 @@ const InterfacePage = ({setAppPage}) => {
 
   return (
     <ColumnsContext.Provider value={[columns, columnManager]}>
-      <div>
-        <InterfaceHeader
-          setAppPage={setAppPage} className="interface-header"
-        />
-        <InterfaceMain className="interface-main" />
+      <div className="interface-page"
+        style={{display: isHidden ? "none" : "block"}}
+      >
+        <InterfaceHeader setAppPage={setAppPage} />
+        <InterfaceMain />
       </div>
     </ColumnsContext.Provider>
   );

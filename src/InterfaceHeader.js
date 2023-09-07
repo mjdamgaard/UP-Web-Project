@@ -17,7 +17,7 @@ import {ColumnsContext} from "./contexts/ColumnsContext.js";
 
 export const InterfaceHeader = ({setAppPage, setColNum}) => {
   return (
-    <header className="navbar navbar-default">
+    <header className="interface-header navbar navbar-default">
     <div className="container-fluid">
       <div className="navbar-header">
         <SuperCoolLogoTBD />
@@ -78,7 +78,7 @@ const AccountButtonsContainer = ({setAppPage}) => {
   <ul className="nav navbar-nav navbar-right">
     <li className="log-in"
       onClick={() => setAppPage("login")}
-      style={!session || session.expTime > Date.now() ? {display: "none"} : {}} 
+      style={!session || session.expTime > Date.now() ? {} : {display: "none"}} 
     >
       <a href="#">
         <span className="glyphicon glyphicon-log-in"></span> Sing in
@@ -94,7 +94,7 @@ const AccountButtonsContainer = ({setAppPage}) => {
     </li>
     <li className="log-out"
       onClick={() => accountManager.logout()}
-      style={!session || session.expTime > Date.now() ? {} : {display: "none"}} 
+      style={!session || session.expTime > Date.now() ? {display: "none"} : {}} 
     >
       <a href="#">
         <span className="glyphicon glyphicon-log-out"></span> Log out

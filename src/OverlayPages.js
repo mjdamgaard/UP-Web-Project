@@ -1,9 +1,11 @@
 import {useState, createContext, useContext} from "react";
 
 
-export const OverlayPage = ({children, setAppPage}) => {
+export const OverlayPage = ({children, setAppPage, isHidden}) => {debugger;
   return (
-    <div>
+    <div className="overlay-page"
+      style={{display: isHidden ? "none" : "block"}}
+    >
       <div className="overlay-page-margin">
         <GoBackButton setAppPage={setAppPage} />
       </div>
@@ -26,9 +28,9 @@ export const GoBackButton = ({setAppPage}) => {
 
 
 
-export const LoginPage = ({setAppPage}) => {
+export const LoginPage = ({setAppPage, isHidden}) => {
   return (
-    <OverlayPage className="overlay-page">
+    <OverlayPage setAppPage={setAppPage} isHidden={isHidden}>
       <h3>Log in</h3>
       <form>
         <div className="form-group">
@@ -93,9 +95,9 @@ export function hasAcceptedStorage() {
 }
 
 
-export const SignupPage = ({setAppPage}) => {
+export const SignupPage = ({setAppPage, isHidden}) => {
   return (
-    <OverlayPage>
+    <OverlayPage setAppPage={setAppPage} isHidden={isHidden}>
       <h3>Create new account</h3>
       <form>
         <div className="form-group">
@@ -178,9 +180,9 @@ export const SignupPage = ({setAppPage}) => {
 // });
 
 
-export const TutorialPage = ({setAppPage}) => {
+export const TutorialPage = ({setAppPage, isHidden}) => {
   return (
-    <OverlayPage>
+    <OverlayPage setAppPage={setAppPage} isHidden={isHidden}>
       <iframe src="tutorial.html" 
         style={{border: "none", width: "100%", height: "100%"}}
       >
