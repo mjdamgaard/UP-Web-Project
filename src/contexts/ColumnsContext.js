@@ -7,20 +7,15 @@ export class ColumnManager {
   constructor(columns, setColumns) {
     this.columns = columns;
     this.setColumns = setColumns;
-
-    this.openCoulumn = this.openColumn.bind(this);
-    this.closeColumn = this.closeColumn.bind(this);
-    this.cycleLeft = this.cycleLeft.bind(this);
-    this.cycleRight = this.cycleRight.bind(this);
   }
 
-  openColumn(callerKey, newEntID, isToTheLeft) {
+  openColumn = (callerKey, newEntID, isToTheLeft) => {
     let columns = this.columns;
     // find caller column's index.
     let callerInd = columns.keys.findIndex(val => val == callerKey);
     // get the new n for the new key if one or more columns with the same entID
     // already exists.
-    let newN = columns.keys.reduce(
+    let newN = 1 + columns.keys.map(val => JSON.parse(val)).reduce(
       (acc, val) => val.entID != newEntID ? acc : (val.n > acc ? val.n : acc),
       0
     );
@@ -34,14 +29,14 @@ export class ColumnManager {
     this.setColumns(prev => ({
       ...prev,
       keys: columns.keys.slice(0, newInd).concat(
-        [{entID: newEntID, n: newN}],
+        [JSON.stringify({entID: newEntID, n: newN})],
         columns.keys.slice(newInd)
       ),
       fst: fst,
       focus: newInd,
     }));
   }
-  closeColumn(callerKey) {
+  closeColumn = (callerKey) => {
     let columns = this.columns;
     // find caller column's index.
     let callerInd = columns.keys.findIndex(val => val == callerKey);
@@ -59,7 +54,7 @@ export class ColumnManager {
     }));
   }
 
-  cycleLeft() {
+  cycleLeft = () => {
     let columns = this.columns;
     this.setColumns(prev => ({
       ...prev,
@@ -69,7 +64,7 @@ export class ColumnManager {
       // just shouldn't be changed.
     }));
   }
-  cycleRight() {
+  cycleRight = () => {
     let columns = this.columns;
     let max = Math.max(columns.keys.length - columns.num, 0);
     this.setColumns(prev => ({
