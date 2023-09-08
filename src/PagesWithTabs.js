@@ -1,4 +1,4 @@
-import {useState, createContext, useContext, useEffect} from "react";
+import {useState, createContext, useContext, useEffect, useMemo} from "react";
 
 /* Placeholders */
 // const TabHeader = () => <template></template>;

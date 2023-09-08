@@ -1,7 +1,8 @@
 import {useState, createContext, useContext} from "react";
 
 import {AccountContextProvider} from "./contexts/AccountContext.js";
-import {ColumnListContext, ColumnListManager} from "./contexts/ColumnListContext.js";
+import {ColumnListContext, ColumnListManager}
+  from "./contexts/ColumnContext.js";
 import {InterfaceHeader} from "./InterfaceHeader.js";
 import {InterfaceMain} from "./InterfaceMain.js";
 import {LoginPage, SignupPage, TutorialPage} from "./OverlayPages.js";

@@ -2,7 +2,7 @@ import {useState, createContext, useContext} from "react";
 
 import {SessionContext, AccountManagerContext}
   from "./contexts/AccountContext.js";
-import {ColumnsContext} from "./contexts/ColumnContext.js";
+import {ColumnListContext} from "./contexts/ColumnContext.js";
 
 
 
@@ -30,7 +30,7 @@ export const InterfaceHeader = ({setAppPage, setColNum}) => {
 };
 
 const SuperCoolLogoTBD = ({setAppPage, setColNum}) => {
-  const [columns, columnManager] = useContext(ColumnsContext);
+  const [columns, columnManager] = useContext(ColumnListContext);
 
   return (
     <span className="navbar-brand" onClick={() => {

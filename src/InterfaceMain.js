@@ -2,6 +2,9 @@ import {useState, createContext, useContext} from "react";
 
 import {ColumnListContext, ColumnContext} from "./contexts/ColumnContext.js";
 
+import {EntityPage} from "./EntityPages.js";
+
+
 export const InterfaceMain = () => {
   const [columns, columnManager] = useContext(ColumnListContext);
 
@@ -40,7 +43,7 @@ const AppColumn = ({colKey}) => {
     <div className="app-column">
       <ColumnButtonContainer colKey={colKey} />
       <ColumnContext.Provider value={columnEntID}>
-        <EntityPage entID={entID} />
+        <EntityPage entID={columnEntID} />
       </ColumnContext.Provider>
     </div>
   );
