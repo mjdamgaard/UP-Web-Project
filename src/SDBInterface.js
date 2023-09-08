@@ -18,7 +18,8 @@ export const SDBInterface = () => {
           setAppPage={setAppPage}
           isHidden={appPage !== "home"}
         />
-        <LoginPage
+        <LoginPage // Todo: Make sure that the LoginPage is refreshed when it is
+        // hidden.
           setAppPage={setAppPage}
           isHidden={appPage !== "login"}
         />

@@ -58,11 +58,11 @@ const ColumnButtonContainer = ({colKey}) => {
   return (
     <div>
       {/* <PinButton /> */}
-      <CloseButton colKey={colKey} />
+      <CloseColumnButton colKey={colKey} />
     </div>
   );
 };
-const CloseButton = ({colKey}) => {
+const CloseColumnButton = ({colKey}) => {
   const [, columnManager] = useContext(ColumnListContext);
 
   return (
