@@ -6,10 +6,10 @@ import {useState, createContext, useContext, useEffect} from "react";
 
 // tabDataArr: [tabTitle, jsxElement].
 
-export const PagesWithTabs = ({tabDataArr, defaultTab}) => {
-  const [activeTab, setActiveTab] = useState(defaultTab);
+export const PagesWithTabs = ({tabDataArr, initTab}) => {
+  const [activeTab, setActiveTab] = useState(initTab);
   const [isLoadedArr, setIsLoadedArr] = useState(tabDataArr.map(
-    val => val[0] === defaultTab
+    val => val[0] === initTab
   ));
   const tabsManager = useMemo(() => (
     new TabsManager(tabDataArr, setActiveTab, setIsLoadedArr)

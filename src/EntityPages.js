@@ -13,10 +13,19 @@ const FullEntityTitle = () => <template></template>;
 const EntityIDDisplay = () => <template></template>;
 const ContextDisplay = () => <template></template>;
 
+const EntityInfoPage = () => <template></template>;
+const EntityRatingsPage = () => <template></template>;
+const PropertyCategoryPage = () => <template></template>;
+const RelevantRatingsTypePage = () => <template></template>;
+const RelevantPropertiesTypePage = () => <template></template>;
+const SubmitEntityPage = () => <template></template>;
+const SubmitTemplatePage = () => <template></template>;
+const CategoryInstancesPage = () => <template></template>;
+const SubmitCategoryInstancePage = () => <template></template>;
 
 
 
-export const EntityPage = ({entID}) => {
+export const EntityPage = ({entID, initTab}) => {
   const [results, setResults] = useState([]);
   useQuery(setResults, 0, {
     req: "ent",
@@ -34,10 +43,14 @@ export const EntityPage = ({entID}) => {
       </div>
     );
   }
-  // Afterwards, extract the data from results[0], then do the full render.
-  const typeID = (result[0] ?? [])[0];
-  const cxtID = (result[0] ?? [])[1];
-  const defStr = (result[0] ?? [])[2];
+  // Afterwards, extract the needed data from results[0], then do a full render.
+  const [typeID, cxtID, defStr] = (result[0] ?? []);
+
+  // Construct the tabs on the EntityPage.
+  const [tabDataArr, defaultTab] = getTabDataArrAndDefaultTab(
+    entID, typeID, cxtID
+  );
+  initTab ??= defaultTab;
 
   return (
     <div className="entity-page">
@@ -47,79 +60,64 @@ export const EntityPage = ({entID}) => {
         <div><EntityIDDisplay entID={entID} /></div>
         <div><ContextDisplay cxtID={cxtID} /></div>
       </div>
-      <PagesWithTabs typeID={typeID} cxtID={cxtID} entID={entID} />
+      <PagesWithTabs tabDataArr={tabDataArr} initTab={initTab} />
     </div>
   );
 };
 
+function getTabDataArrAndDefaultTab(entID, typeID, cxtID) {
+  let tabDataArr = [
+    ["Info", <EntityInfoPage />],
+    ["Ratings", <EntityRatingsPage />],
+    ["Related to", <PropertyCategoryPage propID={42} />],
+  ];
+  let defaultTab;
+  
+  switch (typeID) {
+    case 1:
+      tabDataArr.push(
+        ["Relevant ratings", <RelevantRatingsTypePage />],
+        ["Relevant properties", <RelevantPropertiesTypePage />],
+        ["Templates", <PropertyCategoryPage propID={85} />],
+        ["Submit entity", <SubmitEntityPage />],
+      );
+      if (![1, 3, 4, 5, 7, 8].includes(entID)) {
+        tabDataArr.push(
+            ["Submit template", <SubmitTemplatePage />],
+        );
+      }
+      defaultTab = "Relevant ratings";
+      break;
+    case 2:
+      tabDataArr.push(
+        ["Subcategories", <PropertyCategoryPage propID={37} />],
+        ["Instances", <CategoryInstancesPage />],
+        ["Supercategories", <PropertyCategoryPage propID={47} />],
+        ["Submit instance", <SubmitCategoryInstancePage />],
+      );
+      defaultTab = "Subcategories";
+      break;
+    case 3:
+      tabDataArr.push(
+        ["Submit entity", <SubmitEntityPage />],
+      );
+      defaultTab = "Submit entity";
+      break;
+    default:
+      defaultTab = "Info";
+      break;
+  }
+  // TODO: Implement the following two tabs as well:
+  // tabDataArr.push(
+  //     ["Comments", <EntityCommentsPage />],
+  //     ["Discussions", <EntityDiscussionsPage />],
+  // );
 
-entityPageCL.addCallback(function($ci, data) {
-  if (data.cxtID) {
-    $ci.children('.CI.PagesWithTabs').trigger("load");
-    return;
-  };
-  let reqData = {
-      req: "ent",
-      id: data.entID,
-  };
-  let $this = $(this);
-  DBRequestManager.query($ci, reqData, data, function($ci, result, data) {
-    data.typeID = (result[0] ?? [])[0];
-    data.cxtID = (result[0] ?? [])[1];
-    data.defStr = (result[0] ?? [])[2];
-    data.tabDataArr = [
-        ["Info", "EntityInfoPage", {}],
-        ["Ratings", "EntityRatingsPage", {}],
-        ["Related to", "PropertyCategoryPage", {
-            propID: 42,
-        }],
-    ];
-    switch (data.typeID) {
-      case 1:
-          data.tabDataArr.push(
-              ["Relevant ratings", "RelevantRatingsTypePage"],
-              ["Relevant properties", "RelevantPropertiesTypePage"],
-              ["Templates", "PropertyCategoryPage", {propID: 85}],
-              ["Submit entity", "SubmitEntityPage"],
-          );
-          if (![1, 3, 4, 5, 7, 8].includes(data.entID)) {
-              data.tabDataArr.push(
-                  ["Submit template", "SubmitTemplatePage"],
-              );
-          }
-          data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
-              "Relevant ratings";
-          break;
-      case 2:
-          data.tabDataArr.push(
-              ["Subcategories", "PropertyCategoryPage", {propID: 37}],
-              ["Instances", "CategoryInstancesPage"],
-              ["Supercategories", "PropertyCategoryPage", {propID: 47}],
-              ["Submit instance", "SubmitCategoryInstancePage"],
-          );
-          data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
-              "Subcategories";
-          break;
-      case 3:
-          data.tabDataArr.push(
-              ["Submit entity", "SubmitEntityPage"],
-          );
-          data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
-              "Submit entity";
-          break;
-      default:
-          data.defaultTab = data.getFromAncestor("defaultTab", 1) ??
-              "Info";
-          break;
-    }
-    // TODO: Implement the following two tabs as well.
-    // data.tabDataArr.push(
-    //     ["Comments", "EntityCommentsPage", {}],
-    //     ["Discussions", "EntityDiscussionsPage", {}],
-    // );
-    $ci.children('.CI.PagesWithTabs').trigger("load");
-  });
-});
+  return [tabDataArr, defaultTab];
+}
+
+
+
 
 export var entIDDisplayCL = new ContentLoader(
   "EntityIDDisplay",
