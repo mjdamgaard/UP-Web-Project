@@ -1,9 +1,9 @@
 <?php
 
-$err_path = $_SERVER['DOCUMENT_ROOT'] . "/../php_src/err/";
+$err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/php/err/";
 require_once $err_path . "errors.php";
 
-$db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../php_src/db_io/";
+$db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/php/db_io/";
 require_once $db_io_path . "DBConnector.php";
 
 

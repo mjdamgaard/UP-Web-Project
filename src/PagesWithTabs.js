@@ -88,7 +88,7 @@ export const TabHeader = ({tabTitles, activeTab, isLoadedArr, tabsManager}) => {
 
   return (
     <div className="tab-header">
-      <ul class="nav nav-tabs">
+      <ul className="nav nav-tabs">
         {tabs}
       </ul>
     </div>

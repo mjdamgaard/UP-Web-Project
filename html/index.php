@@ -2,10 +2,10 @@
 
 header("Cache-Control: max-age=300");
 
-$err_path = $_SERVER['DOCUMENT_ROOT'] . "/../php_src/err/";
+$err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/php/err/";
 require_once $err_path . "errors.php";
 
-$user_input_path = $_SERVER['DOCUMENT_ROOT'] . "/../php_src/user_input/";
+$user_input_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/php/user_input/";
 require_once $user_input_path . "InputGetter.php";
 require_once $user_input_path . "InputValidator.php";
 
@@ -57,9 +57,6 @@ $entID = $paramValArr[0];
 </head>
 <body>
 
-<noscript>You need to enable JavaScript to run this app.</noscript>
-<div id="root"></div>
-<!--
 <main id="sdb-interface-app">
 </main>
 <script type="module">
@@ -84,7 +81,7 @@ $entID = $paramValArr[0];
         cl: sdbInterfaceCL.getRelatedCL("EntityPage"),
     };
     sdbInterfaceCL.loadAppended($('#sdb-interface-app'), "self", data);
-</script> -->
+</script>
 
 </body>
 </html>

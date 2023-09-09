@@ -48,7 +48,8 @@ export class DBRequestManager {
     // receiving the response from the server.
     this.ongoingQueries[reqDataKey] = [[setResults, ind]];
     // let thisDBRM = this;
-    $.getJSON("query_handler.php", encodedReqData, result => {
+    let url = "http://localhost:80/query_handler.php";
+    $.getJSON(url, encodedReqData, result => {
       // get and then delete the ongiong query queue.
       let ongoingQueries = this.ongoingQueries;
       let queryQueue = ongoingQueries[reqDataKey];
@@ -89,7 +90,8 @@ export class DBRequestManager {
   }
 
   static input(setResults, ind, reqData) {
-    $.post("input_handler.php", reqData, result => {
+    let url = "http://localhost:80/input_handler.php";
+    $.post(url, reqData, result => {
       setResults(prev => {
         let ret = [...prev];
         ret[ind] = result;

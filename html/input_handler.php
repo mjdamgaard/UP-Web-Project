@@ -1,18 +1,19 @@
 <?php
 
+header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Cache-Control: max-age=3");
 
-$err_path = $_SERVER['DOCUMENT_ROOT'] . "/../php_src/err/";
+$err_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/php/err/";
 require_once $err_path . "errors.php";
 
-$user_input_path = $_SERVER['DOCUMENT_ROOT'] . "/../php_src/user_input/";
+$user_input_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/php/user_input/";
 require_once $user_input_path . "InputGetter.php";
 require_once $user_input_path . "InputValidator.php";
 
-$db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../php_src/db_io/";
+$db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/php/db_io/";
 require_once $db_io_path . "DBConnector.php";
 
-$auth_path = $_SERVER['DOCUMENT_ROOT'] . "/../php_src/auth/";
+$auth_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/php/auth/";
 require_once $auth_path . "Authenticator.php";
 
 
