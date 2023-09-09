@@ -1,5 +1,4 @@
 import {useState, createContext, useContext} from "react";
-
 import {SessionContext, AccountManagerContext}
   from "./contexts/AccountContext.js";
 import {ColumnListContext} from "./contexts/ColumnContext.js";
@@ -30,11 +29,11 @@ export const InterfaceHeader = ({setAppPage, setColNum}) => {
 };
 
 const SuperCoolLogoTBD = ({setAppPage, setColNum}) => {
-  const [columns, columnManager] = useContext(ColumnListContext);
+  const [columns, columnListManager] = useContext(ColumnListContext);
 
   return (
     <span className="navbar-brand" onClick={() => {
-      columnManager.openColumn(columns.keys[columns.fst], 10, true);
+      columnListManager.openColumn(columns.keys[columns.fst], 10, true);
     }}>
       openSDB
     </span>

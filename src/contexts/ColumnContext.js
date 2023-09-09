@@ -75,3 +75,18 @@ export class ColumnListManager {
     }));
   }
 }
+
+
+export class ColumnManager {
+  constructor(columnListManager, colKey) {
+    this.columnListManager = columnListManager;
+    this.colKey = colKey;
+  }
+
+  openColumn = (newEntID, isToTheLeft) => {
+    this.columnListManager.openColumn(this.colKey, newEntID, isToTheLeft);
+  }
+  closeColumn = () => {
+    this.columnListManager.closeColumn(this.colKey);
+  }
+}

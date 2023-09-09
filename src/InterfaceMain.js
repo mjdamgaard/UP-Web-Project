@@ -1,12 +1,12 @@
 import {useState, createContext, useContext} from "react";
-
-import {ColumnListContext, ColumnContext} from "./contexts/ColumnContext.js";
+import {ColumnListContext, ColumnContext, ColumnManager}
+  from "./contexts/ColumnContext.js";
 
 import {EntityPage} from "./EntityPages.js";
 
 
 export const InterfaceMain = () => {
-  const [columns, columnManager] = useContext(ColumnListContext);
+  const [columns, columnListManager] = useContext(ColumnListContext);
 
   let fst = columns.fst;
   const appColumns = columns.keys.map((val, ind) => 
@@ -18,13 +18,17 @@ export const InterfaceMain = () => {
   );
   return (
     <div className="interface-main">
-      <div className="interface-margin" onClick={columnManager.cycleLeft}>
+      <div className="interface-margin" onClick={() => {
+        columnListManager.cycleLeft();
+      }}>
         <br/><span>&#10094;</span><br/>
       </div>
       <div className="column-container">
         {appColumns}
       </div>
-      <div className="interface-margin" onClick={columnManager.cycleRight}>
+      <div className="interface-margin" onClick={() => {
+        columnListManager.cycleRight();
+      }}>
         <br/><span>&#10095;</span><br/>
       </div>
     </div>
@@ -38,11 +42,16 @@ export const InterfaceMain = () => {
 
 
 const AppColumn = ({colKey}) => {
+  const [, columnListManager] = useContext(ColumnListContext);
+  const columnManager = useMemo(() => (
+    new ColumnManager(columnListManager, colKey)
+  ), [columnListManager, colKey]);
+
   const columnEntID = JSON.parse(colKey).entID;
   return (
     <div className="app-column">
       <ColumnButtonContainer colKey={colKey} />
-      <ColumnContext.Provider value={columnEntID}>
+      <ColumnContext.Provider value={[columnEntID, columnManager]}>
         <EntityPage entID={columnEntID} />
       </ColumnContext.Provider>
     </div>
@@ -66,11 +75,11 @@ const ColumnButtonContainer = ({colKey}) => {
   );
 };
 const CloseColumnButton = ({colKey}) => {
-  const [, columnManager] = useContext(ColumnListContext);
+  const [, columnListManager] = useContext(ColumnListContext);
 
   return (
     <button type="button" className="close" onClick={() => {
-      columnManager.closeColumn(colKey);
+      columnListManager.closeColumn(colKey);
     }}>
       <span>&times;</span>
     </button>

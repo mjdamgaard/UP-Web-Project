@@ -1,11 +1,13 @@
 import {useState, createContext, useContext, useEffect} from "react";
-
 import {useQuery} from "./DBRequests.js";
 // import {
 //   MaxRatingSetCombiner, SimpleSetGenerator,
 // } from "/src/SetGenerator.js";
 
 import {PagesWithTabs} from "./PagesWithTabs.js";
+import {
+  EntityID,
+} from "./EntityTitles.js";
 
 /* Placeholders */
 const EntityTitle = () => <template></template>;
@@ -43,6 +45,7 @@ export const EntityPage = ({entID, initTab}) => {
       </div>
     );
   }
+  
   // Afterwards, extract the needed data from results[0], then do a full render.
   const [typeID, cxtID, defStr] = (results[0][0] ?? []);
 
@@ -122,7 +125,7 @@ function getTabDataArrAndDefaultTab(entID, typeID, cxtID) {
 export const EntityIDDisplay = ({entID}) => {
   return (
     <span className="entity-id-display">
-      ID: #{entID}
+      ID: <EntityID entID={entID}/>
     </span>
   );
 };
