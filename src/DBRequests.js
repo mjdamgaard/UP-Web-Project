@@ -1,16 +1,16 @@
-import {useState, useEffect} from "react";
+import {useState, useEffect, useMemo} from "react";
 import $ from 'jquery';
 
 export const useQuery = (reqData, setResults, ind) => {
-  useEffect(() => {
+  useMemo(() => {
     DBRequestManager.query(reqData, setResults, ind);
   }, []);
 };
-export const useInput = (reqData, setResults, ind) => {
-  useEffect(() => {
-    DBRequestManager.input(reqData, setResults, ind);
-  }, []);
-};
+// export const useInput = (reqData, setResults, ind) => {
+//   useEffect(() => {
+//     DBRequestManager.input(reqData, setResults, ind);
+//   }, []);
+// };
 
 // (If it turns out that we'll need manual caching (for more than just
 // collapsed forwarding), I will just use a LRU library, e.g.
