@@ -139,9 +139,23 @@ export const TemplateInstance = ({tmplID, tmplChildren, isLinks, isCut}) => {
   let i = 0;
   return reducedCutAndSplitTmpl.map((val, ind) => (
     <span key={ind} style={{display: (isCut && ind % 2 === 0) ? "none" : ""}}>
-      {val.map(val => (
-        {...hm}
-      ))}
+      {val.map((val, ind) => {
+        if (ind === 0) {
+          return (
+            <span key={ind}>
+              {val}
+            </span>
+          );
+        } else {
+          let ret = (
+            <span key={ind}>
+              {tmplChildren[i]}{val}
+            </span>
+          );
+          i++;
+          return ret;
+        }
+      })}
     </span>
   ));
 };
