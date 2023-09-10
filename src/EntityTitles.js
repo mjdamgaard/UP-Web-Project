@@ -90,7 +90,13 @@ export const TemplateInstance = ({tmplID, tmplChildren, isLinks, isCut}) => {
   // Before results is fetched, render this:
   if (typeof results[0] === "undefined") {
     return (
-      <EntityTitlePlaceholder />
+      <span style={{display: "none"}}>
+        {tmplChildren.map((val, ind) => (
+          <span key={-ind - 1}>
+            {val}
+          </span>
+        ))}
+      </span>
     );
   }
 
