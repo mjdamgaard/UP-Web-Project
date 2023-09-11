@@ -113,7 +113,9 @@ button.close {
     background-color: #fff;
 }
 
-
+.clickable-text {
+    color: #007bff;
+}
 .clickable-text:hover {
     cursor: pointer;
     text-decoration: underline;

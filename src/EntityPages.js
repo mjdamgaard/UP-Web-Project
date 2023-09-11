@@ -6,12 +6,12 @@ import {useQuery} from "./DBRequests.js";
 
 import {PagesWithTabs} from "./PagesWithTabs.js";
 import {
-  EntityID,
+  EntityID, FullEntityTitle,
 } from "./EntityTitles.js";
 
 /* Placeholders */
 const EntityTitle = () => <template></template>;
-const FullEntityTitle = () => <template></template>;
+// const FullEntityTitle = () => <template></template>;
 // const EntityIDDisplay = () => <template></template>;
 const ContextDisplay = () => <template></template>;
 const EntityInfoPage = () => <template></template>;
@@ -40,7 +40,9 @@ export const EntityPage = ({entID, initTab}) => {
       <div className="entity-page">
         <div className="entity-page-header">
           <h2><EntityTitle entID={entID} /></h2>
-          <span className="full-title">Full title: <FullEntityTitle /></span>
+          <span className="full-title">
+            Full title: <FullEntityTitle entID={entID}/>
+          </span>
         </div>
       </div>
     );

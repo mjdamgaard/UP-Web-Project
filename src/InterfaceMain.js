@@ -1,4 +1,4 @@
-import {useState, createContext, useContext} from "react";
+import {useState, createContext, useContext, useMemo} from "react";
 import {ColumnListContext, ColumnContext, ColumnManager}
   from "./contexts/ColumnContext.js";
 
