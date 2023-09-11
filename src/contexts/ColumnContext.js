@@ -1,8 +1,28 @@
-import {createContext} from "react";
+import {createContext, useContext, useState, useMemo} from "react";
 
 export const ColumnContext = createContext();
 
 export const ColumnListContext = createContext();
+
+
+export const ColumnListContextProvider = ({initColKey, children}) => {
+  const [columns, setColumns] = useState({
+    keys: [initColKey],
+    fst: 0, // first visible column from the left.
+    num: 1, // number of visible columns on the screen.
+    focus: 0, // The column currently in focus. (TODO: Implement further.)
+  });
+
+  const columnListManager = useMemo(() => (
+    new ColumnListManager(columns, setColumns)
+  ), []);
+
+  return (
+    <ColumnListContext.Provider value={[columns, columnListManager]}>
+      {children}
+    </ColumnListContext.Provider>
+  );
+};
 
 export class ColumnListManager {
   constructor(columns, setColumns) {
@@ -76,6 +96,20 @@ export class ColumnListManager {
   }
 }
 
+export const ColumnContextProvider = ({colKey, children}) => {
+  const [, columnListManager] = useContext(ColumnListContext);
+
+  const columnManager = useMemo(() => (
+    new ColumnManager(columnListManager, colKey)
+  ), [columnListManager, colKey]);
+
+  const columnEntID = JSON.parse(colKey).entID;
+  return (
+    <ColumnContext.Provider value={[columnEntID, columnManager]}>
+      {children}
+    </ColumnContext.Provider>
+  );
+};
 
 export class ColumnManager {
   constructor(columnListManager, colKey) {

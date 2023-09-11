@@ -1,5 +1,5 @@
 import {useState, createContext, useContext, useMemo} from "react";
-import {ColumnListContext, ColumnContext, ColumnManager}
+import {ColumnListContext, ColumnContextProvider}
   from "./contexts/ColumnContext.js";
 
 import {EntityPage} from "./EntityPages.js";
@@ -42,18 +42,13 @@ export const InterfaceMain = () => {
 
 
 const AppColumn = ({colKey}) => {
-  const [, columnListManager] = useContext(ColumnListContext);
-  const columnManager = useMemo(() => (
-    new ColumnManager(columnListManager, colKey)
-  ), [columnListManager, colKey]);
-
   const columnEntID = JSON.parse(colKey).entID;
   return (
     <div className="app-column">
       <ColumnButtonContainer colKey={colKey} />
-      <ColumnContext.Provider value={[columnEntID, columnManager]}>
+      <ColumnContextProvider colKey={colKey}>
         <EntityPage entID={columnEntID} />
-      </ColumnContext.Provider>
+      </ColumnContextProvider>
     </div>
   );
 };

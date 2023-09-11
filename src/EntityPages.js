@@ -41,7 +41,7 @@ export const EntityPage = ({entID, initTab}) => {
         <div className="entity-page-header">
           <h2><EntityTitle entID={entID} /></h2>
           <span className="full-title">
-            Full title: <FullEntityTitle entID={entID}/>
+            Full title: <FullEntityTitle entID={entID} />
           </span>
         </div>
       </div>
@@ -61,7 +61,9 @@ export const EntityPage = ({entID, initTab}) => {
     <div className="entity-page">
       <div className="entity-page-header">
         <h2><EntityTitle entID={entID} /></h2>
-        <span className="full-title">Full title: <FullEntityTitle /></span>
+        <span className="full-title">
+          Full title: <FullEntityTitle entID={entID} />
+        </span>
         <div><EntityIDDisplay entID={entID} /></div>
         <div><ContextDisplay cxtID={cxtID} /></div>
       </div>

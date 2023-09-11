@@ -1,6 +1,6 @@
 import {useState, createContext, useContext, useMemo} from "react";
 import {AccountContextProvider} from "./contexts/AccountContext.js";
-import {ColumnListContext, ColumnListManager}
+import {ColumnListContextProvider, ColumnListManager}
   from "./contexts/ColumnContext.js";
 
 import {InterfaceHeader} from "./InterfaceHeader.js";
@@ -16,6 +16,7 @@ export const SDBInterface = () => {
     <AccountContextProvider> {/* yeilds: session, accountManager.*/}
       <div className="sdb-interface">
         <InterfacePage
+          initColKey={JSON.stringify({entID: 10, n: 0})}
           setAppPage={setAppPage}
           isHidden={appPage !== "home"}
         />
@@ -39,28 +40,15 @@ export const SDBInterface = () => {
 };
 
 
-const initColKey = JSON.stringify({entID: 10, n: 0});
-
-const InterfacePage = ({setAppPage, isHidden}) => {
-  const [columns, setColumns] = useState({
-    keys: [initColKey],
-    fst: 0, // first visible column from the left.
-    num: 1, // number of visible columns on the screen.
-    focus: 0, // The column currently in focus. (TODO: Implement further.)
-  });
-
-  const columnListManager = useMemo(() => (
-    new ColumnListManager(columns, setColumns)
-  ), []);
-
+const InterfacePage = ({initColKey, setAppPage, isHidden}) => {
   return (
-    <ColumnListContext.Provider value={[columns, columnListManager]}>
+    <ColumnListContextProvider initColKey={initColKey}>
       <div className="interface-page"
         style={{display: isHidden ? "none" : ""}}
       >
         <InterfaceHeader setAppPage={setAppPage} />
         <InterfaceMain />
       </div>
-    </ColumnListContext.Provider>
+    </ColumnListContextProvider>
   );
 };
