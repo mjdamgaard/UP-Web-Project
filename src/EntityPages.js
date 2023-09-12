@@ -29,13 +29,13 @@ const CategoryDisplay = () => <template></template>;
 
 export const EntityPage = ({entID, initTab}) => {
   const [results, setResults] = useState([]);
-  useQuery(setResults, {
+  useQuery(results, setResults, {
     req: "ent",
     id: entID,
   });
 
   // Before results is fetched, render this:
-  if (typeof results[0] === "undefined") {
+  if (!results.isFetched) {
     return (
       <div className="entity-page">
         <div className="entity-page-header">
@@ -49,7 +49,7 @@ export const EntityPage = ({entID, initTab}) => {
   }
   
   // Afterwards, extract the needed data from results[0], then do a full render.
-  const [typeID, cxtID, defStr] = (results[0][0] ?? []);
+  const [typeID, cxtID, defStr] = (results.data[0] ?? []);
 
   // Construct the tabs on the EntityPage.
   const [tabDataArr, defaultTab] = getTabDataArrAndDefaultTab(

@@ -9,20 +9,20 @@ export const EntityTitle = ({entID, isLink, recLevel, maxRecLevel}) => {
   maxRecLevel ??= 3;
 
   const [results, setResults] = useState([]);
-  useQuery(setResults, {
+  useQuery(results, setResults, {
     req: "ent",
     id: entID,
   });
 
   // Before results is fetched, render this:
-  if (typeof results[0] === "undefined") {
+  if (!results.isFetched) {
     return (
       <EntityTitlePlaceholder entID={entID} isLink={isLink} />
     );
   }
 
   // Afterwards, first extract the needed data from results[0].
-  const [typeID, cxtID, defStr] = (results[0][0] ?? []);
+  const [typeID, cxtID, defStr] = (results.data[0] ?? []);
 
   // If the entity is a template entity (typeID == 3) or if it has no context,
   // we only need to to render the defining string:
@@ -87,13 +87,13 @@ function getTemplateChildren(defStr, isLinks, recLevel, maxRecLevel) {
 
 export const TemplateInstance = ({tmplID, tmplChildren, isCut}) => {
   const [results, setResults] = useState([]);
-  useQuery(setResults, 0, {
+  useQuery(results, setResults, {
     req: "ent",
     id: tmplID,
   });
 
   // Before results is fetched, render this:
-  if (typeof results[0] === "undefined") {
+  if (!results.isFetched) {
     return (
       <span style={{display: "none"}}>
         {tmplChildren.map((val, ind) => (
@@ -106,7 +106,7 @@ export const TemplateInstance = ({tmplID, tmplChildren, isCut}) => {
   }
 
   // Afterwards, first extract the needed data from results[0].
-  const [, , tmplDefStr] = (results[0][0] ?? []);
+  const [, , tmplDefStr] = (results.data[0] ?? []);
 
   // Tranform the template into an array of arrays, first by "reducing" the
   // string by removing the unused template placeholder names, then by "cutting"
@@ -233,20 +233,20 @@ export const FullEntityTitle = ({entID, maxRecLevel}) => {
   maxRecLevel ??= 4;
 
   const [results, setResults] = useState([]);
-  useQuery(setResults, 0, {
+  useQuery(results, setResults, {
     req: "ent",
     id: entID,
   });
 
   // Before results is fetched, render this:
-  if (typeof results[0] === "undefined") {
+  if (!results.isFetched) {
     return (
       <EntityTitlePlaceholder entID={entID} />
     );
   }
 
   // Afterwards, first extract the needed data from results[0].
-  const [typeID, cxtID, defStr] = (results[0][0] ?? []);
+  const [typeID, cxtID, defStr] = (results.data[0] ?? []);
 
   // If the entity is a template entity (typeID == 3) or if it has no context,
   // we only need to to render the type followed by a separator followed by the
@@ -283,20 +283,20 @@ export const FullEntityTitle = ({entID, maxRecLevel}) => {
 
 export const ContextDisplay = ({entID}) => {
   const [results, setResults] = useState([]);
-  useQuery(setResults, 0, {
+  useQuery(results, setResults, {
     req: "ent",
     id: entID,
   });
 
   // Before results is fetched, render this:
-  if (typeof results[0] === "undefined") {
+  if (!results.isFetched) {
     return (
       <EntityTitlePlaceholder entID={entID} />
     );
   }
 
   // Afterwards, first extract the needed data from results[0].
-  const [typeID, cxtID, defStr] = (results[0][0] ?? []);
+  const [typeID, cxtID, defStr] = (results.data[0] ?? []);
 
   // If the type can have no context, return an empty context display.
   if (typeID == 1 || 4 <= typeID && typeID <= 8) {

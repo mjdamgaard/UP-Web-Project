@@ -13,27 +13,9 @@ export class SetGenerator {
     // To be redefined by descendant classes.
   }
 
-  // generateSet() queries and combines sets, then calls
-  // callback(obj, set, callbackData).
-  generateSet(obj, callbackData, callback) {
+  // getNewElements() queries and generates .
+  getNewElements(num) {
     // to be redefined by descendant classes.
-  }
-
-  // getSetCategoryKeys() returns an array of all category keys, which are
-  // either numeric IDs or JSON'ed {cxtID, defStr} objects, that are
-  // important to the formation of the set (which we can then show on the
-  // drop-down pages of the set elements).
-  getSetCategoryKeys() {
-    // To be redefined by descendant classes.
-  }
-
-  // getFilterSpecs() returns an array of filter specs (or null), which
-  // each consists of a category ID, threshold and a flag to denote either
-  // the interval below or above the threshold for which all set elements
-  // with a rating in that interval should collapse itself automatically (in
-  // a future version of this web app).
-  getFilterSpecs() {
-    // Can be redefined by descendant classes.
   }
 }
 

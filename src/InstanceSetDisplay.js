@@ -11,18 +11,18 @@ import {useQuery} from "./DBRequests.js";
 
 
 /* Placeholders */
-const CategoryDisplayHeader = () => <template></template>;
-const CategoryElementsContainer = () => <template></template>;
+const InstanceSetDisplayHeader = () => <template></template>;
+const InstanceSetContainer = () => <template></template>;
 
 
 
-const CategoryDisplay = ({catKeys, initOptions}) => {
-  initOptions ??= {};
-  const [options, setOptions] = useState({...initOptions});
+export const InstanceSetDisplay = ({catKeys, structure, filterOptions}) => {
+  filterOptions ??= {};
+  const [structure, setStructure] = useState({...structure});
+  const [filterOptions, setFilterOptions] = useState({...filterOptions});
   const [catData, setCatData] = useState([...catKeys]);
 
-  const [results, setResults] = useState([]);
-  useQuery(setResults, catKeys.map(val => {
+  const catIDsReqData = catKeys.map(val => {
     if (val.catID) {
       return false;
     } else {
@@ -33,7 +33,15 @@ const CategoryDisplay = ({catKeys, initOptions}) => {
         s: val.defStr,
       };
     }
-  }));
+  });
+
+  const [reqData, setReqData] = useState({
+    catIDs: catIDsReqData
+  });
+  const [results, setResults] = useState([]);
+  useQuery(results, setResults, reqData);
+
+
 
   const catIDsAreReady = catKeys.reduce((acc, val, ind) => {
     acc && (!!val.catID || typeof results[ind] !== "undefined")
@@ -43,10 +51,10 @@ const CategoryDisplay = ({catKeys, initOptions}) => {
   if (!catIDsAreReady) {
     return (
       <div className="category-display">
-        <CategoryDisplayHeader
+        <InstanceSetDisplayHeader
           catData={catData} options={options} setOptions={setOptions}
         />
-        <CategoryElementsContainer></CategoryElementsContainer>
+        <InstanceSetContainer></InstanceSetContainer>
       </div>
     );
   }
@@ -58,14 +66,17 @@ const CategoryDisplay = ({catKeys, initOptions}) => {
     return ret;
   }));
 
+  // Then brach according to options, before finally rendering the component.
+
+
   return (
     <div className="category-display">
-      <CategoryDisplayHeader
+      <InstanceSetDisplayHeader
         catData={catData} options={options} setOptions={setOptions}
       />
-      <CategoryElementsContainer>
+      <InstanceSetContainer>
         {elements}
-      </CategoryElementsContainer>
+      </InstanceSetContainer>
     </div>
   );
 };
