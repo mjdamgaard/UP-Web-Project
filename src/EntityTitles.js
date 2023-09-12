@@ -9,7 +9,7 @@ export const EntityTitle = ({entID, isLink, recLevel, maxRecLevel}) => {
   maxRecLevel ??= 3;
 
   const [results, setResults] = useState([]);
-  useQuery(setResults, 0, {
+  useQuery(setResults, {
     req: "ent",
     id: entID,
   });

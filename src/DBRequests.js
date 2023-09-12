@@ -1,9 +1,17 @@
 import {useState, useEffect, useMemo} from "react";
 import $ from 'jquery';
 
-export const useQuery = (reqData, setResults, ind) => {
+export const useQuery = (setResults, reqData) => {
   useMemo(() => {
-    DBRequestManager.query(reqData, setResults, ind);
+    if (Array.isArray(reqData)) {
+      reqData.map((val, ind) => {
+        if (val) {
+          DBRequestManager.query(setResults, ind, val);
+        }
+      });
+    } else {
+      DBRequestManager.query(setResults, 0, reqData);
+    }
   }, []);
 };
 // export const useInput = (reqData, setResults, ind) => {
