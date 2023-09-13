@@ -1,4 +1,5 @@
-import {useState, useEffect, useMemo} from "react";
+import {useState, useEffect, useMemo, useContext} from "react";
+import {AccountManagerContext} from "./contexts/AccountContext.js";
 import {useQuery} from "./DBRequests.js";
 
 
@@ -16,70 +17,276 @@ const InstanceSetContainer = () => <template></template>;
 
 
 
-export const InstanceSetDisplay = ({catKeys, structure, filterOptions}) => {
-  filterOptions ??= {};
-  const [structure, setStructure] = useState({...structure});
-  const [filterOptions, setFilterOptions] = useState({...filterOptions});
-  const [catData, setCatData] = useState([...catKeys]);
-
-  const catIDsReqData = catKeys.map(val => {
-    if (val.catID) {
-      return false;
-    } else {
-      return {
-        req: "entID",
-        t: 2,
-        c: val.cxtID,
-        s: val.defStr,
-      };
-    }
-  });
-
-  const [reqData, setReqData] = useState({
-    catIDs: catIDsReqData
-  });
-  const [results, setResults] = useState([]);
+export const InstanceSetDisplay = ({initStructure, initFilterOptions}) => {
+  initFilterOptions ??= {};
+  // const [structure, setStructure] = useState(
+  //   Object.assign({isFetching: false, isFetched: false}, initStructure)
+  // );
+  const [structure, setStructure] = useState({...initStructure});
+  const [filterOptions, setFilterOptions] = useState({...initFilterOptions});
+  const accountManager = useContext(AccountManagerContext);
+  const [reqData, setReqData] = useState({});
+  const [results, setResults] = useState({});
   useQuery(results, setResults, reqData);
 
+  updateStructureAndRequests(
+    structure, results, reqData, setReqData, accountManager
+  );
 
-
-  const catIDsAreReady = catKeys.reduce((acc, val, ind) => {
-    acc && (!!val.catID || typeof results[ind] !== "undefined")
-  }, true);
-
-  // Before results is fetched, render this:
-  if (!catIDsAreReady) {
+  // Before combined set is, render this:
+  if (!structure.set) {
     return (
       <div className="category-display">
         <InstanceSetDisplayHeader
-          catData={catData} options={options} setOptions={setOptions}
+          catData={catKeys} structure={structure} setStructure={setStructure}
+          filterOptions={filterOptions} setFilterOptions={setFilterOptions}
         />
-        <InstanceSetContainer></InstanceSetContainer>
+        <InstanceSetContainer set={null}/>
       </div>
     );
   }
-  
-  // Afterwards, first record the fetched catIDs in the catData state.
-  setCatData(prev => prev.map((val, ind) => {
-    let ret = val;
-    ret.catID ??= (results[ind][0] ?? [])[0];
-    return ret;
-  }));
 
-  // Then brach according to options, before finally rendering the component.
-
-
+  // And when it is ready, render the full component:
   return (
     <div className="category-display">
       <InstanceSetDisplayHeader
-        catData={catData} options={options} setOptions={setOptions}
+        catData={catKeys} structure={structure} setStructure={setStructure}
+        filterOptions={filterOptions} setFilterOptions={setFilterOptions}
       />
-      <InstanceSetContainer>
-        {elements}
-      </InstanceSetContainer>
+      <InstanceSetContainer set={structure.set} setStructure={setStructure} />
     </div>
   );
 };
+
+// In this implementation, we will only query for each set once, namely by
+// querying for the first 4000 (e.g.) elements at once and non other than
+// that. We can therefore make these queries right away. The "structure" of
+// the instance set then defines how these sets are combined and sorted.
+// TODO: Reimplement at some point so that InstanceSetDisplay can query for
+// more elements than the initial ones if the user requests it (e.g. by
+// scrolling past enough elements).
+// Oh, and in this implementation, we will only use the "simple" set
+// structures as the leaves of the combined structure tree, which each takes
+// one catID and queries that categoery with all users/bots in
+// accountManager.queryUserPriorityArr, then select the rating values of the
+// first user/bot in that array if it exists, and if not it selects that of
+// the next user/bot in the array, and so on.
+
+// Each node in the "structure" defining the instance set has at least a
+// "type" property and a "set" property, which has a falsy value if the set
+// is not yet ready. The outermost node (at least) also has a property
+// "isFetching" for when the leaf sets are queried for but has not arraived,
+// and a property "isFetched" for when they have arrived (but the "set" is
+// not necessarily ready yet).
+// The inner nodes of the structure tree also all have a "children" property.
+// The various node types might also have other proporties. For instance, the
+// "simple" nodes will have a "catID" property.
+
+function updateStructureAndRequests(
+  structure, results, reqData, setReqData, accountManager
+) {
+  // If the set is already ready, return true.
+  if (structure.set) {
+    return true;
+  }
+
+  // Else switch-case the node type and update the results and reqData when
+  // possible. By using setReqData for the latter, it means that the queries
+  // will be forwarded in the useQuery() call above, and when they return,
+  // updateStructureAndRequests() will be called again to make further updates. 
+  switch (structure.type) {
+    case "simple":
+      if (typeof structure.catID === "undefined") {
+        let catKey = structure.catKey;
+        let data = {
+          req: "entID",
+          t: 2,
+          c: catKey.cxtID,
+          s: catKey.defStr,
+        };
+        let key = JSON.stringify(data);
+
+        // Look in reqData to see if the catID is already being fetched, and
+        // if not, initiate the fetching by updating reqData.
+        if (!reqData[key]) {
+          setReqData(prev => {
+            let ret = {...prev};
+            ret[key] = data;
+            return ret;
+          });
+        }
+      } else {
+        accountManager.queryUserPriorityArr.forEach(userID => {
+          let data = {
+            req: "set",
+            u: userID,
+            c: structure.catID,
+            rl: 0,
+            rh: 0,
+            n: 4000,
+            o: 0,
+            a: 0,
+          };
+          let key = JSON.stringify(data);
+
+          // Look in reqData to see if this set is already being fetched, and
+          // if not, initiate the fetching by updating reqData.
+          if (!reqData[key]) {
+            setReqData(prev => {
+              let ret = {...prev};
+              ret[key] = data;
+              return ret;
+            });
+
+          // Else, since the structure.set is not ready yet, look up to see
+          // if ...
+          }
+        });
+      }
+      break;
+    default:
+      throw "updateSetStructure(): unrecognized node type."
+  }
+}
+
+
+  // const catIDsReqData = useMemo(() => catKeys.map(val => {
+  //   if (val.catID) {
+  //     return false;
+  //   } else {
+  //     return {
+  //       req: "entID",
+  //       t: 2,
+  //       c: val.cxtID,
+  //       s: val.defStr,
+  //     };
+  //   }
+  // }));
+
+  // const [reqData, setReqData] = useState({
+  //   catIDs: catIDsReqData
+  // });
+  // const [results, setResults] = useState({
+  //   catIDs: catIDsReqData.map(val => (
+  //     val ? {data: null, isFetched: false} : undefined
+  //   ))
+  // });
+  // useQuery(results, setResults, reqData);
+
+
+  // const catIDsAreReady = results.catIDs.reduce((acc, val, ind) => {
+  //   acc && (val.isFetched || !catIDsReqData[ind])
+  // }, true);
+
+  // const initialHTML = (
+  //   <div className="category-display">
+  //     <InstanceSetDisplayHeader
+  //       catData={catKeys} structure={structure} setStructure={setStructure}
+  //       filterOptions={filterOptions} setFilterOptions={setFilterOptions}
+  //     />
+  //     <InstanceSetContainer set={null}/>
+  //   </div>
+  // );
+  // // Before results is fetched, render this:
+  // if (!catIDsAreReady) {
+  //   return (
+  //     <>
+  //       {initialHTML}
+  //     </>
+  //   );
+  // }
+  
+  // // Afterwards, first record the fetched catIDs in the catData state.
+  // const catData = catKeys.map((val, ind) => {
+  //   let ret = val;
+  //   ret.catID ??= (results.catIDs[ind].data[0] ?? [])[0];
+  //   return ret;
+  // });
+
+  // // In this implementation, we will only query for each set once, namely by
+  // // querying for the first 4000 (e.g.) elements at once and non other than
+  // // that. We can therefore make these queries right away. The "structure" of
+  // // the instance set then defines how these sets are combined and sorted.
+  // // TODO: Reimplement at some point so that InstanceSetDisplay can query for
+  // // more elements than the initial ones if the user requests it (e.g. by
+  // // scrolling past enough elements).
+  // // Oh, and in this implementation, we will only use the "simple" set
+  // // structures as the leaves of the combined structure tree, which each takes
+  // // one catID and queries that categoery with all users/bots in
+  // // accountManager.queryUserPriorityArr, then select the rating values of the
+  // // first user/bot in that array if it exists, and if not it selects that of
+  // // the next user/bot in the array, and so on.
+
+  // // Each node in the "structure" defining the instance set has at least a
+  // // "type" property and a "set" property, which has a falsy value if the set
+  // // is not yet ready. The outermost node (at least) also has a property
+  // // "isFetching" for when the leaf sets are queried for but has not arraived,
+  // // and a property "isFetched" for when they have arrived (but the "set" is
+  // // not necessarily ready yet).
+  // // The inner nodes of the structure tree also all have a "children" property.
+  // // The various node types might also have other proporties. For instance, the
+  // // "simple" nodes will have a "catID" property.
+
+  // // When the combined set is finally ready, render the full component:
+  // if (structure.set) {
+  //   return (
+  //     <div className="category-display">
+  //       <InstanceSetDisplayHeader
+  //           catData={catKeys} structure={structure} setStructure={setStructure}
+  //           filterOptions={filterOptions} setFilterOptions={setFilterOptions}
+  //       />
+  //       <InstanceSetContainer set={structure.set} setStructure={setStructure} />
+  //     </div>
+  //   );
+  // }
+
+
+
+  // // But before that, we should first see if the leaf sets are already fetched,
+  // // and if so, we should compute the comined set. 
+  // if (structure.isFetched) {
+  //   computeCombinedSet(structure, setStructure);
+
+  //   return (
+  //     <>
+  //       {initialHTML}
+  //     </>
+  //   );
+  // }
+
+  // // And before the leaf sets are fetched, we should check that they are not
+  // // not already being fetched, and if not, we should query for them.
+  // if (!structure.isFetching) {
+  //   structure.isFetching = true;
+  //   queryForAllLeafSets(structure, setStructure, setReqData);
+  //   setStructure(prev => {
+  //     let ret = {...prev};
+  //     ret.isFetching = true;
+  //     return ret;
+  //   }); // This statement should be redundant here, but it won't be if the
+  //   // component should change when the leaf sets are being fethed. 
+  // }
+
+  // return (
+  //   <>
+  //     {initialHTML}
+  //   </>
+  // );
+// };
+
+
+// function queryForAllLeafSets(structure, setStructure, setReqData) {
+//   if (structure.type === "simple") {
+
+//   }
+// }
+
+
+// function computeCombinedSet(structure, setStructure) {
+
+// }
+
+
 
 export var setDisplayCL = new ContentLoader(
   "SetDisplay",

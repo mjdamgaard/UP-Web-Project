@@ -18,7 +18,7 @@ export const useQuery = (results, setResults, reqData) => {
           }
         } else if (Array.isArray(data)) {
           results[key] ??= [];
-          data.map((val, ind) => {
+          data.forEach((val, ind) => {
             results[key][ind] ??= [];
             if (val && !results[key][ind].isFetched) {
               DBRequestManager.query(setResults, key, ind, val);
