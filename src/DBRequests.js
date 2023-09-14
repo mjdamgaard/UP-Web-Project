@@ -12,15 +12,13 @@ export const useQuery = (results, setResults, reqData) => {
       keys.forEach(key => {
         let data = reqData[key];
         if (data.req) {
-          results[key] ??= {}; // (Here we break a rule in a non-harmful way.)
-          if (!results[key].isFetched) {
+          if (!(results[key] ?? {}).isFetched) {
             DBRequestManager.query(setResults, key, data);
           }
         } else if (Array.isArray(data)) {
           results[key] ??= [];
           data.forEach((val, ind) => {
-            results[key][ind] ??= [];
-            if (val && !results[key][ind].isFetched) {
+            if (val && !(results[key][ind] ?? {}).isFetched) {
               DBRequestManager.query(setResults, key, ind, val);
             }
           });
@@ -128,9 +126,9 @@ export class DBRequestManager {
         let setResults = queryQueue[i][0];
         let key = queryQueue[i][1];
         let ind = queryQueue[i][2];
-        if (typeof key === "undefined") {
+        if (key === undefined) {
           setResults({data: result, isFetched: true});
-        } else if (typeof ind === "undefined") {
+        } else if (ind === undefined) {
           setResults(prev => {
             let ret = {...prev};
             ret[key] = {data: result, isFetched: true};
