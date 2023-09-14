@@ -20,7 +20,7 @@ export const InstanceSetDisplay = ({initStructure, initFilterOptions}) => {
   useQuery(results, setResults, reqData);
 
   updateStructureAndRequests(
-    structure, setStructure, results, reqData, setReqData, accountManager
+    structure, setStructure, results, setReqData, accountManager
   );
 
   // Before combined set is, render this:
@@ -73,7 +73,7 @@ export const InstanceSetDisplay = ({initStructure, initFilterOptions}) => {
 // "simple" nodes will have a "catID" property.
 
 function updateStructureAndRequests(
-  structure, setStructure, results, reqData, setReqData, accountManager
+  structure, setStructure, results, setReqData, accountManager
 ) {
   // If the set is already ready, return true.
   if (structure.set) {
@@ -86,92 +86,141 @@ function updateStructureAndRequests(
   // updateStructureAndRequests() will be called again to make further updates. 
   switch (structure.type) {
     case "simple":
-      let userArr = accountManager.queryUserPriorityArr;
-      structure.setArr ??= userArr.map(val => false);
-      if (!structure.setArr) {
-        setStructure(prev => {
-          let ret = {...prev};
-          ret[key] = data;
-          return ret;
-        });
-      }
-      
-      // If the sets are already ready, combine them with the combineByPriority
-      // procedure, then return true.
-      if (structure.setArr.reduce((acc, val) => acc && val, true)) {
-        structure.set = combineByPriority(structure.setArr);
-        return true;
-      }
-
-      // Else if we already have the catID, start fetching the sets if they
-      // are not already ready, or if they are already being fetched.
-      // if (typeof structure.catID !== "undefined") {
-      //   if (!structure.catID) {
-      //     structure.set ??= [];
-      //     return true;
-      //   }
-      if (structure.catID) {
-        if (!structure.isFetching) {
-          accountManager.queryUserPriorityArr.forEach((userID, ind) => {
-            if (!structure.isReadyArr[ind]) {
-              let data = {
-                req: "set",
-                u: userID,
-                c: structure.catID,
-                rl: 0,
-                rh: 0,
-                n: 4000,
-                o: 0,
-                a: 0,
-              };
-              let key = JSON.stringify(data);
-              structure.isFetching = true;
-              setReqData(prev => {
-                let ret = {...prev};
-                ret[key] = data;
-                return ret;
-              });
-            }
-          });
-        }
-      
-      } else {
-        let catKey = structure.catKey;
-        let data = {
-          req: "entID",
-          t: 2,
-          c: catKey.cxtID,
-          s: catKey.defStr,
-        };
-        let key = JSON.stringify(catKey);
-
-        // Look in reqData to see if the catID is already being fetched, and
-        // if not, initiate the fetching by updating reqData.
-        if (!reqData[key]) {
-          setReqData(prev => {
-            let ret = {...prev};
-            ret[key] = data;
-            return ret;
-          });
-        }
-
-        // Look in results to see if the catID is arrived, and break the case
-        // statement if and only if not.
-        if (results[key].isFetched) {
-          structure.catID = (results[key].data[0] ?? [])[0];
-        } else {
-          break;
-        }
-      }
-
+      let userIDArr = accountManager.queryUserPriorityArr;
+      querySetsForAllUsersThenCombine(
+        structure, setStructure, results, setReqData, userIDArr,
+        combineByPriority
+      )
       
       break;
+    // For combinator types, I now intend to make the recursive calls (to
+    // updateStructureAndRequests()) work by redefining setStructure for each
+    // recursive call.:)
     default:
       throw "updateSetStructure(): unrecognized node type."
   }
 }
 
 
+function querySetsForAllUsersThenCombine(
+  structure, setStructure, results, setReqData, userIDArr, combineProcedure
+) {      
+  // If the sets are already ready, combine them with the combineByPriority
+  // procedure, then return true.
+  if (structure.setArr) {
+    setStructure(prev => {
+      let ret = {...prev};
+      ret.set = combineProcedure(structure.setArr);
+      return ret;
+    });
+    return true;
+  }
+
+  // Else if we already have the catID, start fetching the sets if they
+  // are not already ready, or if they are already being fetched.
+  // if (typeof structure.catID !== "undefined") {
+  //   if (!structure.catID) {
+  //     structure.set ??= [];
+  //     return true;
+  //   }
+  let catID = structure.catID;
+  if (catID) {
+    if (!structure.isFetching) {
+      setStructure(prev => {
+        let ret = {...prev};
+        ret.isFetching = true;
+        return ret;
+      });
+      userIDArr.forEach((userID, ind) => {
+        let data = {
+          req: "set",
+          u: userID,
+          c: catID,
+          rl: 0,
+          rh: 0,
+          n: 4000,
+          o: 0,
+          a: 0,
+        };
+        let key = JSON.stringify(["set", userID, catID]);
+        setReqData(prev => {
+          let ret = {...prev};
+          ret[key] = data;
+          return ret;
+        });
+      });
+    } else {
+      // If the sets have all arrived, set structure.setArr (which will
+      // then finally be combined by combineProcedure()). Else do nothing
+      // yet.
+      let isFetched = userIDArr.reduce((acc, val) => {
+        let key = JSON.stringify(["set", val, catID]);
+        return acc && (results[key] ?? {}).isFetched;
+      }, true);
+      if (isFetched) {
+        setStructure(prev => {
+          let ret = {...prev};
+          ret.setArr = userIDArr.map(val => {
+            let key = JSON.stringify(["set", val, catID]);
+            return results[key].data;
+          });
+          ret.isFetching = false;
+          return ret;
+        });
+      }
+    }
+
+  // If we don't yet have catID to begin with, see if it is already being
+  // fetched, or else fetch it.
+  } else if (catID === undefined) {
+    let catKey = structure.catKey;
+    let key = JSON.stringify(catKey);
+    if (!structure.isFetching) {
+      setStructure(prev => {
+        let ret = {...prev};
+        ret.isFetching = true;
+        return ret;
+      });
+      let data = {
+        req: "entID",
+        t: 2,
+        c: catKey.cxtID,
+        s: catKey.defStr,
+      };
+      setReqData(prev => {
+        let ret = {...prev};
+        ret[key] = data;
+        return ret;
+      });
+    } else {
+      if ((results[key] ?? {}).isFetched) {
+        setStructure(prev => {
+          let ret = {...prev};
+          ret.catID = (results[key].data[0] ?? [false])[0];
+          // (structure.catID will be false if it couldn't be found.)
+          ret.isFetching = false;
+          return ret;
+        });
+      }
+    }
+
+  // And finally, if catID is defined but falsy, it means that it doesn't
+  // exist (for the given catKey), in which case we should let setArr =
+  // [[], [], ...].
+  } else {
+    setStructure(prev => {
+      let ret = {...prev};
+      ret.setArr = userIDArr.map(() => []);
+      ret.isFetching = false;
+      return ret;
+    });
+  }
+}
+
+
+function combineByPriority(setArr) {
+
+}
 
 
 
