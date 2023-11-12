@@ -1,5 +1,7 @@
 # openSDB
-*Status: A prototype is now live at www.opensdb.com!*
+
+*Status: A prototype is live now at www.opensdb.com, but it* is *a very basic and crude one. One will probably only find it interesting if one is already quite interested in my semantic backend.*
+*I am currently in the process of transforming the source code into REACT, which is going on, not in the master fork, but in a different one.*
 
 
 ## Introduction to the project
