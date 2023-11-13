@@ -23,6 +23,10 @@ So how about system that allows the users to rate each tag on a scale so that ea
 
 This project believes that there is a giant possibility here for improving user experience and utility of websites.
 
-### Some more examples 
+### A few more examples that illustrate the idea
 
-...
+To give some other examples, imagine that you are looking for an article about a subject, and you want to find one that is both very educational and also somewhat entertaining. Then you could take those two tags, 'educational' and 'entertaining' and combine it with an overall rating of how 'liked' the resource is. And by giving a lot of weight (adjusted by some slider) to the 'educational' rating, and a little weight as well to the 'entertaining' rating, you get get these kinds of resources listed first in the search feed.
+
+For each resource in such a search feed, you can then also immediately see the score for each of the tags used in your search, such that you can pick out the one that matches your preferences best.
+
+Another example could be searching for products or services to buy or subscribe to. ...
