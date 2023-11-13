@@ -93,8 +93,7 @@ first in the list.
 
 The fact that creating and using these predicates are completely in the hands
 of the users, and that they can thus use any predicates they want, opens up
-countless possibilities. But let us try to think of a few examples of what it
-could be used for. We already have the one about movies that are scary, funny,
+countless possibilities. But let us try to think of a few examples. We already have the one about movies that are scary, funny,
 and/or wholesome. To add to this example, one could also imagine using
 more detailed predicates like: how much the movie deals with a certain theme,
 how good the acting in it is, how well the plot or the dialog is written, how
@@ -108,7 +107,7 @@ and also potentially predicates concerning manufacturing such as if this is
 environment-friendly, if there is child labor involved or not, if workers are
 paid a fair portion of the money made, and so on.
 
-[^1]: It is worth to note that this is actually one example of a predicate that
+[^1]: This is actually an example of a predicate that
 can be considered as factual (and not a matter of opinion), but where it is
 nonetheless still useful that users can submit their rating on a scale, instead
 of only being able to submit if they think the product is durable or not.
