@@ -1,4 +1,4 @@
-# openSDB
+# Semantic Database Project
 
 *My other README introduction is way too long and nerdy. So I'm in the process of writing this one, which ought to be more like a short pitch of the idea.*
 *(I also have to shorten the long version as well.)*
@@ -6,7 +6,7 @@
 
 ### Short description
 
-This project wants to create a website—and a browser extension—where users can rate all kinds of resources according to arbitrary predicates!
+This project wants to create a website—and a browser extension—where users can rate all kinds of resources (movies, videos, books, products, you name it!) according to arbitrary predicates!
 
 
 ### The existing technology 

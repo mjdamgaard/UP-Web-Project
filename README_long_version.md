@@ -5,6 +5,8 @@
 
 *I am currently in the process of transforming the source code into REACT, which is going on, not in the master fork, but in a different one.*
 
+*I am also considering renaming the project to the Semantic Database Project or the Semantic Network Project instead, by the way.*
+
 
 ## Introduction to the project
 
