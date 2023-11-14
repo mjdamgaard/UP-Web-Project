@@ -414,7 +414,7 @@ and it will hopefully help attract more contributors to the project, including
 content creators as well as open-source programmers and front-end designers.
 
 
-
+<!-- 
 ## Conclusion
 
 openSDB hopes to be a pioneer in an open-source project to create what is a
@@ -437,11 +437,14 @@ any similar closed-source project, since it means security that the providers
 of the service will not be able to turn their back to the community when they
 eye an opportunity to make more money at the cost of its users.
 
-So there is plenty of reasons to be excited and wanting to support and take part
-in this project. First of all simply for the thrill of it, but also because
-having been an early contributor will be valuable in terms of PR (for sponsors)
-or in terms of recognition (for individual contributors).
-And in the case of individual contributors, if the project really takes off and
-people start donating via the mentioned user-to-user donating system, it might
-also pay to have been part of the early contributors that made the project take
-off.
+  <!-- So there is plenty of reasons to be excited and wanting to support and take part
+  in this project. First of all simply for the thrill of it, but also because
+  having been an early contributor will be valuable in terms of PR (for sponsors)
+  or in terms of recognition (for individual contributors).
+  And in the case of individual contributors, if the project really takes off and
+  people start donating via the mentioned user-to-user donating system, it might
+  also pay to have been part of the early contributors that made the project take
+  off. -->
+<!--
+
+So there might be plenty of reasons to be excited about this project—so I hope! -->

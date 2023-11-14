@@ -4,7 +4,7 @@
 *(I also have to shorten the long version as well.)*
  -->
 
- *There is a longer version of this introduction as well in the other [README document](https://github.com/mjdamgaard/openSDB/blob/main/README_long_version.md). It's a harder read, but it has some additional points as well.*
+ *There is also a longer version of this introduction as well in the other [README document](https://github.com/mjdamgaard/openSDB/blob/main/README_long_version.md). It mostly repeats the points below, but it mentions some additional points as well.*
 
 ## Semantic ratings
 
