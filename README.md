@@ -1,8 +1,10 @@
 # Semantic Network Project
-
+<!-- 
 *My other README introduction is way too long and nerdy. So I'm in the process of writing this one, which ought to be way shorter.*
 *(I also have to shorten the long version as well.)*
+ -->
 
+ *There is a longer version of this introduction as well in the other [README document](https://github.com/mjdamgaard/openSDB/blob/main/README_long_version.md). It's a harder read, but it has some additional points as well.*
 
 ## Semantic ratings
 
