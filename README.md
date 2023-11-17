@@ -52,14 +52,18 @@ To give another example, imagine that you are looking for an article about a sub
 For each resource in such a search feed, you can then see the score for each of the given tags that you used in your search, as well as your other favorite tags. -->
 
 
+<!-- ### Advanced searches
+
+To elaborate on how the ratable tags can be used for advanced searches, .. Hm, maybe this is not important enough for this readme.. ..I considered mentioning that the advanced searches could both consist of determining weights (like my educational--entertaining example above) and also on determining ranges (like my scary-movie example). -->
+
 
 ## A Semantic Network
 
 ### User-to-user ratings and user groupings.
 
-Apart from resources, the users can also rate themselves and each other. This further allows for the possibility to group users according to e.g. interests, opinions, reputation, activity, and so on.
+Apart from resources, the users can also rate themselves and each other. This further allows for the possibility that users can be grouped according to e.g. interests, opinions, reputation, activity, and so on.
 
-This will make users able to further refine their searches and their feeds by adjusting the weights, not just for the various tags, but also for the various user groups as well.
+This will make users able to further refine their searches and their feeds by adjusting what weight is given, not just to the various tags used in the search, but also to the various *user groups* as well.
 
 This allows users to find out what groups they tend to agree with in certain matters, and then boost the opinions of those groups! This will then affect all the ratings that they see on the site, and it will also affect their search results and their feeds!
 
