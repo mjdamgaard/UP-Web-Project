@@ -37,9 +37,9 @@ So how about system that allows the users to rate each tag on a scale!?
 This would mean that the users could easily get a **quick overview** of all the qualities that they are interested in for each resource that they browse.
 
 And it would furthermore make it possible to create **advanced searches** where users can search for *exactly* the qualities that they want in the type of resource that they are after!
-(The importance of this point cannot be understated: Searching for things is such a big part of how we use the web, and if this project can better that experience, it could affect millions and millions of people.)
+(The importance of this point cannot be overstated: Searching for things is such a big part of how we use the web, and if this project can better that experience, it could affect millions and millions of people.)
 
-It also makes it way easier an quicker for each user to **express their opinions** about resources with a high degree of nuance. Instead of spending several minutes writing a comment or a review that then just becomes the 10,000th one in a list, they would be able to quickly submit scores for the various rating that are relevant to them. And after having done so, they will know that their contributions will benefit *all* the other users that browses the same resource, and not just the couple of users that make it down to the 10,000th comment.
+It also makes it way easier an quicker for each user to **express their opinions** about resources with a high degree of nuance. Instead of spending several minutes writing a comment or a review that then just becomes the 10,000th one in a list, as is often the case, they would be able to quickly submit scores for the various rating that are relevant to them. And after having done so, they will know that their contributions will benefit *all* the other users that browse or search for the same kind of resource, and not just the couple of users that make it down to that 10,000th comment.
 
 This project believes that there is a giant possibility here for improving user experience and utility of the web!
 
