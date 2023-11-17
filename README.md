@@ -14,8 +14,7 @@
 
 This project wants to create
 a website—and a browser extension—where
-<!-- user network..  -->
-users can rate all kinds of resources (movies, videos, books, products, you name it!) according to arbitrary predicates.
+users can rate all kinds of resources (movies, videos, books, products, you name it!) according to arbitrary predicates!
 
 
 ### Existing technology 
