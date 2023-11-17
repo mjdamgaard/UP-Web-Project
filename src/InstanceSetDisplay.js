@@ -2,36 +2,47 @@ import {useState, useEffect, useMemo, useContext} from "react";
 import {AccountManagerContext} from "./contexts/AccountContext.js";
 import {useQuery} from "./DBRequests.js";
 
+import {InstanceSetContainer} from "./InstanceSetContainer.js";
+import {GeneralEntityElement} from "./EntityElements.js";
 
 
 /* Placeholders */
 const InstanceSetDisplayHeader = () => <template></template>;
-const InstanceSetContainer = () => <template></template>;
+// const InstanceSetContainer = () => <template></template>;
 
 
 
-export const InstanceSetDisplay = ({initStructure, initFilterOptions}) => {
+export const InstanceSetDisplay = ({
+  initStructure, ElemComponent, initFilterOptions
+}) => {
+  ElemComponent ??= GeneralEntityElement;
   initFilterOptions ??= {};
   const [structure, setStructure] = useState({...initStructure});
   const [filterOptions, setFilterOptions] = useState({...initFilterOptions});
   const accountManager = useContext(AccountManagerContext);
   const [reqData, setReqData] = useState({});
   const [results, setResults] = useState({});
+
+  // If reqData changes, fire off the relevant queries to the database.
   useQuery(results, setResults, reqData);
 
+  // Look as results (query results), make new requests if necessary (by
+  // updating reqData), and finally obtain the set of elements (recorded in
+  // structure.set). 
   updateStructureAndRequests(
     structure, setStructure, results, setReqData, accountManager
   );
 
-  // Before combined set is, render this:
+  // Before combined set is ready, render this:
   if (!structure.set) {
     return (
       <div className="set-display">
         <InstanceSetDisplayHeader
-          catData={catKeys} structure={structure} setStructure={setStructure}
+          // catData={catKeys}
+          structure={structure} setStructure={setStructure}
           filterOptions={filterOptions} setFilterOptions={setFilterOptions}
         />
-        <InstanceSetContainer set={null}/>
+        <InstanceSetContainer set={null} ElemComponent={ElemComponent} />
       </div>
     );
   }
@@ -40,13 +51,19 @@ export const InstanceSetDisplay = ({initStructure, initFilterOptions}) => {
   return (
     <div className="set-display">
       <InstanceSetDisplayHeader
-        catData={catKeys} structure={structure} setStructure={setStructure}
+        // catData={catKeys}
+        structure={structure} setStructure={setStructure}
+        ElemComponent={ElemComponent}
         filterOptions={filterOptions} setFilterOptions={setFilterOptions}
       />
-      <InstanceSetContainer set={structure.set} setStructure={setStructure} />
+      <InstanceSetContainer
+        set={structure.set} setStructure={setStructure}
+        ElemComponent={ElemComponent}
+      />
     </div>
   );
 };
+
 
 // In this implementation, we will only query for each set once, namely by
 // querying for the first 4000 (e.g.) elements at once and non other than
@@ -57,20 +74,20 @@ export const InstanceSetDisplay = ({initStructure, initFilterOptions}) => {
 // scrolling past enough elements).
 // Oh, and in this implementation, we will only use the "simple" set
 // structures as the leaves of the combined structure tree, which each takes
-// one catID and queries that categoery with all users/bots in
-// accountManager.queryUserPriorityArr, then select the rating values of the
-// first user/bot in that array if it exists, and if not it selects that of
+// one catID and queries that category with all users/bots in
+// accountManager.queryUserPriorityArr, then selects the rating values of the
+// first user/bot in that array if it exists, and if not, it selects that of
 // the next user/bot in the array, and so on.
 
 // Each node in the "structure" defining the instance set has at least a
 // "type" property and a "set" property, which has a falsy value if the set
 // is not yet ready. The nodes might also have a property "isFetching" for
-// when the leaf sets are queried for but has not arraived, and a property
+// when the leaf sets are queried for but has not arrived, and a property
 // "isFetched" for when they have arrived (but the "set" is not necessarily
 // ready yet).
 // The inner nodes of the structure tree also all have a "children" property.
-// The various node types might also have other proporties. For instance, the
-// "simple" nodes will have a "catID" property.
+// The various node types might also have other properties. For instance, the
+// "simple" nodes will have either a catID or a "catKey" property.
 
 function updateStructureAndRequests(
   structure, setStructure, results, setReqData, accountManager
@@ -118,7 +135,7 @@ function querySetsForAllUsersThenCombine(
   }
 
   // Else if we already have the catID, start fetching the sets if they
-  // are not already ready, or if they are already being fetched.
+  // have not already been fetched, or is in the process of being fetched.
   let catID = structure.catID;
   if (catID) {
     if (!structure.isFetching) {
@@ -127,7 +144,7 @@ function querySetsForAllUsersThenCombine(
         ret.isFetching = true;
         return ret;
       });
-      userIDArr.forEach((userID, ind) => {
+      userIDArr.forEach((userID) => {
         let data = {
           req: "set",
           u: userID,

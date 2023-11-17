@@ -17,13 +17,13 @@ export const PagesWithTabs = ({tabDataArr, initTab}) => {
 
   const tabTitles = tabDataArr.map(val => val[0]);
 
-  const pages = tabDataArr.map((val, ind) => {
+  const pages = tabDataArr.map((val, ind) => (
     <div key={val[0]}
       style={{display: val[0] === activeTab ? "" : "none"}}
     >
       {isLoadedArr[ind] ? val[1] : <></>}
     </div>
-  });
+  ));
 
   return (
     <div className="pages-with-tabs">

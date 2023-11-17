@@ -1,6 +1,14 @@
 import {useState, useEffect, useMemo} from "react";
 import $ from 'jquery';
 
+// reqData =
+//   data |
+//   {key1: data, key2: ...} |
+//   {key1: [data1.1, data1.2, ...], key2: ...}.
+//
+// results =
+//   {data, isFetched}.
+
 export const useQuery = (results, setResults, reqData) => {
   useMemo(() => {
     if (reqData.req) {

@@ -108,11 +108,11 @@ export const TemplateInstance = ({tmplID, tmplChildren, isCut}) => {
   // Afterwards, first extract the needed data from results[0].
   const [, , tmplDefStr] = (results.data[0] ?? []);
 
-  // Tranform the template into an array of arrays, first by "reducing" the
+  // Transform the template into an array of arrays, first by "reducing" the
   // string by removing the unused template placeholder names, then by "cutting"
   // it up along each '{' or '}' character such that only every second entry in
   // the resulting array is rendered if isCut == true, and finally by
-  // "splitting" it up further along each occurance of '&lt;&gt;' ('<>').
+  // "splitting" it up further along each occurrence of '&lt;&gt;' ('<>').
   const reducedTmpl = tmplDefStr
     .replaceAll("&gt;", ">")
     .replaceAll("&lt;", "<")

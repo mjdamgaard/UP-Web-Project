@@ -63,7 +63,7 @@ export class AccountManager {
   }
 
   get inputUserID() {
-    return this.isLoggedIn ? this.userID : false;
+    return this.isLoggedIn ? this.userID : 0;
   }
 
   // TODO: Reimplement at some point to allow for other user-specific

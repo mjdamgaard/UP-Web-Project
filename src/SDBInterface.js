@@ -13,7 +13,7 @@ export const SDBInterface = () => {
   const [appPage, setAppPage] = useState("home");
 
   return (
-    <AccountContextProvider> {/* yeilds: session, accountManager.*/}
+    <AccountContextProvider> {/* yields: session, accountManager.*/}
       <div className="sdb-interface">
         <InterfacePage
           initColKey={JSON.stringify({entID: 10, n: 0})}

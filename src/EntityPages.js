@@ -8,6 +8,7 @@ import {PagesWithTabs} from "./PagesWithTabs.js";
 import {
   EntityID, FullEntityTitle,
 } from "./EntityTitles.js";
+import {InstanceSetDisplay} from "./InstanceSetDisplay.js";
 
 /* Placeholders */
 const EntityTitle = () => <template></template>;
@@ -98,7 +99,7 @@ function getTabDataArrAndDefaultTab(entID, typeID, cxtID) {
       break;
     case 2:
       tabDataArr.push(
-        ["Subcategories", <PropertyCategoryPage propID={37} />],
+        ["Subcategories", <PropertyCategoryPage entID={entID} propID={37} />],
         ["Instances", <CategoryInstancesPage entID={entID} />],
         ["Supercategories", <PropertyCategoryPage entID={entID} propID={47} />],
         ["Submit instance", <SubmitCategoryInstancePage entID={entID} />],
@@ -137,177 +138,185 @@ export const EntityIDDisplay = ({entID}) => {
 
 // TODO: Continue refactoring:
 
-export const PropertyCategoryPage = ({entID, propID}) => {
+export const PropertyCategoryPage = ({propID, entID}) => {
+  const structure = {
+    type: "simple",
+    catKey: {
+      cxtID: 21,
+      defStr: "#" + propID + "|#" + entID,
+    }
+  };
+
   return (
     <div>
-      <CategoryDisplay />
+      <InstanceSetDisplay initStructure={structure} />
     </div>
   );
 };
 
-propertyCategoryPageCL.addCallback("data", function(data) {
-  data.copyFromAncestor([
-      "propID",
-      "entID",  // optional.
-  ]);
-});
-propertyCategoryPageCL.addCallback("data", function(data) {
-  data.elemContentKey = "GeneralEntityElement";
-  data.setGenerator = new SimpleSetGenerator(
-      {cxtID: 21, defStr: "#" + data.propID + "|#" + data.entID}, // catKey.
-      // (21 is the ID of the "<Property> of <Entity>" template.)
-  );
-});
+// propertyCategoryPageCL.addCallback("data", function(data) {
+//   data.copyFromAncestor([
+//       "propID",
+//       "entID",  // optional.
+//   ]);
+// });
+// propertyCategoryPageCL.addCallback("data", function(data) {
+//   data.elemContentKey = "GeneralEntityElement";
+//   data.setGenerator = new SimpleSetGenerator(
+//       {cxtID: 21, defStr: "#" + data.propID + "|#" + data.entID}, // catKey.
+//       // (21 is the ID of the "<Property> of <Entity>" template.)
+//   );
+// });
 
 
-export var categoryInstancesPageCL = new ContentLoader(
-  "CategoryInstancesPage",
-  /* Initial HTML template */
-  '<div>' +
-      '<<SetDisplay>>' +
-  '</div>',
-  sdbInterfaceCL
-);
-categoryInstancesPageCL.addCallback("data", function(data) {
-  data.elemContentKey = "GeneralEntityElement";
-  data.setGenerator = new SimpleSetGenerator(
-      data.getFromAncestor("entID"), // catKey.
-  );
-});
+// export var categoryInstancesPageCL = new ContentLoader(
+//   "CategoryInstancesPage",
+//   /* Initial HTML template */
+//   '<div>' +
+//       '<<SetDisplay>>' +
+//   '</div>',
+//   sdbInterfaceCL
+// );
+// categoryInstancesPageCL.addCallback("data", function(data) {
+//   data.elemContentKey = "GeneralEntityElement";
+//   data.setGenerator = new SimpleSetGenerator(
+//       data.getFromAncestor("entID"), // catKey.
+//   );
+// });
 
 
-export var submitCategoryInstancePageCL = new ContentLoader(
-  "SubmitCategoryInstancePage",
-  /* Initial HTML template */
-  '<div>' +
-      '<<SubmitInstanceField>>' +
-  '</div>',
-  sdbInterfaceCL
-);
-
-
-
-
-
-export var entityRatingsPageCL = new ContentLoader(
-  "EntityRatingsPage",
-  /* Initial HTML template */
-  '<div>' +
-      '<h4>Relevant ratings</h4>' +
-      '<<SetDisplay>>' +
-  '</div>',
-  sdbInterfaceCL
-);
-entityRatingsPageCL.addCallback("data", function(data) {
-  data.copyFromAncestor([
-      "entID",
-      "typeID",
-  ]);
-});
-entityRatingsPageCL.addCallback("data", function(data) {
-  // Relevant categories:
-  data.elemContentKey = "RatingElement";
-  let sg1 = new SimpleSetGenerator(
-      {cxtID: 21, defStr: "#54|#" + data.entID}, // catKey.
-  );
-  let sg2 = new SimpleSetGenerator(
-      {cxtID: 21, defStr: "#52|#" + data.typeID}, // catKey.
-  );
-  data.setGenerator = new MaxRatingSetCombiner([sg1, sg2]);
-});
-entityRatingsPageCL.addCallback("data", function(data) {
-  data.instID = data.getFromAncestor("columnEntityID");
-});
-
-
-
-export var submitEntityPageCL = new ContentLoader(
-  "SubmitEntityPage",
-  /* Initial HTML template */
-  '<div>' +
-      '<<SubmitEntityField>>' +
-  '</div>',
-  sdbInterfaceCL
-);
-
-export var submitTemplatePageCL = new ContentLoader(
-  "SubmitTemplatePage",
-  /* Initial HTML template */
-  '<div>' +
-      '<<SubmitEntityField>>' +
-  '</div>',
-  sdbInterfaceCL
-);
-submitTemplatePageCL.addCallback("data", function(data) {
-  data.isTemplate = true;
-});
-
-
-export var relevantRatingsTypePageCL = new ContentLoader(
-  "RelevantRatingsTypePage",
-  /* Initial HTML template */
-  '<div>' +
-      '<h4>Relevant categories to rate for type instances of this type</h4>' +
-      '<<SetDisplay>>' +
-  '</div>',
-  sdbInterfaceCL
-);
-relevantRatingsTypePageCL.addCallback("data", function(data) {
-  data.copyFromAncestor("entID");
-});
-relevantRatingsTypePageCL.addCallback("data", function(data) {
-  data.elemContentKey = "GeneralEntityElement";
-  data.setGenerator = new SimpleSetGenerator(
-      {cxtID: 21, defStr: "#52|#" + data.entID}, // catKey.
-  );
-});
-
-export var relevantPropertiesTypePageCL = new ContentLoader(
-  "RelevantPropertiesTypePage",
-  /* Initial HTML template */
-  '<div>' +
-      '<h4>Relevant categories to rate for type instances of this type</h4>' +
-      '<<SetDisplay>>' +
-  '</div>',
-  sdbInterfaceCL
-);
-relevantPropertiesTypePageCL.addCallback("data", function(data) {
-  data.copyFromAncestor("entID");
-});
-relevantPropertiesTypePageCL.addCallback("data", function(data) {
-  data.elemContentKey = "GeneralEntityElement";
-  data.setGenerator = new SimpleSetGenerator(
-      {cxtID: 21, defStr: "#58|#" + data.entID}, // catKey.
-  );
-});
+// export var submitCategoryInstancePageCL = new ContentLoader(
+//   "SubmitCategoryInstancePage",
+//   /* Initial HTML template */
+//   '<div>' +
+//       '<<SubmitInstanceField>>' +
+//   '</div>',
+//   sdbInterfaceCL
+// );
 
 
 
 
 
-export var entityInfoPageCL = new ContentLoader(
-  "EntityInfoPage",
-  /* Initial HTML template */
-  '<div>' +
-      '<<SetDisplay>>' +
-  '</div>',
-  sdbInterfaceCL
-);
-entityInfoPageCL.addCallback("data", function(data) {
-  data.copyFromAncestor([
-      "entID",
-      "typeID",
-  ]);
-});
-entityInfoPageCL.addCallback("data", function(data) {
-  data.elemContentKey = "SemanticPropertyElement";
-  let sg1 = new SimpleSetGenerator(
-      {cxtID: 21, defStr: "#58|#" + data.entID}, // catKey.
-      100, // num,
-  );
-  let sg2 = new SimpleSetGenerator(
-      {cxtID: 21, defStr: "#59|#" + data.typeID}, // catKey.
-      100, // num.
-  );
-  data.setGenerator = new MaxRatingSetCombiner([sg1, sg2]);
-});
+// export var entityRatingsPageCL = new ContentLoader(
+//   "EntityRatingsPage",
+//   /* Initial HTML template */
+//   '<div>' +
+//       '<h4>Relevant ratings</h4>' +
+//       '<<SetDisplay>>' +
+//   '</div>',
+//   sdbInterfaceCL
+// );
+// entityRatingsPageCL.addCallback("data", function(data) {
+//   data.copyFromAncestor([
+//       "entID",
+//       "typeID",
+//   ]);
+// });
+// entityRatingsPageCL.addCallback("data", function(data) {
+//   // Relevant categories:
+//   data.elemContentKey = "RatingElement";
+//   let sg1 = new SimpleSetGenerator(
+//       {cxtID: 21, defStr: "#54|#" + data.entID}, // catKey.
+//   );
+//   let sg2 = new SimpleSetGenerator(
+//       {cxtID: 21, defStr: "#52|#" + data.typeID}, // catKey.
+//   );
+//   data.setGenerator = new MaxRatingSetCombiner([sg1, sg2]);
+// });
+// entityRatingsPageCL.addCallback("data", function(data) {
+//   data.instID = data.getFromAncestor("columnEntityID");
+// });
+
+
+
+// export var submitEntityPageCL = new ContentLoader(
+//   "SubmitEntityPage",
+//   /* Initial HTML template */
+//   '<div>' +
+//       '<<SubmitEntityField>>' +
+//   '</div>',
+//   sdbInterfaceCL
+// );
+
+// export var submitTemplatePageCL = new ContentLoader(
+//   "SubmitTemplatePage",
+//   /* Initial HTML template */
+//   '<div>' +
+//       '<<SubmitEntityField>>' +
+//   '</div>',
+//   sdbInterfaceCL
+// );
+// submitTemplatePageCL.addCallback("data", function(data) {
+//   data.isTemplate = true;
+// });
+
+
+// export var relevantRatingsTypePageCL = new ContentLoader(
+//   "RelevantRatingsTypePage",
+//   /* Initial HTML template */
+//   '<div>' +
+//       '<h4>Relevant categories to rate for type instances of this type</h4>' +
+//       '<<SetDisplay>>' +
+//   '</div>',
+//   sdbInterfaceCL
+// );
+// relevantRatingsTypePageCL.addCallback("data", function(data) {
+//   data.copyFromAncestor("entID");
+// });
+// relevantRatingsTypePageCL.addCallback("data", function(data) {
+//   data.elemContentKey = "GeneralEntityElement";
+//   data.setGenerator = new SimpleSetGenerator(
+//       {cxtID: 21, defStr: "#52|#" + data.entID}, // catKey.
+//   );
+// });
+
+// export var relevantPropertiesTypePageCL = new ContentLoader(
+//   "RelevantPropertiesTypePage",
+//   /* Initial HTML template */
+//   '<div>' +
+//       '<h4>Relevant categories to rate for type instances of this type</h4>' +
+//       '<<SetDisplay>>' +
+//   '</div>',
+//   sdbInterfaceCL
+// );
+// relevantPropertiesTypePageCL.addCallback("data", function(data) {
+//   data.copyFromAncestor("entID");
+// });
+// relevantPropertiesTypePageCL.addCallback("data", function(data) {
+//   data.elemContentKey = "GeneralEntityElement";
+//   data.setGenerator = new SimpleSetGenerator(
+//       {cxtID: 21, defStr: "#58|#" + data.entID}, // catKey.
+//   );
+// });
+
+
+
+
+
+// export var entityInfoPageCL = new ContentLoader(
+//   "EntityInfoPage",
+//   /* Initial HTML template */
+//   '<div>' +
+//       '<<SetDisplay>>' +
+//   '</div>',
+//   sdbInterfaceCL
+// );
+// entityInfoPageCL.addCallback("data", function(data) {
+//   data.copyFromAncestor([
+//       "entID",
+//       "typeID",
+//   ]);
+// });
+// entityInfoPageCL.addCallback("data", function(data) {
+//   data.elemContentKey = "SemanticPropertyElement";
+//   let sg1 = new SimpleSetGenerator(
+//       {cxtID: 21, defStr: "#58|#" + data.entID}, // catKey.
+//       100, // num,
+//   );
+//   let sg2 = new SimpleSetGenerator(
+//       {cxtID: 21, defStr: "#59|#" + data.typeID}, // catKey.
+//       100, // num.
+//   );
+//   data.setGenerator = new MaxRatingSetCombiner([sg1, sg2]);
+// });
