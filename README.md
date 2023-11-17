@@ -79,7 +79,7 @@ The project also seeks to develop a browser extension such that users can access
 [^1]: All this traffic is encrypted and not logged at all; only actively submitted ratings and comments are stored.
 
 
-For instance, if a user watches a video on YouTube, the browser extension can then query on show all the relevant ratings and comments for that video. Of course, in this particular example, YouTube will already have a comment section. But it does not have ratable tags for one thing, and it does not have the ability to prioritize comments and ratings from your own favorite user groups.
+For instance, if a user watches a video on YouTube, the browser extension can then query on show all the relevant ratings and comments for that video. Of course, in this particular example, YouTube will already have a comment section. But it does not have ratable tags for one thing, and it does not have the ability to prioritize comments and ratings from your own favorite user groups!
 
 
 <!-- With this simple technology, users will thus be able to access and use the network across the web. And with further development, the browser extension could also analyze the webpage itself in order to recognize individual resources on it and query about data for them.. -->
@@ -103,7 +103,7 @@ It is the users themselves that are responsible for making and structuring the c
 
 ### Semantically structured comment sections
 
-Comments are also implemented as "resources" in the system, which means that these can also be rated and grouped into categories in the same way as other resources. In particular, this means that comment sections can be structured into categories and subcategories as well.
+Comments are also implemented as "resources" in the system, which means that these can be rated and grouped into categories in the same way as other resources. In particular, this means that comment sections can be structured into categories and subcategories as well.
 
 So suppose for example that you have just watched a video, or read an article or a post, and you have a specific question that you want to ask about it. With conventional comment sections, you would then often have to scroll past a great amount of comments before you find what you are looking for (or give up).
 
@@ -111,7 +111,9 @@ With a semantically structured comment sections, on the other hand, all comments
 
 This can potentially make it a lot easier to find the given answer that you are looking for.
 
-And in terms of discussions, these can furthermore be structured into whole [trees](https://www.geeksforgeeks.org/generic-treesn-array-trees/) of arguments and counterarguments. This could make it much easier for users to find all the arguments and counterarguments for a given discussion, and thus better be able to form an informed opinion. 
+And in terms of discussions, these can furthermore be structured into whole [trees](https://www.geeksforgeeks.org/generic-treesn-array-trees/) of arguments and counterarguments. This could make it much easier for users to find all the arguments and counterarguments for a given discussion, and thus make them able to better form an informed opinion about the matter.
+
+It would thus also greatly help users fact-check information on the web, and especially with a well-developed browser extension that allows them to query the Semantic Network about facts immediately while they are on whichever other website that serves them the information.   
 
 
 
