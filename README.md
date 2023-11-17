@@ -26,7 +26,7 @@ However, existing systems only allow users to see *if* a given resource has a ce
 
 For instance, if you are looking for scary movie to watch, you might be able to get a list of all the movies that carries the 'scary' tag on a conventional site, but you cannot see *how* scary any given movie is in order to match the degree that you are searching for.
 
-You could of course try to read comments and reviews for each individual resource, but this process is both slow and not very reliable, since reviews often vary greatly and do not cover all the things that you might be interested in.
+You could of course try to read comments and reviews for each individual resource, but this process is both slow and not very reliable, since reviews often vary greatly and do not necessarily cover all the things that you might be interested in.
 
 ### Ratable tags!
 
@@ -34,11 +34,11 @@ So how about system that allows the users to rate each tag on a scale!?
 <!-- so that each user can then tailor their searches and get their feeds sorted after exactly the qualities that they are looking for? -->
 <!-- so that one can quickly get an overview of all the qualities of a given resource, without having  -->
 
-This would mean that the users could easily get a quick overview of all the qualities that they are interested in for each resource that they browse.
+This would mean that the users could easily get a **quick overview of all** the **qualities** that they are interested in for each resource that they browse.
 
-And it would furthermore make it possible to create advanced searches where users can search for *exactly* the qualities that they want in the type of resource that they are after.
+And it would furthermore make it possible to create **advanced searches** where users can search for *exactly* the qualities that they want in the type of resource that they are after.
 
-It also makes it way easier an quicker for each user to express their opinions about resources with a high degree of nuance. Instead of spending several minutes writing a comment or a review that then just becomes the 10,000th one in a list, they would be able to quickly submit scores for the various rating that are relevant to them. And after having done so, they will know that their contributions will benefit *all* the other users that browses the same resource, and not just the couple of users that make it down to the 10,000th comment.
+It also makes it way easier an quicker for each user to **express their opinions** about resources with a high degree of nuance. Instead of spending several minutes writing a comment or a review that then just becomes the 10,000th one in a list, they would be able to quickly submit scores for the various rating that are relevant to them. And after having done so, they will know that their contributions will benefit *all* the other users that browses the same resource, and not just the couple of users that make it down to the 10,000th comment.
 
 This project believes that there is a giant possibility here for improving user experience and utility of the web!
 
