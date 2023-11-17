@@ -8,6 +8,7 @@
 *I am also considering renaming the project to the Semantic Database Project or the Semantic Network Project instead, by the way.*
 
 <!--
+  Previous repository description:
   This project seeks to realize the old dream of the Semantic Web, but not through extending the WWW, as has been the conventional approach. Instead this project seeks to realize this vision via a network of Web 2.0 sites, running on top an open-source, decentralized and distributed "Semantic Database" (SDB), with openSDB  as a pioneering node.
 -->
 

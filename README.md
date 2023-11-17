@@ -30,7 +30,7 @@ You could of course try to read comments and reviews for each individual resourc
 
 ### Ratable tags!
 
-So how about system that allows the users to rate each tag on a scale!?
+So how about system that allows the users to rate each tag on a scale?
 <!-- so that each user can then tailor their searches and get their feeds sorted after exactly the qualities that they are looking for? -->
 <!-- so that one can quickly get an overview of all the qualities of a given resource, without having  -->
 
@@ -39,7 +39,7 @@ This would mean that the users could easily get a **quick overview** of all the 
 And it would furthermore make it possible to create **advanced searches** where users can search for *exactly* the qualities that they want in the type of resource that they are after!
 (The importance of this point cannot be overstated: Searching for things is such a big part of how we use the web, and if this project can better that experience, it could affect millions and millions of people.)
 
-It also makes it way easier an quicker for each user to **express their opinions** about resources with a high degree of nuance. Instead of spending several minutes writing a comment or a review that then just becomes the 10,000th one in a list, as is often the case, they would be able to quickly submit scores for the various rating that are relevant to them. And after having done so, they will know that their contributions will benefit *all* the other users that browse or search for the same kind of resource, and not just the couple of users that make it down to that 10,000th comment.
+It also makes it way easier an quicker for each user to **express their opinions** about resources with a high degree of nuance. Instead of spending several minutes writing a comment or a review that then just becomes the 10,000th one in a list, as is often the case, they would be able to quickly submit scores for the various ratings that are relevant to them. And after having done so, they will know that their contributions will benefit *all* the other users that browse or search for the same kind of resource, and not just the couple of users that make it down to that 10,000th comment.
 
 This project believes that there is a giant possibility here for improving user experience and utility of the web!
 
@@ -66,6 +66,10 @@ Apart from resources, the users can also rate themselves and each other. This fu
 This will make users able to further refine their searches and their feeds by adjusting what weight is given, not just to the various tags used in the search, but also to the various *user groups* as well.
 
 This allows users to find out what groups they tend to agree with in certain matters, and then boost the opinions of those groups! This will then affect all the ratings that they see on the site, and it will also affect their search results and their feeds!
+
+And if a user wants to change their preferences for what user groups are boosted, e.g. because they are in a different mood or they want to explore other user groups, they can do so manually and with immediate effect: They do not have to go through the long process of training an algorithm to notice their change in desires.    
+
+<!-- (And they also don't have to do this when creating a new account, btw.) -->
 
 
 ### A browser extension and a network of ratings across the web
