@@ -34,10 +34,11 @@ So how about system that allows the users to rate each tag on a scale?
 <!-- so that each user can then tailor their searches and get their feeds sorted after exactly the qualities that they are looking for? -->
 <!-- so that one can quickly get an overview of all the qualities of a given resource, without having  -->
 
-This would mean that the users could easily get a **quick overview** of all the qualities that they are interested in for each resource that they browse.
+This would mean that the users could easily get a **quick and nuanced overview** of all the qualities that they are interested in for each resource that they browse.
 
-And it would furthermore make it possible to create **advanced searches** where users can search for *exactly* the qualities that they want in the type of resource that they are after!
-(The importance of this point cannot be overstated: Searching for things is such a big part of how we use the web, and if this project can better that experience, it could affect millions and millions of people.)
+And it would furthermore make it possible to create **advanced searches** where users can search for *exactly* the qualities that they want in the type of resource that they are after![^1]
+
+[^1]: The importance of this point cannot be overstated: Searching for things is such a big part of how we use the web, and if this project can better that experience, it could affect millions and millions of people.
 
 It also makes it way easier an quicker for each user to **express their opinions** about resources with a high degree of nuance. Instead of spending several minutes writing a comment or a review that then just becomes the 10,000th one in a list, as is often the case, they would be able to quickly submit scores for the various ratings that are relevant to them. And after having done so, they will know that their contributions will benefit *all* the other users that browse or search for the same kind of resource, and not just the couple of users that make it down to that 10,000th comment.
 
@@ -74,9 +75,9 @@ And if a user wants to change their preferences for what user groups are boosted
 
 ### A browser extension and a network of ratings across the web
 
-The project also seeks to develop a browser extension such that users can access the ratings of the Semantic Network across the web. This browser extension can then read the URL of any webpage that the user visits and query the network[^1] for ratings and comments that are relevant for the resource that the given webpage is about.
+The project also seeks to develop a browser extension such that users can access the ratings of the Semantic Network across the web. This browser extension can then read the URL of any webpage that the user visits and query the network[^2] for ratings and comments that are relevant for the resource that the given webpage is about.
 
-[^1]: All this traffic is encrypted and not logged at all; only actively submitted ratings and comments are stored.
+[^2]: All this traffic is encrypted and not logged at all; only actively submitted ratings and comments are stored.
 
 
 For instance, if a user watches a video on YouTube, the browser extension can then query on show all the relevant ratings and comments for that video. Of course, in this particular example, YouTube will already have a comment section. But it does not have ratable tags for one thing, and it does not have the ability to prioritize comments and ratings from your own favorite user groups!
