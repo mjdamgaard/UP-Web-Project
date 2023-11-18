@@ -20,7 +20,7 @@ export const InstanceSetContainer = ({set, setStructure, ElemComponent}) => {
   }
 
   const children = set.map((val, ind) => (
-    <ElemComponent key={val[1]} />
+    <ElemComponent key={val[1]} entID={val[1]} combScore={val[0]} />
   ));
 
   return (

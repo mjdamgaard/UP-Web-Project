@@ -2,10 +2,14 @@ import {useState, useEffect, useMemo, useContext} from "react";
 import {AccountManagerContext} from "./contexts/AccountContext.js";
 import {useQuery} from "./DBRequests.js";
 
+import {EntityTitle, FullEntityTitle} from "./EntityTitles.js";
+import {DropdownBox} from "./DropdownBox.js";
 
-const EntityTitle = () => <template></template>;
+
+// const EntityTitle = () => <template></template>;
 const ElementRatingDisplay = () => <template></template>;
-const DropdownBox = () => <template></template>;
+const SetCategoriesRatingsDisplay = () => <template></template>;
+const EntityIDDisplay = () => <template></template>;
 
 
 
@@ -16,48 +20,26 @@ const DropdownBox = () => <template></template>;
 
 
 
-export const GeneralEntityElement = ({}) => {
+export const GeneralEntityElement = ({entID, combScore}) => {
   return (
-    <div>
+    <div className="general-entity-element">
       <div>
         <h4>
-          <EntityTitle />
+          <EntityTitle entID={entID} isLink={true} />
         </h4>
         <ElementRatingDisplay />
       </div>
-      <DropdownBox />
+      <DropdownBox>
+        <div className="general-element-dropdown-page">
+          <div>Full title: <FullEntityTitle entID={entID} /></div>
+          <div><EntityIDDisplay /></div>
+          <SetCategoriesRatingsDisplay />
+        </div>
+      </DropdownBox>
     </div>
   );
 };
 
-
-// export var generalEntityElementCL = new ContentLoader(
-//   "GeneralEntityElement",
-//   /* Initial HTML template */
-//   '<div>' +
-//     '<div>' +
-//       '<h4><<EntityTitle>></h4>' +
-//       '<<ElementRatingDisplay>>' +
-//     '</div>' +
-//     '<<DropdownBox>>' +
-//   '</div>',
-//   sdbInterfaceCL
-// );
-// generalEntityElementCL.addCallback("data", function(data) {
-//   data.dropdownCL = generalEntityElementCL.getRelatedCL(
-//     "GeneralEntityElementDropdownPage"
-//   );
-// });
-// export var generalEntityElementDropdownPageCL = new ContentLoader(
-//   "GeneralEntityElementDropdownPage",
-//   /* Initial HTML template */
-//   '<div>' +
-//     '<div>Full title: <<FullEntityTitle>></div>' +
-//     '<div><<EntityIDDisplay>></div>' +
-//     '<<SetCategoriesRatingsDisplay>>' +
-//   '</div>',
-//   sdbInterfaceCL
-// );
 
 
 // export var elementRatingDisplayCL = new ContentLoader(

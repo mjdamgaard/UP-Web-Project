@@ -124,35 +124,35 @@ button.close {
 
 
 
-.generalEntityElement {
+.general-entity-element {
     border-bottom: 1px solid gray;
     border-top: 1px solid gray;  
 }
-.ratingElement {
+.rating-element {
     border-bottom: 1px solid gray;
     border-top: 1px solid gray;
  
 }
-.ratingDisplay {
+.rating-display {
     border-bottom: 1px solid lightgray;
     border-top: 1px solid lightgray;
     
 }
 
-.generalEntityElement {
+.general-entity-element {
     & > div:first-of-type {
         display: grid;
         grid-template-columns: 1fr 50px;
         grid-template-rows: auto;
     }
 }
-.elementRatingDisplay {
+.element-rating-display {
     font-size: 15pt;
     padding: 10px 10px 2px;
 }
 
 
-.ratingDisplay {
+.rating-display {
     & .applies-to-subj {
         font-size: 80%;
     }
@@ -160,13 +160,13 @@ button.close {
 
 
 
-.dropdownButtonBar {
+.dropdown-button-bar {
     &:hover {
         cursor: pointer;
         background-color: #eee;
     }
 }
-.dropdownButtonBar {
+.dropdown-button-bar {
     display: flex;
     justify-content: center;
 }
@@ -176,21 +176,27 @@ button.close {
 //     bottom: 10%; // CSS is still weird to me sometimes (why does this not
 //      // work?)..
 // } */
-.dropdownButtonBar .DropdownButton {
+
+.caret.caret-up {
+    border-top-width: 0;
+    border-bottom: 4px solid;
+}
+
+.dropdown-button-bar .dropdown-button {
     font-size: 80%;
     /* bottom: 0%; */
 }
-.dropdownButton:hover {
+.dropdown-button:hover {
     cursor: pointer;
 }
-.setHeader .DropdownButtonBar:not(:hover) {
+.set-header .dropdown-button-bar:not(:hover) {
     background-color: #f4f9ff;
 }
-.setDisplay > .DropdownButtonBar:not(:hover) {
+.set-display > .dropdown-button-bar:not(:hover) {
     background-color: #ddd;
 }
 
-.sortingCategoriesMenu {
+.sorting-categories-menu {
     border-top:    1px solid #ddd;
     border-bottom: 1px solid #ddd;
 }
