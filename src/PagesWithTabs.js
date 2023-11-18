@@ -48,7 +48,7 @@ class TabsManager {
   }
 
   openTab = (tabTitle) => {
-    let ind = this.tabTitles.findIndex(tabTitle);
+    let ind = this.tabTitles.findIndex(t => t === tabTitle);
     if (ind >= 0) {
       this.setIsLoadedArr(prev => {
         let ret = [...prev];
@@ -59,7 +59,7 @@ class TabsManager {
     }
   };
   closeTab = (tabTitle) => {
-    let ind = this.tabTitles.findIndex(tabTitle);
+    let ind = this.tabTitles.findIndex(t => t === tabTitle);
     if (ind >= 0) {
       this.setIsLoadedArr(prev => {
         let ret = [...prev];
@@ -74,7 +74,10 @@ class TabsManager {
 
 export const TabHeader = ({tabTitles, activeTab, isLoadedArr, tabsManager}) => {
   const tabs = tabTitles.map((val, ind) => (
-    <li key={val}>
+    <li key={val} onClick={() => {
+      tabsManager.openTab(val);
+      // e.stopPropagation();
+    }}>
       <CloseTabButton
         tabsManager={tabsManager}
         tabTitle={val}
@@ -99,10 +102,11 @@ export const CloseTabButton = ({tabsManager, tabTitle, isVisible}) => {
   return (
     <button type="button" className="close"
       style={{visibility: isVisible ? "visible" : "hidden"}}
-      onClick={() => {
+      onClick={(e) => {
         if (isVisible) {
           tabsManager.closeTab(tabTitle);
         }
+        e.stopPropagation();
       }}
     >
       <span>&times;</span>

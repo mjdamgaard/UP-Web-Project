@@ -177,10 +177,12 @@ button.close {
 //      // work?)..
 // } */
 
+/* (From w3schools.com) */
 .caret.caret-up {
     border-top-width: 0;
     border-bottom: 4px solid;
 }
+
 
 .dropdown-button-bar .dropdown-button {
     font-size: 80%;

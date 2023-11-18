@@ -14,8 +14,8 @@ export const ColumnListContextProvider = ({initColKey, children}) => {
   });
 
   const columnListManager = useMemo(() => (
-    new ColumnListManager(columns, setColumns)
-  ), []);
+    new ColumnListManager(columns, setColumns, 3)
+  ), [columns]);
 
   return (
     <ColumnListContext.Provider value={[columns, columnListManager]}>
@@ -25,9 +25,10 @@ export const ColumnListContextProvider = ({initColKey, children}) => {
 };
 
 export class ColumnListManager {
-  constructor(columns, setColumns) {
+  constructor(columns, setColumns, maxColNum) {
     this.columns = columns;
     this.setColumns = setColumns;
+    this.maxColNum = maxColNum;
   }
 
   openColumn = (callerKey, newEntID, isToTheLeft) => {
@@ -56,7 +57,7 @@ export class ColumnListManager {
       fst: fst,
       focus: newInd,
     }));
-  }
+  };
   closeColumn = (callerKey) => {
     let columns = this.columns;
     // find caller column's index.
@@ -73,7 +74,7 @@ export class ColumnListManager {
       ),
       fst: fst,
     }));
-  }
+  };
 
   cycleLeft = () => {
     let columns = this.columns;
@@ -84,7 +85,7 @@ export class ColumnListManager {
       // TODO: Consider changing focus to the leftmost column, but maybe focus
       // just shouldn't be changed.
     }));
-  }
+  };
   cycleRight = () => {
     let columns = this.columns;
     let max = Math.max(columns.keys.length - columns.num, 0);
@@ -93,7 +94,21 @@ export class ColumnListManager {
       keys: columns.keys,
       fst: columns.fst >= max ? max : columns.fst + 1,
     }));
-  }
+  };
+
+  increaseColNum = () => {
+    this.setColumns(prev => ({
+      ...prev,
+      num: prev.num < this.maxColNum ? prev.num + 1 : prev.num,
+    }));
+  };
+  decreaseColNum = () => {
+    this.setColumns(prev => ({
+      ...prev,
+      num: prev.num - 1 ? prev.num - 1 : 1,
+    }));
+  };
+
 }
 
 

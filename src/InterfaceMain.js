@@ -23,7 +23,9 @@ export const InterfaceMain = () => {
       }}>
         <br/><span>&#10094;</span><br/>
       </div>
-      <div className="column-container">
+      <div className="column-container"
+        style={{gridTemplateColumns: "1fr ".repeat(columns.num)}}
+      >
         {appColumns}
       </div>
       <div className="interface-margin" onClick={() => {

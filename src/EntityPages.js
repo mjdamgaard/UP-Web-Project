@@ -5,9 +5,7 @@ import {useQuery} from "./DBRequests.js";
 // } from "/src/SetGenerator.js";
 
 import {PagesWithTabs} from "./PagesWithTabs.js";
-import {
-  EntityID, FullEntityTitle,
-} from "./EntityTitles.js";
+import {EntityID, FullEntityTitle} from "./EntityTitles.js";
 import {InstanceSetDisplay} from "./InstanceSetDisplay.js";
 
 /* Placeholders */
@@ -22,8 +20,8 @@ const RelevantRatingsTypePage = () => <template></template>;
 const RelevantPropertiesTypePage = () => <template></template>;
 const SubmitEntityPage = () => <template></template>;
 const SubmitTemplatePage = () => <template></template>;
-const CategoryInstancesPage = () => <template></template>;
-const SubmitCategoryInstancePage = () => <template></template>;
+// const CategoryInstancesPage = () => <template></template>;
+const SubmitInstanceField = () => <template></template>;
 const CategoryDisplay = () => <template></template>;
 
 
@@ -136,7 +134,6 @@ export const EntityIDDisplay = ({entID}) => {
 };
 
 
-// TODO: Continue refactoring:
 
 export const PropertyCategoryPage = ({propID, entID}) => {
   const structure = {
@@ -154,47 +151,33 @@ export const PropertyCategoryPage = ({propID, entID}) => {
   );
 };
 
-// propertyCategoryPageCL.addCallback("data", function(data) {
-//   data.copyFromAncestor([
-//       "propID",
-//       "entID",  // optional.
-//   ]);
-// });
-// propertyCategoryPageCL.addCallback("data", function(data) {
-//   data.elemContentKey = "GeneralEntityElement";
-//   data.setGenerator = new SimpleSetGenerator(
-//       {cxtID: 21, defStr: "#" + data.propID + "|#" + data.entID}, // catKey.
-//       // (21 is the ID of the "<Property> of <Entity>" template.)
-//   );
-// });
+
+export const CategoryInstancesPage = ({entID}) => {
+  const structure = {
+    type: "simple",
+    catID: entID,
+  };
+
+  return (
+    <div>
+      <InstanceSetDisplay initStructure={structure} />
+    </div>
+  );
+};
 
 
-// export var categoryInstancesPageCL = new ContentLoader(
-//   "CategoryInstancesPage",
-//   /* Initial HTML template */
-//   '<div>' +
-//       '<<SetDisplay>>' +
-//   '</div>',
-//   sdbInterfaceCL
-// );
-// categoryInstancesPageCL.addCallback("data", function(data) {
-//   data.elemContentKey = "GeneralEntityElement";
-//   data.setGenerator = new SimpleSetGenerator(
-//       data.getFromAncestor("entID"), // catKey.
-//   );
-// });
+
+export const SubmitCategoryInstancePage = ({entID}) => {
+  return (
+    <div>
+      <SubmitInstanceField entID={entID} />
+    </div>
+  );
+};
 
 
-// export var submitCategoryInstancePageCL = new ContentLoader(
-//   "SubmitCategoryInstancePage",
-//   /* Initial HTML template */
-//   '<div>' +
-//       '<<SubmitInstanceField>>' +
-//   '</div>',
-//   sdbInterfaceCL
-// );
 
-
+// TODO: Continue refactoring:
 
 
 

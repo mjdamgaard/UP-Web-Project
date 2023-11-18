@@ -4,12 +4,13 @@ import {useQuery} from "./DBRequests.js";
 
 import {EntityTitle, FullEntityTitle} from "./EntityTitles.js";
 import {DropdownBox} from "./DropdownBox.js";
+import {EntityIDDisplay} from "./EntityPages.js";
 
 
 // const EntityTitle = () => <template></template>;
-const ElementRatingDisplay = () => <template></template>;
+// const ElementRatingDisplay = () => <template></template>;
 const SetCategoriesRatingsDisplay = () => <template></template>;
-const EntityIDDisplay = () => <template></template>;
+// const EntityIDDisplay = () => <template></template>;
 
 
 
@@ -27,12 +28,12 @@ export const GeneralEntityElement = ({entID, combScore}) => {
         <h4>
           <EntityTitle entID={entID} isLink={true} />
         </h4>
-        <ElementRatingDisplay />
+        <ElementRatingDisplay combScore={combScore} />
       </div>
       <DropdownBox>
         <div className="general-element-dropdown-page">
           <div>Full title: <FullEntityTitle entID={entID} /></div>
-          <div><EntityIDDisplay /></div>
+          <div><EntityIDDisplay entID={entID} /></div>
           <SetCategoriesRatingsDisplay />
         </div>
       </DropdownBox>
@@ -42,17 +43,17 @@ export const GeneralEntityElement = ({entID, combScore}) => {
 
 
 
-// export var elementRatingDisplayCL = new ContentLoader(
-//   "ElementRatingDisplay",
-//   /* Initial HTML template */
-//   '<div>' +
-//   '</div>',
-//   sdbInterfaceCL
-// );
-// elementRatingDisplayCL.addCallback(function($ci, data) {
-//   let ratVal = data.getFromAncestor("ratVal");
-//   $ci.html((ratVal / 6553.5).toFixed(1));
-// });
+export const ElementRatingDisplay = ({combScore}) => {
+  return (
+    <div className="element-rating-display">
+      {(combScore / 6553.5).toFixed(1)}
+    </div>
+  );
+};
+
+
+// TODO: Continue refactor:
+
 
 // export var setCategoriesRatingsDisplayCL = new ContentLoader(
 //   "SetCategoriesRatingsDisplay",

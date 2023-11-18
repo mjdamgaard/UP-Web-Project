@@ -21,14 +21,14 @@ export const InterfaceHeader = ({setAppPage, setColNum}) => {
       <div className="navbar-header">
         <SuperCoolLogoTBD />
       </div>
-      <HeaderButtonsContainer setAppPage={setAppPage} setColNum={setColNum} />
+      <HeaderButtonsContainer setAppPage={setAppPage} />
       <AccountButtonsContainer setAppPage={setAppPage} />
     </div>
   </header>
   );
 };
 
-const SuperCoolLogoTBD = ({setAppPage, setColNum}) => {
+const SuperCoolLogoTBD = ({}) => {
   const [columns, columnListManager] = useContext(ColumnListContext);
 
   return (
@@ -41,7 +41,9 @@ const SuperCoolLogoTBD = ({setAppPage, setColNum}) => {
 };
 
 
-const HeaderButtonsContainer = ({setAppPage, setColNum}) => {
+const HeaderButtonsContainer = ({setAppPage}) => {
+  const [columns, columnListManager] = useContext(ColumnListContext);
+
   return (
     <ul className="nav navbar-nav">
       <li className="tutorial"
@@ -54,14 +56,14 @@ const HeaderButtonsContainer = ({setAppPage, setColNum}) => {
       >
         <a href="#">Tutorial</a>
       </li>
-      <li className="minus" onClick={() => setColNum(
-        prev => prev <= 0 ? 0 : prev - 1
-      )}>
+      <li className="minus" onClick={() => {
+        columnListManager.decreaseColNum();
+      }}>
         <a href="#"><span style={{fontSize: "18pt"}}>-</span></a>
       </li>
-      <li className="plus" onClick={() => setColNum(
-        prev => prev >= 3 ? 3 : prev + 1
-      )}>
+      <li className="plus" onClick={() => {
+        columnListManager.increaseColNum();
+      }}>
         <a href="#"><span style={{fontSize: "18pt"}}>+</span></a>
       </li>
       {/* TODO: Add one or a few more. */}
