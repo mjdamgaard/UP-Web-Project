@@ -1,5 +1,7 @@
 import {useState, createContext, useContext} from "react";
+import {AccountManagerContext} from "./contexts/AccountContext.js";
 
+import {useQuery, useInput} from "./DBRequests.js";
 
 export const OverlayPage = ({children, setAppPage, isHidden}) => {
   return (
@@ -28,55 +30,6 @@ export const GoBackButton = ({setAppPage}) => {
   );
 };
 
-
-
-export const LoginPage = ({setAppPage, isHidden}) => {
-  return (
-    <OverlayPage setAppPage={setAppPage} isHidden={isHidden}>
-      <h3>Log in</h3>
-      <form>
-        <div className="form-group">
-          <label>Username or ID</label>
-          <input type="text" className="form-control user"></input>
-        </div>
-        <div className="form-group">
-          <label>Password</label>
-          <input type="password" className="form-control pw"></input>
-        </div>
-        <span>
-          <button className="btn btn-default">Log in</button>
-        </span>
-      </form>
-      <div className="response-display text-warning"></div>
-    </OverlayPage>
-  );
-};
-// loginPageCL.addCallback(function($ci, data) {
-//   $ci.on("submit", function() {
-//     let $this = $(this);
-//     if (!hasAcceptedStorage()) {
-//       return;
-//     }
-//     $this.find('.response-display').empty();
-//     let user = $this.find('.user').val();
-//     let pw = $this.find('.pw').val();
-//     // TODO: Validate input client-side first!
-//     accountManager.login(user, pw, $this, function($ci, result) {
-//       if (result.exitCode != 0) {
-//         $ci.find('.response-display').text(result.error);
-//       } else {
-//         $ci.trigger("logged-in");
-//         $ci.trigger("back-to-main");
-//       }
-//     });
-//     return false;
-//   });
-// });
-// loginPageCL.addCallback(function($ci, data) {
-//   if (!hasAcceptedStorage()) {
-//     return;
-//   }
-// });
 export function hasAcceptedStorage() {
   if (localStorage.hasAcceptedStorage) {
     return true;
@@ -97,19 +50,80 @@ export function hasAcceptedStorage() {
 }
 
 
+export const LoginPage = ({setAppPage, isHidden}) => {
+  const [user, setUser] = useState("");
+  const [pwd, setPwd] = useState("");
+  const [response, setResponse] = useState("");
+  const accountManager = useContext(AccountManagerContext);
+
+  return (
+    <OverlayPage setAppPage={setAppPage} isHidden={isHidden}>
+      <h3>Log in</h3>
+      <form>
+        <div className="form-group">
+          <label>Username or ID</label>
+          <input type="text" className="form-control user" value={user}
+            onChange={(e) => setUser(e.target.value)}
+          >
+          </input>
+        </div>
+        <div className="form-group">
+          <label>Password</label>
+          <input type="password" className="form-control pw" value={pwd}
+            onChange={(e) => setPwd(e.target.value)}
+          >
+          </input>
+        </div>
+        <span>
+          <button className="btn btn-default" onClick={() => {
+            if (!hasAcceptedStorage()) {
+              return;
+            }
+            // TODO: Validate input client-side first!
+            accountManager.login(user, pwd, (result) => {
+              if (result.exitCode != 0) {
+                setResponse(result.error);
+              } else {
+                setAppPage("home");
+              }
+            });
+          }}>
+            Log in
+          </button>
+        </span>
+      </form>
+      <div className="response-display text-warning">{response}</div>
+    </OverlayPage>
+  );
+};
+
+
 export const SignupPage = ({setAppPage, isHidden}) => {
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [pwd, setPwd] = useState("");
+  const [isChecked, setIsChecked] = useState(false);
+  const [response, setResponse] = useState("");
+  const accountManager = useContext(AccountManagerContext);
+
   return (
     <OverlayPage setAppPage={setAppPage} isHidden={isHidden}>
       <h3>Create new account</h3>
       <form>
         <div className="form-group">
           <label>Username</label>
-          <input type="text" className="form-control username"></input>
+          <input type="text" className="form-control username" value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          >
+          </input>
         </div>
         <p className="text-info"><i>(Anonymous usernames are prefered.)</i></p>
         <div className="form-group">
           <label>E-mail address</label>
-          <input type="email" className="form-control email"></input>
+          <input type="email" className="form-control email" value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          >
+          </input>
         </div>
         <p className="text-info"><i>
           (For testing purposes, you can make a temporary account by 
@@ -122,11 +136,17 @@ export const SignupPage = ({setAppPage, isHidden}) => {
         </i></p>
         <div className="form-group">
           <label>Password</label>
-          <input type="password" className="form-control pw"></input>
+          <input type="password" className="form-control pw" value={pwd}
+            onChange={(e) => setPwd(e.target.value)}
+          >
+          </input>
         </div>
         <p className="text-info"><i>Choose a unique password!</i></p>
         <div className="checkbox" style={{fontSize: "11pt"}}>
-          <label><input type="checkbox" className="terms" value="" />
+          <label>
+            <input type="checkbox" className="terms" value={isChecked}
+              onChange={(e) => setIsChecked(e.target.value)}
+            />
             I accept that the entities and ratings that I submit with 
             this account will be available to the public, and that they 
             will be shared upon request with any third party that 
@@ -139,47 +159,33 @@ export const SignupPage = ({setAppPage, isHidden}) => {
           </label>
         </div>
         <span>
-          <button className="btn btn-default">Submit</button>
+          <button className="btn btn-default" onClick={() => {
+            if (!hasAcceptedStorage()) {
+              return;
+            }
+            if (!isChecked) {
+              setResponse(
+                'You need to accept the terms before creating an account.'
+              );
+              return;
+            }
+            // TODO: Validate input client-side first!
+            accountManager.createNewAccount(username, email, pwd, (result) => {
+              if (result.exitCode != 0) {
+                setResponse(result.error);
+              } else {
+                setAppPage("home");
+              }
+            });
+          }}>
+            Submit
+          </button>
         </span>
       </form>
-      <div className="response-display text-warning"></div>
+      <div className="response-display text-warning">{response}</div>
     </OverlayPage>
   );
 };
-// createAccountPageCL.addCallback(function($ci, data) {
-//   $ci.on("submit", function() {
-//     let $this = $(this);
-//     if (!$this.find('input.terms').is(':checked')) {
-//       $this.find('.response-display').text(
-//         'You need to accept the terms before creating an account.'
-//       );
-//       return;
-//     }
-//     if (!hasAcceptedStorage()) {
-//       return;
-//     }
-//     let username = $this.find('.username').val();
-//     let email = $this.find('.email').val();
-//     let pw = $this.find('.pw').val();
-//     // TODO: Validate input client-side first!
-//     accountManager.createNewAccount(username, email, pw, $this,
-//       function($ci, result) {
-//         if (result.exitCode != 0) {
-//           $ci.find('.response-display').text(result.error);
-//         } else {
-//           $ci.trigger("logged-in");
-//           $ci.trigger("back-to-main");
-//         }
-//       }
-//     );
-//     return false;
-//   });
-// });
-// createAccountPageCL.addCallback(function($ci, data) {
-//   if (!hasAcceptedStorage()) {
-//     return;
-//   }
-// });
 
 
 export const TutorialPage = ({setAppPage, isHidden}) => {

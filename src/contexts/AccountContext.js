@@ -78,13 +78,9 @@ export class AccountManager {
   }
 
 
-  logout(obj, callbackData, callback) {
-    if (!callback) {
-      callback = callbackData ?? (x => void(0));
-      callbackData = null;
-    }
+  logout(callback) {
     if (!this.isLoggedIn) {
-      callback(obj, false, callbackData);
+      callback(false);
       return;
     }
 
@@ -95,8 +91,8 @@ export class AccountManager {
       u: this.inputUserID,
       ses: this.sesIDHex,
     };
-    $.post("logout_handler.php", reqData, function(result) {
-      callback(obj, result, callbackData);
+    $.post("http://localhost:80/logout_handler.php", reqData, (result) => {
+      callback(result);
     });
   }
 
@@ -105,16 +101,12 @@ export class AccountManager {
   // to others if looking at past HTTP(s) requests in the browser's network
   // monitor, while others look on.
 
-  login(userNameOrID, password, obj, callbackData, callback) {
-    if (!callback) {
-      callback = callbackData ?? (x => void(0));
-      callbackData = null;
-    }
+  login(userNameOrID, password, callback) {
     let reqData = {
       u: userNameOrID,
       pw: password,
     };
-    $.post("login_handler.php", reqData, function(result) {
+    $.post("http://localhost:80/login_handler.php", reqData, (result) => {
       if (result.exitCode == 0) {
         let session = localStorage.session = JSON.stringify({
           userID: result.outID,
@@ -123,7 +115,7 @@ export class AccountManager {
         });
         this.setSession(session);
       }
-      callback(obj, result, callbackData);
+      callback(result);
     });
   }
 
@@ -131,17 +123,14 @@ export class AccountManager {
   // updateSession() method here, such that users can in priciple stay logged
   // in if they keep visiting the site.
 
-  createNewAccount(username, email, password, obj, callbackData, callback) {
-    if (!callback) {
-      callback = callbackData ?? (x => void(0));
-      callbackData = null;
-    }
+  createNewAccount(username, email, password, callback) {
     let reqData = {
       n: username,
       em: email,
       pw: password,
     };
-    $.post("account_creation_handler.php", reqData, function(result) {
+    let url = "http://localhost:80/account_creation_handler.php";
+    $.post(url, reqData, (result) => {
       if (result.exitCode == 0) {
         let session = localStorage.session = JSON.stringify({
           userID: result.outID,
@@ -150,7 +139,7 @@ export class AccountManager {
         });
         this.setSession(session);
       }
-      callback(obj, result, callbackData);
+      callback(result);
     });
   }
 }

@@ -23,7 +23,7 @@ export const RatingDisplay = ({catID, instID}) => {
       <div className="statement">
         <EntityTitle entID={catID} />
         <span className="applies-to-inst">
-          (applies to <EntityTitle entID={instID} />)
+          {" "}(applies to <EntityTitle entID={instID} />)
         </span>
       </div>
       {/* TODO: Implement QueryUserRatingDisplay. */}
@@ -77,6 +77,7 @@ export const InputRatingSlider = ({catID, instID}) => {
   const [queryResults, setQueryResults] = useState({});
   const [inputReqData, setInputReqData] = useState({});
   const [inputResults, setInputResults] = useState({});
+
   useQuery(queryResults, setQueryResults, {
     req: "rat",
     u: accountManager.inputUserID,
@@ -127,28 +128,29 @@ export const InputRatingSlider = ({catID, instID}) => {
 
   // Afterwards, extract the data from results.data[0], then do a full render.
 
-  /* prevInputRatVal cannot be 0 (only null or positive). */
-  if (!prevInputRatVal) {
-    setPrevInputRatVal((queryResults.data[0] ?? [])[0]);
+  if (prevInputRatVal === undefined) {
+    setPrevInputRatVal((queryResults.data[0] ?? [null])[0]);
   }
   
-  let sliderVal = (prevInputRatVal / 6553.5).toFixed(1)
-  if (currVal === null) {
-    setCurrVal(sliderVal);
-  }
+  let sliderVal = prevInputRatVal ?
+    (prevInputRatVal / 6553.5).toFixed(1) : null
+  // if (sliderVal && currVal === null) {
+  //   setCurrVal(sliderVal);
+  // }
 
   return (
     <div>
       <input type="range"
-        min="0.1" max="10.0" step="0.1" value={currVal ?? 5}
-        onChange={(e, val) => {
-          setCurrVal(val);
+        min="0.1" max="10.0" step="0.1" value={currVal ?? sliderVal ?? 5}
+        onChange={(e) => {
+          setCurrVal(e.target.value);
         }}
       />
-      <div className="value-display">{currVal}</div>
+      <div className="value-display">{currVal ?? sliderVal ?? 5}</div>
       <div className="button-container">
-          <button className="btn btn-default delete"
-            disabled={!prevInputRatVal} onClick={() => {
+          {/* prevInputRatVal cannot be 0 (only null or positive). */}
+          <button className="btn btn-default delete" disabled={!prevInputRatVal}
+            onClick={() => {
               setInputResults({});
               setInputReqData({
                 req: "rat",
@@ -165,15 +167,15 @@ export const InputRatingSlider = ({catID, instID}) => {
             Delete
           </button>
           {/* currVal cannot be 0 (only null or positive). */}
-          <button className="btn btn-default clear"
-            disabled={!currVal} onClick={() => {
-              setCurrVal(prevInputRatVal ?? 5);
+          <button className="btn btn-default clear" disabled={!currVal}
+            onClick={() => {
+              setCurrVal(undefined);
             }}
           >
             Clear
           </button>
-          <button className="btn btn-default submit"
-            disabled={!currVal} onClick={() => {
+          <button className="btn btn-default submit" disabled={!currVal}
+            onClick={() => {
               let roundedRatVal = Math.max(Math.round(currVal * 25.5), 1) * 256;
               setInputResults({});
               setInputReqData({
@@ -186,6 +188,7 @@ export const InputRatingSlider = ({catID, instID}) => {
                 l: 0,
               });
               setPrevInputRatVal(roundedRatVal);
+              setCurrVal(undefined);
             }}
           >
             Submit
@@ -195,3 +198,8 @@ export const InputRatingSlider = ({catID, instID}) => {
   );
 };
 // TODO: Consider adding a response when input is confirmed by the server.
+
+
+
+// Hm, things *really* go slow now with React... I really hope that this is
+// only because it isn't "compiled" yet..(!..) 

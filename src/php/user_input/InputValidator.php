@@ -150,6 +150,8 @@ class InputValidator {
                 break;
             case "password":
                 if (!is_string($paramVal) || !ctype_print($paramVal)) {
+                    // TODO: Change this as to not echo the password back to
+                    // the user.
                     echoTypeErrorJSONAndExit(
                         $paramName, $paramVal, "VARCHAR(8,72)"
                     );
