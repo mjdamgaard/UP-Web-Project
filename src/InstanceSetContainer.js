@@ -5,13 +5,15 @@ import {useQuery} from "./DBRequests.js";
 
 
 /* Placeholders */
-const InstanceSetDisplayHeader = () => <template></template>;
+// const InstanceSetDisplayHeader = () => <template></template>;
 
 
 // For now, we will just let InstanceSetContainer render all elements at once,
 // but a TODO in the near future is to turn it into an infinite scroller.
 
-export const InstanceSetContainer = ({set, setStructure, ElemComponent}) => {
+export const InstanceSetContainer = ({structure, ElemComponent}) => {
+  const set = (structure ?? {}).set;
+
   if (!set) {
     return (
       <div className="set-container">
@@ -19,8 +21,10 @@ export const InstanceSetContainer = ({set, setStructure, ElemComponent}) => {
     );
   }
 
-  const children = set.map((val, ind) => (
-    <ElemComponent key={val[1]} entID={val[1]} combScore={val[0]} />
+  const children = set.map((val) => (
+    <ElemComponent key={val[1]}
+      entID={val[1]} combScore={val[0]} structure={structure}
+    />
   ));
 
   return (

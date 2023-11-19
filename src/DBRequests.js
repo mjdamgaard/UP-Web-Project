@@ -31,30 +31,41 @@ export const useQuery = (results, setResults, reqData) => {
             }
           });
         } else {
-          throw "useQuery(): reqData input is ill-formed.";
+          throw "useQuery(): reqData is ill-formed.";
         }
       });
     }
   }, [reqData]);
 };
-// export const useQuery = (setResults, key, reqData) => {
-//   useMemo(() => {
-//     if (Array.isArray(reqData)) {
-//       reqData.map((val, ind) => {
-//         if (val) {
-//           DBRequestManager.query(setResults, key, ind, val);
-//         }
-//       });
-//     } else {
-//       DBRequestManager.query(setResults, key, reqData);
-//     }
-//   }, []);
-// };
-// export const useInput = (reqData, setResults, ind) => {
-//   useEffect(() => {
-//     DBRequestManager.input(reqData, setResults, ind);
-//   }, []);
-// };
+
+export const useInput = (results, setResults, reqData) => {
+  useMemo(() => {
+    if (reqData.req) {
+      if (!results.isFetched) {
+        DBRequestManager.input(setResults, reqData);
+      }
+    } else {
+      let keys = Object.keys(reqData);
+      keys.forEach(key => {
+        let data = reqData[key];
+        if (data.req) {
+          if (!(results[key] ?? {}).isFetched) {
+            DBRequestManager.input(setResults, key, data);
+          }
+        } else if (Array.isArray(data)) {
+          results[key] ??= [];
+          data.forEach((val, ind) => {
+            if (val && !(results[key][ind] ?? {}).isFetched) {
+              DBRequestManager.input(setResults, key, ind, val);
+            }
+          });
+        } else {
+          throw "useInput(): reqData is ill-formed.";
+        }
+      });
+    }
+  }, [reqData]);
+};
 
 // (If it turns out that we'll need manual caching (for more than just
 // collapsed forwarding), I will just use a LRU library, e.g.
@@ -159,14 +170,34 @@ export class DBRequestManager {
     });
   }
 
-  static input(setResults, key, reqData) {
+  static input(setResults, key, ind, reqData) {
+    if (!reqData) {
+      reqData = ind;
+      ind = undefined;
+      if (!reqData) {
+        reqData = key;
+        key = undefined;
+      }
+    }
+
     let url = "http://localhost:80/input_handler.php";
     $.post(url, reqData, result => {
-      setResults(prev => {
-        let ret = [...prev];
-        ret[key] = result;
-        return ret;
-      });
+      if (key === undefined) {
+        setResults({data: result, isFetched: true});
+      } else if (ind === undefined) {
+        setResults(prev => {
+          let ret = {...prev};
+          ret[key] = {data: result, isFetched: true};
+          return ret;
+        });
+      } else {
+        setResults(prev => {
+          let ret = {...prev};
+          ret[key] ??= [];
+          ret[key][ind] = {data: result, isFetched: true};
+          return ret;
+        });
+      }
     });
   }
 }

@@ -5,12 +5,12 @@ import {useQuery} from "./DBRequests.js";
 import {EntityTitle, FullEntityTitle} from "./EntityTitles.js";
 import {DropdownBox} from "./DropdownBox.js";
 import {EntityIDDisplay} from "./EntityPages.js";
+import {getCatKeys} from "./InstanceSetDisplay.js";
+import {RatingDisplay} from "./Ratings.js";
 
 
 // const EntityTitle = () => <template></template>;
-// const ElementRatingDisplay = () => <template></template>;
-const SetCategoriesRatingsDisplay = () => <template></template>;
-// const EntityIDDisplay = () => <template></template>;
+// const RatingDisplay = () => <template></template>;
 
 
 
@@ -21,7 +21,7 @@ const SetCategoriesRatingsDisplay = () => <template></template>;
 
 
 
-export const GeneralEntityElement = ({entID, combScore}) => {
+export const GeneralEntityElement = ({entID, combScore, structure}) => {
   return (
     <div className="general-entity-element">
       <div>
@@ -34,7 +34,7 @@ export const GeneralEntityElement = ({entID, combScore}) => {
         <div className="general-element-dropdown-page">
           <div>Full title: <FullEntityTitle entID={entID} /></div>
           <div><EntityIDDisplay entID={entID} /></div>
-          <SetCategoriesRatingsDisplay />
+          <SetCategoriesRatingsDisplay entID={entID} structure={structure} />
         </div>
       </DropdownBox>
     </div>
@@ -52,8 +52,24 @@ export const ElementRatingDisplay = ({combScore}) => {
 };
 
 
-// TODO: Continue refactor:
 
+export const SetCategoriesRatingsDisplay = ({entID, structure}) => {
+  const catKeys = getCatKeys(structure);
+  const children = catKeys.map((val) => (
+    <RatingDisplay key={val.catID ?? val.catSK}
+      catID={val.catID} instID={entID}
+    />
+  ));
+
+  return (
+    <div className="set-categories-ratings-display">
+      {children}
+    </div>
+  );
+};
+
+
+// TODO: Continue refactor:
 
 // export var setCategoriesRatingsDisplayCL = new ContentLoader(
 //   "SetCategoriesRatingsDisplay",

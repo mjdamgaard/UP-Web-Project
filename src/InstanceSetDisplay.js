@@ -1,4 +1,4 @@
-import {useState, useEffect, useMemo, useContext} from "react";
+import {useState, useEffect, useMemo, useContext, createContext} from "react";
 import {AccountManagerContext} from "./contexts/AccountContext.js";
 import {useQuery} from "./DBRequests.js";
 
@@ -10,6 +10,7 @@ import {GeneralEntityElement} from "./EntityElements.js";
 const InstanceSetDisplayHeader = () => <template></template>;
 // const InstanceSetContainer = () => <template></template>;
 
+// export const StructureContext = createContext();
 
 
 export const InstanceSetDisplay = ({
@@ -37,12 +38,13 @@ export const InstanceSetDisplay = ({
   if (!structure.set) {
     return (
       <div className="set-display">
+        {/* <StructureContext.Provider value={[structure, setStructure]} > */}
         <InstanceSetDisplayHeader
-          // catData={catKeys}
           structure={structure} setStructure={setStructure}
           filterOptions={filterOptions} setFilterOptions={setFilterOptions}
         />
-        <InstanceSetContainer set={null} ElemComponent={ElemComponent} />
+        <InstanceSetContainer structure={null} ElemComponent={ElemComponent} />
+        {/* </StructureContext.Provider> */}
       </div>
     );
   }
@@ -51,13 +53,12 @@ export const InstanceSetDisplay = ({
   return (
     <div className="set-display">
       <InstanceSetDisplayHeader
-        // catData={catKeys}
         structure={structure} setStructure={setStructure}
         ElemComponent={ElemComponent}
         filterOptions={filterOptions} setFilterOptions={setFilterOptions}
       />
       <InstanceSetContainer
-        set={structure.set} setStructure={setStructure}
+        structure={structure} setStructure={setStructure}
         ElemComponent={ElemComponent}
       />
     </div>
@@ -87,7 +88,7 @@ export const InstanceSetDisplay = ({
 // ready yet).
 // The inner nodes of the structure tree also all have a "children" property.
 // The various node types might also have other properties. For instance, the
-// "simple" nodes will have either a catID or a "catKey" property.
+// "simple" nodes will have either a catID or a "catSK" property.
 
 function updateStructureAndRequests(
   structure, setStructure, results, setReqData, accountManager
@@ -111,12 +112,46 @@ function updateStructureAndRequests(
       
       break;
     // For combinator types, I now intend to make the recursive calls (to
-    // updateStructureAndRequests()) work by redefining setStructure for each
+    // updateStructureAndRequests()) work by redefining structure for each
     // recursive call.:)
+    case "max-rating-comb":
+      // TODO: Implement.
+      break;
     default:
       throw "updateSetStructure(): unrecognized node type."
   }
 }
+
+
+
+export function getCatKeys(structure) { 
+  switch (structure.type) {
+    case "some-exception":
+      // Implement if this is ever needed.
+      break;
+    default:
+      if (structure.catID || structure.catID === 0) {
+        return [{catID: structure.catID}];
+      }
+      if (structure.catSK) {
+        return [{catSK: structure.catSK}];
+      }
+      if (!structure.children) {
+        throw (
+          "getCatKeys(): Following node needs implementing: " +
+          JSON.stringify(structure)
+        )
+      }
+      if (structure.children.length === 0) {
+        return [];
+      }
+      const childCatKeyArrays = structure.children.map(val => getCatKeys(val));
+      return [].concat(...childCatKeyArrays);
+  }
+}
+
+
+
 
 
 function querySetsForAllUsersThenCombine(
@@ -186,8 +221,8 @@ function querySetsForAllUsersThenCombine(
   // If we don't yet have catID to begin with, see if it is already being
   // fetched, or else fetch it.
   } else if (catID === undefined) {
-    let catKey = structure.catKey;
-    let key = JSON.stringify(catKey);
+    let catSK = structure.catSK;
+    let key = JSON.stringify(catSK);
     if (!structure.isFetching) {
       setStructure(prev => {
         let ret = {...prev};
@@ -197,8 +232,8 @@ function querySetsForAllUsersThenCombine(
       let data = {
         req: "entID",
         t: 2,
-        c: catKey.cxtID,
-        s: catKey.defStr,
+        c: catSK.cxtID,
+        s: catSK.defStr,
       };
       setReqData(prev => {
         let ret = {...prev};
@@ -218,8 +253,8 @@ function querySetsForAllUsersThenCombine(
     }
 
   // And finally, if catID is defined but falsy, it means that it doesn't
-  // exist (for the given catKey), in which case we should let setArr =
-  // [[], [], ...].
+  // exist (for the given catSK (SK = Secondary Key)), in which case we
+  // should let setArr = [[], [], ...].
   } else {
     setStructure(prev => {
       let ret = {...prev};

@@ -14,7 +14,7 @@ const EntityTitle = () => <template></template>;
 // const EntityIDDisplay = () => <template></template>;
 const ContextDisplay = () => <template></template>;
 const EntityInfoPage = () => <template></template>;
-const EntityRatingsPage = () => <template></template>;
+// const EntityRatingsPage = () => <template></template>;
 // const PropertyCategoryPage = () => <template></template>;
 const RelevantRatingsTypePage = () => <template></template>;
 const RelevantPropertiesTypePage = () => <template></template>;
@@ -75,7 +75,7 @@ export const EntityPage = ({entID, initTab}) => {
 function getTabDataArrAndDefaultTab(entID, typeID, cxtID) {
   let tabDataArr = [
     ["Info", <EntityInfoPage entID={entID} />],
-    ["Ratings", <EntityRatingsPage entID={entID} />],
+    ["Ratings", <EntityRatingsPage entID={entID} typeID={typeID} />],
     ["Related to", <PropertyCategoryPage entID={entID} propID={42} />],
   ];
   let defaultTab;
@@ -138,7 +138,7 @@ export const EntityIDDisplay = ({entID}) => {
 export const PropertyCategoryPage = ({propID, entID}) => {
   const structure = {
     type: "simple",
-    catKey: {
+    catSK: {
       cxtID: 21,
       defStr: "#" + propID + "|#" + entID,
     }
@@ -180,6 +180,28 @@ export const SubmitCategoryInstancePage = ({entID}) => {
 // TODO: Continue refactoring:
 
 
+export const EntityRatingsPage = ({entID, typeID}) => {
+  const structure = {
+    type: "max-rating-comb",
+    children: [
+      {
+        type: "simple",
+        catSK: {cxtID: 21, defStr: "#54|#" + entID},
+      },
+      {
+        type: "simple",
+        catSK: {cxtID: 21, defStr: "#52|#" + typeID},
+      },
+    ],
+  };
+
+  return (
+    <div>
+      <h4>Relevant ratings</h4>
+      <InstanceSetDisplay initStructure={structure} />
+    </div>
+  );
+};
 
 // export var entityRatingsPageCL = new ContentLoader(
 //   "EntityRatingsPage",
