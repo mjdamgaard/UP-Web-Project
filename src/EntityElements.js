@@ -28,6 +28,7 @@ export const GeneralEntityElement = ({entID, combScore, structure}) => {
         <h4>
           <EntityTitle entID={entID} isLink={true} />
         </h4>
+        {/* TODO: Make the score update when user logs in and out. */}
         <ElementRatingDisplay combScore={combScore} />
       </div>
       <DropdownBox>

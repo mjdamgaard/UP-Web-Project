@@ -79,18 +79,21 @@ export class AccountManager {
 
 
   logout(callback) {
+    callback ??= () => undefined;
+
     if (!this.isLoggedIn) {
       callback(false);
       return;
     }
 
-    localStorage.removeItem("session");
-    this.setSession(false);
-
     let reqData = {
       u: this.inputUserID,
       ses: this.sesIDHex,
     };
+
+    localStorage.removeItem("session");
+    this.setSession(false);
+
     $.post("http://localhost:80/logout_handler.php", reqData, (result) => {
       callback(result);
     });
