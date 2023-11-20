@@ -58,7 +58,7 @@ export const SetCategoriesRatingsDisplay = ({entID, structure}) => {
   const catKeys = getCatKeys(structure);
   const children = catKeys.map((val) => (
     <RatingDisplay key={val.catID ?? val.catSK}
-      catID={val.catID} instID={entID}
+      catKey={val} instID={entID}
     />
   ));
 
@@ -70,41 +70,7 @@ export const SetCategoriesRatingsDisplay = ({entID, structure}) => {
 };
 
 
-// TODO: Continue refactor:
-
-// export var setCategoriesRatingsDisplayCL = new ContentLoader(
-//   "SetCategoriesRatingsDisplay",
-//   /* Initial HTML template */
-//   '<div>' +
-//   '</div>',
-//   sdbInterfaceCL
-// );
-// setCategoriesRatingsDisplayCL.addCallback("data", function(data) {
-//   data.copyFromAncestor([
-//     "setGenerator",
-//     "entID",
-//   ]);
-// });
-// setCategoriesRatingsDisplayCL.addCallback(function($ci, data) {
-//   let catKeyArr = data.setGenerator.getSetCategoryKeys();
-//   catKeyArr.forEach(function(val) {
-//     if (!isNaN(parseInt(val))) {
-//       setCategoriesRatingsDisplayCL.loadAppended(
-//         $ci, "RatingDisplay", new DataNode(data, {
-//           catID: val,
-//           instID: data.entID,
-//         })
-//       );
-//     } else {
-//       let catKey = JSON.parse(val);
-//       setCategoriesListCL.loadAppended(
-//         $ci, "MissingCategoryDisplay", new DataNode(data, catKey)
-//       );
-//     }
-//   });
-// });
-
-
+// TODO: Continue refactoring:
 
 
 // export var semanticPropertyElementCL = new ContentLoader(

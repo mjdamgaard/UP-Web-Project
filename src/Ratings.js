@@ -5,7 +5,9 @@ import {useQuery, useInput} from "./DBRequests.js";
 import {EntityTitle, FullEntityTitle} from "./EntityTitles.js";
 
 
-// const EntityTitle = () => <template></template>;
+const RatingDisplayPlaceholder = () => <div>...</div>;
+// const RatingDisplayPlaceholder = () => <template></template>;
+// const MissingCategoryDisplay = () => <template></template>;
 
 
 export const RatingElement = ({entID, instID}) => {
@@ -17,21 +19,118 @@ export const RatingElement = ({entID, instID}) => {
 };
 
 
-export const RatingDisplay = ({catID, instID}) => {
+export const RatingDisplay = ({catKey, instID}) => {
+  const catID = catKey.catID;
+  if (catID) {
+    return (
+      <div>
+        <div className="statement">
+          {/* <EntityTitle entID={catID} isLink={true} />
+          <span className="applies-to-inst">
+            {" "}(applies to <EntityTitle entID={instID} isLink={true} />)
+          </span> */}
+          Statement:{" "}
+          <EntityTitle entID={instID} isLink={true} />
+          {" "}belongs to{" "}
+          <EntityTitle entID={catID} isLink={true} />
+        </div>
+        {/* TODO: Implement QueryUserRatingDisplay. */}
+        {/* <QueryUserRatingDisplay /> */}
+        <InputRatingSlider catID={catID} instID={instID} />
+      </div>
+    );
+  }
+
+  // If catID is falsy, see if it is fetched yet, and if not, load a
+  // placeholder:
+  if (!catKey.isFetched) {
+    return (
+      <RatingDisplayPlaceholder />
+    );
+  }
+
+  // If catID is fetched but still falsy, load MissingCategoryDisplay.
+  return (
+    <MissingCategoryDisplay catSK={catKey.catSK} />
+  );
+};
+
+
+
+export const MissingCategoryDisplay = ({catSK}) => {
+  const accountManager = useContext(AccountManagerContext);
+
+  const [reqData, setReqData] = useState({});
+  const [results, setResults] = useState({});
+  useInput(results, setResults, reqData);
+
+  // If user has already submitted, load the following
+  if (reqData.req) {
+    if (!results.isFetched) {
+      return (
+        <div>
+          <span className="text-info">Missing category. Want to submit it?</span>
+          <button className="btn btn-default submit" disabled={true}>
+            Submitting
+          </button>
+        </div>
+      );
+    }
+    if (results.data.exitCode == 0) {
+      return (
+        <div>
+          <span className="text-success">Category successfully submitted!</span>
+          <button className="btn btn-default submit" disabled={true}>
+            Submitted
+          </button>
+        </div>
+      );
+    } else {
+      return (
+        <div>
+          <span className="text-warning">An error occurred.</span>
+          <button className="btn btn-default submit" disabled={true}>
+            Submitted
+          </button>
+        </div>
+      );
+    }
+  }
+
+  // If user is logged in and has not already submitted, load the following.
+  if (accountManager.isLoggedIn) {
+    return (
+      <div>
+        <span className="text-info">Missing category. Want to submit it?</span>
+        <button className="btn btn-default submit" onClick={() => {
+          setReqData({
+            req: "ent",
+            ses: accountManager.sesIDHex,
+            u: accountManager.inputUserID,
+            r: 1,
+            t: 2,
+            c: catSK.cxtID,
+            s: catSK.defStr,
+          });
+        }}>
+          Submit
+        </button>
+      </div>
+    );
+  }
+
+  // Else write that user needs to log in to submit:
   return (
     <div>
-      <div className="statement">
-        <EntityTitle entID={catID} />
-        <span className="applies-to-inst">
-          {" "}(applies to <EntityTitle entID={instID} />)
-        </span>
-      </div>
-      {/* TODO: Implement QueryUserRatingDisplay. */}
-      {/* <QueryUserRatingDisplay /> */}
-      <InputRatingSlider catID={catID} instID={instID} />
+      <span className="text-info">Missing category. Log in to submit it.</span>
     </div>
   );
 };
+
+
+
+
+
 
 // ratingDisplayCL.addCallback(function($ci, data) {
 //   let reqData = {
@@ -198,6 +297,7 @@ export const InputRatingSlider = ({catID, instID}) => {
   );
 };
 // TODO: Consider adding a response when input is confirmed by the server.
+
 
 
 

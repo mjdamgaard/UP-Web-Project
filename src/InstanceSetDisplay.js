@@ -2,12 +2,13 @@ import {useState, useEffect, useMemo, useContext, createContext} from "react";
 import {AccountManagerContext} from "./contexts/AccountContext.js";
 import {useQuery} from "./DBRequests.js";
 
+import {InstanceSetHeader} from "./InstanceSetHeader.js";
 import {InstanceSetContainer} from "./InstanceSetContainer.js";
 import {GeneralEntityElement} from "./EntityElements.js";
 
 
 /* Placeholders */
-const InstanceSetDisplayHeader = () => <template></template>;
+// const InstanceSetHeader = () => <template></template>;
 // const InstanceSetContainer = () => <template></template>;
 
 // export const StructureContext = createContext();
@@ -39,7 +40,7 @@ export const InstanceSetDisplay = ({
     return (
       <div className="set-display">
         {/* <StructureContext.Provider value={[structure, setStructure]} > */}
-        <InstanceSetDisplayHeader
+        <InstanceSetHeader
           structure={structure} setStructure={setStructure}
           filterOptions={filterOptions} setFilterOptions={setFilterOptions}
         />
@@ -52,7 +53,7 @@ export const InstanceSetDisplay = ({
   // And when it is ready, render the full component:
   return (
     <div className="set-display">
-      <InstanceSetDisplayHeader
+      <InstanceSetHeader
         structure={structure} setStructure={setStructure}
         ElemComponent={ElemComponent}
         filterOptions={filterOptions} setFilterOptions={setFilterOptions}
@@ -130,11 +131,8 @@ export function getCatKeys(structure) {
       // Implement if this is ever needed.
       break;
     default:
-      if (structure.catID || structure.catID === 0) {
-        return [{catID: structure.catID}];
-      }
-      if (structure.catSK) {
-        return [{catSK: structure.catSK}];
+      if (structure.catID || structure.catSK) {
+        return [structure];
       }
       if (!structure.children) {
         throw (
@@ -142,10 +140,10 @@ export function getCatKeys(structure) {
           JSON.stringify(structure)
         )
       }
-      if (structure.children.length === 0) {
-        return [];
-      }
-      const childCatKeyArrays = structure.children.map(val => getCatKeys(val));
+      // if (structure.children.length === 0) {
+      //   return [];
+      // }
+      let childCatKeyArrays = structure.children.map(val => getCatKeys(val));
       return [].concat(...childCatKeyArrays);
   }
 }
@@ -244,9 +242,10 @@ function querySetsForAllUsersThenCombine(
       if ((results[key] ?? {}).isFetched) {
         setStructure(prev => {
           let ret = {...prev};
-          ret.catID = (results[key].data[0] ?? [false])[0];
+          ret.catID = (results[key].data[0] ?? [null])[0];
           // (structure.catID will be false if it couldn't be found.)
           ret.isFetching = false;
+          ret.isFetched = true;
           return ret;
         });
       }
