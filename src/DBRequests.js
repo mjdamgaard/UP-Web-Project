@@ -23,13 +23,13 @@ export const useQuery = (results, setResults, reqData) => {
           if (!(results[key] ?? {}).isFetched) {
             DBRequestManager.query(setResults, key, data);
           }
-        } else if (Array.isArray(data)) {
-          results[key] ??= [];
-          data.forEach((val, ind) => {
-            if (val && !(results[key][ind] ?? {}).isFetched) {
-              DBRequestManager.query(setResults, key, ind, val);
-            }
-          });
+        // } else if (Array.isArray(data)) {
+        //   results[key] ??= [];
+        //   data.forEach((val, ind) => {
+        //     if (val && !(results[key][ind] ?? {}).isFetched) {
+        //       DBRequestManager.query(setResults, key, ind, val);
+        //     }
+        //   });
         } else {
           throw "useQuery(): reqData is ill-formed.";
         }
@@ -52,13 +52,13 @@ export const useInput = (results, setResults, reqData) => {
           if (!(results[key] ?? {}).isFetched) {
             DBRequestManager.input(setResults, key, data);
           }
-        } else if (Array.isArray(data)) {
-          results[key] ??= [];
-          data.forEach((val, ind) => {
-            if (val && !(results[key][ind] ?? {}).isFetched) {
-              DBRequestManager.input(setResults, key, ind, val);
-            }
-          });
+        // } else if (Array.isArray(data)) {
+        //   results[key] ??= [];
+        //   data.forEach((val, ind) => {
+        //     if (val && !(results[key][ind] ?? {}).isFetched) {
+        //       DBRequestManager.input(setResults, key, ind, val);
+        //     }
+        //   });
         } else {
           throw "useInput(): reqData is ill-formed.";
         }

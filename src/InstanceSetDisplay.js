@@ -97,12 +97,39 @@ function updateStructureAndRequests(
   // If the set is already ready, return true.
   if (structure.set) {
     return true;
+  }debugger;
+
+  // Else, see if the node is a combinator node (with a 'children' property),
+  // and update its children recursively, if they are not ready yet.
+  let children = structure.children;
+  if (children) {
+    let areReady = children.reduce(
+      (acc, val) => acc && val.set,
+      true
+    );
+    if (!areReady) {
+      children.map((val, ind) => {
+        let childSetStructure = y => {
+          if (y instanceof Function) {
+            return x => y(x[ind]);
+          } else {
+            return x => {
+              x[ind] = y;
+            };
+          }
+        }
+        updateStructureAndRequests(
+          val, childSetStructure, results, setReqData, accountManager
+        );
+      });
+      return false;
+    }
   }
 
-  // Else switch-case the node type and update the results and reqData when
+  // Else, switch-case the node type and update the results and reqData when
   // possible. By using setReqData for the latter, it means that the queries
   // will be forwarded in the useQuery() call above, and when they return,
-  // updateStructureAndRequests() will be called again to make further updates. 
+  // updateStructureAndRequests() will be called again to make further updates.
   switch (structure.type) {
     case "simple":
       let userIDArr = accountManager.queryUserPriorityArr;
@@ -112,15 +139,14 @@ function updateStructureAndRequests(
       )
       
       break;
-    // For combinator types, I now intend to make the recursive calls (to
-    // updateStructureAndRequests()) work by redefining structure for each
-    // recursive call.:)
-    case "max-rating-comb":
-      // TODO: Implement.
+    case "max-rating-comb":debugger;
+        let setArr = children.map(val => val.set);
+        structure.set = combineByMaxRating(setArr);
       break;
     default:
       throw "updateSetStructure(): unrecognized node type."
   }
+  return false;
 }
 
 
@@ -291,6 +317,42 @@ function combineByPriority(setArr) {
           currSetArrIndex = val[2];
           if (currSetArrIndex > minSetArrIndex) {
               row[2] = (minSetArrIndex = currSetArrIndex);
+          }
+      }
+  });
+  // delete the empty slots of ret and return it.
+  ret.length = retLen;
+  return ret;
+}
+
+
+function combineByMaxRating(setArr) {
+  // setArr is imploded into concatArr, which is then sorted by instID.
+  let concatSet = [].concat(...setArr).sort(
+      (a, b) => a[1] - b[1]
+  );
+  // construct a return array by recording only the one rating for each
+  // group of elements with the same instID in the concatArr, namely the
+  // one with the smallest set generator index (val[2]).
+  let ret = new Array(concatSet.length);
+  let retLen = 0;
+  let currInstID = 0;
+  let row, maxRatVal, currRatVal;
+  concatSet.forEach(function(val, ind) {
+      // if val is the first in a group with the same instID, record its
+      // ratVal as the maxRatVal and add a copy of val to the return
+      // array.
+      if (val[1] !== currInstID) {
+          currInstID = val[1];
+          maxRatVal = val[0];
+          ret[retLen] = (row = [maxRatVal, currInstID]);
+          retLen++;
+      // else compare the ratVal to the previous maxRatVal and change the
+      // last row of the return array if it is larger.
+      } else {
+          currRatVal = val[0];
+          if (currRatVal > maxRatVal) {
+              row[0] = (maxRatVal = currRatVal);
           }
       }
   });

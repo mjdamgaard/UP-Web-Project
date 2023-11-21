@@ -7,6 +7,8 @@ import {useQuery} from "./DBRequests.js";
 import {PagesWithTabs} from "./PagesWithTabs.js";
 import {EntityID, FullEntityTitle} from "./EntityTitles.js";
 import {InstanceSetDisplay} from "./InstanceSetDisplay.js";
+import {RatingElement} from "./Ratings.js";
+
 
 /* Placeholders */
 const EntityTitle = () => <template></template>;
@@ -198,40 +200,13 @@ export const EntityRatingsPage = ({entID, typeID}) => {
   return (
     <div>
       <h4>Relevant ratings</h4>
-      <InstanceSetDisplay initStructure={structure} />
+      <InstanceSetDisplay
+        initStructure={structure} ElemComponent={RatingElement}
+      />
     </div>
   );
 };
 
-// export var entityRatingsPageCL = new ContentLoader(
-//   "EntityRatingsPage",
-//   /* Initial HTML template */
-//   '<div>' +
-//       '<h4>Relevant ratings</h4>' +
-//       '<<SetDisplay>>' +
-//   '</div>',
-//   sdbInterfaceCL
-// );
-// entityRatingsPageCL.addCallback("data", function(data) {
-//   data.copyFromAncestor([
-//       "entID",
-//       "typeID",
-//   ]);
-// });
-// entityRatingsPageCL.addCallback("data", function(data) {
-//   // Relevant categories:
-//   data.elemContentKey = "RatingElement";
-//   let sg1 = new SimpleSetGenerator(
-//       {cxtID: 21, defStr: "#54|#" + data.entID}, // catKey.
-//   );
-//   let sg2 = new SimpleSetGenerator(
-//       {cxtID: 21, defStr: "#52|#" + data.typeID}, // catKey.
-//   );
-//   data.setGenerator = new MaxRatingSetCombiner([sg1, sg2]);
-// });
-// entityRatingsPageCL.addCallback("data", function(data) {
-//   data.instID = data.getFromAncestor("columnEntityID");
-// });
 
 
 
