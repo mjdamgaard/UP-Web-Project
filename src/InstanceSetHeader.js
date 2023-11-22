@@ -4,7 +4,7 @@ import {useQuery} from "./DBRequests.js";
 
 import {DropdownBox} from "./DropdownBox.js";
 import {EntityTitle, FullEntityTitle} from "./EntityTitles.js";
-import {InstanceSetDisplay, getCatKeys} from "./InstanceSetDisplay.js";
+import {InstanceSetDisplay, getLeaves} from "./InstanceSetDisplay.js";
 import {MissingCategoryDisplay} from "./Ratings.js";
 
 
@@ -44,9 +44,11 @@ export const InstanceSetHeader = ({
 
 
 export const SetCategoriesList = ({structure}) => {
-  const catKeys = getCatKeys(structure);
-  const children = catKeys.map((val) => (
-    <CategoryDisplay key={val.catID ?? val.catSK} catKey={val} />
+  const leaves = getLeaves(structure);
+  const children = leaves.map((val) => (
+    <CategoryDisplay
+    key={JSON.stringify(val.catSK ?? val.catID)} leaf={val}
+    />
   ));
 
   return (
@@ -57,8 +59,8 @@ export const SetCategoriesList = ({structure}) => {
 };
 
 
-export const CategoryDisplay = ({catKey}) => {
-  const catID = catKey.catID;
+export const CategoryDisplay = ({leaf}) => {
+  const catID = leaf.catID;
   if (catID) {
     return (
       <div>
@@ -69,7 +71,7 @@ export const CategoryDisplay = ({catKey}) => {
 
   // If catID is falsy, see if it is fetched yet, and if not, load a
   // placeholder:
-  if (!catKey.isFetched) {
+  if (catID === undefined) {
     return (
       <div>
         <EntityTitlePlaceholder />
@@ -79,7 +81,7 @@ export const CategoryDisplay = ({catKey}) => {
 
   // If catID is fetched but still falsy, load MissingCategoryDisplay.
   return (
-    <MissingCategoryDisplay catSK={catKey.catSK} />
+    <MissingCategoryDisplay catSK={leaf.catSK} />
   );
 };
 

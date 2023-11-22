@@ -5,7 +5,7 @@ import {useQuery} from "./DBRequests.js";
 import {EntityTitle, FullEntityTitle} from "./EntityTitles.js";
 import {DropdownBox} from "./DropdownBox.js";
 import {EntityIDDisplay} from "./EntityPages.js";
-import {getCatKeys} from "./InstanceSetDisplay.js";
+import {getLeaves} from "./InstanceSetDisplay.js";
 import {RatingDisplay} from "./Ratings.js";
 
 
@@ -55,9 +55,9 @@ export const ElementRatingDisplay = ({combScore}) => {
 
 
 export const SetCategoriesRatingsDisplay = ({entID, structure}) => {
-  const catKeys = getCatKeys(structure);
-  const children = catKeys.map((val) => (
-    <RatingDisplay key={val.catID ?? val.catSK}
+  const leaves = getLeaves(structure);
+  const children = leaves.map((val) => (
+    <RatingDisplay key={JSON.stringify(val.catSK ?? val.catID)}
       catKey={val} instID={entID}
     />
   ));

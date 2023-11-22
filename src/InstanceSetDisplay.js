@@ -84,9 +84,7 @@ export const InstanceSetDisplay = ({
 // Each node in the "structure" defining the instance set has at least a
 // "type" property and a "set" property, which has a falsy value if the set
 // is not yet ready. The nodes might also have a property "isFetching" for
-// when the leaf sets are queried for but has not arrived, and a property
-// "isFetched" for when they have arrived (but the "set" is not necessarily
-// ready yet).
+// when a request is waiting to arrive.
 // The inner nodes of the structure tree also all have a "children" property.
 // The various node types might also have other properties. For instance, the
 // "simple" nodes will have either a catID or a "catSK" property.
@@ -97,7 +95,7 @@ function updateStructureAndRequests(
   // If the set is already ready, return true.
   if (structure.set) {
     return true;
-  }debugger;
+  }
 
   // Else, see if the node is a combinator node (with a 'children' property),
   // and update its children recursively, if they are not ready yet.
@@ -108,21 +106,25 @@ function updateStructureAndRequests(
       true
     );
     if (!areReady) {
-      children.map((val, ind) => {
-        let childSetStructure = y => {
-          if (y instanceof Function) {
-            return x => y(x[ind]);
-          } else {
-            return x => {
-              x[ind] = y;
-            };
+      // if (!structure.isFetching) {
+        // structure.isFetching = true;
+        children.map((val, ind) => {
+          let setChildStructure = y => {
+            setStructure(prev => {
+              let ret = {...prev};
+              ret.children[ind] = y instanceof Function ?
+                y(ret.children[ind]) : y;
+              return ret;
+            });
           }
-        }
-        updateStructureAndRequests(
-          val, childSetStructure, results, setReqData, accountManager
-        );
-      });
+          updateStructureAndRequests(
+            val, setChildStructure, results, setReqData, accountManager
+          );
+        });
+      // }
       return false;
+    } else {
+      structure.isFetching = false;
     }
   }
 
@@ -139,9 +141,13 @@ function updateStructureAndRequests(
       )
       
       break;
-    case "max-rating-comb":debugger;
-        let setArr = children.map(val => val.set);
-        structure.set = combineByMaxRating(setArr);
+    case "max-rating-comb":
+      let setArr = children.map(val => val.set);
+      setStructure(prev => {
+        let ret = {...prev};
+        ret.set = combineByMaxRating(setArr);
+        return ret;
+      });
       break;
     default:
       throw "updateSetStructure(): unrecognized node type."
@@ -151,7 +157,7 @@ function updateStructureAndRequests(
 
 
 
-export function getCatKeys(structure) { 
+export function getLeaves(structure) { 
   switch (structure.type) {
     case "some-exception":
       // Implement if this is ever needed.
@@ -162,15 +168,15 @@ export function getCatKeys(structure) {
       }
       if (!structure.children) {
         throw (
-          "getCatKeys(): Following node needs implementing: " +
+          "getLeaves(): Following node needs implementing: " +
           JSON.stringify(structure)
         )
       }
       // if (structure.children.length === 0) {
       //   return [];
       // }
-      let childCatKeyArrays = structure.children.map(val => getCatKeys(val));
-      return [].concat(...childCatKeyArrays);
+      let childLeafArrays = structure.children.map(val => getLeaves(val));
+      return [].concat(...childLeafArrays);
   }
 }
 
@@ -271,7 +277,6 @@ function querySetsForAllUsersThenCombine(
           ret.catID = (results[key].data[0] ?? [null])[0];
           // (structure.catID will be false if it couldn't be found.)
           ret.isFetching = false;
-          ret.isFetched = true;
           return ret;
         });
       }
