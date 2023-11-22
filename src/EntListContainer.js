@@ -5,13 +5,13 @@ import {useQuery} from "./DBRequests.js";
 
 
 /* Placeholders */
-// const InstanceSetDisplayHeader = () => <template></template>;
+// const EntListDisplayHeader = () => <template></template>;
 
 
-// For now, we will just let InstanceSetContainer render all elements at once,
+// For now, we will just let EntListContainer render all elements at once,
 // but a TODO in the near future is to turn it into an infinite scroller.
 
-export const InstanceSetContainer = ({structure, ElemComponent}) => {
+export const EntListContainer = ({structure, ElemComponent}) => {
   const set = (structure ?? {}).set;
 
   if (!set) {

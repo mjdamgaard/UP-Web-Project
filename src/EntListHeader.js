@@ -4,7 +4,7 @@ import {useQuery} from "./DBRequests.js";
 
 import {DropdownBox} from "./DropdownBox.js";
 import {EntityTitle, FullEntityTitle} from "./EntityTitles.js";
-import {InstanceSetDisplay, getLeaves} from "./InstanceSetDisplay.js";
+import {EntListDisplay, getLeaves} from "./EntListDisplay.js";
 import {MissingCategoryDisplay} from "./Ratings.js";
 
 
@@ -14,7 +14,7 @@ const EntityTitlePlaceholder = () => <span>...</span>;
 
 
 
-export const InstanceSetHeader = ({
+export const EntListHeader = ({
   structure, setStructure, filterOptions, setFilterOptions
 }) => {
   return (

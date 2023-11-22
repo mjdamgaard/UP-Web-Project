@@ -2,25 +2,25 @@ import {useState, useEffect, useMemo, useContext, createContext} from "react";
 import {AccountManagerContext} from "./contexts/AccountContext.js";
 import {useQuery} from "./DBRequests.js";
 
-import {InstanceSetHeader} from "./InstanceSetHeader.js";
-import {InstanceSetContainer} from "./InstanceSetContainer.js";
+import {EntListHeader} from "./EntListHeader.js";
+import {EntListContainer} from "./EntListContainer.js";
 import {GeneralEntityElement} from "./EntityElements.js";
 
 
 /* Placeholders */
-// const InstanceSetHeader = () => <template></template>;
-// const InstanceSetContainer = () => <template></template>;
+// const EntListHeader = () => <template></template>;
+// const EntListContainer = () => <template></template>;
 
 // export const StructureContext = createContext();
 
 
 // (22.11.23) I'm going to refactor 'structure' into a class---which I can call
 // SetGenerator like I've done before. This time, the SetGenerator are just
-// handed 'setReqdata' and 'results,' which they can use in their update()
+// handed 'setReqData' and 'results,' which they can use in their update()
 // methods.
  
 
-export const InstanceSetDisplay = ({
+export const EntListDisplay = ({
   initStructure, ElemComponent, initFilterOptions
 }) => {
   ElemComponent ??= GeneralEntityElement;
@@ -46,11 +46,11 @@ export const InstanceSetDisplay = ({
     return (
       <div className="set-display">
         {/* <StructureContext.Provider value={[structure, setStructure]} > */}
-        <InstanceSetHeader
+        <EntListHeader
           structure={structure} setStructure={setStructure}
           filterOptions={filterOptions} setFilterOptions={setFilterOptions}
         />
-        <InstanceSetContainer structure={null} ElemComponent={ElemComponent} />
+        <EntListContainer structure={null} ElemComponent={ElemComponent} />
         {/* </StructureContext.Provider> */}
       </div>
     );
@@ -59,12 +59,12 @@ export const InstanceSetDisplay = ({
   // And when it is ready, render the full component:
   return (
     <div className="set-display">
-      <InstanceSetHeader
+      <EntListHeader
         structure={structure} setStructure={setStructure}
         ElemComponent={ElemComponent}
         filterOptions={filterOptions} setFilterOptions={setFilterOptions}
       />
-      <InstanceSetContainer
+      <EntListContainer
         structure={structure} setStructure={setStructure}
         ElemComponent={ElemComponent}
       />
@@ -77,7 +77,7 @@ export const InstanceSetDisplay = ({
 // querying for the first 4000 (e.g.) elements at once and non other than
 // that. We can therefore make these queries right away. The "structure" of
 // the instance set then defines how these sets are combined and sorted.
-// TODO: Reimplement at some point so that InstanceSetDisplay can query for
+// TODO: Reimplement at some point so that EntListDisplay can query for
 // more elements than the initial ones if the user requests it (e.g. by
 // scrolling past enough elements).
 // Oh, and in this implementation, we will only use the "simple" set

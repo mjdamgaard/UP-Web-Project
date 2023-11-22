@@ -6,7 +6,7 @@ import {useQuery} from "./DBRequests.js";
 
 import {PagesWithTabs} from "./PagesWithTabs.js";
 import {EntityID, FullEntityTitle} from "./EntityTitles.js";
-import {InstanceSetDisplay} from "./InstanceSetDisplay.js";
+import {EntListDisplay} from "./EntListDisplay.js";
 import {RatingElement} from "./Ratings.js";
 
 
@@ -148,7 +148,7 @@ export const PropertyCategoryPage = ({propID, entID}) => {
 
   return (
     <div>
-      <InstanceSetDisplay initStructure={structure} />
+      <EntListDisplay initStructure={structure} />
     </div>
   );
 };
@@ -162,7 +162,7 @@ export const CategoryInstancesPage = ({entID}) => {
 
   return (
     <div>
-      <InstanceSetDisplay initStructure={structure} />
+      <EntListDisplay initStructure={structure} />
     </div>
   );
 };
@@ -200,7 +200,7 @@ export const EntityRatingsPage = ({entID, typeID}) => {
   return (
     <div>
       <h4>Relevant ratings</h4>
-      <InstanceSetDisplay
+      <EntListDisplay
         initStructure={structure} ElemComponent={RatingElement}
       />
     </div>
