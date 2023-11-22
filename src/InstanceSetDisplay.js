@@ -14,6 +14,12 @@ import {GeneralEntityElement} from "./EntityElements.js";
 // export const StructureContext = createContext();
 
 
+// (22.11.23) I'm going to refactor 'structure' into a class---which I can call
+// SetGenerator like I've done before. This time, the SetGenerator are just
+// handed 'setReqdata' and 'results,' which they can use in their update()
+// methods.
+ 
+
 export const InstanceSetDisplay = ({
   initStructure, ElemComponent, initFilterOptions
 }) => {
