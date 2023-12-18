@@ -12,7 +12,7 @@ import {EntListDisplay} from "./EntListDisplay.js";
 import {RatingElement} from "./Ratings.js";
 
 import {
-  SimpleEntListGenerator
+  SimpleEntListGenerator, MaxRatingEntListCombiner
 } from "./EntListGenerator.js";
 
 
@@ -147,20 +147,13 @@ export const EntityIDDisplay = ({entID}) => {
 export const PropertyCategoryPage = ({propID, entID}) => {
   const accountManager = useContext(AccountManagerContext);
 
-  // const structure = {
-  //   type: "simple",
-  //   catSK: {
-  //     cxtID: 21,
-  //     defStr: "#" + propID + "|#" + entID,
-  //   }
-  // };
   const listGenerator = useMemo(
     () => new SimpleEntListGenerator(
       {catSK: {cxtID: 21, defStr: "#" + propID + "|#" + entID}},
       accountManager
     ),
     [propID, entID]
-  )
+  );
 
   return (
     <div>
@@ -172,18 +165,14 @@ export const PropertyCategoryPage = ({propID, entID}) => {
 
 export const CategoryInstancesPage = ({entID}) => {
   const accountManager = useContext(AccountManagerContext);
-
-  // const structure = {
-  //   type: "simple",
-  //   catID: entID,
-  // };
+  
   const listGenerator = useMemo(
     () => new SimpleEntListGenerator(
       {catID: entID},
       accountManager
     ),
     [entID]
-  )
+  );
 
   return (
     <div>
@@ -204,35 +193,44 @@ export const SubmitCategoryInstancePage = ({entID}) => {
 
 
 
-// TODO: Continue refactoring:
-
 
 export const EntityRatingsPage = ({entID, typeID}) => {
-  const structure = {
-    type: "max-rating-comb",
-    children: [
-      {
-        type: "simple",
-        catSK: {cxtID: 21, defStr: "#54|#" + entID},
-      },
-      {
-        type: "simple",
-        catSK: {cxtID: 21, defStr: "#52|#" + typeID},
-      },
-    ],
-  };
+  const accountManager = useContext(AccountManagerContext);
+  
+  const lg1 = useMemo(
+    () => new SimpleEntListGenerator(
+      {catSK: {cxtID: 21, defStr: "#54|#" + entID}},
+      accountManager
+    ),
+    [entID]
+  );
+  const lg2 = useMemo(
+    () => new SimpleEntListGenerator(
+      {catSK: {cxtID: 21, defStr: "#52|#" + typeID}},
+      accountManager
+    ),
+    [typeID]
+  );
+
+  const listGenerator = useMemo(
+    () => new MaxRatingEntListCombiner([lg1, lg2]),
+    [entID, typeID]
+  );
 
   return (
     <div>
       <h4>Relevant ratings</h4>
       <EntListDisplay
-        initStructure={structure} ElemComponent={RatingElement}
+        listGenerator={listGenerator}
+        ElemComponent={RatingElement} extraProps={{instID: entID}}
       />
     </div>
   );
 };
 
 
+
+// TODO: Continue refactoring:
 
 
 // export var submitEntityPageCL = new ContentLoader(

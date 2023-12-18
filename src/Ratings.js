@@ -13,7 +13,7 @@ const RatingDisplayPlaceholder = () => <div>...</div>;
 export const RatingElement = ({entID, instID}) => {
   return (
     <div className="rating-element">
-      <RatingDisplay entID={entID} instID={instID} />
+      <RatingDisplay catKey={{catID: entID}} instID={instID} />
     </div>
   );
 };

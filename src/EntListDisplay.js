@@ -22,7 +22,7 @@ import {GeneralEntityElement} from "./EntityElements.js";
  
 
 export const EntListDisplay = ({
-  listGenerator, ElemComponent, initFilterOptions
+  listGenerator, ElemComponent, initFilterOptions, extraProps
 }) => {
   ElemComponent ??= GeneralEntityElement;
   initFilterOptions ??= {};
@@ -80,8 +80,8 @@ export const EntListDisplay = ({
         filterOptions={filterOptions} setFilterOptions={setFilterOptions}
       />
       <EntListContainer
-        entList={entList} ElemComponent={ElemComponent}
-        listGenerator={listGenerator} update={update}
+        entList={entList} listGenerator={listGenerator} update={update}
+        ElemComponent={ElemComponent} extraProps={extraProps}
       />
     </div>
   );
