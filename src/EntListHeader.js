@@ -4,7 +4,7 @@ import {useQuery} from "./DBRequests.js";
 
 import {DropdownBox} from "./DropdownBox.js";
 import {EntityTitle, FullEntityTitle} from "./EntityTitles.js";
-import {EntListDisplay, getLeaves} from "./EntListDisplay.js";
+import {EntListDisplay} from "./EntListDisplay.js";
 import {MissingCategoryDisplay} from "./Ratings.js";
 
 
@@ -15,13 +15,13 @@ const EntityTitlePlaceholder = () => <span>...</span>;
 
 
 export const EntListHeader = ({
-  structure, setStructure, filterOptions, setFilterOptions
+  listGenerator, update, filterOptions, setFilterOptions
 }) => {
   return (
-    <div className="set-header">
+    <div className="ent-list-header">
       <DropdownBox>
-        <div className="set-menu">
-          <SetCategoriesList structure={structure}/>
+        <div className="ent-list-menu">
+          <SetCategoriesList listGenerator={listGenerator}/>
           {/* TODO: Implement these: */}
           {/* <SortingCategoriesMenu /> */}
           {/* <RelevantCategoriesSetDisplay /> */}
@@ -43,11 +43,17 @@ export const EntListHeader = ({
 // };
 
 
-export const SetCategoriesList = ({structure}) => {
-  const leaves = getLeaves(structure);
-  const children = leaves.map((val) => (
+export const SetCategoriesList = ({listGenerator}) => {
+  const catKeys = listGenerator.getCatKeys();
+  if (catKeys.includes(null)) {
+    return (
+      <div>
+      </div>
+    );
+  }
+  const children = catKeys.map(val => (
     <CategoryDisplay
-    key={JSON.stringify(val.catSK ?? val.catID)} leaf={val}
+      key={JSON.stringify(val.catSK ?? val.catID)} catKey={val}
     />
   ));
 
@@ -59,8 +65,8 @@ export const SetCategoriesList = ({structure}) => {
 };
 
 
-export const CategoryDisplay = ({leaf}) => {
-  const catID = leaf.catID;
+export const CategoryDisplay = ({catKey}) => {
+  const catID = catKey.catID;
   if (catID) {
     return (
       <div>
@@ -81,7 +87,7 @@ export const CategoryDisplay = ({leaf}) => {
 
   // If catID is fetched but still falsy, load MissingCategoryDisplay.
   return (
-    <MissingCategoryDisplay catSK={leaf.catSK} />
+    <MissingCategoryDisplay catSK={catKey.catSK} />
   );
 };
 

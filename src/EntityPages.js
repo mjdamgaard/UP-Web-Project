@@ -1,13 +1,20 @@
-import {useState, createContext, useContext, useEffect} from "react";
+import {useState, useMemo, useContext} from "react";
 import {useQuery} from "./DBRequests.js";
 // import {
 //   MaxRatingSetCombiner, SimpleSetGenerator,
 // } from "/src/SetGenerator.js";
 
+import {AccountManagerContext} from "./contexts/AccountContext.js";
+
 import {PagesWithTabs} from "./PagesWithTabs.js";
 import {EntityID, FullEntityTitle} from "./EntityTitles.js";
 import {EntListDisplay} from "./EntListDisplay.js";
 import {RatingElement} from "./Ratings.js";
+
+import {
+  SimpleEntListGenerator
+} from "./EntListGenerator.js";
+
 
 
 /* Placeholders */
@@ -138,31 +145,49 @@ export const EntityIDDisplay = ({entID}) => {
 
 
 export const PropertyCategoryPage = ({propID, entID}) => {
-  const structure = {
-    type: "simple",
-    catSK: {
-      cxtID: 21,
-      defStr: "#" + propID + "|#" + entID,
-    }
-  };
+  const accountManager = useContext(AccountManagerContext);
+
+  // const structure = {
+  //   type: "simple",
+  //   catSK: {
+  //     cxtID: 21,
+  //     defStr: "#" + propID + "|#" + entID,
+  //   }
+  // };
+  const listGenerator = useMemo(
+    () => new SimpleEntListGenerator(
+      {catSK: {cxtID: 21, defStr: "#" + propID + "|#" + entID}},
+      accountManager
+    ),
+    [propID, entID]
+  )
 
   return (
     <div>
-      <EntListDisplay initStructure={structure} />
+      <EntListDisplay listGenerator={listGenerator} />
     </div>
   );
 };
 
 
 export const CategoryInstancesPage = ({entID}) => {
-  const structure = {
-    type: "simple",
-    catID: entID,
-  };
+  const accountManager = useContext(AccountManagerContext);
+
+  // const structure = {
+  //   type: "simple",
+  //   catID: entID,
+  // };
+  const listGenerator = useMemo(
+    () => new SimpleEntListGenerator(
+      {catID: entID},
+      accountManager
+    ),
+    [entID]
+  )
 
   return (
     <div>
-      <EntListDisplay initStructure={structure} />
+      <EntListDisplay listGenerator={listGenerator} />
     </div>
   );
 };

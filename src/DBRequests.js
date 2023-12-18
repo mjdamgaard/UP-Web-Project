@@ -13,7 +13,7 @@ export const useQuery = (results, setResults, reqData) => {
   useMemo(() => {
     if (reqData.req) {
       if (!results.isFetched) {
-        DBRequestManager.query(setResults, reqData);
+        DBRequestManager.queryAndSet(setResults, reqData);
       }
     } else {
       let keys = Object.keys(reqData);
@@ -21,7 +21,7 @@ export const useQuery = (results, setResults, reqData) => {
         let data = reqData[key];
         if (data.req) {
           if (!(results[key] ?? {}).isFetched) {
-            DBRequestManager.query(setResults, key, data);
+            DBRequestManager.queryAndSet(setResults, key, data);
           }
         // } else if (Array.isArray(data)) {
         //   results[key] ??= [];
@@ -42,7 +42,7 @@ export const useInput = (results, setResults, reqData) => {
   useMemo(() => {
     if (reqData.req) {
       if (!results.isFetched) {
-        DBRequestManager.input(setResults, reqData);
+        DBRequestManager.inputAndSet(setResults, reqData);
       }
     } else {
       let keys = Object.keys(reqData);
@@ -50,13 +50,13 @@ export const useInput = (results, setResults, reqData) => {
         let data = reqData[key];
         if (data.req) {
           if (!(results[key] ?? {}).isFetched) {
-            DBRequestManager.input(setResults, key, data);
+            DBRequestManager.inputAndSet(setResults, key, data);
           }
         // } else if (Array.isArray(data)) {
         //   results[key] ??= [];
         //   data.forEach((val, ind) => {
         //     if (val && !(results[key][ind] ?? {}).isFetched) {
-        //       DBRequestManager.input(setResults, key, ind, val);
+        //       DBRequestManager.inputAndSet(setResults, key, ind, val);
         //     }
         //   });
         } else {
@@ -77,7 +77,81 @@ export class DBRequestManager {
   // // just telling users that a disabled browser cache will slow the app
   // // down.
 
-  static query(setResults, key, ind, reqData) {
+
+  static query(obj, reqData, callbackData, callback) {
+    if (!callback) {
+      callback = callbackData;
+      callbackData = null;
+    }
+    // URL-encode the request data.
+    let encodedReqData = {};
+    Object.keys(reqData).forEach(function(key) {
+      encodedReqData[key] = encodeURIComponent(reqData[key]);
+    });
+    // If there is already an ongoing query with this reqData object, simply
+    // push the input data and return.
+    let reqDataKey = JSON.stringify(reqData);
+    let queryQueue = this.ongoingQueries[reqDataKey];
+    if (queryQueue) {
+      queryQueue.push([obj, callback, callbackData]);
+      return;
+    }
+    
+    // Else initialize an ongoing query data queue, and make a $.getJSON()
+    // call, which runs all the callbacks in the queue on at a time upon
+    // receiving the response from the server.
+    this.ongoingQueries[reqDataKey] = [[obj, callback, callbackData]];
+    let thisDBRM = this;
+    let url = "http://localhost:80/query_handler.php";
+    $.getJSON(url, encodedReqData, function(result) {
+      // Get and then delete the ongiong query queue.
+      let ongoingQueries = thisDBRM.ongoingQueries;
+      let queryQueue = ongoingQueries[reqDataKey];
+      delete ongoingQueries[reqDataKey];
+      // Unless reqData.type equals "set", or "bin", sanitize all
+      // cells in the result table containing string values.
+      if (reqData.type !== "set" && reqData.type !== "bin") {
+        // TODO: Investigate how jQuery's automatic JSON-parsing of the
+        // numerical data as number types works for BIGINT outputs (will
+        // this cause overflow bugs??).
+        let colLen = result.length;
+        let rowLen = (result[0] ?? []).length;
+        for (let i = 0; i < colLen; i++) {
+          for (let j = 0; j < rowLen; j++) {
+            if (typeof result[i][j] === "string") {
+              result[i][j] = sanitize(result[i][j]);
+            }
+          }
+        }
+      }
+      // Then call all callbacks in queryQueue with their associated data.
+      for (let i = 0; i < queryQueue.length; i++) {
+        let obj = queryQueue[i][0];
+        let callback = queryQueue[i][1];
+        let callbackData = queryQueue[i][2];
+        callback(obj, result, callbackData);
+      }
+      // // If cacheQuery is true, cache the query.
+      // if (cacheQuery) {
+      //   thisDBRM.cache[reqDataKey] = result;
+      // }
+    });
+  }
+
+  static input(obj, reqData, callbackData, callback) {
+    if (!callback) {
+      callback = callbackData;
+      callbackData = null;
+    }
+    let url = "http://localhost:80/input_handler.php";
+    $.post(url, reqData, function(result) {
+      callback(obj, result, callbackData);
+    });
+  }
+
+
+
+  static queryAndSet(setResults, key, ind, reqData) {
     if (!reqData) {
       reqData = ind;
       ind = undefined;
@@ -170,7 +244,7 @@ export class DBRequestManager {
     });
   }
 
-  static input(setResults, key, ind, reqData) {
+  static inputAndSet(setResults, key, ind, reqData) {
     if (!reqData) {
       reqData = ind;
       ind = undefined;

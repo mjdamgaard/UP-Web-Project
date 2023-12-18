@@ -191,10 +191,10 @@ button.close {
 .dropdown-button:hover {
     cursor: pointer;
 }
-.set-header .dropdown-button-bar:not(:hover) {
+.ent-list-header .dropdown-button-bar:not(:hover) {
     background-color: #f4f9ff;
 }
-.set-display > .dropdown-button-bar:not(:hover) {
+.ent-list-display > .dropdown-button-bar:not(:hover) {
     background-color: #ddd;
 }
 

@@ -5,7 +5,7 @@ import {useQuery} from "./DBRequests.js";
 import {EntityTitle, FullEntityTitle} from "./EntityTitles.js";
 import {DropdownBox} from "./DropdownBox.js";
 import {EntityIDDisplay} from "./EntityPages.js";
-import {getLeaves} from "./EntListDisplay.js";
+// import {} from "./EntListDisplay.js";
 import {RatingDisplay} from "./Ratings.js";
 
 
@@ -21,7 +21,7 @@ import {RatingDisplay} from "./Ratings.js";
 
 
 
-export const GeneralEntityElement = ({entID, combScore, structure}) => {
+export const GeneralEntityElement = ({entID, combScore, listGenerator}) => {
   return (
     <div className="general-entity-element">
       <div>
@@ -35,7 +35,9 @@ export const GeneralEntityElement = ({entID, combScore, structure}) => {
         <div className="general-element-dropdown-page">
           <div>Full title: <FullEntityTitle entID={entID} /></div>
           <div><EntityIDDisplay entID={entID} /></div>
-          <SetCategoriesRatingsDisplay entID={entID} structure={structure} />
+          <SetCategoriesRatingsDisplay
+            entID={entID} listGenerator={listGenerator}
+          />
         </div>
       </DropdownBox>
     </div>
@@ -54,9 +56,9 @@ export const ElementRatingDisplay = ({combScore}) => {
 
 
 
-export const SetCategoriesRatingsDisplay = ({entID, structure}) => {
-  const leaves = getLeaves(structure);
-  const children = leaves.map((val) => (
+export const SetCategoriesRatingsDisplay = ({entID, listGenerator}) => {
+  const catKeys = listGenerator.getCatKeys();
+  const children = catKeys.map((val) => (
     <RatingDisplay key={JSON.stringify(val.catSK ?? val.catID)}
       catKey={val} instID={entID}
     />
