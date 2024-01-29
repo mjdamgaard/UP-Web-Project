@@ -7,7 +7,7 @@ import {useQuery} from "./DBRequests.js";
 import {AccountManagerContext} from "./contexts/AccountContext.js";
 
 import {PagesWithTabs} from "./PagesWithTabs.js";
-import {EntityID, FullEntityTitle} from "./EntityTitles.js";
+import {EntityID, FullEntityTitle, EntityTitle, ContextDisplay} from "./EntityTitles.js";
 import {EntListDisplay} from "./EntListDisplay.js";
 import {RatingElement} from "./Ratings.js";
 
@@ -18,17 +18,17 @@ import {
 
 
 /* Placeholders */
-const EntityTitle = () => <template></template>;
+// const EntityTitle = () => <template></template>;
 // const FullEntityTitle = () => <template></template>;
 // const EntityIDDisplay = () => <template></template>;
-const ContextDisplay = () => <template></template>;
+// const ContextDisplay = () => <template></template>;
 const EntityInfoPage = () => <template></template>;
 // const EntityRatingsPage = () => <template></template>;
 // const PropertyCategoryPage = () => <template></template>;
 const RelevantRatingsTypePage = () => <template></template>;
 const RelevantPropertiesTypePage = () => <template></template>;
-const SubmitEntityPage = () => <template></template>;
-const SubmitTemplatePage = () => <template></template>;
+// const SubmitEntityPage = () => <template></template>;
+const SubmitEntityField = () => <template></template>;
 // const CategoryInstancesPage = () => <template></template>;
 const SubmitInstanceField = () => <template></template>;
 const CategoryDisplay = () => <template></template>;
@@ -58,7 +58,7 @@ export const EntityPage = ({entID, initTab}) => {
   
   // Afterwards, extract the needed data from results[0], then do a full render.
   const [typeID, cxtID, defStr] = (results.data[0] ?? []);
-
+  
   // Construct the tabs on the EntityPage.
   const [tabDataArr, defaultTab] = getTabDataArrAndDefaultTab(
     entID, typeID, cxtID
@@ -73,7 +73,7 @@ export const EntityPage = ({entID, initTab}) => {
           Full title: <FullEntityTitle entID={entID} />
         </span>
         <div><EntityIDDisplay entID={entID} /></div>
-        <div><ContextDisplay cxtID={cxtID} /></div>
+        <div><ContextDisplay entID={cxtID} /></div>
       </div>
       <PagesWithTabs tabDataArr={tabDataArr} initTab={initTab} />
     </div>
@@ -230,29 +230,25 @@ export const EntityRatingsPage = ({entID, typeID}) => {
 
 
 
+
+export const SubmitEntityPage = ({entID, typeID}) => {
+  return (
+    <SubmitEntityField entID={entID} typeID={typeID}/>
+  );
+};
+
+export const SubmitTemplatePage = ({entID, typeID}) => {
+  return (
+    <SubmitEntityField entID={entID} typeID={typeID} isTemplate/>
+  );
+};
+
+
+
+
+
 // TODO: Continue refactoring:
 
-
-// export var submitEntityPageCL = new ContentLoader(
-//   "SubmitEntityPage",
-//   /* Initial HTML template */
-//   '<div>' +
-//       '<<SubmitEntityField>>' +
-//   '</div>',
-//   sdbInterfaceCL
-// );
-
-// export var submitTemplatePageCL = new ContentLoader(
-//   "SubmitTemplatePage",
-//   /* Initial HTML template */
-//   '<div>' +
-//       '<<SubmitEntityField>>' +
-//   '</div>',
-//   sdbInterfaceCL
-// );
-// submitTemplatePageCL.addCallback("data", function(data) {
-//   data.isTemplate = true;
-// });
 
 
 // export var relevantRatingsTypePageCL = new ContentLoader(

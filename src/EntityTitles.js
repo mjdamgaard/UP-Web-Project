@@ -279,29 +279,41 @@ export const FullEntityTitle = ({entID, maxRecLevel}) => {
 
 
 
-
-
 export const ContextDisplay = ({entID}) => {
+  if (!entID) {
+    return (
+      <span className="context-display"></span>
+    );
+  } else {
+    return (
+      <span className="context-display">
+        <ContextDisplayContent entID={entID}/>
+      </span>
+    );
+  }
+};
+
+const ContextDisplayContent = ({entID}) => {
   const [results, setResults] = useState([]);
   useQuery(results, setResults, {
     req: "ent",
     id: entID,
   });
-
+  
   // Before results is fetched, render this:
   if (!results.isFetched) {
     return (
       <EntityTitlePlaceholder entID={entID} />
     );
   }
-
+  
   // Afterwards, first extract the needed data from results[0].
   const [typeID, cxtID, defStr] = (results.data[0] ?? []);
-
+  
   // If the type can have no context, return an empty context display.
   if (typeID == 1 || 4 <= typeID && typeID <= 8) {
     return (
-      <span className="context-display"></span>
+      <></>
     );
   }
 
@@ -314,14 +326,14 @@ export const ContextDisplay = ({entID}) => {
   }
   if (cxtID) {
     return (
-      <span className="context-display">
+      <span>
         {label}
         <EntityTitle entID={cxtID} isLink={true}/>
       </span>
     );
   } else {
     return (
-      <span className="context-display">
+      <span>
         {label}
         <i>none</i>
       </span>
