@@ -66,7 +66,7 @@ entityTitleCL.addCallback(function($ci, data) {
             loadEntityTitleHTML($ci, data);
         });
         // parse the defItem string array from defStr, then prefetch all
-        // enitities referenced by IDs (with syntax pattern /^#[1-9][0-9]*$/),
+        // entities referenced by IDs (with syntax pattern /^#[1-9][0-9]*$/),
         // but only if the current recLevel is less than maxRecLevel.
         if (data.recLevel < data.maxRecLevel) {
             data.defItemStrArr = data.defStr

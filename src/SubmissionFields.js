@@ -324,8 +324,8 @@ export const SubmitEntityOfTemplateField = ({tmplID}) => {
 
 export function getLabelArr(tmplDefStr) {
   let placeholderTitleArr = tmplDefStr
-    .replaceAll("&gt;", ">")
-    .replaceAll("&lt;", "<")
+    // .replaceAll("&gt;", ">")
+    // .replaceAll("&lt;", "<")
     .match(/<[^<>]*>/g) ?? [];
   return placeholderTitleArr.map(val => val.slice(1, -1));
 }
@@ -345,8 +345,11 @@ function getDefStrOrSetResponse(fieldValArr, setResponse) {
 
   // Construct the defining string from form fields.
   let defStr = fieldValArr
-    .map(val => val.replaceAll("|", "\\|").replaceAll("\\", "\\\\"))
-    .join("|");
+    .map(val => val
+      .replaceAll("\\", "\\1"))
+      .replaceAll("|", "\\|")
+      .replaceAll("\\1", "\\\\")
+      .join("|");
   
   // Test if defStr is not too long.
   if (data.defStr.length > 255) {

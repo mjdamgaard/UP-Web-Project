@@ -48,7 +48,7 @@ export const EntityTitle = ({entID, isLink, recLevel, maxRecLevel}) => {
       />
     );
   }
-
+  
   if (isLink) {
     return (
       <EntityLink entID={entID}>
@@ -66,9 +66,14 @@ export const EntityTitle = ({entID, isLink, recLevel, maxRecLevel}) => {
 
 function getTemplateChildren(defStr, isLinks, recLevel, maxRecLevel) {
   return defStr
-    .replaceAll("\\\\", "&bsol;")
-    .replaceAll("\\|", "&#124;")
+    .replaceAll("\\\\", "\\\\1")
+    .replaceAll("\\|", "\\\\2")
     .split("|")
+    .map(val => (
+      val
+      .replaceAll("\\\\2", "|")
+      .replaceAll("\\\\", "\\")
+    ))
     .map(val => (
       /^#[1-9][0-9]*$/.test(val) ? (
         <span className="template-child">
@@ -114,16 +119,17 @@ export const TemplateInstance = ({tmplID, tmplChildren, isCut}) => {
   // the resulting array is rendered if isCut == true, and finally by
   // "splitting" it up further along each occurrence of '&lt;&gt;' ('<>').
   const reducedTmpl = tmplDefStr
-    .replaceAll("&gt;", ">")
-    .replaceAll("&lt;", "<")
+    // .replaceAll("&gt;", ">")
+    // .replaceAll("&lt;", "<")
     .replaceAll(/<[^<>]*>/g, '<>')
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
+    // .replaceAll("<", "&lt;")
+    // .replaceAll(">", "&gt;");
   const reducedAndCutTmpl = /[\{\}]/.test(reducedTmpl) ?
     reducedTmpl.split(/[\{\}]/) :
     ['', reducedTmpl]
   const reducedCutAndSplitTmpl = reducedAndCutTmpl.map(val => (
-    val.split('&lt;&gt;')
+    // val.split('&lt;&gt;')
+    val.split('<>')
   ));
 
   // If we have more tmplChildren than there are template placeholders, extend
@@ -303,7 +309,7 @@ const ContextDisplayContent = ({entID}) => {
   // Before results is fetched, render this:
   if (!results.isFetched) {
     return (
-      <EntityTitlePlaceholder entID={entID} />
+      <></>
     );
   }
   

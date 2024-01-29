@@ -73,7 +73,7 @@ export const EntityPage = ({entID, initTab}) => {
           Full title: <FullEntityTitle entID={entID} />
         </span>
         <div><EntityIDDisplay entID={entID} /></div>
-        <div><ContextDisplay entID={cxtID} /></div>
+        <div><ContextDisplay entID={entID} /></div>
       </div>
       <PagesWithTabs tabDataArr={tabDataArr} initTab={initTab} />
     </div>

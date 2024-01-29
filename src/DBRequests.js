@@ -108,22 +108,24 @@ export class DBRequestManager {
       let ongoingQueries = thisDBRM.ongoingQueries;
       let queryQueue = ongoingQueries[reqDataKey];
       delete ongoingQueries[reqDataKey];
-      // Unless reqData.type equals "set", or "bin", sanitize all
-      // cells in the result table containing string values.
-      if (reqData.type !== "set" && reqData.type !== "bin") {
-        // TODO: Investigate how jQuery's automatic JSON-parsing of the
-        // numerical data as number types works for BIGINT outputs (will
-        // this cause overflow bugs??).
-        let colLen = result.length;
-        let rowLen = (result[0] ?? []).length;
-        for (let i = 0; i < colLen; i++) {
-          for (let j = 0; j < rowLen; j++) {
-            if (typeof result[i][j] === "string") {
-              result[i][j] = sanitize(result[i][j]);
-            }
-          }
-        }
-      }
+      
+      // // Unless reqData.type equals "set", or "bin", sanitize all
+      // // cells in the result table containing string values.
+      // if (reqData.type !== "set" && reqData.type !== "bin") {
+      //   // TODO: Investigate how jQuery's automatic JSON-parsing of the
+      //   // numerical data as number types works for BIGINT outputs (will
+      //   // this cause overflow bugs??).
+      //   let colLen = result.length;
+      //   let rowLen = (result[0] ?? []).length;
+      //   for (let i = 0; i < colLen; i++) {
+      //     for (let j = 0; j < rowLen; j++) {
+      //       if (typeof result[i][j] === "string") {
+      //         result[i][j] = sanitize(result[i][j]);
+      //       }
+      //     }
+      //   }
+      // }
+
       // Then call all callbacks in queryQueue with their associated data.
       for (let i = 0; i < queryQueue.length; i++) {
         let obj = queryQueue[i][0];
@@ -195,22 +197,22 @@ export class DBRequestManager {
       let queryQueue = ongoingQueries[reqDataKey];
       delete ongoingQueries[reqDataKey];
 
-      // Unless reqData.type equals "set", or "bin", sanitize all
-      // cells in the result table containing string values.
-      if (reqData.type !== "set" && reqData.type !== "bin") {
-        // TODO: Investigate how jQuery's automatic JSON-parsing of the
-        // numerical data as number types works for BIGINT outputs (will
-        // this cause overflow bugs??).
-        let colLen = result.length;
-        let rowLen = (result[0] ?? []).length;
-        for (let i = 0; i < colLen; i++) {
-          for (let j = 0; j < rowLen; j++) {
-            if (typeof result[i][j] === "string") {
-              result[i][j] = sanitize(result[i][j]);
-            }
-          }
-        }
-      }
+      // // Unless reqData.type equals "set", or "bin", sanitize all
+      // // cells in the result table containing string values.
+      // if (reqData.type !== "set" && reqData.type !== "bin") {
+      //   // TODO: Investigate how jQuery's automatic JSON-parsing of the
+      //   // numerical data as number types works for BIGINT outputs (will
+      //   // this cause overflow bugs??).
+      //   let colLen = result.length;
+      //   let rowLen = (result[0] ?? []).length;
+      //   for (let i = 0; i < colLen; i++) {
+      //     for (let j = 0; j < rowLen; j++) {
+      //       if (typeof result[i][j] === "string") {
+      //         result[i][j] = sanitize(result[i][j]);
+      //       }
+      //     }
+      //   }
+      // }
 
       // Then call all setResults callbacks in queryQueue to change the ind'th
       // entry of the associated results state.
@@ -275,6 +277,9 @@ export class DBRequestManager {
     });
   }
 }
+
+// Hm, if react always sanitizes automatically, should I just not sanitize,
+// then? ..I guess not..
 
 export function sanitize(str) {
   return str
