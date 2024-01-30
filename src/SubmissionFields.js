@@ -106,7 +106,7 @@ export const SubmitInstanceOfCategoryField = ({catID}) => {
 
 
 export const SubmitEntityOfTemplateField = ({tmplID}) => {
-  const [labelArr, setLabelArr] = useState(null);
+  const [labelArr, setLabelArr] = useState(null); // TODO: consider useMemo.
   const [fieldValArr, setFieldValArr] = useState([]);
   const [response, setResponse] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -115,49 +115,37 @@ export const SubmitEntityOfTemplateField = ({tmplID}) => {
   const [, columnManager] = useContext(ColumnContext);
 
   const accountManager = useContext(AccountManagerContext);
-  const [inputResults, setInputResults] = useState({});
-  const [inputReqData, setInputReqData] = useState({});
-  const [queryResults, setQueryResults] = useState({
-    ent: {}, search: {}
-  });
-  const [queryReqData, setQueryReqData] = useState({
-    ent: {
-      req: "ent",
-      id: tmplID,
-    },
-    search: {}
+  const [results, setResults] = useState({});
+  const [reqData, ] = useState({
+    req: "ent",
+    id: tmplID,
   });
 
-  useQuery(queryResults, setQueryResults, queryReqData);
-  useInput(inputResults, setInputResults, inputReqData);
+  useQuery(results, setResults, reqData);
 
-  if (!accountManager.isLoggedIn) {
+
+  // Before results is fetched, render this:
+  if (!results.isFetched) {
     return (
-      <div>
-        <h4>
-          Submit an entity of the template <EntityTitle entID={tmplID} isLInk />
-        </h4>
-        <span className="text-warning">
-          Log in or sign up in order to submit an entity
-        </span>
-      </div>
+      <h4>
+        Submit an entity of the template <EntityTitle entID={tmplID} isLink />
+      </h4>
     );
   }
 
-  // Before queryResults is fetched, render this:
-  if (!queryResults.ent.isFetched) {
-    return (
-      <div>
-        <h4>
-          Submit an entity of the template <EntityTitle entID={tmplID} isLInk />
-        </h4>
-      </div>
-    );
-  }
+  // Afterwards, extract the needed data from results.data[0].
+  const [tmplTypeID, tmplCxtID, tmplDefStr] = (results.data[0] ?? []);
 
-  // Afterwards, extract the needed data from queryResults.ent.data[0].
-  const [tmplTypeID, tmplCxtID, tmplDefStr] = (queryResults.ent.data[0] ?? []);
 
+  const header = <>
+    <h4>
+      Submit an entity of the template <EntityTitle entID={tmplID} isLink />
+    </h4>
+    <div className="tmpl-type-field">
+      <b>Type: </b>
+      <EntityTitle entID={tmplCxtID} isLink/>
+    </div>
+  </>;
 
   if (tmplTypeID != 3) {
     console.error({tmplID: tmplID, tmplTypeID: tmplTypeID});
@@ -175,26 +163,109 @@ export const SubmitEntityOfTemplateField = ({tmplID}) => {
     );
     return (
       <div>
-        <h4>
-          Submit an entity of the template <EntityTitle entID={tmplID} isLInk />
-        </h4>
+        {header}
         <span className="text-warning">Template missing from the database</span>
       </div>
     );
   }
 
-
   if (!labelArr) {
-    setLabelArr(getLabelArr(tmplDefStr));
+    setLabelArr(getTmplLabelArr(tmplDefStr));
     return (
       <div>
-        <h4>
-          Submit an entity of the template <EntityTitle entID={tmplID} isLInk />
-        </h4>
+        {header}
       </div>
     );
   }
 
+  return (
+    <SubmitEntityField entID={tmplID} header={header} labelArr={labelArr}
+      getDataOrRespond={(fieldValArr, setResponse) => {
+        let defStr = getTmplDefStrOrRespond(fieldValArr, setResponse);
+        if (defStr === null) {
+          return null;
+        } else {
+          return {
+            type: tmplCxtID, // tmplCxtID is the type of derived entities.
+            cxt: tmplID,
+            defStr: defStr,
+          }
+        }
+      }}
+    />
+  );
+}
+
+
+export function getTmplLabelArr(tmplDefStr) {
+  let placeholderTitleArr = tmplDefStr
+    // .replaceAll("&gt;", ">")
+    // .replaceAll("&lt;", "<")
+    .match(/<[^<>]*>/g) ?? [];
+  return placeholderTitleArr.map(val => val.slice(1, -1));
+}
+
+function getTmplDefStrOrRespond(fieldValArr, setResponse) {
+  let trimmedFieldValArr = fieldValArr.map(val => val.trim());
+  // Test any input was supplied.
+  if (trimmedFieldValArr.join().length === 0) {
+    setResponse(
+      <span className="text-warning">
+        No input was supplied
+      </span>
+    );
+    return null;
+  }
+
+  // Construct the defining string from form fields.
+  let defStr = trimmedFieldValArr
+    .map(val => val
+      .replaceAll("\\", "\\1")
+      .replaceAll("|", "\\|")
+      .replaceAll("\\1", "\\\\")
+    )
+    .join("|");
+  
+  // Test if defStr is not too long.
+  if (defStr.length > 255) {
+    setResponse(
+      <span className="text-warning">
+        Defining text is too long
+      </span>
+    );
+    console.log("Too long defining string: " + defStr);
+    return null;
+  }
+  return defStr;
+}
+
+
+
+export const SubmitEntityField = ({header, labelArr, getDataOrRespond}) => {
+  const [fieldValArr, setFieldValArr] = useState([]);
+  const [response, setResponse] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const [, columnManager] = useContext(ColumnContext);
+  const accountManager = useContext(AccountManagerContext);
+  const [inputResults, setInputResults] = useState({});
+  const [inputReqData, setInputReqData] = useState({});
+  const [queryResults, setQueryResults] = useState({});
+  const [queryReqData, setQueryReqData] = useState({});
+
+  useQuery(queryResults, setQueryResults, queryReqData);
+  useInput(inputResults, setInputResults, inputReqData);
+
+
+  const isLoggedIn = accountManager.isLoggedIn
+  if (!isLoggedIn) {
+    setResponse(
+      <span className="text-warning">
+        Log in or sign up in order to submit an entity
+      </span>
+    );
+  }
 
 
   const formGroups = labelArr.map((val, ind) => (
@@ -211,8 +282,6 @@ export const SubmitEntityOfTemplateField = ({tmplID}) => {
       ></textarea>
     </div>
   ));
-
-  // const isFetching = inputReqData && !inputResults.isFetched;
 
 
   // If input response has just been received, open column if insert was
@@ -287,9 +356,7 @@ export const SubmitEntityOfTemplateField = ({tmplID}) => {
 
   return (
     <div>
-      <h4>
-        Submit an entity of the template <EntityTitle entID={tmplID} isLInk />
-      </h4>
+      {header}
       <form onSubmit={void(0)}>
         <div className="def-item-field-container">
           {formGroups}
@@ -300,29 +367,34 @@ export const SubmitEntityOfTemplateField = ({tmplID}) => {
             onClick={() => {
               // Get a valid defining string, or set an error response and get
               // null.
-              let defStr = getDefStrOrSetResponse(fieldValArr, setResponse);
-              if (defStr !== null) {
+              let data = getDataOrRespond(fieldValArr, setResponse);
+              if (data !== null) {
                 // Upload the new entity.
                 setQueryResults(prev => ({...prev, search: {}}));
                 setIsSearching(true);
                 setQueryReqData(prev => ({...prev, search: {
                   req: "entID",
-                  t: tmplCxtID, // tmplCxtID is the type of derived entities.
-                  c: tmplID,
-                  s: defStr,
+                  t: data.type,
+                  c: data.cxt,
+                  s: data.defStr,
                 }}));
                 setResponse(<span>Searching...</span>);
+              } else {
+                setResponse(
+                  <span className="text-warning">Invalid input</span>
+                );
               }
             }}
           >
             Search
           </button>
-          <button className="btn btn-default submit" disabled={isFetching}
+          <button className="btn btn-default submit"
+            disabled={isFetching || !isLoggedIn}
             onClick={() => {
               // Get a valid defining string, or set an error response and get
               // null.
-              let defStr = getDefStrOrSetResponse(fieldValArr, setResponse);
-              if (defStr !== null) {
+              let data = getDataOrRespond(fieldValArr, setResponse);
+              if (data !== null) {
                 // Upload the new entity.
                 setInputResults({});
                 setIsSubmitting(true);
@@ -331,11 +403,15 @@ export const SubmitEntityOfTemplateField = ({tmplID}) => {
                   ses: accountManager.sesIDHex,
                   u: accountManager.inputUserID,
                   r: 1,
-                  t: tmplCxtID, // tmplCxtID is the type of derived entities.
-                  c: tmplID,
-                  s: defStr,
+                  t: data.type,
+                  c: data.cxt,
+                  s: data.defStr,
                 });
                 setResponse(<span>Submitting...</span>);
+              } else {
+                setResponse(
+                  <span className="text-warning">Invalid input</span>
+                );
               }
             }}
           >
@@ -349,49 +425,6 @@ export const SubmitEntityOfTemplateField = ({tmplID}) => {
 };
 
 
-export function getLabelArr(tmplDefStr) {
-  let placeholderTitleArr = tmplDefStr
-    // .replaceAll("&gt;", ">")
-    // .replaceAll("&lt;", "<")
-    .match(/<[^<>]*>/g) ?? [];
-  return placeholderTitleArr.map(val => val.slice(1, -1));
-}
-
-
-
-function getDefStrOrSetResponse(fieldValArr, setResponse) {
-  let trimmedFieldValArr = fieldValArr.map(val => val.trim());
-  // Test any input was supplied.
-  if (trimmedFieldValArr.join().length === 0) {
-    setResponse(
-      <span className="text-warning">
-        No input was supplied
-      </span>
-    );
-    return null;
-  }
-
-  // Construct the defining string from form fields.
-  let defStr = trimmedFieldValArr
-    .map(val => val
-      .replaceAll("\\", "\\1")
-      .replaceAll("|", "\\|")
-      .replaceAll("\\1", "\\\\")
-    )
-    .join("|");
-  
-  // Test if defStr is not too long.
-  if (defStr.length > 255) {
-    setResponse(
-      <span className="text-warning">
-        Defining text is too long
-      </span>
-    );
-    console.log("Too long defining string: " + defStr);
-    return null;
-  }
-  return defStr;
-}
 
 
 // // TODO: Continue refactoring: 
