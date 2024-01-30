@@ -10,6 +10,10 @@ import {PagesWithTabs} from "./PagesWithTabs.js";
 import {EntityID, FullEntityTitle, EntityTitle, ContextDisplay} from "./EntityTitles.js";
 import {EntListDisplay} from "./EntListDisplay.js";
 import {RatingElement} from "./Ratings.js";
+import {
+  SubmitEntityOfTemplateField, SubmitInstanceOfCategoryField,
+  SubmitTemplateForTypeField, SubmitTemplateField, SubmitEntityOfStdTypeField,
+} from "./SubmissionFields.js";
 
 import {
   SimpleEntListGenerator, MaxRatingEntListCombiner
@@ -28,7 +32,7 @@ const EntityInfoPage = () => <template></template>;
 const RelevantRatingsTypePage = () => <template></template>;
 const RelevantPropertiesTypePage = () => <template></template>;
 // const SubmitEntityPage = () => <template></template>;
-const SubmitEntityField = () => <template></template>;
+// const SubmitEntityField = () => <template></template>;
 // const CategoryInstancesPage = () => <template></template>;
 const SubmitInstanceField = () => <template></template>;
 const CategoryDisplay = () => <template></template>;
@@ -95,7 +99,7 @@ function getTabDataArrAndDefaultTab(entID, typeID, cxtID) {
         ["Relevant ratings", <RelevantRatingsTypePage entID={entID} />],
         ["Relevant properties", <RelevantPropertiesTypePage entID={entID} />],
         ["Templates", <PropertyCategoryPage entID={entID} propID={85} />],
-        ["Submit entity", <SubmitEntityPage entID={entID} />],
+        ["Submit entity", <SubmitEntityOfTypePage entID={entID} />],
       );
       if (![1, 3, 4, 5, 7, 8].includes(entID)) {
         tabDataArr.push(
@@ -115,7 +119,7 @@ function getTabDataArrAndDefaultTab(entID, typeID, cxtID) {
       break;
     case 3:
       tabDataArr.push(
-        ["Submit entity", <SubmitEntityPage entID={entID} />],
+        ["Submit entity", <SubmitEntityOfTemplatePage entID={entID} />],
       );
       defaultTab = "Submit entity";
       break;
@@ -231,15 +235,32 @@ export const EntityRatingsPage = ({entID, typeID}) => {
 
 
 
-export const SubmitEntityPage = ({entID, typeID}) => {
+
+
+export const SubmitEntityOfTemplatePage = ({entID}) => {
   return (
-    <SubmitEntityField entID={entID} typeID={typeID}/>
+    <SubmitEntityOfTemplateField tmplID={entID} />
   );
 };
 
-export const SubmitTemplatePage = ({entID, typeID}) => {
+export const SubmitTemplatePage = ({entID}) => {
   return (
-    <SubmitEntityField entID={entID} typeID={typeID} isTemplate/>
+    <SubmitTemplateField typeID={entID} />
+  );
+};
+
+export const SubmitEntityOfTypePage = ({entID}) => {
+  // If entID is the Template type, return SubmitEntityOfTemplatePage instead
+  // of the standard SubmitEntityOfTypePage.
+  if (entID == 3) {
+    return (
+      <SubmitEntityOfTemplatePage entID={entID} />
+    );
+  }
+
+  // Else return the standard SubmitEntityOfTypePage:
+  return (
+    <SubmitEntityOfStdTypeField typeID={entID} />
   );
 };
 

@@ -1,7 +1,7 @@
 import {useState, useEffect, useMemo, useContext} from "react";
 import {AccountManagerContext} from "./contexts/AccountContext.js";
 import {ColumnContext} from "./contexts/ColumnContext.js";
-import {useQuery} from "./DBRequests.js";
+import {useQuery, useInput} from "./DBRequests.js";
 
 import {EntityTitle, FullEntityTitle} from "./EntityTitles.js";
 import {DropdownBox} from "./DropdownBox.js";
@@ -19,7 +19,7 @@ export const SubmitEntityOfStdTypeField = ({typeID}) => {
   return (
     <div>
       <h4>Submit an entity of the type <EntityTitle entID={typeID}/></h4>
-      <form action="javascript:void(0);">
+      <form onSubmit={void(0)}>
         <div className="def-item-field-container">
           <div className="form-group">
             <label>Title</label>
@@ -40,7 +40,7 @@ export const SubmitTemplateField = ({typeID}) => {
   return (
     <div>
       <h4>Submit a template</h4>
-      <form action="javascript:void(0);">
+      <form onSubmit={void(0)}>
         <div className="def-item-field-container">
           <div className="form-group">
             <label>Type ID #</label>
@@ -66,7 +66,7 @@ export const SubmitTemplateForTypeField = ({typeID}) => {
   return (
     <div>
       <h4>Submit a template for the type <EntityTitle entID={typeID}/></h4>
-      <form action="javascript:void(0);">
+      <form onSubmit={void(0)}>
         <div className="def-item-field-container">
           <div className="form-group">
             <label>Template</label>
@@ -87,7 +87,7 @@ export const SubmitInstanceOfCategoryField = ({catID}) => {
   return (
     <div>
       <h4>Submit an instance of the category <EntityTitle entID={catID}/></h4>
-      <form action="javascript:void(0);">
+      <form onSubmit={void(0)}>
         <div className="def-item-field-container">
           <div className="form-group">
             <label>ID #</label>
@@ -115,20 +115,28 @@ export const SubmitEntityOfTemplateField = ({tmplID}) => {
   const [, columnManager] = useContext(ColumnContext);
 
   const accountManager = useContext(AccountManagerContext);
-  const [queryResults, setQueryResults] = useState({});
-  const [inputReqData, setInputReqData] = useState(null);
   const [inputResults, setInputResults] = useState({});
-
-  useQuery(queryResults, setQueryResults, {
-    req: "ent",
-    id: tmplID,
+  const [inputReqData, setInputReqData] = useState({});
+  const [queryResults, setQueryResults] = useState({
+    ent: {}, search: {}
   });
+  const [queryReqData, setQueryReqData] = useState({
+    ent: {
+      req: "ent",
+      id: tmplID,
+    },
+    search: {}
+  });
+
+  useQuery(queryResults, setQueryResults, queryReqData);
   useInput(inputResults, setInputResults, inputReqData);
 
   if (!accountManager.isLoggedIn) {
     return (
       <div>
-        <h4>Submit an entity of the template <EntityTitle entID={tmplID}/></h4>
+        <h4>
+          Submit an entity of the template <EntityTitle entID={tmplID} isLInk />
+        </h4>
         <span className="text-warning">
           Log in or sign up in order to submit an entity
         </span>
@@ -136,18 +144,29 @@ export const SubmitEntityOfTemplateField = ({tmplID}) => {
     );
   }
 
-  // Before results is fetched, render this:
-  if (!results.isFetched) {
+  // Before queryResults is fetched, render this:
+  if (!queryResults.ent.isFetched) {
     return (
       <div>
-        <h4>Submit an entity of the template <EntityTitle entID={tmplID}/></h4>
+        <h4>
+          Submit an entity of the template <EntityTitle entID={tmplID} isLInk />
+        </h4>
       </div>
     );
   }
 
+  // Afterwards, extract the needed data from queryResults.ent.data[0].
+  const [tmplTypeID, tmplCxtID, tmplDefStr] = (queryResults.ent.data[0] ?? []);
 
-  // Afterwards, extract the needed data from results[0], then do a full render.
-  const [ , tmplCxtID, tmplDefStr] = (results.data[0] ?? []);
+
+  if (tmplTypeID != 3) {
+    console.error({tmplID: tmplID, tmplTypeID: tmplTypeID});
+    return (
+      <span className="text-error">
+        Entity is not a template! (This should not be happening)
+      </span>
+    );
+  }
 
   if (!tmplDefStr) {
     console.warn(
@@ -156,17 +175,22 @@ export const SubmitEntityOfTemplateField = ({tmplID}) => {
     );
     return (
       <div>
-        <h4>Submit an entity of the template <EntityTitle entID={tmplID}/></h4>
+        <h4>
+          Submit an entity of the template <EntityTitle entID={tmplID} isLInk />
+        </h4>
         <span className="text-warning">Template missing from the database</span>
       </div>
     );
   }
 
+
   if (!labelArr) {
     setLabelArr(getLabelArr(tmplDefStr));
     return (
       <div>
-        <h4>Submit an entity of the template <EntityTitle entID={tmplID}/></h4>
+        <h4>
+          Submit an entity of the template <EntityTitle entID={tmplID} isLInk />
+        </h4>
       </div>
     );
   }
@@ -197,18 +221,19 @@ export const SubmitEntityOfTemplateField = ({tmplID}) => {
   if (isSubmitting && inputResults.isFetched) {
     setIsSubmitting(false);
     let exitCode = inputResults.data.exitCode;
+    let outID = inputResults.data.outID;
     if (exitCode == 0) {
-      columnManager.openColumn(inputResults.data.outID);
       setResponse(
         <span>
           <span className="text-success">
             Entity was successfully uploaded!
           </span>
           <div>
-            New ID: #{inputResults.data.outID}
+            New ID: #{outID}
           </div>
         </span>
-      )
+      );
+      columnManager.openColumn(outID);
     } else if (exitCode == 1) {
       setResponse(
         <span>
@@ -216,10 +241,11 @@ export const SubmitEntityOfTemplateField = ({tmplID}) => {
           Entity already exists
           </span>
           <div>
-            New ID: #{inputResults.data.outID}
+            New ID: #{outID}
           </div>
         </span>
-      )
+      );
+      columnManager.openColumn(outID);
     } else {
       // throw error since this should not happen.
       throw (
@@ -231,21 +257,21 @@ export const SubmitEntityOfTemplateField = ({tmplID}) => {
   // If search response has just been received, open column if insert was
   // successful, and set isSearching = false in any case. Also set response
   // according to exit code.
-  if (isSearching && inputResults.isFetched) {
+  if (isSearching && queryResults.search.isFetched) {
     setIsSearching(false);
-    let entID = inputResults.data.outID
-    if (entID) {
-      columnManager.openColumn(entID);
+    let outID = queryResults.search.data[0];
+    if (outID) {
       setResponse(
         <span>
           <span className="text-success">
             Entity was found!
           </span>
           <div>
-            ID: #{entID}
+            ID: #{outID}
           </div>
         </span>
-      )
+      );
+      columnManager.openColumn(outID);
     } else {
       setResponse(
         <span>
@@ -253,7 +279,7 @@ export const SubmitEntityOfTemplateField = ({tmplID}) => {
           Entity was not found
           </span>
         </span>
-      )
+      );
     }
   }
 
@@ -261,29 +287,30 @@ export const SubmitEntityOfTemplateField = ({tmplID}) => {
 
   return (
     <div>
-      <h4>Submit an entity of the template <EntityTitle entID={tmplID}/></h4>
-      <form action="javascript:void(0);">
+      <h4>
+        Submit an entity of the template <EntityTitle entID={tmplID} isLInk />
+      </h4>
+      <form onSubmit={void(0)}>
         <div className="def-item-field-container">
           {formGroups}
         </div>
         <div className="def-item-field-container"></div>
         <span>
           <button className="btn btn-default search" disabled={isFetching}
-            onSubmit={() => {
+            onClick={() => {
               // Get a valid defining string, or set an error response and get
               // null.
               let defStr = getDefStrOrSetResponse(fieldValArr, setResponse);
               if (defStr !== null) {
                 // Upload the new entity.
-                setInputResults({});
-                setIsSubmitting(true);
-                setInputReqData({
+                setQueryResults(prev => ({...prev, search: {}}));
+                setIsSearching(true);
+                setQueryReqData(prev => ({...prev, search: {
                   req: "entID",
-                  u: data.getFromAncestor("inputUserID"),
-                  t: data.newEntityType,
-                  c: data.newEntityCxt,
-                  s: data.defStr,
-                });
+                  t: tmplCxtID, // tmplCxtID is the type of derived entities.
+                  c: tmplID,
+                  s: defStr,
+                }}));
                 setResponse(<span>Searching...</span>);
               }
             }}
@@ -291,7 +318,7 @@ export const SubmitEntityOfTemplateField = ({tmplID}) => {
             Search
           </button>
           <button className="btn btn-default submit" disabled={isFetching}
-            onSubmit={() => {
+            onClick={() => {
               // Get a valid defining string, or set an error response and get
               // null.
               let defStr = getDefStrOrSetResponse(fieldValArr, setResponse);
@@ -304,9 +331,9 @@ export const SubmitEntityOfTemplateField = ({tmplID}) => {
                   ses: accountManager.sesIDHex,
                   u: accountManager.inputUserID,
                   r: 1,
-                  t: data.newEntityType,
-                  c: data.newEntityCxt,
-                  s: data.defStr,
+                  t: tmplCxtID, // tmplCxtID is the type of derived entities.
+                  c: tmplID,
+                  s: defStr,
                 });
                 setResponse(<span>Submitting...</span>);
               }
@@ -333,8 +360,9 @@ export function getLabelArr(tmplDefStr) {
 
 
 function getDefStrOrSetResponse(fieldValArr, setResponse) {
+  let trimmedFieldValArr = fieldValArr.map(val => val.trim());
   // Test any input was supplied.
-  if (fieldValArr.join().length === 0) {
+  if (trimmedFieldValArr.join().length === 0) {
     setResponse(
       <span className="text-warning">
         No input was supplied
@@ -344,22 +372,22 @@ function getDefStrOrSetResponse(fieldValArr, setResponse) {
   }
 
   // Construct the defining string from form fields.
-  let defStr = fieldValArr
+  let defStr = trimmedFieldValArr
     .map(val => val
-      .replaceAll("\\", "\\1"))
+      .replaceAll("\\", "\\1")
       .replaceAll("|", "\\|")
       .replaceAll("\\1", "\\\\")
-      .join("|");
+    )
+    .join("|");
   
   // Test if defStr is not too long.
-  if (data.defStr.length > 255) {
+  if (defStr.length > 255) {
     setResponse(
       <span className="text-warning">
         Defining text is too long
       </span>
     );
-    // Remember: defStr is unsafe, so never print it in HTML.
-    console.log("Too long defining string: " + data.defStr);
+    console.log("Too long defining string: " + defStr);
     return null;
   }
   return defStr;
@@ -587,7 +615,7 @@ function getDefStrOrSetResponse(fieldValArr, setResponse) {
 //   "SubmitInstanceForm",
 //   /* Initial HTML template */
 //   '<div>' +
-//     '<form action="javascript:void(0);">' +
+//     '<form onSubmit={void(0)}>' +
 //       '<div class="form-group">' +
 //         '<label>ID #:</label>' +
 //         '<input type="text" class="form-control id"></input>' +

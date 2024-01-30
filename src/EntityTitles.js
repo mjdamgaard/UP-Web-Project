@@ -286,20 +286,6 @@ export const FullEntityTitle = ({entID, maxRecLevel}) => {
 
 
 export const ContextDisplay = ({entID}) => {
-  if (!entID) {
-    return (
-      <span className="context-display"></span>
-    );
-  } else {
-    return (
-      <span className="context-display">
-        <ContextDisplayContent entID={entID}/>
-      </span>
-    );
-  }
-};
-
-const ContextDisplayContent = ({entID}) => {
   const [results, setResults] = useState([]);
   useQuery(results, setResults, {
     req: "ent",

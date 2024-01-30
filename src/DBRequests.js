@@ -30,9 +30,9 @@ export const useQuery = (results, setResults, reqData) => {
         //       DBRequestManager.query(setResults, key, ind, val);
         //     }
         //   });
-        } else {
-          throw "useQuery(): reqData is ill-formed.";
-        }
+        } //else {
+        //   throw "useQuery(): reqData is ill-formed.";
+        // }
       });
     }
   }, [reqData]);
@@ -59,9 +59,9 @@ export const useInput = (results, setResults, reqData) => {
         //       DBRequestManager.inputAndSet(setResults, key, ind, val);
         //     }
         //   });
-        } else {
-          throw "useInput(): reqData is ill-formed.";
-        }
+        } //else {
+        //   throw "useInput(): reqData is ill-formed.";
+        // }
       });
     }
   }, [reqData]);
