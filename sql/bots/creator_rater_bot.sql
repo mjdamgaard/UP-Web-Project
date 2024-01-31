@@ -16,7 +16,7 @@ BEGIN proc: BEGIN
     FROM Entities
     WHERE (
         type_id = 2 AND
-        cxt_id <=> 84 AND
+        cxt_id = 84 AND
         def_str = CONCAT("#", userID)
     );
     -- if it does not exist, also insert it and get the ID.
@@ -29,7 +29,7 @@ BEGIN proc: BEGIN
             FROM Entities
             WHERE (
                 type_id = 2 AND
-                cxt_id <=> 84 AND
+                cxt_id = 84 AND
                 def_str = CONCAT("#", userID)
             );
         END IF;

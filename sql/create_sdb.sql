@@ -1,26 +1,26 @@
 
--- /* Semantic inputs */
--- DROP TABLE SemanticInputs;
--- DROP TABLE Private_RecentInputs;
--- DROP TABLE RecordedInputs;
--- /* Indexes */
--- DROP TABLE EntityIndexKeys;
---
--- /* Entities */
--- DROP TABLE Entities;
---
--- /* Data */
--- DROP TABLE Users;
--- DROP TABLE Texts;
--- DROP TABLE Binaries;
---
--- /* Ancillary data for aggregation bots */
--- DROP TABLE BotData;
---
--- /* Private user data */
--- DROP TABLE Private_UserData;
--- DROP TABLE Private_Sessions;
--- DROP TABLE Private_EMails;
+/* Semantic inputs */
+DROP TABLE SemanticInputs;
+DROP TABLE Private_RecentInputs;
+DROP TABLE RecordedInputs;
+/* Indexes */
+DROP TABLE EntityIndexKeys;
+
+/* Entities */
+DROP TABLE Entities;
+
+/* Data */
+DROP TABLE Users;
+DROP TABLE Texts;
+DROP TABLE Binaries;
+
+/* Ancillary data for aggregation bots */
+DROP TABLE BotData;
+
+/* Private user data */
+DROP TABLE Private_UserData;
+DROP TABLE Private_Sessions;
+DROP TABLE Private_EMails;
 
 
 
@@ -31,7 +31,7 @@
  * is that all such statements come with a numerical value which represents the
  * degree to which the user deems that the statement is correct (like when
  * answering a survey).
- * The statements in this system are aways formed from a category entity and a
+ * The statements in this system are always formed from a category entity and a
  * instance entity. The user thus states that the latter is an instance of the
  * given category. The rating then tells how important/useful the user deems
  * the instance to be in that category.
@@ -113,7 +113,7 @@ CREATE TABLE EntityIndexKeys (
     -- contain the "entity keys," which are each just the secondary index of an
     -- entity.
     ent_type CHAR(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-    ent_cxt_id BIGINT UNSIGNED,
+    ent_cxt_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
     ent_def_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
     PRIMARY KEY (
@@ -145,14 +145,14 @@ CREATE TABLE Entities (
     -- For Template entities themselves, however (i.e. when type_id is that of
     -- the 'Template' type entity), the cxt_id is the ID of the template's
     -- intended type. (See initial_inserts.sql for examples.)
-    cxt_id BIGINT UNSIGNED,
+    cxt_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
     -- Defining string of the entity. This can be a lexical item, understood in
     -- the context of the type alone if cxt_id is null. If the cxt_id is the ID
     -- of a Template entity, on the other hand, the def_str can be a series of
     -- inputs separated by '|' of either IDs of the form "#<number>" (e.g.
     -- "#100") or any other string (e.g. "Physics"). These inputs is then
-    -- plugged into the placeholders of the template in order of appearence and
+    -- plugged into the placeholders of the template in order of appearance and
     -- the resulting string is then interpreted in the context of the type to
     -- yield the definition of the entity.
     def_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
@@ -162,15 +162,15 @@ CREATE TABLE Entities (
 
 INSERT INTO Entities (type_id, cxt_id, def_str, id)
 VALUES
-    (1, NULL, "Type", 1), -- The type of this "Type" entity is itself.
-    (1, NULL, "Category", 2), -- This is then the "Category" type entity...
-    (1, NULL, "Template", 3), -- ... and so on.
-    (1, NULL, "Index", 4),
-    (1, NULL, "User", 5),
-    (1, NULL, "Aggregation bot", 6),
-    (1, NULL, "Text data", 7),
-    (1, NULL, "Binary data", 8),
-    (5, NULL, "initial_user", 9); -- This is the first user.
+    (1, 0, "Type", 1), -- The type of this "Type" entity is itself.
+    (1, 0, "Category", 2), -- This is then the "Category" type entity...
+    (1, 0, "Template", 3), -- ... and so on.
+    (1, 0, "Index", 4),
+    (1, 0, "User", 5),
+    (1, 0, "Aggregation bot", 6),
+    (1, 0, "Text data", 7),
+    (1, 0, "Binary data", 8),
+    (5, 0, "initial_user", 9); -- This is the first user.
 
 
 
@@ -178,7 +178,8 @@ CREATE TABLE Users (
     -- User ID.
     id BIGINT UNSIGNED PRIMARY KEY,
 
-    username VARCHAR(50) UNIQUE, -- TODO: Consider adding more restrictions.
+    username VARCHAR(50) UNIQUE NOT NULL,
+    -- TODO: Consider adding more restrictions.
 
     public_keys_for_authentication TEXT
     -- (In order for third parties to be able to copy the database and then

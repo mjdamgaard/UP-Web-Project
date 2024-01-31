@@ -24,15 +24,15 @@ DELETE FROM Private_EMails;
 /* From create_open_sdb.sql */
 INSERT INTO Entities (type_id, cxt_id, def_str, id)
 VALUES
-    (1, NULL, "Type", 1), -- The type of this "Type" entity is itself.
-    (1, NULL, "Category", 2), -- This is then the "Category" type entity...
-    (1, NULL, "Template", 3), -- ... and so on.
-    (1, NULL, "Index", 4),
-    (1, NULL, "User", 5),
-    (1, NULL, "Aggregation bot", 6),
-    (1, NULL, "Text data", 7),
-    (1, NULL, "Binary data", 8),
-    (5, NULL, "initial_user", 9); -- This is the first user.
+    (1, 0, "Type", 1), -- The type of this "Type" entity is itself.
+    (1, 0, "Category", 2), -- This is then the "Category" type entity...
+    (1, 0, "Template", 3), -- ... and so on.
+    (1, 0, "Index", 4),
+    (1, 0, "User", 5),
+    (1, 0, "Aggregation bot", 6),
+    (1, 0, "Text data", 7),
+    (1, 0, "Binary data", 8),
+    (5, 0, "initial_user", 9); -- This is the first user.
 INSERT INTO Users (username, id)
 VALUES ("initial_user", 9);
 
@@ -40,17 +40,17 @@ VALUES ("initial_user", 9);
 INSERT INTO Entities (type_id, cxt_id, def_str, id)
 VALUES
     -- Fundamental categories:
-    (2, NULL, "Entities", 10),
-    (2, NULL, "Types", 11),
-    (2, NULL, "Categories", 12),
-    (2, NULL, "Templates", 13),
-    (2, NULL, "Indexes", 14),
-    (2, NULL, "Users", 15),
-    (2, NULL, "Aggregation bots", 16),
-    (2, NULL, "Texts", 17),
-    (2, NULL, "Binaries", 18),
+    (2, 0, "Entities", 10),
+    (2, 0, "Types", 11),
+    (2, 0, "Categories", 12),
+    (2, 0, "Templates", 13),
+    (2, 0, "Indexes", 14),
+    (2, 0, "Users", 15),
+    (2, 0, "Aggregation bots", 16),
+    (2, 0, "Texts", 17),
+    (2, 0, "Binaries", 18),
     -- Property type:
-    (1, NULL, "Property", 19),
+    (1, 0, "Property", 19),
     -- Property template:
     (3, 19,
       "{<Title>}, <Type>, one-to-<Quantity word (e.g. 'one,' 'few,' or 'many')>", 20),
@@ -270,7 +270,7 @@ CALL insertOrUpdateRating(9, 41, 89, CONV("F000", 16, 10), 1);
 -- just remap the IDs, if these entities have already been inserted by users):
 ALTER TABLE Entities AUTO_INCREMENT=200;
 
-SELECT "Calling publicizeRecentInputs() can take a while (~a minute):";
+SELECT "Calling publicizeRecentInputs() can take a while (about 1 minute):";
 -- (It takes roughly 30 seconds on my laptop.)
 CALL publicizeRecentInputs ();
 

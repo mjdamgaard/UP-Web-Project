@@ -1,24 +1,24 @@
 
 SELECT "Query procedures";
 
--- DROP PROCEDURE selectInputSet;
--- DROP PROCEDURE selectRating;
---
--- DROP PROCEDURE selectEntity;
--- DROP PROCEDURE selectEntityID;
---
--- DROP PROCEDURE selectUsername;
--- DROP PROCEDURE selectUserInfo;
--- DROP PROCEDURE selectUserID;
--- DROP PROCEDURE selectText;
--- DROP PROCEDURE selectTextSubstring;
--- DROP PROCEDURE selectBinary;
--- DROP PROCEDURE selectBinarySubstring;
---
--- DROP PROCEDURE private_selectCreator;
--- DROP PROCEDURE private_selectCreations;
---
--- DROP PROCEDURE selectEventData;
+DROP PROCEDURE selectInputSet;
+DROP PROCEDURE selectRating;
+
+DROP PROCEDURE selectEntity;
+DROP PROCEDURE selectEntityID;
+
+DROP PROCEDURE selectUsername;
+DROP PROCEDURE selectUserInfo;
+DROP PROCEDURE selectUserID;
+DROP PROCEDURE selectText;
+DROP PROCEDURE selectTextSubstring;
+DROP PROCEDURE selectBinary;
+DROP PROCEDURE selectBinarySubstring;
+
+DROP PROCEDURE private_selectCreator;
+DROP PROCEDURE private_selectCreations;
+
+DROP PROCEDURE selectEventData;
 
 
 
@@ -117,15 +117,11 @@ CREATE PROCEDURE selectEntityID (
     IN defStr VARCHAR(255)
 )
 BEGIN
-    IF (cxtID = 0) THEN
-        SET cxtID = NULL;
-    END IF;
-
     SELECT id AS entID
     FROM Entities
     WHERE (
         type_id = typeID AND
-        cxt_id <=> cxtID AND
+        cxt_id = cxtID AND
         def_str = defStr
     );
 END //

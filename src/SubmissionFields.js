@@ -15,106 +15,103 @@ import {RatingDisplay} from "./Ratings.js";
 
 
 
-export const SubmitEntityOfStdTypeField = ({typeID}) => {
-  return (
-    <div>
-      <h4>Submit an entity of the type <EntityTitle entID={typeID}/></h4>
-      <form onSubmit={void(0)}>
-        <div className="def-item-field-container">
-          <div className="form-group">
-            <label>Title</label>
-            <textarea rows="1" className="form-control"></textarea>
-          </div>
-        </div>
-        <span>
-          <button className="btn btn-default search">Search</button>
-          <button className="btn btn-default submit">Submit</button>
-        </span>
-      </form>
-      <div className="response-display"></div>
-    </div>
-  );
-};
 
-export const SubmitTemplateField = ({typeID}) => {
-  return (
-    <div>
-      <h4>Submit a template</h4>
-      <form onSubmit={void(0)}>
-        <div className="def-item-field-container">
-          <div className="form-group">
-            <label>Type ID #</label>
-            <textarea rows="1" className="form-control"></textarea>
-          </div>
-          <div className="form-group">
-            <label>Template</label>
-            <textarea rows="1" className="form-control"></textarea>
-          </div>
-        </div>
-        <span>
-          <button className="btn btn-default search">Search</button>
-          <button className="btn btn-default submit">Submit</button>
-        </span>
-      </form>
-      <div className="response-display"></div>
-    </div>
-  );
-};
 
+// TODO: Fix bug causing double inserts.
+
+export const SubmitEntityOfTypeField = ({typeID}) => {
+  const header = <>
+    <h4>
+      Submit an entity of the type <EntityTitle entID={typeID} isLink />
+    </h4>
+  </>;
+  const labelArr = ["Title"];
+
+  if (typeID == 3) {
+    throw "SubmitEntityOfTypeField: [3, 4, 5, 7, 8].includes(entID)";
+  }
+
+  return (
+    <SubmitEntityField entID={typeID} header={header} labelArr={labelArr}
+      getDataOrRespond={(fieldValArr, setResponse) => {
+        let defStr = getSingleDefStrOrRespond(fieldValArr, setResponse);
+        if (defStr === null) {
+          return null;
+        } else {
+          return {
+            type: typeID,
+            cxt: 0,
+            defStr: defStr,
+          }
+        }
+      }}
+    />
+  );
+}
+
+function getSingleDefStrOrRespond(fieldValArr, setResponse) {
+  let defStr = fieldValArr[0].trim();
+  // Test any input was supplied.
+  if (defStr.length === 0) {
+    setResponse(
+      <span className="text-warning">
+        No input was supplied
+      </span>
+    );
+    return null;
+  }
+  
+  // Test if defStr is not too long.
+  // TODO: Correct this test so that it passes iff it passes in the backend.
+  if (defStr.length > 255) {
+    setResponse(
+      <span className="text-warning">
+        Defining text is too long
+      </span>
+    );
+    console.log("Too long defining string: " + defStr);
+    return null;
+  }
+  return defStr;
+}
+
+// Hm, I think I will actually just remove some submit tabs for non-type
+// non-template entities..
 
 export const SubmitTemplateForTypeField = ({typeID}) => {
-  return (
-    <div>
-      <h4>Submit a template for the type <EntityTitle entID={typeID}/></h4>
-      <form onSubmit={void(0)}>
-        <div className="def-item-field-container">
-          <div className="form-group">
-            <label>Template</label>
-            <textarea rows="1" className="form-control"></textarea>
-          </div>
-        </div>
-        <span>
-          <button className="btn btn-default search">Search</button>
-          <button className="btn btn-default submit">Submit</button>
-        </span>
-      </form>
-      <div className="response-display"></div>
-    </div>
-  );
-};
+  const header = <>
+    <h4>
+      Submit a template for the type <EntityTitle entID={typeID} isLink />
+    </h4>
+  </>;
+  const labelArr = ["Template"];
 
-export const SubmitInstanceOfCategoryField = ({catID}) => {
+  if ([1, 3, 4, 5, 7, 8].includes(typeID)) {
+    throw "SubmitTemplateForTypeField: [1, 3, 4, 5, 7, 8].includes(typeID)";
+  }
+
   return (
-    <div>
-      <h4>Submit an instance of the category <EntityTitle entID={catID}/></h4>
-      <form onSubmit={void(0)}>
-        <div className="def-item-field-container">
-          <div className="form-group">
-            <label>ID #</label>
-            <textarea rows="1" className="form-control"></textarea>
-          </div>
-        </div>
-        <span>
-          <button className="btn btn-default search">Search</button>
-          <button className="btn btn-default submit">Submit</button>
-        </span>
-      </form>
-      <div className="response-display"></div>
-    </div>
+    <SubmitEntityField entID={typeID} header={header} labelArr={labelArr}
+      getDataOrRespond={(fieldValArr, setResponse) => {
+        let defStr = getSingleDefStrOrRespond(fieldValArr, setResponse);
+        if (defStr === null) {
+          return null;
+        } else {
+          return {
+            type: 3,
+            cxt: typeID,
+            defStr: defStr,
+          }
+        }
+      }}
+    />
   );
-};
+}
 
 
 export const SubmitEntityOfTemplateField = ({tmplID}) => {
   const [labelArr, setLabelArr] = useState(null); // TODO: consider useMemo.
-  const [fieldValArr, setFieldValArr] = useState([]);
-  const [response, setResponse] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
 
-  const [, columnManager] = useContext(ColumnContext);
-
-  const accountManager = useContext(AccountManagerContext);
   const [results, setResults] = useState({});
   const [reqData, ] = useState({
     req: "ent",
@@ -258,14 +255,17 @@ export const SubmitEntityField = ({header, labelArr, getDataOrRespond}) => {
   useInput(inputResults, setInputResults, inputReqData);
 
 
-  const isLoggedIn = accountManager.isLoggedIn
-  if (!isLoggedIn) {
-    setResponse(
-      <span className="text-warning">
-        Log in or sign up in order to submit an entity
-      </span>
-    );
-  }
+  const isLoggedIn = useMemo(() => {
+    let ret = accountManager.isLoggedIn;
+      if (!ret) {
+        setResponse(
+          <span className="text-warning">
+            Log in or sign up in order to submit an entity
+          </span>
+        );
+      }
+      return ret;
+  }, [accountManager]);
 
 
   const formGroups = labelArr.map((val, ind) => (
@@ -389,6 +389,7 @@ export const SubmitEntityField = ({header, labelArr, getDataOrRespond}) => {
             Search
           </button>
           <button className="btn btn-default submit"
+            // TODO: Add tooltip for disabled submit button.
             disabled={isFetching || !isLoggedIn}
             onClick={() => {
               // Get a valid defining string, or set an error response and get
@@ -425,6 +426,34 @@ export const SubmitEntityField = ({header, labelArr, getDataOrRespond}) => {
 };
 
 
+
+
+
+export const SubmitInstanceOfCategoryField = ({catID}) => {
+  const header = <>
+    <h4>
+      Submit an entity of the category <EntityTitle entID={catID} isLink />
+    </h4>
+  </>;
+  const labelArr = ["ID #"];
+
+  return (
+    <SubmitEntityField entID={typeID} header={header} labelArr={labelArr}
+      getDataOrRespond={(fieldValArr, setResponse) => {
+        let defStr = getSingleDefStrOrRespond(fieldValArr, setResponse);
+        if (defStr === null) {
+          return null;
+        } else {
+          return {
+            type: catID,
+            cxt: 0,
+            defStr: defStr,
+          }
+        }
+      }}
+    />
+  );
+}
 
 
 // // TODO: Continue refactoring: 

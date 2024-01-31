@@ -1,14 +1,14 @@
 
 SELECT "Input procedures";
 
--- DROP PROCEDURE insertOrUpdateRating;
--- DROP PROCEDURE private_insertOrUpdateRatingAndRunBots;
---
--- DROP PROCEDURE insertOrFindEntity;
--- DROP PROCEDURE insertOrFindTemplate;
--- DROP PROCEDURE insertOrFindType;
--- DROP PROCEDURE insertText;
--- DROP PROCEDURE insertBinary;
+DROP PROCEDURE insertOrUpdateRating;
+DROP PROCEDURE private_insertOrUpdateRatingAndRunBots;
+
+DROP PROCEDURE insertOrFindEntity;
+DROP PROCEDURE insertOrFindTemplate;
+DROP PROCEDURE insertOrFindType;
+DROP PROCEDURE insertText;
+DROP PROCEDURE insertBinary;
 
 
 
@@ -95,7 +95,7 @@ BEGIN
     FROM Entities
     WHERE (
         type_id = 75 AND
-        cxt_id <=> 76 AND
+        cxt_id = 76 AND
         def_str = CONCAT("#", instID, "|#", catID)
     );
     -- if it does not exist, insert it and get the ID.
@@ -110,7 +110,7 @@ BEGIN
             FROM Entities
             WHERE (
                 type_id = 75 AND
-                cxt_id <=> 76 AND
+                cxt_id = 76 AND
                 def_str = CONCAT("#", instID, "|#", catID)
             );
         END IF;
@@ -193,16 +193,16 @@ BEGIN proc: BEGIN
     DECLARE exitCode TINYINT;
     DECLARE userCreationsCatID BIGINT UNSIGNED;
 
-    IF (cxtID = 0) THEN
-        SET cxtID = NULL;
-    END IF;
+    -- IF (cxtID = 0) THEN
+    --     SET cxtID = NULL;
+    -- END IF;
 
     -- check if entity already exists and return its ID as outID if so.
     SELECT id INTO outID
     FROM Entities
     WHERE (
         type_id = typeID AND
-        cxt_id <=> cxtID AND
+        cxt_id = cxtID AND
         def_str = defStr
     );
     IF (outID IS NOT NULL) THEN
@@ -229,18 +229,18 @@ BEGIN proc: BEGIN
         LEAVE proc;
     END IF;
 
-    -- if cxtID is not null, fetch that entity's own type and context.
-    IF (cxtID IS NOT NULL) THEN
+    -- if cxtID is not 0, fetch that entity's own type and context.
+    IF (cxtID != 0) THEN
         SELECT type_id, cxt_id INTO cxtTypeID, cxtCxtID
         FROM Entities
         WHERE id = cxtID;
     END IF;
 
-    -- if typeID is the "Type" type entity, check this cxtID is null.
+    -- if typeID is the "Type" type entity, check this cxtID is 0.
     -- (Types might be allowed to have other (super)types as their context in
     -- the future, but it is not allowed at this point.)
     IF (typeID = 1) THEN
-        IF (cxtID IS NOT NULL) THEN
+        IF (cxtID != 0) THEN
             SET exitCode = 4; -- trying to give a type entity a context.
             SELECT outID, exitCode;
             LEAVE proc;
@@ -256,7 +256,7 @@ BEGIN proc: BEGIN
     -- else the context has to be either null or that of a template entity, in
     -- which case the context of that template entity has to also match typeID,
     -- so check these things.
-    ELSEIF (cxtID IS NOT NULL) THEN
+    ELSEIF (cxtID != 0) THEN
         IF (cxtTypeID != 3) THEN
             SET exitCode = 6; -- cxtID is not of an existing template entity.
             SELECT outID, exitCode;
@@ -277,7 +277,7 @@ BEGIN proc: BEGIN
         FROM Entities
         WHERE (
             type_id = typeID AND
-            cxt_id <=> cxtID AND
+            cxt_id = cxtID AND
             def_str = defStr
         );
         SET exitCode = 1; -- find.
@@ -336,7 +336,7 @@ BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
     INSERT INTO Entities (type_id, cxt_id, def_str)
-    VALUES (7, NULL, name);
+    VALUES (7, 0, name);
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Texts (id, str)
     VALUES (outID, textStr);
@@ -355,7 +355,7 @@ BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
     INSERT INTO Entities (type_id, cxt_id, def_str)
-    VALUES (8, NULL, name);
+    VALUES (8, 0, name);
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Binaries (id, bin)
     VALUES (outID, bin);
