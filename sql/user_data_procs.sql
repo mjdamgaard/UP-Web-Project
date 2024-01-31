@@ -1,8 +1,8 @@
 
 SELECT "User data procedures";
 
--- DROP PROCEDURE createOrUpdateSession;
--- DROP PROCEDURE createNewUser;
+DROP PROCEDURE createOrUpdateSession;
+DROP PROCEDURE createNewUser;
 
 
 DELIMITER //
@@ -54,7 +54,7 @@ BEGIN proc: BEGIN
     END IF;
 
     INSERT INTO Entities (type_id, cxt_id, def_str)
-    VALUES (5, NULL, uName);
+    VALUES (5, 0, uName);
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Users (id, username)
     VALUES (outID, uName);

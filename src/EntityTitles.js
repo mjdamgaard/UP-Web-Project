@@ -28,11 +28,7 @@ export const EntityTitle = ({entID, isLink, recLevel, maxRecLevel}) => {
   // we only need to to render the defining string:
   let titleContent;
   if (!cxtID || typeID == 3) {
-    titleContent = defStr
-      .replaceAll("\\\\", "\\\\1")
-      .replaceAll("\\|", "|")
-      .replaceAll("\\#", "#")
-      .replaceAll("\\\\1", "\\");
+    titleContent = defStr;
   
   // Else, the entity is derived from a template. But if the recursion level
   // has reached maxRecLevel, simply render the entity ID instead.
@@ -86,13 +82,9 @@ function getTemplateChildren(defStr, isLinks, recLevel, maxRecLevel) {
           />
         </span>
       ) : (
-        <span className="template-child">{
-          val
-            .replaceAll("\\\\", "\\\\1")
-            .replaceAll("\\|", "|")
-            .replaceAll("\\#", "#")
-            .replaceAll("\\\\1", "\\")
-        }</span>
+        <span className="template-child">
+          {val}
+        </span>
       )
     ));
 }

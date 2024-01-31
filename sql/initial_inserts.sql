@@ -209,7 +209,7 @@ CALL insertOrFindType(9, 0, "Statement"); -- id: 75
 CALL insertOrFindTemplate(9, 0, 75,
     "{<Entity> is an} important/useful{ instance of <Category>}"); -- id: 76
 CALL insertOrFindTemplate(9, 0, 2,
-    "Users that have rated <Statement> positively"); -- id: 77
+    "Users that rate <Statement> positively"); -- id: 77
 
 
 CALL insertOrFindTemplate(9, 0, 6,

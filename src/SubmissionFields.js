@@ -268,22 +268,6 @@ export const SubmitEntityField = ({header, labelArr, getDataOrRespond}) => {
   }, [accountManager]);
 
 
-  const formGroups = labelArr.map((val, ind) => (
-    <div key={ind} className="form-group">
-      <label>{val}</label>
-      <textarea rows="1" className="form-control" value={fieldValArr[ind] ?? ""}
-        onChange={(e) => {
-          setFieldValArr(prev => {
-            let ret = [...prev];
-            ret[ind] = e.target.value;
-            return ret;
-          });
-        }}
-      ></textarea>
-    </div>
-  ));
-
-
   // If input response has just been received, open column if insert was
   // successful, and set isSubmitting = false in any case. Also set response
   // according to exit code.
@@ -353,6 +337,22 @@ export const SubmitEntityField = ({header, labelArr, getDataOrRespond}) => {
   }
 
   const isFetching = isSubmitting || isSearching;
+
+
+  const formGroups = labelArr.map((val, ind) => (
+    <div key={ind} className="form-group">
+      <label>{val}</label>
+      <textarea rows="1" className="form-control" value={fieldValArr[ind] ?? ""}
+        onChange={(e) => {
+          setFieldValArr(prev => {
+            let ret = [...prev];
+            ret[ind] = e.target.value;
+            return ret;
+          });
+        }}
+      ></textarea>
+    </div>
+  ));
 
   return (
     <div>
@@ -426,212 +426,6 @@ export const SubmitEntityField = ({header, labelArr, getDataOrRespond}) => {
 };
 
 
-
-
-
-export const SubmitInstanceOfCategoryField = ({catID}) => {
-  const header = <>
-    <h4>
-      Submit an entity of the category <EntityTitle entID={catID} isLink />
-    </h4>
-  </>;
-  const labelArr = ["ID #"];
-
-  return (
-    <SubmitEntityField entID={typeID} header={header} labelArr={labelArr}
-      getDataOrRespond={(fieldValArr, setResponse) => {
-        let defStr = getSingleDefStrOrRespond(fieldValArr, setResponse);
-        if (defStr === null) {
-          return null;
-        } else {
-          return {
-            type: catID,
-            cxt: 0,
-            defStr: defStr,
-          }
-        }
-      }}
-    />
-  );
-}
-
-
-// // TODO: Continue refactoring: 
-
-
-
-// //       data.newEntityType = tmplCxtID;
-// //       data.newEntityCxt = data.entID;
-// //       let labelArr = getLabelArr(tmplDefStr);
-// //       $ci.trigger("append-input-fields", [labelArr]);
-// //     });
-
-
-// submitEntityFieldCL.addCallback(function($ci, data) {
-//   $ci.find("button.submit").on("click", function() {
-//     $(this).trigger("construct-entity");
-//     $(this).trigger("submit-entity");
-//     return false;
-//   });
-//   $ci.find("button.search").on("click", function() {
-//     $(this).trigger("construct-entity");
-//     $(this).trigger("search-for-entity");
-//     return false;
-//   });
-//   $ci.on("construct-entity", function() {
-//     let $this = $(this);
-//     // if (!data.readyForSubmission) {
-//     //   $this.children('.response-display').html(
-//     //     '<span class="text-warning">' +
-//     //       'Wait until the submission field is fully loaded' +
-//     //     '</span>'
-//     //   );
-//     //   return false;
-//     // }
-//     let $inputFields = $this
-//       .find('.def-item-field-container')
-//       .children('.CI.TextAreaFormGroup');
-//     // extract inputs from which to construct the defining string.
-//     let defStrParts = [];
-//     $inputFields.each(function() {
-//       let input = ($(this).find('.form-control').val() ?? "").trim();
-//       defStrParts.push(input);
-//     });
-//     // if entID is the "Template" type entity, let newEntityCxt be the
-//     // input of the first ("Type #") input field, and let defStr be that of
-//     // the following "Template" field.
-//     if (data.entID == 3) {
-//       data.newEntityCxt = defStrParts[0];
-//       data.defStr = defStrParts[1];
-//     // else construct defStr from all the input fields given by the
-//     // template.
-//     } else {
-//       // construct the defining string.
-//       data.defStr = defStrParts
-//         .map(val => val.replaceAll("|", "\\|").replaceAll("\\", "\\\\"))
-//         .join("|");
-//       // test if defStr is not too long or too short.
-//       if (data.defStr.length > 255) {
-//         $this.children('.response-display').html(
-//           '<span class="text-warning">' +
-//             'Defining text is too long' +
-//           '</span>'
-//         );
-//         console.log("Too long defining string: " + data.defStr);
-//         return;
-//       }
-//       // test any input was supplied to it.
-//       if (/^[\|]*$/.test(data.defStr)) {
-//         $this.children('.response-display').html(
-//           '<span class="text-warning">' +
-//             'No input was supplied' +
-//           '</span>'
-//         );
-//         return;
-//       }
-//     }
-//     return false;
-//   });
-//   $ci.on("submit-entity", function() {
-//     // upload the new entity.
-//     let reqData = {
-//       req: "ent",
-//       ses: accountManager.sesIDHex,
-//       u: accountManager.inputUserID,
-//       r: 1,
-//       t: data.newEntityType,
-//       c: data.newEntityCxt,
-//       s: data.defStr,
-//     };
-//     dbReqManager.input($(this), reqData, data, function($ci, result, data) {
-//       let exitCode = result.exitCode;
-//       let outID = result.outID;
-//       let newData = new DataNode(data, {entID: outID});
-//       if (exitCode == 0) {
-//         $ci.children('.response-display').html(
-//           '<span class="text-success">' +
-//             'Entity was successfully uploaded!' +
-//           '</span>' +
-//           '<div>' +
-//             'New ID: #' + outID +
-//           '</div>'
-//         );
-//         $ci.trigger("open-column", ["AppColumn", newData, "right"]);
-//       } else if (exitCode == 1) {
-//         $ci.children('.response-display').html(
-//           '<span class="text-info">' +
-//             'Entity already exists' +
-//           '</span>' +
-//           '<div>' +
-//             'ID: #' + outID +
-//           '</div>'
-//         );
-//         $ci.trigger("open-column", ["AppColumn", newData, "right"]);
-//       } else {
-//         // throw error since this should not happen.
-//         throw (
-//           "Received exitCode=" + exitCode + " from entity submission"
-//         );
-//       }
-//     });
-//     return false;
-//   });
-//   $ci.on("search-for-entity", function() {
-//     let $this = $(this);
-//     // remove previous response text.
-//     $ci.children('.response-display').empty();
-//     // upload the new entity.
-//     let reqData = {
-//       req: "entID",
-//       u: data.getFromAncestor("inputUserID"),
-//       t: data.newEntityType,
-//       c: data.newEntityCxt,
-//       s: data.defStr,
-//     };
-//     dbReqManager.query($this, reqData, data, function($ci, result, data) {
-//       let entID = (result[0] ?? [0])[0];
-//       let newData = new DataNode(data, {entID: entID});
-//       if (entID) {
-//         $ci.children('.response-display').html(
-//           '<span class="text-success">' +
-//             'Entity was found!' +
-//           '</span>' +
-//           '<div>' +
-//             'ID: #' + entID +
-//           '</div>'
-//         );
-//         $ci.trigger("open-column", ["AppColumn", newData, "right"]);
-//       } else {
-//         $ci.children('.response-display').html(
-//           '<span class="text-info">' +
-//             'Entity was not found' +
-//           '</span>'
-//         );
-//       }
-//     });
-//     return false;
-//   });
-// });
-
-
-// export var textAreaFormGroupCL = new ContentLoader(
-//   "TextAreaFormGroup",
-//   /* Initial HTML template */
-//   '<div class="form-group">' +
-//     '<label></label>' +
-//     '<textarea rows="1" class="form-control"></textarea>' +
-//   '</div>',
-//   sdbInterfaceCL
-// );
-// textAreaFormGroupCL.addCallback("data", function(data) {
-//   data.copyFromAncestor([
-//     "label",
-//   ]);
-// });
-// textAreaFormGroupCL.addCallback(function($ci, data) {
-//   $ci.find('label').append(data.label + ":");
-// });
-
 // export var extraInputFormGroupCL = new ContentLoader(
 //   "ExtraInputFormGroup",
 //   /* Initial HTML template */
@@ -654,74 +448,66 @@ export const SubmitInstanceOfCategoryField = ({catID}) => {
 // // standard, and then make sure that IDs can be used instead of strings after
 // // the (first) colon..
 
+// TODO: Consider adding "ExtraInputFormGroups" again..
 
 
 
 
 
 
+export const SubmitInstanceOfCategoryField = ({catID}) => {
+  const [fieldVal, setFieldVal] = useState("");
+  const [response, setResponse] = useState("");
+  const [instID, setInstID] = useState(0);
+  
+  return (
+    <div>
+      <h4>
+        Submit an instance of the category <EntityTitle entID={catID} isLink />
+      </h4>
+      <form onSubmit={void(0)}>
+        <div className="form-group">
+          <label>ID #</label>
+          <textarea rows="1" className="form-control" value={fieldVal}
+            onChange={(e) => {
+              setFieldVal(e.target.value);
+            }}
+          ></textarea>
+        </div>
+        <button className="btn btn-default submit"
+          onClick={() => {
+            // Get the ID from the input field.
+            let input = fieldVal.trim();
+            if (/^[1-9][0-9]*$/.test(input)) {
+              // TODO: Add RegEx test to check that number is a BIGINT UNSIGNED.
+              setInstID(input);
+            } else {
+              setInstID(0);
+              setResponse(
+                <span className="text-warning">
+                  Accepts only decimal numbers (without a # in front),
+                  e.g. 1234.
+                </span>
+              );
+            }
+          }}
+        >
+          Submit
+        </button>
+      </form>
+    <div className="response-display">{response}</div>
+    <div className="rating-for-new-inst">{
+      (instID == 0) ? "" : <>
+        <h5>
+          Rate the new instance(s) in order to complete the submission:
+        </h5>
+        {/* (Without the key prop, the EntityTitle does not update.) */}
+        <RatingDisplay key={instID} catKey={{catID: catID}} instID={instID} />
+      </>
+    }</div>
+  </div>
+  );
+}
 
-// export var submitInstanceFieldCL = new ContentLoader(
-//   "SubmitInstanceField",
-//   /* Initial HTML template */
-//   '<div>' +
-//     '<h4>Submit an instance of <<EntityTitle>></h4>' +
-//     '<<SubmitInstanceForm>>' +
-//   '</div>',
-//   sdbInterfaceCL
-// );
-// submitInstanceFieldCL.addCallback("data", function(data) {
-//   data.catID = data.getFromAncestor("entID");
-// });
-// export var submitInstanceFormCL = new ContentLoader(
-//   "SubmitInstanceForm",
-//   /* Initial HTML template */
-//   '<div>' +
-//     '<form onSubmit={void(0)}>' +
-//       '<div class="form-group">' +
-//         '<label>ID #:</label>' +
-//         '<input type="text" class="form-control id"></input>' +
-//       '</div>' +
-//       '<button class="btn btn-default submit">Submit</button>' +
-//     '</form>' +
-//     '<div class="response-display"></div>' +
-//   '</div>',
-//   sdbInterfaceCL
-// );
-// submitInstanceFormCL.addCallback(function($ci, data) {
-//   $ci.find('button.submit').on("click", function() {
-//     $(this).trigger("submit-id");
-//   });
-//   $ci.on("submit-id", function() {
-//     let $ci = $(this);
-//     let inputVal = $ci.find('input.id').val();
-//     // get the ID from the input field.
-//     let id;
-//     if (/^#[1-9][0-9]*$/.test(inputVal)) {
-//       id = inputVal.substring(1);
-//     } else if (/^[1-9][0-9]*$/.test(inputVal)) {
-//       id = inputVal;
-//     } else {
-//       $ci.children('.response-display').html(
-//         '<span class="text-warning">' +
-//           'Please insert a decimal number (w/wo a # in front)' +
-//         '</span>'
-//       );
-//       return false;
-//     }
-//     // generate a rating display with this ID as the instID.
-//     data.instID = id;
-//     data.prevInputRatVal = null;
-//     if (!data.rateMsgIsAppended) {
-//       $ci.append(
-//         '<h5>' +
-//           'Rate the new instance(s) in order to complete the ' +
-//           'submission:' +
-//         '</h5>'
-//       );
-//       data.rateMsgIsAppended = true;
-//     }
-//     submitInstanceFormCL.loadAfter($ci, "RatingDisplay", data);
-//     return false;
-//   });
-// });
+
+

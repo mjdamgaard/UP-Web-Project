@@ -1,7 +1,7 @@
 
 SELECT "Events: publicize_recent_inputs event";
 
--- DROP PROCEDURE publicizeRecentInputs;
+DROP PROCEDURE publicizeRecentInputs;
 -- DROP EVENT publicize_recent_inputs;
 
 

@@ -1,9 +1,9 @@
 
 SELECT "Bots: Mean bots";
 
--- DROP PROCEDURE updateMeanBots;
---
--- DROP PROCEDURE updateMeanWithOffset3Bot;
+DROP PROCEDURE updateMeanBots;
+
+DROP PROCEDURE updateMeanWithOffset3Bot;
 
 DELIMITER //
 CREATE PROCEDURE updateMeanBots (

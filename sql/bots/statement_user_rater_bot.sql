@@ -1,7 +1,7 @@
 
 SELECT "Bots: statement_user_rater_bot";
 
--- DROP PROCEDURE updateStatementUserRaterBot;
+DROP PROCEDURE updateStatementUserRaterBot;
 
 DELIMITER //
 CREATE PROCEDURE updateStatementUserRaterBot (
