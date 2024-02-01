@@ -184,7 +184,6 @@ export const InputRatingSlider = ({catID, instID}) => {
     i: instID,
   });
   useInput(inputResults, setInputResults, inputReqData);
-  console.log(inputResults, inputReqData);debugger;
 
   if (!accountManager.isLoggedIn) {
     return (
@@ -276,7 +275,7 @@ export const InputRatingSlider = ({catID, instID}) => {
           <button className="btn btn-default submit" disabled={!currVal}
             onClick={() => {
               let roundedRatVal = Math.max(Math.round(currVal * 25.5), 1) * 256;
-              setInputResults({});debugger;
+              setInputResults({});
               setInputReqData({
                 req: "rat",
                 ses: accountManager.sesIDHex,

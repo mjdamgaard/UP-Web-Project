@@ -14,6 +14,7 @@ export const useQuery = (results, setResults, reqData) => {
     if (reqData.req) {
       if (!results.isFetched && !results.isFetching) {
         setResults(prev => ({...prev, isFetching: true}));
+        results.isFetching = true;
         DBRequestManager.queryAndSet(setResults, reqData);
       }
     } else {
@@ -28,6 +29,7 @@ export const useQuery = (results, setResults, reqData) => {
               ret[key].isFetching = true;
               return ret;
             });
+            result.isFetching = true;
             DBRequestManager.queryAndSet(setResults, key, data);
           }
         // } else if (Array.isArray(data)) {
@@ -50,6 +52,7 @@ export const useInput = (results, setResults, reqData) => {
     if (reqData.req) {
       if (!results.isFetched && !results.isFetching) {
         setResults(prev => ({...prev, isFetching: true}));
+        results.isFetching = true;
         DBRequestManager.inputAndSet(setResults, reqData);
       }
     } else {
@@ -64,6 +67,7 @@ export const useInput = (results, setResults, reqData) => {
               ret[key].isFetching = true;
               return ret;
             });
+            result.isFetching = true;
             DBRequestManager.inputAndSet(setResults, key, data);
           }
         // } else if (Array.isArray(data)) {
