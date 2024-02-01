@@ -114,6 +114,9 @@ BEGIN
                 def_str = CONCAT("#", instID, "|#", catID)
             );
         END IF;
+        -- TODO: It seems that there still is a risk that stmtID is NULL at
+        -- this point for simultaneous requests, despite all this. So
+        -- investigate and fix (here and other places) at some point.
     END IF;
 
 
@@ -362,3 +365,11 @@ BEGIN
     SELECT outID, 0 AS exitCode; -- insert.
 END //
 DELIMITER ;
+
+
+
+
+-- TODO: There seems to be a bug which can cause a deadlock: "Uncaught
+-- mysqli_sql_exception: Deadlock found when trying to get lock; try
+-- restarting transaction in /var/www/src/php/db_io/DBConnector.php:30"
+-- when a rating deletion request is sent twice at the same time.

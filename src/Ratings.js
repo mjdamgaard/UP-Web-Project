@@ -184,7 +184,7 @@ export const InputRatingSlider = ({catID, instID}) => {
     i: instID,
   });
   useInput(inputResults, setInputResults, inputReqData);
-
+  console.log(inputResults, inputReqData);debugger;
 
   if (!accountManager.isLoggedIn) {
     return (
@@ -214,8 +214,8 @@ export const InputRatingSlider = ({catID, instID}) => {
           <button className="btn btn-default delete" disabled={true}>
             Delete
           </button>
-          <button className="btn btn-default clear" disabled={true}>
-            Clear
+          <button className="btn btn-default reset" disabled={true}>
+            Reset
           </button>
           <button className="btn btn-default submit" disabled={true}>
             Submit
@@ -266,17 +266,17 @@ export const InputRatingSlider = ({catID, instID}) => {
             Delete
           </button>
           {/* currVal cannot be 0 (only null or positive). */}
-          <button className="btn btn-default clear" disabled={!currVal}
+          <button className="btn btn-default reset" disabled={!currVal}
             onClick={() => {
               setCurrVal(undefined);
             }}
           >
-            Clear
+            Reset
           </button>
           <button className="btn btn-default submit" disabled={!currVal}
             onClick={() => {
               let roundedRatVal = Math.max(Math.round(currVal * 25.5), 1) * 256;
-              setInputResults({});
+              setInputResults({});debugger;
               setInputReqData({
                 req: "rat",
                 ses: accountManager.sesIDHex,

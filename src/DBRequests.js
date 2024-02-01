@@ -12,7 +12,8 @@ import $ from 'jquery';
 export const useQuery = (results, setResults, reqData) => {
   useMemo(() => {
     if (reqData.req) {
-      if (!results.isFetched) {
+      if (!results.isFetched && !results.isFetching) {
+        setResults(prev => ({...prev, isFetching: true}));
         DBRequestManager.queryAndSet(setResults, reqData);
       }
     } else {
@@ -20,7 +21,13 @@ export const useQuery = (results, setResults, reqData) => {
       keys.forEach(key => {
         let data = reqData[key];
         if (data.req) {
-          if (!(results[key] ?? {}).isFetched) {
+          let result = (results[key] ?? {});
+          if (!result.isFetched && !result.isFetching) {
+            setResults(prev => {
+              let ret = {...prev};
+              ret[key].isFetching = true;
+              return ret;
+            });
             DBRequestManager.queryAndSet(setResults, key, data);
           }
         // } else if (Array.isArray(data)) {
@@ -41,7 +48,8 @@ export const useQuery = (results, setResults, reqData) => {
 export const useInput = (results, setResults, reqData) => {
   useMemo(() => {
     if (reqData.req) {
-      if (!results.isFetched) {
+      if (!results.isFetched && !results.isFetching) {
+        setResults(prev => ({...prev, isFetching: true}));
         DBRequestManager.inputAndSet(setResults, reqData);
       }
     } else {
@@ -49,7 +57,13 @@ export const useInput = (results, setResults, reqData) => {
       keys.forEach(key => {
         let data = reqData[key];
         if (data.req) {
-          if (!(results[key] ?? {}).isFetched) {
+          let result = (results[key] ?? {});
+          if (!result.isFetched && !result.isFetching) {
+            setResults(prev => {
+              let ret = {...prev};
+              ret[key].isFetching = true;
+              return ret;
+            });
             DBRequestManager.inputAndSet(setResults, key, data);
           }
         // } else if (Array.isArray(data)) {
@@ -153,7 +167,7 @@ export class DBRequestManager {
 
 
 
-  static queryAndSet(setResults, key, ind, reqData) {
+  static queryAndSet(setResults, key, ind, reqData) { 
     if (!reqData) {
       reqData = ind;
       ind = undefined;
@@ -222,18 +236,18 @@ export class DBRequestManager {
         let key = queryQueue[i][1];
         let ind = queryQueue[i][2];
         if (key === undefined) {
-          setResults({data: result, isFetched: true});
+          setResults({data: result, isFetched: true, isFetching: false});
         } else if (ind === undefined) {
           setResults(prev => {
             let ret = {...prev};
-            ret[key] = {data: result, isFetched: true};
+            ret[key] = {data: result, isFetched: true, isFetching: false};
             return ret;
           });
         } else {
           setResults(prev => {
             let ret = {...prev};
             ret[key] ??= [];
-            ret[key][ind] = {data: result, isFetched: true};
+            ret[key][ind] = {data: result, isFetched: true, isFetching: false};
             return ret;
           });
         }
@@ -245,6 +259,7 @@ export class DBRequestManager {
       // }
     });
   }
+
 
   static inputAndSet(setResults, key, ind, reqData) {
     if (!reqData) {
@@ -259,18 +274,18 @@ export class DBRequestManager {
     let url = "http://localhost:80/input_handler.php";
     $.post(url, reqData, result => {
       if (key === undefined) {
-        setResults({data: result, isFetched: true});
+        setResults({data: result, isFetched: true, isFetching: false});
       } else if (ind === undefined) {
         setResults(prev => {
           let ret = {...prev};
-          ret[key] = {data: result, isFetched: true};
+          ret[key] = {data: result, isFetched: true, isFetching: false};
           return ret;
         });
       } else {
         setResults(prev => {
           let ret = {...prev};
           ret[key] ??= [];
-          ret[key][ind] = {data: result, isFetched: true};
+          ret[key][ind] = {data: result, isFetched: true, isFetching: false};
           return ret;
         });
       }
@@ -289,5 +304,6 @@ export function sanitize(str) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&apos;");
 }
+
 
 export default DBRequestManager;
