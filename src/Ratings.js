@@ -165,7 +165,7 @@ export const MissingCategoryDisplay = ({catSK}) => {
 
 
 
-
+// TODO: Add response/feedback when successfully submitting.
 // TODO: Insert ten starts above the rating slider that fills up with yellow
 // according to the position of the slider.
 export const InputRatingSlider = ({catID, instID}) => {
@@ -259,7 +259,8 @@ export const InputRatingSlider = ({catID, instID}) => {
                 r: 0,
                 l: 0,
               });
-              setPrevInputRatVal(undefined);
+              setPrevInputRatVal(null);
+              setCurrVal(undefined);
             }}
           >
             Delete

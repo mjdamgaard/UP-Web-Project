@@ -225,7 +225,7 @@ CALL insertOrFindEntity(9, 0, 6, 78, CONCAT(
 
 
 CALL insertOrFindType(9, 0, "Event data documentation"); -- id: 80
-CALL insertOrFindEntity(9, 0, 80, NULL, CONCAT(
+CALL insertOrFindEntity(9, 0, 80, 0, CONCAT(
     "obj: Statement; ",
     "data_1: Current averaged rating value scaled up as a ulong (for more ",
     "precision), with a neutral rating (of 5/10) as the initial value; ",
@@ -256,7 +256,7 @@ CALL insertOrFindEntity(9, 0, 19, 20, "Templates|#3|many"); -- id: 85
 
 CALL insertOrFindEntity(9, 0, 2, 22, "Hip hop|#24"); -- id: 86
 CALL insertOrFindEntity(9, 0, 2, 22, "Pop|#24"); -- id: 87
-CALL insertOrFindEntity(9, 0, 2, 22, "Classic|#24"); -- id: 88
+CALL insertOrFindEntity(9, 0, 2, 22, "Classical|#24"); -- id: 88
 CALL insertOrUpdateRating(9, 40, 86, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(9, 40, 87, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(9, 40, 88, CONV("F000", 16, 10), 1);

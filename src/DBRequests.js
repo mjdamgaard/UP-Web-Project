@@ -14,7 +14,7 @@ export const useQuery = (results, setResults, reqData) => {
     if (reqData.req) {
       if (!results.isFetched && !results.isFetching) {
         setResults(prev => ({...prev, isFetching: true}));
-        results.isFetching = true;
+        results.isFetching = true; // See useInput for why this line is here.
         DBRequestManager.queryAndSet(setResults, reqData);
       }
     } else {
@@ -52,7 +52,8 @@ export const useInput = (results, setResults, reqData) => {
     if (reqData.req) {
       if (!results.isFetched && !results.isFetching) {
         setResults(prev => ({...prev, isFetching: true}));
-        results.isFetching = true;
+        results.isFetching = true; // A hacky fix, but two inputs will be sent
+        // if this line is out-commented!
         DBRequestManager.inputAndSet(setResults, reqData);
       }
     } else {
