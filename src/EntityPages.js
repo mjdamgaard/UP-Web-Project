@@ -32,8 +32,8 @@ import {
 // const SemanticPropertyElement = () => <template></template>;
 // const EntityRatingsPage = () => <template></template>;
 // const PropertyCategoryPage = () => <template></template>;
-const RelevantRatingsTypePage = () => <template></template>;
-const RelevantPropertiesTypePage = () => <template></template>;
+// const RelevantRatingsTypePage = () => <template></template>;
+// const RelevantPropertiesTypePage = () => <template></template>;
 // const SubmitEntityPage = () => <template></template>;
 // const SubmitEntityField = () => <template></template>;
 // const CategoryInstancesPage = () => <template></template>;
@@ -299,69 +299,47 @@ export const EntityInfoPage = ({entID, typeID}) => {
 };
 
 
-// TODO: Continue refactoring:
 
 
-// export var entityInfoPageCL = new ContentLoader(
-//   "EntityInfoPage",
-//   /* Initial HTML template */
-//   '<div>' +
-//       '<<SetDisplay>>' +
-//   '</div>',
-//   sdbInterfaceCL
-// );
-// entityInfoPageCL.addCallback("data", function(data) {
-//   data.elemContentKey = "SemanticPropertyElement";
-//   let sg1 = new SimpleSetGenerator(
-//       {cxtID: 21, defStr: "#58|#" + data.entID}, // catKey.
-//       100, // num,
-//   );
-//   let sg2 = new SimpleSetGenerator(
-//       {cxtID: 21, defStr: "#59|#" + data.typeID}, // catKey.
-//       100, // num.
-//   );
-//   data.setGenerator = new MaxRatingSetCombiner([sg1, sg2]);
-// });
+export const RelevantRatingsTypePage = ({entID}) => {
+  const accountManager = useContext(AccountManagerContext);
+  
+  const lg = useMemo(
+    () => new SimpleEntListGenerator(
+      {catSK: {cxtID: 21, defStr: "#52|#" + entID}},
+      accountManager
+    ),
+    [entID]
+  );
+
+  return (
+    <div>
+      <h4>Relevant categories to rate for type instances of this type</h4>
+      <EntListDisplay
+        listGenerator={lg}
+      />
+    </div>
+  );
+};
 
 
+export const RelevantPropertiesTypePage = ({entID}) => {
+  const accountManager = useContext(AccountManagerContext);
+  
+  const lg = useMemo(
+    () => new SimpleEntListGenerator(
+      {catSK: {cxtID: 21, defStr: "#59|#" + entID}},
+      accountManager
+    ),
+    [entID]
+  );
 
-
-
-
-// export var relevantRatingsTypePageCL = new ContentLoader(
-//   "RelevantRatingsTypePage",
-//   /* Initial HTML template */
-//   '<div>' +
-//       '<h4>Relevant categories to rate for type instances of this type</h4>' +
-//       '<<SetDisplay>>' +
-//   '</div>',
-//   sdbInterfaceCL
-// );
-// relevantRatingsTypePageCL.addCallback("data", function(data) {
-//   data.copyFromAncestor("entID");
-// });
-// relevantRatingsTypePageCL.addCallback("data", function(data) {
-//   data.elemContentKey = "GeneralEntityElement";
-//   data.setGenerator = new SimpleSetGenerator(
-//       {cxtID: 21, defStr: "#52|#" + data.entID}, // catKey.
-//   );
-// });
-
-// export var relevantPropertiesTypePageCL = new ContentLoader(
-//   "RelevantPropertiesTypePage",
-//   /* Initial HTML template */
-//   '<div>' +
-//       '<h4>Relevant categories to rate for type instances of this type</h4>' +
-//       '<<SetDisplay>>' +
-//   '</div>',
-//   sdbInterfaceCL
-// );
-// relevantPropertiesTypePageCL.addCallback("data", function(data) {
-//   data.copyFromAncestor("entID");
-// });
-// relevantPropertiesTypePageCL.addCallback("data", function(data) {
-//   data.elemContentKey = "GeneralEntityElement";
-//   data.setGenerator = new SimpleSetGenerator(
-//       {cxtID: 21, defStr: "#58|#" + data.entID}, // catKey.
-//   );
-// });
+  return (
+    <div>
+      <h4>Relevant properties for type instances of this type</h4>
+      <EntListDisplay
+        listGenerator={lg}
+      />
+    </div>
+  );
+};

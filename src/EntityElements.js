@@ -135,7 +135,6 @@ export const SemanticPropertyFetched = ({entID, ownerEntID, defStr}) => {
   
   const type = defItemStrArr[1];
   const quantityWord = defItemStrArr[2];
-  console.log(defStr, defItemStrArr);
   var elemContent, initialNum, incrementNum;
   switch (type) {
     case "#7": // the "Text data" type.
