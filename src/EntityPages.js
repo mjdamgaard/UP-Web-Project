@@ -7,9 +7,12 @@ import {useQuery} from "./DBRequests.js";
 import {AccountManagerContext} from "./contexts/AccountContext.js";
 
 import {PagesWithTabs} from "./PagesWithTabs.js";
-import {EntityID, FullEntityTitle, EntityTitle, ContextDisplay} from "./EntityTitles.js";
+import {
+  EntityID, FullEntityTitle, EntityTitle, ContextDisplay
+} from "./EntityTitles.js";
 import {EntListDisplay} from "./EntListDisplay.js";
 import {RatingElement} from "./Ratings.js";
+import {SemanticPropertyElement} from "./EntityElements.js";
 import {
   SubmitEntityOfTemplateField, SubmitInstanceOfCategoryField,
   SubmitTemplateForTypeField, SubmitEntityOfTypeField,
@@ -26,7 +29,7 @@ import {
 // const FullEntityTitle = () => <template></template>;
 // const EntityIDDisplay = () => <template></template>;
 // const ContextDisplay = () => <template></template>;
-const EntityInfoPage = () => <template></template>;
+// const SemanticPropertyElement = () => <template></template>;
 // const EntityRatingsPage = () => <template></template>;
 // const PropertyCategoryPage = () => <template></template>;
 const RelevantRatingsTypePage = () => <template></template>;
@@ -87,7 +90,7 @@ export const EntityPage = ({entID, initTab}) => {
 
 function getTabDataArrAndDefaultTab(entID, typeID, cxtID) {
   let tabDataArr = [
-    ["Info", <EntityInfoPage entID={entID} />],
+    ["Info", <EntityInfoPage entID={entID} typeID={typeID} />],
     ["Ratings", <EntityRatingsPage entID={entID} typeID={typeID} />],
     ["Related to", <PropertyCategoryPage entID={entID} propID={42} />],
   ];
@@ -261,8 +264,67 @@ export const SubmitCategoryInstancePage = ({entID}) => {
 
 
 
+export const EntityInfoPage = ({entID, typeID}) => {
+  const accountManager = useContext(AccountManagerContext);
+  
+  const lg1 = useMemo(
+    () => new SimpleEntListGenerator(
+      {catSK: {cxtID: 21, defStr: "#58|#" + entID}},
+      accountManager
+    ),
+    [entID]
+  );
+  const lg2 = useMemo(
+    () => new SimpleEntListGenerator(
+      {catSK: {cxtID: 21, defStr: "#59|#" + typeID}},
+      accountManager
+    ),
+    [typeID]
+  );
+
+  const listGenerator = useMemo(
+    () => new MaxRatingEntListCombiner([lg1, lg2]),
+    [entID, typeID]
+  );
+
+  return (
+    <div>
+      <EntListDisplay
+        listGenerator={listGenerator}
+        ElemComponent={SemanticPropertyElement}
+        extraProps={{ownerEntID: entID}}
+      />
+    </div>
+  );
+};
+
 
 // TODO: Continue refactoring:
+
+
+// export var entityInfoPageCL = new ContentLoader(
+//   "EntityInfoPage",
+//   /* Initial HTML template */
+//   '<div>' +
+//       '<<SetDisplay>>' +
+//   '</div>',
+//   sdbInterfaceCL
+// );
+// entityInfoPageCL.addCallback("data", function(data) {
+//   data.elemContentKey = "SemanticPropertyElement";
+//   let sg1 = new SimpleSetGenerator(
+//       {cxtID: 21, defStr: "#58|#" + data.entID}, // catKey.
+//       100, // num,
+//   );
+//   let sg2 = new SimpleSetGenerator(
+//       {cxtID: 21, defStr: "#59|#" + data.typeID}, // catKey.
+//       100, // num.
+//   );
+//   data.setGenerator = new MaxRatingSetCombiner([sg1, sg2]);
+// });
+
+
+
 
 
 
@@ -302,35 +364,4 @@ export const SubmitCategoryInstancePage = ({entID}) => {
 //   data.setGenerator = new SimpleSetGenerator(
 //       {cxtID: 21, defStr: "#58|#" + data.entID}, // catKey.
 //   );
-// });
-
-
-
-
-
-// export var entityInfoPageCL = new ContentLoader(
-//   "EntityInfoPage",
-//   /* Initial HTML template */
-//   '<div>' +
-//       '<<SetDisplay>>' +
-//   '</div>',
-//   sdbInterfaceCL
-// );
-// entityInfoPageCL.addCallback("data", function(data) {
-//   data.copyFromAncestor([
-//       "entID",
-//       "typeID",
-//   ]);
-// });
-// entityInfoPageCL.addCallback("data", function(data) {
-//   data.elemContentKey = "SemanticPropertyElement";
-//   let sg1 = new SimpleSetGenerator(
-//       {cxtID: 21, defStr: "#58|#" + data.entID}, // catKey.
-//       100, // num,
-//   );
-//   let sg2 = new SimpleSetGenerator(
-//       {cxtID: 21, defStr: "#59|#" + data.typeID}, // catKey.
-//       100, // num.
-//   );
-//   data.setGenerator = new MaxRatingSetCombiner([sg1, sg2]);
 // });

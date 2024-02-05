@@ -233,7 +233,7 @@ CALL insertOrFindEntity(9, 0, 80, 0, CONCAT(
 )); -- id: 81
 CALL insertOrFindEntity(9, 0, 6, 78, CONCAT(
     "mean_with_offset_3_bot|",
-    "Rates all statments according to an arithmetic mean of all users, biased",
+    "Rates all statements according to an arithmetic mean of all users, biased",
     "towards a neutral rating (5/10) by using an offset of 3 neutral ratings.|",
     "#81;"
 )); -- id: 82

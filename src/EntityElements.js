@@ -3,14 +3,18 @@ import {AccountManagerContext} from "./contexts/AccountContext.js";
 import {useQuery} from "./DBRequests.js";
 
 import {EntityTitle, FullEntityTitle} from "./EntityTitles.js";
-import {DropdownBox} from "./DropdownBox.js";
+import {DropdownBox, DropdownMenu} from "./DropdownBox.js";
 import {EntityIDDisplay} from "./EntityPages.js";
 // import {} from "./EntListDisplay.js";
 import {RatingDisplay} from "./Ratings.js";
-
+import {EntListDisplay} from "./EntListDisplay.js";
+import {
+  SimpleEntListGenerator, MaxRatingEntListCombiner
+} from "./EntListGenerator.js";
 
 // const EntityTitle = () => <template></template>;
-// const RatingDisplay = () => <template></template>;
+const TextDataDisplayElement = () => <template></template>;
+// const DefStrDisplayElement = () => <template></template>;
 
 
 
@@ -72,134 +76,130 @@ export const SetCategoriesRatingsDisplay = ({entID, listGenerator}) => {
 };
 
 
-// TODO: Continue refactoring:
-
-
-// export var semanticPropertyElementCL = new ContentLoader(
-//   "SemanticPropertyElement",
-//   /* Initial HTML template */
-//   '<div>' +
-//     '<<SemanticPropertyTitle>>' +
-//     '<<SetDisplay data:wait>>' +
-//   '</div>',
-//   sdbInterfaceCL
-// );
-// semanticPropertyElementCL.addCallback("data", function(data) {
-//   data.copyFromAncestor([
-//     "entID",
-//     "columnEntityID",
-//   ]);
-// });
-// semanticPropertyElementCL.addCallback(function($ci, data) {
-//   $ci.on("toggle", function() {
-//     let $this = $(this);
-//     if (!data.setDisplayIsLoaded) {
-//       data.setDisplayIsLoaded = true;
-//       let reqData = {
-//         req: "ent",
-//         id: data.entID,
-//       };
-//       dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-//         let defStr = (result[0] ?? [""])[2];
-//         let defItemStrArr = defStr
-//           .replaceAll("\\\\", "&bsol;")
-//           .replaceAll("\\|", "&#124;")
-//           .split("|");
-//         let type = defItemStrArr[1];
-//         let quantityWord = defItemStrArr[2];
-//         switch (type) {
-//           case "#7": // the "Text data" type.
-//             data.elemContentKey = "TextDataDisplayElement";
-//           break;
-//           case "#64": // the "Time" type.
-//             data.elemContentKey = "DefStrDisplayElement";
-//           break;
-//           // TODO: Add more of these type--CL pairings when needed.
-//           default:
-//             data.elemContentKey = "GeneralEntityElement";
-//           break;
-//         }
-//         switch (quantityWord) {
-//           case "one":
-//             data.initialNum = 1;
-//             data.incrementNum = 1;
-//           break;
-//           case "few":
-//             data.initialNum = 6;
-//             data.incrementNum = 6;
-//           break;
-//           case "many":
-//             data.initialNum = 50;
-//             data.incrementNum = 50;
-//           break;
-//           default:
-//             if (/^[1-9][0-9]{0,2}$/.test(quantityWord)) {
-//               data.initialNum = parseInt(quantityWord);
-//               data.incrementNum = parseInt(quantityWord);
-//             } else {
-//               data.initialNum = 50;
-//               data.incrementNum = 50;
-//             }
-//           break;
-//         }
-//         data.setGenerator = new SimpleSetGenerator(
-//           {
-//             cxtID: 21,
-//             defStr: "#" + data.entID + "|#" + data.columnEntityID,
-//           },
-//           null, // num.
-//           36864, // ratingLo (= CONV("9000", 16, 10)).
-//         );
-//         $this.children('.CI.SetDisplay').trigger("load");
-//       });
-//     } else {
-//       $this.children('.CI.SetDisplay').toggle();
-//     }
-//     return false;
-//   });
-// });
-// export var semanticPropertyTitleCL = new ContentLoader(
-//   "SemanticPropertyTitle",
-//   /* Initial HTML template */
-//   '<h3>' +
-//     '<<DropdownButton>>' +
-//     '<<EntityTitle>>' +
-//   '</h3>',
-//   sdbInterfaceCL
-// );
-// semanticPropertyTitleCL.addCallback("data", function(data) {
-//   data.isLinkArr = [];
-// });
-// semanticPropertyTitleCL.addCallback(function($ci, data) {
-//   $ci.on("click", function() {
-//     let $this = $(this);
-//     $this.children('.CI.DropdownButton').trigger("toggle-button-symbol");
-//     $this.trigger("toggle");
-//     return false;
-//   });
-// });
 
 
 
-// export var defStrDisplayElementCL = new ContentLoader(
-//   "DefStrDisplayElement",
-//   /* Initial HTML template */
-//   '<div></div>',
-//   sdbInterfaceCL
-// );
-// defStrDisplayElementCL.addCallback("data", function(data) {
-//   data.copyFromAncestor("entID");
-// });
-// defStrDisplayElementCL.addCallback(function($ci, data) {
-//   let reqData = {
-//     req: "ent",
-//     id: data.entID,
-//   };
-//   dbReqManager.query($ci, reqData, data, function($ci, result, data) {
-//     let defStr = (result[0] ?? [""])[2];
-//     $ci.append(defStr);
-//   });
-// });
+
+
+
+
+
+export const SemanticPropertyElement = ({entID, ownerEntID}) => {
+  return (
+    <div>
+      <DropdownMenu title={<EntityTitle entID={entID} />}>
+        <SemanticProperty entID={entID} ownerEntID={ownerEntID} />
+      </DropdownMenu>
+    </div>
+  );
+};
+
+
+export const SemanticProperty = ({entID, ownerEntID}) => {
+  const [results, setResults] = useState({});
+  useQuery(results, setResults, {
+    req: "ent",
+    id: entID,
+  });
+
+  if (!results.isFetched) {
+    return (
+      <div>
+      </div>
+    );
+  }
+
+  const [, , defStr] = (results.data[0] ?? []);
+  
+  return (
+    <SemanticPropertyFetched
+      entID={entID} ownerEntID={ownerEntID} defStr={defStr}
+    />
+  );
+};
+
+export const SemanticPropertyFetched = ({entID, ownerEntID, defStr}) => {
+  const accountManager = useContext(AccountManagerContext);
+  
+  const defItemStrArr = useMemo(
+    () => defStr
+      .replaceAll("\\\\", "\\\\1")
+      .replaceAll("\\|", "\\\\2")
+      .split("|")
+      .map(val => val
+        .replaceAll("\\\\2", "|")
+        .replaceAll("\\\\1", "\\")
+      ),
+    [entID]
+  );
+  
+  const type = defItemStrArr[1];
+  const quantityWord = defItemStrArr[2];
+  console.log(defStr, defItemStrArr);
+  var elemContent, initialNum, incrementNum;
+  switch (type) {
+    case "#7": // the "Text data" type.
+      elemContent = TextDataDisplayElement;
+    break;
+    case "#64": // the "Time" type.
+      elemContent = DefStrDisplayElement;
+    break;
+    // TODO: Add more of these type--CL pairings when needed.
+    default:
+      elemContent = GeneralEntityElement;
+  }
+  switch (quantityWord) {
+    case "one":
+      initialNum = 1;
+      incrementNum = 1;
+    break;
+    case "few":
+      initialNum = 6;
+      incrementNum = 6;
+    break;
+    case "many":
+      initialNum = 50;
+      incrementNum = 50;
+    break;
+    default:
+      if (/^[1-9][0-9]{0,2}$/.test(quantityWord)) {
+        initialNum = parseInt(quantityWord);
+        incrementNum = parseInt(quantityWord);
+      } else {
+        initialNum = 50;
+        incrementNum = 50;
+      }
+  }  
+  const lg = useMemo(
+    () => new SimpleEntListGenerator(
+      {catSK: {cxtID: 21, defStr: "#" + entID + "|#" + ownerEntID}},
+      accountManager,
+      null, // num.
+      36864, // ratingLo (= CONV("9000", 16, 10)).
+    ),
+    [entID, ownerEntID]
+  );
+
+  return (
+    <div>
+      <EntListDisplay
+        listGenerator={lg}
+        ElemComponent={elemContent}
+      />
+    </div>
+  );
+};
+
+
+
+
+export const DefStrDisplayElement = ({entID}) => {
+  return (
+    <EntityTitle entID={entID} />
+  );
+};
+
+
 
 
 

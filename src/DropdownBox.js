@@ -57,3 +57,65 @@ export const DropdownButtonBar = ({isExpanded, setIsExpanded}) => {
     </div>
   );
 };
+
+
+
+
+export const DropdownMenu = ({title, children}) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  if(!isLoaded && isExpanded) {
+    setIsLoaded(true);
+  }
+
+  if (!isLoaded) {
+    return (
+      <div>
+        <h3 className="dropdown-menu-title clickable" onClick={() => {
+          setIsExpanded(prev => !prev);
+        }}>
+          <span className="dropdown-button">
+            <span className="caret"></span>{' '}
+            {title}
+          </span>
+        </h3>
+        <div style={{display: "none"}}></div>
+      </div>
+    );
+  }
+
+  if (!isExpanded) {
+    return (
+      <div>
+        <h3 className="dropdown-menu-title clickable" onClick={() => {
+          setIsExpanded(prev => !prev);
+        }}>
+          <span className="dropdown-button">
+            <span className="caret">
+              {' '}
+            </span>
+            {title}
+          </span>
+        </h3>
+        <div style={{display: "none"}}>{children}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h3 className="dropdown-menu-title clickable" onClick={() => {
+        setIsExpanded(prev => !prev);
+      }}>
+        <span className="dropdown-button">
+          <span className="caret caret-up dropup">
+            {' '}
+          </span>
+          {title}
+        </span>
+      </h3>
+      <div>{children}</div>
+    </div>
+  );
+};
