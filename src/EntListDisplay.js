@@ -5,6 +5,7 @@ import {useQuery} from "./DBRequests.js";
 import {EntListHeader} from "./EntListHeader.js";
 import {EntListContainer} from "./EntListContainer.js";
 import {GeneralEntityElement} from "./EntityElements.js";
+import { EntListGenerator } from "./EntListGenerator.js";
 
 
 
@@ -22,65 +23,29 @@ import {GeneralEntityElement} from "./EntityElements.js";
  
 
 export const EntListDisplay = ({
-  listGenerator, ElemComponent, initFilterOptions, extraProps
+  initListGenerator, ElemComponent, initFilterOptions, extraProps
 }) => {
   ElemComponent ??= GeneralEntityElement;
   initFilterOptions ??= {};
-  // const [structure, setStructure] = useState({...initGenerator});
-  const [filterOptions, setFilterOptions] = useState({...initFilterOptions});
-  // const accountManager = useContext(AccountManagerContext);
-  // const [reqData, setReqData] = useState({});
-  // const [results, setResults] = useState({});
+  const [lg, setLG] = useState(initListGenerator);
+  const [filterOptions, setFilterOptions] = useState(initFilterOptions);
   const [entList, setEntList] = useState(null);
-  const [update, setUpdate] = useState(true);
 
   useMemo(() => {
-    if (update) {
-      setUpdate(false);
-    } else {
-      listGenerator.generateEntList(null, (obj, combList) => {
-        setEntList(combList);
-      });
-    }
-  }, [update]);
+    lg.generateEntList(null, (obj, combList) => {
+      setEntList(combList);
+    });
+  }, [lg]);
 
-  // // If reqData changes, fire off the relevant queries to the database.
-  // useQuery(results, setResults, reqData);
 
-  // // Look as results (query results), make new requests if necessary (by
-  // // updating reqData), and finally obtain the set of elements (recorded in
-  // // structure.set). 
-  // updateStructureAndRequests(
-  //   structure, setStructure, results, setReqData, accountManager
-  // );
-
-  // // Before combined entList is ready, render this:
-  // if (!entList) {
-  //   return (
-  //     <div className="set-display">
-  //       {/* <StructureContext.Provider value={[structure, setStructure]} > */}
-  //       <EntListHeader
-  //         listGenerator={listGenerator} update={update}
-  //         ElemComponent={ElemComponent}
-  //         filterOptions={filterOptions} setFilterOptions={setFilterOptions}
-  //       />
-  //       <EntListContainer
-  //         entList={entList} listGenerator={listGenerator} update={update}
-  //       />
-  //       {/* </StructureContext.Provider> */}
-  //     </div>
-  //   );
-  // }
-
-  // // And when it is ready, render the full component:
   return (
     <div className="ent-list-display">
       <EntListHeader
-        listGenerator={listGenerator} update={update}
+        lg={lg} setLG={setLG} initLG={initListGenerator}
         filterOptions={filterOptions} setFilterOptions={setFilterOptions}
       />
       <EntListContainer
-        entList={entList} listGenerator={listGenerator} update={update}
+        entList={entList} lg={lg} setLG={setLG}
         ElemComponent={ElemComponent} extraProps={extraProps}
       />
     </div>

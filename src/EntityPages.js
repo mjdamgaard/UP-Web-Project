@@ -159,7 +159,7 @@ export const EntityIDDisplay = ({entID}) => {
 export const PropertyCategoryPage = ({propID, entID}) => {
   const accountManager = useContext(AccountManagerContext);
 
-  const listGenerator = useMemo(
+  const lg = useMemo(
     () => new SimpleEntListGenerator(
       {catSK: {cxtID: 21, defStr: "#" + propID + "|#" + entID}},
       accountManager
@@ -169,7 +169,7 @@ export const PropertyCategoryPage = ({propID, entID}) => {
 
   return (
     <div>
-      <EntListDisplay listGenerator={listGenerator} />
+      <EntListDisplay initListGenerator={lg} />
     </div>
   );
 };
@@ -178,7 +178,7 @@ export const PropertyCategoryPage = ({propID, entID}) => {
 export const CategoryInstancesPage = ({entID}) => {
   const accountManager = useContext(AccountManagerContext);
   
-  const listGenerator = useMemo(
+  const lg = useMemo(
     () => new SimpleEntListGenerator(
       {catID: entID},
       accountManager
@@ -188,7 +188,7 @@ export const CategoryInstancesPage = ({entID}) => {
 
   return (
     <div>
-      <EntListDisplay listGenerator={listGenerator} />
+      <EntListDisplay initListGenerator={lg} />
     </div>
   );
 };
@@ -216,7 +216,7 @@ export const EntityRatingsPage = ({entID, typeID}) => {
     [typeID]
   );
 
-  const listGenerator = useMemo(
+  const lg = useMemo(
     () => new MaxRatingEntListCombiner([lg1, lg2]),
     [entID, typeID]
   );
@@ -225,7 +225,7 @@ export const EntityRatingsPage = ({entID, typeID}) => {
     <div>
       <h4>Relevant ratings</h4>
       <EntListDisplay
-        listGenerator={listGenerator}
+        initListGenerator={lg}
         ElemComponent={RatingElement} extraProps={{instID: entID}}
       />
     </div>
@@ -282,7 +282,7 @@ export const EntityInfoPage = ({entID, typeID}) => {
     [typeID]
   );
 
-  const listGenerator = useMemo(
+  const lg = useMemo(
     () => new MaxRatingEntListCombiner([lg1, lg2]),
     [entID, typeID]
   );
@@ -290,7 +290,7 @@ export const EntityInfoPage = ({entID, typeID}) => {
   return (
     <div>
       <EntListDisplay
-        listGenerator={listGenerator}
+        initListGenerator={lg}
         ElemComponent={SemanticPropertyElement}
         extraProps={{ownerEntID: entID}}
       />
@@ -316,7 +316,7 @@ export const RelevantRatingsTypePage = ({entID}) => {
     <div>
       <h4>Relevant categories to rate for type instances of this type</h4>
       <EntListDisplay
-        listGenerator={lg}
+        initListGenerator={lg}
       />
     </div>
   );
@@ -338,7 +338,7 @@ export const RelevantPropertiesTypePage = ({entID}) => {
     <div>
       <h4>Relevant properties for type instances of this type</h4>
       <EntListDisplay
-        listGenerator={lg}
+        initListGenerator={lg}
       />
     </div>
   );

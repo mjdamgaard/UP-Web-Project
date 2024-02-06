@@ -13,7 +13,7 @@ import {useQuery} from "./DBRequests.js";
 
 
 export const EntListContainer = ({
-  entList, listGenerator, update, ElemComponent, extraProps
+  entList, lg, setLG, ElemComponent, extraProps
 }) => {
   if (!entList) {
     return (
@@ -24,7 +24,7 @@ export const EntListContainer = ({
 
   const children = entList.map((val) => (
     <ElemComponent key={val[1]}
-      entID={val[1]} combScore={val[0]} listGenerator={listGenerator}
+      entID={val[1]} combScore={val[0]} lg={lg}
       {...extraProps}
     />
   ));

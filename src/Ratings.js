@@ -2,7 +2,7 @@ import {useState, useEffect, useMemo, useContext} from "react";
 import {AccountManagerContext} from "./contexts/AccountContext.js";
 import {useQuery, useInput} from "./DBRequests.js";
 
-import {EntityTitle, FullEntityTitle} from "./EntityTitles.js";
+import {EntityTitle, EntityID, FullEntityTitle} from "./EntityTitles.js";
 
 
 const RatingDisplayPlaceholder = () => <div>...</div>;
@@ -69,7 +69,11 @@ export const MissingCategoryDisplay = ({catSK}) => {
     if (!results.isFetched) {
       return (
         <div>
-          <span className="text-info">Missing category. Want to submit it?</span>
+          <span className="text-info">
+            Missing category: (cxt: {catSK.cxtID}, defStr: {catSK.defStr}).
+            Want to submit it?
+          </span>
+          {' '}
           <button className="btn btn-default submit" disabled={true}>
             Submitting
           </button>
@@ -80,6 +84,7 @@ export const MissingCategoryDisplay = ({catSK}) => {
       return (
         <div>
           <span className="text-success">Category successfully submitted!</span>
+          {' '}
           <button className="btn btn-default submit" disabled={true}>
             Submitted
           </button>
@@ -89,6 +94,7 @@ export const MissingCategoryDisplay = ({catSK}) => {
       return (
         <div>
           <span className="text-warning">An error occurred.</span>
+          {' '}
           <button className="btn btn-default submit" disabled={true}>
             Submitted
           </button>
@@ -101,7 +107,14 @@ export const MissingCategoryDisplay = ({catSK}) => {
   if (accountManager.isLoggedIn) {
     return (
       <div>
-        <span className="text-info">Missing category. Want to submit it?</span>
+        <span className="text-info">
+          Missing category: (
+            cxt: <EntityID entID={catSK.cxtID} isLink />,
+            defStr: {catSK.defStr}
+          ).
+          Want to submit it?
+        </span>
+        {' '}
         <button className="btn btn-default submit" onClick={() => {
           setReqData({
             req: "ent",

@@ -6,48 +6,170 @@ import {DropdownBox} from "./DropdownBox.js";
 import {EntityTitle, FullEntityTitle} from "./EntityTitles.js";
 import {EntListDisplay} from "./EntListDisplay.js";
 import {MissingCategoryDisplay} from "./Ratings.js";
+import {
+  SimpleEntListGenerator, WeightedAverageEntListCombiner,
+  MaxRatingEntListCombiner, PriorityEntListCombiner,
+  EntListGenerator,
+  EntListQuerier,
+  EntListCombiner,
+} from "./EntListGenerator.js";
 
 
 /* Placeholders */
-const EntityTitlePlaceholder = () => <span>...</span>;
-// const EntityTitlePlaceholder = () => <template></template>;
+const EntityTitlePlaceholder = () => <span></span>;
+const SortingCategoriesMenu = () => <span></span>;
+// const RelevantCategoriesDisplay = () => <span></span>;
+// const QuerierLGMenu = () => <template></template>;
+const MaxRatingCombinerLGMenu = () => <template></template>;
+const WeightedAverageCombinerLGMenu = () => <template></template>;
+const MoveUpDownButtons = () => <template></template>;
 
 
+// Note: I imagine that users will be able to construct EntListGenerators
+// however they want from this menu at some point, perhaps under an advanced
+// menu. But for the initial implementation, there should just be the standard
+// EntListGen and then the option to add more predicates to this search,
+// with the ability to give a weight to each EntListGenerator (LG) / predicate
+// after extra ones have been selected. I will also just let the extra
+// predicates be selected from one list, that is used for all EntListMenus
+// (Implemented via a predicate of 'useful predicates for searching').
+
+
+// lg = listGenerator.
 
 export const EntListHeader = ({
-  listGenerator, update, filterOptions, setFilterOptions
+  lg, setLG, initLG, filterOptions, setFilterOptions
 }) => {
   return (
     <div className="ent-list-header">
       <DropdownBox>
         <div className="ent-list-menu">
-          <SetCategoriesList listGenerator={listGenerator}/>
-          {/* TODO: Implement these: */}
-          {/* <SortingCategoriesMenu /> */}
-          {/* <RelevantCategoriesSetDisplay /> */}
+          <EntListCategoriesMenu lg={lg} /> {/* Temporary */}
+          <ListGeneratorMenu lg={lg} setLG={setLG} initLG={initLG} />
+          <SortingCategoriesMenu initLG={initLG} setLG={setLG} />
         </div>
       </DropdownBox>
     </div>
   );
 };
 
-// export const SetMenu = ({structure}) => {
-//   return (
-//     <div>
-//       <SetCategoriesList />
-//       {/* TODO: Implement these: */}
-//       {/* <SortingCategoriesMenu /> */}
-//       {/* <RelevantCategoriesSetDisplay /> */}
-//     </div>
-//   );
-// };
 
 
-export const SetCategoriesList = ({listGenerator}) => {
-  const catKeys = listGenerator.getCatKeys();
+export const ListGeneratorMenu = ({lg, setLG, initLG}) => {
+  switch (true) {
+    case (lg instanceof EntListQuerier):
+      return (
+        <QuerierLGMenu lg={lg} setLG={setLG} />
+      );
+    case (lg instanceof PriorityEntListCombiner):
+      return (
+        // (SimpleEntListGenerator extends PriorityEntListCombiner.)
+        <PriorityCombinerMenu lg={lg} setLG={setLG} />
+      );
+    case (lg instanceof MaxRatingEntListCombiner):
+      return (
+        <MaxRatingCombinerLGMenu lg={lg} setLG={setLG} />
+      );
+    case (lg instanceof WeightedAverageEntListCombiner):
+      return (
+        <WeightedAverageCombinerLGMenu lg={lg} setLG={setLG} />
+      );
+    default:
+      return (
+        <span>ListGeneratorMenu: EntListGenerator not implemented yet</span>
+      );
+  }
+};
+
+
+
+export const QuerierLGMenu = ({lg, setLG}) => {
+  return (
+    <div>
+      {/* TODO: insert category display */}
+    </div>
+  );
+};
+
+
+export const LGWeightSlider = ({lg, setLG}) => {
+  return (
+    <div>
+    </div>
+  );
+};
+
+
+export const useChildLGStates = (lg, setLG) => {
+  if (!lg instanceof EntListCombiner) {
+    throw "useChildLGStates: combinerLG is not instance of EntListCombiner";
+  }
+  const childLGArr = lg.entListGeneratorArr;
+  const childLGSetterArr = lg.entListGeneratorArr.map((val, ind) => (
+    y => {
+      setLG(prev => {
+        let ret = {...prev};
+        ret.entListGeneratorArr[ind] = (y instanceof Function) ?
+          y(ret.entListGeneratorArr[ind]) : y;
+        return ret;
+      });
+    }
+  )); // Hm, I think I might need to treat the LGs as mutable in the setters.. 
+  return [childLGArr, childLGSetterArr];
+};
+
+export const useLGArrStates = (lg, setLG) => {
+  if (!lg instanceof EntListCombiner) {
+    throw "useLGArrStates: combinerLG is not instance of EntListCombiner";
+  }
+  const lgArr = lg.entListGeneratorArr;
+  const setLGArr = (
+    y => {
+      setLG(prev => {
+        let ret = {...prev};
+        ret.entListGeneratorArr = (y instanceof Function) ?
+          y(ret.entListGeneratorArr) : y;
+        return ret;
+      });
+    }
+  );
+  return [lgArr, setLGArr];
+};
+
+
+export const PriorityCombinerMenu = ({lg, setLG}) => {
+  const [lgArr, lgSetterArr] = useChildLGStates(lg, setLG);
+  const [, setLGArr] = useLGArrStates(lg, setLG);
+
+  const children = lgArr.map((val, ind) => {
+    <div key={val}>
+        <MoveUpDownButtons ind={ind} setArr={setLGArr} />
+        <ListGeneratorMenu lg={val} setLG={lgSetterArr[ind]} />
+    </div>
+  });
+  return (
+    <div>
+      {children}
+    </div>
+  );
+};
+
+
+
+
+
+
+
+
+
+
+
+export const EntListCategoriesMenu = ({lg}) => {
+  const catKeys = lg.getCatKeys();
   if (catKeys.includes(null)) {
     return (
       <div>
+        <h5>Categories</h5>
       </div>
     );
   }
@@ -59,6 +181,7 @@ export const SetCategoriesList = ({listGenerator}) => {
 
   return (
     <div>
+      <h5>Categories</h5>
       {children}
     </div>
   );
@@ -92,33 +215,3 @@ export const CategoryDisplay = ({catKey}) => {
 };
 
 
-
-// TODO: Implement SortingCategoriesMenu etc.
-
-// export var sortingCategoriesMenuCL = new ContentLoader(
-//   "SortingCategoriesMenu",
-//   /* Initial HTML template */
-//   '<div>' +
-//   '</div>',
-//   sdbInterfaceCL
-// );
-
-
-// export var relevantCategoriesSetDisplayCL = new ContentLoader(
-//   "RelevantCategoriesSetDisplay",
-//   /* Initial HTML template */
-//   '<<DropdownBox>>',
-//   sdbInterfaceCL
-// );
-// relevantCategoriesSetDisplayCL.addCallback("data", function(data) {
-//   data.copyFromAncestor([
-//     "entID",
-//     "typeID",
-//   ]);
-//   data.dropdownCL = relevantCategoriesSetDisplayCL.getRelatedCL(
-//     "SetDisplay"
-//   );
-// });
-// relevantCategoriesSetDisplayCL.addCallback("data", function(data) {
-//   // TODO: Implement this.
-// });
