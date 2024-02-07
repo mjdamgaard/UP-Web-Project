@@ -201,7 +201,7 @@ export class EntListCombiner extends EntListGenerator {
     // filter out repeated categories.
     catKeyArr = catKeyArr
       .map(val => JSON.stringify(val))
-      .filter((val, ind, arr) => !arr.slice(0, ind).includes(val))
+      .filter((val, ind, arr) => arr.indexOf(val) === ind)
       .map(val => JSON.parse(val));
     return catKeyArr;
   }

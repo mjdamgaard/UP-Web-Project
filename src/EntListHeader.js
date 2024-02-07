@@ -17,7 +17,7 @@ import {
 
 /* Placeholders */
 const EntityTitlePlaceholder = () => <span></span>;
-const SortingCategoriesMenu = () => <span></span>;
+// const SortingCategoriesMenu = () => <span></span>;
 // const RelevantCategoriesDisplay = () => <span></span>;
 // const QuerierLGMenu = () => <template></template>;
 // const MaxRatingCombinerLGMenu = () => <template></template>;
@@ -47,7 +47,7 @@ export const EntListHeader = ({
           {/* <EntListCategoriesMenu lg={lg} /> */}
           {/* <InitCategoriesHeader initCatKeys={initCatKeys} /> */}
           <ListGeneratorMenu lg={lg} setLG={setLG} initCatKeys={initCatKeys} />
-          <SortingCategoriesMenu initCatKeys={initCatKeys} setLG={setLG} />
+          {/* <SortingCategoriesMenu initCatKeys={initCatKeys} setLG={setLG} /> */}
         </div>
       </DropdownBox>
     </div>
@@ -160,7 +160,7 @@ export function getNonce() {
 export const PriorityCombinerMenu = ({lg, setLG}) => {
   const [lgArr, lgSetterArr] = useChildLGStates(lg, setLG);
   const [, setLGArr] = useLGArrStates(lg, setLG);
-  
+
   const keyPrefix = useMemo(
     () => getNonce(),
     [lg]
@@ -213,7 +213,7 @@ export const WeightedAverageCombinerLGMenu = ({lg, setLG}) => {
   ));
 
   return (
-    <div>
+    <div>WeightedAverageCombinerLGMenu
       {children}
     </div>
   );
@@ -231,30 +231,204 @@ export const WeightedAverageCombinerLGMenu = ({lg, setLG}) => {
 
 
 
-
-
-export const EntListCategoriesMenu = ({lg}) => {
-  const catKeys = lg.getCatKeys();
-  if (catKeys.includes(null)) {
-    return (
-      <div>
-        <h5>Categories</h5>
-      </div>
-    );
-  }
-  const children = catKeys.map(val => (
-    <CategoryDisplay
-      key={JSON.stringify(val.catSK ?? val.catID)} catKey={val}
-    />
-  ));
+export const SortingCategoriesMenu = ({initCatKeys, setLG}) => {
 
   return (
-    <div>
-      <h5>Categories</h5>
-      {children}
-    </div>
+    <FetchAllEntIDsFromDefinitionThenRender initCatKeys={initCatKeys}
+      renderFun={(AssocEntIDs, isFetched) => {
+        if (!isFetched) {
+          return (
+            <div></div>
+          );
+        } else {
+          return (
+            <SortingCategoriesMenuFetched AssocEntIDs={AssocEntIDs} />
+          );
+        }
+      }}
+    />
   );
 };
+
+export const SortingCategoriesMenuFetched = ({initCatKeys, setLG}) => {
+
+  return (
+    <div>SortingCategoriesMenuFetched...</div>
+  );
+};
+
+
+
+export const FetchCatKeysThenRender = ({initCatKeys, renderFun}) => {
+  // Fetch all catIDs and catSKs for all initCatKeys if missing, then render
+  // the return JSX element by calling renderFun(catKeys, isFetched).
+  const [results, setResults] = useState([]);
+  useQuery(results, setResults, initCatKeys.map(val => {
+    let catID = val.catID;
+    let catSK = val.catSK;
+    if (catID && catSK) {
+      return {};
+    }
+    if (!catID) {
+      return {
+        req: "entID",
+        t: 2,
+        c: catSK.cxtID,
+        s: catSK.defStr,
+      };
+    }
+    if (!catSK) {
+      return {
+        req: "ent",
+        t: 2,
+        c: catSK.cxtID,
+        s: catSK.defStr,
+      };
+    }
+  }));
+
+  const isFetched = results.reduce(
+    (acc, val) => acc && val.isFetched,
+    true
+  );
+  if (!isFetched) {
+    return renderFun(catKeys, isFetched);
+  }
+
+  const catKeys = initCatKeys.map((val, ind) => {
+    let catID = val.catID;
+    let catSK = val.catSK;
+    if (catID && catSK) {
+      return val;
+    }
+    if (!catID) {
+      return {
+        catID: results[ind].data[0],
+        catSK: catSK,
+      };
+    }
+    if (!catSK) {
+      return {
+        catID: catID,
+        catSK: {
+          cxtID: results[ind].data[1],
+          defStr: results[ind].data[2],
+        }
+      };
+    }
+  });
+
+  return renderFun(catKeys, isFetched);
+};
+
+
+export const FetchAllEntIDsFromDefinitionThenRender = ({
+  initCatKeys, renderFun
+}) => {
+  // Fetch all catIDs and catSKs by calling FetchCatKeysThenRender, then render
+  // return JSX element of renderFun(AssocEntIDs, isFetched).
+  return (
+    <FetchCatKeysThenRender
+      initCatKeys={initCatKeys}
+      renderFun={(catKeys, isFetched) => {
+        if (!isFetched) {
+          return (
+            <div></div>
+          );
+        } else {
+          return (
+            <FetchAllEntIDsFromDefinitionThenRenderFetchedKeys
+              catKeys={catKeys}
+              renderFun={(AssocEntIDs, isFetched) => {
+                if (!isFetched) {
+                  return (
+                    <div></div>
+                  );
+                } else {
+                  return renderFun(AssocEntIDs, isFetched);
+                }
+              }}
+            />
+          );
+        }
+      }}
+    />
+  );
+};
+
+export const FetchAllEntIDsFromDefinitionThenRenderFetchedKeys = ({
+  catKeys, renderFun
+}) => {
+  let initJSONCatKeys = catKeys.map(val => JSON.stringify(val));
+  let expandedCatKeyArr = getExpandedCatKeyArr(catKeys);
+  let isDone = expandedCatKeyArr.reduce(
+    (acc, val) => acc && initJSONCatKeys.includes(JSON.stringify(val)),
+    true
+  );
+  
+  if (isDone) {
+    return renderFun(AssocEntIDs, isFetched);
+  }
+
+  return renderFun(AssocEntIDs, isFetched);
+};
+
+
+export function getAssocEntIDsFromDefStr(defStr) {
+  return defStr
+    .match(/#[1-9][0-9]*/g)
+    .filter((val, ind, arr) => arr.indexOf(val) === ind)
+    .map(val => val.substring(1));
+}
+
+export function getExpandedCatKeyArr(catKeys) {
+  let expandedCatKeyArrArr = catKeys
+    .map(val => {
+      if (val.catSK === undefined || val.catSK.defStr === undefined) {
+        throw "getExpandedCatKeyArr: catKeys need to contain catSKs.";
+      }
+      let assocCatKeys = getAssocEntIDsFromDefStr(val.catSK.defStr)
+        .map(val => ({catID: val}));
+      return [val].concat(...assocCatKeys);
+    });
+
+  let expandedCatKeyArr = [].concat(...expandedCatKeyArrArr)
+    .map(val => JSON.stringify(val))
+    .filter((val, ind, arr) => arr.indexOf(val) === ind)
+    .map(val => JSON.parse(val))
+  
+  return expandedCatKeyArr;
+}
+
+
+
+
+
+
+
+
+// export const EntListCategoriesMenu = ({lg}) => {
+//   const catKeys = lg.getCatKeys();
+//   if (catKeys.includes(null)) {
+//     return (
+//       <div>
+//         <h5>Categories</h5>
+//       </div>
+//     );
+//   }
+//   const children = catKeys.map(val => (
+//     <CategoryDisplay
+//       key={JSON.stringify(val.catSK ?? val.catID)} catKey={val}
+//     />
+//   ));
+
+//   return (
+//     <div>
+//       <h5>Categories</h5>
+//       {children}
+//     </div>
+//   );
+// };
 
 
 export const CategoryDisplay = ({catKey}) => {
