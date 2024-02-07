@@ -158,18 +158,17 @@ export const EntityIDDisplay = ({entID}) => {
 
 export const PropertyCategoryPage = ({propID, entID}) => {
   const accountManager = useContext(AccountManagerContext);
-
-  const lg = useMemo(
-    () => new SimpleEntListGenerator(
+  
+  const [lg, ] = useState(
+    new SimpleEntListGenerator(
       {catSK: {cxtID: 21, defStr: "#" + propID + "|#" + entID}},
       accountManager
-    ),
-    [propID, entID]
+    )
   );
 
   return (
     <div>
-      <EntListDisplay initListGenerator={lg} />
+      <EntListDisplay listGenerator={lg} />
     </div>
   );
 };
@@ -178,17 +177,16 @@ export const PropertyCategoryPage = ({propID, entID}) => {
 export const CategoryInstancesPage = ({entID}) => {
   const accountManager = useContext(AccountManagerContext);
   
-  const lg = useMemo(
-    () => new SimpleEntListGenerator(
+  const [lg, ] = useState(
+    new SimpleEntListGenerator(
       {catID: entID},
-      accountManager
-    ),
-    [entID]
+      accountManager,
+    )
   );
 
   return (
     <div>
-      <EntListDisplay initListGenerator={lg} />
+      <EntListDisplay listGenerator={lg} />
     </div>
   );
 };
@@ -201,31 +199,27 @@ export const CategoryInstancesPage = ({entID}) => {
 export const EntityRatingsPage = ({entID, typeID}) => {
   const accountManager = useContext(AccountManagerContext);
   
-  const lg1 = useMemo(
-    () => new SimpleEntListGenerator(
+  const [lg1, ] = useState(
+    new SimpleEntListGenerator(
       {catSK: {cxtID: 21, defStr: "#54|#" + entID}},
-      accountManager
-    ),
-    [entID]
+      accountManager,
+    )
   );
-  const lg2 = useMemo(
-    () => new SimpleEntListGenerator(
+  const [lg2, ] = useState(
+    new SimpleEntListGenerator(
       {catSK: {cxtID: 21, defStr: "#52|#" + typeID}},
-      accountManager
-    ),
-    [typeID]
+      accountManager,
+    )
   );
-
-  const lg = useMemo(
-    () => new MaxRatingEntListCombiner([lg1, lg2]),
-    [entID, typeID]
+  const [lg, ] = useState(
+    new MaxRatingEntListCombiner([lg1, lg2])
   );
 
   return (
     <div>
       <h4>Relevant ratings</h4>
       <EntListDisplay
-        initListGenerator={lg}
+        listGenerator={lg}
         ElemComponent={RatingElement} extraProps={{instID: entID}}
       />
     </div>
@@ -267,30 +261,26 @@ export const SubmitCategoryInstancePage = ({entID}) => {
 export const EntityInfoPage = ({entID, typeID}) => {
   const accountManager = useContext(AccountManagerContext);
   
-  const lg1 = useMemo(
-    () => new SimpleEntListGenerator(
+  const [lg1, ] = useState(
+    new SimpleEntListGenerator(
       {catSK: {cxtID: 21, defStr: "#58|#" + entID}},
-      accountManager
-    ),
-    [entID]
+      accountManager,
+    )
   );
-  const lg2 = useMemo(
-    () => new SimpleEntListGenerator(
+  const [lg2, ] = useState(
+    new SimpleEntListGenerator(
       {catSK: {cxtID: 21, defStr: "#59|#" + typeID}},
-      accountManager
-    ),
-    [typeID]
+      accountManager,
+    )
   );
-
-  const lg = useMemo(
-    () => new MaxRatingEntListCombiner([lg1, lg2]),
-    [entID, typeID]
+  const [lg, ] = useState(
+    new MaxRatingEntListCombiner([lg1, lg2])
   );
 
   return (
     <div>
       <EntListDisplay
-        initListGenerator={lg}
+        listGenerator={lg}
         ElemComponent={SemanticPropertyElement}
         extraProps={{ownerEntID: entID}}
       />
@@ -303,20 +293,19 @@ export const EntityInfoPage = ({entID, typeID}) => {
 
 export const RelevantRatingsTypePage = ({entID}) => {
   const accountManager = useContext(AccountManagerContext);
-  
-  const lg = useMemo(
-    () => new SimpleEntListGenerator(
+
+  const [lg, ] = useState(
+    new SimpleEntListGenerator(
       {catSK: {cxtID: 21, defStr: "#52|#" + entID}},
       accountManager
-    ),
-    [entID]
+    )
   );
 
   return (
     <div>
       <h4>Relevant categories to rate for type instances of this type</h4>
       <EntListDisplay
-        initListGenerator={lg}
+        listGenerator={lg}
       />
     </div>
   );
@@ -325,20 +314,19 @@ export const RelevantRatingsTypePage = ({entID}) => {
 
 export const RelevantPropertiesTypePage = ({entID}) => {
   const accountManager = useContext(AccountManagerContext);
-  
-  const lg = useMemo(
-    () => new SimpleEntListGenerator(
+
+  const [lg, ] = useState(
+    new SimpleEntListGenerator(
       {catSK: {cxtID: 21, defStr: "#59|#" + entID}},
       accountManager
-    ),
-    [entID]
+    )
   );
 
   return (
     <div>
       <h4>Relevant properties for type instances of this type</h4>
       <EntListDisplay
-        initListGenerator={lg}
+        listGenerator={lg}
       />
     </div>
   );

@@ -20,8 +20,8 @@ const EntityTitlePlaceholder = () => <span></span>;
 const SortingCategoriesMenu = () => <span></span>;
 // const RelevantCategoriesDisplay = () => <span></span>;
 // const QuerierLGMenu = () => <template></template>;
-const MaxRatingCombinerLGMenu = () => <template></template>;
-const WeightedAverageCombinerLGMenu = () => <template></template>;
+// const MaxRatingCombinerLGMenu = () => <template></template>;
+// const WeightedAverageCombinerLGMenu = () => <template></template>;
 const MoveUpDownButtons = () => <template></template>;
 
 
@@ -38,15 +38,16 @@ const MoveUpDownButtons = () => <template></template>;
 // lg = listGenerator.
 
 export const EntListHeader = ({
-  lg, setLG, initLG, filterOptions, setFilterOptions
+  lg, setLG, initCatKeys, filterOptions, setFilterOptions
 }) => {
   return (
     <div className="ent-list-header">
       <DropdownBox>
         <div className="ent-list-menu">
-          <EntListCategoriesMenu lg={lg} /> {/* Temporary */}
-          <ListGeneratorMenu lg={lg} setLG={setLG} initLG={initLG} />
-          <SortingCategoriesMenu initLG={initLG} setLG={setLG} />
+          {/* <EntListCategoriesMenu lg={lg} /> */}
+          {/* <InitCategoriesHeader initCatKeys={initCatKeys} /> */}
+          <ListGeneratorMenu lg={lg} setLG={setLG} initCatKeys={initCatKeys} />
+          <SortingCategoriesMenu initCatKeys={initCatKeys} setLG={setLG} />
         </div>
       </DropdownBox>
     </div>
@@ -57,6 +58,10 @@ export const EntListHeader = ({
 
 export const ListGeneratorMenu = ({lg, setLG, initLG}) => {
   switch (true) {
+    case (lg instanceof SimpleEntListGenerator):
+      return (
+        <SimpleLGMenu lg={lg} setLG={setLG} />
+      );
     case (lg instanceof EntListQuerier):
       return (
         <QuerierLGMenu lg={lg} setLG={setLG} />
@@ -83,21 +88,24 @@ export const ListGeneratorMenu = ({lg, setLG, initLG}) => {
 
 
 
+export const SimpleLGMenu = ({lg, setLG}) => {
+  return (
+    <div>
+      <CategoryDisplay catKey={lg.getCatKeys()[0]} />
+      {/* TODO: Implement changing to see the full PriorityCombinerLGMenu. */}
+    </div>
+  );
+};
+
 export const QuerierLGMenu = ({lg, setLG}) => {
   return (
     <div>
-      {/* TODO: insert category display */}
+      <CategoryDisplay catKey={lg.getCatKeys()[0]} />
+      {/* TODO: Implement menu to change query parameters. */}
     </div>
   );
 };
 
-
-export const LGWeightSlider = ({lg, setLG}) => {
-  return (
-    <div>
-    </div>
-  );
-};
 
 
 export const useChildLGStates = (lg, setLG) => {
@@ -106,15 +114,19 @@ export const useChildLGStates = (lg, setLG) => {
   }
   const childLGArr = lg.entListGeneratorArr;
   const childLGSetterArr = lg.entListGeneratorArr.map((val, ind) => (
+    // We need to treat the LGs as mutable in the setters.
     y => {
       setLG(prev => {
-        let ret = {...prev};
-        ret.entListGeneratorArr[ind] = (y instanceof Function) ?
-          y(ret.entListGeneratorArr[ind]) : y;
-        return ret;
+        prev.entListGeneratorArr[ind] = (y instanceof Function) ?
+          y(prev.entListGeneratorArr[ind]) : y;
+        return prev;
+        // let ret = {...prev};
+        // ret.entListGeneratorArr[ind] = (y instanceof Function) ?
+        //   y(ret.entListGeneratorArr[ind]) : y;
+        // return ret;
       });
     }
-  )); // Hm, I think I might need to treat the LGs as mutable in the setters.. 
+  ));
   return [childLGArr, childLGSetterArr];
 };
 
@@ -126,10 +138,13 @@ export const useLGArrStates = (lg, setLG) => {
   const setLGArr = (
     y => {
       setLG(prev => {
-        let ret = {...prev};
-        ret.entListGeneratorArr = (y instanceof Function) ?
-          y(ret.entListGeneratorArr) : y;
-        return ret;
+        prev.entListGeneratorArr = (y instanceof Function) ?
+          y(prev.entListGeneratorArr) : y;
+        return prev;
+        // let ret = {...prev};
+        // ret.entListGeneratorArr = (y instanceof Function) ?
+        //   y(ret.entListGeneratorArr) : y;
+        // return ret;
       });
     }
   );
@@ -137,16 +152,66 @@ export const useLGArrStates = (lg, setLG) => {
 };
 
 
+var nonce = 0;
+export function getNonce() {
+  return ++nonce;
+}
+
 export const PriorityCombinerMenu = ({lg, setLG}) => {
   const [lgArr, lgSetterArr] = useChildLGStates(lg, setLG);
   const [, setLGArr] = useLGArrStates(lg, setLG);
-
-  const children = lgArr.map((val, ind) => {
-    <div key={val}>
+  
+  const keyPrefix = useMemo(
+    () => getNonce(),
+    [lg]
+  );
+  const children = lgArr.map((val, ind) => (
+    <div key={keyPrefix + "." + ind}>
         <MoveUpDownButtons ind={ind} setArr={setLGArr} />
         <ListGeneratorMenu lg={val} setLG={lgSetterArr[ind]} />
     </div>
-  });
+  ));
+
+  return (
+    <div>
+      {children}
+    </div>
+  );
+};
+
+export const MaxRatingCombinerLGMenu = ({lg, setLG}) => {
+  const [lgArr, lgSetterArr] = useChildLGStates(lg, setLG);
+
+  const keyPrefix = useMemo(
+    () => getNonce(),
+    [lg]
+  );
+  const children = lgArr.map((val, ind) => (
+    <div key={keyPrefix + "." + ind}>
+        <ListGeneratorMenu lg={val} setLG={lgSetterArr[ind]} />
+    </div>
+  ));
+
+  return (
+    <div>
+      {children}
+    </div>
+  );
+};
+
+export const WeightedAverageCombinerLGMenu = ({lg, setLG}) => {
+  const [lgArr, lgSetterArr] = useChildLGStates(lg, setLG);
+
+  const keyPrefix = useMemo(
+    () => getNonce(),
+    [lg]
+  );
+  const children = lgArr.map((val, ind) => (
+    <div key={keyPrefix + "." + ind}>
+        <ListGeneratorMenu lg={val} setLG={lgSetterArr[ind]} />
+    </div>
+  ));
+
   return (
     <div>
       {children}
@@ -156,8 +221,12 @@ export const PriorityCombinerMenu = ({lg, setLG}) => {
 
 
 
-
-
+// export const LGWeightSlider = ({lg, setLG}) => {
+//   return (
+//     <div>
+//     </div>
+//   );
+// };
 
 
 

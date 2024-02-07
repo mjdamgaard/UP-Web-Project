@@ -23,11 +23,12 @@ import { EntListGenerator } from "./EntListGenerator.js";
  
 
 export const EntListDisplay = ({
-  initListGenerator, ElemComponent, initFilterOptions, extraProps
+  listGenerator, ElemComponent, initFilterOptions, extraProps
 }) => {
   ElemComponent ??= GeneralEntityElement;
   initFilterOptions ??= {};
-  const [lg, setLG] = useState(initListGenerator);
+  const [lg, setLG] = useState(listGenerator);
+  const [initCatKeys, ] = useState(listGenerator.getCatKeys());
   const [filterOptions, setFilterOptions] = useState(initFilterOptions);
   const [entList, setEntList] = useState(null);
 
@@ -41,7 +42,7 @@ export const EntListDisplay = ({
   return (
     <div className="ent-list-display">
       <EntListHeader
-        lg={lg} setLG={setLG} initLG={initListGenerator}
+        lg={lg} setLG={setLG} initCatKeys={initCatKeys}
         filterOptions={filterOptions} setFilterOptions={setFilterOptions}
       />
       <EntListContainer

@@ -121,16 +121,15 @@ export const SemanticProperty = ({entID, ownerEntID}) => {
 export const SemanticPropertyFetched = ({entID, ownerEntID, defStr}) => {
   const accountManager = useContext(AccountManagerContext);
   
-  const defItemStrArr = useMemo(
-    () => defStr
+  const [defItemStrArr, ] = useState(
+    defStr
       .replaceAll("\\\\", "\\\\1")
       .replaceAll("\\|", "\\\\2")
       .split("|")
       .map(val => val
         .replaceAll("\\\\2", "|")
         .replaceAll("\\\\1", "\\")
-      ),
-    [entID]
+      )
   );
   
   const type = defItemStrArr[1];
@@ -169,14 +168,13 @@ export const SemanticPropertyFetched = ({entID, ownerEntID, defStr}) => {
         incrementNum = 50;
       }
   }  
-  const lg = useMemo(
-    () => new SimpleEntListGenerator(
+  const [lg, ] = useState(
+    new SimpleEntListGenerator(
       {catSK: {cxtID: 21, defStr: "#" + entID + "|#" + ownerEntID}},
       accountManager,
       null, // num.
       36864, // ratingLo (= CONV("9000", 16, 10)).
-    ),
-    [entID, ownerEntID]
+    )
   );
 
   return (
