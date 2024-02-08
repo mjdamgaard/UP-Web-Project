@@ -261,6 +261,7 @@ export const SubmitCategoryInstancePage = ({entID}) => {
 export const EntityInfoPage = ({entID, typeID}) => {
   const accountManager = useContext(AccountManagerContext);
   
+  // (Change to use useMemo if needing to be able to update props.)
   const [lg1, ] = useState(
     new SimpleEntListGenerator(
       {catSK: {cxtID: 21, defStr: "#58|#" + entID}},

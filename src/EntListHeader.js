@@ -17,12 +17,8 @@ import {
 
 /* Placeholders */
 const EntityTitlePlaceholder = () => <span></span>;
-// const SortingCategoriesMenu = () => <span></span>;
-// const RelevantCategoriesDisplay = () => <span></span>;
-// const QuerierLGMenu = () => <template></template>;
-// const MaxRatingCombinerLGMenu = () => <template></template>;
-// const WeightedAverageCombinerLGMenu = () => <template></template>;
 const MoveUpDownButtons = () => <template></template>;
+const RelatedSortingMenuPoints = () => <template></template>;
 
 
 // Note: I imagine that users will be able to construct EntListGenerators
@@ -37,17 +33,15 @@ const MoveUpDownButtons = () => <template></template>;
 
 // lg = listGenerator.
 
-export const EntListHeader = ({
-  lg, setLG, initCatKeys, filterOptions, setFilterOptions
-}) => {
+export const EntListHeader = ({lg, setLG}) => {
   return (
     <div className="ent-list-header">
       <DropdownBox>
         <div className="ent-list-menu">
           {/* <EntListCategoriesMenu lg={lg} /> */}
           {/* <InitCategoriesHeader initCatKeys={initCatKeys} /> */}
-          <ListGeneratorMenu lg={lg} setLG={setLG} initCatKeys={initCatKeys} />
-          {/* <SortingCategoriesMenu initCatKeys={initCatKeys} setLG={setLG} /> */}
+          <ListGeneratorMenu lg={lg} setLG={setLG} />
+          <SortingCategoriesMenu lg={lg} setLG={setLG} />
         </div>
       </DropdownBox>
     </div>
@@ -55,8 +49,29 @@ export const EntListHeader = ({
 };
 
 
+export const SortingCategoriesMenu = ({lg, setLG}) => {
 
-export const ListGeneratorMenu = ({lg, setLG, initLG}) => {
+  return (
+    <div>
+      <StandardSortingMenuPoint setLG={setLG} />
+      <RelatedSortingMenuPoints lg={lg} setLG={setLG} />
+    </div>
+  );
+};
+
+
+
+export const StandardSortingMenuPoint = ({setLG}) => {
+
+  return (
+    <div>
+    </div>
+  );
+};
+
+
+
+export const ListGeneratorMenu = ({lg, setLG}) => {
   switch (true) {
     case (lg instanceof SimpleEntListGenerator):
       return (
@@ -89,24 +104,55 @@ export const ListGeneratorMenu = ({lg, setLG, initLG}) => {
 
 
 export const SimpleLGMenu = ({lg, setLG}) => {
+  const catKey = useMemo(() => lg.getCatKeys()[0], [lg]);
   return (
     <div>
-      <CategoryDisplay catKey={lg.getCatKeys()[0]} />
+      <CategoryDisplay catKey={catKey} />
       {/* TODO: Implement changing to see the full PriorityCombinerLGMenu. */}
     </div>
   );
 };
 
 export const QuerierLGMenu = ({lg, setLG}) => {
+  const catKey = useMemo(() => lg.getCatKeys()[0], [lg]);
   return (
     <div>
-      <CategoryDisplay catKey={lg.getCatKeys()[0]} />
+      <CategoryDisplay catKey={catKey} />
       {/* TODO: Implement menu to change query parameters. */}
     </div>
   );
 };
 
 
+export const CategoryDisplay = ({catKey}) => {
+  const catID = catKey.catID;
+  if (catID) {
+    return (
+      <div>
+        <EntityTitle entID={catID} isLink={true} />
+      </div>
+    );
+  }
+
+  // If catID is falsy, see if it is fetched yet, and if not, load a
+  // placeholder:
+  if (catID === undefined) {
+    return (
+      <div>
+        <EntityTitlePlaceholder />
+      </div>
+    );
+  }
+
+  // If catID is fetched but still falsy, load MissingCategoryDisplay.
+  return (
+    <MissingCategoryDisplay catSK={catKey.catSK} />
+  );
+};
+
+
+
+/* Combiner ListGenerators */
 
 export const useChildLGStates = (lg, setLG) => {
   if (!lg instanceof EntListCombiner) {
@@ -231,147 +277,10 @@ export const WeightedAverageCombinerLGMenu = ({lg, setLG}) => {
 
 
 
-export const SortingCategoriesMenu = ({initCatKeys, setLG}) => {
-
-  return (
-    <FetchAllEntIDsFromDefinitionThenRender initCatKeys={initCatKeys}
-      renderFun={(AssocEntIDs, isFetched) => {
-        if (!isFetched) {
-          return (
-            <div></div>
-          );
-        } else {
-          return (
-            <SortingCategoriesMenuFetched AssocEntIDs={AssocEntIDs} />
-          );
-        }
-      }}
-    />
-  );
-};
-
-export const SortingCategoriesMenuFetched = ({initCatKeys, setLG}) => {
-
-  return (
-    <div>SortingCategoriesMenuFetched...</div>
-  );
-};
 
 
 
-export const FetchCatKeysThenRender = ({initCatKeys, renderFun}) => {
-  // Fetch all catIDs and catSKs for all initCatKeys if missing, then render
-  // the return JSX element by calling renderFun(catKeys, isFetched).
-  const [results, setResults] = useState([]);
-  useQuery(results, setResults, initCatKeys.map(val => {
-    let catID = val.catID;
-    let catSK = val.catSK;
-    if (catID && catSK) {
-      return {};
-    }
-    if (!catID) {
-      return {
-        req: "entID",
-        t: 2,
-        c: catSK.cxtID,
-        s: catSK.defStr,
-      };
-    }
-    if (!catSK) {
-      return {
-        req: "ent",
-        t: 2,
-        c: catSK.cxtID,
-        s: catSK.defStr,
-      };
-    }
-  }));
 
-  const isFetched = results.reduce(
-    (acc, val) => acc && val.isFetched,
-    true
-  );
-  if (!isFetched) {
-    return renderFun(catKeys, isFetched);
-  }
-
-  const catKeys = initCatKeys.map((val, ind) => {
-    let catID = val.catID;
-    let catSK = val.catSK;
-    if (catID && catSK) {
-      return val;
-    }
-    if (!catID) {
-      return {
-        catID: results[ind].data[0],
-        catSK: catSK,
-      };
-    }
-    if (!catSK) {
-      return {
-        catID: catID,
-        catSK: {
-          cxtID: results[ind].data[1],
-          defStr: results[ind].data[2],
-        }
-      };
-    }
-  });
-
-  return renderFun(catKeys, isFetched);
-};
-
-
-export const FetchAllEntIDsFromDefinitionThenRender = ({
-  initCatKeys, renderFun
-}) => {
-  // Fetch all catIDs and catSKs by calling FetchCatKeysThenRender, then render
-  // return JSX element of renderFun(AssocEntIDs, isFetched).
-  return (
-    <FetchCatKeysThenRender
-      initCatKeys={initCatKeys}
-      renderFun={(catKeys, isFetched) => {
-        if (!isFetched) {
-          return (
-            <div></div>
-          );
-        } else {
-          return (
-            <FetchAllEntIDsFromDefinitionThenRenderFetchedKeys
-              catKeys={catKeys}
-              renderFun={(AssocEntIDs, isFetched) => {
-                if (!isFetched) {
-                  return (
-                    <div></div>
-                  );
-                } else {
-                  return renderFun(AssocEntIDs, isFetched);
-                }
-              }}
-            />
-          );
-        }
-      }}
-    />
-  );
-};
-
-export const FetchAllEntIDsFromDefinitionThenRenderFetchedKeys = ({
-  catKeys, renderFun
-}) => {
-  let initJSONCatKeys = catKeys.map(val => JSON.stringify(val));
-  let expandedCatKeyArr = getExpandedCatKeyArr(catKeys);
-  let isDone = expandedCatKeyArr.reduce(
-    (acc, val) => acc && initJSONCatKeys.includes(JSON.stringify(val)),
-    true
-  );
-  
-  if (isDone) {
-    return renderFun(AssocEntIDs, isFetched);
-  }
-
-  return renderFun(AssocEntIDs, isFetched);
-};
 
 
 export function getAssocEntIDsFromDefStr(defStr) {
@@ -407,54 +316,189 @@ export function getExpandedCatKeyArr(catKeys) {
 
 
 
-// export const EntListCategoriesMenu = ({lg}) => {
-//   const catKeys = lg.getCatKeys();
-//   if (catKeys.includes(null)) {
-//     return (
-//       <div>
-//         <h5>Categories</h5>
-//       </div>
-//     );
-//   }
-//   const children = catKeys.map(val => (
-//     <CategoryDisplay
-//       key={JSON.stringify(val.catSK ?? val.catID)} catKey={val}
-//     />
-//   ));
+// I wasn't done with this out-commented implementation below: I was about to
+// change AssocEntIDs to AssocEntCatKeys instead.
+
+// export const SortingCategoriesMenu = ({initCatKeys, setLG}) => {
 
 //   return (
-//     <div>
-//       <h5>Categories</h5>
-//       {children}
-//     </div>
+//     <FetchAllEntIDsFromDefinitionThenRender initCatKeys={initCatKeys}
+//       renderFun={(AssocEntIDs, isFetched) => {
+//         if (!isFetched) {
+//           return (
+//             <div></div>
+//           );
+//         } else {
+//           return (
+//             <SortingCategoriesMenuFetched AssocEntIDs={AssocEntIDs} />
+//           );
+//         }
+//       }}
+//     />
+//   );
+// };
+
+// export const SortingCategoriesMenuFetched = ({initCatKeys, setLG}) => {
+
+//   return (
+//     <div>SortingCategoriesMenuFetched...</div>
 //   );
 // };
 
 
-export const CategoryDisplay = ({catKey}) => {
-  const catID = catKey.catID;
-  if (catID) {
-    return (
-      <div>
-        <EntityTitle entID={catID} isLink={true} />
-      </div>
-    );
-  }
 
-  // If catID is falsy, see if it is fetched yet, and if not, load a
-  // placeholder:
-  if (catID === undefined) {
-    return (
-      <div>
-        <EntityTitlePlaceholder />
-      </div>
-    );
-  }
+// export const FetchCatKeysThenRender = ({initCatKeys, renderFun}) => {
+//   // Fetch all catIDs and catSKs for all initCatKeys if missing, then render
+//   // the return JSX element by calling renderFun(catKeys, isFetched).
+//   const [results, setResults] = useState([]);
+//   useQuery(results, setResults, initCatKeys.map(val => {
+//     let catID = val.catID;
+//     let catSK = val.catSK;
+//     if (catID && catSK) {
+//       return {};
+//     }
+//     if (!catID) {
+//       return {
+//         req: "entID",
+//         t: 2,
+//         c: catSK.cxtID,
+//         s: catSK.defStr,
+//       };
+//     }
+//     if (!catSK) {
+//       return {
+//         req: "ent",
+//         t: 2,
+//         c: catSK.cxtID,
+//         s: catSK.defStr,
+//       };
+//     }
+//   }));
 
-  // If catID is fetched but still falsy, load MissingCategoryDisplay.
-  return (
-    <MissingCategoryDisplay catSK={catKey.catSK} />
-  );
-};
+//   const isFetched = results.reduce(
+//     (acc, val) => acc && val.isFetched,
+//     true
+//   );
+//   if (!isFetched) {
+//     return renderFun(catKeys, isFetched);
+//   }
+
+//   const catKeys = initCatKeys.map((val, ind) => {
+//     let catID = val.catID;
+//     let catSK = val.catSK;
+//     if (catID && catSK) {
+//       return val;
+//     }
+//     if (!catID) {
+//       return {
+//         catID: results[ind].data[0],
+//         catSK: catSK,
+//       };
+//     }
+//     if (!catSK) {
+//       return {
+//         catID: catID,
+//         catSK: {
+//           cxtID: results[ind].data[1],
+//           defStr: results[ind].data[2],
+//         }
+//       };
+//     }
+//   });
+
+//   return renderFun(catKeys, isFetched);
+// };
+
+
+// export const FetchAllEntIDsFromDefinitionThenRender = ({
+//   initCatKeys, renderFun
+// }) => {
+//   // Fetch all catIDs and catSKs by calling FetchCatKeysThenRender, then render
+//   // return JSX element of renderFun(AssocEntIDs, isFetched).
+//   return (
+//     <FetchCatKeysThenRender
+//       initCatKeys={initCatKeys}
+//       renderFun={(catKeys, isFetched) => {
+//         if (!isFetched) {
+//           return (
+//             <div></div>
+//           );
+//         } else {
+//           return (
+//             <FetchAllEntIDsFromDefinitionThenRenderFetchedKeys
+//               catKeys={catKeys}
+//               renderFun={(AssocEntIDs, isFetched) => {
+//                 if (!isFetched) {
+//                   return (
+//                     <div></div>
+//                   );
+//                 } else {
+//                   return renderFun(AssocEntIDs, isFetched);
+//                 }
+//               }}
+//             />
+//           );
+//         }
+//       }}
+//     />
+//   );
+// };
+
+// export const FetchAllEntIDsFromDefinitionThenRenderFetchedKeys = ({
+//   catKeys, renderFun
+// }) => {
+//   let initJSONCatKeys = catKeys.map(val => JSON.stringify(val));
+//   let expandedCatKeyArr = getExpandedCatKeyArr(catKeys);
+//   let isDone = expandedCatKeyArr.reduce(
+//     (acc, val) => acc && initJSONCatKeys.includes(JSON.stringify(val)),
+//     true
+//   );
+  
+//   if (isDone) {
+//     return renderFun(AssocEntIDs, isFetched);
+//   }
+
+//   return renderFun(AssocEntIDs, isFetched);
+// };
+
+
+// export function getAssocEntIDsFromDefStr(defStr) {
+//   return defStr
+//     .match(/#[1-9][0-9]*/g)
+//     .filter((val, ind, arr) => arr.indexOf(val) === ind)
+//     .map(val => val.substring(1));
+// }
+
+// export function getExpandedCatKeyArr(catKeys) {
+//   let expandedCatKeyArrArr = catKeys
+//     .map(val => {
+//       if (val.catSK === undefined || val.catSK.defStr === undefined) {
+//         throw "getExpandedCatKeyArr: catKeys need to contain catSKs.";
+//       }
+//       let assocCatKeys = getAssocEntIDsFromDefStr(val.catSK.defStr)
+//         .map(val => ({catID: val}));
+//       return [val].concat(...assocCatKeys);
+//     });
+
+//   let expandedCatKeyArr = [].concat(...expandedCatKeyArrArr)
+//     .map(val => JSON.stringify(val))
+//     .filter((val, ind, arr) => arr.indexOf(val) === ind)
+//     .map(val => JSON.parse(val))
+  
+//   return expandedCatKeyArr;
+// }
+
+
+
+
+
+// (08.02.24, 15:14) Ej, jeg er virkeligt nede i et hul rent arbejdsmæssigt.
+// Jeg havde sådan en god arbejdsdag i forgårs, og i går morges/middags var
+// også god, og så har jeg bare stort set ikke nået noget siden da (andet end
+// at få tænkt nogle (ok) tanker..). Det er som, det fylder alt for meget i mit
+// sind, at jeg ikke får nogen svar tilbage omkring matematikken, selv ikke
+// fra professoren, der ellers sagde at han gerne ville tales ved her i det
+// nye år.. ...(16:05) Jeg giver op. Tror bare, jeg vil gå en lang eftermiddag-
+// /aftentur, og så lade op til en forhåbentlig produktiv dag i morgen...
 
 

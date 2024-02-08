@@ -5,7 +5,7 @@ import {useQuery} from "./DBRequests.js";
 import {EntListHeader} from "./EntListHeader.js";
 import {EntListContainer} from "./EntListContainer.js";
 import {GeneralEntityElement} from "./EntityElements.js";
-import { EntListGenerator } from "./EntListGenerator.js";
+import {EntListGenerator} from "./EntListGenerator.js";
 
 
 
@@ -22,14 +22,10 @@ import { EntListGenerator } from "./EntListGenerator.js";
 // methods. *(I'll call it EntListGenerator.)
  
 
-export const EntListDisplay = ({
-  listGenerator, ElemComponent, initFilterOptions, extraProps
-}) => {
+export const EntListDisplay = ({listGenerator, ElemComponent}) => {
   ElemComponent ??= GeneralEntityElement;
   initFilterOptions ??= {};
   const [lg, setLG] = useState(listGenerator);
-  const [initCatKeys, ] = useState(listGenerator.getCatKeys());
-  const [filterOptions, setFilterOptions] = useState(initFilterOptions);
   const [entList, setEntList] = useState(null);
 
   useMemo(() => {
@@ -41,10 +37,7 @@ export const EntListDisplay = ({
 
   return (
     <div className="ent-list-display">
-      <EntListHeader
-        lg={lg} setLG={setLG} initCatKeys={initCatKeys}
-        filterOptions={filterOptions} setFilterOptions={setFilterOptions}
-      />
+      <EntListHeader lg={lg} setLG={setLG} />
       <EntListContainer
         entList={entList} lg={lg} setLG={setLG}
         ElemComponent={ElemComponent} extraProps={extraProps}
