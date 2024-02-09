@@ -133,19 +133,29 @@ export const SortingCategoryElement = ({entID, setLG}) => {
 };
 
 export function addSortingCategory(entID, setLG, accountManager) {
-  setLG(prev => {debugger;
-    let ret = prev; // We don't care that prev is changed via side-effects.
-    if (!(ret instanceof WeightedAverageEntListCombiner)) {
-      ret = new WeightedAverageEntListCombiner([prev], [1]);
+  // "React doesn’t always trigger a re-render on setState"... ...It uses
+  // Object.is() to test if a re-render is necessary..
+  setLG(prev => {
+    // let ret = prev; // We don't care that prev is changed via side-effects.
+    let entListGeneratorArr = [];
+    let weightArr = [];
+    if (prev instanceof WeightedAverageEntListCombiner) {
+      entListGeneratorArr = prev.entListGeneratorArr;
+      weightArr = prev.weightArr;
     }
 
     let newLG = new SimpleEntListGenerator(
       {catID: entID},
       accountManager,
     )
+    entListGeneratorArr.push(newLG);
+    weightArr.push(0.5);
 
-    ret.entListGeneratorArr.push(newLG);
-    ret.weightArr.push(0.5);
+    let ret = new WeightedAverageEntListCombiner(
+      entListGeneratorArr,
+      weightArr,
+      prev.sort, prev.sortAscending, prev.entListArr, prev.isReadyArr,
+    );
     return ret;
   });
 }
