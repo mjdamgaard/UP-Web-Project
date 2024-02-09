@@ -120,11 +120,12 @@ export class EntListQuerier extends EntListGenerator {
   }
 
   getCatKeys() {
-    if (!this.entList) {
-      return [null];
-    } else {
-      return [{catID: this.catID, catSK: this.catSK}];
-    }
+    // if (!this.entList) {
+    //   return [null];
+    // } else {
+    //   return [{catID: this.catID, catSK: this.catSK}];
+    // }
+    return [{catID: this.catID, catSK: this.catSK}];
   }
 }
 

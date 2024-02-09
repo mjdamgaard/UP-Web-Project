@@ -133,10 +133,10 @@ export const SortingCategoryElement = ({entID, setLG}) => {
 };
 
 export function addSortingCategory(entID, setLG, accountManager) {
-  setLG(prev => {
+  setLG(prev => {debugger;
     let ret = prev; // We don't care that prev is changed via side-effects.
-    if (!ret instanceof WeightedAverageCombinerLGMenu) {
-      ret = new WeightedAverageCombinerLGMenu([prev], [1]);
+    if (!(ret instanceof WeightedAverageEntListCombiner)) {
+      ret = new WeightedAverageEntListCombiner([prev], [1]);
     }
 
     let newLG = new SimpleEntListGenerator(
@@ -239,7 +239,7 @@ export const CategoryDisplay = ({catKey}) => {
 /* Combiner ListGenerators */
 
 export const useChildLGStates = (lg, setLG) => {
-  if (!lg instanceof EntListCombiner) {
+  if (!(lg instanceof EntListCombiner)) {
     throw "useChildLGStates: combinerLG is not instance of EntListCombiner";
   }
   const childLGArr = lg.entListGeneratorArr;
@@ -261,7 +261,7 @@ export const useChildLGStates = (lg, setLG) => {
 };
 
 export const useLGArrStates = (lg, setLG) => {
-  if (!lg instanceof EntListCombiner) {
+  if (!(lg instanceof EntListCombiner)) {
     throw "useLGArrStates: combinerLG is not instance of EntListCombiner";
   }
   const lgArr = lg.entListGeneratorArr;

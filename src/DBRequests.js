@@ -10,7 +10,7 @@ import $ from 'jquery';
 //   {data, isFetched}.
 
 export const useQuery = (results, setResults, reqData) => {
-  useMemo(() => {
+  useEffect(() => {
     if (reqData.req) {
       if (!results.isFetched && !results.isFetching) {
         setResults(prev => ({...prev, isFetching: true}));
@@ -48,7 +48,7 @@ export const useQuery = (results, setResults, reqData) => {
 };
 
 export const useInput = (results, setResults, reqData) => {
-  useMemo(() => {
+  useEffect(() => {
     if (reqData.req) {
       if (!results.isFetched && !results.isFetching) {
         setResults(prev => ({...prev, isFetching: true}));
