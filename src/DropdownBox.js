@@ -72,14 +72,14 @@ export const DropdownMenu = ({title, children}) => {
   if (!isLoaded) {
     return (
       <div>
-        <h3 className="dropdown-menu-title clickable" onClick={() => {
+        <h4 className="dropdown-menu-title clickable" onClick={() => {
           setIsExpanded(prev => !prev);
         }}>
           <span className="dropdown-button">
             <span className="caret"></span>{' '}
             {title}
           </span>
-        </h3>
+        </h4>
         <div style={{display: "none"}}></div>
       </div>
     );
@@ -88,16 +88,14 @@ export const DropdownMenu = ({title, children}) => {
   if (!isExpanded) {
     return (
       <div>
-        <h3 className="dropdown-menu-title clickable" onClick={() => {
+        <h4 className="dropdown-menu-title clickable" onClick={() => {
           setIsExpanded(prev => !prev);
         }}>
           <span className="dropdown-button">
-            <span className="caret">
-              {' '}
-            </span>
+            <span className="caret"></span>{' '}
             {title}
           </span>
-        </h3>
+        </h4>
         <div style={{display: "none"}}>{children}</div>
       </div>
     );
@@ -105,16 +103,14 @@ export const DropdownMenu = ({title, children}) => {
 
   return (
     <div>
-      <h3 className="dropdown-menu-title clickable" onClick={() => {
+      <h4 className="dropdown-menu-title clickable" onClick={() => {
         setIsExpanded(prev => !prev);
       }}>
         <span className="dropdown-button">
-          <span className="caret caret-up dropup">
-            {' '}
-          </span>
+          <span className="caret caret-up dropup"></span>{' '}
           {title}
         </span>
-      </h3>
+      </h4>
       <div>{children}</div>
     </div>
   );

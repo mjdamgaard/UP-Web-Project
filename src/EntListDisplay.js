@@ -22,9 +22,8 @@ import {EntListGenerator} from "./EntListGenerator.js";
 // methods. *(I'll call it EntListGenerator.)
  
 
-export const EntListDisplay = ({listGenerator, ElemComponent}) => {
+export const EntListDisplay = ({listGenerator, ElemComponent, extraProps}) => {
   ElemComponent ??= GeneralEntityElement;
-  initFilterOptions ??= {};
   const [lg, setLG] = useState(listGenerator);
   const [entList, setEntList] = useState(null);
 

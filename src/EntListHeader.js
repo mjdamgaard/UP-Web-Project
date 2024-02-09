@@ -2,7 +2,7 @@ import {useState, useEffect, useMemo, useContext} from "react";
 import {AccountManagerContext} from "./contexts/AccountContext.js";
 import {useQuery} from "./DBRequests.js";
 
-import {DropdownBox} from "./DropdownBox.js";
+import {DropdownBox, DropdownMenu} from "./DropdownBox.js";
 import {EntityTitle, FullEntityTitle} from "./EntityTitles.js";
 import {EntListDisplay} from "./EntListDisplay.js";
 import {MissingCategoryDisplay} from "./Ratings.js";
@@ -19,6 +19,8 @@ import {
 const EntityTitlePlaceholder = () => <span></span>;
 const MoveUpDownButtons = () => <template></template>;
 const RelatedSortingMenuPoints = () => <template></template>;
+// const SortingCategoryElement = () => <template></template>;
+// const TypeMenuOfSortingCategoriesElement = () => <template></template>;
 
 
 // Note: I imagine that users will be able to construct EntListGenerators
@@ -62,12 +64,94 @@ export const SortingCategoriesMenu = ({lg, setLG}) => {
 
 
 export const StandardSortingMenuPoint = ({setLG}) => {
+  const accountManager = useContext(AccountManagerContext);
+  const [typeLG, ] = useState(
+    new SimpleEntListGenerator(
+      {catID: 11},
+      accountManager,
+      6, //TODO: Change so that this is handed to the EntListContainer instead.
+    )
+  );
 
   return (
+    <DropdownMenu title={
+      <span>Relevant sorting categories for each type</span>
+    }>
+      <EntListDisplay
+        listGenerator={typeLG}
+        ElemComponent={TypeMenuOfSortingCategoriesElement}
+        extraProps={{setLG: setLG}}
+      />
+    </DropdownMenu>
+  );
+};
+
+
+export const TypeMenuOfSortingCategoriesElement = ({entID, setLG}) => {
+  const accountManager = useContext(AccountManagerContext);
+  const [catLG, ] = useState(
+    new SimpleEntListGenerator(
+      {catSK: {cxtID: 21, defStr: "#52|#" + entID}},
+      accountManager,
+      15, //TODO: Change so that this is handed to the EntListContainer instead.
+    )
+  );
+  
+  return (
     <div>
+      <DropdownMenu title={<EntityTitle entID={entID} />}>
+        <div>
+          <h5>
+            Relevant sorting categories for the type{" "}
+            <EntityTitle entID={entID} isLink />
+          </h5>
+          <EntListDisplay
+            listGenerator={catLG}
+            ElemComponent={SortingCategoryElement}
+            extraProps={{setLG: setLG}}
+          />
+        </div>
+      </DropdownMenu>
     </div>
   );
 };
+
+export const SortingCategoryElement = ({entID, setLG}) => {
+  // TODO: I should make accountManager a global instead of a context variable.
+  const accountManager = useContext(AccountManagerContext);
+  
+  return (
+    <div>
+      <EntityTitle entID={entID} isLink/>{" "}
+      <button onClick={() => {
+        addSortingCategory(entID, setLG, accountManager);
+      }}>
+        Add sorting category
+      </button>
+    </div>
+  );
+};
+
+export function addSortingCategory(entID, setLG, accountManager) {
+  setLG(prev => {
+    let ret = prev; // We don't care that prev is changed via side-effects.
+    if (!ret instanceof WeightedAverageCombinerLGMenu) {
+      ret = new WeightedAverageCombinerLGMenu([prev], [1]);
+    }
+
+    let newLG = new SimpleEntListGenerator(
+      {catID: entID},
+      accountManager,
+    )
+
+    ret.entListGeneratorArr.push(newLG);
+    ret.weightArr.push(0.5);
+    return ret;
+  });
+}
+
+
+
 
 
 
@@ -487,18 +571,5 @@ export function getExpandedCatKeyArr(catKeys) {
   
 //   return expandedCatKeyArr;
 // }
-
-
-
-
-
-// (08.02.24, 15:14) Ej, jeg er virkeligt nede i et hul rent arbejdsmæssigt.
-// Jeg havde sådan en god arbejdsdag i forgårs, og i går morges/middags var
-// også god, og så har jeg bare stort set ikke nået noget siden da (andet end
-// at få tænkt nogle (ok) tanker..). Det er som, det fylder alt for meget i mit
-// sind, at jeg ikke får nogen svar tilbage omkring matematikken, selv ikke
-// fra professoren, der ellers sagde at han gerne ville tales ved her i det
-// nye år.. ...(16:05) Jeg giver op. Tror bare, jeg vil gå en lang eftermiddag-
-// /aftentur, og så lade op til en forhåbentlig produktiv dag i morgen...
 
 

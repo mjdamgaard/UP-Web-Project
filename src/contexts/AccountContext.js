@@ -1,3 +1,10 @@
+
+
+
+// TODO: I should make accountManager a global instead of a context variable.
+
+
+
 import {useState, createContext, useMemo} from "react";
 import $ from 'jquery';
 

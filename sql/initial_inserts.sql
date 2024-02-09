@@ -264,6 +264,22 @@ CALL insertOrUpdateRating(9, 40, 88, CONV("F000", 16, 10), 1);
 CALL insertOrFindEntity(9, 0, 2, 22, "Geology|#32"); -- id: 89
 CALL insertOrUpdateRating(9, 41, 89, CONV("F000", 16, 10), 1);
 
+
+
+CALL insertOrUpdateRating(9, 11, 1, CONV("F000", 16, 10), 1);
+CALL insertOrUpdateRating(9, 11, 2, CONV("FF00", 16, 10), 1);
+CALL insertOrUpdateRating(9, 11, 3, CONV("F000", 16, 10), 1);
+CALL insertOrUpdateRating(9, 11, 5, CONV("FF00", 16, 10), 1);
+CALL insertOrUpdateRating(9, 11, 6, CONV("FF00", 16, 10), 1);
+CALL insertOrUpdateRating(9, 11, 7, CONV("FF00", 16, 10), 1);
+CALL insertOrUpdateRating(9, 11, 8, CONV("FF00", 16, 10), 1);
+CALL insertOrUpdateRating(9, 11, 27, CONV("FF00", 16, 10), 1);
+CALL insertOrUpdateRating(9, 11, 61, CONV("FF00", 16, 10), 1);
+CALL insertOrUpdateRating(9, 11, 64, CONV("FF00", 16, 10), 1);
+CALL insertOrUpdateRating(9, 11, 75, CONV("F000", 16, 10), 1);
+
+
+
 -- SELECT SLEEP(1);
 
 -- Make some room for some other initial inserts in the future (where we must

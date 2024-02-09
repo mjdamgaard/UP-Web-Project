@@ -172,7 +172,9 @@ export const SemanticPropertyFetched = ({entID, ownerEntID, defStr}) => {
     new SimpleEntListGenerator(
       {catSK: {cxtID: 21, defStr: "#" + entID + "|#" + ownerEntID}},
       accountManager,
-      null, // num.
+      // null, // num.
+      initialNum, //TODO: Implement button to increase EntListContainer, and
+      // change so that initialNum is handed to the EntListContainer instead.
       36864, // ratingLo (= CONV("9000", 16, 10)).
     )
   );
