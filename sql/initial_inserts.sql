@@ -60,8 +60,10 @@ VALUES
     (3, 2, "<Property> of <Entity>", 21),
     -- Subcategory template:
     (3, 2, "{<Title>} (<Supercategory>)", 22),
-    -- Adjective subcategory template:
-    (3, 2, "<Adjective phrase> <Category>", 23);
+    -- -- Adjective subcategory template:
+    -- (3, 2, "<Adjective phrase> <Category>", 23);
+
+    (1, 0, "Aggregate category", 23);
 
 
 -- SELECT SLEEP(1);
@@ -141,10 +143,18 @@ CALL insertOrFindEntity(9, 0, 19, 20, "Supercategories|#2|many"); -- id: 47
 
 -- SELECT SLEEP(1);
 
-CALL insertOrFindEntity(9, 0, 2, 23, "Good|#31"); -- id: 48
-CALL insertOrFindEntity(9, 0, 2, 23, "Funny|#31"); -- id: 49
-CALL insertOrFindEntity(9, 0, 2, 23, "Scary|#31"); -- id: 50
-CALL insertOrFindEntity(9, 0, 2, 23, "Iconic|#31"); -- id: 51
+-- CALL insertOrFindEntity(9, 0, 2, 23, "Good|#31"); -- id: 48
+-- CALL insertOrFindEntity(9, 0, 2, 23, "Funny|#31"); -- id: 49
+-- CALL insertOrFindEntity(9, 0, 2, 23, "Scary|#31"); -- id: 50
+-- CALL insertOrFindEntity(9, 0, 2, 23, "Iconic|#31"); -- id: 51
+CALL insertOrFindEntity(9, 0, 2, 0, "Good"); -- id: 48
+CALL insertOrFindEntity(9, 0, 2, 0, "Funny"); -- id: 49
+CALL insertOrFindEntity(9, 0, 2, 0, "Scary"); -- id: 50
+CALL insertOrFindEntity(9, 0, 2, 0, "Iconic"); -- id: 51
+-- (One could have written e.g. "{Good} entities" here, but we'll let that be
+-- implicitly understood instead for all such categories with adjectives as
+-- titles, and by the way also when the titles are verbs (but refrain from
+-- making categories out of verbs starting with 'Is').)
 
 CALL insertOrFindEntity(9, 0, 19, 20,
     "Relevant categories to rate for type instances|#2|many"); -- id: 52
@@ -161,7 +171,8 @@ CALL insertOrUpdateRating(9, 55, 49, CONV("E100", 16, 10), 1);
 CALL insertOrUpdateRating(9, 55, 50, CONV("EA00", 16, 10), 1);
 CALL insertOrUpdateRating(9, 55, 51, CONV("E000", 16, 10), 1);
 
-CALL insertOrFindEntity(9, 0, 2, 23, "well-formed|#10"); -- id: 56
+-- CALL insertOrFindEntity(9, 0, 2, 23, "well-formed|#10"); -- id: 56
+CALL insertOrFindEntity(9, 0, 2, 0, "{Well-formed} as an entity"); -- id: 56
 CALL insertOrFindEntity(9, 0, 2, 21, "#54|#10"); -- id: 57
 CALL insertOrUpdateRating(9, 57, 54, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(9, 57, 10, CONV("9000", 16, 10), 1);
@@ -283,6 +294,10 @@ CALL insertOrUpdateRating(9, 11, 61, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(9, 11, 64, CONV("EF00", 16, 10), 1);
 CALL insertOrUpdateRating(9, 11, 75, CONV("E000", 16, 10), 1);
 
+
+CALL insertOrFindEntity(9, 0, 2, 0, "Has good acting"); -- id: 90
+-- Recommendation: Avoid creating categories from verbs starting with 'Is.'
+CALL insertOrUpdateRating(9, 53, 90, CONV("E000", 16, 10), 1);
 
 
 -- SELECT SLEEP(1);
