@@ -133,12 +133,10 @@ export const SortingCategoryElement = ({entID, setLG}) => {
 };
 
 export function addSortingCategory(entID, setLG, accountManager) {
-  // "React doesn’t always trigger a re-render on setState"... ...It uses
-  // Object.is() to test if a re-render is necessary..
   setLG(prev => {
     // let ret = prev; // We don't care that prev is changed via side-effects.
-    let entListGeneratorArr = [];
-    let weightArr = [];
+    let entListGeneratorArr = [prev];
+    let weightArr = [1];
     if (prev instanceof WeightedAverageEntListCombiner) {
       entListGeneratorArr = prev.entListGeneratorArr;
       weightArr = prev.weightArr;
@@ -149,7 +147,7 @@ export function addSortingCategory(entID, setLG, accountManager) {
       accountManager,
     )
     entListGeneratorArr.push(newLG);
-    weightArr.push(0.5);
+    weightArr.push(1);
 
     let ret = new WeightedAverageEntListCombiner(
       entListGeneratorArr,
@@ -341,32 +339,59 @@ export const MaxRatingCombinerLGMenu = ({lg, setLG}) => {
 
 export const WeightedAverageCombinerLGMenu = ({lg, setLG}) => {
   const [lgArr, lgSetterArr] = useChildLGStates(lg, setLG);
-
   const keyPrefix = useMemo(
     () => getNonce(),
     [lg]
   );
+
   const children = lgArr.map((val, ind) => (
     <div key={keyPrefix + "." + ind}>
+      <WeightedAverageCombinerLGMenuItem lg={lg} ind={ind} setLG={setLG} >
         <ListGeneratorMenu lg={val} setLG={lgSetterArr[ind]} />
+      </WeightedAverageCombinerLGMenuItem >
     </div>
   ));
-
   return (
-    <div>WeightedAverageCombinerLGMenu
+    <div>
       {children}
     </div>
   );
 };
 
 
+export const WeightedAverageCombinerLGMenuItem = ({
+  children, lg, ind, setLG
+}) => {
 
-// export const LGWeightSlider = ({lg, setLG}) => {
-//   return (
-//     <div>
-//     </div>
-//   );
-// };
+  return (
+    <div>
+      {children}
+      <WeightSlider lg={lg} ind={ind} setLG={setLG} />
+    </div>
+  );
+};
+
+
+export const WeightSlider = ({lg, ind, setLG}) => {
+  const [currVal, setCurrVal] = useState(lg.weightArr[ind]);
+
+  return (
+    <div>
+      <input type="range"
+        min="0" max="1" step="0.05" value={currVal}
+        onChange={e => {
+          setCurrVal(e.target.value);
+          setLG(prev => {
+            lg.weightArr[ind] = parseFloat(e.target.value) + 0.00001;
+            return lg;
+          });
+        }}
+      />
+      <div className="value-display">{currVal}</div>
+    </div>
+  );
+};
+
 
 
 

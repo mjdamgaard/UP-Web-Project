@@ -334,7 +334,8 @@ export class WeightedAverageEntListCombiner extends EntListCombiner {
   transformEntList(entList, gIndex) {
     let weight = this.weightArr[gIndex];
     return entList.map(function(val) {
-      val[2] = weight;
+      val[2] = parseFloat(weight);
+      val[0] = parseInt(val[0]);
       return val;
     });
   }
@@ -347,22 +348,20 @@ export class WeightedAverageEntListCombiner extends EntListCombiner {
     // construct a return array by ...
     let ret = new Array(concatEntList.length);
     let retLen = 0;
-    let weightArr = this.weightArr;
     let currInstID = 0;
     let row, accWeight, currWeight, newWeight;
-    concatEntList.forEach(function(val, ind) {
+    concatEntList.forEach(val => {
       // if val is the first in a group with the same instID, write its
       // weight (val[2]) to the accumulated weight (accWeight) and add a
       // copy of val to the return array.
-      if (val[1] !== currInstID) {
+      if (val[1] !== currInstID) {debugger;
         currInstID = val[1];
-        ret[retLen] = (row = [val[0], val[1]]);
-        retLen++;
+        ret[retLen++] = (row = [val[0], val[1]]);
         accWeight = val[2];
       // else combine the last row with val by computing a combined,
       // ratVal, namely a weighted average, and also add the weight to
       // accWeight.
-      } else {
+      } else {debugger;
         currWeight = val[2];
         newWeight = accWeight + currWeight;
         row[0] = (row[0] * accWeight + val[0] * currWeight) / newWeight;

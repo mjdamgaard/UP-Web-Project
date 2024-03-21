@@ -53,7 +53,9 @@ VALUES
     (1, 0, "Property", 19),
     -- Property template:
     (3, 19,
-      "{<Title>}, <Type>, one-to-<Quantity word (e.g. 'one,' 'few,' or 'many')>", 20),
+      "{<Title>}, <Type>, one-to-<Quantity word (e.g. 'one,' 'few,' or 'many')>",
+      20
+    ),
     -- Property category template:
     (3, 2, "<Property> of <Entity>", 21),
     -- Subcategory template:
@@ -96,7 +98,8 @@ CALL insertOrUpdateRating(9, 38, 31, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(9, 38, 24, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(9, 38, 25, CONV("A100", 16, 10), 1);
 CALL insertOrUpdateRating(9, 38, 26, CONV("A000", 16, 10), 1);
-CALL insertOrFindEntity(9, 0, 27, 0, "ExAmPlE oF a NoT vErY uSeFuL eNtItY"); -- id: 39
+CALL insertOrFindEntity(9, 0, 27, 0, "ExAmPlE oF a NoT vErY uSeFuL eNtItY");
+    -- id: 39
 CALL insertOrUpdateRating(9, 38, 39, CONV("0103", 16, 10), 1);
 
 -- SELECT SLEEP(1);
@@ -123,7 +126,8 @@ CALL insertOrUpdateRating(9, 31, 30, CONV("FF02", 16, 10), 1);
 
 -- SELECT SLEEP(1);
 
-CALL insertOrFindEntity(9, 0, 19, 20, "Related entities|any type|many"); -- id: 42
+CALL insertOrFindEntity(9, 0, 19, 20, "Related entities|any type|many");
+    -- id: 42
 CALL insertOrFindEntity(9, 0, 2, 21, "#42|#29"); -- id: 43
 CALL insertOrUpdateRating(9, 43, 30, CONV("FF00", 16, 10), 1);
 CALL insertOrFindEntity(9, 0, 2, 21, "#42|#30"); -- id: 44
@@ -149,7 +153,8 @@ CALL insertOrUpdateRating(9, 53, 48, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(9, 53, 49, CONV("E100", 16, 10), 1);
 CALL insertOrUpdateRating(9, 53, 50, CONV("E000", 16, 10), 1);
 
-CALL insertOrFindEntity(9, 0, 19, 20, "Relevant categories to rate|#2|many"); -- id: 54
+CALL insertOrFindEntity(9, 0, 19, 20, "Relevant categories to rate|#2|many");
+    -- id: 54
 CALL insertOrFindEntity(9, 0, 2, 21, "#54|#29"); -- id: 55
 CALL insertOrUpdateRating(9, 55, 48, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(9, 55, 49, CONV("E100", 16, 10), 1);
@@ -266,17 +271,17 @@ CALL insertOrUpdateRating(9, 41, 89, CONV("F000", 16, 10), 1);
 
 
 
-CALL insertOrUpdateRating(9, 11, 1, CONV("F000", 16, 10), 1);
+CALL insertOrUpdateRating(9, 11, 1, CONV("E000", 16, 10), 1);
 CALL insertOrUpdateRating(9, 11, 2, CONV("FF00", 16, 10), 1);
-CALL insertOrUpdateRating(9, 11, 3, CONV("F000", 16, 10), 1);
-CALL insertOrUpdateRating(9, 11, 5, CONV("FF00", 16, 10), 1);
-CALL insertOrUpdateRating(9, 11, 6, CONV("FF00", 16, 10), 1);
-CALL insertOrUpdateRating(9, 11, 7, CONV("FF00", 16, 10), 1);
-CALL insertOrUpdateRating(9, 11, 8, CONV("FF00", 16, 10), 1);
+CALL insertOrUpdateRating(9, 11, 3, CONV("E000", 16, 10), 1);
+CALL insertOrUpdateRating(9, 11, 5, CONV("EF00", 16, 10), 1);
+CALL insertOrUpdateRating(9, 11, 6, CONV("EF00", 16, 10), 1);
+CALL insertOrUpdateRating(9, 11, 7, CONV("EF00", 16, 10), 1);
+CALL insertOrUpdateRating(9, 11, 8, CONV("EF00", 16, 10), 1);
 CALL insertOrUpdateRating(9, 11, 27, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(9, 11, 61, CONV("FF00", 16, 10), 1);
-CALL insertOrUpdateRating(9, 11, 64, CONV("FF00", 16, 10), 1);
-CALL insertOrUpdateRating(9, 11, 75, CONV("F000", 16, 10), 1);
+CALL insertOrUpdateRating(9, 11, 64, CONV("EF00", 16, 10), 1);
+CALL insertOrUpdateRating(9, 11, 75, CONV("E000", 16, 10), 1);
 
 
 

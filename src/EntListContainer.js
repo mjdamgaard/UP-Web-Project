@@ -24,7 +24,7 @@ export const EntListContainer = ({
 
   const children = entList.map((val) => (
     <ElemComponent key={val[1]}
-      entID={val[1]} combScore={val[0]} lg={lg}
+      entID={val[1]} combScore={val[0]} listGenerator={lg}
       {...extraProps}
     />
   ));

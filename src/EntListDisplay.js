@@ -25,20 +25,25 @@ import {EntListGenerator} from "./EntListGenerator.js";
 export const EntListDisplay = ({listGenerator, ElemComponent, extraProps}) => {
   ElemComponent ??= GeneralEntityElement;
   const [lg, setLG] = useState(listGenerator);
+  const [nonce, setNonce] = useState(0); // Used to force re-render.
+  const setLGAndRerender = y => {
+    setLG(y);
+    setNonce(nonce + 1);
+  };
   const [entList, setEntList] = useState(null);
 
   useMemo(() => {
     lg.generateEntList(null, (obj, combList) => {
       setEntList(combList);
     });
-  }, [lg]);
+  }, [lg, nonce]); // (Without nonce here, function is not called again.)
 
 
   return (
     <div className="ent-list-display">
-      <EntListHeader lg={lg} setLG={setLG} />
+      <EntListHeader lg={lg} setLG={setLGAndRerender} />
       <EntListContainer
-        entList={entList} lg={lg} setLG={setLG}
+        entList={entList} lg={lg} setLG={setLGAndRerender}
         ElemComponent={ElemComponent} extraProps={extraProps}
       />
     </div>
