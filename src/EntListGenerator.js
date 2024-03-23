@@ -37,13 +37,12 @@ export class EntListGenerator {
     // to be redefined by descendant classes.
   }
 
-  // getLeaves() {
-  //   if (this.catID || this.catSK) {
-  //     return [this];
-  //   }
-  //   let childLeafArrays = this.children.map(val => getLeaves(val));
-  //   return [].concat(...childLeafArrays);
-  // }
+  // requestMoreElements() adds more elements to the entList and returns true,
+  // or fails to get more and returns false.
+  requestMoreElements() {
+    // Abstract method.
+    return false;
+  }
 
   getCatKeys() {
     // Todo: Consider implementing.

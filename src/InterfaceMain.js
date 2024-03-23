@@ -3,9 +3,11 @@ import {ColumnListContext, ColumnContextProvider}
   from "./contexts/ColumnContext.js";
 
 import {EntityPage} from "./EntityPages.js";
+import {ListGeneratorPage} from "./ListGenPages.js";
 
 /* Placeholders */
-const ListGeneratorPage = () => <template></template>;
+// const ListGeneratorPage = () => <template></template>;
+
 
 export const InterfaceMain = () => {
   const [columns, columnListManager] = useContext(ColumnListContext);
