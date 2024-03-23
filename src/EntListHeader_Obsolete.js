@@ -35,10 +35,10 @@ const RelatedSortingMenuPoints = () => <template></template>;
 
 // lg = listGenerator.
 
-export const EntListHeader = ({lg, setLG}) => {
+export const EntListHeader = ({lg, setLG, startAsExpanded}) => {
   return (
     <div className="ent-list-header">
-      <DropdownBox>
+      <DropdownBox startAsExpanded={startAsExpanded} >
         <div className="ent-list-menu">
           {/* <EntListCategoriesMenu lg={lg} /> */}
           {/* <InitCategoriesHeader initCatKeys={initCatKeys} /> */}

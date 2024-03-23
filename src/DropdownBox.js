@@ -2,9 +2,9 @@ import {useState, useEffect, useMemo, useContext} from "react";
 
 
 
-export const DropdownBox = ({children}) => {
+export const DropdownBox = ({children, startAsExpanded}) => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(startAsExpanded);
   
   if(!isLoaded && isExpanded) {
     setIsLoaded(true);
@@ -61,9 +61,9 @@ export const DropdownButtonBar = ({isExpanded, setIsExpanded}) => {
 
 
 
-export const DropdownMenu = ({title, children}) => {
+export const DropdownMenu = ({title, children, startAsExpanded}) => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(startAsExpanded);
   
   if(!isLoaded && isExpanded) {
     setIsLoaded(true);

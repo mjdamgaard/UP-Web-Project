@@ -52,7 +52,7 @@ CREATE TABLE SemanticInputs (
     inst_id BIGINT UNSIGNED NOT NULL,
 
     -- Resulting semantic input: "User #<user_id> states that entity #<inst_id>
-    -- is an instance of category #<cat_id> with importantance/usefulness given
+    -- is an instance of category #<cat_id> with importance/usefulness given
     -- on a scale from 0 to 10 (with 5 being neutral) by <rat_val> / 6553.5."
 
     PRIMARY KEY (
@@ -81,7 +81,7 @@ CREATE TABLE Private_RecentInputs (
 
 -- RecordedInputs can first of all be used by time-dependent bots (e.g. a mean-
 -- of-recent-inputs bot), and can also potentially used by bots that update on
--- scheduled events rather than immediately when the input is recieved. And
+-- scheduled events rather than immediately when the input is received. And
 -- furthermore, they can also potentially be used by third-party bots and by
 -- SDB peers.
 CREATE TABLE RecordedInputs (
@@ -125,6 +125,9 @@ CREATE TABLE EntityIndexKeys (
     )
 );
 -- (Also needs compressing.)
+-- This implementation is out-dated, and I actually don't think Indexes will be
+-- needed in the near future of this system. But I'll just keep the room for
+-- them for now.
 
 
 

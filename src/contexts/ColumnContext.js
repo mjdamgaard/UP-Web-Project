@@ -4,10 +4,14 @@ export const ColumnContext = createContext();
 
 export const ColumnListContext = createContext();
 
+var _nonce = 0;
+function getNonce() {
+  return _nonce++;
+}
 
-export const ColumnListContextProvider = ({initColKey, children}) => {
+export const ColumnListContextProvider = ({initColSpec, children}) => {
   const [columns, setColumns] = useState({
-    keys: [initColKey],
+    keys: [{colSpec: initColSpec, n: getNonce()}],
     fst: 0, // first visible column from the left.
     num: 1, // number of visible columns on the screen.
     focus: 0, // The column currently in focus. (TODO: Implement further.)
@@ -31,17 +35,20 @@ export class ColumnListManager {
     this.maxColNum = maxColNum;
   }
 
-  openColumn = (callerKey, newEntID, isToTheLeft) => {
+  openColumn = (callerKey, newColSpec, isToTheLeft) => {
+    // If newColSpec is not an object, interpret it as an entID.
+    if (typeof newColSpec !== "object") {
+      newColSpec = {entID: newColSpec};
+    }
+
     let columns = this.columns;
-    // find caller column's index.
-    let callerInd = columns.keys.findIndex(val => val == callerKey);
-    // get the new n for the new key if one or more columns with the same entID
-    // already exists.
-    let newN = 1 + columns.keys.map(val => JSON.parse(val)).reduce(
-      (acc, val) => val.entID != newEntID ? acc : (val.n > acc ? val.n : acc),
-      0
-    );
-    // create and insert the new column key in columns.keys, and potentially
+
+    // Find caller column's index.
+    let callerInd = columns.keys.findIndex(val => (
+      JSON.stringify(val) == JSON.stringify(callerKey)
+    ));
+
+    // Create and insert the new column key in columns.keys, and potentially
     // increase fst.
     let fst = columns.fst;
     if (!isToTheLeft && fst + columns.num - 1 == callerInd) {
@@ -51,18 +58,24 @@ export class ColumnListManager {
     this.setColumns(prev => ({
       ...prev,
       keys: columns.keys.slice(0, newInd).concat(
-        [JSON.stringify({entID: newEntID, n: newN})],
+        // [JSON.stringify({entID: newColSpec, n: newN})],
+        [{colSpec: newColSpec, nonce: getNonce()}],
         columns.keys.slice(newInd)
       ),
       fst: fst,
       focus: newInd,
     }));
   };
+
   closeColumn = (callerKey) => {
     let columns = this.columns;
-    // find caller column's index.
-    let callerInd = columns.keys.findIndex(val => val == callerKey);
-    // remove the column key in columns.keys, and potentially reduce fst.
+
+    // Find caller column's index.
+    let callerInd = columns.keys.findIndex(val => (
+      JSON.stringify(val) == JSON.stringify(callerKey)
+    ));
+
+    // Remove the column key in columns.keys, and potentially reduce fst.
     let fst = columns.fst;
     while (fst > 0 && fst + columns.num > columns.keys.length) {
       fst--;
@@ -120,9 +133,9 @@ export const ColumnContextProvider = ({colKey, children}) => {
     new ColumnManager(columnListManager, colKey)
   ), [columnListManager, colKey]);
 
-  const columnEntID = JSON.parse(colKey).entID;
+  // const columnEntID = JSON.parse(colKey).entID;
   return (
-    <ColumnContext.Provider value={[columnEntID, columnManager]}>
+    <ColumnContext.Provider value={[colKey, columnManager]}>
       {children}
     </ColumnContext.Provider>
   );
@@ -134,8 +147,8 @@ export class ColumnManager {
     this.colKey = colKey;
   }
 
-  openColumn = (newEntID, isToTheLeft) => {
-    this.columnListManager.openColumn(this.colKey, newEntID, isToTheLeft);
+  openColumn = (newColSpec, isToTheLeft) => {
+    this.columnListManager.openColumn(this.colKey, newColSpec, isToTheLeft);
   }
   closeColumn = () => {
     this.columnListManager.closeColumn(this.colKey);

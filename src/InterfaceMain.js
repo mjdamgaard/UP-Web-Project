@@ -4,15 +4,17 @@ import {ColumnListContext, ColumnContextProvider}
 
 import {EntityPage} from "./EntityPages.js";
 
+/* Placeholders */
+const ListGeneratorPage = () => <template></template>;
 
 export const InterfaceMain = () => {
   const [columns, columnListManager] = useContext(ColumnListContext);
 
   let fst = columns.fst;
   const appColumns = columns.keys.map((val, ind) => 
-    <div key={val}
+    <div key={JSON.stringify(val)}
       style={{display: fst <= ind && ind < fst + columns.num ? null : "none"}}
-  >
+    >
       <AppColumn colKey={val} />
     </div>
   );
@@ -44,22 +46,25 @@ export const InterfaceMain = () => {
 
 
 const AppColumn = ({colKey}) => {
-  const columnEntID = JSON.parse(colKey).entID;
+  const colSpec = colKey.colSpec;
+
+  var page;
+  if (colSpec.entID) {
+    page = <EntityPage entID={colSpec.entID} />;
+  }
+  if (colSpec.lg) {
+    page = <ListGeneratorPage lg={colSpec.lg} />;
+  }
+
   return (
     <div className="app-column">
       <ColumnButtonContainer colKey={colKey} />
       <ColumnContextProvider colKey={colKey}>
-        <EntityPage entID={columnEntID} />
+        {page}
       </ColumnContextProvider>
     </div>
   );
 };
-// appColumnCL.addCallback("data", function(data) {
-//   data.copyFromAncestor("cl", 1);
-//   data.cl ??= appColumnCL.getRelatedCL("EntityPage");;
-//   data.recLevel = null;
-//   data.maxRecLevel = null;
-// });
 
 
 
@@ -72,6 +77,9 @@ const ColumnButtonContainer = ({colKey}) => {
   );
 };
 const CloseColumnButton = ({colKey}) => {
+  // (Using ColumnListContext rather than ColumnContext because a future
+  // implementation might include buttons for columns to switch places with
+  // neighbors.)
   const [, columnListManager] = useContext(ColumnListContext);
 
   return (
