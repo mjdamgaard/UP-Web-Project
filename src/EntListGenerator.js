@@ -13,9 +13,15 @@ export class EntListGenerator {
     // To be redefined by descendant classes.
   }
 
+  // Returns a string with the class name, e.g. "EntListQuerier".
+  getType() {
+    // Abstract method.
+    throw "EntListGenerator";
+  }
+
   // Turns the class instance 
   become(entListGenerator) {
-    this.constructor = entListGenerator.constructor;
+    // this.constructor = entListGenerator.constructor;
     this.prototype = entListGenerator.prototype;
     for (const [key, value] of Object.entries(entListGenerator)) {
       this[key] = value;
@@ -24,7 +30,12 @@ export class EntListGenerator {
 
   // Return a shallow clone of the class instance.
   clone() {
-    // Abstract method.
+    let ret = {};
+    ret.prototype = this.prototype;
+    for (const [key, value] of Object.entries(this)) {
+      ret[key] = value;
+    }
+    return ret;
   }
 
   // generateEntList() queries and combines entLists, then calls
@@ -85,16 +96,9 @@ export class EntListQuerier extends EntListGenerator {
     this.isAscending = isAscending ?? 0;
     this.offset = offset ?? 0;
   }
-
-  clone() {
-    let ret = new EntListQuerier(
-      // {catID: this.catID, catSK: this.catSK},
-      // this.queryUserID,
-    );
-    for (const [key, value] of Object.entries(this)) {
-      ret[key] = value;
-    }
-    return ret;
+  
+  getType() {
+    return "EntListQuerier";
   }
 
   generateEntList(obj, callbackData, callback) {
@@ -169,9 +173,10 @@ export class EntListCombiner extends EntListGenerator {
     this.sort = sort ?? 1;
     this.sortAscending = sortAscending ?? 0;
   }
-
-  clone() {
+  
+  getType() {
     // Abstract method.
+    throw "EntListCombiner";
   }
 
   generateEntList(obj, callbackData, callback) {
@@ -252,13 +257,9 @@ export class MaxRatingEntListCombiner extends EntListCombiner {
       sort, sortAscending, entListArr, isReadyArr,
     );
   }
-
-  clone() {
-    let ret = new MaxRatingEntListCombiner();
-    for (const [key, value] of Object.entries(this)) {
-      ret[key] = value;
-    }
-    return ret;
+  
+  getType() {
+    return "MaxRatingEntListCombiner";
   }
 
   combineEntLists() {
@@ -309,14 +310,18 @@ export class PriorityEntListCombiner extends EntListCombiner {
       sort, sortAscending, entListArr, isReadyArr,
     );
   }
-
-  clone() {
-    let ret = new PriorityEntListCombiner();
-    for (const [key, value] of Object.entries(this)) {
-      ret[key] = value;
-    }
-    return ret;
+  
+  getType() {
+    return "PriorityEntListCombiner";
   }
+
+  // clone() {
+  //   let ret = new PriorityEntListCombiner();
+  //   for (const [key, value] of Object.entries(this)) {
+  //     ret[key] = value;
+  //   }
+  //   return ret;
+  // }
 
   transformEntList(entList, gIndex) {
     return entList.map(function(val) {
@@ -375,13 +380,9 @@ export class WeightedAverageEntListCombiner extends EntListCombiner {
     );
     this.weightArr = weightArr;
   }
-
-  clone() {
-    let ret = new WeightedAverageEntListCombiner();
-    for (const [key, value] of Object.entries(this)) {
-      ret[key] = value;
-    }
-    return ret;
+  
+  getType() {
+    return "WeightedAverageEntListCombiner";
   }
 
   transformEntList(entList, gIndex) {
@@ -450,12 +451,8 @@ export class SimpleEntListGenerator extends PriorityEntListCombiner {
       sort, sortAscending, entListArr, isReadyArr, // optional.
     );
   }
-
-  clone() {
-    let ret = new SimpleEntListGenerator();
-    for (const [key, value] of Object.entries(this)) {
-      ret[key] = value;
-    }
-    return ret;
+  
+  getType() {
+    return "SimpleEntListGenerator";
   }
 }

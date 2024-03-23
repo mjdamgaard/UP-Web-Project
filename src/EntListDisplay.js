@@ -1,6 +1,7 @@
 import {useState, useEffect, useMemo, useContext} from "react";
 // import {AccountManagerContext} from "./contexts/AccountContext.js";
 import {useQuery} from "./DBRequests.js";
+import {ColumnContext} from "./contexts/ColumnContext.js";
 
 import {GeneralEntityElement} from "./EntityElements.js";
 import {EntListGenerator} from "./EntListGenerator.js";
@@ -63,9 +64,31 @@ export const EntListHeader = ({lg, update}) => {
 
 
 export const ListGeneratorLink = ({lg, update}) => {
+  const [, columnManager] = useContext(ColumnContext);
+
+  var linkContent;
+  switch (lg.getType()) {
+    case "EntListQuerier":
+      linkContent = "Atomic List";
+      break;
+    case "SimpleEntListGenerator":
+      linkContent = "Simple List";
+      break;
+    case "MaxRatingEntListCombiner":
+      linkContent = "Priority List Combiner";
+      break;
+    case "PriorityEntListCombiner":
+      linkContent = "Priority List Combiner";
+      break;
+    case "WeightedAverageEntListCombiner":
+      linkContent = "Priority List Combiner";
+      break;
+  }
   return (
-    <span>
-      {/* TODO: make a link to open a new column for the list generator. */}
+    <span className="list-gen-link clickable-text" onClick={() => {
+      columnManager.openColumn({lg: lg})
+    }}>
+      {linkContent}
     </span>
   );
 };

@@ -45,6 +45,7 @@ export class ColumnListManager {
 
     // Find caller column's index.
     let callerInd = columns.keys.findIndex(val => (
+      (val.lg ?? {}) == callerKey.lg ||
       JSON.stringify(val) == JSON.stringify(callerKey)
     ));
 
@@ -72,6 +73,7 @@ export class ColumnListManager {
 
     // Find caller column's index.
     let callerInd = columns.keys.findIndex(val => (
+      (val.lg ?? {}) == callerKey.lg ||
       JSON.stringify(val) == JSON.stringify(callerKey)
     ));
 
