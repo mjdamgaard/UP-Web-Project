@@ -33,6 +33,7 @@ const SuperCoolLogoTBD = ({}) => {
 
   return (
     <span className="navbar-brand" onClick={() => {
+      // TODO: Correct (or make it a link to the (fresh) homepage).
       columnListManager.openColumn(columns.keys[columns.fst], 10, true);
     }}>
       openSDB

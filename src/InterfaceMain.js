@@ -14,7 +14,7 @@ export const InterfaceMain = () => {
 
   let fst = columns.fst;
   const appColumns = columns.keys.map((val, ind) => 
-    <div key={JSON.stringify(val)}
+    <div key={val.id}
       style={{display: fst <= ind && ind < fst + columns.num ? null : "none"}}
     >
       <AppColumn colKey={val} />
