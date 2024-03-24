@@ -4,14 +4,12 @@ import {useQuery} from "./DBRequests.js";
 import {ColumnContext} from "./contexts/ColumnContext.js";
 
 import {GeneralEntityElement} from "./EntityElements.js";
-import {EntListGenerator} from "./EntListGenerator.js";
+import {ListGeneratorSmallMenu} from "./ListGenPages.js";
 
 
 
 /* Placeholders */
-const RelevantCategoriesDropdownMenuButton = () => <template></template>;
 const UpdateButton = () => <template></template>;
-const AddCombinerButton = () => <template></template>;
 
 
  
@@ -28,7 +26,7 @@ export const EntListDisplay = ({
   const [entList, setEntList] = useState(null);
 
   useEffect(() => {
-    listGenerator.generateEntList(null, (obj, combList) => {
+    listGenerator.generateEntList(combList => {
       setEntList(combList);
     });
   }, [listGenerator, nonce]);
@@ -53,45 +51,14 @@ export const EntListHeader = ({lg, update}) => {
   return (
     <div className="ent-list-header">
       <span>
-        <ListGeneratorLink lg={lg} update={update} />
-        <RelevantCategoriesDropdownMenuButton lg={lg} />
         <UpdateButton update={update} />
-        <AddCombinerButton lg={lg} />
+        <ListGeneratorSmallMenu lg={lg} />
       </span>
     </div>
   );
 };
 
 
-export const ListGeneratorLink = ({lg, update}) => {
-  const [, columnManager] = useContext(ColumnContext);
-
-  var linkContent;
-  switch (lg.getType()) {
-    case "EntListQuerier":
-      linkContent = "Atomic List";
-      break;
-    case "SimpleEntListGenerator":
-      linkContent = "Simple List";
-      break;
-    case "MaxRatingEntListCombiner":
-      linkContent = "Priority List Combiner";
-      break;
-    case "PriorityEntListCombiner":
-      linkContent = "Priority List Combiner";
-      break;
-    case "WeightedAverageEntListCombiner":
-      linkContent = "Priority List Combiner";
-      break;
-  }
-  return (
-    <span className="list-gen-link clickable-text" onClick={() => {
-      columnManager.openColumn({lg: lg})
-    }}>
-      {linkContent}
-    </span>
-  );
-};
 
 
 

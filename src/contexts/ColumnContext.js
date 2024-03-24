@@ -11,7 +11,7 @@ function getNonce() {
 
 export const ColumnListContextProvider = ({initColSpec, children}) => {
   const [columns, setColumns] = useState({
-    keys: [{colSpec: initColSpec, n: getNonce()}],
+    keys: [{colSpec: initColSpec, id: getNonce()}],
     fst: 0, // first visible column from the left.
     num: 1, // number of visible columns on the screen.
     focus: 0, // The column currently in focus. (TODO: Implement further.)
@@ -44,10 +44,8 @@ export class ColumnListManager {
     let columns = this.columns;
 
     // Find caller column's index.
-    let callerInd = columns.keys.findIndex(val => (
-      (val.lg ?? {}) == callerKey.lg ||
-      JSON.stringify(val) == JSON.stringify(callerKey)
-    ));
+    let callerID = callerKey.id;
+    let callerInd = columns.keys.findIndex(val => val.id == callerID);
 
     // Create and insert the new column key in columns.keys, and potentially
     // increase fst.
@@ -60,7 +58,7 @@ export class ColumnListManager {
       ...prev,
       keys: columns.keys.slice(0, newInd).concat(
         // [JSON.stringify({entID: newColSpec, n: newN})],
-        [{colSpec: newColSpec, nonce: getNonce()}],
+        [{colSpec: newColSpec, id: getNonce()}],
         columns.keys.slice(newInd)
       ),
       fst: fst,
@@ -72,10 +70,8 @@ export class ColumnListManager {
     let columns = this.columns;
 
     // Find caller column's index.
-    let callerInd = columns.keys.findIndex(val => (
-      (val.lg ?? {}) == callerKey.lg ||
-      JSON.stringify(val) == JSON.stringify(callerKey)
-    ));
+    let callerID = callerKey.id;
+    let callerInd = columns.keys.findIndex(val => val.id == callerID);
 
     // Remove the column key in columns.keys, and potentially reduce fst.
     let fst = columns.fst;

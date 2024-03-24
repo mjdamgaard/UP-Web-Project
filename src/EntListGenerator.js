@@ -7,6 +7,7 @@ import {DBRequestManager} from "./DBRequests.js";
 
 
 
+// EntListGenerator is an abstract class.
 export class EntListGenerator {
   constructor() {
     this.entList = undefined;
@@ -40,11 +41,7 @@ export class EntListGenerator {
 
   // generateEntList() queries and combines entLists, then calls
   // callback(entList).
-  generateEntList(obj, callbackData, callback)  {
-    if (!callback) {
-        callback = callbackData;
-        callbackData = undefined;
-    }
+  generateEntList(callback)  {
     // to be redefined by descendant classes.
   }
 
@@ -55,18 +52,23 @@ export class EntListGenerator {
     return false;
   }
 
-  getCatKeys() {
-    // Todo: Consider implementing.
-  }
+  // // getCatKeys(callback) waits until all catIDs are queried for, then calls
+  // // callback(catKeyArr), where each catKey in this array has the type:
+  // // {catID : (num | undef | null), catSK : ({cxtID, defStr} | undef).
+  // // If catID is null, it means that it was queried for and was not found.
+  // getCatKeys(callback) {
+  //   this.getCatKeysCallback = callback;
+  // }
 
-  // getFilterSpecs() returns an array of filter specs (or null), which
-  // each consists of a category ID, threshold and a flag to denote either
-  // the interval below or above the threshold for which all set elements
-  // with a rating in that interval should collapse itself automatically (in
-  // a future version of this web app).
-  getFilterSpecs() {
-    // Can be redefined by descendant classes.
-  }
+
+  // // getFilterSpecs() returns an array of filter specs (or null), which
+  // // each consists of a category ID, threshold and a flag to denote either
+  // // the interval below or above the threshold for which all set elements
+  // // with a rating in that interval should collapse itself automatically (in
+  // // a future version of this web app).
+  // getFilterSpecs() {
+  //   // Can be redefined by descendant classes.
+  // }
 
 }
 
@@ -81,12 +83,6 @@ export class EntListQuerier extends EntListGenerator {
     entList, replaceExistingSet, // optional.
   ) {
     super();
-    // if (typeof catKey === "object") {
-    //   this.catCxtID = catKey.cxtID;
-    //   this.catDefStr = catKey.defStr;
-    // } else {
-    //   this.catID = catKey;
-    // }
     this.catID = catKey.catID;
     this.catSK = catKey.catSK;
     this.queryUserID = queryUserID;
@@ -95,23 +91,21 @@ export class EntListQuerier extends EntListGenerator {
     this.ratingHi = ratingHi ?? 0;
     this.isAscending = isAscending ?? 0;
     this.offset = offset ?? 0;
+
+    this.catKeyCallback = undefined;
   }
   
   getType() {
     return "EntListQuerier";
   }
 
-  generateEntList(obj, callbackData, callback) {
-    if (!callback) {
-        callback = callbackData;
-        callbackData = undefined;
-    }
+  generateEntList(callback) {
     if (this.entList) {
-      callback(obj, this.entList, callbackData);
+      callback(this.entList);
       return;
     }
     if (this.catID) {
-      this.queryWithCatID(obj, callbackData, callback);
+      this.queryWithCatID(callback);
     } else {
       let reqData = {
         req: "entID",
@@ -119,19 +113,25 @@ export class EntListQuerier extends EntListGenerator {
         c: this.catSK.cxtID,
         s: this.catSK.defStr,
       };
-      DBRequestManager.query(this, reqData, function(g, result) {
-        g.catID = (result[0] ?? [null])[0];
-        if (g.catID) {
-          g.queryWithCatID(obj, callbackData, callback);
+      DBRequestManager.query(this, reqData, function(thisLG, result) {
+        thisLG.catID = (result[0] ?? [null])[0];
+        if (thisLG.catID) {
+          thisLG.queryWithCatID(callback);
         } else {
-          g.entList = [];
-          callback(obj, g.entList, callbackData);
+          thisLG.entList = [];
+          callback(thisLG.entList);
+        }
+
+        // Call and delete the catKeyCallback if any.
+        if (thisLG.catKeyCallback) {
+          thisLG.catKeyCallback({catID: thisLG.catID, catSK: thisLG.catSK});
+          delete thisLG.catKeyCallback;
         }
       });
     }
   }
 
-  queryWithCatID(obj, callbackData, callback) {
+  queryWithCatID(callback) {
     let reqData = {
       req: "set",
       u: this.queryUserID,
@@ -142,19 +142,23 @@ export class EntListQuerier extends EntListGenerator {
       o: this.offset,
       a: this.isAscending,
     };
-    DBRequestManager.query(this, reqData, function(g, result) {
-      g.entList = result;
-      callback(obj, g.entList, callbackData);
+    DBRequestManager.query(this, reqData, function(lg, result) {
+      lg.entList = result;
+      callback(lg.entList);
     });
   }
 
-  getCatKeys() {
-    // if (!this.entList) {
-    //   return [null];
-    // } else {
-    //   return [{catID: this.catID, catSK: this.catSK}];
-    // }
-    return [{catID: this.catID, catSK: this.catSK}];
+  // getCatKey(callback) waits until the catID is queried for, then calls
+  // callback(catKey), where catKey has the type:
+  // {catID : (num | undef | null), catSK : ({cxtID, defStr} | undef).
+  // If catID is null, it means that it was queried for and was not found.
+  getCatKey(callback) {
+    if (this.catID !== undefined) {
+      callback({catID: this.catID, catSK: this.catSK});
+      return true;
+    }
+    this.catKeyCallback = callback;
+    return false;
   }
 }
 
@@ -162,12 +166,12 @@ export class EntListQuerier extends EntListGenerator {
 // implementing.
 export class EntListCombiner extends EntListGenerator {
   constructor(
-    entListGeneratorArr,
+    listGeneratorArr,
     sort, sortAscending, entListArr, isReadyArr, // optional.
   ) {
     super();
-    this.entListGeneratorArr = entListGeneratorArr ?? [];
-    let entListNum = this.entListGeneratorArr.length;
+    this.listGeneratorArr = listGeneratorArr ?? [];
+    let entListNum = this.listGeneratorArr.length;
     this.entListArr = entListArr ?? new Array(entListNum);
     this.isReadyArr = isReadyArr ?? new Array(entListNum).fill(false);
     this.sort = sort ?? 1;
@@ -179,28 +183,24 @@ export class EntListCombiner extends EntListGenerator {
     throw "EntListCombiner";
   }
 
-  generateEntList(obj, callbackData, callback) {
-    if (!callback) {
-        callback = callbackData;
-        callbackData = undefined;
-    }
+  generateEntList(callback) {
     if (this.entList) {
-      callback(obj, this.entList, callbackData);
+      callback(this.entList);
       return;
     }
-    let thisG = this;
-    this.entListGeneratorArr.forEach(function(val, ind) {
-      val.generateEntList(thisG, ind, function(g, entList, ind) {
-        g.entListArr[ind] = (
-          g.transformEntList(entList, ind) ?? entList
+    let parentLG = this;
+    this.listGeneratorArr.forEach((val, ind) => {
+      val.generateEntList(entList => {
+        parentLG.entListArr[ind] = (
+          parentLG.transformEntList(entList, ind) ?? entList
         );
-        g.isReadyArr[ind] = true;
-        g.combineEntListsIfReady(obj, callbackData, callback);
+        parentLG.isReadyArr[ind] = true;
+        parentLG.combineEntListsIfReady(callback);
       });
     });
   }
 
-  combineEntListsIfReady(obj, callbackData, callback) {
+  combineEntListsIfReady(callback) {
     let isReady = this.isReadyArr.reduce(
       (acc, val) => acc && val, true
     );
@@ -215,11 +215,11 @@ export class EntListCombiner extends EntListGenerator {
         }
       }
       // finally call the callback with the resulting combSet.
-      callback(obj, combList, callbackData);
+      callback(combList);
     }
   }
 
-  transformEntList(entList, gIndex) {
+  transformEntList(entList, lgIndex) {
     // Can be redefined by descendant classes.
     // (transformSet() might also store additional data for combineSets().)
   }
@@ -229,7 +229,7 @@ export class EntListCombiner extends EntListGenerator {
   }
 
   getCatKeys() {
-    let catKeyArrArr = this.entListGeneratorArr.map(
+    let catKeyArrArr = this.listGeneratorArr.map(
       val => val.getCatKeys()
     );
     let catKeyArr = [].concat(...catKeyArrArr);
@@ -249,11 +249,11 @@ export class EntListCombiner extends EntListGenerator {
 // across the sets.
 export class MaxRatingEntListCombiner extends EntListCombiner {
   constructor(
-    entListGeneratorArr,
+    listGeneratorArr,
     sort, sortAscending, entListArr, isReadyArr, // optional.
   ) {
     super(
-      entListGeneratorArr,
+      listGeneratorArr,
       sort, sortAscending, entListArr, isReadyArr,
     );
   }
@@ -299,14 +299,14 @@ export class MaxRatingEntListCombiner extends EntListCombiner {
 
 // PrioritySetCombiner takes an array of SetGenerators and constructs a combined
 // entList by letting each instance get the rating of the first entList in which they
-// appeared in the generated entLists of the entListGeneratorArr.
+// appeared in the generated entLists of the listGeneratorArr.
 export class PriorityEntListCombiner extends EntListCombiner {
   constructor(
-    entListGeneratorArr,
+    listGeneratorArr,
     sort, sortAscending, entListArr, isReadyArr, // optional.
   ) {
     super(
-      entListGeneratorArr,
+      listGeneratorArr,
       sort, sortAscending, entListArr, isReadyArr,
     );
   }
@@ -323,9 +323,9 @@ export class PriorityEntListCombiner extends EntListCombiner {
   //   return ret;
   // }
 
-  transformEntList(entList, gIndex) {
+  transformEntList(entList, lgIndex) {
     return entList.map(function(val) {
-      val[2] = gIndex;
+      val[2] = lgIndex;
       return val;
     });
   }
@@ -341,21 +341,21 @@ export class PriorityEntListCombiner extends EntListCombiner {
     let ret = new Array(concatEntList.length);
     let retLen = 0;
     let currInstID = 0;
-    let row, minGIndex, currGIndex;
+    let row, minLGIndex, currLGIndex;
     concatEntList.forEach(function(val, ind) {
       // if val is the first in a group with the same instID, record its
-      // gIndex and add a copy of val to the return array.
+      // lgIndex and add a copy of val to the return array.
       if (val[1] !== currInstID) {
         currInstID = val[1];
-        minGIndex = val[2];
-        ret[retLen] = (row = [val[0], currInstID, minGIndex]);
+        minLGIndex = val[2];
+        ret[retLen] = (row = [val[0], currInstID, minLGIndex]);
         retLen++;
-      // else compare the val[2] to the previous minGIndex and change the
+      // else compare the val[2] to the previous minLGIndex and change the
       // last row of the return array if it is smaller.
       } else {
-        currGIndex = val[2];
-        if (currGIndex > minGIndex) {
-          row[2] = (minGIndex = currGIndex);
+        currLGIndex = val[2];
+        if (currLGIndex > minLGIndex) {
+          row[2] = (minLGIndex = currLGIndex);
         }
       }
     });
@@ -370,12 +370,12 @@ export class PriorityEntListCombiner extends EntListCombiner {
 // their ratings in each entList (of those in which they appear).
 export class WeightedAverageEntListCombiner extends EntListCombiner {
   constructor(
-    entListGeneratorArr,
+    listGeneratorArr,
     weightArr,
     sort, sortAscending, entListArr, isReadyArr, // optional.
   ) {
     super(
-      entListGeneratorArr,
+      listGeneratorArr,
       sort, sortAscending, entListArr, isReadyArr,
     );
     this.weightArr = weightArr;
@@ -385,8 +385,8 @@ export class WeightedAverageEntListCombiner extends EntListCombiner {
     return "WeightedAverageEntListCombiner";
   }
 
-  transformEntList(entList, gIndex) {
-    let weight = this.weightArr[gIndex];
+  transformEntList(entList, lgIndex) {
+    let weight = this.weightArr[lgIndex];
     return entList.map(function(val) {
       val[2] = parseFloat(weight);
       val[0] = parseInt(val[0]);
@@ -438,7 +438,7 @@ export class SimpleEntListGenerator extends PriorityEntListCombiner {
     isAscending, offset, // optional.
     sort, sortAscending, entListArr, isReadyArr, // optional.
   ) {
-    let entListGeneratorArr = accountManager.queryUserPriorityArr
+    let listGeneratorArr = accountManager.queryUserPriorityArr
       .filter(x => x)
       .map(id => new EntListQuerier(
         catKey,
@@ -447,12 +447,20 @@ export class SimpleEntListGenerator extends PriorityEntListCombiner {
         isAscending, offset,
       ));
     super(
-      entListGeneratorArr,
+      listGeneratorArr,
       sort, sortAscending, entListArr, isReadyArr, // optional.
     );
   }
   
   getType() {
     return "SimpleEntListGenerator";
+  }
+
+  // getCatKey(callback) waits until the catID is queried for, then calls
+  // callback(catKey), where catKey has the type:
+  // {catID : (num | undef | null), catSK : ({cxtID, defStr} | undef).
+  // If catID is null, it means that it was queried for and was not found.
+  getCatKey(callback) {
+    return this.listGeneratorArr[0].getCatKey(callback);
   }
 }
