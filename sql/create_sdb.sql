@@ -42,13 +42,32 @@ DROP TABLE Private_EMails;
 CREATE TABLE SemanticInputs (
     -- User (or bot) who states the statement.
     user_id BIGINT UNSIGNED NOT NULL,
+
+    -- The type of the instances of the category. Note that these types are not
+    -- inherent to the instances themselves, as these are generally overloaded
+    -- with several types. For example, the entity 'WWII' might be
+    -- interpreted as referring to the war itself, or as a subject of history.
+    -- And if we want to categorize 'WWII' as e.g. 'good,' it is important to
+    -- specify whether we mean as a war or as a history subject. If we mean
+    -- the latter, we could then let this inst_type be the id of an entity
+    -- called 'subject' (where 'WWII' would then be the inst_id, and 'good'
+    -- would be the cat_id).
+    inst_type BIGINT UNSIGNED NOT NULL,
+
     -- Category of the statement.
     cat_id BIGINT UNSIGNED NOT NULL,
 
-    /* The input set */
-    -- Given some constants for the above two columns, the "input sets" contain
-    -- pairs of rating values and the IDs of the category instances.
+    -- Rating value of how well the instance fits the category. The first byte
+    -- of the SMALLINT is interpreted as a number between 0 and 10, where 0
+    -- means 'absolutely/perfectly not' and 10 means 'absolutely/perfectly.'
+    -- The last byte can either be used for more precision (in long lists),
+    -- or it can also be used by users to denote a precision/uncertainty,
+    -- although this won't be a thing until some future implementation.
     rat_val SMALLINT UNSIGNED NOT NULL,
+
+    -- The (potential) instance of the category. This is the entity being
+    -- rated (for the category <cat_id>, as an entity of the type <type_id>,
+    -- by the user/bot <user_id>, with a rating value of <rat_val>.)
     inst_id BIGINT UNSIGNED NOT NULL,
 
     -- Resulting semantic input: "User #<user_id> states that entity #<inst_id>
@@ -57,12 +76,13 @@ CREATE TABLE SemanticInputs (
 
     PRIMARY KEY (
         user_id,
+        inst_type,
         cat_id,
         rat_val,
         inst_id
     ),
 
-    UNIQUE INDEX (user_id, cat_id, inst_id)
+    UNIQUE INDEX (user_id, inst_type, cat_id, inst_id)
 );
 -- TODO: Compress this table and its sec. index, as well as some other tables
 -- and sec. indexes below. (But compression is a must for this table.)
@@ -72,9 +92,10 @@ CREATE TABLE Private_RecentInputs (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     user_id BIGINT UNSIGNED NOT NULL,
+    inst_type BIGINT UNSIGNED NOT NULL,
     cat_id BIGINT UNSIGNED NOT NULL,
     inst_id BIGINT UNSIGNED NOT NULL,
-    rat_val SMALLINT UNSIGNED,
+    rat_val SMALLINT UNSIGNED NOT NULL,
 
     live_at_time BIGINT UNSIGNED NOT NULL
 );
@@ -88,12 +109,13 @@ CREATE TABLE RecordedInputs (
     changed_at_time BIGINT UNSIGNED NOT NULL,
 
     user_id BIGINT UNSIGNED NOT NULL,
+    inst_type BIGINT UNSIGNED NOT NULL,
     cat_id BIGINT UNSIGNED NOT NULL,
     inst_id BIGINT UNSIGNED NOT NULL,
 
-    rat_val SMALLINT UNSIGNED,
+    rat_val SMALLINT UNSIGNED NOT NULL,
 
-    PRIMARY KEY (changed_at_time, user_id, cat_id, inst_id)
+    PRIMARY KEY (changed_at_time, user_id, inst_type, cat_id, inst_id)
 
     -- TODO: Consider creating this index as well:
     -- UNIQUE INDEX (user_id, cat_id, inst_id, changed_at_time)
@@ -105,6 +127,7 @@ CREATE TABLE RecordedInputs (
 CREATE TABLE EntityIndexKeys (
     -- User (or bot) who governs the index.
     user_id BIGINT UNSIGNED NOT NULL,
+
     -- Index entity which defines the restrictions on the entity keys.
     idx_id BIGINT UNSIGNED NOT NULL,
 
@@ -112,22 +135,15 @@ CREATE TABLE EntityIndexKeys (
     -- Given some constants for the above two columns, the "entity indexes"
     -- contain the "entity keys," which are each just the secondary index of an
     -- entity.
-    ent_type CHAR(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-    ent_cxt_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
-    ent_def_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    ent_def VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
     PRIMARY KEY (
         user_id,
         idx_id,
-        ent_type,
-        ent_cxt_id,
-        ent_def_str
+        ent_def
     )
 );
 -- (Also needs compressing.)
--- This implementation is out-dated, and I actually don't think Indexes will be
--- needed in the near future of this system. But I'll just keep the room for
--- them for now.
 
 
 
@@ -137,43 +153,23 @@ CREATE TABLE Entities (
     -- Entity ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- Type of the entity. This can for instance be: Type, Category, Template,
-    -- Index, User, Text data, Binary data, Aggregation bot, as well as any
-    -- user-submitted type.
-    type_id BIGINT UNSIGNED NOT NULL,
+    -- Definition (i.e. the defining string) of the entity. TODO: elaborate.
+    ent_def VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
-    -- ID of the entity's context entity. This will typically be that of a
-    -- Template entity (i.e. with the type 'Template'), in which case it defines
-    -- how the last field, the 'defining string,' is to be interpreted.
-    -- For Template entities themselves, however (i.e. when type_id is that of
-    -- the 'Template' type entity), the cxt_id is the ID of the template's
-    -- intended type. (See initial_inserts.sql for examples.)
-    cxt_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    -- Defining string of the entity. This can be a lexical item, understood in
-    -- the context of the type alone if cxt_id is null. If the cxt_id is the ID
-    -- of a Template entity, on the other hand, the def_str can be a series of
-    -- inputs separated by '|' of either IDs of the form "#<number>" (e.g.
-    -- "#100") or any other string (e.g. "Physics"). These inputs is then
-    -- plugged into the placeholders of the template in order of appearance and
-    -- the resulting string is then interpreted in the context of the type to
-    -- yield the definition of the entity.
-    def_str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-
-    UNIQUE INDEX (type_id, cxt_id, def_str)
+    UNIQUE INDEX (ent_def)
 );
 
-INSERT INTO Entities (type_id, cxt_id, def_str, id)
-VALUES
-    (1, 0, "Type", 1), -- The type of this "Type" entity is itself.
-    (1, 0, "Category", 2), -- This is then the "Category" type entity...
-    (1, 0, "Template", 3), -- ... and so on.
-    (1, 0, "Index", 4),
-    (1, 0, "User", 5),
-    (1, 0, "Aggregation bot", 6),
-    (1, 0, "Text data", 7),
-    (1, 0, "Binary data", 8),
-    (5, 0, "initial_user", 9); -- This is the first user.
+-- INSERT INTO Entities (type_id, cxt_id, def_str, id)
+-- VALUES
+--     (1, 0, "Type", 1), -- The type of this "Type" entity is itself.
+--     (1, 0, "Category", 2), -- This is then the "Category" type entity...
+--     (1, 0, "Template", 3), -- ... and so on.
+--     (1, 0, "Index", 4),
+--     (1, 0, "User", 5),
+--     (1, 0, "Aggregation bot", 6),
+--     (1, 0, "Text data", 7),
+--     (1, 0, "Binary data", 8),
+--     (5, 0, "initial_user", 9); -- This is the first user.
 
 
 

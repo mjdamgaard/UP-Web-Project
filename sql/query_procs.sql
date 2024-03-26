@@ -1,7 +1,7 @@
 
 SELECT "Query procedures";
 
-DROP PROCEDURE selectInputSet;
+DROP PROCEDURE selectRatedList;
 DROP PROCEDURE selectRating;
 
 DROP PROCEDURE selectEntity;
@@ -23,8 +23,9 @@ DROP PROCEDURE selectEventData;
 
 
 DELIMITER //
-CREATE PROCEDURE selectInputSet (
+CREATE PROCEDURE selectRatedList (
     IN userID BIGINT UNSIGNED,
+    IN instType BIGINT UNSIGNED,
     IN catID BIGINT UNSIGNED,
     IN ratingRangeLo SMALLINT UNSIGNED,
     IN ratingRangeHi SMALLINT UNSIGNED,
@@ -39,6 +40,7 @@ BEGIN
     FROM SemanticInputs
     WHERE (
         user_id = userID AND
+        inst_type = instType AND
         cat_id = catID AND
         (ratingRangeLo = 0 OR rat_val >= ratingRangeLo) AND
         (ratingRangeHi = 0 OR rat_val <= ratingRangeHi)
@@ -57,6 +59,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectRating (
     IN userID BIGINT UNSIGNED,
+    IN instType BIGINT UNSIGNED,
     IN catID BIGINT UNSIGNED,
     IN instID BIGINT UNSIGNED
 )
@@ -65,6 +68,7 @@ BEGIN
     FROM SemanticInputs
     WHERE (
         user_id = userID AND
+        inst_type = instType AND
         cat_id = catID AND
         inst_id = instID
     );
@@ -101,9 +105,7 @@ CREATE PROCEDURE selectEntity (
 )
 BEGIN
     SELECT
-        type_id AS typeID,
-        cxt_id AS cxtID,
-        def_str AS defStr
+        ent_def AS def
     FROM Entities
     WHERE id = entID;
 END //
@@ -112,17 +114,13 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectEntityID (
-    IN typeID BIGINT UNSIGNED,
-    IN cxtID BIGINT UNSIGNED,
-    IN defStr VARCHAR(255)
+    IN def VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
 BEGIN
     SELECT id AS entID
     FROM Entities
     WHERE (
-        type_id = typeID AND
-        cxt_id = cxtID AND
-        def_str = defStr
+        ent_def = def
     );
 END //
 DELIMITER ;

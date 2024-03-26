@@ -61,9 +61,8 @@ export const ListGeneratorPage = ({lg}) => {
 export const ListGeneratorSmallMenu = ({lg}) => {
   return (
     <span>
-      <ListGeneratorLink lg={lg} />
-      <RelevantCategoriesDropdownMenuButton lg={lg} />
       <AddCombinerButton lg={lg} />
+      <ListGeneratorLink lg={lg} />
     </span>
   );
 };

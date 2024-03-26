@@ -22,16 +22,16 @@ DELETE FROM Private_EMails;
 -- SET FOREIGN_KEY_CHECKS = 0;
 
 /* From create_open_sdb.sql */
-INSERT INTO Entities (type_id, cxt_id, def_str, id)
+INSERT INTO Entities (ent_def, id)
 VALUES
-    (1, 0, "Type", 1), -- The type of this "Type" entity is itself.
-    (1, 0, "Category", 2), -- This is then the "Category" type entity...
-    (1, 0, "Template", 3), -- ... and so on.
-    (1, 0, "Index", 4),
-    (1, 0, "User", 5),
-    (1, 0, "Aggregation bot", 6),
-    (1, 0, "Text data", 7),
-    (1, 0, "Binary data", 8),
+    ("type", 1), -- The type of this "Type" entity is itself.
+    ("category", 2), -- This is then the "Category" type entity...
+    ("template", 3), -- ... and so on.
+    ("index", 4),
+    ("User", 5),
+    ("Aggregation bot", 6),
+    ("Text data", 7),
+    ("Binary data", 8),
     (5, 0, "initial_user", 9); -- This is the first user.
 INSERT INTO Users (username, id)
 VALUES ("initial_user", 9);
@@ -40,17 +40,17 @@ VALUES ("initial_user", 9);
 INSERT INTO Entities (type_id, cxt_id, def_str, id)
 VALUES
     -- Fundamental categories:
-    (2, 0, "Entities", 10),
-    (2, 0, "Types", 11),
-    (2, 0, "Categories", 12),
-    (2, 0, "Templates", 13),
-    (2, 0, "Indexes", 14),
-    (2, 0, "Users", 15),
-    (2, 0, "Aggregation bots", 16),
-    (2, 0, "Texts", 17),
-    (2, 0, "Binaries", 18),
+    ("Entities", 10),
+    ("Types", 11),
+    ("Categories", 12),
+    ("Templates", 13),
+    ("Indexes", 14),
+    ("Users", 15),
+    ("Aggregation bots", 16),
+    ("Texts", 17),
+    ("Binaries", 18),
     -- Property type:
-    (1, 0, "Property", 19),
+    ("Property", 19),
     -- Property template:
     (3, 19,
       "{<Title>}, <Type>, one-to-<Quantity word (e.g. 'one,' 'few,' or 'many')>",
@@ -63,7 +63,7 @@ VALUES
     -- -- Adjective subcategory template:
     -- (3, 2, "<Adjective phrase> <Category>", 23);
 
-    (1, 0, "Aggregate category", 23);
+    ("Aggregate category", 23);
 
 
 -- SELECT SLEEP(1);
