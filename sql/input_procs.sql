@@ -4,7 +4,7 @@ SELECT "Input procedures";
 DROP PROCEDURE insertOrUpdateRating;
 DROP PROCEDURE private_insertOrUpdateRatingAndRunBots;
 
-DROP PROCEDURE insertOrFindEntity;
+DROP PROCEDURE insertOrFindString;
 DROP PROCEDURE insertText;
 DROP PROCEDURE insertBinary;
 
@@ -14,9 +14,9 @@ DROP PROCEDURE insertBinary;
 DELIMITER //
 CREATE PROCEDURE insertOrUpdateRating (
     IN userID BIGINT UNSIGNED,
-    IN instType BIGINT UNSIGNED,
-    IN catID BIGINT UNSIGNED,
-    IN instID BIGINT UNSIGNED,
+    IN objTypeID BIGINT UNSIGNED,
+    IN tagID BIGINT UNSIGNED,
+    IN objStrID BIGINT UNSIGNED,
     IN ratVal SMALLINT UNSIGNED,
     IN liveAtTime BIGINT UNSIGNED
 )
@@ -27,28 +27,28 @@ BEGIN
     IF (liveAtTime > 0) THEN
         INSERT INTO Private_RecentInputs (
             user_id,
-            inst_type,
-            cat_id,
+            obj_type_id,
+            tag_id,
             rat_val,
-            inst_id,
+            obj_str_id,
             live_at_time
         )
         VALUES (
             userID,
-            instType,
-            catID,
+            objTypeID,
+            tagID,
             ratVal,
-            instID,
+            objStrID,
             liveAtTime
         );
     ELSE
         CALL private_insertOrUpdateRatingAndRunBots (
-            userID, instType, catID, instID, ratVal
+            userID, objTypeID, tagID, objStrID, ratVal
         );
     END IF;
     SET exitCode = 0; -- Rating insert/update is done or is pending.
 
-    SELECT instID AS outID, exitCode;
+    SELECT objStrID AS outID, exitCode;
 END //
 DELIMITER ;
 
@@ -58,9 +58,9 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE private_insertOrUpdateRatingAndRunBots (
     IN userID BIGINT UNSIGNED,
-    IN instType BIGINT UNSIGNED,
-    IN catID BIGINT UNSIGNED,
-    IN instID BIGINT UNSIGNED,
+    IN objTypeID BIGINT UNSIGNED,
+    IN tagID BIGINT UNSIGNED,
+    IN objStrID BIGINT UNSIGNED,
     IN ratVal SMALLINT UNSIGNED
 )
 BEGIN
@@ -76,8 +76,8 @@ BEGIN
     FROM SemanticInputs
     WHERE (
         user_id = userID AND
-        cat_id = catID AND
-        inst_id = instID
+        tag_id = tagID AND
+        obj_str_id = objStrID
     );
 
     -- TODO: Fix and in-comment again:
@@ -87,12 +87,12 @@ BEGIN
     -- WHERE (
     --     type_id = 75 AND
     --     cxt_id = 76 AND
-    --     def_str = CONCAT("#", instID, "|#", catID)
+    --     def_str = CONCAT("#", objStrID, "|#", tagID)
     -- );
     -- -- If it does not exist, insert it and get the ID.
     -- IF (stmtID IS NULL) THEN
     --     INSERT IGNORE INTO Entities (type_id, cxt_id, def_str)
-    --     VALUES (75, 76, CONCAT("#", instID, "|#", catID));
+    --     VALUES (75, 76, CONCAT("#", objStrID, "|#", tagID));
     --     SELECT LAST_INSERT_ID() INTO stmtID;
     --     -- If a race condition means that the insert is ignored and stmtID
     --     -- is null, select the now added (by another process) Statement.
@@ -102,7 +102,7 @@ BEGIN
     --         WHERE (
     --             type_id = 75 AND
     --             cxt_id = 76 AND
-    --             def_str = CONCAT("#", instID, "|#", catID)
+    --             def_str = CONCAT("#", objStrID, "|#", tagID)
     --         );
     --     END IF;
     --     -- TODO: It seems that there still is a risk that stmtID is NULL at
@@ -118,25 +118,25 @@ BEGIN
         DELETE FROM SemanticInputs
         WHERE (
             user_id = userID AND
-            inst_type = instType AND
-            cat_id = catID AND
-            inst_id = instID
+            obj_type_id = objTypeID AND
+            tag_id = tagID AND
+            obj_str_id = objStrID
         );
     -- Else update the corresponding SemInput with the new rat_val.
     ELSE
         REPLACE INTO SemanticInputs (
             user_id,
-            inst_type,
-            cat_id,
+            obj_type_id,
+            tag_id,
             rat_val,
-            inst_id
+            obj_str_id
         )
         VALUES (
             userID,
-            instType,
-            catID,
+            objTypeID,
+            tagID,
             ratVal,
-            instID
+            objStrID
         );
     END IF;
 
@@ -146,26 +146,26 @@ BEGIN
     REPLACE INTO RecordedInputs (
         changed_at_time,
         user_id,
-        inst_type,
-        cat_id,
-        inst_id,
+        obj_type_id,
+        tag_id,
+        obj_str_id,
         rat_val
     )
     VALUES (
         now,
         userID,
-        instType,
-        catID,
-        instID,
+        objTypeID,
+        tagID,
+        objStrID,
         ratVal
     );
 
 
     /* Run procedures to update the various aggregation bots */
 
-    CALL updateStatementUserRaterBot (userID, instType, stmtID, ratVal);
+    CALL updateStatementUserRaterBot (userID, objTypeID, stmtID, ratVal);
     CALL updateMeanBots (
-        userID, instType, catID, instID, ratVal, prevRatVal, stmtID
+        userID, objTypeID, tagID, objStrID, ratVal, prevRatVal, stmtID
     );
 
 END //
@@ -180,21 +180,22 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE insertOrFindEntity (
+CREATE PROCEDURE insertOrFindString (
     IN userID BIGINT UNSIGNED,
     IN recordCreator BOOL,
-    IN def VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
+    IN string VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
 BEGIN proc: BEGIN
-    DECLARE outID, typeTypeID, cxtTypeID, cxtCxtID BIGINT UNSIGNED;
+    DECLARE outID BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
-    DECLARE userCreationsCatID BIGINT UNSIGNED;
+    DECLARE userCreationsCatID BIGINT UNSIGNED; -- TODO: I might have deleted
+    -- some code I need to reproduce..
 
     -- Check if entity already exists and return its ID as outID if so.
     SELECT id INTO outID
     FROM Entities
     WHERE (
-        ent_def = def
+        str = string
     );
     IF (outID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
@@ -202,14 +203,14 @@ BEGIN proc: BEGIN
         LEAVE proc;
     END IF;
 
-    INSERT IGNORE INTO Entities (ent_def)
-    VALUES (def);
+    INSERT IGNORE INTO Entities (str)
+    VALUES (string);
     SELECT LAST_INSERT_ID() INTO outID;
     IF (outID IS NULL) THEN
         SELECT id INTO outID
         FROM Entities
         WHERE (
-            ent_def = def
+            str = string
         );
         SET exitCode = 1; -- find.
     ELSE

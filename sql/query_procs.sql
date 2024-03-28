@@ -4,8 +4,8 @@ SELECT "Query procedures";
 DROP PROCEDURE selectRatedList;
 DROP PROCEDURE selectRating;
 
-DROP PROCEDURE selectEntity;
-DROP PROCEDURE selectEntityID;
+DROP PROCEDURE selectString;
+DROP PROCEDURE selectStringID;
 
 DROP PROCEDURE selectUsername;
 DROP PROCEDURE selectUserInfo;
@@ -25,8 +25,8 @@ DROP PROCEDURE selectEventData;
 DELIMITER //
 CREATE PROCEDURE selectRatedList (
     IN userID BIGINT UNSIGNED,
-    IN instType BIGINT UNSIGNED,
-    IN catID BIGINT UNSIGNED,
+    IN objTypeID BIGINT UNSIGNED,
+    IN tagID BIGINT UNSIGNED,
     IN ratingRangeLo SMALLINT UNSIGNED,
     IN ratingRangeHi SMALLINT UNSIGNED,
     IN maxNum INT UNSIGNED,
@@ -36,20 +36,20 @@ CREATE PROCEDURE selectRatedList (
 BEGIN
     SELECT
         rat_val AS ratVal,
-        inst_id AS instID
+        obj_str_id AS objStrID
     FROM SemanticInputs
     WHERE (
         user_id = userID AND
-        inst_type = instType AND
-        cat_id = catID AND
+        obj_type_id = objTypeID AND
+        tag_id = tagID AND
         (ratingRangeLo = 0 OR rat_val >= ratingRangeLo) AND
         (ratingRangeHi = 0 OR rat_val <= ratingRangeHi)
     )
     ORDER BY
         CASE WHEN isAscOrder THEN rat_val END ASC,
         CASE WHEN NOT isAscOrder THEN rat_val END DESC,
-        CASE WHEN isAscOrder THEN inst_id END ASC,
-        CASE WHEN NOT isAscOrder THEN inst_id END DESC
+        CASE WHEN isAscOrder THEN obj_str_id END ASC,
+        CASE WHEN NOT isAscOrder THEN obj_str_id END DESC
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
@@ -59,18 +59,18 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectRating (
     IN userID BIGINT UNSIGNED,
-    IN instType BIGINT UNSIGNED,
-    IN catID BIGINT UNSIGNED,
-    IN instID BIGINT UNSIGNED
+    IN objTypeID BIGINT UNSIGNED,
+    IN tagID BIGINT UNSIGNED,
+    IN objStrID BIGINT UNSIGNED
 )
 BEGIN
     SELECT rat_val AS ratVal
     FROM SemanticInputs
     WHERE (
         user_id = userID AND
-        inst_type = instType AND
-        cat_id = catID AND
-        inst_id = instID
+        obj_type_id = objTypeID AND
+        tag_id = tagID AND
+        obj_str_id = objStrID
     );
 END //
 DELIMITER ;
@@ -85,8 +85,8 @@ DELIMITER ;
 -- BEGIN
 --     SELECT
 --         user_id AS userID,
---         cat_id AS catID,
---         inst_id AS instID,
+--         tag_id AS tagID,
+--         obj_str_id AS objStrID,
 --         rat_val AS ratVal,
 --         changed_at AS changedAt
 --     FROM RecentInputs
@@ -100,27 +100,27 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectEntity (
-    IN entID BIGINT UNSIGNED
+CREATE PROCEDURE selectString (
+    IN strID BIGINT UNSIGNED
 )
 BEGIN
     SELECT
-        ent_def AS def
+        str AS str
     FROM Entities
-    WHERE id = entID;
+    WHERE id = strID;
 END //
 DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectEntityID (
-    IN def VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
+CREATE PROCEDURE selectStringID (
+    IN string VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
 BEGIN
-    SELECT id AS entID
+    SELECT id AS strID
     FROM Entities
     WHERE (
-        ent_def = def
+        str = string
     );
 END //
 DELIMITER ;
@@ -172,7 +172,7 @@ CREATE PROCEDURE selectText (
     IN textID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT str AS textStr
+    SELECT txt AS text
     FROM Texts
     WHERE id = textID;
 END //
@@ -186,7 +186,7 @@ CREATE PROCEDURE selectTextSubstring (
     IN start INT
 )
 BEGIN
-    SELECT SUBSTRING(str, start, length) AS textStr
+    SELECT SUBSTRING(txt, start, length) AS text
     FROM Texts
     WHERE id = textID;
 END //
@@ -224,12 +224,12 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE private_selectCreator (
-    IN entID BIGINT UNSIGNED
+    IN strID BIGINT UNSIGNED
 )
 BEGIN
     SELECT user_id AS userID
     FROM Private_Creators
-    WHERE ent_id = entID;
+    WHERE ent_id = strID;
 END //
 DELIMITER ;
 
@@ -242,7 +242,7 @@ CREATE PROCEDURE private_selectCreations (
     IN isAscOrder BOOL
 )
 BEGIN
-    SELECT ent_id AS entID
+    SELECT ent_id AS strID
     FROM Private_Creators
     WHERE user_id = userID
     ORDER BY

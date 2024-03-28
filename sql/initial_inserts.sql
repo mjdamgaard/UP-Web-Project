@@ -10,7 +10,7 @@ DELETE FROM EntityIndexKeys;
 
 DELETE FROM Entities;
 ALTER TABLE Entities AUTO_INCREMENT=1;
-DELETE FROM Users;
+-- DELETE FROM Users;
 DELETE FROM Texts;
 DELETE FROM Binaries;
 
@@ -22,48 +22,57 @@ DELETE FROM Private_EMails;
 -- SET FOREIGN_KEY_CHECKS = 0;
 
 /* From create_open_sdb.sql */
-INSERT INTO Entities (ent_def, id)
+INSERT INTO Strings (str, id)
 VALUES
-    ("type", 1), -- The type of this "Type" entity is itself.
-    ("category", 2), -- This is then the "Category" type entity...
-    ("template", 3), -- ... and so on.
-    ("index", 4),
-    ("User", 5),
-    ("Aggregation bot", 6),
-    ("Text data", 7),
-    ("Binary data", 8),
-    (5, 0, "initial_user", 9); -- This is the first user.
-INSERT INTO Users (username, id)
-VALUES ("initial_user", 9);
+    -- Most fundamental three types:
+    ("thing", 1),
+    ("type", 2),
+    ("tag", 3),
+    -- Types of non-string entities of the database. (These names are meant
+    -- to not be too simple, except 'user,' as this shouldn't conflict with
+    -- any real-world, non-meta, custom types, that the users might wish to
+    -- define and use, anyway.) (And the same can be said for 'type' and
+    -- 'tag' above.) ..Oh wait, 'user' might be usable to refer to users of
+    -- other sites.. Hm.. ..Hm, how about 'local user'.. ..Hm, or else the
+    -- custom type(s) of internet users would just have to be called that:
+    -- internet user.. ..Yeah.. ..Hm, but let me call it 'user of this
+    -- network,' still..
+    ("string template", 4), -- reserved letter: 't'.
+    ("user of this network", 5),  -- reserved letter: 'u'.
+    ("aggregation bot", 6), -- reserved letter: 'a'.
+    ("text data", 7), -- reserved letter: 'x'.
+    ("binary data", 8); -- reserved letter: 'b'.
+    ("string index", 9), -- reserved letter: 'i'.
+    -- The reserved letters here are when typing out placeholders for string
+    -- templates, or references for link substitutions (string substitutions
+    -- don't need types). These are however converted to the IDs before the
+    -- string is uploaded. (See 23-xx note collection.tex currently for more
+    -- info. (28.03.24))
 
-/* Some more useful types and some useful templates and categories */
-INSERT INTO Entities (type_id, cxt_id, def_str, id)
+
+-- INSERT INTO Users (username, id)
+-- VALUES ("initial_user", 1);
+
+
+-- We skip some numbers here, such that it is easier to insert other
+-- fundamental types (or other objects) in the future, or to remap some
+-- existing object strings to a low number, if that becomes a desire.
+
+INSERT INTO Strings (str, id)
 VALUES
-    -- Fundamental categories:
-    ("Entities", 10),
-    ("Types", 11),
-    ("Categories", 12),
-    ("Templates", 13),
-    ("Indexes", 14),
-    ("Users", 15),
-    ("Aggregation bots", 16),
-    ("Texts", 17),
-    ("Binaries", 18),
-    -- Property type:
-    ("Property", 19),
-    -- Property template:
-    (3, 19,
-      "{<Title>}, <Type>, one-to-<Quantity word (e.g. 'one,' 'few,' or 'many')>",
-      20
-    ),
-    -- Property category template:
-    (3, 2, "<Property> of <Entity>", 21),
-    -- Subcategory template:
-    (3, 2, "{<Title>} (<Supercategory>)", 22),
-    -- -- Adjective subcategory template:
-    -- (3, 2, "<Adjective phrase> <Category>", 23);
+    -- Some fundamental templates, plus some more types, such as 'property.'
+    ("<1>, <1>", 50),
+    ("property", 51),
+    ("<51> of <>", 52);
+    -- ("aggregate category", 53);
 
-    ("Aggregate category", 23);
+
+-- We also skip some numbers here, for the same reason.
+
+INSERT INTO Strings (id, str)
+VALUES
+    (1000, "example of a not very useful entity|1,1.3,1.5,1.7,2.2,3,3.3,4.2,4.4,5.2,5.4,5.6,6.2,6.4,6.6");
+
 
 
 -- SELECT SLEEP(1);
