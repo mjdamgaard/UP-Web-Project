@@ -49,7 +49,7 @@
     -- And if we want to categorize 'WWII' as e.g. 'good,' it is important to
     -- specify whether we mean as a war or as a history subject. If we mean
     -- the latter, we could then let this obj_type_id be the id of an entity
-    -- called 'subject' (where 'WWII' would then be the obj_str_id, and 'good'
+    -- called 'subject' (where 'WWII' would then be the obj_def_id, and 'good'
     -- would be the cat_id). 
 
 
@@ -80,10 +80,10 @@ CREATE TABLE SemanticInputs (
     -- consider the object ('war', 'WWII'), you might not necessarily think
     -- that WWII is good as a war. This is why the type is important when
     -- tagging something, as it provides necessary context for the statement. 
-    obj_str_id BIGINT UNSIGNED NOT NULL,
+    obj_def_id BIGINT UNSIGNED NOT NULL,
 
     -- Resulting semantic input: "User #<user_id> states that object 
-    -- (#<obj_type_id>, #<obj_str_id>) fits the tag #<tag_id> on a scale
+    -- (#<obj_type_id>, #<obj_def_id>) fits the tag #<tag_id> on a scale
     -- from 0 to 10 (with 5 being neutral) by <rat_val> / 6553.5."
 
     PRIMARY KEY (
@@ -91,10 +91,10 @@ CREATE TABLE SemanticInputs (
         obj_type_id,
         tag_id,
         rat_val,
-        obj_str_id
+        obj_def_id
     ),
 
-    UNIQUE INDEX (user_id, obj_type_id, tag_id, obj_str_id)
+    UNIQUE INDEX (user_id, obj_type_id, tag_id, obj_def_id)
 );
 -- TODO: Compress this table and its sec. index, as well as some other tables
 -- and sec. indexes below. (But compression is a must for this table.)
@@ -106,7 +106,7 @@ CREATE TABLE Private_RecentInputs (
     user_id BIGINT UNSIGNED NOT NULL,
     obj_type_id BIGINT UNSIGNED NOT NULL,
     tag_id BIGINT UNSIGNED NOT NULL,
-    obj_str_id BIGINT UNSIGNED NOT NULL,
+    obj_def_id BIGINT UNSIGNED NOT NULL,
     rat_val SMALLINT UNSIGNED NOT NULL,
 
     live_at_time BIGINT UNSIGNED NOT NULL
@@ -123,14 +123,14 @@ CREATE TABLE RecordedInputs (
     user_id BIGINT UNSIGNED NOT NULL,
     obj_type_id BIGINT UNSIGNED NOT NULL,
     tag_id BIGINT UNSIGNED NOT NULL,
-    obj_str_id BIGINT UNSIGNED NOT NULL,
+    obj_def_id BIGINT UNSIGNED NOT NULL,
 
     rat_val SMALLINT UNSIGNED NOT NULL,
 
-    PRIMARY KEY (changed_at_time, user_id, obj_type_id, tag_id, obj_str_id)
+    PRIMARY KEY (changed_at_time, user_id, obj_type_id, tag_id, obj_def_id)
 
     -- TODO: Consider creating this index as well:
-    -- UNIQUE INDEX (user_id, tag_id, obj_str_id, changed_at_time)
+    -- UNIQUE INDEX (user_id, tag_id, obj_def_id, changed_at_time)
 );
 
 
@@ -242,10 +242,11 @@ CREATE TABLE Binaries (
 /* Ancillary data for aggregation bots */
 
 CREATE TABLE BotData (
-    -- Definition text which defines what the data means.
-    def_id BIGINT UNSIGNED NOT NULL,
-    -- Object which the data is about.
-    obj_id BIGINT UNSIGNED NOT NULL, -- TODO: Change and fix.
+    -- Bot that uses this data.
+    bot_id BIGINT UNSIGNED NOT NULL,
+    -- Object definition of the object which the data is about.
+    obj_def_id BIGINT UNSIGNED NOT NULL,
+
     -- Data.
     data_1 BIGINT UNSIGNED,
     data_2 BIGINT UNSIGNED,
@@ -253,8 +254,8 @@ CREATE TABLE BotData (
     data_4 BIGINT UNSIGNED,
 
     PRIMARY KEY (
-        def_id,
-        obj_id
+        bot_id,
+        obj_def_id
     )
 );
 -- TODO: Compress.

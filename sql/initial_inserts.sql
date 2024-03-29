@@ -52,8 +52,9 @@ VALUES
     ("user of this network|4", 5),  -- reserved letter: 'u'.
     ("bot for aggregation|3", 6), -- reserved letter: 'u'. (also a "user")
     ("text (internally stored)|4", 7), -- reserved letter: 'x'.
-    ("binary (internally stored)|6", 8); -- reserved letter: 'b'.
+    ("binary (internally stored)|6", 8), -- reserved letter: 'b'.
     ("index of object strings|5", 9), -- reserved letter: 'i'.
+    ("user/bot of this network|8", 10); 
     -- The reserved letters here are when typing out placeholders for string
     -- templates, or references for link substitutions (string substitutions
     -- don't need types). These are however converted to the IDs before the
@@ -81,13 +82,17 @@ INSERT INTO Strings (str, id)
 VALUES
     -- Some fundamental templates, plus some more types, such as 'property.'
     ("property", 40),
-    ("<property> of <something>", 41);
+    ("<property> of <any>", 41);
+    ("statement", 42),
+    ("<tag> fits <any>", 43);
     -- ("aggregate category", 53);
 
 INSERT INTO Users (str, id)
 VALUES
     -- Some fundamental aggregation bots.
-    ("creator_rater_bot", 60);
+    ("creator_rater_bot", 60),
+    ("statement_user_rater_bot", 61),
+    ("mean_with_offset_3_bot", 62);
 
 -- We also skip some numbers here, for the same reason.
 

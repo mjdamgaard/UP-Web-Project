@@ -40,7 +40,7 @@ BEGIN proc: BEGIN
         obj_type_id,
         tag_id,
         rat_val,
-        obj_str_id
+        obj_def_id
     )
     VALUES (
         60, -- ID of the 'creator_rater_bot.''

@@ -36,7 +36,7 @@ CREATE PROCEDURE selectRatedList (
 BEGIN
     SELECT
         rat_val AS ratVal,
-        obj_str_id AS objStrID
+        obj_def_id AS objDefID
     FROM SemanticInputs
     WHERE (
         user_id = userID AND
@@ -48,8 +48,8 @@ BEGIN
     ORDER BY
         CASE WHEN isAscOrder THEN rat_val END ASC,
         CASE WHEN NOT isAscOrder THEN rat_val END DESC,
-        CASE WHEN isAscOrder THEN obj_str_id END ASC,
-        CASE WHEN NOT isAscOrder THEN obj_str_id END DESC
+        CASE WHEN isAscOrder THEN obj_def_id END ASC,
+        CASE WHEN NOT isAscOrder THEN obj_def_id END DESC
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
@@ -61,7 +61,7 @@ CREATE PROCEDURE selectRating (
     IN userID BIGINT UNSIGNED,
     IN objTypeID BIGINT UNSIGNED,
     IN tagID BIGINT UNSIGNED,
-    IN objStrID BIGINT UNSIGNED
+    IN objDefID BIGINT UNSIGNED
 )
 BEGIN
     SELECT rat_val AS ratVal
@@ -70,7 +70,7 @@ BEGIN
         user_id = userID AND
         obj_type_id = objTypeID AND
         tag_id = tagID AND
-        obj_str_id = objStrID
+        obj_def_id = objDefID
     );
 END //
 DELIMITER ;
@@ -86,7 +86,7 @@ DELIMITER ;
 --     SELECT
 --         user_id AS userID,
 --         tag_id AS tagID,
---         obj_str_id AS objStrID,
+--         obj_def_id AS objDefID,
 --         rat_val AS ratVal,
 --         changed_at AS changedAt
 --     FROM RecentInputs
@@ -134,7 +134,7 @@ CREATE PROCEDURE selectUsername (
 )
 BEGIN
     SELECT username AS username
-    FROM Users
+    FROM UsersAndBots
     WHERE id = userID;
 END //
 DELIMITER ;
@@ -148,7 +148,7 @@ BEGIN
     SELECT
         username AS username,
         public_keys_for_authentication AS publicKeys
-    FROM Users
+    FROM UsersAndBots
     WHERE id = userID;
 END //
 DELIMITER ;
@@ -160,7 +160,7 @@ CREATE PROCEDURE selectUserID (
 )
 BEGIN
     SELECT id AS userID
-    FROM Users
+    FROM UsersAndBots
     WHERE username = uName;
 END //
 DELIMITER ;
