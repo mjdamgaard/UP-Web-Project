@@ -33,7 +33,7 @@ BEGIN proc: BEGIN
     DECLARE accountNum TINYINT UNSIGNED;
 
     SELECT id INTO outID
-    FROM Users
+    FROM UsersAndBots
     WHERE username = uName
     FOR UPDATE;
     IF (outID IS NOT NULL) THEN
@@ -53,11 +53,9 @@ BEGIN proc: BEGIN
         LEAVE proc;
     END IF;
 
-    INSERT INTO Entities (type_id, cxt_id, def_str)
-    VALUES (5, 0, uName);
+    INSERT INTO UsersAndBots (username)
+    VALUES (uName);
     SELECT LAST_INSERT_ID() INTO outID;
-    INSERT INTO Users (id, username)
-    VALUES (outID, uName);
 
     INSERT INTO Private_EMails
         (e_mail_address, number_of_accounts, account_1_user_id)

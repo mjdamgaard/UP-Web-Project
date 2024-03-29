@@ -10,7 +10,7 @@
 -- DROP TABLE Strings;
 
 -- /* Data */
--- DROP TABLE Users;
+-- DROP TABLE UsersAndBots;
 -- DROP TABLE Texts;
 -- DROP TABLE Binaries;
 
@@ -191,9 +191,9 @@ VALUES
 
 
 
-CREATE TABLE Users (
+CREATE TABLE UsersAndBots (
     -- User ID.
-    id BIGINT UNSIGNED PRIMARY KEY,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     username VARCHAR(50) UNIQUE NOT NULL,
     -- TODO: Consider adding more restrictions.
@@ -207,14 +207,21 @@ CREATE TABLE Users (
 
 );
 
-INSERT INTO Users (username, id)
-VALUES ("initial_user", 1);
 
+-- CREATE TABLE AggregationBots (
+--     -- User ID.
+--     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+--     bot_name VARCHAR(50) UNIQUE NOT NULL,
+--     -- TODO: Consider adding more restrictions.
+
+--     public_keys_for_authentication TEXT
+-- );
 
 
 CREATE TABLE Texts (
     /* Text ID */
-    id BIGINT UNSIGNED PRIMARY KEY,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     /* Data */
     txt TEXT NOT NULL
@@ -222,7 +229,7 @@ CREATE TABLE Texts (
 
 CREATE TABLE Binaries (
     /* Binary string ID */
-    id BIGINT UNSIGNED PRIMARY KEY,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     /* Data */
     bin LONGBLOB NOT NULL
@@ -235,10 +242,10 @@ CREATE TABLE Binaries (
 /* Ancillary data for aggregation bots */
 
 CREATE TABLE BotData (
-    -- Bot entity or event entity which defines what the data means.
+    -- Definition text which defines what the data means.
     def_id BIGINT UNSIGNED NOT NULL,
-    -- Object entity which the data is about.
-    obj_id BIGINT UNSIGNED NOT NULL,
+    -- Object which the data is about.
+    obj_id BIGINT UNSIGNED NOT NULL, -- TODO: Change and fix.
     -- Data.
     data_1 BIGINT UNSIGNED,
     data_2 BIGINT UNSIGNED,

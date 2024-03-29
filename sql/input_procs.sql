@@ -83,7 +83,7 @@ BEGIN
     -- TODO: Fix and in-comment again:
     -- -- Get the statement entity.
     -- SELECT id INTO stmtID
-    -- FROM Entities
+    -- FROM Strings
     -- WHERE (
     --     type_id = 75 AND
     --     cxt_id = 76 AND
@@ -91,14 +91,14 @@ BEGIN
     -- );
     -- -- If it does not exist, insert it and get the ID.
     -- IF (stmtID IS NULL) THEN
-    --     INSERT IGNORE INTO Entities (type_id, cxt_id, def_str)
+    --     INSERT IGNORE INTO Strings (type_id, cxt_id, def_str)
     --     VALUES (75, 76, CONCAT("#", objStrID, "|#", tagID));
     --     SELECT LAST_INSERT_ID() INTO stmtID;
     --     -- If a race condition means that the insert is ignored and stmtID
     --     -- is null, select the now added (by another process) Statement.
     --     IF (stmtID IS NULL) THEN
     --         SELECT id INTO stmtID
-    --         FROM Entities
+    --         FROM Strings
     --         WHERE (
     --             type_id = 75 AND
     --             cxt_id = 76 AND
@@ -188,12 +188,10 @@ CREATE PROCEDURE insertOrFindString (
 BEGIN proc: BEGIN
     DECLARE outID BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
-    DECLARE userCreationsCatID BIGINT UNSIGNED; -- TODO: I might have deleted
-    -- some code I need to reproduce..
 
     -- Check if entity already exists and return its ID as outID if so.
     SELECT id INTO outID
-    FROM Entities
+    FROM Strings
     WHERE (
         str = string
     );
@@ -203,12 +201,12 @@ BEGIN proc: BEGIN
         LEAVE proc;
     END IF;
 
-    INSERT IGNORE INTO Entities (str)
+    INSERT IGNORE INTO Strings (str)
     VALUES (string);
     SELECT LAST_INSERT_ID() INTO outID;
     IF (outID IS NULL) THEN
         SELECT id INTO outID
-        FROM Entities
+        FROM Strings
         WHERE (
             str = string
         );
@@ -244,7 +242,7 @@ CREATE PROCEDURE insertText (
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
-    INSERT INTO Entities (type_id, cxt_id, def_str)
+    INSERT INTO Strings (type_id, cxt_id, def_str)
     VALUES (7, 0, name);
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Texts (id, str)
@@ -263,7 +261,7 @@ CREATE PROCEDURE insertBinary (
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
-    INSERT INTO Entities (type_id, cxt_id, def_str)
+    INSERT INTO Strings (type_id, cxt_id, def_str)
     VALUES (8, 0, name);
     SELECT LAST_INSERT_ID() INTO outID;
     INSERT INTO Binaries (id, bin)

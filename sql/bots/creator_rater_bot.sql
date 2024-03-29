@@ -5,32 +5,31 @@ DROP PROCEDURE creatorRaterBot;
 
 DELIMITER //
 CREATE PROCEDURE creatorRaterBot (
-    IN entID BIGINT UNSIGNED,
+    IN strID BIGINT UNSIGNED,
     IN userID BIGINT UNSIGNED
 )
 BEGIN proc: BEGIN
-    DECLARE userCreationsCatID BIGINT UNSIGNED;
+    DECLARE userCreationsTagID BIGINT UNSIGNED;
 
     -- get the user's Creations category.
-    SELECT id INTO userCreationsCatID
-    FROM Entities
+    SELECT id INTO userCreationsTagID
+    FROM Strings
     WHERE (
-        type_id = 2 AND
-        cxt_id = 84 AND
-        def_str = CONCAT("#", userID)
+        -- type_id = 2 AND
+        -- cxt_id = 84 AND
+        -- def_str = CONCAT("#", userID)
+        str = CONCAT("submitted by @u[", userID, "]")
     );
     -- if it does not exist, also insert it and get the ID.
-    IF (userCreationsCatID IS NULL) THEN
-        INSERT IGNORE INTO Entities (type_id, cxt_id, def_str)
-        VALUES (2, 84, CONCAT("#", userID));
-        SELECT LAST_INSERT_ID() INTO userCreationsCatID;
-        IF (userCreationsCatID IS NULL) THEN
-            SELECT id INTO userCreationsCatID
-            FROM Entities
+    IF (userCreationsTagID IS NULL) THEN
+        INSERT IGNORE INTO Strings (str)
+        VALUES (CONCAT("submitted by @u[", userID, "]"));
+        SELECT LAST_INSERT_ID() INTO userCreationsTagID;
+        IF (userCreationsTagID IS NULL) THEN
+            SELECT id INTO userCreationsTagID
+            FROM Strings
             WHERE (
-                type_id = 2 AND
-                cxt_id = 84 AND
-                def_str = CONCAT("#", userID)
+                str = CONCAT("submitted by @u[", userID, "]")
             );
         END IF;
     END IF;
@@ -38,15 +37,17 @@ BEGIN proc: BEGIN
     -- update the bot's input set.
     REPLACE INTO SemanticInputs (
         user_id,
-        cat_id,
+        obj_type_id,
+        tag_id,
         rat_val,
-        inst_id
+        obj_str_id
     )
     VALUES (
-        84,
-        userCreationsCatID,
+        60, -- ID of the 'creator_rater_bot.''
+        1, -- ID of type 'something.'
+        userCreationsTagID,
         65535,
-        entID
+        strID
     );
 
 END proc; END //
