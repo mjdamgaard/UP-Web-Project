@@ -8,8 +8,8 @@ ALTER TABLE Private_RecentInputs AUTO_INCREMENT=1;
 DELETE FROM RecordedInputs;
 DELETE FROM StringIndexKeys;
 
-DELETE FROM AtomicStrings;
-ALTER TABLE AtomicStrings AUTO_INCREMENT=1;
+DELETE FROM Strings;
+ALTER TABLE Strings AUTO_INCREMENT=1;
 
 -- DELETE FROM UsersAndBots;
 
@@ -24,7 +24,7 @@ DELETE FROM Private_EMails;
 -- SET FOREIGN_KEY_CHECKS = 0;
 
 /* From create_open_sdb.sql */
-INSERT INTO AtomicStrings (str, id)
+INSERT INTO Strings (str, id)
 VALUES
     -- Most fundamental three types:
     ("something", 1),
@@ -60,7 +60,7 @@ VALUES ("initial_user", 1);
 -- fundamental types (or other entities) in the future, or to remap some
 -- existing entity strings to a low number, if that becomes a desire.
 
-INSERT INTO AtomicStrings (str, id)
+INSERT INTO Strings (str, id)
 VALUES
     -- Some fundamental templates, plus some more types, such as 'property.'
     ("property", 40),
@@ -79,7 +79,7 @@ VALUES
 
 -- We also skip some numbers here, for the same reason.
 
-INSERT INTO AtomicStrings (str, id)
+INSERT INTO Strings (str, id)
 VALUES
     ("example of a not very useful entity||eapefnteysflniy", 1000);
 
@@ -348,7 +348,7 @@ CALL insertOrUpdateRating(1, 53, 90, CONV("E000", 16, 10), 1);
 
 -- Make some room for some other initial inserts in the future (where we must
 -- just remap the IDs, if these entities have already been inserted by users):
-ALTER TABLE AtomicStrings AUTO_INCREMENT=200;
+ALTER TABLE Strings AUTO_INCREMENT=200;
 
 SELECT "Calling publicizeRecentInputs() can take a while (about 1 minute):";
 -- (It takes roughly 30 seconds on my laptop.)

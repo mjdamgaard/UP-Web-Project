@@ -84,7 +84,7 @@ BEGIN
 
     -- Get the statement entity.
     SELECT id INTO stmtID
-    FROM AtomicStrings
+    FROM Strings
     WHERE (
         -- type_id = 75 AND
         -- cxt_id = 76 AND
@@ -93,14 +93,14 @@ BEGIN
     );
     -- If it does not exist, insert it and get the ID.
     IF (stmtID IS NULL) THEN
-        INSERT IGNORE INTO AtomicStrings (type_id, cxt_id, def_str)
+        INSERT IGNORE INTO Strings (type_id, cxt_id, def_str)
         VALUES (stmtStr);
         SELECT LAST_INSERT_ID() INTO stmtID;
         -- If a race condition means that the insert is ignored and stmtID
         -- is null, select the now added (by another process) Statement.
         IF (stmtID IS NULL) THEN
             SELECT id INTO stmtID
-            FROM AtomicStrings
+            FROM Strings
             WHERE (
                 str = stmtStr
             );
@@ -191,7 +191,7 @@ BEGIN proc: BEGIN
 
     -- Check if entity already exists and return its ID as outID if so.
     SELECT id INTO outID
-    FROM AtomicStrings
+    FROM Strings
     WHERE (
         str = string
     );
@@ -201,12 +201,12 @@ BEGIN proc: BEGIN
         LEAVE proc;
     END IF;
 
-    INSERT IGNORE INTO AtomicStrings (str)
+    INSERT IGNORE INTO Strings (str)
     VALUES (string);
     SELECT LAST_INSERT_ID() INTO outID;
     IF (outID IS NULL) THEN
         SELECT id INTO outID
-        FROM AtomicStrings
+        FROM Strings
         WHERE (
             str = string
         );

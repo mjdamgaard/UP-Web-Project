@@ -7,7 +7,7 @@ DROP TABLE RecordedInputs;
 DROP TABLE StringIndexKeys;
 
 /* Strings */
-DROP TABLE AtomicStrings;
+DROP TABLE Strings;
 DROP TABLE ConcatenatedStrings;
 DROP TABLE SpecifiedTitles;
 
@@ -167,7 +167,7 @@ CREATE TABLE StringIndexKeys (
 
 /* Strings */
 
-CREATE TABLE AtomicStrings (
+CREATE TABLE Strings (
     -- String ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
@@ -184,31 +184,6 @@ CREATE TABLE AtomicStrings (
     UNIQUE INDEX (str)
 );
 
-
-
-CREATE TABLE ConcatenatedStrings (
-    -- Concatenated string ID.
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
-    str_1_is_atomic TINYINT NOT NULL,
-    str_1_id BIGINT UNSIGNED NOT NULL,
-
-    str_2 VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-
-    UNIQUE INDEX (str_1_is_atomic, str_1_id, str_2)
-);
-
-
-
-CREATE TABLE SpecifiedTitles (
-    -- Specified title ID.
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
-    title_id BIGINT UNSIGNED NOT NULL,
-    spec_id BIGINT UNSIGNED NOT NULL,
-
-    UNIQUE INDEX (name_id, spec_id)
-);
 
 
 
