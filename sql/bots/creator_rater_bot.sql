@@ -13,7 +13,7 @@ BEGIN proc: BEGIN
 
     -- get the user's Creations category.
     SELECT id INTO userCreationsTagID
-    FROM Strings
+    FROM AtomicStrings
     WHERE (
         -- type_id = 2 AND
         -- cxt_id = 84 AND
@@ -22,12 +22,12 @@ BEGIN proc: BEGIN
     );
     -- if it does not exist, also insert it and get the ID.
     IF (userCreationsTagID IS NULL) THEN
-        INSERT IGNORE INTO Strings (str)
+        INSERT IGNORE INTO AtomicStrings (str)
         VALUES (CONCAT("submitted by @u[", userID, "]"));
         SELECT LAST_INSERT_ID() INTO userCreationsTagID;
         IF (userCreationsTagID IS NULL) THEN
             SELECT id INTO userCreationsTagID
-            FROM Strings
+            FROM AtomicStrings
             WHERE (
                 str = CONCAT("submitted by @u[", userID, "]")
             );

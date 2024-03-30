@@ -6,8 +6,10 @@ DROP TABLE RecordedInputs;
 /* Indexes */
 DROP TABLE StringIndexKeys;
 
-/* Entities */
-DROP TABLE Strings;
+/* Strings */
+DROP TABLE AtomicStrings;
+DROP TABLE ConcatenatedStrings;
+DROP TABLE SpecifiedTitles;
 
 /* Data */
 DROP TABLE UsersAndBots;
@@ -163,10 +165,10 @@ CREATE TABLE StringIndexKeys (
 -- column. But I will do this in another file, then.
 
 
-/* Entities */
+/* Strings */
 
-CREATE TABLE Strings (
-    -- Entity ID.
+CREATE TABLE AtomicStrings (
+    -- String ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     -- String. These are used to define entities, as each entity is a tuple of
@@ -181,17 +183,34 @@ CREATE TABLE Strings (
 
     UNIQUE INDEX (str)
 );
-INSERT INTO Strings (str, id)
-VALUES
-    ("type", 1),
-    ("tag", 2),
-    -- internal non-string data types:
-    ("f", 3), -- format string.
-    ("i", 4), -- index.
-    ("u", 5), -- user.
-    ("a", 6), -- aggregation bot.
-    ("t", 7), -- text.
-    ("b", 8); -- binary.
+
+
+
+CREATE TABLE ConcatenatedStrings (
+    -- Concatenated string ID.
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    str_1_is_atomic TINYINT NOT NULL,
+    str_1_id BIGINT UNSIGNED NOT NULL,
+
+    str_2 VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+
+    UNIQUE INDEX (str_1_is_atomic, str_1_id, str_2)
+);
+
+
+
+CREATE TABLE SpecifiedTitles (
+    -- Specified title ID.
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    title_id BIGINT UNSIGNED NOT NULL,
+    spec_id BIGINT UNSIGNED NOT NULL,
+
+    UNIQUE INDEX (name_id, spec_id)
+);
+
+
 
 
 

@@ -103,7 +103,7 @@ CREATE PROCEDURE selectString (
 BEGIN
     SELECT
         str AS str
-    FROM Entities
+    FROM AtomicStrings
     WHERE id = strID;
 END //
 DELIMITER ;
@@ -115,7 +115,7 @@ CREATE PROCEDURE selectStringID (
 )
 BEGIN
     SELECT id AS strID
-    FROM Entities
+    FROM AtomicStrings
     WHERE (
         str = string
     );
