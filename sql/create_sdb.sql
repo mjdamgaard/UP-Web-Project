@@ -1,26 +1,26 @@
 
--- /* Semantic inputs */
--- DROP TABLE SemanticInputs;
--- DROP TABLE Private_RecentInputs;
--- DROP TABLE RecordedInputs;
--- /* Indexes */
--- DROP TABLE StringIndexKeys;
+/* Semantic inputs */
+DROP TABLE SemanticInputs;
+DROP TABLE Private_RecentInputs;
+DROP TABLE RecordedInputs;
+/* Indexes */
+DROP TABLE StringIndexKeys;
 
--- /* Entities */
--- DROP TABLE Strings;
+/* Entities */
+DROP TABLE Strings;
 
--- /* Data */
--- DROP TABLE UsersAndBots;
--- DROP TABLE Texts;
--- DROP TABLE Binaries;
+/* Data */
+DROP TABLE UsersAndBots;
+DROP TABLE Texts;
+DROP TABLE Binaries;
 
--- /* Ancillary data for aggregation bots */
--- DROP TABLE BotData;
+/* Ancillary data for aggregation bots */
+DROP TABLE BotData;
 
--- /* Private user data */
--- DROP TABLE Private_UserData;
--- DROP TABLE Private_Sessions;
--- DROP TABLE Private_EMails;
+/* Private user data */
+DROP TABLE Private_UserData;
+DROP TABLE Private_Sessions;
+DROP TABLE Private_EMails;
 
 
 
@@ -40,7 +40,7 @@
  * movies."
  **/
 
--- TODO: Correct the above paragraph and explain the new objects, maybe by
+-- TODO: Correct the above paragraph and explain the new entities, maybe by
 -- fixing:
     -- Note that these types are not
     -- inherent to the instances themselves, as these are generally overloaded
@@ -48,8 +48,8 @@
     -- interpreted as referring to the war itself, or as a subject of history.
     -- And if we want to categorize 'WWII' as e.g. 'good,' it is important to
     -- specify whether we mean as a war or as a history subject. If we mean
-    -- the latter, we could then let this obj_type_id be the id of an entity
-    -- called 'subject' (where 'WWII' would then be the obj_def_id, and 'good'
+    -- the latter, we could then let this ent_type_id be the id of an entity
+    -- called 'subject' (where 'WWII' would then be the ent_def_id, and 'good'
     -- would be the cat_id). 
 
 
@@ -57,13 +57,13 @@ CREATE TABLE SemanticInputs (
     -- User (or bot) who states the statement.
     user_id BIGINT UNSIGNED NOT NULL,
 
-    -- The type of the object being tagged. 
-    obj_type_id BIGINT UNSIGNED NOT NULL,
+    -- The type of the entity being tagged. 
+    ent_type_id BIGINT UNSIGNED NOT NULL,
 
     -- Tag of the statement.
     tag_id BIGINT UNSIGNED NOT NULL,
 
-    -- Rating value of how well the tag fits the object. The first byte
+    -- Rating value of how well the tag fits the entity. The first byte
     -- of the SMALLINT is interpreted as a number between 0 and 10, where 0
     -- means 'absolutely/perfectly not' and 10 means 'absolutely/perfectly.'
     -- The last byte can either be used for more precision (in long lists),
@@ -71,30 +71,31 @@ CREATE TABLE SemanticInputs (
     -- although this won't be a thing until some future implementation.
     rat_val SMALLINT UNSIGNED NOT NULL,
 
-    -- The string of the object being tagged. Note that the object is defined
-    -- by its type and its string combined. An 'object' is thus a tuple of
-    -- two string IDs, (typeID, strID). When we look up the strings that these
+    -- The definition of the entity being tagged. Note that the entity is
+    -- fully defined by its type and its definition combined.
+    -- An 'entity' is thus a tuple of two string IDs, (typeID, strID).
+    -- When we look up the strings that these
     -- IDs point to, we might get e.g. ('subject of history', 'WWII').
     -- Now you might think that 'WWII' is a good subject, and thus give this
-    -- object the tag 'good' with a high rating attached. But if we then
-    -- consider the object ('war', 'WWII'), you might not necessarily think
+    -- entity the tag 'good' with a high rating attached. But if we then
+    -- consider the entity ('war', 'WWII'), you might not necessarily think
     -- that WWII is good as a war. This is why the type is important when
     -- tagging something, as it provides necessary context for the statement. 
-    obj_def_id BIGINT UNSIGNED NOT NULL,
+    ent_def_id BIGINT UNSIGNED NOT NULL,
 
-    -- Resulting semantic input: "User #<user_id> states that object 
-    -- (#<obj_type_id>, #<obj_def_id>) fits the tag #<tag_id> on a scale
+    -- Resulting semantic input: "User #<user_id> states that entity 
+    -- (#<ent_type_id>, #<ent_def_id>) fits the tag #<tag_id> on a scale
     -- from 0 to 10 (with 5 being neutral) by <rat_val> / 6553.5."
 
     PRIMARY KEY (
         user_id,
-        obj_type_id,
+        ent_type_id,
         tag_id,
         rat_val,
-        obj_def_id
+        ent_def_id
     ),
 
-    UNIQUE INDEX (user_id, obj_type_id, tag_id, obj_def_id)
+    UNIQUE INDEX (user_id, ent_type_id, tag_id, ent_def_id)
 );
 -- TODO: Compress this table and its sec. index, as well as some other tables
 -- and sec. indexes below. (But compression is a must for this table.)
@@ -104,9 +105,9 @@ CREATE TABLE Private_RecentInputs (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     user_id BIGINT UNSIGNED NOT NULL,
-    obj_type_id BIGINT UNSIGNED NOT NULL,
+    ent_type_id BIGINT UNSIGNED NOT NULL,
     tag_id BIGINT UNSIGNED NOT NULL,
-    obj_def_id BIGINT UNSIGNED NOT NULL,
+    ent_def_id BIGINT UNSIGNED NOT NULL,
     rat_val SMALLINT UNSIGNED NOT NULL,
 
     live_at_time BIGINT UNSIGNED NOT NULL
@@ -121,16 +122,16 @@ CREATE TABLE RecordedInputs (
     changed_at_time BIGINT UNSIGNED NOT NULL,
 
     user_id BIGINT UNSIGNED NOT NULL,
-    obj_type_id BIGINT UNSIGNED NOT NULL,
+    ent_type_id BIGINT UNSIGNED NOT NULL,
     tag_id BIGINT UNSIGNED NOT NULL,
-    obj_def_id BIGINT UNSIGNED NOT NULL,
+    ent_def_id BIGINT UNSIGNED NOT NULL,
 
     rat_val SMALLINT UNSIGNED NOT NULL,
 
-    PRIMARY KEY (changed_at_time, user_id, obj_type_id, tag_id, obj_def_id)
+    PRIMARY KEY (changed_at_time, user_id, ent_type_id, tag_id, ent_def_id)
 
     -- TODO: Consider creating this index as well:
-    -- UNIQUE INDEX (user_id, tag_id, obj_def_id, changed_at_time)
+    -- UNIQUE INDEX (user_id, tag_id, ent_def_id, changed_at_time)
 );
 
 
@@ -157,6 +158,9 @@ CREATE TABLE StringIndexKeys (
 );
 -- (Also needs compressing.)
 
+-- I intend to at some point copy at least one of these indexes (with a
+-- specific idx_id) over in another table with a FULLTEXT index on the str
+-- column. But I will do this in another file, then.
 
 
 /* Entities */
@@ -165,12 +169,12 @@ CREATE TABLE Strings (
     -- Entity ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- String. These are used to define objects, as each object is a tuple of
+    -- String. These are used to define entities, as each entity is a tuple of
     -- two strings (or string IDs, if one will). The first string in these
-    -- tuples denotes the type of the object (as a kind of context), and the
+    -- tuples denotes the type of the entity (as a kind of context), and the
     -- second string is the word/sentence/lexical item/code referencing the
-    -- object itself (understood in the context of its type). For instance,
-    -- an object might be ('movie', 'The Lord of the Rings'), or
+    -- entity itself (understood in the context of its type). For instance,
+    -- an entity might be ('movie', 'The Lord of the Rings'), or
     --  ('subject', 'The Lord of the Rings'), or
     -- ('book', 'The Lord of the Rings'), etc.
     str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
@@ -244,8 +248,8 @@ CREATE TABLE Binaries (
 CREATE TABLE BotData (
     -- Bot that uses this data.
     bot_id BIGINT UNSIGNED NOT NULL,
-    -- Object definition of the object which the data is about.
-    obj_def_id BIGINT UNSIGNED NOT NULL,
+    -- Entity definition of the entity which the data is about.
+    ent_def_id BIGINT UNSIGNED NOT NULL,
 
     -- Data.
     data_1 BIGINT UNSIGNED,
@@ -255,7 +259,7 @@ CREATE TABLE BotData (
 
     PRIMARY KEY (
         bot_id,
-        obj_def_id
+        ent_def_id
     )
 );
 -- TODO: Compress.

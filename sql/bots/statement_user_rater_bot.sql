@@ -60,18 +60,18 @@ BEGIN proc: BEGIN
         DELETE FROM SemanticInputs
         WHERE (
             user_id = 61 AND -- ID of the 'statement_user_rater_bot.'
-            obj_type_id = 5 AND -- ID of the 'user' type.
+            ent_type_id = 5 AND -- ID of the 'user' type.
             tag_id = stmtUserTagID AND
-            obj_def_id = userStrID
+            ent_def_id = userStrID
         );
     -- Else update the corresponding SemInput with the new rat_val.
     ELSE
         REPLACE INTO SemanticInputs (
             user_id,
-            obj_type_id,
+            ent_type_id,
             tag_id,
             rat_val,
-            obj_def_id
+            ent_def_id
         )
         VALUES (
             61,

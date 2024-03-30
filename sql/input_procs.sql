@@ -14,9 +14,9 @@ DROP PROCEDURE insertBinary;
 DELIMITER //
 CREATE PROCEDURE insertOrUpdateRating (
     IN userID BIGINT UNSIGNED,
-    IN objTypeID BIGINT UNSIGNED,
+    IN entTypeID BIGINT UNSIGNED,
     IN tagID BIGINT UNSIGNED,
-    IN objDefID BIGINT UNSIGNED,
+    IN entDefID BIGINT UNSIGNED,
     IN ratVal SMALLINT UNSIGNED,
     IN liveAtTime BIGINT UNSIGNED
 )
@@ -27,28 +27,28 @@ BEGIN
     IF (liveAtTime > 0) THEN
         INSERT INTO Private_RecentInputs (
             user_id,
-            obj_type_id,
+            ent_type_id,
             tag_id,
             rat_val,
-            obj_def_id,
+            ent_def_id,
             live_at_time
         )
         VALUES (
             userID,
-            objTypeID,
+            entTypeID,
             tagID,
             ratVal,
-            objDefID,
+            entDefID,
             liveAtTime
         );
     ELSE
         CALL private_insertOrUpdateRatingAndRunBots (
-            userID, objTypeID, tagID, objDefID, ratVal
+            userID, entTypeID, tagID, entDefID, ratVal
         );
     END IF;
     SET exitCode = 0; -- Rating insert/update is done or is pending.
 
-    SELECT objDefID AS outID, exitCode;
+    SELECT entDefID AS outID, exitCode;
 END //
 DELIMITER ;
 
@@ -58,15 +58,15 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE private_insertOrUpdateRatingAndRunBots (
     IN userID BIGINT UNSIGNED,
-    IN objTypeID BIGINT UNSIGNED,
+    IN entTypeID BIGINT UNSIGNED,
     IN tagID BIGINT UNSIGNED,
-    IN objDefID BIGINT UNSIGNED,
+    IN entDefID BIGINT UNSIGNED,
     IN ratVal SMALLINT UNSIGNED
 )
 BEGIN
     DECLARE stmtID BIGINT UNSIGNED;
     DECLARE stmtStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
-    DEFAULT CONCAT("@3[", tagID, "] fits @", objTypeID, "[", objDefID, "]");
+    DEFAULT CONCAT("@3[", tagID, "] fits @", entTypeID, "[", entDefID, "]");
     DECLARE prevRatVal SMALLINT UNSIGNED;
     DECLARE now BIGINT UNSIGNED DEFAULT UNIX_TIMESTAMP();
 
@@ -79,7 +79,7 @@ BEGIN
     WHERE (
         user_id = userID AND
         tag_id = tagID AND
-        obj_def_id = objDefID
+        ent_def_id = entDefID
     );
 
     -- Get the statement entity.
@@ -88,7 +88,7 @@ BEGIN
     WHERE (
         -- type_id = 75 AND
         -- cxt_id = 76 AND
-        -- def_str = CONCAT("#", objDefID, "|#", tagID)
+        -- def_str = CONCAT("#", entDefID, "|#", tagID)
         str = stmtStr
     );
     -- If it does not exist, insert it and get the ID.
@@ -118,25 +118,25 @@ BEGIN
         DELETE FROM SemanticInputs
         WHERE (
             user_id = userID AND
-            obj_type_id = objTypeID AND
+            ent_type_id = entTypeID AND
             tag_id = tagID AND
-            obj_def_id = objDefID
+            ent_def_id = entDefID
         );
     -- Else update the corresponding SemInput with the new rat_val.
     ELSE
         REPLACE INTO SemanticInputs (
             user_id,
-            obj_type_id,
+            ent_type_id,
             tag_id,
             rat_val,
-            obj_def_id
+            ent_def_id
         )
         VALUES (
             userID,
-            objTypeID,
+            entTypeID,
             tagID,
             ratVal,
-            objDefID
+            entDefID
         );
     END IF;
 
@@ -146,26 +146,26 @@ BEGIN
     REPLACE INTO RecordedInputs (
         changed_at_time,
         user_id,
-        obj_type_id,
+        ent_type_id,
         tag_id,
-        obj_def_id,
+        ent_def_id,
         rat_val
     )
     VALUES (
         now,
         userID,
-        objTypeID,
+        entTypeID,
         tagID,
-        objDefID,
+        entDefID,
         ratVal
     );
 
 
     /* Run procedures to update the various aggregation bots */
 
-    CALL updateStatementUserRaterBot (userID, objTypeID, stmtID, ratVal);
+    CALL updateStatementUserRaterBot (userID, entTypeID, stmtID, ratVal);
     CALL updateMeanBots (
-        userID, objTypeID, tagID, objDefID, ratVal, prevRatVal, stmtID
+        userID, entTypeID, tagID, entDefID, ratVal, prevRatVal, stmtID
     );
 
 END //

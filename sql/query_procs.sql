@@ -15,17 +15,14 @@ DROP PROCEDURE selectTextSubstring;
 DROP PROCEDURE selectBinary;
 DROP PROCEDURE selectBinarySubstring;
 
-DROP PROCEDURE private_selectCreator;
-DROP PROCEDURE private_selectCreations;
-
-DROP PROCEDURE selectEventData;
+DROP PROCEDURE selectBotData;
 
 
 
 DELIMITER //
 CREATE PROCEDURE selectRatedList (
     IN userID BIGINT UNSIGNED,
-    IN objTypeID BIGINT UNSIGNED,
+    IN entTypeID BIGINT UNSIGNED,
     IN tagID BIGINT UNSIGNED,
     IN ratingRangeLo SMALLINT UNSIGNED,
     IN ratingRangeHi SMALLINT UNSIGNED,
@@ -36,11 +33,11 @@ CREATE PROCEDURE selectRatedList (
 BEGIN
     SELECT
         rat_val AS ratVal,
-        obj_def_id AS objDefID
+        ent_def_id AS entDefID
     FROM SemanticInputs
     WHERE (
         user_id = userID AND
-        obj_type_id = objTypeID AND
+        ent_type_id = entTypeID AND
         tag_id = tagID AND
         (ratingRangeLo = 0 OR rat_val >= ratingRangeLo) AND
         (ratingRangeHi = 0 OR rat_val <= ratingRangeHi)
@@ -48,8 +45,8 @@ BEGIN
     ORDER BY
         CASE WHEN isAscOrder THEN rat_val END ASC,
         CASE WHEN NOT isAscOrder THEN rat_val END DESC,
-        CASE WHEN isAscOrder THEN obj_def_id END ASC,
-        CASE WHEN NOT isAscOrder THEN obj_def_id END DESC
+        CASE WHEN isAscOrder THEN ent_def_id END ASC,
+        CASE WHEN NOT isAscOrder THEN ent_def_id END DESC
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
@@ -59,18 +56,18 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectRating (
     IN userID BIGINT UNSIGNED,
-    IN objTypeID BIGINT UNSIGNED,
+    IN entTypeID BIGINT UNSIGNED,
     IN tagID BIGINT UNSIGNED,
-    IN objDefID BIGINT UNSIGNED
+    IN entDefID BIGINT UNSIGNED
 )
 BEGIN
     SELECT rat_val AS ratVal
     FROM SemanticInputs
     WHERE (
         user_id = userID AND
-        obj_type_id = objTypeID AND
+        ent_type_id = entTypeID AND
         tag_id = tagID AND
-        obj_def_id = objDefID
+        ent_def_id = entDefID
     );
 END //
 DELIMITER ;
@@ -86,7 +83,7 @@ DELIMITER ;
 --     SELECT
 --         user_id AS userID,
 --         tag_id AS tagID,
---         obj_def_id AS objDefID,
+--         ent_def_id AS entDefID,
 --         rat_val AS ratVal,
 --         changed_at AS changedAt
 --     FROM RecentInputs
@@ -222,49 +219,18 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE private_selectCreator (
-    IN strID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT user_id AS userID
-    FROM Private_Creators
-    WHERE ent_id = strID;
-END //
-DELIMITER ;
-
 
 DELIMITER //
-CREATE PROCEDURE private_selectCreations (
-    IN userID BIGINT UNSIGNED,
-    IN maxNum INT UNSIGNED,
-    IN numOffset INT UNSIGNED,
-    IN isAscOrder BOOL
+CREATE PROCEDURE selectBotData (
+    IN botID BIGINT UNSIGNED,
+    IN entDefID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT ent_id AS strID
-    FROM Private_Creators
-    WHERE user_id = userID
-    ORDER BY
-        CASE WHEN isAscOrder THEN ent_id END ASC,
-        CASE WHEN NOT isAscOrder THEN ent_id END DESC
-    LIMIT numOffset, maxNum;
-END //
-DELIMITER ;
-
-
-
-DELIMITER //
-CREATE PROCEDURE selectEventData (
-    IN defID BIGINT UNSIGNED,
-    IN objID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT data AS data
-    FROM EventData
+    SELECT data_1, data_2, data_3, data_4 AS data1, data2, data3, data4
+    FROM BotData
     WHERE (
-        def_id = defID AND
-        obj_id = objID
+        bot_id = defID AND
+        ent_def_id = entID
     );
 END //
 DELIMITER ;

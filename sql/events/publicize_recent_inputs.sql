@@ -9,11 +9,11 @@ DELIMITER //
 CREATE PROCEDURE publicizeRecentInputs ()
 BEGIN
     DECLARE now BIGINT UNSIGNED DEFAULT UNIX_TIMESTAMP();
-    DECLARE userID, objTypeID, tagID, objDefID BIGINT UNSIGNED;
+    DECLARE userID, entTypeID, tagID, entDefID BIGINT UNSIGNED;
     DECLARE ratVal SMALLINT UNSIGNED;
     DECLARE done BOOL DEFAULT FALSE;
     DECLARE cur CURSOR FOR
-        SELECT user_id, obj_type_id, tag_id, obj_def_id, rat_val
+        SELECT user_id, ent_type_id, tag_id, ent_def_id, rat_val
         FROM Private_RecentInputs
         WHERE live_at_time <= now
         FOR UPDATE;
@@ -22,13 +22,13 @@ BEGIN
     OPEN cur;
 
     loop_1: LOOP
-        FETCH cur INTO userID, objTypeID, tagID, objDefID, ratVal;
+        FETCH cur INTO userID, entTypeID, tagID, entDefID, ratVal;
         IF (done) THEN
             LEAVE loop_1;
         END IF;
 
         CALL private_insertOrUpdateRatingAndRunBots (
-            userID, objTypeID, tagID, objDefID, ratVal
+            userID, entTypeID, tagID, entDefID, ratVal
         );
 
     END LOOP loop_1;

@@ -8,16 +8,16 @@ DROP PROCEDURE updateMeanWithOffset3Bot;
 DELIMITER //
 CREATE PROCEDURE updateMeanBots (
     IN userID BIGINT UNSIGNED, -- (unused for now)
-    IN objTypeID BIGINT UNSIGNED,
+    IN entTypeID BIGINT UNSIGNED,
     IN tagID BIGINT UNSIGNED,
-    IN objDefID BIGINT UNSIGNED,
+    IN entDefID BIGINT UNSIGNED,
     IN ratVal SMALLINT UNSIGNED,
     IN prevRatVal SMALLINT UNSIGNED,
     IN stmtID BIGINT UNSIGNED
 )
 BEGIN
     CALL updateMeanWithOffset3Bot (
-        objTypeID, tagID, objDefID, ratVal, prevRatVal, stmtID
+        entTypeID, tagID, entDefID, ratVal, prevRatVal, stmtID
     );
 END //
 DELIMITER ;
@@ -25,9 +25,9 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE updateMeanWithOffset3Bot (
-    IN objTypeID BIGINT UNSIGNED,
+    IN entTypeID BIGINT UNSIGNED,
     IN tagID BIGINT UNSIGNED,
-    IN objDefID BIGINT UNSIGNED,
+    IN entDefID BIGINT UNSIGNED,
     IN ratVal SMALLINT UNSIGNED,
     IN prevRatVal SMALLINT UNSIGNED,
     IN stmtID BIGINT UNSIGNED
@@ -43,7 +43,7 @@ BEGIN
     FROM BotData
     WHERE (
         bot_id = 62 AND -- ID of the "mean_with_offset_3_bot."
-        obj_def_id = stmtID
+        ent_def_id = stmtID
     )
     FOR UPDATE;
     -- if this is the first input for the statement, initialize a neutral mean
@@ -51,13 +51,13 @@ BEGIN
     IF (prevMeanHP IS NULL) THEN
         SET prevMeanHP =  9223372036854775807;
         SET prevUserNum = 3;
-        INSERT INTO BotData (bot_id, obj_def_id, data_1, data_2)
+        INSERT INTO BotData (bot_id, ent_def_id, data_1, data_2)
         VALUES (62, stmtID, prevMeanHP, prevUserNum);
         SELECT data_1, data_2 INTO prevMeanHP, prevUserNum
         FROM BotData
         WHERE (
             bot_id = 62 AND
-            obj_def_id = stmtID
+            ent_def_id = stmtID
         )
         FOR UPDATE;
     END IF;
@@ -99,20 +99,20 @@ BEGIN
     -- update the bot's input set.
     REPLACE INTO SemanticInputs (
         user_id,
-        obj_type_id,
+        ent_type_id,
         tag_id,
         rat_val,
-        obj_def_id
+        ent_def_id
     )
     VALUES (
         62,
-        objTypeID,
+        entTypeID,
         tagID,
         newMean,
-        objDefID
+        entDefID
     );
     -- update the bot's data for the statement.
-    REPLACE INTO BotData (bot_id, obj_def_id, data_1, data_2)
+    REPLACE INTO BotData (bot_id, ent_def_id, data_1, data_2)
     VALUES (62, stmtID, newMeanHP, newUserNum);
 END //
 DELIMITER ;

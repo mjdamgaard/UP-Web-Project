@@ -37,10 +37,10 @@ BEGIN proc: BEGIN
     -- update the bot's input set.
     REPLACE INTO SemanticInputs (
         user_id,
-        obj_type_id,
+        ent_type_id,
         tag_id,
         rat_val,
-        obj_def_id
+        ent_def_id
     )
     VALUES (
         60, -- ID of the 'creator_rater_bot.''
