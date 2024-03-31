@@ -66,7 +66,10 @@ CREATE PROCEDURE private_insertOrUpdateRatingAndRunBots (
 BEGIN
     DECLARE stmtID BIGINT UNSIGNED;
     DECLARE stmtStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
-    DEFAULT CONCAT("@3[", tagID, "] fits @", entTypeID, "[", entDefID, "]");
+    DEFAULT CONCAT(
+        "@3[", tagID, "] fits @", entTypeID, "[", entDefID, "] as a ",
+        "@2[", entTypeID, "]"
+    );
     DECLARE prevRatVal SMALLINT UNSIGNED;
     DECLARE now BIGINT UNSIGNED DEFAULT UNIX_TIMESTAMP();
 
@@ -93,7 +96,7 @@ BEGIN
     );
     -- If it does not exist, insert it and get the ID.
     IF (stmtID IS NULL) THEN
-        INSERT IGNORE INTO Strings (type_id, cxt_id, def_str)
+        INSERT IGNORE INTO Strings (str)
         VALUES (stmtStr);
         SELECT LAST_INSERT_ID() INTO stmtID;
         -- If a race condition means that the insert is ignored and stmtID
@@ -163,7 +166,7 @@ BEGIN
 
     /* Run procedures to update the various aggregation bots */
 
-    CALL updateStatementUserRaterBot (userID, entTypeID, stmtID, ratVal);
+    CALL updateStatementUserRaterBot (userID, stmtID, ratVal);
     CALL updateMeanBots (
         userID, entTypeID, tagID, entDefID, ratVal, prevRatVal, stmtID
     );

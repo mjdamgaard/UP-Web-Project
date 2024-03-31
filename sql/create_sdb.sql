@@ -8,8 +8,6 @@ DROP TABLE StringIndexKeys;
 
 /* Strings */
 DROP TABLE Strings;
-DROP TABLE ConcatenatedStrings;
-DROP TABLE SpecifiedTitles;
 
 /* Data */
 DROP TABLE UsersAndBots;
@@ -175,10 +173,7 @@ CREATE TABLE Strings (
     -- two strings (or string IDs, if one will). The first string in these
     -- tuples denotes the type of the entity (as a kind of context), and the
     -- second string is the word/sentence/lexical item/code referencing the
-    -- entity itself (understood in the context of its type). For instance,
-    -- an entity might be ('movie', 'The Lord of the Rings'), or
-    --  ('subject', 'The Lord of the Rings'), or
-    -- ('book', 'The Lord of the Rings'), etc.
+    -- entity itself (understood in the context of its type).
     str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
     UNIQUE INDEX (str)
@@ -204,6 +199,9 @@ CREATE TABLE UsersAndBots (
     -- the user via a third party.)
 
 );
+
+INSERT INTO UsersAndBots (username, id)
+VALUES ("initial_user", 1);
 
 
 -- CREATE TABLE AggregationBots (
