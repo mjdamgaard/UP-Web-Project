@@ -4,8 +4,8 @@ SELECT "Query procedures";
 DROP PROCEDURE selectRatedList;
 DROP PROCEDURE selectRating;
 
-DROP PROCEDURE selectString;
-DROP PROCEDURE selectStringID;
+DROP PROCEDURE selectEntity;
+DROP PROCEDURE selectEntityID;
 
 DROP PROCEDURE selectUsername;
 DROP PROCEDURE selectUserInfo;
@@ -22,7 +22,6 @@ DROP PROCEDURE selectBotData;
 DELIMITER //
 CREATE PROCEDURE selectRatedList (
     IN userID BIGINT UNSIGNED,
-    IN entTypeID BIGINT UNSIGNED,
     IN tagID BIGINT UNSIGNED,
     IN ratingRangeLo SMALLINT UNSIGNED,
     IN ratingRangeHi SMALLINT UNSIGNED,
@@ -33,11 +32,10 @@ CREATE PROCEDURE selectRatedList (
 BEGIN
     SELECT
         rat_val AS ratVal,
-        ent_def_id AS entDefID
+        inst_id AS instID
     FROM SemanticInputs
     WHERE (
         user_id = userID AND
-        ent_type_id = entTypeID AND
         tag_id = tagID AND
         (ratingRangeLo = 0 OR rat_val >= ratingRangeLo) AND
         (ratingRangeHi = 0 OR rat_val <= ratingRangeHi)
@@ -45,8 +43,8 @@ BEGIN
     ORDER BY
         CASE WHEN isAscOrder THEN rat_val END ASC,
         CASE WHEN NOT isAscOrder THEN rat_val END DESC,
-        CASE WHEN isAscOrder THEN ent_def_id END ASC,
-        CASE WHEN NOT isAscOrder THEN ent_def_id END DESC
+        CASE WHEN isAscOrder THEN inst_id END ASC,
+        CASE WHEN NOT isAscOrder THEN inst_id END DESC
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
@@ -56,18 +54,16 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectRating (
     IN userID BIGINT UNSIGNED,
-    IN entTypeID BIGINT UNSIGNED,
     IN tagID BIGINT UNSIGNED,
-    IN entDefID BIGINT UNSIGNED
+    IN instID BIGINT UNSIGNED
 )
 BEGIN
     SELECT rat_val AS ratVal
     FROM SemanticInputs
     WHERE (
         user_id = userID AND
-        ent_type_id = entTypeID AND
         tag_id = tagID AND
-        ent_def_id = entDefID
+        inst_id = instID
     );
 END //
 DELIMITER ;
@@ -83,7 +79,7 @@ DELIMITER ;
 --     SELECT
 --         user_id AS userID,
 --         tag_id AS tagID,
---         ent_def_id AS entDefID,
+--         inst_id AS instID,
 --         rat_val AS ratVal,
 --         changed_at AS changedAt
 --     FROM RecentInputs
@@ -97,27 +93,27 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectString (
-    IN strID BIGINT UNSIGNED
+CREATE PROCEDURE selectEntity (
+    IN entID BIGINT UNSIGNED
 )
 BEGIN
     SELECT
-        str AS str
-    FROM Strings
-    WHERE id = strID;
+        def AS def
+    FROM Entities
+    WHERE id = entID;
 END //
 DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectStringID (
-    IN string VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
+CREATE PROCEDURE selectEntityID (
+    IN defStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
 BEGIN
-    SELECT id AS strID
-    FROM Strings
+    SELECT id AS entID
+    FROM Entities
     WHERE (
-        str = string
+        def = defStr
     );
 END //
 DELIMITER ;
@@ -223,14 +219,14 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectBotData (
     IN botID BIGINT UNSIGNED,
-    IN entDefID BIGINT UNSIGNED
+    IN entID BIGINT UNSIGNED
 )
 BEGIN
     SELECT data_1, data_2, data_3, data_4 AS data1, data2, data3, data4
     FROM BotData
     WHERE (
-        bot_id = defID AND
-        ent_def_id = entID
+        bot_id = botID AND
+        ent_id = entID
     );
 END //
 DELIMITER ;

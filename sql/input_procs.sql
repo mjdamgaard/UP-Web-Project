@@ -4,7 +4,7 @@ SELECT "Input procedures";
 DROP PROCEDURE insertOrUpdateRating;
 DROP PROCEDURE private_insertOrUpdateRatingAndRunBots;
 
-DROP PROCEDURE insertOrFindString;
+DROP PROCEDURE insertOrFindEntity;
 DROP PROCEDURE insertText;
 DROP PROCEDURE insertBinary;
 
@@ -14,9 +14,8 @@ DROP PROCEDURE insertBinary;
 DELIMITER //
 CREATE PROCEDURE insertOrUpdateRating (
     IN userID BIGINT UNSIGNED,
-    IN entTypeID BIGINT UNSIGNED,
     IN tagID BIGINT UNSIGNED,
-    IN entDefID BIGINT UNSIGNED,
+    IN instID BIGINT UNSIGNED,
     IN ratVal SMALLINT UNSIGNED,
     IN liveAtTime BIGINT UNSIGNED
 )
@@ -27,28 +26,26 @@ BEGIN
     IF (liveAtTime > 0) THEN
         INSERT INTO Private_RecentInputs (
             user_id,
-            ent_type_id,
             tag_id,
             rat_val,
-            ent_def_id,
+            inst_id,
             live_at_time
         )
         VALUES (
             userID,
-            entTypeID,
             tagID,
             ratVal,
-            entDefID,
+            instID,
             liveAtTime
         );
     ELSE
         CALL private_insertOrUpdateRatingAndRunBots (
-            userID, entTypeID, tagID, entDefID, ratVal
+            userID, tagID, instID, ratVal
         );
     END IF;
     SET exitCode = 0; -- Rating insert/update is done or is pending.
 
-    SELECT entDefID AS outID, exitCode;
+    SELECT instID AS outID, exitCode;
 END //
 DELIMITER ;
 
@@ -58,17 +55,16 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE private_insertOrUpdateRatingAndRunBots (
     IN userID BIGINT UNSIGNED,
-    IN entTypeID BIGINT UNSIGNED,
     IN tagID BIGINT UNSIGNED,
-    IN entDefID BIGINT UNSIGNED,
+    IN instID BIGINT UNSIGNED,
     IN ratVal SMALLINT UNSIGNED
 )
 BEGIN
     DECLARE stmtID BIGINT UNSIGNED;
     DECLARE stmtStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
     DEFAULT CONCAT(
-        "@3[", tagID, "] fits @", entTypeID, "[", entDefID, "] as a ",
-        "@2[", entTypeID, "]"
+        -- "@", tagID, ". fits @", instID
+        "@f44.", instID, ".", tagID, "."
     );
     DECLARE prevRatVal SMALLINT UNSIGNED;
     DECLARE now BIGINT UNSIGNED DEFAULT UNIX_TIMESTAMP();
@@ -82,30 +78,27 @@ BEGIN
     WHERE (
         user_id = userID AND
         tag_id = tagID AND
-        ent_def_id = entDefID
+        inst_id = instID
     );
 
     -- Get the statement entity.
     SELECT id INTO stmtID
-    FROM Strings
+    FROM Entities
     WHERE (
-        -- type_id = 75 AND
-        -- cxt_id = 76 AND
-        -- def_str = CONCAT("#", entDefID, "|#", tagID)
-        str = stmtStr
+        def = stmtStr
     );
     -- If it does not exist, insert it and get the ID.
     IF (stmtID IS NULL) THEN
-        INSERT IGNORE INTO Strings (str)
+        INSERT IGNORE INTO Entities (def)
         VALUES (stmtStr);
         SELECT LAST_INSERT_ID() INTO stmtID;
         -- If a race condition means that the insert is ignored and stmtID
         -- is null, select the now added (by another process) Statement.
         IF (stmtID IS NULL) THEN
             SELECT id INTO stmtID
-            FROM Strings
+            FROM Entities
             WHERE (
-                str = stmtStr
+                def = stmtStr
             );
         END IF;
         -- TODO: It seems that there still is a risk that stmtID is NULL at
@@ -121,25 +114,22 @@ BEGIN
         DELETE FROM SemanticInputs
         WHERE (
             user_id = userID AND
-            ent_type_id = entTypeID AND
             tag_id = tagID AND
-            ent_def_id = entDefID
+            inst_id = instID
         );
     -- Else update the corresponding SemInput with the new rat_val.
     ELSE
         REPLACE INTO SemanticInputs (
             user_id,
-            ent_type_id,
             tag_id,
             rat_val,
-            ent_def_id
+            inst_id
         )
         VALUES (
             userID,
-            entTypeID,
             tagID,
             ratVal,
-            entDefID
+            instID
         );
     END IF;
 
@@ -149,17 +139,15 @@ BEGIN
     REPLACE INTO RecordedInputs (
         changed_at_time,
         user_id,
-        ent_type_id,
         tag_id,
-        ent_def_id,
+        inst_id,
         rat_val
     )
     VALUES (
         now,
         userID,
-        entTypeID,
         tagID,
-        entDefID,
+        instID,
         ratVal
     );
 
@@ -168,7 +156,7 @@ BEGIN
 
     CALL updateStatementUserRaterBot (userID, stmtID, ratVal);
     CALL updateMeanBots (
-        userID, entTypeID, tagID, entDefID, ratVal, prevRatVal, stmtID
+        userID, tagID, instID, ratVal, prevRatVal, stmtID
     );
 
 END //
@@ -183,10 +171,10 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE insertOrFindString (
+CREATE PROCEDURE insertOrFindEntity (
     IN userID BIGINT UNSIGNED,
     IN recordCreator BOOL,
-    IN string VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
+    IN defStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
 BEGIN proc: BEGIN
     DECLARE outID BIGINT UNSIGNED;
@@ -194,9 +182,9 @@ BEGIN proc: BEGIN
 
     -- Check if entity already exists and return its ID as outID if so.
     SELECT id INTO outID
-    FROM Strings
+    FROM Entities
     WHERE (
-        str = string
+        def = defStr
     );
     IF (outID IS NOT NULL) THEN
         SET exitCode = 1; -- find.
@@ -204,14 +192,14 @@ BEGIN proc: BEGIN
         LEAVE proc;
     END IF;
 
-    INSERT IGNORE INTO Strings (str)
-    VALUES (string);
+    INSERT IGNORE INTO Entities (def)
+    VALUES (defStr);
     SELECT LAST_INSERT_ID() INTO outID;
     IF (outID IS NULL) THEN
         SELECT id INTO outID
-        FROM Strings
+        FROM Entities
         WHERE (
-            str = string
+            def = defStr
         );
         SET exitCode = 1; -- find.
     ELSE

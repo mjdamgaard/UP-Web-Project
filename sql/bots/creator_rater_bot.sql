@@ -5,7 +5,7 @@ DROP PROCEDURE creatorRaterBot;
 
 DELIMITER //
 CREATE PROCEDURE creatorRaterBot (
-    IN strID BIGINT UNSIGNED,
+    IN entID BIGINT UNSIGNED,
     IN userID BIGINT UNSIGNED
 )
 BEGIN proc: BEGIN
@@ -13,23 +13,20 @@ BEGIN proc: BEGIN
 
     -- get the user's Creations category.
     SELECT id INTO userCreationsTagID
-    FROM Strings
+    FROM Entities
     WHERE (
-        -- type_id = 2 AND
-        -- cxt_id = 84 AND
-        -- def_str = CONCAT("#", userID)
-        str = CONCAT("submitted by @u[", userID, "]")
+        def = CONCAT("@f48.", userID, ".")
     );
     -- if it does not exist, also insert it and get the ID.
     IF (userCreationsTagID IS NULL) THEN
-        INSERT IGNORE INTO Strings (str)
-        VALUES (CONCAT("submitted by @u[", userID, "]"));
+        INSERT IGNORE INTO Entities (def)
+        VALUES (CONCAT("@f48.", userID, "."));
         SELECT LAST_INSERT_ID() INTO userCreationsTagID;
         IF (userCreationsTagID IS NULL) THEN
             SELECT id INTO userCreationsTagID
-            FROM Strings
+            FROM Entities
             WHERE (
-                str = CONCAT("submitted by @u[", userID, "]")
+                def = CONCAT("@f48.", userID, ".")
             );
         END IF;
     END IF;
@@ -37,17 +34,17 @@ BEGIN proc: BEGIN
     -- update the bot's input set.
     REPLACE INTO SemanticInputs (
         user_id,
-        ent_type_id,
+        -- ent_type_id,
         tag_id,
         rat_val,
-        ent_def_id
+        inst_id
     )
     VALUES (
         60, -- ID of the 'creator_rater_bot.''
-        1, -- ID of type 'something.'
+        -- 1, -- ID of type 'something.'
         userCreationsTagID,
         65535,
-        strID
+        entID
     );
 
 END proc; END //

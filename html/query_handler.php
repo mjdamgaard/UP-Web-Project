@@ -53,15 +53,15 @@ $typeArr = "";
 switch ($reqType) {
     case "list":
         header("Cache-Control: max-age=3");
-        $sql = "CALL selectRatedList (?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "CALL selectRatedList (?, ?, ?, ?, ?, ?, ?)";
         $paramNameArr = array(
-            "u", "ty", "ta",
+            "u", "t",
             "rl", "rh",
             "n", "o",
             "a"
         );
         $typeArr = array(
-            "id", "id", "id",
+            "id", "id",
             "rat", "rat",
             "uint", "uint",
             "tint"
@@ -71,7 +71,7 @@ switch ($reqType) {
     case "rat":
         header("Cache-Control: max-age=3");
         $sql = "CALL selectRating (?, ?, ?)";
-        $paramNameArr = array("u", "ty", "ta", "i");
+        $paramNameArr = array("u", "t", "i");
         $typeArr = array("id", "id", "id");
         // output: [[ratVal]].
         break;
@@ -82,16 +82,16 @@ switch ($reqType) {
     //     $typeArr = array("id", "uint");
     //     // output: [[userID, catID, ratVal, instID, changedAt], ...].
     //     break;
-    case "str":
-        $sql = "CALL selectString (?)";
+    case "ent":
+        $sql = "CALL selectEntity (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
         // output: [[str]].
         break;
     case "entID":
-        $sql = "CALL selectStringID (?, ?, ?)";
-        $paramNameArr = array("t", "c", "s");
-        $typeArr = array("id", "id", "str");
+        $sql = "CALL selectEntityID (?)";
+        $paramNameArr = array("d");
+        $typeArr = array("str");
         // output: [[strID]].
         break;
     case "username":

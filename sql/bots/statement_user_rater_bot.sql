@@ -10,47 +10,47 @@ CREATE PROCEDURE updateStatementUserRaterBot (
     IN ratVal SMALLINT UNSIGNED
 )
 BEGIN proc: BEGIN
-    DECLARE stmtUserTagID, userStrID BIGINT UNSIGNED;
+    DECLARE stmtUserTagID, userEntID BIGINT UNSIGNED;
+    -- DECLARE stmtUserTagDef VARCHAR(255)
+    -- CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
+    -- DEFAULT CONCAT("@f47.", stmtID, ".");
 
     -- Get the statement's Users category.
     SELECT id INTO stmtUserTagID
-    FROM Strings
+    FROM Entities
     WHERE (
-        -- type_id = 2 AND
-        -- cxt_id = 77 AND
-        -- def_str = CONCAT("#", stmtID)
-        str = CONCAT("user that thinks @42[", stmtID, "]")
+        def = CONCAT("@f47.", stmtID, ".")
     );
     -- If it does not exist, also insert it and get the ID.
     IF (stmtUserTagID IS NULL) THEN
-        INSERT IGNORE INTO Strings (str)
-        VALUES (CONCAT("user that thinks @42[", stmtID, "]"));
+        INSERT IGNORE INTO Entities (def)
+        VALUES (CONCAT("@f47.", stmtID, "."));
         SELECT LAST_INSERT_ID() INTO stmtUserTagID;
         IF (stmtUserTagID IS NULL) THEN
             SELECT id INTO stmtUserTagID
-            FROM Strings
+            FROM Entities
             WHERE (
-                str = CONCAT("thinks @42[", stmtID, "]")
+                def = CONCAT("@f47.", stmtID, ".")
             );
         END IF;
     END IF;
 
-    -- Get the string representing the user.
-    SELECT id INTO userStrID
-    FROM Strings
+    -- Get the entity representing the user.
+    SELECT id INTO userEntID
+    FROM Entities
     WHERE (
-        str = CONCAT("@5[", userID, "]")
+        def = CONCAT("@u", userID, ".")
     );
     -- If it does not exist, also insert it and get the ID.
-    IF (userStrID IS NULL) THEN
-        INSERT IGNORE INTO Strings (str)
-        VALUES (CONCAT("@5[", userID, "]"));
-        SELECT LAST_INSERT_ID() INTO userStrID;
-        IF (userStrID IS NULL) THEN
-            SELECT id INTO userStrID
-            FROM Strings
+    IF (userEntID IS NULL) THEN
+        INSERT IGNORE INTO Entities (def)
+        VALUES (CONCAT("@u", userID, "."));
+        SELECT LAST_INSERT_ID() INTO userEntID;
+        IF (userEntID IS NULL) THEN
+            SELECT id INTO userEntID
+            FROM Entities
             WHERE (
-                str = CONCAT("@5[", userID, "]")
+                def = CONCAT("@u", userID, ".")
             );
         END IF;
     END IF;
@@ -60,25 +60,25 @@ BEGIN proc: BEGIN
         DELETE FROM SemanticInputs
         WHERE (
             user_id = 61 AND -- ID of the 'statement_user_rater_bot.'
-            ent_type_id = 5 AND -- ID of the 'user' type.
+            -- ent_type_id = 5 AND -- ID of the 'user' type.
             tag_id = stmtUserTagID AND
-            ent_def_id = userStrID
+            inst_id = userEntID
         );
     -- Else update the corresponding SemInput with the new rat_val.
     ELSE
         REPLACE INTO SemanticInputs (
             user_id,
-            ent_type_id,
+            -- ent_type_id,
             tag_id,
             rat_val,
-            ent_def_id
+            inst_id
         )
         VALUES (
             61,
-            5,
+            -- 5,
             stmtUserTagID,
             ratVal,
-            userStrID
+            userEntID
         );
     END IF;
 END proc; END //

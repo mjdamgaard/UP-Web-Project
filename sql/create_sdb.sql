@@ -4,10 +4,10 @@ DROP TABLE SemanticInputs;
 DROP TABLE Private_RecentInputs;
 DROP TABLE RecordedInputs;
 /* Indexes */
-DROP TABLE StringIndexKeys;
+DROP TABLE EntityIndexKeys;
 
-/* Strings */
-DROP TABLE Strings;
+/* Entities */
+DROP TABLE Entities;
 
 /* Data */
 DROP TABLE UsersAndBots;
@@ -49,16 +49,13 @@ DROP TABLE Private_EMails;
     -- And if we want to categorize 'WWII' as e.g. 'good,' it is important to
     -- specify whether we mean as a war or as a history subject. If we mean
     -- the latter, we could then let this ent_type_id be the id of an entity
-    -- called 'subject' (where 'WWII' would then be the ent_def_id, and 'good'
+    -- called 'subject' (where 'WWII' would then be the inst_id, and 'good'
     -- would be the cat_id). 
 
 
 CREATE TABLE SemanticInputs (
     -- User (or bot) who states the statement.
     user_id BIGINT UNSIGNED NOT NULL,
-
-    -- The type of the entity being tagged. 
-    ent_type_id BIGINT UNSIGNED NOT NULL,
 
     -- Tag of the statement.
     tag_id BIGINT UNSIGNED NOT NULL,
@@ -73,29 +70,28 @@ CREATE TABLE SemanticInputs (
 
     -- The definition of the entity being tagged. Note that the entity is
     -- fully defined by its type and its definition combined.
-    -- An 'entity' is thus a tuple of two string IDs, (typeID, strID).
-    -- When we look up the strings that these
+    -- An 'entity' is thus a tuple of two entity IDs, (typeID, strID).
+    -- When we look up the entities that these
     -- IDs point to, we might get e.g. ('subject of history', 'WWII').
     -- Now you might think that 'WWII' is a good subject, and thus give this
     -- entity the tag 'good' with a high rating attached. But if we then
     -- consider the entity ('war', 'WWII'), you might not necessarily think
     -- that WWII is good as a war. This is why the type is important when
     -- tagging something, as it provides necessary context for the statement. 
-    ent_def_id BIGINT UNSIGNED NOT NULL,
+    inst_id BIGINT UNSIGNED NOT NULL,
 
     -- Resulting semantic input: "User #<user_id> states that entity 
-    -- (#<ent_type_id>, #<ent_def_id>) fits the tag #<tag_id> on a scale
+    -- #<inst_id> fits the tag #<tag_id> on a scale
     -- from 0 to 10 (with 5 being neutral) by <rat_val> / 6553.5."
 
     PRIMARY KEY (
         user_id,
-        ent_type_id,
         tag_id,
         rat_val,
-        ent_def_id
+        inst_id
     ),
 
-    UNIQUE INDEX (user_id, ent_type_id, tag_id, ent_def_id)
+    UNIQUE INDEX (user_id, tag_id, inst_id)
 );
 -- TODO: Compress this table and its sec. index, as well as some other tables
 -- and sec. indexes below. (But compression is a must for this table.)
@@ -105,9 +101,8 @@ CREATE TABLE Private_RecentInputs (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     user_id BIGINT UNSIGNED NOT NULL,
-    ent_type_id BIGINT UNSIGNED NOT NULL,
     tag_id BIGINT UNSIGNED NOT NULL,
-    ent_def_id BIGINT UNSIGNED NOT NULL,
+    inst_id BIGINT UNSIGNED NOT NULL,
     rat_val SMALLINT UNSIGNED NOT NULL,
 
     live_at_time BIGINT UNSIGNED NOT NULL
@@ -122,22 +117,21 @@ CREATE TABLE RecordedInputs (
     changed_at_time BIGINT UNSIGNED NOT NULL,
 
     user_id BIGINT UNSIGNED NOT NULL,
-    ent_type_id BIGINT UNSIGNED NOT NULL,
     tag_id BIGINT UNSIGNED NOT NULL,
-    ent_def_id BIGINT UNSIGNED NOT NULL,
+    inst_id BIGINT UNSIGNED NOT NULL,
 
     rat_val SMALLINT UNSIGNED NOT NULL,
 
-    PRIMARY KEY (changed_at_time, user_id, ent_type_id, tag_id, ent_def_id)
+    PRIMARY KEY (changed_at_time, user_id, tag_id, inst_id)
 
     -- TODO: Consider creating this index as well:
-    -- UNIQUE INDEX (user_id, tag_id, ent_def_id, changed_at_time)
+    -- UNIQUE INDEX (user_id, tag_id, inst_id, changed_at_time)
 );
 
 
 /* Indexes */
 
-CREATE TABLE StringIndexKeys (
+CREATE TABLE EntityIndexKeys (
     -- User (or bot) who governs the index.
     user_id BIGINT UNSIGNED NOT NULL,
 
@@ -148,12 +142,12 @@ CREATE TABLE StringIndexKeys (
     -- Given some constants for the above two columns, the "entity indexes"
     -- contain the "entity keys," which are each just the secondary index of an
     -- entity.
-    str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    def VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
     PRIMARY KEY (
         user_id,
         idx_id,
-        str
+        def
     )
 );
 -- (Also needs compressing.)
@@ -163,20 +157,16 @@ CREATE TABLE StringIndexKeys (
 -- column. But I will do this in another file, then.
 
 
-/* Strings */
+/* Entities */
 
-CREATE TABLE Strings (
-    -- String ID.
+CREATE TABLE Entities (
+    -- Entity ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- String. These are used to define entities, as each entity is a tuple of
-    -- two strings (or string IDs, if one will). The first string in these
-    -- tuples denotes the type of the entity (as a kind of context), and the
-    -- second string is the word/sentence/lexical item/code referencing the
-    -- entity itself (understood in the context of its type).
-    str VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    -- Entity definition.
+    def VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
-    UNIQUE INDEX (str)
+    UNIQUE INDEX (def)
 );
 
 
@@ -240,8 +230,8 @@ CREATE TABLE Binaries (
 CREATE TABLE BotData (
     -- Bot that uses this data.
     bot_id BIGINT UNSIGNED NOT NULL,
-    -- Entity definition of the entity which the data is about.
-    ent_def_id BIGINT UNSIGNED NOT NULL,
+    -- Entity which the data is about.
+    ent_id BIGINT UNSIGNED NOT NULL,
 
     -- Data.
     data_1 BIGINT UNSIGNED,
@@ -251,7 +241,7 @@ CREATE TABLE BotData (
 
     PRIMARY KEY (
         bot_id,
-        ent_def_id
+        ent_id
     )
 );
 -- TODO: Compress.
