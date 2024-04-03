@@ -38,7 +38,7 @@ BEGIN
     -- get previous high-precision mean and the number of users for the
     -- statement.
     SELECT data_1, data_2 INTO prevMeanHP, prevUserNum
-    FROM BotData
+    FROM BotData1e2d
     WHERE (
         bot_id = 62 AND -- ID of the "mean_with_offset_3_bot."
         ent_id = stmtID
@@ -49,10 +49,10 @@ BEGIN
     IF (prevMeanHP IS NULL) THEN
         SET prevMeanHP =  9223372036854775807;
         SET prevUserNum = 3;
-        INSERT INTO BotData (bot_id, ent_id, data_1, data_2)
+        INSERT INTO BotData1e2d (bot_id, ent_id, data_1, data_2)
         VALUES (62, stmtID, prevMeanHP, prevUserNum);
         SELECT data_1, data_2 INTO prevMeanHP, prevUserNum
-        FROM BotData
+        FROM BotData1e2d
         WHERE (
             bot_id = 62 AND
             ent_id = stmtID
@@ -108,7 +108,7 @@ BEGIN
         instID
     );
     -- update the bot's data for the statement.
-    REPLACE INTO BotData (bot_id, ent_id, data_1, data_2)
+    REPLACE INTO BotData1e2d (bot_id, ent_id, data_1, data_2)
     VALUES (62, stmtID, newMeanHP, newUserNum);
 END //
 DELIMITER ;

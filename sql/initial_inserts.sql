@@ -16,7 +16,7 @@ ALTER TABLE Entities AUTO_INCREMENT=1;
 DELETE FROM Texts;
 DELETE FROM Binaries;
 
-DELETE FROM BotData;
+DELETE FROM BotData1e2d;
 DELETE FROM Private_UserData;
 DELETE FROM Private_Sessions;
 DELETE FROM Private_EMails;
@@ -27,27 +27,19 @@ DELETE FROM Private_EMails;
 INSERT INTO Entities (def, id)
 VALUES
     -- Most fundamental three types:
-    ("sdb entity||sdb", 1),
+    ("entity", 1),
     ("type", 2),
     ("tag", 3),
--- ("template| for entity strings", 4), -- reserved letter: 't'.
--- ("user| of this network", 5),  -- reserved letter: 'u'.
--- ("bot| for aggregation", 6), -- reserved letter: 'u'. (also a "user")
--- ("text| (internally stored)", 7), -- reserved letter: 'x'.
--- ("binary| (internally stored)", 8), -- reserved letter: 'b'.
--- ("index| of entity strings", 9), -- reserved letter: 'i'.
--- ("user/bot| of this network", 10);
-    -- Now the so-called specifications, such as ' for entity strings' etc.
-    -- above, can just be added at some later appropriate point, once we have
-    -- implemented dealing with duplicates, which will now not very hard.
-    -- Oh, and we also won't need templates at all as a fundamental thing.
-    ("format", 4), -- reserved letter: 'f'.
-    ("sdb user||sdb", 5),  -- reserved letter: 'u'.
-    ("sdb bot||sdb", 6), -- reserved letter: 'u'.
-    ("text data", 7), -- reserved letter: 't'.
-    ("binary data", 8), -- reserved letter: 'b'.
-    ("index", 9), -- reserved letter: 'i'.
-    ("sdb user/bot||sdb", 10); -- reserved letter: 'u'.
+    -- ("format |. a format string used to define entities|a1", 4),
+    ("format string| used to define entities", 4),
+        -- reserved letter: 'f'.
+    ("user| of this sdb|s2db", 5),  -- reserved letter: 'u'.
+    ("bot| native to this sdb|s1db", 6), -- reserved letter: 'u'.
+    ("text| stored by this sdb|s2db", 7), -- reserved letter: 't'.
+    ("binary| file stored by this sdb|s2db", 8), -- reserved letter: 'b'.
+    ("index| of entity definitions, stored by this sdb|s3db", 9),
+        -- reserved letter: 'i'.
+    ("user/bot| of this sdb|s2db", 10); -- reserved letter: 'u'.
     -- The reserved letters here are when typing out placeholders for string
     -- templates, or references for link substitutions (string substitutions
     -- don't need types). These are however converted to the IDs before the
@@ -74,18 +66,28 @@ VALUES
 INSERT INTO Entities (def, id)
 VALUES
     -- Some fundamental templates, plus some more types, such as 'property.'
-    ("%e :: %e|fits the tag %1 when having the type %2", 40),
+    ("%e of %e|: an instance of the property %1 of the entity %2", 40),
     ("property", 41),
-    ("%e -> %e|is a property %2 of the entity %1", 42),
     (CONCAT(
-        "%e :: %e -> %e",
-        "|is a property %3 of the entity %1 when this has the type %2"
+        "%e of %e, the %e|: ",
+        "an instance of the property %1 of the entity %2, when said entity ",
+        "is interpreted as being of the type %3"
+    ), 42), -- This template might come in handy, but it also might not.
+    (CONCAT(
+        "%e :: %e|. ",
+        "this tag is meant for bots, not users. ",
+        "it means 'fits the tag %1 while also having the type %2.'",
+        "|ti2"
     ), 43),
     ("statement", 44),
-    ("%e => %e|the entity %1 fits the tag %2", 45),
-    ("url||url", 46),
-    ("user that thinks %e|user that thinks the statement %1 is true", 47),
-    ("submitted by %u|is submitted by the user %1", 48);
+    ("%e fits %e|: the entity %1 fits the tag %2", 45),
+    ("better duplicate| than this one to use", 46),
+    (CONCAT(
+        "user who thinks that %e|: ",
+        "user who thinks that the statement %1 is true"
+    ), 47),
+    ("submitted by %u|: is submitted by the user %1", 48),
+    ("url||url", 49);
     -- ("aggregate category", 53);
 
 INSERT INTO Entities (def, id)
@@ -118,7 +120,7 @@ CALL insertOrFindEntity(1, 0, "film director"); -- id: +6
 CALL insertOrFindEntity(1, 0, "2001"); -- id: +8
 CALL insertOrFindEntity(1, 0, "2002"); -- id: +9
 CALL insertOrFindEntity(1, 0, "person"); -- id: +10
-CALL insertOrFindEntity(1, 0, "peter jackson||pj"); -- id: +11
+CALL insertOrFindEntity(1, 0, "peter jackson|film director|pj"); -- id: +11
 CALL insertOrFindEntity(1, 0, CONCAT(
     "the lord of the rings: the fellowship of the ring",
     "|2001 movie|tlr1tfr"
@@ -126,54 +128,31 @@ CALL insertOrFindEntity(1, 0, CONCAT(
 -- CALL insertOrFindEntity(1, 0, "@2[1004], @1005[1008]"); -- id: +13
 --     -- renders as: "movie, 2001".
 -- These two Entities are obsolete, and ought to be changed to something else:
-CALL insertOrFindEntity(1, 0, "2001 movie"); -- id: +13
-    -- renders as: "movie, 2001".
-CALL insertOrFindEntity(1, 0, "#1012;1013"); -- id: +14
-    -- renders as: "The Lord of the Rings: The Fellowship of the Ring
-    -- <i>movie, 2001</i>".
+CALL insertOrFindEntity(1, 0, "change me!"); -- id: +13
+CALL insertOrFindEntity(1, 0, "change me too!"); -- id: +14
+
 CALL insertOrFindEntity(1, 0,
     "the lord of the rings: the two towers|2002 movie|tlr1ttt"
 ); -- id: +15
--- CALL insertOrFindEntity(1, 0, "@2[1004], @1005[1009]"); -- id: +16
---     -- renders as: "movie, 2002".
--- These two Entities are obsolete, and ought to be changed to something else:
-CALL insertOrFindEntity(1, 0, "2002 movie"); -- id: +16
-    -- renders as: "movie, 2002".
-CALL insertOrFindEntity(1, 0, "#1015;1016"); -- id: +17
-    -- renders as: "The Lord of the Rings: The Two Towers <i>movie, 2002</i>".
 
--- These two examples (the two movies above, i.e.) are examples of what we
--- might call 'specified titles.' Note that the first part of such 'specified
--- titles,' i.e.\ the 'title' part, should be as searchable as possible, and
--- therefore should preferably include no '@'-references. The second part,
--- on the other hand is free to use as many '@'-references (or 'entity
--- references' more formally) as they like (and it can be a good idea to
--- use them a lot). *(We can call this second part the 'specification,' btw.)
--- Specified titles are very useful for the fundamental things that we want
--- to rate, i.e.\ things of the "real word," also counting fictional things
--- of the real world as being "of the real world" here. Other kinds of
--- entities include the tags. (Of course it is also often useful to
--- rate tags, but only so that we can ultimately better rate the "real-world"
--- (non-meta) things.) We do not need to specify the tags too precisely.
--- For instance, it is not necessary to specify what we mean by the tag
--- 'funny' any further, but as for a thing like The Lord of the Rings: The
--- Two Towers, it is more important to be specify what we are talking about,
--- at least enough so that it is the same movie that all users are thinking
--- about when they rate it.
+-- These two Entities are obsolete, and ought to be changed to something else:
+CALL insertOrFindEntity(1, 0, "...and me!"); -- id: +16
+CALL insertOrFindEntity(1, 0, "...and me as well!"); -- id: +17
+
 
 
 
 CALL insertOrFindEntity(1, 0, "science"); -- id: +18
-CALL insertOrFindEntity(1, 0, "musicology|#32"); -- id: +19
-CALL insertOrFindEntity(1, 0, "cinematography|#32"); -- id: +20
-CALL insertOrFindEntity(1, 0, "physics|#32"); -- id: +21
-CALL insertOrFindEntity(1, 0, "mathematics|#32"); -- id: +22
+CALL insertOrFindEntity(1, 0, "musicology"); -- id: +19
+CALL insertOrFindEntity(1, 0, "cinematography"); -- id: +20
+CALL insertOrFindEntity(1, 0, "physics"); -- id: +21
+CALL insertOrFindEntity(1, 0, "mathematics"); -- id: +22
 
 -- SELECT SLEEP(1);
 
 
 CALL insertOrFindEntity(1, 0, "subcategory"); -- id: +23
-CALL insertOrFindEntity(1, 0, "@f43.1.3.1023."); -- id: +24
+CALL insertOrFindEntity(1, 0, "@f40.1023.1."); -- id: +24
 
 CALL insertOrUpdateRating(1, 1024, 1018, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1024, 1021, CONV("E000", 16, 10), 1);
@@ -185,13 +164,13 @@ CALL insertOrUpdateRating(1, 1024, 1000, CONV("0100", 16, 10), 1);
 -- SELECT SLEEP(1);
 
 
-CALL insertOrFindEntity(1, 0, "@f43.1001.3.1023."); -- id: +25
+CALL insertOrFindEntity(1, 0, "@f40.1023.1001."); -- id: +25
 CALL insertOrUpdateRating(1, 1025, 1002, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1025, 1003, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1025, 1019, CONV("E000", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1025, 1000, CONV("0100", 16, 10), 1);
 
-CALL insertOrFindEntity(1, 0, "@f43.1018.3.1023."); -- id: +26
+CALL insertOrFindEntity(1, 0, "@f40.1023.1018."); -- id: +26
 CALL insertOrUpdateRating(1, 1026, 1019, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1026, 1020, CONV("F100", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1026, 1021, CONV("F200", 16, 10), 1);
@@ -210,14 +189,14 @@ CALL insertOrUpdateRating(1, 1004, 1015, CONV("FE00", 16, 10), 1);
 CALL insertOrFindEntity(1, 0, "related entity"); -- id: +27
 
 -- (Note the '1' is omitted here after the '@'. *No, not after all..)
-CALL insertOrFindEntity(1, 0, "@f43.1012.1.1027."); -- id: +28
+CALL insertOrFindEntity(1, 0, "@f40.1027.1012."); -- id: +28
 CALL insertOrUpdateRating(1, 1028, 1015, CONV("FF00", 16, 10), 1);
-CALL insertOrFindEntity(1, 0, "@f43.1015.1.1027."); -- id: +29
+CALL insertOrFindEntity(1, 0, "@f40.1027.1.1015."); -- id: +29
 CALL insertOrUpdateRating(1, 1029, 1012, CONV("FF00", 16, 10), 1);
 
-CALL insertOrFindEntity(1, 0, "@f43.1027.1.1027."); -- id: +30
+CALL insertOrFindEntity(1, 0, "@f40.1027.1001."); -- id: +30
 CALL insertOrUpdateRating(1, 1030, 1019, CONV("F000", 16, 10), 1);
-CALL insertOrFindEntity(1, 0, "@f43.1019.1.1027."); -- id: +31
+CALL insertOrFindEntity(1, 0, "@f40.1027.1019."); -- id: +31
 CALL insertOrUpdateRating(1, 1031, 1004, CONV("FF00", 16, 10), 1);
 
 
@@ -226,27 +205,28 @@ CALL insertOrFindEntity(1, 0, "supercategory"); -- id: +32
 -- SELECT SLEEP(1);
 
 
-CALL insertOrFindEntity(1, 0, "good"); -- id: +33
-CALL insertOrFindEntity(1, 0, "funny"); -- id: +34
-CALL insertOrFindEntity(1, 0, "scary"); -- id: +35
-CALL insertOrFindEntity(1, 0, "iconic"); -- id: +36
+-- CALL insertOrFindEntity(1, 0, "good|to watch as a piece of media"); -- id: +33
+CALL insertOrFindEntity(1, 0, "good|as a piece of media"); -- id: +33
+CALL insertOrFindEntity(1, 0, "funny|as a piece of media"); -- id: +34
+CALL insertOrFindEntity(1, 0, "scary|as a piece of media"); -- id: +35
+CALL insertOrFindEntity(1, 0, "iconic|as a piece of media"); -- id: +36
 
 
 CALL insertOrFindEntity(1, 0, "relevant tag to rate"); -- id: +37
 
-CALL insertOrFindEntity(1, 0, "@f43.1037.2.1037."); -- id: +38
+CALL insertOrFindEntity(1, 0, "@f40.1037.1004."); -- id: +38
 CALL insertOrUpdateRating(1, 1038, 1033, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1038, 1034, CONV("E100", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1038, 1035, CONV("E000", 16, 10), 1);
 
 
-CALL insertOrFindEntity(1, 0, "@f43.1012.1004.1037."); -- id: +39
+CALL insertOrFindEntity(1, 0, "@f40.1037.1012."); -- id: +39
 CALL insertOrUpdateRating(1, 1039, 1033, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1039, 1034, CONV("E100", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1039, 1035, CONV("EA00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1039, 1036, CONV("E000", 16, 10), 1);
 
-CALL insertOrFindEntity(1, 0, "@f43.1.2.1037."); -- id: +40
+CALL insertOrFindEntity(1, 0, "@f40.1037.1."); -- id: +40
 -- CALL insertOrUpdateRating(1, 1040, 1033, CONV("FF00", 16, 10), 1);
 -- CALL insertOrUpdateRating(1, 1040, 1034, CONV("9000", 16, 10), 1);
 
@@ -260,7 +240,7 @@ CALL insertOrFindEntity(1, 0, "time"); -- id: +42
 CALL insertOrFindEntity(1, 0, "running time"); -- id: +43
 CALL insertOrFindEntity(1, 0, "actor"); -- id: +44
 
-CALL insertOrFindEntity(1, 0, "@40[1041] of @2[1004]"); -- id: +45
+CALL insertOrFindEntity(1, 0, "@f40.1041.1004."); -- id: +45
 CALL insertOrUpdateRating(1, 1045, 1006, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1045, 1044, CONV("FE00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1045, 1043, CONV("FC00", 16, 10), 1);
@@ -274,9 +254,9 @@ CALL insertOrFindEntity(1, 0, "elijah wood||ew"); -- id: +48
 
 CALL insertOrFindEntity(1, 0, "2 h 59 min"); -- id: +49
 
-CALL insertOrFindEntity(1, 0, "@f43.1012.1004.1006."); -- id: +50
-CALL insertOrFindEntity(1, 0, "@f43.1012.1004.1044."); -- id: +51
-CALL insertOrFindEntity(1, 0, "@f43.1012.1004.1043."); -- id: +52
+CALL insertOrFindEntity(1, 0, "@f40.1006.1012."); -- id: +50
+CALL insertOrFindEntity(1, 0, "@f40.1044.1012."); -- id: +51
+CALL insertOrFindEntity(1, 0, "@f40.1043.1012."); -- id: +52
 CALL insertOrUpdateRating(1, 1050, 1011, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1051, 1046, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1051, 1047, CONV("FF00", 16, 10), 1);

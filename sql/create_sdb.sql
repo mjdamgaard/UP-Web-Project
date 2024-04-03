@@ -15,7 +15,8 @@ DROP TABLE Texts;
 DROP TABLE Binaries;
 
 /* Ancillary data for aggregation bots */
-DROP TABLE BotData;
+DROP TABLE BotData1e2d;
+DROP TABLE BotData1e4d;
 
 /* Private user data */
 DROP TABLE Private_UserData;
@@ -95,6 +96,10 @@ CREATE TABLE SemanticInputs (
 );
 -- TODO: Compress this table and its sec. index, as well as some other tables
 -- and sec. indexes below. (But compression is a must for this table.)
+-- There is also the option to create a sec. index: (tag_id, inst_id, rat_val,
+-- user_id), but I actually think that it is better to implement semantically,
+-- e.g. by using the "statement_user_rater_bot," namely since this better
+-- allows for filtering such user lists.. 
 
 
 CREATE TABLE Private_RecentInputs (
@@ -227,17 +232,19 @@ CREATE TABLE Binaries (
 
 /* Ancillary data for aggregation bots */
 
-CREATE TABLE BotData (
+CREATE TABLE BotData1e2d (
     -- Bot that uses this data.
     bot_id BIGINT UNSIGNED NOT NULL,
     -- Entity which the data is about.
     ent_id BIGINT UNSIGNED NOT NULL,
 
     -- Data.
+    -- data_1 BIGINT UNSIGNED NOT NULL,
+    -- data_2 BIGINT UNSIGNED NOT NULL,
     data_1 BIGINT UNSIGNED,
     data_2 BIGINT UNSIGNED,
-    data_3 BIGINT UNSIGNED,
-    data_4 BIGINT UNSIGNED,
+    -- TODO: Check mean_bots.sql to see if it is okay to make these  columns
+    -- NOT NULL, and if not, change mean_bots.sql so that it can be done.
 
     PRIMARY KEY (
         bot_id,
@@ -245,6 +252,27 @@ CREATE TABLE BotData (
     )
 );
 -- TODO: Compress.
+
+CREATE TABLE BotData1e4d (
+    -- Bot that uses this data.
+    bot_id BIGINT UNSIGNED NOT NULL,
+    -- Entity which the data is about.
+    ent_id BIGINT UNSIGNED NOT NULL,
+
+    -- Data.
+    data_1 BIGINT UNSIGNED NOT NULL,
+    data_2 BIGINT UNSIGNED NOT NULL,
+    data_3 BIGINT UNSIGNED NOT NULL,
+    data_4 BIGINT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (
+        bot_id,
+        ent_id
+    )
+);
+-- TODO: Compress.
+-- TODO: Add other BotData_n_m tables if need be (and BotData_1_4 is only for
+-- show right now).
 
 
 
