@@ -80,14 +80,15 @@ VALUES
         "|ti2"
     ), 43),
     ("statement", 44),
-    ("%e fits %e|: the entity %1 fits the tag %2", 45),
+    ("%e fits %e|: the tag %1 fits the entity %2", 45),
     ("better duplicate| than this one to use", 46),
     (CONCAT(
         "user who thinks that %e|: ",
         "user who thinks that the statement %1 is true"
     ), 47),
     ("submitted by %u|: is submitted by the user %1", 48),
-    ("url||url", 49);
+    ("url||url", 49),
+    ("user %u|: the user %1 of this sdb|s3db", 50);
     -- ("aggregate category", 53);
 
 INSERT INTO Entities (def, id)

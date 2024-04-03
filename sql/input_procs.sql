@@ -63,8 +63,7 @@ BEGIN
     DECLARE stmtID BIGINT UNSIGNED;
     DECLARE stmtStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
     DEFAULT CONCAT(
-        -- "@", tagID, ". fits @", instID
-        "@f44.", instID, ".", tagID, "."
+        "@f45.", instID, ".", tagID, "."
     );
     DECLARE prevRatVal SMALLINT UNSIGNED;
     DECLARE now BIGINT UNSIGNED DEFAULT UNIX_TIMESTAMP();

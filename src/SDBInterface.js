@@ -16,7 +16,7 @@ export const SDBInterface = () => {
     <AccountContextProvider> {/* yields: session, accountManager.*/}
       <div className="sdb-interface">
         <InterfacePage
-          initColSpec={{entID: 10}}
+          initColSpec={{entID: 1}}
           setAppPage={setAppPage}
           isHidden={appPage !== "home"}
         />

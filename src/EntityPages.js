@@ -64,8 +64,11 @@ export const EntityPage = ({entID, initTab}) => {
   }
   
   // Afterwards, extract the needed data from results[0], then do a full render.
-  const [typeID, cxtID, defStr] = (results.data[0] ?? []);
+  const [def] = (results.data[0] ?? []);
   
+  // TODO: Query for the topmost types for the entity (entID), and use them to
+  // specify the tabs.
+
   // Construct the tabs on the EntityPage.
   const [tabDataArr, defaultTab] = getTabDataArrAndDefaultTab(
     entID, typeID, cxtID

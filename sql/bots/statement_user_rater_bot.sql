@@ -39,18 +39,19 @@ BEGIN proc: BEGIN
     SELECT id INTO userEntID
     FROM Entities
     WHERE (
-        def = CONCAT("@u", userID, ".")
+        -- def = CONCAT("@u", userID, ".")
+        def = CONCAT("@f50.", userID, ".")
     );
     -- If it does not exist, also insert it and get the ID.
     IF (userEntID IS NULL) THEN
         INSERT IGNORE INTO Entities (def)
-        VALUES (CONCAT("@u", userID, "."));
+        VALUES (CONCAT("@f50", userID, "."));
         SELECT LAST_INSERT_ID() INTO userEntID;
         IF (userEntID IS NULL) THEN
             SELECT id INTO userEntID
             FROM Entities
             WHERE (
-                def = CONCAT("@u", userID, ".")
+                def = CONCAT("@f50", userID, ".")
             );
         END IF;
     END IF;
