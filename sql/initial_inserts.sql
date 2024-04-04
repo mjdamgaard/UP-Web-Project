@@ -23,36 +23,21 @@ DELETE FROM Private_EMails;
 
 -- SET FOREIGN_KEY_CHECKS = 0;
 
-/* From create_open_sdb.sql */
+-- Some fundamental types:
 INSERT INTO Entities (def, id)
 VALUES
-    -- Most fundamental three types:
-    ("entity", 1),
+    ("entity", 1), -- reserved letter: 'e'.
     ("type", 2),
     ("tag", 3),
-    -- ("format |. a format string used to define entities|a1", 4),
-    ("format string| used to define entities", 4),
-        -- reserved letter: 'f'.
-    ("user| of this sdb|s2db", 5),  -- reserved letter: 'u'.
+    ("template| used to define entities", 4),
+    ("user| of this sdb|s2db", 5), -- reserved letter: 'u'.
     ("bot| native to this sdb|s1db", 6), -- reserved letter: 'u'.
     ("text| stored by this sdb|s2db", 7), -- reserved letter: 't'.
     ("binary| file stored by this sdb|s2db", 8), -- reserved letter: 'b'.
     ("index| of entity definitions, stored by this sdb|s3db", 9),
         -- reserved letter: 'i'.
     ("user/bot| of this sdb|s2db", 10); -- reserved letter: 'u'.
-    -- The reserved letters here are when typing out placeholders for string
-    -- templates, or references for link substitutions (string substitutions
-    -- don't need types). These are however converted to the IDs before the
-    -- string is uploaded. (See 23-xx note collection.tex currently for more
-    -- info. (28.03.24))
-
--- (29.03.24) [...] let us actually just
--- reserve all single letters, and all single symbols as well, meaning that
--- users can't expect to type out custom single-symbol types for there entity
--- references, e.g.\ as in '@s[axophone]', and then expect the app to find the
--- string ID of 's' and insert it in its place.
--- ... Oh, but what about e.g. Chinese?.. ..Hm, let's just reserve all ASCII
--- symbols, then..
+    
 
 
 -- INSERT INTO UsersAndBots (username, id)
@@ -88,8 +73,9 @@ VALUES
     ), 47),
     ("submitted by %u|: is submitted by the user %1", 48),
     ("url||url", 49),
-    ("user %u|: the user %1 of this sdb|s3db", 50);
-    -- ("aggregate category", 53);
+    ("user %u|: the user/bot %1 of this sdb|s3db", 50);
+    -- ("%u|: the user/bot %1 of this sdb|s3db", 50);
+
 
 INSERT INTO Entities (def, id)
 VALUES
@@ -153,7 +139,7 @@ CALL insertOrFindEntity(1, 0, "mathematics"); -- id: +22
 
 
 CALL insertOrFindEntity(1, 0, "subcategory"); -- id: +23
-CALL insertOrFindEntity(1, 0, "@f40.1023.1."); -- id: +24
+CALL insertOrFindEntity(1, 0, "@40.1023.1"); -- id: +24
 
 CALL insertOrUpdateRating(1, 1024, 1018, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1024, 1021, CONV("E000", 16, 10), 1);
@@ -165,13 +151,13 @@ CALL insertOrUpdateRating(1, 1024, 1000, CONV("0100", 16, 10), 1);
 -- SELECT SLEEP(1);
 
 
-CALL insertOrFindEntity(1, 0, "@f40.1023.1001."); -- id: +25
+CALL insertOrFindEntity(1, 0, "@40.1023.1001"); -- id: +25
 CALL insertOrUpdateRating(1, 1025, 1002, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1025, 1003, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1025, 1019, CONV("E000", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1025, 1000, CONV("0100", 16, 10), 1);
 
-CALL insertOrFindEntity(1, 0, "@f40.1023.1018."); -- id: +26
+CALL insertOrFindEntity(1, 0, "@40.1023.1018"); -- id: +26
 CALL insertOrUpdateRating(1, 1026, 1019, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1026, 1020, CONV("F100", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1026, 1021, CONV("F200", 16, 10), 1);
@@ -190,14 +176,14 @@ CALL insertOrUpdateRating(1, 1004, 1015, CONV("FE00", 16, 10), 1);
 CALL insertOrFindEntity(1, 0, "related entity"); -- id: +27
 
 -- (Note the '1' is omitted here after the '@'. *No, not after all..)
-CALL insertOrFindEntity(1, 0, "@f40.1027.1012."); -- id: +28
+CALL insertOrFindEntity(1, 0, "@40.1027.1012"); -- id: +28
 CALL insertOrUpdateRating(1, 1028, 1015, CONV("FF00", 16, 10), 1);
-CALL insertOrFindEntity(1, 0, "@f40.1027.1.1015."); -- id: +29
+CALL insertOrFindEntity(1, 0, "@40.1027.1.1015"); -- id: +29
 CALL insertOrUpdateRating(1, 1029, 1012, CONV("FF00", 16, 10), 1);
 
-CALL insertOrFindEntity(1, 0, "@f40.1027.1001."); -- id: +30
+CALL insertOrFindEntity(1, 0, "@40.1027.1001"); -- id: +30
 CALL insertOrUpdateRating(1, 1030, 1019, CONV("F000", 16, 10), 1);
-CALL insertOrFindEntity(1, 0, "@f40.1027.1019."); -- id: +31
+CALL insertOrFindEntity(1, 0, "@40.1027.1019"); -- id: +31
 CALL insertOrUpdateRating(1, 1031, 1004, CONV("FF00", 16, 10), 1);
 
 
@@ -215,19 +201,19 @@ CALL insertOrFindEntity(1, 0, "iconic|as a piece of media"); -- id: +36
 
 CALL insertOrFindEntity(1, 0, "relevant tag to rate"); -- id: +37
 
-CALL insertOrFindEntity(1, 0, "@f40.1037.1004."); -- id: +38
+CALL insertOrFindEntity(1, 0, "@40.1037.1004"); -- id: +38
 CALL insertOrUpdateRating(1, 1038, 1033, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1038, 1034, CONV("E100", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1038, 1035, CONV("E000", 16, 10), 1);
 
 
-CALL insertOrFindEntity(1, 0, "@f40.1037.1012."); -- id: +39
+CALL insertOrFindEntity(1, 0, "@40.1037.1012"); -- id: +39
 CALL insertOrUpdateRating(1, 1039, 1033, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1039, 1034, CONV("E100", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1039, 1035, CONV("EA00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1039, 1036, CONV("E000", 16, 10), 1);
 
-CALL insertOrFindEntity(1, 0, "@f40.1037.1."); -- id: +40
+CALL insertOrFindEntity(1, 0, "@40.1037.1"); -- id: +40
 -- CALL insertOrUpdateRating(1, 1040, 1033, CONV("FF00", 16, 10), 1);
 -- CALL insertOrUpdateRating(1, 1040, 1034, CONV("9000", 16, 10), 1);
 
@@ -241,7 +227,7 @@ CALL insertOrFindEntity(1, 0, "time"); -- id: +42
 CALL insertOrFindEntity(1, 0, "running time"); -- id: +43
 CALL insertOrFindEntity(1, 0, "actor"); -- id: +44
 
-CALL insertOrFindEntity(1, 0, "@f40.1041.1004."); -- id: +45
+CALL insertOrFindEntity(1, 0, "@40.1041.1004"); -- id: +45
 CALL insertOrUpdateRating(1, 1045, 1006, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1045, 1044, CONV("FE00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1045, 1043, CONV("FC00", 16, 10), 1);
@@ -255,9 +241,9 @@ CALL insertOrFindEntity(1, 0, "elijah wood||ew"); -- id: +48
 
 CALL insertOrFindEntity(1, 0, "2 h 59 min"); -- id: +49
 
-CALL insertOrFindEntity(1, 0, "@f40.1006.1012."); -- id: +50
-CALL insertOrFindEntity(1, 0, "@f40.1044.1012."); -- id: +51
-CALL insertOrFindEntity(1, 0, "@f40.1043.1012."); -- id: +52
+CALL insertOrFindEntity(1, 0, "@40.1006.1012"); -- id: +50
+CALL insertOrFindEntity(1, 0, "@40.1044.1012"); -- id: +51
+CALL insertOrFindEntity(1, 0, "@40.1043.1012"); -- id: +52
 CALL insertOrUpdateRating(1, 1050, 1011, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1051, 1046, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1051, 1047, CONV("FF00", 16, 10), 1);
