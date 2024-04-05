@@ -115,3 +115,62 @@ export const DropdownMenu = ({title, children, startAsExpanded}) => {
     </div>
   );
 };
+
+
+
+
+export const ExpandableSpan = ({children, startAsExpanded}) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(startAsExpanded);
+  
+  if(!isLoaded && isExpanded) {
+    setIsLoaded(true);
+  }
+
+  if (!isLoaded) {
+    return (
+      <span className="expandable-span">
+        <span style={{display: "none"}}></span>
+        <ExpandButton
+          isExpanded={isExpanded} setIsExpanded={setIsExpanded}
+        />
+      </span>
+    );
+  }
+
+  if (!isExpanded) {
+    return (
+      <span className="expandable-span">
+        <span style={{display: "none"}}>
+          {children}
+        </span>
+        <ExpandButton
+          isExpanded={isExpanded} setIsExpanded={setIsExpanded}
+        />
+      </span>
+    );
+  }
+
+  return (
+    <span className="expandable-span">
+      <span>
+        {children}
+      </span>
+      <ExpandButton
+        isExpanded={isExpanded} setIsExpanded={setIsExpanded}
+      />
+    </span>
+  );
+};
+
+
+
+export const ExpandButton = ({isExpanded, setIsExpanded}) => {
+  return (
+    <button className="expand-button" onClick={() => {
+      setIsExpanded(prev => !prev);
+    }}>
+      {isExpanded ? "<" : ">"}
+    </button>
+  );
+};

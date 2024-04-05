@@ -1,15 +1,15 @@
 import {useState, createContext, useContext, useEffect} from "react";
 import {useQuery} from "./DBRequests.js";
 import {ColumnContext} from "./contexts/ColumnContext.js";
+import {ExpandableSpan} from "./DropdownBox.js";
 
 
 
 export const EntityTitle = ({
-  entID, isLink, canBeToggled, startAsExpanded, recLevel, maxRecLevel
+  entID, isLink, isFull, recLevel, maxRecLevel
 }) => {
   isLink ??= true;
-  canBeToggled ??= true;
-  startAsExpanded ??= false;
+  isFull ??= false;
   recLevel ??= 0;
   maxRecLevel ??= 3;
 
@@ -28,19 +28,14 @@ export const EntityTitle = ({
   
   // Afterwards, first extract the needed data from results[0].
   const [def] = (results.data[0] ?? []);
-
-
-  if (canBeToggled) {
-    throw "EntityTitles: Toggleable titles are not implemented yet.";
-  }
   
 
   // If def codes for a concatenated string (starting with an unescaped '#'),
   // return a ConcatenatedEntityTitle.
   if (def[0] === "#") {
     return (
-      <ConcatenatedEntityTitle def={def} entID={entID} isLink={isLink}
-        canBeToggled={canBeToggled} startAsExpanded={startAsExpanded}
+      <ConcatenatedEntityTitle def={def} entID={entID}
+        isLink={isLink} isFull={isFull}
         recLevel={recLevel} maxRecLevel={maxRecLevel}
       />
     );
@@ -50,8 +45,8 @@ export const EntityTitle = ({
   // return a TemplateInstanceEntityTitle.
   if (/^@[1-9]/.test(def[0])) {
     return (
-      <TemplateInstanceEntityTitle def={def} entID={entID} isLink={isLink}
-        canBeToggled={canBeToggled} startAsExpanded={startAsExpanded}
+      <TemplateInstanceEntityTitle def={def} entID={entID}
+        isLink={isLink} isFull={isFull}
         recLevel={recLevel} maxRecLevel={maxRecLevel}
       />
     );
@@ -84,71 +79,63 @@ export const EntityTitle = ({
   // let us just write out the plain def instead
   if (typeof extraCode !== "undefined") {
     return (
-      <InvalidEntityTitle def={def} entID={entID} isLink={isLink}
-        canBeToggled={canBeToggled} startAsExpanded={startAsExpanded}
+      <InvalidEntityTitle def={def} entID={entID}
+        isLink={isLink} isFull={isFull}
       />
     );
   }
 
-  // Substitute ..
+  // Split modDef in up into the (short) title part and the specification
+  // part.
+  const [modTitle, modSpec] = modDef.split("\\\\4");
 
-  // Split this modified definition in two parts: The (short) title and the
-  // specification.
-  const [titleIL, specIL] = modifiedDef.split("\\\\4");
-  
-  // Get HTML of the (short) title and the specification, with entity
-  // references submitted and converted from the IL back to plaintext.
-  
-  // If there is no specification
-
-
-
-
-
-  // // If the recursion level has reached maxRecLevel, simply render the
-  // // entity ID instead.
-  // if (recLevel >= maxRecLevel) {
-  //   return (
-  //     <EntityID entID={entID} isLink={isLink} />
-  //   );
-  // }
-
-  if (isLink) {
+  // If isFull, return the full title.
+  if (isFull) {
     return (
-      <EntityLink entID={entID}>
-        {titleContent}
-      </EntityLink>
-    );
-  } else {
-    return (
-      <>
-        {titleContent}
-      </>
+      <span className="entity-title">
+        <span className="short-title">
+          <EntityTitleFromModDef modDef={modTitle} isLink={false}
+            recLevel={recLevel} maxRecLevel={maxRecLevel}
+          />
+        </span>
+        <span className="title-spec">
+          <span className="title-spec-separator"></span>
+          <EntityTitleFromModDef modDef={modSpec} isLink={false}
+            recLevel={recLevel} maxRecLevel={maxRecLevel}
+          />
+        </span>
+      </span>
     );
   }
+
+  // Else return title as a link iff isLink, followed by a button to expand
+  // the specification.
+  return (
+    <span className="entity-title">
+      <span className="short-title">
+        <EntityTitleFromModDef entID={entID} modDef={modTitle} isLink={isLink}
+          recLevel={recLevel} maxRecLevel={maxRecLevel}
+        />
+      </span>
+      <ExpandableSpan>
+        <span className="title-spec-separator"></span>
+        <EntityTitleFromModDef modDef={modSpec} isLink={false}
+          recLevel={recLevel} maxRecLevel={maxRecLevel}
+        />
+      </ExpandableSpan>
+    </span>
+  );
 };
 
 
-  // Converts the definition to an intermediate language (IL) where 
-  // "\\" ->  "\\0", "\|" -> "\\1", "\@" ->  "\\2",
-  // where a leading "\#" is converted to "#", and where the first occurrence
-  // of "|" is converted to "\\3", and the next occurrence of "|" is converted
-  // to "\\4".
-
-export function getIntermediateLanguageDefinition(def) {
-  return def
-    .replaceAll("\\\\", "\\\\0")
-    .replaceAll("\\|", "\\\\1")
-    .replaceAll("\\@", "\\\\2")
-    .replace("|", "\\\\3")
-    .replace("|", "\\\\4");
-}
 
 export function getCapitalizedAndAccentedString(str, capCode) {
   return str; // TODO: Implement.
 }
 
 
+
+// TODO: Continue remaking:
 
 function getTemplateChildren(defStr, isLinks, recLevel, maxRecLevel) {
   return defStr
