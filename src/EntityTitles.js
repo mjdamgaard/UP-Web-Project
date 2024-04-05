@@ -5,11 +5,11 @@ import {ColumnContext} from "./contexts/ColumnContext.js";
 
 
 export const EntityTitle = ({
-  entID, isLink, canBeToggled, startsAsExpanded, recLevel, maxRecLevel
+  entID, isLink, canBeToggled, startAsExpanded, recLevel, maxRecLevel
 }) => {
   isLink ??= true;
   canBeToggled ??= true;
-  startsAsExpanded ??= false;
+  startAsExpanded ??= false;
   recLevel ??= 0;
   maxRecLevel ??= 3;
 
@@ -26,17 +26,21 @@ export const EntityTitle = ({
     );
   }
   
-
   // Afterwards, first extract the needed data from results[0].
   const [def] = (results.data[0] ?? []);
 
+
+  if (canBeToggled) {
+    throw "EntityTitles: Toggleable titles are not implemented yet.";
+  }
+  
 
   // If def codes for a concatenated string (starting with an unescaped '#'),
   // return a ConcatenatedEntityTitle.
   if (def[0] === "#") {
     return (
-      <ConcatenatedEntityTitle entID={entID} isLink={isLink}
-        canBeToggled={canBeToggled} startsAsExpanded={startsAsExpanded}
+      <ConcatenatedEntityTitle def={def} entID={entID} isLink={isLink}
+        canBeToggled={canBeToggled} startAsExpanded={startAsExpanded}
         recLevel={recLevel} maxRecLevel={maxRecLevel}
       />
     );
@@ -46,32 +50,51 @@ export const EntityTitle = ({
   // return a TemplateInstanceEntityTitle.
   if (/^@[1-9]/.test(def[0])) {
     return (
-      <TemplateInstanceEntityTitle entID={entID} isLink={isLink}
-        canBeToggled={canBeToggled} startsAsExpanded={startsAsExpanded}
+      <TemplateInstanceEntityTitle def={def} entID={entID} isLink={isLink}
+        canBeToggled={canBeToggled} startAsExpanded={startAsExpanded}
         recLevel={recLevel} maxRecLevel={maxRecLevel}
       />
     );
   }
-  
-  // Convert the definition to an intermediate language (IL) where 
-  // "\\" ->  "\\0", "\|" -> "\\1", "\@" ->  "\\2",
-  // where a leading "\#" is converted to "#", and where the first occurrence
-  // of "|" is converted to "\\3", and the next occurrence of "|" is converted
-  // to "\\4".
-  const defIL = getIntermediateLanguageDefinition(def);
-  // const defIL = def
-  //   .replaceAll("\\\\", "\\\\0")
-  //   .replaceAll("\\|", "\\\\1")
-  //   .replaceAll("\\@", "\\\\2")
-  //   .replace("|", "\\\\3")
-  //   .replace("|", "\\\\4");
 
-  // Get the capitalized and accented (when implemented) defIL.
-  const capDefIL = getCapitalizedAndAccentedDefIL(defIL);
+
+  // Encode the definition such that 
+  // "\\" ->  "\\0", "\|" -> "\\1", "\@" ->  "\\2", , "\#" ->  "\\3",
+  // and where the first occurrence of "|" is converted to "\\4". Then split
+  // the string along the second occurrence of "|" into the encoded definition
+  // (encodedDef) and the capitalization-accent code (capCode). (The latter is
+  // not supposed to contain any of the special characters here , so we are
+  // free to let it be encoded as well, as this should not change it if it is
+  // well-formed.)
+  const [encodedDef, capCode, extraCode] = def
+    .replaceAll("\\\\", "\\\\0")
+    .replaceAll("\\|", "\\\\1")
+    .replaceAll("\\@", "\\\\2")
+    .replaceAll("\\#", "\\\\3")
+    .replace("|", "\\\\4")
+    .split("|");
+
+  // Get the capitalized and accented (when implemented) encodedDef, call it
+  // the 'modified definition,' or modDef for short.
+  const modDef = getCapitalizedAndAccentedString(encodedDef, capCode);
+
+
+  // If extraCode is not undefined, render an 'invalid entity title' saying
+  // that no extra code is implemented yet (it may never be). ..Well, no,
+  // let us just write out the plain def instead
+  if (typeof extraCode !== "undefined") {
+    return (
+      <InvalidEntityTitle def={def} entID={entID} isLink={isLink}
+        canBeToggled={canBeToggled} startAsExpanded={startAsExpanded}
+      />
+    );
+  }
+
+  // Substitute ..
 
   // Split this modified definition in two parts: The (short) title and the
   // specification.
-  const [titleIL, specIL] = def.split("\\\\1");
+  const [titleIL, specIL] = modifiedDef.split("\\\\4");
   
   // Get HTML of the (short) title and the specification, with entity
   // references submitted and converted from the IL back to plaintext.
@@ -81,67 +104,6 @@ export const EntityTitle = ({
 
 
 
-
-  // // If the recursion level has reached maxRecLevel, simply render the
-  // // entity ID instead.
-  // if (recLevel >= maxRecLevel) {
-  //   return (
-  //     <EntityID entID={entID} isLink={isLink} />
-  //   );
-  // }
-
-  if (isLink) {
-    return (
-      <EntityLink entID={entID}>
-        {titleContent}
-      </EntityLink>
-    );
-  } else {
-    return (
-      <>
-        {titleContent}
-      </>
-    );
-  }
-};
-
-const ModifiedDefinition = ({
-  entID, isLink, canBeToggled, startsAsExpanded, recLevel, maxRecLevel
-}) => {
-  isLink ??= true;
-  canBeToggled ??= true;
-  startsAsExpanded ??= false;
-  recLevel ??= 0;
-  maxRecLevel ??= 3;
-
-  const [results, setResults] = useState([]);
-  useQuery(results, setResults, {
-    req: "ent",
-    id: entID,
-  });
-
-  // Before results is fetched, render this:
-  if (!results.isFetched) {
-    return (
-      <EntityTitlePlaceholder entID={entID} isLink={isLink} />
-    );
-  }
-  
-
-  // Afterwards, first extract the needed data from results[0].
-  const [def] = (results.data[0] ?? []);
-
-  // If def codes for a concatenated string (starting with an unescaped '#'),
-  // load a ConcatenatedEntityTitle.
-  if (def[0] === "#") {
-    return (
-      <ConcatenatedEntityTitle entID={entID} isLink={isLink}
-        canBeToggled={canBeToggled} startsAsExpanded={startsAsExpanded}
-        recLevel={recLevel} maxRecLevel={maxRecLevel}
-      />
-    );
-  }
-  
 
   // // If the recursion level has reached maxRecLevel, simply render the
   // // entity ID instead.
@@ -182,8 +144,8 @@ export function getIntermediateLanguageDefinition(def) {
     .replace("|", "\\\\4");
 }
 
-export function getCapitalizedAndAccentedDefIL(defIL) {
-  return defIL; // TODO: Implement.
+export function getCapitalizedAndAccentedString(str, capCode) {
+  return str; // TODO: Implement.
 }
 
 

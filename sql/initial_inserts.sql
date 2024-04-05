@@ -36,7 +36,14 @@ VALUES
     ("binary| file stored by this sdb|s2db", 8), -- reserved letter: 'b'.
     ("index| of entity definitions, stored by this sdb|s3db", 9),
         -- reserved letter: 'i'.
-    ("user/bot| of this sdb|s2db", 10); -- reserved letter: 'u'.
+    ("user/bot| of this sdb|s2db", 10),
+    (CONCAT(
+        "%property|: ",
+        "a singular noun used for creating relational tags of the form ",
+        "'<property> of <entity>,' for instance 'actor of <movie>,' where ",
+        "this tag would then apply to all actors of in the given movie, ",
+        "rated according to notability"
+    ), 11); -- reserved letter: 'u'.
     
 
 
@@ -51,8 +58,11 @@ VALUES
 INSERT INTO Entities (def, id)
 VALUES
     -- Some fundamental templates, plus some more types, such as 'property.'
-    ("%e of %e|: an instance of the property %1 of the entity %2", 40),
-    ("property", 41),
+    ("%e of %e|: an instance of the @e11. %1 of the entity %2", 40),
+    (CONCAT(
+        "character string|: an entity whose title is interpreted as the ",
+        "entity itself"
+    ), 41),
     (CONCAT(
         "%e of %e, the %e|: ",
         "an instance of the property %1 of the entity %2, when said entity ",
