@@ -4,8 +4,8 @@ import {ColumnContext} from "./contexts/ColumnContext.js";
 import {ExpandableSpan} from "./DropdownBox.js";
 
 const ConcatenatedEntityTitle = () => <template></template>;
-const TemplateInstanceEntityTitle = () => <template></template>;
-const InvalidEntityTitle = () => <template></template>;
+// const TemplateInstanceEntityTitle = () => <template></template>;
+// const InvalidEntityTitle = () => <template></template>;
 
 
 export const EntityTitle = ({
@@ -29,7 +29,7 @@ export const EntityTitle = ({
     );
   }
   
-  // Afterwards, first extract the needed data from results[0].
+  // Afterwards, first extract the needed data from results.data[0].
   const [def] = (results.data[0] ?? []);
   
 
@@ -54,11 +54,11 @@ export const EntityTitle = ({
       />
     );
   }
-
+  
 
   // Encode the definition such that 
-  // "\\" ->  "\\0", "\|" -> "\\1", "\@" ->  "\\2", , "\#" ->  "\\3",
-  // and where the first occurrence of "|" is converted to "\\4". Then split
+  // "\\"--> "\\0", "\|"-->"\\1", "\@"--> "\\2", "\#"--> "\\3", "\%"--> "\\4",
+  // and where the first occurrence of "|" is converted to "\\9". Then split
   // the string along the second occurrence of "|" into the encoded definition
   // (encodedDef) and the capitalization-accent code (capCode). (The latter is
   // not supposed to contain any of the special characters here , so we are
@@ -69,17 +69,23 @@ export const EntityTitle = ({
     .replaceAll("\\|", "\\\\1")
     .replaceAll("\\@", "\\\\2")
     .replaceAll("\\#", "\\\\3")
-    .replace("|", "\\\\4")
+    .replace("|", "\\\\9")
     .split("|");
 
-  // Get the capitalized and accented (when implemented) encodedDef, call it
-  // the 'modified definition,' or modDef for short.
-  const modDef = getCapitalizedAndAccentedString(encodedDef, capCode);
+  // If def has single backslashes that does not escape a special character,
+  // or if contains unescaped '#'s (which should only be part of concatenated
+// strings), return an InvalidEntityTitle.
+  const defHasInvalidEscapes = encodedDef.replaceAll("\\\\", "").includes("\\");
+  const defHasUnescapedNumberSigns = encodedDef.includes("#");
+  if (defHasInvalidEscapes || defHasUnescapedNumberSigns) {
+    return (
+      <InvalidEntityTitle entID={entID} isLink={isLink} >
+        {def}
+      </InvalidEntityTitle>
+    );
+  }
 
-
-  // If extraCode is not undefined, render an 'invalid entity title' saying
-  // that no extra code is implemented yet (it may never be). ..Well, no,
-  // let us just write out the plain def instead
+  // If extraCode is not undefined, return an InvalidEntityTitle.
   if (typeof extraCode !== "undefined") {
     return (
       <InvalidEntityTitle entID={entID} isLink={isLink} >
@@ -88,9 +94,13 @@ export const EntityTitle = ({
     );
   }
 
-  // Split modDef in up into the (short) title part and the specification
-  // part.
-  const [modTitle, modSpec] = modDef.split("\\\\4");
+  // Get the capitalized and accented (when implemented) encodedDef, call it
+  // the 'modified definition,' or modDef for short.
+  const modDef = getCapitalizedAndAccentedString(encodedDef, capCode);
+
+
+  // Split modDef in up into the (short) title part and the specification part.
+  const [modTitle, modSpec] = modDef.split("\\\\9");
 
   // If isFull, return the full title.
   if (isFull) {
@@ -160,13 +170,7 @@ const EntityTitleFromModDef = ({
     );
   }
 
-  const boilerplateArr = modDef.split(/@[^.]*./g).map(val => val
-    .replaceAll("\\\\0", "\\")
-    .replaceAll("\\\\1", "|")
-    .replaceAll("\\\\", "@")
-    .replaceAll("\\\\3", "#")
-  );
-
+  const encodedBoilerplateArr = modDef.split(/@[^.]*./g);
 
   const boilerplateIsWellFormed = boilerplateArr.reduce((acc, val) => 
     acc && /^[^#@]+$/.test(val), true
@@ -178,6 +182,15 @@ const EntityTitleFromModDef = ({
       </InvalidEntityTitle>
     );
   }
+
+  const boilerplateArr = modDef.split(/@[^.]*./g).map(val => val
+    .replaceAll("\\\\0", "\\")
+    .replaceAll("\\\\1", "|")
+    .replaceAll("\\\\2", "@")
+    .replaceAll("\\\\3", "#")
+    // .replaceAll("\\\\4", "%")
+  );
+
 
   // // If there are no references, return the decoded modDef contained in
   // // boilerplateArr[0].
@@ -191,11 +204,11 @@ const EntityTitleFromModDef = ({
 
   // Compute the HTML for the links based on the references. If maxRecLevel
   // is reached, these are EntityID elements, which only shows the entity ID.
-  const linkArr = (recLevel >= maxRecLevel)
-    ? referenceArr.map((val, ind) => (
+  const linkArr = (recLevel >= maxRecLevel) ?
+    referenceArr.map((val, ind) => (
       <EntityID key={2 * ind + 1} entID={val.slice(1, -1)} />
-    ))
-    : referenceArr.map((val, ind) => (
+    )) :
+    referenceArr.map((val, ind) => (
       <EntityTitle key={2 * ind  + 1} entID={val.slice(1, -1)}
         isLink={!isLink && recLevel == 1}
         recLevel={recLevel + 1} maxRecLevel={maxRecLevel}
@@ -225,6 +238,52 @@ const EntityTitleFromModDef = ({
     );
   }
 };
+
+
+
+
+
+const TemplateInstanceEntityTitle = ({
+  def, entID, isLink, isFull, recLevel, maxRecLevel
+}) => {
+  const [reqData, setReqData] = useState({});
+  const [results, setResults] = useState({});
+  useQuery(results, setResults, reqData);
+
+  // Check if template closure isn't well-formed.
+  if (!/^@[1-9][0-9]*(\.[1-9][0-9])+$/.test(def)) {
+    return (
+      <InvalidEntityTitle entID={entID} isLink={isLink} >
+        {def}
+      </InvalidEntityTitle>
+    );
+  }
+
+  // Else, parse the ID array and fetch the template's definition.
+  const idArr = def.match(/[1-9][0-9]*/g);
+  setReqData(idArr.map(val => ({
+    req: "ent",
+    id: val,
+  })));
+
+
+  // Before results[0] is fetched, render a placeholder
+  if (!results[0].isFetched) {
+    return (
+      <EntityTitlePlaceholder entID={entID} isLink={isLink} />
+    );
+  }
+  
+  // Afterwards, first extract the needed data from results[0].data[0].
+  const [templateDef] = (results[0].data[0] ?? []);
+
+  // ..Then encode and modify the templateDef, substitute the '%'-placeholders
+  // for '@'-references and give it to a EntityTitleFromModDef, and if
+  // isFull, also insert a symbol with a link to the template at the
+  // beginning... (TODO...)
+};
+
+
 
 
 
@@ -263,11 +322,45 @@ export const EntityID = ({entID, isLink}) => {
 
 
 
-
-
 export function getCapitalizedAndAccentedString(str, capCode) {
   return str; // TODO: Implement.
 }
+
+
+const EntityTitlePlaceholder = ({entID, isLink}) => <span></span>;
+
+const InvalidEntityTitle = ({entID, isLink, children}) => {
+  if (isLink) {
+    return (
+      <span className="invalid-title">
+        <EntityLink entID={entID}>
+          {children}
+        </EntityLink>
+      </span>
+    );
+  } else {
+    return (
+      <span className="invalid-title">
+        {children}
+      </span>
+    );
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -406,8 +499,6 @@ export const TemplateInstance = ({tmplID, tmplChildren, isCut}) => {
 //     .replaceAll('}', "");
 // }
 
-
-const EntityTitlePlaceholder = ({entID, isLink}) => <span></span>;
 
 
 

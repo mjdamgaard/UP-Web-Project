@@ -38,7 +38,7 @@ VALUES
         -- reserved letter: 'i'.
     ("user/bot| of this sdb|s2db", 10),
     (CONCAT(
-        "%property|: ",
+        "property|: ",
         "a singular noun used for creating relational tags of the form ",
         "'<property> of <entity>,' for instance 'actor of <movie>,' where ",
         "this tag would then apply to all actors of in the given movie, ",
@@ -58,33 +58,33 @@ VALUES
 INSERT INTO Entities (def, id)
 VALUES
     -- Some fundamental templates, plus some more types, such as 'property.'
-    ("%e of %e|: an instance of the @e11. %1 of the entity %2", 40),
+    ("%e of %e|: an instance of the @e11. @1 of the entity @2", 40),
     (CONCAT(
         "character string|: an entity whose title is interpreted as the ",
         "entity itself"
     ), 41),
     (CONCAT(
         "%e of %e, the %e|: ",
-        "an instance of the property %1 of the entity %2, when said entity ",
-        "is interpreted as being of the type %3"
+        "an instance of the property @1 of the entity @2, when said entity ",
+        "is interpreted as being of the type @3"
     ), 42), -- This template might come in handy, but it also might not.
     (CONCAT(
         "%e :: %e|. ",
         "this tag is meant for bots, not users. ",
-        "it means 'fits the tag %1 while also having the type %2.'",
+        "it means 'fits the tag @1 while also fitting the tag @2.'",
         "|ti2"
     ), 43),
     ("statement", 44),
-    ("%e fits %e|: the tag %1 fits the entity %2", 45),
+    ("%e fits %e|: the tag @1 fits the entity @2", 45),
     ("better duplicate| than this one to use", 46),
     (CONCAT(
         "user who thinks that %e|: ",
-        "user who thinks that the statement %1 is true"
+        "user who thinks that the statement @1 is true"
     ), 47),
-    ("submitted by %u|: is submitted by the user %1", 48),
+    ("submitted by %u|: is submitted by the user @1", 48),
     ("url||url", 49),
-    ("user %u|: the user/bot %1 of this sdb|s3db", 50);
-    -- ("%u|: the user/bot %1 of this sdb|s3db", 50);
+    ("user %u|: the user/bot @1 of this sdb|s3db", 50);
+    -- ("%u|: the user/bot @1 of this sdb|s3db", 50);
 
 
 INSERT INTO Entities (def, id)
@@ -203,10 +203,10 @@ CALL insertOrFindEntity(1, 0, "supercategory"); -- id: +32
 
 
 -- CALL insertOrFindEntity(1, 0, "good|to watch as a piece of media"); -- id: +33
-CALL insertOrFindEntity(1, 0, "good|as a piece of media"); -- id: +33
-CALL insertOrFindEntity(1, 0, "funny|as a piece of media"); -- id: +34
-CALL insertOrFindEntity(1, 0, "scary|as a piece of media"); -- id: +35
-CALL insertOrFindEntity(1, 0, "iconic|as a piece of media"); -- id: +36
+CALL insertOrFindEntity(1, 0, "good| as a movie"); -- id: +33
+CALL insertOrFindEntity(1, 0, "funny| as a movie"); -- id: +34
+CALL insertOrFindEntity(1, 0, "scary| as a movie"); -- id: +35
+CALL insertOrFindEntity(1, 0, "iconic| as a movie"); -- id: +36
 
 
 CALL insertOrFindEntity(1, 0, "relevant tag to rate"); -- id: +37
