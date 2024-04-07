@@ -56,6 +56,19 @@ export const EntityTitle = ({
   }
   
 
+  // Else return EntityTitleFromDef directly.
+  return (
+    <EntityTitleFromDef def={def} entID={entID}
+      isLink={isLink} isFull={isFull}
+      recLevel={recLevel} maxRecLevel={maxRecLevel}
+    />
+  );
+}
+
+const EntityTitleFromDef = ({
+  def, entID, isLink, isFull, recLevel, maxRecLevel
+}) => {
+
   // Encode the definition such that 
   // "\\"--> "\\0", "\|"-->"\\1", "\@"--> "\\2", "\#"--> "\\3", "\%"--> "\\4",
   // and where the first occurrence of "|" is converted to "\\9". Then split
@@ -74,7 +87,7 @@ export const EntityTitle = ({
 
   // If def has single backslashes that does not escape a special character,
   // or if contains unescaped '#'s (which should only be part of concatenated
-// strings), return an InvalidEntityTitle.
+  // strings), return an InvalidEntityTitle.
   const defHasInvalidEscapes = encodedDef.replaceAll("\\\\", "").includes("\\");
   const defHasUnescapedNumberSigns = encodedDef.includes("#");
   if (defHasInvalidEscapes || defHasUnescapedNumberSigns) {

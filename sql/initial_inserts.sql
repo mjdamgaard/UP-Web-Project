@@ -29,21 +29,21 @@ VALUES
     ("entity", 1), -- reserved letter: 'e'.
     ("type", 2),
     ("tag", 3),
-    ("template| used to define entities", 4),
-    ("user| of this sdb|s2db", 5), -- reserved letter: 'u'.
-    ("bot| native to this sdb|s1db", 6), -- reserved letter: 'u'.
-    ("text| stored by this sdb|s2db", 7), -- reserved letter: 't'.
-    ("binary| file stored by this sdb|s2db", 8), -- reserved letter: 'b'.
-    ("index| of entity definitions, stored by this sdb|s3db", 9),
+    ("template used to define entities| ", 4),
+    ("user of this sdb| |s2db", 5), -- reserved letter: 'u'.
+    ("bot native to this sdb| |s1db", 6), -- reserved letter: 'u'.
+    ("text stored by this sdb| |s2db", 7), -- reserved letter: 't'.
+    ("binary file stored by this sdb| |s2db", 8), -- reserved letter: 'b'.
+    ("index of entity definitions, stored by this sdb| |s3db", 9),
         -- reserved letter: 'i'.
-    ("user/bot| of this sdb|s2db", 10),
-    (CONCAT(
-        "property|: ",
-        "a singular noun used for creating relational tags of the form ",
-        "'<property> of <entity>,' for instance 'actor of <movie>,' where ",
-        "this tag would then apply to all actors of in the given movie, ",
-        "rated according to notability"
-    ), 11); -- reserved letter: 'u'.
+    ("user/bot| of this sdb| |s2db", 10);
+    -- (CONCAT(
+    --     "property|: ",
+    --     "a singular noun used for creating relational tags of the form ",
+    --     "'<property> of <entity>,' for instance 'actor of <movie>,' where ",
+    --     "this tag would then apply to all actors of in the given movie, ",
+    --     "rated according to notability"
+    -- ), 11); -- reserved letter: 'u'.
     
 
 
@@ -58,33 +58,33 @@ VALUES
 INSERT INTO Entities (def, id)
 VALUES
     -- Some fundamental templates, plus some more types, such as 'property.'
-    ("%e of %e|: an instance of the @e11. @1 of the entity @2", 40),
+    ("%e of %e|: an instance of the @e11. %1 of the entity %2", 40),
     (CONCAT(
         "character string|: an entity whose title is interpreted as the ",
         "entity itself"
     ), 41),
     (CONCAT(
         "%e of %e, the %e|: ",
-        "an instance of the property @1 of the entity @2, when said entity ",
-        "is interpreted as being of the type @3"
+        "an instance of the property %1 of the entity %2, when said entity ",
+        "is interpreted as being of the type %3"
     ), 42), -- This template might come in handy, but it also might not.
     (CONCAT(
         "%e :: %e|. ",
         "this tag is meant for bots, not users. ",
-        "it means 'fits the tag @1 while also fitting the tag @2.'",
+        "it means 'fits the tag %1 while also fitting the tag %2.'",
         "|ti2"
     ), 43),
     ("statement", 44),
-    ("%e fits %e|: the tag @1 fits the entity @2", 45),
+    ("%e fits %e|: the tag %1 fits the entity %2", 45),
     ("better duplicate| than this one to use", 46),
     (CONCAT(
         "user who thinks that %e|: ",
-        "user who thinks that the statement @1 is true"
+        "user who thinks that the statement %1 is true"
     ), 47),
-    ("submitted by %u|: is submitted by the user @1", 48),
+    ("submitted by %u|: is submitted by the user %1", 48),
     ("url||url", 49),
-    ("user %u|: the user/bot @1 of this sdb|s3db", 50);
-    -- ("%u|: the user/bot @1 of this sdb|s3db", 50);
+    ("user %u|: the user/bot %1 of this sdb|s3db", 50);
+    -- ("%u|: the user/bot %1 of this sdb|s3db", 50);
 
 
 INSERT INTO Entities (def, id)
@@ -117,10 +117,10 @@ CALL insertOrFindEntity(1, 0, "film director"); -- id: +6
 CALL insertOrFindEntity(1, 0, "2001"); -- id: +8
 CALL insertOrFindEntity(1, 0, "2002"); -- id: +9
 CALL insertOrFindEntity(1, 0, "person"); -- id: +10
-CALL insertOrFindEntity(1, 0, "peter jackson|film director|pj"); -- id: +11
+CALL insertOrFindEntity(1, 0, "peter jackson|, film director|pj"); -- id: +11
 CALL insertOrFindEntity(1, 0, CONCAT(
-    "the lord of the rings: the fellowship of the ring",
-    "|2001 movie|tlr1tfr"
+    "the lord of the rings: the fellowship of the ring|, ",
+    "2001 movie|tlr1tfr"
 )); -- id: +12
 -- CALL insertOrFindEntity(1, 0, "@2[1004], @1005[1008]"); -- id: +13
 --     -- renders as: "movie, 2001".
@@ -129,7 +129,7 @@ CALL insertOrFindEntity(1, 0, "change me!"); -- id: +13
 CALL insertOrFindEntity(1, 0, "change me too!"); -- id: +14
 
 CALL insertOrFindEntity(1, 0,
-    "the lord of the rings: the two towers|2002 movie|tlr1ttt"
+    "the lord of the rings: the two towers|, 2002 movie|tlr1ttt"
 ); -- id: +15
 
 -- These two Entities are obsolete, and ought to be changed to something else:
