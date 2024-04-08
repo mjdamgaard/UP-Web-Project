@@ -36,7 +36,7 @@ VALUES
     ("binary file stored by this sdb| |s2db", 8), -- reserved letter: 'b'.
     ("index of entity definitions, stored by this sdb| |s3db", 9),
         -- reserved letter: 'i'.
-    ("user/bot| of this sdb| |s2db", 10);
+    ("user/bot of this sdb| |s2db", 10);
     -- (CONCAT(
     --     "property|: ",
     --     "a singular noun used for creating relational tags of the form ",
