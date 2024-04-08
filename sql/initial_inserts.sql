@@ -6,7 +6,7 @@ DELETE FROM SemanticInputs;
 DELETE FROM Private_RecentInputs;
 ALTER TABLE Private_RecentInputs AUTO_INCREMENT=1;
 DELETE FROM RecordedInputs;
-DELETE FROM EntityIndexKeys;
+DELETE FROM IndexedEntities;
 
 DELETE FROM Entities;
 ALTER TABLE Entities AUTO_INCREMENT=1;
@@ -26,24 +26,25 @@ DELETE FROM Private_EMails;
 -- Some fundamental types:
 INSERT INTO Entities (def, id)
 VALUES
-    ("entity", 1), -- reserved letter: 'e'.
-    ("type", 2),
-    ("tag", 3),
-    ("template used to define entities| ", 4),
-    ("user of this sdb| |s2db", 5), -- reserved letter: 'u'.
-    ("bot native to this sdb| |s1db", 6), -- reserved letter: 'u'.
-    ("text stored by this sdb| |s2db", 7), -- reserved letter: 't'.
-    ("binary file stored by this sdb| |s2db", 8), -- reserved letter: 'b'.
-    ("index of entity definitions, stored by this sdb| |s3db", 9),
+    ("Entity|. This is the all-inclusive type of 'all things.'", 1),
+        -- reserved letter: 'e'.
+    ("Type", 2),
+    ("Tag", 3),
+    ("Template| used to define entities", 4),
+    ("User| of this SDB", 5), -- reserved letter: 'u'.
+    ("Bot| native to this SDB", 6), -- reserved letter: 'u'.
+    ("Text| stored by this SDB", 7), -- reserved letter: 't'.
+    ("Binary| file stored by this SDB", 8), -- reserved letter: 'b'.
+    ("Index| of entity definitions, stored by this SDB", 9),
         -- reserved letter: 'i'.
-    ("user/bot of this sdb| |s2db", 10);
-    -- (CONCAT(
-    --     "property|: ",
-    --     "a singular noun used for creating relational tags of the form ",
-    --     "'<property> of <entity>,' for instance 'actor of <movie>,' where ",
-    --     "this tag would then apply to all actors of in the given movie, ",
-    --     "rated according to notability"
-    -- ), 11); -- reserved letter: 'u'.
+    ("User/bot| of this SDB", 10),
+    (CONCAT(
+        "Property|: ",
+        "A singular noun used for creating relational tags of the form ",
+        "'<property> of <entity>,' for instance 'actor of <movie>,' where ",
+        "this tag would then apply to all actors in the given movie ",
+        "(typically rated according to notability)."
+    ), 11); -- reserved letter: 'u'.
     
 
 
@@ -58,32 +59,42 @@ VALUES
 INSERT INTO Entities (def, id)
 VALUES
     -- Some fundamental templates, plus some more types, such as 'property.'
-    ("%e of %e|: an instance of the @e11. %1 of the entity %2", 40),
     (CONCAT(
-        "character string|: an entity whose title is interpreted as the ",
-        "entity itself"
+        "%e of %e|: An instance of the @11. %1 of the entity %2. ",
+        "See the full definition of %1 for further specification."
+    ), 40),
+    (CONCAT(
+        "String| of characters: An entity whose title is interpreted as the ",
+        "entity itself."
     ), 41),
     (CONCAT(
         "%e of %e, the %e|: ",
-        "an instance of the property %1 of the entity %2, when said entity ",
-        "is interpreted as being of the type %3"
+        "An instance of the property %1 of the entity %2, when said entity ",
+        "is interpreted as being of the type %3."
     ), 42), -- This template might come in handy, but it also might not.
     (CONCAT(
         "%e :: %e|. ",
-        "this tag is meant for bots, not users. ",
-        "it means 'fits the tag %1 while also fitting the tag %2.'",
-        "|ti2"
+        "This tag is meant for bots, not users. ",
+        "It means 'fits the tag %1 while also fitting the tag %2.'"
     ), 43),
-    ("statement", 44),
-    ("%e fits %e|: the tag %1 fits the entity %2", 45),
-    ("better duplicate| than this one to use", 46),
+    ("Statement", 44),
+    ("%e fits %e|: The statement that the tag %1 fits the entity %2", 45),
     (CONCAT(
-        "user who thinks that %e|: ",
-        "user who thinks that the statement %1 is true"
+        "Better duplicate|: A @11. of any entity that refers to the same ",
+        "thing as the owner entity, but whose definition is so much better ",
+        "that it is worth abandoning the owner entity and start using the ",
+        "property entity instead."
+    ), 46),
+    (CONCAT(
+        "User who thinks that %e|: ",
+        "User who thinks that the statement %1 is true"
     ), 47),
-    ("submitted by %u|: is submitted by the user %1", 48),
-    ("url||url", 49),
-    ("user %u|: the user/bot %1 of this sdb|s3db", 50);
+    -- ("submitted by %u|: is submitted by the user %1", 48),
+    -- -- Here is an example ('submitted by %u') of a title that we may not want
+    -- -- to capitalize.
+    ("Submitted by %u|: Is submitted by the user %1", 48),
+    ("URL", 49),
+    ("User %u|: The user/bot %1 of this SDB", 50);
     -- ("%u|: the user/bot %1 of this sdb|s3db", 50);
 
 
@@ -99,7 +110,7 @@ VALUES
 
 INSERT INTO Entities (def, id)
 VALUES
-    ("example of a not very useful entity||eapefnteysflniy", 1000);
+    ("ExAmPlE oF a NoT vErY uSeFuL eNtItY", 1000);
 
 
 
@@ -107,20 +118,19 @@ VALUES
 
 /* Some more inserts and also ratings, now using the input_procs API */
 
-CALL insertOrFindEntity(1, 0, "music"); -- id: (1000) +1
-CALL insertOrFindEntity(1, 0, "rock music"); -- id: +2
-CALL insertOrFindEntity(1, 0, "jazz"); -- id: +3
+CALL insertOrFindEntity(1, 0, "Music"); -- id: (1000) +1
+CALL insertOrFindEntity(1, 0, "Rock music"); -- id: +2
+CALL insertOrFindEntity(1, 0, "Jazz"); -- id: +3
 
-CALL insertOrFindEntity(1, 0, "movie"); -- id: +4
-CALL insertOrFindEntity(1, 0, "year"); -- id: +5
-CALL insertOrFindEntity(1, 0, "film director"); -- id: +6
+CALL insertOrFindEntity(1, 0, "Movie"); -- id: +4
+CALL insertOrFindEntity(1, 0, "Year"); -- id: +5
+CALL insertOrFindEntity(1, 0, "Film director"); -- id: +6
 CALL insertOrFindEntity(1, 0, "2001"); -- id: +8
 CALL insertOrFindEntity(1, 0, "2002"); -- id: +9
-CALL insertOrFindEntity(1, 0, "person"); -- id: +10
-CALL insertOrFindEntity(1, 0, "peter jackson|, film director|pj"); -- id: +11
+CALL insertOrFindEntity(1, 0, "Person"); -- id: +10
+CALL insertOrFindEntity(1, 0, "Peter Jackson|, film director"); -- id: +11
 CALL insertOrFindEntity(1, 0, CONCAT(
-    "the lord of the rings: the fellowship of the ring|, ",
-    "2001 movie|tlr1tfr"
+    "The Lord of the Rings: The Fellowship of the Ring|, 2001 movie"
 )); -- id: +12
 -- CALL insertOrFindEntity(1, 0, "@2[1004], @1005[1008]"); -- id: +13
 --     -- renders as: "movie, 2001".
@@ -129,7 +139,7 @@ CALL insertOrFindEntity(1, 0, "change me!"); -- id: +13
 CALL insertOrFindEntity(1, 0, "change me too!"); -- id: +14
 
 CALL insertOrFindEntity(1, 0,
-    "the lord of the rings: the two towers|, 2002 movie|tlr1ttt"
+    "The Lord of the Rings: The Two Towers|, 2002 movie"
 ); -- id: +15
 
 -- These two Entities are obsolete, and ought to be changed to something else:
@@ -139,16 +149,16 @@ CALL insertOrFindEntity(1, 0, "...and me as well!"); -- id: +17
 
 
 
-CALL insertOrFindEntity(1, 0, "science"); -- id: +18
-CALL insertOrFindEntity(1, 0, "musicology"); -- id: +19
-CALL insertOrFindEntity(1, 0, "cinematography"); -- id: +20
-CALL insertOrFindEntity(1, 0, "physics"); -- id: +21
-CALL insertOrFindEntity(1, 0, "mathematics"); -- id: +22
+CALL insertOrFindEntity(1, 0, "Science"); -- id: +18
+CALL insertOrFindEntity(1, 0, "Musicology"); -- id: +19
+CALL insertOrFindEntity(1, 0, "Cinematography"); -- id: +20
+CALL insertOrFindEntity(1, 0, "Physics"); -- id: +21
+CALL insertOrFindEntity(1, 0, "Mathematics"); -- id: +22
 
 -- SELECT SLEEP(1);
 
 
-CALL insertOrFindEntity(1, 0, "subcategory"); -- id: +23
+CALL insertOrFindEntity(1, 0, "Subcategory"); -- id: +23
 CALL insertOrFindEntity(1, 0, "@40.1023.1"); -- id: +24
 
 CALL insertOrUpdateRating(1, 1024, 1018, CONV("FF00", 16, 10), 1);
@@ -183,7 +193,7 @@ CALL insertOrUpdateRating(1, 1004, 1015, CONV("FE00", 16, 10), 1);
 
 -- SELECT SLEEP(1);
 
-CALL insertOrFindEntity(1, 0, "related entity"); -- id: +27
+CALL insertOrFindEntity(1, 0, "Related entity"); -- id: +27
 
 -- (Note the '1' is omitted here after the '@'. *No, not after all..)
 CALL insertOrFindEntity(1, 0, "@40.1027.1012"); -- id: +28
@@ -197,19 +207,19 @@ CALL insertOrFindEntity(1, 0, "@40.1027.1019"); -- id: +31
 CALL insertOrUpdateRating(1, 1031, 1004, CONV("FF00", 16, 10), 1);
 
 
-CALL insertOrFindEntity(1, 0, "supercategory"); -- id: +32
+CALL insertOrFindEntity(1, 0, "Supercategory"); -- id: +32
 
 -- SELECT SLEEP(1);
 
 
 -- CALL insertOrFindEntity(1, 0, "good|to watch as a piece of media"); -- id: +33
-CALL insertOrFindEntity(1, 0, "good| as a movie"); -- id: +33
-CALL insertOrFindEntity(1, 0, "funny| as a movie"); -- id: +34
-CALL insertOrFindEntity(1, 0, "scary| as a movie"); -- id: +35
-CALL insertOrFindEntity(1, 0, "iconic| as a movie"); -- id: +36
+CALL insertOrFindEntity(1, 0, "Good| as a movie"); -- id: +33
+CALL insertOrFindEntity(1, 0, "Funny| as a movie"); -- id: +34
+CALL insertOrFindEntity(1, 0, "Scary| as a movie"); -- id: +35
+CALL insertOrFindEntity(1, 0, "Iconic| as a movie"); -- id: +36
 
 
-CALL insertOrFindEntity(1, 0, "relevant tag to rate"); -- id: +37
+CALL insertOrFindEntity(1, 0, "Relevant tag to rate"); -- id: +37
 
 CALL insertOrFindEntity(1, 0, "@40.1037.1004"); -- id: +38
 CALL insertOrUpdateRating(1, 1038, 1033, CONV("F000", 16, 10), 1);
@@ -230,12 +240,12 @@ CALL insertOrFindEntity(1, 0, "@40.1037.1"); -- id: +40
 -- SELECT SLEEP(1);
 
 
-CALL insertOrFindEntity(1, 0, "relevant property"); -- id: +41
+CALL insertOrFindEntity(1, 0, "Relevant property| for instances of this type"); -- id: +41
 -- CALL insertOrFindEntity(1, 0, "director"); -- id: +6
 -- CALL insertOrFindEntity(1, 0, "person"); -- id: +10
-CALL insertOrFindEntity(1, 0, "time"); -- id: +42
-CALL insertOrFindEntity(1, 0, "running time"); -- id: +43
-CALL insertOrFindEntity(1, 0, "actor"); -- id: +44
+CALL insertOrFindEntity(1, 0, "Time"); -- id: +42
+CALL insertOrFindEntity(1, 0, "Running time"); -- id: +43
+CALL insertOrFindEntity(1, 0, "Actor"); -- id: +44
 
 CALL insertOrFindEntity(1, 0, "@40.1041.1004"); -- id: +45
 CALL insertOrUpdateRating(1, 1045, 1006, CONV("FF00", 16, 10), 1);
@@ -245,9 +255,9 @@ CALL insertOrUpdateRating(1, 1045, 1043, CONV("FC00", 16, 10), 1);
 
 
 -- CALL insertOrFindEntity(1, 0, "Peter Jackson"); -- id: +11
-CALL insertOrFindEntity(1, 0, "ian mckellen||imk"); -- id: +46
-CALL insertOrFindEntity(1, 0, "viggo mortensen||vm"); -- id: +47
-CALL insertOrFindEntity(1, 0, "elijah wood||ew"); -- id: +48
+CALL insertOrFindEntity(1, 0, "Ian McKellen"); -- id: +46
+CALL insertOrFindEntity(1, 0, "Viggo Mortensen"); -- id: +47
+CALL insertOrFindEntity(1, 0, "Elijah Wood"); -- id: +48
 
 CALL insertOrFindEntity(1, 0, "2 h 59 min"); -- id: +49
 
@@ -334,14 +344,14 @@ CALL insertOrUpdateRating(1, 1052, 1049, CONV("FF00", 16, 10), 1);
 -- SELECT SLEEP(1);
 
 
-CALL insertOrFindEntity(1, 0, "hip hop music"); -- id: +53
-CALL insertOrFindEntity(1, 0, "pop music"); -- id: +54
-CALL insertOrFindEntity(1, 0, "classical music"); -- id: +55
+CALL insertOrFindEntity(1, 0, "Hip hop music"); -- id: +53
+CALL insertOrFindEntity(1, 0, "Pop music"); -- id: +54
+CALL insertOrFindEntity(1, 0, "Classical music"); -- id: +55
 CALL insertOrUpdateRating(1, 1025, 1053, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1025, 1054, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1025, 1055, CONV("FF00", 16, 10), 1);
 
-CALL insertOrFindEntity(1, 0, "geology"); -- id: +56
+CALL insertOrFindEntity(1, 0, "Geology"); -- id: +56
 CALL insertOrUpdateRating(1, 1026, 1056, CONV("F100", 16, 10), 1);
 
 

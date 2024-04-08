@@ -4,7 +4,7 @@ DROP TABLE SemanticInputs;
 DROP TABLE Private_RecentInputs;
 DROP TABLE RecordedInputs;
 /* Indexes */
-DROP TABLE EntityIndexKeys;
+DROP TABLE IndexedEntities;
 
 /* Entities */
 DROP TABLE Entities;
@@ -136,10 +136,7 @@ CREATE TABLE RecordedInputs (
 
 /* Indexes */
 
-CREATE TABLE EntityIndexKeys (
-    -- User (or bot) who governs the index.
-    user_id BIGINT UNSIGNED NOT NULL,
-
+CREATE TABLE IndexedEntities (
     -- Index entity which defines the restrictions on the entity keys.
     idx_id BIGINT UNSIGNED NOT NULL,
 
@@ -147,12 +144,15 @@ CREATE TABLE EntityIndexKeys (
     -- Given some constants for the above two columns, the "entity indexes"
     -- contain the "entity keys," which are each just the secondary index of an
     -- entity.
-    def VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    key_str VARCHAR(255) NOT NULL,
+
+
+    ent_id BIGINT UNSIGNED NOT NULL,
 
     PRIMARY KEY (
-        user_id,
         idx_id,
-        def
+        key_str,
+        ent_id -- (A single key might in principle index several entities.) 
     )
 );
 -- (Also needs compressing.)

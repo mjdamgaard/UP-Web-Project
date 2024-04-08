@@ -8,9 +8,13 @@ const ConcatenatedEntityTitle = () => <template></template>;
 // const InvalidEntityTitle = () => <template></template>;
 
 
-export const EntityTitle = ({entID, isLink, isFull}) => {
+export const EntityTitle = ({
+  entID, isLink, isFull, recLevel, maxRecLevel
+}) => {
   isLink ??= true;
   isFull ??= false;
+  recLevel ??= 0;
+  maxRecLevel ??= 3;
 
   const [results, setResults] = useState([]);
   useQuery(results, setResults, {
@@ -35,143 +39,136 @@ export const EntityTitle = ({entID, isLink, isFull}) => {
     return (
       <ConcatenatedEntityTitle def={def} entID={entID}
         isLink={isLink} isFull={isFull}
+        recLevel={recLevel} maxRecLevel={maxRecLevel}
+      />
+    );
+  }
+
+  // If def codes for a template instance (starting with /^@[1-9]/),
+  // return a TemplateInstanceEntityTitle.
+  if (/^@[1-9]/.test(def[0])) {
+    return (
+      <TemplateInstanceEntityTitle def={def} entID={entID}
+        isLink={isLink} isFull={isFull}
+        recLevel={recLevel} maxRecLevel={maxRecLevel}
       />
     );
   }
   
-  // Else encode the definition such that "\\"-->"\\0", "\|"-->"\\1",
-  // "\#"-->"\\2".
-  const defF2 = convertFromF1toF2(def);
 
-  // And return EntityTitleFromFullDef directly.
+  // Else return EntityTitleFromDef directly.
   return (
-    <EntityTitleFromDefF2 defF2={defF2} entID={entID}
+    <EntityTitleFromDef def={def} entID={entID}
       isLink={isLink} isFull={isFull}
+      recLevel={recLevel} maxRecLevel={maxRecLevel}
     />
   );
 }
 
-function convertFromF1toF2(def) {
-  return def
+const EntityTitleFromDef = ({
+  def, entID, isLink, isFull, recLevel, maxRecLevel
+}) => {
+
+  // Encode the definition such that 
+  // "\\"--> "\\0", "\|"-->"\\1", "\@"--> "\\2", "\#"--> "\\3", "\%"--> "\\4",
+  // and where the first occurrence of "|" is converted to "\\9". Then split
+  // the string along the second occurrence of "|" into the encoded definition
+  // (encodedDef) and the capitalization-accent code (capCode). (The latter is
+  // not supposed to contain any of the special characters here , so we are
+  // free to let it be encoded as well, as this should not change it if it is
+  // well-formed.)
+  const [encodedDef, capCode, extraCode] = def
     .replaceAll("\\\\", "\\\\0")
     .replaceAll("\\|", "\\\\1")
-    .replaceAll("\\#", "\\\\2");
-}
-
-function convertFromF2toF1(defF2) {
-  return defF2
-    .replaceAll("\\\\2", "\\#")
-    .replaceAll("\\\\1", "\\|")
-    .replaceAll("\\\\0", "\\\\");
-}
-
-function convertFromF2toF0(defF2) {
-  return defF2
-    .replaceAll("\\\\2", "#")
-    .replaceAll("\\\\1", "|")
-    .replaceAll("\\\\0", "\\");
-}
-
-const EntityTitleFromDefF2 = ({defF2, entID, isLink, isFull}) => {
-
-  // Split defF2 up along '|' into the full title, the
-  // specification position code, the capitalization (and accenting) code,
-  // and the link code.
-  const [fullTitleF2, specPosCode, capCode, linkCode, excessCode] = defF2
+    .replaceAll("\\@", "\\\\2")
+    .replaceAll("\\#", "\\\\3")
+    .replace("|", "\\\\9")
     .split("|");
-
-
-  // If excessCode is not undefined, return an InvalidEntityTitle.
-  if (typeof excessCode !== "undefined") {
-    return (
-      <InvalidEntityTitle entID={entID} isLink={isLink} >
-        {convertFromF2toF1(defF2)}
-      </InvalidEntityTitle>
-    );
-  }
 
   // If def has single backslashes that does not escape a special character,
   // or if contains unescaped '#'s (which should only be part of concatenated
   // strings), return an InvalidEntityTitle.
-  const defHasInvalidEscapes = defF2.replaceAll("\\\\", "").includes("\\");
-  const defHasUnescapedNumberSigns = defF2.includes("#");
+  const defHasInvalidEscapes = encodedDef.replaceAll("\\\\", "").includes("\\");
+  const defHasUnescapedNumberSigns = encodedDef.includes("#");
   if (defHasInvalidEscapes || defHasUnescapedNumberSigns) {
     return (
       <InvalidEntityTitle entID={entID} isLink={isLink} >
-        {convertFromF2toF1(defF2)}
+        {def}
       </InvalidEntityTitle>
     );
   }
 
-  // Interpret the specPosCode by inserting a delimiter ('\\\\3') where the
-  // divide should be. (Call this format F2D, where D stands for 'delimiter' or
-  // 'divided'.)
-  const fullTitleF2D = getDividedString(fullTitleF2, specPosCode);
-
-  // Get the capitalized and accented (when implemented) fullTitleF2D. (Here
-  // we'll add a C to denote 'capitalized (and accented).')
-  const fullTitleF2DC = getCapitalizedAndAccentedString(fullTitleF2D, capCode);
-
-  // If !isFull, we simply need to return a span containing fullTitleF2DC,
-  // but only after removing the specification, and after converting from F2
-  // to F0, which is the WYSIWYG format
-  if (!isFull) {
-    const shortTitleF2DC = fullTitleF2DC.split('\\\\3')[0];
-    const shortTitleF0DC = convertFromF2toF0(shortTitleF2DC);
-    if (isLink) {
-      return (
-        <span className="entity-title">
-          <EntityLink entID={entID} >
-            {shortTitleF0DC}
-          </EntityLink>
-        </span>
-      );
-    } else {
-      return (
-        <span className="entity-title">
-          {shortTitleF0DC}
-        </span>
-      );
-    }
+  // If extraCode is not undefined, return an InvalidEntityTitle.
+  if (typeof extraCode !== "undefined") {
+    return (
+      <InvalidEntityTitle entID={entID} isLink={isLink} >
+        {def}
+      </InvalidEntityTitle>
+    );
   }
 
-  // Else, if isLink, we don't need to insert child links. All we need to do
-  // is to remove the spec delimiter ('\\\\3'), then render the whole thing
-  // as a link, without rendering the spec any differently from the short title.
+  // Get the capitalized and accented (when implemented) encodedDef, call it
+  // the 'modified definition,' or modDef for short.
+  const modDef = getCapitalizedAndAccentedString(encodedDef, capCode);
 
-  // Else return title as a link iff isLink, followed by a button to expand
-  // the specification.
-  if (isLink) {
-    const fullTitleF0C = convertFromF2toF0(fullTitleF2DC.replace('\\\\3', ''));
+
+  // Split modDef in up into the (short) title part and the specification part.
+  const [modTitle, modSpec] = modDef.split("\\\\9");
+
+  // If isFull, return the full title.
+  if (isFull) {
     return (
       <span className="entity-title">
-        <EntityLink entID={entID} >
-          {fullTitleF0C}
-        </EntityLink>
+        <span className="short-title">
+          <EntityTitleFromModDef modDef={modTitle} isLink={false}
+            recLevel={recLevel} maxRecLevel={maxRecLevel}
+          />
+        </span>
+        <span className="title-spec">
+          <EntityTitleFromModDef modDef={modSpec} isLink={false}
+            recLevel={recLevel} maxRecLevel={maxRecLevel}
+          />
+        </span>
       </span>
     );
   }
 
-  // Else return the full title, with child links inserted (if linkCode is not
-  // undefined).
+  // Else return title as a link iff isLink, followed by a button to expand
+  // the specification.
+  if (modSpec) {
+    return (
+      <span className="entity-title">
+        <span className="short-title">
+          <EntityTitleFromModDef entID={entID} modDef={modTitle} isLink={isLink}
+            recLevel={recLevel} maxRecLevel={maxRecLevel}
+          />
+        </span>
+        <ExpandableSpan>
+          <EntityTitleFromModDef modDef={modSpec} isLink={false}
+            recLevel={recLevel} maxRecLevel={maxRecLevel}
+          />
+        </ExpandableSpan>
+      </span>
+    );
+  }
+
+  // Else return just the short title
   return (
-    <FullEntityTitleFromFullTitleF2DC entID={entID}
-      fullTitleF2DC={fullTitleF2DC} linkCode={linkCode}
-    />
+    <span className="entity-title">
+      <span className="short-title">
+        <EntityTitleFromModDef entID={entID} modDef={modTitle} isLink={isLink}
+          recLevel={recLevel} maxRecLevel={maxRecLevel}
+        />
+      </span>
+    </span>
   );
 };
 
 
 
-const FullEntityTitleFromFullTitleF2DC = ({
-  entID, fullTitleF2DC, linkCode
+const EntityTitleFromModDef = ({
+  entID, modDef, isLink, recLevel, maxRecLevel
 }) => {
-
-  const [results, setResults] = useState([]);
-  useQuery(results, setResults, {
-    req: "ent",
-    id: entID,
-  });
 
   const referenceArr = modDef.match(/@[^.]*./g) ?? [];
 
