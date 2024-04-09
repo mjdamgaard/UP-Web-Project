@@ -177,7 +177,8 @@ CREATE TABLE Entities (
 
 
 
-
+-- TODO: Add TINYINT to define whether a native bot or not, and add a nullable
+-- bot description TEXT.
 
 CREATE TABLE UsersAndBots (
     -- User ID.

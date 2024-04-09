@@ -29,15 +29,18 @@ export const EntityTitle = ({
     );
   }
   
-  // Afterwards, first extract the needed data from results.data[0].
+  // Afterwards, first extract the needed data from results.
   const [def] = (results.data[0] ?? []);
   
+  // Transform the definition such that 
+  // "\\"-->"\\0", "\|"-->"\\1", "\@"-->"\\2", "\#"-->"\\3", "\%"-->"\\4".
+  const transDef = transformDef(def);
 
   // If def codes for a concatenated string (starting with an unescaped '#'),
   // return a ConcatenatedEntityTitle.
-  if (def[0] === "#") {
+  if (transDef[0] === "#") {
     return (
-      <ConcatenatedEntityTitle def={def} entID={entID}
+      <ConcatenatedEntityTitle transDef={transDef} entID={entID}
         isLink={isLink} isFull={isFull}
         recLevel={recLevel} maxRecLevel={maxRecLevel}
       />
@@ -46,9 +49,9 @@ export const EntityTitle = ({
 
   // If def codes for a template instance (starting with /^@[1-9]/),
   // return a TemplateInstanceEntityTitle.
-  if (/^@[1-9]/.test(def[0])) {
+  if (/^@[1-9]/.test(transDef[0])) {
     return (
-      <TemplateInstanceEntityTitle def={def} entID={entID}
+      <TemplateInstanceEntityTitle transDef={transDef} entID={entID}
         isLink={isLink} isFull={isFull}
         recLevel={recLevel} maxRecLevel={maxRecLevel}
       />
@@ -56,184 +59,123 @@ export const EntityTitle = ({
   }
   
 
-  // Else return EntityTitleFromDef directly.
+  // Else return EntityTitleFromTransDef directly.
   return (
-    <EntityTitleFromDef def={def} entID={entID}
+    <EntityTitleFromTransDef transDef={transDef} entID={entID}
       isLink={isLink} isFull={isFull}
       recLevel={recLevel} maxRecLevel={maxRecLevel}
     />
   );
 }
 
-const EntityTitleFromDef = ({
-  def, entID, isLink, isFull, recLevel, maxRecLevel
-}) => {
-
-  // Encode the definition such that 
-  // "\\"--> "\\0", "\|"-->"\\1", "\@"--> "\\2", "\#"--> "\\3", "\%"--> "\\4",
-  // and where the first occurrence of "|" is converted to "\\9". Then split
-  // the string along the second occurrence of "|" into the encoded definition
-  // (encodedDef) and the capitalization-accent code (capCode). (The latter is
-  // not supposed to contain any of the special characters here , so we are
-  // free to let it be encoded as well, as this should not change it if it is
-  // well-formed.)
-  const [encodedDef, capCode, extraCode] = def
+function transformDef(def) {
+  return def
     .replaceAll("\\\\", "\\\\0")
     .replaceAll("\\|", "\\\\1")
     .replaceAll("\\@", "\\\\2")
     .replaceAll("\\#", "\\\\3")
-    .replace("|", "\\\\9")
-    .split("|");
+    .replaceAll("\\%", "\\\\4");
+}
+
+function transformDefBack(transDef) {
+  return transDef
+    .replaceAll("\\\\4", "\\%")
+    .replaceAll("\\\\3", "\\#")
+    .replaceAll("\\\\2", "\\@")
+    .replaceAll("\\\\1", "\\|")
+    .replaceAll("\\\\0", "\\\\");
+}
+
+function getWYSIWYGDef(transDef) {
+  return transDef
+    .replaceAll("\\\\4", "%")
+    .replaceAll("\\\\3", "#")
+    .replaceAll("\\\\2", "@")
+    .replaceAll("\\\\0", "\\");
+}
+
+
+
+const EntityTitleFromTransDef = ({
+  transDef, entID, isLink, isFull, recLevel, maxRecLevel
+}) => {
+  // First we make some checks that the def is well-formed.
 
   // If def has single backslashes that does not escape a special character,
   // or if contains unescaped '#'s (which should only be part of concatenated
-  // strings), return an InvalidEntityTitle.
-  const defHasInvalidEscapes = encodedDef.replaceAll("\\\\", "").includes("\\");
-  const defHasUnescapedNumberSigns = encodedDef.includes("#");
-  if (defHasInvalidEscapes || defHasUnescapedNumberSigns) {
+  // strings), or if it contains more than one unescaped '|', or if def
+  // is nullish, or if it starts with '|', or if it start or ends in
+  // whitespace, or contains newlines, return an InvalidEntityTitle.
+  const defHasInvalidEscapes = transDef.replaceAll("\\\\", "").includes("\\");
+  const defHasUnescapedNumberSigns = transDef.includes("#");
+  const defHasSeveralVBars = transDef.replace("|", "").includes("|");
+  const defStartsWithVBar = transDef[0] === "|";
+  const defHasInvalidWhitespace = transDef.includes("\n") ||
+    transDef.match(/^\s/g) || transDef.match(/\s$/g);
+  if (
+    defHasInvalidEscapes || defHasUnescapedNumberSigns ||
+    defHasSeveralVBars || !transDef || defStartsWithVBar ||
+    defHasInvalidWhitespace
+  ) {
     return (
       <InvalidEntityTitle entID={entID} isLink={isLink} >
-        {def}
+        {transformDefBack(transDef)}
       </InvalidEntityTitle>
     );
   }
 
-  // If extraCode is not undefined, return an InvalidEntityTitle.
-  if (typeof extraCode !== "undefined") {
+  // If transDef has occurrences of '@' or '%' where these are not part of
+  // well-formed references and back-references, respectively, return an
+  // InvalidEntityTitle.
+  const defHasInvalidRefs = transDef
+    .replaceAll(/@[eutbi][1-9][0-9]*\./g, "")
+    .includes("@");
+  const defHasInvalidBackRefs = transDef
+    // .replaceAll(/(%[1-9])|(%\[[1-9][0-9]*\])/g, "")
+    // (Let's not implement the /%\[[1-9][0-9]*\]/ syntax yet, if at all.)
+    .replaceAll(/%[1-9]/g, "")
+    .includes("%");
+  if (defHasInvalidRefs || defHasInvalidBackRefs) {
     return (
       <InvalidEntityTitle entID={entID} isLink={isLink} >
-        {def}
+        {transformDefBack(transDef)}
       </InvalidEntityTitle>
     );
   }
 
-  // Get the capitalized and accented (when implemented) encodedDef, call it
-  // the 'modified definition,' or modDef for short.
-  const modDef = getCapitalizedAndAccentedString(encodedDef, capCode);
 
+  // Then parse any links, and split transDef up into parts
+  const refRegEx = /@\w+\./g;
+  const refArr = transDef.match(refRegEx).map(val => val.slice(1, -1));
+  const refOrBackRefOrVBarOrRestRegEx = /(\|)|(@\w+\.)|(%[1-9])|([^@%\|]+)/g;
+  const splitTransDef = transDef.match(refOrBackRefOrVBarOrRestRegEx);
 
-  // Split modDef in up into the (short) title part and the specification part.
-  const [modTitle, modSpec] = modDef.split("\\\\9");
+  // If !isFull, slice the array to exclude "|" and every element to its right.
+  const transDefArr = isFull ? splitTransDef :
+    splitTransDef.slice(0, splitTransDef.indexOf("|"));
 
-  // If isFull, return the full title.
-  if (isFull) {
-    return (
-      <span className="entity-title">
-        <span className="short-title">
-          <EntityTitleFromModDef modDef={modTitle} isLink={false}
-            recLevel={recLevel} maxRecLevel={maxRecLevel}
-          />
-        </span>
-        <span className="title-spec">
-          <EntityTitleFromModDef modDef={modSpec} isLink={false}
-            recLevel={recLevel} maxRecLevel={maxRecLevel}
-          />
-        </span>
-      </span>
-    );
-  }
-
-  // Else return title as a link iff isLink, followed by a button to expand
-  // the specification.
-  if (modSpec) {
-    return (
-      <span className="entity-title">
-        <span className="short-title">
-          <EntityTitleFromModDef entID={entID} modDef={modTitle} isLink={isLink}
-            recLevel={recLevel} maxRecLevel={maxRecLevel}
-          />
-        </span>
-        <ExpandableSpan>
-          <EntityTitleFromModDef modDef={modSpec} isLink={false}
-            recLevel={recLevel} maxRecLevel={maxRecLevel}
-          />
-        </ExpandableSpan>
-      </span>
-    );
-  }
-
-  // Else return just the short title
-  return (
-    <span className="entity-title">
-      <span className="short-title">
-        <EntityTitleFromModDef entID={entID} modDef={modTitle} isLink={isLink}
-          recLevel={recLevel} maxRecLevel={maxRecLevel}
-        />
-      </span>
-    </span>
-  );
-};
-
-
-
-const EntityTitleFromModDef = ({
-  entID, modDef, isLink, recLevel, maxRecLevel
-}) => {
-
-  const referenceArr = modDef.match(/@[^.]*./g) ?? [];
-
-  const referencesAreWellFormed = referenceArr.reduce((acc, val) => 
-    acc && /@[1-9[0-9]*]/.test(val), true
-  );
-  if (!referencesAreWellFormed) {
-    return (
-      <InvalidEntityTitle entID={entID} isLink={false} >
-        {referenceArr.join()}
-      </InvalidEntityTitle>
-    );
-  }
-
-  const encodedBoilerplateArr = modDef.split(/@[^.]*./g);
-
-  const boilerplateIsWellFormed = boilerplateArr.reduce((acc, val) => 
-    acc && /^[^#@]+$/.test(val), true
-  );
-  if (!boilerplateIsWellFormed) {
-    return (
-      <InvalidEntityTitle entID={entID} isLink={false} >
-        {boilerplateArr.join("@[...]")}
-      </InvalidEntityTitle>
-    );
-  }
-
-  const boilerplateArr = modDef.split(/@[^.]*./g).map(val => val
-    .replaceAll("\\\\0", "\\")
-    .replaceAll("\\\\1", "|")
-    .replaceAll("\\\\2", "@")
-    .replaceAll("\\\\3", "#")
-    // .replaceAll("\\\\4", "%")
-  );
-
-
-  // // If there are no references, return the decoded modDef contained in
-  // // boilerplateArr[0].
-  // if (referenceArr.length == 0) {
-  //   return (
-  //     <EntityLink entID={entID} >
-  //       {boilerplateArr[0]}
-  //     </EntityLink>
-  //   );
-  // }
 
   // Compute the HTML for the links based on the references. If maxRecLevel
   // is reached, these are EntityID elements, which only shows the entity ID.
-  const linkArr = (recLevel >= maxRecLevel) ?
-    referenceArr.map((val, ind) => (
-      <EntityID key={2 * ind + 1} entID={val.slice(1, -1)} />
-    )) :
-    referenceArr.map((val, ind) => (
-      <EntityTitle key={2 * ind  + 1} entID={val.slice(1, -1)}
-        isLink={!isLink && recLevel == 1}
-        recLevel={recLevel + 1} maxRecLevel={maxRecLevel}
-      />
-    ));
-  
-  const children = boilerplateArr.map((val, ind) => (
-    <>
-      <span key={2 * ind} >{val}</span>
-      {linkArr[ind] ?? ""}
-    </>
-  ));
+  const children = transDefArr.map((val, ind) => {
+    if (val.match(refRegEx)) {
+      let linkEntID = val.slice(1, -1);
+      return (recLevel >= maxRecLevel) ?
+        <EntityTitle key={ind} entID={linkEntID} isLink={isFull}
+          recLevel={recLevel + 1} maxRecLevel={maxRecLevel}
+        /> :
+        <EntityID key={ind} entID={linkEntID} isLink={isFull} />;
+    }
+    if (val.match(/%[1-9]/g)) {
+      let n = val[1];
+      let linkEntID = (refArr[n - 1] ?? "@.").slice(1, -1);
+      return <EntityBackRefLink key={ind} entID={linkEntID} />
+    }
+    if (val === "|") {
+      return <span key={ind} className="spec-separator" ></span>
+    }
+    return <span key={ind}>{getWYSIWYGDef(val)}</span>;
+  });
   
 
   // Return a link if isLink, or else just return a span of these children.
@@ -254,7 +196,7 @@ const EntityTitleFromModDef = ({
 
 
 
-
+// TODO: Correct and finish:
 
 const TemplateInstanceEntityTitle = ({
   def, entID, isLink, isFull, recLevel, maxRecLevel
