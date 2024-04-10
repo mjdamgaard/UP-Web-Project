@@ -37,9 +37,9 @@ export const EntityTitle = ({
   // "\\"-->"\\0", "\|"-->"\\1", "\@"-->"\\2", "\#"-->"\\3", "\%"-->"\\4".
   const transDef = transformDef(def);
 
-  // If def codes for a concatenated string (starting with an unescaped '#'),
+  // If def codes for a concatenated string (containing two unescaped '#'s),
   // return a ConcatenatedEntityTitle.
-  if (transDef[0] === "#") {
+  if (/^#[1-9][0-9]*\.[^#]*#[1-9][0-9]*$/.test(transDef)) {
     return (
       <ConcatenatedEntityTitle transDef={transDef} entID={entID}
         isLink={isLink} isFull={isFull}
@@ -48,11 +48,22 @@ export const EntityTitle = ({
     );
   }
 
-  // If def codes for a template instance (starting with /^@[1-9]/),
+  // If def codes for a template instance (like e.g. '#123.124.125'),
   // return a TemplateInstanceEntityTitle.
-  if (/^@[1-9]/.test(transDef[0])) {
+  if (/^#[1-9][0-9]*(\.[1-9][0-9]*)+$/.test(transDef)) {
     return (
       <TemplateInstanceEntityTitle transDef={transDef} entID={entID}
+        isLink={isLink} isFull={isFull}
+        recLevel={recLevel} maxRecLevel={maxRecLevel} refNum={refNum}
+      />
+    );
+  }
+
+  // If def codes for a special-type reference (like e.g. 'u#123'),
+  // return a TemplateInstanceEntityTitle.
+  if (/^[utbi]#[1-9][0-9]*]$/.test(transDef)) {
+    return (
+      <SpecialRefEntityTitle transDef={transDef} entID={entID}
         isLink={isLink} isFull={isFull}
         recLevel={recLevel} maxRecLevel={maxRecLevel} refNum={refNum}
       />
@@ -106,37 +117,28 @@ const EntityTitleFromTransDef = ({
   // or if contains unescaped '#'s (which should only be part of concatenated
   // strings), or if it contains more than one unescaped '|', or if def
   // is nullish, or if it starts with '|', or if it start or ends in
-  // whitespace, or contains newlines, return an InvalidEntityTitle.
+  // whitespace, or contains newlines, or if f transDef has occurrences of
+  // '@' or '%' where these are not part of well-formed references and
+  // back-references, respectively, return an InvalidEntityTitle.
   const defHasInvalidEscapes = transDef.replaceAll("\\\\", "").includes("\\");
   const defHasUnescapedNumberSigns = transDef.includes("#");
   const defHasSeveralVBars = transDef.replace("|", "").includes("|");
   const defStartsWithVBar = transDef[0] === "|";
   const defHasInvalidWhitespace = transDef.includes("\n") ||
     transDef.match(/^\s/g) || transDef.match(/\s$/g);
-  if (
-    defHasInvalidEscapes || defHasUnescapedNumberSigns ||
-    defHasSeveralVBars || !transDef || defStartsWithVBar ||
-    defHasInvalidWhitespace
-  ) {
-    return (
-      <InvalidEntityTitle entID={entID} isLink={isLink} >
-        {transformDefBack(transDef)}
-      </InvalidEntityTitle>
-    );
-  }
-
-  // If transDef has occurrences of '@' or '%' where these are not part of
-  // well-formed references and back-references, respectively, return an
-  // InvalidEntityTitle.
   const defHasInvalidRefs = transDef
-    .replaceAll(/@[eutbi][1-9][0-9]*\./g, "")
+    .replaceAll(/@[1-9][0-9]*\./g, "")
     .includes("@");
   const defHasInvalidBackRefs = transDef
     // .replaceAll(/(%[1-9])|(%\[[1-9][0-9]*\])/g, "")
     // (Let's not implement the /%\[[1-9][0-9]*\]/ syntax yet, if at all.)
     .replaceAll(/%[1-9]/g, "")
     .includes("%");
-  if (defHasInvalidRefs || defHasInvalidBackRefs) {
+  if (
+    defHasInvalidEscapes || defHasUnescapedNumberSigns ||
+    defHasSeveralVBars || !transDef || defStartsWithVBar ||
+    defHasInvalidWhitespace || defHasInvalidRefs || defHasInvalidBackRefs
+  ) {
     return (
       <InvalidEntityTitle entID={entID} isLink={isLink} >
         {transformDefBack(transDef)}
@@ -207,29 +209,11 @@ const TemplateInstanceEntityTitle = ({
   const [results, setResults] = useState({});
   useQuery(results, setResults, reqData);
 
-  // Check if template closure isn't well-formed.
-  if (!/^@[1-9][0-9]*(\.[eutbi][1-9][0-9])+$/.test(transDef)) {
-    return (
-      <InvalidEntityTitle entID={entID} isLink={isLink} >
-        {transformDefBack(transDef)}
-      </InvalidEntityTitle>
-    );
-  }
-
-  // Else, parse the ID array and fetch the definition of the template
+  // Parse the ID array and fetch the definition of the template
   // and of the inputs.
-  const idArr = transDef.match(/[1-9][0-9]*/g);
-  const typeArr = ["e"].concat(transDef.match(/[eutbi]/g));
-  const reqTypeArr = typeArr.map(val => {
-    return (val === "e") ? "ent" :
-      (val === "u") ? "username" :
-      (val === "t") ? "text" :
-      (val === "b") ? "bin" :
-      (val === "i") ? "idx" :
-      "";
-  })
-  setReqData(idArr.map((val, ind) => ({
-    req: reqTypeArr[ind],
+  const idArr = transDef.match(/[1-9][0-9]*/g); // RegExp.match() is greedy.
+  setReqData(idArr.map(val => ({
+    req: "ent",
     id: val,
   })));
 
@@ -241,12 +225,11 @@ const TemplateInstanceEntityTitle = ({
     );
   }
   
-  // Afterwards, first extract the needed data from results[0].data[0].
+  // Afterwards, first extract the templateDef data from results[0].data[0].
   const [templateDef] = (results[0].data[0] ?? []);
 
-  // Check that the input types in transDef conforms to the placeholders in
-  // templateDef.
-  
+  // TODO: Continue...
+
 };
 
 

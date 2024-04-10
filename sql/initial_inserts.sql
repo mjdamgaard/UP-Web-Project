@@ -92,9 +92,9 @@ VALUES
     -- ("submitted by %u|: is submitted by the user %1", 48),
     -- -- Here is an example ('submitted by %u') of a title that we may not want
     -- -- to capitalize.
-    ("Submitted by %u|: Is submitted by the user %1", 48),
-    ("URL", 49),
-    ("User %u|: The user/bot %1 of this SDB", 50);
+    ("Submitted by %e|: Is submitted by the user %1", 48),
+    ("URL", 49)
+    -- ("User %u|: The user/bot %1 of this SDB", 50);
     -- ("%u|: the user/bot %1 of this sdb|s3db", 50);
 
 
@@ -159,7 +159,7 @@ CALL insertOrFindEntity(1, 0, "Mathematics"); -- id: +22
 
 
 CALL insertOrFindEntity(1, 0, "Subcategory"); -- id: +23
-CALL insertOrFindEntity(1, 0, "@40.1023.1"); -- id: +24
+CALL insertOrFindEntity(1, 0, "#40.1023.1"); -- id: +24
 
 CALL insertOrUpdateRating(1, 1024, 1018, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1024, 1021, CONV("E000", 16, 10), 1);
@@ -171,13 +171,13 @@ CALL insertOrUpdateRating(1, 1024, 1000, CONV("0100", 16, 10), 1);
 -- SELECT SLEEP(1);
 
 
-CALL insertOrFindEntity(1, 0, "@40.1023.1001"); -- id: +25
+CALL insertOrFindEntity(1, 0, "#40.1023.1001"); -- id: +25
 CALL insertOrUpdateRating(1, 1025, 1002, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1025, 1003, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1025, 1019, CONV("E000", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1025, 1000, CONV("0100", 16, 10), 1);
 
-CALL insertOrFindEntity(1, 0, "@40.1023.1018"); -- id: +26
+CALL insertOrFindEntity(1, 0, "#40.1023.1018"); -- id: +26
 CALL insertOrUpdateRating(1, 1026, 1019, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1026, 1020, CONV("F100", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1026, 1021, CONV("F200", 16, 10), 1);
@@ -196,14 +196,14 @@ CALL insertOrUpdateRating(1, 1004, 1015, CONV("FE00", 16, 10), 1);
 CALL insertOrFindEntity(1, 0, "Related entity"); -- id: +27
 
 -- (Note the '1' is omitted here after the '@'. *No, not after all..)
-CALL insertOrFindEntity(1, 0, "@40.1027.1012"); -- id: +28
+CALL insertOrFindEntity(1, 0, "#40.1027.1012"); -- id: +28
 CALL insertOrUpdateRating(1, 1028, 1015, CONV("FF00", 16, 10), 1);
-CALL insertOrFindEntity(1, 0, "@40.1027.1.1015"); -- id: +29
+CALL insertOrFindEntity(1, 0, "#40.1027.1.1015"); -- id: +29
 CALL insertOrUpdateRating(1, 1029, 1012, CONV("FF00", 16, 10), 1);
 
-CALL insertOrFindEntity(1, 0, "@40.1027.1001"); -- id: +30
+CALL insertOrFindEntity(1, 0, "#40.1027.1001"); -- id: +30
 CALL insertOrUpdateRating(1, 1030, 1019, CONV("F000", 16, 10), 1);
-CALL insertOrFindEntity(1, 0, "@40.1027.1019"); -- id: +31
+CALL insertOrFindEntity(1, 0, "#40.1027.1019"); -- id: +31
 CALL insertOrUpdateRating(1, 1031, 1004, CONV("FF00", 16, 10), 1);
 
 
@@ -221,19 +221,19 @@ CALL insertOrFindEntity(1, 0, "Iconic| as a movie"); -- id: +36
 
 CALL insertOrFindEntity(1, 0, "Relevant tag to rate"); -- id: +37
 
-CALL insertOrFindEntity(1, 0, "@40.1037.1004"); -- id: +38
+CALL insertOrFindEntity(1, 0, "#40.1037.1004"); -- id: +38
 CALL insertOrUpdateRating(1, 1038, 1033, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1038, 1034, CONV("E100", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1038, 1035, CONV("E000", 16, 10), 1);
 
 
-CALL insertOrFindEntity(1, 0, "@40.1037.1012"); -- id: +39
+CALL insertOrFindEntity(1, 0, "#40.1037.1012"); -- id: +39
 CALL insertOrUpdateRating(1, 1039, 1033, CONV("F000", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1039, 1034, CONV("E100", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1039, 1035, CONV("EA00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1039, 1036, CONV("E000", 16, 10), 1);
 
-CALL insertOrFindEntity(1, 0, "@40.1037.1"); -- id: +40
+CALL insertOrFindEntity(1, 0, "#40.1037.1"); -- id: +40
 -- CALL insertOrUpdateRating(1, 1040, 1033, CONV("FF00", 16, 10), 1);
 -- CALL insertOrUpdateRating(1, 1040, 1034, CONV("9000", 16, 10), 1);
 
@@ -247,7 +247,7 @@ CALL insertOrFindEntity(1, 0, "Time"); -- id: +42
 CALL insertOrFindEntity(1, 0, "Running time"); -- id: +43
 CALL insertOrFindEntity(1, 0, "Actor"); -- id: +44
 
-CALL insertOrFindEntity(1, 0, "@40.1041.1004"); -- id: +45
+CALL insertOrFindEntity(1, 0, "#40.1041.1004"); -- id: +45
 CALL insertOrUpdateRating(1, 1045, 1006, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1045, 1044, CONV("FE00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1045, 1043, CONV("FC00", 16, 10), 1);
@@ -261,9 +261,9 @@ CALL insertOrFindEntity(1, 0, "Elijah Wood"); -- id: +48
 
 CALL insertOrFindEntity(1, 0, "2 h 59 min"); -- id: +49
 
-CALL insertOrFindEntity(1, 0, "@40.1006.1012"); -- id: +50
-CALL insertOrFindEntity(1, 0, "@40.1044.1012"); -- id: +51
-CALL insertOrFindEntity(1, 0, "@40.1043.1012"); -- id: +52
+CALL insertOrFindEntity(1, 0, "#40.1006.1012"); -- id: +50
+CALL insertOrFindEntity(1, 0, "#40.1044.1012"); -- id: +51
+CALL insertOrFindEntity(1, 0, "#40.1043.1012"); -- id: +52
 CALL insertOrUpdateRating(1, 1050, 1011, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1051, 1046, CONV("FF00", 16, 10), 1);
 CALL insertOrUpdateRating(1, 1051, 1047, CONV("FF00", 16, 10), 1);

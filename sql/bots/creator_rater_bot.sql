@@ -15,18 +15,18 @@ BEGIN proc: BEGIN
     SELECT id INTO userCreationsTagID
     FROM Entities
     WHERE (
-        def = CONCAT("@48.", userID)
+        def = CONCAT("#48.", userID)
     );
     -- if it does not exist, also insert it and get the ID.
     IF (userCreationsTagID IS NULL) THEN
         INSERT IGNORE INTO Entities (def)
-        VALUES (CONCAT("@48.", userID));
+        VALUES (CONCAT("#48.", userID));
         SELECT LAST_INSERT_ID() INTO userCreationsTagID;
         IF (userCreationsTagID IS NULL) THEN
             SELECT id INTO userCreationsTagID
             FROM Entities
             WHERE (
-                def = CONCAT("@48.", userID)
+                def = CONCAT("#48.", userID)
             );
         END IF;
     END IF;
