@@ -9,12 +9,13 @@ const ConcatenatedEntityTitle = () => <template></template>;
 
 
 export const EntityTitle = ({
-  entID, isLink, isFull, recLevel, maxRecLevel
+  entID, isLink, isFull, recLevel, maxRecLevel, refNum
 }) => {
   isLink ??= true;
   isFull ??= false;
   recLevel ??= 0;
   maxRecLevel ??= 3;
+  refNum ??= 0;
 
   const [results, setResults] = useState([]);
   useQuery(results, setResults, {
@@ -42,7 +43,7 @@ export const EntityTitle = ({
     return (
       <ConcatenatedEntityTitle transDef={transDef} entID={entID}
         isLink={isLink} isFull={isFull}
-        recLevel={recLevel} maxRecLevel={maxRecLevel}
+        recLevel={recLevel} maxRecLevel={maxRecLevel} refNum={refNum}
       />
     );
   }
@@ -53,7 +54,7 @@ export const EntityTitle = ({
     return (
       <TemplateInstanceEntityTitle transDef={transDef} entID={entID}
         isLink={isLink} isFull={isFull}
-        recLevel={recLevel} maxRecLevel={maxRecLevel}
+        recLevel={recLevel} maxRecLevel={maxRecLevel} refNum={refNum}
       />
     );
   }
@@ -63,7 +64,7 @@ export const EntityTitle = ({
   return (
     <EntityTitleFromTransDef transDef={transDef} entID={entID}
       isLink={isLink} isFull={isFull}
-      recLevel={recLevel} maxRecLevel={maxRecLevel}
+      recLevel={recLevel} maxRecLevel={maxRecLevel} refNum={refNum}
     />
   );
 }
@@ -97,7 +98,7 @@ function getWYSIWYGDef(transDef) {
 
 
 const EntityTitleFromTransDef = ({
-  transDef, entID, isLink, isFull, recLevel, maxRecLevel
+  transDef, entID, isLink, isFull, recLevel, maxRecLevel, refNum
 }) => {
   // First we make some checks that the def is well-formed.
 
@@ -159,17 +160,18 @@ const EntityTitleFromTransDef = ({
   // is reached, these are EntityID elements, which only shows the entity ID.
   const children = transDefArr.map((val, ind) => {
     if (val.match(refRegEx)) {
+      let n = refArr.indexOF(val) + 1;
       let linkEntID = val.slice(1, -1);
       return (recLevel >= maxRecLevel) ?
         <EntityTitle key={ind} entID={linkEntID} isLink={isFull}
-          recLevel={recLevel + 1} maxRecLevel={maxRecLevel}
+          recLevel={recLevel + 1} maxRecLevel={maxRecLevel} refNum={n}
         /> :
-        <EntityID key={ind} entID={linkEntID} isLink={isFull} />;
+        <EntityID key={ind} entID={linkEntID} isLink={isFull} refNum={n} />;
     }
     if (val.match(/%[1-9]/g)) {
       let n = val[1];
       let linkEntID = (refArr[n - 1] ?? "@.").slice(1, -1);
-      return <EntityBackRefLink key={ind} entID={linkEntID} />
+      return <EntityBackRefLink key={ind} entID={linkEntID} refNum={n} />
     }
     if (val === "|") {
       return <span key={ind} className="spec-separator" ></span>
@@ -181,13 +183,15 @@ const EntityTitleFromTransDef = ({
   // Return a link if isLink, or else just return a span of these children.
   if (isLink) {
     return (
-      <EntityLink entID={entID}>
-        {children}
-      </EntityLink>
+      <span className={"entity-title ref-num-" + refNum} >
+        <EntityLink entID={entID}>
+          {children}
+        </EntityLink>
+      </span>
     );
   } else {
     return (
-      <span>
+      <span className={"entity-title ref-num-" + refNum} >
         {children}
       </span>
     );
@@ -196,28 +200,36 @@ const EntityTitleFromTransDef = ({
 
 
 
-// TODO: Correct and finish:
-
 const TemplateInstanceEntityTitle = ({
-  def, entID, isLink, isFull, recLevel, maxRecLevel
+  transDef, entID, isLink, isFull, recLevel, maxRecLevel, refNum
 }) => {
   const [reqData, setReqData] = useState({});
   const [results, setResults] = useState({});
   useQuery(results, setResults, reqData);
 
   // Check if template closure isn't well-formed.
-  if (!/^@[1-9][0-9]*(\.[1-9][0-9])+$/.test(def)) {
+  if (!/^@[1-9][0-9]*(\.[eutbi][1-9][0-9])+$/.test(transDef)) {
     return (
       <InvalidEntityTitle entID={entID} isLink={isLink} >
-        {def}
+        {transformDefBack(transDef)}
       </InvalidEntityTitle>
     );
   }
 
-  // Else, parse the ID array and fetch the template's definition.
-  const idArr = def.match(/[1-9][0-9]*/g);
-  setReqData(idArr.map(val => ({
-    req: "ent",
+  // Else, parse the ID array and fetch the definition of the template
+  // and of the inputs.
+  const idArr = transDef.match(/[1-9][0-9]*/g);
+  const typeArr = ["e"].concat(transDef.match(/[eutbi]/g));
+  const reqTypeArr = typeArr.map(val => {
+    return (val === "e") ? "ent" :
+      (val === "u") ? "username" :
+      (val === "t") ? "text" :
+      (val === "b") ? "bin" :
+      (val === "i") ? "idx" :
+      "";
+  })
+  setReqData(idArr.map((val, ind) => ({
+    req: reqTypeArr[ind],
     id: val,
   })));
 
@@ -232,12 +244,10 @@ const TemplateInstanceEntityTitle = ({
   // Afterwards, first extract the needed data from results[0].data[0].
   const [templateDef] = (results[0].data[0] ?? []);
 
-  // ..Then encode and modify the templateDef, substitute the '%'-placeholders
-  // for '@'-references and give it to a EntityTitleFromModDef, and if
-  // isFull, also insert a symbol with a link to the template at the
-  // beginning... (TODO...)
+  // Check that the input types in transDef conforms to the placeholders in
+  // templateDef.
+  
 };
-
 
 
 
