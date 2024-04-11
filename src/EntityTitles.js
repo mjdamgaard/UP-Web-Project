@@ -4,7 +4,9 @@ import {ColumnContext} from "./contexts/ColumnContext.js";
 import {ExpandableSpan} from "./DropdownBox.js";
 
 const ConcatenatedEntityTitle = () => <template></template>;
-// const TemplateInstanceEntityTitle = () => <template></template>;
+const TemplateLink = () => <template></template>;
+const SpecialRefEntityTitle = () => <template></template>;
+const EntityBackRefLink = () => <template></template>;
 // const InvalidEntityTitle = () => <template></template>;
 
 
@@ -33,6 +35,15 @@ export const EntityTitle = ({
   // Afterwards, first extract the needed data from results.
   const [def] = (results.data[0] ?? []);
   
+  // If def is nullish return an InvalidEntityTitle.
+  if (!def) {
+    return (
+      <InvalidEntityTitle entID={entID} isLink={isLink} >
+        {"Entity not found"}
+      </InvalidEntityTitle>
+    );
+  }
+
   // Transform the definition such that 
   // "\\"-->"\\0", "\|"-->"\\1", "\@"-->"\\2", "\#"-->"\\3", "\%"-->"\\4".
   const transDef = transformDef(def);
@@ -103,21 +114,23 @@ function getWYSIWYGDef(transDef) {
     .replaceAll("\\\\4", "%")
     .replaceAll("\\\\3", "#")
     .replaceAll("\\\\2", "@")
+    .replaceAll("\\\\1", "|")
     .replaceAll("\\\\0", "\\");
 }
 
 
 
 const EntityTitleFromTransDef = ({
-  transDef, entID, isLink, isFull, recLevel, maxRecLevel, refNum
+  transDef, entID, isLink, isFull, recLevel, maxRecLevel, refNum,
+  isTemplateInstance, templateID
 }) => {
   // First we make some checks that the def is well-formed.
 
   // If def has single backslashes that does not escape a special character,
   // or if contains unescaped '#'s (which should only be part of concatenated
-  // strings), or if it contains more than one unescaped '|', or if def
-  // is nullish, or if it starts with '|', or if it start or ends in
-  // whitespace, or contains newlines, or if f transDef has occurrences of
+  // strings), or if it contains more than one unescaped '|',
+  // or if it starts with '|', or if it start or ends in whitespace, or
+  // contains newlines, or if f transDef has occurrences of
   // '@' or '%' where these are not part of well-formed references and
   // back-references, respectively, return an InvalidEntityTitle.
   const defHasInvalidEscapes = transDef.replaceAll("\\\\", "").includes("\\");
@@ -136,8 +149,8 @@ const EntityTitleFromTransDef = ({
     .includes("%");
   if (
     defHasInvalidEscapes || defHasUnescapedNumberSigns ||
-    defHasSeveralVBars || !transDef || defStartsWithVBar ||
-    defHasInvalidWhitespace || defHasInvalidRefs || defHasInvalidBackRefs
+    defHasSeveralVBars || defStartsWithVBar || defHasInvalidWhitespace ||
+    defHasInvalidRefs || defHasInvalidBackRefs
   ) {
     return (
       <InvalidEntityTitle entID={entID} isLink={isLink} >
@@ -149,18 +162,18 @@ const EntityTitleFromTransDef = ({
 
   // Then parse any links, and split transDef up into parts
   const refRegEx = /@\w+\./g;
-  const refArr = transDef.match(refRegEx).map(val => val.slice(1, -1));
+  const refArr = (transDef.match(refRegEx) ?? []).map(val => val.slice(1, -1));
   const refOrBackRefOrVBarOrRestRegEx = /(\|)|(@\w+\.)|(%[1-9])|([^@%\|]+)/g;
-  const splitTransDef = transDef.match(refOrBackRefOrVBarOrRestRegEx);
+  const transDefFullArr = transDef.match(refOrBackRefOrVBarOrRestRegEx);
 
   // If !isFull, slice the array to exclude "|" and every element to its right.
-  const transDefArr = isFull ? splitTransDef :
-    splitTransDef.slice(0, splitTransDef.indexOf("|"));
+  const transDefArr = isFull ? transDefFullArr :
+    transDefFullArr.slice(0, transDefFullArr.indexOf("|"));
 
 
   // Compute the HTML for the links based on the references. If maxRecLevel
   // is reached, these are EntityID elements, which only shows the entity ID.
-  const children = transDefArr.map((val, ind) => {
+  var children = transDefArr.map((val, ind) => {
     if (val.match(refRegEx)) {
       let n = refArr.indexOF(val) + 1;
       let linkEntID = val.slice(1, -1);
@@ -180,6 +193,14 @@ const EntityTitleFromTransDef = ({
     }
     return <span key={ind}>{getWYSIWYGDef(val)}</span>;
   });
+
+  // If isFull && isTemplateInstance, insert a link to the template at the
+  // end of the full definition.
+  if (isFull && isTemplateInstance) {
+    children.push(
+      <TemplateLink key={children.length} entID={templateID} />
+    );
+  }
   
 
   // Return a link if isLink, or else just return a span of these children.
@@ -217,8 +238,10 @@ const TemplateInstanceEntityTitle = ({
     id: val,
   })));
 
+  const inputIDArr = idArr.slice(1);
 
-  // Before results[0] is fetched, render a placeholder
+
+  // Before results[0] is fetched, render a placeholder.
   if (!results[0].isFetched) {
     return (
       <EntityTitlePlaceholder entID={entID} isLink={isLink} />
@@ -228,7 +251,53 @@ const TemplateInstanceEntityTitle = ({
   // Afterwards, first extract the templateDef data from results[0].data[0].
   const [templateDef] = (results[0].data[0] ?? []);
 
-  // TODO: Continue...
+  // Transform the templateDef.
+  const transTemplateDef = transformDef(templateDef);
+
+  // If transTemplateDef has ill-formed placeholders (or back-references),
+  // return an InvalidEntityTitle.
+  const templateDefHasInvalidPlaceholders = transTemplateDef
+    .replaceAll(/%[e1-9]/g, "")
+    .includes("%");
+  if (templateDefHasInvalidPlaceholders) {
+    return (
+      <InvalidEntityTitle entID={entID} isLink={isLink} >
+        {"Instance of invalid template: " + transformDefBack(transTemplateDef)}
+      </InvalidEntityTitle>
+    );
+  }
+
+  // If the number of placeholders does not match the number of inputs,
+  // return an InvalidEntityTitle.
+  const inputNumberIsWrong = (
+    transTemplateDef.match(/%e/g).length === inputIDArr.length
+  );
+  if (inputNumberIsWrong) {
+    return (
+      <InvalidEntityTitle entID={entID} isLink={isLink} >
+        {
+          "Wrong number inputs (" + inputIDArr.length + ") for template: " +
+          templateDef
+        }
+      </InvalidEntityTitle>
+    );
+  }
+
+  // Construct the template instance.
+  const transTemplateInstDef = inputIDArr.reduce(
+    (acc, val) => acc.replace("%e", "@" + val + "."),
+    transTemplateDef
+  );
+
+  // Return an EntityTitleFromTransDef (isTemplateInstance={true}) with a
+  // recLevel of one more.
+  return (
+    <EntityTitleFromTransDef transDef={transTemplateInstDef} entID={entID}
+      isLink={isLink} isFull={isFull}
+      recLevel={recLevel} maxRecLevel={maxRecLevel} refNum={refNum}
+      isTemplateInstance={true} templateID={idArr[0]}
+    />
+  );
 
 };
 
