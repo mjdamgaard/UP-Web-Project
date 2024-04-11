@@ -6,17 +6,17 @@ import {ExpandableSpan} from "./DropdownBox.js";
 const ConcatenatedEntityTitle = () => <template></template>;
 const TemplateLink = () => <template></template>;
 const SpecialRefEntityTitle = () => <template></template>;
-const EntityBackRefLink = () => <template></template>;
+// const EntityBackRefLink = () => <template></template>;
 // const InvalidEntityTitle = () => <template></template>;
 
 
 export const EntityTitle = ({
   entID, isLink, isFull, recLevel, maxRecLevel, refNum
 }) => {
-  isLink ??= true;
   isFull ??= false;
+  isLink ??= !isFull;
   recLevel ??= 0;
-  maxRecLevel ??= 3;
+  maxRecLevel ??= 6;
   refNum ??= 0;
 
   const [results, setResults] = useState([]);
@@ -130,9 +130,9 @@ const EntityTitleFromTransDef = ({
   // or if contains unescaped '#'s (which should only be part of concatenated
   // strings), or if it contains more than one unescaped '|',
   // or if it starts with '|', or if it start or ends in whitespace, or
-  // contains newlines, or if f transDef has occurrences of
-  // '@' or '%' where these are not part of well-formed references and
-  // back-references, respectively, return an InvalidEntityTitle.
+  // contains newlines, or if it has ill-formed '@' references or back-
+  // references, or if it has ill-formed placeholders, return an
+  // InvalidEntityTitle.
   const defHasInvalidEscapes = transDef.replaceAll("\\\\", "").includes("\\");
   const defHasUnescapedNumberSigns = transDef.includes("#");
   const defHasSeveralVBars = transDef.replace("|", "").includes("|");
@@ -140,17 +140,15 @@ const EntityTitleFromTransDef = ({
   const defHasInvalidWhitespace = transDef.includes("\n") ||
     transDef.match(/^\s/g) || transDef.match(/\s$/g);
   const defHasInvalidRefs = transDef
-    .replaceAll(/@[1-9][0-9]*\./g, "")
+    .replaceAll(/(@n[1-9])|(@[1-9][0-9]*\.)/g, "")
     .includes("@");
-  const defHasInvalidBackRefs = transDef
-    // .replaceAll(/(%[1-9])|(%\[[1-9][0-9]*\])/g, "")
-    // (Let's not implement the /%\[[1-9][0-9]*\]/ syntax yet, if at all.)
-    .replaceAll(/%[1-9]/g, "")
+  const defHasInvalidPlaceholders = transDef
+    .replaceAll(/%[e1-9]/g, "")
     .includes("%");
   if (
     defHasInvalidEscapes || defHasUnescapedNumberSigns ||
     defHasSeveralVBars || defStartsWithVBar || defHasInvalidWhitespace ||
-    defHasInvalidRefs || defHasInvalidBackRefs
+    defHasInvalidRefs || defHasInvalidPlaceholders
   ) {
     return (
       <InvalidEntityTitle entID={entID} isLink={isLink} >
@@ -161,10 +159,12 @@ const EntityTitleFromTransDef = ({
 
 
   // Then parse any links, and split transDef up into parts
-  const refRegEx = /@\w+\./g;
-  const refArr = (transDef.match(refRegEx) ?? []).map(val => val.slice(1, -1));
-  const refOrBackRefOrVBarOrRestRegEx = /(\|)|(@\w+\.)|(%[1-9])|([^@%\|]+)/g;
-  const transDefFullArr = transDef.match(refOrBackRefOrVBarOrRestRegEx);
+  const refRegEx = /@[1-9][0-9]*\./g;
+  const refArr = (transDef.match(refRegEx) ?? ["@."])
+    .map(val => val.slice(1, -1));
+  const transDefComponentsRegEx =
+    /(\|)|(@n[1-9])|(@\w+\.)|(%[e1-9])|([^@%\|]+)/g;
+  const transDefFullArr = transDef.match(transDefComponentsRegEx);
 
   // If !isFull, slice the array to exclude "|" and every element to its right.
   const transDefArr = isFull ? transDefFullArr :
@@ -175,18 +175,25 @@ const EntityTitleFromTransDef = ({
   // is reached, these are EntityID elements, which only shows the entity ID.
   var children = transDefArr.map((val, ind) => {
     if (val.match(refRegEx)) {
-      let n = refArr.indexOF(val) + 1;
+      let n = refArr.indexOf(val.slice(1, -1)) + 1;
       let linkEntID = val.slice(1, -1);
-      return (recLevel >= maxRecLevel) ?
+      return (recLevel <= maxRecLevel) ?
         <EntityTitle key={ind} entID={linkEntID} isLink={isFull}
           recLevel={recLevel + 1} maxRecLevel={maxRecLevel} refNum={n}
         /> :
         <EntityID key={ind} entID={linkEntID} isLink={isFull} refNum={n} />;
     }
-    if (val.match(/%[1-9]/g)) {
-      let n = val[1];
+    if (val.match(/^@n[1-9]$/g)) {
+      let n = val[2];
       let linkEntID = (refArr[n - 1] ?? "@.").slice(1, -1);
-      return <EntityBackRefLink key={ind} entID={linkEntID} refNum={n} />
+      return (
+        <EntityBackRefLink key={ind} entID={linkEntID}
+          refNum={n} isLink={isFull}
+        />
+      );
+    }
+    if (val.match(/^%[e1-9]$/g)) {
+      return <span key={ind} className="template-placeholder">{val}</span>;
     }
     if (val === "|") {
       return <span key={ind} className="spec-separator" ></span>
@@ -226,19 +233,20 @@ const EntityTitleFromTransDef = ({
 const TemplateInstanceEntityTitle = ({
   transDef, entID, isLink, isFull, recLevel, maxRecLevel, refNum
 }) => {
-  const [reqData, setReqData] = useState({});
-  const [results, setResults] = useState({});
-  useQuery(results, setResults, reqData);
+  const [results, setResults] = useState([{}]);
 
   // Parse the ID array and fetch the definition of the template
   // and of the inputs.
   const idArr = transDef.match(/[1-9][0-9]*/g); // RegExp.match() is greedy.
-  setReqData(idArr.map(val => ({
+  const reqData = idArr.map(val => ({
     req: "ent",
     id: val,
-  })));
+  }));
 
   const inputIDArr = idArr.slice(1);
+
+  useQuery(results, setResults, reqData);
+
 
 
   // Before results[0] is fetched, render a placeholder.
@@ -286,7 +294,7 @@ const TemplateInstanceEntityTitle = ({
   // Construct the template instance.
   const transTemplateInstDef = inputIDArr.reduce(
     (acc, val) => acc.replace("%e", "@" + val + "."),
-    transTemplateDef
+    transTemplateDef.replaceAll(/%[1-9]/g, str => "@n" + str[1])
   );
 
   // Return an EntityTitleFromTransDef (isTemplateInstance={true}) with a
@@ -294,7 +302,7 @@ const TemplateInstanceEntityTitle = ({
   return (
     <EntityTitleFromTransDef transDef={transTemplateInstDef} entID={entID}
       isLink={isLink} isFull={isFull}
-      recLevel={recLevel} maxRecLevel={maxRecLevel} refNum={refNum}
+      recLevel={recLevel + 1} maxRecLevel={maxRecLevel} refNum={refNum}
       isTemplateInstance={true} templateID={idArr[0]}
     />
   );
@@ -350,6 +358,7 @@ const InvalidEntityTitle = ({entID, isLink, children}) => {
   if (isLink) {
     return (
       <span className="invalid-title">
+        <span className="text-warning">Invalid entity title: </span>
         <EntityLink entID={entID}>
           {children}
         </EntityLink>
@@ -358,6 +367,7 @@ const InvalidEntityTitle = ({entID, isLink, children}) => {
   } else {
     return (
       <span className="invalid-title">
+        <span className="text-warning">Invalid entity title: </span>
         {children}
       </span>
     );
@@ -365,8 +375,21 @@ const InvalidEntityTitle = ({entID, isLink, children}) => {
 };
 
 
-
-
+const EntityBackRefLink = ({entID, refNum, isLink}) => {
+  if (isLink) {
+    return (
+      <span className={"back-reference ref-num-" + refNum}>
+        (<EntityLink entID={entID}>{refNum}</EntityLink>)
+      </span>
+    );
+  } else {
+    return (
+      <span className={"back-reference ref-num-" + refNum} >
+        ({refNum})
+      </span>
+    );
+  }
+};
 
 
 

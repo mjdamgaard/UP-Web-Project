@@ -8,7 +8,7 @@ import {AccountManagerContext} from "./contexts/AccountContext.js";
 
 import {PagesWithTabs} from "./PagesWithTabs.js";
 import {
-  EntityID, FullEntityTitle, EntityTitle, ContextDisplay
+  EntityID, EntityTitle, ContextDisplay
 } from "./EntityTitles.js";
 import {EntListDisplay} from "./EntListDisplay.js";
 import {RatingElement} from "./Ratings.js";
@@ -55,9 +55,9 @@ export const EntityPage = ({entID, initTab}) => {
       <div className="entity-page">
         <div className="entity-page-header">
           <h2><EntityTitle entID={entID} /></h2>
-          <span className="full-title">
-            Full title: <FullEntityTitle entID={entID} />
-          </span>
+          <div className="full-title">
+            <b>Full title:</b> <EntityTitle entID={entID} isFull />
+          </div>
         </div>
       </div>
     );
@@ -79,11 +79,10 @@ export const EntityPage = ({entID, initTab}) => {
     <div className="entity-page">
       <div className="entity-page-header">
         <h2><EntityTitle entID={entID} isLink /></h2>
-        <span className="full-title">
-          Full title: <FullEntityTitle entID={entID} />
-        </span>
+        <div className="full-title">
+            <b>Full title:</b> <EntityTitle entID={entID} isFull />
+        </div>
         <div><EntityIDDisplay entID={entID} /></div>
-        <div><ContextDisplay entID={entID} /></div>
       </div>
       <PagesWithTabs tabDataArr={tabDataArr} initTab={initTab} />
     </div>
@@ -157,7 +156,7 @@ function getTabDataArrAndDefaultTab(entID, typeID, cxtID) {
 export const EntityIDDisplay = ({entID}) => {
   return (
     <span className="entity-id-display">
-      ID: <EntityID entID={entID}/>
+      <b>ID:</b> <EntityID entID={entID}/>
     </span>
   );
 };

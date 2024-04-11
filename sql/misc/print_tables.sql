@@ -1,16 +1,10 @@
 
-SELECT "Creators:";
-SELECT
-    ent_id AS entID,
-    user_id AS userID
-FROM Private_Creators
-ORDER BY ent_id ASC, user_id ASC;
 
 SELECT "RecentInputs:";
 SELECT
     id AS id,
     user_id AS userID,
-    cat_id AS catID,
+    tag_id AS tagID,
     inst_id AS instID,
     rat_val AS ratVal,
     live_at_time AS liveAtTime
@@ -21,11 +15,11 @@ ORDER BY id ASC;
 SELECT "SemanticInputs:";
 SELECT
     user_id AS userID,
-    cat_id AS catID,
+    tag_id AS tagID,
     rat_val AS ratVal,
     inst_id AS instID
 FROM SemanticInputs
-ORDER BY user_id ASC, cat_id ASC, rat_val DESC;
+ORDER BY user_id ASC, tag_id ASC, rat_val DESC;
 
 
 -- SELECT "UserData:";
@@ -50,8 +44,6 @@ ORDER BY id;
 SELECT "Entities:";
 SELECT
     id AS entID,
-    type_id AS typeID,
-    cxt_id AS cxtID,
-    SUBSTRING(def_str, 1, 80) AS defStr_substring
+    SUBSTRING(def, 1, 80) AS def
 FROM Entities
 ORDER BY id;

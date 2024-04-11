@@ -93,7 +93,7 @@ VALUES
     -- -- Here is an example ('submitted by %u') of a title that we may not want
     -- -- to capitalize.
     ("Submitted by %e|: Is submitted by the user %1", 48),
-    ("URL", 49)
+    ("URL", 49);
     -- ("User %u|: The user/bot %1 of this SDB", 50);
     -- ("%u|: the user/bot %1 of this sdb|s3db", 50);
 
@@ -125,6 +125,7 @@ CALL insertOrFindEntity(1, 0, "Jazz"); -- id: +3
 CALL insertOrFindEntity(1, 0, "Movie"); -- id: +4
 CALL insertOrFindEntity(1, 0, "Year"); -- id: +5
 CALL insertOrFindEntity(1, 0, "Film director"); -- id: +6
+CALL insertOrFindEntity(1, 0, "change me, first!"); -- id: +7
 CALL insertOrFindEntity(1, 0, "2001"); -- id: +8
 CALL insertOrFindEntity(1, 0, "2002"); -- id: +9
 CALL insertOrFindEntity(1, 0, "Person"); -- id: +10
