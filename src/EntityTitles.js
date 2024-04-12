@@ -137,8 +137,10 @@ const EntityTitleFromTransDef = ({
   const defHasUnescapedNumberSigns = transDef.includes("#");
   const defHasSeveralVBars = transDef.replace("|", "").includes("|");
   const defStartsWithVBar = transDef[0] === "|";
-  const defHasInvalidWhitespace = transDef.includes("\n") ||
-    transDef.match(/^\s/g) || transDef.match(/\s$/g);
+  const defHasInvalidWhitespace = (
+    transDef.match(/(^\s)|(\s$)|(\s\|)/g) ||
+    transDef.replaceAll(" ", "").match(/\s/g)
+  );
   const defHasInvalidRefs = transDef
     .replaceAll(/(@n[1-9])|(@[1-9][0-9]*\.)/g, "")
     .includes("@");
@@ -233,17 +235,18 @@ const EntityTitleFromTransDef = ({
 const TemplateInstanceEntityTitle = ({
   transDef, entID, isLink, isFull, recLevel, maxRecLevel, refNum
 }) => {
-  const [results, setResults] = useState([{}]);
 
   // Parse the ID array and fetch the definition of the template
   // and of the inputs.
   const idArr = transDef.match(/[1-9][0-9]*/g); // RegExp.match() is greedy.
+  const inputIDArr = idArr.slice(1);
+
+  const [results, setResults] = useState(idArr.map(val => ({})));
   const reqData = idArr.map(val => ({
     req: "ent",
     id: val,
   }));
 
-  const inputIDArr = idArr.slice(1);
 
   useQuery(results, setResults, reqData);
 

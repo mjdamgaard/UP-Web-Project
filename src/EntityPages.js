@@ -56,7 +56,7 @@ export const EntityPage = ({entID, initTab}) => {
         <div className="entity-page-header">
           <h2><EntityTitle entID={entID} /></h2>
           <div className="full-title">
-            <b>Full title:</b> <EntityTitle entID={entID} isFull />
+            <b>Definition:</b> <EntityTitle entID={entID} isFull />
           </div>
         </div>
       </div>
@@ -80,7 +80,7 @@ export const EntityPage = ({entID, initTab}) => {
       <div className="entity-page-header">
         <h2><EntityTitle entID={entID} isLink /></h2>
         <div className="full-title">
-            <b>Full title:</b> <EntityTitle entID={entID} isFull />
+            <b>Definition:</b> <EntityTitle entID={entID} isFull />
         </div>
         <div><EntityIDDisplay entID={entID} /></div>
       </div>

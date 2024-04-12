@@ -159,7 +159,10 @@ CALL insertOrFindEntity(1, 0, "Mathematics"); -- id: +22
 -- SELECT SLEEP(1);
 
 
-CALL insertOrFindEntity(1, 0, "Subcategory"); -- id: +23
+CALL insertOrFindEntity(1, 0, CONCAT(
+    "Subcategory| of a given tag/type. For instance, 'Action movie' is a ",
+    "subcategory of 'Movie,' and 'Witty' is a subcategory of 'Funny.'"
+)); -- id: +23
 CALL insertOrFindEntity(1, 0, "#40.1023.1"); -- id: +24
 
 CALL insertOrUpdateRating(1, 1024, 1018, CONV("FF00", 16, 10), 1);
@@ -208,7 +211,11 @@ CALL insertOrFindEntity(1, 0, "#40.1027.1019"); -- id: +31
 CALL insertOrUpdateRating(1, 1031, 1004, CONV("FF00", 16, 10), 1);
 
 
-CALL insertOrFindEntity(1, 0, "Supercategory"); -- id: +32
+CALL insertOrFindEntity(1, 0, CONCAT(
+    "Supercategory| of a given tag/type. For instance, 'Movie' is a ",
+    "supercategory of 'Action movie,' and 'Funny' is a supercategory of ",
+    "'Witty.'"
+)); -- id: +32
 
 -- SELECT SLEEP(1);
 
@@ -220,7 +227,9 @@ CALL insertOrFindEntity(1, 0, "Scary| as a movie"); -- id: +35
 CALL insertOrFindEntity(1, 0, "Iconic| as a movie"); -- id: +36
 
 
-CALL insertOrFindEntity(1, 0, "Relevant tag to rate"); -- id: +37
+CALL insertOrFindEntity(1, 0,
+    "Relevant tag| to rate for instances of a given type"
+); -- id: +37
 
 CALL insertOrFindEntity(1, 0, "#40.1037.1004"); -- id: +38
 CALL insertOrUpdateRating(1, 1038, 1033, CONV("F000", 16, 10), 1);
@@ -241,7 +250,9 @@ CALL insertOrFindEntity(1, 0, "#40.1037.1"); -- id: +40
 -- SELECT SLEEP(1);
 
 
-CALL insertOrFindEntity(1, 0, "Relevant property| for instances of this type"); -- id: +41
+CALL insertOrFindEntity(1, 0,
+    "Relevant property| for instances of a given type"
+); -- id: +41
 -- CALL insertOrFindEntity(1, 0, "director"); -- id: +6
 -- CALL insertOrFindEntity(1, 0, "person"); -- id: +10
 CALL insertOrFindEntity(1, 0, "Time"); -- id: +42
