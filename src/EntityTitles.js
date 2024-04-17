@@ -281,7 +281,7 @@ const TemplateInstanceEntityTitle = ({
   // If the number of placeholders does not match the number of inputs,
   // return an InvalidEntityTitle.
   const inputNumberIsWrong = (
-    transTemplateDef.match(/%e/g).length === inputIDArr.length
+    transTemplateDef.match(/%e/g).length !== inputIDArr.length
   );
   if (inputNumberIsWrong) {
     return (
