@@ -7,24 +7,24 @@ import {DBRequestManager} from "./DBRequests.js";
 
 
 
-// EntListGenerator is an abstract class.
-export class EntListGenerator {
+// InstListGenerator is an abstract class.
+export class InstListGenerator {
   constructor() {
-    this.entList = undefined;
+    this.instList = undefined;
     // To be redefined by descendant classes.
   }
 
-  // Returns a string with the class name, e.g. "EntListQuerier".
+  // Returns a string with the class name, e.g. "InstListQuerier".
   getType() {
     // Abstract method.
-    throw "EntListGenerator";
+    throw "InstListGenerator";
   }
 
   // Turns the class instance 
-  become(entListGenerator) {
-    // this.constructor = entListGenerator.constructor;
-    this.prototype = entListGenerator.prototype;
-    for (const [key, value] of Object.entries(entListGenerator)) {
+  become(instListGenerator) {
+    // this.constructor = instListGenerator.constructor;
+    this.prototype = instListGenerator.prototype;
+    for (const [key, value] of Object.entries(instListGenerator)) {
       this[key] = value;
     }
   }
@@ -39,13 +39,13 @@ export class EntListGenerator {
     return ret;
   }
 
-  // generateEntList() queries and combines entLists, then calls
-  // callback(entList).
-  generateEntList(callback)  {
+  // generateInstList() queries and combines instLists, then calls
+  // callback(instList).
+  generateInstList(callback)  {
     // to be redefined by descendant classes.
   }
 
-  // requestMoreElements() adds more elements to the entList and returns true,
+  // requestMoreElements() adds more elements to the instList and returns true,
   // or fails to get more and returns false.
   requestMoreElements() {
     // Abstract method.
@@ -74,13 +74,13 @@ export class EntListGenerator {
 
 
 
-export class EntListQuerier extends EntListGenerator {
+export class InstListQuerier extends InstListGenerator {
   constructor(
     catKey, // : {catID : (num | undef), catSK : ({cxtID, defStr} | undef).
     queryUserID,
     num, ratingLo, ratingHi, // optional.
     isAscending, offset, // optional.
-    entList, replaceExistingSet, // optional.
+    instList, replaceExistingSet, // optional.
   ) {
     super();
     this.catID = catKey.catID;
@@ -96,12 +96,12 @@ export class EntListQuerier extends EntListGenerator {
   }
   
   getType() {
-    return "EntListQuerier";
+    return "InstListQuerier";
   }
 
-  generateEntList(callback) {
-    if (this.entList) {
-      callback(this.entList);
+  generateInstList(callback) {
+    if (this.instList) {
+      callback(this.instList);
       return;
     }
     if (this.catID) {
@@ -118,8 +118,8 @@ export class EntListQuerier extends EntListGenerator {
         if (thisLG.catID) {
           thisLG.queryWithCatID(callback);
         } else {
-          thisLG.entList = [];
-          callback(thisLG.entList);
+          thisLG.instList = [];
+          callback(thisLG.instList);
         }
 
         // Call and delete the catKeyCallback if any.
@@ -143,8 +143,8 @@ export class EntListQuerier extends EntListGenerator {
       a: this.isAscending,
     };
     DBRequestManager.query(this, reqData, function(lg, result) {
-      lg.entList = result;
-      callback(lg.entList);
+      lg.instList = result;
+      callback(lg.instList);
     });
   }
 
@@ -162,51 +162,51 @@ export class EntListQuerier extends EntListGenerator {
   }
 }
 
-// SetCombiner is also an abstract class, as combineEntLists() needs
+// SetCombiner is also an abstract class, as combineInstLists() needs
 // implementing.
-export class EntListCombiner extends EntListGenerator {
+export class InstListCombiner extends InstListGenerator {
   constructor(
     listGeneratorArr,
-    sort, sortAscending, entListArr, isReadyArr, // optional.
+    sort, sortAscending, instListArr, isReadyArr, // optional.
   ) {
     super();
     this.listGeneratorArr = listGeneratorArr ?? [];
-    let entListNum = this.listGeneratorArr.length;
-    this.entListArr = entListArr ?? new Array(entListNum);
-    this.isReadyArr = isReadyArr ?? new Array(entListNum).fill(false);
+    let instListNum = this.listGeneratorArr.length;
+    this.instListArr = instListArr ?? new Array(instListNum);
+    this.isReadyArr = isReadyArr ?? new Array(instListNum).fill(false);
     this.sort = sort ?? 1;
     this.sortAscending = sortAscending ?? 0;
   }
   
   getType() {
     // Abstract method.
-    throw "EntListCombiner";
+    throw "InstListCombiner";
   }
 
-  generateEntList(callback) {
-    if (this.entList) {
-      callback(this.entList);
+  generateInstList(callback) {
+    if (this.instList) {
+      callback(this.instList);
       return;
     }
     let parentLG = this;
     this.listGeneratorArr.forEach((val, ind) => {
-      val.generateEntList(entList => {
-        parentLG.entListArr[ind] = (
-          parentLG.transformEntList(entList, ind) ?? entList
+      val.generateInstList(instList => {
+        parentLG.instListArr[ind] = (
+          parentLG.transformInstList(instList, ind) ?? instList
         );
         parentLG.isReadyArr[ind] = true;
-        parentLG.combineEntListsIfReady(callback);
+        parentLG.combineInstListsIfReady(callback);
       });
     });
   }
 
-  combineEntListsIfReady(callback) {
+  combineInstListsIfReady(callback) {
     let isReady = this.isReadyArr.reduce(
       (acc, val) => acc && val, true
     );
     if (isReady) {
-      let combList = this.combineEntLists();
-      // sort combEntList if this.sort is truthful.
+      let combList = this.combineInstLists();
+      // sort combInstList if this.sort is truthful.
       if (this.sort) {
         if (this.sortAscending) {
           combList = combList.sort((row1, row2) => row1[0] - row2[0]);
@@ -219,12 +219,12 @@ export class EntListCombiner extends EntListGenerator {
     }
   }
 
-  transformEntList(entList, lgIndex) {
+  transformInstList(instList, lgIndex) {
     // Can be redefined by descendant classes.
     // (transformSet() might also store additional data for combineSets().)
   }
 
-  combineEntLists() {
+  combineInstLists() {
     // To be redefined by descendant classes.
   }
 
@@ -247,33 +247,33 @@ export class EntListCombiner extends EntListGenerator {
 // It takes an array of SetGenerators and constructs a combined set by letting
 // each instance in the union of the sets get its maximum rating value from
 // across the sets.
-export class MaxRatingEntListCombiner extends EntListCombiner {
+export class MaxRatingInstListCombiner extends InstListCombiner {
   constructor(
     listGeneratorArr,
-    sort, sortAscending, entListArr, isReadyArr, // optional.
+    sort, sortAscending, instListArr, isReadyArr, // optional.
   ) {
     super(
       listGeneratorArr,
-      sort, sortAscending, entListArr, isReadyArr,
+      sort, sortAscending, instListArr, isReadyArr,
     );
   }
   
   getType() {
-    return "MaxRatingEntListCombiner";
+    return "MaxRatingInstListCombiner";
   }
 
-  combineEntLists() {
-    // entListArr is imploded into concatArr, which is then sorted by instID.
-    let concatEntList = [].concat(...this.entListArr).sort(
+  combineInstLists() {
+    // instListArr is imploded into concatArr, which is then sorted by instID.
+    let concatInstList = [].concat(...this.instListArr).sort(
       (a, b) => a[1] - b[1]
     );
     // construct a return array by recording only the maximal rating for
     // each group of elements with the same instID in the concatArr.
-    let ret = new Array(concatEntList.length);
+    let ret = new Array(concatInstList.length);
     let retLen = 0;
     let currInstID = 0;
     let row, maxRatVal, currRatVal;
-    concatEntList.forEach(function(val, ind) {
+    concatInstList.forEach(function(val, ind) {
       // if val is the first in a group with the same instID, record its
       // ratVal as the maxRatVal and add a copy of val to the return
       // array.
@@ -298,51 +298,51 @@ export class MaxRatingEntListCombiner extends EntListCombiner {
 }
 
 // PrioritySetCombiner takes an array of SetGenerators and constructs a combined
-// entList by letting each instance get the rating of the first entList in which they
-// appeared in the generated entLists of the listGeneratorArr.
-export class PriorityEntListCombiner extends EntListCombiner {
+// instList by letting each instance get the rating of the first instList in which they
+// appeared in the generated instLists of the listGeneratorArr.
+export class PriorityInstListCombiner extends InstListCombiner {
   constructor(
     listGeneratorArr,
-    sort, sortAscending, entListArr, isReadyArr, // optional.
+    sort, sortAscending, instListArr, isReadyArr, // optional.
   ) {
     super(
       listGeneratorArr,
-      sort, sortAscending, entListArr, isReadyArr,
+      sort, sortAscending, instListArr, isReadyArr,
     );
   }
   
   getType() {
-    return "PriorityEntListCombiner";
+    return "PriorityInstListCombiner";
   }
 
   // clone() {
-  //   let ret = new PriorityEntListCombiner();
+  //   let ret = new PriorityInstListCombiner();
   //   for (const [key, value] of Object.entries(this)) {
   //     ret[key] = value;
   //   }
   //   return ret;
   // }
 
-  transformEntList(entList, lgIndex) {
-    return entList.map(function(val) {
+  transformInstList(instList, lgIndex) {
+    return instList.map(function(val) {
       val[2] = lgIndex;
       return val;
     });
   }
 
-  combineEntLists() {
-    // entListArr is imploded into concatArr, which is then sorted by instID.
-    let concatEntList = [].concat(...this.entListArr).sort(
+  combineInstLists() {
+    // instListArr is imploded into concatArr, which is then sorted by instID.
+    let concatInstList = [].concat(...this.instListArr).sort(
       (a, b) => a[1] - b[1]
     );
     // construct a return array by recording only the one rating for each
     // group of elements with the same instID in the concatArr, namely the
-    // one with the smallest entList generator index (val[2]).
-    let ret = new Array(concatEntList.length);
+    // one with the smallest instList generator index (val[2]).
+    let ret = new Array(concatInstList.length);
     let retLen = 0;
     let currInstID = 0;
     let row, minLGIndex, currLGIndex;
-    concatEntList.forEach(function(val, ind) {
+    concatInstList.forEach(function(val, ind) {
       // if val is the first in a group with the same instID, record its
       // lgIndex and add a copy of val to the return array.
       if (val[1] !== currInstID) {
@@ -367,44 +367,44 @@ export class PriorityEntListCombiner extends EntListCombiner {
 
 // WeightedAverageSetCombiner takes an array of SetGenerators and constructs a
 // combined where each instance gets a rating that is a weighted average of all
-// their ratings in each entList (of those in which they appear).
-export class WeightedAverageEntListCombiner extends EntListCombiner {
+// their ratings in each instList (of those in which they appear).
+export class WeightedAverageInstListCombiner extends InstListCombiner {
   constructor(
     listGeneratorArr,
     weightArr,
-    sort, sortAscending, entListArr, isReadyArr, // optional.
+    sort, sortAscending, instListArr, isReadyArr, // optional.
   ) {
     super(
       listGeneratorArr,
-      sort, sortAscending, entListArr, isReadyArr,
+      sort, sortAscending, instListArr, isReadyArr,
     );
     this.weightArr = weightArr;
   }
   
   getType() {
-    return "WeightedAverageEntListCombiner";
+    return "WeightedAverageInstListCombiner";
   }
 
-  transformEntList(entList, lgIndex) {
+  transformInstList(instList, lgIndex) {
     let weight = this.weightArr[lgIndex];
-    return entList.map(function(val) {
+    return instList.map(function(val) {
       val[2] = parseFloat(weight);
       val[0] = parseInt(val[0]);
       return val;
     });
   }
 
-  combineEntLists() {
-    // entListArr is imploded into concatArr, which is then sorted by instID.
-    let concatEntList = [].concat(...this.entListArr).sort(
+  combineInstLists() {
+    // instListArr is imploded into concatArr, which is then sorted by instID.
+    let concatInstList = [].concat(...this.instListArr).sort(
       (a, b) => a[1] - b[1]
     );
     // construct a return array by ...
-    let ret = new Array(concatEntList.length);
+    let ret = new Array(concatInstList.length);
     let retLen = 0;
     let currInstID = 0;
     let row, accWeight, currWeight, newWeight;
-    concatEntList.forEach(val => {
+    concatInstList.forEach(val => {
       // if val is the first in a group with the same instID, write its
       // weight (val[2]) to the accumulated weight (accWeight) and add a
       // copy of val to the return array.
@@ -430,17 +430,17 @@ export class WeightedAverageEntListCombiner extends EntListCombiner {
 
 
 
-export class SimpleEntListGenerator extends PriorityEntListCombiner {
+export class SimpleInstListGenerator extends PriorityInstListCombiner {
   constructor(
     catKey,
     accountManager,
     num, ratingLo, ratingHi, // optional.
     isAscending, offset, // optional.
-    sort, sortAscending, entListArr, isReadyArr, // optional.
+    sort, sortAscending, instListArr, isReadyArr, // optional.
   ) {
     let listGeneratorArr = accountManager.queryUserPriorityArr
       .filter(x => x)
-      .map(id => new EntListQuerier(
+      .map(id => new InstListQuerier(
         catKey,
         id,
         num, ratingLo, ratingHi,
@@ -448,12 +448,12 @@ export class SimpleEntListGenerator extends PriorityEntListCombiner {
       ));
     super(
       listGeneratorArr,
-      sort, sortAscending, entListArr, isReadyArr, // optional.
+      sort, sortAscending, instListArr, isReadyArr, // optional.
     );
   }
   
   getType() {
-    return "SimpleEntListGenerator";
+    return "SimpleInstListGenerator";
   }
 
   // getCatKey(callback) waits until the catID is queried for, then calls

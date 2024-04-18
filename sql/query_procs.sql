@@ -1,7 +1,8 @@
 
 SELECT "Query procedures";
 
-DROP PROCEDURE selectRatedList;
+DROP PROCEDURE selectInstanceList;
+DROP PROCEDURE selectInstanceListSecKey;
 DROP PROCEDURE selectRating;
 
 DROP PROCEDURE selectEntity;
@@ -20,7 +21,7 @@ DROP PROCEDURE selectBotData;
 
 
 DELIMITER //
-CREATE PROCEDURE selectRatedList (
+CREATE PROCEDURE selectInstanceList (
     IN userID BIGINT UNSIGNED,
     IN tagID BIGINT UNSIGNED,
     IN ratingRangeLo SMALLINT UNSIGNED,
@@ -49,6 +50,44 @@ BEGIN
 END //
 DELIMITER ;
 
+
+DELIMITER //
+CREATE PROCEDURE selectInstanceListSecKey (
+    IN userID BIGINT UNSIGNED,
+    IN tagDef VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN ratingRangeLo SMALLINT UNSIGNED,
+    IN ratingRangeHi SMALLINT UNSIGNED,
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED,
+    IN isAscOrder BOOL
+)
+BEGIN
+    DECLARE tagID BIGINT UNSIGNED;
+    
+    SELECT id INTO tagID
+    FROM Entities
+    WHERE (
+        def = tagDef
+    );
+
+    SELECT
+        rat_val AS ratVal,
+        inst_id AS instID
+    FROM SemanticInputs
+    WHERE (
+        user_id = userID AND
+        tag_id = tagID AND
+        (ratingRangeLo = 0 OR rat_val >= ratingRangeLo) AND
+        (ratingRangeHi = 0 OR rat_val <= ratingRangeHi)
+    )
+    ORDER BY
+        CASE WHEN isAscOrder THEN rat_val END ASC,
+        CASE WHEN NOT isAscOrder THEN rat_val END DESC,
+        CASE WHEN isAscOrder THEN inst_id END ASC,
+        CASE WHEN NOT isAscOrder THEN inst_id END DESC
+    LIMIT numOffset, maxNum;
+END //
+DELIMITER ;
 
 
 DELIMITER //

@@ -53,7 +53,7 @@ $typeArr = "";
 switch ($reqType) {
     case "list":
         header("Cache-Control: max-age=3");
-        $sql = "CALL selectRatedList (?, ?, ?, ?, ?, ?, ?)";
+        $sql = "CALL selectInstanceList (?, ?, ?, ?, ?, ?, ?)";
         $paramNameArr = array(
             "u", "t",
             "rl", "rh",
@@ -68,6 +68,23 @@ switch ($reqType) {
         );
         // output: [[ratVal, entDefID], ...].
         break;
+        case "listSK":
+            header("Cache-Control: max-age=3");
+            $sql = "CALL selectInstanceListSecKey (?, ?, ?, ?, ?, ?, ?)";
+            $paramNameArr = array(
+                "u", "t",
+                "rl", "rh",
+                "n", "o",
+                "a"
+            );
+            $typeArr = array(
+                "id", "str",
+                "rat", "rat",
+                "uint", "uint",
+                "tint"
+            );
+            // output: [[ratVal, entDefID], ...].
+            break;
     case "rat":
         header("Cache-Control: max-age=3");
         $sql = "CALL selectRating (?, ?, ?)";

@@ -11,11 +11,11 @@ import {PagesWithTabs} from "./PagesWithTabs.js";
 import {
   EntityID, FullEntityTitle, EntityTitle, ContextDisplay
 } from "./EntityTitles.js";
-import {EntListDisplay} from "./EntListDisplay.js";
+import {InstListDisplay} from "./InstListDisplay.js";
 
 import {
-  SimpleEntListGenerator, MaxRatingEntListCombiner
-} from "./EntListGenerator.js";
+  SimpleInstListGenerator, MaxRatingInstListCombiner
+} from "./InstListGenerator.js";
 
 
 
@@ -29,19 +29,19 @@ export const ListGeneratorPage = ({lg}) => {
 
   var headerContent;
   switch (lg.getType()) {
-    case "EntListQuerier":
+    case "InstListQuerier":
       headerContent = "atomic list";
       break;
-    case "SimpleEntListGenerator":
+    case "SimpleInstListGenerator":
       headerContent = "simple list";
       break;
-    case "MaxRatingEntListCombiner":
+    case "MaxRatingInstListCombiner":
       headerContent = "max rating list";
       break;
-    case "PriorityEntListCombiner":
+    case "PriorityInstListCombiner":
       headerContent = <PriorityLGHeaderContent lg={lg}/>;
       break;
-    case "WeightedAverageEntListCombiner":
+    case "WeightedAverageInstListCombiner":
       headerContent = "weighted average list";
       break;
   }
@@ -51,7 +51,7 @@ export const ListGeneratorPage = ({lg}) => {
       <div className="list-gen-page-header">
         {headerContent}
       </div>
-      <EntListDisplay listGenerator={lg} />
+      <InstListDisplay listGenerator={lg} />
     </div>
   );
 };
@@ -73,19 +73,19 @@ export const ListGeneratorLink = ({lg}) => {
 
   var linkContent;
   switch (lg.getType()) {
-    case "EntListQuerier":
+    case "InstListQuerier":
       linkContent = "atomic list";
       break;
-    case "SimpleEntListGenerator":
+    case "SimpleInstListGenerator":
       linkContent = "simple list";
       break;
-    case "MaxRatingEntListCombiner":
+    case "MaxRatingInstListCombiner":
       linkContent = "max rating list";
       break;
-    case "PriorityEntListCombiner":
+    case "PriorityInstListCombiner":
       linkContent = "priority list";
       break;
-    case "WeightedAverageEntListCombiner":
+    case "WeightedAverageInstListCombiner":
       linkContent = "weighted average list";
       break;
   }

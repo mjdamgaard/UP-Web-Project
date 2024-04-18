@@ -5,12 +5,12 @@ import {useQuery} from "./DBRequests.js";
 import {EntityTitle, FullEntityTitle} from "./EntityTitles.js";
 import {DropdownBox, DropdownMenu} from "./DropdownBox.js";
 import {EntityIDDisplay} from "./EntityPages.js";
-// import {} from "./EntListDisplay.js";
+// import {} from "./InstListDisplay.js";
 import {RatingDisplay} from "./Ratings.js";
-import {EntListDisplay} from "./EntListDisplay.js";
+import {InstListDisplay} from "./InstListDisplay.js";
 import {
-  SimpleEntListGenerator, MaxRatingEntListCombiner
-} from "./EntListGenerator.js";
+  SimpleInstListGenerator, MaxRatingInstListCombiner
+} from "./InstListGenerator.js";
 
 // const EntityTitle = () => <template></template>;
 const TextDataDisplayElement = () => <template></template>;
@@ -169,19 +169,19 @@ export const SemanticPropertyFetched = ({entID, ownerEntID, defStr}) => {
       }
   }  
   const [lg, ] = useState(
-    new SimpleEntListGenerator(
+    new SimpleInstListGenerator(
       {catSK: {cxtID: 21, defStr: "#" + entID + "|#" + ownerEntID}},
       accountManager,
       // null, // num.
-      initialNum, //TODO: Implement button to increase EntListContainer, and
-      // change so that initialNum is handed to the EntListContainer instead.
+      initialNum, //TODO: Implement button to increase InstListContainer, and
+      // change so that initialNum is handed to the InstListContainer instead.
       36864, // ratingLo (= CONV("9000", 16, 10)).
     )
   );
 
   return (
     <div>
-      <EntListDisplay
+      <InstListDisplay
         listGenerator={lg}
         ElemComponent={elemContent}
       />

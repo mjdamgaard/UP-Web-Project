@@ -20,7 +20,7 @@ if (typeof(Storage) === "undefined") {
 }
 
 // Let me use a static class instead of a context, why not? (And it means that
-// I can import it for the SimpleEntListGenerator class.) ... Hm, or maybe this
+// I can import it for the SimpleInstListGenerator class.) ... Hm, or maybe this
 // is actually more complicated.. Let me just useContext for now, then..
 
 
