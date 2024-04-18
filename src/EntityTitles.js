@@ -11,13 +11,12 @@ const SpecialRefEntityTitle = () => <template></template>;
 
 
 export const EntityTitle = ({
-  entID, isLink, isFull, recLevel, maxRecLevel, refNum
+  entID, isLink, isFull, recLevel, maxRecLevel
 }) => {
   isFull ??= false;
   isLink ??= !isFull;
   recLevel ??= 0;
   maxRecLevel ??= 6;
-  refNum ??= 0;
 
   const [results, setResults] = useState([]);
   useQuery(results, setResults, {
@@ -54,7 +53,7 @@ export const EntityTitle = ({
     return (
       <ConcatenatedEntityTitle transDef={transDef} entID={entID}
         isLink={isLink} isFull={isFull}
-        recLevel={recLevel} maxRecLevel={maxRecLevel} refNum={refNum}
+        recLevel={recLevel} maxRecLevel={maxRecLevel}
       />
     );
   }
@@ -65,7 +64,7 @@ export const EntityTitle = ({
     return (
       <TemplateInstanceEntityTitle transDef={transDef} entID={entID}
         isLink={isLink} isFull={isFull}
-        recLevel={recLevel} maxRecLevel={maxRecLevel} refNum={refNum}
+        recLevel={recLevel} maxRecLevel={maxRecLevel}
       />
     );
   }
@@ -76,7 +75,7 @@ export const EntityTitle = ({
     return (
       <SpecialRefEntityTitle transDef={transDef} entID={entID}
         isLink={isLink} isFull={isFull}
-        recLevel={recLevel} maxRecLevel={maxRecLevel} refNum={refNum}
+        recLevel={recLevel} maxRecLevel={maxRecLevel}
       />
     );
   }
@@ -86,7 +85,7 @@ export const EntityTitle = ({
   return (
     <EntityTitleFromTransDef transDef={transDef} entID={entID}
       isLink={isLink} isFull={isFull}
-      recLevel={recLevel} maxRecLevel={maxRecLevel} refNum={refNum}
+      recLevel={recLevel} maxRecLevel={maxRecLevel}
     />
   );
 }
@@ -121,7 +120,7 @@ function getWYSIWYGDef(transDef) {
 
 
 const EntityTitleFromTransDef = ({
-  transDef, entID, isLink, isFull, recLevel, maxRecLevel, refNum,
+  transDef, entID, isLink, isFull, recLevel, maxRecLevel,
   isTemplateInstance, templateID
 }) => {
   // First we make some checks that the def is well-formed.
@@ -142,7 +141,7 @@ const EntityTitleFromTransDef = ({
     transDef.replaceAll(" ", "").match(/\s/g)
   );
   const defHasInvalidRefs = transDef
-    .replaceAll(/(@n[1-9])|(@[1-9][0-9]*\.)/g, "")
+    .replaceAll(/@[1-9][0-9]*\./g, "")
     .includes("@");
   const defHasInvalidPlaceholders = transDef
     .replaceAll(/%[e1-9]/g, "")
@@ -165,7 +164,7 @@ const EntityTitleFromTransDef = ({
   const refArr = (transDef.match(refRegEx) ?? ["@."])
     .map(val => val.slice(1, -1));
   const transDefComponentsRegEx =
-    /(\|)|(@n[1-9])|(@\w+\.)|(%[e1-9])|([^@%\|]+)/g;
+    /(\|)|(@\w+\.)|(%[e1-9])|([^@%\|]+)/g;
   const transDefFullArr = transDef.match(transDefComponentsRegEx);
 
   // If !isFull, slice the array to exclude "|" and every element to its right.
@@ -177,22 +176,12 @@ const EntityTitleFromTransDef = ({
   // is reached, these are EntityID elements, which only shows the entity ID.
   var children = transDefArr.map((val, ind) => {
     if (val.match(refRegEx)) {
-      let n = refArr.indexOf(val.slice(1, -1)) + 1;
       let linkEntID = val.slice(1, -1);
       return (recLevel <= maxRecLevel) ?
         <EntityTitle key={ind} entID={linkEntID} isLink={isFull}
-          recLevel={recLevel + 1} maxRecLevel={maxRecLevel} refNum={n}
+          recLevel={recLevel + 1} maxRecLevel={maxRecLevel}
         /> :
-        <EntityID key={ind} entID={linkEntID} isLink={isFull} refNum={n} />;
-    }
-    if (val.match(/^@n[1-9]$/g)) {
-      let n = val[2];
-      let linkEntID = (refArr[n - 1] ?? "@.").slice(1, -1);
-      return (
-        <EntityBackRefLink key={ind} entID={linkEntID}
-          refNum={n} isLink={isFull}
-        />
-      );
+        <EntityID key={ind} entID={linkEntID} isLink={isFull} />;
     }
     if (val.match(/^%[e1-9]$/g)) {
       return <span key={ind} className="template-placeholder">{val}</span>;
@@ -215,7 +204,7 @@ const EntityTitleFromTransDef = ({
   // Return a link if isLink, or else just return a span of these children.
   if (isLink) {
     return (
-      <span className={"entity-title ref-num-" + refNum} >
+      <span className="entity-title" >
         <EntityLink entID={entID}>
           {children}
         </EntityLink>
@@ -223,7 +212,7 @@ const EntityTitleFromTransDef = ({
     );
   } else {
     return (
-      <span className={"entity-title ref-num-" + refNum} >
+      <span className="entity-title" >
         {children}
       </span>
     );
@@ -233,7 +222,7 @@ const EntityTitleFromTransDef = ({
 
 
 const TemplateInstanceEntityTitle = ({
-  transDef, entID, isLink, isFull, recLevel, maxRecLevel, refNum
+  transDef, entID, isLink, isFull, recLevel, maxRecLevel
 }) => {
 
   // Parse the ID array and fetch the definition of the template
@@ -297,7 +286,10 @@ const TemplateInstanceEntityTitle = ({
   // Construct the template instance.
   const transTemplateInstDef = inputIDArr.reduce(
     (acc, val) => acc.replace("%e", "@" + val + "."),
-    transTemplateDef.replaceAll(/%[1-9]/g, str => "@n" + str[1])
+    transTemplateDef.replaceAll(
+      /%[1-9]/g,
+      str => ("@" + inputIDArr[parseInt(str[1]) - 1] + ".")
+    )
   );
 
   // Return an EntityTitleFromTransDef (isTemplateInstance={true}) with a
@@ -305,7 +297,7 @@ const TemplateInstanceEntityTitle = ({
   return (
     <EntityTitleFromTransDef transDef={transTemplateInstDef} entID={entID}
       isLink={isLink} isFull={isFull}
-      recLevel={recLevel + 1} maxRecLevel={maxRecLevel} refNum={refNum}
+      recLevel={recLevel + 1} maxRecLevel={maxRecLevel}
       isTemplateInstance={true} templateID={idArr[0]}
     />
   );
@@ -378,21 +370,6 @@ const InvalidEntityTitle = ({entID, isLink, children}) => {
 };
 
 
-const EntityBackRefLink = ({entID, refNum, isLink}) => {
-  if (isLink) {
-    return (
-      <span className={"back-reference ref-num-" + refNum}>
-        (<EntityLink entID={entID}>{refNum}</EntityLink>)
-      </span>
-    );
-  } else {
-    return (
-      <span className={"back-reference ref-num-" + refNum} >
-        ({refNum})
-      </span>
-    );
-  }
-};
 
 
 
