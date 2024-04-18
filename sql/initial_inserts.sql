@@ -26,21 +26,46 @@ DELETE FROM Private_EMails;
 -- Some fundamental types:
 INSERT INTO Entities (def, id)
 VALUES
-    ("Entity|. This is the all-inclusive type of 'all things.'", 1),
-        -- reserved letter: 'e'.
-    ("Type", 2),
-    ("Tag", 3),
-    ("Template| used to define entities", 4),
-    ("User| of this SDB", 5), -- reserved letter: 'u'.
-    ("Bot| native to this SDB", 6), -- reserved letter: 'u'.
-    ("Text| stored by this SDB", 7), -- reserved letter: 't'.
-    ("Binary| file stored by this SDB", 8), -- reserved letter: 'b'.
-    ("Index| of entity definitions, stored by this SDB", 9),
-        -- reserved letter: 'i'.
-    ("User/bot| of this SDB", 10),
     (CONCAT(
-        "Property|: ",
-        "A singular noun used for creating relational tags of the form ",
+        "1,2|tag|This is the fundamental type of 'tags,' which are ",
+        "used to create statements in the SDB. Each ratable statement ",
+        "thus consists of a 'tag' and an 'instance,' saying that the given ",
+        "tag fits the given instance."
+    ), 1),
+    (CONCAT(
+        "1,2|type|This is the fundamental type of 'types,' which are used ",
+        "to specify entities. For instance, this entity has @1. and @2. ",
+        "(itself) as its declared types. See the type declarations of other ",
+        "entities for more examples."
+    ), 2),
+    ("1,2|entity|This is the all-inclusive 'type of all things.'", 3),
+        -- reserved letter: 'e'.
+    (CONCAT(
+        "1,2|template|This is the type of 'templates,' which are used to ",
+        "define entities. ",
+        "They work much like 'format strings' known from many ",
+        "programming languages, substituting a list of inputs with ",
+        "all the occurrences of '\%e'."
+    ), 4),
+    ("1,2|user|This is the type of all the users of the SDB.", 5),
+        -- reserved letter: 'u'.
+    (CONCAT(
+        "1,2|bot|This is the type of all the bots native to the SDB. ",
+        "These are generally used for aggregating user ratings. ",
+        "An aggregation bot might thus for instance calculate the mean ",
+        "of all user ratings, and rate all entities by that."
+    ), 6),-- reserved letter: 'u'.
+    ("1,2|text|This is the type of all texts (data) stored by the SDB.", 7),
+        -- reserved letter: 't'.
+    ("1,2|binary|This is the type of all binary data stored by the SDB.", 8),
+        -- reserved letter: 'b'.
+-- TODO: Continue:
+    ("1,2|index|... of entity definitions, stored by this SDB", 9),
+        -- reserved letter: 'i'.
+    ("1,2|user/bot|... of this SDB", 10),
+    (CONCAT(
+        "1,2|property|",
+        "Type of singular nouns used for creating relational tags of the form ",
         "'<property> of <entity>,' for instance 'actor of <movie>,' where ",
         "this tag would then apply to all actors in the given movie ",
         "(typically rated according to notability)."
@@ -60,7 +85,7 @@ INSERT INTO Entities (def, id)
 VALUES
     -- Some fundamental templates, plus some more types, such as 'property.'
     (CONCAT(
-        "%e of %e|: An instance of the @11. %1 of the entity %2. ",
+        "4|2|%e of %e|Instance of the @11. %1 of the entity %2. ",
         "See the full definition of %1 for further specification."
     ), 40),
     (CONCAT(
@@ -399,6 +424,6 @@ ALTER TABLE Entities AUTO_INCREMENT=3000;
 
 SELECT "Calling publicizeRecentInputs() can take a while (about 1 minute):";
 -- (It takes roughly 30 seconds on my laptop.)
-CALL publicizeRecentInputs ();
+-- CALL publicizeRecentInputs ();
 
 -- SET FOREIGN_KEY_CHECKS = 1;

@@ -288,7 +288,7 @@ const TemplateInstanceEntityTitle = ({
     (acc, val) => acc.replace("%e", "@" + val + "."),
     transTemplateDef.replaceAll(
       /%[1-9]/g,
-      str => ("@" + inputIDArr[parseInt(str[1]) - 1] + ".")
+      str => ("@" + (inputIDArr[parseInt(str[1]) - 1] ?? "") + ".")
     )
   );
 
