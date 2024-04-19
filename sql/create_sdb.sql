@@ -10,9 +10,10 @@ DROP TABLE IndexedEntities;
 DROP TABLE Entities;
 
 /* Data */
-DROP TABLE UsersAndBots;
-DROP TABLE Texts;
-DROP TABLE Binaries;
+DROP TABLE SemanticEntityData;
+DROP TABLE UsersAndBotData;
+DROP TABLE TextData;
+DROP TABLE BinaryData;
 
 /* Ancillary data for aggregation bots */
 DROP TABLE BotData1e2d;
@@ -32,27 +33,10 @@ DROP TABLE Private_EMails;
  * is that all such statements come with a numerical value which represents the
  * degree to which the user deems that the statement is correct (like when
  * answering a survey).
- * The statements in this system are always formed from a category entity and a
+ * The statements in this system are always formed from a tag entity and an
  * instance entity. The user thus states that the latter is an instance of the
- * given category. The rating then tells how important/useful the user deems
- * the instance to be in that category.
- * Note that all predicates can be reformulated as categories. For instance,
- * the predicate "is a scary movie" can be reformulated as the category "Scary
- * movies."
+ * given tag. The rating then tells how well the tag first the instance.
  **/
-
--- TODO: Correct the above paragraph and explain the new entities, maybe by
--- fixing:
-    -- Note that these types are not
-    -- inherent to the instances themselves, as these are generally overloaded
-    -- with several types. For example, the entity 'WWII' might be
-    -- interpreted as referring to the war itself, or as a subject of history.
-    -- And if we want to categorize 'WWII' as e.g. 'good,' it is important to
-    -- specify whether we mean as a war or as a history subject. If we mean
-    -- the latter, we could then let this ent_type_id be the id of an entity
-    -- called 'subject' (where 'WWII' would then be the inst_id, and 'good'
-    -- would be the cat_id). 
-
 
 CREATE TABLE SemanticInputs (
     -- User (or bot) who states the statement.
@@ -60,6 +44,11 @@ CREATE TABLE SemanticInputs (
 
     -- Tag of the statement.
     tag_id BIGINT UNSIGNED NOT NULL,
+
+    -- -- The fundamental type (one of four) of the instances. This character,
+    -- -- which can be either 't', 'b', 'u', or 's', forms the full key of
+    -- -- the instance entities when combined with the inst_id's.
+    -- type_char CHAR NOT NULL,
 
     -- Rating value of how well the tag fits the entity. The first byte
     -- of the SMALLINT is interpreted as a number between 0 and 10, where 0
@@ -69,16 +58,10 @@ CREATE TABLE SemanticInputs (
     -- although this won't be a thing until some future implementation.
     rat_val SMALLINT UNSIGNED NOT NULL,
 
-    -- The definition of the entity being tagged. Note that the entity is
-    -- fully defined by its type and its definition combined.
-    -- An 'entity' is thus a tuple of two entity IDs, (typeID, strID).
-    -- When we look up the entities that these
-    -- IDs point to, we might get e.g. ('subject of history', 'WWII').
-    -- Now you might think that 'WWII' is a good subject, and thus give this
-    -- entity the tag 'good' with a high rating attached. But if we then
-    -- consider the entity ('war', 'WWII'), you might not necessarily think
-    -- that WWII is good as a war. This is why the type is important when
-    -- tagging something, as it provides necessary context for the statement. 
+    -- The so-called instance of the tag, or rather the potential instance:
+    -- How well the instance fits the tag is thus determined by the rating,
+    -- which might also be below neutral, meaning that the instance does not
+    -- fit the tag.
     inst_id BIGINT UNSIGNED NOT NULL,
 
     -- Resulting semantic input: "User #<user_id> states that entity 
@@ -168,63 +151,83 @@ CREATE TABLE Entities (
     -- Entity ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- Entity definition.
-    def VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    -- Fundamental entity type. (This can be either 's', 'u', 't', or 'b'.)
+    type_char CHAR NOT NULL,
 
-    UNIQUE INDEX (def)
+    -- Entity definition.
+    data_key BIGINT UNSIGNED NOT NULL
 );
 
 
+/* Semantic entities */
+
+CREATE TABLE SemanticEntityData (
+    -- Semantic entity data key (private).
+    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    -- ID of the text entity holding the original property document (JSON)
+    -- providing the initial definition of the entity.
+    -- Note that that this the foreign key of the Entities table, not the
+    -- TextData table.
+    text_id BIGINT UNSIGNED NOT NULL
+
+    -- def VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+
+    -- UNIQUE INDEX (text_id)
+);
 
 
 -- TODO: Add TINYINT to define whether a native bot or not, and add a nullable
 -- bot description TEXT.
 
-CREATE TABLE UsersAndBots (
-    -- User ID.
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE UsersAndBotData (
+    -- User data key (private).
+    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     username VARCHAR(50) UNIQUE NOT NULL,
     -- TODO: Consider adding more restrictions.
 
-    public_keys_for_authentication TEXT
+    public_keys_for_authentication TEXT,
     -- (In order for third parties to be able to copy the database and then
     -- be able to have users log on, without the need to exchange passwords
     -- between databases.) (This could also be other data than encryption keys,
     -- and in principle it could even just be some ID to use for authenticating
     -- the user via a third party.)
 
+    bot_description TEXT
 );
 
-INSERT INTO UsersAndBots (username, id)
+INSERT INTO UsersAndBotData (username, id)
 VALUES ("initial_user", 1);
 
 
--- CREATE TABLE AggregationBots (
---     -- User ID.
---     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
---     bot_name VARCHAR(50) UNIQUE NOT NULL,
---     -- TODO: Consider adding more restrictions.
-
---     public_keys_for_authentication TEXT
--- );
 
 
-CREATE TABLE Texts (
-    /* Text ID */
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE TextData (
+    -- Text data key (private).
+    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    /* Data */
-    txt TEXT NOT NULL
+    -- Data hash. (We use SHA2 rather than MD5 to allow ourselves to simply
+    -- assume that there won't be any collisions.)
+    data_hash CHAR(224) DEFAULT SHA2(txt, 224),
+
+    -- Data.
+    txt TEXT NOT NULL,
+
+    UNIQUE INDEX (data_hash, data_key)
 );
 
-CREATE TABLE Binaries (
-    /* Binary string ID */
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE BinaryData (
+    -- Binary string/file (BLOB) data key (private).
+    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    /* Data */
-    bin LONGBLOB NOT NULL
+    -- Data hash.
+    data_hash CHAR(224) DEFAULT SHA2(bin, 224),
+
+    -- Data.
+    bin LONGBLOB NOT NULL,
+
+    UNIQUE INDEX (data_hash, data_key)
 );
 
 
