@@ -10,7 +10,8 @@ DROP TABLE IndexedEntities;
 DROP TABLE Entities;
 
 /* Data */
-DROP TABLE StandardEntityData;
+DROP TABLE DefinedEntityData;
+DROP TABLE SimpleEntityData;
 DROP TABLE FunctionalEntityData;
 DROP TABLE TextData;
 DROP TABLE BinaryData;
@@ -153,8 +154,8 @@ CREATE TABLE Entities (
     -- Entity ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- Fundamental entity type. (This can be either 's', 'f', 'u', 't', or
-    -- 'b'.)
+    -- Entity meta type. (This can be either 'd', 's', 'f', 't', 'b', 'u',
+    -- or 'a'.)
     meta_type CHAR NOT NULL,
 
     -- Entity definition.
@@ -165,28 +166,35 @@ CREATE TABLE Entities (
 
 
 
-/* Standard (or 'semantic') entities */
+/* Property-defined (or simply 'defined') entities */
 
-CREATE TABLE StandardEntityData (
+CREATE TABLE DefinedEntityData (
     -- Standard entity data key (private).
     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- Short title: a potentially shortened (or full) title of the entity.
-    sh_title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    -- Title. A potentially shortened (or full) title of the entity.
+    title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
-    -- A string listing the IDs of some defining types of the entity.
-    type_list VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    -- -- A string listing the IDs of some defining types of the entity.
+    -- type_list VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL
 
-    -- ID of the text entity holding the original property document (JSON)
-    -- providing the initial definition of the entity. The property document
-    -- ('prop doc' or simply 'doc' for short) is a JSON text listing all the
-    -- other defining properties of the entity, other than than short title
-    -- and the types.
-    -- Note that that this the foreign key of the Entities table, not the
-    -- TextData table.
-    doc_id BIGINT UNSIGNED NOT NULL,
+    -- A property document (JSON) providing the initial definition of the
+    -- entity. The property document is a JSON text listing all the
+    -- defining properties of the entity, other than than the title.
+    prop_doc TEXT NOT NULL
+);
 
-    UNIQUE INDEX (sh_title, type_list, doc_id)
+
+/* Simply-defined (or simply 'simple') entities */
+
+CREATE TABLE SimpleEntityData (
+    -- Standard entity data key (private).
+    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    -- Title. A potentially shortened (or full) title of the entity.
+    title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+
+    UNIQUE INDEX (title)
 );
 
 
@@ -214,27 +222,27 @@ CREATE TABLE TextData (
     -- Text data key (private).
     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- -- Data hash. (We use SHA2 rather than MD5 to allow ourselves to simply
-    -- -- assume that there won't be any collisions.)
-    -- data_hash CHAR(224) DEFAULT (SHA2(txt, 224)),
+    -- Data hash. (We use SHA2 rather than MD5 to allow ourselves to simply
+    -- assume that there won't be any collisions.)
+    data_hash CHAR(224) NOT NULL DEFAULT (SHA2(txt, 224)),
 
     -- Data.
-    txt TEXT NOT NULL
+    txt TEXT,
 
-    -- UNIQUE INDEX (data_hash, data_key)
+    UNIQUE INDEX (data_hash, data_key)
 );
 
 CREATE TABLE BinaryData (
     -- Binary string/file (BLOB) data key (private).
     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- -- Data hash.
-    -- data_hash CHAR(224) DEFAULT (SHA2(bin, 224)),
+    -- Data hash.
+    data_hash CHAR(224) NOT NULL DEFAULT (SHA2(bin, 224)),
 
     -- Data.
-    bin LONGBLOB NOT NULL
+    bin LONGBLOB,
 
-    -- UNIQUE INDEX (data_hash, data_key)
+    UNIQUE INDEX (data_hash, data_key)
 );
 
 
@@ -259,13 +267,13 @@ CREATE TABLE UserData (
 );
 
 
+/* Aggregation bot (or simply 'bot') entities */
 
 CREATE TABLE BotData (
-    -- User data key (private).
+    -- Aggregation bot data key (private).
     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     bot_name VARCHAR(50) NOT NULL,
-    -- TODO: Consider adding more restrictions.
 
     bot_description TEXT
 );

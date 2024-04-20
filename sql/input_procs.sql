@@ -4,10 +4,11 @@ SELECT "Input procedures";
 DROP PROCEDURE insertOrUpdateRating;
 DROP PROCEDURE private_insertOrUpdateRatingAndRunBots;
 
-DROP PROCEDURE insertOrFindStdEntity;
+DROP PROCEDURE insertOrFindDefEntity;
+DROP PROCEDURE insertOrFindSimEntity;
 DROP PROCEDURE insertOrFindFunEntity;
-DROP PROCEDURE insertTextEntity;
-DROP PROCEDURE insertBinaryEntity;
+DROP PROCEDURE insertOrFindTextEntity;
+DROP PROCEDURE insertOrFindBinaryEntity;
 
 
 
@@ -171,19 +172,45 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE insertOrFindStdEntity (
+CREATE PROCEDURE insertOrFindDefEntity (
     IN userID BIGINT UNSIGNED,
     IN recordCreator BOOL,
-    IN shTitle VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-    IN types VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-    IN docID BIGINT UNSIGNED
+    IN titleStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN propDoc TEXT
+)
+BEGIN
+    DECLARE outID, dataKey BIGINT UNSIGNED;
+
+    INSERT INTO DefinedEntityData (title, doc_id)
+    VALUES (titleStr, propDoc);
+    SELECT LAST_INSERT_ID() INTO dataKey;
+    INSERT INTO Entities (meta_type, data_key)
+    VALUES ('d', dataKey);
+    SELECT LAST_INSERT_ID() INTO outID;
+    -- If recordCreator, call a bot to rate the user as the creator of
+    -- the new entity.
+    IF (recordCreator) THEN
+        CALL creatorRaterBot (outID, userID);
+    END IF;
+
+    SELECT outID, 0 AS exitCode;
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertOrFindSimEntity (
+    IN userID BIGINT UNSIGNED,
+    IN recordCreator BOOL,
+    IN titleStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
 BEGIN
     DECLARE outID, dataKey BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
 
-    INSERT IGNORE INTO StandardEntityData (sh_title, types, doc_id)
-    VALUES (shTitle, types, docID);
+    INSERT IGNORE INTO SimpleEntityData (title)
+    VALUES (titleStr);
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
@@ -198,12 +225,8 @@ BEGIN
     ELSE
         SET exitCode = 1; -- find.
         SELECT data_key INTO dataKey
-        FROM StandardEntityData
-        WHERE (
-            sh_title = shTitle AND
-            type_list = types AND
-            doc_id = docID
-        );
+        FROM SimpleEntityData
+        WHERE title = titleStr;
         SELECT id INTO outID
         FROM Entities
         WHERE (
@@ -266,13 +289,11 @@ DELIMITER ;
 
 
 
--- TODO: Reimplement insertText() and insertBinary() to handle the case where
--- name already exists (and think about if.. Hm, if the name shouldn't just be
--- randomly generated (or, better, the same as the ID)...).
-
+-- TODO: Correct insertText() and insertBinary() to search for (and find)
+-- existing text/binaries with matching hashes.
 
 DELIMITER //
-CREATE PROCEDURE insertTextEntity (
+CREATE PROCEDURE insertOrFindTextEntity (
     IN userID BIGINT UNSIGNED,
     IN recordCreator BOOL,
     IN textStr TEXT
@@ -298,7 +319,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE insertBinaryEntity (
+CREATE PROCEDURE insertOrFindBinaryEntity (
     IN userID BIGINT UNSIGNED,
     IN recordCreator BOOL,
     IN binData LONGBLOB

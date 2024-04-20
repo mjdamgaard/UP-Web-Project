@@ -13,7 +13,8 @@ ALTER TABLE Entities AUTO_INCREMENT=1;
 
 -- DELETE FROM UsersAndBots;
 
-DELETE FROM StandardEntityData;
+DELETE FROM DefinedEntityData;
+DELETE FROM SimpleEntityData;
 DELETE FROM FunctionalEntityData;
 DELETE FROM TextData;
 DELETE FROM BinaryData;
