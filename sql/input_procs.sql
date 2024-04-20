@@ -179,9 +179,8 @@ CREATE PROCEDURE insertOrFindStdEntity (
     IN docID BIGINT UNSIGNED
 )
 BEGIN
-    DECLARE outID BIGINT UNSIGNED;
+    DECLARE outID, dataKey BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
-    DECLARE dataKey BIGINT UNSIGNED;
 
     INSERT IGNORE INTO StandardEntityData (sh_title, types, doc_id)
     VALUES (shTitle, types, docID);
@@ -227,9 +226,8 @@ CREATE PROCEDURE insertOrFindFunEntity (
     IN inputs VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
 BEGIN
-    DECLARE outID BIGINT UNSIGNED;
+    DECLARE outID, dataKey BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
-    DECLARE dataKey BIGINT UNSIGNED;
 
     INSERT IGNORE INTO FunctionalEntityData (fun_id, input_list)
     VALUES (funID, inputs);
@@ -280,8 +278,7 @@ CREATE PROCEDURE insertTextEntity (
     IN textStr TEXT
 )
 BEGIN
-    DECLARE outID BIGINT UNSIGNED;
-    DECLARE dataKey BIGINT UNSIGNED;
+    DECLARE outID, dataKey BIGINT UNSIGNED;
 
     INSERT INTO TextData (txt)
     VALUES (textStr);
@@ -307,8 +304,7 @@ CREATE PROCEDURE insertBinaryEntity (
     IN binData LONGBLOB
 )
 BEGIN
-    DECLARE outID BIGINT UNSIGNED;
-    DECLARE dataKey BIGINT UNSIGNED;
+    DECLARE outID, dataKey BIGINT UNSIGNED;
 
     INSERT INTO BinaryData (bin)
     VALUES (binData);

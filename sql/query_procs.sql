@@ -5,6 +5,19 @@ DROP PROCEDURE selectInstanceList;
 DROP PROCEDURE selectInstanceListSecKey;
 DROP PROCEDURE selectRating;
 
+DROP PROCEDURE selectEntityInfo;
+DROP PROCEDURE selectEntityID;
+
+DROP PROCEDURE selectUserID;
+DROP PROCEDURE selectText;
+DROP PROCEDURE selectTextSubstring;
+DROP PROCEDURE selectBinary;
+DROP PROCEDURE selectBinarySubstring;
+
+DROP PROCEDURE selectBotData;
+
+
+
 DROP PROCEDURE selectEntity;
 DROP PROCEDURE selectEntityID;
 
@@ -214,11 +227,11 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectTextSubstring (
     IN textID BIGINT UNSIGNED,
-    IN length SMALLINT UNSIGNED,
-    IN start INT
+    IN len SMALLINT UNSIGNED,
+    IN startPos INT
 )
 BEGIN
-    SELECT SUBSTRING(txt, start, length) AS text
+    SELECT SUBSTRING(txt, startPos, len) AS text
     FROM Texts
     WHERE id = textID;
 END //
@@ -240,11 +253,11 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectBinarySubstring (
     IN binID BIGINT UNSIGNED,
-    IN length SMALLINT UNSIGNED,
-    IN start INT
+    IN len SMALLINT UNSIGNED,
+    IN startPos INT
 )
 BEGIN
-    SELECT SUBSTRING(bin, start, length) AS bin
+    SELECT SUBSTRING(bin, startPos, len) AS bin
     FROM Binaries
     WHERE id = binID;
 END //

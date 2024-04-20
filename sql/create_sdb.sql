@@ -12,13 +12,14 @@ DROP TABLE Entities;
 /* Data */
 DROP TABLE StandardEntityData;
 DROP TABLE FunctionalEntityData;
-DROP TABLE UsersAndBotData;
 DROP TABLE TextData;
 DROP TABLE BinaryData;
+DROP TABLE UserData;
+DROP TABLE BotData;
 
 /* Ancillary data for aggregation bots */
-DROP TABLE BotData1e2d;
-DROP TABLE BotData1e4d;
+DROP TABLE AncillaryBotData1e2d;
+DROP TABLE AncillaryBotData1e4d;
 
 /* Private user data */
 DROP TABLE Private_UserData;
@@ -207,31 +208,6 @@ CREATE TABLE FunctionalEntityData (
 
 
 
--- TODO: Add TINYINT to define whether a native bot or not, and add a nullable
--- bot description TEXT. *(Added the latter, but both things still needs
--- to be implemented in the procedures.)
-
-CREATE TABLE UsersAndBotData (
-    -- User data key (private).
-    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
-    username VARCHAR(50) UNIQUE NOT NULL,
-    -- TODO: Consider adding more restrictions.
-
-    public_keys_for_authentication TEXT,
-    -- (In order for third parties to be able to copy the database and then
-    -- be able to have users log on, without the need to exchange passwords
-    -- between databases.) (This could also be other data than encryption keys,
-    -- and in principle it could even just be some ID to use for authenticating
-    -- the user via a third party.)
-
-    bot_description TEXT
-);
-
-INSERT INTO UsersAndBotData (username, data_key)
-VALUES ("initial_user", 1);
-
-
 
 
 CREATE TABLE TextData (
@@ -265,9 +241,44 @@ CREATE TABLE BinaryData (
 
 
 
+CREATE TABLE UserData (
+    -- User data key (private).
+    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    username VARCHAR(50) NOT NULL,
+    -- TODO: Consider adding more restrictions.
+
+    public_keys_for_authentication TEXT,
+    -- (In order for third parties to be able to copy the database and then
+    -- be able to have users log on, without the need to exchange passwords
+    -- between databases.) (This could also be other data than encryption keys,
+    -- and in principle it could even just be some ID to use for authenticating
+    -- the user via a third party.)
+
+    UNIQUE INDEX (username)
+);
+
+
+
+CREATE TABLE BotData (
+    -- User data key (private).
+    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    bot_name VARCHAR(50) NOT NULL,
+    -- TODO: Consider adding more restrictions.
+
+    bot_description TEXT
+);
+
+
+
+
+
+
 /* Ancillary data for aggregation bots */
 
-CREATE TABLE BotData1e2d (
+
+CREATE TABLE AncillaryBotData1e2d (
     -- Bot that uses this data.
     bot_id BIGINT UNSIGNED NOT NULL,
     -- Entity which the data is about.
@@ -288,7 +299,7 @@ CREATE TABLE BotData1e2d (
 );
 -- TODO: Compress.
 
-CREATE TABLE BotData1e4d (
+CREATE TABLE AncillaryBotData1e4d (
     -- Bot that uses this data.
     bot_id BIGINT UNSIGNED NOT NULL,
     -- Entity which the data is about.

@@ -13,10 +13,14 @@ ALTER TABLE Entities AUTO_INCREMENT=1;
 
 -- DELETE FROM UsersAndBots;
 
-DELETE FROM Texts;
-DELETE FROM Binaries;
+DELETE FROM StandardEntityData;
+DELETE FROM FunctionalEntityData;
+DELETE FROM TextData;
+DELETE FROM BinaryData;
+DELETE FROM UserData;
+DELETE FROM BotData;
 
-DELETE FROM BotData1e2d;
+DELETE FROM AncillaryBotData1e2d;
 DELETE FROM Private_UserData;
 DELETE FROM Private_Sessions;
 DELETE FROM Private_EMails;
@@ -73,8 +77,8 @@ VALUES
     
 
 
--- INSERT INTO UsersAndBots (username, id)
--- VALUES ("initial_user", 1);
+INSERT INTO UserData (username, data_key)
+VALUES ("initial_user", 1);
 
 
 -- We skip some numbers here, such that it is easier to insert other
