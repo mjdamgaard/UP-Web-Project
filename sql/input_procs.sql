@@ -4,9 +4,10 @@ SELECT "Input procedures";
 DROP PROCEDURE insertOrUpdateRating;
 DROP PROCEDURE private_insertOrUpdateRatingAndRunBots;
 
-DROP PROCEDURE insertOrFindEntity;
-DROP PROCEDURE insertText;
-DROP PROCEDURE insertBinary;
+DROP PROCEDURE insertOrFindStdEntity;
+DROP PROCEDURE insertOrFindFunEntity;
+DROP PROCEDURE insertTextEntity;
+DROP PROCEDURE insertBinaryEntity;
 
 
 
@@ -170,48 +171,98 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE insertOrFindEntity (
+CREATE PROCEDURE insertOrFindStdEntity (
     IN userID BIGINT UNSIGNED,
     IN recordCreator BOOL,
-    IN defStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
+    IN shTitle VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN types VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN docID BIGINT UNSIGNED
 )
-BEGIN proc: BEGIN
+BEGIN
     DECLARE outID BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
+    DECLARE dataKey BIGINT UNSIGNED;
 
-    -- Check if entity already exists and return its ID as outID if so.
-    SELECT id INTO outID
-    FROM Entities
-    WHERE (
-        def = defStr
-    );
-    IF (outID IS NOT NULL) THEN
-        SET exitCode = 1; -- find.
-        SELECT outID, exitCode;
-        LEAVE proc;
-    END IF;
-
-    INSERT IGNORE INTO Entities (def)
-    VALUES (defStr);
-    SELECT LAST_INSERT_ID() INTO outID;
-    IF (outID IS NULL) THEN
-        SELECT id INTO outID
-        FROM Entities
-        WHERE (
-            def = defStr
-        );
-        SET exitCode = 1; -- find.
-    ELSE
+    INSERT IGNORE INTO StandardEntityData (sh_title, types, doc_id)
+    VALUES (shTitle, types, docID);
+    IF (mysql_affected_rows() > 0) THEN
+        SET exitCode = 0; -- insert.
+        SELECT LAST_INSERT_ID() INTO dataKey;
+        INSERT INTO Entities (meta_type, data_key)
+        VALUES ('s', dataKey);
+        SELECT LAST_INSERT_ID() INTO outID;
+        -- If recordCreator, call a bot to rate the user as the creator of
+        -- the new entity.
         IF (recordCreator) THEN
             CALL creatorRaterBot (outID, userID);
         END IF;
-        SET exitCode = 0; -- insert.
+    ELSE
+        SET exitCode = 1; -- find.
+        SELECT data_key INTO dataKey
+        FROM StandardEntityData
+        WHERE (
+            sh_title = shTitle AND
+            type_list = types AND
+            doc_id = docID
+        );
+        SELECT id INTO outID
+        FROM Entities
+        WHERE (
+            meta_type = 's' AND
+            data_key = dataKey
+        );
     END IF;
 
     SELECT outID, exitCode;
-END proc; END //
+END //
 DELIMITER ;
 
+
+
+DELIMITER //
+CREATE PROCEDURE insertOrFindFunEntity (
+    IN userID BIGINT UNSIGNED,
+    IN recordCreator BOOL,
+    IN funID BIGINT UNSIGNED,
+    IN inputs VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
+)
+BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
+    DECLARE dataKey BIGINT UNSIGNED;
+
+    INSERT IGNORE INTO FunctionalEntityData (fun_id, input_list)
+    VALUES (funID, inputs);
+    IF (mysql_affected_rows() > 0) THEN
+        SET exitCode = 0; -- insert.
+        SELECT LAST_INSERT_ID() INTO dataKey;
+        INSERT INTO Entities (meta_type, data_key)
+        VALUES ('f', dataKey);
+        SELECT LAST_INSERT_ID() INTO outID;
+        -- If recordCreator, call a bot to rate the user as the creator of
+        -- the new entity.
+        IF (recordCreator) THEN
+            CALL creatorRaterBot (outID, userID);
+        END IF;
+    ELSE
+        SET exitCode = 1; -- find.
+        SELECT data_key INTO dataKey
+        FROM FunctionalEntityData
+        WHERE (
+            fun_id = funID AND
+            input_list = inputs
+        );
+        SELECT id INTO outID
+        FROM Entities
+        WHERE (
+            meta_type = 'f' AND
+            data_key = dataKey
+        );
+    END IF;
+
+    SELECT outID, exitCode;
+END //
+DELIMITER ;
 
 
 
@@ -223,16 +274,26 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE insertText (
+CREATE PROCEDURE insertTextEntity (
     IN userID BIGINT UNSIGNED,
+    IN recordCreator BOOL,
     IN textStr TEXT
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
+    DECLARE dataKey BIGINT UNSIGNED;
 
-    INSERT INTO Texts (str)
+    INSERT INTO TextData (txt)
     VALUES (textStr);
+    SELECT LAST_INSERT_ID() INTO dataKey;
+    INSERT INTO Entities (meta_type, data_key)
+    VALUES ('t', dataKey);
     SELECT LAST_INSERT_ID() INTO outID;
+    -- If recordCreator, call a bot to rate the user as the creator of
+    -- the new entity.
+    IF (recordCreator) THEN
+        CALL creatorRaterBot (outID, userID);
+    END IF;
 
     SELECT outID, 0 AS exitCode; -- insert.
 END //
@@ -240,17 +301,27 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE insertBinary (
+CREATE PROCEDURE insertBinaryEntity (
     IN userID BIGINT UNSIGNED,
+    IN recordCreator BOOL,
     IN binData LONGBLOB
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
+    DECLARE dataKey BIGINT UNSIGNED;
 
-    INSERT INTO Binaries (bin)
+    INSERT INTO BinaryData (bin)
     VALUES (binData);
+    SELECT LAST_INSERT_ID() INTO dataKey;
+    INSERT INTO Entities (meta_type, data_key)
+    VALUES ('b', dataKey);
     SELECT LAST_INSERT_ID() INTO outID;
-    
+    -- If recordCreator, call a bot to rate the user as the creator of
+    -- the new entity.
+    IF (recordCreator) THEN
+        CALL creatorRaterBot (outID, userID);
+    END IF;
+
     SELECT outID, 0 AS exitCode; -- insert.
 END //
 DELIMITER ;

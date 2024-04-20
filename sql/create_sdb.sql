@@ -10,7 +10,8 @@ DROP TABLE IndexedEntities;
 DROP TABLE Entities;
 
 /* Data */
-DROP TABLE SemanticEntityData;
+DROP TABLE StandardEntityData;
+DROP TABLE FunctionalEntityData;
 DROP TABLE UsersAndBotData;
 DROP TABLE TextData;
 DROP TABLE BinaryData;
@@ -151,34 +152,64 @@ CREATE TABLE Entities (
     -- Entity ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- Fundamental entity type. (This can be either 's', 'u', 't', or 'b'.)
-    type_char CHAR NOT NULL,
+    -- Fundamental entity type. (This can be either 's', 'f', 'u', 't', or
+    -- 'b'.)
+    meta_type CHAR NOT NULL,
 
     -- Entity definition.
     data_key BIGINT UNSIGNED NOT NULL
+
+    -- UNIQUE INDEX (meta_type, data_key)
 );
 
 
-/* Semantic entities */
 
-CREATE TABLE SemanticEntityData (
-    -- Semantic entity data key (private).
+/* Standard (or 'semantic') entities */
+
+CREATE TABLE StandardEntityData (
+    -- Standard entity data key (private).
     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
+    -- Short title: a potentially shortened (or full) title of the entity.
+    sh_title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+
+    -- A string listing the IDs of some defining types of the entity.
+    type_list VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+
     -- ID of the text entity holding the original property document (JSON)
-    -- providing the initial definition of the entity.
+    -- providing the initial definition of the entity. The property document
+    -- ('prop doc' or simply 'doc' for short) is a JSON text listing all the
+    -- other defining properties of the entity, other than than short title
+    -- and the types.
     -- Note that that this the foreign key of the Entities table, not the
     -- TextData table.
-    text_id BIGINT UNSIGNED NOT NULL
+    doc_id BIGINT UNSIGNED NOT NULL,
 
-    -- def VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-
-    -- UNIQUE INDEX (text_id)
+    UNIQUE INDEX (sh_title, type_list, doc_id)
 );
+
+
+/* Functional (or 'formal') entities */
+
+CREATE TABLE FunctionalEntityData (
+    -- Functional entity data key (private).
+    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    -- ID of the function entity, which defines how the entity is interpreted,
+    -- given the inputs as well.
+    fun_id BIGINT UNSIGNED NOT NULL,
+    
+    -- A string listing the IDs of the inputs of the function.
+    input_list VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+
+    UNIQUE INDEX (fun_id, input_list)
+);
+
 
 
 -- TODO: Add TINYINT to define whether a native bot or not, and add a nullable
--- bot description TEXT.
+-- bot description TEXT. *(Added the latter, but both things still needs
+-- to be implemented in the procedures.)
 
 CREATE TABLE UsersAndBotData (
     -- User data key (private).
@@ -197,7 +228,7 @@ CREATE TABLE UsersAndBotData (
     bot_description TEXT
 );
 
-INSERT INTO UsersAndBotData (username, id)
+INSERT INTO UsersAndBotData (username, data_key)
 VALUES ("initial_user", 1);
 
 
@@ -207,27 +238,27 @@ CREATE TABLE TextData (
     -- Text data key (private).
     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- Data hash. (We use SHA2 rather than MD5 to allow ourselves to simply
-    -- assume that there won't be any collisions.)
-    data_hash CHAR(224) DEFAULT SHA2(txt, 224),
+    -- -- Data hash. (We use SHA2 rather than MD5 to allow ourselves to simply
+    -- -- assume that there won't be any collisions.)
+    -- data_hash CHAR(224) DEFAULT (SHA2(txt, 224)),
 
     -- Data.
-    txt TEXT NOT NULL,
+    txt TEXT NOT NULL
 
-    UNIQUE INDEX (data_hash, data_key)
+    -- UNIQUE INDEX (data_hash, data_key)
 );
 
 CREATE TABLE BinaryData (
     -- Binary string/file (BLOB) data key (private).
     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- Data hash.
-    data_hash CHAR(224) DEFAULT SHA2(bin, 224),
+    -- -- Data hash.
+    -- data_hash CHAR(224) DEFAULT (SHA2(bin, 224)),
 
     -- Data.
-    bin LONGBLOB NOT NULL,
+    bin LONGBLOB NOT NULL
 
-    UNIQUE INDEX (data_hash, data_key)
+    -- UNIQUE INDEX (data_hash, data_key)
 );
 
 
