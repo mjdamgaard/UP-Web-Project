@@ -6,9 +6,14 @@ DROP PROCEDURE selectInstanceListSecKey;
 DROP PROCEDURE selectRating;
 
 DROP PROCEDURE selectEntityInfo;
-DROP PROCEDURE selectEntityID;
+DROP PROCEDURE selectEntityText;
+
+DROP PROCEDURE selectDefEntityID;
+DROP PROCEDURE selectSimEntityID;
+DROP PROCEDURE selectFunEntityID;
 
 DROP PROCEDURE selectUserID;
+
 DROP PROCEDURE selectText;
 DROP PROCEDURE selectTextSubstring;
 DROP PROCEDURE selectBinary;
@@ -18,6 +23,7 @@ DROP PROCEDURE selectBotData;
 
 
 
+DROP PROCEDURE selectEntityInfo;
 DROP PROCEDURE selectEntity;
 DROP PROCEDURE selectEntityID;
 
@@ -143,9 +149,72 @@ DELIMITER ;
 
 
 
+-- TODO: Hm, I probably won't return the textStart for (property-)defined
+-- entities after all; only for the text entities..
 
 DELIMITER //
-CREATE PROCEDURE selectEntity (
+CREATE PROCEDURE selectEntityInfo (
+    IN entID BIGINT UNSIGNED
+)
+BEGIN
+    DECLARE metaType CHAR;
+    DECLARE dataKey BIGINT UNSIGNED;
+    DECLARE varStr VARCHAR(255);
+    DECLARE varID BIGINT UNSIGNED;
+    DECLARE textStart, dataHash VARCHAR(255);
+    DECLARE dataLen SMALLINT UNSIGNED;
+
+    -- Get the metaType and dataKey.
+    SELECT meta_type, data_key INTO metaType, dataKey 
+    FROM Entities
+    WHERE id = entID;
+
+    IF (metaType = 'd') THEN
+        -- Get the title and defID (into varStr, varID).
+        SELECT title, def_id INTO varStr, varID
+        FROM DefinedEntityData
+        WHERE data_key = dataKey;
+        -- Get textStart and textLen
+        SELECT SUBSTRING(txt, 1, 255), LENGTH(txt), data_hash
+        INTO textStart, dataLen, dataHash
+        FROM TextData
+        WHERE data_key = (
+            SELECT data_key
+            FROM Entities
+            WHERE id = varID;
+        );
+        -- Select the returned info.
+        SELECT
+            metaType,
+            varStr AS title,
+            varID AS defID,
+            textStart,
+            dataLen AS textLen,
+            dataHash AS textHash
+        FROM DefinedEntityData
+        WHERE data_key = dataKey;
+
+    ELSEIF (metaType = 's') THEN
+        -- Get the title (into varStr).
+        SELECT title INTO varStr
+        FROM SimpleEntityData
+        WHERE data_key = dataKey;
+        -- Select the returned info.
+        SELECT
+            metaType,
+            varStr AS title,
+        FROM SimpleEntityData
+        WHERE data_key = dataKey;
+
+    ELSEIF (metaType = 'f') THEN
+
+    END IF;
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectEntityText (
     IN entID BIGINT UNSIGNED
 )
 BEGIN
@@ -157,18 +226,82 @@ END //
 DELIMITER ;
 
 
+
+
+
+
+
 DELIMITER //
-CREATE PROCEDURE selectEntityID (
-    IN defStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
+CREATE PROCEDURE selectDefEntityID (
+    IN titleStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN defID BIGINT UNSIGNED
 )
 BEGIN
+    DECLARE dataKey BIGINT UNSIGNED;
+
+    SELECT data_key INTO dataKey
+    FROM DefinedEntityData
+    WHERE (
+        title = titleStr AND
+        def_id = defID
+    );
     SELECT id AS entID
     FROM Entities
     WHERE (
-        def = defStr
+        meta_type = 'd' AND
+        data_key = dataKey
     );
 END //
 DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectSimEntityID (
+    IN titleStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
+)
+BEGIN
+    DECLARE dataKey BIGINT UNSIGNED;
+
+    SELECT data_key INTO dataKey
+    FROM SimpleEntityData
+    WHERE (
+        title = titleStr
+    );
+    SELECT id AS entID
+    FROM Entities
+    WHERE (
+        meta_type = 's' AND
+        data_key = dataKey
+    );
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectDefEntityID (
+    IN funID BIGINT UNSIGNED,
+    IN inputs VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
+)
+BEGIN
+    DECLARE dataKey BIGINT UNSIGNED;
+
+    SELECT data_key INTO dataKey
+    FROM FunctionalEntityData
+    WHERE (
+        fun_id = funID AND
+        input_list = inputs
+    );
+    SELECT id AS entID
+    FROM Entities
+    WHERE (
+        meta_type = 'f' AND
+        data_key = dataKey
+    );
+END //
+DELIMITER ;
+
+
+
 
 
 

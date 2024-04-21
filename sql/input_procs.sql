@@ -176,24 +176,42 @@ CREATE PROCEDURE insertOrFindDefEntity (
     IN userID BIGINT UNSIGNED,
     IN recordCreator BOOL,
     IN titleStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-    IN propDoc TEXT
+    IN defID TEXT
 )
 BEGIN
     DECLARE outID, dataKey BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
 
-    INSERT INTO DefinedEntityData (title, doc_id)
-    VALUES (titleStr, propDoc);
-    SELECT LAST_INSERT_ID() INTO dataKey;
-    INSERT INTO Entities (meta_type, data_key)
-    VALUES ('d', dataKey);
-    SELECT LAST_INSERT_ID() INTO outID;
-    -- If recordCreator, call a bot to rate the user as the creator of
-    -- the new entity.
-    IF (recordCreator) THEN
-        CALL creatorRaterBot (outID, userID);
+    INSERT IGNORE INTO DefinedEntityData (title, def_id)
+    VALUES (titleStr, defID);
+    IF (mysql_affected_rows() > 0) THEN
+        SET exitCode = 0; -- insert.
+        SELECT LAST_INSERT_ID() INTO dataKey;
+        INSERT INTO Entities (meta_type, data_key)
+        VALUES ('d', dataKey);
+        SELECT LAST_INSERT_ID() INTO outID;
+        -- If recordCreator, call a bot to rate the user as the creator of
+        -- the new entity.
+        IF (recordCreator) THEN
+            CALL creatorRaterBot (outID, userID);
+        END IF;
+    ELSE
+        SET exitCode = 1; -- find.
+        SELECT data_key INTO dataKey
+        FROM DefinedEntityData
+        WHERE (
+            title = titleStr AND
+            def_id = defID
+        );
+        SELECT id INTO outID
+        FROM Entities
+        WHERE (
+            meta_type = 'd' AND
+            data_key = dataKey
+        );
     END IF;
 
-    SELECT outID, 0 AS exitCode;
+    SELECT outID, exitCode;
 END //
 DELIMITER ;
 
@@ -300,20 +318,37 @@ CREATE PROCEDURE insertOrFindTextEntity (
 )
 BEGIN
     DECLARE outID, dataKey BIGINT UNSIGNED;
+    DECLARE dataHash VARCHAR(255) DEFAULT (SHA2(textStr, 224));
 
-    INSERT INTO TextData (txt)
-    VALUES (textStr);
-    SELECT LAST_INSERT_ID() INTO dataKey;
-    INSERT INTO Entities (meta_type, data_key)
-    VALUES ('t', dataKey);
-    SELECT LAST_INSERT_ID() INTO outID;
-    -- If recordCreator, call a bot to rate the user as the creator of
-    -- the new entity.
-    IF (recordCreator) THEN
-        CALL creatorRaterBot (outID, userID);
+    INSERT IGNORE INTO TextData (data_hash, txt)
+    VALUES (dataHash, textStr);
+    IF (mysql_affected_rows() > 0) THEN
+        SET exitCode = 0; -- insert.
+        SELECT LAST_INSERT_ID() INTO dataKey;
+        INSERT INTO Entities (meta_type, data_key)
+        VALUES ('t', dataKey);
+        SELECT LAST_INSERT_ID() INTO outID;
+        -- If recordCreator, call a bot to rate the user as the creator of
+        -- the new entity.
+        IF (recordCreator) THEN
+            CALL creatorRaterBot (outID, userID);
+        END IF;
+    ELSE
+        SET exitCode = 1; -- find.
+        SELECT data_key INTO dataKey
+        FROM TextData
+        WHERE (
+            data_hash = dataHash
+        );
+        SELECT id INTO outID
+        FROM Entities
+        WHERE (
+            meta_type = 't' AND
+            data_key = dataKey
+        );
     END IF;
 
-    SELECT outID, 0 AS exitCode; -- insert.
+    SELECT outID, exitCode;
 END //
 DELIMITER ;
 
@@ -326,20 +361,37 @@ CREATE PROCEDURE insertOrFindBinaryEntity (
 )
 BEGIN
     DECLARE outID, dataKey BIGINT UNSIGNED;
+    DECLARE dataHash VARCHAR(255) DEFAULT (SHA2(textStr, 224));
 
-    INSERT INTO BinaryData (bin)
-    VALUES (binData);
-    SELECT LAST_INSERT_ID() INTO dataKey;
-    INSERT INTO Entities (meta_type, data_key)
-    VALUES ('b', dataKey);
-    SELECT LAST_INSERT_ID() INTO outID;
-    -- If recordCreator, call a bot to rate the user as the creator of
-    -- the new entity.
-    IF (recordCreator) THEN
-        CALL creatorRaterBot (outID, userID);
+    INSERT IGNORE INTO BinaryData (data_hash, bin)
+    VALUES (dataHash, binData);
+    IF (mysql_affected_rows() > 0) THEN
+        SET exitCode = 0; -- insert.
+        SELECT LAST_INSERT_ID() INTO dataKey;
+        INSERT INTO Entities (meta_type, data_key)
+        VALUES ('b', dataKey);
+        SELECT LAST_INSERT_ID() INTO outID;
+        -- If recordCreator, call a bot to rate the user as the creator of
+        -- the new entity.
+        IF (recordCreator) THEN
+            CALL creatorRaterBot (outID, userID);
+        END IF;
+    ELSE
+        SET exitCode = 1; -- find.
+        SELECT data_key INTO dataKey
+        FROM BinaryData
+        WHERE (
+            data_hash = dataHash
+        );
+        SELECT id INTO outID
+        FROM Entities
+        WHERE (
+            meta_type = 'b' AND
+            data_key = dataKey
+        );
     END IF;
 
-    SELECT outID, 0 AS exitCode; -- insert.
+    SELECT outID, exitCode;
 END //
 DELIMITER ;
 

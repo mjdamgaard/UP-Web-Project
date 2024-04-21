@@ -16,7 +16,7 @@ DROP TABLE FunctionalEntityData;
 DROP TABLE TextData;
 DROP TABLE BinaryData;
 DROP TABLE UserData;
-DROP TABLE BotData;
+DROP TABLE AggregationBotData;
 
 /* Ancillary data for aggregation bots */
 DROP TABLE AncillaryBotData1e2d;
@@ -47,11 +47,6 @@ CREATE TABLE SemanticInputs (
 
     -- Tag of the statement.
     tag_id BIGINT UNSIGNED NOT NULL,
-
-    -- -- The fundamental type (one of four) of the instances. This character,
-    -- -- which can be either 't', 'b', 'u', or 's', forms the full key of
-    -- -- the instance entities when combined with the inst_id's.
-    -- type_char CHAR NOT NULL,
 
     -- Rating value of how well the tag fits the entity. The first byte
     -- of the SMALLINT is interpreted as a number between 0 and 10, where 0
@@ -166,7 +161,7 @@ CREATE TABLE Entities (
 
 
 
-/* Property-defined (or simply 'defined') entities */
+/* Property-defined entities (or 'defined entities' for short) */
 
 CREATE TABLE DefinedEntityData (
     -- Standard entity data key (private).
@@ -175,17 +170,16 @@ CREATE TABLE DefinedEntityData (
     -- Title. A potentially shortened (or full) title of the entity.
     title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
-    -- -- A string listing the IDs of some defining types of the entity.
-    -- type_list VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL
-
-    -- A property document (JSON) providing the initial definition of the
-    -- entity. The property document is a JSON text listing all the
+    -- ID of the property document (JSON) providing the initial definition of
+    -- the entity. The property document is a JSON text listing all the
     -- defining properties of the entity, other than than the title.
-    prop_doc TEXT NOT NULL
+    def_id BIGINT UNSIGNED NOT NULL,
+
+    UNIQUE INDEX (title, def_id)
 );
 
 
-/* Simply-defined (or simply 'simple') entities */
+/* Simply defined entities (or 'simple entities' for short) */
 
 CREATE TABLE SimpleEntityData (
     -- Standard entity data key (private).
@@ -224,26 +218,34 @@ CREATE TABLE TextData (
 
     -- Data hash. (We use SHA2 rather than MD5 to allow ourselves to simply
     -- assume that there won't be any collisions.)
-    data_hash CHAR(224) NOT NULL DEFAULT (SHA2(txt, 224)),
+    data_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(txt, 224)),
 
-    -- Data.
+    -- Data. Note that texts are not stored completely verbatim, as '@'s need
+    -- to be escaped, unless the are to be interpreted as the beginning of
+    -- a link to a reference (where the title is typically substituted as
+    -- a clickable link). The same is also true, by the way, for the titles
+    -- of the simply defined and the property-defined entities.
     txt TEXT,
 
-    UNIQUE INDEX (data_hash, data_key)
+    -- UNIQUE INDEX (data_hash, data_key)
+    UNIQUE INDEX (data_hash)
 );
+
 
 CREATE TABLE BinaryData (
     -- Binary string/file (BLOB) data key (private).
     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     -- Data hash.
-    data_hash CHAR(224) NOT NULL DEFAULT (SHA2(bin, 224)),
+    data_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(bin, 224)),
 
     -- Data.
     bin LONGBLOB,
 
-    UNIQUE INDEX (data_hash, data_key)
+    UNIQUE INDEX (data_hash)
 );
+
+
 
 
 
@@ -267,9 +269,9 @@ CREATE TABLE UserData (
 );
 
 
-/* Aggregation bot (or simply 'bot') entities */
+/* Aggregation bot entities (or 'bot entities' for short) */
 
-CREATE TABLE BotData (
+CREATE TABLE AggregationBotData (
     -- Aggregation bot data key (private).
     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
