@@ -6,36 +6,22 @@ DROP PROCEDURE selectInstanceListSecKey;
 DROP PROCEDURE selectRating;
 
 DROP PROCEDURE selectEntityInfo;
-DROP PROCEDURE selectEntityText;
+
+DROP PROCEDURE selectText;
+DROP PROCEDURE selectUserInfo;
+DROP PROCEDURE selectBotInfo;
 
 DROP PROCEDURE selectDefEntityID;
 DROP PROCEDURE selectSimEntityID;
 DROP PROCEDURE selectFunEntityID;
 
-DROP PROCEDURE selectUserID;
+DROP PROCEDURE selectTextEntityID;
+DROP PROCEDURE selectBinaryEntityID;
+DROP PROCEDURE selectUserEntityID;
 
-DROP PROCEDURE selectText;
-DROP PROCEDURE selectTextSubstring;
-DROP PROCEDURE selectBinary;
-DROP PROCEDURE selectBinarySubstring;
+DROP PROCEDURE selectAncillaryBotData1e2d;
+DROP PROCEDURE selectAncillaryBotData1e4d;
 
-DROP PROCEDURE selectBotData;
-
-
-
-DROP PROCEDURE selectEntityInfo;
-DROP PROCEDURE selectEntity;
-DROP PROCEDURE selectEntityID;
-
-DROP PROCEDURE selectUsername;
-DROP PROCEDURE selectUserInfo;
-DROP PROCEDURE selectUserID;
-DROP PROCEDURE selectText;
-DROP PROCEDURE selectTextSubstring;
-DROP PROCEDURE selectBinary;
-DROP PROCEDURE selectBinarySubstring;
-
-DROP PROCEDURE selectBotData;
 
 
 
@@ -149,8 +135,7 @@ DELIMITER ;
 
 
 
--- TODO: Hm, I probably won't return the textStart for (property-)defined
--- entities after all; only for the text entities..
+
 
 DELIMITER //
 CREATE PROCEDURE selectEntityInfo (
@@ -159,10 +144,6 @@ CREATE PROCEDURE selectEntityInfo (
 BEGIN
     DECLARE metaType CHAR;
     DECLARE dataKey BIGINT UNSIGNED;
-    DECLARE varStr VARCHAR(255);
-    DECLARE varID BIGINT UNSIGNED;
-    DECLARE textStart, dataHash VARCHAR(255);
-    DECLARE dataLen SMALLINT UNSIGNED;
 
     -- Get the metaType and dataKey.
     SELECT meta_type, data_key INTO metaType, dataKey 
@@ -170,60 +151,130 @@ BEGIN
     WHERE id = entID;
 
     IF (metaType = 'd') THEN
-        -- Get the title and defID (into varStr, varID).
-        SELECT title, def_id INTO varStr, varID
-        FROM DefinedEntityData
-        WHERE data_key = dataKey;
-        -- Get textStart and textLen
-        SELECT SUBSTRING(txt, 1, 255), LENGTH(txt), data_hash
-        INTO textStart, dataLen, dataHash
-        FROM TextData
-        WHERE data_key = (
-            SELECT data_key
-            FROM Entities
-            WHERE id = varID;
-        );
         -- Select the returned info.
         SELECT
             metaType,
-            varStr AS title,
-            varID AS defID,
-            textStart,
-            dataLen AS textLen,
-            dataHash AS textHash
+            title,
+            def_id AS defID
         FROM DefinedEntityData
         WHERE data_key = dataKey;
 
     ELSEIF (metaType = 's') THEN
-        -- Get the title (into varStr).
-        SELECT title INTO varStr
-        FROM SimpleEntityData
-        WHERE data_key = dataKey;
         -- Select the returned info.
         SELECT
             metaType,
-            varStr AS title,
+            title
         FROM SimpleEntityData
         WHERE data_key = dataKey;
 
     ELSEIF (metaType = 'f') THEN
+        -- Select the returned info.
+        SELECT
+            metaType,
+            fun_id AS funID,
+            input_list AS inputs
+        FROM FunctionalEntityData
+        WHERE data_key = dataKey;
+
+    ELSEIF (metaType = 't') THEN
+        -- Select the returned info.
+        SELECT
+            metaType,
+            SUBSTRING(txt, 1, 255) AS textStart,
+            LENGTH(txt) AS len,
+            data_hash AS dataHash
+        FROM TextData
+        WHERE data_key = dataKey;
+
+    ELSEIF (metaType = 'b') THEN
+        -- Select the returned info.
+        SELECT
+            metaType,
+            LENGTH(bin) AS len,
+            data_hash AS dataHash
+        FROM BinaryData
+        WHERE data_key = dataKey;
+
+    ELSEIF (metaType = 'u') THEN
+        -- Select the returned info.
+        SELECT
+            metaType,
+            username
+        FROM UserData
+        WHERE data_key = dataKey;
+
+
+    ELSEIF (metaType = 'a') THEN
+        -- Select the returned info.
+        SELECT
+            metaType,
+            bot_name AS botName
+        FROM AggregationBotData
+        WHERE data_key = dataKey;
+
 
     END IF;
 END //
 DELIMITER ;
 
 
+
+
 DELIMITER //
-CREATE PROCEDURE selectEntityText (
-    IN entID BIGINT UNSIGNED
+CREATE PROCEDURE selectText (
+    IN entID BIGINT UNSIGNED,
+    IN maxLen INT UNSIGNED
 )
 BEGIN
     SELECT
-        def AS def
-    FROM Entities
-    WHERE id = entID;
+        CASE WHEN maxLen = 0 THEN txt
+        ELSE SUBSTRING(txt, 1, maxLen)
+        END
+    FROM TextData
+    WHERE data_key = (
+        SELECT data_key
+        FROM Entities
+        WHERE id = entID
+    );
 END //
 DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectUserInfo (
+    IN userID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT
+        username AS username,
+        public_keys_for_authentication AS publicKeys
+    FROM UserData
+    WHERE data_key = (
+        SELECT data_key
+        FROM Entities
+        WHERE id = userID
+    );
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectBotInfo (
+    IN botID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT
+        bot_name AS botName,
+        bot_description AS botDescription
+    FROM AggregationBotData
+    WHERE data_key = (
+        SELECT data_key
+        FROM Entities
+        WHERE id = botID
+    );
+END //
+DELIMITER ;
+
 
 
 
@@ -237,19 +288,15 @@ CREATE PROCEDURE selectDefEntityID (
     IN defID BIGINT UNSIGNED
 )
 BEGIN
-    DECLARE dataKey BIGINT UNSIGNED;
-
-    SELECT data_key INTO dataKey
-    FROM DefinedEntityData
-    WHERE (
-        title = titleStr AND
-        def_id = defID
-    );
     SELECT id AS entID
     FROM Entities
     WHERE (
         meta_type = 'd' AND
-        data_key = dataKey
+        data_key = (
+            SELECT data_key
+            FROM DefinedEntityData
+            WHERE title = titleStr AND def_id = defID
+        )
     );
 END //
 DELIMITER ;
@@ -260,42 +307,92 @@ CREATE PROCEDURE selectSimEntityID (
     IN titleStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
 BEGIN
-    DECLARE dataKey BIGINT UNSIGNED;
-
-    SELECT data_key INTO dataKey
-    FROM SimpleEntityData
-    WHERE (
-        title = titleStr
-    );
     SELECT id AS entID
     FROM Entities
     WHERE (
         meta_type = 's' AND
-        data_key = dataKey
+        data_key = (
+            SELECT data_key
+            FROM SimpleEntityData
+            WHERE title = titleStr
+        )
     );
 END //
 DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectDefEntityID (
+CREATE PROCEDURE selectFunEntityID (
     IN funID BIGINT UNSIGNED,
     IN inputs VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
 BEGIN
-    DECLARE dataKey BIGINT UNSIGNED;
-
-    SELECT data_key INTO dataKey
-    FROM FunctionalEntityData
-    WHERE (
-        fun_id = funID AND
-        input_list = inputs
-    );
     SELECT id AS entID
     FROM Entities
     WHERE (
         meta_type = 'f' AND
-        data_key = dataKey
+        data_key = (
+            SELECT data_key
+            FROM FunctionalEntityData
+            WHERE fun_id = funID AND input_list = inputs
+        )
+    );
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectTextEntityID (
+    IN dataHash VARCHAR(50)
+)
+BEGIN
+    SELECT id AS entID
+    FROM Entities
+    WHERE (
+        meta_type = 't' AND
+        data_key = (
+            SELECT data_key
+            FROM TextData
+            WHERE data_hash = dataHash
+        )
+    );
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectBinaryEntityID (
+    IN dataHash VARCHAR(50)
+)
+BEGIN
+    SELECT id AS entID
+    FROM Entities
+    WHERE (
+        meta_type = 'b' AND
+        data_key = (
+            SELECT data_key
+            FROM BinaryData
+            WHERE data_hash = dataHash
+        )
+    );
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectUserEntityID (
+    IN uName VARCHAR(50)
+)
+BEGIN
+    SELECT id AS entID
+    FROM Entities
+    WHERE (
+        meta_type = 'u' AND
+        data_key = (
+            SELECT data_key
+            FROM UserData
+            WHERE username = uName
+        )
     );
 END //
 DELIMITER ;
@@ -306,109 +403,30 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE selectUsername (
-    IN userID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT username AS username
-    FROM UsersAndBots
-    WHERE id = userID;
-END //
-DELIMITER ;
-
 
 DELIMITER //
-CREATE PROCEDURE selectUserInfo (
-    IN userID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT
-        username AS username,
-        public_keys_for_authentication AS publicKeys
-    FROM UsersAndBots
-    WHERE id = userID;
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE selectUserID (
-    IN uName VARCHAR(50)
-)
-BEGIN
-    SELECT id AS userID
-    FROM UsersAndBots
-    WHERE username = uName;
-END //
-DELIMITER ;
-
-
-
-DELIMITER //
-CREATE PROCEDURE selectText (
-    IN textID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT txt AS text
-    FROM Texts
-    WHERE id = textID;
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE selectTextSubstring (
-    IN textID BIGINT UNSIGNED,
-    IN len SMALLINT UNSIGNED,
-    IN startPos INT
-)
-BEGIN
-    SELECT SUBSTRING(txt, startPos, len) AS text
-    FROM Texts
-    WHERE id = textID;
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE selectBinary (
-    IN binID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT bin AS bin
-    FROM Binaries
-    WHERE id = binID;
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE selectBinarySubstring (
-    IN binID BIGINT UNSIGNED,
-    IN len SMALLINT UNSIGNED,
-    IN startPos INT
-)
-BEGIN
-    SELECT SUBSTRING(bin, startPos, len) AS bin
-    FROM Binaries
-    WHERE id = binID;
-END //
-DELIMITER ;
-
-
-
-
-
-
-DELIMITER //
-CREATE PROCEDURE selectBotData (
+CREATE PROCEDURE selectAncillaryBotData1e2d (
     IN botID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT data_1, data_2, data_3, data_4 AS data1, data2, data3, data4
-    FROM BotData
+    SELECT data_1 AS data1, data_2 AS data2
+    FROM AncillaryBotData1e2d
+    WHERE (
+        bot_id = botID AND
+        ent_id = entID
+    );
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE selectAncillaryBotData1e4d (
+    IN botID BIGINT UNSIGNED,
+    IN entID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT data_1 AS data1, data_2 AS data2, data_3 AS data3, data_4 AS data4
+    FROM AncillaryBotData1e4d
     WHERE (
         bot_id = botID AND
         ent_id = entID

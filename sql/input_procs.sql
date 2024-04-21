@@ -318,6 +318,7 @@ CREATE PROCEDURE insertOrFindTextEntity (
 )
 BEGIN
     DECLARE outID, dataKey BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
     DECLARE dataHash VARCHAR(255) DEFAULT (SHA2(textStr, 224));
 
     INSERT IGNORE INTO TextData (data_hash, txt)
@@ -361,6 +362,7 @@ CREATE PROCEDURE insertOrFindBinaryEntity (
 )
 BEGIN
     DECLARE outID, dataKey BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
     DECLARE dataHash VARCHAR(255) DEFAULT (SHA2(textStr, 224));
 
     INSERT IGNORE INTO BinaryData (data_hash, bin)
