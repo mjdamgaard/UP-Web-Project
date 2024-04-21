@@ -7,6 +7,7 @@ DROP PROCEDURE private_insertOrUpdateRatingAndRunBots;
 DROP PROCEDURE insertOrFindDefEntity;
 DROP PROCEDURE insertOrFindSimEntity;
 DROP PROCEDURE insertOrFindFunEntity;
+DROP PROCEDURE insertOrFindPropTagEntity;
 DROP PROCEDURE insertOrFindTextEntity;
 DROP PROCEDURE insertOrFindBinaryEntity;
 
@@ -295,6 +296,52 @@ BEGIN
         FROM Entities
         WHERE (
             meta_type = 'f' AND
+            data_key = dataKey
+        );
+    END IF;
+
+    SELECT outID, exitCode;
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertOrFindPropTagEntity (
+    IN userID BIGINT UNSIGNED,
+    IN recordCreator BOOL,
+    IN subjID BIGINT UNSIGNED,
+    IN propID BIGINT UNSIGNED
+)
+BEGIN
+    DECLARE outID, dataKey BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
+
+    INSERT IGNORE INTO PropertyTagEntityData (subj_id, prop_id)
+    VALUES (subjID, propID);
+    IF (mysql_affected_rows() > 0) THEN
+        SET exitCode = 0; -- insert.
+        SELECT LAST_INSERT_ID() INTO dataKey;
+        INSERT INTO Entities (meta_type, data_key)
+        VALUES ('p', dataKey);
+        SELECT LAST_INSERT_ID() INTO outID;
+        -- If recordCreator, call a bot to rate the user as the creator of
+        -- the new entity.
+        IF (recordCreator) THEN
+            CALL creatorRaterBot (outID, userID);
+        END IF;
+    ELSE
+        SET exitCode = 1; -- find.
+        SELECT data_key INTO dataKey
+        FROM PropertyTagEntityData
+        WHERE (
+            subj_id = subjID AND
+            prop_id = propID
+        );
+        SELECT id INTO outID
+        FROM Entities
+        WHERE (
+            meta_type = 'p' AND
             data_key = dataKey
         );
     END IF;

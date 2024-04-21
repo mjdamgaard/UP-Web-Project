@@ -14,6 +14,7 @@ DROP PROCEDURE selectBotInfo;
 DROP PROCEDURE selectDefEntityID;
 DROP PROCEDURE selectSimEntityID;
 DROP PROCEDURE selectFunEntityID;
+DROP PROCEDURE selectPropTagEntityID;
 
 DROP PROCEDURE selectTextEntityID;
 DROP PROCEDURE selectBinaryEntityID;
@@ -176,6 +177,15 @@ BEGIN
         FROM FunctionalEntityData
         WHERE data_key = dataKey;
 
+    ELSEIF (metaType = 'p') THEN
+        -- Select the returned info.
+        SELECT
+            metaType,
+            subj_id AS subjID,
+            prop_id AS propID
+        FROM PropertyTagEntityData
+        WHERE data_key = dataKey;
+
     ELSEIF (metaType = 't') THEN
         -- Select the returned info.
         SELECT
@@ -335,6 +345,26 @@ BEGIN
             SELECT data_key
             FROM FunctionalEntityData
             WHERE fun_id = funID AND input_list = inputs
+        )
+    );
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectPropTagEntityID (
+    IN subjID BIGINT UNSIGNED,
+    IN propID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT id AS entID
+    FROM Entities
+    WHERE (
+        meta_type = 'p' AND
+        data_key = (
+            SELECT data_key
+            FROM PropertyTagEntityData
+            WHERE subj_id = subjID AND prop_id = propID
         )
     );
 END //

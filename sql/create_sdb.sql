@@ -13,6 +13,7 @@ DROP TABLE Entities;
 DROP TABLE DefinedEntityData;
 DROP TABLE SimpleEntityData;
 DROP TABLE FunctionalEntityData;
+DROP TABLE PropertyTagEntityData;
 DROP TABLE TextData;
 DROP TABLE BinaryData;
 DROP TABLE UserData;
@@ -149,7 +150,7 @@ CREATE TABLE Entities (
     -- Entity ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- Entity meta type. (This can be either 'd', 's', 'f', 't', 'b', 'u',
+    -- Entity meta type. (This can be either 'd', 's', 'f', 'p', 't', 'b', 'u',
     -- or 'a'.)
     meta_type CHAR NOT NULL,
 
@@ -206,6 +207,22 @@ CREATE TABLE FunctionalEntityData (
     input_list VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
     UNIQUE INDEX (fun_id, input_list)
+);
+
+
+/* Property tag entities */
+
+CREATE TABLE PropertyTagEntityData (
+    -- Property tag entity data key (private).
+    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    -- ID of the property subject entity.
+    subj_id BIGINT UNSIGNED NOT NULL,
+    
+    -- ID of the property entity.
+    prop_id BIGINT UNSIGNED NOT NULL,
+
+    UNIQUE INDEX (subj_id, prop_id)
 );
 
 
@@ -275,9 +292,11 @@ CREATE TABLE AggregationBotData (
     -- Aggregation bot data key (private).
     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    bot_name VARCHAR(50) NOT NULL,
+    bot_name VARCHAR(255) NOT NULL,
 
-    bot_description TEXT
+    bot_description TEXT,
+
+    UNIQUE INDEX (bot_name)
 );
 
 
