@@ -1,5 +1,5 @@
 
-import {DBRequestManager} from "./DBRequests.js";
+import {DBRequestManager} from "../hooks/DBRequests.js";
 // import {AccountManager} from "./contexts/AccountContext.js";
 
 // const dbReqManager = new DBRequestManager;

@@ -1,6 +1,6 @@
 import {useState, createContext, useContext, useMemo} from "react";
 import {ColumnListContext, ColumnContextProvider}
-  from "./contexts/ColumnContext.js";
+  from "../contexts/ColumnContext.js";
 
 import {EntityPage} from "./EntityPages.js";
 import {ListGeneratorPage} from "./ListGenPages.js";

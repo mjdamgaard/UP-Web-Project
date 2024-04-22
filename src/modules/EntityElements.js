@@ -1,6 +1,6 @@
 import {useState, useEffect, useMemo, useContext} from "react";
-import {AccountManagerContext} from "./contexts/AccountContext.js";
-import {useQuery} from "./DBRequests.js";
+import {AccountManagerContext} from "../contexts/AccountContext.js";
+import {useQuery} from "../hooks/DBRequests.js";
 
 import {EntityTitle, FullEntityTitle} from "./EntityTitles.js";
 import {DropdownBox, DropdownMenu} from "./DropdownBox.js";
@@ -10,7 +10,7 @@ import {RatingDisplay} from "./Ratings.js";
 import {InstListDisplay} from "./InstListDisplay.js";
 import {
   SimpleInstListGenerator, MaxRatingInstListCombiner
-} from "./InstListGenerator.js";
+} from "../classes/InstListGenerator.js";
 
 // const EntityTitle = () => <template></template>;
 const TextDataDisplayElement = () => <template></template>;

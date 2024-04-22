@@ -19,6 +19,7 @@ DROP PROCEDURE selectPropTagEntityID;
 DROP PROCEDURE selectTextEntityID;
 DROP PROCEDURE selectBinaryEntityID;
 DROP PROCEDURE selectUserEntityID;
+DROP PROCEDURE selectBotEntityID;
 
 DROP PROCEDURE selectAncillaryBotData1e2d;
 DROP PROCEDURE selectAncillaryBotData1e4d;
@@ -270,7 +271,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectBotInfo (
-    IN botID BIGINT UNSIGNED
+    IN botName BIGINT UNSIGNED
 )
 BEGIN
     SELECT
@@ -280,7 +281,7 @@ BEGIN
     WHERE data_key = (
         SELECT data_key
         FROM Entities
-        WHERE id = botID
+        WHERE id = botName
     );
 END //
 DELIMITER ;
@@ -428,6 +429,25 @@ END //
 DELIMITER ;
 
 
+DELIMITER //
+CREATE PROCEDURE selectBotEntityID (
+    IN botName VARCHAR(50)
+)
+BEGIN
+    SELECT id AS entID
+    FROM Entities
+    WHERE (
+        meta_type = 'b' AND
+        data_key = (
+            SELECT data_key
+            FROM AggregationBotData
+            WHERE bot_name = botName
+        )
+    );
+END //
+DELIMITER ;
+
+
 
 
 
@@ -436,14 +456,14 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectAncillaryBotData1e2d (
-    IN botID BIGINT UNSIGNED,
+    IN botName BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED
 )
 BEGIN
     SELECT data_1 AS data1, data_2 AS data2
     FROM AncillaryBotData1e2d
     WHERE (
-        bot_id = botID AND
+        bot_name = botName AND
         ent_id = entID
     );
 END //
@@ -451,14 +471,14 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectAncillaryBotData1e4d (
-    IN botID BIGINT UNSIGNED,
+    IN botName BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED
 )
 BEGIN
     SELECT data_1 AS data1, data_2 AS data2, data_3 AS data3, data_4 AS data4
     FROM AncillaryBotData1e4d
     WHERE (
-        bot_id = botID AND
+        bot_name = botName AND
         ent_id = entID
     );
 END //

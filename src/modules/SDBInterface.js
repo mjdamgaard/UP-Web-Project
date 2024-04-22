@@ -1,7 +1,7 @@
 import {useState, createContext, useContext, useMemo} from "react";
-import {AccountContextProvider} from "./contexts/AccountContext.js";
+import {AccountContextProvider} from "../contexts/AccountContext.js";
 import {ColumnListContextProvider, ColumnListManager}
-  from "./contexts/ColumnContext.js";
+  from "../contexts/ColumnContext.js";
 
 import {InterfaceHeader} from "./InterfaceHeader.js";
 import {InterfaceMain} from "./InterfaceMain.js";

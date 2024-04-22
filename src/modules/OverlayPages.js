@@ -1,7 +1,7 @@
 import {useState, createContext, useContext} from "react";
-import {AccountManagerContext} from "./contexts/AccountContext.js";
+import {AccountManagerContext} from "../contexts/AccountContext.js";
 
-import {useQuery, useInput} from "./DBRequests.js";
+import {useQuery, useInput} from "../hooks/DBRequests.js";
 
 export const OverlayPage = ({children, setAppPage, isHidden}) => {
   return (

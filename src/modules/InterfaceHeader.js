@@ -1,7 +1,7 @@
 import {useState, createContext, useContext} from "react";
 import {SessionContext, AccountManagerContext}
-  from "./contexts/AccountContext.js";
-import {ColumnListContext} from "./contexts/ColumnContext.js";
+  from "../contexts/AccountContext.js";
+import {ColumnListContext} from "../contexts/ColumnContext.js";
 
 
 

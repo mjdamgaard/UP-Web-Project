@@ -308,8 +308,8 @@ CREATE TABLE AggregationBotData (
 
 
 CREATE TABLE AncillaryBotData1e2d (
-    -- Bot that uses this data.
-    bot_id BIGINT UNSIGNED NOT NULL,
+    -- Name of the bot that uses this data.
+    bot_name VARCHAR(255) NOT NULL,
     -- Entity which the data is about.
     ent_id BIGINT UNSIGNED NOT NULL,
 
@@ -322,15 +322,15 @@ CREATE TABLE AncillaryBotData1e2d (
     -- NOT NULL, and if not, change mean_bots.sql so that it can be done.
 
     PRIMARY KEY (
-        bot_id,
+        bot_name,
         ent_id
     )
 );
 -- TODO: Compress.
 
 CREATE TABLE AncillaryBotData1e4d (
-    -- Bot that uses this data.
-    bot_id BIGINT UNSIGNED NOT NULL,
+    -- Name of the bot that uses this data.
+    bot_name VARCHAR(255) NOT NULL,
     -- Entity which the data is about.
     ent_id BIGINT UNSIGNED NOT NULL,
 
@@ -341,7 +341,7 @@ CREATE TABLE AncillaryBotData1e4d (
     data_4 BIGINT UNSIGNED NOT NULL,
 
     PRIMARY KEY (
-        bot_id,
+        bot_name,
         ent_id
     )
 );
