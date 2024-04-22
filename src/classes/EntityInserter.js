@@ -13,10 +13,10 @@ export class EntityInserter {
 
 
   insertOrFind(entDefObj) {
-    // If entDefObj is an array, call this method on each element and return.
+    // If entDefObj is an array, call this method on each element and return
+    // the array with all the outIDs and exitCodes.
     if (Array.isArray(entDefObj)) {
-      entDefObj.forEach(val => (this.insertOrFind(val)));
-      return;
+      return entDefObj.map(val => (this.insertOrFind(val)));
     }
 
     // Else check the meta type of the entDefObj, and branch accordingly.
@@ -49,6 +49,8 @@ export class EntityInserter {
    * only public because they need to be called from callback functions.
   **/
 
+  /* Semi-private methods */
+
 
   storeEntID(key, entID) {
     let callbackArr = this.#idOrCallbackArrStore[key] ?? [];
@@ -70,14 +72,13 @@ export class EntityInserter {
     return;
   }
   
-  inputEntity(reqData, key) {
-    if (key) {
-      DBRequestManager.input(this, reqData, (obj, result) => {
-        obj.storeEntID(key, result.outID);
-      });
-    } else {
-      DBRequestManager.input(this, reqData, () => {});
-    }
+  inputEntity(reqData, key, callback) {
+    DBRequestManager.input(reqData, (result) => {
+      if (key) {
+        this.storeEntID(key, result.outID);
+      }
+      callback(result);
+    });
   }
 
 }

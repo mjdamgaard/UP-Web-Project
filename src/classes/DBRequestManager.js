@@ -12,7 +12,7 @@ export class DBRequestManager {
   // // down.
 
 
-  static query(obj, reqData, callbackData, callback) {
+  static query(reqData, callbackData, callback) {
     if (!callback) {
       callback = callbackData;
       callbackData = null;
@@ -27,14 +27,14 @@ export class DBRequestManager {
     let reqDataKey = JSON.stringify(reqData);
     let queryQueue = this.ongoingQueries[reqDataKey];
     if (queryQueue) {
-      queryQueue.push([obj, callback, callbackData]);
+      queryQueue.push([callback, callbackData]);
       return;
     }
     
     // Else initialize an ongoing query data queue, and make a $.getJSON()
     // call, which runs all the callbacks in the queue on at a time upon
     // receiving the response from the server.
-    this.ongoingQueries[reqDataKey] = [[obj, callback, callbackData]];
+    this.ongoingQueries[reqDataKey] = [[callback, callbackData]];
     let thisDBRM = this;
     let url = "http://localhost:80/query_handler.php";
     $.getJSON(url, encodedReqData, function(result) {
@@ -45,10 +45,9 @@ export class DBRequestManager {
 
       // Then call all callbacks in queryQueue with their associated data.
       for (let i = 0; i < queryQueue.length; i++) {
-        let obj = queryQueue[i][0];
-        let callback = queryQueue[i][1];
-        let callbackData = queryQueue[i][2];
-        callback(obj, result, callbackData);
+        let callback = queryQueue[i][0];
+        let callbackData = queryQueue[i][1];
+        callback(result, callbackData);
       }
       // // If cacheQuery is true, cache the query.
       // if (cacheQuery) {
@@ -57,139 +56,161 @@ export class DBRequestManager {
     });
   }
 
-  static input(obj, reqData, callbackData, callback) {
+  static input(reqData, callbackData, callback) {
     if (!callback) {
       callback = callbackData;
       callbackData = null;
     }
     let url = "http://localhost:80/input_handler.php";
     $.post(url, reqData, function(result) {
-      callback(obj, result, callbackData);
+      callback(result, callbackData);
     });
   }
 
 
 
-  static queryAndSet(setResults, key, ind, reqData) { 
+  static queryAndSet(setResults, key, reqData) {
     if (!reqData) {
-      reqData = ind;
-      ind = undefined;
-      if (!reqData) {
-        reqData = key;
-        key = undefined;
-      }
+      reqData = key;
+      key = undefined;
     }
 
-    // URL-encode the request data.
-    let encodedReqData = {};
-    Object.keys(reqData).forEach(function(key) {
-      encodedReqData[key] = encodeURIComponent(reqData[key]);
-    });
-
-    // If there is already an ongoing query with this reqData object, simply
-    // push the input data and return.
-    let reqDataKey = JSON.stringify(reqData);
-    let queryQueue = this.ongoingQueries[reqDataKey];
-    if (queryQueue) {
-      queryQueue.push([setResults, key, ind]);
-      return;
-    }
-
-    // // Else if the query is already cached, use that result and return.
-    // let cachedResult = this.cache[reqDataKey];
-    // if (cachedResult) {
-    //   callback(obj, cachedResult, callbackData);
-    //   return;
-    // }
-
-    // Else initialize an ongoing query data queue, and make an AJAX HTTP
-    // call, which runs all the callbacks in the queue on at a time upon
-    // receiving the response from the server.
-    this.ongoingQueries[reqDataKey] = [[setResults, key, ind]];
-    // let thisDBRM = this;
-    let url = "http://localhost:80/query_handler.php";
-    $.getJSON(url, encodedReqData, result => {
-      // Get and then delete the ongiong query queue.
-      let ongoingQueries = this.ongoingQueries;
-      let queryQueue = ongoingQueries[reqDataKey];
-      delete ongoingQueries[reqDataKey];
-
-      // Then call all setResults callbacks in queryQueue to change the ind'th
-      // entry of the associated results state.
-      let len = queryQueue.length;
-      for (let i = 0; i < len; i++) {
-        let setResults = queryQueue[i][0];
-        let key = queryQueue[i][1];
-        let ind = queryQueue[i][2];
-        if (key === undefined) {
-          setResults({data: result, isFetched: true, isFetching: false});
-        } else if (ind === undefined) {
-          setResults(prev => {
-            let ret = {...prev};
-            ret[key] = {data: result, isFetched: true, isFetching: false};
-            return ret;
-          });
-        } else {
-          setResults(prev => {
-            let ret = {...prev};
-            ret[key] ??= [];
-            ret[key][ind] = {data: result, isFetched: true, isFetching: false};
-            return ret;
-          });
-        }
-      }
-
-      // // if cacheQuery is true, cache the query.
-      // if (cacheQuery) {
-      //   this.cache[reqDataKey] = result;
-      // }
-    });
+    this.query(reqData, [setResults, key], this.#queryAndSetCallback);
   }
 
+  static #queryAndSetCallback = (result, callbackData) => {
+    let setResults = callbackData[0];
+    let key = callbackData[1];
+    if (key === undefined) {
+      setResults({data: result, isFetched: true, isFetching: false});
+    } else {
+      setResults(prev => {
+        let ret = {...prev};
+        ret[key] = {data: result, isFetched: true, isFetching: false};
+        return ret;
+      });
+    }
+  };
 
-  static inputAndSet(setResults, key, ind, reqData) {
+
+
+  // static queryAndSet(setResults, key, reqData) {
+  //   if (!reqData) {
+  //     reqData = key;
+  //     key = undefined;
+  //   }
+
+  //   // URL-encode the request data.
+  //   let encodedReqData = {};
+  //   Object.keys(reqData).forEach(function(key) {
+  //     encodedReqData[key] = encodeURIComponent(reqData[key]);
+  //   });
+
+  //   // If there is already an ongoing query with this reqData object, simply
+  //   // push the input data and return.
+  //   let reqDataKey = JSON.stringify(reqData);
+  //   let queryQueue = this.ongoingQueries[reqDataKey];
+  //   if (queryQueue) {
+  //     queryQueue.push([setResults, key, ind]);
+  //     return;
+  //   }
+
+  //   // // Else if the query is already cached, use that result and return.
+  //   // let cachedResult = this.cache[reqDataKey];
+  //   // if (cachedResult) {
+  //   //   callback(obj, cachedResult, callbackData);
+  //   //   return;
+  //   // }
+
+  //   // Else initialize an ongoing query data queue, and make an AJAX HTTP
+  //   // call, which runs all the callbacks in the queue on at a time upon
+  //   // receiving the response from the server.
+  //   this.ongoingQueries[reqDataKey] = [[setResults, key, ind]];
+  //   // let thisDBRM = this;
+  //   let url = "http://localhost:80/query_handler.php";
+  //   $.getJSON(url, encodedReqData, result => {
+  //     // Get and then delete the ongiong query queue.
+  //     let ongoingQueries = this.ongoingQueries;
+  //     let queryQueue = ongoingQueries[reqDataKey];
+  //     delete ongoingQueries[reqDataKey];
+
+  //     // Then call all setResults callbacks in queryQueue to change the ind'th
+  //     // entry of the associated results state.
+  //     let len = queryQueue.length;
+  //     for (let i = 0; i < len; i++) {
+  //       let setResults = queryQueue[i][0];
+  //       let key = queryQueue[i][1];
+  //       let ind = queryQueue[i][2];
+  //       if (key === undefined) {
+  //         setResults({data: result, isFetched: true, isFetching: false});
+  //       } else if (ind === undefined) {
+  //         setResults(prev => {
+  //           let ret = {...prev};
+  //           ret[key] = {data: result, isFetched: true, isFetching: false};
+  //           return ret;
+  //         });
+  //       } else {
+  //         setResults(prev => {
+  //           let ret = {...prev};
+  //           ret[key] ??= [];
+  //           ret[key][ind] = {data: result, isFetched: true, isFetching: false};
+  //           return ret;
+  //         });
+  //       }
+  //     }
+
+  //     // // if cacheQuery is true, cache the query.
+  //     // if (cacheQuery) {
+  //     //   this.cache[reqDataKey] = result;
+  //     // }
+  //   });
+  // }
+
+
+  static inputAndSet(setResults, key, reqData) {
     if (!reqData) {
-      reqData = ind;
-      ind = undefined;
-      if (!reqData) {
-        reqData = key;
-        key = undefined;
-      }
+      reqData = key;
+      key = undefined;
     }
 
     let url = "http://localhost:80/input_handler.php";
     $.post(url, reqData, result => {
       if (key === undefined) {
         setResults({data: result, isFetched: true, isFetching: false});
-      } else if (ind === undefined) {
+      } else {
         setResults(prev => {
           let ret = {...prev};
           ret[key] = {data: result, isFetched: true, isFetching: false};
           return ret;
         });
-      } else {
-        setResults(prev => {
-          let ret = {...prev};
-          ret[key] ??= [];
-          ret[key][ind] = {data: result, isFetched: true, isFetching: false};
-          return ret;
-        });
       }
+      // } else if (ind === undefined) {
+      //   setResults(prev => {
+      //     let ret = {...prev};
+      //     ret[key] = {data: result, isFetched: true, isFetching: false};
+      //     return ret;
+      //   });
+      // } else {
+      //   setResults(prev => {
+      //     let ret = {...prev};
+      //     ret[key] ??= [];
+      //     ret[key][ind] = {data: result, isFetched: true, isFetching: false};
+      //     return ret;
+      //   });
+      // }
     });
   }
 }
 
-// Hm, if react always sanitizes automatically, should I just not sanitize,
-// then? ..I guess not..
 
-export function sanitize(str) {
-  return str
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&apos;");
-}
+// export function sanitize(str) {
+//   return str
+//     .replaceAll("&", "&amp;")
+//     .replaceAll("<", "&lt;")
+//     .replaceAll(">", "&gt;")
+//     .replaceAll('"', "&quot;")
+//     .replaceAll("'", "&apos;");
+// }
 
 
 export default DBRequestManager;
