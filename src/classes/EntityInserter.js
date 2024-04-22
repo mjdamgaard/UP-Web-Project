@@ -1,5 +1,5 @@
 
-import {DBRequestManager} from "../hooks/DBRequests.js";
+import {DBRequestManager} from "../classes/DBRequestManager.js";
 
 
 
