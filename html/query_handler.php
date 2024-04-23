@@ -105,7 +105,7 @@ switch ($reqType) {
         $typeArr = array("id");
         // output:
         //     sim: [[metaType, title]],
-        //     def: [[metaType, title, defID]],
+        //     def: [[metaType, titleID, title, defID]],
         //     fun: [[metaType, funID, inputs]],
         //     propTag: [[metaType, subjID, propID]],
         //     text: [[metaType, textStart, len, dataHash]],
@@ -146,7 +146,7 @@ switch ($reqType) {
     case "defID":
         $sql = "CALL selectDefEntityID (?, ?)";
         $paramNameArr = array("t", "d");
-        $typeArr = array("str", "id");
+        $typeArr = array("id", "id");
         // output: [[entID]].
         break;
     case "funID":

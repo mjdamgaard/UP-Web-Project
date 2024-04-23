@@ -55,9 +55,9 @@ export class EntityInserter {
       });
     });
 
-    // Else check the meta type of the entDefObj, and branch accordingly.
+    // Then check the meta type of the entDefObj, and branch accordingly.
     switch (entDefObj.metaType) {      
-      case 's':
+      case 's': {
         let title = entDefObj.title;
         if (title[0] === "@") {
           // If entDefObj.title is a key, wait for it to resolve, then call
@@ -98,10 +98,12 @@ export class EntityInserter {
           this.#inputOrLookupEntity(reqData, title, modCallback)
         }
         break;
-
-      case 'd':
+      }
+      case 'd': {
+        let title = entDefObj.title;
+        let definition = entDefObj.definition;
         break;
-
+      }
       case 'f':
         break;
 

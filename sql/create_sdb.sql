@@ -182,15 +182,15 @@ CREATE TABLE DefinedEntityData (
     -- Standard entity data key (private).
     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- data key of a simple entity holding the title of this 'defined' entity.
-    title_data_key BIGINT UNSIGNED NOT NULL,
+    -- ID of a simple entity holding the title of this 'defined' entity.
+    title_id BIGINT UNSIGNED NOT NULL,
 
     -- ID of the property document (JSON) providing the initial definition of
     -- the entity. The property document is a JSON text listing all the
     -- defining properties of the entity, other than than the title.
     def_id BIGINT UNSIGNED NOT NULL,
 
-    UNIQUE INDEX (title_data_key, def_id)
+    UNIQUE INDEX (title_id, def_id)
 );
 
 

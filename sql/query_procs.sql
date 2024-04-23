@@ -147,7 +147,8 @@ CREATE PROCEDURE selectEntityInfo (
 )
 BEGIN
     DECLARE metaType CHAR;
-    DECLARE dataKey, titleDataKey, defID BIGINT UNSIGNED;
+    DECLARE dataKey BIGINT UNSIGNED;
+    DECLARE titleID, defID, titleDataKey BIGINT UNSIGNED;
 
     -- Get the metaType and dataKey.
     SELECT meta_type, data_key INTO metaType, dataKey 
@@ -164,11 +165,15 @@ BEGIN
 
     ELSEIF (metaType = 'd') THEN
         -- Select the returned info.
-        SELECT title_data_key, def_id INTO titleDataKey, defID
+        SELECT title_id, def_id INTO titleID, defID
         FROM DefinedEntityData
         WHERE data_key = dataKey;
+        SELECT data_key INTO titleDataKey
+        FROM Entities
+        WHERE id = titleID;
         SELECT
             metaType,
+            titleID,
             title,
             defID
         FROM SimpleEntityData
@@ -337,7 +342,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectDefEntityID (
-    IN titleStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN titleID BIGINT UNSIGNED,
     IN defID BIGINT UNSIGNED
 )
 BEGIN
@@ -348,14 +353,7 @@ BEGIN
         data_key = (
             SELECT data_key
             FROM DefinedEntityData
-            WHERE (
-                title_data_key = (
-                    SELECT data_key
-                    FROM SimpleEntityData
-                    WHERE title = titleStr
-                ) AND
-                def_id = defID
-            )
+            WHERE title_id = titleID AND def_id = defID
         )
     );
 END //

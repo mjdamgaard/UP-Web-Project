@@ -217,23 +217,26 @@ DELIMITER //
 CREATE PROCEDURE insertOrFindDefEntity (
     IN userID BIGINT UNSIGNED,
     IN recordCreator BOOL,
-    IN titleStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN titleID BIGINT UNSIGNED,
     IN defID TEXT
 )
-BEGIN
-    DECLARE outID, dataKey, titleDataKey BIGINT UNSIGNED;
+BEGIN proc: BEGIN
+    DECLARE outID, dataKey BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
+    DECLARE metaType CHAR;
 
-    -- First insert (if not existing already) the simple entity with the title.
-    CALL insertOrFindSimEntity(userID, recordCreator, titleStr);
-    -- Then select the data key of this (potentially new) simple entity.
-    SELECT data_key INTO titleDataKey
-    FROM SimpleEntityData
-    WHERE title = titleStr;
+    -- If titleID is not the ID of a simple entity, return exitCode = 2.
+    SELECT meta_type INTO metaType
+    FROM Entities
+    WHERE id = titleID;
+    IF (metaType != 's') THEN
+        SELECT NULL AS outID, 2 AS exitCode; -- failure.
+        LEAVE proc;
+    END IF;
 
-    -- Then continue the same way as the other related procedures.
-    INSERT IGNORE INTO DefinedEntityData (title_data_key, def_id)
-    VALUES (titleDataKey, defID);
+    -- Else continue the same way as the other related procedures.
+    INSERT IGNORE INTO DefinedEntityData (title_id, def_id)
+    VALUES (titleID, defID);
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
@@ -250,7 +253,7 @@ BEGIN
         SELECT data_key INTO dataKey
         FROM DefinedEntityData
         WHERE (
-            title_data_key = titleDataKey AND
+            title_id = titleID AND
             def_id = defID
         );
         SELECT id INTO outID
@@ -262,7 +265,7 @@ BEGIN
     END IF;
 
     SELECT outID, exitCode;
-END //
+END proc; END //
 DELIMITER ;
 
 
