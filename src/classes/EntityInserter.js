@@ -6,7 +6,6 @@ import {DBRequestManager} from "../classes/DBRequestManager.js";
 
 export class EntityInserter {
   #idOrCallbackArrStore = {};
-  #simpleEntIDStore = {};
 
   constructor(accountManager, recordCreator) {
     // Public properties:
@@ -55,6 +54,9 @@ export class EntityInserter {
       });
     });
 
+    // We also get the entity key property if any.
+    let entKey = entDefObj.key;
+
     // Then check the meta type of the entDefObj, and branch accordingly.
     switch (entDefObj.metaType) {      
       case 's': {
@@ -101,10 +103,54 @@ export class EntityInserter {
       }
       case 'd': {
         let title = entDefObj.title;
-        let definition = entDefObj.definition;
+        let def = entDefObj.definition;
+
+        // First let us insert or find the title entity right away with no
+        // supplied callback.
+        this.insertOrFind(title);
+        // (This will mean that if the title object includes an otherProps
+        // property, these otherProps will be up-rates two times for the
+        // title entity, but that's alright.)
+
+        // Then we insert the definition, and give it a callback to insert
+        // or find (expecting to do the latter) the title once again, after
+        // which we finally call #inputOrLookupEntity() for this 'defined'
+        // entity.
+        this.insertOrFind(def, (defID) => {
+          this.insertOrFind(title, (titleID) => {
+            let reqData = {
+              req: "def",
+              ses: this.accountManager.sesIDHex,
+              u: this.accountManager.inputUserID,
+              r: this.recordCreator,
+              t: titleID,
+              d: defID,
+            }
+            this.#inputOrLookupEntity(reqData, entKey, modCallback);
+          });
+        });
         break;
       }
       case 'f':
+        let fun = entDefObj.function;
+        let inputs = entDefObj.inputs;
+
+        // First we verify the inputs string.
+        if (inputs) {throw "TODO: Implement verification.";}
+
+        // Then we insert or find the function, with a callback to finally
+        // insert the functional entity once the funID is resolved.
+        this.insertOrFind(fun, (funID) => {
+          let reqData = {
+            req: "fun",
+            ses: this.accountManager.sesIDHex,
+            u: this.accountManager.inputUserID,
+            r: this.recordCreator,
+            f: funID,
+            i: inputs,
+          }
+          this.#inputOrLookupEntity(reqData, entKey, modCallback);
+        });
         break;
 
       case 'p':
