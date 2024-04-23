@@ -43,15 +43,17 @@ export class EntityInserter {
 
     // Else, modify the callback, first of all, such that it also up-rates
     // the properties of entDefObj.otherProps for the entity once its ID is
-    // gotten.
-    let modCallback = (entID) => {
+    // gotten, if entDefObj.otherProps is not undefined (or falsy).
+    let modCallback = (!entDefObj.otherProps) ? callback : ((entID) => {
       // First call the original callback function.
       callback(entID);
 
-      // Then up-rate the 'other properties' found in entDefObj.otherProps.
-      
-      // TODO: Implement.
-    };
+      // Then up-rate the 'other properties' found in entDefObj.otherProps,
+      // but not before substituting any key references in otherProps.
+      this.getSubstitutedText(entDefObj.otherProps, (propDoc) => {
+        this.#uprateProperties(entID, propDoc);
+      });
+    });
 
     // Else check the meta type of the entDefObj, and branch accordingly.
     switch (entDefObj.metaType) {      
@@ -160,6 +162,14 @@ export class EntityInserter {
       this.getSubstitutedText(newText, callback);
     });
     return;
+  }
+
+  // #uprateProperties() takes an entity ID and a property document, which HAS
+  // to have ALREADY been substituted via a call to getSubstitutedText(), and
+  // up-rates all the contained properties for the given entity (with a maximal
+  // rating).
+  #uprateProperties(entID, propDoc) {
+    // TODO: Implement.
   }
 
 
