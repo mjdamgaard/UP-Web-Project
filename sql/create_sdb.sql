@@ -150,34 +150,17 @@ CREATE TABLE Entities (
     -- Entity ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- Entity meta type. (This can be either 'd', 's', 'f', 'p', 't', 'b', 'u',
-    -- or 'a'.)
+    -- Entity meta type. (This can be either 's', 'd', 'f', 'p', 't', 'b',
+    -- 'u', or 'a'.)
     meta_type CHAR NOT NULL,
 
     -- Entity definition.
-    data_key BIGINT UNSIGNED NOT NULL
+    data_key BIGINT UNSIGNED NOT NULL,
 
-    -- UNIQUE INDEX (meta_type, data_key)
+    UNIQUE INDEX (meta_type, data_key)
 );
 
 
-
-/* Property-defined entities (or 'defined entities' for short) */
-
-CREATE TABLE DefinedEntityData (
-    -- Standard entity data key (private).
-    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
-    -- Title. A potentially shortened (or full) title of the entity.
-    title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-
-    -- ID of the property document (JSON) providing the initial definition of
-    -- the entity. The property document is a JSON text listing all the
-    -- defining properties of the entity, other than than the title.
-    def_id BIGINT UNSIGNED NOT NULL,
-
-    UNIQUE INDEX (title, def_id)
-);
 
 
 /* Simply defined entities (or 'simple entities' for short) */
@@ -193,6 +176,24 @@ CREATE TABLE SimpleEntityData (
 );
 
 
+/* Property-defined entities (or 'defined entities' for short) */
+
+CREATE TABLE DefinedEntityData (
+    -- Standard entity data key (private).
+    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    -- data key of a simple entity holding the title of this 'defined' entity.
+    title_data_key BIGINT UNSIGNED NOT NULL,
+
+    -- ID of the property document (JSON) providing the initial definition of
+    -- the entity. The property document is a JSON text listing all the
+    -- defining properties of the entity, other than than the title.
+    def_id BIGINT UNSIGNED NOT NULL,
+
+    UNIQUE INDEX (title_data_key, def_id)
+);
+
+
 /* Functional (or 'formal') entities */
 
 CREATE TABLE FunctionalEntityData (
@@ -204,7 +205,7 @@ CREATE TABLE FunctionalEntityData (
     fun_id BIGINT UNSIGNED NOT NULL,
     
     -- A string listing the IDs of the inputs of the function.
-    input_list VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    input_list VARCHAR(255) NOT NULL,
 
     UNIQUE INDEX (fun_id, input_list)
 );
@@ -228,6 +229,7 @@ CREATE TABLE PropertyTagEntityData (
 
 
 
+/* Text entities */
 
 CREATE TABLE TextData (
     -- Text data key (private).
@@ -249,6 +251,8 @@ CREATE TABLE TextData (
 );
 
 
+/* Binary string entities */
+
 CREATE TABLE BinaryData (
     -- Binary string/file (BLOB) data key (private).
     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -265,8 +269,7 @@ CREATE TABLE BinaryData (
 
 
 
-
-
+/* User entities */
 
 CREATE TABLE UserData (
     -- User data key (private).

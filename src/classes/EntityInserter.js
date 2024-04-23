@@ -8,8 +8,10 @@ export class EntityInserter {
   #idOrCallbackArrStore = {};
   #simpleEntIDStore = {};
 
-  constructor(accountManager) {
+  constructor(accountManager, recordCreator) {
+    // Public properties:
     this.accountManager = accountManager;
+    this.recordCreator = recordCreator ?? false;
   }
 
   // insertOrFind() parses an entity definition object and uploads all the
@@ -83,12 +85,11 @@ export class EntityInserter {
           // title as the key. If #inputOrLookupEntity() has been called before
           // with the same key, it will not send another request put just
           // pass the callback function to wait the the entID to be resolved.
-          let accountManager = this.accountManager;
           let reqData = {
             req: "sim",
-            ses: accountManager.sesIDHex,
-            u: accountManager.inputUserID,
-            r: 1,
+            ses: this.accountManager.sesIDHex,
+            u: this.accountManager.inputUserID,
+            r: this.recordCreator,
             t: conTitle,
           }
           this.#inputOrLookupEntity(reqData, title, modCallback)

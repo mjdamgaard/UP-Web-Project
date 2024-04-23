@@ -8,6 +8,8 @@ DROP PROCEDURE selectRating;
 DROP PROCEDURE selectEntityInfo;
 
 DROP PROCEDURE selectText;
+DROP PROCEDURE selectBinary;
+
 DROP PROCEDURE selectUserInfo;
 DROP PROCEDURE selectBotInfo;
 
@@ -145,29 +147,32 @@ CREATE PROCEDURE selectEntityInfo (
 )
 BEGIN
     DECLARE metaType CHAR;
-    DECLARE dataKey BIGINT UNSIGNED;
+    DECLARE dataKey, titleDataKey, defID BIGINT UNSIGNED;
 
     -- Get the metaType and dataKey.
     SELECT meta_type, data_key INTO metaType, dataKey 
     FROM Entities
     WHERE id = entID;
 
-    IF (metaType = 'd') THEN
-        -- Select the returned info.
-        SELECT
-            metaType,
-            title,
-            def_id AS defID
-        FROM DefinedEntityData
-        WHERE data_key = dataKey;
-
-    ELSEIF (metaType = 's') THEN
+    IF (metaType = 's') THEN
         -- Select the returned info.
         SELECT
             metaType,
             title
         FROM SimpleEntityData
         WHERE data_key = dataKey;
+
+    ELSEIF (metaType = 'd') THEN
+        -- Select the returned info.
+        SELECT title_data_key, def_id INTO titleDataKey, defID
+        FROM DefinedEntityData
+        WHERE data_key = dataKey;
+        SELECT
+            metaType,
+            title,
+            defID
+        FROM SimpleEntityData
+        WHERE data_key = titleDataKey;
 
     ELSEIF (metaType = 'f') THEN
         -- Select the returned info.
@@ -310,25 +315,6 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE selectDefEntityID (
-    IN titleStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-    IN defID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT id AS entID
-    FROM Entities
-    WHERE (
-        meta_type = 'd' AND
-        data_key = (
-            SELECT data_key
-            FROM DefinedEntityData
-            WHERE title = titleStr AND def_id = defID
-        )
-    );
-END //
-DELIMITER ;
-
 
 DELIMITER //
 CREATE PROCEDURE selectSimEntityID (
@@ -350,9 +336,36 @@ DELIMITER ;
 
 
 DELIMITER //
+CREATE PROCEDURE selectDefEntityID (
+    IN titleStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN defID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT id AS entID
+    FROM Entities
+    WHERE (
+        meta_type = 'd' AND
+        data_key = (
+            SELECT data_key
+            FROM DefinedEntityData
+            WHERE (
+                title_data_key = (
+                    SELECT data_key
+                    FROM SimpleEntityData
+                    WHERE title = titleStr
+                ) AND
+                def_id = defID
+            )
+        )
+    );
+END //
+DELIMITER ;
+
+
+DELIMITER //
 CREATE PROCEDURE selectFunEntityID (
     IN funID BIGINT UNSIGNED,
-    IN inputs VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
+    IN inputs VARCHAR(255)
 )
 BEGIN
     SELECT id AS entID
@@ -391,7 +404,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectTextEntityID (
-    IN dataHash VARCHAR(50)
+    IN dataHash VARCHAR(255)
 )
 BEGIN
     SELECT id AS entID
@@ -410,7 +423,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectBinaryEntityID (
-    IN dataHash VARCHAR(50)
+    IN dataHash VARCHAR(255)
 )
 BEGIN
     SELECT id AS entID
@@ -429,7 +442,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectUserEntityID (
-    IN uName VARCHAR(50)
+    IN uName VARCHAR(255)
 )
 BEGIN
     SELECT id AS entID
@@ -448,7 +461,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectBotEntityID (
-    IN botName VARCHAR(50)
+    IN botName VARCHAR(255)
 )
 BEGIN
     SELECT id AS entID

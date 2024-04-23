@@ -103,8 +103,9 @@ switch ($reqType) {
         $sql = "CALL selectEntityInfo (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: def: [[metaType, title, defID]],
+        // output:
         //     sim: [[metaType, title]],
+        //     def: [[metaType, title, defID]],
         //     fun: [[metaType, funID, inputs]],
         //     propTag: [[metaType, subjID, propID]],
         //     text: [[metaType, textStart, len, dataHash]],
@@ -136,16 +137,16 @@ switch ($reqType) {
         $typeArr = array("id");
         // output: [[botName, botDescription]].
         break;
-    case "defID":
-        $sql = "CALL selectDefEntityID (?, ?)";
-        $paramNameArr = array("t", "d");
-        $typeArr = array("str", "id");
-        // output: [[entID]].
-        break;
     case "simID":
         $sql = "CALL selectSimEntityID (?)";
         $paramNameArr = array("t");
         $typeArr = array("str");
+        // output: [[entID]].
+        break;
+    case "defID":
+        $sql = "CALL selectDefEntityID (?, ?)";
+        $paramNameArr = array("t", "d");
+        $typeArr = array("str", "id");
         // output: [[entID]].
         break;
     case "funID":

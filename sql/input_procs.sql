@@ -171,53 +171,6 @@ DELIMITER ;
 
 
 
-
-DELIMITER //
-CREATE PROCEDURE insertOrFindDefEntity (
-    IN userID BIGINT UNSIGNED,
-    IN recordCreator BOOL,
-    IN titleStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-    IN defID TEXT
-)
-BEGIN
-    DECLARE outID, dataKey BIGINT UNSIGNED;
-    DECLARE exitCode TINYINT;
-
-    INSERT IGNORE INTO DefinedEntityData (title, def_id)
-    VALUES (titleStr, defID);
-    IF (mysql_affected_rows() > 0) THEN
-        SET exitCode = 0; -- insert.
-        SELECT LAST_INSERT_ID() INTO dataKey;
-        INSERT INTO Entities (meta_type, data_key)
-        VALUES ('d', dataKey);
-        SELECT LAST_INSERT_ID() INTO outID;
-        -- If recordCreator, call a bot to rate the user as the creator of
-        -- the new entity.
-        IF (recordCreator) THEN
-            CALL creatorRaterBot (outID, userID);
-        END IF;
-    ELSE
-        SET exitCode = 1; -- find.
-        SELECT data_key INTO dataKey
-        FROM DefinedEntityData
-        WHERE (
-            title = titleStr AND
-            def_id = defID
-        );
-        SELECT id INTO outID
-        FROM Entities
-        WHERE (
-            meta_type = 'd' AND
-            data_key = dataKey
-        );
-    END IF;
-
-    SELECT outID, exitCode;
-END //
-DELIMITER ;
-
-
-
 DELIMITER //
 CREATE PROCEDURE insertOrFindSimEntity (
     IN userID BIGINT UNSIGNED,
@@ -250,6 +203,60 @@ BEGIN
         FROM Entities
         WHERE (
             meta_type = 's' AND
+            data_key = dataKey
+        );
+    END IF;
+
+    SELECT outID, exitCode;
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertOrFindDefEntity (
+    IN userID BIGINT UNSIGNED,
+    IN recordCreator BOOL,
+    IN titleStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN defID TEXT
+)
+BEGIN
+    DECLARE outID, dataKey, titleDataKey BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
+
+    -- First insert (if not existing already) the simple entity with the title.
+    CALL insertOrFindSimEntity(userID, recordCreator, titleStr);
+    -- Then select the data key of this (potentially new) simple entity.
+    SELECT data_key INTO titleDataKey
+    FROM SimpleEntityData
+    WHERE title = titleStr;
+
+    -- Then continue the same way as the other related procedures.
+    INSERT IGNORE INTO DefinedEntityData (title_data_key, def_id)
+    VALUES (titleDataKey, defID);
+    IF (mysql_affected_rows() > 0) THEN
+        SET exitCode = 0; -- insert.
+        SELECT LAST_INSERT_ID() INTO dataKey;
+        INSERT INTO Entities (meta_type, data_key)
+        VALUES ('d', dataKey);
+        SELECT LAST_INSERT_ID() INTO outID;
+        -- If recordCreator, call a bot to rate the user as the creator of
+        -- the new entity.
+        IF (recordCreator) THEN
+            CALL creatorRaterBot (outID, userID);
+        END IF;
+    ELSE
+        SET exitCode = 1; -- find.
+        SELECT data_key INTO dataKey
+        FROM DefinedEntityData
+        WHERE (
+            title_data_key = titleDataKey AND
+            def_id = defID
+        );
+        SELECT id INTO outID
+        FROM Entities
+        WHERE (
+            meta_type = 'd' AND
             data_key = dataKey
         );
     END IF;

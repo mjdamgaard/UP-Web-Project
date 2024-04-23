@@ -65,15 +65,15 @@ switch ($reqType) {
         $paramNameArr = array("u", "t", "i", "r", "l");
         $typeArr = array("id", "id", "id", "rat", "unix_time");
         break;
-    case "def":
-        $sql = "CALL insertOrFindDefEntity (?, ?, ?, ?)";
-        $paramNameArr = array("u", "r", "t", "d");
-        $typeArr = array("id", "tint", "str", "id");
-        break;
     case "sim":
         $sql = "CALL insertOrFindSimEntity (?, ?, ?)";
         $paramNameArr = array("u", "r", "t");
         $typeArr = array("id", "tint", "str");
+        break;
+    case "def":
+        $sql = "CALL insertOrFindDefEntity (?, ?, ?, ?)";
+        $paramNameArr = array("u", "r", "t", "d");
+        $typeArr = array("id", "tint", "str", "id");
         break;
     case "fun":
         $sql = "CALL insertOrFindFunEntity (?, ?, ?, ?)";
