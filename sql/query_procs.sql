@@ -240,7 +240,7 @@ BEGIN
     SELECT
         CASE WHEN maxLen = 0 THEN txt
         ELSE SUBSTRING(txt, 1, maxLen)
-        END
+        END AS text
     FROM TextData
     WHERE data_key = (
         SELECT data_key
@@ -249,6 +249,23 @@ BEGIN
     );
 END //
 DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectBinary (
+    IN entID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT bin
+    FROM BinaryData
+    WHERE data_key = (
+        SELECT data_key
+        FROM Entities
+        WHERE id = entID
+    );
+END //
+DELIMITER ;
+
 
 
 DELIMITER //

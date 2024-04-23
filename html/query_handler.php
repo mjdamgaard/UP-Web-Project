@@ -66,7 +66,7 @@ switch ($reqType) {
             "uint", "uint",
             "tint"
         );
-        // output: [[ratVal, entDefID], ...].
+        // output: [[ratVal, instID], ...].
         break;
         case "listSK":
             header("Cache-Control: max-age=3");
@@ -83,7 +83,7 @@ switch ($reqType) {
                 "uint", "uint",
                 "tint"
             );
-            // output: [[ratVal, entDefID], ...].
+            // output: [[ratVal, instID], ...].
             break;
     case "rat":
         header("Cache-Control: max-age=3");
@@ -100,45 +100,22 @@ switch ($reqType) {
     //     // output: [[userID, catID, ratVal, instID, changedAt], ...].
     //     break;
     case "ent":
-        $sql = "CALL selectEntity (?)";
+        $sql = "CALL selectEntityInfo (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [[str]].
-        break;
-    case "entID":
-        $sql = "CALL selectEntityID (?)";
-        $paramNameArr = array("d");
-        $typeArr = array("str");
-        // output: [[strID]].
-        break;
-    case "username":
-        $sql = "CALL selectUsername (?)";
-        $paramNameArr = array("id");
-        $typeArr = array("id");
-        // output: [[username]].
-        break;
-    case "userInfo":
-        $sql = "CALL selectUserInfo (?)";
-        $paramNameArr = array("id");
-        $typeArr = array("id");
-        // output: [[username, publicKeys]].
-        break;
-    case "userID":
-        $sql = "CALL selectUserID (?)";
-        $paramNameArr = array("n");
-        $typeArr = array("username");
-        // output: [[userID]].
+        // output: def: [[metaType, title, defID]],
+        //     sim: [[metaType, title]],
+        //     fun: [[metaType, funID, inputs]],
+        //     propTag: [[metaType, subjID, propID]],
+        //     text: [[metaType, textStart, len, dataHash]],
+        //     bin: [[metaType, len, dataHash]],
+        //     user: [[metaType, username]],
+        //     bot: [[metaType, botName]],
         break;
     case "text":
-        $sql = "CALL selectText (?)";
-        $paramNameArr = array("id");
-        $typeArr = array("id");
-        // output: [[text]].
-        break;
-    case "textSub":
-        $sql = "CALL selectTextSubstring (?, ?, ?)";
-        $paramNameArr = array("id", "l", "s");
-        $typeArr = array("id", "ushort", "int");
+        $sql = "CALL selectText (?, ?)";
+        $paramNameArr = array("id", "l");
+        $typeArr = array("id", "uint");
         // output: [[text]].
         break;
     case "bin":
@@ -147,11 +124,77 @@ switch ($reqType) {
         $typeArr = array("id");
         // output: [[bin]].
         break;
-    case "binSub":
-        $sql = "CALL selectBinarySubstring (?, ?, ?)";
-        $paramNameArr = array("id", "l", "s");
-        $typeArr = array("id", "ushort", "int");
-        // output: [[bin]].
+    case "user":
+        $sql = "CALL selectUserInfo (?)";
+        $paramNameArr = array("id");
+        $typeArr = array("id");
+        // output: [[username, publicKeys]].
+        break;
+    case "bot":
+        $sql = "CALL selectBotInfo (?)";
+        $paramNameArr = array("id");
+        $typeArr = array("id");
+        // output: [[botName, botDescription]].
+        break;
+    case "defID":
+        $sql = "CALL selectDefEntityID (?, ?)";
+        $paramNameArr = array("t", "d");
+        $typeArr = array("str", "id");
+        // output: [[entID]].
+        break;
+    case "simID":
+        $sql = "CALL selectSimEntityID (?)";
+        $paramNameArr = array("t");
+        $typeArr = array("str");
+        // output: [[entID]].
+        break;
+    case "funID":
+        $sql = "CALL selectSimEntityID (?, ?)";
+        $paramNameArr = array("f", "i");
+        $typeArr = array("id", "str");
+        // output: [[entID]].
+        break;
+    case "propTagID":
+        $sql = "CALL selectPropTagEntityID (?, ?)";
+        $paramNameArr = array("s", "p");
+        $typeArr = array("id", "id");
+        // output: [[entID]].
+        break;
+    case "textID":
+        $sql = "CALL selectTextEntityID (?)";
+        $paramNameArr = array("h");
+        $typeArr = array("str");
+        // output: [[entID]].
+        break;
+    case "binID":
+        $sql = "CALL selectBinaryEntityID (?)";
+        $paramNameArr = array("h");
+        $typeArr = array("str");
+        // output: [[entID]].
+        break;
+    case "userID":
+        $sql = "CALL selectUserEntityID (?)";
+        $paramNameArr = array("n");
+        $typeArr = array("str");
+        // output: [[entID]].
+        break;
+    case "textID":
+        $sql = "CALL selectBotEntityID (?)";
+        $paramNameArr = array("n");
+        $typeArr = array("str");
+        // output: [[entID]].
+        break;
+    case "ancBotData1e2d":
+        $sql = "CALL selectAncillaryBotData1e2d (?, ?)";
+        $paramNameArr = array("n", "e");
+        $typeArr = array("str", "id");
+        // output: [[data1, data2]].
+        break;
+    case "ancBotData1e4d":
+        $sql = "CALL selectAncillaryBotData1e4d (?, ?)";
+        $paramNameArr = array("n", "e");
+        $typeArr = array("str", "id");
+        // output: [[data1, data2, data3, data4]].
         break;
     default:
         echoBadErrorJSONAndExit("Unrecognized request type");

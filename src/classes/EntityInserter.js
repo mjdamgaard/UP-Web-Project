@@ -8,6 +8,9 @@ export class EntityInserter {
   #idOrCallbackArrStore = {};
   #simpleEntIDStore = {};
 
+  constructor(accountManager) {
+    this.accountManager = accountManager;
+  }
 
   // insertOrFind() parses an entity definition object and uploads all the
   // relevant entities and related ratings instructed by this object.
@@ -63,15 +66,15 @@ export class EntityInserter {
         } else {
           // If entDefObj.title is a title, potentially convert a leading '\@'
           // to '@'.
-          let convTitle = (entDefObj.substring(0, 2) === "\\@") ?
+          let conTitle = (entDefObj.substring(0, 2) === "\\@") ?
             entDefObj.substring(1) :
             entDefObj;
           
           // Also check if the converted title is not too long.
-          let titleLen = (new TextEncoder().encode(convTitle)).length;
+          let titleLen = (new TextEncoder().encode(conTitle)).length;
           if (titleLen > 255) {
             throw (
-              'EntityInserter: String "' + convTitle + "' has UTF-8 length " +
+              'EntityInserter: String "' + conTitle + "' has UTF-8 length " +
               titleLen + " > 255."
             );
           }
@@ -80,9 +83,13 @@ export class EntityInserter {
           // title as the key. If #inputOrLookupEntity() has been called before
           // with the same key, it will not send another request put just
           // pass the callback function to wait the the entID to be resolved.
+          let accountManager = this.accountManager;
           let reqData = {
-            req: "simEnt",
-            // TODO: Continue.
+            req: "sim",
+            ses: accountManager.sesIDHex,
+            u: accountManager.inputUserID,
+            r: 1,
+            t: conTitle,
           }
           this.#inputOrLookupEntity(reqData, title, modCallback)
         }

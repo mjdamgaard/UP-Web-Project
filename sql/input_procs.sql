@@ -354,8 +354,7 @@ DELIMITER ;
 
 
 
--- TODO: Correct insertText() and insertBinary() to search for (and find)
--- existing text/binaries with matching hashes.
+
 
 DELIMITER //
 CREATE PROCEDURE insertOrFindTextEntity (

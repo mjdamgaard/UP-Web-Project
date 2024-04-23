@@ -65,17 +65,31 @@ switch ($reqType) {
         $paramNameArr = array("u", "t", "i", "r", "l");
         $typeArr = array("id", "id", "id", "rat", "unix_time");
         break;
-    case "ent":
-        $sql = "CALL insertOrFindEntity (?, ?, ?)";
-        $paramNameArr = array("u", "r", "d");
+    case "def":
+        $sql = "CALL insertOrFindDefEntity (?, ?, ?, ?)";
+        $paramNameArr = array("u", "r", "t", "d");
+        $typeArr = array("id", "tint", "str", "id");
+        break;
+    case "sim":
+        $sql = "CALL insertOrFindSimEntity (?, ?, ?)";
+        $paramNameArr = array("u", "r", "t");
         $typeArr = array("id", "tint", "str");
         break;
+    case "fun":
+        $sql = "CALL insertOrFindFunEntity (?, ?, ?, ?)";
+        $paramNameArr = array("u", "r", "f", "i");
+        $typeArr = array("id", "tint", "id", "str");
+        break;
+    case "propTag":
+        $sql = "CALL insertOrFindPropTagEntity (?, ?, ?, ?)";
+        $paramNameArr = array("u", "r", "s", "p");
+        $typeArr = array("id", "tint", "id", "id");
+        break;
     case "text":
-        // $sql = "CALL insertText (?, ?, ?)";
-        // $paramNameArr = array("u", "n", "s");
-        // $typeArr = array("id", "str", "text");
-        // break;
-        echoErrorJSONAndExit('The "text" request type is not implemented yet');
+        $sql = "CALL insertOrFindSimEntity (?, ?, ?)";
+        $paramNameArr = array("u", "r", "t");
+        $typeArr = array("id", "tint", "text");
+        break;
     case "bin":
         // $sql = "CALL insertBinary (?, ?, ?)";
         // $paramNameArr = array("u", "n", "b");
