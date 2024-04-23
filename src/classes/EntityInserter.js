@@ -22,7 +22,7 @@ export class EntityInserter {
   // entDefObj is an array, callback is called on the last outID from the array.
   insertOrFind(entDefObj, callback) {
     if (callback === undefined) {
-      callback = () => {};
+      callback = (entID) => {};
     }
 
     // If entDefObj is an array, call this method on each element and return,
@@ -54,16 +54,17 @@ export class EntityInserter {
     };
 
     // Else check the meta type of the entDefObj, and branch accordingly.
-    switch (entDefObj.metaType) {
-      case 'd':
-
-        break;
-      
+    switch (entDefObj.metaType) {      
       case 's':
         let title = entDefObj.title;
         if (title[0] === "@") {
           // If entDefObj.title is a key, wait for it to resolve, then call
           // the modified callback function.
+          if (!/^@[a-zA-Z][\w_]*\.$/.test(title)) {
+            throw (
+              'EntityInserter: "' + title + '" is not a valid key reference.'
+            );
+          }
           this.#waitForIDThen(title, modCallback);
         } else {
           // If entDefObj.title is a title, potentially convert a leading '\@'
@@ -76,8 +77,8 @@ export class EntityInserter {
           let titleLen = (new TextEncoder().encode(conTitle)).length;
           if (titleLen > 255) {
             throw (
-              'EntityInserter: String "' + conTitle + "' has UTF-8 length " +
-              titleLen + " > 255."
+              'EntityInserter: String "' + conTitle + '" has UTF-8 length ' +
+              titleLen + ' > 255.'
             );
           }
 
@@ -94,6 +95,9 @@ export class EntityInserter {
           }
           this.#inputOrLookupEntity(reqData, title, modCallback)
         }
+        break;
+
+      case 'd':
         break;
 
       case 'f':
@@ -117,7 +121,45 @@ export class EntityInserter {
       default:
         throw "EntityInserter: Unrecognized meta type.";
     }
+    return;
+  }
 
+
+  // getSubstitutedText() takes a text containing key references of the form
+  // /@[a-zA-Z][\w_]*\./ and substitutes these with entity references of the
+  // form /@[1-9][0-9]*\./, by looking up the entity IDs via calls to the
+  // #waitForIDThen() method. getSubstitutedText() then finally calls the
+  // supplied callback function on the converted text.
+  getSubstitutedText(text, callback) {
+    // If there are no key references (left) in the text, convert all
+    // occurrences of '\@' to '@', and '\\' to '\', and verify that there are
+    // no ill-formed references, then call the callback function and return;
+    let firstKeyReference = (text.match(/@[a-zA-Z][\w_]*\./g) ?? [])[0];
+    if (!firstKeyReference) {
+      let transformedText = text
+        .replaceAll("\\\\", "\\\\0")
+        .replaceAll("\\@", "\\\\1");
+      let containsIllFormedRefs = (
+        transformedText.match(/@/g).length !==
+        transformedText.match(/@[1-9][0-9]*\./g).length
+      );
+      if (containsIllFormedRefs) {
+        throw (
+          'EntityInserter: text "' + text + '" contains ill-formed references.'
+        );
+      }
+      // If this test succeeds, call the callback function on the (final) text.
+      callback(text);
+      return;
+    }
+
+    // Else wait for the ID of the first key reference, then call this method
+    // again recursively on the text with this first key reference substituted.
+    this.#waitForIDThen(firstKeyReference, (entID) => {
+      let newText = text.replace(firstKeyReference, "@" + entID + ".");
+      this.getSubstitutedText(newText, callback);
+    });
+    return;
   }
 
 
@@ -141,7 +183,8 @@ export class EntityInserter {
     
     // Else idOrCallbackArr is already the ID rather than an array, so simply
     // call the callback function immediately.
-    callback(idOrCallbackArr);
+    let entID = idOrCallbackArr;
+    callback(entID);
     return;
   }
 
@@ -188,6 +231,7 @@ export class EntityInserter {
         callback(result.outID);
       });
     }
+    return;
   }
 
 }
