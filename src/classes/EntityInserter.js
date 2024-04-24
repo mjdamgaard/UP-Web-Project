@@ -37,20 +37,32 @@ export class EntityInserter {
     // If entDefObj is a string, insert the resulting string as a simple
     // entity, passing the callback function.
     if (typeof entDefObj === "string") {
-      return this.insertOrFind({metaType: 's', title: entDefObj}, callback);
+      this.insertOrFind({metaType: 's', title: entDefObj}, callback);
+      return;
     }
 
     // Else, modify the callback, first of all, such that it also up-rates
     // the properties of entDefObj.otherProps for the entity once its ID is
     // gotten, if entDefObj.otherProps is not undefined (or falsy).
-    let modCallback = (!entDefObj.otherProps) ? callback : ((entID) => {
-      // Call the original callback function, and also up-rate the
-      // 'other properties' found in entDefObj.otherProps.
+    let modCallback = (entID) => {
+      // First call the original callback function.
       callback(entID);
-      this.insertOrFind(entDefObj.otherProps, (propDocID) => {
-        this.#uprateProperties(entID, propDocID);
-      });
-    });
+      // Then up-rate the 'other properties' found in entDefObj.otherProps.
+      if (entDefObj.otherProps) {
+        this.insertOrFind(entDefObj.otherProps, (propDocID) => {
+          this.#uprateProperties(entID, propDocID);
+        });
+      }
+      // Then up-rate this entity for the tags found in entDefObj.fittingTags.
+      if (entDefObj.fittingTags) {
+        entDefObj.fittingTags.forEach(val => {
+          let [tag, rating] = val;
+          this.insertOrFind(tag, (tagID) => {
+            this.#insertRating(tagID, entID, rating);
+          });
+        });
+      }
+    };
 
     // We also get the entity key property if any.
     let key = entDefObj.key;
@@ -88,45 +100,62 @@ export class EntityInserter {
   #insertOrFindSimpleEntity(entDefObj, modCallback) {
     let title = entDefObj.title;
     if (title[0] === "@") {
-      // If entDefObj.title is a key, wait for it to resolve, then call
-      // the modified callback function.
+      // If title is an entity reference, simply call the modified callback
+      // immediately and return. 
+      if (/^@[1-9]/.test(title)) {
+        // Throw if the entity reference is ill-formed.
+        if (!/^@[1-9][0-9]*\.$/.test(title)) {
+          throw (
+            'EntityInserter: "' + title + '" is not a valid entity reference.'
+          );
+        }
+        // Else call the modCallback and return.
+        let entID = title.slice(1, -1);
+        modCallback(entID);
+        return;
+      }
+
+      // If title is a key, wait for it to resolve, then call the modified
+      // callback function.
       if (!/^@[a-zA-Z][\w_]*\.$/.test(title)) {
         throw (
           'EntityInserter: "' + title + '" is not a valid key reference.'
         );
       }
       this.#waitForIDThen(title, modCallback);
-    } else {
-      // If entDefObj.title is a title, potentially convert a leading '\@'
-      // to '@'.
-      let conTitle = (entDefObj.substring(0, 2) === "\\@") ?
-        entDefObj.substring(1) :
-        entDefObj;
-      
-      // Also check if the converted title is not too long.
-      let titleLen = (new TextEncoder().encode(conTitle)).length;
-      if (titleLen > 255) {
-        throw (
-          'EntityInserter: String "' + conTitle + '" has UTF-8 length ' +
-          titleLen + ' > 255.'
-        );
-      }
-
-      // Then construct an input request with the unconverted
-      // title as the key. If #inputOrLookupEntity() has been called before
-      // with the same key, it will not send another request put just
-      // pass the callback function to wait the the entID to be resolved.
-      let reqData = {
-        req: "sim",
-        ses: this.accountManager.sesIDHex,
-        u: this.accountManager.inputUserID,
-        r: this.recordCreator,
-        t: conTitle,
-      }
-      this.#inputOrLookupEntity(reqData, title, modCallback)
+      return;
     }
 
+    // If title is a title, potentially convert a leading '\@' to '@'.
+    let actualTitle = (entDefObj.substring(0, 2) === "\\@") ?
+      entDefObj.substring(1) :
+      entDefObj;
+    
+    // Also check if the converted title is not too long.
+    let titleLen = (new TextEncoder().encode(actualTitle)).length;
+    if (titleLen > 255) {
+      throw (
+        'EntityInserter: String "' + actualTitle + '" has UTF-8 length ' +
+        titleLen + ' > 255.'
+      );
+    }
+
+    // Then construct an input request with the unconverted
+    // title as the key. If #inputOrLookupEntity() has been called before
+    // with the same key, it will not send another request put just
+    // pass the callback function to wait the the entID to be resolved.
+    let reqData = {
+      req: "sim",
+      ses: this.accountManager.sesIDHex,
+      u: this.accountManager.inputUserID,
+      r: this.recordCreator,
+      t: actualTitle,
+    };
+    this.#inputOrLookupEntity(reqData, title, modCallback);
+    return;
   }
+
+
 
 
   #insertOrFindDefinedEntity(entDefObj, key, modCallback) {
@@ -146,7 +175,7 @@ export class EntityInserter {
           r: this.recordCreator,
           t: titleID,
           d: defID,
-        }
+        };
         this.#inputOrLookupEntity(reqData, key, (entID) => {
           // Call the callback, and also uprate the properties contained
           // in the property document that def defined for this new entity.
@@ -175,7 +204,7 @@ export class EntityInserter {
         r: this.recordCreator,
         f: funID,
         i: inputs,
-      }
+      };
       this.#inputOrLookupEntity(reqData, key, modCallback);
     });
   }
@@ -187,10 +216,47 @@ export class EntityInserter {
 
 
   #insertOrFindTextEntity(entDefObj, key, modCallback) {
+    let text = entDefObj.text;
+    let format = entDefObj.format;
+    switch (format) {
+      case "uft8, linked entity references":
+      case "uft8, linked":
+      case "standard":
+      case "std":
+        // format = "std";
+        this.#insertOrFindStdTextEntity(text, key, modCallback);
+        break;
+      case "property document":
+      case "propDoc":
+      case "prop-doc":
+        // format = "propDoc";
+        this.#insertOrFindPropDocEntity(text, key, modCallback);
+        break;
+      default:
+        throw "EntityInserter: Unrecognized text format.";
+    }
 
   }
 
 
+  #insertOrFindStdTextEntity(text, key, modCallback) {
+    this.getSubstitutedText(text, (newText) => {
+      let reqData = {
+        req: "text",
+        ses: this.accountManager.sesIDHex,
+        u: this.accountManager.inputUserID,
+        r: this.recordCreator,
+        f: "std",
+        t: newText,
+      };
+      this.#inputOrLookupEntity(reqData, key, modCallback);
+    });
+  }
+
+
+  #insertOrFindPropDocEntity(text, key, modCallback) {
+
+  }
 
 
 
@@ -240,6 +306,9 @@ export class EntityInserter {
   }
 
 
+  #insertRating(tagID, entID, rating) {
+    // TODO: Implement.
+  }
 
   // #waitForIDThen() executes the callback function as soon as the entID
   // referred to by the key is ready.

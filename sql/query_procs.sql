@@ -416,7 +416,7 @@ BEGIN
             FROM TextData
             WHERE (
                 data_hash = dataHash AND
-                intended_format = intendedFormat
+                (intended_format = intendedFormat OR intendedFormat = "")
             )
         )
     );
@@ -439,7 +439,7 @@ BEGIN
             FROM BinaryData
             WHERE (
                 data_hash = dataHash AND
-                intended_format = intendedFormat
+                (intended_format = intendedFormat OR intendedFormat = "")
             )
         )
     );
