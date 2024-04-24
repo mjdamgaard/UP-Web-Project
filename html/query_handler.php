@@ -185,6 +185,18 @@ switch ($reqType) {
         $typeArr = array("str");
         // output: [[entID]].
         break;
+    case "creator":
+        $sql = "CALL selectCreator (?)";
+        $paramNameArr = array("id");
+        $typeArr = array("id");
+        // output: [[userID]].
+        break;
+    case "creations":
+        $sql = "CALL selectCreations (?, ?, ?, ?)";
+        $paramNameArr = array("u", "n", "o", "a");
+        $typeArr = array("id", "uint", "uint", "tint");
+        // output: [[entID]].
+        break;
     case "ancBotData1e2d":
         $sql = "CALL selectAncillaryBotData1e2d (?, ?)";
         $paramNameArr = array("n", "e");

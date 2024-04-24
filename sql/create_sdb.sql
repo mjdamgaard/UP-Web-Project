@@ -157,7 +157,12 @@ CREATE TABLE Entities (
     -- Entity definition.
     data_key BIGINT UNSIGNED NOT NULL,
 
-    UNIQUE INDEX (meta_type, data_key)
+    -- ID of the creator, i.e. the user who uploaded this entity.
+    creator_id BIGINT UNSIGNED NOT NULL,
+
+    UNIQUE INDEX (meta_type, data_key),
+
+    UNIQUE INDEX (creator_id, id)
 );
 
 

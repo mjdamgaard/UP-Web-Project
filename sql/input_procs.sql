@@ -186,14 +186,9 @@ BEGIN
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
-        INSERT INTO Entities (meta_type, data_key)
-        VALUES ('s', dataKey);
+        INSERT INTO Entities (meta_type, data_key, creator_id)
+        VALUES ('s', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
         SELECT LAST_INSERT_ID() INTO outID;
-        -- If recordCreator, call a bot to rate the user as the creator of
-        -- the new entity.
-        IF (recordCreator) THEN
-            CALL creatorRaterBot (outID, userID);
-        END IF;
     ELSE
         SET exitCode = 1; -- find.
         SELECT data_key INTO dataKey
@@ -240,14 +235,9 @@ BEGIN proc: BEGIN
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
-        INSERT INTO Entities (meta_type, data_key)
-        VALUES ('d', dataKey);
+        INSERT INTO Entities (meta_type, data_key, creator_id)
+        VALUES ('d', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
         SELECT LAST_INSERT_ID() INTO outID;
-        -- If recordCreator, call a bot to rate the user as the creator of
-        -- the new entity.
-        IF (recordCreator) THEN
-            CALL creatorRaterBot (outID, userID);
-        END IF;
     ELSE
         SET exitCode = 1; -- find.
         SELECT data_key INTO dataKey
@@ -286,14 +276,9 @@ BEGIN
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
-        INSERT INTO Entities (meta_type, data_key)
-        VALUES ('f', dataKey);
+        INSERT INTO Entities (meta_type, data_key, creator_id)
+        VALUES ('f', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
         SELECT LAST_INSERT_ID() INTO outID;
-        -- If recordCreator, call a bot to rate the user as the creator of
-        -- the new entity.
-        IF (recordCreator) THEN
-            CALL creatorRaterBot (outID, userID);
-        END IF;
     ELSE
         SET exitCode = 1; -- find.
         SELECT data_key INTO dataKey
@@ -332,14 +317,9 @@ BEGIN
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
-        INSERT INTO Entities (meta_type, data_key)
-        VALUES ('p', dataKey);
+        INSERT INTO Entities (meta_type, data_key, creator_id)
+        VALUES ('p', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
         SELECT LAST_INSERT_ID() INTO outID;
-        -- If recordCreator, call a bot to rate the user as the creator of
-        -- the new entity.
-        IF (recordCreator) THEN
-            CALL creatorRaterBot (outID, userID);
-        END IF;
     ELSE
         SET exitCode = 1; -- find.
         SELECT data_key INTO dataKey
@@ -383,14 +363,9 @@ BEGIN
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
-        INSERT INTO Entities (meta_type, data_key)
-        VALUES ('t', dataKey);
+        INSERT INTO Entities (meta_type, data_key, creator_id)
+        VALUES ('t', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
         SELECT LAST_INSERT_ID() INTO outID;
-        -- If recordCreator, call a bot to rate the user as the creator of
-        -- the new entity.
-        IF (recordCreator) THEN
-            CALL creatorRaterBot (outID, userID);
-        END IF;
     ELSE
         SET exitCode = 1; -- find.
         SELECT data_key INTO dataKey
@@ -429,14 +404,9 @@ BEGIN
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
-        INSERT INTO Entities (meta_type, data_key)
-        VALUES ('b', dataKey);
+        INSERT INTO Entities (meta_type, data_key, creator_id)
+        VALUES ('b', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
         SELECT LAST_INSERT_ID() INTO outID;
-        -- If recordCreator, call a bot to rate the user as the creator of
-        -- the new entity.
-        IF (recordCreator) THEN
-            CALL creatorRaterBot (outID, userID);
-        END IF;
     ELSE
         SET exitCode = 1; -- find.
         SELECT data_key INTO dataKey

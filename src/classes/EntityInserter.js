@@ -89,6 +89,13 @@ export class EntityInserter {
         throw "EntityInserter: Users cannot be inserted.";
       case 'a':
         throw "EntityInserter: Aggregation bots cannot be inserted.";
+      /* Virtual meta types used just for this method */
+      case 'propDoc':
+        this.#insertOrFindPropDocEntity(entDefObj, key, modCallback);
+        break;
+      case 'rating':
+        this.#insertOrFindRating(entDefObj, key, modCallback);
+        break;
       default:
         throw "EntityInserter: Unrecognized meta type.";
     }
@@ -211,27 +218,28 @@ export class EntityInserter {
 
 
   #insertOrFindPropertyTagEntity(entDefObj, key, modCallback) {
-
+    // TODO: Implement.
   }
 
 
   #insertOrFindTextEntity(entDefObj, key, modCallback) {
-    let text = entDefObj.text;
+    let text = entDefObj.textArr.join("");
     let format = entDefObj.format;
     switch (format) {
       case "uft8, linked entity references":
-      case "uft8, linked":
+      case "uft8_linked":
       case "standard":
       case "std":
+      case undefined:
         // format = "std";
         this.#insertOrFindStdTextEntity(text, key, modCallback);
         break;
-      case "property document":
-      case "propDoc":
-      case "prop-doc":
-        // format = "propDoc";
-        this.#insertOrFindPropDocEntity(text, key, modCallback);
-        break;
+      // case "property document":
+      // case "propDoc":
+      // case "prop-doc":
+      //   // format = "propDoc";
+      //   this.#insertOrFindPropDocEntity(text, key, modCallback);
+      //   break;
       default:
         throw "EntityInserter: Unrecognized text format.";
     }
@@ -254,9 +262,21 @@ export class EntityInserter {
   }
 
 
-  #insertOrFindPropDocEntity(text, key, modCallback) {
 
+
+
+
+  #insertOrFindPropDocEntity(entDefObj, key, modCallback) {
+    // TODO: Implement.
   }
+
+
+
+
+  #insertOrFindRating(entDefObj, key, modCallback) {
+    // TODO: Implement.
+  }
+
 
 
 

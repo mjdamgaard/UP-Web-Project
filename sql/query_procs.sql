@@ -22,6 +22,9 @@ DROP PROCEDURE selectBinaryEntityID;
 DROP PROCEDURE selectUserEntityID;
 DROP PROCEDURE selectBotEntityID;
 
+DROP PROCEDURE selectCreator;
+DROP PROCEDURE selectCreations;
+
 DROP PROCEDURE selectAncillaryBotData1e2d;
 DROP PROCEDURE selectAncillaryBotData1e4d;
 
@@ -245,12 +248,15 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectText (
     IN entID BIGINT UNSIGNED,
-    IN maxLen INT UNSIGNED
+    IN maxLen INT UNSIGNED,
+    IN startPos INT UNSIGNED
 )
 BEGIN
+    SET startPos = startPos + 1;
+
     SELECT
-        CASE WHEN maxLen = 0 THEN txt
-        ELSE SUBSTRING(txt, 1, maxLen)
+        CASE WHEN maxLen = 0 THEN SUBSTRING(txt, startPos, startPos + maxLen)
+        ELSE SUBSTRING(txt, startPos, startPos + maxLen)
         END AS text
     FROM TextData
     WHERE data_key = (
@@ -483,6 +489,45 @@ BEGIN
     );
 END //
 DELIMITER ;
+
+
+
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectCreator (
+    IN entID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT creator_id AS userID
+    FROM Entities
+    WHERE id = entID;
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectCreations (
+    IN userID BIGINT UNSIGNED,
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED,
+    IN isAscOrder BOOL
+)
+BEGIN
+    SELECT id AS entID
+    FROM Entities
+    WHERE creator_id = userID
+    ORDER BY
+        CASE WHEN isAscOrder THEN id END ASC,
+        CASE WHEN NOT isAscOrder THEN id END DESC
+    LIMIT numOffset, maxNum;
+END //
+DELIMITER ;
+
 
 
 
