@@ -15,9 +15,8 @@ DROP PROCEDURE selectBotInfo;
 
 DROP PROCEDURE selectDefEntityID;
 DROP PROCEDURE selectSimEntityID;
-DROP PROCEDURE selectFunEntityID;
+DROP PROCEDURE selectFormEntityID;
 DROP PROCEDURE selectPropTagEntityID;
-
 DROP PROCEDURE selectTextEntityID;
 DROP PROCEDURE selectBinaryEntityID;
 DROP PROCEDURE selectUserEntityID;
@@ -185,7 +184,7 @@ BEGIN
             metaType,
             fun_id AS funID,
             input_list AS inputs
-        FROM FunctionalEntityData
+        FROM FormalEntityData
         WHERE data_key = dataKey;
 
     ELSEIF (metaType = 'p') THEN
@@ -201,6 +200,7 @@ BEGIN
         -- Select the returned info.
         SELECT
             metaType,
+            intended_format AS intendedFormat,
             SUBSTRING(txt, 1, 255) AS textStart,
             LENGTH(txt) AS len,
             data_hash AS dataHash
@@ -211,6 +211,7 @@ BEGIN
         -- Select the returned info.
         SELECT
             metaType,
+            intended_format AS intendedFormat,
             LENGTH(bin) AS len,
             data_hash AS dataHash
         FROM BinaryData
@@ -361,7 +362,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectFunEntityID (
+CREATE PROCEDURE selectFormEntityID (
     IN funID BIGINT UNSIGNED,
     IN inputs VARCHAR(255)
 )
@@ -372,7 +373,7 @@ BEGIN
         meta_type = 'f' AND
         data_key = (
             SELECT data_key
-            FROM FunctionalEntityData
+            FROM FormalEntityData
             WHERE fun_id = funID AND input_list = inputs
         )
     );
@@ -402,7 +403,8 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectTextEntityID (
-    IN dataHash VARCHAR(255)
+    IN dataHash VARCHAR(255),
+    IN intendedFormat VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
 BEGIN
     SELECT id AS entID
@@ -412,7 +414,10 @@ BEGIN
         data_key = (
             SELECT data_key
             FROM TextData
-            WHERE data_hash = dataHash
+            WHERE (
+                data_hash = dataHash AND
+                intended_format = intendedFormat
+            )
         )
     );
 END //
@@ -421,7 +426,8 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectBinaryEntityID (
-    IN dataHash VARCHAR(255)
+    IN dataHash VARCHAR(255),
+    IN intendedFormat VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
 BEGIN
     SELECT id AS entID
@@ -431,7 +437,10 @@ BEGIN
         data_key = (
             SELECT data_key
             FROM BinaryData
-            WHERE data_hash = dataHash
+            WHERE (
+                data_hash = dataHash AND
+                intended_format = intendedFormat
+            )
         )
     );
 END //

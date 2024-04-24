@@ -108,8 +108,8 @@ switch ($reqType) {
         //     def: [[metaType, titleID, title, defID]],
         //     fun: [[metaType, funID, inputs]],
         //     propTag: [[metaType, subjID, propID]],
-        //     text: [[metaType, textStart, len, dataHash]],
-        //     bin: [[metaType, len, dataHash]],
+        //     text: [[metaType, intendedFormat, textStart, len, dataHash]],
+        //     bin: [[metaType, intendedFormat, len, dataHash]],
         //     user: [[metaType, username]],
         //     bot: [[metaType, botName]],
         break;
@@ -149,8 +149,8 @@ switch ($reqType) {
         $typeArr = array("id", "id");
         // output: [[entID]].
         break;
-    case "funID":
-        $sql = "CALL selectSimEntityID (?, ?)";
+    case "formID":
+        $sql = "CALL selectFormEntityID (?, ?)";
         $paramNameArr = array("f", "i");
         $typeArr = array("id", "str");
         // output: [[entID]].
@@ -162,15 +162,15 @@ switch ($reqType) {
         // output: [[entID]].
         break;
     case "textID":
-        $sql = "CALL selectTextEntityID (?)";
-        $paramNameArr = array("h");
-        $typeArr = array("str");
+        $sql = "CALL selectTextEntityID (?, ?)";
+        $paramNameArr = array("h", "f");
+        $typeArr = array("str", "str");
         // output: [[entID]].
         break;
     case "binID":
-        $sql = "CALL selectBinaryEntityID (?)";
-        $paramNameArr = array("h");
-        $typeArr = array("str");
+        $sql = "CALL selectBinaryEntityID (?, ?)";
+        $paramNameArr = array("h", "f");
+        $typeArr = array("str", "str");
         // output: [[entID]].
         break;
     case "userID":

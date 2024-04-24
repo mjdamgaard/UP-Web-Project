@@ -127,6 +127,7 @@ export class EntityInserter {
               d: defID,
             }
             this.#inputOrLookupEntity(reqData, entKey, modCallback);
+            // TODO: remember to also uprateProperties here.
           });
         });
         break;

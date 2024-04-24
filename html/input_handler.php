@@ -75,8 +75,8 @@ switch ($reqType) {
         $paramNameArr = array("u", "r", "t", "d");
         $typeArr = array("id", "tint", "id", "id");
         break;
-    case "fun":
-        $sql = "CALL insertOrFindFunEntity (?, ?, ?, ?)";
+    case "form":
+        $sql = "CALL insertOrFindFormEntity (?, ?, ?, ?)";
         $paramNameArr = array("u", "r", "f", "i");
         $typeArr = array("id", "tint", "id", "str");
         break;
@@ -86,14 +86,14 @@ switch ($reqType) {
         $typeArr = array("id", "tint", "id", "id");
         break;
     case "text":
-        $sql = "CALL insertOrFindSimEntity (?, ?, ?)";
-        $paramNameArr = array("u", "r", "t");
-        $typeArr = array("id", "tint", "text");
+        $sql = "CALL insertOrFindTextEntity (?, ?, ?, ?)";
+        $paramNameArr = array("u", "r", "f", "t");
+        $typeArr = array("id", "tint", "str", "text");
         break;
     case "bin":
-        // $sql = "CALL insertBinary (?, ?, ?)";
-        // $paramNameArr = array("u", "n", "b");
-        // $typeArr = array("id", "str", "blob");
+        // $sql = "CALL insertOrFindBinaryEntity (?, ?, ?, ?)";
+        // $paramNameArr = array("u", "r", "f", "b");
+        // $typeArr = array("id", "tint", "str", "blob");
         echoErrorJSONAndExit('The "bin" request type is not implemented yet');
         break;
     default:

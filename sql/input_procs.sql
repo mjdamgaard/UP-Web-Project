@@ -6,7 +6,7 @@ DROP PROCEDURE private_insertOrUpdateRatingAndRunBots;
 
 DROP PROCEDURE insertOrFindDefEntity;
 DROP PROCEDURE insertOrFindSimEntity;
-DROP PROCEDURE insertOrFindFunEntity;
+DROP PROCEDURE insertOrFindFormEntity;
 DROP PROCEDURE insertOrFindPropTagEntity;
 DROP PROCEDURE insertOrFindTextEntity;
 DROP PROCEDURE insertOrFindBinaryEntity;
@@ -271,7 +271,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE insertOrFindFunEntity (
+CREATE PROCEDURE insertOrFindFormEntity (
     IN userID BIGINT UNSIGNED,
     IN recordCreator BOOL,
     IN funID BIGINT UNSIGNED,
@@ -281,7 +281,7 @@ BEGIN
     DECLARE outID, dataKey BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
 
-    INSERT IGNORE INTO FunctionalEntityData (fun_id, input_list)
+    INSERT IGNORE INTO FormalEntityData (fun_id, input_list)
     VALUES (funID, inputs);
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
@@ -297,7 +297,7 @@ BEGIN
     ELSE
         SET exitCode = 1; -- find.
         SELECT data_key INTO dataKey
-        FROM FunctionalEntityData
+        FROM FormalEntityData
         WHERE (
             fun_id = funID AND
             input_list = inputs
@@ -370,6 +370,7 @@ DELIMITER //
 CREATE PROCEDURE insertOrFindTextEntity (
     IN userID BIGINT UNSIGNED,
     IN recordCreator BOOL,
+    IN intendedFormat VARCHAR(255),
     IN textStr TEXT
 )
 BEGIN
@@ -377,8 +378,8 @@ BEGIN
     DECLARE exitCode TINYINT;
     DECLARE dataHash VARCHAR(255) DEFAULT (SHA2(textStr, 224));
 
-    INSERT IGNORE INTO TextData (data_hash, txt)
-    VALUES (dataHash, textStr);
+    INSERT IGNORE INTO TextData (intended_format, data_hash, txt)
+    VALUES (intendedFormat, dataHash, textStr);
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
@@ -395,7 +396,8 @@ BEGIN
         SELECT data_key INTO dataKey
         FROM TextData
         WHERE (
-            data_hash = dataHash
+            data_hash = dataHash AND
+            intended_format = intendedFormat
         );
         SELECT id INTO outID
         FROM Entities
@@ -414,6 +416,7 @@ DELIMITER //
 CREATE PROCEDURE insertOrFindBinaryEntity (
     IN userID BIGINT UNSIGNED,
     IN recordCreator BOOL,
+    IN intendedFormat VARCHAR(255),
     IN binData LONGBLOB
 )
 BEGIN
@@ -421,8 +424,8 @@ BEGIN
     DECLARE exitCode TINYINT;
     DECLARE dataHash VARCHAR(255) DEFAULT (SHA2(textStr, 224));
 
-    INSERT IGNORE INTO BinaryData (data_hash, bin)
-    VALUES (dataHash, binData);
+    INSERT IGNORE INTO BinaryData (intended_format, data_hash, bin)
+    VALUES (intendedFormat, dataHash, binData);
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
@@ -439,7 +442,8 @@ BEGIN
         SELECT data_key INTO dataKey
         FROM BinaryData
         WHERE (
-            data_hash = dataHash
+            data_hash = dataHash AND
+            intended_format = intendedFormat
         );
         SELECT id INTO outID
         FROM Entities
