@@ -125,6 +125,15 @@ class InputValidator {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, "propDoc");
                 }
                 break;
+            case "list_text":
+                $pattern = "/^[1-9][0-9]*(,[1-9][0-9]*)*$/";
+                if (
+                    strlen($paramVal) > 65535 ||
+                    !preg_match($pattern, $paramVal)
+                ) {
+                    echoTypeErrorJSONAndExit($paramName, $paramVal, "listText");
+                }
+                break;
             // case "time":
             //     $pattern =
             //         "/^(" .

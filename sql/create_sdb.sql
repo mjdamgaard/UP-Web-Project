@@ -14,6 +14,7 @@ DROP TABLE SimpleEntityData;
 DROP TABLE AssocEntityData;
 DROP TABLE FormalEntityData;
 DROP TABLE PropertyTagData;
+DROP TABLE ListData;
 DROP TABLE PropertyDocData;
 DROP TABLE TextData;
 DROP TABLE BinaryData;
@@ -157,8 +158,8 @@ CREATE TABLE Entities (
     -- Entity ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- Entity data type. (This can be either 's', 'd', 'f', 'p', 't', 'b',
-    -- 'u', or 'a'.)
+    -- Entity data type. (This can be either 's', 'a', 'f', 'p', 'l', 'd',
+    -- 't', 'b', 'u', or 'n'.)
     data_type CHAR NOT NULL,
 
     -- Entity definition.
@@ -244,14 +245,31 @@ CREATE TABLE PropertyTagData (
 
 
 
+/* List entities */
+
+CREATE TABLE ListData (
+    -- List data key (private).
+    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    -- Data hash. (We use SHA2 rather than MD5 to allow ourselves to simply
+    -- assume that there won't be any collisions.)
+    data_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(txt, 224)),
+
+    -- Text consisting of a list of (positive) integers separated by commas.
+    txt TEXT NOT NULL,
+
+    -- UNIQUE INDEX (data_hash, data_key)
+    UNIQUE INDEX (data_hash)
+);
+
+
 /* Property document entities */
 
 CREATE TABLE PropertyDocData (
     -- Property document data key (private).
     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- Data hash. (We use SHA2 rather than MD5 to allow ourselves to simply
-    -- assume that there won't be any collisions.)
+    -- Data hash.
     data_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(txt, 224)),
 
     -- Text containing the property--value assignments. A property might
@@ -271,8 +289,7 @@ CREATE TABLE TextData (
     -- Text data key (private).
     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- Data hash. (We use SHA2 rather than MD5 to allow ourselves to simply
-    -- assume that there won't be any collisions.)
+    -- Data hash.
     data_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(txt, 224)),
 
     -- Data. Note that texts are not stored completely verbatim, as '@'s need

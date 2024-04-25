@@ -7,6 +7,8 @@ DROP PROCEDURE selectRating;
 
 DROP PROCEDURE selectEntityInfo;
 
+DROP PROCEDURE selectList;
+DROP PROCEDURE selectPropDoc;
 DROP PROCEDURE selectText;
 DROP PROCEDURE selectBinary;
 
@@ -17,6 +19,7 @@ DROP PROCEDURE selectAssocEntityID;
 DROP PROCEDURE selectSimEntityID;
 DROP PROCEDURE selectFormEntityID;
 DROP PROCEDURE selectPropTagEntityID;
+DROP PROCEDURE selectListEntityID;
 DROP PROCEDURE selectPropDocEntityID;
 DROP PROCEDURE selectTextEntityID;
 DROP PROCEDURE selectBinaryEntityID;
@@ -200,12 +203,22 @@ BEGIN
         FROM PropertyTagData
         WHERE data_key = dataKey;
 
+    ELSEIF (dataType = 'l') THEN
+        -- Select the returned info.
+        SELECT
+            dataType,
+            SUBSTRING(txt, 1, 255) AS textStart,
+            LENGTH(txt) AS len
+        FROM ListData
+        WHERE data_key = dataKey;
+
     ELSEIF (dataType = 'd') THEN
         -- Select the returned info.
         SELECT
             dataType,
-            txt AS propDoc
-        FROM TextData
+            SUBSTRING(txt, 1, 255) AS textStart,
+            LENGTH(txt) AS len
+        FROM PropertyDocData
         WHERE data_key = dataKey;
 
     ELSEIF (dataType = 't') THEN
@@ -253,6 +266,50 @@ DELIMITER ;
 
 
 DELIMITER //
+CREATE PROCEDURE selectList (
+    IN entID BIGINT UNSIGNED,
+    IN maxLen INT UNSIGNED,
+    IN startPos INT UNSIGNED
+)
+BEGIN
+    SET startPos = startPos + 1;
+    SELECT
+        CASE WHEN maxLen = 0 THEN SUBSTRING(txt, startPos)
+        ELSE SUBSTRING(txt, startPos, startPos + maxLen)
+        END AS text
+    FROM ListData
+    WHERE data_key = (
+        SELECT data_key
+        FROM Entities
+        WHERE id = entID
+    );
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectPropDoc (
+    IN entID BIGINT UNSIGNED,
+    IN maxLen INT UNSIGNED,
+    IN startPos INT UNSIGNED
+)
+BEGIN
+    SET startPos = startPos + 1;
+    SELECT
+        CASE WHEN maxLen = 0 THEN SUBSTRING(txt, startPos)
+        ELSE SUBSTRING(txt, startPos, startPos + maxLen)
+        END AS text
+    FROM PropertyDocData
+    WHERE data_key = (
+        SELECT data_key
+        FROM Entities
+        WHERE id = entID
+    );
+END //
+DELIMITER ;
+
+
+DELIMITER //
 CREATE PROCEDURE selectText (
     IN entID BIGINT UNSIGNED,
     IN maxLen INT UNSIGNED,
@@ -260,9 +317,8 @@ CREATE PROCEDURE selectText (
 )
 BEGIN
     SET startPos = startPos + 1;
-
     SELECT
-        CASE WHEN maxLen = 0 THEN SUBSTRING(txt, startPos, startPos + maxLen)
+        CASE WHEN maxLen = 0 THEN SUBSTRING(txt, startPos)
         ELSE SUBSTRING(txt, startPos, startPos + maxLen)
         END AS text
     FROM TextData
@@ -273,6 +329,7 @@ BEGIN
     );
 END //
 DELIMITER ;
+
 
 
 DELIMITER //
@@ -408,6 +465,25 @@ BEGIN
             SELECT data_key
             FROM PropertyTagData
             WHERE subj_id = subjID AND prop_id = propID
+        )
+    );
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectListEntityID (
+    IN dataHash VARCHAR(255)
+)
+BEGIN
+    SELECT id AS entID
+    FROM Entities
+    WHERE (
+        data_type = 'l' AND
+        data_key = (
+            SELECT data_key
+            FROM ListData
+            WHERE data_hash = dataHash
         )
     );
 END //

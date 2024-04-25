@@ -85,6 +85,11 @@ switch ($reqType) {
         $paramNameArr = array("u", "r", "s", "p");
         $typeArr = array("id", "tint", "id", "id");
         break;
+    case "list":
+        $sql = "CALL insertOrFindListEntity (?, ?, ?)";
+        $paramNameArr = array("u", "r", "l");
+        $typeArr = array("id", "tint", "list_text");
+        break;
     case "propDoc":
         $sql = "CALL insertOrFindPropDocEntity (?, ?, ?)";
         $paramNameArr = array("u", "r", "p");

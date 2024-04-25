@@ -51,7 +51,7 @@ $sql = "";
 $paramNameArr = "";
 $typeArr = "";
 switch ($reqType) {
-    case "list":
+    case "instList":
         header("Cache-Control: max-age=3");
         $sql = "CALL selectInstanceList (?, ?, ?, ?, ?, ?, ?)";
         $paramNameArr = array(
@@ -68,7 +68,7 @@ switch ($reqType) {
         );
         // output: [[ratVal, instID], ...].
         break;
-        case "listSK":
+        case "instListSK":
             header("Cache-Control: max-age=3");
             $sql = "CALL selectInstanceListSecKey (?, ?, ?, ?, ?, ?, ?)";
             $paramNameArr = array(
@@ -108,16 +108,29 @@ switch ($reqType) {
         //     assoc: [['a', titleID, title, defID]],
         //     fun: [['f', funID, inputs]],
         //     propTag: [['p', subjID, propID]],
-        //     propDoc: [['d', propDoc]],
+        //     list: [['l', textStart, len]],
+        //     propDoc: [['d', textStart, len]],
         //     text: [['t', textStart, len, dataHash]],
         //     bin: [['b', len, dataHash]],
         //     user: [['u', username]],
         //     bot: [['n', botName]],
         break;
+    case "list":
+        $sql = "CALL selectList (?, ?, ?)";
+        $paramNameArr = array("id", "l", "s");
+        $typeArr = array("id", "uint", "uint");
+        // output: [[text]].
+        break;
+    case "propDoc":
+        $sql = "CALL selectPropDoc (?, ?, ?)";
+        $paramNameArr = array("id", "l", "s");
+        $typeArr = array("id", "uint", "uint");
+        // output: [[text]].
+        break;
     case "text":
-        $sql = "CALL selectText (?, ?)";
-        $paramNameArr = array("id", "l");
-        $typeArr = array("id", "uint");
+        $sql = "CALL selectText (?, ?, ?)";
+        $paramNameArr = array("id", "l", "s");
+        $typeArr = array("id", "uint", "uint");
         // output: [[text]].
         break;
     case "bin":
@@ -160,6 +173,12 @@ switch ($reqType) {
         $sql = "CALL selectPropTagEntityID (?, ?)";
         $paramNameArr = array("s", "p");
         $typeArr = array("id", "id");
+        // output: [[entID]].
+        break;
+    case "listID":
+        $sql = "CALL selectListEntityID (?)";
+        $paramNameArr = array("h");
+        $typeArr = array("str");
         // output: [[entID]].
         break;
     case "propDocID":

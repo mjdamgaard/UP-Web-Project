@@ -8,6 +8,7 @@ DROP PROCEDURE insertOrFindSimEntity;
 DROP PROCEDURE insertOrFindAssocEntity;
 DROP PROCEDURE insertOrFindFormEntity;
 DROP PROCEDURE insertOrFindPropTagEntity;
+DROP PROCEDURE insertOrFindListEntity;
 DROP PROCEDURE insertOrFindPropDocEntity;
 DROP PROCEDURE insertOrFindTextEntity;
 DROP PROCEDURE insertOrFindBinaryEntity;
@@ -352,6 +353,46 @@ END //
 DELIMITER ;
 
 
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertOrFindListEntity (
+    IN userID BIGINT UNSIGNED,
+    IN recordCreator BOOL,
+    IN listText TEXT
+)
+BEGIN
+    DECLARE outID, dataKey BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
+    DECLARE dataHash VARCHAR(255) DEFAULT (SHA2(listText, 224));
+
+    INSERT IGNORE INTO PropertyDocData (data_hash, txt)
+    VALUES (dataHash, listText);
+    IF (mysql_affected_rows() > 0) THEN
+        SET exitCode = 0; -- insert.
+        SELECT LAST_INSERT_ID() INTO dataKey;
+        INSERT INTO Entities (data_type, data_key, creator_id)
+        VALUES ('l', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
+        SELECT LAST_INSERT_ID() INTO outID;
+    ELSE
+        SET exitCode = 1; -- find.
+        SELECT data_key INTO dataKey
+        FROM PropertyDocData
+        WHERE (
+            data_hash = dataHash
+        );
+        SELECT id INTO outID
+        FROM Entities
+        WHERE (
+            data_type = 'l' AND
+            data_key = dataKey
+        );
+    END IF;
+
+    SELECT outID, exitCode;
+END //
+DELIMITER ;
 
 
 
