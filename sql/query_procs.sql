@@ -148,24 +148,24 @@ CREATE PROCEDURE selectEntityInfo (
     IN entID BIGINT UNSIGNED
 )
 BEGIN
-    DECLARE metaType CHAR;
+    DECLARE dataType CHAR;
     DECLARE dataKey BIGINT UNSIGNED;
     DECLARE titleID, defID, titleDataKey BIGINT UNSIGNED;
 
-    -- Get the metaType and dataKey.
-    SELECT meta_type, data_key INTO metaType, dataKey 
+    -- Get the dataType and dataKey.
+    SELECT data_type, data_key INTO dataType, dataKey 
     FROM Entities
     WHERE id = entID;
 
-    IF (metaType = 's') THEN
+    IF (dataType = 's') THEN
         -- Select the returned info.
         SELECT
-            metaType,
+            dataType,
             title
         FROM SimpleEntityData
         WHERE data_key = dataKey;
 
-    ELSEIF (metaType = 'd') THEN
+    ELSEIF (dataType = 'd') THEN
         -- Select the returned info.
         SELECT title_id, def_id INTO titleID, defID
         FROM DefinedEntityData
@@ -174,65 +174,63 @@ BEGIN
         FROM Entities
         WHERE id = titleID;
         SELECT
-            metaType,
+            dataType,
             titleID,
             title,
             defID
         FROM SimpleEntityData
         WHERE data_key = titleDataKey;
 
-    ELSEIF (metaType = 'f') THEN
+    ELSEIF (dataType = 'f') THEN
         -- Select the returned info.
         SELECT
-            metaType,
+            dataType,
             fun_id AS funID,
             input_list AS inputs
         FROM FormalEntityData
         WHERE data_key = dataKey;
 
-    ELSEIF (metaType = 'p') THEN
+    ELSEIF (dataType = 'p') THEN
         -- Select the returned info.
         SELECT
-            metaType,
+            dataType,
             subj_id AS subjID,
             prop_id AS propID
         FROM PropertyTagEntityData
         WHERE data_key = dataKey;
 
-    ELSEIF (metaType = 't') THEN
+    ELSEIF (dataType = 't') THEN
         -- Select the returned info.
         SELECT
-            metaType,
-            intended_format AS intendedFormat,
+            dataType,
             SUBSTRING(txt, 1, 255) AS textStart,
             LENGTH(txt) AS len,
             data_hash AS dataHash
         FROM TextData
         WHERE data_key = dataKey;
 
-    ELSEIF (metaType = 'b') THEN
+    ELSEIF (dataType = 'b') THEN
         -- Select the returned info.
         SELECT
-            metaType,
-            intended_format AS intendedFormat,
+            dataType,
             LENGTH(bin) AS len,
             data_hash AS dataHash
         FROM BinaryData
         WHERE data_key = dataKey;
 
-    ELSEIF (metaType = 'u') THEN
+    ELSEIF (dataType = 'u') THEN
         -- Select the returned info.
         SELECT
-            metaType,
+            dataType,
             username
         FROM UserData
         WHERE data_key = dataKey;
 
 
-    ELSEIF (metaType = 'a') THEN
+    ELSEIF (dataType = 'a') THEN
         -- Select the returned info.
         SELECT
-            metaType,
+            dataType,
             bot_name AS botName
         FROM AggregationBotData
         WHERE data_key = dataKey;
@@ -336,7 +334,7 @@ BEGIN
     SELECT id AS entID
     FROM Entities
     WHERE (
-        meta_type = 's' AND
+        data_type = 's' AND
         data_key = (
             SELECT data_key
             FROM SimpleEntityData
@@ -356,7 +354,7 @@ BEGIN
     SELECT id AS entID
     FROM Entities
     WHERE (
-        meta_type = 'd' AND
+        data_type = 'd' AND
         data_key = (
             SELECT data_key
             FROM DefinedEntityData
@@ -376,7 +374,7 @@ BEGIN
     SELECT id AS entID
     FROM Entities
     WHERE (
-        meta_type = 'f' AND
+        data_type = 'f' AND
         data_key = (
             SELECT data_key
             FROM FormalEntityData
@@ -396,7 +394,7 @@ BEGIN
     SELECT id AS entID
     FROM Entities
     WHERE (
-        meta_type = 'p' AND
+        data_type = 'p' AND
         data_key = (
             SELECT data_key
             FROM PropertyTagEntityData
@@ -409,21 +407,17 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectTextEntityID (
-    IN dataHash VARCHAR(255),
-    IN intendedFormat VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
+    IN dataHash VARCHAR(255)
 )
 BEGIN
     SELECT id AS entID
     FROM Entities
     WHERE (
-        meta_type = 't' AND
+        data_type = 't' AND
         data_key = (
             SELECT data_key
             FROM TextData
-            WHERE (
-                data_hash = dataHash AND
-                (intended_format = intendedFormat OR intendedFormat = "")
-            )
+            WHERE data_hash = dataHash
         )
     );
 END //
@@ -432,21 +426,17 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectBinaryEntityID (
-    IN dataHash VARCHAR(255),
-    IN intendedFormat VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
+    IN dataHash VARCHAR(255)
 )
 BEGIN
     SELECT id AS entID
     FROM Entities
     WHERE (
-        meta_type = 'b' AND
+        data_type = 'b' AND
         data_key = (
             SELECT data_key
             FROM BinaryData
-            WHERE (
-                data_hash = dataHash AND
-                (intended_format = intendedFormat OR intendedFormat = "")
-            )
+            WHERE data_hash = dataHash
         )
     );
 END //
@@ -461,7 +451,7 @@ BEGIN
     SELECT id AS entID
     FROM Entities
     WHERE (
-        meta_type = 'u' AND
+        data_type = 'u' AND
         data_key = (
             SELECT data_key
             FROM UserData
@@ -480,7 +470,7 @@ BEGIN
     SELECT id AS entID
     FROM Entities
     WHERE (
-        meta_type = 'b' AND
+        data_type = 'b' AND
         data_key = (
             SELECT data_key
             FROM AggregationBotData

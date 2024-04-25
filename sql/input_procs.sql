@@ -186,7 +186,7 @@ BEGIN
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
-        INSERT INTO Entities (meta_type, data_key, creator_id)
+        INSERT INTO Entities (data_type, data_key, creator_id)
         VALUES ('s', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
         SELECT LAST_INSERT_ID() INTO outID;
     ELSE
@@ -197,7 +197,7 @@ BEGIN
         SELECT id INTO outID
         FROM Entities
         WHERE (
-            meta_type = 's' AND
+            data_type = 's' AND
             data_key = dataKey
         );
     END IF;
@@ -218,13 +218,13 @@ CREATE PROCEDURE insertOrFindDefEntity (
 BEGIN proc: BEGIN
     DECLARE outID, dataKey BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
-    DECLARE metaType CHAR;
+    DECLARE dataType CHAR;
 
     -- If titleID is not the ID of a simple entity, return exitCode = 2.
-    SELECT meta_type INTO metaType
+    SELECT data_type INTO dataType
     FROM Entities
     WHERE id = titleID;
-    IF (metaType != 's') THEN
+    IF (dataType != 's') THEN
         SELECT NULL AS outID, 2 AS exitCode; -- failure.
         LEAVE proc;
     END IF;
@@ -235,7 +235,7 @@ BEGIN proc: BEGIN
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
-        INSERT INTO Entities (meta_type, data_key, creator_id)
+        INSERT INTO Entities (data_type, data_key, creator_id)
         VALUES ('d', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
         SELECT LAST_INSERT_ID() INTO outID;
     ELSE
@@ -249,7 +249,7 @@ BEGIN proc: BEGIN
         SELECT id INTO outID
         FROM Entities
         WHERE (
-            meta_type = 'd' AND
+            data_type = 'd' AND
             data_key = dataKey
         );
     END IF;
@@ -276,7 +276,7 @@ BEGIN
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
-        INSERT INTO Entities (meta_type, data_key, creator_id)
+        INSERT INTO Entities (data_type, data_key, creator_id)
         VALUES ('f', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
         SELECT LAST_INSERT_ID() INTO outID;
     ELSE
@@ -290,7 +290,7 @@ BEGIN
         SELECT id INTO outID
         FROM Entities
         WHERE (
-            meta_type = 'f' AND
+            data_type = 'f' AND
             data_key = dataKey
         );
     END IF;
@@ -317,7 +317,7 @@ BEGIN
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
-        INSERT INTO Entities (meta_type, data_key, creator_id)
+        INSERT INTO Entities (data_type, data_key, creator_id)
         VALUES ('p', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
         SELECT LAST_INSERT_ID() INTO outID;
     ELSE
@@ -331,7 +331,7 @@ BEGIN
         SELECT id INTO outID
         FROM Entities
         WHERE (
-            meta_type = 'p' AND
+            data_type = 'p' AND
             data_key = dataKey
         );
     END IF;
@@ -350,7 +350,6 @@ DELIMITER //
 CREATE PROCEDURE insertOrFindTextEntity (
     IN userID BIGINT UNSIGNED,
     IN recordCreator BOOL,
-    IN intendedFormat VARCHAR(255),
     IN textStr TEXT
 )
 BEGIN
@@ -358,12 +357,12 @@ BEGIN
     DECLARE exitCode TINYINT;
     DECLARE dataHash VARCHAR(255) DEFAULT (SHA2(textStr, 224));
 
-    INSERT IGNORE INTO TextData (intended_format, data_hash, txt)
-    VALUES (intendedFormat, dataHash, textStr);
+    INSERT IGNORE INTO TextData (data_hash, txt)
+    VALUES (dataHash, textStr);
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
-        INSERT INTO Entities (meta_type, data_key, creator_id)
+        INSERT INTO Entities (data_type, data_key, creator_id)
         VALUES ('t', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
         SELECT LAST_INSERT_ID() INTO outID;
     ELSE
@@ -371,13 +370,12 @@ BEGIN
         SELECT data_key INTO dataKey
         FROM TextData
         WHERE (
-            data_hash = dataHash AND
-            intended_format = intendedFormat
+            data_hash = dataHash
         );
         SELECT id INTO outID
         FROM Entities
         WHERE (
-            meta_type = 't' AND
+            data_type = 't' AND
             data_key = dataKey
         );
     END IF;
@@ -391,7 +389,6 @@ DELIMITER //
 CREATE PROCEDURE insertOrFindBinaryEntity (
     IN userID BIGINT UNSIGNED,
     IN recordCreator BOOL,
-    IN intendedFormat VARCHAR(255),
     IN binData LONGBLOB
 )
 BEGIN
@@ -399,12 +396,12 @@ BEGIN
     DECLARE exitCode TINYINT;
     DECLARE dataHash VARCHAR(255) DEFAULT (SHA2(textStr, 224));
 
-    INSERT IGNORE INTO BinaryData (intended_format, data_hash, bin)
-    VALUES (intendedFormat, dataHash, binData);
+    INSERT IGNORE INTO BinaryData (data_hash, bin)
+    VALUES (dataHash, binData);
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
-        INSERT INTO Entities (meta_type, data_key, creator_id)
+        INSERT INTO Entities (data_type, data_key, creator_id)
         VALUES ('b', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
         SELECT LAST_INSERT_ID() INTO outID;
     ELSE
@@ -412,13 +409,12 @@ BEGIN
         SELECT data_key INTO dataKey
         FROM BinaryData
         WHERE (
-            data_hash = dataHash AND
-            intended_format = intendedFormat
+            data_hash = dataHash
         );
         SELECT id INTO outID
         FROM Entities
         WHERE (
-            meta_type = 'b' AND
+            data_type = 'b' AND
             data_key = dataKey
         );
     END IF;

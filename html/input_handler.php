@@ -86,14 +86,14 @@ switch ($reqType) {
         $typeArr = array("id", "tint", "id", "id");
         break;
     case "text":
-        $sql = "CALL insertOrFindTextEntity (?, ?, ?, ?)";
-        $paramNameArr = array("u", "r", "f", "t");
-        $typeArr = array("id", "tint", "str", "text");
+        $sql = "CALL insertOrFindTextEntity (?, ?, ?)";
+        $paramNameArr = array("u", "r", "t");
+        $typeArr = array("id", "tint", "text");
         break;
     case "bin":
-        // $sql = "CALL insertOrFindBinaryEntity (?, ?, ?, ?)";
-        // $paramNameArr = array("u", "r", "f", "b");
-        // $typeArr = array("id", "tint", "str", "blob");
+        // $sql = "CALL insertOrFindBinaryEntity (?, ?, ?)";
+        // $paramNameArr = array("u", "r", "b");
+        // $typeArr = array("id", "tint", "blob");
         echoErrorJSONAndExit('The "bin" request type is not implemented yet');
         break;
     default:

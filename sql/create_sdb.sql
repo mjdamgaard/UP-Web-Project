@@ -150,9 +150,9 @@ CREATE TABLE Entities (
     -- Entity ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- Entity meta type. (This can be either 's', 'd', 'f', 'p', 't', 'b',
+    -- Entity data type. (This can be either 's', 'd', 'f', 'p', 't', 'b',
     -- 'u', or 'a'.)
-    meta_type CHAR NOT NULL,
+    data_type CHAR NOT NULL,
 
     -- Entity definition.
     data_key BIGINT UNSIGNED NOT NULL,
@@ -160,7 +160,7 @@ CREATE TABLE Entities (
     -- ID of the creator, i.e. the user who uploaded this entity.
     creator_id BIGINT UNSIGNED NOT NULL,
 
-    UNIQUE INDEX (meta_type, data_key),
+    UNIQUE INDEX (data_type, data_key),
 
     UNIQUE INDEX (creator_id, id)
 );
@@ -240,14 +240,6 @@ CREATE TABLE TextData (
     -- Text data key (private).
     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- The intended format of that the text conforms to (although the backend
-    -- generally doesn't promise to check this). For instance, the intended
-    -- format might be "text/plain" for regular texts. Note that similar
-    -- names as used for HTTP content types *may* be used, but the SDB and
-    -- its users are also free to make their own format names. 
-    intended_format VARCHAR(255)
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-
     -- Data hash. (We use SHA2 rather than MD5 to allow ourselves to simply
     -- assume that there won't be any collisions.)
     data_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(txt, 224)),
@@ -260,7 +252,7 @@ CREATE TABLE TextData (
     txt TEXT,
 
     -- UNIQUE INDEX (data_hash, data_key)
-    UNIQUE INDEX (data_hash, intended_format)
+    UNIQUE INDEX (data_hash)
 );
 
 
@@ -270,19 +262,13 @@ CREATE TABLE BinaryData (
     -- Binary string/file (BLOB) data key (private).
     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- The intended format of the binary file (not necessarily verified by
-    -- the backend).
-    intended_format VARCHAR(255)
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-
-
     -- Data hash.
     data_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(bin, 224)),
 
     -- Data.
     bin LONGBLOB,
 
-    UNIQUE INDEX (data_hash, intended_format)
+    UNIQUE INDEX (data_hash)
 );
 
 
