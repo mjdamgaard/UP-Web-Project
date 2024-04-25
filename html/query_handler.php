@@ -104,14 +104,14 @@ switch ($reqType) {
         $paramNameArr = array("id");
         $typeArr = array("id");
         // output:
-        //     sim: [[metaType, title]],
-        //     def: [[metaType, titleID, title, defID]],
-        //     fun: [[metaType, funID, inputs]],
-        //     propTag: [[metaType, subjID, propID]],
-        //     text: [[metaType, textStart, len, dataHash]],
-        //     bin: [[metaType, len, dataHash]],
-        //     user: [[metaType, username]],
-        //     bot: [[metaType, botName]],
+        //     sim: [['s', title]],
+        //     assoc: [['a', titleID, title, defID]],
+        //     fun: [['f', funID, inputs]],
+        //     propTag: [['p', subjID, propID]],
+        //     text: [['t', textStart, len, dataHash]],
+        //     bin: [['b', len, dataHash]],
+        //     user: [['u', username]],
+        //     bot: [['n', botName]],
         break;
     case "text":
         $sql = "CALL selectText (?, ?)";
@@ -143,9 +143,9 @@ switch ($reqType) {
         $typeArr = array("str");
         // output: [[entID]].
         break;
-    case "defID":
-        $sql = "CALL selectDefEntityID (?, ?)";
-        $paramNameArr = array("t", "d");
+    case "assocID":
+        $sql = "CALL selectAssocEntityID (?, ?)";
+        $paramNameArr = array("t", "p");
         $typeArr = array("id", "id");
         // output: [[entID]].
         break;
@@ -159,6 +159,12 @@ switch ($reqType) {
         $sql = "CALL selectPropTagEntityID (?, ?)";
         $paramNameArr = array("s", "p");
         $typeArr = array("id", "id");
+        // output: [[entID]].
+        break;
+    case "propDocID":
+        $sql = "CALL selectPropDocEntityID (?)";
+        $paramNameArr = array("h");
+        $typeArr = array("str");
         // output: [[entID]].
         break;
     case "textID":

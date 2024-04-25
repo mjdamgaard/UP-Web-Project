@@ -4,10 +4,11 @@ SELECT "Input procedures";
 DROP PROCEDURE insertOrUpdateRating;
 DROP PROCEDURE private_insertOrUpdateRatingAndRunBots;
 
-DROP PROCEDURE insertOrFindDefEntity;
 DROP PROCEDURE insertOrFindSimEntity;
+DROP PROCEDURE insertOrFindAssocEntity;
 DROP PROCEDURE insertOrFindFormEntity;
 DROP PROCEDURE insertOrFindPropTagEntity;
+DROP PROCEDURE insertOrFindPropDocEntity;
 DROP PROCEDURE insertOrFindTextEntity;
 DROP PROCEDURE insertOrFindBinaryEntity;
 
@@ -209,11 +210,11 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE insertOrFindDefEntity (
+CREATE PROCEDURE insertOrFindAssocEntity (
     IN userID BIGINT UNSIGNED,
     IN recordCreator BOOL,
     IN titleID BIGINT UNSIGNED,
-    IN defID TEXT
+    IN propDocID TEXT
 )
 BEGIN proc: BEGIN
     DECLARE outID, dataKey BIGINT UNSIGNED;
@@ -229,27 +230,37 @@ BEGIN proc: BEGIN
         LEAVE proc;
     END IF;
 
+    -- If propDocID is not the ID of a property document entity, return
+    -- exitCode = 2.
+    SELECT data_type INTO dataType
+    FROM Entities
+    WHERE id = propDocID;
+    IF (dataType != 'd') THEN
+        SELECT NULL AS outID, 2 AS exitCode; -- failure.
+        LEAVE proc;
+    END IF;
+
     -- Else continue the same way as the other related procedures.
-    INSERT IGNORE INTO DefinedEntityData (title_id, def_id)
-    VALUES (titleID, defID);
+    INSERT IGNORE INTO AssocEntityData (title_id, prop_doc_id)
+    VALUES (titleID, propDocID);
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
         INSERT INTO Entities (data_type, data_key, creator_id)
-        VALUES ('d', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
+        VALUES ('a', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
         SELECT LAST_INSERT_ID() INTO outID;
     ELSE
         SET exitCode = 1; -- find.
         SELECT data_key INTO dataKey
-        FROM DefinedEntityData
+        FROM AssocEntityData
         WHERE (
             title_id = titleID AND
-            def_id = defID
+            prop_doc_id = propDocID
         );
         SELECT id INTO outID
         FROM Entities
         WHERE (
-            data_type = 'd' AND
+            data_type = 'a' AND
             data_key = dataKey
         );
     END IF;
@@ -312,7 +323,7 @@ BEGIN
     DECLARE outID, dataKey BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
 
-    INSERT IGNORE INTO PropertyTagEntityData (subj_id, prop_id)
+    INSERT IGNORE INTO PropertyTagData (subj_id, prop_id)
     VALUES (subjID, propID);
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
@@ -323,7 +334,7 @@ BEGIN
     ELSE
         SET exitCode = 1; -- find.
         SELECT data_key INTO dataKey
-        FROM PropertyTagEntityData
+        FROM PropertyTagData
         WHERE (
             subj_id = subjID AND
             prop_id = propID
@@ -343,6 +354,44 @@ DELIMITER ;
 
 
 
+
+DELIMITER //
+CREATE PROCEDURE insertOrFindPropDocEntity (
+    IN userID BIGINT UNSIGNED,
+    IN recordCreator BOOL,
+    IN propDoc TEXT
+)
+BEGIN
+    DECLARE outID, dataKey BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
+    DECLARE dataHash VARCHAR(255) DEFAULT (SHA2(propDoc, 224));
+
+    INSERT IGNORE INTO PropertyDocData (data_hash, txt)
+    VALUES (dataHash, propDoc);
+    IF (mysql_affected_rows() > 0) THEN
+        SET exitCode = 0; -- insert.
+        SELECT LAST_INSERT_ID() INTO dataKey;
+        INSERT INTO Entities (data_type, data_key, creator_id)
+        VALUES ('d', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
+        SELECT LAST_INSERT_ID() INTO outID;
+    ELSE
+        SET exitCode = 1; -- find.
+        SELECT data_key INTO dataKey
+        FROM PropertyDocData
+        WHERE (
+            data_hash = dataHash
+        );
+        SELECT id INTO outID
+        FROM Entities
+        WHERE (
+            data_type = 'd' AND
+            data_key = dataKey
+        );
+    END IF;
+
+    SELECT outID, exitCode;
+END //
+DELIMITER ;
 
 
 

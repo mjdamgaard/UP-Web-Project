@@ -13,10 +13,11 @@ DROP PROCEDURE selectBinary;
 DROP PROCEDURE selectUserInfo;
 DROP PROCEDURE selectBotInfo;
 
-DROP PROCEDURE selectDefEntityID;
+DROP PROCEDURE selectAssocEntityID;
 DROP PROCEDURE selectSimEntityID;
 DROP PROCEDURE selectFormEntityID;
 DROP PROCEDURE selectPropTagEntityID;
+DROP PROCEDURE selectPropDocEntityID;
 DROP PROCEDURE selectTextEntityID;
 DROP PROCEDURE selectBinaryEntityID;
 DROP PROCEDURE selectUserEntityID;
@@ -150,7 +151,7 @@ CREATE PROCEDURE selectEntityInfo (
 BEGIN
     DECLARE dataType CHAR;
     DECLARE dataKey BIGINT UNSIGNED;
-    DECLARE titleID, defID, titleDataKey BIGINT UNSIGNED;
+    DECLARE titleID, propDocID, titleDataKey BIGINT UNSIGNED;
 
     -- Get the dataType and dataKey.
     SELECT data_type, data_key INTO dataType, dataKey 
@@ -165,10 +166,10 @@ BEGIN
         FROM SimpleEntityData
         WHERE data_key = dataKey;
 
-    ELSEIF (dataType = 'd') THEN
+    ELSEIF (dataType = 'a') THEN
         -- Select the returned info.
-        SELECT title_id, def_id INTO titleID, defID
-        FROM DefinedEntityData
+        SELECT title_id, prop_doc_id INTO titleID, propDocID
+        FROM AssocEntityData
         WHERE data_key = dataKey;
         SELECT data_key INTO titleDataKey
         FROM Entities
@@ -177,7 +178,7 @@ BEGIN
             dataType,
             titleID,
             title,
-            defID
+            propDocID
         FROM SimpleEntityData
         WHERE data_key = titleDataKey;
 
@@ -196,7 +197,7 @@ BEGIN
             dataType,
             subj_id AS subjID,
             prop_id AS propID
-        FROM PropertyTagEntityData
+        FROM PropertyTagData
         WHERE data_key = dataKey;
 
     ELSEIF (dataType = 't') THEN
@@ -227,12 +228,12 @@ BEGIN
         WHERE data_key = dataKey;
 
 
-    ELSEIF (dataType = 'a') THEN
+    ELSEIF (dataType = 'n') THEN
         -- Select the returned info.
         SELECT
             dataType,
             bot_name AS botName
-        FROM AggregationBotData
+        FROM NativeBotData
         WHERE data_key = dataKey;
 
 
@@ -309,7 +310,7 @@ BEGIN
     SELECT
         bot_name AS botName,
         bot_description AS botDescription
-    FROM AggregationBotData
+    FROM NativeBotData
     WHERE data_key = (
         SELECT data_key
         FROM Entities
@@ -346,19 +347,19 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectDefEntityID (
+CREATE PROCEDURE selectAssocEntityID (
     IN titleID BIGINT UNSIGNED,
-    IN defID BIGINT UNSIGNED
+    IN propDocID BIGINT UNSIGNED
 )
 BEGIN
     SELECT id AS entID
     FROM Entities
     WHERE (
-        data_type = 'd' AND
+        data_type = 'a' AND
         data_key = (
             SELECT data_key
             FROM DefinedEntityData
-            WHERE title_id = titleID AND def_id = defID
+            WHERE title_id = titleID AND prop_doc_id = propDocID
         )
     );
 END //
@@ -397,8 +398,27 @@ BEGIN
         data_type = 'p' AND
         data_key = (
             SELECT data_key
-            FROM PropertyTagEntityData
+            FROM PropertyTagData
             WHERE subj_id = subjID AND prop_id = propID
+        )
+    );
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectPropDocEntityID (
+    IN dataHash VARCHAR(255)
+)
+BEGIN
+    SELECT id AS entID
+    FROM Entities
+    WHERE (
+        data_type = 'd' AND
+        data_key = (
+            SELECT data_key
+            FROM PropertyDocData
+            WHERE data_hash = dataHash
         )
     );
 END //
@@ -470,10 +490,10 @@ BEGIN
     SELECT id AS entID
     FROM Entities
     WHERE (
-        data_type = 'b' AND
+        data_type = 'n' AND
         data_key = (
             SELECT data_key
-            FROM AggregationBotData
+            FROM NativeBotData
             WHERE bot_name = botName
         )
     );

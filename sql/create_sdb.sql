@@ -10,14 +10,15 @@ DROP TABLE IndexedEntities;
 DROP TABLE Entities;
 
 /* Data */
-DROP TABLE DefinedEntityData;
 DROP TABLE SimpleEntityData;
+DROP TABLE AssocEntityData;
 DROP TABLE FormalEntityData;
-DROP TABLE PropertyTagEntityData;
+DROP TABLE PropertyTagData;
+DROP TABLE PropertyDocData;
 DROP TABLE TextData;
 DROP TABLE BinaryData;
 DROP TABLE UserData;
-DROP TABLE AggregationBotData;
+DROP TABLE NativeBotData;
 
 /* Ancillary data for aggregation bots */
 DROP TABLE AncillaryBotData1e2d;
@@ -144,6 +145,12 @@ CREATE TABLE IndexedEntities (
 -- column. But I will do this in another file, then.
 
 
+
+
+
+
+
+
 /* Entities */
 
 CREATE TABLE Entities (
@@ -181,21 +188,25 @@ CREATE TABLE SimpleEntityData (
 );
 
 
-/* Property-defined entities (or 'defined entities' for short) */
+/* Associative entities (or 'property-defined entities,' alternatively) */
 
-CREATE TABLE DefinedEntityData (
+CREATE TABLE AssocEntityData (
     -- Standard entity data key (private).
     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     -- ID of a simple entity holding the title of this 'defined' entity.
     title_id BIGINT UNSIGNED NOT NULL,
 
-    -- ID of the property document (JSON) providing the initial definition of
-    -- the entity. The property document is a JSON text listing all the
-    -- defining properties of the entity, other than than the title.
-    def_id BIGINT UNSIGNED NOT NULL,
+    -- The property document providing the initial definition of
+    -- the entity. The property document encodes what is like a plain object
+    -- in JavaScript or an associative array in PHP: Basically list of
+    -- key--value pairs, where the key is a property name (such as 'name',
+    -- 'occupation', etc.) and the value is the property value (such as
+    -- 'John', 'actor', etc.). The only difference is that a property documents
+    -- can actually have several values for each property.
+    prop_doc_id BIGINT UNSIGNED NOT NULL,
 
-    UNIQUE INDEX (title_id, def_id)
+    UNIQUE INDEX (title_id, prop_doc_id)
 );
 
 
@@ -218,7 +229,7 @@ CREATE TABLE FormalEntityData (
 
 /* Property tag entities */
 
-CREATE TABLE PropertyTagEntityData (
+CREATE TABLE PropertyTagData (
     -- Property tag entity data key (private).
     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
@@ -232,6 +243,26 @@ CREATE TABLE PropertyTagEntityData (
 );
 
 
+
+/* Property document entities */
+
+CREATE TABLE PropertyDocData (
+    -- Property document data key (private).
+    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    -- Data hash. (We use SHA2 rather than MD5 to allow ourselves to simply
+    -- assume that there won't be any collisions.)
+    data_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(txt, 224)),
+
+    -- Text containing the property--value assignments. A property might
+    -- have multiple values assigned to it. For instance, a movie might
+    -- have several directors for its 'director' property, and might have
+    -- a whole list of actors for its 'actor' property. 
+    txt TEXT NOT NULL,
+
+    -- UNIQUE INDEX (data_hash, data_key)
+    UNIQUE INDEX (data_hash)
+);
 
 
 /* Text entities */
@@ -247,8 +278,7 @@ CREATE TABLE TextData (
     -- Data. Note that texts are not stored completely verbatim, as '@'s need
     -- to be escaped, unless the are to be interpreted as the beginning of
     -- a link to a reference (where the title is typically substituted as
-    -- a clickable link). The same is also true, by the way, for the titles
-    -- of the simply defined and the property-defined entities.
+    -- a clickable link).
     txt TEXT,
 
     -- UNIQUE INDEX (data_hash, data_key)
@@ -294,9 +324,9 @@ CREATE TABLE UserData (
 );
 
 
-/* Aggregation bot entities (or 'bot entities' for short) */
+/* Native bot entities (or 'bot entities' for short) */
 
-CREATE TABLE AggregationBotData (
+CREATE TABLE NativeBotData (
     -- Aggregation bot data key (private).
     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 

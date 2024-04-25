@@ -70,9 +70,9 @@ switch ($reqType) {
         $paramNameArr = array("u", "r", "t");
         $typeArr = array("id", "tint", "str");
         break;
-    case "def":
-        $sql = "CALL insertOrFindDefEntity (?, ?, ?, ?)";
-        $paramNameArr = array("u", "r", "t", "d");
+    case "assoc":
+        $sql = "CALL insertOrFindAssocEntity (?, ?, ?, ?)";
+        $paramNameArr = array("u", "r", "t", "p");
         $typeArr = array("id", "tint", "id", "id");
         break;
     case "form":
@@ -84,6 +84,11 @@ switch ($reqType) {
         $sql = "CALL insertOrFindPropTagEntity (?, ?, ?, ?)";
         $paramNameArr = array("u", "r", "s", "p");
         $typeArr = array("id", "tint", "id", "id");
+        break;
+    case "propDoc":
+        $sql = "CALL insertOrFindPropDocEntity (?, ?, ?)";
+        $paramNameArr = array("u", "r", "p");
+        $typeArr = array("id", "tint", "prop_doc");
         break;
     case "text":
         $sql = "CALL insertOrFindTextEntity (?, ?, ?)";
