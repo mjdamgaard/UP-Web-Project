@@ -222,9 +222,9 @@ CREATE TABLE FormalEntityData (
     fun_id BIGINT UNSIGNED NOT NULL,
     
     -- A string listing the IDs of the inputs of the function.
-    input_list VARCHAR(255) NOT NULL,
+    input_list_id BIGINT UNSIGNED NOT NULL,
 
-    UNIQUE INDEX (fun_id, input_list)
+    UNIQUE INDEX (fun_id, input_list_id)
 );
 
 

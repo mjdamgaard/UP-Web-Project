@@ -116,6 +116,9 @@ export class EntityInserter {
       case 'propTag':
         this.#insertOrFindPropertyTagEntity(entDefObj, key, modCallback);
         break;
+      case 'list':
+        this.#insertOrFindListEntity(entDefObj, key, modCallback);
+        break;
       case 'propDoc':
         this.#insertOrFindPropDocEntity(entDefObj, key, modCallback);
         break;
@@ -129,6 +132,9 @@ export class EntityInserter {
       case 'bot':
         throw "EntityInserter: Aggregation bots cannot be inserted.";
       /* Virtual data types used just for this method */
+      case 'spread':
+        this.#insertOrFindSpreadList(entDefObj, key, modCallback);
+        break;
       case 'rating':
         this.#insertOrFindRating(entDefObj, key, modCallback);
         break;
@@ -289,6 +295,11 @@ export class EntityInserter {
   }
 
 
+  #insertOrFindListEntity(entDefObj, key, modCallback) {
+    // TODO: Implement.
+  }
+
+
   #insertOrFindPropDocEntity(entDefObj, key, modCallback) {
     // TODO: Implement.
     if (
@@ -307,6 +318,13 @@ export class EntityInserter {
     }
   }
 
+
+  #insertOrFindSpreadList(entDefObj, key, modCallback) {
+    // TODO: Implement.
+  }
+
+
+
   #insertOrFindTextEntity(entDefObj, key, modCallback) {
     let text = entDefObj.text ?? entDefObj.textArr.join("");
     this.getSubstitutedText(text, (newText) => {
@@ -322,7 +340,6 @@ export class EntityInserter {
 
   }
   
-
 
 
 

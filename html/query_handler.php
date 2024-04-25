@@ -106,7 +106,7 @@ switch ($reqType) {
         // output:
         //     sim: [['s', title]],
         //     assoc: [['a', titleID, title, defID]],
-        //     fun: [['f', funID, inputs]],
+        //     form: [['f', funID, inputListID]],
         //     propTag: [['p', subjID, propID]],
         //     list: [['l', textStart, len]],
         //     propDoc: [['d', textStart, len]],
@@ -166,7 +166,13 @@ switch ($reqType) {
     case "formID":
         $sql = "CALL selectFormEntityID (?, ?)";
         $paramNameArr = array("f", "i");
-        $typeArr = array("id", "str");
+        $typeArr = array("id", "id");
+        // output: [[entID]].
+        break;
+    case "formIDFromText":
+        $sql = "CALL selectFormEntityIDFromText (?, ?)";
+        $paramNameArr = array("f", "i");
+        $typeArr = array("id", "text");
         // output: [[entID]].
         break;
     case "propTagID":

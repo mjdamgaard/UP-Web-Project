@@ -18,6 +18,7 @@ DROP PROCEDURE selectBotInfo;
 DROP PROCEDURE selectAssocEntityID;
 DROP PROCEDURE selectSimEntityID;
 DROP PROCEDURE selectFormEntityID;
+DROP PROCEDURE selectFormEntityIDFromText;
 DROP PROCEDURE selectPropTagEntityID;
 DROP PROCEDURE selectListEntityID;
 DROP PROCEDURE selectPropDocEntityID;
@@ -190,7 +191,7 @@ BEGIN
         SELECT
             dataType,
             fun_id AS funID,
-            input_list AS inputs
+            input_list_id AS inputListID
         FROM FormalEntityData
         WHERE data_key = dataKey;
 
@@ -434,7 +435,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectFormEntityID (
     IN funID BIGINT UNSIGNED,
-    IN inputs VARCHAR(255)
+    IN inputListID BIGINT UNSIGNED
 )
 BEGIN
     SELECT id AS entID
@@ -444,7 +445,41 @@ BEGIN
         data_key = (
             SELECT data_key
             FROM FormalEntityData
-            WHERE fun_id = funID AND input_list = inputs
+            WHERE fun_id = funID AND input_list_id = inputListID
+        )
+    );
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectFormEntityIDFromText (
+    IN funID BIGINT UNSIGNED,
+    IN inputListHash VARCHAR(255)
+)
+BEGIN
+    SELECT id AS entID
+    FROM Entities
+    WHERE (
+        data_type = 'f' AND
+        data_key = (
+            SELECT data_key
+            FROM FormalEntityData
+            WHERE (
+                fun_id = funID AND
+                input_list_id = (
+                    SELECT id
+                    FROM Entities
+                    WHERE (
+                        data_type = 'l' AND
+                        data_key = (
+                            SELECT data_key
+                            FROM ListData
+                            WHERE data_hash = inputListHash
+                        )
+                    )
+                )
+            )
         )
     );
 END //

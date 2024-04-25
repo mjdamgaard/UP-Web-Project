@@ -277,14 +277,23 @@ CREATE PROCEDURE insertOrFindFormEntity (
     IN userID BIGINT UNSIGNED,
     IN recordCreator BOOL,
     IN funID BIGINT UNSIGNED,
-    IN inputs VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
+    IN inputListID BIGINT UNSIGNED
 )
 BEGIN
     DECLARE outID, dataKey BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
 
-    INSERT IGNORE INTO FormalEntityData (fun_id, input_list)
-    VALUES (funID, inputs);
+    -- If inputListID is not the ID of a list entity, return exitCode = 2.
+    SELECT data_type INTO dataType
+    FROM Entities
+    WHERE id = inputListID;
+    IF (dataType != 'l') THEN
+        SELECT NULL AS outID, 2 AS exitCode; -- failure.
+        LEAVE proc;
+    END IF;
+
+    INSERT IGNORE INTO FormalEntityData (fun_id, input_list_id)
+    VALUES (funID, inputListID);
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
@@ -297,7 +306,7 @@ BEGIN
         FROM FormalEntityData
         WHERE (
             fun_id = funID AND
-            input_list = inputs
+            input_list_id = inputListID
         );
         SELECT id INTO outID
         FROM Entities

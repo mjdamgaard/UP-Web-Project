@@ -78,7 +78,7 @@ switch ($reqType) {
     case "form":
         $sql = "CALL insertOrFindFormEntity (?, ?, ?, ?)";
         $paramNameArr = array("u", "r", "f", "i");
-        $typeArr = array("id", "tint", "id", "str");
+        $typeArr = array("id", "tint", "id", "id");
         break;
     case "propTag":
         $sql = "CALL insertOrFindPropTagEntity (?, ?, ?, ?)";
