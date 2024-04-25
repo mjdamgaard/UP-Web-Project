@@ -279,9 +279,10 @@ CREATE PROCEDURE insertOrFindFormEntity (
     IN funID BIGINT UNSIGNED,
     IN inputListID BIGINT UNSIGNED
 )
-BEGIN
+BEGIN proc: BEGIN
     DECLARE outID, dataKey BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
+    DECLARE dataType CHAR;
 
     -- If inputListID is not the ID of a list entity, return exitCode = 2.
     SELECT data_type INTO dataType
@@ -317,7 +318,7 @@ BEGIN
     END IF;
 
     SELECT outID, exitCode;
-END //
+END proc; END //
 DELIMITER ;
 
 

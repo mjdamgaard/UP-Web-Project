@@ -240,32 +240,24 @@ export class EntityInserter {
 
   #insertOrFindFormalEntity(entDefObj, key, modCallback) {
     let fun = entDefObj.function;
-    let inputs = entDefObj.inputs ?? entDefObj.inputsArr.join("");
+    let inputList = entDefObj.inputs;
 
-    // First we verify the inputs string.
-    if (
-      inputs.length > 255 ||
-      !/^[1-9][0-9]*(,[1-9][0-9]*)*$/.test(inputs)
-    ) {
-      throw (
-        'EntityInserter: Inputs "' + inputs + '" does not have ' +
-        'the correct format (like "123,45,7,890") ' +
-        'or is too long (' + inputs.length + ' > 255).'
-      );
-    }
-
-    // Then we insert or find the function, with a callback to finally
-    // insert the functional entity once the funID is resolved.
+    // We insert or find the function, with a callback to then insert the
+    // input list as well, with yet another callback to finally insert the
+    // 'formal' entity once the funID and inputListID are resolved.
+    // (Note that dding a key to functions speeds up the insertion process.)
     this.insertOrFind(fun, (funID) => {
-      let reqData = {
-        req: "form",
-        ses: this.accountManager.sesIDHex,
-        u: this.accountManager.inputUserID,
-        r: this.recordCreator,
-        f: funID,
-        i: inputs,
-      };
-      this.#inputOrLookupEntity(reqData, key, modCallback);
+      this.insertOrFind(inputList, (inputListID) => {
+        let reqData = {
+          req: "form",
+          ses: this.accountManager.sesIDHex,
+          u: this.accountManager.inputUserID,
+          r: this.recordCreator,
+          f: funID,
+          i: inputListID,
+        };
+        this.#inputOrLookupEntity(reqData, key, modCallback);
+      });
     });
   }
 
