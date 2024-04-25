@@ -118,7 +118,10 @@ class InputValidator {
                 break;
             case "prop_doc":
                 $pattern = "/^([1-9][0-9]*:[1-9][0-9]*(,[1-9][0-9]*)*;)*$/";
-                if (!preg_match($pattern, $paramVal)) {
+                if (
+                    strlen($paramVal) > 65535 ||
+                    !preg_match($pattern, $paramVal)
+                ) {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, "propDoc");
                 }
                 break;

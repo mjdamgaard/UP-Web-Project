@@ -200,6 +200,14 @@ BEGIN
         FROM PropertyTagData
         WHERE data_key = dataKey;
 
+    ELSEIF (dataType = 'd') THEN
+        -- Select the returned info.
+        SELECT
+            dataType,
+            txt AS propDoc
+        FROM TextData
+        WHERE data_key = dataKey;
+
     ELSEIF (dataType = 't') THEN
         -- Select the returned info.
         SELECT

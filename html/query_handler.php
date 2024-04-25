@@ -108,6 +108,7 @@ switch ($reqType) {
         //     assoc: [['a', titleID, title, defID]],
         //     fun: [['f', funID, inputs]],
         //     propTag: [['p', subjID, propID]],
+        //     propDoc: [['d', propDoc]],
         //     text: [['t', textStart, len, dataHash]],
         //     bin: [['b', len, dataHash]],
         //     user: [['u', username]],
