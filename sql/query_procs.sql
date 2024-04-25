@@ -458,28 +458,26 @@ CREATE PROCEDURE selectFormEntityIDFromText (
     IN inputListHash VARCHAR(255)
 )
 BEGIN
-    SELECT id AS entID
+    DECLARE inputListID BIGINT UNSIGNED;
+
+    SELECT id INTO inputListID
+    FROM Entities
+    WHERE (
+        data_type = 'l' AND
+        data_key = (
+            SELECT data_key
+            FROM ListData
+            WHERE data_hash = inputListHash
+        )
+    );
+    SELECT id AS entID, inputListID
     FROM Entities
     WHERE (
         data_type = 'f' AND
         data_key = (
             SELECT data_key
             FROM FormalEntityData
-            WHERE (
-                fun_id = funID AND
-                input_list_id = (
-                    SELECT id
-                    FROM Entities
-                    WHERE (
-                        data_type = 'l' AND
-                        data_key = (
-                            SELECT data_key
-                            FROM ListData
-                            WHERE data_hash = inputListHash
-                        )
-                    )
-                )
-            )
+            WHERE fun_id = funID AND input_list_id = inputListID
         )
     );
 END //

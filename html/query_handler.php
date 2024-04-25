@@ -173,7 +173,7 @@ switch ($reqType) {
         $sql = "CALL selectFormEntityIDFromText (?, ?)";
         $paramNameArr = array("f", "i");
         $typeArr = array("id", "text");
-        // output: [[entID]].
+        // output: [[entID, inputListID]].
         break;
     case "propTagID":
         $sql = "CALL selectPropTagEntityID (?, ?)";

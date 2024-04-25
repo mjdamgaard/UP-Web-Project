@@ -135,8 +135,8 @@ export class EntityInserter {
       case 'spread':
         this.#insertOrFindSpreadList(entDefObj, key, modCallback);
         break;
-      case 'rating':
-        this.#insertOrFindRating(entDefObj, key, modCallback);
+      case 'ratings':
+        this.#insertRatings(entDefObj);
         break;
       default:
         throw "EntityInserter: Unrecognized data type.";
@@ -335,8 +335,20 @@ export class EntityInserter {
 
 
 
-  #insertOrFindRating(entDefObj, key, modCallback) {
-    // TODO: Implement.
+  #insertRatings(entDefObj) {
+    let ratingArr = entDefObj.ratings;
+    ratingArr.forEach(val => {
+      let tag = val.tag;
+      let instRatingArr = val.instances;
+      this.insertOrFind(tag, (tagID) => {
+        instRatingArr.forEach(val => {
+          let [inst, rating] = val;
+          this.insertOrFind(inst, (instID) => {
+            this.#insertRating(tagID, instID, rating);
+          });
+        });
+      });
+    });
   }
 
 
@@ -362,7 +374,7 @@ export class EntityInserter {
       );
       if (containsIllFormedRefs) {
         throw (
-          'EntityInserter: text "' + text + '" contains ill-formed references.'
+          'EntityInserter: Text "' + text + '" contains ill-formed references.'
         );
       }
       // If this test succeeds, call the callback function on the (final) text.
@@ -388,9 +400,35 @@ export class EntityInserter {
   }
 
 
-  #insertRating(tagID, entID, rating) {
-    // TODO: Implement.
+  #insertRating(tagID, instID, rating) {
+    var roundedRatVal;
+    if (rating === "del" || rating === "delete") {
+      roundedRatVal = 0;
+    } else {
+      rating = parseFloat(rating);
+      if (isNaN(rating) || rating < 0 || 10 < rating) {
+        throw (
+          'EntityInserter: A rating of ' + rating + ' is not valid.'
+        );
+      }
+      roundedRatVal = Math.max(Math.round(rating * 25.5), 1) * 256;
+      if (roundedRatVal == 0) {
+        roundedRatVal = roundedRatVal + 1;
+      }
+    }
+    let reqData = {
+      req: "rat",
+      ses: this.accountManager.sesIDHex,
+      u: this.accountManager.inputUserID,
+      t: tagID,
+      i: instID,
+      r: roundedRatVal,
+      l: 0,
+    };
+    DBRequestManager.input(reqData);
   }
+
+
 
   // #waitForIDThen() executes the callback function as soon as the entID
   // referred to by the key is ready.

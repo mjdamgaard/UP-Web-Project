@@ -14,7 +14,7 @@ export class DBRequestManager {
 
   static query(reqData, callbackData, callback) {
     if (!callback) {
-      callback = callbackData;
+      callback = callbackData ?? void(0);
       callbackData = null;
     }
     // URL-encode the request data.
@@ -58,7 +58,7 @@ export class DBRequestManager {
 
   static input(reqData, callbackData, callback) {
     if (!callback) {
-      callback = callbackData;
+      callback = callbackData ?? void(0);
       callbackData = null;
     }
     let url = "http://localhost:80/input_handler.php";
