@@ -10,7 +10,7 @@ export class EntityInserter {
   constructor(accountManager, recordCreator) {
     // Public properties:
     this.accountManager = accountManager;
-    this.recordCreator = recordCreator ?? false;
+    this.recordCreator = recordCreator ?? true;
   }
 
   // insertOrFind() parses an entity definition object and uploads all the
@@ -34,10 +34,45 @@ export class EntityInserter {
       return;
     }
 
-    // If entDefObj is a string, insert the resulting string as a simple
-    // entity, passing the callback function.
+    // If entDefObj is a string, it can either start with "@" and be an entity
+    // or a key reference, or it can be a simple entity, denoted by its title,
+    // except that if the title starts with '@', this has to be escaped as
+    // '\@' instead (but this only applies at the beginning of the title.)
     if (typeof entDefObj === "string") {
-      this.insertOrFind({metaType: 's', title: entDefObj}, callback);
+      // If entDefObj is neither an entity reference nor a key reference, pass
+      // it on to be handled by #insertOrFindSimpleEntity().
+      if (entDefObj[0] !== "@") {
+        // Note that any leading '\@' will be converted to '@' by
+        // #insertOrFindSimpleEntity().
+        this.insertOrFind({dataType: 's', title: entDefObj}, callback);
+        return;
+      }
+
+      // If title is an entity reference, simply call the callback function
+      // immediately and return. 
+      if (/^@[1-9]/.test(entDefObj)) {
+        // Throw if the entity reference is ill-formed.
+        if (!/^@[1-9][0-9]*\.$/.test(entDefObj)) {
+          throw (
+            'EntityInserter: "' + entDefObj + '" is not a valid entity ' +
+            'reference.'
+          );
+        }
+        // Else call the callback and return.
+        let entID = entDefObj.slice(1, -1);
+        callback(entID);
+        return;
+      }
+  
+      // Else if entDefObj is a key, wait for it to resolve, then call the
+      // callback function. But throw if the key reference is ill-formed.
+      if (!/^@[a-zA-Z][\w_]*\.$/.test(title)) {
+        throw (
+          'EntityInserter: "' + entDefObj + '" is not a valid key reference.'
+        );
+      }
+      // Else call the callback after the key has resolved.
+      this.#waitForIDThen(entDefObj, callback);
       return;
     }
 
@@ -67,37 +102,38 @@ export class EntityInserter {
     // We also get the entity key property if any.
     let key = entDefObj.key;
 
-    // Then check the meta type of the entDefObj, and branch accordingly.
-    switch (entDefObj.metaType) {      
-      case 's':
+    // Then check the data type of the entDefObj, and branch accordingly.
+    switch (entDefObj.dataType) {      
+      case 'sim':
+        // (For simple entities, the title is always the key reference.)
         this.#insertOrFindSimpleEntity(entDefObj, modCallback);
         break;
-      case 'd':
-        this.#insertOrFindDefinedEntity(entDefObj, key, modCallback);
-      case 'f':
+      case 'assoc':
+        this.#insertOrFindAssocEntity(entDefObj, key, modCallback);
+      case 'formal':
         this.#insertOrFindFormalEntity(entDefObj, key, modCallback);
         break;
-      case 'p':
+      case 'propTag':
         this.#insertOrFindPropertyTagEntity(entDefObj, key, modCallback);
         break;
-      case 't':
-        this.#insertOrFindTextEntity(entDefObj, key, modCallback);
-        break;
-      case 'b':
-        throw "EntityInserter: Binaries are not implemented yet.";
-      case 'u':
-        throw "EntityInserter: Users cannot be inserted.";
-      case 'a':
-        throw "EntityInserter: Aggregation bots cannot be inserted.";
-      /* Virtual meta types used just for this method */
       case 'propDoc':
         this.#insertOrFindPropDocEntity(entDefObj, key, modCallback);
         break;
+      case 'text':
+        this.#insertOrFindTextEntity(entDefObj, key, modCallback);
+        break;
+      case 'binary':
+        throw "EntityInserter: Binaries are not implemented yet.";
+      case 'user':
+        throw "EntityInserter: Users cannot be inserted.";
+      case 'bot':
+        throw "EntityInserter: Aggregation bots cannot be inserted.";
+      /* Virtual data types used just for this method */
       case 'rating':
         this.#insertOrFindRating(entDefObj, key, modCallback);
         break;
       default:
-        throw "EntityInserter: Unrecognized meta type.";
+        throw "EntityInserter: Unrecognized data type.";
     }
     return;
   }
@@ -105,30 +141,33 @@ export class EntityInserter {
 
 
   #insertOrFindSimpleEntity(entDefObj, modCallback) {
-    let title = entDefObj.title;
-    if (title[0] === "@") {
-      // If title is an entity reference, simply call the modified callback
-      // immediately and return. 
-      if (/^@[1-9]/.test(title)) {
-        // Throw if the entity reference is ill-formed.
-        if (!/^@[1-9][0-9]*\.$/.test(title)) {
-          throw (
-            'EntityInserter: "' + title + '" is not a valid entity reference.'
-          );
-        }
-        // Else call the modCallback and return.
-        let entID = title.slice(1, -1);
-        modCallback(entID);
-        return;
-      }
+    let title = entDefObj.title ?? entDefObj.titleArr.join("");
 
-      // If title is a key, wait for it to resolve, then call the modified
-      // callback function.
+    // If title is an entity reference, simply call the modified callback
+    // immediately and return. 
+    if (/^@[1-9]/.test(title)) {
+      // Throw if the entity reference is ill-formed.
+      if (!/^@[1-9][0-9]*\.$/.test(title)) {
+        throw (
+          'EntityInserter: "' + title + '" is not a valid entity reference.'
+        );
+      }
+      // Else call the modCallback and return.
+      let entID = title.slice(1, -1);
+      modCallback(entID);
+      return;
+    }
+
+    // If title is a key, wait for it to resolve, then call the modified
+    // callback function.
+    if (title[0] === "@") {
+      // Throw if the key reference is ill-formed.
       if (!/^@[a-zA-Z][\w_]*\.$/.test(title)) {
         throw (
           'EntityInserter: "' + title + '" is not a valid key reference.'
         );
       }
+      // Else call the modCallback after the key has resolved.
       this.#waitForIDThen(title, modCallback);
       return;
     }
@@ -165,29 +204,28 @@ export class EntityInserter {
 
 
 
-  #insertOrFindDefinedEntity(entDefObj, key, modCallback) {
-    let title = entDefObj.title;
-    let def = entDefObj.definition;
+  #insertOrFindAssocEntity(entDefObj, key, modCallback) {
+    let title = entDefObj.title ?? entDefObj.titleArr.join("");
+    let propDoc = entDefObj.propDoc;
 
-    // We definition, and give it a callback to insert
-    // or find (expecting to do the latter) the title once again, after
-    // which we finally call #inputOrLookupEntity() for this 'defined'
-    // entity.
-    this.insertOrFind(def, (defID) => {
+    // We insert the property document, and give it a callback to insert
+    // or find the title, after which we finally call #inputOrLookupEntity()
+    // for this 'associative' entity.
+    this.insertOrFind(propDoc, (propDocID) => {
       this.insertOrFind(title, (titleID) => {
         let reqData = {
-          req: "def",
+          req: "assoc",
           ses: this.accountManager.sesIDHex,
           u: this.accountManager.inputUserID,
           r: this.recordCreator,
           t: titleID,
-          d: defID,
+          p: propDocID,
         };
         this.#inputOrLookupEntity(reqData, key, (entID) => {
           // Call the callback, and also uprate the properties contained
-          // in the property document that def defined for this new entity.
+          // in the defining property document.
           modCallback(entID);
-          this.#uprateProperties(entID, defID);
+          this.#uprateProperties(entID, propDocID);
         });
       });
     });
@@ -196,10 +234,19 @@ export class EntityInserter {
 
   #insertOrFindFormalEntity(entDefObj, key, modCallback) {
     let fun = entDefObj.function;
-    let inputs = entDefObj.inputs;
+    let inputs = entDefObj.inputs ?? entDefObj.inputsArr.join("");
 
     // First we verify the inputs string.
-    if (inputs) {throw "TODO: Implement verification.";}
+    if (
+      inputs.length > 255 ||
+      !/^[1-9][0-9]*(,[1-9][0-9]*)*$/.test(inputs)
+    ) {
+      throw (
+        'EntityInserter: Inputs "' + inputs + '" does not have ' +
+        'the correct format (like "123,45,7,890") ' +
+        'or is too long (' + inputs.length + ' > 255).'
+      );
+    }
 
     // Then we insert or find the function, with a callback to finally
     // insert the functional entity once the funID is resolved.
@@ -218,57 +265,63 @@ export class EntityInserter {
 
 
   #insertOrFindPropertyTagEntity(entDefObj, key, modCallback) {
-    // TODO: Implement.
+    let subj = entDefObj.subject;
+    let prop = entDefObj.property;
+
+    // We insert or find the subject, with a callback to then insert the
+    // property as well, with yet another callback to finally insert the
+    // 'property tag' entity once the subjID and propID are resolved.
+    // (Note that using simple entities as properties (often advised), or
+    // adding a key to non-simple properties speeds up the insertion process.)
+    this.insertOrFind(subj, (subjID) => {
+      this.insertOrFind(prop, (propID) => {
+        let reqData = {
+          req: "propTag",
+          ses: this.accountManager.sesIDHex,
+          u: this.accountManager.inputUserID,
+          r: this.recordCreator,
+          s: subjID,
+          p: propID,
+        };
+        this.#inputOrLookupEntity(reqData, key, modCallback);
+      });
+    });
   }
 
+
+  #insertOrFindPropDocEntity(entDefObj, key, modCallback) {
+    // TODO: Implement.
+    if (
+      propDoc.length > 65535 // ||
+      // !/^([1-9][0-9]*:[1-9][0-9]*(,[1-9][0-9]*)*;)*$/.test(propDoc)
+    ) {
+      // throw (
+      //   'EntityInserter: Property document "' + propDoc + '" does not have ' +
+      //   'the correct format (like "123:456;78:901,2,34;5:67890;") ' +
+      //   'or is too long (' + propDoc.length + ' > 65535).'
+      // );
+      throw (
+        'EntityInserter: Property document "' + propDoc + '" is too long (' +
+        propDoc.length + ' > 65535).'
+      );
+    }
+  }
 
   #insertOrFindTextEntity(entDefObj, key, modCallback) {
-    let text = entDefObj.textArr.join("");
-    let format = entDefObj.format;
-    switch (format) {
-      case "uft8, linked entity references":
-      case "uft8_linked":
-      case "standard":
-      case "std":
-      case undefined:
-        // format = "std";
-        this.#insertOrFindStdTextEntity(text, key, modCallback);
-        break;
-      // case "property document":
-      // case "propDoc":
-      // case "prop-doc":
-      //   // format = "propDoc";
-      //   this.#insertOrFindPropDocEntity(text, key, modCallback);
-      //   break;
-      default:
-        throw "EntityInserter: Unrecognized text format.";
-    }
-
-  }
-
-
-  #insertOrFindStdTextEntity(text, key, modCallback) {
+    let text = entDefObj.text ?? entDefObj.textArr.join("");
     this.getSubstitutedText(text, (newText) => {
       let reqData = {
         req: "text",
         ses: this.accountManager.sesIDHex,
         u: this.accountManager.inputUserID,
         r: this.recordCreator,
-        f: "std",
         t: newText,
       };
       this.#inputOrLookupEntity(reqData, key, modCallback);
     });
+
   }
-
-
-
-
-
-
-  #insertOrFindPropDocEntity(entDefObj, key, modCallback) {
-    // TODO: Implement.
-  }
+  
 
 
 
