@@ -43,7 +43,7 @@ export class EntityInserter {
       if (entDefObj[0] !== "@") {
         // Note that any leading '\@' will be converted to '@' by
         // #insertOrFindSimpleEntity().
-        this.insertOrFind({dataType: 's', title: entDefObj}, callback);
+        this.insertOrFind({dataType: 'sim', title: entDefObj}, callback);
         return;
       }
 
@@ -131,9 +131,6 @@ export class EntityInserter {
       case 'bot':
         throw "EntityInserter: Aggregation bots cannot be inserted.";
       /* Virtual data types used just for this method */
-      case 'spread':
-        this.#insertOrFindSpreadList(entDefObj, key, modCallback);
-        break;
       case 'ratings':
         this.#insertRatings(entDefObj);
         break;
@@ -282,6 +279,9 @@ export class EntityInserter {
   }
 
 
+
+
+
   #insertOrFindListEntity(entDefObj, key, modCallback) {
     let elemArr = entDefObj.elements;
     this.#mapInsert(elemArr, val => val, idArr => {
@@ -358,6 +358,18 @@ export class EntityInserter {
     return;
   }
 
+  // #mapDelayedCallback(array, initCallback, finalCallback) first calls
+  // initCallback(element, tryResolve), where element is the given element of
+  // the array, and where tryResolve is a callback function which initCallback
+  // is always supposed to call at the end of its statement block.
+  // When tryResolve is called, it first records that initCallback considers
+  // itself done (including the effect that it triggers), then checks if all
+  // the other initCallbacks (i.e. for all the other elements) are done, and
+  // if so, finalCallback is called on ...
+  // ..Hm, maybe I'll do something else...
+  #mapDelayedCallback(array, initCallback, finalCallback) {
+    
+  }
 
 
 

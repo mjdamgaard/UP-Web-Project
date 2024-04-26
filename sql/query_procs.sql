@@ -455,9 +455,10 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectFormEntityIDFromText (
     IN funID BIGINT UNSIGNED,
-    IN inputListHash VARCHAR(255)
+    IN inputListText TEXT
 )
 BEGIN
+    DECLARE inputListHash VARCHAR(255) DEFAULT (SHA2(inputListText, 224));
     DECLARE inputListID BIGINT UNSIGNED;
 
     SELECT id INTO inputListID
