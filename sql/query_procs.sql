@@ -156,6 +156,7 @@ BEGIN
     DECLARE dataType CHAR;
     DECLARE dataKey BIGINT UNSIGNED;
     DECLARE titleID, propDocID, titleDataKey BIGINT UNSIGNED;
+    DECLARE funID, inputListID, inputListDataKey BIGINT UNSIGNED;
 
     -- Get the dataType and dataKey.
     SELECT data_type, data_key INTO dataType, dataKey 
@@ -188,12 +189,20 @@ BEGIN
 
     ELSEIF (dataType = 'f') THEN
         -- Select the returned info.
-        SELECT
-            dataType,
-            fun_id AS funID,
-            input_list_id AS inputListID
+        SELECT fun_id, input_list_id INTO funID, inputListID
         FROM FormalEntityData
         WHERE data_key = dataKey;
+        SELECT data_key INTO inputListDataKey
+        FROM Entities
+        WHERE id = inputListID;
+        SELECT
+            dataType,
+            funID,
+            inputListID,
+            SUBSTRING(txt, 1, 255) AS textStart,
+            LENGTH(txt) AS len
+        FROM ListData
+        WHERE data_key = inputListDataKey;
 
     ELSEIF (dataType = 'p') THEN
         -- Select the returned info.

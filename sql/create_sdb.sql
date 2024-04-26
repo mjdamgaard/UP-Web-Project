@@ -221,6 +221,9 @@ CREATE TABLE FormalEntityData (
     -- given the inputs as well.
     fun_id BIGINT UNSIGNED NOT NULL,
     
+    -- TODO: Make this table hold the input list text itself as well iff it
+    -- is of length 255 or shorter, and use this to speed up queries.
+
     -- A string listing the IDs of the inputs of the function.
     input_list_id BIGINT UNSIGNED NOT NULL,
 

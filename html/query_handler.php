@@ -106,7 +106,7 @@ switch ($reqType) {
         // output:
         //     sim: [['s', title]],
         //     assoc: [['a', titleID, title, defID]],
-        //     form: [['f', funID, inputListID]],
+        //     form: [['f', funID, inputListID, textStart, len]],
         //     propTag: [['p', subjID, propID]],
         //     list: [['l', textStart, len]],
         //     propDoc: [['d', textStart, len]],
