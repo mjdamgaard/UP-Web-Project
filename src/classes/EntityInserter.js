@@ -10,7 +10,6 @@ export class EntityInserter {
   constructor(accountManager, recordCreator) {
     // Public properties:
     this.accountManager = accountManager;
-    this.recordCreator = recordCreator ?? true;
   }
 
   // insertOrFind() parses an entity definition object and uploads all the
@@ -200,7 +199,6 @@ export class EntityInserter {
       req: "sim",
       ses: this.accountManager.sesIDHex,
       u: this.accountManager.inputUserID,
-      r: this.recordCreator,
       t: actualTitle,
     };
     this.#inputOrLookupEntity(reqData, title, modCallback);
@@ -223,7 +221,6 @@ export class EntityInserter {
           req: "assoc",
           ses: this.accountManager.sesIDHex,
           u: this.accountManager.inputUserID,
-          r: this.recordCreator,
           t: titleID,
           p: propDocID,
         };
@@ -252,7 +249,6 @@ export class EntityInserter {
           req: "form",
           ses: this.accountManager.sesIDHex,
           u: this.accountManager.inputUserID,
-          r: this.recordCreator,
           f: funID,
           i: inputListID,
         };
@@ -277,7 +273,6 @@ export class EntityInserter {
           req: "propTag",
           ses: this.accountManager.sesIDHex,
           u: this.accountManager.inputUserID,
-          r: this.recordCreator,
           s: subjID,
           p: propID,
         };
@@ -288,7 +283,18 @@ export class EntityInserter {
 
 
   #insertOrFindListEntity(entDefObj, key, modCallback) {
-    // TODO: Implement.
+    let elemArr = entDefObj.elements;
+    this.#mapInsert(elemArr, val => val, idArr => {
+      let listText = idArr.join(",");
+      let reqData = {
+        req: "list",
+        ses: this.accountManager.sesIDHex,
+        u: this.accountManager.inputUserID,
+        l: listText,
+      };
+      this.#inputOrLookupEntity(reqData, key, modCallback);
+    });
+    return;
   }
 
 
@@ -317,6 +323,46 @@ export class EntityInserter {
 
 
 
+  // #mapInsert() takes and array and getEntDefObj function, which extracts
+  // an entDefObj from each element of the array. It then calls insertOrFind()
+  // for each of these extracted objects. And once all these are resolved and
+  // the outID is obtained from each one, the third input, callback, is called
+  // on an array containing all these IDs, and having the same order as the
+  // input array. 
+  #mapInsert(array, getEntDefObj, callback) {
+    let entDefObjArr = array.map(getEntDefObj);
+    let len = entDefObjArr.length;
+    var IndexIDPairArr = [];
+    // Prepare a function to end this method once IndexIDPairArr is grown to
+    // its full length.
+    let ifReadyGetIDArrThenCallback = () => {
+      if (IndexIDPairArr.length === len) {
+        // Sort the IndexIDPairArr such that the indexes are in ascending,
+        // order, then extract an array of IDs in that order.
+        let idArr = IndexIDPairArr
+          .sort((a, b) => a[0] - b[0])
+          .map(val => val[1]);
+        // Finally call the provided callback.
+        callback(idArr);
+      }
+    }
+    // Then call insertOrFind() on each nested entDefObj, giving each one
+    // a callback to push the index-ID pair, then call
+    // ifReadyGetIDArrThenCallback().
+    entDefObjArr.forEach((val, ind) => {
+      this.insertOrFind(val, (entID) => {
+        IndexIDPairArr.push([ind, entID]);
+        ifReadyGetIDArrThenCallback();
+      });
+    });
+    return;
+  }
+
+
+
+
+
+
   #insertOrFindTextEntity(entDefObj, key, modCallback) {
     let text = entDefObj.text ?? entDefObj.textArr.join("");
     this.getSubstitutedText(text, (newText) => {
@@ -324,7 +370,6 @@ export class EntityInserter {
         req: "text",
         ses: this.accountManager.sesIDHex,
         u: this.accountManager.inputUserID,
-        r: this.recordCreator,
         t: newText,
       };
       this.#inputOrLookupEntity(reqData, key, modCallback);

@@ -176,7 +176,6 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindSimEntity (
     IN userID BIGINT UNSIGNED,
-    IN recordCreator BOOL,
     IN titleStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
 BEGIN
@@ -189,7 +188,7 @@ BEGIN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
         INSERT INTO Entities (data_type, data_key, creator_id)
-        VALUES ('s', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
+        VALUES ('s', dataKey, userID);
         SELECT LAST_INSERT_ID() INTO outID;
     ELSE
         SET exitCode = 1; -- find.
@@ -213,7 +212,6 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindAssocEntity (
     IN userID BIGINT UNSIGNED,
-    IN recordCreator BOOL,
     IN titleID BIGINT UNSIGNED,
     IN propDocID TEXT
 )
@@ -248,7 +246,7 @@ BEGIN proc: BEGIN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
         INSERT INTO Entities (data_type, data_key, creator_id)
-        VALUES ('a', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
+        VALUES ('a', dataKey, userID);
         SELECT LAST_INSERT_ID() INTO outID;
     ELSE
         SET exitCode = 1; -- find.
@@ -275,7 +273,6 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindFormEntity (
     IN userID BIGINT UNSIGNED,
-    IN recordCreator BOOL,
     IN funID BIGINT UNSIGNED,
     IN inputListID BIGINT UNSIGNED
 )
@@ -299,7 +296,7 @@ BEGIN proc: BEGIN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
         INSERT INTO Entities (data_type, data_key, creator_id)
-        VALUES ('f', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
+        VALUES ('f', dataKey, userID);
         SELECT LAST_INSERT_ID() INTO outID;
     ELSE
         SET exitCode = 1; -- find.
@@ -326,7 +323,6 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindPropTagEntity (
     IN userID BIGINT UNSIGNED,
-    IN recordCreator BOOL,
     IN subjID BIGINT UNSIGNED,
     IN propID BIGINT UNSIGNED
 )
@@ -340,7 +336,7 @@ BEGIN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
         INSERT INTO Entities (data_type, data_key, creator_id)
-        VALUES ('p', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
+        VALUES ('p', dataKey, userID);
         SELECT LAST_INSERT_ID() INTO outID;
     ELSE
         SET exitCode = 1; -- find.
@@ -369,7 +365,6 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindListEntity (
     IN userID BIGINT UNSIGNED,
-    IN recordCreator BOOL,
     IN listText TEXT
 )
 BEGIN
@@ -383,7 +378,7 @@ BEGIN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
         INSERT INTO Entities (data_type, data_key, creator_id)
-        VALUES ('l', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
+        VALUES ('l', dataKey, userID);
         SELECT LAST_INSERT_ID() INTO outID;
     ELSE
         SET exitCode = 1; -- find.
@@ -409,7 +404,6 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindPropDocEntity (
     IN userID BIGINT UNSIGNED,
-    IN recordCreator BOOL,
     IN propDoc TEXT
 )
 BEGIN
@@ -423,7 +417,7 @@ BEGIN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
         INSERT INTO Entities (data_type, data_key, creator_id)
-        VALUES ('d', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
+        VALUES ('d', dataKey, userID);
         SELECT LAST_INSERT_ID() INTO outID;
     ELSE
         SET exitCode = 1; -- find.
@@ -449,7 +443,6 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindTextEntity (
     IN userID BIGINT UNSIGNED,
-    IN recordCreator BOOL,
     IN textStr TEXT
 )
 BEGIN
@@ -463,7 +456,7 @@ BEGIN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
         INSERT INTO Entities (data_type, data_key, creator_id)
-        VALUES ('t', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
+        VALUES ('t', dataKey, userID);
         SELECT LAST_INSERT_ID() INTO outID;
     ELSE
         SET exitCode = 1; -- find.
@@ -488,7 +481,6 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindBinaryEntity (
     IN userID BIGINT UNSIGNED,
-    IN recordCreator BOOL,
     IN binData LONGBLOB
 )
 BEGIN
@@ -502,7 +494,7 @@ BEGIN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO dataKey;
         INSERT INTO Entities (data_type, data_key, creator_id)
-        VALUES ('b', dataKey, CASE WHEN recordCreator THEN userID ELSE 0 END);
+        VALUES ('b', dataKey, userID);
         SELECT LAST_INSERT_ID() INTO outID;
     ELSE
         SET exitCode = 1; -- find.
