@@ -134,6 +134,9 @@ export class EntityInserter {
       case 'ratings':
         this.#insertRatings(entDefObj);
         break;
+      case 'concatList':
+        this.#insertOrFindConcatenatedList(entDefObj, key, modCallback);
+        break;
       default:
         throw "EntityInserter: Unrecognized data type.";
     }
@@ -286,6 +289,12 @@ export class EntityInserter {
     let elemArr = entDefObj.elements;
     this.#mapInsert(elemArr, val => val, idArr => {
       let listText = idArr.join(",");
+      if (listText.length) {
+        throw (
+          'EntityInserter: List "' + listText + '" is too long (' +
+          listText.length + ' > 65535).'
+        );
+      }
       let reqData = {
         req: "list",
         ses: this.accountManager.sesIDHex,
@@ -317,8 +326,38 @@ export class EntityInserter {
   }
 
 
-  #insertOrFindSpreadList(entDefObj, key, modCallback) {
-    // TODO: Implement.
+  #insertOrFindConcatenatedList(entDefObj, key, modCallback) {
+    let litsArr = entDefObj.lists;
+    this.#mapInsert(litsArr, val => val, idArr => {
+      this.#mapQuery(
+        idArr,
+        id => ({
+          req: "list",
+          id: id,
+          l: 0, // (This is the same as l (maxLen) = 65535.)
+          s: 0, // (startPos = 0.)
+        }),
+        resultArr => {
+          let listText = resultArr
+            .map(result => result[0][0])
+            .join(",");
+          if (listText.length) {
+            throw (
+              'EntityInserter: List "' + listText + '" is too long (' +
+              listText.length + ' > 65535).'
+            );
+          }
+          let reqData = {
+            req: "list",
+            ses: this.accountManager.sesIDHex,
+            u: this.accountManager.inputUserID,
+            l: listText,
+          };
+          this.#inputOrLookupEntity(reqData, key, modCallback);
+        }
+      );
+    });
+    return;
   }
 
 
@@ -330,6 +369,10 @@ export class EntityInserter {
   // on an array containing all these IDs, and having the same order as the
   // input array. 
   #mapInsert(array, getEntDefObj, callback) {
+    if (callback === undefined) {
+      callback = getEntDefObj;
+      getEntDefObj = val => val;
+    }
     let entDefObjArr = array.map(getEntDefObj);
     let len = entDefObjArr.length;
     var IndexIDPairArr = [];
@@ -347,7 +390,7 @@ export class EntityInserter {
       }
     }
     // Then call insertOrFind() on each nested entDefObj, giving each one
-    // a callback to push the index-ID pair, then call
+    // a callback to push the index-ID pair to IndexIDPairArr, then call
     // ifReadyGetIDArrThenCallback().
     entDefObjArr.forEach((val, ind) => {
       this.insertOrFind(val, (entID) => {
@@ -358,17 +401,40 @@ export class EntityInserter {
     return;
   }
 
-  // #mapDelayedCallback(array, initCallback, finalCallback) first calls
-  // initCallback(element, tryResolve), where element is the given element of
-  // the array, and where tryResolve is a callback function which initCallback
-  // is always supposed to call at the end of its statement block.
-  // When tryResolve is called, it first records that initCallback considers
-  // itself done (including the effect that it triggers), then checks if all
-  // the other initCallbacks (i.e. for all the other elements) are done, and
-  // if so, finalCallback is called on ...
-  // ..Hm, maybe I'll do something else...
-  #mapDelayedCallback(array, initCallback, finalCallback) {
-    
+  // #mapQuery() query is like #mapInsert but where the array contains query
+  // reqData instead of entDef objects, and where the callback is called on an
+  // array of query results rather than an array of outID's.
+  #mapQuery(array, getReqData, callback) {
+    if (callback === undefined) {
+      callback = getReqData;
+      getReqData = val => val;
+    }
+    let reqDataArr = array.map(getReqData);
+    let len = reqDataArr.length;
+    var IndexResultPairArr = [];
+    // Prepare a function to end this method once IndexResultPairArr is grown
+    // to its full length.
+    let ifReadyGetResultArrThenCallback = () => {
+      if (IndexResultPairArr.length === len) {
+        // Sort the IndexResultPairArr such that the indexes are in ascending,
+        // order, then extract an array of IDs in that order.
+        let resultArr = IndexResultPairArr
+          .sort((a, b) => a[0] - b[0])
+          .map(val => val[1]);
+        // Finally call the provided callback.
+        callback(resultArr);
+      }
+    }
+    // Then call query the database with each nested reqData, giving each one
+    // a callback to push the index-result pair to IndexResultPairArr, then
+    // call ifReadyGetResultArrThenCallback().
+    reqDataArr.forEach((reqData, ind) => {
+      DBRequestManager.query(reqData, (result) => {
+        IndexResultPairArr.push([ind, result]);
+        ifReadyGetResultArrThenCallback();
+      });
+    });
+    return;
   }
 
 

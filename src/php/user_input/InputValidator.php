@@ -117,7 +117,8 @@ class InputValidator {
                 }
                 break;
             case "prop_doc":
-                $pattern = "/^([1-9][0-9]*:s?[1-9][0-9]*(,s?[1-9][0-9]*)*;)*$/";
+                // $pattern = "/^([1-9][0-9]*:s?[1-9][0-9]*(,s?[1-9][0-9]*)*;)*$/";
+                $pattern = "/^([1-9][0-9]*[=:][1-9][0-9]*;)*$/";
                 if (
                     strlen($paramVal) > 65535 ||
                     !preg_match($pattern, $paramVal)

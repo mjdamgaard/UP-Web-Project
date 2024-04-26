@@ -118,6 +118,7 @@ switch ($reqType) {
     case "list":
         $sql = "CALL selectList (?, ?, ?)";
         $paramNameArr = array("id", "l", "s");
+        // (l = 0 is the same as l = 65535.)
         $typeArr = array("id", "uint", "uint");
         // output: [[text]].
         break;
