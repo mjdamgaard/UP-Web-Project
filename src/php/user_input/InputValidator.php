@@ -58,7 +58,7 @@ class InputValidator {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, "INT");
                 }
                 break;
-            case "rat":
+            // case "rat":
             case "ushort":
                 $pattern = "/^[1-9][0-9]{0,4}|0$/";
                 $n = intval($paramVal);
@@ -72,6 +72,7 @@ class InputValidator {
                 }
                 break;
             case "tint":
+            case "rat":
                 $pattern = "/^-?[1-9][0-9]{0,2}|0$/";
                 $n = intval($paramVal);
                 if (

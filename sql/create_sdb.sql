@@ -1,8 +1,7 @@
 
 /* Semantic inputs */
 DROP TABLE SemanticInputs;
-DROP TABLE Private_RecentInputs;
-DROP TABLE RecordedInputs;
+DROP TABLE RecentInputs;
 /* Indexes */
 DROP TABLE IndexedEntities;
 
@@ -57,7 +56,7 @@ CREATE TABLE SemanticInputs (
     -- The last byte can either be used for more precision (in long lists),
     -- or it can also be used by users to denote a precision/uncertainty,
     -- although this won't be a thing until some future implementation.
-    rat_val SMALLINT UNSIGNED NOT NULL,
+    rat_val TINYINT UNSIGNED NOT NULL,
 
     -- The so-called instance of the tag, or rather the potential instance:
     -- How well the instance fits the tag is thus determined by the rating,
@@ -86,36 +85,22 @@ CREATE TABLE SemanticInputs (
 -- allows for filtering such user lists.. 
 
 
-CREATE TABLE Private_RecentInputs (
+-- RecentInputs can first of all be used by time-dependent bots (e.g. a mean-
+-- of-recent-inputs bot), and can also potentially used by bots that update on
+-- scheduled events rather than immediately when the input is received. And
+-- furthermore, they can also potentially be used by third-party bots and by
+-- SDB peers.
+CREATE TABLE RecentInputs (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     user_id BIGINT UNSIGNED NOT NULL,
     tag_id BIGINT UNSIGNED NOT NULL,
     inst_id BIGINT UNSIGNED NOT NULL,
-    rat_val SMALLINT UNSIGNED NOT NULL,
-
-    live_at_time BIGINT UNSIGNED NOT NULL
+    -- We break the standard of having NULL mean 'missing' here, and instead
+    -- let it mean 'deletion' of the rating:
+    rat_val TINYINT UNSIGNED
 );
 
--- RecordedInputs can first of all be used by time-dependent bots (e.g. a mean-
--- of-recent-inputs bot), and can also potentially used by bots that update on
--- scheduled events rather than immediately when the input is received. And
--- furthermore, they can also potentially be used by third-party bots and by
--- SDB peers.
-CREATE TABLE RecordedInputs (
-    changed_at_time BIGINT UNSIGNED NOT NULL,
-
-    user_id BIGINT UNSIGNED NOT NULL,
-    tag_id BIGINT UNSIGNED NOT NULL,
-    inst_id BIGINT UNSIGNED NOT NULL,
-
-    rat_val SMALLINT UNSIGNED NOT NULL,
-
-    PRIMARY KEY (changed_at_time, user_id, tag_id, inst_id)
-
-    -- TODO: Consider creating this index as well:
-    -- UNIQUE INDEX (user_id, tag_id, inst_id, changed_at_time)
-);
 
 
 /* Indexes */
@@ -223,6 +208,7 @@ CREATE TABLE FormalEntityData (
     
     -- TODO: Make this table hold the input list text itself as well iff it
     -- is of length 255 or shorter, and use this to speed up queries.
+    -- ... Or it could hold the data hash. But then again, maybe not..
 
     -- A string listing the IDs of the inputs of the function.
     input_list_id BIGINT UNSIGNED NOT NULL,

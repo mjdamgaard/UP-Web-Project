@@ -21,36 +21,33 @@ CREATE PROCEDURE insertOrUpdateRating (
     IN userID BIGINT UNSIGNED,
     IN tagID BIGINT UNSIGNED,
     IN instID BIGINT UNSIGNED,
-    IN ratVal SMALLINT UNSIGNED,
-    IN liveAtTime BIGINT UNSIGNED
+    IN ratVal TINYINT UNSIGNED,
+    IN deleteRat BOOL
 )
 BEGIN
-    DECLARE exitCode TINYINT;
-    -- DECLARE now BIGINT UNSIGNED DEFAULT UNIX_TIMESTAMP();
+    IF deleteRat THEN SET ratVal = NULL; END IF;
 
-    IF (liveAtTime > 0) THEN
-        INSERT INTO Private_RecentInputs (
-            user_id,
-            tag_id,
-            rat_val,
-            inst_id,
-            live_at_time
-        )
-        VALUES (
-            userID,
-            tagID,
-            ratVal,
-            instID,
-            liveAtTime
-        );
-    ELSE
-        CALL private_insertOrUpdateRatingAndRunBots (
-            userID, tagID, instID, ratVal
-        );
-    END IF;
-    SET exitCode = 0; -- Rating insert/update is done or is pending.
+    -- TODO: Insert into RecentInputs instead and run bots on scheduled events
+    -- instead.
 
-    SELECT instID AS outID, exitCode;
+    -- INSERT INTO RecentInputs (
+    --     user_id,
+    --     tag_id,
+    --     rat_val,
+    --     inst_id
+    -- )
+    -- VALUES (
+    --     userID,
+    --     tagID,
+    --     ratVal,
+    --     instID
+    -- );
+
+    CALL private_insertOrUpdateRatingAndRunBots (
+        userID, tagID, instID, ratVal
+    );
+
+    SELECT instID AS outID, 0 AS exitCode;
 END //
 DELIMITER ;
 
@@ -62,15 +59,16 @@ CREATE PROCEDURE private_insertOrUpdateRatingAndRunBots (
     IN userID BIGINT UNSIGNED,
     IN tagID BIGINT UNSIGNED,
     IN instID BIGINT UNSIGNED,
-    IN ratVal SMALLINT UNSIGNED
+    IN ratVal TINYINT UNSIGNED
 )
 BEGIN
+    -- TODO: Change.
     DECLARE stmtID BIGINT UNSIGNED;
     DECLARE stmtStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
     DEFAULT CONCAT(
         "#45.", instID, ".", tagID
     );
-    DECLARE prevRatVal SMALLINT UNSIGNED;
+    DECLARE prevRatVal TINYINT UNSIGNED;
     DECLARE now BIGINT UNSIGNED DEFAULT UNIX_TIMESTAMP();
 
 
@@ -113,8 +111,8 @@ BEGIN
 
     /* Updating the user's own input set */
 
-    -- If the input's rat_val is 0, delete the corresponding SemInput.
-    IF (ratVal = 0) THEN
+    -- If the input's rat_val is NULL, delete the corresponding SemInput.
+    IF (ratVal IS NULL) THEN
         DELETE FROM SemanticInputs
         WHERE (
             user_id = userID AND
@@ -136,25 +134,6 @@ BEGIN
             instID
         );
     END IF;
-
-
-    /* Updating RecordedInputs */
-
-    REPLACE INTO RecordedInputs (
-        changed_at_time,
-        user_id,
-        tag_id,
-        inst_id,
-        rat_val
-    )
-    VALUES (
-        now,
-        userID,
-        tagID,
-        instID,
-        ratVal
-    );
-
 
     /* Run procedures to update the various aggregation bots */
 

@@ -62,8 +62,8 @@ $typeArr = "";
 switch ($reqType) {
     case "rat":
         $sql = "CALL insertOrUpdateRating (?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "t", "i", "r", "l");
-        $typeArr = array("id", "id", "id", "rat", "unix_time");
+        $paramNameArr = array("u", "t", "i", "r", "d");
+        $typeArr = array("id", "id", "id", "rat", "tint");
         break;
     case "sim":
         $sql = "CALL insertOrFindSimEntity (?, ?, ?)";

@@ -68,23 +68,6 @@ switch ($reqType) {
         );
         // output: [[ratVal, instID], ...].
         break;
-        case "instListSK":
-            header("Cache-Control: max-age=3");
-            $sql = "CALL selectInstanceListSecKey (?, ?, ?, ?, ?, ?, ?)";
-            $paramNameArr = array(
-                "u", "t",
-                "rl", "rh",
-                "n", "o",
-                "a"
-            );
-            $typeArr = array(
-                "id", "str",
-                "rat", "rat",
-                "uint", "uint",
-                "tint"
-            );
-            // output: [[ratVal, instID], ...].
-            break;
     case "rat":
         header("Cache-Control: max-age=3");
         $sql = "CALL selectRating (?, ?, ?)";
@@ -92,13 +75,20 @@ switch ($reqType) {
         $typeArr = array("id", "id", "id");
         // output: [[ratVal]].
         break;
-    // case "recentInputs":
-    //     header("Cache-Control: max-age=3");
-    //     $sql = "CALL selectRecentInputs (?, ?)";
-    //     $paramNameArr = array("id", "n");
-    //     $typeArr = array("id", "uint");
-    //     // output: [[userID, catID, ratVal, instID, changedAt], ...].
-    //     break;
+    case "recentInputs":
+        header("Cache-Control: max-age=3");
+        $sql = "CALL selectRecentInputs (?, ?)";
+        $paramNameArr = array("id", "n");
+        $typeArr = array("id", "uint");
+        // output: [[userID, tagID, instID, ratVal], ...].
+        break;
+        case "recentInputsMaxID":
+            header("Cache-Control: max-age=3");
+            $sql = "CALL selectRecentInputsMaxID ()";
+            $paramNameArr = array();
+            $typeArr = array();
+            // output: [[maxID]].
+            break;
     case "ent":
         $sql = "CALL selectEntityInfo (?)";
         $paramNameArr = array("id");
