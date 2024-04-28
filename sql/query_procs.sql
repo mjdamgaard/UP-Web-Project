@@ -4,8 +4,8 @@ SELECT "Query procedures";
 DROP PROCEDURE selectInstanceList;
 DROP PROCEDURE selectRating;
 DROP PROCEDURE selectRecordedInputs;
-DROP PROCEDURE selectRecordedInputsMaxID;
 DROP PROCEDURE selectRecordedInputsFromSecKey;
+DROP PROCEDURE selectRecordedInputsMaxID;
 
 DROP PROCEDURE selectEntityInfo;
 
@@ -111,16 +111,6 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectRecordedInputsMaxID (
-)
-BEGIN
-    SELECT MAX(id) AS maxID
-    FROM RecordedInputs;
-END //
-DELIMITER ;
-
-
-DELIMITER //
 CREATE PROCEDURE selectRecordedInputsFromSecKey (
     IN stmtID BIGINT UNSIGNED,
     IN maxNum INT UNSIGNED,
@@ -139,6 +129,15 @@ BEGIN
         CASE WHEN isAscOrder THEN id END ASC,
         CASE WHEN NOT isAscOrder THEN id END DESC
     LIMIT numOffset, maxNum;
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectRecordedInputsMaxID ()
+BEGIN
+    SELECT MAX(id) AS maxID
+    FROM RecordedInputs;
 END //
 DELIMITER ;
 

@@ -75,16 +75,23 @@ switch ($reqType) {
         $typeArr = array("id", "id", "id");
         // output: [[ratVal]].
         break;
-    case "recentInputs":
+    case "recInputs":
         header("Cache-Control: max-age=3");
-        $sql = "CALL selectRecentInputs (?, ?)";
+        $sql = "CALL selectRecordedInputs (?, ?)";
         $paramNameArr = array("id", "n");
         $typeArr = array("id", "uint");
-        // output: [[userID, tagID, instID, ratVal], ...].
+        // output: [[userID, stmtID, ratVal], ...].
         break;
-        case "recentInputsMaxID":
+    case "recInputsSK":
+        header("Cache-Control: max-age=3");
+        $sql = "CALL selectRecordedInputsFromSecKey (?, ?, ?, ?)";
+        $paramNameArr = array("s", "n", "o", "a");
+        $typeArr = array("id", "uint", "uint", "tint");
+        // output: [[ratID, userID, stmtID, ratVal], ...].
+        break;
+        case "recInputsMaxID":
             header("Cache-Control: max-age=3");
-            $sql = "CALL selectRecentInputsMaxID ()";
+            $sql = "CALL selectRecordedInputsMaxID ()";
             $paramNameArr = array();
             $typeArr = array();
             // output: [[maxID]].
@@ -98,6 +105,7 @@ switch ($reqType) {
         //     assoc: [['a', titleID, title, defID]],
         //     form: [['f', funID, inputListID, textStart, len]],
         //     propTag: [['p', subjID, propID]],
+        //     stmt: [['m', tagID, instID]],
         //     list: [['l', textStart, len]],
         //     propDoc: [['d', textStart, len]],
         //     text: [['t', textStart, len, dataHash]],
@@ -172,6 +180,12 @@ switch ($reqType) {
         $typeArr = array("id", "id");
         // output: [[entID]].
         break;
+        case "stmtID":
+            $sql = "CALL selectStmtEntityID (?, ?)";
+            $paramNameArr = array("t", "i");
+            $typeArr = array("id", "id");
+            // output: [[entID]].
+            break;
     case "listID":
         $sql = "CALL selectListEntityID (?)";
         $paramNameArr = array("h");

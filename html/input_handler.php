@@ -64,44 +64,50 @@ switch ($reqType) {
         $sql = "CALL insertOrUpdateRating (?, ?, ?, ?)";
         $paramNameArr = array("u", "t", "i", "r");
         $typeArr = array("id", "id", "id", "enc_rat");
+        // (outID is the stmtID here, i.e. the tag--instance statement.)
         break;
     case "sim":
-        $sql = "CALL insertOrFindSimEntity (?, ?, ?)";
+        $sql = "CALL insertOrFindSimEntity (?, ?)";
         $paramNameArr = array("u", "t");
         $typeArr = array("id", "str");
         break;
     case "assoc":
-        $sql = "CALL insertOrFindAssocEntity (?, ?, ?, ?)";
+        $sql = "CALL insertOrFindAssocEntity (?, ?, ?)";
         $paramNameArr = array("u", "t", "p");
         $typeArr = array("id", "id", "id");
         break;
     case "form":
-        $sql = "CALL insertOrFindFormEntity (?, ?, ?, ?)";
+        $sql = "CALL insertOrFindFormEntity (?, ?, ?)";
         $paramNameArr = array("u", "f", "i");
         $typeArr = array("id", "id", "id");
         break;
     case "propTag":
-        $sql = "CALL insertOrFindPropTagEntity (?, ?, ?, ?)";
+        $sql = "CALL insertOrFindPropTagEntity (?, ?, ?)";
         $paramNameArr = array("u", "s", "p");
         $typeArr = array("id", "id", "id");
         break;
+    case "stmt":
+        $sql = "CALL insertOrFindStmtEntity (?, ?, ?)";
+        $paramNameArr = array("u", "t", "i");
+        $typeArr = array("id", "id", "id");
+        break;
     case "list":
-        $sql = "CALL insertOrFindListEntity (?, ?, ?)";
+        $sql = "CALL insertOrFindListEntity (?, ?)";
         $paramNameArr = array("u", "l");
         $typeArr = array("id", "list_text");
         break;
     case "propDoc":
-        $sql = "CALL insertOrFindPropDocEntity (?, ?, ?)";
+        $sql = "CALL insertOrFindPropDocEntity (?, ?)";
         $paramNameArr = array("u", "p");
         $typeArr = array("id", "prop_doc");
         break;
     case "text":
-        $sql = "CALL insertOrFindTextEntity (?, ?, ?)";
+        $sql = "CALL insertOrFindTextEntity (?, ?)";
         $paramNameArr = array("u", "t");
         $typeArr = array("id", "text");
         break;
     case "bin":
-        // $sql = "CALL insertOrFindBinaryEntity (?, ?, ?)";
+        // $sql = "CALL insertOrFindBinaryEntity (?, ?)";
         // $paramNameArr = array("u", "b");
         // $typeArr = array("id", "blob");
         echoErrorJSONAndExit('The "bin" request type is not implemented yet');
