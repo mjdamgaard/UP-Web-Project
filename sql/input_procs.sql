@@ -2,12 +2,12 @@
 SELECT "Input procedures";
 
 DROP PROCEDURE insertOrUpdateRating;
-DROP PROCEDURE private_insertOrUpdateRatingAndRunBots;
 
 DROP PROCEDURE insertOrFindSimEntity;
 DROP PROCEDURE insertOrFindAssocEntity;
 DROP PROCEDURE insertOrFindFormEntity;
 DROP PROCEDURE insertOrFindPropTagEntity;
+DROP PROCEDURE insertOrFindStmtEntity;
 DROP PROCEDURE insertOrFindListEntity;
 DROP PROCEDURE insertOrFindPropDocEntity;
 DROP PROCEDURE insertOrFindTextEntity;
@@ -21,128 +21,105 @@ CREATE PROCEDURE insertOrUpdateRating (
     IN userID BIGINT UNSIGNED,
     IN tagID BIGINT UNSIGNED,
     IN instID BIGINT UNSIGNED,
-    IN ratVal TINYINT UNSIGNED,
-    IN deleteRat BOOL
+    IN encodedRatVal SMALLINT UNSIGNED
 )
-BEGIN
-    IF deleteRat THEN SET ratVal = NULL; END IF;
+BEGIN proc: BEGIN
+    DECLARE exitCode TINYINT UNSIGNED DEFAULT 0;
+    DECLARE ratVal, prevRatVal TINYINT UNSIGNED;
+    DECLARE stmtID, stmtDataKey BIGINT UNSIGNED;
 
-    -- TODO: Insert into RecentInputs instead and run bots on scheduled events
-    -- instead.
-
-    -- INSERT INTO RecentInputs (
-    --     user_id,
-    --     tag_id,
-    --     rat_val,
-    --     inst_id
-    -- )
-    -- VALUES (
-    --     userID,
-    --     tagID,
-    --     ratVal,
-    --     instID
-    -- );
-
-    CALL private_insertOrUpdateRatingAndRunBots (
-        userID, tagID, instID, ratVal
-    );
-
-    SELECT instID AS outID, 0 AS exitCode;
-END //
-DELIMITER ;
-
-
-
-
-DELIMITER //
-CREATE PROCEDURE private_insertOrUpdateRatingAndRunBots (
-    IN userID BIGINT UNSIGNED,
-    IN tagID BIGINT UNSIGNED,
-    IN instID BIGINT UNSIGNED,
-    IN ratVal TINYINT UNSIGNED
-)
-BEGIN
-    -- TODO: Change.
-    DECLARE stmtID BIGINT UNSIGNED;
-    DECLARE stmtStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
-    DEFAULT CONCAT(
-        "#45.", instID, ".", tagID
-    );
-    DECLARE prevRatVal TINYINT UNSIGNED;
-    DECLARE now BIGINT UNSIGNED DEFAULT UNIX_TIMESTAMP();
-
-
-    /* Retrieval of the previous rating the statement entity */
-
-    -- Get the previous rating value (might be null).
-    SELECT rat_val INTO prevRatVal
-    FROM SemanticInputs
-    WHERE (
-        user_id = userID AND
-        tag_id = tagID AND
-        inst_id = instID
-    );
-
-    -- Get the statement entity.
-    SELECT id INTO stmtID
-    FROM Entities
-    WHERE (
-        def = stmtStr
-    );
-    -- If it does not exist, insert it and get the ID.
-    IF (stmtID IS NULL) THEN
-        INSERT IGNORE INTO Entities (def)
-        VALUES (stmtStr);
+    -- Get or create the statement entity.
+    INSERT IGNORE INTO StatementData (tag_id, inst_id)
+    VALUES (tagID, instID);
+    IF (mysql_affected_rows() > 0) THEN
+        SELECT LAST_INSERT_ID() INTO stmtDataKey;
+        INSERT INTO Entities (data_type, data_key, creator_id)
+        VALUES ('m', stmtDataKey, userID);
         SELECT LAST_INSERT_ID() INTO stmtID;
-        -- If a race condition means that the insert is ignored and stmtID
-        -- is null, select the now added (by another process) Statement.
-        IF (stmtID IS NULL) THEN
-            SELECT id INTO stmtID
-            FROM Entities
-            WHERE (
-                def = stmtStr
-            );
-        END IF;
-        -- TODO: It seems that there still is a risk that stmtID is NULL at
-        -- this point for simultaneous requests, despite all this. So
-        -- investigate and fix (here and other places) at some point.
+    ELSE
+        SELECT data_key INTO stmtDataKey
+        FROM StatementData
+        WHERE (
+            tag_id = tagID AND
+            inst_id = instID
+        );
+        SELECT id INTO stmtID
+        FROM Entities
+        WHERE (
+            data_type = 'm' AND
+            data_key = stmtDataKey
+        );
     END IF;
 
-
-    /* Updating the user's own input set */
-
-    -- If the input's rat_val is NULL, delete the corresponding SemInput.
-    IF (ratVal IS NULL) THEN
+    -- If encodedRatVal > 256, delete the rating stored in SemanticInputs, and
+    -- add the rating deletion as a record in RecordedInputs (without deleting
+    -- the previous rating there, as this should be done via another procedure).
+    IF (encodedRatVal > 256) THEN
         DELETE FROM SemanticInputs
         WHERE (
             user_id = userID AND
             tag_id = tagID AND
             inst_id = instID
         );
-    -- Else update the corresponding SemInput with the new rat_val.
-    ELSE
-        REPLACE INTO SemanticInputs (
+        INSERT INTO RecordedInputs (
             user_id,
-            tag_id,
-            rat_val,
-            inst_id
+            stmt_id,
+            rat_val
         )
         VALUES (
             userID,
-            tagID,
-            ratVal,
-            instID
+            stmtID,
+            300 -- just a number larger than 256 meaning 'deletion.'
         );
+    ELSE
+        SET ratVal = encodedRatVal;
+
+        -- Get the previous rating value (might be null).
+        SELECT rat_val INTO prevRatVal
+        FROM SemanticInputs
+        WHERE (
+            user_id = userID AND
+            tag_id = tagID AND
+            inst_id = instID
+        );
+        -- If prevRatVal is the same as before, set exitCode = 1 and do nothing
+        -- further.
+        IF (prevRatVal <=> ratVal) THEN
+            SET exitCode = 1; -- Rating is the same value as before.
+        ELSE
+            -- Else insert the rating into SemanticInputs, as well as into
+            -- RecordedInputs.
+            REPLACE INTO SemanticInputs (
+                user_id,
+                tag_id,
+                rat_val,
+                inst_id
+            )
+            VALUES (
+                userID,
+                tagID,
+                ratVal,
+                instID
+            );
+            INSERT INTO RecordedInputs (
+                user_id,
+                stmt_id,
+                rat_val
+            )
+            VALUES (
+                userID,
+                stmtID,
+                ratVal
+            );
+        END IF;
     END IF;
 
-    /* Run procedures to update the various aggregation bots */
 
-    CALL updateStatementUserRaterBot (userID, stmtID, ratVal);
-    CALL updateMeanBots (
-        userID, tagID, instID, ratVal, prevRatVal, stmtID
-    );
+    -- TODO: Run bots on scheduled events instead.
+    CALL runBots ();
 
-END //
+    SELECT stmtID AS outID, exitCode;
+END proc; END //
 DELIMITER ;
 
 
@@ -329,6 +306,46 @@ BEGIN
         FROM Entities
         WHERE (
             data_type = 'p' AND
+            data_key = dataKey
+        );
+    END IF;
+
+    SELECT outID, exitCode;
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertOrFindStmtEntity (
+    IN userID BIGINT UNSIGNED,
+    IN tagID BIGINT UNSIGNED,
+    IN instID BIGINT UNSIGNED
+)
+BEGIN
+    DECLARE outID, dataKey BIGINT UNSIGNED;
+    DECLARE exitCode TINYINT;
+
+    INSERT IGNORE INTO StatementData (tag_id, inst_id)
+    VALUES (tagID, instID);
+    IF (mysql_affected_rows() > 0) THEN
+        SET exitCode = 0; -- insert.
+        SELECT LAST_INSERT_ID() INTO dataKey;
+        INSERT INTO Entities (data_type, data_key, creator_id)
+        VALUES ('m', dataKey, userID);
+        SELECT LAST_INSERT_ID() INTO outID;
+    ELSE
+        SET exitCode = 1; -- find.
+        SELECT data_key INTO dataKey
+        FROM StatementData
+        WHERE (
+            tag_id = tagID AND
+            inst_id = instID
+        );
+        SELECT id INTO outID
+        FROM Entities
+        WHERE (
+            data_type = 'm' AND
             data_key = dataKey
         );
     END IF;

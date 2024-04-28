@@ -1,7 +1,7 @@
 
 /* Semantic inputs */
 DROP TABLE SemanticInputs;
-DROP TABLE RecentInputs;
+DROP TABLE RecordedInputs;
 /* Indexes */
 DROP TABLE IndexedEntities;
 
@@ -85,20 +85,24 @@ CREATE TABLE SemanticInputs (
 -- allows for filtering such user lists.. 
 
 
--- RecentInputs can first of all be used by time-dependent bots (e.g. a mean-
+-- RecordedInputs can first of all be used by time-dependent bots (e.g. a mean-
 -- of-recent-inputs bot), and can also potentially used by bots that update on
 -- scheduled events rather than immediately when the input is received. And
 -- furthermore, they can also potentially be used by third-party bots and by
 -- SDB peers.
-CREATE TABLE RecentInputs (
+CREATE TABLE RecordedInputs (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     user_id BIGINT UNSIGNED NOT NULL,
-    tag_id BIGINT UNSIGNED NOT NULL,
-    inst_id BIGINT UNSIGNED NOT NULL,
-    -- We break the standard of having NULL mean 'missing' here, and instead
-    -- let it mean 'deletion' of the rating:
-    rat_val TINYINT UNSIGNED
+    -- tag_id BIGINT UNSIGNED NOT NULL,
+    -- inst_id BIGINT UNSIGNED NOT NULL,
+    stmt_id BIGINT UNSIGNED NOT NULL,
+    -- A rating value of NULL means 'take my rating away,' making it 'missing'/
+    -- 'deleted.'
+    rat_val TINYINT UNSIGNED,
+
+    -- UNIQUE INDEX (tag_id, inst_id, id)
+    UNIQUE INDEX (stmt_id, id)
 );
 
 
@@ -143,7 +147,7 @@ CREATE TABLE Entities (
     -- Entity ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- Entity data type. (This can be either 's', 'a', 'f', 'p', 'l', 'd',
+    -- Entity data type. (This can be either 's', 'a', 'f', 'p', 'm', 'l', 'd',
     -- 't', 'b', 'u', or 'n'.)
     data_type CHAR NOT NULL,
 
@@ -230,6 +234,22 @@ CREATE TABLE PropertyTagData (
     prop_id BIGINT UNSIGNED NOT NULL,
 
     UNIQUE INDEX (subj_id, prop_id)
+);
+
+
+/* Statement entities */
+
+CREATE TABLE StatementData (
+    -- Statement entity data key (private).
+    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    -- ID of the tag entity.
+    tag_id BIGINT UNSIGNED NOT NULL,
+    
+    -- ID of the instance entity, which the statement says fits the given tag.
+    inst_id BIGINT UNSIGNED NOT NULL,
+
+    UNIQUE INDEX (tag_id, inst_id)
 );
 
 

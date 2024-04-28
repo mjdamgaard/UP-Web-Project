@@ -3,8 +3,9 @@ SELECT "Query procedures";
 
 DROP PROCEDURE selectInstanceList;
 DROP PROCEDURE selectRating;
-DROP PROCEDURE selectRecentInputs;
-DROP PROCEDURE selectRecentInputsMaxID;
+DROP PROCEDURE selectRecordedInputs;
+DROP PROCEDURE selectRecordedInputsMaxID;
+DROP PROCEDURE selectRecordedInputsFromSecKey;
 
 DROP PROCEDURE selectEntityInfo;
 
@@ -21,6 +22,7 @@ DROP PROCEDURE selectSimEntityID;
 DROP PROCEDURE selectFormEntityID;
 DROP PROCEDURE selectFormEntityIDFromText;
 DROP PROCEDURE selectPropTagEntityID;
+DROP PROCEDURE selectStmtEntityID;
 DROP PROCEDURE selectListEntityID;
 DROP PROCEDURE selectPropDocEntityID;
 DROP PROCEDURE selectTextEntityID;
@@ -89,30 +91,54 @@ DELIMITER ;
 
 
 
+
 DELIMITER //
-CREATE PROCEDURE selectRecentInputs (
+CREATE PROCEDURE selectRecordedInputs (
     IN startID BIGINT UNSIGNED,
     IN maxNum INT UNSIGNED
 )
 BEGIN
     SELECT
         user_id AS userID,
-        tag_id AS tagID,
-        inst_id AS instID,
+        stmt_id AS stmtID,
         rat_val AS ratVal
-    FROM RecentInputs
+    FROM RecordedInputs
     WHERE id >= startID
     ORDER BY id ASC
     LIMIT maxNum;
 END //
 DELIMITER ;
 
+
 DELIMITER //
-CREATE PROCEDURE selectRecentInputsMaxID (
+CREATE PROCEDURE selectRecordedInputsMaxID (
 )
 BEGIN
     SELECT MAX(id) AS maxID
-    FROM RecentInputs;
+    FROM RecordedInputs;
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectRecordedInputsFromSecKey (
+    IN stmtID BIGINT UNSIGNED,
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED,
+    IN isAscOrder BOOL
+)
+BEGIN
+    SELECT
+        id AS ratID,
+        user_id AS userID,
+        stmtID,
+        rat_val AS ratVal
+    FROM RecordedInputs
+    WHERE stmt_id = stmtID
+    ORDER BY
+        CASE WHEN isAscOrder THEN id END ASC,
+        CASE WHEN NOT isAscOrder THEN id END DESC
+    LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
 
@@ -183,6 +209,15 @@ BEGIN
             subj_id AS subjID,
             prop_id AS propID
         FROM PropertyTagData
+        WHERE data_key = dataKey;
+
+    ELSEIF (dataType = 'm') THEN
+        -- Select the returned info.
+        SELECT
+            dataType,
+            tag_id AS tagID,
+            inst_id AS instID
+        FROM StatementData
         WHERE data_key = dataKey;
 
     ELSEIF (dataType = 'l') THEN
@@ -480,6 +515,26 @@ BEGIN
             SELECT data_key
             FROM PropertyTagData
             WHERE subj_id = subjID AND prop_id = propID
+        )
+    );
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectStmtEntityID (
+    IN tagID BIGINT UNSIGNED,
+    IN instID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT id AS entID
+    FROM Entities
+    WHERE (
+        data_type = 'm' AND
+        data_key = (
+            SELECT data_key
+            FROM StatementData
+            WHERE tag_id = tagID AND inst_id = instID
         )
     );
 END //

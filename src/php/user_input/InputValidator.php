@@ -58,19 +58,6 @@ class InputValidator {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, "INT");
                 }
                 break;
-            // case "rat":
-            case "ushort":
-                $pattern = "/^[1-9][0-9]{0,4}|0$/";
-                $n = intval($paramVal);
-                if (
-                    !preg_match($pattern, $paramVal) ||
-                    $n > 65535
-                ) {
-                    echoTypeErrorJSONAndExit(
-                        $paramName, $paramVal, "SMALLINT UNSIGNED"
-                    );
-                }
-                break;
             case "tint":
             case "rat":
                 $pattern = "/^-?[1-9][0-9]{0,2}|0$/";
@@ -81,6 +68,20 @@ class InputValidator {
                     $n > 127
                 ) {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, "TINYINT");
+                }
+                break;
+            case "ushort":
+            case "encoded_rat":
+            case "enc_rat":
+                $pattern = "/^[1-9][0-9]{0,4}|0$/";
+                $n = intval($paramVal);
+                if (
+                    !preg_match($pattern, $paramVal) ||
+                    $n > 65535
+                ) {
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "SMALLINT UNSIGNED"
+                    );
                 }
                 break;
             case "str":
