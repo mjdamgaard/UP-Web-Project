@@ -115,6 +115,9 @@ export class EntityInserter {
       case 'propTag':
         this.#insertOrFindPropertyTagEntity(entDefObj, key, modCallback);
         break;
+      case 'stmt':
+        this.#insertOrFindStatementEntity(entDefObj, key, modCallback);
+        break;
       case 'list':
         this.#insertOrFindListEntity(entDefObj, key, modCallback);
         break;
@@ -282,6 +285,27 @@ export class EntityInserter {
   }
 
 
+  #insertOrFindStatementEntity(entDefObj, key, modCallback) {
+    let tag = entDefObj.tag;
+    let inst = entDefObj.instance;
+
+    // This method follows a similar procedure as the one above for property
+    // tags.
+    this.insertOrFind(tag, (tagID) => {
+      this.insertOrFind(inst, (instID) => {
+        let reqData = {
+          req: "stmt",
+          ses: this.accountManager.sesIDHex,
+          u: this.accountManager.inputUserID,
+          t: tagID,
+          i: instID,
+        };
+        this.#inputOrLookupEntity(reqData, key, modCallback);
+      });
+    });
+  }
+
+
 
 
 
@@ -328,7 +352,40 @@ export class EntityInserter {
 
   #insertOrFindConcatenatedList(entDefObj, key, modCallback) {
     let litsArr = entDefObj.lists;
-    this.#mapInsert(litsArr, val => val, idArr => {
+
+    // As a way of including single-element lists ('monads') in the
+    // concatenation, where these monads are NOT uploaded as entities
+    // on their own, we use a virtual data type called 'virtualMonad,' which
+    // this method then knows NOT to upload as a list entity. These 'virtual
+    // monads' should only contain a single entDefObj stored in an .element
+    // property.
+    // To implement this, we define a getEntDefObj() function for #mapInsert(),
+    // called getListOrMonadElement(), which inserts of finds each monad's
+    // element rather than the list itself, and then records which elements
+    // are virtual monads and which are actual list entities in a monadIndexes
+    // array:
+    var monadIndexes = new Array(litsArr.length);
+    let getListOrMonadElement = (val, ind) => {
+      let dataType = val.dataType;
+      if (dataType === "list") {
+        return val;
+      }
+      if (dataType === "virtualMonad") {
+        monadIndexes[ind] = true;
+        return val.element;
+      }
+      throw (
+        'EntityInserter: Invalid data type "' + dataType + '" for ' +
+        'concatenated list (expecting either "list" or "virtualMonad").'
+      );
+    }
+
+    this.#mapInsert(litsArr, getListOrMonadElement, idArr => {
+      if (monadIndexes) {
+        // ...
+      } else {
+
+      }
       this.#mapQuery(
         idArr,
         id => ({
@@ -367,11 +424,15 @@ export class EntityInserter {
   // for each of these extracted objects. And once all these are resolved and
   // the outID is obtained from each one, the third input, callback, is called
   // on an array containing all these IDs, and having the same order as the
-  // input array. 
+  // input array.
+  // (Note that getEntDefObj can be a pure function, but it can also be a
+  // function that stores some data about the element in an auxillary data
+  // structure (e.g. an array) about the element, which can then be used by
+  // the callback to know how to do with the resulting idArr.)
   #mapInsert(array, getEntDefObj, callback) {
     if (callback === undefined) {
       callback = getEntDefObj;
-      getEntDefObj = val => val;
+      getEntDefObj = (val, ind, arr) => val;
     }
     let entDefObjArr = array.map(getEntDefObj);
     let len = entDefObjArr.length;
