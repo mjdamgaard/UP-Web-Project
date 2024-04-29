@@ -538,9 +538,66 @@ export class EntityInserter {
 
   // #uprateProperties() takes the ID of a subject entity and a property
   // document entity, quires for the property document text, and then up-rates
-  // all the properties of this document for the given subject entity. 
+  // all the properties of this document for the given subject entity.
   #uprateProperties(subjID, propDocID) {
-    // TODO: Implement.
+    let reqData = {
+      req: "propDoc",
+      id: propDocID,
+      l: 0,
+      s: 0,
+    };
+    DBRequestManager.query(reqData, (result) => {
+      let propDoc = result[0][0];
+
+      // Extract a property--value pair array for all single-value properties,
+      // and a property--list pair array for all multiple-values properties.
+      let propValPairs = (propDoc.match(/[1-9][0-9]*=[1-9][0-9]*;/g) ?? [])
+        .map(elem => elem.slice(0, -1).split("="));
+      let propListPairs = (propDoc.match(/[1-9][0-9]*:[1-9][0-9]*;/g) ?? [])
+        .map(elem => elem.slice(0, -1).split(":"));
+
+      // For each property--value pair, insert or find the propTag, then insert
+      // a maximal rating that the subject fits that tag.
+      propValPairs.forEach(elem => {
+        let propID = elem[0];
+        let valID = elem[1];
+        let propTag = {
+          dataType: "propTag",
+          subject: "@" + subjID + ";",
+          property: "@" + propID + ";",
+        };
+        this.insertOrFind(propTag, (propTagID) => {
+          this.#insertRating(propTagID, valID, 256);
+        });
+      });
+      // For each property--list pair, insert or find the propTag, then query
+      // for the listText, and for each element of that list, insert a maximal
+      // rating.
+      propValPairs.forEach(elem => {
+        let propID = elem[0];
+        let listID = elem[1];
+        let propTag = {
+          dataType: "propTag",
+          subject: "@" + subjID + ";",
+          property: "@" + propID + ";",
+        };
+        this.insertOrFind(propTag, (propTagID) => {
+          let reqData = {
+            req: "list",
+            id: listID,
+            l: 0,
+            s: 0,
+          };
+          DBRequestManager.query(reqData, (result) => {
+            let listText = result[0][0];
+            let valIDArr = listText.split(",");
+            valIDArr.forEach(valID => {
+              this.#insertRating(propTagID, valID, 256);
+            });
+          });
+        });
+      });
+    });
   }
 
 
