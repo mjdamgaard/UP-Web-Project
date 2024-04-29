@@ -57,6 +57,12 @@ const HeaderButtonsContainer = ({setAppPage}) => {
       >
         <a href="#">Tutorial</a>
       </li>
+      {/* TODO: Remove Insert button: */}
+      <li className="insert"
+        onClick={() => setAppPage("insert")}
+      >
+        <a href="#">Insert</a>
+      </li>
       <li className="minus" onClick={() => {
         columnListManager.decreaseColNum();
       }}>

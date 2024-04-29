@@ -5,7 +5,9 @@ import {ColumnListContextProvider, ColumnListManager}
 
 import {InterfaceHeader} from "./InterfaceHeader.js";
 import {InterfaceMain} from "./InterfaceMain.js";
-import {LoginPage, SignupPage, TutorialPage} from "./OverlayPages.js";
+import {
+  LoginPage, SignupPage, TutorialPage, InsertPage
+} from "./OverlayPages.js";
 
 
 
@@ -34,6 +36,11 @@ export const SDBInterface = () => {
         <TutorialPage
           setAppPage={setAppPage}
           isHidden={appPage !== "tutorial"}
+        />
+        {/* TODO: Remove the following test page */}
+        <InsertPage
+          setAppPage={setAppPage}
+          isHidden={appPage !== "insert"}
         />
       </div>
     {/* </AppPageContext.Provider> */}

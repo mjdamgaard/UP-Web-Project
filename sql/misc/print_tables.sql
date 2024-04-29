@@ -1,14 +1,12 @@
 
 
-SELECT "RecentInputs:";
+SELECT "RecordedInputs:";
 SELECT
     id AS id,
     user_id AS userID,
-    tag_id AS tagID,
-    inst_id AS instID,
-    rat_val AS ratVal,
-    live_at_time AS liveAtTime
-FROM Private_RecentInputs
+    stmt_id AS stmtID,
+    rat_val AS ratVal
+FROM RecordedInputs
 ORDER BY id ASC;
 
 
@@ -44,6 +42,15 @@ ORDER BY id;
 SELECT "Entities:";
 SELECT
     id AS entID,
-    SUBSTRING(def, 1, 80) AS def
+    data_type AS dataType,
+    data_key AS dataKey,
+    creator_id AS creator
 FROM Entities
 ORDER BY id;
+
+SELECT "SimpleEntityData:";
+SELECT
+    data_key AS dataKey,
+    title AS title
+FROM SimpleEntityData
+ORDER BY data_key;

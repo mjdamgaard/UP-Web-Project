@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
-import {SDBInterface} from './SDBInterface.js';
+import {SDBInterface} from './components/SDBInterface.js';
 
 import './style/style01.css';
 

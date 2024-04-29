@@ -1,7 +1,10 @@
-import {useState, createContext, useContext} from "react";
+import {useState, useContext, useMemo} from "react";
 import {AccountManagerContext} from "../contexts/AccountContext.js";
 
-import {useQuery, useInput} from "../hooks/DBRequests.js";
+// TODO: Remove import:
+import {insertInitialEntities} from "../inserts/initial_inserts.js";
+import {EntityInserter} from "../classes/EntityInserter.js";
+
 
 export const OverlayPage = ({children, setAppPage, isHidden}) => {
   return (
@@ -195,6 +198,25 @@ export const TutorialPage = ({setAppPage, isHidden}) => {
         style={{border: "none", width: "100%", height: "100%"}}
       >
       </iframe>
+    </OverlayPage>
+  );
+};
+
+
+
+// TODO: Remove this test page:
+export const InsertPage = ({setAppPage, isHidden}) => {
+  const accountManager = useContext(AccountManagerContext);
+  const entityInserter = useMemo(() => new EntityInserter(accountManager), []);
+
+  return (
+    <OverlayPage setAppPage={setAppPage} isHidden={isHidden}>
+      <h2>Insert</h2>
+      <button onClick={() => {
+        insertInitialEntities(entityInserter);
+      }}>
+        Insert initial entities
+      </button>
     </OverlayPage>
   );
 };

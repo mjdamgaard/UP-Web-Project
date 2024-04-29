@@ -7,7 +7,7 @@ import {DBRequestManager} from "../classes/DBRequestManager.js";
 export class EntityInserter {
   #idOrCallbackArrStore = {};
 
-  constructor(accountManager, recordCreator) {
+  constructor(accountManager) {
     // Public properties:
     this.accountManager = accountManager;
   }
@@ -70,7 +70,7 @@ export class EntityInserter {
   
       // Else if entDefObj is a key, wait for it to resolve, then call the
       // callback function. But throw if the key reference is ill-formed.
-      if (!/^@[a-zA-Z][\w_]*\.$/.test(title)) {
+      if (!/^@[a-zA-Z][\w_]*\.$/.test(entDefObj)) {
         throw (
           'EntityInserter: "' + entDefObj + '" is not a valid key reference.'
         );
@@ -187,9 +187,9 @@ export class EntityInserter {
     }
 
     // If title is a title, potentially convert a leading '\@' to '@'.
-    let actualTitle = (entDefObj.substring(0, 2) === "\\@") ?
-      entDefObj.substring(1) :
-      entDefObj;
+    let actualTitle = (title.substring(0, 2) === "\\@") ?
+      title.substring(1) :
+      title;
     
     // Also check if the converted title is not too long.
     let titleLen = (new TextEncoder().encode(actualTitle)).length;
