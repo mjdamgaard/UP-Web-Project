@@ -22,6 +22,11 @@ export class EntityInserter {
     if (callback === undefined) {
       callback = (entID) => {};
     }
+    // If entDefObj is falsy, call the callback function on null and return.
+    if (!entDefObj) {
+      callback(null);
+      return;
+    }
 
     // If entDefObj is an array, call this method on each element and return,
     // passing the callback only to insertOrFind() for the last element.
@@ -137,8 +142,9 @@ export class EntityInserter {
       case 'ratings':
         this.#insertRatings(entDefObj);
         break;
-      case 'concatList':
-        this.#insertOrFindConcatenatedList(entDefObj, key, modCallback);
+      case 'none':
+        // Simply call modCallback on null.
+        modCallback(null);
         break;
       default:
         throw "EntityInserter: Unrecognized data type.";
@@ -332,90 +338,44 @@ export class EntityInserter {
 
 
   #insertOrFindPropDocEntity(entDefObj, key, modCallback) {
-    // TODO: Implement.
-    if (
-      propDoc.length > 65535 // ||
-      // !/^([1-9][0-9]*:[1-9][0-9]*(,[1-9][0-9]*)*;)*$/.test(propDoc)
-    ) {
-      // throw (
-      //   'EntityInserter: Property document "' + propDoc + '" does not have ' +
-      //   'the correct format (like "123:456;78:901,2,34;5:67890;") ' +
-      //   'or is too long (' + propDoc.length + ' > 65535).'
-      // );
-      throw (
-        'EntityInserter: Property document "' + propDoc + '" is too long (' +
-        propDoc.length + ' > 65535).'
-      );
-    }
-  }
-
-
-  #insertOrFindConcatenatedList(entDefObj, key, modCallback) {
-    let litsArr = entDefObj.lists;
-
-    // As a way of including single-element lists ('monads') in the
-    // concatenation, where these monads are NOT uploaded as entities
-    // on their own, we use a virtual data type called 'virtualMonad,' which
-    // this method then knows NOT to upload as a list entity. These 'virtual
-    // monads' should only contain a single entDefObj stored in an .element
-    // property.
-    // To implement this, we define a getEntDefObj() function for #mapInsert(),
-    // called getListOrMonadElement(), which inserts of finds each monad's
-    // element rather than the list itself, and then records which elements
-    // are virtual monads and which are actual list entities in a monadIndexes
-    // array:
-    var monadIndexes = new Array(litsArr.length);
-    let getListOrMonadElement = (val, ind) => {
-      let dataType = val.dataType;
-      if (dataType === "list") {
-        return val;
-      }
-      if (dataType === "virtualMonad") {
-        monadIndexes[ind] = true;
-        return val.element;
-      }
-      throw (
-        'EntityInserter: Invalid data type "' + dataType + '" for ' +
-        'concatenated list (expecting either "list" or "virtualMonad").'
-      );
-    }
-
-    this.#mapInsert(litsArr, getListOrMonadElement, idArr => {
-      if (monadIndexes) {
-        // ...
-      } else {
-
-      }
-      this.#mapQuery(
-        idArr,
-        id => ({
-          req: "list",
-          id: id,
-          l: 0, // (This is the same as l (maxLen) = 65535.)
-          s: 0, // (startPos = 0.)
-        }),
-        resultArr => {
-          let listText = resultArr
-            .map(result => result[0][0])
-            .join(",");
-          if (listText.length) {
+    let propAndValuesArr = entDefObj.properties;
+    // Insert or find all the property entities.
+    this.#mapInsert(propAndValuesArr, val => val.property, propIDArr => {
+      // Insert or find all the value entities.
+      this.#mapInsert(propAndValuesArr, val => val.valueList, valListIDArr => {
+        // Insert or find all the value list entities.
+        this.#mapInsert(propAndValuesArr, val => val.value, valIDArr => {
+          // Construct the propDocText.
+          let propDoc = propIDArr
+            .map((propID, ind) => {
+              let val = valIDArr[ind];
+              if (val) {
+                return (propID + "=" + val + ";");
+              } else {
+                return (propID + ":" + valListIDArr[ind] + ";");
+              }
+            })
+            .join("");
+          // Then verify its length, and insert it if verification succeeds.
+          if (propDoc.length) {
             throw (
-              'EntityInserter: List "' + listText + '" is too long (' +
-              listText.length + ' > 65535).'
+              'EntityInserter: Property document "' + propDoc + '" is too ' +
+              'long (' + propDoc.length + ' > 65535).'
             );
           }
           let reqData = {
-            req: "list",
+            req: "propDoc",
             ses: this.accountManager.sesIDHex,
             u: this.accountManager.inputUserID,
-            l: listText,
+            p: propDoc,
           };
           this.#inputOrLookupEntity(reqData, key, modCallback);
-        }
-      );
+        });
+      });
     });
     return;
   }
+
 
 
 
@@ -620,7 +580,7 @@ export class EntityInserter {
     let idOrCallbackArr = this.#idOrCallbackArrStore[key];
     
     // If idOrCallbackArr is an array (of callbacks), simply append callback.
-    if (typeof idOrCallbackArr === "object") {
+    if (Array.isArray(idOrCallbackArr)) {
       idOrCallbackArr.push(callback);
       return;
     }
@@ -645,7 +605,7 @@ export class EntityInserter {
 
     // Verify that the callback array is not already replaced with an ID by
     // an earlier call to this method.
-    if (typeof callbackArr !== "object") {
+    if (!Array.isArray(callbackArr)) {
       throw (
         'EntityInserter: The key "' + key + '" is already used.'
       );
@@ -668,7 +628,7 @@ export class EntityInserter {
   #inputOrLookupEntity(reqData, key, callback) {
     if (key) {
       let entID = this.#idOrCallbackArrStore[key];
-      if (entID !== undefined && typeof entID !== "object") {
+      if (entID && typeof entID !== "object") {
         callback(entID);
       } else {
         this.#waitForIDThen(key, callback);
