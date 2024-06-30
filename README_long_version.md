@@ -1,7 +1,7 @@
 # openSDB
 
 #### Status
-*A prototype is live now at www.opensdb.com, but it* is *a very basic and crude one. One will probably only find it interesting if one is already quite interested in my semantic backend.*
+*A prototype is live now at [...] (It is no longer live as of 29.06.24, edit), but it* is *a very basic and crude one. One will probably only find it interesting if one is already quite interested in my semantic backend.*
 
 *I am currently in the process of transforming the source code into REACT, which is going on, not in the main fork, but in a different one.*
 
@@ -9,13 +9,13 @@
 
 <!--
   Previous repository description:
-  This project seeks to realize the old dream of the Semantic Web, but not through extending the WWW, as has been the conventional approach. Instead this project seeks to realize this vision via a network of Web 2.0 sites, running on top an open-source, decentralized and distributed "Semantic Database" (SDB), with openSDB  as a pioneering node.
+  This project seeks to realize the old dream of the Semantic Web, but not through extending the WWW, as has been the conventional approach. Instead this project seeks to realize this vision via a network of Web 2.0 sites, running on top an open-source, decentralized and distributed "Semantic Database" (SDB), with openSDB as a pioneering node.
 -->
 
 ## Introduction to the project
 
-openSDB is an open source Semantic Database (SDB), interfaced via
-www.opensdb.com.
+openSDB (I intend to change this name, edit) is an open source Semantic Database (SDB), interfaced via
+[...] (I have given up on the previous domain and intend to find a new one when I continue this project (soon), edit).
 
 By 'semantic' we refer to the fact that entities in the database can be linked
 via relations that can be created freely by the users and can carry any meaning.
