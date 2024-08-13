@@ -7,31 +7,33 @@ DROP PROCEDURE selectRecordedInputs;
 DROP PROCEDURE selectRecordedInputsFromSecKey;
 DROP PROCEDURE selectRecordedInputsMaxID;
 
-DROP PROCEDURE selectEntityInfo;
+DROP PROCEDURE selectEntity;
+DROP PROCEDURE selectEntityFromSecKey;
+DROP PROCEDURE selectEntityData;
+DROP PROCEDURE selectCreator;
+DROP PROCEDURE selectCreations;
 
-DROP PROCEDURE selectList;
-DROP PROCEDURE selectPropDoc;
-DROP PROCEDURE selectText;
-DROP PROCEDURE selectBinary;
+-- DROP PROCEDURE selectList;
+-- DROP PROCEDURE selectPropDoc;
+-- DROP PROCEDURE selectText;
+-- DROP PROCEDURE selectBinary;
 
 DROP PROCEDURE selectUserInfo;
 DROP PROCEDURE selectBotInfo;
 
-DROP PROCEDURE selectAssocEntityID;
-DROP PROCEDURE selectSimEntityID;
-DROP PROCEDURE selectFormEntityID;
-DROP PROCEDURE selectFormEntityIDFromText;
-DROP PROCEDURE selectPropTagEntityID;
-DROP PROCEDURE selectStmtEntityID;
-DROP PROCEDURE selectListEntityID;
-DROP PROCEDURE selectPropDocEntityID;
-DROP PROCEDURE selectTextEntityID;
-DROP PROCEDURE selectBinaryEntityID;
-DROP PROCEDURE selectUserEntityID;
-DROP PROCEDURE selectBotEntityID;
+-- DROP PROCEDURE selectAssocEntityID;
+-- DROP PROCEDURE selectSimEntityID;
+-- DROP PROCEDURE selectFormEntityID;
+-- DROP PROCEDURE selectFormEntityIDFromText;
+-- DROP PROCEDURE selectPropTagEntityID;
+-- DROP PROCEDURE selectStmtEntityID;
+-- DROP PROCEDURE selectListEntityID;
+-- DROP PROCEDURE selectPropDocEntityID;
+-- DROP PROCEDURE selectTextEntityID;
+-- DROP PROCEDURE selectBinaryEntityID;
+-- DROP PROCEDURE selectUserEntityID;
+-- DROP PROCEDURE selectBotEntityID;
 
-DROP PROCEDURE selectCreator;
-DROP PROCEDURE selectCreations;
 
 DROP PROCEDURE selectAncillaryBotData1e2d;
 DROP PROCEDURE selectAncillaryBotData1e4d;
@@ -145,144 +147,41 @@ DELIMITER ;
 
 
 
+
+
 DELIMITER //
-CREATE PROCEDURE selectEntityInfo (
+CREATE PROCEDURE selectEntity (
     IN entID BIGINT UNSIGNED
 )
 BEGIN
-    DECLARE dataType CHAR;
-    DECLARE dataKey BIGINT UNSIGNED;
-    DECLARE titleID, propDocID, titleDataKey BIGINT UNSIGNED;
-    DECLARE funID, inputListID, inputListDataKey BIGINT UNSIGNED;
-
-    -- Get the dataType and dataKey.
-    SELECT data_type, data_key INTO dataType, dataKey 
+    SELECT
+        parent_id AS parentId,
+        con_input AS conInput,
+        prop_struct AS propStruct,
+        LENGTH(data_input) AS dataInputLen
     FROM Entities
     WHERE id = entID;
-
-    IF (dataType = 's') THEN
-        -- Select the returned info.
-        SELECT
-            dataType,
-            title
-        FROM SimpleEntityData
-        WHERE data_key = dataKey;
-
-    ELSEIF (dataType = 'a') THEN
-        -- Select the returned info.
-        SELECT title_id, prop_doc_id INTO titleID, propDocID
-        FROM AssocEntityData
-        WHERE data_key = dataKey;
-        SELECT data_key INTO titleDataKey
-        FROM Entities
-        WHERE id = titleID;
-        SELECT
-            dataType,
-            titleID,
-            title,
-            propDocID
-        FROM SimpleEntityData
-        WHERE data_key = titleDataKey;
-
-    ELSEIF (dataType = 'f') THEN
-        -- Select the returned info.
-        SELECT fun_id, input_list_id INTO funID, inputListID
-        FROM FormalEntityData
-        WHERE data_key = dataKey;
-        SELECT data_key INTO inputListDataKey
-        FROM Entities
-        WHERE id = inputListID;
-        SELECT
-            dataType,
-            funID,
-            inputListID,
-            SUBSTRING(txt, 1, 255) AS textStart,
-            LENGTH(txt) AS len
-        FROM ListData
-        WHERE data_key = inputListDataKey;
-
-    ELSEIF (dataType = 'p') THEN
-        -- Select the returned info.
-        SELECT
-            dataType,
-            subj_id AS subjID,
-            prop_id AS propID
-        FROM PropertyTagData
-        WHERE data_key = dataKey;
-
-    ELSEIF (dataType = 'm') THEN
-        -- Select the returned info.
-        SELECT
-            dataType,
-            tag_id AS tagID,
-            inst_id AS instID
-        FROM StatementData
-        WHERE data_key = dataKey;
-
-    ELSEIF (dataType = 'l') THEN
-        -- Select the returned info.
-        SELECT
-            dataType,
-            SUBSTRING(txt, 1, 255) AS textStart,
-            LENGTH(txt) AS len
-        FROM ListData
-        WHERE data_key = dataKey;
-
-    ELSEIF (dataType = 'd') THEN
-        -- Select the returned info.
-        SELECT
-            dataType,
-            SUBSTRING(txt, 1, 255) AS textStart,
-            LENGTH(txt) AS len
-        FROM PropertyDocData
-        WHERE data_key = dataKey;
-
-    ELSEIF (dataType = 't') THEN
-        -- Select the returned info.
-        SELECT
-            dataType,
-            SUBSTRING(txt, 1, 255) AS textStart,
-            LENGTH(txt) AS len,
-            data_hash AS dataHash
-        FROM TextData
-        WHERE data_key = dataKey;
-
-    ELSEIF (dataType = 'b') THEN
-        -- Select the returned info.
-        SELECT
-            dataType,
-            LENGTH(bin) AS len,
-            data_hash AS dataHash
-        FROM BinaryData
-        WHERE data_key = dataKey;
-
-    ELSEIF (dataType = 'u') THEN
-        -- Select the returned info.
-        SELECT
-            dataType,
-            username
-        FROM UserData
-        WHERE data_key = dataKey;
-
-
-    ELSEIF (dataType = 'n') THEN
-        -- Select the returned info.
-        SELECT
-            dataType,
-            bot_name AS botName
-        FROM NativeBotData
-        WHERE data_key = dataKey;
-
-
-    END IF;
 END //
 DELIMITER ;
 
 
 
+DELIMITER //
+CREATE PROCEDURE selectEntityFromSecKey (
+    IN parentID BIGINT UNSIGNED,
+    IN conInput VARCHAR(255)
+)
+BEGIN
+    SELECT id
+    FROM Entities
+    WHERE parent_id = parentID AND con_input = conInput;
+END //
+DELIMITER ;
+
+
 
 DELIMITER //
-CREATE PROCEDURE selectList (
+CREATE PROCEDURE selectEntityData (
     IN entID BIGINT UNSIGNED,
     IN maxLen INT UNSIGNED,
     IN startPos INT UNSIGNED
@@ -290,78 +189,268 @@ CREATE PROCEDURE selectList (
 BEGIN
     SET startPos = startPos + 1;
     SELECT
-        CASE WHEN maxLen = 0 THEN SUBSTRING(txt, startPos)
-        ELSE SUBSTRING(txt, startPos, startPos + maxLen)
-        END AS text
-    FROM ListData
-    WHERE data_key = (
-        SELECT data_key
-        FROM Entities
-        WHERE id = entID
-    );
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE selectPropDoc (
-    IN entID BIGINT UNSIGNED,
-    IN maxLen INT UNSIGNED,
-    IN startPos INT UNSIGNED
-)
-BEGIN
-    SET startPos = startPos + 1;
-    SELECT
-        CASE WHEN maxLen = 0 THEN SUBSTRING(txt, startPos)
-        ELSE SUBSTRING(txt, startPos, startPos + maxLen)
-        END AS text
-    FROM PropertyDocData
-    WHERE data_key = (
-        SELECT data_key
-        FROM Entities
-        WHERE id = entID
-    );
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE selectText (
-    IN entID BIGINT UNSIGNED,
-    IN maxLen INT UNSIGNED,
-    IN startPos INT UNSIGNED
-)
-BEGIN
-    SET startPos = startPos + 1;
-    SELECT
-        CASE WHEN maxLen = 0 THEN SUBSTRING(txt, startPos)
-        ELSE SUBSTRING(txt, startPos, startPos + maxLen)
-        END AS text
-    FROM TextData
-    WHERE data_key = (
-        SELECT data_key
-        FROM Entities
-        WHERE id = entID
-    );
+        CASE WHEN maxLen = 0 THEN SUBSTRING(data_input, startPos)
+        ELSE SUBSTRING(data_input, startPos, startPos + maxLen)
+        END AS dataInput
+    FROM Entities
+    WHERE id = entID;
 END //
 DELIMITER ;
 
 
 
 DELIMITER //
-CREATE PROCEDURE selectBinary (
+CREATE PROCEDURE selectCreator (
     IN entID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT bin
-    FROM BinaryData
-    WHERE data_key = (
-        SELECT data_key
-        FROM Entities
-        WHERE id = entID
-    );
+    SELECT creator_id AS userID
+    FROM Entities
+    WHERE id = entID;
 END //
 DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectCreations (
+    IN userID BIGINT UNSIGNED,
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED,
+    IN isAscOrder BOOL
+)
+BEGIN
+    SELECT id AS entID
+    FROM Entities
+    WHERE creator_id = userID
+    ORDER BY
+        CASE WHEN isAscOrder THEN id END ASC,
+        CASE WHEN NOT isAscOrder THEN id END DESC
+    LIMIT numOffset, maxNum;
+END //
+DELIMITER ;
+
+
+
+
+
+-- DELIMITER //
+-- CREATE PROCEDURE selectEntityInfo (
+--     IN entID BIGINT UNSIGNED
+-- )
+-- BEGIN
+--     DECLARE dataType CHAR;
+--     DECLARE dataKey BIGINT UNSIGNED;
+--     DECLARE titleID, propDocID, titleDataKey BIGINT UNSIGNED;
+--     DECLARE funID, inputListID, inputListDataKey BIGINT UNSIGNED;
+
+--     -- Get the dataType and dataKey.
+--     SELECT data_type, data_key INTO dataType, dataKey 
+--     FROM Entities
+--     WHERE id = entID;
+
+--     IF (dataType = 's') THEN
+--         -- Select the returned info.
+--         SELECT
+--             dataType,
+--             title
+--         FROM SimpleEntityData
+--         WHERE data_key = dataKey;
+
+--     ELSEIF (dataType = 'a') THEN
+--         -- Select the returned info.
+--         SELECT title_id, prop_doc_id INTO titleID, propDocID
+--         FROM AssocEntityData
+--         WHERE data_key = dataKey;
+--         SELECT data_key INTO titleDataKey
+--         FROM Entities
+--         WHERE id = titleID;
+--         SELECT
+--             dataType,
+--             titleID,
+--             title,
+--             propDocID
+--         FROM SimpleEntityData
+--         WHERE data_key = titleDataKey;
+
+--     ELSEIF (dataType = 'f') THEN
+--         -- Select the returned info.
+--         SELECT fun_id, input_list_id INTO funID, inputListID
+--         FROM FormalEntityData
+--         WHERE data_key = dataKey;
+--         SELECT data_key INTO inputListDataKey
+--         FROM Entities
+--         WHERE id = inputListID;
+--         SELECT
+--             dataType,
+--             funID,
+--             inputListID,
+--             SUBSTRING(txt, 1, 255) AS textStart,
+--             LENGTH(txt) AS len
+--         FROM ListData
+--         WHERE data_key = inputListDataKey;
+
+--     ELSEIF (dataType = 'p') THEN
+--         -- Select the returned info.
+--         SELECT
+--             dataType,
+--             subj_id AS subjID,
+--             prop_id AS propID
+--         FROM PropertyTagData
+--         WHERE data_key = dataKey;
+
+--     ELSEIF (dataType = 'm') THEN
+--         -- Select the returned info.
+--         SELECT
+--             dataType,
+--             tag_id AS tagID,
+--             inst_id AS instID
+--         FROM StatementData
+--         WHERE data_key = dataKey;
+
+--     ELSEIF (dataType = 'l') THEN
+--         -- Select the returned info.
+--         SELECT
+--             dataType,
+--             SUBSTRING(txt, 1, 255) AS textStart,
+--             LENGTH(txt) AS len
+--         FROM ListData
+--         WHERE data_key = dataKey;
+
+--     ELSEIF (dataType = 'd') THEN
+--         -- Select the returned info.
+--         SELECT
+--             dataType,
+--             SUBSTRING(txt, 1, 255) AS textStart,
+--             LENGTH(txt) AS len
+--         FROM PropertyDocData
+--         WHERE data_key = dataKey;
+
+--     ELSEIF (dataType = 't') THEN
+--         -- Select the returned info.
+--         SELECT
+--             dataType,
+--             SUBSTRING(txt, 1, 255) AS textStart,
+--             LENGTH(txt) AS len,
+--             data_hash AS dataHash
+--         FROM TextData
+--         WHERE data_key = dataKey;
+
+--     ELSEIF (dataType = 'b') THEN
+--         -- Select the returned info.
+--         SELECT
+--             dataType,
+--             LENGTH(bin) AS len,
+--             data_hash AS dataHash
+--         FROM BinaryData
+--         WHERE data_key = dataKey;
+
+--     ELSEIF (dataType = 'u') THEN
+--         -- Select the returned info.
+--         SELECT
+--             dataType,
+--             username
+--         FROM UserData
+--         WHERE data_key = dataKey;
+
+
+--     ELSEIF (dataType = 'n') THEN
+--         -- Select the returned info.
+--         SELECT
+--             dataType,
+--             bot_name AS botName
+--         FROM NativeBotData
+--         WHERE data_key = dataKey;
+
+
+--     END IF;
+-- END //
+-- DELIMITER ;
+
+
+
+
+-- DELIMITER //
+-- CREATE PROCEDURE selectList (
+--     IN entID BIGINT UNSIGNED,
+--     IN maxLen INT UNSIGNED,
+--     IN startPos INT UNSIGNED
+-- )
+-- BEGIN
+--     SET startPos = startPos + 1;
+--     SELECT
+--         CASE WHEN maxLen = 0 THEN SUBSTRING(txt, startPos)
+--         ELSE SUBSTRING(txt, startPos, startPos + maxLen)
+--         END AS text
+--     FROM ListData
+--     WHERE data_key = (
+--         SELECT data_key
+--         FROM Entities
+--         WHERE id = entID
+--     );
+-- END //
+-- DELIMITER ;
+
+
+-- DELIMITER //
+-- CREATE PROCEDURE selectPropDoc (
+--     IN entID BIGINT UNSIGNED,
+--     IN maxLen INT UNSIGNED,
+--     IN startPos INT UNSIGNED
+-- )
+-- BEGIN
+--     SET startPos = startPos + 1;
+--     SELECT
+--         CASE WHEN maxLen = 0 THEN SUBSTRING(txt, startPos)
+--         ELSE SUBSTRING(txt, startPos, startPos + maxLen)
+--         END AS text
+--     FROM PropertyDocData
+--     WHERE data_key = (
+--         SELECT data_key
+--         FROM Entities
+--         WHERE id = entID
+--     );
+-- END //
+-- DELIMITER ;
+
+
+-- DELIMITER //
+-- CREATE PROCEDURE selectText (
+--     IN entID BIGINT UNSIGNED,
+--     IN maxLen INT UNSIGNED,
+--     IN startPos INT UNSIGNED
+-- )
+-- BEGIN
+--     SET startPos = startPos + 1;
+--     SELECT
+--         CASE WHEN maxLen = 0 THEN SUBSTRING(txt, startPos)
+--         ELSE SUBSTRING(txt, startPos, startPos + maxLen)
+--         END AS text
+--     FROM TextData
+--     WHERE data_key = (
+--         SELECT data_key
+--         FROM Entities
+--         WHERE id = entID
+--     );
+-- END //
+-- DELIMITER ;
+
+
+
+-- DELIMITER //
+-- CREATE PROCEDURE selectBinary (
+--     IN entID BIGINT UNSIGNED
+-- )
+-- BEGIN
+--     SELECT bin
+--     FROM BinaryData
+--     WHERE data_key = (
+--         SELECT data_key
+--         FROM Entities
+--         WHERE id = entID
+--     );
+-- END //
+-- DELIMITER ;
 
 
 
@@ -408,288 +497,255 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE selectSimEntityID (
-    IN titleStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
-)
-BEGIN
-    SELECT id AS entID
-    FROM Entities
-    WHERE (
-        data_type = 's' AND
-        data_key = (
-            SELECT data_key
-            FROM SimpleEntityData
-            WHERE title = titleStr
-        )
-    );
-END //
-DELIMITER ;
+-- DELIMITER //
+-- CREATE PROCEDURE selectSimEntityID (
+--     IN titleStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
+-- )
+-- BEGIN
+--     SELECT id AS entID
+--     FROM Entities
+--     WHERE (
+--         data_type = 's' AND
+--         data_key = (
+--             SELECT data_key
+--             FROM SimpleEntityData
+--             WHERE title = titleStr
+--         )
+--     );
+-- END //
+-- DELIMITER ;
 
 
-DELIMITER //
-CREATE PROCEDURE selectAssocEntityID (
-    IN titleID BIGINT UNSIGNED,
-    IN propDocID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT id AS entID
-    FROM Entities
-    WHERE (
-        data_type = 'a' AND
-        data_key = (
-            SELECT data_key
-            FROM DefinedEntityData
-            WHERE title_id = titleID AND prop_doc_id = propDocID
-        )
-    );
-END //
-DELIMITER ;
+-- DELIMITER //
+-- CREATE PROCEDURE selectAssocEntityID (
+--     IN titleID BIGINT UNSIGNED,
+--     IN propDocID BIGINT UNSIGNED
+-- )
+-- BEGIN
+--     SELECT id AS entID
+--     FROM Entities
+--     WHERE (
+--         data_type = 'a' AND
+--         data_key = (
+--             SELECT data_key
+--             FROM DefinedEntityData
+--             WHERE title_id = titleID AND prop_doc_id = propDocID
+--         )
+--     );
+-- END //
+-- DELIMITER ;
 
 
-DELIMITER //
-CREATE PROCEDURE selectFormEntityID (
-    IN funID BIGINT UNSIGNED,
-    IN inputListID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT id AS entID
-    FROM Entities
-    WHERE (
-        data_type = 'f' AND
-        data_key = (
-            SELECT data_key
-            FROM FormalEntityData
-            WHERE fun_id = funID AND input_list_id = inputListID
-        )
-    );
-END //
-DELIMITER ;
+-- DELIMITER //
+-- CREATE PROCEDURE selectFormEntityID (
+--     IN funID BIGINT UNSIGNED,
+--     IN inputListID BIGINT UNSIGNED
+-- )
+-- BEGIN
+--     SELECT id AS entID
+--     FROM Entities
+--     WHERE (
+--         data_type = 'f' AND
+--         data_key = (
+--             SELECT data_key
+--             FROM FormalEntityData
+--             WHERE fun_id = funID AND input_list_id = inputListID
+--         )
+--     );
+-- END //
+-- DELIMITER ;
 
 
-DELIMITER //
-CREATE PROCEDURE selectFormEntityIDFromText (
-    IN funID BIGINT UNSIGNED,
-    IN inputListText TEXT
-)
-BEGIN
-    DECLARE inputListHash VARCHAR(255) DEFAULT (SHA2(inputListText, 224));
-    DECLARE inputListID BIGINT UNSIGNED;
+-- DELIMITER //
+-- CREATE PROCEDURE selectFormEntityIDFromText (
+--     IN funID BIGINT UNSIGNED,
+--     IN inputListText TEXT
+-- )
+-- BEGIN
+--     DECLARE inputListHash VARCHAR(255) DEFAULT (SHA2(inputListText, 224));
+--     DECLARE inputListID BIGINT UNSIGNED;
 
-    SELECT id INTO inputListID
-    FROM Entities
-    WHERE (
-        data_type = 'l' AND
-        data_key = (
-            SELECT data_key
-            FROM ListData
-            WHERE data_hash = inputListHash
-        )
-    );
-    SELECT id AS entID, inputListID
-    FROM Entities
-    WHERE (
-        data_type = 'f' AND
-        data_key = (
-            SELECT data_key
-            FROM FormalEntityData
-            WHERE fun_id = funID AND input_list_id = inputListID
-        )
-    );
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE selectPropTagEntityID (
-    IN subjID BIGINT UNSIGNED,
-    IN propID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT id AS entID
-    FROM Entities
-    WHERE (
-        data_type = 'p' AND
-        data_key = (
-            SELECT data_key
-            FROM PropertyTagData
-            WHERE subj_id = subjID AND prop_id = propID
-        )
-    );
-END //
-DELIMITER ;
+--     SELECT id INTO inputListID
+--     FROM Entities
+--     WHERE (
+--         data_type = 'l' AND
+--         data_key = (
+--             SELECT data_key
+--             FROM ListData
+--             WHERE data_hash = inputListHash
+--         )
+--     );
+--     SELECT id AS entID, inputListID
+--     FROM Entities
+--     WHERE (
+--         data_type = 'f' AND
+--         data_key = (
+--             SELECT data_key
+--             FROM FormalEntityData
+--             WHERE fun_id = funID AND input_list_id = inputListID
+--         )
+--     );
+-- END //
+-- DELIMITER ;
 
 
-DELIMITER //
-CREATE PROCEDURE selectStmtEntityID (
-    IN tagID BIGINT UNSIGNED,
-    IN instID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT id AS entID
-    FROM Entities
-    WHERE (
-        data_type = 'm' AND
-        data_key = (
-            SELECT data_key
-            FROM StatementData
-            WHERE tag_id = tagID AND inst_id = instID
-        )
-    );
-END //
-DELIMITER ;
+-- DELIMITER //
+-- CREATE PROCEDURE selectPropTagEntityID (
+--     IN subjID BIGINT UNSIGNED,
+--     IN propID BIGINT UNSIGNED
+-- )
+-- BEGIN
+--     SELECT id AS entID
+--     FROM Entities
+--     WHERE (
+--         data_type = 'p' AND
+--         data_key = (
+--             SELECT data_key
+--             FROM PropertyTagData
+--             WHERE subj_id = subjID AND prop_id = propID
+--         )
+--     );
+-- END //
+-- DELIMITER ;
 
 
-DELIMITER //
-CREATE PROCEDURE selectListEntityID (
-    IN dataHash VARCHAR(255)
-)
-BEGIN
-    SELECT id AS entID
-    FROM Entities
-    WHERE (
-        data_type = 'l' AND
-        data_key = (
-            SELECT data_key
-            FROM ListData
-            WHERE data_hash = dataHash
-        )
-    );
-END //
-DELIMITER ;
+-- DELIMITER //
+-- CREATE PROCEDURE selectStmtEntityID (
+--     IN tagID BIGINT UNSIGNED,
+--     IN instID BIGINT UNSIGNED
+-- )
+-- BEGIN
+--     SELECT id AS entID
+--     FROM Entities
+--     WHERE (
+--         data_type = 'm' AND
+--         data_key = (
+--             SELECT data_key
+--             FROM StatementData
+--             WHERE tag_id = tagID AND inst_id = instID
+--         )
+--     );
+-- END //
+-- DELIMITER ;
 
 
-DELIMITER //
-CREATE PROCEDURE selectPropDocEntityID (
-    IN dataHash VARCHAR(255)
-)
-BEGIN
-    SELECT id AS entID
-    FROM Entities
-    WHERE (
-        data_type = 'd' AND
-        data_key = (
-            SELECT data_key
-            FROM PropertyDocData
-            WHERE data_hash = dataHash
-        )
-    );
-END //
-DELIMITER ;
+-- DELIMITER //
+-- CREATE PROCEDURE selectListEntityID (
+--     IN dataHash VARCHAR(255)
+-- )
+-- BEGIN
+--     SELECT id AS entID
+--     FROM Entities
+--     WHERE (
+--         data_type = 'l' AND
+--         data_key = (
+--             SELECT data_key
+--             FROM ListData
+--             WHERE data_hash = dataHash
+--         )
+--     );
+-- END //
+-- DELIMITER ;
 
 
-DELIMITER //
-CREATE PROCEDURE selectTextEntityID (
-    IN dataHash VARCHAR(255)
-)
-BEGIN
-    SELECT id AS entID
-    FROM Entities
-    WHERE (
-        data_type = 't' AND
-        data_key = (
-            SELECT data_key
-            FROM TextData
-            WHERE data_hash = dataHash
-        )
-    );
-END //
-DELIMITER ;
+-- DELIMITER //
+-- CREATE PROCEDURE selectPropDocEntityID (
+--     IN dataHash VARCHAR(255)
+-- )
+-- BEGIN
+--     SELECT id AS entID
+--     FROM Entities
+--     WHERE (
+--         data_type = 'd' AND
+--         data_key = (
+--             SELECT data_key
+--             FROM PropertyDocData
+--             WHERE data_hash = dataHash
+--         )
+--     );
+-- END //
+-- DELIMITER ;
 
 
-DELIMITER //
-CREATE PROCEDURE selectBinaryEntityID (
-    IN dataHash VARCHAR(255)
-)
-BEGIN
-    SELECT id AS entID
-    FROM Entities
-    WHERE (
-        data_type = 'b' AND
-        data_key = (
-            SELECT data_key
-            FROM BinaryData
-            WHERE data_hash = dataHash
-        )
-    );
-END //
-DELIMITER ;
+-- DELIMITER //
+-- CREATE PROCEDURE selectTextEntityID (
+--     IN dataHash VARCHAR(255)
+-- )
+-- BEGIN
+--     SELECT id AS entID
+--     FROM Entities
+--     WHERE (
+--         data_type = 't' AND
+--         data_key = (
+--             SELECT data_key
+--             FROM TextData
+--             WHERE data_hash = dataHash
+--         )
+--     );
+-- END //
+-- DELIMITER ;
 
 
-DELIMITER //
-CREATE PROCEDURE selectUserEntityID (
-    IN uName VARCHAR(255)
-)
-BEGIN
-    SELECT id AS entID
-    FROM Entities
-    WHERE (
-        data_type = 'u' AND
-        data_key = (
-            SELECT data_key
-            FROM UserData
-            WHERE username = uName
-        )
-    );
-END //
-DELIMITER ;
+-- DELIMITER //
+-- CREATE PROCEDURE selectBinaryEntityID (
+--     IN dataHash VARCHAR(255)
+-- )
+-- BEGIN
+--     SELECT id AS entID
+--     FROM Entities
+--     WHERE (
+--         data_type = 'b' AND
+--         data_key = (
+--             SELECT data_key
+--             FROM BinaryData
+--             WHERE data_hash = dataHash
+--         )
+--     );
+-- END //
+-- DELIMITER ;
 
 
-DELIMITER //
-CREATE PROCEDURE selectBotEntityID (
-    IN botName VARCHAR(255)
-)
-BEGIN
-    SELECT id AS entID
-    FROM Entities
-    WHERE (
-        data_type = 'n' AND
-        data_key = (
-            SELECT data_key
-            FROM NativeBotData
-            WHERE bot_name = botName
-        )
-    );
-END //
-DELIMITER ;
+-- DELIMITER //
+-- CREATE PROCEDURE selectUserEntityID (
+--     IN uName VARCHAR(255)
+-- )
+-- BEGIN
+--     SELECT id AS entID
+--     FROM Entities
+--     WHERE (
+--         data_type = 'u' AND
+--         data_key = (
+--             SELECT data_key
+--             FROM UserData
+--             WHERE username = uName
+--         )
+--     );
+-- END //
+-- DELIMITER ;
 
 
-
+-- DELIMITER //
+-- CREATE PROCEDURE selectBotEntityID (
+--     IN botName VARCHAR(255)
+-- )
+-- BEGIN
+--     SELECT id AS entID
+--     FROM Entities
+--     WHERE (
+--         data_type = 'n' AND
+--         data_key = (
+--             SELECT data_key
+--             FROM NativeBotData
+--             WHERE bot_name = botName
+--         )
+--     );
+-- END //
+-- DELIMITER ;
 
 
 
 
 
-DELIMITER //
-CREATE PROCEDURE selectCreator (
-    IN entID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT creator_id AS userID
-    FROM Entities
-    WHERE id = entID;
-END //
-DELIMITER ;
-
-
-
-DELIMITER //
-CREATE PROCEDURE selectCreations (
-    IN userID BIGINT UNSIGNED,
-    IN maxNum INT UNSIGNED,
-    IN numOffset INT UNSIGNED,
-    IN isAscOrder BOOL
-)
-BEGIN
-    SELECT id AS entID
-    FROM Entities
-    WHERE creator_id = userID
-    ORDER BY
-        CASE WHEN isAscOrder THEN id END ASC,
-        CASE WHEN NOT isAscOrder THEN id END DESC
-    LIMIT numOffset, maxNum;
-END //
-DELIMITER ;
 
 
 

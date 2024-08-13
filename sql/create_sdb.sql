@@ -150,41 +150,51 @@ CREATE TABLE Entities (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     -- Parent ID: An entity that this entity inherits properties from.
-    parent_id BIGINT UNSIGNED NOT NULL,
+    parent_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
     -- (A majority of entities will have a parent, so we use 0 instead of NULL.)
 
-    -- Constructor input: A list of IDs (integers) separated only with commas.
-    -- These are substituted instead of placeholders in the prop_struct of the
-    -- parent. 
-    constr_input VARCHAR(255) NOT NULL,
+    -- Constructor input: A a JSON array of strings or entity IDs. These are
+    -- substituted instead of placeholders in the prop_struct of the parent. 
+    con_input VARCHAR(255) NOT NULL DEFAULT "",
     -- (We use "" for no constructor inputs.)
 
     -- Property data structure (struct) containing the specific properties of
     -- this entity.
-    prop_struct TEXT,
-    prop_struct_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(txt, 224)),
-    -- (We use "" when prop_struct is NULL.)
+    prop_struct TEXT DEFAULT NULL,
+    prop_struct_hash VARCHAR(255) NOT NULL DEFAULT (
+        CASE
+            WHEN prop_struct IS NULL OR prop_struct = "" THEN ""
+            ELSE SHA2(prop_struct, 224)
+        END
+    ),
 
 
     -- Data input: A large TEXT or BLOB that cannot fit in the prop_struct
     -- directly, and therefore also substitutes a placeholder there instead
     -- (similarly to the constructor input, but with a different placeholder).
-    data_input LONGBLOB,
+    data_input LONGBLOB DEFAULT NULL,
+    data_input_hash VARCHAR(255) NOT NULL DEFAULT (
+        CASE
+            WHEN data_input IS NULL OR data_input = "" THEN ""
+            ELSE SHA2(data_input, 224)
+        END
+    ),
     -- (Any size restriction on this BLOB is implemented in the control layer,
     -- or in the interface with it, i.e. in the "input procedures.")
-    data_input_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(txt, 224)),
-    -- (We use "" when data_input is NULL.)
 
 
-    UNIQUE INDEX (parent_id, constr_input, prop_struct_hash, data_input_hash),
+    UNIQUE INDEX (parent_id, con_input, prop_struct_hash, data_input_hash),
 
 
     -- ID of the creator, i.e. the user who uploaded this entity.
-    creator_id BIGINT UNSIGNED NOT NULL,
+    creator_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    -- (A majority of entities will have a creator.)
 
     UNIQUE INDEX (creator_id, id)
 );
-
+INSERT INTO Entities (id, prop_struct)
+VALUES
+    (1, '{"type":"user", "username":"%1"}');
 
 
 
@@ -409,6 +419,17 @@ CREATE TABLE AncillaryBotData1e4d (
 CREATE TABLE Private_UserData (
     user_id BIGINT UNSIGNED PRIMARY KEY,
     password_hash VARBINARY(255),
+
+    username VARCHAR(50) NOT NULL UNIQUE,
+    -- TODO: Consider adding more restrictions.
+
+    public_keys_for_authentication TEXT,
+    -- (In order for third parties to be able to copy the database and then
+    -- be able to have users log on, without the need to exchange passwords
+    -- between databases.) (This could also be other data than encryption keys,
+    -- and in principle it could even just be some ID to use for authenticating
+    -- the user via a third party.)
+
 
     -- TODO: Implement managing of and restrictions on these fields when it
     -- becomes relevant:

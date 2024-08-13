@@ -28,12 +28,12 @@ CREATE PROCEDURE createNewUser (
     IN pwHash VARBINARY(255)
 )
 BEGIN proc: BEGIN
-    DECLARE outID, dataKey BIGINT UNSIGNED;
+    DECLARE outID BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
     DECLARE accountNum TINYINT UNSIGNED;
 
-    SELECT id INTO outID
-    FROM UserData
+    SELECT user_id INTO outID
+    FROM Private_UserData
     WHERE username = uName
     FOR UPDATE;
     IF (outID IS NOT NULL) THEN
@@ -53,11 +53,14 @@ BEGIN proc: BEGIN
         LEAVE proc;
     END IF;
 
-    INSERT INTO UserData (username)
-    VALUES (uName);
-    SELECT LAST_INSERT_ID() INTO dataKey;
-    INSERT INTO Entities (meta_type, data_key)
-    VALUES ('u', dataKey);
+    IF (INSTR(uName, '"') > 0) THEN
+        SET exitCode = 3; -- username is ill-formed (consider expanding check).
+        SELECT outID, exitCode;
+        LEAVE proc;
+    END IF;
+
+    INSERT INTO Entities (parent_id, con_input)
+    VALUES (1, CONCAT('["', uName, '"]')); -- 1 is the ID of the 'user' class.
     SELECT LAST_INSERT_ID() INTO outID;
 
     INSERT INTO Private_EMails
