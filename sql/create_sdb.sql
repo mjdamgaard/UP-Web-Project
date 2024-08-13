@@ -8,17 +8,22 @@ DROP TABLE IndexedEntities;
 /* Entities */
 DROP TABLE Entities;
 
-/* Data */
-DROP TABLE SimpleEntityData;
-DROP TABLE AssocEntityData;
-DROP TABLE FormalEntityData;
-DROP TABLE PropertyTagData;
-DROP TABLE ListData;
-DROP TABLE PropertyDocData;
-DROP TABLE TextData;
-DROP TABLE BinaryData;
-DROP TABLE UserData;
-DROP TABLE NativeBotData;
+-- /* Data */
+-- DROP TABLE SimpleEntityData;
+-- DROP TABLE AssocEntityData;
+-- DROP TABLE FormalEntityData;
+-- DROP TABLE PropertyTagData;
+-- DROP TABLE StatementData;
+-- DROP TABLE ListData;
+-- DROP TABLE PropertyDocData;
+-- DROP TABLE TextData;
+-- DROP TABLE BinaryData;
+-- DROP TABLE UserData;
+-- DROP TABLE NativeBotData;
+
+/* Users and Bots */
+DROP TABLE Users;
+DROP TABLE AggregationBots;
 
 /* Ancillary data for aggregation bots */
 DROP TABLE AncillaryBotData1e2d;
@@ -138,26 +143,44 @@ CREATE TABLE IndexedEntities (
 
 
 
-
-
-
 /* Entities */
 
 CREATE TABLE Entities (
     -- Entity ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- Entity data type. (This can be either 's', 'a', 'f', 'p', 'm', 'l', 'd',
-    -- 't', 'b', 'u', or 'n'.)
-    data_type CHAR NOT NULL,
+    -- Parent ID: An entity that this entity inherits properties from.
+    parent_id BIGINT UNSIGNED NOT NULL,
+    -- (A majority of entities will have a parent, so we use 0 instead of NULL.)
 
-    -- Entity definition.
-    data_key BIGINT UNSIGNED NOT NULL,
+    -- Constructor input: A list of IDs (integers) separated only with commas.
+    -- These are substituted instead of placeholders in the prop_struct of the
+    -- parent. 
+    constr_input VARCHAR(255) NOT NULL,
+    -- (We use "" for no constructor inputs.)
+
+    -- Property data structure (struct) containing the specific properties of
+    -- this entity.
+    prop_struct TEXT,
+    prop_struct_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(txt, 224)),
+    -- (We use "" when prop_struct is NULL.)
+
+
+    -- Data input: A large TEXT or BLOB that cannot fit in the prop_struct
+    -- directly, and therefore also substitutes a placeholder there instead
+    -- (similarly to the constructor input, but with a different placeholder).
+    data_input LONGBLOB,
+    -- (Any size restriction on this BLOB is implemented in the control layer,
+    -- or in the interface with it, i.e. in the "input procedures.")
+    data_input_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(txt, 224)),
+    -- (We use "" when data_input is NULL.)
+
+
+    UNIQUE INDEX (parent_id, constr_input, prop_struct_hash, data_input_hash),
+
 
     -- ID of the creator, i.e. the user who uploaded this entity.
     creator_id BIGINT UNSIGNED NOT NULL,
-
-    UNIQUE INDEX (data_type, data_key),
 
     UNIQUE INDEX (creator_id, id)
 );
@@ -165,174 +188,140 @@ CREATE TABLE Entities (
 
 
 
-/* Simply defined entities (or 'simple entities' for short) */
 
-CREATE TABLE SimpleEntityData (
-    -- Standard entity data key (private).
-    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+-- /* Formal (or 'functional') entities */
 
-    -- Title. A potentially shortened (or full) title of the entity.
-    title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+-- CREATE TABLE FormalEntityData (
+--     -- Formal entity data key (private).
+--     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    UNIQUE INDEX (title)
-);
-
-
-/* Associative entities (or 'property-defined entities,' alternatively) */
-
-CREATE TABLE AssocEntityData (
-    -- Standard entity data key (private).
-    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
-    -- ID of a simple entity holding the title of this 'defined' entity.
-    title_id BIGINT UNSIGNED NOT NULL,
-
-    -- The property document providing the initial definition of
-    -- the entity. The property document encodes what is like a plain object
-    -- in JavaScript or an associative array in PHP: Basically list of
-    -- key--value pairs, where the key is a property name (such as 'name',
-    -- 'occupation', etc.) and the value is the property value (such as
-    -- 'John', 'actor', etc.). The only difference is that a property documents
-    -- can actually have several values for each property.
-    prop_doc_id BIGINT UNSIGNED NOT NULL,
-
-    UNIQUE INDEX (title_id, prop_doc_id)
-);
-
-
-/* Formal (or 'functional') entities */
-
-CREATE TABLE FormalEntityData (
-    -- Formal entity data key (private).
-    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
-    -- ID of the function entity, which defines how the entity is interpreted,
-    -- given the inputs as well.
-    fun_id BIGINT UNSIGNED NOT NULL,
+--     -- ID of the function entity, which defines how the entity is interpreted,
+--     -- given the inputs as well.
+--     fun_id BIGINT UNSIGNED NOT NULL,
     
-    -- TODO: Make this table hold the input list text itself as well iff it
-    -- is of length 255 or shorter, and use this to speed up queries.
-    -- ... Or it could hold the data hash. But then again, maybe not..
+--     -- TODO: Make this table hold the input list text itself as well iff it
+--     -- is of length 255 or shorter, and use this to speed up queries.
+--     -- ... Or it could hold the data hash. But then again, maybe not..
 
-    -- A string listing the IDs of the inputs of the function.
-    input_list_id BIGINT UNSIGNED NOT NULL,
+--     -- A string listing the IDs of the inputs of the function.
+--     input_list_id BIGINT UNSIGNED NOT NULL,
 
-    UNIQUE INDEX (fun_id, input_list_id)
-);
+--     UNIQUE INDEX (fun_id, input_list_id)
+-- );
 
 
-/* Property tag entities */
+-- /* Property tag entities */
 
-CREATE TABLE PropertyTagData (
-    -- Property tag entity data key (private).
-    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+-- CREATE TABLE PropertyTagData (
+--     -- Property tag entity data key (private).
+--     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- ID of the property subject entity.
-    subj_id BIGINT UNSIGNED NOT NULL,
+--     -- ID of the property subject entity.
+--     subj_id BIGINT UNSIGNED NOT NULL,
     
-    -- ID of the property entity.
-    prop_id BIGINT UNSIGNED NOT NULL,
+--     -- ID of the property entity.
+--     prop_id BIGINT UNSIGNED NOT NULL,
 
-    UNIQUE INDEX (subj_id, prop_id)
-);
+--     UNIQUE INDEX (subj_id, prop_id)
+-- );
 
 
-/* Statement entities */
+-- /* Statement entities */
 
-CREATE TABLE StatementData (
-    -- Statement entity data key (private).
-    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+-- CREATE TABLE StatementData (
+--     -- Statement entity data key (private).
+--     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- ID of the tag entity.
-    tag_id BIGINT UNSIGNED NOT NULL,
+--     -- ID of the tag entity.
+--     tag_id BIGINT UNSIGNED NOT NULL,
     
-    -- ID of the instance entity, which the statement says fits the given tag.
-    inst_id BIGINT UNSIGNED NOT NULL,
+--     -- ID of the instance entity, which the statement says fits the given tag.
+--     inst_id BIGINT UNSIGNED NOT NULL,
 
-    UNIQUE INDEX (tag_id, inst_id)
-);
-
-
-
-/* List entities */
-
-CREATE TABLE ListData (
-    -- List data key (private).
-    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
-    -- Data hash. (We use SHA2 rather than MD5 to allow ourselves to simply
-    -- assume that there won't be any collisions.)
-    data_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(txt, 224)),
-
-    -- Text consisting of a list of (positive) integers separated by commas.
-    txt TEXT NOT NULL,
-
-    -- UNIQUE INDEX (data_hash, data_key)
-    UNIQUE INDEX (data_hash)
-);
-
-
-/* Property document entities */
-
-CREATE TABLE PropertyDocData (
-    -- Property document data key (private).
-    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
-    -- Data hash.
-    data_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(txt, 224)),
-
-    -- Text containing the property--value assignments. A property might
-    -- have multiple values assigned to it. For instance, a movie might
-    -- have several directors for its 'director' property, and might have
-    -- a whole list of actors for its 'actor' property. 
-    txt TEXT NOT NULL,
-
-    -- UNIQUE INDEX (data_hash, data_key)
-    UNIQUE INDEX (data_hash)
-);
-
-
-/* Text entities */
-
-CREATE TABLE TextData (
-    -- Text data key (private).
-    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
-    -- Data hash.
-    data_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(txt, 224)),
-
-    -- Data. Note that texts are not stored completely verbatim, as '@'s need
-    -- to be escaped, unless the are to be interpreted as the beginning of
-    -- a link to a reference (where the title is typically substituted as
-    -- a clickable link).
-    txt TEXT,
-
-    -- UNIQUE INDEX (data_hash, data_key)
-    UNIQUE INDEX (data_hash)
-);
-
-
-/* Binary string entities */
-
-CREATE TABLE BinaryData (
-    -- Binary string/file (BLOB) data key (private).
-    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
-    -- Data hash.
-    data_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(bin, 224)),
-
-    -- Data.
-    bin LONGBLOB,
-
-    UNIQUE INDEX (data_hash)
-);
+--     UNIQUE INDEX (tag_id, inst_id)
+-- );
 
 
 
+-- /* List entities */
 
-/* User entities */
+-- CREATE TABLE ListData (
+--     -- List data key (private).
+--     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-CREATE TABLE UserData (
+--     -- Data hash. (We use SHA2 rather than MD5 to allow ourselves to simply
+--     -- assume that there won't be any collisions.)
+--     data_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(txt, 224)),
+
+--     -- Text consisting of a list of (positive) integers separated by commas.
+--     txt TEXT NOT NULL,
+
+--     -- UNIQUE INDEX (data_hash, data_key)
+--     UNIQUE INDEX (data_hash)
+-- );
+
+
+-- /* Property document entities */
+
+-- CREATE TABLE PropertyDocData (
+--     -- Property document data key (private).
+--     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+--     -- Data hash.
+--     data_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(txt, 224)),
+
+--     -- Text containing the property--value assignments. A property might
+--     -- have multiple values assigned to it. For instance, a movie might
+--     -- have several directors for its 'director' property, and might have
+--     -- a whole list of actors for its 'actor' property. 
+--     txt TEXT NOT NULL,
+
+--     -- UNIQUE INDEX (data_hash, data_key)
+--     UNIQUE INDEX (data_hash)
+-- );
+
+
+-- /* Text entities */
+
+-- CREATE TABLE TextData (
+--     -- Text data key (private).
+--     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+--     -- Data hash.
+--     data_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(txt, 224)),
+
+--     -- Data. Note that texts are not stored completely verbatim, as '@'s need
+--     -- to be escaped, unless the are to be interpreted as the beginning of
+--     -- a link to a reference (where the title is typically substituted as
+--     -- a clickable link).
+--     txt TEXT,
+
+--     -- UNIQUE INDEX (data_hash, data_key)
+--     UNIQUE INDEX (data_hash)
+-- );
+
+
+-- /* Binary string entities */
+
+-- CREATE TABLE BinaryData (
+--     -- Binary string/file (BLOB) data key (private).
+--     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+--     -- Data hash.
+--     data_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(bin, 224)),
+
+--     -- Data.
+--     bin LONGBLOB,
+
+--     UNIQUE INDEX (data_hash)
+-- );
+
+
+
+
+/* Users */
+
+CREATE TABLE Users (
     -- User data key (private).
     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
@@ -350,9 +339,9 @@ CREATE TABLE UserData (
 );
 
 
-/* Native bot entities (or 'bot entities' for short) */
+/* Native aggregation bots (or simply 'bots' for short) */
 
-CREATE TABLE NativeBotData (
+CREATE TABLE AggregationBots (
     -- Aggregation bot data key (private).
     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 

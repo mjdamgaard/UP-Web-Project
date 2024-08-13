@@ -42,15 +42,12 @@ ORDER BY id;
 SELECT "Entities:";
 SELECT
     id AS entID,
-    data_type AS dataType,
-    data_key AS dataKey,
+    parent_id AS parentID,
+    constr_input AS constrInput,
+    prop_struct AS propStruct,
+    prop_struct_hash AS propStructHash,
+    data_input AS dataInput,
+    data_input_hash AS dataInputHash,
     creator_id AS creator
 FROM Entities
 ORDER BY id;
-
-SELECT "SimpleEntityData:";
-SELECT
-    data_key AS dataKey,
-    title AS title
-FROM SimpleEntityData
-ORDER BY data_key;
