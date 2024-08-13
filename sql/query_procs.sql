@@ -169,12 +169,29 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectEntityFromSecKey (
     IN parentID BIGINT UNSIGNED,
-    IN conInput VARCHAR(255)
+    IN conInput VARCHAR(255),
+    IN propStruct TEXT,
+    IN dataInput LONGBLOB
 )
 BEGIN
     SELECT id
     FROM Entities
-    WHERE parent_id = parentID AND con_input = conInput;
+    WHERE (
+        parent_id = parentID AND
+        con_input = conInput AND
+        prop_struct_hash = (
+            CASE
+                WHEN propStruct IS NULL OR propStruct = "" THEN ""
+                ELSE SHA2(propStruct, 224)
+            END
+        ) AND
+        data_input_hash = (
+            CASE
+                WHEN dataInput IS NULL OR dataInput = "" THEN ""
+                ELSE SHA2(dataInput, 224)
+            END
+        )
+    );
 END //
 DELIMITER ;
 

@@ -192,9 +192,20 @@ CREATE TABLE Entities (
 
     UNIQUE INDEX (creator_id, id)
 );
-INSERT INTO Entities (id, prop_struct)
+
+
+/* Some initial inserts */
+
+INSERT INTO Entities (id, parent_id, con_input, prop_struct)
 VALUES
-    (1, '{"type":"user", "username":"%1"}');
+    (1, 0, '', '{"type":"user", "username":"%1"}'),
+    (2, 0, '', '{"type":"tag", "title":"%1"}'),
+    (3, 0, '', '{"title":"%1"}'),
+    (4, 0, '',
+        '{"type":["tag", "property tag"], "subject":"%1", "property":"%2"}'
+    ),
+    (5, 1, '["initial_user"]', ''),
+    (6, 4, '[5, "type"]', '');
 
 
 

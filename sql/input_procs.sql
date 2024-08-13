@@ -144,12 +144,19 @@ BEGIN
     DECLARE exitCode TINYINT;
     DECLARE propStructHash VARCHAR(255) DEFAULT CASE
         WHEN propStruct = "" OR propStruct IS NULL THEN ""
-        ELSE (SHA2(propStruct, 224))
+        ELSE SHA2(propStruct, 224)
     END;
     DECLARE dataInputHash VARCHAR(255) DEFAULT CASE
         WHEN dataInput = "" OR dataInput IS NULL THEN ""
-        ELSE (SHA2(dataInput, 224))
+        ELSE SHA2(dataInput, 224)
     END;
+
+    IF (propStruct = "") THEN
+        SET propStruct = NULL;
+    END IF;
+    IF (dataInput = "") THEN
+        SET dataInput = NULL;
+    END IF;
 
     INSERT IGNORE INTO Entities (
         parent_id, con_input, prop_struct, prop_struct_hash,
