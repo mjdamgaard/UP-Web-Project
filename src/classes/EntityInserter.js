@@ -5,22 +5,69 @@ import {DBRequestManager} from "../classes/DBRequestManager.js";
 
 
 export class EntityInserter {
-  #idOrCallbackArrStore = {};
+  #entKeyIDStore = {};
+  #stringEntIDOrCallbackArrStore = {};
 
   constructor(accountManager) {
     // Public properties:
     this.accountManager = accountManager;
   }
 
+  #getIDOrThrow(entKey) {
+    let id = this.#entKeyIDStore[entKey];
+    if (!id) {
+      throw "EntityInserter: missing key: " + entKey;
+    }
+    return id;
+  }
+  
+  // substitutePropsAndValues(props) substitute all occurrences of "@[^0-9]..."
+  // in props, both for it value and its keys. 
+  substitutePropsAndValues(props) {
+    let keyRegEx = /^@[^0-9]/g;
+    props.keys().forEach(prop => {
+      // Substitute property if it is a key reference.
+      if (keyRegEx.test(prop)) {
+        let idRef = "@" + this.#getIDOrThrow(prop);
+        props[idRef] = props[prop];
+        delete props[prop];
+        prop = idRef;
+      }
+
+      // Substitute property value if it is a key reference.
+      let val = props[prop];
+      if (keyRegEx.test(val)) {
+        let idRef = "@" + this.#getIDOrThrow(val);
+        props[prop] = idRef;
+      }
+
+      // If val is an object, including an array, call this method on each
+      // value/element.
+      if (val && typeof val === "object") {
+        val.keys().forEach(elem => {
+          this.substitutePropsAndValues(elem);
+        });
+      }
+    });
+  }
+
+  // substitutePropsAndFillOut(props) takes an entDef and calls
+  // substitutePropsAndValues() on entDef.props and also initializes parentID,
+  // spec, props, and data if they are undefined.
+  substitutePropsAndFillOut(entDef) {
+    entDef.parentID ??= 0;
+    entDef.spec ??= "";
+    entDef.props ??= "";
+    entDef.data ??= "";
+    if (!entDef.props) {
+      this.substitutePropsAndValues(entDef.props);
+    }
+  }
 
   // insertOrFindEntityOnly() uploads an entity defined by entDef, stores the
-  // outID for the key, if any, and calls the callback.
-  insertOrFindEntityOnly(entDef, key, callback) {
+  // outID for the entKey, if any, and calls the callback.
+  insertOrFindEntityOnly(entDef, entKey, callback) {
     callback ??= (entID) => {};
-    let parentID = entDef.parentID ?? 0;
-    let spec = entDef.spec ?? "";
-    let props = entDef.props ?? "";
-    let data = entDef.data ?? "";
     let reqData = {
       req: "ent",
       ses: this.accountManager.sesIDHex,
@@ -31,19 +78,19 @@ export class EntityInserter {
       d: data,
     };
     DBRequestManager.input(reqData, (result) => {
-      this.#idOrCallbackArrStore[key] = result.outID;
+      // Note that entKeys starting with [0-9] is no use.
+      if (typeof entKey === "string") {
+        this.#entKeyIDStore[entKey] = result.outID;
+      }
       callback(result.outID);
     });
   }
-  // Oh, I also need to parse key references in props... ...Hm, how about
-  // iterating through all nested properties and values of props, and then call
-  // waitForIDThen() for all key references..? ...Ah, or else I can just upload
-  // one entity at a time. I think that's better. ..So the same, just throw on
-  // missing key.
+  
 
-  // createProps() can be called after insertOrFindEntityOnly() in order to
-  // also create all the string-value properties and values.
-  insertProps(entDef, entID, callback) {
+
+  // insertStringPropsAndValues() can be called after insertOrFindEntityOnly()
+  // in order to also create all the string-value properties and values.
+  insertStringPropsAndValues(entDef, entID, callback) {
     let parentID = entDef.parentID ?? 0;
     let spec = entDef.spec ?? "";
     let props = entDef.props ?? "";
@@ -59,8 +106,7 @@ export class EntityInserter {
     };
     DBRequestManager.input(reqData, (result) => {
       if (typeof key === "string") {
-        // Note that keys starting with [0-9] is no use.
-        this.#idOrCallbackArrStore[key] = result.outID;
+        this.#entKeyIDStore[key] = result.outID;
       }
       callback(result.outID);
     });
@@ -585,7 +631,7 @@ export class EntityInserter {
   // #waitForIDThen() executes the callback function as soon as the entID
   // referred to by the key is ready.
   #waitForIDThen(key, callback) {
-    let idOrCallbackArr = this.#idOrCallbackArrStore[key];
+    let idOrCallbackArr = this.#entKeyIDStore[key];
     
     // If idOrCallbackArr is an array (of callbacks), simply append callback.
     if (Array.isArray(idOrCallbackArr)) {
@@ -595,7 +641,7 @@ export class EntityInserter {
 
     // Else if idOrCallbackArr is undefined, create a new callback array
     if (idOrCallbackArr === undefined) {
-      this.#idOrCallbackArrStore[key] = [callback];
+      this.#entKeyIDStore[key] = [callback];
       return;
     }
     
@@ -609,7 +655,7 @@ export class EntityInserter {
   // #storeIDAndResolve() stores a freshly fetched entID and then resolves all
   // the waiting callback functions.  
   #storeIDAndResolve(key, entID) {
-    let callbackArr = this.#idOrCallbackArrStore[key] ?? [];
+    let callbackArr = this.#entKeyIDStore[key] ?? [];
 
     // Verify that the callback array is not already replaced with an ID by
     // an earlier call to this method.
@@ -624,7 +670,7 @@ export class EntityInserter {
     callbackArr.forEach(callback => {
       callback(entID, key);
     });
-    this.#idOrCallbackArrStore[key] = entID;
+    this.#entKeyIDStore[key] = entID;
     return;
   }
   
@@ -635,7 +681,7 @@ export class EntityInserter {
   // might be immediately).
   #inputOrLookupEntity(reqData, key, callback) {
     if (key) {
-      let entID = this.#idOrCallbackArrStore[key];
+      let entID = this.#entKeyIDStore[key];
       if (entID && typeof entID !== "object") {
         callback(entID);
       } else {
