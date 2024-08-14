@@ -28,7 +28,7 @@ CREATE PROCEDURE createNewUser (
     IN pwHash VARBINARY(255)
 )
 BEGIN proc: BEGIN
-    DECLARE outID BIGINT UNSIGNED;
+    DECLARE outID BIGINT UNSIGNED DEFAULT 0;
     DECLARE exitCode TINYINT;
     DECLARE accountNum TINYINT UNSIGNED;
 
@@ -59,9 +59,16 @@ BEGIN proc: BEGIN
         LEAVE proc;
     END IF;
 
-    INSERT INTO Entities (parent_id, con_input)
+    INSERT IGNORE INTO Entities (parent_id, spec_input)
     VALUES (1, CONCAT('["', uName, '"]')); -- 1 is the ID of the 'user' class.
-    SELECT LAST_INSERT_ID() INTO outID;
+    SELECT id INTO outID
+    FROM Entities
+    WHERE (
+        parent_id = 1 AND
+        spec_input = CONCAT('["', uName, '"]') AND
+        prop_struct_hash = "" AND
+        data_input_hash = ""
+    );
 
     INSERT INTO Private_EMails
         (e_mail_address, number_of_accounts, account_1_user_id)

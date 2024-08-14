@@ -135,7 +135,7 @@ DELIMITER //
 CREATE PROCEDURE insertOrFindEntity (
     IN userID BIGINT UNSIGNED,
     IN parentID BIGINT UNSIGNED,
-    IN conInput BIGINT UNSIGNED,
+    IN specInput VARCHAR(255),
     IN propStruct TEXT,
     IN dataInput LONGBLOB
 )
@@ -159,11 +159,11 @@ BEGIN
     END IF;
 
     INSERT IGNORE INTO Entities (
-        parent_id, con_input, prop_struct, prop_struct_hash,
+        parent_id, spec_input, prop_struct, prop_struct_hash,
         data_input, data_input_hash, creator_id
     )
     VALUES (
-        parentId, conInput, propStruct, propStructHash,
+        parentId, specInput, propStruct, propStructHash,
         dataInput, dataInputHash, userID
     );
     IF (mysql_affected_rows() > 0) THEN
@@ -175,7 +175,7 @@ BEGIN
         FROM Entities
         WHERE (
             parent_id = parentID AND
-            con_input = conInput AND
+            spec_input = specInput AND
             prop_struct_hash = propStructHash AND
             data_input_hash = dataInputHash
         );

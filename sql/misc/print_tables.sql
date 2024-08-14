@@ -43,7 +43,7 @@ SELECT "Entities:";
 SELECT
     id AS entID,
     parent_id AS parentID,
-    con_input AS conInput,
+    spec_input AS specInput,
     prop_struct AS propStruct,
     -- prop_struct_hash AS propStructHash,
     data_input AS dataInput,

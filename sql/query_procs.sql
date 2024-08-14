@@ -156,9 +156,9 @@ CREATE PROCEDURE selectEntity (
 BEGIN
     SELECT
         parent_id AS parentId,
-        con_input AS conInput,
+        spec_input AS specInput,
         prop_struct AS propStruct,
-        LENGTH(data_input) AS dataInputLen
+        LENGTH(data_input) AS dataLen
     FROM Entities
     WHERE id = entID;
 END //
@@ -169,16 +169,16 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectEntityFromSecKey (
     IN parentID BIGINT UNSIGNED,
-    IN conInput VARCHAR(255),
+    IN specInput VARCHAR(255),
     IN propStruct TEXT,
     IN dataInput LONGBLOB
 )
 BEGIN
-    SELECT id
+    SELECT id AS entID
     FROM Entities
     WHERE (
         parent_id = parentID AND
-        con_input = conInput AND
+        spec_input = specInput AND
         prop_struct_hash = (
             CASE
                 WHEN propStruct IS NULL OR propStruct = "" THEN ""
@@ -205,10 +205,11 @@ CREATE PROCEDURE selectEntityData (
 )
 BEGIN
     SET startPos = startPos + 1;
-    SELECT
+    SELECT (
         CASE WHEN maxLen = 0 THEN SUBSTRING(data_input, startPos)
         ELSE SUBSTRING(data_input, startPos, startPos + maxLen)
-        END AS dataInput
+        END
+    ) AS dataInput
     FROM Entities
     WHERE id = entID;
 END //

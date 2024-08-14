@@ -153,10 +153,11 @@ CREATE TABLE Entities (
     parent_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
     -- (A majority of entities will have a parent, so we use 0 instead of NULL.)
 
-    -- Constructor input: A a JSON array of strings or entity IDs. These are
-    -- substituted instead of placeholders in the prop_struct of the parent. 
-    con_input VARCHAR(255) NOT NULL DEFAULT "",
-    -- (We use "" for no constructor inputs.)
+    -- Specifying input: A string or a JSON array of strings or entity IDs.
+    -- These are substituted instead of placeholders in the prop_struct of the
+    -- parent. 
+    spec_input VARCHAR(255) NOT NULL DEFAULT "",
+    -- (We use "" for no specifying inputs.)
 
     -- Property data structure (struct) containing the specific properties of
     -- this entity.
@@ -171,7 +172,7 @@ CREATE TABLE Entities (
 
     -- Data input: A large TEXT or BLOB that cannot fit in the prop_struct
     -- directly, and therefore also substitutes a placeholder there instead
-    -- (similarly to the constructor input, but with a different placeholder).
+    -- (similarly to the specifying input, but with a different placeholder).
     data_input LONGBLOB DEFAULT NULL,
     data_input_hash VARCHAR(255) NOT NULL DEFAULT (
         CASE
@@ -183,7 +184,7 @@ CREATE TABLE Entities (
     -- or in the interface with it, i.e. in the "input procedures.")
 
 
-    UNIQUE INDEX (parent_id, con_input, prop_struct_hash, data_input_hash),
+    UNIQUE INDEX (parent_id, spec_input, prop_struct_hash, data_input_hash),
 
 
     -- ID of the creator, i.e. the user who uploaded this entity.
@@ -196,16 +197,27 @@ CREATE TABLE Entities (
 
 /* Some initial inserts */
 
-INSERT INTO Entities (id, parent_id, con_input, prop_struct)
+INSERT INTO Entities (id, parent_id, spec_input, prop_struct)
 VALUES
-    (1, 0, '', '{"type":"user", "username":"%1"}'),
-    (2, 0, '', '{"type":"tag", "title":"%1"}'),
-    (3, 0, '', '{"title":"%1"}'),
+    (1, 0, '', '{"type":"user", "username":"%l"}'),
+    (2, 0, '', '{"type":"tag", "title":"%l"}'),
+    (3, 0, '', '{"title":"%l"}'),
     (4, 0, '',
         '{"type":["tag", "property tag"], "subject":"%1", "property":"%2"}'
     ),
-    (5, 1, '["initial_user"]', ''),
-    (6, 4, '[5, "type"]', '');
+    (5, 1, '"initial_user"', ''), -- The JSON string literal is wrapped in "".
+    (6, 4, '["@5", "type"]', '');
+
+
+-- For '%l', the spec_input JSON literal is substituted directly. For '%1',
+-- '%2', etc., the spec_input is parsed a a JSON array of literals before
+-- substituting each one. The data_input substitutes the '%d' placeholder, if
+-- any.
+-- Special characters are '%' and '@', which are escaped by writing them
+-- double (e.g. '@@' -> '@'), as well as the other special characters of JSON,
+-- of course (escaped the JSON way).
+-- '@' is used to write IDs, namely by writing e.g. '"@5"' which refers the the
+-- "initial_user" entity.
 
 
 
