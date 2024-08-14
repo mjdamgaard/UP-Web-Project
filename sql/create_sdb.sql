@@ -202,11 +202,12 @@ VALUES
     (1, 0, '', '{"type":"user","username":"%1"}'),
     (2, 0, '', '{"type":"tag","title":"%1"}'),
     (3, 0, '', '{"title":"%1"}'),
-    (4, 0, '',
+    (4, 0, '', '{"type":"property","title":"%1"}');
+    (5, 0, '',
         '{"type":["tag","property tag"],"subject":"%1","property":"%2"}'
     ),
-    (5, 1, 'initial_user', ''),
-    (6, 4, '@5|type', '');
+    (6, 1, 'initial_user', ''),
+    (7, 5, '@6|type', '');
 
 
 -- For the placeholders '%1', '%2', etc., the spec_input is parsed a a JSON

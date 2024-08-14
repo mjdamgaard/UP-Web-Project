@@ -12,6 +12,60 @@ export class EntityInserter {
     this.accountManager = accountManager;
   }
 
+
+  // insertOrFindEntityOnly() uploads an entity defined by entDef, stores the
+  // outID for the key, if any, and calls the callback.
+  insertOrFindEntityOnly(entDef, key, callback) {
+    callback ??= (entID) => {};
+    let parentID = entDef.parentID ?? 0;
+    let spec = entDef.spec ?? "";
+    let props = entDef.props ?? "";
+    let data = entDef.data ?? "";
+    let reqData = {
+      req: "ent",
+      ses: this.accountManager.sesIDHex,
+      u: this.accountManager.inputUserID,
+      p: parentID,
+      s: spec,
+      ps: props,
+      d: data,
+    };
+    DBRequestManager.input(reqData, (result) => {
+      this.#idOrCallbackArrStore[key] = result.outID;
+      callback(result.outID);
+    });
+  }
+  // Oh, I also need to parse key references in props... ...Hm, how about
+  // iterating through all nested properties and values of props, and then call
+  // waitForIDThen() for all key references..? ...Ah, or else I can just upload
+  // one entity at a time. I think that's better. ..So the same, just throw on
+  // missing key.
+
+  // createProps() can be called after insertOrFindEntityOnly() in order to
+  // also create all the string-value properties and values.
+  insertProps(entDef, entID, callback) {
+    let parentID = entDef.parentID ?? 0;
+    let spec = entDef.spec ?? "";
+    let props = entDef.props ?? "";
+    let data = entDef.data ?? "";
+    let reqData = {
+      req: "ent",
+      ses: this.accountManager.sesIDHex,
+      u: this.accountManager.inputUserID,
+      p: parentID,
+      s: spec,
+      ps: props,
+      d: data,
+    };
+    DBRequestManager.input(reqData, (result) => {
+      if (typeof key === "string") {
+        // Note that keys starting with [0-9] is no use.
+        this.#idOrCallbackArrStore[key] = result.outID;
+      }
+      callback(result.outID);
+    });
+  }
+
   // insertOrFind() parses an entity definition object and uploads all the
   // relevant entities and related ratings instructed by this object.
   // The object can also be an array of entity definition objects.
@@ -48,7 +102,8 @@ export class EntityInserter {
       if (entDefObj[0] !== "@") {
         // Note that any leading '\@' will be converted to '@' by
         // #insertOrFindSimpleEntity().
-        this.insertOrFind({dataType: 'sim', title: entDefObj}, callback);
+        let title = entDefObj;
+        this.#insertOrFindSimpleEntity(title, callback);
         return;
       }
 
@@ -114,18 +169,6 @@ export class EntityInserter {
         break;
       case 'assoc':
         this.#insertOrFindAssocEntity(entDefObj, key, modCallback);
-      case 'formal':
-        this.#insertOrFindFormalEntity(entDefObj, key, modCallback);
-        break;
-      case 'propTag':
-        this.#insertOrFindPropertyTagEntity(entDefObj, key, modCallback);
-        break;
-      case 'stmt':
-        this.#insertOrFindStatementEntity(entDefObj, key, modCallback);
-        break;
-      case 'list':
-        this.#insertOrFindListEntity(entDefObj, key, modCallback);
-        break;
       case 'propDoc':
         this.#insertOrFindPropDocEntity(entDefObj, key, modCallback);
         break;
@@ -243,98 +286,6 @@ export class EntityInserter {
     });
   }
 
-
-  #insertOrFindFormalEntity(entDefObj, key, modCallback) {
-    let fun = entDefObj.function;
-    let inputList = entDefObj.inputs;
-
-    // We insert or find the function, with a callback to then insert the
-    // input list as well, with yet another callback to finally insert the
-    // 'formal' entity once the funID and inputListID are resolved.
-    // (Note that dding a key to functions speeds up the insertion process.)
-    this.insertOrFind(fun, (funID) => {
-      this.insertOrFind(inputList, (inputListID) => {
-        let reqData = {
-          req: "form",
-          ses: this.accountManager.sesIDHex,
-          u: this.accountManager.inputUserID,
-          f: funID,
-          i: inputListID,
-        };
-        this.#inputOrLookupEntity(reqData, key, modCallback);
-      });
-    });
-  }
-
-
-  #insertOrFindPropertyTagEntity(entDefObj, key, modCallback) {
-    let subj = entDefObj.subject;
-    let prop = entDefObj.property;
-
-    // We insert or find the subject, with a callback to then insert the
-    // property as well, with yet another callback to finally insert the
-    // 'property tag' entity once the subjID and propID are resolved.
-    // (Note that using simple entities as properties (often advised), or
-    // adding a key to non-simple properties speeds up the insertion process.)
-    this.insertOrFind(subj, (subjID) => {
-      this.insertOrFind(prop, (propID) => {
-        let reqData = {
-          req: "propTag",
-          ses: this.accountManager.sesIDHex,
-          u: this.accountManager.inputUserID,
-          s: subjID,
-          p: propID,
-        };
-        this.#inputOrLookupEntity(reqData, key, modCallback);
-      });
-    });
-  }
-
-
-  #insertOrFindStatementEntity(entDefObj, key, modCallback) {
-    let tag = entDefObj.tag;
-    let inst = entDefObj.instance;
-
-    // This method follows a similar procedure as the one above for property
-    // tags.
-    this.insertOrFind(tag, (tagID) => {
-      this.insertOrFind(inst, (instID) => {
-        let reqData = {
-          req: "stmt",
-          ses: this.accountManager.sesIDHex,
-          u: this.accountManager.inputUserID,
-          t: tagID,
-          i: instID,
-        };
-        this.#inputOrLookupEntity(reqData, key, modCallback);
-      });
-    });
-  }
-
-
-
-
-
-  #insertOrFindListEntity(entDefObj, key, modCallback) {
-    let elemArr = entDefObj.elements;
-    this.#mapInsert(elemArr, val => val, idArr => {
-      let listText = idArr.join(",");
-      if (listText.length) {
-        throw (
-          'EntityInserter: List "' + listText + '" is too long (' +
-          listText.length + ' > 65535).'
-        );
-      }
-      let reqData = {
-        req: "list",
-        ses: this.accountManager.sesIDHex,
-        u: this.accountManager.inputUserID,
-        l: listText,
-      };
-      this.#inputOrLookupEntity(reqData, key, modCallback);
-    });
-    return;
-  }
 
 
   #insertOrFindPropDocEntity(entDefObj, key, modCallback) {
@@ -678,7 +629,7 @@ export class EntityInserter {
   }
   
   // #inputOrLookupEntity() forwards an input request to the server, but
-  // only if the key is not already stored in idOrCallbackArrStore, either
+  // only if the key is not already stored in keyIDStore, either
   // pending or resolved. If key is falsy, then the request is always sent.
   // The supplied callback function is called as soon as the ID is ready (which
   // might be immediately).
