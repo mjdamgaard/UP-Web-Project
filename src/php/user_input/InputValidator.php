@@ -118,14 +118,12 @@ class InputValidator {
                     );
                 }
                 break;
-            case "prop_struct":
-                // $pattern = "/^([1-9][0-9]*:s?[1-9][0-9]*(,s?[1-9][0-9]*)*;)*$/";
-                $pattern = "/^([1-9][0-9]*[=:][1-9][0-9]*;)*$/";
+            case "json":
                 if (
                     strlen($paramVal) > 65535 ||
-                    !preg_match($pattern, $paramVal)
+                    !json_validate($paramVal)
                 ) {
-                    echoTypeErrorJSONAndExit($paramName, $paramVal, "propDoc");
+                    echoTypeErrorJSONAndExit($paramName, $paramVal, "JSON");
                 }
                 break;
             case "list_text":

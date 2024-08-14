@@ -69,7 +69,7 @@ switch ($reqType) {
     case "ent":
         $sql = "CALL insertOrFindEntity (?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "p", "s", "ps", "d");
-        $typeArr = array("id", "id", "str", "text", "blob");
+        $typeArr = array("id", "id", "str", "json", "blob");
         break;
     // case "sim":
     //     $sql = "CALL insertOrFindSimEntity (?, ?)";

@@ -199,23 +199,23 @@ CREATE TABLE Entities (
 
 INSERT INTO Entities (id, parent_id, spec_input, prop_struct)
 VALUES
-    (1, 0, '', '{"type":"user", "username":"%l"}'),
-    (2, 0, '', '{"type":"tag", "title":"%l"}'),
-    (3, 0, '', '{"title":"%l"}'),
+    (1, 0, '', '{"type":"user","username":"%1"}'),
+    (2, 0, '', '{"type":"tag","title":"%1"}'),
+    (3, 0, '', '{"title":"%1"}'),
     (4, 0, '',
-        '{"type":["tag", "property tag"], "subject":"%1", "property":"%2"}'
+        '{"type":["tag","property tag"],"subject":"%1","property":"%2"}'
     ),
-    (5, 1, '"initial_user"', ''), -- The JSON string literal is wrapped in "".
-    (6, 4, '["@5", "type"]', '');
+    (5, 1, 'initial_user', ''),
+    (6, 4, '@5|type', '');
 
 
--- For '%l', the spec_input JSON literal is substituted directly. For '%1',
--- '%2', etc., the spec_input is parsed a a JSON array of literals before
--- substituting each one. The data_input substitutes the '%d' placeholder, if
--- any.
--- Special characters are '%' and '@', which are escaped by writing them
+-- For the placeholders '%1', '%2', etc., the spec_input is parsed a a JSON
+-- array of literals before substituting each one. The data_input substitutes
+-- the '%d' placeholder, if any.
+-- Special characters are '%', '@', which are escaped by writing them
 -- double (e.g. '@@' -> '@'), as well as the other special characters of JSON,
--- of course (escaped the JSON way).
+-- of course (escaped the JSON way), in case of the propStruct. For the
+-- spec_input, the separator '|' is also special, also escaped by '||'.
 -- '@' is used to write IDs, namely by writing e.g. '"@5"' which refers the the
 -- "initial_user" entity.
 

@@ -60,12 +60,12 @@ BEGIN proc: BEGIN
     END IF;
 
     INSERT IGNORE INTO Entities (parent_id, spec_input)
-    VALUES (1, CONCAT('["', uName, '"]')); -- 1 is the ID of the 'user' class.
+    VALUES (1, CONCAT('"', uName, '"')); -- 1 is the ID of the 'user' class.
     SELECT id INTO outID
     FROM Entities
     WHERE (
         parent_id = 1 AND
-        spec_input = CONCAT('["', uName, '"]') AND
+        spec_input = CONCAT('"', uName, '"') AND
         prop_struct_hash = "" AND
         data_input_hash = ""
     );

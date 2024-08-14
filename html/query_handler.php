@@ -22,7 +22,6 @@ require_once $auth_path . "Authenticator.php";
 
 
 
-// queries can also be GET-gotten.
 if ($_SERVER["REQUEST_METHOD"] != "POST") {
     $_POST = array_map('urldecode', $_GET);
 }
@@ -104,8 +103,8 @@ switch ($reqType) {
         break;
     case "entSK":
         $sql = "CALL selectEntityFromSecKey (?, ?, ?, ?)";
-        $paramNameArr = array("p", "s", "ps", "d");
-        $paramNameArr = array("id", "str", "text", "blob");
+        $paramNameArr = array("p", "s", "psh", "dh");
+        $paramNameArr = array("id", "str", "str", "str");
         // output: [[entID]].
         break;
     case "entData":
@@ -283,6 +282,11 @@ $stmt = $conn->prepare($sql);
 DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 // fetch the result as a numeric array.
 $res = $stmt->get_result()->fetch_all();
+// if $reqType == ent, JSON-parse the third output, "propStruct", before the
+// final full JSON-encoding. 
+if ($reqType === "ent") {
+    $res[0][2] = json_decode($res[0][2]);
+}
 // finally echo the JSON-encoded numeric array, containing e.g. the
 // columns: ("ratVal", "instID") for $reqType == "set", etc., so look at
 // the comments above for what the resulting arrays will contain.
