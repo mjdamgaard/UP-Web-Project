@@ -5,8 +5,11 @@ import {DBRequestManager} from "../classes/DBRequestManager.js";
 
 
 export class EntityInserter {
-  #entKeyIDStore = {};
-  #stringEntIDOrCallbackArrStore = {};
+  #entKeyIDStore = {
+    // s: {}, // The 's' prefix stands for string/simple entities.
+    // p: {}, // The 's' prefix stands for property entities.
+    // o: {}, // The 's' prefix stands for other/object entities.
+  };
 
   constructor(accountManager) {
     // Public properties:
@@ -15,19 +18,40 @@ export class EntityInserter {
 
   #getIDOrThrow(entKey) {
     let id = this.#entKeyIDStore[entKey];
-    if (!id) {
+    if (typeof id !== "string") {
       throw "EntityInserter: missing key: " + entKey;
     }
     return id;
   }
   
+  #insertOrLookupEntity(reqData, entKey, callback) {
+    if (entKey) {
+      let entID = this.#entKeyIDStore[entKey];
+      if (entID && typeof entID !== "object") {
+        callback(entID);
+      } else {
+        this.#waitForIDThen(entKey, callback);
+        DBRequestManager.input(reqData, (result) => {
+          this.#storeIDAndResolve(entKey, result.outID);
+        });
+      }
+    } else {
+      DBRequestManager.input(reqData, (result) => {
+        callback(result.outID);
+      });
+    }
+    return;
+  }
+
+
+
   // substitutePropsAndValues(props) substitute all occurrences of "@[^0-9]..."
   // in props, both for it value and its keys. 
-  substitutePropsAndValues(props) {
-    let keyRegEx = /^@[^0-9]/g;
+  substitutePropKeysAndValues(props) {
+    let entKeyRegEx = /^@[^0-9]/g;
     props.keys().forEach(prop => {
       // Substitute property if it is a key reference.
-      if (keyRegEx.test(prop)) {
+      if (entKeyRegEx.test(prop)) {
         let idRef = "@" + this.#getIDOrThrow(prop);
         props[idRef] = props[prop];
         delete props[prop];
@@ -36,7 +60,7 @@ export class EntityInserter {
 
       // Substitute property value if it is a key reference.
       let val = props[prop];
-      if (keyRegEx.test(val)) {
+      if (entKeyRegEx.test(val)) {
         let idRef = "@" + this.#getIDOrThrow(val);
         props[prop] = idRef;
       }
@@ -45,7 +69,7 @@ export class EntityInserter {
       // value/element.
       if (val && typeof val === "object") {
         val.keys().forEach(elem => {
-          this.substitutePropsAndValues(elem);
+          this.substitutePropKeysAndValues(elem);
         });
       }
     });
@@ -60,7 +84,7 @@ export class EntityInserter {
     entDef.props ??= "";
     entDef.data ??= "";
     if (!entDef.props) {
-      this.substitutePropsAndValues(entDef.props);
+      this.substitutePropKeysAndValues(entDef.props);
     }
   }
 
@@ -68,14 +92,18 @@ export class EntityInserter {
   // outID for the entKey, if any, and calls the callback.
   insertOrFindEntityOnly(entDef, entKey, callback) {
     callback ??= (entID) => {};
+    if (this.#entKeyIDStore[entKey]) {
+      throw "EntityInserter: entKey " + entKey + " is already in use";
+    }
+    this.substitutePropsAndFillOut(entDef)
     let reqData = {
       req: "ent",
       ses: this.accountManager.sesIDHex,
       u: this.accountManager.inputUserID,
-      p: parentID,
-      s: spec,
-      ps: props,
-      d: data,
+      p: entDef.parentID,
+      s: entDef.spec,
+      ps: entDef.props,
+      d: entDef.data,
     };
     DBRequestManager.input(reqData, (result) => {
       // Note that entKeys starting with [0-9] is no use.
@@ -88,29 +116,191 @@ export class EntityInserter {
   
 
 
-  // insertStringPropsAndValues() can be called after insertOrFindEntityOnly()
-  // in order to also create all the string-value properties and values.
-  insertStringPropsAndValues(entDef, entID, callback) {
-    let parentID = entDef.parentID ?? 0;
-    let spec = entDef.spec ?? "";
-    let props = entDef.props ?? "";
-    let data = entDef.data ?? "";
+  // insertPropKeys() can be called after insertOrFindEntityOnly()
+  // in order to also insert all the string-valued properties.
+  insertPropKeys(props, callback) {
+    var propKeys = props.keys();
+    var ind = 0;
+    this.#insertPropKeysHelper(propKeys, ind, props, callback)
+  }
+
+  #insertPropKeysHelper(propKeys, ind, callback) {
+    let propKey = propKeys[ind];
+    // If end of propKeys is reach, call the callback and return.
+    if (!propKey) {
+      return callback();
+    }
+    // If propKey is an ID (or entKey) reference, skip it.
+    if (!/^[^@]/.test(propKey)) {
+      this.#insertPropKeysHelper(propKeys, ind + 1, callback);
+    }
+    // Skip also if the prop is already inserted and stored.
+    if (this.#entKeyIDStore["@p." + propKey]) {
+      this.#insertPropKeysHelper(propKeys, ind + 1, callback);
+    }
+
+    // Else insert it as a property entity (parentID = 4) and continue. But not
+    // before removing any leading '\' (which can escape '@').
+    if (propKey[0] === "\\") {
+      propKey = propKey.slice(1);
+    }
     let reqData = {
       req: "ent",
       ses: this.accountManager.sesIDHex,
       u: this.accountManager.inputUserID,
-      p: parentID,
-      s: spec,
-      ps: props,
-      d: data,
+      p: "4",
+      s: propKey,
+      ps: "",
+      d: "",
     };
     DBRequestManager.input(reqData, (result) => {
-      if (typeof key === "string") {
-        this.#entKeyIDStore[key] = result.outID;
-      }
-      callback(result.outID);
+      this.#entKeyIDStore["@p." + propKey] = result.outID;
+      this.#insertPropKeysHelper(propKeys, ind + 1, callback);
     });
   }
+
+
+  // insertPropValues() can be called after insertOrFindEntityOnly()
+  // in order to also insert all the string-valued property values.
+  insertPropValues(props, callback) {
+    var propKeys = props.keys();
+    var ind = 0;
+    this.#insertPropValuesHelper(propKeys, ind, props, callback)
+  }
+
+  #insertPropValuesHelper(propKeys, ind, props, callback) {
+    let propKey = propKeys[ind];
+    // If end of propKeys is reach, call the callback and return.
+    if (!propKey) {
+      callback();
+      return;
+    }
+    let val = props[propKey];
+    // If val is an ID (or entKey) reference, skip it.
+    if (!/^[^@]/.test(propKey)) {
+      this.#insertPropValuesHelper(propKeys, ind + 1, props, callback);
+    }
+    // Skip also if val is already inserted and stored.
+    if (this.#entKeyIDStore["@s." + propKey]) {
+      this.#insertPropValuesHelper(propKeys, ind + 1, props, callback);
+    }
+
+    // Else insert it as a simple entity (parentID = 3) and continue. But not
+    // before removing any leading '\' (which can escape '@').
+    if (propKey[0] === "\\") {
+      propKey = propKey.slice(1);
+    }
+    let reqData = {
+      req: "ent",
+      ses: this.accountManager.sesIDHex,
+      u: this.accountManager.inputUserID,
+      p: "3",
+      s: propKey,
+      ps: "",
+      d: "",
+    };
+    DBRequestManager.input(reqData, (result) => {
+      this.#entKeyIDStore["@s." + propKey] = result.outID;
+      this.#insertPropValuesHelper(propKeys, ind + 1, props, callback);
+    });
+  }
+
+  // // insertProps() combines the last two methods into one.
+  // insertProps(props, callback) {
+  //   this.insertPropKeys(props, () => {
+  //     this.insertPropValues(props, () => {
+  //       callback();
+  //     });
+  //   });
+  // }
+
+
+
+  // insertPropsAndPropTags() first calls insertPropKeys to insert all property
+  // key strings, then go through each property key and inserts a
+  // propTag for one with entID as the subject.
+  // Note that substitutePropKeysAndValues() ought to be called somehow before
+  // this method.
+  insertPropKeysAndPropTags(entID, props, callback) {
+    var propKeys = props.keys();
+    var ind = 0;
+    this.insertPropKeys(props, () => {
+      this.#insertPropKeysAndPropTagsHelper(propKeys, ind, entID, callback);
+    });
+  }
+
+  #insertPropKeysAndPropTagsHelper(propKeys, ind, entID, callback) {
+    let propKey = propKeys[ind];
+    // If end of propKeys is reach, call the callback and return.
+    if (!propKey) {
+      callback();
+      return;
+    }
+
+    // Get the propID.
+    var propID;
+    // If propKey is an ID reference, get that.
+    if (/^@[1-9][0-9]*$/.test(propKey)) {
+      propID = propKey.slice(1);
+    }
+    // If propKey is an entKey reference, get the ID (or throw).
+    else if (/^@[^0-9]/.test(propKey)) {
+      propID = this.#getIDOrThrow(propKey);
+    }
+    // Else if propKey is a string, get the ID from the @p.<string> entKey.
+    else {
+      propID = this.#getIDOrThrow("@p." + propKey);
+    }
+
+    // Construct the propTag entKey.
+    let propTagEntKey = "@pt." + entID + "." + propID;
+
+
+    // Skip this propTag if it is already inserted and stored.
+    if (this.#entKeyIDStore[propTagEntKey]) {
+      this.#insertPropKeysAndPropTagsHelper(propKeys, ind + 1, entID, callback);
+    }
+
+    // Else insert it as the propTag entity (parentID = 5) and continue.
+    let reqData = {
+      req: "ent",
+      ses: this.accountManager.sesIDHex,
+      u: this.accountManager.inputUserID,
+      p: "5",
+      s: entID + "|" + propID,
+      ps: "",
+      d: "",
+    };
+    DBRequestManager.input(reqData, (result) => {
+      this.#entKeyIDStore[propTagEntKey] = result.outID;
+      this.#insertPropKeysAndPropTagsHelper(propKeys, ind + 1, entID, callback);
+    });
+  }
+
+
+
+  // insertAndUprateProps() first calls insertPropKeysAndPropTags() and
+  // insertPropValues(), then go through each property and uprates...
+  // Note that substitutePropKeysAndValues() ought to be called somehow before
+  // this method.
+  insertAndUprateProps(entID, props) {
+    this.substitutePropKeysAndValues(props);
+
+  }
+
+
+  // insertOrFindEntityThenInsertAndUprateProps() ...
+  insertOrFindEntityThenInsertAndUprateProps(entDef, entKey, callback) {
+    this.insertOrFindEntityOnly(entDef, entKey, (entID) => {
+      this.insertProps(entDef.props, () => {
+          callback(entID);
+      });
+    });
+  }
+
+
+
+
 
   // insertOrFind() parses an entity definition object and uploads all the
   // relevant entities and related ratings instructed by this object.
@@ -628,10 +818,11 @@ export class EntityInserter {
 
 
 
+
   // #waitForIDThen() executes the callback function as soon as the entID
-  // referred to by the key is ready.
-  #waitForIDThen(key, callback) {
-    let idOrCallbackArr = this.#entKeyIDStore[key];
+  // referred to by entKey is ready.
+  #waitForIDThen(entKey, callback) {
+    let idOrCallbackArr = this.#entKeyIDStore[entKey];
     
     // If idOrCallbackArr is an array (of callbacks), simply append callback.
     if (Array.isArray(idOrCallbackArr)) {
@@ -641,7 +832,7 @@ export class EntityInserter {
 
     // Else if idOrCallbackArr is undefined, create a new callback array
     if (idOrCallbackArr === undefined) {
-      this.#entKeyIDStore[key] = [callback];
+      this.#entKeyIDStore[entKey] = [callback];
       return;
     }
     
@@ -654,23 +845,23 @@ export class EntityInserter {
 
   // #storeIDAndResolve() stores a freshly fetched entID and then resolves all
   // the waiting callback functions.  
-  #storeIDAndResolve(key, entID) {
-    let callbackArr = this.#entKeyIDStore[key] ?? [];
+  #storeIDAndResolve(entKey, entID) {
+    let callbackArr = this.#entKeyIDStore[entKey] ?? [];
 
     // Verify that the callback array is not already replaced with an ID by
     // an earlier call to this method.
     if (!Array.isArray(callbackArr)) {
       throw (
-        'EntityInserter: The key "' + key + '" is already used.'
+        'EntityInserter: The key "' + entKey + '" is already used.'
       );
     }
 
     // Call all the callbacks with the entID (and key) as input, then exchange
     // the callback array for the entID.
     callbackArr.forEach(callback => {
-      callback(entID, key);
+      callback(entID, entKey);
     });
-    this.#entKeyIDStore[key] = entID;
+    this.#entKeyIDStore[entKey] = entID;
     return;
   }
   
@@ -679,15 +870,15 @@ export class EntityInserter {
   // pending or resolved. If key is falsy, then the request is always sent.
   // The supplied callback function is called as soon as the ID is ready (which
   // might be immediately).
-  #inputOrLookupEntity(reqData, key, callback) {
-    if (key) {
-      let entID = this.#entKeyIDStore[key];
+  #inputOrLookupEntity(reqData, entKey, callback) {
+    if (entKey) {
+      let entID = this.#entKeyIDStore[entKey];
       if (entID && typeof entID !== "object") {
         callback(entID);
       } else {
-        this.#waitForIDThen(key, callback);
+        this.#waitForIDThen(entKey, callback);
         DBRequestManager.input(reqData, (result) => {
-          this.#storeIDAndResolve(key, result.outID);
+          this.#storeIDAndResolve(entKey, result.outID);
         });
       }
     } else {
