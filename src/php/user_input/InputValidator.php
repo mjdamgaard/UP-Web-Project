@@ -59,7 +59,7 @@ class InputValidator {
                 }
                 break;
             case "tint":
-            case "rat":
+            // case "rat":
                 $pattern = "/^-?[1-9][0-9]{0,2}|0$/";
                 $n = intval($paramVal);
                 if (
@@ -70,9 +70,24 @@ class InputValidator {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, "TINYINT");
                 }
                 break;
+            case "utint":
+            case "uchar":
+            case "rat":
+                $pattern = "/^[1-9][0-9][0-9]|0$/";
+                $n = intval($paramVal);
+                if (
+                    !preg_match($pattern, $paramVal) ||
+                    $n < 0 ||
+                    $n > 255
+                ) {
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "TINYINT UNSIGNED"
+                    );
+                }
+                break;
             case "ushort":
-            case "encoded_rat":
-            case "enc_rat":
+            // case "encoded_rat":
+            // case "enc_rat":
                 $pattern = "/^[1-9][0-9]{0,4}|0$/";
                 $n = intval($paramVal);
                 if (

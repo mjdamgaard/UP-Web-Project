@@ -63,8 +63,9 @@ switch ($reqType) {
     case "rat":
         $sql = "CALL insertOrUpdateRating (?, ?, ?, ?)";
         $paramNameArr = array("u", "t", "i", "r");
-        $typeArr = array("id", "id", "id", "enc_rat");
+        $typeArr = array("id", "id", "id", "utint");
         // (outID is the stmtID here, i.e. the tag--instance statement.)
+        // TODO: Is it?
         break;
     case "ent":
         $sql = "CALL insertOrFindEntity (?, ?, ?, ?, ?)";

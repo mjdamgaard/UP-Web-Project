@@ -207,7 +207,8 @@ VALUES
         '{"type":["tag","property tag"],"subject":"%1","property":"%2"}'
     ),
     (6, 1, 'initial_user', ''),
-    (7, 5, '@6|type', '');
+    (7, 0, '', '{"type":"list","elements":"%1"}'),
+    (8, 5, '@6|type', '');
 
 
 -- For the placeholders '%1', '%2', etc., the spec_input is parsed a a JSON
