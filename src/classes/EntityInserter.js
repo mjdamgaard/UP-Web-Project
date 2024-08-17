@@ -294,71 +294,112 @@ export class EntityInserter {
 
 
 
-  // insertAndUprateProps() first calls substitutePropKeysAndValues(), 
-  // insertPropKeysAndPropTags() and insertPropValues(), then go through each
-  // property and up-rates all values.
+  // insertAndUprateProps() first calls substitutePropKeysAndValues(),
+  // insertPropKeysAndPropTags(), insertPropValues(), and
+  // insertRelevantPropertiesTag(), then go through each property and up-rates
+  // all values.
   insertAndUprateProps(entID, props, callback) {
     this.substitutePropKeysAndValues(props);
     this.insertPropKeysAndPropTags(entID, props, () => {
       this.insertPropValues(props, () => {
-        // After having substituted entKeys in props, then inserted property
-        // keys, property tags, and values, go through each property key,
-        // get the given property tag, and get an array of all values to uprate
-        // for that propTag.
-        props.keys().forEach(propKey => {
-          var propID;
-          // If propKey is an ID reference, get that.
-          if (/^@[1-9][0-9]*$/.test(propKey)) {
-            propID = propKey.slice(1);
-          }
-          // Or if propKey is a string, get the ID from the @p.<string> entKey.
-          else {
-            propID = this.#getIDOrThrow("@p." + propKey);
-          }
-          // Get the stored propTag ID.
-          let propTagID = this.#getIDOrThrow("@pt." + entID + "." + propID);
-          
-          // Get all non-list values.
-          let valSet = props[propKey];
-          var valArr = Array.isArray(valSet) ? valSet : [valSet];
-          valArr.forEach(val => {
-            var valID;
-            // If val is an ID reference, get that.
-            if (/^@[1-9][0-9]*$/.test(val)) {
-              valID = val.slice(1);
+        this.insertRelevantPropertiesTag(entID, (rptID) => {
+          // After having substituted entKeys in props, then inserted property
+          // keys, property tags, and values, go through each property key,
+          // get the given property tag, and get an array of all values to
+          // up-rate for that propTag.
+          props.keys().forEach(propKey => {
+            var propID;
+            // If propKey is an ID reference, get that.
+            if (/^@[1-9][0-9]*$/.test(propKey)) {
+              propID = propKey.slice(1);
             }
-            // Or if val is a string, get the ID from the @s.<string> entKey.
-            else if (typeof val === "string") {
-              valID = this.#getIDOrThrow("@s." + val);
-            }
-            // Or if it is an array, get the ID from the @l.<json> entKey.
-            else if (Array.isArray(val)) {
-              valID = this.#getIDOrThrow("@l." + JSON.stringify(val));
-            }
+            // Or if propKey is a string, get the ID from the @p.<string>
+            // entKey.
             else {
-              throw "insertAndUprateProps(): value has unexpected type";
+              propID = this.#getIDOrThrow("@p." + propKey);
             }
+            // Get the stored propTag ID.
+            let propTagID = this.#getIDOrThrow("@pt." + entID + "." + propID);
+            
+            // Get all non-list values.
+            let valSet = props[propKey];
+            var valArr = Array.isArray(valSet) ? valSet : [valSet];
+            valArr.forEach(val => {
+              var valID;
+              // If val is an ID reference, get that.
+              if (/^@[1-9][0-9]*$/.test(val)) {
+                valID = val.slice(1);
+              }
+              // Or if val is a string, get the ID from the @s.<string> entKey.
+              else if (typeof val === "string") {
+                valID = this.#getIDOrThrow("@s." + val);
+              }
+              // Or if it is an array, get the ID from the @l.<json> entKey.
+              else if (Array.isArray(val)) {
+                valID = this.#getIDOrThrow("@l." + JSON.stringify(val));
+              }
+              else {
+                throw "insertAndUprateProps(): value has unexpected type";
+              }
 
-            // Now send a request to uprate this valID for the given propTagID.
+              // Now send a request to uprate this valID for the given
+              // propTagID.
+              let reqData = {
+                req: "rat",
+                ses: this.accountManager.sesIDHex,
+                u: this.accountManager.inputUserID,
+                t: propTagID,
+                i: valID,
+                r: "255",
+              };
+              DBRequestManager.input(reqData, (result) => {
+                console.log(
+                  "rating input outID: " + result.outID +
+                  ", and exitCode: " + result.exitCode
+                );
+              });
+            });
+
+            // Also up-rate propTagID as a relevant property.
             let reqData = {
               req: "rat",
               ses: this.accountManager.sesIDHex,
               u: this.accountManager.inputUserID,
-              t: propTagID,
-              i: valID,
+              t: rptID,
+              i: propTagID,
               r: "255",
             };
             DBRequestManager.input(reqData, (result) => {
-              console.log(
-                "rating input outID: " + result.outID + ", and exitCode: " +
-                result.exitCode
-              );
+              // console.log(
+              //   "rpt rating input outID: " + result.outID +
+              //   ", and exitCode: " + result.exitCode
+              // );
             });
           });
-
+          callback();
         });
-        callback();
       });
+    });
+  }
+
+
+
+  // insertRelevantPropertiesTag() takes an entID an inserts or finds the
+  // 'relevant properties' tag for that entity, then stores it with the key
+  // "@rpt.<entID>"
+  insertRelevantPropertiesTag(entID, callback) {
+    let reqData = {
+      req: "ent",
+      ses: this.accountManager.sesIDHex,
+      u: this.accountManager.inputUserID,
+      p: "9",
+      s: entID,
+      ps: "",
+      d: "",
+    };
+    DBRequestManager.input(reqData, (result) => {
+      this.#entKeyIDStore["@rpt." + entID] = result.outID;
+      callback(result.outID);
     });
   }
 
