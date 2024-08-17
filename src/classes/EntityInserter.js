@@ -142,21 +142,15 @@ export class EntityInserter {
 
 
   // insertPropValues() can be called after substitutePropKeysAndValues()
-  // in order to also insert all the string-valued property values.
-  // The depth specifies how deep into arrays the function should go, default
-  // value being 1, meaning that all set elements are inserted, but list
-  // elements are not (and lists themselves are never inserted by this method).
-  insertPropValues(props, depth, callback) {
-    if (!callback) {
-      callback = depth;
-      depth = 1;
-    }
-    var propKeys = props.keys();
-    var ind = 0;
+  // in order to also insert all the property values.
+  insertPropValues(props, callback) {
+    let propKeys = props.keys();
+    let ind = 0;
+    let depth = 0;
     this.#insertPropValuesHelper(propKeys, ind, props, depth, callback)
   }
 
-  #insertPropValuesHelper(propKeys, ind, props, callback) {
+  #insertPropValuesHelper(propKeys, ind, props, depth, callback) {
     let propKey = propKeys[ind];
     // If end of propKeys is reached, call the callback and return.
     if (!propKey) {
@@ -174,13 +168,22 @@ export class EntityInserter {
     }
 
 
-    // If val is an array and depth > 0, call insertPropValues() on each
-    // element, subtracting 1 from depth, then continue.
-    if (Array.isArray(val) && depth > 0) {
-      this.insertPropValues(val, depth - 1, () => {
-        this.#insertPropValuesHelper(propKeys, ind + 1, props, depth, callback);
-      });
-      return;
+    // If val is an array and depth == 0, meaning that it is set of property
+    // values, insert each element. If depth == 1, however, the array is a
+    // list and should be inserted as such.
+    if (Array.isArray(val)) {
+      if (depth === 0) {
+        this.#insertPropValuesHelper(val.keys(), 0, props, 1, () => {
+          this.#insertPropValuesHelper(propKeys, ind + 1, props, 0, callback);
+        });
+        return;
+      }
+      else {
+        this.insertList(val, () => {
+          this.#insertPropValuesHelper(propKeys, ind + 1, props, 1, callback);
+        });
+        return;
+      }
     }
 
     // Else insert it as a simple entity (parentID = 3) and continue. But not
@@ -204,14 +207,27 @@ export class EntityInserter {
   }
 
 
-  // // insertProps() combines the last two methods into one.
-  // insertProps(props, callback) {
-  //   this.insertPropKeys(props, () => {
-  //     this.insertPropValues(props, () => {
-  //       callback();
-  //     });
-  //   });
-  // }
+  // insertList() inserts a list but doesn't insert or up-rate any properties.
+  // Note that substitutePropKeysAndValues() should be called first.
+  insertList(elemArr, callback) {
+    if (!Array.isArray(elemArr)) {
+      throw "insertList(): input has to be an array";
+    }
+    let listJSON = JSON.stringify(elemArr);
+    let reqData = {
+      req: "ent",
+      ses: this.accountManager.sesIDHex,
+      u: this.accountManager.inputUserID,
+      p: "7",
+      s: listJSON,
+      ps: "",
+      d: "",
+    };
+    DBRequestManager.input(reqData, (result) => {
+      this.#entKeyIDStore["@l." + listJSON] = result.outID;
+      callback(result.outID);
+    });
+  }
 
 
 
@@ -280,10 +296,7 @@ export class EntityInserter {
 
   // insertAndUprateProps() first calls substitutePropKeysAndValues(), 
   // insertPropKeysAndPropTags() and insertPropValues(), then go through each
-  // property and up-rates all values with a maximum depth of 1, meaning that
-  // string-valued and entID-valued properties (including substituted entKeys)
-  // get up-rated, as well as such values inside a set. But anonymous lists
-  // don't get uprated (nor do their elements get inserted).
+  // property and up-rates all values.
   insertAndUprateProps(entID, props, callback) {
     this.substitutePropKeysAndValues(props);
     this.insertPropKeysAndPropTags(entID, props, () => {
@@ -309,17 +322,21 @@ export class EntityInserter {
           let valSet = props[propKey];
           var valArr = Array.isArray(valSet) ? valSet : [valSet];
           valArr.forEach(val => {
-            if (typeof val !== "string") {
-              return;
-            }
             var valID;
             // If val is an ID reference, get that.
             if (/^@[1-9][0-9]*$/.test(val)) {
               valID = val.slice(1);
             }
             // Or if val is a string, get the ID from the @s.<string> entKey.
-            else {
+            else if (typeof val === "string") {
               valID = this.#getIDOrThrow("@s." + val);
+            }
+            // Or if it is an array, get the ID from the @l.<json> entKey.
+            else if (Array.isArray(val)) {
+              valID = this.#getIDOrThrow("@l." + JSON.stringify(val));
+            }
+            else {
+              throw "insertAndUprateProps(): value has unexpected type";
             }
 
             // Now send a request to uprate this valID for the given propTagID.
