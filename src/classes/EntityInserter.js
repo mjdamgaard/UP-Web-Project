@@ -5,19 +5,19 @@ import {DBRequestManager} from "../classes/DBRequestManager.js";
 
 
 export class EntityInserter {
-  #entKeyIDStore = {
-    // "@s.<string>" is reserved for string/simple entities.
-    // "@p.<string>" is reserved for property entities.
-    // "@pt.<string>" is reserved for property tag entities.
-  };
 
-  constructor(accountManager) {
+  constructor(accountManager, entKeyIDStore) {
     // Public properties:
     this.accountManager = accountManager;
+    this.entKeyIDStore = entKeyIDStore ?? {
+      // "@s.<JSON string>" is reserved for string/simple entities.
+      // "@p.<JSON string>" is reserved for property entities.
+      // "@pt.<JSON string>" is reserved for property tag entities.
+    };
   }
 
   #getIDOrThrow(entKey) {
-    let id = this.#entKeyIDStore[entKey];
+    let id = this.entKeyIDStore[entKey];
     if (typeof id !== "string") {
       throw "EntityInserter: missing key: " + entKey;
     }
@@ -26,29 +26,30 @@ export class EntityInserter {
 
 
 
-  // substitutePropsAndValues(props) substitute all occurrences of "@[^0-9]..."
-  // in props, both for it value and its keys. 
+  // substitutePropsAndValues(props) substitute all occurrences of
+  // /@([a-z]+\.)?"([^"\\]|\\.)*"/ in props, both for it value and its keys. 
   substitutePropKeysAndValues(props) {
-    let entKeyRegEx = /^@[^0-9]/g;
+    let entKeyRegEx = /@([a-z]+\.)?"([^"\\]|\\.)*"/g;
     props.keys().forEach(prop => {
-      // Substitute property if it is a key reference.
-      if (entKeyRegEx.test(prop)) {
-        let idRef = "@" + this.#getIDOrThrow(prop);
-        props[idRef] = props[prop];
+      // Substitute all entKey references in prop.
+      let newProp = prop.replaceAll(entKeyRegEx, entKey => {
+        return "@" + this.#getIDOrThrow(entKey);
+      });
+      if (newProp !== prop) {
+        props[newProp] = props[prop];
         delete props[prop];
-        prop = idRef;
       }
 
-      // Substitute property value if it is a key reference.
-      let val = props[prop];
-      if (entKeyRegEx.test(val)) {
-        let idRef = "@" + this.#getIDOrThrow(val);
-        props[prop] = idRef;
+      // Substitute all entKey references in val if it is a string.
+      let val = props[newProp];
+      if (typeof val === "string") {
+        props[newProp] = val.replaceAll(entKeyRegEx, entKey => {
+          return "@" + this.#getIDOrThrow(entKey);
+        });
       }
-
-      // If val is an object, including an array, call this method on each
+      // Else if val is an object, including an array, call this method on each
       // value/element.
-      if (val && typeof val === "object") {
+      else if (val && typeof val === "object") {
         val.keys().forEach(elem => {
           this.substitutePropKeysAndValues(elem);
         });
@@ -73,7 +74,7 @@ export class EntityInserter {
   // outID for the entKey, if any, and calls the callback.
   insertOrFindEntityOnly(entDef, entKey, callback) {
     callback ??= (entID) => {};
-    // if (this.#entKeyIDStore[entKey]) {
+    // if (this.entKeyIDStore[entKey]) {
     //   throw "EntityInserter: entKey " + entKey + " is already in use";
     // }
     this.substitutePropsAndFillOut(entDef)
@@ -89,7 +90,7 @@ export class EntityInserter {
     DBRequestManager.input(reqData, (result) => {
       // Note that entKeys starting with [0-9] is no use.
       if (typeof entKey === "string") {
-        this.#entKeyIDStore[entKey] = result.outID;
+        this.entKeyIDStore[entKey] = result.outID;
       }
       callback(result.outID);
     });
@@ -116,7 +117,7 @@ export class EntityInserter {
       this.#insertPropKeysHelper(propKeys, ind + 1, callback);
     }
     // Skip also if the prop is already inserted and stored.
-    if (this.#entKeyIDStore["@p." + propKey]) {
+    if (this.entKeyIDStore["@p." + propKey]) {
       this.#insertPropKeysHelper(propKeys, ind + 1, callback);
     }
 
@@ -135,7 +136,7 @@ export class EntityInserter {
       d: "",
     };
     DBRequestManager.input(reqData, (result) => {
-      this.#entKeyIDStore["@p." + propKey] = result.outID;
+      this.entKeyIDStore["@p." + propKey] = result.outID;
       this.#insertPropKeysHelper(propKeys, ind + 1, callback);
     });
   }
@@ -163,7 +164,7 @@ export class EntityInserter {
       this.#insertPropValuesHelper(propKeys, ind + 1, props, depth, callback);
     }
     // Skip also if val is already inserted and stored.
-    if (this.#entKeyIDStore["@s." + val]) {
+    if (this.entKeyIDStore["@s." + val]) {
       this.#insertPropValuesHelper(propKeys, ind + 1, props, depth, callback);
     }
 
@@ -201,7 +202,7 @@ export class EntityInserter {
       d: "",
     };
     DBRequestManager.input(reqData, (result) => {
-      this.#entKeyIDStore["@s." + propKey] = result.outID;
+      this.entKeyIDStore["@s." + propKey] = result.outID;
       this.#insertPropValuesHelper(propKeys, ind + 1, props, depth, callback);
     });
   }
@@ -224,7 +225,7 @@ export class EntityInserter {
       d: "",
     };
     DBRequestManager.input(reqData, (result) => {
-      this.#entKeyIDStore["@l." + listJSON] = result.outID;
+      this.entKeyIDStore["@l." + listJSON] = result.outID;
       callback(result.outID);
     });
   }
@@ -272,7 +273,7 @@ export class EntityInserter {
 
 
     // Skip this propTag if it is already inserted and stored.
-    if (this.#entKeyIDStore[propTagEntKey]) {
+    if (this.entKeyIDStore[propTagEntKey]) {
       this.#insertPropKeysAndPropTagsHelper(propKeys, ind + 1, entID, callback);
     }
 
@@ -287,7 +288,7 @@ export class EntityInserter {
       d: "",
     };
     DBRequestManager.input(reqData, (result) => {
-      this.#entKeyIDStore[propTagEntKey] = result.outID;
+      this.entKeyIDStore[propTagEntKey] = result.outID;
       this.#insertPropKeysAndPropTagsHelper(propKeys, ind + 1, entID, callback);
     });
   }
@@ -398,7 +399,7 @@ export class EntityInserter {
       d: "",
     };
     DBRequestManager.input(reqData, (result) => {
-      this.#entKeyIDStore["@rpt." + entID] = result.outID;
+      this.entKeyIDStore["@rpt." + entID] = result.outID;
       callback(result.outID);
     });
   }
@@ -406,12 +407,12 @@ export class EntityInserter {
 
 
   // insertOrFindEntityThenInsertAndUprateProps() inserts an entity defined by
-  // entDef, stores it outID with the entKey in the #entKeyIDStore, then
+  // entDef, stores it outID with the entKey in the entKeyIDStore, then
   // inserts properties and values from entDef.props, if any, and up-rates
-  // all these property values, unless they are lists (nested arrays). If
-  // a value in props is an array (not nested), then it is interpreted as a
-  // set of property values, and each is inserted and up-rated individually
-  // (but again, not if they are lists)
+  // all these property values If a value in props is an array (not nested),
+  // then it is interpreted as a set of property values, and each is inserted
+  // and up-rated individually. Nested arrays are interpreted and inserted as
+  // lists.
   insertOrFindEntityThenInsertAndUprateProps(entDef, entKey, callback) {
     this.insertOrFindEntityOnly(entDef, entKey, (entID) => {
       this.insertAndUprateProps(entID, entDef.props, () => {
@@ -454,6 +455,8 @@ export class EntityInserter {
 
 
 
+  // // TODO: Remake, perhaps using substitutePropKeysAndValues() (..Nah): ...Ah,
+  // // substitutePropKeysAndValues() should just do this already..
   // // getSubstitutedText() takes a text containing key references of the form
   // // /@[a-zA-Z][\w_]*\./ and substitutes these with entity references of the
   // // form /@[1-9][0-9]*\./, by looking up the entity IDs via calls to the
@@ -490,6 +493,7 @@ export class EntityInserter {
   //   });
   //   return;
   // }
+  // #waitForIDThen() {}
 
 
 

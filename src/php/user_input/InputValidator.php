@@ -123,13 +123,22 @@ class InputValidator {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, "TEXT");
                 }
                 break;
+            // case "blob":
+            //     if (
+            //         !is_string($paramVal) ||
+            //         strlen($paramVal) > 4294967295
+            //     ) {
+            //         echoTypeErrorJSONAndExit(
+            //             $paramName, $paramVal, "MEDIUMBLOB"
+            //         );
+            //     }
+            //     break;
             case "blob":
                 if (
-                    !is_string($paramVal) ||
-                    strlen($paramVal) > 4294967295
+                    $paramVal !== ""
                 ) {
                     echoTypeErrorJSONAndExit(
-                        $paramName, $paramVal, "MEDIUMBLOB"
+                        $paramName, $paramVal, "data blob not implemented yet"
                     );
                 }
                 break;
