@@ -23,6 +23,15 @@ export const EntityTitle = ({
     id: entID,
   });
 
+  // if recursion level exceeds the max value, just make '@<entID>' the title.
+  if (recLevel > maxRecLevel) {
+    return (
+      <span className="entity-title">
+        <EntityID entID={entID} isLink={isLink} />
+      </span>
+    );
+  }
+
   // Before results is fetched, render this:
   if (!results.isFetched) {
     return (
@@ -31,10 +40,11 @@ export const EntityTitle = ({
   }
   
   // Afterwards, first extract the needed data from results.
-  const [parentID, spec, propJSON, dataLen] = (results.data[0] ?? []);
+  const [parentID, spec, propStruct, dataLen] = (results.data[0] ?? []);
   
-  // If parentID is undefined return an InvalidEntityTitle.
-  if (parentID === undefined) {
+  // If parentID is undefined, or if it is 0 and propStruct is falsy, return
+  // an InvalidEntityTitle.
+  if (parentID === undefined || (!parentID && !propStruct)) {
     return (
       <InvalidEntityTitle entID={entID} isLink={isLink} >
         {"Entity not found"}
@@ -42,23 +52,26 @@ export const EntityTitle = ({
     );
   }
 
-  // If propStruct is a JSON object, look for the "title" there (since it will
+  // If propStruct is not falsy, look for the "title" there (since it will
   // then overwrite the parents "title" property).
-  var propStruct;
-  if (propJSON) {
-    propStruct = JSON.parse(propJSON);
-    if (propStruct.title) {
-      return (
-        <EntityTitleFromString
-          entID={entID} str={propStruct.title} isLink={isLink}
-        />
-      );
-    }
+  if (propStruct.title) {
+    return (
+      <EntityTitleFromString
+        entID={entID} str={propStruct.title} isLink={isLink}
+      />
+    );
   }
+  
 
-  // ..Hm, does it make sense to just look up the top rated title instead?..
-  // ..Well I guess I still have to do this anyway.. Well, maybe not.. ..Yeah,
-  // I do..
+  return (
+    <EntityTitleFromParent
+      entID={entID} isLink={isLink} parentID={parentID} spec={spec}
+      propStruct={propStruct} recLevel={recLevel} maxRecLevel={maxRecLevel}
+    />
+  );
+
+  // If not, pass the data to EntityTitleFromParent to query the parent for
+  // more.
 
 
   // // If def codes for a template instance (like e.g. '#123.124.125'),
@@ -71,15 +84,6 @@ export const EntityTitle = ({
   //     />
   //   );
   // }
-
-
-  // Else return EntityTitleFromTransDef directly.
-  return (
-    <EntityTitleFromTransDef transDef={transDef} entID={entID}
-      isLink={isLink} isFull={isFull}
-      recLevel={recLevel} maxRecLevel={maxRecLevel}
-    />
-  );
 }
 
 
@@ -107,6 +111,81 @@ export const EntityTitleFromString = ({entID, str, isLink}) => {
 
 
 
+export const EntityTitleFromParent = ({
+  entID, isLink, parentID, spec, propStruct, recLevel, maxRecLevel
+}) => {
+  const [results, setResults] = useState([]);
+  useQuery(results, setResults, {
+    req: "ent",
+    id: parentID,
+  });
+
+  // Before results is fetched, render this:
+  if (!results.isFetched) {
+    return (
+      <EntityTitlePlaceholder entID={entID} isLink={isLink} />
+    );
+  }
+  
+  // Afterwards, first extract the needed data from results.
+  const [parParentID, parSpec, parPropStruct, ] = (results.data[0] ?? []);
+
+  // Call getTransPropStruct() to construct the transformed propStruct.
+  const transPropStruct = getTransformedPropStruct(
+    parPropStruct, spec, propStruct
+  );
+  
+  // If parentID is undefined return an InvalidEntityTitle.
+  if (parentID === undefined) {
+    return (
+      <InvalidEntityTitle entID={entID} isLink={isLink} >
+        {"Entity not found"}
+      </InvalidEntityTitle>
+    );
+  }
+
+  // If propStruct is not falsy, look for the "title" there (since it will
+  // then overwrite the parents "title" property).
+  if (propStruct.title) {
+    return (
+      <EntityTitleFromString
+        entID={entID} str={propStruct.title} isLink={isLink}
+      />
+    );
+  }
+  
+
+  return (
+    <EntityTitleFromParent
+      entID={entID} isLink={isLink} parentID={parentID} propStruct={propStruct}
+      spec={spec} recLevel={recLevel} maxRecLevel={maxRecLevel}
+    />
+  );
+}
+
+
+export function getTransformedPropStruct(parPropStruct, spec, propStruct) {
+  return Object.assign(getSpecifiedPropStruct(parPropStruct, spec), propStruct);
+}
+
+export function getSpecifiedPropStruct(parPropStruct, spec) {
+  let specArr = getSpecArr(spec);
+  // Replace each '%<n>' placeholder in parPropStruct with specArr[<n> - 1]. 
+}
+
+export function getSpecArr(spec) {
+  let pipeDelimiterRegEx = /(^|[^\|\\])/g;
+  return spec
+    .replaceAll("\\\\", "\\\\0")
+    .replaceAll("\\|", "\\\\1")
+    .split("|")
+    .map(val => {
+      return val
+      .replaceAll("\\\\1", "|")
+      .replaceAll("\\\\0", "\\");
+    });
+
+}
 
 
 // function transformDef(def) {
@@ -342,7 +421,7 @@ const EntityLink = ({entID, children}) => {
 
 export const EntityID = ({entID, isLink}) => {
   const entityID = (
-    <span className="entity-id">#{entID}</span>
+    <span className="entity-id">@{entID}</span>
   );
   if (isLink) {
     return (

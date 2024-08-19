@@ -27,23 +27,23 @@ export class EntityInserter {
 
   getSubstitutedString(str) {
     let entKeyRegEx =
-      /(^|[^@])@(@@)*([a-z]+\.)?"([^"\\]|\\.)*"/g;
+      /(^|[^\\])(\\\\)*@([a-z]+\.)?"([^"\\]|\\.)*"/g;
     let illFormedEntKeyRegEx =
-      /(^|[^@])@(@@)*([a-z]+\.)?"([^"\\]|\\.)*$/g;
+      /(^|[^\\])(\\\\)*@([a-z]+\.)?"([^"\\]|\\.)*$/g;
     if (illFormedEntKeyRegEx.test(str)) {
       throw "EntityInserter: ill-formed entKey in: '" + str + "'";
     }
 
     // Replace all entKey references with entID references instead.
     return str.replaceAll(entKeyRegEx, val => {
-      let [leadingAts, entKey] = val.match(/^@+|[^@].*$/g);
-      return leadingAts + this.#getIDOrThrow(entKey);
+      let [leadingBSsAndAt, entKey] = val.match(/^(\\\\)*@|[^@].*$/g);
+      return leadingBSsAndAt + this.#getIDOrThrow(entKey);
     });
   }
 
 
   // substitutePropsAndValues(props) substitute all occurrences of
-  // /@([a-z]+\.)?"([^"\\]|\\.)*"/ in props, both for it value and its keys. 
+  // /@([a-z]+\.)?"([^"\\]|\\.)*"/ in props, both for its value and its keys. 
   substitutePropKeysAndValues(props) {
     let entKeyRegEx = /@([a-z]+\.)?"([^"\\]|\\.)*"/g;
     props.keys().forEach(prop => {
