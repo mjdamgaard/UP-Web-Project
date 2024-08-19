@@ -27,17 +27,17 @@ export class EntityInserter {
 
   getSubstitutedString(str) {
     let entKeyRegEx =
-      /(^|[^\\])(\\\\)*@([a-z]+\.)?"([^"\\]|\\.)*"/g;
+      /(^|[^\\@])(\\\\)*@([a-z]+\.)?"([^"\\]|\\.)*"/g;
     let illFormedEntKeyRegEx =
-      /(^|[^\\])(\\\\)*@([a-z]+\.)?"([^"\\]|\\.)*$/g;
+      /(^|[^\\@])(\\\\)*@([a-z]+\.)?"([^"\\]|\\.)*$/g;
     if (illFormedEntKeyRegEx.test(str)) {
       throw "EntityInserter: ill-formed entKey in: '" + str + "'";
     }
 
     // Replace all entKey references with entID references instead.
     return str.replaceAll(entKeyRegEx, val => {
-      let [leadingBSsAndAt, entKey] = val.match(/^(\\\\)*@|[^@].*$/g);
-      return leadingBSsAndAt + this.#getIDOrThrow(entKey);
+      let [leadingChars, entKey] = val.match(/^(\\\\)*@|[^@].*$/g);
+      return leadingChars + this.#getIDOrThrow(entKey);
     });
   }
 

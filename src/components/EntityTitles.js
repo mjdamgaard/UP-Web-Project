@@ -169,8 +169,30 @@ export function getTransformedPropStruct(parPropStruct, spec, propStruct) {
 }
 
 export function getSpecifiedPropStruct(parPropStruct, spec) {
-  let specArr = getSpecArr(spec);
-  // Replace each '%<n>' placeholder in parPropStruct with specArr[<n> - 1]. 
+  var specArr = (typeof spec === "string") ? getSpecArr(spec) : spec;
+
+  // Replace each '%<n>' placeholder in parPropStruct with specArr[<n> - 1].
+  // If a specArr[<n> - 1] is undefined...
+  var ret = {};
+  parPropStruct.keys().forEach(prop => {
+    let val = parPropStruct[prop];
+    // If property value is a string, replace e.g. '%3' with specArr[2], and
+    // '\\\\%3' with '\\\\' + specArr[2]. If...
+    if (typeof val === "string") {
+      ret[prop] = val.replaceAll(/(^|[^\\%])(\\\\)*%[1-9][0-9]*/g, str => {
+        let [leadingChars, n] = val.match(/^[^%]*|%.*$/g);
+        if (n === undefined) {
+          n = leadingChars;
+        } leadingChars = "";
+        return leadingChars + specArr[parseInt(n) - 1];
+      });
+    }
+    // Else call getSpecifiedPropStruct recursively to get the substituted val.
+    else {
+      ret[prop] = getSpecifiedPropStruct(val, specArr);
+    }
+  });
+  return ret;
 }
 
 export function getSpecArr(spec) {
