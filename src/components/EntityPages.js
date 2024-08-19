@@ -64,8 +64,21 @@ export const EntityPage = ({entID, initTab}) => {
   }
   
   // Afterwards, extract the needed data from results[0], then do a full render.
-  const [def, typeID, cxtID] = (results.data[0] ?? []);
+  const [parentID, specInput, propStruct, dataLen] = (results.data[0] ?? []);
   
+  // TODO: Remove: Temporary module while refactoring and debugging:
+  const [def, typeID, cxtID] = (results.data[0] ?? []);
+  return (
+    <div className="entity-page">
+      <div className="entity-page-header">
+        <h2><EntityTitle entID={entID} /></h2>
+        <div className="full-title">
+          <b>Definition:</b> <EntityTitle entID={entID} isFull />
+        </div>
+      </div>
+    </div>
+  );
+
   // TODO: Query for the topmost types for the entity (entID), and use them to
   // specify the tabs.
 

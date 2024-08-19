@@ -25,6 +25,22 @@ export class EntityInserter {
   }
 
 
+  getSubstitutedString(str) {
+    let entKeyRegEx =
+      /(^|[^@])@(@@)*([a-z]+\.)?"([^"\\]|\\.)*"/g;
+    let illFormedEntKeyRegEx =
+      /(^|[^@])@(@@)*([a-z]+\.)?"([^"\\]|\\.)*$/g;
+    if (illFormedEntKeyRegEx.test(str)) {
+      throw "EntityInserter: ill-formed entKey in: '" + str + "'";
+    }
+
+    // Replace all entKey references with entID references instead.
+    return str.replaceAll(entKeyRegEx, val => {
+      let [leadingAts, entKey] = val.match(/^@+|[^@].*$/g);
+      return leadingAts + this.#getIDOrThrow(entKey);
+    });
+  }
+
 
   // substitutePropsAndValues(props) substitute all occurrences of
   // /@([a-z]+\.)?"([^"\\]|\\.)*"/ in props, both for it value and its keys. 
@@ -32,9 +48,7 @@ export class EntityInserter {
     let entKeyRegEx = /@([a-z]+\.)?"([^"\\]|\\.)*"/g;
     props.keys().forEach(prop => {
       // Substitute all entKey references in prop.
-      let newProp = prop.replaceAll(entKeyRegEx, entKey => {
-        return "@" + this.#getIDOrThrow(entKey);
-      });
+      let newProp = this.getSubstitutedString(prop)
       if (newProp !== prop) {
         props[newProp] = props[prop];
         delete props[prop];
@@ -43,9 +57,7 @@ export class EntityInserter {
       // Substitute all entKey references in val if it is a string.
       let val = props[newProp];
       if (typeof val === "string") {
-        props[newProp] = val.replaceAll(entKeyRegEx, entKey => {
-          return "@" + this.#getIDOrThrow(entKey);
-        });
+        props[newProp] = this.getSubstitutedString(val);
       }
       // Else if val is an object, including an array, call this method on each
       // value/element.

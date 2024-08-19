@@ -20,7 +20,7 @@ export const SDBInterface = () => {
         <InterfacePage
           // initColSpec={{entID: 1}}
           // initColSpec={{entID: 40}}
-          initColSpec={{entID: 1024}} 
+          initColSpec={{entID: 10}} 
           setAppPage={setAppPage}
           isHidden={appPage !== "home"}
         />

@@ -11,10 +11,9 @@ const SpecialRefEntityTitle = () => <template></template>;
 
 
 export const EntityTitle = ({
-  entID, isLink, isFull, recLevel, maxRecLevel
+  entID, isLink, recLevel, maxRecLevel
 }) => {
-  isFull ??= false;
-  isLink ??= !isFull;
+  isLink ??= true;
   recLevel ??= 0;
   maxRecLevel ??= 6;
 
@@ -32,10 +31,10 @@ export const EntityTitle = ({
   }
   
   // Afterwards, first extract the needed data from results.
-  const [def] = (results.data[0] ?? []);
+  const [parentID, spec, propJSON, dataLen] = (results.data[0] ?? []);
   
-  // If def is nullish return an InvalidEntityTitle.
-  if (!def) {
+  // If parentID is undefined return an InvalidEntityTitle.
+  if (parentID === undefined) {
     return (
       <InvalidEntityTitle entID={entID} isLink={isLink} >
         {"Entity not found"}
@@ -43,43 +42,36 @@ export const EntityTitle = ({
     );
   }
 
-  // Transform the definition such that 
-  // "\\"-->"\\0", "\|"-->"\\1", "\@"-->"\\2", "\#"-->"\\3", "\%"-->"\\4".
-  const transDef = transformDef(def);
-
-  // If def codes for a concatenated string (containing two unescaped '#'s),
-  // return a ConcatenatedEntityTitle.
-  if (/^#[1-9][0-9]*\.[^#]*#[1-9][0-9]*$/.test(transDef)) {
-    return (
-      <ConcatenatedEntityTitle transDef={transDef} entID={entID}
-        isLink={isLink} isFull={isFull}
-        recLevel={recLevel} maxRecLevel={maxRecLevel}
-      />
-    );
+  // If propStruct is a JSON object, look for the "title" there (since it will
+  // then overwrite the parents "title" property).
+  var propStruct;
+  if (propJSON) {
+    propStruct = JSON.parse(propJSON);
+    if (propStruct.title) {
+      return (
+        <EntityTitleFromString
+          entID={entID} str={propStruct.title} isLink={isLink}
+        />
+      );
+    }
   }
 
-  // If def codes for a template instance (like e.g. '#123.124.125'),
-  // return a TemplateInstanceEntityTitle.
-  if (/^#[1-9][0-9]*(\.[1-9][0-9]*)+$/.test(transDef)) {
-    return (
-      <TemplateInstanceEntityTitle transDef={transDef} entID={entID}
-        isLink={isLink} isFull={isFull}
-        recLevel={recLevel} maxRecLevel={maxRecLevel}
-      />
-    );
-  }
+  // ..Hm, does it make sense to just look up the top rated title instead?..
+  // ..Well I guess I still have to do this anyway.. Well, maybe not.. ..Yeah,
+  // I do..
 
-  // If def codes for a special-type reference (like e.g. 'u#123'),
-  // return a TemplateInstanceEntityTitle.
-  if (/^[utbi]#[1-9][0-9]*]$/.test(transDef)) {
-    return (
-      <SpecialRefEntityTitle transDef={transDef} entID={entID}
-        isLink={isLink} isFull={isFull}
-        recLevel={recLevel} maxRecLevel={maxRecLevel}
-      />
-    );
-  }
-  
+
+  // // If def codes for a template instance (like e.g. '#123.124.125'),
+  // // return a TemplateInstanceEntityTitle.
+  // if (/^#[1-9][0-9]*(\.[1-9][0-9]*)+$/.test(transDef)) {
+  //   return (
+  //     <TemplateInstanceEntityTitle transDef={transDef} entID={entID}
+  //       isLink={isLink} isFull={isFull}
+  //       recLevel={recLevel} maxRecLevel={maxRecLevel}
+  //     />
+  //   );
+  // }
+
 
   // Else return EntityTitleFromTransDef directly.
   return (
@@ -90,134 +82,161 @@ export const EntityTitle = ({
   );
 }
 
-function transformDef(def) {
-  return def
-    .replaceAll("\\\\", "\\\\0")
-    .replaceAll("\\|", "\\\\1")
-    .replaceAll("\\@", "\\\\2")
-    .replaceAll("\\#", "\\\\3")
-    .replaceAll("\\%", "\\\\4");
-}
 
-function transformDefBack(transDef) {
-  return transDef
-    .replaceAll("\\\\4", "\\%")
-    .replaceAll("\\\\3", "\\#")
-    .replaceAll("\\\\2", "\\@")
-    .replaceAll("\\\\1", "\\|")
-    .replaceAll("\\\\0", "\\\\");
-}
+export const EntityTitleFromString = ({entID, str, isLink}) => {
 
-function getWYSIWYGDef(transDef) {
-  return transDef
-    .replaceAll("\\\\4", "%")
-    .replaceAll("\\\\3", "#")
-    .replaceAll("\\\\2", "@")
-    .replaceAll("\\\\1", "|")
-    .replaceAll("\\\\0", "\\");
-}
-
-
-
-const EntityTitleFromTransDef = ({
-  transDef, entID, isLink, isFull, recLevel, maxRecLevel,
-  isTemplateInstance, templateID
-}) => {
-  // First we make some checks that the def is well-formed.
-
-  // If def has single backslashes that does not escape a special character,
-  // or if contains unescaped '#'s (which should only be part of concatenated
-  // strings), or if it contains more than one unescaped '|',
-  // or if it starts with '|', or if it start or ends in whitespace, or
-  // contains newlines, or if it has ill-formed '@' references or back-
-  // references, or if it has ill-formed placeholders, return an
-  // InvalidEntityTitle.
-  const defHasInvalidEscapes = transDef.replaceAll("\\\\", "").includes("\\");
-  const defHasUnescapedNumberSigns = transDef.includes("#");
-  const defHasSeveralVBars = transDef.replace("|", "").includes("|");
-  const defStartsWithVBar = transDef[0] === "|";
-  const defHasInvalidWhitespace = (
-    transDef.match(/(^\s)|(\s$)|(\s\|)/g) ||
-    transDef.replaceAll(" ", "").match(/\s/g)
-  );
-  const defHasInvalidRefs = transDef
-    .replaceAll(/@[1-9][0-9]*\./g, "")
-    .includes("@");
-  const defHasInvalidPlaceholders = transDef
-    .replaceAll(/%[e1-9]/g, "")
-    .includes("%");
-  if (
-    defHasInvalidEscapes || defHasUnescapedNumberSigns ||
-    defHasSeveralVBars || defStartsWithVBar || defHasInvalidWhitespace ||
-    defHasInvalidRefs || defHasInvalidPlaceholders
-  ) {
-    return (
-      <InvalidEntityTitle entID={entID} isLink={isLink} >
-        {transformDefBack(transDef)}
-      </InvalidEntityTitle>
-    );
-  }
-
-
-  // Then parse any links, and split transDef up into parts
-  const refRegEx = /@[1-9][0-9]*\./g;
-  const refArr = (transDef.match(refRegEx) ?? ["@."])
-    .map(val => val.slice(1, -1));
-  const transDefComponentsRegEx =
-    /(\|)|(@\w+\.)|(%[e1-9])|([^@%\|]+)/g;
-  const transDefFullArr = transDef.match(transDefComponentsRegEx);
-
-  // If !isFull, slice the array to exclude "|" and every element to its right.
-  const transDefArr = isFull ? transDefFullArr :
-    transDefFullArr.slice(0, transDefFullArr.indexOf("|"));
-
-
-  // Compute the HTML for the links based on the references. If maxRecLevel
-  // is reached, these are EntityID elements, which only shows the entity ID.
-  var children = transDefArr.map((val, ind) => {
-    if (val.match(refRegEx)) {
-      let linkEntID = val.slice(1, -1);
-      return (recLevel <= maxRecLevel) ?
-        <EntityTitle key={ind} entID={linkEntID} isLink={isFull}
-          recLevel={recLevel + 1} maxRecLevel={maxRecLevel}
-        /> :
-        <EntityID key={ind} entID={linkEntID} isLink={isFull} />;
-    }
-    if (val.match(/^%[e1-9]$/g)) {
-      return <span key={ind} className="template-placeholder">{val}</span>;
-    }
-    if (val === "|") {
-      return <span key={ind} className="spec-separator" ></span>
-    }
-    return <span key={ind}>{getWYSIWYGDef(val)}</span>;
-  });
-
-  // If isFull && isTemplateInstance, insert a link to the template at the
-  // end of the full definition.
-  if (isFull && isTemplateInstance) {
-    children.push(
-      <TemplateLink key={children.length} entID={templateID} />
-    );
-  }
-  
-
-  // Return a link if isLink, or else just return a span of these children.
+  // If the whole EntityTitle is a link, just use the whole string as is.
   if (isLink) {
     return (
-      <span className="entity-title" >
+      <span className="entity-title">
         <EntityLink entID={entID}>
-          {children}
+          {str}
         </EntityLink>
       </span>
     );
-  } else {
+  }
+  // Else just return the string.
+  else {
     return (
-      <span className="entity-title" >
-        {children}
+      <span className="entity-title">
+        {str}
       </span>
     );
   }
-};
+}
+
+
+
+
+
+// function transformDef(def) {
+//   return def
+//     .replaceAll("\\\\", "\\\\0")
+//     .replaceAll("\\|", "\\\\1")
+//     .replaceAll("\\@", "\\\\2")
+//     .replaceAll("\\#", "\\\\3")
+//     .replaceAll("\\%", "\\\\4");
+// }
+
+// function transformDefBack(transDef) {
+//   return transDef
+//     .replaceAll("\\\\4", "\\%")
+//     .replaceAll("\\\\3", "\\#")
+//     .replaceAll("\\\\2", "\\@")
+//     .replaceAll("\\\\1", "\\|")
+//     .replaceAll("\\\\0", "\\\\");
+// }
+
+// function getWYSIWYGDef(transDef) {
+//   return transDef
+//     .replaceAll("\\\\4", "%")
+//     .replaceAll("\\\\3", "#")
+//     .replaceAll("\\\\2", "@")
+//     .replaceAll("\\\\1", "|")
+//     .replaceAll("\\\\0", "\\");
+// }
+
+
+
+// const EntityTitleFromTransDef = ({
+//   transDef, entID, isLink, isFull, recLevel, maxRecLevel,
+//   isTemplateInstance, templateID
+// }) => {
+//   // First we make some checks that the def is well-formed.
+
+//   // If def has single backslashes that does not escape a special character,
+//   // or if contains unescaped '#'s (which should only be part of concatenated
+//   // strings), or if it contains more than one unescaped '|',
+//   // or if it starts with '|', or if it start or ends in whitespace, or
+//   // contains newlines, or if it has ill-formed '@' references or back-
+//   // references, or if it has ill-formed placeholders, return an
+//   // InvalidEntityTitle.
+//   const defHasInvalidEscapes = transDef.replaceAll("\\\\", "").includes("\\");
+//   const defHasUnescapedNumberSigns = transDef.includes("#");
+//   const defHasSeveralVBars = transDef.replace("|", "").includes("|");
+//   const defStartsWithVBar = transDef[0] === "|";
+//   const defHasInvalidWhitespace = (
+//     transDef.match(/(^\s)|(\s$)|(\s\|)/g) ||
+//     transDef.replaceAll(" ", "").match(/\s/g)
+//   );
+//   const defHasInvalidRefs = transDef
+//     .replaceAll(/@[1-9][0-9]*\./g, "")
+//     .includes("@");
+//   const defHasInvalidPlaceholders = transDef
+//     .replaceAll(/%[e1-9]/g, "")
+//     .includes("%");
+//   if (
+//     defHasInvalidEscapes || defHasUnescapedNumberSigns ||
+//     defHasSeveralVBars || defStartsWithVBar || defHasInvalidWhitespace ||
+//     defHasInvalidRefs || defHasInvalidPlaceholders
+//   ) {
+//     return (
+//       <InvalidEntityTitle entID={entID} isLink={isLink} >
+//         {transformDefBack(transDef)}
+//       </InvalidEntityTitle>
+//     );
+//   }
+
+
+//   // Then parse any links, and split transDef up into parts
+//   const refRegEx = /@[1-9][0-9]*\./g;
+//   const refArr = (transDef.match(refRegEx) ?? ["@."])
+//     .map(val => val.slice(1, -1));
+//   const transDefComponentsRegEx =
+//     /(\|)|(@\w+\.)|(%[e1-9])|([^@%\|]+)/g;
+//   const transDefFullArr = transDef.match(transDefComponentsRegEx);
+
+//   // If !isFull, slice the array to exclude "|" and every element to its right.
+//   const transDefArr = isFull ? transDefFullArr :
+//     transDefFullArr.slice(0, transDefFullArr.indexOf("|"));
+
+
+//   // Compute the HTML for the links based on the references. If maxRecLevel
+//   // is reached, these are EntityID elements, which only shows the entity ID.
+//   var children = transDefArr.map((val, ind) => {
+//     if (val.match(refRegEx)) {
+//       let linkEntID = val.slice(1, -1);
+//       return (recLevel <= maxRecLevel) ?
+//         <EntityTitle key={ind} entID={linkEntID} isLink={isFull}
+//           recLevel={recLevel + 1} maxRecLevel={maxRecLevel}
+//         /> :
+//         <EntityID key={ind} entID={linkEntID} isLink={isFull} />;
+//     }
+//     if (val.match(/^%[e1-9]$/g)) {
+//       return <span key={ind} className="template-placeholder">{val}</span>;
+//     }
+//     if (val === "|") {
+//       return <span key={ind} className="spec-separator" ></span>
+//     }
+//     return <span key={ind}>{getWYSIWYGDef(val)}</span>;
+//   });
+
+//   // If isFull && isTemplateInstance, insert a link to the template at the
+//   // end of the full definition.
+//   if (isFull && isTemplateInstance) {
+//     children.push(
+//       <TemplateLink key={children.length} entID={templateID} />
+//     );
+//   }
+  
+
+//   // Return a link if isLink, or else just return a span of these children.
+//   if (isLink) {
+//     return (
+//       <span className="entity-title" >
+//         <EntityLink entID={entID}>
+//           {children}
+//         </EntityLink>
+//       </span>
+//     );
+//   } else {
+//     return (
+//       <span className="entity-title" >
+//         {children}
+//       </span>
+//     );
+//   }
+// };
 
 
 

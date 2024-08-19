@@ -56,12 +56,11 @@ CREATE TABLE SemanticInputs (
     tag_id BIGINT UNSIGNED NOT NULL,
 
     -- Rating value of how well the tag fits the entity. The first byte
-    -- of the SMALLINT is interpreted as a number between 0 and 10, where 0
-    -- means 'absolutely/perfectly not' and 10 means 'absolutely/perfectly.'
-    -- The last byte can either be used for more precision (in long lists),
-    -- or it can also be used by users to denote a precision/uncertainty,
-    -- although this won't be a thing until some future implementation.
+    -- of the TINYINT runs from 1 to 255, where 1
+    -- means 'absolutely/perfectly not,' 128 means 'doesn't particularly fit or
+    -- not fit,' and 255 means 'absolutely/perfectly.'
     rat_val TINYINT UNSIGNED NOT NULL,
+    CHECK (rat_val != 0),
 
     -- The so-called instance of the tag, or rather the potential instance:
     -- How well the instance fits the tag is thus determined by the rating,
@@ -214,6 +213,7 @@ VALUES
         '{"type":["tag","relevant properties tag"],"subject":"%1",',
         '"title":"relevant properties of %1"}'
     )),
+    (10, 2, 'entity', ''),
     -- 
     (NULL, 3, 'exAmpLe of A noT very usefuL enTiTy', '');
 
