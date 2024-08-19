@@ -52,61 +52,25 @@ export const EntityTitle = ({
     );
   }
 
-  // If propStruct is not falsy, look for the "title" there (since it will
-  // then overwrite the parents "title" property).
-  if (propStruct.title) {
-    return (
-      <EntityTitleFromString
-        entID={entID} str={propStruct.title} isLink={isLink}
-      />
-    );
-  }
+  // // If propStruct is not falsy, look for the "title" there (since it will
+  // // then overwrite the parents "title" property).
+  // if (propStruct.title) {
+  //   return (
+  //     <EntityTitleFromString
+  //       entID={entID} str={propStruct.title} isLink={isLink}
+  //     />
+  //   );
+  // }
   
 
+  // If not, pass the data to EntityTitleFromParent to query the parent for
+  // more.
   return (
     <EntityTitleFromParent
       entID={entID} isLink={isLink} parentID={parentID} spec={spec}
       propStruct={propStruct} recLevel={recLevel} maxRecLevel={maxRecLevel}
     />
   );
-
-  // If not, pass the data to EntityTitleFromParent to query the parent for
-  // more.
-
-
-  // // If def codes for a template instance (like e.g. '#123.124.125'),
-  // // return a TemplateInstanceEntityTitle.
-  // if (/^#[1-9][0-9]*(\.[1-9][0-9]*)+$/.test(transDef)) {
-  //   return (
-  //     <TemplateInstanceEntityTitle transDef={transDef} entID={entID}
-  //       isLink={isLink} isFull={isFull}
-  //       recLevel={recLevel} maxRecLevel={maxRecLevel}
-  //     />
-  //   );
-  // }
-}
-
-
-export const EntityTitleFromString = ({entID, str, isLink}) => {
-
-  // If the whole EntityTitle is a link, just use the whole string as is.
-  if (isLink) {
-    return (
-      <span className="entity-title">
-        <EntityLink entID={entID}>
-          {str}
-        </EntityLink>
-      </span>
-    );
-  }
-  // Else just return the string.
-  else {
-    return (
-      <span className="entity-title">
-        {str}
-      </span>
-    );
-  }
 }
 
 
@@ -130,37 +94,63 @@ export const EntityTitleFromParent = ({
   // Afterwards, first extract the needed data from results.
   const [parParentID, parSpec, parPropStruct, ] = (results.data[0] ?? []);
 
-  // Call getTransPropStruct() to construct the transformed propStruct.
-  const transPropStruct = getTransformedPropStruct(
-    parPropStruct, spec, propStruct
-  );
-  
   // If parentID is undefined return an InvalidEntityTitle.
   if (parentID === undefined) {
     return (
       <InvalidEntityTitle entID={entID} isLink={isLink} >
-        {"Entity not found"}
+        {"Parent entity not found"}
       </InvalidEntityTitle>
     );
   }
 
-  // If propStruct is not falsy, look for the "title" there (since it will
-  // then overwrite the parents "title" property).
-  if (propStruct.title) {
+  // Call getTransPropStruct() to construct the transformed propStruct.
+  const transPropStruct = getTransformedPropStruct(
+    parPropStruct, spec, propStruct
+  );
+
+  if (parParentID) {
     return (
-      <EntityTitleFromString
-        entID={entID} str={propStruct.title} isLink={isLink}
+      <EntityTitleFromParent
+        entID={entID} isLink={isLink} parentID={parParentID} spec={parSpec}
+        propStruct={transPropStruct}
+        recLevel={recLevel} maxRecLevel={maxRecLevel}
       />
     );
   }
-  
 
-  return (
-    <EntityTitleFromParent
-      entID={entID} isLink={isLink} parentID={parentID} propStruct={propStruct}
-      spec={spec} recLevel={recLevel} maxRecLevel={maxRecLevel}
-    />
-  );
+  if (parSpec) {
+    return (
+      <InvalidEntityTitle entID={entID} isLink={isLink} >
+        {"Invalid entity with parSpec and no parent"}
+      </InvalidEntityTitle>
+    );
+  }
+
+  var preTitle = ""
+  if (includesPlaceholders(transPropStruct)) {
+    preTitle = "Class: ";
+  }
+
+  if (typeof transPropStruct.title === "string") {
+    return (
+      <EntityTitleFromString
+        entID={entID} isLink={isLink} str={preTitle + transPropStruct.title}
+      />
+    );
+  } else if (typeof transPropStruct.type === "string") {
+    return (
+      <EntityTitleFromString
+        entID={entID} isLink={isLink}
+        str={preTitle + transPropStruct.type + " #" + entID}
+      />
+    );
+  } else {
+    return (
+      <InvalidEntityTitle entID={entID} isLink={isLink} >
+        {"Invalid entity with no title or type"}
+      </InvalidEntityTitle>
+    );
+  }
 }
 
 
@@ -172,19 +162,27 @@ export function getSpecifiedPropStruct(parPropStruct, spec) {
   var specArr = (typeof spec === "string") ? getSpecArr(spec) : spec;
 
   // Replace each '%<n>' placeholder in parPropStruct with specArr[<n> - 1].
-  // If a specArr[<n> - 1] is undefined...
+  // If a specArr[<n> - 1] is undefined, let the placeholder be. Note that
+  // <n> should have the form /[0-9][0-9]/ (with e.g. 01 being equivalent with
+  // 1), but 0 or 00 should not be used.
   var ret = {};
   parPropStruct.keys().forEach(prop => {
     let val = parPropStruct[prop];
     // If property value is a string, replace e.g. '%3' with specArr[2], and
-    // '\\\\%3' with '\\\\' + specArr[2]. If...
+    // '\\\\%3' with '\\\\' + specArr[2], unless specArr[2] is undefined.
     if (typeof val === "string") {
-      ret[prop] = val.replaceAll(/(^|[^\\%])(\\\\)*%[1-9][0-9]*/g, str => {
+      ret[prop] = val.replaceAll(/(^|[^\\%])(\\\\)*%[0-9][0-9]?/g, str => {
         let [leadingChars, n] = val.match(/^[^%]*|%.*$/g);
         if (n === undefined) {
           n = leadingChars;
-        } leadingChars = "";
-        return leadingChars + specArr[parseInt(n) - 1];
+          leadingChars = "";
+        }
+        let placement = specArr[parseInt(n) - 1];
+        if (placement !== undefined) {
+          return leadingChars + placement;
+        } else {
+          return str;
+        }
       });
     }
     // Else call getSpecifiedPropStruct recursively to get the substituted val.
@@ -209,6 +207,30 @@ export function getSpecArr(spec) {
 
 }
 
+
+
+
+
+export const EntityTitleFromString = ({entID, str, isLink}) => {
+  // If the whole EntityTitle is a link, just use the whole string as is.
+  if (isLink) {
+    return (
+      <span className="entity-title">
+        <EntityLink entID={entID}>
+          {str}
+        </EntityLink>
+      </span>
+    );
+  }
+  // Else just return the string.
+  else {
+    return (
+      <span className="entity-title">
+        {str}
+      </span>
+    );
+  }
+}
 
 // function transformDef(def) {
 //   return def
