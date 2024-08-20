@@ -99,11 +99,11 @@ switch ($reqType) {
         $sql = "CALL selectEntity (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [[parentID, specInput, propStruct, dataLen]].
+        // output: [[parentID, specInput, ownStruct, dataLen]].
         break;
     case "entSK":
         $sql = "CALL selectEntityFromSecKey (?, ?, ?, ?)";
-        $paramNameArr = array("p", "s", "psh", "dh");
+        $paramNameArr = array("p", "s", "oh", "dh");
         $paramNameArr = array("id", "str", "str", "str");
         // output: [[entID]].
         break;
@@ -282,7 +282,7 @@ $stmt = $conn->prepare($sql);
 DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 // fetch the result as a numeric array.
 $res = $stmt->get_result()->fetch_all();
-// if $reqType == ent, JSON-decode the third output, "propStruct", before the
+// if $reqType == ent, JSON-decode the third output, "ownStruct", before the
 // final full JSON-encoding. 
 if ($reqType === "ent") {
     $res[0][2] = json_decode($res[0][2], true);

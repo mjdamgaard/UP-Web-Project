@@ -96,7 +96,7 @@ export class EntityInserter {
       u: this.accountManager.inputUserID,
       p: entDef.parentID,
       s: entDef.spec,
-      ps: entDef.props,
+      o: entDef.props,
       d: entDef.data,
     };
     DBRequestManager.input(reqData, (result) => {
@@ -144,7 +144,7 @@ export class EntityInserter {
       u: this.accountManager.inputUserID,
       p: "4",
       s: propKey,
-      ps: "",
+      o: "",
       d: "",
     };
     DBRequestManager.input(reqData, (result) => {
@@ -210,7 +210,7 @@ export class EntityInserter {
       u: this.accountManager.inputUserID,
       p: "3",
       s: propKey,
-      ps: "",
+      o: "",
       d: "",
     };
     DBRequestManager.input(reqData, (result) => {
@@ -233,7 +233,7 @@ export class EntityInserter {
       u: this.accountManager.inputUserID,
       p: "7",
       s: listJSON,
-      ps: "",
+      o: "",
       d: "",
     };
     DBRequestManager.input(reqData, (result) => {
@@ -296,7 +296,7 @@ export class EntityInserter {
       u: this.accountManager.inputUserID,
       p: "5",
       s: entID + "|" + propID,
-      ps: "",
+      o: "",
       d: "",
     };
     DBRequestManager.input(reqData, (result) => {
@@ -407,7 +407,7 @@ export class EntityInserter {
       u: this.accountManager.inputUserID,
       p: "9",
       s: entID,
-      ps: "",
+      o: "",
       d: "",
     };
     DBRequestManager.input(reqData, (result) => {
@@ -433,10 +433,10 @@ export class EntityInserter {
     });
   }
 
-  // Oh, I have forgotten about the parent propStruct, as well as inserting the
+  // Oh, I have forgotten about the parent ownStruct, as well as inserting the
   // specs.. ..Oh well, let that wait for now. ...Oh wait, this is quite easy,
   // 'cause I can just make a transProps which is constructed from props, spec,
-  // and the parent (and ancestors') propStruct(s), before using this
+  // and the parent (and ancestors') ownStruct(s), before using this
   // transProps as the props input for the next methods.
 
 

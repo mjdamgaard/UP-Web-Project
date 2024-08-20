@@ -66,7 +66,7 @@ BEGIN proc: BEGIN
     WHERE (
         parent_id = 1 AND
         spec_input = CONCAT('"', uName, '"') AND
-        prop_struct_hash = "" AND
+        own_struct_hash = "" AND
         data_input_hash = ""
     );
 

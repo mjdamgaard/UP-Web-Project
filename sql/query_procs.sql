@@ -157,7 +157,7 @@ BEGIN
     SELECT
         parent_id AS parentId,
         spec_input AS specInput,
-        prop_struct AS propStruct,
+        own_struct AS ownStruct,
         LENGTH(data_input) AS dataLen
     FROM Entities
     WHERE id = entID;
@@ -170,7 +170,7 @@ DELIMITER //
 CREATE PROCEDURE selectEntityFromSecKey (
     IN parentID BIGINT UNSIGNED,
     IN specInput VARCHAR(255),
-    IN propStructHash VARCHAR(255),
+    IN ownStructHash VARCHAR(255),
     IN dataInputHash VARCHAR(255)
 )
 BEGIN
@@ -179,7 +179,7 @@ BEGIN
     WHERE (
         parent_id = parentID AND
         spec_input = specInput AND
-        prop_struct_hash = propStructHash AND
+        own_struct_hash = ownStructHash AND
         data_input_hash = dataInputHash
     );
 END //

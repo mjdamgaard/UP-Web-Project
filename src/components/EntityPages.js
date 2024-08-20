@@ -4,7 +4,7 @@ import {useQuery} from "../hooks/DBRequests.js";
 //   MaxRatingSetCombiner, SimpleSetGenerator,
 // } from "/src/SetGenerator.js";
 
-import {PropStructFetcher} from "./PropStructFetcher.js";
+import {PropStructFetcher} from "./EntityDataFetcher.js";
 
 import {AccountManagerContext} from "../contexts/AccountContext.js";
 

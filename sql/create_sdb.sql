@@ -153,23 +153,23 @@ CREATE TABLE Entities (
     -- (A majority of entities will have a parent, so we use 0 instead of NULL.)
 
     -- Specifying input: A string or a JSON array of strings or entity IDs.
-    -- These are substituted instead of placeholders in the prop_struct of the
+    -- These are substituted instead of placeholders in the own_struct of the
     -- parent. 
     spec_input VARCHAR(255) NOT NULL DEFAULT "",
     -- (We use "" for no specifying inputs.)
 
-    -- Property data structure (struct) containing the specific properties of
-    -- this entity.
-    prop_struct TEXT DEFAULT NULL,
-    prop_struct_hash VARCHAR(255) NOT NULL DEFAULT (
+    -- Own property data structure (struct) containing the specific properties
+    -- of this entity.
+    own_struct TEXT DEFAULT NULL,
+    own_struct_hash VARCHAR(255) NOT NULL DEFAULT (
         CASE
-            WHEN prop_struct IS NULL OR prop_struct = "" THEN ""
-            ELSE SHA2(prop_struct, 224)
+            WHEN own_struct IS NULL OR own_struct = "" THEN ""
+            ELSE SHA2(own_struct, 224)
         END
     ),
 
 
-    -- Data input: A large TEXT or BLOB that cannot fit in the prop_struct
+    -- Data input: A large TEXT or BLOB that cannot fit in the own_struct
     -- directly, and therefore also substitutes a placeholder there instead
     -- (similarly to the specifying input, but with a different placeholder).
     data_input LONGBLOB DEFAULT NULL,
@@ -183,7 +183,7 @@ CREATE TABLE Entities (
     -- or in the interface with it, i.e. in the "input procedures.")
 
 
-    UNIQUE INDEX (parent_id, spec_input, prop_struct_hash, data_input_hash),
+    UNIQUE INDEX (parent_id, spec_input, own_struct_hash, data_input_hash),
 
 
     -- ID of the creator, i.e. the user who uploaded this entity.
@@ -196,7 +196,7 @@ CREATE TABLE Entities (
 
 /* Some initial inserts */
 
-INSERT INTO Entities (id, parent_id, spec_input, prop_struct)
+INSERT INTO Entities (id, parent_id, spec_input, own_struct)
 VALUES
     (1, 0, '', '{"type":"user","username":"%1"}'),
     (2, 0, '', '{"type":"tag","title":"%1"}'),
@@ -221,10 +221,10 @@ VALUES
 -- For the placeholders '%1', '%2', etc., the spec_input is parsed a a JSON
 -- array of literals before substituting each one. The data_input substitutes
 -- the '%d' placeholder, if any.
--- Special characters are '%', '@', which are escaped by writing them
--- double (e.g. '@@' -> '@'), as well as the other special characters of JSON,
--- of course (escaped the JSON way), in case of the propStruct. For the
--- spec_input, the separator '|' is also special, also escaped by '||'.
+-- Special characters are '%', '@', which are escaped with backslashes,
+-- as well as the other special characters of JSON, of course (escaped the
+-- JSON way), in case of the ownStruct. For the spec_input, the separator '|'
+-- is also special, also escaped by a backslash.
 -- '@' is used to write IDs, namely by writing e.g. '"@5"' which refers the the
 -- "initial_user" entity.
 

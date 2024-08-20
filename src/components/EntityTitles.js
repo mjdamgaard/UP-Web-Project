@@ -1,7 +1,7 @@
 import {useState, createContext, useContext, useEffect} from "react";
 import {useQuery} from "../hooks/DBRequests.js";
 import {ColumnContext} from "../contexts/ColumnContext.js";
-import {PropStructFetcher} from "../components/PropStructFetcher.js";
+import {PropStructFetcher} from "./EntityDataFetcher.js";
 import {ExpandableSpan} from "./DropdownBox.js";
 
 const ConcatenatedEntityTitle = () => <template></template>;

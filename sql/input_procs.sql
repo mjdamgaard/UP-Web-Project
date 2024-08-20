@@ -136,34 +136,34 @@ CREATE PROCEDURE insertOrFindEntity (
     IN userID BIGINT UNSIGNED,
     IN parentID BIGINT UNSIGNED,
     IN specInput VARCHAR(255),
-    IN propStruct TEXT,
+    IN ownStruct TEXT,
     IN dataInput LONGBLOB
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
-    DECLARE propStructHash VARCHAR(255) DEFAULT CASE
-        WHEN propStruct = "" OR propStruct IS NULL THEN ""
-        ELSE SHA2(propStruct, 224)
+    DECLARE ownStructHash VARCHAR(255) DEFAULT CASE
+        WHEN ownStruct = "" OR ownStruct IS NULL THEN ""
+        ELSE SHA2(ownStruct, 224)
     END;
     DECLARE dataInputHash VARCHAR(255) DEFAULT CASE
         WHEN dataInput = "" OR dataInput IS NULL THEN ""
         ELSE SHA2(dataInput, 224)
     END;
 
-    IF (propStruct = "") THEN
-        SET propStruct = NULL;
+    IF (ownStruct = "") THEN
+        SET ownStruct = NULL;
     END IF;
     IF (dataInput = "") THEN
         SET dataInput = NULL;
     END IF;
 
     INSERT IGNORE INTO Entities (
-        parent_id, spec_input, prop_struct, prop_struct_hash,
+        parent_id, spec_input, own_struct, own_struct_hash,
         data_input, data_input_hash, creator_id
     )
     VALUES (
-        parentId, specInput, propStruct, propStructHash,
+        parentId, specInput, ownStruct, ownStructHash,
         dataInput, dataInputHash, userID
     );
     IF (mysql_affected_rows() > 0) THEN
@@ -176,7 +176,7 @@ BEGIN
         WHERE (
             parent_id = parentID AND
             spec_input = specInput AND
-            prop_struct_hash = propStructHash AND
+            own_struct_hash = ownStructHash AND
             data_input_hash = dataInputHash
         );
     END IF;
