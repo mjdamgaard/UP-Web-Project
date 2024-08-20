@@ -102,7 +102,11 @@ class InputValidator {
             case "str":
                 // TODO: Find out why e.g. "£" and "Æ" does not pass this test,
                 // and fix.
-                if (!is_string($paramVal) || !ctype_print($paramVal)) {
+                if (
+                    !is_string($paramVal) || !ctype_print($paramVal) ||
+                    // We hae no need for allowing newlines or tabs.
+                    preg_match("/[\n\r\t]/", $paramVal)
+                ) {
                     echoTypeErrorJSONAndExit(
                         $paramName, $paramVal, "VARCHAR(1,225)"
                     );

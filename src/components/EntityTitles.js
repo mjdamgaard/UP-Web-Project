@@ -1,6 +1,7 @@
 import {useState, createContext, useContext, useEffect} from "react";
 import {useQuery} from "../hooks/DBRequests.js";
 import {ColumnContext} from "../contexts/ColumnContext.js";
+import {propStructFetcher} from "../components/PropStructFetcher.js";
 import {ExpandableSpan} from "./DropdownBox.js";
 
 const ConcatenatedEntityTitle = () => <template></template>;
@@ -162,16 +163,16 @@ export function getSpecifiedPropStruct(parPropStruct, spec) {
   var specArr = (typeof spec === "string") ? getSpecArr(spec) : spec;
 
   // Replace each '%<n>' placeholder in parPropStruct with specArr[<n> - 1].
-  // If a specArr[<n> - 1] is undefined, let the placeholder be. Note that
-  // <n> should have the form /[0-9][0-9]/ (with e.g. 01 being equivalent with
-  // 1), but 0 or 00 should not be used.
+  // If a specArr[<n> - 1] is undefined, let the placeholder be. Note that is
+  // is assumed that '%<n>' will always be followed by space or some sort of
+  // punctuation, and never directly by other digits or another placeholder. 
   var ret = {};
   parPropStruct.keys().forEach(prop => {
     let val = parPropStruct[prop];
     // If property value is a string, replace e.g. '%3' with specArr[2], and
     // '\\\\%3' with '\\\\' + specArr[2], unless specArr[2] is undefined.
     if (typeof val === "string") {
-      ret[prop] = val.replaceAll(/(^|[^\\%])(\\\\)*%[0-9][0-9]?/g, str => {
+      ret[prop] = val.replaceAll(/(^|[^\\%])(\\\\)*%[1-9][0-9]*/g, str => {
         let [leadingChars, n] = val.match(/^[^%]*|%.*$/g);
         if (n === undefined) {
           n = leadingChars;
