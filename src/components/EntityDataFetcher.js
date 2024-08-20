@@ -1,4 +1,4 @@
-import {useState, createContext, useContext, useEffect} from "react";
+import {useState, createContext, useContext, useEffect, useDebugValue} from "react";
 import {useQuery} from "../hooks/DBRequests.js";
 import {ColumnContext} from "../contexts/ColumnContext.js";
 
@@ -82,6 +82,7 @@ export function getPropStruct(entDataArr) {
     let spec = entData[1];
     let ownStruct = entData[2];
     propStruct = getTransformedPropStruct(propStruct, spec, ownStruct);
+    console.log(entData);console.log(propStruct);
   });
 
   // And finally return the constructed full propStruct.
@@ -108,7 +109,7 @@ export function getSpecifiedPropStruct(parPropStruct, spec) {
     // '\\\\%3' with '\\\\' + specArr[2], unless specArr[2] is undefined.
     if (typeof val === "string") {
       ret[prop] = val.replaceAll(/(^|[^\\%])(\\\\)*%[1-9][0-9]*/g, str => {
-        let [leadingChars, n] = val.match(/^[^%]*|%.*$/g);
+        let [leadingChars, n] = val.match(/^[^%]*|[^%].*$/g);
         if (n === undefined) {
           n = leadingChars;
           leadingChars = "";
