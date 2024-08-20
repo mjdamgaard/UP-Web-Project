@@ -1,7 +1,7 @@
 import {useState, createContext, useContext, useEffect} from "react";
 import {useQuery} from "../hooks/DBRequests.js";
 import {ColumnContext} from "../contexts/ColumnContext.js";
-import {propStructFetcher} from "../components/PropStructFetcher.js";
+import {PropStructFetcher} from "../components/PropStructFetcher.js";
 import {ExpandableSpan} from "./DropdownBox.js";
 
 const ConcatenatedEntityTitle = () => <template></template>;
@@ -11,204 +11,134 @@ const SpecialRefEntityTitle = () => <template></template>;
 // const InvalidEntityTitle = () => <template></template>;
 
 
-export const EntityTitle = ({
-  entID, isLink, recLevel, maxRecLevel
+export const EntityTitle = ({entID, isLink}) => {
+  // Use PropStructFetcher to fetch entDataArr and construct the
+  // fullPropStruct, then pass this to EntityTitleFromPropStruct.
+  return (
+    <PropStructFetcher
+      entID={entID} PlaceholderModule={EntityTitlePlaceholder}
+      ChildModule={EntityTitleFromPropStruct} extraProps={{isLink: isLink}}
+    />
+  );
+}
+
+
+const EntityTitleFromPropStruct = ({
+  isLink,
+  entID, fullPropStruct, entDataArr,
+  exceedsRecLevel, entIsMissing, entIsInvalid, ancIsMissing, ancIsInvalid
 }) => {
-  isLink ??= true;
-  recLevel ??= 0;
-  maxRecLevel ??= 6;
-
-  const [results, setResults] = useState([]);
-  useQuery(results, setResults, {
-    req: "ent",
-    id: entID,
-  });
-
-  // if recursion level exceeds the max value, just make '@<entID>' the title.
-  if (recLevel > maxRecLevel) {
+  // If recursion level exceeds the max value, return an InvalidEntityTitle.
+  if (exceedsRecLevel) {
     return (
-      <span className="entity-title">
-        <EntityID entID={entID} isLink={isLink} />
-      </span>
+      <InvalidEntityTitle entID={entID} isLink={isLink} >
+        {"Entity with too many ancestors"}
+      </InvalidEntityTitle>
     );
   }
-
-  // Before results is fetched, render this:
-  if (!results.isFetched) {
-    return (
-      <EntityTitlePlaceholder entID={entID} isLink={isLink} />
-    );
-  }
-  
-  // Afterwards, first extract the needed data from results.
-  const [parentID, spec, propStruct, dataLen] = (results.data[0] ?? []);
-  
-  // If parentID is undefined, or if it is 0 and propStruct is falsy, return
-  // an InvalidEntityTitle.
-  if (parentID === undefined || (!parentID && !propStruct)) {
+  // If entity is missing from the database, return an InvalidEntityTitle.
+  if (entIsMissing) {
     return (
       <InvalidEntityTitle entID={entID} isLink={isLink} >
         {"Entity not found"}
       </InvalidEntityTitle>
     );
   }
-
-  // // If propStruct is not falsy, look for the "title" there (since it will
-  // // then overwrite the parents "title" property).
-  // if (propStruct.title) {
-  //   return (
-  //     <EntityTitleFromString
-  //       entID={entID} str={propStruct.title} isLink={isLink}
-  //     />
-  //   );
-  // }
-  
-
-  // If not, pass the data to EntityTitleFromParent to query the parent for
-  // more.
-  return (
-    <EntityTitleFromParent
-      entID={entID} isLink={isLink} parentID={parentID} spec={spec}
-      propStruct={propStruct} recLevel={recLevel} maxRecLevel={maxRecLevel}
-    />
-  );
-}
-
-
-
-export const EntityTitleFromParent = ({
-  entID, isLink, parentID, spec, propStruct, recLevel, maxRecLevel
-}) => {
-  const [results, setResults] = useState([]);
-  useQuery(results, setResults, {
-    req: "ent",
-    id: parentID,
-  });
-
-  // Before results is fetched, render this:
-  if (!results.isFetched) {
-    return (
-      <EntityTitlePlaceholder entID={entID} isLink={isLink} />
-    );
-  }
-  
-  // Afterwards, first extract the needed data from results.
-  const [parParentID, parSpec, parPropStruct, ] = (results.data[0] ?? []);
-
-  // If parentID is undefined return an InvalidEntityTitle.
-  if (parentID === undefined) {
+  // If entity has a spec but no parent, return an InvalidEntityTitle.
+  if (entIsInvalid) {
     return (
       <InvalidEntityTitle entID={entID} isLink={isLink} >
-        {"Parent entity not found"}
+        {"Invalid entity"}
+      </InvalidEntityTitle>
+    );
+  }
+  // If entity has a missing ancestor, return an InvalidEntityTitle.
+  if (ancIsMissing) {
+    return (
+      <InvalidEntityTitle entID={entID} isLink={isLink} >
+        {"Entity with missing ancestor"}
+      </InvalidEntityTitle>
+    );
+  }
+  // If entity has an invalid ancestor, return an InvalidEntityTitle.
+  if (ancIsInvalid) {
+    return (
+      <InvalidEntityTitle entID={entID} isLink={isLink} >
+        {"Entity with an invalid ancestor"}
       </InvalidEntityTitle>
     );
   }
 
-  // Call getTransPropStruct() to construct the transformed propStruct.
-  const transPropStruct = getTransformedPropStruct(
-    parPropStruct, spec, propStruct
-  );
-
-  if (parParentID) {
-    return (
-      <EntityTitleFromParent
-        entID={entID} isLink={isLink} parentID={parParentID} spec={parSpec}
-        propStruct={transPropStruct}
-        recLevel={recLevel} maxRecLevel={maxRecLevel}
-      />
-    );
+  // Else we have the full propStruct (except that any data inputs haven't
+  // been neither fetched nor inserted). We are therefore ready to render the
+  // EntityTitle.
+  // First we look if there are remaining spec input placeholders, and if so,
+  // we preface the title with "Class: ".
+  var prefix = ""
+  if (includesPlaceholders(fullPropStruct)) {
+    prefix = "Class: ";
   }
 
-  if (parSpec) {
-    return (
-      <InvalidEntityTitle entID={entID} isLink={isLink} >
-        {"Invalid entity with parSpec and no parent"}
-      </InvalidEntityTitle>
-    );
-  }
-
-  var preTitle = ""
-  if (includesPlaceholders(transPropStruct)) {
-    preTitle = "Class: ";
-  }
-
-  if (typeof transPropStruct.title === "string") {
+  if (typeof fullPropStruct.title === "string") {
     return (
       <EntityTitleFromString
-        entID={entID} isLink={isLink} str={preTitle + transPropStruct.title}
+        entID={entID} isLink={isLink} str={prefix + fullPropStruct.title}
       />
     );
-  } else if (typeof transPropStruct.type === "string") {
+  } else if (typeof fullPropStruct.type === "string") {
     return (
       <EntityTitleFromString
         entID={entID} isLink={isLink}
-        str={preTitle + transPropStruct.type + " #" + entID}
+        str={prefix + fullPropStruct.type + " #" + entID}
       />
     );
   } else {
     return (
       <InvalidEntityTitle entID={entID} isLink={isLink} >
-        {"Invalid entity with no title or type"}
+        {"Entity with no title or type"}
       </InvalidEntityTitle>
     );
   }
 }
 
 
-export function getTransformedPropStruct(parPropStruct, spec, propStruct) {
-  return Object.assign(getSpecifiedPropStruct(parPropStruct, spec), propStruct);
-}
-
-export function getSpecifiedPropStruct(parPropStruct, spec) {
-  var specArr = (typeof spec === "string") ? getSpecArr(spec) : spec;
-
-  // Replace each '%<n>' placeholder in parPropStruct with specArr[<n> - 1].
-  // If a specArr[<n> - 1] is undefined, let the placeholder be. Note that is
-  // is assumed that '%<n>' will always be followed by space or some sort of
-  // punctuation, and never directly by other digits or another placeholder. 
-  var ret = {};
-  parPropStruct.keys().forEach(prop => {
-    let val = parPropStruct[prop];
-    // If property value is a string, replace e.g. '%3' with specArr[2], and
-    // '\\\\%3' with '\\\\' + specArr[2], unless specArr[2] is undefined.
-    if (typeof val === "string") {
-      ret[prop] = val.replaceAll(/(^|[^\\%])(\\\\)*%[1-9][0-9]*/g, str => {
-        let [leadingChars, n] = val.match(/^[^%]*|%.*$/g);
-        if (n === undefined) {
-          n = leadingChars;
-          leadingChars = "";
-        }
-        let placement = specArr[parseInt(n) - 1];
-        if (placement !== undefined) {
-          return leadingChars + placement;
-        } else {
-          return str;
-        }
-      });
-    }
-    // Else call getSpecifiedPropStruct recursively to get the substituted val.
-    else {
-      ret[prop] = getSpecifiedPropStruct(val, specArr);
-    }
+export function includesPlaceholders(propStruct) {
+  var ret = false;
+  let placeholderRegEx = /(^|[^\\%])(\\\\)*%[1-9][0-9]*/;
+  propStruct.values().forEach(val => {
+    ret = ret || placeholderRegEx.test(val);
   });
   return ret;
 }
 
-export function getSpecArr(spec) {
-  let pipeDelimiterRegEx = /(^|[^\|\\])/g;
-  return spec
-    .replaceAll("\\\\", "\\\\0")
-    .replaceAll("\\|", "\\\\1")
-    .split("|")
-    .map(val => {
-      return val
-      .replaceAll("\\\\1", "|")
-      .replaceAll("\\\\0", "\\");
-    });
 
+
+
+
+
+const EntityTitlePlaceholder = ({entID, isLink}) => {
+  return <span className="entity-title entity-title-placeholder"></span>;
 }
 
-
+const InvalidEntityTitle = ({entID, isLink, children}) => {
+  if (isLink) {
+    return (
+      <span className="entity-title invalid-entity-title text-warning">
+        {/* TODO: Remove "text-warning" className. */}
+        <EntityLink entID={entID}>
+          {children}
+        </EntityLink>
+      </span>
+    );
+  } else {
+    return (
+      <span className="entity-title invalid-entity-title text-warning">
+        {/* TODO: Remove "text-warning" className. */}
+        {children}
+      </span>
+    );
+  }
+};
 
 
 
@@ -232,6 +162,46 @@ export const EntityTitleFromString = ({entID, str, isLink}) => {
     );
   }
 }
+
+
+const EntityLink = ({entID, children}) => {
+  const [, columnManager] = useContext(ColumnContext);
+
+  return (
+    <span className="entity-link clickable-text" onClick={() => {
+      columnManager.openColumn(entID);
+    }}>
+      {children}
+    </span>
+  );
+};
+
+export const EntityID = ({entID, isLink}) => {
+  const entityID = (
+    <span className="entity-id">@{entID}</span>
+  );
+  if (isLink) {
+    return (
+      <EntityLink entID={entID}>
+        {entityID}
+      </EntityLink>
+    );
+  } else {
+    return (
+      <>
+        {entityID}
+      </>
+    );
+  }
+};
+
+
+
+
+
+
+
+
 
 // function transformDef(def) {
 //   return def
@@ -364,357 +334,281 @@ export const EntityTitleFromString = ({entID, str, isLink}) => {
 
 
 
-const TemplateInstanceEntityTitle = ({
-  transDef, entID, isLink, isFull, recLevel, maxRecLevel
-}) => {
+// const TemplateInstanceEntityTitle = ({
+//   transDef, entID, isLink, isFull, recLevel, maxRecLevel
+// }) => {
 
-  // Parse the ID array and fetch the definition of the template
-  // and of the inputs.
-  const idArr = transDef.match(/[1-9][0-9]*/g); // RegExp.match() is greedy.
-  const inputIDArr = idArr.slice(1);
+//   // Parse the ID array and fetch the definition of the template
+//   // and of the inputs.
+//   const idArr = transDef.match(/[1-9][0-9]*/g); // RegExp.match() is greedy.
+//   const inputIDArr = idArr.slice(1);
 
-  const [results, setResults] = useState(idArr.map(val => ({})));
-  const reqData = idArr.map(val => ({
-    req: "ent",
-    id: val,
-  }));
-
-
-  useQuery(results, setResults, reqData);
+//   const [results, setResults] = useState(idArr.map(val => ({})));
+//   const reqData = idArr.map(val => ({
+//     req: "ent",
+//     id: val,
+//   }));
 
 
+//   useQuery(results, setResults, reqData);
 
-  // Before results[0] is fetched, render a placeholder.
-  if (!results[0].isFetched) {
-    return (
-      <EntityTitlePlaceholder entID={entID} isLink={isLink} />
-    );
-  }
+
+
+//   // Before results[0] is fetched, render a placeholder.
+//   if (!results[0].isFetched) {
+//     return (
+//       <EntityTitlePlaceholder entID={entID} isLink={isLink} />
+//     );
+//   }
   
-  // Afterwards, first extract the templateDef data from results[0].data[0].
-  const [templateDef] = (results[0].data[0] ?? []);
+//   // Afterwards, first extract the templateDef data from results[0].data[0].
+//   const [templateDef] = (results[0].data[0] ?? []);
 
-  // Transform the templateDef.
-  const transTemplateDef = transformDef(templateDef);
+//   // Transform the templateDef.
+//   const transTemplateDef = transformDef(templateDef);
 
-  // If transTemplateDef has ill-formed placeholders (or back-references),
-  // return an InvalidEntityTitle.
-  const templateDefHasInvalidPlaceholders = transTemplateDef
-    .replaceAll(/%[e1-9]/g, "")
-    .includes("%");
-  if (templateDefHasInvalidPlaceholders) {
-    return (
-      <InvalidEntityTitle entID={entID} isLink={isLink} >
-        {"Instance of invalid template: " + transformDefBack(transTemplateDef)}
-      </InvalidEntityTitle>
-    );
-  }
+//   // If transTemplateDef has ill-formed placeholders (or back-references),
+//   // return an InvalidEntityTitle.
+//   const templateDefHasInvalidPlaceholders = transTemplateDef
+//     .replaceAll(/%[e1-9]/g, "")
+//     .includes("%");
+//   if (templateDefHasInvalidPlaceholders) {
+//     return (
+//       <InvalidEntityTitle entID={entID} isLink={isLink} >
+//         {"Instance of invalid template: " + transformDefBack(transTemplateDef)}
+//       </InvalidEntityTitle>
+//     );
+//   }
 
-  // If the number of placeholders does not match the number of inputs,
-  // return an InvalidEntityTitle.
-  const inputNumberIsWrong = (
-    transTemplateDef.match(/%e/g).length !== inputIDArr.length
-  );
-  if (inputNumberIsWrong) {
-    return (
-      <InvalidEntityTitle entID={entID} isLink={isLink} >
-        {
-          "Wrong number inputs (" + inputIDArr.length + ") for template: " +
-          templateDef
-        }
-      </InvalidEntityTitle>
-    );
-  }
+//   // If the number of placeholders does not match the number of inputs,
+//   // return an InvalidEntityTitle.
+//   const inputNumberIsWrong = (
+//     transTemplateDef.match(/%e/g).length !== inputIDArr.length
+//   );
+//   if (inputNumberIsWrong) {
+//     return (
+//       <InvalidEntityTitle entID={entID} isLink={isLink} >
+//         {
+//           "Wrong number inputs (" + inputIDArr.length + ") for template: " +
+//           templateDef
+//         }
+//       </InvalidEntityTitle>
+//     );
+//   }
 
-  // Construct the template instance.
-  const transTemplateInstDef = inputIDArr.reduce(
-    (acc, val) => acc.replace("%e", "@" + val + "."),
-    transTemplateDef.replaceAll(
-      /%[1-9]/g,
-      str => ("@" + (inputIDArr[parseInt(str[1]) - 1] ?? "") + ".")
-    )
-  );
+//   // Construct the template instance.
+//   const transTemplateInstDef = inputIDArr.reduce(
+//     (acc, val) => acc.replace("%e", "@" + val + "."),
+//     transTemplateDef.replaceAll(
+//       /%[1-9]/g,
+//       str => ("@" + (inputIDArr[parseInt(str[1]) - 1] ?? "") + ".")
+//     )
+//   );
 
-  // Return an EntityTitleFromTransDef (isTemplateInstance={true}) with a
-  // recLevel of one more.
-  return (
-    <EntityTitleFromTransDef transDef={transTemplateInstDef} entID={entID}
-      isLink={isLink} isFull={isFull}
-      recLevel={recLevel + 1} maxRecLevel={maxRecLevel}
-      isTemplateInstance={true} templateID={idArr[0]}
-    />
-  );
+//   // Return an EntityTitleFromTransDef (isTemplateInstance={true}) with a
+//   // recLevel of one more.
+//   return (
+//     <EntityTitleFromTransDef transDef={transTemplateInstDef} entID={entID}
+//       isLink={isLink} isFull={isFull}
+//       recLevel={recLevel + 1} maxRecLevel={maxRecLevel}
+//       isTemplateInstance={true} templateID={idArr[0]}
+//     />
+//   );
 
-};
-
-
-
-
-
-
-const EntityLink = ({entID, children}) => {
-  const [, columnManager] = useContext(ColumnContext);
-
-  return (
-    <span className="entity-link clickable-text" onClick={() => {
-      columnManager.openColumn(entID);
-    }}>
-      {children}
-    </span>
-  );
-};
-
-export const EntityID = ({entID, isLink}) => {
-  const entityID = (
-    <span className="entity-id">@{entID}</span>
-  );
-  if (isLink) {
-    return (
-      <EntityLink entID={entID}>
-        {entityID}
-      </EntityLink>
-    );
-  } else {
-    return (
-      <>
-        {entityID}
-      </>
-    );
-  }
-};
-
-
-
-export function getCapitalizedAndAccentedString(str, capCode) {
-  return str; // TODO: Implement.
-}
-
-
-const EntityTitlePlaceholder = ({entID, isLink}) => <span></span>;
-
-const InvalidEntityTitle = ({entID, isLink, children}) => {
-  if (isLink) {
-    return (
-      <span className="invalid-title">
-        <span className="text-warning">Invalid entity title: </span>
-        <EntityLink entID={entID}>
-          {children}
-        </EntityLink>
-      </span>
-    );
-  } else {
-    return (
-      <span className="invalid-title">
-        <span className="text-warning">Invalid entity title: </span>
-        {children}
-      </span>
-    );
-  }
-};
+// };
 
 
 
 
 
+// // TODO: Continue remaking:
 
-
-
-
-
-
-
-
-
-
-
-// TODO: Continue remaking:
-
-function getTemplateChildren(defStr, isLinks, recLevel, maxRecLevel) {
-  return defStr
-    .replaceAll("\\\\", "\\\\1")
-    .replaceAll("\\|", "\\\\2")
-    .split("|")
-    .map(val => (
-      val
-      .replaceAll("\\\\2", "|")
-      .replaceAll("\\\\", "\\")
-    ))
-    .map(val => (
-      /^#[1-9][0-9]*$/.test(val) ? (
-        <span className="template-child">
-          <EntityTitle entID={val.substring(1)}
-            isLink={isLinks} recLevel={recLevel + 1} maxRecLevel={maxRecLevel}
-          />
-        </span>
-      ) : (
-        <span className="template-child">
-          {val}
-        </span>
-      )
-    ));
-}
-
-
-export const TemplateInstance = ({tmplID, tmplChildren, isCut}) => {
-  const [results, setResults] = useState([]);
-  useQuery(results, setResults, {
-    req: "ent",
-    id: tmplID,
-  });
-
-  // Before results is fetched, render this:
-  if (!results.isFetched) {
-    return (
-      <span style={{display: "none"}}>
-        {tmplChildren.map((val, ind) => (
-          <span key={-ind - 1}>
-            {val}
-          </span>
-        ))}
-      </span>
-    );
-  }
-
-  // Afterwards, first extract the needed data from results[0].
-  const [, , tmplDefStr] = (results.data[0] ?? []);
-
-  // Transform the template into an array of arrays, first by "reducing" the
-  // string by removing the unused template placeholder names, then by "cutting"
-  // it up along each '{' or '}' character such that only every second entry in
-  // the resulting array is rendered if isCut == true, and finally by
-  // "splitting" it up further along each occurrence of '&lt;&gt;' ('<>').
-  const reducedTmpl = tmplDefStr
-    // .replaceAll("&gt;", ">")
-    // .replaceAll("&lt;", "<")
-    .replaceAll(/<[^<>]*>/g, '<>')
-    // .replaceAll("<", "&lt;")
-    // .replaceAll(">", "&gt;");
-  const reducedAndCutTmpl = /[\{\}]/.test(reducedTmpl) ?
-    reducedTmpl.split(/[\{\}]/) :
-    ['', reducedTmpl]
-  const reducedCutAndSplitTmpl = reducedAndCutTmpl.map(val => (
-    // val.split('&lt;&gt;')
-    val.split('<>')
-  ));
-
-  // If we have more tmplChildren than there are template placeholders, extend
-  // reducedCutAndSplitTmpl such that these children will be added at the end
-  // of the template.
-  let placeholderNum = reducedCutAndSplitTmpl.reduce((acc, val) => (
-    acc + val.length - 1
-  ), 0);
-  let excess = placeholderNum - tmplChildren.length;
-  if (excess > 0) {
-    let len = reducedCutAndSplitTmpl.length
-    let lastTmplPart = reducedCutAndSplitTmpl[len - 1];
-    let prevEnd = lastTmplPart.pop();
-    let separator = '<span class="extra-children-separator">, </span>'
-    lastTmplPart.push(prevEnd + separator);
-    while (excess > 1) {
-      lastTmplPart.push(separator);
-    }
-    lastTmplPart.push('');
-  }
-  // TODO: Change the above so that this last step is done before "cutting,"
-  // and also find a more clear representation and name for e.g. 
-  // "reducedCutAndSplitTmpl."
-
-  // Finally create the template instance by filling in the provided template
-  // children into this structure and reduce it to a JSX element.
-  let i = 0;
-  let len = tmplChildren.length;
-  return reducedCutAndSplitTmpl.map((val, ind) => (
-    <span key={ind} style={{display: (isCut && ind % 2 === 0) ? "none" : ""}}>
-      {val.map((val, ind) => {
-        if (ind === 0) {
-          return (
-            <span key={ind}>
-              {val}
-            </span>
-          );
-        } else if (i >= len) {
-          <span key={ind}>
-            <i class="text-warning">missing entity</i>
-          </span>
-        } else {
-          let ret = (
-            <span key={ind}>
-              {tmplChildren[i]}{val}
-            </span>
-          );
-          i++;
-          return ret;
-        }
-      })}
-    </span>
-  ));
-};
-// TODO: Consider doing something like this again:
-// export function getTitle(tmpl, defItemStrArr) {
-//   return getTransformedTemplate(tmpl, defItemStrArr)
-//     .replace(/^[^\{]*\{/g, "")
-//     .replace(/\}[^\{]*$/g, "")
-//     .replaceAll(/\}[^\{]*\{/g, "");
-// }
-// export function getFullTitle(tmpl, defItemStrArr) {
-//   return getTransformedTemplate(tmpl, defItemStrArr)
-//     .replaceAll('{', "")
-//     .replaceAll('}', "");
+// function getTemplateChildren(defStr, isLinks, recLevel, maxRecLevel) {
+//   return defStr
+//     .replaceAll("\\\\", "\\\\1")
+//     .replaceAll("\\|", "\\\\2")
+//     .split("|")
+//     .map(val => (
+//       val
+//       .replaceAll("\\\\2", "|")
+//       .replaceAll("\\\\", "\\")
+//     ))
+//     .map(val => (
+//       /^#[1-9][0-9]*$/.test(val) ? (
+//         <span className="template-child">
+//           <EntityTitle entID={val.substring(1)}
+//             isLink={isLinks} recLevel={recLevel + 1} maxRecLevel={maxRecLevel}
+//           />
+//         </span>
+//       ) : (
+//         <span className="template-child">
+//           {val}
+//         </span>
+//       )
+//     ));
 // }
 
 
+// export const TemplateInstance = ({tmplID, tmplChildren, isCut}) => {
+//   const [results, setResults] = useState([]);
+//   useQuery(results, setResults, {
+//     req: "ent",
+//     id: tmplID,
+//   });
+
+//   // Before results is fetched, render this:
+//   if (!results.isFetched) {
+//     return (
+//       <span style={{display: "none"}}>
+//         {tmplChildren.map((val, ind) => (
+//           <span key={-ind - 1}>
+//             {val}
+//           </span>
+//         ))}
+//       </span>
+//     );
+//   }
+
+//   // Afterwards, first extract the needed data from results[0].
+//   const [, , tmplDefStr] = (results.data[0] ?? []);
+
+//   // Transform the template into an array of arrays, first by "reducing" the
+//   // string by removing the unused template placeholder names, then by "cutting"
+//   // it up along each '{' or '}' character such that only every second entry in
+//   // the resulting array is rendered if isCut == true, and finally by
+//   // "splitting" it up further along each occurrence of '&lt;&gt;' ('<>').
+//   const reducedTmpl = tmplDefStr
+//     // .replaceAll("&gt;", ">")
+//     // .replaceAll("&lt;", "<")
+//     .replaceAll(/<[^<>]*>/g, '<>')
+//     // .replaceAll("<", "&lt;")
+//     // .replaceAll(">", "&gt;");
+//   const reducedAndCutTmpl = /[\{\}]/.test(reducedTmpl) ?
+//     reducedTmpl.split(/[\{\}]/) :
+//     ['', reducedTmpl]
+//   const reducedCutAndSplitTmpl = reducedAndCutTmpl.map(val => (
+//     // val.split('&lt;&gt;')
+//     val.split('<>')
+//   ));
+
+//   // If we have more tmplChildren than there are template placeholders, extend
+//   // reducedCutAndSplitTmpl such that these children will be added at the end
+//   // of the template.
+//   let placeholderNum = reducedCutAndSplitTmpl.reduce((acc, val) => (
+//     acc + val.length - 1
+//   ), 0);
+//   let excess = placeholderNum - tmplChildren.length;
+//   if (excess > 0) {
+//     let len = reducedCutAndSplitTmpl.length
+//     let lastTmplPart = reducedCutAndSplitTmpl[len - 1];
+//     let prevEnd = lastTmplPart.pop();
+//     let separator = '<span class="extra-children-separator">, </span>'
+//     lastTmplPart.push(prevEnd + separator);
+//     while (excess > 1) {
+//       lastTmplPart.push(separator);
+//     }
+//     lastTmplPart.push('');
+//   }
+//   // TODO: Change the above so that this last step is done before "cutting,"
+//   // and also find a more clear representation and name for e.g. 
+//   // "reducedCutAndSplitTmpl."
+
+//   // Finally create the template instance by filling in the provided template
+//   // children into this structure and reduce it to a JSX element.
+//   let i = 0;
+//   let len = tmplChildren.length;
+//   return reducedCutAndSplitTmpl.map((val, ind) => (
+//     <span key={ind} style={{display: (isCut && ind % 2 === 0) ? "none" : ""}}>
+//       {val.map((val, ind) => {
+//         if (ind === 0) {
+//           return (
+//             <span key={ind}>
+//               {val}
+//             </span>
+//           );
+//         } else if (i >= len) {
+//           <span key={ind}>
+//             <i class="text-warning">missing entity</i>
+//           </span>
+//         } else {
+//           let ret = (
+//             <span key={ind}>
+//               {tmplChildren[i]}{val}
+//             </span>
+//           );
+//           i++;
+//           return ret;
+//         }
+//       })}
+//     </span>
+//   ));
+// };
+// // TODO: Consider doing something like this again:
+// // export function getTitle(tmpl, defItemStrArr) {
+// //   return getTransformedTemplate(tmpl, defItemStrArr)
+// //     .replace(/^[^\{]*\{/g, "")
+// //     .replace(/\}[^\{]*$/g, "")
+// //     .replaceAll(/\}[^\{]*\{/g, "");
+// // }
+// // export function getFullTitle(tmpl, defItemStrArr) {
+// //   return getTransformedTemplate(tmpl, defItemStrArr)
+// //     .replaceAll('{', "")
+// //     .replaceAll('}', "");
+// // }
 
 
 
 
 
-export const FullEntityTitle = ({entID, maxRecLevel}) => {
-  maxRecLevel ??= 4;
 
-  const [results, setResults] = useState([]);
-  useQuery(results, setResults, {
-    req: "ent",
-    id: entID,
-  });
 
-  // Before results is fetched, render this:
-  if (!results.isFetched) {
-    return (
-      <EntityTitlePlaceholder entID={entID} />
-    );
-  }
+// export const FullEntityTitle = ({entID, maxRecLevel}) => {
+//   maxRecLevel ??= 4;
 
-  // Afterwards, first extract the needed data from results[0].
-  const [typeID, cxtID, defStr] = (results.data[0] ?? []);
+//   const [results, setResults] = useState([]);
+//   useQuery(results, setResults, {
+//     req: "ent",
+//     id: entID,
+//   });
 
-  // If the entity is a template entity (typeID == 3) or if it has no context,
-  // we only need to to render the type followed by a separator followed by the
-  // defining string:
-  let titleContent;
-  if (!cxtID || typeID == 3) {
-    titleContent = defStr;
+//   // Before results is fetched, render this:
+//   if (!results.isFetched) {
+//     return (
+//       <EntityTitlePlaceholder entID={entID} />
+//     );
+//   }
+
+//   // Afterwards, first extract the needed data from results[0].
+//   const [typeID, cxtID, defStr] = (results.data[0] ?? []);
+
+//   // If the entity is a template entity (typeID == 3) or if it has no context,
+//   // we only need to to render the type followed by a separator followed by the
+//   // defining string:
+//   let titleContent;
+//   if (!cxtID || typeID == 3) {
+//     titleContent = defStr;
   
-  // Else, the entity is derived from a template. The full title should not be
-  // "cut", meaning that all parts of it will be rendered despite the curly
-  // braces (which will be removed), and each reference-type template child
-  // should be a link on its own (isLinks = true).
-  } else {
-    let tmplChildren = getTemplateChildren(defStr, true, 0, maxRecLevel);
-    titleContent = (
-      <TemplateInstance 
-        tmplID={cxtID} tmplChildren={tmplChildren} isCut={false}
-      />
-    );
-  }
+//   // Else, the entity is derived from a template. The full title should not be
+//   // "cut", meaning that all parts of it will be rendered despite the curly
+//   // braces (which will be removed), and each reference-type template child
+//   // should be a link on its own (isLinks = true).
+//   } else {
+//     let tmplChildren = getTemplateChildren(defStr, true, 0, maxRecLevel);
+//     titleContent = (
+//       <TemplateInstance 
+//         tmplID={cxtID} tmplChildren={tmplChildren} isCut={false}
+//       />
+//     );
+//   }
 
-  return (
-    <span className="full-entity-title">
-      <EntityTitle entID={typeID} isLink={true} />
-      <span className="type-separator"> &#9656; </span>
-      {titleContent}
-    </span>
-  );
-};
+//   return (
+//     <span className="full-entity-title">
+//       <EntityTitle entID={typeID} isLink={true} />
+//       <span className="type-separator"> &#9656; </span>
+//       {titleContent}
+//     </span>
+//   );
+// };
 
 
 

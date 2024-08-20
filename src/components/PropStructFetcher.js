@@ -59,7 +59,7 @@ export const PropStructFetcher = ({
 
 
 
-export const PropStructFetcherHelper = ({
+const PropStructFetcherHelper = ({
   entID, PlaceholderModule, ChildModule, extraProps,
   parentID, spec, propStruct, entDataArr, recLevel, maxRecLevel
 }) => {
@@ -90,12 +90,11 @@ export const PropStructFetcherHelper = ({
   const [parParentID, parSpec, parPropStruct, ] = (results.data[0] ?? []);
 
   // If parParentID is undefined, meaning that the ancestor is missing, return
-  // ChildModule with the boolean ancestorIsMissing set, and pass the offending
-  // parentID as well.
+  // ChildModule with the boolean ancIsMissing set.
   if (parParentID === undefined) {
     return (
       <ChildModule
-        {...extraProps} entID={entID} entDataArr={entDataArr} ancestorIsMissing
+        {...extraProps} entID={entID} entDataArr={entDataArr} ancIsMissing
       />
     );
   }
@@ -119,12 +118,11 @@ export const PropStructFetcherHelper = ({
   }
 
   // Else if parent's spec is defined while its parentID is not, return
-  // ChildModule with the boolean ancestorIsInvalid set, and pass the offending
-  // parentID as well.
+  // ChildModule with the boolean ancIsInvalid set.
   if (parSpec) {
     return (
       <ChildModule
-        {...extraProps} entID={entID} entDataArr={entDataArr} ancestorIsInvalid
+        {...extraProps} entID={entID} entDataArr={entDataArr} ancIsInvalid
       />
     );
   }
@@ -134,8 +132,8 @@ export const PropStructFetcherHelper = ({
   // props. 
   return (
     <ChildModule
-      {...extraProps} entID={entID} entDataArr={entDataArr}
-      fullPropStruct={transPropStruct}
+      {...extraProps}
+      entID={entID} fullPropStruct={transPropStruct} entDataArr={entDataArr}
     />
   );
 }
