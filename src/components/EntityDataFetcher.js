@@ -94,100 +94,59 @@ export const EntityDataFetcher = ({
 
 
 
-const PropStructConstructor = ({
-  entID, entDataArr, exceedsRecLevel, ChildModule, extraProps,
-  PlaceholderModule,
+export const PropStructConstructor = ({
+  entDataArr, exceedsRecLevel, ChildModule, extraProps,
 }) => {
   extraProps ??= {};
-  PlaceholderModule ??= () => <></>;
 
   // If the recLevel has been exceeded, simple return the ChildModule with
   // the boolean exceedsRecLevel set.
   if (exceedsRecLevel) {
     return (
       <ChildModule
-        {...extraProps} entID={entID} propStruct={{}} exceedsRecLevel
+        {...extraProps} entID={entID} propStruct={null} exceedsRecLevel
       />
     );
   }
 
   // Else construct a reverse version of entDataArr without the first element
-  // (== entID).
-  const dataArr = [...entDataArr].reverse();
-  dataArr.pop();
+  // (== entID), and the last element, which is the root ancestor data.
+  var dataArr = [...entDataArr];
+  const rootData = dataArr.pop();
+  dataArr.reverse();
+  const entID = dataArr.pop();
 
-  // Now go through each element (from root ancestor's data down to the
-  // entity's own data) and construct the full propStruct
-
-  //..Oh, I should actually get the full propStruct of the parent first, and
-  // *then* insert the spec inputs..
-
-  // Call getTransPropStruct() to construct the transformed propStruct.
-  const transPropStruct = getTransformedPropStruct(
-    parPropStruct, spec, propStruct
-  );
-
-
-
-  // // Before results is fetched, render this:
-  // if (!results.isFetched) {
-  //   return (
-  //     <PlaceholderModule {...extraProps} entID={entID} recLevel={recLevel} />
-  //   );
-  // }
-  
-  // // Afterwards, first extract the needed data from results.
-  // const entData = results.data[0] ?? [];
-  // const [parParentID, parSpec, parPropStruct, parDataLen] = entData;
-
-  // // If parParentID is undefined, meaning that the ancestor is missing, return
-  // // ChildModule with the boolean ancIsMissing set.
-  // if (parParentID === undefined) {
-  //   return (
-  //     <ChildModule
-  //       {...extraProps} entID={entID} entDataArr={entDataArr.concat([entData])}
-  //       ancIsMissing
-  //     />
-  //   );
-  // }
-  
-  // If parent's parent is defined, pass to self yet another time to get more
-  // data to construct the full propStruct.
-  if (parParentID) {
-    return (
-      <PropStructFetcherHelper
-      entID={entID} PlaceholderModule={PlaceholderModule}
-      ChildModule={ChildModule} extraProps={extraProps}
-      parentID={parParentID} spec={parSpec} propStruct={transPropStruct}
-      entDataArr={entDataArr} recLevel={1} maxRecLevel={maxRecLevel}
-      />
-    );
-  }
-
-  // Else if parent's spec is defined while its parentID is not, return
-  // ChildModule with the boolean ancIsInvalid set.
-  if (parSpec) {
+  // Then first of all check that rootData is of a valid root ancestor, and
+  // if not, return ChildModule with the boolean hasInvalidRoot set.
+  if(rootData[0] || rootData[1] || !rootData[2]) {
     return (
       <ChildModule
-        {...extraProps} entID={entID} entDataArr={entDataArr} ancIsInvalid
+        {...extraProps} entID={entID} propStruct={null} hasInvalidRoot
       />
     );
   }
 
-  // Else we now have that transPropStruct is the full propStruct of the
-  // entity, and we can finally pass this to the ChildModule, along with other
-  // props. 
+  // Now go through each element in dataArr (from root ancestor's first child
+  // and down to entity itself) and construct the full propStruct.
+  var propStruct = {...rootData[2]};
+  dataArr.forEach(entData => {
+    let spec = entData[1];
+    let ownStruct = entData[2];
+    propStruct = getTransformedPropStruct(propStruct, spec, ownStruct);
+  });
+
+  // And finally return ChildModule with the full propStruct object.
   return (
     <ChildModule
-      {...extraProps}
-      entID={entID} fullPropStruct={transPropStruct} entDataArr={entDataArr}
+      {...extraProps} entID={entID} propStruct={propStruct}
     />
   );
 }
 
 
-export function getTransformedPropStruct(parPropStruct, spec, propStruct) {
-  return Object.assign(getSpecifiedPropStruct(parPropStruct, spec), propStruct);
+
+export function getTransformedPropStruct(parPropStruct, spec, ownStruct) {
+  return Object.assign(getSpecifiedPropStruct(parPropStruct, spec), ownStruct);
 }
 
 export function getSpecifiedPropStruct(parPropStruct, spec) {
@@ -236,4 +195,33 @@ export function getSpecArr(spec) {
       .replaceAll("\\\\0", "\\");
     });
 
+}
+
+
+
+
+
+export const EntityPropStructFetcher = ({
+  entID, ChildModule, extraProps, PlaceholderModule,
+}) => {
+  // Use EntityDataFetcher to fetch entDataArr and construct the
+  // fullPropStruct, then pass this to EntityTitleFromPropStruct.
+  return (
+    <EntityDataFetcher
+      entID={entID} ChildModule={EntityTitleFromData}
+      extraProps={{isLink: isLink}} PlaceholderModule={EntityTitlePlaceholder}
+    />
+  );
+}
+
+export const EntityTitleFromData = ({entDataArr, exceedsRecLevel, isLink}) => {
+  // Use PropStructConstructor to the full propStruct, then pass it to
+  // EntityTitleFromPropStruct.
+  return (
+    <PropStructConstructor
+      entDataArr={entDataArr} ChildModule={EntityTitleFromPropStruct}
+      extraProps={{isLink: isLink, exceedsRecLevel: exceedsRecLevel}}
+      PlaceholderModule={EntityTitlePlaceholder}
+    />
+  );
 }

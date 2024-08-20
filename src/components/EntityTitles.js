@@ -1,7 +1,7 @@
 import {useState, createContext, useContext, useEffect} from "react";
 import {useQuery} from "../hooks/DBRequests.js";
 import {ColumnContext} from "../contexts/ColumnContext.js";
-import {PropStructFetcher} from "./EntityDataFetcher.js";
+import {EntityDataFetcher, PropStructConstructor} from "./EntityDataFetcher.js";
 import {ExpandableSpan} from "./DropdownBox.js";
 
 const ConcatenatedEntityTitle = () => <template></template>;
@@ -15,16 +15,29 @@ export const EntityTitle = ({entID, isLink}) => {
   // Use PropStructFetcher to fetch entDataArr and construct the
   // fullPropStruct, then pass this to EntityTitleFromPropStruct.
   return (
-    <PropStructFetcher
-      entID={entID} PlaceholderModule={EntityTitlePlaceholder}
-      ChildModule={EntityTitleFromPropStruct} extraProps={{isLink: isLink}}
+    <EntityDataFetcher
+      entID={entID} ChildModule={EntityTitleFromData}
+      extraProps={{isLink: isLink}} PlaceholderModule={EntityTitlePlaceholder}
+    />
+  );
+}
+
+export const EntityTitleFromData = ({entDataArr, exceedsRecLevel, isLink}) => {
+  // Use PropStructConstructor to the full propStruct, then pass it to
+  // EntityTitleFromPropStruct.
+  return (
+    <PropStructConstructor
+      entDataArr={entDataArr} ChildModule={EntityTitleFromPropStruct}
+      extraProps={{isLink: isLink, exceedsRecLevel: exceedsRecLevel}}
+      PlaceholderModule={EntityTitlePlaceholder}
     />
   );
 }
 
 
 const EntityTitleFromPropStruct = ({
-  isLink,
+  entID, propStruct, isLink,
+  exceedsRecLevel, 
   entID, fullPropStruct, entDataArr,
   exceedsRecLevel, entIsMissing, entIsInvalid, ancIsMissing, ancIsInvalid
 }) => {
