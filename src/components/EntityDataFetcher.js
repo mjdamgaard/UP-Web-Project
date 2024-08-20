@@ -25,7 +25,7 @@ export const EntityDataFetcher = ({
   if (recLevel > maxRecLevel) {
     return (
       <ChildModule
-        {...extraProps} entID={entID} entDataArr={entDataArr} exceedsRecLevel
+        {...extraProps} entID={entID} entDataArr={entDataArr}
       />
     );
   }
@@ -57,59 +57,12 @@ export const EntityDataFetcher = ({
       recLevel={recLevel} entDataArr={newEntDataArr}
     />
   );
-
-  // // If entity is missing from the database, return ChildModule with the
-  // // boolean entIsMissing set.
-  // if (!entData) {
-  //   return (
-  //     <ChildModule
-  //       {...extraProps} entID={entID} entDataArr={newEntDataArr} entIsMissing
-  //     />
-  //   );
-  // }
-
-  // // If the entity neither has a parent nor a ownStruct, return
-  // // ChildModule with the boolean entIsInvalid set.
-  // if (!parentID && !ownStruct) {
-  //   return (
-  //     <ChildModule
-  //       {...extraProps} entID={entID} entDataArr={entDataArr} entIsInvalid
-  //     />
-  //   );
-  // }
-
-  // // If
-
-  // // If not, pass the data to EntityTitleFromParent to query the parent for
-  // // more data to construct the full ownStruct.
-  // return (
-  //   <PropStructFetcherHelper
-  //     entID={entID} PlaceholderModule={PlaceholderModule}
-  //     ChildModule={ChildModule} extraProps={extraProps}
-  //     parentID={parentID} spec={spec} ownStruct={ownStruct}
-  //     entDataArr={entDataArr} recLevel={1} maxRecLevel={maxRecLevel}
-  //   />
-  // );
 }
 
 
 
-export const PropStructConstructor = ({
-  entDataArr, exceedsRecLevel, ChildModule, extraProps,
-}) => {
-  extraProps ??= {};
-
-  // If the recLevel has been exceeded, simple return the ChildModule with
-  // the boolean exceedsRecLevel set.
-  if (exceedsRecLevel) {
-    return (
-      <ChildModule
-        {...extraProps} entID={entID} propStruct={null} exceedsRecLevel
-      />
-    );
-  }
-
-  // Else construct a reverse version of entDataArr without the first element
+export function getPropStruct(entDataArr) {
+  // First construct a reverse version of entDataArr without the first element
   // (== entID), and the last element, which is the root ancestor data.
   var dataArr = [...entDataArr];
   const rootData = dataArr.pop();
@@ -117,13 +70,9 @@ export const PropStructConstructor = ({
   const entID = dataArr.pop();
 
   // Then first of all check that rootData is of a valid root ancestor, and
-  // if not, return ChildModule with the boolean hasInvalidRoot set.
+  // if not, return null.
   if(rootData[0] || rootData[1] || !rootData[2]) {
-    return (
-      <ChildModule
-        {...extraProps} entID={entID} propStruct={null} hasInvalidRoot
-      />
-    );
+    return null;
   }
 
   // Now go through each element in dataArr (from root ancestor's first child
@@ -135,12 +84,8 @@ export const PropStructConstructor = ({
     propStruct = getTransformedPropStruct(propStruct, spec, ownStruct);
   });
 
-  // And finally return ChildModule with the full propStruct object.
-  return (
-    <ChildModule
-      {...extraProps} entID={entID} propStruct={propStruct}
-    />
-  );
+  // And finally return the constructed full propStruct.
+  return propStruct;
 }
 
 
@@ -195,33 +140,4 @@ export function getSpecArr(spec) {
       .replaceAll("\\\\0", "\\");
     });
 
-}
-
-
-
-
-
-export const EntityPropStructFetcher = ({
-  entID, ChildModule, extraProps, PlaceholderModule,
-}) => {
-  // Use EntityDataFetcher to fetch entDataArr and construct the
-  // fullPropStruct, then pass this to EntityTitleFromPropStruct.
-  return (
-    <EntityDataFetcher
-      entID={entID} ChildModule={EntityTitleFromData}
-      extraProps={{isLink: isLink}} PlaceholderModule={EntityTitlePlaceholder}
-    />
-  );
-}
-
-export const EntityTitleFromData = ({entDataArr, exceedsRecLevel, isLink}) => {
-  // Use PropStructConstructor to the full propStruct, then pass it to
-  // EntityTitleFromPropStruct.
-  return (
-    <PropStructConstructor
-      entDataArr={entDataArr} ChildModule={EntityTitleFromPropStruct}
-      extraProps={{isLink: isLink, exceedsRecLevel: exceedsRecLevel}}
-      PlaceholderModule={EntityTitlePlaceholder}
-    />
-  );
 }

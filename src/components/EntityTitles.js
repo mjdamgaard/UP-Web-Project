@@ -1,7 +1,7 @@
 import {useState, createContext, useContext, useEffect} from "react";
 import {useQuery} from "../hooks/DBRequests.js";
 import {ColumnContext} from "../contexts/ColumnContext.js";
-import {EntityDataFetcher, PropStructConstructor} from "./EntityDataFetcher.js";
+import {EntityDataFetcher, getPropStruct} from "./EntityDataFetcher.js";
 import {ExpandableSpan} from "./DropdownBox.js";
 
 const ConcatenatedEntityTitle = () => <template></template>;
@@ -12,8 +12,8 @@ const SpecialRefEntityTitle = () => <template></template>;
 
 
 export const EntityTitle = ({entID, isLink}) => {
-  // Use PropStructFetcher to fetch entDataArr and construct the
-  // fullPropStruct, then pass this to EntityTitleFromPropStruct.
+  // Use PropStructFetcher to fetch entDataArr and then pass this to
+  // EntityTitleFromData.
   return (
     <EntityDataFetcher
       entID={entID} ChildModule={EntityTitleFromData}
@@ -22,59 +22,34 @@ export const EntityTitle = ({entID, isLink}) => {
   );
 }
 
-export const EntityTitleFromData = ({entDataArr, exceedsRecLevel, isLink}) => {
-  // Use PropStructConstructor to the full propStruct, then pass it to
-  // EntityTitleFromPropStruct.
-  return (
-    <PropStructConstructor
-      entDataArr={entDataArr} ChildModule={EntityTitleFromPropStruct}
-      extraProps={{isLink: isLink, exceedsRecLevel: exceedsRecLevel}}
-      PlaceholderModule={EntityTitlePlaceholder}
-    />
-  );
-}
-
-
-const EntityTitleFromPropStruct = ({
-  entID, propStruct, isLink,
-  exceedsRecLevel, 
-  entID, fullPropStruct, entDataArr,
-  exceedsRecLevel, entIsMissing, entIsInvalid, ancIsMissing, ancIsInvalid
-}) => {
-  // If recursion level exceeds the max value, return an InvalidEntityTitle.
-  if (exceedsRecLevel) {
-    return (
-      <InvalidEntityTitle entID={entID} isLink={isLink} >
-        {"Entity with too many ancestors"}
-      </InvalidEntityTitle>
-    );
-  }
+export const EntityTitleFromData = ({entID, entDataArr, isLink}) => {
   // If entity is missing from the database, return an InvalidEntityTitle.
-  if (entIsMissing) {
+  if (!entDataArr[1]) {
     return (
       <InvalidEntityTitle entID={entID} isLink={isLink} >
         {"Entity not found"}
       </InvalidEntityTitle>
     );
   }
-  // If entity has a spec but no parent, return an InvalidEntityTitle.
-  if (entIsInvalid) {
-    return (
-      <InvalidEntityTitle entID={entID} isLink={isLink} >
-        {"Invalid entity"}
-      </InvalidEntityTitle>
-    );
-  }
-  // If entity has a missing ancestor, return an InvalidEntityTitle.
-  if (ancIsMissing) {
+  // If an ancestor is missing from the database, return an InvalidEntityTitle.
+  let rootData = entDataArr.slice(-1)[0];
+  if (!rootData) {
     return (
       <InvalidEntityTitle entID={entID} isLink={isLink} >
         {"Entity with missing ancestor"}
       </InvalidEntityTitle>
     );
   }
-  // If entity has an invalid ancestor, return an InvalidEntityTitle.
-  if (ancIsInvalid) {
+  // If the root entity has a parent, return an InvalidEntityTitle.
+  if (rootData[0]) {
+    return (
+      <InvalidEntityTitle entID={entID} isLink={isLink} >
+        {"Entity with too many ancestors"}
+      </InvalidEntityTitle>
+    );
+  }
+  // If the root entity has a spec, return an InvalidEntityTitle.
+  if (rootData[1]) {
     return (
       <InvalidEntityTitle entID={entID} isLink={isLink} >
         {"Entity with an invalid ancestor"}
@@ -82,29 +57,39 @@ const EntityTitleFromPropStruct = ({
     );
   }
 
-  // Else we have the full propStruct (except that any data inputs haven't
-  // been neither fetched nor inserted). We are therefore ready to render the
-  // EntityTitle.
-  // First we look if there are remaining spec input placeholders, and if so,
-  // we preface the title with "Class: ".
-  var prefix = <></>;
-  if (includesPlaceholders(fullPropStruct)) {
-    prefix = <span className="title-prefix class-prefix">class:</span>;
+  // Else we get the full propStruct (except that any data inputs haven't
+  // been neither fetched nor inserted).
+  const propStruct = getPropStruct(entDataArr);
+  if (!propStruct) {
+    throw "EntityTitleFromData: Either getPropStruct() or checks failed";
   }
 
-  if (typeof fullPropStruct.title === "string") {
+  // First we look if there are remaining spec input placeholders, and if so,
+  // we preface the title with "class: ".
+  let isClass = includesPlaceholders(propStruct);
+  if (isClass) {
     return (
-      <EntityTitleFromChildren entID={entID} isLink={isLink} >
-        {prefix} {fullPropStruct.title}
-      </EntityTitleFromChildren>
+      <EntityTitleWrapper entID={entID} isLink={isLink} >
+        <span className="title-prefix class-prefix">{"class: "}</span>
+        {"type: " + propStruct.type + ", title: " + propStruct.title}
+      </EntityTitleWrapper>
     );
-  } else if (typeof fullPropStruct.type === "string") {
+  }
+  else if (typeof propStruct.title === "string") {
     return (
-      <EntityTitleFromChildren entID={entID} isLink={isLink} >
-        {prefix} {fullPropStruct.type + " #" + entID}
-      </EntityTitleFromChildren>
+      <EntityTitleWrapper entID={entID} isLink={isLink} >
+        {propStruct.title}
+      </EntityTitleWrapper>
     );
-  } else {
+  }
+  else if (typeof propStruct.type === "string") {
+    return (
+      <EntityTitleWrapper entID={entID} isLink={isLink} >
+        {propStruct.type + " #" + entID}
+      </EntityTitleWrapper>
+    );
+  }
+  else {
     return (
       <InvalidEntityTitle entID={entID} isLink={isLink} >
         {"Entity with no title or type"}
@@ -154,7 +139,7 @@ const InvalidEntityTitle = ({entID, isLink, children}) => {
 
 
 
-export const EntityTitleFromChildren = ({entID, isLink, children}) => {
+export const EntityTitleWrapper = ({entID, isLink, children}) => {
   // If the whole EntityTitle is a link, just use the whole string as is.
   if (isLink) {
     return (
