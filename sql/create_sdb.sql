@@ -206,16 +206,16 @@ VALUES
         '{"type":["tag","property tag"],"subject":"%1","property":"%2",'
         '"title":"%2 of %1"}'
     )),
-    (6, 1, 'initial_user', ''),
+    (6, 1, 'initial_user', NULL),
     (7, 0, '', '{"type":"list","elements":"%1"}'),
-    (8, 5, '@6|type', ''),
+    (8, 5, '@6|type', NULL),
     (9, 0, '', CONCAT(
         '{"type":["tag","relevant properties tag"],"subject":"%1",',
         '"title":"relevant properties of %1"}'
     )),
-    (10, 2, 'entity', ''),
+    (10, 2, 'entity', NULL),
     -- 
-    (NULL, 3, 'exAmpLe of A noT very usefuL enTiTy', '');
+    (NULL, 3, 'exAmpLe of A noT very usefuL enTiTy', NULL);
 
 
 -- For the placeholders '%1', '%2', etc., the spec_input is parsed a a JSON

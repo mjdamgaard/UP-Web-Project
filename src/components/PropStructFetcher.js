@@ -7,6 +7,7 @@ import {ColumnContext} from "../contexts/ColumnContext.js";
 export const PropStructFetcher = ({
   entID, PlaceholderModule, ChildModule, extraProps, maxRecLevel
 }) => {
+  PlaceholderModule ??= () => <template></template>;
   maxRecLevel ??= 6;
 
   const [results, setResults] = useState([]);
@@ -87,17 +88,22 @@ const PropStructFetcherHelper = ({
   }
   
   // Afterwards, first extract the needed data from results.
-  const [parParentID, parSpec, parPropStruct, ] = (results.data[0] ?? []);
+  const entData = results.data[0] ?? [];
+  const [parParentID, parSpec, parPropStruct, parDataLen] = entData;
 
   // If parParentID is undefined, meaning that the ancestor is missing, return
   // ChildModule with the boolean ancIsMissing set.
   if (parParentID === undefined) {
     return (
       <ChildModule
-        {...extraProps} entID={entID} entDataArr={entDataArr} ancIsMissing
+        {...extraProps} entID={entID} entDataArr={entDataArr.concat([entData])}
+        ancIsMissing
       />
     );
   }
+
+  //..Oh, I should actually get the full propStruct of the parent first, and
+  // *then* insert the spec inputs..
 
   // Call getTransPropStruct() to construct the transformed propStruct.
   const transPropStruct = getTransformedPropStruct(
@@ -143,7 +149,7 @@ export function getTransformedPropStruct(parPropStruct, spec, propStruct) {
   return Object.assign(getSpecifiedPropStruct(parPropStruct, spec), propStruct);
 }
 
-export function getSpecifiedPropStruct(parPropStruct, spec) {console.log(parPropStruct);
+export function getSpecifiedPropStruct(parPropStruct, spec) {
   var specArr = (typeof spec === "string") ? getSpecArr(spec) : spec;
 
   // Replace each '%<n>' placeholder in parPropStruct with specArr[<n> - 1].

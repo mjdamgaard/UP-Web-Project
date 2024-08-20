@@ -4,6 +4,8 @@ import {useQuery} from "../hooks/DBRequests.js";
 //   MaxRatingSetCombiner, SimpleSetGenerator,
 // } from "/src/SetGenerator.js";
 
+import {PropStructFetcher} from "./PropStructFetcher.js";
+
 import {AccountManagerContext} from "../contexts/AccountContext.js";
 
 import {PagesWithTabs} from "./PagesWithTabs.js";
@@ -39,48 +41,50 @@ import {
 // const CategoryInstancesPage = () => <template></template>;
 const SubmitInstanceField = () => <template></template>;
 const CategoryDisplay = () => <template></template>;
+// const PropStructDisplayPlaceholder = () => <span></span>;
 
 
+const PropStructDisplay = ({entID, fullPropStruct, entDataArr}) => {
+  return (
+    <div>
+      <h4>Full property struct:</h4>
+      <div>{JSON.stringify(fullPropStruct)}</div>
+      <h4>Entity ID:</h4>
+      <div>{entID}</div>
+      <h4>Entity data array:</h4>
+      <div>{JSON.stringify(entDataArr)}</div>
+    </div>
+  );
+};
 
 export const EntityPage = ({entID, initTab}) => {
-  const [results, setResults] = useState([]);
-  useQuery(results, setResults, {
-    req: "ent",
-    id: entID,
-  });
 
-  // Before results is fetched, render this:
-  if (!results.isFetched) {
-    return (
-      <div className="entity-page">
-        <div className="entity-page-header">
-          <h2><EntityTitle entID={entID} /></h2>
-          <div className="full-title">
-            <b>Definition:</b> <EntityTitle entID={entID} isFull />
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
-  // Afterwards, extract the needed data from results[0], then do a full render.
-  const [parentID, specInput, propStruct, dataLen] = (results.data[0] ?? []);
+  // TODO: Query for the topmost types for the entity (entID), and use them to
+  // specify the tabs. *Or maybe look up types in fullPropStruct, or do both..
+
+  // const [results, setResults] = useState([]);
+  // useQuery(results, setResults, {
+  //   req: "instList",
+  //   u: ...,
+  // });
   
   // TODO: Remove: Temporary module while refactoring and debugging:
-  const [def, typeID, cxtID] = (results.data[0] ?? []);
+  var typeID, cxtID;
   return (
     <div className="entity-page">
       <div className="entity-page-header">
-        <h2><EntityTitle entID={entID} /></h2>
+        <h2><EntityTitle entID={entID} isLink /></h2>
         <div className="full-title">
-          <b>Definition:</b> <EntityTitle entID={entID} isFull />
+            <PropStructFetcher
+              entID={entID} ChildModule={PropStructDisplay} extraProps={{}}
+            />
         </div>
+        {/* <div><EntityIDDisplay entID={entID} /></div> */}
       </div>
+      {/* <PagesWithTabs tabDataArr={tabDataArr} initTab={initTab} /> */}
     </div>
   );
 
-  // TODO: Query for the topmost types for the entity (entID), and use them to
-  // specify the tabs.
 
   // Construct the tabs on the EntityPage.
   const [tabDataArr, defaultTab] = getTabDataArrAndDefaultTab(
