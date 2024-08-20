@@ -74,23 +74,22 @@ const EntityTitleFromPropStruct = ({
   // EntityTitle.
   // First we look if there are remaining spec input placeholders, and if so,
   // we preface the title with "Class: ".
-  var prefix = ""
+  var prefix = <></>;
   if (includesPlaceholders(fullPropStruct)) {
-    prefix = "Class: ";
+    prefix = <span className="title-prefix class-prefix">class:</span>;
   }
 
   if (typeof fullPropStruct.title === "string") {
     return (
-      <EntityTitleFromString
-        entID={entID} isLink={isLink} str={prefix + fullPropStruct.title}
-      />
+      <EntityTitleFromChildren entID={entID} isLink={isLink} >
+        {prefix} {fullPropStruct.title}
+      </EntityTitleFromChildren>
     );
   } else if (typeof fullPropStruct.type === "string") {
     return (
-      <EntityTitleFromString
-        entID={entID} isLink={isLink}
-        str={prefix + fullPropStruct.type + " #" + entID}
-      />
+      <EntityTitleFromChildren entID={entID} isLink={isLink} >
+        {prefix} {fullPropStruct.type + " #" + entID}
+      </EntityTitleFromChildren>
     );
   } else {
     return (
@@ -105,7 +104,7 @@ const EntityTitleFromPropStruct = ({
 export function includesPlaceholders(propStruct) {
   var ret = false;
   let placeholderRegEx = /(^|[^\\%])(\\\\)*%[1-9][0-9]*/;
-  propStruct.values().forEach(val => {
+  Object.values(propStruct).forEach(val => {
     ret = ret || placeholderRegEx.test(val);
   });
   return ret;
@@ -142,13 +141,13 @@ const InvalidEntityTitle = ({entID, isLink, children}) => {
 
 
 
-export const EntityTitleFromString = ({entID, str, isLink}) => {
+export const EntityTitleFromChildren = ({entID, isLink, children}) => {
   // If the whole EntityTitle is a link, just use the whole string as is.
   if (isLink) {
     return (
       <span className="entity-title">
         <EntityLink entID={entID}>
-          {str}
+          {children}
         </EntityLink>
       </span>
     );
@@ -157,7 +156,7 @@ export const EntityTitleFromString = ({entID, str, isLink}) => {
   else {
     return (
       <span className="entity-title">
-        {str}
+        {children}
       </span>
     );
   }

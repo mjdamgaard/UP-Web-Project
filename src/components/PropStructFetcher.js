@@ -24,7 +24,7 @@ export const PropStructFetcher = ({
   
   // Afterwards, first extract the needed data from results.
   const entDataArr = results.data;
-  const [parentID, spec, propStruct, dataLen] = entData[0] ?? [];
+  const [parentID, spec, propStruct, dataLen] = entDataArr[0] ?? [];
   
   // If parentID is undefined, meaning that the entity is missing, return
   // ChildModule with the boolean entIsMissing set.
@@ -143,7 +143,7 @@ export function getTransformedPropStruct(parPropStruct, spec, propStruct) {
   return Object.assign(getSpecifiedPropStruct(parPropStruct, spec), propStruct);
 }
 
-export function getSpecifiedPropStruct(parPropStruct, spec) {
+export function getSpecifiedPropStruct(parPropStruct, spec) {console.log(parPropStruct);
   var specArr = (typeof spec === "string") ? getSpecArr(spec) : spec;
 
   // Replace each '%<n>' placeholder in parPropStruct with specArr[<n> - 1].
@@ -151,7 +151,7 @@ export function getSpecifiedPropStruct(parPropStruct, spec) {
   // is assumed that '%<n>' will always be followed by space or some sort of
   // punctuation, and never directly by other digits or another placeholder. 
   var ret = {};
-  parPropStruct.keys().forEach(prop => {
+  Object.keys(parPropStruct).forEach(prop => {
     let val = parPropStruct[prop];
     // If property value is a string, replace e.g. '%3' with specArr[2], and
     // '\\\\%3' with '\\\\' + specArr[2], unless specArr[2] is undefined.

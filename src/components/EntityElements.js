@@ -2,7 +2,7 @@ import {useState, useEffect, useMemo, useContext} from "react";
 import {AccountManagerContext} from "../contexts/AccountContext.js";
 import {useQuery} from "../hooks/DBRequests.js";
 
-import {EntityTitle, FullEntityTitle} from "./EntityTitles.js";
+import {EntityTitle} from "./EntityTitles.js";
 import {DropdownBox, DropdownMenu} from "./DropdownBox.js";
 import {EntityIDDisplay} from "./EntityPages.js";
 // import {} from "./InstListDisplay.js";
@@ -14,6 +14,7 @@ import {
 
 // const EntityTitle = () => <template></template>;
 const TextDataDisplayElement = () => <template></template>;
+const FullEntityTitle = () => <template></template>;
 // const DefStrDisplayElement = () => <template></template>;
 
 

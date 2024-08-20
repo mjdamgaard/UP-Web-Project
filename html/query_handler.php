@@ -282,10 +282,10 @@ $stmt = $conn->prepare($sql);
 DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 // fetch the result as a numeric array.
 $res = $stmt->get_result()->fetch_all();
-// if $reqType == ent, JSON-parse the third output, "propStruct", before the
+// if $reqType == ent, JSON-decode the third output, "propStruct", before the
 // final full JSON-encoding. 
 if ($reqType === "ent") {
-    $res[0][2] = json_decode($res[0][2]);
+    $res[0][2] = json_decode($res[0][2], true);
 }
 // finally echo the JSON-encoded numeric array, containing e.g. the
 // columns: ("ratVal", "instID") for $reqType == "set", etc., so look at
