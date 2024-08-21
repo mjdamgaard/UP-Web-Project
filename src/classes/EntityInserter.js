@@ -2,6 +2,15 @@
 import {DBRequestManager} from "../classes/DBRequestManager.js";
 
 
+export const SIMPLE_TAG_CLASS_ID = "2";
+export const SIMPLE_ENTITY_CLASS_ID = "3";
+export const SIMPLE_PROPERTY_CLASS_ID = "4";
+export const PROPERTY_TAG_CLASS_ID = "5";
+export const LIST_CLASS_ID = "7";
+export const RELEVANT_PROPERTIES_TAG_CLASS_ID = "9";
+export const ENTITIES_CATEGORY_ID = "10";
+
+
 
 
 export class EntityInserter {
@@ -142,7 +151,7 @@ export class EntityInserter {
       req: "ent",
       ses: this.accountManager.sesIDHex,
       u: this.accountManager.inputUserID,
-      p: "4",
+      p: SIMPLE_PROPERTY_CLASS_ID,
       s: propKey,
       o: "",
       d: "",
@@ -208,7 +217,7 @@ export class EntityInserter {
       req: "ent",
       ses: this.accountManager.sesIDHex,
       u: this.accountManager.inputUserID,
-      p: "3",
+      p: SIMPLE_ENTITY_CLASS_ID,
       s: propKey,
       o: "",
       d: "",
@@ -231,7 +240,7 @@ export class EntityInserter {
       req: "ent",
       ses: this.accountManager.sesIDHex,
       u: this.accountManager.inputUserID,
-      p: "7",
+      p: LIST_CLASS_ID,
       s: listJSON,
       o: "",
       d: "",
@@ -294,7 +303,7 @@ export class EntityInserter {
       req: "ent",
       ses: this.accountManager.sesIDHex,
       u: this.accountManager.inputUserID,
-      p: "5",
+      p: PROPERTY_TAG_CLASS_ID,
       s: entID + "|" + propID,
       o: "",
       d: "",
@@ -405,7 +414,7 @@ export class EntityInserter {
       req: "ent",
       ses: this.accountManager.sesIDHex,
       u: this.accountManager.inputUserID,
-      p: "9",
+      p: RELEVANT_PROPERTIES_TAG_CLASS_ID,
       s: entID,
       o: "",
       d: "",

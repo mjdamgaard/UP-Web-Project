@@ -196,31 +196,35 @@ CREATE TABLE Entities (
 
 /* Some initial inserts */
 
-INSERT INTO Entities (id, parent_id, spec_input, own_struct)
+INSERT INTO Entities (id, parent_id, spec_input, own_struct, data_input)
 VALUES
-    (1, 0, '', '{"type":"user","username":"%1"}'),
-    (2, 0, '', '{"type":"tag","title":"%1"}'),
-    (3, 0, '', '{"title":"%1"}'),
-    (4, 0, '', '{"type":"property","title":"%1"}'),
+    -- TODO: Add 'initial description's (with data_input text as the value).
+    (1, 0, '', '{"type":"user","username":"%1"}', NULL),
+    (2, 0, '', '{"type":"tag","title":"%1"}', NULL),
+    (3, 0, '', '{"title":"%1"}', NULL),
+    (4, 0, '', '{"type":"property","title":"%1"}', NULL),
     (5, 0, '', CONCAT(
         '{"type":["tag","property tag"],"subject":"%1","property":"%2",'
         '"title":"%2 of %1"}'
-    )),
-    (6, 1, 'initial_user', NULL),
-    (7, 0, '', '{"type":"list","elements":"%1"}'),
-    (8, 5, '@6|type', NULL),
+    ), NULL),
+    (6, 1, 'initial_user', NULL, NULL),
+    (7, 0, '', '{"type":"list","elements":"%1"}', NULL),
+    (8, 5, '@6|type', NULL, NULL),
     (9, 0, '', CONCAT(
         '{"type":["tag","relevant properties tag"],"subject":"%1",',
         '"title":"relevant properties of %1"}'
-    )),
-    (10, 2, 'entity', NULL),
+    ), NULL),
+    (10, 2, 'entity', NULL, NULL),
     -- 
-    (NULL, 3, 'exAmpLe of A noT very usefuL enTiTy', NULL);
+    (NULL, 3, 'exAmpLe of A noT very usefuL enTiTy', NULL, NULL);
 
 
 -- For the placeholders '%1', '%2', etc., the spec_input is parsed a a JSON
--- array of literals before substituting each one. The data_input substitutes
--- the '%d' placeholder, if any.
+-- array of literals before substituting each one. If data_input is a text, it
+-- is substituted in a similar way as spec_input, only using '%t1', '%t2',
+-- etc., instead. I data_input is a binary file, '%b' is used, but this should
+-- conventionally only be used for special file classes (which defines the
+-- file format but no other metadata about the file). 
 -- Special characters are '%', '@', which are escaped with backslashes,
 -- as well as the other special characters of JSON, of course (escaped the
 -- JSON way), in case of the ownStruct. For the spec_input, the separator '|'

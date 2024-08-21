@@ -103,7 +103,7 @@ class InputValidator {
                 // TODO: Find out why e.g. "£" and "Æ" does not pass this test,
                 // and fix.
                 if (
-                    !is_string($paramVal) || !ctype_print($paramVal) ||
+                    !is_string($paramVal) || // !ctype_print($paramVal) ||
                     // We hae no need for allowing newlines or tabs.
                     preg_match("/[\n\r\t]/", $paramVal)
                 ) {
@@ -121,7 +121,7 @@ class InputValidator {
             case "text":
                 if (
                     !is_string($paramVal) ||
-                    !ctype_print($paramVal) ||
+                    // !ctype_print($paramVal) ||
                     strlen($paramVal) > 65535
                 ) {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, "TEXT");
@@ -139,11 +139,11 @@ class InputValidator {
             //     break;
             case "blob":
                 if (
-                    $paramVal !== ""
+                    !is_string($paramVal) ||
+                    // !ctype_print($paramVal) ||
+                    strlen($paramVal) > 65535
                 ) {
-                    echoTypeErrorJSONAndExit(
-                        $paramName, $paramVal, "data blob not implemented yet"
-                    );
+                    echoTypeErrorJSONAndExit($paramName, $paramVal, "BLOB");
                 }
                 break;
             case "json":
