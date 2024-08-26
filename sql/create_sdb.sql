@@ -215,24 +215,128 @@ INSERT INTO Entities
     (id, template_id, template_input, property_struct, data_input)
 VALUES
     -- TODO: Add 'initial description's (with data_input text as the value).
-    (1, 0, '', '{"type":"user","username":"%1"}', NULL),
-    (2, 0, '', '{"type":"tag","title":"%1"}', NULL),
-    (3, 0, '', '{"title":"%1"}', NULL),
-    (4, 0, '', '{"type":"property","title":"%1"}', NULL),
-    (5, 0, '', CONCAT(
-        '{"type":["tag","property tag"],"subject":"%1","property":"%2",'
-        '"title":"%2 of %1"}'
+    (1, 0, '', CONCAT(
+        '{"class":"class","title":"tag","description":"%t"}'
+    ), CONCAT(
+        "A class of the so-called 'tags,' which are essential to this ",
+        "semantic system. A tag is essentially a function that takes ",
+        "an 'instance' (of any given class) entity and produces a ratable ",
+        "quality, which can e.g. ",
+        "be how good a product or piece of media is, perhaps measured on a ",
+        "scale from 1 to 5 stars, how durable a product is, perhaps measured ",
+        "in months, or how much it generally costs, perhaps measured in USD. ",
+        "For every pair of tag and subject, the users can then rate/score/",
+        "estimate the resulting ratable quality."
+    )),
+    (2, 0, '', CONCAT(
+        '{"class":"class","title":"template","description":"%t"}'
+    ), CONCAT(
+        "A class of the so-called 'templates,' which are entities that ",
+        "can be used to define new entities with property structs that ",
+        "follow a specific template. The only property that defines an ",
+        "entity of this 'template' class, other than the 'class' property, ",
+        "is the 'template' property, which is a variable property structure ",
+        "that has placeholders for substitution. ...TODO: Continue."
+    )),
+    (3, 0, '', CONCAT(
+        '{"class":"class","title":"user","description":"%t"}'
+    ), CONCAT(
+        "A class of the users of this Semantic Network. Whenever a ",
+        "new user is created, an entity of this 'user' class is created to ",
+        "represent this new user."
+    )),
+    (4, 0, '', CONCAT(
+        '{"class":"@2","template":{"class":"@3","username":"%1"}}'
     ), NULL),
-    (6, 1, 'initial_user', NULL, NULL),
-    (7, 0, '', '{"type":"list","elements":"%1"}', NULL),
-    (8, 5, '@6|type', NULL, NULL),
+    (5, 0, '', CONCAT(
+        '{"class":"@2","template":{"title":"%1"}}'
+    ), NULL),
+    (6, 0, '', CONCAT(
+        '{"class":"class","title":"property","description":"%t"}'
+    ), CONCAT(
+        "A class of so-called 'properties,' which constitute a standard way ",
+        "to make semantic relations in this semantic system. A property is ",
+        "always formulated as a singular (potentially composite) noun. ",
+        "For instance, a movie might have an 'director' property. ",
+        "And this 'property' class itself has both a 'class' and a 'title' ",
+        "property. Note that when defining a new entity, you don't ",
+        "necessarily need this class, since any string like 'director' or ",
+        "'class' will automatically be interpreted as a property anyway. ",
+        "This class ought therefore only be used when wanting to further ",
+        "elaborate what exactly the given property means, what its value(s) ",
+        "should be, and potentially also how they ought to be rated."
+    )),
+    (7, 0, '', CONCAT(
+        '{"class":"@2","template":{"class":"@6","title":"%1",",
+        "description":"%t"}}'
+    ), NULL),
+    (8, 0, '', CONCAT(
+        '{"class":"class","title":"property tag","description":"%t"}'
+    ), CONCAT(
+        "A class of 'property tags,' which are tags of a very specific ",
+        "structure used to form semantic relations in this semantic system. ",
+        "A property tag is always constructed from just a 'property' entity ",
+        "(of the 'property' class) and another 'subject' entity (of any ",
+        "class). The resulting ratable quality is then how well the given ",
+        "instance entity fits the given property of the subject entity. "
+        "For instance, we might have a movie entity as our subject entity, ",
+        "and 'director' as our property entity, and have 'John Doe' ",
+        "as the instance entity, which says that John Doe is the ",
+        "director of the given movie. If the property entity has no ",
+        "further description, the ratable quality is just how well the ",
+        "instance (e.g. John Doe) fits the tag of being e.g. the 'director ",
+        "of the given movie.' But the property entity might also specify ",
+        "this rating further in its description. (For instance, it might ", 
+        "specify that the main director always ought to be given 5 stars on ",
+        "a rating scale from 1 to 5, e.g.)"
+    )),
+    (9, 0, '', CONCAT(
+        '{"class":"@2","template":{',
+            '"class":["@1","@6"],',
+            '"subject":"%1",',
+            '"property":"%2",',
+            '"title":"%2 of %1"',
+        '}}'
+    ), NULL),
+    (10, 0, '', CONCAT(
+        '{"class":"class","title":"entity","description":"%t"}'
+    ), CONCAT(
+        "A class of all entities of this Semantic Network."
+    )),
+    (11, 4, 'initial_user', NULL, NULL),
+    (12, 0, '', CONCAT(
+        '{"class":"class","title":"list","description":"%t"}'
+    ), CONCAT(
+        "A class of all (ordered) lists. The only property of entities of ",
+        "this class, other than the 'class' property itself, is an 'elements' ",
+        "property that includes a list of all the elements. Note that lists ",
+        "are written in property structs as e.g. '",
+        '"elements":[[elem_1, elem_2, elem_3]]',
+        "', whereas '[elem_1, elem_2, elem_3]' (with no nesting) is ",
+        "interpreted as an unordered set of valid property values (used for ",
+        "one-to-many properties)."
+    )),
+    (13, 0, '', CONCAT(
+        '{"class":"@2","template":{"class":"@12","elements":[[%t]]}'
+    ), NULL),
+    -- Searchable lists (of limited size) (in case one might somehow need it):
+    (14, 0, '', CONCAT(
+        '{"class":"@2","template":{"class":"@12","elements":[[%1]]}'
+    ), NULL),
+    (15, 0, '', CONCAT(
+        '{"type":["tag","relevant properties tag"],"subject":"%1",',
+        '"title":"relevant properties of %1"}'
+    ), NULL),
+    (16, 0, '', CONCAT(
+        '{"class":"@2","template":{"class":"@1",title":"%1"}'
+    ), NULL),
+    -- 
     (9, 0, '', CONCAT(
         '{"type":["tag","relevant properties tag"],"subject":"%1",',
         '"title":"relevant properties of %1"}'
     ), NULL),
-    (10, 2, 'entity', NULL, NULL),
     -- 
-    (NULL, 3, 'exAmpLe of A noT very usefuL enTiTy', NULL, NULL);
+    (NULL, 5, 'exAmpLe of A noT very usefuL enTiTy', NULL, NULL);
 
 
 -- [...] If data_input is a binary file, '%b' is used, but this should
