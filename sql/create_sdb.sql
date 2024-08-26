@@ -220,13 +220,15 @@ VALUES
     ), CONCAT(
         "A class of the so-called 'tags,' which are essential to this ",
         "semantic system. A tag is essentially a function that takes ",
-        "an 'instance' (of any given class) entity and produces a ratable ",
-        "quality, which can e.g. ",
-        "be how good a product or piece of media is, perhaps measured on a ",
+        "an 'instance' (of any given class) entity and produces a rating ",
+        "scale, which can e.g. ",
+        "be how good a product or a piece of media is, perhaps measured on a ",
         "scale from 1 to 5 stars, how durable a product is, perhaps measured ",
         "in months, or how much it generally costs, perhaps measured in USD. ",
-        "For every pair of tag and subject, the users can then rate/score/",
-        "estimate the resulting ratable quality."
+        "For every pair of tag and subject, the users can then rate the ",
+        "resulting rating scale. If a tag has no specific ",
+        "description of the scale, then the default interpretation is a ",
+        "1–5 rating scale of how well the tag fits the given instance."
     )),
     (2, 0, '', CONCAT(
         '{"class":"class","title":"template","description":"%t"}'
@@ -277,18 +279,19 @@ VALUES
         "structure used to form semantic relations in this semantic system. ",
         "A property tag is always constructed from just a 'property' entity ",
         "(of the 'property' class) and another 'subject' entity (of any ",
-        "class). The resulting ratable quality is then how well the given ",
+        "class). The resulting rating scale is then how well the given ",
         "instance entity fits the given property of the subject entity. "
         "For instance, we might have a movie entity as our subject entity, ",
         "and 'director' as our property entity, and have 'John Doe' ",
         "as the instance entity, which says that John Doe is the ",
         "director of the given movie. If the property entity has no ",
-        "further description, the ratable quality is just how well the ",
-        "instance (e.g. John Doe) fits the tag of being e.g. the 'director ",
+        "further description, the rating scale is just a 1–5 scale how ",
+        "well the ",
+        "instance (e.g. John Doe) fits the given tag, e.g. the 'director ",
         "of the given movie.' But the property entity might also specify ",
         "this rating further in its description. (For instance, it might ", 
         "specify that the main director always ought to be given 5 stars on ",
-        "a rating scale from 1 to 5, e.g.)"
+        "the rating scale from 1 to 5, e.g.)"
     )),
     (9, 0, '', CONCAT(
         '{"class":"@2","template":{',
@@ -307,7 +310,7 @@ VALUES
     (12, 0, '', CONCAT(
         '{"class":"class","title":"list","description":"%t"}'
     ), CONCAT(
-        "A class of all (ordered) lists. The only property of entities of ",
+        "A class of all (ordered) lists. The only property of ",
         "this class, other than the 'class' property itself, is an 'elements' ",
         "property that includes a list of all the elements. Note that lists ",
         "are written in property structs as e.g. '",
@@ -317,19 +320,23 @@ VALUES
         "one-to-many properties)."
     )),
     (13, 0, '', CONCAT(
-        '{"class":"@2","template":{"class":"@12","elements":[[%t]]}'
+        '{"class":"@2","template":{"class":"@12","elements":[["%t"]]}'
     ), NULL),
     -- Searchable lists (of limited size) (in case one might somehow need it):
     (14, 0, '', CONCAT(
-        '{"class":"@2","template":{"class":"@12","elements":[[%1]]}'
+        '{"class":"@2","template":{"class":"@12","elements":[["%1"]]}'
     ), NULL),
     (15, 0, '', CONCAT(
-        '{"type":["tag","relevant properties tag"],"subject":"%1",',
-        '"title":"relevant properties of %1"}'
+        '{"class":"@2","template":{"class":"@1","title":"%1",',
+        '"class of instances":"%2"}'
     ), NULL),
     (16, 0, '', CONCAT(
-        '{"class":"@2","template":{"class":"@1",title":"%1"}'
+        '{"class":"@2","template":{"class":"@1","title":"%1",',
+        '"class of instances":"%2","description":"%t"}'
     ), NULL),
+    (17, 16, 'relevant properties|@6', '', CONCAT(
+        "Properties that "
+    )),
     -- 
     (9, 0, '', CONCAT(
         '{"type":["tag","relevant properties tag"],"subject":"%1",',
