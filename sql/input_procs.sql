@@ -134,36 +134,36 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindEntity (
     IN userID BIGINT UNSIGNED,
-    IN parentID BIGINT UNSIGNED,
-    IN specInput VARCHAR(255),
-    IN ownStruct TEXT,
+    IN tmplID BIGINT UNSIGNED,
+    IN tmplInput VARCHAR(255),
+    IN propStruct TEXT,
     IN dataInput LONGBLOB
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
-    DECLARE ownStructHash VARCHAR(255) DEFAULT CASE
-        WHEN ownStruct = "" OR ownStruct IS NULL THEN ""
-        ELSE SHA2(ownStruct, 224)
+    DECLARE propStructHash VARCHAR(255) DEFAULT CASE
+        WHEN propStruct = "" OR propStruct IS NULL THEN ""
+        ELSE SHA2(propStruct, 224)
     END;
     DECLARE dataInputHash VARCHAR(255) DEFAULT CASE
         WHEN dataInput = "" OR dataInput IS NULL THEN ""
         ELSE SHA2(dataInput, 224)
     END;
 
-    IF (ownStruct = "") THEN
-        SET ownStruct = NULL;
+    IF (propStruct = "") THEN
+        SET propStruct = NULL;
     END IF;
     IF (dataInput = "") THEN
         SET dataInput = NULL;
     END IF;
 
     INSERT IGNORE INTO Entities (
-        parent_id, spec_input, own_struct, own_struct_hash,
+        template_id, template_input, property_struct, property_struct_hash,
         data_input, data_input_hash, creator_id
     )
     VALUES (
-        parentId, specInput, ownStruct, ownStructHash,
+        parentId, tmplInput, propStruct, propStructHash,
         dataInput, dataInputHash, userID
     );
     IF (mysql_affected_rows() > 0) THEN
@@ -174,9 +174,9 @@ BEGIN
         SELECT id INTO outID
         FROM Entities
         WHERE (
-            parent_id = parentID AND
-            spec_input = specInput AND
-            own_struct_hash = ownStructHash AND
+            template_id = tmplID AND
+            template_input = tmplInput AND
+            property_struct_hash = propStructHash AND
             data_input_hash = dataInputHash
         );
     END IF;

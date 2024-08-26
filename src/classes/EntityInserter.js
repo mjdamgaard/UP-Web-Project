@@ -103,9 +103,9 @@ export class EntityInserter {
       req: "ent",
       ses: this.accountManager.sesIDHex,
       u: this.accountManager.inputUserID,
-      p: entDef.parentID,
-      s: entDef.spec,
-      o: entDef.props,
+      t: entDef.parentID,
+      i: entDef.spec,
+      p: entDef.props,
       d: entDef.data,
     };
     DBRequestManager.input(reqData, (result) => {
@@ -151,9 +151,9 @@ export class EntityInserter {
       req: "ent",
       ses: this.accountManager.sesIDHex,
       u: this.accountManager.inputUserID,
-      p: SIMPLE_PROPERTY_CLASS_ID,
-      s: propKey,
-      o: "",
+      t: SIMPLE_PROPERTY_CLASS_ID,
+      i: propKey,
+      p: "",
       d: "",
     };
     DBRequestManager.input(reqData, (result) => {
@@ -217,9 +217,9 @@ export class EntityInserter {
       req: "ent",
       ses: this.accountManager.sesIDHex,
       u: this.accountManager.inputUserID,
-      p: SIMPLE_ENTITY_CLASS_ID,
-      s: propKey,
-      o: "",
+      t: SIMPLE_ENTITY_CLASS_ID,
+      i: propKey,
+      p: "",
       d: "",
     };
     DBRequestManager.input(reqData, (result) => {
@@ -240,9 +240,9 @@ export class EntityInserter {
       req: "ent",
       ses: this.accountManager.sesIDHex,
       u: this.accountManager.inputUserID,
-      p: LIST_CLASS_ID,
-      s: listJSON,
-      o: "",
+      t: LIST_CLASS_ID,
+      i: listJSON,
+      p: "",
       d: "",
     };
     DBRequestManager.input(reqData, (result) => {
@@ -303,9 +303,9 @@ export class EntityInserter {
       req: "ent",
       ses: this.accountManager.sesIDHex,
       u: this.accountManager.inputUserID,
-      p: PROPERTY_TAG_CLASS_ID,
-      s: entID + "|" + propID,
-      o: "",
+      t: PROPERTY_TAG_CLASS_ID,
+      i: entID + "|" + propID,
+      p: "",
       d: "",
     };
     DBRequestManager.input(reqData, (result) => {
@@ -414,9 +414,9 @@ export class EntityInserter {
       req: "ent",
       ses: this.accountManager.sesIDHex,
       u: this.accountManager.inputUserID,
-      p: RELEVANT_PROPERTIES_TAG_CLASS_ID,
-      s: entID,
-      o: "",
+      t: RELEVANT_PROPERTIES_TAG_CLASS_ID,
+      i: entID,
+      p: "",
       d: "",
     };
     DBRequestManager.input(reqData, (result) => {

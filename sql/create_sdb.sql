@@ -148,30 +148,43 @@ CREATE TABLE Entities (
     -- Entity ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- Parent ID: An entity that this entity inherits properties from.
-    parent_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    -- Template ID: An entity that this entity inherits properties from.
+    -- the a template entity holds a template property which is a JSON object
+    -- containing the properties of the instance entities, where some of the
+    -- property values might include placeholders of the form '%1', '%2', etc.,
+    -- or of the form '%b', '%t', or '%t1', '%t2', etc. ('%' is escaped by
+    -- '\%'.)
+    template_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
     -- (A majority of entities will have a parent, so we use 0 instead of NULL.)
 
-    -- Specifying input: A string or a JSON array of strings or entity IDs.
-    -- These are substituted instead of placeholders in the own_struct of the
-    -- parent. 
-    spec_input VARCHAR(255) NOT NULL DEFAULT "",
+    -- Template input: A list of inputs separated by '|', which substitutes the
+    -- /%[1-9][0-9]*/ placeholders of the template. ('|' is escaped by '\|'.)
+    template_input VARCHAR(255) NOT NULL DEFAULT "",
     -- (We use "" for no specifying inputs.)
 
     -- Own property data structure (struct) containing the specific properties
-    -- of this entity.
-    own_struct TEXT DEFAULT NULL,
-    own_struct_hash VARCHAR(255) NOT NULL DEFAULT (
+    -- of this entity, and formatted as a JSON object. If a property value is
+    -- an array, it is interpreted as a set (used for one-to-many properties,
+    -- such as e.g. movie->actor). An array nested directly inside of an array
+    -- is interpreted as a ordered list, however. (When in doubt of whether to
+    -- define an entity via an ordered list or a set, use a set.) 
+    property_struct TEXT DEFAULT NULL,
+    property_struct_hash VARCHAR(255) NOT NULL DEFAULT (
         CASE
-            WHEN own_struct IS NULL OR own_struct = "" THEN ""
-            ELSE SHA2(own_struct, 224)
+            WHEN property_struct IS NULL OR property_struct = "" THEN ""
+            ELSE SHA2(property_struct, 224)
         END
     ),
 
 
-    -- Data input: A large TEXT or BLOB that cannot fit in the own_struct
-    -- directly, and therefore also substitutes a placeholder there instead
-    -- (similarly to the specifying input, but with a different placeholder).
+    -- Data input: A TEXT or BLOB that which can be large enough that one might
+    -- want to store it outside of the PRIMARY INDEX, and might want to only
+    -- serve to the client upon specific request, and not whenever the client
+    -- looks up defining data for the entity. This inputs either replaces the
+    -- '%b' or '%t' placeholder ('b' for binary, 't' for text) in
+    -- property_struct, or it is also split into multiple strings using '|'
+    -- as a delimiter, in case of the '%t<num>' placeholders. ('|' is also
+    -- escaped by '\|' here.)
     data_input LONGBLOB DEFAULT NULL,
     data_input_hash VARCHAR(255) NOT NULL DEFAULT (
         CASE
@@ -183,7 +196,9 @@ CREATE TABLE Entities (
     -- or in the interface with it, i.e. in the "input procedures.")
 
 
-    UNIQUE INDEX (parent_id, spec_input, own_struct_hash, data_input_hash),
+    UNIQUE INDEX (
+        template_id, template_input, property_struct_hash, data_input_hash
+    ),
 
 
     -- ID of the creator, i.e. the user who uploaded this entity.
@@ -196,7 +211,8 @@ CREATE TABLE Entities (
 
 /* Some initial inserts */
 
-INSERT INTO Entities (id, parent_id, spec_input, own_struct, data_input)
+INSERT INTO Entities
+    (id, template_id, template_input, property_struct, data_input)
 VALUES
     -- TODO: Add 'initial description's (with data_input text as the value).
     (1, 0, '', '{"type":"user","username":"%1"}', NULL),
@@ -219,148 +235,18 @@ VALUES
     (NULL, 3, 'exAmpLe of A noT very usefuL enTiTy', NULL, NULL);
 
 
--- For the placeholders '%1', '%2', etc., the spec_input is parsed a a JSON
--- array of literals before substituting each one. If data_input is a text, it
--- is substituted in a similar way as spec_input, only using '%t1', '%t2',
--- etc., instead. I data_input is a binary file, '%b' is used, but this should
+-- [...] If data_input is a binary file, '%b' is used, but this should
 -- conventionally only be used for special file classes (which defines the
 -- file format but no other metadata about the file). 
 -- Special characters are '%', '@', which are escaped with backslashes,
 -- as well as the other special characters of JSON, of course (escaped the
--- JSON way), in case of the ownStruct. For the spec_input, the separator '|'
+-- JSON way), in case of the propStruct. For the tmplInput, the separator '|'
 -- is also special, also escaped by a backslash.
--- '@' is used to write IDs, namely by writing e.g. '"@5"' which refers the the
+-- '@' is used to write IDs, namely by writing e.g. '"@6"' which refers the the
 -- "initial_user" entity.
 
 
 
-
--- /* Formal (or 'functional') entities */
-
--- CREATE TABLE FormalEntityData (
---     -- Formal entity data key (private).
---     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
---     -- ID of the function entity, which defines how the entity is interpreted,
---     -- given the inputs as well.
---     fun_id BIGINT UNSIGNED NOT NULL,
-    
---     -- TODO: Make this table hold the input list text itself as well iff it
---     -- is of length 255 or shorter, and use this to speed up queries.
---     -- ... Or it could hold the data hash. But then again, maybe not..
-
---     -- A string listing the IDs of the inputs of the function.
---     input_list_id BIGINT UNSIGNED NOT NULL,
-
---     UNIQUE INDEX (fun_id, input_list_id)
--- );
-
-
--- /* Property tag entities */
-
--- CREATE TABLE PropertyTagData (
---     -- Property tag entity data key (private).
---     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
---     -- ID of the property subject entity.
---     subj_id BIGINT UNSIGNED NOT NULL,
-    
---     -- ID of the property entity.
---     prop_id BIGINT UNSIGNED NOT NULL,
-
---     UNIQUE INDEX (subj_id, prop_id)
--- );
-
-
--- /* Statement entities */
-
--- CREATE TABLE StatementData (
---     -- Statement entity data key (private).
---     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
---     -- ID of the tag entity.
---     tag_id BIGINT UNSIGNED NOT NULL,
-    
---     -- ID of the instance entity, which the statement says fits the given tag.
---     inst_id BIGINT UNSIGNED NOT NULL,
-
---     UNIQUE INDEX (tag_id, inst_id)
--- );
-
-
-
--- /* List entities */
-
--- CREATE TABLE ListData (
---     -- List data key (private).
---     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
---     -- Data hash. (We use SHA2 rather than MD5 to allow ourselves to simply
---     -- assume that there won't be any collisions.)
---     data_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(txt, 224)),
-
---     -- Text consisting of a list of (positive) integers separated by commas.
---     txt TEXT NOT NULL,
-
---     -- UNIQUE INDEX (data_hash, data_key)
---     UNIQUE INDEX (data_hash)
--- );
-
-
--- /* Property document entities */
-
--- CREATE TABLE PropertyDocData (
---     -- Property document data key (private).
---     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
---     -- Data hash.
---     data_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(txt, 224)),
-
---     -- Text containing the property--value assignments. A property might
---     -- have multiple values assigned to it. For instance, a movie might
---     -- have several directors for its 'director' property, and might have
---     -- a whole list of actors for its 'actor' property. 
---     txt TEXT NOT NULL,
-
---     -- UNIQUE INDEX (data_hash, data_key)
---     UNIQUE INDEX (data_hash)
--- );
-
-
--- /* Text entities */
-
--- CREATE TABLE TextData (
---     -- Text data key (private).
---     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
---     -- Data hash.
---     data_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(txt, 224)),
-
---     -- Data. Note that texts are not stored completely verbatim, as '@'s need
---     -- to be escaped, unless the are to be interpreted as the beginning of
---     -- a link to a reference (where the title is typically substituted as
---     -- a clickable link).
---     txt TEXT,
-
---     -- UNIQUE INDEX (data_hash, data_key)
---     UNIQUE INDEX (data_hash)
--- );
-
-
--- /* Binary string entities */
-
--- CREATE TABLE BinaryData (
---     -- Binary string/file (BLOB) data key (private).
---     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
---     -- Data hash.
---     data_hash VARCHAR(255) NOT NULL, -- DEFAULT (SHA2(bin, 224)),
-
---     -- Data.
---     bin LONGBLOB,
-
---     UNIQUE INDEX (data_hash)
--- );
 
 
 

@@ -69,55 +69,9 @@ switch ($reqType) {
         break;
     case "ent":
         $sql = "CALL insertOrFindEntity (?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "p", "s", "o", "d");
+        $paramNameArr = array("u", "t", "i", "p", "d");
         $typeArr = array("id", "id", "str", "json", "blob");
         break;
-    // case "sim":
-    //     $sql = "CALL insertOrFindSimEntity (?, ?)";
-    //     $paramNameArr = array("u", "t");
-    //     $typeArr = array("id", "str");
-    //     break;
-    // case "assoc":
-    //     $sql = "CALL insertOrFindAssocEntity (?, ?, ?)";
-    //     $paramNameArr = array("u", "t", "p");
-    //     $typeArr = array("id", "id", "id");
-    //     break;
-    // case "form":
-    //     $sql = "CALL insertOrFindFormEntity (?, ?, ?)";
-    //     $paramNameArr = array("u", "f", "i");
-    //     $typeArr = array("id", "id", "id");
-    //     break;
-    // case "propTag":
-    //     $sql = "CALL insertOrFindPropTagEntity (?, ?, ?)";
-    //     $paramNameArr = array("u", "s", "p");
-    //     $typeArr = array("id", "id", "id");
-    //     break;
-    // case "stmt":
-    //     $sql = "CALL insertOrFindStmtEntity (?, ?, ?)";
-    //     $paramNameArr = array("u", "t", "i");
-    //     $typeArr = array("id", "id", "id");
-    //     break;
-    // case "list":
-    //     $sql = "CALL insertOrFindListEntity (?, ?)";
-    //     $paramNameArr = array("u", "l");
-    //     $typeArr = array("id", "list_text");
-    //     break;
-    // case "propDoc":
-    //     $sql = "CALL insertOrFindPropDocEntity (?, ?)";
-    //     $paramNameArr = array("u", "p");
-    //     $typeArr = array("id", "prop_doc");
-    //     break;
-    // case "text":
-    //     $sql = "CALL insertOrFindTextEntity (?, ?)";
-    //     $paramNameArr = array("u", "t");
-    //     $typeArr = array("id", "text");
-    //     break;
-    // case "bin":
-    //     // $sql = "CALL insertOrFindBinaryEntity (?, ?)";
-    //     // $paramNameArr = array("u", "b");
-    //     // $typeArr = array("id", "blob");
-    //     echoErrorJSONAndExit('The "bin" request type is not implemented yet');
-    //     break;
     default:
         echoBadErrorJSONAndExit("Unrecognized request type");
 }

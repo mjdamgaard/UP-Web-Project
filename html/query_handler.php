@@ -99,11 +99,11 @@ switch ($reqType) {
         $sql = "CALL selectEntity (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [[parentID, specInput, ownStruct, dataLen]].
+        // output: [[tmplID, tmplInput, propStruct, dataLen]].
         break;
     case "entSK":
         $sql = "CALL selectEntityFromSecKey (?, ?, ?, ?)";
-        $paramNameArr = array("p", "s", "oh", "dh");
+        $paramNameArr = array("t", "i", "ph", "dh");
         $paramNameArr = array("id", "str", "str", "str");
         // output: [[entID]].
         break;
@@ -125,48 +125,6 @@ switch ($reqType) {
         $typeArr = array("id", "uint", "uint", "tint");
         // output: [[entID], ...].
         break;
-    // case "ent":
-    //     $sql = "CALL selectEntityInfo (?)";
-    //     $paramNameArr = array("id");
-    //     $typeArr = array("id");
-    //     // output:
-    //     //     sim: [['s', title]],
-    //     //     assoc: [['a', titleID, title, defID]],
-    //     //     form: [['f', funID, inputListID, textStart, len]],
-    //     //     propTag: [['p', subjID, propID]],
-    //     //     stmt: [['m', tagID, instID]],
-    //     //     list: [['l', textStart, len]],
-    //     //     propDoc: [['d', textStart, len]],
-    //     //     text: [['t', textStart, len, dataHash]],
-    //     //     bin: [['b', len, dataHash]],
-    //     //     user: [['u', username]],
-    //     //     bot: [['n', botName]],
-    //     break;
-    // case "list":
-    //     $sql = "CALL selectList (?, ?, ?)";
-    //     $paramNameArr = array("id", "l", "s");
-    //     // (l = 0 is the same as l = 65535.)
-    //     $typeArr = array("id", "uint", "uint");
-    //     // output: [[text]].
-    //     break;
-    // case "propDoc":
-    //     $sql = "CALL selectPropDoc (?, ?, ?)";
-    //     $paramNameArr = array("id", "l", "s");
-    //     $typeArr = array("id", "uint", "uint");
-    //     // output: [[text]].
-    //     break;
-    // case "text":
-    //     $sql = "CALL selectText (?, ?, ?)";
-    //     $paramNameArr = array("id", "l", "s");
-    //     $typeArr = array("id", "uint", "uint");
-    //     // output: [[text]].
-    //     break;
-    // case "bin":
-    //     $sql = "CALL selectBinary (?)";
-    //     $paramNameArr = array("id");
-    //     $typeArr = array("id");
-    //     // output: [[bin]].
-    //     break;
     case "user":
         $sql = "CALL selectUserInfo (?)";
         $paramNameArr = array("id");
@@ -179,66 +137,6 @@ switch ($reqType) {
         $typeArr = array("id");
         // output: [[botName, botDescription]].
         break;
-    // case "simID":
-    //     $sql = "CALL selectSimEntityID (?)";
-    //     $paramNameArr = array("t");
-    //     $typeArr = array("str");
-    //     // output: [[entID]].
-    //     break;
-    // case "assocID":
-    //     $sql = "CALL selectAssocEntityID (?, ?)";
-    //     $paramNameArr = array("t", "p");
-    //     $typeArr = array("id", "id");
-    //     // output: [[entID]].
-    //     break;
-    // case "formID":
-    //     $sql = "CALL selectFormEntityID (?, ?)";
-    //     $paramNameArr = array("f", "i");
-    //     $typeArr = array("id", "id");
-    //     // output: [[entID]].
-    //     break;
-    // case "formIDFromText":
-    //     $sql = "CALL selectFormEntityIDFromText (?, ?)";
-    //     $paramNameArr = array("f", "i");
-    //     $typeArr = array("id", "text");
-    //     // output: [[entID, inputListID]].
-    //     break;
-    // case "propTagID":
-    //     $sql = "CALL selectPropTagEntityID (?, ?)";
-    //     $paramNameArr = array("s", "p");
-    //     $typeArr = array("id", "id");
-    //     // output: [[entID]].
-    //     break;
-    //     case "stmtID":
-    //         $sql = "CALL selectStmtEntityID (?, ?)";
-    //         $paramNameArr = array("t", "i");
-    //         $typeArr = array("id", "id");
-    //         // output: [[entID]].
-    //         break;
-    // case "listID":
-    //     $sql = "CALL selectListEntityID (?)";
-    //     $paramNameArr = array("h");
-    //     $typeArr = array("str");
-    //     // output: [[entID]].
-    //     break;
-    // case "propDocID":
-    //     $sql = "CALL selectPropDocEntityID (?)";
-    //     $paramNameArr = array("h");
-    //     $typeArr = array("str");
-    //     // output: [[entID]].
-    //     break;
-    // case "textID":
-    //     $sql = "CALL selectTextEntityID (?)";
-    //     $paramNameArr = array("h");
-    //     $typeArr = array("str");
-    //     // output: [[entID]].
-    //     break;
-    // case "binID":
-    //     $sql = "CALL selectBinaryEntityID (?)";
-    //     $paramNameArr = array("h");
-    //     $typeArr = array("str");
-    //     // output: [[entID]].
-    //     break;
     // case "userID":
     //     $sql = "CALL selectUserEntityID (?)";
     //     $paramNameArr = array("n");

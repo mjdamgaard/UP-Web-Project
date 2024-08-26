@@ -59,14 +59,14 @@ BEGIN proc: BEGIN
         LEAVE proc;
     END IF;
 
-    INSERT IGNORE INTO Entities (parent_id, spec_input)
+    INSERT IGNORE INTO Entities (template_id, template_input)
     VALUES (1, CONCAT('"', uName, '"')); -- 1 is the ID of the 'user' class.
     SELECT id INTO outID
     FROM Entities
     WHERE (
-        parent_id = 1 AND
-        spec_input = CONCAT('"', uName, '"') AND
-        own_struct_hash = "" AND
+        template_id = 1 AND
+        template_input = CONCAT('"', uName, '"') AND
+        property_struct_hash = "" AND
         data_input_hash = ""
     );
 
