@@ -11,7 +11,15 @@ const SpecialRefEntityTitle = () => <template></template>;
 // const InvalidEntityTitle = () => <template></template>;
 
 
-export const EntityTitle = ({entID, isLink}) => {
+export const EntityTitle = ({entID, setIsReadyArr, key}) => {
+  setIsReadyArr ??= () => {};
+  key ??= 0;
+
+  const [results, setResults] = useState([]);
+  useQuery(results, setResults, {
+    req: "ent",
+    id: entID,
+  });
   // Use PropStructFetcher to fetch entDataArr and then pass this to
   // EntityTitleFromData.
   return (

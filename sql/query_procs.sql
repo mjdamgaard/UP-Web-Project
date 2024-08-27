@@ -54,7 +54,7 @@ CREATE PROCEDURE selectInstanceList (
 BEGIN
     SELECT
         rat_val AS ratVal,
-        inst_id AS instID
+        obj_id AS objID
     FROM SemanticInputs
     WHERE (
         user_id = userID AND
@@ -65,8 +65,8 @@ BEGIN
     ORDER BY
         CASE WHEN isAscOrder THEN rat_val END ASC,
         CASE WHEN NOT isAscOrder THEN rat_val END DESC,
-        CASE WHEN isAscOrder THEN inst_id END ASC,
-        CASE WHEN NOT isAscOrder THEN inst_id END DESC
+        CASE WHEN isAscOrder THEN obj_id END ASC,
+        CASE WHEN NOT isAscOrder THEN obj_id END DESC
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
@@ -78,7 +78,7 @@ DELIMITER //
 CREATE PROCEDURE selectRating (
     IN userID BIGINT UNSIGNED,
     IN tagID BIGINT UNSIGNED,
-    IN instID BIGINT UNSIGNED
+    IN objID BIGINT UNSIGNED
 )
 BEGIN
     SELECT rat_val AS ratVal
@@ -86,7 +86,7 @@ BEGIN
     WHERE (
         user_id = userID AND
         tag_id = tagID AND
-        inst_id = instID
+        obj_id = objID
     );
 END //
 DELIMITER ;

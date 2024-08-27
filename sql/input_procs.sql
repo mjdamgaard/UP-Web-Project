@@ -11,8 +11,9 @@ DROP PROCEDURE insertOrFindEntity;
 DELIMITER //
 CREATE PROCEDURE insertOrUpdateRating (
     IN userID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
     IN tagID BIGINT UNSIGNED,
-    IN instID BIGINT UNSIGNED,
+    IN objID BIGINT UNSIGNED,
     IN encodedRatVal SMALLINT UNSIGNED
 )
 BEGIN proc: BEGIN
@@ -21,8 +22,8 @@ BEGIN proc: BEGIN
     DECLARE stmtID, stmtDataKey BIGINT UNSIGNED;
 
     -- Get or create the statement entity.
-    INSERT IGNORE INTO StatementData (tag_id, inst_id)
-    VALUES (tagID, instID);
+    INSERT IGNORE INTO StatementData (tag_id, obj_id)
+    VALUES (tagID, objID);
     IF (mysql_affected_rows() > 0) THEN
         SELECT LAST_INSERT_ID() INTO stmtDataKey;
         INSERT INTO Entities (data_type, data_key, creator_id)
@@ -33,7 +34,7 @@ BEGIN proc: BEGIN
         FROM StatementData
         WHERE (
             tag_id = tagID AND
-            inst_id = instID
+            obj_id = objID
         );
         SELECT id INTO stmtID
         FROM Entities
@@ -51,7 +52,7 @@ BEGIN proc: BEGIN
         WHERE (
             user_id = userID AND
             tag_id = tagID AND
-            inst_id = instID
+            obj_id = objID
         );
         INSERT INTO RecordedInputs (
             user_id,
@@ -72,7 +73,7 @@ BEGIN proc: BEGIN
         WHERE (
             user_id = userID AND
             tag_id = tagID AND
-            inst_id = instID
+            obj_id = objID
         );
         -- If prevRatVal is the same as before, set exitCode = 1 and do nothing
         -- further.
@@ -85,13 +86,13 @@ BEGIN proc: BEGIN
                 user_id,
                 tag_id,
                 rat_val,
-                inst_id
+                obj_id
             )
             VALUES (
                 userID,
                 tagID,
                 ratVal,
-                instID
+                objID
             );
             INSERT INTO RecordedInputs (
                 user_id,

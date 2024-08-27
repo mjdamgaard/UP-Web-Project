@@ -52,7 +52,10 @@ CREATE TABLE SemanticInputs (
     -- User (or bot) who states the statement.
     user_id BIGINT UNSIGNED NOT NULL,
 
-    -- Tag of the statement.
+    -- Subject of the statement (might be nothing, represented by 0).
+    subj_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+    -- Tag or relation of the statement (a tag if subj_id = 0, else a relation).
     tag_id BIGINT UNSIGNED NOT NULL,
 
     -- Rating value of how well the tag fits the entity. The first byte
@@ -62,24 +65,22 @@ CREATE TABLE SemanticInputs (
     rat_val TINYINT UNSIGNED NOT NULL,
     CHECK (rat_val != 0),
 
-    -- The so-called instance of the tag, or rather the potential instance:
-    -- How well the instance fits the tag is thus determined by the rating,
-    -- which might also be below neutral, meaning that the instance does not
-    -- fit the tag.
-    inst_id BIGINT UNSIGNED NOT NULL,
+    -- The object of the tag/relation.
+    obj_id BIGINT UNSIGNED NOT NULL,
 
     -- Resulting semantic input: "User #<user_id> states that entity 
-    -- #<inst_id> fits the tag #<tag_id> on a scale
-    -- from 0 to 10 (with 5 being neutral) by <rat_val> / 6553.5."
+    -- #<obj_id> fits the tag #<tag_id>(#<subj_id>) on a scale specified
+    -- by the tag/relation entity (or by its class).
 
     PRIMARY KEY (
         user_id,
+        subj_id,
         tag_id,
         rat_val,
-        inst_id
+        obj_id
     ),
 
-    UNIQUE INDEX (user_id, tag_id, inst_id)
+    UNIQUE INDEX (user_id, subj_id, tag_id, obj_id)
 );
 -- TODO: Compress this table and its sec. index, as well as some other tables
 -- and sec. indexes below. (But compression is a must for this table.)
@@ -87,6 +88,8 @@ CREATE TABLE SemanticInputs (
 -- user_id), but I actually think that it is better to implement semantically,
 -- e.g. by using the "statement_user_rater_bot," namely since this better
 -- allows for filtering such user lists.. 
+
+
 
 
 -- RecordedInputs can first of all be used by time-dependent bots (e.g. a mean-
@@ -108,6 +111,7 @@ CREATE TABLE RecordedInputs (
     -- UNIQUE INDEX (tag_id, inst_id, id)
     UNIQUE INDEX (stmt_id, id)
 );
+
 
 
 
@@ -147,6 +151,8 @@ CREATE TABLE IndexedEntities (
 CREATE TABLE Entities (
     -- Entity ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    class_id BIGINT UNSIGNED NOT NULL DEFAULT 12,
 
     -- Template ID: An entity that this entity inherits properties from.
     -- the a template entity holds a template property which is a JSON object
@@ -222,13 +228,13 @@ CREATE TABLE Entities (
 /* Some initial inserts */
 
 INSERT INTO Entities (
-    id, template_id, template_entity_inputs, template_string_inputs,
+    id, class_id, template_id, template_entity_inputs, template_string_inputs,
     property_struct, data_input
 )
 VALUES
     -- TODO: Add 'initial description's (with data_input text as the value).
-    (1, 0, '', '', CONCAT(
-        '{"class":"@1","title":"class"}'
+    (1, 1, 0, '', '', CONCAT(
+        '{"title":"class"}'
     ), CONCAT(
         "A class of all class entities, including this entity itself. ",
         "One benefit of using entities as classes, rather than just writing ",
@@ -236,8 +242,8 @@ VALUES
         "which is 'class'), is that they can provide an additional ",
         "description to the class, like the one that you are reading now."
     )),
-    (2, 0, '', '', CONCAT(
-        '{"class":"@1","title":"tag"}'
+    (2, 1, 0, '', '', CONCAT(
+        '{"title":"tag"}'
     ), CONCAT(
         "A class of the so-called 'tags,' which are essential to this ",
         "semantic system. A tag is essentially a function that takes ",
@@ -254,8 +260,8 @@ VALUES
         "entity itself, or by its class, or by the relation entity if it is ",
         "formed by a relation and a subject."
     )),
-    (3, 0, '', '', CONCAT(
-        '{"class":"@1","title":"template"}'
+    (3, 1, 0, '', '', CONCAT(
+        '{"title":"template"}'
     ), CONCAT(
         "A class of the so-called 'templates,' which are entities that ",
         "can be used to define new entities with property structs that ",
@@ -264,21 +270,21 @@ VALUES
         "is the 'template' property, which is a variable property structure ",
         "that has placeholders for substitution. ...TODO: Continue."
     )),
-    (4, 0, '', '', CONCAT(
-        '{"class":"@1","title":"user"}'
+    (4, 1, 0, '', '', CONCAT(
+        '{"title":"user"}'
     ), CONCAT(
         "A class of the users of this Semantic Network. Whenever a ",
         "new user is created, an entity of this 'user' class is created to ",
         "represent this new user."
     )),
-    (5, 0, '', '', CONCAT(
-        '{"class":"@3","template":{"class":"@4","username":"%s"}}'
+    (5, 3, 0, '', '', CONCAT(
+        '{"template":{"class":"@4","username":"%s"}}'
     ), NULL),
-    (6, 0, '', '', CONCAT(
-        '{"class":"@3","template":{"title":"%s"}}'
+    (6, 3, 0, '', '', CONCAT(
+        '{"template":{"title":"%s"}}'
     ), NULL),
-    (7, 0, '', '', CONCAT(
-        '{"class":"@1","title":"relation"}'
+    (7, 1, 0, '', '', CONCAT(
+        '{"title":"relation"}'
     ), CONCAT(
         "A class of so-called 'relation,' which are essentially functions ",
         "that take a subject entity, perhaps of a specified class, and ",
@@ -288,8 +294,8 @@ VALUES
         "entity, which is the entity that is being rated as the instance of ",
         "the tag."
     )),
-    (8, 0, '', '', CONCAT(
-        '{"class":"@1","superclass":"@7","title":"property relation"}'
+    (8, 1, 0, '', '', CONCAT(
+        '{"superclass":"@7","title":"property relation"}'
     ), CONCAT(
         "A class of so-called 'property relations,' which constitute a ",
         "standard way ",
@@ -307,12 +313,12 @@ VALUES
         "value(s) should be, and potentially also information about how the ",
         "rating scale of the resulting tags are supposed to be interpreted."
     )),
-    (9, 0, '', '', CONCAT(
-        '{"class":"@3","template":{"class":"@8","title":"%s",",
+    (9, 3, 0, '', '', CONCAT(
+        '{"template":{"class":"@8","title":"%s",",
         "object class":"%e1" "subject class":"%e2","description":"%t"}}'
     ), NULL),
-    (10, 0, '', '', CONCAT(
-        '{"class":"@1","superclass":"@2","title":"property tag"}'
+    (10, 1, 0, '', '', CONCAT(
+        '{"superclass":"@2","title":"property tag"}'
     ), CONCAT(
         "A class of 'property tags,' which are tags of a very specific ",
         "structure used to form semantic relations in this semantic system. ",
@@ -332,24 +338,23 @@ VALUES
         "specify that the main director always ought to be given 5 stars on ",
         "the rating scale from 1 to 5, e.g.)"
     )),
-    (11, 0, '', '', CONCAT(
-        '{"class":"@3","template":{',
+    (11, 3, 0, '', '', CONCAT(
+        '{"template":{',
             '"class":"@10",',
             '"subject":"%e1",',
             '"property":"%e2",',
-            '"title":"%e2 of %e1"',
         '}}'
     ), NULL),
-    (12, 0, '', '', CONCAT(
-        '{"class":"@1","title":"entity"}'
+    (12, 1, 0, '', '', CONCAT(
+        '{"title":"entity"}'
     ), CONCAT(
         "A class of all entities of this Semantic Network. All entities ",
         "automatically has this class without needing to specify so in their ",
         "definition."
     )),
-    (13, 5, '', 'initial_user', NULL, NULL),
-    (14, 0, '', '', CONCAT(
-        '{"class":"@1","title":"list"}'
+    (13, 4, 5, '', 'initial_user', NULL, NULL),
+    (14, 1, 0, '', '', CONCAT(
+        '{"title":"list"}'
     ), CONCAT(
         "A class of all (ordered) lists. The only property of ",
         "this class, other than the 'class' property itself, is an 'elements' ",
@@ -360,25 +365,25 @@ VALUES
         "interpreted as an unordered set of valid property values (used for ",
         "one-to-many properties)."
     )),
-    (15, 0, '', '', CONCAT(
-        '{"class":"@3","template":{"class":"@14","elements":[["%s%t"]]}'
+    (15, 3, 0, '', '', CONCAT(
+        '{"template":{"class":"@14","elements":[["%s%t"]]}'
     ), NULL),
-    (16, 0, '', '', CONCAT(
-        '{"class":"@3","template":{"class":"@2","title":"%s",',
-        '"class of instances":"%e1","description":"%t"}'
+    (16, 3, 0, '', '', CONCAT(
+        '{"template":{"class":"@2","title":"%s",',
+        '"instance class":"%e1","description":"%t"}'
     ), NULL),
-    (17, 9, '8', 'relevant property', NULL, CONCAT(
+    (17, 8, 9, '8', 'relevant property', NULL, CONCAT(
         "A property relation where the objects are the property relations ",
         "that are relevant to the subject entity."
     )),
-    (18, 9, '8,1', 'relevant property of class instances', NULL, CONCAT(
+    (18, 8, 9, '8,1', 'relevant property of class instances', NULL, CONCAT(
         "A property relation where the objects are the property relations ",
         "that are relevant to all the instances of the subject class."
     )),
-    (19, 11, '12,18', '', NULL, NULL),
-    (20, 11, '2,18', '', NULL, NULL),
-    (21, 0, '', '', CONCAT(
-        '{"class":"@1","title":"set"}'
+    (19, 10, 11, '12,18', '', NULL, NULL),
+    (20, 10, 11, '2,18', '', NULL, NULL),
+    (21, 1, 0, '', '', CONCAT(
+        '{"title":"set"}'
     ), CONCAT(
         "A class of all sets (unordered lists). The only property of ",
         "this class, other than the 'class' property itself, is an 'elements' ",
@@ -394,11 +399,11 @@ VALUES
         "using the '[]' syntax or by creating another set entity with the ",
         "given set as its only element."
     )),
-    (22, 0, '', '', CONCAT(
-        '{"class":"@3","template":{"class":"@21","elements":["%s%t"]}'
+    (22, 3, 0, '', '', CONCAT(
+        '{"template":{"class":"@21","elements":["%s%t"]}'
     ), NULL),
     -- 
-    (NULL, 6, '', 'exAmpLe of A noT very usefuL enTiTy', NULL, NULL);
+    (NULL, 12, 6, '', 'exAmpLe of A noT very usefuL enTiTy', NULL, NULL);
 
 
 -- [...] If data_input is a binary file, '%b' is used, but this should
