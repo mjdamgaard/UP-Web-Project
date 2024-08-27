@@ -99,14 +99,21 @@ switch ($reqType) {
         $sql = "CALL selectEntity (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [[tmplID, tmplInput, propStruct, dataLen]].
+        // output: [[
+        //     tmplID, tmplEntInputs, tmplStrInputs, propStructLen, dataLen
+        // ]].
         break;
     case "entSK":
-        $sql = "CALL selectEntityFromSecKey (?, ?, ?, ?)";
-        $paramNameArr = array("t", "i", "ph", "dh");
-        $paramNameArr = array("id", "str", "str", "str");
+        $sql = "CALL selectEntityFromSecKey (?, ?, ?, ?, ?)";
+        $paramNameArr = array("t", "e", "s", "ph", "dh");
+        $paramNameArr = array("id", "id_list", "str", "str", "str");
         // output: [[entID]].
         break;
+    case "entPS":
+        $sql = "CALL selectEntityPropStruct (?, ?, ?)";
+        $paramNameArr = array("id", "l", "s");
+        $paramNameArr = array("id", "uint", "uint");
+        // output: [[dataInput]].
     case "entData":
         $sql = "CALL selectEntityData (?, ?, ?)";
         $paramNameArr = array("id", "l", "s");

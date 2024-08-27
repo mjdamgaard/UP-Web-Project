@@ -156,8 +156,9 @@ CREATE PROCEDURE selectEntity (
 BEGIN
     SELECT
         template_id AS parentId,
-        template_input AS tmplInput,
-        property_struct AS propStruct,
+        template_entity_inputs AS tmplEntInputs,
+        template_string_inputs AS tmplStrInputs,
+        LENGTH(property_struct) AS propStructLen,
         LENGTH(data_input) AS dataLen
     FROM Entities
     WHERE id = entID;
@@ -169,7 +170,8 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectEntityFromSecKey (
     IN tmplID BIGINT UNSIGNED,
-    IN tmplInput VARCHAR(255),
+    IN tmplEntInputs VARCHAR(209),
+    IN tmplStrInputs VARCHAR(255),
     IN propStructHash VARCHAR(56),
     IN dataInputHash VARCHAR(56)
 )
@@ -178,10 +180,31 @@ BEGIN
     FROM Entities
     WHERE (
         template_id = tmplID AND
-        template_input = tmplInput AND
+        template_entity_inputs = tmplEntInputs AND
+        template_string_inputs = tmplStrInputs AND
         property_struct_hash = propStructHash AND
         data_input_hash = dataInputHash
     );
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectEntityPropStruct (
+    IN entID BIGINT UNSIGNED,
+    IN maxLen INT UNSIGNED,
+    IN startPos INT UNSIGNED
+)
+BEGIN
+    SET startPos = startPos + 1;
+    SELECT (
+        CASE WHEN maxLen = 0 THEN SUBSTRING(property_struct, startPos)
+        ELSE SUBSTRING(property_struct, startPos, startPos + maxLen)
+        END
+    ) AS propStruct
+    FROM Entities
+    WHERE id = entID;
 END //
 DELIMITER ;
 

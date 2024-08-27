@@ -160,7 +160,7 @@ CREATE TABLE Entities (
 
     -- Template entity (ID) inputs: A list of integer inputs separated by ',',
     -- which substitutes the /%e[0-9]/ placeholders of the template.
-    template_entity_inputs VARCHAR(255) NOT NULL DEFAULT "",
+    template_entity_inputs VARCHAR(209) NOT NULL DEFAULT "",
 
     -- Template string inputs: A list of string inputs separated by '|',
     -- which substitutes the /%s[0-9]/ placeholders of the template.
@@ -249,7 +249,10 @@ VALUES
         "For every pair of tag and subject, the users can then rate the ",
         "resulting rating scale. If a tag has no specific ",
         "description of the scale, then the default interpretation is a ",
-        "1–5 rating scale of how well the tag fits the given instance."
+        "1–5 rating scale of how well the tag fits the given instance. ",
+        "The description of the rating scale can be defined by the tag ",
+        "entity itself, or by its class, or by the relation entity if it is ",
+        "formed by a relation and a subject."
     )),
     (3, 0, '', '', CONCAT(
         '{"class":"@1","title":"template"}'
