@@ -5,10 +5,92 @@ import {DBRequestManager} from "../classes/DBRequestManager.js";
 
 export class DataFetcher {
   
-  static fetch() {
+  // DataFetcher.fetch() takes a request object, rqObj, and calls callback not
+  // just at the end when all requests are fulfilled, but calls it each time
+  // a request is completed, with the given reqObj key and the fetched result
+  // as the inputs to the callback.
+  // The structure of reqObj is:
+  // reqObj = {
+  //   key1: {
+  //     dependencies: (falsy | KeyObj),
+  //     entKey: (ID | {entID: ID} | SecondaryEntKey),
+  //     property: (string | {(propID|relID): ID} | {metadata: MetadataKey}),
+  //     status: (falsy | "waiting" | "success" | "failure"),
+  //   },
+  //   key2: {...},
+  //   ...
+  // },
+  // KeyArr := {key1: (true|false), key2: (true|false), ...],
+  // SecondaryEntKey := TODO...
+  // MetadataKey := TODO...
+  //
+  // If a request has dependencies it wait for those requests (referenced by
+  // their keys) to be done first. If a key is accompanied by the value true,
+  // the request is only carried out if the referenced request is successful,
+  // and if it is accompanied by false, the request is only carried out if
+  // the referenced request is un-successful.
+  static fetchAll(reqObj, callback) {
+    Object.keys(reqObj).forEach(key => {
+      let req = reqObj[key];
 
+      // Do nothing if status is either "waiting", "success", or "failure".
+      if (req.status) return;
+
+      // Else, if there are no dependencies or all dependencies are done,
+      // carry out the request.
+      if (dependenciesAreReady(reqObj, req)) {
+        req.status = "waiting";
+        this.fetch(req.entKey, req.property, (result, isSuccess) => {
+          // Whenever new data returns from the server, first set the status,
+          // then call the callback on the key and the result, and then call
+          // this fetchAll() method once again to see if new requests need
+          // to be made.
+          req.status = (isSuccess) ? "success" : "failure";
+          callback(key, result);
+          this.fetchAll(reqObj, callback);
+        });
+      } 
+    });
   }
 
+
+  // TODO: Describe.
+  static fetch(entKey, property, callback) {
+    
+  }
+
+}
+
+
+
+
+function dependenciesAreReady(reqObj, req) {
+  // If there are no dependencies, return true.
+  if (!req.dependencies) return true;
+
+  // Else go through each dependency and check that all dependencies are
+  // fetched, and with the right outcome.
+  var areReady = true;
+  return Object.keys(req.dependencies).forEach(key => {
+    // If areReady is already false, return immediately.
+    if (!areReady) return;
+
+    // Else check that the status of the referenced req is not falsy or
+    // "waiting", and set areReady = false if it is.
+    let status = reqObj[key].status;
+    if (!status || status === "waiting") {
+      areReady = false;
+      return;
+    }
+
+    // Else check that the status matches the required one.
+    if (req.dependencies[key]) {
+      areReady = (status === "success") ? true : false;
+    } else {
+      areReady = (status === "failure") ? true : false;
+    }
+    return;
+  });
 }
 
 
