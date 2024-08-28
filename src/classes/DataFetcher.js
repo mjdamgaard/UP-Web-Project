@@ -26,8 +26,8 @@ export function fetchPropStructData(entID, callback) {
     ownStruct: null,
     dataLen: null,
     template: null,
-    entInputNames: null,
-    strInputNames: null,
+    // entInputNames: null,
+    // strInputNames: null,
     error: false,
   };
   let reqData = {
@@ -68,6 +68,7 @@ export function fetchPropStructData(entID, callback) {
   });
 }
 
+
 function fetchTemplateAndCreatePropStruct(entData, callback) {
   let reqData = {
     req: "entOPS",
@@ -80,98 +81,51 @@ function fetchTemplateAndCreatePropStruct(entData, callback) {
 }
 
 
+
 function parseAndConstructPropStruct(entData, callback) {
-  let propStruct = {};
+  // Initialize the propStruct as the un-substituted template.
+  let propStruct = Object.assign({}, entData.template);
 
-  // First get the property names of all the entity inputs.
+  // Replace all /%e[0-9]/ placeholders in the values of the template by the
+  // entity inputs. 
+  let entInputArr = entData.entInput.split(",");
+  substitutePlaceholders(propStruct, /%e[0-9]/g, placeholder => {
+    let n = parseInt(placeholder.substring(2));
+    return entInputArr[n] ?? "";
+  });
 
+  // Replace all /%s[0-9]/ placeholders in the values of the template by the
+  // string inputs, separated by '|'.
+  let strInputArr = getStrInputArr(entData.strInput);
+  substitutePlaceholders(propStruct, /%s[0-9]/g, placeholder => {
+    let n = parseInt(placeholder.substring(2));
+    return strInputArr[n] ?? "";
+  });
 
+  // Replace any /%s/ placeholders in the values of the template by the
+  // whole string input. 
+  let strInput = entData.strInput;
+  substitutePlaceholders(propStruct, /%s/g, () => strInput);
 
+  // Finally copy the object's own property struct into the template. 
   entData.propStruct = Object.assign(propStruct, entData.ownStruct);
 
+  // Then call the callback function and return.
   callback(entData);
   return;
 }
 
 
-function getEntInputNames(template) {
-  let ret = [];
-  let placeholderOnlyRegEx = /^%e[0-9]$/;
-  Object.keys(template).forEach(propKey => {
-    let propVal = template[propKey];
-    if (placeholderOnlyRegEx.test(propVal)) {
-      let n = parseInt(propVal.substring(1));
-      ret[n] ??= propKey;
-    }
+export function substitutePlaceholders(propStruct, regex, substituteFun) {
+  Object.keys(propStruct).forEach(propKey => {
+    let propVal = propStruct[propKey];
+    propStruct[propKey] = propVal.replaceAll(regex, substituteFun);
   });
-  return ret;
 }
 
 
-function getStrInputNames(template) {
-  let ret;
-  let wholeStrPlaceholderOnlyRegEx = /^%s$/;
-  Object.keys(template).forEach(propKey => {
-    let propVal = template[propKey];
-    if (wholeStrPlaceholderOnlyRegEx.test(propVal)) {
-      ret ??= propKey;
-    }
-  });
-  if (ret) return;
-
-  // If no 'propKey:"%s"' member was found, look for 'propKey:"%s[0-9]"'
-  // members and return an array of the relevant propKeys.
-  ret = [];
-  let splitStrPlaceholderOnlyRegEx = /^%s[0-9]$/;
-  Object.keys(template).forEach(propKey => {
-    let propVal = template[propKey];
-    if (splitStrPlaceholderOnlyRegEx.test(propVal)) {
-      let n = parseInt(propVal.substring(1));
-      ret[n] ??= propKey;
-    }
-  });
-  return ret;
-}
-
-
-
-export function getSpecifiedPropStruct(parPropStruct, spec) {
-  var specArr = (typeof spec === "string") ? getSpecArr(spec) : spec;
-
-  // Replace each '%<n>' placeholder in parPropStruct with specArr[<n> - 1].
-  // If a specArr[<n> - 1] is undefined, let the placeholder be. Note that is
-  // is assumed that '%<n>' will always be followed by space or some sort of
-  // punctuation, and never directly by other digits or another placeholder. 
-  var ret = {};
-  Object.keys(parPropStruct).forEach(prop => {
-    let val = parPropStruct[prop];
-    // If property value is a string, replace e.g. '%3' with specArr[2], and
-    // '\\\\%3' with '\\\\' + specArr[2], unless specArr[2] is undefined.
-    if (typeof val === "string") {
-      ret[prop] = val.replaceAll(/(^|[^\\%])(\\\\)*%[1-9][0-9]*/g, str => {
-        let [leadingChars, n] = val.match(/^[^%]*|[^%].*$/g);
-        if (n === undefined) {
-          n = leadingChars;
-          leadingChars = "";
-        }
-        let placement = specArr[parseInt(n) - 1];
-        if (placement !== undefined) {
-          return leadingChars + placement;
-        } else {
-          return str;
-        }
-      });
-    }
-    // Else call getSpecifiedPropStruct recursively to get the substituted val.
-    else {
-      ret[prop] = getSpecifiedPropStruct(val, specArr);
-    }
-  });
-  return ret;
-}
-
-export function getSpecArr(spec) {
-  return spec
+export function getStrInputArr(strInput) {
+  return strInput
     .replaceAll("\\\\", "\\\\0")
     .replaceAll("\\|", "\\\\1")
     .split("|")
@@ -180,5 +134,50 @@ export function getSpecArr(spec) {
       .replaceAll("\\\\1", "|")
       .replaceAll("\\\\0", "\\");
     });
-
 }
+
+
+
+
+
+
+
+
+// function getEntInputNames(template) {
+//   let ret = [];
+//   let placeholderOnlyRegEx = /^%e[0-9]$/;
+//   Object.keys(template).forEach(propKey => {
+//     let propVal = template[propKey];
+//     if (placeholderOnlyRegEx.test(propVal)) {
+//       let n = parseInt(propVal.substring(1));
+//       ret[n] ??= propKey;
+//     }
+//   });
+//   return ret;
+// }
+
+
+// function getStrInputNames(template) {
+//   let ret;
+//   let wholeStrPlaceholderOnlyRegEx = /^%s$/;
+//   Object.keys(template).forEach(propKey => {
+//     let propVal = template[propKey];
+//     if (wholeStrPlaceholderOnlyRegEx.test(propVal)) {
+//       ret ??= propKey;
+//     }
+//   });
+//   if (ret) return;
+
+//   // If no 'propKey:"%s"' member was found, look for 'propKey:"%s[0-9]"'
+//   // members and return an array of the relevant propKeys.
+//   ret = [];
+//   let splitStrPlaceholderOnlyRegEx = /^%s[0-9]$/;
+//   Object.keys(template).forEach(propKey => {
+//     let propVal = template[propKey];
+//     if (splitStrPlaceholderOnlyRegEx.test(propVal)) {
+//       let n = parseInt(propVal.substring(1));
+//       ret[n] ??= propKey;
+//     }
+//   });
+//   return ret;
+// }
