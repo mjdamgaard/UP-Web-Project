@@ -69,17 +69,43 @@ export class DataFetcher {
   // DataFetcher.fetch() branches according to the input property in order to
     // fetch the appropriate data.
   static fetch(entKey, property, callback) {
-    
+    // First get entID from the entKey.
+    const entID = getEntID(entKey);
+
     // If property is just a string, interpret as a request to search the
     // defining propStruct, before the text/binary dataInput is substituted
     // into it, for the value of the property with that name.
     if (typeof property === "string") {
-
+      fetchPropStructData(entID, (entData) => {
+        let result = (entData.propStruct ?? {})[property];
+        let isSuccess = !entData.error && result;
+        callback(result, isSuccess);
+      });
     }
     
+    
+    // TODO: Add more.
   }
 
 }
+
+
+// TODO: Describe.
+function getEntID(entKey) {
+  // If entKey is a string of digits, interpret it as the entID itself. 
+  if (typeof entKey === "object" ) {
+    return entKey;
+  }
+
+  // If entKey includes an entID property, return the value of that.
+  if (entKey.entID) {
+    return entKey.entID;
+  }
+
+  // TODO: Add more.
+}
+
+
 
 
 // isFinished() returns true if reqObj has no further requests pending or
@@ -127,33 +153,6 @@ function dependenciesAreMet(reqObj, req) {
     },
     true
   );
-
-  // If there are no dependencies, return true.
-  if (!req.dependencies) return true;
-
-  // Else go through each dependency and check that all dependencies are
-  // fetched, and with the right outcome.
-  var areReady = true;
-  return Object.keys(req.dependencies).forEach(key => {
-    // If areReady is already false, return immediately.
-    if (!areReady) return;
-
-    // Else check that the status of the referenced req is not falsy or
-    // "waiting", and set areReady = false if it is.
-    let status = reqObj[key].status;
-    if (!status || status === "waiting") {
-      areReady = false;
-      return;
-    }
-
-    // Else check that the status matches the required one.
-    if (req.dependencies[key]) {
-      areReady = (status === "success") ? true : false;
-    } else {
-      areReady = (status === "failure") ? true : false;
-    }
-    return;
-  });
 }
 
 
