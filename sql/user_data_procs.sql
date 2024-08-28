@@ -66,7 +66,7 @@ BEGIN proc: BEGIN
     WHERE (
         template_id = 1 AND
         template_input = CONCAT('"', uName, '"') AND
-        property_struct_hash = "" AND
+        own_prop_struct_hash = "" AND
         data_input_hash = ""
     );
 

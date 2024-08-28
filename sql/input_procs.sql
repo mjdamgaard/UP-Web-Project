@@ -128,23 +128,23 @@ CREATE PROCEDURE insertOrFindEntity (
     IN tmplID BIGINT UNSIGNED,
     IN tmplEntInputs VARCHAR(209),
     IN tmplStrInputs VARCHAR(255),
-    IN propStruct TEXT,
+    IN ownStruct TEXT,
     IN dataInput LONGBLOB
 )
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
     DECLARE exitCode TINYINT;
-    DECLARE propStructHash VARCHAR(56) DEFAULT CASE
-        WHEN propStruct = "" OR propStruct IS NULL THEN ""
-        ELSE SHA2(propStruct, 224)
+    DECLARE ownStructHash VARCHAR(56) DEFAULT CASE
+        WHEN ownStruct = "" OR ownStruct IS NULL THEN ""
+        ELSE SHA2(ownStruct, 224)
     END;
     DECLARE dataInputHash VARCHAR(56) DEFAULT CASE
         WHEN dataInput = "" OR dataInput IS NULL THEN ""
         ELSE SHA2(dataInput, 224)
     END;
 
-    IF (propStruct = "") THEN
-        SET propStruct = NULL;
+    IF (ownStruct = "") THEN
+        SET ownStruct = NULL;
     END IF;
     IF (dataInput = "") THEN
         SET dataInput = NULL;
@@ -152,12 +152,12 @@ BEGIN
 
     INSERT IGNORE INTO Entities (
         template_id, template_entity_inputs, template_string_inputs,
-        property_struct, property_struct_hash, data_input, data_input_hash,
+        own_prop_struct, own_prop_struct_hash, data_input, data_input_hash,
         creator_id
     )
     VALUES (
         parentId, tmplEntInputs, tmplStrInputs,
-        propStruct, propStructHash, dataInput, dataInputHash, userID
+        ownStruct, ownStructHash, dataInput, dataInputHash, userID
     );
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
@@ -169,7 +169,7 @@ BEGIN
         WHERE (
             template_id = tmplID AND
             template_entity_inputs = tmplEntInputs AND
-            property_struct_hash = propStructHash AND
+            own_prop_struct_hash = ownStructHash AND
             data_input_hash = dataInputHash
         );
     END IF;

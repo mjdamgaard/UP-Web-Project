@@ -9,28 +9,14 @@ DROP PROCEDURE selectRecordedInputsMaxID;
 
 DROP PROCEDURE selectEntity;
 DROP PROCEDURE selectEntityFromSecKey;
+DROP PROCEDURE selectEntityPropStruct;
 DROP PROCEDURE selectEntityData;
 DROP PROCEDURE selectCreator;
 DROP PROCEDURE selectCreations;
 
--- DROP PROCEDURE selectList;
--- DROP PROCEDURE selectPropDoc;
--- DROP PROCEDURE selectText;
--- DROP PROCEDURE selectBinary;
-
 DROP PROCEDURE selectUserInfo;
 DROP PROCEDURE selectBotInfo;
 
--- DROP PROCEDURE selectAssocEntityID;
--- DROP PROCEDURE selectSimEntityID;
--- DROP PROCEDURE selectFormEntityID;
--- DROP PROCEDURE selectFormEntityIDFromText;
--- DROP PROCEDURE selectPropTagEntityID;
--- DROP PROCEDURE selectStmtEntityID;
--- DROP PROCEDURE selectListEntityID;
--- DROP PROCEDURE selectPropDocEntityID;
--- DROP PROCEDURE selectTextEntityID;
--- DROP PROCEDURE selectBinaryEntityID;
 -- DROP PROCEDURE selectUserEntityID;
 -- DROP PROCEDURE selectBotEntityID;
 
@@ -158,7 +144,7 @@ BEGIN
         template_id AS parentId,
         template_entity_inputs AS tmplEntInputs,
         template_string_inputs AS tmplStrInputs,
-        LENGTH(property_struct) AS propStructLen,
+        LENGTH(own_prop_struct) AS ownStructLen,
         LENGTH(data_input) AS dataLen
     FROM Entities
     WHERE id = entID;
@@ -172,7 +158,7 @@ CREATE PROCEDURE selectEntityFromSecKey (
     IN tmplID BIGINT UNSIGNED,
     IN tmplEntInputs VARCHAR(209),
     IN tmplStrInputs VARCHAR(255),
-    IN propStructHash VARCHAR(56),
+    IN ownStructHash VARCHAR(56),
     IN dataInputHash VARCHAR(56)
 )
 BEGIN
@@ -182,7 +168,7 @@ BEGIN
         template_id = tmplID AND
         template_entity_inputs = tmplEntInputs AND
         template_string_inputs = tmplStrInputs AND
-        property_struct_hash = propStructHash AND
+        own_prop_struct_hash = ownStructHash AND
         data_input_hash = dataInputHash
     );
 END //
@@ -199,10 +185,10 @@ CREATE PROCEDURE selectEntityPropStruct (
 BEGIN
     SET startPos = startPos + 1;
     SELECT (
-        CASE WHEN maxLen = 0 THEN SUBSTRING(property_struct, startPos)
-        ELSE SUBSTRING(property_struct, startPos, startPos + maxLen)
+        CASE WHEN maxLen = 0 THEN SUBSTRING(own_prop_struct, startPos)
+        ELSE SUBSTRING(own_prop_struct, startPos, startPos + maxLen)
         END
-    ) AS propStruct
+    ) AS ownStruct
     FROM Entities
     WHERE id = entID;
 END //
