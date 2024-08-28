@@ -6,9 +6,7 @@ import {DBRequestManager} from "../classes/DBRequestManager.js";
 export class DataFetcher {
   
   // DataFetcher.fetchAll() takes a request object, rqObj, and calls callback
-  // not just at the end when all requests are fulfilled, but calls it each
-  // time a request is completed, with the given reqObj key and the fetched
-  // result as the inputs to the callback.
+  // at the end when all requests are fulfilled.
   // The structure of reqObj is:
   // reqObj = {
   //   key1: {
@@ -17,7 +15,7 @@ export class DataFetcher {
   //     entKey: (falsy | ID | {entID: ID} | SecondaryEntKey),
   //     property: (string | {(propID|relID): ID} | {metadata: MetadataKey}),
   //     status: (falsy | "waiting" | "success" | "failure" | "skipped"),
-  //     result: (entID | string | ...),
+  //     result: (falsy | entID | string | ...),
   //   },
   //   key2: {...},
   //   ...
@@ -65,13 +63,16 @@ export class DataFetcher {
           // and result.
           req.result = result;
           req.status = (isSuccess) ? "success" : "failure";
-          // Then call the callback on the key, the result, and a boolean
-          // whether this was the last data that was needed.
-          let isFinished = getIsFinished(reqObj);
-          callback(key, result, isFinished);
-          // Then call this fetchAll() method once again to see if new
-          // requests need to be made (but not if isFinished is already true).
-          if (!isFinished) this.fetchAll(reqObj, callback);
+          // Then if not all data has been fetched, call this fetchAll() method
+          // once again to see if new requests need to be made.
+          if (!getIsFinished(reqObj)) {
+            this.fetchAll(reqObj, callback)
+          }
+          // Else call the callback, and pass it the reqObj, as well as the
+          // last result and key.
+          else {
+            callback(reqObj, result, key)
+          }
         });
       } 
     });

@@ -1,7 +1,7 @@
 import {useState, createContext, useContext, useEffect} from "react";
 import {useQuery} from "../hooks/DBRequests.js";
 import {ColumnContext} from "../contexts/ColumnContext.js";
-import {EntityDataFetcher, getPropStruct} from "./EntityDataFetcher.js";
+import {DataFetcher} from "../classes/DataFetcher.js";
 import {ExpandableSpan} from "./DropdownBox.js";
 
 const ConcatenatedEntityTitle = () => <template></template>;
@@ -11,15 +11,21 @@ const SpecialRefEntityTitle = () => <template></template>;
 // const InvalidEntityTitle = () => <template></template>;
 
 
-export const EntityTitle = ({entID, setIsReadyArr, key}) => {
-  setIsReadyArr ??= () => {};
-  key ??= 0;
+export const EntityTitle = ({entID, key}) => {
 
-  const [results, setResults] = useState([]);
-  useQuery(results, setResults, {
-    req: "ent",
-    id: entID,
-  });
+  const [results, setResults] = useState({});
+  useEffect(() => {
+    let reqObj = {
+      titleReq: {entKey: entID, property: "title"}
+    };
+    DataFetcher.fetchAll(reqObj, () => {
+      setResults(prev => {
+        let ret = {...prev};
+        ret.title = reqObj.titleReq.result;
+      });
+    });
+  }, []);
+  
   // Use PropStructFetcher to fetch entDataArr and then pass this to
   // EntityTitleFromData.
   return (
