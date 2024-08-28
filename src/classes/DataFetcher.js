@@ -10,17 +10,19 @@ export class DataFetcher {
   // The structure of reqObj is:
   // reqObj = {
   //   key1: {
-  //     dependencies: (falsy | KeyObj),
-  //     getEntKey: (falsy | (resultObj) => entKey),
   //     entKey: (falsy | ID | {entID: ID} | SecondaryEntKey),
-  //     property: (string | {(propID|relID): ID} | {metadata: MetadataKey}),
+  //     property: ("propStruct" | {relID: ID} | {metadata: MetadataKey}),
+  //     dependencies: (falsy | KeyArr),
+  //     getIsReady: (reqObj) => (true | false),
+  //     getEntKey: (falsy | (reqObj) => entKey),
   //     status: (falsy | "waiting" | "success" | "failure" | "skipped"),
-  //     result: (falsy | entID | string | ...),
+  //     isDone: (falsy | true),
+  //     result: (falsy | object | entID | string | ...),
   //   },
   //   key2: {...},
   //   ...
   // },
-  // KeyObj := {key1: (true|false), key2: (true|false), ...],
+  // KeyArr := [key1, key2, ...],
   // SecondaryEntKey := TODO...
   // MetadataKey := TODO...
   //
@@ -36,40 +38,40 @@ export class DataFetcher {
       // Do nothing if status is either "waiting", "success", or "failure".
       if (req.status) return;
 
-      // Else if all dependencies are done, see if these met, and if so, fetch
-      // the data, and if not, then mark the request as "skipped"
+      // Else if all dependencies are done, check req.getIsReady() and if it
+      // returns false, skip this request entirely. If is is true, however,
+      // carry out the request.
       if (dependenciesAreDone(reqObj, req)) {
-        // Mark the request as "skipped" if the dependencies are done but not
-        // met. 
-        if (!dependenciesAreMet(reqObj, req)) {
+        // Mark the request as "skipped" if not req.getIsReady().
+        let getIsReady = req.getIsReady ?? (() => true);
+        if (!getIsReady(reqObj)) {
           req.status = "skipped";
+          req.isDone = true;
           return;
         }
+
         // Else mark the request as "waiting".
         req.status = "waiting";
+
         // Then get the entKey, potentially from previously fetched results.
-        var entKey = req.entKey;
-        if (!entKey) {
-          let keyArr = Object.keys(req.dependencies);
-          var resultObj = {};
-          keyArr.forEach(key => {
-            resultObj[key] = reqObj[key].result;
-          });
-          entKey = req.getEntKey(resultObj);
-        }
+        var entKey = req.entKey ?? req.getEntKey(reqObj);
+
         // Then fetch the data.
         this.fetch(entKey, req.property, (result, isSuccess) => {
           // Whenever new data returns from the server, first set the status
           // and result.
           req.result = result;
           req.status = (isSuccess) ? "success" : "failure";
+          req.isDone = true;
+
           // Then if not all data has been fetched, call this fetchAll() method
           // once again to see if new requests need to be made.
           if (!getIsFinished(reqObj)) {
             this.fetchAll(reqObj, callback)
           }
-          // Else call the callback, and pass it the reqObj, as well as the
-          // last result and key.
+
+          // Else finally call the callback, and pass it the reqObj, as well
+          // as the last result and key.
           else {
             callback(reqObj, result, key)
           }
@@ -88,10 +90,10 @@ export class DataFetcher {
     // If property is just a string, interpret as a request to search the
     // defining propStruct, before the text/binary dataInput is substituted
     // into it, for the value of the property with that name.
-    if (typeof property === "string") {
+    if (property === "propStruct") {
       fetchPropStructData(entID, (entData) => {
-        let result = (entData.propStruct ?? {})[property];
-        let isSuccess = !entData.error && result;
+        let result = entData;
+        let isSuccess = !entData.error && entData;
         callback(result, isSuccess);
       });
     }
@@ -135,38 +137,29 @@ function getIsFinished(reqObj) {
 
 
 function dependenciesAreDone(reqObj, req) {
-  // If there are no dependencies, return true.
-  if (!req.dependencies) return false;
-
-  // Else go through each dependency and check that all dependencies are
-  // fetched
-  return Object.keys(req.dependencies).reduce(
-    (acc, key) => {
-      let status = reqObj[key].status;
-      return acc && (status === "success" || status === "failure");
-    },
+  // If there are no dependencies, return true. Else go through each dependency
+  // and check that all dependencies are either fetched or skipped.
+  return !req.dependencies || req.dependencies.reduce(
+    (acc, key) => (acc && reqObj[key].status),
     true
   );
 }
 
-function dependenciesAreMet(reqObj, req) {
-  // If there are no dependencies, return true.
-  if (!req.dependencies) return false;
-
-  // Else go through each dependency and check that all dependencies are
-  // fetched
-  return Object.keys(req.dependencies).reduce(
-    (acc, key) => {
-      let val = req.dependencies[key];
-      let status = reqObj[key].status;
-      return acc && (
-        val && status === "success" ||
-        !val && status === "failure"
-      );
-    },
-    true
-  );
-}
+// function dependenciesAreMet(reqObj, req) {
+//   // If there are no dependencies, return true. Else go through each dependency
+//   // and check that all dependencies are fetched successfully
+//   return !req.dependencies || Object.keys(req.dependencies).reduce(
+//     (acc, key) => {
+//       let val = req.dependencies[key];
+//       let status = reqObj[key].status;
+//       return acc && (
+//         val && status === "success" ||
+//         !val && status === "failure"
+//       );
+//     },
+//     true
+//   );
+// }
 
 
 

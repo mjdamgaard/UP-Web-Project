@@ -16,16 +16,27 @@ export const EntityTitle = ({entID, key}) => {
   const [results, setResults] = useState({});
   useEffect(() => {
     let reqObj = {
-      titleReq: {entKey: entID, property: "title"}
+      psReq: {entKey: entID, property: "propStruct"}
     };
     DataFetcher.fetchAll(reqObj, () => {
+      let propStruct = reqObj.psReq.result.propStruct;
       setResults(prev => {
         let ret = {...prev};
-        ret.title = reqObj.titleReq.result;
+        ret.class = propStruct.class;
+        ret.title = propStruct.title;
+        ret.isFetched = true;
       });
     });
   }, []);
-  
+
+
+  // Before results is fetched, render this:
+  if (!results.isFetched) {
+    return (
+      <PlaceholderModule {...extraProps} entID={entID} recLevel={recLevel} />
+    );
+  }
+
   // Use PropStructFetcher to fetch entDataArr and then pass this to
   // EntityTitleFromData.
   return (
