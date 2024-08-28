@@ -13,7 +13,8 @@ export class DataFetcher {
   // reqObj = {
   //   key1: {
   //     dependencies: (falsy | KeyObj),
-  //     entKey: (ID | {entID: ID} | SecondaryEntKey),
+  //     getEntKey: (falsy | (resultObj) => entKey),
+  //     entKey: (falsy | ID | {entID: ID} | SecondaryEntKey),
   //     property: (string | {(propID|relID): ID} | {metadata: MetadataKey}),
   //     status: (falsy | "waiting" | "success" | "failure" | "skipped"),
   //     result: (entID | string | ...),
@@ -21,7 +22,7 @@ export class DataFetcher {
   //   key2: {...},
   //   ...
   // },
-  // KeyArr := {key1: (true|false), key2: (true|false), ...],
+  // KeyObj := {key1: (true|false), key2: (true|false), ...],
   // SecondaryEntKey := TODO...
   // MetadataKey := TODO...
   //
@@ -46,9 +47,20 @@ export class DataFetcher {
           req.status = "skipped";
           return;
         }
-        // Else mark the request as "waiting" and fetch the data.
+        // Else mark the request as "waiting".
         req.status = "waiting";
-        this.fetch(req.entKey, req.property, (result, isSuccess) => {
+        // Then get the entKey, potentially from previously fetched results.
+        var entKey = req.entKey;
+        if (!entKey) {
+          let keyArr = Object.keys(req.dependencies);
+          var resultObj = {};
+          keyArr.forEach(key => {
+            resultObj[key] = reqObj[key].result;
+          });
+          entKey = req.getEntKey(resultObj);
+        }
+        // Then fetch the data.
+        this.fetch(entKey, req.property, (result, isSuccess) => {
           // Whenever new data returns from the server, first set the status
           // and result.
           req.result = result;
@@ -67,7 +79,7 @@ export class DataFetcher {
 
 
   // DataFetcher.fetch() branches according to the input property in order to
-    // fetch the appropriate data.
+  // fetch the appropriate data.
   static fetch(entKey, property, callback) {
     // First get entID from the entKey.
     const entID = getEntID(entKey);
@@ -83,7 +95,7 @@ export class DataFetcher {
       });
     }
     
-    
+
     // TODO: Add more.
   }
 
