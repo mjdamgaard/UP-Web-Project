@@ -16,10 +16,10 @@ export const EntityTitle = ({entID, key}) => {
 
   const [results, setResults] = useState({});
   useEffect(() => {
-    getEntityTitle(entID, (title) => {
+    getEntityTitle(entID, (xmlChildren) => {
       setResults(prev => {
         let ret = {...prev};
-        ret.title = title;
+        ret.xmlChildren = xmlChildren;
         ret.isFetched = true;
         return ret;
       });
@@ -37,7 +37,7 @@ export const EntityTitle = ({entID, key}) => {
   // Finally render this. 
   return (
     <span key={key} className="entity-title">
-      {results.title}
+      {results.xmlChildren}
     </span>
   );
 }
@@ -46,15 +46,36 @@ export const EntityTitle = ({entID, key}) => {
 export function getEntityTitle(entID, callback) {
   DataFetcher.fetchMetadata(entID, (entMetadata) => {
     let propStruct = entMetadata.propStruct;
-    let title = propStruct.title;
     var entClass = propStruct.class;
-    if (/^@[1-9][0-9]*$/.test(entClass)) {
-      entClass = entClass.substring(1); 
+    // TODO: Import specific IDs instead as variable (e.g. TEMPLATE_CLASS_ID).
+    if (entClass === "@3") {
+      callback(
+        <>
+          <span className="class-prefix">{"template: "}</span>
+          <span className="ps-template">
+            {JSON.stringify(propStruct.template)}
+          </span>
+        </>
+      );
     }
-    if (entClass === "...") {
-      callback(title);
-    } else {
-      callback(title);
+    else if (entClass === "@1") {
+      callback(
+        <>
+          <span className="class-prefix">{"class: "}</span>
+          <span className="ps-class">
+            {propStruct.title}
+          </span>
+        </>
+      );
+    }
+    // TODO: Add more.
+
+    else {
+      callback(
+        <>
+          {propStruct.title}
+        </>
+      );
     }
   });
 }
