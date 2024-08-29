@@ -179,7 +179,7 @@ CREATE TABLE Entities (
     -- such as e.g. movie->actor). An array nested directly inside of an array
     -- is interpreted as a ordered list, however. (When in doubt of whether to
     -- define an entity via an ordered list or a set, use a set.) 
-    own_prop_struct TEXT DEFAULT NULL,
+    own_prop_struct TEXT(1000) DEFAULT NULL, -- (Can be resized.)
     own_prop_struct_hash VARCHAR(56) NOT NULL DEFAULT (
         CASE
             WHEN own_prop_struct IS NULL OR own_prop_struct = "" THEN ""

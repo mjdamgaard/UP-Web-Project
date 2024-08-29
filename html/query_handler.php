@@ -100,7 +100,7 @@ switch ($reqType) {
         $paramNameArr = array("id");
         $typeArr = array("id");
         // output: [[
-        //     tmplID, tmplEntInputs, tmplStrInputs, ownStructLen, dataLen
+        //     tmplID, tmplEntInputs, tmplStrInputs, ownStruct, dataLen
         // ]].
         break;
     case "entSK":
@@ -109,11 +109,11 @@ switch ($reqType) {
         $paramNameArr = array("id", "id_list", "str", "str", "str");
         // output: [[entID]].
         break;
-    case "entOPS":
-        $sql = "CALL selectEntityPropStruct (?, ?, ?)";
-        $paramNameArr = array("id", "l", "s");
-        $paramNameArr = array("id", "uint", "uint");
-        // output: [[ownStruct]].
+    // case "entOPS":
+    //     $sql = "CALL selectEntityPropStruct (?, ?, ?)";
+    //     $paramNameArr = array("id", "l", "s");
+    //     $paramNameArr = array("id", "uint", "uint");
+    //     // output: [[ownStruct]].
     case "entData":
         $sql = "CALL selectEntityData (?, ?, ?)";
         $paramNameArr = array("id", "l", "s");
@@ -187,14 +187,14 @@ $stmt = $conn->prepare($sql);
 DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 // fetch the result as a numeric array.
 $res = $stmt->get_result()->fetch_all();
-// if $reqType == entOPS, JSON-decode the output, "ownStruct", before the
+// if $reqType == ent, JSON-decode the fourth output, "ownStruct", before the
 // final full JSON-encoding. 
-if ($reqType === "entOPS") {
-    $ownStruct = $res[0][0];
+if ($reqType === "ent") {
+    $ownStruct = $res[0][3];
     if ($ownStruct) {
-        $res[0][0] = json_decode($ownStruct, true);
+        $res[0][3] = json_decode($ownStruct, true);
     } else {
-        $res[0][0] = json_decode("{}", true);
+        $res[0][3] = json_decode("{}", true);
     }
 }
 // finally echo the JSON-encoded numeric array, containing e.g. the

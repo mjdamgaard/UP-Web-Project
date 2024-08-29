@@ -128,7 +128,7 @@ CREATE PROCEDURE insertOrFindEntity (
     IN tmplID BIGINT UNSIGNED,
     IN tmplEntInputs VARCHAR(209),
     IN tmplStrInputs VARCHAR(255),
-    IN ownStruct TEXT,
+    IN ownStruct TEXT(1000),
     IN dataInput LONGBLOB
 )
 BEGIN

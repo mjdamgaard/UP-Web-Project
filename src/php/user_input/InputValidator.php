@@ -158,6 +158,14 @@ class InputValidator {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, "BLOB");
                 }
                 break;
+            case "prop_struct":
+                if (
+                    strlen($paramVal) > 1000 ||
+                    !json_validate($paramVal)
+                ) {
+                    echoTypeErrorJSONAndExit($paramName, $paramVal, "JSON");
+                }
+                break;
             case "json":
                 if (
                     strlen($paramVal) > 65535 ||

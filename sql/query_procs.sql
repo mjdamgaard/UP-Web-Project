@@ -9,7 +9,7 @@ DROP PROCEDURE selectRecordedInputsMaxID;
 
 DROP PROCEDURE selectEntity;
 DROP PROCEDURE selectEntityFromSecKey;
-DROP PROCEDURE selectEntityPropStruct;
+-- DROP PROCEDURE selectEntityPropStruct;
 DROP PROCEDURE selectEntityData;
 DROP PROCEDURE selectCreator;
 DROP PROCEDURE selectCreations;
@@ -144,7 +144,8 @@ BEGIN
         template_id AS parentId,
         template_entity_inputs AS tmplEntInputs,
         template_string_inputs AS tmplStrInputs,
-        LENGTH(own_prop_struct) AS ownStructLen,
+        -- LENGTH(own_prop_struct) AS ownStructLen,
+        own_prop_struct AS ownStruct,
         LENGTH(data_input) AS dataLen
     FROM Entities
     WHERE id = entID;
@@ -176,23 +177,23 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE selectEntityPropStruct (
-    IN entID BIGINT UNSIGNED,
-    IN maxLen INT UNSIGNED,
-    IN startPos INT UNSIGNED
-)
-BEGIN
-    SET startPos = startPos + 1;
-    SELECT (
-        CASE WHEN maxLen = 0 THEN SUBSTRING(own_prop_struct, startPos)
-        ELSE SUBSTRING(own_prop_struct, startPos, startPos + maxLen)
-        END
-    ) AS ownStruct
-    FROM Entities
-    WHERE id = entID;
-END //
-DELIMITER ;
+-- DELIMITER //
+-- CREATE PROCEDURE selectEntityPropStruct (
+--     IN entID BIGINT UNSIGNED,
+--     IN maxLen INT UNSIGNED,
+--     IN startPos INT UNSIGNED
+-- )
+-- BEGIN
+--     SET startPos = startPos + 1;
+--     SELECT (
+--         CASE WHEN maxLen = 0 THEN SUBSTRING(own_prop_struct, startPos)
+--         ELSE SUBSTRING(own_prop_struct, startPos, startPos + maxLen)
+--         END
+--     ) AS ownStruct
+--     FROM Entities
+--     WHERE id = entID;
+-- END //
+-- DELIMITER ;
 
 
 
