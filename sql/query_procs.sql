@@ -7,6 +7,8 @@ DROP PROCEDURE selectRecordedInputs;
 DROP PROCEDURE selectRecordedInputsFromSecKey;
 DROP PROCEDURE selectRecordedInputsMaxID;
 
+-- TODO: Make proc to query for users who has rated a stmt / scale.
+
 DROP PROCEDURE selectEntity;
 DROP PROCEDURE selectEntityFromSecKey;
 -- DROP PROCEDURE selectEntityPropStruct;

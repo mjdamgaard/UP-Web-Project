@@ -8,19 +8,6 @@ DROP TABLE IndexedEntities;
 /* Entities */
 DROP TABLE Entities;
 
--- /* Data */
--- DROP TABLE SimpleEntityData;
--- DROP TABLE AssocEntityData;
--- DROP TABLE FormalEntityData;
--- DROP TABLE PropertyTagData;
--- DROP TABLE StatementData;
--- DROP TABLE ListData;
--- DROP TABLE PropertyDocData;
--- DROP TABLE TextData;
--- DROP TABLE BinaryData;
--- DROP TABLE UserData;
--- DROP TABLE NativeBotData;
-
 /* Users and Bots */
 DROP TABLE Users;
 DROP TABLE AggregationBots;
@@ -80,14 +67,22 @@ CREATE TABLE SemanticInputs (
         obj_id
     ),
 
-    UNIQUE INDEX (user_id, subj_id, tag_id, obj_id)
+    -- Index to look up specific rating (and restricting one rating pr. user.)
+    UNIQUE INDEX (user_id, subj_id, tag_id, obj_id),
+
+    -- Index to look up users who has rated the stmt / rating scale.
+    UNIQUE INDEX (subj_id, tag_id, obj_i, rat_val, user_id)
+
+    -- All relations are directional, so we don't need:
+    -- UNIQUE INDEX (user_id, obj_i, tag_id, subj_id)
 );
 -- TODO: Compress this table and its sec. index, as well as some other tables
 -- and sec. indexes below. (But compression is a must for this table.)
 -- There is also the option to create a sec. index: (tag_id, inst_id, rat_val,
 -- user_id), but I actually think that it is better to implement semantically,
 -- e.g. by using the "statement_user_rater_bot," namely since this better
--- allows for filtering such user lists.. 
+-- allows for filtering such user lists.. *Well, now I've made that index
+-- anyway.
 
 
 
