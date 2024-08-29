@@ -12,19 +12,16 @@ const SpecialRefEntityTitle = () => <template></template>;
 
 
 export const EntityTitle = ({entID, key}) => {
+  key ??= "0";
 
   const [results, setResults] = useState({});
   useEffect(() => {
-    let reqObj = {
-      psReq: {entKey: entID, property: "propStruct"}
-    };
-    DataFetcher.fetchAll(reqObj, () => {
-      let propStruct = reqObj.psReq.result.propStruct;
+    getEntityTitle(entID, (title) => {
       setResults(prev => {
         let ret = {...prev};
-        ret.class = propStruct.class;
-        ret.title = propStruct.title;
+        ret.title = title;
         ret.isFetched = true;
+        return ret;
       });
     });
   }, []);
@@ -33,105 +30,133 @@ export const EntityTitle = ({entID, key}) => {
   // Before results is fetched, render this:
   if (!results.isFetched) {
     return (
-      <PlaceholderModule {...extraProps} entID={entID} recLevel={recLevel} />
+      <EntityTitlePlaceholder entID={entID} key={key} />
     );
   }
 
-  // Use PropStructFetcher to fetch entDataArr and then pass this to
-  // EntityTitleFromData.
+  // Finally render this. 
   return (
-    <EntityDataFetcher
-      entID={entID} ChildModule={EntityTitleFromData}
-      extraProps={{isLink: isLink}} PlaceholderModule={EntityTitlePlaceholder}
-    />
+    <span key={key} className="entity-title">
+      {results.title}
+    </span>
   );
 }
 
-export const EntityTitleFromData = ({entID, entDataArr, isLink}) => {
-  // If entity is missing from the database, return an InvalidEntityTitle.
-  if (!entDataArr[1]) {
-    return (
-      <InvalidEntityTitle entID={entID} isLink={isLink} >
-        {"Entity not found"}
-      </InvalidEntityTitle>
-    );
-  }
-  // If an ancestor is missing from the database, return an InvalidEntityTitle.
-  let rootData = entDataArr.slice(-1)[0];
-  if (!rootData) {
-    return (
-      <InvalidEntityTitle entID={entID} isLink={isLink} >
-        {"Entity with missing ancestor"}
-      </InvalidEntityTitle>
-    );
-  }
-  // If the root entity has a parent, return an InvalidEntityTitle.
-  if (rootData[0]) {
-    return (
-      <InvalidEntityTitle entID={entID} isLink={isLink} >
-        {"Entity with too many ancestors"}
-      </InvalidEntityTitle>
-    );
-  }
-  // If the root entity has a spec, return an InvalidEntityTitle.
-  if (rootData[1]) {
-    return (
-      <InvalidEntityTitle entID={entID} isLink={isLink} >
-        {"Entity with an invalid ancestor"}
-      </InvalidEntityTitle>
-    );
-  }
 
-  // Else we get the full propStruct (except that any data inputs haven't
-  // been neither fetched nor inserted).
-  const propStruct = getPropStruct(entDataArr);
-  if (!propStruct) {
-    throw "EntityTitleFromData: Either getPropStruct() or checks failed";
-  }
-
-  // First we look if there are remaining spec input placeholders, and if so,
-  // we preface the title with "class: ".
-  let isClass = includesPlaceholders(propStruct);
-  if (isClass) {
-    return (
-      <EntityTitleWrapper entID={entID} isLink={isLink} >
-        <span className="title-prefix class-prefix">{"class: "}</span>
-        {"type: " + propStruct.type + ", title: " + propStruct.title}
-      </EntityTitleWrapper>
-    );
-  }
-  else if (typeof propStruct.title === "string") {
-    return (
-      <EntityTitleWrapper entID={entID} isLink={isLink} >
-        {propStruct.title}
-      </EntityTitleWrapper>
-    );
-  }
-  else if (typeof propStruct.type === "string") {
-    return (
-      <EntityTitleWrapper entID={entID} isLink={isLink} >
-        {propStruct.type + " #" + entID}
-      </EntityTitleWrapper>
-    );
-  }
-  else {
-    return (
-      <InvalidEntityTitle entID={entID} isLink={isLink} >
-        {"Entity with no title or type"}
-      </InvalidEntityTitle>
-    );
-  }
-}
-
-
-export function includesPlaceholders(propStruct) {
-  var ret = false;
-  let placeholderRegEx = /(^|[^\\%])(\\\\)*%[1-9][0-9]*/;
-  Object.values(propStruct).forEach(val => {
-    ret = ret || placeholderRegEx.test(val);
+export function getEntityTitle(entID, callback) {
+  DataFetcher.fetchMetadata(entID, (entMetadata) => {
+    let propStruct = entMetadata.propStruct;
+    let title = propStruct.title;
+    var entClass = propStruct.class;
+    if (/^@[1-9][0-9]*$/.test(entClass)) {
+      entClass = entClass.substring(1); 
+    }
+    if (entClass === "...") {
+      callback(title);
+    } else {
+      callback(title);
+    }
   });
-  return ret;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// export const EntityTitleFromData = ({entID, entDataArr, isLink}) => {
+//   // If entity is missing from the database, return an InvalidEntityTitle.
+//   if (!entDataArr[1]) {
+//     return (
+//       <InvalidEntityTitle entID={entID} isLink={isLink} >
+//         {"Entity not found"}
+//       </InvalidEntityTitle>
+//     );
+//   }
+//   // If an ancestor is missing from the database, return an InvalidEntityTitle.
+//   let rootData = entDataArr.slice(-1)[0];
+//   if (!rootData) {
+//     return (
+//       <InvalidEntityTitle entID={entID} isLink={isLink} >
+//         {"Entity with missing ancestor"}
+//       </InvalidEntityTitle>
+//     );
+//   }
+//   // If the root entity has a parent, return an InvalidEntityTitle.
+//   if (rootData[0]) {
+//     return (
+//       <InvalidEntityTitle entID={entID} isLink={isLink} >
+//         {"Entity with too many ancestors"}
+//       </InvalidEntityTitle>
+//     );
+//   }
+//   // If the root entity has a spec, return an InvalidEntityTitle.
+//   if (rootData[1]) {
+//     return (
+//       <InvalidEntityTitle entID={entID} isLink={isLink} >
+//         {"Entity with an invalid ancestor"}
+//       </InvalidEntityTitle>
+//     );
+//   }
+
+//   // Else we get the full propStruct (except that any data inputs haven't
+//   // been neither fetched nor inserted).
+//   const propStruct = getPropStruct(entDataArr);
+//   if (!propStruct) {
+//     throw "EntityTitleFromData: Either getPropStruct() or checks failed";
+//   }
+
+//   // First we look if there are remaining spec input placeholders, and if so,
+//   // we preface the title with "class: ".
+//   let isClass = includesPlaceholders(propStruct);
+//   if (isClass) {
+//     return (
+//       <EntityTitleWrapper entID={entID} isLink={isLink} >
+//         <span className="title-prefix class-prefix">{"class: "}</span>
+//         {"type: " + propStruct.type + ", title: " + propStruct.title}
+//       </EntityTitleWrapper>
+//     );
+//   }
+//   else if (typeof propStruct.title === "string") {
+//     return (
+//       <EntityTitleWrapper entID={entID} isLink={isLink} >
+//         {propStruct.title}
+//       </EntityTitleWrapper>
+//     );
+//   }
+//   else if (typeof propStruct.type === "string") {
+//     return (
+//       <EntityTitleWrapper entID={entID} isLink={isLink} >
+//         {propStruct.type + " #" + entID}
+//       </EntityTitleWrapper>
+//     );
+//   }
+//   else {
+//     return (
+//       <InvalidEntityTitle entID={entID} isLink={isLink} >
+//         {"Entity with no title or type"}
+//       </InvalidEntityTitle>
+//     );
+//   }
+// }
+
+
+// export function includesPlaceholders(propStruct) {
+//   var ret = false;
+//   let placeholderRegEx = /(^|[^\\%])(\\\\)*%[1-9][0-9]*/;
+//   Object.values(propStruct).forEach(val => {
+//     ret = ret || placeholderRegEx.test(val);
+//   });
+//   return ret;
+// }
 
 
 

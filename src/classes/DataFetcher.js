@@ -5,6 +5,53 @@ import {DBRequestManager} from "../classes/DBRequestManager.js";
 
 export class DataFetcher {
   
+
+
+  static fetchMetadata(entID, callback) {
+    let entMetadata = {
+      propStruct: null,
+      tmplID: null,
+      entInput: null,
+      strInput: null,
+      ownStruct: null,
+      dataLen: null,
+      template: null,
+      // entInputNames: null,
+      // strInputNames: null,
+      error: false,
+    };
+    let reqData = {
+      req: "ent",
+      id: entID,
+    };
+    DBRequestManager.query(reqData, (result) => {
+      let [tmplID, entInput, strInput, ownStrut, dataLen] = result[0] ?? [];
+      entMetadata.tmplID = tmplID;
+      entMetadata.entInput = entInput;
+      entMetadata.strInput = strInput;
+      entMetadata.ownStruct = ownStrut;
+      entMetadata.dataLen = dataLen;
+
+      // If entity is missing, set error msg and return.
+      if (!tmplID && tmplID != 0) {
+        entMetadata.error = "entity missing";
+        callback(entMetadata);
+      }
+
+      // Else continue by looking up the template and construct the propStruct.
+      let reqData = {
+        req: "ent",
+        id: entMetadata.tmplID,
+      };
+      DBRequestManager.query(reqData, (result) => {
+        let [,,,tmplPropStruct] = result[0] ?? [];
+        entMetadata.template = (tmplPropStruct ?? {}).template;
+        parseAndConstructPropStruct(entMetadata, callback);
+      });
+    });
+  }
+
+
   // DataFetcher.fetchAll() takes a request object, rqObj, and calls callback
   // at the end when all requests are fulfilled.
   // The structure of reqObj is:
@@ -31,76 +78,76 @@ export class DataFetcher {
   // the request is only carried out if the referenced request is successful,
   // and if it is accompanied by false, the request is only carried out if
   // the referenced request is un-successful.
-  static fetchAll(reqObj, callback) {
-    Object.keys(reqObj).forEach(key => {
-      let req = reqObj[key];
+  // static fetchAll(reqObj, callback) {
+  //   Object.keys(reqObj).forEach(key => {
+  //     let req = reqObj[key];
 
-      // Do nothing if status is either "waiting", "success", or "failure".
-      if (req.status) return;
+  //     // Do nothing if status is either "waiting", "success", or "failure".
+  //     if (req.status) return;
 
-      // Else if all dependencies are done, check req.getIsReady() and if it
-      // returns false, skip this request entirely. If is is true, however,
-      // carry out the request.
-      if (dependenciesAreDone(reqObj, req)) {
-        // Mark the request as "skipped" if not req.getIsReady().
-        let getIsReady = req.getIsReady ?? (() => true);
-        if (!getIsReady(reqObj)) {
-          req.status = "skipped";
-          req.isDone = true;
-          return;
-        }
+  //     // Else if all dependencies are done, check req.getIsReady() and if it
+  //     // returns false, skip this request entirely. If is is true, however,
+  //     // carry out the request.
+  //     if (dependenciesAreDone(reqObj, req)) {
+  //       // Mark the request as "skipped" if not req.getIsReady().
+  //       let getIsReady = req.getIsReady ?? (() => true);
+  //       if (!getIsReady(reqObj)) {
+  //         req.status = "skipped";
+  //         req.isDone = true;
+  //         return;
+  //       }
 
-        // Else mark the request as "waiting".
-        req.status = "waiting";
+  //       // Else mark the request as "waiting".
+  //       req.status = "waiting";
 
-        // Then get the entKey, potentially from previously fetched results.
-        var entKey = req.entKey ?? req.getEntKey(reqObj);
+  //       // Then get the entKey, potentially from previously fetched results.
+  //       var entKey = req.entKey ?? req.getEntKey(reqObj);
 
-        // Then fetch the data.
-        this.fetch(entKey, req.property, (result, isSuccess) => {
-          // Whenever new data returns from the server, first set the status
-          // and result.
-          req.result = result;
-          req.status = (isSuccess) ? "success" : "failure";
-          req.isDone = true;
+  //       // Then fetch the data.
+  //       this.fetch(entKey, req.property, (result, isSuccess) => {
+  //         // Whenever new data returns from the server, first set the status
+  //         // and result.
+  //         req.result = result;
+  //         req.status = (isSuccess) ? "success" : "failure";
+  //         req.isDone = true;
 
-          // Then if not all data has been fetched, call this fetchAll() method
-          // once again to see if new requests need to be made.
-          if (!getIsFinished(reqObj)) {
-            this.fetchAll(reqObj, callback)
-          }
+  //         // Then if not all data has been fetched, call this fetchAll() method
+  //         // once again to see if new requests need to be made.
+  //         if (!getIsFinished(reqObj)) {
+  //           this.fetchAll(reqObj, callback)
+  //         }
 
-          // Else finally call the callback, and pass it the reqObj, as well
-          // as the last result and key.
-          else {
-            callback(reqObj, result, key)
-          }
-        });
-      } 
-    });
-  }
+  //         // Else finally call the callback, and pass it the reqObj, as well
+  //         // as the last result and key.
+  //         else {
+  //           callback(reqObj, result, key)
+  //         }
+  //       });
+  //     } 
+  //   });
+  // }
 
 
-  // DataFetcher.fetch() branches according to the input property in order to
-  // fetch the appropriate data.
-  static fetch(entKey, property, callback) {
-    // First get entID from the entKey.
-    const entID = getEntID(entKey);
+  // // DataFetcher.fetch() branches according to the input property in order to
+  // // fetch the appropriate data.
+  // static fetch(entKey, property, callback) {
+  //   // First get entID from the entKey.
+  //   const entID = getEntID(entKey);
 
-    // If property is just a string, interpret as a request to search the
-    // defining propStruct, before the text/binary dataInput is substituted
-    // into it, for the value of the property with that name.
-    if (property === "propStruct") {
-      fetchPropStructData(entID, (entData) => {
-        let result = entData;
-        let isSuccess = !entData.error && entData;
-        callback(result, isSuccess);
-      });
-    }
+  //   // If property is just a string, interpret as a request to search the
+  //   // defining propStruct, before the text/binary dataInput is substituted
+  //   // into it, for the value of the property with that name.
+  //   if (property === "propStruct") {
+  //     fetchPropStructData(entID, (entMetadata) => {
+  //       let result = entMetadata;
+  //       let isSuccess = !entMetadata.error && entMetadata;
+  //       callback(result, isSuccess);
+  //     });
+  //   }
     
 
-    // TODO: Add more.
-  }
+  //   // TODO: Add more.
+  // }
 
 }
 
@@ -167,78 +214,16 @@ function dependenciesAreDone(reqObj, req) {
 
 
 
-export function fetchPropStructData(entID, callback) {
-  let entData = {
-    propStruct: null,
-    tmplID: null,
-    entInput: null,
-    strInput: null,
-    ownStruct: null,
-    dataLen: null,
-    template: null,
-    // entInputNames: null,
-    // strInputNames: null,
-    error: false,
-  };
-  let reqData = {
-    req: "ent",
-    id: entID,
-  };
-  DBRequestManager.query(reqData, (result) => {
-    let [tmplID, entInput, strInput, opsLen, dataLen] = result[0] ?? [];
-    entData.tmplID = tmplID;
-    entData.entInput = entInput;
-    entData.strInput = strInput;
-    entData.ownStruct = (opsLen > 0) ? null : {};
-    entData.dataLen = dataLen;
-
-    // If entity is missing, set error msg and return.
-    if (!tmplID && tmplID != 0) {
-      entData.error = "entity missing";
-      callback(entData);
-    }
-
-    // Else if psLen > 0, get the entity's own propStruct before continuing.
-    else if (opsLen > 0) {
-      let reqData = {
-        req: "entOPS",
-        id: entID,
-        l: 0,
-        s: 0,
-      };
-      DBRequestManager.query(reqData, (result) => {
-        entData.ownStruct = (result[0] ?? [])[0];
-        // Continue by looking up the template and construct the propStruct.
-        fetchTemplateAndCreatePropStruct(entData, callback);
-      });
-    }
-
-    // Else continue by looking up the template and construct the propStruct.
-    else fetchTemplateAndCreatePropStruct(entData, callback);
-  });
-}
-
-
-function fetchTemplateAndCreatePropStruct(entData, callback) {
-  let reqData = {
-    req: "entOPS",
-    id: entData.tmplID,
-  };
-  DBRequestManager.query(reqData, (result) => {
-    entData.template = (result[0] ?? [{}])[0].template;
-    parseAndConstructPropStruct(entData, callback);
-  });
-}
 
 
 
-function parseAndConstructPropStruct(entData, callback) {
+function parseAndConstructPropStruct(entMetadata, callback) {
   // Initialize the propStruct as the un-substituted template.
-  let propStruct = Object.assign({}, entData.template);
+  let propStruct = Object.assign({}, entMetadata.template);
 
   // Replace all /%e[0-9]/ placeholders in the values of the template by the
   // entity inputs. 
-  let entInputArr = entData.entInput.split(",");
+  let entInputArr = entMetadata.entInput.split(",");
   substitutePlaceholders(propStruct, /%e[0-9]/g, placeholder => {
     let n = parseInt(placeholder.substring(2));
     return entInputArr[n] ?? "";
@@ -246,7 +231,7 @@ function parseAndConstructPropStruct(entData, callback) {
 
   // Replace all /%s[0-9]/ placeholders in the values of the template by the
   // string inputs, separated by '|'.
-  let strInputArr = getStrInputArr(entData.strInput);
+  let strInputArr = getStrInputArr(entMetadata.strInput);
   substitutePlaceholders(propStruct, /%s[0-9]/g, placeholder => {
     let n = parseInt(placeholder.substring(2));
     return strInputArr[n] ?? "";
@@ -254,14 +239,14 @@ function parseAndConstructPropStruct(entData, callback) {
 
   // Replace any /%s/ placeholders in the values of the template by the
   // whole string input. 
-  let strInput = entData.strInput;
+  let strInput = entMetadata.strInput;
   substitutePlaceholders(propStruct, /%s/g, () => strInput);
 
   // Finally copy the object's own property struct into the template. 
-  entData.propStruct = Object.assign(propStruct, entData.ownStruct);
+  entMetadata.propStruct = Object.assign(propStruct, entMetadata.ownStruct);
 
   // Then call the callback function and return.
-  callback(entData);
+  callback(entMetadata);
   return;
 }
 

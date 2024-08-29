@@ -110,10 +110,10 @@ CREATE TABLE RelationalRatings (
     UNIQUE INDEX (user_id, obj_id, tag_id, subj_id),
 
     -- Index to look up users who has rated the stmt / rating scale.
-    UNIQUE INDEX (obj_id, tag_id, subj_id, rat_val, user_id),
+    UNIQUE INDEX (obj_id, tag_id, subj_id, rat_val, user_id)
 
-    -- Index to look up the reversed relation.
-    UNIQUE INDEX (user_id, subj_id, tag_id, obj_id)
+    -- All relations are directional, so we don't need:
+    -- UNIQUE INDEX (user_id, subj_id, tag_id, obj_id)
 );
 
 -- TODO: Compress these tables and their sec. index, as well as other tables

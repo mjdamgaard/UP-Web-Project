@@ -193,7 +193,7 @@ if ($reqType === "ent") {
     $ownStruct = $res[0][3];
     if ($ownStruct) {
         $res[0][3] = json_decode($ownStruct, true);
-    } else {
+    } else if ($ownStruct === "") {
         $res[0][3] = json_decode("{}", true);
     }
 }

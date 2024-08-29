@@ -4,7 +4,7 @@ import {useQuery} from "../hooks/DBRequests.js";
 //   MaxRatingSetCombiner, SimpleSetGenerator,
 // } from "/src/SetGenerator.js";
 
-import {EntityDataFetcher, getPropStruct} from "./EntityDataFetcher.js";
+import {DataFetcher} from "../classes/DataFetcher.js";
 
 import {AccountManagerContext} from "../contexts/AccountContext.js";
 
@@ -47,12 +47,14 @@ const CategoryDisplay = () => <template></template>;
 const PropStructDisplay = ({entID, entDataArr}) => {
   return (
     <div>
-      <h4>Full property struct:</h4>
+      <h4>Entity title:</h4>
+      <EntityTitle entID={entID} />
+      {/* <h4>Full property struct:</h4>
       <div>{JSON.stringify(getPropStruct(entDataArr))}</div>
       <h4>Entity ID:</h4>
       <div>{entID}</div>
       <h4>Entity data array:</h4>
-      <div>{JSON.stringify(entDataArr)}</div>
+      <div>{JSON.stringify(entDataArr)}</div> */}
     </div>
   );
 };
@@ -74,11 +76,11 @@ export const EntityPage = ({entID, initTab}) => {
     <div className="entity-page">
       <div className="entity-page-header">
         <h2><EntityTitle entID={entID} isLink /></h2>
-        <div className="full-title">
+        {/* <div className="full-title">
             <EntityDataFetcher
               entID={entID} ChildModule={PropStructDisplay} extraProps={{}}
             />
-        </div>
+        </div> */}
         {/* <div><EntityIDDisplay entID={entID} /></div> */}
       </div>
       {/* <PagesWithTabs tabDataArr={tabDataArr} initTab={initTab} /> */}
