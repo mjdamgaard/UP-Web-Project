@@ -1,28 +1,29 @@
 import {useState, useMemo, useContext} from "react";
-import {useQuery} from "../hooks/DBRequests.js";
+import {Link} from "react-router-dom";
+import {useQuery} from "../../hooks/DBRequests.js";
 // import {
 //   MaxRatingSetCombiner, SimpleSetGenerator,
 // } from "/src/SetGenerator.js";
 
-import {DataFetcher} from "../classes/DataFetcher.js";
+import {DataFetcher} from "../../classes/DataFetcher.js";
 
-import {AccountManagerContext} from "../contexts/AccountContext.js";
+import {AccountManagerContext} from "../../contexts/AccountContext.js";
 
-import {PagesWithTabs} from "./PagesWithTabs.js";
+import {PagesWithTabs} from "../PagesWithTabs.js";
 import {
   EntityID, EntityTitle, ContextDisplay
-} from "./EntityTitles.js";
-import {InstListDisplay} from "./InstListDisplay.js";
-import {RatingElement} from "./Ratings.js";
-import {SemanticPropertyElement} from "./EntityElements.js";
+} from "../EntityTitles.js";
+import {InstListDisplay} from "../InstListDisplay.js";
+import {RatingElement} from "../Ratings.js";
+import {SemanticPropertyElement} from "../EntityElements.js";
 import {
   SubmitEntityOfTemplateField, SubmitInstanceOfCategoryField,
   SubmitTemplateForTypeField, SubmitEntityOfTypeField,
-} from "./SubmissionFields.js";
+} from "../SubmissionFields.js";
 
 import {
   SimpleInstListGenerator, MaxRatingInstListCombiner
-} from "../classes/InstListGenerator.js";
+} from "../../classes/InstListGenerator.js";
 
 
 
@@ -44,20 +45,6 @@ const CategoryDisplay = () => <template></template>;
 // const PropStructDisplayPlaceholder = () => <span></span>;
 
 
-const PropStructDisplay = ({entID, entDataArr}) => {
-  return (
-    <div>
-      <h4>Entity title:</h4>
-      <EntityTitle entID={entID} />
-      {/* <h4>Full property struct:</h4>
-      <div>{JSON.stringify(getPropStruct(entDataArr))}</div>
-      <h4>Entity ID:</h4>
-      <div>{entID}</div>
-      <h4>Entity data array:</h4>
-      <div>{JSON.stringify(entDataArr)}</div> */}
-    </div>
-  );
-};
 
 export const EntityPage = ({entID, initTab}) => {
 
@@ -75,7 +62,22 @@ export const EntityPage = ({entID, initTab}) => {
   return (
     <div className="entity-page">
       <div className="entity-page-header">
-        <h2><EntityTitle entID={entID} isLink /></h2>
+        <h4>Entity title:</h4>
+        <h2><EntityTitle entID={entID} /></h2>
+        <h2>Test links</h2>
+        <div>
+          <Link to={{pathname: "", search:"?e=12"}}>
+            to entity #12
+          </Link>
+        </div>
+        <div>
+          <Link to={{pathname: "", search:"?e=13"}}>
+            to entity #13
+          </Link>
+        </div>
+        {/* Doesn't change path: */}
+        {/* <Link to={{search:"?e=13"}}>to entity #13</Link>*/}
+
         {/* <div className="full-title">
             <EntityDataFetcher
               entID={entID} ChildModule={PropStructDisplay} extraProps={{}}

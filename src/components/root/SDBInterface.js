@@ -1,18 +1,31 @@
 import {useState, createContext, useContext, useMemo} from "react";
-import {AccountContextProvider} from "../contexts/AccountContext.js";
-import {ColumnListContextProvider, ColumnListManager}
-  from "../contexts/ColumnContext.js";
+import {
+  useParams, useSearchParams,
+} from "react-router-dom";
 
-import {InterfaceHeader} from "./InterfaceHeader.js";
-import {InterfaceMain} from "./InterfaceMain.js";
+import {AccountContextProvider} from "../../contexts/AccountContext.js";
+import {ColumnListContextProvider, ColumnListManager}
+  from "../../contexts/ColumnContext.js";
+
+import {InterfaceHeader} from "../InterfaceHeader.js";
+import {InterfaceMain} from "../InterfaceMain.js";
 import {
   LoginPage, SignupPage, TutorialPage, InsertPage
-} from "./OverlayPages.js";
+} from "../OverlayPages.js";
 
+
+export const HOME_ENTITY_ID = 12;
 
 
 export const SDBInterface = () => {
+  const pathname = useParams()["*"];
+  const search = useSearchParams()[0].toString();
   const [appPage, setAppPage] = useState("home");
+
+  var entID = HOME_ENTITY_ID;
+  if (search) {
+    entID = (search.match(/e=[1-9][0-9]*/)[0] ?? "e=" + entID).substring(2);
+  }
 
   return (
     <AccountContextProvider> {/* yields: session, accountManager.*/}
@@ -20,7 +33,7 @@ export const SDBInterface = () => {
         <InterfacePage
           // initColSpec={{entID: 1}}
           // initColSpec={{entID: 40}}
-          initColSpec={{entID: 12}} 
+          initColSpec={{entID: entID}} 
           setAppPage={setAppPage}
           isHidden={appPage !== "home"}
         />
@@ -33,10 +46,10 @@ export const SDBInterface = () => {
           setAppPage={setAppPage}
           isHidden={appPage !== "signup"}
         />
-        <TutorialPage
+        {/* <TutorialPage
           setAppPage={setAppPage}
           isHidden={appPage !== "tutorial"}
-        />
+        /> */}
         {/* TODO: Remove the following test page */}
         <InsertPage
           setAppPage={setAppPage}

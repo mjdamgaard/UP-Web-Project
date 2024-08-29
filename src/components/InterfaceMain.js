@@ -2,7 +2,7 @@ import {useState, createContext, useContext, useMemo} from "react";
 import {ColumnListContext, ColumnContextProvider}
   from "../contexts/ColumnContext.js";
 
-import {EntityPage} from "./EntityPages.js";
+import {EntityPage} from "./pages/EntityPage.js";
 import {ListGeneratorPage} from "./ListGenPages.js";
 
 /* Placeholders */
