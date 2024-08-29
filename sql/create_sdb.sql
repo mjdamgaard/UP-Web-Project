@@ -1,7 +1,10 @@
 
-/* Semantic inputs */
-DROP TABLE SemanticInputs;
+/* Ratings */
+DROP TABLE MonadicRatings;
+DROP TABLE RelationalRatings;
+
 DROP TABLE RecordedInputs;
+
 /* Indexes */
 DROP TABLE IndexedEntities;
 
@@ -34,15 +37,11 @@ DROP TABLE Private_EMails;
  * instance entity. The user thus states that the latter is an instance of the
  * given tag. The rating then tells how well the tag first the instance.
  **/
-
-CREATE TABLE SemanticInputs (
-    -- User (or bot) who states the statement.
+CREATE TABLE MonadicRatings (
+    -- User (or bot) who rates the rating scale.
     user_id BIGINT UNSIGNED NOT NULL,
 
-    -- Subject of the statement (might be nothing, represented by 0).
-    subj_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    -- Tag or relation of the statement (a tag if subj_id = 0, else a relation).
+    -- Tag that the subject is rated in relation to.
     tag_id BIGINT UNSIGNED NOT NULL,
 
     -- Rating value of how well the tag fits the entity. The first byte
@@ -52,37 +51,73 @@ CREATE TABLE SemanticInputs (
     rat_val TINYINT UNSIGNED NOT NULL,
     CHECK (rat_val != 0),
 
-    -- The object of the tag/relation.
-    obj_id BIGINT UNSIGNED NOT NULL,
+    -- The subject that is rated in relation to the tag.
+    subj_id BIGINT UNSIGNED NOT NULL,
 
     -- Resulting semantic input: "User #<user_id> states that entity 
-    -- #<obj_id> fits the tag #<tag_id>(#<subj_id>) on a scale specified
+    -- #<subj_id> fits the tag #<tag_id> on a scale specified
     -- by the tag/relation entity (or by its class).
 
     PRIMARY KEY (
         user_id,
-        subj_id,
         tag_id,
         rat_val,
-        obj_id
+        subj_id
     ),
 
     -- Index to look up specific rating (and restricting one rating pr. user.)
-    UNIQUE INDEX (user_id, subj_id, tag_id, obj_id),
+    UNIQUE INDEX (user_id, tag_id, subj_id),
 
     -- Index to look up users who has rated the stmt / rating scale.
-    UNIQUE INDEX (subj_id, tag_id, obj_i, rat_val, user_id)
-
-    -- All relations are directional, so we don't need:
-    -- UNIQUE INDEX (user_id, obj_i, tag_id, subj_id)
+    UNIQUE INDEX (tag_id, subj_id, rat_val, user_id)
 );
--- TODO: Compress this table and its sec. index, as well as some other tables
--- and sec. indexes below. (But compression is a must for this table.)
--- There is also the option to create a sec. index: (tag_id, inst_id, rat_val,
--- user_id), but I actually think that it is better to implement semantically,
--- e.g. by using the "statement_user_rater_bot," namely since this better
--- allows for filtering such user lists.. *Well, now I've made that index
--- anyway.
+
+
+
+CREATE TABLE RelationalRatings (
+    -- User (or bot) who states the statement.
+    user_id BIGINT UNSIGNED NOT NULL,
+
+    -- Object that that the relational takes to produce a monadic tag.
+    obj_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+    -- Tag that the subject is rated in relation to, specified by the object.
+    tag_id BIGINT UNSIGNED NOT NULL,
+
+    -- Rating value of how well the tag fits the entity. The first byte
+    -- of the TINYINT runs from 1 to 255, where 1
+    -- means 'absolutely/perfectly not,' 128 means 'doesn't particularly fit or
+    -- not fit,' and 255 means 'absolutely/perfectly.'
+    rat_val TINYINT UNSIGNED NOT NULL,
+    CHECK (rat_val != 0),
+
+    -- The subject that is rated in relation to the tag(object).
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    -- Resulting semantic input: "User #<user_id> states that entity 
+    -- #<subj_id> fits the tag #<tag_id>(#<obj_id>) on a scale specified
+    -- by the tag/relation entity (or by its class).
+
+    PRIMARY KEY (
+        user_id,
+        obj_id,
+        tag_id,
+        rat_val,
+        subj_id
+    ),
+
+    -- Index to look up specific rating (and restricting one rating pr. user.)
+    UNIQUE INDEX (user_id, obj_id, tag_id, subj_id),
+
+    -- Index to look up users who has rated the stmt / rating scale.
+    UNIQUE INDEX (obj_id, tag_id, subj_id, rat_val, user_id),
+
+    -- Index to look up the reversed relation.
+    UNIQUE INDEX (user_id, subj_id, tag_id, obj_id)
+);
+
+-- TODO: Compress these tables and their sec. index, as well as other tables
+-- and sec. indexes below.
 
 
 
