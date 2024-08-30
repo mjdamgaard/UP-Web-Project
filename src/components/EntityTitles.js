@@ -61,6 +61,14 @@ export function getEntityTitle(entID, recLevel, maxRecLevel, callback) {
     return;
   }
 
+  // Hm, let me build a DataFetcher method instead to transform a propStruct
+  // by fetching and inserting entity data as objects in place of all
+  // placeholders in all strings, thus also exploding all strings into arrays.
+  // And let us also transform sets and lists inside the propStruct by
+  // wrapping them in objects. ..Let us also wrap the exploded strings in such
+  // objects (e.g. {string: [...]}, {set: [...]}, or {list: [...]}).
+  //  ..DataFetcher.expandPropStruct()
+
   DataFetcher.fetchMetadata(entID, (entMetadata) => {
     let propStruct = entMetadata.propStruct;
     // Create an array, propMembers, of property name and value pairs. If a

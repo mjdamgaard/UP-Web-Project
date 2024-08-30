@@ -52,6 +52,28 @@ export class DataFetcher {
   }
 
 
+  // expandPropStruct() expands the propStruct by substituting entID references
+  // by nested entData objects. This method also transforms each value into an
+  // object like {string: [...]}, {set: [...]}, {list: [...]}, etc.
+  static expandPropStruct(propStruct, maxRecLevel, recLevel) {
+    maxRecLevel ??= 2;
+    recLevel ??= 0;
+
+  }
+
+
+  // substituteDataInput(entID, propStruct) fetches dataInput from the entity
+  // and substitutes the relevant placeholders in propStruct. If propStruct
+  // has nested entity objects in it (as a result of expandPropStruct()), the
+  // data for these propStructs are also fetched and substituted, unless
+  // maxRecLevel is exceeded.
+  static substituteDataInput(entID, propStruct, maxRecLevel, recLevel) {
+    maxRecLevel ??= 2;
+    recLevel ??= 0;
+
+  }
+
+
   // DataFetcher.fetchAll() takes a request object, rqObj, and calls callback
   // at the end when all requests are fulfilled.
   // The structure of reqObj is:
