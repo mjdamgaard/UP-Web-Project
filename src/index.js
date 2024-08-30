@@ -16,7 +16,7 @@ import './style/style01.css';
 const router = createBrowserRouter([
   {
     path: "/*",
-    element: <SDBInterface key={0} />,
+    element: <SDBInterface />,
   },
 ]);
 

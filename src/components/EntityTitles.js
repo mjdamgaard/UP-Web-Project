@@ -1,8 +1,11 @@
 import {useState, createContext, useContext, useEffect} from "react";
+// import {redirect} from "react-router-dom";
 import {useQuery} from "../hooks/DBRequests.js";
 import {ColumnContext} from "../contexts/ColumnContext.js";
 import {DataFetcher} from "../classes/DataFetcher.js";
 import {ExpandableSpan} from "./DropdownBox.js";
+
+import { AsyncManipulator } from "../classes/AsyncManipulator.js";
 
 const ConcatenatedEntityTitle = () => <template></template>;
 const TemplateLink = () => <template></template>;
@@ -11,15 +14,17 @@ const SpecialRefEntityTitle = () => <template></template>;
 // const InvalidEntityTitle = () => <template></template>;
 
 
-export const EntityTitle = ({entID, key}) => {
-  key ??= "0";
+export const EntityTitle = ({entID, recLevel, maxRecLevel}) => {
+  recLevel ??= 0;
+  maxRecLevel ??= 2;
 
   const [results, setResults] = useState({});
   useEffect(() => {
-    getEntityTitle(entID, (xmlChildren) => {
+    getEntityTitle(entID, recLevel, maxRecLevel, (entityTitle, title) => {
       setResults(prev => {
         let ret = {...prev};
-        ret.xmlChildren = xmlChildren;
+        ret.entityTitle = entityTitle;
+        ret.title = title;
         ret.isFetched = true;
         return ret;
       });
@@ -35,17 +40,70 @@ export const EntityTitle = ({entID, key}) => {
   }
 
   // Finally render this. 
-  return (
-    <span key={key} className="entity-title">
-      {results.xmlChildren}
-    </span>
-  );
+  let titleClassName = (results.title) ? " title-" + results.title : "";
+  return results.entityTitle;
 }
 
 
-export function getEntityTitle(entID, callback) {
+export function getEntityTitle(entID, recLevel, maxRecLevel, callback) {
+  // TODO: Also query for the highest rated 'representation' and if the rating
+  // is high enough, use the propStruct generated from that instead.
+  // TODO: Also always query for the `useful entity' meta-tag and print out
+  // that rating as well.
+
+  if (recLevel > maxRecLevel) {
+    let entityTitle = (
+      <span className="entity-title">
+        <EntityID entID={entID} />
+      </span>
+    );
+    callback(entityTitle, "");
+    return;
+  }
+
   DataFetcher.fetchMetadata(entID, (entMetadata) => {
     let propStruct = entMetadata.propStruct;
+    // Create an array, propMembers, of property name and value pairs. If a
+    // property value is an array (a set), add a pair for each element in this
+    // array.
+    let propMembers = [].concat(...Object.keys(propStruct).map(propKey => {
+      let propVal = propStruct[propKey];
+      let propValArr = (Array.isArray(propVal)) ? propVal : [propVal];
+      return propValArr.map(val => [propKey, val]);
+    }));
+
+    let asyncManipulator = new AsyncManipulator();
+    propMembers.forEach(([propKey, propVal], ind) => {
+      asyncManipulator.push(ind, () => {
+        if (/^@[1-9][0-9]*$/.test(propVal)) {
+          let childEntID = propVal.substring(1);
+          getEntityTitle(
+            childEntID, recLevel - 1, maxRecLevel, (entityTitle, title) => {
+              propMembers[ind] = entityTitle;
+            }
+          );
+        }
+        else {
+
+        }
+      });
+    });
+
+    const propChildren = Object.keys(propStruct).map((propKey => {
+      let propVal = propStruct[propKey];
+      let propValArr = (Array.isArray(propVal)) ? propVal : [propVal];
+      var titleArr = [];
+      return propValArr.map((val, ind) => {
+        return (
+          <span key={propKey + "-" + ind}
+            className={"prop-member prop-name-" + propKey}
+          >
+  
+          </span>
+        );
+      });
+    }));
+
     var entClass = propStruct.class;
     // TODO: Import specific IDs instead as variable (e.g. TEMPLATE_CLASS_ID).
     if (entClass === "@3") {
@@ -84,6 +142,77 @@ export function getEntityTitle(entID, callback) {
 
 
 
+
+
+
+
+const EntityTitlePlaceholder = ({entID, isLink}) => {
+  return <span className="entity-title entity-title-placeholder"></span>;
+}
+
+const InvalidEntityTitle = ({entID, isLink, children}) => {
+  if (isLink) {
+    return (
+      <span className="entity-title invalid-entity-title text-warning">
+        {/* TODO: Remove "text-warning" className. */}
+        <EntityLink entID={entID}>
+          {children}
+        </EntityLink>
+      </span>
+    );
+  } else {
+    return (
+      <span className="entity-title invalid-entity-title text-warning">
+        {/* TODO: Remove "text-warning" className. */}
+        {children}
+      </span>
+    );
+  }
+};
+
+
+
+export const EntityTitleWrapper = ({entID, isLink, children}) => {
+  // If the whole EntityTitle is a link, just use the whole string as is.
+  if (isLink) {
+    return (
+      <span className="entity-title">
+        <EntityLink entID={entID}>
+          {children}
+        </EntityLink>
+      </span>
+    );
+  }
+  // Else just return the string.
+  else {
+    return (
+      <span className="entity-title">
+        {children}
+      </span>
+    );
+  }
+}
+
+
+const EntityLink = ({entID, children}) => {
+  const [, columnManager] = useContext(ColumnContext);
+
+  return (
+    <span className="entity-link" onClick={() => {
+      columnManager.openColumn(entID);
+    }}>
+      {children}
+    </span>
+  );
+};
+
+export const EntityID = ({entID}) => {
+  return (
+    <EntityLink entID={entID}>
+      <span className="entity-id">@{entID}</span>
+    </EntityLink>
+  );
+};
 
 
 
@@ -184,84 +313,7 @@ export function getEntityTitle(entID, callback) {
 
 
 
-const EntityTitlePlaceholder = ({entID, isLink}) => {
-  return <span className="entity-title entity-title-placeholder"></span>;
-}
 
-const InvalidEntityTitle = ({entID, isLink, children}) => {
-  if (isLink) {
-    return (
-      <span className="entity-title invalid-entity-title text-warning">
-        {/* TODO: Remove "text-warning" className. */}
-        <EntityLink entID={entID}>
-          {children}
-        </EntityLink>
-      </span>
-    );
-  } else {
-    return (
-      <span className="entity-title invalid-entity-title text-warning">
-        {/* TODO: Remove "text-warning" className. */}
-        {children}
-      </span>
-    );
-  }
-};
-
-
-
-export const EntityTitleWrapper = ({entID, isLink, children}) => {
-  // If the whole EntityTitle is a link, just use the whole string as is.
-  if (isLink) {
-    return (
-      <span className="entity-title">
-        <EntityLink entID={entID}>
-          {children}
-        </EntityLink>
-      </span>
-    );
-  }
-  // Else just return the string.
-  else {
-    return (
-      <span className="entity-title">
-        {children}
-      </span>
-    );
-  }
-}
-
-
-const EntityLink = ({entID, children}) => {
-  const [, columnManager] = useContext(ColumnContext);
-
-  return (
-    <span className="entity-link clickable-text" onClick={() => {
-      columnManager.openColumn(entID);
-    }}>
-      {children}
-    </span>
-  );
-};
-
-export const EntityID = ({entID, isLink}) => {
-  const entityID = (
-    <span className="entity-id">@{entID}</span>
-  );
-  if (isLink) {
-    return (
-      <EntityLink entID={entID}>
-        {entityID}
-      </EntityLink>
-    );
-  } else {
-    return (
-      <>
-        {entityID}
-      </>
-    );
-  }
-};
 
 
 

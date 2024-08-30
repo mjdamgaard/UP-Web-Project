@@ -1,7 +1,5 @@
 import {useState, createContext, useContext, useMemo} from "react";
-import {
-  useParams, useSearchParams,
-} from "react-router-dom";
+import {useParams, useSearchParams} from "react-router-dom";
 
 import {AccountContextProvider} from "../../contexts/AccountContext.js";
 import {ColumnListContextProvider, ColumnListManager}
@@ -23,8 +21,8 @@ export const SDBInterface = () => {
   const [appPage, setAppPage] = useState("home");
 
   var entID = HOME_ENTITY_ID;
-  if (search) {
-    entID = (search.match(/e=[1-9][0-9]*/)[0] ?? "e=" + entID).substring(2);
+  if (pathname) {
+    entID = (search.match(/^e\/[1-9][0-9]*/)[0] ?? "e/" + entID).substring(2);
   }
 
   return (

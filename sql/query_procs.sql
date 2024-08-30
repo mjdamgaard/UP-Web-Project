@@ -169,10 +169,10 @@ BEGIN
     FROM Entities
     WHERE (
         template_id = tmplID AND
-        template_entity_inputs = tmplEntInputs AND
-        template_string_inputs = tmplStrInputs AND
+        data_input_hash = dataInputHash AND
         own_prop_struct_hash = ownStructHash AND
-        data_input_hash = dataInputHash
+        template_entity_inputs = tmplEntInputs AND
+        template_string_inputs = tmplStrInputs
     );
 END //
 DELIMITER ;

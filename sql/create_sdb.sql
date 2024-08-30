@@ -45,9 +45,9 @@ CREATE TABLE MonadicRatings (
     tag_id BIGINT UNSIGNED NOT NULL,
 
     -- Rating value of how well the tag fits the entity. The first byte
-    -- of the TINYINT runs from 1 to 255, where 1
-    -- means 'absolutely/perfectly not,' 128 means 'doesn't particularly fit or
-    -- not fit,' and 255 means 'absolutely/perfectly.'
+    -- of the TINYINT runs from 0 to 254, where 0 normally
+    -- means 'absolutely/perfectly not,' 127 means 'doesn't particularly fit or
+    -- not fit,' and 254 means 'absolutely/perfectly.'
     rat_val TINYINT UNSIGNED NOT NULL,
     CHECK (rat_val != 0),
 
@@ -85,9 +85,9 @@ CREATE TABLE RelationalRatings (
     tag_id BIGINT UNSIGNED NOT NULL,
 
     -- Rating value of how well the tag fits the entity. The first byte
-    -- of the TINYINT runs from 1 to 255, where 1
-    -- means 'absolutely/perfectly not,' 128 means 'doesn't particularly fit or
-    -- not fit,' and 255 means 'absolutely/perfectly.'
+    -- of the TINYINT runs from 0 to 254, where 0 normally
+    -- means 'absolutely/perfectly not,' 127 means 'doesn't particularly fit or
+    -- not fit,' and 254 means 'absolutely/perfectly.'
     rat_val TINYINT UNSIGNED NOT NULL,
     CHECK (rat_val != 0),
 
