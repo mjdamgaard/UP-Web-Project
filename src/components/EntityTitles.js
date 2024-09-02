@@ -5,7 +5,7 @@ import {ColumnContext} from "../contexts/ColumnContext.js";
 import {DataFetcher} from "../classes/DataFetcher.js";
 import {ExpandableSpan} from "./DropdownBox.js";
 
-import { AsyncManipulator } from "../classes/AsyncManipulator.js";
+import {ParallelCallbackHandler} from "../classes/ParallelCallbackHandler.js";
 
 const ConcatenatedEntityTitle = () => <template></template>;
 const TemplateLink = () => <template></template>;
@@ -80,9 +80,9 @@ export function getEntityTitle(entID, recLevel, maxRecLevel, callback) {
       return propValArr.map(val => [propKey, val]);
     }));
 
-    let asyncManipulator = new AsyncManipulator();
+    let callbackHandler = new ParallelCallbackHandler();
     propMembers.forEach(([propKey, propVal], ind) => {
-      asyncManipulator.push(ind, () => {
+      callbackHandler.push(ind, () => {
         if (/^@[1-9][0-9]*$/.test(propVal)) {
           let childEntID = propVal.substring(1);
           getEntityTitle(

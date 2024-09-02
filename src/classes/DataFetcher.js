@@ -9,6 +9,7 @@ export class DataFetcher {
 
   static fetchMetadata(entID, callback) {
     let entMetadata = {
+      entID: entID,
       propStruct: null,
       tmplID: null,
       entInput: null,
@@ -55,10 +56,84 @@ export class DataFetcher {
   // expandPropStruct() expands the propStruct by substituting entID references
   // by nested entData objects. This method also transforms each value into an
   // object like {string: [...]}, {set: [...]}, {list: [...]}, etc.
-  static expandPropStruct(propStruct, maxRecLevel, recLevel) {
+  static expandPropStruct(propStruct, maxRecLevel, recLevel, callback) {
     maxRecLevel ??= 2;
     recLevel ??= 0;
+    if (recLevel > maxRecLevel) {
+      return;
+    }
 
+    let callbackHandler = new ParallelCallbackHandler();
+
+    Object.keys(propStruct).forEach(propKey => {
+      propVal = propStruct[propKey];
+      
+      if (Array.isArray(propVal)) {
+        let elemArr = propStruct[propKey];
+        propStruct[propKey] = {set: elemArr};
+        this.#expandElements(
+          elemArr, callbackHandler, propKey, maxRecLevel, recLevel
+        );
+      }
+      else this.#expandPropVal(
+        propVal, propStruct, propKey, callbackHandler, maxRecLevel, recLevel
+      );
+    });
+
+    callbackHandler.executeThen(callback);
+  }
+
+
+  static #expandElements(
+    elemArr, callbackHandler, key, maxRecLevel, recLevel
+  ) {
+    elemArr.forEach((elem, ind) => {
+      if (Array.isArray(elem)) {
+        elemArr[ind] = {list: elem};
+        this.#expandElements(
+          elem, callbackHandler, key + "-" + ind, maxRecLevel, recLevel
+        );
+      }
+      else this.#expandPropVal(
+        elem, elemArr, ind, callbackHandler, key, maxRecLevel, recLevel
+      )
+    });
+  }
+
+
+  static #expandPropVal(
+    propVal, obj, objKey, callbackHandler, key, maxRecLevel, recLevel
+  ) {
+    if (/^@[1-9][0-9]*$/.test(propVal)) {
+      let entID = propVal.substring(1);
+      callbackHandler.push(key, () => {
+        this.fetchMetadata(entID, (entMetadata) => {
+          obj[objKey] = {ent: entMetadata};
+          expandPropStruct(entMetadata.propStruct, maxRecLevel, recLevel + 1);
+          callbackHandler.resolve(key);
+        })
+      });
+    }
+    else if (typeof propVal === "string") {
+      let strArr = propVal.match(/([^@]|\\@)+|@[0-9]*/g);
+      strArr.forEach((str, ind) => {
+        if (/^@[1-9][0-9]*$/.test(str)) {
+          let entID = str.substring(1);
+          let newKey = key + "-" + ind;
+          callbackHandler.push(newKey, () => {
+            this.fetchMetadata(entID, (entMetadata) => {
+              strArr[ind] = {ent: entMetadata};
+              expandPropStruct(
+                entMetadata.propStruct, maxRecLevel, recLevel + 1
+              );
+              callbackHandler.resolve(newKey);
+            })
+          });
+        }
+        else return;
+      });
+    }
+    else throw "DataFetcher.expandPropVal(): Unexpected type.";
   }
 
 
@@ -66,7 +141,8 @@ export class DataFetcher {
   // and substitutes the relevant placeholders in propStruct. If propStruct
   // has nested entity objects in it (as a result of expandPropStruct()), the
   // data for these propStructs are also fetched and substituted, unless
-  // maxRecLevel is exceeded.
+  // maxRecLevel is exceeded. This method also transforms each value into an
+  // object like {string: [...]}, {set: [...]}, {list: [...]}, etc.
   static substituteDataInput(entID, propStruct, maxRecLevel, recLevel) {
     maxRecLevel ??= 2;
     recLevel ??= 0;
