@@ -262,7 +262,7 @@ INSERT INTO Entities (
 VALUES
     -- TODO: Add 'initial description's (with data_input text as the value).
     (1, 0, '', '', CONCAT(
-        '{"class":"@1","title":"class"}'
+        '{"class":"@this","title":"class"}'
     ), CONCAT(
         "A class of all class entities, including this entity itself. ",
         "One benefit of using entities as classes, rather than just writing ",

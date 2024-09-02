@@ -57,10 +57,13 @@ export class DataFetcher {
   // by nested entData objects. This method also transforms each value into an
   // object like {string: [...]}, {set: [...]}, {list: [...]}, etc.
   static expandPropStruct(propStruct, maxRecLevel, recLevel, callback) {
-    maxRecLevel ??= 2;
-    recLevel ??= 0;
-    if (recLevel > maxRecLevel) {
-      return;
+    if (!callback) {
+      callback = recLevel;
+      recLevel = 0;
+    }
+    if (!callback) {
+      callback = maxRecLevel;
+      maxRecLevel = 2;
     }
 
     let callbackHandler = new ParallelCallbackHandler();
@@ -106,29 +109,42 @@ export class DataFetcher {
   ) {
     if (/^@[1-9][0-9]*$/.test(propVal)) {
       let entID = propVal.substring(1);
-      callbackHandler.push(key, () => {
-        this.fetchMetadata(entID, (entMetadata) => {
-          obj[objKey] = {ent: entMetadata};
-          expandPropStruct(entMetadata.propStruct, maxRecLevel, recLevel + 1);
-          callbackHandler.resolve(key);
-        })
-      });
+      if (recLevel > maxRecLevel) {
+        obj[objKey] = {ent: {entID: entID}};
+      }
+      else {
+        callbackHandler.push(key, () => {
+          this.fetchMetadata(entID, (entMetadata) => {
+            obj[objKey] = {ent: entMetadata};
+            expandPropStruct(
+              entMetadata.propStruct, maxRecLevel, recLevel + 1
+            );
+            callbackHandler.resolve(key);
+          })
+        });
+      }
     }
     else if (typeof propVal === "string") {
       let strArr = propVal.match(/([^@]|\\@)+|@[0-9]*/g);
+      obj[objKey] = {string: strArr};
       strArr.forEach((str, ind) => {
         if (/^@[1-9][0-9]*$/.test(str)) {
-          let entID = str.substring(1);
-          let newKey = key + "-" + ind;
-          callbackHandler.push(newKey, () => {
-            this.fetchMetadata(entID, (entMetadata) => {
-              strArr[ind] = {ent: entMetadata};
-              expandPropStruct(
-                entMetadata.propStruct, maxRecLevel, recLevel + 1
-              );
-              callbackHandler.resolve(newKey);
-            })
-          });
+          let entID = propVal.substring(1);
+          if (recLevel > maxRecLevel) {
+            strArr[ind] = {ent: {entID: entID}};
+          }
+          else {
+            let newKey = key + "-" + ind;
+            callbackHandler.push(newKey, () => {
+              this.fetchMetadata(entID, (entMetadata) => {
+                strArr[ind] = {ent: entMetadata};
+                expandPropStruct(
+                  entMetadata.propStruct, maxRecLevel, recLevel + 1
+                );
+                callbackHandler.resolve(newKey);
+              })
+            });
+          }
         }
         else return;
       });

@@ -20,13 +20,14 @@ export const EntityTitle = ({entID, recLevel, maxRecLevel}) => {
 
   const [results, setResults] = useState({});
   useEffect(() => {
-    getEntityTitle(entID, recLevel, maxRecLevel, (entityTitle, title) => {
-      setResults(prev => {
-        let ret = {...prev};
-        ret.entityTitle = entityTitle;
-        ret.title = title;
-        ret.isFetched = true;
-        return ret;
+    DataFetcher.fetchMetadata(entID, (entMetadata) => {
+      DataFetcher.expandPropStruct(entMetadata.propStruct, () => {
+        setResults(prev => {
+          let ret = {...prev};
+          ret.entityTitle = getEntityTitle(entData);
+          ret.isFetched = true;
+          return ret;
+        });
       });
     });
   }, []);
@@ -40,25 +41,23 @@ export const EntityTitle = ({entID, recLevel, maxRecLevel}) => {
   }
 
   // Finally render this. 
-  let titleClassName = (results.title) ? " title-" + results.title : "";
+  // let titleClassName = (results.title) ? " title-" + results.title : "";
   return results.entityTitle;
 }
 
 
-export function getEntityTitle(entID, recLevel, maxRecLevel, callback) {
+export function getEntityTitle(entData) {
   // TODO: Also query for the highest rated 'representation' and if the rating
   // is high enough, use the propStruct generated from that instead.
   // TODO: Also always query for the `useful entity' meta-tag and print out
-  // that rating as well.
+  // that rating as well. *No, just do this for the drop-down menu for now.
 
-  if (recLevel > maxRecLevel) {
-    let entityTitle = (
+  if (!entData.propStruct) {
+    return (
       <span className="entity-title">
         <EntityID entID={entID} />
       </span>
     );
-    callback(entityTitle, "");
-    return;
   }
 
   // Hm, let me build a DataFetcher method instead to transform a propStruct
