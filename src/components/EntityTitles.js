@@ -14,22 +14,22 @@ const SpecialRefEntityTitle = () => <template></template>;
 // const InvalidEntityTitle = () => <template></template>;
 
 
-export const EntityTitle = ({entID, recLevel, maxRecLevel}) => {
+export const EntityTitle = ({entID, maxRecLevel, recLevel}) => {
   recLevel ??= 0;
   maxRecLevel ??= 2;
 
   const [results, setResults] = useState({});
   useEffect(() => {
-    DataFetcher.fetchMetadata(entID, (entMetadata) => {
-      DataFetcher.expandPropStruct(entMetadata.propStruct, () => {
+    DataFetcher.fetchExpandedMetadata(
+      entID, maxRecLevel, recLevel, (entMetadata) => {
         setResults(prev => {
           let ret = {...prev};
-          ret.entityTitle = getEntityTitle(entData);
+          ret.entityTitle = getEntityTitle(entMetadata);
           ret.isFetched = true;
           return ret;
         });
-      });
-    });
+      }
+    );
   }, []);
 
 
@@ -60,89 +60,53 @@ export function getEntityTitle(entData) {
     );
   }
 
-  // Hm, let me build a DataFetcher method instead to transform a propStruct
-  // by fetching and inserting entity data as objects in place of all
-  // placeholders in all strings, thus also exploding all strings into arrays.
-  // And let us also transform sets and lists inside the propStruct by
-  // wrapping them in objects. ..Let us also wrap the exploded strings in such
-  // objects (e.g. {string: [...]}, {set: [...]}, or {list: [...]}).
-  //  ..DataFetcher.expandPropStruct()
 
-  DataFetcher.fetchMetadata(entID, (entMetadata) => {
-    let propStruct = entMetadata.propStruct;
-    // Create an array, propMembers, of property name and value pairs. If a
-    // property value is an array (a set), add a pair for each element in this
-    // array.
-    let propMembers = [].concat(...Object.keys(propStruct).map(propKey => {
-      let propVal = propStruct[propKey];
-      let propValArr = (Array.isArray(propVal)) ? propVal : [propVal];
-      return propValArr.map(val => [propKey, val]);
-    }));
+  const propChildren = Object.keys(propStruct).map((propKey => {
+    let propVal = propStruct[propKey];
+    let propValArr = (Array.isArray(propVal)) ? propVal : [propVal];
+    var titleArr = [];
+    return propValArr.map((val, ind) => {
+      return (
+        <span key={propKey + "-" + ind}
+          className={"prop-member prop-name-" + propKey}
+        >
 
-    let callbackHandler = new ParallelCallbackHandler();
-    propMembers.forEach(([propKey, propVal], ind) => {
-      callbackHandler.push(ind, () => {
-        if (/^@[1-9][0-9]*$/.test(propVal)) {
-          let childEntID = propVal.substring(1);
-          getEntityTitle(
-            childEntID, recLevel - 1, maxRecLevel, (entityTitle, title) => {
-              propMembers[ind] = entityTitle;
-            }
-          );
-        }
-        else {
-
-        }
-      });
+        </span>
+      );
     });
+  }));
 
-    const propChildren = Object.keys(propStruct).map((propKey => {
-      let propVal = propStruct[propKey];
-      let propValArr = (Array.isArray(propVal)) ? propVal : [propVal];
-      var titleArr = [];
-      return propValArr.map((val, ind) => {
-        return (
-          <span key={propKey + "-" + ind}
-            className={"prop-member prop-name-" + propKey}
-          >
-  
-          </span>
-        );
-      });
-    }));
-
-    var entClass = propStruct.class;
-    // TODO: Import specific IDs instead as variable (e.g. TEMPLATE_CLASS_ID).
-    if (entClass === "@3") {
-      callback(
-        <>
-          <span className="class-prefix">{"template: "}</span>
-          <span className="ps-template">
-            {JSON.stringify(propStruct.template)}
-          </span>
-        </>
-      );
-    }
-    else if (entClass === "@1") {
-      callback(
-        <>
-          <span className="class-prefix">{"class: "}</span>
-          <span className="ps-class">
-            {propStruct.title}
-          </span>
-        </>
-      );
-    }
-    // TODO: Add more.
-
-    else {
-      callback(
-        <>
+  var entClass = propStruct.class;
+  // TODO: Import specific IDs instead as variable (e.g. TEMPLATE_CLASS_ID).
+  if (entClass === "@3") {
+    callback(
+      <>
+        <span className="class-prefix">{"template: "}</span>
+        <span className="ps-template">
+          {JSON.stringify(propStruct.template)}
+        </span>
+      </>
+    );
+  }
+  else if (entClass === "@1") {
+    callback(
+      <>
+        <span className="class-prefix">{"class: "}</span>
+        <span className="ps-class">
           {propStruct.title}
-        </>
-      );
-    }
-  });
+        </span>
+      </>
+    );
+  }
+  // TODO: Add more.
+
+  else {
+    callback(
+      <>
+        {propStruct.title}
+      </>
+    );
+  }
 }
 
 

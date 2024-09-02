@@ -43,11 +43,13 @@ export class DBRequestManager {
       let queryQueue = ongoingQueries[reqDataKey];
       delete ongoingQueries[reqDataKey];
 
-      // Then call all callbacks in queryQueue with their associated data.
+      // Then call all callbacks in queryQueue with their associated data,
+      // but make a deep copy for each individual callback first.
+      let resultJSON = JSON.stringify(result);
       for (let i = 0; i < queryQueue.length; i++) {
         let callback = queryQueue[i][0];
         let callbackData = queryQueue[i][1];
-        callback(result, callbackData);
+        callback(JSON.parse(resultJSON), callbackData);
       }
       // // If cacheQuery is true, cache the query.
       // if (cacheQuery) {

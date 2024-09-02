@@ -49,7 +49,11 @@ CREATE TABLE MonadicRatings (
     -- means 'absolutely/perfectly not,' 127 means 'doesn't particularly fit or
     -- not fit,' and 254 means 'absolutely/perfectly.'
     rat_val TINYINT UNSIGNED NOT NULL,
-    CHECK (rat_val != 0),
+    CHECK (rat_val != 255),
+
+    -- Rating modifier is often used to denote an interval radius of
+    -- "uncertainty" (often a flat distribution rather than a Gaussian). 
+    rat_modifier TINYINT UNSIGNED NOT NULL,
 
     -- The subject that is rated in relation to the tag.
     subj_id BIGINT UNSIGNED NOT NULL,
@@ -62,6 +66,7 @@ CREATE TABLE MonadicRatings (
         user_id,
         tag_id,
         rat_val,
+        rat_modifier,
         subj_id
     ),
 
@@ -69,7 +74,7 @@ CREATE TABLE MonadicRatings (
     UNIQUE INDEX (user_id, tag_id, subj_id),
 
     -- Index to look up users who has rated the stmt / rating scale.
-    UNIQUE INDEX (tag_id, subj_id, rat_val, user_id)
+    UNIQUE INDEX (tag_id, subj_id, rat_val, rat_modifier, user_id)
 );
 
 
@@ -89,7 +94,11 @@ CREATE TABLE RelationalRatings (
     -- means 'absolutely/perfectly not,' 127 means 'doesn't particularly fit or
     -- not fit,' and 254 means 'absolutely/perfectly.'
     rat_val TINYINT UNSIGNED NOT NULL,
-    CHECK (rat_val != 0),
+    CHECK (rat_val != 255),
+
+    -- Rating modifier is often used to denote an interval radius of
+    -- "uncertainty" (often a flat distribution rather than a Gaussian). 
+    rat_modifier TINYINT UNSIGNED NOT NULL,
 
     -- The subject that is rated in relation to the tag(object).
     subj_id BIGINT UNSIGNED NOT NULL,
@@ -103,6 +112,7 @@ CREATE TABLE RelationalRatings (
         obj_id,
         tag_id,
         rat_val,
+        rat_modifier,
         subj_id
     ),
 
@@ -110,7 +120,7 @@ CREATE TABLE RelationalRatings (
     UNIQUE INDEX (user_id, obj_id, tag_id, subj_id),
 
     -- Index to look up users who has rated the stmt / rating scale.
-    UNIQUE INDEX (obj_id, tag_id, subj_id, rat_val, user_id)
+    UNIQUE INDEX (obj_id, tag_id, subj_id, rat_val, rat_modifier, user_id)
 
     -- All relations are directional, so we don't need:
     -- UNIQUE INDEX (user_id, subj_id, tag_id, obj_id)
