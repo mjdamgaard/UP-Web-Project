@@ -144,8 +144,32 @@ export class DataFetcher {
         });
       }
     }
+    if (/^@[1-9][0-9]*c[1-9][0-9]*$/.test(propVal)) {
+      let [entID, expectedClassID] = propVal.match(/[1-9][0-9]*/g);
+      if (recLevel > maxRecLevel) {
+        obj[objKey] = {
+          entOfClass: {entID: entID, expectedClassID: expectedClassID}
+        };
+      }
+      else {
+        callbackHandler.push(key, () => {
+          this.fetchMetadata(entID, (entMetadata) => {
+            obj[objKey] = {
+              entOfClass: Object.assign(
+                {expectedClassID: expectedClassID},
+                entMetadata
+              )
+            };
+            this.expandPropStruct(
+              entMetadata.propStruct, entID, maxRecLevel, recLevel + 1
+            );
+            callbackHandler.resolve(key);
+          })
+        });
+      }
+    }
     else if (propVal === "@this") {
-      obj[objKey] = {thisEnt: thisID};
+      obj[objKey] = {thisEntID: thisID};
     }
     else if (typeof propVal === "string") {
       let stringLexRegEx = /([^@%]|\\@|\\%)+|@[0-9a-z]*|%[a-z0-9]*|.+/g;
@@ -175,7 +199,7 @@ export class DataFetcher {
             }
           }
           else if (str === "@this") {
-            strArr[ind] = {thisEnt: thisID};
+            strArr[ind] = {thisEntID: thisID};
           }
           else {
             strArr[ind] = {illFormedReference: str};

@@ -9,7 +9,8 @@ import {
 
 import {SDBInterface} from './components/root/SDBInterface.js';
 
-import './style/style01.css';
+import './style/style01.scss';
+import './style/entity_titles/title_style01.scss';
 
 
 

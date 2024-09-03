@@ -1,0 +1,21 @@
+
+
+.entity-ref {
+  // display: inline-block;
+
+  * {
+    display: inline-block;
+  }
+
+  > [class^=prop-member] {
+    display: none;
+  }
+
+  > [class=prop-member-title] {
+    display: inline-block;
+
+    > .prop-name-title {
+      display: none;
+    }
+  }
+}

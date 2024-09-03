@@ -24,8 +24,10 @@ html, body, #root {
   }
 } */
 
+$headerColor: #40E0E9;
+
 .interface-header {
-    background-color: #40E0E9;
+    background-color: $headerColor;
     margin-bottom: 10px;
 }
 .logo {
