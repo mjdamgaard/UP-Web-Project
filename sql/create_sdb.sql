@@ -66,8 +66,8 @@ CREATE TABLE MonadicRatings (
         user_id,
         tag_id,
         rat_val,
-        rat_modifier,
-        subj_id
+        subj_id,
+        rat_modifier
     ),
 
     -- Index to look up specific rating (and restricting one rating pr. user.)
@@ -112,8 +112,8 @@ CREATE TABLE RelationalRatings (
         obj_id,
         tag_id,
         rat_val,
-        rat_modifier,
-        subj_id
+        subj_id,
+        rat_modifier
     ),
 
     -- Index to look up specific rating (and restricting one rating pr. user.)

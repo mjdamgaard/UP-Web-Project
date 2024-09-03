@@ -20,11 +20,15 @@ export const EntityTitle = ({entID, maxRecLevel, recLevel}) => {
 
   const [results, setResults] = useState({});
   useEffect(() => {
+    // TODO: Also query for the highest rated 'representation' and if the rating
+    // is high enough, use the propStruct generated from that instead.
+    // TODO: Also always query for the `useful entity' meta-tag and print out
+    // that rating as well. *No, just do this for the drop-down menu for now.
     DataFetcher.fetchExpandedMetadata(
-      entID, maxRecLevel, recLevel, (entMetadata) => {
+      entID, maxRecLevel, recLevel, (expEntMetadata) => {
         setResults(prev => {
           let ret = {...prev};
-          ret.entityTitle = getEntityTitle(entMetadata);
+          ret.expEntMetadata = expEntMetadata;
           ret.isFetched = true;
           return ret;
         });
@@ -42,72 +46,106 @@ export const EntityTitle = ({entID, maxRecLevel, recLevel}) => {
 
   // Finally render this. 
   // let titleClassName = (results.title) ? " title-" + results.title : "";
-  return results.entityTitle;
+  return (
+    <div className="entity-title">
+      <EntityMetadataProperties expEntMetadata={results.expEntMetadata} />
+      <ExpandTitleButton expEntMetadata={results.expEntMetadata} />
+    </div>
+  );
 }
 
 
-export function getEntityTitle(entData) {
-  // TODO: Also query for the highest rated 'representation' and if the rating
-  // is high enough, use the propStruct generated from that instead.
-  // TODO: Also always query for the `useful entity' meta-tag and print out
-  // that rating as well. *No, just do this for the drop-down menu for now.
 
-  if (!entData.propStruct) {
+const EntityMetadataProperties = ({expEntMetadata}) => {
+  if (!expEntMetadata.propStruct) {
     return (
-      <span className="entity-title">
-        <EntityID entID={entID} />
+      <EntityID entID={expEntMetadata.entID} />
+    );
+  }
+
+  return Object.keys(expEntMetadata.propStruct).map((propKey => {
+    let propVal = propStruct[propKey];
+    let propValArr = (propVal.set) ? propVal.set : [propVal];
+    let propName = propKey.replaceAll(/[ \t\n\r\f]/, "-");
+    return (
+      <span key={propKey} className={"prop-name-" + propName}>
+        {propValArr.map((val, ind) => {
+          return (
+            <EntityPropertyValue key={ind} propVal={val}/>
+          );
+        })}
+      </span>
+    );
+  }));
+}
+
+
+const EntityPropertyValue = ({propVal}) => {
+  if (propVal.ent) {
+    return (
+      <span className={"prop-val-ent-" + propVal.ent.entID}>
+        <EntityLink entID={propVal.ent.entID} >
+          <EntityMetadataProperties expEntMetadata={propVal.ent} />
+        </EntityLink>
       </span>
     );
   }
-
-
-  const propChildren = Object.keys(propStruct).map((propKey => {
-    let propVal = propStruct[propKey];
-    let propValArr = (Array.isArray(propVal)) ? propVal : [propVal];
-    var titleArr = [];
-    return propValArr.map((val, ind) => {
-      return (
-        <span key={propKey + "-" + ind}
-          className={"prop-member prop-name-" + propKey}
-        >
-
-        </span>
-      );
-    });
-  }));
-
-  var entClass = propStruct.class;
-  // TODO: Import specific IDs instead as variable (e.g. TEMPLATE_CLASS_ID).
-  if (entClass === "@3") {
-    callback(
-      <>
-        <span className="class-prefix">{"template: "}</span>
-        <span className="ps-template">
-          {JSON.stringify(propStruct.template)}
-        </span>
-      </>
+  if (propVal.string) {
+    return (
+      <span className={"prop-val-str"}>
+        {propVal.string.map((val, ind) => {
+          if (val.ent) {
+            return (
+              <EntityLink key={ind} entID={propVal.ent.entID} >
+                <EntityPropertyValue propVal={val} />
+              </EntityLink>
+            );
+          }
+          else if (typeof val !== "string") {
+            return (
+              <span key={ind} className="pure-string">
+                {val}
+              </span>
+            );
+          }
+          else throw "EntityPropertyValue: val is not a string.";
+        })}
+      </span>
     );
   }
-  else if (entClass === "@1") {
-    callback(
-      <>
-        <span className="class-prefix">{"class: "}</span>
-        <span className="ps-class">
-          {propStruct.title}
-        </span>
-      </>
+  if (propVal.set) {
+    return (
+      <span className={"prop-val-set"}>
+        {/* Implement sets for EntityTitle only if it becomes useful. */}
+      </span>
     );
   }
-  // TODO: Add more.
-
+  if (propVal.list) {
+    return (
+      <span className={"prop-val-list"}>
+        {/* Implement lists for EntityTitle only if it becomes useful. */}
+      </span>
+    );
+  }
   else {
-    callback(
-      <>
-        {propStruct.title}
-      </>
-    );
+    throw "EntityPropertyValue: Unknown type " + JSON.stringify(propVal) + ".";
   }
 }
+
+
+
+
+
+
+const ExpandTitleButton = ({expEntMetadata}) => {
+  // TODO: Make this button turn into a whole drop-down menu when expanded.
+  return (
+    <div className={"expand-title-button not-expanded"}>
+      {/* Implement further */}
+    </div>
+  );
+}
+
 
 
 
@@ -164,7 +202,7 @@ export const EntityTitleWrapper = ({entID, isLink, children}) => {
   }
 }
 
-
+// TODO: Change to a Link instead and let SDBInterface open the new column.
 const EntityLink = ({entID, children}) => {
   const [, columnManager] = useContext(ColumnContext);
 

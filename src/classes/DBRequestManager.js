@@ -1,5 +1,8 @@
 import $ from 'jquery';
 
+// TODO: Refactor to remove jquery (also eliminating the redundant JSON-
+// encoding, decoding, and then encoding again.)
+
 
 // (If it turns out that we'll need manual caching (for more than just
 // collapsed forwarding), I will just use a LRU library, e.g.
