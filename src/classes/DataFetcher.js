@@ -64,7 +64,7 @@ export class DataFetcher {
     }
     this.fetchMetadata(entID, (entMetadata) => {
       this.expandPropStruct(
-        entMetadata.propStruct, maxRecLevel, recLevel, () => {
+        entMetadata.propStruct, entID, maxRecLevel, recLevel, () => {
           callback(entMetadata);
         }
       );
@@ -75,7 +75,7 @@ export class DataFetcher {
   // expandPropStruct() expands the propStruct by substituting entID references
   // by nested entData objects. This method also transforms each value into an
   // object like {string: [...]}, {set: [...]}, {list: [...]}, etc.
-  static expandPropStruct(propStruct, maxRecLevel, recLevel, callback) {
+  static expandPropStruct(propStruct, entID, maxRecLevel, recLevel, callback) {
     if (!callback) {
       callback = recLevel;
       recLevel = 0;
@@ -98,7 +98,8 @@ export class DataFetcher {
         );
       }
       else this.#expandPropVal(
-        propVal, propStruct, propKey, callbackHandler, maxRecLevel, recLevel
+        propVal, propStruct, propKey, entID, callbackHandler,
+        maxRecLevel, recLevel
       );
     });
 
@@ -107,24 +108,24 @@ export class DataFetcher {
 
 
   static #expandElements(
-    elemArr, callbackHandler, key, maxRecLevel, recLevel
+    elemArr, thisID, callbackHandler, key, maxRecLevel, recLevel
   ) {
     elemArr.forEach((elem, ind) => {
       if (Array.isArray(elem)) {
         elemArr[ind] = {list: elem};
         this.#expandElements(
-          elem, callbackHandler, key + "-" + ind, maxRecLevel, recLevel
+          elem, thisID, callbackHandler, key + "-" + ind, maxRecLevel, recLevel
         );
       }
       else this.#expandPropVal(
-        elem, elemArr, ind, callbackHandler, key, maxRecLevel, recLevel
+        elem, elemArr, ind, thisID, callbackHandler, key, maxRecLevel, recLevel
       )
     });
   }
 
 
   static #expandPropVal(
-    propVal, obj, objKey, callbackHandler, key, maxRecLevel, recLevel
+    propVal, obj, objKey, thisID, callbackHandler, key, maxRecLevel, recLevel
   ) {
     if (/^@[1-9][0-9]*$/.test(propVal)) {
       let entID = propVal.substring(1);
@@ -136,36 +137,76 @@ export class DataFetcher {
           this.fetchMetadata(entID, (entMetadata) => {
             obj[objKey] = {ent: entMetadata};
             this.expandPropStruct(
-              entMetadata.propStruct, maxRecLevel, recLevel + 1
+              entMetadata.propStruct, entID, maxRecLevel, recLevel + 1
             );
             callbackHandler.resolve(key);
           })
         });
       }
     }
+    else if (propVal === "@this") {
+      obj[objKey] = {thisEnt: thisID};
+    }
     else if (typeof propVal === "string") {
-      let strArr = propVal.match(/([^@]|\\@)+|@[0-9]*/g);
+      let stringLexRegEx = /([^@%]|\\@|\\%)+|@[0-9a-z]*|%[a-z0-9]*|.+/g;
+      let strArr = propVal.match(stringLexRegEx);
       obj[objKey] = {string: strArr};
       strArr.forEach((str, ind) => {
-        if (/^@[1-9][0-9]*$/.test(str)) {
-          let entID = propVal.substring(1);
-          if (recLevel > maxRecLevel) {
-            strArr[ind] = {ent: {entID: entID}};
+        if (/^([^@%]|\\@|\\%)+$/.test(str)) {
+          return;
+        }
+        else if (str[0] === "@") {
+          if (/^@[1-9][0-9]*$/.test(str)) {
+            let entID = propVal.substring(1);
+            if (recLevel > maxRecLevel) {
+              strArr[ind] = {ent: {entID: entID}};
+            }
+            else {
+              let newKey = key + "-" + ind;
+              callbackHandler.push(newKey, () => {
+                this.fetchMetadata(entID, (entMetadata) => {
+                  strArr[ind] = {ent: entMetadata};
+                  this.expandPropStruct(
+                    entMetadata.propStruct, entID, maxRecLevel, recLevel + 1
+                  );
+                  callbackHandler.resolve(newKey);
+                })
+              });
+            }
+          }
+          else if (str === "@this") {
+            strArr[ind] = {thisEnt: thisID};
           }
           else {
-            let newKey = key + "-" + ind;
-            callbackHandler.push(newKey, () => {
-              this.fetchMetadata(entID, (entMetadata) => {
-                strArr[ind] = {ent: entMetadata};
-                this.expandPropStruct(
-                  entMetadata.propStruct, maxRecLevel, recLevel + 1
-                );
-                callbackHandler.resolve(newKey);
-              })
-            });
+            strArr[ind] = {illFormedReference: str};
           }
         }
-        else return;
+        else if (str[0] === "%") {
+          if (str === "%t") {
+            strArr[ind] = {fullTextPlaceholder: true};
+          }
+          else if (/^%t[0-9]$/.test(str)) {
+            strArr[ind] = {textPlaceholder: str[2]};
+          }
+          else if (str === "%d") {
+            strArr[ind] = {dataPlaceholder: true};
+          }
+          else if (/^%e[0-9]$/.test(str)) {
+            strArr[ind] = {unusedEntityPlaceholder: str[2]};
+          }
+          else if (str === "%s") {
+            strArr[ind] = {unusedFullStringPlaceholder: true};
+          }
+          else if (/^%s[0-9]$/.test(str)) {
+            strArr[ind] = {unusedStringPlaceholder: str[2]};
+          }
+          else {
+            strArr[ind] = {illFormedPlaceholder: str};
+          }
+        }
+        else {
+          strArr[ind] = {illFormedString: str};
+        }
       });
     }
     else throw "DataFetcher.expandPropVal(): Unexpected type.";

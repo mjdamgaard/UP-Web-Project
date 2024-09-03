@@ -44,10 +44,9 @@ export const EntityTitle = ({entID, maxRecLevel, recLevel}) => {
     );
   }
 
-  // Finally render this. 
-  // let titleClassName = (results.title) ? " title-" + results.title : "";
+  // Finally render this.
   return (
-    <div className="entity-title">
+    <div className="entity-title entity-ref">
       <EntityMetadataProperties expEntMetadata={results.expEntMetadata} />
       <ExpandTitleButton expEntMetadata={results.expEntMetadata} />
     </div>
@@ -69,7 +68,10 @@ const EntityMetadataProperties = ({expEntMetadata}) => {
     let propValArr = (propVal.set) ? propVal.set : [propVal];
     let propName = propKey.replaceAll(/[ \t\n\r\f]/g, "-");
     return (
-      <span key={propKey} className={"prop-name-" + propName}>
+      <span key={propKey} className={"prop-member-list-" + propName}>
+        <span key={propKey} className={"prop-name-" + propName}>
+          {propKey + ": "}
+        </span>
         {propValArr.map((val, ind) => {
           return (
             <EntityPropertyValue key={ind} propVal={val}/>
@@ -85,24 +87,24 @@ const EntityPropertyValue = ({propVal}) => {
   if (propVal.ent) {
     return (
       <span className={"prop-val-ent-" + propVal.ent.entID}>
-        <EntityLink entID={propVal.ent.entID} >
+        <EntityReference entID={propVal.ent.entID} >
           <EntityMetadataProperties expEntMetadata={propVal.ent} />
-        </EntityLink>
+        </EntityReference>
       </span>
     );
   }
-  if (propVal.string) {
+  else if (propVal.string) {
     return (
       <span className={"prop-val-str"}>
         {propVal.string.map((val, ind) => {
           if (val.ent) {
             return (
-              <EntityLink key={ind} entID={propVal.ent.entID} >
+              <EntityReference key={ind} entID={propVal.ent.entID} >
                 <EntityPropertyValue propVal={val} />
-              </EntityLink>
+              </EntityReference>
             );
           }
-          else if (typeof val !== "string") {
+          else if (typeof val === "string") {
             return (
               <span key={ind} className="pure-string">
                 {val}
@@ -117,17 +119,26 @@ const EntityPropertyValue = ({propVal}) => {
       </span>
     );
   }
-  if (propVal.set) {
+  else if (propVal.set) {
     return (
       <span className={"prop-val-set"}>
         {/* Implement sets for EntityTitle only if it becomes useful. */}
       </span>
     );
   }
-  if (propVal.list) {
+  else if (propVal.list) {
     return (
       <span className={"prop-val-list"}>
         {/* Implement lists for EntityTitle only if it becomes useful. */}
+      </span>
+    );
+  }
+  else if (propVal.thisEnt) {
+    return (
+      <span className={"prop-val-this"}>
+        <EntityReference entID={propVal.thisEnt}>
+          {"@this"}
+        </EntityReference>
       </span>
     );
   }
@@ -168,9 +179,9 @@ const InvalidEntityTitle = ({entID, isLink, children}) => {
     return (
       <span className="entity-title invalid-entity-title text-warning">
         {/* TODO: Remove "text-warning" className. */}
-        <EntityLink entID={entID}>
+        <EntityReference entID={entID}>
           {children}
-        </EntityLink>
+        </EntityReference>
       </span>
     );
   } else {
@@ -190,9 +201,9 @@ export const EntityTitleWrapper = ({entID, isLink, children}) => {
   if (isLink) {
     return (
       <span className="entity-title">
-        <EntityLink entID={entID}>
+        <EntityReference entID={entID}>
           {children}
-        </EntityLink>
+        </EntityReference>
       </span>
     );
   }
@@ -207,11 +218,11 @@ export const EntityTitleWrapper = ({entID, isLink, children}) => {
 }
 
 // TODO: Change to a Link instead and let SDBInterface open the new column.
-const EntityLink = ({entID, children}) => {
+const EntityReference = ({entID, children}) => {
   const [, columnManager] = useContext(ColumnContext);
 
   return (
-    <span className="entity-link" onClick={() => {
+    <span className="entity-ref" onClick={() => {
       columnManager.openColumn(entID);
     }}>
       {children}
@@ -221,9 +232,9 @@ const EntityLink = ({entID, children}) => {
 
 export const EntityID = ({entID}) => {
   return (
-    <EntityLink entID={entID}>
+    <EntityReference entID={entID}>
       <span className="entity-id">@{entID}</span>
-    </EntityLink>
+    </EntityReference>
   );
 };
 
@@ -451,9 +462,9 @@ export const EntityID = ({entID}) => {
 //   if (isLink) {
 //     return (
 //       <span className="entity-title" >
-//         <EntityLink entID={entID}>
+//         <EntityReference entID={entID}>
 //           {children}
-//         </EntityLink>
+//         </EntityReference>
 //       </span>
 //     );
 //   } else {
