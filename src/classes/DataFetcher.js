@@ -1,6 +1,6 @@
 
 import {DBRequestManager} from "../classes/DBRequestManager.js";
-
+import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 
 
 export class DataFetcher {
@@ -88,7 +88,7 @@ export class DataFetcher {
     let callbackHandler = new ParallelCallbackHandler();
 
     Object.keys(propStruct).forEach(propKey => {
-      propVal = propStruct[propKey];
+      let propVal = propStruct[propKey];
       
       if (Array.isArray(propVal)) {
         let elemArr = propStruct[propKey];
@@ -135,7 +135,7 @@ export class DataFetcher {
         callbackHandler.push(key, () => {
           this.fetchMetadata(entID, (entMetadata) => {
             obj[objKey] = {ent: entMetadata};
-            expandPropStruct(
+            this.expandPropStruct(
               entMetadata.propStruct, maxRecLevel, recLevel + 1
             );
             callbackHandler.resolve(key);
@@ -157,7 +157,7 @@ export class DataFetcher {
             callbackHandler.push(newKey, () => {
               this.fetchMetadata(entID, (entMetadata) => {
                 strArr[ind] = {ent: entMetadata};
-                expandPropStruct(
+                this.expandPropStruct(
                   entMetadata.propStruct, maxRecLevel, recLevel + 1
                 );
                 callbackHandler.resolve(newKey);

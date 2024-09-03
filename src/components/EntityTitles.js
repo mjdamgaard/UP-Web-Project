@@ -40,7 +40,7 @@ export const EntityTitle = ({entID, maxRecLevel, recLevel}) => {
   // Before results is fetched, render this:
   if (!results.isFetched) {
     return (
-      <EntityTitlePlaceholder entID={entID} key={key} />
+      <EntityTitlePlaceholder entID={entID} />
     );
   }
 
@@ -57,16 +57,17 @@ export const EntityTitle = ({entID, maxRecLevel, recLevel}) => {
 
 
 const EntityMetadataProperties = ({expEntMetadata}) => {
-  if (!expEntMetadata.propStruct) {
+  let propStruct = expEntMetadata.propStruct;
+  if (!propStruct) {
     return (
       <EntityID entID={expEntMetadata.entID} />
     );
   }
 
-  return Object.keys(expEntMetadata.propStruct).map((propKey => {
+  return Object.keys(propStruct).map((propKey => {
     let propVal = propStruct[propKey];
     let propValArr = (propVal.set) ? propVal.set : [propVal];
-    let propName = propKey.replaceAll(/[ \t\n\r\f]/, "-");
+    let propName = propKey.replaceAll(/[ \t\n\r\f]/g, "-");
     return (
       <span key={propKey} className={"prop-name-" + propName}>
         {propValArr.map((val, ind) => {
@@ -108,7 +109,10 @@ const EntityPropertyValue = ({propVal}) => {
               </span>
             );
           }
-          else throw "EntityPropertyValue: val is not a string.";
+          else throw (
+            "EntityPropertyValue: val " + JSON.stringify(val) +
+            " is not a string."
+          );
         })}
       </span>
     );

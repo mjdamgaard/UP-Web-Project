@@ -11,11 +11,15 @@ export class ParallelCallbackHandler {
   constructor() {
     this.callbackObj = [];
     this.isReadyObj = [];
+    this.finalCallback = null;
   }
 
   resolve(key) {
     this.isReadyObj[key] = true;
-    let isReady = this.isReadyArr.reduce((acc, val) => acc && val);
+    let isReady = Object.keys(this.callbackObj).reduce(
+      (acc, key) => acc && this.isReadyObj[key],
+      true
+    );
     if (isReady) {
       this.finalCallback("success");
     }
@@ -30,8 +34,8 @@ export class ParallelCallbackHandler {
   }
 
   executeThen(finalCallback) {
-    this.isReadyArr = this.callbackArr.map(() => true);
-    this.callbackArr.forEach(callback => {
+    this.finalCallback = finalCallback ?? void(0);
+    Object.values(this.callbackObj).forEach(callback => {
       callback();
     });
 
