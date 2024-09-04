@@ -45,11 +45,11 @@ CREATE TABLE MonadicRatings (
     tag_id BIGINT UNSIGNED NOT NULL,
 
     -- Rating value of how well the tag fits the entity. The first byte
-    -- of the TINYINT runs from 0 to 254, where 0 normally
-    -- means 'absolutely/perfectly not,' 127 means 'doesn't particularly fit or
-    -- not fit,' and 254 means 'absolutely/perfectly.'
+    -- of the TINYINT runs from 0 to 200, where 0 normally
+    -- means 'absolutely/perfectly not,' 100 means 'doesn't particularly fit or
+    -- not fit,' and 200 means 'absolutely/perfectly.'
     rat_val TINYINT UNSIGNED NOT NULL,
-    CHECK (rat_val != 255),
+    CHECK (rat_val <= 200),
 
     -- Rating modifier is often used to denote an interval radius of
     -- "uncertainty" (often a flat distribution rather than a Gaussian). 
@@ -66,8 +66,8 @@ CREATE TABLE MonadicRatings (
         user_id,
         tag_id,
         rat_val,
-        subj_id,
-        rat_modifier
+        rat_modifier,
+        subj_id
     ),
 
     -- Index to look up specific rating (and restricting one rating pr. user.)
@@ -90,11 +90,11 @@ CREATE TABLE RelationalRatings (
     tag_id BIGINT UNSIGNED NOT NULL,
 
     -- Rating value of how well the tag fits the entity. The first byte
-    -- of the TINYINT runs from 0 to 254, where 0 normally
-    -- means 'absolutely/perfectly not,' 127 means 'doesn't particularly fit or
-    -- not fit,' and 254 means 'absolutely/perfectly.'
+    -- of the TINYINT runs from 0 to 200, where 0 normally
+    -- means 'absolutely/perfectly not,' 100 means 'doesn't particularly fit or
+    -- not fit,' and 200 means 'absolutely/perfectly.'
     rat_val TINYINT UNSIGNED NOT NULL,
-    CHECK (rat_val != 255),
+    CHECK (rat_val <= 200),
 
     -- Rating modifier is often used to denote an interval radius of
     -- "uncertainty" (often a flat distribution rather than a Gaussian). 
@@ -112,8 +112,8 @@ CREATE TABLE RelationalRatings (
         obj_id,
         tag_id,
         rat_val,
-        subj_id,
-        rat_modifier
+        rat_modifier,
+        subj_id
     ),
 
     -- Index to look up specific rating (and restricting one rating pr. user.)

@@ -1,5 +1,8 @@
 
-// ParallelCallbackHandler is basically like a special case JS Promise class.
+// ParallelCallbackHandler is like JS Promise class, only one that takes
+// several callbacks (to manipulate some data asynchronously), executes them
+// all in one go, and then waits to call only one .then() callback
+// (finalCallback) once these callbacks have all resolved.
 // Usage: Make an callbackHandler instance, then push some callbacks, together
 // with a key, that all ultimately ends in a call to either
 // callbackHandler.resolve(key) or callbackHandler.resolve(reject). Then
@@ -9,15 +12,15 @@
 // instead, where key is the key of the failed callback.
 export class ParallelCallbackHandler {
   constructor() {
-    this.callbackObj = [];
-    this.isReadyObj = [];
+    this.callbackArr = [];
+    this.isReadyArr = [];
     this.finalCallback = null;
   }
 
-  resolve(key) {
-    this.isReadyObj[key] = true;
-    let isReady = Object.keys(this.callbackObj).reduce(
-      (acc, key) => acc && this.isReadyObj[key],
+  resolve(ind) {
+    this.isReadyArr[ind] = true;
+    let isReady = this.isReadyArr.reduce(
+      (acc, val) => acc && val,
       true
     );
     if (isReady) {
@@ -25,18 +28,21 @@ export class ParallelCallbackHandler {
     }
   }
 
-  reject(key) {
-    this.finalCallback("failure", key);
+  reject(msg, ind) {
+    this.finalCallback("failure", msg, ind, this.callbackArr[ind]);
   }
 
-  push(key, callback) {
-    this.callbackObj[key] = callback;
+  push(callback) {
+    this.callbackArr.push(callback);
   }
 
-  executeThen(finalCallback) {
+  execAndThen(finalCallback) {
+    this.isReadyArr = this.callbackArr.map(() => false);
     this.finalCallback = finalCallback ?? void(0);
-    Object.values(this.callbackObj).forEach(callback => {
-      callback();
+    Object.values(this.callbackArr).forEach((callback, ind) => {
+      let resolve = () => this.resolve(ind);
+      let reject = (msg) => this.reject(msg, ind);
+      callback(resolve, reject);
     });
 
   }

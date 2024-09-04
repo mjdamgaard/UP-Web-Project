@@ -67,19 +67,17 @@ export class DataFetcher {
       maxRecLevel = 2;
     }
     this.fetchMetadata(entID, (entMetadata) => {
-      this.expandPropStruct(
-        entMetadata.propStruct, entID, maxRecLevel, recLevel, () => {
-          callback(entMetadata);
-        }
-      );
+      this.expandMetaData(entMetadata, entID, maxRecLevel, recLevel, () => {
+        callback(entMetadata);
+      });
     });
   }
 
 
-  // expandPropStruct() expands the propStruct by substituting entID references
+  // expandMetaData() expands the propStruct by substituting entID references
   // by nested entData objects. This method also transforms each value into an
   // object like {string: [...]}, {set: [...]}, {list: [...]}, etc.
-  static expandPropStruct(propStruct, entID, maxRecLevel, recLevel, callback) {
+  static expandMetaData(entMetadata, entID, maxRecLevel, recLevel, callback) {
     if (!callback) {
       callback = recLevel;
       recLevel = 0;
@@ -88,48 +86,65 @@ export class DataFetcher {
       callback = maxRecLevel;
       maxRecLevel = 2;
     }
+    if (recLevel > maxRecLevel) {
+      return;
+    }
+
+    let propStruct = entMetadata.propStruct;
 
     let callbackHandler = new ParallelCallbackHandler();
 
+    // Prepare callbacks to expand the propStruct.
     Object.keys(propStruct).forEach(propKey => {
       let propVal = propStruct[propKey];
       
       if (Array.isArray(propVal)) {
         let elemArr = propStruct[propKey];
         propStruct[propKey] = {set: elemArr};
-        this.#expandElements(
-          elemArr, callbackHandler, propKey, maxRecLevel, recLevel
-        );
+        this.#expandElements(elemArr, callbackHandler, maxRecLevel, recLevel);
       }
       else this.#expandPropVal(
-        propVal, propStruct, propKey, entID, callbackHandler,
-        maxRecLevel, recLevel
+        propVal, propStruct, entID, callbackHandler, maxRecLevel, recLevel
       );
     });
 
-    callbackHandler.executeThen(callback);
+    // Prepare callback to get the expanded (with recLevel -= 1) metadata
+    // of the entity's class.
+    let classID = entMetadata.classID;
+    callbackHandler.push((resolve) => {
+      this.fetchMetadata(classID, (classMetadata) => {
+        this.expandMetaData(
+          classMetadata, entID, maxRecLevel, recLevel + 1, () => {
+            entMetadata.classMetaData = classMetadata;
+            resolve();
+          }
+        );
+      });
+    });
+
+    callbackHandler.execAndThen(callback);
   }
 
 
   static #expandElements(
-    elemArr, thisID, callbackHandler, key, maxRecLevel, recLevel
+    elemArr, thisID, callbackHandler, maxRecLevel, recLevel
   ) {
     elemArr.forEach((elem, ind) => {
       if (Array.isArray(elem)) {
         elemArr[ind] = {list: elem};
         this.#expandElements(
-          elem, thisID, callbackHandler, key + "-" + ind, maxRecLevel, recLevel
+          elem, thisID, callbackHandler, maxRecLevel, recLevel
         );
       }
       else this.#expandPropVal(
-        elem, elemArr, ind, thisID, callbackHandler, key, maxRecLevel, recLevel
+        elem, elemArr, ind, thisID, callbackHandler, maxRecLevel, recLevel
       )
     });
   }
 
 
   static #expandPropVal(
-    propVal, obj, objKey, thisID, callbackHandler, key, maxRecLevel, recLevel
+    propVal, obj, objKey, thisID, callbackHandler, maxRecLevel, recLevel
   ) {
     if (/^@[1-9][0-9]*$/.test(propVal)) {
       let entID = propVal.substring(1);
@@ -137,13 +152,11 @@ export class DataFetcher {
         obj[objKey] = {ent: {entID: entID}};
       }
       else {
-        callbackHandler.push(key, () => {
+        callbackHandler.push(resolve => {
           this.fetchMetadata(entID, (entMetadata) => {
             obj[objKey] = {ent: entMetadata};
-            this.expandPropStruct(
-              entMetadata.propStruct, entID, maxRecLevel, recLevel + 1
-            );
-            callbackHandler.resolve(key);
+            this.expandMetaData(entMetadata, entID, maxRecLevel, recLevel + 1);
+            resolve();
           })
         });
       }
@@ -156,7 +169,7 @@ export class DataFetcher {
         };
       }
       else {
-        callbackHandler.push(key, () => {
+        callbackHandler.push(resolve => {
           this.fetchMetadata(entID, (entMetadata) => {
             obj[objKey] = {
               ent: Object.assign(
@@ -164,10 +177,8 @@ export class DataFetcher {
                 entMetadata
               )
             };
-            this.expandPropStruct(
-              entMetadata.propStruct, entID, maxRecLevel, recLevel + 1
-            );
-            callbackHandler.resolve(key);
+            this.expandMetaData(entMetadata, entID, maxRecLevel, recLevel + 1);
+            resolve();
           })
         });
       }
@@ -193,14 +204,13 @@ export class DataFetcher {
               strArr[ind] = {ent: {entID: entID}};
             }
             else {
-              let newKey = key + "-" + ind;
-              callbackHandler.push(newKey, () => {
+              callbackHandler.push(resolve => {
                 this.fetchMetadata(entID, (entMetadata) => {
                   strArr[ind] = {ent: entMetadata};
-                  this.expandPropStruct(
-                    entMetadata.propStruct, entID, maxRecLevel, recLevel + 1
+                  this.expandMetaData(
+                    entMetadata, entID, maxRecLevel, recLevel + 1
                   );
-                  callbackHandler.resolve(newKey);
+                  resolve();
                 })
               });
             }
@@ -249,7 +259,7 @@ export class DataFetcher {
 
   // substituteDataInput(entID, propStruct) fetches dataInput from the entity
   // and substitutes the relevant placeholders in propStruct. If propStruct
-  // has nested entity objects in it (as a result of expandPropStruct()), the
+  // has nested entity objects in it (as a result of expandMetaData()), the
   // data for these propStructs are also fetched and substituted, unless
   // maxRecLevel is exceeded. This method also transforms each value into an
   // object like {string: [...]}, {set: [...]}, {list: [...]}, etc.
