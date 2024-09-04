@@ -169,7 +169,10 @@ export class DataFetcher {
       }
     }
     else if (propVal === "@this") {
-      obj[objKey] = {thisEntID: thisID};
+      obj[objKey] = {thisEnt: thisID};
+    }
+    else if (propVal === "@null") {
+      obj[objKey] = {null: true};
     }
     else if (typeof propVal === "string") {
       let stringLexRegEx = /([^@%]|\\@|\\%)+|@[0-9a-z]*|%[a-z0-9]*|.+/g;
@@ -199,7 +202,10 @@ export class DataFetcher {
             }
           }
           else if (str === "@this") {
-            strArr[ind] = {thisEntID: thisID};
+            strArr[ind] = {thisEnt: thisID};
+          }
+          else if (str === "@null") {
+            strArr[ind] = {null: true};
           }
           else {
             strArr[ind] = {illFormedReference: str};
@@ -281,7 +287,15 @@ function parseAndConstructPropStruct(entMetadata, callback) {
   let entInputArr = entMetadata.entInput.split(",");
   substitutePlaceholders(propStruct, /%e[0-9]/g, placeholder => {
     let n = parseInt(placeholder.substring(2));
-    return entInputArr[n] ?? "";
+    let substitute = entInputArr[n];
+    if (substitute === undefined) {
+      substitute = "@null"
+    }
+    // If substitute == "this" or "<num>", return "@this" or "@<num>".
+    else {
+      substitute = "@" + substitute;
+    }
+    return substitute;
   });
 
   // Replace all /%s[0-9]/ placeholders in the values of the template by the
@@ -289,7 +303,7 @@ function parseAndConstructPropStruct(entMetadata, callback) {
   let strInputArr = getStrInputArr(entMetadata.strInput);
   substitutePlaceholders(propStruct, /%s[0-9]/g, placeholder => {
     let n = parseInt(placeholder.substring(2));
-    return strInputArr[n] ?? "";
+    return strInputArr[n] ?? "@null";
   });
 
   // Replace any /%s/ placeholders in the values of the template by the

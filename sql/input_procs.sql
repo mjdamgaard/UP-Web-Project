@@ -125,6 +125,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindEntity (
     IN userID BIGINT UNSIGNED,
+    IN classID BIGINT UNSIGNED,
     IN tmplID BIGINT UNSIGNED,
     IN tmplEntInputs VARCHAR(209),
     IN tmplStrInputs VARCHAR(255),
@@ -151,12 +152,12 @@ BEGIN
     END IF;
 
     INSERT IGNORE INTO Entities (
-        template_id, template_entity_inputs, template_string_inputs,
+        class_id, template_id, template_entity_inputs, template_string_inputs,
         own_prop_struct, own_prop_struct_hash, data_input, data_input_hash,
         creator_id
     )
     VALUES (
-        parentId, tmplEntInputs, tmplStrInputs,
+        classID, tmplID, tmplEntInputs, tmplStrInputs,
         ownStruct, ownStructHash, dataInput, dataInputHash, userID
     );
     IF (mysql_affected_rows() > 0) THEN

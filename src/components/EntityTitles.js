@@ -157,10 +157,10 @@ const EntityPropertyValue = ({propVal}) => {
       </div>
     );
   }
-  else if (propVal.thisEntID) {
+  else if (propVal.thisEnt) {
     return (
       <div className={"prop-val-this"}>
-        <EntityLink entID={propVal.thisEntID}>
+        <EntityLink entID={propVal.thisEnt}>
           {"@this"}
         </EntityLink>
       </div>

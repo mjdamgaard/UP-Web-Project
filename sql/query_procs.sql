@@ -143,7 +143,8 @@ CREATE PROCEDURE selectEntity (
 )
 BEGIN
     SELECT
-        template_id AS parentId,
+        class_id AS classID,
+        template_id AS tmplID,
         template_entity_inputs AS tmplEntInputs,
         template_string_inputs AS tmplStrInputs,
         -- LENGTH(own_prop_struct) AS ownStructLen,
@@ -158,6 +159,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectEntityFromSecKey (
+    IN classID BIGINT UNSIGNED,
     IN tmplID BIGINT UNSIGNED,
     IN tmplEntInputs VARCHAR(209),
     IN tmplStrInputs VARCHAR(255),
@@ -168,6 +170,7 @@ BEGIN
     SELECT id AS entID
     FROM Entities
     WHERE (
+        class_id = classID AND
         template_id = tmplID AND
         data_input_hash = dataInputHash AND
         own_prop_struct_hash = ownStructHash AND

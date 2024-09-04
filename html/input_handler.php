@@ -68,9 +68,11 @@ switch ($reqType) {
         // TODO: Is it?
         break;
     case "ent":
-        $sql = "CALL insertOrFindEntity (?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "t", "e", "s", "p", "d");
-        $typeArr = array("id", "id", "id_list", "str", "prop_struct", "blob");
+        $sql = "CALL insertOrFindEntity (?, ?, ?, ?, ?, ?, ?)";
+        $paramNameArr = array("u", "c", "t", "e", "s", "p", "d");
+        $typeArr = array(
+            "id", "id", "id", "id_list", "str", "prop_struct", "blob"
+        );
         break;
     default:
         echoBadErrorJSONAndExit("Unrecognized request type");

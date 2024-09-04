@@ -119,7 +119,7 @@ class InputValidator {
                 }
                 break;
             case "id_list":
-                $pattern = "/^([1-9][0-9]*(,[1-9][0-9]*)*)?$/";
+                $pattern = "/^((this|[1-9][0-9]*)(,(this|[1-9][0-9]*))*)?$/";
                 $len = strlen($paramVal);
                 if (
                     $len > 209 ||

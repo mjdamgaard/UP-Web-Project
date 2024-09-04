@@ -100,13 +100,13 @@ switch ($reqType) {
         $paramNameArr = array("id");
         $typeArr = array("id");
         // output: [[
-        //     tmplID, tmplEntInputs, tmplStrInputs, ownStruct, dataLen
+        //   classID, tmplID, tmplEntInputs, tmplStrInputs, ownStruct, dataLen
         // ]].
         break;
     case "entSK":
-        $sql = "CALL selectEntityFromSecKey (?, ?, ?, ?, ?)";
-        $paramNameArr = array("t", "e", "s", "oh", "dh");
-        $paramNameArr = array("id", "id_list", "str", "str", "str");
+        $sql = "CALL selectEntityFromSecKey (?, ?, ?, ?, ?, ?)";
+        $paramNameArr = array("c", "t", "e", "s", "oh", "dh");
+        $paramNameArr = array("id", "id", "id_list", "str", "str", "str");
         // output: [[entID]].
         break;
     // case "entOPS":
