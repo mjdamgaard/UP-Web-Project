@@ -187,14 +187,14 @@ $stmt = $conn->prepare($sql);
 DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 // fetch the result as a numeric array.
 $res = $stmt->get_result()->fetch_all();
-// if $reqType == ent, JSON-decode the fourth output, "ownStruct", before the
+// if $reqType == ent, JSON-decode the fifth output, "ownStruct", before the
 // final full JSON-encoding. 
 if ($reqType === "ent") {
-    $ownStruct = $res[0][3];
+    $ownStruct = $res[0][4];
     if ($ownStruct) {
-        $res[0][3] = json_decode($ownStruct, true);
+        $res[0][4] = json_decode($ownStruct, true);
     } else if ($ownStruct === "") {
-        $res[0][3] = json_decode("{}", true);
+        $res[0][4] = json_decode("{}", true);
     }
 }
 // finally echo the JSON-encoded numeric array, containing e.g. the

@@ -2,6 +2,13 @@
 import {DBRequestManager} from "../classes/DBRequestManager.js";
 import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 
+const CLASS_CLASS_METADATA_JSON = JSON.stringify({
+  entID: 1,
+  propStruct: {title: {string: ["class"]}},
+  classID: 1,
+  ownStruct: {title: "class"},
+  dataLen: 60,
+});
 
 export class DataFetcher {
   
@@ -37,8 +44,16 @@ export class DataFetcher {
       entMetadata.dataLen = dataLen;
       entMetadata.isMissing = !classID;
 
-      // If entity is missing or has no template, return.
-      if (!classID || tmplID == "0") {
+      // If entity is missing, call callback immediately and return.
+      if (!classID) {
+        callback(entMetadata);
+        return;
+      }
+
+      // If entity is has no template, make set propStruct as the ownStruct,
+      // and call the callback and return.
+      if (tmplID == "0") {
+        entMetadata.propStruct = entMetadata.ownStruct;
         callback(entMetadata);
         return;
       }
@@ -49,7 +64,7 @@ export class DataFetcher {
         id: entMetadata.tmplID,
       };
       DBRequestManager.query(reqData, (result) => {
-        let [,,,tmplPropStruct] = result[0] ?? [];
+        let [,,,,tmplPropStruct] = result[0] ?? [];
         entMetadata.template = (tmplPropStruct ?? {}).format;
         parseAndConstructPropStruct(entMetadata, callback);
       });
@@ -77,7 +92,7 @@ export class DataFetcher {
   // expandMetaData() expands the propStruct by substituting entID references
   // by nested entData objects. This method also transforms each value into an
   // object like {string: [...]}, {set: [...]}, {list: [...]}, etc.
-  static expandMetaData(entMetadata, entID, maxRecLevel, recLevel, callback) {
+  static expandMetaData(entMetadata, thisID, maxRecLevel, recLevel, callback) {
     if (!callback) {
       callback = recLevel;
       recLevel = 0;
@@ -87,6 +102,7 @@ export class DataFetcher {
       maxRecLevel = 2;
     }
     if (recLevel > maxRecLevel) {
+      callback();
       return;
     }
 
@@ -101,26 +117,34 @@ export class DataFetcher {
       if (Array.isArray(propVal)) {
         let elemArr = propStruct[propKey];
         propStruct[propKey] = {set: elemArr};
-        this.#expandElements(elemArr, callbackHandler, maxRecLevel, recLevel);
+        this.#expandElements(
+          elemArr, thisID, callbackHandler, maxRecLevel, recLevel
+        );
       }
       else this.#expandPropVal(
-        propVal, propStruct, entID, callbackHandler, maxRecLevel, recLevel
+        propVal, propStruct, propKey, thisID, callbackHandler,
+        maxRecLevel, recLevel
       );
     });
 
     // Prepare callback to get the expanded (with recLevel -= 1) metadata
     // of the entity's class.
     let classID = entMetadata.classID;
-    callbackHandler.push((resolve) => {
-      this.fetchMetadata(classID, (classMetadata) => {
-        this.expandMetaData(
-          classMetadata, entID, maxRecLevel, recLevel + 1, () => {
+    // If classID == 1, just use a hard-coded classMetaData.
+    if (classID == "1" && false) { // TODO: Correct.
+      entMetadata.classMetaData = JSON.parse(CLASS_CLASS_METADATA_JSON);
+    }
+    // Else fetch the metadata of the class from the database.
+    else {
+      callbackHandler.push((resolve) => {
+        this.fetchExpandedMetadata(
+          classID, maxRecLevel, recLevel + 1, (classMetadata) => {
             entMetadata.classMetaData = classMetadata;
             resolve();
           }
         );
       });
-    });
+    }
 
     callbackHandler.execAndThen(callback);
   }
@@ -138,7 +162,7 @@ export class DataFetcher {
       }
       else this.#expandPropVal(
         elem, elemArr, ind, thisID, callbackHandler, maxRecLevel, recLevel
-      )
+      );
     });
   }
 
@@ -153,15 +177,16 @@ export class DataFetcher {
       }
       else {
         callbackHandler.push(resolve => {
-          this.fetchMetadata(entID, (entMetadata) => {
-            obj[objKey] = {ent: entMetadata};
-            this.expandMetaData(entMetadata, entID, maxRecLevel, recLevel + 1);
-            resolve();
-          })
+          this.fetchExpandedMetadata(
+            entID,  maxRecLevel, recLevel + 1, (expEntMetadata) => {
+              obj[objKey] = {ent: expEntMetadata};
+              resolve();
+            }
+          );
         });
       }
     }
-    if (/^@[1-9][0-9]*c[1-9][0-9]*$/.test(propVal)) {
+    else if (/^@[1-9][0-9]*c[1-9][0-9]*$/.test(propVal)) {
       let [entID, expectedClassID] = propVal.match(/[1-9][0-9]*/g);
       if (recLevel > maxRecLevel) {
         obj[objKey] = {
@@ -170,16 +195,17 @@ export class DataFetcher {
       }
       else {
         callbackHandler.push(resolve => {
-          this.fetchMetadata(entID, (entMetadata) => {
-            obj[objKey] = {
-              ent: Object.assign(
-                {expectedClassID: expectedClassID},
-                entMetadata
-              )
-            };
-            this.expandMetaData(entMetadata, entID, maxRecLevel, recLevel + 1);
-            resolve();
-          })
+          this.fetchExpandedMetadata(
+            entID,  maxRecLevel, recLevel + 1, (expEntMetadata) => {
+              obj[objKey] = {
+                ent: Object.assign(
+                  {expectedClassID: expectedClassID},
+                  expEntMetadata
+                )
+              };
+              resolve();
+            }
+          );
         });
       }
     }
@@ -188,6 +214,9 @@ export class DataFetcher {
     }
     else if (propVal === "@null") {
       obj[objKey] = {null: true};
+    }
+    else if (propVal === "@0" || propVal === "@none") {
+      obj[objKey] = {none: true};
     }
     else if (typeof propVal === "string") {
       let stringLexRegEx = /([^@%]|\\@|\\%)+|@[0-9a-z]*|%[a-z0-9]*|.+/g;
@@ -205,13 +234,12 @@ export class DataFetcher {
             }
             else {
               callbackHandler.push(resolve => {
-                this.fetchMetadata(entID, (entMetadata) => {
-                  strArr[ind] = {ent: entMetadata};
-                  this.expandMetaData(
-                    entMetadata, entID, maxRecLevel, recLevel + 1
-                  );
-                  resolve();
-                })
+                this.fetchExpandedMetadata(
+                  entID,  maxRecLevel, recLevel + 1, (expEntMetadata) => {
+                    strArr[ind] = {ent: expEntMetadata};
+                    resolve();
+                  }
+                );
               });
             }
           }
@@ -221,19 +249,22 @@ export class DataFetcher {
           else if (str === "@null") {
             strArr[ind] = {null: true};
           }
+          else if (str === "@0" || str === "@none") {
+            strArr[ind] = {none: true};
+          }
           else {
             strArr[ind] = {illFormedReference: str};
           }
         }
         else if (str[0] === "%") {
           if (str === "%t") {
-            strArr[ind] = {fullTextPlaceholder: true};
+            strArr[ind] = {fullTextPlaceholder: thisID};
           }
           else if (/^%t[0-9]$/.test(str)) {
-            strArr[ind] = {textPlaceholder: str[2]};
+            strArr[ind] = {textPlaceholder: {n: str[2], entID: thisID}};
           }
           else if (str === "%d") {
-            strArr[ind] = {dataPlaceholder: true};
+            strArr[ind] = {dataPlaceholder: thisID};
           }
           else if (/^%e[0-9]$/.test(str)) {
             strArr[ind] = {unusedEntityPlaceholder: str[2]};

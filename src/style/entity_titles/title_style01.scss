@@ -9,6 +9,7 @@
 
   > [class^=prop-member] {
     display: none;
+    display: inline-block;
   }
 
   > [class=prop-member-title] {
@@ -16,6 +17,7 @@
 
     > .prop-name-title {
       display: none;
+      display: inline-block;
     }
   }
 }
