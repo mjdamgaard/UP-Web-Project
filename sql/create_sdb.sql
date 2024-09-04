@@ -194,9 +194,10 @@ CREATE TABLE Entities (
 
     -- Class ID: An entity that represents the class of this entity.
     class_id BIGINT UNSIGNED NOT NULL,
+    CHECK (class_id != 0),
 
     -- Template ID: An entity that this entity inherits properties from.
-    -- the a template entity holds a template property which is a JSON object
+    -- the a template entity holds a format property which is a JSON object
     -- containing the properties of the instance entities, where some of the
     -- property values might include placeholders of the form '%e0', '%e1',
     -- etc.,
@@ -235,7 +236,7 @@ CREATE TABLE Entities (
     -- want to only serve to the client upon specific request, and not whenever
     -- the client looks up defining data for the entity. This inputs either
     -- replaces the '%b' or '%t' placeholder ('b' for binary, 't' for text) in
-    -- the template, which is the own_prop_struct of the template_id entity,
+    -- the format, which is in the own_prop_struct of the template_id entity,
     -- or it is also split into multiple strings using '|'
     -- as a delimiter, in case of the '%t<num>' placeholders. ('|' is also
     -- escaped by '\|' here.)
@@ -277,7 +278,7 @@ VALUES
     (1, 1, 0, '', '', CONCAT(
         '{"title":"class"}'
     ), CONCAT(
-        "A class of all class entities, including this entity itself.",
+        "A class of all class entities, including this entity itself."
         -- " One benefit of using entities as classes, rather than just writing ",
         -- "a string (like the value of the 'title' property of this entity, ",
         -- "which is 'class'), is that they can provide an additional ",
@@ -306,9 +307,9 @@ VALUES
     ), CONCAT(
         "A class of the so-called 'templates,' which are entities that ",
         "can be used to define new entities with property structs that ",
-        "follow a specific template. The only property that defines an ",
-        "entity of this 'template' class, other than the 'class' property, ",
-        "is the 'template' property, which is a variable property structure ",
+        "follow a specific template format. The only property that defines an ",
+        "entity of this 'template' class ",
+        "is the 'format' property, which is a variable property structure ",
         "that has placeholders for substitution. ...TODO: Continue."
     )),
     (4, 1, 0, '', '', CONCAT(
@@ -319,10 +320,10 @@ VALUES
         "represent this new user."
     )),
     (5, 3, 0, '', '', CONCAT(
-        '{"template":{"username":"%s"}}' -- "class":"@4"
+        '{"format":{"username":"%s"}}' -- "class":"@4"
     ), NULL),
     (6, 3, 0, '', '', CONCAT(
-        '{"template":{"title":"%s"}}'
+        '{"format":{"title":"%s"}}'
     ), NULL),
     (7, 1, 0, '', '', CONCAT(
         '{"title":"relation"}'
@@ -356,7 +357,7 @@ VALUES
     )),
     (9, 3, 0, '', '', CONCAT(
         -- "class":"@8"
-        '{"template":{"title":"%s",",
+        '{"format":{"title":"%s",",
         "object class":"%e1" "subject class":"%e2","description":"%t"}}'
     ), NULL),
     (10, 1, 0, '', '', CONCAT(
@@ -381,7 +382,7 @@ VALUES
         "the rating scale from 1 to 5, e.g.)"
     )),
     (11, 3, 0, '', '', CONCAT(
-        '{"template":{',
+        '{"format":{',
             -- '"class":"@10",',
             '"subject":"%e1",',
             '"property":"%e2",',
@@ -408,11 +409,11 @@ VALUES
         "one-to-many properties)."
     )),
     (15, 3, 0, '', '', CONCAT(
-        '{"template":{"elements":[["%s%t"]]}' -- "class":"@14"
+        '{"format":{"elements":[["%s%t"]]}' -- "class":"@14"
     ), NULL),
     (16, 3, 0, '', '', CONCAT(
         -- "class":"@3"
-        '{"template":{"class":"@2","title":"%s",',
+        '{"format":{"class":"@2","title":"%s",',
         '"instance class":"%e1","description":"%t"}'
     ), NULL),
     (17, 8, 9, '8', 'relevant property', NULL, CONCAT(
@@ -443,7 +444,7 @@ VALUES
         "given set as its only element."
     )),
     (22, 3, 0, '', '', CONCAT(
-        '{"template":{"elements":["%s%t"]}' -- "class":"@21"
+        '{"format":{"elements":["%s%t"]}' -- "class":"@21"
     ), NULL),
     -- 
     (NULL, 1, 6, '', 'exAmpLe of A noT very usefuL enTiTy', NULL, NULL);

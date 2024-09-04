@@ -11,32 +11,36 @@ export class DataFetcher {
     let entMetadata = {
       entID: entID,
       propStruct: null,
+      classID: null,
       tmplID: null,
       entInput: null,
       strInput: null,
       ownStruct: null,
       dataLen: null,
       template: null,
+      isMissing: null,
       // entInputNames: null,
       // strInputNames: null,
-      error: false,
     };
     let reqData = {
       req: "ent",
       id: entID,
     };
     DBRequestManager.query(reqData, (result) => {
-      let [tmplID, entInput, strInput, ownStruct, dataLen] = result[0] ?? [];
+      let [classID, tmplID, entInput, strInput, ownStruct, dataLen] =
+        result[0] ?? [];
+      entMetadata.classID = classID;
       entMetadata.tmplID = tmplID;
       entMetadata.entInput = entInput;
       entMetadata.strInput = strInput;
       entMetadata.ownStruct = ownStruct;
       entMetadata.dataLen = dataLen;
+      entMetadata.isMissing = !classID;
 
-      // If entity is missing, set error msg and return.
-      if (!tmplID && tmplID != 0) {
-        entMetadata.error = "entity missing";
+      // If entity is missing or has no template, return.
+      if (!classID || tmplID == "0") {
         callback(entMetadata);
+        return;
       }
 
       // Else continue by looking up the template and construct the propStruct.
@@ -46,7 +50,7 @@ export class DataFetcher {
       };
       DBRequestManager.query(reqData, (result) => {
         let [,,,tmplPropStruct] = result[0] ?? [];
-        entMetadata.template = (tmplPropStruct ?? {}).template;
+        entMetadata.template = (tmplPropStruct ?? {}).format;
         parseAndConstructPropStruct(entMetadata, callback);
       });
     });
@@ -148,14 +152,14 @@ export class DataFetcher {
       let [entID, expectedClassID] = propVal.match(/[1-9][0-9]*/g);
       if (recLevel > maxRecLevel) {
         obj[objKey] = {
-          entOfClass: {entID: entID, expectedClassID: expectedClassID}
+          ent: {entID: entID, expectedClassID: expectedClassID}
         };
       }
       else {
         callbackHandler.push(key, () => {
           this.fetchMetadata(entID, (entMetadata) => {
             obj[objKey] = {
-              entOfClass: Object.assign(
+              ent: Object.assign(
                 {expectedClassID: expectedClassID},
                 entMetadata
               )
