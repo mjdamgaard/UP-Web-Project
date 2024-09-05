@@ -111,9 +111,7 @@ const EntityReference = ({expEntMetadata, expectedClassID}) => {
   else if (expEntMetadata.thisEnt) {
     return (
       <div className={"entity-ref-this-" + expEntMetadata.thisEnt}>
-        <EntityLink entID={expEntMetadata.thisEnt} >
-          {"@this"}
-        </EntityLink>
+        {"@this"}
       </div>
     );
   }
@@ -308,29 +306,13 @@ const ExpandTitleButton = ({expEntMetadata}) => {
 
 
 const EntityTitlePlaceholder = ({entID, isLink}) => {
-  return <div className="entity-title entity-title-placeholder"></div>;
+  return (
+    <div className="entity-title entity-title-placeholder">
+      {"loading..."}
+    </div>
+  );
 }
 
-
-const InvalidEntityTitle = ({entID, isLink, children}) => {
-  if (isLink) {
-    return (
-      <div className="entity-title invalid-entity-title text-warning">
-        {/* TODO: Remove "text-warning" className. */}
-        <EntityLink entID={entID}>
-          {children}
-        </EntityLink>
-      </div>
-    );
-  } else {
-    return (
-      <div className="entity-title invalid-entity-title text-warning">
-        {/* TODO: Remove "text-warning" className. */}
-        {children}
-      </div>
-    );
-  }
-};
 
 
 const MissingEntityReference = ({entID}) => {
@@ -351,10 +333,13 @@ const NoneEntityReference = () => {
 
 // TODO: Change to a Link instead and let SDBInterface open the new column.
 const EntityLink = ({entID, children}) => {
-  const [, columnManager] = useContext(ColumnContext);
+  const [colKey, columnManager] = useContext(ColumnContext);
 
   return (
-    <Link to={{pathname: "e" + entID, search: columnManager.getSearch()}} >
+    <Link to={{
+      pathname: "e" + entID,
+      search: "?from" + JSON.stringify(colKey),
+    }} >
       {children}
     </Link>
   );
@@ -362,9 +347,9 @@ const EntityLink = ({entID, children}) => {
 
 export const EntityID = ({entID}) => {
   return (
-    <EntityLink entID={entID}>
-      <div className="entity-id">@{entID}</div>
-    </EntityLink>
+    <div className="entity-id">
+      {"@" + entID}
+    </div>
   );
 };
 

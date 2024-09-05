@@ -3,6 +3,7 @@ import {
   BrowserRouter, Routes, Route, Outlet, redirect,
   useParams, useSearchParams,
   useNavigate, Navigate,
+  useLocation,
 } from "react-router-dom";
 
 import {AccountContextProvider} from "../../contexts/AccountContext.js";
@@ -41,6 +42,7 @@ export const SDBApp = () => {
 
 
 
+
 const Layout = ({}) => {
   return (
     <AccountContextProvider> {/* yields: session, accountManager.*/}
@@ -51,20 +53,30 @@ const Layout = ({}) => {
 
 const IndexPage = ({}) => {
   return (
-    <Navigate replace to={"/e12"} />
+    <Navigate replace to={"/e" + HOME_ENTITY_ID} />
   );
 };
 
 
 
 const InterfacePage = ({}) => {
-  const pathname = useParams()["*"];
-  const search = useSearchParams()[0];
+  const location = useLocation();
+  const pathname = location.pathname;
+  // const search = location.search;
 
   var entID = HOME_ENTITY_ID;
   if (pathname) {
-    entID = (pathname.match(/^e[1-9][0-9]*/)[0] ?? "e" + entID).substring(1);
+    entID = (pathname.match(/^\/e[1-9][0-9]*/)[0] ?? "/e" + entID).substring(2);
   }
+
+  const [[colSpecs, colIndexes], setColState] = useState([
+    [{entID: entID}], {[location.key]: 0}
+  ]);
+
+  const currColInd = colIndexes[location.key];
+  const currColSpec = colSpecs[currColInd];
+  const action = window.history.action;
+
 
   return (
     <ColumnListContextProvider initColSpec={{entID: entID}}>
@@ -79,6 +91,11 @@ const InterfacePage = ({}) => {
 };
 
 
+
+var _nonce = 0;
+function getNonce() {
+  return _nonce++;
+}
 
 // <AccountContextProvider> {/* yields: session, accountManager.*/}
 // <div className="sdb-interface">
