@@ -127,7 +127,7 @@ export class DataFetcher {
     // of the entity's class.
     let classID = entMetadata.classID;
     // If classID == 1, just use a hard-coded classMetaData.
-    if (classID == "1" && false) { // TODO: Correct.
+    if (classID == "1") {
       entMetadata.classMetaData = JSON.parse(CLASS_CLASS_METADATA_JSON);
     }
     // Else fetch the metadata of the class from the database.

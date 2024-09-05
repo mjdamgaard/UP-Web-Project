@@ -1,23 +1,37 @@
 
 
-.entity-ref {
-  // display: inline-block;
+[class^=entity-ref] {
+  display: inline-block;
 
   * {
     display: inline-block;
   }
 
-  > [class^=prop-member] {
+  > .entity-link > [class^=prop-member] {
     display: none;
-    display: inline-block;
-  }
 
-  > [class=prop-member-title] {
-    display: inline-block;
-
-    > .prop-name-title {
-      display: none;
+    &:is(.prop-member-title) {
       display: inline-block;
+
+      > [class^=prop-name] {
+        display: none;
+      }
     }
   }
+
+  [class^=class-clarification] {
+    margin: 0em .2em;
+
+    &::before {
+      content: "(";
+    }
+    &::after {
+      content: ")";
+    }
+
+    &:is(.class-clarification-missing) {
+      display: none;
+    }
+  }
+
 }
