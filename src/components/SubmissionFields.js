@@ -3,7 +3,7 @@ import {AccountManagerContext} from "../contexts/AccountContext.js";
 import {ColumnContext} from "../contexts/ColumnContext.js";
 import {useQuery, useInput} from "../hooks/DBRequests.js";
 
-import {EntityTitle, FullEntityTitle} from "./EntityTitles.js";
+import {EntityTitle, FullEntityTitle} from "./entity_titles/EntityTitles.js";
 import {DropdownBox} from "./DropdownBox.js";
 import {EntityIDDisplay} from "./pages/EntityPage.js";
 import {getLeaves} from "./InstListDisplay.js";

@@ -12,7 +12,7 @@ import {AccountManagerContext} from "../../contexts/AccountContext.js";
 import {PagesWithTabs} from "../PagesWithTabs.js";
 import {
   EntityID, EntityTitle, ContextDisplay
-} from "../EntityTitles.js";
+} from "../entity_titles/EntityTitles.js";
 import {InstListDisplay} from "../InstListDisplay.js";
 import {RatingElement} from "../Ratings.js";
 import {SemanticPropertyElement} from "../EntityElements.js";
@@ -66,13 +66,18 @@ export const EntityPage = ({entID, initTab}) => {
         <h2><EntityTitle entID={entID} /></h2>
         <h2>Test links</h2>
         <div>
-          <Link to={{pathname: "", search:"?e=12"}}>
-            to entity #12
+          <Link to={{pathname: "/e12", search: "?from=e" + entID}}>
+            to entity @12
           </Link>
         </div>
         <div>
-          <Link to={{pathname: "", search:"?e=13"}}>
-            to entity #13
+          <Link to={{pathname: "/e13", search: "?from=e" + entID}}>
+            to entity @13
+          </Link>
+        </div>
+        <div>
+          <Link to={{pathname: "/e14", search: "?from=e" + entID}}>
+            to entity @14
           </Link>
         </div>
         {/* Doesn't change path: */}

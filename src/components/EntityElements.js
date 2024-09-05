@@ -2,7 +2,7 @@ import {useState, useEffect, useMemo, useContext} from "react";
 import {AccountManagerContext} from "../contexts/AccountContext.js";
 import {useQuery} from "../hooks/DBRequests.js";
 
-import {EntityTitle} from "./EntityTitles.js";
+import {EntityTitle} from "./entity_titles/EntityTitles.js";
 import {DropdownBox, DropdownMenu} from "./DropdownBox.js";
 import {EntityIDDisplay} from "./pages/EntityPage.js";
 // import {} from "./InstListDisplay.js";

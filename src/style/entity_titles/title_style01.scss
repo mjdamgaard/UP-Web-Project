@@ -7,7 +7,7 @@
     display: inline-block;
   }
 
-  > .entity-link > [class^=prop-member] {
+  [class^=prop-member] {
     display: none;
 
     &:is(.prop-member-title) {

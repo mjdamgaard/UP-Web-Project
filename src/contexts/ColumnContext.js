@@ -151,4 +151,12 @@ export class ColumnManager {
   closeColumn = () => {
     this.columnListManager.closeColumn(this.colKey);
   }
+
+
+  getColKey = () => {
+    return this.colKey;
+  }
+  getSearch = () => {
+    return "?from=" + this.colKey;
+  }
 }

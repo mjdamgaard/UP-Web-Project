@@ -1,30 +1,31 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
-import {
-  createBrowserRouter,
-  RouterProvider,
-} from "react-router-dom";
+// import {
+//   BrowserRouter, Routes,
+//   createBrowserRouter,
+//   RouterProvider,
+// } from "react-router-dom";
 
 
-import {SDBInterface} from './components/root/SDBInterface.js';
+import {SDBApp} from './components/root/SDBApp.js';
 
 import './style/style01.scss';
 import './style/entity_titles/title_style01.scss';
 
 
 
-const router = createBrowserRouter([
-  {
-    path: "/*",
-    element: <SDBInterface />,
-  },
-]);
+// const router = createBrowserRouter([
+//   {
+//     path: "/*",
+//     element: <SDBApp />,
+//   },
+// ]);
 
 
 const myElement = (
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <SDBApp />
   </React.StrictMode>
 );
 

@@ -1,11 +1,12 @@
 import {useState, createContext, useContext, useEffect} from "react";
-// import {redirect} from "react-router-dom";
-import {useQuery} from "../hooks/DBRequests.js";
-import {ColumnContext} from "../contexts/ColumnContext.js";
-import {DataFetcher} from "../classes/DataFetcher.js";
-import {ExpandableSpan} from "./DropdownBox.js";
+import {Link} from "react-router-dom";
 
-import {ParallelCallbackHandler} from "../classes/ParallelCallbackHandler.js";
+import {useQuery} from "../../hooks/DBRequests.js";
+import {ColumnContext} from "../../contexts/ColumnContext.js";
+import {DataFetcher} from "../../classes/DataFetcher.js";
+import {ExpandableSpan} from "../DropdownBox.js";
+
+import {ParallelCallbackHandler} from "../../classes/ParallelCallbackHandler.js";
 
 const ConcatenatedEntityTitle = () => <template></template>;
 const TemplateLink = () => <template></template>;
@@ -50,16 +51,18 @@ export const EntityTitle = ({
   const expEntMetadata = results.expEntMetadata;
   return (
     <div className="entity-title">
-      <EntityReference
-        expEntMetadata={expEntMetadata} expectedClassID={expectedClassID}
-      />
-      <ExpandTitleButton expEntMetadata={expEntMetadata} />
+      <EntityLink entID={expEntMetadata.entID} >
+        <EntityReference
+          expEntMetadata={expEntMetadata} expectedClassID={expectedClassID}
+        />
+        <ExpandTitleButton expEntMetadata={expEntMetadata} />
+      </EntityLink>
     </div>
   );
 };
 
 
-
+// TODO:
 const EntityReference = ({expEntMetadata, expectedClassID}) => {
   if (expEntMetadata.entID) {
     if (expEntMetadata.isMissing) {
@@ -70,13 +73,11 @@ const EntityReference = ({expEntMetadata, expectedClassID}) => {
     else {
       return (
         <div className={"entity-ref-" + expEntMetadata.entID}>
-          <EntityLink entID={expEntMetadata.entID} >
-            <EntityMetadataProperties expEntMetadata={expEntMetadata} />
-            <ClassClarification
-              classMetaData={expEntMetadata.classMetaData}
-              expectedClassID={expectedClassID}
-            />
-          </EntityLink>
+          <EntityMetadataProperties expEntMetadata={expEntMetadata} />
+          <ClassClarification
+            classMetaData={expEntMetadata.classMetaData}
+            expectedClassID={expectedClassID}
+          />
         </div>
       );
     }
@@ -86,13 +87,11 @@ const EntityReference = ({expEntMetadata, expectedClassID}) => {
     let newMetadata = expEntMetadata.ent;
     return (
       <div className={"entity-ref-" + newMetadata.entID}>
-        <EntityLink entID={newMetadata.entID} >
-          <EntityMetadataProperties expEntMetadata={newMetadata} />
-          <ClassClarification
-            classMetaData={newMetadata.classMetaData}
-            expectedClassID={false}
-          />
-        </EntityLink>
+        <EntityMetadataProperties expEntMetadata={newMetadata} />
+        <ClassClarification
+          classMetaData={newMetadata.classMetaData}
+          expectedClassID={false}
+        />
       </div>
     );
   }
@@ -100,13 +99,11 @@ const EntityReference = ({expEntMetadata, expectedClassID}) => {
     let newMetadata = expEntMetadata.entOfClass;
     return (
       <div className={"entity-ref-" + newMetadata.entID}>
-        <EntityLink entID={newMetadata.entID} >
-          <EntityMetadataProperties expEntMetadata={newMetadata} />
-          <ClassClarification
-            classMetaData={newMetadata.classMetaData}
-            expectedClassID={newMetadata.expectedClassID}
-          />
-        </EntityLink>
+        <EntityMetadataProperties expEntMetadata={newMetadata} />
+        <ClassClarification
+          classMetaData={newMetadata.classMetaData}
+          expectedClassID={newMetadata.expectedClassID}
+        />
       </div>
     );
   }
@@ -357,11 +354,9 @@ const EntityLink = ({entID, children}) => {
   const [, columnManager] = useContext(ColumnContext);
 
   return (
-    <div className="entity-link" onClick={() => {
-      columnManager.openColumn(entID);
-    }}>
+    <Link to={{pathname: "e" + entID, search: columnManager.getSearch()}} >
       {children}
-    </div>
+    </Link>
   );
 };
 

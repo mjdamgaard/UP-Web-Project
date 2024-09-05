@@ -10,7 +10,7 @@ import {ColumnContext} from "../contexts/ColumnContext.js";
 import {PagesWithTabs} from "./PagesWithTabs.js";
 import {
   EntityID, FullEntityTitle, EntityTitle, ContextDisplay
-} from "./EntityTitles.js";
+} from "./entity_titles/EntityTitles.js";
 import {InstListDisplay} from "./InstListDisplay.js";
 
 import {
