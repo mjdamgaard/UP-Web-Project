@@ -22,8 +22,15 @@ export class ParallelCallbackHandler {
   }
 
   execAndThen(finalCallback) {
-    this.isReadyArr = this.callbackArr.map(() => false);
     this.finalCallback = finalCallback ?? void(0);
+    // If no callbacks have been pushed, call finalCallback right away.
+    if (this.callbackArr.length === 0) {
+      this.finalCallback("success");
+      return;
+    }
+    // Else call each callback, and give them each distinct resolve and reject
+    // functions as inputs.
+    this.isReadyArr = Array(this.callbackArr.length).fill(false);
     Object.values(this.callbackArr).forEach((callback, ind) => {
       let resolve = () => this.#resolve(ind);
       let reject = (msg) => this.#reject(msg, ind);
@@ -33,6 +40,7 @@ export class ParallelCallbackHandler {
 
 
   #resolve(ind) {
+    // If all callbacks have called their resolve function, call finalCallback.
     this.isReadyArr[ind] = true;
     let isReady = this.isReadyArr.reduce(
       (acc, val) => acc && val,

@@ -101,10 +101,6 @@ export class DataFetcher {
       callback = maxRecLevel;
       maxRecLevel = 2;
     }
-    if (recLevel > maxRecLevel) {
-      callback();
-      return;
-    }
 
     let propStruct = entMetadata.propStruct;
 
@@ -135,7 +131,7 @@ export class DataFetcher {
       entMetadata.classMetaData = JSON.parse(CLASS_CLASS_METADATA_JSON);
     }
     // Else fetch the metadata of the class from the database.
-    else {
+    else if (recLevel <= maxRecLevel) {
       callbackHandler.push((resolve) => {
         this.fetchExpandedMetadata(
           classID, maxRecLevel, recLevel + 1, (classMetadata) => {

@@ -165,13 +165,13 @@ const EntityReference = ({expEntMetadata, expectedClassID}) => {
       }
     });
   }
-  else if (typeof expEntMetadata === "string") {
-    return (
-      <div className="pure-string">
-        {expEntMetadata}
-      </div>
-    );
-  }
+  // else if (typeof expEntMetadata === "string") {
+  //   return (
+  //     <div className="pure-string">
+  //       {expEntMetadata}
+  //     </div>
+  //   );
+  // }
 
   else {
     throw (
@@ -268,6 +268,12 @@ const EntityMetadataProperties = ({expEntMetadata}) => {
 
 
 const ClassClarification = ({classMetaData, expectedClassID}) => {
+  if (!classMetaData) {
+    return (
+      <div className={"class-clarification-missing"}>
+      </div>
+    );
+  }
   var className = "class-clarification";
   if (classMetaData.entID == expectedClassID) {
     className = "class-clarification-expected";
