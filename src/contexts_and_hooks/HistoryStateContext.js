@@ -1,77 +1,47 @@
 import {useState, useId, useEffect, createContext, useContext} from "react";
+// import {LazyDelayedPromise} from "../classes/LazyDelayedPromise";
 
-import {LazyDelayedPromise} from "../classes/LazyDelayedPromise";
 
-// // TODO: Refactor whenReady() as a class in another module (and import it from
-// // there).
-// const DELAY = 2000;
-// var isReady = false;
-// var callbackArr = [];
-// function whenReady(callback) {
-//   callbackArr.push(callback);
-//   if (isReady) {
-//     isReady = false;
-//     let lastCallback = callbackArr.pop()();
-//     callbackArr = [];
-//     lastCallback();
-//     sleep(DELAY).then(() => {
-//       if (!isReady) {
-//         isReady = true;
-//       }
-//     });
-//   }
-//   else {
-//     sleep(DELAY).then(() => {
-//       if (callbackArr.length > 0 && isReady) {
-//         isReady = false;
-//         let lastCallback = callbackArr.pop()();
-//         callbackArr = [];
-//         lastCallback();
-//       }
-//     })
-//   }
-// }
 
-export const HistoryStateContext = createContext();
+const HistoryStateContext = createContext();
 
 
 export const HistoryStateProvider = ({children}) => {
-  const [childStates, setChildStates] = useState([]);
-
-  const setChildState = useMemo(() => ((key, state) => {
-    setChildStates(prev => {
-      let ret = {...prev};
-      ret[key] = state;
-      return ret;
-    });
-  }), []);
-  const removeChildState = useMemo(() => ((key) => {
-    setChildStates(prev => {
-      let ret = {...prev};
-      delete ret[key];
-      return ret;
-    });
-  }), []);
-
   const providerID = useId();
+  
+  const getChildHistoryState = useMemo(() => ((key) => {
+    // First update history.state.
+    let prevState = window.history.state ?? {};
+    let newState = {...prevState};
+    newState.componentStates ??= {};
+    newState.componentStates[providerID] ??= {};
+    return newState.componentStates[providerID][key];
+  }), []);
 
-  // Create an instance of LazyDelayedPromise(delay), which waits the delay
-  // before executing only the most recently add callback (from the .then()
-  // method), before resetting, ready to receive new callbacks.
-  const lazyDelayedPromise = useMemo(() => {
-    return new LazyDelayedPromise(2000);
-  }, []);
+  const setChildHistoryState = useMemo(() => ((key, state) => {
+    // First update history.state.
+    let prevState = window.history.state ?? {};
+    let newState = {...prevState};
+    newState.componentStates ??= {};
+    newState.componentStates[providerID] ??= {};
+    newState.componentStates[providerID][key] = state;
+    window.history.replaceState(newState, "");
+  }), []);
 
-  // When childState updates, store then lazily to the history.state object.
-  useEffect(() => {
-    lazyDelayedPromise.then(() => {
-      let prevState = window.history.state ?? {};
-      let newState = {...prevState};
-      newState.componentStates ??= {};
-      newState.componentStates[providerID] = childStates;
-      window.history.pushState(newState);
-    });
-  }, [childStates]);
+  const deleteChildHistoryState = useMemo(() => ((key) => {
+    // First remove the child state from history.state.
+    let prevState = window.history.state ?? {};
+    let newState = {...prevState};
+    newState.componentStates ??= {};
+    newState.componentStates[providerID] ??= {};
+    delete newState.componentStates[providerID][key];
+    window.history.replaceState(newState, "");
+  }), []);
+
+
+
+  // TODO: Check that pushing state frequently doesn't slow the app down.
+
 
   // When this component dismounts, remove its data from history.state. 
   useEffect(() => {
@@ -81,12 +51,14 @@ export const HistoryStateProvider = ({children}) => {
       let newState = {...prevState};
       newState.componentStates ??= {};
       delete newState.componentStates[providerID];
-      window.history.pushState(newState);
+      window.history.replaceState(newState, "");
     };
   }, []);
 
   return (
-    <HistoryStateContext.Provider value={[setChildState, removeChildState]} >
+    <HistoryStateContext.Provider value={
+      [getChildHistoryState, setChildHistoryState, deleteChildHistoryState]
+    } >
       {children}
     </HistoryStateContext.Provider>
   );
@@ -101,35 +73,32 @@ export const HistoryStateProvider = ({children}) => {
 // meaning that navigation to and back from another website will restore the
 // state.
 export const useHistoryState = (initState) => {
-  const [setChildState, removeChildState] = useContext(HistoryStateContext);
   const componentID = useId();
-  
-  if (!window.history.state) {
-    window.history.state = {};
-  }
-  if (!window.history.state.componentStates) {
-    window.history.state.componentStates = {};
-  }
+  const [getChildHistoryState, setChildHistoryState, deleteChildHistoryState] =
+    useContext(HistoryStateContext);
+
+  // If the component calling this hook is unmounted, delete its history.state
+  // record.
   useEffect(() => {
-    if (!window.history.state.componentStates[componentID]) {
-      window.history.state.componentStates[componentID] = initState;
-    }
-    // Cleanup function to remove the history state:
+    // Clean up after a dismount (but not when navigating to other websites).
     return () => {
-      delete window.history.state.componentStates[componentID];
+      deleteChildHistoryState(componentID);
     };
   }, []);
 
+  // Call the useState hook, but initialize as the stored history child state
+  // if any is available, instead of as initState.
   const [state, internalSetState] = useState(
-    window.history.state.componentStates[componentID] ?? initState
+    getChildHistoryState(componentID) ?? initState
   );
-  
+
+  // Prepare the setState function that also stores the state in history.state.
   const setState = useMemo(() => ((y) => {
     if (y instanceof Function) {
-      window.history.state.componentStates[componentID] = y(state);
+      setChildHistoryState(componentID, y(state));
     }
     else {
-      window.history.state.componentStates[componentID] = y;
+      setChildHistoryState(componentID, y);
     }
     internalSetState(y);
   }), []);
