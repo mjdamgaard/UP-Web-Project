@@ -1,6 +1,6 @@
 import {useState, useEffect, useMemo, useContext} from "react";
-import {AccountManagerContext} from "../contexts/AccountContext.js";
-import {useQuery} from "../hooks/DBRequests.js";
+import {AccountManagerContext} from "../contexts_and_hooks/AccountContext.js";
+import {useQuery} from "../contexts_and_hooks/DBRequests.js";
 
 import {EntityTitle} from "./entity_titles/EntityTitles.js";
 import {DropdownBox, DropdownMenu} from "./DropdownBox.js";

@@ -1,6 +1,6 @@
 import {useState, useEffect, useMemo, useContext} from "react";
-import {AccountManagerContext} from "../contexts/AccountContext.js";
-import {useQuery, useInput} from "../hooks/DBRequests.js";
+import {AccountManagerContext} from "../contexts_and_hooks/AccountContext.js";
+import {useQuery, useInput} from "../contexts_and_hooks/DBRequests.js";
 
 import {EntityTitle, EntityID, FullEntityTitle} from "./entity_titles/EntityTitles.js";
 

@@ -1,7 +1,7 @@
 import {useState, useEffect, useMemo, useContext} from "react";
 // import {AccountManagerContext} from "./contexts/AccountContext.js";
-import {useQuery} from "../hooks/DBRequests.js";
-import {ColumnContext} from "../contexts/ColumnContext.js";
+import {useQuery} from "../contexts_and_hooks/DBRequests.js";
+import {ColumnContext} from "../contexts_and_hooks/ColumnContext.js";
 
 import {GeneralEntityElement} from "./EntityElements.js";
 import {ListGeneratorSmallMenu} from "./ListGenPages.js";

@@ -1,8 +1,8 @@
 import {useState, createContext, useContext, useEffect} from "react";
 import {Link} from "react-router-dom";
 
-import {useQuery} from "../../hooks/DBRequests.js";
-import {ColumnContext} from "../../contexts/ColumnContext.js";
+import {useQuery} from "../../contexts_and_hooks/DBRequests.js";
+import {ColumnContext} from "../../contexts_and_hooks/ColumnContext.js";
 import {DataFetcher} from "../../classes/DataFetcher.js";
 import {ExpandableSpan} from "../DropdownBox.js";
 

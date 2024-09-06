@@ -6,9 +6,9 @@ import {
   useLocation,
 } from "react-router-dom";
 
-import {AccountContextProvider} from "../../contexts/AccountContext.js";
+import {AccountContextProvider} from "../../contexts_and_hooks/AccountContext.js";
 import {ColumnListContextProvider, ColumnListManager}
-  from "../../contexts/ColumnContext.js";
+  from "../../contexts_and_hooks/ColumnContext.js";
 
 import {InterfaceHeader} from "../InterfaceHeader.js";
 import {MainPage, AppColumn} from "../pages/MainPage.js";

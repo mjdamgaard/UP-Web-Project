@@ -3,7 +3,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import {ColumnListContext, ColumnContextProvider, ColumnListContextProvider}
-  from "../../contexts/ColumnContext.js";
+  from "../../contexts_and_hooks/ColumnContext.js";
 
 import {EntityPage} from "../EntityPage.js";
 import {ListGeneratorPage} from "../ListGenPages.js";

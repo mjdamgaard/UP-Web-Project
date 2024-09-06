@@ -1,13 +1,13 @@
 import {useState, useMemo, useContext} from "react";
 import {Link} from "react-router-dom";
-import {useQuery} from "../hooks/DBRequests.js";
+import {useQuery} from "../contexts_and_hooks/DBRequests.js";
 // import {
 //   MaxRatingSetCombiner, SimpleSetGenerator,
 // } from "/src/SetGenerator.js";
 
 import {DataFetcher} from "../classes/DataFetcher.js";
 
-import {AccountManagerContext} from "../contexts/AccountContext.js";
+import {AccountManagerContext} from "../contexts_and_hooks/AccountContext.js";
 
 import {PagesWithTabs} from "./PagesWithTabs.js";
 import {

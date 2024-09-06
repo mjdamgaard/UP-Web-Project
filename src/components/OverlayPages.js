@@ -1,5 +1,5 @@
 import {useState, useContext, useMemo} from "react";
-import {AccountManagerContext} from "../contexts/AccountContext.js";
+import {AccountManagerContext} from "../contexts_and_hooks/AccountContext.js";
 
 // TODO: Remove import:
 import {insertInitialEntities} from "../inserts/initial_inserts.js";
