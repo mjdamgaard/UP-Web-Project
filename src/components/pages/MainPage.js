@@ -1,12 +1,51 @@
-import {useState, createContext, useContext, useMemo} from "react";
-import {ColumnListContext, ColumnContextProvider}
-  from "../contexts/ColumnContext.js";
+import {useState, createContext, useContext, useMemo, useId} from "react";
+import {
+  useLocation,
+} from "react-router-dom";
+import {ColumnListContext, ColumnContextProvider, ColumnListContextProvider}
+  from "../../contexts/ColumnContext.js";
 
-import {EntityPage} from "./pages/EntityPage.js";
-import {ListGeneratorPage} from "./ListGenPages.js";
+import {EntityPage} from "../EntityPage.js";
+import {ListGeneratorPage} from "../ListGenPages.js";
 
 /* Placeholders */
 // const ListGeneratorPage = () => <template></template>;
+
+
+export const HOME_ENTITY_ID = 12;
+
+
+export const MainPage = ({}) => {
+  const location = useLocation();
+  const pathname = location.pathname;
+  // const search = location.search;
+
+  console.log(useId());
+
+  var entID = HOME_ENTITY_ID;
+  if (pathname) {
+    entID = (pathname.match(/^\/e[1-9][0-9]*/)[0] ?? "/e" + entID).substring(2);
+  }
+
+  const [[colSpecs, colIndexes], setColState] = useState([
+    [{entID: entID}], {[location.key]: 0}
+  ]);
+
+  const currColInd = colIndexes[location.key];
+  const currColSpec = colSpecs[currColInd];
+  const action = window.history.action;
+
+
+  return (
+    <ColumnListContextProvider initColSpec={{entID: entID}}>
+      <div className="interface-page"
+        // style={{display: isHidden ? "none" : ""}}
+      >
+        <InterfaceMain />
+      </div>
+    </ColumnListContextProvider>
+  );
+};
 
 
 export const InterfaceMain = () => {

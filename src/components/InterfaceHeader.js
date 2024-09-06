@@ -29,12 +29,12 @@ export const InterfaceHeader = ({setAppPage, setColNum}) => {
 };
 
 const SuperCoolLogoTBD = ({}) => {
-  const [columns, columnListManager] = useContext(ColumnListContext);
+  // const [columns, columnListManager] = useContext(ColumnListContext);
 
   return (
     <span className="navbar-brand" onClick={() => {
       // TODO: Correct (or make it a link to the (fresh) homepage).
-      columnListManager.openColumn(columns.keys[columns.fst], 10, true);
+      // columnListManager.openColumn(columns.keys[columns.fst], 10, true);
     }}>
       openSDB
     </span>
@@ -43,7 +43,7 @@ const SuperCoolLogoTBD = ({}) => {
 
 
 const HeaderButtonsContainer = ({setAppPage}) => {
-  const [columns, columnListManager] = useContext(ColumnListContext);
+  // const [columns, columnListManager] = useContext(ColumnListContext);
 
   return (
     <ul className="nav navbar-nav">
@@ -64,12 +64,12 @@ const HeaderButtonsContainer = ({setAppPage}) => {
         <a href="#">Insert</a>
       </li>
       <li className="minus" onClick={() => {
-        columnListManager.decreaseColNum();
+        // columnListManager.decreaseColNum();
       }}>
         <a href="#"><span style={{fontSize: "18pt"}}>-</span></a>
       </li>
       <li className="plus" onClick={() => {
-        columnListManager.increaseColNum();
+        // columnListManager.increaseColNum();
       }}>
         <a href="#"><span style={{fontSize: "18pt"}}>+</span></a>
       </li>

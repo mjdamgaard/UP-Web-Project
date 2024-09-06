@@ -1,29 +1,29 @@
 import {useState, useMemo, useContext} from "react";
 import {Link} from "react-router-dom";
-import {useQuery} from "../../hooks/DBRequests.js";
+import {useQuery} from "../hooks/DBRequests.js";
 // import {
 //   MaxRatingSetCombiner, SimpleSetGenerator,
 // } from "/src/SetGenerator.js";
 
-import {DataFetcher} from "../../classes/DataFetcher.js";
+import {DataFetcher} from "../classes/DataFetcher.js";
 
-import {AccountManagerContext} from "../../contexts/AccountContext.js";
+import {AccountManagerContext} from "../contexts/AccountContext.js";
 
-import {PagesWithTabs} from "../PagesWithTabs.js";
+import {PagesWithTabs} from "./PagesWithTabs.js";
 import {
   EntityID, EntityTitle, ContextDisplay
-} from "../entity_titles/EntityTitles.js";
-import {InstListDisplay} from "../InstListDisplay.js";
-import {RatingElement} from "../Ratings.js";
-import {SemanticPropertyElement} from "../EntityElements.js";
+} from "./entity_titles/EntityTitles.js";
+import {InstListDisplay} from "./InstListDisplay.js";
+import {RatingElement} from "./Ratings.js";
+import {SemanticPropertyElement} from "./EntityElements.js";
 import {
   SubmitEntityOfTemplateField, SubmitInstanceOfCategoryField,
   SubmitTemplateForTypeField, SubmitEntityOfTypeField,
-} from "../SubmissionFields.js";
+} from "./SubmissionFields.js";
 
 import {
   SimpleInstListGenerator, MaxRatingInstListCombiner
-} from "../../classes/InstListGenerator.js";
+} from "../classes/InstListGenerator.js";
 
 
 

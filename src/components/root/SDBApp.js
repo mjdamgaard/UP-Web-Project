@@ -1,4 +1,4 @@
-import {useState, useEffect, createContext, useContext, useMemo} from "react";
+import {useState, useEffect, useMemo} from "react";
 import {
   BrowserRouter, Routes, Route, Outlet, redirect,
   useParams, useSearchParams,
@@ -11,7 +11,7 @@ import {ColumnListContextProvider, ColumnListManager}
   from "../../contexts/ColumnContext.js";
 
 import {InterfaceHeader} from "../InterfaceHeader.js";
-import {InterfaceMain} from "../InterfaceMain.js";
+import {MainPage, AppColumn} from "../pages/MainPage.js";
 import {
   LoginPage, SignupPage, TutorialPage, InsertPage
 } from "../OverlayPages.js";
@@ -33,7 +33,8 @@ export const SDBApp = () => {
           <Route path="signup" element={<SignupPage />} />
           {/* <Route path="tutorial" element={<TutorialPage />} /> */}
           <Route path="insert" element={<InsertPage />} />
-          <Route path="*" element={<InterfacePage />} />
+          <Route path="*" element={<MainPage />} />
+          {/* Wrong paths are handled in MainPage instead of here */}
         </Route>
       </Routes>
     </BrowserRouter>
@@ -46,6 +47,7 @@ export const SDBApp = () => {
 const Layout = ({}) => {
   return (
     <AccountContextProvider> {/* yields: session, accountManager.*/}
+      <InterfaceHeader setAppPage={void(0)} />
       <Outlet />
     </AccountContextProvider>
   );
@@ -59,43 +61,7 @@ const IndexPage = ({}) => {
 
 
 
-const InterfacePage = ({}) => {
-  const location = useLocation();
-  const pathname = location.pathname;
-  // const search = location.search;
 
-  var entID = HOME_ENTITY_ID;
-  if (pathname) {
-    entID = (pathname.match(/^\/e[1-9][0-9]*/)[0] ?? "/e" + entID).substring(2);
-  }
-
-  const [[colSpecs, colIndexes], setColState] = useState([
-    [{entID: entID}], {[location.key]: 0}
-  ]);
-
-  const currColInd = colIndexes[location.key];
-  const currColSpec = colSpecs[currColInd];
-  const action = window.history.action;
-
-
-  return (
-    <ColumnListContextProvider initColSpec={{entID: entID}}>
-      <div className="interface-page"
-        // style={{display: isHidden ? "none" : ""}}
-      >
-        <InterfaceHeader setAppPage={void(0)} />
-        <InterfaceMain />
-      </div>
-    </ColumnListContextProvider>
-  );
-};
-
-
-
-var _nonce = 0;
-function getNonce() {
-  return _nonce++;
-}
 
 // <AccountContextProvider> {/* yields: session, accountManager.*/}
 // <div className="sdb-interface">

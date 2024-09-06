@@ -29,5 +29,7 @@ const myElement = (
   </React.StrictMode>
 );
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById('root'), {
+  identifierPrefix: '',
+});
 root.render(myElement);

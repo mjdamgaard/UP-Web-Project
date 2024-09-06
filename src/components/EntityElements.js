@@ -4,7 +4,7 @@ import {useQuery} from "../hooks/DBRequests.js";
 
 import {EntityTitle} from "./entity_titles/EntityTitles.js";
 import {DropdownBox, DropdownMenu} from "./DropdownBox.js";
-import {EntityIDDisplay} from "./pages/EntityPage.js";
+import {EntityIDDisplay} from "./EntityPage.js";
 // import {} from "./InstListDisplay.js";
 import {RatingDisplay} from "./Ratings.js";
 import {InstListDisplay} from "./InstListDisplay.js";
