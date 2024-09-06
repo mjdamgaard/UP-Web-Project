@@ -9,8 +9,7 @@ import {ListGeneratorPage} from "../ListGenPages.js";
 
 
 
-export const AppColumn = ({colKey}) => {
-  const colSpec = colKey.colSpec;
+export const AppColumn = ({colKey, colSpec}) => {
 
   var page;
   if (colSpec.entID) {

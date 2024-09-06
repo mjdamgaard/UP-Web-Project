@@ -1,6 +1,7 @@
 import {useState, createContext, useContext, useMemo, useId} from "react";
+import {useHistoryState} from "../../contexts_and_hooks/HistoryStateContext.js";
 import {
-  useLocation,
+  useLocation, Navigate,
 } from "react-router-dom";
 
 import {AppColumn} from "../app_columns/AppColumn.js";
@@ -14,30 +15,60 @@ export const HOME_ENTITY_ID = 12;
 
 
 export const MainPage = ({}) => {
+  const [[ colKeyArr, specStore, currInd, fst, n, nonce ], setColumListData] =
+    useHistoryState([ [0], {"0": {entID: HOME_ENTITY_ID}}, 0, 0, 1, 1 ]);
+
   const location = useLocation();
   const pathname = location.pathname;
-  // const search = location.search;
+  const search = location.search;
 
-  console.log(useId());
+  var navigate = <></>;
+  if (/^\?from=/.test(search)) {
+    let newColSpec = getColumnSpec(pathname);
+    let callerColKey = getCallerColumnKey(search);
+    let callerColInd = colKeyArr.indexOf(callerColKey);
 
-  var entID = HOME_ENTITY_ID;
-  if (pathname) {
-    entID = (pathname.match(/^\/e[1-9][0-9]*/)[0] ?? "/e" + entID).substring(2);
+    let newNonce = nonce + 1;
+    let newColKeyArr = (callerColInd === -1) ?
+      colKeyArr.concat([newNonce]) :
+      colKeyArr.slice(0, callerColInd + 1).concat(
+        [newNonce], colKeyArr.slice(callerColInd + 1)
+      )
+    let newSpecStore = {...specStore, [newNonce]: newColSpec};
+    let newCurrInd = callerColInd + 1;
+    let newFST = (fst < newCurrInd - n + 1) ?
+      newCurrInd - n + 1 :
+      (fst > newCurrInd) ?
+        newCurrInd :
+        fst;
+    
+    setColumListData(
+      [newColKeyArr, newSpecStore, newCurrInd, newFST, n, newNonce]
+    );
+    navigate = <Navigate replace to={{pathname}} />
   }
 
-  const [[colSpecs, colIndexes], setColState] = useState([
-    [{entID: entID}], {[location.key]: 0}
-  ]);
-
-  const currColInd = colIndexes[location.key];
-  const currColSpec = colSpecs[currColInd];
-  const action = window.history.action;
-
+  const appColumns = colKeyArr.map(colKey => {
+    let colSpec = specStore[colKey];
+    return <AppColumn key={colKey} colKey={colKey} colSpec={colSpec} />
+  });
 
   return (
-    <AppColumn colKey={{colSpec: {entID: entID}}} />
+    <div className="main-page">
+      {appColumns}
+      {navigate}
+    </div>
   );
 };
+
+export function getColumnSpec(pathname) {
+  let entID = (pathname.match(/e[1-9][0-9]/) ?? "e" + HOME_ENTITY_ID).substring(1);
+  return {entID: entID};
+}
+
+export function getCallerColumnKey(search) {
+
+}
 
 
 export const InterfaceMain = () => {

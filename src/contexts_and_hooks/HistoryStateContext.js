@@ -20,6 +20,7 @@ export const HistoryStateProvider = ({children}) => {
     return newState.componentStates[providerID][key];
   }), []);
 
+  // TODO: Check that replacing state frequently doesn't slow the app down.
   const setChildHistoryState = useMemo(() => ((key, state) => {
     // First update history.state.
     let prevState = window.history.state ?? {};
@@ -39,10 +40,6 @@ export const HistoryStateProvider = ({children}) => {
     delete newState.componentStates[providerID][key];
     window.history.replaceState(newState, "");
   }), []);
-
-
-
-  // TODO: Check that pushing state frequently doesn't slow the app down.
 
 
   // When this component is unmounted, remove its data from history.state. 
