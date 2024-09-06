@@ -1,4 +1,6 @@
-import {useState, useId, useEffect, createContext, useContext} from "react";
+import {
+  useState, useId, useEffect, createContext, useContext, useMemo,
+} from "react";
 // import {LazyDelayedPromise} from "../classes/LazyDelayedPromise";
 
 
@@ -43,9 +45,9 @@ export const HistoryStateProvider = ({children}) => {
   // TODO: Check that pushing state frequently doesn't slow the app down.
 
 
-  // When this component dismounts, remove its data from history.state. 
+  // When this component is unmounted, remove its data from history.state. 
   useEffect(() => {
-    // Clean up after a dismount (but not when navigating to other websites).
+    // Clean up after an unmount (but not when navigating to other websites).
     return () => {
       let prevState = window.history.state ?? {};
       let newState = {...prevState};
@@ -80,7 +82,7 @@ export const useHistoryState = (initState) => {
   // If the component calling this hook is unmounted, delete its history.state
   // record.
   useEffect(() => {
-    // Clean up after a dismount (but not when navigating to other websites).
+    // Clean up after an unmount (but not when navigating to other websites).
     return () => {
       deleteChildHistoryState(componentID);
     };

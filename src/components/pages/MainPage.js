@@ -2,10 +2,8 @@ import {useState, createContext, useContext, useMemo, useId} from "react";
 import {
   useLocation,
 } from "react-router-dom";
-import {ColumnListContext, ColumnContextProvider, ColumnListContextProvider}
-  from "../../contexts_and_hooks/ColumnContext.js";
 
-import {EntityPage} from "../EntityPage.js";
+import {AppColumn} from "../app_columns/AppColumn.js";
 import {ListGeneratorPage} from "../ListGenPages.js";
 
 /* Placeholders */
@@ -37,19 +35,14 @@ export const MainPage = ({}) => {
 
 
   return (
-    <ColumnListContextProvider initColSpec={{entID: entID}}>
-      <div className="interface-page"
-        // style={{display: isHidden ? "none" : ""}}
-      >
-        <InterfaceMain />
-      </div>
-    </ColumnListContextProvider>
+    <AppColumn colKey={{colSpec: {entID: entID}}} />
   );
 };
 
 
 export const InterfaceMain = () => {
-  const [columns, columnListManager] = useContext(ColumnListContext);
+  // const [columns, columnListManager] = useContext(ColumnListContext);
+  const columns = {};
 
   let fst = columns.fst;
   const appColumns = columns.keys.map((val, ind) => 
@@ -62,7 +55,7 @@ export const InterfaceMain = () => {
   return (
     <div className="interface-main">
       <div className="interface-margin" onClick={() => {
-        columnListManager.cycleLeft();
+        // columnListManager.cycleLeft();
       }}>
         <br/><span>&#10094;</span><br/>
       </div>
@@ -72,62 +65,10 @@ export const InterfaceMain = () => {
         {appColumns}
       </div>
       <div className="interface-margin" onClick={() => {
-        columnListManager.cycleRight();
+        // columnListManager.cycleRight();
       }}>
         <br/><span>&#10095;</span><br/>
       </div>
     </div>
-  );
-};
-
-
-
-
-
-
-
-const AppColumn = ({colKey}) => {
-  const colSpec = colKey.colSpec;
-
-  var page;
-  if (colSpec.entID) {
-    page = <EntityPage entID={colSpec.entID} />;
-  }
-  if (colSpec.lg) {
-    page = <ListGeneratorPage lg={colSpec.lg} />;
-  }
-
-  return (
-    <div className="app-column">
-      <ColumnButtonContainer colKey={colKey} />
-      <ColumnContextProvider colKey={colKey}>
-        {page}
-      </ColumnContextProvider>
-    </div>
-  );
-};
-
-
-
-const ColumnButtonContainer = ({colKey}) => {
-  return (
-    <div>
-      {/* <PinButton /> */}
-      <CloseColumnButton colKey={colKey} />
-    </div>
-  );
-};
-const CloseColumnButton = ({colKey}) => {
-  // (Using ColumnListContext rather than ColumnContext because a future
-  // implementation might include buttons for columns to switch places with
-  // neighbors.)
-  const [, columnListManager] = useContext(ColumnListContext);
-
-  return (
-    <button type="button" className="close" onClick={() => {
-      columnListManager.closeColumn(colKey);
-    }}>
-      <span>&times;</span>
-    </button>
   );
 };

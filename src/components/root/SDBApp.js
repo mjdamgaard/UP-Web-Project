@@ -7,8 +7,8 @@ import {
 } from "react-router-dom";
 
 import {AccountContextProvider} from "../../contexts_and_hooks/AccountContext.js";
-import {ColumnListContextProvider, ColumnListManager}
-  from "../../contexts_and_hooks/ColumnContext.js";
+import {HistoryStateProvider}
+  from "../../contexts_and_hooks/HistoryStateContext.js";
 
 import {InterfaceHeader} from "../InterfaceHeader.js";
 import {MainPage, AppColumn} from "../pages/MainPage.js";
@@ -23,21 +23,23 @@ export const HOME_ENTITY_ID = 12;
 export const SDBApp = () => {
   
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<IndexPage />} />
-          <Route path="login" element={<LoginPage />} />
-          {/* Todo: Make sure that the LoginPage is refreshed when it is
-          hidden. */}
-          <Route path="signup" element={<SignupPage />} />
-          {/* <Route path="tutorial" element={<TutorialPage />} /> */}
-          <Route path="insert" element={<InsertPage />} />
-          <Route path="*" element={<MainPage />} />
-          {/* Wrong paths are handled in MainPage instead of here */}
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <HistoryStateProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<IndexPage />} />
+            <Route path="login" element={<LoginPage />} />
+            {/* Todo: Make sure that the LoginPage is refreshed when it is
+            hidden. */}
+            <Route path="signup" element={<SignupPage />} />
+            {/* <Route path="tutorial" element={<TutorialPage />} /> */}
+            <Route path="insert" element={<InsertPage />} />
+            <Route path="*" element={<MainPage />} />
+            {/* Wrong paths are handled in MainPage instead of here */}
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </HistoryStateProvider>
   );
 };
 

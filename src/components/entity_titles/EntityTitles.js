@@ -333,12 +333,13 @@ const NoneEntityReference = () => {
 
 // TODO: Change to a Link instead and let SDBInterface open the new column.
 const EntityLink = ({entID, children}) => {
-  const [colKey, columnManager] = useContext(ColumnContext);
+  const colKey = useContext(ColumnContext);
 
   return (
-    <Link to={{
+    <Link replace to={{
       pathname: "e" + entID,
-      search: "?from" + JSON.stringify(colKey),
+      search: "?from=" + colKey,
+      state: window.history.state,
     }} >
       {children}
     </Link>
