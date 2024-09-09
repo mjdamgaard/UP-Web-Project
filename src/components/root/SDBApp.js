@@ -6,9 +6,12 @@ import {
   useLocation,
 } from "react-router-dom";
 
-import {AccountContextProvider} from "../../contexts_and_hooks/AccountContext.js";
-import {SessionStateContextProvider}
-  from "../../contexts_and_hooks/SessionStateContext.js";
+import {
+  AccountContextProvider
+} from "../../contexts_and_hooks/AccountContext.js";
+import {
+  SessionStateContextProvider
+} from "../../contexts_and_hooks/SessionStateContext.js";
 
 import {InterfaceHeader} from "../InterfaceHeader.js";
 import {MainPage, AppColumn} from "../pages/MainPage.js";

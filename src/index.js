@@ -30,6 +30,6 @@ const myElement = (
 );
 
 const root = ReactDOM.createRoot(document.getElementById('root'), {
-  identifierPrefix: '',
+  identifierPrefix: '', // Set if using more than one React application.
 });
 root.render(myElement);

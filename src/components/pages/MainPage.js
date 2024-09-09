@@ -1,5 +1,7 @@
 import {useState, createContext, useContext, useMemo, useId} from "react";
-import {useSessionState} from "../../contexts_and_hooks/SessionStateContext.js";
+import {
+  useSessionState, useSharedSessionState
+} from "../../contexts_and_hooks/SessionStateContext.js";
 import {
   useLocation, Navigate,
 } from "react-router-dom";
@@ -15,26 +17,38 @@ export const HOME_ENTITY_ID = 12;
 
 
 export const MainPage = ({}) => {
-  const [[ colKeyArr, specStore, currInd, fst, n, nonce ], setColumListData] =
-    useSessionState([ [0], {"0": {entID: HOME_ENTITY_ID}}, 0, 0, 1, 1 ]);
+  const [[
+    colKeyArr,
+    specStore,
+    currInd, fst, n, nonce,
+    isOpening
+  ], setColListData] = useSessionState([
+    [0],
+    {"0": {entID: HOME_ENTITY_ID}},
+    0, 0, 1, 1,
+    false,
+  ]);
+console.log(useSharedSessionState([
+  null, null
+]));debugger;
+  const [[
+    callerColInd, colSpec
+  ], setNewColData] = useSharedSessionState([
+    null, null
+  ]);
 
   const location = useLocation();
   const pathname = location.pathname;
   const search = location.search;
 
-  var navigate = <></>;
-  if (/^\?from=/.test(search)) {
-    let newColSpec = getColumnSpec(pathname);
-    let callerColKey = getCallerColumnKey(search);
-    let callerColInd = colKeyArr.indexOf(callerColKey);
-
+  if (colSpec && !isOpening) {
     let newNonce = nonce + 1;
     let newColKeyArr = (callerColInd === -1) ?
       colKeyArr.concat([newNonce]) :
       colKeyArr.slice(0, callerColInd + 1).concat(
         [newNonce], colKeyArr.slice(callerColInd + 1)
       )
-    let newSpecStore = {...specStore, [newNonce]: newColSpec};
+    let newSpecStore = {...specStore, [newNonce]: colSpec};
     let newCurrInd = callerColInd + 1;
     let newFST = (fst < newCurrInd - n + 1) ?
       newCurrInd - n + 1 :
@@ -42,27 +56,46 @@ export const MainPage = ({}) => {
         newCurrInd :
         fst;
     
-    setColumListData(
-      [newColKeyArr, newSpecStore, newCurrInd, newFST, n, newNonce]
-    );
-    navigate = <Navigate replace to={{pathname}} />
+    setColListData([
+      newColKeyArr,
+      newSpecStore,
+      newCurrInd, newFST, n, newNonce,
+      true,
+    ]);
+  }
+  else if (colSpec && isOpening) {
+    setNewColData([null, null]);
+  }
+  else if (!colSpec && isOpening) {
+    setColListData(prev => {
+      let ret = {...prev};
+      ret[6] = false; // isOpening = false;
+      return ret;
+    });
   }
 
-  const appColumns = colKeyArr.map(colKey => {
+  const appColumns = colKeyArr.map((colKey, ind) => {
     let colSpec = specStore[colKey];
-    return <AppColumn key={colKey} colKey={colKey} colSpec={colSpec} />
+    return (
+      <div className={
+        (ind == currInd) ? "in-focus" : (ind == fst) ? "fst-column" : ""
+      }>
+        <AppColumn key={colKey} colKey={colKey} colSpec={colSpec} />
+      </div>
+    );
   });
 
   return (
     <div className="main-page">
       {appColumns}
-      {navigate}
     </div>
   );
 };
 
 export function getColumnSpec(pathname) {
-  let entID = (pathname.match(/e[1-9][0-9]/) ?? "e" + HOME_ENTITY_ID).substring(1);
+  let entID = (
+    pathname.match(/\/e[1-9][0-9]/)[0] ?? "/e" + HOME_ENTITY_ID
+  ).substring(2);
   return {entID: entID};
 }
 
