@@ -16,7 +16,7 @@ const sessionStateAuxillaryDataStore = {};
 // stateful child components, which these can then use as their psKey (parent
 // session state key) input. If the psKey is undefined, then the component that
 // calls this hook acts as a root for storing the session state.
-export const useSessionState = (initState, psKey) => {
+export const useSessionState = (initState, psKey, contextKey) => {
   initState ??= null;
   psKey ??= "root";
   const sKey = useId();
@@ -51,6 +51,7 @@ export const useSessionState = (initState, psKey) => {
     sessionStateAuxillaryDataStore[sKey] = {
       psKey: psKey,
       setState: setState,
+      contextKey: contextKey,
     }
 
     // Clean up after an unmount, but not if a parent node tells us to save
@@ -91,7 +92,8 @@ function getShouldBeSaved(sKey) {
 }
 
 
-export const useSaveChildren = (shouldBeSaved) => {
+
+export const useSaveSessionChildren = (shouldBeSaved) => {
   const sKey = useId();
   if (!sessionStateAuxillaryDataStore[sKey]) {
     throw "useSaveChildren(): Call useSessionState() before this hook."
@@ -99,6 +101,41 @@ export const useSaveChildren = (shouldBeSaved) => {
   sessionStateAuxillaryDataStore[sKey].saveChildren = shouldBeSaved;
 }
 
+
+
+export const useAncestorSessionState = (contextKey, skip) => {
+  skip ??= 0;
+  const sKey = useId();
+
+  // Get the sKey of the ancestor.
+  var ancKey =  getAncestorKey(sKey, contextKey);
+  while (skip > 0) {
+    skip = skip - 1;
+    ancKey =  getAncestorKey(ancKey, contextKey);
+  }
+
+  // Return the state and the setState function.
+  const state = JSON.parse(sessionStorage.getItem(ancKey));
+  const setState = sessionStateAuxillaryDataStore[ancKey].setState;
+  return [state, setState];
+}
+
+
+function getAncestorKey(sKey, contextKey) {
+  var data;
+  while (data = sessionStateAuxillaryDataStore[sKey]) {
+    if (!data) {
+      return false;
+    }
+    if (data.contextKey === contextKey) {
+      return sKey;
+    }
+    if (data.psKey === "root") {
+      return false;
+    }
+    sKey = data.psKey;
+  }
+}
 
 
 
