@@ -4,28 +4,31 @@ import {
 // import {LazyDelayedPromise} from "../classes/LazyDelayedPromise";
 
 
+// TODO: Change implementation to use sessionStorage instead. (In order to
+// get mre space and reduce code.)
 
-const HistoryStateContext = createContext();
+
+const SessionStateContext = createContext();
 
 
-export const HistoryStateContextProvider = ({children, initState}) => {
+export const SessionStateContextProvider = ({children, initState}) => {
   const providerID = useId();
 
   /* Shared state getter and setter */
   var state = window.history.state; state &&
-    (state = state._sharedStates) &&
+    (state = state.sharedStates) &&
     (state = state[providerID]);
   const [sharedState, setSharedState] = useState(state ?? initState ?? {});
 
-  const getSharedHistoryState = useMemo(() => (() => {
+  const getSharedSessionState = useMemo(() => (() => {
     return sharedState;
   }), []);
 
-  const setSharedHistoryState = useMemo(() => ((state) => {
+  const setSharedSessionState = useMemo(() => ((state) => {
     let prevState = window.history.state ?? {};
     let newState = {...prevState};
-    newState._sharedStates ??= {};
-    newState._sharedStates[providerID] = state;
+    newState.sharedStates ??= {};
+    newState.sharedStates[providerID] = state;
     window.history.replaceState(newState, "");
     setSharedState(state);
   }), []);
@@ -33,41 +36,41 @@ export const HistoryStateContextProvider = ({children, initState}) => {
 
 
   /* Child state getter, setter, and delete function */
-  const getChildHistoryState = useMemo(() => ((key) => {
+  const getChildSessionState = useMemo(() => ((key) => {
     let state = window.history.state; state &&
-      (state = state._componentStates) &&
+      (state = state.componentStates) &&
       (state = state[providerID]) &&
       (state = state[key]);
     return state;
   }), []);
 
-  const setChildHistoryState = useMemo(() => ((key, state) => {
+  const setChildSessionState = useMemo(() => ((key, state) => {
     let prevState = window.history.state ?? {};
     let newState = {...prevState};
-    newState._componentStates ??= {};
-    newState._componentStates[providerID] ??= {};
-    newState._componentStates[providerID][key] = state;
+    newState.componentStates ??= {};
+    newState.componentStates[providerID] ??= {};
+    newState.componentStates[providerID][key] = state;
     window.history.replaceState(newState, "");
   }), []);
 
-  const deleteChildHistoryState = useMemo(() => ((key) => {
+  const deleteChildSessionState = useMemo(() => ((key) => {
     let prevState = window.history.state ?? {};
     let newState = {...prevState};
-    newState._componentStates ??= {};
-    newState._componentStates[providerID] ??= {};
-    delete newState._componentStates[providerID][key];
+    newState.componentStates ??= {};
+    newState.componentStates[providerID] ??= {};
+    delete newState.componentStates[providerID][key];
     window.history.replaceState(newState, "");
   }), []);
 
   
   /* Global state getter and setter */
-  const getGlobalHistoryState = useMemo(() => (() => {
+  const getGlobalSessionState = useMemo(() => (() => {
     let state = window.history.state;
     state && (state = state._globalState);
     return state;
   }), []);
 
-  const setGlobalHistoryState = useMemo(() => ((state) => {
+  const setGlobalSessionState = useMemo(() => ((state) => {
     let prevState = window.history.state ?? {};
     let newState = {...prevState};
     newState._globalState ??= {};
@@ -85,62 +88,62 @@ export const HistoryStateContextProvider = ({children, initState}) => {
     return () => {
       let prevState = window.history.state ?? {};
       let newState = {...prevState};
-      newState._componentStates ??= {};
-      newState._sharedStates ??= {};
-      delete newState._componentStates[providerID];
-      delete newState._sharedStates[providerID];
+      newState.componentStates ??= {};
+      newState.sharedStates ??= {};
+      delete newState.componentStates[providerID];
+      delete newState.sharedStates[providerID];
       window.history.replaceState(newState, "");
     };
   }, []);
 
   return (
-    <HistoryStateContext.Provider value={[
-      getSharedHistoryState, setSharedHistoryState,
-      getChildHistoryState, setChildHistoryState, deleteChildHistoryState,
-      getGlobalHistoryState, setGlobalHistoryState,
+    <SessionStateContext.Provider value={[
+      getSharedSessionState, setSharedSessionState,
+      getChildSessionState, setChildSessionState, deleteChildSessionState,
+      getGlobalSessionState, setGlobalSessionState,
     ]} >
       {children}
-    </HistoryStateContext.Provider>
+    </SessionStateContext.Provider>
   );
 };
 
 
 
 
-// This useHistoryState() hook is a wrapper around the normal useState hook,
+// This useSessionState() hook is a wrapper around the normal useState hook,
 // which also backs up the state of the component in the global history.state
-// object, under history.state._componentStates for as long as it is mounted,
+// object, under history.state.componentStates for as long as it is mounted,
 // meaning that navigation to and back from another website will restore the
 // state.
-export const useHistoryState = (initState) => {
+export const useSessionState = (initState) => {
   const componentID = useId();
   const [
     ,,
-    getChildHistoryState, setChildHistoryState, deleteChildHistoryState
-  ] = useContext(HistoryStateContext);
+    getChildSessionState, setChildSessionState, deleteChildSessionState
+  ] = useContext(SessionStateContext);
 
   // If the component calling this hook is unmounted, delete its history.state
   // record.
   useEffect(() => {
     // Clean up after an unmount (but not when navigating to other websites).
     return () => {
-      deleteChildHistoryState(componentID);
+      deleteChildSessionState(componentID);
     };
   }, []);
 
   // Call the useState hook, but initialize as the stored history child state
   // if any is available, instead of as initState.
   const [state, internalSetState] = useState(
-    getChildHistoryState(componentID) ?? initState
+    getChildSessionState(componentID) ?? initState
   );
 
   // Prepare the setState function that also stores the state in history.state.
   const setState = useMemo(() => ((y) => {
     if (y instanceof Function) {
-      setChildHistoryState(componentID, y(state));
+      setChildSessionState(componentID, y(state));
     }
     else {
-      setChildHistoryState(componentID, y);
+      setChildSessionState(componentID, y);
     }
     internalSetState(y);
   }), []);
@@ -150,22 +153,22 @@ export const useHistoryState = (initState) => {
 
 
 
-export const useSharedHistoryState = () => {
+export const useSharedSessionState = () => {
   const componentID = useId();
   const [
-    getSharedHistoryState, setSharedHistoryState
-  ] = useContext(HistoryStateContext);
+    getSharedSessionState, setSharedSessionState
+  ] = useContext(SessionStateContext);
 
-  return [getSharedHistoryState, setSharedHistoryState];
+  return [getSharedSessionState, setSharedSessionState];
 };
 
-export const useGlobalHistoryState = () => {
+export const useGlobalSessionState = () => {
   const componentID = useId();
   const [
     ,,
     ,,,
-    getGlobalHistoryState, setGlobalHistoryState
-  ] = useContext(HistoryStateContext);
+    getGlobalSessionState, setGlobalSessionState
+  ] = useContext(SessionStateContext);
 
-  return [getGlobalHistoryState, setGlobalHistoryState];
+  return [getGlobalSessionState, setGlobalSessionState];
 };

@@ -1,5 +1,5 @@
 import {useState, createContext, useContext, useMemo, useId} from "react";
-import {useHistoryState} from "../../contexts_and_hooks/HistoryStateContext.js";
+import {useSessionState} from "../../contexts_and_hooks/SessionStateContext.js";
 import {
   useLocation, Navigate,
 } from "react-router-dom";
@@ -16,7 +16,7 @@ export const HOME_ENTITY_ID = 12;
 
 export const MainPage = ({}) => {
   const [[ colKeyArr, specStore, currInd, fst, n, nonce ], setColumListData] =
-    useHistoryState([ [0], {"0": {entID: HOME_ENTITY_ID}}, 0, 0, 1, 1 ]);
+    useSessionState([ [0], {"0": {entID: HOME_ENTITY_ID}}, 0, 0, 1, 1 ]);
 
   const location = useLocation();
   const pathname = location.pathname;

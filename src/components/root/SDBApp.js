@@ -7,8 +7,8 @@ import {
 } from "react-router-dom";
 
 import {AccountContextProvider} from "../../contexts_and_hooks/AccountContext.js";
-import {HistoryStateContextProvider}
-  from "../../contexts_and_hooks/HistoryStateContext.js";
+import {SessionStateContextProvider}
+  from "../../contexts_and_hooks/SessionStateContext.js";
 
 import {InterfaceHeader} from "../InterfaceHeader.js";
 import {MainPage, AppColumn} from "../pages/MainPage.js";
@@ -23,7 +23,7 @@ export const HOME_ENTITY_ID = 12;
 export const SDBApp = () => {
   
   return (
-    <HistoryStateContextProvider>
+    <SessionStateContextProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Layout />}>
@@ -39,7 +39,7 @@ export const SDBApp = () => {
           </Route>
         </Routes>
       </BrowserRouter>
-    </HistoryStateContextProvider>
+    </SessionStateContextProvider>
   );
 };
 
