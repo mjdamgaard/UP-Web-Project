@@ -1,7 +1,5 @@
 import {useState, createContext, useContext, useMemo, useId} from "react";
-import {
-  useSessionState
-} from "../../contexts_and_hooks/SessionStateContext.js";
+
 import {
   useLocation, Navigate,
 } from "react-router-dom";
@@ -22,7 +20,7 @@ export const MainPage = ({}) => {console.log(<div></div>);
     specStore,
     currInd, fst, n, nonce,
     isOpening
-  ], setColListData] = useSessionState([
+  ], setColListData] = useState([
     [0, 2],
     {"0": {entID: HOME_ENTITY_ID}, "2": {entID: HOME_ENTITY_ID}},
     0, 0, 1, 1,
