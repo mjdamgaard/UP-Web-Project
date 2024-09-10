@@ -1,4 +1,4 @@
-import {useState, createContext, useContext, useEffect} from "react";
+import {useState, createContext, useContext, useEffect, useMemo} from "react";
 import {Link} from "react-router-dom";
 
 import {useQuery} from "../../contexts_and_hooks/DBRequests.js";
@@ -22,7 +22,7 @@ export const EntityTitle = ({
   maxRecLevel ??= 2;
 
   const [results, setResults] = useState({});
-  useEffect(() => {
+  useMemo(() => {
     // TODO: Also query for the highest rated 'representation' and if the rating
     // is high enough, use the propStruct generated from that instead.
     // TODO: Also always query for the `useful entity' meta-tag and print out

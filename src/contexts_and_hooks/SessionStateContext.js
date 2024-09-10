@@ -26,8 +26,8 @@ export const useSessionState = (initState, psKey, contextKey) => {
   // if any is available, instead of as initState.
   const [state, internalSetState] = useState(
     JSON.parse(sessionStorage.getItem(sKey)) ??
-      sessionStorage.setItem(sKey, JSON.stringify(initState)) ??
-      initState
+      sessionStorage.setItem(sKey, JSON.stringify(initState)) ?
+        initState : initState
   );
 
   // Prepare the setState function that also stores the state in sessionStorage.

@@ -1,6 +1,6 @@
 import {useState, createContext, useContext, useMemo, useId} from "react";
 import {
-  useSessionState, useSharedSessionState
+  useSessionState
 } from "../../contexts_and_hooks/SessionStateContext.js";
 import {
   useLocation, Navigate,
@@ -16,26 +16,25 @@ import {ListGeneratorPage} from "../ListGenPages.js";
 export const HOME_ENTITY_ID = 12;
 
 
-export const MainPage = ({}) => {
+export const MainPage = ({}) => {console.log(<div></div>);
   const [[
     colKeyArr,
     specStore,
     currInd, fst, n, nonce,
     isOpening
   ], setColListData] = useSessionState([
-    [0],
-    {"0": {entID: HOME_ENTITY_ID}},
+    [0, 2],
+    {"0": {entID: HOME_ENTITY_ID}, "2": {entID: HOME_ENTITY_ID}},
     0, 0, 1, 1,
     false,
   ]);
-console.log(useSharedSessionState([
-  null, null
-]));debugger;
-  const [[
-    callerColInd, colSpec
-  ], setNewColData] = useSharedSessionState([
-    null, null
-  ]);
+
+  // const [[
+  //   callerColInd, colSpec
+  // ], setNewColData] = useSessionState([
+  //   null, null
+  // ]);
+  const [callerColInd, colSpec, setNewColData] = [null, null, void(0)]
 
   const location = useLocation();
   const pathname = location.pathname;
@@ -76,11 +75,13 @@ console.log(useSharedSessionState([
 
   const appColumns = colKeyArr.map((colKey, ind) => {
     let colSpec = specStore[colKey];
+    let props = {key: colKey, colKey: colKey, colSpec: colSpec};
     return (
       <div className={
         (ind == currInd) ? "in-focus" : (ind == fst) ? "fst-column" : ""
       }>
-        <AppColumn key={colKey} colKey={colKey} colSpec={colSpec} />
+        {/* <AppColumn key={"hej" + colKey} colKey={colKey} colSpec={colSpec} /> */}
+        <AppColumn key={0} {...props} />
       </div>
     );
   });
