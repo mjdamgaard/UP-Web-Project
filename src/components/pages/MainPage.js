@@ -15,17 +15,22 @@ export const HOME_ENTITY_ID = 12;
 
 
 export const MainPage = ({}) => {console.log(<div></div>);
-  const [[
-    colKeyArr,
-    specStore,
-    currInd, fst, n, nonce,
-    isOpening
-  ], setColListData] = useState([
-    [0, 2],
-    {"0": {entID: HOME_ENTITY_ID}, "2": {entID: HOME_ENTITY_ID}},
-    0, 0, 1, 1,
-    false,
-  ]);
+  const [
+    [
+      colKeyArr,
+      specStore,
+      currInd, fst, n, nonce,
+      isOpening,
+    ],
+    setColListData
+  ] = useState(
+    [
+      [0, 2],
+      {"0": {entID: HOME_ENTITY_ID}, "2": {entID: HOME_ENTITY_ID}},
+      0, 0, 1, 1,
+      false,
+    ]
+  );
 
   // const [[
   //   callerColInd, colSpec

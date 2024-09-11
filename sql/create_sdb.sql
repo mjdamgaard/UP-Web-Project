@@ -48,10 +48,14 @@ CREATE TABLE MonadicRatings (
     -- runs on a scale from -100 to 100, where -100 normally means
     -- 'absolutely/perfectly not,' 0 means 'doesn't particularly fit or not
     -- fit,' and 100 means 'absolutely/perfectly.'
-    rat_val SMALLINT UNSIGNED NOT NULL,
+    rat_val FLOAT UNSIGNED NOT NULL,
 
     -- The subject that is rated in relation to the tag.
     subj_id BIGINT UNSIGNED NOT NULL,
+
+    -- Rating error (std. deviation) exponent. This number is divided by some
+    -- integer before being substituted in sigma = 2^x.
+    rat_err_exp TINYINT NOT NULL,
 
     -- Resulting semantic input: "User #<user_id> states that entity 
     -- #<subj_id> fits the tag #<tag_id> on a scale specified
@@ -61,14 +65,15 @@ CREATE TABLE MonadicRatings (
         user_id,
         tag_id,
         rat_val,
-        subj_id
+        subj_id,
+        rat_err_exp
     ),
 
     -- Index to look up specific rating (and restricting one rating pr. user.)
     UNIQUE INDEX (user_id, tag_id, subj_id),
 
     -- Index to look up users who has rated the stmt / rating scale.
-    UNIQUE INDEX (tag_id, subj_id, rat_val, user_id)
+    UNIQUE INDEX (tag_id, subj_id, rat_val, rat_err_exp, user_id)
 );
 
 
@@ -87,10 +92,14 @@ CREATE TABLE RelationalRatings (
     -- runs on a scale from -100 to 100, where -100 normally means
     -- 'absolutely/perfectly not,' 0 means 'doesn't particularly fit or not
     -- fit,' and 100 means 'absolutely/perfectly.'
-    rat_val SMALLINT UNSIGNED NOT NULL,
+    rat_val FLOAT UNSIGNED NOT NULL,
 
     -- The subject that is rated in relation to the tag(object).
     subj_id BIGINT UNSIGNED NOT NULL,
+
+    -- Rating error (std. deviation) exponent. This number is divided by some
+    -- integer before being substituted in sigma = 2^x.
+    rat_err_exp TINYINT NOT NULL,
 
     -- Resulting semantic input: "User #<user_id> states that entity 
     -- #<subj_id> fits the tag #<tag_id>(#<obj_id>) on a scale specified
@@ -101,14 +110,15 @@ CREATE TABLE RelationalRatings (
         obj_id,
         tag_id,
         rat_val,
-        subj_id
+        subj_id,
+        rat_err_exp
     ),
 
     -- Index to look up specific rating (and restricting one rating pr. user.)
     UNIQUE INDEX (user_id, obj_id, tag_id, subj_id),
 
     -- Index to look up users who has rated the stmt / rating scale.
-    UNIQUE INDEX (obj_id, tag_id, subj_id, rat_val, user_id)
+    UNIQUE INDEX (obj_id, tag_id, subj_id, rat_val, rat_err_exp, user_id)
 
     -- All relations are directional, so we don't need:
     -- UNIQUE INDEX (user_id, subj_id, tag_id, obj_id)
@@ -134,7 +144,7 @@ CREATE TABLE RecordedInputs (
     stmt_id BIGINT UNSIGNED NOT NULL,
     -- A rating value of NULL means 'take my rating away,' making it 'missing'/
     -- 'deleted.'
-    rat_val TINYINT UNSIGNED,
+    rat_val FLOAT UNSIGNED,
 
     -- UNIQUE INDEX (tag_id, inst_id, id)
     UNIQUE INDEX (stmt_id, id)
