@@ -14,13 +14,13 @@ import {ListGeneratorPage} from "../ListGenPages.js";
 export const HOME_ENTITY_ID = 12;
 
 
-export const MainPage = ({}) => {console.log(<div></div>);
+export const MainPage = ({}) => {
   const [
     [
       colKeyArr,
       specStore,
       currInd, fst, n, nonce,
-      isOpening,
+      isOpening, // TODO: Remove.
     ],
     setColListData
   ] = useState(
@@ -31,6 +31,25 @@ export const MainPage = ({}) => {console.log(<div></div>);
       false,
     ]
   );
+
+  console.log((() => {
+    let ret = <AppColumn key="temp key" />;
+    ret = {...ret, key: "hello key!"};
+    return ret;
+  })()); // Works.
+
+  // console.log((() => {
+  //   let ret = <><AppColumn /></>;
+  //   ret = {...ret, key: "hello key!"};
+  //   return ret;
+  // })());  // Also works.
+
+  // console.log((() => {
+  //   let ret = <><AppColumn /><div></div></>;
+  //   ret = {...ret, key: "hello key!"};
+  //   return ret;
+  // })());  // Also works.
+
 
   // const [[
   //   callerColInd, colSpec
@@ -78,15 +97,23 @@ export const MainPage = ({}) => {console.log(<div></div>);
 
   const appColumns = colKeyArr.map((colKey, ind) => {
     let colSpec = specStore[colKey];
-    let props = {key: colKey, colKey: colKey, colSpec: colSpec};
-    return (
-      <div className={
+    let ret = (
+      <div key={colKey} className={
         (ind == currInd) ? "in-focus" : (ind == fst) ? "fst-column" : ""
       }>
-        {/* <AppColumn key={"hej" + colKey} colKey={colKey} colSpec={colSpec} /> */}
-        <AppColumn key={0} {...props} />
+        <AppColumn colKey={colKey} colSpec={colSpec} />
       </div>
     );
+    // return (
+    //   <div key={colKey} className={
+    //     (ind == currInd) ? "in-focus" : (ind == fst) ? "fst-column" : ""
+    //   }>
+    //     <AppColumn colKey={colKey} colSpec={colSpec} />
+    //   </div>
+    // );
+    let ret2 = {...ret};
+    ret2.key = colKey;
+    return ret2;
   });
 
   return (
