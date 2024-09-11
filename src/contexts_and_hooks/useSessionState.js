@@ -6,7 +6,39 @@ import {
 
 const sessionStateAuxillaryDataStore = {};
 
+const COMPONENT_ID_PREFIX = "_i.";
+const ROOT_ID_PREFIX      = "_r.";
+const S_KEY_PREFIX        = "_s.";
 
+
+var nonce = -1;
+
+function lookupOrCreateComponentID(componentName) {
+  let componentID = sessionStorage.getItem(
+    COMPONENT_ID_PREFIX + componentName
+  );
+  if (componentID) {
+    return componentID;
+  } else {
+    nonce++;
+    sessionStorage.setItem(
+      COMPONENT_ID_PREFIX + componentName,
+      nonce
+    );
+    return nonce.toString();
+  }
+}
+
+
+
+// export const useSessionStateRootProps = (id, name) => {
+//   const rootProps = {_pSKey: id, _name: name ?? "root"};
+//   return rootProps;
+// };
+
+export const getRootProps = (id, name) => {
+  return {pSKey: id, _name: name ?? "root", isRoot: true};
+};
 
 
 // This useSessionState() hook is a wrapper around the normal useState hook,
@@ -18,19 +50,13 @@ const sessionStateAuxillaryDataStore = {};
 // stateful child components, which these can then use as their pSKey (parent
 // session state key) input. If the pSKey is undefined, then the component that
 // calls this hook acts as a root for storing the session state.
-export const useSessionState = (props, initState, componentKey, reducers) => {
+export const useSessionState = (props, initState, reducers) => {
   initState ??= null;
-  const key = props._key;
-  const pSKey = (typeof props === "string") ? undefined : props._pSKey;
-  const sKey = (typeof props === "string") ? props : pSKey + ":" + key;
+  // const sKey = props._sKey;
+  const componentName = props._name;
+  const pSKey = props._sKey.replace(/\/[^\/]+$/, "");
 
-  if (key === undefined) {
-    throw (
-      'useSessionState(): Missing _key prop. Make sure to wrap returned ' +
-      'JSX in prepareJSX(), AND make sure to give a React key to all ' +
-      'components that call this hook.' 
-    );
-  }
+  const componentID = lookupOrCreateComponentID(componentName);
   
 
   // Call the useState() hook, but initialize as the stored session state
@@ -240,7 +266,7 @@ function getAncestorKey(sKey, contextKey) {
 //       type: "SessionChildrenStateSaver",
 //       parent: parentNodeID,
 //     }
-//     // localStorage.componentStates[nodeID] = removedSavedChildren;
+//     // sessionStorage.componentStates[nodeID] = removedSavedChildren;
 
 //     // Clean up after an unmount (but not when navigating to other websites).
 //     return () => {

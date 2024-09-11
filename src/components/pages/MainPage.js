@@ -101,7 +101,7 @@ export const MainPage = ({}) => {
       <div key={colKey} className={
         (ind == currInd) ? "in-focus" : (ind == fst) ? "fst-column" : ""
       }>
-        <AppColumn colKey={colKey} colSpec={colSpec} />
+        <AppColumn key={colKey} colKey={colKey} colSpec={colSpec} />
       </div>
     );
     // return (
