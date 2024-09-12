@@ -6,144 +6,153 @@ import {
 
 const sessionStateAuxillaryDataStore = {};
 
-const COMPONENT_ID_PREFIX = "_i.";
-// const ROOT_ID_PREFIX      = "r.";
-// const S_KEY_PREFIX        = "s.";
+
 sessionStorage.getItem("_componentStateData") ||
   sessionStorage.setItem("_componentStateData", JSON.stringify({
     componentsStates: {}, componentIDs: {}, backups: {}
   }));
-// sessionStorage.getItem("_componentIDs") ||
-//   sessionStorage.setItem("_componentIDs", JSON.stringify({}));
 
 
+class SessionStatesHandler {
 
-function getComponentState(sKey) {
-  let componentStateData = JSON.parse(
-    sessionStorage.getItem("_componentStateData")
-  );
-  return componentStateData.componentStates[sKey];
-}
+  // function getComponentState(sKey) {
+  //   let componentStateData = JSON.parse(
+  //     sessionStorage.getItem("_componentStateData")
+  //   );
+  //   return componentStateData.componentStates[sKey];
+  // }
 
-function getAllComponentStates() {
-  let componentStateData = JSON.parse(
-    sessionStorage.getItem("_componentStateData")
-  );
-  return componentStateData.componentStates;
-}
+  // function getAllComponentStates() {
+  //   let componentStateData = JSON.parse(
+  //     sessionStorage.getItem("_componentStateData")
+  //   );
+  //   return componentStateData.componentStates;
+  // }
 
-function setComponentState(sKey, state) {
-  let componentStateData = JSON.parse(
-    sessionStorage.getItem("_componentStateData")
-  );
-  componentStateData.componentStates[sKey] = state;
-  sessionStorage.setItem(
-    "_componentStateData",
-    JSON.stringify(componentStateData)
-  );
-}
-
-function deleteComponentState(sKey) {
-  let componentStateData = JSON.parse(
-    sessionStorage.getItem("_componentStateData")
-  );
-  delete componentStateData.componentStates[sKey];
-  sessionStorage.setItem(
-    "_componentStateData",
-    JSON.stringify(componentStateData)
-  );
-}
-
-function lookupOrCreateComponentState(sKey, state) {
-  let componentStateData = JSON.parse(
-    sessionStorage.getItem("_componentStateData")
-  );
-  let state = componentStateData.componentStates[sKey];
-  if (state) {
-    return state;
-  } else {
+  static setComponentState(sKey, state) {
+    let componentStateData = JSON.parse(
+      sessionStorage.getItem("_componentStateData")
+    );
     componentStateData.componentStates[sKey] = state;
     sessionStorage.setItem(
       "_componentStateData",
       JSON.stringify(componentStateData)
     );
-    return state;
   }
-}
 
-
-var nonce = -1;
-
-function lookupOrCreateComponentID(componentName) {
-  let componentStateData = JSON.parse(
-    sessionStorage.getItem("_componentStateData")
-  );
-  let componentID = componentStateData.componentIDs[componentName];
-  if (componentID) {
-    return componentID;
-  } else {
-    nonce++;
-    componentStateData.componentIDs[componentName] = nonce;
+  static deleteComponentState(sKey) {
+    let componentStateData = JSON.parse(
+      sessionStorage.getItem("_componentStateData")
+    );
+    delete componentStateData.componentStates[sKey];
     sessionStorage.setItem(
       "_componentStateData",
       JSON.stringify(componentStateData)
     );
-    return nonce.toString();
   }
+
+  static lookupOrCreateComponentState(sKey, state) {
+    let componentStateData = JSON.parse(
+      sessionStorage.getItem("_componentStateData")
+    );
+    let state = componentStateData.componentStates[sKey];
+    if (state) {
+      return state;
+    } else {
+      componentStateData.componentStates[sKey] = state;
+      sessionStorage.setItem(
+        "_componentStateData",
+        JSON.stringify(componentStateData)
+      );
+      return state;
+    }
+  }
+
+
+  static nonce = -1;
+
+  static lookupOrCreateComponentID(componentName) {
+    let componentStateData = JSON.parse(
+      sessionStorage.getItem("_componentStateData")
+    );
+    let componentID = componentStateData.componentIDs[componentName];
+    if (componentID) {
+      return componentID;
+    } else {
+      nonce++;
+      componentStateData.componentIDs[componentName] = nonce;
+      sessionStorage.setItem(
+        "_componentStateData",
+        JSON.stringify(componentStateData)
+      );
+      return nonce.toString();
+    }
+  }
+
+
+
+  static backUpChildStates(sKey) {
+    // Get all component states.
+    let componentStateData = JSON.parse(
+      sessionStorage.getItem("_componentStateData")
+    );
+    let allStates = componentStateData.componentStates;
+
+    // Filter out the descendant states.
+    let descendantStates = Object.entries(allStates).filter(([key, ]) => {
+      return key.startsWith(sKey);
+    });
+
+    // Set the backup.
+    componentStateData.backups[sKey] = descendantStates;
+    sessionStorage.setItem(
+      "_componentStateData",
+      JSON.stringify(componentStateData)
+    );
+  }
+
+  static restoreChildStates(sKey) {
+    // Get the descendant states from backup.
+    let componentStateData = JSON.parse(
+      sessionStorage.getItem("_componentStateData")
+    );
+    let descendantStates = componentStateData.backups[sKey];
+    descendantStates.forEach((key, state) => {
+      SessionStatesHandler.setComponentState(key, state);
+    });
+
+    // Delete the backup.
+    delete componentStateData.backups[sKey];
+    sessionStorage.setItem(
+      "_componentStateData",
+      JSON.stringify(componentStateData)
+    );
+  }
+
 }
 
 
 
-function backUpChildStates(sKey) {
-  // Get all component states.
-  let componentStateData = JSON.parse(
-    sessionStorage.getItem("_componentStateData")
-  );
-  let allStates = componentStateData.componentStates;
-
-  // Filter out the descendant states.
-  let descendantStates = Object.entries(allStates).filter(([key, ]) => {
-    return key.startsWith(sKey);
-  });
-
-  // Set the backup.
-  componentStateData.backups[sKey] = descendantStates;
-  sessionStorage.setItem(
-    "_componentStateData",
-    JSON.stringify(componentStateData)
-  );
-}
-
-function restoreChildStates(sKey) {
-  // Get the descendant states from backup.
-  let componentStateData = JSON.parse(
-    sessionStorage.getItem("_componentStateData")
-  );
-  let descendantStates = componentStateData.backups[sKey];
-  descendantStates.forEach((key, state) => {
-    setComponentState(key, state);
-  });
-
-  // Delete the backup.
-  delete componentStateData.backups[sKey];
-  sessionStorage.setItem(
-    "_componentStateData",
-    JSON.stringify(componentStateData)
-  );
-}
 
 
 
 
 
-// export const useSessionStateRootProps = (id, name) => {
-//   const rootProps = {_pSKey: id, _name: name ?? "root"};
-//   return rootProps;
-// };
 
-export const getRootProps = (id, name) => {
-  return {id: id, _name: name ?? "root", isRoot: true};
+
+export const useRootSessionState = (
+  id, name, initState, reducers, backUpAndRemove
+) => {
+  let props = {id: id, _name: name ?? "root", isRoot: true};
+  return useSessionState(props, initState, reducers, backUpAndRemove);
 };
+
+
+
+
+function getRootProps(id, name) {
+  return {id: id, _name: name ?? "root", isRoot: true};
+}
 
 
 // This useSessionState() hook is a wrapper around the normal useState hook,
@@ -156,23 +165,23 @@ export const getRootProps = (id, name) => {
 // session state key) input. If the pSKey is undefined, then the component that
 // calls this hook acts as a root for storing the session state.
 export const useSessionState = (
-  props, initState, reducers, backUpAndRemove
+  props, initState = null, reducers, backUpAndRemove
 ) => {
-  initState ??= null;
-
   const sKey = (props.isRoot) ? props.id :
     props._sKey;
   const pSKey = (props.isRoot) ? undefined :
     props._sKey.replace(/\/[^\/]+$/, "");
 
   const componentName = props._name;
-  const componentID = lookupOrCreateComponentID(componentName);
+  const componentID = SessionStatesHandler.lookupOrCreateComponentID(
+    componentName
+  );
   
 
   // Call the useState() hook, but initialize as the stored session state
   // if any is available, instead of as initState.
   const [state, internalSetState] = useState(
-    lookupOrCreateComponentState(sKey, state)
+    SessionStatesHandler.lookupOrCreateComponentState(sKey, initState)
   );
 
   // Prepare the setState() function that also stores the state in
@@ -180,7 +189,7 @@ export const useSessionState = (
   const setState = useMemo(() => ((y) => {
     internalSetState(prev => {
       let newState = (y instanceof Function) ? y(prev) : y;
-      setComponentState(sKey, newState);
+      SessionStatesHandler.setComponentState(sKey, newState);
       return newState;
     });
   }), []);
@@ -206,10 +215,10 @@ export const useSessionState = (
   useMemo(() => {
     auxData = sessionStateAuxillaryDataStore[sKey];
     if (backUpAndRemove && !auxData.backUpAndRemove) {
-      backUpChildStates(sKey);
+      SessionStatesHandler.backUpChildStates(sKey);
     }
     else if (!backUpAndRemove && auxData.backUpAndRemove) {
-      restoreChildStates(sKey);
+      SessionStatesHandler.restoreChildStates(sKey);
     }
     auxData.backUpAndRemove = backUpAndRemove;
   }, [backUpAndRemove]);
@@ -220,7 +229,7 @@ export const useSessionState = (
   useEffect(() => {
     return () => {
       delete sessionStateAuxillaryDataStore[sKey];
-      sessionStorage.removeItem(S_KEY_PREFIX + sKey);
+      SessionStatesHandler.deleteComponentState(sKey);
     };
   }, []);
 
@@ -257,9 +266,20 @@ export const useSessionState = (
   }), []);
 
 
-
+  // prepareJSX() is supposed to wrap around all returned JSX elements from the
+  // component. Its task is to drill the underlying sKey-related props. It also
+  // automatically returns and empty JSX fragment if backUpAndRemove is set to
+  // true.
   const prepareJSX = useMemo(() => ((element) => {
+    // If backUpAndRemove, return an empty JSX fragment.
+    if (backUpAndRemove) {
+      return <></>;
+    }
     
+    // Prepare the returned JSX element.
+    let ret = {...element};
+
+
   }), [backUpAndRemove]);
 
 
@@ -273,23 +293,38 @@ export const useSessionState = (
 
 
 
+export const usePrepareJSX = (props, backUpAndRemove) => {
+  const prepareJSX = useMemo(() => ((element) => {
+    return getPrepareJSX(sKey, pSKey, componentID, backUpAndRemove);
+  }), [backUpAndRemove]);
+};
 
-function getAncestorReducers(sKey, componentName, skip) {
-  let componentID = lookupOrCreateComponentID(componentName);
-  var data = sessionStateAuxillaryDataStore[sKey];
-  while (data) {
-    if (!data.componentID === componentID) {
-      if (skip <= 0) {
-        return data.reducers;
-      } else {
-        skip--;
-      }
-    }
-    if (!data.pSKey) {
-      return false;
-    }
-    data = sessionStateAuxillaryDataStore[data.pSKey];
+export const useRootPrepareJSX = (id, name, backUpAndRemove) => {
+  let props = getRootProps(id, name);
+  const prepareJSX = useMemo(() => ((element) => {
+    return getPrepareJSX(sKey, pSKey, componentID, backUpAndRemove);
+  }), [backUpAndRemove]);
+};
+
+
+
+
+
+
+
+// prepareJSX() is supposed to wrap around all returned JSX elements from the
+// component. Its task is to drill the underlying sKey-related props. It also
+// automatically returns and empty JSX fragment if backUpAndRemove is set to
+// true.
+function getPrepareJSX(sKey, pSKey, componentID, backUpAndRemove) {
+  // If backUpAndRemove, return an empty JSX fragment.
+  if (backUpAndRemove) {
+    return <></>;
   }
+  
+  // Prepare the returned JSX element.
+  let ret = {...element};
+
 }
 
 
@@ -313,24 +348,28 @@ function getPreparedJSX(pSKey, element) {
 
 
 
-function getShouldBeSaved(sKey) {
-  var ret = false;
+
+function getAncestorReducers(sKey, componentName, skip) {
+  let componentID = SessionStatesHandler.lookupOrCreateComponentID(
+    componentName
+  );
   var data = sessionStateAuxillaryDataStore[sKey];
   while (data) {
+    if (!data.componentID === componentID) {
+      if (skip <= 0) {
+        return data.reducers;
+      } else {
+        skip--;
+      }
+    }
     if (!data.pSKey) {
       return false;
     }
-    if (data.saveChildren) {
-      ret = true;
-      continue;
-    }
-    if (data.pSKey === "root") {
-      break;
-    }
     data = sessionStateAuxillaryDataStore[data.pSKey];
   }
-  return ret;
 }
+
+
 
 
 
@@ -377,230 +416,3 @@ function getAncestorKey(sKey, contextKey) {
     sKey = data.pSKey;
   }
 }
-
-
-
-// const ParentSessionStateContext = createContext();
-
-
-// export const SessionStateRoot = ({children}) => {
-//   return (
-//     <ParentSessionStateContext.Provider value={null} >
-//       {children}
-//     </ParentSessionStateContext.Provider>
-//   );
-// };
-
-// export const ChildrenSessionStateSaver = ({
-//   children, removedSavedChildren
-// }) => {
-//   const nodeID = useId();
-//   const parentNodeID = useContext(ParentSessionStateContext);
-
-//   useEffect(() => {
-//     sessionStateAuxillaryDataStore[nodeID] = {
-//       type: "SessionChildrenStateSaver",
-//       parent: parentNodeID,
-//     }
-//     // sessionStorage.componentStates[nodeID] = removedSavedChildren;
-
-//     // Clean up after an unmount (but not when navigating to other websites).
-//     return () => {
-//       let prevState = window.history.state ?? {};
-//       let newState = {...prevState};
-//       newState.componentStates ??= {};
-//       newState.sharedStates ??= {};
-//       delete newState.componentStates[providerID];
-//       delete newState.sharedStates[providerID];
-//       window.history.replaceState(newState, "");
-//     };
-//   }, []);
-
-//   return (
-//     <ParentSessionStateContext.Provider value={providerID} >
-//       {children}
-//     </ParentSessionStateContext.Provider>
-//   );
-// };
-
-
-
-
-
-
-
-// // TODO: Change implementation to use sessionStorage instead. (In order to
-// // get mre space and reduce code.)
-
-
-// const SessionStateContext = createContext();
-
-
-// export const SessionStateContextProvider = ({children, initState}) => {
-//   const providerID = useId();
-
-//   /* Shared state getter and setter */
-//   var state = window.history.state; state &&
-//     (state = state.sharedStates) &&
-//     (state = state[providerID]);
-//   const [sharedState, setSharedState] = useState(state ?? initState ?? {});
-
-//   const getSharedSessionState = useMemo(() => (() => {
-//     return sharedState;
-//   }), []);
-
-//   const setSharedSessionState = useMemo(() => ((state) => {
-//     let prevState = window.history.state ?? {};
-//     let newState = {...prevState};
-//     newState.sharedStates ??= {};
-//     newState.sharedStates[providerID] = state;
-//     window.history.replaceState(newState, "");
-//     setSharedState(state);
-//   }), []);
-
-
-
-//   /* Child state getter, setter, and delete function */
-//   const getChildSessionState = useMemo(() => ((key) => {
-//     let state = window.history.state; state &&
-//       (state = state.componentStates) &&
-//       (state = state[providerID]) &&
-//       (state = state[key]);
-//     return state;
-//   }), []);
-
-//   const setChildSessionState = useMemo(() => ((key, state) => {
-//     let prevState = window.history.state ?? {};
-//     let newState = {...prevState};
-//     newState.componentStates ??= {};
-//     newState.componentStates[providerID] ??= {};
-//     newState.componentStates[providerID][key] = state;
-//     window.history.replaceState(newState, "");
-//   }), []);
-
-//   const deleteChildSessionState = useMemo(() => ((key) => {
-//     let prevState = window.history.state ?? {};
-//     let newState = {...prevState};
-//     newState.componentStates ??= {};
-//     newState.componentStates[providerID] ??= {};
-//     delete newState.componentStates[providerID][key];
-//     window.history.replaceState(newState, "");
-//   }), []);
-
-  
-//   /* Global state getter and setter */
-//   const getGlobalSessionState = useMemo(() => (() => {
-//     let state = window.history.state;
-//     state && (state = state.globalState);
-//     return state;
-//   }), []);
-
-//   const setGlobalSessionState = useMemo(() => ((state) => {
-//     let prevState = window.history.state ?? {};
-//     let newState = {...prevState};
-//     newState.globalState ??= {};
-//     newState.globalState = state;
-//     window.history.replaceState(newState, "");
-//   }), []);
-
-
-//   // TODO: Check that replacing state frequently doesn't slow the app down.
-
-
-//   // When this component is unmounted, remove its data from history.state. 
-//   useEffect(() => {
-//     // Clean up after an unmount (but not when navigating to other websites).
-//     return () => {
-//       let prevState = window.history.state ?? {};
-//       let newState = {...prevState};
-//       newState.componentStates ??= {};
-//       newState.sharedStates ??= {};
-//       delete newState.componentStates[providerID];
-//       delete newState.sharedStates[providerID];
-//       window.history.replaceState(newState, "");
-//     };
-//   }, []);
-
-//   return (
-//     <SessionStateContext.Provider value={[
-//       getSharedSessionState, setSharedSessionState,
-//       getChildSessionState, setChildSessionState, deleteChildSessionState,
-//       getGlobalSessionState, setGlobalSessionState,
-//     ]} >
-//       {children}
-//     </SessionStateContext.Provider>
-//   );
-// };
-
-
-
-
-// // // This useSessionState() hook is a wrapper around the normal useState hook,
-// // // which also backs up the state of the component in the global history.state
-// // // object, under history.state.componentStates for as long as it is mounted,
-// // // meaning that navigation to and back from another website will restore the
-// // // state.
-// // export const useSessionState = (initState) => {
-// //   const componentID = useId();
-// //   const [
-// //     ,,
-// //     getChildSessionState, setChildSessionState, deleteChildSessionState
-// //   ] = useContext(SessionStateContext);
-
-// //   // If the component calling this hook is unmounted, delete its history.state
-// //   // record.
-// //   useEffect(() => {
-// //     // Clean up after an unmount (but not when navigating to other websites).
-// //     return () => {
-// //       deleteChildSessionState(componentID);
-// //     };
-// //   }, []);
-
-// //   // Call the useState hook, but initialize as the stored history child state
-// //   // if any is available, instead of as initState.
-// //   const [state, internalSetState] = useState(
-// //     getChildSessionState(componentID) ?? initState
-// //   );
-
-// //   // Prepare the setState function that also stores the state in history.state.
-// //   const setState = useMemo(() => ((y) => {
-// //     if (y instanceof Function) {
-// //       setChildSessionState(componentID, y(state));
-// //     }
-// //     else {
-// //       setChildSessionState(componentID, y);
-// //     }
-// //     internalSetState(y);
-// //   }), []);
-
-// //   return [state, setState];
-// // };
-
-
-
-// export const useSharedSessionState = (initState) => {
-//   const [
-//     getSharedSessionState, setSharedSessionState
-//   ] = useContext(SessionStateContext);
-
-//   if (initState !== undefined && getSharedSessionState() === undefined) {
-//     setSharedSessionState(initState);
-//   }
-
-//   return [getSharedSessionState(), setSharedSessionState];
-// };
-
-
-// export const useGlobalSessionState = (initState) => {
-//   const [
-//     ,,
-//     ,,,
-//     getGlobalSessionState, setGlobalSessionState
-//   ] = useContext(SessionStateContext);
-
-//   if (initState !== undefined && getGlobalSessionState() === undefined) {
-//     setGlobalSessionState(initState);
-//   }
-
-//   return [getGlobalSessionState(), setGlobalSessionState];
-// };
