@@ -51,7 +51,7 @@ class SessionStatesHandler {
     );
   }
 
-  static lookupOrCreateComponentState(sKey, state) {
+  static lookUpOrCreateComponentState(sKey, state) {
     let componentStateData = JSON.parse(
       sessionStorage.getItem("_componentStateData")
     );
@@ -71,7 +71,7 @@ class SessionStatesHandler {
 
   static nonce = -1;
 
-  static lookupOrCreateComponentID(componentName) {
+  static lookUpOrCreateComponentID(componentName) {
     let componentStateData = JSON.parse(
       sessionStorage.getItem("_componentStateData")
     );
@@ -145,14 +145,12 @@ function getSKeysAndCIDFromProps(props) {
   const pSKey = (props.isRoot) ? undefined :
     props._sKey.replace(/\/[^\/]+$/, "");
   const componentName = props._name;
-  const componentID = SessionStatesHandler.lookupOrCreateComponentID(
+  const componentID = SessionStatesHandler.lookUpOrCreateComponentID(
     componentName
   );
 
   return [sKey, pSKey, componentID];
 }
-
-// TODO: I might need to refactor where lookupOrCreateComponentID() is called.
 
 
 
@@ -175,7 +173,7 @@ export const useSessionState = (
   // Call the useState() hook, but initialize as the stored session state
   // if any is available, instead of as initState.
   const [state, internalSetState] = useState(
-    SessionStatesHandler.lookupOrCreateComponentState(sKey, initState)
+    SessionStatesHandler.lookUpOrCreateComponentState(sKey, initState)
   );
 
   // Prepare the setState() function that also stores the state in
@@ -300,7 +298,7 @@ export const useRootSessionState = (
 
 
 function getRootProps(id, name) {
-  return {id: id, _name: name ?? "root", isRoot: true};
+  return {_sKey: id, _name: name ?? "root", isRoot: true};
 }
 
 
@@ -308,10 +306,11 @@ function getRootProps(id, name) {
 
 
 export const usePrepareJSX = (props, backUpAndRemove) => {
-  const [sKey, pSKey, componentID] = getSKeysAndCIDFromProps(props);
+  const sKey = props._sKey;
   const prepareJSX = useMemo(() => ((element) => {
-    prepareJSXFromData(element, sKey, pSKey, componentID, backUpAndRemove)
+    prepareJSXFromData(element, sKey, 0, backUpAndRemove)
   }), [backUpAndRemove]);
+
   return prepareJSX;
 };
 
@@ -332,7 +331,7 @@ export const useRootPrepareJSX = (id, name, backUpAndRemove) => {
 // automatically returns and empty JSX fragment if backUpAndRemove is set to
 // true.
 function prepareJSXFromData(
-  element, sKey, pSKey, componentID, backUpAndRemove
+  element, pSKey, pos = 0, backUpAndRemove
 ) {
   // If backUpAndRemove, return an empty JSX fragment.
   if (backUpAndRemove) {
@@ -341,8 +340,49 @@ function prepareJSXFromData(
   
   // Prepare the new JSX element to return.
   let ret = {...element};
+  // Construct its sKey, starting from its parent sKey.
+  var sKey = pSKey + "/";
+  // If the element has a key, prepend `k${key}`, only where all ':' has been
+  // replaced, reversibly.
+  if (ret.key !== null && ret.key !== undefined) {
+    let key = ret.key.replaceAll("\\", "\\b").replaceAll(":", "\\c");
+    sKey += "k" + key;
+  }
+  // Else prepend the position of the element within the parent instead.
+  else {
+    sKey += pos;
+  }
+  // Finally prepend `:${componentID}`, where componentID is that of the
+  // element itself, looked up (or created) from its componentName.
+  let elemComponentName = getComponentName(ret);
+  let elemComponentID = SessionStatesHandler.lookUpOrCreateComponentID(
+    elemComponentName
+  );
+  sKey += ":" + elemComponentID;
+  // Now add this as the _sKey property of ret.
+  ret._sKey = sKey;
 
-  
+  // Then iterate through each children and do the same thing, only with pSKey
+  // replaced by the current sKey, and where pos increments for each child. 
+  let children = ret.props.children;
+  if (children) {
+    if (Array.isArray(children)) {
+      ret.props.children = children.map((child, ind) => (
+        prepareJSXFromData(child, sKey, ind)
+      ));
+    }
+    else {
+      ret.props.children = prepareJSXFromData(children, sKey, 0);
+    }
+  }
+
+  // And finally return the prepared element.
+  return ret;
+}
+
+
+function getComponentName(element) {
+
 }
 
 
@@ -368,7 +408,7 @@ function getPreparedJSX(pSKey, element) {
 
 
 function getAncestorReducers(sKey, componentName, skip) {
-  let componentID = SessionStatesHandler.lookupOrCreateComponentID(
+  let componentID = SessionStatesHandler.lookUpOrCreateComponentID(
     componentName
   );
   var data = sessionStateAuxillaryDataStore[sKey];
