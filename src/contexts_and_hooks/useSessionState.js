@@ -139,20 +139,22 @@ class SessionStatesHandler {
 
 
 
+function getSKeysAndCIDFromProps(props) {
+  const sKey = (props.isRoot) ? props.id :
+    props._sKey;
+  const pSKey = (props.isRoot) ? undefined :
+    props._sKey.replace(/\/[^\/]+$/, "");
+  const componentName = props._name;
+  const componentID = SessionStatesHandler.lookupOrCreateComponentID(
+    componentName
+  );
 
-export const useRootSessionState = (
-  id, name, initState, reducers, backUpAndRemove
-) => {
-  let props = {id: id, _name: name ?? "root", isRoot: true};
-  return useSessionState(props, initState, reducers, backUpAndRemove);
-};
-
-
-
-
-function getRootProps(id, name) {
-  return {id: id, _name: name ?? "root", isRoot: true};
+  return [sKey, pSKey, componentID];
 }
+
+// TODO: I might need to refactor where lookupOrCreateComponentID() is called.
+
+
 
 
 // This useSessionState() hook is a wrapper around the normal useState hook,
@@ -167,15 +169,7 @@ function getRootProps(id, name) {
 export const useSessionState = (
   props, initState = null, reducers, backUpAndRemove
 ) => {
-  const sKey = (props.isRoot) ? props.id :
-    props._sKey;
-  const pSKey = (props.isRoot) ? undefined :
-    props._sKey.replace(/\/[^\/]+$/, "");
-
-  const componentName = props._name;
-  const componentID = SessionStatesHandler.lookupOrCreateComponentID(
-    componentName
-  );
+  const [sKey, pSKey, componentID] = getSKeysAndCIDFromProps(props);
   
 
   // Call the useState() hook, but initialize as the stored session state
@@ -293,17 +287,38 @@ export const useSessionState = (
 
 
 
-export const usePrepareJSX = (props, backUpAndRemove) => {
-  const prepareJSX = useMemo(() => ((element) => {
-    return getPrepareJSX(sKey, pSKey, componentID, backUpAndRemove);
-  }), [backUpAndRemove]);
+
+
+export const useRootSessionState = (
+  id, name, initState, reducers, backUpAndRemove
+) => {
+  let props = getRootProps(id, name);
+  return useSessionState(props, initState, reducers, backUpAndRemove);
 };
+
+
+
+
+function getRootProps(id, name) {
+  return {id: id, _name: name ?? "root", isRoot: true};
+}
+
+
+
+
+
+export const usePrepareJSX = (props, backUpAndRemove) => {
+  const [sKey, pSKey, componentID] = getSKeysAndCIDFromProps(props);
+  const prepareJSX = useMemo(() => ((element) => {
+    prepareJSXFromData(element, sKey, pSKey, componentID, backUpAndRemove)
+  }), [backUpAndRemove]);
+  return prepareJSX;
+};
+
 
 export const useRootPrepareJSX = (id, name, backUpAndRemove) => {
   let props = getRootProps(id, name);
-  const prepareJSX = useMemo(() => ((element) => {
-    return getPrepareJSX(sKey, pSKey, componentID, backUpAndRemove);
-  }), [backUpAndRemove]);
+  return usePrepareJSX(props, backUpAndRemove);
 };
 
 
@@ -316,15 +331,18 @@ export const useRootPrepareJSX = (id, name, backUpAndRemove) => {
 // component. Its task is to drill the underlying sKey-related props. It also
 // automatically returns and empty JSX fragment if backUpAndRemove is set to
 // true.
-function getPrepareJSX(sKey, pSKey, componentID, backUpAndRemove) {
+function prepareJSXFromData(
+  element, sKey, pSKey, componentID, backUpAndRemove
+) {
   // If backUpAndRemove, return an empty JSX fragment.
   if (backUpAndRemove) {
     return <></>;
   }
   
-  // Prepare the returned JSX element.
+  // Prepare the new JSX element to return.
   let ret = {...element};
 
+  
 }
 
 
