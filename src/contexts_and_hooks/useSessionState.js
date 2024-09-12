@@ -5,6 +5,7 @@ import {
 
 
 const sessionStateAuxillaryDataStore = {};
+var shouldRemoveGarbage = false;
 
 
 sessionStorage.getItem("_componentStateData") ||
@@ -129,6 +130,35 @@ class SessionStatesHandler {
     );
   }
 
+
+  static removeGarbage() {
+    let componentStateData = JSON.parse(
+      sessionStorage.getItem("_componentStateData")
+    );
+
+    let sKeys = Object.keys(componentStateData.componentStates);
+    let len;
+    do {
+      len = sKeys.length;
+
+      sKeys = sKeys.filter(sKey => {
+        let pSKey = sKey.replace(/\/[^\/]+$/, "");
+        return sKeys.includes(pSKey);
+        // No, this doesn't work, I need to take the nearest ancestor that
+        // *has a state*! ..So do I advertise that in sKey, or what..?
+      });
+
+      sKeys = Object.keys(componentStateData.componentStates);
+    }
+    while (sKeys.length != len);
+
+    // Finally write the garbage-collected componentStateData back.
+    sessionStorage.setItem(
+      "_componentStateData",
+      JSON.stringify(componentStateData)
+    );
+  }
+
 }
 
 
@@ -201,6 +231,7 @@ export const useSessionState = (
   }, []);
 
 
+
   // Whenever backUpAndRemove changes, either back up descendant states in a
   // separate place in session storage, before they are being removed,
   // or restore them from this backup. 
@@ -211,8 +242,22 @@ export const useSessionState = (
     }
     else if (!backUpAndRemove && auxData.backUpAndRemove) {
       SessionStatesHandler.restoreChildStates(sKey);
+      shouldRemoveGarbage = true;
     }
     auxData.backUpAndRemove = backUpAndRemove;
+  }, [backUpAndRemove]);
+
+  // If the component has just been restored from a backup, schedule a garbage
+  // collector to run if the component is unmounted or if backUpAndRemove
+  // changes to remove any memory leaks if the state is changed by the user,
+  // and some of the descendants are not re-mounted. 
+  useEffect(() => {
+    return () => {
+      if (shouldRemoveGarbage) {
+        shouldRemoveGarbage = false;
+        SessionStatesHandler.removeGarbage();
+      }
+    };
   }, [backUpAndRemove]);
 
 
