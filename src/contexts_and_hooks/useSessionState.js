@@ -7,27 +7,132 @@ import {
 const sessionStateAuxillaryDataStore = {};
 
 const COMPONENT_ID_PREFIX = "_i.";
-const ROOT_ID_PREFIX      = "_r.";
-const S_KEY_PREFIX        = "_s.";
+// const ROOT_ID_PREFIX      = "r.";
+// const S_KEY_PREFIX        = "s.";
+sessionStorage.getItem("_componentStateData") ||
+  sessionStorage.setItem("_componentStateData", JSON.stringify({
+    componentsStates: {}, componentIDs: {}, backups: {}
+  }));
+// sessionStorage.getItem("_componentIDs") ||
+//   sessionStorage.setItem("_componentIDs", JSON.stringify({}));
+
+
+
+function getComponentState(sKey) {
+  let componentStateData = JSON.parse(
+    sessionStorage.getItem("_componentStateData")
+  );
+  return componentStateData.componentStates[sKey];
+}
+
+function getAllComponentStates() {
+  let componentStateData = JSON.parse(
+    sessionStorage.getItem("_componentStateData")
+  );
+  return componentStateData.componentStates;
+}
+
+function setComponentState(sKey, state) {
+  let componentStateData = JSON.parse(
+    sessionStorage.getItem("_componentStateData")
+  );
+  componentStateData.componentStates[sKey] = state;
+  sessionStorage.setItem(
+    "_componentStateData",
+    JSON.stringify(componentStateData)
+  );
+}
+
+function deleteComponentState(sKey) {
+  let componentStateData = JSON.parse(
+    sessionStorage.getItem("_componentStateData")
+  );
+  delete componentStateData.componentStates[sKey];
+  sessionStorage.setItem(
+    "_componentStateData",
+    JSON.stringify(componentStateData)
+  );
+}
+
+function lookupOrCreateComponentState(sKey, state) {
+  let componentStateData = JSON.parse(
+    sessionStorage.getItem("_componentStateData")
+  );
+  let state = componentStateData.componentStates[sKey];
+  if (state) {
+    return state;
+  } else {
+    componentStateData.componentStates[sKey] = state;
+    sessionStorage.setItem(
+      "_componentStateData",
+      JSON.stringify(componentStateData)
+    );
+    return state;
+  }
+}
 
 
 var nonce = -1;
 
 function lookupOrCreateComponentID(componentName) {
-  let componentID = sessionStorage.getItem(
-    COMPONENT_ID_PREFIX + componentName
+  let componentStateData = JSON.parse(
+    sessionStorage.getItem("_componentStateData")
   );
+  let componentID = componentStateData.componentIDs[componentName];
   if (componentID) {
     return componentID;
   } else {
     nonce++;
+    componentStateData.componentIDs[componentName] = nonce;
     sessionStorage.setItem(
-      COMPONENT_ID_PREFIX + componentName,
-      nonce
+      "_componentStateData",
+      JSON.stringify(componentStateData)
     );
     return nonce.toString();
   }
 }
+
+
+
+function backUpChildStates(sKey) {
+  // Get all component states.
+  let componentStateData = JSON.parse(
+    sessionStorage.getItem("_componentStateData")
+  );
+  let allStates = componentStateData.componentStates;
+
+  // Filter out the descendant states.
+  let descendantStates = Object.entries(allStates).filter(([key, ]) => {
+    return key.startsWith(sKey);
+  });
+
+  // Set the backup.
+  componentStateData.backups[sKey] = descendantStates;
+  sessionStorage.setItem(
+    "_componentStateData",
+    JSON.stringify(componentStateData)
+  );
+}
+
+function restoreChildStates(sKey) {
+  // Get the descendant states from backup.
+  let componentStateData = JSON.parse(
+    sessionStorage.getItem("_componentStateData")
+  );
+  let descendantStates = componentStateData.backups[sKey];
+  descendantStates.forEach((key, state) => {
+    setComponentState(key, state);
+  });
+
+  // Delete the backup.
+  delete componentStateData.backups[sKey];
+  sessionStorage.setItem(
+    "_componentStateData",
+    JSON.stringify(componentStateData)
+  );
+}
+
+
 
 
 
@@ -37,7 +142,7 @@ function lookupOrCreateComponentID(componentName) {
 // };
 
 export const getRootProps = (id, name) => {
-  return {pSKey: id, _name: name ?? "root", isRoot: true};
+  return {id: id, _name: name ?? "root", isRoot: true};
 };
 
 
@@ -47,24 +152,27 @@ export const getRootProps = (id, name) => {
 // website will restore the state.
 // useSessionState() returns an sKey (session state key) along with the usual
 // state and setState returns, which is supposed to be drilled to any session-
-// stateful child components, which these can then use as their pSKey (parent
+// stateful descendant components, which these can then use as their pSKey (parent
 // session state key) input. If the pSKey is undefined, then the component that
 // calls this hook acts as a root for storing the session state.
-export const useSessionState = (props, initState, reducers) => {
+export const useSessionState = (
+  props, initState, reducers, backUpAndRemove
+) => {
   initState ??= null;
-  // const sKey = props._sKey;
-  const componentName = props._name;
-  const pSKey = props._sKey.replace(/\/[^\/]+$/, "");
 
+  const sKey = (props.isRoot) ? props.id :
+    props._sKey;
+  const pSKey = (props.isRoot) ? undefined :
+    props._sKey.replace(/\/[^\/]+$/, "");
+
+  const componentName = props._name;
   const componentID = lookupOrCreateComponentID(componentName);
   
 
   // Call the useState() hook, but initialize as the stored session state
   // if any is available, instead of as initState.
   const [state, internalSetState] = useState(
-    JSON.parse(sessionStorage.getItem(sKey)) ??
-      sessionStorage.setItem(sKey, JSON.stringify(initState)) ?
-        initState : initState
+    lookupOrCreateComponentState(sKey, state)
   );
 
   // Prepare the setState() function that also stores the state in
@@ -72,43 +180,61 @@ export const useSessionState = (props, initState, reducers) => {
   const setState = useMemo(() => ((y) => {
     internalSetState(prev => {
       let newState = (y instanceof Function) ? y(prev) : y;
-      sessionStorage.setItem(sKey, JSON.stringify(newState ?? null));
+      setComponentState(sKey, newState);
       return newState;
     });
   }), []);
 
 
   // We store the parent key in order to be able to set and get states from
-  // a parent, as well as to check whether children states should be saved.
-  // We also store setState as auxillary data in order for children to be
+  // a parent, as well as to check whether descendant states should be saved.
+  // We also store setState as auxillary data in order for descendants to be
   // able to access it.
   useMemo(() => {
     sessionStateAuxillaryDataStore[sKey] = {
       pSKey: pSKey,
-      componentKey: componentKey,
+      componentID: componentID,
       reducers: {...reducers, setState: setState},
+      backUpAndRemove: backUpAndRemove,
     }
   }, []);
 
-  // Record pSKey and setState in an auxillary data structure, and define
-  // a cleanup function to both delete this auxillary data, as well as the
-  // session state, but only if a parent node does not have the boolean
-  // saveChildren property set as true.
+
+  // Whenever backUpAndRemove changes, either back up descendant states in a
+  // separate place in session storage, before they are being removed,
+  // or restore them from this backup. 
+  useMemo(() => {
+    auxData = sessionStateAuxillaryDataStore[sKey];
+    if (backUpAndRemove && !auxData.backUpAndRemove) {
+      backUpChildStates(sKey);
+    }
+    else if (!backUpAndRemove && auxData.backUpAndRemove) {
+      restoreChildStates(sKey);
+    }
+    auxData.backUpAndRemove = backUpAndRemove;
+  }, [backUpAndRemove]);
+
+
+  // Cleanup function to both delete this auxillary data, as well as the
+  // session state.
   useEffect(() => {
-    // Clean up after an unmount, but not if a parent node tells us to save
-    // the children.
     return () => {
-      if (!getShouldBeSaved(sKey)) {
-        delete sessionStateAuxillaryDataStore[sKey];
-        sessionStorage.removeItem(sKey);
-      }
+      delete sessionStateAuxillaryDataStore[sKey];
+      sessionStorage.removeItem(S_KEY_PREFIX + sKey);
     };
   }, []);
 
 
-  // Prepare the dispatch function, which...
-  const dispatch = useMemo(() => ((componentKey, action, params = []) => {
-    if (componentKey === "self") {
+  // Prepare the dispatch function, which is able to change the sate of the
+  // component itself, or of any of its ancestors, by calling one of the
+  // provided reducers, or an ancestor's reducer. We also always add the all-
+  // powerful setState as a reducer, but it is recommended to only use custom
+  // reducers, as these can then constitute an API of the "public methods"
+  // for the component (or "protected"; you can only call them from itself
+  // or its descendants).
+  const dispatch = useMemo(() => ((componentName, action, params = []) => {
+    // If componentName = "self", call one of this state's own reducers.
+    if (componentName === "self") {
       let reducer = reducers[action];
       setState(state => reducer(state, ...params));
       return;
@@ -117,32 +243,42 @@ export const useSessionState = (props, initState, reducers) => {
     let skip = 0;
     // If componentKey is an array, treat it as [componentKey, skip] instead,
     // where skip is the number of ancestors to skip.
-    if (Array.isArray(componentKey)) {
-      [componentKey, skip] = componentKey;
+    if (Array.isArray(componentName)) {
+      [componentName, skip] = componentName;
       skip = parseInt(skip);
     }
 
     // If code reaches here, then we should look up the nearest ancestor
     // of componentKey, after having skipped over skip ancestors.
-    let ancReducers = getAncestorReducers(sKey, componentKey, skip);
+    let ancReducers = getAncestorReducers(sKey, componentName, skip);
     let reducer = ancReducers[action];
     setState(state => reducer(state, ...params));
     return;
   }), []);
 
 
+
+  const prepareJSX = useMemo(() => ((element) => {
+    
+  }), [backUpAndRemove]);
+
+
   // Return the state and the expanded setState function, as well as the sKey
   // (session state key), which ought to be drilled to child components in
   // order to be used for the pSKey (parent session state key) property of
-  // this very hook by children components. 
-  return [state, setState, sKey];
+  // this very hook by descendant components. 
+  return [state, dispatch, prepareJSX];
 };
 
 
-function getAncestorReducers(sKey, componentKey, skip) {
+
+
+
+function getAncestorReducers(sKey, componentName, skip) {
+  let componentID = lookupOrCreateComponentID(componentName);
   var data = sessionStateAuxillaryDataStore[sKey];
   while (data) {
-    if (!data.componentKey === componentKey) {
+    if (!data.componentID === componentID) {
       if (skip <= 0) {
         return data.reducers;
       } else {
