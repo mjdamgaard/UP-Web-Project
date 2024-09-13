@@ -1,27 +1,27 @@
 import {
-  useState, useId, useEffect, useMemo,
+  useState, useEffect, useMemo,
 } from "react";
 
 
 
 const sessionStateAuxillaryDataStore = {};
-var shouldRemoveGarbage = false;
 
 
 sessionStorage.getItem("_componentStateData") ||
   sessionStorage.setItem("_componentStateData", JSON.stringify({
-    componentsStates: {}, elemTypeIDs: {}, backups: {}
+    componentsStates: {}, elemTypeIDs: {},
   }));
 
 
 
 class SessionStatesHandler {
 
+
   static getComponentState(sKey) {
     let componentStateData = JSON.parse(
       sessionStorage.getItem("_componentStateData")
     );
-    return componentStateData.componentStates[sKey];
+    return (componentStateData.componentStates[sKey] ?? {}).state;
   }
 
   // static getAllComponentStates() {
@@ -35,7 +35,7 @@ class SessionStatesHandler {
     let componentStateData = JSON.parse(
       sessionStorage.getItem("_componentStateData")
     );
-    componentStateData.componentStates[sKey] = state;
+    componentStateData.componentStates[sKey] = {state: state};
     sessionStorage.setItem(
       "_componentStateData",
       JSON.stringify(componentStateData)
@@ -46,13 +46,17 @@ class SessionStatesHandler {
     let componentStateData = JSON.parse(
       sessionStorage.getItem("_componentStateData")
     );
-    delete componentStateData.componentStates[sKey];
+    // Delete this component state, as well as any descendant state, which
+    // all starts with sKey in their own sKeys.
+    let sKeys = Object.keys(componentStateData.componentStates);
+    let sKeysToRemove = sKeys.filter(key => key.startsWith(sKey));
+    sKeysToRemove.forEach(key => {
+      delete componentStateData.componentStates[key];
+    });
     sessionStorage.setItem(
       "_componentStateData",
       JSON.stringify(componentStateData)
     );
-
-    // TODO: Delete children.
   }
 
   // static lookUpOrCreateComponentState(sKey, state) {
@@ -72,20 +76,28 @@ class SessionStatesHandler {
   //   }
   // }
 
-
+  static #elemTypeIDs = {};
   static nonce = 0;
 
   static lookUpOrCreateElemTypeID(elemType) {
+    // First look in this.#elemTypeIDs.
+    let elemTypeID = this.#elemTypeIDs[elemType];
+    if (elemTypeID !== undefined) {
+      return elemTypeID;
+    }
+    // If not there, look in sessionStorage, and if not there, get a new
+    // elemTypeID from nonce, then store and return that.
     let componentStateData = JSON.parse(
       sessionStorage.getItem("_componentStateData")
     );
-    let elemTypeID = componentStateData.elemTypeIDs[componentName];
+    elemTypeID = componentStateData.elemTypeIDs[elemType];
     if (elemTypeID) {
       return elemTypeID;
     } else {
       elemTypeID = nonce;
       nonce++;
-      componentStateData.elemTypeIDs[componentName] = elemTypeID;
+      componentStateData.elemTypeIDs[elemType] = elemTypeID;
+      this.#elemTypeIDs[elemType] = elemTypeID;
       sessionStorage.setItem(
         "_componentStateData",
         JSON.stringify(componentStateData)
@@ -101,15 +113,18 @@ class SessionStatesHandler {
     let componentStateData = JSON.parse(
       sessionStorage.getItem("_componentStateData")
     );
-    let allStates = componentStateData.componentStates;
+    let componentStates = componentStateData.componentStates;
 
     // Filter out the descendant states.
-    let descendantStates = Object.entries(allStates).filter(([key, ]) => {
-      return key.startsWith(sKey);
+    let descStateEntries = Object.entries(componentStates).filter(([key,]) => {
+      return key.startsWith(sKey) && key !== sKey;
     });
 
     // Set the backup.
-    componentStateData.backups[sKey] = descendantStates;
+    if (!componentStates[sKey]) {
+      componentStates[sKey] = {};
+    }
+    componentStates[sKey].backup = descStateEntries;
     sessionStorage.setItem(
       "_componentStateData",
       JSON.stringify(componentStateData)
@@ -121,13 +136,17 @@ class SessionStatesHandler {
     let componentStateData = JSON.parse(
       sessionStorage.getItem("_componentStateData")
     );
-    let descendantStates = componentStateData.backups[sKey];
-    descendantStates.forEach((key, state) => {
-      SessionStatesHandler.setComponentState(key, state);
+    let componentStates = componentStateData.componentStates;
+    if (!componentStates[sKey]) {
+      componentStates[sKey] = {};
+    }
+    let descStateEntries = componentStates[sKey].backup;
+    // Restore the descendant states.
+    descStateEntries.forEach(([key, state]) => {
+      componentStateData.componentStates[key] = state;
     });
-
-    // Delete the backup.
-    delete componentStateData.backups[sKey];
+    // Then delete the backup, and store the changes.
+    delete componentStates[sKey].backup;
     sessionStorage.setItem(
       "_componentStateData",
       JSON.stringify(componentStateData)
@@ -315,7 +334,7 @@ const useSessionStateHelper = (
   // for the component (or "protected"; you can only call them from itself
   // or its descendants).
   const dispatch = useMemo(() => ((key, action, input = []) => {
-    // If componentName = "self", call one of this state's own reducers.
+    // If key = "self", call one of this state's own reducers.
     if (key === "self") {
       if (isStateless) {
         console.log(sKey);

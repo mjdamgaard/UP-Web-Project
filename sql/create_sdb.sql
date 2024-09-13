@@ -70,10 +70,11 @@ CREATE TABLE MonadicRatings (
     ),
 
     -- Index to look up specific rating (and restricting one rating pr. user.)
-    UNIQUE INDEX (user_id, tag_id, subj_id),
+    UNIQUE INDEX (user_id, tag_id, subj_id)
 
-    -- Index to look up users who has rated the stmt / rating scale.
-    UNIQUE INDEX (tag_id, subj_id, rat_val, rat_err_exp, user_id)
+    -- Still better to use a bot for this instead:
+    -- -- Index to look up users who has rated the stmt / rating scale.
+    -- UNIQUE INDEX (tag_id, subj_id, rat_val, rat_err_exp, user_id)
 );
 
 
@@ -115,10 +116,11 @@ CREATE TABLE RelationalRatings (
     ),
 
     -- Index to look up specific rating (and restricting one rating pr. user.)
-    UNIQUE INDEX (user_id, obj_id, tag_id, subj_id),
+    UNIQUE INDEX (user_id, obj_id, tag_id, subj_id)
 
-    -- Index to look up users who has rated the stmt / rating scale.
-    UNIQUE INDEX (obj_id, tag_id, subj_id, rat_val, rat_err_exp, user_id)
+    -- Still better to use a bot for this instead:
+    -- -- Index to look up users who has rated the stmt / rating scale.
+    -- UNIQUE INDEX (obj_id, tag_id, subj_id, rat_val, rat_err_exp, user_id)
 
     -- All relations are directional, so we don't need:
     -- UNIQUE INDEX (user_id, subj_id, tag_id, obj_id)
