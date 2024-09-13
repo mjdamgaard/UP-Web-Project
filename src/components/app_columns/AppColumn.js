@@ -1,4 +1,5 @@
-import {useState, createContext, useContext, useMemo, useId} from "react";
+import {useState, createContext, useContext, useMemo, Fragment} from "react";
+import React from 'react';
 import {ColumnContext} from "../../contexts_and_hooks/ColumnContext.js";
 
 import {EntityPage} from "../EntityPage.js";
@@ -9,8 +10,14 @@ import {ListGeneratorPage} from "../ListGenPages.js";
 
 
 
-export const AppColumn = ({colKey, colSpec}) => {
-
+export const AppColumn = ({colKey, colSpec}) => {console.log(
+  <div className="app-column">
+    <ColumnButtonContainer colKey={colKey} />
+    <ColumnContext.Provider value={colKey}>
+      {page}
+    </ColumnContext.Provider>
+</div>
+);
   var page;
   if (colSpec.entID) {
     page = <EntityPage entID={colSpec.entID} />;
@@ -29,16 +36,33 @@ export const AppColumn = ({colKey, colSpec}) => {
   );
 };
 
-
-
-const ColumnButtonContainer = ({colKey}) => {
-  return (
+class ColumnButtonContainer extends React.Component {
+  render() {console.log(
     <div>
       {/* <PinButton /> */}
-      <CloseColumnButton colKey={colKey} />
+      <CloseColumnButton colKey={this.props.colKey} />
+      <></>
+      <Fragment></Fragment>
     </div>
   );
-};
+    return (
+      <div>
+        {/* <PinButton /> */}
+        <CloseColumnButton colKey={this.props.colKey} />
+        <></>
+        <Fragment></Fragment>
+      </div>
+    );
+  }
+}
+// const ColumnButtonContainer = ({colKey}) => {
+//   return (
+//     <div>
+//       {/* <PinButton /> */}
+//       <CloseColumnButton colKey={colKey} />
+//     </div>
+//   );
+// };
 const CloseColumnButton = ({colKey}) => {
   // (Using ColumnListContext rather than ColumnContext because a future
   // implementation might include buttons for columns to switch places with
