@@ -10,7 +10,7 @@ var shouldRemoveGarbage = false;
 
 sessionStorage.getItem("_componentStateData") ||
   sessionStorage.setItem("_componentStateData", JSON.stringify({
-    componentsStates: {}, componentIDs: {}, backups: {}
+    componentsStates: {}, elemTypeIDs: {}, backups: {}
   }));
 
 
@@ -42,7 +42,7 @@ class SessionStatesHandler {
     );
   }
 
-  static deleteComponentState(sKey) {
+  static deleteComponentStateAndChildren(sKey) {
     let componentStateData = JSON.parse(
       sessionStorage.getItem("_componentStateData")
     );
@@ -51,6 +51,8 @@ class SessionStatesHandler {
       "_componentStateData",
       JSON.stringify(componentStateData)
     );
+
+    // TODO: Delete children.
   }
 
   // static lookUpOrCreateComponentState(sKey, state) {
@@ -73,22 +75,22 @@ class SessionStatesHandler {
 
   static nonce = 0;
 
-  static lookUpOrCreateComponentID(componentName) {
+  static lookUpOrCreateElemTypeID(elemType) {
     let componentStateData = JSON.parse(
       sessionStorage.getItem("_componentStateData")
     );
-    let componentID = componentStateData.componentIDs[componentName];
-    if (componentID) {
-      return componentID;
+    let elemTypeID = componentStateData.elemTypeIDs[componentName];
+    if (elemTypeID) {
+      return elemTypeID;
     } else {
-      componentID = nonce;
+      elemTypeID = nonce;
       nonce++;
-      componentStateData.componentIDs[componentName] = componentID;
+      componentStateData.elemTypeIDs[componentName] = elemTypeID;
       sessionStorage.setItem(
         "_componentStateData",
         JSON.stringify(componentStateData)
       );
-      return componentID;
+      return elemTypeID;
     }
   }
 
@@ -133,57 +135,38 @@ class SessionStatesHandler {
   }
 
 
-  static removeGarbage() {
-    let componentStateData = JSON.parse(
-      sessionStorage.getItem("_componentStateData")
-    );
+  // static removeGarbage() {
+  //   let componentStateData = JSON.parse(
+  //     sessionStorage.getItem("_componentStateData")
+  //   );
 
-    let sKeys = Object.keys(componentStateData.componentStates);
-    let len;
-    do {
-      len = sKeys.length;
+  //   let sKeys = Object.keys(componentStateData.componentStates);
+  //   let len;
+  //   do {
+  //     len = sKeys.length;
 
-      sKeys = sKeys.filter(sKey => {
-        let pSKey = sKey.replace(/\/[^\/]+$/, "");
-        return sKeys.includes(pSKey);
-        // No, this doesn't work, I need to take the nearest ancestor that
-        // *has a state*! ..So do I advertise that in sKey, or what..?
-      });
+  //     sKeys = sKeys.filter(sKey => {
+  //       let pSKey = sKey.replace(/\/[^\/]+$/, "");
+  //       return sKeys.includes(pSKey);
+  //       // No, this doesn't work, I need to take the nearest ancestor that
+  //       // *has a state*! ..So do I advertise that in sKey, or what..?
+  //     });
 
-      sKeys = Object.keys(componentStateData.componentStates);
-    }
-    while (sKeys.length != len);
+  //     sKeys = Object.keys(componentStateData.componentStates);
+  //   }
+  //   while (sKeys.length != len);
 
-    // Finally write the garbage-collected componentStateData back.
-    sessionStorage.setItem(
-      "_componentStateData",
-      JSON.stringify(componentStateData)
-    );
-  }
+  //   // Finally write the garbage-collected componentStateData back.
+  //   sessionStorage.setItem(
+  //     "_componentStateData",
+  //     JSON.stringify(componentStateData)
+  //   );
+  // }
 
 }
 
 
 
-
-
-
-
-
-
-// function getSKeysAndCIDFromProps(props) {
-//   const sKey = (props.isRoot) ? props.id :
-//     props._sKey;
-//   const pSKey = (props.isRoot) ? undefined :
-//     props._sKey.replace(/\/[^\/]+$/, "");
-//   const componentID = props._sKey.match(/:[0-9]+$/g)[0].substring(1);
-//   // const componentName = props._name;
-//   // const componentID = SessionStatesHandler.lookUpOrCreateComponentID(
-//   //   componentName
-//   // );
-
-//   return [sKey, pSKey, componentID];
-// }
 
 
 
@@ -203,9 +186,9 @@ export const useSessionState = (
   propsOrRootID, initState, dispatchKey, reducers, backUpAndRemove
 ) => {
   const sKey = (typeof propsOrRootID !== "string") ? propsOrRootID._sKey :
-    propsOrRootID.replaceAll("\\", "\\b")
-      .replaceAll("/", "\\f")
-      .replaceAll(";", "\\s")
+    "/" + propsOrRootID.replaceAll("\\", "\\b")
+      .replaceAll("/", "\\s")
+      .replaceAll(">", "\\g")
       .replaceAll(":", "\\c");
   
 
@@ -260,9 +243,9 @@ export const useSessionStateless = (
   propsOrRootID, backUpAndRemove
 ) => {
   const sKey = (typeof propsOrRootID !== "string") ? propsOrRootID._sKey :
-    propsOrRootID.replaceAll("\\", "\\b")
-      .replaceAll("/", "\\f")
-      .replaceAll(";", "\\s")
+    "/" + propsOrRootID.replaceAll("\\", "\\b")
+      .replaceAll("/", "\\s")
+      .replaceAll(">", "\\g")
       .replaceAll(":", "\\c");
 
   // We store the parent key in order to be able to set and get states from
@@ -335,9 +318,10 @@ const useSessionStateHelper = (
     // If componentName = "self", call one of this state's own reducers.
     if (key === "self") {
       if (isStateless) {
+        console.log(sKey);
         throw (
           'useSessionStateless: dispatch(): "self" is not a valid action ' +
-          'for a stateless component. (Thrown from ' + sKey + '.)'
+          'for a stateless component.'
         );
       }
       if (action === "setState") {
@@ -375,7 +359,7 @@ const useSessionStateHelper = (
   // automatically returns and empty JSX fragment if backUpAndRemove is set to
   // true.
   const passKeys = useMemo(() => ((element) => (
-    passKeysFromData( element, sKey, 0, backUpAndRemove)
+    passKeysFromData(element, sKey, 0, backUpAndRemove)
   )), [backUpAndRemove]);
 
 
@@ -386,76 +370,46 @@ const useSessionStateHelper = (
 
 
 
+/**
+  passKeys() is supposed to wrap around all returned JSX elements from the
+  component. Its task is to drill the underlying sKey-related props. It also
+  automatically returns and empty JSX fragment if backUpAndRemove is set to
+  true.
 
-
-
-
-export const usePassKeys = (props, backUpAndRemove) => {
-  const sKey = props._sKey;
-  const passKeys = useMemo(() => ((element) => {
-    passKeysFromData(element, sKey, 0, backUpAndRemove)
-  }), [backUpAndRemove]);
-
-  return passKeys;
-};
-
-
-
-
-
-
-
-
-// passKeys() is supposed to wrap around all returned JSX elements from the
-// component. Its task is to drill the underlying sKey-related props. It also
-// automatically returns and empty JSX fragment if backUpAndRemove is set to
-// true.
+  sKey is of the form: '/Root_ID ( (/|>) ($Key|Pos) : Element_type_ID )*'
+**/
 function passKeysFromData(
-  element, pSKey, pos = 0, backUpAndRemove
+  element, parentSKey, pos = 0, backUpAndRemove
 ) {
   // If backUpAndRemove, return an empty JSX fragment.
   if (backUpAndRemove) {
     return <></>;
   }
   
+  // Get element's own nodeIdentifier, and a boolean denoting whether it is a
+  // React Component or a normal HTML element.
+  let [nodeIdentifier, isReactComponent] = getNodeIdentifier(ret);
+
   // Prepare the new JSX element to return.
   let ret = {...element};
-  // Construct its sKey, starting from its parent sKey.
-  var sKey = pSKey + "/";
-  // If the element has a key, prepend `k${key}`, only where all ':' has been
-  // replaced, reversibly.
-  if (ret.key !== null && ret.key !== undefined) {
-    let key = ret.key.replaceAll("\\", "\\b")
-      .replaceAll("/", "\\f")
-      .replaceAll(";", "\\s")
-      .replaceAll(":", "\\c");
-    sKey += "$" + key;
-  }
-  // Else prepend the position of the element within the parent instead.
-  else {
-    sKey += pos;
-  }
-  // Finally prepend `:${componentID}`, where componentID is that of the
-  // element itself, looked up (or created) from its componentName.
-  let elemComponentName = getComponentName(ret);
-  let elemComponentID = SessionStatesHandler.lookUpOrCreateComponentID(
-    elemComponentName
-  );
-  sKey += ":" + elemComponentID;
-  // Now add this as the _sKey property of ret.
-  ret._sKey = sKey;
 
-  // Then iterate through each children and do the same thing, only with pSKey
-  // replaced by the current sKey, and where pos increments for each child. 
-  let children = ret.props.children;
-  if (children) {
-    if (Array.isArray(children)) {
-      ret.props.children = children.map((child, ind) => (
-        passKeysFromData(child, sKey, ind)
-      ));
-    }
-    else {
-      ret.props.children = passKeysFromData(children, sKey, 0);
+  // Now add this as the _sKey property of ret. (This is the important part.)
+  ret._sKey = parentSKey + (isReactComponent ? "/" : ">") + nodeIdentifier;
+
+  // If the element is not a React component, iterate through each of its
+  // children and do the same thing, only with parentSKey replaced by the
+  // current sKey, and where pos increments for each child.
+  if (!isReactComponent) {
+    let children = ret.props.children;
+    if (children) {
+      if (Array.isArray(children)) {
+        ret.props.children = children.map((child, ind) => (
+          passKeysFromData(child, sKey, ind)
+        ));
+      }
+      else {
+        ret.props.children = passKeysFromData(children, sKey, 0);
+      }
     }
   }
 
@@ -464,8 +418,31 @@ function passKeysFromData(
 }
 
 
-function getComponentName(element) {
 
+function getNodeIdentifier(element, pos) {
+  let nodeIdentifier;
+  // If the element has a key, prepend `k${key}`, only where all ':' has been
+  // replaced, reversibly.
+  if (element.key !== null && element.key !== undefined) {
+    let key = element.key.replaceAll("\\", "\\b")
+      .replaceAll("/", "\\s")
+      .replaceAll(">", "\\g")
+      .replaceAll(":", "\\c");
+    nodeIdentifier = "$" + key;
+  }
+  // Else prepend the position of the element within the parent instead.
+  else {
+    nodeIdentifier = pos;
+  }
+  // Finally prepend `:${elemTypeID}`, where elemTypeID is that of the
+  // element itself, looked up (or created) from its elemType.
+  let [elemType, isReactComponent] = getElementType(element);
+  let elemTypeID = SessionStatesHandler.lookUpOrCreateElemTypeID(
+    elemType
+  );
+  nodeIdentifier += ":" + elemTypeID;
+
+  return [nodeIdentifier, isReactComponent];
 }
 
 
@@ -473,73 +450,39 @@ function getComponentName(element) {
 
 
 
-function getAncestorReducers(sKey, componentName, skip) {
-  let componentID = SessionStatesHandler.lookUpOrCreateComponentID(
-    componentName
-  );
-  var data = sessionStateAuxillaryDataStore[sKey];
-  while (data) {
-    if (!data.componentID === componentID) {
+function getElementType(element) {
+  // TODO: Implement.
+}
+
+
+
+
+
+
+function getAncestorReducers(sKey, key, skip) {
+  let ancSKey, data;
+  while (ancSKey = getNearestReactComponentAncestorSKey(sKey)) {
+    data = sessionStateAuxillaryDataStore[ancSKey];
+    if (!data.key === key) {
       if (skip <= 0) {
-        return data.reducers;
+        return [data.reducers, data.setState];
       } else {
         skip--;
       }
     }
-    if (!data.pSKey) {
-      return false;
-    }
-    data = sessionStateAuxillaryDataStore[data.pSKey];
   }
+  // If this search fails, throw an error:
+  console.log(sKey);
+  throw (
+    'useSessionStateless: dispatch(): "' + key + '" was not found ' +
+    'as an ancestor of this component.'
+  );
 }
 
-
-
-
-
-// export const useSaveSessionChildren = (shouldBeSaved) => {
-//   const sKey = useId();
-//   if (!sessionStateAuxillaryDataStore[sKey]) {
-//     throw "useSaveChildren(): Call useSessionState() before this hook."
-//   }
-//   sessionStateAuxillaryDataStore[sKey].saveChildren = shouldBeSaved;
-// }
-
-
-
-// export const useAncestorSessionState = (contextKey, skip) => {
-//   skip ??= 0;
-//   const sKey = useId();
-
-//   // Get the sKey of the ancestor.
-//   var ancKey =  getAncestorKey(sKey, contextKey);
-//   while (skip > 0) {
-//     skip = skip - 1;
-//     ancKey =  getAncestorKey(ancKey, contextKey);
-//   }
-
-//   // Return the state and the setState function.
-//   const state = JSON.parse(sessionStorage.getItem(ancKey));
-//   const setState = sessionStateAuxillaryDataStore[ancKey].setState;
-//   return [state, setState];
-// }
-
-
-// function getAncestorKey(sKey, contextKey) {
-//   var data;
-//   while (data = sessionStateAuxillaryDataStore[sKey]) {
-//     if (!data) {
-//       return false;
-//     }
-//     if (data.contextKey === contextKey) {
-//       return sKey;
-//     }
-//     if (data.pSKey === "root") {
-//       return false;
-//     }
-//     sKey = data.pSKey;
-//   }
-// }
+function getNearestReactComponentAncestorSKey(sKey) {
+  let ancSKey = sKey.replace(/\/[^\/]+$/, "");
+  return (ancSKey === "") ? null : ancSKey;
+}
 
 
 
