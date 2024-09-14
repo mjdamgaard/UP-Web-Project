@@ -39,7 +39,7 @@ class SessionStatesHandler {
   static deleteComponentStateAndChildren(sKey) {
     let componentStateData = JSON.parse(
       sessionStorage.getItem("_componentStateData")
-    );debugger;
+    );
     // Delete this component state, as well as any descendant state, which
     // all starts with sKey in their own sKeys.
     let sKeys = Object.keys(componentStateData.componentStates);
@@ -154,6 +154,7 @@ class SessionStatesHandler {
   returned (JSX) element of the component if the children includes any session-
   stateful components. passKeys() then serves to pass the keys that allows
   useSessionState() to construct its own tree of DOM nodes.
+  The order of the returns are: [passKeys, dispatch, state].
   Inputs:
   First input is the initial state, just like for useState().
   Second input is the props of the component, which is used both to get the
@@ -240,7 +241,7 @@ export const useSessionState = (
   );
 
   // Return the state, as well as the dispatch() and passKeys() functions.   
-  return [state, dispatch, passKeys];
+  return [passKeys, dispatch, state];
 };
 
 
@@ -280,6 +281,8 @@ export const useSessionStateless = (
   // Return the passKeys() and dispatch() functions.   
   return [passKeys, dispatch];
 };
+
+
 
 
 
@@ -368,8 +371,8 @@ const useSessionStateHelper = (
   // component. Its task is to drill the underlying sKey-related props. It also
   // automatically returns and empty JSX fragment if backUpAndRemove is set to
   // true.
-  const passKeys = useMemo(() => ((element) => (
-    passKeysFromData(element, sKey, 0, backUpAndRemove)
+  const passKeys = useMemo(() => ((elementOrKey, element) => (
+    passKeysFromData(elementOrKey, element, sKey, 0, backUpAndRemove)
   )), [backUpAndRemove]);
 
 
@@ -389,23 +392,32 @@ const useSessionStateHelper = (
   sKey is of the form: '/Root_ID ( (/|>) ($Key|Pos) : Element_type_ID )*'
 **/
 function passKeysFromData(
-  element, parentSKey, pos = 0, backUpAndRemove
+  elementOrKey, element, parentSKey, pos = 0, backUpAndRemove
 ) {
+  let customKey;
+  if (element) {
+    customKey = elementOrKey;
+  } else {
+    element = elementOrKey;
+  }
+
   // If backUpAndRemove, return an empty JSX fragment.
   if (backUpAndRemove) {
     return <></>;
   }
-  
+
   // Get element's own nodeIdentifier, and a boolean denoting whether it is a
   // React Component or a normal HTML element.
-  let [nodeIdentifier, isReactComponent] = getNodeIdentifier(element);
+  let [nodeIdentifier, isReactComponent] =
+    getNodeIdentifier(customKey, element, pos);
 
   // Prepare the new JSX element to return.
   let ret = {...element};
+  ret.props = {...element.props};
 
   // Now add this as the _sKey property of ret. (This is the important part.)
   let sKey = parentSKey + (isReactComponent ? "/" : ">") + nodeIdentifier;
-  ret._sKey = sKey;
+  ret.props._sKey = sKey;
 
   // If the element is not a React component, iterate through each of its
   // children and do the same thing, only with parentSKey replaced by the
@@ -415,11 +427,11 @@ function passKeysFromData(
     if (children) {
       if (Array.isArray(children)) {
         ret.props.children = children.map((child, ind) => (
-          passKeysFromData(child, sKey, ind)
+          passKeysFromData(null, child, sKey, ind)
         ));
       }
       else {
-        ret.props.children = passKeysFromData(children, sKey, 0);
+        ret.props.children = passKeysFromData(null, children, sKey, 0);
       }
     }
   }
@@ -430,11 +442,20 @@ function passKeysFromData(
 
 
 
-function getNodeIdentifier(element, pos) {
+function getNodeIdentifier(customKey, element, pos) {
   let nodeIdentifier;
-  // If the element has a key, prepend `k${key}`, only where all ':' has been
-  // replaced, reversibly.
-  if (element.key !== null && element.key !== undefined) {
+  // If the element has a customKey, prepend `&{customKey}`, only where all
+  // special sKey symbols has been replaced, reversibly.
+  if (customKey) {
+    customKey = customKey.replaceAll("\\", "\\b")
+      .replaceAll("/", "\\s")
+      .replaceAll(">", "\\g")
+      .replaceAll(":", "\\c");
+    nodeIdentifier = "&" + customKey;
+  }
+  // If the element has a key, prepend `${key}`, only where all special sKey
+  // symbols has been replaced, reversibly.
+  else if (element.key !== null && element.key !== undefined) {
     let key = element.key.replaceAll("\\", "\\b")
       .replaceAll("/", "\\s")
       .replaceAll(">", "\\g")

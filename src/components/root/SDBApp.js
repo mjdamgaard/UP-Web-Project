@@ -24,19 +24,19 @@ export const HOME_ENTITY_ID = 12;
 
 export const SDBApp = () => {
   const [passKeys] = useSessionStateless(null, "app");
-  
+
   return passKeys(
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<IndexPage />} />
-          <Route key={"l"} path="login" element={<LoginPage />} />
+          <Route path="login" element={<LoginPage />} />
           {/* Todo: Make sure that the LoginPage is refreshed when it is
           hidden. */}
           <Route path="signup" element={<SignupPage />} />
           {/* <Route path="tutorial" element={<TutorialPage />} /> */}
           <Route path="insert" element={<InsertPage />} />
-          <Route key={"m"} path="*" element={<MainPage key={"m"} />} />
+          <Route path="*" element={passKeys("m", <MainPage foo={"bar"} />)} />
           {/* Wrong paths are handled in MainPage instead of here */}
         </Route>
       </Routes>
@@ -47,10 +47,12 @@ export const SDBApp = () => {
 
 
 
-const Layout = ({}) => {
+const Layout = (props) => {
+  // const {children} = props;
   return (
     <AccountContextProvider> {/* yields: session, accountManager.*/}
       <InterfaceHeader setAppPage={void(0)} />
+      {/* {children} */}
       <Outlet />
     </AccountContextProvider>
   );
@@ -97,3 +99,34 @@ const IndexPage = ({}) => {
 // {/* </AppPageContext.Provider> */}
 // </AccountContextProvider>
 
+
+
+
+
+    // <BrowserRouter>
+    //   <Routes>
+    //     <Route path="/" element={<Layout />}>
+    //       <Route index element={<IndexPage />} />
+    //       <Route path="login" element={<LoginPage />} />
+    //       {/* Todo: Make sure that the LoginPage is refreshed when it is
+    //       hidden. */}
+    //       <Route path="signup" element={<SignupPage />} />
+    //       {/* <Route path="tutorial" element={<TutorialPage />} /> */}
+    //       <Route path="insert" element={<InsertPage />} />
+    //       <Route key={"m"} path="*" element={<MainPage key={"m"} />} />
+    //       {/* Wrong paths are handled in MainPage instead of here */}
+    //     </Route>
+    //   </Routes>
+    // </BrowserRouter>
+
+
+
+    // <Layout>
+    //   <MainPage />
+    //   <LoginPage />
+    //   {/* Todo: Make sure that the LoginPage is refreshed when it is
+    //   hidden. */}
+    //   <SignupPage />
+    //   {/* <TutorialPage /> */}
+    //   <InsertPage />
+    // </Layout>

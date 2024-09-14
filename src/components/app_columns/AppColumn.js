@@ -10,14 +10,7 @@ import {ListGeneratorPage} from "../ListGenPages.js";
 
 
 
-export const AppColumn = ({colKey, colSpec}) => {console.log(
-  <div className="app-column">
-    <ColumnButtonContainer colKey={colKey} />
-    <ColumnContext.Provider value={colKey}>
-      {page}
-    </ColumnContext.Provider>
-</div>
-);
+export const AppColumn = ({colKey, colSpec}) => {
   var page;
   if (colSpec.entID) {
     page = <EntityPage entID={colSpec.entID} />;
@@ -37,14 +30,7 @@ export const AppColumn = ({colKey, colSpec}) => {console.log(
 };
 
 class ColumnButtonContainer extends React.Component {
-  render() {console.log(
-    <div>
-      {/* <PinButton /> */}
-      <CloseColumnButton colKey={this.props.colKey} />
-      <></>
-      <Fragment></Fragment>
-    </div>
-  );
+  render() {
     return (
       <div>
         {/* <PinButton /> */}

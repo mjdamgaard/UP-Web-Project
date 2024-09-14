@@ -1,4 +1,7 @@
 import {useState, createContext, useContext, useMemo, useId} from "react";
+import {
+  useSessionState, useSessionStateless
+} from "../../contexts_and_hooks/useSessionState.js";
 
 import {
   useLocation, Navigate,
@@ -14,7 +17,8 @@ import {ListGeneratorPage} from "../ListGenPages.js";
 export const HOME_ENTITY_ID = 12;
 
 
-export const MainPage = ({}) => {
+export const MainPage = (props) => {
+  const [passKeys, dispatch, state] = useSessionState({}, props);
   const [
     [
       colKeyArr,
@@ -32,11 +36,11 @@ export const MainPage = ({}) => {
     ]
   );
 
-  console.log((() => {
-    let ret = <AppColumn key="temp key" />;
-    ret = {...ret, key: "hello key!"};
-    return ret;
-  })()); // Works.
+  // console.log((() => {
+  //   let ret = <AppColumn key="temp key" />;
+  //   ret = {...ret, key: "hello key!"};
+  //   return ret;
+  // })()); // Works.
 
   // console.log((() => {
   //   let ret = <><AppColumn /></>;
