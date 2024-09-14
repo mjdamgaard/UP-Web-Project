@@ -16,11 +16,8 @@ const SpecialRefEntityTitle = () => <template></template>;
 
 
 export const EntityTitle = ({
-  entID, expectedClassID, maxRecLevel, recLevel
+  entID, expectedClassID, maxRecLevel = 2, recLevel = 0
 }) => {
-  recLevel ??= 0;
-  maxRecLevel ??= 2;
-
   const [results, setResults] = useState({});
   useMemo(() => {
     // TODO: Also query for the highest rated 'representation' and if the rating
