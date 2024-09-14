@@ -6,6 +6,8 @@ import {
   useLocation,
 } from "react-router-dom";
 
+import {useSessionStateless} from "../../contexts_and_hooks/useSessionState.js"
+
 import {
   AccountContextProvider
 } from "../../contexts_and_hooks/AccountContext.js";
@@ -21,8 +23,9 @@ export const HOME_ENTITY_ID = 12;
 
 
 export const SDBApp = () => {
+  const [passKeys] = useSessionStateless(null, "app");
   
-  return (
+  return passKeys(
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Layout />}>
