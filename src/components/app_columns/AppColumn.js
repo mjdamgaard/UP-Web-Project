@@ -1,4 +1,7 @@
-import {useState, createContext, useContext, useMemo, Fragment} from "react";
+import {useState, createContext, useContext, useMemo} from "react";
+import {
+  useSessionStateless
+} from "../../contexts_and_hooks/useSessionState.js";
 import React from 'react';
 import {ColumnContext} from "../../contexts_and_hooks/ColumnContext.js";
 
@@ -10,7 +13,19 @@ import {ListGeneratorPage} from "../ListGenPages.js";
 
 
 
-export const AppColumn = ({colKey, colSpec}) => {
+const mainPageReducers = {
+  key: "app-column",
+  "OPEN_COLUMN": ([state, props], colSpec, dispatch) => {
+    let callerColKey = props.colKey;
+    dispatch("main", "OPEN_COLUMN", [colSpec, callerColKey]);
+  },
+}
+
+
+export const AppColumn = (props) => {
+  const {colKey, colSpec} = props;
+  const [passKeys, dispatch] = useSessionStateless(props, mainPageReducers);
+
   var page;
   if (colSpec.entID) {
     page = <EntityPage entID={colSpec.entID} />;
@@ -19,7 +34,7 @@ export const AppColumn = ({colKey, colSpec}) => {
     page = <ListGeneratorPage lg={colSpec.lg} />;
   }
 
-  return (
+  return passKeys(
     <div className="app-column">
       <ColumnButtonContainer colKey={colKey} />
       <ColumnContext.Provider value={colKey}>
@@ -35,8 +50,6 @@ class ColumnButtonContainer extends React.Component {
       <div>
         {/* <PinButton /> */}
         <CloseColumnButton colKey={this.props.colKey} />
-        <></>
-        <Fragment></Fragment>
       </div>
     );
   }

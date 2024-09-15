@@ -20,10 +20,10 @@
   }
 
   [class^=class-clarification] {
-    // margin: 0em .2em;
+    margin: 0em .25em;
 
     &::before {
-      content: " (";
+      content: "(";
     }
     &::after {
       content: ")";

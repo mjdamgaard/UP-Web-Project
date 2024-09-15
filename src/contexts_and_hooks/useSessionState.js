@@ -173,6 +173,7 @@ class SessionStatesHandler {
   dispatch()), and returns a new state of the component. Reducers can can also
   take an optional third input, dispatch, which can be used to run other
   reducers right after execution, including those of the component's ancestors.
+  If a reducer returns a nullish value, the state is unchanged.
   Access these reducers in order to change the state of this component by
   calling dispatch("self", action, input), where action is the key of the
   specific reducer in the reducers object, and input is the aforementioned
@@ -239,7 +240,7 @@ export const useSessionState = (
   // also schedules a cleanup function to remove this session state when it is
   // unmounted (but it can still be restored if it has been backed up).
   const [dispatch, passKeys] = useSessionStateHelper(
-    props, contexts, sKey, reducers, backUpAndRemove, false, setState
+    props, contexts, sKey, reducers, backUpAndRemove, setState
   );
 
   // Also store the dispatch() function in the aux. store in order for reducers
@@ -259,7 +260,7 @@ export const useSessionState = (
   (The first 'props' input is actually not strictly needed id rootID is set.)
 **/
 export const useSessionStateless = (
-  props, rootID = null, backUpAndRemove
+  props, reducers = {}, rootID = null, backUpAndRemove
 ) => {
   // Get the sKey (session state key).
   const sKey = (rootID === null) ? props._sKey :
@@ -271,6 +272,7 @@ export const useSessionStateless = (
   // We store some auxillary data used for backing up descendant states.
   useMemo(() => {
     sessionStateAuxillaryDataStore[sKey] = {
+      setState: void(0),
       backUpAndRemove: backUpAndRemove,
     }
   }, []);
@@ -281,7 +283,7 @@ export const useSessionStateless = (
   // also schedules a cleanup function to remove this session state when it is
   // unmounted (but it can still be restored if it has been backed up).
   const [dispatch, passKeys] = useSessionStateHelper(
-    null, null, sKey, null, backUpAndRemove, true
+    null, null, sKey, reducers, backUpAndRemove, void(0)
   );
 
   // Return the passKeys() and dispatch() functions.   
@@ -295,7 +297,7 @@ export const useSessionStateless = (
 
 
 const useSessionStateHelper = (
-  props, contexts, sKey, reducers, backUpAndRemove, isStateless, setState
+  props, contexts, sKey, reducers, backUpAndRemove, setState
 ) => {
   // Whenever backUpAndRemove changes, either back up descendant states in a
   // separate place in session storage, before they are being removed,
@@ -335,20 +337,13 @@ const useSessionStateHelper = (
   const dispatch = useMemo(() => ((key, action, input = []) => {
     // If key = "self", call one of this state's own reducers.
     if (key === "self") {
-      if (isStateless) {
-        console.log(sKey);
-        throw (
-          'useSessionStateless: dispatch(): "self" is not a valid action ' +
-          'for a stateless component.'
-        );
-      }
       if (action === "setState") {
         setState(input);
       } else {
         let thisDispatch = sessionStateAuxillaryDataStore[sKey].dispatch;
         let reducer = reducers[action];
-        setState(state => reducer(
-          [state, props, contexts], input, thisDispatch
+        setState(state => (
+          reducer([state, props, contexts], input, thisDispatch) ?? state
         ));
       }
       return;
@@ -370,8 +365,8 @@ const useSessionStateHelper = (
       ancSetState(input);
     } else {
       let reducer = ancReducers[action];
-      ancSetState(state => reducer(
-        [state, ancProps, ancContexts], input, ancDispatch
+      ancSetState(state => (
+        reducer([state, ancProps, ancContexts], input, ancDispatch) ?? state
       ));
     }
     return;
@@ -515,7 +510,7 @@ function getElementType(element) {
   if (type === Symbol("react.fragment")) {
     return ["fragment", false];
   }
-  if (type.type && type.type.$$typeof === Symbol("react.provider")) {
+  if (type.$$typeof.toString() === "Symbol(react.provider)") {
     return ["provider", false];
   }
   else {
