@@ -117,6 +117,16 @@ export class DataFetcher {
           elemArr, thisID, callbackHandler, maxRecLevel, recLevel
         );
       }
+      if (typeof propVal === "object") {
+        let obj = propVal;
+        propStruct[propKey] = {struct: obj};
+        Object.keys(obj).forEach(key => {
+          let val = obj[key];
+          this.#expandPropVal(
+            val, obj, key, thisID, callbackHandler, maxRecLevel, recLevel
+          );
+        })
+      }
       else this.#expandPropVal(
         propVal, propStruct, propKey, thisID, callbackHandler,
         maxRecLevel, recLevel
