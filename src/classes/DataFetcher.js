@@ -117,16 +117,6 @@ export class DataFetcher {
           elemArr, thisID, callbackHandler, maxRecLevel, recLevel
         );
       }
-      if (typeof propVal === "object") {
-        let obj = propVal;
-        propStruct[propKey] = {struct: obj};
-        Object.keys(obj).forEach(key => {
-          let val = obj[key];
-          this.#expandPropVal(
-            val, obj, key, thisID, callbackHandler, maxRecLevel, recLevel
-          );
-        })
-      }
       else this.#expandPropVal(
         propVal, propStruct, propKey, thisID, callbackHandler,
         maxRecLevel, recLevel
@@ -176,7 +166,17 @@ export class DataFetcher {
   static #expandPropVal(
     propVal, obj, objKey, thisID, callbackHandler, maxRecLevel, recLevel
   ) {
-    if (/^@[1-9][0-9]*$/.test(propVal)) {
+    if (typeof propVal === "object") {
+      let struct = propVal;
+      obj[objKey] = {struct: propVal};
+      Object.keys(struct).forEach(key => {
+        let val = struct[key];
+        this.#expandPropVal(
+          val, struct, key, thisID, callbackHandler, maxRecLevel, recLevel
+        );
+      })
+    }
+    else if (/^@[1-9][0-9]*$/.test(propVal)) {
       let entID = propVal.substring(1);
       if (recLevel > maxRecLevel) {
         obj[objKey] = {ent: {entID: entID}};
