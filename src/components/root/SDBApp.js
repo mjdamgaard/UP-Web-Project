@@ -1,18 +1,20 @@
 import {useState, useEffect, useMemo} from "react";
-import {
-  BrowserRouter, Routes, Route, Outlet, redirect,
-  useParams, useSearchParams,
-  useNavigate, Navigate,
-  useLocation,
-} from "react-router-dom";
+// import {
+//   BrowserRouter, Routes, Route, Outlet, redirect,
+//   useParams, useSearchParams,
+//   useNavigate, Navigate,
+//   useLocation,
+// } from "react-router-dom";
 
-import {useSessionStateless} from "../../contexts_and_hooks/useSessionState.js"
+import {
+  useSessionState, useSessionStateless
+} from "../../contexts_and_hooks/useSessionState.js"
 
 import {
   AccountContextProvider
 } from "../../contexts_and_hooks/AccountContext.js";
 
-import {InterfaceHeader} from "../InterfaceHeader.js";
+// import {InterfaceHeader} from "../InterfaceHeader.js";
 import {MainPage, AppColumn} from "../pages/MainPage.js";
 import {
   LoginPage, SignupPage, TutorialPage, InsertPage
@@ -22,47 +24,78 @@ import {
 export const HOME_ENTITY_ID = 12;
 
 
+const appReducers = {
+  key: "app",
+  "SET_PAGE": ([state, props, contexts], appPage) => {
+    return {...state, appPage: appPage};
+  },
+}
+
+function getPageFromTop() {
+  // TODO: Implement.
+  return "main";
+}
+
+
 export const SDBApp = () => {
-  const [passKeys] = useSessionStateless(null, "app");
+  // On first render of the app, get the page from the URL and use it to set
+  // the initial state. 
+  const [initialPage] = useMemo(() => getPageFromTop(), []);
+
+  const [{
+    appPage,
+
+  }, passKeys, dispatch] = useSessionState({
+    appPage: initialPage,
+
+  }, null, appReducers, "app");
 
   return passKeys(
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<IndexPage />} />
-          <Route path="login" element={<LoginPage />} />
-          {/* Todo: Make sure that the LoginPage is refreshed when it is
-          hidden. */}
-          <Route path="signup" element={<SignupPage />} />
-          {/* <Route path="tutorial" element={<TutorialPage />} /> */}
-          <Route path="insert" element={<InsertPage />} />
-          <Route path="*" element={passKeys("m", <MainPage foo={"bar"} />)} />
-          {/* Wrong paths are handled in MainPage instead of here */}
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <div className="sdb-interface">
+      <AccountContextProvider> {/* yields: session, accountManager.*/}
+        {/* <InterfaceHeader setAppPage={void(0)} /> */}
+        <MainPage
+          isHidden={appPage !== "main"}
+        />
+        <LoginPage // Todo: Make sure that the LoginPage is refreshed
+        // when it is hidden.
+          isHidden={appPage !== "login"}
+        />
+        <SignupPage
+          isHidden={appPage !== "signup"}
+        />
+        {/* <TutorialPage
+          setAppPage={setAppPage}
+          isHidden={appPage !== "tutorial"}
+        /> */}
+        {/* TODO: Remove the following test page */}
+        <InsertPage
+          isHidden={appPage !== "insert"}
+        />
+      </AccountContextProvider>
+    </div>
   );
 };
 
 
 
 
-const Layout = (props) => {
-  // const {children} = props;
-  return (
-    <AccountContextProvider> {/* yields: session, accountManager.*/}
-      <InterfaceHeader setAppPage={void(0)} />
-      {/* {children} */}
-      <Outlet />
-    </AccountContextProvider>
-  );
-};
+// const Layout = (props) => {
+//   const {children} = props;
+//   return (
+//     <AccountContextProvider> {/* yields: session, accountManager.*/}
+//       <InterfaceHeader setAppPage={void(0)} />
+//       {children}
+//       {/* <Outlet /> */}
+//     </AccountContextProvider>
+//   );
+// };
 
-const IndexPage = ({}) => {
-  return (
-    <Navigate replace to={"/e" + HOME_ENTITY_ID} />
-  );
-};
+// const IndexPage = ({}) => {
+//   return (
+//     <Navigate replace to={"/e" + HOME_ENTITY_ID} />
+//   );
+// };
 
 
 

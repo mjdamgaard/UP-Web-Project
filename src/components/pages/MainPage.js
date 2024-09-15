@@ -7,6 +7,8 @@ import {
   useLocation, Navigate,
 } from "react-router-dom";
 
+
+import {InterfaceHeader} from "../InterfaceHeader.js";
 import {AppColumn} from "../app_columns/AppColumn.js";
 import {ListGeneratorPage} from "../ListGenPages.js";
 
@@ -16,57 +18,11 @@ import {ListGeneratorPage} from "../ListGenPages.js";
 
 export const HOME_ENTITY_ID = 12;
 
-
-export const MainPage = (props) => {
-  const [passKeys, dispatch, state] = useSessionState({}, props);
-  const [
-    [
-      colKeyArr,
-      specStore,
-      currInd, fst, n, nonce,
-      isOpening, // TODO: Remove.
-    ],
-    setColListData
-  ] = useState(
-    [
-      [0, 2],
-      {"0": {entID: HOME_ENTITY_ID}, "2": {entID: HOME_ENTITY_ID}},
-      0, 0, 1, 1,
-      false,
-    ]
-  );
-
-  // console.log((() => {
-  //   let ret = <AppColumn key="temp key" />;
-  //   ret = {...ret, key: "hello key!"};
-  //   return ret;
-  // })()); // Works.
-
-  // console.log((() => {
-  //   let ret = <><AppColumn /></>;
-  //   ret = {...ret, key: "hello key!"};
-  //   return ret;
-  // })());  // Also works.
-
-  // console.log((() => {
-  //   let ret = <><AppColumn /><div></div></>;
-  //   ret = {...ret, key: "hello key!"};
-  //   return ret;
-  // })());  // Also works.
-
-
-  // const [[
-  //   callerColInd, colSpec
-  // ], setNewColData] = useSessionState([
-  //   null, null
-  // ]);
-  const [callerColInd, colSpec, setNewColData] = [null, null, void(0)]
-
-  const location = useLocation();
-  const pathname = location.pathname;
-  const search = location.search;
-
-  if (colSpec && !isOpening) {
+const mainPageReducers = {
+  key: "main",
+  "OPEN_COLUMN": ([state], [colSpec, callerColKey]) => {
+    const {colKeyArr, specStore, fst, n, nonce} = state;
+    let callerColInd = colKeyArr.indexOf(callerColKey);
     let newNonce = nonce + 1;
     let newColKeyArr = (callerColInd === -1) ?
       colKeyArr.concat([newNonce]) :
@@ -81,47 +37,50 @@ export const MainPage = (props) => {
         newCurrInd :
         fst;
     
-    setColListData([
-      newColKeyArr,
-      newSpecStore,
-      newCurrInd, newFST, n, newNonce,
-      true,
-    ]);
-  }
-  else if (colSpec && isOpening) {
-    setNewColData([null, null]);
-  }
-  else if (!colSpec && isOpening) {
-    setColListData(prev => {
-      let ret = {...prev};
-      ret[6] = false; // isOpening = false;
-      return ret;
-    });
-  }
+    return {
+      colKeyArr: newColKeyArr,
+      specStore: newSpecStore,
+      currInd: newCurrInd, fst: newFST, n: n, nonce: newNonce,
+    };
+  },
+}
+
+export const MainPage = (props) => {
+  const [{
+    colKeyArr,
+    specStore,
+    currInd, fst, n, nonce,
+
+  }, passKeys, dispatch] = useSessionState({
+    colKeyArr: [0, 2],
+    specStore: {"0": {entID: HOME_ENTITY_ID}, "2": {entID: HOME_ENTITY_ID}},
+    currInd: 0, fst: 0, n: 1, nonce: 1,
+
+  }, props, mainPageReducers);
+
+
+  // const location = useLocation();
+  // const pathname = location.pathname;
+  // const search = location.search;
+
 
   const appColumns = colKeyArr.map((colKey, ind) => {
     let colSpec = specStore[colKey];
-    let ret = (
+    return (
       <div key={colKey} className={
         (ind == currInd) ? "in-focus" : (ind == fst) ? "fst-column" : ""
       }>
         <AppColumn key={colKey} colKey={colKey} colSpec={colSpec} />
       </div>
     );
-    // return (
-    //   <div key={colKey} className={
-    //     (ind == currInd) ? "in-focus" : (ind == fst) ? "fst-column" : ""
-    //   }>
-    //     <AppColumn colKey={colKey} colSpec={colSpec} />
-    //   </div>
-    // );
-    let ret2 = {...ret};
-    ret2.key = colKey;
-    return ret2;
   });
 
-  return (
+  return passKeys(
     <div className="main-page">
+      <InterfaceHeader
+        setAppPage={void(0)}
+        colKeyArr={colKeyArr} specStore={specStore} currInd={currInd} n={n}
+      />
       {appColumns}
     </div>
   );

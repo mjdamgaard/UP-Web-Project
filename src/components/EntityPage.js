@@ -1,5 +1,5 @@
 import {useState, useMemo, useContext} from "react";
-import {Link} from "react-router-dom";
+// import {EntityLink} from "react-router-dom";
 import {useQuery} from "../contexts_and_hooks/DBRequests.js";
 // import {
 //   MaxRatingSetCombiner, SimpleSetGenerator,
@@ -11,7 +11,7 @@ import {AccountManagerContext} from "../contexts_and_hooks/AccountContext.js";
 
 import {PagesWithTabs} from "./PagesWithTabs.js";
 import {
-  EntityID, EntityTitle, ContextDisplay
+  EntityID, EntityTitle, ContextDisplay, EntityLink
 } from "./entity_titles/EntityTitles.js";
 import {InstListDisplay} from "./InstListDisplay.js";
 import {RatingElement} from "./Ratings.js";
@@ -66,19 +66,19 @@ export const EntityPage = ({entID, initTab}) => {
         <h2><EntityTitle entID={entID} /></h2>
         <h2>Test links</h2>
         <div>
-          <Link to={{pathname: "/e12", search: "?from=e" + entID}}>
+          <EntityLink to={{pathname: "/e12", search: "?from=e" + entID}}>
             to entity @12
-          </Link>
+          </EntityLink>
         </div>
         <div>
-          <Link to={{pathname: "/e13", search: "?from=e" + entID}}>
+          <EntityLink to={{pathname: "/e13", search: "?from=e" + entID}}>
             to entity @13
-          </Link>
+          </EntityLink>
         </div>
         <div>
-          <Link to={{pathname: "/e14", search: "?from=e" + entID}}>
+          <EntityLink to={{pathname: "/e14", search: "?from=e" + entID}}>
             to entity @14
-          </Link>
+          </EntityLink>
         </div>
         {/* Doesn't change path: */}
         {/* <Link to={{search:"?e=13"}}>to entity #13</Link>*/}

@@ -154,7 +154,7 @@ class SessionStatesHandler {
   returned (JSX) element of the component if the children includes any session-
   stateful components. passKeys() then serves to pass the keys that allows
   useSessionState() to construct its own tree of DOM nodes.
-  The order of the returns are: [passKeys, dispatch, state].
+  The order of the returns are: [state, passKeys, dispatch].
   Inputs:
   First input is the initial state, just like for useState().
   Second input is the props of the component, which is used both to get the
@@ -170,8 +170,10 @@ class SessionStatesHandler {
   {action: reducer, ...}, where action is a unique string that selects the
   given reducer, and the reducer is a pure function that takes [state, props,
   contexts] as its first input, as well as an optional second input (passed to
-  dispatch()), and returns a new state of the component.
-  Access these reducers on order to change the state of this component by
+  dispatch()), and returns a new state of the component. Reducers can can also
+  take an optional third input, dispatch, which can be used to run other
+  reducers right after execution, including those of the component's ancestors.
+  Access these reducers in order to change the state of this component by
   calling dispatch("self", action, input), where action is the key of the
   specific reducer in the reducers object, and input is the aforementioned
   second input that gets passed to the reducer. As mentioned, the reducers can
@@ -240,8 +242,12 @@ export const useSessionState = (
     props, contexts, sKey, reducers, backUpAndRemove, false, setState
   );
 
+  // Also store the dispatch() function in the aux. store in order for reducers
+  // to be able to access the component's dispatch() function as well. 
+  sessionStateAuxillaryDataStore[sKey].dispatch = dispatch;
+
   // Return the state, as well as the dispatch() and passKeys() functions.   
-  return [passKeys, dispatch, state];
+  return [state, passKeys, dispatch];
 };
 
 
@@ -339,8 +345,11 @@ const useSessionStateHelper = (
       if (action === "setState") {
         setState(input);
       } else {
+        let thisDispatch = sessionStateAuxillaryDataStore[sKey].dispatch;
         let reducer = reducers[action];
-        setState(state => reducer([state, props, contexts], input));
+        setState(state => reducer(
+          [state, props, contexts], input, thisDispatch
+        ));
       }
       return;
     }
@@ -355,13 +364,15 @@ const useSessionStateHelper = (
 
     // If code reaches here, then we should look up the nearest ancestor
     // of componentKey, after having skipped over skip ancestors.
-    let [ancReducers, ancSetState, ancProps, ancContexts] =
+    let [ancReducers, ancSetState, ancProps, ancContexts, ancDispatch] =
       getAncestorReducerData(sKey, key, skip);
     if (action === "setState") {
       ancSetState(input);
     } else {
       let reducer = ancReducers[action];
-      ancSetState(state => reducer([state, ancProps, ancContexts], input));
+      ancSetState(state => reducer(
+        [state, ancProps, ancContexts], input, ancDispatch
+      ));
     }
     return;
   }), []);
@@ -372,7 +383,7 @@ const useSessionStateHelper = (
   // automatically returns and empty JSX fragment if backUpAndRemove is set to
   // true.
   const passKeys = useMemo(() => ((elementOrKey, element) => (
-    passKeysFromData(elementOrKey, element, sKey, 0, backUpAndRemove)
+    passKeysFromData(elementOrKey, element, sKey, [0], backUpAndRemove)
   )), [backUpAndRemove]);
 
 
@@ -392,7 +403,7 @@ const useSessionStateHelper = (
   sKey is of the form: '/Root_ID ( (/|>) ($Key|Pos) : Element_type_ID )*'
 **/
 function passKeysFromData(
-  elementOrKey, element, parentSKey, pos = 0, backUpAndRemove
+  elementOrKey, element, parentSKey, posMonad, backUpAndRemove
 ) {
   let customKey;
   if (element) {
@@ -406,37 +417,48 @@ function passKeysFromData(
     return <></>;
   }
 
-  // Get element's own nodeIdentifier, and a boolean denoting whether it is a
-  // React Component or a normal HTML element.
+  // Else if element is an array, map passKeysFromData onto it, where the
+  // position inside posMonad is incremented for each non-array element,
+  // and increased with the array length for each nested array.
+  // equal to the index, and return that.
+  if (Array.isArray(element)) {
+    return element.map((elem) => (
+      passKeysFromData(null, elem, parentSKey, posMonad)
+    ));
+  }
+
+
+  // Else get element's own nodeIdentifier, and a boolean denoting whether it
+  // is a custom React Component or a normal HTML element (or a React fragment
+  // or a React context provider).
+  let pos = posMonad[0];
   let [nodeIdentifier, isReactComponent] =
     getNodeIdentifier(customKey, element, pos);
+
+  // Construct the new sKey of this element.
+  let sKey = parentSKey + (isReactComponent ? "/" : ">") + nodeIdentifier;
 
   // Prepare the new JSX element to return.
   let ret = {...element};
   ret.props = {...element.props};
 
-  // Now add this as the _sKey property of ret. (This is the important part.)
-  let sKey = parentSKey + (isReactComponent ? "/" : ">") + nodeIdentifier;
-  ret.props._sKey = sKey;
-
-  // If the element is not a React component, iterate through each of its
-  // children and do the same thing, only with parentSKey replaced by the
-  // current sKey, and where pos increments for each child.
-  if (!isReactComponent) {
+  // If element is a React component, add sKey as the _sKey prop. (This is the
+  // important part.)
+  if (isReactComponent) {
+    ret.props._sKey = sKey;
+  }
+  // Else if the element is not a React component, call passKeysFromData()
+  // recursively on its children.
+  else {
     let children = ret.props.children;
     if (children) {
-      if (Array.isArray(children)) {
-        ret.props.children = children.map((child, ind) => (
-          passKeysFromData(null, child, sKey, ind)
-        ));
-      }
-      else {
-        ret.props.children = passKeysFromData(null, children, sKey, 0);
-      }
+      ret.props.children = passKeysFromData(null, children, sKey, [0]);
     }
   }
 
-  // And finally return the prepared element.
+  // And finally increment the position inside posMonad (in case element is
+  // an element of an array) and then return the prepared element.
+  posMonad[0]++;
   return ret;
 }
 
@@ -485,16 +507,16 @@ function getNodeIdentifier(customKey, element, pos) {
 function getElementType(element) {
   let type = element.type;
   if (typeof type === "string") {
-    return type;
+    return [type, false];
   }
   else if (type.name) {
-    return type.name;
+    return [type.name, true];
   }
   if (type === Symbol("react.fragment")) {
-    return "fragment";
+    return ["fragment", false];
   }
   if (type.type && type.type.$$typeof === Symbol("react.provider")) {
-    return "provider";
+    return ["provider", false];
   }
   else {
     console.log(element);
@@ -513,7 +535,10 @@ function getAncestorReducerData(sKey, key, skip) {
     data = sessionStateAuxillaryDataStore[ancSKey];
     if (!data.reducers.key === key) {
       if (skip <= 0) {
-        return [data.reducers, data.setState, data.props, data.contexts];
+        return [
+          data.reducers, data.setState, data.props, data.contexts,
+          data.dispatch
+        ];
       } else {
         skip--;
       }
@@ -530,15 +555,4 @@ function getAncestorReducerData(sKey, key, skip) {
 function getNearestReactComponentAncestorSKey(sKey) {
   let ancSKey = sKey.replace(/\/[^\/]+$/, "");
   return (ancSKey === "") ? null : ancSKey;
-}
-
-
-
-
-
-
-
-
-export function logSKey(props) {
-  console.log(props._sKey);
 }

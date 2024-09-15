@@ -10,7 +10,7 @@
   [class^=prop-member] {
     display: none;
 
-    &:is(.prop-member-title) {
+    &:is([class^=prop-member-title]) {
       display: inline-block;
 
       > [class^=prop-name] {
@@ -20,10 +20,10 @@
   }
 
   [class^=class-clarification] {
-    margin: 0em .2em;
+    // margin: 0em .2em;
 
     &::before {
-      content: "(";
+      content: " (";
     }
     &::after {
       content: ")";

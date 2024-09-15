@@ -1,5 +1,5 @@
 import {useState, createContext, useContext, useEffect, useMemo} from "react";
-import {Link} from "react-router-dom";
+// import {Link} from "react-router-dom";
 
 import {useQuery} from "../../contexts_and_hooks/DBRequests.js";
 import {ColumnContext} from "../../contexts_and_hooks/ColumnContext.js";
@@ -328,18 +328,23 @@ const NoneEntityReference = () => {
 
 
 
-// TODO: Change to a Link instead and let SDBInterface open the new column.
-const EntityLink = ({entID, children}) => {
-  const colKey = useContext(ColumnContext);
+
+export const EntityLink = ({entID, children}) => {
+  // const colKey = useContext(ColumnContext);
 
   return (
-    <Link replace to={{
-      pathname: "e" + entID,
-      search: "?from=" + colKey,
-      state: window.history.state,
+    <div className="entity-link" onClick={() => {
+      // TODO: dispatch open column action.
     }} >
       {children}
-    </Link>
+    </div>
+    // <Link replace to={{
+    //   pathname: "e" + entID,
+    //   search: "?from=" + colKey,
+    //   state: window.history.state,
+    // }} >
+    //   {children}
+    // </Link>
   );
 };
 
