@@ -168,7 +168,7 @@ export class DataFetcher {
   ) {
     if (typeof propVal === "object") {
       let struct = propVal;
-      obj[objKey] = {struct: propVal};
+      obj[objKey] = {struct: struct};
       Object.keys(struct).forEach(key => {
         let val = struct[key];
         this.#expandPropVal(

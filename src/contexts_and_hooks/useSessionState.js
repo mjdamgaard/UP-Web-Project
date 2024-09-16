@@ -231,6 +231,8 @@ export const useSessionState = (
       backUpAndRemove: backUpAndRemove,
     }
   }, []);
+  sessionStateAuxillaryDataStore[sKey] ||
+    (sessionStateAuxillaryDataStore[sKey] = {});
   sessionStateAuxillaryDataStore[sKey].props = props;
   sessionStateAuxillaryDataStore[sKey].contexts = contexts;
 
@@ -381,7 +383,7 @@ const useSessionStateHelper = (
     passKeysFromData(elementOrKey, element, sKey, [0], backUpAndRemove)
   )), [backUpAndRemove]);
 
-
+console.log(sessionStateAuxillaryDataStore);
   return [dispatch, passKeys];
 };
 
@@ -410,6 +412,14 @@ function passKeysFromData(
   // If backUpAndRemove, return an empty JSX fragment.
   if (backUpAndRemove) {
     return <></>;
+  }
+
+  // If the element is a string, I believe that the position ought to be
+  // incremented in the React tree. (TODO: Test this.) And return the same
+  // string, then.
+  if (typeof element === "string") {
+    posMonad[0]++;
+    return element;
   }
 
   // Else if element is an array, map passKeysFromData onto it, where the
@@ -525,9 +535,13 @@ function getElementType(element) {
 
 
 function getAncestorReducerData(sKey, key, skip) {
-  let ancSKey, data;
-  while (ancSKey = getNearestReactComponentAncestorSKey(sKey)) {
-    data = sessionStateAuxillaryDataStore[ancSKey];
+  let ancSKey = sKey;
+  let data;
+  while (ancSKey = getParentSKey(ancSKey)) {console.log(sessionStateAuxillaryDataStore);
+    data = sessionStateAuxillaryDataStore[ancSKey];console.log(data);
+    if (!data) {
+      continue;
+    }
     if (!data.reducers.key === key) {
       if (skip <= 0) {
         return [
@@ -547,7 +561,7 @@ function getAncestorReducerData(sKey, key, skip) {
   );
 }
 
-function getNearestReactComponentAncestorSKey(sKey) {
-  let ancSKey = sKey.replace(/\/[^\/]+$/, "");
-  return (ancSKey === "") ? null : ancSKey;
+function getParentSKey(sKey) {
+  let ancSKey = sKey.replace(/[\/>][^\/]+$/, "");
+  return (ancSKey === "" || ancSKey === sKey) ? null : ancSKey;
 }

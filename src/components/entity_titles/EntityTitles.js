@@ -1,4 +1,7 @@
 import {useState, createContext, useContext, useEffect, useMemo} from "react";
+import {
+  useSessionStateless
+} from "../../contexts_and_hooks/useSessionState.js";
 // import {Link} from "react-router-dom";
 
 import {useQuery} from "../../contexts_and_hooks/DBRequests.js";
@@ -15,9 +18,10 @@ const SpecialRefEntityTitle = () => <template></template>;
 // const InvalidEntityTitle = () => <template></template>;
 
 
-export const EntityTitle = ({
-  entID, expectedClassID, maxRecLevel = 2, recLevel = 0
-}) => {
+export const EntityTitle = (props) => {
+  const {entID, expectedClassID, maxRecLevel = 2, recLevel = 0} = props;
+  const [passKeys, dispatch] = useSessionStateless(props, {});
+
   const [results, setResults] = useState({});
   useMemo(() => {
     // TODO: Also query for the highest rated 'representation' and if the rating
@@ -39,14 +43,14 @@ export const EntityTitle = ({
 
   // Before results is fetched, render this:
   if (!results.isFetched) {
-    return (
+    return passKeys(
       <EntityTitlePlaceholder entID={entID} />
     );
   }
 
   // Finally render this.
   const expEntMetadata = results.expEntMetadata;
-  return (
+  return passKeys(
     <div className="entity-title">
       <EntityLink entID={expEntMetadata.entID} >
         <EntityReference
@@ -329,12 +333,15 @@ const NoneEntityReference = () => {
 
 
 
-export const EntityLink = ({entID, children}) => {
+export const EntityLink = (props) => {
+  const {entID, children} = props;
+  const [passKeys, dispatch] = useSessionStateless(props, {});
   // const colKey = useContext(ColumnContext);
 
   return (
     <div className="entity-link" onClick={() => {
-      // TODO: dispatch open column action.
+      let colSPec = {entID: entID};
+      dispatch("app-column", "OPEN_COLUMN", colSPec);
     }} >
       {children}
     </div>

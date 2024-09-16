@@ -1,4 +1,7 @@
 import {useState, useMemo, useContext} from "react";
+import {
+  useSessionStateless
+} from "../contexts_and_hooks/useSessionState.js";
 // import {EntityLink} from "react-router-dom";
 import {useQuery} from "../contexts_and_hooks/DBRequests.js";
 // import {
@@ -46,7 +49,10 @@ const CategoryDisplay = () => <template></template>;
 
 
 
-export const EntityPage = ({entID, initTab}) => {
+export const EntityPage = (props) => {
+  const {entID, initTab} = props;
+
+  const [passKeys, dispatch] = useSessionStateless(props, {});
 
   // TODO: Query for the topmost types for the entity (entID), and use them to
   // specify the tabs. *Or maybe look up types in fullPropStruct, or do both..
@@ -59,10 +65,12 @@ export const EntityPage = ({entID, initTab}) => {
   
   // TODO: Remove: Temporary module while refactoring and debugging:
   var typeID, cxtID;
-  return (
+  return passKeys(
     <div className="entity-page">
       <div className="entity-page-header">
         <h4>Entity title:</h4>
+        foo 
+        {"bar"}
         <h2><EntityTitle entID={entID} /></h2>
         <h2>Test links</h2>
         <div>

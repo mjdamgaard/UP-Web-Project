@@ -7,6 +7,7 @@
 
 import {useState, createContext, useMemo} from "react";
 import $ from 'jquery';
+import {useSessionStateless} from "./useSessionState";
 
 export const SessionContext = createContext();
 export const AccountManagerContext = createContext();
@@ -25,7 +26,11 @@ if (typeof(Storage) === "undefined") {
 
 
 
-export const AccountContextProvider = ({children}) => {
+export const AccountContextProvider = (props) => {
+  const {children} = props;
+  const [passKeys] = useSessionStateless(props);
+
+
   const [session, setSession] = useState(localStorage.session ?? false);
 
   const accountManager = useMemo(
@@ -33,7 +38,7 @@ export const AccountContextProvider = ({children}) => {
     []
   );
 
-  return (
+  return passKeys(
     <SessionContext.Provider value={session}>
     <AccountManagerContext.Provider value={accountManager}>
       {children}
