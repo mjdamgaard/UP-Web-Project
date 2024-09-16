@@ -4,6 +4,18 @@ import {
 
 
 
+// TODO: Remake these hooks according to: "And for my plan for the remake of
+// the useSessionState: As I alluded to, we could still let all session states
+// be contained in one object in sessionStorage, but use nonces instead for
+// the sKeys. Then each parent state just has to hold a store over all the
+// nodeIdentifiers (gotten from getNodeIdentifier()) of its React component
+// children, paired with their nonce IDs, i.e. their sKeys. ..And it of course
+// has to also hold the sKey of its parent. And that's it, really. 
+// Hm, it doesn't sound too hard to implement, actually. But neither does the
+// more simple useStateAndReducers() [edit.], so let me just implement and
+// use those first."
+
+
 const sessionStateAuxillaryDataStore = {};
 
 
@@ -383,7 +395,7 @@ const useSessionStateHelper = (
     passKeysFromData(elementOrKey, element, sKey, [0], backUpAndRemove)
   )), [backUpAndRemove]);
 
-console.log(sessionStateAuxillaryDataStore);
+
   return [dispatch, passKeys];
 };
 
@@ -537,12 +549,12 @@ function getElementType(element) {
 function getAncestorReducerData(sKey, key, skip) {
   let ancSKey = sKey;
   let data;
-  while (ancSKey = getParentSKey(ancSKey)) {console.log(sessionStateAuxillaryDataStore);
-    data = sessionStateAuxillaryDataStore[ancSKey];console.log(data);
+  while (ancSKey = getParentSKey(ancSKey)) {
+    data = sessionStateAuxillaryDataStore[ancSKey];
     if (!data) {
       continue;
     }
-    if (!data.reducers.key === key) {
+    if (data.reducers.key === key) {
       if (skip <= 0) {
         return [
           data.reducers, data.setState, data.props, data.contexts,
@@ -556,7 +568,7 @@ function getAncestorReducerData(sKey, key, skip) {
   // If this search fails, throw an error:
   console.log(sKey);
   throw (
-    'useSessionStateless: dispatch(): "' + key + '" was not found ' +
+    'useSessionState: dispatch(): "' + key + '" was not found ' +
     'as an ancestor of this component.'
   );
 }
