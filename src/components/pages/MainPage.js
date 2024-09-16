@@ -1,7 +1,7 @@
 import {useState, createContext, useContext, useMemo, useId} from "react";
 import {
-  useSessionState, useSessionStateless
-} from "../../contexts_and_hooks/useSessionState.js";
+  useStateAndReducers, useDispatch
+} from "../../contexts_and_hooks/useStateAndReducers.js"
 
 import {
   useLocation, Navigate,
@@ -51,7 +51,7 @@ export const MainPage = (props) => {
     specStore,
     currInd, fst, n, nonce,
 
-  }, passKeys, dispatch] = useSessionState({
+  }, dispatch, passData] = useStateAndReducers({
     colKeyArr: [0, 2],
     specStore: {"0": {entID: HOME_ENTITY_ID}, "2": {entID: HOME_ENTITY_ID}},
     currInd: 0, fst: 0, n: 1, nonce: 1,
@@ -75,7 +75,7 @@ export const MainPage = (props) => {
     );
   });
 
-  return passKeys(
+  return passData(
     <div className="main-page">
       <InterfaceHeader
         setAppPage={void(0)}

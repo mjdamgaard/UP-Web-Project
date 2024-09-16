@@ -7,7 +7,9 @@
 
 import {useState, createContext, useMemo} from "react";
 import $ from 'jquery';
-import {useSessionStateless} from "./useSessionState";
+import {
+  useStateAndReducers, useDispatch
+} from "./useStateAndReducers.js"
 
 export const SessionContext = createContext();
 export const AccountManagerContext = createContext();
@@ -28,7 +30,7 @@ if (typeof(Storage) === "undefined") {
 
 export const AccountContextProvider = (props) => {
   const {children} = props;
-  const [passKeys] = useSessionStateless(props);
+  const [dispatch, passData] = useDispatch(props);
 
 
   const [session, setSession] = useState(localStorage.session ?? false);
@@ -38,7 +40,7 @@ export const AccountContextProvider = (props) => {
     []
   );
 
-  return passKeys(
+  return passData(
     <SessionContext.Provider value={session}>
     <AccountManagerContext.Provider value={accountManager}>
       {children}

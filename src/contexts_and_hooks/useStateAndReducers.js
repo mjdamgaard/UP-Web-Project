@@ -68,16 +68,13 @@ export const useStateAndReducers = (
   const [state, setState] = useState(initState);
 
 
-  // Get dispatch() and passData() with useSessionStateHelper(), which also
-  // backs up or restores children when backUpAndRemove changes value, and
-  // also schedules a cleanup function to remove this session state when it is
-  // unmounted (but it can still be restored if it has been backed up).
-  const [dispatch, passData] = useSessionStateHelper(
+  // Get dispatch() and passData() with useStateAndReducersHelper().
+  const [dispatch, passData] = useStateAndReducersHelper(
     props, contexts, reducers, setState
   );
 
   // Return the state, as well as the dispatch() and passData() functions.   
-  return [state, passData, dispatch];
+  return [state, dispatch, passData];
 };
 
 
@@ -103,7 +100,7 @@ export const useDispatch = (
   );
 
   // Return the passData() and dispatch() functions.   
-  return [passData, dispatch];
+  return [dispatch, passData];
 };
 
 
@@ -117,7 +114,7 @@ const useStateAndReducersHelper = (
 ) => {
 
   const sKey = useId();
-  const parentSKey = props._pSKey;
+  const parentSKey = props ? props._pSKey : undefined;
   
 
   // Store some auxillary data used by dispatch().
@@ -131,7 +128,7 @@ const useStateAndReducersHelper = (
   // Cleanup function to delete the auxillary data.
   useEffect(() => {
     return () => {
-      delete sessionStateAuxillaryDataStore[sKey];
+      delete auxDataStore[sKey];
     };
   }, []);
 
@@ -189,11 +186,11 @@ const useStateAndReducersHelper = (
   // component. Its task is to drill the underlying sKey-related props. It also
   // automatically returns and empty JSX fragment if backUpAndRemove is set to
   // true.
-  const passData = useMemo(() => ((elementOrKey, element) => (
-    passDataHelper(elementOrKey, element, sKey, [0], backUpAndRemove)
-  )), [backUpAndRemove]);
+  const passData = useMemo(() => ((element) => (
+    passDataHelper(element, sKey)
+  )), []);
 
-console.log(auxDataStore);
+
   return [dispatch, passData];
 };
 
@@ -228,37 +225,16 @@ function getAncestorReducerData(sKey, key, skip) {
 
 
 
-
-
-
 /**
   passData() is supposed to wrap around all returned JSX elements from the
-  component. Its task is to drill the underlying sKey-related props. It also
-  automatically returns and empty JSX fragment if backUpAndRemove is set to
-  true.
-
-  sKey is of the form: '/Root_ID ( (/|>) ($Key|Pos) : Element_type_ID )*'
+  component. Its task is to drill the underlying sKey-related props.
 **/
 function passDataHelper(
-  elementOrKey, element, parentSKey, posMonad, backUpAndRemove
+  element, sKey
 ) {
-  let customKey;
-  if (element) {
-    customKey = elementOrKey;
-  } else {
-    element = elementOrKey;
-  }
 
-  // If backUpAndRemove, return an empty JSX fragment.
-  if (backUpAndRemove) {
-    return <></>;
-  }
-
-  // If the element is a string, I believe that the position ought to be
-  // incremented in the React tree. (TODO: Test this.) And return the same
-  // string, then.
+  // If the element is a string, simply return that.
   if (typeof element === "string") {
-    posMonad[0]++;
     return element;
   }
 
@@ -268,84 +244,40 @@ function passDataHelper(
   // equal to the index, and return that.
   if (Array.isArray(element)) {
     return element.map((elem) => (
-      passDataHelper(null, elem, parentSKey, posMonad)
+      passDataHelper(elem, sKey)
     ));
   }
 
-
-  // Else get element's own nodeIdentifier, and a boolean denoting whether it
-  // is a custom React Component or a normal HTML element (or a React fragment
-  // or a React context provider).
-  let pos = posMonad[0];
-  let [nodeIdentifier, isReactComponent] =
-    getNodeIdentifier(customKey, element, pos);
-
-  // Construct the new sKey of this element.
-  let sKey = parentSKey + (isReactComponent ? "/" : ">") + nodeIdentifier;
+  let [elemType, isReactComponent]  = getIsReactComponent(element);
 
   // Prepare the new JSX element to return.
   let ret = {...element};
   ret.props = {...element.props};
 
-  // If element is a React component, add sKey as the _sKey prop. (This is the
+  // If element is a React component, add sKey as the _pSKey prop. (This is the
   // important part.)
   if (isReactComponent) {
-    ret.props._sKey = sKey;
+    ret.props._pSKey = sKey;
   }
   // Else if the element is not a React component, call passDataHelper()
   // recursively on its children.
   else {
     let children = ret.props.children;
     if (children) {
-      ret.props.children = passDataHelper(null, children, sKey, [0]);
+      ret.props.children = passDataHelper(children, sKey);
     }
   }
 
-  // And finally increment the position inside posMonad (in case element is
-  // an element of an array) and then return the prepared element.
-  posMonad[0]++;
+  // And finally return the prepared element.
   return ret;
 }
 
 
 
-function getNodeIdentifier(customKey, element, pos) {
-  let nodeIdentifier;
-  // If the element has a customKey, prepend `&{customKey}`, only where all
-  // special sKey symbols has been replaced, reversibly.
-  if (customKey) {
-    customKey = customKey.replaceAll("\\", "\\b")
-      .replaceAll("/", "\\s")
-      .replaceAll(">", "\\g")
-      .replaceAll(":", "\\c");
-    nodeIdentifier = "&" + customKey;
-  }
-  // If the element has a key, prepend `${key}`, only where all special sKey
-  // symbols has been replaced, reversibly.
-  else if (element.key !== null && element.key !== undefined) {
-    let key = element.key.replaceAll("\\", "\\b")
-      .replaceAll("/", "\\s")
-      .replaceAll(">", "\\g")
-      .replaceAll(":", "\\c");
-    nodeIdentifier = "$" + key;
-  }
-  // Else prepend the position of the element within the parent instead.
-  else {
-    nodeIdentifier = pos;
-  }
-  // Finally prepend `:${elemTypeID}`, where elemTypeID is that of the
-  // element itself, looked up (or created) from its elemType.
+function getIsReactComponent(element) {
   let [elemType, isReactComponent] = getElementType(element);
-  let elemTypeID = SessionStatesHandler.lookUpOrCreateElemTypeID(
-    elemType
-  );
-  nodeIdentifier += ":" + elemTypeID;
-
-  return [nodeIdentifier, isReactComponent];
+  return [elemType, isReactComponent];
 }
-
-
-
 
 
 

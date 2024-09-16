@@ -7,8 +7,8 @@ import {useState, useEffect, useMemo} from "react";
 // } from "react-router-dom";
 
 import {
-  useSessionState, useSessionStateless
-} from "../../contexts_and_hooks/useSessionState.js"
+  useStateAndReducers, useDispatch
+} from "../../contexts_and_hooks/useStateAndReducers.js"
 
 import {
   AccountContextProvider
@@ -45,12 +45,12 @@ export const SDBApp = () => {
   const [{
     appPage,
 
-  }, passKeys, dispatch] = useSessionState({
+  }, dispatch, passData] = useStateAndReducers({
     appPage: initialPage,
 
-  }, null, appReducers, "app");
+  }, null, appReducers);
 
-  return passKeys(
+  return passData(
     <div className="sdb-interface">
       <AccountContextProvider> {/* yields: session, accountManager.*/}
         {/* <InterfaceHeader setAppPage={void(0)} /> */}

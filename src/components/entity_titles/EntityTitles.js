@@ -1,7 +1,7 @@
 import {useState, createContext, useContext, useEffect, useMemo} from "react";
 import {
-  useSessionStateless
-} from "../../contexts_and_hooks/useSessionState.js";
+  useStateAndReducers, useDispatch
+} from "../../contexts_and_hooks/useStateAndReducers.js"
 // import {Link} from "react-router-dom";
 
 import {useQuery} from "../../contexts_and_hooks/DBRequests.js";
@@ -20,7 +20,7 @@ const SpecialRefEntityTitle = () => <template></template>;
 
 export const EntityTitle = (props) => {
   const {entID, expectedClassID, maxRecLevel = 2, recLevel = 0} = props;
-  const [passKeys, dispatch] = useSessionStateless(props, {});
+  const [dispatch, passData] = useDispatch(props, {});
 
   const [results, setResults] = useState({});
   useMemo(() => {
@@ -43,14 +43,14 @@ export const EntityTitle = (props) => {
 
   // Before results is fetched, render this:
   if (!results.isFetched) {
-    return passKeys(
+    return passData(
       <EntityTitlePlaceholder entID={entID} />
     );
   }
 
   // Finally render this.
   const expEntMetadata = results.expEntMetadata;
-  return passKeys(
+  return passData(
     <div className="entity-title">
       <EntityLink entID={expEntMetadata.entID} >
         <EntityReference
@@ -335,7 +335,7 @@ const NoneEntityReference = () => {
 
 export const EntityLink = (props) => {
   const {entID, children} = props;
-  const [passKeys, dispatch] = useSessionStateless(props, {});
+  const [dispatch, passData] = useDispatch(props, {});
   // const colKey = useContext(ColumnContext);
 
   return (

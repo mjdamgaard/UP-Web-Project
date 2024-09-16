@@ -1,7 +1,7 @@
 import {useState, createContext, useContext, useMemo} from "react";
 import {
-  useSessionStateless
-} from "../../contexts_and_hooks/useSessionState.js";
+  useStateAndReducers, useDispatch
+} from "../../contexts_and_hooks/useStateAndReducers.js"
 import React from 'react';
 import {ColumnContext} from "../../contexts_and_hooks/ColumnContext.js";
 
@@ -24,7 +24,7 @@ const mainPageReducers = {
 
 export const AppColumn = (props) => {
   const {colKey, colSpec} = props;
-  const [passKeys, dispatch] = useSessionStateless(props, mainPageReducers);
+  const [dispatch, passData] = useDispatch(props, mainPageReducers);
 
   var page;
   if (colSpec.entID) {
@@ -34,7 +34,7 @@ export const AppColumn = (props) => {
     page = <ListGeneratorPage lg={colSpec.lg} />;
   }
 
-  return passKeys(
+  return passData(
     <div className="app-column">
       <ColumnButtonContainer colKey={colKey} />
       <ColumnContext.Provider value={colKey}>
