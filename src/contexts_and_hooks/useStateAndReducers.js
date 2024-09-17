@@ -1,18 +1,18 @@
 import {
-  useState, useEffect, useMemo
+  useState, useEffect, useMemo, useId
 } from "react";
 
 
-const useID = (parentSKey) => {
-  return useMemo(() => {
-    return getNonce();
-  }, [parentSKey]);
-};
+// const useID = (parentSKey) => {
+//   return useMemo(() => {
+//     return getNonce();
+//   }, [parentSKey]);
+// };
 
-var nonce = 0;
-function getNonce() {
-  return nonce++;
-}
+// var nonce = 0;
+// function getNonce() {
+//   return nonce++;
+// }
 
 
 const auxDataStore = {}
@@ -128,7 +128,7 @@ const useStateAndReducersHelper = (
 ) => {
 
   const parentSKey = props._pSKey;
-  const sKey = useID(parentSKey);
+  const sKey = useId(parentSKey);
   
 
   // Store some auxillary data used by dispatch().
@@ -144,7 +144,7 @@ const useStateAndReducersHelper = (
     return () => {console.log(sKey);
       delete auxDataStore[sKey];
     };
-  }, []);
+  }, [sKey]);
 
   // Prepare the dispatch function, which is able to change the sate of the
   // component itself, or of any of its ancestors, by calling one of the
@@ -153,7 +153,10 @@ const useStateAndReducersHelper = (
   // reducers, as these can then constitute an API of the "public methods"
   // for the component (or "protected"; you can only call them from itself
   // or its descendants).
-  const dispatch = useMemo(() => ((key, action, input) => {
+console.log("outside dispatch:");
+console.log([sKey, parentSKey]);
+console.log("inside dispatch:");
+  const dispatch = useMemo(() => {console.log([sKey, parentSKey]);return ((key, action, input) => {
     // If key = "self", call one of this state's own reducers.
     if (key === "self" || key === null) {
       if (action === "setState") {
@@ -189,7 +192,8 @@ const useStateAndReducersHelper = (
       ));
     }
     return;
-  }), [sKey, parentSKey]);
+  })}, [sKey, parentSKey]);
+console.log("done.")
 
   // Also store the dispatch() function in the auxDataStore in order for
   // reducers to be able to access the component's dispatch() function as well.
@@ -200,9 +204,13 @@ const useStateAndReducersHelper = (
   // component. Its task is to drill the underlying sKey-related props. It also
   // automatically returns and empty JSX fragment if backUpAndRemove is set to
   // true.
-  const passData = useMemo(() => ((element) => (
+console.log("outside:");
+console.log([sKey, parentSKey]);
+console.log("inside:");
+  const passData = useMemo(() => {console.log([sKey, parentSKey]); return ((element) => (
     passDataHelper(element, sKey)
-  )), [sKey, parentSKey]);
+  ));}, [sKey, parentSKey]);
+console.log("done.");
 
 console.log(auxDataStore);
   return [dispatch, passData];

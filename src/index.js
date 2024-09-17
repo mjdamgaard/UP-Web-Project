@@ -24,9 +24,9 @@ import './style/entity_titles/title_style01.scss';
 
 
 const myElement = (
-  <React.StrictMode>
+  // <React.StrictMode>
     <SDBApp />
-  </React.StrictMode>
+  // </React.StrictMode>
 );
 
 const root = ReactDOM.createRoot(document.getElementById('root'), {
