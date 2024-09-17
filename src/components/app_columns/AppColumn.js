@@ -5,7 +5,7 @@ import {
 import React from 'react';
 import {ColumnContext} from "../../contexts_and_hooks/ColumnContext.js";
 
-import {EntityPage} from "../EntityPage.js";
+import {EntityPage} from "./column_pages/EntityPage.js";
 import {ListGeneratorPage} from "../ListGenPages.js";
 
 /* Placeholders */

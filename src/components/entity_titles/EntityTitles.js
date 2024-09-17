@@ -20,9 +20,9 @@ const SpecialRefEntityTitle = () => <template></template>;
 
 export const EntityTitle = (props) => {
   const {entID, expectedClassID, maxRecLevel = 2, recLevel = 0} = props;
-  const [dispatch, passData] = useDispatch(props, {});
+  const [results, dispatch, passData] = useStateAndReducers({}, props, {});
 
-  const [results, setResults] = useState({});
+  // const [results, setResults] = useState({});
   useMemo(() => {
     // TODO: Also query for the highest rated 'representation' and if the rating
     // is high enough, use the propStruct generated from that instead.
@@ -30,7 +30,7 @@ export const EntityTitle = (props) => {
     // that rating as well. *No, just do this for the drop-down menu for now.
     DataFetcher.fetchExpandedMetadata(
       entID, maxRecLevel, recLevel, (expEntMetadata) => {
-        setResults(prev => {
+        dispatch("self", "setState", prev => {
           let ret = {...prev};
           ret.expEntMetadata = expEntMetadata;
           ret.isFetched = true;

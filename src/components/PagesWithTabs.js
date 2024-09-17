@@ -1,12 +1,15 @@
 import {useState, createContext, useContext, useEffect, useMemo} from "react";
-
+import { useDispatch } from "../contexts_and_hooks/useStateAndReducers";
 /* Placeholders */
 // const TabHeader = () => <template></template>;
 
 
 // tabDataArr: [tabTitle, jsxElement].
 
-export const PagesWithTabs = ({tabDataArr, initTab}) => {
+export const PagesWithTabs = (props) => {
+  const {tabDataArr, initTab} = props;
+  const [dispatch, passData] = useDispatch(props);
+
   const [activeTab, setActiveTab] = useState(initTab);
   const [isLoadedArr, setIsLoadedArr] = useState(tabDataArr.map(
     val => val[0] === initTab
@@ -25,7 +28,7 @@ export const PagesWithTabs = ({tabDataArr, initTab}) => {
     </div>
   ));
 
-  return (
+  return passData(
     <div className="pages-with-tabs">
       <TabHeader
         tabTitles={tabTitles}

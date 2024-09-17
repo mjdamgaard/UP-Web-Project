@@ -5,7 +5,7 @@ import {useQuery, useInput} from "../contexts_and_hooks/DBRequests.js";
 
 import {EntityTitle} from "./entity_titles/EntityTitles.js";
 import {DropdownBox} from "./DropdownBox.js";
-import {EntityIDDisplay} from "./EntityPage.js";
+import {EntityIDDisplay} from "./app_columns/column_pages/EntityPage.js";
 import {getLeaves} from "./InstListDisplay.js";
 import {RatingDisplay} from "./Ratings.js";
 
