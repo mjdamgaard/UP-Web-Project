@@ -110,7 +110,7 @@ export const useDispatch = (
 
   // Get dispatch() and passData() with useStateAndReducersHelper().
   const [dispatch, passData] = useStateAndReducersHelper(
-    props, contexts, reducers, void(0)
+    props, contexts, reducers, undefined
   );
 
   // Return the passData() and dispatch() functions.   
@@ -136,12 +136,13 @@ const useStateAndReducersHelper = (
   auxDataStore[sKey].pSKey = parentSKey;
   auxDataStore[sKey].props = props;
   auxDataStore[sKey].contexts = contexts;
+  auxDataStore[sKey].reducers = reducers;
   auxDataStore[sKey].setState = setState;
 
   
   // Cleanup function to delete the auxillary data.
   useEffect(() => {
-    return () => {console.log(sKey);
+    return () => {
       delete auxDataStore[sKey];
     };
   }, [sKey]);
@@ -153,12 +154,10 @@ const useStateAndReducersHelper = (
   // reducers, as these can then constitute an API of the "public methods"
   // for the component (or "protected"; you can only call them from itself
   // or its descendants).
-console.log("outside dispatch:");
-console.log([sKey, parentSKey]);
-console.log("inside dispatch:");
-  const dispatch = useMemo(() => {console.log([sKey, parentSKey]);return ((key, action, input) => {
+  const dispatch = useMemo(() => ((key, action, input) => {
     // If key = "self", call one of this state's own reducers.
     if (key === "self" || key === null) {
+      setState ??= y => (y instanceof Function) ? y() : null;
       if (action === "setState") {
         setState(input);
       } else {
@@ -183,6 +182,8 @@ console.log("inside dispatch:");
     // of componentKey, after having skipped over skip ancestors.
     let [ancReducers, ancSetState, ancProps, ancContexts, ancDispatch] =
       getAncestorReducerData(sKey, key, skip);
+    ancSetState ??= y => (y instanceof Function) ? y() : null;
+    // Then use the reducers (and its setState and other data) of that ancestor.
     if (action === "setState") {
       ancSetState(input);
     } else {
@@ -192,8 +193,7 @@ console.log("inside dispatch:");
       ));
     }
     return;
-  })}, [sKey, parentSKey]);
-console.log("done.")
+  }), [sKey, parentSKey]);
 
   // Also store the dispatch() function in the auxDataStore in order for
   // reducers to be able to access the component's dispatch() function as well.
@@ -204,15 +204,11 @@ console.log("done.")
   // component. Its task is to drill the underlying sKey-related props. It also
   // automatically returns and empty JSX fragment if backUpAndRemove is set to
   // true.
-console.log("outside:");
-console.log([sKey, parentSKey]);
-console.log("inside:");
-  const passData = useMemo(() => {console.log([sKey, parentSKey]); return ((element) => (
+  const passData = useMemo(() => ((element) => (
     passDataHelper(element, sKey)
-  ));}, [sKey, parentSKey]);
-console.log("done.");
+  )), [sKey, parentSKey]);
 
-console.log(auxDataStore);
+
   return [dispatch, passData];
 };
 
@@ -220,12 +216,10 @@ console.log(auxDataStore);
 
 
 
-function getAncestorReducerData(sKey, key, skip) {console.log(auxDataStore);
-console.log(sKey);
+function getAncestorReducerData(sKey, key, skip) {
   let origSkip = skip;
-  let ancSKey = auxDataStore[sKey].pSKey;
-  let data;
-  while (data = auxDataStore[ancSKey]) {
+  let data = auxDataStore[sKey];
+  while (data = auxDataStore[data.pSKey]) {
     if (data.reducers.key === key) {
       if (skip <= 0) {
         return [
