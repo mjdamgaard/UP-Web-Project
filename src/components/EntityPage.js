@@ -74,17 +74,17 @@ export const EntityPage = (props) => {
         <h2><EntityTitle entID={entID} /></h2>
         <h2>Test links</h2>
         <div>
-          <EntityLink to={{pathname: "/e12", search: "?from=e" + entID}}>
+          <EntityLink entID={12}>
             to entity @12
           </EntityLink>
         </div>
         <div>
-          <EntityLink to={{pathname: "/e13", search: "?from=e" + entID}}>
+          <EntityLink entID={13}>
             to entity @13
           </EntityLink>
         </div>
         <div>
-          <EntityLink to={{pathname: "/e14", search: "?from=e" + entID}}>
+          <EntityLink entID={14}>
             to entity @14
           </EntityLink>
         </div>

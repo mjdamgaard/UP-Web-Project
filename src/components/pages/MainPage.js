@@ -36,11 +36,10 @@ const mainPageReducers = {
       (fst > newCurrInd) ?
         newCurrInd :
         fst;
-    
     return {
       colKeyArr: newColKeyArr,
       specStore: newSpecStore,
-      currInd: newCurrInd, fst: newFST, n: n, nonce: newNonce,
+      nonce: newNonce, currInd: newCurrInd, fst: newFST, n: n,
     };
   },
 }
@@ -49,12 +48,12 @@ export const MainPage = (props) => {
   const [{
     colKeyArr,
     specStore,
-    currInd, fst, n, nonce,
+    nonce, currInd, fst, n,
 
   }, dispatch, passData] = useStateAndReducers({
-    colKeyArr: [0, 2],
-    specStore: {"0": {entID: HOME_ENTITY_ID}, "2": {entID: HOME_ENTITY_ID}},
-    currInd: 0, fst: 0, n: 1, nonce: 1,
+    colKeyArr: [0, 1],
+    specStore: {"0": {entID: HOME_ENTITY_ID}, "1": {entID: HOME_ENTITY_ID}},
+    nonce: 1, currInd: 0, fst: 0, n: 1,
 
   }, props, mainPageReducers);
 
@@ -67,8 +66,8 @@ export const MainPage = (props) => {
   const appColumns = colKeyArr.map((colKey, ind) => {
     let colSpec = specStore[colKey];
     return (
-      <div key={colKey} className={
-        (ind == currInd) ? "in-focus" : (ind == fst) ? "fst-column" : ""
+      <div key={colKey} className={"column-container" +
+        ((ind == currInd) ? "-focus" : (ind == fst) ? "-fst" : "")
       }>
         <AppColumn key={colKey} colKey={colKey} colSpec={colSpec} />
       </div>

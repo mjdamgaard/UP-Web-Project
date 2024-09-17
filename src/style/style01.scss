@@ -54,17 +54,17 @@ $headerColor: #40E0E9;
     grid-template-columns: 70px auto 70px;
     grid-template-rows: auto;
 }
-.column-container {
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr;
-    /* justify-items: center;
-    overflow-x: auto;
-    overflow-y: hidden; */
-    white-space: nowrap;
-    /* background-color: #f9fef5; */
+// .column-container {
+//     display: grid;
+//     grid-template-columns: 1fr;
+//     grid-template-rows: 1fr;
+//     /* justify-items: center;
+//     overflow-x: auto;
+//     overflow-y: hidden; */
+//     white-space: nowrap;
+//     /* background-color: #f9fef5; */
     
-}
+// }
 .app-column {
     overflow: initial;
     white-space: initial;
