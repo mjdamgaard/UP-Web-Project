@@ -127,7 +127,7 @@ const useStateAndReducersHelper = (
   
   // Cleanup function to delete the auxillary data.
   useEffect(() => {
-    return () => {
+    return () => {console.log(sKey);
       delete auxDataStore[sKey];
     };
   }, []);
@@ -198,7 +198,8 @@ const useStateAndReducersHelper = (
 
 
 
-function getAncestorReducerData(sKey, key, skip) {
+function getAncestorReducerData(sKey, key, skip) {console.log(auxDataStore);
+console.log(sKey);
   let origSkip = skip;
   let ancSKey = auxDataStore[sKey].pSKey;
   let data;

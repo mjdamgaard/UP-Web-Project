@@ -216,6 +216,7 @@ CREATE TABLE Entities (
     -- One can also use '%s' instead, which is substituted by the whole string
     -- (and '|' is then not taken as a special character).
     template_string_inputs VARCHAR(255) NOT NULL DEFAULT "",
+    -- TODO: Collate uft-8_bin.
 
     -- Own property data structure (struct) containing the specific properties
     -- of this entity, and formatted as a JSON object. If a property value is
