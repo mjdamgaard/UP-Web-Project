@@ -52,7 +52,7 @@ export const SDBApp = () => {
 
   return passData(
     <div className="sdb-interface">
-      <AccountContextProvider> {/* yields: session, accountManager.*/}
+      <AccountContextProvider>{/* yields: session, accountManager.*/}
         {/* <InterfaceHeader setAppPage={void(0)} /> */}
         <MainPage
           isHidden={appPage !== "main"}

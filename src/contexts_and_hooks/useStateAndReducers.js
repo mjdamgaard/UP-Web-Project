@@ -1,8 +1,18 @@
 import {
-  useState, useEffect, useMemo, useId
+  useState, useEffect, useMemo
 } from "react";
 
 
+const useID = (parentSKey) => {
+  return useMemo(() => {
+    return getNonce();
+  }, [parentSKey]);
+};
+
+var nonce = 0;
+function getNonce() {
+  return nonce++;
+}
 
 
 const auxDataStore = {}
@@ -58,6 +68,8 @@ const auxDataStore = {}
 export const useStateAndReducers = (
   initState, props, reducers = {}
 ) => {
+  props ??= {};
+
   // If props is an array, treat it as [props, contexts] instead.
   let contexts;
   if (Array.isArray(props)) {
@@ -88,6 +100,8 @@ export const useStateAndReducers = (
 export const useDispatch = (
   props, reducers = {}
 ) => {
+  props ??= {};
+
   // If props is an array, treat it as [props, contexts] instead.
   let contexts;
   if (Array.isArray(props)) {
@@ -113,8 +127,8 @@ const useStateAndReducersHelper = (
   props, contexts, reducers, setState
 ) => {
 
-  const sKey = useId();
-  const parentSKey = props ? props._pSKey : undefined;
+  const parentSKey = props._pSKey;
+  const sKey = useID(parentSKey);
   
 
   // Store some auxillary data used by dispatch().
@@ -139,7 +153,7 @@ const useStateAndReducersHelper = (
   // reducers, as these can then constitute an API of the "public methods"
   // for the component (or "protected"; you can only call them from itself
   // or its descendants).
-  const dispatch = useMemo(() => ((key, action, input = []) => {
+  const dispatch = useMemo(() => ((key, action, input) => {
     // If key = "self", call one of this state's own reducers.
     if (key === "self" || key === null) {
       if (action === "setState") {
@@ -175,7 +189,7 @@ const useStateAndReducersHelper = (
       ));
     }
     return;
-  }), []);
+  }), [sKey, parentSKey]);
 
   // Also store the dispatch() function in the auxDataStore in order for
   // reducers to be able to access the component's dispatch() function as well.
@@ -188,9 +202,9 @@ const useStateAndReducersHelper = (
   // true.
   const passData = useMemo(() => ((element) => (
     passDataHelper(element, sKey)
-  )), []);
+  )), [sKey, parentSKey]);
 
-
+console.log(auxDataStore);
   return [dispatch, passData];
 };
 
