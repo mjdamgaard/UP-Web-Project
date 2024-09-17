@@ -44,6 +44,7 @@ import {
 // const CategoryInstancesPage = () => <template></template>;
 const SubmitInstanceField = () => <template></template>;
 const CategoryDisplay = () => <template></template>;
+const EntityMetaPage = () => <template></template>;
 // const PropStructDisplayPlaceholder = () => <span></span>;
 
 
@@ -105,7 +106,7 @@ export const EntityPagesWithTabs = (props) => {
         </div> */}
         {/* <div><EntityIDDisplay entID={entID} /></div> */}
       </div>
-      {/* <PagesWithTabs tabDataArr={tabDataArr} initTab={initTab} /> */}
+      <PagesWithTabs tabDataArr={tabDataArr} initTab={initTab} />
     </div>
   );
 
@@ -127,9 +128,10 @@ export const EntityPagesWithTabs = (props) => {
 
 function getTabDataArrAndDefaultTab(entID, classID) {
   let tabDataArr = [
-    ["Info", <EntityInfoPage entID={entID} typeID={classID} />],
-    ["Ratings", <EntityRatingsPage entID={entID} typeID={classID} />],
-    ["Related to", <PropertyCategoryPage entID={entID} propID={42} />],
+    ["Meta", <EntityMetaPage entID={entID} typeID={classID} />],
+    // ["Info", <EntityInfoPage entID={entID} typeID={classID} />],
+    // ["Ratings", <EntityRatingsPage entID={entID} typeID={classID} />],
+    // ["Related to", <PropertyCategoryPage entID={entID} propID={42} />],
   ];
   let defaultTab;
   

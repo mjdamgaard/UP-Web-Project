@@ -306,7 +306,7 @@ function getElementType(element) {
   else if (type.name) {
     return [type.name, true];
   }
-  if (type === Symbol("react.fragment")) {
+  if (type.toString() === "Symbol(react.fragment)") {
     return ["fragment", false];
   }
   if (type.$$typeof.toString() === "Symbol(react.provider)") {
