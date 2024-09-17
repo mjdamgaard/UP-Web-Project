@@ -54,28 +54,44 @@ $headerColor: #40E0E9;
     grid-template-columns: 70px auto 70px;
     grid-template-rows: auto;
 }
-// .column-container {
-//     display: grid;
-//     grid-template-columns: 1fr;
-//     grid-template-rows: 1fr;
-//     /* justify-items: center;
-//     overflow-x: auto;
-//     overflow-y: hidden; */
-//     white-space: nowrap;
-//     /* background-color: #f9fef5; */
+
+.sdb-interface > * {
+    height: 100%;
+    width: 100%;
+}
+
+[class^=column-container] {
+    height: 100%;
+    width: 100%;
+    margin: auto;
+    overflow-x: scroll;
+    overflow-y: hidden;
+    white-space: nowrap;
+    scroll-snap-type: x mandatory;
+    /* background-color: #f9fef5; */
     
-// }
-.app-column {
-    overflow: initial;
-    white-space: initial;
+    .margin {
+        width: 25%;
+        height: 100%;
+        display: inline-block;
+    }
+}
+
+[class^=app-column] {
+    height: 100%;
+    width: 50%;
     display: inline-block;
+    scroll-snap-align: center;
+    overflow: scroll;
+    // white-space: initial;
     margin: 0px 10px;
     border: 1px solid #DDD;
     border-radius: 8px;
     background-color: #FFF;
-    max-width: 900px;
+    // max-width: 900px;
     
 }
+
 button.close {
     padding: 0px 4px;
     /* position: relative;

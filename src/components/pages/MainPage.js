@@ -66,11 +66,7 @@ export const MainPage = (props) => {
   const appColumns = colKeyArr.map((colKey, ind) => {
     let colSpec = specStore[colKey];
     return (
-      <div key={colKey} className={"column-container" +
-        ((ind == currInd) ? "-focus" : (ind == fst) ? "-fst" : "")
-      }>
-        <AppColumn key={colKey} colKey={colKey} colSpec={colSpec} />
-      </div>
+      <AppColumn key={colKey} colKey={colKey} colSpec={colSpec} />
     );
   });
 
@@ -80,7 +76,18 @@ export const MainPage = (props) => {
         setAppPage={void(0)}
         colKeyArr={colKeyArr} specStore={specStore} currInd={currInd} n={n}
       />
-      {appColumns}
+      <div className="column-container" onScroll={(event => {
+        // TODO: Implement function that sets the by calling a
+        // dispatch("self", "FOCUS") reducer to do so.
+        // TODO: Also at some point add click event rather than using the
+        // scroll snap property, since it is unresponsive for too long after
+        // snapping. (But do this only when it can be tested that it doesn't
+        // interfere with using arrow keys in e.g. text fields.)
+      })}>
+        <div className="margin"></div>
+        {appColumns}
+        <div className="margin"></div>
+      </div>
     </div>
   );
 };
