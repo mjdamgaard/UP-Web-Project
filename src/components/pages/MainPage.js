@@ -74,9 +74,10 @@ const mainPageReducers = {
     return [columnContainer, pos, childPosArr];
   },
 
-  "REACT_TO_SCROLL": function ([state], input, dispatch) {
+  "REACT_TO_SCROLL": function ([state], input, dispatch) {debugger;
     // Get the column container and the positions.
-    const [, pos, childPosArr] = this.getColumnContainerAndPositions();
+    const [, pos, childPosArr] =
+      mainPageReducers.getColumnContainerAndPositions();
     // And get the center position of the column container.
     const center = pos.center;
 
@@ -108,7 +109,7 @@ const mainPageReducers = {
     
     // // Now scroll by the amount needed to go to the next column.
     // columnContainer.scrollBy({left: centerDiff});
-
+debugger;
     // Then update the current column index, which also scrolls it into view,
     // automatically.
     dispatch("self", "UPDATE_CURR_IND", newInd);
@@ -119,9 +120,9 @@ const mainPageReducers = {
   "UPDATE_CURR_IND": function ([state], newInd, dispatch) {
     // Get the column container and the positions.
     const [columnContainer, pos, childPosArr] =
-      this.getColumnContainerAndPositions();
+      mainPageReducers.getColumnContainerAndPositions();
     // And get the center position of the column container.
-    const center = pos.center;
+    const center = pos.center;console.trace();debugger;
 
     // Get the amount to scroll to the new column.
     const centerDiff = childPosArr[newInd].center - center;
@@ -185,15 +186,15 @@ export const MainPage = (props) => {
         colKeyArr={colKeyArr} specStore={specStore} currInd={currInd}
       />
       <div className="column-container"
-      onScroll={(event => {
-        let {scrollLeft, scrollRight} = event.target;
+      onScroll={(event => {debugger;
+        let {scrollLeft} = event.target;
         dispatch("self", "UPDATE_SCROLL", scrollLeft);
         // TODO: Also at some point add click event rather than using the
         // scroll snap property, since it is unresponsive for too long after
         // snapping. (But do this only when it can be tested that it doesn't
         // interfere with using arrow keys in e.g. text fields.)
       })}
-      onMouseUp={event => {
+      onMouseUp={event => {debugger;
         dispatch("self", "REACT_TO_SCROLL");
       }}
       >
