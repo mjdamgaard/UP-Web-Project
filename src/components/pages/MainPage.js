@@ -74,7 +74,7 @@ const mainPageReducers = {
     return [columnContainer, pos, childPosArr];
   },
 
-  "REACT_TO_SCROLL": ([state], input, dispatch) => {debugger;
+  "REACT_TO_SCROLL": function ([state], input, dispatch) {console.log(this);
     // Get the column container and the positions.
     const [, pos, childPosArr] = this.getColumnContainerAndPositions();
     // And get the center position of the column container.
@@ -116,7 +116,7 @@ const mainPageReducers = {
     return; // A nullish return causes no state changes.
   },
 
-  "UPDATE_CURR_IND": ([state], newInd, dispatch) => {
+  "UPDATE_CURR_IND": function ([state], newInd, dispatch) {
     // Get the column container and the positions.
     const [columnContainer, pos, childPosArr] =
       this.getColumnContainerAndPositions();
