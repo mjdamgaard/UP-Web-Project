@@ -67,8 +67,7 @@ $headerColor: #40E0E9;
     overflow-x: scroll;
     overflow-y: hidden;
     white-space: nowrap;
-    scroll-snap-type: x mandatory;
-    /* background-color: #f9fef5; */
+    // scroll-snap-type: x mandatory;
     
     .margin {
         width: 25%;
@@ -77,11 +76,17 @@ $headerColor: #40E0E9;
     }
 }
 
-[class^=app-column] {
+[id^=app-column-wrapper] {
     height: 100%;
     width: 50%;
     display: inline-block;
-    scroll-snap-align: center;
+    // scroll-snap-align: center;
+    
+}
+
+[class^=app-column] {
+    height: 100%;
+    width: 100%;
     overflow: scroll;
     // white-space: initial;
     margin: 0px 10px;
