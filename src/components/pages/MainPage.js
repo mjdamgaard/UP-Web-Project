@@ -1,4 +1,7 @@
-import {useState, createContext, useContext, useMemo, useId, useEffect} from "react";
+import {
+  useState, createContext, useContext, useMemo, useId, useEffect,
+  useLayoutEffect
+} from "react";
 import {
   useStateAndReducers, useDispatch
 } from "../../contexts_and_hooks/useStateAndReducers.js"
@@ -60,7 +63,7 @@ const mainPageReducers = {
   "UPDATE_SCROLL_END": ([state], [scrollLeft, scrollVelocity], dispatch) => {
     // Get the center positions of each app column.
     const columnContainer = document.querySelector(".column-container");
-    const appColumnWrappers = document.querySelectorAll(
+    const appColumnWrappers = columnContainer.querySelectorAll(
       "[id^=app-column-wrapper]"
     );
     const posArr = [];
@@ -113,17 +116,22 @@ export const MainPage = (props) => {
     specStore,
     nonce,
     currInd,
-    scrollLeft, scrollVelocity
+    scrollLeft,
 
   }, dispatch, passData] = useStateAndReducers({
     colKeyArr: [0, 1],
     specStore: {"0": {entID: HOME_ENTITY_ID}, "1": {entID: 1}},
     nonce: 1,
     currInd: 0,
-    scrollLeft: 0, scrollVelocity: 0,
+    scrollLeft: 0,
 
   }, props, mainPageReducers);
 
+
+  // useMemo(() => {
+  //   currColKey = 
+  //   document.location.hash = "app-column-wrapper-" + currColKey;
+  // }, [currInd]);
 
   // const location = useLocation();
   // const pathname = location.pathname;
@@ -145,14 +153,22 @@ export const MainPage = (props) => {
         setAppPage={void(0)}
         colKeyArr={colKeyArr} specStore={specStore} currInd={currInd}
       />
-      <div className="column-container" onScroll={(event => {
+      <div className="column-container"
+      onScroll={(event => {debugger;
         let {scrollLeft, scrollRight} = event.target;
         dispatch("self", "UPDATE_SCROLL", scrollLeft);
         // TODO: Also at some point add click event rather than using the
         // scroll snap property, since it is unresponsive for too long after
         // snapping. (But do this only when it can be tested that it doesn't
         // interfere with using arrow keys in e.g. text fields.)
-      })}>
+      })}
+      onMouseUp={event => {debugger;
+        // Test:
+        const columnContainer = document.querySelector(".column-container");
+        columnContainer.scrollTo({left: 1000, behavior: "smooth"})
+        // dispatch("self", "FOCUS_CURR_COL");
+      }}
+      >
         <div className="margin"></div>
         {appColumns}
         <div className="margin"></div>
