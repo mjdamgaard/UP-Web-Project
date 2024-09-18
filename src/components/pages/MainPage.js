@@ -74,7 +74,7 @@ const mainPageReducers = {
     return [columnContainer, pos, childPosArr];
   },
 
-  "REACT_TO_SCROLL": function ([state], input, dispatch) {console.log(this);
+  "REACT_TO_SCROLL": function ([state], input, dispatch) {
     // Get the column container and the positions.
     const [, pos, childPosArr] = this.getColumnContainerAndPositions();
     // And get the center position of the column container.
