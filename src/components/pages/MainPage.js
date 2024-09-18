@@ -70,11 +70,11 @@ const mainPageReducers = {
       let {left, right} = element.getBoundingClientRect();
       childPosArr[ind] = {left: left, center: (right - left) / 2, right: right};
     });
-    
+
     return [columnContainer, pos, childPosArr];
   },
 
-  "REACT_TO_SCROLL": function ([state], input, dispatch) {debugger;
+  "REACT_TO_SCROLL": function ([state], input, dispatch) {
     // Get the column container and the positions.
     const [, pos, childPosArr] =
       mainPageReducers.getColumnContainerAndPositions();
@@ -90,26 +90,29 @@ const mainPageReducers = {
     // Else get the index of to the first column in the scroll direction from
     // the center of the column container.
     const scrollVelocity = state.scrollVelocity;
-    const {newInd} = childPosArr.reduce((acc, val, ind) => {
-      let offSetFromCenter = val.center - center;
-      let absOffSet = Math.abs(offSetFromCenter);
-      if (ind === 0) {
-        return {absOffSet: absOffSet, newInd: 0}
-      }
-      else if (Math.sign(offSetFromCenter) !== Math.sign(scrollVelocity)) {
-        return acc;
-      }
-      else if (absOffSet < acc.absOffSet) {
-        return {absOffSet: absOffSet, newInd: ind};
-      }
-      else {
-        return acc;
-      }
-    });
+    const {newInd} = childPosArr.reduce(
+      (acc, val, ind) => {
+        let offSetFromCenter = val.center - center;
+        let absOffSet = Math.abs(offSetFromCenter);
+        if (ind === 0) {
+          return {absOffSet: absOffSet, newInd: 0}
+        }
+        else if (Math.sign(offSetFromCenter) !== Math.sign(scrollVelocity)) {
+          return acc;
+        }
+        else if (absOffSet < acc.absOffSet) {
+          return {absOffSet: absOffSet, newInd: ind};
+        }
+        else {
+          return acc;
+        }
+      },
+      {}
+    );
     
     // // Now scroll by the amount needed to go to the next column.
     // columnContainer.scrollBy({left: centerDiff});
-debugger;
+
     // Then update the current column index, which also scrolls it into view,
     // automatically.
     dispatch("self", "UPDATE_CURR_IND", newInd);
@@ -122,7 +125,7 @@ debugger;
     const [columnContainer, pos, childPosArr] =
       mainPageReducers.getColumnContainerAndPositions();
     // And get the center position of the column container.
-    const center = pos.center;console.trace();debugger;
+    const center = pos.center;
 
     // Get the amount to scroll to the new column.
     const centerDiff = childPosArr[newInd].center - center;
@@ -186,7 +189,7 @@ export const MainPage = (props) => {
         colKeyArr={colKeyArr} specStore={specStore} currInd={currInd}
       />
       <div className="column-container"
-      onScroll={(event => {debugger;
+      onScroll={(event => {
         let {scrollLeft} = event.target;
         dispatch("self", "UPDATE_SCROLL", scrollLeft);
         // TODO: Also at some point add click event rather than using the
@@ -194,7 +197,7 @@ export const MainPage = (props) => {
         // snapping. (But do this only when it can be tested that it doesn't
         // interfere with using arrow keys in e.g. text fields.)
       })}
-      onMouseUp={event => {debugger;
+      onMouseUp={event => {
         dispatch("self", "REACT_TO_SCROLL");
       }}
       >
