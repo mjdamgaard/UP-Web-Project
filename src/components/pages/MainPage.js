@@ -15,9 +15,6 @@ import {InterfaceHeader} from "../InterfaceHeader.js";
 import {AppColumn} from "../app_columns/AppColumn.js";
 import {ListGeneratorPage} from "../ListGenPages.js";
 
-import {
-  LazyDelayedPromiseOnceRest
-} from "../../classes/LazyDelayedPromise.js";
 
 /* Placeholders */
 // const ListGeneratorPage = () => <template></template>;
@@ -52,62 +49,96 @@ const mainPageReducers = {
   "UPDATE_SCROLL": ([state], scrollLeft, dispatch) => {
     // Get the scroll velocity.
     const scrollVelocity = scrollLeft - state.scrollLeft;
-    
-    scrollEndPromise.then(() => {
-      dispatch("self", "UPDATE_SCROLL_END", [scrollLeft, scrollVelocity]);
-    });
 
     return {...state, scrollLeft: scrollLeft, scrollVelocity: scrollVelocity};
   },
 
-  "UPDATE_SCROLL_END": ([state], [scrollLeft, scrollVelocity], dispatch) => {
-    // Get the center positions of each app column.
-    const columnContainer = document.querySelector(".column-container");
-    const appColumnWrappers = columnContainer.querySelectorAll(
-      "[id^=app-column-wrapper]"
+  getColumnContainerAndPositions: () => {
+    const columnContainer = document.querySelector(
+      COLUMN_LIST_CONTAINER_SELECTOR
     );
-    const posArr = [];
-    appColumnWrappers.forEach((element, ind) => {
-      let {left, right} = element.getBoundingClientRect();
-      posArr[ind] = (right - left) / 2;
-    });
+
+    const {left, right} = columnContainer.getBoundingClientRect();
+    const pos = {left: left, center: (right - left) / 2, right: right};
 
     // Get the center position of the column container.
-    const {left, right} = columnContainer.getBoundingClientRect();
-    const center = (right - left) / 2;
+    const appColumnWrappers = columnContainer.querySelectorAll(
+      COLUMN_POSTERIOR_SELECTOR
+    );
+    const childPosArr = [];
+    appColumnWrappers.forEach((element, ind) => {
+      let {left, right} = element.getBoundingClientRect();
+      childPosArr[ind] = {left: left, center: (right - left) / 2, right: right};
+    });
+    
+    return [columnContainer, pos, childPosArr];
+  },
 
-    // Get the first column in the scroll direction from the center of the
-    // column container.
-    const {colInd} = posArr.reduce((acc, val, ind) => {
-      let offSetFromCenter = val - center;
+  "REACT_TO_SCROLL": ([state], input, dispatch) => {debugger;
+    // Get the column container and the positions.
+    const [, pos, childPosArr] = this.getColumnContainerAndPositions();
+    // And get the center position of the column container.
+    const center = pos.center;
+
+    // If center of the currInd column is to close to the center, do nothing.
+    const centerDiff = childPosArr[state.currInd].center - center;
+    if (Math.abs(centerDiff) < 80) {
+      return;
+    }
+
+    // Else get the index of to the first column in the scroll direction from
+    // the center of the column container.
+    const scrollVelocity = state.scrollVelocity;
+    const {newInd} = childPosArr.reduce((acc, val, ind) => {
+      let offSetFromCenter = val.center - center;
       let absOffSet = Math.abs(offSetFromCenter);
       if (ind === 0) {
-        return {absOffSet: absOffSet, colInd: 0}
+        return {absOffSet: absOffSet, newInd: 0}
       }
       else if (Math.sign(offSetFromCenter) !== Math.sign(scrollVelocity)) {
         return acc;
       }
       else if (absOffSet < acc.absOffSet) {
-        return {absOffSet: absOffSet, colInd: ind};
+        return {absOffSet: absOffSet, newInd: ind};
       }
       else {
         return acc;
       }
     });
-    // dispatch("self", "UPDATE_CURRENT_COLUMN", colInd);
+    
+    // // Now scroll by the amount needed to go to the next column.
+    // columnContainer.scrollBy({left: centerDiff});
 
-    const newCenterColumn = appColumnWrappers.item(colInd);
-    // Test: Let's...
-    newCenterColumn.scrollIntoView();
+    // Then update the current column index, which also scrolls it into view,
+    // automatically.
+    dispatch("self", "UPDATE_CURR_IND", newInd);
 
-    return state;
+    return; // A nullish return causes no state changes.
+  },
+
+  "UPDATE_CURR_IND": ([state], newInd, dispatch) => {
+    // Get the column container and the positions.
+    const [columnContainer, pos, childPosArr] =
+      this.getColumnContainerAndPositions();
+    // And get the center position of the column container.
+    const center = pos.center;
+
+    // Get the amount to scroll to the new column.
+    const centerDiff = childPosArr[newInd].center - center;
+    
+    // Now scroll by that amount.
+    columnContainer.scrollBy({left: centerDiff});
+
+    // Then update the document.location.
+    // TODO.
+
+    return {...state, currInd: newInd};
   },
 }
 
 
-
-const scrollEndPromise = new LazyDelayedPromiseOnceRest(100);
-
+const COLUMN_LIST_CONTAINER_SELECTOR = ".column-container";
+const COLUMN_POSTERIOR_SELECTOR = "[id^=app-column-wrapper]";
 
 
 export const MainPage = (props) => {
@@ -116,14 +147,14 @@ export const MainPage = (props) => {
     specStore,
     nonce,
     currInd,
-    scrollLeft,
+    scrollLeft, scrollVelocity,
 
   }, dispatch, passData] = useStateAndReducers({
     colKeyArr: [0, 1],
     specStore: {"0": {entID: HOME_ENTITY_ID}, "1": {entID: 1}},
     nonce: 1,
     currInd: 0,
-    scrollLeft: 0,
+    scrollLeft: 0, scrollVelocity: 0,
 
   }, props, mainPageReducers);
 
@@ -141,8 +172,8 @@ export const MainPage = (props) => {
   const appColumns = colKeyArr.map((colKey, ind) => {
     let colSpec = specStore[colKey];
     return (
-      <div id={"app-column-wrapper-" + colKey}>
-        <AppColumn key={colKey} colKey={colKey} colSpec={colSpec} />
+      <div key={colKey} id={"app-column-wrapper-" + colKey}>
+        <AppColumn colKey={colKey} colSpec={colSpec} />
       </div>
     );
   });
@@ -154,7 +185,7 @@ export const MainPage = (props) => {
         colKeyArr={colKeyArr} specStore={specStore} currInd={currInd}
       />
       <div className="column-container"
-      onScroll={(event => {debugger;
+      onScroll={(event => {
         let {scrollLeft, scrollRight} = event.target;
         dispatch("self", "UPDATE_SCROLL", scrollLeft);
         // TODO: Also at some point add click event rather than using the
@@ -162,11 +193,8 @@ export const MainPage = (props) => {
         // snapping. (But do this only when it can be tested that it doesn't
         // interfere with using arrow keys in e.g. text fields.)
       })}
-      onMouseUp={event => {debugger;
-        // Test:
-        const columnContainer = document.querySelector(".column-container");
-        columnContainer.scrollTo({left: 1000, behavior: "smooth"})
-        // dispatch("self", "FOCUS_CURR_COL");
+      onMouseUp={event => {
+        dispatch("self", "REACT_TO_SCROLL");
       }}
       >
         <div className="margin"></div>
