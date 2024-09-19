@@ -31,7 +31,7 @@ const TIME_BEFORE_ALWAYS_GOING_TO_CLOSEST_COLUMN = 200;
 
 const mainPageReducers = {
   key: "main",
-  "OPEN_COLUMN": ([state], [colSpec, callerColKey]) => {
+  "OPEN_COLUMN": function ([state], [colSpec, callerColKey]) {
     const {colKeyArr, specStore, nonce} = state;
     let callerColInd = colKeyArr.indexOf(callerColKey);
     let newNonce = nonce + 1;
@@ -51,7 +51,7 @@ const mainPageReducers = {
     };
   },
 
-  "UPDATE_SCROLL": ([state], scrollLeft) => {
+  "UPDATE_SCROLL": function ([state], scrollLeft) {
     return {
       ...state,
       scrollLeft: scrollLeft,
@@ -60,7 +60,7 @@ const mainPageReducers = {
     };
   },
 
-  getColumnContainerAndPositions: () => {
+  getColumnContainerAndPositions: function () {
     const columnContainer = document.querySelector(
       COLUMN_LIST_CONTAINER_SELECTOR
     );
@@ -81,7 +81,7 @@ const mainPageReducers = {
     return [columnContainer, pos, childPosArr];
   },
 
-  "REACT_TO_SCROLL": ([state], input, dispatch) => {debugger;
+  "REACT_TO_SCROLL": function ([state], input, dispatch) {debugger;
     // Get the column container and the positions.
     const [, pos, childPosArr] = this.getColumnContainerAndPositions();
     // And get the center position of the column container.
@@ -150,7 +150,7 @@ const mainPageReducers = {
     return this["UPDATE_CURR_IND"]([state], newInd);
   },
 
-  "UPDATE_CURR_IND": ([state], newInd) => {debugger;
+  "UPDATE_CURR_IND": function ([state], newInd) {debugger;
     // Get the column container and the positions.
     const [columnContainer, pos, childPosArr] =
       this.getColumnContainerAndPositions();
