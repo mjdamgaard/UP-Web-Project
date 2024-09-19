@@ -75,22 +75,25 @@ const mainPageReducers = {
     const childPosArr = [];
     appColumnWrappers.forEach((element, ind) => {
       let {left, right} = element.getBoundingClientRect();
-      childPosArr[ind] = {left: left, center: (right - left) / 2, right: right};
+      childPosArr[ind] = {
+        left: left, center: left + (right - left) / 2, right: right
+      };
     });
 
     return [columnContainer, pos, childPosArr];
   },
 
-  "REACT_TO_SCROLL": function ([state], input, dispatch) {debugger;
+  "REACT_TO_SCROLL": function ([state], input, dispatch) {
     // Get the column container and the positions.
     const [, pos, childPosArr] = this.getColumnContainerAndPositions();
     // And get the center position of the column container.
     const center = pos.center;
 
-    // If center of the currInd column is to close to the center, do nothing.
+    // If center of the currInd column is to close to the center, do nothing
+    // except scrolling back to that column. 
     const centerDiff = childPosArr[state.currInd].center - center;
     if (Math.abs(centerDiff) < PX_TO_SCROLL_BEFORE_CHANGING_COLUMN) {
-      return;
+      return this["SCROLL_INTO_VIEW"]([state], newInd);
     }
 
     // Get the closest distance to a non-current column's center.
@@ -150,7 +153,7 @@ const mainPageReducers = {
     return this["UPDATE_CURR_IND"]([state], newInd);
   },
 
-  "UPDATE_CURR_IND": function ([state], newInd) {debugger;
+  "SCROLL_INTO_VIEW": function ([state], colInd) {
     // Get the column container and the positions.
     const [columnContainer, pos, childPosArr] =
       this.getColumnContainerAndPositions();
@@ -158,13 +161,16 @@ const mainPageReducers = {
     const center = pos.center;
 
     // Get the amount to scroll to the new column.
-    const centerDiff = childPosArr[newInd].center - center;
+    const centerDiff = childPosArr[colInd].center - center;
     
     // Now scroll by that amount.
-    columnContainer.scrollBy({left: centerDiff});
+    columnContainer.scrollBy({left: centerDiff, behavior: "smooth"});
 
-    // Then update the document.location.
-    // TODO.
+    return;
+  },
+
+  "UPDATE_CURR_IND": function ([state], newInd) {
+    this["SCROLL_INTO_VIEW"]([state], newInd);
 
     return {...state, currInd: newInd};
   },
@@ -196,6 +202,7 @@ export const MainPage = (props) => {
     let currColSpec = specStore[colKeyArr[currInd]];
     let newPath = currColSpec.entID ? "e" + currColSpec.entID : "";
     window.history.pushState(null, "", newPath);
+console.log("top has changed");
   }, [currInd])
 
 
