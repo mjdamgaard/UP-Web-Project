@@ -23,6 +23,11 @@ import {ListGeneratorPage} from "../ListGenPages.js";
 export const HOME_ENTITY_ID = 12;
 
 
+const PX_TO_SCROLL_BEFORE_CHANGING_COLUMN = 80;
+const PX_TO_CENTER_BEFORE_CHANGING_CURR_IND_ON_SCROLL = 200;
+const TIME_BEFORE_ALWAYS_GOING_TO_CLOSEST_COLUMN = 200;
+
+
 
 const mainPageReducers = {
   key: "main",
@@ -46,11 +51,13 @@ const mainPageReducers = {
     };
   },
 
-  "UPDATE_SCROLL": ([state], scrollLeft, dispatch) => {
-    // Get the scroll velocity.
-    const scrollVelocity = scrollLeft - state.scrollLeft;
-
-    return {...state, scrollLeft: scrollLeft, scrollVelocity: scrollVelocity};
+  "UPDATE_SCROLL": ([state], scrollLeft) => {
+    return {
+      ...state,
+      scrollLeft: scrollLeft,
+      scrollVelocity: scrollLeft - state.scrollLeft,
+      lastScrollAt: Date.now(),
+    };
   },
 
   getColumnContainerAndPositions: () => {
@@ -76,15 +83,44 @@ const mainPageReducers = {
 
   "REACT_TO_SCROLL": ([state], input, dispatch) => {
     // Get the column container and the positions.
-    const [, pos, childPosArr] =
-      mainPageReducers.getColumnContainerAndPositions();
+    const [, pos, childPosArr] = this.getColumnContainerAndPositions();
     // And get the center position of the column container.
     const center = pos.center;
 
     // If center of the currInd column is to close to the center, do nothing.
     const centerDiff = childPosArr[state.currInd].center - center;
-    if (Math.abs(centerDiff) < 80) {
+    if (Math.abs(centerDiff) < PX_TO_SCROLL_BEFORE_CHANGING_COLUMN) {
       return;
+    }
+
+    // Get the closest distance to a non-current column's center.
+    var {absOffSet, closestInd} = childPosArr
+      .filter((val, ind) => ind !== state.currInd)
+      .reduce(
+        (acc, val, ind) => {
+          let offSetFromCenter = val.center - center;
+          let absOffSet = Math.abs(offSetFromCenter);
+          if (ind === 0) {
+            return {absOffSet: absOffSet, closestInd: 0}
+          }
+          else if (absOffSet < acc.absOffSet) {
+            return {absOffSet: absOffSet, closestInd: ind};
+          }
+          else {
+            return acc;
+          }
+        },
+        {}
+      );
+    // If this distance is below a threshold, or if it has been long enough
+    // time since the last scroll, make that column the current one, also
+    // automatically scrolling it into view.
+    if (
+      absOffSet < PX_TO_CENTER_BEFORE_CHANGING_CURR_IND_ON_SCROLL ||
+      (DATE.now() - state.lastScrollAt) >
+        TIME_BEFORE_ALWAYS_GOING_TO_CLOSEST_COLUMN
+    ) {
+      return this["UPDATE_CURR_IND"]([state], closestInd);
     }
 
     // Else get the index of to the first column in the scroll direction from
@@ -109,21 +145,15 @@ const mainPageReducers = {
       },
       {}
     );
-    
-    // // Now scroll by the amount needed to go to the next column.
-    // columnContainer.scrollBy({left: centerDiff});
-
     // Then update the current column index, which also scrolls it into view,
     // automatically.
-    dispatch("self", "UPDATE_CURR_IND", newInd);
-
-    return; // A nullish return causes no state changes.
+    return this["UPDATE_CURR_IND"]([state], newInd);
   },
 
-  "UPDATE_CURR_IND": ([state], newInd, dispatch) => {
+  "UPDATE_CURR_IND": ([state], newInd) => {debugger;
     // Get the column container and the positions.
     const [columnContainer, pos, childPosArr] =
-      mainPageReducers.getColumnContainerAndPositions();
+      this.getColumnContainerAndPositions();
     // And get the center position of the column container.
     const center = pos.center;
 
@@ -151,26 +181,23 @@ export const MainPage = (props) => {
     specStore,
     nonce,
     currInd,
-    scrollLeft, scrollVelocity,
+    scrollLeft, scrollVelocity, lastScrollAt,
 
   }, dispatch, passData] = useStateAndReducers({
     colKeyArr: [0, 1],
     specStore: {"0": {entID: HOME_ENTITY_ID}, "1": {entID: 1}},
     nonce: 1,
     currInd: 0,
-    scrollLeft: 0, scrollVelocity: 0,
+    scrollLeft: 0, scrollVelocity: 0, lastScrollAt: 0,
 
   }, props, mainPageReducers);
 
+  useLayoutEffect(() => {
+    let currColSpec = specStore[colKeyArr[currInd]];
+    let newPath = currColSpec.entID ? "e" + currColSpec.entID : "";
+    window.history.pushState(null, "", newPath);
+  }, [currInd])
 
-  // useMemo(() => {
-  //   currColKey = 
-  //   document.location.hash = "app-column-wrapper-" + currColKey;
-  // }, [currInd]);
-
-  // const location = useLocation();
-  // const pathname = location.pathname;
-  // const search = location.search;
 
 
   const appColumns = colKeyArr.map((colKey, ind) => {

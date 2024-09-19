@@ -163,9 +163,9 @@ const useStateAndReducersHelper = (
       } else {
         let thisDispatch = auxDataStore[sKey].dispatch;
         let modDispatch = getModifiedDispatch(thisDispatch);
-        let reducer = reducers[action];
         setState(state => (
-          reducer([state, props, contexts], input, modDispatch) ?? state
+          reducers[action]([state, props, contexts], input, modDispatch)
+            ?? state
         ));
       }
       return;
@@ -189,9 +189,9 @@ const useStateAndReducersHelper = (
       ancSetState(input);
     } else {
       let modDispatch = getModifiedDispatch(ancDispatch);
-      let reducer = ancReducers[action];
       ancSetState(state => (
-        reducer([state, ancProps, ancContexts], input, modDispatch) ?? state
+        ancReducers[action]([state, ancProps, ancContexts], input, modDispatch)
+          ?? state
       ));
     }
     return;
@@ -222,7 +222,7 @@ function getModifiedDispatch(dispatch) {
     if (key === "self") {
       throw (
         'useStateAndReducers: dispatch(): don\'t call "self" from ' +
-        'within a reducer. Call myReducers.MY_ACTION instead.'
+        'within a reducer. Call this.MY_ACTION instead.'
       );
     }
     else return dispatch(key, action, input);
