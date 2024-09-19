@@ -24,11 +24,12 @@ html, body, #root {
   }
 } */
 
-$headerColor: #40E0E9;
+// $headerColor: #40E0E9;
+$headerColor: #40C8F0;
 
 .interface-header {
     background-color: $headerColor;
-    margin-bottom: 10px;
+    // margin-bottom: 10px;
 }
 .logo {
     color: black;
@@ -60,10 +61,24 @@ $headerColor: #40E0E9;
     width: 100%;
 }
 
-[class^=column-container] {
+
+
+[class^=main-page] {
     height: 100%;
     width: 100%;
-    margin: auto;
+    // display: flex;
+    // flex-direction: column;
+}
+
+[class^=interface-header] {
+    height: 60px;
+    margin: 0;
+}
+
+
+[class^=column-container] {
+    height: calc(100% - 60px - 5px);
+    width: 100%;
     overflow-x: scroll;
     overflow-y: hidden;
     white-space: nowrap;
@@ -71,25 +86,27 @@ $headerColor: #40E0E9;
     
     .margin {
         width: 25%;
-        height: 100%;
+        height: calc(100% - 60px);
         display: inline-block;
+    }
+
+    & > * {
+        height: 100%;
+        width: 50%;
+        margin: 5px 10px; 
+        display: inline-block;
+        // scroll-snap-align: center;
+        
     }
 }
 
-[id^=app-column-wrapper] {
-    height: 100%;
-    width: 50%;
-    display: inline-block;
-    // scroll-snap-align: center;
-    
-}
+
 
 [class^=app-column] {
     height: 100%;
     width: 100%;
     overflow: scroll;
     // white-space: initial;
-    margin: 0px 10px;
     border: 1px solid #DDD;
     border-radius: 8px;
     background-color: #FFF;

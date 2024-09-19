@@ -12,7 +12,7 @@ import {DataFetcher} from "../../../classes/DataFetcher.js";
 
 import {AccountManagerContext} from "../../../contexts_and_hooks/AccountContext.js";
 
-import {EntityPagesWithTabs} from "./EntityPagesWithTabs.js";
+import {EntityPagesWithTabs} from "./EntitySubpages.js";
 import {PagesWithTabs} from "../../PagesWithTabs.js";
 import {
   EntityID, EntityTitle, ContextDisplay, EntityLink

@@ -202,7 +202,8 @@ export const MainPage = (props) => {
     let currColSpec = specStore[colKeyArr[currInd]];
     let newPath = currColSpec.entID ? "e" + currColSpec.entID : "";
     window.history.pushState(null, "", newPath);
-console.log("top has changed");
+    // TODO: Refactor:
+    mainPageReducers["SCROLL_INTO_VIEW"]([], currInd);
   }, [currInd])
 
 
@@ -231,9 +232,9 @@ console.log("top has changed");
         // snapping. (But do this only when it can be tested that it doesn't
         // interfere with using arrow keys in e.g. text fields.)
       })}
-      onMouseUp={event => {
-        dispatch("self", "REACT_TO_SCROLL");
-      }}
+      // onMouseUp={event => {
+      //   dispatch("self", "REACT_TO_SCROLL");
+      // }}
       >
         <div className="margin"></div>
         {appColumns}
