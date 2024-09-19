@@ -163,9 +163,9 @@ const useStateAndReducersHelper = (
       } else {
         let thisDispatch = auxDataStore[sKey].dispatch;
         let modDispatch = getModifiedDispatch(thisDispatch);
+        let reducer = reducers[action].bind(reducers);
         setState(state => (
-          reducers[action]([state, props, contexts], input, modDispatch)
-            ?? state
+          reducer([state, props, contexts], input, modDispatch) ?? state
         ));
       }
       return;
@@ -189,9 +189,9 @@ const useStateAndReducersHelper = (
       ancSetState(input);
     } else {
       let modDispatch = getModifiedDispatch(ancDispatch);
+      let reducer = ancReducers[action].bind(ancReducers);
       ancSetState(state => (
-        ancReducers[action]([state, ancProps, ancContexts], input, modDispatch)
-          ?? state
+        reducer([state, ancProps, ancContexts], input, modDispatch) ?? state
       ));
     }
     return;

@@ -81,7 +81,7 @@ const mainPageReducers = {
     return [columnContainer, pos, childPosArr];
   },
 
-  "REACT_TO_SCROLL": ([state], input, dispatch) => {
+  "REACT_TO_SCROLL": ([state], input, dispatch) => {debugger;
     // Get the column container and the positions.
     const [, pos, childPosArr] = this.getColumnContainerAndPositions();
     // And get the center position of the column container.
@@ -117,7 +117,7 @@ const mainPageReducers = {
     // automatically scrolling it into view.
     if (
       absOffSet < PX_TO_CENTER_BEFORE_CHANGING_CURR_IND_ON_SCROLL ||
-      (DATE.now() - state.lastScrollAt) >
+      (Date.now() - state.lastScrollAt) >
         TIME_BEFORE_ALWAYS_GOING_TO_CLOSEST_COLUMN
     ) {
       return this["UPDATE_CURR_IND"]([state], closestInd);
