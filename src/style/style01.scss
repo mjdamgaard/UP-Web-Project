@@ -90,13 +90,18 @@ $headerColor: #40C8F0;
         display: inline-block;
     }
 
+    // .app-column-wrapper:
     & > * {
         height: 100%;
-        width: 50%;
-        margin: 5px 10px; 
+        width: min(1000px, 95%);
+        margin: 5px min(10px, 0.5%); 
         display: inline-block;
         // scroll-snap-align: center;
         
+        // Disable all pointer events for descendants of inactive columns.
+        &:not(.active) * {
+            pointer-events: none;
+        }
     }
 }
 

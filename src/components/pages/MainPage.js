@@ -187,14 +187,14 @@ export const MainPage = (props) => {
     specStore,
     nonce,
     currInd,
-    scrollLeft, scrollVelocity, lastScrollAt,
+    // scrollLeft, scrollVelocity, lastScrollAt,
 
   }, dispatch, passData] = useStateAndReducers({
     colKeyArr: [0, 1],
     specStore: {"0": {entID: HOME_ENTITY_ID}, "1": {entID: 1}},
     nonce: 1,
     currInd: 0,
-    scrollLeft: 0, scrollVelocity: 0, lastScrollAt: 0,
+    // scrollLeft: 0, scrollVelocity: 0, lastScrollAt: 0,
 
   }, props, mainPageReducers);
 
@@ -204,6 +204,9 @@ export const MainPage = (props) => {
     window.history.pushState(null, "", newPath);
     // TODO: Refactor:
     mainPageReducers["SCROLL_INTO_VIEW"]([], currInd);
+    window.onresize = (event) => {
+      mainPageReducers["SCROLL_INTO_VIEW"]([], currInd);
+    };
   }, [currInd])
 
 
@@ -211,7 +214,14 @@ export const MainPage = (props) => {
   const appColumns = colKeyArr.map((colKey, ind) => {
     let colSpec = specStore[colKey];
     return (
-      <div key={colKey} id={"app-column-wrapper-" + colKey}>
+      <div key={colKey} id={"app-column-wrapper-" + colKey}
+        className={(currInd === ind) ? " active" : ""}
+        onClick={
+          (currInd === ind) ? null : () => {
+            dispatch("self", "UPDATE_CURR_IND", ind);
+          }
+        }
+      >
         <AppColumn colKey={colKey} colSpec={colSpec} />
       </div>
     );
@@ -224,14 +234,17 @@ export const MainPage = (props) => {
         colKeyArr={colKeyArr} specStore={specStore} currInd={currInd}
       />
       <div className="column-container"
-      onScroll={(event => {
-        let {scrollLeft} = event.target;
-        dispatch("self", "UPDATE_SCROLL", scrollLeft);
-        // TODO: Also at some point add click event rather than using the
-        // scroll snap property, since it is unresponsive for too long after
-        // snapping. (But do this only when it can be tested that it doesn't
-        // interfere with using arrow keys in e.g. text fields.)
-      })}
+      // onresize={event => {debugger;
+      //   mainPageReducers["SCROLL_INTO_VIEW"]([], currInd);
+      // }}
+      // onScroll={(event => {
+      //   let {scrollLeft} = event.target;
+      //   dispatch("self", "UPDATE_SCROLL", scrollLeft);
+      //   // TODO: Also at some point add click event rather than using the
+      //   // scroll snap property, since it is unresponsive for too long after
+      //   // snapping. (But do this only when it can be tested that it doesn't
+      //   // interfere with using arrow keys in e.g. text fields.)
+      // })}
       // onMouseUp={event => {
       //   dispatch("self", "REACT_TO_SCROLL");
       // }}
