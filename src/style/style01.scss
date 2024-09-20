@@ -63,20 +63,20 @@ $headerColor: #40C8F0;
 
 
 
-[class^=main-page] {
+.main-page {
     height: 100%;
     width: 100%;
     // display: flex;
     // flex-direction: column;
 }
 
-[class^=interface-header] {
+.interface-header {
     height: 60px;
     margin: 0;
 }
 
 
-[class^=column-container] {
+.column-container {
     height: calc(100% - 60px - 5px);
     width: 100%;
     overflow-x: scroll;
@@ -84,17 +84,20 @@ $headerColor: #40C8F0;
     white-space: nowrap;
     // scroll-snap-type: x mandatory;
     
-    .margin {
+    & > .margin {
         width: 25%;
-        height: calc(100% - 60px);
+        height: 100%;
         display: inline-block;
     }
 
     // .app-column-wrapper:
-    & > * {
+    & > *:not(.margin) {
         height: 100%;
-        width: min(1000px, 95%);
-        margin: 5px min(10px, 0.5%); 
+        width: min(1000px, 90%);
+        margin: 0.2%;
+        @media only screen and (min-width: 1000px) {
+            margin: 10px;
+        }
         display: inline-block;
         // scroll-snap-align: center;
         
@@ -107,7 +110,7 @@ $headerColor: #40C8F0;
 
 
 
-[class^=app-column] {
+.app-column {
     height: 100%;
     width: 100%;
     overflow: scroll;

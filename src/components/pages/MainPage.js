@@ -178,7 +178,7 @@ const mainPageReducers = {
 
 
 const COLUMN_LIST_CONTAINER_SELECTOR = ".column-container";
-const COLUMN_POSTERIOR_SELECTOR = "[id^=app-column-wrapper]";
+const COLUMN_POSTERIOR_SELECTOR = ".app-column-wrapper";
 
 
 export const MainPage = (props) => {
@@ -214,8 +214,9 @@ export const MainPage = (props) => {
   const appColumns = colKeyArr.map((colKey, ind) => {
     let colSpec = specStore[colKey];
     return (
-      <div key={colKey} id={"app-column-wrapper-" + colKey}
-        className={(currInd === ind) ? " active" : ""}
+      <div key={colKey} className={
+        "app-column-wrapper" + ((currInd === ind) ? " active" : "")
+      }
         onClick={
           (currInd === ind) ? null : () => {
             dispatch("self", "UPDATE_CURR_IND", ind);
