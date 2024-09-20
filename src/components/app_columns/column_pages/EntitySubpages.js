@@ -27,6 +27,7 @@ import {
   SimpleInstListGenerator, MaxRatingInstListCombiner
 } from "../../../classes/InstListGenerator.js";
 
+import {MetadataDisplay} from "../../entity_metadata/MetadataDisplay.js";
 
 
 /* Placeholders */
@@ -44,12 +45,12 @@ import {
 // const CategoryInstancesPage = () => <template></template>;
 const SubmitInstanceField = () => <template></template>;
 const CategoryDisplay = () => <template></template>;
-const EntityMetaPage = () => <template></template>;
+const EntityMetaPage = () => <MetadataDisplay />;
 // const PropStructDisplayPlaceholder = () => <span></span>;
 
 
 
-export const EntityPagesWithTabs = (props) => {
+export const EntitySubpages = (props) => {
   var {entID, classID, initTab} = props;
 
   const [dispatch, passData] = useDispatch(props, {});
@@ -107,6 +108,7 @@ export const EntityPagesWithTabs = (props) => {
         {/* <div><EntityIDDisplay entID={entID} /></div> */}
       </div>
       <PagesWithTabs tabDataArr={tabDataArr} initTab={initTab} />
+      <MetadataDisplay entID={entID} />
     </div>
   );
 
@@ -128,7 +130,7 @@ export const EntityPagesWithTabs = (props) => {
 
 function getTabDataArrAndDefaultTab(entID, classID) {
   let tabDataArr = [
-    ["Meta", <EntityMetaPage entID={entID} typeID={classID} />],
+    ["Meta", <MetadataDisplay entID={entID} />],
     // ["Info", <EntityInfoPage entID={entID} typeID={classID} />],
     // ["Ratings", <EntityRatingsPage entID={entID} typeID={classID} />],
     // ["Related to", <PropertyCategoryPage entID={entID} propID={42} />],

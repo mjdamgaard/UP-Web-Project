@@ -217,11 +217,13 @@ export const MainPage = (props) => {
       <div key={colKey} className={
         "app-column-wrapper" + ((currInd === ind) ? " active" : "")
       }
-        onClick={
-          (currInd === ind) ? null : () => {
+        onClick={() => {
+          if (currInd === ind) {
+            mainPageReducers["SCROLL_INTO_VIEW"]([], ind);
+          } else {
             dispatch("self", "UPDATE_CURR_IND", ind);
           }
-        }
+        }}
       >
         <AppColumn colKey={colKey} colSpec={colSpec} />
       </div>

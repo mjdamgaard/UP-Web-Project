@@ -317,10 +317,14 @@ function getIsReactComponent(element) {
 
 function getElementType(element) {
   let type = element.type;
+  if (type === undefined) {
+    console.log(element);
+    throw "getElementType: Unhandled React element type";
+  }
   if (typeof type === "string") {
     return [type, false];
   }
-  else if (type.name) {
+  if (type.name) {
     return [type.name, true];
   }
   if (type.toString() === "Symbol(react.fragment)") {

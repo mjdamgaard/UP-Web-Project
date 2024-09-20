@@ -104,6 +104,7 @@ $headerColor: #40C8F0;
         // Disable all pointer events for descendants of inactive columns.
         &:not(.active) * {
             pointer-events: none;
+            opacity: 0.92;
         }
     }
 }

@@ -12,7 +12,7 @@ import {DataFetcher} from "../../../classes/DataFetcher.js";
 
 import {AccountManagerContext} from "../../../contexts_and_hooks/AccountContext.js";
 
-import {EntityPagesWithTabs} from "./EntitySubpages.js";
+import {EntitySubpages} from "./EntitySubpages.js";
 import {PagesWithTabs} from "../../PagesWithTabs.js";
 import {
   EntityID, EntityTitle, ContextDisplay, EntityLink
@@ -89,45 +89,7 @@ export const EntityPage = (props) => {
   //   u: ...,
   // });
   
-  // // TODO: Remove: Temporary module while refactoring and debugging:
-  // var typeID, cxtID;
-  // return passData(
-  //   <div className="entity-page">
-  //     <div className="entity-page-header">
-  //       <h4>Entity title:</h4>
-  //       foo 
-  //       {"bar"}
-  //       <h2><EntityTitle entID={entID} /></h2>
-  //       <h2>Test links</h2>
-  //       <div>
-  //         <EntityLink entID={12}>
-  //           to entity @12
-  //         </EntityLink>
-  //       </div>
-  //       <div>
-  //         <EntityLink entID={13}>
-  //           to entity @13
-  //         </EntityLink>
-  //       </div>
-  //       <div>
-  //         <EntityLink entID={14}>
-  //           to entity @14
-  //         </EntityLink>
-  //       </div>
-  //       {/* Doesn't change path: */}
-  //       {/* <Link to={{search:"?e=13"}}>to entity #13</Link>*/}
-
-  //       {/* <div className="full-title">
-  //           <EntityDataFetcher
-  //             entID={entID} ChildModule={PropStructDisplay} extraProps={{}}
-  //           />
-  //       </div> */}
-  //       {/* <div><EntityIDDisplay entID={entID} /></div> */}
-  //     </div>
-  //     {/* <PagesWithTabs tabDataArr={tabDataArr} initTab={initTab} /> */}
-  //   </div>
-  // );
-
+ 
 
   // // Construct the tabs on the EntityPage.
   // const [tabDataArr, defaultTab] = getTabDataArrAndDefaultTab(
@@ -146,7 +108,7 @@ export const EntityPage = (props) => {
         </div>
         <div><EntityIDDisplay entID={entID} /></div>
       </div>
-      <EntityPagesWithTabs entID={entID} classID={classID} />
+      <EntitySubpages entID={entID} classID={classID} />
     </div>
   );
 };
