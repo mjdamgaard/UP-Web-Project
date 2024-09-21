@@ -1,7 +1,8 @@
 
 /* Ratings */
-DROP TABLE MonadicRatings;
-DROP TABLE RelationalRatings;
+DROP TABLE AtomicStatementScores;
+DROP TABLE PredicativeStatementScores;
+DROP TABLE RelationalStatementScores;
 
 DROP TABLE RecordedInputs;
 
@@ -30,100 +31,108 @@ DROP TABLE Private_EMails;
 
 /* Semantic inputs are the statements that the users (or aggregation bots) give
  * as input to the semantic network. A central feature of this semantic system
- * is that all such statements come with a numerical value which represents the
- * degree to which the user deems that the statement is correct (like when
- * answering a survey).
- * The statements in this system are always formed from a tag entity and an
- * instance entity. The user thus states that the latter is an instance of the
- * given tag. The rating then tells how well the tag first the instance.
+ * is that all such statements come with a numerical value which qualifies
+ * the statement.
  **/
-CREATE TABLE MonadicRatings (
-    -- User (or bot) who rates the rating scale.
+
+
+CREATE TABLE AtomicStatementScores (
+    -- User (or bot) who scores the statement.
     user_id BIGINT UNSIGNED NOT NULL,
 
-    -- Tag that the subject is rated in relation to.
-    tag_id BIGINT UNSIGNED NOT NULL,
+    -- Statement.
+    stmt_id BIGINT UNSIGNED NOT NULL,
 
-    -- Rating value of how well the tag fits the entity. The rating typically
-    -- runs on a scale from -100 to 100, where -100 normally means
-    -- 'absolutely/perfectly not,' 0 means 'doesn't particularly fit or not
-    -- fit,' and 100 means 'absolutely/perfectly.'
-    rat_val FLOAT UNSIGNED NOT NULL,
+    -- Score value. This value qualifies the statement. It might represent a
+    -- grade that scores the statement on some grading scale, or a likelihood
+    -- of how probable the stmt is, or it might even represent a quantity. For
+    -- instance 'x costs money' might be qualified by a score in units of the
+    -- money that x is believed to cost.
+    score_val FLOAT NOT NULL,
 
-    -- The subject that is rated in relation to the tag.
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    -- Rating error (std. deviation) exponent. This number is divided by some
-    -- integer before being substituted in sigma = 2^x.
-    rat_err_exp TINYINT NOT NULL,
-
-    -- Resulting semantic input: "User #<user_id> states that entity 
-    -- #<subj_id> fits the tag #<tag_id> on a scale specified
-    -- by the tag/relation entity (or by its class).
+    -- Rating error (standard deviation).
+    score_err FLOAT UNSIGNED NOT NULL,
 
     PRIMARY KEY (
         user_id,
-        tag_id,
-        rat_val,
+        stmt_id
+    )
+
+    -- Still better to use a bot for this instead:
+    -- -- Index to look up users who has rated the statement.
+    -- UNIQUE INDEX (stmt_id, score_val, score_err, user_id)
+);
+
+
+CREATE TABLE PredicativeStatementScores (
+    -- User (or bot) who scores the statement.
+    user_id BIGINT UNSIGNED NOT NULL,
+
+    -- Predicate that forms the statement together with the subject.
+    pred_id BIGINT UNSIGNED NOT NULL,
+
+    -- Subject that forms the statement together with the predicate.
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    -- --"--
+    score_val FLOAT NOT NULL,
+    -- --"--
+    score_err FLOAT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (
+        user_id,
+        pred_id,
+        score_val,
         subj_id,
-        rat_err_exp
+        score_err
     ),
 
     -- Index to look up specific rating (and restricting one rating pr. user.)
-    UNIQUE INDEX (user_id, tag_id, subj_id)
+    UNIQUE INDEX (user_id, pred_id, subj_id)
 
     -- Still better to use a bot for this instead:
     -- -- Index to look up users who has rated the stmt / rating scale.
-    -- UNIQUE INDEX (tag_id, subj_id, rat_val, rat_err_exp, user_id)
+    -- UNIQUE INDEX (pred_id, subj_id, score_val, score_err, user_id)
 );
 
 
 
-CREATE TABLE RelationalRatings (
-    -- User (or bot) who states the statement.
+CREATE TABLE RelationalStatementScores (
+    -- User (or bot) who scores the statement.
     user_id BIGINT UNSIGNED NOT NULL,
 
-    -- Object that that the relational takes to produce a monadic tag.
-    obj_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    -- Relation that forms the stmt together with the object and subject.
+    rel_id BIGINT UNSIGNED NOT NULL,
 
-    -- Tag that the subject is rated in relation to, specified by the object.
-    tag_id BIGINT UNSIGNED NOT NULL,
+    -- Object that forms the stmt together with the relation and subject.
+    obj_id BIGINT UNSIGNED NOT NULL,
 
-    -- Rating value of how well the tag fits the entity. The rating typically
-    -- runs on a scale from -100 to 100, where -100 normally means
-    -- 'absolutely/perfectly not,' 0 means 'doesn't particularly fit or not
-    -- fit,' and 100 means 'absolutely/perfectly.'
-    rat_val FLOAT UNSIGNED NOT NULL,
-
-    -- The subject that is rated in relation to the tag(object).
+    -- Subject that forms the stmt together with the relation and object.
     subj_id BIGINT UNSIGNED NOT NULL,
 
-    -- Rating error (std. deviation) exponent. This number is divided by some
-    -- integer before being substituted in sigma = 2^x.
-    rat_err_exp TINYINT NOT NULL,
-
-    -- Resulting semantic input: "User #<user_id> states that entity 
-    -- #<subj_id> fits the tag #<tag_id>(#<obj_id>) on a scale specified
-    -- by the tag/relation entity (or by its class).
+    -- --"--
+    score_val FLOAT NOT NULL,
+    -- --"--
+    score_err FLOAT UNSIGNED NOT NULL,
 
     PRIMARY KEY (
         user_id,
         obj_id,
-        tag_id,
-        rat_val,
+        rel_id,
+        score_val,
         subj_id,
-        rat_err_exp
+        score_err
     ),
 
     -- Index to look up specific rating (and restricting one rating pr. user.)
-    UNIQUE INDEX (user_id, obj_id, tag_id, subj_id)
+    UNIQUE INDEX (user_id, obj_id, rel_id, subj_id)
 
     -- Still better to use a bot for this instead:
     -- -- Index to look up users who has rated the stmt / rating scale.
-    -- UNIQUE INDEX (obj_id, tag_id, subj_id, rat_val, rat_err_exp, user_id)
+    -- UNIQUE INDEX (obj_id, rel_id, subj_id, score_val, score_err, user_id)
 
     -- All relations are directional, so we don't need:
-    -- UNIQUE INDEX (user_id, subj_id, tag_id, obj_id)
+    -- UNIQUE INDEX (user_id, subj_id, rel_id, obj_id)
 );
 
 -- TODO: Compress these tables and their sec. index, as well as other tables
@@ -192,7 +201,7 @@ CREATE TABLE Entities (
     -- Entity ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- Class ID: An entity that represents the class of this entity.
+    -- Class ID: An entity that represents the main class of this entity.
     class_id BIGINT UNSIGNED NOT NULL,
     CHECK (class_id != 0),
 
@@ -215,20 +224,21 @@ CREATE TABLE Entities (
     -- ('|' is escaped by '\|'.)
     -- One can also use '%s' instead, which is substituted by the whole string
     -- (and '|' is then not taken as a special character).
-    template_string_inputs VARCHAR(255) NOT NULL DEFAULT "",
+    template_string_inputs VARCHAR(255)
+    CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "",
     -- TODO: Collate uft-8_bin.
 
-    -- Own property data structure (struct) containing the specific properties
+    -- Other properties: A data structure containing the specific properties
     -- of this entity, and formatted as a JSON object. If a property value is
     -- an array, it is interpreted as a set (used for one-to-many properties,
     -- such as e.g. movie->actor). An array nested directly inside of an array
     -- is interpreted as a ordered list, however. (When in doubt of whether to
     -- define an entity via an ordered list or a set, use a set.) 
-    own_prop_struct TEXT(1000) DEFAULT NULL, -- (Can be resized.)
-    own_prop_struct_hash VARCHAR(56) NOT NULL DEFAULT (
+    other_props TEXT(1000) DEFAULT NULL, -- (Can be resized.)
+    other_props_hash VARCHAR(56) NOT NULL DEFAULT (
         CASE
-            WHEN own_prop_struct IS NULL OR own_prop_struct = "" THEN ""
-            ELSE SHA2(own_prop_struct, 224)
+            WHEN other_props IS NULL OR other_props = "" THEN ""
+            ELSE SHA2(other_props, 224)
         END
     ),
 
@@ -237,12 +247,12 @@ CREATE TABLE Entities (
     -- want to only serve to the client upon specific request, and not whenever
     -- the client looks up defining data for the entity. This inputs either
     -- replaces the '%b' or '%t' placeholder ('b' for binary, 't' for text) in
-    -- the format, which is in the own_prop_struct of the template_id entity,
+    -- the format, which is in the other_props of the template_id entity,
     -- or it is also split into multiple strings using '|'
     -- as a delimiter, in case of the '%t<num>' placeholders. ('|' is also
     -- escaped by '\|' here.)
     -- If the entity has no template (template_id = 0), then data_input is
-    -- always interpreted as the 'description' of the entity.
+    -- always interpreted as the (text) 'description' of the entity.
     data_input LONGBLOB DEFAULT NULL,
     data_input_hash VARCHAR(56) NOT NULL DEFAULT (
         CASE
@@ -255,7 +265,7 @@ CREATE TABLE Entities (
 
 
     UNIQUE INDEX (
-        class_id, template_id, data_input_hash, own_prop_struct_hash,
+        class_id, template_id, data_input_hash, other_props_hash,
         template_entity_inputs, template_string_inputs
     ),
 
@@ -275,113 +285,120 @@ INSERT INTO Entities (
     own_prop_struct, data_input
 )
 VALUES
-    -- TODO: Add 'initial description's (with data_input text as the value).
     (1, 1, 0, '', '', CONCAT(
-        '{"title":"class"}'
+        '{"title":"Class"}'
     ), CONCAT(
-        "A class of all class entities, including this entity itself."
-        -- " One benefit of using entities as classes, rather than just writing ",
-        -- "a string (like the value of the 'title' property of this entity, ",
-        -- "which is 'class'), is that they can provide an additional ",
-        -- "description to the class, like the one that you are reading now."
+        "A class of all 'Class' entities, including this entity itself."
     )),
     (2, 1, 0, '', '', CONCAT(
-        '{"title":"tag"}'
+        '{"title":"Entity"}'
     ), CONCAT(
-        "A class of the so-called 'tags,' which are essential to this ",
-        "semantic system. A tag is essentially a function that takes ",
-        "an 'instance' (of any given class) entity and produces a rating ",
-        "scale, which can e.g. ",
-        "be how good a product or a piece of media is, perhaps measured on a ",
-        "scale from 1 to 5 stars, how durable a product is, perhaps measured ",
-        "in months, or how much it generally costs, perhaps measured in USD. ",
-        "For every pair of tag and subject, the users can then rate the ",
-        "resulting rating scale. If a tag has no specific ",
-        "description of the scale, then the default interpretation is a ",
-        "1–5 rating scale of how well the tag fits the given instance. ",
-        "The description of the rating scale can be defined by the tag ",
-        "entity itself, or by its class, or by the relation entity if it is ",
-        "formed by a relation and a subject."
+        "A class of all entities, including this entity itself."
     )),
     (3, 1, 0, '', '', CONCAT(
-        '{"title":"template"}'
+        '{"title":"Statement"}'
     ), CONCAT(
-        "A class of the so-called 'templates,' which are entities that ",
-        "can be used to define new entities with property structs that ",
+        "A class of all 'Statement' entities, which can be scored by the ",
+        "users in order to express their opinions and beliefs. ",
+        "A statement can for instance be '<Movie> is funny,' which might ",
+        "be scored by the users on a grading scale (A, B, C, D, F). ",
+        "It can also be something like '<Movie> is an animated movie,' which ",
+        "might then be scored on a true–false scale (i.e. a likelihood ",
+        "scale) instead. ",
+        "Or it can be a statement concerning some quantity, such as ",
+        "'<Movie> has a length of x h,' where x here is taken to reference ",
+        "the score itself with which that the users can qualify the ",
+        "statement. ",
+        "Note that it is the job of a Statement entity to define the scale ",
+        "that it is qualified by."
+    )),
+    (4, 1, 0, '', '', CONCAT(
+        '{"title":"Predicate"}'
+    ), CONCAT(
+        "A class of all 'Predicate' entities, which can be combined with a ",
+        "another 'subject' entity in order to form a @3 entity. ",
+        "Predicates must not require any specification other than said ",
+        "subject entity in order to form a well-formed @3 entity."
+    )),
+    (5, 1, 0, '', '', CONCAT(
+        '{"title":"Relation"}'
+    ), CONCAT(
+        "A class of all 'Relation' entities, which can be combined with a ",
+        "another 'object' entity in order to form a @4 entity. ",
+        "Relations must not require any specification other than said ",
+        "object entity in order to form a well-formed @4 entity. ",
+        "Note that since predicates also takes a subject in order to form a ",
+        "@3 entity, this means that relations are essentially binary ",
+        "functions that returns a statement."
+    )),
+    (6, 1, 0, '', '', CONCAT(
+        '{"title":"Template"}'
+    ), CONCAT(
+        "A class of all 'Template' entities, which ",
+        "can be used to define new entities with defining data that ",
         "follow a specific template format. The only property that defines an ",
         "entity of this 'template' class ",
         "is the 'format' property, which is a variable property structure ",
         "that has placeholders for substitution. ...TODO: Continue."
     )),
-    (4, 1, 0, '', '', CONCAT(
-        '{"title":"user"}'
+    (7, 1, 0, '', '', CONCAT(
+        '{"title":"User"}'
     ), CONCAT(
         "A class of the users of this Semantic Network. Whenever a ",
         "new user is created, an entity of this 'user' class is created to ",
         "represent this new user."
     )),
-    (5, 3, 0, '', '', CONCAT(
-        '{"format":{"username":"%s"}}' -- "class":"@4"
+    (8, 6, 0, '', '', CONCAT(
+        '{"format":{"username":"%s"}}' -- "class":"@7"
     ), NULL),
-    (6, 3, 0, '', '', CONCAT(
-        '{"format":{"title":"%s"}}'
-    ), NULL),
-    (7, 1, 0, '', '', CONCAT(
-        '{"title":"relation"}'
-    ), CONCAT(
-        "A class of so-called 'relation,' which are essentially functions ",
-        "that take a subject entity, perhaps of a specified class, and ",
-        "produces a ",
-        "tag. This tag can then be used to create a rating scale, often ",
-        "saying how well the relation fits the subject entity and the object ",
-        "entity, which is the entity that is being rated as the instance of ",
-        "the tag."
+    (9, 1, 0, '', '', CONCAT(
+        '{"title":"Text"}'
+    ),  CONCAT(
+        "A class of texts. These are all strings of characters that has some ",
+        "(at least partial) meaning attached to them."
     )),
-    (8, 1, 0, '', '', CONCAT(
-        '{"superclass":"@7","title":"property relation"}'
-    ), CONCAT(
-        "A class of so-called 'property relations,' which constitute a ",
-        "standard way ",
-        "to make semantic relations in this semantic system. A property ",
-        "relation is ",
-        "always represented by a singular (potentially composite) noun. ",
-        "For instance, a movie might have an 'director' property. ",
-        "And the 'property relation' class being defined here can be seen to ",
-        "have both a 'class', a 'superclass', and a 'title' ",
-        "property. Note that when defining a new entity, you don't ",
-        "necessarily need this class, since any string like 'director' or ",
-        "'class' will automatically be interpreted as a property anyway. ",
-        "This class ought therefore only be used when wanting to further ",
-        "elaborate on what exactly the given property means, what its ",
-        "value(s) should be, and potentially also information about how the ",
-        "rating scale of the resulting tags are supposed to be interpreted."
+    (10, 1, 0, '', '', CONCAT(
+        '{"title":"Lexical item","superclass":"@9"}'
+    ),  CONCAT(
+        "A class of lexical items, which are any part of a sentence that can ",
+        "be said to have a meaning of its own, even if it cannot stand alone ",
+        "in a well-formed sentence. An example is a compound verb. ",
+        "Lexical items form a general class of what one might look up in a ",
+        "an extended dictionary that also includes things like phrases, and ",
+        "not just words." 
     )),
-    (9, 3, 0, '', '', CONCAT(
+    (11, 1, 0, '', '', CONCAT(
+        '{"title":"Word","superclass":"@10"}'
+    ),  CONCAT(
+        "A class of words. This class also includes compound words such as ",
+        "e.g. 'apple tree' and 'turned off.' Proper nouns are also included." 
+    )),
+    (12, 6, 0, '', '', CONCAT(
         -- "class":"@8"
-        '{"format":{"title":"%s",",
+        '{"format":{"subject noun":"%s",",
         "object class":"%e1" "subject class":"%e2","description":"%t"}}'
     ), NULL),
-    (10, 1, 0, '', '', CONCAT(
-        '{"superclass":"@2","title":"property tag"}'
-    ), CONCAT(
-        "A class of 'property tags,' which are tags of a very specific ",
-        "structure used to form semantic relations in this semantic system. ",
-        "A property tag is always constructed from just a 'property' entity ",
-        "(of the 'property relation' class) and another 'subject' entity ",
-        "(of any class). The resulting rating scale is then how well the ",
-        "given instance entity fits the given property of the subject entity. "
-        "For instance, we might have a movie entity as our subject entity, ",
-        "and 'director' as our property entity, and have 'John Doe' ",
-        "as the instance entity, which says that John Doe is the ",
-        "director of the given movie. If the property entity has no ",
-        "further description, then the rating scale is just a 1–5 scale of ",
-        "how well the ",
-        "instance (e.g. John Doe) fits the given tag, e.g. the 'director ",
-        "of the given movie.' But the property entity might also specify ",
-        "this rating further in its description. (For instance, it might ", 
-        "specify that the main director always ought to be given 5 stars on ",
-        "the rating scale from 1 to 5, e.g.)"
-    )),
+    -- (10, 1, 0, '', '', CONCAT(
+    --     '{"superclass":"@2","title":"property tag"}'
+    -- ), CONCAT(
+    --     "A class of 'property tags,' which are tags of a very specific ",
+    --     "structure used to form semantic relations in this semantic system. ",
+    --     "A property tag is always constructed from just a 'property' entity ",
+    --     "(of the 'property relation' class) and another 'subject' entity ",
+    --     "(of any class). The resulting rating scale is then how well the ",
+    --     "given instance entity fits the given property of the subject entity. "
+    --     "For instance, we might have a movie entity as our subject entity, ",
+    --     "and 'director' as our property entity, and have 'John Doe' ",
+    --     "as the instance entity, which says that John Doe is the ",
+    --     "director of the given movie. If the property entity has no ",
+    --     "further description, then the rating scale is just a 1–5 scale of ",
+    --     "how well the ",
+    --     "instance (e.g. John Doe) fits the given tag, e.g. the 'director ",
+    --     "of the given movie.' But the property entity might also specify ",
+    --     "this rating further in its description. (For instance, it might ", 
+    --     "specify that the main director always ought to be given 5 stars on ",
+    --     "the rating scale from 1 to 5, e.g.)"
+    -- )),
     (11, 3, 0, '', '', CONCAT(
         '{"format":{',
             -- '"class":"@10",',
