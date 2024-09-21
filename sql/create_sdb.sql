@@ -234,7 +234,7 @@ CREATE TABLE Entities (
     -- such as e.g. movie->actor). An array nested directly inside of an array
     -- is interpreted as a ordered list, however. (When in doubt of whether to
     -- define an entity via an ordered list or a set, use a set.) 
-    other_props TEXT(1000) DEFAULT NULL, -- (Can be resized.)
+    other_props TEXT(10000) DEFAULT NULL, -- (Can be resized.)
     other_props_hash VARCHAR(56) NOT NULL DEFAULT (
         CASE
             WHEN other_props IS NULL OR other_props = "" THEN ""
@@ -303,14 +303,17 @@ VALUES
         "A statement can for instance be '<Movie> is funny,' which might ",
         "be scored by the users on a grading scale (A, B, C, D, F). ",
         "It can also be something like '<Movie> is an animated movie,' which ",
-        "might then be scored on a true–false scale (i.e. a likelihood ",
+        "might then be scored on a true-false scale (i.e. a likelihood ",
         "scale) instead. ",
         "Or it can be a statement concerning some quantity, such as ",
         "'<Movie> has a length of x h,' where x here is taken to reference ",
         "the score itself with which that the users can qualify the ",
         "statement. ",
         "Note that it is the job of a Statement entity to define the scale ",
-        "that it is qualified by."
+        "that it is qualified by. "
+        "And unless otherwise specified (by the @13 subclass), statements ",
+        "Always talk about the thing that the entity represents, and not the ",
+        "representation itself."
     )),
     (4, 1, 0, '', '', CONCAT(
         '{"title":"Predicate"}'
@@ -386,18 +389,40 @@ VALUES
         "into defining the scales that qualifies the @3 entities when these ",
         "are scored by the users."
     )),
-    (13, 6, 0, '', '', CONCAT(
+    (13, 1, 0, '', '', CONCAT(
+        '{"title":"Data statement","superclass":"@3"}'
+    ), CONCAT(
+        "A class of all statements that do not talk about the thing that ",
+        "the entities represent, but talk about the representation of the ",
+        "entities, i.e. the defining data of the entities in the database. "
+        "A good example is a statement saying that a subject is a more ",
+        "popular duplicate of the same entity. "
+        "Or that a subject is a better/more useful representation of the ",
+        'entity (giving us a way to essentially "edit" entities).'
+    )),
+    (14, 1, 0, '', '', CONCAT(
+        '{"title":"Data predicate","superclass":"@4"}'
+    ), CONCAT(
+        "A class of all @4 entities that is used to form @13 entities."
+    )),
+    (15, 1, 0, '', '', CONCAT(
+        '{"title":"Data relation","superclass":"@5"}'
+    ), CONCAT(
+        "A class of all @5 entities that is used to form @14 and ",
+        "@13 entities."
+    )),
+    (16, 6, 0, '', '', CONCAT(
         -- "class":"@3"
         '{"format":{"text":"%e1","scale specification":"%e2"}}'
     ), NULL),
-    (14, 6, 0, '', '', CONCAT(
+    (17, 6, 0, '', '', CONCAT(
         -- "class":"@4"
         '{"format":{"predicate":"%s","subject class":"%e2"}}'
     ), CONCAT(
         "@[Predicate] should preferably either be a (compound) adjective ",
         "or a (compound) verb."
     )),
-    (15, 6, 0, '', '', CONCAT(
+    (18, 6, 0, '', '', CONCAT(
         -- "class":"@5"
         '{"format":{"subject noun":"%s",",
         "subject class":"%e1" "object class":"%e2"}}'
