@@ -355,8 +355,13 @@ VALUES
         '{"title":"Text"}'
     ),  CONCAT(
         "A class of texts. These are all strings of characters that has some ",
-        "(at least partial) meaning attached to them."
+        "(at least partial) meaning attached to them. ",
+        "Some text entities might also have more data (metadata) about them. ",
+        "For instance, and article or a comment might also include an author ",
+        "and a date."
     )),
+    -- Note that we don't need a pure text data class/template, since we
+    -- already the ability to write texts in other_props and in data_input.
     (10, 1, 0, '', '', CONCAT(
         '{"title":"Lexical item","superclass":"@9"}'
     ),  CONCAT(
@@ -373,11 +378,35 @@ VALUES
         "A class of words. This class also includes compound words such as ",
         "e.g. 'apple tree' and 'turned off.' Proper nouns are also included." 
     )),
-    (12, 6, 0, '', '', CONCAT(
-        -- "class":"@8"
-        '{"format":{"subject noun":"%s",",
-        "object class":"%e1" "subject class":"%e2","description":"%t"}}'
+    (12, 1, 0, '', '', CONCAT(
+        '{"title":"Scale specification"}'
+    ),  CONCAT(
+        "A class the descriptions and accompanying data structures (structs) ",
+        "that goes ",
+        "into defining the scales that qualifies the @3 entities when these ",
+        "are scored by the users."
+    )),
+    (13, 6, 0, '', '', CONCAT(
+        -- "class":"@3"
+        '{"format":{"text":"%e1","scale specification":"%e2"}}'
     ), NULL),
+    (14, 6, 0, '', '', CONCAT(
+        -- "class":"@4"
+        '{"format":{"predicate":"%s","subject class":"%e2"}}'
+    ), CONCAT(
+        "@[Predicate] should preferably either be a (compound) adjective ",
+        "or a (compound) verb."
+    )),
+    (15, 6, 0, '', '', CONCAT(
+        -- "class":"@5"
+        '{"format":{"subject noun":"%s",",
+        "subject class":"%e1" "object class":"%e2"}}'
+        -- "description":"%t" is redundant.
+    ), CONCAT(
+        "@[Subject noun] should preferably be a (compound) noun. ",
+        "Plural nouns are often preferred, unless you most often expect ",
+        "there be only one subject per object for the relation."
+    )),
     -- (10, 1, 0, '', '', CONCAT(
     --     '{"superclass":"@2","title":"property tag"}'
     -- ), CONCAT(
