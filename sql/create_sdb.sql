@@ -282,7 +282,7 @@ CREATE TABLE Entities (
 
 INSERT INTO Entities (
     id, class_id, template_id, template_entity_inputs, template_string_inputs,
-    own_prop_struct, data_input
+    other_props, data_input
 )
 VALUES
     (1, 1, 0, '', '', CONCAT(
@@ -340,7 +340,7 @@ VALUES
     ), CONCAT(
         "A class of all 'Template' entities, which ",
         "can be used to define new entities with defining data that ",
-        "follow a specific template format. The only property that defines an ",
+        "follow a specific format. The only property that defines an ",
         "entity of this Template class ",
         "is the 'template' property, which is a variable property structure ",
         "that has placeholders for substitution. ...TODO: Continue."
@@ -353,7 +353,7 @@ VALUES
         "represent this new user."
     )),
     (8, 6, 0, '', '', CONCAT(
-        '{"format":{"username":"%s"}}' -- "class":"@7"
+        '{"template":{"username":"%s"}}' -- "class":"@7"
     ), NULL),
     (9, 1, 0, '', '', CONCAT(
         '{"title":"Text"}'
@@ -414,12 +414,12 @@ VALUES
     )),
     (16, 6, 0, '', '', CONCAT(
         -- "class":"@3"
-        '{"format":{"statement":"%s","scale specification@c12":"@21"}}'
+        '{"template":{"statement":"%s","scale specification@c12":"@21"}}'
     ), NULL),
     (17, 6, 0, '', '', CONCAT(
         -- "class":"@4"
-        '{"format":{"predicate":"%s","subject class@c1":"%e1",',
-        '"statement":"@subj fits @[Predicate]",',
+        '{"template":{"predicate":"%s","subject class@c1":"%e1",',
+        '"statement":"@[Subject] fits @[Predicate]",',
         '"scale specification@c12":"@22"}}'
     ), CONCAT(
         "@[Predicate] should either be a (compound) adjective ",
@@ -427,28 +427,30 @@ VALUES
     )),
     (18, 6, 0, '', '', CONCAT(
         -- "class":"@4"
-        '{"format":{"statement":"%s","subject class@c1":"%e1",',
+        '{"template":{"statement":"%s","subject class@c1":"%e1",',
         '"scale specification@c12":"@22"}}'
     ), CONCAT(
         "@[Statement] should be a complicated sentence describing a ",
-        "predicate, referring directly to '@subj'. If the predicate can be ",
-        "formulated simply as '@subj <some verb>', use @17 instead."
+        "predicate, referring directly to '@[Subject]'. If the predicate can ",
+        "be formulated simply as '@[Subject] <some verb>', use @17 instead."
     )),
     (19, 6, 0, '', '', CONCAT(
         -- "class":"@5"
-        '{"format":{"noun":"%s",',
-        "subject class@c1":"%e1","object class@c1":"%e2",
-        '"statement":"@subj is the @[Noun] of @obj",',
+        '{"template":{"noun":"%s",',
+        '"subject class@c1":"%e1","object class@c1":"%e2",',
+        '"predicate":"is the @[Noun] of @[Object]",',
+        '"statement":"@[Subject] @(predicate)",',
         '"scale specification@c12":"@21"}}'
         -- "description":"%t" is redundant.
     ), CONCAT(
-        "@[Noun] should be a singular (compound) noun.",
+        "@[Noun] should be a singular (compound) noun."
     )),
     (20, 6, 0, '', '', CONCAT(
         -- "class":"@5"
-        '{"format":{"noun (pl.)":"%s",',
-        "subject class@c1":"%e1","object class@c1":"%e2",
-        '"statement":"@subj is an important/useful instance @[Predicate]",',
+        '{"template":{"noun (pl.)":"%s",',
+        '"subject class@c1":"%e1","object class@c1":"%e2",',
+        '"predicate":"is an important/useful instance of the %s of @[Object]",',
+        '"statement":"@[Subject] @(predicate)",',
         '"scale specification@c12":"@22"}}'
         -- "description":"%t" is redundant.
     ), CONCAT(
@@ -512,71 +514,71 @@ VALUES
     --     "specify that the main director always ought to be given 5 stars on ",
     --     "the rating scale from 1 to 5, e.g.)"
     -- )),
-    (11, 3, 0, '', '', CONCAT(
-        '{"format":{',
-            -- '"class":"@10",',
-            '"subject":"%e1",',
-            '"property":"%e2",',
-        '}}'
-    ), NULL),
-    (12, 1, 0, '', '', CONCAT(
-        '{"title":"entity"}'
-    ), CONCAT(
-        "A class of all entities of this Semantic Network. All entities ",
-        "automatically has this class without needing to specify so in their ",
-        "definition."
-    )),
-    (13, 4, 5, '', 'initial_user', NULL, NULL),
-    (14, 1, 0, '', '', CONCAT(
-        '{"title":"list"}'
-    ), CONCAT(
-        "A class of all (ordered) lists. The only property of ",
-        "this class, other than the 'class' property itself, is an 'elements' ",
-        "property that includes a list of all the elements. Note that lists ",
-        "are written in property structs as e.g. '",
-        '"elements":[[elem_1, elem_2, elem_3]]',
-        "', whereas '[elem_1, elem_2, elem_3]' (with no nesting) is ",
-        "interpreted as an unordered set of valid property values (used for ",
-        "one-to-many properties)."
-    )),
-    (15, 3, 0, '', '', CONCAT(
-        '{"format":{"elements":[["%s%t"]]}' -- "class":"@14"
-    ), NULL),
-    (16, 3, 0, '', '', CONCAT(
-        -- "class":"@3"
-        '{"format":{"class":"@2","title":"%s",',
-        '"instance class":"%e1","description":"%t"}'
-    ), NULL),
-    (17, 8, 9, '8', 'relevant property', NULL, CONCAT(
-        "A property relation where the objects are the property relations ",
-        "that are relevant to the subject entity."
-    )),
-    (18, 8, 9, '8,1', 'relevant property of class instances', NULL, CONCAT(
-        "A property relation where the objects are the property relations ",
-        "that are relevant to all the instances of the subject class."
-    )),
-    (19, 10, 11, '12,18', '', NULL, NULL),
-    (20, 10, 11, '2,18', '', NULL, NULL),
-    (21, 1, 0, '', '', CONCAT(
-        '{"title":"set"}'
-    ), CONCAT(
-        "A class of all sets (unordered lists). The only property of ",
-        "this class, other than the 'class' property itself, is an 'elements' ",
-        "property holding an array of all the elements of the set. ",
-        "Note that sets are written in property structs as e.g. '",
-        '"elements":[elem_1, elem_2, elem_3]',
-        "', whereas '[[elem_1, elem_2, elem_3]]' (a nested array) is ",
-        "interpreted as a (ordered) list instead. "
-        "Whenever a set entity is the value of a property in a property ",
-        "struct, the interpretation is that all the elements fits the given ",
-        "property, not the set itself. To sey that a set entity itself is ",
-        "the value of a property, simply wrap it in another set, either ",
-        "using the '[]' syntax or by creating another set entity with the ",
-        "given set as its only element."
-    )),
-    (22, 3, 0, '', '', CONCAT(
-        '{"format":{"elements":["%s%t"]}' -- "class":"@21"
-    ), NULL),
+    -- (11, 3, 0, '', '', CONCAT(
+    --     '{"format":{',
+    --         -- '"class":"@10",',
+    --         '"subject":"%e1",',
+    --         '"property":"%e2",',
+    --     '}}'
+    -- ), NULL),
+    -- (12, 1, 0, '', '', CONCAT(
+    --     '{"title":"entity"}'
+    -- ), CONCAT(
+    --     "A class of all entities of this Semantic Network. All entities ",
+    --     "automatically has this class without needing to specify so in their ",
+    --     "definition."
+    -- )),
+    -- (13, 4, 5, '', 'initial_user', NULL, NULL),
+    -- (14, 1, 0, '', '', CONCAT(
+    --     '{"title":"list"}'
+    -- ), CONCAT(
+    --     "A class of all (ordered) lists. The only property of ",
+    --     "this class, other than the 'class' property itself, is an 'elements' ",
+    --     "property that includes a list of all the elements. Note that lists ",
+    --     "are written in property structs as e.g. '",
+    --     '"elements":[[elem_1, elem_2, elem_3]]',
+    --     "', whereas '[elem_1, elem_2, elem_3]' (with no nesting) is ",
+    --     "interpreted as an unordered set of valid property values (used for ",
+    --     "one-to-many properties)."
+    -- )),
+    -- (15, 3, 0, '', '', CONCAT(
+    --     '{"format":{"elements":[["%s%t"]]}' -- "class":"@14"
+    -- ), NULL),
+    -- (16, 3, 0, '', '', CONCAT(
+    --     -- "class":"@3"
+    --     '{"format":{"class":"@2","title":"%s",',
+    --     '"instance class":"%e1","description":"%t"}'
+    -- ), NULL),
+    -- (17, 8, 9, '8', 'relevant property', NULL, CONCAT(
+    --     "A property relation where the objects are the property relations ",
+    --     "that are relevant to the subject entity."
+    -- )),
+    -- (18, 8, 9, '8,1', 'relevant property of class instances', NULL, CONCAT(
+    --     "A property relation where the objects are the property relations ",
+    --     "that are relevant to all the instances of the subject class."
+    -- )),
+    -- (19, 10, 11, '12,18', '', NULL, NULL),
+    -- (20, 10, 11, '2,18', '', NULL, NULL),
+    -- (21, 1, 0, '', '', CONCAT(
+    --     '{"title":"set"}'
+    -- ), CONCAT(
+    --     "A class of all sets (unordered lists). The only property of ",
+    --     "this class, other than the 'class' property itself, is an 'elements' ",
+    --     "property holding an array of all the elements of the set. ",
+    --     "Note that sets are written in property structs as e.g. '",
+    --     '"elements":[elem_1, elem_2, elem_3]',
+    --     "', whereas '[[elem_1, elem_2, elem_3]]' (a nested array) is ",
+    --     "interpreted as a (ordered) list instead. "
+    --     "Whenever a set entity is the value of a property in a property ",
+    --     "struct, the interpretation is that all the elements fits the given ",
+    --     "property, not the set itself. To sey that a set entity itself is ",
+    --     "the value of a property, simply wrap it in another set, either ",
+    --     "using the '[]' syntax or by creating another set entity with the ",
+    --     "given set as its only element."
+    -- )),
+    -- (22, 3, 0, '', '', CONCAT(
+    --     '{"format":{"elements":["%s%t"]}' -- "class":"@21"
+    -- ), NULL),
     -- 
     (NULL, 1, 6, '', 'exAmpLe of A noT very usefuL enTiTy', NULL, NULL);
 
