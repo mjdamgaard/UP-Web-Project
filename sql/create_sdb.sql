@@ -228,6 +228,11 @@ CREATE TABLE Entities (
     CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "",
     -- TODO: Collate uft-8_bin.
 
+
+    main_props TEXT(1000) DEFAULT NULL, -- (Can be resized.)
+    CHECK (main_props != ""),
+    CHECK (template_id = 0 OR main_props IS NULL),
+
     -- Other properties: A data structure containing the specific properties
     -- of this entity, and formatted as a JSON object. If a property value is
     -- an array, it is interpreted as a set (used for one-to-many properties,
@@ -235,12 +240,8 @@ CREATE TABLE Entities (
     -- is interpreted as a ordered list, however. (When in doubt of whether to
     -- define an entity via an ordered list or a set, use a set.) 
     other_props TEXT(10000) DEFAULT NULL, -- (Can be resized.)
-    other_props_hash VARCHAR(56) NOT NULL DEFAULT (
-        CASE
-            WHEN other_props IS NULL OR other_props = "" THEN ""
-            ELSE SHA2(other_props, 224)
-        END
-    ),
+    CHECK (other_props != ""),
+    CHECK (template_id = 0 OR other_props IS NULL),
 
 
     -- Data input: A TEXT or BLOB that which can be large enough that one might
@@ -253,20 +254,30 @@ CREATE TABLE Entities (
     -- escaped by '\|' here.)
     -- If the entity has no template (template_id = 0), then data_input is
     -- always interpreted as the (text) 'description' of the entity.
-    data_input LONGBLOB DEFAULT NULL,
-    data_input_hash VARCHAR(56) NOT NULL DEFAULT (
-        CASE
-            WHEN data_input IS NULL OR data_input = "" THEN ""
-            ELSE SHA2(data_input, 224)
-        END
-    ),
+    binary_data LONGBLOB DEFAULT NULL,
+    CHECK (binary_data != ""),
+    CHECK (template_id = 0 OR binary_data IS NULL),
     -- (Any size restriction on this BLOB is implemented in the control layer,
     -- or in the interface with it, i.e. in the "input procedures.")
 
 
+    data_hash VARCHAR(56) NOT NULL DEFAULT (
+        CASE WHEN (
+            main_props IS NULL AND other_props IS NULL AND binary_data IS NULL
+        )
+        THEN ""
+        ELSE SHA2(CONCAT(
+            SHA2(IFNULL(main_props, ""), 224),
+            SHA2(IFNULL(other_props, ""), 224),
+            SHA2(IFNULL(binary_data, ""), 224)
+        ), 224)
+        END
+    ),
+
     UNIQUE INDEX (
-        class_id, template_id, data_input_hash, other_props_hash,
-        template_entity_inputs, template_string_inputs
+        class_id, template_id,
+        template_entity_inputs, template_string_inputs,
+        data_hash
     ),
 
 
@@ -282,7 +293,7 @@ CREATE TABLE Entities (
 
 INSERT INTO Entities (
     id, class_id, template_id, template_entity_inputs, template_string_inputs,
-    other_props, data_input
+    main_props, other_props
 )
 VALUES
     (1, 1, 0, '', '', CONCAT(
@@ -439,7 +450,7 @@ VALUES
         '{"template":{"noun":"%s",',
         '"subject class@c1":"%e1","object class@c1":"%e2",',
         '"predicate":"is the @[Noun] of @[Object]",',
-        '"statement":"@[Subject] @(predicate)",',
+        '"statement":"@[Subject] is the @[Noun] of @[Object]",',
         '"scale specification@c12":"@21"}}'
         -- "description":"%t" is redundant.
     ), CONCAT(
@@ -450,7 +461,8 @@ VALUES
         '{"template":{"noun (pl.)":"%s",',
         '"subject class@c1":"%e1","object class@c1":"%e2",',
         '"predicate":"is an important/useful instance of the %s of @[Object]",',
-        '"statement":"@[Subject] @(predicate)",',
+        '"statement":"@[Subject] is an important/useful instance of the %s ',
+        'of @[Object]",',
         '"scale specification@c12":"@22"}}'
         -- "description":"%t" is redundant.
     ), CONCAT(
@@ -492,6 +504,34 @@ VALUES
         "quality, D denotes 'among the bad at achieving ...', C denotes ",
         "'among the middling ...', B denotes 'among the good ...', and A ",
         "denotes 'among the best in terms of achieving the given quality'."
+    )),
+    (23, 6, 0, '', '', CONCAT(
+        -- "class":"@3"
+        '{"template":{"predicate@c4":"%e1","subject":"%e2",',
+        '"description":',
+        '"A @3c1 entity formed by applying @[Predicate] to @[Subject]."}}'
+    ), CONCAT(
+        "A template to "
+    )),
+    (24, 6, 0, '', '', CONCAT(
+        -- "class":"@13"
+        '{"template":{"predicate@c14":"%e1","subject":"%e2"}}'
+    ), CONCAT(
+        "A @13c1 entity formed by applying @[Predicate] to @[Subject]."
+    )),
+    (25, 6, 0, '', '', CONCAT(
+        -- "class":"@4"
+        '{"template":{"relation@c5":"%e1","object":"%e2",',
+        '"description":"A @4c1 entity formed by applying @[Relation] ',
+        'to @[Object]."}}'
+    ), CONCAT(
+        "A @4c1 entity formed by applying @[Relation] to @[Object]."
+    )),
+    (26, 6, 0, '', '', CONCAT(
+        -- "class":"@14"
+        '{"template":{"relation@c15":"%e1","object":"%e2"}}'
+    ), CONCAT(
+        "A @14c1 entity formed by applying @[Relation] to @[Object]."
     )),
     -- (10, 1, 0, '', '', CONCAT(
     --     '{"superclass":"@2","title":"property tag"}'
