@@ -301,7 +301,8 @@ VALUES
         "A class of all 'Statement' entities, which can be scored by the ",
         "users in order to express their opinions and beliefs. ",
         "A statement can for instance be '<Movie> is funny,' which might ",
-        "be scored by the users on a grading scale (A, B, C, D, F). ",
+        "be scored by the users on a grading scale (A, B, C, D, F), and/or "
+        "a n-star scale. ",
         "It can also be something like '<Movie> is an animated movie,' which ",
         "might then be scored on a true-false scale (i.e. a likelihood ",
         "scale) instead. ",
@@ -311,7 +312,7 @@ VALUES
         "statement. ",
         "Note that it is the job of a Statement entity to define the scale ",
         "that it is qualified by. "
-        "And unless otherwise specified (by the @13 subclass), statements ",
+        "And unless otherwise specified (by the @13c1 subclass), statements ",
         "Always talk about the thing that the entity represents, and not the ",
         "representation itself."
     )),
@@ -319,19 +320,19 @@ VALUES
         '{"title":"Predicate"}'
     ), CONCAT(
         "A class of all 'Predicate' entities, which can be combined with a ",
-        "another 'subject' entity in order to form a @3 entity. ",
+        "another 'subject' entity in order to form a @3c1 entity. ",
         "Predicates must not require any specification other than said ",
-        "subject entity in order to form a well-formed @3 entity."
+        "subject entity in order to form a well-formed @3c1 entity."
     )),
     (5, 1, 0, '', '', CONCAT(
         '{"title":"Relation"}'
     ), CONCAT(
         "A class of all 'Relation' entities, which can be combined with a ",
-        "another 'object' entity in order to form a @4 entity. ",
+        "another 'object' entity in order to form a @4c1 entity. ",
         "Relations must not require any specification other than said ",
-        "object entity in order to form a well-formed @4 entity. ",
+        "object entity in order to form a well-formed @4c1 entity. ",
         "Note that since predicates also takes a subject in order to form a ",
-        "@3 entity, this means that relations are essentially binary ",
+        "@3c1 entity, this means that relations are essentially binary ",
         "functions that returns a statement."
     )),
     (6, 1, 0, '', '', CONCAT(
@@ -340,8 +341,8 @@ VALUES
         "A class of all 'Template' entities, which ",
         "can be used to define new entities with defining data that ",
         "follow a specific template format. The only property that defines an ",
-        "entity of this 'template' class ",
-        "is the 'format' property, which is a variable property structure ",
+        "entity of this Template class ",
+        "is the 'template' property, which is a variable property structure ",
         "that has placeholders for substitution. ...TODO: Continue."
     )),
     (7, 1, 0, '', '', CONCAT(
@@ -366,7 +367,7 @@ VALUES
     -- Note that we don't need a pure text data class/template, since we
     -- already the ability to write texts in other_props and in data_input.
     (10, 1, 0, '', '', CONCAT(
-        '{"title":"Lexical item","superclass":"@9"}'
+        '{"title":"Lexical item","superclass@c1":"@9"}'
     ),  CONCAT(
         "A class of lexical items, which are any part of a sentence that can ",
         "be said to have a meaning of its own, even if it cannot stand alone ",
@@ -376,7 +377,7 @@ VALUES
         "not just words." 
     )),
     (11, 1, 0, '', '', CONCAT(
-        '{"title":"Word","superclass":"@10"}'
+        '{"title":"Word","superclass@c1":"@10"}'
     ),  CONCAT(
         "A class of words. This class also includes compound words such as ",
         "e.g. 'apple tree' and 'turned off.' Proper nouns are also included." 
@@ -386,11 +387,11 @@ VALUES
     ),  CONCAT(
         "A class the descriptions and accompanying data structures (structs) ",
         "that goes ",
-        "into defining the scales that qualifies the @3 entities when these ",
+        "into defining the scales that qualifies the @3c1 entities when these ",
         "are scored by the users."
     )),
     (13, 1, 0, '', '', CONCAT(
-        '{"title":"Data statement","superclass":"@3"}'
+        '{"title":"Data statement","superclass@c1":"@3"}'
     ), CONCAT(
         "A class of all statements that do not talk about the thing that ",
         "the entities represent, but talk about the representation of the ",
@@ -401,36 +402,94 @@ VALUES
         'entity (giving us a way to essentially "edit" entities).'
     )),
     (14, 1, 0, '', '', CONCAT(
-        '{"title":"Data predicate","superclass":"@4"}'
+        '{"title":"Data predicate","superclass@c1":"@4"}'
     ), CONCAT(
-        "A class of all @4 entities that is used to form @13 entities."
+        "A class of all @4c1 entities that is used to form @13c1 entities."
     )),
     (15, 1, 0, '', '', CONCAT(
-        '{"title":"Data relation","superclass":"@5"}'
+        '{"title":"Data relation","superclass@c1":"@5"}'
     ), CONCAT(
-        "A class of all @5 entities that is used to form @14 and ",
-        "@13 entities."
+        "A class of all @5c1 entities that is used to form @14c1 and ",
+        "@13c1 entities."
     )),
     (16, 6, 0, '', '', CONCAT(
         -- "class":"@3"
-        '{"format":{"text":"%e1","scale specification":"%e2"}}'
+        '{"format":{"statement":"%s","scale specification@c12":"@21"}}'
     ), NULL),
     (17, 6, 0, '', '', CONCAT(
         -- "class":"@4"
-        '{"format":{"predicate":"%s","subject class":"%e2"}}'
+        '{"format":{"predicate":"%s","subject class@c1":"%e1",',
+        '"statement":"@subj fits @[Predicate]",',
+        '"scale specification@c12":"@22"}}'
     ), CONCAT(
-        "@[Predicate] should preferably either be a (compound) adjective ",
+        "@[Predicate] should either be a (compound) adjective ",
         "or a (compound) verb."
     )),
     (18, 6, 0, '', '', CONCAT(
+        -- "class":"@4"
+        '{"format":{"statement":"%s","subject class@c1":"%e1",',
+        '"scale specification@c12":"@22"}}'
+    ), CONCAT(
+        "@[Statement] should be a complicated sentence describing a ",
+        "predicate, referring directly to '@subj'. If the predicate can be ",
+        "formulated simply as '@subj <some verb>', use @17 instead."
+    )),
+    (19, 6, 0, '', '', CONCAT(
         -- "class":"@5"
-        '{"format":{"subject noun":"%s",",
-        "subject class":"%e1" "object class":"%e2"}}'
+        '{"format":{"noun":"%s",',
+        "subject class@c1":"%e1","object class@c1":"%e2",
+        '"statement":"@subj is the @[Noun] of @obj",',
+        '"scale specification@c12":"@21"}}'
         -- "description":"%t" is redundant.
     ), CONCAT(
-        "@[Subject noun] should preferably be a (compound) noun. ",
-        "Plural nouns are often preferred, unless you most often expect ",
-        "there be only one subject per object for the relation."
+        "@[Noun] should be a singular (compound) noun.",
+    )),
+    (20, 6, 0, '', '', CONCAT(
+        -- "class":"@5"
+        '{"format":{"noun (pl.)":"%s",',
+        "subject class@c1":"%e1","object class@c1":"%e2",
+        '"statement":"@subj is an important/useful instance @[Predicate]",',
+        '"scale specification@c12":"@22"}}'
+        -- "description":"%t" is redundant.
+    ), CONCAT(
+        "@[Noun (pl.)] should be a plural (compound) noun."
+    )),
+    (21, 12, 0, '', '', CONCAT(
+        '{"title":"Likelihood scale"}'
+    ), CONCAT(
+        "A scale to score the truth/falsity of a (factual) statement, or more ",
+        "precisely the likelihood with which the scoring users deem the ",
+        "statement to be true. ",
+        "This scale have a fixed interval, going from 0 % to 100 %."
+    )),
+    (22, 12, 0, '', '', CONCAT(
+        '{"title":"Grading scale"}'
+    ), CONCAT(
+        "A scale to score how well entities fit a certain predicate. ",
+        "This scale is intended for most instances where you need to score ",
+        "a class of entities among themselves in relation to some quality.\n",
+        "The entities with the highest scores should be the ones that you ",
+        "want to see at the top of the list if you are looking for the given ",
+        "quality specifically, and lowest-scored entities should be the ones ",
+        "you want to see last. ",
+        "And if you adjust a search/feed algorithm to give more weight to ",
+        "entities with this quality, the added weight should then generally ",
+        "be proportional to the score, i.e. the highest scored entities are ",
+        "boosted the most.\n",
+        "The interval of the scale is unlimited, but the default interval ",
+        "runs from approximately 0 to 10. And it is the intention that for ",
+        "most qualities, when the classes include enough entities, the ",
+        "curve over the combined user scores of all the entities should ",
+        "a bell curve, approximately. To remind the users of this, we will ",
+        "draw a bell curve in the background of the actual curve. And the ",
+        "bots that aggregate the user scores might even stretch or shrink ",
+        "the scale, or add an offset to it, such that it normalizes to a ",
+        "bell curve.\n",
+        "We will also divide the interval into grades, from F--A (skipping ",
+        "E), where F denotes 'among worst in terms of achieving the given ",
+        "quality, D denotes 'among the bad at achieving ...', C denotes ",
+        "'among the middling ...', B denotes 'among the good ...', and A ",
+        "denotes 'among the best in terms of achieving the given quality'."
     )),
     -- (10, 1, 0, '', '', CONCAT(
     --     '{"superclass":"@2","title":"property tag"}'
