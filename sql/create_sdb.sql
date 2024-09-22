@@ -225,13 +225,9 @@ CREATE TABLE Entities (
     -- One can also use '%s' instead, which is substituted by the whole string
     -- (and '|' is then not taken as a special character).
     template_string_inputs VARCHAR(255)
-    CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "",
-    -- TODO: Collate uft-8_bin.
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "",
 
 
-    main_props TEXT(1000) DEFAULT NULL, -- (Can be resized.)
-    CHECK (main_props != ""),
-    CHECK (template_id = 0 OR main_props IS NULL),
 
     -- Other properties: A data structure containing the specific properties
     -- of this entity, and formatted as a JSON object. If a property value is
@@ -239,9 +235,12 @@ CREATE TABLE Entities (
     -- such as e.g. movie->actor). An array nested directly inside of an array
     -- is interpreted as a ordered list, however. (When in doubt of whether to
     -- define an entity via an ordered list or a set, use a set.) 
+    main_props TEXT(1000) DEFAULT NULL, -- (Can be resized.)
+
+    own_desc TEXT(10000) DEFAULT NULL, -- (Can be resized.)
+    inst_desc TEXT(10000) DEFAULT NULL, -- (Can be resized.)
+
     other_props TEXT(10000) DEFAULT NULL, -- (Can be resized.)
-    CHECK (other_props != ""),
-    CHECK (template_id = 0 OR other_props IS NULL),
 
 
     -- Data input: A TEXT or BLOB that which can be large enough that one might
@@ -255,10 +254,25 @@ CREATE TABLE Entities (
     -- If the entity has no template (template_id = 0), then data_input is
     -- always interpreted as the (text) 'description' of the entity.
     binary_data LONGBLOB DEFAULT NULL,
-    CHECK (binary_data != ""),
-    CHECK (template_id = 0 OR binary_data IS NULL),
     -- (Any size restriction on this BLOB is implemented in the control layer,
     -- or in the interface with it, i.e. in the "input procedures.")
+
+    CHECK (
+        main_props  != "" AND
+        own_desc    != "" AND
+        inst_desc   != "" AND
+        other_props != "" AND
+        binary_data != ""
+    ),
+
+    CHECK (
+        template_id = 0 OR
+            main_props  IS NULL AND
+            own_desc    IS NULL AND
+            inst_desc   IS NULL AND
+            other_props IS NULL AND
+            binary_data IS NULL
+    ),
 
 
     data_hash VARCHAR(56) NOT NULL DEFAULT (
@@ -267,7 +281,7 @@ CREATE TABLE Entities (
         )
         THEN ""
         ELSE SHA2(CONCAT(
-            SHA2(IFNULL(main_props, ""), 224),
+            SHA2(IFNULL(main_props, ""),  224),
             SHA2(IFNULL(other_props, ""), 224),
             SHA2(IFNULL(binary_data, ""), 224)
         ), 224)
@@ -293,19 +307,19 @@ CREATE TABLE Entities (
 
 INSERT INTO Entities (
     id, class_id, template_id, template_entity_inputs, template_string_inputs,
-    main_props, other_props
+    main_props, own_desc, inst_desc
 )
 VALUES
     (1, 1, 0, '', '', CONCAT(
         '{"title":"Class"}'
     ), CONCAT(
         "A class of all 'Class' entities, including this entity itself."
-    )),
+    ), NULL),
     (2, 1, 0, '', '', CONCAT(
         '{"title":"Entity"}'
     ), CONCAT(
         "A class of all entities, including this entity itself."
-    )),
+    ), NULL),
     (3, 1, 0, '', '', CONCAT(
         '{"title":"Statement"}'
     ), CONCAT(
@@ -326,7 +340,7 @@ VALUES
         "And unless otherwise specified (by the @13c1 subclass), statements ",
         "Always talk about the thing that the entity represents, and not the ",
         "representation itself."
-    )),
+    ), NULL),
     (4, 1, 0, '', '', CONCAT(
         '{"title":"Predicate"}'
     ), CONCAT(
@@ -334,7 +348,7 @@ VALUES
         "another 'subject' entity in order to form a @3c1 entity. ",
         "Predicates must not require any specification other than said ",
         "subject entity in order to form a well-formed @3c1 entity."
-    )),
+    ), NULL),
     (5, 1, 0, '', '', CONCAT(
         '{"title":"Relation"}'
     ), CONCAT(
@@ -345,7 +359,7 @@ VALUES
         "Note that since predicates also takes a subject in order to form a ",
         "@3c1 entity, this means that relations are essentially binary ",
         "functions that returns a statement."
-    )),
+    ), NULL),
     (6, 1, 0, '', '', CONCAT(
         '{"title":"Template"}'
     ), CONCAT(
@@ -355,17 +369,21 @@ VALUES
         "entity of this Template class ",
         "is the 'template' property, which is a variable property structure ",
         "that has placeholders for substitution. ...TODO: Continue."
-    )),
+    ), NULL),
     (7, 1, 0, '', '', CONCAT(
         '{"title":"User"}'
     ), CONCAT(
         "A class of the users of this Semantic Network. Whenever a ",
         "new user is created, an entity of this 'user' class is created to ",
         "represent this new user."
-    )),
+    ), NULL),
     (8, 6, 0, '', '', CONCAT(
         '{"template":{"username":"%s"}}' -- "class":"@7"
-    ), NULL),
+    ), CONCAT(
+        "A @6c1 used to create user entities."
+    ), CONCAT(
+        "A @7c1 of this Semantic Network."
+    )),
     (9, 1, 0, '', '', CONCAT(
         '{"title":"Text"}'
     ),  CONCAT(
@@ -374,7 +392,7 @@ VALUES
         "Some text entities might also have more data (metadata) about them. ",
         "For instance, and article or a comment might also include an author ",
         "and a date."
-    )),
+    ), NULL),
     -- Note that we don't need a pure text data class/template, since we
     -- already the ability to write texts in other_props and in data_input.
     (10, 1, 0, '', '', CONCAT(
@@ -386,13 +404,13 @@ VALUES
         "Lexical items form a general class of what one might look up in a ",
         "an extended dictionary that also includes things like phrases, and ",
         "not just words." 
-    )),
+    ), NULL),
     (11, 1, 0, '', '', CONCAT(
         '{"title":"Word","superclass@c1":"@10"}'
     ),  CONCAT(
         "A class of words. This class also includes compound words such as ",
         "e.g. 'apple tree' and 'turned off.' Proper nouns are also included." 
-    )),
+    ), NULL),
     (12, 1, 0, '', '', CONCAT(
         '{"title":"Scale specification"}'
     ),  CONCAT(
@@ -400,7 +418,7 @@ VALUES
         "that goes ",
         "into defining the scales that qualifies the @3c1 entities when these ",
         "are scored by the users."
-    )),
+    ), NULL),
     (13, 1, 0, '', '', CONCAT(
         '{"title":"Data statement","superclass@c1":"@3"}'
     ), CONCAT(
@@ -411,22 +429,28 @@ VALUES
         "popular duplicate of the same entity. "
         "Or that a subject is a better/more useful representation of the ",
         'entity (giving us a way to essentially "edit" entities).'
-    )),
+    ), NULL),
     (14, 1, 0, '', '', CONCAT(
         '{"title":"Data predicate","superclass@c1":"@4"}'
     ), CONCAT(
         "A class of all @4c1 entities that is used to form @13c1 entities."
-    )),
+    ), NULL),
     (15, 1, 0, '', '', CONCAT(
         '{"title":"Data relation","superclass@c1":"@5"}'
     ), CONCAT(
         "A class of all @5c1 entities that is used to form @14c1 and ",
         "@13c1 entities."
-    )),
+    ), NULL),
     (16, 6, 0, '', '', CONCAT(
         -- "class":"@3"
         '{"template":{"statement":"%s","scale specification@c12":"@21"}}'
-    ), NULL),
+    ), CONCAT(
+        "A @6c1 that can be used to create @3c1 entities from texts, scored ",
+        "on the @21."
+    ), CONCAT(
+        "A @3c1 stating that @[Statement] is true, scored on the @21."
+    )),
+    -- TODO: Continue ------------------------------------------------------
     (17, 6, 0, '', '', CONCAT(
         -- "class":"@4"
         '{"template":{"predicate":"%s","subject class@c1":"%e1",',
@@ -435,7 +459,7 @@ VALUES
     ), CONCAT(
         "@[Predicate] should either be a (compound) adjective ",
         "or a (compound) verb."
-    )),
+    ), NULL),
     (18, 6, 0, '', '', CONCAT(
         -- "class":"@4"
         '{"template":{"statement":"%s","subject class@c1":"%e1",',
@@ -444,7 +468,7 @@ VALUES
         "@[Statement] should be a complicated sentence describing a ",
         "predicate, referring directly to '@[Subject]'. If the predicate can ",
         "be formulated simply as '@[Subject] <some verb>', use @17 instead."
-    )),
+    ), NULL),
     (19, 6, 0, '', '', CONCAT(
         -- "class":"@5"
         '{"template":{"noun":"%s",',
@@ -455,7 +479,7 @@ VALUES
         -- "description":"%t" is redundant.
     ), CONCAT(
         "@[Noun] should be a singular (compound) noun."
-    )),
+    ), NULL),
     (20, 6, 0, '', '', CONCAT(
         -- "class":"@5"
         '{"template":{"noun (pl.)":"%s",',
@@ -467,7 +491,7 @@ VALUES
         -- "description":"%t" is redundant.
     ), CONCAT(
         "@[Noun (pl.)] should be a plural (compound) noun."
-    )),
+    ), NULL),
     (21, 12, 0, '', '', CONCAT(
         '{"title":"Likelihood scale"}'
     ), CONCAT(
@@ -475,7 +499,7 @@ VALUES
         "precisely the likelihood with which the scoring users deem the ",
         "statement to be true. ",
         "This scale have a fixed interval, going from 0 % to 100 %."
-    )),
+    ), NULL),
     (22, 12, 0, '', '', CONCAT(
         '{"title":"Grading scale"}'
     ), CONCAT(
@@ -504,7 +528,7 @@ VALUES
         "quality, D denotes 'among the bad at achieving ...', C denotes ",
         "'among the middling ...', B denotes 'among the good ...', and A ",
         "denotes 'among the best in terms of achieving the given quality'."
-    )),
+    ), NULL),
     (23, 6, 0, '', '', CONCAT(
         -- "class":"@3"
         '{"template":{"predicate@c4":"%e1","subject":"%e2",',
@@ -512,13 +536,13 @@ VALUES
         '"A @3c1 entity formed by applying @[Predicate] to @[Subject]."}}'
     ), CONCAT(
         "A template to "
-    )),
+    ), NULL),
     (24, 6, 0, '', '', CONCAT(
         -- "class":"@13"
         '{"template":{"predicate@c14":"%e1","subject":"%e2"}}'
     ), CONCAT(
         "A @13c1 entity formed by applying @[Predicate] to @[Subject]."
-    )),
+    ), NULL),
     (25, 6, 0, '', '', CONCAT(
         -- "class":"@4"
         '{"template":{"relation@c5":"%e1","object":"%e2",',
@@ -526,13 +550,13 @@ VALUES
         'to @[Object]."}}'
     ), CONCAT(
         "A @4c1 entity formed by applying @[Relation] to @[Object]."
-    )),
+    ), NULL),
     (26, 6, 0, '', '', CONCAT(
         -- "class":"@14"
         '{"template":{"relation@c15":"%e1","object":"%e2"}}'
     ), CONCAT(
         "A @14c1 entity formed by applying @[Relation] to @[Object]."
-    )),
+    ), NULL),
     -- (10, 1, 0, '', '', CONCAT(
     --     '{"superclass":"@2","title":"property tag"}'
     -- ), CONCAT(
@@ -553,7 +577,7 @@ VALUES
     --     "this rating further in its description. (For instance, it might ", 
     --     "specify that the main director always ought to be given 5 stars on ",
     --     "the rating scale from 1 to 5, e.g.)"
-    -- )),
+    -- ), NULL),
     -- (11, 3, 0, '', '', CONCAT(
     --     '{"format":{',
     --         -- '"class":"@10",',
@@ -567,7 +591,7 @@ VALUES
     --     "A class of all entities of this Semantic Network. All entities ",
     --     "automatically has this class without needing to specify so in their ",
     --     "definition."
-    -- )),
+    -- ), NULL),
     -- (13, 4, 5, '', 'initial_user', NULL, NULL),
     -- (14, 1, 0, '', '', CONCAT(
     --     '{"title":"list"}'
@@ -580,7 +604,7 @@ VALUES
     --     "', whereas '[elem_1, elem_2, elem_3]' (with no nesting) is ",
     --     "interpreted as an unordered set of valid property values (used for ",
     --     "one-to-many properties)."
-    -- )),
+    -- ), NULL),
     -- (15, 3, 0, '', '', CONCAT(
     --     '{"format":{"elements":[["%s%t"]]}' -- "class":"@14"
     -- ), NULL),
@@ -592,11 +616,11 @@ VALUES
     -- (17, 8, 9, '8', 'relevant property', NULL, CONCAT(
     --     "A property relation where the objects are the property relations ",
     --     "that are relevant to the subject entity."
-    -- )),
+    -- ), NULL),
     -- (18, 8, 9, '8,1', 'relevant property of class instances', NULL, CONCAT(
     --     "A property relation where the objects are the property relations ",
     --     "that are relevant to all the instances of the subject class."
-    -- )),
+    -- ), NULL),
     -- (19, 10, 11, '12,18', '', NULL, NULL),
     -- (20, 10, 11, '2,18', '', NULL, NULL),
     -- (21, 1, 0, '', '', CONCAT(
@@ -615,12 +639,12 @@ VALUES
     --     "the value of a property, simply wrap it in another set, either ",
     --     "using the '[]' syntax or by creating another set entity with the ",
     --     "given set as its only element."
-    -- )),
+    -- ), NULL),
     -- (22, 3, 0, '', '', CONCAT(
     --     '{"format":{"elements":["%s%t"]}' -- "class":"@21"
     -- ), NULL),
     -- 
-    (NULL, 1, 6, '', 'exAmpLe of A noT very usefuL enTiTy', NULL, NULL);
+    (NULL, 1, 6, '', 'exAmpLe of A noT very usefuL enTiTy', NULL, NULL, NULL);
 
 
 -- [...] If data_input is a binary file, '%b' is used, but this should
