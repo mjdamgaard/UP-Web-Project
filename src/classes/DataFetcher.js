@@ -21,6 +21,7 @@ export class DataFetcher {
       classID: null,
       tmplID: null,
       entInput: null,
+      listInput: null,
       strInput: null,
       otherPropsLen: null,
       template: null,
@@ -31,11 +32,15 @@ export class DataFetcher {
       id: entID,
     };
     DBRequestManager.query(reqData, (result) => {
-      let [classID, tmplID, entInput, strInput, mainProps, otherPropsLen] =
-        result[0] ?? [];
+      let [
+        classID, tmplID, entInput, listInput, strInput,
+        mainProps, otherPropsLen
+      ] = result[0] ?? [];
+
       entMainData.classID = classID;
       entMainData.tmplID = tmplID;
       entMainData.entInput = entInput;
+      entMainData.listInput = listInput;
       entMainData.strInput = strInput;
       entMainData.mainProps = mainProps;
       entMainData.otherPropsLen = otherPropsLen;
@@ -88,7 +93,7 @@ export class DataFetcher {
 
   // expandMainData() expands the mainProps by substituting entID references
   // by nested entData objects. This method also transforms each value into an
-  // object like {string: [...]}, {set: [...]}, {list: [...]}, etc.
+  // object like {string: [...]}, {concat: [...]}, {list: [...]}, etc.
   static expandMainData(entMainData, thisID, maxRecLevel, recLevel, callback) {
     if (!callback) {
       callback = recLevel;
@@ -109,7 +114,7 @@ export class DataFetcher {
       
       if (Array.isArray(propVal)) {
         let elemArr = mainProps[propKey];
-        mainProps[propKey] = {set: elemArr};
+        mainProps[propKey] = {concat: elemArr};
         this.#expandElements(
           elemArr, thisID, callbackHandler, maxRecLevel, recLevel
         );
@@ -153,7 +158,7 @@ export class DataFetcher {
 
   static #expandClassContextsFromPropNames(props) {
     Object.keys(props).forEach(propKey => {
-      let propVal = rops[propKey];
+      let propVal = props[propKey];
       if (propVal && typeof propVal === "object") {
         this.#expandClassContextsFromPropNames(propVal);
       }
@@ -161,7 +166,7 @@ export class DataFetcher {
         delete props[propKey];
         let newPropKey = propKey.replace(/@c[1-9][0-9]*$/, "");
         let classID = propKey.match(/[0-9]*$/)[0];
-        props[propKey] = {classContext: {classID: classID, value: propVal}};
+        props[newPropKey] = {classContext: {classID: classID, value: propVal}};
       }
     });
   }
@@ -268,6 +273,9 @@ export class DataFetcher {
           else if (str === "@0" || str === "@none") {
             strArr[ind] = {none: true};
           }
+          else if (str === "@bin") {
+            strArr[ind] = {binRef: true};
+          }
           else {
             strArr[ind] = {illFormedReference: str};
           }
@@ -284,6 +292,9 @@ export class DataFetcher {
           // }
           else if (/^%e[0-9]$/.test(str)) {
             strArr[ind] = {unusedEntityPlaceholder: str[2]};
+          }
+          else if (/^%l[0-9]$/.test(str)) {
+            strArr[ind] = {unusedListPlaceholder: str[2]};
           }
           else if (str === "%s") {
             strArr[ind] = {unusedFullStringPlaceholder: true};
@@ -327,7 +338,7 @@ export class DataFetcher {
   // has nested entity objects in it (as a result of expandMainData()), the
   // data for these mainProps are also fetched and substituted, unless
   // maxRecLevel is exceeded. This method also transforms each value into an
-  // object like {string: [...]}, {set: [...]}, {list: [...]}, etc.
+  // object like {string: [...]}, {concat: [...]}, {list: [...]}, etc.
   static substituteDataInput(entID, mainProps, maxRecLevel, recLevel) {
     maxRecLevel ??= 2;
     recLevel ??= 0;

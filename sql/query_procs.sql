@@ -11,7 +11,7 @@ DROP PROCEDURE selectRecordedInputsMaxID;
 
 DROP PROCEDURE selectEntityMainData;
 DROP PROCEDURE selectEntityFromSecKey;
-DROP PROCEDURE selectEntityTextInputs;
+DROP PROCEDURE selectEntityTextInput;
 DROP PROCEDURE selectEntityDescription;
 DROP PROCEDURE selectEntityInstanceDescription;
 DROP PROCEDURE selectEntityOtherProps;
@@ -150,8 +150,9 @@ BEGIN
     SELECT
         class_id AS classID,
         template_id AS tmplID,
-        template_entity_inputs AS tmplEntInputs,
-        template_string_inputs AS tmplStrInputs,
+        template_entity_input AS entInput,
+        template_list_input AS listInput,
+        template_string_input AS strInput,
         main_props AS mainProps,
         LENGTH(other_props) AS otherPropsLen
     FROM Entities
@@ -165,8 +166,9 @@ DELIMITER //
 CREATE PROCEDURE selectEntityFromSecKey (
     IN classID BIGINT UNSIGNED,
     IN tmplID BIGINT UNSIGNED,
-    IN tmplEntInputs VARCHAR(209),
-    IN tmplStrInputs VARCHAR(255),
+    IN entInput VARCHAR(209),
+    IN listInput VARCHAR(209),
+    IN strInput VARCHAR(255),
     IN dataHash VARCHAR(56)
 )
 BEGIN
@@ -176,8 +178,9 @@ BEGIN
         class_id = classID AND
         template_id = tmplID AND
         data_hash = dataHash AND
-        template_entity_inputs = tmplEntInputs AND
-        template_string_inputs = tmplStrInputs
+        template_entity_input = entInput AND
+        template_list_input = listInput AND
+        template_string_input = strInput
     );
 END //
 DELIMITER ;
@@ -185,11 +188,11 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectEntityTextInputs (
+CREATE PROCEDURE selectEntityTextInput (
     IN entID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT template_text_inputs AS tmplTxtInputs
+    SELECT template_text_input AS textInput
     FROM Entities
     WHERE id = entID;
 END //

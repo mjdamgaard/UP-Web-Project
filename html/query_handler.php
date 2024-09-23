@@ -101,21 +101,21 @@ switch ($reqType) {
         $paramNameArr = array("id");
         $typeArr = array("id");
         // output: [[
-        //   classID, tmplID, tmplEntInputs, tmplStrInputs, mainProps,
-        //   otherPropsLen
+        //   classID, tmplID, entInput, listInput, strInput,
+        //   mainProps, otherPropsLen
         // ]].
         break;
     case "entSK":
-        $sql = "CALL selectEntityFromSecKey (?, ?, ?, ?, ?)";
-        $paramNameArr = array("c", "t", "e", "s", "h");
-        $paramNameArr = array("id", "id", "id_list", "str", "str");
+        $sql = "CALL selectEntityFromSecKey (?, ?, ?, ?, ?, ?)";
+        $paramNameArr = array("c", "t", "e", "s", "l", "h");
+        $paramNameArr = array("id", "id", "id_list", "id_list", "str", "str");
         // output: [[entID]].
         break;
-    case "entTxtInputs":
-        $sql = "CALL selectEntityTextInputs (?)";
+    case "entTxtI":
+        $sql = "CALL selectEntityTextInput (?)";
         $paramNameArr = array("id");
         $paramNameArr = array("id");
-        // output: [[tmplTxtInputs]].
+        // output: [[textInput]].
     case "entDesc":
         $sql = "CALL selectEntityDescription (?)";
         $paramNameArr = array("id");
@@ -207,11 +207,11 @@ $res = $stmt->get_result()->fetch_all();
 // if $reqType == ent, JSON-decode the fifth output, "ownStruct", before the
 // final full JSON-encoding. 
 if ($reqType === "ent") {
-    $mainProps = $res[0][4];
+    $mainProps = $res[0][5];
     if ($mainProps) {
-        $res[0][4] = json_decode($mainProps, true);
+        $res[0][5] = json_decode($mainProps, true);
     } else if ($mainProps === "") {
-        $res[0][4] = json_decode("null", true);
+        $res[0][5] = json_decode("null", true);
     }
 }
 else if ($reqType === "entOtherProps") {

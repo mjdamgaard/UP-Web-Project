@@ -215,20 +215,26 @@ CREATE TABLE Entities (
     template_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
     -- (A majority of entities will have a tmpl, so we use 0 instead of NULL.)
 
-    -- Template entity (ID) inputs: A list of integer inputs separated by ',',
+    -- Template entity (ID) input: A list of integers separated by ',',
     -- which substitutes the /%e[0-9]/ placeholders of the template.
-    template_entity_inputs VARCHAR(209) NOT NULL DEFAULT "",
+    template_entity_input VARCHAR(209) NOT NULL DEFAULT "",
 
-    -- Template string inputs: A list of string inputs separated by '|',
+    -- Template entity ID lists: A list of integers separated by ','
+    -- and '|', which substitutes the /%l[0-9]/ placeholders of the template.
+    -- Each '%l<n>' is substituted by the nth comma-separated list, each list
+    -- separated by the '|'s.
+    template_list_input VARCHAR(209) NOT NULL DEFAULT "",
+
+    -- Template string input: A list of string inputs separated by '|',
     -- which substitutes the /%s[0-9]/ placeholders of the template.
     -- ('|' is escaped by '\|'.)
     -- One can also use '%s' instead, which is substituted by the whole string
     -- (and '|' is then not taken as a special character).
-    template_string_inputs VARCHAR(255)
+    template_string_input VARCHAR(255)
         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "",
 
 
-    template_text_inputs TEXT(10000) DEFAULT NULL,
+    template_text_input TEXT(10000) DEFAULT NULL,
 
     -- Other properties: A data structure containing the specific properties
     -- of this entity, and formatted as a JSON object. If a property value is
@@ -250,12 +256,12 @@ CREATE TABLE Entities (
     -- or in the interface with it, i.e. in the "input procedures.")
 
     CHECK (
-        template_text_inputs != "" AND
-        main_props           != "" AND
-        own_desc             != "" AND
-        inst_desc            != "" AND
-        other_props          != "" AND
-        binary_data          != ""
+        template_text_input != "" AND
+        main_props          != "" AND
+        own_desc            != "" AND
+        inst_desc           != "" AND
+        other_props         != "" AND
+        binary_data         != ""
     ),
 
     CHECK (
@@ -270,21 +276,21 @@ CREATE TABLE Entities (
 
     data_hash VARCHAR(56) NOT NULL DEFAULT (
         CASE WHEN (
-            template_text_inputs IS NULL AND
-            main_props           IS NULL AND
-            own_desc             IS NULL AND
-            inst_desc            IS NULL AND
-            other_props          IS NULL AND
-            binary_data          IS NULL
+            template_text_input IS NULL AND
+            main_props          IS NULL AND
+            own_desc            IS NULL AND
+            inst_desc           IS NULL AND
+            other_props         IS NULL AND
+            binary_data         IS NULL
         )
         THEN ""
         ELSE SHA2(CONCAT(
-            IFNULL(SHA2(template_text_inputs, 224), "null"),
-            IFNULL(SHA2(main_props,           224), "null"),
-            IFNULL(SHA2(own_desc,             224), "null"),
-            IFNULL(SHA2(inst_desc,            224), "null"),
-            IFNULL(SHA2(other_props,          224), "null"),
-            IFNULL(SHA2(binary_data,          224), "null")
+            IFNULL(SHA2(template_text_input, 224), "null"),
+            IFNULL(SHA2(main_props,          224), "null"),
+            IFNULL(SHA2(own_desc,            224), "null"),
+            IFNULL(SHA2(inst_desc,           224), "null"),
+            IFNULL(SHA2(other_props,         224), "null"),
+            IFNULL(SHA2(binary_data,         224), "null")
         ), 224)
         END
     ),
@@ -292,7 +298,7 @@ CREATE TABLE Entities (
     UNIQUE INDEX (
         class_id, template_id,
         data_hash,
-        template_entity_inputs, template_string_inputs
+        template_entity_input, template_list_input, template_string_input
     ),
 
 
@@ -307,7 +313,7 @@ CREATE TABLE Entities (
 /* Some initial inserts */
 
 INSERT INTO Entities (
-    id, class_id, template_id, template_entity_inputs, template_string_inputs,
+    id, class_id, template_id, template_entity_input, template_string_input,
     main_props, own_desc, inst_desc
 )
 VALUES
