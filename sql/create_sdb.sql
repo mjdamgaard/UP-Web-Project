@@ -473,8 +473,8 @@ VALUES
         -- "class":"@5"
         '{"template":{"noun":"%s",',
         '"subject class@c1":"%e1","object class@c1":"%e2",',
-        '"predicate":"is the @[Noun] of @[Object]",',
-        '"statement":"@[Subject] is the @[Noun] of @[Object]",',
+        '"predicate":"is the %s of @[Object]",',
+        '"statement":"@[Subject] is the %s of @[Object]",',
         '"scale specification@c12":"@21"}}'
     ), CONCAT(
         "A @6c1 that can be used to create factual @5c1 entities from ",
@@ -487,28 +487,28 @@ VALUES
     )),
     (20, 6, 0, '', '', CONCAT(
         -- "class":"@5"
-        '{"template":{"noun (pl.)":"%s",',
+        '{"template":{"noun (pl.)":"%s1",',
         '"subject class@c1":"%e1","object class@c1":"%e2",',
-        '"sorting predicate@c4":"e3",', --Note that one can also use Data
-        -- predicates here; @c4 is just the *expected* class, and Data
-        -- predicates will thus just get a ClassClarification, i.e. when @4
-        -- is not the *main* class.
-        '"predicate":"is an instance of the @[Noun] of @[Object] that fits ',
-        '@[Sorting predicate]",',
-        '"statement":"@[Subject] is an instance of the @[Noun] of @[Object] ',
-        'that fits @[Sorting predicate]",',
+        '"graded w.r.t.":"%s2",',
+        '"predicate":"is an instance of the %s1 of @[Object], graded ',
+        'with respect to %s2",',
+        '"statement":"@[Subject] is an instance of the %s1 of @[Object], ',
+        'graded with respect to %s2",',
         '"scale specification@c12":"@22"}}'
     ), CONCAT(
         "A @6c1 that can be used to create one-to-many @5c1 entities from ",
-        "(plural) nouns, scored on the @22 according to how well they fit ",
-        "the @[Sorting predicate]. These lists should also be filtered ",
-        "according to the corresponding factual version of this Relation",
-        "creates with @27.\n",
+        "(plural) nouns, scored on the @22 according to @[Graded w.r.t.] ",
+        "These entity lists should also be filtered ",
+        "according to the corresponding factual version of this relation, ",
+        "created from @27.\n",
         "@[Noun (pl.)] should be a plural (compound) noun."
     ), CONCAT(
         "A one-to-many @5c1 formed from a (plural) noun, stating that ",
-        "@[Subject] is an instance of the @[Noun] of @[Object] that",
-        "of @[Object] includes the @[Subject]. It is scored on the @22."
+        "@[Subject] is an instance of the @[Noun (pl.)] of @[Object], graded ",
+        "according to @[Graded w.r.t.] on the @22.\n",
+        "These entity lists should also be filtered ",
+        "according to the corresponding factual version of this relation, ",
+        "created from @27."
     )),
     (21, 12, 0, '', '', CONCAT(
         '{"title":"Likelihood scale"}'
@@ -549,47 +549,56 @@ VALUES
     ), NULL),
     (23, 6, 0, '', '', CONCAT(
         -- "class":"@3"
-        '{"template":{"predicate@c4":"%e1","subject":"%e2",',
-        '"description":',
-        '"A @3c1 entity formed by applying @[Predicate] to @[Subject]."}}'
+        '{"template":{"predicate@c4":"%e1","subject":"%e2"}}'
     ), CONCAT(
-        "A template to "
-    ), NULL),
+        "A @6c1 for creating @3c1 entities by applying @[Predicate] to ",
+        "@[Subject]."
+    ), CONCAT(
+        "A @3c1 formed by applying @[Predicate] to @[Subject]."
+    )),
     (24, 6, 0, '', '', CONCAT(
         -- "class":"@13"
         '{"template":{"predicate@c14":"%e1","subject":"%e2"}}'
     ), CONCAT(
-        "A @13c1 entity formed by applying @[Predicate] to @[Subject]."
-    ), NULL),
+        "A @6c1 for creating @13c1 entities by applying @[Predicate] to ",
+        "@[Subject]."
+    ), CONCAT(
+        "A @13c1 formed by applying @[Predicate] to @[Subject]."
+    )),
     (25, 6, 0, '', '', CONCAT(
         -- "class":"@4"
-        '{"template":{"relation@c5":"%e1","object":"%e2",',
-        '"description":"A @4c1 entity formed by applying @[Relation] ',
-        'to @[Object]."}}'
+        '{"template":{"relation@c5":"%e1","object":"%e2"}}'
     ), CONCAT(
-        "A @4c1 entity formed by applying @[Relation] to @[Object]."
-    ), NULL),
+        "A @6c1 for creating @4c1 entities by applying @[Relation] to ",
+        "@[Object]."
+    ), CONCAT(
+        "A @4c1 formed by applying @[Relation] to @[Object]."
+    )),
     (26, 6, 0, '', '', CONCAT(
         -- "class":"@14"
         '{"template":{"relation@c15":"%e1","object":"%e2"}}'
     ), CONCAT(
-        "A @14c1 entity formed by applying @[Relation] to @[Object]."
-    ), NULL),
+        "A @6c1 for creating @14c1 entities by applying @[Relation] to ",
+        "@[Object]."
+    ), CONCAT(
+        "A @14c1 formed by applying @[Relation] to @[Object]."
+    )),
     (27, 6, 0, '', '', CONCAT(
         -- "class":"@5"
         '{"template":{"noun (pl.)":"%s",',
         '"subject class@c1":"%e1","object class@c1":"%e2",',
-        '"predicate":"is an instance of the @[Noun] of @[Object]",',
-        '"statement":"@[Subject] is an instance of the @[Noun] of @[Object]",',
-        '"scale specification@c12":"@22"}}'
+        '"predicate":"is an instance of the %s of @[Object]",',
+        '"statement":"@[Subject] is an instance of the %s of @[Object]",',
+        '"scale specification@c12":"@21"}}'
     ), CONCAT(
         "A @6c1 that can be used to create factual one-to-many @5c1 entities ",
-        "from (plural) nouns, scored on the @21 whether they are instances ",
-        "of the @[Noun] of @[Object] or not.\n",
+        "from (plural) nouns, scored on the @21 in terms of whether they are ",
+        "instances of the @[Noun (pl.)] of @[Object].\n",
         "@[Noun (pl.)] should be a plural (compound) noun."
     ), CONCAT(
-        "A one-to-many @5c1 formed from a (plural) noun, stating the @[Noun] ",
-        "of @[Object] includes the @[Subject]. It is scored on the @22."
+        "A one-to-many @5c1 formed from a (plural) noun, stating that ",
+        "@[Subject] is an instance of the @[Noun (pl.)] of @[Object], scored ",
+        "on the @21."
     )),
     -- (10, 1, 0, '', '', CONCAT(
     --     '{"superclass":"@2","title":"property tag"}'
