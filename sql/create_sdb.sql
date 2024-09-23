@@ -243,18 +243,9 @@ CREATE TABLE Entities (
     other_props TEXT(10000) DEFAULT NULL, -- (Can be resized.)
 
 
-    -- Data input: A TEXT or BLOB that which can be large enough that one might
-    -- want to only serve to the client upon specific request, and not whenever
-    -- the client looks up defining data for the entity. This inputs either
-    -- replaces the '%b' or '%t' placeholder ('b' for binary, 't' for text) in
-    -- the format, which is in the other_props of the template_id entity,
-    -- or it is also split into multiple strings using '|'
-    -- as a delimiter, in case of the '%t<num>' placeholders. ('|' is also
-    -- escaped by '\|' here.)
-    -- If the entity has no template (template_id = 0), then data_input is
-    -- always interpreted as the (text) 'description' of the entity.
+    -- Binary data: A blob storing.. 
     binary_data LONGBLOB DEFAULT NULL,
-    -- (Any size restriction on this BLOB is implemented in the control layer,
+    -- (Size restrictions on this BLOB can be implemented in the control layer,
     -- or in the interface with it, i.e. in the "input procedures.")
 
     CHECK (
@@ -270,7 +261,7 @@ CREATE TABLE Entities (
             main_props  IS NULL AND
             own_desc    IS NULL AND
             inst_desc   IS NULL AND
-            other_props IS NULL AND
+            -- other_props IS NULL AND
             binary_data IS NULL
     ),
 
@@ -445,30 +436,39 @@ VALUES
         -- "class":"@3"
         '{"template":{"statement":"%s","scale specification@c12":"@21"}}'
     ), CONCAT(
-        "A @6c1 that can be used to create @3c1 entities from texts, scored ",
-        "on the @21."
+        "A @6c1 that can be used to create @3c1 entities from texts, ",
+        "scored on the @21."
     ), CONCAT(
         "A @3c1 stating that @[Statement] is true, scored on the @21."
     )),
-    -- TODO: Continue ------------------------------------------------------
     (17, 6, 0, '', '', CONCAT(
         -- "class":"@4"
         '{"template":{"predicate":"%s","subject class@c1":"%e1",',
         '"statement":"@[Subject] fits @[Predicate]",',
         '"scale specification@c12":"@22"}}'
     ), CONCAT(
+        "A @6c1 that can be used to create @4c1 entities from adjectives or ",
+        "verbs, scored on the @22.\n",
         "@[Predicate] should either be a (compound) adjective ",
         "or a (compound) verb."
-    ), NULL),
+    ), CONCAT(
+        "A @4c1 formed from an adjective or a verb (@[Predicate]), ",
+        "scored on the @21."
+    )),
     (18, 6, 0, '', '', CONCAT(
         -- "class":"@4"
         '{"template":{"statement":"%s","subject class@c1":"%e1",',
         '"scale specification@c12":"@22"}}'
     ), CONCAT(
+        "A @6c1 that can be used to create @4c1 entities with complicated ",
+        "formulations, scored on the @22.\n",
         "@[Statement] should be a complicated sentence describing a ",
         "predicate, referring directly to '@[Subject]'. If the predicate can ",
         "be formulated simply as '@[Subject] <some verb>', use @17 instead."
-    ), NULL),
+    ), CONCAT(
+        "A @4c1 formed from a whole statement, referring to @[Subject] ",
+        "as the subject of the predicate. It is scored on the @22."
+    )),
     (19, 6, 0, '', '', CONCAT(
         -- "class":"@5"
         '{"template":{"noun":"%s",',
@@ -476,22 +476,40 @@ VALUES
         '"predicate":"is the @[Noun] of @[Object]",',
         '"statement":"@[Subject] is the @[Noun] of @[Object]",',
         '"scale specification@c12":"@21"}}'
-        -- "description":"%t" is redundant.
     ), CONCAT(
+        "A @6c1 that can be used to create factual @5c1 entities from ",
+        "(singular) nouns, scored on the @21.\n",
         "@[Noun] should be a singular (compound) noun."
-    ), NULL),
+    ), CONCAT(
+        "A factual @5c1 formed from a (singular) noun, stating the @[Noun] ",
+        "of @[Object] is the @[Subject]. As a factual @5c1, it is scored on ",
+        "the @21."
+    )),
     (20, 6, 0, '', '', CONCAT(
         -- "class":"@5"
         '{"template":{"noun (pl.)":"%s",',
         '"subject class@c1":"%e1","object class@c1":"%e2",',
-        '"predicate":"is an important/useful instance of the %s of @[Object]",',
-        '"statement":"@[Subject] is an important/useful instance of the %s ',
-        'of @[Object]",',
+        '"sorting predicate@c4":"e3",', --Note that one can also use Data
+        -- predicates here; @c4 is just the *expected* class, and Data
+        -- predicates will thus just get a ClassClarification, i.e. when @4
+        -- is not the *main* class.
+        '"predicate":"is an instance of the @[Noun] of @[Object] that fits ',
+        '@[Sorting predicate]",',
+        '"statement":"@[Subject] is an instance of the @[Noun] of @[Object] ',
+        'that fits @[Sorting predicate]",',
         '"scale specification@c12":"@22"}}'
-        -- "description":"%t" is redundant.
     ), CONCAT(
+        "A @6c1 that can be used to create one-to-many @5c1 entities from ",
+        "(plural) nouns, scored on the @22 according to how well they fit ",
+        "the @[Sorting predicate]. These lists should also be filtered ",
+        "according to the corresponding factual version of this Relation",
+        "creates with @27.\n",
         "@[Noun (pl.)] should be a plural (compound) noun."
-    ), NULL),
+    ), CONCAT(
+        "A one-to-many @5c1 formed from a (plural) noun, stating that ",
+        "@[Subject] is an instance of the @[Noun] of @[Object] that",
+        "of @[Object] includes the @[Subject]. It is scored on the @22."
+    )),
     (21, 12, 0, '', '', CONCAT(
         '{"title":"Likelihood scale"}'
     ), CONCAT(
@@ -557,6 +575,22 @@ VALUES
     ), CONCAT(
         "A @14c1 entity formed by applying @[Relation] to @[Object]."
     ), NULL),
+    (27, 6, 0, '', '', CONCAT(
+        -- "class":"@5"
+        '{"template":{"noun (pl.)":"%s",',
+        '"subject class@c1":"%e1","object class@c1":"%e2",',
+        '"predicate":"is an instance of the @[Noun] of @[Object]",',
+        '"statement":"@[Subject] is an instance of the @[Noun] of @[Object]",',
+        '"scale specification@c12":"@22"}}'
+    ), CONCAT(
+        "A @6c1 that can be used to create factual one-to-many @5c1 entities ",
+        "from (plural) nouns, scored on the @21 whether they are instances ",
+        "of the @[Noun] of @[Object] or not.\n",
+        "@[Noun (pl.)] should be a plural (compound) noun."
+    ), CONCAT(
+        "A one-to-many @5c1 formed from a (plural) noun, stating the @[Noun] ",
+        "of @[Object] includes the @[Subject]. It is scored on the @22."
+    )),
     -- (10, 1, 0, '', '', CONCAT(
     --     '{"superclass":"@2","title":"property tag"}'
     -- ), CONCAT(
