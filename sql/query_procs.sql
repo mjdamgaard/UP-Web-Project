@@ -11,6 +11,7 @@ DROP PROCEDURE selectRecordedInputsMaxID;
 
 DROP PROCEDURE selectEntityMainData;
 DROP PROCEDURE selectEntityFromSecKey;
+DROP PROCEDURE selectEntityTextInputs;
 DROP PROCEDURE selectEntityDescription;
 DROP PROCEDURE selectEntityInstanceDescription;
 DROP PROCEDURE selectEntityOtherProps;
@@ -183,6 +184,16 @@ DELIMITER ;
 
 
 
+DELIMITER //
+CREATE PROCEDURE selectEntityTextInputs (
+    IN entID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT template_text_inputs AS tmplTxtInputs
+    FROM Entities
+    WHERE id = entID;
+END //
+DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectEntityDescription (

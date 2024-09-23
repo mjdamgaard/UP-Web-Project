@@ -22,8 +22,7 @@ export class DataFetcher {
       tmplID: null,
       entInput: null,
       strInput: null,
-      ownStruct: null,
-      dataLen: null,
+      otherPropsLen: null,
       template: null,
       isMissing: null,
     };
@@ -38,7 +37,7 @@ export class DataFetcher {
       entMainData.tmplID = tmplID;
       entMainData.entInput = entInput;
       entMainData.strInput = strInput;
-      entMainData.ownStruct = ownStruct;
+      entMainData.mainProps = mainProps;
       entMainData.otherPropsLen = otherPropsLen;
       entMainData.isMissing = !classID;
 
@@ -48,10 +47,10 @@ export class DataFetcher {
         return;
       }
 
-      // If entity is has no template, make set mainProps as the ownStruct,
-      // and call the callback and return.
+      // If entity is has no template, the mainProps is just the fetched
+      // mainProps object, and we can call callback already.
       if (tmplID == "0") {
-        entMainData.mainProps = entMainData.ownStruct;
+        entMainData.mainProps;
         callback(entMainData);
         return;
       }
@@ -80,17 +79,17 @@ export class DataFetcher {
       maxRecLevel = 2;
     }
     this.fetchMainData(entID, (entMainData) => {
-      this.expandMetaData(entMainData, entID, maxRecLevel, recLevel, () => {
+      this.expandMainData(entMainData, entID, maxRecLevel, recLevel, () => {
         callback(entMainData);
       });
     });
   }
 
 
-  // expandMetaData() expands the mainProps by substituting entID references
+  // expandMainData() expands the mainProps by substituting entID references
   // by nested entData objects. This method also transforms each value into an
   // object like {string: [...]}, {set: [...]}, {list: [...]}, etc.
-  static expandMetaData(entMainData, thisID, maxRecLevel, recLevel, callback) {
+  static expandMainData(entMainData, thisID, maxRecLevel, recLevel, callback) {
     if (!callback) {
       callback = recLevel;
       recLevel = 0;
@@ -121,19 +120,27 @@ export class DataFetcher {
       );
     });
 
+  
+    // After all values and nested values have been substituted/expanded,
+    // substitute any property name that end with /@c[1-9][0-9]*$/ with one
+    // where this ending is removed, but the value is instead wrapped in a
+    // classContext wrapper.
+    this.#expandClassContextsFromPropNames(mainProps);
+
+
     // Prepare callback to get the expanded (with recLevel -= 1) mainData
     // of the entity's class.
     let classID = entMainData.classID;
-    // If classID == 1, just use a hard-coded classMetaData.
+    // If classID == 1, just use a hard-coded classMainData.
     if (classID == "1") {
-      entMainData.classMetaData = JSON.parse(CLASS_CLASS_METADATA_JSON);
+      entMainData.classMainData = JSON.parse(CLASS_CLASS_METADATA_JSON);
     }
     // Else fetch the mainData of the class from the database.
     else if (recLevel <= maxRecLevel) {
       callbackHandler.push((resolve) => {
         this.fetchExpandedMainData(
           classID, maxRecLevel, recLevel + 1, (classMainData) => {
-            entMainData.classMetaData = classMainData;
+            entMainData.classMainData = classMainData;
             resolve();
           }
         );
@@ -144,19 +151,18 @@ export class DataFetcher {
   }
 
 
-  static #expandElements(
-    elemArr, thisID, callbackHandler, maxRecLevel, recLevel
-  ) {
-    elemArr.forEach((elem, ind) => {
-      if (Array.isArray(elem)) {
-        elemArr[ind] = {list: elem};
-        this.#expandElements(
-          elem, thisID, callbackHandler, maxRecLevel, recLevel
-        );
+  static #expandClassContextsFromPropNames(props) {
+    Object.keys(props).forEach(propKey => {
+      let propVal = rops[propKey];
+      if (propVal && typeof propVal === "object") {
+        this.#expandClassContextsFromPropNames(propVal);
       }
-      else this.#expandPropVal(
-        elem, elemArr, ind, thisID, callbackHandler, maxRecLevel, recLevel
-      );
+      if (/@c[1-9][0-9]*$/.test(propKey)) {
+        delete props[propKey];
+        let newPropKey = propKey.replace(/@c[1-9][0-9]*$/, "");
+        let classID = propKey.match(/[0-9]*$/)[0];
+        props[propKey] = {classContext: {classID: classID, value: propVal}};
+      }
     });
   }
 
@@ -193,19 +199,18 @@ export class DataFetcher {
     else if (/^@[1-9][0-9]*c[1-9][0-9]*$/.test(propVal)) {
       let [entID, expectedClassID] = propVal.match(/[1-9][0-9]*/g);
       if (recLevel > maxRecLevel) {
+        let entValue = {ent: {entID: entID}};
         obj[objKey] = {
-          ent: {entID: entID, expectedClassID: expectedClassID}
+          classContext: {classID: expectedClassID, value: entValue}
         };
       }
       else {
         callbackHandler.push(resolve => {
           this.fetchExpandedMainData(
             entID,  maxRecLevel, recLevel + 1, (expEntMainData) => {
+              let entValue = {ent: expEntMainData};
               obj[objKey] = {
-                ent: Object.assign(
-                  {expectedClassID: expectedClassID},
-                  expEntMainData
-                )
+                classContext: {classID: expectedClassID, value: entValue}
               };
               resolve();
             }
@@ -222,8 +227,15 @@ export class DataFetcher {
     else if (propVal === "@0" || propVal === "@none") {
       obj[objKey] = {none: true};
     }
+    else if (propVal === "@bin") {
+      obj[objKey] = {binRef: true};
+    }
+    else if (/^@\[[^\[\]]+\]$/.test(propVal)) {
+      obj[objKey] = {explicitRef: propVal.slice(2, -1)};
+    }
     else if (typeof propVal === "string") {
-      let stringLexRegEx = /([^@%]|\\@|\\%)+|@[0-9a-z]*|%[a-z0-9]*|.+/g;
+      let stringLexRegEx =
+        /([^@%]|\\@|\\%)+|@[0-9a-z]*|@\[[^\[\]]+\]|%[a-z0-9]*|.+/g;
       let strArr = propVal.match(stringLexRegEx);
       obj[objKey] = {string: strArr};
       strArr.forEach((str, ind) => {
@@ -267,9 +279,9 @@ export class DataFetcher {
           else if (/^%t[0-9]$/.test(str)) {
             strArr[ind] = {textPlaceholder: {n: str[2], entID: thisID}};
           }
-          else if (str === "%d") {
-            strArr[ind] = {dataPlaceholder: thisID};
-          }
+          // else if (str === "%d") {
+          //   strArr[ind] = {dataPlaceholder: thisID};
+          // }
           else if (/^%e[0-9]$/.test(str)) {
             strArr[ind] = {unusedEntityPlaceholder: str[2]};
           }
@@ -292,10 +304,28 @@ export class DataFetcher {
   }
 
 
+  static #expandElements(
+    elemArr, thisID, callbackHandler, maxRecLevel, recLevel
+  ) {
+    elemArr.forEach((elem, ind) => {
+      if (Array.isArray(elem)) {
+        elemArr[ind] = {list: elem};
+        this.#expandElements(
+          elem, thisID, callbackHandler, maxRecLevel, recLevel
+        );
+      }
+      else this.#expandPropVal(
+        elem, elemArr, ind, thisID, callbackHandler, maxRecLevel, recLevel
+      );
+    });
+  }
+
+
+
   // substituteDataInput(entID, mainProps) fetches dataInput from the entity
   // and substitutes the relevant placeholders in mainProps. If mainProps
-  // has nested entity objects in it (as a result of expandMetaData()), the
-  // data for these mainPropss are also fetched and substituted, unless
+  // has nested entity objects in it (as a result of expandMainData()), the
+  // data for these mainProps are also fetched and substituted, unless
   // maxRecLevel is exceeded. This method also transforms each value into an
   // object like {string: [...]}, {set: [...]}, {list: [...]}, etc.
   static substituteDataInput(entID, mainProps, maxRecLevel, recLevel) {

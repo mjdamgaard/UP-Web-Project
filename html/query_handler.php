@@ -111,6 +111,11 @@ switch ($reqType) {
         $paramNameArr = array("id", "id", "id_list", "str", "str");
         // output: [[entID]].
         break;
+    case "entTxtInputs":
+        $sql = "CALL selectEntityTextInputs (?)";
+        $paramNameArr = array("id");
+        $paramNameArr = array("id");
+        // output: [[tmplTxtInputs]].
     case "entDesc":
         $sql = "CALL selectEntityDescription (?)";
         $paramNameArr = array("id");

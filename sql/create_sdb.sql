@@ -228,6 +228,7 @@ CREATE TABLE Entities (
         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "",
 
 
+    template_text_inputs TEXT(10000) DEFAULT NULL,
 
     -- Other properties: A data structure containing the specific properties
     -- of this entity, and formatted as a JSON object. If a property value is
@@ -240,7 +241,7 @@ CREATE TABLE Entities (
     own_desc TEXT(10000) DEFAULT NULL, -- (Can be resized.)
     inst_desc TEXT(10000) DEFAULT NULL, -- (Can be resized.)
 
-    other_props TEXT(10000) DEFAULT NULL, -- (Can be resized.)
+    other_props TEXT(1000) DEFAULT NULL, -- (Can be resized.)
 
 
     -- Binary data: A blob storing.. 
@@ -249,11 +250,12 @@ CREATE TABLE Entities (
     -- or in the interface with it, i.e. in the "input procedures.")
 
     CHECK (
-        main_props  != "" AND
-        own_desc    != "" AND
-        inst_desc   != "" AND
-        other_props != "" AND
-        binary_data != ""
+        template_text_inputs != "" AND
+        main_props           != "" AND
+        own_desc             != "" AND
+        inst_desc            != "" AND
+        other_props          != "" AND
+        binary_data          != ""
     ),
 
     CHECK (
@@ -268,19 +270,21 @@ CREATE TABLE Entities (
 
     data_hash VARCHAR(56) NOT NULL DEFAULT (
         CASE WHEN (
-            main_props  IS NULL AND
-            own_desc    IS NULL AND
-            inst_desc   IS NULL AND
-            other_props IS NULL AND
-            binary_data IS NULL
+            template_text_inputs IS NULL AND
+            main_props           IS NULL AND
+            own_desc             IS NULL AND
+            inst_desc            IS NULL AND
+            other_props          IS NULL AND
+            binary_data          IS NULL
         )
         THEN ""
         ELSE SHA2(CONCAT(
-            IFNULL(SHA2(main_props,  224), "null"),
-            IFNULL(SHA2(own_desc,    224), "null"),
-            IFNULL(SHA2(inst_desc,   224), "null"),
-            IFNULL(SHA2(other_props, 224), "null"),
-            IFNULL(SHA2(binary_data, 224), "null")
+            IFNULL(SHA2(template_text_inputs, 224), "null"),
+            IFNULL(SHA2(main_props,           224), "null"),
+            IFNULL(SHA2(own_desc,             224), "null"),
+            IFNULL(SHA2(inst_desc,            224), "null"),
+            IFNULL(SHA2(other_props,          224), "null"),
+            IFNULL(SHA2(binary_data,          224), "null")
         ), 224)
         END
     ),
