@@ -4,7 +4,7 @@ import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 
 const CLASS_CLASS_METADATA_JSON = JSON.stringify({
   entID: 1,
-  propStruct: {title: {string: ["class"]}},
+  mainProps: {title: {string: ["class"]}},
   classID: 1,
   ownStruct: {title: "class"},
   dataLen: 60,
@@ -14,10 +14,10 @@ export class DataFetcher {
   
 
 
-  static fetchMetadata(entID, callback) {
-    let entMetadata = {
+  static fetchMainData(entID, callback) {
+    let entMainData = {
       entID: entID,
-      propStruct: null,
+      mainProps: null,
       classID: null,
       tmplID: null,
       entInput: null,
@@ -26,53 +26,51 @@ export class DataFetcher {
       dataLen: null,
       template: null,
       isMissing: null,
-      // entInputNames: null,
-      // strInputNames: null,
     };
     let reqData = {
       req: "ent",
       id: entID,
     };
     DBRequestManager.query(reqData, (result) => {
-      let [classID, tmplID, entInput, strInput, ownStruct, dataLen] =
+      let [classID, tmplID, entInput, strInput, mainProps, otherPropsLen] =
         result[0] ?? [];
-      entMetadata.classID = classID;
-      entMetadata.tmplID = tmplID;
-      entMetadata.entInput = entInput;
-      entMetadata.strInput = strInput;
-      entMetadata.ownStruct = ownStruct;
-      entMetadata.dataLen = dataLen;
-      entMetadata.isMissing = !classID;
+      entMainData.classID = classID;
+      entMainData.tmplID = tmplID;
+      entMainData.entInput = entInput;
+      entMainData.strInput = strInput;
+      entMainData.ownStruct = ownStruct;
+      entMainData.otherPropsLen = otherPropsLen;
+      entMainData.isMissing = !classID;
 
       // If entity is missing, call callback immediately and return.
       if (!classID) {
-        callback(entMetadata);
+        callback(entMainData);
         return;
       }
 
-      // If entity is has no template, make set propStruct as the ownStruct,
+      // If entity is has no template, make set mainProps as the ownStruct,
       // and call the callback and return.
       if (tmplID == "0") {
-        entMetadata.propStruct = entMetadata.ownStruct;
-        callback(entMetadata);
+        entMainData.mainProps = entMainData.ownStruct;
+        callback(entMainData);
         return;
       }
 
-      // Else continue by looking up the template and construct the propStruct.
+      // Else continue by looking up the template and construct the mainProps.
       let reqData = {
         req: "ent",
-        id: entMetadata.tmplID,
+        id: entMainData.tmplID,
       };
       DBRequestManager.query(reqData, (result) => {
-        let [,,,,tmplPropStruct] = result[0] ?? [];
-        entMetadata.template = (tmplPropStruct ?? {}).format;
-        parseAndConstructPropStruct(entMetadata, callback);
+        let [,,,,tmplMainProps] = result[0] ?? [];
+        entMainData.template = (tmplMainProps ?? {}).format;
+        parseAndConstructMainProps(entMainData, callback);
       });
     });
   }
 
 
-  static fetchExpandedMetadata(entID, maxRecLevel, recLevel, callback) {
+  static fetchExpandedMainData(entID, maxRecLevel, recLevel, callback) {
     if (!callback) {
       callback = recLevel;
       recLevel = 0;
@@ -81,18 +79,18 @@ export class DataFetcher {
       callback = maxRecLevel;
       maxRecLevel = 2;
     }
-    this.fetchMetadata(entID, (entMetadata) => {
-      this.expandMetaData(entMetadata, entID, maxRecLevel, recLevel, () => {
-        callback(entMetadata);
+    this.fetchMainData(entID, (entMainData) => {
+      this.expandMetaData(entMainData, entID, maxRecLevel, recLevel, () => {
+        callback(entMainData);
       });
     });
   }
 
 
-  // expandMetaData() expands the propStruct by substituting entID references
+  // expandMetaData() expands the mainProps by substituting entID references
   // by nested entData objects. This method also transforms each value into an
   // object like {string: [...]}, {set: [...]}, {list: [...]}, etc.
-  static expandMetaData(entMetadata, thisID, maxRecLevel, recLevel, callback) {
+  static expandMetaData(entMainData, thisID, maxRecLevel, recLevel, callback) {
     if (!callback) {
       callback = recLevel;
       recLevel = 0;
@@ -102,40 +100,40 @@ export class DataFetcher {
       maxRecLevel = 2;
     }
 
-    let propStruct = entMetadata.propStruct;
+    let mainProps = entMainData.mainProps;
 
     let callbackHandler = new ParallelCallbackHandler();
 
-    // Prepare callbacks to expand the propStruct.
-    Object.keys(propStruct).forEach(propKey => {
-      let propVal = propStruct[propKey];
+    // Prepare callbacks to expand the mainProps.
+    Object.keys(mainProps).forEach(propKey => {
+      let propVal = mainProps[propKey];
       
       if (Array.isArray(propVal)) {
-        let elemArr = propStruct[propKey];
-        propStruct[propKey] = {set: elemArr};
+        let elemArr = mainProps[propKey];
+        mainProps[propKey] = {set: elemArr};
         this.#expandElements(
           elemArr, thisID, callbackHandler, maxRecLevel, recLevel
         );
       }
       else this.#expandPropVal(
-        propVal, propStruct, propKey, thisID, callbackHandler,
+        propVal, mainProps, propKey, thisID, callbackHandler,
         maxRecLevel, recLevel
       );
     });
 
-    // Prepare callback to get the expanded (with recLevel -= 1) metadata
+    // Prepare callback to get the expanded (with recLevel -= 1) mainData
     // of the entity's class.
-    let classID = entMetadata.classID;
+    let classID = entMainData.classID;
     // If classID == 1, just use a hard-coded classMetaData.
     if (classID == "1") {
-      entMetadata.classMetaData = JSON.parse(CLASS_CLASS_METADATA_JSON);
+      entMainData.classMetaData = JSON.parse(CLASS_CLASS_METADATA_JSON);
     }
-    // Else fetch the metadata of the class from the database.
+    // Else fetch the mainData of the class from the database.
     else if (recLevel <= maxRecLevel) {
       callbackHandler.push((resolve) => {
-        this.fetchExpandedMetadata(
-          classID, maxRecLevel, recLevel + 1, (classMetadata) => {
-            entMetadata.classMetaData = classMetadata;
+        this.fetchExpandedMainData(
+          classID, maxRecLevel, recLevel + 1, (classMainData) => {
+            entMainData.classMetaData = classMainData;
             resolve();
           }
         );
@@ -183,9 +181,9 @@ export class DataFetcher {
       }
       else {
         callbackHandler.push(resolve => {
-          this.fetchExpandedMetadata(
-            entID,  maxRecLevel, recLevel + 1, (expEntMetadata) => {
-              obj[objKey] = {ent: expEntMetadata};
+          this.fetchExpandedMainData(
+            entID,  maxRecLevel, recLevel + 1, (expEntMainData) => {
+              obj[objKey] = {ent: expEntMainData};
               resolve();
             }
           );
@@ -201,12 +199,12 @@ export class DataFetcher {
       }
       else {
         callbackHandler.push(resolve => {
-          this.fetchExpandedMetadata(
-            entID,  maxRecLevel, recLevel + 1, (expEntMetadata) => {
+          this.fetchExpandedMainData(
+            entID,  maxRecLevel, recLevel + 1, (expEntMainData) => {
               obj[objKey] = {
                 ent: Object.assign(
                   {expectedClassID: expectedClassID},
-                  expEntMetadata
+                  expEntMainData
                 )
               };
               resolve();
@@ -240,9 +238,9 @@ export class DataFetcher {
             }
             else {
               callbackHandler.push(resolve => {
-                this.fetchExpandedMetadata(
-                  entID,  maxRecLevel, recLevel + 1, (expEntMetadata) => {
-                    strArr[ind] = {ent: expEntMetadata};
+                this.fetchExpandedMainData(
+                  entID,  maxRecLevel, recLevel + 1, (expEntMainData) => {
+                    strArr[ind] = {ent: expEntMainData};
                     resolve();
                   }
                 );
@@ -294,13 +292,13 @@ export class DataFetcher {
   }
 
 
-  // substituteDataInput(entID, propStruct) fetches dataInput from the entity
-  // and substitutes the relevant placeholders in propStruct. If propStruct
+  // substituteDataInput(entID, mainProps) fetches dataInput from the entity
+  // and substitutes the relevant placeholders in mainProps. If mainProps
   // has nested entity objects in it (as a result of expandMetaData()), the
-  // data for these propStructs are also fetched and substituted, unless
+  // data for these mainPropss are also fetched and substituted, unless
   // maxRecLevel is exceeded. This method also transforms each value into an
   // object like {string: [...]}, {set: [...]}, {list: [...]}, etc.
-  static substituteDataInput(entID, propStruct, maxRecLevel, recLevel) {
+  static substituteDataInput(entID, mainProps, maxRecLevel, recLevel) {
     maxRecLevel ??= 2;
     recLevel ??= 0;
 
@@ -329,14 +327,14 @@ export class DataFetcher {
 
 
 
-function parseAndConstructPropStruct(entMetadata, callback) {
-  // Initialize the propStruct as the un-substituted template.
-  let propStruct = Object.assign({}, entMetadata.template);
+function parseAndConstructMainProps(entMainData, callback) {
+  // Initialize the mainProps as the un-substituted template.
+  let mainProps = Object.assign({}, entMainData.template);
 
   // Replace all /%e[0-9]/ placeholders in the values of the template by the
   // entity inputs. 
-  let entInputArr = entMetadata.entInput.split(",");
-  substitutePlaceholders(propStruct, /%e[0-9]/g, placeholder => {
+  let entInputArr = entMainData.entInput.split(",");
+  substitutePlaceholders(mainProps, /%e[0-9]/g, placeholder => {
     let n = parseInt(placeholder.substring(2));
     let substitute = entInputArr[n];
     if (substitute === undefined) {
@@ -351,30 +349,30 @@ function parseAndConstructPropStruct(entMetadata, callback) {
 
   // Replace all /%s[0-9]/ placeholders in the values of the template by the
   // string inputs, separated by '|'.
-  let strInputArr = getStrInputArr(entMetadata.strInput);
-  substitutePlaceholders(propStruct, /%s[0-9]/g, placeholder => {
+  let strInputArr = getStrInputArr(entMainData.strInput);
+  substitutePlaceholders(mainProps, /%s[0-9]/g, placeholder => {
     let n = parseInt(placeholder.substring(2));
     return strInputArr[n] ?? "@null";
   });
 
   // Replace any /%s/ placeholders in the values of the template by the
   // whole string input. 
-  let strInput = entMetadata.strInput;
-  substitutePlaceholders(propStruct, /%s/g, () => strInput);
+  let strInput = entMainData.strInput;
+  substitutePlaceholders(mainProps, /%s/g, () => strInput);
 
   // Finally copy the object's own property struct into the template. 
-  entMetadata.propStruct = Object.assign(propStruct, entMetadata.ownStruct);
+  entMainData.mainProps = Object.assign(mainProps, entMainData.ownStruct);
 
   // Then call the callback function and return.
-  callback(entMetadata);
+  callback(entMainData);
   return;
 }
 
 
-export function substitutePlaceholders(propStruct, regex, substituteFun) {
-  Object.keys(propStruct).forEach(propKey => {
-    let propVal = propStruct[propKey];
-    propStruct[propKey] = propVal.replaceAll(regex, substituteFun);
+export function substitutePlaceholders(mainProps, regex, substituteFun) {
+  Object.keys(mainProps).forEach(propKey => {
+    let propVal = mainProps[propKey];
+    mainProps[propKey] = propVal.replaceAll(regex, substituteFun);
   });
 }
 

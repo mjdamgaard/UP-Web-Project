@@ -9,8 +9,12 @@ DROP PROCEDURE selectRecordedInputsMaxID;
 
 -- TODO: Make proc to query for users who has rated a stmt / scale.
 
-DROP PROCEDURE selectEntity;
+DROP PROCEDURE selectEntityMainData;
 DROP PROCEDURE selectEntityFromSecKey;
+DROP PROCEDURE selectEntityDescription;
+DROP PROCEDURE selectEntityInstanceDescription;
+DROP PROCEDURE selectEntityOtherProps;
+
 -- DROP PROCEDURE selectEntityPropStruct;
 DROP PROCEDURE selectEntityData;
 DROP PROCEDURE selectCreator;
@@ -138,7 +142,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectEntity (
+CREATE PROCEDURE selectEntityMainData (
     IN entID BIGINT UNSIGNED
 )
 BEGIN
@@ -147,9 +151,8 @@ BEGIN
         template_id AS tmplID,
         template_entity_inputs AS tmplEntInputs,
         template_string_inputs AS tmplStrInputs,
-        -- LENGTH(own_prop_struct) AS ownStructLen,
-        own_prop_struct AS ownStruct,
-        LENGTH(data_input) AS dataLen
+        main_props AS mainProps,
+        LENGTH(other_props) AS otherPropsLen
     FROM Entities
     WHERE id = entID;
 END //
@@ -163,8 +166,7 @@ CREATE PROCEDURE selectEntityFromSecKey (
     IN tmplID BIGINT UNSIGNED,
     IN tmplEntInputs VARCHAR(209),
     IN tmplStrInputs VARCHAR(255),
-    IN ownStructHash VARCHAR(56),
-    IN dataInputHash VARCHAR(56)
+    IN dataHash VARCHAR(56)
 )
 BEGIN
     SELECT id AS entID
@@ -172,11 +174,48 @@ BEGIN
     WHERE (
         class_id = classID AND
         template_id = tmplID AND
-        data_input_hash = dataInputHash AND
-        own_prop_struct_hash = ownStructHash AND
+        data_hash = dataHash AND
         template_entity_inputs = tmplEntInputs AND
         template_string_inputs = tmplStrInputs
     );
+END //
+DELIMITER ;
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectEntityDescription (
+    IN entID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT own_desc AS ownDesc
+    FROM Entities
+    WHERE id = entID;
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectEntityInstanceDescription (
+    IN entID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT inst_desc AS instDesc
+    FROM Entities
+    WHERE id = entID;
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectEntityOtherProps (
+    IN entID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT other_props AS otherProps
+    FROM Entities
+    WHERE id = entID;
 END //
 DELIMITER ;
 

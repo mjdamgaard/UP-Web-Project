@@ -258,9 +258,9 @@ CREATE TABLE Entities (
 
     CHECK (
         template_id = 0 OR
-            main_props  IS NULL AND
-            own_desc    IS NULL AND
-            inst_desc   IS NULL AND
+            main_props IS NULL AND
+            own_desc   IS NULL AND
+            inst_desc  IS NULL AND
             -- other_props IS NULL AND
             binary_data IS NULL
     ),
@@ -268,21 +268,27 @@ CREATE TABLE Entities (
 
     data_hash VARCHAR(56) NOT NULL DEFAULT (
         CASE WHEN (
-            main_props IS NULL AND other_props IS NULL AND binary_data IS NULL
+            main_props  IS NULL AND
+            own_desc    IS NULL AND
+            inst_desc   IS NULL AND
+            other_props IS NULL AND
+            binary_data IS NULL
         )
         THEN ""
         ELSE SHA2(CONCAT(
-            SHA2(IFNULL(main_props, ""),  224),
-            SHA2(IFNULL(other_props, ""), 224),
-            SHA2(IFNULL(binary_data, ""), 224)
+            IFNULL(SHA2(main_props,  224), "null"),
+            IFNULL(SHA2(own_desc,    224), "null"),
+            IFNULL(SHA2(inst_desc,   224), "null"),
+            IFNULL(SHA2(other_props, 224), "null"),
+            IFNULL(SHA2(binary_data, 224), "null")
         ), 224)
         END
     ),
 
     UNIQUE INDEX (
         class_id, template_id,
-        template_entity_inputs, template_string_inputs,
-        data_hash
+        data_hash,
+        template_entity_inputs, template_string_inputs
     ),
 
 

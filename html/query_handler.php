@@ -95,31 +95,43 @@ switch ($reqType) {
         $typeArr = array();
         // output: [[maxID]].
         break;
+    /* Entity queries */
     case "ent":
-        $sql = "CALL selectEntity (?)";
+        $sql = "CALL selectEntityMainData (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
         // output: [[
-        //   classID, tmplID, tmplEntInputs, tmplStrInputs, ownStruct, dataLen
+        //   classID, tmplID, tmplEntInputs, tmplStrInputs, mainProps,
+        //   otherPropsLen
         // ]].
         break;
     case "entSK":
-        $sql = "CALL selectEntityFromSecKey (?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("c", "t", "e", "s", "oh", "dh");
-        $paramNameArr = array("id", "id", "id_list", "str", "str", "str");
+        $sql = "CALL selectEntityFromSecKey (?, ?, ?, ?, ?)";
+        $paramNameArr = array("c", "t", "e", "s", "h");
+        $paramNameArr = array("id", "id", "id_list", "str", "str");
         // output: [[entID]].
         break;
+    case "entDesc":
+        $sql = "CALL selectEntityDescription (?)";
+        $paramNameArr = array("id");
+        $paramNameArr = array("id");
+        // output: [[ownDesc]].
+    case "entInstDesc":
+        $sql = "CALL selectEntityInstanceDescription (?)";
+        $paramNameArr = array("id");
+        $paramNameArr = array("id");
+        // output: [[instDesc]].
+    case "entOtherProps":
+        $sql = "CALL selectEntityOtherProps (?)";
+        $paramNameArr = array("id");
+        $paramNameArr = array("id");
+        // output: [[otherProps]].
     // case "entOPS":
     //     $sql = "CALL selectEntityPropStruct (?, ?, ?)";
     //     $paramNameArr = array("id", "l", "s");
     //     $paramNameArr = array("id", "uint", "uint");
     //     // output: [[ownStruct]].
-    case "entData":
-        $sql = "CALL selectEntityData (?, ?, ?)";
-        $paramNameArr = array("id", "l", "s");
-        $paramNameArr = array("id", "uint", "uint");
-        // output: [[dataInput]].
-        break;
+    /* Other queries */
     case "creator":
         $sql = "CALL selectCreator (?)";
         $paramNameArr = array("id");
@@ -190,11 +202,19 @@ $res = $stmt->get_result()->fetch_all();
 // if $reqType == ent, JSON-decode the fifth output, "ownStruct", before the
 // final full JSON-encoding. 
 if ($reqType === "ent") {
-    $ownStruct = $res[0][4];
-    if ($ownStruct) {
-        $res[0][4] = json_decode($ownStruct, true);
-    } else if ($ownStruct === "") {
-        $res[0][4] = json_decode("{}", true);
+    $mainProps = $res[0][4];
+    if ($mainProps) {
+        $res[0][4] = json_decode($mainProps, true);
+    } else if ($mainProps === "") {
+        $res[0][4] = json_decode("null", true);
+    }
+}
+else if ($reqType === "entOtherProps") {
+    $otherProps = $res[0][0];
+    if ($otherProps) {
+        $res[0][0] = json_decode($otherProps, true);
+    } else if ($otherProps === "") {
+        $res[0][0] = json_decode("null", true);
     }
 }
 // finally echo the JSON-encoded numeric array, containing e.g. the
