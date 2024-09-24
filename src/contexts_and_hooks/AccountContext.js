@@ -28,9 +28,7 @@ if (typeof(Storage) === "undefined") {
 
 
 
-export const AccountContextProvider = (props) => {
-  const {children} = props;
-  const [dispatch, passData] = useDispatch(props);
+export const AccountContextProvider = ({children} ) => {
 
 
   const [session, setSession] = useState(localStorage.session ?? false);
@@ -40,7 +38,7 @@ export const AccountContextProvider = (props) => {
     []
   );
 
-  return passData(
+  return (
     <SessionContext.Provider value={session}>
     <AccountManagerContext.Provider value={accountManager}>
       {children}

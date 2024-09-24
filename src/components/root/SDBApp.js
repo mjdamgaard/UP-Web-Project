@@ -26,7 +26,7 @@ export const HOME_ENTITY_ID = 12;
 
 const appReducers = {
   key: "app",
-  "SET_PAGE": ([state, props, contexts], appPage) => {
+  "SET_PAGE": ([state], appPage) => {
     return {...state, appPage: appPage};
   },
 }
@@ -45,13 +45,13 @@ export const SDBApp = () => {
   const [{
     appPage,
 
-  }, dispatch, passData] = useStateAndReducers({
+  }, dispatch, ref] = useStateAndReducers({
     appPage: initialPage,
 
-  }, null, appReducers);
+  }, appReducers);
 
-  return passData(
-    <div className="sdb-interface">
+  return (
+    <div className="sdb-interface" ref={ref}>
       <AccountContextProvider>{/* yields: session, accountManager.*/}
         {/* <InterfaceHeader setAppPage={void(0)} /> */}
         <MainPage

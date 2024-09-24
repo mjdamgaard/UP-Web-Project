@@ -189,14 +189,14 @@ export const MainPage = (props) => {
     currInd,
     // scrollLeft, scrollVelocity, lastScrollAt,
 
-  }, dispatch, passData] = useStateAndReducers({
+  }, dispatch, ref] = useStateAndReducers({
     colKeyArr: [0, 1],
     specStore: {"0": {entID: HOME_ENTITY_ID}, "1": {entID: 1}},
     nonce: 1,
     currInd: 0,
     // scrollLeft: 0, scrollVelocity: 0, lastScrollAt: 0,
 
-  }, props, mainPageReducers);
+  }, mainPageReducers, props);
 
   useLayoutEffect(() => {
     let currColSpec = specStore[colKeyArr[currInd]];
@@ -230,8 +230,8 @@ export const MainPage = (props) => {
     );
   });
 
-  return passData(
-    <div className="main-page">
+  return (
+    <div className="main-page" ref={ref}>
       <InterfaceHeader
         setAppPage={void(0)}
         colKeyArr={colKeyArr} specStore={specStore} currInd={currInd}

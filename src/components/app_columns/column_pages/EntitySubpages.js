@@ -53,7 +53,7 @@ const EntityMetaPage = () => <EntityDataDisplay />;
 export const EntitySubpages = (props) => {
   var {entID, classID, initTab} = props;
 
-  const [dispatch, passData] = useDispatch(props, {});
+  // const [dispatch, passData] = useDispatch(props, {});
 
   // TODO: Query for the topmost types for the entity (entID), and use them to
   // specify the tabs. *Or maybe look up types in fullPropStruct, or do both..
@@ -74,7 +74,7 @@ export const EntitySubpages = (props) => {
   
   // TODO: Remove: Temporary module while refactoring and debugging:
   var typeID, cxtID;
-  return passData(
+  return (
     <div className="entity-page">
       <div className="entity-page-header">
         <h4>Entity title:</h4>

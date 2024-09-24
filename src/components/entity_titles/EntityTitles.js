@@ -20,7 +20,7 @@ const SpecialRefEntityTitle = () => <template></template>;
 
 export const EntityTitle = (props) => {
   const {entID, expectedClassID, maxRecLevel = 2, recLevel = 0} = props;
-  const [results, dispatch, passData] = useStateAndReducers({}, props, {});
+  const [results, setState] = useState({});
 
   // const [results, setResults] = useState({});
   useMemo(() => {
@@ -30,11 +30,12 @@ export const EntityTitle = (props) => {
     // that rating as well. *No, just do this for the drop-down menu for now.
     DataFetcher.fetchExpandedMainData(
       entID, maxRecLevel, recLevel, (expEntMainData) => {
-        dispatch("self", "setState", prev => {
-          let ret = {...prev};
-          ret.expEntMainData = expEntMainData;
-          ret.isFetched = true;
-          return ret;
+        setState(prev => {
+          return {
+            ...prev,
+            expEntMainData: expEntMainData,
+            isFetched: true,
+          };
         });
       }
     );
@@ -43,14 +44,14 @@ export const EntityTitle = (props) => {
 
   // Before results is fetched, render this:
   if (!results.isFetched) {
-    return passData(
+    return (
       <EntityTitlePlaceholder entID={entID} />
     );
   }
 
   // Finally render this.
   const expEntMainData = results.expEntMainData;
-  return passData(
+  return (
     <div className="entity-title">
       <EntityLink entID={expEntMainData.entID} >
         <EntityReference
@@ -66,16 +67,15 @@ export const EntityTitle = (props) => {
 
 const EntityReference = (props) => {
   const {expEntMainData, expectedClassID} = props;
-  const [results, dispatch, passData] = useStateAndReducers({}, props, {});
 
   if (expEntMainData.entID) {
     if (expEntMainData.isMissing) {
-      return passData(
+      return (
         <MissingEntityReference entID={expEntMainData.entID} />
       );
     }
     else {
-      return passData(
+      return (
         <div className={"entity-ref-" + expEntMainData.entID}>
           <EntityMainDataProperties expEntMainData={expEntMainData} />
           <ClassClarification
@@ -125,7 +125,6 @@ const EntityMainDataProperties = ({expEntMainData}) => {
 
 const EntityPropertyValue = (props) => {
   const {propVal} = props;
-  const [results, dispatch, passData] = useStateAndReducers({}, props, {});
   
   if (typeof propVal === "string") {
     return (
@@ -137,7 +136,7 @@ const EntityPropertyValue = (props) => {
 
   else if (propVal.ent) {
     let newMainData = propVal.ent;
-    return passData(
+    return (
       <div className={"entity-ref-" + newMainData.entID}>
         <EntityMainDataProperties expEntMainData={newMainData} />
         <ClassClarification
@@ -150,7 +149,7 @@ const EntityPropertyValue = (props) => {
   else if (propVal.classContext) {
     let expectedClassID = propVal.classContext.classID;
     let newMainData = propVal.classContext.value;
-    return passData(
+    return (
       <div className={"entity-ref-" + newMainData.entID}>
         <EntityMainDataProperties expEntMainData={newMainData} />
         <ClassClarification
@@ -162,7 +161,7 @@ const EntityPropertyValue = (props) => {
   }
 
   else if (propVal.thisEnt) {
-    return passData(
+    return (
       <div className={"entity-ref-this-" + propVal.thisEnt}>
         {"@this"}
       </div>
@@ -170,19 +169,19 @@ const EntityPropertyValue = (props) => {
   }
 
   else if (propVal.null) {
-    return passData(
+    return (
       <NullEntityReference />
     );
   }
   else if (propVal.none) {
-    return passData(
+    return (
       <NoneEntityReference />
     );
   }
 
   else if (propVal.list) {
     // Implement lists further for EntityTitle only if it becomes useful.
-    return passData(
+    return (
       <div className="entity-ref-list">
           {JSON.stringify(propVal.list)}
       </div>
@@ -191,7 +190,7 @@ const EntityPropertyValue = (props) => {
   else if (propVal.concat) {
     // Implement concatenations further for EntityTitle only if it becomes
     // useful.
-    return passData(
+    return (
       <div className="entity-ref-concat">
           {JSON.stringify(propVal.concat)}
       </div>
@@ -199,9 +198,9 @@ const EntityPropertyValue = (props) => {
   }
 
   else if (propVal.string) {
-    return passData(
+    return (
       propVal.string.map((val, ind) => {
-        return passData(
+        return (
           <EntityPropertyValue key={ind} propVal={val} />
         );
       })
@@ -352,11 +351,11 @@ const NoneEntityReference = () => {
 
 export const EntityLink = (props) => {
   const {entID, children} = props;
-  const [dispatch, passData] = useDispatch(props, {});
+  const [dispatch, ref] = useDispatch(null, props);
   // const colKey = useContext(ColumnContext);
 
   return (
-    <div className="entity-link" onClick={() => {
+    <div className="entity-link" ref={ref} onClick={() => {
       let colSPec = {entID: entID};
       dispatch("app-column", "OPEN_COLUMN", colSPec);
     }} >

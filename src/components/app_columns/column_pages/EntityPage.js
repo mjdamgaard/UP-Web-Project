@@ -52,7 +52,7 @@ const CategoryDisplay = () => <template></template>;
 
 export const EntityPage = (props) => {
   const {entID, initTab} = props;
-  const [results, dispatch, passData] = useStateAndReducers({}, props, {});
+  const [results, setState] = useState({});
 
   // const [results, setResults] = useState({});
   useMemo(() => {
@@ -62,11 +62,12 @@ export const EntityPage = (props) => {
     // that rating as well. *No, just do this for the drop-down menu for now.
     DataFetcher.fetchMainData(
       entID, (entMainData) => {
-        dispatch("self", "setState", prev => {
-          let ret = {...prev};
-          ret.entMainData = entMainData;
-          ret.isFetched = true;
-          return ret;
+        setState(prev => {
+          return {
+            ...prev,
+            entMainData: entMainData,
+            isFetched: true,
+          };
         });
       }
     );
@@ -99,7 +100,7 @@ export const EntityPage = (props) => {
 
   const classID = results.entMainData.classID;
 
-  return passData(
+  return (
     <div className="entity-page">
       <div className="entity-page-header">
         <h2><EntityTitle entID={entID} isLink /></h2>

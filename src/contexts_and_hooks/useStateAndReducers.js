@@ -1,5 +1,5 @@
 import {
-  useState, useEffect, useLayoutEffect
+  useState, useEffect, useLayoutEffect, useRef
 } from "react";
 
 
@@ -83,7 +83,6 @@ function dispatchFromRef(
         input.bind(reducers);
       }
       setState(input);
-      return;
     }
     // Else find the right reducer in reducers, with 'this' bound to reducers,
     // and setState with that.
@@ -92,31 +91,35 @@ function dispatchFromRef(
         return throwMissingAction(key, action, ref);
       }
       let reducer = reducers[action].bind(reducers);
-      let modDispatch = getModifiedDispatch(dispatch);
+      let modDispatch = getModifiedDispatch1((key, action, input) => (
+        dispatchToAncestor(ref, key, action, input)
+      ));
       setState(state => (
         reducer([state, props, contexts], input, modDispatch)
       ));
-      return;
     }
   }
   // Else dispatch a event that bubble up to the first ancestor that has
   // called useStateAndReducers() or useDispatch(), and on from there if key
   // doesn't match that ancestor's reducer key.
   else {
-    ref.current.parentElement.dispatchEvent(
-      new CustomEvent("reduce-state", {
-        bubbles: true,
-        detail: [key, action, input],
-      })
-    );
-    return;
+    dispatchToAncestor(ref, key, action, input);
   }
 }
 
 
+function dispatchToAncestor(ref, key, action, input) {
+  ref.current.parentElement.dispatchEvent(
+    new CustomEvent("reduce-state", {
+      bubbles: true,
+      detail: [key, action, input],
+    })
+  );
+}
 
 
-function getModifiedDispatch(dispatch) {
+
+function getModifiedDispatch1(dispatch) {
   return (key, action, input) => {
     if (key === "self") {
       throw (
@@ -128,6 +131,60 @@ function getModifiedDispatch(dispatch) {
   };
 }
 
+function getModifiedDispatch2(dispatch) {
+  return (key, action, input) => {
+    if (key === "self") {
+      throw (
+        'useDispatch(): dispatch(): don\'t call "self" from ' +
+        'a component that uses useDispatch() rather than ' +
+        'useStateAndReducers().'
+      );
+    }
+    else return dispatch(key, action, input);
+  };
+}
+
+
+
+
+
+
+function reduceStateEventHandler(e, ref, reducers, dispatch) {debugger;
+  let [key, action, input] = e.detail;
+  // If key is an array, treat it as [key, skip] instead, where skip is
+  // the number of ancestors to skip.
+  let skip = 0;
+  if (Array.isArray(key)) {
+    [key, skip] = key;
+    skip = parseInt(skip);
+  }
+
+  // If key doesn't match the reducer key, let the event bubble up
+  // further.
+  if (reducers.key !== key) {
+    return true;
+  }
+  // Else handle the event.
+  else {
+    // Stop the event from going further.
+    e.stopPropagation();
+    // If skip > 0, replace the event with one where skip is decremented
+    // by one, and let that bubble up instead.
+    if (skip > 0) {
+      ref.current.parentElement.dispatchEvent(
+        new CustomEvent("reduce-state", {
+          bubbles: true,
+          detail: [[key, skip - 1], action, input],
+        })
+      );
+    }
+    // Else reduce the state of this component.
+    else {
+      dispatch("self", action, input);
+    }
+  }
+  return false;
+}
 
 
 
@@ -135,9 +192,12 @@ function getModifiedDispatch(dispatch) {
 
 
 
-export const useStateAndReducers = (
-  initState, reducers = {}, props = {}, contexts
-) => {
+
+
+
+export const useStateAndReducers = (initState, reducers, props, contexts) => {
+  reducers ??= {};
+
   // Call the useState() hook on initState.
   const [state, setState] = useState(initState);
 
@@ -149,43 +209,10 @@ export const useStateAndReducers = (
     );
   };
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (ref.current) {
       ref.current.addEventListener("reduce-state", (e) => {
-        let [key, action, input] = e.detail;
-        // If key is an array, treat it as [key, skip] instead, where skip is
-        // the number of ancestors to skip.
-        let skip = 0;
-        if (Array.isArray(key)) {
-          [key, skip] = key;
-          skip = parseInt(skip);
-        }
-
-        // If key doesn't match the reducer key, let the event bubble up
-        // further.
-        if (reducers.key !== key) {
-          return true;
-        }
-        // Else handle the event.
-        else {
-          // Stop the event from going further.
-          e.stopPropagation();
-          // If skip > 0, replace the event with one where skip is decremented
-          // by one, and let that bubble up instead.
-          if (skip > 0) {
-            ref.current.parentElement.dispatchEvent(
-              new CustomEvent("reduce-state", {
-                bubbles: true,
-                detail: [[key, skip - 1], action, input],
-              })
-            );
-          }
-          // Else reduce the state of this component.
-          else {
-            dispatch("self", action, input);
-          }
-        }
-        return false;
+        reduceStateEventHandler(e, ref, reducers, dispatch);
       });
     }
   });
@@ -202,63 +229,27 @@ export const useStateAndReducers = (
   but don't need for the given component to have a state itself.
   (The first 'props' input is actually not strictly needed id rootID is set.)
 **/
-export const useDispatch = (
-  reducers = {}, props = {}, contexts
-) => {
+export const useDispatch = (reducers, props, contexts) => {
+  reducers ??= {};
 
   const ref = useRef();
 
-  const dispatch = getModifiedDispatch((key, action, input) => {
+  const dispatch = (key, action, input) => {
     dispatchFromRef(
       ref, reducers, () => {}, props, contexts, key, action, input
     );
-  });
+  };
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (ref.current) {
       ref.current.addEventListener("reduce-state", (e) => {
-        let [key, action, input] = e.detail;
-        // If key is an array, treat it as [key, skip] instead, where skip is
-        // the number of ancestors to skip.
-        let skip = 0;
-        if (Array.isArray(key)) {
-          [key, skip] = key;
-          skip = parseInt(skip);
-        }
-
-        // If key doesn't match the reducer key, let the event bubble up
-        // further.
-        if (reducers.key !== key) {
-          return true;
-        }
-        // Else handle the event.
-        else {
-          // Stop the event from going further.
-          e.stopPropagation();
-          // If skip > 0, replace the event with one where skip is decremented
-          // by one, and let that bubble up instead.
-          if (skip > 0) {
-            ref.current.parentElement.dispatchEvent(
-              new CustomEvent("reduce-state", {
-                bubbles: true,
-                detail: [[key, skip - 1], action, input],
-              })
-            );
-          }
-          // Else reduce the state of this component.
-          else {
-            dispatch("self", action, input);
-          }
-        }
-        return false;
+        reduceStateEventHandler(e, ref, reducers, dispatch);
       });
     }
   });
 
-
-  return [dispatch, ref];
+  const modDispatch = getModifiedDispatch2(dispatch);
+  return [modDispatch, ref];
 };
-
-
 
 

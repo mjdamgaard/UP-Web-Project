@@ -6,10 +6,7 @@ import { useDispatch } from "../contexts_and_hooks/useStateAndReducers";
 
 // tabDataArr: [tabTitle, jsxElement].
 
-export const PagesWithTabs = (props) => {
-  const {tabDataArr, initTab} = props;
-  const [dispatch, passData] = useDispatch(props);
-
+export const PagesWithTabs = ({tabDataArr, initTab}) => {
   const [activeTab, setActiveTab] = useState(initTab);
   const [isLoadedArr, setIsLoadedArr] = useState(tabDataArr.map(
     val => val[0] === initTab
@@ -28,7 +25,7 @@ export const PagesWithTabs = (props) => {
     </div>
   ));
 
-  return passData(
+  return (
     <div className="pages-with-tabs">
       <TabHeader
         tabTitles={tabTitles}

@@ -13,9 +13,9 @@ import {ListGeneratorPage} from "../ListGenPages.js";
 
 
 
-const mainPageReducers = {
+const appColumnReducers = {
   key: "app-column",
-  "OPEN_COLUMN": ([state, props], colSpec, dispatch) => {
+  "OPEN_COLUMN": ([state, props], colSpec, dispatch) => {debugger;
     let callerColKey = props.colKey;
     dispatch("main", "OPEN_COLUMN", [colSpec, callerColKey]);
   },
@@ -24,7 +24,7 @@ const mainPageReducers = {
 
 export const AppColumn = (props) => {
   const {colKey, colSpec} = props;
-  const [dispatch, passData] = useDispatch(props, mainPageReducers);
+  const [dispatch, ref] = useDispatch(appColumnReducers, props);
 
   var page;
   if (colSpec.entID) {
@@ -34,8 +34,8 @@ export const AppColumn = (props) => {
     page = <ListGeneratorPage lg={colSpec.lg} />;
   }
 
-  return passData(
-    <div className="app-column">
+  return (
+    <div className="app-column" ref={ref}>
       <ColumnButtonContainer colKey={colKey} />
       <ColumnContext.Provider value={colKey}>
         {page}
