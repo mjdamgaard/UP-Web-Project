@@ -64,15 +64,18 @@ export const EntityTitle = (props) => {
 
 
 
-const EntityReference = ({expEntMainData, expectedClassID}) => {
+const EntityReference = (props) => {
+  const {expEntMainData, expectedClassID} = props;
+  const [results, dispatch, passData] = useStateAndReducers({}, props, {});
+
   if (expEntMainData.entID) {
     if (expEntMainData.isMissing) {
-      return (
+      return passData(
         <MissingEntityReference entID={expEntMainData.entID} />
       );
     }
     else {
-      return (
+      return passData(
         <div className={"entity-ref-" + expEntMainData.entID}>
           <EntityMainDataProperties expEntMainData={expEntMainData} />
           <ClassClarification
@@ -84,93 +87,6 @@ const EntityReference = ({expEntMainData, expectedClassID}) => {
     }
   }
 
-  else if (expEntMainData.ent) {
-    let newMainData = expEntMainData.ent;
-    return (
-      <div className={"entity-ref-" + newMainData.entID}>
-        <EntityMainDataProperties expEntMainData={newMainData} />
-        <ClassClarification
-          classMainData={newMainData.classMainData}
-          expectedClassID={false}
-        />
-      </div>
-    );
-  }
-  else if (expEntMainData.classContext) {
-    let expectedClassID = expEntMainData.classContext.classID;
-    let newMainData = expEntMainData.classContext.value;
-    return (
-      <div className={"entity-ref-" + newMainData.entID}>
-        <EntityMainDataProperties expEntMainData={newMainData} />
-        <ClassClarification
-          classMainData={newMainData.classMainData}
-          expectedClassID={expectedClassID}
-        />
-      </div>
-    );
-  }
-
-  else if (expEntMainData.thisEnt) {
-    return (
-      <div className={"entity-ref-this-" + expEntMainData.thisEnt}>
-        {"@this"}
-      </div>
-    );
-  }
-
-  else if (expEntMainData.null) {
-    return (
-      <NullEntityReference />
-    );
-  }
-  else if (expEntMainData.none) {
-    return (
-      <NoneEntityReference />
-    );
-  }
-
-  else if (expEntMainData.list) {
-    // Implement lists further for EntityTitle only if it becomes useful.
-    return (
-      <div className="entity-ref-list">
-          {JSON.stringify(expEntMainData.list)}
-      </div>
-    );
-  }
-  else if (expEntMainData.concat) {
-    // Implement concatenations further for EntityTitle only if it becomes
-    // useful.
-    return (
-      <div className="entity-ref-concat">
-          {JSON.stringify(expEntMainData.concat)}
-      </div>
-    );
-  }
-
-  else if (expEntMainData.string) {
-    return expEntMainData.string.map((val, ind) => {
-      if (typeof val === "string") {
-        return (
-          <div key={ind} className="pure-string">
-            {val}
-          </div>
-        );
-      }
-      else {
-        return (
-          <EntityReference key={ind} expEntMainData={val} />
-        );
-      }
-    });
-  }
-  else if (typeof expEntMainData === "string") {
-    return (
-      <div className="pure-string">
-        {expEntMainData}
-      </div>
-    );
-  }
-
   else {
     throw (
       "EntityReference: Unhandled case: " + JSON.stringify(expEntMainData) +
@@ -178,6 +94,8 @@ const EntityReference = ({expEntMainData, expectedClassID}) => {
     );
   }
 };
+
+
 
 
 const EntityMainDataProperties = ({expEntMainData}) => {
@@ -189,23 +107,120 @@ const EntityMainDataProperties = ({expEntMainData}) => {
   }
 
   return Object.keys(mainProps).map((propKey => {
-    let propVal = mainProps[propKey];console.log(propVal);
-    let propValArr = propVal.set || [propVal];
+    let propVal = mainProps[propKey];
     let propName = propKey.replaceAll(/[ \t\n\r\f]/g, "-");
     return (
       <div key={propKey} className={"prop-member-" + propName}>
         <div key={propKey} className={"prop-name-" + propName}>
           {propKey + ": "}
         </div>
-        {propValArr.map((val, ind) => {
-          return (
-            <EntityReference key={ind} expEntMainData={val} />
-          );
-        })}
+        <EntityPropertyValue propVal={propVal} />
       </div>
     );
   }));
 };
+
+
+
+
+const EntityPropertyValue = (props) => {
+  const {propVal} = props;
+  const [results, dispatch, passData] = useStateAndReducers({}, props, {});
+  
+  if (typeof propVal === "string") {
+    return (
+      <div className="pure-string">
+        {propVal}
+      </div>
+    );
+  }
+
+  else if (propVal.ent) {
+    let newMainData = propVal.ent;
+    return passData(
+      <div className={"entity-ref-" + newMainData.entID}>
+        <EntityMainDataProperties expEntMainData={newMainData} />
+        <ClassClarification
+          classMainData={newMainData.classMainData}
+          expectedClassID={false}
+        />
+      </div>
+    );
+  }
+  else if (propVal.classContext) {
+    let expectedClassID = propVal.classContext.classID;
+    let newMainData = propVal.classContext.value;
+    return passData(
+      <div className={"entity-ref-" + newMainData.entID}>
+        <EntityMainDataProperties expEntMainData={newMainData} />
+        <ClassClarification
+          classMainData={newMainData.classMainData}
+          expectedClassID={expectedClassID}
+        />
+      </div>
+    );
+  }
+
+  else if (propVal.thisEnt) {
+    return passData(
+      <div className={"entity-ref-this-" + propVal.thisEnt}>
+        {"@this"}
+      </div>
+    );
+  }
+
+  else if (propVal.null) {
+    return passData(
+      <NullEntityReference />
+    );
+  }
+  else if (propVal.none) {
+    return passData(
+      <NoneEntityReference />
+    );
+  }
+
+  else if (propVal.list) {
+    // Implement lists further for EntityTitle only if it becomes useful.
+    return passData(
+      <div className="entity-ref-list">
+          {JSON.stringify(propVal.list)}
+      </div>
+    );
+  }
+  else if (propVal.concat) {
+    // Implement concatenations further for EntityTitle only if it becomes
+    // useful.
+    return passData(
+      <div className="entity-ref-concat">
+          {JSON.stringify(propVal.concat)}
+      </div>
+    );
+  }
+
+  else if (propVal.string) {
+    return passData(
+      propVal.string.map((val, ind) => {
+        return passData(
+          <EntityPropertyValue key={ind} propVal={val} />
+        );
+      })
+    );
+  }
+
+  else {
+    throw (
+      "EntityPropertyValue: Unhandled case: " + JSON.stringify(propVal) +
+      "."
+    );
+  }
+};
+
+
+
+
+
+
 
 
 // const EntityPropertyValue = ({propVal}) => {

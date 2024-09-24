@@ -65,8 +65,8 @@ export class DataFetcher {
         id: entMainData.tmplID,
       };
       DBRequestManager.query(reqData, (result) => {
-        let [,,,,tmplMainProps] = result[0] ?? [];
-        entMainData.template = (tmplMainProps ?? {}).format;
+        let [,,,,,tmplMainProps] = result[0] ?? [];
+        entMainData.template = (tmplMainProps ?? {}).template;
         parseAndConstructMainProps(entMainData, callback);
       });
     });
