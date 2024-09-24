@@ -119,6 +119,18 @@ class InputValidator {
                 }
                 break;
             case "id_list":
+                $pattern = "/^((this|[1-9][0-9]*)(,(this|[1-9][0-9]*))*)?$/";
+                $len = strlen($paramVal);
+                if (
+                    $len > 209 ||
+                    !preg_match($pattern, $paramVal)
+                ) {
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "ID list (max 10)"
+                    );
+                }
+                break;
+            case "list_list":
                 $pattern =
                     "/^((this|[1-9][0-9]*)([,\|](this|[1-9][0-9]*))*)?$/";
                 $len = strlen($paramVal);

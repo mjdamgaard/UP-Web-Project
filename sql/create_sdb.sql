@@ -234,8 +234,6 @@ CREATE TABLE Entities (
         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "",
 
 
-    template_text_input TEXT(10000) DEFAULT NULL,
-
     -- Other properties: A data structure containing the specific properties
     -- of this entity, and formatted as a JSON object. If a property value is
     -- an array, it is interpreted as a set (used for one-to-many properties,
@@ -247,6 +245,8 @@ CREATE TABLE Entities (
     own_desc TEXT(10000) DEFAULT NULL, -- (Can be resized.)
     inst_desc TEXT(10000) DEFAULT NULL, -- (Can be resized.)
 
+    ref_text TEXT(10000) DEFAULT NULL,
+
     other_props TEXT(1000) DEFAULT NULL, -- (Can be resized.)
 
 
@@ -256,41 +256,39 @@ CREATE TABLE Entities (
     -- or in the interface with it, i.e. in the "input procedures.")
 
     CHECK (
-        template_text_input != "" AND
-        main_props          != "" AND
-        own_desc            != "" AND
-        inst_desc           != "" AND
-        other_props         != "" AND
-        binary_data         != ""
+        main_props  != "" AND
+        own_desc    != "" AND
+        inst_desc   != "" AND
+        ref_text    != "" AND
+        other_props != "" AND
+        binary_data != ""
     ),
 
     CHECK (
         template_id = 0 OR
             main_props IS NULL AND
-            own_desc   IS NULL AND
-            inst_desc  IS NULL AND
-            -- other_props IS NULL AND
-            binary_data IS NULL
+            inst_desc  IS NULL
+            -- binary_data IS NULL
     ),
 
 
     data_hash VARCHAR(56) NOT NULL DEFAULT (
         CASE WHEN (
-            template_text_input IS NULL AND
-            main_props          IS NULL AND
-            own_desc            IS NULL AND
-            inst_desc           IS NULL AND
-            other_props         IS NULL AND
-            binary_data         IS NULL
+            main_props  IS NULL AND
+            own_desc    IS NULL AND
+            inst_desc   IS NULL AND
+            ref_text    IS NULL AND
+            other_props IS NULL AND
+            binary_data IS NULL
         )
         THEN ""
         ELSE SHA2(CONCAT(
-            IFNULL(SHA2(template_text_input, 224), "null"),
-            IFNULL(SHA2(main_props,          224), "null"),
-            IFNULL(SHA2(own_desc,            224), "null"),
-            IFNULL(SHA2(inst_desc,           224), "null"),
-            IFNULL(SHA2(other_props,         224), "null"),
-            IFNULL(SHA2(binary_data,         224), "null")
+            IFNULL(SHA2(main_props,  224), "null"),
+            IFNULL(SHA2(own_desc,    224), "null"),
+            IFNULL(SHA2(inst_desc,   224), "null"),
+            IFNULL(SHA2(ref_text,    224), "null"),
+            IFNULL(SHA2(other_props, 224), "null"),
+            IFNULL(SHA2(binary_data, 224), "null")
         ), 224)
         END
     ),

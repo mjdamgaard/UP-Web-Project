@@ -107,15 +107,15 @@ switch ($reqType) {
         break;
     case "entSK":
         $sql = "CALL selectEntityFromSecKey (?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("c", "t", "e", "s", "l", "h");
-        $paramNameArr = array("id", "id", "id_list", "id_list", "str", "str");
+        $paramNameArr = array("c", "t", "e", "l", "s", "h");
+        $paramNameArr = array("id", "id", "id_list", "list_list", "str", "str");
         // output: [[entID]].
         break;
-    case "entTxtI":
-        $sql = "CALL selectEntityTextInput (?)";
+    case "entRefText":
+        $sql = "CALL selectEntityRefText (?)";
         $paramNameArr = array("id");
         $paramNameArr = array("id");
-        // output: [[textInput]].
+        // output: [[refText]].
     case "entDesc":
         $sql = "CALL selectEntityDescription (?)";
         $paramNameArr = array("id");

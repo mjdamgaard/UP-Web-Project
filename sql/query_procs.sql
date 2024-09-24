@@ -11,9 +11,9 @@ DROP PROCEDURE selectRecordedInputsMaxID;
 
 DROP PROCEDURE selectEntityMainData;
 DROP PROCEDURE selectEntityFromSecKey;
-DROP PROCEDURE selectEntityTextInput;
 DROP PROCEDURE selectEntityDescription;
 DROP PROCEDURE selectEntityInstanceDescription;
+DROP PROCEDURE selectEntityRefText;
 DROP PROCEDURE selectEntityOtherProps;
 
 -- DROP PROCEDURE selectEntityPropStruct;
@@ -186,13 +186,24 @@ END //
 DELIMITER ;
 
 
-
 DELIMITER //
-CREATE PROCEDURE selectEntityTextInput (
+CREATE PROCEDURE selectEntityInstanceDescription (
     IN entID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT template_text_input AS textInput
+    SELECT inst_desc AS instDesc
+    FROM Entities
+    WHERE id = entID;
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectEntityRefText (
+    IN entID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT ref_text AS refText
     FROM Entities
     WHERE id = entID;
 END //
@@ -204,18 +215,6 @@ CREATE PROCEDURE selectEntityDescription (
 )
 BEGIN
     SELECT own_desc AS ownDesc
-    FROM Entities
-    WHERE id = entID;
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE selectEntityInstanceDescription (
-    IN entID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT inst_desc AS instDesc
     FROM Entities
     WHERE id = entID;
 END //

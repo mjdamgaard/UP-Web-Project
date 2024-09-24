@@ -258,18 +258,15 @@ export class DataFetcher {
       else if (/^@\[[^\]]+\]$/.test(propVal)) {
         obj[objKey] = {explicitRef: propVal.slice(2, -1)};
       }
+      else if (/^@text([1-9][0-9]?)?$/.test(propVal)) {
+        obj[objKey] = {textRef: propVal.substring(5) || true};
+      }
       else {
         obj[objKey] = {illFormedReference: str};
       }
     }
     else if (propVal[0] === "%") {
-      if (propVal === "%t") {
-        obj[objKey] = {fullTextPlaceholder: thisID};
-      }
-      else if (/^%t[0-9]$/.test(str)) {
-        obj[objKey] = {textPlaceholder: {n: propVal[2], entID: thisID}};
-      }
-      else if (/^%e[0-9](c[1-9][0-9]*)?$/.test(propVal)) {
+      if (/^%e[0-9](c[1-9][0-9]*)?$/.test(propVal)) {
         obj[objKey] = {unusedEntityPlaceholder: propVal[2]};
       }
       else if (/^%l[0-9]$/.test(propVal)) {
@@ -387,9 +384,6 @@ function parseAndConstructMainProps(entMainData, callback) {
     let strInput = entMainData.strInput;
     substitutePlaceholders(mainProps, /%s/g, () => strInput);
   }
-
-  // Don't replace any /%t[0-9]/ placeholders as this is not part of the "main
-  // data."
 
   // Finally copy the object's own property struct into the template. 
   entMainData.mainProps = Object.assign(mainProps, entMainData.ownStruct);
