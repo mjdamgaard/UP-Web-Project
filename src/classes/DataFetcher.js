@@ -246,7 +246,7 @@ export class DataFetcher {
       else if (propVal === "@this") {
         obj[objKey] = {thisEnt: thisID};
       }
-      else if (propVal === "@null") {
+      else if (propVal === "" || propVal === "@null") {
         obj[objKey] = {null: true};
       }
       else if (propVal === "@0" || propVal === "@none") {
@@ -284,14 +284,19 @@ export class DataFetcher {
     }
     else if (typeof propVal === "string") {
       let stringLexRegEx =
-        /([^@%]|\\@|\\%)+|@[0-9a-z]*|@\[[^\]]+(\]|$)|%[a-z0-9]*|.+/g;
+        /([^@%]|\\@|\\%)+|@[a-z0-9]*|@\[[^\]]+(\]|$)|%[a-z0-9]*|.+/g;
       let strArr = propVal.match(stringLexRegEx);
-      obj[objKey] = {string: strArr};
-      strArr.forEach((str, ind) => {
-        this.#expandPropVal(
-          str, strArr, ind, thisID, callbackHandler, maxRecLevel, recLevel
-        )
-      });
+      if (strArr.length === 1) {
+        obj[objKey] = strArr[0];
+      }
+      else {
+        obj[objKey] = {string: strArr};
+        strArr.forEach((str, ind) => {
+          this.#expandPropVal(
+            str, strArr, ind, thisID, callbackHandler, maxRecLevel, recLevel
+          )
+        });
+      }
     }
     else throw (
       'DataFetcher.expandPropVal(): Unexpected type "' + (typeof propVal) +

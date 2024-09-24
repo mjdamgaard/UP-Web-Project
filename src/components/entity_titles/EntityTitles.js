@@ -28,11 +28,11 @@ export const EntityTitle = (props) => {
     // is high enough, use the propStruct generated from that instead.
     // TODO: Also always query for the `useful entity' meta-tag and print out
     // that rating as well. *No, just do this for the drop-down menu for now.
-    DataFetcher.fetchExpandedMetadata(
-      entID, maxRecLevel, recLevel, (expEntMetadata) => {
+    DataFetcher.fetchExpandedMainData(
+      entID, maxRecLevel, recLevel, (expEntMainData) => {
         dispatch("self", "setState", prev => {
           let ret = {...prev};
-          ret.expEntMetadata = expEntMetadata;
+          ret.expEntMainData = expEntMainData;
           ret.isFetched = true;
           return ret;
         });
@@ -49,34 +49,34 @@ export const EntityTitle = (props) => {
   }
 
   // Finally render this.
-  const expEntMetadata = results.expEntMetadata;
+  const expEntMainData = results.expEntMainData;
   return passData(
     <div className="entity-title">
-      <EntityLink entID={expEntMetadata.entID} >
+      <EntityLink entID={expEntMainData.entID} >
         <EntityReference
-          expEntMetadata={expEntMetadata} expectedClassID={expectedClassID}
+          expEntMainData={expEntMainData} expectedClassID={expectedClassID}
         />
-        <ExpandTitleButton expEntMetadata={expEntMetadata} />
+        <ExpandTitleButton expEntMainData={expEntMainData} />
       </EntityLink>
     </div>
   );
 };
 
 
-// TODO:
-const EntityReference = ({expEntMetadata, expectedClassID}) => {
-  if (expEntMetadata.entID) {
-    if (expEntMetadata.isMissing) {
+
+const EntityReference = ({expEntMainData, expectedClassID}) => {
+  if (expEntMainData.entID) {
+    if (expEntMainData.isMissing) {
       return (
-        <MissingEntityReference entID={expEntMetadata.entID} />
+        <MissingEntityReference entID={expEntMainData.entID} />
       );
     }
     else {
       return (
-        <div className={"entity-ref-" + expEntMetadata.entID}>
-          <EntityMetadataProperties expEntMetadata={expEntMetadata} />
+        <div className={"entity-ref-" + expEntMainData.entID}>
+          <EntityMainDataProperties expEntMainData={expEntMainData} />
           <ClassClarification
-            classMetaData={expEntMetadata.classMetaData}
+            classMainData={expEntMainData.classMainData}
             expectedClassID={expectedClassID}
           />
         </div>
@@ -84,69 +84,71 @@ const EntityReference = ({expEntMetadata, expectedClassID}) => {
     }
   }
 
-  else if (expEntMetadata.ent) {
-    let newMetadata = expEntMetadata.ent;
+  else if (expEntMainData.ent) {
+    let newMainData = expEntMainData.ent;
     return (
-      <div className={"entity-ref-" + newMetadata.entID}>
-        <EntityMetadataProperties expEntMetadata={newMetadata} />
+      <div className={"entity-ref-" + newMainData.entID}>
+        <EntityMainDataProperties expEntMainData={newMainData} />
         <ClassClarification
-          classMetaData={newMetadata.classMetaData}
+          classMainData={newMainData.classMainData}
           expectedClassID={false}
         />
       </div>
     );
   }
-  else if (expEntMetadata.entOfClass) {
-    let newMetadata = expEntMetadata.entOfClass;
+  else if (expEntMainData.classContext) {
+    let expectedClassID = expEntMainData.classContext.classID;
+    let newMainData = expEntMainData.classContext.value;
     return (
-      <div className={"entity-ref-" + newMetadata.entID}>
-        <EntityMetadataProperties expEntMetadata={newMetadata} />
+      <div className={"entity-ref-" + newMainData.entID}>
+        <EntityMainDataProperties expEntMainData={newMainData} />
         <ClassClarification
-          classMetaData={newMetadata.classMetaData}
-          expectedClassID={newMetadata.expectedClassID}
+          classMainData={newMainData.classMainData}
+          expectedClassID={expectedClassID}
         />
       </div>
     );
   }
 
-  else if (expEntMetadata.thisEnt) {
+  else if (expEntMainData.thisEnt) {
     return (
-      <div className={"entity-ref-this-" + expEntMetadata.thisEnt}>
+      <div className={"entity-ref-this-" + expEntMainData.thisEnt}>
         {"@this"}
       </div>
     );
   }
 
-  else if (expEntMetadata.null) {
+  else if (expEntMainData.null) {
     return (
       <NullEntityReference />
     );
   }
-  else if (expEntMetadata.none) {
+  else if (expEntMainData.none) {
     return (
       <NoneEntityReference />
     );
   }
 
-  else if (expEntMetadata.list) {
+  else if (expEntMainData.list) {
     // Implement lists further for EntityTitle only if it becomes useful.
     return (
       <div className="entity-ref-list">
-          {JSON.stringify(expEntMetadata.list)}
+          {JSON.stringify(expEntMainData.list)}
       </div>
     );
   }
-  else if (expEntMetadata.set) {
-    // Implement sets further for EntityTitle only if it becomes useful.
+  else if (expEntMainData.concat) {
+    // Implement concatenations further for EntityTitle only if it becomes
+    // useful.
     return (
-      <div className="entity-ref-set">
-          {JSON.stringify(expEntMetadata.set)}
+      <div className="entity-ref-concat">
+          {JSON.stringify(expEntMainData.concat)}
       </div>
     );
   }
 
-  else if (expEntMetadata.string) {
-    return expEntMetadata.string.map((val, ind) => {
+  else if (expEntMainData.string) {
+    return expEntMainData.string.map((val, ind) => {
       if (typeof val === "string") {
         return (
           <div key={ind} className="pure-string">
@@ -156,33 +158,33 @@ const EntityReference = ({expEntMetadata, expectedClassID}) => {
       }
       else {
         return (
-          <EntityReference key={ind} expEntMetadata={val} />
+          <EntityReference key={ind} expEntMainData={val} />
         );
       }
     });
   }
-  // else if (typeof expEntMetadata === "string") {
-  //   return (
-  //     <div className="pure-string">
-  //       {expEntMetadata}
-  //     </div>
-  //   );
-  // }
+  else if (typeof expEntMainData === "string") {
+    return (
+      <div key={ind} className="pure-string">
+        {expEntMainData}
+      </div>
+    );
+  }
 
   else {
     throw (
-      "EntityReference: Unhandled case: " + JSON.stringify(expEntMetadata) +
+      "EntityReference: Unhandled case: " + JSON.stringify(expEntMainData) +
       "."
     );
   }
 };
 
 
-const EntityMetadataProperties = ({expEntMetadata}) => {
-  let propStruct = expEntMetadata.propStruct;
+const EntityMainDataProperties = ({expEntMainData}) => {
+  let propStruct = expEntMainData.propStruct;
   if (!propStruct) {
     return (
-      <EntityID entID={expEntMetadata.entID} />
+      <EntityID entID={expEntMainData.entID} />
     );
   }
 
@@ -197,7 +199,7 @@ const EntityMetadataProperties = ({expEntMetadata}) => {
         </div>
         {propValArr.map((val, ind) => {
           return (
-            <EntityReference key={ind} expEntMetadata={val} />
+            <EntityReference key={ind} expEntMainData={val} />
           );
         })}
       </div>
@@ -234,20 +236,20 @@ const EntityMetadataProperties = ({expEntMetadata}) => {
 //     );
 //   }
 //   else if (propVal.ent) {
-//     let expEntMetadata = propVal.ent;
+//     let expEntMainData = propVal.ent;
 //     return (
-//       <div className={"prop-val-ent-" + expEntMetadata.entID}>
-//         <EntityReference expEntMetadata={expEntMetadata} />
+//       <div className={"prop-val-ent-" + expEntMainData.entID}>
+//         <EntityReference expEntMainData={expEntMainData} />
 //       </div>
 //     );
 //   }
 //   else if (propVal.entOfClass) {
-//     let expEntMetadata = propVal.entOfClass;
+//     let expEntMainData = propVal.entOfClass;
 //     return (
-//       <div className={"prop-val-ent-" + expEntMetadata.entID}>
+//       <div className={"prop-val-ent-" + expEntMainData.entID}>
 //         <EntityReference
-//           expEntMetadata={expEntMetadata}
-//           expectedClassID={expEntMetadata.expectedClassID}
+//           expEntMainData={expEntMainData}
+//           expectedClassID={expEntMainData.expectedClassID}
 //         />
 //       </div>
 //     );
@@ -255,7 +257,7 @@ const EntityMetadataProperties = ({expEntMetadata}) => {
 //   else {
 //     return (
 //       <div className={"prop-val"}>
-//         <EntityReference expEntMetadata={propVal} />
+//         <EntityReference expEntMainData={propVal} />
 //       </div>
 //     );
 //   }
@@ -263,22 +265,22 @@ const EntityMetadataProperties = ({expEntMetadata}) => {
 
 
 
-const ClassClarification = ({classMetaData, expectedClassID}) => {
-  if (!classMetaData) {
+const ClassClarification = ({classMainData, expectedClassID}) => {
+  if (!classMainData) {
     return (
       <div className={"class-clarification-missing"}>
       </div>
     );
   }
   var className = "class-clarification";
-  if (classMetaData.entID == expectedClassID) {
+  if (classMainData.entID == expectedClassID) {
     className = "class-clarification-expected";
   }
 
   return (
     <div className={className}>
       <EntityReference
-        expEntMetadata={classMetaData}
+        expEntMainData={classMainData}
         expectedClassID={"1"} // ID of the 'class' class entity is 1.
       />
     </div>
@@ -288,7 +290,7 @@ const ClassClarification = ({classMetaData, expectedClassID}) => {
 
 
 
-const ExpandTitleButton = ({expEntMetadata}) => {
+const ExpandTitleButton = ({expEntMainData}) => {
   // TODO: Make this button turn into a whole drop-down menu when expanded.
   return (
     <div className={"expand-title-button not-expanded"}>
