@@ -4,10 +4,10 @@ import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 
 const CLASS_CLASS_METADATA_JSON = JSON.stringify({
   entID: 1,
-  mainProps: {title: {string: ["class"]}},
+  tmplID: 0,
+  mainProps: {title: "Class"},
   classID: 1,
-  ownStruct: {title: "class"},
-  dataLen: 60,
+  otherPropsLen: 0,
 });
 
 export class DataFetcher {
@@ -55,7 +55,6 @@ export class DataFetcher {
       // If entity is has no template, the mainProps is just the fetched
       // mainProps object, and we can call callback already.
       if (tmplID == "0") {
-        entMainData.mainProps;
         callback(entMainData);
         return;
       }
@@ -262,7 +261,7 @@ export class DataFetcher {
         obj[objKey] = {textRef: propVal.substring(5) || true};
       }
       else {
-        obj[objKey] = {illFormedReference: str};
+        obj[objKey] = {illFormedReference: propVal};
       }
     }
     else if (propVal[0] === "%") {

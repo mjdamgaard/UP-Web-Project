@@ -60,11 +60,11 @@ export const EntityPage = (props) => {
     // is high enough, use the propStruct generated from that instead.
     // TODO: Also always query for the `useful entity' meta-tag and print out
     // that rating as well. *No, just do this for the drop-down menu for now.
-    DataFetcher.fetchMetadata(
-      entID, (entMetadata) => {
+    DataFetcher.fetchMainData(
+      entID, (entMainData) => {
         dispatch("self", "setState", prev => {
           let ret = {...prev};
-          ret.entMetadata = entMetadata;
+          ret.entMainData = entMainData;
           ret.isFetched = true;
           return ret;
         });
@@ -97,7 +97,7 @@ export const EntityPage = (props) => {
   // );
   // initTab ??= defaultTab;
 
-  const classID = results.entMetadata.classID;
+  const classID = results.entMainData.classID;
 
   return passData(
     <div className="entity-page">

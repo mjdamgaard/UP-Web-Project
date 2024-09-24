@@ -25,7 +25,7 @@ export const EntityTitle = (props) => {
   // const [results, setResults] = useState({});
   useMemo(() => {
     // TODO: Also query for the highest rated 'representation' and if the rating
-    // is high enough, use the propStruct generated from that instead.
+    // is high enough, use the mainProps generated from that instead.
     // TODO: Also always query for the `useful entity' meta-tag and print out
     // that rating as well. *No, just do this for the drop-down menu for now.
     DataFetcher.fetchExpandedMainData(
@@ -165,7 +165,7 @@ const EntityReference = ({expEntMainData, expectedClassID}) => {
   }
   else if (typeof expEntMainData === "string") {
     return (
-      <div key={ind} className="pure-string">
+      <div className="pure-string">
         {expEntMainData}
       </div>
     );
@@ -181,16 +181,16 @@ const EntityReference = ({expEntMainData, expectedClassID}) => {
 
 
 const EntityMainDataProperties = ({expEntMainData}) => {
-  let propStruct = expEntMainData.propStruct;
-  if (!propStruct) {
+  let mainProps = expEntMainData.mainProps;
+  if (!mainProps) {
     return (
       <EntityID entID={expEntMainData.entID} />
     );
   }
 
-  return Object.keys(propStruct).map((propKey => {
-    let propVal = propStruct[propKey];
-    let propValArr = (propVal.set) ? propVal.set : [propVal];
+  return Object.keys(mainProps).map((propKey => {
+    let propVal = mainProps[propKey];console.log(propVal);
+    let propValArr = propVal.set || [propVal];
     let propName = propKey.replaceAll(/[ \t\n\r\f]/g, "-");
     return (
       <div key={propKey} className={"prop-member-" + propName}>

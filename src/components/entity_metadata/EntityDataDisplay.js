@@ -14,17 +14,18 @@ import {DataFetcher} from "../../classes/DataFetcher.js";
 
 
 
-export const MetadataDisplay = (props) => {
+export const EntityDataDisplay = (props) => {
+  return <></>;
   const {entID} = props;
   const [results, dispatch, passData] = useStateAndReducers({}, props, {});
 
   // const [results, setResults] = useState({});
   useMemo(() => {
-    DataFetcher.fetchExpandedMetadata(
-      entID, (expEntMetadata) => {
+    DataFetcher.fetchExpandedMainData(
+      entID, (expEntMainData) => {
         dispatch("self", "setState", prev => {
           let ret = {...prev};
-          ret.expEntMetadata = expEntMetadata;
+          ret.expEntMainData = expEntMainData;
           ret.isFetched = true;
           return ret;
         });
@@ -40,17 +41,17 @@ export const MetadataDisplay = (props) => {
     );
   }
 
-  const metadata = results.expEntMetadata;
+  const mainData = results.expEntMainData;
 
   return passData(
-    <div className="metadata-display">
+    <div className="mainData-display">
       <div className="class-display">
         <div>main class:</div>
-        <div>{metadata.classID}</div>
+        <div>{mainData.classID}</div>
       </div>
       <div className="comb-def-props">
         <div>Defining properties:</div>
-        <div>{JSON.stringify(metadata.propStruct)}</div>
+        <div>{JSON.stringify(mainData.propStruct)}</div>
       </div>
     </div>
   );
