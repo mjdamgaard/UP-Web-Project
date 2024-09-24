@@ -172,148 +172,6 @@ export class DataFetcher {
   }
 
 
-  static #expandPropVal(
-    propVal, obj, objKey, thisID, callbackHandler, maxRecLevel, recLevel
-  ) {
-    if (typeof propVal === "object") {
-      let struct = propVal;
-      obj[objKey] = {struct: struct};
-      Object.keys(struct).forEach(key => {
-        let val = struct[key];
-        this.#expandPropVal(
-          val, struct, key, thisID, callbackHandler, maxRecLevel, recLevel
-        );
-      })
-    }
-    else if (/^@[1-9][0-9]*$/.test(propVal)) {
-      let entID = propVal.substring(1);
-      if (recLevel > maxRecLevel) {
-        obj[objKey] = {ent: {entID: entID}};
-      }
-      else {
-        callbackHandler.push(resolve => {
-          this.fetchExpandedMainData(
-            entID,  maxRecLevel, recLevel + 1, (expEntMainData) => {
-              obj[objKey] = {ent: expEntMainData};
-              resolve();
-            }
-          );
-        });
-      }
-    }
-    else if (/^@[1-9][0-9]*c[1-9][0-9]*$/.test(propVal)) {
-      let [entID, expectedClassID] = propVal.match(/[1-9][0-9]*/g);
-      if (recLevel > maxRecLevel) {
-        let entValue = {ent: {entID: entID}};
-        obj[objKey] = {
-          classContext: {classID: expectedClassID, value: entValue}
-        };
-      }
-      else {
-        callbackHandler.push(resolve => {
-          this.fetchExpandedMainData(
-            entID,  maxRecLevel, recLevel + 1, (expEntMainData) => {
-              let entValue = {ent: expEntMainData};
-              obj[objKey] = {
-                classContext: {classID: expectedClassID, value: entValue}
-              };
-              resolve();
-            }
-          );
-        });
-      }
-    }
-    else if (propVal === "@this") {
-      obj[objKey] = {thisEnt: thisID};
-    }
-    else if (propVal === "@null") {
-      obj[objKey] = {null: true};
-    }
-    else if (propVal === "@0" || propVal === "@none") {
-      obj[objKey] = {none: true};
-    }
-    else if (propVal === "@bin") {
-      obj[objKey] = {binRef: true};
-    }
-    else if (/^@\[[^\[\]]+\]$/.test(propVal)) {
-      obj[objKey] = {explicitRef: propVal.slice(2, -1)};
-    }
-    else if (typeof propVal === "string") {
-      let stringLexRegEx =
-        /([^@%]|\\@|\\%)+|@[0-9a-z]*|@\[[^\[\]]+\]|%[a-z0-9]*|.+/g;
-      let strArr = propVal.match(stringLexRegEx);
-      obj[objKey] = {string: strArr};
-      strArr.forEach((str, ind) => {
-        if (/^([^@%]|\\@|\\%)+$/.test(str)) {
-          return;
-        }
-        else if (str[0] === "@") {
-          if (/^@[1-9][0-9]*$/.test(str)) {
-            let entID = propVal.substring(1);
-            if (recLevel > maxRecLevel) {
-              strArr[ind] = {ent: {entID: entID}};
-            }
-            else {
-              callbackHandler.push(resolve => {
-                this.fetchExpandedMainData(
-                  entID,  maxRecLevel, recLevel + 1, (expEntMainData) => {
-                    strArr[ind] = {ent: expEntMainData};
-                    resolve();
-                  }
-                );
-              });
-            }
-          }
-          else if (str === "@this") {
-            strArr[ind] = {thisEnt: thisID};
-          }
-          else if (str === "@null") {
-            strArr[ind] = {null: true};
-          }
-          else if (str === "@0" || str === "@none") {
-            strArr[ind] = {none: true};
-          }
-          else if (str === "@bin") {
-            strArr[ind] = {binRef: true};
-          }
-          else {
-            strArr[ind] = {illFormedReference: str};
-          }
-        }
-        else if (str[0] === "%") {
-          if (str === "%t") {
-            strArr[ind] = {fullTextPlaceholder: thisID};
-          }
-          else if (/^%t[0-9]$/.test(str)) {
-            strArr[ind] = {textPlaceholder: {n: str[2], entID: thisID}};
-          }
-          // else if (str === "%d") {
-          //   strArr[ind] = {dataPlaceholder: thisID};
-          // }
-          else if (/^%e[0-9]$/.test(str)) {
-            strArr[ind] = {unusedEntityPlaceholder: str[2]};
-          }
-          else if (/^%l[0-9]$/.test(str)) {
-            strArr[ind] = {unusedListPlaceholder: str[2]};
-          }
-          else if (str === "%s") {
-            strArr[ind] = {unusedFullStringPlaceholder: true};
-          }
-          else if (/^%s[0-9]$/.test(str)) {
-            strArr[ind] = {unusedStringPlaceholder: str[2]};
-          }
-          else {
-            strArr[ind] = {illFormedPlaceholder: str};
-          }
-        }
-        else {
-          strArr[ind] = {illFormedString: str};
-        }
-      });
-    }
-    else throw "DataFetcher.expandPropVal(): Unexpected type.";
-  }
-
 
   static #expandElements(
     elemArr, thisID, callbackHandler, maxRecLevel, recLevel
@@ -329,6 +187,119 @@ export class DataFetcher {
         elem, elemArr, ind, thisID, callbackHandler, maxRecLevel, recLevel
       );
     });
+  }
+
+
+
+  static #expandPropVal(
+    propVal, obj, objKey, thisID, callbackHandler, maxRecLevel, recLevel
+  ) {
+    if (typeof propVal === "object") {
+      let struct = propVal;
+      obj[objKey] = {struct: struct};
+      Object.keys(struct).forEach(key => {
+        let val = struct[key];
+        this.#expandPropVal(
+          val, struct, key, thisID, callbackHandler, maxRecLevel, recLevel
+        );
+      })
+    }
+    else if (propVal[0] === "@") {
+      if (/^@[1-9][0-9]*$/.test(propVal)) {
+        let entID = propVal.substring(1);
+        if (recLevel > maxRecLevel) {
+          obj[objKey] = {ent: {entID: entID}};
+        }
+        else {
+          callbackHandler.push(resolve => {
+            this.fetchExpandedMainData(
+              entID,  maxRecLevel, recLevel + 1, (expEntMainData) => {
+                obj[objKey] = {ent: expEntMainData};
+                resolve();
+              }
+            );
+          });
+        }
+      }
+      else if (/^@[1-9][0-9]*c[1-9][0-9]*$/.test(propVal)) {
+        let [entID, expectedClassID] = propVal.match(/[1-9][0-9]*/g);
+        if (recLevel > maxRecLevel) {
+          let entValue = {ent: {entID: entID}};
+          obj[objKey] = {
+            classContext: {classID: expectedClassID, value: entValue}
+          };
+        }
+        else {
+          callbackHandler.push(resolve => {
+            this.fetchExpandedMainData(
+              entID,  maxRecLevel, recLevel + 1, (expEntMainData) => {
+                let entValue = {ent: expEntMainData};
+                obj[objKey] = {
+                  classContext: {classID: expectedClassID, value: entValue}
+                };
+                resolve();
+              }
+            );
+          });
+        }
+      }
+      else if (propVal === "@this") {
+        obj[objKey] = {thisEnt: thisID};
+      }
+      else if (propVal === "@null") {
+        obj[objKey] = {null: true};
+      }
+      else if (propVal === "@0" || propVal === "@none") {
+        obj[objKey] = {none: true};
+      }
+      else if (propVal === "@bin") {
+        obj[objKey] = {binRef: true};
+      }
+      else if (/^@\[[^\]]+\]$/.test(propVal)) {
+        obj[objKey] = {explicitRef: propVal.slice(2, -1)};
+      }
+      else {
+        obj[objKey] = {illFormedReference: str};
+      }
+    }
+    else if (propVal[0] === "%") {
+      if (propVal === "%t") {
+        obj[objKey] = {fullTextPlaceholder: thisID};
+      }
+      else if (/^%t[0-9]$/.test(str)) {
+        obj[objKey] = {textPlaceholder: {n: propVal[2], entID: thisID}};
+      }
+      else if (/^%e[0-9](c[1-9][0-9]*)?$/.test(propVal)) {
+        obj[objKey] = {unusedEntityPlaceholder: propVal[2]};
+      }
+      else if (/^%l[0-9]$/.test(propVal)) {
+        obj[objKey] = {unusedListPlaceholder: propVal[2]};
+      }
+      else if (propVal === "%s") {
+        obj[objKey] = {unusedFullStringPlaceholder: true};
+      }
+      else if (/^%s[0-9]$/.test(propVal)) {
+        obj[objKey] = {unusedStringPlaceholder: propVal[2]};
+      }
+      else {
+        obj[objKey] = {illFormedPlaceholder: propVal};
+      }
+    }
+    else if (typeof propVal === "string") {
+      let stringLexRegEx =
+        /([^@%]|\\@|\\%)+|@[0-9a-z]*|@\[[^\]]+(\]|$)|%[a-z0-9]*|.+/g;
+      let strArr = propVal.match(stringLexRegEx);
+      obj[objKey] = {string: strArr};
+      strArr.forEach((str, ind) => {
+        this.#expandPropVal(
+          str, strArr, ind, thisID, callbackHandler, maxRecLevel, recLevel
+        )
+      });
+    }
+    else throw (
+      'DataFetcher.expandPropVal(): Unexpected type "' + (typeof propVal) +
+      '".' 
+    );
   }
 
 
@@ -374,32 +345,51 @@ function parseAndConstructMainProps(entMainData, callback) {
 
   // Replace all /%e[0-9]/ placeholders in the values of the template by the
   // entity inputs. 
-  let entInputArr = entMainData.entInput.split(",");
-  substitutePlaceholders(mainProps, /%e[0-9]/g, placeholder => {
-    let n = parseInt(placeholder.substring(2));
-    let substitute = entInputArr[n];
-    if (substitute === undefined) {
-      substitute = "@null"
-    }
-    // If substitute == "this" or "<num>", return "@this" or "@<num>".
-    else {
-      substitute = "@" + substitute;
-    }
-    return substitute;
-  });
+  if (entMainData.entInput) {
+    let entInputArr = entMainData.entInput.split(",");
+    substitutePlaceholders(mainProps, /%e[0-9]/g, placeholder => {
+      let n = parseInt(placeholder.substring(2));
+      let substitute = entInputArr[n];
+      if (substitute === undefined) {
+        substitute = "@null"
+      }
+      // If substitute == "this" or "<num>", return "@this" or "@<num>".
+      else {
+        substitute = "@" + substitute;
+      }
+      return substitute;
+    });
+  }
+
+  // Replace all /%l[0-9]/ placeholders in the values of the template by the
+  // list inputs, separated by '|'. Make sure to split() each list, which is a
+  // comma-separated list of integers, into an array first.
+  if (entMainData.listInput) {
+    let listInputArr = entMainData.listInput.split('|').map(list => (
+      list.split(',')
+    ));
+    substitutePlaceholders(mainProps, /%l[0-9]/g, placeholder => {
+      let n = parseInt(placeholder.substring(2));
+      return listInputArr[n] ?? "@null";
+    });
+  }
 
   // Replace all /%s[0-9]/ placeholders in the values of the template by the
   // string inputs, separated by '|'.
-  let strInputArr = getStrInputArr(entMainData.strInput);
-  substitutePlaceholders(mainProps, /%s[0-9]/g, placeholder => {
-    let n = parseInt(placeholder.substring(2));
-    return strInputArr[n] ?? "@null";
-  });
+  if (entMainData.strInput) {
+    let strInputArr = getStrInputArr(entMainData.strInput);
+    substitutePlaceholders(mainProps, /%s[0-9]/g, placeholder => {
+      let n = parseInt(placeholder.substring(2));
+      return strInputArr[n] ?? "@null";
+    });
+    // Also Replace any /%s/ placeholders in the values of the template by the
+    // whole string input. 
+    let strInput = entMainData.strInput;
+    substitutePlaceholders(mainProps, /%s/g, () => strInput);
+  }
 
-  // Replace any /%s/ placeholders in the values of the template by the
-  // whole string input. 
-  let strInput = entMainData.strInput;
-  substitutePlaceholders(mainProps, /%s/g, () => strInput);
+  // Don't replace any /%t[0-9]/ placeholders as this is not part of the "main
+  // data."
 
   // Finally copy the object's own property struct into the template. 
   entMainData.mainProps = Object.assign(mainProps, entMainData.ownStruct);
