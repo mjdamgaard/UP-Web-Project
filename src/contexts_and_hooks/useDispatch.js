@@ -79,44 +79,38 @@ export const useDispatch = (reducers, setState, props, contexts) => {
 
   const ref = useRef();
 
-  const idRef = useRef(() => getNonce());
+  const idRef = useRef(useMemo(() => getNonce(), []));
 
   // On the first render, set auxillary data to be used by reducers, and also
   // schedule a cleanup function to remove this data after unmounting.
   useEffect(() => {
-    let refID = idRef.current;
-    auxDataStore[refID] = [reducers, props, contexts, setState];
-    ref.current.setAttribute("data-ref-id", refID);
+    let id = idRef.current;
+    auxDataStore[id] = [reducers, props, contexts, setState];
     return () => {
-      delete auxDataStore[refID];
+      delete auxDataStore[id];
     };
   }, []);
 
-  // And on all rerenders, update the same data. (refID is a function on first
-  // render, before the useEffect() effects are called.)
-  if (typeof idRef.current === "number") {
-    let refID = idRef.current;
-    auxDataStore[refID] = [reducers, props, contexts, setState];
-  }
-
-  // Also attach refID to the ref.current node initially, and whenever this
-  // node changes.
+  // Also attach id to the ref.current node initially, and whenever this
+  // node changes, and then, importantly, set an event listener to listen
+  // for dispatches.
   useEffect(() => {
-    let refID = idRef.current;
-    ref.current.setAttribute("data-ref-id", refID);
-  }, [ref.current]);
-
-
-  // Then add an event listener to listen to dispatch calls this component
-  // or from its descendants.
-  useEffect(() => {
-    if (!ref.current) {
+    let node = ref.current;
+    if (!node) {
       debugger;throw(
         "useDispatch(): Remember to put ref on a DOM element (ref={ref})."
       );
     }
-    ref.current.addEventListener("dispatch", dispatchListener);
+    let id = idRef.current;
+    node.setAttribute("data-use-dispatch-id", id);
+    node.addEventListener("use-dispatch", dispatchListener);
+    return () => {
+      node.removeAttribute("data-use-dispatch-id");
+      node.removeEventListener("use-dispatch", dispatchListener);
+    }
   }, [ref.current]);
+
+
 
   return [ref, dispatch];
 };
@@ -124,7 +118,7 @@ export const useDispatch = (reducers, setState, props, contexts) => {
 
 const dispatch = (ref, key, action, input, skip) => {
   ref.current.dispatchEvent(
-    new CustomEvent("dispatch", {
+    new CustomEvent("use-dispatch", {
       bubbles: true,
       detail: [key, action, input, skip],
     })
@@ -143,16 +137,18 @@ const ancDispatch = (ref, key, action, input, skip) => {
 };
 
 
+
+
 const dispatchListener = (e) => {
   let [key, action, input, skip = 0] = e.detail;
   skip = parseSkip(skip);
   const node = e.target;
-  const refID = node.getAttribute("data-ref-id");
-  const [reducers] = auxDataStore[refID];
+  const id = node.getAttribute("data-use-dispatch-id");
+  const [reducers] = auxDataStore[id];
 
   // If key doesn't match the reducer key, let the event bubble up
   // further.
-  if (reducers.key !== key) {
+  if (key !== reducers.key && key !== "self") {
     return true;
   }
   // Else handle the event.
@@ -191,7 +187,7 @@ function parseSkip(skip) {
 
 function dispatchToAncestor(node, key, action, input, skip) {
   node.parentElement.dispatchEvent(
-    new CustomEvent("dispatch", {
+    new CustomEvent("use-dispatch", {
       bubbles: true,
       detail: [key, action, input, skip],
     })
@@ -201,8 +197,8 @@ function dispatchToAncestor(node, key, action, input, skip) {
 
 
 function dispatchToSelf(node, key, action, input) {
-  const refID = node.getAttribute("data-ref-id");
-  const [reducers, props, contexts, setState] = auxDataStore[refID];
+  const id = node.getAttribute("data-use-dispatch-id");
+  const [reducers, props, contexts, setState] = auxDataStore[id];
 
   // If action === "setSate", call setState instead of a listed reducer.
   if (action === "setState") {
