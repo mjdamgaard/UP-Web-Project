@@ -1,7 +1,5 @@
 import {useState, createContext, useContext, useEffect, useMemo} from "react";
-import {
-  useStateAndReducers, useDispatch
-} from "../../contexts_and_hooks/useDispatch.js"
+import {useDispatch} from "../../contexts_and_hooks/useDispatch.js"
 // import {Link} from "react-router-dom";
 
 import {useQuery} from "../../contexts_and_hooks/DBRequests.js";
@@ -351,7 +349,7 @@ const NoneEntityReference = () => {
 
 export const EntityLink = (props) => {
   const {entID, children} = props;
-  const [dispatch, ref] = useDispatch(null, props);
+  const [ref, dispatch] = useDispatch(null, null, props);
   // const colKey = useContext(ColumnContext);
 
   return (

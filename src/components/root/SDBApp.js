@@ -6,16 +6,14 @@ import {useState, useEffect, useMemo} from "react";
 //   useLocation,
 // } from "react-router-dom";
 
-import {
-  useStateAndReducers, useDispatch
-} from "../../contexts_and_hooks/useDispatch.js"
+import {useDispatch} from "../../contexts_and_hooks/useDispatch.js"
 
 import {
   AccountContextProvider
 } from "../../contexts_and_hooks/AccountContext.js";
 
 // import {InterfaceHeader} from "../InterfaceHeader.js";
-import {MainPage, AppColumn} from "../pages/MainPage.js";
+import {MainPage, AppColumn} from "../app_pages/MainPage.js";
 import {
   LoginPage, SignupPage, TutorialPage, InsertPage
 } from "../OverlayPages.js";
@@ -39,16 +37,11 @@ function getPageFromTop() {
 
 export const SDBApp = () => {
   // On first render of the app, get the page from the URL and use it to set
-  // the initial state. 
-  const [initialPage] = useMemo(() => getPageFromTop(), []);
+  // the initial state.
+  const initialPage = useMemo(() => getPageFromTop(), []);
+  const [{appPage}, setState] = useState({appPage: initialPage})
 
-  const [{
-    appPage,
-
-  }, dispatch, ref] = useStateAndReducers({
-    appPage: initialPage,
-
-  }, appReducers);
+  const [ref, dispatch] = useDispatch(appReducers, setState);
 
   return (
     <div className="sdb-interface" ref={ref}>

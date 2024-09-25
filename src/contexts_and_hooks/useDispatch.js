@@ -74,7 +74,7 @@ function getNonce() {
 // };
 
 
-export const useDispatch = (reducers, props, contexts, setState) => {
+export const useDispatch = (reducers, setState, props, contexts) => {
   reducers ??= {};
 
   const ref = useRef();
@@ -91,13 +91,8 @@ export const useDispatch = (reducers, props, contexts, setState) => {
     };
   }, [refID]);
 
-
-  const dispatch = (key, action, input, skip) => {
-    dispatchFromRef(
-      refID, key, action, input, skip
-    );
-  };
-
+  // Add/refresh event listener to listen to dispatch calls this component
+  // or from its descendants.
   useEffect(() => {
     ref.current.addEventListener("dispatch", dispatchListener);
     return () => {
@@ -105,15 +100,36 @@ export const useDispatch = (reducers, props, contexts, setState) => {
     }
   });
 
-
   return [ref, dispatch];
 };
 
 
+const dispatch = (ref, key, action, input, skip) => {
+  ref.current.dispatchEvent(
+    new CustomEvent("dispatch", {
+      bubbles: true,
+      detail: [key, action, input, skip],
+    })
+  );
+};
+
+const ancDispatch = (ref, key, action, input, skip) => {
+  if (key === "self") {
+    debugger;throw (
+      'useDispatch(): Don\'t call dispatch() with key == "self" from ' +
+      'within a reducer. Call this.MY_ACTION instead.'
+    );
+  }
+  skip = parseSkip(skip);
+  dispatchToAncestor(ref, key, action, input, skip)
+};
+
 
 const dispatchListener = (e) => {
   let [key, action, input, skip = 0] = e.detail;
-  skip = parseSkip(skip);
+  const ref = e.target;
+  const refID = ref.current.getAttribute("data-ref-id");
+  const [reducers] = auxDataStore[refID];
 
   // If key doesn't match the reducer key, let the event bubble up
   // further.
@@ -124,6 +140,9 @@ const dispatchListener = (e) => {
   else {
     // Stop the event from going further.
     e.stopPropagation();
+    // Parse skip and get ref from e.target.
+    skip = parseSkip(skip);
+    const ref = e.target;
     // If skip > 0, replace the event with one where skip is decremented
     // by one, and let that bubble up instead.
     if (skip > 0) {
@@ -131,7 +150,7 @@ const dispatchListener = (e) => {
     }
     // Else reduce the state of this component.
     else {
-      dispatchToSelf(ref, action, input);
+      dispatchToSelf(ref, key, action, input);
     }
   }
   return false;
@@ -165,7 +184,7 @@ function dispatchToAncestor(ref, key, action, input, skip) {
 
 
 
-function dispatchToSelf(ref, action, input) {
+function dispatchToSelf(ref, key, action, input) {
   const refID = ref.current.getAttribute("data-ref-id");
   const [reducers, props, contexts, setState] = auxDataStore[refID];
 
@@ -202,25 +221,17 @@ function dispatchToSelf(ref, action, input) {
   }
   // Then bind 'this' to reducers object.
   reducer = reducers[action].bind(reducers);
-  
-  const dispatch = (key, action, input, skip) => {
-    if (key === "self") {
-      debugger;throw (
-        'useDispatch(): Don\'t call dispatch() with key == "self" from ' +
-        'within a reducer. Call this.MY_ACTION instead.'
-      );
-    }
-    skip = parseSkip(skip);
-    dispatchToAncestor(ref, key, action, input, skip)
-  };
+  // And use the ancDispatch, which wraps dispatch() and prevents "self" from
+  // being called.
+  let dispatch = ancDispatch;
 
   // If setState is missing, simply call the "reducer" in order to allow it
   // to signal to parents (which is allowed non-pure behavior) of the reducers.
   if (!setState) {
-    reducer({props: props, contexts: contexts}, input, dispatch);
+    reducer({props: props, contexts: contexts, ref: ref}, input, dispatch);
   }
   // Else use the reducer to set the state.
   setState(state => reducer(
-    {state: state, props: props, contexts: contexts}, input, dispatch
+    {state: state, props: props, contexts: contexts, ref: ref}, input, dispatch
   ));
 }

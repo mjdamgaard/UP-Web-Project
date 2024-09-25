@@ -1,7 +1,5 @@
 import {useMemo, useContext} from "react";
-import {
-  useStateAndReducers, useDispatch
-} from "../../contexts_and_hooks/useDispatch.js"
+import {useDispatch} from "../../contexts_and_hooks/useDispatch.js"
 
 import {DataFetcher} from "../../classes/DataFetcher.js";
 
@@ -17,7 +15,7 @@ import {DataFetcher} from "../../classes/DataFetcher.js";
 export const EntityDataDisplay = (props) => {
   return <></>;
   const {entID} = props;
-  const [results, dispatch, passData] = useStateAndReducers({}, props, {});
+  const [results, dispatch, passData] = useDispatch({}, props, {});
 
   // const [results, setResults] = useState({});
   useMemo(() => {

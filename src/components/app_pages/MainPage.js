@@ -2,9 +2,7 @@ import {
   useState, createContext, useContext, useMemo, useId, useEffect,
   useLayoutEffect
 } from "react";
-import {
-  useStateAndReducers, useDispatch
-} from "../../contexts_and_hooks/useDispatch.js"
+import {useDispatch} from "../../contexts_and_hooks/useDispatch.js"
 
 import {
   useLocation, Navigate,
@@ -153,7 +151,7 @@ const mainPageReducers = {
     return this["UPDATE_CURR_IND"]({state}, newInd);
   },
 
-  "SCROLL_INTO_VIEW": function ([state], colInd) {
+  "SCROLL_INTO_VIEW": function ({state}, colInd) {
     // Get the column container and the positions.
     const [columnContainer, pos, childPosArr] =
       this.getColumnContainerAndPositions();
@@ -189,14 +187,16 @@ export const MainPage = (props) => {
     currInd,
     // scrollLeft, scrollVelocity, lastScrollAt,
 
-  }, dispatch, ref] = useStateAndReducers({
+  }, setState] = useState({
     colKeyArr: [0, 1],
     specStore: {"0": {entID: HOME_ENTITY_ID}, "1": {entID: 1}},
     nonce: 1,
     currInd: 0,
     // scrollLeft: 0, scrollVelocity: 0, lastScrollAt: 0,
 
-  }, mainPageReducers, props);
+  });
+
+  const [ref, dispatch] = useDispatch(mainPageReducers, setState, props);
 
   useLayoutEffect(() => {
     let currColSpec = specStore[colKeyArr[currInd]];

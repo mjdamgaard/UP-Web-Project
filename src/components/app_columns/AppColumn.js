@@ -1,6 +1,6 @@
 import {useState, createContext, useContext, useMemo} from "react";
 import {
-  useStateAndReducers, useDispatch
+  useDispatch
 } from "../../contexts_and_hooks/useDispatch.js"
 import React from 'react';
 import {ColumnContext} from "../../contexts_and_hooks/ColumnContext.js";
@@ -24,7 +24,7 @@ const appColumnReducers = {
 
 export const AppColumn = (props) => {
   const {colKey, colSpec} = props;
-  const [dispatch, ref] = useDispatch(appColumnReducers, props);
+  const [ref, dispatch] = useDispatch(appColumnReducers, null, props);
 
   var page;
   if (colSpec.entID) {
