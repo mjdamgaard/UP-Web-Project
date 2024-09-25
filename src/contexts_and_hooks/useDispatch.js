@@ -94,6 +94,11 @@ export const useDispatch = (reducers, setState, props, contexts) => {
   // Add/refresh event listener to listen to dispatch calls this component
   // or from its descendants.
   useEffect(() => {
+    if (!ref.current) {
+      debugger;throw(
+        "useDispatch(): Remember to put ref on a DOM node."
+      );
+    }
     ref.current.addEventListener("dispatch", dispatchListener);
     return () => {
       ref.current.removeEventListener("dispatch", dispatchListener);
@@ -121,14 +126,15 @@ const ancDispatch = (ref, key, action, input, skip) => {
     );
   }
   skip = parseSkip(skip);
-  dispatchToAncestor(ref, key, action, input, skip)
+  dispatchToAncestor(ref.current, key, action, input, skip)
 };
 
 
 const dispatchListener = (e) => {
   let [key, action, input, skip = 0] = e.detail;
-  const ref = e.target;
-  const refID = ref.current.getAttribute("data-ref-id");
+  skip = parseSkip(skip);
+  const node = e.target;
+  const refID = node.getAttribute("data-ref-id");
   const [reducers] = auxDataStore[refID];
 
   // If key doesn't match the reducer key, let the event bubble up
@@ -140,17 +146,14 @@ const dispatchListener = (e) => {
   else {
     // Stop the event from going further.
     e.stopPropagation();
-    // Parse skip and get ref from e.target.
-    skip = parseSkip(skip);
-    const ref = e.target;
     // If skip > 0, replace the event with one where skip is decremented
     // by one, and let that bubble up instead.
     if (skip > 0) {
-      dispatchToAncestor(ref, key, action, input, skip - 1);
+      dispatchToAncestor(node, key, action, input, skip - 1);
     }
     // Else reduce the state of this component.
     else {
-      dispatchToSelf(ref, key, action, input);
+      dispatchToSelf(node, key, action, input);
     }
   }
   return false;
@@ -173,8 +176,8 @@ function parseSkip(skip) {
 
 
 
-function dispatchToAncestor(ref, key, action, input, skip) {
-  ref.current.parentElement.dispatchEvent(
+function dispatchToAncestor(node, key, action, input, skip) {
+  node.parentElement.dispatchEvent(
     new CustomEvent("dispatch", {
       bubbles: true,
       detail: [key, action, input, skip],
@@ -184,8 +187,8 @@ function dispatchToAncestor(ref, key, action, input, skip) {
 
 
 
-function dispatchToSelf(ref, key, action, input) {
-  const refID = ref.current.getAttribute("data-ref-id");
+function dispatchToSelf(node, key, action, input) {
+  const refID = node.getAttribute("data-ref-id");
   const [reducers, props, contexts, setState] = auxDataStore[refID];
 
   // If action === "setSate", call setState instead of a listed reducer.
@@ -224,6 +227,8 @@ function dispatchToSelf(ref, key, action, input) {
   // And use the ancDispatch, which wraps dispatch() and prevents "self" from
   // being called.
   let dispatch = ancDispatch;
+  // reconstruct ref. 
+  let ref = {current: node};
 
   // If setState is missing, simply call the "reducer" in order to allow it
   // to signal to parents (which is allowed non-pure behavior) of the reducers.

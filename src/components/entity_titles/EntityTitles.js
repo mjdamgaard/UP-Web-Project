@@ -355,7 +355,7 @@ export const EntityLink = (props) => {
   return (
     <div className="entity-link" ref={ref} onClick={() => {
       let colSPec = {entID: entID};
-      dispatch("app-column", "OPEN_COLUMN", colSPec);
+      dispatch(ref, "app-column", "OPEN_COLUMN", colSPec);
     }} >
       {children}
     </div>

@@ -221,7 +221,7 @@ export const MainPage = (props) => {
           if (currInd === ind) {
             mainPageReducers["SCROLL_INTO_VIEW"]({}, ind);
           } else {
-            dispatch("self", "UPDATE_CURR_IND", ind);
+            dispatch(ref, "self", "UPDATE_CURR_IND", ind);
           }
         }}
       >
