@@ -54,6 +54,72 @@ import {
 **/
 
 
+export const useStateAndReducers = (initState, reducers, props, contexts) => {
+  reducers ??= {};
+
+  // Call the useState() hook on initState.
+  const [state, setState] = useState(initState);
+
+  const ref = useRef();
+
+  const dispatch = (key, action, input) => {
+    dispatchFromRef(
+      ref, reducers, setState, props, contexts, key, action, input
+    );
+  };
+
+  useEffect(() => {
+    AddOrReplaceReduceStateEventListener(ref, reducers, dispatch);
+  });
+
+
+  return [state, dispatch, ref];
+};
+
+
+
+
+export const useDispatch = (reducers, props, contexts) => {
+  reducers ??= {};
+
+  const ref = useRef();
+
+  const dispatch = (key, action, input) => {
+    dispatchFromRef(
+      ref, reducers, (y) => {y()}, props, contexts, key, action, input
+    );
+  };
+
+  useEffect(() => {
+    AddOrReplaceReduceStateEventListener(ref, reducers, dispatch);
+  });
+
+  const modDispatch = getModifiedDispatch2(dispatch);
+  return [modDispatch, ref];
+};
+
+
+
+
+
+function AddOrReplaceReduceStateEventListener(ref, reducers, dispatch) {
+  if (ref.current) {
+    let listener = (e) => {
+      reduceStateEventHandler(e, ref, reducers, dispatch);
+    };
+    let prevListener = ref.current.getAttribute("data-reduce-state-listener");
+    if (prevListener) {debugger;
+      ref.current.removeEventListener("reduce-state", prevListener);
+    }
+    ref.current.addEventListener("reduce-state", listener);
+    ref.current.setAttribute("data-reduce-state-listener", listener);
+  }
+}
+
+
+
+
+
 
 
 function throwMissingAction(key, action, ref) {
@@ -149,7 +215,7 @@ function getModifiedDispatch2(dispatch) {
 
 
 
-function reduceStateEventHandler(e, ref, reducers, dispatch) {debugger;
+function reduceStateEventHandler(e, ref, reducers, dispatch) {
   let [key, action, input] = e.detail;
   // If key is an array, treat it as [key, skip] instead, where skip is
   // the number of ancestors to skip.
@@ -191,65 +257,5 @@ function reduceStateEventHandler(e, ref, reducers, dispatch) {debugger;
 
 
 
-
-
-
-
-export const useStateAndReducers = (initState, reducers, props, contexts) => {
-  reducers ??= {};
-
-  // Call the useState() hook on initState.
-  const [state, setState] = useState(initState);
-
-  const ref = useRef();
-
-  const dispatch = (key, action, input) => {
-    dispatchFromRef(
-      ref, reducers, setState, props, contexts, key, action, input
-    );
-  };
-
-  useEffect(() => {
-    if (ref.current) {
-      ref.current.addEventListener("reduce-state", (e) => {
-        reduceStateEventHandler(e, ref, reducers, dispatch);
-      });
-    }
-  });
-
-
-  return [state, dispatch, ref];
-};
-
-
-
-
-/**
-  useSessionStateless() can be used whenever you would call useSessionState()
-  but don't need for the given component to have a state itself.
-  (The first 'props' input is actually not strictly needed id rootID is set.)
-**/
-export const useDispatch = (reducers, props, contexts) => {
-  reducers ??= {};
-
-  const ref = useRef();
-
-  const dispatch = (key, action, input) => {
-    dispatchFromRef(
-      ref, reducers, () => {}, props, contexts, key, action, input
-    );
-  };
-
-  useEffect(() => {
-    if (ref.current) {
-      ref.current.addEventListener("reduce-state", (e) => {
-        reduceStateEventHandler(e, ref, reducers, dispatch);
-      });
-    }
-  });
-
-  const modDispatch = getModifiedDispatch2(dispatch);
-  return [modDispatch, ref];
-};
 
 

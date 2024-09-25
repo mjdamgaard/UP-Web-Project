@@ -417,7 +417,7 @@ VALUES
         "e.g. 'apple tree' and 'turned off.' Proper nouns are also included." 
     ), NULL),
     (12, 1, 0, '', '', CONCAT(
-        '{"title":"Scale specification"}'
+        '{"title":"Scale type"}'
     ),  CONCAT(
         "A class the descriptions and accompanying data structures (structs) ",
         "that goes ",
@@ -448,7 +448,7 @@ VALUES
     ), NULL),
     (16, 6, 0, '', '', CONCAT(
         -- "class":"@3"
-        '{"template":{"statement":"%s","scale specification@c12":"@21"}}'
+        '{"template":{"statement":"%s","scale type@c12":"@21"}}'
     ), CONCAT(
         "A @6c1 that can be used to create @3c1 entities from texts, ",
         "scored on the @21."
@@ -459,7 +459,7 @@ VALUES
         -- "class":"@4"
         '{"template":{"predicate":"%s","subject class@c1":"%e1",',
         '"statement":"@[Subject] fits @[Predicate]",',
-        '"scale specification@c12":"@22"}}'
+        '"scale type@c12":"@22"}}'
     ), CONCAT(
         "A @6c1 that can be used to create @4c1 entities from adjectives or ",
         "verbs, scored on the @22.\n",
@@ -472,7 +472,7 @@ VALUES
     (18, 6, 0, '', '', CONCAT(
         -- "class":"@4"
         '{"template":{"statement":"%s","subject class@c1":"%e1",',
-        '"scale specification@c12":"@22"}}'
+        '"scale type@c12":"@22"}}'
     ), CONCAT(
         "A @6c1 that can be used to create @4c1 entities with complicated ",
         "formulations, scored on the @22.\n",
@@ -489,7 +489,7 @@ VALUES
         '"subject class@c1":"%e1","object class@c1":"%e2",',
         '"predicate":"is the %s of @[Object]",',
         '"statement":"@[Subject] is the %s of @[Object]",',
-        '"scale specification@c12":"@21"}}'
+        '"scale type@c12":"@21"}}'
     ), CONCAT(
         "A @6c1 that can be used to create factual @5c1 entities from ",
         "(singular) nouns, scored on the @21.\n",
@@ -508,7 +508,7 @@ VALUES
         'with respect to %s2",',
         '"statement":"@[Subject] is an instance of the %s1 of @[Object], ',
         'graded with respect to %s2",',
-        '"scale specification@c12":"@22"}}'
+        '"scale type@c12":"@22"}}'
     ), CONCAT(
         "A @6c1 that can be used to create one-to-many @5c1 entities from ",
         "(plural) nouns, scored on the @22 according to @[Graded w.r.t.] ",
@@ -603,7 +603,7 @@ VALUES
         '"subject class@c1":"%e1","object class@c1":"%e2",',
         '"predicate":"is an instance of the %s of @[Object]",',
         '"statement":"@[Subject] is an instance of the %s of @[Object]",',
-        '"scale specification@c12":"@21"}}'
+        '"scale type@c12":"@21"}}'
     ), CONCAT(
         "A @6c1 that can be used to create factual one-to-many @5c1 entities ",
         "from (plural) nouns, scored on the @21 in terms of whether they are ",
