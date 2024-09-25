@@ -1,7 +1,7 @@
 import {useState, createContext, useContext, useEffect, useMemo} from "react";
 import {
   useStateAndReducers, useDispatch
-} from "../../contexts_and_hooks/useStateAndReducers.js"
+} from "../../contexts_and_hooks/useDispatch.js"
 // import {Link} from "react-router-dom";
 
 import {useQuery} from "../../contexts_and_hooks/DBRequests.js";

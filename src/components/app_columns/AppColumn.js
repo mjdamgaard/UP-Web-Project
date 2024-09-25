@@ -1,7 +1,7 @@
 import {useState, createContext, useContext, useMemo} from "react";
 import {
   useStateAndReducers, useDispatch
-} from "../../contexts_and_hooks/useStateAndReducers.js"
+} from "../../contexts_and_hooks/useDispatch.js"
 import React from 'react';
 import {ColumnContext} from "../../contexts_and_hooks/ColumnContext.js";
 
@@ -15,7 +15,7 @@ import {ListGeneratorPage} from "../ListGenPages.js";
 
 const appColumnReducers = {
   key: "app-column",
-  "OPEN_COLUMN": ([state, props], colSpec, dispatch) => {
+  "OPEN_COLUMN": ({state, props}, colSpec, dispatch) => {
     let callerColKey = props.colKey;
     dispatch("main", "OPEN_COLUMN", [colSpec, callerColKey]);
   },

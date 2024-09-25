@@ -9,7 +9,7 @@ import {useState, createContext, useMemo} from "react";
 import $ from 'jquery';
 import {
   useStateAndReducers, useDispatch
-} from "./useStateAndReducers.js"
+} from "./useDispatch.js"
 
 export const SessionContext = createContext();
 export const AccountManagerContext = createContext();

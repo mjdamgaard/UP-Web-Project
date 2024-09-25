@@ -4,7 +4,7 @@ import {
 } from "react";
 import {
   useStateAndReducers, useDispatch
-} from "../../contexts_and_hooks/useStateAndReducers.js"
+} from "../../contexts_and_hooks/useDispatch.js"
 
 import {
   useLocation, Navigate,
@@ -31,7 +31,7 @@ const TIME_BEFORE_ALWAYS_GOING_TO_CLOSEST_COLUMN = 200;
 
 const mainPageReducers = {
   key: "main",
-  "OPEN_COLUMN": function ([state], [colSpec, callerColKey]) {
+  "OPEN_COLUMN": function ({state}, [colSpec, callerColKey]) {
     const {colKeyArr, specStore, nonce} = state;
     let callerColInd = colKeyArr.indexOf(callerColKey);
     let newNonce = nonce + 1;
@@ -51,7 +51,7 @@ const mainPageReducers = {
     };
   },
 
-  "UPDATE_SCROLL": function ([state], scrollLeft) {
+  "UPDATE_SCROLL": function ({state}, scrollLeft) {
     return {
       ...state,
       scrollLeft: scrollLeft,
@@ -83,7 +83,7 @@ const mainPageReducers = {
     return [columnContainer, pos, childPosArr];
   },
 
-  "REACT_TO_SCROLL": function ([state], input, dispatch) {
+  "REACT_TO_SCROLL": function ({state}, input, dispatch) {
     // Get the column container and the positions.
     const [, pos, childPosArr] = this.getColumnContainerAndPositions();
     // And get the center position of the column container.
@@ -93,7 +93,7 @@ const mainPageReducers = {
     // except scrolling back to that column. 
     const centerDiff = childPosArr[state.currInd].center - center;
     if (Math.abs(centerDiff) < PX_TO_SCROLL_BEFORE_CHANGING_COLUMN) {
-      return this["SCROLL_INTO_VIEW"]([state], newInd);
+      return this["SCROLL_INTO_VIEW"]({state: state}, newInd);
     }
 
     // Get the closest distance to a non-current column's center.
@@ -123,7 +123,7 @@ const mainPageReducers = {
       (Date.now() - state.lastScrollAt) >
         TIME_BEFORE_ALWAYS_GOING_TO_CLOSEST_COLUMN
     ) {
-      return this["UPDATE_CURR_IND"]([state], closestInd);
+      return this["UPDATE_CURR_IND"]({state: state}, closestInd);
     }
 
     // Else get the index of to the first column in the scroll direction from
@@ -150,7 +150,7 @@ const mainPageReducers = {
     );
     // Then update the current column index, which also scrolls it into view,
     // automatically.
-    return this["UPDATE_CURR_IND"]([state], newInd);
+    return this["UPDATE_CURR_IND"]({state}, newInd);
   },
 
   "SCROLL_INTO_VIEW": function ([state], colInd) {
@@ -169,8 +169,8 @@ const mainPageReducers = {
     return;
   },
 
-  "UPDATE_CURR_IND": function ([state], newInd) {
-    this["SCROLL_INTO_VIEW"]([state], newInd);
+  "UPDATE_CURR_IND": function ({state: state}, newInd) {
+    this["SCROLL_INTO_VIEW"]({state: state}, newInd);
 
     return {...state, currInd: newInd};
   },
@@ -203,9 +203,9 @@ export const MainPage = (props) => {
     let newPath = currColSpec.entID ? "e" + currColSpec.entID : "";
     window.history.pushState(null, "", newPath);
     // TODO: Refactor:
-    mainPageReducers["SCROLL_INTO_VIEW"]([], currInd);
+    mainPageReducers["SCROLL_INTO_VIEW"]({}, currInd);
     window.onresize = (event) => {
-      mainPageReducers["SCROLL_INTO_VIEW"]([], currInd);
+      mainPageReducers["SCROLL_INTO_VIEW"]({}, currInd);
     };
   }, [currInd])
 
@@ -219,7 +219,7 @@ export const MainPage = (props) => {
       }
         onClick={() => {
           if (currInd === ind) {
-            mainPageReducers["SCROLL_INTO_VIEW"]([], ind);
+            mainPageReducers["SCROLL_INTO_VIEW"]({}, ind);
           } else {
             dispatch("self", "UPDATE_CURR_IND", ind);
           }

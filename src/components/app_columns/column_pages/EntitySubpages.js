@@ -1,7 +1,7 @@
 import {useState, useMemo, useContext} from "react";
 import {
   useStateAndReducers, useDispatch
-} from "../../../contexts_and_hooks/useStateAndReducers.js"
+} from "../../../contexts_and_hooks/useDispatch.js"
 // import {EntityLink} from "react-router-dom";
 // import {
 //   MaxRatingSetCombiner, SimpleSetGenerator,

@@ -8,7 +8,7 @@ import {useState, useEffect, useMemo} from "react";
 
 import {
   useStateAndReducers, useDispatch
-} from "../../contexts_and_hooks/useStateAndReducers.js"
+} from "../../contexts_and_hooks/useDispatch.js"
 
 import {
   AccountContextProvider
