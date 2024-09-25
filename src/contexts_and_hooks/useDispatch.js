@@ -116,7 +116,7 @@ export const useDispatch = (reducers, setState, props, contexts) => {
 };
 
 
-const dispatch = (ref, key, action, input, skip) => {debugger;
+const dispatch = (ref, key, action, input, skip) => {
   ref.current.dispatchEvent(
     new CustomEvent("use-dispatch", {
       bubbles: true,
@@ -145,11 +145,11 @@ const dispatchListener = (e) => {
   const node = e.target;
   const id = node.getAttribute("data-use-dispatch-id");
   const [reducers] = auxDataStore[id];
-
+console.trace();
   // If key doesn't match the reducer key, and isn't "self", let the event
   // bubble up further.
   if (!reducers.key || key !== reducers.key && key !== "self") {debugger;
-    return true;
+    return;
   }
   // Else handle the event.
   else {debugger;
@@ -165,7 +165,7 @@ const dispatchListener = (e) => {
       dispatchToSelf(node, key, action, input);
     }
   }
-  return false;
+  return;
 }
 
 
@@ -185,7 +185,7 @@ function parseSkip(skip) {
 
 
 
-function dispatchToAncestor(node, key, action, input, skip) {
+function dispatchToAncestor(node, key, action, input, skip) {debugger;
   node.parentElement.dispatchEvent(
     new CustomEvent("use-dispatch", {
       bubbles: true,
