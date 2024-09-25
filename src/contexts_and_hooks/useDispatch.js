@@ -116,7 +116,7 @@ export const useDispatch = (reducers, setState, props, contexts) => {
 };
 
 
-const dispatch = (ref, key, action, input, skip) => {
+const dispatch = (ref, key, action, input, skip) => {debugger;
   ref.current.dispatchEvent(
     new CustomEvent("use-dispatch", {
       bubbles: true,
@@ -146,13 +146,13 @@ const dispatchListener = (e) => {
   const id = node.getAttribute("data-use-dispatch-id");
   const [reducers] = auxDataStore[id];
 
-  // If key doesn't match the reducer key, let the event bubble up
-  // further.
-  if (key !== reducers.key && key !== "self") {
+  // If key doesn't match the reducer key, and isn't "self", let the event
+  // bubble up further.
+  if (!reducers.key || key !== reducers.key && key !== "self") {debugger;
     return true;
   }
   // Else handle the event.
-  else {
+  else {debugger;
     // Stop the event from going further.
     e.stopPropagation();
     // If skip > 0, replace the event with one where skip is decremented

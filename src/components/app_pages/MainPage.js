@@ -29,7 +29,7 @@ const TIME_BEFORE_ALWAYS_GOING_TO_CLOSEST_COLUMN = 200;
 
 const mainPageReducers = {
   key: "main",
-  "OPEN_COLUMN": function ({state}, [colSpec, callerColKey]) {
+  "OPEN_COLUMN": function ({state}, [colSpec, callerColKey]) {debugger;
     const {colKeyArr, specStore, nonce} = state;
     let callerColInd = colKeyArr.indexOf(callerColKey);
     let newNonce = nonce + 1;
@@ -237,7 +237,7 @@ export const MainPage = (props) => {
         colKeyArr={colKeyArr} specStore={specStore} currInd={currInd}
       />
       <div className="column-container"
-      // onresize={event => {debugger;
+      // onresize={event => {
       //   mainPageReducers["SCROLL_INTO_VIEW"]([], currInd);
       // }}
       // onScroll={(event => {
