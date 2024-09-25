@@ -167,7 +167,7 @@ const mainPageReducers = {
     return;
   },
 
-  "UPDATE_CURR_IND": function ({state: state}, newInd) {
+  "UPDATE_CURR_IND": function ({state: state}, newInd) {debugger;
     this["SCROLL_INTO_VIEW"]({state: state}, newInd);
 
     return {...state, currInd: newInd};

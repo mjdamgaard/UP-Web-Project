@@ -79,31 +79,44 @@ export const useDispatch = (reducers, setState, props, contexts) => {
 
   const ref = useRef();
 
-  const refID = useMemo(() => getNonce(), []);
+  const idRef = useRef(() => getNonce());
 
-  // Set auxillary data to be used by reducers. 
-  auxDataStore[refID] = [reducers, props, contexts, setState];
-  // And schedule cleanup of this data.
+  // On the first render, set auxillary data to be used by reducers, and also
+  // schedule a cleanup function to remove this data after unmounting.
   useEffect(() => {
+    let refID = idRef.current;
+    auxDataStore[refID] = [reducers, props, contexts, setState];
     ref.current.setAttribute("data-ref-id", refID);
     return () => {
       delete auxDataStore[refID];
     };
-  }, [refID]);
+  }, []);
 
-  // Add/refresh event listener to listen to dispatch calls this component
+  // And on all rerenders, update the same data. (refID is a function on first
+  // render, before the useEffect() effects are called.)
+  if (typeof idRef.current === "number") {
+    let refID = idRef.current;
+    auxDataStore[refID] = [reducers, props, contexts, setState];
+  }
+
+  // Also attach refID to the ref.current node initially, and whenever this
+  // node changes.
+  useEffect(() => {
+    let refID = idRef.current;
+    ref.current.setAttribute("data-ref-id", refID);
+  }, [ref.current]);
+
+
+  // Then add an event listener to listen to dispatch calls this component
   // or from its descendants.
   useEffect(() => {
     if (!ref.current) {
       debugger;throw(
-        "useDispatch(): Remember to put ref on a DOM node."
+        "useDispatch(): Remember to put ref on a DOM element (ref={ref})."
       );
     }
     ref.current.addEventListener("dispatch", dispatchListener);
-    return () => {
-      ref.current.removeEventListener("dispatch", dispatchListener);
-    }
-  });
+  }, [ref.current]);
 
   return [ref, dispatch];
 };
