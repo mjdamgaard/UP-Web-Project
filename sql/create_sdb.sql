@@ -464,8 +464,20 @@ VALUES
     ), CONCAT(
         "A @6c1 that can be used to create @4c1 entities from adjectives or ",
         "verbs, scored on the @22.\n",
-        "@[Predicate] should either be a (compound) adjective ",
-        "or a (compound) verb."
+        -- "@[Predicate] should either be a (compound) adjective, ",
+        -- "a (compound) verb, or a (compound) noun, in which case we interpret ",
+        -- "the predicate to be 'is a/an @[Predicate]'. If you want to..."
+        "@[Predicate] should either be a (compound) adjective or ",
+        "a (compound) verb. However, by writing e.g. 'is a'/'is an', or ",
+        "'has'/'contains' in a parenthesis at the beginning of @[Predicate], ",
+        "the app can cut away this parenthesis when rendering the title of ",
+        "the entity in most cases. For instance, you might write '(is a) ",
+        "sci-fi movie' as @[Predicate], which can then be rendered as ",
+        "'sci-fi movie,' since the 'is a' part will generally be implicitly ",
+        "understood anyway. Or you might write '(has) good acting', which ",
+        "can then be rendered simply as 'good acting.' And as a last ",
+        "example, one could also write '(contains) spoilers' as ",
+        "@[Predicate], which can then be rendered simply as 'spoilers.'"
     ), CONCAT(
         "A @4c1 formed from an adjective or a verb (@[Predicate]), ",
         "scored on the @21."
