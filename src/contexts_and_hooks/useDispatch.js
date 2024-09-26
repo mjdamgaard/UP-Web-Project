@@ -93,14 +93,18 @@ export const useDispatch = (reducers, key, setState, props, contexts) => {
         ancDispatch(node, key, action, input, skip - 1);
       }
       else {
-        callReducer(reducers, action, input, props, contexts, setState, node);
+        callReducer(
+          reducers, key, action, input, props, contexts, setState, node
+        );
       }
     }
   }, []);
 
   const refCallback = (node) => {
-    node.removeEventListener("use-dispatch", dispatchListener);
-    node.addEventListener("use-dispatch", dispatchListener);
+    if (node) {
+      node.removeEventListener("use-dispatch", dispatchListener);
+      node.addEventListener("use-dispatch", dispatchListener);
+    }
   };
   // Add a warning that might allow us to call the returned value 'ref'
   // instead of 'refCallback.'

@@ -41,10 +41,10 @@ export const SDBApp = () => {
   const initialPage = useMemo(() => getPageFromTop(), []);
   const [{appPage}, setState] = useState({appPage: initialPage})
 
-  const [ref, dispatch] = useDispatch(appReducers, setState);
+  const [refCallback, dispatch] = useDispatch(appReducers, "app", setState);
 
   return (
-    <div className="sdb-interface" ref={ref}>
+    <div className="sdb-interface" ref={refCallback}>
       <AccountContextProvider>{/* yields: session, accountManager.*/}
         {/* <InterfaceHeader setAppPage={void(0)} /> */}
         <MainPage

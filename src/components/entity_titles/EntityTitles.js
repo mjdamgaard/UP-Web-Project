@@ -349,13 +349,13 @@ const NoneEntityReference = () => {
 
 export const EntityLink = (props) => {
   const {entID, children} = props;
-  const [ref, dispatch] = useDispatch(null, null, props);
+  const [refCallback, dispatch] = useDispatch(null, null, props);
   // const colKey = useContext(ColumnContext);
 
   return (
-    <div className="entity-link" ref={ref} onClick={() => {
+    <div className="entity-link" ref={refCallback} onClick={(e) => {
       let colSPec = {entID: entID};
-      dispatch(ref, "app-column", "OPEN_COLUMN", colSPec);
+      dispatch(e.target, "app-column", "OPEN_COLUMN", colSPec);
     }} >
       {children}
     </div>

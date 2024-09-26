@@ -196,7 +196,9 @@ export const MainPage = (props) => {
 
   });
 
-  const [ref, dispatch] = useDispatch(mainPageReducers, setState, props);
+  const [refCallback, dispatch] = useDispatch(
+    mainPageReducers, "main", setState, props
+  );
 
   useLayoutEffect(() => {
     let currColSpec = specStore[colKeyArr[currInd]];
@@ -217,11 +219,11 @@ export const MainPage = (props) => {
       <div key={colKey} className={
         "app-column-wrapper" + ((currInd === ind) ? " active" : "")
       }
-        onClick={() => {
+        onClick={(e) => {
           if (currInd === ind) {
             mainPageReducers["SCROLL_INTO_VIEW"]({}, ind);
           } else {
-            dispatch(ref, "self", "UPDATE_CURR_IND", ind);
+            dispatch(e.target, "self", "UPDATE_CURR_IND", ind);
           }
         }}
       >
@@ -231,7 +233,7 @@ export const MainPage = (props) => {
   });
 
   return (
-    <div className="main-page" ref={ref}>
+    <div className="main-page" ref={refCallback}>
       <InterfaceHeader
         setAppPage={void(0)}
         colKeyArr={colKeyArr} specStore={specStore} currInd={currInd}
