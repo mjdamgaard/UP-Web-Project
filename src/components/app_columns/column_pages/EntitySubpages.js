@@ -27,7 +27,7 @@ import {
   SimpleInstListGenerator, MaxRatingInstListCombiner
 } from "../../../classes/InstListGenerator.js";
 
-import {EntityDataDisplay} from "../../entity_metadata/EntityDataDisplay.js";
+import {EntityDataDisplay} from "../../entity_data/EntityDataDisplay.js";
 
 
 /* Placeholders */
@@ -77,9 +77,6 @@ export const EntitySubpages = (props) => {
   return (
     <div className="entity-page">
       <div className="entity-page-header">
-        <h4>Entity title:</h4>
-        foo 
-        {"bar"}
         <h2><EntityTitle entID={entID} /></h2>
         <h2>Test links</h2>
         <div>

@@ -316,19 +316,19 @@ INSERT INTO Entities (
 )
 VALUES
     (1, 1, 0, '', '', CONCAT(
-        '{"title":"Class"}'
+        '{"title":"class"}'
     ), CONCAT(
-        "A class of all 'Class' entities, including this entity itself."
+        "A class of all 'class' entities, including this entity itself."
     ), NULL),
     (2, 1, 0, '', '', CONCAT(
-        '{"title":"Entity"}'
+        '{"title":"entity"}'
     ), CONCAT(
         "A class of all entities, including this entity itself."
     ), NULL),
     (3, 1, 0, '', '', CONCAT(
-        '{"title":"Statement"}'
+        '{"title":"statement"}'
     ), CONCAT(
-        "A class of all 'Statement' entities, which can be scored by the ",
+        "A class of all 'statement' entities, which can be scored by the ",
         "users in order to express their opinions and beliefs. ",
         "A statement can for instance be '<Movie> is funny,' which might ",
         "be scored by the users on a grading scale (A, B, C, D, F), and/or "
@@ -340,24 +340,24 @@ VALUES
         "'<Movie> has a length of x h,' where x here is taken to reference ",
         "the score itself with which that the users can qualify the ",
         "statement. ",
-        "Note that it is the job of a Statement entity to define the scale ",
+        "Note that it is the job of a 'statement' entity to define the scale ",
         "that it is qualified by. "
         "And unless otherwise specified (by the @13c1 subclass), statements ",
         "Always talk about the thing that the entity represents, and not the ",
         "representation itself."
     ), NULL),
     (4, 1, 0, '', '', CONCAT(
-        '{"title":"Predicate"}'
+        '{"title":"predicate"}'
     ), CONCAT(
-        "A class of all 'Predicate' entities, which can be combined with a ",
+        "A class of all 'predicate' entities, which can be combined with a ",
         "another 'subject' entity in order to form a @3c1 entity. ",
         "Predicates must not require any specification other than said ",
         "subject entity in order to form a well-formed @3c1 entity."
     ), NULL),
     (5, 1, 0, '', '', CONCAT(
-        '{"title":"Relation"}'
+        '{"title":"relation"}'
     ), CONCAT(
-        "A class of all 'Relation' entities, which can be combined with a ",
+        "A class of all 'relation' entities, which can be combined with a ",
         "another 'object' entity in order to form a @4c1 entity. ",
         "Relations must not require any specification other than said ",
         "object entity in order to form a well-formed @4c1 entity. ",
@@ -366,17 +366,18 @@ VALUES
         "functions that returns a statement."
     ), NULL),
     (6, 1, 0, '', '', CONCAT(
-        '{"title":"Template"}'
+        '{"title":"template"}'
     ), CONCAT(
-        "A class of all 'Template' entities, which ",
+        '{"title":"template"}'
+        "A class of all 'template' entities, which ",
         "can be used to define new entities with defining data that ",
         "follow a specific format. The only property that defines an ",
-        "entity of this Template class ",
+        "entity of this template class ",
         "is the 'template' property, which is a variable property structure ",
         "that has placeholders for substitution. ...TODO: Continue."
     ), NULL),
     (7, 1, 0, '', '', CONCAT(
-        '{"title":"User"}'
+        '{"title":"user"}'
     ), CONCAT(
         "A class of the users of this Semantic Network. Whenever a ",
         "new user is created, an entity of this 'user' class is created to ",
@@ -390,7 +391,7 @@ VALUES
         "A @7c1 of this Semantic Network."
     )),
     (9, 1, 0, '', '', CONCAT(
-        '{"title":"Text"}'
+        '{"title":"text"}'
     ),  CONCAT(
         "A class of texts. These are all strings of characters that has some ",
         "(at least partial) meaning attached to them. ",
@@ -401,7 +402,7 @@ VALUES
     -- Note that we don't need a pure text data class/template, since we
     -- already the ability to write texts in other_props and in data_input.
     (10, 1, 0, '', '', CONCAT(
-        '{"title":"Lexical item","superclass@c1":"@9"}'
+        '{"title":"lexical item","superclass@c1":"@9"}'
     ),  CONCAT(
         "A class of lexical items, which are any part of a sentence that can ",
         "be said to have a meaning of its own, even if it cannot stand alone ",
@@ -411,13 +412,13 @@ VALUES
         "not just words." 
     ), NULL),
     (11, 1, 0, '', '', CONCAT(
-        '{"title":"Word","superclass@c1":"@10"}'
+        '{"title":"word","superclass@c1":"@10"}'
     ),  CONCAT(
         "A class of words. This class also includes compound words such as ",
         "e.g. 'apple tree' and 'turned off.' Proper nouns are also included." 
     ), NULL),
     (12, 1, 0, '', '', CONCAT(
-        '{"title":"Scale type"}'
+        '{"title":"scale type"}'
     ),  CONCAT(
         "A class the descriptions and accompanying data structures (structs) ",
         "that goes ",
@@ -425,7 +426,7 @@ VALUES
         "are scored by the users."
     ), NULL),
     (13, 1, 0, '', '', CONCAT(
-        '{"title":"Data statement","superclass@c1":"@3"}'
+        '{"title":"data statement","superclass@c1":"@3"}'
     ), CONCAT(
         "A class of all statements that do not talk about the thing that ",
         "the entities represent, but talk about the representation of the ",
@@ -436,12 +437,12 @@ VALUES
         'entity (giving us a way to essentially "edit" entities).'
     ), NULL),
     (14, 1, 0, '', '', CONCAT(
-        '{"title":"Data predicate","superclass@c1":"@4"}'
+        '{"title":"data predicate","superclass@c1":"@4"}'
     ), CONCAT(
         "A class of all @4c1 entities that is used to form @13c1 entities."
     ), NULL),
     (15, 1, 0, '', '', CONCAT(
-        '{"title":"Data relation","superclass@c1":"@5"}'
+        '{"title":"data relation","superclass@c1":"@5"}'
     ), CONCAT(
         "A class of all @5c1 entities that is used to form @14c1 and ",
         "@13c1 entities."

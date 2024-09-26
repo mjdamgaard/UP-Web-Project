@@ -5,7 +5,7 @@ import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 const CLASS_CLASS_METADATA_JSON = JSON.stringify({
   entID: 1,
   tmplID: 0,
-  mainProps: {title: "Class"},
+  mainProps: {title: "class"},
   classID: 1,
   otherPropsLen: 0,
 });

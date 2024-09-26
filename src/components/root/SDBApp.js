@@ -19,7 +19,7 @@ import {
 } from "../OverlayPages.js";
 
 
-export const HOME_ENTITY_ID = 12;
+export const HOME_ENTITY_ID = 2;
 
 
 const appReducers = {

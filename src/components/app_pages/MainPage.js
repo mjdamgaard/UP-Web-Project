@@ -48,15 +48,6 @@ const mainPageReducers = {
     };
   },
 
-  "UPDATE_SCROLL": function ({state}, scrollLeft) {
-    return {
-      ...state,
-      scrollLeft: scrollLeft,
-      scrollVelocity: scrollLeft - state.scrollLeft,
-      lastScrollAt: Date.now(),
-    };
-  },
-
   getColumnContainerAndPositions: function () {
     const columnContainer = document.querySelector(
       COLUMN_LIST_CONTAINER_SELECTOR
@@ -78,76 +69,6 @@ const mainPageReducers = {
     });
 
     return [columnContainer, pos, childPosArr];
-  },
-
-  "REACT_TO_SCROLL": function ({state}, input, dispatch) {
-    // Get the column container and the positions.
-    const [, pos, childPosArr] = this.getColumnContainerAndPositions();
-    // And get the center position of the column container.
-    const center = pos.center;
-
-    // If center of the currInd column is to close to the center, do nothing
-    // except scrolling back to that column. 
-    const centerDiff = childPosArr[state.currInd].center - center;
-    if (Math.abs(centerDiff) < PX_TO_SCROLL_BEFORE_CHANGING_COLUMN) {
-      return this["SCROLL_INTO_VIEW"]({state: state}, newInd);
-    }
-
-    // Get the closest distance to a non-current column's center.
-    var {absOffSet, closestInd} = childPosArr
-      .filter((val, ind) => ind !== state.currInd)
-      .reduce(
-        (acc, val, ind) => {
-          let offSetFromCenter = val.center - center;
-          let absOffSet = Math.abs(offSetFromCenter);
-          if (ind === 0) {
-            return {absOffSet: absOffSet, closestInd: 0}
-          }
-          else if (absOffSet < acc.absOffSet) {
-            return {absOffSet: absOffSet, closestInd: ind};
-          }
-          else {
-            return acc;
-          }
-        },
-        {}
-      );
-    // If this distance is below a threshold, or if it has been long enough
-    // time since the last scroll, make that column the current one, also
-    // automatically scrolling it into view.
-    if (
-      absOffSet < PX_TO_CENTER_BEFORE_CHANGING_CURR_IND_ON_SCROLL ||
-      (Date.now() - state.lastScrollAt) >
-        TIME_BEFORE_ALWAYS_GOING_TO_CLOSEST_COLUMN
-    ) {
-      return this["UPDATE_CURR_IND"]({state: state}, closestInd);
-    }
-
-    // Else get the index of to the first column in the scroll direction from
-    // the center of the column container.
-    const scrollVelocity = state.scrollVelocity;
-    const {newInd} = childPosArr.reduce(
-      (acc, val, ind) => {
-        let offSetFromCenter = val.center - center;
-        let absOffSet = Math.abs(offSetFromCenter);
-        if (ind === 0) {
-          return {absOffSet: absOffSet, newInd: 0}
-        }
-        else if (Math.sign(offSetFromCenter) !== Math.sign(scrollVelocity)) {
-          return acc;
-        }
-        else if (absOffSet < acc.absOffSet) {
-          return {absOffSet: absOffSet, newInd: ind};
-        }
-        else {
-          return acc;
-        }
-      },
-      {}
-    );
-    // Then update the current column index, which also scrolls it into view,
-    // automatically.
-    return this["UPDATE_CURR_IND"]({state}, newInd);
   },
 
   "SCROLL_INTO_VIEW": function ({state}, colInd) {
@@ -237,22 +158,7 @@ export const MainPage = (props) => {
         setAppPage={void(0)}
         colKeyArr={colKeyArr} specStore={specStore} currInd={currInd}
       />
-      <div className="column-container"
-      // onresize={event => {
-      //   mainPageReducers["SCROLL_INTO_VIEW"]([], currInd);
-      // }}
-      // onScroll={(event => {
-      //   let {scrollLeft} = event.target;
-      //   dispatch("self", "UPDATE_SCROLL", scrollLeft);
-      //   // TODO: Also at some point add click event rather than using the
-      //   // scroll snap property, since it is unresponsive for too long after
-      //   // snapping. (But do this only when it can be tested that it doesn't
-      //   // interfere with using arrow keys in e.g. text fields.)
-      // })}
-      // onMouseUp={event => {
-      //   dispatch("self", "REACT_TO_SCROLL");
-      // }}
-      >
+      <div className="column-container">
         <div className="margin"></div>
         {appColumns}
         <div className="margin"></div>

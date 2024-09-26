@@ -10,7 +10,9 @@ import {useQuery} from "../../../contexts_and_hooks/DBRequests.js";
 
 import {DataFetcher} from "../../../classes/DataFetcher.js";
 
-import {AccountManagerContext} from "../../../contexts_and_hooks/AccountContext.js";
+import {
+  AccountManagerContext
+} from "../../../contexts_and_hooks/AccountContext.js";
 
 import {EntitySubpages} from "./EntitySubpages.js";
 import {PagesWithTabs} from "../../PagesWithTabs.js";
@@ -28,6 +30,7 @@ import {
 import {
   SimpleInstListGenerator, MaxRatingInstListCombiner
 } from "../../../classes/InstListGenerator.js";
+import {EntityDataDisplay} from "../../entity_data/EntityDataDisplay.js";
 
 
 
@@ -104,10 +107,7 @@ export const EntityPage = (props) => {
     <div className="entity-page">
       <div className="entity-page-header">
         <h2><EntityTitle entID={entID} isLink /></h2>
-        <div className="full-title">
-            <b>Definition:</b> <EntityTitle entID={entID} isFull />
-        </div>
-        <div><EntityIDDisplay entID={entID} /></div>
+        <div><EntityDataDisplay entID={entID} /></div>
       </div>
       <EntitySubpages entID={entID} classID={classID} />
     </div>
