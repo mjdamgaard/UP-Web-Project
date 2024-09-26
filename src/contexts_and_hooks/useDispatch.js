@@ -1,6 +1,5 @@
 import {
-  useState, useEffect, useLayoutEffect, useRef, useId, useMemo
-  
+  useState, useEffect, useLayoutEffect, useRef, useId, useMemo, useCallback
 } from "react";
 
 
@@ -74,132 +73,52 @@ function getNonce() {
 // };
 
 
-export const useDispatch = (reducers, setState, props, contexts) => {
+export const useDispatch = (reducers, key, setState, props, contexts) => {
   reducers ??= {};
 
-  const ref = useRef();
+  const dataRef = useRef([reducers, key, props, contexts, setState]);
+  dataRef.current = [reducers, key, props, contexts, setState];
 
-  const idRef = useRef(useMemo(() => getNonce(), []));
-
-  // On the first render, set auxillary data to be used by reducers, and also
-  // schedule a cleanup function to remove this data after unmounting.
-  useEffect(() => {
-    let id = idRef.current;
-    auxDataStore[id] = [reducers, props, contexts, setState];
-    return () => {
-      delete auxDataStore[id];
-    };
+  const dispatchListener = useCallback((e) => {
+    e.stopPropagation();
+    let [key, action, input, skip=0] = e.detail;
+    skip = parseSkip(skip);
+    const node = e.target;
+    const [reducers, nodeKey, props, contexts, setState] = dataRef.current;
+    if (!nodeKey || (key && key !== "self" && key !== nodeKey)) {
+      ancDispatch(node, key, action, input, skip);
+    }
+    else {
+      if (key && key === nodeKey && skip > 0) {
+        ancDispatch(node, key, action, input, skip - 1);
+      }
+      else {
+        callReducer(reducers, action, input, props, contexts, setState, node);
+      }
+    }
   }, []);
 
-  // Also attach id to the ref.current node initially, and whenever this
-  // node changes, and then, importantly, set an event listener to listen
-  // for dispatches.
-  useEffect(() => {
-    let node = ref.current;
-    if (!node) {
-      debugger;throw(
-        "useDispatch(): Remember to put ref on a DOM element (ref={ref})."
-      );
-    }
-    let id = idRef.current;
-    node.setAttribute("data-use-dispatch-id", id);
+  const refCallback = (node) => {
+    node.removeEventListener("use-dispatch", dispatchListener);
     node.addEventListener("use-dispatch", dispatchListener);
-    return () => {
-      node.removeAttribute("data-use-dispatch-id");
-      node.removeEventListener("use-dispatch", dispatchListener);
-    }
-  }, [ref.current]);
-
-
-
-  return [ref, dispatch];
-};
-
-
-const dispatch = (ref, key, action, input, skip) => {
-  ref.current.dispatchEvent(
-    new CustomEvent("use-dispatch", {
-      bubbles: true,
-      detail: [key, action, input, skip],
-    })
+  };
+  // Add a warning that might allow us to call the returned value 'ref'
+  // instead of 'refCallback.'
+  refCallback.current = (
+    "useDispatch(): Don't access ref.current, as the DOM node is not " +
+    "kept in memory."
   );
-};
 
-const ancDispatch = (ref, key, action, input, skip) => {
-  if (key === "self") {
-    debugger;throw (
-      'useDispatch(): Don\'t call dispatch() with key == "self" from ' +
-      'within a reducer. Call this.MY_ACTION instead.'
-    );
-  }
-  skip = parseSkip(skip);
-  dispatchToAncestor(ref.current, key, action, input, skip)
-};
-
-
-
-
-const dispatchListener = (e) => {
-  let [key, action, input, skip = 0] = e.detail;
-  skip = parseSkip(skip);
-  const node = e.target;
-  const id = node.getAttribute("data-use-dispatch-id");
-  const [reducers] = auxDataStore[id];
-console.trace();
-  // If key doesn't match the reducer key, and isn't "self", let the event
-  // bubble up further.
-  if (!reducers.key || key !== reducers.key && key !== "self") {debugger;
-    return;
-  }
-  // Else handle the event.
-  else {debugger;
-    // Stop the event from going further.
-    e.stopPropagation();
-    // If skip > 0, replace the event with one where skip is decremented
-    // by one, and let that bubble up instead.
-    if (skip > 0) {
-      dispatchToAncestor(node, key, action, input, skip - 1);
-    }
-    // Else reduce the state of this component.
-    else {
-      dispatchToSelf(node, key, action, input);
-    }
-  }
-  return;
-}
-
-
-function parseSkip(skip) {
-  skip = parseInt(skip);
-  if (skip === NaN) {
-    debugger;throw (
-      'useDispatch(): skip input to dispatch() must be an integer.'
-    );
-  }
-  return skip;
+  // Return the refCallback and the (constant) dispatch function.
+  return [refCallback, dispatch];
 }
 
 
 
 
-
-
-
-function dispatchToAncestor(node, key, action, input, skip) {debugger;
-  node.parentElement.dispatchEvent(
-    new CustomEvent("use-dispatch", {
-      bubbles: true,
-      detail: [key, action, input, skip],
-    })
-  );
-}
-
-
-
-function dispatchToSelf(node, key, action, input) {
-  const id = node.getAttribute("data-use-dispatch-id");
-  const [reducers, props, contexts, setState] = auxDataStore[id];
-
+function callReducer(
+  reducers, key, action, input, props, contexts, setState, node
+) {
   // If action === "setSate", call setState instead of a listed reducer.
   if (action === "setState") {
     if (!setState) {
@@ -233,19 +152,54 @@ function dispatchToSelf(node, key, action, input) {
   }
   // Then bind 'this' to reducers object.
   reducer = reducers[action].bind(reducers);
-  // And use the ancDispatch, which wraps dispatch() and prevents "self" from
-  // being called.
-  let dispatch = ancDispatch;
-  // reconstruct ref. 
-  let ref = {current: node};
 
   // If setState is missing, simply call the "reducer" in order to allow it
   // to signal to parents (which is allowed non-pure behavior) of the reducers.
   if (!setState) {
-    reducer({props: props, contexts: contexts, ref: ref}, input, dispatch);
+    reducer({props: props, contexts: contexts, node: node}, input, ancDispatch);
   }
   // Else use the reducer to set the state.
   setState(state => reducer(
-    {state: state, props: props, contexts: contexts, ref: ref}, input, dispatch
+    {state: state, props: props, contexts: contexts, node: node},
+    input, ancDispatch
   ));
+}
+
+
+
+const dispatch = (node, key, action, input, skip = 0) => {
+  skip = parseSkip(skip);
+  node.dispatchEvent(
+    new CustomEvent("use-dispatch", {
+      bubbles: true,
+      detail: [key, action, input, skip],
+    })
+  );
+};
+
+const ancDispatch = (node, key, action, input, skip = 0) => {
+  skip = parseSkip(skip);
+  if (key === "self") {
+    debugger;throw (
+      'useDispatch(): Don\'t call dispatch() with key == "self" from ' +
+      'within a reducer. Call this.MY_ACTION instead.'
+    );
+  }
+  node.parentElement.dispatchEvent(
+    new CustomEvent("use-dispatch", {
+      bubbles: true,
+      detail: [key, action, input, skip],
+    })
+  );
+};
+
+
+function parseSkip(skip) {
+  skip = parseInt(skip);
+  if (skip === NaN) {
+    debugger;throw (
+      'useDispatch(): skip input to dispatch() must be an integer.'
+    );
+  }
+  return skip;
 }
