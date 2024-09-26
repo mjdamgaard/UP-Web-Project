@@ -14,17 +14,18 @@ import {ListGeneratorPage} from "../ListGenPages.js";
 
 
 const appColumnReducers = {
-  key: "app-column",
-  "OPEN_COLUMN": ({state, props}, colSpec, dispatch) => {debugger;
+  "OPEN_COLUMN": ({state, props, node}, colSpec, dispatch) => {
     let callerColKey = props.colKey;
-    dispatch("main", "OPEN_COLUMN", [colSpec, callerColKey]);
+    dispatch(node, "main", "OPEN_COLUMN", [colSpec, callerColKey]);
   },
 }
 
 
 export const AppColumn = (props) => {
   const {colKey, colSpec} = props;
-  const [ref, dispatch] = useDispatch(appColumnReducers, null, props);
+  const [ref, dispatch] = useDispatch(
+    appColumnReducers, "app-column", null, props
+  );
 
   var page;
   if (colSpec.entID) {

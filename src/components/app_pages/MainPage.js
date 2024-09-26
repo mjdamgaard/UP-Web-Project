@@ -28,8 +28,7 @@ const TIME_BEFORE_ALWAYS_GOING_TO_CLOSEST_COLUMN = 200;
 
 
 const mainPageReducers = {
-  key: "main",
-  "OPEN_COLUMN": function ({state}, [colSpec, callerColKey]) {debugger;
+  "OPEN_COLUMN": function ({state}, [colSpec, callerColKey]) {
     const {colKeyArr, specStore, nonce} = state;
     let callerColInd = colKeyArr.indexOf(callerColKey);
     let newNonce = nonce + 1;

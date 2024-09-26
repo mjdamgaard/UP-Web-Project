@@ -163,10 +163,12 @@ function callReducer(
     reducer({props: props, contexts: contexts, node: node}, input, ancDispatch);
   }
   // Else use the reducer to set the state.
-  setState(state => reducer(
-    {state: state, props: props, contexts: contexts, node: node},
-    input, ancDispatch
-  ));
+  else {
+    setState(state => reducer(
+      {state: state, props: props, contexts: contexts, node: node},
+      input, ancDispatch
+    ));
+  }
 }
 
 

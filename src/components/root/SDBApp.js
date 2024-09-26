@@ -23,7 +23,6 @@ export const HOME_ENTITY_ID = 12;
 
 
 const appReducers = {
-  key: "app",
   "SET_PAGE": ([state], appPage) => {
     return {...state, appPage: appPage};
   },
