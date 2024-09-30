@@ -1,0 +1,26 @@
+
+
+.entity-data-display {
+
+  & > .main-class-display > * {
+    display: inline-block;
+
+    &:first-child {
+      margin-right: 0.4em;
+      &::after {
+        content: ":";
+      }
+    }
+  }
+
+  & .prop-member-display > * {
+    display: inline-block;
+
+    &:first-child {
+      margin-right: 0.4em;
+      &::after {
+        content: ":";
+      }
+    }
+  }
+}

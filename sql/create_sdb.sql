@@ -368,7 +368,6 @@ VALUES
     (6, 1, 0, '', '', CONCAT(
         '{"title":"template"}'
     ), CONCAT(
-        '{"title":"template"}'
         "A class of all 'template' entities, which ",
         "can be used to define new entities with defining data that ",
         "follow a specific format. The only property that defines an ",

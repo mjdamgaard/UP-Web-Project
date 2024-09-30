@@ -11,7 +11,8 @@ import ReactDOM from 'react-dom/client';
 import {SDBApp} from './components/root/SDBApp.js';
 
 import './style/style01.scss';
-import './style/entity_titles/title_style01.scss';
+import './style/entity_titles/title_style.scss';
+import './style/entity_data/entity_data_style.scss';
 
 
 

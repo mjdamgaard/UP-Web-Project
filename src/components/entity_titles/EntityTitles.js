@@ -74,7 +74,10 @@ const EntityReference = (props) => {
     }
     else {
       return (
-        <div className={"entity-ref-" + expEntMainData.entID}>
+        <div className={
+          "entity-ref-" + expEntMainData.entID +
+          " class-" + expEntMainData.classID
+        }>
           <EntityMainDataProperties expEntMainData={expEntMainData} />
           <ClassClarification
             classMainData={expEntMainData.classMainData}
@@ -121,9 +124,7 @@ const EntityMainDataProperties = ({expEntMainData}) => {
 
 
 
-const EntityPropertyValue = (props) => {
-  const {propVal} = props;
-  
+export const EntityPropertyValue = ({propVal}) => {  
   if (typeof propVal === "string") {
     return (
       <div className="pure-string">
@@ -135,7 +136,10 @@ const EntityPropertyValue = (props) => {
   else if (propVal.ent) {
     let newMainData = propVal.ent;
     return (
-      <div className={"entity-ref-" + newMainData.entID}>
+      <div className={
+        "entity-ref-" + newMainData.entID +
+        " class-" + newMainData.classID
+      }>
         <EntityMainDataProperties expEntMainData={newMainData} />
         <ClassClarification
           classMainData={newMainData.classMainData}
@@ -148,7 +152,10 @@ const EntityPropertyValue = (props) => {
     let expectedClassID = propVal.classContext.classID;
     let newMainData = propVal.classContext.value;
     return (
-      <div className={"entity-ref-" + newMainData.entID}>
+      <div className={
+        "entity-ref-" + newMainData.entID +
+        " class-" + newMainData.classID
+      }>
         <EntityMainDataProperties expEntMainData={newMainData} />
         <ClassClarification
           classMainData={newMainData.classMainData}

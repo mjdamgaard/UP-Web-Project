@@ -3,7 +3,9 @@ import {useDispatch} from "../../contexts_and_hooks/useDispatch.js"
 
 import {DataFetcher} from "../../classes/DataFetcher.js";
 
-
+import {
+  EntityTitle, EntityPropertyValue
+} from "../entity_titles/EntityTitles.js";
 
 
 /* Placeholders */
@@ -40,12 +42,16 @@ export const EntityDataDisplay = (props) => {
   }
 
   const mainData = results.expEntMainData;
-console.log(Object.entries(mainData.mainProps));
+console.log(mainData);
   return (
     <div className="entity-data-display">
       <div className="main-class-display">
         <div>main class</div>
-        <div>{mainData.classID}</div>
+        <div>
+          <EntityPropertyValue propVal={{
+            classContext: {classID: 1, value: mainData.classMainData}
+          }} />
+        </div>
       </div>
       <div className="main-props-display">
         <div>Main properties</div>
