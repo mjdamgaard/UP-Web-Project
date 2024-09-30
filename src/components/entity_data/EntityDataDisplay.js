@@ -42,7 +42,7 @@ export const EntityDataDisplay = (props) => {
   }
 
   const mainData = results.expEntMainData;
-console.log(mainData);
+console.log(mainData.mainProps);
   return (
     <div className="entity-data-display">
       <div className="main-class-display">
@@ -60,7 +60,9 @@ console.log(mainData);
             return (
               <div key={ind} className="prop-member-display">
                 <div className="prop-name">{key}</div>
-                <div className="prop-val">{val}</div>
+                <div className="prop-val">
+                  <EntityPropertyValue propVal={val} />
+                </div>
               </div>
             );
           })

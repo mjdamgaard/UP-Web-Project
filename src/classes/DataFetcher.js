@@ -161,11 +161,14 @@ export class DataFetcher {
       if (propVal && typeof propVal === "object") {
         this.#expandClassContextsFromPropNames(propVal);
       }
-      if (/@c[1-9][0-9]*$/.test(propKey)) {
+      if (/@c[1-9][0-9]*$/.test(propKey)) {debugger;
+        let newPropVal = props[propKey];
         delete props[propKey];
         let newPropKey = propKey.replace(/@c[1-9][0-9]*$/, "");
         let classID = propKey.match(/[0-9]*$/)[0];
-        props[newPropKey] = {classContext: {classID: classID, value: propVal}};
+        props[newPropKey] = {
+          classContext: {classID: classID, value: newPropVal}
+        };
       }
     });
   }
