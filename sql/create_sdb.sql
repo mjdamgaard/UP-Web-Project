@@ -195,6 +195,20 @@ CREATE TABLE IndexedEntities (
 
 
 
+
+CREATE TABLE DataStrings (
+    -- Entity ID.
+    data_hash VARCHAR(56) PRIMARY KEY DEFAULT (SHA2(data_str, 224)),
+
+    data_str LONGBLOB
+    -- (Size restrictions on this BLOB can be implemented in the control layer,
+    -- or in the interface with it, i.e. in the "input procedures.")
+);
+
+-- For a FULLTEXT index, make a new table (of only meaningful texts).
+
+
+
 /* Entities */
 
 CREATE TABLE Entities (
@@ -205,98 +219,22 @@ CREATE TABLE Entities (
     class_id BIGINT UNSIGNED NOT NULL,
     CHECK (class_id != 0),
 
-    -- Template ID: An entity that this entity inherits properties from.
-    -- the a template entity holds a format property which is a JSON object
-    -- containing the properties of the instance entities, where some of the
-    -- property values might include placeholders of the form '%e0', '%e1',
-    -- etc.,
-    -- or of the form '%b', '%t', or '%t1', '%t2', etc. ('%' is escaped by
-    -- '\%'.)
-    template_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
-    -- (A majority of entities will have a tmpl, so we use 0 instead of NULL.)
+    -- Hash of attributes, which is JSON object containing the specific
+    -- attributes of this entity.
+    attr_hash VARCHAR(56) NOT NULL DEFAULT "",
 
-    -- Template entity (ID) input: A list of integers separated by ',',
-    -- which substitutes the /%e[0-9]/ placeholders of the template.
-    template_entity_input VARCHAR(209) NOT NULL DEFAULT "",
+    -- Description hashes: A ""-separated list of CHAR(56)-long strings that
+    -- SHA2 hashes of the descriptions of the entity. 
+    desc_hashes VARCHAR(600) NOT NULL DEFAULT "", -- (Can be resized.)
 
-    -- Template entity ID lists: A list of integers separated by ','
-    -- and '|', which substitutes the /%l[0-9]/ placeholders of the template.
-    -- Each '%l<n>' is substituted by the nth comma-separated list, each list
-    -- separated by the '|'s.
-    template_list_input VARCHAR(209) NOT NULL DEFAULT "",
+    -- Hash of text or binary data. 
+    data_hash VARCHAR(56) NOT NULL DEFAULT "",
 
-    -- Template string input: A list of string inputs separated by '|',
-    -- which substitutes the /%s[0-9]/ placeholders of the template.
-    -- ('|' is escaped by '\|'.)
-    -- One can also use '%s' instead, which is substituted by the whole string
-    -- (and '|' is then not taken as a special character).
-    template_string_input VARCHAR(255)
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "",
-
-
-    -- Other properties: A data structure containing the specific properties
-    -- of this entity, and formatted as a JSON object. If a property value is
-    -- an array, it is interpreted as a set (used for one-to-many properties,
-    -- such as e.g. movie->actor). An array nested directly inside of an array
-    -- is interpreted as a ordered list, however. (When in doubt of whether to
-    -- define an entity via an ordered list or a set, use a set.) 
-    main_props TEXT(1000) DEFAULT NULL, -- (Can be resized.)
-
-    own_desc TEXT(10000) DEFAULT NULL, -- (Can be resized.)
-    inst_desc TEXT(10000) DEFAULT NULL, -- (Can be resized.)
-
-    ref_text TEXT(10000) DEFAULT NULL,
-
-    other_props TEXT(1000) DEFAULT NULL, -- (Can be resized.)
-
-
-    -- Binary data: A blob storing.. 
-    binary_data LONGBLOB DEFAULT NULL,
-    -- (Size restrictions on this BLOB can be implemented in the control layer,
-    -- or in the interface with it, i.e. in the "input procedures.")
-
-    CHECK (
-        main_props  != "" AND
-        own_desc    != "" AND
-        inst_desc   != "" AND
-        ref_text    != "" AND
-        other_props != "" AND
-        binary_data != ""
-    ),
-
-    CHECK (
-        template_id = 0 OR
-            main_props IS NULL AND
-            inst_desc  IS NULL
-            -- binary_data IS NULL
-    ),
-
-
-    data_hash VARCHAR(56) NOT NULL DEFAULT (
-        CASE WHEN (
-            main_props  IS NULL AND
-            own_desc    IS NULL AND
-            inst_desc   IS NULL AND
-            ref_text    IS NULL AND
-            other_props IS NULL AND
-            binary_data IS NULL
-        )
-        THEN ""
-        ELSE SHA2(CONCAT(
-            IFNULL(SHA2(main_props,  224), "null"),
-            IFNULL(SHA2(own_desc,    224), "null"),
-            IFNULL(SHA2(inst_desc,   224), "null"),
-            IFNULL(SHA2(ref_text,    224), "null"),
-            IFNULL(SHA2(other_props, 224), "null"),
-            IFNULL(SHA2(binary_data, 224), "null")
-        ), 224)
-        END
-    ),
 
     UNIQUE INDEX (
-        class_id, template_id,
-        data_hash,
-        template_entity_input, template_list_input, template_string_input
+        class_id, attr_hash,
+        desc_hashes,
+        data_hash
     ),
 
 
