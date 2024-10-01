@@ -270,11 +270,11 @@ VALUES
         "scale) instead. ",
         "Or it can be a statement concerning some quantity, such as ",
         "'<Movie> has a length of x h,' where x here is taken to reference ",
-        "the score itself with which that the users can qualify the ",
+        "the score itself with which the users can qualify the ",
         "statement. ",
         "Note that it is the job of a 'statement' entity to define the scale ",
-        "that it is qualified by. "
-        "And unless otherwise specified (by the @13c1 subclass), statements ",
+        "that it is qualified by.\n"
+        "Unless otherwise specified (by the @13 subclass), statements ",
         "Always talk about the thing that the entity represents, and not the ",
         "representation itself."
     ), 256), SHA2(CONCAT(
@@ -282,19 +282,19 @@ VALUES
     ), 256), ""),
     (1, 1, SHA2(CONCAT(
         "A class of all 'predicate' entities, which can be combined with a ",
-        "another 'subject' entity in order to form a @3c1 entity. ",
+        "another 'subject' entity in order to form a @3 entity. ",
         "Predicates must not require any specification other than said ",
-        "subject entity in order to form a well-formed @3c1 entity."
+        "subject entity in order to form a well-formed @3 entity."
     ), 256), SHA2(CONCAT(
         '{"title":"predicate"}'
     ), 256), ""),
     (1, 1, SHA2(CONCAT(
         "A class of all 'relation' entities, which can be combined with a ",
-        "another 'object' entity in order to form a @4c1 entity. ",
+        "another 'object' entity in order to form a @4 entity. ",
         "Relations must not require any specification other than said ",
-        "object entity in order to form a well-formed @4c1 entity. ",
+        "object entity in order to form a well-formed @4 entity. ",
         "Note that since predicates also takes a subject in order to form a ",
-        "@3c1 entity, this means that relations are essentially binary ",
+        "@3 entity, this means that relations are essentially binary ",
         "functions that returns a statement."
     ), 256), SHA2(CONCAT(
         '{"title":"relation"}'
@@ -324,9 +324,9 @@ VALUES
     (8, 6, 0, '', '', CONCAT(
         '{"template":{"username":"%s"}}' -- "class":"@7"
     ), CONCAT(
-        "A @6c1 used to create user entities."
+        "A @6 used to create user entities."
     ), CONCAT(
-        "A @7c1 of this Semantic Network."
+        "A @7 of this Semantic Network."
     )),
     (9, 1, 0, '', '', CONCAT(
         '{"title":"text"}'
@@ -340,7 +340,7 @@ VALUES
     -- Note that we don't need a pure text data class/template, since we
     -- already the ability to write texts in other_props and in data_input.
     (10, 1, 0, '', '', CONCAT(
-        '{"title":"lexical item","superclass@c1":"@9"}'
+        '{"title":"lexical item","superclass":"@9"}'
     ),  CONCAT(
         "A class of lexical items, which are any part of a sentence that can ",
         "be said to have a meaning of its own, even if it cannot stand alone ",
@@ -350,7 +350,7 @@ VALUES
         "not just words." 
     ), NULL),
     (11, 1, 0, '', '', CONCAT(
-        '{"title":"word","superclass@c1":"@10"}'
+        '{"title":"word","superclass":"@10"}'
     ),  CONCAT(
         "A class of words. This class also includes compound words such as ",
         "e.g. 'apple tree' and 'turned off.' Proper nouns are also included." 
@@ -360,11 +360,11 @@ VALUES
     ),  CONCAT(
         "A class the descriptions and accompanying data structures (structs) ",
         "that goes ",
-        "into defining the scales that qualifies the @3c1 entities when these ",
+        "into defining the scales that qualifies the @3 entities when these ",
         "are scored by the users."
     ), NULL),
     (13, 1, 0, '', '', CONCAT(
-        '{"title":"data statement","superclass@c1":"@3"}'
+        '{"title":"data statement","superclass":"@3"}'
     ), CONCAT(
         "A class of all statements that do not talk about the thing that ",
         "the entities represent, but talk about the representation of the ",
@@ -375,32 +375,32 @@ VALUES
         'entity (giving us a way to essentially "edit" entities).'
     ), NULL),
     (14, 1, 0, '', '', CONCAT(
-        '{"title":"data predicate","superclass@c1":"@4"}'
+        '{"title":"data predicate","superclass":"@4"}'
     ), CONCAT(
-        "A class of all @4c1 entities that is used to form @13c1 entities."
+        "A class of all @4 entities that is used to form @13 entities."
     ), NULL),
     (15, 1, 0, '', '', CONCAT(
-        '{"title":"data relation","superclass@c1":"@5"}'
+        '{"title":"data relation","superclass":"@5"}'
     ), CONCAT(
-        "A class of all @5c1 entities that is used to form @14c1 and ",
-        "@13c1 entities."
+        "A class of all @5 entities that is used to form @14 and ",
+        "@13 entities."
     ), NULL),
     (16, 6, 0, '', '', CONCAT(
         -- "class":"@3"
-        '{"template":{"statement":"%s","scale type@c12":"@21"}}'
+        '{"template":{"statement":"%s","scale type":"@21"}}'
     ), CONCAT(
-        "A @6c1 that can be used to create @3c1 entities from texts, ",
+        "A @6 that can be used to create @3 entities from texts, ",
         "scored on the @21."
     ), CONCAT(
-        "A @3c1 stating that @[Statement] is true, scored on the @21."
+        "A @3 stating that @[Statement] is true, scored on the @21."
     )),
     (17, 6, 0, '', '', CONCAT(
         -- "class":"@4"
-        '{"template":{"predicate":"%s","subject class@c1":"%e1",',
+        '{"template":{"predicate":"%s","subject class":"%e1",',
         '"statement":"@[Subject] fits @[Predicate]",',
-        '"scale type@c12":"@22"}}'
+        '"scale type":"@22"}}'
     ), CONCAT(
-        "A @6c1 that can be used to create @4c1 entities from adjectives or ",
+        "A @6 that can be used to create @4 entities from adjectives or ",
         "verbs, scored on the @22.\n",
         -- "@[Predicate] should either be a (compound) adjective, ",
         -- "a (compound) verb, or a (compound) noun, in which case we interpret ",
@@ -417,58 +417,58 @@ VALUES
         "example, one could also write '(contains) spoilers' as ",
         "@[Predicate], which can then be rendered simply as 'spoilers.'"
     ), CONCAT(
-        "A @4c1 formed from an adjective or a verb (@[Predicate]), ",
+        "A @4 formed from an adjective or a verb (@[Predicate]), ",
         "scored on the @21."
     )),
     (18, 6, 0, '', '', CONCAT(
         -- "class":"@4"
-        '{"template":{"statement":"%s","subject class@c1":"%e1",',
-        '"scale type@c12":"@22"}}'
+        '{"template":{"statement":"%s","subject class":"%e1",',
+        '"scale type":"@22"}}'
     ), CONCAT(
-        "A @6c1 that can be used to create @4c1 entities with complicated ",
+        "A @6 that can be used to create @4 entities with complicated ",
         "formulations, scored on the @22.\n",
         "@[Statement] should be a complicated sentence describing a ",
         "predicate, referring directly to '@[Subject]'. If the predicate can ",
         "be formulated simply as '@[Subject] <some verb>', use @17 instead."
     ), CONCAT(
-        "A @4c1 formed from a whole statement, referring to @[Subject] ",
+        "A @4 formed from a whole statement, referring to @[Subject] ",
         "as the subject of the predicate. It is scored on the @22."
     )),
     (19, 6, 0, '', '', CONCAT(
         -- "class":"@5"
         '{"template":{"noun":"%s",',
-        '"subject class@c1":"%e1","object class@c1":"%e2",',
+        '"subject class":"%e1","object class":"%e2",',
         '"predicate":"is the %s of @[Object]",',
         '"statement":"@[Subject] is the %s of @[Object]",',
-        '"scale type@c12":"@21"}}'
+        '"scale type":"@21"}}'
     ), CONCAT(
-        "A @6c1 that can be used to create factual @5c1 entities from ",
+        "A @6 that can be used to create factual @5 entities from ",
         "(singular) nouns, scored on the @21.\n",
         "@[Noun] should be a singular (compound) noun."
     ), CONCAT(
-        "A factual @5c1 formed from a (singular) noun, stating the @[Noun] ",
-        "of @[Object] is the @[Subject]. As a factual @5c1, it is scored on ",
+        "A factual @5 formed from a (singular) noun, stating the @[Noun] ",
+        "of @[Object] is the @[Subject]. As a factual @5, it is scored on ",
         "the @21."
     )),
     (20, 6, 0, '', '', CONCAT(
         -- "class":"@5"
         '{"template":{"noun (pl.)":"%s1",',
-        '"subject class@c1":"%e1","object class@c1":"%e2",',
+        '"subject class":"%e1","object class":"%e2",',
         '"graded w.r.t.":"%s2",',
         '"predicate":"is an instance of the %s1 of @[Object], graded ',
         'with respect to %s2",',
         '"statement":"@[Subject] is an instance of the %s1 of @[Object], ',
         'graded with respect to %s2",',
-        '"scale type@c12":"@22"}}'
+        '"scale type":"@22"}}'
     ), CONCAT(
-        "A @6c1 that can be used to create one-to-many @5c1 entities from ",
+        "A @6 that can be used to create one-to-many @5 entities from ",
         "(plural) nouns, scored on the @22 according to @[Graded w.r.t.] ",
         "These entity lists should also be filtered ",
         "according to the corresponding factual version of this relation, ",
         "created from @27.\n",
         "@[Noun (pl.)] should be a plural (compound) noun."
     ), CONCAT(
-        "A one-to-many @5c1 formed from a (plural) noun, stating that ",
+        "A one-to-many @5 formed from a (plural) noun, stating that ",
         "@[Subject] is an instance of the @[Noun (pl.)] of @[Object], graded ",
         "according to @[Graded w.r.t.] on the @22.\n",
         "These entity lists should also be filtered ",
@@ -514,54 +514,54 @@ VALUES
     ), NULL),
     (23, 6, 0, '', '', CONCAT(
         -- "class":"@3"
-        '{"template":{"predicate@c4":"%e1","subject":"%e2"}}'
+        '{"template":{"predicate":"%e1","subject":"%e2"}}'
     ), CONCAT(
-        "A @6c1 for creating @3c1 entities by applying @[Predicate] to ",
+        "A @6 for creating @3 entities by applying @[Predicate] to ",
         "@[Subject]."
     ), CONCAT(
-        "A @3c1 formed by applying @[Predicate] to @[Subject]."
+        "A @3 formed by applying @[Predicate] to @[Subject]."
     )),
     (24, 6, 0, '', '', CONCAT(
         -- "class":"@13"
-        '{"template":{"predicate@c14":"%e1","subject":"%e2"}}'
+        '{"template":{"predicate":"%e1","subject":"%e2"}}'
     ), CONCAT(
-        "A @6c1 for creating @13c1 entities by applying @[Predicate] to ",
+        "A @6 for creating @13 entities by applying @[Predicate] to ",
         "@[Subject]."
     ), CONCAT(
-        "A @13c1 formed by applying @[Predicate] to @[Subject]."
+        "A @13 formed by applying @[Predicate] to @[Subject]."
     )),
     (25, 6, 0, '', '', CONCAT(
         -- "class":"@4"
-        '{"template":{"relation@c5":"%e1","object":"%e2"}}'
+        '{"template":{"relation":"%e1","object":"%e2"}}'
     ), CONCAT(
-        "A @6c1 for creating @4c1 entities by applying @[Relation] to ",
+        "A @6 for creating @4 entities by applying @[Relation] to ",
         "@[Object]."
     ), CONCAT(
-        "A @4c1 formed by applying @[Relation] to @[Object]."
+        "A @4 formed by applying @[Relation] to @[Object]."
     )),
     (26, 6, 0, '', '', CONCAT(
         -- "class":"@14"
-        '{"template":{"relation@c15":"%e1","object":"%e2"}}'
+        '{"template":{"relation":"%e1","object":"%e2"}}'
     ), CONCAT(
-        "A @6c1 for creating @14c1 entities by applying @[Relation] to ",
+        "A @6 for creating @14 entities by applying @[Relation] to ",
         "@[Object]."
     ), CONCAT(
-        "A @14c1 formed by applying @[Relation] to @[Object]."
+        "A @14 formed by applying @[Relation] to @[Object]."
     )),
     (27, 6, 0, '', '', CONCAT(
         -- "class":"@5"
         '{"template":{"noun (pl.)":"%s",',
-        '"subject class@c1":"%e1","object class@c1":"%e2",',
+        '"subject class":"%e1","object class":"%e2",',
         '"predicate":"is an instance of the %s of @[Object]",',
         '"statement":"@[Subject] is an instance of the %s of @[Object]",',
-        '"scale type@c12":"@21"}}'
+        '"scale type":"@21"}}'
     ), CONCAT(
-        "A @6c1 that can be used to create factual one-to-many @5c1 entities ",
+        "A @6 that can be used to create factual one-to-many @5 entities ",
         "from (plural) nouns, scored on the @21 in terms of whether they are ",
         "instances of the @[Noun (pl.)] of @[Object].\n",
         "@[Noun (pl.)] should be a plural (compound) noun."
     ), CONCAT(
-        "A one-to-many @5c1 formed from a (plural) noun, stating that ",
+        "A one-to-many @5 formed from a (plural) noun, stating that ",
         "@[Subject] is an instance of the @[Noun (pl.)] of @[Object], scored ",
         "on the @21."
     )),
