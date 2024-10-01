@@ -9,12 +9,9 @@ DROP PROCEDURE selectRecordedInputsMaxID;
 
 -- TODO: Make proc to query for users who has rated a stmt / scale.
 
-DROP PROCEDURE selectEntityMainData;
+DROP PROCEDURE selectEntity;
 DROP PROCEDURE selectEntityFromSecKey;
-DROP PROCEDURE selectEntityDescription;
-DROP PROCEDURE selectEntityInstanceDescription;
-DROP PROCEDURE selectEntityRefText;
-DROP PROCEDURE selectEntityOtherProps;
+DROP PROCEDURE selectDataString;
 
 -- DROP PROCEDURE selectEntityPropStruct;
 DROP PROCEDURE selectEntityData;
@@ -143,20 +140,18 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectEntityMainData (
+CREATE PROCEDURE selectEntity (
     IN entID BIGINT UNSIGNED
 )
 BEGIN
     SELECT
-        class_id AS classID,
-        template_id AS tmplID,
-        template_entity_input AS entInput,
-        template_list_input AS listInput,
-        template_string_input AS strInput,
-        main_props AS mainProps,
-        LENGTH(other_props) AS otherPropsLen
-    FROM Entities
-    WHERE id = entID;
+        Entities.class_id AS classID,
+        Entities.desc_hashes AS descHashes,
+        DataStrings.data_str AS attrs,
+        Entities.data_hash AS dataHash
+    FROM Entities INNER JOIN DataStrings
+    ON Entities.attrs_hash = DataStrings.data_hash
+    WHERE Entities.id = entID;
 END //
 DELIMITER ;
 
@@ -165,72 +160,41 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectEntityFromSecKey (
     IN classID BIGINT UNSIGNED,
-    IN tmplID BIGINT UNSIGNED,
-    IN entInput VARCHAR(209),
-    IN listInput VARCHAR(209),
-    IN strInput VARCHAR(255),
-    IN dataHash VARCHAR(56)
+    IN descHashes VARCHAR(576),
+    IN attrsHash VARCHAR(64),
+    IN dataHash VARCHAR(64)
 )
 BEGIN
     SELECT id AS entID
     FROM Entities
     WHERE (
         class_id = classID AND
-        template_id = tmplID AND
-        data_hash = dataHash AND
-        template_entity_input = entInput AND
-        template_list_input = listInput AND
-        template_string_input = strInput
+        desc_hashes = descHashes AND
+        attrs_hash = attrsHash AND
+        data_hash = dataHash
     );
 END //
 DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectEntityInstanceDescription (
-    IN entID BIGINT UNSIGNED
+CREATE PROCEDURE selectDataString (
+    IN dataHash CHAR(64),
+    IN maxLen INT UNSIGNED,
+    IN startPos INT UNSIGNED
 )
 BEGIN
-    SELECT inst_desc AS instDesc
-    FROM Entities
-    WHERE id = entID;
+    SET startPos = startPos + 1;
+    SELECT (
+        CASE WHEN maxLen = 0 THEN SUBSTRING(data_str, startPos)
+        ELSE SUBSTRING(data_str, startPos, startPos + maxLen)
+        END
+    ) AS dataStr
+    FROM DataStrings
+    WHERE data_hash = dataHash;
 END //
 DELIMITER ;
 
-
-DELIMITER //
-CREATE PROCEDURE selectEntityRefText (
-    IN entID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT ref_text AS refText
-    FROM Entities
-    WHERE id = entID;
-END //
-DELIMITER ;
-
-DELIMITER //
-CREATE PROCEDURE selectEntityDescription (
-    IN entID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT own_desc AS ownDesc
-    FROM Entities
-    WHERE id = entID;
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE selectEntityOtherProps (
-    IN entID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT other_props AS otherProps
-    FROM Entities
-    WHERE id = entID;
-END //
-DELIMITER ;
 
 
 

@@ -4,6 +4,8 @@ SELECT "Input procedures";
 DROP PROCEDURE insertOrUpdateRating;
 
 DROP PROCEDURE insertOrFindEntity;
+DROP PROCEDURE insertOrFindDataString;
+
 
 
 
@@ -122,43 +124,26 @@ DELIMITER ;
 
 
 
+
+
+
 DELIMITER //
 CREATE PROCEDURE insertOrFindEntity (
     IN userID BIGINT UNSIGNED,
     IN classID BIGINT UNSIGNED,
-    IN tmplID BIGINT UNSIGNED,
-    IN tmplEntInputs VARCHAR(209),
-    IN tmplStrInputs VARCHAR(255),
-    IN ownStruct TEXT(1000),
-    IN dataInput LONGBLOB
+    IN descHashes VARCHAR(576),
+    IN attrsHash VARCHAR(64),
+    IN dataHash VARCHAR(64),
+    IN recordCreator TINYINT 
 )
 BEGIN
-    DECLARE outID BIGINT UNSIGNED;
-    DECLARE exitCode TINYINT;
-    DECLARE ownStructHash VARCHAR(56) DEFAULT CASE
-        WHEN ownStruct = "" OR ownStruct IS NULL THEN ""
-        ELSE SHA2(ownStruct, 224)
-    END;
-    DECLARE dataInputHash VARCHAR(56) DEFAULT CASE
-        WHEN dataInput = "" OR dataInput IS NULL THEN ""
-        ELSE SHA2(dataInput, 224)
-    END;
-
-    IF (ownStruct = "") THEN
-        SET ownStruct = NULL;
-    END IF;
-    IF (dataInput = "") THEN
-        SET dataInput = NULL;
-    END IF;
+    DECLARE outID, exitCode BIGINT UNSIGNED;
 
     INSERT IGNORE INTO Entities (
-        class_id, template_id, template_entity_inputs, template_string_inputs,
-        own_prop_struct, own_prop_struct_hash, data_input, data_input_hash,
-        creator_id
+        class_id, desc_hashes, attrs_hash, data_hash, creator_id
     )
     VALUES (
-        classID, tmplID, tmplEntInputs, tmplStrInputs,
-        ownStruct, ownStructHash, dataInput, dataInputHash, userID
+        classID, descHashes, attrsHash, dataHash, IF(recordCreator, userID, 0)
     );
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
@@ -168,16 +153,34 @@ BEGIN
         SELECT id INTO outID
         FROM Entities
         WHERE (
-            template_id = tmplID AND
-            template_entity_inputs = tmplEntInputs AND
-            own_prop_struct_hash = ownStructHash AND
-            data_input_hash = dataInputHash
+            class_id = classID AND
+            desc_hashes = descHashes AND
+            attrs_hash = attrsHash AND
+            data_hash = dataHash
         );
     END IF;
 
     SELECT outID, exitCode;
 END //
 DELIMITER ;
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertOrFindDataString (
+    IN dataStr LONGBLOB
+)
+BEGIN
+    INSERT IGNORE INTO DataStrings (data_str)
+    VALUES (dataStr);
+
+    SELECT 0 AS exitCode;
+END //
+DELIMITER ;
+
+
 
 
 

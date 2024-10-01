@@ -10,6 +10,7 @@ DROP TABLE RecordedInputs;
 DROP TABLE IndexedEntities;
 
 /* Entities */
+DROP TABLE DataStrings;
 DROP TABLE Entities;
 
 /* Users and Bots */
@@ -198,7 +199,7 @@ CREATE TABLE IndexedEntities (
 
 CREATE TABLE DataStrings (
     -- Entity ID.
-    data_hash VARCHAR(56) PRIMARY KEY DEFAULT (SHA2(data_str, 224)),
+    data_hash CHAR(64) PRIMARY KEY DEFAULT (SHA2(data_str, 256)),
 
     data_str LONGBLOB
     -- (Size restrictions on this BLOB can be implemented in the control layer,
@@ -219,23 +220,19 @@ CREATE TABLE Entities (
     class_id BIGINT UNSIGNED NOT NULL,
     CHECK (class_id != 0),
 
-    -- Hash of attributes, which is JSON object containing the specific
-    -- attributes of this entity.
-    attr_hash VARCHAR(56) NOT NULL DEFAULT "",
-
     -- Description hashes: A ""-separated list of CHAR(56)-long strings that
     -- SHA2 hashes of the descriptions of the entity. 
-    desc_hashes VARCHAR(600) NOT NULL DEFAULT "", -- (Can be resized.)
+    desc_hashes VARCHAR(576) NOT NULL DEFAULT "", -- (Can be resized.)
+
+    -- Hash of attributes, which is JSON object containing the specific
+    -- attributes of this entity.
+    attrs_hash VARCHAR(64) NOT NULL DEFAULT "",
 
     -- Hash of text or binary data. 
-    data_hash VARCHAR(56) NOT NULL DEFAULT "",
+    data_hash VARCHAR(64) NOT NULL DEFAULT "",
 
 
-    UNIQUE INDEX (
-        class_id, attr_hash,
-        desc_hashes,
-        data_hash
-    ),
+    UNIQUE INDEX (class_id, desc_hashes, attrs_hash, data_hash),
 
 
     -- ID of the creator, i.e. the user who uploaded this entity.
@@ -249,23 +246,20 @@ CREATE TABLE Entities (
 /* Some initial inserts */
 
 INSERT INTO Entities (
-    id, class_id, template_id, template_entity_input, template_string_input,
-    main_props, own_desc, inst_desc
+    id, class_id, desc_hashes, attrs_hash, data_hash
 )
 VALUES
-    (1, 1, 0, '', '', CONCAT(
-        '{"title":"class"}'
-    ), CONCAT(
+    (1, 1, SHA2(CONCAT(
         "A class of all 'class' entities, including this entity itself."
-    ), NULL),
-    (2, 1, 0, '', '', CONCAT(
-        '{"title":"entity"}'
-    ), CONCAT(
+    ), 256), SHA2(CONCAT(
+        '{"title":"class"}'
+    ), 256), ""),
+    (1, 1, SHA2(CONCAT(
         "A class of all entities, including this entity itself."
-    ), NULL),
-    (3, 1, 0, '', '', CONCAT(
-        '{"title":"statement"}'
-    ), CONCAT(
+    ), 256), SHA2(CONCAT(
+        '{"title":"entity"}'
+    ), 256), ""),
+    (1, 1, SHA2(CONCAT(
         "A class of all 'statement' entities, which can be scored by the ",
         "users in order to express their opinions and beliefs. ",
         "A statement can for instance be '<Movie> is funny,' which might ",
@@ -283,18 +277,18 @@ VALUES
         "And unless otherwise specified (by the @13c1 subclass), statements ",
         "Always talk about the thing that the entity represents, and not the ",
         "representation itself."
-    ), NULL),
-    (4, 1, 0, '', '', CONCAT(
-        '{"title":"predicate"}'
-    ), CONCAT(
+    ), 256), SHA2(CONCAT(
+        '{"title":"statement"}'
+    ), 256), ""),
+    (1, 1, SHA2(CONCAT(
         "A class of all 'predicate' entities, which can be combined with a ",
         "another 'subject' entity in order to form a @3c1 entity. ",
         "Predicates must not require any specification other than said ",
         "subject entity in order to form a well-formed @3c1 entity."
-    ), NULL),
-    (5, 1, 0, '', '', CONCAT(
-        '{"title":"relation"}'
-    ), CONCAT(
+    ), 256), SHA2(CONCAT(
+        '{"title":"predicate"}'
+    ), 256), ""),
+    (1, 1, SHA2(CONCAT(
         "A class of all 'relation' entities, which can be combined with a ",
         "another 'object' entity in order to form a @4c1 entity. ",
         "Relations must not require any specification other than said ",
@@ -302,7 +296,14 @@ VALUES
         "Note that since predicates also takes a subject in order to form a ",
         "@3c1 entity, this means that relations are essentially binary ",
         "functions that returns a statement."
-    ), NULL),
+    ), 256), SHA2(CONCAT(
+        '{"title":"relation"}'
+    ), 256), ""),
+    (1, 1, SHA2(CONCAT(
+        
+    ), 256), SHA2(CONCAT(
+        
+    ), 256), ""),
     (6, 1, 0, '', '', CONCAT(
         '{"title":"template"}'
     ), CONCAT(
