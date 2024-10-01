@@ -97,46 +97,23 @@ switch ($reqType) {
         break;
     /* Entity queries */
     case "ent":
-        $sql = "CALL selectEntityMainData (?)";
+        $sql = "CALL selectEntity (?)";
         $paramNameArr = array("id");
         $typeArr = array("id");
-        // output: [[
-        //   classID, tmplID, entInput, listInput, strInput,
-        //   mainProps, otherPropsLen
-        // ]].
+        // output: [[def]].
+        break;
+    case "entSub":
+        $sql = "CALL selectEntitySubstring (?, ?, ?)";
+        $paramNameArr = array("id", "m", "s");
+        $typeArr = array("id", "uint", "uint");
+        // output: [[def]].
         break;
     case "entSK":
-        $sql = "CALL selectEntityFromSecKey (?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("c", "t", "e", "l", "s", "h");
-        $paramNameArr = array("id", "id", "id_list", "list_list", "str", "str");
+        $sql = "CALL selectEntityFromSecKey (?)";
+        $paramNameArr = array("h");
+        $paramNameArr = array("hash");
         // output: [[entID]].
         break;
-    case "entRefText":
-        $sql = "CALL selectEntityRefText (?)";
-        $paramNameArr = array("id");
-        $paramNameArr = array("id");
-        // output: [[refText]].
-    case "entDesc":
-        $sql = "CALL selectEntityDescription (?)";
-        $paramNameArr = array("id");
-        $paramNameArr = array("id");
-        // output: [[ownDesc]].
-    case "entInstDesc":
-        $sql = "CALL selectEntityInstanceDescription (?)";
-        $paramNameArr = array("id");
-        $paramNameArr = array("id");
-        // output: [[instDesc]].
-    case "entOtherProps":
-        $sql = "CALL selectEntityOtherProps (?)";
-        $paramNameArr = array("id");
-        $paramNameArr = array("id");
-        // output: [[otherProps]].
-    // case "entOPS":
-    //     $sql = "CALL selectEntityPropStruct (?, ?, ?)";
-    //     $paramNameArr = array("id", "l", "s");
-    //     $paramNameArr = array("id", "uint", "uint");
-    //     // output: [[ownStruct]].
-    /* Other queries */
     case "creator":
         $sql = "CALL selectCreator (?)";
         $paramNameArr = array("id");

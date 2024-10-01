@@ -118,6 +118,12 @@ class InputValidator {
                     );
                 }
                 break;
+            case "hash":
+                $pattern = "/^[0-9a-f]{64}$/";
+                if (preg_match($pattern, $paramVal)) {
+                    echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
+                }
+                break;
             case "id_list":
                 $pattern = "/^((this|[1-9][0-9]*)(,(this|[1-9][0-9]*))*)?$/";
                 $len = strlen($paramVal);

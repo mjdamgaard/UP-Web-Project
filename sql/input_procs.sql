@@ -4,7 +4,6 @@ SELECT "Input procedures";
 DROP PROCEDURE insertOrUpdateRating;
 
 DROP PROCEDURE insertOrFindEntity;
-DROP PROCEDURE insertOrFindDataString;
 
 
 
@@ -130,20 +129,17 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindEntity (
     IN userID BIGINT UNSIGNED,
-    IN classID BIGINT UNSIGNED,
-    IN descHashes VARCHAR(576),
-    IN attrsHash VARCHAR(64),
-    IN dataHash VARCHAR(64),
+    IN def TEXT,
     IN recordCreator TINYINT 
 )
 BEGIN
     DECLARE outID, exitCode BIGINT UNSIGNED;
 
     INSERT IGNORE INTO Entities (
-        class_id, desc_hashes, attrs_hash, data_hash, creator_id
+        def_str, creator_id
     )
     VALUES (
-        classID, descHashes, attrsHash, dataHash, IF(recordCreator, userID, 0)
+        def, IF(recordCreator, userID, 0)
     );
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
@@ -152,12 +148,7 @@ BEGIN
         SET exitCode = 1; -- find.
         SELECT id INTO outID
         FROM Entities
-        WHERE (
-            class_id = classID AND
-            desc_hashes = descHashes AND
-            attrs_hash = attrsHash AND
-            data_hash = dataHash
-        );
+        WHERE def_hash = SHA2(def_str, 256);
     END IF;
 
     SELECT outID, exitCode;
@@ -165,20 +156,6 @@ END //
 DELIMITER ;
 
 
-
-
-
-DELIMITER //
-CREATE PROCEDURE insertOrFindDataString (
-    IN dataStr LONGBLOB
-)
-BEGIN
-    INSERT IGNORE INTO DataStrings (data_str)
-    VALUES (dataStr);
-
-    SELECT 0 AS exitCode;
-END //
-DELIMITER ;
 
 
 

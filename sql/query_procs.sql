@@ -10,8 +10,8 @@ DROP PROCEDURE selectRecordedInputsMaxID;
 -- TODO: Make proc to query for users who has rated a stmt / scale.
 
 DROP PROCEDURE selectEntity;
+DROP PROCEDURE selectEntitySubstring;
 DROP PROCEDURE selectEntityFromSecKey;
-DROP PROCEDURE selectDataString;
 
 -- DROP PROCEDURE selectEntityPropStruct;
 DROP PROCEDURE selectEntityData;
@@ -144,14 +144,25 @@ CREATE PROCEDURE selectEntity (
     IN entID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT
-        Entities.class_id AS classID,
-        Entities.desc_hashes AS descHashes,
-        DataStrings.data_str AS attrs,
-        Entities.data_hash AS dataHash
-    FROM Entities INNER JOIN DataStrings
-    ON Entities.attrs_hash = DataStrings.data_hash
-    WHERE Entities.id = entID;
+    SELECT def_str AS def
+    FROM Entities
+    WHERE id = entID;
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectEntitySubstring (
+    IN entID BIGINT UNSIGNED,
+    IN maxLen INT UNSIGNED,
+    IN startPos INT UNSIGNED
+)
+BEGIN
+    SET startPos = startPos + 1;
+    SELECT SUBSTRING(def_str, startPos, startPos + maxLen) AS str
+    FROM Entities
+    WHERE id = entID;
 END //
 DELIMITER ;
 
@@ -159,41 +170,15 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectEntityFromSecKey (
-    IN classID BIGINT UNSIGNED,
-    IN descHashes VARCHAR(576),
-    IN attrsHash VARCHAR(64),
-    IN dataHash VARCHAR(64)
+    IN defHash CHAR(64)
 )
 BEGIN
     SELECT id AS entID
     FROM Entities
-    WHERE (
-        class_id = classID AND
-        desc_hashes = descHashes AND
-        attrs_hash = attrsHash AND
-        data_hash = dataHash
-    );
+    WHERE def_hash = defHash;
 END //
 DELIMITER ;
 
-
-DELIMITER //
-CREATE PROCEDURE selectDataString (
-    IN dataHash CHAR(64),
-    IN maxLen INT UNSIGNED,
-    IN startPos INT UNSIGNED
-)
-BEGIN
-    SET startPos = startPos + 1;
-    SELECT (
-        CASE WHEN maxLen = 0 THEN SUBSTRING(data_str, startPos)
-        ELSE SUBSTRING(data_str, startPos, startPos + maxLen)
-        END
-    ) AS dataStr
-    FROM DataStrings
-    WHERE data_hash = dataHash;
-END //
-DELIMITER ;
 
 
 
