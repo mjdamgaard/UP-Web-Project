@@ -201,17 +201,7 @@ CREATE TABLE Entities (
     -- Entity ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- The ID of the user who uploaded the entity.
-    creator_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    -- A key that is used to reference the entity, together with the creator
-    -- ID.
-    ent_key VARCHAR(255) NOT NULL, -- (Can be resized.)
-
-    -- The 'entity address' (entAddr).
-    UNIQUE INDEX (creator_id, ent_key)
-
-    -- A JSON value (string or object) that defines this entity.
+    -- A JSON value (string or object, or array) that defines the entity. 
     def_str TEXT NOT NULL, -- (Can be resized.)
     def_hash CHAR(64) NOT NULL DEFAULT (
         SHA2(def_str, 256)
@@ -220,6 +210,11 @@ CREATE TABLE Entities (
     UNIQUE INDEX (def_hash),
 
 
+    -- ID of the creator, i.e. the user who uploaded this entity.
+    creator_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    -- (A majority of entities will have a creator.)
+
+    UNIQUE INDEX (creator_id, id)
 );
 
 
