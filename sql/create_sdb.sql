@@ -256,15 +256,15 @@ VALUES
         "<flags><flag>optional</flag></flags>",
         "<p>...",
         "</p>",
-        '"',
+        '"'
     )),
     (2, CONCAT(
         '{"classes":["@this"],"documentation":["@1"],"title":"class"}'
     )),
     (3, CONCAT(
         '"',
-        "A class of all entities (including itself).\n"
-        '"',
+        "A class of all entities (including itself).\n",
+        '"'
     )),
     (4, CONCAT(
         '{"classes":["@2"],"descriptions":["@3"],"title":"entity"}'
