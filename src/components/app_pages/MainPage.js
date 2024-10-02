@@ -99,7 +99,7 @@ const COLUMN_LIST_CONTAINER_SELECTOR = ".column-container";
 const COLUMN_POSTERIOR_SELECTOR = ".app-column-wrapper";
 
 
-export const MainPage = (props) => {
+export const MainPage = (props) => {console.log({foo:"bar"});
   const [{
     colKeyArr,
     specStore,

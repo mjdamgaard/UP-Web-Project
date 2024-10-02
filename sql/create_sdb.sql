@@ -225,16 +225,51 @@ INSERT INTO Entities (
 )
 VALUES
     (1, CONCAT(
-        '{"classes":["@1"],"descriptions":["@2"],"title":"class"}'
+        '"',
+        "<h1><class>class</class></h1>",
+        "<h2>Description</h2>",
+        "<p>A class of all class entities (including itself). ",
+        "Classes both serve as a broad way of categorizing entities, ",
+        "and they are also used to define the meaning of their instances, ",
+        "as their <attr>documentation</attr> will be shown on the info page ",
+        "of each of their instances.",
+        "</p>",
+        "<p>As an example, this documentation of the <class>class</class> ",
+        "entity will be shown on the info page of all class entities, just ",
+        "above the documentation of the general <class>entity</class> class.",
+        "</p>",
+        "<p>The <attr>documentation</attr> of a class should include a ",
+        "section of 'special attributes,' if it defines a new attribute ",
+        "or redefines an attribute of a superclass (opposite of 'subclass'). ",
+        "As an example, since the <class>class</class> class introduces an ",
+        "optional <attr>superclass</attr> attribute and expands on the ",
+        "<attr>documentation</attr> attribute, the following 'special ",
+        "attributes' section will include a description of both these ",
+        "attributes.",
+        "</p>",
+        "<h2>Special attributes</h2>",
+        "<h3><attr>documentation</attr> (mandatory)</h3>",
+        "<p>",
+        "</p>",
+        "<h3><attr>superclass</attr> (optional)</h3>",
+        "Instances of this class should have the following attributes:\n",
+        "<attr>classes</attr>: An",
+        "attribute where @this is the first element of an array. ",
+        "They should also have <attr>title</attr>, as well as an array of ",
+        "<attr>descriptions</attr>, where each description, like this one, ",
+        "describes ",
+        '"',
     )),
     (2, CONCAT(
-        '"A class of all \'class\' entities, including this entity itself."'
+        '{"classes":["@this"],"documentation":["@1"],"title":"class"}'
     )),
     (3, CONCAT(
-        '{"classes":["@1"],"descriptions":["@4"],"title":"entity"}'
+        '"',
+        "A class of all entities (including itself).\n"
+        '"',
     )),
     (4, CONCAT(
-        '"A class of all entities, including this entity itself."'
+        '{"classes":["@2"],"descriptions":["@3"],"title":"entity"}'
     )),
     (NULL, '"exAmpLe of A noT very usefuL enTiTy"');
     -- (1, 1, SHA2(CONCAT(

@@ -186,9 +186,20 @@ class InputValidator {
                 }
                 break;
             case "json":
+                // Never mind about this, I don't wish to not have
+                // 'constructor' as a possible attribute:
+                // $jsObjProtoPropsPattern =
+                //     '/[^\\]"(' .
+                //         '__defineGetter__|__defineSetter__|__lookupGetter__|' .
+                //         '__lookupSetter__|__proto__|hasOwnProperty|' .
+                //         'isPrototypeOf|propertyIsEnumerable|toLocaleString|' .
+                //         'toString|valueOf|constructor|' . 
+                //         '<get __proto__\\(\\)>|<set __proto__\\(\\)>' .
+                //     ')":/';
                 if (
                     strlen($paramVal) > 65535 ||
-                    !json_validate($paramVal)
+                    !json_validate($paramVal) // ||
+                    // preg_match($jsObjProtoPropsPattern, $paramVal)
                 ) {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, "JSON");
                 }
