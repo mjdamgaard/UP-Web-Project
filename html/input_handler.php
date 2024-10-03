@@ -70,8 +70,13 @@ switch ($reqType) {
         break;
     case "ent":
         $sql = "CALL insertOrFindEntity (?, ?, ?)";
-        $paramNameArr = array("u", "d");
-        $typeArr = array("id", "text", "tint");
+        $paramNameArr = array("u", "d", "k");
+        $typeArr = array("id", "text", "str");
+        break;
+    case "map":
+        $sql = "CALL mapEntKey (?, ?, ?)";
+        $paramNameArr = array("u", "k", "id");
+        $typeArr = array("id", "str", "id");
         break;
     default:
         echoBadErrorJSONAndExit("Unrecognized request type");

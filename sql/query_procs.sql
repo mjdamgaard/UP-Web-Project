@@ -9,9 +9,9 @@ DROP PROCEDURE selectRecordedInputsMaxID;
 
 -- TODO: Make proc to query for users who has rated a stmt / scale.
 
-DROP PROCEDURE selectEntity;
-DROP PROCEDURE selectEntitySubstring;
-DROP PROCEDURE selectEntityFromSecKey;
+DROP PROCEDURE selectEntityDefFromID;
+DROP PROCEDURE selectEntityDefFromHash;
+DROP PROCEDURE selectEntityDefFromAddr;
 
 -- DROP PROCEDURE selectEntityPropStruct;
 DROP PROCEDURE selectEntityData;
@@ -140,27 +140,20 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectEntity (
-    IN entID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT def_str AS def
-    FROM Entities
-    WHERE id = entID;
-END //
-DELIMITER ;
-
-
-
-DELIMITER //
-CREATE PROCEDURE selectEntitySubstring (
+CREATE PROCEDURE selectEntityDefFromID (
     IN entID BIGINT UNSIGNED,
     IN maxLen INT UNSIGNED,
     IN startPos INT UNSIGNED
 )
 BEGIN
     SET startPos = startPos + 1;
-    SELECT SUBSTRING(def_str, startPos, startPos + maxLen) AS str
+    SELECT 
+        (
+            CASE WHEN maxLen = 0 THEN SUBSTRING(def_str, startPos)
+            ELSE SUBSTRING(def_str, startPos, startPos + maxLen)
+            END
+        ) AS defStr,
+        LENGTH(def_str) AS len
     FROM Entities
     WHERE id = entID;
 END //
@@ -169,16 +162,56 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectEntityFromSecKey (
-    IN defHash CHAR(64)
+CREATE PROCEDURE selectEntityDefFromHash (
+    IN defHash CHAR(64),
+    IN maxLen INT UNSIGNED,
+    IN startPos INT UNSIGNED
 )
 BEGIN
-    SELECT id AS entID
+    SET startPos = startPos + 1;
+    SELECT 
+        (
+            CASE WHEN maxLen = 0 THEN SUBSTRING(def_str, startPos)
+            ELSE SUBSTRING(def_str, startPos, startPos + maxLen)
+            END
+        ) AS defStr,
+        LENGTH(def_str) AS len
     FROM Entities
     WHERE def_hash = defHash;
 END //
 DELIMITER ;
 
+
+
+DELIMITER //
+CREATE PROCEDURE selectEntityDefFromAddr (
+    IN userID BIGINT UNSIGNED,
+    IN entKey VARCHAR(255),
+    IN maxLen INT UNSIGNED,
+    IN startPos INT UNSIGNED
+)
+BEGIN
+    DECLARE entID BIGINT UNSIGNED;
+
+    SELECT ent_id INTO entID
+    FROM EntityKeys
+    WHERE (
+        user_id = userID AND
+        ent_key = entKey
+    );
+
+    SET startPos = startPos + 1;
+    SELECT 
+        (
+            CASE WHEN maxLen = 0 THEN SUBSTRING(def_str, startPos)
+            ELSE SUBSTRING(def_str, startPos, startPos + maxLen)
+            END
+        ) AS defStr,
+        LENGTH(def_str) AS len
+    FROM Entities
+    WHERE id = entID;
+END //
+DELIMITER ;
 
 
 

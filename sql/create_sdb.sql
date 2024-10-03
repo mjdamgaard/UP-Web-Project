@@ -10,6 +10,7 @@ DROP TABLE RecordedInputs;
 DROP TABLE IndexedEntities;
 
 /* Entities */
+DROP TABLE EntityKeys;
 DROP TABLE Entities;
 
 /* Users and Bots */
@@ -197,11 +198,28 @@ CREATE TABLE IndexedEntities (
 
 /* Entities */
 
+CREATE TABLE EntityKeys (
+    -- User that maps the entKey to the entID
+    user_id BIGINT UNSIGNED NOT NULL,
+
+    ent_key VARCHAR(255) NOT NULL,
+
+    ent_id BIGINT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (
+        user_id,
+        ent_key 
+    ),
+
+    UNIQUE INDEX (user_id, ent_id)
+);
+
+
 CREATE TABLE Entities (
     -- Entity ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- A JSON value (string or object, or array) that defines the entity. 
+    -- A JSON value (string or object, or array) that defines the entity.
     def_str TEXT NOT NULL, -- (Can be resized.)
     def_hash CHAR(64) NOT NULL DEFAULT (
         SHA2(def_str, 256)

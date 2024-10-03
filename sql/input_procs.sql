@@ -4,6 +4,7 @@ SELECT "Input procedures";
 DROP PROCEDURE insertOrUpdateRating;
 
 DROP PROCEDURE insertOrFindEntity;
+DROP PROCEDURE mapEntKey;
 -- DROP PROCEDURE reserveEntityID;
 -- DROP PROCEDURE insertReservedEntity;
 
@@ -132,7 +133,8 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindEntity (
     IN userID BIGINT UNSIGNED,
-    IN def TEXT
+    IN defStr TEXT,
+    IN entKey VARCHAR(255)
 )
 BEGIN
     DECLARE outID, exitCode BIGINT UNSIGNED;
@@ -141,7 +143,7 @@ BEGIN
         def_str, creator_id
     )
     VALUES (
-        def, userID
+        defStr, userID
     );
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
@@ -150,7 +152,27 @@ BEGIN
         SET exitCode = 1; -- find.
         SELECT id INTO outID
         FROM Entities
-        WHERE def_hash = SHA2(def, 256);
+        WHERE def_hash = SHA2(defStr, 256);
+    END IF;
+
+    -- -- Regardless of whether the entity was inserted or found, map the entKey
+    -- -- to outID for the user if one does not already exist.
+    -- INSERT IGNORE INTO EntityKeys (
+    --     user_id, ent_key, ent_id
+    -- )
+    -- VALUES (
+    --     userID, entKey, outID
+    -- );
+
+    -- If the entity was inserted rather than found, map the entKey to outID
+    -- for the user if an entry for that entKey does not already exist.
+    IF (exitCode = 0) THEN
+        INSERT IGNORE INTO EntityKeys (
+            user_id, ent_key, ent_id
+        )
+        VALUES (
+            userID, entKey, outID
+        );
     END IF;
 
     SELECT outID, exitCode;
@@ -159,6 +181,38 @@ DELIMITER ;
 
 
 
+
+DELIMITER //
+CREATE PROCEDURE mapEntKey (
+    IN userID BIGINT UNSIGNED,
+    IN entKey VARCHAR(255),
+    IN entID BIGINT UNSIGNED
+)
+BEGIN
+    DECLARE outID, exitCode BIGINT UNSIGNED;
+
+    INSERT IGNORE INTO EntityKeys (
+        user_id, ent_key, ent_id
+    )
+    VALUES (
+        userID, entKey, outID
+    );
+    IF (mysql_affected_rows() > 0) THEN
+        SET exitCode = 0; -- success.
+        SET outID = entID;
+    ELSE
+        SET exitCode = 1; -- entKey already exists.
+        SELECT id INTO outID
+        FROM EntityKeys
+        WHERE (
+            user_id = userID AND
+            ent_key = entKey
+        );
+    END IF;
+
+    SELECT outID, exitCode;
+END //
+DELIMITER ;
 
 
 

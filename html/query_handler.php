@@ -96,23 +96,35 @@ switch ($reqType) {
         // output: [[maxID]].
         break;
     /* Entity queries */
-    case "ent":
-        $sql = "CALL selectEntity (?)";
-        $paramNameArr = array("id");
-        $typeArr = array("id");
-        // output: [[def]].
-        break;
-    case "entSub":
-        $sql = "CALL selectEntitySubstring (?, ?, ?)";
+    case "entDefFromID":
+        $sql = "CALL selectEntityDefFromID (?, ?, ?)";
         $paramNameArr = array("id", "m", "s");
         $typeArr = array("id", "uint", "uint");
-        // output: [[def]].
+        // output: [[defStr, len]].
         break;
-    case "entSK":
-        $sql = "CALL selectEntityFromSecKey (?)";
-        $paramNameArr = array("h");
-        $paramNameArr = array("hash");
-        // output: [[entID]].
+    case "entDefFromHash":
+        $sql = "CALL selectEntityDefFromHash (?, ?, ?)";
+        $paramNameArr = array("h", "m", "s");
+        $typeArr = array("hash", "uint", "uint");
+        // output: [[defStr, len]].
+        break;
+    case "entDefFromAddr":
+        $sql = "CALL selectEntityDefFromAddr (?, ?, ?, ?)";
+        $paramNameArr = array("u", "k", "m", "s");
+        $typeArr = array("id", "str", "uint", "uint");
+        // output: [[defStr, len]].
+        break;
+    case "entAddrFromID":
+        $sql = "CALL selectEntityAddrFromID (?, ?, ?, ?)";
+        $paramNameArr = array("u", "id", "m", "s");
+        $typeArr = array("id", "id", "uint", "uint");
+        // output: [[defStr, len]].
+        break;
+    case "entAddrFromHash":
+        $sql = "CALL selectEntityAddrFromHash (?, ?, ?, ?)";
+        $paramNameArr = array("u", "h", "m", "s");
+        $typeArr = array("id", "hash", "uint", "uint");
+        // output: [[defStr, len]].
         break;
     case "creator":
         $sql = "CALL selectCreator (?)";
