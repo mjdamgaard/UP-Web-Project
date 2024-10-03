@@ -23,7 +23,7 @@ export class EntityInserter {
   }
 
 
-  insertEntities(entArr) {
+  insertEntities(entArr, callback) {
     const defStrCompOrOtherRegex =
         /[^\\@]+|\\.|@[1-9][0-9]*|@"([^"\\]|\\.)*"|.+/g;
     const defStrCompRegex =
@@ -53,6 +53,7 @@ export class EntityInserter {
         defStrComponents: defStrComponents,
         dependencies: dependencies,
         isInserted: false,
+        hasReturned: false,
       };
     });
 
@@ -67,13 +68,13 @@ export class EntityInserter {
       parsedEnt.dependencies = parsedEnt.dependencies
         .filter(entKey => this.getID(entKey));
       if (parsedEnt.dependencies.length === 0) {
-        this.#insertParsedEntity(parsedEnt, parsedEntArr);
+        this.#insertParsedEntity(parsedEnt, parsedEntArr, callback);
       }
     });
   }
 
 
-  #insertParsedEntity(parsedEnt, parsedEntArr) {
+  #insertParsedEntity(parsedEnt, parsedEntArr, finalCallback) {
     parsedEnt.isInserted = true;
     const entKeyRefRegex = /^@"([^"\\]|\\.)*"$/g;
     const subbedComponents = parsedEnt.defStrComponents.map(comp => {
@@ -88,9 +89,19 @@ export class EntityInserter {
     });
     const entDef = subbedComponents.join();
     this.#insertEntity(entDef, parsedEnt.entKey, () => {
-      // After the insertion, remove all dependencies === entKey from
-      // parsedEntArr, and if this removes a last dependency, insert the given
-      // parsedEnt.
+      // After the insertion, first set hasReturned, and if all inserts has
+      // returned, call the final callback. 
+      parsedEnt.hasReturned = true;
+      let isDone = parsedEntArr.reduce(
+        (acc, val) => acc && val.hasReturned,
+        true
+      );
+      if (isDone) {
+        finalCallback();
+        return;
+      }
+      // Else remove all dependencies === entKey from parsedEntArr, and if
+      // this removes a last dependency, insert the given parsedEnt.
       let entKey = parsedEnt.entKey;
       parsedEntArr.forEach(val => {
         if (val.isInserted) {
@@ -99,7 +110,7 @@ export class EntityInserter {
         val.dependencies = val.dependencies
           .filter(dependency => (dependency !== entKey));
         if (val.dependencies.length === 0) {
-          this.#insertParsedEntity(val, parsedEntArr)
+          this.#insertParsedEntity(val, parsedEntArr, finalCallback)
         }
       });
     });
