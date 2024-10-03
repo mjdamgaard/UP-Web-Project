@@ -40,7 +40,8 @@ $conn = DBConnector::getConnectionOrDie(
 
 // authenticate the user by verifying the session ID.
 $sesID = hex2bin($sesIDHex);
-$res = Authenticator::verifySessionID($conn, $userID, $sesID);
+// $res = Authenticator::verifySessionID($conn, $userID, $sesID);
+// TODO: Comment in again.
 
 
 
@@ -69,7 +70,7 @@ switch ($reqType) {
         break;
     case "ent":
         $sql = "CALL insertOrFindEntity (?, ?, ?)";
-        $paramNameArr = array("u", "d", "r");
+        $paramNameArr = array("u", "d");
         $typeArr = array("id", "text", "tint");
         break;
     default:

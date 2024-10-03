@@ -15,39 +15,157 @@ export const ENTITIES_CATEGORY_ID = "10";
 
 export class EntityInserter {
 
-  constructor(accountManager, entKeyIDStore) {
+  constructor(accountManager, parentInserter) {
     // Public properties:
     this.accountManager = accountManager;
-    this.entKeyIDStore = entKeyIDStore ?? {
-      // "@s.<JSON string>" is reserved for string/simple entities.
-      // "@p.<JSON string>" is reserved for property entities.
-      // "@pt.<JSON string>" is reserved for property tag entities.
+    this.parentInserter = parentInserter;
+    this.entKeyIDStore = {};
+  }
+
+
+  #insertEntity(entDef, entKey, callback) {
+    callback ??= (entID, entKey) => {};
+
+    let reqData = {
+      req: "ent",
+      ses: this.accountManager.sesIDHex,
+      u: this.accountManager.inputUserID,
+      d: entDef.parentID,
     };
+    DBRequestManager.input(reqData, (result) => {
+      if (entKey) {
+        this.entKeyIDStore[entKey] = result.outID;
+      }
+      callback(result.outID, entKey);
+    });
   }
 
-  #getIDOrThrow(entKey) {
-    let id = this.entKeyIDStore[entKey];
-    if (typeof id !== "string") {
-      throw "EntityInserter: missing key: " + entKey;
-    }
-    return id;
+
+  insertEntities(entArr) {
+    const defStrCompOrOtherRegex =
+        /[^\\@]+|\\.|@[1-9][0-9]*|@"([^"\\]|\\.)*"|.+/g;
+    const defStrCompRegex =
+      /^([^\\@]+|\\.|@[1-9][0-9]*|@"([^"\\]|\\.)*")$/g;
+    const entKeyRefRegex =
+                                /^@"([^"\\]|\\.)*"$/g;
+    // Construct an array of {entKey, defStrComponents, dependencies} for all
+    // entities ({entKey, entDef}) in entArr.
+    const parsedEntArr = entArr.map(ent => {
+      const {entKey, entDef} = ent;
+      const defStrComponents = entDef.match(defStrCompOrOtherRegex);
+      // Check that all components matches a valid strCompRegex.
+      const lastComp = defStrComponents[defStrComponents.length - 1];
+      if (!defStrCompRegex.test(lastComp)) {
+        debugger;throw (
+          "EntityInserter: ill-formed def from: '" + lastComp + "'"
+        );
+      }
+      // Then find all the dependencies (entKeys).
+      const dependencies = defStrComponents
+        .filter(str => entKeyRefRegex.test(entKeyRefRegex))
+        .map(entKeyRef => entKeyRef.slice(2, -1));
+      // And finally return {entKey, defStrComponents, dependencies,
+      // isInserted}
+      return {
+        entKey: entKey,
+        defStrComponents: defStrComponents,
+        dependencies: dependencies,
+        isInserted: false,
+      };
+    });
+
+    // Now we simply loop through each one, and inserts it only if its
+    // dependencies all exist in entKeyIDStore. Whenever a matching ID is
+    // found in that store, we remove the dependency so that we don't have to
+    // check it several times. Then whenever an insertion returns an outID for
+    // an entity with an entKey, we loop through all parsedEntArr again and
+    // remove the dependencies of the given entKey. And whenever this leaves
+    // a parsedEnt with no dependencies left, we also insert it.
+    parsedEntArr.forEach(parsedEnt => {
+      parsedEnt.dependencies = parsedEnt.dependencies
+        .filter(entKey => this.getID(entKey));
+      if (parsedEnt.dependencies.length === 0) {
+        this.#insertParsedEntity(parsedEnt, () => {
+          // After the insertion, remove all dependencies === entKey from
+          // parsedEntArr, and if this turns
+          parsedEntArr.forEach(parsedEnt => {
+            parsedEnt.dependencies = parsedEnt.dependencies
+              .filter(dependency => (dependency !== entKey));
+          });
+        });
+      }
+    });
   }
 
+
+  #insertParsedEntity(parsedEnt, callback) {
+    const entKeyRefRegex = /^@"([^"\\]|\\.)*"$/g;
+    const subbedComponents = parsedEnt.defStrComponents.map(comp => {
+      if (entKeyRefRegex.test(comp)) {
+        let entKey = comp.slice(2, -1);
+        let entID = this.getIDOrThrow(entKey);
+        return "@" + entID;
+      }
+      else {
+        return comp;
+      }
+    });
+    const def = subbedComponents.join();
+    this.#insertEntity(entDef, parsedEnt.entKey, callback);
+  }
+
+
+
+
+
+
+  insertEntityWithSubstitutions(entDef, entKey, callback) {
+    subbedEntDef = getSubstitutedString(entDef);
+    this.#insertEntity(subbedEntDef, entKey, callback);
+  }
 
   getSubstitutedString(str) {
     let entKeyRegEx =
-      /(^|[^\\@])(\\\\)*@([a-z]+\.)?"([^"\\]|\\.)*"/g;
+      /(^|[^\\@])(\\\\)*@"([^"\\]|\\.)*"/g;
     let illFormedEntKeyRegEx =
-      /(^|[^\\@])(\\\\)*@([a-z]+\.)?"([^"\\]|\\.)*$/g;
+      /(^|[^\\@])(\\\\)*@"([^"\\]|\\.)*$/g;
     if (illFormedEntKeyRegEx.test(str)) {
-      throw "EntityInserter: ill-formed entKey in: '" + str + "'";
+      debugger;throw "EntityInserter: ill-formed entKey in: '" + str + "'";
     }
 
     // Replace all entKey references with entID references instead.
     return str.replaceAll(entKeyRegEx, val => {
-      let [leadingChars, entKey] = val.match(/^(\\\\)*@|[^@].*$/g);
-      return leadingChars + this.#getIDOrThrow(entKey);
+      let [leadingChars] = val.match(/^.*@/g);
+      return leadingChars + this.getIDOrThrow(entKey);
     });
+  }
+
+
+  getIDOrThrow(entKey) {
+    let id = this.entKeyIDStore[entKey];
+    if (id) {
+      return id;
+    }
+    else {
+      if (this.parentInserter) {
+        return this.parentInserter.getIDOrThrow(entKey);
+      }
+      else throw "EntityInserter: missing key: " + entKey;
+    }
+  }
+
+
+  getID(entKey) {
+    let id = this.entKeyIDStore[entKey];
+    if (id) {
+      return id;
+    }
+    else {
+      if (this.parentInserter) {
+        return this.parentInserter.getID(entKey);
+      }
+      else return false;
+    }
   }
 
 
@@ -282,11 +400,11 @@ export class EntityInserter {
     }
     // // If propKey is an entKey reference, get the ID (or throw).
     // else if (/^@[^0-9]/.test(propKey)) {
-    //   propID = this.#getIDOrThrow(propKey);
+    //   propID = this.getIDOrThrow(propKey);
     // }
     // Else if propKey is a string, get the ID from the @p.<string> entKey.
     else {
-      propID = this.#getIDOrThrow("@p." + propKey);
+      propID = this.getIDOrThrow("@p." + propKey);
     }
 
     // Construct the propTag entKey.
@@ -338,10 +456,10 @@ export class EntityInserter {
             // Or if propKey is a string, get the ID from the @p.<string>
             // entKey.
             else {
-              propID = this.#getIDOrThrow("@p." + propKey);
+              propID = this.getIDOrThrow("@p." + propKey);
             }
             // Get the stored propTag ID.
-            let propTagID = this.#getIDOrThrow("@pt." + entID + "." + propID);
+            let propTagID = this.getIDOrThrow("@pt." + entID + "." + propID);
             
             // Get all non-list values.
             let valSet = props[propKey];
@@ -354,11 +472,11 @@ export class EntityInserter {
               }
               // Or if val is a string, get the ID from the @s.<string> entKey.
               else if (typeof val === "string") {
-                valID = this.#getIDOrThrow("@s." + val);
+                valID = this.getIDOrThrow("@s." + val);
               }
               // Or if it is an array, get the ID from the @l.<json> entKey.
               else if (Array.isArray(val)) {
-                valID = this.#getIDOrThrow("@l." + JSON.stringify(val));
+                valID = this.getIDOrThrow("@l." + JSON.stringify(val));
               }
               else {
                 throw "insertAndUprateProps(): value has unexpected type";
