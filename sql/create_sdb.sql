@@ -10,7 +10,7 @@ DROP TABLE RecordedInputs;
 DROP TABLE IndexedEntities;
 
 /* Entities */
-DROP TABLE EntityKeys;
+DROP TABLE EntityIDIntervals;
 DROP TABLE Entities;
 
 /* Users and Bots */
@@ -196,23 +196,32 @@ CREATE TABLE IndexedEntities (
 
 
 
+
 /* Entities */
 
-CREATE TABLE EntityKeys (
-    -- User that maps the entKey to the entID
-    user_id BIGINT UNSIGNED NOT NULL,
+CREATE TABLE EntityIDIntervals (
+    -- The start of the interval. The end is just before the next start_id in
+    -- this table, which just hold a NULL user_id when it is not reserved yet,
+    -- and is currently the last one of the table.
+    start_id BIGINT UNSIGNED PRIMARY KEY,
 
-    ent_key VARCHAR(255) NOT NULL,
+    -- The user who reserved the interval. Is NULL only for the last entry,
+    -- which marks the end of the table. 
+    user_id BIGINT UNSIGNED,
 
-    ent_id BIGINT UNSIGNED NOT NULL,
+    -- A key to guard against unintentionally repeated reservations/insertions.
+    -- If a user uses the same key twice, we simply return the same interval,
+    -- rather than reserving a new one. 
+    interval_key BIGINT UNSIGNED,
 
-    PRIMARY KEY (
-        user_id,
-        ent_key 
-    ),
+    UNIQUE INDEX (user_id, interval_key),
 
-    UNIQUE INDEX (user_id, ent_id)
+    -- A boolean of whether the creator is done editing all the entities of
+    -- the interval.
+    is_finalized BOOL DEFAULT 0
+
 );
+
 
 
 CREATE TABLE Entities (
@@ -228,11 +237,11 @@ CREATE TABLE Entities (
     UNIQUE INDEX (def_hash),
 
 
-    -- ID of the creator, i.e. the user who uploaded this entity.
-    creator_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
-    -- (A majority of entities will have a creator.)
+    -- creator_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    -- The creator can instead be obtained from EntityIDIntervals.
 
-    UNIQUE INDEX (creator_id, id)
+    -- A boolean of whether the creator is done editing the entity.
+    is_finalized BOOL DEFAULT 0
 );
 
 

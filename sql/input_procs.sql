@@ -182,101 +182,68 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE mapEntKey (
-    IN userID BIGINT UNSIGNED,
-    IN entKey VARCHAR(255),
-    IN entID BIGINT UNSIGNED
-)
-BEGIN
-    DECLARE outID, exitCode BIGINT UNSIGNED;
 
-    INSERT IGNORE INTO EntityKeys (
-        user_id, ent_key, ent_id
+DELIMITER //
+CREATE PROCEDURE reserveEntityID ()
+BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+    DECLARE code BINARY(32) DEFAULT RANDOM_BYTES(32);
+    DECLARE codeHash CHAR(64) DEFAULT SHA2(code, 256);
+
+    INSERT IGNORE INTO Entities (
+        def_str, def_hash
     )
     VALUES (
-        userID, entKey, outID
+        codeHash, codeHash
     );
-    IF (mysql_affected_rows() > 0) THEN
-        SET exitCode = 0; -- success.
-        SET outID = entID;
-    ELSE
-        SET exitCode = 1; -- entKey already exists.
-        SELECT id INTO outID
-        FROM EntityKeys
-        WHERE (
-            user_id = userID AND
-            ent_key = entKey
-        );
-    END IF;
+    SELECT LAST_INSERT_ID() INTO outID;
 
-    SELECT outID, exitCode;
+    SELECT outID, code;
 END //
 DELIMITER ;
 
 
 
--- DELIMITER //
--- CREATE PROCEDURE reserveEntityID ()
--- BEGIN
---     DECLARE outID BIGINT UNSIGNED;
---     DECLARE code BINARY(32) DEFAULT RANDOM_BYTES(32);
---     DECLARE codeHash CHAR(64) DEFAULT SHA2(code, 256);
+DELIMITER //
+CREATE PROCEDURE insertReservedEntity (
+    IN userID BIGINT UNSIGNED,
+    IN code BINARY(32),
+    IN defStr TEXT,
+    IN recordCreator TINYINT
+)
+BEGIN
+    DECLARE outID, exitCode BIGINT UNSIGNED;
+    DECLARE codeHash CHAR(64) DEFAULT SHA2(code, 256);
 
---     INSERT IGNORE INTO Entities (
---         def_str, def_hash
---     )
---     VALUES (
---         codeHash, codeHash
---     );
---     SELECT LAST_INSERT_ID() INTO outID;
+    SELECT id INTO outID
+    FROM Entities
+    WHERE (
+        def_str  = codeHash AND
+        def_hash = codeHash
+    );
 
---     SELECT outID, code;
--- END //
--- DELIMITER ;
+    IF (outID IS NULL) THEN
+        SET exitCode = 2; -- no reservation.
+    ELSE
+        UPDATE IGNORE Entities
+        SET
+            def_str = defStr,
+            creator_id = IF(recordCreator, userID, 0)
+        WHERE id = outID;
 
+        IF (mysql_affected_rows() > 0) THEN
+            SET exitCode = 0; -- insert.
+        ELSE
+            SET exitCode = 1; -- find.
+            SELECT id INTO outID
+            FROM Entities
+            WHERE def_hash = SHA2(def, 256);
+        END IF;
+    END IF;
 
-
--- DELIMITER //
--- CREATE PROCEDURE insertReservedEntity (
---     IN userID BIGINT UNSIGNED,
---     IN code BINARY(32),
---     IN def TEXT,
---     IN recordCreator TINYINT
--- )
--- BEGIN
---     DECLARE outID, exitCode BIGINT UNSIGNED;
---     DECLARE codeHash CHAR(64) DEFAULT SHA2(code, 256);
-
---     SELECT id INTO outID
---     FROM Entities
---     WHERE (
---         def_str  = codeHash AND
---         def_hash = codeHash
---     );
-
---     IF (outID IS NULL) THEN
---         SET exitCode = 2; -- no reservation.
---     ELSE
---         UPDATE IGNORE Entities
---         SET
---             def_str = def,
---             creator_id = IF(recordCreator, userID, 0)
---         WHERE id = outID;
-
---         IF (mysql_affected_rows() > 0) THEN
---             SET exitCode = 0; -- insert.
---         ELSE
---             SET exitCode = 1; -- find.
---             SELECT id INTO outID
---             FROM Entities
---             WHERE def_hash = SHA2(def, 256);
---         END IF;
---     END IF;
-
---     SELECT outID, exitCode;
--- END //
--- DELIMITER ;
+    SELECT outID, exitCode;
+END //
+DELIMITER ;
 
 
 
