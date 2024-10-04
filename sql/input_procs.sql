@@ -186,25 +186,44 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE reserveEntityIDInterval (
+CREATE PROCEDURE reserveNewEntityIDInterval (
+    IN userID BIGINT UNSIGNED,
     IN intervalKey BIGINT UNSIGNED,
-    IN len SMALLINT UNSIGNED,
+    IN len TINYINT UNSIGNED
 )
-BEGIN
-    DECLARE outID BIGINT UNSIGNED;
-    DECLARE code BINARY(32) DEFAULT RANDOM_BYTES(32);
-    DECLARE codeHash CHAR(64) DEFAULT SHA2(code, 256);
+BEGIN proc: BEGIN
+    DECLARE outID, exitCode, lastHeadID, lastLen BIGINT UNSIGNED;
+    IF (len < 1) THEN
+        SET exitCode = 1; -- len < 1.
+        SELECT outID, exitCode;
+        LEAVE proc;
+    END IF;
 
-    INSERT IGNORE INTO Entities (
-        def_str, def_hash
+    -- Simply select the last allocated interval (works for now) in order to
+    -- get the next interval head at lastHeadID + interval_length.
+    SELECT head_id, interval_length INTO lastHeadID, lastLen
+    FROM EntityIDIntervals
+    ORDER BY head_id DESC
+    LIMIT 1;
+
+    SET outID = lastHeadID + lastLen;
+    INSERT INTO EntityIDIntervals (
+        head_id,
+        interval_length,
+        parent_head_id,
+        user_id,
+        interval_key
     )
     VALUES (
-        codeHash, codeHash
+        outID,
+        len,
+        1,
+        userID,
+        intervalKey
     );
-    SELECT LAST_INSERT_ID() INTO outID;
 
     SELECT outID, code;
-END //
+END proc; END //
 DELIMITER ;
 
 

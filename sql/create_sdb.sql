@@ -203,13 +203,13 @@ CREATE TABLE EntityIDIntervals (
     -- The start of the interval. The end is just before the next head_id in
     -- this table, which just hold a NULL user_id when it is not reserved yet,
     -- and is currently the last one of the table.
-    head_id BIGINT UNSIGNED PRIMARY KEY,
+    head_id INT UNSIGNED NOT NULL,
 
     -- The length of the interval
-    interval_length BIGINT UNSIGNED NOT NULL,
+    interval_length INT UNSIGNED NOT NULL,
 
     -- The start of the parent interval, in which this interval is nested.
-    parent_head_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    parent_head_id BIGINT UNSIGNED NOT NULL,
 
     -- The user who reserved the interval.
     user_id BIGINT UNSIGNED NOT NULL,
@@ -217,13 +217,36 @@ CREATE TABLE EntityIDIntervals (
     -- A key to guard against unintentionally repeated reservations/insertions.
     -- If a user uses the same key twice, we simply return the same interval,
     -- rather than reserving a new one. 
-    interval_key BIGINT UNSIGNED,
+    interval_key BIGINT UNSIGNED NOT NULL,
 
     UNIQUE INDEX (user_id, interval_key),
 
     -- A boolean of whether the 
     is_finalized BOOL NOT NULL DEFAULT 0
 );
+INSERT INTO AllocatedIDIntervals (
+    head_id,
+    interval_length,
+    parent_head_id,
+    user_id,
+    interval_key
+)
+VALUES (
+    1,
+    100000000000000,
+    -- (Initially we just allocate a very large part of the space, and make
+    -- sure to only fill up from bottom to top, not expecting overflow. Then
+    -- once we start making the database distributed, we can resize this
+    -- interval and reimplement the reserveInterval() procedure.)
+    0,
+    1,
+    0
+
+);
+-- We assume that the administrator user of this database node is represented
+-- by the entity with id = 1.
+
+
 
 
 CREATE TABLE Entities (
@@ -231,7 +254,7 @@ CREATE TABLE Entities (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     -- A JSON value (string or object, or array) that defines the entity.
-    def_str TEXT, -- Is null only when deleted. (Can be resized.)
+    def_str TEXT NOT NULL, -- (Can be resized.)
     def_hash CHAR(64) NOT NULL DEFAULT (
         SHA2(def_str, 256)
     ),
