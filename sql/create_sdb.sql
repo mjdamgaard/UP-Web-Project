@@ -200,14 +200,19 @@ CREATE TABLE IndexedEntities (
 /* Entities */
 
 CREATE TABLE EntityIDIntervals (
-    -- The start of the interval. The end is just before the next start_id in
+    -- The start of the interval. The end is just before the next head_id in
     -- this table, which just hold a NULL user_id when it is not reserved yet,
     -- and is currently the last one of the table.
-    start_id BIGINT UNSIGNED PRIMARY KEY,
+    head_id BIGINT UNSIGNED PRIMARY KEY,
 
-    -- The user who reserved the interval. Is NULL only for the last entry,
-    -- which marks the end of the table. 
-    user_id BIGINT UNSIGNED,
+    -- The length of the interval
+    interval_length BIGINT UNSIGNED NOT NULL,
+
+    -- The start of the parent interval, in which this interval is nested.
+    parent_head_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+    -- The user who reserved the interval.
+    user_id BIGINT UNSIGNED NOT NULL,
 
     -- A key to guard against unintentionally repeated reservations/insertions.
     -- If a user uses the same key twice, we simply return the same interval,
@@ -216,12 +221,9 @@ CREATE TABLE EntityIDIntervals (
 
     UNIQUE INDEX (user_id, interval_key),
 
-    -- A boolean of whether the creator is done editing all the entities of
-    -- the interval.
-    is_finalized BOOL DEFAULT 0
-
+    -- A boolean of whether the 
+    is_finalized BOOL NOT NULL DEFAULT 0
 );
-
 
 
 CREATE TABLE Entities (
@@ -229,19 +231,15 @@ CREATE TABLE Entities (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     -- A JSON value (string or object, or array) that defines the entity.
-    def_str TEXT NOT NULL, -- (Can be resized.)
+    def_str TEXT, -- Is null only when deleted. (Can be resized.)
     def_hash CHAR(64) NOT NULL DEFAULT (
         SHA2(def_str, 256)
     ),
 
-    UNIQUE INDEX (def_hash),
-
+    UNIQUE INDEX (def_hash)
 
     -- creator_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
     -- The creator can instead be obtained from EntityIDIntervals.
-
-    -- A boolean of whether the creator is done editing the entity.
-    is_finalized BOOL DEFAULT 0
 );
 
 

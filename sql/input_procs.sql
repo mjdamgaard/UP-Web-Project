@@ -131,23 +131,45 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE insertOrFindEntity (
+CREATE PROCEDURE insertOrFindEntityInInterval (
     IN userID BIGINT UNSIGNED,
     IN defStr TEXT,
-    IN entKey VARCHAR(255)
+    IN entID BIGINT UNSIGNED
 )
-BEGIN
-    DECLARE outID, exitCode BIGINT UNSIGNED;
+BEGIN proc: BEGIN
+    DECLARE outID BIGINT UNSIGNED DEFAULT entID;
+    DECLARE exitCode, idOwner BIGINT UNSIGNED;
 
-    INSERT IGNORE INTO Entities (
-        def_str, creator_id
-    )
-    VALUES (
-        defStr, userID
-    );
+    -- Select user who has claim to the ID.
+    SELECT user_id INTO idOwner
+    FROM EntityIDIntervals
+    WHERE head_id <= entID
+    ORDER BY head_id DESC
+    LIMIT 1;
+
+    -- Check if the user has reserved the interval.
+    IF (userID != idOwner) THEN
+        SET exitCode = 3; -- user has not reserved this entID.
+        SELECT outID, exitCode;
+        LEAVE proc;
+    END IF;
+
+    -- If there is a finalized entity already with id = entID, make no changes.
+    IF (SELECT is_finalized FROM Entities WHERE id = entID) THEN
+    IF (userID != idOwner) THEN
+        SET exitCode = 2; -- entity has already been finalized.
+        SELECT outID, exitCode;
+        LEAVE proc;
+    END IF;
+
+    -- Else we insert-ignore the new entity, and if there is no clash with the
+    -- unique def_hash, we return entID as the outID. If there is a clash, we
+    -- return exitCode = 1, and return the ID of the clashing, identical entity.
+    INSERT IGNORE INTO Entities (def_str)
+    VALUES (defStr);
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
-        SELECT LAST_INSERT_ID() INTO outID;
+        -- SELECT LAST_INSERT_ID() INTO outID;
     ELSE
         SET exitCode = 1; -- find.
         SELECT id INTO outID
@@ -155,28 +177,8 @@ BEGIN
         WHERE def_hash = SHA2(defStr, 256);
     END IF;
 
-    -- -- Regardless of whether the entity was inserted or found, map the entKey
-    -- -- to outID for the user if one does not already exist.
-    -- INSERT IGNORE INTO EntityKeys (
-    --     user_id, ent_key, ent_id
-    -- )
-    -- VALUES (
-    --     userID, entKey, outID
-    -- );
-
-    -- If the entity was inserted rather than found, map the entKey to outID
-    -- for the user if an entry for that entKey does not already exist.
-    IF (exitCode = 0) THEN
-        INSERT IGNORE INTO EntityKeys (
-            user_id, ent_key, ent_id
-        )
-        VALUES (
-            userID, entKey, outID
-        );
-    END IF;
-
     SELECT outID, exitCode;
-END //
+END proc; END //
 DELIMITER ;
 
 
@@ -184,7 +186,10 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE reserveEntityID ()
+CREATE PROCEDURE reserveEntityIDInterval (
+    IN intervalKey BIGINT UNSIGNED,
+    IN len SMALLINT UNSIGNED,
+)
 BEGIN
     DECLARE outID BIGINT UNSIGNED;
     DECLARE code BINARY(32) DEFAULT RANDOM_BYTES(32);
