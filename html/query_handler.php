@@ -118,31 +118,31 @@ switch ($reqType) {
         $sql = "CALL selectEntity (?, ?, ?)";
         $paramNameArr = array("id", "m", "s");
         $typeArr = array("id", "uint", "uint");
-        // output: [[defStr, len, creatorID]].
+        // output: [[def, len, creatorID]].
         break;
     case "entAsUser":
         $sql = "CALL selectEntityAsUser (?, ?, ?, ?)";
         $paramNameArr = array("u", "id", "m", "s");
         $typeArr = array("id", "id", "uint", "uint");
-        // output: [[defStr, len, creatorID, isPublic]].
+        // output: [[def, len, creatorID, isPublic]].
         break;
     case "entFromHash":
         $sql = "CALL selectEntityFromHash (?, ?, ?, ?)";
         $paramNameArr = array("h", "c", "m", "s");
         $typeArr = array("hash", "id", "uint", "uint");
-        // output: [[defStr, len]].
+        // output: [[def, len]].
         break;
     case "creations":
         $sql = "CALL selectCreations (?, ?, ?, ?)";
         $paramNameArr = array("c", "m", "o", "a");
         $typeArr = array("id", "uint", "uint", "bool");
-        // output: [[entID]].
+        // output: [[entID], ...].
         break;
     case "prvCreations":
         $sql = "CALL selectPrivateCreations (?, ?, ?, ?)";
         $paramNameArr = array("u", "m", "o", "a");
         $typeArr = array("id", "uint", "uint", "bool");
-        // output: [[entID]].
+        // output: [[entID], ...].
         break;
     /* User data */
     // case "user":
