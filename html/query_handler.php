@@ -37,14 +37,32 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 
 /* Handling of the qeury request */
 
-// get request type.
+// Get request type.
 if (!isset($_POST["req"])) {
     echoBadErrorJSONAndExit("No request type specified");
 }
 $reqType = $_POST["req"];
 
 
-// match $reqType against any of the following single-query request types
+
+// Some requests are protected.
+if ($reqType === "entAsUser" || $reqType === "prvCreations") {
+    // Get the userID and the session ID.
+    $paramNameArr = array("u", "ses");
+    $typeArr = array("id", "session_id_hex");
+    $paramValArr = InputGetter::getParams($paramNameArr);
+    InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
+    $userID = $paramValArr[0];
+    $sesIDHex = $paramValArr[1];
+    // // Then authenticate the user.
+    // $sesID = hex2bin($sesIDHex);
+    // Authenticator::verifySessionID($conn, $userID, $sesID);
+    // TODO: Comment in again.
+}
+
+
+
+// Match $reqType against any of the following single-query request types
 // and execute the corresponding query if a match is found.
 $sql = "";
 $paramNameArr = "";
@@ -63,7 +81,7 @@ switch ($reqType) {
             "id", "id",
             "rat", "rat",
             "uint", "uint",
-            "tint"
+            "bool"
         );
         // output: [[ratVal, instID], ...].
         break;
@@ -96,60 +114,49 @@ switch ($reqType) {
         // output: [[maxID]].
         break;
     /* Entity queries */
-    case "entDefFromID":
-        $sql = "CALL selectEntityDefFromID (?, ?, ?)";
+    case "ent":
+        $sql = "CALL selectEntity (?, ?, ?)";
         $paramNameArr = array("id", "m", "s");
         $typeArr = array("id", "uint", "uint");
-        // output: [[defStr, len]].
+        // output: [[defStr, len, creatorID]].
         break;
-    case "entDefFromHash":
-        $sql = "CALL selectEntityDefFromHash (?, ?, ?)";
-        $paramNameArr = array("h", "m", "s");
-        $typeArr = array("hash", "uint", "uint");
-        // output: [[defStr, len]].
-        break;
-    case "entDefFromAddr":
-        $sql = "CALL selectEntityDefFromAddr (?, ?, ?, ?)";
-        $paramNameArr = array("u", "k", "m", "s");
-        $typeArr = array("id", "str", "uint", "uint");
-        // output: [[defStr, len]].
-        break;
-    case "entAddrFromID":
-        $sql = "CALL selectEntityAddrFromID (?, ?, ?, ?)";
+    case "entAsUser":
+        $sql = "CALL selectEntityAsUser (?, ?, ?, ?)";
         $paramNameArr = array("u", "id", "m", "s");
         $typeArr = array("id", "id", "uint", "uint");
-        // output: [[defStr, len]].
+        // output: [[defStr, len, creatorID, isPublic]].
         break;
-    case "entAddrFromHash":
-        $sql = "CALL selectEntityAddrFromHash (?, ?, ?, ?)";
-        $paramNameArr = array("u", "h", "m", "s");
-        $typeArr = array("id", "hash", "uint", "uint");
+    case "entFromHash":
+        $sql = "CALL selectEntityFromHash (?, ?, ?, ?)";
+        $paramNameArr = array("h", "c", "m", "s");
+        $typeArr = array("hash", "id", "uint", "uint");
         // output: [[defStr, len]].
-        break;
-    case "creator":
-        $sql = "CALL selectCreator (?)";
-        $paramNameArr = array("id");
-        $typeArr = array("id");
-        // output: [[userID]].
         break;
     case "creations":
         $sql = "CALL selectCreations (?, ?, ?, ?)";
-        $paramNameArr = array("u", "n", "o", "a");
-        $typeArr = array("id", "uint", "uint", "tint");
-        // output: [[entID], ...].
+        $paramNameArr = array("c", "m", "o", "a");
+        $typeArr = array("id", "uint", "uint", "bool");
+        // output: [[entID]].
         break;
-    case "user":
-        $sql = "CALL selectUserInfo (?)";
-        $paramNameArr = array("id");
-        $typeArr = array("id");
-        // output: [[username, publicKeys]].
+    case "prvCreations":
+        $sql = "CALL selectPrivateCreations (?, ?, ?, ?)";
+        $paramNameArr = array("u", "m", "o", "a");
+        $typeArr = array("id", "uint", "uint", "bool");
+        // output: [[entID]].
         break;
-    case "bot":
-        $sql = "CALL selectBotInfo (?)";
-        $paramNameArr = array("id");
-        $typeArr = array("id");
-        // output: [[botName, botDescription]].
-        break;
+    /* User data */
+    // case "user":
+    //     $sql = "CALL selectUserInfo (?)";
+    //     $paramNameArr = array("id");
+    //     $typeArr = array("id");
+    //     // output: [[username, publicKeys]].
+    //     break;
+    // case "bot":
+    //     $sql = "CALL selectBotInfo (?)";
+    //     $paramNameArr = array("id");
+    //     $typeArr = array("id");
+    //     // output: [[botName, botDescription]].
+    //     break;
     // case "userID":
     //     $sql = "CALL selectUserEntityID (?)";
     //     $paramNameArr = array("n");
@@ -162,56 +169,49 @@ switch ($reqType) {
     //     $typeArr = array("str");
     //     // output: [[entID]].
     //     break;
-    case "ancBotData1e2d":
-        $sql = "CALL selectAncillaryBotData1e2d (?, ?)";
-        $paramNameArr = array("n", "e");
-        $typeArr = array("str", "id");
-        // output: [[data1, data2]].
-        break;
-    case "ancBotData1e4d":
-        $sql = "CALL selectAncillaryBotData1e4d (?, ?)";
-        $paramNameArr = array("n", "e");
-        $typeArr = array("str", "id");
-        // output: [[data1, data2, data3, data4]].
-        break;
+    // case "ancBotData1e2d":
+    //     $sql = "CALL selectAncillaryBotData1e2d (?, ?)";
+    //     $paramNameArr = array("n", "e");
+    //     $typeArr = array("str", "id");
+    //     // output: [[data1, data2]].
+    //     break;
+    // case "ancBotData1e4d":
+    //     $sql = "CALL selectAncillaryBotData1e4d (?, ?)";
+    //     $paramNameArr = array("n", "e");
+    //     $typeArr = array("str", "id");
+    //     // output: [[data1, data2, data3, data4]].
+    //     break;
     default:
         echoBadErrorJSONAndExit("Unrecognized request type");
 }
 
-// get inputs.
+// Get inputs.
 $paramValArr = InputGetter::getParams($paramNameArr);
-// validate inputs.
+// Validate inputs.
 InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
-// get connection.
+// Get connection.
 require $db_io_path . "sdb_config.php";
 $conn = DBConnector::getConnectionOrDie(
     DB_SERVER_NAME, DB_DATABASE_NAME, DB_USERNAME, DB_PASSWORD
 );
-// prepare input MySQLi statement.
+// Prepare input MySQLi statement.
 $stmt = $conn->prepare($sql);
-// execute query statement.
+// Execute query statement.
 DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
-// fetch the result as a numeric array.
+// Fetch the result as a numeric array.
 $res = $stmt->get_result()->fetch_all();
-// if $reqType == ent, JSON-decode the fifth output, "ownStruct", before the
+// If $reqType == ent, JSON-decode the fifth output, "ownStruct", before the
 // final full JSON-encoding. 
-if ($reqType === "ent") {
-    $mainProps = $res[0][5];
-    if ($mainProps) {
-        $res[0][5] = json_decode($mainProps, true);
-    } else if ($mainProps === "") {
-        $res[0][5] = json_decode("null", true);
-    }
-}
-else if ($reqType === "entOtherProps") {
-    $otherProps = $res[0][0];
-    if ($otherProps) {
-        $res[0][0] = json_decode($otherProps, true);
-    } else if ($otherProps === "") {
+if (substr($reqType, 0, 3) === "ent") {
+    $defStr = $res[0][0];
+    if ($defStr) {
+        $res[0][0] = json_decode($defStr, true);
+    } else if ($defStr === "") {
         $res[0][0] = json_decode("null", true);
     }
 }
-// finally echo the JSON-encoded numeric array, containing e.g. the
+
+// Finally echo the JSON-encoded numeric array, containing e.g. the
 // columns: ("ratVal", "instID") for $reqType == "set", etc., so look at
 // the comments above for what the resulting arrays will contain.
 header("Content-Type: text/json");

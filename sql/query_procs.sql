@@ -139,8 +139,13 @@ DELIMITER ;
 
 
 
+
+
+
+
+
 DELIMITER //
-CREATE PROCEDURE selectEntityDefFromID (
+CREATE PROCEDURE selectEntity (
     IN entID BIGINT UNSIGNED,
     IN maxLen INT UNSIGNED,
     IN startPos INT UNSIGNED
@@ -153,53 +158,54 @@ BEGIN
             ELSE SUBSTRING(def_str, startPos, startPos + maxLen)
             END
         ) AS defStr,
-        LENGTH(def_str) AS len
+        LENGTH(def_str) AS len,
+        creator_id AS creatorID
     FROM Entities
-    WHERE id = entID;
-END //
-DELIMITER ;
-
-
-
-DELIMITER //
-CREATE PROCEDURE selectEntityDefFromHash (
-    IN defHash CHAR(64),
-    IN maxLen INT UNSIGNED,
-    IN startPos INT UNSIGNED
-)
-BEGIN
-    SET startPos = startPos + 1;
-    SELECT 
-        (
-            CASE WHEN maxLen = 0 THEN SUBSTRING(def_str, startPos)
-            ELSE SUBSTRING(def_str, startPos, startPos + maxLen)
-            END
-        ) AS defStr,
-        LENGTH(def_str) AS len
-    FROM Entities
-    WHERE def_hash = defHash;
-END //
-DELIMITER ;
-
-
-
-DELIMITER //
-CREATE PROCEDURE selectEntityDefFromAddr (
-    IN userID BIGINT UNSIGNED,
-    IN entKey VARCHAR(255),
-    IN maxLen INT UNSIGNED,
-    IN startPos INT UNSIGNED
-)
-BEGIN
-    DECLARE entID BIGINT UNSIGNED;
-
-    SELECT ent_id INTO entID
-    FROM EntityKeys
     WHERE (
-        user_id = userID AND
-        ent_key = entKey
+        id = entID AND
+        is_public = 1
     );
+END //
+DELIMITER ;
 
+
+
+DELIMITER //
+CREATE PROCEDURE selectEntityAsUser (
+    IN userID BIGINT UNSIGNED,
+    IN entID BIGINT UNSIGNED,
+    IN maxLen INT UNSIGNED,
+    IN startPos INT UNSIGNED
+)
+BEGIN
+    SET startPos = startPos + 1;
+    SELECT 
+        (
+            CASE WHEN maxLen = 0 THEN SUBSTRING(def_str, startPos)
+            ELSE SUBSTRING(def_str, startPos, startPos + maxLen)
+            END
+        ) AS defStr,
+        LENGTH(def_str) AS len,
+        creator_id AS creatorID,
+        is_public AS isPublic
+    FROM Entities
+    WHERE (
+        id = entID AND
+        (is_public = 1 OR creator_id = userID)
+    );
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectEntityFromHash (
+    IN defHash CHAR(64),
+    IN creatorID BIGINT UNSIGNED,
+    IN maxLen INT UNSIGNED,
+    IN startPos INT UNSIGNED
+)
+BEGIN
     SET startPos = startPos + 1;
     SELECT 
         (
@@ -209,10 +215,59 @@ BEGIN
         ) AS defStr,
         LENGTH(def_str) AS len
     FROM Entities
-    WHERE id = entID;
+    WHERE (
+        is_public = 1 AND
+        def_hash = defHash AND
+        creator_id = creatorID
+    );
 END //
 DELIMITER ;
 
+
+
+DELIMITER //
+CREATE PROCEDURE selectCreations (
+    IN creatorID BIGINT UNSIGNED,
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED,
+    IN isAscOrder BOOL
+)
+BEGIN
+    SELECT id AS entID
+    FROM Entities
+    WHERE (
+        is_public = 1 AND
+        creator_id = creatorID
+    )
+    ORDER BY
+        CASE WHEN isAscOrder THEN id END ASC,
+        CASE WHEN NOT isAscOrder THEN id END DESC
+    LIMIT numOffset, maxNum;
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectPrivateCreations (
+    IN userID BIGINT UNSIGNED,
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED,
+    IN isAscOrder BOOL
+)
+BEGIN
+    SELECT id AS entID
+    FROM Entities
+    WHERE (
+        is_public = 0 AND
+        creator_id = userID
+    )
+    ORDER BY
+        CASE WHEN isAscOrder THEN id END ASC,
+        CASE WHEN NOT isAscOrder THEN id END DESC
+    LIMIT numOffset, maxNum;
+END //
+DELIMITER ;
 
 
 

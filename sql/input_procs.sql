@@ -4,9 +4,8 @@ SELECT "Input procedures";
 DROP PROCEDURE insertOrUpdateRating;
 
 DROP PROCEDURE insertOrFindEntity;
-DROP PROCEDURE mapEntKey;
--- DROP PROCEDURE reserveEntityID;
--- DROP PROCEDURE insertReservedEntity;
+DROP PROCEDURE insertOrFindAnonymousEntity;
+DROP PROCEDURE publicizeEntity;
 
 
 
@@ -131,50 +130,28 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE insertOrFindEntityInInterval (
+CREATE PROCEDURE insertOrFindEntity (
     IN userID BIGINT UNSIGNED,
     IN defStr TEXT,
-    IN entID BIGINT UNSIGNED
+    IN isPublic BOOL
 )
 BEGIN proc: BEGIN
-    DECLARE outID BIGINT UNSIGNED DEFAULT entID;
-    DECLARE exitCode, idOwner BIGINT UNSIGNED;
+    DECLARE outID, exitCode BIGINT UNSIGNED;
 
-    -- Select user who has claim to the ID.
-    SELECT user_id INTO idOwner
-    FROM EntityIDIntervals
-    WHERE head_id <= entID
-    ORDER BY head_id DESC
-    LIMIT 1;
-
-    -- Check if the user has reserved the interval.
-    IF (userID != idOwner) THEN
-        SET exitCode = 3; -- user has not reserved this entID.
-        SELECT outID, exitCode;
-        LEAVE proc;
-    END IF;
-
-    -- If there is a finalized entity already with id = entID, make no changes.
-    IF (SELECT is_finalized FROM Entities WHERE id = entID) THEN
-    IF (userID != idOwner) THEN
-        SET exitCode = 2; -- entity has already been finalized.
-        SELECT outID, exitCode;
-        LEAVE proc;
-    END IF;
-
-    -- Else we insert-ignore the new entity, and if there is no clash with the
-    -- unique def_hash, we return entID as the outID. If there is a clash, we
-    -- return exitCode = 1, and return the ID of the clashing, identical entity.
-    INSERT IGNORE INTO Entities (def_str)
-    VALUES (defStr);
+    INSERT IGNORE INTO Entities (creator_id, def_str, is_public)
+    VALUES (userID, defStr, isPublic);
     IF (mysql_affected_rows() > 0) THEN
         SET exitCode = 0; -- insert.
-        -- SELECT LAST_INSERT_ID() INTO outID;
+        SELECT LAST_INSERT_ID() INTO outID;
     ELSE
         SET exitCode = 1; -- find.
         SELECT id INTO outID
         FROM Entities
-        WHERE def_hash = SHA2(defStr, 256);
+        WHERE (
+            is_public = isPublic AND
+            def_hash = SHA2(defStr, 256) AND
+            creator_id = userID
+        );
     END IF;
 
     SELECT outID, exitCode;
@@ -183,91 +160,137 @@ DELIMITER ;
 
 
 
-
-
 DELIMITER //
-CREATE PROCEDURE reserveNewEntityIDInterval (
-    IN userID BIGINT UNSIGNED,
-    IN intervalKey BIGINT UNSIGNED,
-    IN len TINYINT UNSIGNED
+CREATE PROCEDURE insertOrFindAnonymousEntity (
+    IN defStr TEXT
 )
 BEGIN proc: BEGIN
-    DECLARE outID, exitCode, lastHeadID, lastLen BIGINT UNSIGNED;
-    IF (len < 1) THEN
-        SET exitCode = 1; -- len < 1.
-        SELECT outID, exitCode;
-        LEAVE proc;
+    DECLARE outID, exitCode BIGINT UNSIGNED;
+
+    INSERT IGNORE INTO Entities (creator_id, def_str, is_public)
+    VALUES (0, defStr, 1);
+    IF (mysql_affected_rows() > 0) THEN
+        SET exitCode = 0; -- insert.
+        SELECT LAST_INSERT_ID() INTO outID;
+    ELSE
+        SET exitCode = 1; -- find.
+        SELECT id INTO outID
+        FROM Entities
+        WHERE (
+            is_public = 1 AND
+            def_hash = SHA2(defStr, 256) AND
+            creator_id = 0
+        );
     END IF;
 
-    -- Simply select the last allocated interval (works for now) in order to
-    -- get the next interval head at lastHeadID + interval_length.
-    SELECT head_id, interval_length INTO lastHeadID, lastLen
-    FROM EntityIDIntervals
-    ORDER BY head_id DESC
-    LIMIT 1;
-
-    SET outID = lastHeadID + lastLen;
-    INSERT INTO EntityIDIntervals (
-        head_id,
-        interval_length,
-        parent_head_id,
-        user_id,
-        interval_key
-    )
-    VALUES (
-        outID,
-        len,
-        1,
-        userID,
-        intervalKey
-    );
-
-    SELECT outID, code;
+    SELECT outID, exitCode;
 END proc; END //
 DELIMITER ;
 
 
 
+
+
+
 DELIMITER //
-CREATE PROCEDURE insertReservedEntity (
+CREATE PROCEDURE publicizeEntity (
     IN userID BIGINT UNSIGNED,
-    IN code BINARY(32),
-    IN defStr TEXT,
-    IN recordCreator TINYINT
+    IN entID BIGINT UNSIGNED
 )
 BEGIN
-    DECLARE outID, exitCode BIGINT UNSIGNED;
-    DECLARE codeHash CHAR(64) DEFAULT SHA2(code, 256);
+    UPDATE Entities
+    SET is_public = 1
+    WHERE (id = entID AND creator_id = userID);
 
-    SELECT id INTO outID
-    FROM Entities
-    WHERE (
-        def_str  = codeHash AND
-        def_hash = codeHash
-    );
-
-    IF (outID IS NULL) THEN
-        SET exitCode = 2; -- no reservation.
-    ELSE
-        UPDATE IGNORE Entities
-        SET
-            def_str = defStr,
-            creator_id = IF(recordCreator, userID, 0)
-        WHERE id = outID;
-
-        IF (mysql_affected_rows() > 0) THEN
-            SET exitCode = 0; -- insert.
-        ELSE
-            SET exitCode = 1; -- find.
-            SELECT id INTO outID
-            FROM Entities
-            WHERE def_hash = SHA2(def, 256);
-        END IF;
-    END IF;
-
-    SELECT outID, exitCode;
+    SELECT entID AS outID, 0 AS exitCode;
 END //
 DELIMITER ;
+
+
+
+-- DELIMITER //
+-- CREATE PROCEDURE reserveNewEntityIDInterval (
+--     IN userID BIGINT UNSIGNED,
+--     IN intervalKey BIGINT UNSIGNED,
+--     IN len TINYINT UNSIGNED
+-- )
+-- BEGIN proc: BEGIN
+--     DECLARE outID, exitCode, lastHeadID, lastLen BIGINT UNSIGNED;
+--     IF (len < 1) THEN
+--         SET exitCode = 1; -- len < 1.
+--         SELECT outID, exitCode;
+--         LEAVE proc;
+--     END IF;
+
+--     -- Simply select the last allocated interval (works for now) in order to
+--     -- get the next interval head at lastHeadID + interval_length.
+--     SELECT head_id, interval_length INTO lastHeadID, lastLen
+--     FROM EntityIDIntervals
+--     ORDER BY head_id DESC
+--     LIMIT 1;
+
+--     SET outID = lastHeadID + lastLen;
+--     INSERT INTO EntityIDIntervals (
+--         head_id,
+--         interval_length,
+--         parent_head_id,
+--         user_id,
+--         interval_key
+--     )
+--     VALUES (
+--         outID,
+--         len,
+--         1,
+--         userID,
+--         intervalKey
+--     );
+
+--     SELECT outID, code;
+-- END proc; END //
+-- DELIMITER ;
+
+
+
+-- DELIMITER //
+-- CREATE PROCEDURE insertReservedEntity (
+--     IN userID BIGINT UNSIGNED,
+--     IN code BINARY(32),
+--     IN defStr TEXT,
+--     IN recordCreator TINYINT
+-- )
+-- BEGIN
+--     DECLARE outID, exitCode BIGINT UNSIGNED;
+--     DECLARE codeHash CHAR(64) DEFAULT SHA2(code, 256);
+
+--     SELECT id INTO outID
+--     FROM Entities
+--     WHERE (
+--         def_str  = codeHash AND
+--         def_hash = codeHash
+--     );
+
+--     IF (outID IS NULL) THEN
+--         SET exitCode = 2; -- no reservation.
+--     ELSE
+--         UPDATE IGNORE Entities
+--         SET
+--             def_str = defStr,
+--             creator_id = IF(recordCreator, userID, 0)
+--         WHERE id = outID;
+
+--         IF (mysql_affected_rows() > 0) THEN
+--             SET exitCode = 0; -- insert.
+--         ELSE
+--             SET exitCode = 1; -- find.
+--             SELECT id INTO outID
+--             FROM Entities
+--             WHERE def_hash = SHA2(def, 256);
+--         END IF;
+--     END IF;
+
+--     SELECT outID, exitCode;
+-- END //
+-- DELIMITER ;
 
 
 

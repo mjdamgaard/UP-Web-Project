@@ -24,7 +24,7 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
 
 /* Verification of the session ID  */
 
-// get the userID and the session ID.
+// Get the userID and the session ID.
 $paramNameArr = array("u", "ses");
 $typeArr = array("id", "session_id_hex");
 $paramValArr = InputGetter::getParams($paramNameArr);
@@ -32,14 +32,14 @@ InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
 $userID = $paramValArr[0];
 $sesIDHex = $paramValArr[1];
 
-// get connection to the database.
+// Get connection to the database.
 require $db_io_path . "sdb_config.php";
 $conn = DBConnector::getConnectionOrDie(
     DB_SERVER_NAME, DB_DATABASE_NAME, DB_USERNAME, DB_PASSWORD
 );
 
-// authenticate the user by verifying the session ID.
-$sesID = hex2bin($sesIDHex);
+// // Authenticate the user by verifying the session ID.
+// $sesID = hex2bin($sesIDHex);
 // $res = Authenticator::verifySessionID($conn, $userID, $sesID);
 // TODO: Comment in again.
 
@@ -48,14 +48,14 @@ $sesID = hex2bin($sesIDHex);
 
 /* Handling of the input request */
 
-// get request type.
+// Get request type.
 if (!isset($_POST["req"])) {
     echoBadErrorJSONAndExit("No request type specified");
 }
 $reqType = $_POST["req"];
 
 
-// match $reqType against any of the following single-query request types
+// Match $reqType against any of the following single-query request types
 // and execute the corresponding query if a match is found.
 $sql = "";
 $paramNameArr = "";
@@ -70,29 +70,34 @@ switch ($reqType) {
         break;
     case "ent":
         $sql = "CALL insertOrFindEntity (?, ?, ?)";
-        $paramNameArr = array("u", "d", "k");
-        $typeArr = array("id", "text", "str");
+        $paramNameArr = array("u", "d", "p");
+        $typeArr = array("id", "text", "bool");
         break;
-    case "map":
-        $sql = "CALL mapEntKey (?, ?, ?)";
-        $paramNameArr = array("u", "k", "id");
-        $typeArr = array("id", "str", "id");
+    case "anonEnt":
+        $sql = "CALL insertOrFindAnonymousEntity (?)";
+        $paramNameArr = array("d");
+        $typeArr = array("text");
+        break;
+    case "publicizeEnt":
+        $sql = "CALL publicizeEntity (?, ?)";
+        $paramNameArr = array("u", "e");
+        $typeArr = array("id", "id");
         break;
     default:
         echoBadErrorJSONAndExit("Unrecognized request type");
 }
 
-// get inputs.
+// Get inputs.
 $paramValArr = InputGetter::getParams($paramNameArr);
-// validate inputs.
+// Validate inputs.
 InputValidator::validateParams($paramValArr, $typeArr, $paramNameArr);
-// prepare input MySQLi statement.
+// Prepare input MySQLi statement.
 $stmt = $conn->prepare($sql);
-// execute statement.
+// Execute statement.
 DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
-// fetch the result as an associative array.
+// Fetch the result as an associative array.
 $res = $stmt->get_result()->fetch_assoc();
-// finally echo the JSON-encoded result array (containing outID and exitCode).
+// Finally echo the JSON-encoded result array (containing outID and exitCode).
 header("Content-Type: text/json");
 echo json_encode($res);
 

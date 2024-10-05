@@ -70,6 +70,13 @@ class InputValidator {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, "TINYINT");
                 }
                 break;
+            case "bool":
+            // case "rat":
+                $pattern = "/^[01]$/";
+                if (!preg_match($pattern, $paramVal)) {
+                    echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
+                }
+                break;
             case "utint":
             case "uchar":
             case "rat":
