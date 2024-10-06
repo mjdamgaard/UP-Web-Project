@@ -28,7 +28,7 @@ BEGIN proc: BEGIN
     -- Get or create the statement entity.
     INSERT IGNORE INTO StatementData (tag_id, obj_id)
     VALUES (tagID, objID);
-    IF (mysql_affected_rows() > 0) THEN
+    IF (ROW_COUNT() > 0) THEN
         SELECT LAST_INSERT_ID() INTO stmtDataKey;
         INSERT INTO Entities (data_type, data_key, creator_id)
         VALUES ('m', stmtDataKey, userID);
@@ -140,19 +140,19 @@ BEGIN proc: BEGIN
 
     INSERT IGNORE INTO Entities (creator_id, def_str, is_public)
     VALUES (userID, defStr, isPublic);
-    -- IF (mysql_affected_rows() > 0) THEN
-    --     SET exitCode = 0; -- insert.
-    --     SELECT LAST_INSERT_ID() INTO outID;
-    -- ELSE
-    --     SET exitCode = 1; -- find.
-    --     SELECT id INTO outID
-    --     FROM Entities
-    --     WHERE (
-    --         is_public = isPublic AND
-    --         def_hash = SHA2(defStr, 256) AND
-    --         creator_id = userID
-    --     );
-    -- END IF;
+    IF (ROW_COUNT() > 0) THEN
+        SET exitCode = 0; -- insert.
+        SELECT LAST_INSERT_ID() INTO outID;
+    ELSE
+        SET exitCode = 1; -- find.
+        SELECT id INTO outID
+        FROM Entities
+        WHERE (
+            is_public = isPublic AND
+            def_hash = SHA2(defStr, 256) AND
+            creator_id = userID
+        );
+    END IF;
 
     SELECT outID, exitCode;
 END proc; END //
@@ -169,7 +169,7 @@ BEGIN proc: BEGIN
 
     INSERT IGNORE INTO Entities (creator_id, def_str, is_public)
     VALUES (0, defStr, 1);
-    IF (mysql_affected_rows() > 0) THEN
+    IF (ROW_COUNT() > 0) THEN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO outID;
     ELSE
@@ -278,7 +278,7 @@ DELIMITER ;
 --             creator_id = IF(recordCreator, userID, 0)
 --         WHERE id = outID;
 
---         IF (mysql_affected_rows() > 0) THEN
+--         IF (ROW_COUNT() > 0) THEN
 --             SET exitCode = 0; -- insert.
 --         ELSE
 --             SET exitCode = 1; -- find.

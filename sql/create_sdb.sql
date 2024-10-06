@@ -1,29 +1,29 @@
 
 /* Ratings */
-DROP TABLE AtomicStatementScores;
-DROP TABLE PredicativeStatementScores;
-DROP TABLE RelationalStatementScores;
+-- DROP TABLE AtomicStatementScores;
+-- DROP TABLE PredicativeStatementScores;
+-- DROP TABLE RelationalStatementScores;
 
-DROP TABLE RecordedInputs;
+-- DROP TABLE RecordedInputs;
 
 /* Indexes */
-DROP TABLE IndexedEntities;
+-- DROP TABLE IndexedEntities;
 
 /* Entities */
 DROP TABLE Entities;
 
 /* Users and Bots */
-DROP TABLE Users;
-DROP TABLE AggregationBots;
+-- DROP TABLE Users;
+-- DROP TABLE AggregationBots;
 
 /* Ancillary data for aggregation bots */
-DROP TABLE AncillaryBotData1e2d;
-DROP TABLE AncillaryBotData1e4d;
+-- DROP TABLE AncillaryBotData1e2d;
+-- DROP TABLE AncillaryBotData1e4d;
 
 /* Private user data */
-DROP TABLE Private_UserData;
-DROP TABLE Private_Sessions;
-DROP TABLE Private_EMails;
+-- DROP TABLE Private_UserData;
+-- DROP TABLE Private_Sessions;
+-- DROP TABLE Private_EMails;
 
 
 

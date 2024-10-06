@@ -37,12 +37,7 @@ class Inserter {
 
 
     public function insertPublicEntities($userID, $firstNewCrID, $defArr) {
-        // Get connection to the database and prepare the MySQLi statement.
-        $conn = DBConnector::getConnectionOrDie(
-            DB_SERVER_NAME, DB_DATABASE_NAME, DB_USERNAME, DB_PASSWORD
-        );
-        $sql = "CALL insertOrFindEntity (?, ?, ?)";
-        $stmt = $conn->prepare($sql);
+        $paramValArr = array(null, null, null);
 
         // First construct all the initial defStrings.
         $defStrArr = array_map('json_encode', $defArr);
@@ -57,7 +52,6 @@ class Inserter {
             $explodePattern = "/[^@\\\\]+|(\\\\.)+|@[a-z0-9]+|./";
             $crRefPattern = "/^@cr[1-9][0-9]*$/";
             foreach ($defStrArr as $ind => $defStr) {
-    error_log("                                           defStr: " . $defStr);
                 // First explode the deStr into an array of strings that either
                 // are or are not creation references.
                 preg_match_all(
@@ -79,16 +73,28 @@ class Inserter {
                 }
                 // Then implode back the exploded defStr with the substitutions.
                 $subbedDefStr = implode($explodedDefStr);
-    error_log("                               subbedDefStr: " . $subbedDefStr);
+error_log("subbedDefStr: " . $subbedDefStr);
 
+                // Get connection to the database and prepare the MySQLi statement.
+                $conn = DBConnector::getConnectionOrDie(
+                    DB_SERVER_NAME, DB_DATABASE_NAME, DB_USERNAME, DB_PASSWORD
+                );
+                $sql = "CALL insertOrFindEntity (?, ?, ?)";
+                $stmt = $conn->prepare($sql);
+                // Execute the statement
                 $paramValArr = array($userID, $subbedDefStr, 1);
                 DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
-                $outID = $stmt->get_result()->fetch_assoc()["outID"];
+                $res = $stmt->get_result()->fetch_assoc();
+                $outID = $res["outID"];
                 $this->creationIDs[$firstNewCrID + $ind] = strval($outID);
+
+                $conn->close();
+error_log("res: " . json_encode($res));
+error_log("creationIDs: " . json_encode($this->creationIDs));
             }
         }
         
-        $conn->close();
+        // $conn->close();
     }
 
 
