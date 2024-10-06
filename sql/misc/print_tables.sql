@@ -41,13 +41,9 @@ ORDER BY id;
 
 SELECT "Entities:";
 SELECT
-    id AS entID,
-    parent_id AS parentID,
-    spec_input AS specInput,
-    prop_struct AS propStruct,
-    -- prop_struct_hash AS propStructHash,
-    data_input AS dataInput,
-    -- data_input_hash AS dataInputHash,
-    creator_id AS creator
+    id,
+    def_str,
+    creator_id,
+    is_public
 FROM Entities
 ORDER BY id;

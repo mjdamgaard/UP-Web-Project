@@ -140,19 +140,19 @@ BEGIN proc: BEGIN
 
     INSERT IGNORE INTO Entities (creator_id, def_str, is_public)
     VALUES (userID, defStr, isPublic);
-    IF (mysql_affected_rows() > 0) THEN
-        SET exitCode = 0; -- insert.
-        SELECT LAST_INSERT_ID() INTO outID;
-    ELSE
-        SET exitCode = 1; -- find.
-        SELECT id INTO outID
-        FROM Entities
-        WHERE (
-            is_public = isPublic AND
-            def_hash = SHA2(defStr, 256) AND
-            creator_id = userID
-        );
-    END IF;
+    -- IF (mysql_affected_rows() > 0) THEN
+    --     SET exitCode = 0; -- insert.
+    --     SELECT LAST_INSERT_ID() INTO outID;
+    -- ELSE
+    --     SET exitCode = 1; -- find.
+    --     SELECT id INTO outID
+    --     FROM Entities
+    --     WHERE (
+    --         is_public = isPublic AND
+    --         def_hash = SHA2(defStr, 256) AND
+    --         creator_id = userID
+    --     );
+    -- END IF;
 
     SELECT outID, exitCode;
 END proc; END //

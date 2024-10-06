@@ -283,7 +283,7 @@ CREATE TABLE Entities (
 /* Some initial inserts */
 
 INSERT INTO Entities (
-    id, def_str
+    id, def_strrrrr
 )
 VALUES
     (1, CONCAT(

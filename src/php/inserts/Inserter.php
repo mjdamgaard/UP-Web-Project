@@ -7,6 +7,7 @@ require_once $err_path . "errors.php";
 
 $db_io_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/php/db_io/";
 require_once $db_io_path . "DBConnector.php";
+require_once $db_io_path . "sdb_config.php";
 
 
 
@@ -16,7 +17,6 @@ class Inserter {
 
     public function getPublicCreations($userID) {
         // Get connection to the database and prepare the MySQLi statement.
-        require $db_io_path . "sdb_config.php";
         $conn = DBConnector::getConnectionOrDie(
             DB_SERVER_NAME, DB_DATABASE_NAME, DB_USERNAME, DB_PASSWORD
         );
@@ -26,7 +26,7 @@ class Inserter {
         // Then fetch the creations
         $paramValArr = array($userID, 100000, 0, 1);
         DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
-        $this->$creationIDs = array_map(
+        $this->creationIDs = array_map(
             function($val) {return strval($val[0]);},
             $stmt->get_result()->fetch_all()
         );
@@ -36,9 +36,8 @@ class Inserter {
     }
 
 
-    public function insertPublicEntities($userID, $defArr, $firstNewCrID) {
+    public function insertPublicEntities($userID, $firstNewCrID, $defArr) {
         // Get connection to the database and prepare the MySQLi statement.
-        require $db_io_path . "sdb_config.php";
         $conn = DBConnector::getConnectionOrDie(
             DB_SERVER_NAME, DB_DATABASE_NAME, DB_USERNAME, DB_PASSWORD
         );
@@ -58,6 +57,7 @@ class Inserter {
             $explodePattern = "/[^@\\\\]+|(\\\\.)+|@[a-z0-9]+|./";
             $crRefPattern = "/^@cr[1-9][0-9]*$/";
             foreach ($defStrArr as $ind => $defStr) {
+    error_log("                                           defStr: " . $defStr);
                 // First explode the deStr into an array of strings that either
                 // are or are not creation references.
                 preg_match_all(
@@ -71,14 +71,15 @@ class Inserter {
                 foreach ($explodedDefStr as $matchInd => $match) {
                     if (preg_match($crRefPattern, $match)) {
                         $crID = intval(substr($match, 3));
-                        $creationID = $this->$creationIDs[$crID];
-                        if ($creation) {
+                        if (array_key_exists($crID, $this->creationIDs)) {
+                            $creationID = $this->creationIDs[$crID];
                             $explodedDefStr[$matchInd] = "@" . $creationID;
                         }
                     }
                 }
                 // Then implode back the exploded defStr with the substitutions.
                 $subbedDefStr = implode($explodedDefStr);
+    error_log("                               subbedDefStr: " . $subbedDefStr);
 
                 $paramValArr = array($userID, $subbedDefStr, 1);
                 DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
