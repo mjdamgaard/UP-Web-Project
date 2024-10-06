@@ -271,12 +271,13 @@ CREATE TABLE Entities (
     is_public TINYINT UNSIGNED NOT NULL DEFAULT 1,
     CHECK (is_public <= 1),
 
+    creation_ident VARCHAR(255) NOT NULL DEFAULT "",
 
     CHECK (creator_id != 0 OR is_public),
 
     UNIQUE INDEX (is_public, def_hash, creator_id),
 
-    UNIQUE INDEX (is_public, creator_id, id)
+    UNIQUE INDEX (is_public, creator_id, creation_ident, id)
 );
 
 
