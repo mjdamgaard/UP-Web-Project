@@ -115,10 +115,15 @@ class EntityInserter {
 
                 $conn->close();
 
-                print_r($explodedDefStr);
-                print_r($subbedDefStr);
-                print_r($this->creationIDStore);
-                // Haha! (16:53) 
+                print_r("explodedDefStr: </br>");
+                print_r(htmlspecialchars(json_encode($explodedDefStr)));
+                print_r("</br>");
+                print_r("subbedDefStr: </br>");
+                print_r(htmlspecialchars(json_encode($subbedDefStr)));
+                print_r("</br>");
+                print_r("creationIDStore: </br>");
+                print_r(htmlspecialchars(json_encode($this->creationIDStore)));
+                print_r("</br>");
             }
         }
     }
