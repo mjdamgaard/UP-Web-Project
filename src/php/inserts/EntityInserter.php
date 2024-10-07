@@ -43,7 +43,7 @@ class EntityInserter {
     public function insertPublicEntities(
         $userID, $firstNewCrID, $newCreations
     ) {
-        $explodePattern = "/[^@\\\\]+|(\\\\.)+|@\\w+|@\\([^\\(\\)]*\\)|./";
+        $explodePattern = "/([^@]|@@)+|@\\w+|@\\([^\\(\\)]*\\)|./";
         $crRefPattern = "/^@\\([^\\(\\)]*\\)$/";
 
         // We repeat the following process two times to make sure that that all
