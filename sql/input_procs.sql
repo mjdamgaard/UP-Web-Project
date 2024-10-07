@@ -257,7 +257,7 @@ BEGIN
         SELECT id INTO outID
         FROM Entities
         WHERE (
-            is_private = isPrivate AND
+            is_private = (SELECT is_private FROM Entities WHERE id = entID) AND
             def_hash = defHash AND
             creator_id = userID
         );

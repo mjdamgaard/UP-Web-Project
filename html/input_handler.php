@@ -89,12 +89,12 @@ switch ($reqType) {
         $typeArr = array("id", "id");
         break;
     case "editEnt":
-        $sql = "CALL editEntity (?, ?, +)";
+        $sql = "CALL editEntity (?, ?, ?)";
         $paramNameArr = array("u", "e", "d");
         $typeArr = array("id", "id", "text");
         break;
     case "editIdent":
-        $sql = "CALL editEntityIdentifier (?, ?, +)";
+        $sql = "CALL editEntityIdentifier (?, ?, ?)";
         $paramNameArr = array("u", "e", "i");
         $typeArr = array("id", "id", "str");
         break;

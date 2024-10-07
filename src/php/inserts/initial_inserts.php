@@ -7,16 +7,16 @@ require_once $err_path . "errors.php";
 
 
 $inserts_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/php/inserts/";
-require_once $inserts_path . "Inserter.php";
+require_once $inserts_path . "EntityInserter.php";
 
-$inserter = new Inserter();
+$inserter = new EntityInserter();
 $inserter->insertPublicEntities("1", 0, array(
-    array(
-        "class"=>"@cr0",
-        "description"=>"@cr1",
-        "title"=>"class"
+    "class" => array(
+        "class" => "@(class)",
+        "description" => "@(class description)",
+        "title" => "class"
     ),
-    (
+    "class description" => (
         "<h1><class>class</class></h1>".
         // "<h2>Description</h2>".
         // "<p>A class of all class entities (including itself). ".
@@ -48,15 +48,15 @@ $inserter->insertPublicEntities("1", 0, array(
         // "<p>...".
         "</p>"
     ),
-    array(
-        "class"=>"@cr0",
-        "description"=>"@cr3",
-        "title"=>"entity"
-    ),
-    (
-        "<h1><class>entity</class></h1>".
-        "..."
-    ),
+    // array(
+    //     "class"=>"@cr0",
+    //     "description"=>"@cr3",
+    //     "title"=>"entity"
+    // ),
+    // (
+    //     "<h1><class>entity</class></h1>".
+    //     "..."
+    // ),
 ));
 
 

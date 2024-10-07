@@ -44,6 +44,6 @@ SELECT
     id,
     def_str,
     creator_id,
-    is_public
+    is_private
 FROM Entities
 ORDER BY id;
