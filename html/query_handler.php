@@ -46,7 +46,11 @@ $reqType = $_POST["req"];
 
 
 // Some requests are protected.
-if ($reqType === "entAsUser" || $reqType === "prvCreations") {
+if (
+    $reqType === "entAsUser" ||
+    $reqType === "entFromHashAsUser" ||
+    $reqType === "prvCreations"
+) {
     // Get the userID and the session ID.
     $paramNameArr = array("u", "ses");
     $typeArr = array("id", "session_id_hex");
@@ -132,17 +136,23 @@ switch ($reqType) {
         $typeArr = array("hash", "id", "uint", "uint");
         // output: [[def, len]].
         break;
+    case "entFromHashAsUser":
+        $sql = "CALL selectEntityFromHashAsUser (?, ?, ?, ?)";
+        $paramNameArr = array("h", "u", "m", "s");
+        $typeArr = array("hash", "id", "uint", "uint");
+        // output: [[def, len]].
+        break;
     case "creations":
         $sql = "CALL selectCreations (?, ?, ?, ?)";
         $paramNameArr = array("c", "m", "o", "a");
         $typeArr = array("id", "uint", "uint", "bool");
-        // output: [[entID], ...].
+        // output: [[ident, entID], ...].
         break;
-    case "prvCreations":
-        $sql = "CALL selectPrivateCreations (?, ?, ?, ?)";
+    case "creationsAsUser":
+        $sql = "CALL selectCreationsAsUser (?, ?, ?, ?)";
         $paramNameArr = array("u", "m", "o", "a");
         $typeArr = array("id", "uint", "uint", "bool");
-        // output: [[entID], ...].
+        // output: [[ident, entID], ...].
         break;
     /* User data */
     // case "user":

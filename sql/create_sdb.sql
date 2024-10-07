@@ -262,22 +262,22 @@ CREATE TABLE Entities (
     -- The user who submitted the entity, unless creator_id = 0, which means
     -- that the creator is anonymous and have forfeited the rights to edit
     -- the entity, but on the other hand, it can now be searched on the
-    -- (is_public, def_hash, creator_id) index without knowing its original
+    -- (is_private, def_hash, creator_id) index without knowing its original
     -- creator.
     creator_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
     -- A boolean representing whether this entity can be viewed by anyone other
     -- than its creator.
-    is_public TINYINT UNSIGNED NOT NULL DEFAULT 1,
-    CHECK (is_public <= 1),
+    is_private TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    CHECK (is_private <= 1),
 
-    creation_ident VARCHAR(255) NOT NULL DEFAULT "",
+    creation_ident VARBINARY(255) NOT NULL DEFAULT "",
 
-    CHECK (creator_id != 0 OR is_public),
+    CHECK (creator_id != 0 OR is_private),
 
-    UNIQUE INDEX (is_public, def_hash, creator_id),
+    UNIQUE INDEX (is_private, def_hash, creator_id),
 
-    UNIQUE INDEX (is_public, creator_id, creation_ident, id)
+    UNIQUE INDEX (creator_id, creation_ident, id)
 );
 
 

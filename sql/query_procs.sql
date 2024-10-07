@@ -12,8 +12,9 @@ DROP PROCEDURE selectRecordedInputsMaxID;
 DROP PROCEDURE selectEntity;
 DROP PROCEDURE selectEntityAsUser;
 DROP PROCEDURE selectEntityFromHash;
+DROP PROCEDURE selectEntityFromHashAsUser;
 DROP PROCEDURE selectCreations;
-DROP PROCEDURE selectPrivateCreations;
+DROP PROCEDURE selectCreationsAsUser;
 
 
 DROP PROCEDURE selectUserInfo;
@@ -161,7 +162,7 @@ BEGIN
     FROM Entities
     WHERE (
         id = entID AND
-        is_public = 1
+        is_private = 0
     );
 END //
 DELIMITER ;
@@ -185,11 +186,11 @@ BEGIN
         ) AS defStr,
         LENGTH(def_str) AS len,
         creator_id AS creatorID,
-        is_public AS isPublic
+        is_private AS isPrivate
     FROM Entities
     WHERE (
         id = entID AND
-        (is_public = 1 OR creator_id = userID)
+        (is_private = 0 OR creator_id = userID)
     );
 END //
 DELIMITER ;
@@ -214,12 +215,41 @@ BEGIN
         LENGTH(def_str) AS len
     FROM Entities
     WHERE (
-        is_public = 1 AND
+        is_private = 0 AND
         def_hash = defHash AND
         creator_id = creatorID
     );
 END //
 DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectEntityFromHashAsUser (
+    IN defHash CHAR(64),
+    IN userID BIGINT UNSIGNED,
+    IN maxLen INT UNSIGNED,
+    IN startPos INT UNSIGNED
+)
+BEGIN
+    SET startPos = startPos + 1;
+    SELECT 
+        (
+            CASE WHEN maxLen = 0 THEN SUBSTRING(def_str, startPos)
+            ELSE SUBSTRING(def_str, startPos, startPos + maxLen)
+            END
+        ) AS defStr,
+        LENGTH(def_str) AS len
+    FROM Entities
+    WHERE (
+        is_private = 1 AND
+        def_hash = defHash AND
+        creator_id = userID
+    );
+END //
+DELIMITER ;
+
+
 
 
 
@@ -231,11 +261,11 @@ CREATE PROCEDURE selectCreations (
     IN isAscOrder BOOL
 )
 BEGIN
-    SELECT id AS entID
+    SELECT creation_ident AS ident, id AS entID
     FROM Entities
     WHERE (
-        is_public = 1 AND
-        creator_id = creatorID
+        creator_id = creatorID AND
+        is_private = 0
     )
     ORDER BY
         CASE WHEN isAscOrder THEN id END ASC,
@@ -247,17 +277,16 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectPrivateCreations (
+CREATE PROCEDURE selectCreationsAsUser (
     IN userID BIGINT UNSIGNED,
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED,
     IN isAscOrder BOOL
 )
 BEGIN
-    SELECT id AS entID
+    SELECT creation_ident AS ident, id AS entID
     FROM Entities
     WHERE (
-        is_public = 0 AND
         creator_id = userID
     )
     ORDER BY
