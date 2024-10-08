@@ -16,6 +16,11 @@ $inserter->insertPublicEntities("1", array(
         "description" => "@[users/initial_admin/desc]",
         "username" => "initial_admin"
     ),
+    "classes/user" => array(
+        "class" => "@[classes/class]",
+        "description" => "@[classes/user/desc]",
+        "title" => "user"
+    ),
     "classes/class" => array(
         "class" => "@[classes/class]",
         "description" => "@[classes/class/desc]",
