@@ -303,56 +303,19 @@ DELIMITER ;
 
 
 
--- DELIMITER //
--- CREATE PROCEDURE selectEntityData (
---     IN entID BIGINT UNSIGNED,
---     IN maxLen INT UNSIGNED,
---     IN startPos INT UNSIGNED
--- )
--- BEGIN
---     SET startPos = startPos + 1;
---     SELECT (
---         CASE WHEN maxLen = 0 THEN SUBSTRING(data_input, startPos)
---         ELSE SUBSTRING(data_input, startPos, startPos + maxLen)
---         END
---     ) AS dataInput
---     FROM Entities
---     WHERE id = entID;
--- END //
--- DELIMITER ;
 
 
 
--- DELIMITER //
--- CREATE PROCEDURE selectCreator (
---     IN entID BIGINT UNSIGNED
--- )
--- BEGIN
---     SELECT creator_id AS userID
---     FROM Entities
---     WHERE id = entID;
--- END //
--- DELIMITER ;
 
 
 
--- DELIMITER //
--- CREATE PROCEDURE selectCreations (
---     IN userID BIGINT UNSIGNED,
---     IN maxNum INT UNSIGNED,
---     IN numOffset INT UNSIGNED,
---     IN isAscOrder BOOL
--- )
--- BEGIN
---     SELECT id AS entID
---     FROM Entities
---     WHERE creator_id = userID
---     ORDER BY
---         CASE WHEN isAscOrder THEN id END ASC,
---         CASE WHEN NOT isAscOrder THEN id END DESC
---     LIMIT numOffset, maxNum;
--- END //
--- DELIMITER ;
+
+
+
+
+
+
+
 
 
 

@@ -11,12 +11,17 @@ require_once $inserts_path . "EntityInserter.php";
 
 $inserter = new EntityInserter();
 $inserter->insertPublicEntities("1", array(
-    "class" => array(
-        "class" => "@[class]",
-        "description" => "@[class/desc]",
+    "users/initial_admin" => array(
+        "class" => "@[classes/user]",
+        "description" => "@[users/initial_admin/desc]",
+        "username" => "initial_admin"
+    ),
+    "classes/class" => array(
+        "class" => "@[classes/class]",
+        "description" => "@[classes/class/desc]",
         "title" => "class"
     ),
-    "class/desc" => (
+    "classes/class/desc" => (
         "<h1><class>class</class></h1>".
         // "<h2>Description</h2>".
         // "<p>A class of all class entities (including itself). ".
@@ -48,12 +53,12 @@ $inserter->insertPublicEntities("1", array(
         // "<p>...".
         "</p>"
     ),
-    "entity" => array(
-        "class"=>"@[class]",
-        "description"=>"@[entity/desc]",
+    "classes/entity" => array(
+        "class"=>"@[classes/class]",
+        "description"=>"@[classes/entity/desc]",
         "title"=>"entity"
     ),
-    "entity/desc" => (
+    "classes/entity/desc" => (
         "<h1><class>entity</class></h1>".
         "..."
     ),

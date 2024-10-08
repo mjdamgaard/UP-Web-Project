@@ -29,20 +29,21 @@ class EntityInserter {
         $creations = $stmt->get_result()->fetch_all();
         $conn->close();
 
-        // Construct the creationIDStore as a [ident => entID] array from the
-        // creations [[ident, entID]] array.
+        // Finally, construct the creationIDStore as a [ident => entID] array
+        // from the creations [[ident, entID]] array.
         $this->creationIDStore = array();
         foreach ($creations AS $val) {
             $this->creationIDStore[$val[0]] = strval($val[1]);
         }
-
-        // Then go through each one again and replace any relative keys..
     }
 
 
     public function insertPublicEntities($userID, $newCreations) {
         $explodePattern = "/([^@]|@@)+|@\\w+|@\\[[^\\[\\]]*\\]|./";
         $crRefPattern = "/^@\\[[^\\]\\]]*\\]$/";
+
+        // First we fetch the existing creations.
+        $this->getPublicCreations($userID);
 
         // We repeat the following process two times to make sure that that all
         // creation references that can be replaced by an outID from the first
@@ -104,7 +105,7 @@ class EntityInserter {
                     // Prepare the MySQLi statement.
                     $sql = "CALL insertOrFindEntity (?, ?, ?, ?)";
                     $stmt = $conn->prepare($sql);
-                    $paramValArr = array($userID, $subbedDefStr, 1, $ident);
+                    $paramValArr = array($userID, $subbedDefStr, 0, $ident);
                     // Execute the statement
                     DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
                     $res = $stmt->get_result()->fetch_assoc();
