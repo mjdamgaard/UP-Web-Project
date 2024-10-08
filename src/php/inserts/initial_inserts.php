@@ -10,13 +10,13 @@ $inserts_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/php/inserts/";
 require_once $inserts_path . "EntityInserter.php";
 
 $inserter = new EntityInserter();
-$inserter->insertPublicEntities("1", 0, array(
+$inserter->insertPublicEntities("1", array(
     "class" => array(
-        "class" => "@(class)",
-        "description" => "@(class description)",
+        "class" => "@[class]",
+        "description" => "@[class/desc]",
         "title" => "class"
     ),
-    "class description" => (
+    "class/desc" => (
         "<h1><class>class</class></h1>".
         // "<h2>Description</h2>".
         // "<p>A class of all class entities (including itself). ".
@@ -48,15 +48,15 @@ $inserter->insertPublicEntities("1", 0, array(
         // "<p>...".
         "</p>"
     ),
-    // array(
-    //     "class"=>"@cr0",
-    //     "description"=>"@cr3",
-    //     "title"=>"entity"
-    // ),
-    // (
-    //     "<h1><class>entity</class></h1>".
-    //     "..."
-    // ),
+    "entity" => array(
+        "class"=>"@[class]",
+        "description"=>"@[entity/desc]",
+        "title"=>"entity"
+    ),
+    "entity/desc" => (
+        "<h1><class>entity</class></h1>".
+        "..."
+    ),
 ));
 
 

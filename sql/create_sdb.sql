@@ -255,9 +255,8 @@ CREATE TABLE Entities (
 
     -- A JSON value (string or object, or array) that defines the entity.
     def_str TEXT NOT NULL, -- (Can be resized.)
-    def_hash CHAR(64) NOT NULL DEFAULT (
-        SHA2(def_str, 256)
-    ),
+
+    def_hash CHAR(64) NOT NULL DEFAULT (SHA2(def_str, 256)),
 
     -- The user who submitted the entity, unless creator_id = 0, which means
     -- that the creator is anonymous and have forfeited the rights to edit
@@ -277,7 +276,10 @@ CREATE TABLE Entities (
 
     UNIQUE INDEX (is_private, def_hash, creator_id),
 
-    UNIQUE INDEX (creator_id, creation_ident, id)
+    UNIQUE INDEX (creator_id, creation_ident, id),
+
+    modified_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    -- The modified_at field is (potentially) for future use.
 );
 
 

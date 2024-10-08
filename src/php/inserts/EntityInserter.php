@@ -40,11 +40,9 @@ class EntityInserter {
     }
 
 
-    public function insertPublicEntities(
-        $userID, $firstNewCrID, $newCreations
-    ) {
-        $explodePattern = "/([^@]|@@)+|@\\w+|@\\([^\\(\\)]*\\)|./";
-        $crRefPattern = "/^@\\([^\\(\\)]*\\)$/";
+    public function insertPublicEntities($userID, $newCreations) {
+        $explodePattern = "/([^@]|@@)+|@\\w+|@\\[[^\\[\\]]*\\]|./";
+        $crRefPattern = "/^@\\[[^\\]\\]]*\\]$/";
 
         // We repeat the following process two times to make sure that that all
         // creation references that can be replaced by an outID from the first
@@ -69,7 +67,9 @@ class EntityInserter {
                 // Then substitute any creation reference if possible.
                 foreach ($explodedDefStr as $matchInd => $match) {
                     if (preg_match($crRefPattern, $match)) {
-                        $refIdent = intval(substr($match, 3));
+                        $refIdent = json_decode(
+                            '"' . substr($match, 2, -1) . '"'
+                        );
                         if (
                             array_key_exists($refIdent, $this->creationIDStore)
                         ) {
@@ -115,15 +115,15 @@ class EntityInserter {
 
                 $conn->close();
 
-                print_r("explodedDefStr: </br>");
-                print_r(htmlspecialchars(json_encode($explodedDefStr)));
-                print_r("</br>");
-                print_r("subbedDefStr: </br>");
-                print_r(htmlspecialchars(json_encode($subbedDefStr)));
-                print_r("</br>");
-                print_r("creationIDStore: </br>");
-                print_r(htmlspecialchars(json_encode($this->creationIDStore)));
-                print_r("</br>");
+            // print_r("explodedDefStr: </br>");
+            // print_r(htmlspecialchars(json_encode($explodedDefStr)));
+            // print_r("</br>");
+            // print_r("subbedDefStr: </br>");
+            // print_r(htmlspecialchars(json_encode($subbedDefStr)));
+            // print_r("</br>");
+            // print_r("creationIDStore: </br>");
+            // print_r(htmlspecialchars(json_encode($this->creationIDStore)));
+            // print_r("</br>");
             }
         }
     }
