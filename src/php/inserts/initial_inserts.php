@@ -11,15 +11,12 @@ require_once $inserts_path . "EntityInserter.php";
 
 $inserter = new EntityInserter();
 $inserter->insertPublicEntities("1", array(
+    // Let's keep the most important entities at the start such that they get
+    // the same entIDs across edits.
     "users/initial_admin" => array(
         "class" => "@[classes/user]",
         "description" => "@[users/initial_admin/desc]",
         "username" => "initial_admin"
-    ),
-    "classes/user" => array(
-        "class" => "@[classes/class]",
-        "description" => "@[classes/user/desc]",
-        "title" => "user"
     ),
     "classes/class" => array(
         "class" => "@[classes/class]",
@@ -66,6 +63,11 @@ $inserter->insertPublicEntities("1", array(
     "classes/entity/desc" => (
         "<h1><class>entity</class></h1>".
         "..."
+    ),
+    "classes/user" => array(
+        "class" => "@[classes/class]",
+        "description" => "@[classes/user/desc]",
+        "title" => "user"
     ),
 ));
 

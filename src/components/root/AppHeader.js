@@ -1,7 +1,4 @@
 import {useState, createContext, useContext} from "react";
-import {SessionContext, AccountManagerContext}
-  from "../contexts_and_hooks/AccountContext.js";
-import {ColumnListContext} from "../contexts_and_hooks/ColumnContext.js";
 
 
 
@@ -14,14 +11,14 @@ import {ColumnListContext} from "../contexts_and_hooks/ColumnContext.js";
 
 
 
-export const InterfaceHeader = ({setAppPage, setColNum}) => {
+export const AppHeader = ({setAppPage, setColNum}) => {
   return (
-    <header className="interface-header navbar navbar-default">
+    <header className="app-header navbar navbar-default">
     <div className="container-fluid">
       <div className="navbar-header">
         <SuperCoolLogoTBD />
       </div>
-      <HeaderButtonsContainer setAppPage={setAppPage} />
+      {/* <HeaderButtonsContainer setAppPage={setAppPage} /> */}
       <AccountButtonsContainer setAppPage={setAppPage} />
     </div>
   </header>
@@ -32,7 +29,7 @@ const SuperCoolLogoTBD = ({}) => {
   // const [columns, columnListManager] = useContext(ColumnListContext);
 
   return (
-    <span className="navbar-brand" onClick={() => {
+    <span className="navbar-brand logo" onClick={() => {
       // TODO: Correct (or make it a link to the (fresh) homepage).
       // columnListManager.openColumn(columns.keys[columns.fst], 10, true);
     }}>
@@ -79,8 +76,8 @@ const HeaderButtonsContainer = ({setAppPage}) => {
 };
 
 const AccountButtonsContainer = ({setAppPage}) => {
-  const session = useContext(SessionContext);
-  const accountManager = useContext(AccountManagerContext);
+  const session = localStorage.session;
+  const accountManager = null; // useContext(AccountManagerContext);
 
   return (
   <ul className="nav navbar-nav navbar-right">

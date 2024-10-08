@@ -8,7 +8,7 @@ import ReactDOM from 'react-dom/client';
 // } from "react-router-dom";
 
 
-import {SDBApp} from './components/root/SDBApp.js';
+import {App} from './components/root/App.js';
 
 import './style/style01.scss';
 import './style/entity_titles/title_style.scss';
@@ -26,7 +26,7 @@ import './style/entity_data/entity_data_style.scss';
 
 const myElement = (
   <React.StrictMode>
-    <SDBApp />
+    <App />
   </React.StrictMode>
 );
 

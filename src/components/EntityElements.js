@@ -1,10 +1,10 @@
 import {useState, useEffect, useMemo, useContext} from "react";
-import {AccountManagerContext} from "../contexts_and_hooks/AccountContext.js";
-import {useQuery} from "../contexts_and_hooks/DBRequests.js";
+import {AccountManagerContext} from "../hooks/Obsolete_AccountContext.js";
+import {useQuery} from "../hooks/DBRequests.js";
 
 import {EntityTitle} from "./entity_titles/EntityTitles.js";
 import {DropdownBox, DropdownMenu} from "./DropdownBox.js";
-import {EntityIDDisplay} from "./app_columns/column_pages/EntityPage.js";
+import {EntityIDDisplay} from "./app_pages/entity_pages/EntityPage.js";
 // import {} from "./InstListDisplay.js";
 import {RatingDisplay} from "./Ratings.js";
 import {InstListDisplay} from "./InstListDisplay.js";

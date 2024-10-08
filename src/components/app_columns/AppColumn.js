@@ -1,9 +1,9 @@
 import {useState, createContext, useContext, useMemo} from "react";
 import {
   useDispatch
-} from "../../contexts_and_hooks/useDispatch.js"
+} from "../../hooks/useDispatch.js"
 import React from 'react';
-import {ColumnContext} from "../../contexts_and_hooks/ColumnContext.js";
+import {ColumnContext} from "../../hooks/ColumnContext.js";
 
 import {EntityPage} from "./column_pages/EntityPage.js";
 import {ListGeneratorPage} from "../ListGenPages.js";

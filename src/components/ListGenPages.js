@@ -1,11 +1,11 @@
 import {useState, useMemo, useContext} from "react";
-import {useQuery} from "../contexts_and_hooks/DBRequests.js";
+import {useQuery} from "../hooks/DBRequests.js";
 // import {
 //   MaxRatingSetCombiner, SimpleSetGenerator,
 // } from "/src/SetGenerator.js";
 
-import {AccountManagerContext} from "../contexts_and_hooks/AccountContext.js";
-import {ColumnContext} from "../contexts_and_hooks/ColumnContext.js";
+import {AccountManagerContext} from "../hooks/Obsolete_AccountContext.js";
+import {ColumnContext} from "../hooks/ColumnContext.js";
 
 import {PagesWithTabs} from "./PagesWithTabs.js";
 import {

@@ -1,5 +1,5 @@
 import {useMemo, useState} from "react";
-import {useDispatch} from "../../contexts_and_hooks/useDispatch.js"
+import {useDispatch} from "../../hooks/useDispatch.js"
 
 import {DataFetcher} from "../../classes/DataFetcher.js";
 

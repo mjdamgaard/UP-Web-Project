@@ -1,16 +1,20 @@
 import {useState, useMemo, useContext} from "react";
 import {
   useDispatch
-} from "../../../contexts_and_hooks/useDispatch.js"
+} from "../../../hooks/useDispatch.js"
 // import {EntityLink} from "react-router-dom";
+import {useQuery} from "../../../hooks/DBRequests.js";
 // import {
 //   MaxRatingSetCombiner, SimpleSetGenerator,
 // } from "/src/SetGenerator.js";
 
+import {DataFetcher} from "../../../classes/DataFetcher.js";
+
 import {
   AccountManagerContext
-} from "../../../contexts_and_hooks/AccountContext.js";
+} from "../../../hooks/Obsolete_AccountContext.js";
 
+import {EntitySubpages} from "./EntitySubpages.js";
 import {PagesWithTabs} from "../../PagesWithTabs.js";
 import {
   EntityID, EntityTitle, ContextDisplay, EntityLink
@@ -26,8 +30,8 @@ import {
 import {
   SimpleInstListGenerator, MaxRatingInstListCombiner
 } from "../../../classes/InstListGenerator.js";
-
 import {EntityDataDisplay} from "../../entity_data/EntityDataDisplay.js";
+
 
 
 /* Placeholders */
@@ -45,15 +49,40 @@ import {EntityDataDisplay} from "../../entity_data/EntityDataDisplay.js";
 // const CategoryInstancesPage = () => <template></template>;
 const SubmitInstanceField = () => <template></template>;
 const CategoryDisplay = () => <template></template>;
-const EntityMetaPage = () => <EntityDataDisplay />;
 // const PropStructDisplayPlaceholder = () => <span></span>;
 
 
 
-export const EntitySubpages = (props) => {
-  var {entID, classID, initTab} = props;
+export const EntityPage = (props) => {
+  const {entID, initTab} = props;
+  const [results, setState] = useState({});
 
-  // const [dispatch, passData] = useDispatch(props, {});
+  // const [results, setResults] = useState({});
+  useMemo(() => {
+    // TODO: Also query for the highest rated 'representation' and if the rating
+    // is high enough, use the propStruct generated from that instead.
+    // TODO: Also always query for the `useful entity' meta-tag and print out
+    // that rating as well. *No, just do this for the drop-down menu for now.
+    DataFetcher.fetchMainData(
+      entID, (entMainData) => {
+        setState(prev => {
+          return {
+            ...prev,
+            entMainData: entMainData,
+            isFetched: true,
+          };
+        });
+      }
+    );
+  }, []);
+
+
+  // Before results is fetched, render this:
+  if (!results.isFetched) {
+    return (
+      <></>
+    );
+  }
 
   // TODO: Query for the topmost types for the entity (entID), and use them to
   // specify the tabs. *Or maybe look up types in fullPropStruct, or do both..
@@ -63,63 +92,24 @@ export const EntitySubpages = (props) => {
   //   req: "instList",
   //   u: ...,
   // });
-
-
-
-  // Construct the tabs on the EntityPage.
-  const [tabDataArr, defaultTab] = getTabDataArrAndDefaultTab(
-    entID, typeID, cxtID
-  );
-  initTab ??= defaultTab;
   
-  // TODO: Remove: Temporary module while refactoring and debugging:
-  var typeID, cxtID;
-  return (
-    <div className="entity-page">
-      <div className="entity-page-header">
-        <h2><EntityTitle entID={entID} /></h2>
-        <h2>Test links</h2>
-        <div>
-          <EntityLink entID={12}>
-            to entity @12
-          </EntityLink>
-        </div>
-        <div>
-          <EntityLink entID={13}>
-            to entity @13
-          </EntityLink>
-        </div>
-        <div>
-          <EntityLink entID={14}>
-            to entity @14
-          </EntityLink>
-        </div>
-        {/* Doesn't change path: */}
-        {/* <Link to={{search:"?e=13"}}>to entity #13</Link>*/}
+ 
 
-        {/* <div className="full-title">
-            <EntityDataFetcher
-              entID={entID} ChildModule={PropStructDisplay} extraProps={{}}
-            />
-        </div> */}
-        {/* <div><EntityIDDisplay entID={entID} /></div> */}
-      </div>
-      <PagesWithTabs tabDataArr={tabDataArr} initTab={initTab} />
-      <EntityDataDisplay entID={entID} />
-    </div>
-  );
+  // // Construct the tabs on the EntityPage.
+  // const [tabDataArr, defaultTab] = getTabDataArrAndDefaultTab(
+  //   entID, typeID, cxtID
+  // );
+  // initTab ??= defaultTab;
 
+  const classID = results.entMainData.classID;
 
   return (
     <div className="entity-page">
       <div className="entity-page-header">
         <h2><EntityTitle entID={entID} isLink /></h2>
-        <div className="full-title">
-            <b>Definition:</b> <EntityTitle entID={entID} isFull />
-        </div>
-        <div><EntityIDDisplay entID={entID} /></div>
+        <div><EntityDataDisplay entID={entID} /></div>
       </div>
-      <PagesWithTabs tabDataArr={tabDataArr} initTab={initTab} />
+      <EntitySubpages entID={entID} classID={classID} />
     </div>
   );
 };
@@ -127,10 +117,9 @@ export const EntitySubpages = (props) => {
 
 function getTabDataArrAndDefaultTab(entID, classID) {
   let tabDataArr = [
-    ["Meta", <EntityDataDisplay entID={entID} />],
-    // ["Info", <EntityInfoPage entID={entID} typeID={classID} />],
-    // ["Ratings", <EntityRatingsPage entID={entID} typeID={classID} />],
-    // ["Related to", <PropertyCategoryPage entID={entID} propID={42} />],
+    ["Info", <EntityInfoPage entID={entID} typeID={classID} />],
+    ["Ratings", <EntityRatingsPage entID={entID} typeID={classID} />],
+    ["Related to", <PropertyCategoryPage entID={entID} propID={42} />],
   ];
   let defaultTab;
   

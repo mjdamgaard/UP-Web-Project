@@ -1,5 +1,5 @@
 import {useState, createContext, useContext, useEffect, useMemo} from "react";
-import { useDispatch } from "../contexts_and_hooks/useDispatch";
+import { useDispatch } from "../hooks/useDispatch";
 /* Placeholders */
 // const TabHeader = () => <template></template>;
 
