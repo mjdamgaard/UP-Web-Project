@@ -74,7 +74,7 @@ export const App = (props) => {
       <div key={pageKey} className={
         "page-container" + ((currInd === ind) ? " active" : "")
       }
-        onClick={(e) => {debugger;
+        onClick={(e) => {
           if (currInd === ind) {
             appReducers["SCROLL_INTO_VIEW"]({}, ind);
           } else {
@@ -169,7 +169,7 @@ const appReducers = {
     return;
   },
 
-  "UPDATE_CURR_IND": function ({state: state}, newInd) {debugger;
+  "UPDATE_CURR_IND": function ({state: state}, newInd) {
     this["SCROLL_INTO_VIEW"]({state: state}, newInd);
 
     return {...state, currInd: newInd};
