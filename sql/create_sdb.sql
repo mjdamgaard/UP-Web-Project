@@ -252,11 +252,15 @@ CREATE TABLE Entities (
     -- Entity ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
+    type_ident CHAR NOT NULL DEFAULT 'j',
 
-    -- A JSON value (string or object, or array) that defines the entity.
+    -- A string (possibly a JSON object) that defines the entity. The format
+    -- depends on type_ident.
     def_str TEXT NOT NULL, -- (Can be resized.)
 
-    def_hash CHAR(64) NOT NULL DEFAULT (SHA2(def_str, 256)),
+    def_hash CHAR(64) NOT NULL DEFAULT (
+        SHA2(CONCAT(type_ident, def_str), 256)
+    ),
 
     -- The user who submitted the entity, unless creator_id = 0, which means
     -- that the creator is anonymous and have forfeited the rights to edit

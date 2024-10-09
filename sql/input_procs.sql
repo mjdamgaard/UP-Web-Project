@@ -135,19 +135,20 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindEntity (
     IN userID BIGINT UNSIGNED,
+    IN type CHAR,
     IN defStr TEXT,
     IN isPrivate BOOL,
     IN ident VARBINARY(255)
 )
 BEGIN
     DECLARE outID, exitCode BIGINT UNSIGNED;
-    DECLARE defHash CHAR(64) DEFAULT (SHA2(defStr, 256));
+    DECLARE defHash CHAR(64) DEFAULT (SHA2(CONCAT(type, defStr), 256));
 
     INSERT IGNORE INTO Entities (
-        creator_id, def_str, def_hash, is_private, creation_ident
+        creator_id, type_ident, def_str, def_hash, is_private, creation_ident
     )
     VALUES (
-        userID, defStr, defHash, isPrivate, ident
+        userID, type, defStr, defHash, isPrivate, ident
     );
     IF (ROW_COUNT() > 0) THEN
         SET exitCode = 0; -- insert.
@@ -171,14 +172,17 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE insertOrFindAnonymousEntity (
+    IN type CHAR,
     IN defStr TEXT
 )
 BEGIN
     DECLARE outID, exitCode BIGINT UNSIGNED;
-    DECLARE defHash CHAR(64) DEFAULT (SHA2(defStr, 256));
+    DECLARE defHash CHAR(64) DEFAULT (SHA2(CONCAT(type, defStr), 256));
 
-    INSERT IGNORE INTO Entities (creator_id, def_str, def_hash, is_private)
-    VALUES (0, defStr, defHash, 0);
+    INSERT IGNORE INTO Entities (
+        creator_id, type_ident, def_str, def_hash, is_private
+    )
+    VALUES (0, type, defStr, defHash, 0);
     IF (ROW_COUNT() > 0) THEN
         SET exitCode = 0; -- insert.
         SELECT LAST_INSERT_ID() INTO outID;
@@ -240,14 +244,15 @@ DELIMITER //
 CREATE PROCEDURE editEntity (
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
+    IN type CHAR,
     IN defStr TEXT
 )
 BEGIN
     DECLARE outID, exitCode BIGINT UNSIGNED;
-    DECLARE defHash CHAR(64) DEFAULT (SHA2(defStr, 256));
+    DECLARE defHash CHAR(64) DEFAULT (SHA2(CONCAT(type, defStr), 256));
 
     UPDATE IGNORE Entities
-    SET def_str = defStr, def_hash = defHash
+    SET type_ident = type, def_str = defStr, def_hash = defHash
     WHERE (id = entID AND creator_id = userID);
     IF (ROW_COUNT() > 0) THEN
         SET exitCode = 0; -- edit.

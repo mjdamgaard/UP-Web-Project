@@ -42,6 +42,7 @@ ORDER BY id;
 SELECT "Entities:";
 SELECT
     id,
+    type_ident,
     def_str,
     creator_id,
     is_private

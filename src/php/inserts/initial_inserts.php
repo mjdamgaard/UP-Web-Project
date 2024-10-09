@@ -13,17 +13,17 @@ $inserter = new EntityInserter();
 $inserter->insertPublicEntities("1", array(
     // Let's keep the most important entities at the start such that they get
     // the same entIDs across edits.
-    "users/initial_admin" => array(
+    "users/initial_admin" => array("j", json_encode(array(
         "class" => "@[classes/user]",
         "description" => "@[users/initial_admin/desc]",
         "username" => "initial_admin"
-    ),
-    "classes/class" => array(
+    ))),
+    "classes/class" => array("j", json_encode(array(
         "class" => "@[classes/class]",
         "description" => "@[classes/class/desc]",
         "title" => "class"
-    ),
-    "classes/class/desc" => (
+    ))),
+    "classes/class/desc" => array("t",
         "<h1><class>class</class></h1>".
         // "<h2>Description</h2>".
         // "<p>A class of all class entities (including itself). ".
@@ -55,20 +55,20 @@ $inserter->insertPublicEntities("1", array(
         // "<p>...".
         "</p>"
     ),
-    "classes/entity" => array(
+    "classes/entity" => array("j", json_encode(array(
         "class"=>"@[classes/class]",
         "description"=>"@[classes/entity/desc]",
         "title"=>"entity"
-    ),
-    "classes/entity/desc" => (
+    ))),
+    "classes/entity/desc" => array("t",
         "<h1><class>entity</class></h1>".
         "..."
     ),
-    "classes/user" => array(
+    "classes/user" => array("j", json_encode(array(
         "class" => "@[classes/class]",
         "description" => "@[classes/user/desc]",
         "title" => "user"
-    ),
+    ))),
 ));
 
 

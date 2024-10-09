@@ -145,10 +145,18 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectEntity (
-    IN entID BIGINT UNSIGNED
+    IN entID BIGINT UNSIGNED,
+    IN maxLen INT UNSIGNED,
+    IN startPos INT UNSIGNED
 )
 BEGIN
     SELECT
+        type_ident AS type,
+        (
+            CASE WHEN maxLen = 0 THEN SUBSTRING(def_str, startPos + 1)
+            ELSE SUBSTRING(def_str, startPos + 1, maxLen)
+            END
+        ) AS defStr,
         SUBSTRING(def_str, 1, 65535) AS defStr,
         LENGTH(def_str) AS len,
         creator_id AS creatorID
@@ -165,11 +173,18 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectEntityAsUser (
     IN userID BIGINT UNSIGNED,
-    IN entID BIGINT UNSIGNED
+    IN entID BIGINT UNSIGNED,
+    IN maxLen INT UNSIGNED,
+    IN startPos INT UNSIGNED
 )
 BEGIN
     SELECT
-        SUBSTRING(def_str, 1, 65535) AS defStr,
+        type_ident AS type,
+        (
+            CASE WHEN maxLen = 0 THEN SUBSTRING(def_str, startPos + 1)
+            ELSE SUBSTRING(def_str, startPos + 1, maxLen)
+            END
+        ) AS defStr,
         LENGTH(def_str) AS len,
         creator_id AS creatorID,
         is_private AS isPrivate
@@ -186,11 +201,18 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectEntityFromHash (
     IN defHash CHAR(64),
-    IN creatorID BIGINT UNSIGNED
+    IN creatorID BIGINT UNSIGNED,
+    IN maxLen INT UNSIGNED,
+    IN startPos INT UNSIGNED
 )
 BEGIN
     SELECT
-        SUBSTRING(def_str, 1, 65535) AS defStr,
+        type_ident AS type,
+        (
+            CASE WHEN maxLen = 0 THEN SUBSTRING(def_str, startPos + 1)
+            ELSE SUBSTRING(def_str, startPos + 1, maxLen)
+            END
+        ) AS defStr,
         LENGTH(def_str) AS len
     FROM Entities
     WHERE (
@@ -206,11 +228,18 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectEntityFromHashAsUser (
     IN defHash CHAR(64),
-    IN userID BIGINT UNSIGNED
+    IN userID BIGINT UNSIGNED,
+    IN maxLen INT UNSIGNED,
+    IN startPos INT UNSIGNED
 )
 BEGIN
     SELECT
-        SUBSTRING(def_str, 1, 65535) AS defStr,
+        type_ident AS type,
+        (
+            CASE WHEN maxLen = 0 THEN SUBSTRING(def_str, startPos + 1)
+            ELSE SUBSTRING(def_str, startPos + 1, maxLen)
+            END
+        ) AS defStr,
         LENGTH(def_str) AS len
     FROM Entities
     WHERE (

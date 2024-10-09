@@ -53,7 +53,12 @@ class EntityInserter {
             // If a defStr contains a creation reference, substitute it first
             // if there the given creation already exists.
             foreach ($newCreations as $ident => $def) {
-                $defStr = json_encode($def);
+                $type = $def[0];
+                $defStr = $def[1];
+
+                // TODO: If we implement more types than "j" and "t", make
+                // switch-case statement (or similar) here, and thus branch
+                // away from the following reference substitutions if needed. 
 
                 // First explode the deStr into an array of strings that either
                 // are or are not creation references.
@@ -92,10 +97,12 @@ class EntityInserter {
                 // entity.
                 if (array_key_exists($ident, $this->creationIDStore)) {
                     // Prepare the MySQLi statement.
-                    $sql = "CALL editEntity (?, ?, ?)";
+                    $sql = "CALL editEntity (?, ?, ?, ?)";
                     $stmt = $conn->prepare($sql);
                     $entID = $this->creationIDStore[$ident];
-                    $paramValArr = array($userID, $entID, $subbedDefStr);
+                    $paramValArr = array(
+                        $userID, $entID, $type, $subbedDefStr
+                    );
                     // Execute the statement
                     DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
                 }
@@ -103,9 +110,11 @@ class EntityInserter {
                 // creationIDStore
                 else {
                     // Prepare the MySQLi statement.
-                    $sql = "CALL insertOrFindEntity (?, ?, ?, ?)";
+                    $sql = "CALL insertOrFindEntity (?, ?, ?, ?, ?)";
                     $stmt = $conn->prepare($sql);
-                    $paramValArr = array($userID, $subbedDefStr, 0, $ident);
+                    $paramValArr = array(
+                        $userID, $type, $subbedDefStr, 0, $ident
+                    );
                     // Execute the statement
                     DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
                     $res = $stmt->get_result()->fetch_assoc();

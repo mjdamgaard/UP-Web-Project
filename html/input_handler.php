@@ -69,14 +69,14 @@ switch ($reqType) {
         // TODO: Is it?
         break;
     case "ent":
-        $sql = "CALL insertOrFindEntity (?, ?, ?, ?)";
-        $paramNameArr = array("u", "d", "prv", "i");
-        $typeArr = array("id", "text", "bool", "str");
+        $sql = "CALL insertOrFindEntity (?, ?, ?, ?, ?)";
+        $paramNameArr = array("u", "t", "d", "prv", "i");
+        $typeArr = array("id", "char", "text", "bool", "str");
         break;
     case "anonEnt":
-        $sql = "CALL insertOrFindAnonymousEntity (?)";
-        $paramNameArr = array("d");
-        $typeArr = array("text");
+        $sql = "CALL insertOrFindAnonymousEntity (?, ?)";
+        $paramNameArr = array("t", "d");
+        $typeArr = array("char", "text");
         break;
     case "publicizeEnt":
         $sql = "CALL publicizeEntity (?, ?)";
@@ -89,9 +89,9 @@ switch ($reqType) {
         $typeArr = array("id", "id");
         break;
     case "editEnt":
-        $sql = "CALL editEntity (?, ?, ?)";
-        $paramNameArr = array("u", "e", "d");
-        $typeArr = array("id", "id", "text");
+        $sql = "CALL editEntity (?, ?, ?, ?)";
+        $paramNameArr = array("u", "e", "t", "d");
+        $typeArr = array("id", "id", "char", "text");
         break;
     case "editIdent":
         $sql = "CALL editEntityIdentifier (?, ?, ?)";

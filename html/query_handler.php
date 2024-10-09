@@ -119,28 +119,28 @@ switch ($reqType) {
         break;
     /* Entity queries */
     case "ent":
-        $sql = "CALL selectEntity (?)";
-        $paramNameArr = array("id");
-        $typeArr = array("id");
-        // output: [[def, len, creatorID]].
+        $sql = "CALL selectEntity (?, ?, ?)";
+        $paramNameArr = array("id", "m", "s");
+        $typeArr = array("id", "uint", "uint");
+        // output: [[type, defStr, len, creatorID]].
         break;
     case "entAsUser":
-        $sql = "CALL selectEntityAsUser (?, ?)";
-        $paramNameArr = array("u", "id");
-        $typeArr = array("id", "id");
-        // output: [[def, len, creatorID, isPublic]].
+        $sql = "CALL selectEntityAsUser (?, ?, ?, ?)";
+        $paramNameArr = array("u", "id", "m", "s");
+        $typeArr = array("id", "id", "uint", "uint");
+        // output: [[type, defStr, len, creatorID, isPublic]].
         break;
     case "entFromHash":
-        $sql = "CALL selectEntityFromHash (?, ?)";
-        $paramNameArr = array("h", "c");
-        $typeArr = array("hash", "id");
-        // output: [[def, len]].
+        $sql = "CALL selectEntityFromHash (?, ?, ?, ?)";
+        $paramNameArr = array("h", "c", "m", "s");
+        $typeArr = array("hash", "id", "uint", "uint");
+        // output: [[type, defStr, len]].
         break;
     case "entFromHashAsUser":
-        $sql = "CALL selectEntityFromHashAsUser (?, ?)";
-        $paramNameArr = array("h", "u");
-        $typeArr = array("hash", "id");
-        // output: [[def, len]].
+        $sql = "CALL selectEntityFromHashAsUser (?, ?, ?, ?)";
+        $paramNameArr = array("h", "u", "m", "s");
+        $typeArr = array("hash", "id", "uint", "uint");
+        // output: [[type, defStr, len]].
         break;
     case "creations":
         $sql = "CALL selectCreations (?, ?, ?, ?)";
@@ -210,16 +210,6 @@ $stmt = $conn->prepare($sql);
 DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 // Fetch the result as a numeric array.
 $res = $stmt->get_result()->fetch_all();
-// If $reqType == ent, JSON-decode the fifth output, "ownStruct", before the
-// final full JSON-encoding. 
-if (substr($reqType, 0, 3) === "ent") {
-    $defStr = $res[0][0];
-    if ($defStr) {
-        $res[0][0] = json_decode($defStr, true);
-    } else if ($defStr === "") {
-        $res[0][0] = json_decode("null", true);
-    }
-}
 
 // Finally echo the JSON-encoded numeric array, containing e.g. the
 // columns: ("ratVal", "instID") for $reqType == "set", etc., so look at

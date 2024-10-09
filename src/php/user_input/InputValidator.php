@@ -106,6 +106,18 @@ class InputValidator {
                     );
                 }
                 break;
+            case "char":
+                // TODO: Find out why e.g. "£" and "Æ" does not pass this test,
+                // and fix.
+                if (
+                    !is_string($paramVal) ||
+                    strlen($paramVal) > 1
+                ) {
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "CHAR(1)"
+                    );
+                }
+                break;
             case "str":
                 // TODO: Find out why e.g. "£" and "Æ" does not pass this test,
                 // and fix.
