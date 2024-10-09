@@ -1,5 +1,5 @@
 
-import {DBRequestManager} from "../classes/DBRequestManager.js";
+import {DBRequestManager} from "../DBRequestManager.js";
 
 
 export const SIMPLE_TAG_CLASS_ID = "2";

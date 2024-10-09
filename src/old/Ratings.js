@@ -1,8 +1,8 @@
 import {useState, useEffect, useMemo, useContext} from "react";
-import {AccountManagerContext} from "../hooks/Obsolete_AccountContext.js";
+import {AccountManagerContext} from "./AccountContext.js";
 import {useQuery, useInput} from "../hooks/DBRequests.js";
 
-import {EntityTitle, EntityID, FullEntityTitle} from "./entity_titles/EntityTitles.js";
+import {EntityTitle, EntityID, FullEntityTitle} from "../components/entity_titles/EntityTitles.js";
 
 
 const RatingDisplayPlaceholder = () => <div>...</div>;

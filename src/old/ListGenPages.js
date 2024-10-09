@@ -4,13 +4,13 @@ import {useQuery} from "../hooks/DBRequests.js";
 //   MaxRatingSetCombiner, SimpleSetGenerator,
 // } from "/src/SetGenerator.js";
 
-import {AccountManagerContext} from "../hooks/Obsolete_AccountContext.js";
+import {AccountManagerContext} from "./AccountContext.js";
 import {ColumnContext} from "../hooks/ColumnContext.js";
 
 import {PagesWithTabs} from "./PagesWithTabs.js";
 import {
   EntityID, FullEntityTitle, EntityTitle, ContextDisplay
-} from "./entity_titles/EntityTitles.js";
+} from "../components/entity_titles/EntityTitles.js";
 import {InstListDisplay} from "./InstListDisplay.js";
 
 import {

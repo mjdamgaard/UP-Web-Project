@@ -28,16 +28,7 @@ const PAGE_CONTAINER_SELECTOR = ".page-container";
 
 
 export const App = (props) => {
-  const [{
-    sesUserID,
-    sesIDHex,
-    pageKeyArr,
-    pagePathStore,
-    nonce,
-    currInd,
-    // scrollLeft, scrollVelocity, lastScrollAt,
-
-  }, setState] = useState({
+  const [state, setState] = useState({
     sesUserID: localStorage.session && localStorage.session.userID,
     sesIDHex: localStorage.session && localStorage.session.sesIDHex,
     pageKeyArr: [0, 1],
@@ -47,9 +38,11 @@ export const App = (props) => {
     },
     nonce: 1,
     currInd: 1,
+    prevInd: 0,
     // scrollLeft: 0, scrollVelocity: 0, lastScrollAt: 0,
 
   });
+  const {pagePathStore, pageKeyArr, currInd} = state;
 
   const [refCallback, dispatch] = useDispatch(
     appReducers, "app", setState, props
@@ -78,7 +71,7 @@ export const App = (props) => {
           if (currInd === ind) {
             appReducers["SCROLL_INTO_VIEW"]({}, ind);
           } else {
-            dispatch(e.target, "self", "UPDATE_CURR_IND", ind);
+            dispatch(e.target, "self", "GO_TO_PAGE", ind);
           }
         }}
       >
@@ -116,12 +109,25 @@ const appReducers = {
       )
     let newSpecStore = {...pagePathStore, [newNonce]: pagePath};
     let newCurrInd = callerColInd + 1;
+
+    if (newCurrInd == state.prevInd) {
+      // window.history.popState()...
+    }
+
+    state = this["GO_TO_PAGE"]({state}, newCurrInd);
     return {
       ...state,
       pageKeyArr: newPageKeyArr,
       pagePathStore: newSpecStore,
       nonce: newNonce,
-      currInd: newCurrInd,
+    };
+  },
+
+  "GO_TO_PAGE": function ({state}, pageInd) {
+    return {
+      ...state,
+      currInd: pageInd,
+      prevInd: state.currInd,
     };
   },
 
@@ -167,12 +173,6 @@ const appReducers = {
     pageListContainer.scrollBy({left: centerDiff, behavior: "smooth"});
 
     return;
-  },
-
-  "UPDATE_CURR_IND": function ({state: state}, newInd) {
-    this["SCROLL_INTO_VIEW"]({state: state}, newInd);
-
-    return {...state, currInd: newInd};
   },
 }
 

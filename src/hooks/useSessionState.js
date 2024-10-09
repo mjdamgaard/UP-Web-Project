@@ -4,16 +4,10 @@ import {
 
 
 
-// TODO: Remake these hooks according to: "And for my plan for the remake of
-// the useSessionState: As I alluded to, we could still let all session states
-// be contained in one object in sessionStorage, but use nonces instead for
-// the sKeys. Then each parent state just has to hold a store over all the
-// nodeIdentifiers (gotten from getNodeIdentifier()) of its React component
-// children, paired with their nonce IDs, i.e. their sKeys. ..And it of course
-// has to also hold the sKey of its parent. And that's it, really. 
-// Hm, it doesn't sound too hard to implement, actually. But neither does the
-// more simple useStateAndReducers() [edit.], so let me just implement and
-// use those first."
+// TODO: Remake this hook without the backup-and-remove functionality (not
+// needed), and without the dispatch function (use useDispatch() instead),
+// following my plan (see 23-xx notes) of using a single array to store
+// states rather than using a tree structure. 
 
 
 const sessionStateAuxillaryDataStore = {};
