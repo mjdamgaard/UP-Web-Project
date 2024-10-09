@@ -21,7 +21,7 @@ export const AppPage = (props) => {
   );
 
   var page;
-  if (/^e[1-9]/.test(pagePath)) {
+  if (/^\/e[1-9]/.test(pagePath)) {
     page = <EntityPage entID={pagePath.match(/[1-9][0-9]*/)[0]} />;
   }
 

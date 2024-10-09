@@ -39,7 +39,7 @@ export const App = (props) => {
     },
     pageKeyArr: [0, 1],
     pagePathStore: {
-      0: "e" + HOME_ENTITY_ID,
+      0: "/e" + HOME_ENTITY_ID,
       1: window.location.pathname,
     },
     nonce: 1,

@@ -15,14 +15,17 @@ import {DBRequestManager} from "../classes/DBRequestManager.js";
 export class DataFetcher {
 
 
-  static fetchPublicEntity(entID, callback) {
+  static fetchPublicSmallEntity(entID, callback) {
     let reqData = {
       req: "ent",
       id: entID,
+      m: 65535,
+      s: 0,
     };
     DBRequestManager.query(reqData, (result) => {
-      let [def, len] = result[0] ?? [];
-      callback(def, len);
+      let [datatype, defStr, len] = result[0] ?? [];
+      let isContained = (len <= 65535); 
+      callback(datatype, defStr, len, isContained);
     });
   }
 

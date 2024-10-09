@@ -1,5 +1,6 @@
 import {useState, useMemo, useContext} from "react";
 
+import {DataFetcher} from "../../../classes/DataFetcher";
 
 
 /* Placeholders */
@@ -18,23 +19,20 @@ export const EntityPage = (props) => {
     // TODO: Also always query for the `useful entity' meta-tag and print out
     // that rating as well. *No, just do this for the drop-down menu for now.
     
-    // DataFetcher.fetchMainData(
-    //   entID, (entMainData) => {
-    //     setState(prev => {
-    //       return {
-    //         ...prev,
-    //         entMainData: entMainData,
-    //         isFetched: true,
-    //       };
-    //     });
-    //   }
-    // );
-    setState(prev => {
-      return {
-        ...prev,
-        isFetched: true,
-      };
-    });
+    DataFetcher.fetchPublicSmallEntity(
+      entID, (datatype, defStr, len, isContained) => {
+        setState(prev => {
+          return {
+            ...prev,
+            datatype: datatype,
+            defStr: defStr,
+            len: len,
+            isContained: isContained,
+            isFetched: true,
+          };
+        });
+      }
+    );
   }, []);
 
 
@@ -66,6 +64,7 @@ export const EntityPage = (props) => {
         {/* <div><EntityDataDisplay entID={entID} /></div> */}
       </div>
       {/* <EntitySubpages entID={entID} classID={classID} /> */}
+      {"defStr: " + results.defStr}
     </div>
   );
 };
