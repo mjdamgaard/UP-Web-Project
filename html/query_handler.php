@@ -119,27 +119,27 @@ switch ($reqType) {
         break;
     /* Entity queries */
     case "ent":
-        $sql = "CALL selectEntity (?, ?, ?)";
-        $paramNameArr = array("id", "m", "s");
-        $typeArr = array("id", "uint", "uint");
+        $sql = "CALL selectEntity (?)";
+        $paramNameArr = array("id");
+        $typeArr = array("id");
         // output: [[def, len, creatorID]].
         break;
     case "entAsUser":
-        $sql = "CALL selectEntityAsUser (?, ?, ?, ?)";
-        $paramNameArr = array("u", "id", "m", "s");
-        $typeArr = array("id", "id", "uint", "uint");
+        $sql = "CALL selectEntityAsUser (?, ?)";
+        $paramNameArr = array("u", "id");
+        $typeArr = array("id", "id");
         // output: [[def, len, creatorID, isPublic]].
         break;
     case "entFromHash":
-        $sql = "CALL selectEntityFromHash (?, ?, ?, ?)";
-        $paramNameArr = array("h", "c", "m", "s");
-        $typeArr = array("hash", "id", "uint", "uint");
+        $sql = "CALL selectEntityFromHash (?, ?)";
+        $paramNameArr = array("h", "c");
+        $typeArr = array("hash", "id");
         // output: [[def, len]].
         break;
     case "entFromHashAsUser":
-        $sql = "CALL selectEntityFromHashAsUser (?, ?, ?, ?)";
-        $paramNameArr = array("h", "u", "m", "s");
-        $typeArr = array("hash", "id", "uint", "uint");
+        $sql = "CALL selectEntityFromHashAsUser (?, ?)";
+        $paramNameArr = array("h", "u");
+        $typeArr = array("hash", "id");
         // output: [[def, len]].
         break;
     case "creations":

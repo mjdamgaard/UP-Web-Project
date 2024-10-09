@@ -145,18 +145,11 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectEntity (
-    IN entID BIGINT UNSIGNED,
-    IN maxLen INT UNSIGNED,
-    IN startPos INT UNSIGNED
+    IN entID BIGINT UNSIGNED
 )
 BEGIN
-    SET startPos = startPos + 1;
-    SELECT 
-        (
-            CASE WHEN maxLen = 0 THEN SUBSTRING(def_str, startPos)
-            ELSE SUBSTRING(def_str, startPos, startPos + maxLen)
-            END
-        ) AS defStr,
+    SELECT
+        SUBSTRING(def_str, 1, 65535) AS defStr,
         LENGTH(def_str) AS len,
         creator_id AS creatorID
     FROM Entities
@@ -172,18 +165,11 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectEntityAsUser (
     IN userID BIGINT UNSIGNED,
-    IN entID BIGINT UNSIGNED,
-    IN maxLen INT UNSIGNED,
-    IN startPos INT UNSIGNED
+    IN entID BIGINT UNSIGNED
 )
 BEGIN
-    SET startPos = startPos + 1;
-    SELECT 
-        (
-            CASE WHEN maxLen = 0 THEN SUBSTRING(def_str, startPos)
-            ELSE SUBSTRING(def_str, startPos, startPos + maxLen)
-            END
-        ) AS defStr,
+    SELECT
+        SUBSTRING(def_str, 1, 65535) AS defStr,
         LENGTH(def_str) AS len,
         creator_id AS creatorID,
         is_private AS isPrivate
@@ -200,18 +186,11 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectEntityFromHash (
     IN defHash CHAR(64),
-    IN creatorID BIGINT UNSIGNED,
-    IN maxLen INT UNSIGNED,
-    IN startPos INT UNSIGNED
+    IN creatorID BIGINT UNSIGNED
 )
 BEGIN
-    SET startPos = startPos + 1;
-    SELECT 
-        (
-            CASE WHEN maxLen = 0 THEN SUBSTRING(def_str, startPos)
-            ELSE SUBSTRING(def_str, startPos, startPos + maxLen)
-            END
-        ) AS defStr,
+    SELECT
+        SUBSTRING(def_str, 1, 65535) AS defStr,
         LENGTH(def_str) AS len
     FROM Entities
     WHERE (
@@ -227,18 +206,11 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectEntityFromHashAsUser (
     IN defHash CHAR(64),
-    IN userID BIGINT UNSIGNED,
-    IN maxLen INT UNSIGNED,
-    IN startPos INT UNSIGNED
+    IN userID BIGINT UNSIGNED
 )
 BEGIN
-    SET startPos = startPos + 1;
-    SELECT 
-        (
-            CASE WHEN maxLen = 0 THEN SUBSTRING(def_str, startPos)
-            ELSE SUBSTRING(def_str, startPos, startPos + maxLen)
-            END
-        ) AS defStr,
+    SELECT
+        SUBSTRING(def_str, 1, 65535) AS defStr,
         LENGTH(def_str) AS len
     FROM Entities
     WHERE (
