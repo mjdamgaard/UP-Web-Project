@@ -1,4 +1,4 @@
-import {useState, useLayoutEffect, useMemo} from "react";
+import {useState, useLayoutEffect, createContext, useCallback} from "react";
 
 import {useDispatch} from "../../hooks/useDispatch.js";
 
@@ -26,11 +26,17 @@ const PAGE_CONTAINER_SELECTOR = ".page-container";
 // }
 
 
+export const AccountContext = createContext();
+
+
+
 
 export const App = (props) => {
   const [state, setState] = useState({
-    sesUserID: localStorage.session && localStorage.session.userID,
-    sesIDHex: localStorage.session && localStorage.session.sesIDHex,
+    accountData: {
+      userID: localStorage.session && localStorage.session.userID,
+      sesIDHex: localStorage.session && localStorage.session.sesIDHex,
+    },
     pageKeyArr: [0, 1],
     pagePathStore: {
       0: "e" + HOME_ENTITY_ID,
@@ -42,11 +48,17 @@ export const App = (props) => {
     // scrollLeft: 0, scrollVelocity: 0, lastScrollAt: 0,
 
   });
-  const {pagePathStore, pageKeyArr, currInd} = state;
+  const {pagePathStore, pageKeyArr, currInd, accountData} = state;
 
   const [refCallback, dispatch] = useDispatch(
     appReducers, "app", setState, props
   );
+
+
+  const getAccountData = useCallback((propName) => {
+    return accountData[propName];
+  }, Object.values(accountData))
+
 
   useLayoutEffect(() => {
     let currPagePath = pagePathStore[pageKeyArr[currInd]];
@@ -82,13 +94,16 @@ export const App = (props) => {
 
   return (
     <div className="app" ref={refCallback}>
-      <AppHeader
-        setAppPage={void(0)}
-        pageKeyArr={pageKeyArr} pagePathStore={pagePathStore} currInd={currInd}
-      />
-      <div className="page-list-container">
-        {appPages}
-      </div>
+      <AccountContext.Provider value={getAccountData}>
+        <AppHeader
+          setAppPage={void(0)}
+          pageKeyArr={pageKeyArr} pagePathStore={pagePathStore}
+          currInd={currInd}
+        />
+        <div className="page-list-container">
+          {appPages}
+        </div>
+      </AccountContext.Provider>
     </div>
   );
 };
@@ -173,6 +188,13 @@ const appReducers = {
     pageListContainer.scrollBy({left: centerDiff, behavior: "smooth"});
 
     return;
+  },
+
+  /* Account reducers */
+
+  "LOG_IN": function ({state, props, node}, input, dispatch) {
+    // TODO: Implement.
+    alert("LOG_IN not implemented yet.");
   },
 }
 
