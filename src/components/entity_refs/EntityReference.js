@@ -16,8 +16,6 @@ export const EntityReference = ({
   const [results, setState] = useState({});
 
   useMemo(() => {
-    // TODO: Also query for the highest rated 'representation' and if the
-    // score is high enough, use the entity data from that instead.
     if (recLevel <= maxRecLevel) {
       DataFetcher.fetchPublicSmallEntity(
         entID, (datatype, defStr, len, creatorID, isContained) => {

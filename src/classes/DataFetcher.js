@@ -16,6 +16,8 @@ export class DataFetcher {
 
 
   static fetchPublicSmallEntity(entID, callback) {
+    // TODO: Also query for the highest rated 'representation' and if the
+    // score is high enough, use the entity data from that instead.
     let reqData = {
       req: "ent",
       id: entID,

@@ -8,14 +8,10 @@ import {EntityReference} from "../../entity_refs/EntityReference";
 
 
 
-export const EntityPage = (props) => {
-  const {entID, initTab} = props;
+export const EntityPage = ({entID, initTab} ) => {
   const [results, setState] = useState({});
 
   useMemo(() => {
-    // TODO: Also query for the highest rated 'representation' and if the
-    // score is high enough, use the entity data from that instead.
-    
     DataFetcher.fetchPublicSmallEntity(
       entID, (datatype, defStr, len, creatorID, isContained) => {
         setState(prev => {
@@ -33,6 +29,7 @@ export const EntityPage = (props) => {
     );
   }, []);
 
+  const {datatype, defStr, isContained, isFetched} = results;
 
   // Before results is fetched, render this:
   if (!results.isFetched) {
@@ -61,7 +58,7 @@ export const EntityPage = (props) => {
         <h2><EntityReference entID={entID} isLink /></h2>
         {/* <div><EntityDataDisplay entID={entID} /></div> */}
       </div>
-      {/* <EntitySubpages entID={entID} classID={classID} /> */}
+      <EntityInfoPage entID={entID} />
       {"defStr: " + results.defStr}
     </div>
   );
