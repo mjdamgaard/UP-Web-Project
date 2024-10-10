@@ -32,24 +32,26 @@ export const AccountContext = createContext();
 
 
 export const App = (props) => {
+  const pathname = window.location.pathname;
+  const hasPath = pathname !== "/";
   const [state, setState] = useState({
     accountData: {
       userID: localStorage.session && localStorage.session.userID,
       sesIDHex: localStorage.session && localStorage.session.sesIDHex,
     },
-    pageKeyArr: [0, 1],
+    pageKeyArr: hasPath ? [0, 1] : [0],
     pagePathStore: {
       0: "/e" + HOME_ENTITY_ID,
-      1: window.location.pathname,
+      1: hasPath ? pathname : undefined,
     },
     nonce: 1,
-    currInd: 1,
-    prevInd: 0,
+    currInd: hasPath ? 1 : 0,
+    prevInd: hasPath ? 0 : null,
     // scrollLeft: 0, scrollVelocity: 0, lastScrollAt: 0,
 
   });
   const {pagePathStore, pageKeyArr, currInd, accountData} = state;
-
+console.log(pagePathStore);
   const [refCallback, dispatch] = useDispatch(
     appReducers, "app", setState, props
   );

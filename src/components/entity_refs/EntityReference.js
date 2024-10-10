@@ -10,32 +10,52 @@ import {DataFetcher} from "../../classes/DataFetcher.js";
 const CLASS_CLASS_ID = 2;
 
 
-export const EntityReference = ({entID, isLink}) => {
+export const EntityReference = ({
+  entID, isLink, maxRecLevel = 2, recLevel = 0
+}) => {
   const [results, setState] = useState({});
 
   useMemo(() => {
     // TODO: Also query for the highest rated 'representation' and if the
     // score is high enough, use the entity data from that instead.
-    
-    DataFetcher.fetchPublicSmallEntity(
-      entID, (datatype, defStr, len, creatorID, isContained) => {
-        setState(prev => {
-          return {
-            ...prev,
-            datatype: datatype,
-            defStr: defStr,
-            len: len,
-            creatorID: creatorID,
-            isContained: isContained,
-            isFetched: true,
-          };
-        });
-      }
-    );
+    if (recLevel <= maxRecLevel) {
+      DataFetcher.fetchPublicSmallEntity(
+        entID, (datatype, defStr, len, creatorID, isContained) => {
+          setState(prev => {
+            return {
+              ...prev,
+              datatype: datatype,
+              defStr: defStr,
+              len: len,
+              creatorID: creatorID,
+              isContained: isContained,
+              isFetched: true,
+            };
+          });
+        }
+      );
+    }
   }, []);
 
   const {datatype, defStr, isContained, isFetched} = results;
 
+  if (recLevel > maxRecLevel) {
+    if (isLink) {
+      return (
+        <div className="entity-ref">
+          <EntityLink entID={entID} >
+            {"Entity #" + entID}
+          </EntityLink>
+        </div>
+      );
+    } else {
+      return (
+        <div className="entity-ref">
+          {"Entity #" + entID}
+        </div>
+      );
+    }
+  }
 
   // Before results is fetched, render this:
   if (!isFetched) {
@@ -148,14 +168,14 @@ const ObjectEntityReference = ({entID, defObj}) => {
   const classID = defObj.class.match(/[0-9]+/)[0];
   var content;
   switch (classID) {
-    case CLASS_CLASS_ID:
-      content = <ReferenceContentOfClassClass
-        entID={entID} defObj={defObj}
-      />;
-      break;
+    // case CLASS_CLASS_ID:
+    //   content = <ReferenceContentOfClassClass
+    //     entID={entID} defObj={defObj}
+    //   />;
+    //   break;
     // TODO: Add more.
     default:
-      content = <ReferenceContentOfClassUnknown
+      content = <DefaultReferenceContent
         entID={entID} defObj={defObj}
       />;
   }
@@ -168,30 +188,9 @@ const ObjectEntityReference = ({entID, defObj}) => {
 };
 
 
-const ReferenceContentOfClassUnknown = ({entID, defObj}) => {
+const DefaultReferenceContent = ({entID, defObj}) => {
   return (
-    <div className="class-unknown">
-      {
-        Object.entries(defObj).map(([key, val], ind) => {
-          let parsedKey = key.match(/[a-z0-9\-]+/g).join();
-          return (
-            <div key={ind} className={"member-" + parsedKey}>
-              <div className="attribute-name">{key}</div>
-              <div className="attribute-value">{val}</div>
-            </div>
-          );
-        })
-      }
-      <div key={"entID"} className="entID">{entID}</div>
-    </div>
-  );
-};
-
-
-const ReferenceContentOfClassClass = ({entID, defObj}) => {
-  // TODO: Change.
-  return (
-    <div className="class-class">
+    <div className="class-default">
       {
         Object.entries(defObj).map(([key, val], ind) => {
           let parsedKey = key.match(/[a-z0-9\-]+/g).join();

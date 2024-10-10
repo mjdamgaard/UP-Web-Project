@@ -1,0 +1,36 @@
+
+$classClassID: 2;
+
+
+.entity-ref {
+  display: inline-block;
+
+  * {
+    display: inline-block;
+  }
+
+  & .class-default > * {
+    display: none;
+
+    & > .attribute-name {
+      display: none;
+    }
+
+    &.member-name {
+      display: inline-block;
+    }
+    &.member-title:not(:has(~ .member-name)) {
+      display: inline-block;
+    }
+    &.member-username:not(:has(~ .member-name) + :has(~ .member-title)) {
+      display: inline-block;
+    }
+  }
+
+  .obj-entity.class-id-#{$classClassID} {
+    .attribute-value {
+      font-family: monospace;
+    }
+  }
+
+}
