@@ -1,7 +1,7 @@
 import {useState, useMemo, useContext} from "react";
 
 import {DataFetcher} from "../../../classes/DataFetcher";
-
+import {EntityReference} from "../../entity_refs/EntityReference";
 
 /* Placeholders */
 // const CategoryInstancesPage = () => <template></template>;
@@ -12,21 +12,19 @@ export const EntityPage = (props) => {
   const {entID, initTab} = props;
   const [results, setState] = useState({});
 
-  // const [results, setResults] = useState({});
   useMemo(() => {
-    // TODO: Also query for the highest rated 'representation' and if the rating
-    // is high enough, use the propStruct generated from that instead.
-    // TODO: Also always query for the `useful entity' meta-tag and print out
-    // that rating as well. *No, just do this for the drop-down menu for now.
+    // TODO: Also query for the highest rated 'representation' and if the
+    // score is high enough, use the entity data from that instead.
     
     DataFetcher.fetchPublicSmallEntity(
-      entID, (datatype, defStr, len, isContained) => {
+      entID, (datatype, defStr, len, creatorID, isContained) => {
         setState(prev => {
           return {
             ...prev,
             datatype: datatype,
             defStr: defStr,
             len: len,
+            creatorID: creatorID,
             isContained: isContained,
             isFetched: true,
           };
@@ -60,7 +58,7 @@ export const EntityPage = (props) => {
   return (
     <div className="entity-page">
       <div className="entity-page-header">
-        {/* <h2><EntityTitle entID={entID} isLink /></h2> */}
+        <h2><EntityReference entID={entID} isLink /></h2>
         {/* <div><EntityDataDisplay entID={entID} /></div> */}
       </div>
       {/* <EntitySubpages entID={entID} classID={classID} /> */}

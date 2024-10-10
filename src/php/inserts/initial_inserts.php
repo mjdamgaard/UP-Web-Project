@@ -23,7 +23,7 @@ $inserter->insertPublicEntities("1", array(
         "description" => "@[classes/class/desc]",
         "title" => "class"
     ))),
-    "classes/class/desc" => array("t",
+    "classes/class/desc" => array("x", // ('x' for 'XML,' or simply 'teXt.')
         "<h1><class>class</class></h1>".
         // "<h2>Description</h2>".
         // "<p>A class of all class entities (including itself). ".
@@ -60,7 +60,7 @@ $inserter->insertPublicEntities("1", array(
         "description"=>"@[classes/entity/desc]",
         "title"=>"entity"
     ))),
-    "classes/entity/desc" => array("t",
+    "classes/entity/desc" => array("x",
         "<h1><class>entity</class></h1>".
         "..."
     ),

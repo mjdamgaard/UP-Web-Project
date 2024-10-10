@@ -1,10 +1,10 @@
 import {useState, createContext, useContext, useEffect, useMemo} from "react";
-import {useDispatch} from "../../hooks/useDispatch.js"
+import {useDispatch} from "../hooks/useDispatch.js"
 // import {Link} from "react-router-dom";
 
-import {useQuery} from "../../hooks/DBRequests.js";
+import {useQuery} from "../hooks/DBRequests.js";
 import {ColumnContext} from "../../hooks/ColumnContext.js";
-import {DataFetcher} from "../../classes/DataFetcher.js";
+import {DataFetcher} from "../classes/DataFetcher.js";
 import {ExpandableSpan} from "../DropdownBox.js";
 
 import {ParallelCallbackHandler} from "../../classes/ParallelCallbackHandler.js";

@@ -157,7 +157,6 @@ BEGIN
             ELSE SUBSTRING(def_str, startPos + 1, maxLen)
             END
         ) AS defStr,
-        SUBSTRING(def_str, 1, 65535) AS defStr,
         LENGTH(def_str) AS len,
         creator_id AS creatorID
     FROM Entities

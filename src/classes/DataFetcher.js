@@ -23,9 +23,9 @@ export class DataFetcher {
       s: 0,
     };
     DBRequestManager.query(reqData, (result) => {
-      let [datatype, defStr, len] = result[0] ?? [];
+      let [datatype, defStr, len, creatorID] = result[0] ?? [];
       let isContained = (len <= 65535); 
-      callback(datatype, defStr, len, isContained);
+      callback(datatype, defStr, len, creatorID, isContained);
     });
   }
 

@@ -56,7 +56,7 @@ class EntityInserter {
                 $type = $def[0];
                 $defStr = $def[1];
 
-                // TODO: If we implement more types than "j" and "t", make
+                // TODO: If we implement more types than "j" and "x", make
                 // switch-case statement (or similar) here, and thus branch
                 // away from the following reference substitutions if needed. 
 
@@ -73,6 +73,7 @@ class EntityInserter {
                 // Then substitute any creation reference if possible.
                 foreach ($explodedDefStr as $matchInd => $match) {
                     if (preg_match($crRefPattern, $match)) {
+                        // TODO: Remove this JSON decoding for XML texts.
                         $refIdent = json_decode(
                             '"' . substr($match, 2, -1) . '"'
                         );
