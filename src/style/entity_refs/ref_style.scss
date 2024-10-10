@@ -24,6 +24,12 @@ $classClassID: 2;
     }
     &.member-username:not(:has(~ .member-name) + :has(~ .member-title)) {
       display: inline-block;
+      // :before {
+      //   content: "User ";
+      // }
+      :before {
+        content: "@";
+      }
     }
   }
 

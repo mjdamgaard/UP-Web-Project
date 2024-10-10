@@ -73,10 +73,11 @@ class EntityInserter {
                 // Then substitute any creation reference if possible.
                 foreach ($explodedDefStr as $matchInd => $match) {
                     if (preg_match($crRefPattern, $match)) {
-                        // TODO: Remove this JSON decoding for XML texts.
-                        $refIdent = json_decode(
-                            '"' . substr($match, 2, -1) . '"'
-                        );
+                        $refIdent = ($type === "j") ?
+                            json_decode(
+                                '"' . substr($match, 2, -1) . '"'
+                            ) :
+                            substr($match, 2, -1);
                         if (
                             array_key_exists($refIdent, $this->creationIDStore)
                         ) {
