@@ -78,6 +78,7 @@ export const EntityReference = ({
 
   // Finally render this.
   if (isLink) {
+    // TODO: Make the link a button to the left of the title instead.
     return (
       <div className="entity-ref">
         <EntityLink entID={entID} >

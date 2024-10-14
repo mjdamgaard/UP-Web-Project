@@ -72,14 +72,14 @@ export const DropdownMenu = ({title, children, startAsExpanded}) => {
   if (!isLoaded) {
     return (
       <div>
-        <h4 className="dropdown-menu-title clickable" onClick={() => {
+        <h2 className="dropdown-menu-title clickable" onClick={() => {
           setIsExpanded(prev => !prev);
         }}>
           <span className="dropdown-button">
             <span>&#8250;</span>{' '}
             {title}
           </span>
-        </h4>
+        </h2>
         <div style={{display: "none"}}></div>
       </div>
     );
@@ -88,14 +88,14 @@ export const DropdownMenu = ({title, children, startAsExpanded}) => {
   if (!isExpanded) {
     return (
       <div>
-        <h4 className="dropdown-menu-title clickable" onClick={() => {
+        <h2 className="dropdown-menu-title clickable" onClick={() => {
           setIsExpanded(prev => !prev);
         }}>
           <span className="dropdown-button">
           <span>&#8250;</span>{' '}
             {title}
           </span>
-        </h4>
+        </h2>
         <div style={{display: "none"}}>{children}</div>
       </div>
     );
@@ -103,14 +103,14 @@ export const DropdownMenu = ({title, children, startAsExpanded}) => {
 
   return (
     <div>
-      <h4 className="dropdown-menu-title clickable" onClick={() => {
+      <h2 className="dropdown-menu-title clickable" onClick={() => {
         setIsExpanded(prev => !prev);
       }}>
         <span className="dropdown-button">
           <span>&#8964;</span>{' '}
           {title}
         </span>
-      </h4>
+      </h2>
       <div>{children}</div>
     </div>
   );

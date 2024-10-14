@@ -142,6 +142,89 @@ const ObjectEntityInfoPageContent = ({entID, defObj}) => {
       <DropdownMenu
         title={"Description"} children={descriptionText} startAsExpanded
       />
+      <ClassDescriptions defObj={defObj} />
+    </>
+  );
+};
+
+
+
+const ClassDescriptions = ({defObj, maxRecLevel = 7, recLevel = 0}) => {
+  if (recLevel > maxRecLevel) {
+    return <></>;
+  }
+  var descriptionText;
+  if (/^@[1-9][0-9]*$/.test(defObj.class)) {
+    return <ClassDescriptionsFromClassID
+      maxRecLevel={maxRecLevel} recLevel={recLevel}
+      classID={defObj.class.substring(1)}
+    />;
+  } else {
+    return <>{"Class attribute is ill-formed or missing."}</>;
+  }
+};
+
+
+const ClassDescriptionsFromClassID = ({classID, maxRecLevel, recLevel}) => {
+  const [results, setState] = useState({});
+  useMemo(() => {
+    DataFetcher.fetchPublicSmallEntity(
+      classID, (datatype, defStr, len, creatorID, isContained) => {
+        setState(prev => {
+          return {
+            ...prev,
+            datatype: datatype,
+            defStr: defStr,
+            len: len,
+            creatorID: creatorID,
+            isContained: isContained,
+            isFetched: true,
+          };
+        });
+      }
+    );
+  }, []);
+  const {datatype, defStr, isContained, isFetched} = results;
+  // Before results is fetched, render this:
+  if (!results.isFetched) {
+    return (
+      <></>
+    );
+  }
+
+  var defObj;
+  try {
+    defObj = JSON.parse(defStr);
+  } catch (error) {
+    return (
+      <>{"Invalid class #" + classID + " (invalid JSON)"}</>
+    );
+  }
+  if (!defObj || Array.isArray(defObj) || typeof defObj !== "object") {
+    return (
+      <>{"Invalid class #" + classID + " (not a JSON object)"}</>
+    );
+  }
+
+
+  var descriptionText;
+  if (/^@[1-9][0-9]*$/.test(defObj.description)) {
+    descriptionText = <XMLTextFromEntID
+      entID={defObj.description.substring(1)}
+    />;
+  } else {
+    descriptionText = "Description attribute is ill-formed or missing."
+  }
+
+  return (
+    <>
+      <DropdownMenu
+        title={<EntityReference entID={classID} isLink />}
+        children={descriptionText}
+      />
+      <ClassDescriptions
+        defObj={defObj} maxRecLevel={maxRecLevel} recLevel={recLevel + 1}
+      />
     </>
   );
 };
