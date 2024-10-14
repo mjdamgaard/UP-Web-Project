@@ -1,11 +1,12 @@
 import {useState, useMemo, useContext} from "react";
 
 import {DataFetcher} from "../../../../classes/DataFetcher";
-import { DropdownMenu } from "../../../menus/DropdownMenu";
-import { EntityReference } from "../../../entity_refs/EntityReference";
+import {DropdownMenu} from "../../../menus/DropdownMenu";
+import {EntityReference} from "../../../entity_refs/EntityReference";
+import {XMLText, XMLTextFromEntID} from "../../../texts/XMLText";
 
 /* Placeholders */
-const XMLText = () => <template></template>;
+// const XMLText = () => <template></template>;
 
 
 
@@ -43,7 +44,7 @@ export const EntityInfoPage = ({entID}) => {
   if (datatype === 'x') {
     content = <>
       <h1>Text content</h1>
-      <XMLText xml={defStr}/>
+      <XMLText xml={defStr} />
     </>;
   }
   else if (datatype === 'j') {
@@ -112,22 +113,34 @@ const JSONEntityInfoPageContent = ({entID, defStr, isContained}) => {
 const ObjectEntityInfoPageContent = ({entID, defObj}) => {
 
   const attributeMembers =  Object.entries(defObj).map(([key, val], ind) => {
-        let parsedKey = key.match(/[a-z0-9\-]+/g).join();
-        if (/^@[1-9[0-9]*$/.test(val)) {
-          val = <EntityReference entID={val.substring(1)} isLink />
-        }
-        return (
-          <div key={ind} className={"member-" + parsedKey}>
-            <div className="attribute-name">{key}</div>
-            <div className="attribute-value">{val}</div>
-          </div>
-        );
-      });
+    let parsedKey = key.match(/[a-z0-9\-]+/g).join();
+    if (/^@[1-9[0-9]*$/.test(val)) {
+      val = <EntityReference entID={val.substring(1)} isLink />
+    }
+    return (
+      <div key={ind} className={"member-" + parsedKey}>
+        <div className="attribute-name">{key}</div>
+        <div className="attribute-value">{val}</div>
+      </div>
+    );
+  });
+
+  var descriptionText;
+  if (/^@[1-9][0-9]*$/.test(defObj.description)) {
+    descriptionText = <XMLTextFromEntID
+      entID={defObj.description.substring(1)}
+    />;
+  } else {
+    descriptionText = "Description attribute is ill-formed or missing."
+  }
 
   return (
     <>
       <DropdownMenu
         title={"Attributes"} children={attributeMembers} startAsExpanded
+      />
+      <DropdownMenu
+        title={"Description"} children={descriptionText} startAsExpanded
       />
     </>
   );

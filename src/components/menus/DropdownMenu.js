@@ -76,7 +76,7 @@ export const DropdownMenu = ({title, children, startAsExpanded}) => {
           setIsExpanded(prev => !prev);
         }}>
           <span className="dropdown-button">
-            <span className="caret"></span>{' '}
+            <span>&#8250;</span>{' '}
             {title}
           </span>
         </h4>
@@ -92,7 +92,7 @@ export const DropdownMenu = ({title, children, startAsExpanded}) => {
           setIsExpanded(prev => !prev);
         }}>
           <span className="dropdown-button">
-            <span className="caret"></span>{' '}
+          <span>&#8250;</span>{' '}
             {title}
           </span>
         </h4>
@@ -107,7 +107,7 @@ export const DropdownMenu = ({title, children, startAsExpanded}) => {
         setIsExpanded(prev => !prev);
       }}>
         <span className="dropdown-button">
-          <span className="caret caret-up dropup"></span>{' '}
+          <span>&#8964;</span>{' '}
           {title}
         </span>
       </h4>
