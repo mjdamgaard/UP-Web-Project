@@ -139,7 +139,8 @@ const JSONEntityReference = ({entID, defStr, isContained}) => {
   else if (typeof def === "number") {
     return (
       <div className="json-entity">
-        {def}
+        {/* {def} */}
+        {"Number #" + entID + " (numbers are not yet implemented)"}
       </div>
     );
   }

@@ -2,6 +2,7 @@ import {useState, useMemo, useContext} from "react";
 
 import {DataFetcher} from "../../../classes/DataFetcher";
 import {EntityReference} from "../../entity_refs/EntityReference";
+import {EntityInfoPage} from "./subpages/InfoPage";
 
 /* Placeholders */
 // const CategoryInstancesPage = () => <template></template>;
@@ -59,7 +60,6 @@ export const EntityPage = ({entID, initTab} ) => {
         {/* <div><EntityDataDisplay entID={entID} /></div> */}
       </div>
       <EntityInfoPage entID={entID} />
-      {"defStr: " + results.defStr}
     </div>
   );
 };

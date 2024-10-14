@@ -1,13 +1,15 @@
 import {useState, useMemo, useContext} from "react";
 
-import {DataFetcher} from "../../../classes/DataFetcher";
+import {DataFetcher} from "../../../../classes/DataFetcher";
+import { DropdownMenu } from "../../../menus/DropdownMenu";
+import { EntityReference } from "../../../entity_refs/EntityReference";
 
 /* Placeholders */
-// const CategoryInstancesPage = () => <template></template>;
+const XMLText = () => <template></template>;
 
 
 
-export const InfoPage = ({entID}) => {
+export const EntityInfoPage = ({entID}) => {
   const [results, setState] = useState({});
 
   useMemo(() => {
@@ -86,26 +88,47 @@ const JSONEntityInfoPageContent = ({entID, defStr, isContained}) => {
       <>{"Array #" + entID + " (arrays are not yet implemented)"}</>
     );
   }
-  // ....
   else if (def && typeof def === "object") {
     return (
       <div className="json-entity">
-        <ObjectEntityReference entID={entID} defObj={def} />
+        <ObjectEntityInfoPageContent entID={entID} defObj={def} />
       </div>
     );
   }
   else if (typeof def === "string") {
     return (
-      <div className="json-entity">
-        {"String #" + entID + " (strings are not yet implemented)"}
-      </div>
+      <>{"String #" + entID + " (strings are not yet implemented)"}</>
     );
   }
   else if (typeof def === "number") {
     return (
-      <div className="json-entity">
-        {def}
-      </div>
+      <>{"Number #" + entID + " (numbers are not yet implemented)"}</>
     );
   }
+};
+
+
+
+const ObjectEntityInfoPageContent = ({entID, defObj}) => {
+
+  const attributeMembers =  Object.entries(defObj).map(([key, val], ind) => {
+        let parsedKey = key.match(/[a-z0-9\-]+/g).join();
+        if (/^@[1-9[0-9]*$/.test(val)) {
+          val = <EntityReference entID={val.substring(1)} isLink />
+        }
+        return (
+          <div key={ind} className={"member-" + parsedKey}>
+            <div className="attribute-name">{key}</div>
+            <div className="attribute-value">{val}</div>
+          </div>
+        );
+      });
+
+  return (
+    <>
+      <DropdownMenu
+        title={"Attributes"} children={attributeMembers} startAsExpanded
+      />
+    </>
+  );
 };
