@@ -11,6 +11,7 @@ import {XMLText, XMLTextFromEntID} from "../../../texts/XMLText";
 
 
 export const EntityInfoPage = ({entID}) => {
+  // TODO: Refactor this as a hook instead, returning results.
   const [results, setState] = useState({});
 
   useMemo(() => {
@@ -134,6 +135,16 @@ const ObjectEntityInfoPageContent = ({entID, defObj}) => {
     descriptionText = "Description attribute is ill-formed or missing."
   }
 
+
+  var classDescriptions;
+  if (/^@[1-9][0-9]*$/.test(defObj.class)) {
+    classDescriptions = <ClassDescriptions
+      classID={defObj.class.substring(1)}
+    />;
+  } else {
+    classDescriptions = <>{"Class attribute is ill-formed or missing."}</>;
+  }
+
   return (
     <>
       <DropdownMenu
@@ -142,30 +153,14 @@ const ObjectEntityInfoPageContent = ({entID, defObj}) => {
       <DropdownMenu
         title={"Description"} children={descriptionText} startAsExpanded
       />
-      <ClassDescriptions defObj={defObj} />
+      {classDescriptions}
     </>
   );
 };
 
 
 
-const ClassDescriptions = ({defObj, maxRecLevel = 7, recLevel = 0}) => {
-  if (recLevel > maxRecLevel) {
-    return <></>;
-  }
-  var descriptionText;
-  if (/^@[1-9][0-9]*$/.test(defObj.class)) {
-    return <ClassDescriptionsFromClassID
-      maxRecLevel={maxRecLevel} recLevel={recLevel}
-      classID={defObj.class.substring(1)}
-    />;
-  } else {
-    return <>{"Class attribute is ill-formed or missing."}</>;
-  }
-};
-
-
-const ClassDescriptionsFromClassID = ({classID, maxRecLevel, recLevel}) => {
+const ClassDescriptions = ({classID, maxRecLevel = 7, recLevel = 0}) => {
   const [results, setState] = useState({});
   useMemo(() => {
     DataFetcher.fetchPublicSmallEntity(
@@ -216,15 +211,28 @@ const ClassDescriptionsFromClassID = ({classID, maxRecLevel, recLevel}) => {
     descriptionText = "Description attribute is ill-formed or missing."
   }
 
+  var parentClassDescriptions;
+  let parentClass = defObj["parent class"];
+  if (/^@[1-9][0-9]*$/.test(parentClass)) {
+    parentClassDescriptions = <ClassDescriptions
+      classID={parentClass.substring(1)}
+      maxRecLevel={maxRecLevel} recLevel={recLevel + 1}
+    />;
+  }
+  else if (parentClass === undefined) {
+    parentClassDescriptions = <></>;
+  }
+  else {
+    parentClassDescriptions = <>{"Parent class attribute is ill-formed."}</>;
+  }
+
   return (
     <>
       <DropdownMenu
         title={<EntityReference entID={classID} isLink />}
         children={descriptionText}
       />
-      <ClassDescriptions
-        defObj={defObj} maxRecLevel={maxRecLevel} recLevel={recLevel + 1}
-      />
+      {parentClassDescriptions}
     </>
   );
 };
