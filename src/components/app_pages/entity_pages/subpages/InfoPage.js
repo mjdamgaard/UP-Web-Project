@@ -8,6 +8,8 @@ import {XMLText, XMLTextFromEntID} from "../../../texts/XMLText";
 /* Placeholders */
 // const XMLText = () => <template></template>;
 
+const ENTITY_CLASS_ID = "4";
+const ENTITY_CLASS_DESC_ID = "5";
 
 
 export const EntityInfoPage = ({entID}) => {
@@ -154,6 +156,10 @@ const ObjectEntityInfoPageContent = ({entID, defObj}) => {
         title={"Description"} children={descriptionText} startAsExpanded
       />
       {classDescriptions}
+      <DropdownMenu
+        title={<EntityReference entID={ENTITY_CLASS_ID} isLink />}
+        children={<XMLTextFromEntID entID={ENTITY_CLASS_DESC_ID} />}
+      />
     </>
   );
 };
