@@ -268,8 +268,8 @@ export const EntityLink = (props) => {
 
   return (
     <div className="entity-link" ref={refCallback} onClick={(e) => {
-      let colSPec = {entID: entID};
-      dispatch(e.target, "app-column", "OPEN_COLUMN", colSPec);
+      let pagePath = "/e" + entID;
+      dispatch(e.target, "app-page", "OPEN_PAGE", pagePath);
     }} >
       {children}
     </div>
