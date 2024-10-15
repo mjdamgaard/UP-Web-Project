@@ -8,6 +8,7 @@ import {XMLText, XMLTextFromEntID} from "../../../texts/XMLText";
 /* Placeholders */
 // const XMLText = () => <template></template>;
 
+const CLASS_CLASS_ID = "2";
 const ENTITY_CLASS_ID = "4";
 const ENTITY_CLASS_DESC_ID = "5";
 
@@ -81,7 +82,8 @@ const JSONEntityInfoPageContent = ({entID, defStr, isContained}) => {
   var def;
   try {
     def = JSON.parse(defStr);
-  } catch (error) {
+  }
+  catch (error) {
     return (
       <>{"Invalid Entity #" + entID + " (invalid JSON)"}</>
     );
@@ -114,7 +116,6 @@ const JSONEntityInfoPageContent = ({entID, defStr, isContained}) => {
 
 
 const ObjectEntityInfoPageContent = ({entID, defObj}) => {
-
   const attributeMembers =  Object.entries(defObj).map(([key, val], ind) => {
     let parsedKey = key.match(/[a-z0-9\-]+/g).join();
     if (/^@[1-9[0-9]*$/.test(val)) {
@@ -130,20 +131,35 @@ const ObjectEntityInfoPageContent = ({entID, defObj}) => {
 
   var descriptionText;
   if (/^@[1-9][0-9]*$/.test(defObj.description)) {
-    descriptionText = <XMLTextFromEntID
-      entID={defObj.description.substring(1)}
-    />;
-  } else {
+    let descriptionID = defObj.description.substring(1);
+    descriptionText = <XMLTextFromEntID entID={descriptionID} />;
+  }
+  else {
     descriptionText = "Description attribute is ill-formed or missing."
   }
 
 
   var classDescriptions;
   if (/^@[1-9][0-9]*$/.test(defObj.class)) {
-    classDescriptions = <ClassDescriptions
-      classID={defObj.class.substring(1)}
-    />;
-  } else {
+    let classID = defObj.class.substring(1);
+    if (classID != CLASS_CLASS_ID) {
+      classDescriptions = <ClassDescriptions classID={classID} />;
+    }
+    else if (defObj["parent class"]) {
+      let parentClass = defObj["parent class"];
+      if (/^@[1-9][0-9]*$/.test(parentClass)) {
+        let parentClassID = parentClass.substring(1);
+        classDescriptions = <ClassDescriptions classID={parentClassID} />;
+      }
+      else {
+        classDescriptions = <>{"Parent class attribute is ill-formed."}</>;
+      }
+    }
+    else {
+      classDescriptions = <></>;
+    }
+  }
+  else {
     classDescriptions = <>{"Class attribute is ill-formed or missing."}</>;
   }
 
@@ -196,7 +212,8 @@ const ClassDescriptions = ({classID, maxRecLevel = 7, recLevel = 0}) => {
   var defObj;
   try {
     defObj = JSON.parse(defStr);
-  } catch (error) {
+  }
+  catch (error) {
     return (
       <>{"Invalid class #" + classID + " (invalid JSON)"}</>
     );
@@ -210,10 +227,10 @@ const ClassDescriptions = ({classID, maxRecLevel = 7, recLevel = 0}) => {
 
   var descriptionText;
   if (/^@[1-9][0-9]*$/.test(defObj.description)) {
-    descriptionText = <XMLTextFromEntID
-      entID={defObj.description.substring(1)}
-    />;
-  } else {
+    let descriptionID = defObj.description.substring(1);
+    descriptionText = <XMLTextFromEntID entID={descriptionID} />;
+  }
+  else {
     descriptionText = "Description attribute is ill-formed or missing."
   }
 
