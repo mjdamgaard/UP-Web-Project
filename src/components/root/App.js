@@ -1,6 +1,6 @@
 import {useState, useLayoutEffect, createContext, useCallback} from "react";
 
-import {useDispatch} from "../../hooks/useDispatch.js";
+import {useDispatch} from "../../hooks/old/useDispatch.js";
 
 // import {appReducers} from "./appReducers.js";
 

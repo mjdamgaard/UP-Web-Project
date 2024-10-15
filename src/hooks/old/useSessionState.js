@@ -1,19 +1,201 @@
 import {
-  useState, useEffect, useMemo, useId,
+  useState, useEffect, useMemo,
 } from "react";
 
 
 
-const stateStore = {};
+// TODO: Remake this hook without the backup-and-remove functionality (not
+// needed), and without the dispatch function (use useDispatch() instead),
+// following my plan (see 23-xx notes) of using a single array to store
+// states rather than using a tree structure. 
 
-function getShouldBeRestored() {
-  // TODO: Implement.
-  return false;
+
+const sessionStateAuxillaryDataStore = {};
+
+
+sessionStorage.getItem("_componentStateData") ||
+  sessionStorage.setItem("_componentStateData", JSON.stringify({
+    componentStates: {}, elemTypeIDs: {},
+  }));
+
+
+
+class SessionStatesHandler {
+
+  static getComponentState(sKey) {
+    let componentStateData = JSON.parse(
+      sessionStorage.getItem("_componentStateData")
+    );
+    return (componentStateData.componentStates[sKey] ?? {}).state;
+  }
+
+
+  static setComponentState(sKey, state) {
+    let componentStateData = JSON.parse(
+      sessionStorage.getItem("_componentStateData")
+    );
+    componentStateData.componentStates[sKey] = {state: state};
+    sessionStorage.setItem(
+      "_componentStateData",
+      JSON.stringify(componentStateData)
+    );
+  }
+
+
+  static deleteComponentStateAndChildren(sKey) {
+    let componentStateData = JSON.parse(
+      sessionStorage.getItem("_componentStateData")
+    );
+    // Delete this component state, as well as any descendant state, which
+    // all starts with sKey in their own sKeys.
+    let sKeys = Object.keys(componentStateData.componentStates);
+    let sKeysToRemove = sKeys.filter(key => key.startsWith(sKey));
+    sKeysToRemove.forEach(key => {
+      delete componentStateData.componentStates[key];
+    });
+    sessionStorage.setItem(
+      "_componentStateData",
+      JSON.stringify(componentStateData)
+    );
+  }
+  
+
+
+  static #elemTypeIDs = {};
+  static #nonce = 0;
+
+  static lookUpOrCreateElemTypeID(elemType) {
+    // First look in this.#elemTypeIDs.
+    let elemTypeID = this.#elemTypeIDs[elemType];
+    if (elemTypeID !== undefined) {
+      return elemTypeID;
+    }
+    // If not there, look in sessionStorage, and if not there, get a new
+    // elemTypeID from nonce, then store and return that.
+    let componentStateData = JSON.parse(
+      sessionStorage.getItem("_componentStateData")
+    );
+    elemTypeID = componentStateData.elemTypeIDs[elemType];
+    if (elemTypeID) {
+      return elemTypeID;
+    } else {
+      elemTypeID = this.#nonce;
+      this.#nonce++;
+      componentStateData.elemTypeIDs[elemType] = elemTypeID;
+      this.#elemTypeIDs[elemType] = elemTypeID;
+      sessionStorage.setItem(
+        "_componentStateData",
+        JSON.stringify(componentStateData)
+      );
+      return elemTypeID;
+    }
+  }
+
+
+
+  static backUpChildStates(sKey) {
+    // Get all component states.
+    let componentStateData = JSON.parse(
+      sessionStorage.getItem("_componentStateData")
+    );
+    let componentStates = componentStateData.componentStates;
+
+    // Filter out the descendant states.
+    let descStateEntries = Object.entries(componentStates).filter(([key,]) => {
+      return key.startsWith(sKey) && key !== sKey;
+    });
+
+    // Set the backup.
+    if (!componentStates[sKey]) {
+      componentStates[sKey] = {};
+    }
+    componentStates[sKey].backup = descStateEntries;
+    sessionStorage.setItem(
+      "_componentStateData",
+      JSON.stringify(componentStateData)
+    );
+  }
+
+
+  static restoreChildStates(sKey) {
+    // Get the descendant states from backup.
+    let componentStateData = JSON.parse(
+      sessionStorage.getItem("_componentStateData")
+    );
+    let componentStates = componentStateData.componentStates;
+    if (!componentStates[sKey]) {
+      componentStates[sKey] = {};
+    }
+    let descStateEntries = componentStates[sKey].backup;
+    // Restore the descendant states.
+    descStateEntries.forEach(([key, state]) => {
+      componentStateData.componentStates[key] = state;
+    });
+    // Then delete the backup, and store the changes.
+    delete componentStates[sKey].backup;
+    sessionStorage.setItem(
+      "_componentStateData",
+      JSON.stringify(componentStateData)
+    );
+  }
+
 }
 
 
+
+
+
+
+
+/**
+  This useSessionState() hook is a wrapper around the normal useState hook,
+  which also backs up the state of the component in sessionStorage for as
+  long as it is mounted, meaning that navigation to and back from another
+  website will restore the state.
+  Returns:
+  useSessionState() returns the state like normal, but returns a dispatch()
+  function (with more possibilities) instead of the normal setState(). More on
+  dispatch() below.
+  Lastly, it returns a passKeys() function, which has to wrap around any
+  returned (JSX) element of the component if the children includes any session-
+  stateful components. passKeys() then serves to pass the keys that allows
+  useSessionState() to construct its own tree of DOM nodes.
+  The order of the returns are: [state, passKeys, dispatch].
+  Inputs:
+  First input is the initial state, just like for useState().
+  Second input is the props of the component, which is used both to get the
+  relevant keys from the passKeys() called by the parent component, and is
+  also used in the dispatch() function, meaning that the outcome of dispatch()
+  can depend on props. Furthermore, it can also depend on the component's
+  contexts, but this require the user to pass [props, context] in place of
+  the props input.
+  Third input is the reducers to change the state (by calls to the dispatch()
+  function). reducers, if provided, is an object always starting with a key
+  property, which allows descendant components to access the components
+  reducers as well. And from there, each member is of the form
+  {action: reducer, ...}, where action is a unique string that selects the
+  given reducer, and the reducer is a pure function that takes [state, props,
+  contexts] as its first input, as well as an optional second input (passed to
+  dispatch()), and returns a new state of the component. Reducers can can also
+  take an optional third input, dispatch, which can be used to run other
+  reducers right after execution, including those of the component's ancestors.
+  If a reducer returns a nullish value, the state is unchanged.
+  Access these reducers in order to change the state of this component by
+  calling dispatch("self", action, input), where action is the key of the
+  specific reducer in the reducers object, and input is the aforementioned
+  second input that gets passed to the reducer. As mentioned, the reducers can
+  also be accessed by any descendants by calling dispatch(key, action, input),
+  where key is the aforementioned one defined in the reducers object.
+  Fourth input, rootID, should only be set if you want the state to act as a
+  root in the session state tree. Each rootID of the app must be unique (and
+  also deterministic between hard refreshes/reboots of the entire app).
+  And lastly, the fifth input, backUpAndRemove, is a flag that when set as
+  true, removes all descendants of the component (making passKeys() return a
+  React fragment for good measure), but backs them up in sessionStorage such
+  that they are restored if backUpAndRemove is set as something falsy again.
+**/
 export const useSessionState = (
-  initState, props, reducers = {}, key, 
+  initState, props, reducers = {}, rootID = null, backUpAndRemove
 ) => {
   // If props is an array, treat it as [props, contexts] instead.
   let contexts;
@@ -21,12 +203,30 @@ export const useSessionState = (
     [props, contexts] = props;
   }
 
-  // Set the initial state, unless there's a backup waiting to be restored.
-  const [state, setState] = useState(getShouldBeRestored() ? {} : initState);
+  // Get the sKey (session state key).
+  const sKey = (rootID === null) ? props._sKey :
+    "/" + rootID.replaceAll("\\", "\\b")
+      .replaceAll("/", "\\s")
+      .replaceAll(">", "\\g")
+      .replaceAll(":", "\\c");
+  
 
-  const stateID = useId();
+  // Call the useState() hook, but initialize as the stored session state
+  // if any is available, instead of as initState.
+  const [state, internalSetState] = useState(
+    SessionStatesHandler.getComponentState(sKey) ?? initState
+  );
 
-  // TODO: Continue...
+  // Prepare the setState() function that also stores the state in
+  // sessionStorage.
+  const setState = useMemo(() => ((y) => {
+    internalSetState(prev => {
+      let newState = (y instanceof Function) ? y(prev) : y;
+      SessionStatesHandler.setComponentState(sKey, newState);
+      return newState;
+    });
+  }), []);
+
 
   // We store some auxillary data used mainly by the dispatch() functions, and
   // also for backing up descendant states.
@@ -371,212 +571,3 @@ function getParentSKey(sKey) {
   let ancSKey = sKey.replace(/[\/>][^\/]+$/, "");
   return (ancSKey === "" || ancSKey === sKey) ? null : ancSKey;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// TODO: Remake this hook without the backup-and-remove functionality (not
-// needed), and without the dispatch function (use useDispatch() instead),
-// following my plan (see 23-xx notes) of using a single array to store
-// states rather than using a tree structure. 
-
-
-const sessionStateAuxillaryDataStore = {};
-
-
-sessionStorage.getItem("_componentStateData") ||
-  sessionStorage.setItem("_componentStateData", JSON.stringify({
-    componentStates: {}, elemTypeIDs: {},
-  }));
-
-
-
-class SessionStatesHandler {
-
-  static getComponentState(sKey) {
-    let componentStateData = JSON.parse(
-      sessionStorage.getItem("_componentStateData")
-    );
-    return (componentStateData.componentStates[sKey] ?? {}).state;
-  }
-
-
-  static setComponentState(sKey, state) {
-    let componentStateData = JSON.parse(
-      sessionStorage.getItem("_componentStateData")
-    );
-    componentStateData.componentStates[sKey] = {state: state};
-    sessionStorage.setItem(
-      "_componentStateData",
-      JSON.stringify(componentStateData)
-    );
-  }
-
-
-  static deleteComponentStateAndChildren(sKey) {
-    let componentStateData = JSON.parse(
-      sessionStorage.getItem("_componentStateData")
-    );
-    // Delete this component state, as well as any descendant state, which
-    // all starts with sKey in their own sKeys.
-    let sKeys = Object.keys(componentStateData.componentStates);
-    let sKeysToRemove = sKeys.filter(key => key.startsWith(sKey));
-    sKeysToRemove.forEach(key => {
-      delete componentStateData.componentStates[key];
-    });
-    sessionStorage.setItem(
-      "_componentStateData",
-      JSON.stringify(componentStateData)
-    );
-  }
-  
-
-
-  static #elemTypeIDs = {};
-  static #nonce = 0;
-
-  static lookUpOrCreateElemTypeID(elemType) {
-    // First look in this.#elemTypeIDs.
-    let elemTypeID = this.#elemTypeIDs[elemType];
-    if (elemTypeID !== undefined) {
-      return elemTypeID;
-    }
-    // If not there, look in sessionStorage, and if not there, get a new
-    // elemTypeID from nonce, then store and return that.
-    let componentStateData = JSON.parse(
-      sessionStorage.getItem("_componentStateData")
-    );
-    elemTypeID = componentStateData.elemTypeIDs[elemType];
-    if (elemTypeID) {
-      return elemTypeID;
-    } else {
-      elemTypeID = this.#nonce;
-      this.#nonce++;
-      componentStateData.elemTypeIDs[elemType] = elemTypeID;
-      this.#elemTypeIDs[elemType] = elemTypeID;
-      sessionStorage.setItem(
-        "_componentStateData",
-        JSON.stringify(componentStateData)
-      );
-      return elemTypeID;
-    }
-  }
-
-
-
-  static backUpChildStates(sKey) {
-    // Get all component states.
-    let componentStateData = JSON.parse(
-      sessionStorage.getItem("_componentStateData")
-    );
-    let componentStates = componentStateData.componentStates;
-
-    // Filter out the descendant states.
-    let descStateEntries = Object.entries(componentStates).filter(([key,]) => {
-      return key.startsWith(sKey) && key !== sKey;
-    });
-
-    // Set the backup.
-    if (!componentStates[sKey]) {
-      componentStates[sKey] = {};
-    }
-    componentStates[sKey].backup = descStateEntries;
-    sessionStorage.setItem(
-      "_componentStateData",
-      JSON.stringify(componentStateData)
-    );
-  }
-
-
-  static restoreChildStates(sKey) {
-    // Get the descendant states from backup.
-    let componentStateData = JSON.parse(
-      sessionStorage.getItem("_componentStateData")
-    );
-    let componentStates = componentStateData.componentStates;
-    if (!componentStates[sKey]) {
-      componentStates[sKey] = {};
-    }
-    let descStateEntries = componentStates[sKey].backup;
-    // Restore the descendant states.
-    descStateEntries.forEach(([key, state]) => {
-      componentStateData.componentStates[key] = state;
-    });
-    // Then delete the backup, and store the changes.
-    delete componentStates[sKey].backup;
-    sessionStorage.setItem(
-      "_componentStateData",
-      JSON.stringify(componentStateData)
-    );
-  }
-
-}
-
-
-
-
-
-
-
-/**
-  This useSessionState() hook is a wrapper around the normal useState hook,
-  which also backs up the state of the component in sessionStorage for as
-  long as it is mounted, meaning that navigation to and back from another
-  website will restore the state.
-  Returns:
-  useSessionState() returns the state like normal, but returns a dispatch()
-  function (with more possibilities) instead of the normal setState(). More on
-  dispatch() below.
-  Lastly, it returns a passKeys() function, which has to wrap around any
-  returned (JSX) element of the component if the children includes any session-
-  stateful components. passKeys() then serves to pass the keys that allows
-  useSessionState() to construct its own tree of DOM nodes.
-  The order of the returns are: [state, passKeys, dispatch].
-  Inputs:
-  First input is the initial state, just like for useState().
-  Second input is the props of the component, which is used both to get the
-  relevant keys from the passKeys() called by the parent component, and is
-  also used in the dispatch() function, meaning that the outcome of dispatch()
-  can depend on props. Furthermore, it can also depend on the component's
-  contexts, but this require the user to pass [props, context] in place of
-  the props input.
-  Third input is the reducers to change the state (by calls to the dispatch()
-  function). reducers, if provided, is an object always starting with a key
-  property, which allows descendant components to access the components
-  reducers as well. And from there, each member is of the form
-  {action: reducer, ...}, where action is a unique string that selects the
-  given reducer, and the reducer is a pure function that takes [state, props,
-  contexts] as its first input, as well as an optional second input (passed to
-  dispatch()), and returns a new state of the component. Reducers can can also
-  take an optional third input, dispatch, which can be used to run other
-  reducers right after execution, including those of the component's ancestors.
-  If a reducer returns a nullish value, the state is unchanged.
-  Access these reducers in order to change the state of this component by
-  calling dispatch("self", action, input), where action is the key of the
-  specific reducer in the reducers object, and input is the aforementioned
-  second input that gets passed to the reducer. As mentioned, the reducers can
-  also be accessed by any descendants by calling dispatch(key, action, input),
-  where key is the aforementioned one defined in the reducers object.
-  Fourth input, rootID, should only be set if you want the state to act as a
-  root in the session state tree. Each rootID of the app must be unique (and
-  also deterministic between hard refreshes/reboots of the entire app).
-  And lastly, the fifth input, backUpAndRemove, is a flag that when set as
-  true, removes all descendants of the component (making passKeys() return a
-  React fragment for good measure), but backs them up in sessionStorage such
-  that they are restored if backUpAndRemove is set as something falsy again.
-**/

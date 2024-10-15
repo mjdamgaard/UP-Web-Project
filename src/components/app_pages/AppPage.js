@@ -1,7 +1,7 @@
 import {createContext} from "react";
 import {
   useDispatch
-} from "../../hooks/useDispatch.js"
+} from "../../hooks/old/useDispatch.js"
 import React from 'react';
 
 import {EntityPage} from "./entity_pages/EntityPage.js";
