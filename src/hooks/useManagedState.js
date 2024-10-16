@@ -12,8 +12,8 @@ function getShouldBeRestored() {
 }
 
 
-export const useSessionState = (
-  initState, props, reducers = {}, key, 
+export const useManagedState = (
+  initState, methods, props, key, restore = true
 ) => {
   // If props is an array, treat it as [props, contexts] instead.
   let contexts;
@@ -22,10 +22,14 @@ export const useSessionState = (
   }
 
   // Set the initial state, unless there's a backup waiting to be restored.
-  const [state, setState] = useState(getShouldBeRestored() ? {} : initState);
+  const [state, setState] = useState(
+    (restore && getShouldBeRestored()) ? {} : initState
+  );
 
   const stateID = useId();
 
+
+  const passRefs = (element) => passRefsWithStateID(element, stateID);
   // TODO: Continue...
 
   // We store some auxillary data used mainly by the dispatch() functions, and
@@ -59,6 +63,82 @@ export const useSessionState = (
   return [state, passKeys, dispatch];
 };
 
+
+
+
+function passRefsWithStateID (element, stateID) {
+  // If element is a number, wrap it in a span with the state ID.
+  if (typeof element === "number") {
+    return <span data-state-id={stateID}>{element}</span>;
+  }
+  // If element is nothing, return an empty template with the state ID.
+  else if (!element) {
+    return <template data-state-id={stateID}></template>;
+  }
+  let type = element.type;
+  // If element is a HTML element (like 'div' or 'span' etc.), pass it the
+  // state ID.
+  if (typeof type === "string") {
+    element.props["data-state-id"] = stateID;
+    return element;
+  }
+  // If element is a standard React component, set or modify its ref to
+  // add the state id in front of any existing value.
+  else if (type.name || typeof type === "string") {
+    let existingRef = element.ref;
+    if (existingRef) {
+      element.ref = (node) => {
+        // Handle the existing ref first.
+        if (existingRef instanceof Function) {
+          existingRef(node);
+        } else {
+          existingRef.current = node;
+        }
+        // Then create or prepend to the data-state-id attribute.
+        let childStateIDs = node.getAttribute("data-state-id");
+        if (!childStateIDs) {
+          node.setAttribute("data-state-id", stateID);
+        }
+        else {
+          node.setAttribute("data-state-id", stateID + "-" + childStateIDs);
+        }
+      };
+    } else {
+      element.ref = (node) => {
+        node.setAttribute("data-state-id", stateID);
+      };
+    }
+    
+    return element;
+  }
+  else if (Array.isArray(element)) {
+    let len = element.length;
+    if (len === 0) {
+      return passRefsWithStateID(null, stateID);
+    }
+    else if (len === 1) {
+      return passRefsWithStateID(element[0], stateID);
+    }
+    else {
+      element[0] = passBeginRefs(element[0], stateID);
+      element[len - 1] = passEndRefs(element[len - 1], stateID);
+      return element;
+    }
+  }
+  else if (
+    type === Symbol("react.fragment") ||
+    type.$$typeof.toString() === "Symbol(react.provider)"
+  ) {
+    element.props.children = passRefsWithStateID(
+      element.props.children, stateID
+    );
+    return element;
+  }
+  else {
+    console.log(element);
+    debugger;throw "getElementType: Unhandled React element type";
+  }
+}
 
 
 

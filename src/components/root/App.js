@@ -51,7 +51,7 @@ export const App = (props) => {
 
   });
   const {pagePathStore, pageKeyArr, currInd, accountData} = state;
-console.log(pagePathStore);
+
   const [refCallback, dispatch] = useDispatch(
     appReducers, "app", setState, props
   );
@@ -115,7 +115,7 @@ console.log(pagePathStore);
 
 
 const appReducers = {
-  "OPEN_PAGE": function ({state}, [pagePath, callerPageKey]) {
+  "OPEN_PAGE": ({state}, [pagePath, callerPageKey]) => {
     const {pageKeyArr, pagePathStore, nonce} = state;
     let callerColInd = pageKeyArr.indexOf(callerPageKey);
     let newNonce = nonce + 1;
@@ -140,7 +140,7 @@ const appReducers = {
     };
   },
 
-  "GO_TO_PAGE": function ({state}, pageInd) {
+  "GO_TO_PAGE": ({state}, pageInd) => {
     return {
       ...state,
       currInd: pageInd,
@@ -148,7 +148,7 @@ const appReducers = {
     };
   },
 
-  "CLOSE_PAGE": function ({state}, callerPageKey) {
+  "CLOSE_PAGE": ({state}, callerPageKey) => {
     // TODO: Implement.
     alert("CLOSE_PAGE not implemented yet.");
   },
@@ -176,7 +176,8 @@ const appReducers = {
     return [pageListContainer, pos, childPosArr];
   },
 
-  "SCROLL_INTO_VIEW": function ({state}, colInd) {
+  "SCROLL_INTO_VIEW": function ({state}, colInd) { // Huh? Doesn't work when
+    // I change to '({state}, colInd) => {...' instead..?
     // Get the page container and the positions.
     const [pageListContainer, pos, childPosArr] =
       this.getPageListContainerAndPositions();
@@ -194,7 +195,7 @@ const appReducers = {
 
   /* Account reducers */
 
-  "LOG_IN": function ({state, props, node}, input, dispatch) {
+  "LOG_IN": ({state, props, node}, input, dispatch) => {
     // TODO: Implement.
     alert("LOG_IN not implemented yet.");
   },
