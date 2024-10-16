@@ -6,7 +6,7 @@ import {
 
 const stateStore = {};
 
-function getShouldBeRestored() {
+function getIsRestoring() {
   // TODO: Implement.
   return false;
 }
@@ -23,7 +23,7 @@ export const useManagedState = (
 
   // Set the initial state, unless there's a backup waiting to be restored.
   const [state, setState] = useState(
-    (restore && getShouldBeRestored()) ? {} : initState
+    (restore && getIsRestoring()) ? {} : initState
   );
 
   const stateID = useId();
@@ -84,7 +84,19 @@ function passRefsWithStateID (element, stateID) {
   }
   // If element is a standard React component, set or modify its ref to
   // add the state id in front of any existing value.
-  else if (type.name || typeof type === "string") {
+  else if (type.name) {
+    element = <template ref={(node) => {
+      // Create or prepend to the data-state-id attribute.
+      let childStateIDs = node.getAttribute("data-state-id");
+      if (!childStateIDs) {
+        node.setAttribute("data-state-id", stateID);
+      }
+      else {
+        node.setAttribute("data-state-id", stateID + "-" + childStateIDs);
+      }
+    }}>
+      {element}
+    </template>;
     let existingRef = element.ref;
     if (existingRef) {
       element.ref = (node) => {
