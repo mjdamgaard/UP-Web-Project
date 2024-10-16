@@ -6,6 +6,11 @@ import {
 
 const stateStore = {};
 
+var nonce = 0;
+function getNonce() {
+  return nonce++;
+}
+
 function getIsRestoring() {
   // TODO: Implement.
   return false;
@@ -26,41 +31,33 @@ export const useManagedState = (
     (restore && getIsRestoring()) ? {} : initState
   );
 
-  const stateID = useId();
+  const stateID = useMemo(() => getNonce(), []);
+
+
+  stateStore[stateID] = {
+    methods: methods,
+    props: props,
+    contexts: contexts,
+    key: key,
+    restore: restore,
+    state: state,
+    setState: setState,
+  }
+
+  useEffect(() => {
+    return () => {
+      delete stateStore[stateID];
+    };
+  }, stateID);
+
+  // TODO: Add useLayoutEffect to restore state, and make passRefs return an
+  // empty element while restoring and not isReady..
 
 
   const passRefs = (element) => passRefsWithStateID(element, stateID);
-  // TODO: Continue...
 
-  // We store some auxillary data used mainly by the dispatch() functions, and
-  // also for backing up descendant states.
-  useMemo(() => {
-    sessionStateAuxillaryDataStore[sKey] = {
-      reducers: reducers,
-      setState: setState,
-      backUpAndRemove: backUpAndRemove,
-    }
-  }, []);
-  sessionStateAuxillaryDataStore[sKey] ||
-    (sessionStateAuxillaryDataStore[sKey] = {});
-  sessionStateAuxillaryDataStore[sKey].props = props;
-  sessionStateAuxillaryDataStore[sKey].contexts = contexts;
-
-
-  // Get dispatch() and passKeys() with useSessionStateHelper(), which also
-  // backs up or restores children when backUpAndRemove changes value, and
-  // also schedules a cleanup function to remove this session state when it is
-  // unmounted (but it can still be restored if it has been backed up).
-  const [dispatch, passKeys] = useSessionStateHelper(
-    props, contexts, sKey, reducers, backUpAndRemove, setState
-  );
-
-  // Also store the dispatch() function in the aux. store in order for reducers
-  // to be able to access the component's dispatch() function as well. 
-  sessionStateAuxillaryDataStore[sKey].dispatch = dispatch;
-
-  // Return the state, as well as the dispatch() and passKeys() functions.   
-  return [state, passKeys, dispatch];
+  // Return the state, as well as the passRefs() and dispatch() functions.   
+  return [state, passRefs, dispatch];
 };
 
 
@@ -106,6 +103,11 @@ function passRefsWithStateID (element, stateID) {
       "name collisions with the existing actions of the parent.)"
     );
   }
+}
+
+
+export function dispatch(caller, key, action, input) {
+
 }
 
 
