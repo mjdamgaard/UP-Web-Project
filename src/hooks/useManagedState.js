@@ -67,14 +67,6 @@ export const useManagedState = (
 
 
 function passRefsWithStateID (element, stateID) {
-  // If element is a number, wrap it in a span with the state ID.
-  if (typeof element === "number") {
-    return <span data-state-id={stateID}>{element}</span>;
-  }
-  // If element is nothing, return an empty template with the state ID.
-  else if (!element) {
-    return <template data-state-id={stateID}></template>;
-  }
   let type = element.type;
   // If element is a HTML element (like 'div' or 'span' etc.), pass it the
   // state ID.
@@ -82,73 +74,37 @@ function passRefsWithStateID (element, stateID) {
     element.props["data-state-id"] = stateID;
     return element;
   }
-  // If element is a standard React component, set or modify its ref to
-  // add the state id in front of any existing value.
-  else if (type.name) {
-    element = <template ref={(node) => {
-      // Create or prepend to the data-state-id attribute.
-      let childStateIDs = node.getAttribute("data-state-id");
-      if (!childStateIDs) {
-        node.setAttribute("data-state-id", stateID);
-      }
-      else {
-        node.setAttribute("data-state-id", stateID + "-" + childStateIDs);
-      }
-    }}>
-      {element}
-    </template>;
-    let existingRef = element.ref;
-    if (existingRef) {
-      element.ref = (node) => {
-        // Handle the existing ref first.
-        if (existingRef instanceof Function) {
-          existingRef(node);
-        } else {
-          existingRef.current = node;
-        }
-        // Then create or prepend to the data-state-id attribute.
-        let childStateIDs = node.getAttribute("data-state-id");
-        if (!childStateIDs) {
-          node.setAttribute("data-state-id", stateID);
-        }
-        else {
-          node.setAttribute("data-state-id", stateID + "-" + childStateIDs);
-        }
-      };
-    } else {
-      element.ref = (node) => {
-        node.setAttribute("data-state-id", stateID);
-      };
-    }
-    
-    return element;
+  // If it is a non-empty array, map passRefs() to all its elements.
+  else if (Array.isArray(element) && element.length > 0) {
+    return element.map(val => passRefsWithStateID(val, stateID));
   }
-  else if (Array.isArray(element)) {
-    let len = element.length;
-    if (len === 0) {
-      return passRefsWithStateID(null, stateID);
-    }
-    else if (len === 1) {
-      return passRefsWithStateID(element[0], stateID);
-    }
-    else {
-      element[0] = passBeginRefs(element[0], stateID);
-      element[len - 1] = passEndRefs(element[len - 1], stateID);
-      return element;
-    }
-  }
+  // And do the same if it is a list of children inside a React fragment or a
+  // React context provider.
   else if (
-    type === Symbol("react.fragment") ||
-    type.$$typeof.toString() === "Symbol(react.provider)"
+    (
+      type.$$typeof.toString() === "Symbol(react.fragment)" ||
+      type.$$typeof.toString() === "Symbol(react.provider)"
+    ) && element.props.children && element.props.children.length > 0
   ) {
-    element.props.children = passRefsWithStateID(
-      element.props.children, stateID
-    );
+    element.props.children = element.props.children.map(val => (
+      passRefsWithStateID(val, stateID)
+    ));
     return element;
   }
   else {
     console.log(element);
-    debugger;throw "getElementType: Unhandled React element type";
+    debugger;throw (
+      "useManagedState(): Returned JSX element can only be a single HTML " +
+      "element (like a 'div' or a 'span' element), or a list of HTML " +
+      "elements. " +
+      "Outer React fragments or context providers are also allowed, as long " +
+      "as their children are all HTML elements. " +
+      "Thus, please wrap any outer child React component in such a HTML " +
+      "element, or refactor by moving the state of the component up to its " +
+      "parent. (Note that you can then still dispatch actions from the " +
+      "child component in the same way, just as long as their are no " +
+      "name collisions with the existing actions of the parent.)"
+    );
   }
 }
 
