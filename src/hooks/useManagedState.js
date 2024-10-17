@@ -1,5 +1,5 @@
 import {
-  useState, useEffect, useMemo, useId,
+  useState, useEffect, useMemo, useCallback,
 } from "react";
 
 
@@ -18,7 +18,7 @@ function getIsRestoring() {
 
 
 export const useManagedState = (
-  initState, methods, props, key, restore = true
+  initState, methods, props, key, restore = true, closed = false
 ) => {
   // If props is an array, treat it as [props, contexts] instead.
   let contexts;
@@ -26,44 +26,69 @@ export const useManagedState = (
     [props, contexts] = props;
   }
 
+  // Get whether there is a restoration of an earlier state going on.
+  const isRestoring = getIsRestoring();
+
   // Set the initial state, unless there's a backup waiting to be restored.
   const [state, setState] = useState(
-    (restore && getIsRestoring()) ? {} : initState
+    (restore && isRestoring) ? {} : initState
   );
 
-  const stateID = useMemo(() => getNonce(), []);
+  // Get a unique and constant stateID.
+  const stateID = useCallback((
+    () => {
+      let nonce = getNonce();
+      return () => nonce;
+    }
+  )())();
 
-
+  // Store the state data in stateStore.
   stateStore[stateID] = {
+    parentStateID: null,
+    childIndex: null,
+    hasChanged: false,
+    ...stateStore[stateID],
     methods: methods,
     props: props,
     contexts: contexts,
     key: key,
     restore: restore,
+    closed: closed,
     state: state,
     setState: setState,
+    // (The parentStateID is set on the first call to dispatch(), or on the
+    // popstate event before saving the full state in sessionStorage, or
+    // on backUpAndRemove. And childIndex is set on the latter two.)
   }
 
+  // Schedule a cleanup function to remove the state data from stateStore.
   useEffect(() => {
     return () => {
-      delete stateStore[stateID];
+      // This check is redundant now when each new stateID is unique, but let's
+      // keep it for now.
+      if (stateStore.setState === setState) {
+        delete stateStore[stateID];
+      }
     };
-  }, stateID);
+  }, []);
 
-  // TODO: Add useLayoutEffect to restore state, and make passRefs return an
+  // TODO: Add useLayoutEffect to restore state, and make passData return an
   // empty element while restoring and not isReady..
 
 
-  const passRefs = (element) => passRefsWithStateID(element, stateID);
+  const passData = isRestoring ?
+    (element => passRestorationRef(passStateID(element, stateID))) :
+    (element => passStateID(element, stateID));
 
-  // Return the state, as well as the passRefs() and dispatch() functions.   
-  return [state, passRefs, dispatch];
+  // Return the state, as well as the passData() and dispatch() functions.   
+  return [state, passData, dispatch];
 };
 
 
 
 
-function passRefsWithStateID (element, stateID) {
+
+function passStateID (element, stateID) {
   let type = element.type;
   // If element is a HTML element (like 'div' or 'span' etc.), pass it the
   // state ID.
@@ -71,9 +96,9 @@ function passRefsWithStateID (element, stateID) {
     element.props["data-state-id"] = stateID;
     return element;
   }
-  // If it is a non-empty array, map passRefs() to all its elements.
+  // If it is a non-empty array, map passData() to all its elements.
   else if (Array.isArray(element) && element.length > 0) {
-    return element.map(val => passRefsWithStateID(val, stateID));
+    return element.map(val => passStateID(val, stateID));
   }
   // And do the same if it is a list of children inside a React fragment or a
   // React context provider.
@@ -84,7 +109,7 @@ function passRefsWithStateID (element, stateID) {
     ) && element.props.children && element.props.children.length > 0
   ) {
     element.props.children = element.props.children.map(val => (
-      passRefsWithStateID(val, stateID)
+      passStateID(val, stateID)
     ));
     return element;
   }
@@ -104,6 +129,58 @@ function passRefsWithStateID (element, stateID) {
     );
   }
 }
+
+
+
+function passRestorationRef(element, stateID) {
+  let type = element.type;
+  // If element is a HTML element (like 'div' or 'span' etc.), pass it the
+  // state ID.
+  if (typeof type === "string") {
+    element.props["data-state-id"] = stateID;
+    return element;
+  }
+  // If it is a non-empty array, map passData() to all its elements.
+  else if (Array.isArray(element) && element.length > 0) {
+    return element.map(val => passStateID(val, stateID));
+  }
+  // And do the same if it is a list of children inside a React fragment or a
+  // React context provider.
+  else if (
+    (
+      type.$$typeof.toString() === "Symbol(react.fragment)" ||
+      type.$$typeof.toString() === "Symbol(react.provider)"
+    ) && element.props.children && element.props.children.length > 0
+  ) {
+    element.props.children = element.props.children.map(val => (
+      passStateID(val, stateID)
+    ));
+    return element;
+  }
+}
+
+
+
+
+function restorationRef(node) {
+  let statefulAncestors = getStatefulAncestors(node);
+  setParentStateIDs(statefulAncestors);
+  let shouldBeRestored = statefulAncestors.reduce(
+    (acc, ancNode) => acc ||
+      getIsRestoring(ancNode.getAttribute("data-state-id")),
+    false
+  );
+}
+
+function getStatefulAncestors(node) {
+  
+}
+
+function setParentStateIDs(statefulAncestors) {
+  
+}
+
+
 
 
 export function dispatch(caller, key, action, input) {
