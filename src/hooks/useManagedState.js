@@ -4,9 +4,9 @@ import {
 
 
 
-const stateStore = {};
+const stateDataStore = {};
 
-var nonce = 0;
+var nonce = 1;
 function getNonce() {
   return nonce++;
 }
@@ -18,12 +18,12 @@ function getIsRestoring() {
 
 
 export const useManagedState = (
-  initState, methods, props, key, restore = true, closed = false
+  initState, actions, props, key, restore = true, closed = false
 ) => {
   // If props is an array, treat it as [props, contexts] instead.
-  let contexts;
+  let contexts, refs;
   if (Array.isArray(props)) {
-    [props, contexts] = props;
+    [props, contexts, refs] = props;
   }
 
   // Get whether there is a restoration of an earlier state going on.
@@ -31,26 +31,34 @@ export const useManagedState = (
 
   // Set the initial state, unless there's a backup waiting to be restored.
   const [state, setState] = useState(
-    (restore && isRestoring) ? {} : initState
+    (restore && isRestoring) ?
+      {status: "waiting-for-state", state: null} :
+      {status: "done", state: initState}
   );
 
   // Get a unique and constant stateID.
-  const stateID = useCallback((
-    () => {
-      let nonce = getNonce();
-      return () => nonce;
-    }
-  )())();
+  const stateID = useCallback(() => {
+    var stateID;
+    return () => {
+      if (!stateID) {
+        stateID = getNonce();
+      }
+      return stateID;
+    };
+  })();
 
   // Store the state data in stateStore.
-  stateStore[stateID] = {
+  const stateData = (stateDataStore[stateID] = {
     parentStateID: null,
-    childIndex: null,
+    childStateIDs: null,
+    childIsDoneArr: null,
     hasChanged: false,
-    ...stateStore[stateID],
+    isRestored: !isRestoring,
+    ...stateDataStore[stateID],
     methods: methods,
     props: props,
     contexts: contexts,
+    refs: refs,
     key: key,
     restore: restore,
     closed: closed,
@@ -58,17 +66,13 @@ export const useManagedState = (
     setState: setState,
     // (The parentStateID is set on the first call to dispatch(), or on the
     // popstate event before saving the full state in sessionStorage, or
-    // on backUpAndRemove. And childIndex is set on the latter two.)
-  }
+    // on backUpAndRemove. And childStateIDs is set on the latter two.)
+  });
 
   // Schedule a cleanup function to remove the state data from stateStore.
   useEffect(() => {
     return () => {
-      // This check is redundant now when each new stateID is unique, but let's
-      // keep it for now.
-      if (stateStore.setState === setState) {
-        delete stateStore[stateID];
-      }
+      delete stateDataStore[stateID];
     };
   }, []);
 
@@ -76,9 +80,14 @@ export const useManagedState = (
   // empty element while restoring and not isReady..
 
 
-  const passData = isRestoring ?
-    (element => passRestorationRef(passStateID(element, stateID))) :
-    (element => passStateID(element, stateID));
+  const passData = state.status === "done" ?
+    (element => passStateID(element, stateID)) :
+    state.status === "waiting-for-children" ?
+      (element => passRestorationRefAndHide(passStateID(element, stateID))) :
+      // And when state.status === "waiting-for-state":
+      (() => (
+        <template ref={findParentStateID} data-state-id={stateID}></template>
+      ));
 
   // Return the state, as well as the passData() and dispatch() functions.   
   return [state, passData, dispatch];
@@ -88,13 +97,13 @@ export const useManagedState = (
 
 
 
-function passStateID (element, stateID) {
+function passStateID(element, stateID) {
   let type = element.type;
   // If element is a HTML element (like 'div' or 'span' etc.), pass it the
   // state ID.
   if (typeof type === "string") {
-    element.props["data-state-id"] = stateID;
-    return element;
+    let props = {...element.props, "data-state-id": stateID};
+    return {...element, props: props};
   }
   // If it is a non-empty array, map passData() to all its elements.
   else if (Array.isArray(element) && element.length > 0) {
@@ -108,12 +117,13 @@ function passStateID (element, stateID) {
       type.$$typeof.toString() === "Symbol(react.provider)"
     ) && element.props.children && element.props.children.length > 0
   ) {
-    element.props.children = element.props.children.map(val => (
+    let children = element.props.children.map(val => (
       passStateID(val, stateID)
     ));
-    return element;
+    return {...element, props: {...element.props, children: children}};
   }
   else {
+    console.trace();
     console.log(element);
     debugger;throw (
       "useManagedState(): Returned JSX element can only be a single HTML " +
@@ -132,17 +142,37 @@ function passStateID (element, stateID) {
 
 
 
-function passRestorationRef(element, stateID) {
+function passRestorationRefAndHide(element) {
   let type = element.type;
-  // If element is a HTML element (like 'div' or 'span' etc.), pass it the
-  // state ID.
+  // If element is a HTML element (like 'div' or 'span' etc.), give it a
+  // restoration ref callback.
   if (typeof type === "string") {
-    element.props["data-state-id"] = stateID;
-    return element;
+    let props = {...element.props, "style": "display:none;"};
+    // let ref = !element.ref ?
+    //   restorationRefCallback :
+    //   (element.ref instanceof Function) ?
+    //     (node) => {
+    //       restorationRefCallback(node);
+    //       element.ref(node);
+    //     } :
+    //     (node) => {
+    //       restorationRefCallback(node);
+    //       element.ref.current = node;
+    //     };
+    let ref = restorationRefCallback;
+    return {...element, ref: ref, props: props};
   }
-  // If it is a non-empty array, map passData() to all its elements.
+  // If it is a non-empty array, pass the restorationRefCallback only to the 
+  // first element, but hide all other as well.
   else if (Array.isArray(element) && element.length > 0) {
-    return element.map(val => passStateID(val, stateID));
+    return element.map((val, ind) => {
+      if (ind === 0) {
+        return passRestorationRefAndHide(val);
+      } else {
+        let props = {...val.props, "style": "display:none;"};
+        return {...val, props: props};
+      }
+    });
   }
   // And do the same if it is a list of children inside a React fragment or a
   // React context provider.
@@ -152,17 +182,43 @@ function passRestorationRef(element, stateID) {
       type.$$typeof.toString() === "Symbol(react.provider)"
     ) && element.props.children && element.props.children.length > 0
   ) {
-    element.props.children = element.props.children.map(val => (
-      passStateID(val, stateID)
+    let children = element.props.children.map(val => (
+      passRestorationRefAndHide(val)
     ));
-    return element;
+    return {...element, props: {...element.props, children: children}};
   }
 }
 
 
 
 
-function restorationRef(node) {
+
+function findAndSetParentStateID(node) {
+  const stateID = node.getAttribute("data-state-id");
+  let parentNode = node.parentNode;
+  // Get the stateID of the first ancestor node that has the data-state-id
+  // attribute.
+  let parentStateID;
+  do {
+    if (parentNode.nodeType === Node.DOCUMENT_NODE) {
+      parentStateID = null;
+      break;
+    }
+    parentStateID = parentNode.getAttribute("data-state-id") || undefined;
+    parentNode = parentNode.parentNode;
+  } while (parentStateID === undefined);
+
+  // If a parent was found, store the parentStateID...
+  setParentStateIDs(statefulAncestors);
+  let shouldBeRestored = statefulAncestors.reduce(
+    (acc, ancNode) => acc ||
+      getIsRestoring(ancNode.getAttribute("data-state-id")),
+    false
+  );
+}
+
+
+function restorationRefCallback(node) {
   let statefulAncestors = getStatefulAncestors(node);
   setParentStateIDs(statefulAncestors);
   let shouldBeRestored = statefulAncestors.reduce(
