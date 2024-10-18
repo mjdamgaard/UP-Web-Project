@@ -18,7 +18,7 @@ function getIsRestoring() {
 
 
 export const useManagedState = (
-  initState, actions, props, key, restore = true, closed = false
+  initState, actions, props, key, isRoot, restore = true, closed = false
 ) => {
   // If props is an array, treat it as [props, contexts] instead.
   let contexts, refs;
@@ -27,17 +27,14 @@ export const useManagedState = (
   }
 
   // Get whether there is a restoration of an earlier state going on.
-  const isRestoring = getIsRestoring();
+  const isRestoring = restore && getIsRestoring();
 
-  // Set the initial state, unless there's a backup waiting to be restored.
-  const [state, setState] = useState(
-    (restore && isRestoring) ?
-      {status: "waiting-for-state", state: null} :
-      {status: "done", state: initState}
-  );
+  // If the component is a state root, and isRestoring, get the old state
+  // immediately.
+  const oldRootState = isRoot && isRestoring && "...";
 
   // Get a unique and constant stateID.
-  const stateID = useCallback(() => {
+  const stateID = isRoot ? "root-" + key : useCallback(() => {
     var stateID;
     return () => {
       if (!stateID) {
@@ -47,8 +44,24 @@ export const useManagedState = (
     };
   })();
 
+
+  // Set the initial state, unless there's a backup waiting to be restored.
+  const tempState = !isRestoring ?
+    initState :
+    isRoot ?
+      stateData.state : "";
+
+  const [extState, setState] = useState(
+    !isRestoring ?
+      {status: "done", state: initState} :
+      isRoot ?
+        {status: "waiting-for-children", state: null} :
+        {status: "waiting-for-state",    state: null}
+  );
+
   // Store the state data in stateStore.
   const stateData = (stateDataStore[stateID] = {
+    state: null,
     parentStateID: null,
     childStateIDs: null,
     childIsDoneArr: null,
@@ -62,7 +75,6 @@ export const useManagedState = (
     key: key,
     restore: restore,
     closed: closed,
-    state: state,
     setState: setState,
     // (The parentStateID is set on the first call to dispatch(), or on the
     // popstate event before saving the full state in sessionStorage, or
@@ -76,6 +88,7 @@ export const useManagedState = (
     };
   }, []);
 
+
   // TODO: Add useLayoutEffect to restore state, and make passData return an
   // empty element while restoring and not isReady..
 
@@ -85,9 +98,7 @@ export const useManagedState = (
     state.status === "waiting-for-children" ?
       (element => passRestorationRefAndHide(passStateID(element, stateID))) :
       // And when state.status === "waiting-for-state":
-      (() => (
-        <template ref={findParentStateID} data-state-id={stateID}></template>
-      ));
+      (() => <template data-state-id={stateID}></template>);
 
   // Return the state, as well as the passData() and dispatch() functions.   
   return [state, passData, dispatch];
