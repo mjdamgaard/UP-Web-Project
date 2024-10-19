@@ -3,22 +3,21 @@ import {
 } from "react";
 
 
+// Hm, let's make it a class instead.. ..Well, no, we need the hook as well..
+// Should I just call it dispatch() and reducers, like I did?.. ..Let me just
+// take a walk now and think about it.. (13:49)
 
-const stateDataStore = {};
-
-var nonce = 1;
-function getNonce() {
-  return nonce++;
+export class useStateManager {
+  constructor(setState, props, contexts, refs) {
+    this.setState = setState;
+    this.props = props;
+    this.contexts = contexts;
+    this.refs = refs;
+  }
 }
 
-function getIsRestoring() {
-  // TODO: Implement.
-  return false;
-}
-
-
-export const useManagedState = (
-  initState, actions, props, key, isRoot, restore = true, closed = false
+export const useStateManager = (
+  id, setState, stateManager, props, key, isRoot, restore = true, closed = false
 ) => {
   // If props is an array, treat it as [props, contexts] instead.
   let contexts, refs;

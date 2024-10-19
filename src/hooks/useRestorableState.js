@@ -30,12 +30,12 @@ export const useRestorableState = (id, initState, refs) => {
 
 
 
-class RestorableDataStore {
+export class RestorableDataStore {
   static dataStore =
     JSON.parse(sessionStorage.getItem("_restorableDataStore") ?? "null") ?? {};
 
-  static createPopStateEvent() {
-    window.addEventListener("popstate", (event) => {
+  static createBeforeUnloadEvent() {
+    window.addEventListener("beforeunload", (event) => {
       sessionStorage.setItem("_restorableDataStore", JSON.stringify(
         this.dataStore
       ));
@@ -87,5 +87,3 @@ class RestorableDataStore {
   } 
 
 }
-
-RestorableDataStore.createPopStateEvent();
