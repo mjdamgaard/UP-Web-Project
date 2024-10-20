@@ -34,7 +34,7 @@ export class RestorableDataStore {
   static dataStore =
     JSON.parse(sessionStorage.getItem("_restorableDataStore") ?? "null") ?? {};
 
-  static createBeforeUnloadEvent() {
+  static saveDataOnBeforeUnloadEvent() {
     window.addEventListener("beforeunload", (event) => {
       sessionStorage.setItem("_restorableDataStore", JSON.stringify(
         this.dataStore
