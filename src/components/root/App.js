@@ -1,6 +1,6 @@
 import {useState, useLayoutEffect, createContext, useCallback} from "react";
 
-import {useDispatch} from "../../hooks/old/useDispatch.js";
+import {useDispatch} from "../../hooks/useDispatch.js";
 
 // import {appReducers} from "./appReducers.js";
 
@@ -53,7 +53,7 @@ export const App = (props) => {
   const {pagePathStore, pageKeyArr, currInd, accountData} = state;
 
   const [refCallback, dispatch] = useDispatch(
-    appReducers, "app", setState, props
+    appActions, setState, state, props
   );
 
 
@@ -67,9 +67,9 @@ export const App = (props) => {
     let newPath = currPagePath.entID ? "e" + currPagePath.entID : "";
     window.history.pushState(null, "", newPath);
     // TODO: Refactor:
-    appReducers["SCROLL_INTO_VIEW"]({}, currInd);
+    appActions["SCROLL_INTO_VIEW"](null, {}, currInd);
     window.onresize = (event) => {
-      appReducers["SCROLL_INTO_VIEW"]({}, currInd);
+      appActions["SCROLL_INTO_VIEW"](null, {}, currInd);
     };
   }, [currInd])
 
@@ -83,9 +83,9 @@ export const App = (props) => {
       }
         onClick={(e) => {
           if (currInd === ind) {
-            appReducers["SCROLL_INTO_VIEW"]({}, ind);
+            appActions["SCROLL_INTO_VIEW"](null, {}, ind);
           } else {
-            dispatch(e.target, "self", "GO_TO_PAGE", ind);
+            dispatch(e.target, "GO_TO_PAGE", ind);
           }
         }}
       >
@@ -114,8 +114,8 @@ export const App = (props) => {
 
 
 
-const appReducers = {
-  "OPEN_PAGE": ({state}, [pagePath, callerPageKey]) => {
+const appActions = {
+  "OPEN_PAGE": function(setState, {state}, [pagePath, callerPageKey]) {
     const {pageKeyArr, pagePathStore, nonce} = state;
     let callerColInd = pageKeyArr.indexOf(callerPageKey);
     let newNonce = nonce + 1;
@@ -132,23 +132,23 @@ const appReducers = {
     }
 
     state = this["GO_TO_PAGE"]({state}, newCurrInd);
-    return {
+    setState({
       ...state,
       pageKeyArr: newPageKeyArr,
       pagePathStore: newSpecStore,
       nonce: newNonce,
-    };
+    });
   },
 
-  "GO_TO_PAGE": ({state}, pageInd) => {
-    return {
+  "GO_TO_PAGE": function(setState, {state}, pageInd) {
+    setState ({
       ...state,
       currInd: pageInd,
       prevInd: state.currInd,
-    };
+    });
   },
 
-  "CLOSE_PAGE": ({state}, callerPageKey) => {
+  "CLOSE_PAGE": (setState, {state}, callerPageKey) => {
     // TODO: Implement.
     alert("CLOSE_PAGE not implemented yet.");
   },
@@ -176,8 +176,7 @@ const appReducers = {
     return [pageListContainer, pos, childPosArr];
   },
 
-  "SCROLL_INTO_VIEW": function ({state}, colInd) { // Huh? Doesn't work when
-    // I change to '({state}, colInd) => {...' instead..?
+  "SCROLL_INTO_VIEW": function(_, {state}, colInd) {
     // Get the page container and the positions.
     const [pageListContainer, pos, childPosArr] =
       this.getPageListContainerAndPositions();
@@ -195,7 +194,7 @@ const appReducers = {
 
   /* Account reducers */
 
-  "LOG_IN": ({state, props, node}, input, dispatch) => {
+  "LOG_IN": (setState, {state, props, node}, input, dispatch) => {
     // TODO: Implement.
     alert("LOG_IN not implemented yet.");
   },

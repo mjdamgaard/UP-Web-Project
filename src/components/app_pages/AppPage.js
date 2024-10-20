@@ -1,7 +1,7 @@
 import {createContext} from "react";
 import {
   useDispatch
-} from "../../hooks/old/useDispatch.js"
+} from "../../hooks/useDispatch.js"
 import React from 'react';
 
 import {EntityPage} from "./entity_pages/EntityPage.js";
@@ -17,7 +17,7 @@ const PageContext = createContext();
 export const AppPage = (props) => {
   const {pageKey, pagePath} = props;
   const [ref, dispatch] = useDispatch(
-    appPageReducers, "app-page", null, props
+    appPageActions, null, null, props
   );
 
   var page;
@@ -37,8 +37,8 @@ export const AppPage = (props) => {
 
 
 
-const appPageReducers = {
-  "OPEN_PAGE": ({state, props, node}, pagePath, dispatch) => {
+const appPageActions = {
+  "OPEN_PAGE": (setState, {state, props, node}, pagePath, dispatch) => {
     let callerPageKey = props.pageKey;
     dispatch(node, "app", "OPEN_PAGE", [pagePath, callerPageKey]);
   },
