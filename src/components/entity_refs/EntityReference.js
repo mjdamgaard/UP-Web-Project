@@ -1,5 +1,5 @@
 import {useState, createContext, useContext, useEffect, useMemo} from "react";
-import {useDispatch} from "../../hooks/old/useDispatch.js"
+import {useDispatch} from "../../hooks/useDispatch.js"
 // import {Link} from "react-router-dom";
 
 import {DataFetcher} from "../../classes/DataFetcher.js";
@@ -261,15 +261,14 @@ const NoneEntityReference = () => {
 
 
 
-export const EntityLink = (props) => {
-  const {entID, children} = props;
-  const [refCallback, dispatch] = useDispatch(null, null, props);
+export const EntityLink = ({entID, children}) => {
+  const [refCallback, dispatch] = useDispatch();
   // const colKey = useContext(ColumnContext);
 
   return (
     <div className="entity-link" ref={refCallback} onClick={(e) => {
       let pagePath = "/e" + entID;
-      dispatch(e.target, "app-page", "OPEN_PAGE", pagePath);
+      dispatch(e.target, "OPEN_PAGE", pagePath);
     }} >
       {children}
     </div>

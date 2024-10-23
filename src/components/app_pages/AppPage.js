@@ -38,9 +38,9 @@ export const AppPage = (props) => {
 
 
 const appPageActions = {
-  "OPEN_PAGE": (setState, {state, props, node}, pagePath, dispatch) => {
+  "OPEN_PAGE": (pagePath, setState, {state, props}, node, dispatch) => {
     let callerPageKey = props.pageKey;
-    dispatch(node, "app", "OPEN_PAGE", [pagePath, callerPageKey]);
+    dispatch(node.parentNode, "OPEN_PAGE", [pagePath, callerPageKey]);
   },
 }
 

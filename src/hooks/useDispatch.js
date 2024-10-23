@@ -35,17 +35,16 @@ export const useDispatch = (
 
 function dispatchListenerWithDataRef(event, dataRef) {
   const node = event.currentTarget;
-  const target = event.target;
   const [actionKey, input] = event.detail;
   const [actions, setState, state, props, contexts, refs] = dataRef.current;
   if (Object.keys(actions).includes(actionKey)) {
-    event.stopPropagation();
+    event.stopPropagation();debugger;
     actions[actionKey](
+      input,
       setState,
       {state: state, props: props, contexts: contexts, refs: refs},
-      input,
-      dispatch,
-      node, target
+      node,
+      dispatch
     );
   }
 }

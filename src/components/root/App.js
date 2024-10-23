@@ -67,9 +67,9 @@ export const App = (props) => {
     let newPath = currPagePath.entID ? "e" + currPagePath.entID : "";
     window.history.pushState(null, "", newPath);
     // TODO: Refactor:
-    appActions["SCROLL_INTO_VIEW"](null, {}, currInd);
+    appActions["SCROLL_INTO_VIEW"](currInd);
     window.onresize = (event) => {
-      appActions["SCROLL_INTO_VIEW"](null, {}, currInd);
+      appActions["SCROLL_INTO_VIEW"](currInd);
     };
   }, [currInd])
 
@@ -83,7 +83,7 @@ export const App = (props) => {
       }
         onClick={(e) => {
           if (currInd === ind) {
-            appActions["SCROLL_INTO_VIEW"](null, {}, ind);
+            appActions["SCROLL_INTO_VIEW"](ind);
           } else {
             dispatch(e.target, "GO_TO_PAGE", ind);
           }
@@ -115,7 +115,7 @@ export const App = (props) => {
 
 
 const appActions = {
-  "OPEN_PAGE": function(setState, {state}, [pagePath, callerPageKey]) {
+  "OPEN_PAGE": function([pagePath, callerPageKey], setState, state) { //{state}) {
     const {pageKeyArr, pagePathStore, nonce} = state;
     let callerColInd = pageKeyArr.indexOf(callerPageKey);
     let newNonce = nonce + 1;
@@ -131,7 +131,7 @@ const appActions = {
       // window.history.popState()...
     }
 
-    state = this["GO_TO_PAGE"]({state}, newCurrInd);
+    state = this["GO_TO_PAGE"](newCurrInd, setState, {state});debugger;
     setState({
       ...state,
       pageKeyArr: newPageKeyArr,
@@ -140,7 +140,7 @@ const appActions = {
     });
   },
 
-  "GO_TO_PAGE": function(setState, {state}, pageInd) {
+  "GO_TO_PAGE": function(pageInd, setState, {state}) {
     setState ({
       ...state,
       currInd: pageInd,
@@ -176,7 +176,7 @@ const appActions = {
     return [pageListContainer, pos, childPosArr];
   },
 
-  "SCROLL_INTO_VIEW": function(_, {state}, colInd) {
+  "SCROLL_INTO_VIEW": function(colInd) {
     // Get the page container and the positions.
     const [pageListContainer, pos, childPosArr] =
       this.getPageListContainerAndPositions();
@@ -194,7 +194,7 @@ const appActions = {
 
   /* Account reducers */
 
-  "LOG_IN": (setState, {state, props, node}, input, dispatch) => {
+  "LOG_IN": (input, setState, {state, props}, node, dispatch) => {
     // TODO: Implement.
     alert("LOG_IN not implemented yet.");
   },
