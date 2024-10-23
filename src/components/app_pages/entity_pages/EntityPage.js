@@ -3,9 +3,15 @@ import {useState, useMemo, useContext} from "react";
 import {DataFetcher} from "../../../classes/DataFetcher";
 import {EntityReference} from "../../entity_refs/EntityReference";
 import {EntityInfoPage} from "./subpages/InfoPage";
+import {DropdownMenu} from "../../menus/DropdownMenu";
 
 /* Placeholders */
-// const CategoryInstancesPage = () => <template></template>;
+const ScoringDisplay = () => <template></template>;
+const MainMenu = () => <template></template>;
+const ClassesMenu = () => <template></template>;
+const FilteringPredicatesMenu = () => <template></template>;
+const SortingPredicatesMenu = () => <template></template>;
+const SubdivisionsMenu = () => <template></template>;
 
 
 
@@ -55,12 +61,27 @@ export const EntityPage = ({entID, initTab} ) => {
 
   return (
     <div className="entity-page">
-      <div className="entity-page-header">
-        <h2><EntityReference entID={entID} isLink /></h2>
-        {/* <div><EntityDataDisplay entID={entID} /></div> */}
-      </div>
-      <EntityInfoPage entID={entID} />
+      <EntityPageHeader entID={entID}/>
+      {/* TODO: Move the InfoPage under one of the topmost tabs instead. */}
+      <DropdownMenu
+        title={"Info"} children={<EntityInfoPage entID={entID} />}
+        startAsExpanded
+      />
+      <MainMenu /> {/* Consists of class tabs under which are the main tabs */}
+      <ScoringDisplay />
+      <ClassesMenu /> {/* Superclasses and useful subclasses */}
+      <FilteringPredicatesMenu />
+      <SortingPredicatesMenu />
+      <SubdivisionsMenu /> {/* Under here are also all scoring menus */}
     </div>
   );
 };
 
+
+const EntityPageHeader = ({entID}) => {
+  return (
+    <div className="entity-page-header">
+      <h2><EntityReference entID={entID} isLink /></h2>
+    </div>
+  );
+};

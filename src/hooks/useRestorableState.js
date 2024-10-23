@@ -35,7 +35,7 @@ export class RestorableDataStore {
     JSON.parse(sessionStorage.getItem("_restorableDataStore") ?? "null") ?? {};
 
   static saveDataOnBeforeUnloadEvent() {
-    window.addEventListener("beforeunload", (event) => {
+    window.addEventListener("beforeunload", () => {
       sessionStorage.setItem("_restorableDataStore", JSON.stringify(
         this.dataStore
       ));
@@ -43,7 +43,7 @@ export class RestorableDataStore {
   }
 
   static #getParentDataStoreAndLastKeyPart(key, delimiter) {
-    keyParts = key.split(delimiter);
+    let keyParts = key.split(delimiter);
     let len = keyParts.length;
 
     var dataStore = this.dataStore;
@@ -54,7 +54,7 @@ export class RestorableDataStore {
     return [dataStore, keyParts[len - 1]]
   }
 
-  static getData(key, delimiter) {
+  static getData(key, delimiter) {debugger;
     const [dataStore, lastKeyPart] = this.#getParentDataStoreAndLastKeyPart(
       key, delimiter
     );

@@ -1,6 +1,7 @@
 import {useState, useLayoutEffect, createContext, useCallback} from "react";
 
 import {useDispatch} from "../../hooks/useDispatch.js";
+import {useRestorableState} from "../../hooks/useRestorableState.js";
 
 // import {appReducers} from "./appReducers.js";
 
@@ -34,23 +35,26 @@ export const AccountContext = createContext();
 export const App = (props) => {
   const pathname = window.location.pathname;
   const hasPath = pathname !== "/";
+  // const [state, setState] = useRestorableState("app", {
   const [state, setState] = useState({
-    accountData: {
+    accountState: {
       userID: localStorage.session && localStorage.session.userID,
       sesIDHex: localStorage.session && localStorage.session.sesIDHex,
     },
-    pageKeyArr: hasPath ? [0, 1] : [0],
-    pagePathStore: {
-      0: "/e" + HOME_ENTITY_ID,
-      1: hasPath ? pathname : undefined,
+    pagesState: {
+      pageKeyArr: hasPath ? [0, 1] : [0],
+      pagePathStore: {
+        0: "/e" + HOME_ENTITY_ID,
+        1: hasPath ? pathname : undefined,
+      },
+      nonce: 1,
+      currInd: hasPath ? 1 : 0,
+      prevInd: hasPath ? 0 : null,
     },
-    nonce: 1,
-    currInd: hasPath ? 1 : 0,
-    prevInd: hasPath ? 0 : null,
     // scrollLeft: 0, scrollVelocity: 0, lastScrollAt: 0,
 
   });
-  const {pagePathStore, pageKeyArr, currInd, accountData} = state;
+  const {pagePathStore, pageKeyArr, currInd} = state.pagesState;
 
   const [refCallback, dispatch] = useDispatch(
     appActions, setState, state, props
@@ -58,8 +62,8 @@ export const App = (props) => {
 
 
   const getAccountData = useCallback((propName) => {
-    return accountData[propName];
-  }, Object.values(accountData))
+    return state.accountState[propName];
+  }, Object.values(state.accountState))
 
 
   useLayoutEffect(() => {
@@ -116,7 +120,8 @@ export const App = (props) => {
 
 const appActions = {
   "OPEN_PAGE": function([pagePath, callerPageKey], setState, {state}) {
-    const {pageKeyArr, pagePathStore, nonce} = state;
+    const pagesState = state.pagesState;
+    const {pageKeyArr, pagePathStore, nonce} = state.pagesState;
     let callerColInd = pageKeyArr.indexOf(callerPageKey);
     let newNonce = nonce + 1;
     let newPageKeyArr = (callerColInd === -1) ?
@@ -127,24 +132,31 @@ const appActions = {
     let newSpecStore = {...pagePathStore, [newNonce]: pagePath};
     let newCurrInd = callerColInd + 1;
 
-    if (newCurrInd == state.prevInd) {
+    if (newCurrInd == pagesState.prevInd) {
       // window.history.popState()...
     }
 
     this["GO_TO_PAGE"](newCurrInd, setState, {state});
     setState({
       ...state,
-      pageKeyArr: newPageKeyArr,
-      pagePathStore: newSpecStore,
-      nonce: newNonce,
+      pagesState: {
+        ...state.pagesState,
+        pageKeyArr: newPageKeyArr,
+        pagePathStore: newSpecStore,
+        nonce: newNonce,
+      }
     });
   },
 
   "GO_TO_PAGE": function(pageInd, setState, {state}) {
+    const pagesState = state.pagesState;
     setState ({
       ...state,
-      currInd: pageInd,
-      prevInd: state.currInd,
+      pagesState: {
+        ...state.pagesState,
+        currInd: pageInd,
+        prevInd: pagesState.currInd,
+      }
     });
   },
 
