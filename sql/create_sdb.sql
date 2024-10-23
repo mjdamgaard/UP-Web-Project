@@ -36,103 +36,116 @@ DROP TABLE Entities;
  **/
 
 
-CREATE TABLE AtomicStatementScores (
-    -- User (or bot) who scores the statement.
+
+
+CREATE TABLE LikelihoodScores (
+    -- User (or bot) who scores the "belongs to" statement.
     user_id BIGINT UNSIGNED NOT NULL,
 
-    -- Statement.
-    stmt_id BIGINT UNSIGNED NOT NULL,
+    -- Class the the Subject may or may not belong to.
+    class_id BIGINT UNSIGNED NOT NULL,
 
-    -- Score value. This value qualifies the statement. It might represent a
-    -- grade that scores the statement on some grading scale, or a likelihood
-    -- of how probable the stmt is, or it might even represent a quantity. For
-    -- instance 'x costs money' might be qualified by a score in units of the
-    -- money that x is believed to cost.
+    -- Subject that may or may not belong to the Class.
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    -- The score value is a number (single-precision float) between 0 and 1
+    -- that denotes the likelihood of Subject belonging to Class, as deemed
+    -- by the user (or bot).
     score_val FLOAT NOT NULL,
-
-    -- Rating error (standard deviation).
-    score_err FLOAT UNSIGNED NOT NULL,
 
     PRIMARY KEY (
         user_id,
-        stmt_id
-    )
+        class_id,
+        score_val,
+        subj_id
+    ),
+
+    -- Index to look up specific score (and restricting one score per user).
+    UNIQUE INDEX (user_id, class_id, subj_id)
 
     -- Still better to use a bot for this instead:
-    -- -- Index to look up users who has rated the statement.
-    -- UNIQUE INDEX (stmt_id, score_val, score_err, user_id)
+    -- -- Index to look up users who has rated the stmt / rating scale.
+    -- UNIQUE INDEX (class_id, subj_id, score_val, user_id)
 );
 
 
-CREATE TABLE PredicativeStatementScores (
+
+CREATE TABLE RatingScores (
     -- User (or bot) who scores the statement.
     user_id BIGINT UNSIGNED NOT NULL,
 
-    -- Predicate that forms the statement together with the subject.
+    -- Class that restricts the Subjects being rated.
+    class_id BIGINT UNSIGNED NOT NULL,
+
+    -- Predicate w.r.t. which the Subject is rated.
     pred_id BIGINT UNSIGNED NOT NULL,
 
-    -- Subject that forms the statement together with the predicate.
+    -- Subject that is rated.
     subj_id BIGINT UNSIGNED NOT NULL,
 
-    -- --"--
+    -- Unit-less score value that places Subject on a scale among its peers
+    -- from the same class, Class. The distribution over this scale is always
+    -- normalized to have the same mean and variance for all rating scales.   
     score_val FLOAT NOT NULL,
-    -- --"--
-    score_err FLOAT UNSIGNED NOT NULL,
 
     PRIMARY KEY (
         user_id,
+        class_id,
         pred_id,
         score_val,
-        subj_id,
-        score_err
+        subj_id
     ),
 
-    -- Index to look up specific rating (and restricting one rating pr. user.)
-    UNIQUE INDEX (user_id, pred_id, subj_id)
+    -- Index to look up specific score (and restricting one score per user).
+    UNIQUE INDEX (user_id, class_id, pred_id, subj_id)
 
     -- Still better to use a bot for this instead:
     -- -- Index to look up users who has rated the stmt / rating scale.
-    -- UNIQUE INDEX (pred_id, subj_id, score_val, score_err, user_id)
+    -- UNIQUE INDEX (class_id, pred_id, subj_id, score_val, user_id)
 );
 
 
-
-CREATE TABLE RelationalStatementScores (
+CREATE TABLE CorrelationScores (
     -- User (or bot) who scores the statement.
     user_id BIGINT UNSIGNED NOT NULL,
 
-    -- Relation that forms the stmt together with the object and subject.
-    rel_id BIGINT UNSIGNED NOT NULL,
+    -- Division (or 'subdivision'). This is a group of either classes or
+    -- predicates, that respectively divide the class or predicate in question
+    -- into parts, so to speak. For classes, these parts are just subclasses,
+    -- only with an implicit "rest" class as well that contains all the
+    -- entities not in any of the chosen subclasses. And for predicates, the
+    -- "parts" are underlying predicates, from which the score of the "parent
+    -- predicate" ought to approximately derive. Like the "rest" class, there
+    -- is also always an "other" predicate present in each division.
+    div_id BIGINT UNSIGNED NOT NULL,
 
-    -- Object that forms the stmt together with the relation and subject.
-    obj_id BIGINT UNSIGNED NOT NULL,
+    -- ...
 
-    -- Subject that forms the stmt together with the relation and object.
+    -- Predicate w.r.t. which the Subject is rated.
+    pred_id BIGINT UNSIGNED NOT NULL,
+
+    -- Subject that is rated.
     subj_id BIGINT UNSIGNED NOT NULL,
 
-    -- --"--
+    -- Unit-less score value that places Subject on a scale among its peers
+    -- from the same class, Class. The distribution over this scale is always
+    -- normalized to have the same mean and variance for all rating scales.   
     score_val FLOAT NOT NULL,
-    -- --"--
-    score_err FLOAT UNSIGNED NOT NULL,
 
     PRIMARY KEY (
         user_id,
-        obj_id,
-        rel_id,
+        class_id,
+        pred_id,
         score_val,
-        subj_id,
-        score_err
+        subj_id
     ),
 
-    -- Index to look up specific rating (and restricting one rating pr. user.)
-    UNIQUE INDEX (user_id, obj_id, rel_id, subj_id)
+    -- Index to look up specific score (and restricting one score per user).
+    UNIQUE INDEX (user_id, class_id, pred_id, subj_id)
 
     -- Still better to use a bot for this instead:
     -- -- Index to look up users who has rated the stmt / rating scale.
-    -- UNIQUE INDEX (obj_id, rel_id, subj_id, score_val, score_err, user_id)
-
-    -- All relations are directional, so we don't need:
-    -- UNIQUE INDEX (user_id, subj_id, rel_id, obj_id)
+    -- UNIQUE INDEX (class_id, pred_id, subj_id, score_val, user_id)
 );
 
 -- TODO: Compress these tables and their sec. index, as well as other tables
@@ -197,55 +210,6 @@ CREATE TABLE IndexedEntities (
 
 
 /* Entities */
-
--- CREATE TABLE EntityIDIntervals (
---     -- The start of the interval. The end is just before the next head_id in
---     -- this table, which just hold a NULL user_id when it is not reserved yet,
---     -- and is currently the last one of the table.
---     head_id INT UNSIGNED NOT NULL,
-
---     -- The length of the interval
---     interval_length BIGINT UNSIGNED NOT NULL,
-
---     -- The start of the parent interval, in which this interval is nested.
---     parent_head_id BIGINT UNSIGNED NOT NULL,
-
---     -- The user who reserved the interval.
---     user_id BIGINT UNSIGNED NOT NULL,
-
---     -- A key to guard against unintentionally repeated reservations/insertions.
---     -- If a user uses the same key twice, we simply return the same interval,
---     -- rather than reserving a new one. 
---     next_interval BIGINT UNSIGNED,
-
---     UNIQUE INDEX (user_id, interval_key),
-
---     -- A boolean of whether the 
---     is_finalized BOOL NOT NULL DEFAULT 0
--- );
--- INSERT INTO AllocatedIDIntervals (
---     head_id,
---     interval_length,
---     parent_head_id,
---     user_id,
---     interval_key
--- )
--- VALUES (
---     1,
---     100000000000000,
---     -- (Initially we just allocate a very large part of the space, and make
---     -- sure to only fill up from bottom to top, not expecting overflow. Then
---     -- once we start making the database distributed, we can resize this
---     -- interval and reimplement the reserveInterval() procedure.)
---     0,
---     1,
---     0
-
--- );
--- -- We assume that the administrator user of this database node is represented
--- -- by the entity with id = 1.
-
-
 
 
 CREATE TABLE Entities (

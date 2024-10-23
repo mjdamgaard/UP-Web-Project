@@ -12,6 +12,8 @@ const ClassesMenu = () => <template></template>;
 const FilteringPredicatesMenu = () => <template></template>;
 const SortingPredicatesMenu = () => <template></template>;
 const SubdivisionsMenu = () => <template></template>;
+const EntityPageBody = () => <template></template>;
+const OpenedTabList = () => <template></template>;
 
 
 
@@ -69,10 +71,12 @@ export const EntityPage = ({entID, initTab} ) => {
       />
       <MainMenu /> {/* Consists of class tabs under which are the main tabs */}
       <ScoringDisplay />
+      <OpenedTabList />
       <ClassesMenu /> {/* Superclasses and useful subclasses */}
       <FilteringPredicatesMenu />
       <SortingPredicatesMenu />
       <SubdivisionsMenu /> {/* Under here are also all scoring menus */}
+      <EntityPageBody />
     </div>
   );
 };
