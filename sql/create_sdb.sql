@@ -70,6 +70,37 @@ CREATE TABLE LikelihoodScores (
 
 
 
+CREATE TABLE ValueScores (
+    -- User (or bot) who scores the "belongs to" statement.
+    user_id BIGINT UNSIGNED NOT NULL,
+
+    -- Function that together with the Subject produces a scalar to be scored.
+    fun_id BIGINT UNSIGNED NOT NULL,
+
+    -- Subject that is the "input" to the Function.
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    -- The score value is a number (single-precision float) taking any possible
+    -- (MySQL-compatible) value.
+    score_val FLOAT NOT NULL,
+
+    PRIMARY KEY (
+        user_id,
+        fun_id,
+        score_val,
+        subj_id
+    ),
+
+    -- Index to look up specific score (and restricting one score per user).
+    UNIQUE INDEX (user_id, fun_id, subj_id)
+
+    -- Still better to use a bot for this instead:
+    -- -- Index to look up users who has rated the stmt / rating scale.
+    -- UNIQUE INDEX (fun_id, subj_id, score_val, user_id)
+);
+
+
+
 CREATE TABLE RatingScores (
     -- User (or bot) who scores the statement.
     user_id BIGINT UNSIGNED NOT NULL,
@@ -105,7 +136,8 @@ CREATE TABLE RatingScores (
 );
 
 
-CREATE TABLE CorrelationScores (
+
+CREATE TABLE RatingCorrelationScores (
     -- User (or bot) who scores the statement.
     user_id BIGINT UNSIGNED NOT NULL,
 
@@ -154,25 +186,25 @@ CREATE TABLE CorrelationScores (
 
 
 
--- RecordedInputs can first of all be used by time-dependent bots (e.g. a mean-
--- of-recent-inputs bot), and can also potentially used by bots that update on
--- scheduled events rather than immediately when the input is received. And
--- furthermore, they can also potentially be used by third-party bots and by
--- SDB peers.
-CREATE TABLE RecordedInputs (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+-- -- RecordedInputs can first of all be used by time-dependent bots (e.g. a mean-
+-- -- of-recent-inputs bot), and can also potentially used by bots that update on
+-- -- scheduled events rather than immediately when the input is received. And
+-- -- furthermore, they can also potentially be used by third-party bots and by
+-- -- SDB peers.
+-- CREATE TABLE RecordedInputs (
+--     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    user_id BIGINT UNSIGNED NOT NULL,
-    -- tag_id BIGINT UNSIGNED NOT NULL,
-    -- inst_id BIGINT UNSIGNED NOT NULL,
-    stmt_id BIGINT UNSIGNED NOT NULL,
-    -- A rating value of NULL means 'take my rating away,' making it 'missing'/
-    -- 'deleted.'
-    rat_val FLOAT UNSIGNED,
+--     user_id BIGINT UNSIGNED NOT NULL,
+--     -- tag_id BIGINT UNSIGNED NOT NULL,
+--     -- inst_id BIGINT UNSIGNED NOT NULL,
+--     stmt_id BIGINT UNSIGNED NOT NULL,
+--     -- A rating value of NULL means 'take my rating away,' making it 'missing'/
+--     -- 'deleted.'
+--     rat_val FLOAT UNSIGNED,
 
-    -- UNIQUE INDEX (tag_id, inst_id, id)
-    UNIQUE INDEX (stmt_id, id)
-);
+--     -- UNIQUE INDEX (tag_id, inst_id, id)
+--     UNIQUE INDEX (stmt_id, id)
+-- );
 
 
 
@@ -216,6 +248,7 @@ CREATE TABLE Entities (
     -- Entity ID.
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
+    -- Type identifier.
     type_ident CHAR NOT NULL DEFAULT 'j',
 
     -- A string (possibly a JSON object) that defines the entity. The format
@@ -238,6 +271,7 @@ CREATE TABLE Entities (
     is_private TINYINT UNSIGNED NOT NULL DEFAULT 1,
     CHECK (is_private <= 1),
 
+    -- Creation identifier used by a user to structure and edit their creations.
     creation_ident VARBINARY(255) NOT NULL DEFAULT "",
 
     CHECK (creator_id != 0 OR is_private),
