@@ -115,7 +115,7 @@ export const App = (props) => {
 
 
 const appActions = {
-  "OPEN_PAGE": function([pagePath, callerPageKey], setState, {state}) {debugger;
+  "OPEN_PAGE": function([pagePath, callerPageKey], setState, {state}) {
     const {pageKeyArr, pagePathStore, nonce} = state;
     let callerColInd = pageKeyArr.indexOf(callerPageKey);
     let newNonce = nonce + 1;
@@ -131,7 +131,7 @@ const appActions = {
       // window.history.popState()...
     }
 
-    state = this["GO_TO_PAGE"](newCurrInd, setState, {state});debugger;
+    this["GO_TO_PAGE"](newCurrInd, setState, {state});
     setState({
       ...state,
       pageKeyArr: newPageKeyArr,
