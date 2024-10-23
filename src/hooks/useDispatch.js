@@ -38,7 +38,7 @@ function dispatchListenerWithDataRef(event, dataRef) {
   const [actionKey, input] = event.detail;
   const [actions, setState, state, props, contexts, refs] = dataRef.current;
   if (Object.keys(actions).includes(actionKey)) {
-    event.stopPropagation();debugger;
+    event.stopPropagation();
     actions[actionKey](
       input,
       setState,
