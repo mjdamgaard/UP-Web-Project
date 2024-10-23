@@ -115,7 +115,8 @@ export const App = (props) => {
 
 
 const appActions = {
-  "OPEN_PAGE": function([pagePath, callerPageKey], setState, state) { //{state}) {
+  "OPEN_PAGE": function([pagePath, callerPageKey], setState, state) {
+    state = state.state;
     const {pageKeyArr, pagePathStore, nonce} = state;
     let callerColInd = pageKeyArr.indexOf(callerPageKey);
     let newNonce = nonce + 1;
