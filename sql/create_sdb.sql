@@ -1,8 +1,7 @@
 
 /* Ratings */
 DROP TABLE Scores;
--- DROP TABLE PredicativeStatementScores;
--- DROP TABLE RelationalStatementScores;
+-- DROP TABLE PrivateScores;
 
 -- DROP TABLE RecordedInputs;
 
@@ -68,6 +67,28 @@ CREATE TABLE Scores (
     -- UNIQUE INDEX (scale_id, subj_id, score_val, user_id)
 );
 
+
+
+
+
+CREATE TABLE PrivateScores (
+    user_id BIGINT UNSIGNED NOT NULL,
+
+    scale_id BIGINT UNSIGNED NOT NULL,
+
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    score_val FLOAT NOT NULL,
+
+    PRIMARY KEY (
+        user_id,
+        scale_id,
+        score_val,
+        subj_id
+    ),
+
+    UNIQUE INDEX (user_id, scale_id, subj_id)
+);
 
 
 
