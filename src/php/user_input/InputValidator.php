@@ -106,6 +106,15 @@ class InputValidator {
                     );
                 }
                 break;
+            case "float":
+            // TODO: Expand legal syntax.
+                $pattern = "/^\\-?(0|[1-9][0-9]*)(\\.[0-9]+)$/";
+                if (!preg_match($pattern, $paramVal)) {
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "FLOAT: " . $pattern
+                    );
+                }
+                break;
             case "char":
                 // TODO: Find out why e.g. "£" and "Æ" does not pass this test,
                 // and fix.

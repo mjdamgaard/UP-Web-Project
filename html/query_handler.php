@@ -72,50 +72,42 @@ $sql = "";
 $paramNameArr = "";
 $typeArr = "";
 switch ($reqType) {
-    case "instList":
+    case "entList":
         header("Cache-Control: max-age=3");
-        $sql = "CALL selectInstanceList (?, ?, ?, ?, ?, ?, ?)";
+        $sql = "CALL selectEntityList (?, ?, ?, ?, ?)";
         $paramNameArr = array(
-            "u", "t",
-            "rl", "rh",
+            "u", "s",
             "n", "o",
             "a"
         );
         $typeArr = array(
             "id", "id",
-            "rat", "rat",
             "uint", "uint",
             "bool"
         );
-        // output: [[ratVal, instID], ...].
+        // output: [[scoreVal, entID], ...].
         break;
-    case "rat":
+    case "entListFromHash":
         header("Cache-Control: max-age=3");
-        $sql = "CALL selectRating (?, ?, ?)";
-        $paramNameArr = array("u", "t", "i");
+        $sql = "CALL selectEntityListFromHash (?, ?, ?, ?, ?)";
+        $paramNameArr = array(
+            "u", "h",
+            "n", "o",
+            "a"
+        );
+        $typeArr = array(
+            "id", "hash",
+            "uint", "uint",
+            "bool"
+        );
+        // output: [[scoreVal, entID], ...].
+        break;
+    case "score":
+        header("Cache-Control: max-age=3");
+        $sql = "CALL selectScore (?, ?, ?)";
+        $paramNameArr = array("u", "s", "e");
         $typeArr = array("id", "id", "id");
-        // output: [[ratVal]].
-        break;
-    case "recInputs":
-        header("Cache-Control: max-age=3");
-        $sql = "CALL selectRecordedInputs (?, ?)";
-        $paramNameArr = array("id", "n");
-        $typeArr = array("id", "uint");
-        // output: [[userID, stmtID, ratVal], ...].
-        break;
-    case "recInputsSK":
-        header("Cache-Control: max-age=3");
-        $sql = "CALL selectRecordedInputsFromSecKey (?, ?, ?, ?)";
-        $paramNameArr = array("s", "n", "o", "a");
-        $typeArr = array("id", "uint", "uint", "tint");
-        // output: [[ratID, userID, stmtID, ratVal], ...].
-        break;
-    case "recInputsMaxID":
-        header("Cache-Control: max-age=3");
-        $sql = "CALL selectRecordedInputsMaxID ()";
-        $paramNameArr = array();
-        $typeArr = array();
-        // output: [[maxID]].
+        // output: [[scoreVal]].
         break;
     /* Entity queries */
     case "ent":

@@ -61,12 +61,15 @@ $sql = "";
 $paramNameArr = "";
 $typeArr = "";
 switch ($reqType) {
-    case "rat":
-        $sql = "CALL insertOrUpdateRating (?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "s", "t", "o", "r");
-        $typeArr = array("id", "id", "id", "id", "utint");
-        // (outID is the stmtID here, i.e. the tag--instance statement.)
-        // TODO: Is it?
+    case "score":
+        $sql = "CALL insertOrUpdateScore (?, ?, ?, ?)";
+        $paramNameArr = array("u", "s", "e", "v");
+        $typeArr = array("id", "id", "id", "float");
+        break;
+    case "delScore":
+        $sql = "CALL deleteScore (?, ?, ?)";
+        $paramNameArr = array("u", "s", "e");
+        $typeArr = array("id", "id", "id");
         break;
     case "ent":
         $sql = "CALL insertOrFindEntity (?, ?, ?, ?, ?)";

@@ -1,11 +1,9 @@
 
 SELECT "Query procedures";
 
-DROP PROCEDURE selectInstanceList;
-DROP PROCEDURE selectRating;
-DROP PROCEDURE selectRecordedInputs;
-DROP PROCEDURE selectRecordedInputsFromSecKey;
-DROP PROCEDURE selectRecordedInputsMaxID;
+DROP PROCEDURE selectEntityList;
+DROP PROCEDURE selectEntityListFromHash;
+DROP PROCEDURE selectScore;
 
 -- TODO: Make proc to query for users who has rated a stmt / scale.
 
@@ -31,25 +29,59 @@ DROP PROCEDURE selectAncillaryBotData1e4d;
 
 
 DELIMITER //
-CREATE PROCEDURE selectInstanceList (
+CREATE PROCEDURE selectEntityList (
     IN userID BIGINT UNSIGNED,
-    IN tagID BIGINT UNSIGNED,
-    IN ratingRangeLo TINYINT UNSIGNED,
-    IN ratingRangeHi TINYINT UNSIGNED,
+    IN scaleID BIGINT UNSIGNED,
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED,
     IN isAscOrder BOOL
 )
 BEGIN
     SELECT
-        rat_val AS ratVal,
-        obj_id AS objID
-    FROM SemanticInputs
+        score_val AS scoreVal,
+        subj_id AS subjID
+    FROM Scores
     WHERE (
         user_id = userID AND
-        tag_id = tagID AND
-        (ratingRangeLo = 0 OR rat_val >= ratingRangeLo) AND
-        (ratingRangeHi = 0 OR rat_val <= ratingRangeHi)
+        scale_id = scaleID
+    )
+    ORDER BY
+        CASE WHEN isAscOrder THEN rat_val END ASC,
+        CASE WHEN NOT isAscOrder THEN rat_val END DESC,
+        CASE WHEN isAscOrder THEN obj_id END ASC,
+        CASE WHEN NOT isAscOrder THEN obj_id END DESC
+    LIMIT numOffset, maxNum;
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectEntityListFromHash (
+    IN userID BIGINT UNSIGNED,
+    IN scaleHash CHAR(64),
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED,
+    IN isAscOrder BOOL
+)
+BEGIN
+    DECLARE scaleID BIGINT UNSIGNED;
+
+    SELECT id INTO scaleID
+    FROM Entities
+    WHERE (
+        is_private = 0 AND
+        def_hash = scaleHash AND
+        creator_id = 0
+    );
+
+    SELECT
+        score_val AS scoreVal,
+        subj_id AS entID
+    FROM Scores
+    WHERE (
+        user_id = userID AND
+        scale_id = scaleID
     )
     ORDER BY
         CASE WHEN isAscOrder THEN rat_val END ASC,
@@ -64,73 +96,23 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectRating (
+CREATE PROCEDURE selectScore (
     IN userID BIGINT UNSIGNED,
-    IN tagID BIGINT UNSIGNED,
-    IN objID BIGINT UNSIGNED
+    IN scaleID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT rat_val AS ratVal
-    FROM SemanticInputs
+    SELECT score_val AS scoreVal
+    FROM Scores
     WHERE (
         user_id = userID AND
-        tag_id = tagID AND
-        obj_id = objID
+        scale_id = scaleID AND
+        subj_id = subjID
     );
 END //
 DELIMITER ;
 
 
-
-
-DELIMITER //
-CREATE PROCEDURE selectRecordedInputs (
-    IN startID BIGINT UNSIGNED,
-    IN maxNum INT UNSIGNED
-)
-BEGIN
-    SELECT
-        user_id AS userID,
-        stmt_id AS stmtID,
-        rat_val AS ratVal
-    FROM RecordedInputs
-    WHERE id >= startID
-    ORDER BY id ASC
-    LIMIT maxNum;
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE selectRecordedInputsFromSecKey (
-    IN stmtID BIGINT UNSIGNED,
-    IN maxNum INT UNSIGNED,
-    IN numOffset INT UNSIGNED,
-    IN isAscOrder BOOL
-)
-BEGIN
-    SELECT
-        id AS ratID,
-        user_id AS userID,
-        stmtID,
-        rat_val AS ratVal
-    FROM RecordedInputs
-    WHERE stmt_id = stmtID
-    ORDER BY
-        CASE WHEN isAscOrder THEN id END ASC,
-        CASE WHEN NOT isAscOrder THEN id END DESC
-    LIMIT numOffset, maxNum;
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE selectRecordedInputsMaxID ()
-BEGIN
-    SELECT MAX(id) AS maxID
-    FROM RecordedInputs;
-END //
-DELIMITER ;
 
 
 

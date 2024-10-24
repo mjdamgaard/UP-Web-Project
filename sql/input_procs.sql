@@ -1,7 +1,8 @@
 
 SELECT "Input procedures";
 
-DROP PROCEDURE insertOrUpdateRating;
+DROP PROCEDURE insertOrUpdateScore;
+DROP PROCEDURE deleteScore;
 
 DROP PROCEDURE insertOrFindEntity;
 DROP PROCEDURE insertOrFindAnonymousEntity;
@@ -16,112 +17,46 @@ DROP PROCEDURE editEntityIdentifier;
 
 
 DELIMITER //
-CREATE PROCEDURE insertOrUpdateRating (
+CREATE PROCEDURE insertOrUpdateScore (
     IN userID BIGINT UNSIGNED,
+    IN scaleID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN tagID BIGINT UNSIGNED,
-    IN objID BIGINT UNSIGNED,
-    IN encodedRatVal SMALLINT UNSIGNED
+    IN scoreVal FLOAT
 )
-BEGIN proc: BEGIN
-    DECLARE exitCode TINYINT UNSIGNED DEFAULT 0;
-    DECLARE ratVal, prevRatVal TINYINT UNSIGNED;
-    DECLARE stmtID, stmtDataKey BIGINT UNSIGNED;
+BEGIN
+    INSERT INTO Scores (user_id, scale_id, subj_id, score_val)
+    VALUES (userID, scaleID, subjID, scoreVal)
+    ON DUPLICATE KEY UPDATE score_val = scoreVal;
 
-    -- Get or create the statement entity.
-    INSERT IGNORE INTO StatementData (tag_id, obj_id)
-    VALUES (tagID, objID);
-    IF (ROW_COUNT() > 0) THEN
-        SELECT LAST_INSERT_ID() INTO stmtDataKey;
-        INSERT INTO Entities (data_type, data_key, creator_id)
-        VALUES ('m', stmtDataKey, userID);
-        SELECT LAST_INSERT_ID() INTO stmtID;
-    ELSE
-        SELECT data_key INTO stmtDataKey
-        FROM StatementData
-        WHERE (
-            tag_id = tagID AND
-            obj_id = objID
-        );
-        SELECT id INTO stmtID
-        FROM Entities
-        WHERE (
-            data_type = 'm' AND
-            data_key = stmtDataKey
-        );
-    END IF;
+    -- -- TODO: Run bots on scheduled events instead.
+    -- CALL runBots ();
 
-    -- If encodedRatVal > 256, delete the rating stored in SemanticInputs, and
-    -- add the rating deletion as a record in RecordedInputs (without deleting
-    -- the previous rating there, as this should be done via another procedure).
-    IF (encodedRatVal > 256) THEN
-        DELETE FROM SemanticInputs
-        WHERE (
-            user_id = userID AND
-            tag_id = tagID AND
-            obj_id = objID
-        );
-        INSERT INTO RecordedInputs (
-            user_id,
-            stmt_id,
-            rat_val
-        )
-        VALUES (
-            userID,
-            stmtID,
-            300 -- just a number larger than 256 meaning 'deletion.'
-        );
-    ELSE
-        SET ratVal = encodedRatVal;
-
-        -- Get the previous rating value (might be null).
-        SELECT rat_val INTO prevRatVal
-        FROM SemanticInputs
-        WHERE (
-            user_id = userID AND
-            tag_id = tagID AND
-            obj_id = objID
-        );
-        -- If prevRatVal is the same as before, set exitCode = 1 and do nothing
-        -- further.
-        IF (prevRatVal <=> ratVal) THEN
-            SET exitCode = 1; -- Rating is the same value as before.
-        ELSE
-            -- Else insert the rating into SemanticInputs, as well as into
-            -- RecordedInputs.
-            REPLACE INTO SemanticInputs (
-                user_id,
-                tag_id,
-                rat_val,
-                obj_id
-            )
-            VALUES (
-                userID,
-                tagID,
-                ratVal,
-                objID
-            );
-            INSERT INTO RecordedInputs (
-                user_id,
-                stmt_id,
-                rat_val
-            )
-            VALUES (
-                userID,
-                stmtID,
-                ratVal
-            );
-        END IF;
-    END IF;
-
-
-    -- TODO: Run bots on scheduled events instead.
-    CALL runBots ();
-
-    SELECT stmtID AS outID, exitCode;
-END proc; END //
+    SELECT subjID AS outID, 0 AS exitCode;
+END //
 DELIMITER ;
 
+
+
+DELIMITER //
+CREATE PROCEDURE deleteScore (
+    IN userID BIGINT UNSIGNED,
+    IN scaleID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED
+)
+BEGIN
+    DELETE FROM Scores
+    WHERE (
+        user_id = userID AND
+        scale_id = scaleID AND
+        subj_id = subjID
+    );
+
+    -- -- TODO: Run bots on scheduled events instead.
+    -- CALL runBots ();
+
+    SELECT subjID AS outID, 0 AS exitCode;
+END //
+DELIMITER ;
 
 
 

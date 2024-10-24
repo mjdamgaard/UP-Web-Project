@@ -1,6 +1,6 @@
 
 /* Ratings */
--- DROP TABLE AtomicStatementScores;
+DROP TABLE Scores;
 -- DROP TABLE PredicativeStatementScores;
 -- DROP TABLE RelationalStatementScores;
 
@@ -36,149 +36,138 @@ DROP TABLE Entities;
  **/
 
 
-
-
-CREATE TABLE LikelihoodScores (
+CREATE TABLE Scores (
     -- User (or bot) who scores the "belongs to" statement.
     user_id BIGINT UNSIGNED NOT NULL,
 
-    -- Class the the Subject may or may not belong to.
-    class_id BIGINT UNSIGNED NOT NULL,
+    -- Scale that the Subject is scored on. This entity does not have to be
+    -- of the class 'Scale.' Specifically, 'Class' entities are automatically
+    -- interpreted to mean the likelihood scale of the Subject belonging to
+    -- the given class.
+    scale_id BIGINT UNSIGNED NOT NULL,
 
-    -- Subject that may or may not belong to the Class.
+    -- Subject that are rated on the scale. (A scale and a subject form a
+    -- so-called 'scalar,' by the way, i.e. a specific thing to be scored.)
     subj_id BIGINT UNSIGNED NOT NULL,
 
-    -- The score value is a number (single-precision float) between 0 and 1
-    -- that denotes the likelihood of Subject belonging to Class, as deemed
-    -- by the user (or bot).
+    -- The score value is a number (single-precision float).
     score_val FLOAT NOT NULL,
 
     PRIMARY KEY (
         user_id,
-        class_id,
+        scale_id,
         score_val,
         subj_id
     ),
 
     -- Index to look up specific score (and restricting one score per user).
-    UNIQUE INDEX (user_id, class_id, subj_id)
+    UNIQUE INDEX (user_id, scale_id, subj_id)
 
     -- Still better to use a bot for this instead:
     -- -- Index to look up users who has rated the stmt / rating scale.
-    -- UNIQUE INDEX (class_id, subj_id, score_val, user_id)
+    -- UNIQUE INDEX (scale_id, subj_id, score_val, user_id)
 );
 
 
 
-CREATE TABLE ValueScores (
-    -- User (or bot) who scores the "belongs to" statement.
-    user_id BIGINT UNSIGNED NOT NULL,
 
-    -- Function that together with the Subject produces a scalar to be scored.
-    fun_id BIGINT UNSIGNED NOT NULL,
+-- CREATE TABLE LikelihoodScores (
+--     -- User (or bot) who scores the "belongs to" statement.
+--     user_id BIGINT UNSIGNED NOT NULL,
 
-    -- Subject that is the "input" to the Function.
-    subj_id BIGINT UNSIGNED NOT NULL,
+--     -- Class the the Subject may or may not belong to.
+--     class_id BIGINT UNSIGNED NOT NULL,
 
-    -- The score value is a number (single-precision float) taking any possible
-    -- (MySQL-compatible) value.
-    score_val FLOAT NOT NULL,
+--     -- Subject that may or may not belong to the Class.
+--     subj_id BIGINT UNSIGNED NOT NULL,
 
-    PRIMARY KEY (
-        user_id,
-        fun_id,
-        score_val,
-        subj_id
-    ),
+--     -- The score value is a number (single-precision float) between 0 and 1
+--     -- that denotes the likelihood of Subject belonging to Class, as deemed
+--     -- by the user (or bot).
+--     score_val FLOAT NOT NULL,
 
-    -- Index to look up specific score (and restricting one score per user).
-    UNIQUE INDEX (user_id, fun_id, subj_id)
+--     PRIMARY KEY (
+--         user_id,
+--         class_id,
+--         score_val,
+--         subj_id
+--     ),
 
-    -- Still better to use a bot for this instead:
-    -- -- Index to look up users who has rated the stmt / rating scale.
-    -- UNIQUE INDEX (fun_id, subj_id, score_val, user_id)
-);
+--     -- Index to look up specific score (and restricting one score per user).
+--     UNIQUE INDEX (user_id, class_id, subj_id)
 
-
-
-CREATE TABLE RatingScores (
-    -- User (or bot) who scores the statement.
-    user_id BIGINT UNSIGNED NOT NULL,
-
-    -- Class that restricts the Subjects being rated.
-    class_id BIGINT UNSIGNED NOT NULL,
-
-    -- Predicate w.r.t. which the Subject is rated.
-    pred_id BIGINT UNSIGNED NOT NULL,
-
-    -- Subject that is rated.
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    -- Unit-less score value that places Subject on a scale among its peers
-    -- from the same class, Class. The distribution over this scale is always
-    -- normalized to have the same mean and variance for all rating scales.   
-    score_val FLOAT NOT NULL,
-
-    PRIMARY KEY (
-        user_id,
-        class_id,
-        pred_id,
-        score_val,
-        subj_id
-    ),
-
-    -- Index to look up specific score (and restricting one score per user).
-    UNIQUE INDEX (user_id, class_id, pred_id, subj_id)
-
-    -- Still better to use a bot for this instead:
-    -- -- Index to look up users who has rated the stmt / rating scale.
-    -- UNIQUE INDEX (class_id, pred_id, subj_id, score_val, user_id)
-);
+--     -- Still better to use a bot for this instead:
+--     -- -- Index to look up users who has rated the stmt / rating scale.
+--     -- UNIQUE INDEX (class_id, subj_id, score_val, user_id)
+-- );
 
 
 
-CREATE TABLE RatingCorrelationScores (
-    -- User (or bot) who scores the statement.
-    user_id BIGINT UNSIGNED NOT NULL,
+-- CREATE TABLE ValueScores (
+--     -- User (or bot) who scores the "belongs to" statement.
+--     user_id BIGINT UNSIGNED NOT NULL,
 
-    -- Division (or 'subdivision'). This is a group of either classes or
-    -- predicates, that respectively divide the class or predicate in question
-    -- into parts, so to speak. For classes, these parts are just subclasses,
-    -- only with an implicit "rest" class as well that contains all the
-    -- entities not in any of the chosen subclasses. And for predicates, the
-    -- "parts" are underlying predicates, from which the score of the "parent
-    -- predicate" ought to approximately derive. Like the "rest" class, there
-    -- is also always an "other" predicate present in each division.
-    div_id BIGINT UNSIGNED NOT NULL,
+--     -- Function that together with the Subject produces a scalar to be scored.
+--     fun_id BIGINT UNSIGNED NOT NULL,
 
-    -- ...
+--     -- Subject that is the "input" to the Function.
+--     subj_id BIGINT UNSIGNED NOT NULL,
 
-    -- Predicate w.r.t. which the Subject is rated.
-    pred_id BIGINT UNSIGNED NOT NULL,
+--     -- The score value is a number (single-precision float) taking any possible
+--     -- (MySQL-compatible) value.
+--     score_val FLOAT NOT NULL,
 
-    -- Subject that is rated.
-    subj_id BIGINT UNSIGNED NOT NULL,
+--     PRIMARY KEY (
+--         user_id,
+--         fun_id,
+--         score_val,
+--         subj_id
+--     ),
 
-    -- Unit-less score value that places Subject on a scale among its peers
-    -- from the same class, Class. The distribution over this scale is always
-    -- normalized to have the same mean and variance for all rating scales.   
-    score_val FLOAT NOT NULL,
+--     -- Index to look up specific score (and restricting one score per user).
+--     UNIQUE INDEX (user_id, fun_id, subj_id)
 
-    PRIMARY KEY (
-        user_id,
-        class_id,
-        pred_id,
-        score_val,
-        subj_id
-    ),
+--     -- Still better to use a bot for this instead:
+--     -- -- Index to look up users who has rated the stmt / rating scale.
+--     -- UNIQUE INDEX (fun_id, subj_id, score_val, user_id)
+-- );
 
-    -- Index to look up specific score (and restricting one score per user).
-    UNIQUE INDEX (user_id, class_id, pred_id, subj_id)
 
-    -- Still better to use a bot for this instead:
-    -- -- Index to look up users who has rated the stmt / rating scale.
-    -- UNIQUE INDEX (class_id, pred_id, subj_id, score_val, user_id)
-);
+
+-- CREATE TABLE RatingScores (
+--     -- User (or bot) who scores the statement.
+--     user_id BIGINT UNSIGNED NOT NULL,
+
+--     -- Class that restricts the Subjects being rated.
+--     class_id BIGINT UNSIGNED NOT NULL,
+
+--     -- Predicate w.r.t. which the Subject is rated.
+--     pred_id BIGINT UNSIGNED NOT NULL,
+
+--     -- Subject that is rated.
+--     subj_id BIGINT UNSIGNED NOT NULL,
+
+--     -- Unit-less score value that places Subject on a scale among its peers
+--     -- from the same class, Class. The distribution over this scale is always
+--     -- normalized to have the same mean and variance for all rating scales.   
+--     score_val FLOAT NOT NULL,
+
+--     PRIMARY KEY (
+--         user_id,
+--         class_id,
+--         pred_id,
+--         score_val,
+--         subj_id
+--     ),
+
+--     -- Index to look up specific score (and restricting one score per user).
+--     UNIQUE INDEX (user_id, class_id, pred_id, subj_id)
+
+--     -- Still better to use a bot for this instead:
+--     -- -- Index to look up users who has rated the stmt / rating scale.
+--     -- UNIQUE INDEX (class_id, pred_id, subj_id, score_val, user_id)
+-- );
+
 
 -- TODO: Compress these tables and their sec. index, as well as other tables
 -- and sec. indexes below.
