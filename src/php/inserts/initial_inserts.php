@@ -115,6 +115,16 @@ $inserter->insertPublicEntities("1", array(
         ),
         "Description" => "@[classes/scales/likelihood scales/desc]",
     ))),
+    "classes/scalars" => array("j", json_encode(array(
+        "Class" => "@[classes/classes]",
+        "Name" => "Scalars",
+        "Special attributes" => array(
+            array("Scale", "@[classes/scales]", "mandatory"),
+            array("Subject", "@[classes/entities]", "mandatory"),
+            array("Description", "x", "removed"),
+        ),
+        "Description" => "@[classes/scalars/desc]",
+    ))),
     "classes/scales/rating scales" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
         "Name" => "Rating scales",
@@ -170,9 +180,74 @@ $inserter->insertPublicEntities("1", array(
         "Name" => "Relations",
         "Special attributes" => array(
             array("Noun", "string", "mandatory"),
+            array("Member class", "@[classes/classes]", "mandatory"),
+            array("Object class", "@[classes/classes]", "mandatory"),
             array("Description", "x", "mandatory"),
         ),
         "Description" => "@[classes/relations/desc]",
+    ))),
+    "classes/relations/useful relations" => array("j", json_encode(array(
+        "Class" => "@[classes/relations]",
+        "Noun" => "Useful relations",
+        "Member class" => "@[classes/relations]",
+        "Object class" => "@[classes/entities]",
+        "Description" => "@[classes/relations/useful relations/desc]",
+    ))),
+    "classes/relations/useful sub-relations" => array("j", json_encode(array(
+        "Class" => "@[classes/relations]",
+        "Noun" => "Useful sub-relations",
+        "Member class" => "@[classes/relations]",
+        "Object class" => "@[classes/relations]",
+        "Description" => "@[classes/relations/useful sub-relations/desc]",
+    ))),
+    "classes/relations/useful subclasses" => array("j", json_encode(array(
+        "Class" => "@[classes/relations]",
+        "Noun" => "Useful subclasses",
+        "Member class" => "@[classes/classes]",
+        "Object class" => "@[classes/classes]",
+        "Description" => "@[classes/relations/useful subclasses/desc]",
+    ))),
+    "classes/relations/relevant tags" => array("j", json_encode(array(
+        "Class" => "@[classes/relations]",
+        "Noun" => "Relevant tags",
+        "Member class" => "@[classes/tags]",
+        "Object class" => "@[classes/classes]",
+        "Description" => "@[classes/relations/relevant tags/desc]",
+    ))),
+    "classes/relations/arguments" => array("j", json_encode(array(
+        "Class" => "@[classes/relations]",
+        "Noun" => "Arguments",
+        "Member class" => "@[classes/scalars]",
+        "Object class" => "@[classes/scalars]",
+        "Description" => "@[classes/relations/arguments/desc]",
+    ))),
+    "classes/relations/comments" => array("j", json_encode(array(
+        "Class" => "@[classes/relations]",
+        "Noun" => "Comments",
+        "Member class" => "@[classes/comments]",
+        "Object class" => "@[classes/entities]",
+        "Description" => "@[classes/relations/comments/desc]",
+    ))),
+    "classes/relations/reaction comments" => array("j", json_encode(array(
+        "Class" => "@[classes/relations]",
+        "Noun" => "Reaction comments",
+        "Member class" => "@[classes/comments]", // ('comments' is intentional)
+        "Object class" => "@[classes/entities]",
+        "Description" => "@[classes/relations/reaction comments/desc]",
+    ))),
+    "classes/relations/informative comments" => array("j", json_encode(array(
+        "Class" => "@[classes/relations]",
+        "Noun" => "Informative comments",
+        "Member class" => "@[classes/comments]", // (also intentional)
+        "Object class" => "@[classes/entities]",
+        "Description" => "@[classes/relations/informative comments/desc]",
+    ))),
+    "classes/relations/discussions" => array("j", json_encode(array(
+        "Class" => "@[classes/relations]",
+        "Noun" => "Discussions",
+        "Member class" => "@[classes/scalars]", // Or 'comments'?..
+        "Object class" => "@[classes/entities]",
+        "Description" => "@[classes/relations/discussions/desc]",
     ))),
 ));
 
