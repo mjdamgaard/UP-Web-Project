@@ -20,9 +20,9 @@ $inserter->insertPublicEntities("1", array(
     ))),
     "classes/classes" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
-        "Title" => "Classes",
+        "Name" => "Classes",
         "Special attributes" => array(
-            array("Title", "string", "mandatory"),
+            array("Name", "string", "mandatory"),
             array("Parent class", "@[classes/classes]", "optional"),
             array("Special attributes", "[[Name,Type,Option]]", "optional"),
         ),
@@ -62,7 +62,7 @@ $inserter->insertPublicEntities("1", array(
     ),
     "classes/entities" => array("j", json_encode(array(
         "Class"=>"@[classes/classes]",
-        "Title"=>"Entities",
+        "Name"=>"Entities",
         "Special attributes" => array(
             array("Class", "@[classes/classes]", "mandatory"),
             array("Description", "x", "optional"),
@@ -75,7 +75,7 @@ $inserter->insertPublicEntities("1", array(
     ),
     "classes/users" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
-        "Title" => "Users",
+        "Name" => "Users",
         "Special attributes" => array(
             array("username", "string", "mandatory"),
         ),
@@ -83,7 +83,7 @@ $inserter->insertPublicEntities("1", array(
     ))),
     "classes/scales" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
-        "Title" => "Scales",
+        "Name" => "Scales",
         "Description" => "@[classes/scales/desc]",
     ))),
     "classes/scales/desc" => array("x",
@@ -92,31 +92,53 @@ $inserter->insertPublicEntities("1", array(
     ),
     "classes/scales/likelihood scales" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
-        "Title" => "Likelihood scales",
+        "Name" => "Likelihood scales",
         "Parent class" => "@[classes/scales]",
         "Special attributes" => array(
-            array("Description", "x", "removed"),
             array("Predicate", "@[classes/classes]", "mandatory"),
+            array("Description", "x", "removed"),
         ),
         "Description" => "@[classes/scales/likelihood scales/desc]",
     ))),
     "classes/scales/rating scales" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
-        "Title" => "Rating scales",
+        "Name" => "Rating scales",
         "Parent class" => "@[classes/scales]",
         "Special attributes" => array(
             array("Domain", "@[classes/classes]", "mandatory"),
-            array("Predicate", "@[classes/scalar predicates]", "mandatory"),
+            array("Tag", "@[classes/tags]", "mandatory"),
+            array("Description", "x", "removed"),
         ),
         "Description" => "@[classes/scales/rating scales/desc]",
     ))),
-    "classes/scalar predicates" => array("j", json_encode(array(
+    "classes/tags" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
-        "Title" => "Scalar predicates",
+        "Name" => "Tags",
         "Special attributes" => array(
-            array("Title", "string", "mandatory"),
+            array("Name", "string", "mandatory"),
+            array("Description", "x", "mandatory"), // Overwrites "optional".
         ),
-        "Description" => "@[classes/scales/scalar predicates/desc]",
+        "Description" => "@[classes/tags/desc]",
+    ))),
+    "classes/scales/value scales" => array("j", json_encode(array(
+        "Class" => "@[classes/classes]",
+        "Name" => "Value scales",
+        "Parent class" => "@[classes/scales]",
+        "Special attributes" => array(
+            array("Domain", "@[classes/classes]", "mandatory"),
+            array("Function", "@[classes/functions]", "mandatory"),
+            array("Description", "x", "removed"),
+        ),
+        "Description" => "@[classes/scales/rating scales/desc]",
+    ))),
+    "classes/functions" => array("j", json_encode(array(
+        "Class" => "@[classes/classes]",
+        "Name" => "Functions",
+        "Special attributes" => array(
+            array("Name", "string", "mandatory"),
+            array("Description", "x", "mandatory"),
+        ),
+        "Description" => "@[classes/functions/desc]",
     ))),
 ));
 
