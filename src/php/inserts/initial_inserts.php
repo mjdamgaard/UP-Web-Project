@@ -19,14 +19,14 @@ $inserter->insertPublicEntities("1", array(
         "Description" => "@[users/initial_admin/desc]",
     ))),
     "classes/entities" => array("j", json_encode(array(
-        "Class"=>"@[classes/classes]",
-        "Name"=>"Entities",
+        "Class" => "@[classes/classes]",
+        "Name" => "Entities",
         "Special attributes" => array(
             array("Class", "@[classes/classes]", "mandatory"),
             array("Description", "x", "optional"),
         ),
-        "No child instances"=>"true",
-        "Description"=>"@[classes/entities/desc]",
+        "No child instances" => true,
+        "Description" => "@[classes/entities/desc]",
     ))),
     "classes/entities/desc" => array("x",
         "<h1><class>Entities</class></h1>".
@@ -98,7 +98,7 @@ $inserter->insertPublicEntities("1", array(
     "classes/scales" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
         "Name" => "Scales",
-        "No child instances"=>"true",
+        "No child instances" => true,
         "Description" => "@[classes/scales/desc]",
     ))),
     "classes/scales/desc" => array("x",
@@ -155,15 +155,24 @@ $inserter->insertPublicEntities("1", array(
         ),
         "Description" => "@[classes/functions/desc]",
     ))),
-    "classes/derived classes" => array("j", json_encode(array(
+    "classes/relational classes" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
-        "Name" => "Derived classes",
+        "Name" => "Relational classes",
         "Special attributes" => array(
-            array("Relation", "@[classes/classes]", "mandatory"),
-            array("Object", "@[classes/functions]", "mandatory"),
+            array("Relation", "@[classes/relations]", "mandatory"),
+            array("Object", "@[classes/entities]", "mandatory"),
             array("Description", "x", "removed"),
         ),
-        "Description" => "@[classes/rating scales/desc]",
+        "Description" => "@[classes/relational classes/desc]",
+    ))),
+    "classes/relations" => array("j", json_encode(array(
+        "Class" => "@[classes/classes]",
+        "Name" => "Relations",
+        "Special attributes" => array(
+            array("Noun", "string", "mandatory"),
+            array("Description", "x", "mandatory"),
+        ),
+        "Description" => "@[classes/relations/desc]",
     ))),
 ));
 
