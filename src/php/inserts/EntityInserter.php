@@ -153,39 +153,41 @@ class EntityInserter {
 
 
 
-    public function scoreEntityFromID($userID, $entID, $scaleAndScoreArr) {
-        foreach ($scaleAndScoreArr as $scaleAndScorePair) {
-            $scaleID = $scaleAndScorePair[0];
-            $scoreVal = $scaleAndScorePair[1];
-            // Get connection to the database.
-            $conn = DBConnector::getConnectionOrDie(
-                DB_SERVER_NAME, DB_DATABASE_NAME, DB_USERNAME, DB_PASSWORD
-            );
+    // public function scoreEntityFromID($userID, $entID, $scaleAndScoreArr) {
+    //     foreach ($scaleAndScoreArr as $scaleAndScorePair) {
+    //         $scaleID = $scaleAndScorePair[0];
+    //         $scoreVal = $scaleAndScorePair[1];
+    //         // Get connection to the database.
+    //         $conn = DBConnector::getConnectionOrDie(
+    //             DB_SERVER_NAME, DB_DATABASE_NAME, DB_USERNAME, DB_PASSWORD
+    //         );
 
-            // Prepare the MySQLi statement.
-            $sql = "CALL insertOrUpdateScore (?, ?, ?, ?)";
-            $stmt = $conn->prepare($sql);
-            $paramValArr = array(
-                $userID, $scaleID, $entID, $scoreVal
-            );
-            // Execute the statement
-            DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
-            $conn->close();
-        }
-    }
+    //         // Prepare the MySQLi statement.
+    //         $sql = "CALL insertOrUpdateScore (?, ?, ?, ?)";
+    //         $stmt = $conn->prepare($sql);
+    //         $paramValArr = array(
+    //             $userID, $scaleID, $entID, $scoreVal
+    //         );
+    //         // Execute the statement
+    //         DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
+    //         $conn->close();
+    //     }
+    // }
 
-    public function scoreEntityFromIdent($userID, $ident, $scaleAndScoreArr) {
-        $entID = $this->creationIDStore[$ident];
-        $this->scoreEntityFromID($userID, $entID, $scaleAndScoreArr);
-    }
+    // public function scoreEntityFromIdent($userID, $ident, $scaleAndScoreArr) {
+    //     $entID = $this->creationIDStore[$ident];
+    //     $this->scoreEntityFromID($userID, $entID, $scaleAndScoreArr);
+    // }
 
 
-    public function addEntitiesToListFromScaleID(
-        $userID, $scaleID, $entitiesAndScoreArr
+    public function addEntitiesToList(
+        $userID, $scaleIdent, $entitiesAndScoreArr
     ) {
+        $scaleID = $this->creationIDStore[$scaleIdent];
         foreach ($entitiesAndScoreArr as $entitiesAndScorePair) {
-            $entID = $entitiesAndScorePair[0];
+            $entIdent = $entitiesAndScorePair[0];
             $scoreVal = $entitiesAndScorePair[1];
+            $entID = $this->creationIDStore[$entIdent];
             // Get connection to the database.
             $conn = DBConnector::getConnectionOrDie(
                 DB_SERVER_NAME, DB_DATABASE_NAME, DB_USERNAME, DB_PASSWORD

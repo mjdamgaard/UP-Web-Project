@@ -25,7 +25,7 @@ $inserter->insertPublicEntities("1", array(
             array("Class", "@[classes/classes]", "mandatory"),
             array("Description", "x", "optional"),
         ),
-        "No child instances" => true,
+        "Rejects submissions" => true,
         "Description" => "@[classes/entities/desc]",
     ))),
     "classes/entities/desc" => array("x",
@@ -43,7 +43,7 @@ $inserter->insertPublicEntities("1", array(
                 "[[Attribute name,Type,Option]]",
                 "optional"
             ),
-            array("No child instances", "bool=false", "optional"),
+            array("Rejects submissions", "bool=false", "optional"),
             // ('false' is the default value when missing)
             array("Description", "x", "mandatory"), // (Overwrites "optional")
         ),
@@ -93,12 +93,13 @@ $inserter->insertPublicEntities("1", array(
         "Special attributes" => array(
             array("username", "string", "mandatory"),
         ),
+        "Rejects submissions" => true,
         "Description" => "@[classes/users/desc]",
     ))),
     "classes/scales" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
         "Name" => "Scales",
-        "No child instances" => true,
+        "Rejects submissions" => true,
         "Description" => "@[classes/scales/desc]",
     ))),
     "classes/scales/desc" => array("x",
@@ -110,8 +111,8 @@ $inserter->insertPublicEntities("1", array(
         "Name" => "Likelihood scales",
         "Parent class" => "@[classes/scales]",
         "Special attributes" => array(
-            array("Predicate", "@[classes/classes]", "mandatory"),
-            array("Description", "x", "removed"),
+            array("Predicate class", "@[classes/classes]", "mandatory"),
+            array("Description", "", "removed"),
         ),
         "Description" => "@[classes/scales/likelihood scales/desc]",
     ))),
@@ -121,7 +122,7 @@ $inserter->insertPublicEntities("1", array(
         "Special attributes" => array(
             array("Scale", "@[classes/scales]", "mandatory"),
             array("Subject", "@[classes/entities]", "mandatory"),
-            array("Description", "x", "removed"),
+            array("Description", "", "removed"),
         ),
         "Description" => "@[classes/scalars/desc]",
     ))),
@@ -132,7 +133,7 @@ $inserter->insertPublicEntities("1", array(
         "Special attributes" => array(
             array("Domain", "@[classes/classes]", "mandatory"),
             array("Tag", "@[classes/tags]", "mandatory"),
-            array("Description", "x", "removed"),
+            array("Description", "", "removed"),
         ),
         "Description" => "@[classes/scales/rating scales/desc]",
     ))),
@@ -152,7 +153,7 @@ $inserter->insertPublicEntities("1", array(
         "Special attributes" => array(
             array("Domain", "@[classes/classes]", "mandatory"),
             array("Function", "@[classes/functions]", "mandatory"),
-            array("Description", "x", "removed"),
+            array("Description", "", "removed"),
         ),
         "Description" => "@[classes/scales/rating scales/desc]",
     ))),
@@ -171,7 +172,7 @@ $inserter->insertPublicEntities("1", array(
         "Special attributes" => array(
             array("Relation", "@[classes/relations]", "mandatory"),
             array("Object", "@[classes/entities]", "mandatory"),
-            array("Description", "x", "removed"),
+            array("Description", "", "removed"),
         ),
         "Description" => "@[classes/relational classes/desc]",
     ))),
@@ -186,72 +187,132 @@ $inserter->insertPublicEntities("1", array(
         ),
         "Description" => "@[classes/relations/desc]",
     ))),
-    "classes/relations/useful relations" => array("j", json_encode(array(
+    "relations/useful relations" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
         "Noun" => "Useful relations",
         "Member class" => "@[classes/relations]",
         "Object class" => "@[classes/entities]",
-        "Description" => "@[classes/relations/useful relations/desc]",
+        "Description" => "@[relations/useful relations/desc]",
     ))),
-    "classes/relations/useful sub-relations" => array("j", json_encode(array(
+    "relations/useful sub-relations" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
         "Noun" => "Useful sub-relations",
         "Member class" => "@[classes/relations]",
         "Object class" => "@[classes/relations]",
-        "Description" => "@[classes/relations/useful sub-relations/desc]",
+        "Description" => "@[relations/useful sub-relations/desc]",
     ))),
-    "classes/relations/useful subclasses" => array("j", json_encode(array(
+    "relations/useful subclasses" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
         "Noun" => "Useful subclasses",
         "Member class" => "@[classes/classes]",
         "Object class" => "@[classes/classes]",
-        "Description" => "@[classes/relations/useful subclasses/desc]",
+        "Description" => "@[relations/useful subclasses/desc]",
     ))),
-    "classes/relations/relevant tags" => array("j", json_encode(array(
+    "relations/relevant tags" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
         "Noun" => "Relevant tags",
         "Member class" => "@[classes/tags]",
         "Object class" => "@[classes/classes]",
-        "Description" => "@[classes/relations/relevant tags/desc]",
+        "Description" => "@[relations/relevant tags/desc]",
     ))),
-    "classes/relations/arguments" => array("j", json_encode(array(
+    "relations/arguments" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
         "Noun" => "Arguments",
         "Member class" => "@[classes/scalars]",
         "Object class" => "@[classes/scalars]",
-        "Description" => "@[classes/relations/arguments/desc]",
+        "Description" => "@[relations/arguments/desc]",
     ))),
-    "classes/relations/comments" => array("j", json_encode(array(
+    "relations/comments" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
         "Noun" => "Comments",
         "Member class" => "@[classes/comments]",
         "Object class" => "@[classes/entities]",
-        "Description" => "@[classes/relations/comments/desc]",
+        "Description" => "@[relations/comments/desc]",
     ))),
-    "classes/relations/reaction comments" => array("j", json_encode(array(
+    "relations/reaction comments" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
         "Noun" => "Reaction comments",
         "Member class" => "@[classes/comments]", // ('comments' is intentional)
         "Object class" => "@[classes/entities]",
-        "Description" => "@[classes/relations/reaction comments/desc]",
+        "Description" => "@[relations/reaction comments/desc]",
     ))),
-    "classes/relations/informative comments" => array("j", json_encode(array(
+    "relations/informative comments" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
         "Noun" => "Informative comments",
         "Member class" => "@[classes/comments]", // (also intentional)
         "Object class" => "@[classes/entities]",
-        "Description" => "@[classes/relations/informative comments/desc]",
+        "Description" => "@[relations/informative comments/desc]",
     ))),
-    "classes/relations/discussions" => array("j", json_encode(array(
+    "relations/relevant statements" => array("j", json_encode(array(
+        "Class" => "@[classes/relations]",
+        "Noun" => "Relevant statements",
+        "Member class" => "@[classes/statements]",
+        "Object class" => "@[classes/entities]",
+        "Description" => "@[relations/relevant statements/desc]",
+    ))),
+    "relations/discussions" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
         "Noun" => "Discussions",
-        "Member class" => "@[classes/scalars]", // Or 'comments'?..
+        "Member class" => "@[classes/statements]",
         "Object class" => "@[classes/entities]",
-        "Description" => "@[classes/relations/discussions/desc]",
+        "Description" => "@[relations/discussions/desc]",
+    ))),
+    "relations/facts" => array("j", json_encode(array(
+        "Class" => "@[classes/relations]",
+        "Noun" => "Facts",
+        "Member class" => "@[classes/statements]",
+        "Object class" => "@[classes/entities]",
+        "Description" => "@[relations/facts/desc]",
+    ))),
+    "classes/statements" => array("j", json_encode(array(
+        "Class" => "@[classes/classes]",
+        "Name" => "Statements",
+        "Special attributes" => array(
+            array("Text", "x", "mandatory"),
+            array("Is claimed by user", "bool=false", "optional"),
+            array("Description", "", "removed"),
+        ),
+        "Description" => "@[classes/statements/desc]",
+    ))),
+    "classes/comments" => array("j", json_encode(array(
+        "Class" => "@[classes/classes]",
+        "Name" => "Comments",
+        "Parent class" => "@[classes/statements]",
+        "Special attributes" => array(
+            array("Is claimed by user", "", "removed"),
+        ),
+        "Description" => "@[classes/comments/desc]",
+    ))),
+    "classes/true statements" => array("j", json_encode(array(
+        "Class" => "@[classes/classes]",
+        "Name" => "True statements",
+        "Parent class" => "@[classes/statements]",
+        "Rejects submissions" => true,
+        "Description" => "@[classes/true statements/desc]",
     ))),
 ));
 
 
+$inserter->insertPublicEntities("1", array(
+    "likelihood scales/classes" => array("j", json_encode(array(
+        "Class" => "@[classes/likelihood scales]",
+        "Predicate class" => "@[classes/classes]",
+    ))),
+    "likelihood scales/true statements" => array("j", json_encode(array(
+        "Class" => "@[classes/likelihood scales]",
+        "Predicate class" => "@[classes/true statements]",
+    ))),
+));
 
+
+$inserter->addEntitiesToList("1", "likelihood scales/classes", array(
+    array("classes/classes", "1"),
+    array("classes/entities", "1"),
+    array("classes/users", "1"),
+    array("classes/scales", "1"),
+    array("classes/likelihood scales", "1"),
+    array("classes/statements", "1"),
+    array("classes/comments", "1"),
+));
 
 ?>
