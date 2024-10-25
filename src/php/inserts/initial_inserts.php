@@ -18,13 +18,34 @@ $inserter->insertPublicEntities("1", array(
         "Username" => "initial_admin",
         "Description" => "@[users/initial_admin/desc]",
     ))),
+    "classes/entities" => array("j", json_encode(array(
+        "Class"=>"@[classes/classes]",
+        "Name"=>"Entities",
+        "Special attributes" => array(
+            array("Class", "@[classes/classes]", "mandatory"),
+            array("Description", "x", "optional"),
+        ),
+        "No child instances"=>"true",
+        "Description"=>"@[classes/entities/desc]",
+    ))),
+    "classes/entities/desc" => array("x",
+        "<h1><class>Entities</class></h1>".
+        "..."
+    ),
     "classes/classes" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
         "Name" => "Classes",
         "Special attributes" => array(
             array("Name", "string", "mandatory"),
             array("Parent class", "@[classes/classes]", "optional"),
-            array("Special attributes", "[[Name,Type,Option]]", "optional"),
+            array(
+                "Special attributes",
+                "[[Attribute name,Type,Option]]",
+                "optional"
+            ),
+            array("No child instances", "bool=false", "optional"),
+            // ('false' is the default value when missing)
+            array("Description", "x", "mandatory"), // (Overwrites "optional")
         ),
         "Description" => "@[classes/classes/desc]",
     ))),
@@ -59,19 +80,12 @@ $inserter->insertPublicEntities("1", array(
         "<flags><flag>optional</flag></flags>".
         "<p>...".
         "</p>"
-    ),
-    "classes/entities" => array("j", json_encode(array(
-        "Class"=>"@[classes/classes]",
-        "Name"=>"Entities",
-        "Special attributes" => array(
-            array("Class", "@[classes/classes]", "mandatory"),
-            array("Description", "x", "optional"),
-        ),
-        "Description"=>"@[classes/entities/desc]",
-    ))),
-    "classes/entities/desc" => array("x",
-        "<h1><class>Entities</class></h1>".
-        "..."
+        // TODO: Rewrite and add: Unless otherwise specified, entities with
+        // more popular duplicates are always excluded from the class.
+        // I might also add a general statement about not including specific
+        // versions or "modes," unless otherwise specified, but to stick to the
+        // level of abstraction that is the most obvious (if not defined) for
+        // the class..
     ),
     "classes/users" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
@@ -84,6 +98,7 @@ $inserter->insertPublicEntities("1", array(
     "classes/scales" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
         "Name" => "Scales",
+        "No child instances"=>"true",
         "Description" => "@[classes/scales/desc]",
     ))),
     "classes/scales/desc" => array("x",
@@ -116,7 +131,7 @@ $inserter->insertPublicEntities("1", array(
         "Name" => "Tags",
         "Special attributes" => array(
             array("Name", "string", "mandatory"),
-            array("Description", "x", "mandatory"), // Overwrites "optional".
+            array("Description", "x", "mandatory"),
         ),
         "Description" => "@[classes/tags/desc]",
     ))),
@@ -139,6 +154,16 @@ $inserter->insertPublicEntities("1", array(
             array("Description", "x", "mandatory"),
         ),
         "Description" => "@[classes/functions/desc]",
+    ))),
+    "classes/derived classes" => array("j", json_encode(array(
+        "Class" => "@[classes/classes]",
+        "Name" => "Derived classes",
+        "Special attributes" => array(
+            array("Relation", "@[classes/classes]", "mandatory"),
+            array("Object", "@[classes/functions]", "mandatory"),
+            array("Description", "x", "removed"),
+        ),
+        "Description" => "@[classes/rating scales/desc]",
     ))),
 ));
 
