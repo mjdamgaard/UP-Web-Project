@@ -188,12 +188,12 @@ BEGIN
 
     UPDATE IGNORE Entities
     SET type_ident = type, def_str = defStr, def_hash = defHash
-    WHERE (id = entID AND creator_id = userID);
+    WHERE (id = entID AND creator_id = userID AND is_editable = 1);
     IF (ROW_COUNT() > 0) THEN
         SET exitCode = 0; -- edit.
         SET outID = entID;
     ELSE
-        SET exitCode = 1; -- collision.
+        SET exitCode = 1; -- collision or not editable.
         SELECT id INTO outID
         FROM Entities
         WHERE (

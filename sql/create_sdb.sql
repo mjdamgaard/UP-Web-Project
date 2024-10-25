@@ -39,10 +39,7 @@ CREATE TABLE Scores (
     -- User (or bot) who scores the "belongs to" statement.
     user_id BIGINT UNSIGNED NOT NULL,
 
-    -- Scale that the Subject is scored on. This entity does not have to be
-    -- of the class 'Scale.' Specifically, 'Class' entities are automatically
-    -- interpreted to mean the likelihood scale of the Subject belonging to
-    -- the given class.
+    -- Scale that the Subject is scored on.
     scale_id BIGINT UNSIGNED NOT NULL,
 
     -- Subject that are rated on the scale. (A scale and a subject form a
@@ -279,6 +276,10 @@ CREATE TABLE Entities (
     -- A boolean representing whether this entity can be viewed by anyone other
     -- than its creator.
     is_private TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    CHECK (is_private <= 1),
+
+    -- A boolean representing whether this entity can be edited
+    is_editable TINYINT UNSIGNED NOT NULL DEFAULT 1,
     CHECK (is_private <= 1),
 
     -- Creation identifier used by a user to structure and edit their creations.

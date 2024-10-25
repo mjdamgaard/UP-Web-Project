@@ -14,17 +14,22 @@ $inserter->insertPublicEntities("1", array(
     // Let's keep the most important entities at the start such that they get
     // the same entIDs across edits.
     "users/initial_admin" => array("j", json_encode(array(
-        "class" => "@[classes/user]",
-        "description" => "@[users/initial_admin/desc]",
-        "username" => "initial_admin"
+        "Class" => "@[classes/users]",
+        "Username" => "initial_admin",
+        "Description" => "@[users/initial_admin/desc]",
     ))),
-    "classes/class" => array("j", json_encode(array(
-        "class" => "@[classes/class]",
-        "description" => "@[classes/class/desc]",
-        "title" => "class"
+    "classes/classes" => array("j", json_encode(array(
+        "Class" => "@[classes/classes]",
+        "Title" => "Classes",
+        "Special attributes" => array(
+            array("Title", "string", "mandatory"),
+            array("Parent class", "@[classes/classes]", "optional"),
+            array("Special attributes", "[[Name,Type,Option]]", "optional"),
+        ),
+        "Description" => "@[classes/classes/desc]",
     ))),
-    "classes/class/desc" => array("x", // ('x' for 'XML,' or simply 'teXt.')
-        "<h1><class>class</class></h1>".
+    "classes/classes/desc" => array("x", // ('x' for 'XML,' or simply 'teXt.')
+        "<h1><class>Classes</class></h1>".
         "<h2>Description</h2>".
         "<p>A class of all class entities (including itself). ".
         "Classes both serve as a broad way of categorizing entities, ".
@@ -55,31 +60,63 @@ $inserter->insertPublicEntities("1", array(
         "<p>...".
         "</p>"
     ),
-    "classes/entity" => array("j", json_encode(array(
-        "class"=>"@[classes/class]",
-        "description"=>"@[classes/entity/desc]",
-        "title"=>"entity"
+    "classes/entities" => array("j", json_encode(array(
+        "Class"=>"@[classes/classes]",
+        "Title"=>"Entities",
+        "Special attributes" => array(
+            array("Class", "@[classes/classes]", "mandatory"),
+            array("Description", "x", "optional"),
+        ),
+        "Description"=>"@[classes/entities/desc]",
     ))),
-    "classes/entity/desc" => array("x",
-        "<h1><class>entity</class></h1>".
+    "classes/entities/desc" => array("x",
+        "<h1><class>Entities</class></h1>".
         "..."
     ),
-    "classes/user" => array("j", json_encode(array(
-        "class" => "@[classes/class]",
-        "description" => "@[classes/user/desc]",
-        "title" => "user"
+    "classes/users" => array("j", json_encode(array(
+        "Class" => "@[classes/classes]",
+        "Title" => "Users",
+        "Special attributes" => array(
+            array("username", "string", "mandatory"),
+        ),
+        "Description" => "@[classes/users/desc]",
     ))),
-    "classes/tests/test1" => array("j", json_encode(array(
-        "class" => "@[classes/class]",
-        "parent class" => "@[classes/user]",
-        "description" => "@[classes/user/desc]",
-        "title" => "test class 1"
+    "classes/scales" => array("j", json_encode(array(
+        "Class" => "@[classes/classes]",
+        "Title" => "Scales",
+        "Description" => "@[classes/scales/desc]",
     ))),
-    "classes/tests/test2" => array("j", json_encode(array(
-        "class" => "@[classes/class]",
-        "parent class" => "@[classes/tests/test1]",
-        "description" => "@[classes/entity/desc]",
-        "title" => "test class 2"
+    "classes/scales/desc" => array("x",
+        "<h1><class>Scales</class></h1>".
+        "..."
+    ),
+    "classes/scales/likelihood scales" => array("j", json_encode(array(
+        "Class" => "@[classes/classes]",
+        "Title" => "Likelihood scales",
+        "Parent class" => "@[classes/scales]",
+        "Special attributes" => array(
+            array("Description", "x", "removed"),
+            array("Predicate", "@[classes/classes]", "mandatory"),
+        ),
+        "Description" => "@[classes/scales/likelihood scales/desc]",
+    ))),
+    "classes/scales/rating scales" => array("j", json_encode(array(
+        "Class" => "@[classes/classes]",
+        "Title" => "Rating scales",
+        "Parent class" => "@[classes/scales]",
+        "Special attributes" => array(
+            array("Domain", "@[classes/classes]", "mandatory"),
+            array("Predicate", "@[classes/scalar predicates]", "mandatory"),
+        ),
+        "Description" => "@[classes/scales/rating scales/desc]",
+    ))),
+    "classes/scalar predicates" => array("j", json_encode(array(
+        "Class" => "@[classes/classes]",
+        "Title" => "Scalar predicates",
+        "Special attributes" => array(
+            array("Title", "string", "mandatory"),
+        ),
+        "Description" => "@[classes/scales/scalar predicates/desc]",
     ))),
 ));
 

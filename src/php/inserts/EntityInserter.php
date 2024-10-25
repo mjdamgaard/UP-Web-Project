@@ -59,7 +59,10 @@ class EntityInserter {
 
                 // TODO: If we implement more types than "j" and "x", make
                 // switch-case statement (or similar) here, and thus branch
-                // away from the following reference substitutions if needed. 
+                // away from the following reference substitutions if needed.
+                // We also have 'u' now for UFT-8 texts. But for now, let us
+                // just hack that in there, below.. ..(If we also implement
+                // UTF-16 at some point, let us plan to then use 'U' for now..)
 
                 // First explode the deStr into an array of strings that either
                 // are or are not creation references.
@@ -90,6 +93,13 @@ class EntityInserter {
 
                 // Then implode back the exploded defStr with the substitutions.
                 $subbedDefStr = implode($explodedDefStr);
+
+                // Hacky solution, if $type === "u" for a UFT-8 text, use the
+                // original string instead. ..And let's also already just add
+                // $type === "b" for a binary string..
+                if ($type === "u" || $type === "b") {
+                    $subbedDefStr = $defStr;
+                }
 
                 // Get connection to the database.
                 $conn = DBConnector::getConnectionOrDie(
