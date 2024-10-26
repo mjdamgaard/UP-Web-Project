@@ -15,9 +15,8 @@ DROP TABLE Entities;
 -- DROP TABLE Users;
 -- DROP TABLE AggregationBots;
 
-/* Ancillary data for aggregation bots */
--- DROP TABLE AncillaryBotData1e2d;
--- DROP TABLE AncillaryBotData1e4d;
+/* Messages */
+DROP TABLE DirectMessages;
 
 /* Private user data */
 -- DROP TABLE Private_UserData;
@@ -86,6 +85,43 @@ CREATE TABLE PrivateScores (
 
     UNIQUE INDEX (user_id, scale_id, subj_id)
 );
+
+
+
+
+
+
+
+
+
+CREATE TABLE RecordedScores (
+    user_group_id BIGINT UNSIGNED NOT NULL,
+
+    scale_id BIGINT UNSIGNED NOT NULL,
+    subj_id BIGINT UNSIGNED NOT NULL,
+    
+    weight_val FLOAT NOT NULL,
+
+    user_id BIGINT UNSIGNED NOT NULL,
+
+    submitted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    score_val FLOAT,
+
+    PRIMARY KEY (
+        user_group_id,
+        scale_id,
+        subj_id,
+        weight_val,
+        user_id,
+        submitted_at
+    )
+);
+
+
+
+
+
 
 
 
@@ -798,50 +834,22 @@ CREATE TABLE AggregationBots (
 
 
 
-/* Ancillary data for aggregation bots */
+
+/* Direct messages (including reports) */
 
 
-CREATE TABLE AncillaryBotData1e2d (
-    -- Name of the bot that uses this data.
-    bot_name VARCHAR(255) NOT NULL,
-    -- Entity which the data is about.
-    ent_id BIGINT UNSIGNED NOT NULL,
+CREATE TABLE DirectMessages (
+    receiver_id BIGINT UNSIGNED NOT NULL,
 
-    -- Data.
-    -- data_1 BIGINT UNSIGNED NOT NULL,
-    -- data_2 BIGINT UNSIGNED NOT NULL,
-    data_1 BIGINT UNSIGNED,
-    data_2 BIGINT UNSIGNED,
-    -- TODO: Check mean_bots.sql to see if it is okay to make these  columns
-    -- NOT NULL, and if not, change mean_bots.sql so that it can be done.
+    -- TODO: Implement.
 
     PRIMARY KEY (
-        bot_name,
-        ent_id
+        receiver_id
     )
 );
--- TODO: Compress.
 
-CREATE TABLE AncillaryBotData1e4d (
-    -- Name of the bot that uses this data.
-    bot_name VARCHAR(255) NOT NULL,
-    -- Entity which the data is about.
-    ent_id BIGINT UNSIGNED NOT NULL,
 
-    -- Data.
-    data_1 BIGINT UNSIGNED NOT NULL,
-    data_2 BIGINT UNSIGNED NOT NULL,
-    data_3 BIGINT UNSIGNED NOT NULL,
-    data_4 BIGINT UNSIGNED NOT NULL,
 
-    PRIMARY KEY (
-        bot_name,
-        ent_id
-    )
-);
--- TODO: Compress.
--- TODO: Add other BotData_n_m tables if need be (and BotData_1_4 is only for
--- show right now).
 
 
 

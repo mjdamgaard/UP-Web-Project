@@ -48,13 +48,13 @@ export const App = (props) => {
         1: hasPath ? pathname : undefined,
       },
       nonce: 1,
-      currInd: hasPath ? 1 : 0,
+      curInd: hasPath ? 1 : 0,
       prevInd: hasPath ? 0 : null,
     },
     // scrollLeft: 0, scrollVelocity: 0, lastScrollAt: 0,
 
   });
-  const {pagePathStore, pageKeyArr, currInd} = state.pagesState;
+  const {pagePathStore, pageKeyArr, curInd} = state.pagesState;
 
   const [refCallback, dispatch] = useDispatch(
     appActions, setState, state, props
@@ -67,15 +67,15 @@ export const App = (props) => {
 
 
   useLayoutEffect(() => {
-    let currPagePath = pagePathStore[pageKeyArr[currInd]];
-    let newPath = currPagePath.entID ? "e" + currPagePath.entID : "";
+    let curPagePath = pagePathStore[pageKeyArr[curInd]];
+    let newPath = curPagePath.entID ? "e" + curPagePath.entID : "";
     window.history.pushState(null, "", newPath);
     // TODO: Refactor:
-    appActions["SCROLL_INTO_VIEW"](currInd);
+    appActions["SCROLL_INTO_VIEW"](curInd);
     window.onresize = (event) => {
-      appActions["SCROLL_INTO_VIEW"](currInd);
+      appActions["SCROLL_INTO_VIEW"](curInd);
     };
-  }, [currInd])
+  }, [curInd])
 
 
 
@@ -83,10 +83,10 @@ export const App = (props) => {
     let pagePath = pagePathStore[pageKey];
     return (
       <div key={pageKey} className={
-        "page-container" + ((currInd === ind) ? " active" : "")
+        "page-container" + ((curInd === ind) ? " active" : "")
       }
         onClick={(e) => {
-          if (currInd === ind) {
+          if (curInd === ind) {
             appActions["SCROLL_INTO_VIEW"](ind);
           } else {
             dispatch(e.target, "GO_TO_PAGE", ind);
@@ -104,7 +104,7 @@ export const App = (props) => {
         <AppHeader
           setAppPage={void(0)}
           pageKeyArr={pageKeyArr} pagePathStore={pagePathStore}
-          currInd={currInd}
+          curInd={curInd}
         />
         <div className="page-list-container">
           {appPages}
@@ -130,13 +130,13 @@ const appActions = {
         [newNonce], pageKeyArr.slice(callerColInd + 1)
       )
     let newSpecStore = {...pagePathStore, [newNonce]: pagePath};
-    let newCurrInd = callerColInd + 1;
+    let newCurInd = callerColInd + 1;
 
-    if (newCurrInd == pagesState.prevInd) {
+    if (newCurInd == pagesState.prevInd) {
       // window.history.popState()...
     }
 
-    this["GO_TO_PAGE"](newCurrInd, setState, {state});
+    this["GO_TO_PAGE"](newCurInd, setState, {state});
     setState({
       ...state,
       pagesState: {
@@ -154,8 +154,8 @@ const appActions = {
       ...state,
       pagesState: {
         ...state.pagesState,
-        currInd: pageInd,
-        prevInd: pagesState.currInd,
+        curInd: pageInd,
+        prevInd: pagesState.curInd,
       }
     });
   },

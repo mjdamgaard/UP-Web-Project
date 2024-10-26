@@ -44,14 +44,14 @@ $inserter->insertPublicEntities("1", array(
                 "optional"
             ),
             array("Rejects submissions", "bool=false", "optional"),
-            array("Has anonymous creators", "bool=false", "optional"),
+            array("Anonymous creators only", "bool=false", "optional"),
             // ('false' is the default value when missing)
             array("Description", "x", "mandatory"), // (Overwrites "optional")
         ),
         "Description" => "@[classes/classes/desc]",
     ))),
     "classes/classes/desc" => array("x", // ('x' for 'XML,' or simply 'teXt.')
-        "<h1><class>Classes</class></h1>".
+        "<h1>Classes</h1>".
         "<h2>Description</h2>".
         "<p>A class of all class entities (including itself). ".
         "Classes both serve as a broad way of categorizing entities, ".
@@ -100,23 +100,15 @@ $inserter->insertPublicEntities("1", array(
     "classes/scales" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
         "Name" => "Scales",
-        "Rejects submissions" => true,
+        "Special attributes" => array(
+            array("Domain", "@[classes/classes]", "mandatory"),
+        ),
         "Description" => "@[classes/scales/desc]",
     ))),
     "classes/scales/desc" => array("x",
-        "<h1><class>Scales</class></h1>".
+        "<h1>Scales</h1>".
         "..."
     ),
-    "classes/scales/likelihood scales" => array("j", json_encode(array(
-        "Class" => "@[classes/classes]",
-        "Name" => "Likelihood scales",
-        "Parent class" => "@[classes/scales]",
-        "Special attributes" => array(
-            array("Predicate class", "@[classes/classes]", "mandatory"),
-            array("Description", "", "removed"),
-        ),
-        "Description" => "@[classes/scales/likelihood scales/desc]",
-    ))),
     "classes/scalars" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
         "Name" => "Scalars",
@@ -127,16 +119,30 @@ $inserter->insertPublicEntities("1", array(
         ),
         "Description" => "@[classes/scalars/desc]",
     ))),
+    "scales/likelihood scale" => array("j", json_encode(array(
+        "Class" => "@[classes/scales]",
+        "Name" => "Likelihood scale",
+        "Domain" => "@[classes/statements]",
+        "Description" => "@[scales/likelihood scale/desc]",
+    ))),
+    "classes/scales/relevancy scales" => array("j", json_encode(array(
+        "Class" => "@[classes/classes]",
+        "Name" => "Relevancy scales",
+        "Parent class" => "@[classes/scales]",
+        "Special attributes" => array(
+            array("Description", "", "removed"),
+        ),
+        "Description" => "@[classes/scales/relevancy scales/desc]",
+    ))),
     "classes/scales/rating scales" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
         "Name" => "Rating scales",
         "Parent class" => "@[classes/scales]",
         "Special attributes" => array(
-            array("Domain", "@[classes/classes]", "mandatory"),
             array("Tag", "@[classes/tags]", "mandatory"),
             array("Description", "", "removed"),
         ),
-        "Has anonymous creators" => true,
+        "Anonymous creators only" => true,
         "Description" => "@[classes/scales/rating scales/desc]",
     ))),
     "classes/tags" => array("j", json_encode(array(
@@ -153,11 +159,10 @@ $inserter->insertPublicEntities("1", array(
         "Name" => "Value scales",
         "Parent class" => "@[classes/scales]",
         "Special attributes" => array(
-            array("Domain", "@[classes/classes]", "mandatory"),
             array("Function", "@[classes/functions]", "mandatory"),
             array("Description", "", "removed"),
         ),
-        "Has anonymous creators" => true,
+        "Anonymous creators only" => true,
         "Description" => "@[classes/scales/rating scales/desc]",
     ))),
     "classes/functions" => array("j", json_encode(array(
@@ -177,7 +182,7 @@ $inserter->insertPublicEntities("1", array(
             array("Object", "@[classes/entities]", "mandatory"),
             array("Description", "", "removed"),
         ),
-        "Has anonymous creators" => true,
+        "Anonymous creators only" => true,
         "Description" => "@[classes/relational classes/desc]",
     ))),
     "classes/relations" => array("j", json_encode(array(
@@ -287,53 +292,68 @@ $inserter->insertPublicEntities("1", array(
         ),
         "Description" => "@[classes/comments/desc]",
     ))),
-    "classes/true statements" => array("j", json_encode(array(
-        "Class" => "@[classes/classes]",
-        "Name" => "True statements",
-        "Parent class" => "@[classes/statements]",
-        "Rejects submissions" => true,
-        "Description" => "@[classes/true statements/desc]",
-    ))),
 ));
 
 
 $inserter->insertPublicEntities("0", array(
-    "likelihood scales/classes" => array("j", json_encode(array(
-        "Class" => "@[classes/likelihood scales]",
-        "Predicate class" => "@[classes/classes]",
+    "relevancy scales/classes RS" => array("j", json_encode(array(
+        "Class" => "@[classes/relevancy scales]",
+        "Domain" => "@[classes/classes]",
     ))),
-    "likelihood scales/true statements" => array("j", json_encode(array(
-        "Class" => "@[classes/likelihood scales]",
-        "Predicate class" => "@[classes/true statements]",
-    ))),
-    "relational classes/useful subclasses of classes" => array("j",
+    "classes/classes/->useful subclasses" => array("j",
         json_encode(array(
             "Class" => "@[classes/relational classes]",
             "Relation" => "@[relations/useful subclasses]",
             "Object" => "@[classes/classes]",
         )
     )),
-    "tags/useful" => array("j",
+    "relevancy scales/classes->useful subclasses RS" => array("j",
+        json_encode(array(
+            "Class" => "@[classes/relevancy scales]",
+            "Domain" => "@[classes/classes/->useful subclasses]",
+        )
+    )),
+    "classes/statements/->useful subclasses" => array("j",
         json_encode(array(
             "Class" => "@[classes/relational classes]",
             "Relation" => "@[relations/useful subclasses]",
-            "Object" => "@[classes/classes]",
+            "Object" => "@[classes/statements]",
+        )
+    )),
+    "classes/comments/->useful subclasses" => array("j",
+        json_encode(array(
+            "Class" => "@[classes/relational classes]",
+            "Relation" => "@[relations/useful subclasses]",
+            "Object" => "@[classes/comments]",
         )
     )),
 ));
 
 
 $inserter->addEntitiesToList(
-    "1", "relational classes/useful subclasses of classes", array(
+    "1", "relevancy scales/classes RS", array(
         array("classes/classes", "1"),
         array("classes/entities", "1"),
-        array("classes/users", "1"),
-        array("classes/scales", "1"),
-        array("classes/likelihood scales", "1"),
-        array("classes/rating scales", "1"),
-        array("classes/value scales", "1"),
+        array("classes/users", "0.8"),
+        array("classes/scales", "0.5"),
+        array("classes/relevancy scales", "0.6"),
+        array("classes/rating scales", "0.6"),
+        array("classes/value scales", "0.55"),
         array("classes/statements", "1"),
-        array("classes/comments", "1"),
+        array("classes/comments", "0.95"),
+    )
+);
+$inserter->addEntitiesToList(
+    "1", "relevancy scales/classes->useful subclasses RS", array(
+        array("classes/classes", "1"),
+        array("classes/entities", "1"),
+        array("classes/users", "0.8"),
+        array("classes/scales", "0.5"),
+        array("classes/relevancy scales", "0.6"),
+        array("classes/rating scales", "0.6"),
+        array("classes/value scales", "0.55"),
+        array("classes/statements", "1"),
+        array("classes/comments", "0.95"),
     )
 );
 
