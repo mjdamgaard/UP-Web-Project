@@ -4,6 +4,7 @@ import {DataFetcher} from "../../../classes/DataFetcher";
 import {EntityReference} from "../../entity_refs/EntityReference";
 import {EntityInfoPage} from "./subpages/InfoPage";
 import {DropdownMenu} from "../../menus/DropdownMenu";
+import {AppPageTabList} from "../tabs/AppPageTabList";
 
 /* Placeholders */
 const ScoringDisplay = () => <template></template>;
@@ -16,9 +17,12 @@ const EntityPageBody = () => <template></template>;
 const OpenedTabList = () => <template></template>;
 const SettingsMenu = () => <template></template>;
 
+// TODO: Import from one location instead:
+const CLASSES_CLASS_ID = "4";
+const USEFUL_RELATIONS_REL_ID = "19";
 
 
-export const EntityPage = ({entID, initTab} ) => {
+export const EntityPage = ({entID, initTab}) => {
   const [results, setState] = useState({});
 
   useMemo(() => {
@@ -82,11 +86,27 @@ const EntityPageHeader = ({entID}) => {
 
 
 const EntityPageMenu = ({entID, entType, classID}) => {
+  var initTabArr, initTab, moreTabsRelationID;
+  switch (classID) {
+    case CLASSES_CLASS_ID:
+      initTabArr = [["info-tab", classID], ["instances-tab", classID]];
+      initTab = ["instances-tab", classID];
+      moreTabsRelationID = USEFUL_RELATIONS_REL_ID;
+      break;
+    default:
+      initTabArr = [["info-tab", classID], ];
+      initTab = ["info-tab", classID];
+      moreTabsRelationID = USEFUL_RELATIONS_REL_ID;
+  }
+
   return (
     <div className="entity-page-menu">
       <SettingsMenu />
       <OpenedTabList />
-      <AppPageTabList initTabArr={"..."} initTab={null} tabScaleID={null} />
+      <AppPageTabList
+        initTabArr={initTabArr} initTab={initTab}
+        moreTabsRelationID={moreTabsRelationID}
+      />
     </div>
   );
 };
