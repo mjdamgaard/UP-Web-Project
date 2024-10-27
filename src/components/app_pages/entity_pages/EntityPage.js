@@ -46,37 +46,25 @@ export const EntityPage = ({entID, initTab} ) => {
       <></>
     );
   }
-
-  // TODO: Query for the topmost types for the entity (entID), and use them to
-  // specify the tabs. *Or maybe look up types in fullPropStruct, or do both..
-
-  
  
-
-  // // Construct the tabs on the EntityPage.
-  // const [tabDataArr, defaultTab] = getTabDataArrAndDefaultTab(
-  //   entID, typeID, cxtID
-  // );
-  // initTab ??= defaultTab;
-
-  // const classID = results.entMainData.classID;
+  var classID;
+  try {
+    classID = JSON.parse(defStr).Class.substring(1);
+  } catch (error) {
+    classID = null;
+  }
 
   return (
     <div className="entity-page">
       <EntityPageHeader entID={entID}/>
+      <ScoringDisplay />
+      <EntityPageMenu  entID={entID} entType={datatype} classID={classID} />
+      <EntityPageBody />
       {/* TODO: Move the InfoPage under one of the topmost tabs instead. */}
       <DropdownMenu
         title={"Info"} children={<EntityInfoPage entID={entID} />}
         startAsExpanded
       />
-      <MainMenu /> {/* Consists of class tabs under which are the main tabs */}
-      <ScoringDisplay />
-      <OpenedTabList />
-      <ClassesMenu /> {/* Superclasses and useful subclasses */}
-      <FilteringPredicatesMenu />
-      <SortingPredicatesMenu />
-      <SubdivisionsMenu /> {/* Under here are also all scoring menus */}
-      <EntityPageBody />
     </div>
   );
 };
@@ -86,6 +74,21 @@ const EntityPageHeader = ({entID}) => {
   return (
     <div className="entity-page-header">
       <h2><EntityReference entID={entID} isLink /></h2>
+    </div>
+  );
+};
+
+
+
+const EntityPageMenu = ({entType, }) => {
+  return (
+    <div className="entity-page-menu">
+      <MainMenu /> {/* Consists of class tabs under which are the main tabs */}
+      <OpenedTabList />
+      <ClassesMenu /> {/* Superclasses and useful subclasses */}
+      <FilteringPredicatesMenu />
+      <SortingPredicatesMenu />
+      <SubdivisionsMenu /> {/* Under here are also all scoring menus */}
     </div>
   );
 };

@@ -150,14 +150,14 @@ const JSONEntityReference = ({entID, defStr, isContained}) => {
 
 
 const ObjectEntityReference = ({entID, defObj}) => {
-  if (!defObj.class) {
+  if (!defObj.Class) {
     return (
       <div className="obj-entity invalid">
         {"Invalid Object Entity #" + entID + " (missing class)"}
       </div>
     );
   }
-  if (!/^@[1-9][0-9]*$/.test(defObj.class)) {
+  if (!/^@[1-9][0-9]*$/.test(defObj.Class)) {
     return (
       <div className="obj-entity invalid">
         {"Invalid Object Entity #" + entID + " (class is not a reference)"}
@@ -165,7 +165,7 @@ const ObjectEntityReference = ({entID, defObj}) => {
     );
   }
 
-  const classID = defObj.class.match(/[0-9]+/)[0];
+  const classID = defObj.Class.match(/[0-9]+/)[0];
   var content;
   switch (classID) {
     // case CLASS_CLASS_ID:
@@ -193,7 +193,7 @@ const DefaultReferenceContent = ({entID, defObj}) => {
     <div className="class-default">
       {
         Object.entries(defObj).map(([key, val], ind) => {
-          let parsedKey = key.match(/[a-z0-9\-]+/g).join();
+          let parsedKey = key.toLowerCase().match(/[a-z0-9\-]+/g).join();
           return (
             <div key={ind} className={"member-" + parsedKey}>
               <div className="attribute-name">{key}</div>

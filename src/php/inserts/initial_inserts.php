@@ -119,11 +119,17 @@ $inserter->insertPublicEntities("1", array(
         ),
         "Description" => "@[classes/scalars/desc]",
     ))),
-    "scales/likelihood scale" => array("j", json_encode(array(
+    "scales/probability scale" => array("j", json_encode(array(
         "Class" => "@[classes/scales]",
-        "Name" => "Likelihood scale",
+        "Name" => "Probability scale",
         "Domain" => "@[classes/statements]",
-        "Description" => "@[scales/likelihood scale/desc]",
+        "Description" => "@[scales/probability scale/desc]",
+    ))),
+    "scales/agreement scale" => array("j", json_encode(array(
+        "Class" => "@[classes/scales]",
+        "Name" => "Agreement scale",
+        "Domain" => "@[classes/statements]",
+        "Description" => "@[scales/agreement scale/desc]",
     ))),
     "classes/scales/relevancy scales" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
@@ -278,7 +284,8 @@ $inserter->insertPublicEntities("1", array(
         "Name" => "Statements",
         "Special attributes" => array(
             array("Text", "x", "mandatory"),
-            array("Is claimed by user", "bool=false", "optional"),
+            array("Is claimed by the creator", "bool=false", "optional"),
+            array("Is objective", "bool=false", "optional"),
             array("Description", "", "removed"),
         ),
         "Description" => "@[classes/statements/desc]",
@@ -288,7 +295,8 @@ $inserter->insertPublicEntities("1", array(
         "Name" => "Comments",
         "Parent class" => "@[classes/statements]",
         "Special attributes" => array(
-            array("Is claimed by user", "", "removed"),
+            array("Topic", "@[classes/entities]", "mandatory"),
+            array("Is claimed by the creator", "", "removed"),
         ),
         "Description" => "@[classes/comments/desc]",
     ))),
@@ -345,13 +353,11 @@ $inserter->addEntitiesToList(
 );
 $inserter->addEntitiesToList(
     "1", "relevancy scales/classes->useful subclasses RS", array(
-        array("classes/classes", "1"),
-        array("classes/entities", "1"),
         array("classes/users", "0.8"),
-        array("classes/scales", "0.5"),
-        array("classes/relevancy scales", "0.6"),
-        array("classes/rating scales", "0.6"),
-        array("classes/value scales", "0.55"),
+        array("classes/scales", "0.8"),
+        array("classes/relevancy scales", "0.4"),
+        array("classes/rating scales", "0.4"),
+        array("classes/value scales", "0.4"),
         array("classes/statements", "1"),
         array("classes/comments", "0.95"),
     )
