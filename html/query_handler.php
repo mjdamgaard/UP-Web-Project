@@ -102,6 +102,21 @@ switch ($reqType) {
         );
         // output: [[scoreVal, entID], ...].
         break;
+    case "entListFromStrings":
+        header("Cache-Control: max-age=3");
+        $sql = "CALL selectEntityListFromDefStrings (?, ?, ?, ?, ?)";
+        $paramNameArr = array(
+            "u", "d",
+            "n", "o",
+            "a"
+        );
+        $typeArr = array(
+            "id", "text",
+            "uint", "uint",
+            "bool"
+        );
+        // output: [[scoreVal, entID], ...].
+        break;
     case "score":
         header("Cache-Control: max-age=3");
         $sql = "CALL selectScore (?, ?, ?)";

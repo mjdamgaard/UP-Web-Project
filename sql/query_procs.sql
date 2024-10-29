@@ -3,6 +3,7 @@ SELECT "Query procedures";
 
 DROP PROCEDURE selectEntityList;
 DROP PROCEDURE selectEntityListFromHash;
+DROP PROCEDURE selectEntityListFromDefStrings;
 DROP PROCEDURE selectScore;
 
 -- TODO: Make proc to query for users who has rated a stmt / scale.
@@ -106,40 +107,41 @@ BEGIN
     DECLARE defStr1, defStr2, defStr3, defStr4, defStr5, scaleDefStr TEXT;
 
     entID_search: BEGIN 
-        SET defStr1 = SUBSTRING_INDEX(defStrList, "|", 1);
+        SET defStr1 = SUBSTRING_INDEX(defStrList, "@;", 1);
+        SET defStr1 = SUBSTRING_INDEX(defStrList, "@;", 1);
         SELECT id INTO entID1
         FROM Entities
         WHERE (
             is_private = 0 AND
-            def_hash = SHA2(defStr1) AND
+            def_hash = SHA2(defStr1, 256) AND
             creator_id = 0
         );
         IF (entID1 IS NULL) THEN LEAVE entID_search; END IF;
 
-        SET defStr2 = SUBSTRING_INDEX(defStrList, "|", 2);
+        SET defStr2 = SUBSTRING_INDEX(defStrList, "@;", 2);
         SET defStr2 = REPLACE(defStr2, "@e1", CONCAT("@", entID1));
         SELECT id INTO entID2
         FROM Entities
         WHERE (
             is_private = 0 AND
-            def_hash = SHA2(defStr2) AND
+            def_hash = SHA2(defStr2, 256) AND
             creator_id = 0
         );
         IF (entID2 IS NULL) THEN LEAVE entID_search; END IF;
 
-        SET defStr3 = SUBSTRING_INDEX(defStrList, "|", 3);
+        SET defStr3 = SUBSTRING_INDEX(defStrList, "@;", 3);
         SET defStr3 = REPLACE(defStr3, "@e1", CONCAT("@", entID1));
         SET defStr3 = REPLACE(defStr3, "@e2", CONCAT("@", entID2));
         SELECT id INTO entID3
         FROM Entities
         WHERE (
             is_private = 0 AND
-            def_hash = SHA2(defStr3) AND
+            def_hash = SHA2(defStr3, 256) AND
             creator_id = 0
         );
         IF (entID3 IS NULL) THEN LEAVE entID_search; END IF;
 
-        SET defStr4 = SUBSTRING_INDEX(defStrList, "|", 4);
+        SET defStr4 = SUBSTRING_INDEX(defStrList, "@;", 4);
         SET defStr4 = REPLACE(defStr4, "@e1", CONCAT("@", entID1));
         SET defStr4 = REPLACE(defStr4, "@e2", CONCAT("@", entID2));
         SET defStr4 = REPLACE(defStr4, "@e3", CONCAT("@", entID3));
@@ -147,12 +149,12 @@ BEGIN
         FROM Entities
         WHERE (
             is_private = 0 AND
-            def_hash = SHA2(defStr4) AND
+            def_hash = SHA2(defStr4, 256) AND
             creator_id = 0
         );
         IF (entID4 IS NULL) THEN LEAVE entID_search; END IF;
 
-        SET defStr5 = SUBSTRING_INDEX(defStrList, "|", 5);
+        SET defStr5 = SUBSTRING_INDEX(defStrList, "@;", 5);
         SET defStr5 = REPLACE(defStr5, "@e1", CONCAT("@", entID1));
         SET defStr5 = REPLACE(defStr5, "@e2", CONCAT("@", entID2));
         SET defStr5 = REPLACE(defStr5, "@e3", CONCAT("@", entID3));
@@ -161,12 +163,12 @@ BEGIN
         FROM Entities
         WHERE (
             is_private = 0 AND
-            def_hash = SHA2(defStr5) AND
+            def_hash = SHA2(defStr5, 256) AND
             creator_id = 0
         );
     END entID_search;
 
-    SET scaleDefStr = SUBSTRING_INDEX(defStrList, "|", -1);
+    SET scaleDefStr = SUBSTRING_INDEX(defStrList, "@;", -1);
     SET scaleDefStr = REPLACE(scaleDefStr, "@e1", CONCAT("@", entID1));
     SET scaleDefStr = REPLACE(scaleDefStr, "@e2", CONCAT("@", entID2));
     SET scaleDefStr = REPLACE(scaleDefStr, "@e3", CONCAT("@", entID3));
@@ -176,7 +178,7 @@ BEGIN
     FROM Entities
     WHERE (
         is_private = 0 AND
-        def_hash = SHA2(scaleDefStr) AND
+        def_hash = SHA2(scaleDefStr, 256) AND
         creator_id = 0
     );
 
