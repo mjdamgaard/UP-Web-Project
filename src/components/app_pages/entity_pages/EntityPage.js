@@ -16,6 +16,7 @@ const SubdivisionsMenu = () => <template></template>;
 const EntityPageBody = () => <template></template>;
 const OpenedTabList = () => <template></template>;
 const SettingsMenu = () => <template></template>;
+const SubmitEntityMenu = () => <template></template>;
 
 // TODO: Import from one location instead:
 const CLASSES_CLASS_ID = "4";
@@ -86,27 +87,29 @@ const EntityPageHeader = ({entID}) => {
 
 
 const EntityPageMenu = ({entID, entType, classID}) => {
-  var initTabArr, initTab, moreTabsRelationID;
+  var initTabArr, initTab, moreTabsRelationID, moreTabsObjectID;
   switch (classID) {
     case CLASSES_CLASS_ID:
-      initTabArr = [["info-tab", classID], ["instances-tab", classID]];
+      initTabArr = [["info-tab", entID], ["instances-tab", classID]];
       initTab = ["instances-tab", classID];
       moreTabsRelationID = USEFUL_RELATIONS_REL_ID;
       break;
     default:
-      initTabArr = [["info-tab", classID], ];
-      initTab = ["info-tab", classID];
+      initTabArr = [["info-tab", entID], ];
+      initTab = ["info-tab", entID];
       moreTabsRelationID = USEFUL_RELATIONS_REL_ID;
   }
 
   return (
     <div className="entity-page-menu">
-      <SettingsMenu />
       <OpenedTabList />
       <AppPageTabList
         initTabArr={initTabArr} initTab={initTab}
         moreTabsRelationID={moreTabsRelationID}
+        moreTabsObjectID={moreTabsObjectID}
       />
+      <SettingsMenu />
+      <SubmitEntityMenu />
     </div>
   );
 };
