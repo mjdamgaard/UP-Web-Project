@@ -118,6 +118,7 @@ $inserter->insertPublicEntities("1", array(
         "<h1>Scales</h1>".
         "..."
     ),
+
     "classes/scalar parameters" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
         "Name" => "Scalar parameters",
@@ -130,126 +131,125 @@ $inserter->insertPublicEntities("1", array(
         "Description" => "@[classes/scalar parameters/desc]",
     ))),
 
-    /* Some quality scales */
     "classes/qualities" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
         "Name" => "Qualities",
         "Special attributes" => array(
             array("Tag", "string", "mandatory"),
+            // Use purely lowercase tags only when the Description is left out.
+            array("Scale type", "@[classes/scale types]", "mandatory"),
         ),
         "Description" => "@[classes/qualities/desc]",
     ))),
-    "classes/percentage qualities" => array("j", json_encode(array(
+    "classes/scale types" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
-        "Name" => "Percentage qualities",
-        "Parent class" => "@[classes/qualities]",
-        "Description" => "@[classes/percentage qualities/desc]",
+        "Name" => "Scale types",
+        "Special attributes" => array(
+            array("Name", "string", "mandatory"),
+            array("Description", "x", "mandatory"),
+        ),
+        "Description" => "@[classes/scale types/desc]",
     ))),
-    "classes/relative qualities" => array("j", json_encode(array(
+
+    /* Some scale types */
+    "scale types/percentage scale" => array("j", json_encode(array(
+        "Class" => "@[classes/scale types]",
+        "Name" => "Percentage scale",
+        "Description" => "@[scale types/percentage scale/desc]",
+    ))),
+    "scale types/relative scale" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
-        "Name" => "Relative qualities",
-        "Parent class" => "@[classes/qualities]",
-        "Description" => "@[classes/relative qualities/desc]",
-        // Description should say: 'Unless anything else is specified, the
-        // scores are unbounded,' and then go on to describe the properties
-        // of the "standard" relative scales (to be implemented at some point).
+        "Name" => "Relative scale",
+        "Description" => "@[scale types/relative scale/desc]",
+        // Description should say that 'this scale type is treated as the
+        // 0-10-star scale type, until a point when it is changed to an
+        // unbounded relative scale,' and then go on to describe this
+        // unbounded scale type. Once this change happens, we can then also
+        // uprate a 'better representation' for this entity, without the
+        //0-10-star-scale part of the description.
     ))),
-    "classes/0-10-star qualities" => array("j", json_encode(array(
+    "scale types/value scale" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
-        "Name" => "0–10-star qualities",
-        "Parent class" => "@[classes/relative qualities]",
-        "Description" => "@[classes/0-10-star qualities/desc]",
-        // (We use 0-10-star qualities initially, before "upgrading" to the
-        // unbounded (continuously normalized) relative scales.)
+        "Name" => "Value scale",
+        "Description" => "@[scale types/value scale/desc]",
     ))),
-    "classes/value qualities" => array("j", json_encode(array(
-        "Class" => "@[classes/classes]",
-        "Name" => "Percentage qualities",
-        "Description" => "@[classes/value qualities/desc]",
-    ))),
+
+    // "classes/0-10-star qualities" => array("j", json_encode(array(
+    //     "Class" => "@[classes/classes]",
+    //     "Name" => "0–10-star qualities",
+    //     "Parent class" => "@[classes/relative qualities]",
+    //     "Description" => "@[classes/0-10-star qualities/desc]",
+    //     // (We use 0-10-star qualities initially, before "upgrading" to the
+    //     // unbounded (continuously normalized) relative scales.)
+    // ))),
 
     /* Some qualities */
     "qualities/relevancy" => array("j", json_encode(array(
-        "Class" => "@[classes/percentage qualities]",
+        "Class" => "@[classes/qualities]",
         "Tag" => "Relevancy",
+        "Scale type" => "@[scale types/percentage scale]",
         "Description" => "@[qualities/relevancy/desc]",
     ))),
     "qualities/probability" => array("j", json_encode(array(
-        "Class" => "@[classes/percentage qualities]",
+        "Class" => "@[classes/qualities]",
         "Tag" => "Probability",
+        "Scale type" => "@[scale types/percentage scale]",
         "Description" => "@[qualities/probability/desc]",
     ))),
     "qualities/agreement" => array("j", json_encode(array(
-        "Class" => "@[classes/percentage qualities]",
+        "Class" => "@[classes/qualities]",
         "Tag" => "Agreement",
+        "Scale type" => "@[scale types/percentage scale]",
         "Description" => "@[qualities/agreement/desc]",
     ))),
 
 
-    "qualities/good" => array("j", json_encode(array(
-        "Class" => "@[classes/percentage qualities]",
+    "qualities/good (no desc.)" => array("j", json_encode(array(
+        "Class" => "@[classes/qualities]",
         "Tag" => "good",
-        // (Let us use lowercase for adjective and verb tags.)
+        // We use lowercase when Description is not provided.
+        "Scale type" => "@[scale types/relative scale]",
+    ))),
+    "qualities/funny (no desc.)" => array("j", json_encode(array(
+        "Class" => "@[classes/qualities]",
+        "Tag" => "funny",
+        "Scale type" => "@[scale types/relative scale]",
+    ))),
+    "qualities/good" => array("j", json_encode(array(
+        "Class" => "@[classes/qualities]",
+        "Tag" => "Good",
+        // We capitalize first letter when Description is provided.
+        "Scale type" => "@[scale types/relative scale]",
         "Description" => "@[qualities/good/desc]",
     ))),
     "qualities/funny" => array("j", json_encode(array(
-        "Class" => "@[classes/percentage qualities]",
-        "Tag" => "funny",
+        "Class" => "@[classes/qualities]",
+        "Tag" => "Funny",
+        "Scale type" => "@[scale types/relative scale]",
         "Description" => "@[qualities/funny/desc]",
+    ))),
+    "qualities/spoilers" => array("j", json_encode(array(
+        "Class" => "@[classes/qualities]",
+        "Tag" => "Spoilers",
+        "Scale type" => "@[scale types/relative scale]",
+        "Description" => "@[qualities/spoilers/desc]",
     ))),
 
     "qualities/price" => array("j", json_encode(array(
-        "Class" => "@[classes/percentage qualities]",
+        "Class" => "@[classes/qualities]",
         "Tag" => "Price",
+        "Scale type" => "@[scale types/value scale]",
         "Description" => "@[qualities/price/desc]",
     ))),
     "qualities/durability" => array("j", json_encode(array(
-        "Class" => "@[classes/percentage qualities]",
+        "Class" => "@[classes/qualities]",
         "Tag" => "Durability",
-        // ..Hm, or should we use it for nouns as well?..
+        "Scale type" => "@[scale types/value scale]",
         "Description" => "@[qualities/durability/desc]",
     ))),
 
-    "classes/tags" => array("j", json_encode(array(
-        "Class" => "@[classes/classes]",
-        "Name" => "Tags",
-        "Special attributes" => array(
-            array("Name", "string", "mandatory"),
-            array("Description", "x", "mandatory"),
-        ),
-        "Description" => "@[classes/tags/desc]",
-    ))),
-    "classes/scales/value scales" => array("j", json_encode(array(
-        "Class" => "@[classes/classes]",
-        "Name" => "Value scales",
-        "Parent class" => "@[classes/scales]",
-        "Special attributes" => array(
-            array("Function", "@[classes/functions]", "mandatory"),
-            array("Description", "", "removed"),
-        ),
-        "Anonymous creators only" => true,
-        "Description" => "@[classes/scales/rating scales/desc]",
-    ))),
-    "classes/functions" => array("j", json_encode(array(
-        "Class" => "@[classes/classes]",
-        "Name" => "Functions",
-        "Special attributes" => array(
-            array("Name", "string", "mandatory"),
-            array("Description", "x", "mandatory"),
-        ),
-        "Description" => "@[classes/functions/desc]",
-    ))),
-    "classes/relational classes" => array("j", json_encode(array(
-        "Class" => "@[classes/classes]",
-        "Name" => "Relational classes",
-        "Special attributes" => array(
-            array("Relation", "@[classes/relations]", "mandatory"),
-            array("Object", "@[classes/entities]", "mandatory"),
-            array("Description", "", "removed"),
-        ),
-        "Anonymous creators only" => true,
-        "Description" => "@[classes/relational classes/desc]",
-    ))),
+
+    /* Relations */
     "classes/relations" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
         "Name" => "Relations",
@@ -257,13 +257,13 @@ $inserter->insertPublicEntities("1", array(
             array("Noun", "string", "mandatory"),
             array("Member class", "@[classes/classes]", "mandatory"),
             array("Object class", "@[classes/classes]", "mandatory"),
-            array("Description", "x", "mandatory"),
+            // array("Description", "x", "mandatory"),
         ),
         "Description" => "@[classes/relations/desc]",
     ))),
     "relations/useful relations" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
-        "Noun" => "Useful relations",
+        "Noun" => "Relations",
         "Member class" => "@[classes/relations]",
         "Object class" => "@[classes/entities]",
         "Description" => "@[relations/useful relations/desc]",
