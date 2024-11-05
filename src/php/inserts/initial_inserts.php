@@ -111,6 +111,7 @@ $inserter->insertPublicEntities("1", array(
             array("Quality", "@[classes/qualities]", "mandatory"),
             array("Description", "", "removed"),
         ),
+        "Anonymous creators only" => true,
         "Description" => "@[classes/scales/desc]",
     ))),
     "classes/scales/desc" => array("x",
@@ -125,6 +126,7 @@ $inserter->insertPublicEntities("1", array(
             array("Subject", "@[classes/entities]", "mandatory"),
             array("Description", "", "removed"),
         ),
+        "Anonymous creators only" => true,
         "Description" => "@[classes/scalar parameters/desc]",
     ))),
 
@@ -184,32 +186,30 @@ $inserter->insertPublicEntities("1", array(
     ))),
 
 
-    "qualities/probability scale" => array("j", json_encode(array(
-        "Class" => "@[classes/percentage scales]",
-        "Name" => "Probability scale",
-        "Relation" => "@[relations/instances]",
-        "Object" => "@[classes/statements]",
-        "Description" => "@[scales/probability scale/desc]",
+    "qualities/good" => array("j", json_encode(array(
+        "Class" => "@[classes/percentage qualities]",
+        "Tag" => "good",
+        // (Let us use lowercase for adjective and verb tags.)
+        "Description" => "@[qualities/good/desc]",
     ))),
-    "scales/agreement scale" => array("j", json_encode(array(
-        "Class" => "@[classes/scales]",
-        "Name" => "Agreement scale",
-        "Relation" => "@[relations/instances]",
-        "Object" => "@[classes/statements]",
-        "Description" => "@[scales/agreement scale/desc]",
+    "qualities/funny" => array("j", json_encode(array(
+        "Class" => "@[classes/percentage qualities]",
+        "Tag" => "funny",
+        "Description" => "@[qualities/funny/desc]",
     ))),
-    "classes/scales/rating scales" => array("j", json_encode(array(
-        "Class" => "@[classes/classes]",
-        "Name" => "Rating scales",
-        "Parent class" => "@[classes/scales]",
-        "Special attributes" => array(
-            array("Name", "", "removed"),
-            array("Tag", "@[classes/tags]", "mandatory"),
-            array("Description", "", "removed"),
-        ),
-        "Anonymous creators only" => true,
-        "Description" => "@[classes/scales/rating scales/desc]",
+
+    "qualities/price" => array("j", json_encode(array(
+        "Class" => "@[classes/percentage qualities]",
+        "Tag" => "Price",
+        "Description" => "@[qualities/price/desc]",
     ))),
+    "qualities/durability" => array("j", json_encode(array(
+        "Class" => "@[classes/percentage qualities]",
+        "Tag" => "Durability",
+        // ..Hm, or should we use it for nouns as well?..
+        "Description" => "@[qualities/durability/desc]",
+    ))),
+
     "classes/tags" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
         "Name" => "Tags",
