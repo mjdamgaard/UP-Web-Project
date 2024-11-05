@@ -14,7 +14,7 @@ const SettingsMenu = () => <template></template>;
 
 
 export const AppPageTabList = ({
-  initTabArr, initTab, moreTabsRelationID
+  initTabArr, initTab, moreTabsRelationID, moreTabsObjectID
 }) => {
 
   return (

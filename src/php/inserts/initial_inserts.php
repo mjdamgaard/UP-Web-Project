@@ -37,7 +37,12 @@ $inserter->insertPublicEntities("1", array(
         "Name" => "Classes",
         "Special attributes" => array(
             array("Name", "string", "mandatory"),
-            array("Parent class", "@[classes/classes]", "optional"),
+            array(
+                "Parent class",
+                "@[classes/classes]=@[classes/entities]",
+                // (When missing, the parent class is the 'Entities' class.)
+                "optional"
+            ),
             array(
                 "Special attributes",
                 "[[Attribute name,Type,Option]]",
@@ -92,7 +97,7 @@ $inserter->insertPublicEntities("1", array(
         "Class" => "@[classes/classes]",
         "Name" => "Users",
         "Special attributes" => array(
-            array("username", "string", "mandatory"),
+            array("Username", "string", "mandatory"),
         ),
         "Rejects submissions" => true,
         "Description" => "@[classes/users/desc]",
@@ -101,7 +106,10 @@ $inserter->insertPublicEntities("1", array(
         "Class" => "@[classes/classes]",
         "Name" => "Scales",
         "Special attributes" => array(
-            array("Domain", "@[classes/classes]", "mandatory"),
+            array("Relation", "@[classes/relations]", "mandatory"),
+            array("Object", "@[classes/entities]", "mandatory"),
+            array("Quality", "@[classes/qualities]", "mandatory"),
+            array("Description", "", "removed"),
         ),
         "Description" => "@[classes/scales/desc]",
     ))),
@@ -109,42 +117,93 @@ $inserter->insertPublicEntities("1", array(
         "<h1>Scales</h1>".
         "..."
     ),
-    "classes/scalars" => array("j", json_encode(array(
+    "classes/scalar parameters" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
-        "Name" => "Scalars",
+        "Name" => "Scalar parameters",
         "Special attributes" => array(
             array("Scale", "@[classes/scales]", "mandatory"),
             array("Subject", "@[classes/entities]", "mandatory"),
             array("Description", "", "removed"),
         ),
-        "Description" => "@[classes/scalars/desc]",
+        "Description" => "@[classes/scalar parameters/desc]",
     ))),
-    "scales/probability scale" => array("j", json_encode(array(
-        "Class" => "@[classes/scales]",
+
+    /* Some quality scales */
+    "classes/qualities" => array("j", json_encode(array(
+        "Class" => "@[classes/classes]",
+        "Name" => "Qualities",
+        "Special attributes" => array(
+            array("Tag", "string", "mandatory"),
+        ),
+        "Description" => "@[classes/qualities/desc]",
+    ))),
+    "classes/percentage qualities" => array("j", json_encode(array(
+        "Class" => "@[classes/classes]",
+        "Name" => "Percentage qualities",
+        "Parent class" => "@[classes/qualities]",
+        "Description" => "@[classes/percentage qualities/desc]",
+    ))),
+    "classes/relative qualities" => array("j", json_encode(array(
+        "Class" => "@[classes/classes]",
+        "Name" => "Relative qualities",
+        "Parent class" => "@[classes/qualities]",
+        "Description" => "@[classes/relative qualities/desc]",
+        // Description should say: 'Unless anything else is specified, the
+        // scores are unbounded,' and then go on to describe the properties
+        // of the "standard" relative scales (to be implemented at some point).
+    ))),
+    "classes/0-10-star qualities" => array("j", json_encode(array(
+        "Class" => "@[classes/classes]",
+        "Name" => "0–10-star qualities",
+        "Parent class" => "@[classes/relative qualities]",
+        "Description" => "@[classes/0-10-star qualities/desc]",
+        // (We use 0-10-star qualities initially, before "upgrading" to the
+        // unbounded (continuously normalized) relative scales.)
+    ))),
+    "classes/value qualities" => array("j", json_encode(array(
+        "Class" => "@[classes/classes]",
+        "Name" => "Percentage qualities",
+        "Description" => "@[classes/value qualities/desc]",
+    ))),
+
+    /* Some qualities */
+    "qualities/relevancy" => array("j", json_encode(array(
+        "Class" => "@[classes/percentage qualities]",
+        "Tag" => "Relevancy",
+        "Description" => "@[qualities/relevancy/desc]",
+    ))),
+    "qualities/probability" => array("j", json_encode(array(
+        "Class" => "@[classes/percentage qualities]",
+        "Tag" => "Probability",
+        "Description" => "@[qualities/probability/desc]",
+    ))),
+    "qualities/agreement" => array("j", json_encode(array(
+        "Class" => "@[classes/percentage qualities]",
+        "Tag" => "Agreement",
+        "Description" => "@[qualities/agreement/desc]",
+    ))),
+
+
+    "qualities/probability scale" => array("j", json_encode(array(
+        "Class" => "@[classes/percentage scales]",
         "Name" => "Probability scale",
-        "Domain" => "@[classes/statements]",
+        "Relation" => "@[relations/instances]",
+        "Object" => "@[classes/statements]",
         "Description" => "@[scales/probability scale/desc]",
     ))),
     "scales/agreement scale" => array("j", json_encode(array(
         "Class" => "@[classes/scales]",
         "Name" => "Agreement scale",
-        "Domain" => "@[classes/statements]",
+        "Relation" => "@[relations/instances]",
+        "Object" => "@[classes/statements]",
         "Description" => "@[scales/agreement scale/desc]",
-    ))),
-    "classes/scales/relevancy scales" => array("j", json_encode(array(
-        "Class" => "@[classes/classes]",
-        "Name" => "Relevancy scales",
-        "Parent class" => "@[classes/scales]",
-        "Special attributes" => array(
-            array("Description", "", "removed"),
-        ),
-        "Description" => "@[classes/scales/relevancy scales/desc]",
     ))),
     "classes/scales/rating scales" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
         "Name" => "Rating scales",
         "Parent class" => "@[classes/scales]",
         "Special attributes" => array(
+            array("Name", "", "removed"),
             array("Tag", "@[classes/tags]", "mandatory"),
             array("Description", "", "removed"),
         ),
