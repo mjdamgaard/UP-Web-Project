@@ -4,7 +4,7 @@ import {DataFetcher} from "../../../classes/DataFetcher";
 import {EntityReference} from "../../entity_refs/EntityReference";
 import {EntityInfoPage} from "./subpages/InfoPage";
 import {DropdownMenu} from "../../menus/DropdownMenu";
-import {AppPageTabList} from "../tabs/AppPageTabList";
+import {PagesWithVariableTabs} from "../tabs/PagesWithVariableTabs";
 
 /* Placeholders */
 const ScoringDisplay = () => <template></template>;
@@ -103,7 +103,7 @@ const EntityPageMenu = ({entID, entType, classID}) => {
   return (
     <div className="entity-page-menu">
       <OpenedTabList />
-      <AppPageTabList
+      <PagesWithVariableTabs
         initTabArr={initTabArr} initTab={initTab}
         moreTabsRelationID={moreTabsRelationID}
         moreTabsObjectID={moreTabsObjectID}

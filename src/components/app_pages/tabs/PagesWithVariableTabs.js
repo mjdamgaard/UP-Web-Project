@@ -13,12 +13,12 @@ const SettingsMenu = () => <template></template>;
 
 
 
-export const AppPageTabList = ({
-  initTabArr, initTab, moreTabsRelationID, moreTabsObjectID
+export const PagesWithVariableTabs = ({
+  entID, classID, tabsRelID, tabsFromClassRelID
 }) => {
 
   return (
-    <div className="app-page-tab-list">
+    <div className="pages-with-tabs variable-tabs">
     </div>
   );
 };

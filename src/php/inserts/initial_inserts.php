@@ -263,10 +263,17 @@ $inserter->insertPublicEntities("1", array(
     ))),
     "relations/useful relations" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
-        "Noun" => "Relations",
+        "Noun" => "Useful relations",
         "Member class" => "@[classes/relations]",
         "Object class" => "@[classes/entities]",
         "Description" => "@[relations/useful relations/desc]",
+    ))),
+    "relations/useful relations for instances" => array("j", json_encode(array(
+        "Class" => "@[classes/relations]",
+        "Noun" => "Useful relations for instances",
+        "Member class" => "@[classes/relations]",
+        "Object class" => "@[classes/classes]",
+        "Description" => "@[relations/useful relations for instances/desc]",
     ))),
     "relations/useful sub-relations" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
@@ -282,13 +289,23 @@ $inserter->insertPublicEntities("1", array(
         "Object class" => "@[classes/classes]",
         "Description" => "@[relations/useful subclasses/desc]",
     ))),
-    "relations/relevant tags" => array("j", json_encode(array(
+    "relations/useful qualities" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
-        "Noun" => "Relevant tags",
-        "Member class" => "@[classes/tags]",
-        "Object class" => "@[classes/classes]",
-        "Description" => "@[relations/relevant tags/desc]",
+        "Noun" => "Useful qualities",
+        "Member class" => "@[classes/qualities]",
+        "Object class" => "@[classes/entities]",
+        "Description" => "@[relations/useful qualities/desc]",
     ))),
+    "relations/useful qualities for instances" => array("j", json_encode(array(
+        "Class" => "@[classes/relations]",
+        "Noun" => "Useful qualities for instances",
+        "Member class" => "@[classes/qualities]",
+        "Object class" => "@[classes/classes]",
+        "Description" => "@[relations/useful qualities for instances/desc]",
+    ))),
+
+    // TODO: Continue refactoring/changing:
+
     "relations/arguments" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
         "Noun" => "Arguments",

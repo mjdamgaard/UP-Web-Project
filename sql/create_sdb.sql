@@ -56,11 +56,10 @@ CREATE TABLE Scores (
     ),
 
     -- Index to look up specific score (and restricting one score per user).
-    UNIQUE INDEX (user_id, scale_id, subj_id)
+    UNIQUE INDEX (user_id, scale_id, subj_id),
 
-    -- Still better to use a bot for this instead:
-    -- -- Index to look up users who has rated the stmt / rating scale.
-    -- UNIQUE INDEX (scale_id, subj_id, score_val, user_id)
+    -- Index to look up users who has rated the stmt / rating scale.
+    UNIQUE INDEX (scale_id, subj_id, score_val, user_id)
 );
 
 
