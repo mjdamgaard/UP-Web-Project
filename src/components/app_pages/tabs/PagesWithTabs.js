@@ -7,31 +7,34 @@ const TabHeader = () => <template></template>;
 
 
 export const PagesWithTabs = (props) => {
-  const {initTabs, defaultTab, entID, scaleKeysForMoreTabs} = props;
+  const {initTabs, defaultTab, entID, classID, scaleKeysForMoreTabs} = props;
 
-  // Tabs are defined by primitive types, but this can include JSON strings.
-  // A numerical tab is interpreted as a Relation ID, yielding a Scale domain
-  // together with entID is the Object. ...No, that depends on the definition
-  // of the 'More tabs' tab..
+  // // Tabs are defined by primitive types, but this can include JSON strings.
+  // // The 'more tabs' tab is supposed to be (defined by) a JSON string, which
+  // // also "knows" how to construct new tabs from any entity selected in an
+  // // EntityList under the tab.
+
+  // Tabs are arrays of: [pageType, pageProps], where pageProps is an object.
+
+  const defaultTabKey = JSON.stringify(defaultTab);
 
   const [state, setState] = useState({
-    tabList: initTabs,
-    curTab: defaultTab,
-    loadedPages: [defaultTab],
+    tabList: moreTabsTab ? [...initTabs, moreTabsTab] : initTabs,
+    curTabKey: defaultTabKey,
+    loadedPages: [defaultTabKey],
   });
 
   const [refCallback, dispatch] = useDispatch(
     pwtActions, setState, state, props
   );
 
-  // Let's just load the default tab for now:
 
 
   const pages = state.loadedPages.map((tab) => (
     <div key={tab}
       style={tab == curTab ? {} : {display: "none"}}
     >
-      {isLoadedArr[ind] ? val[1] : <></>}
+      <PageUnderTab tab={tab}/>
     </div>
   ));
 
