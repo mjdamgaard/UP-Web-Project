@@ -13,6 +13,7 @@ const SubmitEntityMenu = () => <template></template>;
 
 // TODO: Import from one location instead:
 const CLASSES_CLASS_ID = "4";
+const RELATIONS_CLASS_ID = "7";
 const USEFUL_RELATIONS_REL_ID = "19";
 
 
@@ -61,7 +62,7 @@ export const EntityList = ({scaleKey, userID}) => {
   }
   // Else...
   else {
-    let scaleHash = "TODO: Get hash from a function...";
+    let scaleHash = getScaleDefStr(...scaleKey); // TODO: Hash.
     let userID = "1";
     DataFetcher.fetchEntityListFromHash(
       userID, scaleHash, (entList, scaleID) => {
@@ -83,3 +84,14 @@ export const EntityList = ({scaleKey, userID}) => {
   
   return <></>;
 };
+
+
+
+function getScaleDefStr(relID, objID, qualID) {
+  return JSON.stringify({
+    Class: "@" + RELATIONS_CLASS_ID,
+    Relation: "@" + relID,
+    Object: "@" + objID,
+    Quality: "@" + (qualID || RELEVANCY_QUAL_ID),
+  });
+}
