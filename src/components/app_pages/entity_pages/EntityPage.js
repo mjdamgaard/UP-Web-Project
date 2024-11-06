@@ -4,7 +4,8 @@ import {DataFetcher} from "../../../classes/DataFetcher";
 import {EntityReference} from "../../entity_refs/EntityReference";
 import {EntityInfoPage} from "./subpages/InfoPage";
 import {DropdownMenu} from "../../menus/DropdownMenu";
-import {PagesWithTabs} from "../tabs/PagesWithTabs";
+import {SubpagesWithTabs} from "./subpages/SubpagesWithTabs";
+import {EntityList} from "../../entity_lists/EntityList";
 
 /* Placeholders */
 const ScoringDisplay = () => <template></template>;
@@ -60,12 +61,14 @@ export const EntityPage = ({entID, initTab}) => {
     classID = null;
   }
 
+  const subclassesTab = ["Subclasses", EntityList, {}];
+
   return (
     <div className="entity-page">
       <EntityPageHeader entID={entID}/>
-      <ScoringDisplay />
-      <EntityPageMenu  entID={entID} entType={datatype} classID={classID} />
-      <EntityPageBody />
+      <PagesWithTabs
+        initTabs={[subclassesTab]} defaultTab={subclassesTab}
+      />
       {/* TODO: Move the InfoPage under one of the topmost tabs instead. */}
       <DropdownMenu
         title={"Info"} children={<EntityInfoPage entID={entID} />}

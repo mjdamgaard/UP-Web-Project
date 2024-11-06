@@ -1,12 +1,12 @@
 import {useState, useMemo, useContext} from "react";
-import {useDispatch} from "../../../hooks/useDispatch";
+import {useDispatch} from "../../../../hooks/useDispatch";
 
 /* Placeholders */
 const TabHeader = () => <template></template>;
 
 
 
-export const PagesWithTabs = (props) => {
+export const SubpagesWithTabs = (props) => {
   const {initTabs, defaultTab, entID, classID, scaleKeysForMoreTabs} = props;
 
   // Tabs are arrays of: [tabTitle, pageType, pageProps].
@@ -16,7 +16,7 @@ export const PagesWithTabs = (props) => {
   const [state, setState] = useState({
     tabList: moreTabsTab ? [...initTabs, moreTabsTab] : initTabs,
     curTabKey: defaultTabKey,
-    loadedPages: [defaultTabKey],
+    loadedSubpages: [defaultTabKey],
   });
 
   const [refCallback, dispatch] = useDispatch(
@@ -25,7 +25,7 @@ export const PagesWithTabs = (props) => {
 
 
 
-  const pages = state.loadedPages.map((tab) => {
+  const subpages = state.loadedSubpages.map((tab) => {
     let tabKey = JSON.stringify(tab);
     let curTabKey = state.curTabKey;
     let PageComponent = getPageComponent(tab[1]);
@@ -43,11 +43,11 @@ export const PagesWithTabs = (props) => {
     let tabKey = JSON.stringify(tab);
     let tabTitle = tab[0];
     let curTabKey = state.curTabKey;
-    let loadedPages = state.loadedPages;
+    let loadedSubpages = state.loadedSubpages;
     return (
       <div key={tabKey}
-        className={!loadedPages.includes(tabKey) ? "" :
-          tabKey === curTabKey ? "open" : "loaded"
+        className={!loadedSubpages.includes(tabKey) ? "tab" :
+          tabKey === curTabKey ? "tab open" : "tab loaded"
         }
         onClick={() => {
           // TODO: Implement.
@@ -59,12 +59,12 @@ export const PagesWithTabs = (props) => {
   });
 
   return (
-    <div ref={refCallback} className="pages-with-tabs variable-tabs">
-      <div className="tab-header">
+    <div ref={refCallback} className="subpages-with-tabs">
+      <div className="tab-list">
         {tabs}
       </div>
-      <div className="page-container">
-        {pages}
+      <div className="subpage-container">
+        {subpages}
       </div>
     </div>
   );

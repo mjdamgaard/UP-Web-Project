@@ -289,6 +289,13 @@ $inserter->insertPublicEntities("1", array(
         "Object class" => "@[classes/classes]",
         "Description" => "@[relations/useful subclasses/desc]",
     ))),
+    "relations/instances" => array("j", json_encode(array(
+        "Class" => "@[classes/relations]",
+        "Noun" => "Instances",
+        "Member class" => "@[classes/entities]",
+        "Object class" => "@[classes/classes]",
+        "Description" => "@[relations/instances/desc]",
+    ))),
     "relations/useful qualities" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
         "Noun" => "Useful qualities",
@@ -304,7 +311,6 @@ $inserter->insertPublicEntities("1", array(
         "Description" => "@[relations/useful qualities for instances/desc]",
     ))),
 
-    // TODO: Continue refactoring/changing:
 
     "relations/arguments" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
@@ -355,6 +361,8 @@ $inserter->insertPublicEntities("1", array(
         "Object class" => "@[classes/entities]",
         "Description" => "@[relations/facts/desc]",
     ))),
+
+
     "classes/statements" => array("j", json_encode(array(
         "Class" => "@[classes/classes]",
         "Name" => "Statements",
@@ -380,42 +388,43 @@ $inserter->insertPublicEntities("1", array(
 
 
 $inserter->insertPublicEntities("0", array(
-    "relevancy scales/classes RS" => array("j", json_encode(array(
-        "Class" => "@[classes/relevancy scales]",
-        "Domain" => "@[classes/classes]",
-    ))),
-    "classes/classes/->useful subclasses" => array("j",
+    "scales/entities->useful subclasses" => array("j",
         json_encode(array(
-            "Class" => "@[classes/relational classes]",
+            "Class" => "@[classes/scales]",
+            "Relation" => "@[relations/useful subclasses]",
+            "Object" => "@[classes/entities]",
+            "Quality" => "@[qualities/relevancy]",
+        )
+    )),
+    "scales/entities->instances" => array("j",
+        json_encode(array(
+            "Class" => "@[classes/scales]",
+            "Relation" => "@[relations/instances]",
+            "Object" => "@[classes/entities]",
+            "Quality" => "@[qualities/relevancy]",
+        )
+    )),
+    "scales/classes->useful subclasses" => array("j",
+        json_encode(array(
+            "Class" => "@[classes/scales]",
             "Relation" => "@[relations/useful subclasses]",
             "Object" => "@[classes/classes]",
+            "Quality" => "@[qualities/relevancy]",
         )
     )),
-    "relevancy scales/classes->useful subclasses RS" => array("j",
+    "scales/classes->instances" => array("j",
         json_encode(array(
-            "Class" => "@[classes/relevancy scales]",
-            "Domain" => "@[classes/classes/->useful subclasses]",
-        )
-    )),
-    "classes/statements/->useful subclasses" => array("j",
-        json_encode(array(
-            "Class" => "@[classes/relational classes]",
-            "Relation" => "@[relations/useful subclasses]",
-            "Object" => "@[classes/statements]",
-        )
-    )),
-    "classes/comments/->useful subclasses" => array("j",
-        json_encode(array(
-            "Class" => "@[classes/relational classes]",
-            "Relation" => "@[relations/useful subclasses]",
-            "Object" => "@[classes/comments]",
+            "Class" => "@[classes/scales]",
+            "Relation" => "@[relations/instances]",
+            "Object" => "@[classes/classes]",
+            "Quality" => "@[qualities/relevancy]",
         )
     )),
 ));
 
 
 $inserter->addEntitiesToList(
-    "1", "relevancy scales/classes RS", array(
+    "1", "scales/classes->instances", array(
         array("classes/classes", "1"),
         array("classes/entities", "1"),
         array("classes/users", "0.8"),
@@ -428,7 +437,7 @@ $inserter->addEntitiesToList(
     )
 );
 $inserter->addEntitiesToList(
-    "1", "relevancy scales/classes->useful subclasses RS", array(
+    "1", "scales/classes->useful subclasses", array(
         array("classes/users", "0.8"),
         array("classes/scales", "0.8"),
         array("classes/relevancy scales", "0.4"),
