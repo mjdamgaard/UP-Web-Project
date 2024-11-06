@@ -9,12 +9,7 @@ const TabHeader = () => <template></template>;
 export const PagesWithTabs = (props) => {
   const {initTabs, defaultTab, entID, classID, scaleKeysForMoreTabs} = props;
 
-  // // Tabs are defined by primitive types, but this can include JSON strings.
-  // // The 'more tabs' tab is supposed to be (defined by) a JSON string, which
-  // // also "knows" how to construct new tabs from any entity selected in an
-  // // EntityList under the tab.
-
-  // Tabs are arrays of: [pageType, pageProps], where pageProps is an object.
+  // Tabs are arrays of: [tabTitle, pageType, pageProps].
 
   const defaultTabKey = JSON.stringify(defaultTab);
 
@@ -30,22 +25,47 @@ export const PagesWithTabs = (props) => {
 
 
 
-  const pages = state.loadedPages.map((tab) => (
-    <div key={tab}
-      style={tab == curTab ? {} : {display: "none"}}
-    >
-      <PageUnderTab tab={tab}/>
-    </div>
-  ));
+  const pages = state.loadedPages.map((tab) => {
+    let tabKey = JSON.stringify(tab);
+    let curTabKey = state.curTabKey;
+    let PageComponent = getPageComponent(tab[1]);
+    let pageProps = tab[2] ?? {};
+    return (
+      <div key={tabKey}
+        style={tabKey == curTabKey ? {} : {display: "none"}}
+      >
+        <PageComponent {...pageProps} />
+      </div>
+    );
+  });
+
+  const tabs = state.tabList.map((tab) => {
+    let tabKey = JSON.stringify(tab);
+    let tabTitle = tab[0];
+    let curTabKey = state.curTabKey;
+    let loadedPages = state.loadedPages;
+    return (
+      <div key={tabKey}
+        className={!loadedPages.includes(tabKey) ? "" :
+          tabKey === curTabKey ? "open" : "loaded"
+        }
+        onClick={() => {
+          // TODO: Implement.
+        }}
+      >
+        {tabTitle}
+      </div>
+    );
+  });
 
   return (
     <div ref={refCallback} className="pages-with-tabs variable-tabs">
       <div className="tab-header">
         {tabs}
-        <div className="more-tabs-button">
-        </div>
       </div>
-      {pages}
+      <div className="page-container">
+        {pages}
+      </div>
     </div>
   );
 };
