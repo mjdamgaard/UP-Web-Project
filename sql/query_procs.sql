@@ -77,6 +77,10 @@ BEGIN
     );
 
     SELECT
+        NULL AS scoreVal,
+        scaleID AS entID
+    UNION
+    SELECT
         score_val AS scoreVal,
         subj_id AS entID
     FROM Scores

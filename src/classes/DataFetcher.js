@@ -33,6 +33,35 @@ export class DataFetcher {
 
 
 
+  static fetchEntityList(userID, scaleID, callback) {
+    let reqData = {
+      req: "entList",
+      u: userID,
+      s: scaleID,
+      n: 4000,
+      o: 0,
+      a: 0,
+    };
+    DBRequestManager.query(reqData, (entList) => {
+      callback(entList);
+    });
+  }
+
+  static fetchEntityListFromHash(userID, scaleHash, callback) {
+    let reqData = {
+      req: "entListFromHash",
+      u: userID,
+      h: scaleHash,
+      n: 4000,
+      o: 0,
+      a: 0,
+    };
+    DBRequestManager.query(reqData, (result) => {
+      let scaleID = result[0][1];
+      let entList = result.slice(1);
+      callback(entList, scaleID);
+    });
+  }
 
 
 

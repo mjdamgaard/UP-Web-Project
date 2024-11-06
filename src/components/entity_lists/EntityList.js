@@ -20,40 +20,66 @@ export const EntityList = ({scaleKey, userID}) => {
   userID ??= "1"; // (TODO: Remove.)
 
   // scaleKey = scaleID | [relID, objID, qualID?].
-  const [results, setState] = useState({});
+  const [state, setState] = useState({
+    entList: null,
+  });
+  const {scaleID, entList} = state;
 
-  // TODO: Make a conditional query to get the scaleID, then query for the
-  // (whole) entity list.
+  // If the entity list is ready, return the entity list.
+  if (Array.isArray(entList)) {
+    return (
+      <div className="entity-list">
+        {JSON.stringify(entList)}
+      </div>
+    );
+  }
+  // If it is fetching, return nothing.
+  if (entList === "fetching") {
+    return <></>;
+  }
 
-  useMemo(() => {
-    DataFetcher.fetchPublicSmallEntity(
-      entID, (datatype, defStr, len, creatorID, isContained) => {
+  // Else if scaleID is provided, query for the entity list.
+  if (typeof scaleKey === "number") {
+    let scaleID = scaleKey;
+    let userID = "1";
+    DataFetcher.fetchEntityList(
+      userID, scaleID, (entList) => {
         setState(prev => {
           return {
             ...prev,
-            datatype: datatype,
-            defStr: defStr,
-            len: len,
-            creatorID: creatorID,
-            isContained: isContained,
-            isFetched: true,
+            entList: entList,
           };
         });
       }
     );
-  }, []);
-
-  const {datatype, defStr, isContained, isFetched} = results;
-
-  // Before results is fetched, render this:
-  if (!results.isFetched) {
-    return (
-      <></>
-    );
+    setState(prev => {
+      return {
+        ...prev,
+        entList: "fetching",
+      };
+    });
   }
- 
-  return (
-    <div className="entity-list">
-    </div>
-  );
+  // Else...
+  else {
+    let scaleHash = "TODO: Get hash from a function...";
+    let userID = "1";
+    DataFetcher.fetchEntityListFromHash(
+      userID, scaleHash, (entList, scaleID) => {
+        setState(prev => {
+          return {
+            ...prev,
+            entList: entList,
+          };
+        });
+      }
+    );
+    setState(prev => {
+      return {
+        ...prev,
+        entList: "fetching",
+      };
+    });
+  }
+  
+  return <></>;
 };
