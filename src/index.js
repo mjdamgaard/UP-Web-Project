@@ -13,6 +13,7 @@ import {App} from './components/root/App.js';
 import './style/style01.scss';
 import './style/entity_refs/ref_style.scss';
 import './style/entity_data/entity_data_style.scss';
+import './style/pages/subpages_style.scss';
 
 
 

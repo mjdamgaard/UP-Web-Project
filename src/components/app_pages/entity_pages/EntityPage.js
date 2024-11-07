@@ -61,14 +61,16 @@ export const EntityPage = ({entID, initTab}) => {
     classID = null;
   }
 
-  const subclassesTab = ["Subclasses", EntityList, {}];
-  const classSubpage = ["Class subpage", "class"];
+  const subclassesTab = JSON.stringify(["Subclasses", EntityList, {}]);
+  const classSubpage = JSON.stringify(["Class subpage", "class"]);
+  const classSubpage2 = JSON.stringify(["Class subpage 2", "class", {foo:"bar"}]);
 
   return (
     <div className="entity-page">
       <EntityPageHeader entID={entID}/>
       <SubpagesWithTabs
-        initTabs={[classSubpage]} defaultTab={classSubpage}
+        initTabKeys={[classSubpage, classSubpage2]}
+        defaultTabKey={classSubpage}
       />
       {/* TODO: Move the InfoPage under one of the topmost tabs instead. */}
       <DropdownMenu

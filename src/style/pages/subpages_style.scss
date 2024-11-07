@@ -1,0 +1,13 @@
+
+
+.tab-list {
+  & .tab {
+    display: inline-block;
+    padding: 2px 4px;
+    border: 1px solid black;
+    &:hover {
+      background-color: lightgray;
+      cursor: pointer;
+    }
+  }
+}

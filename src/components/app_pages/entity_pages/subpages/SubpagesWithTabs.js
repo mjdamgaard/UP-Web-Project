@@ -7,51 +7,85 @@ import {ClassSubpage} from "./ClassSubpage.js";
 const TabHeader = () => <template></template>;
 
 
+function getUnionedParsedAndSortedEntList(entLists) {
+  let unionedAndParsedEntList = [].concat(...entLists).map(val => {
+    return [parseFloat(val[0]), val[1]];
+  });
+  return unionedAndParsedEntList.sort((a, b) => b[0] - a[0]);
+} 
+
 export const SubpagesWithTabs = (props) => {
-  const {initTabs, defaultTab, entID, classID, scaleKeysForMoreTabs} = props;
+  const {initTabKeys, defaultTabKey, entID, classID, tabScaleKeys} = props;
 
-  // Tabs are arrays of: [tabTitle, pageType, pageProps].
-
-  const defaultTabKey = JSON.stringify(defaultTab);
+  // Tabs are arrays of: [tabTitle, pageType, pageProps]. Tab keys are the
+  // corresponding JSON arrays. 
 
   const [state, setState] = useState({
-    tabList: initTabs,
+    tabKeyList: initTabKeys,
     curTabKey: defaultTabKey,
-    loadedSubpages: [defaultTab],
+    loadedTabKeys: [defaultTabKey],
+    topTabEntList: null,
+    topTabsAreFetched: false,
   });
 
   const [refCallback, dispatch] = useDispatch(
-    swtActions, setState, state, props
+    subpagesWTActions, setState, state, props
   );
 
+  useMemo(() => {
+    if (state.topTabsAreFetched) {
+      return;
+    }
+    DataFetcher.fetchSeveralEntityLists(
+      userID, tabScaleKeys, 20, (entLists, scaleIDs) => {
+        setState(prev => ({
+          ...prev,
+          topTabEntList: getUnionedParsedAndSortedEntList(entLists),
+          topTabsAreFetched: true,
+        }))
+      }
+    );
+  });
+
+  useMemo(() => {
+    if (!state.topTabsAreFetched) {
+      return;
+    }
+    DataFetcher.fetchSeveralEntities(
+      state.topTabEntList.slice(0, 20), (results) => {
+        // TODO: Construct tabs from the.. og wait, we should hand the entIDs
+        // to a tab component instead, right?..
+      }
+    );
+
+  }, [state.topTabsAreFetched ? true : false]);
 
 
-  const subpages = state.loadedSubpages.map((tab) => {
-    let tabKey = JSON.stringify(tab);
-    let curTabKey = state.curTabKey;
+  const subpages = state.loadedTabKeys.map((tabKey) => {
+    let tab = JSON.parse(tabKey);
     let PageComponent = getPageComponent(tab[1]);
     let pageProps = tab[2] ?? {};
+    let curTabKey = state.curTabKey;
+    let styleProps = tabKey == curTabKey ? {} : {style: {display: "none"}};
     return (
-      <div key={tabKey}
-        style={tabKey == curTabKey ? {} : {display: "none"}}
-      >
+      <div key={tabKey} {...styleProps}>
         <PageComponent {...pageProps} />
       </div>
     );
   });
 
-  const tabs = state.tabList.map((tab) => {
-    let tabKey = JSON.stringify(tab);
+  const tabs = state.tabKeyList.map((tabKey) => {
+    let tab = JSON.parse(tabKey);
     let tabTitle = tab[0];
     let curTabKey = state.curTabKey;
-    let loadedSubpages = state.loadedSubpages;
+    let loadedTabKeys = state.loadedTabKeys;
     return (
       <div key={tabKey}
-        className={!loadedSubpages.includes(tabKey) ? "tab" :
+        className={!loadedTabKeys.includes(tabKey) ? "tab" :
           tabKey === curTabKey ? "tab open" : "tab loaded"
         }
-        onClick={() => {
-          // TODO: Implement.
+        onClick={(event) => {
+          dispatch(event.target, "OPEN_TAB", tabKey);
         }}
       >
         {tabTitle}
@@ -72,8 +106,18 @@ export const SubpagesWithTabs = (props) => {
 };
 
 
-const swtActions = {
-
+const subpagesWTActions = {
+  "OPEN_TAB": function(tabKey, setState, {state}) {
+    setState(prev => {
+      let loadedTabKeys = prev.loadedTabKeys;
+      return {
+        ...prev,
+        loadedTabKeys: loadedTabKeys.includes(tabKey) ? loadedTabKeys :
+          [...loadedTabKeys, tabKey],
+        curTabKey: tabKey,
+      };
+    })
+  },
 }
 
 

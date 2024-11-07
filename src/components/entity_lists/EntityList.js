@@ -20,8 +20,9 @@ export const EntityList = ({scaleKey, userID}) => {
   // scaleKey = scaleID | [relID, objID, qualID?].
   const [state, setState] = useState({
     entList: null,
+    scaleIDIsMissing: null,
   });
-  const {scaleID, entList} = state;
+  const {entList, scaleIDIsMissing} = state;
 
   // If the entity list is ready, return the entity list.
   if (Array.isArray(entList)) {
@@ -31,64 +32,33 @@ export const EntityList = ({scaleKey, userID}) => {
       </div>
     );
   }
-  // If it is fetching, return nothing.
-  if (entList === "fetching") {
-    return <></>;
-  }
 
-  // Else if scaleID is provided, query for the entity list.
-  if (typeof scaleKey === "number") {
-    let scaleID = scaleKey;
-    let userID = "1";
-    DataFetcher.fetchEntityList(
-      userID, scaleID, (entList) => {
-        setState(prev => {
-          return {
-            ...prev,
-            entList: entList,
-          };
-        });
-      }
+  // Else if scaleIDIsMissing (from the database) is true, load a page where
+  // the user can submit it.
+  if (scaleIDIsMissing) {
+    return (
+      <div>TODO: Make this a page to submit missing scaleID.</div>
     );
-    setState(prev => {
-      return {
-        ...prev,
-        entList: "fetching",
-      };
-    });
-  }
-  // Else...
-  else {
-    let scaleDefStr = getScaleDefStr(...scaleKey);
-    let userID = "1";
-    DataFetcher.fetchEntityListFromHash(
-      userID, scaleDefStr, (entList, scaleID) => {
-        setState(prev => {
-          return {
-            ...prev,
-            entList: entList,
-          };
-        });
+  } 
+
+  // Else fetch it.
+  DataFetcher.fetchEntityListFromScaleKey(
+    userID, scaleKey, null, (entList, scaleID) => {
+      if (!scaleID) {
+        setState(prev => ({
+          ...prev,
+          scaleIDIsMissing: true,
+        }))
       }
-    );
-    setState(prev => {
-      return {
-        ...prev,
-        entList: "fetching",
-      };
-    });
-  }
-  
-  return <></>;
+      else {
+        setState(prev => ({
+          ...prev,
+          entList: entList,
+          scaleIDIsMissing: false,
+        }))
+      }
+    }
+  );
+  // And return a placeholder.
+  return <>...</>;
 };
-
-
-
-function getScaleDefStr(relID, objID, qualID) {
-  return JSON.stringify({
-    Class: "@" + RELATIONS_CLASS_ID,
-    Relation: "@" + relID,
-    Object: "@" + objID,
-    Quality: "@" + (qualID || RELEVANCY_QUAL_ID),
-  });
-}

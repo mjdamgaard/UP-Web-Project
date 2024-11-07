@@ -1,6 +1,8 @@
 
 import {DBRequestManager} from "../classes/DBRequestManager.js";
 
+import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
+
 // const CLASS_CLASS_METADATA_JSON = JSON.stringify({
 //   entID: 1,
 //   tmplID: 0,
@@ -9,6 +11,11 @@ import {DBRequestManager} from "../classes/DBRequestManager.js";
 //   otherPropsLen: 0,
 // });
 
+
+const CLASSES_CLASS_ID = "4";
+const RELATIONS_CLASS_ID = "7";
+const USEFUL_RELATIONS_REL_ID = "19";
+const RELEVANCY_QUAL_ID = "15";
 
 
 
@@ -32,27 +39,51 @@ export class DataFetcher {
   }
 
 
+  static fetchSeveralEntities(entIDs, callback) {
+    const results = Array(scaleKeys.length);
 
-  static fetchEntityList(userID, scaleID, callback) {
+    const parallelCallbackHandler = new ParallelCallbackHandler;
+
+    entIDs.forEach((entID, ind) => {
+      parallelCallbackHandler.push(() => {
+        this.fetchPublicSmallEntity(
+          entID, (datatype, defStr, len, creatorID, isContained) => {
+            results[ind] = [datatype, defStr, len, creatorID, isContained];
+          }
+        );
+      });
+    });
+
+    parallelCallbackHandler.execAndThen(() => {
+      callback(results);
+    });
+  }
+
+
+
+
+
+
+  static fetchEntityList(userID, scaleID, n, callback) {
     let reqData = {
       req: "entList",
       u: userID,
       s: scaleID,
-      n: 4000,
+      n: n || 4000,
       o: 0,
       a: 0,
     };
     DBRequestManager.query(reqData, (entList) => {
-      callback(entList);
+      callback(entList, scaleID);
     });
   }
 
-  static fetchEntityListFromDefStr(userID, scaleDefStr, callback) {
+  static fetchEntityListFromDefStr(userID, scaleDefStr, n, callback) {
     let reqData = {
       req: "entListFromDefStr",
       u: userID,
       d: scaleDefStr,
-      n: 4000,
+      n: n || 4000,
       o: 0,
       a: 0,
     };
@@ -63,7 +94,57 @@ export class DataFetcher {
     });
   }
 
+  static fetchEntityListFromScaleKey(userID, scaleKey, n, callback) {
+    if (typeof scaleKey === "number") {
+      let scaleID = scaleKey;
+      this.fetchEntityList(userID, scaleID, n, callback);
+    }
+    else {
+      let scaleDefStr = getScaleDefStr(...scaleKey);
+      this.fetchEntityListFromDefStr(userID, scaleDefStr, n, callback)
+    }
+  }
+
+
+  static fetchSeveralEntityLists(userIDs, scaleKeys, n, callback) {
+    if (typeof userIDs === "number") {
+      let userID = userIDs;
+      userIDs = scaleKeys.map(() => userID);
+    }
+
+    const entLists = Array(scaleKeys.length);
+    const scaleIDs = Array(scaleKeys.length);
+
+    const parallelCallbackHandler = new ParallelCallbackHandler;
+
+    scaleKeys.forEach((scaleKey, ind) => {
+      parallelCallbackHandler.push(() => {
+        this.fetchEntityListFromScaleKey(
+          userIDs[ind], scaleKey, n, (entList, scaleID) => {
+            entLists[ind] = entList;
+            scaleIDs[ind] = scaleID;
+          }
+        );
+      });
+    });
+
+    parallelCallbackHandler.execAndThen(() => {
+      callback(entLists, scaleIDs);
+    });
+  }
 
 
 
 };
+
+
+
+
+export function getScaleDefStr(relID, objID, qualID) {
+  return JSON.stringify({
+    Class: "@" + RELATIONS_CLASS_ID,
+    Relation: "@" + relID,
+    Object: "@" + objID,
+    Quality: "@" + (qualID || RELEVANCY_QUAL_ID),
+  });
+}
