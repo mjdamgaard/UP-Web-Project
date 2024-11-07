@@ -40,7 +40,7 @@ export class DataFetcher {
 
 
   static fetchSeveralEntities(entIDs, callback) {
-    const results = Array(scaleKeys.length);
+    const results = Array(entIDs.length);
 
     const parallelCallbackHandler = new ParallelCallbackHandler;
 
