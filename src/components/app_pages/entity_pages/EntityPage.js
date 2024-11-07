@@ -62,12 +62,13 @@ export const EntityPage = ({entID, initTab}) => {
   }
 
   const subclassesTab = ["Subclasses", EntityList, {}];
+  const classSubpage = ["Class subpage", "class"];
 
   return (
     <div className="entity-page">
       <EntityPageHeader entID={entID}/>
-      <PagesWithTabs
-        initTabs={[subclassesTab]} defaultTab={subclassesTab}
+      <SubpagesWithTabs
+        initTabs={[classSubpage]} defaultTab={classSubpage}
       />
       {/* TODO: Move the InfoPage under one of the topmost tabs instead. */}
       <DropdownMenu
@@ -106,7 +107,7 @@ const EntityPageMenu = ({entID, entType, classID}) => {
   return (
     <div className="entity-page-menu">
       <OpenedTabList />
-      <PagesWithTabs
+      <SubpagesWithTabs
         initTabArr={initTabArr} initTab={initTab}
         moreTabsRelationID={moreTabsRelationID}
         moreTabsObjectID={moreTabsObjectID}

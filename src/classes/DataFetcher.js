@@ -47,11 +47,11 @@ export class DataFetcher {
     });
   }
 
-  static fetchEntityListFromHash(userID, scaleHash, callback) {
+  static fetchEntityListFromDefStr(userID, scaleDefStr, callback) {
     let reqData = {
-      req: "entListFromHash",
+      req: "entListFromDefStr",
       u: userID,
-      h: scaleHash,
+      d: scaleDefStr,
       n: 4000,
       o: 0,
       a: 0,

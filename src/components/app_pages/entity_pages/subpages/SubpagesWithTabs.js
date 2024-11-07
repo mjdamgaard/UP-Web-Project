@@ -1,9 +1,10 @@
 import {useState, useMemo, useContext} from "react";
 import {useDispatch} from "../../../../hooks/useDispatch";
 
+import {ClassSubpage} from "./ClassSubpage.js";
+
 /* Placeholders */
 const TabHeader = () => <template></template>;
-
 
 
 export const SubpagesWithTabs = (props) => {
@@ -14,13 +15,13 @@ export const SubpagesWithTabs = (props) => {
   const defaultTabKey = JSON.stringify(defaultTab);
 
   const [state, setState] = useState({
-    tabList: moreTabsTab ? [...initTabs, moreTabsTab] : initTabs,
+    tabList: initTabs,
     curTabKey: defaultTabKey,
-    loadedSubpages: [defaultTabKey],
+    loadedSubpages: [defaultTab],
   });
 
   const [refCallback, dispatch] = useDispatch(
-    pwtActions, setState, state, props
+    swtActions, setState, state, props
   );
 
 
@@ -69,3 +70,20 @@ export const SubpagesWithTabs = (props) => {
     </div>
   );
 };
+
+
+const swtActions = {
+
+}
+
+
+
+
+function getPageComponent(pageType) {
+  switch (pageType) {
+    case "class":
+      return ClassSubpage;
+    default:
+      break;
+  }
+}

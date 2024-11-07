@@ -1,10 +1,6 @@
 import {useState, useMemo, useContext} from "react";
 
-import {DataFetcher} from "../../../classes/DataFetcher";
-import {EntityReference} from "../../entity_refs/EntityReference";
-import {EntityInfoPage} from "./subpages/InfoPage";
-import {DropdownMenu} from "../../menus/DropdownMenu";
-import {PagesWithTabs} from "../tabs/PagesWithTabs";
+import {DataFetcher} from "../../classes/DataFetcher";
 
 /* Placeholders */
 const OpenedTabList = () => <template></template>;
@@ -15,6 +11,7 @@ const SubmitEntityMenu = () => <template></template>;
 const CLASSES_CLASS_ID = "4";
 const RELATIONS_CLASS_ID = "7";
 const USEFUL_RELATIONS_REL_ID = "19";
+const RELEVANCY_QUAL_ID = "15";
 
 
 export const EntityList = ({scaleKey, userID}) => {
@@ -62,10 +59,10 @@ export const EntityList = ({scaleKey, userID}) => {
   }
   // Else...
   else {
-    let scaleHash = getScaleDefStr(...scaleKey); // TODO: Hash.
+    let scaleDefStr = getScaleDefStr(...scaleKey);
     let userID = "1";
     DataFetcher.fetchEntityListFromHash(
-      userID, scaleHash, (entList, scaleID) => {
+      userID, scaleDefStr, (entList, scaleID) => {
         setState(prev => {
           return {
             ...prev,

@@ -99,6 +99,47 @@ DELIMITER ;
 
 
 DELIMITER //
+CREATE PROCEDURE selectEntityListFromDefStr (
+    IN userID BIGINT UNSIGNED,
+    IN scaleDefStr CHAR(64),
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED,
+    IN isAscOrder BOOL
+)
+BEGIN
+    DECLARE scaleID BIGINT UNSIGNED;
+
+    SELECT id INTO scaleID
+    FROM Entities
+    WHERE (
+        is_private = 0 AND
+        def_hash = SHA2(scaleDefStr, 256) AND
+        creator_id = 0
+    );
+
+    SELECT
+        NULL AS scoreVal,
+        scaleID AS entID
+    UNION
+    SELECT
+        score_val AS scoreVal,
+        subj_id AS entID
+    FROM Scores
+    WHERE (
+        user_id = userID AND
+        scale_id = scaleID
+    )
+    ORDER BY
+        CASE WHEN isAscOrder THEN rat_val END ASC,
+        CASE WHEN NOT isAscOrder THEN rat_val END DESC,
+        CASE WHEN isAscOrder THEN obj_id END ASC,
+        CASE WHEN NOT isAscOrder THEN obj_id END DESC
+    LIMIT numOffset, maxNum;
+END //
+DELIMITER ;
+
+
+DELIMITER //
 CREATE PROCEDURE selectEntityListFromDefStrings (
     IN userID BIGINT UNSIGNED,
     IN defStrList TEXT,
