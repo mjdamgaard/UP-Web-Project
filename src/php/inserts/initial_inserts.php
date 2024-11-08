@@ -254,110 +254,110 @@ $inserter->insertPublicEntities("1", array(
         "Class" => "@[classes/classes]",
         "Name" => "Relations",
         "Special attributes" => array(
-            array("Noun", "string", "mandatory"),
-            array("Member class", "@[classes/classes]", "mandatory"),
+            array("Title", "string", "mandatory"),
+            array("Subject class", "@[classes/classes]", "mandatory"),
             array("Object class", "@[classes/classes]", "mandatory"),
             // array("Description", "x", "mandatory"),
         ),
         "Description" => "@[classes/relations/desc]",
     ))),
-    "relations/useful relations" => array("j", json_encode(array(
+    "relations/members" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
-        "Noun" => "Useful relations",
-        "Member class" => "@[classes/relations]",
-        "Object class" => "@[classes/entities]",
-        "Description" => "@[relations/useful relations/desc]",
-    ))),
-    "relations/useful relations for instances" => array("j", json_encode(array(
-        "Class" => "@[classes/relations]",
-        "Noun" => "Useful relations for instances",
-        "Member class" => "@[classes/relations]",
+        "Title" => "Members",
+        "Subject class" => "@[classes/entities]",
         "Object class" => "@[classes/classes]",
-        "Description" => "@[relations/useful relations for instances/desc]",
-    ))),
-    "relations/useful sub-relations" => array("j", json_encode(array(
-        "Class" => "@[classes/relations]",
-        "Noun" => "Useful sub-relations",
-        "Member class" => "@[classes/relations]",
-        "Object class" => "@[classes/relations]",
-        "Description" => "@[relations/useful sub-relations/desc]",
+        "Description" => "@[relations/members/desc]",
     ))),
     "relations/useful subclasses" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
-        "Noun" => "Useful subclasses",
-        "Member class" => "@[classes/classes]",
+        "Title" => "Useful subclasses",
+        "Subject class" => "@[classes/classes]",
         "Object class" => "@[classes/classes]",
         "Description" => "@[relations/useful subclasses/desc]",
     ))),
-    "relations/instances" => array("j", json_encode(array(
+    "relations/useful relations" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
-        "Noun" => "Instances",
-        "Member class" => "@[classes/entities]",
+        "Title" => "Useful relations",
+        "Subject class" => "@[classes/relations]",
+        "Object class" => "@[classes/entities]",
+        "Description" => "@[relations/useful relations/desc]",
+    ))),
+    "relations/useful relations for members" => array("j", json_encode(array(
+        "Class" => "@[classes/relations]",
+        "Title" => "Useful relations for members",
+        "Subject class" => "@[classes/relations]",
         "Object class" => "@[classes/classes]",
-        "Description" => "@[relations/instances/desc]",
+        "Description" => "@[relations/useful relations for members/desc]",
+    ))),
+    "relations/useful sub-relations" => array("j", json_encode(array(
+        "Class" => "@[classes/relations]",
+        "Title" => "Useful sub-relations",
+        "Subject class" => "@[classes/relations]",
+        "Object class" => "@[classes/relations]",
+        "Description" => "@[relations/useful sub-relations/desc]",
     ))),
     "relations/useful qualities" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
-        "Noun" => "Useful qualities",
-        "Member class" => "@[classes/qualities]",
+        "Title" => "Useful qualities",
+        "Subject class" => "@[classes/qualities]",
         "Object class" => "@[classes/entities]",
         "Description" => "@[relations/useful qualities/desc]",
     ))),
-    "relations/useful qualities for instances" => array("j", json_encode(array(
+    "relations/useful qualities for members" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
-        "Noun" => "Useful qualities for instances",
-        "Member class" => "@[classes/qualities]",
+        "Title" => "Useful qualities for members",
+        "Subject class" => "@[classes/qualities]",
         "Object class" => "@[classes/classes]",
-        "Description" => "@[relations/useful qualities for instances/desc]",
+        "Description" => "@[relations/useful qualities for members/desc]",
     ))),
 
 
     "relations/arguments" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
-        "Noun" => "Arguments",
-        "Member class" => "@[classes/scalars]",
+        "Title" => "Arguments",
+        "Subject class" => "@[classes/scalars]",
         "Object class" => "@[classes/scalars]",
         "Description" => "@[relations/arguments/desc]",
     ))),
     "relations/comments" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
-        "Noun" => "Comments",
-        "Member class" => "@[classes/comments]",
+        "Title" => "Comments",
+        "Subject class" => "@[classes/comments]",
         "Object class" => "@[classes/entities]",
         "Description" => "@[relations/comments/desc]",
     ))),
     "relations/reaction comments" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
-        "Noun" => "Reaction comments",
-        "Member class" => "@[classes/comments]", // ('comments' is intentional)
+        "Title" => "Reaction comments",
+        "Subject class" => "@[classes/comments]", // ('comments' is intentional)
         "Object class" => "@[classes/entities]",
         "Description" => "@[relations/reaction comments/desc]",
     ))),
     "relations/informative comments" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
-        "Noun" => "Informative comments",
-        "Member class" => "@[classes/comments]", // (also intentional)
+        "Title" => "Informative comments",
+        "Subject class" => "@[classes/comments]", // (also intentional)
         "Object class" => "@[classes/entities]",
         "Description" => "@[relations/informative comments/desc]",
     ))),
     "relations/relevant statements" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
-        "Noun" => "Relevant statements",
-        "Member class" => "@[classes/statements]",
+        "Title" => "Relevant statements",
+        "Subject class" => "@[classes/statements]",
         "Object class" => "@[classes/entities]",
         "Description" => "@[relations/relevant statements/desc]",
     ))),
     "relations/discussions" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
-        "Noun" => "Discussions",
-        "Member class" => "@[classes/statements]",
+        "Title" => "Discussions",
+        "Subject class" => "@[classes/statements]",
         "Object class" => "@[classes/entities]",
         "Description" => "@[relations/discussions/desc]",
     ))),
     "relations/facts" => array("j", json_encode(array(
         "Class" => "@[classes/relations]",
-        "Noun" => "Facts",
-        "Member class" => "@[classes/statements]",
+        "Title" => "Facts",
+        "Subject class" => "@[classes/statements]",
         "Object class" => "@[classes/entities]",
         "Description" => "@[relations/facts/desc]",
     ))),
@@ -396,10 +396,10 @@ $inserter->insertPublicEntities("0", array(
             "Quality" => "@[qualities/relevancy]",
         )
     )),
-    "scales/entities->instances" => array("j",
+    "scales/entities->members" => array("j",
         json_encode(array(
             "Class" => "@[classes/scales]",
-            "Relation" => "@[relations/instances]",
+            "Relation" => "@[relations/members]",
             "Object" => "@[classes/entities]",
             "Quality" => "@[qualities/relevancy]",
         )
@@ -412,10 +412,10 @@ $inserter->insertPublicEntities("0", array(
             "Quality" => "@[qualities/relevancy]",
         )
     )),
-    "scales/classes->instances" => array("j",
+    "scales/classes->members" => array("j",
         json_encode(array(
             "Class" => "@[classes/scales]",
-            "Relation" => "@[relations/instances]",
+            "Relation" => "@[relations/members]",
             "Object" => "@[classes/classes]",
             "Quality" => "@[qualities/relevancy]",
         )
@@ -424,7 +424,7 @@ $inserter->insertPublicEntities("0", array(
 
 
 $inserter->addEntitiesToList(
-    "1", "scales/classes->instances", array(
+    "1", "scales/classes->members", array(
         array("classes/classes", "1"),
         array("classes/entities", "1"),
         array("classes/users", "0.8"),

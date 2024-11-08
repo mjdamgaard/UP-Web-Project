@@ -113,8 +113,8 @@ export const useDispatch = (reducers, key, setState, props, contexts) => {
     "kept in memory."
   );
 
-  // Return the refCallback and the (constant) dispatch function.
-  return [refCallback, dispatch];
+  // Return the (constant) dispatch() and the refCallback() functions.
+  return [dispatch, refCallback];
 }
 
 

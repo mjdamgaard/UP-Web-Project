@@ -56,7 +56,7 @@ export const App = (props) => {
   });
   const {pagePathStore, pageKeyArr, curInd} = state.pagesState;
 
-  const [refCallback, dispatch] = useDispatch(
+  const [dispatch, refCallback] = useDispatch(
     appActions, setState, state, props
   );
 

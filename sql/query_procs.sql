@@ -3,6 +3,7 @@ SELECT "Query procedures";
 
 DROP PROCEDURE selectEntityList;
 DROP PROCEDURE selectEntityListFromHash;
+DROP PROCEDURE selectEntityListFromDefStr;
 DROP PROCEDURE selectEntityListFromDefStrings;
 DROP PROCEDURE selectScore;
 

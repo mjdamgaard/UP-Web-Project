@@ -21,7 +21,8 @@ const SubmitEntityMenu = () => <template></template>;
 
 // TODO: Import from one location instead:
 const CLASSES_CLASS_ID = "4";
-const USEFUL_RELATIONS_REL_ID = "19";
+const MEMBERS_REL_ID = "26";
+const USEFUL_RELATIONS_REL_ID = "28";
 
 
 export const EntityPage = ({entID, initTab}) => {
@@ -89,35 +90,4 @@ const EntityPageHeader = ({entID}) => {
     </div>
   );
 };
-
-
-
-const EntityPageMenu = ({entID, entType, classID}) => {
-  var initTabArr, initTab, moreTabsRelationID, moreTabsObjectID;
-  switch (classID) {
-    case CLASSES_CLASS_ID:
-      initTabArr = [["info-tab", entID], ["instances-tab", classID]];
-      initTab = ["instances-tab", classID];
-      moreTabsRelationID = USEFUL_RELATIONS_REL_ID;
-      break;
-    default:
-      initTabArr = [["info-tab", entID], ];
-      initTab = ["info-tab", entID];
-      moreTabsRelationID = USEFUL_RELATIONS_REL_ID;
-  }
-
-  return (
-    <div className="entity-page-menu">
-      <OpenedTabList />
-      <SubpagesWithTabs
-        initTabArr={initTabArr} initTab={initTab}
-        moreTabsRelationID={moreTabsRelationID}
-        moreTabsObjectID={moreTabsObjectID}
-      />
-      <SettingsMenu />
-      <SubmitEntityMenu />
-    </div>
-  );
-};
-
 

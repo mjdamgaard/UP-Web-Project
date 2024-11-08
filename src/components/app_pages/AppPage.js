@@ -16,7 +16,7 @@ const PageContext = createContext();
 
 export const AppPage = (props) => {
   const {pageKey, pagePath} = props;
-  const [ref, dispatch] = useDispatch(
+  const [dispatch, ref] = useDispatch(
     appPageActions, null, null, props
   );
 

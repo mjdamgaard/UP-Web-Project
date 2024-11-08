@@ -19,29 +19,30 @@ function getUnionedParsedAndSortedEntList(entLists) {
 
 export const SubpagesWithTabs = (props) => {
   const {
-    initTabKeys, defaultTabKey,
-    defaultPageType, defaultPageProps,
+    initTabKeys, initInd = 0,
+    defaultTabType, defaultPageType, defaultPageProps,
     tabScaleKeys, getTabKeyFromEntID,
   } = props;
 
   const userID = "1"; // (TODO: Remove.)
+  const initTabKey = initTabKeys[initInd];
 
-  // Tabs are arrays of: [tabProps, pageType, pageProps]. Tab keys are the
-  // corresponding JSON arrays. 
+  // Tabs are arrays of: [entID, tabType, pageType, pageProps].
+  // Tab keys are the corresponding JSON arrays. 
 
   const [state, setState] = useState({
     tabKeyList: initTabKeys,
-    curTabKey: defaultTabKey,
-    loadedTabKeys: [defaultTabKey],
-    topTabsAreFetched: false,
+    curTabKey: initTabKey,
+    loadedTabKeys: [initTabKey],
+    tabsAreFetched: !tabScaleKeys,
   });
 
-  const [refCallback, dispatch] = useDispatch(
-    subpagesWTActions, setState, state, props
+  const [dispatch, refCallback] = useDispatch(
+    subpagesWithTabsActions, setState, state, props
   );
 
   useMemo(() => {
-    if (!tabScaleKeys || state.topTabsAreFetched) {
+    if (!tabScaleKeys || state.tabsAreFetched) {
       return;
     }
     DataFetcher.fetchSeveralEntityLists(
@@ -54,7 +55,7 @@ export const SubpagesWithTabs = (props) => {
         setState(prev => ({
           ...prev,
           tabKeyList: [...prev.tabKeyList, ...fetchedTabList],
-          topTabsAreFetched: true,
+          tabsAreFetched: true,
         }));
       }
     );
@@ -63,9 +64,9 @@ export const SubpagesWithTabs = (props) => {
 
   const subpages = state.loadedTabKeys.map((tabKey) => {
     let tab = JSON.parse(tabKey);
-    let PageComponent = tab[1] ? getPageComponent(tab[1]) :
+    let PageComponent = tab[2] ? getPageComponent(tab[2]) :
       getPageComponent(defaultPageType);
-    let pageProps = tab[2] ?? defaultPageProps;
+    let pageProps = tab[3] ?? defaultPageProps;
     let curTabKey = state.curTabKey;
     let styleProps = tabKey == curTabKey ? {} : {style: {display: "none"}};
     return (
@@ -77,13 +78,14 @@ export const SubpagesWithTabs = (props) => {
 
   const tabs = state.tabKeyList.map((tabKey) => {
     let tab = JSON.parse(tabKey);
-    let tabProps = tab[0];
+    let entID = tab[0];
+    let tabType = tab[1];
     let curTabKey = state.curTabKey;
     let isLoaded = state.loadedTabKeys.includes(tabKey);
     let isOpen = tabKey === curTabKey;
     return (
-      <Tab key={tabKey}
-        {...tabProps} tabKey={tabKey} isLoaded={isLoaded} isOpen={isOpen} 
+      <Tab key={tabKey} tabKey={tabKey}
+        entID={entID} tabType={tabType} isLoaded={isLoaded} isOpen={isOpen} 
       />
     );
   });
@@ -100,22 +102,78 @@ export const SubpagesWithTabs = (props) => {
   );
 };
 
-const Tab = ({isLoaded, isOpen, tabKey}) => {
-  const [, dispatch] = useDispatch();
+const Tab = ({tabKey, entID, tabType, isLoaded, isOpen}) => {
+  const [state, setState] = useState({
+    title: false, // null means missing or invalid.
+  });
+  const {title} = state;
 
+  const [dispatch] = useDispatch();
+
+  useMemo(() => {
+    // If tabType is a 'relation' or 'class' type, fetch a JSON entity and
+    // display its 'Title' attribute or its 'Name' attribute, respectively.
+    if (tabType === "relation" || tabType === "class") {
+      DataFetcher.fetchPublicSmallEntity(
+        entID, (datatype, defStr, len, creatorID, isContained) => {
+          // If the entity is not a (contained) JSON entity, set title as
+          // missing/invalid (null).
+          if (datatype !== "j" || !isContained) {
+            setState(prev => ({
+              ...prev,
+              title: null,
+            }));
+            return;
+          }
+          // Else if the JSON is invalid, do the same.
+          var defObj;
+          try {
+            defObj = JSON.parse(defStr);
+          } catch (error) {
+            setState(prev => ({
+              ...prev,
+              title: null,
+            }));
+            return;
+          }
+          // Else if set the title as either the relation's 'Title' attribute
+          // value, or, if typeType is instead 'class,' its 'Name' attribute.
+          setState(prev => {
+            return {
+              ...prev,
+              title: (tabType === "class" ? defObj.Name : defObj.Title) || null,
+            };
+          });
+        }
+      );
+    }
+  });
+
+  var tabContent;
+  if (!title) {
+    if (title === null) {
+      tabContent = <span className="tab-title missing"></span>;
+    }
+    else {
+      tabContent = <span className="tab-title loading"></span>;
+    }
+  }
+  else {
+    tabContent = <span className="tab-title loaded">{title}</span>
+  }
   return (
     <div className={isLoaded ? "tab loaded" : isOpen ? "tab open" : "tab"}
       onClick={(event) => {
         dispatch(event.target, "OPEN_TAB", tabKey);
       }}
     >
-      {tabKey}
+      {tabContent}
     </div>
   );
 }
 
 
-const subpagesWTActions = {
+const subpagesWithTabsActions = {
   "OPEN_TAB": function(tabKey, setState, {state}) {
     setState(prev => {
       let loadedTabKeys = prev.loadedTabKeys;
