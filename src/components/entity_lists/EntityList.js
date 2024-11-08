@@ -17,7 +17,7 @@ const RELEVANCY_QUAL_ID = "15";
 export const EntityList = ({scaleKey, userID}) => {
   userID ??= "1"; // (TODO: Remove.)
 
-  // scaleKey = scaleID | [relID, objID, qualID?].
+  // scaleKey = scaleID | JSON.stringify([relID, objID, qualID?]).
   const [state, setState] = useState({
     entList: null,
     scaleIDIsMissing: null,
@@ -43,7 +43,7 @@ export const EntityList = ({scaleKey, userID}) => {
 
   // Else fetch it.
   DataFetcher.fetchEntityListFromScaleKey(
-    userID, scaleKey, null, (entList, scaleID) => {
+    userID, JSON.parse(scaleKey), null, (entList, scaleID) => {
       if (!scaleID) {
         setState(prev => ({
           ...prev,

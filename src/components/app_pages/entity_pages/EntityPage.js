@@ -5,7 +5,9 @@ import {EntityReference} from "../../entity_refs/EntityReference";
 import {EntityInfoPage} from "./subpages/InfoPage";
 import {DropdownMenu} from "../../menus/DropdownMenu";
 import {SubpagesWithTabs} from "./subpages/SubpagesWithTabs";
+
 import {EntityList} from "../../entity_lists/EntityList";
+import {ClassSubpage} from "./subpages/ClassSubpage.js";
 
 /* Placeholders */
 const ScoringDisplay = () => <template></template>;
@@ -63,7 +65,9 @@ export const EntityPage = ({entID, initTab}) => {
     classID = null;
   }
 
-  const subclassesTab = JSON.stringify([SUBCLASSES_REL_ID, "class", "class"]);
+  const subclassesTab = JSON.stringify(
+    [MEMBERS_REL_ID, "relation", "class"]
+  );
 
   return (
     <div className="entity-page">

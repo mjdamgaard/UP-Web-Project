@@ -2,7 +2,7 @@ import {useState, useMemo, useContext} from "react";
 import {useDispatch} from "../../../../hooks/useDispatch";
 import {DataFetcher} from "../../../../classes/DataFetcher.js";
 
-import {ClassSubpage} from "./ClassSubpage.js";
+import {ClassSubpage, MembersPage} from "./ClassSubpage.js";
 
 /* Placeholders */
 const TabHeader = () => <template></template>;
@@ -148,6 +148,14 @@ const Tab = ({tabKey, entID, tabType, isLoaded, isOpen}) => {
         }
       );
     }
+    else if (tabType === "all-members") {
+      setState(prev => {
+        return {
+          ...prev,
+          title: "All",
+        };
+      });
+    }
   }, []);
 
   var tabContent;
@@ -195,6 +203,8 @@ function getPageComponent(pageType) {
   switch (pageType) {
     case "class":
       return ClassSubpage;
+    case "members-list":
+      return MembersPage;
     default:
       break;
   }
