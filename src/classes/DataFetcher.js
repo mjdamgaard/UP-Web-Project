@@ -14,7 +14,7 @@ import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 
 const CLASSES_CLASS_ID = "4";
 const RELATIONS_CLASS_ID = "25";
-const USEFUL_RELATIONS_REL_ID = "28";
+const RELATIONS_REL_ID = "28";
 const RELEVANCY_QUAL_ID = "15";
 
 

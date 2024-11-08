@@ -22,7 +22,8 @@ const SubmitEntityMenu = () => <template></template>;
 // TODO: Import from one location instead:
 const CLASSES_CLASS_ID = "4";
 const MEMBERS_REL_ID = "26";
-const USEFUL_RELATIONS_REL_ID = "28";
+const SUBCLASSES_REL_ID = "27";
+const RELATIONS_REL_ID = "28";
 
 
 export const EntityPage = ({entID, initTab}) => {
@@ -62,16 +63,14 @@ export const EntityPage = ({entID, initTab}) => {
     classID = null;
   }
 
-  const subclassesTab = JSON.stringify(["Subclasses", EntityList, {}]);
-  const classSubpage = JSON.stringify(["Class subpage", "class"]);
-  const classSubpage2 = JSON.stringify(["Class subpage 2", "class", {foo:"bar"}]);
+  const subclassesTab = JSON.stringify([SUBCLASSES_REL_ID, "class", "class"]);
 
   return (
     <div className="entity-page">
       <EntityPageHeader entID={entID}/>
       <SubpagesWithTabs
-        initTabKeys={[classSubpage, classSubpage2]}
-        defaultTabKey={classSubpage}
+        initTabKeys={[subclassesTab]}
+        initInd={0}
       />
       {/* TODO: Move the InfoPage under one of the topmost tabs instead. */}
       <DropdownMenu

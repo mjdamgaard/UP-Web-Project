@@ -59,11 +59,12 @@ export const SubpagesWithTabs = (props) => {
         }));
       }
     );
-  });
+  }, []);
 
 
   const subpages = state.loadedTabKeys.map((tabKey) => {
     let tab = JSON.parse(tabKey);
+    let entID = tab[0];
     let PageComponent = tab[2] ? getPageComponent(tab[2]) :
       getPageComponent(defaultPageType);
     let pageProps = tab[3] ?? defaultPageProps;
@@ -71,7 +72,7 @@ export const SubpagesWithTabs = (props) => {
     let styleProps = tabKey == curTabKey ? {} : {style: {display: "none"}};
     return (
       <div key={tabKey} {...styleProps}>
-        <PageComponent {...pageProps} />
+        <PageComponent entID={entID} {...pageProps} />
       </div>
     );
   });
@@ -79,7 +80,7 @@ export const SubpagesWithTabs = (props) => {
   const tabs = state.tabKeyList.map((tabKey) => {
     let tab = JSON.parse(tabKey);
     let entID = tab[0];
-    let tabType = tab[1];
+    let tabType = tab[1] ?? defaultTabType;
     let curTabKey = state.curTabKey;
     let isLoaded = state.loadedTabKeys.includes(tabKey);
     let isOpen = tabKey === curTabKey;
@@ -147,7 +148,7 @@ const Tab = ({tabKey, entID, tabType, isLoaded, isOpen}) => {
         }
       );
     }
-  });
+  }, []);
 
   var tabContent;
   if (!title) {
@@ -159,7 +160,7 @@ const Tab = ({tabKey, entID, tabType, isLoaded, isOpen}) => {
     }
   }
   else {
-    tabContent = <span className="tab-title loaded">{title}</span>
+    tabContent = <span className="tab-title">{title}</span>
   }
   return (
     <div className={isLoaded ? "tab loaded" : isOpen ? "tab open" : "tab"}
