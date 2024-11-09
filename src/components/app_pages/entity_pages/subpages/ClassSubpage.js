@@ -14,7 +14,7 @@ const SUBCLASSES_REL_ID = "27";
 export const ClassSubpage = ({entID}) => {
 
   const allMembersTab = JSON.stringify(
-    [entID, "all-members", "members-list"]
+    [entID, "t:All", "members-list"]
   );
 
   return (

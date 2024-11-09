@@ -41,17 +41,17 @@ CREATE PROCEDURE selectEntityList (
 BEGIN
     SELECT
         score_val AS scoreVal,
-        subj_id AS subjID
+        subj_id AS entID
     FROM Scores
     WHERE (
         user_id = userID AND
         scale_id = scaleID
     )
     ORDER BY
-        CASE WHEN isAscOrder THEN rat_val END ASC,
-        CASE WHEN NOT isAscOrder THEN rat_val END DESC,
-        CASE WHEN isAscOrder THEN obj_id END ASC,
-        CASE WHEN NOT isAscOrder THEN obj_id END DESC
+        CASE WHEN isAscOrder THEN scoreVal END ASC,
+        CASE WHEN NOT isAscOrder THEN scoreVal END DESC,
+        CASE WHEN isAscOrder THEN entID END ASC,
+        CASE WHEN NOT isAscOrder THEN entID END DESC
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
@@ -90,10 +90,10 @@ BEGIN
         scale_id = scaleID
     )
     ORDER BY
-        CASE WHEN isAscOrder THEN rat_val END ASC,
-        CASE WHEN NOT isAscOrder THEN rat_val END DESC,
-        CASE WHEN isAscOrder THEN obj_id END ASC,
-        CASE WHEN NOT isAscOrder THEN obj_id END DESC
+        CASE WHEN isAscOrder THEN scoreVal END ASC,
+        CASE WHEN NOT isAscOrder THEN scoreVal END DESC,
+        CASE WHEN isAscOrder THEN entID END ASC,
+        CASE WHEN NOT isAscOrder THEN entID END DESC
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
@@ -131,10 +131,10 @@ BEGIN
         scale_id = scaleID
     )
     ORDER BY
-        CASE WHEN isAscOrder THEN rat_val END ASC,
-        CASE WHEN NOT isAscOrder THEN rat_val END DESC,
-        CASE WHEN isAscOrder THEN obj_id END ASC,
-        CASE WHEN NOT isAscOrder THEN obj_id END DESC
+        CASE WHEN isAscOrder THEN scoreVal END ASC,
+        CASE WHEN NOT isAscOrder THEN scoreVal END DESC,
+        CASE WHEN isAscOrder THEN entID END ASC,
+        CASE WHEN NOT isAscOrder THEN entID END DESC
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
@@ -257,10 +257,10 @@ BEGIN
         scale_id = scaleID
     )
     ORDER BY
-        CASE WHEN isAscOrder THEN rat_val END ASC,
-        CASE WHEN NOT isAscOrder THEN rat_val END DESC,
-        CASE WHEN isAscOrder THEN obj_id END ASC,
-        CASE WHEN NOT isAscOrder THEN obj_id END DESC
+        CASE WHEN isAscOrder THEN scoreVal END ASC,
+        CASE WHEN NOT isAscOrder THEN scoreVal END DESC,
+        CASE WHEN isAscOrder THEN entID END ASC,
+        CASE WHEN NOT isAscOrder THEN entID END DESC
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
