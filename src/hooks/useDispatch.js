@@ -28,7 +28,7 @@ export const useDispatch = (
   };
 
   // Return the refCallback and the (constant) dispatch function.
-  return [refCallback, dispatch];
+  return [dispatch, refCallback];
 }
 
 

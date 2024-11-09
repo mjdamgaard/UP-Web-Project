@@ -1,4 +1,4 @@
-import {useState, useMemo, useContext} from "react";
+import {useState, useMemo, useRef} from "react";
 import {useDispatch} from "../../../../hooks/useDispatch";
 import {DataFetcher} from "../../../../classes/DataFetcher.js";
 
@@ -6,6 +6,9 @@ import {ClassSubpage, MembersPage} from "./ClassSubpage.js";
 
 /* Placeholders */
 const MoreTabsSubpage = () => <template></template>;
+
+
+const IS_FETCHING = {};
 
 
 function getUnionedParsedAndSortedEntList(entLists) {
@@ -19,8 +22,8 @@ function getUnionedParsedAndSortedEntList(entLists) {
 
 export const SubpagesWithTabs = (props) => {
   const {
-    initTabsJSON, getTabTitleFromID, getPageCompFromID,
-    tabScaleKeysJSON, initExpansionStage = 1,
+    initTabsJSON, getPageCompFromID, getTabTitleFromID,
+    tabScaleKeysJSON, initIsExpanded = false,
   } = props;
 
   const userID = "1"; // (TODO: Remove.)
@@ -36,18 +39,19 @@ export const SubpagesWithTabs = (props) => {
     curTabID: 0,
     loadedTabIDs: [initTabs[0][1]],
     tabsAreFetched: !tabScaleKeysJSON,
-    expansionStage: initExpansionStage,
+    isExpanded: initIsExpanded,
     moreTabsSubpageIsLoaded: false,
   });
   const {
     tabIDArr, tabTitleStore, curTabID, loadedTabIDs, tabsAreFetched,
-    expansionStage, moreTabsSubpageIsLoaded
+    isExpanded, moreTabsSubpageIsLoaded
   } = state;
 
   const [dispatch, refCallback] = useDispatch(
-    subpagesWithTabsActions, setState, state, props
+    subpagesWithTabsActions, setState, state, props, null, 
   );
 
+  // On first render, fetch a few more tabs if any tabScaleKeys are provided.
   useMemo(() => {
     if (tabsAreFetched) {
       return;
@@ -67,10 +71,50 @@ export const SubpagesWithTabs = (props) => {
   }, []);
 
 
+  const visibleTabIDs = [...new Set(loadedTabIDs.concat(tabIDArr))]
+    .slice(0, isExpanded ? 20 : 6);
+
+  // Fetch any not-yet-gotten tab titles of the visible tabs.
+  useMemo(() => {
+    visibleTabIDs.forEach(tabID => {
+      if (!tabTitleStore[tabID]) {
+        tabTitleStore[tabID] = IS_FETCHING;
+        getTabTitleFromID(tabID, (title => {
+          setState(prev => ({
+            ...prev,
+            tabTitleStore: {...prev.tabTitleStore, [tabID]: title},
+          }));
+        }));
+      }
+    });
+  }, [JSON.stringify(visibleTabIDs)]);
+
+  // Construct the (visible) tab JSX elements.
+  const tabs = visibleTabIDs.map((tabID) => {
+    let tabTitle = tabTitleStore[tabID];
+    let isFetching = tabTitle === IS_FETCHING;
+    let isLoaded = loadedTabIDs.includes(tabID);
+    let isOpen = tabID === curTabID;
+    return (
+      <div
+        className={"tab" +
+            (isLoaded   ? " loaded" : "") +
+            (isOpen     ? " open" : "") +
+            (isFetching ? " fetching" : "")
+        }
+        onClick={(event) => {
+          dispatch(event.currentTarget, "OPEN_TAB", tabID);
+        }}
+      >
+        {tabContent}
+      </div>
+    );
+  });
+
+  // Construct the subpage JSX elements.
   const subpages = loadedTabIDs.map((tabID) => {
-    let [PageComponent, pageProps] = getPageCompFromID(tabID)
-    let styleProps = expansionStage == 3 || tabID != curTabID ?
-      {style: {display: "none"}} : {};
+    let [PageComponent, pageProps] = getPageCompFromID(tabID);
+    let styleProps = tabID == curTabID ? {} : {style: {display: "none"}};
     return (
       <div key={tabID} {...styleProps}>
         <PageComponent tabID={tabID} {...pageProps} />
@@ -80,24 +124,12 @@ export const SubpagesWithTabs = (props) => {
 
   const moreTabsSubpage = !moreTabsSubpageIsLoaded ? <></> : (
     <div key={"more-tabs"}
-      {...(expansionStage == 3 ? {} : {style: {display: "none"}})}
+      {...(curTabID === "more-tabs" ? {} : {style: {display: "none"}})}
     >
       <MoreTabsSubpage tabScaleKeysJSON={tabScaleKeysJSON} />
     </div>
   );
 
-  const tabs = tabIDArr.map((tabID) => {
-    let tab = JSON.parse(tabID);
-    let entID = tab[0];
-    let tabType = tab[1] ?? defaultTabType;
-    let isLoaded = loadedTabIDs.includes(tabID);
-    let isOpen = tabID === curTabID;
-    return (
-      <Tab key={tabID}
-        tabID={tabID} tabType={tabType} isLoaded={isLoaded} isOpen={isOpen} 
-      />
-    );
-  });
 
   return (
     <div ref={refCallback} className="subpages-with-tabs">
@@ -186,7 +218,7 @@ const Tab = ({tabID, tabType, isLoaded, isOpen}) => {
   return (
     <div className={isLoaded ? "tab loaded" : isOpen ? "tab open" : "tab"}
       onClick={(event) => {
-        dispatch(event.target, "OPEN_TAB", tabID);
+        dispatch(event.currentTarget, "OPEN_TAB", tabID);
       }}
     >
       {tabContent}
