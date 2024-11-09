@@ -1,4 +1,4 @@
-import {useState, useMemo, useContext} from "react";
+import {useState, useMemo, useContext, useCallback} from "react";
 import {useDispatch} from "../../../../hooks/useDispatch";
 
 import {SubpagesWithTabs} from "./SubpagesWithTabs.js";
@@ -13,14 +13,26 @@ const SUBCLASSES_REL_ID = "27";
 
 export const ClassSubpage = ({entID}) => {
 
-  const allMembersTab = JSON.stringify(
-    [entID, "t:All", "members-list"]
-  );
+  const getPageCompFromID = useCallback(tabID => {
+    if (tabID == entID) {
+      return [MembersPage, {entID: entID}];
+    }
+    // TODO: Handle arbitrary IDs of subclasses.
+  });
+
+  const initTabsJSON = JSON.stringify([
+    ["All", entID],
+  ]);
+  const tabScaleKeysJSON = JSON.stringify([
+    [SUBCLASSES_REL_ID, entID],
+  ]);
 
   return (
     <SubpagesWithTabs
-      initTabKeys={[allMembersTab]}
-      initInd={0}
+      initTabsJSON={[initTabsJSON]}
+      getPageCompFromID={getPageCompFromID}
+      getTabTitleFromID="Name"
+      tabScaleKeysJSON={tabScaleKeysJSON}
     />
   );
 };

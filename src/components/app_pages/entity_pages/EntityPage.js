@@ -68,6 +68,9 @@ export const EntityPage = ({entID, initTab}) => {
   const initTabsJSON = JSON.stringify([
     ["Members", MEMBERS_REL_ID],
   ]);
+  const tabScaleKeysJSON = JSON.stringify([
+    [RELATIONS_REL_ID, entID],
+  ]);
 
   return (
     <div className="entity-page">
@@ -75,6 +78,8 @@ export const EntityPage = ({entID, initTab}) => {
       <SubpagesWithTabs
         initTabsJSON={[initTabsJSON]}
         getPageCompFromID={0}
+        getTabTitleFromID="Title"
+        tabScaleKeysJSON={tabScaleKeysJSON}
       />
       {/* TODO: Move the InfoPage under one of the topmost tabs instead. */}
       <DropdownMenu
