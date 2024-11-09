@@ -25,12 +25,18 @@ export const SubpagesWithTabs = (props) => {
     initTabsJSON, getPageCompFromID, getTabTitleFromID,
     tabScaleKeysJSON, initIsExpanded = false,
   } = props;
+  if (typeof getTabTitleFromID === "string") {
+    let attrName = getTabTitleFromID;
+    getTabTitleFromID = (entID, callback) => {
+      fetchEntityAttribute(entID, attrName, callback);
+    };
+  }
 
   const userID = "1"; // (TODO: Remove.)
 
   const initTabs = JSON.parse(initTabsJSON);
 
-  // initTabsJSON is a JSON array of: [tabTitle, tabID].
+  // initTabsJSON is a JSON array of: [[tabTitle, tabID]*].
   // Tab keys are the corresponding JSON arrays. 
 
   const [state, setState] = useState({
@@ -93,14 +99,16 @@ export const SubpagesWithTabs = (props) => {
   const tabs = visibleTabIDs.map((tabID) => {
     let tabTitle = tabTitleStore[tabID];
     let isFetching = tabTitle === IS_FETCHING;
+    let isMissing = tabTitle === null;
     let isLoaded = loadedTabIDs.includes(tabID);
     let isOpen = tabID === curTabID;
     return (
       <div
         className={"tab" +
-            (isLoaded   ? " loaded" : "") +
-            (isOpen     ? " open" : "") +
-            (isFetching ? " fetching" : "")
+            (isFetching ? " fetching" : "") +
+            (isMissing  ? " missing"  : "") +
+            (isLoaded   ? " loaded"   : "") +
+            (isOpen     ? " open"     : "")
         }
         onClick={(event) => {
           dispatch(event.currentTarget, "OPEN_TAB", tabID);
@@ -146,87 +154,6 @@ export const SubpagesWithTabs = (props) => {
 
 
 
-const Tab = ({tabID, tabType, isLoaded, isOpen}) => {
-  const [state, setState] = useState({
-    title: false, // null means missing or invalid.
-  });
-  const {title} = state;
-
-  const [dispatch] = useDispatch();
-
-  useMemo(() => {
-    // If tabType is a 'relation' or 'class' type, fetch a JSON entity and
-    // display its 'Title' attribute or its 'Name' attribute, respectively.
-    if (tabType === "relation" || tabType === "class") {
-      let entID = tabID;
-      DataFetcher.fetchPublicSmallEntity(
-        entID, (datatype, defStr, len, creatorID, isContained) => {
-          // If the entity is not a (contained) JSON entity, set title as
-          // missing/invalid (null).
-          if (datatype !== "j" || !isContained) {
-            setState(prev => ({
-              ...prev,
-              title: null,
-            }));
-            return;
-          }
-          // Else if the JSON is invalid, do the same.
-          var defObj;
-          try {
-            defObj = JSON.parse(defStr);
-          } catch (error) {
-            setState(prev => ({
-              ...prev,
-              title: null,
-            }));
-            return;
-          }
-          // Else set the title as either the relation's 'Title' attribute
-          // value, or, if typeType is instead 'class,' its 'Name' attribute.
-          setState(prev => {
-            return {
-              ...prev,
-              title: (tabType === "class" ? defObj.Name : defObj.Title)
-                || null,
-            };
-          });
-        }
-      );
-    }
-    else if (/^t:/.test(tabType)) {
-      setState(prev => {
-        return {
-          ...prev,
-          title: tabType.substring(2),
-        };
-      });
-    }
-  }, []);
-
-  var tabContent;
-  if (!title) {
-    if (title === null) {
-      tabContent = <span className="tab-title missing"></span>;
-    }
-    else {
-      tabContent = <span className="tab-title loading"></span>;
-    }
-  }
-  else {
-    tabContent = <span className="tab-title">{title}</span>
-  }
-  return (
-    <div className={isLoaded ? "tab loaded" : isOpen ? "tab open" : "tab"}
-      onClick={(event) => {
-        dispatch(event.currentTarget, "OPEN_TAB", tabID);
-      }}
-    >
-      {tabContent}
-    </div>
-  );
-}
-
-
 const subpagesWithTabsActions = {
   "OPEN_TAB": function(tabID, setState, {state}) {
     setState(prev => {
@@ -234,7 +161,7 @@ const subpagesWithTabsActions = {
       return {
         ...prev,
         loadedTabIDs: loadedTabIDs.includes(tabID) ? loadedTabIDs :
-          [...loadedTabIDs, tabID],
+          [tabID, ...loadedTabIDs],
         curTabID: tabID,
       };
     })
@@ -242,6 +169,31 @@ const subpagesWithTabsActions = {
 }
 
 
+
+
+export function fetchEntityAttribute(entID, attrName, callback) {
+  DataFetcher.fetchPublicSmallEntity(
+    entID, (datatype, defStr, len, creatorID, isContained) => {
+      // If the entity is not a (contained) JSON entity, return title as
+      // missing/invalid (null).
+      if (datatype !== "j" || !isContained) {
+        callback(null);
+        return;
+      }
+      // Else if the JSON is invalid, do the same.
+      var defObj;
+      try {
+        defObj = JSON.parse(defStr);
+      } catch (error) {
+        callback(null);
+        return;
+      }
+      // Else return the title as either the value of the attribute of
+      // attrName.
+      callback(defObj[attrName]);
+    }
+  );
+}
 
 
 function getPageComponent(pageType) {
