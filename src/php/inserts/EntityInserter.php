@@ -148,6 +148,7 @@ class EntityInserter {
             // print_r(htmlspecialchars(json_encode($this->creationIDStore)));
             // print_r("</br>");
             }
+            return $outID;
         }
     }
 

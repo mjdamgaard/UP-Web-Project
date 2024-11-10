@@ -15,13 +15,13 @@ export const ClassSubpage = ({entID}) => {
 
   const getPageCompFromID = useCallback(tabID => {
     if (tabID == entID) {
-      return [MembersPage, {entID: entID}];
+      return [AllMembersPage, {entID: tabID}];
     }
     // TODO: Handle arbitrary IDs of subclasses.
   });
 
   const initTabsJSON = JSON.stringify([
-    ["All", entID],
+    [entID, "All"],
   ]);
   const tabScaleKeysJSON = JSON.stringify([
     [SUBCLASSES_REL_ID, entID],
@@ -39,7 +39,7 @@ export const ClassSubpage = ({entID}) => {
 
 
 
-export const MembersPage = ({entID}) => {
+export const AllMembersPage = ({entID}) => {
   return (
     <EntityList scaleKey={JSON.stringify([MEMBERS_REL_ID, entID])}/>
   );

@@ -2,7 +2,7 @@ import {useState, useMemo, useRef} from "react";
 import {useDispatch} from "../../../../hooks/useDispatch";
 import {DataFetcher} from "../../../../classes/DataFetcher.js";
 
-import {ClassSubpage, MembersPage} from "./ClassSubpage.js";
+import {ClassSubpage} from "./ClassSubpage.js";
 
 /* Placeholders */
 const MoreTabsSubpage = () => <template></template>;
@@ -21,10 +21,11 @@ function getUnionedParsedAndSortedEntList(entLists) {
 
 
 export const SubpagesWithTabs = (props) => {
-  const {
+  var {
     initTabsJSON, getPageCompFromID, getTabTitleFromID,
     tabScaleKeysJSON, initIsExpanded = false,
   } = props;
+
   if (typeof getTabTitleFromID === "string") {
     let attrName = getTabTitleFromID;
     getTabTitleFromID = (entID, callback) => {
@@ -40,10 +41,10 @@ export const SubpagesWithTabs = (props) => {
   // Tab keys are the corresponding JSON arrays. 
 
   const [state, setState] = useState({
-    tabIDArr: initTabs.map(val => val[1]),
+    tabIDArr: initTabs.map(val => val[0]),
     tabTitleStore: Object.fromEntries(initTabs),
-    curTabID: 0,
-    loadedTabIDs: [initTabs[0][1]],
+    curTabID: initTabs[0][0],
+    loadedTabIDs: [initTabs[0][0]],
     tabsAreFetched: !tabScaleKeysJSON,
     isExpanded: initIsExpanded,
     moreTabsSubpageIsLoaded: false,
@@ -101,9 +102,9 @@ export const SubpagesWithTabs = (props) => {
     let isFetching = tabTitle === IS_FETCHING;
     let isMissing = tabTitle === null;
     let isLoaded = loadedTabIDs.includes(tabID);
-    let isOpen = tabID === curTabID;
+    let isOpen = tabID == curTabID;
     return (
-      <div
+      <div key={tabID}
         className={"tab" +
             (isFetching ? " fetching" : "") +
             (isMissing  ? " missing"  : "") +
@@ -114,7 +115,7 @@ export const SubpagesWithTabs = (props) => {
           dispatch(event.currentTarget, "OPEN_TAB", tabID);
         }}
       >
-        {tabContent}
+        {isFetching ? "" : tabTitle}
       </div>
     );
   });
@@ -193,16 +194,4 @@ export function fetchEntityAttribute(entID, attrName, callback) {
       callback(defObj[attrName]);
     }
   );
-}
-
-
-function getPageComponent(pageType) {
-  switch (pageType) {
-    case "class":
-      return ClassSubpage;
-    case "members-list":
-      return MembersPage;
-    default:
-      break;
-  }
 }

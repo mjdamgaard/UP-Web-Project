@@ -1,4 +1,4 @@
-import {useState, useMemo, useContext} from "react";
+import {useState, useMemo, useCallback} from "react";
 
 import {DataFetcher} from "../../../classes/DataFetcher";
 import {EntityReference} from "../../entity_refs/EntityReference";
@@ -51,13 +51,6 @@ export const EntityPage = ({entID, initTab}) => {
 
   const {datatype, defStr, isContained, isFetched} = results;
 
-  // Before results is fetched, render this:
-  if (!results.isFetched) {
-    return (
-      <></>
-    );
-  }
- 
   var classID;
   try {
     classID = JSON.parse(defStr).Class.substring(1);
@@ -65,19 +58,34 @@ export const EntityPage = ({entID, initTab}) => {
     classID = null;
   }
 
+
+  const getPageCompFromID = useCallback(tabID => {
+    if (tabID == MEMBERS_REL_ID) {
+      return [ClassSubpage, {entID: tabID}];
+    }
+    // TODO: Handle arbitrary IDs of subclasses.
+  });
+ 
   const initTabsJSON = JSON.stringify([
-    ["Members", MEMBERS_REL_ID],
+    [MEMBERS_REL_ID, "Members"],
   ]);
   const tabScaleKeysJSON = JSON.stringify([
     [RELATIONS_REL_ID, entID],
   ]);
+
+  // Before results is fetched, render this:
+  if (!results.isFetched) {
+    return (
+      <></>
+    );
+  }
 
   return (
     <div className="entity-page">
       <EntityPageHeader entID={entID}/>
       <SubpagesWithTabs
         initTabsJSON={[initTabsJSON]}
-        getPageCompFromID={0}
+        getPageCompFromID={getPageCompFromID}
         getTabTitleFromID="Title"
         tabScaleKeysJSON={tabScaleKeysJSON}
       />

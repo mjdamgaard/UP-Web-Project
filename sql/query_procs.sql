@@ -18,14 +18,6 @@ DROP PROCEDURE selectCreationsAsUser;
 
 
 DROP PROCEDURE selectUserInfo;
-DROP PROCEDURE selectBotInfo;
-
--- DROP PROCEDURE selectUserEntityID;
--- DROP PROCEDURE selectBotEntityID;
-
-
-DROP PROCEDURE selectAncillaryBotData1e2d;
-DROP PROCEDURE selectAncillaryBotData1e4d;
 
 
 
@@ -494,68 +486,3 @@ BEGIN
 END //
 DELIMITER ;
 
-
-DELIMITER //
-CREATE PROCEDURE selectBotInfo (
-    IN botName BIGINT UNSIGNED
-)
-BEGIN
-    SELECT
-        bot_name AS botName,
-        bot_description AS botDescription
-    FROM NativeBotData
-    WHERE data_key = (
-        SELECT data_key
-        FROM Entities
-        WHERE id = botName
-    );
-END //
-DELIMITER ;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-DELIMITER //
-CREATE PROCEDURE selectAncillaryBotData1e2d (
-    IN botName BIGINT UNSIGNED,
-    IN entID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT data_1 AS data1, data_2 AS data2
-    FROM AncillaryBotData1e2d
-    WHERE (
-        bot_name = botName AND
-        ent_id = entID
-    );
-END //
-DELIMITER ;
-
-DELIMITER //
-CREATE PROCEDURE selectAncillaryBotData1e4d (
-    IN botName BIGINT UNSIGNED,
-    IN entID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT data_1 AS data1, data_2 AS data2, data_3 AS data3, data_4 AS data4
-    FROM AncillaryBotData1e4d
-    WHERE (
-        bot_name = botName AND
-        ent_id = entID
-    );
-END //
-DELIMITER ;

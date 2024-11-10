@@ -396,50 +396,70 @@ $inserter->insertPublicEntities("0", array(
             "Quality" => "@[qualities/usefulness]",
         )
     )),
-    "scales/entities->members" => array("j",
-        json_encode(array(
-            "Class" => "@[classes/scales]",
-            "Relation" => "@[relations/members]",
-            "Object" => "@[classes/entities]",
-            "Quality" => "@[qualities/usefulness]",
-        )
-    )),
-    "scales/classes->subclasses" => array("j",
-        json_encode(array(
-            "Class" => "@[classes/scales]",
-            "Relation" => "@[relations/subclasses]",
-            "Object" => "@[classes/classes]",
-            "Quality" => "@[qualities/usefulness]",
-        )
-    )),
-    "scales/classes->members" => array("j",
-        json_encode(array(
-            "Class" => "@[classes/scales]",
-            "Relation" => "@[relations/members]",
-            "Object" => "@[classes/classes]",
-            "Quality" => "@[qualities/usefulness]",
-        )
-    )),
+    // "scales/entities->members" => array("j",
+    //     json_encode(array(
+    //         "Class" => "@[classes/scales]",
+    //         "Relation" => "@[relations/members]",
+    //         "Object" => "@[classes/entities]",
+    //         "Quality" => "@[qualities/usefulness]",
+    //     )
+    // )),
+    // "scales/classes->subclasses" => array("j",
+    //     json_encode(array(
+    //         "Class" => "@[classes/scales]",
+    //         "Relation" => "@[relations/subclasses]",
+    //         "Object" => "@[classes/classes]",
+    //         "Quality" => "@[qualities/usefulness]",
+    //     )
+    // )),
+    // "scales/classes->members" => array("j",
+    //     json_encode(array(
+    //         "Class" => "@[classes/scales]",
+    //         "Relation" => "@[relations/members]",
+    //         "Object" => "@[classes/classes]",
+    //         "Quality" => "@[qualities/usefulness]",
+    //     )
+    // )),
 ));
 
 
-$inserter->addEntitiesToList(
-    "1", "scales/classes->members", array(
-        array("classes/classes", "1"),
-        array("classes/entities", "1"),
-        array("classes/users", "0.8"),
-        array("classes/scales", "0.5"),
-        array("classes/statements", "1"),
-        array("classes/comments", "0.95"),
-    )
-);
-$inserter->addEntitiesToList(
-    "1", "scales/classes->subclasses", array(
-        array("classes/users", "0.8"),
-        array("classes/scales", "0.8"),
-        array("classes/statements", "1"),
-        array("classes/comments", "0.95"),
-    )
-);
+// $inserter->addEntitiesToList(
+//     "1", "scales/classes->members", array(
+//         array("classes/classes", "1"),
+//         array("classes/entities", "1"),
+//         array("classes/users", "0.8"),
+//         array("classes/scales", "0.5"),
+//         array("classes/statements", "1"),
+//         array("classes/comments", "0.95"),
+//     )
+// );
+// $inserter->addEntitiesToList(
+//     "1", "scales/classes->subclasses", array(
+//         array("classes/users", "0.8"),
+//         array("classes/scales", "0.8"),
+//         array("classes/statements", "1"),
+//         array("classes/comments", "0.95"),
+//     )
+// );
+
+// $inserter->addEntitiesToList(
+//     "1", "scales/entities->members", array(
+//         array("classes/classes", "1"),
+//         array("classes/entities", "1"),
+//         array("classes/users", "0.8"),
+//         array("classes/scales", "0.5"),
+//         array("classes/statements", "1"),
+//         array("classes/comments", "0.95"),
+//     )
+// );
+// $inserter->addEntitiesToList(
+//     "1", "scales/entities->subclasses", array(
+//         array("classes/classes", "1"),
+//         array("classes/users", "0.8"),
+//         array("classes/scales", "0.8"),
+//         array("classes/statements", "1"),
+//         array("classes/comments", "0.95"),
+//     )
+// );
 
 ?>
