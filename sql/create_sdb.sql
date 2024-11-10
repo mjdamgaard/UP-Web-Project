@@ -313,18 +313,20 @@ CREATE TABLE Entities (
     is_private TINYINT UNSIGNED NOT NULL DEFAULT 1,
     CHECK (is_private <= 1),
 
-    -- A boolean representing whether this entity can be edited
+    -- A boolean representing whether this entity can be edited.
     is_editable TINYINT UNSIGNED NOT NULL DEFAULT 1,
-    CHECK (is_private <= 1),
+    CHECK (is_editable <= 1),
 
-    -- Creation identifier used by a user to structure and edit their creations.
-    creation_ident VARBINARY(255) NOT NULL DEFAULT "",
+    -- -- Creation identifier used by a user to structure and edit their creations.
+    -- creation_ident VARBINARY(255) NOT NULL DEFAULT "",
 
-    CHECK (creator_id != 0 OR is_private),
+    CHECK (creator_id != 0 OR is_private = 1),
 
-    UNIQUE INDEX (is_private, def_hash, creator_id),
+    -- UNIQUE INDEX (is_private, def_hash, creator_id),
 
-    UNIQUE INDEX (creator_id, creation_ident, id),
+    -- UNIQUE INDEX (creator_id, creation_ident, id),
+
+    UNIQUE INDEX (is_private, creator_id, def_hash),
 
     modified_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     -- The modified_at field is (potentially) for future use.

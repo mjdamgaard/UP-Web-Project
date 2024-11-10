@@ -65,8 +65,8 @@ BEGIN
     FROM Entities
     WHERE (
         is_private = 0 AND
-        def_hash = scaleHash AND
-        creator_id = 0
+        creator_id = 0 AND
+        def_hash = scaleHash
     );
 
     SELECT
@@ -106,8 +106,8 @@ BEGIN
     FROM Entities
     WHERE (
         is_private = 0 AND
-        def_hash = SHA2(scaleDefStr, 256) AND
-        creator_id = 0
+        creator_id = 0 AND
+        def_hash = SHA2(scaleDefStr, 256)
     );
 
     SELECT
@@ -151,8 +151,8 @@ BEGIN
         FROM Entities
         WHERE (
             is_private = 0 AND
-            def_hash = SHA2(defStr1, 256) AND
-            creator_id = 0
+            creator_id = 0 AND
+            def_hash = SHA2(defStr1, 256)
         );
         IF (entID1 IS NULL) THEN LEAVE entID_search; END IF;
 
@@ -162,8 +162,8 @@ BEGIN
         FROM Entities
         WHERE (
             is_private = 0 AND
-            def_hash = SHA2(defStr2, 256) AND
-            creator_id = 0
+            creator_id = 0 AND
+            def_hash = SHA2(defStr2, 256)
         );
         IF (entID2 IS NULL) THEN LEAVE entID_search; END IF;
 
@@ -174,8 +174,8 @@ BEGIN
         FROM Entities
         WHERE (
             is_private = 0 AND
-            def_hash = SHA2(defStr3, 256) AND
-            creator_id = 0
+            creator_id = 0 AND
+            def_hash = SHA2(defStr3, 256)
         );
         IF (entID3 IS NULL) THEN LEAVE entID_search; END IF;
 
@@ -187,8 +187,8 @@ BEGIN
         FROM Entities
         WHERE (
             is_private = 0 AND
-            def_hash = SHA2(defStr4, 256) AND
-            creator_id = 0
+            creator_id = 0 AND
+            def_hash = SHA2(defStr4, 256)
         );
         IF (entID4 IS NULL) THEN LEAVE entID_search; END IF;
 
@@ -201,8 +201,8 @@ BEGIN
         FROM Entities
         WHERE (
             is_private = 0 AND
-            def_hash = SHA2(defStr5, 256) AND
-            creator_id = 0
+            creator_id = 0 AND
+            def_hash = SHA2(defStr5, 256)
         );
     END entID_search;
 
@@ -216,8 +216,8 @@ BEGIN
     FROM Entities
     WHERE (
         is_private = 0 AND
-        def_hash = SHA2(scaleDefStr, 256) AND
-        creator_id = 0
+        creator_id = 0 AND
+        def_hash = SHA2(scaleDefStr, 256)
     );
 
     SELECT
@@ -362,8 +362,8 @@ BEGIN
     FROM Entities
     WHERE (
         is_private = 0 AND
-        def_hash = defHash AND
-        creator_id = creatorID
+        creator_id = creatorID AND
+        def_hash = defHash
     );
 END //
 DELIMITER ;
@@ -389,8 +389,8 @@ BEGIN
     FROM Entities
     WHERE (
         is_private = 1 AND
-        def_hash = defHash AND
-        creator_id = userID
+        creator_id = userID AND
+        def_hash = defHash
     );
 END //
 DELIMITER ;
@@ -407,11 +407,11 @@ CREATE PROCEDURE selectCreations (
     IN isAscOrder BOOL
 )
 BEGIN
-    SELECT creation_ident AS ident, id AS entID
+    SELECT id AS entID
     FROM Entities
     WHERE (
-        creator_id = creatorID AND
-        is_private = 0
+        is_private = 0 AND
+        creator_id = creatorID
     )
     ORDER BY
         CASE WHEN isAscOrder THEN id END ASC,
@@ -430,10 +430,11 @@ CREATE PROCEDURE selectCreationsAsUser (
     IN isAscOrder BOOL
 )
 BEGIN
-    SELECT creation_ident AS ident, id AS entID
+    SELECT id AS entID
     FROM Entities
     WHERE (
-        creator_id = userID
+        is_private = 0 AND creator_id = userID OR
+        is_private = 1 AND creator_id = userID
     )
     ORDER BY
         CASE WHEN isAscOrder THEN id END ASC,

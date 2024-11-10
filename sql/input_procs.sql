@@ -9,7 +9,6 @@ DROP PROCEDURE insertOrFindAnonymousEntity;
 DROP PROCEDURE publicizeEntity;
 DROP PROCEDURE privatizeEntity;
 DROP PROCEDURE editEntity;
-DROP PROCEDURE editEntityIdentifier;
 
 
 
@@ -72,18 +71,17 @@ CREATE PROCEDURE insertOrFindEntity (
     IN userID BIGINT UNSIGNED,
     IN type CHAR,
     IN defStr TEXT,
-    IN isPrivate BOOL,
-    IN ident VARBINARY(255)
+    IN isPrivate BOOL
 )
 BEGIN
     DECLARE outID, exitCode BIGINT UNSIGNED;
     DECLARE defHash CHAR(64) DEFAULT (SHA2(CONCAT(type, defStr), 256));
 
     INSERT IGNORE INTO Entities (
-        creator_id, type_ident, def_str, def_hash, is_private, creation_ident
+        creator_id, type_ident, def_str, def_hash, is_private
     )
     VALUES (
-        userID, type, defStr, defHash, isPrivate, ident
+        userID, type, defStr, defHash, isPrivate
     );
     IF (ROW_COUNT() > 0) THEN
         SET exitCode = 0; -- insert.
@@ -94,8 +92,8 @@ BEGIN
         FROM Entities
         WHERE (
             is_private = isPrivate AND
-            def_hash = defHash AND
-            creator_id = userID
+            creator_id = userID AND
+            def_hash = defHash
         );
     END IF;
 
@@ -127,8 +125,8 @@ BEGIN
         FROM Entities
         WHERE (
             is_private = 0 AND
-            def_hash = defHash AND
-            creator_id = 0
+            creator_id = userID AND
+            def_hash = defHash
         );
     END IF;
 
@@ -198,8 +196,8 @@ BEGIN
         FROM Entities
         WHERE (
             is_private = (SELECT is_private FROM Entities WHERE id = entID) AND
-            def_hash = defHash AND
-            creator_id = userID
+            creator_id = userID AND
+            def_hash = defHash
         );
     END IF;
 
@@ -209,20 +207,6 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE editEntityIdentifier (
-    IN userID BIGINT UNSIGNED,
-    IN entID BIGINT UNSIGNED,
-    IN ident VARBINARY(255)
-)
-BEGIN
-    UPDATE Entities
-    SET creation_ident = ident
-    WHERE (id = entID AND creator_id = userID);
-
-    SELECT entID AS outID, 0 AS exitCode;
-END //
-DELIMITER ;
 
 
 
