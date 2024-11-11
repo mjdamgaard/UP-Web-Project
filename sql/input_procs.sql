@@ -4,8 +4,7 @@ SELECT "Input procedures";
 DROP PROCEDURE insertOrUpdateScore;
 DROP PROCEDURE deleteScore;
 
-DROP PROCEDURE insertOrFindEntity;
-DROP PROCEDURE insertOrFindAnonymousEntity;
+DROP PROCEDURE insertEntity;
 DROP PROCEDURE publicizeEntity;
 DROP PROCEDURE privatizeEntity;
 DROP PROCEDURE editEntity;
@@ -67,72 +66,82 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE insertOrFindEntity (
+CREATE PROCEDURE insertEntity (
     IN userID BIGINT UNSIGNED,
     IN type CHAR,
     IN defStr TEXT,
-    IN isPrivate BOOL
+    IN isPrivate BOOL,
+    IN isEditable BOOL,
+    IN isAnonymous BOOL,
+    IN insertHash BOOL
 )
-BEGIN
+BEGIN proc: BEGIN
     DECLARE outID, exitCode BIGINT UNSIGNED;
-    DECLARE defHash CHAR(64) DEFAULT (SHA2(CONCAT(type, defStr), 256));
+    DECLARE defHash CHAR(64); -- DEFAULT (SHA2(CONCAT(type, defStr), 256));
 
-    INSERT IGNORE INTO Entities (
-        creator_id, type_ident, def_str, def_hash, is_private
+    IF NOT (
+        (isPrivate <= 1 AND isEditable <= 1) AND
+        (isPrivate = 0 OR userID != 0 AND isEditable = 1) AND
+        (userID != 0 OR isEditable = 0) AND
+        (NOT insertHash OR isEditable = 0)
+    ) THEN
+        SET exitCode = 2; -- wrong combination is boolean values.
+        SET outID = NULL;
+        SELECT outID, exitCode;
+        LEAVE proc;
+    END IF;
+
+    IF (insertHash) THEN
+        SET defHash = SHA2(CONCAT(type, defStr), 256);
+
+        SELECT ent_id INTO outID
+        FROM EntityHashes
+        WHERE def_hash = defHash;
+        IF (outID IS NOT NULL) THEN
+            SET exitCode = 1; -- find.
+            SELECT outID, exitCode;
+            LEAVE proc;
+        END IF;
+
+        -- If the hash does not already exist, repeat the same select statement
+        -- but with a locking read (i.e. SELECT ... FOR UPDATE).
+        SELECT ent_id INTO outID
+        FROM EntityHashes
+        WHERE def_hash = defHash
+        FOR UPDATE;
+        IF (outID IS NOT NULL) THEN
+            SET exitCode = 1; -- find.
+            SELECT outID, exitCode;
+            LEAVE proc;
+        END IF;
+    END IF;
+
+    INSERT INTO Entities (
+        creator_id,
+        type_ident, def_str, is_private, is_editable
     )
     VALUES (
-        userID, type, defStr, defHash, isPrivate
+        CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
+        type, defStr, isPrivate, isEditable
     );
-    IF (ROW_COUNT() > 0) THEN
-        SET exitCode = 0; -- insert.
-        SELECT LAST_INSERT_ID() INTO outID;
-    ELSE
-        SET exitCode = 1; -- find.
-        SELECT id INTO outID
-        FROM Entities
-        WHERE (
-            is_private = isPrivate AND
-            creator_id = userID AND
-            def_hash = defHash
+    SET outID = LAST_INSERT_ID();
+    SET exitCode = 0; -- insert.
+    
+    IF (insertHash) THEN
+        INSERT INTO EntityHashes (
+            def_hash, ent_id
+        )
+        VALUES (
+            defHash, outID
         );
     END IF;
 
+
     SELECT outID, exitCode;
-END //
+END proc; END //
 DELIMITER ;
 
 
-
-DELIMITER //
-CREATE PROCEDURE insertOrFindAnonymousEntity (
-    IN type CHAR,
-    IN defStr TEXT
-)
-BEGIN
-    DECLARE outID, exitCode BIGINT UNSIGNED;
-    DECLARE defHash CHAR(64) DEFAULT (SHA2(CONCAT(type, defStr), 256));
-
-    INSERT IGNORE INTO Entities (
-        creator_id, type_ident, def_str, def_hash, is_private
-    )
-    VALUES (0, type, defStr, defHash, 0);
-    IF (ROW_COUNT() > 0) THEN
-        SET exitCode = 0; -- insert.
-        SELECT LAST_INSERT_ID() INTO outID;
-    ELSE
-        SET exitCode = 1; -- find.
-        SELECT id INTO outID
-        FROM Entities
-        WHERE (
-            is_private = 0 AND
-            creator_id = userID AND
-            def_hash = defHash
-        );
-    END IF;
-
-    SELECT outID, exitCode;
-END //
-DELIMITER ;
 
 
 

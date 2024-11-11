@@ -10,6 +10,7 @@ DROP TABLE Scores;
 
 /* Entities */
 DROP TABLE Entities;
+DROP TABLE EntityHashes;
 
 /* Users and Bots */
 -- DROP TABLE Users;
@@ -297,15 +298,12 @@ CREATE TABLE Entities (
     -- depends on type_ident.
     def_str TEXT NOT NULL, -- (Can be resized.)
 
-    def_hash CHAR(64) NOT NULL DEFAULT (
-        SHA2(CONCAT(type_ident, def_str), 256)
-    ),
+    -- def_hash CHAR(64) NOT NULL DEFAULT (
+    --     SHA2(CONCAT(type_ident, def_str), 256)
+    -- ),
 
     -- The user who submitted the entity, unless creator_id = 0, which means
-    -- that the creator is anonymous and have forfeited the rights to edit
-    -- the entity, but on the other hand, it can now be searched on the
-    -- (is_private, def_hash, creator_id) index without knowing its original
-    -- creator.
+    -- that the creator is anonymous.
     creator_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
     -- A boolean representing whether this entity can be viewed by anyone other
@@ -317,20 +315,33 @@ CREATE TABLE Entities (
     is_editable TINYINT UNSIGNED NOT NULL DEFAULT 1,
     CHECK (is_editable <= 1),
 
-    -- -- Creation identifier used by a user to structure and edit their creations.
-    -- creation_ident VARBINARY(255) NOT NULL DEFAULT "",
+    CHECK (is_private = 0 OR creator_id != 0 AND is_editable = 1),
+    CHECK (creator_id != 0 OR is_editable = 0),
 
-    CHECK (creator_id != 0 OR is_private = 1),
 
-    -- UNIQUE INDEX (is_private, def_hash, creator_id),
+    -- -- -- Creation identifier used by a user to structure and edit their creations.
+    -- -- creation_ident VARBINARY(255) NOT NULL DEFAULT "",
 
-    -- UNIQUE INDEX (creator_id, creation_ident, id),
+    -- CHECK (creator_id != 0 OR is_private = 1),
 
-    UNIQUE INDEX (is_private, creator_id, def_hash),
+    -- -- UNIQUE INDEX (is_private, def_hash, creator_id),
 
-    modified_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    -- The modified_at field is (potentially) for future use.
+    -- -- UNIQUE INDEX (creator_id, creation_ident, id),
+
+    -- UNIQUE INDEX (is_private, creator_id, def_hash),
+
+    -- modified_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    -- -- The modified_at field is (potentially) for future use.
 );
+
+
+CREATE TABLE EntityHashes (
+    def_hash CHAR(64) NOT NULL PRIMARY KEY,
+
+    ent_id BIGINT UNSIGNED NOT NULL
+);
+
+
 
 
 /* Some initial inserts */
