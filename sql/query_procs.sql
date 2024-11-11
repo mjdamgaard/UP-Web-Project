@@ -282,10 +282,6 @@ DELIMITER ;
 
 
 
-
-
-
-
 DELIMITER //
 CREATE PROCEDURE selectEntity (
     IN entID BIGINT UNSIGNED,
@@ -301,7 +297,8 @@ BEGIN
             END
         ) AS defStr,
         LENGTH(def_str) AS len,
-        creator_id AS creatorID
+        creator_id AS creatorID,
+        is_editable AS isEditable
     FROM Entities
     WHERE (
         id = entID AND
@@ -329,6 +326,7 @@ BEGIN
         ) AS defStr,
         LENGTH(def_str) AS len,
         creator_id AS creatorID,
+        is_editable AS isEditable,
         is_private AS isPrivate
     FROM Entities
     WHERE (

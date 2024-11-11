@@ -319,7 +319,7 @@ CREATE TABLE Entities (
     -- editable. 
     CHECK (is_private = 0 OR creator_id != 0 AND is_editable = 1),
     -- If creator ID is 0, then it is never editable.
-    CHECK (creator_id != 0 OR is_editable = 0),
+    CHECK (creator_id != 0 OR is_editable = 0)
 
 
     -- -- -- Creation identifier used by a user to structure and edit their creations.

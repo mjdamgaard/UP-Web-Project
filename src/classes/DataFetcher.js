@@ -32,9 +32,9 @@ export class DataFetcher {
       s: 0,
     };
     DBRequestManager.query(reqData, (result) => {
-      let [datatype, defStr, len, creatorID] = result[0] ?? [];
+      let [datatype, defStr, len, creatorID, isEditable] = result[0] ?? [];
       let isContained = (len <= 65535); 
-      callback(datatype, defStr, len, creatorID, isContained);
+      callback(datatype, defStr, isContained, len, creatorID, isEditable);
     });
   }
 
@@ -46,9 +46,11 @@ export class DataFetcher {
 
     entIDs.forEach((entID, ind) => {
       parallelCallbackHandler.push(() => {
-        this.fetchPublicSmallEntity(
-          entID, (datatype, defStr, len, creatorID, isContained) => {
-            results[ind] = [datatype, defStr, len, creatorID, isContained];
+        this.fetchPublicSmallEntity(entID,
+          (datatype, defStr, isContained, len, creatorID, isEditable) => {
+            results[ind] = [
+              datatype, defStr, isContained, len, creatorID, isEditable
+            ];
           }
         );
       });
@@ -60,8 +62,8 @@ export class DataFetcher {
   }
 
   static fetchPublicObject(entID, callback) {
-    DataFetcher.fetchPublicSmallEntity(
-      entID, (datatype, defStr, len, creatorID, isContained) => {
+    DataFetcher.fetchPublicSmallEntity(entID,
+      (datatype, defStr, isContained, len, creatorID, isEditable) => {
         if (datatype !== "j" || !isContained) {
           callback(null);
           return;
@@ -91,9 +93,12 @@ export class DataFetcher {
       s: 0,
     };
     DBRequestManager.query(reqData, (result) => {
-      let [datatype, defStr, len, creatorID] = result[0] ?? [];
+      let [datatype, defStr, len, creatorID, isEditable, isPrivate] =
+        result[0] ?? [];
       let isContained = (len <= 65535); 
-      callback(datatype, defStr, len, creatorID, isContained);
+      callback(
+        datatype, defStr, isContained, len, creatorID, isEditable, isPrivate
+      );
     });
   }
 
@@ -107,7 +112,10 @@ export class DataFetcher {
       parallelCallbackHandler.push(() => {
         this.fetchSmallEntity(getAccountData, entID,
           (datatype, defStr, len, creatorID, isContained) => {
-            results[ind] = [datatype, defStr, len, creatorID, isContained];
+            results[ind] = [
+              datatype, defStr, isContained, len, creatorID,
+              isEditable, isPrivate
+            ];
           }
         );
       });
@@ -120,7 +128,7 @@ export class DataFetcher {
 
   static fetchObject(getAccountData, entID, callback) {
     DataFetcher.fetchSmallEntity(getAccountData, entID,
-      (datatype, defStr, len, creatorID, isContained) => {
+      (datatype, isContained, defStr) => {
         if (datatype !== "j" || !isContained) {
           callback(null);
           return;

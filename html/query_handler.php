@@ -144,13 +144,13 @@ switch ($reqType) {
         $sql = "CALL selectEntity (?, ?, ?)";
         $paramNameArr = array("id", "m", "s");
         $typeArr = array("id", "uint", "uint");
-        // output: [[type, defStr, len, creatorID]].
+        // output: [[type, defStr, len, creatorID, isEditable]].
         break;
     case "entAsUser":
         $sql = "CALL selectEntityAsUser (?, ?, ?, ?)";
         $paramNameArr = array("u", "id", "m", "s");
         $typeArr = array("id", "id", "uint", "uint");
-        // output: [[type, defStr, len, creatorID, isPublic]].
+        // output: [[type, defStr, len, creatorID, isEditable, isPrivate]].
         break;
     case "entFromHash":
         $sql = "CALL selectEntityFromHash (?, ?, ?, ?)";
