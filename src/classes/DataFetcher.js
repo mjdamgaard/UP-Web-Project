@@ -39,7 +39,7 @@ export class DataFetcher {
   }
 
 
-  static fetchSeveralEntities(entIDs, callback) {
+  static fetchSeveralPublicEntities(entIDs, callback) {
     const results = Array(entIDs.length);
 
     const parallelCallbackHandler = new ParallelCallbackHandler;
@@ -59,6 +59,83 @@ export class DataFetcher {
     });
   }
 
+  static fetchPublicObject(entID, callback) {
+    DataFetcher.fetchPublicSmallEntity(
+      entID, (datatype, defStr, len, creatorID, isContained) => {
+        if (datatype !== "j" || !isContained) {
+          callback(null);
+          return;
+        }
+        var obj;
+        try {
+          obj = JSON.parse(defStr);
+        } catch (error) {
+          callback(null);
+          return;
+        }
+        callback(obj);
+      }
+    );
+  }
+
+
+  static fetchSmallEntity(getAccountData, entID, callback) {
+    // TODO: Also query for the highest rated 'representation' and if the
+    // score is high enough, use the entity data from that instead.
+    let reqData = {
+      req: "entAsUser",
+      ses: getAccountData("sesIDHex"),
+      u: getAccountData("userID"),
+      id: entID,
+      m: 65535,
+      s: 0,
+    };
+    DBRequestManager.query(reqData, (result) => {
+      let [datatype, defStr, len, creatorID] = result[0] ?? [];
+      let isContained = (len <= 65535); 
+      callback(datatype, defStr, len, creatorID, isContained);
+    });
+  }
+
+
+  static fetchSeveralEntities(getAccountData, entIDs, callback) {
+    const results = Array(entIDs.length);
+
+    const parallelCallbackHandler = new ParallelCallbackHandler;
+
+    entIDs.forEach((entID, ind) => {
+      parallelCallbackHandler.push(() => {
+        this.fetchSmallEntity(getAccountData, entID,
+          (datatype, defStr, len, creatorID, isContained) => {
+            results[ind] = [datatype, defStr, len, creatorID, isContained];
+          }
+        );
+      });
+    });
+
+    parallelCallbackHandler.execAndThen(() => {
+      callback(results);
+    });
+  }
+
+  static fetchObject(getAccountData, entID, callback) {
+    DataFetcher.fetchSmallEntity(getAccountData, entID,
+      (datatype, defStr, len, creatorID, isContained) => {
+        if (datatype !== "j" || !isContained) {
+          callback(null);
+          return;
+        }
+        var obj;
+        try {
+          obj = JSON.parse(defStr);
+        } catch (error) {
+          callback(null);
+          return;
+        }
+        callback(obj);
+      }
+    );
+  }
 
 
 
@@ -135,7 +212,7 @@ export class DataFetcher {
 
 
 
-};
+}
 
 
 

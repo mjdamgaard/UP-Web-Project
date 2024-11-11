@@ -72,9 +72,9 @@ switch ($reqType) {
         $typeArr = array("id", "id", "id");
         break;
     case "ent":
-        $sql = "CALL insertOrFindEntity (?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "t", "d", "prv", "i");
-        $typeArr = array("id", "char", "text", "bool", "str");
+        $sql = "CALL insertOrFindEntity (?, ?, ?, ?)";
+        $paramNameArr = array("u", "t", "d", "prv");
+        $typeArr = array("id", "char", "text", "bool");
         break;
     case "anonEnt":
         $sql = "CALL insertOrFindAnonymousEntity (?, ?)";
@@ -95,11 +95,6 @@ switch ($reqType) {
         $sql = "CALL editEntity (?, ?, ?, ?)";
         $paramNameArr = array("u", "e", "t", "d");
         $typeArr = array("id", "id", "char", "text");
-        break;
-    case "editIdent":
-        $sql = "CALL editEntityIdentifier (?, ?, ?)";
-        $paramNameArr = array("u", "e", "i");
-        $typeArr = array("id", "id", "str");
         break;
     default:
         echoBadErrorJSONAndExit("Unrecognized request type");
