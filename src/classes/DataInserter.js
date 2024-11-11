@@ -21,7 +21,7 @@ export class DataInserter {
     callback(obj)
   }
 
-  updateWorkspaceObj(callback) {
+  updateWorkspace(callback) {
     if (!callback) {
       callback = () => {};
     }
@@ -63,6 +63,50 @@ export class DataInserter {
     });
   }
 
-  
+
+  addExistingEntToWorkspace(path, entID) {
+    let pathParts = path.split("/");
+    var wsObj = this.workspaceObj;
+    var targetNode;
+    // First create all required nodes in the workspace, and finish by having
+    // targetNode be the last node where entID is supposed to be inserted. 
+    pathParts.forEach(pathPart => {
+      if (!wsObj[pathPart]) {
+        wsObj[pathPart] = [null, {}];
+      }
+      targetNode = wsObj[pathPart];
+      wsObj = wsObj[pathPart][1];
+    });
+    // Finally insert entID at this potentially newly created node.
+    targetNode[0] = {
+      entID: entID.toString(),
+      isOwnedByUser: 0,
+    }
+  }
+
+
+  insertEnt(path, datatype, defStr, isAnonymous, isPrivate) {
+    let pathParts = path.split("/");
+    var wsObj = this.workspaceObj;
+    var targetNode;
+    // First create all required nodes in the workspace, and finish by having
+    // targetNode be the last node where entID is supposed to be inserted. 
+    pathParts.forEach(pathPart => {
+      if (!wsObj[pathPart]) {
+        wsObj[pathPart] = [null, {}];
+      }
+      targetNode = wsObj[pathPart];
+      wsObj = wsObj[pathPart][1];
+    });
+    // Finally insert entID at this potentially newly created node.
+    targetNode[0] = {
+      entID: entID.toString(),
+      isAnonymous: isAnonymous,
+      isPrivate: isAnonymous ? undefined : isPrivate,
+      isOwnedByUser: !isAnonymous,
+    }
+  }
+
+
 }
 
