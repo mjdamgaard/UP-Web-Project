@@ -315,7 +315,10 @@ CREATE TABLE Entities (
     is_editable TINYINT UNSIGNED NOT NULL DEFAULT 1,
     CHECK (is_editable <= 1),
 
+    -- If an entity is private, the creator ID is never 0, and it is always
+    -- editable. 
     CHECK (is_private = 0 OR creator_id != 0 AND is_editable = 1),
+    -- If creator ID is 0, then it is never editable.
     CHECK (creator_id != 0 OR is_editable = 0),
 
 
