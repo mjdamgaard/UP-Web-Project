@@ -12,9 +12,6 @@ DROP PROCEDURE selectScore;
 DROP PROCEDURE selectEntity;
 DROP PROCEDURE selectEntityAsUser;
 DROP PROCEDURE selectEntityFromHash;
-DROP PROCEDURE selectEntityFromHashAsUser;
-DROP PROCEDURE selectCreations;
-DROP PROCEDURE selectCreationsAsUser;
 
 
 DROP PROCEDURE selectUserInfo;
@@ -346,7 +343,6 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectEntityFromHash (
     IN defHash CHAR(64),
-    IN creatorID BIGINT UNSIGNED,
     IN maxLen INT UNSIGNED,
     IN startPos INT UNSIGNED
 )
@@ -360,96 +356,13 @@ BEGIN
         ) AS defStr,
         LENGTH(def_str) AS len
     FROM Entities
-    WHERE (
-        is_private = 0 AND
-        creator_id = creatorID AND
-        def_hash = defHash
+    WHERE id = (
+        SELECT ent_id
+        FROM EntityHashes
+        WHERE def_hash = defHash
     );
 END //
 DELIMITER ;
-
-
-
-DELIMITER //
-CREATE PROCEDURE selectEntityFromHashAsUser (
-    IN defHash CHAR(64),
-    IN userID BIGINT UNSIGNED,
-    IN maxLen INT UNSIGNED,
-    IN startPos INT UNSIGNED
-)
-BEGIN
-    SELECT
-        type_ident AS type,
-        (
-            CASE WHEN maxLen = 0 THEN SUBSTRING(def_str, startPos + 1)
-            ELSE SUBSTRING(def_str, startPos + 1, maxLen)
-            END
-        ) AS defStr,
-        LENGTH(def_str) AS len
-    FROM Entities
-    WHERE (
-        is_private = 1 AND
-        creator_id = userID AND
-        def_hash = defHash
-    );
-END //
-DELIMITER ;
-
-
-
-
-
-DELIMITER //
-CREATE PROCEDURE selectCreations (
-    IN creatorID BIGINT UNSIGNED,
-    IN maxNum INT UNSIGNED,
-    IN numOffset INT UNSIGNED,
-    IN isAscOrder BOOL
-)
-BEGIN
-    SELECT id AS entID
-    FROM Entities
-    WHERE (
-        is_private = 0 AND
-        creator_id = creatorID
-    )
-    ORDER BY
-        CASE WHEN isAscOrder THEN id END ASC,
-        CASE WHEN NOT isAscOrder THEN id END DESC
-    LIMIT numOffset, maxNum;
-END //
-DELIMITER ;
-
-
-
-DELIMITER //
-CREATE PROCEDURE selectCreationsAsUser (
-    IN userID BIGINT UNSIGNED,
-    IN maxNum INT UNSIGNED,
-    IN numOffset INT UNSIGNED,
-    IN isAscOrder BOOL
-)
-BEGIN
-    SELECT id AS entID
-    FROM Entities
-    WHERE (
-        is_private = 0 AND creator_id = userID OR
-        is_private = 1 AND creator_id = userID
-    )
-    ORDER BY
-        CASE WHEN isAscOrder THEN id END ASC,
-        CASE WHEN NOT isAscOrder THEN id END DESC
-    LIMIT numOffset, maxNum;
-END //
-DELIMITER ;
-
-
-
-
-
-
-
-
 
 
 

@@ -72,29 +72,14 @@ switch ($reqType) {
         $typeArr = array("id", "id", "id");
         break;
     case "ent":
-        $sql = "CALL insertOrFindEntity (?, ?, ?, ?)";
-        $paramNameArr = array("u", "t", "d", "prv");
-        $typeArr = array("id", "char", "text", "bool");
-        break;
-    case "anonEnt":
-        $sql = "CALL insertOrFindAnonymousEntity (?, ?)";
-        $paramNameArr = array("t", "d");
-        $typeArr = array("char", "text");
-        break;
-    case "publicizeEnt":
-        $sql = "CALL publicizeEntity (?, ?)";
-        $paramNameArr = array("u", "e");
-        $typeArr = array("id", "id");
-        break;
-    case "privatizeEnt":
-        $sql = "CALL privatizeEntity (?, ?)";
-        $paramNameArr = array("u", "e");
-        $typeArr = array("id", "id");
+        $sql = "CALL insertOrFindEntity (?, ?, ?, ?, ?, ?)";
+        $paramNameArr = array("u", "t", "d", "prv", "e", "h");
+        $typeArr = array("id", "char", "text", "bool", "bool", "bool");
         break;
     case "editEnt":
-        $sql = "CALL editEntity (?, ?, ?, ?)";
-        $paramNameArr = array("u", "e", "t", "d");
-        $typeArr = array("id", "id", "char", "text");
+        $sql = "CALL editEntity (?, ?, ?, ?, ?, ?, ?)";
+        $paramNameArr = array("u", "e", "t", "d", "prv", "e", "h");
+        $typeArr = array("id", "id", "char", "text", "bool", "bool", "bool");
         break;
     default:
         echoBadErrorJSONAndExit("Unrecognized request type");

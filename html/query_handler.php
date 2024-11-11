@@ -154,28 +154,22 @@ switch ($reqType) {
         break;
     case "entFromHash":
         $sql = "CALL selectEntityFromHash (?, ?, ?, ?)";
-        $paramNameArr = array("h", "c", "m", "s");
-        $typeArr = array("hash", "id", "uint", "uint");
+        $paramNameArr = array("h", "m", "s");
+        $typeArr = array("hash", "uint", "uint");
         // output: [[type, defStr, len]].
         break;
-    case "entFromHashAsUser":
-        $sql = "CALL selectEntityFromHashAsUser (?, ?, ?, ?)";
-        $paramNameArr = array("h", "u", "m", "s");
-        $typeArr = array("hash", "id", "uint", "uint");
-        // output: [[type, defStr, len]].
-        break;
-    case "creations":
-        $sql = "CALL selectCreations (?, ?, ?, ?)";
-        $paramNameArr = array("c", "m", "o", "a");
-        $typeArr = array("id", "uint", "uint", "bool");
-        // output: [[ident, entID], ...].
-        break;
-    case "creationsAsUser":
-        $sql = "CALL selectCreationsAsUser (?, ?, ?, ?)";
-        $paramNameArr = array("u", "m", "o", "a");
-        $typeArr = array("id", "uint", "uint", "bool");
-        // output: [[ident, entID], ...].
-        break;
+    // case "creations":
+    //     $sql = "CALL selectCreations (?, ?, ?, ?)";
+    //     $paramNameArr = array("c", "m", "o", "a");
+    //     $typeArr = array("id", "uint", "uint", "bool");
+    //     // output: [[ident, entID], ...].
+    //     break;
+    // case "creationsAsUser":
+    //     $sql = "CALL selectCreationsAsUser (?, ?, ?, ?)";
+    //     $paramNameArr = array("u", "m", "o", "a");
+    //     $typeArr = array("id", "uint", "uint", "bool");
+    //     // output: [[ident, entID], ...].
+    //     break;
     /* User data */
     // case "user":
     //     $sql = "CALL selectUserInfo (?)";
