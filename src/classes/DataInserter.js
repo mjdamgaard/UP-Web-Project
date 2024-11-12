@@ -66,6 +66,16 @@ export class DataInserter {
 
 
   addExistingEntityToWorkspace(path, entID) {
+    // Get or set the relevant node from path, then insert entID at this
+    // potentially newly created node.
+    let targetNode = this.#getOrSetNodeFromPath(path);
+    targetNode[0] = {
+      entID: entID.toString(),
+      c: null,
+    }
+  }
+
+  #getOrSetNodeFromPath(path) {
     let pathParts = path.split("/");
     var wsObj = this.workspaceObj;
     var targetNode;
@@ -78,12 +88,26 @@ export class DataInserter {
       targetNode = wsObj[pathPart];
       wsObj = wsObj[pathPart][1];
     });
-    // Finally insert entID at this potentially newly created node.
-    targetNode[0] = {
-      entID: entID.toString(),
-      c: null,
-    }
+    return targetNode;
   }
+
+  #getNodeFromPath(path) {
+    let pathParts = path.split("/");
+    var wsObj = this.workspaceObj;
+    var targetNode;
+    // Find the node pointed to by path, or return the match unchanged if
+    // this does not exist.
+    pathParts.forEach(pathPart => {
+      if (!wsObj[pathPart]) {
+        return null;
+      }
+      targetNode = wsObj[pathPart];
+      wsObj = wsObj[pathPart][1];
+    });
+    return targetNode;
+  }
+
+
 
 
   insertEntity(
@@ -102,31 +126,20 @@ export class DataInserter {
     };
     DBRequestManager.input(reqData, (result) => {
       if (result.exitCode >= 2) {
-        callback(result.outID, result.exitCode)
+        callback(result.outID, result.exitCode);
         return;
       }
-      let pathParts = path.split("/");
-      var wsObj = this.workspaceObj;
-      var targetNode;
-      // First create all required nodes in the workspace, and finish by having
-      // targetNode be the last node where entID is supposed to be inserted. 
-      pathParts.forEach(pathPart => {
-        if (!wsObj[pathPart]) {
-          wsObj[pathPart] = [null, {}];
-        }
-        targetNode = wsObj[pathPart];
-        wsObj = wsObj[pathPart][1];
-      });
-      // Finally insert entID at this potentially newly created node.
+      // Get or set the relevant node from path, then insert entID at this
+      // potentially newly created node.
+      let targetNode = this.#getOrSetNodeFromPath(path);
       targetNode[0] = {
         entID: result.outID.toString(),
         c: isAnonymous ? 0 : this.getAccountData("userID"),
         prv: isAnonymous ? undefined : isPrivate,
         ed: isAnonymous ? undefined : isPrivate ? undefined : isEditable,
-      }
-      callback(result.outID, result.exitCode)
+      };
+      callback(result.outID, result.exitCode);
     });
-
   }
 
   insertParsedEntity(
@@ -142,7 +155,81 @@ export class DataInserter {
 
 
   parseDefStr(str) {
-    
+    return str.replaceAll(/@\[[^\]\]]*\]/g, match => {
+      let path = match.slice(2, -1);
+      // Find the node pointed to by path, or return the match unchanged if
+      // this does not exist.
+      let targetNode = this.#getNodeFromPath(path);
+      if (!targetNode) {
+        return match;
+      }
+      // If the node has a recorded (not falsy) entID, return the corresponding
+      // entity reference, or else return the match unchanged.
+      let entData = targetNode[0];
+      if (entData && entData.entID) {
+        return "@" + entData.entID;
+      }
+      else {
+        return match;
+      }
+    });
   }
-}
 
+  insertOrEditEntity(
+    path, datatype, defStr, isAnonymous, isPrivate, isEditable, insertHash,
+    callback
+  ) {
+    // If an entID is not already recorded at path, simply insert a new entity.
+    let targetNode = this.#getNodeFromPath(path);
+    if (!targetNode || !targetNode[0].entID) {
+      insertParsedEntity(
+        path, datatype, defStr, isAnonymous, isPrivate, isEditable, insertHash,
+        callback
+      );
+      return;
+    }
+    // Else edit the given entity.
+    let entID = targetNode[0].entID;
+    let reqData = {
+      req: "editEnt",
+      ses: this.getAccountData("sesIDHex"),
+      u: isAnonymous ? 0 : this.getAccountData("userID"),
+      e: entID,
+      t: datatype,
+      d: defStr,
+      prv: isPrivate,
+      ed: isEditable,
+      h: insertHash,
+    };
+    DBRequestManager.input(reqData, (result) => {
+      if (result.exitCode >= 2) {
+        callback(result.outID, result.exitCode);
+        return;
+      }
+      // Get or set the relevant node from path, then insert entID at this
+      // potentially newly created node.
+      let targetNode = this.#getOrSetNodeFromPath(path);
+      targetNode[0] = {
+        entID: result.outID.toString(),
+        c: result.exitCode == "1" ? null :
+          isAnonymous ? 0 : this.getAccountData("userID"),
+        prv: isAnonymous ? undefined : isPrivate,
+        ed: isAnonymous ? undefined : isPrivate ? undefined : isEditable,
+      };
+      callback(result.outID, result.exitCode);
+    });
+  }
+
+
+  insertOrEditParsedEntity(
+    path, datatype, defStr, isAnonymous, isPrivate, isEditable, insertHash,
+    callback
+  ) {
+    let defStr = this.parseDefStr(defStr);
+    this.insertOrEditEntity(
+      path, datatype, defStr, isAnonymous, isPrivate, isEditable, insertHash,
+      callback
+    );
+  }
+
+}

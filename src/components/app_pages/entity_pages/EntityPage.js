@@ -70,7 +70,7 @@ export const EntityPage = ({entID, initTab}) => {
     [MEMBERS_REL_ID, "Members"],
   ]);
   const tabScaleKeysJSON = JSON.stringify([
-    [RELATIONS_REL_ID, entID],
+    [entID, RELATIONS_REL_ID],
   ]);
 
   // Before results is fetched, render this:
