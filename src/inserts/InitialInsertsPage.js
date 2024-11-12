@@ -1,13 +1,25 @@
-
+import {useEffect} from "react";
 import {DataInserter} from "../classes/DataInserter.js";
 
 
 
+export const InitialInsertsPage = () => {
+  return (
+    <div>
+      <h2>Initial inserts</h2>
+      <button onClick={() => initialInserts()}>
+        Insert
+      </button>
+    </div>
+  );
+}
 
-function initialInserts() {
+
+export function initialInserts() {
+  let sesIDHex = "00".repeat(60);
   let getAccountData = (propName) => {
     return (propName === "userID") ? "1" :
-      (propName === "sesIDHex") ? "" : null;
+      (propName === "sesIDHex") ? sesIDHex : null;
   }
   let dataInserter = new DataInserter(getAccountData);
 

@@ -110,8 +110,11 @@ export class DataFetcher {
 
     entIDs.forEach((entID, ind) => {
       parallelCallbackHandler.push(() => {
-        this.fetchSmallEntity(getAccountData, entID,
-          (datatype, defStr, len, creatorID, isContained) => {
+        this.fetchSmallEntity(getAccountData, entID, 
+          (
+            datatype, defStr, isContained, len, creatorID, isEditable,
+            isPrivate
+          ) => {
             results[ind] = [
               datatype, defStr, isContained, len, creatorID,
               isEditable, isPrivate

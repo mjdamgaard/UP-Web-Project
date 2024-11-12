@@ -17,8 +17,8 @@ export class DataInserter {
   fetchWorkspaceObject(callback) {
     DataFetcher.fetchObject(this.workspaceEntID, obj => {
       this.workspaceObj = obj;
+      callback(obj)
     });
-    callback(obj)
   }
 
   updateWorkspace(callback) {
@@ -37,6 +37,7 @@ export class DataInserter {
       d: JSON.stringify(this.workspaceObj),
       prv: 1,
       ed: 1,
+      a: 0,
       h: 0,
     };
     DBRequestManager.input(reqData, (result) => {
@@ -56,6 +57,7 @@ export class DataInserter {
       d: JSON.stringify(this.workspaceObj),
       prv: 1,
       ed: 1,
+      a: 0,
       h: 0,
     };
     DBRequestManager.input(reqData, (result) => {
@@ -122,6 +124,7 @@ export class DataInserter {
       d: defStr,
       prv: isPrivate,
       ed: isEditable,
+      a: isAnonymous,
       h: insertHash,
     };
     DBRequestManager.input(reqData, (result) => {
@@ -146,7 +149,7 @@ export class DataInserter {
     path, datatype, defStr, isAnonymous, isPrivate, isEditable, insertHash,
     callback
   ) {
-    let defStr = this.parseDefStr(defStr);
+    defStr = this.parseDefStr(defStr);
     this.insertEntity(
       path, datatype, defStr, isAnonymous, isPrivate, isEditable, insertHash,
       callback
@@ -182,7 +185,7 @@ export class DataInserter {
     // If an entID is not already recorded at path, simply insert a new entity.
     let targetNode = this.#getNodeFromPath(path);
     if (!targetNode || !targetNode[0].entID) {
-      insertParsedEntity(
+      this.insertParsedEntity(
         path, datatype, defStr, isAnonymous, isPrivate, isEditable, insertHash,
         callback
       );
@@ -199,6 +202,7 @@ export class DataInserter {
       d: defStr,
       prv: isPrivate,
       ed: isEditable,
+      a: isAnonymous,
       h: insertHash,
     };
     DBRequestManager.input(reqData, (result) => {
@@ -225,7 +229,7 @@ export class DataInserter {
     path, datatype, defStr, isAnonymous, isPrivate, isEditable, insertHash,
     callback
   ) {
-    let defStr = this.parseDefStr(defStr);
+    defStr = this.parseDefStr(defStr);
     this.insertOrEditEntity(
       path, datatype, defStr, isAnonymous, isPrivate, isEditable, insertHash,
       callback

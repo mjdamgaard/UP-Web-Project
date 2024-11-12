@@ -5,7 +5,7 @@ import {
 import React from 'react';
 
 import {EntityPage} from "./entity_pages/EntityPage.js";
-// import {ListGeneratorPage} from "../ListGenPages.js";
+import {InitialInsertsPage} from "../../inserts/InitialInsertsPage.js";
 
 const PageContext = createContext();
 
@@ -23,6 +23,10 @@ export const AppPage = (props) => {
   var page;
   if (/^\/e[1-9]/.test(pagePath)) {
     page = <EntityPage entID={pagePath.match(/[1-9][0-9]*/)[0]} />;
+  }
+  // Temporary initial insert page used for development.
+  else if (pagePath === "/init_inserts") {
+    page = <InitialInsertsPage />;
   }
 
   return (
