@@ -43,21 +43,12 @@ export const EntityList = ({scaleKey, userID}) => {
 
   // Else fetch it.
   DataFetcher.fetchEntityListFromScaleKey(
-    userID, JSON.parse(scaleKey), null, (entList, scaleID) => {
-      if (!scaleID) {
-        setState(prev => ({
-          ...prev,
-          scaleIDIsMissing: true,
-        }))
-      }
-      else {
+    userID, JSON.parse(scaleKey), null, (entList) => {
         setState(prev => ({
           ...prev,
           entList: entList,
-          scaleIDIsMissing: false,
         }))
       }
-    }
   );
   // And return a placeholder.
   return <>...</>;

@@ -159,7 +159,7 @@ export class DataFetcher {
       a: 0,
     };
     DBRequestManager.query(reqData, (entList) => {
-      callback(entList, scaleID);
+      callback(entList);
     });
   }
 
@@ -172,10 +172,8 @@ export class DataFetcher {
       o: 0,
       a: 0,
     };
-    DBRequestManager.query(reqData, (result) => {
-      let scaleID = result[0][1];
-      let entList = result.slice(1);
-      callback(entList, scaleID);
+    DBRequestManager.query(reqData, (entList) => {
+      callback(entList);
     });
   }
 
@@ -198,23 +196,21 @@ export class DataFetcher {
     }
 
     const entLists = Array(scaleKeys.length);
-    const scaleIDs = Array(scaleKeys.length);
 
     const parallelCallbackHandler = new ParallelCallbackHandler;
 
     scaleKeys.forEach((scaleKey, ind) => {
       parallelCallbackHandler.push(() => {
         this.fetchEntityListFromScaleKey(
-          userIDs[ind], scaleKey, n, (entList, scaleID) => {
+          userIDs[ind], scaleKey, n, (entList) => {
             entLists[ind] = entList;
-            scaleIDs[ind] = scaleID;
           }
         );
       });
     });
 
     parallelCallbackHandler.execAndThen(() => {
-      callback(entLists, scaleIDs);
+      callback(entLists);
     });
   }
 
@@ -225,11 +221,11 @@ export class DataFetcher {
 
 
 
-export function getScaleDefStr(relID, objID, qualID) {
+export function getScaleDefStr(objID, relID, qualID) {
   return JSON.stringify({
     Class: "@" + RELATIONS_CLASS_ID,
-    Relation: "@" + relID,
     Object: "@" + objID,
+    Relation: "@" + relID,
     Quality: "@" + (qualID || RELEVANCY_QUAL_ID),
   });
 }

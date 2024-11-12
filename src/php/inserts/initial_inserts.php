@@ -106,8 +106,8 @@ $inserter->insertPublicEntities("1", array(
         "Class" => "@[classes]",
         "Name" => "Scales",
         "Special attributes" => array(
-            array("Relation", "@[relations]", "mandatory"),
             array("Object", "@[entities]", "mandatory"),
+            array("Relation", "@[relations]", "mandatory"),
             array("Quality", "@[qualities]", "mandatory"),
             array("Description", "", "removed"),
         ),
@@ -184,11 +184,11 @@ $inserter->insertPublicEntities("1", array(
     // ))),
 
     /* Some qualities */
-    "qualities/usefulness" => array("j", json_encode(array(
+    "qualities/relevant" => array("j", json_encode(array(
         "Class" => "@[qualities]",
-        "Tag" => "Usefulness",
+        "Tag" => "Relevant",
         "Scale type" => "@[scale types/percentage scale]",
-        "Description" => "@[qualities/usefulness/desc]",
+        "Description" => "@[qualities/relevant/desc]",
     ))),
     "qualities/probability" => array("j", json_encode(array(
         "Class" => "@[qualities]",
@@ -273,11 +273,11 @@ $inserter->insertPublicEntities("1", array(
         "Title" => "Subclasses",
         "Subject class" => "@[classes]",
         "Object class" => "@[classes]",
-        "Description" => "@[relations/subdesc]",
+        "Description" => "@[relations/subclasses/desc]",
     ))),
     "relations/relations" => array("j", json_encode(array(
         "Class" => "@[relations]",
-        "Title" => "Useful relations",
+        "Title" => "Relations",
         "Subject class" => "@[relations]",
         "Object class" => "@[entities]",
         "Description" => "@[relations/relations/desc]",
@@ -391,33 +391,33 @@ $inserter->insertPublicEntities("0", array(
     "scales/entities->subclasses" => array("j",
         json_encode(array(
             "Class" => "@[scales]",
-            "Relation" => "@[relations/subclasses]",
             "Object" => "@[entities]",
-            "Quality" => "@[qualities/usefulness]",
+            "Relation" => "@[relations/subclasses]",
+            "Quality" => "@[qualities/relevant]",
         )
     )),
     // "scales/entities->members" => array("j",
     //     json_encode(array(
     //         "Class" => "@[scales]",
-    //         "Relation" => "@[relations/members]",
     //         "Object" => "@[entities]",
-    //         "Quality" => "@[qualities/usefulness]",
+    //         "Relation" => "@[relations/members]",
+    //         "Quality" => "@[qualities/relevant]",
     //     )
     // )),
     // "scales/classes->subclasses" => array("j",
     //     json_encode(array(
     //         "Class" => "@[scales]",
-    //         "Relation" => "@[relations/subclasses]",
     //         "Object" => "@[classes]",
-    //         "Quality" => "@[qualities/usefulness]",
+    //         "Relation" => "@[relations/subclasses]",
+    //         "Quality" => "@[qualities/relevant]",
     //     )
     // )),
     // "scales/classes->members" => array("j",
     //     json_encode(array(
     //         "Class" => "@[scales]",
-    //         "Relation" => "@[relations/members]",
     //         "Object" => "@[classes]",
-    //         "Quality" => "@[qualities/usefulness]",
+    //         "Relation" => "@[relations/members]",
+    //         "Quality" => "@[qualities/relevant]",
     //     )
     // )),
 ));

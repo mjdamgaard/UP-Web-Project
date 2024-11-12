@@ -65,7 +65,7 @@ export const SubpagesWithTabs = (props) => {
     }
     let tabScaleKeys = JSON.parse(tabScaleKeysJSON);
     DataFetcher.fetchSeveralEntityLists(
-      userID, tabScaleKeys, 20, (entLists, scaleIDs) => {
+      userID, tabScaleKeys, 20, (entLists) => {
         let fetchedTabEntList = getUnionedParsedAndSortedEntList(entLists);
         let fetchedTabIDs = fetchedTabEntList.map(val => val[1]);
         setState(prev => ({

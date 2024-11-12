@@ -24,7 +24,7 @@ export const ClassSubpage = ({entID}) => {
     [entID, "All"],
   ]);
   const tabScaleKeysJSON = JSON.stringify([
-    [SUBCLASSES_REL_ID, entID],
+    [entID, SUBCLASSES_REL_ID],
   ]);
 
   return (
@@ -41,6 +41,6 @@ export const ClassSubpage = ({entID}) => {
 
 export const AllMembersPage = ({entID}) => {
   return (
-    <EntityList scaleKey={JSON.stringify([MEMBERS_REL_ID, entID])}/>
+    <EntityList scaleKey={JSON.stringify([entID, MEMBERS_REL_ID])}/>
   );
 };
