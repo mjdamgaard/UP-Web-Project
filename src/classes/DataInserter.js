@@ -101,7 +101,8 @@ export class DataInserter {
     // this does not exist.
     pathParts.forEach(pathPart => {
       if (!wsObj[pathPart]) {
-        return null;
+        targetNode = null;
+        return;
       }
       targetNode = wsObj[pathPart];
       wsObj = wsObj[pathPart][1];
