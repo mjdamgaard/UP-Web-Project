@@ -4,18 +4,52 @@ import {DataInserter} from "../classes/DataInserter.js";
 
 
 export const InitialInsertsPage = () => {
+  // TODO: Implement a scale from which to fetch a user's workspace, instead
+  // of this temporary solution of just storing it in localStorage.
+  const workspaceEntID = localStorage.getItem("workspaceEntID");
   const sesIDHex = "00".repeat(60);
   const getAccountData = useCallback((propName) => {
     return (propName === "userID") ? "1" :
       (propName === "sesIDHex") ? sesIDHex : null;
   });
-  const dataInserter = useRef(new DataInserter(getAccountData)).current;
+  const dataInserter = useRef(
+    new DataInserter(getAccountData, workspaceEntID)
+  ).current;
+  if (workspaceEntID) {
+    dataInserter.fetchWorkspaceObject();
+  }
+
   return (
     <div>
       <h2>Initial inserts</h2>
-      <button onClick={() => initialInserts(dataInserter)}>
-        Insert
-      </button>
+      <br/>
+      <div>
+        <button onClick={() => localStorage.removeItem("workspaceEntID")}>
+          Clear workspaceEntID
+        </button>
+      </div>
+      <hr/>
+      <div>
+        <button onClick={() => initialInserts(dataInserter)}>
+          Insert
+        </button>
+      </div>
+      <hr/>
+      <div>
+        <button onClick={() => {
+          dataInserter.createWorkspace((outID) => {
+            localStorage.setItem("workspaceEntID", outID);
+          });
+        }}>
+          Create workspace
+        </button>
+      </div>
+      <hr/>
+      <div>
+        <button onClick={() => dataInserter.updateWorkspace()}>
+          Update workspace
+        </button>
+      </div>
     </div>
   );
 }
@@ -515,4 +549,6 @@ export function initialInserts(dataInserter) {
         "Description": "@[comments/desc]",
     }),
   );
+
+  
 }

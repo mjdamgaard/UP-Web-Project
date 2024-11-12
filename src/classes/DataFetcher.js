@@ -131,12 +131,12 @@ export class DataFetcher {
 
   static fetchObject(getAccountData, entID, callback) {
     DataFetcher.fetchSmallEntity(getAccountData, entID,
-      (datatype, isContained, defStr) => {
+      (datatype, defStr, isContained) => {
         if (datatype !== "j" || !isContained) {
           callback(null);
           return;
         }
-        var obj;
+        var obj = null;
         try {
           obj = JSON.parse(defStr);
         } catch (error) {

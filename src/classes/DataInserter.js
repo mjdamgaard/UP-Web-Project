@@ -14,10 +14,10 @@ export class DataInserter {
     this.workspaceObj = {};
   }
 
-  fetchWorkspaceObject(callback) {
-    DataFetcher.fetchObject(this.workspaceEntID, obj => {
-      this.workspaceObj = obj;
-      callback(obj)
+  fetchWorkspaceObject(callback = () => {}) {
+    DataFetcher.fetchObject(this.getAccountData, this.workspaceEntID, obj => {
+      this.workspaceObj = obj ?? {};
+      callback(obj);
     });
   }
 
