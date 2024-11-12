@@ -36,16 +36,6 @@ export const InitialInsertsPage = () => {
       </div>
       <hr/>
       <div>
-        <button onClick={() => {
-          dataInserter.createWorkspace((outID) => {
-            localStorage.setItem("workspaceEntID", outID);
-          });
-        }}>
-          Create workspace
-        </button>
-      </div>
-      <hr/>
-      <div>
         <button onClick={() => dataInserter.updateWorkspace()}>
           Update workspace
         </button>
@@ -53,6 +43,7 @@ export const InitialInsertsPage = () => {
     </div>
   );
 }
+
 
 
 export function initialInserts(dataInserter) {
@@ -447,6 +438,42 @@ export function initialInserts(dataInserter) {
         "Object class": "@[classes]",
         "Description": "@[relations/qualities for members/desc]",
     }),
+  );
+
+
+  dataInserter.insertOrEditParsedEntity(
+    "relations/workspaces", "j", 
+    JSON.stringify({
+        "Class": "@[relations]",
+        "Title": "Workspaces",
+        "Subject class": "@[workspaces]",
+        "Object class": "@[users]",
+        "Description": "@[relations/workspaces/desc]",
+    }),
+  );
+  dataInserter.insertOrEditParsedEntity(
+    "workspaces", "j", 
+    JSON.stringify({
+        "Class": "@[classes]",
+        "Name": "Workspaces",
+        "Special attributes": [
+            ["Workspace object", "object", "mandatory"],
+            ["Description", "", "removed"],
+        ],
+        "Description": "@[workspaces/desc]",
+    }),
+  );
+  dataInserter.insertOrEditParsedEntity(
+    "workspaces/initial_admin's workspace", "j", 
+    JSON.stringify({
+        "Class": "@[workspaces]",
+        "Workspace object": {},
+    }),
+    0, 1, 1, 0,
+    (outID) => {
+      localStorage.setItem("workspaceEntID", outID)
+      dataInserter.workspaceEntID = outID;
+    },
   );
 
 

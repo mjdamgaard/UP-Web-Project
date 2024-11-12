@@ -5,6 +5,8 @@ import {DataFetcher} from "./DataFetcher.js";
 import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 
 
+const WORKSPACES_CLASS_ID = "27";
+
 
 export class DataInserter {
 
@@ -16,7 +18,7 @@ export class DataInserter {
 
   fetchWorkspaceObject(callback = () => {}) {
     DataFetcher.fetchObject(this.getAccountData, this.workspaceEntID, obj => {
-      this.workspaceObj = obj ?? {};
+      this.workspaceObj = (obj ?? {})["Workspace object"] ?? {};
       callback(obj);
     });
   }
@@ -34,7 +36,10 @@ export class DataInserter {
       u: this.getAccountData("userID"),
       e: this.workspaceEntID,
       t: "j",
-      d: JSON.stringify(this.workspaceObj),
+      d: JSON.stringify({
+        "Class": WORKSPACES_CLASS_ID,
+        "Workspace object": this.workspaceObj,
+      }),
       prv: 1,
       ed: 1,
       a: 0,
@@ -54,7 +59,10 @@ export class DataInserter {
       ses: this.getAccountData("sesIDHex"),
       u: this.getAccountData("userID"),
       t: "j",
-      d: JSON.stringify(this.workspaceObj),
+      d: JSON.stringify({
+        "Class": WORKSPACES_CLASS_ID,
+        "Workspace object": this.workspaceObj,
+      }),
       prv: 1,
       ed: 1,
       a: 0,
