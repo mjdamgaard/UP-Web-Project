@@ -113,8 +113,9 @@ export class DataInserter {
 
 
   insertEntity(
-    path, datatype, defStr, isAnonymous, isPrivate, isEditable, insertHash,
-    callback
+    path, datatype, defStr,
+    isAnonymous = 0, isPrivate = 0, isEditable = 1, insertHash = 0,
+    callback = () => {}
   ) {
     let reqData = {
       req: "ent",
@@ -179,8 +180,9 @@ export class DataInserter {
   }
 
   insertOrEditEntity(
-    path, datatype, defStr, isAnonymous, isPrivate, isEditable, insertHash,
-    callback
+    path, datatype, defStr,
+    isAnonymous = 0, isPrivate = 0, isEditable = 1, insertHash = 0,
+    callback = () => {}
   ) {
     // If an entID is not already recorded at path, simply insert a new entity.
     let targetNode = this.#getNodeFromPath(path);
@@ -233,15 +235,6 @@ export class DataInserter {
     this.insertOrEditEntity(
       path, datatype, defStr, isAnonymous, isPrivate, isEditable, insertHash,
       callback
-    );
-  }
-
-
-  insertOrEditPublicParsedEntity(
-    path, datatype, defStr, insertHash = 0, callback
-  ) {
-    this.insertOrEditParsedEntity(
-      path, datatype, defStr, 0, 0, 1, insertHash, callback
     );
   }
 }

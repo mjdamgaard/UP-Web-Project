@@ -1,13 +1,19 @@
-import {useEffect} from "react";
+import {useCallback, useRef} from "react";
 import {DataInserter} from "../classes/DataInserter.js";
 
 
 
 export const InitialInsertsPage = () => {
+  const sesIDHex = "00".repeat(60);
+  const getAccountData = useCallback((propName) => {
+    return (propName === "userID") ? "1" :
+      (propName === "sesIDHex") ? sesIDHex : null;
+  });
+  const dataInserter = useRef(new DataInserter(getAccountData)).current;
   return (
     <div>
       <h2>Initial inserts</h2>
-      <button onClick={() => initialInserts()}>
+      <button onClick={() => initialInserts(dataInserter)}>
         Insert
       </button>
     </div>
@@ -15,15 +21,9 @@ export const InitialInsertsPage = () => {
 }
 
 
-export function initialInserts() {
-  let sesIDHex = "00".repeat(60);
-  let getAccountData = (propName) => {
-    return (propName === "userID") ? "1" :
-      (propName === "sesIDHex") ? sesIDHex : null;
-  }
-  let dataInserter = new DataInserter(getAccountData);
+export function initialInserts(dataInserter) {
 
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "users/initial_admin", "j",
     JSON.stringify({
       "Class": "@[users]",
@@ -31,7 +31,7 @@ export function initialInserts() {
       "Description": "@[users/initial_admin/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "entities", "j", 
     JSON.stringify({
         "Class": "@[classes]",
@@ -44,13 +44,13 @@ export function initialInserts() {
         "Description": "@[entities/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "entities/desc", "x", (
         "<h1><class>Entities</class></h1>" +
         "..."
     )
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "classes", "j", 
     JSON.stringify({
         "Class": "@[classes]",
@@ -76,7 +76,7 @@ export function initialInserts() {
         "Description": "@[classes/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "classes/desc", "x", ( // ('x' for 'XML,' or simply 'teXt.')
         "<h1>Classes</h1>" +
         "<h2>Description</h2>" +
@@ -116,7 +116,7 @@ export function initialInserts() {
         // level of abstraction that is the most obvious (if not defined) for
         // the class..
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "users", "j", 
     JSON.stringify({
         "Class": "@[classes]",
@@ -128,7 +128,7 @@ export function initialInserts() {
         "Description": "@[users/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "scales", "j", 
     JSON.stringify({
         "Class": "@[classes]",
@@ -143,14 +143,14 @@ export function initialInserts() {
         "Description": "@[scales/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "scales/desc", "x", (
       "<h1>Scales</h1>" +
       "..."
     )
   );
 
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "scalar parameters", "j", 
     JSON.stringify({
         "Class": "@[classes]",
@@ -165,7 +165,7 @@ export function initialInserts() {
     }),
   );
 
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "qualities", "j", 
     JSON.stringify({
         "Class": "@[classes]",
@@ -178,7 +178,7 @@ export function initialInserts() {
         "Description": "@[qualities/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "scale types", "j", 
     JSON.stringify({
         "Class": "@[classes]",
@@ -192,7 +192,7 @@ export function initialInserts() {
   );
 
     /* Some scale types */
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "scale types/percentage scale", "j", 
     JSON.stringify({
         "Class": "@[scale types]",
@@ -200,7 +200,7 @@ export function initialInserts() {
         "Description": "@[scale types/percentage scale/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "scale types/relative scale", "j", 
     JSON.stringify({
         "Class": "@[classes]",
@@ -214,7 +214,7 @@ export function initialInserts() {
         //0-10-star-scale part of the description.
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "scale types/value scale", "j", 
     JSON.stringify({
         "Class": "@[classes]",
@@ -234,7 +234,7 @@ export function initialInserts() {
     // ))),
 
     /* Some qualities */
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "qualities/relevant", "j", 
     JSON.stringify({
         "Class": "@[qualities]",
@@ -243,7 +243,7 @@ export function initialInserts() {
         "Description": "@[qualities/relevant/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "qualities/probability", "j", 
     JSON.stringify({
         "Class": "@[qualities]",
@@ -252,7 +252,7 @@ export function initialInserts() {
         "Description": "@[qualities/probability/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "qualities/agreement", "j", 
     JSON.stringify({
         "Class": "@[qualities]",
@@ -263,7 +263,7 @@ export function initialInserts() {
   );
 
 
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "qualities/good (no desc.)", "j", 
     JSON.stringify({
         "Class": "@[qualities]",
@@ -272,7 +272,7 @@ export function initialInserts() {
         "Scale type": "@[scale types/relative scale]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "qualities/funny (no desc.)", "j", 
     JSON.stringify({
         "Class": "@[qualities]",
@@ -280,7 +280,7 @@ export function initialInserts() {
         "Scale type": "@[scale types/relative scale]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "qualities/good", "j", 
     JSON.stringify({
         "Class": "@[qualities]",
@@ -290,7 +290,7 @@ export function initialInserts() {
         "Description": "@[qualities/good/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "qualities/funny", "j", 
     JSON.stringify({
         "Class": "@[qualities]",
@@ -299,7 +299,7 @@ export function initialInserts() {
         "Description": "@[qualities/funny/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "qualities/spoilers", "j", 
     JSON.stringify({
         "Class": "@[qualities]",
@@ -309,7 +309,7 @@ export function initialInserts() {
     }),
   );
 
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "qualities/price", "j", 
     JSON.stringify({
         "Class": "@[qualities]",
@@ -318,7 +318,7 @@ export function initialInserts() {
         "Description": "@[qualities/price/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "qualities/durability", "j", 
     JSON.stringify({
         "Class": "@[qualities]",
@@ -330,7 +330,7 @@ export function initialInserts() {
 
 
     /* Relations */
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "relations", "j", 
     JSON.stringify({
         "Class": "@[classes]",
@@ -344,7 +344,7 @@ export function initialInserts() {
         "Description": "@[relations/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "relations/members", "j", 
     JSON.stringify({
         "Class": "@[relations]",
@@ -354,7 +354,7 @@ export function initialInserts() {
         "Description": "@[relations/members/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "relations/subclasses", "j", 
     JSON.stringify({
         "Class": "@[relations]",
@@ -364,7 +364,7 @@ export function initialInserts() {
         "Description": "@[relations/subclasses/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "relations/relations", "j", 
     JSON.stringify({
         "Class": "@[relations]",
@@ -374,7 +374,7 @@ export function initialInserts() {
         "Description": "@[relations/relations/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "relations/relations for members", "j", 
     JSON.stringify({
         "Class": "@[relations]",
@@ -384,7 +384,7 @@ export function initialInserts() {
         "Description": "@[relations/relations for members/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "relations/Sub-relations", "j", 
     JSON.stringify({
         "Class": "@[relations]",
@@ -394,7 +394,7 @@ export function initialInserts() {
         "Description": "@[relations/sub-relations/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "relations/qualities", "j", 
     JSON.stringify({
         "Class": "@[relations]",
@@ -404,7 +404,7 @@ export function initialInserts() {
         "Description": "@[relations/qualities/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "relations/qualities for members", "j", 
     JSON.stringify({
         "Class": "@[relations]",
@@ -416,7 +416,7 @@ export function initialInserts() {
   );
 
 
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "relations/arguments", "j", 
     JSON.stringify({
         "Class": "@[relations]",
@@ -426,7 +426,7 @@ export function initialInserts() {
         "Description": "@[relations/arguments/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "relations/comments", "j", 
     JSON.stringify({
         "Class": "@[relations]",
@@ -436,7 +436,7 @@ export function initialInserts() {
         "Description": "@[relations/comments/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "relations/reaction comments", "j", 
     JSON.stringify({
         "Class": "@[relations]",
@@ -446,7 +446,7 @@ export function initialInserts() {
         "Description": "@[relations/reaction comments/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "relations/informative comments", "j", 
     JSON.stringify({
         "Class": "@[relations]",
@@ -456,7 +456,7 @@ export function initialInserts() {
         "Description": "@[relations/informative comments/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "relations/relevant statements", "j", 
     JSON.stringify({
         "Class": "@[relations]",
@@ -466,7 +466,7 @@ export function initialInserts() {
         "Description": "@[relations/relevant statements/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "relations/discussions", "j", 
     JSON.stringify({
         "Class": "@[relations]",
@@ -476,7 +476,7 @@ export function initialInserts() {
         "Description": "@[relations/discussions/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "relations/facts", "j", 
     JSON.stringify({
         "Class": "@[relations]",
@@ -488,7 +488,7 @@ export function initialInserts() {
   );
 
 
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "statements", "j", 
     JSON.stringify({
         "Class": "@[classes]",
@@ -502,7 +502,7 @@ export function initialInserts() {
         "Description": "@[statements/desc]",
     }),
   );
-  dataInserter.insertOrEditPublicParsedEntity(
+  dataInserter.insertOrEditParsedEntity(
     "comments", "j", 
     JSON.stringify({
         "Class": "@[classes]",
