@@ -232,4 +232,12 @@ export class DataInserter {
     );
   }
 
+
+  insertOrEditPublicParsedEntity(
+    path, datatype, defStr, insertHash = 0, callback
+  ) {
+    this.insertOrEditParsedEntity(
+      path, datatype, defStr, 0, 0, 1, insertHash, callback
+    );
+  }
 }
