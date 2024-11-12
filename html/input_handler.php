@@ -73,12 +73,12 @@ switch ($reqType) {
         break;
     case "ent":
         $sql = "CALL insertOrFindEntity (?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "t", "d", "prv", "e", "h");
+        $paramNameArr = array("u", "t", "d", "prv", "ed", "h");
         $typeArr = array("id", "char", "text", "bool", "bool", "bool");
         break;
     case "editEnt":
         $sql = "CALL editEntity (?, ?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "e", "t", "d", "prv", "e", "h");
+        $paramNameArr = array("u", "e", "t", "d", "prv", "ed", "h");
         $typeArr = array("id", "id", "char", "text", "bool", "bool", "bool");
         break;
     default:

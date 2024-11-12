@@ -11,10 +11,10 @@ export class DataInserter {
   constructor(getAccountData, workspaceEntID) {
     this.getAccountData = getAccountData;
     this.workspaceEntID = workspaceEntID;
-    this.workspaceObj = null;
+    this.workspaceObj = {};
   }
 
-  fetchWorkspaceObj(callback) {
+  fetchWorkspaceObject(callback) {
     DataFetcher.fetchObject(this.workspaceEntID, obj => {
       this.workspaceObj = obj;
     });
@@ -30,41 +30,42 @@ export class DataInserter {
     }
     let reqData = {
       req: "editEnt",
-      ses: getAccountData("sesIDHex"),
-      u: getAccountData("userID"),
+      ses: this.getAccountData("sesIDHex"),
+      u: this.getAccountData("userID"),
       e: this.workspaceEntID,
       t: "j",
       d: JSON.stringify(this.workspaceObj),
+      prv: 1,
+      ed: 1,
+      h: 0,
     };
     DBRequestManager.input(reqData, (result) => {
-      callback(result);
+      callback(result.outID, result.exitCode);
     });
   }
 
-  createWorkspace(workspaceObj, callback) {
+  createWorkspace(callback) {
     if (!callback) {
       callback = () => {};
     }
-    if (!workspaceObj) {
-      return;
-    }
     let reqData = {
       req: "ent",
-      ses: getAccountData("sesIDHex"),
-      u: getAccountData("userID"),
+      ses: this.getAccountData("sesIDHex"),
+      u: this.getAccountData("userID"),
       t: "j",
-      d: JSON.stringify(workspaceObj),
+      d: JSON.stringify(this.workspaceObj),
       prv: 1,
+      ed: 1,
+      h: 0,
     };
     DBRequestManager.input(reqData, (result) => {
       this.workspaceEntID = result.outID;
-      this.workspaceObj = workspaceObj;
-      callback(result.outID);
+      callback(result.outID, result.exitCode);
     });
   }
 
 
-  addExistingEntToWorkspace(path, entID) {
+  addExistingEntityToWorkspace(path, entID) {
     let pathParts = path.split("/");
     var wsObj = this.workspaceObj;
     var targetNode;
@@ -80,33 +81,68 @@ export class DataInserter {
     // Finally insert entID at this potentially newly created node.
     targetNode[0] = {
       entID: entID.toString(),
-      isOwnedByUser: 0,
+      c: null,
     }
   }
 
 
-  insertEnt(path, datatype, defStr, isAnonymous, isPrivate) {
-    let pathParts = path.split("/");
-    var wsObj = this.workspaceObj;
-    var targetNode;
-    // First create all required nodes in the workspace, and finish by having
-    // targetNode be the last node where entID is supposed to be inserted. 
-    pathParts.forEach(pathPart => {
-      if (!wsObj[pathPart]) {
-        wsObj[pathPart] = [null, {}];
+  insertEntity(
+    path, datatype, defStr, isAnonymous, isPrivate, isEditable, insertHash,
+    callback
+  ) {
+    let reqData = {
+      req: "ent",
+      ses: this.getAccountData("sesIDHex"),
+      u: isAnonymous ? 0 : this.getAccountData("userID"),
+      t: datatype,
+      d: defStr,
+      prv: isPrivate,
+      ed: isEditable,
+      h: insertHash,
+    };
+    DBRequestManager.input(reqData, (result) => {
+      if (result.exitCode >= 2) {
+        callback(result.outID, result.exitCode)
+        return;
       }
-      targetNode = wsObj[pathPart];
-      wsObj = wsObj[pathPart][1];
+      let pathParts = path.split("/");
+      var wsObj = this.workspaceObj;
+      var targetNode;
+      // First create all required nodes in the workspace, and finish by having
+      // targetNode be the last node where entID is supposed to be inserted. 
+      pathParts.forEach(pathPart => {
+        if (!wsObj[pathPart]) {
+          wsObj[pathPart] = [null, {}];
+        }
+        targetNode = wsObj[pathPart];
+        wsObj = wsObj[pathPart][1];
+      });
+      // Finally insert entID at this potentially newly created node.
+      targetNode[0] = {
+        entID: result.outID.toString(),
+        c: isAnonymous ? 0 : this.getAccountData("userID"),
+        prv: isAnonymous ? undefined : isPrivate,
+        ed: isAnonymous ? undefined : isPrivate ? undefined : isEditable,
+      }
+      callback(result.outID, result.exitCode)
     });
-    // Finally insert entID at this potentially newly created node.
-    targetNode[0] = {
-      entID: entID.toString(),
-      isAnonymous: isAnonymous,
-      isPrivate: isAnonymous ? undefined : isPrivate,
-      isOwnedByUser: !isAnonymous,
-    }
+
+  }
+
+  insertParsedEntity(
+    path, datatype, defStr, isAnonymous, isPrivate, isEditable, insertHash,
+    callback
+  ) {
+    let defStr = this.parseDefStr(defStr);
+    this.insertEntity(
+      path, datatype, defStr, isAnonymous, isPrivate, isEditable, insertHash,
+      callback
+    );
   }
 
 
+  parseDefStr(str) {
+    
+  }
 }
 
