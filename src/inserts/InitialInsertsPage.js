@@ -43,8 +43,8 @@ export const InitialInsertsPage = () => {
                 }),
                 0, 1, 1, 0,
                 (outID) => {
-                  dataInserter.updateWorkspace()
-                  event.target.setAttribute("style", "color:gray;")
+                  dataInserter.updateWorkspace();
+                  event.target.setAttribute("style", "color:gray;");
                 },
               );
             },
@@ -67,16 +67,16 @@ export const InitialInsertsPage = () => {
       </div>
       <hr/>
       <div>
-        <button onClick={() => {
-          console.log(dataInserter);
+        <button onClick={(event) => {
+          copyBasicEntityIDModuleToClipboard(dataInserter);
+          event.target.setAttribute("style", "color:gray;");
         }}>
-          Log workspace
+          Generate basic_entity_ids.js
         </button>
       </div>
     </div>
   );
 }
-
 
 
 export function initialInserts(dataInserter) {
@@ -614,4 +614,45 @@ export function initialInserts(dataInserter) {
   );
 
   
+}
+
+
+
+
+
+
+
+
+
+
+export function getEntityIDModule(dataInserter, pathArr, objName) {
+  var ret = "\nexport const " + objName + " = {\n";
+  pathArr.forEach(path => {
+    let entID = dataInserter.getEntIDFromPath(path);
+    ret += '  "' + path + '": ' + (entID || "null") + ",\n"
+  });
+  ret += "\n};"
+  return ret;
+}
+
+export function copyEntityIDModuleToClipboard(dataInserter, pathArr, objName) {
+  let ret = getEntityIDModule(dataInserter, pathArr, objName);
+  navigator.clipboard.writeText(ret);
+  return ret;
+}
+
+
+
+const basicEntPaths = [
+  "classes",
+  "entities",
+  "relations",
+  "relations/relations",
+  "qualities/relevant",
+];
+
+export function copyBasicEntityIDModuleToClipboard(dataInserter) {
+  return copyEntityIDModuleToClipboard(
+    dataInserter, basicEntPaths, "basicEntIDs"
+  );
 }

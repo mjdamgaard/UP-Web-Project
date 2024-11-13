@@ -118,6 +118,15 @@ export class DataInserter {
     return targetNode;
   }
 
+  getEntIDFromPath(path) {
+    let targetNode = this.#getNodeFromPath(path);
+    if (!targetNode || !targetNode[0]) {
+      return;
+    }
+    else {
+      return targetNode[0].entID;
+    }
+  }
 
 
 
@@ -170,21 +179,10 @@ export class DataInserter {
   parseDefStr(str) {
     return str.replaceAll(/@\[[^\]\]]*\]/g, match => {
       let path = match.slice(2, -1);
-      // Find the node pointed to by path, or return the match unchanged if
+      // Find the entID pointed to by path, or return the match unchanged if
       // this does not exist.
-      let targetNode = this.#getNodeFromPath(path);
-      if (!targetNode) {
-        return match;
-      }
-      // If the node has a recorded (not falsy) entID, return the corresponding
-      // entity reference, or else return the match unchanged.
-      let entData = targetNode[0];
-      if (entData && entData.entID) {
-        return "@" + entData.entID;
-      }
-      else {
-        return match;
-      }
+      let entID = this.getEntIDFromPath(path);
+      return entID ? "@" + entID : match;
     });
   }
 
@@ -194,8 +192,8 @@ export class DataInserter {
     callback = () => {}
   ) {
     // If an entID is not already recorded at path, simply insert a new entity.
-    let targetNode = this.#getNodeFromPath(path);
-    if (!targetNode || !targetNode[0] || !targetNode[0].entID) {
+    let entID = this.getEntIDFromPath(path);
+    if (!entID) {
       this.insertEntity(
         path, datatype, defStr, isAnonymous, isPrivate, isEditable, insertHash,
         callback
@@ -203,7 +201,6 @@ export class DataInserter {
       return;
     }
     // Else edit the given entity.
-    let entID = targetNode[0].entID;
     let reqData = {
       req: "editEnt",
       ses: this.getAccountData("sesIDHex"),
