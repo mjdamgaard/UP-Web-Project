@@ -152,15 +152,17 @@ export class DataInserter {
         callback(result.outID, result.exitCode);
         return;
       }
-      // Get or set the relevant node from path, then insert entID at this
-      // potentially newly created node.
-      let targetNode = this.#getOrSetNodeFromPath(path);
-      targetNode[0] = {
-        entID: result.outID.toString(),
-        c: isAnonymous ? 0 : this.getAccountData("userID"),
-        prv: isAnonymous ? undefined : isPrivate,
-        ed: isAnonymous ? undefined : isPrivate ? undefined : isEditable,
-      };
+      // If path is provided, get or set the relevant node from path, then
+      // insert entID at this potentially newly created node.
+      if (path) {
+        let targetNode = this.#getOrSetNodeFromPath(path);
+        targetNode[0] = {
+          entID: result.outID.toString(),
+          c: isAnonymous ? 0 : this.getAccountData("userID"),
+          prv: isAnonymous ? undefined : isPrivate,
+          ed: isAnonymous ? undefined : isPrivate ? undefined : isEditable,
+        };
+      }
       callback(result.outID, result.exitCode);
     });
   }

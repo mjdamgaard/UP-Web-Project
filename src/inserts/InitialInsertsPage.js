@@ -16,8 +16,8 @@ export const InitialInsertsPage = () => {
   ).current;
   
   dataInserter.fetchWorkspaceObject((obj) => {
-    console.log(obj);
-    console.log(dataInserter);
+    // console.log(obj);
+    // console.log(dataInserter);
   });
 
   return (
@@ -613,6 +613,51 @@ export function initialInserts(dataInserter) {
     }),
   );
 
+
+
+  /* Scales */
+  dataInserter.insertParsedEntity(
+    "scales/entities->subclasses", "j", 
+    JSON.stringify({
+        "Class": "@[scales]",
+        "Object": "@[entities]",
+        "Relation": "@[relations/subclasses]",
+        "Quality": "@[qualities/relevant]",
+    }),
+    1, 0, 0, 1,
+  );
+  dataInserter.insertParsedEntity(
+    "scales/entities->members", "j", 
+    JSON.stringify({
+        "Class": "@[scales]",
+        "Object": "@[entities]",
+        "Relation": "@[relations/members]",
+        "Quality": "@[qualities/relevant]",
+    }),
+    1, 0, 0, 1,
+  );
+  dataInserter.insertParsedEntity(
+    "scales/classes->subclasses", "j", 
+    JSON.stringify({
+        "Class": "@[scales]",
+        "Object": "@[entities]",
+        "Relation": "@[relations/subclasses]",
+        "Quality": "@[qualities/relevant]",
+    }),
+    1, 0, 0, 1,
+    (outID, exitCode) => console.log(exitCode)
+  );
+  dataInserter.insertParsedEntity(
+    "scales/classes->members", "j", 
+    JSON.stringify({
+        "Class": "@[scales]",
+        "Object": "@[entities]",
+        "Relation": "@[relations/members]",
+        "Quality": "@[qualities/relevant]",
+    }),
+    1, 0, 0, 1,
+  );
+
   
 }
 
@@ -631,7 +676,7 @@ export function getEntityIDModule(dataInserter, pathArr, objName) {
     let entID = dataInserter.getEntIDFromPath(path);
     ret += '  "' + path + '": ' + (entID || "null") + ",\n"
   });
-  ret += "\n};"
+  ret += "};"
   return ret;
 }
 
