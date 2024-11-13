@@ -76,7 +76,6 @@ CREATE PROCEDURE insertOrFindEntity (
 BEGIN proc: BEGIN
     DECLARE outID, exitCode BIGINT UNSIGNED;
     DECLARE defHash CHAR(64);
-    -- SET autocommit = 0;
 
     IF NOT (
         (NOT isPrivate OR userID != 0 AND isEditable) AND
@@ -94,10 +93,23 @@ BEGIN proc: BEGIN
 
         SELECT ent_id INTO outID
         FROM EntityHashes
+        WHERE def_hash = defHash;
+        IF (outID IS NOT NULL) THEN
+            SET exitCode = 1; -- find.
+            SELECT outID, exitCode;
+            LEAVE proc;
+        END IF;
+
+        -- If the hash does not already exist, start a transaction and repeat
+        -- the same select statement, but with a locking read (i.e. SELECT ...
+        -- FOR UPDATE).
+        START TRANSACTION;
+        SELECT ent_id INTO outID
+        FROM EntityHashes
         WHERE def_hash = defHash
         FOR UPDATE;
-
         IF (outID IS NOT NULL) THEN
+            COMMIT;
             SET exitCode = 1; -- find.
             SELECT outID, exitCode;
             LEAVE proc;
@@ -122,6 +134,7 @@ BEGIN proc: BEGIN
         VALUES (
             defHash, outID
         );
+        COMMIT;
     END IF;
 
     SELECT outID, exitCode;
@@ -161,14 +174,16 @@ BEGIN proc: BEGIN
         LEAVE proc;
     END IF;
 
-    -- Repeat the same select statement, but with a locking read (i.e.
-    -- SELECT ... FOR UPDATE).
+    -- Start a transaction and repeat the same select statement, but with a
+    -- locking read (i.e. SELECT ... FOR UPDATE).
+    START TRANSACTION;
     SELECT is_private, is_editable, creator_id
     INTO prevIsPrivate, prevIsEditable, prevCreatorID
     FROM Entities
     WHERE id = entID
     FOR UPDATE;
     IF NOT (prevCreatorID <=> userID AND prevIsEditable) THEN
+        COMMIT;
         SET exitCode = 3; -- entity does not exist, or user does not have the
         -- rights to edit it.
         SET outID = 0;
@@ -182,6 +197,7 @@ BEGIN proc: BEGIN
         (NOT insertHash OR NOT isEditable) AND
         (prevIsPrivate OR NOT isPrivate)
     ) THEN
+        COMMIT;
         SET exitCode = 2; -- wrong combination is boolean values.
         SET outID = 0;
         SELECT outID, exitCode;
@@ -196,18 +212,20 @@ BEGIN proc: BEGIN
         FROM EntityHashes
         WHERE def_hash = defHash;
         IF (outID IS NOT NULL) THEN
+            COMMIT;
             SET exitCode = 1; -- find.
             SELECT outID, exitCode;
             LEAVE proc;
         END IF;
 
-        -- If the hash does not already exist, repeat the same select statement
-        -- but with a locking read (i.e. SELECT ... FOR UPDATE).
+        -- If the hash does not already exist, repeat the same select
+        -- statement, but with a locking read (i.e. SELECT ... FOR UPDATE).
         SELECT ent_id INTO outID
         FROM EntityHashes
         WHERE def_hash = defHash
         FOR UPDATE;
         IF (outID IS NOT NULL) THEN
+            COMMIT;
             SET exitCode = 1; -- find.
             SELECT outID, exitCode;
             LEAVE proc;
@@ -235,26 +253,7 @@ BEGIN proc: BEGIN
         );
     END IF;
 
+    COMMIT; 
     SELECT outID, exitCode;
 END proc; END //
 DELIMITER ;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- TODO: There seems to be a bug which can cause a deadlock: "Uncaught
--- mysqli_sql_exception: Deadlock found when trying to get lock; try
--- restarting transaction in /var/www/src/php/db_io/DBConnector.php:30"
--- when a rating deletion request is sent twice at the same time.
