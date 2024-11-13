@@ -640,7 +640,7 @@ export function initialInserts(dataInserter) {
     "scales/classes->subclasses", "j", 
     JSON.stringify({
         "Class": "@[scales]",
-        "Object": "@[entities]",
+        "Object": "@[entities]", // TODO: Correct after debugging.
         "Relation": "@[relations/subclasses]",
         "Quality": "@[qualities/relevant]",
     }),

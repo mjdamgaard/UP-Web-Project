@@ -76,6 +76,7 @@ CREATE PROCEDURE insertOrFindEntity (
 BEGIN proc: BEGIN
     DECLARE outID, exitCode BIGINT UNSIGNED;
     DECLARE defHash CHAR(64);
+    -- SET autocommit = 0;
 
     IF NOT (
         (NOT isPrivate OR userID != 0 AND isEditable) AND
@@ -83,7 +84,7 @@ BEGIN proc: BEGIN
         (NOT insertHash OR NOT isEditable)
     ) THEN
         SET exitCode = 2; -- wrong combination is boolean values.
-        SET outID = NULL;
+        SET outID = 0;
         SELECT outID, exitCode;
         LEAVE proc;
     END IF;
@@ -93,19 +94,9 @@ BEGIN proc: BEGIN
 
         SELECT ent_id INTO outID
         FROM EntityHashes
-        WHERE def_hash = defHash;
-        IF (outID IS NOT NULL) THEN
-            SET exitCode = 1; -- find.
-            SELECT outID, exitCode;
-            LEAVE proc;
-        END IF;
-
-        -- If the hash does not already exist, repeat the same select statement
-        -- but with a locking read (i.e. SELECT ... FOR UPDATE).
-        SELECT ent_id INTO outID
-        FROM EntityHashes
         WHERE def_hash = defHash
         FOR UPDATE;
+
         IF (outID IS NOT NULL) THEN
             SET exitCode = 1; -- find.
             SELECT outID, exitCode;
@@ -165,7 +156,7 @@ BEGIN proc: BEGIN
     IF (prevCreatorID != userID OR NOT prevIsEditable) THEN
         SET exitCode = 3; -- entity does not exist, or user does not have the
         -- rights to edit it.
-        SET outID = NULL;
+        SET outID = 0;
         SELECT outID, exitCode;
         LEAVE proc;
     END IF;
@@ -180,7 +171,7 @@ BEGIN proc: BEGIN
     IF NOT (prevCreatorID <=> userID AND prevIsEditable) THEN
         SET exitCode = 3; -- entity does not exist, or user does not have the
         -- rights to edit it.
-        SET outID = NULL;
+        SET outID = 0;
         SELECT outID, exitCode;
         LEAVE proc;
     END IF;
@@ -192,7 +183,7 @@ BEGIN proc: BEGIN
         (prevIsPrivate OR NOT isPrivate)
     ) THEN
         SET exitCode = 2; -- wrong combination is boolean values.
-        SET outID = NULL;
+        SET outID = 0;
         SELECT outID, exitCode;
         LEAVE proc;
     END IF;
