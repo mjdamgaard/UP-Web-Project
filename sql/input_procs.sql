@@ -4,8 +4,8 @@ SELECT "Input procedures";
 DROP PROCEDURE insertOrUpdateScore;
 DROP PROCEDURE deleteScore;
 
-DROP PROCEDURE insertEntity;
-DROP PROCEDURE editEntity;
+DROP PROCEDURE insertOrFindEntity;
+DROP PROCEDURE editOrFindEntity;
 
 
 
@@ -64,7 +64,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE insertEntity (
+CREATE PROCEDURE insertOrFindEntity (
     IN userID BIGINT UNSIGNED,
     IN type CHAR,
     IN defStr TEXT,
@@ -143,7 +143,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE editEntity (
+CREATE PROCEDURE editOrFindEntity (
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
     IN type CHAR,

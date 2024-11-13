@@ -1,12 +1,11 @@
 import {useCallback, useRef} from "react";
 import {DataInserter} from "../classes/DataInserter.js";
+import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
 
 
 
 export const InitialInsertsPage = () => {
-  // TODO: Implement a scale from which to fetch a user's workspace, instead
-  // of this temporary solution of just storing it in localStorage.
-  const workspaceEntID = localStorage.getItem("workspaceEntID");
+  const workspaceEntID = "2";
   const sesIDHex = "00".repeat(60);
   const getAccountData = useCallback((propName) => {
     return (propName === "userID") ? "1" :
@@ -15,17 +14,43 @@ export const InitialInsertsPage = () => {
   const dataInserter = useRef(
     new DataInserter(getAccountData, workspaceEntID)
   ).current;
-  if (workspaceEntID) {
-    dataInserter.fetchWorkspaceObject();
-  }
+  
+  dataInserter.fetchWorkspaceObject((obj) => {
+    console.log(obj);
+    console.log(dataInserter);
+  });
 
   return (
     <div>
       <h2>Initial inserts</h2>
       <br/>
       <div>
-        <button onClick={() => localStorage.removeItem("workspaceEntID")}>
-          Clear workspaceEntID
+        <button onClick={(event) => {
+          dataInserter.insertOrEditParsedEntity(
+            "users/initial_admin", "j",
+            JSON.stringify({
+              "Class": "@[users]",
+              "Username": "initial_admin",
+              "Description": "@[users/initial_admin/desc]",
+            }),
+            undefined, undefined, undefined, undefined,
+            (outID) => {
+              dataInserter.insertOrEditParsedEntity(
+                "workspaces/initial_admin's workspace", "j", 
+                JSON.stringify({
+                    "Class": "@[workspaces]",
+                    "Workspace object": {},
+                }),
+                0, 1, 1, 0,
+                (outID) => {
+                  dataInserter.updateWorkspace()
+                  event.target.setAttribute("style", "color:gray;")
+                },
+              );
+            },
+          );
+        }}>
+          Insert initial user and workspace
         </button>
       </div>
       <hr/>
@@ -40,6 +65,14 @@ export const InitialInsertsPage = () => {
           Update workspace
         </button>
       </div>
+      <hr/>
+      <div>
+        <button onClick={() => {
+          console.log(dataInserter);
+        }}>
+          Log workspace
+        </button>
+      </div>
     </div>
   );
 }
@@ -48,14 +81,27 @@ export const InitialInsertsPage = () => {
 
 export function initialInserts(dataInserter) {
 
-  dataInserter.insertOrEditParsedEntity(
-    "users/initial_admin", "j",
-    JSON.stringify({
-      "Class": "@[users]",
-      "Username": "initial_admin",
-      "Description": "@[users/initial_admin/desc]",
-    }),
-  );
+  // dataInserter.insertOrEditParsedEntity(
+  //   "users/initial_admin", "j",
+  //   JSON.stringify({
+  //     "Class": "@[users]",
+  //     "Username": "initial_admin",
+  //     "Description": "@[users/initial_admin/desc]",
+  //   }),
+  // );
+
+  // dataInserter.insertOrEditParsedEntity(
+  //   "workspaces/initial_admin's workspace", "j", 
+  //   JSON.stringify({
+  //       "Class": "@[workspaces]",
+  //       "Workspace object": {},
+  //   }),
+  //   0, 1, 1, 0,
+  //   (outID) => {
+  //     event.currentTarget.setAttribute("style", "color:gray;")
+  //   },
+  // );
+
   dataInserter.insertOrEditParsedEntity(
     "entities", "j", 
     JSON.stringify({
@@ -442,42 +488,6 @@ export function initialInserts(dataInserter) {
 
 
   dataInserter.insertOrEditParsedEntity(
-    "relations/workspaces", "j", 
-    JSON.stringify({
-        "Class": "@[relations]",
-        "Title": "Workspaces",
-        "Subject class": "@[workspaces]",
-        "Object class": "@[users]",
-        "Description": "@[relations/workspaces/desc]",
-    }),
-  );
-  dataInserter.insertOrEditParsedEntity(
-    "workspaces", "j", 
-    JSON.stringify({
-        "Class": "@[classes]",
-        "Name": "Workspaces",
-        "Special attributes": [
-            ["Workspace object", "object", "mandatory"],
-            ["Description", "", "removed"],
-        ],
-        "Description": "@[workspaces/desc]",
-    }),
-  );
-  dataInserter.insertOrEditParsedEntity(
-    "workspaces/initial_admin's workspace", "j", 
-    JSON.stringify({
-        "Class": "@[workspaces]",
-        "Workspace object": {},
-    }),
-    0, 1, 1, 0,
-    (outID) => {
-      localStorage.setItem("workspaceEntID", outID)
-      dataInserter.workspaceEntID = outID;
-    },
-  );
-
-
-  dataInserter.insertOrEditParsedEntity(
     "relations/arguments", "j", 
     JSON.stringify({
         "Class": "@[relations]",
@@ -574,6 +584,32 @@ export function initialInserts(dataInserter) {
             ["Is claimed by the creator", "", "removed"],
         ],
         "Description": "@[comments/desc]",
+    }),
+  );
+
+
+
+
+  dataInserter.insertOrEditParsedEntity(
+    "relations/workspaces", "j", 
+    JSON.stringify({
+        "Class": "@[relations]",
+        "Title": "Workspaces",
+        "Subject class": "@[workspaces]",
+        "Object class": "@[users]",
+        "Description": "@[relations/workspaces/desc]",
+    }),
+  );
+  dataInserter.insertOrEditParsedEntity(
+    "workspaces", "j", 
+    JSON.stringify({
+        "Class": "@[classes]",
+        "Name": "Workspaces",
+        "Special attributes": [
+            ["Workspace object", "object", "mandatory"],
+            ["Description", "", "removed"],
+        ],
+        "Description": "@[workspaces/desc]",
     }),
   );
 

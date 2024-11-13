@@ -195,8 +195,8 @@ export class DataInserter {
   ) {
     // If an entID is not already recorded at path, simply insert a new entity.
     let targetNode = this.#getNodeFromPath(path);
-    if (!targetNode || !targetNode[0].entID) {
-      this.insertParsedEntity(
+    if (!targetNode || !targetNode[0] || !targetNode[0].entID) {
+      this.insertEntity(
         path, datatype, defStr, isAnonymous, isPrivate, isEditable, insertHash,
         callback
       );
