@@ -456,7 +456,7 @@ export function initialInserts(dataInserter) {
     }),
   );
   dataInserter.insertOrEditParsedEntity(
-    "relations/Sub-relations", "j", 
+    "relations/sub-relations", "j", 
     JSON.stringify({
         "Class": "@[relations]",
         "Title": "Sub-relations",
@@ -646,9 +646,13 @@ export function copyEntityIDModuleToClipboard(dataInserter, pathArr, objName) {
 const basicEntPaths = [
   "classes",
   "entities",
+  "workspaces",
   "relations",
-  "relations/relations",
   "qualities/relevant",
+  "relations/relations",
+  "relations/members",
+  "relations/subclasses",
+  "relations/sub-relations",
 ];
 
 export function copyBasicEntityIDModuleToClipboard(dataInserter) {

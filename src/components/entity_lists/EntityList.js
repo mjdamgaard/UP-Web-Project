@@ -1,5 +1,6 @@
 import {useState, useMemo, useContext} from "react";
 
+import {basicEntIDs} from "../../entity_ids/basic_entity_ids.js";
 import {DataFetcher} from "../../classes/DataFetcher";
 
 /* Placeholders */
@@ -7,11 +8,11 @@ const OpenedTabList = () => <template></template>;
 const SettingsMenu = () => <template></template>;
 const SubmitEntityMenu = () => <template></template>;
 
-// TODO: Import from one location instead:
-const CLASSES_CLASS_ID = "4";
-const RELATIONS_CLASS_ID = "7";
-const USEFUL_RELATIONS_REL_ID = "19";
-const RELEVANCY_QUAL_ID = "15";
+
+const CLASSES_CLASS_ID = basicEntIDs["classes"];
+const RELATIONS_CLASS_ID = basicEntIDs["relations"];
+const RELATIONS_REL_ID = basicEntIDs["relations/relations"];
+const RELEVANT_QUAL_ID = basicEntIDs["qualities/relevant"];
 
 
 export const EntityList = ({scaleKey, userID}) => {

@@ -1,11 +1,12 @@
 
 import {DBRequestManager} from "./DBRequestManager.js";
 
+import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
 import {DataFetcher} from "./DataFetcher.js";
 import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 
 
-const WORKSPACES_CLASS_ID = "27";
+const WORKSPACES_CLASS_ID = basicEntIDs["workspaces"];
 
 
 export class DataInserter {

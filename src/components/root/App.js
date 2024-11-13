@@ -2,6 +2,7 @@ import {useState, useLayoutEffect, createContext, useCallback} from "react";
 
 import {useDispatch} from "../../hooks/useDispatch.js";
 import {useRestorableState} from "../../hooks/useRestorableState.js";
+import {basicEntIDs} from "../../entity_ids/basic_entity_ids.js";
 
 // import {appReducers} from "./appReducers.js";
 
@@ -9,7 +10,7 @@ import {AppHeader} from "./AppHeader.js";
 import {AppPage} from "../app_pages/AppPage.js";
 
 
-export const HOME_ENTITY_ID = "2";
+export const HOME_ENTITY_ID = basicEntIDs["entities"];
 
 
 

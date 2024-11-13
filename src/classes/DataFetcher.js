@@ -1,6 +1,7 @@
 
 import {DBRequestManager} from "../classes/DBRequestManager.js";
 
+import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
 import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 
 // const CLASS_CLASS_METADATA_JSON = JSON.stringify({
@@ -12,10 +13,10 @@ import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 // });
 
 
-const CLASSES_CLASS_ID = "4";
-const RELATIONS_CLASS_ID = "25";
-const RELATIONS_REL_ID = "28";
-const RELEVANCY_QUAL_ID = "15";
+const CLASSES_CLASS_ID = basicEntIDs["classes"];
+const RELATIONS_CLASS_ID = basicEntIDs["relations"];
+const RELATIONS_REL_ID = basicEntIDs["relations/relations"];
+const RELEVANT_QUAL_ID = basicEntIDs["qualities/relevant"];
 
 
 
@@ -229,6 +230,6 @@ export function getScaleDefStr(objID, relID, qualID) {
     Class: "@" + RELATIONS_CLASS_ID,
     Object: "@" + objID,
     Relation: "@" + relID,
-    Quality: "@" + (qualID || RELEVANCY_QUAL_ID),
+    Quality: "@" + (qualID || RELEVANT_QUAL_ID),
   });
 }

@@ -1,15 +1,17 @@
 import {useState, useMemo, useContext, useCallback} from "react";
 import {useDispatch} from "../../../../hooks/useDispatch";
 
+import {basicEntIDs} from "../../../../entity_ids/basic_entity_ids.js";
+
 import {SubpagesWithTabs} from "./SubpagesWithTabs.js";
 import {EntityList} from "../../../entity_lists/EntityList.js";
 
 /* Placeholders */
 const TabHeader = () => <template></template>;
 
-// TODO: Refactor to import from single location instead.
-const MEMBERS_REL_ID = "26";
-const SUBCLASSES_REL_ID = "27";
+
+const MEMBERS_REL_ID = basicEntIDs["relations/members"];
+const SUBCLASSES_REL_ID = basicEntIDs["relations/subclasses"];
 
 export const ClassSubpage = ({entID}) => {
 
