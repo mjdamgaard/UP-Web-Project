@@ -640,7 +640,7 @@ export function initialInserts(dataInserter) {
     "scales/classes->subclasses", "j", 
     JSON.stringify({
         "Class": "@[scales]",
-        "Object": "@[entities]", // TODO: Correct after debugging.
+        "Object": "@[classes]",
         "Relation": "@[relations/subclasses]",
         "Quality": "@[qualities/relevant]",
     }),
@@ -651,13 +651,65 @@ export function initialInserts(dataInserter) {
     "scales/classes->members", "j", 
     JSON.stringify({
         "Class": "@[scales]",
-        "Object": "@[entities]",
+        "Object": "@[classes]",
         "Relation": "@[relations/members]",
         "Quality": "@[qualities/relevant]",
     }),
     1, 0, 0, 1,
   );
 
+
+  dataInserter.addEntitiesToListFromScaleKey(
+    ["classes", "relations/members"],
+    [
+      ["classes", "1"]
+      ["entities", "1"]
+      ["users", "0.8"]
+      ["scales", "0.5"]
+      ["statements", "1"]
+      ["comments", "0.95"]
+    ],
+  );
+
+
+// $inserter->addEntitiesToList(
+//     "1", "scales/classes->members", array(
+//         array("classes", "1"),
+//         array("entities", "1"),
+//         array("users", "0.8"),
+//         array("scales", "0.5"),
+//         array("statements", "1"),
+//         array("comments", "0.95"),
+//     )
+// );
+// $inserter->addEntitiesToList(
+//     "1", "scales/classes->subclasses", array(
+//         array("users", "0.8"),
+//         array("scales", "0.8"),
+//         array("statements", "1"),
+//         array("comments", "0.95"),
+//     )
+// );
+
+// $inserter->addEntitiesToList(
+//     "1", "scales/entities->members", array(
+//         array("classes", "1"),
+//         array("entities", "1"),
+//         array("users", "0.8"),
+//         array("scales", "0.5"),
+//         array("statements", "1"),
+//         array("comments", "0.95"),
+//     )
+// );
+// $inserter->addEntitiesToList(
+//     "1", "scales/entities->subclasses", array(
+//         array("classes", "1"),
+//         array("users", "0.8"),
+//         array("scales", "0.8"),
+//         array("statements", "1"),
+//         array("comments", "0.95"),
+//     )
+// );
   
 }
 

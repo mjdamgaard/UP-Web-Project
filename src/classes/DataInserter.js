@@ -2,7 +2,7 @@
 import {DBRequestManager} from "./DBRequestManager.js";
 
 import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
-import {DataFetcher} from "./DataFetcher.js";
+import {DataFetcher, getScaleDefStr} from "./DataFetcher.js";
 import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 
 
@@ -246,4 +246,82 @@ export class DataInserter {
       callback
     );
   }
+
+
+
+
+  insertOrFindScale(scaleKey, callback) {
+    scaleKey = scaleKey.map(val => {
+      if (parseInt(val) > 0) {
+        return val;
+      }
+      else {
+        return this.getEntIDFromPath(val);
+      }
+    });
+    if (scaleKey.reduce((acc, val) => acc && val)) {
+      return;
+    }
+    let scaleDefStr = getScaleDefStr(...scaleKey);
+    this.insertEntity(
+      "", "j", scaleDefStr,
+      1, 0, 0, 1,
+      (outID, exitCode) => callback(outID, exitCode)
+    );
+  }
+
+
+
+  addEntitiesToListFromScaleID(
+    scaleID, PathScorePairArr, callback = () => {}
+  ) {
+    let parallelCallbackHandler = new ParallelCallbackHandler;
+    let results = [];
+
+    PathScorePairArr.forEach((pathScorePair, ind) => {
+      let entPath = pathScorePair[0];
+      let scoreVal = pathScorePair[1];
+      let entID = this.getEntIDFromPath(entPath);
+      if (!entID) {
+        return;
+      }
+      let reqData = {
+        req: "score",
+        ses: this.getAccountData("sesIDHex"),
+        u: this.getAccountData("userID"),
+        s: scaleID,
+        e: entID,
+        v: scoreVal,
+      };
+      parallelCallbackHandler.push(() => {
+        DBRequestManager.input(reqData, (result) => {
+          results[ind] = result;
+        });
+      });
+    });
+
+    parallelCallbackHandler.execAndThen(() => {
+      callback(results);
+    });
+  }
+
+  addEntitiesToListFromScalePath(scalePath, PathScorePairArr, callback) {
+    let scaleID = this.getEntIDFromPath(scalePath);
+    if (!scaleID) {
+      return;
+    }
+    addEntitiesToListFromScaleID(scaleID, PathScorePairArr, callback);
+  }
+
+
+  addEntitiesToListFromScaleKey(scaleKey, PathScorePairArr, callback) {
+    this.insertOrFindScale(scaleKey, (outID, exitCode) => {
+      if (parseInt(exitCode) <= 1) {
+        this.addEntitiesToListFromScaleID(outID, PathScorePairArr, callback);
+      }
+    });
+  }
+
+
+
 }
