@@ -15,6 +15,7 @@ import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 
 const CLASSES_CLASS_ID = basicEntIDs["classes"];
 const RELATIONS_CLASS_ID = basicEntIDs["relations"];
+const SCALES_CLASS_ID = basicEntIDs["scales"];
 const RELATIONS_REL_ID = basicEntIDs["relations/relations"];
 const RELEVANT_QUAL_ID = basicEntIDs["qualities/relevant"];
 
@@ -227,7 +228,7 @@ export class DataFetcher {
 
 export function getScaleDefStr(objID, relID, qualID) {
   return JSON.stringify({
-    Class: "@" + RELATIONS_CLASS_ID,
+    Class: "@" + SCALES_CLASS_ID,
     Object: "@" + objID,
     Relation: "@" + relID,
     Quality: "@" + (qualID || RELEVANT_QUAL_ID),

@@ -259,7 +259,7 @@ export class DataInserter {
         return this.getEntIDFromPath(val);
       }
     });
-    if (scaleKey.reduce((acc, val) => acc && val)) {
+    if (!scaleKey.reduce((acc, val) => acc && val)) {
       return;
     }
     let scaleDefStr = getScaleDefStr(...scaleKey);
@@ -279,21 +279,21 @@ export class DataInserter {
     let results = [];
 
     PathScorePairArr.forEach((pathScorePair, ind) => {
-      let entPath = pathScorePair[0];
-      let scoreVal = pathScorePair[1];
-      let entID = this.getEntIDFromPath(entPath);
-      if (!entID) {
-        return;
-      }
-      let reqData = {
-        req: "score",
-        ses: this.getAccountData("sesIDHex"),
-        u: this.getAccountData("userID"),
-        s: scaleID,
-        e: entID,
-        v: scoreVal,
-      };
       parallelCallbackHandler.push(() => {
+        let entPath = pathScorePair[0];
+        let scoreVal = pathScorePair[1];
+        let entID = this.getEntIDFromPath(entPath);
+        if (!entID) {
+          return;
+        }
+        let reqData = {
+          req: "score",
+          ses: this.getAccountData("sesIDHex"),
+          u: this.getAccountData("userID"),
+          s: scaleID,
+          e: entID,
+          v: scoreVal,
+        };
         DBRequestManager.input(reqData, (result) => {
           results[ind] = result;
         });
@@ -310,7 +310,7 @@ export class DataInserter {
     if (!scaleID) {
       return;
     }
-    addEntitiesToListFromScaleID(scaleID, PathScorePairArr, callback);
+    this.addEntitiesToListFromScaleID(scaleID, PathScorePairArr, callback);
   }
 
 

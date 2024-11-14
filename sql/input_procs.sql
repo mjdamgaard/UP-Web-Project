@@ -99,7 +99,20 @@ BEGIN proc: BEGIN
             SELECT outID, exitCode;
             LEAVE proc;
         END IF;
+    END IF;
 
+    INSERT INTO Entities (
+        creator_id,
+        type_ident, def_str, is_private, is_editable
+    )
+    VALUES (
+        CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
+        type, defStr, isPrivate, isEditable
+    );
+    SET outID = LAST_INSERT_ID();
+    SET exitCode = 0; -- insert.
+
+    IF (insertHash) THEN
         INSERT IGNORE INTO EntityHashes (
             def_hash, ent_id
         )
@@ -117,17 +130,6 @@ BEGIN proc: BEGIN
             END IF;
         END IF;
     END IF;
-
-    INSERT INTO Entities (
-        creator_id,
-        type_ident, def_str, is_private, is_editable
-    )
-    VALUES (
-        CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        type, defStr, isPrivate, isEditable
-    );
-    SET outID = LAST_INSERT_ID();
-    SET exitCode = 0; -- insert.
 
     SELECT outID, exitCode;
 END proc; END //
@@ -208,7 +210,21 @@ BEGIN proc: BEGIN
             SELECT outID, exitCode;
             LEAVE proc;
         END IF;
+    END IF;
 
+    UPDATE Entities
+    SET
+        creator_id = CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
+        type_ident = type,
+        def_str = defStr,
+        is_private = isPrivate,
+        is_editable = isEditable
+    WHERE id = entID;
+
+    SET outID = entID;
+    SET exitCode = 0; -- insert.
+
+    IF (insertHash) THEN
         INSERT IGNORE INTO EntityHashes (
             def_hash, ent_id
         )
@@ -226,18 +242,6 @@ BEGIN proc: BEGIN
             END IF;
         END IF;
     END IF;
-
-    UPDATE Entities
-    SET
-        creator_id = CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        type_ident = type,
-        def_str = defStr,
-        is_private = isPrivate,
-        is_editable = isEditable
-    WHERE id = entID;
-
-    SET outID = entID;
-    SET exitCode = 0; -- insert.
 
     COMMIT; 
     SELECT outID, exitCode;

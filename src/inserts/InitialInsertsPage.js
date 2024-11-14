@@ -67,6 +67,12 @@ export const InitialInsertsPage = () => {
       </div>
       <hr/>
       <div>
+        <button onClick={() => insertInitialScores(dataInserter)}>
+          Insert initial scores
+        </button>
+      </div>
+      <hr/>
+      <div>
         <button onClick={(event) => {
           copyBasicEntityIDModuleToClipboard(dataInserter);
           event.target.setAttribute("style", "color:gray;");
@@ -659,15 +665,22 @@ export function initialInserts(dataInserter) {
   );
 
 
+}
+
+
+
+
+export function insertInitialScores(dataInserter) {
+
   dataInserter.addEntitiesToListFromScaleKey(
     ["classes", "relations/members"],
     [
-      ["classes", "1"]
-      ["entities", "1"]
-      ["users", "0.8"]
-      ["scales", "0.5"]
-      ["statements", "1"]
-      ["comments", "0.95"]
+      ["classes", "1"],
+      ["entities", "1"],
+      ["users", "0.8"],
+      ["scales", "0.5"],
+      ["statements", "1"],
+      ["comments", "0.95"],
     ],
   );
 
@@ -744,6 +757,7 @@ const basicEntPaths = [
   "classes",
   "entities",
   "workspaces",
+  "scales",
   "relations",
   "qualities/relevant",
   "relations/relations",

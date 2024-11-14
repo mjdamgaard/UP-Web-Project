@@ -108,7 +108,7 @@ class InputValidator {
                 break;
             case "float":
             // TODO: Expand legal syntax.
-                $pattern = "/^\\-?(0|[1-9][0-9]*)(\\.[0-9]+)$/";
+                $pattern = "/^\\-?(0|[1-9][0-9]*)(\\.[0-9]+)?$/";
                 if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit(
                         $paramName, $paramVal, "FLOAT: " . $pattern

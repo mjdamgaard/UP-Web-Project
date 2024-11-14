@@ -10,14 +10,14 @@ FROM RecordedInputs
 ORDER BY id ASC;
 
 
-SELECT "SemanticInputs:";
+SELECT "Scores:";
 SELECT
     user_id AS userID,
-    tag_id AS tagID,
-    rat_val AS ratVal,
-    inst_id AS instID
-FROM SemanticInputs
-ORDER BY user_id ASC, tag_id ASC, rat_val DESC;
+    scale_id AS scaleID,
+    score_val AS scoreVal,
+    subj_id AS subjID
+FROM Scores
+ORDER BY userID ASC, scaleID ASC, scoreVal DESC;
 
 
 -- SELECT "UserData:";
