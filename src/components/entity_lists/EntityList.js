@@ -1,7 +1,7 @@
 import {useState, useMemo, useContext} from "react";
 
 import {basicEntIDs} from "../../entity_ids/basic_entity_ids.js";
-import {DataFetcher} from "../../classes/DataFetcher";
+import {DataFetcher, getScaleDefStr, hashPromise} from "../../classes/DataFetcher";
 
 /* Placeholders */
 const OpenedTabList = () => <template></template>;
@@ -40,7 +40,7 @@ export const EntityList = ({scaleKey, userID}) => {
     return (
       <div>TODO: Make this a page to submit missing scaleID.</div>
     );
-  } 
+  }
 
   // Else fetch it.
   DataFetcher.fetchEntityListFromScaleKey(

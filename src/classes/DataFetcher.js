@@ -168,11 +168,11 @@ export class DataFetcher {
     });
   }
 
-  static fetchEntityListFromDefStr(userID, scaleDefStr, n, callback) {
+  static fetchEntityListFromHash(userID, scaleDefStrHash, n, callback) {
     let reqData = {
-      req: "entListFromDefStr",
+      req: "entListFromHash",
       u: userID,
-      d: scaleDefStr,
+      h: scaleDefStrHash,
       n: n || 4000,
       o: 0,
       a: 0,
@@ -188,8 +188,9 @@ export class DataFetcher {
       this.fetchEntityList(userID, scaleID, n, callback);
     }
     else {
-      let scaleDefStr = getScaleDefStr(...scaleKey);
-      this.fetchEntityListFromDefStr(userID, scaleDefStr, n, callback)
+      scaleDefStrHashPromise(...scaleKey).then(hash => {
+        this.fetchEntityListFromHash(userID, hash, n, callback);
+      });
     }
   }
 
@@ -233,4 +234,22 @@ export function getScaleDefStr(objID, relID, qualID) {
     Relation: "@" + relID,
     Quality: "@" + (qualID || RELEVANT_QUAL_ID),
   });
+}
+
+
+export async function scaleDefStrHashPromise(objID, relID, qualID) {
+  let scaleDefStr = getScaleDefStr(objID, relID, qualID);
+  let hashHex = await hashPromise(scaleDefStr);
+  return hashHex;
+}
+
+
+export async function hashPromise(string) {
+  let data = new TextEncoder().encode(string);
+  let hashBuffer = await window.crypto.subtle.digest("SHA-256", data);
+  let hashArray = Array.from(new Uint8Array(hashBuffer));
+  let hashHex = hashArray
+    .map(val => val.toString(16).padStart(2, "0"))
+    .join("");
+  return hashHex;
 }

@@ -638,37 +638,43 @@ export function initialInserts(dataInserter) {
 
 
   /* Scales */
-  dataInserter.insertParsedEntity(
-    "scales/entities->subclasses", "j", 
-    JSON.stringify({
-        "Class": "@[scales]",
-        "Object": "@[entities]",
-        "Relation": "@[relations/subclasses]",
-        "Quality": "@[qualities/relevant]",
-    }),
-    1, 0, 0, 1,
-  );
-  dataInserter.insertParsedEntity(
-    "scales/entities->members", "j", 
-    JSON.stringify({
-        "Class": "@[scales]",
-        "Object": "@[entities]",
-        "Relation": "@[relations/members]",
-        "Quality": "@[qualities/relevant]",
-    }),
-    1, 0, 0, 1,
-  );
-  dataInserter.insertParsedEntity(
-    "scales/classes->subclasses", "j", 
-    JSON.stringify({
-        "Class": "@[scales]",
-        "Object": "@[classes]",
-        "Relation": "@[relations/subclasses]",
-        "Quality": "@[qualities/relevant]",
-    }),
-    1, 0, 0, 1,
-    (outID, exitCode) => console.log(exitCode)
-  );
+
+  // Ah, I can't do this, since I can't edit them when isEditable = 0, and this
+  // means that the paths need to be resolved at the time they are inserted.
+  // I could make an extra button to insert scales, but I also don't need these
+  // scale paths now.
+
+  // dataInserter.insertParsedEntity(
+  //   "scales/entities->subclasses", "j", 
+  //   JSON.stringify({
+  //       "Class": "@[scales]",
+  //       "Object": "@[entities]",
+  //       "Relation": "@[relations/subclasses]",
+  //       "Quality": "@[qualities/relevant]",
+  //   }),
+  //   1, 0, 0, 1,
+  // );
+  // dataInserter.insertParsedEntity(
+  //   "scales/entities->members", "j", 
+  //   JSON.stringify({
+  //       "Class": "@[scales]",
+  //       "Object": "@[entities]",
+  //       "Relation": "@[relations/members]",
+  //       "Quality": "@[qualities/relevant]",
+  //   }),
+  //   1, 0, 0, 1,
+  // );
+  // dataInserter.insertParsedEntity(
+  //   "scales/classes->subclasses", "j", 
+  //   JSON.stringify({
+  //       "Class": "@[scales]",
+  //       "Object": "@[classes]",
+  //       "Relation": "@[relations/subclasses]",
+  //       "Quality": "@[qualities/relevant]",
+  //   }),
+  //   1, 0, 0, 1,
+  //   (outID, exitCode) => console.log(exitCode)
+  // );
   // dataInserter.insertParsedEntity(
   //   "scales/classes->members", "j", 
   //   JSON.stringify({

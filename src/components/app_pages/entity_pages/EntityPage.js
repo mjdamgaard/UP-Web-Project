@@ -1,5 +1,6 @@
 import {useState, useMemo, useCallback} from "react";
 
+import {basicEntIDs} from "../../../entity_ids/basic_entity_ids.js";
 import {DataFetcher} from "../../../classes/DataFetcher";
 import {EntityReference} from "../../entity_refs/EntityReference";
 import {EntityInfoPage} from "./subpages/InfoPage";
@@ -21,11 +22,13 @@ const OpenedTabList = () => <template></template>;
 const SettingsMenu = () => <template></template>;
 const SubmitEntityMenu = () => <template></template>;
 
-// TODO: Import from one location instead:
-const CLASSES_CLASS_ID = "4";
-const MEMBERS_REL_ID = "26";
-const SUBCLASSES_REL_ID = "27";
-const RELATIONS_REL_ID = "28";
+
+const CLASSES_CLASS_ID = basicEntIDs["classes"];
+const RELATIONS_CLASS_ID = basicEntIDs["relations"];
+const SCALES_CLASS_ID = basicEntIDs["scales"];
+const RELATIONS_REL_ID = basicEntIDs["relations/relations"];
+const MEMBERS_REL_ID = basicEntIDs["relations/members"];
+const RELEVANT_QUAL_ID = basicEntIDs["qualities/relevant"];
 
 
 export const EntityPage = ({entID, initTab}) => {

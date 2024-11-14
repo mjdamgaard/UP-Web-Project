@@ -140,7 +140,7 @@ class InputValidator {
                 }
                 break;
             case "hash":
-                $pattern = "/^[0-9a-f]{64}$/";
+                $pattern = "/^[0-9a-f]{128}$/";
                 if (preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, $pattern);
                 }
