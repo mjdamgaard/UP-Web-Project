@@ -20,14 +20,23 @@ CREATE PROCEDURE insertOrUpdateScore (
     IN scoreVal FLOAT
 )
 BEGIN
-    INSERT INTO Scores (user_id, scale_id, subj_id, score_val)
-    VALUES (userID, scaleID, subjID, scoreVal)
-    ON DUPLICATE KEY UPDATE score_val = scoreVal;
+    IF (
+        SELECT type_ident
+        FROM Entities
+        WHERE id = subjID
+    )
+    THEN
+        INSERT INTO Scores (user_id, scale_id, subj_id, score_val)
+        VALUES (userID, scaleID, subjID, scoreVal)
+        ON DUPLICATE KEY UPDATE score_val = scoreVal;
 
-    -- -- TODO: Run bots on scheduled events instead.
-    -- CALL runBots ();
+        -- -- TODO: Run bots on scheduled events instead.
+        -- CALL runBots ();
 
-    SELECT subjID AS outID, 0 AS exitCode;
+        SELECT subjID AS outID, 0 AS exitCode; -- insert or update.
+    ELSE
+        SELECT subjID AS outID, 1 AS exitCode; -- subject does not exist.
+    END IF;
 END //
 DELIMITER ;
 

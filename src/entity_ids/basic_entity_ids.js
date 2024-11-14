@@ -2,12 +2,12 @@
 export const basicEntIDs = {
   "classes": 5,
   "entities": 3,
-  "workspaces": 35,
+  "workspaces": 27,
   "scales": 8,
-  "relations": 26,
-  "qualities/relevant": 16,
-  "relations/relations": 29,
-  "relations/members": 27,
+  "relations": 34,
+  "qualities/relevant": 49,
+  "relations/relations": 24,
+  "relations/members": 29,
   "relations/subclasses": 28,
-  "relations/sub-relations": 30,
+  "relations/sub-relations": 21,
 };

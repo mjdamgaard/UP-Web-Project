@@ -299,6 +299,22 @@ export function initialInserts(dataInserter) {
         "Description": "@[scale types/value scale/desc]",
     }),
   );
+  dataInserter.insertOrEditParsedEntity(
+    "scale types/5-star scale", "j", 
+    JSON.stringify({
+        "Class": "@[classes]",
+        "Name": "5-star scale",
+        "Description": "@[scale types/5-star scale/desc]",
+    }),
+  );
+  dataInserter.insertOrEditParsedEntity(
+    "scale types/10-star scale", "j", 
+    JSON.stringify({
+        "Class": "@[classes]",
+        "Name": "10-star scale",
+        "Description": "@[scale types/10-star scale/desc]",
+    }),
+  );
 
     // "0-10-star qualities", "j", 
     // JSON.stringify({
@@ -316,7 +332,7 @@ export function initialInserts(dataInserter) {
     JSON.stringify({
         "Class": "@[qualities]",
         "Tag": "Relevant",
-        "Scale type": "@[scale types/percentage scale]",
+        "Scale type": "@[scale types/5-star scale]",
         "Description": "@[qualities/relevant/desc]",
     }),
   );
@@ -653,16 +669,16 @@ export function initialInserts(dataInserter) {
     1, 0, 0, 1,
     (outID, exitCode) => console.log(exitCode)
   );
-  dataInserter.insertParsedEntity(
-    "scales/classes->members", "j", 
-    JSON.stringify({
-        "Class": "@[scales]",
-        "Object": "@[classes]",
-        "Relation": "@[relations/members]",
-        "Quality": "@[qualities/relevant]",
-    }),
-    1, 0, 0, 1,
-  );
+  // dataInserter.insertParsedEntity(
+  //   "scales/classes->members", "j", 
+  //   JSON.stringify({
+  //       "Class": "@[scales]",
+  //       "Object": "@[classes]",
+  //       "Relation": "@[relations/members]",
+  //       "Quality": "@[qualities/relevant]",
+  //   }),
+  //   1, 0, 0, 1,
+  // );
 
 
 }
@@ -683,46 +699,36 @@ export function insertInitialScores(dataInserter) {
       ["comments", "0.95"],
     ],
   );
+  dataInserter.addEntitiesToListFromScaleKey(
+    ["classes", "relations/subclasses"],
+    [
+      ["users", "0.8"],
+      ["scales", "0.8"],
+      ["statements", "1"],
+      ["comments", "0.95"],
+    ],
+  );
+  dataInserter.addEntitiesToListFromScaleKey(
+    ["entities", "relations/members"],
+    [
+      ["classes", "1"],
+      ["entities", "0.6"],
+      ["relations/members", "0.5"],
+      ["statements", "1"],
+      ["comments", "0.95"],
+    ],
+  );
+  dataInserter.addEntitiesToListFromScaleKey(
+    ["entities", "relations/subclasses"],
+    [
+      ["classes", "1"],
+      ["users", "0.8"],
+      ["scales", "0.8"],
+      ["statements", "1"],
+      ["comments", "0.95"],
+    ],
+  );
 
-
-// $inserter->addEntitiesToList(
-//     "1", "scales/classes->members", array(
-//         array("classes", "1"),
-//         array("entities", "1"),
-//         array("users", "0.8"),
-//         array("scales", "0.5"),
-//         array("statements", "1"),
-//         array("comments", "0.95"),
-//     )
-// );
-// $inserter->addEntitiesToList(
-//     "1", "scales/classes->subclasses", array(
-//         array("users", "0.8"),
-//         array("scales", "0.8"),
-//         array("statements", "1"),
-//         array("comments", "0.95"),
-//     )
-// );
-
-// $inserter->addEntitiesToList(
-//     "1", "scales/entities->members", array(
-//         array("classes", "1"),
-//         array("entities", "1"),
-//         array("users", "0.8"),
-//         array("scales", "0.5"),
-//         array("statements", "1"),
-//         array("comments", "0.95"),
-//     )
-// );
-// $inserter->addEntitiesToList(
-//     "1", "scales/entities->subclasses", array(
-//         array("classes", "1"),
-//         array("users", "0.8"),
-//         array("scales", "0.8"),
-//         array("statements", "1"),
-//         array("comments", "0.95"),
-//     )
-// );
   
 }
 
