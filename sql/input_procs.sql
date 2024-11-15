@@ -98,7 +98,7 @@ BEGIN proc: BEGIN
     END IF;
 
     IF (insertHash) THEN
-        SET defHash = SHA2(CONCAT(type, defStr), 256);
+        SET defHash = SHA2(CONCAT(type, ".", defStr), 256);
 
         SELECT ent_id INTO outID
         FROM EntityHashes
@@ -209,7 +209,7 @@ BEGIN proc: BEGIN
 
 
     IF (insertHash) THEN
-        SET defHash = SHA2(CONCAT(type, defStr), 256);
+        SET defHash = SHA2(CONCAT(type, ".", defStr), 256);
 
         SELECT ent_id INTO outID
         FROM EntityHashes

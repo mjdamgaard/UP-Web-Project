@@ -239,8 +239,7 @@ export function getScaleDefStr(objID, relID, qualID) {
 
 export async function scaleDefStrHashPromise(objID, relID, qualID) {
   let scaleDefStr = getScaleDefStr(objID, relID, qualID);
-  let hashHex = await hashPromise(scaleDefStr);
-console.log(JSON.stringify([hashHex, JSON.parse(scaleDefStr)]));
+  let hashHex = await hashPromise("j." + scaleDefStr);
   return hashHex;
 }
 

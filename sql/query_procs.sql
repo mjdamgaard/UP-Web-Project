@@ -95,7 +95,7 @@ BEGIN
         scale_id = (
             SELECT ent_id
             FROM EntityHashes
-            WHERE def_hash = SHA2(scaleDefStr, 256)
+            WHERE def_hash = SHA2(CONCAT("j.", scaleDefStr), 256)
         )
     )
     ORDER BY
@@ -128,7 +128,7 @@ DELIMITER ;
 --         WHERE (
 --             is_private = 0 AND
 --             creator_id = 0 AND
---             def_hash = SHA2(defStr1, 256)
+--             def_hash = SHA2(CONCAT("j.", defStr1, 256))
 --         );
 --         IF (entID1 IS NULL) THEN LEAVE entID_search; END IF;
 
@@ -139,7 +139,7 @@ DELIMITER ;
 --         WHERE (
 --             is_private = 0 AND
 --             creator_id = 0 AND
---             def_hash = SHA2(defStr2, 256)
+--             def_hash = SHA2(CONCAT("j.", defStr2, 256))
 --         );
 --         IF (entID2 IS NULL) THEN LEAVE entID_search; END IF;
 
@@ -151,7 +151,7 @@ DELIMITER ;
 --         WHERE (
 --             is_private = 0 AND
 --             creator_id = 0 AND
---             def_hash = SHA2(defStr3, 256)
+--             def_hash = SHA2(CONCAT("j.", defStr3, 256))
 --         );
 --         IF (entID3 IS NULL) THEN LEAVE entID_search; END IF;
 
@@ -164,7 +164,7 @@ DELIMITER ;
 --         WHERE (
 --             is_private = 0 AND
 --             creator_id = 0 AND
---             def_hash = SHA2(defStr4, 256)
+--             def_hash = SHA2(CONCAT("j.", defStr4, 256))
 --         );
 --         IF (entID4 IS NULL) THEN LEAVE entID_search; END IF;
 
@@ -178,7 +178,7 @@ DELIMITER ;
 --         WHERE (
 --             is_private = 0 AND
 --             creator_id = 0 AND
---             def_hash = SHA2(defStr5, 256)
+--             def_hash = SHA2(CONCAT("j.", defStr5, 256))
 --         );
 --     END entID_search;
 
@@ -193,7 +193,7 @@ DELIMITER ;
 --     WHERE (
 --         is_private = 0 AND
 --         creator_id = 0 AND
---         def_hash = SHA2(scaleDefStr, 256)
+--         def_hash = SHA2(CONCAT("j.", scaleDefStr, 256))
 --     );
 
 --     SELECT
