@@ -228,17 +228,17 @@ export function initialInserts(dataInserter) {
   );
 
   dataInserter.insertOrEditParsedEntity(
-    "scalar parameters", "j", // Maybe just 'parameters' instead..?
+    "parameters", "j", // Maybe just 'parameters' instead..?
     JSON.stringify({
         "Class": "@[classes]",
-        "Name": "Scalar parameters",
+        "Name": "Parameters",
         "Special attributes": [
             ["Scale", "@[scales]", "mandatory"],
             ["Subject", "@[entities]", "mandatory"],
             ["Description", "", "removed"],
         ],
         "Anonymous creators only": true,
-        "Description": "@[scalar parameters/desc]",
+        "Description": "@[parameters/desc]",
     }),
   );
 
@@ -248,91 +248,99 @@ export function initialInserts(dataInserter) {
         "Class": "@[classes]",
         "Name": "Qualities",
         "Special attributes": [
-            ["Tag", "string", "mandatory"],
-            // Use purely lowercase tags only when the Description is left out.
-            ["Scale type", "@[scale types]", "mandatory"],
+            ["Label", "string", "mandatory"],
+            // Use purely lowercase labels only when the Description is left
+            // out.
+            // ["Scale type", "@[scale types]", "mandatory"],
+            ["Unit", "string", "optional"],
+            // ["Lower bound", "float", "optional"],
+            // ["Upper bound", "float", "optional"],
+            ["Low end", "float", "mandatory"],
+            ["High end", "float", "mandatory"],
+            ["Has lower bound", "bool=true", "optional"],
+            ["Has upper bound", "bool=true", "optional"],
+            ["Cutoff point", "float", "optional"],
         ],
         "Description": "@[qualities/desc]",
     }),
   );
-  dataInserter.insertOrEditParsedEntity(
-    "scale types", "j", 
-    JSON.stringify({
-        "Class": "@[classes]",
-        "Name": "Scale types",
-        "Special attributes": [
-            ["Name", "string", "mandatory"],
-            ["Description", "x", "mandatory"],
-        ],
-        "Description": "@[scale types/desc]",
-    }),
-  );
 
-    /* Some scale types */
-  dataInserter.insertOrEditParsedEntity(
-    "scale types/percentage scale", "j", 
-    JSON.stringify({
-        "Class": "@[scale types]",
-        "Name": "Percentage scale",
-        "Description": "@[scale types/percentage scale/desc]",
-    }),
-  );
-  dataInserter.insertOrEditParsedEntity(
-    "scale types/relative scale", "j", 
-    JSON.stringify({
-        "Class": "@[classes]",
-        "Name": "Relative scale",
-        "Description": "@[scale types/relative scale/desc]",
-        // Description should say that 'this scale type is treated as the
-        // 0-10-star scale type, until a point when it is changed to an
-        // unbounded relative scale,' and then go on to describe this
-        // unbounded scale type. Once this change happens, we can then also
-        // uprate a 'better representation' for this entity, without the
-        //0-10-star-scale part of the description.
-    }),
-  );
-  dataInserter.insertOrEditParsedEntity(
-    "scale types/value scale", "j", 
-    JSON.stringify({
-        "Class": "@[classes]",
-        "Name": "Value scale",
-        "Description": "@[scale types/value scale/desc]",
-    }),
-  );
-  dataInserter.insertOrEditParsedEntity(
-    "scale types/5-star scale", "j", 
-    JSON.stringify({
-        "Class": "@[classes]",
-        "Name": "5-star scale",
-        "Description": "@[scale types/5-star scale/desc]",
-    }),
-  );
-  dataInserter.insertOrEditParsedEntity(
-    "scale types/10-star scale", "j", 
-    JSON.stringify({
-        "Class": "@[classes]",
-        "Name": "10-star scale",
-        "Description": "@[scale types/10-star scale/desc]",
-    }),
-  );
+  // dataInserter.insertOrEditParsedEntity(
+  //   "scale types", "j", 
+  //   JSON.stringify({
+  //       "Class": "@[classes]",
+  //       "Name": "Scale types",
+  //       "Special attributes": [
+  //           ["Name", "string", "mandatory"],
+  //           ["Unit", "string", "optional"],
+  //           ["Lower bound", "float", "optional"],
+  //           ["Upper bound", "float", "optional"],
+  //           ["Description", "x", "mandatory"],
+  //       ],
+  //       "Description": "@[scale types/desc]",
+  //   }),
+  // );
 
-    // "0-10-star qualities", "j", 
-    // JSON.stringify({
-    //     "Class": "@[classes]",
-    //     "Name": "0–10-star qualities",
-    //     "Parent class": "@[relative qualities]",
-    //     "Description": "@[0-10-star qualities/desc]",
-    //     // (We use 0-10-star qualities initially, before "upgrading" to the
-    //     // unbounded (continuously normalized) relative scales.)
-    // ))),
+  //   /* Some scale types */
+  // dataInserter.insertOrEditParsedEntity(
+  //   "scale types/percentage scale", "j", 
+  //   JSON.stringify({
+  //       "Class": "@[scale types]",
+  //       "Name": "Percentage scale",
+  //       "Unit": "%",
+  //       "Lower bound": 0,
+  //       "Upper bound": 100,
+  //       "Description": "@[scale types/percentage scale/desc]",
+  //   }),
+  // );
+  // dataInserter.insertOrEditParsedEntity(
+  //   "scale types/relative scale", "j", 
+  //   JSON.stringify({
+  //       "Class": "@[classes]",
+  //       "Name": "Relative scale",
+  //       "Description": "@[scale types/relative scale/desc]",
+  //       // Description should say that 0 is generally considered the cutoff
+  //       // point of when the quality applies or not, especially when the
+  //       // quality is an adjective, or more generally describes a predicate.
+  //   }),
+  // );
+  // dataInserter.insertOrEditParsedEntity(
+  //   "scale types/value scale", "j", 
+  //   JSON.stringify({
+  //       "Class": "@[classes]",
+  //       "Name": "Value scale",
+  //       "Description": "@[scale types/value scale/desc]",
+  //   }),
+  // );
+  // dataInserter.insertOrEditParsedEntity(
+  //   "scale types/5-star scale", "j", 
+  //   JSON.stringify({
+  //       "Class": "@[classes]",
+  //       "Name": "5-star scale",
+  //       "Description": "@[scale types/5-star scale/desc]",
+  //   }),
+  // );
+  // dataInserter.insertOrEditParsedEntity(
+  //   "scale types/10-star scale", "j", 
+  //   JSON.stringify({
+  //       "Class": "@[classes]",
+  //       "Name": "10-star scale",
+  //       "Description": "@[scale types/10-star scale/desc]",
+  //   }),
+  // );
+
 
     /* Some qualities */
   dataInserter.insertOrEditParsedEntity(
     "qualities/relevant", "j", 
     JSON.stringify({
         "Class": "@[qualities]",
-        "Tag": "Relevant",
-        "Scale type": "@[scale types/5-star scale]",
+        "Label": "Relevant",
+        "Unit": "\\stars",
+        "Low end": 0,
+        "High end": 10,
+        "Cutoff point": 5,
+        // "Scale type": "@[scale types/relative scale]",
         "Description": "@[qualities/relevant/desc]",
     }),
   );
@@ -340,8 +348,13 @@ export function initialInserts(dataInserter) {
     "qualities/probability", "j", 
     JSON.stringify({
         "Class": "@[qualities]",
-        "Tag": "Probability",
-        "Scale type": "@[scale types/percentage scale]",
+        "Label": "Probability",
+        "Unit": "%",
+        // "Lower bound": 0,
+        // "Upper bound": 100,
+        "Low end": 0,
+        "High end": 100,
+        // "Scale type": "@[scale types/percentage scale]",
         "Description": "@[qualities/probability/desc]",
     }),
   );
@@ -349,8 +362,10 @@ export function initialInserts(dataInserter) {
     "qualities/agreement", "j", 
     JSON.stringify({
         "Class": "@[qualities]",
-        "Tag": "Agreement",
-        "Scale type": "@[scale types/percentage scale]",
+        "Label": "Agreement",
+        "Unit": "%",
+        "Low end": 0,
+        "High end": 100,
         "Description": "@[qualities/agreement/desc]",
     }),
   );
@@ -360,7 +375,10 @@ export function initialInserts(dataInserter) {
     "qualities/good (no desc.)", "j", 
     JSON.stringify({
         "Class": "@[qualities]",
-        "Tag": "good",
+        "Label": "good",
+        "Unit": "\\stars",
+        "Low end": 0,
+        "High end": 10,
         // We use lowercase when Description is not provided.
         "Scale type": "@[scale types/relative scale]",
     }),
@@ -369,7 +387,10 @@ export function initialInserts(dataInserter) {
     "qualities/funny (no desc.)", "j", 
     JSON.stringify({
         "Class": "@[qualities]",
-        "Tag": "funny",
+        "Label": "funny",
+        "Unit": "\\stars",
+        "Low end": 0,
+        "High end": 10,
         "Scale type": "@[scale types/relative scale]",
     }),
   );
@@ -377,7 +398,10 @@ export function initialInserts(dataInserter) {
     "qualities/good", "j", 
     JSON.stringify({
         "Class": "@[qualities]",
-        "Tag": "Good",
+        "Label": "Good",
+        "Unit": "\\stars",
+        "Low end": 0,
+        "High end": 10,
         // We capitalize first letter when Description is provided.
         "Scale type": "@[scale types/relative scale]",
         "Description": "@[qualities/good/desc]",
@@ -387,7 +411,10 @@ export function initialInserts(dataInserter) {
     "qualities/funny", "j", 
     JSON.stringify({
         "Class": "@[qualities]",
-        "Tag": "Funny",
+        "Label": "Funny",
+        "Unit": "\\stars",
+        "Low end": 0,
+        "High end": 10,
         "Scale type": "@[scale types/relative scale]",
         "Description": "@[qualities/funny/desc]",
     }),
@@ -396,26 +423,38 @@ export function initialInserts(dataInserter) {
     "qualities/spoilers", "j", 
     JSON.stringify({
         "Class": "@[qualities]",
-        "Tag": "Spoilers",
+        "Label": "Spoilers",
+        "Unit": "\\stars",
+        "Low end": 0,
+        "High end": 10,
+        "Cutoff point": 5,
         "Scale type": "@[scale types/relative scale]",
         "Description": "@[qualities/spoilers/desc]",
     }),
   );
 
   dataInserter.insertOrEditParsedEntity(
-    "qualities/price", "j", 
+    "qualities/price 0-1,000,000 $", "j", 
     JSON.stringify({
         "Class": "@[qualities]",
-        "Tag": "Price",
+        "Label": "Price",
+        "Unit": "$",
+        "Low end": 0,
+        "High end": 1000000,
+        "Has upper bound": false,
         "Scale type": "@[scale types/value scale]",
         "Description": "@[qualities/price/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
-    "qualities/durability", "j", 
+    "qualities/durability 0-20 yr", "j", 
     JSON.stringify({
         "Class": "@[qualities]",
-        "Tag": "Durability",
+        "Label": "Durability",
+        "Unit": "yr",
+        "Low end": 0,
+        "High end": 20,
+        "Has upper bound": false,
         "Scale type": "@[scale types/value scale]",
         "Description": "@[qualities/durability/desc]",
     }),
@@ -524,8 +563,8 @@ export function initialInserts(dataInserter) {
     JSON.stringify({
         "Class": "@[relations]",
         "Title": "Arguments",
-        "Subject class": "@[scalar parameters]",
-        "Object class": "@[scalar parameters]",
+        "Subject class": "@[parameters]",
+        "Object class": "@[parameters]",
         "Description": "@[relations/arguments/desc]",
     }),
   );

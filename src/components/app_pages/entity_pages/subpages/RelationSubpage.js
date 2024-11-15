@@ -1,5 +1,5 @@
 import {useState, useMemo, useContext, useCallback} from "react";
-import {useDispatch} from "../../../../hooks/useDispatch";
+import {useDispatch} from "../../../../hooks/useDispatch.js";
 
 import {basicEntIDs} from "../../../../entity_ids/basic_entity_ids.js";
 
@@ -13,7 +13,7 @@ const TabHeader = () => <template></template>;
 const MEMBERS_REL_ID = basicEntIDs["relations/members"];
 const SUBCLASSES_REL_ID = basicEntIDs["relations/subclasses"];
 
-export const ClassSubpage = ({entID}) => {
+export const RelationSubpage = ({objID, relID}) => {
 
   const getPageCompFromID = useCallback(tabID => {
     if (tabID == entID) {

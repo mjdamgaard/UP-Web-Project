@@ -1,13 +1,19 @@
 
+.subpages-with-tabs{
 
-.tab-list {
-  & .tab {
-    display: inline-block;
-    padding: 2px 4px;
-    border: 1px solid black;
-    &:hover {
-      background-color: lightgray;
-      cursor: pointer;
+  & > .tab-list {
+    & .tab {
+      display: inline-block;
+      padding: 2px 4px;
+      border: 1px solid black;
+      &:hover {
+        background-color: lightgray;
+        cursor: pointer;
+      }
     }
+  }
+
+  & > hr {
+    margin: 0 0 0px;
   }
 }

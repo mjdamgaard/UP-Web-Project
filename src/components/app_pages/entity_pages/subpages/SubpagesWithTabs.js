@@ -58,7 +58,7 @@ export const SubpagesWithTabs = (props) => {
     }
     let tabScaleKeys = JSON.parse(tabScaleKeysJSON);
     DataFetcher.fetchSeveralEntityLists(
-      userID, tabScaleKeys, 20, (entLists) => {
+      userID, tabScaleKeys, 40, (entLists) => {
         let fetchedTabEntList = getUnionedParsedAndSortedEntList(entLists);
         let fetchedTabIDs = fetchedTabEntList.map(val => val[1]);
         setState(prev => ({
@@ -70,9 +70,9 @@ export const SubpagesWithTabs = (props) => {
     );
   }, []);
 
-
+  // TODO: Change this: I don't want the tabs to move after all; it feels wrong.
   const visibleTabIDs = [...new Set(loadedTabIDs.concat(tabIDArr))]
-    .slice(0, isExpanded ? 20 : 6);
+    .slice(0, isExpanded ? 40 : 10);
 
   // Fetch any not-yet-gotten tab titles of the visible tabs.
   useMemo(() => {
@@ -138,6 +138,7 @@ export const SubpagesWithTabs = (props) => {
       <div className={"tab-list" + (tabsAreFetched ? "" : " fetching")}>
         {tabs}
       </div>
+      <hr/>
       <div className="subpage-container">
         {subpages}
         {moreTabsSubpage}
