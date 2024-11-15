@@ -47,12 +47,13 @@ export class DataFetcher {
     const parallelCallbackHandler = new ParallelCallbackHandler;
 
     entIDs.forEach((entID, ind) => {
-      parallelCallbackHandler.push(() => {
+      parallelCallbackHandler.push((resolve) => {
         this.fetchPublicSmallEntity(entID,
           (datatype, defStr, isContained, len, creatorID, isEditable) => {
             results[ind] = [
               datatype, defStr, isContained, len, creatorID, isEditable
             ];
+            resolve();
           }
         );
       });
@@ -111,7 +112,7 @@ export class DataFetcher {
     const parallelCallbackHandler = new ParallelCallbackHandler;
 
     entIDs.forEach((entID, ind) => {
-      parallelCallbackHandler.push(() => {
+      parallelCallbackHandler.push((resolve) => {
         this.fetchSmallEntity(getAccountData, entID, 
           (
             datatype, defStr, isContained, len, creatorID, isEditable,
@@ -121,6 +122,7 @@ export class DataFetcher {
               datatype, defStr, isContained, len, creatorID,
               isEditable, isPrivate
             ];
+            resolve();
           }
         );
       });

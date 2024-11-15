@@ -279,7 +279,7 @@ export class DataInserter {
     let results = [];
 
     PathScorePairArr.forEach((pathScorePair, ind) => {
-      parallelCallbackHandler.push(() => {
+      parallelCallbackHandler.push((resolve) => {
         let entPath = pathScorePair[0];
         let scoreVal = pathScorePair[1];
         let entID = this.getEntIDFromPath(entPath);
@@ -296,6 +296,7 @@ export class DataInserter {
         };
         DBRequestManager.input(reqData, (result) => {
           results[ind] = result;
+          resolve();
         });
       });
     });

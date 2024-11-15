@@ -58,7 +58,7 @@ export const EntityPage = ({entID, initTab}) => {
 
   const getPageCompFromID = useCallback(tabID => {
     if (tabID == basicEntIDs["relations/members"]) {
-      return [ClassSubpage, {entID: tabID}];
+      return [ClassSubpage, {entID: entID}];
     }
     // TODO: Handle arbitrary IDs of subclasses.
   });

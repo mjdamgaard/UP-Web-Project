@@ -26,7 +26,7 @@ export const EntityList = ({scaleKey, userID}) => {
   const {entList, scaleIDIsMissing} = state;
 
   // If the entity list is ready, return the entity list.
-  if (Array.isArray(entList)) {console.log(entList);
+  if (Array.isArray(entList)) {
     return (
       <div className="entity-list">
         {JSON.stringify(entList)}

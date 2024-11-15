@@ -13,7 +13,7 @@ const TabHeader = () => <template></template>;
 const MEMBERS_REL_ID = basicEntIDs["relations/members"];
 const SUBCLASSES_REL_ID = basicEntIDs["relations/subclasses"];
 
-export const ClassSubpage = ({entID}) => {console.log(entID);
+export const ClassSubpage = ({entID}) => {
 
   const getPageCompFromID = useCallback(tabID => {
     if (tabID == entID) {
