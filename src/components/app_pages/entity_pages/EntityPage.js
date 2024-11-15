@@ -23,12 +23,6 @@ const SettingsMenu = () => <template></template>;
 const SubmitEntityMenu = () => <template></template>;
 
 
-const CLASSES_CLASS_ID = basicEntIDs["classes"];
-const RELATIONS_CLASS_ID = basicEntIDs["relations"];
-const SCALES_CLASS_ID = basicEntIDs["scales"];
-const RELATIONS_REL_ID = basicEntIDs["relations/relations"];
-const MEMBERS_REL_ID = basicEntIDs["relations/members"];
-const RELEVANT_QUAL_ID = basicEntIDs["qualities/relevant"];
 
 
 export const EntityPage = ({entID, initTab}) => {
@@ -63,17 +57,18 @@ export const EntityPage = ({entID, initTab}) => {
 
 
   const getPageCompFromID = useCallback(tabID => {
-    if (tabID == MEMBERS_REL_ID) {
+    if (tabID == basicEntIDs["relations/members"]) {
       return [ClassSubpage, {entID: tabID}];
     }
     // TODO: Handle arbitrary IDs of subclasses.
   });
  
   const initTabsJSON = JSON.stringify([
-    [MEMBERS_REL_ID, "Members"],
+    [basicEntIDs["relations/members"], "Members"],
   ]);
   const tabScaleKeysJSON = JSON.stringify([
-    [entID, RELATIONS_REL_ID],
+    [classID, basicEntIDs["relations/relations for members"]],
+    [entID, basicEntIDs["relations/relations"]],
   ]);
 
   // Before results is fetched, render this:

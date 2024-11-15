@@ -67,17 +67,17 @@ export const InitialInsertsPage = () => {
       </div>
       <hr/>
       <div>
-        <button onClick={() => insertInitialScores(dataInserter)}>
-          Insert initial scores
-        </button>
-      </div>
-      <hr/>
-      <div>
         <button onClick={(event) => {
           copyBasicEntityIDModuleToClipboard(dataInserter);
           event.target.setAttribute("style", "color:gray;");
         }}>
           Generate basic_entity_ids.js
+        </button>
+      </div>
+      <hr/>
+      <div>
+        <button onClick={() => insertInitialScores(dataInserter)}>
+          Insert initial scores (update basic_entity_ids.js and reload first!)
         </button>
       </div>
     </div>
@@ -228,7 +228,7 @@ export function initialInserts(dataInserter) {
   );
 
   dataInserter.insertOrEditParsedEntity(
-    "scalar parameters", "j", 
+    "scalar parameters", "j", // Maybe just 'parameters' instead..?
     JSON.stringify({
         "Class": "@[classes]",
         "Name": "Scalar parameters",
@@ -488,6 +488,16 @@ export function initialInserts(dataInserter) {
     }),
   );
   dataInserter.insertOrEditParsedEntity(
+    "relations/sub-relations for members", "j", 
+    JSON.stringify({
+        "Class": "@[relations]",
+        "Title": "Sub-relations for members",
+        "Subject class": "@[relations]",
+        "Object class": "@[classes]",
+        "Description": "@[relations/sub-relations for members/desc]",
+    }),
+  );
+  dataInserter.insertOrEditParsedEntity(
     "relations/qualities", "j", 
     JSON.stringify({
         "Class": "@[relations]",
@@ -514,8 +524,8 @@ export function initialInserts(dataInserter) {
     JSON.stringify({
         "Class": "@[relations]",
         "Title": "Arguments",
-        "Subject class": "@[scalars]",
-        "Object class": "@[scalars]",
+        "Subject class": "@[scalar parameters]",
+        "Object class": "@[scalar parameters]",
         "Description": "@[relations/arguments/desc]",
     }),
   );
@@ -550,13 +560,13 @@ export function initialInserts(dataInserter) {
     }),
   );
   dataInserter.insertOrEditParsedEntity(
-    "relations/relevant statements", "j", 
+    "relations/statements", "j", 
     JSON.stringify({
         "Class": "@[relations]",
-        "Title": "Relevant statements",
+        "Title": "Statements",
         "Subject class": "@[statements]",
         "Object class": "@[entities]",
-        "Description": "@[relations/relevant statements/desc]",
+        "Description": "@[relations/statements/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
@@ -735,6 +745,18 @@ export function insertInitialScores(dataInserter) {
     ],
   );
 
+
+
+  dataInserter.addEntitiesToListFromScaleKey(
+    ["classes", "relations/relations for members"],
+    [
+      ["relations/members", "1"],
+      ["subclasses", "0.6"],
+      ["relations/statements", "0.9"],
+      ["relations/comments", "0.8"],
+    ],
+  );
+
   
 }
 
@@ -772,10 +794,12 @@ const basicEntPaths = [
   "scales",
   "relations",
   "qualities/relevant",
-  "relations/relations",
   "relations/members",
   "relations/subclasses",
+  "relations/relations",
+  "relations/relations for members",
   "relations/sub-relations",
+  "relations/sub-relations for members",
 ];
 
 export function copyBasicEntityIDModuleToClipboard(dataInserter) {

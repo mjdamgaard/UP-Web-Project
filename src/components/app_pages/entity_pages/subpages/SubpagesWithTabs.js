@@ -11,13 +11,6 @@ const MoreTabsSubpage = () => <template></template>;
 const IS_FETCHING = {};
 
 
-function getUnionedParsedAndSortedEntList(entLists) {
-  let unionedAndParsedEntList = [].concat(...entLists).map(val => {
-    return [parseFloat(val[0]), val[1]];
-  });
-  return unionedAndParsedEntList.sort((a, b) => b[0] - a[0]);
-} 
-
 
 
 export const SubpagesWithTabs = (props) => {
@@ -67,7 +60,7 @@ export const SubpagesWithTabs = (props) => {
     DataFetcher.fetchSeveralEntityLists(
       userID, tabScaleKeys, 20, (entLists) => {
         let fetchedTabEntList = getUnionedParsedAndSortedEntList(entLists);
-        let fetchedTabIDs = fetchedTabEntList.map(val => val[1]);
+        let fetchedTabIDs = fetchedTabEntList.map(val => val[1]);debugger;
         setState(prev => ({
           ...prev,
           tabIDArr: [...new Set([...prev.tabIDArr, ...fetchedTabIDs])],
@@ -168,6 +161,17 @@ const subpagesWithTabsActions = {
     })
   },
 }
+
+
+
+
+
+function getUnionedParsedAndSortedEntList(entLists) {
+  let unionedAndParsedEntList = [].concat(...entLists).map(val => {
+    return [parseFloat(val[0]), val[1]];
+  });
+  return unionedAndParsedEntList.sort((a, b) => b[0] - a[0]);
+} 
 
 
 

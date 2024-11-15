@@ -196,9 +196,9 @@ export class DataFetcher {
 
 
   static fetchSeveralEntityLists(userIDs, scaleKeys, n, callback) {
-    if (typeof userIDs === "number") {
+    if (typeof userIDs !== "object") {
       let userID = userIDs;
-      userIDs = scaleKeys.map(() => userID);
+      userIDs = Array(scaleKeys.length).fill(userID);
     }
 
     const entLists = Array(scaleKeys.length);
@@ -240,6 +240,7 @@ export function getScaleDefStr(objID, relID, qualID) {
 export async function scaleDefStrHashPromise(objID, relID, qualID) {
   let scaleDefStr = getScaleDefStr(objID, relID, qualID);
   let hashHex = await hashPromise(scaleDefStr);
+console.log(JSON.stringify([hashHex, JSON.parse(scaleDefStr)]));
   return hashHex;
 }
 
