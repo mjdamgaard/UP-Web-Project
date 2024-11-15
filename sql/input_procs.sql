@@ -20,12 +20,7 @@ CREATE PROCEDURE insertOrUpdateScore (
     IN scoreVal FLOAT
 )
 BEGIN
-    IF (
-        SELECT type_ident
-        FROM Entities
-        WHERE id = subjID
-    )
-    THEN
+    IF ((SELECT type_ident FROM Entities WHERE id = subjID) IS NOT NULL) THEN
         INSERT INTO Scores (user_id, scale_id, subj_id, score_val)
         VALUES (userID, scaleID, subjID, scoreVal)
         ON DUPLICATE KEY UPDATE score_val = scoreVal;
