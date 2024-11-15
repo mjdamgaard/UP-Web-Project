@@ -156,25 +156,43 @@ export class DataFetcher {
 
 
 
-  static fetchEntityList(userID, scaleID, n, callback) {
+  static fetchEntityList(userID, scaleID, n, lo, hi, o, a, callback) {
+    if (callback === undefined) {
+      callback = a ?? o ?? hi ?? lo ?? n;
+    }
+    if (!(callback instanceof Function)) {
+      callback = () => {};
+    }
     let reqData = {
       req: "entList",
-      u: userID,
+      u: userID,      
       s: scaleID,
+      hi: hi ?? 3.402823466E+38,
+      lo: lo ?? -3.402823466E+38,
       n: n || 4000,
-      o: 0,
-      a: 0,
+      o: o ?? 0,
+      a: a ?? 0,
     };
     DBRequestManager.query(reqData, (entList) => {
       callback(entList);
     });
   }
 
-  static fetchEntityListFromHash(userID, scaleDefStrHash, n, callback) {
+  static fetchEntityListFromHash(
+    userID, scaleDefStrHash, n, lo, hi, o, a, callback
+  ) {
+    if (callback === undefined) {
+      callback = a ?? o ?? hi ?? lo ?? n;
+    }
+    if (!(callback instanceof Function)) {
+      callback = () => {};
+    }
     let reqData = {
       req: "entListFromHash",
       u: userID,
       h: scaleDefStrHash,
+      hi: hi ?? 3.402823466E+38,
+      lo: lo ?? -3.402823466E+38,
       n: n || 4000,
       o: 0,
       a: 0,
@@ -184,20 +202,30 @@ export class DataFetcher {
     });
   }
 
-  static fetchEntityListFromScaleKey(userID, scaleKey, n, callback) {
+  static fetchEntityListFromScaleKey(
+    userID, scaleKey, n, lo, hi, o, a, callback
+  ) {
     if (typeof scaleKey === "number") {
       let scaleID = scaleKey;
-      this.fetchEntityList(userID, scaleID, n, callback);
+      this.fetchEntityList(userID, scaleID, n, lo, hi, o, a, callback);
     }
     else {
       scaleDefStrHashPromise(...scaleKey).then(hash => {
-        this.fetchEntityListFromHash(userID, hash, n, callback);
+        this.fetchEntityListFromHash(userID, hash, n, lo, hi, o, a, callback);
       });
     }
   }
 
 
-  static fetchSeveralEntityLists(userIDs, scaleKeys, n, callback) {
+  static fetchSeveralEntityLists(
+    userIDs, scaleKeys, n, lo, hi, o, a, callback
+  ) {
+    if (callback === undefined) {
+      callback = a ?? o ?? hi ?? lo ?? n;
+    }
+    if (!(callback instanceof Function)) {
+      callback = () => {};
+    }
     if (typeof userIDs !== "object") {
       let userID = userIDs;
       userIDs = Array(scaleKeys.length).fill(userID);
@@ -210,7 +238,7 @@ export class DataFetcher {
     scaleKeys.forEach((scaleKey, ind) => {
       parallelCallbackHandler.push((resolve) => {
         this.fetchEntityListFromScaleKey(
-          userIDs[ind], scaleKey, n, (entList) => {
+          userIDs[ind], scaleKey, n, lo, hi, o, a, (entList) => {
             entLists[ind] = entList;
             resolve();
           }

@@ -74,14 +74,16 @@ $typeArr = "";
 switch ($reqType) {
     case "entList":
         header("Cache-Control: max-age=3");
-        $sql = "CALL selectEntityList (?, ?, ?, ?, ?)";
+        $sql = "CALL selectEntityList (?, ?, ?, ?, ?, ?, ?)";
         $paramNameArr = array(
             "u", "s",
+            "hi", "lo",
             "n", "o",
             "a"
         );
         $typeArr = array(
             "id", "id",
+            "float", "float",
             "uint", "uint",
             "bool"
         );
@@ -89,14 +91,16 @@ switch ($reqType) {
         break;
     case "entListFromHash":
         header("Cache-Control: max-age=3");
-        $sql = "CALL selectEntityListFromHash (?, ?, ?, ?, ?)";
+        $sql = "CALL selectEntityListFromHash (?, ?, ?, ?, ?, ?, ?)";
         $paramNameArr = array(
             "u", "h",
+            "hi", "lo",
             "n", "o",
             "a"
         );
         $typeArr = array(
             "id", "hash",
+            "float", "float",
             "uint", "uint",
             "bool"
         );
@@ -104,14 +108,16 @@ switch ($reqType) {
         break;
     case "entListFromDefStr":
         header("Cache-Control: max-age=3");
-        $sql = "CALL selectEntityListFromDefStr (?, ?, ?, ?, ?)";
+        $sql = "CALL selectEntityListFromDefStr (?, ?, ?, ?, ?, ?, ?)";
         $paramNameArr = array(
             "u", "d",
+            "hi", "lo",
             "n", "o",
             "a"
         );
         $typeArr = array(
             "id", "text",
+            "float", "float",
             "uint", "uint",
             "bool"
         );

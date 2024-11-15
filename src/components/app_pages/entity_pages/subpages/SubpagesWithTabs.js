@@ -15,8 +15,7 @@ const IS_FETCHING = {};
 
 export const SubpagesWithTabs = (props) => {
   var {
-    initTabsJSON, getPageCompFromID, getTabTitleFromID,
-    tabScaleKeysJSON, initIsExpanded = false,
+    initTabsJSON, getPageCompFromID, getTabTitleFromID, tabScaleKeysJSON,
   } = props;
 
   if (typeof getTabTitleFromID === "string") {
@@ -39,12 +38,11 @@ export const SubpagesWithTabs = (props) => {
     curTabID: initTabs[0][0],
     loadedTabIDs: [initTabs[0][0]],
     tabsAreFetched: !tabScaleKeysJSON,
-    isExpanded: initIsExpanded,
     moreTabsSubpageIsLoaded: false,
   });
   const {
     tabIDArr, tabTitleStore, curTabID, loadedTabIDs, tabsAreFetched,
-    isExpanded, moreTabsSubpageIsLoaded
+    moreTabsSubpageIsLoaded
   } = state;
 
   const [dispatch, refCallback] = useDispatch(
@@ -58,7 +56,7 @@ export const SubpagesWithTabs = (props) => {
     }
     let tabScaleKeys = JSON.parse(tabScaleKeysJSON);
     DataFetcher.fetchSeveralEntityLists(
-      userID, tabScaleKeys, 40, (entLists) => {
+      userID, tabScaleKeys, 20, 0, 10, (entLists) => {
         let fetchedTabEntList = getUnionedParsedAndSortedEntList(entLists);
         let fetchedTabIDs = fetchedTabEntList.map(val => val[1]);
         setState(prev => ({
@@ -70,13 +68,9 @@ export const SubpagesWithTabs = (props) => {
     );
   }, []);
 
-  // TODO: Change this: I don't want the tabs to move after all; it feels wrong.
-  const visibleTabIDs = [...new Set(loadedTabIDs.concat(tabIDArr))]
-    .slice(0, isExpanded ? 40 : 10);
-
   // Fetch any not-yet-gotten tab titles of the visible tabs.
   useMemo(() => {
-    visibleTabIDs.forEach(tabID => {
+    tabIDArr.forEach(tabID => {
       if (!tabTitleStore[tabID]) {
         tabTitleStore[tabID] = IS_FETCHING;
         getTabTitleFromID(tabID, (title => {
@@ -87,10 +81,10 @@ export const SubpagesWithTabs = (props) => {
         }));
       }
     });
-  }, [JSON.stringify(visibleTabIDs)]);
+  }, [JSON.stringify(tabIDArr)]);
 
   // Construct the (visible) tab JSX elements.
-  const tabs = visibleTabIDs.map((tabID) => {
+  const tabs = tabIDArr.map((tabID) => {
     let tabTitle = tabTitleStore[tabID];
     let isFetching = tabTitle === IS_FETCHING;
     let isMissing = tabTitle === null;

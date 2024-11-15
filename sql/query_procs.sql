@@ -22,6 +22,8 @@ DELIMITER //
 CREATE PROCEDURE selectEntityList (
     IN userID BIGINT UNSIGNED,
     IN scaleID BIGINT UNSIGNED,
+    IN hi FLOAT,
+    IN lo FLOAT,
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED,
     IN isAscOrder BOOL
@@ -33,7 +35,8 @@ BEGIN
     FROM Scores
     WHERE (
         user_id = userID AND
-        scale_id = scaleID
+        scale_id = scaleID AND
+        score_val BETWEEN lo AND hi
     )
     ORDER BY
         CASE WHEN isAscOrder THEN scoreVal END ASC,
@@ -50,6 +53,8 @@ DELIMITER //
 CREATE PROCEDURE selectEntityListFromHash (
     IN userID BIGINT UNSIGNED,
     IN scaleHash CHAR(64),
+    IN hi FLOAT,
+    IN lo FLOAT,
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED,
     IN isAscOrder BOOL
@@ -65,7 +70,8 @@ BEGIN
             SELECT ent_id
             FROM EntityHashes
             WHERE def_hash = scaleHash
-        )
+        ) AND
+        score_val BETWEEN lo AND hi
     )
     ORDER BY
         CASE WHEN isAscOrder THEN scoreVal END ASC,
@@ -81,6 +87,8 @@ DELIMITER //
 CREATE PROCEDURE selectEntityListFromDefStr (
     IN userID BIGINT UNSIGNED,
     IN scaleDefStr CHAR(64),
+    IN hi FLOAT,
+    IN lo FLOAT,
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED,
     IN isAscOrder BOOL
@@ -96,7 +104,8 @@ BEGIN
             SELECT ent_id
             FROM EntityHashes
             WHERE def_hash = SHA2(CONCAT("j.", scaleDefStr), 256)
-        )
+        ) AND
+        score_val BETWEEN lo AND hi
     )
     ORDER BY
         CASE WHEN isAscOrder THEN scoreVal END ASC,

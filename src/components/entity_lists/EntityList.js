@@ -44,7 +44,7 @@ export const EntityList = ({scaleKey, userID}) => {
 
   // Else fetch it.
   DataFetcher.fetchEntityListFromScaleKey(
-    userID, JSON.parse(scaleKey), null, (entList) => {
+    userID, JSON.parse(scaleKey), null, null, null, (entList) => {
         setState(prev => ({
           ...prev,
           entList: entList,
