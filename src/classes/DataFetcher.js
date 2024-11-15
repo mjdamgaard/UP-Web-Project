@@ -206,10 +206,11 @@ export class DataFetcher {
     const parallelCallbackHandler = new ParallelCallbackHandler;
 
     scaleKeys.forEach((scaleKey, ind) => {
-      parallelCallbackHandler.push(() => {
+      parallelCallbackHandler.push((resolve) => {
         this.fetchEntityListFromScaleKey(
           userIDs[ind], scaleKey, n, (entList) => {
             entLists[ind] = entList;
+            resolve();
           }
         );
       });

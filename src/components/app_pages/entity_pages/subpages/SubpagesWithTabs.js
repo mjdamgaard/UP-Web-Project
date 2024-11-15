@@ -60,7 +60,7 @@ export const SubpagesWithTabs = (props) => {
     DataFetcher.fetchSeveralEntityLists(
       userID, tabScaleKeys, 20, (entLists) => {
         let fetchedTabEntList = getUnionedParsedAndSortedEntList(entLists);
-        let fetchedTabIDs = fetchedTabEntList.map(val => val[1]);debugger;
+        let fetchedTabIDs = fetchedTabEntList.map(val => val[1]);
         setState(prev => ({
           ...prev,
           tabIDArr: [...new Set([...prev.tabIDArr, ...fetchedTabIDs])],
