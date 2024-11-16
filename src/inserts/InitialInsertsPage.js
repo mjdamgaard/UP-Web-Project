@@ -745,41 +745,41 @@ export function insertInitialScores(dataInserter) {
   dataInserter.addEntitiesToListFromScaleKey(
     ["classes", "relations/members"],
     [
-      ["classes", "1"],
-      ["entities", "1"],
-      ["users", "0.8"],
-      ["scales", "0.5"],
-      ["statements", "1"],
-      ["comments", "0.95"],
+      ["classes", "10"],
+      ["entities", "10"],
+      ["users", "8"],
+      ["scales", "5"],
+      ["statements", "10"],
+      ["comments", "9.5"],
     ],
   );
   dataInserter.addEntitiesToListFromScaleKey(
     ["classes", "relations/subclasses"],
     [
-      ["users", "0.8"],
-      ["scales", "0.8"],
-      ["statements", "1"],
-      ["comments", "0.95"],
+      ["users", "8"],
+      ["scales", "8"],
+      ["statements", "10"],
+      ["comments", "9.5"],
     ],
   );
   dataInserter.addEntitiesToListFromScaleKey(
     ["entities", "relations/members"],
     [
-      ["classes", "1"],
-      ["entities", "0.6"],
-      ["relations/members", "0.5"],
-      ["statements", "1"],
-      ["comments", "0.95"],
+      ["classes", "10"],
+      ["entities", "6"],
+      ["relations/members", "5"],
+      ["statements", "10"],
+      ["comments", "9.5"],
     ],
   );
   dataInserter.addEntitiesToListFromScaleKey(
     ["entities", "relations/subclasses"],
     [
-      ["classes", "1"],
-      ["users", "0.8"],
-      ["scales", "0.8"],
-      ["statements", "1"],
-      ["comments", "0.95"],
+      ["classes", "10"],
+      ["users", "8"],
+      ["scales", "8"],
+      ["statements", "10"],
+      ["comments", "9.5"],
     ],
   );
 

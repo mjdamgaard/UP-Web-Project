@@ -10,9 +10,6 @@ import {EntityList} from "../../../entity_lists/EntityList.js";
 const TabHeader = () => <template></template>;
 
 
-const MEMBERS_REL_ID = basicEntIDs["relations/members"];
-const SUBCLASSES_REL_ID = basicEntIDs["relations/subclasses"];
-
 export const ClassSubpage = ({entID}) => {
 
   const getPageCompFromID = useCallback(tabID => {
@@ -26,7 +23,7 @@ export const ClassSubpage = ({entID}) => {
     [entID, "All"],
   ]);
   const tabScaleKeysJSON = JSON.stringify([
-    [entID, SUBCLASSES_REL_ID],
+    [entID, basicEntIDs["relations/subclasses"]],
   ]);
 
   return (
@@ -35,6 +32,7 @@ export const ClassSubpage = ({entID}) => {
       getPageCompFromID={getPageCompFromID}
       getTabTitleFromID="Name"
       tabScaleKeysJSON={tabScaleKeysJSON}
+      tabBarHeader="Subclasses"
     />
   );
 };
@@ -43,6 +41,8 @@ export const ClassSubpage = ({entID}) => {
 
 export const AllMembersPage = ({entID}) => {
   return (
-    <EntityList scaleKey={JSON.stringify([entID, MEMBERS_REL_ID])}/>
+    <EntityList scaleKey={JSON.stringify(
+      [entID, basicEntIDs["relations/members"]]
+    )}/>
   );
 };

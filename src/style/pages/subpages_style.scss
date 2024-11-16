@@ -1,17 +1,75 @@
 
+$moreTabsButtonWidth: 30px;
+$moreTabsButtonMargin: 3px;
+$hoverColor: lightgray;
+$openTabColor: #e7e7e7;
+
 .subpages-with-tabs{
 
-  & > .tab-list {
-    & .tab {
+  & > .tab-bar {
+    background-image: linear-gradient($openTabColor, #fbfbfb, white);
+
+    & > .tab-bar-header {
+      font-size: 10pt;
+      &::after {
+        content: ':';
+      }
+    }
+
+    & > .tab-list {
       display: inline-block;
-      padding: 2px 4px;
-      border: 1px solid black;
+      width: calc(100% - $moreTabsButtonWidth - 2 * $moreTabsButtonMargin);
+      & .tab {
+        display: inline-block;
+        padding: 2px 6px;
+        border: 1px solid #9c9c9c;
+        &:hover {
+          background-color: $hoverColor;
+          cursor: pointer;
+        }
+        &.fetching::after {
+          &::after {
+            content: '...';
+          }
+          color: #808080;
+        }
+        &.missing::after {
+          &::after {
+            content: 'missing';
+          }
+          color: #ffc107;
+          font-style: italic;
+        }
+        &:not(.loaded) {
+          color: #274f88;
+        }
+        &.loaded {
+          font-style: normal;
+        }
+        &.open {
+          background-color: $openTabColor;
+          border: 1px solid #3b3b3b;
+          border-bottom-width: 0px;
+        }
+      }
+    }
+
+    & > .more-tabs-button {
+      &::after {
+        content: '\2304';
+      }
+      text-align: center;
+      display: inline-block;
+      width: $moreTabsButtonWidth;
+      height: 100%;
+      margin: 0 $moreTabsButtonMargin;
+      border: 1px solid #b9b9b9;
       &:hover {
-        background-color: lightgray;
-        cursor: pointer;
+        background-color: $hoverColor;
       }
     }
   }
+
 
   & > hr {
     margin: 0 0 0px;

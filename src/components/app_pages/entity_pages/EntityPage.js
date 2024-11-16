@@ -86,6 +86,7 @@ export const EntityPage = ({entID, initTab}) => {
         getPageCompFromID={getPageCompFromID}
         getTabTitleFromID="Title"
         tabScaleKeysJSON={tabScaleKeysJSON}
+        tabBarHeader="Relations"
       />
       {/* TODO: Move the InfoPage under one of the topmost tabs instead. */}
       <DropdownMenu

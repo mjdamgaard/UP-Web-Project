@@ -14,9 +14,10 @@ const IS_FETCHING = {};
 
 
 export const SubpagesWithTabs = (props) => {
-  var {
-    initTabsJSON, getPageCompFromID, getTabTitleFromID, tabScaleKeysJSON,
+  const {
+    initTabsJSON, getPageCompFromID, tabScaleKeysJSON, tabBarHeader,
   } = props;
+  var {getTabTitleFromID} = props;
 
   if (typeof getTabTitleFromID === "string") {
     let attrName = getTabTitleFromID;
@@ -42,7 +43,7 @@ export const SubpagesWithTabs = (props) => {
   });
   const {
     tabIDArr, tabTitleStore, curTabID, loadedTabIDs, tabsAreFetched,
-    moreTabsSubpageIsLoaded
+    moreTabsSubpageIsLoaded,
   } = state;
 
   const [dispatch, refCallback] = useDispatch(
@@ -56,7 +57,7 @@ export const SubpagesWithTabs = (props) => {
     }
     let tabScaleKeys = JSON.parse(tabScaleKeysJSON);
     DataFetcher.fetchSeveralEntityLists(
-      userID, tabScaleKeys, 20, 0, 10, (entLists) => {
+      userID, tabScaleKeys, 20, 8, 10, (entLists) => {
         let fetchedTabEntList = getUnionedParsedAndSortedEntList(entLists);
         let fetchedTabIDs = fetchedTabEntList.map(val => val[1]);
         setState(prev => ({
@@ -99,7 +100,7 @@ export const SubpagesWithTabs = (props) => {
             (isOpen     ? " open"     : "")
         }
         onClick={(event) => {
-          dispatch(event.currentTarget, "OPEN_TAB", tabID);
+          dispatch(event.target, "OPEN_TAB", tabID);
         }}
       >
         {isFetching ? "" : tabTitle}
@@ -129,8 +130,17 @@ export const SubpagesWithTabs = (props) => {
 
   return (
     <div ref={refCallback} className="subpages-with-tabs">
-      <div className={"tab-list" + (tabsAreFetched ? "" : " fetching")}>
-        {tabs}
+      <div className={"tab-bar" + (tabsAreFetched ? "" : " fetching")}>
+        <div className="tab-bar-header">
+          {tabBarHeader}
+        </div>
+        <div className="tab-list">
+          {tabs}
+        </div>
+        <div className="more-tabs-button" onClick={(event) => {
+          dispatch(event.target, "OPEN_MORE_TABS_PAGE");
+        }}>
+        </div>
       </div>
       <hr/>
       <div className="subpage-container">
@@ -152,6 +162,14 @@ const subpagesWithTabsActions = {
         loadedTabIDs: loadedTabIDs.includes(tabID) ? loadedTabIDs :
           [tabID, ...loadedTabIDs],
         curTabID: tabID,
+      };
+    })
+  },
+  "OPEN_MORE_TABS_PAGE": function(_, setState, {state}) {
+    setState(prev => {
+      return {
+        ...prev,
+        // TODO: Implement.
       };
     })
   },

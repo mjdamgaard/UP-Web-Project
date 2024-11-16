@@ -20,6 +20,8 @@ CREATE PROCEDURE insertOrUpdateScore (
     IN scoreVal FLOAT
 )
 BEGIN
+    -- TODO: Why on earth are we getting deadlocks sometimes from this proc??..
+    -- I guess deadlocks are just "supposed" to occur. It's just very weird..
     IF ((SELECT type_ident FROM Entities WHERE id = subjID) IS NOT NULL) THEN
         INSERT INTO Scores (user_id, scale_id, subj_id, score_val)
         VALUES (userID, scaleID, subjID, scoreVal)
