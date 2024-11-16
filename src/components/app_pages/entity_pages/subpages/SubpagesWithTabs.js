@@ -3,9 +3,10 @@ import {useDispatch} from "../../../../hooks/useDispatch";
 import {DataFetcher} from "../../../../classes/DataFetcher.js";
 
 import {ClassSubpage} from "./ClassSubpage.js";
+import {MoreTabsSubpage} from "./MoreTabsSubpage.js";
 
 /* Placeholders */
-const MoreTabsSubpage = () => <template></template>;
+// const MoreTabsSubpage = () => <template></template>;
 
 
 const IS_FETCHING = {};
@@ -113,14 +114,14 @@ export const SubpagesWithTabs = (props) => {
     let [PageComponent, pageProps] = getPageCompFromID(tabID);
     let styleProps = tabID == curTabID ? {} : {style: {display: "none"}};
     return (
-      <div key={tabID} {...styleProps}>
+      <div key={tabID} className="subpage" {...styleProps}>
         <PageComponent tabID={tabID} {...pageProps} />
       </div>
     );
   });
 
   const moreTabsSubpage = !moreTabsSubpageIsLoaded ? <></> : (
-    <div key={"more-tabs"}
+    <div key={"more-tabs"} className="more-tabs-page"
       {...(curTabID === "more-tabs" ? {} : {style: {display: "none"}})}
     >
       <MoreTabsSubpage tabScaleKeysJSON={tabScaleKeysJSON} />
@@ -169,7 +170,8 @@ const subpagesWithTabsActions = {
     setState(prev => {
       return {
         ...prev,
-        // TODO: Implement.
+        moreTabsSubpageIsLoaded: true,
+        curTabID: "more-tabs",
       };
     })
   },

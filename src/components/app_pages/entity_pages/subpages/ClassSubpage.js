@@ -17,7 +17,7 @@ export const ClassSubpage = ({entID}) => {
       return [AllMembersPage, {entID: entID}];
     }
     return [ClassSubpage, {entID: tabID}];
-  });
+  }, [entID]);
 
   const initTabsJSON = JSON.stringify([
     [entID, "All"],

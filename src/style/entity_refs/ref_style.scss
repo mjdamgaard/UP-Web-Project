@@ -40,3 +40,9 @@ $classClassID: 2;
   }
 
 }
+
+.scale-ref {
+  & > .rel-op {
+    margin: 0 3px;
+  }
+}

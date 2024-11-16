@@ -788,13 +788,20 @@ export function insertInitialScores(dataInserter) {
   dataInserter.addEntitiesToListFromScaleKey(
     ["classes", "relations/relations for members"],
     [
-      ["relations/members", "1"],
-      ["subclasses", "0.6"],
-      ["relations/statements", "0.9"],
-      ["relations/comments", "0.8"],
+      ["relations/members", "10"],
+      ["subclasses", "6"],
+      ["relations/statements", "9"],
+      ["relations/comments", "8"],
     ],
   );
 
+
+  dataInserter.addEntitiesToListFromScaleKey(
+    ["relations/statements", "relations/sub-relations"],
+    [
+      ["relations/comments", "10"],
+    ],
+  );
   
 }
 

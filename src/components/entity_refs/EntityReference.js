@@ -40,17 +40,17 @@ export const EntityReference = ({
   if (recLevel > maxRecLevel) {
     if (isLink) {
       return (
-        <div className="entity-ref">
+        <span className="entity-ref">
           <EntityLink entID={entID} >
             {"Entity #" + entID}
           </EntityLink>
-        </div>
+        </span>
       );
     } else {
       return (
-        <div className="entity-ref">
+        <span className="entity-ref">
           {"Entity #" + entID}
-        </div>
+        </span>
       );
     }
   }
@@ -80,17 +80,17 @@ export const EntityReference = ({
   if (isLink) {
     // TODO: Make the link a button to the left of the title instead.
     return (
-      <div className="entity-ref">
+      <span className="entity-ref">
         <EntityLink entID={entID} >
           {content}
         </EntityLink>
-      </div>
+      </span>
     );
   } else {
     return (
-      <div className="entity-ref">
+      <span className="entity-ref">
         {content}
-      </div>
+      </span>
     );
   }
 };
@@ -100,9 +100,9 @@ export const EntityReference = ({
 const JSONEntityReference = ({entID, defStr, isContained}) => {
   if (!isContained) {
     return (
-      <div className="json-entity invalid">
+      <span className="json-entity invalid">
         {"Invalid Entity #" + entID + " (definition is too long)"}
-      </div>
+      </span>
     );
   }
   var def;
@@ -110,39 +110,39 @@ const JSONEntityReference = ({entID, defStr, isContained}) => {
     def = JSON.parse(defStr);
   } catch (error) {
     return (
-      <div className="json-entity invalid">
+      <span className="json-entity invalid">
         {"Invalid Entity #" + entID + " (invalid JSON)"}
-      </div>
+      </span>
     );
   }
 
   if (Array.isArray(def)) {
     return (
-      <div className="json-entity">
+      <span className="json-entity">
         {"Array #" + entID + " (arrays are not yet implemented)"}
-      </div>
+      </span>
     );
   }
   else if (def && typeof def === "object") {
     return (
-      <div className="json-entity">
+      <span className="json-entity">
         <ObjectEntityReference entID={entID} defObj={def} />
-      </div>
+      </span>
     );
   }
   else if (typeof def === "string") {
     return (
-      <div className="json-entity">
+      <span className="json-entity">
         {"String #" + entID + " (strings are not yet implemented)"}
-      </div>
+      </span>
     );
   }
   else if (typeof def === "number") {
     return (
-      <div className="json-entity">
+      <span className="json-entity">
         {/* {def} */}
         {"Number #" + entID + " (numbers are not yet implemented)"}
-      </div>
+      </span>
     );
   }
 };
@@ -152,16 +152,16 @@ const JSONEntityReference = ({entID, defStr, isContained}) => {
 const ObjectEntityReference = ({entID, defObj}) => {
   if (!defObj.Class) {
     return (
-      <div className="obj-entity invalid">
+      <span className="obj-entity invalid">
         {"Invalid Object Entity #" + entID + " (missing class)"}
-      </div>
+      </span>
     );
   }
   if (!/^@[1-9][0-9]*$/.test(defObj.Class)) {
     return (
-      <div className="obj-entity invalid">
+      <span className="obj-entity invalid">
         {"Invalid Object Entity #" + entID + " (class is not a reference)"}
-      </div>
+      </span>
     );
   }
 
@@ -181,29 +181,29 @@ const ObjectEntityReference = ({entID, defObj}) => {
   }
 
   return (
-    <div className={"obj-entity class-id-" + classID}>
+    <span className={"obj-entity class-id-" + classID}>
       {content}
-    </div>
+    </span>
   );
 };
 
 
 const DefaultReferenceContent = ({entID, defObj}) => {
   return (
-    <div className="class-default">
+    <span className="class-default">
       {
         Object.entries(defObj).map(([key, val], ind) => {
           let parsedKey = key.toLowerCase().match(/[a-z0-9\-]+/g).join();
           return (
-            <div key={ind} className={"member-" + parsedKey}>
-              <div className="attribute-name">{key}</div>
-              <div className="attribute-value">{val}</div>
-            </div>
+            <span key={ind} className={"member-" + parsedKey}>
+              <span className="attribute-name">{key}</span>
+              <span className="attribute-value">{val}</span>
+            </span>
           );
         })
       }
-      <div key={"entID"} className="entID">{entID}</div>
-    </div>
+      <span key={"entID"} className="entID">{entID}</span>
+    </span>
   );
 };
 
@@ -222,9 +222,9 @@ const DefaultReferenceContent = ({entID, defObj}) => {
 const ExpandTitleButton = ({expEntMainData}) => {
   // TODO: Make this button turn into a whole drop-down menu when expanded.
   return (
-    <div className={"expand-title-button not-expanded"}>
+    <span className={"expand-title-button not-expanded"}>
       {/* Implement further */}
-    </div>
+    </span>
   );
 };
 
@@ -236,9 +236,9 @@ const ExpandTitleButton = ({expEntMainData}) => {
 
 const EntityReferencePlaceholder = ({entID, isLink}) => {
   return (
-    <div className="entity-title entity-title-placeholder">
+    <span className="entity-title entity-title-placeholder">
       {"loading..."}
-    </div>
+    </span>
   );
 }
 
@@ -247,15 +247,15 @@ const EntityReferencePlaceholder = ({entID, isLink}) => {
 const MissingEntityReference = ({entID}) => {
   // TODO: At some point in the future, potentially provide a link to some
   // archive.
-  return <div className="entity-ref-missing">{"@" + entID}</div>;
+  return <span className="entity-ref-missing">{"@" + entID}</span>;
 }
 
 const NullEntityReference = () => {
-  return <div className="entity-ref-null">{"@null"}</div>;
+  return <span className="entity-ref-null">{"@null"}</span>;
 }
 
 const NoneEntityReference = () => {
-  return <div className="entity-ref-none">{"@none"}</div>;
+  return <span className="entity-ref-none">{"@none"}</span>;
 }
 
 
@@ -266,12 +266,12 @@ export const EntityLink = ({entID, children}) => {
   // const colKey = useContext(ColumnContext);
 
   return (
-    <div className="entity-link" ref={refCallback} onClick={(e) => {
+    <span className="entity-link" ref={refCallback} onClick={(e) => {
       let pagePath = "/e" + entID;
       dispatch(e.target, "OPEN_PAGE", pagePath);
     }} >
       {children}
-    </div>
+    </span>
     // <Link replace to={{
     //   pathname: "e" + entID,
     //   search: "?from=" + colKey,
@@ -284,14 +284,26 @@ export const EntityLink = ({entID, children}) => {
 
 export const EntityID = ({entID}) => {
   return (
-    <div className="entity-id">
+    <span className="entity-id">
       {"@" + entID}
-    </div>
+    </span>
   );
 };
 
 
 
+
+
+
+export const ScaleReference = ({objID, relID}) => {
+  return (
+    <span className="scale-ref">
+      <span className="obj-ref"><EntityReference entID={objID}/></span>
+      <span className="rel-op">{"→"}</span>
+      <span className="rel-ref"><EntityReference entID={relID}/></span>
+    </span>
+  );
+};
 
 
 

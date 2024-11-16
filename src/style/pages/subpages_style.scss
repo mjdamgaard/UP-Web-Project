@@ -27,13 +27,13 @@ $openTabColor: #e7e7e7;
           background-color: $hoverColor;
           cursor: pointer;
         }
-        &.fetching::after {
+        &.fetching {
           &::after {
             content: '...';
           }
           color: #808080;
         }
-        &.missing::after {
+        &.missing {
           &::after {
             content: 'missing';
           }

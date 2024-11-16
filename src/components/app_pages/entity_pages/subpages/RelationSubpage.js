@@ -6,17 +6,15 @@ import {basicEntIDs} from "../../../../entity_ids/basic_entity_ids.js";
 import {SubpagesWithTabs} from "./SubpagesWithTabs.js";
 import {EntityList} from "../../../entity_lists/EntityList.js";
 
-/* Placeholders */
-const TabHeader = () => <template></template>;
 
 
 export const RelationSubpage = ({objID, relID}) => {
 
   const getPageCompFromID = useCallback(tabID => {
     return (
-      <EntityList scaleKey={JSON.stringify([objID, tabID])}/>
+      [EntityList, {scaleKey: JSON.stringify([objID, tabID])}]
     );
-  });
+  }, [objID, relID]);
 
   const initTabsJSON = JSON.stringify([
     [relID, undefined],

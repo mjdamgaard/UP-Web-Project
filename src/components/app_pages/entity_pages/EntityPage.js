@@ -9,6 +9,7 @@ import {SubpagesWithTabs} from "./subpages/SubpagesWithTabs";
 
 import {EntityList} from "../../entity_lists/EntityList";
 import {ClassSubpage} from "./subpages/ClassSubpage.js";
+import {RelationSubpage} from "./subpages/RelationSubpage.js";
 
 /* Placeholders */
 const ScoringDisplay = () => <template></template>;
@@ -60,8 +61,8 @@ export const EntityPage = ({entID, initTab}) => {
     if (tabID == basicEntIDs["relations/members"]) {
       return [ClassSubpage, {entID: entID}];
     }
-    // TODO: Handle arbitrary IDs of subclasses.
-  });
+    return [RelationSubpage, {objID: entID, relID: tabID}];
+  }, [entID]);
  
   const initTabsJSON = JSON.stringify([
     [basicEntIDs["relations/members"], "Members"],
