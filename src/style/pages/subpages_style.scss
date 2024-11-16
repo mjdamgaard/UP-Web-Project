@@ -2,7 +2,7 @@
 $moreTabsButtonWidth: 30px;
 $moreTabsButtonMargin: 3px;
 $hoverColor: lightgray;
-$openTabColor: #e7e7e7;
+$openTabColor: #f4f4f4;
 
 .subpages-with-tabs{
 
@@ -64,8 +64,12 @@ $openTabColor: #e7e7e7;
       height: 100%;
       margin: 0 $moreTabsButtonMargin;
       border: 1px solid #b9b9b9;
-      &:hover {
+      &:hover:not([disabled]) {
         background-color: $hoverColor;
+        cursor: pointer;
+      }
+      &:hover[disabled] {
+        cursor: not-allowed;
       }
     }
   }

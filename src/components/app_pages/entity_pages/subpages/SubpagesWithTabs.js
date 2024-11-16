@@ -29,7 +29,8 @@ export const SubpagesWithTabs = (props) => {
 
   const userID = "1"; // (TODO: Remove.)
 
-  const initTabs = JSON.parse(initTabsJSON);
+  const initTabs = JSON.parse(initTabsJSON ?? "[]");
+  const initTab = initTabs[0] && initTabs[0][0];
 
   // initTabsJSON is a JSON array of: [[tabTitle, tabID]*].
   // Tab keys are the corresponding JSON arrays. 
@@ -37,8 +38,8 @@ export const SubpagesWithTabs = (props) => {
   const [state, setState] = useState({
     tabIDArr: initTabs.map(val => val[0]),
     tabTitleStore: Object.fromEntries(initTabs),
-    curTabID: initTabs[0][0],
-    loadedTabIDs: [initTabs[0][0]],
+    curTabID: initTab,
+    loadedTabIDs: [initTab],
     tabsAreFetched: !tabScaleKeysJSON,
     moreTabsSubpageIsLoaded: false,
   });
@@ -128,7 +129,6 @@ export const SubpagesWithTabs = (props) => {
     </div>
   );
 
-
   return (
     <div ref={refCallback} className="subpages-with-tabs">
       <div className={"tab-bar" + (tabsAreFetched ? "" : " fetching")}>
@@ -138,10 +138,13 @@ export const SubpagesWithTabs = (props) => {
         <div className="tab-list">
           {tabs}
         </div>
-        <div className="more-tabs-button" onClick={(event) => {
-          dispatch(event.target, "OPEN_MORE_TABS_PAGE");
-        }}>
-        </div>
+        <button type="button" className="more-tabs-button"
+          {...(tabScaleKeysJSON ? {} : {disabled: true})}
+          onClick={(event) => {
+            dispatch(event.target, "OPEN_MORE_TABS_PAGE");
+          }}
+        >
+        </button>
       </div>
       <hr/>
       <div className="subpage-container">
