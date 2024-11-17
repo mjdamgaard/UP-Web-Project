@@ -12,4 +12,6 @@ export const basicEntIDs = {
   "relations/relations for members": 39,
   "relations/sub-relations": 41,
   "relations/sub-relations for members": 40,
+  "relations/qualities": 37,
+  "relations/qualities for members": 36,
 };

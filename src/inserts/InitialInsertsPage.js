@@ -845,6 +845,8 @@ const basicEntPaths = [
   "relations/relations for members",
   "relations/sub-relations",
   "relations/sub-relations for members",
+  "relations/qualities",
+  "relations/qualities for members",
 ];
 
 export function copyBasicEntityIDModuleToClipboard(dataInserter) {

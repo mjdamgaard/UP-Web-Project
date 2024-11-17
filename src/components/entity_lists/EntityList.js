@@ -1,7 +1,8 @@
 import {useState, useMemo, useContext} from "react";
 
 import {basicEntIDs} from "../../entity_ids/basic_entity_ids.js";
-import {DataFetcher, getScaleDefStr, hashPromise} from "../../classes/DataFetcher";
+import {DataFetcher} from "../../classes/DataFetcher";
+import {GeneralEntityElement} from "./elements/GeneralEntityElement.js";
 
 /* Placeholders */
 const OpenedTabList = () => <template></template>;
@@ -15,7 +16,7 @@ const RELATIONS_REL_ID = basicEntIDs["relations/relations"];
 const RELEVANT_QUAL_ID = basicEntIDs["qualities/relevant"];
 
 
-export const EntityList = ({scaleKey, userID, n, lo, hi, o, a}) => {
+export const EntityList = ({scaleKey, userID, n, lo, hi, o, a, ElemComp}) => {
   userID ??= "1"; // (TODO: Remove.)
 
   // scaleKey = scaleID | JSON.stringify([relID, objID, qualID?]).
@@ -25,11 +26,15 @@ export const EntityList = ({scaleKey, userID, n, lo, hi, o, a}) => {
   });
   const {entList, scaleIDIsMissing} = state;
 
+  ElemComp = ElemComp ?? GeneralEntityElement;
+
   // If the entity list is ready, return the entity list.
   if (Array.isArray(entList)) {
     return (
       <div className="entity-list">
-        {JSON.stringify(entList)}
+        {entList.map(([score, entID]) => (
+          <ElemComp key={entID} entID={entID} score={score} />
+        ))}
       </div>
     );
   }
@@ -38,7 +43,10 @@ export const EntityList = ({scaleKey, userID, n, lo, hi, o, a}) => {
   // the user can submit it.
   if (scaleIDIsMissing) {
     return (
-      <div>TODO: Make this a page to submit missing scaleID.</div>
+      <div>
+        TODO: Make this a page to submit missing scaleID. *No, we just submit
+        it when adding the first entity.
+      </div>
     );
   }
 
