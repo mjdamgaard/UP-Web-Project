@@ -789,7 +789,7 @@ export function insertInitialScores(dataInserter) {
     ["classes", "relations/relations for members"],
     [
       ["relations/members", "10"],
-      ["subclasses", "6"],
+      ["relations/subclasses", "6"],
       ["relations/statements", "9"],
       ["relations/comments", "8"],
     ],

@@ -2,7 +2,9 @@ import {useState, useMemo, useCallback} from "react";
 
 import {basicEntIDs} from "../../../entity_ids/basic_entity_ids.js";
 import {DataFetcher} from "../../../classes/DataFetcher";
-import {EntityReference} from "../../entity_refs/EntityReference";
+import {
+  EntityReference, ScaleReference
+} from "../../entity_refs/EntityReference";
 import {EntityInfoPage} from "./subpages/InfoPage";
 import {DropdownMenu} from "../../menus/DropdownMenu";
 import {SubpagesWithTabs} from "./subpages/SubpagesWithTabs";
@@ -26,7 +28,7 @@ const SubmitEntityMenu = () => <template></template>;
 
 
 
-export const EntityPage = ({entID, initTab}) => {
+export const EntityPage = ({entID, initTabID}) => {
   const [results, setState] = useState({});
 
   useMemo(() => {
@@ -87,7 +89,10 @@ export const EntityPage = ({entID, initTab}) => {
         getPageCompFromID={getPageCompFromID}
         getTabTitleFromID="Title"
         tabScaleKeysJSON={tabScaleKeysJSON}
-        tabBarHeader="Relations"
+        tabBarHeader={<ScaleReference
+          objID={entID} relID={basicEntIDs["relations/relations"]}
+        />}
+        initTabID={initTabID}
       />
       {/* TODO: Move the InfoPage under one of the topmost tabs instead. */}
       <DropdownMenu

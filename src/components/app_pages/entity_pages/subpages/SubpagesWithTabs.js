@@ -18,7 +18,7 @@ export const SubpagesWithTabs = (props) => {
   const {
     initTabsJSON, getPageCompFromID, tabScaleKeysJSON, tabBarHeader,
   } = props;
-  var {getTabTitleFromID} = props;
+  var {getTabTitleFromID, initTabID} = props;
 
   if (typeof getTabTitleFromID === "string") {
     let attrName = getTabTitleFromID;
@@ -29,19 +29,25 @@ export const SubpagesWithTabs = (props) => {
 
   const userID = "1"; // (TODO: Remove.)
 
-  const initTabs = JSON.parse(initTabsJSON ?? "[]");
-  const initTab = initTabs[0] && initTabs[0][0];
 
   // initTabsJSON is a JSON array of: [[tabTitle, tabID]*].
   // Tab keys are the corresponding JSON arrays. 
 
-  const [state, setState] = useState({
-    tabIDArr: initTabs.map(val => val[0]),
-    tabTitleStore: Object.fromEntries(initTabs),
-    curTabID: initTab,
-    loadedTabIDs: [initTab],
-    tabsAreFetched: !tabScaleKeysJSON,
-    moreTabsSubpageIsLoaded: false,
+  const [state, setState] = useState(() => {
+    let initTabs = JSON.parse(initTabsJSON ?? "[]");
+    initTabID = initTabID ?? (initTabs[0] && initTabs[0][0]);
+    let tabIDArr = initTabs.map(val => val[0]);
+    if (!tabIDArr.includes(initTabID)) {
+      tabIDArr.push(initTabID);
+    }
+    return {
+      tabIDArr: tabIDArr,
+      tabTitleStore: Object.fromEntries(initTabs),
+      curTabID: initTabID,
+      loadedTabIDs: [initTabID],
+      tabsAreFetched: !tabScaleKeysJSON,
+      moreTabsSubpageIsLoaded: false,
+    }
   });
   const {
     tabIDArr, tabTitleStore, curTabID, loadedTabIDs, tabsAreFetched,

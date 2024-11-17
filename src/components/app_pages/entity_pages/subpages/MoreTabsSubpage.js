@@ -19,7 +19,7 @@ export const MoreTabsSubpage = ({tabScaleKeysJSON}) => {
     const scaleKey = tabScaleKeys[tabID];
     return (
       [EntityList, {
-        scaleKeyJSON: JSON.stringify(scaleKey), lo: 5,
+        scaleKeyJSON: JSON.stringify(scaleKey), lo: 4,
         ElemComp: TabEntityElement,
       }]
     );
