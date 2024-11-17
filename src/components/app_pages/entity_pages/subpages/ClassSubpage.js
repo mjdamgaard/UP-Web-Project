@@ -41,8 +41,8 @@ export const ClassSubpage = ({entID}) => {
 
 export const AllMembersPage = ({entID}) => {
   return (
-    <EntityList 
-      scaleKey={JSON.stringify(
+    <EntityList
+      scaleKeyJSON={JSON.stringify(
         [entID, basicEntIDs["relations/members"]]
       )}
       lo={5}

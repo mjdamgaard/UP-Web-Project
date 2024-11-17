@@ -6,6 +6,9 @@ import {basicEntIDs} from "../../../../entity_ids/basic_entity_ids.js";
 import {SubpagesWithTabs} from "./SubpagesWithTabs.js";
 import {EntityList} from "../../../entity_lists/EntityList.js";
 import {ScaleReference} from "../../../entity_refs/EntityReference.js";
+import {
+  TabEntityElement
+} from "../../../entity_lists/elements/TabEntityElement.js";
 
 
 
@@ -15,7 +18,10 @@ export const MoreTabsSubpage = ({tabScaleKeysJSON}) => {
   const getPageCompFromID = useCallback(tabID => {
     const scaleKey = tabScaleKeys[tabID];
     return (
-      [EntityList, {scaleKey: JSON.stringify(scaleKey)}]
+      [EntityList, {
+        scaleKeyJSON: JSON.stringify(scaleKey), lo: 5,
+        ElemComp: TabEntityElement,
+      }]
     );
   }, [tabScaleKeysJSON]);
 

@@ -12,7 +12,7 @@ export const RelationSubpage = ({objID, relID}) => {
 
   const getPageCompFromID = useCallback(tabID => {
     return (
-      [EntityList, {scaleKey: JSON.stringify([objID, tabID]), lo: 5}]
+      [EntityList, {scaleKeyJSON: JSON.stringify([objID, tabID]), lo: 5}]
     );
   }, [objID, relID]);
 
