@@ -9,33 +9,59 @@ import {ScaleReference} from "../../../entity_refs/EntityReference.js";
 
 
 
-export const RelationSubpage = ({objID, relID}) => {
+export const ScaleSubpage = ({
+  objID, relID, qualID, showSubQualities, subjClassID, ElemComp
+}) => {
 
   const getPageCompFromID = useCallback(tabID => {
+    if (tabID == qualID) {
+      return (
+        [EntityList, {
+          scaleKeyJSON: JSON.stringify([objID, relID, tabID]),
+          ElemComp: ElemComp,
+        }]
+      );
+    }
     return (
-      [EntityList, {scaleKeyJSON: JSON.stringify([objID, tabID]), lo: 5}]
+      [ScaleSubpage, {
+        objID: objID, relID: relID, qualID: tabID,
+        showSubQualities: tabID != qualID,
+        subjClassID: subjClassID, ElemComp: ElemComp,
+      }]
     );
-  }, [objID, relID]);
+  }, [objID, relID, qualID]);
 
   const initTabsJSON = JSON.stringify([
-    [relID, undefined],
+    [qualID, undefined],
   ]);
   const tabScaleKeysJSON = JSON.stringify([
-    [relID, basicEntIDs["relations/sub-relations"]],
+    [qualID, basicEntIDs["relations/sub-qualities"]],
   ]);
 
-  return (
-    <div className="relation-subpage">
-      <SubpagesWithTabs
-        initTabsJSON={[initTabsJSON]}
-        getPageCompFromID={getPageCompFromID}
-        getTabTitleFromID="Title"
-        tabScaleKeysJSON={tabScaleKeysJSON}
-        tabBarHeader={<ScaleReference
-          objID={relID} relID={basicEntIDs["relations/sub-relations"]}
-        />}
-      />
-    </div>
-  );
+  if (showSubQualities) {
+    return (
+      <div className="scale-subpage">
+        <SubpagesWithTabs
+          initTabsJSON={[initTabsJSON]}
+          getPageCompFromID={getPageCompFromID}
+          getTabTitleFromID="Label"
+          tabScaleKeysJSON={tabScaleKeysJSON}
+          tabBarHeader={<ScaleReference
+            objID={qualID} relID={basicEntIDs["relations/sub-qualities"]}
+          />}
+        />
+      </div>
+    );
+  }
+  else {
+    return (
+      <div className="scale-subpage">
+        <EntityList
+          scaleKeyJSON={JSON.stringify([objID, relID, qualID])}
+          ElemComp={ElemComp}
+        />
+      </div>
+    );
+  }
 };
 

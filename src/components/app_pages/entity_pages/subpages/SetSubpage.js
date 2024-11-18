@@ -6,33 +6,39 @@ import {basicEntIDs} from "../../../../entity_ids/basic_entity_ids.js";
 import {SubpagesWithTabs} from "./SubpagesWithTabs.js";
 import {EntityList} from "../../../entity_lists/EntityList.js";
 import {ScaleReference} from "../../../entity_refs/EntityReference.js";
+import {ScaleSubpage} from "./ScaleSubpage.js";
 
 
 
-export const SetSubpage = ({objID, relID}) => {
+export const SetSubpage = ({objID, relID, subjClassID, ElemComp}) => {
 
   const getPageCompFromID = useCallback(tabID => {
     return (
-      [EntityList, {scaleKeyJSON: JSON.stringify([objID, tabID]), lo: 5}]
+      [ScaleSubpage, {
+        objID: objID, relID: relID, qualID: tabID,
+        showSubQualities: tabID !== basicEntIDs["qualities/relevant"],
+        subjClassID: subjClassID, ElemComp: ElemComp,
+      }]
     );
   }, [objID, relID]);
 
   const initTabsJSON = JSON.stringify([
-    [relID, undefined],
+    [basicEntIDs["qualities/relevant"], "Relevant"],
   ]);
   const tabScaleKeysJSON = JSON.stringify([
-    [relID, basicEntIDs["relations/sub-relations"]],
+    [subjClassID, basicEntIDs["relations/qualities for members"]],
+    [relID, basicEntIDs["relations/qualities"]],
   ]);
 
   return (
-    <div className="relation-subpage">
+    <div className="set-subpage">
       <SubpagesWithTabs
         initTabsJSON={[initTabsJSON]}
         getPageCompFromID={getPageCompFromID}
-        getTabTitleFromID="Title"
+        getTabTitleFromID="Label"
         tabScaleKeysJSON={tabScaleKeysJSON}
         tabBarHeader={<ScaleReference
-          objID={relID} relID={basicEntIDs["relations/sub-relations"]}
+          objID={relID} relID={basicEntIDs["relations/qualities"]}
         />}
       />
     </div>

@@ -386,11 +386,10 @@ export function initialInserts(dataInserter) {
     JSON.stringify({
         "Class": "@[qualities]",
         "Label": "good",
+        // We use lowercase when Description is not provided.
         "Unit": "\\stars",
         "Low end": 0,
         "High end": 10,
-        // We use lowercase when Description is not provided.
-        "Scale type": "@[scale types/relative scale]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
@@ -401,7 +400,6 @@ export function initialInserts(dataInserter) {
         "Unit": "\\stars",
         "Low end": 0,
         "High end": 10,
-        "Scale type": "@[scale types/relative scale]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
@@ -409,11 +407,10 @@ export function initialInserts(dataInserter) {
     JSON.stringify({
         "Class": "@[qualities]",
         "Label": "Good",
+        // We capitalize first letter when Description is provided.
         "Unit": "\\stars",
         "Low end": 0,
         "High end": 10,
-        // We capitalize first letter when Description is provided.
-        "Scale type": "@[scale types/relative scale]",
         "Description": "@[qualities/good/desc]",
     }),
   );
@@ -425,8 +422,18 @@ export function initialInserts(dataInserter) {
         "Unit": "\\stars",
         "Low end": 0,
         "High end": 10,
-        "Scale type": "@[scale types/relative scale]",
         "Description": "@[qualities/funny/desc]",
+    }),
+  );
+  dataInserter.insertOrEditParsedEntity(
+    "qualities/witty", "j", 
+    JSON.stringify({
+        "Class": "@[qualities]",
+        "Label": "Witty",
+        "Unit": "\\stars",
+        "Low end": 0,
+        "High end": 10,
+        "Description": "@[qualities/witty/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
@@ -437,7 +444,6 @@ export function initialInserts(dataInserter) {
         "Unit": "\\stars",
         "Low end": 0,
         "High end": 10,
-        "Scale type": "@[scale types/relative scale]",
         "Description": "@[qualities/spoilers/desc]",
     }),
   );
@@ -451,7 +457,6 @@ export function initialInserts(dataInserter) {
         "Low end": 0,
         "High end": 1000000,
         "Has upper bound": false,
-        "Scale type": "@[scale types/value scale]",
         "Description": "@[qualities/price/desc]",
     }),
   );
@@ -464,7 +469,6 @@ export function initialInserts(dataInserter) {
         "Low end": 0,
         "High end": 20,
         "Has upper bound": false,
-        "Scale type": "@[scale types/value scale]",
         "Description": "@[qualities/durability/desc]",
     }),
   );
@@ -564,6 +568,16 @@ export function initialInserts(dataInserter) {
         "Subject class": "@[qualities]",
         "Object class": "@[classes]",
         "Description": "@[relations/qualities for members/desc]",
+    }),
+  );
+  dataInserter.insertOrEditParsedEntity(
+    "relations/sub-qualities", "j", 
+    JSON.stringify({
+        "Class": "@[relations]",
+        "Title": "Sub-qualities",
+        "Subject class": "@[qualities]",
+        "Object class": "@[qualities]",
+        "Description": "@[relations/sub-qualities/desc]",
     }),
   );
 
@@ -826,7 +840,35 @@ export function insertInitialScores(dataInserter) {
       ["relations/comments", "10"],
     ],
   );
-  
+
+
+
+  dataInserter.addEntitiesToListFromScaleKey(
+    ["relations/statements", "relations/qualities"],
+    [
+      ["qualities/good (no desc.)", "9"],
+      ["qualities/funny (no desc.)", "9"],
+    ],
+  );
+  dataInserter.addEntitiesToListFromScaleKey(
+    ["statements", "relations/qualities for members"],
+    [
+      ["qualities/good", "8"],
+      ["qualities/funny (no desc.)", "6"],
+    ],
+  );
+  dataInserter.addEntitiesToListFromScaleKey(
+    ["qualities/good (no desc.)", "relations/sub-qualities"],
+    [
+      ["qualities/funny (no desc.)", "9"],
+    ],
+  );
+  dataInserter.addEntitiesToListFromScaleKey(
+    ["qualities/funny (no desc.)", "relations/sub-qualities"],
+    [
+      ["qualities/witty", "8"],
+    ],
+  );
 }
 
 
@@ -871,6 +913,7 @@ const basicEntPaths = [
   "relations/sub-relations for members",
   "relations/qualities",
   "relations/qualities for members",
+  "relations/sub-qualities",
 ];
 
 export function copyBasicEntityIDModuleToClipboard(dataInserter) {
