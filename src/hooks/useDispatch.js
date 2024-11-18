@@ -13,7 +13,7 @@ import {
 export const useDispatch = (
   actions = {}, setState, state, props, contexts, refs
 ) => {
-  const dataRef = useRef(null);
+  const dataRef = useRef([actions, setState, state, props, contexts, refs]);
   dataRef.current = [actions, setState, state, props, contexts, refs];
 
   const dispatchListener = useCallback((event) => {

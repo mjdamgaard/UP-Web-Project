@@ -183,21 +183,17 @@ const subpagesWithTabsActions = {
       };
     });
   },
-  "ADD_AND_OPEN_TAB": function(tabID, setState, {props}, node, dispatch) {
-    if (props.tabScaleKeysJSON) {
-      setState(prev => {
-        return {
-          ...prev,
-          tabIDArr: prev.tabIDArr.includes(tabID) ? prev.tabIDArr :
-            [...prev.tabIDArr, tabID],
-          loadedTabIDs: prev.loadedTabIDs.includes(tabID) ? prev.loadedTabIDs :
-            [...prev.loadedTabIDs, tabID],
-          curTabID: tabID,
-        };
-      });
-    } else {
-      dispatch(node.parentNode, "ADD_AND_OPEN_TAB", tabID);
-    }
+  "ADD_AND_OPEN_TAB": function(tabID, setState) {
+    setState(prev => {
+      return {
+        ...prev,
+        tabIDArr: prev.tabIDArr.includes(tabID) ? prev.tabIDArr :
+          [...prev.tabIDArr, tabID],
+        loadedTabIDs: prev.loadedTabIDs.includes(tabID) ? prev.loadedTabIDs :
+          [...prev.loadedTabIDs, tabID],
+        curTabID: tabID,
+      };
+    });
   },
 }
 

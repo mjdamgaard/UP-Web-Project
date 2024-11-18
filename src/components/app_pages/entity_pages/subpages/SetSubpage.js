@@ -1,5 +1,5 @@
 import {useState, useMemo, useContext, useCallback} from "react";
-import {useDispatch} from "../../../../hooks/useDispatch";
+import {useDispatch} from "../../../../hooks/useDispatch.js";
 
 import {basicEntIDs} from "../../../../entity_ids/basic_entity_ids.js";
 
@@ -7,50 +7,35 @@ import {SubpagesWithTabs} from "./SubpagesWithTabs.js";
 import {EntityList} from "../../../entity_lists/EntityList.js";
 import {ScaleReference} from "../../../entity_refs/EntityReference.js";
 
-/* Placeholders */
-const TabHeader = () => <template></template>;
 
 
-export const ClassSubpage = ({entID}) => {
+export const SetSubpage = ({objID, relID}) => {
 
   const getPageCompFromID = useCallback(tabID => {
-    if (tabID == entID) {
-      return [AllMembersSubpage, {entID: entID}];
-    }
-    return [ClassSubpage, {entID: tabID}];
-  }, [entID]);
+    return (
+      [EntityList, {scaleKeyJSON: JSON.stringify([objID, tabID]), lo: 5}]
+    );
+  }, [objID, relID]);
 
   const initTabsJSON = JSON.stringify([
-    [entID, "All"],
+    [relID, undefined],
   ]);
   const tabScaleKeysJSON = JSON.stringify([
-    [entID, basicEntIDs["relations/subclasses"]],
+    [relID, basicEntIDs["relations/sub-relations"]],
   ]);
 
   return (
-    <div className="class-subpage">
+    <div className="relation-subpage">
       <SubpagesWithTabs
         initTabsJSON={[initTabsJSON]}
         getPageCompFromID={getPageCompFromID}
-        getTabTitleFromID="Name"
+        getTabTitleFromID="Title"
         tabScaleKeysJSON={tabScaleKeysJSON}
         tabBarHeader={<ScaleReference
-          objID={entID} relID={basicEntIDs["relations/subclasses"]}
+          objID={relID} relID={basicEntIDs["relations/sub-relations"]}
         />}
       />
     </div>
   );
 };
 
-
-
-export const AllMembersSubpage = ({entID}) => {
-  return (
-    <EntityList
-      scaleKeyJSON={JSON.stringify(
-        [entID, basicEntIDs["relations/members"]]
-      )}
-      lo={5}
-    />
-  );
-};

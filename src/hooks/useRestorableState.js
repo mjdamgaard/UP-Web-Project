@@ -4,6 +4,12 @@ import {
 
 
 
+// TODO: Reimplement with another idea that just uses one refCallback for each
+// restorable-stateful component (and where we can just make a combined hook
+// with useDispatch(), then). ..It could also be a useRestoreState() that
+// doesn't initialize the state, but instead promises to change the state, and
+// signal when ready, if there's a state waiting to be restored.
+
 
 export const useRestorableState = (id, initState, refs) => {
   // Get previous state from RestorableDataStore if any.

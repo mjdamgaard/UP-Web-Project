@@ -56,7 +56,7 @@ export const TabEntityElement = ({entID, score}) => {
 
   return (
     <div className="tab-entity-element" onClick={(event) => {
-      dispatch(event.target, "ADD_AND_OPEN_TAB", entID);
+      dispatch(event.target, "ELEMENT_SELECTED", entID);
     }}>
       <EntityReference entID={entID} />
       {"@" + entID + ", " + score}

@@ -15,6 +15,8 @@ import {
 export const MoreTabsSubpage = ({tabScaleKeysJSON}) => {
   const tabScaleKeys = JSON.parse(tabScaleKeysJSON ?? "[]");
 
+  const [dispatch, refCallback] = useDispatch(moreTabsSubpageActions);
+
   const getPageCompFromID = useCallback(tabID => {
     const scaleKey = tabScaleKeys[tabID];
     return (
@@ -25,9 +27,7 @@ export const MoreTabsSubpage = ({tabScaleKeysJSON}) => {
     );
   }, [tabScaleKeysJSON]);
 
-  const initTabsJSON = JSON.stringify(tabScaleKeys.map((scaleKey, ind) => {
-    const objID = scaleKey[0];
-    const relID = scaleKey[1]; 
+  const initTabsJSON = JSON.stringify(tabScaleKeys.map((_, ind) => {
     return [ind, undefined]
   }));
   const getTabTitleFromID = useCallback((tabID, callback) => {
@@ -38,12 +38,21 @@ export const MoreTabsSubpage = ({tabScaleKeysJSON}) => {
   }, [tabScaleKeysJSON]);
 
   return (
-    <SubpagesWithTabs
-      initTabsJSON={[initTabsJSON]}
-      getPageCompFromID={getPageCompFromID}
-      getTabTitleFromID={getTabTitleFromID}
-      tabBarHeader="Tab lists"
-    />
+    <div className="more-tabs-subpage" ref={refCallback}>
+      <SubpagesWithTabs
+        initTabsJSON={[initTabsJSON]}
+        getPageCompFromID={getPageCompFromID}
+        getTabTitleFromID={getTabTitleFromID}
+        tabBarHeader="Tab lists"
+      />
+    </div>
   );
 };
 
+
+
+const moreTabsSubpageActions = {
+  "ELEMENT_SELECTED": function(entID, setState, {state}, node, dispatch) {
+    dispatch(node.parentNode, "ADD_AND_OPEN_TAB", entID);
+  },
+}
