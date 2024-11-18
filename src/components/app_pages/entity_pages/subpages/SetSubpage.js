@@ -11,7 +11,7 @@ import {DataFetcher} from "../../../../classes/DataFetcher.js";
 
 
 
-export const SetSubpage = ({objID, relID, subjClassID, ElemComp}) => {
+export const SetSubpage = ({objID, relID, subjClassID, lo, hi, ElemComp}) => {
   const [results, setState] = useState({});
 
   useMemo(() => {
@@ -59,6 +59,9 @@ export const SetSubpage = ({objID, relID, subjClassID, ElemComp}) => {
       <span>Subject class is missing.</span>
     );
   }
+
+  // TODO: Compute default hi and lo as well, if not provided.
+
 
   const initTabsJSON = JSON.stringify([
     [basicEntIDs["qualities/relevant"], "Relevant"],

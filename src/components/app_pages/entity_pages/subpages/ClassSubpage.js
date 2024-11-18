@@ -6,6 +6,7 @@ import {basicEntIDs} from "../../../../entity_ids/basic_entity_ids.js";
 import {SubpagesWithTabs} from "./SubpagesWithTabs.js";
 import {EntityList} from "../../../entity_lists/EntityList.js";
 import {ScaleReference} from "../../../entity_refs/EntityReference.js";
+import { SetSubpage } from "./SetSubpage.js";
 
 /* Placeholders */
 const TabHeader = () => <template></template>;
@@ -46,10 +47,9 @@ export const ClassSubpage = ({entID}) => {
 
 export const AllMembersSubpage = ({entID}) => {
   return (
-    <EntityList
-      scaleKeyJSON={JSON.stringify(
-        [entID, basicEntIDs["relations/members"]]
-      )}
+    <SetSubpage
+      objID={entID} relID={basicEntIDs["relations/members"]}
+      subjClassID={entID}
       lo={5}
     />
   );
