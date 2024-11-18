@@ -113,6 +113,7 @@ export function initialInserts(dataInserter) {
     JSON.stringify({
         "Class": "@[classes]",
         "Name": "Entities",
+        "Member title": "Entity",
         "Special attributes": [
             ["Class", "@[classes]", "mandatory"],
             ["Description", "x", "optional"],
@@ -132,8 +133,10 @@ export function initialInserts(dataInserter) {
     JSON.stringify({
         "Class": "@[classes]",
         "Name": "Classes",
+        "Member title": "Class",
         "Special attributes": [
             ["Name", "string", "mandatory"],
+            ["Member title", "string", "mandatory"],
             [
                 "Parent class",
                 "@[classes]=@[entities]",
@@ -198,6 +201,7 @@ export function initialInserts(dataInserter) {
     JSON.stringify({
         "Class": "@[classes]",
         "Name": "Users",
+        "Member title": "User",
         "Special attributes": [
             ["Username", "string", "mandatory"],
         ],
@@ -210,6 +214,7 @@ export function initialInserts(dataInserter) {
     JSON.stringify({
         "Class": "@[classes]",
         "Name": "Scales",
+        "Member title": "Scale",
         "Special attributes": [
             ["Object", "@[entities]", "mandatory"],
             ["Relation", "@[relations]", "mandatory"],
@@ -228,17 +233,18 @@ export function initialInserts(dataInserter) {
   );
 
   dataInserter.insertOrEditParsedEntity(
-    "parameters", "j", // Maybe just 'parameters' instead..?
+    "scalar parameters", "j",
     JSON.stringify({
         "Class": "@[classes]",
-        "Name": "Parameters",
+        "Name": "Scalar parameters",
+        "Member title": "Scalar parameter",
         "Special attributes": [
             ["Scale", "@[scales]", "mandatory"],
             ["Subject", "@[entities]", "mandatory"],
             ["Description", "", "removed"],
         ],
         "Anonymous creators only": true,
-        "Description": "@[parameters/desc]",
+        "Description": "@[scalar parameters/desc]",
     }),
   );
 
@@ -247,10 +253,12 @@ export function initialInserts(dataInserter) {
     JSON.stringify({
         "Class": "@[classes]",
         "Name": "Qualities",
+        "Member title": "Quality",
         "Special attributes": [
             ["Label", "string", "mandatory"],
             // Use purely lowercase labels only when the Description is left
             // out.
+            ["Subject class", "@[classes]=@[entities]", "optional"],
             // ["Scale type", "@[scale types]", "mandatory"],
             ["Unit", "string", "optional"],
             // ["Lower bound", "float", "optional"],
@@ -349,6 +357,7 @@ export function initialInserts(dataInserter) {
     JSON.stringify({
         "Class": "@[qualities]",
         "Label": "Probability",
+        "Subject class": "@[statements]",
         "Unit": "%",
         // "Lower bound": 0,
         // "Upper bound": 100,
@@ -363,6 +372,7 @@ export function initialInserts(dataInserter) {
     JSON.stringify({
         "Class": "@[qualities]",
         "Label": "Agreement",
+        "Subject class": "@[statements]",
         "Unit": "%",
         "Low end": 0,
         "High end": 100,
@@ -466,6 +476,7 @@ export function initialInserts(dataInserter) {
     JSON.stringify({
         "Class": "@[classes]",
         "Name": "Relations",
+        "Member title": "Relation",
         "Special attributes": [
             ["Title", "string", "mandatory"],
             ["Subject class", "@[classes]", "mandatory"],
@@ -562,8 +573,8 @@ export function initialInserts(dataInserter) {
     JSON.stringify({
         "Class": "@[relations]",
         "Title": "Arguments",
-        "Subject class": "@[parameters]",
-        "Object class": "@[parameters]",
+        "Subject class": "@[scalar parameters]",
+        "Object class": "@[scalar parameters]",
         "Description": "@[relations/arguments/desc]",
     }),
   );
@@ -627,6 +638,16 @@ export function initialInserts(dataInserter) {
         "Description": "@[relations/facts/desc]",
     }),
   );
+  dataInserter.insertOrEditParsedEntity(
+    "relations/scale members", "j", 
+    JSON.stringify({
+        "Class": "@[relations]",
+        "Title": "Members",
+        "Subject class": "@[entities]",
+        "Object class": "@[scales]",
+        "Description": "@[relations/members/desc]",
+    }),
+  );
 
 
   dataInserter.insertOrEditParsedEntity(
@@ -634,6 +655,7 @@ export function initialInserts(dataInserter) {
     JSON.stringify({
         "Class": "@[classes]",
         "Name": "Statements",
+        "Member title": "Statement",
         "Special attributes": [
             ["Text", "x", "mandatory"],
             ["Is claimed by the creator", "bool=false", "optional"],
@@ -648,6 +670,7 @@ export function initialInserts(dataInserter) {
     JSON.stringify({
         "Class": "@[classes]",
         "Name": "Comments",
+        "Member title": "Comment",
         "Parent class": "@[statements]",
         "Special attributes": [
             ["Topic", "@[entities]", "mandatory"],
@@ -675,6 +698,7 @@ export function initialInserts(dataInserter) {
     JSON.stringify({
         "Class": "@[classes]",
         "Name": "Workspaces",
+        "Member title": "Workspace",
         "Special attributes": [
             ["Workspace object", "object", "mandatory"],
             ["Description", "", "removed"],

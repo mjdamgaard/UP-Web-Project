@@ -15,7 +15,7 @@ export const ClassSubpage = ({entID}) => {
 
   const getPageCompFromID = useCallback(tabID => {
     if (tabID == entID) {
-      return [AllMembersPage, {entID: entID}];
+      return [AllMembersSubpage, {entID: entID}];
     }
     return [ClassSubpage, {entID: tabID}];
   }, [entID]);
@@ -42,7 +42,7 @@ export const ClassSubpage = ({entID}) => {
 
 
 
-export const AllMembersPage = ({entID}) => {
+export const AllMembersSubpage = ({entID}) => {
   return (
     <EntityList
       scaleKeyJSON={JSON.stringify(

@@ -3,6 +3,7 @@ import {useDispatch} from "../../hooks/useDispatch.js"
 // import {Link} from "react-router-dom";
 
 import {DataFetcher} from "../../classes/DataFetcher.js";
+import { basicEntIDs } from "../../entity_ids/basic_entity_ids.js";
 // const EntityReferencePlaceholder = () => <template></template>;
 // const EntityBackRefLink = () => <template></template>;
 // const InvalidEntityTitle = () => <template></template>;
@@ -193,7 +194,7 @@ const DefaultReferenceContent = ({entID, defObj}) => {
     <span className="class-default">
       {
         Object.entries(defObj).map(([key, val], ind) => {
-          let parsedKey = key.toLowerCase().match(/[a-z0-9\-]+/g).join();
+          let parsedKey = key.toLowerCase().match(/[a-z0-9\-]+/g).join("-");
           return (
             <span key={ind} className={"member-" + parsedKey}>
               <span className="attribute-name">{key}</span>
@@ -295,12 +296,20 @@ export const EntityID = ({entID}) => {
 
 
 
-export const ScaleReference = ({objID, relID}) => {
+export const ScaleReference = ({
+  objID, relID, qualID = basicEntIDs["qualities/relevant"]
+}) => {
   return (
     <span className="scale-ref">
       <span className="obj-ref"><EntityReference entID={objID}/></span>
-      <span className="rel-op">{"→"}</span>
+      <span className="rel-op"></span>
       <span className="rel-ref"><EntityReference entID={relID}/></span>
+      {
+        qualID != basicEntIDs["qualities/relevant"] ? <>
+          <span className="qual-op"></span>
+          <span className="qual-ref"><EntityReference entID={qualID}/></span>
+        </> : <></>
+      }
     </span>
   );
 };
