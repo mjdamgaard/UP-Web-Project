@@ -1,34 +1,60 @@
 import {
-  useState, useEffect,
+  useState, useCallback, useEffect, useRef, useId,
 } from "react";
 
+// TODO: Continue..
+
+const callbackStore = {};
 
 
-// TODO: Reimplement with another idea that just uses one refCallback for each
-// restorable-stateful component (and where we can just make a combined hook
-// with useDispatch(), then). ..It could also be a useRestoreState() that
-// doesn't initialize the state, but instead promises to change the state, and
-// signal when ready, if there's a state waiting to be restored.
+export const useRestore = (componentKey, data, callback) => {
 
+  const prevDataStore = RestorableDataStore.prevDataStore;
 
-export const useRestorableState = (id, initState, refs) => {
-  // Get previous state from RestorableDataStore if any.
-  const [prevState] = RestorableDataStore.getData(id, ">");
+  var _id = useId();
+  const nodeRef = (useCallback(
+    (() => {
+      let id = _id;
+      let ref = {
+        id: id,
+        node: null,
+      };
+      return () => ref;
+    })(),
+    []
+  ))(); console.log([componentKey, nodeRef]);
 
-  // Set the initial state, unless there's a backup waiting to be restored.
-  const [state, setState] = useState(prevState ?? initState);
+  const refCallback = useCallback((node) => {
+    if (node) {
+      node.setAttribute("data-restore-status",
+        componentKey + "," + nodeRef.id + "," + (prevDataStore ? "0" : "1")
+      );
+      nodeRef.node = node;
+      callbackStore[nodeRef.id] = () => {
+        if (componentKey.slice(0, 4) === "root") {
+  
+        }
+      };
+    }
+  }, [componentKey]);
 
-  // Store the state and the refs in RestorableDataStore.
-  RestorableDataStore.setData(id, ">", [state, refs]);
-
-  // Schedule a cleanup function to delete the state data.
+  // If the app is restoring...
   useEffect(() => {
-    return () => {
-      RestorableDataStore.deleteData(id, ">");
-    };
+    if (prevDataStore) {
+
+    }
+  }, []);
+
+  useEffect(() => {
+    // TODO: Look at parents data-state-id's and use them to get and set
+    // any stored states (using setState()).
   }, []);
   
-  return [state, setState];
+  var isRestoring = prevDataStore;
+  // TODO: Return a modified setState that initiates a delayed callback to
+  // store the state (including when setState is used to restore a previously
+  // stored state). 
+  return [isRestoring, refCallback];
 };
 
 
@@ -36,9 +62,11 @@ export const useRestorableState = (id, initState, refs) => {
 
 
 
-export class RestorableDataStore {
-  static dataStore =
-    JSON.parse(sessionStorage.getItem("_restorableDataStore") ?? "null") ?? {};
+class RestorableDataStore {
+  static prevDataStore =JSON.parse(
+    sessionStorage.getItem("_restorableDataStore") ?? "null"
+  );
+  static dataStore = this.prevDataStore ?? {};
 
   static saveDataOnBeforeUnloadEvent() {
     window.addEventListener("beforeunload", () => {
@@ -60,7 +88,7 @@ export class RestorableDataStore {
     return [dataStore, keyParts[len - 1]]
   }
 
-  static getData(key, delimiter) {debugger;
+  static getData(key, delimiter) {
     const [dataStore, lastKeyPart] = this.#getParentDataStoreAndLastKeyPart(
       key, delimiter
     );
@@ -93,3 +121,6 @@ export class RestorableDataStore {
   } 
 
 }
+
+
+RestorableDataStore.saveDataOnBeforeUnloadEvent();

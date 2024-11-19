@@ -20,12 +20,12 @@ export const useDispatch = (
     dispatchListenerWithDataRef(event, dataRef);
   }, []);
 
-  const refCallback = (node) => {
+  const refCallback = useCallback((node) => {
     if (node) {
       node.removeEventListener("dispatch", dispatchListener);
       node.addEventListener("dispatch", dispatchListener);
     }
-  };
+  });
 
   // Return the refCallback and the (constant) dispatch function.
   return [dispatch, refCallback];

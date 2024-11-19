@@ -158,10 +158,14 @@ export class DataFetcher {
 
   static fetchEntityList(userID, scaleID, n, lo, hi, o, a, callback) {
     if (callback === undefined) {
-      callback = a ?? o ?? hi ?? lo ?? n;
-    }
-    if (!(callback instanceof Function)) {
-      callback = () => {};
+      (
+        a  instanceof Function ? (callback = a ) && (a  = undefined) :
+        o  instanceof Function ? (callback = o ) && (o  = undefined) :
+        hi instanceof Function ? (callback = hi) && (hi = undefined) :
+        lo instanceof Function ? (callback = lo) && (lo = undefined) :
+        n  instanceof Function ? (callback = n ) && (n  = undefined) :
+        (callback = () => {})
+      );
     }
     let reqData = {
       req: "entList",
@@ -182,10 +186,14 @@ export class DataFetcher {
     userID, scaleDefStrHash, n, lo, hi, o, a, callback
   ) {
     if (callback === undefined) {
-      callback = a ?? o ?? hi ?? lo ?? n;
-    }
-    if (!(callback instanceof Function)) {
-      callback = () => {};
+      (
+        a  instanceof Function ? (callback = a ) && (a  = undefined) :
+        o  instanceof Function ? (callback = o ) && (o  = undefined) :
+        hi instanceof Function ? (callback = hi) && (hi = undefined) :
+        lo instanceof Function ? (callback = lo) && (lo = undefined) :
+        n  instanceof Function ? (callback = n ) && (n  = undefined) :
+        (callback = () => {})
+      );
     }
     let reqData = {
       req: "entListFromHash",
@@ -221,10 +229,14 @@ export class DataFetcher {
     userIDs, scaleKeys, n, lo, hi, o, a, callback
   ) {
     if (callback === undefined) {
-      callback = a ?? o ?? hi ?? lo ?? n;
-    }
-    if (!(callback instanceof Function)) {
-      callback = () => {};
+      (
+        a  instanceof Function ? (callback = a ) && (a  = undefined) :
+        o  instanceof Function ? (callback = o ) && (o  = undefined) :
+        hi instanceof Function ? (callback = hi) && (hi = undefined) :
+        lo instanceof Function ? (callback = lo) && (lo = undefined) :
+        n  instanceof Function ? (callback = n ) && (n  = undefined) :
+        (callback = () => {})
+      );
     }
     if (typeof userIDs !== "object") {
       let userID = userIDs;
