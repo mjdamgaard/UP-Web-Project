@@ -2,7 +2,7 @@
 
 
 
-export class LazyDelayedPromiseOnceRest {
+export class LazyCallbackHandler {
 
   constructor(delay) {
     this.delay = delay;

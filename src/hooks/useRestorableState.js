@@ -1,69 +1,98 @@
 import {
   useState, useCallback, useEffect, useRef, useId,
 } from "react";
+import {LazyCallbackHandler, LazyCallbackHandler} from "../classes/LazyCallbackHandler";
 
 // TODO: Continue..
 
-const callbackStore = {};
+var nonce = 1;
+
+const stopRestoringLCH = new LazyCallbackHandler(2000);
+
+const idDataStore = {};
+
 
 
 export const useRestore = (componentKey, data, callback) => {
 
-  const prevDataStore = RestorableDataStore.prevDataStore;
+  const isRestoring = getIsRestoring();
+  const isRoot = componentKey.slice(0, 4) === "root";
 
-  var _id = useId();
   const nodeRef = (useCallback(
     (() => {
-      let id = _id;
-      let ref = {
-        id: id,
-        node: null,
+      let ret = {current: null};
+      return () => {
+        if (!ret.current) {
+          ret.current = {
+            id: nonce++,
+            isReady: !isRestoring,
+          }
+        }
+        return ret;
       };
-      return () => ref;
     })(),
     []
-  ))(); console.log([componentKey, nodeRef]);
+  ))(); console.log(JSON.stringify([componentKey, nodeRef]));
+
 
   const refCallback = useCallback((node) => {
     if (node) {
-      node.setAttribute("data-restore-status",
-        componentKey + "," + nodeRef.id + "," + (prevDataStore ? "0" : "1")
+      node.setAttribute("data-restore-keys",
+        componentKey + "," + nodeRef.current.id
       );
-      nodeRef.node = node;
-      callbackStore[nodeRef.id] = () => {
-        if (componentKey.slice(0, 4) === "root") {
-  
+    }
+
+    if (isRestoring) {
+      fetchPrevDataAndUpdateIDTree(
+        componentKey, isRoot, id, node, (prevData) => {
+          nodeRef.current.isReady = true;
+          callback(prevData);
+          stopRestoringLCH.then(stopRestoringIfReadyOrTimedOut);
         }
-      };
+      );
     }
-  }, [componentKey]);
+  }, [componentKey, isRestoring]);
 
-  // If the app is restoring...
-  useEffect(() => {
-    if (prevDataStore) {
-
-    }
-  }, []);
 
   useEffect(() => {
-    // TODO: Look at parents data-state-id's and use them to get and set
-    // any stored states (using setState()).
-  }, []);
+    idDataStore[id] = data;
+    return () => {
+      delete idDataStore[id];
+    };
+  }, [data]);
   
-  var isRestoring = prevDataStore;
   // TODO: Return a modified setState that initiates a delayed callback to
   // store the state (including when setState is used to restore a previously
   // stored state). 
-  return [isRestoring, refCallback];
+  return [nodeRef.current.isReady, refCallback];
 };
 
 
 
+function getIsRestoring() {
+  return RestorableDataStore.prevDataStore ? true : false; 
+}
 
+
+
+function fetchPrevDataAndUpdateIDTree(
+  componentKey, isRoot, id, node, callback
+) {
+  if (isRoot) {
+    
+  }
+}
+
+
+var isTimedOut = false;
+
+function stopRestoringIfReadyOrTimedOut() {
+
+}
 
 
 class RestorableDataStore {
-  static prevDataStore =JSON.parse(
+  static prevDataStore = JSON.parse(
     sessionStorage.getItem("_restorableDataStore") ?? "null"
   );
   static dataStore = this.prevDataStore ?? {};
