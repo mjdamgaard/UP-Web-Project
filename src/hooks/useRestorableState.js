@@ -1,24 +1,44 @@
 import {
   useState, useCallback, useEffect, useRef, useId,
 } from "react";
-import {LazyCallbackHandler, LazyCallbackHandler} from "../classes/LazyCallbackHandler";
+import {LazyCallbackHandler} from "../classes/LazyCallbackHandler";
 
-// TODO: Continue..
+
 
 var nonce = 1;
 
 const stopRestoringLCH = new LazyCallbackHandler(2000);
 
-const idDataStore = {};
+const dataStore = {};
+const idTree    = {};
+const rootIDs   = {};
+
+window.addEventListener("beforeunload", () => {
+  sessionStorage.setItem("_restorableDataStore", JSON.stringify(dataStore));
+  sessionStorage.setItem("_restorableIDTree",    JSON.stringify(idTree));
+  sessionStorage.setItem("_restorableRootIDs",   JSON.stringify(rootIDs));
+});
+
+const prevDataStore = JSON.parse(
+  sessionStorage.getItem("_restorableDataStore") ?? "null"
+);
+const prevIDTree = JSON.parse(
+  sessionStorage.getItem("_restorableIDTree")    ?? "null"
+);
+const prevRootIDs = JSON.parse(
+  sessionStorage.getItem("_restorableRootIDs")   ?? "null"
+);
+
+const prevIDs = {};
+
+var isRestoring = prevDataStore ? true : false;
 
 
 
 export const useRestore = (componentKey, data, callback) => {
-
-  const isRestoring = getIsRestoring();
   const isRoot = componentKey.slice(0, 4) === "root";
 
-  const nodeRef = (useCallback(
+  const ref = (useCallback(
     (() => {
       let ret = {current: null};
       return () => {
@@ -32,55 +52,78 @@ export const useRestore = (componentKey, data, callback) => {
       };
     })(),
     []
-  ))(); console.log(JSON.stringify([componentKey, nodeRef]));
+  ))(); console.log(JSON.stringify([componentKey, ref]));
 
 
   const refCallback = useCallback((node) => {
     if (node) {
       node.setAttribute("data-restore-keys",
-        componentKey + "," + nodeRef.current.id
+        componentKey + "," + ref.current.id
       );
-    }
 
-    if (isRestoring) {
-      fetchPrevDataAndUpdateIDTree(
-        componentKey, isRoot, id, node, (prevData) => {
-          nodeRef.current.isReady = true;
+      var parentID, path;
+      if (isRoot) {
+        rootIDs[componentKey] = id;
+        [parentID, path] = [null, null];
+      }
+      else {
+        [parentID, path] = getParentIDAndPath(node);
+        idTree[parentID][path] = id;
+      }
+
+      var prevData;
+
+      if (isRestoring) {
+        let prevID = getAndUpdatePrevID(componentKey, isRoot, parentID, path);
+        if (prevID) {
+          prevData = prevDataStore[prevID] || null;
           callback(prevData);
-          stopRestoringLCH.then(stopRestoringIfReadyOrTimedOut);
         }
-      );
+        ref.current.isReady = true;
+        stopRestoringLCH.then(stopRestoringIfReadyOrTimedOut);
+      }
+
+      idTree[id] = {};
+      dataStore[id] = prevData ?? data;
+    } else {
+      if (isRoot) {
+        delete rootIDs[componentKey];
+      }
+      delete idTree[id];
+      delete dataStore[id];
     }
-  }, [componentKey, isRestoring]);
+
+  }, [componentKey]);
 
 
-  useEffect(() => {
-    idDataStore[id] = data;
-    return () => {
-      delete idDataStore[id];
-    };
-  }, [data]);
-  
-  // TODO: Return a modified setState that initiates a delayed callback to
-  // store the state (including when setState is used to restore a previously
-  // stored state). 
-  return [nodeRef.current.isReady, refCallback];
+  return [ref.current.isReady, refCallback];
 };
 
 
 
-function getIsRestoring() {
-  return RestorableDataStore.prevDataStore ? true : false; 
+
+
+function getParentIDAndPath(node) {
+  // TODO: Make.
+
+  return [parentID, path];
 }
 
 
 
-function fetchPrevDataAndUpdateIDTree(
-  componentKey, isRoot, id, node, callback
-) {
+function getAndUpdatePrevID(componentKey, isRoot, id, parentID, path) {
+  var prevID;
   if (isRoot) {
-    
+    prevID = prevRootIDs[componentKey];
   }
+  else {
+    let prevParentID = prevIDs[parentID];
+    prevID = prevIDTree[prevParentID][path];
+
+  }
+
+  prevIDs[id] = prevID;
+  return prevID;
 }
 
 
@@ -91,65 +134,68 @@ function stopRestoringIfReadyOrTimedOut() {
 }
 
 
-class RestorableDataStore {
-  static prevDataStore = JSON.parse(
-    sessionStorage.getItem("_restorableDataStore") ?? "null"
-  );
-  static dataStore = this.prevDataStore ?? {};
-
-  static saveDataOnBeforeUnloadEvent() {
-    window.addEventListener("beforeunload", () => {
-      sessionStorage.setItem("_restorableDataStore", JSON.stringify(
-        this.dataStore
-      ));
-    });
-  }
-
-  static #getParentDataStoreAndLastKeyPart(key, delimiter) {
-    let keyParts = key.split(delimiter);
-    let len = keyParts.length;
-
-    var dataStore = this.dataStore;
-    for (let i = 1; dataStore && i < len - 1; i++) {
-      dataStore = dataStore[keyParts[i]][1];
-    }
-
-    return [dataStore, keyParts[len - 1]]
-  }
-
-  static getData(key, delimiter) {
-    const [dataStore, lastKeyPart] = this.#getParentDataStoreAndLastKeyPart(
-      key, delimiter
-    );
-    return dataStore || dataStore[lastKeyPart][0];
-  } 
-
-  static setData(key, delimiter, data) {
-    const [dataStore, lastKeyPart] = this.#getParentDataStoreAndLastKeyPart(
-      key, delimiter
-    );
-    if (!dataStore) {
-      debugger;throw (
-        "setStateData(): Parent state not set prior to setting child state."
-      );
-    }
-
-    let dataObj = dataStore[lastKeyPart] ?? [[], {}];
-    dataObj[0] = data;
-    dataStore[lastKeyPart] = dataObj;
-  }
 
 
-  static deleteData(key, delimiter) {
-    const [dataStore, lastKeyPart] = this.#getParentDataStoreAndLastKeyPart(
-      key, delimiter
-    );
-    if (dataStore) {
-      delete dataStore[lastKeyPart];
-    }
-  } 
 
-}
+// class RestorableDataStore {
+//   static prevDataStore = JSON.parse(
+//     sessionStorage.getItem("_restorableDataStore") ?? "null"
+//   );
+//   static dataStore = this.prevDataStore ?? {};
+
+//   static saveDataOnBeforeUnloadEvent() {
+//     window.addEventListener("beforeunload", () => {
+//       sessionStorage.setItem("_restorableDataStore", JSON.stringify(
+//         this.dataStore
+//       ));
+//     });
+//   }
+
+//   static #getParentDataStoreAndLastKeyPart(key, delimiter) {
+//     let keyParts = key.split(delimiter);
+//     let len = keyParts.length;
+
+//     var dataStore = this.dataStore;
+//     for (let i = 1; dataStore && i < len - 1; i++) {
+//       dataStore = dataStore[keyParts[i]][1];
+//     }
+
+//     return [dataStore, keyParts[len - 1]]
+//   }
+
+//   static getData(key, delimiter) {
+//     const [dataStore, lastKeyPart] = this.#getParentDataStoreAndLastKeyPart(
+//       key, delimiter
+//     );
+//     return dataStore || dataStore[lastKeyPart][0];
+//   } 
+
+//   static setData(key, delimiter, data) {
+//     const [dataStore, lastKeyPart] = this.#getParentDataStoreAndLastKeyPart(
+//       key, delimiter
+//     );
+//     if (!dataStore) {
+//       debugger;throw (
+//         "setStateData(): Parent state not set prior to setting child state."
+//       );
+//     }
+
+//     let dataObj = dataStore[lastKeyPart] ?? [[], {}];
+//     dataObj[0] = data;
+//     dataStore[lastKeyPart] = dataObj;
+//   }
 
 
-RestorableDataStore.saveDataOnBeforeUnloadEvent();
+//   static deleteData(key, delimiter) {
+//     const [dataStore, lastKeyPart] = this.#getParentDataStoreAndLastKeyPart(
+//       key, delimiter
+//     );
+//     if (dataStore) {
+//       delete dataStore[lastKeyPart];
+//     }
+//   } 
+
+// }
+
+
+// RestorableDataStore.saveDataOnBeforeUnloadEvent();
