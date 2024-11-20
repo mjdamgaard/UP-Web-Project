@@ -7,31 +7,41 @@ import {LazyCallbackHandler} from "../classes/LazyCallbackHandler";
 
 var nonce = 1;
 
-const stopRestoringLCH = new LazyCallbackHandler(2000);
+const stopRestoringLCH = new LazyCallbackHandler(4000);
 
 const dataStore = {};
 const idTree    = {};
 const rootIDs   = {};
 
-window.addEventListener("beforeunload", () => {
-  sessionStorage.setItem("_restorableDataStore", JSON.stringify(dataStore));
-  sessionStorage.setItem("_restorableIDTree",    JSON.stringify(idTree));
-  sessionStorage.setItem("_restorableRootIDs",   JSON.stringify(rootIDs));
-});
-
-const prevDataStore = JSON.parse(
+var prevDataStore = JSON.parse(
   sessionStorage.getItem("_restorableDataStore") ?? "null"
 );
-const prevIDTree = JSON.parse(
+var prevIDTree = JSON.parse(
   sessionStorage.getItem("_restorableIDTree")    ?? "null"
 );
-const prevRootIDs = JSON.parse(
+var prevRootIDs = JSON.parse(
   sessionStorage.getItem("_restorableRootIDs")   ?? "null"
 );
 
-const prevIDs = {};
+var prevIDs = {};
 
 var isRestoring = prevDataStore ? true : false;
+
+if (!isRestoring) {
+  setBeforeUnloadEvent();
+}
+
+
+function setBeforeUnloadEvent() {
+  window.addEventListener("beforeunload", () => {
+    sessionStorage.setItem("_restorableDataStore", JSON.stringify(dataStore));
+    sessionStorage.setItem("_restorableIDTree",    JSON.stringify(idTree));
+    sessionStorage.setItem("_restorableRootIDs",   JSON.stringify(rootIDs));
+  });
+}
+
+
+
 
 
 
@@ -79,6 +89,7 @@ export const useRestore = (componentKey, data, callback) => {
           }
         }
         ref.current.isReady = true;
+        prevIDTree[id].isRestored = true;
         stopRestoringLCH.then(stopRestoringIfReadyOrTimedOut);
       }
 
@@ -140,10 +151,31 @@ function getAndUpdatePrevID(componentKey, isRoot, id, parentID, path) {
 }
 
 
-var isTimedOut = false;
+
+var isTimedOut = null;
 
 function stopRestoringIfReadyOrTimedOut() {
-  // TODO: Implement.
+  if (isTimedOut === null) {
+    isTimedOut = false;
+    setTimeout(
+      () => {
+        isTimedOut = true;
+      },
+      20000,
+    );
+  }
+  let allIsRestored = Object.values(prevIDTree).reduce(
+    (acc, val) => acc && val.isRestored,
+    true
+  );
+  if (allIsRestored || isTimedOut) {
+    isRestoring   = false;
+    prevRootIDs   = null;
+    prevIDTree    = null;
+    prevDataStore = null;
+    prevIDs       = null;
+    setBeforeUnloadEvent();
+  }
 }
 
 
