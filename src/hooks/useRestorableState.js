@@ -57,34 +57,33 @@ export const useRestore = (componentKey, data, callback) => {
 
   const refCallback = useCallback((node) => {
     if (node) {
-      node.setAttribute("data-restore-keys",
-        componentKey + "," + ref.current.id
-      );
+      node.setAttribute("data-restore-id", ref.current.id.toString());
 
       var parentID, path;
       if (isRoot) {
         rootIDs[componentKey] = id;
-        [parentID, path] = [null, null];
       }
       else {
         [parentID, path] = getParentIDAndPath(node);
         idTree[parentID][path] = id;
       }
 
-      var prevData;
+      var prevCompKey, prevData;
 
       if (isRestoring) {
         let prevID = getAndUpdatePrevID(componentKey, isRoot, parentID, path);
         if (prevID) {
-          prevData = prevDataStore[prevID] || null;
-          callback(prevData);
+          [prevCompKey, prevData] = prevDataStore[prevID] || [null, null];
+          if (prevCompKey === componentKey) {
+            callback(prevData);
+          }
         }
         ref.current.isReady = true;
         stopRestoringLCH.then(stopRestoringIfReadyOrTimedOut);
       }
 
       idTree[id] = {};
-      dataStore[id] = prevData ?? data;
+      dataStore[id] = [componentKey, prevData ?? data];
     } else {
       if (isRoot) {
         delete rootIDs[componentKey];
@@ -104,9 +103,23 @@ export const useRestore = (componentKey, data, callback) => {
 
 
 function getParentIDAndPath(node) {
-  // TODO: Make.
+  let parentNode = node.parentNode;
+  let parentID = parentNode.getAttribute("data-restore-id");
+  let parentPath;
 
-  return [parentID, path];
+  var siblingIndex = 0;
+  while (node = node.previousSibling) {
+    siblingIndex++;
+  }
+
+  if (parentID) {
+    return [parentID, siblingIndex];
+  }
+  else {
+    [parentID, parentPath] = getParentIDAndPath(parentNode);
+    let path = parentPath + "-" + siblingIndex;
+    return [parentID, path];
+  }
 }
 
 
@@ -130,7 +143,7 @@ function getAndUpdatePrevID(componentKey, isRoot, id, parentID, path) {
 var isTimedOut = false;
 
 function stopRestoringIfReadyOrTimedOut() {
-
+  // TODO: Implement.
 }
 
 
