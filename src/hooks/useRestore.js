@@ -64,10 +64,12 @@ export const useRestore = (componentKey, data, callback) => {
     []
   ))(); console.log(JSON.stringify([componentKey, ref]));
 
+  const id = ref.current.id.toString();
+
 
   const refCallback = useCallback((node) => {
     if (node) {
-      node.setAttribute("data-restore-id", ref.current.id.toString());
+      node.setAttribute("data-restore-id", id);
 
       var parentID, path;
       if (isRoot) {

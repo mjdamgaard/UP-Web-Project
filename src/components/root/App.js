@@ -1,7 +1,7 @@
 import {useState, useLayoutEffect, createContext, useCallback} from "react";
 
 import {useDispatch} from "../../hooks/useDispatch.js";
-import {useRestorableState} from "../../hooks/useRestorableState.js";
+import {useRestore} from "../../hooks/useRestore.js";
 import {basicEntIDs} from "../../entity_ids/basic_entity_ids.js";
 
 // import {appReducers} from "./appReducers.js";
@@ -57,6 +57,11 @@ export const App = (props) => {
   });
   const {pagePathStore, pageKeyArr, curInd} = state.pagesState;
 
+  // TODO: See below.
+  // const [isReady, refCallback2] = useRestore("root", state, prevState => {
+  //   setState(prevState);
+  // });
+
   const [dispatch, refCallback] = useDispatch(
     appActions, setState, state, props
   );
@@ -99,8 +104,17 @@ export const App = (props) => {
     );
   });
 
+  // TODO: comment-in and debug useRestore(). ..(And also make a combined
+  // hook to that we can combine the two refCallbacks instead.)
+  // if (!isReady) {
+  //   return <></>
+  // }
+
   return (
-    <div className="app" ref={refCallback}>
+    <div className="app" ref={(node) => {
+      refCallback(node);
+      // refCallback2(node);
+    }}>
       <AccountContext.Provider value={getAccountData}>
         <AppHeader
           setAppPage={void(0)}
