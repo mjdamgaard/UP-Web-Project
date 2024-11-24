@@ -4,7 +4,7 @@ import {useDispatch} from "../../../../hooks/useDispatch.js";
 import {basicEntIDs} from "../../../../entity_ids/basic_entity_ids.js";
 
 import {SubpagesWithTabs} from "./SubpagesWithTabs.js";
-import {EntityList} from "../../../entity_lists/EntityList.js";
+import {EntityListSubpage} from "../../../entity_lists/EntityList.js";
 import {ScaleReference} from "../../../entity_refs/EntityReference.js";
 import {
   TabEntityElement
@@ -18,10 +18,12 @@ export const MoreTabsSubpage = ({tabScaleKeysJSON}) => {
   const [dispatch, refCallback] = useDispatch(moreTabsSubpageActions);
 
   const getPageCompFromID = useCallback(tabID => {
-    const scaleKey = tabScaleKeys[tabID];
+    const [objID, relID, qualID]  = tabScaleKeys[tabID];
     return (
-      [EntityList, {
-        scaleKeyJSON: JSON.stringify(scaleKey), lo: 4,
+      [EntityListSubpage, {
+        objID: objID, relID: relID, qualID: qualID,
+        subjClassID: basicEntIDs["relations"], 
+        lo: 4,
         ElemComp: TabEntityElement,
       }]
     );
@@ -31,9 +33,7 @@ export const MoreTabsSubpage = ({tabScaleKeysJSON}) => {
     return [ind, undefined]
   }));
   const getTabTitleFromID = useCallback((tabID, callback) => {
-    const scaleKey = tabScaleKeys[tabID];
-    const objID = scaleKey[0];
-    const relID = scaleKey[1]; 
+    const [objID, relID] = tabScaleKeys[tabID];
     callback(<ScaleReference objID={objID} relID={relID} />);
   }, [tabScaleKeysJSON]);
 

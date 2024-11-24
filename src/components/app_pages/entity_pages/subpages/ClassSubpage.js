@@ -9,7 +9,7 @@ import {ScaleReference} from "../../../entity_refs/EntityReference.js";
 import { SetSubpage } from "./SetSubpage.js";
 
 /* Placeholders */
-const TabHeader = () => <template></template>;
+// const TabHeader = () => <template></template>;
 
 
 export const ClassSubpage = ({entID}) => {
@@ -22,7 +22,7 @@ export const ClassSubpage = ({entID}) => {
   }, [entID]);
 
   const initTabsJSON = JSON.stringify([
-    [entID, "All"],
+    [entID, "All members"],
   ]);
   const tabScaleKeysJSON = JSON.stringify([
     [entID, basicEntIDs["relations/subclasses"]],

@@ -8,10 +8,11 @@ import {MoreTabsSubpage} from "./MoreTabsSubpage.js";
 /* Placeholders */
 // const MoreTabsSubpage = () => <template></template>;
 
-
 const IS_FETCHING = {};
 
 
+// TODO: Make the previously selected tab stand out when going to the more tabs
+// page.
 
 
 export const SubpagesWithTabs = (props) => {

@@ -16,8 +16,8 @@ const RELATIONS_REL_ID = basicEntIDs["relations/relations"];
 const RELEVANT_QUAL_ID = basicEntIDs["qualities/relevant"];
 
 
-export const EntityList = ({
-  scaleKeyJSON, userID, n, lo, hi, o, a, ElemComp
+export const EntityListSubpage = ({
+  objID, relID, qualID, subjClassID, userID, n, lo, hi, o, a, ElemComp
 }) => {
   userID ??= "1"; // (TODO: Remove.)
 
@@ -54,7 +54,7 @@ export const EntityList = ({
 
   // Else fetch it.
   DataFetcher.fetchEntityListFromScaleKey(
-    userID, JSON.parse(scaleKeyJSON), n, lo, hi, o, a, (entList) => {
+    userID, [objID, relID, qualID], n, lo, hi, o, a, (entList) => {
         setState(prev => ({
           ...prev,
           entList: entList,

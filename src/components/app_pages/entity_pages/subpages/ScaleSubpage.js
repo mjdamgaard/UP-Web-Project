@@ -4,7 +4,7 @@ import {useDispatch} from "../../../../hooks/useDispatch.js";
 import {basicEntIDs} from "../../../../entity_ids/basic_entity_ids.js";
 
 import {SubpagesWithTabs} from "./SubpagesWithTabs.js";
-import {EntityList} from "../../../entity_lists/EntityList.js";
+import {EntityListSubpage} from "../../../entity_lists/EntityList.js";
 import {ScaleReference} from "../../../entity_refs/EntityReference.js";
 
 
@@ -16,9 +16,9 @@ export const ScaleSubpage = ({
   const getPageCompFromID = useCallback(tabID => {
     if (tabID == qualID) {
       return (
-        [EntityList, {
-          scaleKeyJSON: JSON.stringify([objID, relID, tabID]),
-          ElemComp: ElemComp,
+        [EntityListSubpage, {
+          objID: objID, relID: relID, qualID: tabID,
+          subjClassID: subjClassID, ElemComp: ElemComp,
         }]
       );
     }
@@ -56,9 +56,9 @@ export const ScaleSubpage = ({
   else {
     return (
       <div className="scale-subpage">
-        <EntityList
-          scaleKeyJSON={JSON.stringify([objID, relID, qualID])}
-          ElemComp={ElemComp}
+        <EntityListSubpage
+          objID={objID} relID={relID} qualID={qualID}
+          subjClassID={subjClassID} ElemComp={ElemComp}
         />
       </div>
     );

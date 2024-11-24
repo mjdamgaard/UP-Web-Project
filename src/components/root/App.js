@@ -106,15 +106,19 @@ export const App = (props) => {
 
   // TODO: comment-in and debug useRestore(). ..(And also make a combined
   // hook to that we can combine the two refCallbacks instead.)
+  // Well, maybe I don't actually want to use it after all. But I'll still
+  // debug it at some point..
   // if (!isReady) {
   //   return <></>
   // }
 
   return (
-    <div className="app" ref={(node) => {
-      refCallback(node);
-      // refCallback2(node);
-    }}>
+    <div className="app" ref={refCallback}
+      // ref={(node) => {
+      //   refCallback(node);
+      //   refCallback2(node);
+      // }}
+    >
       <AccountContext.Provider value={getAccountData}>
         <AppHeader
           setAppPage={void(0)}
