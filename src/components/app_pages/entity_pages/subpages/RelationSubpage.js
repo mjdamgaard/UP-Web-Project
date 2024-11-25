@@ -31,6 +31,7 @@ export const RelationSubpage = ({objID, relID}) => {
         initTabsJSON={[initTabsJSON]}
         getPageCompFromID={getPageCompFromID}
         getTabTitleFromID="Title"
+        italicizeFirstTab
         tabScaleKeysJSON={tabScaleKeysJSON}
         tabBarHeader={<ScaleReference
           objID={relID} relID={basicEntIDs["relations/sub-relations"]}

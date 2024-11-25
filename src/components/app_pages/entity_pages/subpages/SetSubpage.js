@@ -64,7 +64,7 @@ export const SetSubpage = ({objID, relID, subjClassID, lo, hi, ElemComp}) => {
 
 
   const initTabsJSON = JSON.stringify([
-    [basicEntIDs["qualities/relevant"], "Relevant"],
+    [basicEntIDs["qualities/relevant"], "Relevant and useful"],
   ]);
   const tabScaleKeysJSON = JSON.stringify([
     [subjClassID, basicEntIDs["relations/qualities for members"]],

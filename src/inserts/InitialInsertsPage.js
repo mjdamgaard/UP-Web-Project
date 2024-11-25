@@ -306,11 +306,11 @@ export function initialInserts(dataInserter) {
 
     /* Some qualities */
   dataInserter.insertOrEditParsedEntity(
-    "predicate qualities/relevant", "j",
+    "qualities/relevant", "j",
     JSON.stringify({
         "Class": "@[predicate qualities]",
         "Label": "Relevant and useful",
-        "Description": "@[predicate qualities/relevant/desc]",
+        "Description": "@[qualities/relevant/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
@@ -343,53 +343,53 @@ export function initialInserts(dataInserter) {
 
 
   dataInserter.insertOrEditParsedEntity(
-    "predicate qualities/good (no desc.)", "j",
+    "qualities/good (no desc.)", "j",
     JSON.stringify({
         "Class": "@[predicate qualities]",
         "Label": "good",
         // We use lowercase when Description is not provided.
-        "Description": "@[predicate qualities/good (no desc.)/desc]",
+        "Description": "@[qualities/good (no desc.)/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
-    "predicate qualities/funny (no desc.)", "j",
+    "qualities/funny (no desc.)", "j",
     JSON.stringify({
         "Class": "@[predicate qualities]",
         "Label": "funny",
-        "Description": "@[predicate qualities/funny (no desc.)/desc]",
+        "Description": "@[qualities/funny (no desc.)/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
-    "predicate qualities/good", "j", 
+    "qualities/good", "j", 
     JSON.stringify({
         "Class": "@[predicate qualities]",
         "Label": "Good",
         // We capitalize first letter when Description is provided.
-        "Description": "@[predicate qualities/good/desc]",
+        "Description": "@[qualities/good/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
-    "predicate qualities/funny", "j", 
+    "qualities/funny", "j", 
     JSON.stringify({
         "Class": "@[predicate qualities]",
         "Label": "Funny",
-        "Description": "@[predicate qualities/funny/desc]",
+        "Description": "@[qualities/funny/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
-    "predicate qualities/witty", "j", 
+    "qualities/witty", "j", 
     JSON.stringify({
         "Class": "@[predicate qualities]",
         "Label": "Witty",
-        "Description": "@[predicate qualities/witty/desc]",
+        "Description": "@[qualities/witty/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
-    "predicate qualities/spoilers", "j", 
+    "qualities/spoilers", "j", 
     JSON.stringify({
         "Class": "@[predicate qualities]",
         "Label": "Spoilers",
-        "Description": "@[predicate qualities/spoilers/desc]",
+        "Description": "@[qualities/spoilers/desc]",
     }),
   );
 
@@ -652,56 +652,6 @@ export function initialInserts(dataInserter) {
     }),
   );
 
-
-
-  /* Scales */
-
-  // Ah, I can't do this, since I can't edit them when isEditable = 0, and this
-  // means that the paths need to be resolved at the time they are inserted.
-  // I could make an extra button to insert scales, but I also don't need these
-  // scale paths now.
-
-  // dataInserter.insertParsedEntity(
-  //   "scales/entities->subclasses", "j", 
-  //   JSON.stringify({
-  //       "Class": "@[scales]",
-  //       "Object": "@[entities]",
-  //       "Relation": "@[relations/subclasses]",
-  //       "Quality": "@[qualities/relevant]",
-  //   }),
-  //   1, 0, 0, 1,
-  // );
-  // dataInserter.insertParsedEntity(
-  //   "scales/entities->members", "j", 
-  //   JSON.stringify({
-  //       "Class": "@[scales]",
-  //       "Object": "@[entities]",
-  //       "Relation": "@[relations/members]",
-  //       "Quality": "@[qualities/relevant]",
-  //   }),
-  //   1, 0, 0, 1,
-  // );
-  // dataInserter.insertParsedEntity(
-  //   "scales/classes->subclasses", "j", 
-  //   JSON.stringify({
-  //       "Class": "@[scales]",
-  //       "Object": "@[classes]",
-  //       "Relation": "@[relations/subclasses]",
-  //       "Quality": "@[qualities/relevant]",
-  //   }),
-  //   1, 0, 0, 1,
-  //   (outID, exitCode) => console.log(exitCode)
-  // );
-  // dataInserter.insertParsedEntity(
-  //   "scales/classes->members", "j", 
-  //   JSON.stringify({
-  //       "Class": "@[scales]",
-  //       "Object": "@[classes]",
-  //       "Relation": "@[relations/members]",
-  //       "Quality": "@[qualities/relevant]",
-  //   }),
-  //   1, 0, 0, 1,
-  // );
 
 
 }

@@ -32,7 +32,7 @@ export const ScaleSubpage = ({
   }, [objID, relID, qualID]);
 
   const initTabsJSON = JSON.stringify([
-    [qualID, undefined],
+    [qualID, undefined, "i"],
   ]);
   const tabScaleKeysJSON = JSON.stringify([
     [qualID, basicEntIDs["relations/sub-qualities"]],

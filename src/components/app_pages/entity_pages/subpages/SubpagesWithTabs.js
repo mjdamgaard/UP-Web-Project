@@ -18,6 +18,7 @@ const IS_FETCHING = {};
 export const SubpagesWithTabs = (props) => {
   const {
     initTabsJSON, getPageCompFromID, tabScaleKeysJSON, tabBarHeader,
+    italicizeFirstTab
   } = props;
   var {getTabTitleFromID, initTabID} = props;
 
@@ -97,6 +98,7 @@ export const SubpagesWithTabs = (props) => {
     let isMissing = tabTitle === null;
     let isLoaded = loadedTabIDs.includes(tabID);
     let isOpen = tabID == curTabID;
+    let isItalic = italicizeFirstTab && tabID == tabIDArr[0];
     return (
       <div key={tabID}
         className={"tab" +
@@ -109,7 +111,7 @@ export const SubpagesWithTabs = (props) => {
           dispatch(event.target, "OPEN_TAB", tabID);
         }}
       >
-        {isFetching ? "" : tabTitle}
+        {isFetching ? "" : isItalic ? <i>{tabTitle}</i> : tabTitle}
       </div>
     );
   });

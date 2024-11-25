@@ -34,6 +34,7 @@ export const ClassSubpage = ({entID}) => {
         initTabsJSON={[initTabsJSON]}
         getPageCompFromID={getPageCompFromID}
         getTabTitleFromID="Name"
+        italicizeFirstTab
         tabScaleKeysJSON={tabScaleKeysJSON}
         tabBarHeader={<ScaleReference
           objID={entID} relID={basicEntIDs["relations/subclasses"]}

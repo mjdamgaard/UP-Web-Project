@@ -24,9 +24,8 @@ export const EntityListSubpage = ({
   // scaleKey = scaleID | JSON.stringify([relID, objID, qualID?]).
   const [state, setState] = useState({
     entList: null,
-    scaleIDIsMissing: null,
   });
-  const {entList, scaleIDIsMissing} = state;
+  const {entList} = state;
 
   ElemComp = ElemComp ?? GeneralEntityElement;
 
@@ -37,17 +36,6 @@ export const EntityListSubpage = ({
         {entList.map(([score, entID]) => (
           <ElemComp key={entID} entID={entID} score={score} />
         ))}
-      </div>
-    );
-  }
-
-  // Else if scaleIDIsMissing (from the database) is true, load a page where
-  // the user can submit it.
-  if (scaleIDIsMissing) {
-    return (
-      <div>
-        TODO: Make this a page to submit missing scaleID. *No, we just submit
-        it when adding the first entity.
       </div>
     );
   }

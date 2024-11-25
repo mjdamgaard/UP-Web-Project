@@ -299,6 +299,10 @@ export const EntityID = ({entID}) => {
 export const ScaleReference = ({
   objID, relID, qualID = basicEntIDs["qualities/relevant"]
 }) => {
+  var contextClass;
+  if (relID == basicEntIDs["relations/members"]) {
+    contextClass = objID;
+  }
   return (
     <span className="scale-ref">
       <span className="obj-ref"><EntityReference entID={objID}/></span>
@@ -307,7 +311,7 @@ export const ScaleReference = ({
       {
         qualID != basicEntIDs["qualities/relevant"] ? <>
           <span className="qual-op"></span>
-          <span className="qual-ref"><EntityReference entID={qualID}/></span>
+          <QualityReference qualID={qualID} contextClass={contextClass} />
         </> : <></>
       }
     </span>
@@ -315,7 +319,25 @@ export const ScaleReference = ({
 };
 
 
+export const SetReference = ({objID, relID}) => {
+  return (
+    <span className="set-ref">
+      <span className="obj-ref"><EntityReference entID={objID}/></span>
+      <span className="rel-op"></span>
+      <span className="rel-ref"><EntityReference entID={relID}/></span>
+    </span>
+  );
+};
 
+
+export const QualityReference = ({qualID, contextClass}) => {
+  // TODO: Fetch the Quality manually and insert the Label and the Domain in
+  // parentheses..
+  return (
+    <span className="qual-ref">
+    </span>
+  );
+};
 
 
 
