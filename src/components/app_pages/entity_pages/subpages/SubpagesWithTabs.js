@@ -31,9 +31,6 @@ export const SubpagesWithTabs = (props) => {
   const userID = "1"; // (TODO: Remove.)
 
 
-  // initTabsJSON is a JSON array of: [[tabTitle, tabID]*].
-  // Tab keys are the corresponding JSON arrays. 
-
   const [state, setState] = useState(() => {
     let initTabs = JSON.parse(initTabsJSON ?? "[]");
     initTabID = initTabID ?? (initTabs[0] && initTabs[0][0]);

@@ -143,6 +143,9 @@ export function initialInserts(dataInserter) {
                 // (When missing, the parent class is the 'Entities' class.)
                 "optional"
             ],
+            ["Member datatype", "string='j'", "optional"],
+            // If Member datatype is set (to not 'j'), then all 'Special
+            // attributes' are interpreted to be 'removed.'
             [
                 "Special attributes",
                 "[[Attribute name,Type,Option]]",
@@ -258,193 +261,135 @@ export function initialInserts(dataInserter) {
             ["Label", "string", "mandatory"],
             // Use purely lowercase labels only when the Description is left
             // out.
-            ["Subject class", "@[classes]=@[entities]", "optional"],
-            // ["Scale type", "@[scale types]", "mandatory"],
+            ["Domain", "@[classes]", "optional"],
             ["Unit", "string", "optional"],
-            // ["Lower bound", "float", "optional"],
-            // ["Upper bound", "float", "optional"],
-            ["Low end", "float", "mandatory"],
-            ["High end", "float", "mandatory"],
-            ["Has lower bound", "bool=true", "optional"],
-            ["Has upper bound", "bool=true", "optional"],
-            // ["Cutoff point", "float", "optional"],
+            ["Lower bound", "float", "optional"],
+            ["Upper bound", "float", "optional"],
+            // ["Include lower bound", "bool=false", "optional"],
+            // ["Include upper bound", "bool=false", "optional"],
         ],
         "Description": "@[qualities/desc]",
     }),
   );
 
-  // dataInserter.insertOrEditParsedEntity(
-  //   "scale types", "j", 
-  //   JSON.stringify({
-  //       "Class": "@[classes]",
-  //       "Name": "Scale types",
-  //       "Special attributes": [
-  //           ["Name", "string", "mandatory"],
-  //           ["Unit", "string", "optional"],
-  //           ["Lower bound", "float", "optional"],
-  //           ["Upper bound", "float", "optional"],
-  //           ["Description", "x", "mandatory"],
-  //       ],
-  //       "Description": "@[scale types/desc]",
-  //   }),
-  // );
-
-  //   /* Some scale types */
-  // dataInserter.insertOrEditParsedEntity(
-  //   "scale types/percentage scale", "j", 
-  //   JSON.stringify({
-  //       "Class": "@[scale types]",
-  //       "Name": "Percentage scale",
-  //       "Unit": "%",
-  //       "Lower bound": 0,
-  //       "Upper bound": 100,
-  //       "Description": "@[scale types/percentage scale/desc]",
-  //   }),
-  // );
-  // dataInserter.insertOrEditParsedEntity(
-  //   "scale types/relative scale", "j", 
-  //   JSON.stringify({
-  //       "Class": "@[classes]",
-  //       "Name": "Relative scale",
-  //       "Description": "@[scale types/relative scale/desc]",
-  //       // Description should say that 0 is generally considered the cutoff
-  //       // point of when the quality applies or not, especially when the
-  //       // quality is an adjective, or more generally describes a predicate.
-  //   }),
-  // );
-  // dataInserter.insertOrEditParsedEntity(
-  //   "scale types/value scale", "j", 
-  //   JSON.stringify({
-  //       "Class": "@[classes]",
-  //       "Name": "Value scale",
-  //       "Description": "@[scale types/value scale/desc]",
-  //   }),
-  // );
-  // dataInserter.insertOrEditParsedEntity(
-  //   "scale types/5-star scale", "j", 
-  //   JSON.stringify({
-  //       "Class": "@[classes]",
-  //       "Name": "5-star scale",
-  //       "Description": "@[scale types/5-star scale/desc]",
-  //   }),
-  // );
-  // dataInserter.insertOrEditParsedEntity(
-  //   "scale types/10-star scale", "j", 
-  //   JSON.stringify({
-  //       "Class": "@[classes]",
-  //       "Name": "10-star scale",
-  //       "Description": "@[scale types/10-star scale/desc]",
-  //   }),
-  // );
+  dataInserter.insertOrEditParsedEntity(
+    "percentage qualities", "j",
+    JSON.stringify({
+        "Class": "@[classes]",
+        "Name": "Percentage qualities",
+        "Member title": "Percentage quality",
+        "Parent class": "@[classes/qualities]",
+        "Special attributes": [
+            ["Unit", "", "removed"],
+            ["Lower bound", "", "removed"],
+            ["Upper bound", "", "removed"],
+        ],
+        "Description": "@[percentage qualities/desc]",
+    }),
+  );
+  dataInserter.insertOrEditParsedEntity(
+    "predicate qualities", "j",
+    JSON.stringify({
+        "Class": "@[classes]",
+        "Name": "Predicate qualities",
+        "Member title": "Predicate quality",
+        "Parent class": "@[classes/qualities]",
+        "Special attributes": [
+            ["Unit", "", "removed"],
+            ["Lower bound", "", "removed"],
+            ["Upper bound", "", "removed"],
+        ],
+        "Description": "@[predicate qualities/desc]",
+    }),
+  );
 
 
     /* Some qualities */
   dataInserter.insertOrEditParsedEntity(
-    "qualities/relevant", "j", 
+    "predicate qualities/relevant", "j",
     JSON.stringify({
-        "Class": "@[qualities]",
-        "Label": "Relevant",
-        "Unit": "\\stars",
-        "Low end": 0,
-        "High end": 10,
-        // "Cutoff point": 5,
-        // "Scale type": "@[scale types/relative scale]",
-        "Description": "@[qualities/relevant/desc]",
+        "Class": "@[predicate qualities]",
+        "Label": "Relevant and useful",
+        "Description": "@[predicate qualities/relevant/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
-    "qualities/probability", "j", 
+    "percentage qualities/probability", "j",
     JSON.stringify({
         "Class": "@[qualities]",
         "Label": "Probability",
-        "Subject class": "@[statements]",
-        "Unit": "%",
-        // "Lower bound": 0,
-        // "Upper bound": 100,
-        "Low end": 0,
-        "High end": 100,
-        // "Scale type": "@[scale types/percentage scale]",
-        "Description": "@[qualities/probability/desc]",
+        "Domain": "@[texts]",
+        "Description": "@[percentage qualities/probability/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
-    "qualities/agreement", "j", 
+    "percentage qualities/truthfulness", "j",
+    JSON.stringify({
+        "Class": "@[qualities]",
+        "Label": "Truthfulness",
+        "Domain": "@[texts]",
+        "Description": "@[percentage qualities/truthfulness/desc]",
+    }),
+  );
+  dataInserter.insertOrEditParsedEntity(
+    "percentage qualities/agreement", "j",
     JSON.stringify({
         "Class": "@[qualities]",
         "Label": "Agreement",
-        "Subject class": "@[statements]",
-        "Unit": "%",
-        "Low end": 0,
-        "High end": 100,
-        "Description": "@[qualities/agreement/desc]",
+        "Domain": "@[texts]",
+        "Description": "@[percentage qualities/agreement/desc]",
     }),
   );
 
 
   dataInserter.insertOrEditParsedEntity(
-    "qualities/good (no desc.)", "j", 
+    "predicate qualities/good (no desc.)", "j",
     JSON.stringify({
-        "Class": "@[qualities]",
+        "Class": "@[predicate qualities]",
         "Label": "good",
         // We use lowercase when Description is not provided.
-        "Unit": "\\stars",
-        "Low end": 0,
-        "High end": 10,
+        "Description": "@[predicate qualities/good (no desc.)/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
-    "qualities/funny (no desc.)", "j", 
+    "predicate qualities/funny (no desc.)", "j",
     JSON.stringify({
-        "Class": "@[qualities]",
+        "Class": "@[predicate qualities]",
         "Label": "funny",
-        "Unit": "\\stars",
-        "Low end": 0,
-        "High end": 10,
+        "Description": "@[predicate qualities/funny (no desc.)/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
-    "qualities/good", "j", 
+    "predicate qualities/good", "j", 
     JSON.stringify({
-        "Class": "@[qualities]",
+        "Class": "@[predicate qualities]",
         "Label": "Good",
         // We capitalize first letter when Description is provided.
-        "Unit": "\\stars",
-        "Low end": 0,
-        "High end": 10,
-        "Description": "@[qualities/good/desc]",
+        "Description": "@[predicate qualities/good/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
-    "qualities/funny", "j", 
+    "predicate qualities/funny", "j", 
     JSON.stringify({
-        "Class": "@[qualities]",
+        "Class": "@[predicate qualities]",
         "Label": "Funny",
-        "Unit": "\\stars",
-        "Low end": 0,
-        "High end": 10,
-        "Description": "@[qualities/funny/desc]",
+        "Description": "@[predicate qualities/funny/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
-    "qualities/witty", "j", 
+    "predicate qualities/witty", "j", 
     JSON.stringify({
-        "Class": "@[qualities]",
+        "Class": "@[predicate qualities]",
         "Label": "Witty",
-        "Unit": "\\stars",
-        "Low end": 0,
-        "High end": 10,
-        "Description": "@[qualities/witty/desc]",
+        "Description": "@[predicate qualities/witty/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
-    "qualities/spoilers", "j", 
+    "predicate qualities/spoilers", "j", 
     JSON.stringify({
-        "Class": "@[qualities]",
+        "Class": "@[predicate qualities]",
         "Label": "Spoilers",
-        "Unit": "\\stars",
-        "Low end": 0,
-        "High end": 10,
-        "Description": "@[qualities/spoilers/desc]",
+        "Description": "@[predicate qualities/spoilers/desc]",
     }),
   );
 
@@ -454,9 +399,8 @@ export function initialInserts(dataInserter) {
         "Class": "@[qualities]",
         "Label": "Price",
         "Unit": "$",
-        "Low end": 0,
-        "High end": 1000000,
-        "Has upper bound": false,
+        "Lower bound": 0,
+        "Upper bound": 1000000,
         "Description": "@[qualities/price/desc]",
     }),
   );
@@ -466,9 +410,8 @@ export function initialInserts(dataInserter) {
         "Class": "@[qualities]",
         "Label": "Durability",
         "Unit": "yr",
-        "Low end": 0,
-        "High end": 20,
-        "Has upper bound": false,
+        "Lower bound": 0,
+        "Upper bound": 20,
         "Description": "@[qualities/durability/desc]",
     }),
   );
@@ -538,16 +481,6 @@ export function initialInserts(dataInserter) {
         "Subject class": "@[relations]",
         "Object class": "@[relations]",
         "Description": "@[relations/sub-relations/desc]",
-    }),
-  );
-  dataInserter.insertOrEditParsedEntity(
-    "relations/sub-relations for members", "j", 
-    JSON.stringify({
-        "Class": "@[relations]",
-        "Title": "Sub-relations for members",
-        "Subject class": "@[relations]",
-        "Object class": "@[classes]",
-        "Description": "@[relations/sub-relations for members/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
@@ -623,13 +556,13 @@ export function initialInserts(dataInserter) {
     }),
   );
   dataInserter.insertOrEditParsedEntity(
-    "relations/statements", "j", 
+    "relations/texts", "j", 
     JSON.stringify({
         "Class": "@[relations]",
-        "Title": "Statements",
-        "Subject class": "@[statements]",
+        "Title": "Texts",
+        "Subject class": "@[texts]",
         "Object class": "@[entities]",
-        "Description": "@[relations/statements/desc]",
+        "Description": "@[relations/texts/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
@@ -637,7 +570,7 @@ export function initialInserts(dataInserter) {
     JSON.stringify({
         "Class": "@[relations]",
         "Title": "Discussions",
-        "Subject class": "@[statements]",
+        "Subject class": "@[texts]",
         "Object class": "@[entities]",
         "Description": "@[relations/discussions/desc]",
     }),
@@ -647,7 +580,7 @@ export function initialInserts(dataInserter) {
     JSON.stringify({
         "Class": "@[relations]",
         "Title": "Facts",
-        "Subject class": "@[statements]",
+        "Subject class": "@[texts]",
         "Object class": "@[entities]",
         "Description": "@[relations/facts/desc]",
     }),
@@ -665,34 +598,32 @@ export function initialInserts(dataInserter) {
 
 
   dataInserter.insertOrEditParsedEntity(
-    "statements", "j", 
+    "texts", "j", 
     JSON.stringify({
         "Class": "@[classes]",
-        "Name": "Statements",
-        "Member title": "Statement",
-        "Special attributes": [
-            ["Text", "x", "mandatory"],
-            ["Is claimed by the creator", "bool=false", "optional"],
-            ["Is objective", "bool=false", "optional"],
-            ["Description", "", "removed"],
-        ],
-        "Description": "@[statements/desc]",
+        "Name": "Texts",
+        "Member title": "Text",
+        "Member datatype": "x",
+        "Description": "@[texts/desc]",
     }),
   );
-  dataInserter.insertOrEditParsedEntity(
-    "comments", "j", 
-    JSON.stringify({
-        "Class": "@[classes]",
-        "Name": "Comments",
-        "Member title": "Comment",
-        "Parent class": "@[statements]",
-        "Special attributes": [
-            ["Topic", "@[entities]", "mandatory"],
-            ["Is claimed by the creator", "", "removed"],
-        ],
-        "Description": "@[comments/desc]",
-    }),
-  );
+
+  // I think we can just implement Comments as XML texts instead, using some
+  // 'context header'..
+  // dataInserter.insertOrEditParsedEntity(
+  //   "comments", "j", 
+  //   JSON.stringify({
+  //       "Class": "@[classes]",
+  //       "Name": "Comments",
+  //       "Member title": "Comment",
+  //       // "Parent class": "@[texts]",
+  //       "Special attributes": [
+  //           ["Topic", "@[entities]", "mandatory"],
+  //           ["Description", "", "removed"],
+  //       ],
+  //       "Description": "@[comments/desc]",
+  //   }),
+  // );
 
 
 
@@ -787,7 +718,7 @@ export function insertInitialScores(dataInserter) {
       ["entities", "10"],
       ["users", "8"],
       ["scales", "5"],
-      ["statements", "10"],
+      ["texts", "10"],
       ["comments", "9.5"],
     ],
   );
@@ -796,7 +727,7 @@ export function insertInitialScores(dataInserter) {
     [
       ["users", "8"],
       ["scales", "8"],
-      ["statements", "10"],
+      ["texts", "10"],
       ["comments", "9.5"],
     ],
   );
@@ -806,7 +737,7 @@ export function insertInitialScores(dataInserter) {
       ["classes", "10"],
       ["entities", "6"],
       ["relations/members", "5"],
-      ["statements", "10"],
+      ["texts", "10"],
       ["comments", "9.5"],
     ],
   );
@@ -816,7 +747,7 @@ export function insertInitialScores(dataInserter) {
       ["classes", "10"],
       ["users", "8"],
       ["scales", "8"],
-      ["statements", "10"],
+      ["texts", "10"],
       ["comments", "9.5"],
     ],
   );
@@ -828,14 +759,14 @@ export function insertInitialScores(dataInserter) {
     [
       ["relations/members", "10"],
       ["relations/subclasses", "6"],
-      ["relations/statements", "9"],
+      ["relations/texts", "9"],
       ["relations/comments", "8"],
     ],
   );
 
 
   dataInserter.addEntitiesToListFromScaleKey(
-    ["relations/statements", "relations/sub-relations"],
+    ["relations/texts", "relations/sub-relations"],
     [
       ["relations/comments", "10"],
     ],
@@ -844,14 +775,14 @@ export function insertInitialScores(dataInserter) {
 
 
   dataInserter.addEntitiesToListFromScaleKey(
-    ["relations/statements", "relations/qualities"],
+    ["relations/texts", "relations/qualities"],
     [
       ["qualities/good (no desc.)", "9"],
       ["qualities/funny (no desc.)", "9"],
     ],
   );
   dataInserter.addEntitiesToListFromScaleKey(
-    ["statements", "relations/qualities for members"],
+    ["texts", "relations/qualities for members"],
     [
       ["qualities/good", "8"],
       ["qualities/funny (no desc.)", "6"],
@@ -910,7 +841,6 @@ const basicEntPaths = [
   "relations/relations",
   "relations/relations for members",
   "relations/sub-relations",
-  "relations/sub-relations for members",
   "relations/qualities",
   "relations/qualities for members",
   "relations/sub-qualities",
