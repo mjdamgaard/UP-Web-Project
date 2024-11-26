@@ -3,18 +3,50 @@ $moreTabsButtonWidth: 30px;
 $moreTabsButtonMargin: 3px;
 $hoverColor: lightgray;
 $openTabColor: #f4f4f4;
+$collapsedTabBarHeight: 25px;
 
 .subpages-with-tabs{
 
   & > .tab-bar {
     background-image: linear-gradient($openTabColor, #fbfbfb, white);
 
-    & > .tab-bar-header {
+
+    & > .tab-bar-header > * {
       font-size: 10pt;
-      &::after {
-        content: ':';
+      display: inline-block;
+      &.header {
+        margin: 0 0.5em;
+        &::after {
+          content: ':';
+        }
       }
     }
+
+    &.collapsed {
+      height: $collapsedTabBarHeight;
+      & > * {
+        height: $collapsedTabBarHeight;
+      }
+
+      & .collapse-expand-button {
+        height: $collapsedTabBarHeight;
+        &::after {
+          content: "›";
+        }
+      }
+
+      & > *:not(.collapse-expand-button, .tab-bar-header) {
+        display: none;
+      }
+    }
+    &:not(.collapsed) {
+      & .collapse-expand-button {
+        display: none;
+      }
+    }
+
+
+
 
     & > .tab-list {
       display: inline-block;

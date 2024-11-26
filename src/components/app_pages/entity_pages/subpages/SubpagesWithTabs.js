@@ -16,11 +16,10 @@ const IS_FETCHING = {};
 
 
 export const SubpagesWithTabs = (props) => {
-  const {
+  var {
     initTabsJSON, getPageCompFromID, tabScaleKeysJSON, tabBarHeader,
-    italicizeFirstTab
+    getTabTitleFromID, initTabID, italicizeFirstTab, startAsCollapsed
   } = props;
-  var {getTabTitleFromID, initTabID} = props;
 
   if (typeof getTabTitleFromID === "string") {
     let attrName = getTabTitleFromID;
@@ -46,11 +45,12 @@ export const SubpagesWithTabs = (props) => {
       loadedTabIDs: [initTabID],
       tabsAreFetched: !tabScaleKeysJSON,
       moreTabsSubpageIsLoaded: false,
+      isCollapsed: startAsCollapsed,
     }
   });
   const {
     tabIDArr, tabTitleStore, curTabID, loadedTabIDs, tabsAreFetched,
-    moreTabsSubpageIsLoaded,
+    moreTabsSubpageIsLoaded, isCollapsed,
   } = state;
 
   const [dispatch, refCallback] = useDispatch(
@@ -137,9 +137,20 @@ export const SubpagesWithTabs = (props) => {
 
   return (
     <div ref={refCallback} className="subpages-with-tabs">
-      <div className={"tab-bar" + (tabsAreFetched ? "" : " fetching")}>
+      <div className={
+        "tab-bar" + (tabsAreFetched ? "" : " fetching") +
+        (isCollapsed ? " collapsed" : "")
+      }>
         <div className="tab-bar-header">
-          {tabBarHeader}
+          <button type="button"  className="collapse-expand-button"
+            onClick={(event) => {
+              dispatch(event.target, "EXPAND_OR_COLLAPSE_TAB_BAR");
+            }}
+          >
+          </button>
+          <div className="header">
+            {tabBarHeader}
+          </div>
         </div>
         <div className="tab-list">
           {tabs}
@@ -192,6 +203,14 @@ const subpagesWithTabsActions = {
         loadedTabIDs: prev.loadedTabIDs.includes(tabID) ? prev.loadedTabIDs :
           [...prev.loadedTabIDs, tabID],
         curTabID: tabID,
+      };
+    });
+  },
+  "EXPAND_OR_COLLAPSE_TAB_BAR": function(_, setState, {state}) {
+    setState(prev => {
+      return {
+        ...prev,
+        isCollapsed: !prev.isCollapsed,
       };
     });
   },
