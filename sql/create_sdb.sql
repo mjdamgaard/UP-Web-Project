@@ -35,88 +35,168 @@ DROP TABLE DirectMessages;
  **/
 
 
-CREATE TABLE Scores (
-    -- User (or bot) who scores the "belongs to" statement.
-    user_id BIGINT UNSIGNED NOT NULL,
+CREATE TABLE UserOpinionScores (
 
-    -- Scale that the Subject is scored on.
-    scale_id BIGINT UNSIGNED NOT NULL,
+    ent_list_id BIGINT UNSIGNED NOT NULL,
 
-    -- Subject that are rated on the scale. (A scale and a subject form a
-    -- so-called 'scalar,' by the way, i.e. a specific thing to be scored.)
     subj_id BIGINT UNSIGNED NOT NULL,
 
-    -- The score value is a number (single-precision float).
     score_val FLOAT NOT NULL,
 
+    score_width FLOAT NOT NULL,
+
+    -- This DATETIME is reduced to just a DATE after a day or so, and can also
+    -- be deleted on the user's request, when we implement this at some point.
+    modified_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
     PRIMARY KEY (
-        user_id,
-        scale_id,
+        ent_list_id,
         score_val,
         subj_id
     ),
 
     -- Index to look up specific score (and restricting one score per user).
-    UNIQUE INDEX (user_id, scale_id, subj_id),
-
-    -- Index to look up users who has rated the stmt / rating scale.
-    UNIQUE INDEX (scale_id, subj_id, score_val, user_id)
+    UNIQUE INDEX (ent_list_id, subj_id)
 );
 
 
+CREATE TABLE ScoreHistograms (
 
-
-
-CREATE TABLE PrivateScores (
-    user_id BIGINT UNSIGNED NOT NULL,
-
-    scale_id BIGINT UNSIGNED NOT NULL,
+    ent_list_id BIGINT UNSIGNED NOT NULL,
 
     subj_id BIGINT UNSIGNED NOT NULL,
 
-    score_val FLOAT NOT NULL,
+    hist_data VARBINARY(500) NOT NULL,
 
     PRIMARY KEY (
-        user_id,
-        scale_id,
-        score_val,
+        ent_list_id,
+        subj_id
+    )
+);
+
+
+CREATE TABLE FloatingPointScoreAggregates (
+
+    ent_list_id BIGINT UNSIGNED NOT NULL,
+
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    score_aggr FLOAT NOT NULL,
+
+    PRIMARY KEY (
+        ent_list_id,
+        score_aggr,
         subj_id
     ),
 
-    UNIQUE INDEX (user_id, scale_id, subj_id)
+    UNIQUE INDEX (ent_list_id, subj_id)
 );
 
 
 
 
+CREATE TABLE UpdateEntityListRequests (
+
+    req_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    ent_list_id BIGINT UNSIGNED NOT NULL,
+
+    user_id BIGINT UNSIGNED NOT NULL
+);
 
 
+CREATE TABLE ScheduledEntityListUpdates (
 
-
-
-CREATE TABLE RecordedScores (
-    user_group_id BIGINT UNSIGNED NOT NULL,
-
-    scale_id BIGINT UNSIGNED NOT NULL,
-    subj_id BIGINT UNSIGNED NOT NULL,
-    
-    weight_val FLOAT NOT NULL,
+    ent_list_id BIGINT UNSIGNED NOT NULL,
 
     user_id BIGINT UNSIGNED NOT NULL,
 
-    submitted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    score_val FLOAT,
+    countdown FLOAT NOT NULL,
 
     PRIMARY KEY (
-        user_group_id,
-        scale_id,
-        subj_id,
-        weight_val,
-        user_id,
-        submitted_at
+        ent_list_id,
+        user_id
     )
 );
+
+-- This table is only used once we start implementing User group trees. (See
+-- my 23--xx notes.)
+CREATE TABLE ScheduledSubListUpdates (
+
+    ent_list_id BIGINT UNSIGNED NOT NULL,
+
+    node_id BIGINT UNSIGNED NOT NULL,
+
+    countdown FLOAT NOT NULL,
+
+    PRIMARY KEY (
+        ent_list_id,
+        node_id
+    )
+);
+
+
+
+-- -- The Entity list entity, typically consisting of a User / User group, a
+-- -- Quality, and an Estimator. The Quality defines some (scalable) predicate
+-- -- or quantity that says something about the Subject. The User (group) is
+-- -- the one doing this estimation. And the Estimator can in the case of a
+-- -- User group determine if the score measures e.g. the mean or the median,
+-- -- etc. And for a User, it can change the score to mean the uncertainty
+-- -- instead, or a e.g. a 'wish.' 
+
+
+
+-- CREATE TABLE PrivateScores (
+--     user_id BIGINT UNSIGNED NOT NULL,
+
+--     scale_id BIGINT UNSIGNED NOT NULL,
+
+--     subj_id BIGINT UNSIGNED NOT NULL,
+
+--     score_val FLOAT NOT NULL,
+
+--     PRIMARY KEY (
+--         user_id,
+--         scale_id,
+--         score_val,
+--         subj_id
+--     ),
+
+--     UNIQUE INDEX (user_id, scale_id, subj_id)
+-- );
+
+
+
+
+
+
+
+
+
+-- CREATE TABLE RecordedScores (
+--     user_group_id BIGINT UNSIGNED NOT NULL,
+
+--     scale_id BIGINT UNSIGNED NOT NULL,
+--     subj_id BIGINT UNSIGNED NOT NULL,
+    
+--     weight_val FLOAT NOT NULL,
+
+--     user_id BIGINT UNSIGNED NOT NULL,
+
+--     submitted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+--     score_val FLOAT,
+
+--     PRIMARY KEY (
+--         user_group_id,
+--         scale_id,
+--         subj_id,
+--         weight_val,
+--         user_id,
+--         submitted_at
+--     )
+-- );
 
 
 
@@ -333,8 +413,8 @@ CREATE TABLE Entities (
 
     -- UNIQUE INDEX (is_private, creator_id, def_hash),
 
-    -- modified_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    -- -- The modified_at field is (potentially) for future use.
+    modified_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    -- The modified_at field is (potentially) for future use.
 );
 
 

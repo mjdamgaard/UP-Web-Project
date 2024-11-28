@@ -261,6 +261,7 @@ export function initialInserts(dataInserter) {
             ["Label", "string", "mandatory"],
             // Use purely lowercase labels only when the Description is left
             // out.
+            ["Elaborate label", "string", "optional"],
             ["Domain", "@[classes]", "optional"],
             ["Unit", "string", "optional"],
             ["Lower bound", "float", "optional"],
@@ -278,7 +279,7 @@ export function initialInserts(dataInserter) {
         "Class": "@[classes]",
         "Name": "Percentage qualities",
         "Member title": "Percentage quality",
-        "Parent class": "@[classes/qualities]",
+        "Parent class": "@[qualities]",
         "Special attributes": [
             ["Unit", "", "removed"],
             ["Lower bound", "", "removed"],
@@ -293,7 +294,7 @@ export function initialInserts(dataInserter) {
         "Class": "@[classes]",
         "Name": "Predicate qualities",
         "Member title": "Predicate quality",
-        "Parent class": "@[classes/qualities]",
+        "Parent class": "@[qualities]",
         "Special attributes": [
             ["Unit", "", "removed"],
             ["Lower bound", "", "removed"],
@@ -302,17 +303,28 @@ export function initialInserts(dataInserter) {
         "Description": "@[predicate qualities/desc]",
     }),
   );
-
-
-    /* Some qualities */
   dataInserter.insertOrEditParsedEntity(
-    "qualities/relevant", "j",
+    "relevancy qualities", "j",
     JSON.stringify({
-        "Class": "@[predicate qualities]",
-        "Label": "Relevant and useful",
-        "Description": "@[qualities/relevant/desc]",
+        "Class": "@[classes]",
+        "Name": "Relevancy qualities",
+        "Member title": "Relevancy quality",
+        "Parent class": "@[predicate qualities]",
+        "Special attributes": [
+            ["Object", "@[entities]", "mandatory"],
+            ["Relation", "@[relations]", "mandatory"],
+            ["Label", "", "removed"],
+            ["Elaborate label", "", "removed"],
+            ["Domain", "", "removed"],
+            ["Description", "", "removed"],
+        ],
+        "Description": "@[relevancy qualities/desc]",
     }),
   );
+
+
+  /* Some qualities */
+
   dataInserter.insertOrEditParsedEntity(
     "percentage qualities/probability", "j",
     JSON.stringify({
@@ -417,7 +429,8 @@ export function initialInserts(dataInserter) {
   );
 
 
-    /* Relations */
+  /* Relations */
+
   dataInserter.insertOrEditParsedEntity(
     "relations", "j", 
     JSON.stringify({
@@ -426,9 +439,9 @@ export function initialInserts(dataInserter) {
         "Member title": "Relation",
         "Special attributes": [
             ["Title", "string", "mandatory"],
+            ["Elaborate title", "string", "optional"],
             ["Subject class", "@[classes]", "mandatory"],
             ["Object class", "@[classes]", "mandatory"],
-            // ["Description", "x", "mandatory"],
         ],
         "Description": "@[relations/desc]",
     }),
@@ -785,7 +798,9 @@ const basicEntPaths = [
   "workspaces",
   "scales",
   "relations",
-  "qualities/relevant",
+  "qualities",
+  "relevancy qualities",
+  "predicate qualities",
   "relations/members",
   "relations/subclasses",
   "relations/relations",
