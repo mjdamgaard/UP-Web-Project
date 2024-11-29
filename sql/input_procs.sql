@@ -1,5 +1,5 @@
 
-SELECT "Input procedures";
+SELECT "Insert procedures";
 
 DROP PROCEDURE insertOrUpdateScore;
 DROP PROCEDURE deleteScore;
@@ -15,26 +15,74 @@ DROP PROCEDURE editOrFindEntity;
 DELIMITER //
 CREATE PROCEDURE insertOrUpdateScore (
     IN userID BIGINT UNSIGNED,
-    IN scaleID BIGINT UNSIGNED,
+    IN listID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN scoreVal FLOAT
+    IN scoreVal FLOAT,
+    IN scoreWidth FLOAT
 )
-BEGIN
-    -- TODO: Why on earth are we getting deadlocks sometimes from this proc??..
-    -- I guess deadlocks are just "supposed" to occur. It's just very weird..
-    IF ((SELECT type_ident FROM Entities WHERE id = subjID) IS NOT NULL) THEN
-        INSERT INTO Scores (user_id, scale_id, subj_id, score_val)
-        VALUES (userID, scaleID, subjID, scoreVal)
-        ON DUPLICATE KEY UPDATE score_val = scoreVal;
+BEGIN proc: BEGIN
+    DECLARE listDef, scaleDef, estDef VARCHAR(700);
+    DECLARE listOwnerID, scaleID, estID BIGINT UNSIGNED;
+    DECLARE scoreMin, scoreMax FLOAT;
 
-        -- -- TODO: Run bots on scheduled events instead.
-        -- CALL runBots ();
-
-        SELECT subjID AS outID, 0 AS exitCode; -- insert or update.
-    ELSE
+    -- Exit if the subject entity does not exist.
+    IF ((SELECT type_ident FROM Entities WHERE id = subjID) IS NULL) THEN
         SELECT subjID AS outID, 1 AS exitCode; -- subject does not exist.
+        LEAVE proc;
     END IF;
-END //
+
+    -- Parse userID and scaleID from listDef = "'op',userID,scaleID".
+    SELECT def_str INTO listDef
+    FROM Entities
+    WHERE id = listID;
+    SET listOwnerID = CAST(
+        SUBSTRING_INDEX(listDef, ",", 2) AS UNSIGNED INTEGER
+    );
+    SET scaleID = CAST(
+        SUBSTRING_INDEX(listDef, ",", 3) AS UNSIGNED INTEGER
+    );
+
+    -- Exit if the list's owner does not match the input userID.
+    IF (listOwnerID != userID) THEN
+        SELECT listOwnerID AS outID, 2 AS exitCode; -- user does not own list.
+        LEAVE proc;
+    END IF;
+
+    -- Parse estID from ScaleDef = "'scale',objID,relID,qualID,estID".
+    SELECT def_str INTO scaleDef
+    FROM Entities
+    WHERE id = scaleID;
+    SET estID = CAST(
+        SUBSTRING_INDEX(scaleDef, ",", 5) AS UNSIGNED INTEGER
+    );
+
+    -- Parse interval limits from estDef = "'est',min,max,step,metricID".
+    SELECT def_str INTO estDef
+    FROM Entities
+    WHERE id = estID;
+    SET scoreMin = CAST(
+        SUBSTRING_INDEX(estDef, ",", 2) AS FLOAT
+    );
+    SET scoreMax = CAST(
+        SUBSTRING_INDEX(estDef, ",", 3) AS FLOAT
+    );
+
+    -- Exit if the score is not within the range.
+    IF (score < scoreMin OR score > scoreMax) THEN
+        SELECT subjID AS outID, 3 AS exitCode; -- score is not within range.
+        LEAVE proc;
+    END IF;
+
+    INSERT INTO UserOpinionScores (
+        list_id, subj_id, score_val, score_width
+    )
+    VALUES (
+        listID, subjID, scoreVal, scoreWidth
+    )
+    ON DUPLICATE KEY UPDATE score_val = scoreVal, score_width = scoreWidth;
+
+    SELECT subjID AS outID, 0 AS exitCode; -- insert or update.
+END proc; END //
 DELIMITER ;
 
 
@@ -42,22 +90,36 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE deleteScore (
     IN userID BIGINT UNSIGNED,
-    IN scaleID BIGINT UNSIGNED,
+    IN listID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED
 )
-BEGIN
-    DELETE FROM Scores
+BEGIN proc: BEGIN
+    DECLARE listDef VARCHAR(700);
+    DECLARE listOwnerID BIGINT UNSIGNED;
+
+    -- Parse userID from listDef = "'op',userID,scaleID".
+    SELECT def_str INTO listDef
+    FROM Entities
+    WHERE id = listID;
+    SET listOwnerID = CAST(
+        SUBSTRING_INDEX(listDef, ",", 2) AS UNSIGNED INTEGER
+    );
+
+    -- Exit if the list's owner does not match the input userID.
+    IF (listOwnerID != userID) THEN
+        SELECT listOwnerID AS outID, 2 AS exitCode; -- user does not own list.
+        LEAVE proc;
+    END IF;
+
+
+    DELETE FROM UserOpinionScores
     WHERE (
-        user_id = userID AND
-        scale_id = scaleID AND
+        list_id = listID AND
         subj_id = subjID
     );
 
-    -- -- TODO: Run bots on scheduled events instead.
-    -- CALL runBots ();
-
-    SELECT subjID AS outID, 0 AS exitCode;
-END //
+    SELECT subjID AS outID, 0 AS exitCode; -- delete.
+END proc; END //
 DELIMITER ;
 
 

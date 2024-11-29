@@ -1,23 +1,23 @@
 
-/* Ratings */
-DROP TABLE Scores;
--- DROP TABLE PrivateScores;
-
--- DROP TABLE RecordedInputs;
-
-/* Indexes */
--- DROP TABLE IndexedEntities;
+/* Scores */
+DROP TABLE UserOpinionScores;
+DROP TABLE ScoreHistograms;
+DROP TABLE FloatingPointScoreAggregates;
 
 /* Entities */
 DROP TABLE Entities;
-DROP TABLE EntityHashes;
 
-/* Users and Bots */
+/* Indexes */
+DROP TABLE EntityHashes;
+DROP TABLE EntityDefStrings;
+-- DROP TABLE FulltextIndexedEntities;
+
+
+/* Users */
 -- DROP TABLE Users;
--- DROP TABLE AggregationBots;
 
 /* Messages */
-DROP TABLE DirectMessages;
+-- DROP TABLE DirectMessages;
 
 /* Private user data */
 -- DROP TABLE Private_UserData;
@@ -26,22 +26,18 @@ DROP TABLE DirectMessages;
 
 
 
-/* Semantic inputs */
 
-/* Semantic inputs are the statements that the users (or aggregation bots) give
- * as input to the semantic network. A central feature of this semantic system
- * is that all such statements come with a numerical value which qualifies
- * the statement.
- **/
+
+/* Scores (Entity lists)  */
 
 
 CREATE TABLE UserOpinionScores (
 
-    ent_list_id BIGINT UNSIGNED NOT NULL,
-
-    subj_id BIGINT UNSIGNED NOT NULL,
+    list_id BIGINT UNSIGNED NOT NULL,
 
     score_val FLOAT NOT NULL,
+
+    subj_id BIGINT UNSIGNED NOT NULL,
 
     score_width FLOAT NOT NULL,
 
@@ -50,26 +46,26 @@ CREATE TABLE UserOpinionScores (
     modified_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (
-        ent_list_id,
+        list_id,
         score_val,
         subj_id
     ),
 
     -- Index to look up specific score (and restricting one score per user).
-    UNIQUE INDEX (ent_list_id, subj_id)
+    UNIQUE INDEX (list_id, subj_id)
 );
 
 
 CREATE TABLE ScoreHistograms (
 
-    ent_list_id BIGINT UNSIGNED NOT NULL,
+    list_id BIGINT UNSIGNED NOT NULL,
 
     subj_id BIGINT UNSIGNED NOT NULL,
 
     hist_data VARBINARY(500) NOT NULL,
 
     PRIMARY KEY (
-        ent_list_id,
+        list_id,
         subj_id
     )
 );
@@ -77,20 +73,26 @@ CREATE TABLE ScoreHistograms (
 
 CREATE TABLE FloatingPointScoreAggregates (
 
-    ent_list_id BIGINT UNSIGNED NOT NULL,
-
-    subj_id BIGINT UNSIGNED NOT NULL,
+    list_id BIGINT UNSIGNED NOT NULL,
 
     score_aggr FLOAT NOT NULL,
 
+    subj_id BIGINT UNSIGNED NOT NULL,
+
     PRIMARY KEY (
-        ent_list_id,
+        list_id,
         score_aggr,
         subj_id
     ),
 
-    UNIQUE INDEX (ent_list_id, subj_id)
+    UNIQUE INDEX (list_id, subj_id)
 );
+
+
+
+
+
+
 
 
 
@@ -99,7 +101,7 @@ CREATE TABLE UpdateEntityListRequests (
 
     req_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    ent_list_id BIGINT UNSIGNED NOT NULL,
+    list_id BIGINT UNSIGNED NOT NULL,
 
     user_id BIGINT UNSIGNED NOT NULL
 );
@@ -107,14 +109,14 @@ CREATE TABLE UpdateEntityListRequests (
 
 CREATE TABLE ScheduledEntityListUpdates (
 
-    ent_list_id BIGINT UNSIGNED NOT NULL,
+    list_id BIGINT UNSIGNED NOT NULL,
 
     user_id BIGINT UNSIGNED NOT NULL,
 
     countdown FLOAT NOT NULL,
 
     PRIMARY KEY (
-        ent_list_id,
+        list_id,
         user_id
     )
 );
@@ -123,14 +125,14 @@ CREATE TABLE ScheduledEntityListUpdates (
 -- my 23--xx notes.)
 CREATE TABLE ScheduledSubListUpdates (
 
-    ent_list_id BIGINT UNSIGNED NOT NULL,
+    list_id BIGINT UNSIGNED NOT NULL,
 
     node_id BIGINT UNSIGNED NOT NULL,
 
     countdown FLOAT NOT NULL,
 
     PRIMARY KEY (
-        ent_list_id,
+        list_id,
         node_id
     )
 );
@@ -332,32 +334,25 @@ CREATE TABLE ScheduledSubListUpdates (
 
 
 
-/* Indexes */
+-- CREATE TABLE IndexedEntities (
+--     -- Index entity which defines the restrictions on the entity keys.
+--     idx_id BIGINT UNSIGNED NOT NULL,
 
-CREATE TABLE IndexedEntities (
-    -- Index entity which defines the restrictions on the entity keys.
-    idx_id BIGINT UNSIGNED NOT NULL,
-
-    /* The entity index */
-    -- Given some constants for the above two columns, the "entity indexes"
-    -- contain the "entity keys," which are each just the secondary index of an
-    -- entity.
-    key_str VARCHAR(255) NOT NULL,
+--     /* The entity index */
+--     -- Given some constants for the above two columns, the "entity indexes"
+--     -- contain the "entity keys," which are each just the secondary index of an
+--     -- entity.
+--     key_str VARCHAR(255) NOT NULL,
 
 
-    ent_id BIGINT UNSIGNED NOT NULL,
+--     ent_id BIGINT UNSIGNED NOT NULL,
 
-    PRIMARY KEY (
-        idx_id,
-        key_str,
-        ent_id -- (A single key might in principle index several entities.) 
-    )
-);
--- (Also needs compressing.)
-
--- I intend to at some point copy at least one of these indexes (with a
--- specific idx_id) over in another table with a FULLTEXT index on the str
--- column. But I will do this in another file, then.
+--     PRIMARY KEY (
+--         idx_id,
+--         key_str,
+--         ent_id -- (A single key might in principle index several entities.) 
+--     )
+-- );
 
 
 
@@ -377,10 +372,6 @@ CREATE TABLE Entities (
     -- A string (possibly a JSON object) that defines the entity. The format
     -- depends on type_ident.
     def_str TEXT NOT NULL, -- (Can be resized.)
-
-    -- def_hash CHAR(64) NOT NULL DEFAULT (
-    --     SHA2(CONCAT(type_ident, def_str), 256)
-    -- ),
 
     -- The user who submitted the entity, unless creator_id = 0, which means
     -- that the creator is anonymous.
@@ -402,29 +393,59 @@ CREATE TABLE Entities (
     CHECK (creator_id != 0 OR is_editable = 0)
 
 
-    -- -- -- Creation identifier used by a user to structure and edit their creations.
-    -- -- creation_ident VARBINARY(255) NOT NULL DEFAULT "",
-
-    -- CHECK (creator_id != 0 OR is_private = 1),
-
-    -- -- UNIQUE INDEX (is_private, def_hash, creator_id),
-
-    -- -- UNIQUE INDEX (creator_id, creation_ident, id),
-
-    -- UNIQUE INDEX (is_private, creator_id, def_hash),
-
-    modified_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    -- The modified_at field is (potentially) for future use.
+    -- modified_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    -- -- The modified_at field is (potentially) for future use.
 );
 
+
+
+/* Indexes */
 
 CREATE TABLE EntityHashes (
-    def_hash CHAR(64) PRIMARY KEY,
 
-    ent_id BIGINT UNSIGNED NOT NULL
+    type_ident CHAR NOT NULL,
+
+    def_hash CHAR(64) NOT NULL,
+
+    is_editable TINYINT UNSIGNED NOT NULL,
+
+    ent_id BIGINT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (
+        type_ident,
+        def_hash,
+        is_editable
+    )
+);
+
+CREATE TABLE EntityDefStrings (
+
+    type_ident CHAR NOT NULL,
+
+    def_str VARCHAR(700) NOT NULL COLLATE utf8mb4_bin,
+
+    is_editable TINYINT UNSIGNED NOT NULL,
+
+    ent_id BIGINT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (
+        type_ident,
+        def_str,
+        is_editable
+    )
 );
 
 
+
+CREATE TABLE FulltextIndexedEntities (
+
+    ent_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    
+    text_str VARCHAR(700) NOT NULL,
+
+    FULLTEXT idx (text_str)
+
+) ENGINE=InnoDB;
 
 
 -- /* Some initial inserts */
@@ -909,21 +930,6 @@ CREATE TABLE Users (
 
     UNIQUE INDEX (username)
 );
-
-
-/* Native aggregation bots (or simply 'bots' for short) */
-
-CREATE TABLE AggregationBots (
-    -- Aggregation bot data key (private).
-    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
-    bot_name VARCHAR(255) NOT NULL,
-
-    bot_description TEXT,
-
-    UNIQUE INDEX (bot_name)
-);
-
 
 
 
