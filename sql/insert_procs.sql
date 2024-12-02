@@ -253,6 +253,7 @@ END //
 DELIMITER ;
 
 
+
 DELIMITER //
 CREATE PROCEDURE insertBinaryEntity (
     IN userID BIGINT UNSIGNED,
@@ -271,45 +272,6 @@ DELIMITER ;
 
 
 
-
-DELIMITER //
-CREATE PROCEDURE _insertTextEntity (
-    IN datatype CHAR,
-    IN userID BIGINT UNSIGNED,
-    IN defStr LONGTEXT CHARACTER SET utf8mb4,
-    IN isPrivate BOOL,
-    IN isAnonymous BOOL,
-    IN daysLeftOfEditing INT
-)
-BEGIN
-    DECLARE outID BIGINT UNSIGNED;
-
-    IF (isPrivate) THEN
-        SET isAnonymous = 0;
-        SET daysLeftOfEditing = NULL;
-    END IF;
-    IF (isAnonymous || daysLeftOfEditing <= 0) THEN
-        SET daysLeftOfEditing = NULL
-    END IF;
-
-    INSERT INTO Entities (
-        creator_id,
-        type_ident, def_str, is_private,
-        editable_until
-    )
-    VALUES (
-        CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        datatype, CAST(defStr AS BINARY), isPrivate,
-        ADDDATE(CURDATE, INTERVAL daysLeftOfEditing DAY)
-    );
-    SET outID = LAST_INSERT_ID();
-
-    SELECT outID, 0 AS exitCode; -- insert.
-END //
-DELIMITER ;
-
-
-
 DELIMITER //
 CREATE PROCEDURE insertUTF8Entity (
     IN userID BIGINT UNSIGNED,
@@ -319,9 +281,10 @@ CREATE PROCEDURE insertUTF8Entity (
     IN daysLeftOfEditing INT
 )
 BEGIN
-    CALL _insertTextEntity(
+    CALL _insertBinaryEntity(
         "u",
-        userID, defStr, isPrivate, isAnonymous, daysLeftOfEditing
+        userID, CAST(defStr AS BINARY), isPrivate, isAnonymous,
+        daysLeftOfEditing
     );
 END //
 DELIMITER ;
@@ -336,9 +299,10 @@ CREATE PROCEDURE insertHTMLEntity (
     IN daysLeftOfEditing INT
 )
 BEGIN
-    CALL _insertTextEntity(
+    CALL _insertBinaryEntity(
         "h",
-        userID, defStr, isPrivate, isAnonymous, daysLeftOfEditing
+        userID, CAST(defStr AS BINARY), isPrivate, isAnonymous,
+        daysLeftOfEditing
     );
 END //
 DELIMITER ;
@@ -353,12 +317,185 @@ CREATE PROCEDURE insertJSONEntity (
     IN daysLeftOfEditing INT
 )
 BEGIN
-    CALL _insertTextEntity(
+    CALL _insertBinaryEntity(
         "j",
-        userID, defStr, isPrivate, isAnonymous, daysLeftOfEditing
+        userID, CAST(defStr AS BINARY), isPrivate, isAnonymous,
+        daysLeftOfEditing
     );
 END //
 DELIMITER ;
+
+
+
+
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE _editBinaryEntity (
+    IN datatype CHAR,
+    IN userID BIGINT UNSIGNED,
+    IN entID BIGINT UNSIGNED,
+    IN defStr LONGBLOB,
+    IN isPrivate BOOL,
+    IN isAnonymous BOOL,
+    IN daysLeftOfEditing INT
+)
+BEGIN proc: BEGIN
+    DECLARE creatorID BIGINT UNSIGNED;
+    DECLARE editableUntil DATE;
+
+    IF (isPrivate) THEN
+        SET isAnonymous = 0;
+        SET daysLeftOfEditing = NULL;
+    END IF;
+    IF (isAnonymous || daysLeftOfEditing <= 0) THEN
+        SET daysLeftOfEditing = NULL
+    END IF;
+
+    SELECT creator_id, editable_until
+    INTO creatorID, editableUntil
+    FROM Entities
+    WHERE id = entID;
+
+    IF (creatorID != userID) THEN
+        SELECT entID AS outID, 1 AS exitCode; -- user is not the owner.
+        LEAVE proc;
+    END IF;
+
+    IF (editableUntil IS NULL OR editableUntil > CURDATE()) THEN
+        SELECT entID AS outID, 2 AS exitCode; -- can no longer be edited.
+        LEAVE proc;
+    END IF;
+
+    UPDATE Entities
+    SET
+        creator_id = CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
+        type_ident = datatype,
+        def_str = defStr,
+        is_private = isPrivate,
+        editable_until = ADDDATE(CURDATE, INTERVAL daysLeftOfEditing DAY)
+    WHERE id = entID;
+
+    SELECT entID AS outID, 0 AS exitCode; -- insert.
+END proc; END //
+DELIMITER ;
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE editBinaryEntity (
+    IN userID BIGINT UNSIGNED,
+    IN entID BIGINT UNSIGNED,
+    IN defStr BLOB,
+    IN isPrivate BOOL,
+    IN isAnonymous BOOL,
+    IN daysLeftOfEditing INT
+)
+BEGIN
+    CALL _editBinaryEntity(
+        "b",
+        userID, entID, defStr, isPrivate, isAnonymous, daysLeftOfEditing
+    );
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE editUTF8Entity (
+    IN userID BIGINT UNSIGNED,
+    IN entID BIGINT UNSIGNED,
+    IN defStr TEXT CHARACTER SET utf8mb4,
+    IN isPrivate BOOL,
+    IN isAnonymous BOOL,
+    IN daysLeftOfEditing INT
+)
+BEGIN
+    CALL _editBinaryEntity(
+        "u",
+        userID, entID, CAST(defStr AS BINARY), isPrivate, isAnonymous,
+        daysLeftOfEditing
+    );
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE editHTMLEntity (
+    IN userID BIGINT UNSIGNED,
+    IN entID BIGINT UNSIGNED,
+    IN defStr TEXT CHARACTER SET utf8mb4,
+    IN isPrivate BOOL,
+    IN isAnonymous BOOL,
+    IN daysLeftOfEditing INT
+)
+BEGIN
+    CALL _editBinaryEntity(
+        "h",
+        userID, entID, CAST(defStr AS BINARY), isPrivate, isAnonymous,
+        daysLeftOfEditing
+    );
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE editJSONEntity (
+    IN userID BIGINT UNSIGNED,
+    IN entID BIGINT UNSIGNED,
+    IN defStr TEXT CHARACTER SET utf8mb4,
+    IN isPrivate BOOL,
+    IN isAnonymous BOOL,
+    IN daysLeftOfEditing INT
+)
+BEGIN
+    CALL _editBinaryEntity(
+        "j",
+        userID, entID, CAST(defStr AS BINARY), isPrivate, isAnonymous,
+        daysLeftOfEditing
+    );
+END //
+DELIMITER ;
+
+
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE anonymizeEntity (
+    IN userID BIGINT UNSIGNED,
+    IN entID BIGINT UNSIGNED
+)
+BEGIN proc: BEGIN
+    DECLARE creatorID BIGINT UNSIGNED;
+
+    SELECT creator_id INTO creatorID
+    FROM Entities
+    WHERE id = entID;
+
+    IF (creatorID != userID) THEN
+        SELECT entID AS outID, 1 AS exitCode; -- user is not the owner.
+        LEAVE proc;
+    END IF;
+
+    UPDATE Entities
+    SET creator_id = 0, is_private = 0, editable_until = NULL
+    WHERE id = entID;
+
+    SELECT entID AS outID, 0 AS exitCode; -- edit.
+END proc; END //
+DELIMITER ;
+
+
+
+
+
 
 
 
@@ -439,110 +576,110 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE editOrFindEntity (
-    IN userID BIGINT UNSIGNED,
-    IN entID BIGINT UNSIGNED,
-    IN datatype CHAR,
-    IN defStr BLOB,
-    IN isPrivate BOOL,
-    IN isEditable BOOL,
-    IN isAnonymous BOOL,
-    IN insertSK BOOL
-)
-BEGIN proc: BEGIN
-    DECLARE outID, exitCode, prevCreatorID BIGINT UNSIGNED;
-    DECLARE prevIsPrivate, prevIsEditable BOOL;
-    DECLARE defKey VARCHAR(700);
+-- DELIMITER //
+-- CREATE PROCEDURE editOrFindEntity (
+--     IN userID BIGINT UNSIGNED,
+--     IN entID BIGINT UNSIGNED,
+--     IN datatype CHAR,
+--     IN defStr BLOB,
+--     IN isPrivate BOOL,
+--     IN isEditable BOOL,
+--     IN isAnonymous BOOL,
+--     IN insertSK BOOL
+-- )
+-- BEGIN proc: BEGIN
+--     DECLARE outID, exitCode, prevCreatorID BIGINT UNSIGNED;
+--     DECLARE prevIsPrivate, prevIsEditable BOOL;
+--     DECLARE defKey VARCHAR(700);
 
-    SELECT is_private, is_editable, creator_id
-    INTO prevIsPrivate, prevIsEditable, prevCreatorID
-    FROM Entities
-    WHERE id = entID;
-    IF (prevCreatorID != userID OR NOT prevIsEditable) THEN
-        SET exitCode = 3; -- entity does not exist, or user does not have the
-        -- rights to edit it.
-        SET outID = 0;
-        SELECT outID, exitCode;
-        LEAVE proc;
-    END IF;
+--     SELECT is_private, is_editable, creator_id
+--     INTO prevIsPrivate, prevIsEditable, prevCreatorID
+--     FROM Entities
+--     WHERE id = entID;
+--     IF (prevCreatorID != userID OR NOT prevIsEditable) THEN
+--         SET exitCode = 3; -- entity does not exist, or user does not have the
+--         -- rights to edit it.
+--         SET outID = 0;
+--         SELECT outID, exitCode;
+--         LEAVE proc;
+--     END IF;
 
-    -- Start a transaction and repeat the same select statement, but with a
-    -- locking read (i.e. SELECT ... FOR UPDATE).
-    START TRANSACTION;
-    SELECT is_private, is_editable, creator_id
-    INTO prevIsPrivate, prevIsEditable, prevCreatorID
-    FROM Entities
-    WHERE id = entID
-    FOR UPDATE;
-    IF NOT (prevCreatorID <=> userID AND prevIsEditable) THEN
-        ROLLBACK;
-        SET exitCode = 3; -- entity does not exist, or user does not have the
-        -- rights to edit it.
-        SET outID = 0;
-        SELECT outID, exitCode;
-        LEAVE proc;
-    END IF;
+--     -- Start a transaction and repeat the same select statement, but with a
+--     -- locking read (i.e. SELECT ... FOR UPDATE).
+--     START TRANSACTION;
+--     SELECT is_private, is_editable, creator_id
+--     INTO prevIsPrivate, prevIsEditable, prevCreatorID
+--     FROM Entities
+--     WHERE id = entID
+--     FOR UPDATE;
+--     IF NOT (prevCreatorID <=> userID AND prevIsEditable) THEN
+--         ROLLBACK;
+--         SET exitCode = 3; -- entity does not exist, or user does not have the
+--         -- rights to edit it.
+--         SET outID = 0;
+--         SELECT outID, exitCode;
+--         LEAVE proc;
+--     END IF;
 
-    IF NOT (
-        (NOT isPrivate OR userID != 0 AND isEditable) AND
-        (userID != 0 OR NOT isEditable) AND
-        (NOT insertSK OR NOT isEditable) AND
-        (prevIsPrivate OR NOT isPrivate)
-    ) THEN
-        ROLLBACK;
-        SET exitCode = 2; -- wrong combination is boolean values.
-        SET outID = 0;
-        SELECT outID, exitCode;
-        LEAVE proc;
-    END IF;
+--     IF NOT (
+--         (NOT isPrivate OR userID != 0 AND isEditable) AND
+--         (userID != 0 OR NOT isEditable) AND
+--         (NOT insertSK OR NOT isEditable) AND
+--         (prevIsPrivate OR NOT isPrivate)
+--     ) THEN
+--         ROLLBACK;
+--         SET exitCode = 2; -- wrong combination is boolean values.
+--         SET outID = 0;
+--         SELECT outID, exitCode;
+--         LEAVE proc;
+--     END IF;
 
 
-    IF (insertSK) THEN
-        SET defKey = SHA2(CONCAT(datatype, ".", defStr), 256);
+--     IF (insertSK) THEN
+--         SET defKey = SHA2(CONCAT(datatype, ".", defStr), 256);
 
-        SELECT ent_id INTO outID
-        FROM EntitySecKeys
-        WHERE def_key = defKey;
-        IF (outID IS NOT NULL) THEN
-            SET exitCode = 1; -- find.
-            SELECT outID, exitCode;
-            LEAVE proc;
-        END IF;
-    END IF;
+--         SELECT ent_id INTO outID
+--         FROM EntitySecKeys
+--         WHERE def_key = defKey;
+--         IF (outID IS NOT NULL) THEN
+--             SET exitCode = 1; -- find.
+--             SELECT outID, exitCode;
+--             LEAVE proc;
+--         END IF;
+--     END IF;
 
-    UPDATE Entities
-    SET
-        creator_id = CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        type_ident = datatype,
-        def_str = defStr,
-        is_private = isPrivate,
-        is_editable = isEditable
-    WHERE id = entID;
+--     UPDATE Entities
+--     SET
+--         creator_id = CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
+--         type_ident = datatype,
+--         def_str = defStr,
+--         is_private = isPrivate,
+--         is_editable = isEditable
+--     WHERE id = entID;
 
-    SET outID = entID;
-    SET exitCode = 0; -- insert.
+--     SET outID = entID;
+--     SET exitCode = 0; -- insert.
 
-    IF (insertSK) THEN
-        INSERT IGNORE INTO EntitySecKeys (
-            def_key, ent_id
-        )
-        VALUES (
-            defKey, outID
-        );
-        IF (ROW_COUNT() <= 0) THEN
-            SELECT ent_id INTO outID
-            FROM EntitySecKeys
-            WHERE def_key = defKey;
-            IF (outID IS NOT NULL) THEN
-                SET exitCode = 1; -- find.
-                SELECT outID, exitCode;
-                LEAVE proc;
-            END IF;
-        END IF;
-    END IF;
+--     IF (insertSK) THEN
+--         INSERT IGNORE INTO EntitySecKeys (
+--             def_key, ent_id
+--         )
+--         VALUES (
+--             defKey, outID
+--         );
+--         IF (ROW_COUNT() <= 0) THEN
+--             SELECT ent_id INTO outID
+--             FROM EntitySecKeys
+--             WHERE def_key = defKey;
+--             IF (outID IS NOT NULL) THEN
+--                 SET exitCode = 1; -- find.
+--                 SELECT outID, exitCode;
+--                 LEAVE proc;
+--             END IF;
+--         END IF;
+--     END IF;
 
-    COMMIT; 
-    SELECT outID, exitCode;
-END proc; END //
-DELIMITER ;
+--     COMMIT; 
+--     SELECT outID, exitCode;
+-- END proc; END //
+-- DELIMITER ;

@@ -86,22 +86,45 @@ switch ($reqType) {
         $paramNameArr = array("u", "def", "prv", "a", "days");
         $typeArr = array("id", "text", "bool", "bool", "int");
         break;
+    case "editBinEnt":
+        $sql = "CALL editBinaryEntity (?, ?, ?, ?, ?, ?)";
+        $paramNameArr = array("u", "e", "def", "prv", "a", "days");
+        $typeArr = array("id", "id", "text", "bool", "bool", "int");
+        break;
     case "utf8Ent":
         $sql = "CALL insertUTF8Entity (?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "def", "prv", "a", "days");
         $typeArr = array("id", "text", "bool", "bool", "int");
+        break;
+    case "editUTF8Ent":
+        $sql = "CALL editUTF8Entity (?, ?, ?, ?, ?, ?)";
+        $paramNameArr = array("u", "e", "def", "prv", "a", "days");
+        $typeArr = array("id", "id", "text", "bool", "bool", "int");
         break;
     case "htmlEnt":
         $sql = "CALL insertHTMLEntity (?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "def", "prv", "a", "days");
         $typeArr = array("id", "text", "bool", "bool", "int");
         break;
-    case "editEnt":
-        $sql = "CALL editOrFindEntity (?, ?, ?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "e", "t", "def", "prv", "a", "days");
-        $typeArr = array(
-            "id", "id", "char", "text", "bool", "bool", "int"
-        );
+    case "editHTMLEnt":
+        $sql = "CALL editHTMLEntity (?, ?, ?, ?, ?, ?)";
+        $paramNameArr = array("u", "e", "def", "prv", "a", "days");
+        $typeArr = array("id", "id", "text", "bool", "bool", "int");
+        break;
+    case "jsonEnt":
+        $sql = "CALL insertJSONEntity (?, ?, ?, ?, ?)";
+        $paramNameArr = array("u", "def", "prv", "a", "days");
+        $typeArr = array("id", "text", "bool", "bool", "int");
+        break;
+    case "editJSONEnt":
+        $sql = "CALL editJSONEntity (?, ?, ?, ?, ?, ?)";
+        $paramNameArr = array("u", "e", "def", "prv", "a", "days");
+        $typeArr = array("id", "id", "text", "bool", "bool", "int");
+        break;
+    case "anonymizeEnt":
+        $sql = "CALL anonymizeEntity (?, ?)";
+        $paramNameArr = array("u", "e");
+        $typeArr = array("id", "id");
         break;
     default:
         echoBadErrorJSONAndExit("Unrecognized request type");
