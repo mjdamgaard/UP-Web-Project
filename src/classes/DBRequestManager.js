@@ -26,7 +26,7 @@ export class DBRequestManager {
       encodedReqData[key] = encodeURIComponent(reqData[key]);
     });
     // If there is already an ongoing query with this reqData object, simply
-    // push the input data and return.
+    // push the insert data and return.
     let reqDataKey = JSON.stringify(reqData);
     let queryQueue = this.ongoingQueries[reqDataKey];
     if (queryQueue) {
@@ -61,12 +61,12 @@ export class DBRequestManager {
     });
   }
 
-  static input(reqData, callbackData, callback) {
+  static insert(reqData, callbackData, callback) {
     if (!callback) {
       callback = callbackData ?? void(0);
       callbackData = null;
     }
-    let url = "http://localhost:80/input_handler.php";
+    let url = "http://localhost:80/insert_handler.php";
     $.post(url, reqData, function(result) {
       callback(result, callbackData);
     });
@@ -112,7 +112,7 @@ export class DBRequestManager {
   //   });
 
   //   // If there is already an ongoing query with this reqData object, simply
-  //   // push the input data and return.
+  //   // push the insert data and return.
   //   let reqDataKey = JSON.stringify(reqData);
   //   let queryQueue = this.ongoingQueries[reqDataKey];
   //   if (queryQueue) {
@@ -172,13 +172,13 @@ export class DBRequestManager {
   // }
 
 
-  static inputAndSet(setResults, key, reqData) {
+  static insertAndSet(setResults, key, reqData) {
     if (!reqData) {
       reqData = key;
       key = undefined;
     }
 
-    let url = "http://localhost:80/input_handler.php";
+    let url = "http://localhost:80/insert_handler.php";
     $.post(url, reqData, result => {
       if (key === undefined) {
         setResults({data: result, isFetched: true, isFetching: false});

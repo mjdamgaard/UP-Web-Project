@@ -72,17 +72,35 @@ switch ($reqType) {
         $typeArr = array("id", "id", "id");
         break;
     case "ent":
-        $sql = "CALL insertOrFindEntity (?, ?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "t", "d", "prv", "ed", "a", "h");
-        $typeArr = array(
-            "id", "char", "text", "bool", "bool", "bool", "bool"
-        );
+        $sql = "CALL insertOrFindAttributeDefinedEntity (?, ?, ?, ?)";
+        $paramNameArr = array("u", "def", "a", "days");
+        $typeArr = array("id", "text", "bool", "int");
+        break;
+    case "funEnt":
+        $sql = "CALL insertOrFindFunctionalEntity (?, ?, ?, ?)";
+        $paramNameArr = array("u", "def", "a", "days");
+        $typeArr = array("id", "text", "bool", "int");
+        break;
+    case "binEnt":
+        $sql = "CALL insertBinaryEntity (?, ?, ?, ?, ?)";
+        $paramNameArr = array("u", "def", "prv", "a", "days");
+        $typeArr = array("id", "text", "bool", "bool", "int");
+        break;
+    case "utf8Ent":
+        $sql = "CALL insertUTF8Entity (?, ?, ?, ?, ?)";
+        $paramNameArr = array("u", "def", "prv", "a", "days");
+        $typeArr = array("id", "text", "bool", "bool", "int");
+        break;
+    case "htmlEnt":
+        $sql = "CALL insertHTMLEntity (?, ?, ?, ?, ?)";
+        $paramNameArr = array("u", "def", "prv", "a", "days");
+        $typeArr = array("id", "text", "bool", "bool", "int");
         break;
     case "editEnt":
         $sql = "CALL editOrFindEntity (?, ?, ?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "e", "t", "d", "prv", "ed", "a", "h");
+        $paramNameArr = array("u", "e", "t", "def", "prv", "a", "days");
         $typeArr = array(
-            "id", "id", "char", "text", "bool", "bool", "bool", "bool"
+            "id", "id", "char", "text", "bool", "bool", "int"
         );
         break;
     default:

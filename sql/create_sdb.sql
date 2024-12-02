@@ -367,11 +367,11 @@ CREATE TABLE Entities (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     -- Type identifier.
-    type_ident CHAR NOT NULL DEFAULT 'j',
+    type_ident CHAR NOT NULL,
 
     -- A string (possibly a JSON object) that defines the entity. The format
     -- depends on type_ident.
-    def_str TEXT NOT NULL, -- (Can be resized.)
+    def_str LONGBLOB NOT NULL,
 
     -- The user who submitted the entity, unless creator_id = 0, which means
     -- that the creator is anonymous.
@@ -379,12 +379,14 @@ CREATE TABLE Entities (
 
     -- A boolean representing whether this entity can be viewed by anyone other
     -- than its creator.
-    is_private TINYINT UNSIGNED NOT NULL DEFAULT 1,
-    CHECK (is_private <= 1),
+    is_private TINYINT UNSIGNED NOT NULL DEFAULT 1, CHECK (is_private <= 1),
 
-    -- A boolean representing whether this entity can be edited.
-    is_editable TINYINT UNSIGNED NOT NULL DEFAULT 1,
-    CHECK (is_editable <= 1),
+    -- -- A boolean representing whether this entity can be edited.
+    -- is_editable TINYINT UNSIGNED NOT NULL DEFAULT 1, CHECK (is_editable <= 1),
+
+    -- A date after which this entity can't be edited. If it is NULL, then
+    -- the entity can't be edited
+    editable_until DATE,
 
     -- If an entity is private, the creator ID is never 0, and it is always
     -- editable. 
@@ -399,39 +401,21 @@ CREATE TABLE Entities (
 
 
 
-/* Indexes */
+/* Entity indexes */
 
-CREATE TABLE EntityHashes (
+CREATE TABLE EntitySecKeys (
 
     type_ident CHAR NOT NULL,
 
-    def_hash CHAR(64) NOT NULL,
+    -- is_hashed TINYINT UNSIGNED NOT NULL, CHECK (is_hashed <= 1),
 
-    is_editable TINYINT UNSIGNED NOT NULL,
+    def_key VARBINARY(3000) NOT NULL,
 
     ent_id BIGINT UNSIGNED NOT NULL,
 
     PRIMARY KEY (
         type_ident,
-        def_hash,
-        is_editable
-    )
-);
-
-CREATE TABLE EntityDefStrings (
-
-    type_ident CHAR NOT NULL,
-
-    def_str VARCHAR(700) NOT NULL COLLATE utf8mb4_bin,
-
-    is_editable TINYINT UNSIGNED NOT NULL,
-
-    ent_id BIGINT UNSIGNED NOT NULL,
-
-    PRIMARY KEY (
-        type_ident,
-        def_str,
-        is_editable
+        def_key
     )
 );
 
@@ -446,6 +430,29 @@ CREATE TABLE FulltextIndexedEntities (
     FULLTEXT idx (text_str)
 
 ) ENGINE=InnoDB;
+
+
+
+-- CREATE TABLE EntityHashes (
+
+--     type_ident CHAR NOT NULL,
+
+--     def_hash CHAR(64) NOT NULL,
+
+--     is_editable TINYINT UNSIGNED NOT NULL,
+
+--     ent_id BIGINT UNSIGNED NOT NULL,
+
+--     PRIMARY KEY (
+--         type_ident,
+--         def_hash,
+--         is_editable,
+--         ent_id
+--     )
+-- );
+
+
+
 
 
 -- /* Some initial inserts */

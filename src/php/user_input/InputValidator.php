@@ -177,24 +177,17 @@ class InputValidator {
                 }
                 break;
             case "text":
+            case "uft8_text":
+                $len = strlen($paramVal);
                 if (
-                    !is_string($paramVal) ||
-                    // !ctype_print($paramVal) ||
-                    strlen($paramVal) > 65535
+                    $len > 65535 ||
+                    !mb_check_encoding($paramVal, 'UTF-8')
                 ) {
-                    echoTypeErrorJSONAndExit($paramName, $paramVal, "TEXT");
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "UFT-8 TEXT"
+                    );
                 }
                 break;
-            // case "blob":
-            //     if (
-            //         !is_string($paramVal) ||
-            //         strlen($paramVal) > 4294967295
-            //     ) {
-            //         echoTypeErrorJSONAndExit(
-            //             $paramName, $paramVal, "MEDIUMBLOB"
-            //         );
-            //     }
-            //     break;
             case "blob":
                 if (
                     !is_string($paramVal) ||
@@ -204,15 +197,8 @@ class InputValidator {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, "BLOB");
                 }
                 break;
-            case "prop_struct":
-                if (
-                    strlen($paramVal) > 1000 ||
-                    !json_validate($paramVal)
-                ) {
-                    echoTypeErrorJSONAndExit($paramName, $paramVal, "JSON");
-                }
-                break;
             case "json":
+            case "json_indexable":
                 // Never mind about this, I don't wish to not have
                 // 'constructor' as a possible attribute:
                 // $jsObjProtoPropsPattern =
@@ -224,7 +210,7 @@ class InputValidator {
                 //         '<get __proto__\\(\\)>|<set __proto__\\(\\)>' .
                 //     ')":/';
                 if (
-                    strlen($paramVal) > 65535 ||
+                    strlen($paramVal) > 3000 ||
                     !json_validate($paramVal) // ||
                     // preg_match($jsObjProtoPropsPattern, $paramVal)
                 ) {

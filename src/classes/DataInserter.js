@@ -46,7 +46,7 @@ export class DataInserter {
       a: 0,
       h: 0,
     };
-    DBRequestManager.input(reqData, (result) => {
+    DBRequestManager.insert(reqData, (result) => {
       callback(result.outID, result.exitCode);
     });
   }
@@ -69,7 +69,7 @@ export class DataInserter {
       a: 0,
       h: 0,
     };
-    DBRequestManager.input(reqData, (result) => {
+    DBRequestManager.insert(reqData, (result) => {
       this.workspaceEntID = result.outID.toString();
       callback(result.outID, result.exitCode);
     });
@@ -147,7 +147,7 @@ export class DataInserter {
       a: isAnonymous,
       h: insertHash,
     };
-    DBRequestManager.input(reqData, (result) => {
+    DBRequestManager.insert(reqData, (result) => {
       if (parseInt(result.exitCode) >= 2) {
         callback(result.outID, result.exitCode);
         return;
@@ -226,7 +226,7 @@ export class DataInserter {
       a: isAnonymous,
       h: insertHash,
     };
-    DBRequestManager.input(reqData, (result) => {
+    DBRequestManager.insert(reqData, (result) => {
       if (parseInt(result.exitCode) >= 2) {
         callback(result.outID, result.exitCode);
         return;
@@ -304,7 +304,7 @@ export class DataInserter {
           e: entID,
           v: scoreVal,
         };
-        DBRequestManager.input(reqData, (result) => {
+        DBRequestManager.insert(reqData, (result) => {
           results[ind] = result;
           resolve();
         });
