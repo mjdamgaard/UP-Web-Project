@@ -180,22 +180,18 @@ export class DataInserter {
 
 
   parseDefStr(str) {
-    return str.replaceAll(/(^|.)@\[[^\]\]]*\]/g, match => {
-      var path;
-      var leadingChars = "";
+    return str.replaceAll(/@+\[[^\]\]]*\]/g, match => {
+      let ats = match.match(/^@+/g)[0];
+      let bracket = match.substring(ats.length);
       // Handle the fact that '@@' escapes the special '@' character.
-      if (match[1] === "[") {
-        path = match.slice(2, -1);
-      } else if (match[0] !== "@") {
-        path = match.slice(3, -1);
-        leadingChars = match[0];
-      } else {
+      if (ats.length % 2 === 0) {
         return match;
       }
       // Find the entID pointed to by path, or return the match unchanged if
       // this does not exist.
+      let path = bracket.slice(1, -1);
       let entID = this.getEntIDFromPath(path);
-      return entID ? (leadingChars + "@" + entID) : match;
+      return entID ? (ats + entID) : match;
     });
   }
 

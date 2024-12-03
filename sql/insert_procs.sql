@@ -133,12 +133,14 @@ DELIMITER ;
 
 
 
+
+
 DELIMITER //
-CREATE PROCEDURE _insertOrFindStringEntity (
-    IN datatype CHAR,
+CREATE PROCEDURE insertOrFindFunctionalEntity (
     IN userID BIGINT UNSIGNED,
     IN defStr VARCHAR(3000) CHARACTER SET utf8mb4,
-    IN isAnonymous BOOL
+    IN isAnonymous BOOL,
+    IN daysLeftOfEditing INT
 )
 BEGIN proc: BEGIN
     DECLARE outID BIGINT UNSIGNED;
@@ -165,49 +167,13 @@ BEGIN proc: BEGIN
     )
     VALUES (
         CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        datatype, CAST(defStr AS BINARY), 0, NULL
+        "f", CAST(defStr AS BINARY), 0, NULL
     );
     SET outID = LAST_INSERT_ID();
 
     COMMIT;
     SELECT outID, 0 AS exitCode; -- insert.
 END proc; END //
-DELIMITER ;
-
-
-
-
-
-DELIMITER //
-CREATE PROCEDURE insertOrFindAttributeDefinedEntity (
-    IN userID BIGINT UNSIGNED,
-    IN defStr VARCHAR(3000) CHARACTER SET utf8mb4,
-    IN isAnonymous BOOL,
-    IN daysLeftOfEditing INT
-)
-BEGIN
-    CALL _insertOrFindStringEntity(
-        "a",
-        userID, defStr, isAnonymous, daysLeftOfEditing
-    );
-END //
-DELIMITER ;
-
-
-
-DELIMITER //
-CREATE PROCEDURE insertOrFindFunctionalEntity (
-    IN userID BIGINT UNSIGNED,
-    IN defStr VARCHAR(3000) CHARACTER SET utf8mb4,
-    IN isAnonymous BOOL,
-    IN daysLeftOfEditing INT
-)
-BEGIN
-    CALL _insertOrFindStringEntity(
-        "f",
-        userID, defStr, isAnonymous, daysLeftOfEditing
-    );
-END //
 DELIMITER ;
 
 
@@ -270,6 +236,23 @@ BEGIN
 END //
 DELIMITER ;
 
+
+DELIMITER //
+CREATE PROCEDURE insertAttributeDefinedEntity (
+    IN userID BIGINT UNSIGNED,
+    IN defStr VARCHAR(600) CHARACTER SET utf8mb4, -- TODO: Determine this initial size.
+    IN isPrivate BOOL,
+    IN isAnonymous BOOL,
+    IN daysLeftOfEditing INT
+)
+BEGIN
+    CALL _insertBinaryEntity(
+        "a",
+        userID, CAST(defStr AS BINARY), isPrivate, isAnonymous,
+        daysLeftOfEditing
+    );
+END //
+DELIMITER ;
 
 
 DELIMITER //
@@ -399,6 +382,25 @@ BEGIN
     CALL _editBinaryEntity(
         "b",
         userID, entID, defStr, isPrivate, isAnonymous, daysLeftOfEditing
+    );
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE insertAttributeDefinedEntity (
+    IN userID BIGINT UNSIGNED,
+    IN entID BIGINT UNSIGNED,
+    IN defStr VARCHAR(600) CHARACTER SET utf8mb4, -- TODO: Determine this initial size.
+    IN isPrivate BOOL,
+    IN isAnonymous BOOL,
+    IN daysLeftOfEditing INT
+)
+BEGIN
+    CALL _editBinaryEntity(
+        "a",
+        userID, entID, CAST(defStr AS BINARY), isPrivate, isAnonymous,
+        daysLeftOfEditing
     );
 END //
 DELIMITER ;

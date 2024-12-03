@@ -18,6 +18,84 @@ DROP PROCEDURE selectUserInfo;
 
 
 
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectFunctionalEntityAndChildren (
+    IN funCallStr VARCHAR(3000) CHARACTER SET utf8mb4
+)
+BEGIN
+    DECLARE outValStr, outSubStr TEXT;
+    DECLARE len INT;
+
+    CALL _selectFunctionalEntityAndChildren(
+        funCallStr, outValStr, outSubStr, len
+    );
+
+    SELECT outValStr, outSubStr;
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE _selectFunctionalEntityAndChildren (
+    IN funCallStr VARCHAR(3000),
+    OUT outValStr TEXT,
+    OUT outSubStr TEXT,
+    OUT len INT
+)
+BEGIN proc: BEGIN
+    DECLARE substitutedStr TEXT;
+    DECLARE fstExp      VARCHAR(3000) DEFAULT (SUBSTRING_INDEX(funCallStr, 1));
+    DECLARE paramNumStr VARCHAR(3000) DEFAULT (SUBSTRING_INDEX(funCallStr, 2));
+    DECLARE p TINYINT UNSIGNED DEFAULT (
+        CAST(paramNumStr AS UNSIGNED INTEGER)
+    );
+
+    IF (SUBSTR(fstExp, 1, 1) NOT REGEXP "[a-zA-z_\\$]") THEN
+        SET outValStr = fstExp;
+        SET outSubStr = fstExp;
+        SET len = LENGTH(fstExp);
+        LEAVE proc;
+    END IF;
+
+    IF (p = 0) THEN
+        SELECT CAST(ent_id AS VARCHAR(3000)) INTO outValStr
+        FROM EntitySecKeys
+        WHERE (
+            type_ident = "f" AND
+            def_key = fstExp
+        );
+        SET outSubStr = outValStr;
+        SET len = LENGTH(fstExp);
+        LEAVE proc;
+    END IF;
+
+    parse_params_loop: LOOP
+
+
+    END LOOP parse_params_loop;
+
+    IF (fun = "op:,3") THEN
+        CALL _selectOpinionListAndChildren(
+            funCallStr, inPos + 3, outID, outSubstring, outPos
+        );
+    ELSEIF () THEN
+    END IF;
+
+
+    SELECT  
+
+END proc; END //
+DELIMITER ;
+
+
+
+
+
 DELIMITER //
 CREATE PROCEDURE selectEntityList (
     IN userID BIGINT UNSIGNED,
