@@ -23,7 +23,7 @@ DROP PROCEDURE selectUserInfo;
 
 DELIMITER //
 CREATE PROCEDURE selectUserOpinionEntityList (
-    IN listID BIGINT UNSIGNED,
+    IN userID BIGINT UNSIGNED,
     IN scaleID BIGINT UNSIGNED,
     IN hi FLOAT,
     IN lo FLOAT,
@@ -35,7 +35,7 @@ BEGIN
     SELECT
         score_val AS scoreVal,
         subj_id AS entID
-    FROM Scores
+    FROM UserOpinionScores
     WHERE (
         user_id = userID AND
         scale_id = scaleID AND
@@ -49,6 +49,73 @@ BEGIN
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectUserOpinionEntityListFromScaleKey (
+    IN userID BIGINT UNSIGNED,
+    IN scaleKey VARCHAR(3000),
+    IN hi FLOAT,
+    IN lo FLOAT,
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED,
+    IN isAscOrder BOOL
+)
+BEGIN
+    DECLARE scaleID BIGINT UNSIGNED;
+
+    SELECT ent_id INTO scaleID
+    FROM EntitySecKeys
+    WHERE (
+        type_ident = "f" AND
+        def_key = CAST(scaleKey AS BINARY)
+    );
+
+    CALL selectUserOpinionEntityList (
+        userID, scaleID,
+        hi, lo,
+        maxNum, numOffset,
+        isAscOrder
+    );
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectPrivateEntityListFromScaleKey (
+    IN userID BIGINT UNSIGNED,
+    IN scaleKey VARCHAR(3000),
+    IN hi FLOAT,
+    IN lo FLOAT,
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED,
+    IN isAscOrder BOOL
+)
+BEGIN
+    SELECT
+        score_val AS scoreVal,
+        subj_id AS entID
+    FROM PrivateScores
+    WHERE (
+        user_id = userID AND
+        scale_key = CAST(scaleKey AS BINARY) AND
+        score_val BETWEEN lo AND hi
+    )
+    ORDER BY
+        CASE WHEN isAscOrder THEN scoreVal END ASC,
+        CASE WHEN NOT isAscOrder THEN scoreVal END DESC,
+        CASE WHEN isAscOrder THEN entID END ASC,
+        CASE WHEN NOT isAscOrder THEN entID END DESC
+    LIMIT numOffset, maxNum;
+END //
+DELIMITER ;
+
+
+
+
+
+
 
 
 
@@ -366,94 +433,98 @@ DELIMITER ;
 
 
 
+-- TODO: Remake selectFunctionalEntityAndChildren() such that it only replaces
+-- the function calls that are preceded by '&'. ..And maybe IDs preceded by @
+-- should be replaced by the entity's defStr (when it's an 'f' entity, at
+-- least).
 
 
-DELIMITER //
-CREATE PROCEDURE selectFunctionalEntityAndChildren (
-    IN funCallStr VARCHAR(3000) CHARACTER SET utf8mb4
-)
-BEGIN
-    DECLARE outValStr, outSubStr TEXT;
-    DECLARE len INT;
+-- DELIMITER //
+-- CREATE PROCEDURE selectFunctionalEntityAndChildren (
+--     IN funCallStr VARCHAR(3000) CHARACTER SET utf8mb4
+-- )
+-- BEGIN
+--     DECLARE outValStr, outSubStr TEXT;
+--     DECLARE len INT;
 
-    CALL _selectFunctionalEntityAndChildren(
-        funCallStr, outValStr, outSubStr, len
-    );
+--     CALL _selectFunctionalEntityAndChildren(
+--         funCallStr, outValStr, outSubStr, len
+--     );
 
-    SELECT outValStr, outSubStr;
-END //
-DELIMITER ;
-
-
-
-DELIMITER //
-CREATE PROCEDURE _selectFunctionalEntityAndChildren (
-    IN funCallStr VARCHAR(3000),
-    OUT outValStr TEXT,
-    OUT outSubStr TEXT,
-    OUT len INT
-)
-BEGIN proc: BEGIN
-    DECLARE fstExp      TEXT DEFAULT (SUBSTRING_INDEX(funCallStr, 1));
-    DECLARE paramNumStr TEXT DEFAULT (SUBSTRING_INDEX(funCallStr, 2));
-    DECLARE p TINYINT UNSIGNED DEFAULT (
-        CAST(paramNumStr AS UNSIGNED INTEGER)
-    );
-    DECLARE valStr, subStr, defStr TEXT;
-    DECLARE l INT;
-
-    IF (SUBSTR(fstExp, 1, 1) NOT REGEXP "[a-zA-z_\\$]") THEN
-        SET outValStr = fstExp;
-        SET outSubStr = fstExp;
-        SET len = LENGTH(fstExp);
-        LEAVE proc;
-    END IF;
-
-    IF (p = 0) THEN
-        SELECT CAST(ent_id AS CHAR) INTO outValStr
-        FROM EntitySecKeys
-        WHERE (
-            type_ident = "f" AND
-            def_key = fstExp
-        );
-        SET outSubStr = CONCAT(outValStr, ",", paramNumStr);
-        SET len = LENGTH(fstExp) + 1 + LENGTH(paramNumStr);
-        LEAVE proc;
-    END IF;
-
-    SET outSubStr = CONCAT(",", paramNumStr);
-    SET defStr = "";
-    SET len = LENGTH(fstExp) + 1 + LENGTH(paramNumStr);
-    for_loop: LOOP
-
-        CALL _selectFunctionalEntityAndChildren(
-            SUBSTR(funCallStr, len + 2), valStr, subStr, l
-        );
-
-        SET outSubStr = CONCAT(outSubStr, ",", subStr);
-        SET defStr = CONCAT(defStr, ",", valStr);
-        SET len = len + 1 + l;
-
-        SET p = p - 1;
-        IF (p > 0) THEN
-            ITERATE for_loop;
-        END IF;
-        LEAVE for_loop;
-    END LOOP for_loop;
+--     SELECT outValStr, outSubStr;
+-- END //
+-- DELIMITER ;
 
 
-    SET defStr = CONCAT(fstExp, defStr);
 
-    SELECT CAST(ent_id AS CHAR) INTO outValStr
-    FROM EntitySecKeys
-    WHERE (
-        type_ident = "f" AND
-        def_key = defStr;
-    );
-    SET outSubStr = CONCAT(outValStr, outSubStr);
+-- DELIMITER //
+-- CREATE PROCEDURE _selectFunctionalEntityAndChildren (
+--     IN funCallStr VARCHAR(3000),
+--     OUT outValStr TEXT,
+--     OUT outSubStr TEXT,
+--     OUT len INT
+-- )
+-- BEGIN proc: BEGIN
+--     DECLARE fstExp      TEXT DEFAULT (SUBSTRING_INDEX(funCallStr, 1));
+--     DECLARE paramNumStr TEXT DEFAULT (SUBSTRING_INDEX(funCallStr, 2));
+--     DECLARE p TINYINT UNSIGNED DEFAULT (
+--         CAST(paramNumStr AS UNSIGNED INTEGER)
+--     );
+--     DECLARE valStr, subStr, defStr TEXT;
+--     DECLARE l INT;
 
-END proc; END //
-DELIMITER ;
+--     IF (SUBSTR(fstExp, 1, 1) NOT REGEXP "[a-zA-z_\\$]") THEN
+--         SET outValStr = fstExp;
+--         SET outSubStr = fstExp;
+--         SET len = LENGTH(fstExp);
+--         LEAVE proc;
+--     END IF;
+
+--     IF (p = 0) THEN
+--         SELECT CAST(ent_id AS CHAR) INTO outValStr
+--         FROM EntitySecKeys
+--         WHERE (
+--             type_ident = "f" AND
+--             def_key = fstExp
+--         );
+--         SET outSubStr = CONCAT(outValStr, ",", paramNumStr);
+--         SET len = LENGTH(fstExp) + 1 + LENGTH(paramNumStr);
+--         LEAVE proc;
+--     END IF;
+
+--     SET outSubStr = CONCAT(",", paramNumStr);
+--     SET defStr = "";
+--     SET len = LENGTH(fstExp) + 1 + LENGTH(paramNumStr);
+--     for_loop: LOOP
+
+--         CALL _selectFunctionalEntityAndChildren(
+--             SUBSTR(funCallStr, len + 2), valStr, subStr, l
+--         );
+
+--         SET outSubStr = CONCAT(outSubStr, ",", subStr);
+--         SET defStr = CONCAT(defStr, ",", valStr);
+--         SET len = len + 1 + l;
+
+--         SET p = p - 1;
+--         IF (p > 0) THEN
+--             ITERATE for_loop;
+--         END IF;
+--         LEAVE for_loop;
+--     END LOOP for_loop;
+
+
+--     SET defStr = CONCAT(fstExp, defStr);
+
+--     SELECT CAST(ent_id AS CHAR) INTO outValStr
+--     FROM EntitySecKeys
+--     WHERE (
+--         type_ident = "f" AND
+--         def_key = defStr;
+--     );
+--     SET outSubStr = CONCAT(outValStr, outSubStr);
+
+-- END proc; END //
+-- DELIMITER ;
 
 
 

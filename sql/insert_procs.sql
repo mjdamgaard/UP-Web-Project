@@ -11,118 +11,99 @@ DROP PROCEDURE editOrFindEntity;
 
 
 
--- TODO: Consider if constant 'op' lists should exits, and then if that should
--- change this implementation. ..Nah, who cares about score widths for constant
--- lists; they should just be put in FloatingPointScoreAggregates instead. 
 DELIMITER //
-CREATE PROCEDURE insertOrUpdateScore (
+CREATE PROCEDURE insertOrUpdateOpinionScore (
     IN userID BIGINT UNSIGNED,
-    IN listID BIGINT UNSIGNED,
+    IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN scoreVal FLOAT,
     IN scoreWidth FLOAT
 )
 BEGIN proc: BEGIN
-    DECLARE listDef, scaleDef, estDef VARCHAR(700);
-    DECLARE listOwnerID, scaleID, estID BIGINT UNSIGNED;
-    DECLARE scoreMin, scoreMax FLOAT;
-
     -- Exit if the subject entity does not exist.
     IF ((SELECT type_ident FROM Entities WHERE id = subjID) IS NULL) THEN
         SELECT subjID AS outID, 1 AS exitCode; -- subject does not exist.
         LEAVE proc;
     END IF;
 
-    -- Parse userID and scaleID from listDef = "op,@<userID>,@<scaleID>".
-    SELECT def_str INTO listDef
-    FROM Entities
-    WHERE id = listID;
-    SET listOwnerID = CAST(
-        SUBSTR(SUBSTRING_INDEX(listDef, ",", 2), 2) AS UNSIGNED INTEGER
-    );
-    SET scaleID = CAST(
-        SUBSTR(SUBSTRING_INDEX(listDef, ",", 3), 2) AS UNSIGNED INTEGER
-    );
-
-    -- Exit if the list's owner does not match the input userID.
-    IF (listOwnerID != userID) THEN
-        SELECT listOwnerID AS outID, 2 AS exitCode; -- user does not own list.
-        LEAVE proc;
-    END IF;
-
-    -- Parse estID from ScaleDef = "scale,@<objID>,@<relID>,@<qualID>,@<estID>".
-    SELECT def_str INTO scaleDef
-    FROM Entities
-    WHERE id = scaleID;
-    SET estID = CAST(
-        SUBSTR(SUBSTRING_INDEX(scaleDef, ",", 5), 2) AS UNSIGNED INTEGER
-    );
-
-    -- Parse interval limits from estDef = "est,<min>,<max>,<step>,@<metricID>".
-    SELECT def_str INTO estDef
-    FROM Entities
-    WHERE id = estID;
-    SET scoreMin = CAST(
-        SUBSTRING_INDEX(estDef, ",", 2) AS FLOAT
-    );
-    SET scoreMax = CAST(
-        SUBSTRING_INDEX(estDef, ",", 3) AS FLOAT
-    );
-
-    -- Exit if the score is not within the range.
-    IF (score < scoreMin OR score > scoreMax) THEN
-        SELECT subjID AS outID, 3 AS exitCode; -- score is not within range.
-        LEAVE proc;
-    END IF;
-
     INSERT INTO UserOpinionScores (
-        list_id, subj_id, score_val, score_width
+        user_id, qual_id, subj_id, score_val, score_width
     )
     VALUES (
-        listID, subjID, scoreVal, scoreWidth
+        userID, qualID, subjID, scoreVal, scoreWidth
     )
     ON DUPLICATE KEY UPDATE score_val = scoreVal, score_width = scoreWidth;
 
-    SELECT subjID AS outID, 0 AS exitCode; -- insert or update.
+    SELECT subjID AS outID, 0 AS exitCode; -- inserted or updated.
+END proc; END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE deleteOpinionScore (
+    IN userID BIGINT UNSIGNED,
+    IN qualID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED
+)
+BEGIN proc: BEGIN
+    DELETE FROM UserOpinionScores
+    WHERE (
+        user_id <=> userID AND
+        qual_id <=> qualID AND
+        subj_id <=> subjID
+    );
+
+    SELECT subjID AS outID, 0 AS exitCode; -- deleted if there.
 END proc; END //
 DELIMITER ;
 
 
 
 DELIMITER //
-CREATE PROCEDURE deleteScore (
+CREATE PROCEDURE insertOrUpdatePrivateScore (
     IN userID BIGINT UNSIGNED,
-    IN listID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED
+    IN qualID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
+    IN scoreVal FLOAT
 )
 BEGIN proc: BEGIN
-    DECLARE listDef VARCHAR(700);
-    DECLARE listOwnerID BIGINT UNSIGNED;
-
-    -- Parse userID from listDef = "op,@<userID>,@<scaleID>".
-    SELECT def_str INTO listDef
-    FROM Entities
-    WHERE id = listID;
-    SET listOwnerID = CAST(
-        SUBSTR(SUBSTRING_INDEX(listDef, ",", 2), 2) AS UNSIGNED INTEGER
-    );
-
-    -- Exit if the list's owner does not match the input userID.
-    IF (listOwnerID != userID) THEN
-        SELECT listOwnerID AS outID, 2 AS exitCode; -- user does not own list.
+    -- Exit if the subject entity does not exist.
+    IF ((SELECT type_ident FROM Entities WHERE id = subjID) IS NULL) THEN
+        SELECT subjID AS outID, 1 AS exitCode; -- subject does not exist.
         LEAVE proc;
     END IF;
 
+    INSERT INTO PrivateScores (
+        user_id, qual_id, subj_id, score_val
+    )
+    VALUES (
+        userID, qualID, subjID, scoreVal
+    )
+    ON DUPLICATE KEY UPDATE score_val = scoreVal;
 
-    DELETE FROM UserOpinionScores
-    WHERE (
-        list_id = listID AND
-        subj_id = subjID
-    );
-
-    SELECT subjID AS outID, 0 AS exitCode; -- delete.
+    SELECT subjID AS outID, 0 AS exitCode; -- insert or update.
 END proc; END //
 DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE deletePrivateScore (
+    IN userID BIGINT UNSIGNED,
+    IN qualID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED
+)
+BEGIN proc: BEGIN
+    DELETE FROM PrivateScores
+    WHERE (
+        user_id <=> userID AND
+        qual_id <=> qualID AND
+        subj_id <=> subjID
+    );
+
+    SELECT subjID AS outID, 0 AS exitCode; -- deleted if there.
+END proc; END //
+DELIMITER ;
+
 
 
 

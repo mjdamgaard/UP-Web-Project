@@ -35,7 +35,9 @@ DROP TABLE EntityDefStrings;
 
 CREATE TABLE UserOpinionScores (
 
-    list_id BIGINT UNSIGNED NOT NULL,
+    user_id BIGINT UNSIGNED NOT NULL,
+
+    qual_id BIGINT UNSIGNED NOT NULL,
 
     score_val FLOAT NOT NULL,
 
@@ -45,16 +47,17 @@ CREATE TABLE UserOpinionScores (
 
     -- This DATETIME is reduced to just a DATE after a day or so, and can also
     -- be deleted on the user's request, when we implement this at some point.
-    modified_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (
-        list_id,
+        user_id,
+        qual_id
         score_val,
         subj_id
     ),
 
     -- Index to look up specific score (and restricting one score per user).
-    UNIQUE INDEX (list_id, subj_id)
+    UNIQUE INDEX (user_id, qual_id, subj_id)
 );
 
 
@@ -62,7 +65,7 @@ CREATE TABLE PrivateScores (
 
     user_id BIGINT UNSIGNED NOT NULL,
 
-    scale_id BIGINT UNSIGNED NOT NULL,
+    qual_id BIGINT UNSIGNED NOT NULL,
 
     score_val FLOAT NOT NULL,
 
@@ -70,7 +73,7 @@ CREATE TABLE PrivateScores (
 
     PRIMARY KEY (
         user_id,
-        scale_id,
+        qual_id,
         score_val,
         subj_id
     )
@@ -96,13 +99,13 @@ CREATE TABLE FloatingPointScoreAggregates (
 
     list_id BIGINT UNSIGNED NOT NULL,
 
-    score_aggr FLOAT NOT NULL,
+    score_val FLOAT NOT NULL,
 
     subj_id BIGINT UNSIGNED NOT NULL,
 
     PRIMARY KEY (
         list_id,
-        score_aggr,
+        score_val,
         subj_id
     ),
 
@@ -121,7 +124,7 @@ CREATE TABLE UpdateEntityListRequests (
 
     req_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    list_id BIGINT UNSIGNED NOT NULL,
+    list_key VARCHAR(3000) NOT NULL,
 
     user_id BIGINT UNSIGNED NOT NULL
 );
@@ -129,14 +132,14 @@ CREATE TABLE UpdateEntityListRequests (
 
 CREATE TABLE ScheduledEntityListUpdates (
 
-    list_id BIGINT UNSIGNED NOT NULL,
+    list_key VARCHAR(3000) NOT NULL,
 
     user_id BIGINT UNSIGNED NOT NULL,
 
     countdown FLOAT NOT NULL,
 
     PRIMARY KEY (
-        list_id,
+        list_key,
         user_id
     )
 );
@@ -145,14 +148,14 @@ CREATE TABLE ScheduledEntityListUpdates (
 -- my 23--xx notes.)
 CREATE TABLE ScheduledSubListUpdates (
 
-    list_id BIGINT UNSIGNED NOT NULL,
+    list_key VARCHAR(3000) NOT NULL,
 
     node_id BIGINT UNSIGNED NOT NULL,
 
     countdown FLOAT NOT NULL,
 
     PRIMARY KEY (
-        list_id,
+        list_key,
         node_id
     )
 );
