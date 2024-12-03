@@ -48,12 +48,13 @@ CREATE PROCEDURE _selectFunctionalEntityAndChildren (
     OUT len INT
 )
 BEGIN proc: BEGIN
-    DECLARE substitutedStr TEXT;
-    DECLARE fstExp      VARCHAR(3000) DEFAULT (SUBSTRING_INDEX(funCallStr, 1));
-    DECLARE paramNumStr VARCHAR(3000) DEFAULT (SUBSTRING_INDEX(funCallStr, 2));
+    DECLARE fstExp      TEXT DEFAULT (SUBSTRING_INDEX(funCallStr, 1));
+    DECLARE paramNumStr TEXT DEFAULT (SUBSTRING_INDEX(funCallStr, 2));
     DECLARE p TINYINT UNSIGNED DEFAULT (
         CAST(paramNumStr AS UNSIGNED INTEGER)
     );
+    DECLARE valStr, subStr, defStr TEXT;
+    DECLARE l INT;
 
     IF (SUBSTR(fstExp, 1, 1) NOT REGEXP "[a-zA-z_\\$]") THEN
         SET outValStr = fstExp;
@@ -63,34 +64,54 @@ BEGIN proc: BEGIN
     END IF;
 
     IF (p = 0) THEN
-        SELECT CAST(ent_id AS VARCHAR(3000)) INTO outValStr
+        SELECT CAST(ent_id AS CHAR) INTO outValStr
         FROM EntitySecKeys
         WHERE (
             type_ident = "f" AND
             def_key = fstExp
         );
-        SET outSubStr = outValStr;
-        SET len = LENGTH(fstExp);
+        SET outSubStr = CONCAT(outValStr, ",", paramNumStr);
+        SET len = LENGTH(fstExp) + 1 + LENGTH(paramNumStr);
         LEAVE proc;
     END IF;
 
-    parse_params_loop: LOOP
+    SET outSubStr = CONCAT(",", paramNumStr);
+    SET defStr = "";
+    SET len = LENGTH(fstExp) + 1 + LENGTH(paramNumStr);
+    for_loop: LOOP
 
-
-    END LOOP parse_params_loop;
-
-    IF (fun = "op:,3") THEN
-        CALL _selectOpinionListAndChildren(
-            funCallStr, inPos + 3, outID, outSubstring, outPos
+        CALL _selectFunctionalEntityAndChildren(
+            SUBSTR(funCallStr, len + 2), valStr, subStr, l
         );
-    ELSEIF () THEN
-    END IF;
+
+        SET outSubStr = CONCAT(outSubStr, ",", subStr);
+        SET defStr = CONCAT(defStr, ",", valStr);
+        SET len = len + 1 + l;
+
+        IF (p > 0) THEN
+            ITERATE for_loop;
+        END IF;
+        LEAVE for_loop;
+    END LOOP for_loop;
 
 
-    SELECT  
+    SET defStr = CONCAT(fstExp, defStr);
+
+    SELECT CAST(ent_id AS CHAR) INTO outValStr
+    FROM EntitySecKeys
+    WHERE (
+        type_ident = "f" AND
+        def_key = defStr;
+    );
+    SET outSubStr = CONCAT(outValStr, outSubStr);
 
 END proc; END //
 DELIMITER ;
+
+
+
+
+
 
 
 
