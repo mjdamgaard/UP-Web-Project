@@ -33,15 +33,15 @@ BEGIN proc: BEGIN
         LEAVE proc;
     END IF;
 
-    -- Parse userID and scaleID from listDef = "'op',userID,scaleID".
+    -- Parse userID and scaleID from listDef = "op,@<userID>,@<scaleID>".
     SELECT def_str INTO listDef
     FROM Entities
     WHERE id = listID;
     SET listOwnerID = CAST(
-        SUBSTRING_INDEX(listDef, ",", 2) AS UNSIGNED INTEGER
+        SUBSTR(SUBSTRING_INDEX(listDef, ",", 2), 2) AS UNSIGNED INTEGER
     );
     SET scaleID = CAST(
-        SUBSTRING_INDEX(listDef, ",", 3) AS UNSIGNED INTEGER
+        SUBSTR(SUBSTRING_INDEX(listDef, ",", 3), 2) AS UNSIGNED INTEGER
     );
 
     -- Exit if the list's owner does not match the input userID.
@@ -50,15 +50,15 @@ BEGIN proc: BEGIN
         LEAVE proc;
     END IF;
 
-    -- Parse estID from ScaleDef = "'scale',objID,relID,qualID,estID".
+    -- Parse estID from ScaleDef = "scale,@<objID>,@<relID>,@<qualID>,@<estID>".
     SELECT def_str INTO scaleDef
     FROM Entities
     WHERE id = scaleID;
     SET estID = CAST(
-        SUBSTRING_INDEX(scaleDef, ",", 5) AS UNSIGNED INTEGER
+        SUBSTR(SUBSTRING_INDEX(scaleDef, ",", 5), 2) AS UNSIGNED INTEGER
     );
 
-    -- Parse interval limits from estDef = "'est',min,max,step,metricID".
+    -- Parse interval limits from estDef = "est,<min>,<max>,<step>,@<metricID>".
     SELECT def_str INTO estDef
     FROM Entities
     WHERE id = estID;
@@ -99,12 +99,12 @@ BEGIN proc: BEGIN
     DECLARE listDef VARCHAR(700);
     DECLARE listOwnerID BIGINT UNSIGNED;
 
-    -- Parse userID from listDef = "'op',userID,scaleID".
+    -- Parse userID from listDef = "op,@<userID>,@<scaleID>".
     SELECT def_str INTO listDef
     FROM Entities
     WHERE id = listID;
     SET listOwnerID = CAST(
-        SUBSTRING_INDEX(listDef, ",", 2) AS UNSIGNED INTEGER
+        SUBSTR(SUBSTRING_INDEX(listDef, ",", 2), 2) AS UNSIGNED INTEGER
     );
 
     -- Exit if the list's owner does not match the input userID.

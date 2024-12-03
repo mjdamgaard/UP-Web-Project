@@ -1,7 +1,9 @@
 
 /* Scores */
 DROP TABLE UserOpinionScores;
+DROP TABLE PrivateScores;
 DROP TABLE ScoreHistograms;
+DROP TABLE FloatingPointScoreAggregates;
 DROP TABLE FloatingPointScoreAggregates;
 
 /* Entities */
@@ -56,6 +58,25 @@ CREATE TABLE UserOpinionScores (
 );
 
 
+CREATE TABLE PrivateScores (
+
+    user_id BIGINT UNSIGNED NOT NULL,
+
+    scale_id BIGINT UNSIGNED NOT NULL,
+
+    score_val FLOAT NOT NULL,
+
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (
+        user_id,
+        scale_id,
+        score_val,
+        subj_id
+    )
+);
+
+
 CREATE TABLE ScoreHistograms (
 
     list_id BIGINT UNSIGNED NOT NULL,
@@ -87,7 +108,6 @@ CREATE TABLE FloatingPointScoreAggregates (
 
     UNIQUE INDEX (list_id, subj_id)
 );
-
 
 
 
