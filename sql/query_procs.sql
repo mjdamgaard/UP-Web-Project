@@ -124,6 +124,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectScoreHistogram (
+    IN userID BIGINT UNSIGNED, -- TODO: Record download data.
     IN listID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED
 )
@@ -142,6 +143,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectFloatingPointAggregateList (
+    IN userID BIGINT UNSIGNED, -- TODO: Record download data.
     IN listID BIGINT UNSIGNED,
     IN hi FLOAT,
     IN lo FLOAT,
@@ -170,6 +172,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectFloatingPointScoreAggregate (
+    IN userID BIGINT UNSIGNED, -- TODO: Record download data.
     IN listID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED
 )

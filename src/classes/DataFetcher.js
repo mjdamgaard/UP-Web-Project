@@ -30,13 +30,13 @@ export class DataFetcher {
     let reqData = {
       req: "ent",
       id: entID,
-      m: 65535,
+      m: 700,
       s: 0,
     };
     DBRequestManager.query(reqData, (result) => {
-      let [datatype, defStr, len, creatorID, isEditable] = result[0] ?? [];
-      let isContained = (len <= 65535); 
-      callback(datatype, defStr, isContained, len, creatorID, isEditable);
+      let [datatype, defStr, len, creatorID, editableUntil] = result[0] ?? [];
+      let isContained = (len <= 700); 
+      callback(datatype, defStr, isContained, len, creatorID, editableUntil);
     });
   }
 
@@ -49,9 +49,9 @@ export class DataFetcher {
     entIDs.forEach((entID, ind) => {
       parallelCallbackHandler.push((resolve) => {
         this.fetchPublicSmallEntity(entID,
-          (datatype, defStr, isContained, len, creatorID, isEditable) => {
+          (datatype, defStr, isContained, len, creatorID, editableUntil) => {
             results[ind] = [
-              datatype, defStr, isContained, len, creatorID, isEditable
+              datatype, defStr, isContained, len, creatorID, editableUntil
             ];
             resolve();
           }
@@ -66,8 +66,8 @@ export class DataFetcher {
 
   static fetchPublicObject(entID, callback) {
     DataFetcher.fetchPublicSmallEntity(entID,
-      (datatype, defStr, isContained, len, creatorID, isEditable) => {
-        if (datatype !== "j" || !isContained) {
+      (datatype, defStr, isContained, len, creatorID, editableUntil) => {
+        if (datatype !== "a" || !isContained) {
           callback(null);
           return;
         }
@@ -92,15 +92,16 @@ export class DataFetcher {
       ses: getAccountData("sesIDHex"),
       u: getAccountData("userID"),
       id: entID,
-      m: 65535,
+      m: 700,
       s: 0,
     };
     DBRequestManager.query(reqData, (result) => {
-      let [datatype, defStr, len, creatorID, isEditable, isPrivate] =
+      let [datatype, defStr, len, creatorID, editableUntil, isPrivate] =
         result[0] ?? [];
-      let isContained = (len <= 65535); 
+      let isContained = (len <= 700); 
       callback(
-        datatype, defStr, isContained, len, creatorID, isEditable, isPrivate
+        datatype, defStr, isContained, len, creatorID, editableUntil,
+        isPrivate
       );
     });
   }
@@ -115,12 +116,12 @@ export class DataFetcher {
       parallelCallbackHandler.push((resolve) => {
         this.fetchSmallEntity(getAccountData, entID, 
           (
-            datatype, defStr, isContained, len, creatorID, isEditable,
+            datatype, defStr, isContained, len, creatorID, editableUntil,
             isPrivate
           ) => {
             results[ind] = [
-              datatype, defStr, isContained, len, creatorID,
-              isEditable, isPrivate
+              datatype, defStr, isContained, len, creatorID, editableUntil,
+              isPrivate
             ];
             resolve();
           }
@@ -136,7 +137,7 @@ export class DataFetcher {
   static fetchObject(getAccountData, entID, callback) {
     DataFetcher.fetchSmallEntity(getAccountData, entID,
       (datatype, defStr, isContained) => {
-        if (datatype !== "j" || !isContained) {
+        if (datatype !== "a" || !isContained) {
           callback(null);
           return;
         }

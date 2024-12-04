@@ -122,26 +122,18 @@ class InputValidator {
                 // }
                 break;
             case "char":
-                // TODO: Find out why e.g. "£" and "Æ" does not pass this test,
-                // and fix.
                 if (
-                    !is_string($paramVal) ||
-                    strlen($paramVal) > 1
+                    !(iconv_strlen($paramVal, "UFT-8") === 1)
                 ) {
-                    echoTypeErrorJSONAndExit(
-                        $paramName, $paramVal, "CHAR(1)"
-                    );
+                    echoTypeErrorJSONAndExit($paramName, $paramVal, "CHAR");
                 }
                 break;
             case "str":
-                // TODO: Find out why e.g. "£" and "Æ" does not pass this test,
-                // and fix.
                 if (
-                    !is_string($paramVal) ||
-                    strlen($paramVal) > 255
+                    !(iconv_strlen($paramVal, "UFT-8") <= 700)
                 ) {
                     echoTypeErrorJSONAndExit(
-                        $paramName, $paramVal, "VARCHAR(225)"
+                        $paramName, $paramVal, "VARCHAR(700)"
                     );
                 }
                 break;

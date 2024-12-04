@@ -22,7 +22,7 @@ export class DBRequestManager {
     }
     // URL-encode the request data.
     let encodedReqData = {};
-    Object.keys(reqData).forEach(function(key) {
+    Object.keys(reqData).forEach(key => {
       encodedReqData[key] = encodeURIComponent(reqData[key]);
     });
     // If there is already an ongoing query with this reqData object, simply
@@ -38,11 +38,10 @@ export class DBRequestManager {
     // call, which runs all the callbacks in the queue on at a time upon
     // receiving the response from the server.
     this.ongoingQueries[reqDataKey] = [[callback, callbackData]];
-    let thisDBRM = this;
     let url = "http://localhost:80/query_handler.php";
-    $.getJSON(url, encodedReqData, function(result) {
-      // Get and then delete the ongiong query queue.
-      let ongoingQueries = thisDBRM.ongoingQueries;
+    $.getJSON(url, encodedReqData, (result) => {
+      // Get and then delete the ongoing query queue.
+      let ongoingQueries = this.ongoingQueries;
       let queryQueue = ongoingQueries[reqDataKey];
       delete ongoingQueries[reqDataKey];
 
@@ -56,7 +55,7 @@ export class DBRequestManager {
       }
       // // If cacheQuery is true, cache the query.
       // if (cacheQuery) {
-      //   thisDBRM.cache[reqDataKey] = result;
+      //   this.cache[reqDataKey] = result;
       // }
     });
   }
@@ -67,7 +66,7 @@ export class DBRequestManager {
       callbackData = null;
     }
     let url = "http://localhost:80/insert_handler.php";
-    $.post(url, reqData, function(result) {
+    $.post(url, reqData, (result) => {
       callback(result, callbackData);
     });
   }

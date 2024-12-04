@@ -61,40 +61,50 @@ $sql = "";
 $paramNameArr = "";
 $typeArr = "";
 switch ($reqType) {
-    case "score":
-        $sql = "CALL insertOrUpdateScore (?, ?, ?, ?)";
-        $paramNameArr = array("u", "s", "e", "v");
+    case "opScore":
+        $sql = "CALL insertOrUpdateOpinionScore (?, ?, ?, ?, ?)";
+        $paramNameArr = array("u", "q", "s", "v", "w");
+        $typeArr = array("id", "id", "id", "float", "float");
+        break;
+    case "delOpScore":
+        $sql = "CALL deleteOpinionScore (?, ?, ?)";
+        $paramNameArr = array("u", "s", "e");
+        $typeArr = array("id", "id", "id");
+        break;
+    case "prvScore":
+        $sql = "CALL insertOrUpdatePrivateScore (?, ?, ?, ?)";
+        $paramNameArr = array("u", "q", "s", "v");
         $typeArr = array("id", "id", "id", "float");
         break;
-    case "delScore":
-        $sql = "CALL deleteScore (?, ?, ?)";
+    case "delPrvScore":
+        $sql = "CALL deletePrivateScore (?, ?, ?)";
         $paramNameArr = array("u", "s", "e");
         $typeArr = array("id", "id", "id");
         break;
     case "funEnt":
-        $sql = "CALL insertOrFindFunctionalEntity (?, ?, ?, ?)";
-        $paramNameArr = array("u", "def", "a", "days");
-        $typeArr = array("id", "text", "bool", "int");
+        $sql = "CALL insertOrFindFunctionalEntity (?, ?, ?)";
+        $paramNameArr = array("u", "def", "a");
+        $typeArr = array("id", "text", "bool");
         break;
     case "attrEnt":
-        $sql = "CALL insertAttributeDefinedEntity (?, ?, ?, ?)";
+        $sql = "CALL insertOrFindAttributeDefinedEntity (?, ?, ?, ?)";
         $paramNameArr = array("u", "def", "a", "days");
         $typeArr = array("id", "text", "bool", "int");
         break;
     case "editAttrEnt":
         $sql = "CALL editAttributeDefinedEntity (?, ?, ?, ?)";
-        $paramNameArr = array("u", "def", "a", "days");
-        $typeArr = array("id", "text", "bool", "int");
+        $paramNameArr = array("u", "e", "def", "a", "days");
+        $typeArr = array("id", "id", "text", "bool", "int");
         break;
     case "binEnt":
         $sql = "CALL insertBinaryEntity (?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "def", "prv", "a", "days");
-        $typeArr = array("id", "text", "bool", "bool", "int");
+        $typeArr = array("id", "blob", "bool", "bool", "int");
         break;
     case "editBinEnt":
         $sql = "CALL editBinaryEntity (?, ?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "e", "def", "prv", "a", "days");
-        $typeArr = array("id", "id", "text", "bool", "bool", "int");
+        $typeArr = array("id", "id", "blob", "bool", "bool", "int");
         break;
     case "utf8Ent":
         $sql = "CALL insertUTF8Entity (?, ?, ?, ?, ?)";

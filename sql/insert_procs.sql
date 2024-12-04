@@ -119,7 +119,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindFunctionalEntity (
     IN userID BIGINT UNSIGNED,
-    IN defStr VARCHAR(700),
+    IN defStr VARCHAR(700) CHARACTER SET utf8mb4,
     IN isAnonymous BOOL
 )
 BEGIN proc: BEGIN
@@ -174,7 +174,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindAttributeDefinedEntity (
     IN userID BIGINT UNSIGNED,
-    IN defStr VARCHAR(700),
+    IN defStr VARCHAR(700) CHARACTER SET utf8mb4,
     IN isAnonymous BOOL,
     IN daysLeftOfEditing INT
 )
@@ -236,7 +236,7 @@ DELIMITER //
 CREATE PROCEDURE editAttributeDefinedEntity (
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
-    IN defStr VARCHAR(700),
+    IN defStr VARCHAR(700) CHARACTER SET utf8mb4,
     IN isAnonymous BOOL,
     IN daysLeftOfEditing INT
 )
@@ -428,7 +428,7 @@ CREATE PROCEDURE insertUTF8Entity (
     IN daysLeftOfEditing INT
 )
 BEGIN
-    CALL _insertTextBasedEntity(
+    CALL _insertTextBasedEntity (
         "u",
         userID, CAST(defStr AS BINARY), isPrivate, isAnonymous,
         daysLeftOfEditing
@@ -446,7 +446,7 @@ CREATE PROCEDURE insertHTMLEntity (
     IN daysLeftOfEditing INT
 )
 BEGIN
-    CALL _insertTextBasedEntity(
+    CALL _insertTextBasedEntity (
         "h",
         userID, CAST(defStr AS BINARY), isPrivate, isAnonymous,
         daysLeftOfEditing
@@ -464,7 +464,7 @@ CREATE PROCEDURE insertJSONEntity (
     IN daysLeftOfEditing INT
 )
 BEGIN
-    CALL _insertTextBasedEntity(
+    CALL _insertTextBasedEntity (
         "j",
         userID, CAST(defStr AS BINARY), isPrivate, isAnonymous,
         daysLeftOfEditing
@@ -612,7 +612,7 @@ CREATE PROCEDURE editBinaryEntity (
     IN daysLeftOfEditing INT
 )
 BEGIN
-    CALL _editBinaryEntity(
+    CALL _editBinaryEntity (
         "b",
         userID, entID, defStr, isPrivate, isAnonymous, daysLeftOfEditing
     );
@@ -630,7 +630,7 @@ CREATE PROCEDURE editUTF8Entity (
     IN daysLeftOfEditing INT
 )
 BEGIN
-    CALL _editTextBasedEntity(
+    CALL _editTextBasedEntity (
         "u",
         userID, entID, CAST(defStr AS BINARY), isPrivate, isAnonymous,
         daysLeftOfEditing
@@ -649,7 +649,7 @@ CREATE PROCEDURE editHTMLEntity (
     IN daysLeftOfEditing INT
 )
 BEGIN
-    CALL _editTextBasedEntity(
+    CALL _editTextBasedEntity (
         "h",
         userID, entID, CAST(defStr AS BINARY), isPrivate, isAnonymous,
         daysLeftOfEditing
@@ -668,7 +668,7 @@ CREATE PROCEDURE editJSONEntity (
     IN daysLeftOfEditing INT
 )
 BEGIN
-    CALL _editTextBasedEntity(
+    CALL _editTextBasedEntity (
         "j",
         userID, entID, CAST(defStr AS BINARY), isPrivate, isAnonymous,
         daysLeftOfEditing

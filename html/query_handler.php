@@ -72,11 +72,11 @@ $sql = "";
 $paramNameArr = "";
 $typeArr = "";
 switch ($reqType) {
-    case "entList":
-        header("Cache-Control: max-age=3");
-        $sql = "CALL selectEntityList (?, ?, ?, ?, ?, ?, ?)";
+    case "opList":
+        header("Cache-Control: max-age=3"); // TODO: Change/adjust.
+        $sql = "CALL selectUserOpinionEntityList (?, ?, ?, ?, ?, ?, ?)";
         $paramNameArr = array(
-            "u", "s",
+            "u", "q",
             "hi", "lo",
             "n", "o",
             "a"
@@ -89,65 +89,94 @@ switch ($reqType) {
         );
         // output: [[scoreVal, entID], ...].
         break;
-    case "entListFromHash":
-        header("Cache-Control: max-age=3");
-        $sql = "CALL selectEntityListFromHash (?, ?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array(
-            "u", "h",
-            "hi", "lo",
-            "n", "o",
-            "a"
-        );
-        $typeArr = array(
-            "id", "hash",
-            "float", "float",
-            "uint", "uint",
-            "bool"
-        );
-        // output: [[scoreVal, entID], ...].
-        break;
-    case "entListFromDefStr":
-        header("Cache-Control: max-age=3");
-        $sql = "CALL selectEntityListFromDefStr (?, ?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array(
-            "u", "d",
-            "hi", "lo",
-            "n", "o",
-            "a"
-        );
-        $typeArr = array(
-            "id", "text",
-            "float", "float",
-            "uint", "uint",
-            "bool"
-        );
-        // output: [[scoreVal, entID], ...].
-        break;
-    case "score":
-        header("Cache-Control: max-age=3");
+    case "opScore":
+        header("Cache-Control: max-age=3"); // TODO: Change/adjust.
         $sql = "CALL selectScore (?, ?, ?)";
-        $paramNameArr = array("u", "s", "e");
+        $paramNameArr = array("u", "q", "s");
+        $typeArr = array("id", "id", "id");
+        // output: [[scoreVal, scoreWidth]].
+        break;
+    case "prvList":
+        header("Cache-Control: max-age=3"); // TODO: Change/adjust.
+        $sql = "CALL selectPrivateEntityList (?, ?, ?, ?, ?, ?, ?)";
+        $paramNameArr = array(
+            "u", "q",
+            "hi", "lo",
+            "n", "o",
+            "a"
+        );
+        $typeArr = array(
+            "id", "id",
+            "float", "float",
+            "uint", "uint",
+            "bool"
+        );
+        // output: [[scoreVal, entID], ...].
+        break;
+    case "prvScore":
+        header("Cache-Control: max-age=3"); // TODO: Change/adjust.
+        $sql = "CALL selectPrivateScore (?, ?, ?)";
+        $paramNameArr = array("u", "q", "s");
         $typeArr = array("id", "id", "id");
         // output: [[scoreVal]].
         break;
+    case "hist":
+        header("Cache-Control: max-age=3"); // TODO: Change/adjust.
+        $sql = "CALL selectScoreHistogram (?, ?, ?)";
+        $paramNameArr = array("u", "l", "s");
+        $typeArr = array("id", "id", "id");
+        // output: [[histDate]].
+        break;
+    case "aggrList":
+        header("Cache-Control: max-age=3"); // TODO: Change/adjust.
+        $sql = "CALL selectFloatingPointAggregateList (?, ?, ?, ?, ?, ?, ?)";
+        $paramNameArr = array(
+            "u", "l",
+            "hi", "lo",
+            "n", "o",
+            "a"
+        );
+        $typeArr = array(
+            "id", "id",
+            "float", "float",
+            "uint", "uint",
+            "bool"
+        );
+        // output: [[scoreVal, entID], ...].
+        break;
+    case "aggrScore":
+        header("Cache-Control: max-age=3"); // TODO: Change/adjust.
+        $sql = "CALL selectFloatingPointScoreAggregate (?, ?, ?)";
+        $paramNameArr = array("u", "l", "s");
+        $typeArr = array("id", "id", "id");
+        // output: [[scoreVal]].
+        break;
+
     /* Entity queries */
     case "ent":
         $sql = "CALL selectEntity (?, ?, ?)";
         $paramNameArr = array("id", "m", "s");
         $typeArr = array("id", "uint", "uint");
-        // output: [[type, defStr, len, creatorID, isEditable]].
+        // output: [[datatype, defStr, len, creatorID, editableUntil]].
         break;
     case "entAsUser":
         $sql = "CALL selectEntityAsUser (?, ?, ?, ?)";
         $paramNameArr = array("u", "id", "m", "s");
         $typeArr = array("id", "id", "uint", "uint");
-        // output: [[type, defStr, len, creatorID, isEditable, isPrivate]].
+        // output:
+        //    [[datatype, defStr, len, creatorID, editableUntil, isPrivate]].
         break;
-    case "entFromHash":
-        $sql = "CALL selectEntityFromHash (?, ?, ?, ?)";
-        $paramNameArr = array("h", "m", "s");
-        $typeArr = array("hash", "uint", "uint");
-        // output: [[type, defStr, len]].
+    case "entFromSK":
+        $sql = "CALL selectEntityFromSecKey (?, ?, ?, ?)";
+        $paramNameArr = array("t", "k", "m", "s");
+        $typeArr = array("char", "str", "uint", "uint");
+        // output: [[datatype, defStr, len, creatorID, editableUntil]].
+        break;
+    case "entIDFromSK":
+        $sql = "CALL selectEntityIDFromSecKey (?, ?)";
+        $paramNameArr = array("t", "k");
+        $typeArr = array("char", "str");
+        // output: [[entID]].
         break;
     // case "creations":
     //     $sql = "CALL selectCreations (?, ?, ?, ?)";
