@@ -125,6 +125,11 @@ CREATE PROCEDURE insertOrFindFunctionalEntity (
 BEGIN proc: BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SELECT NULL AS outID, 2 AS exitCode; -- rollback due to race condition.
+    END;
     START TRANSACTION;
 
     SELECT ent_id INTO outID
@@ -180,6 +185,11 @@ BEGIN proc: BEGIN
         SET daysLeftOfEditing = NULL
     END IF;
 
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SELECT NULL AS outID, 2 AS exitCode; -- rollback due to race condition.
+    END;
     START TRANSACTION;
 
     SELECT ent_id INTO outID
@@ -270,6 +280,11 @@ BEGIN proc: BEGIN
     END IF;
 
 
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SELECT NULL AS outID, 4 AS exitCode; -- rollback due to race condition.
+    END;
     START TRANSACTION;
 
     SELECT ent_id INTO outID
@@ -586,6 +601,7 @@ DELIMITER ;
 
 
 
+
 DELIMITER //
 CREATE PROCEDURE editBinaryEntity (
     IN userID BIGINT UNSIGNED,
@@ -659,6 +675,8 @@ BEGIN
     );
 END //
 DELIMITER ;
+
+
 
 
 
