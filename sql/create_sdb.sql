@@ -56,7 +56,7 @@ CREATE TABLE UserOpinionScores (
         subj_id
     ),
 
-    -- Index to look up specific score (and restricting one score per user).
+    -- Index to look up specific score (and restricting one subject per list).
     UNIQUE INDEX (user_id, qual_id, subj_id)
 );
 
@@ -76,7 +76,10 @@ CREATE TABLE PrivateScores (
         qual_id,
         score_val,
         subj_id
-    )
+    ),
+
+    -- Index to look up specific score (and restricting one subject per list).
+    UNIQUE INDEX (user_id, qual_id, subj_id)
 );
 
 
@@ -109,8 +112,10 @@ CREATE TABLE FloatingPointScoreAggregates (
         subj_id
     ),
 
+    -- Index to look up specific score (and restricting one subject per list).
     UNIQUE INDEX (list_id, subj_id)
 );
+
 
 
 
@@ -394,7 +399,15 @@ CREATE TABLE Entities (
 
     -- A string (possibly a JSON object) that defines the entity. The format
     -- depends on type_ident.
-    def_str LONGBLOB NOT NULL,
+    text_def_str LONGTEXT CHARACTER SET utf8mb4 NOT NULL DEFAULT "",
+
+    -- A string that defines the entity, *if* the entity is not defined by the
+    -- text_def_str. Whether an entity uses text_def_str or bin_def_str depends
+    -- on the datatype.
+    bin_def_str LONGBLOB NOT NULL DEFAULT "",
+
+    -- An entity can only use either a text-based or a binary defStr.
+    CHECK(text_def_str = "" XOR bin_def_str = ""),
 
     -- The user who submitted the entity, unless creator_id = 0, which means
     -- that the creator is anonymous.
@@ -432,7 +445,7 @@ CREATE TABLE EntitySecKeys (
 
     -- is_hashed TINYINT UNSIGNED NOT NULL, CHECK (is_hashed <= 1),
 
-    def_key VARBINARY(3000) NOT NULL,
+    def_key VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
     ent_id BIGINT UNSIGNED NOT NULL,
 
@@ -448,7 +461,7 @@ CREATE TABLE FulltextIndexedEntities (
 
     ent_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     
-    text_str VARCHAR(700) NOT NULL,
+    text_str VARCHAR(700) CHARACTER SET utf8mb4 NOT NULL,
 
     FULLTEXT idx (text_str)
 

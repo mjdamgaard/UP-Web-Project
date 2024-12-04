@@ -24,7 +24,7 @@ DROP PROCEDURE selectUserInfo;
 DELIMITER //
 CREATE PROCEDURE selectUserOpinionEntityList (
     IN userID BIGINT UNSIGNED,
-    IN scaleID BIGINT UNSIGNED,
+    IN qualID BIGINT UNSIGNED,
     IN hi FLOAT,
     IN lo FLOAT,
     IN maxNum INT UNSIGNED,
@@ -38,7 +38,7 @@ BEGIN
     FROM UserOpinionScores
     WHERE (
         user_id = userID AND
-        scale_id = scaleID AND
+        qual_id = qualID AND
         score_val BETWEEN lo AND hi
     )
     ORDER BY
@@ -52,30 +52,20 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectUserOpinionEntityListFromScaleKey (
+CREATE PROCEDURE selectOpinionScore (
     IN userID BIGINT UNSIGNED,
-    IN scaleKey VARCHAR(3000),
-    IN hi FLOAT,
-    IN lo FLOAT,
-    IN maxNum INT UNSIGNED,
-    IN numOffset INT UNSIGNED,
-    IN isAscOrder BOOL
+    IN qualID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED
 )
 BEGIN
-    DECLARE scaleID BIGINT UNSIGNED;
-
-    SELECT ent_id INTO scaleID
-    FROM EntitySecKeys
+    SELECT
+        score_val AS scoreVal,
+        score_width AS scoreWidth
+    FROM UserOpinionScores
     WHERE (
-        type_ident = "f" AND
-        def_key = CAST(scaleKey AS BINARY)
-    );
-
-    CALL selectUserOpinionEntityList (
-        userID, scaleID,
-        hi, lo,
-        maxNum, numOffset,
-        isAscOrder
+        user_id = userID AND
+        qual_id = qualID AND
+        subj_id = subjID
     );
 END //
 DELIMITER ;
@@ -83,9 +73,9 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectPrivateEntityListFromScaleKey (
+CREATE PROCEDURE selectPrivateEntityList (
     IN userID BIGINT UNSIGNED,
-    IN scaleKey VARCHAR(3000),
+    IN qualID BIGINT UNSIGNED,
     IN hi FLOAT,
     IN lo FLOAT,
     IN maxNum INT UNSIGNED,
@@ -99,48 +89,7 @@ BEGIN
     FROM PrivateScores
     WHERE (
         user_id = userID AND
-        scale_key = CAST(scaleKey AS BINARY) AND
-        score_val BETWEEN lo AND hi
-    )
-    ORDER BY
-        CASE WHEN isAscOrder THEN scoreVal END ASC,
-        CASE WHEN NOT isAscOrder THEN scoreVal END DESC,
-        CASE WHEN isAscOrder THEN entID END ASC,
-        CASE WHEN NOT isAscOrder THEN entID END DESC
-    LIMIT numOffset, maxNum;
-END //
-DELIMITER ;
-
-
-
-
-
-
-
-
-
-DELIMITER //
-CREATE PROCEDURE selectEntityListFromHash (
-    IN userID BIGINT UNSIGNED,
-    IN scaleHash CHAR(64),
-    IN hi FLOAT,
-    IN lo FLOAT,
-    IN maxNum INT UNSIGNED,
-    IN numOffset INT UNSIGNED,
-    IN isAscOrder BOOL
-)
-BEGIN
-    SELECT
-        score_val AS scoreVal,
-        subj_id AS entID
-    FROM Scores
-    WHERE (
-        user_id = userID AND
-        scale_id = (
-            SELECT ent_id
-            FROM EntityHashes
-            WHERE def_hash = scaleHash
-        ) AND
+        qual_id = qualID AND
         score_val BETWEEN lo AND hi
     )
     ORDER BY
@@ -154,9 +103,46 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectEntityListFromDefStr (
+CREATE PROCEDURE selectPrivateScore (
     IN userID BIGINT UNSIGNED,
-    IN scaleDefStr CHAR(64),
+    IN qualID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT score_val AS scoreVal
+    FROM PrivateScores
+    WHERE (
+        user_id = userID AND
+        qual_id = qualID AND
+        subj_id = subjID
+    );
+END //
+DELIMITER ;
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectScoreHistogram (
+    IN listID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT hist_data AS histData
+    FROM ScoreHistograms
+    WHERE (
+        list_id = listID AND
+        subj_id = subjID
+    );
+END //
+DELIMITER ;
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectFloatingPointAggregateList (
+    IN listID BIGINT UNSIGNED,
     IN hi FLOAT,
     IN lo FLOAT,
     IN maxNum INT UNSIGNED,
@@ -167,14 +153,9 @@ BEGIN
     SELECT
         score_val AS scoreVal,
         subj_id AS entID
-    FROM Scores
+    FROM FloatingPointScoreAggregates
     WHERE (
-        user_id = userID AND
-        scale_id = (
-            SELECT ent_id
-            FROM EntityHashes
-            WHERE def_hash = SHA2(CONCAT("j.", scaleDefStr), 256)
-        ) AND
+        list_id = listID AND
         score_val BETWEEN lo AND hi
     )
     ORDER BY
@@ -185,6 +166,92 @@ BEGIN
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectFloatingPointScoreAggregate (
+    IN listID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT score_val AS scoreVal
+    FROM FloatingPointScoreAggregates
+    WHERE (
+        list_id = listID AND
+        subj_id = subjID
+    );
+END //
+DELIMITER ;
+
+
+
+
+-- DELIMITER //
+-- CREATE PROCEDURE selectEntityListFromHash (
+--     IN userID BIGINT UNSIGNED,
+--     IN scaleHash CHAR(64),
+--     IN hi FLOAT,
+--     IN lo FLOAT,
+--     IN maxNum INT UNSIGNED,
+--     IN numOffset INT UNSIGNED,
+--     IN isAscOrder BOOL
+-- )
+-- BEGIN
+--     SELECT
+--         score_val AS scoreVal,
+--         subj_id AS entID
+--     FROM Scores
+--     WHERE (
+--         user_id = userID AND
+--         scale_id = (
+--             SELECT ent_id
+--             FROM EntityHashes
+--             WHERE def_hash = scaleHash
+--         ) AND
+--         score_val BETWEEN lo AND hi
+--     )
+--     ORDER BY
+--         CASE WHEN isAscOrder THEN scoreVal END ASC,
+--         CASE WHEN NOT isAscOrder THEN scoreVal END DESC,
+--         CASE WHEN isAscOrder THEN entID END ASC,
+--         CASE WHEN NOT isAscOrder THEN entID END DESC
+--     LIMIT numOffset, maxNum;
+-- END //
+-- DELIMITER ;
+
+
+-- DELIMITER //
+-- CREATE PROCEDURE selectEntityListFromDefStr (
+--     IN userID BIGINT UNSIGNED,
+--     IN scaleDefStr CHAR(64),
+--     IN hi FLOAT,
+--     IN lo FLOAT,
+--     IN maxNum INT UNSIGNED,
+--     IN numOffset INT UNSIGNED,
+--     IN isAscOrder BOOL
+-- )
+-- BEGIN
+--     SELECT
+--         score_val AS scoreVal,
+--         subj_id AS entID
+--     FROM Scores
+--     WHERE (
+--         user_id = userID AND
+--         scale_id = (
+--             SELECT ent_id
+--             FROM EntityHashes
+--             WHERE def_hash = SHA2(CONCAT("j.", scaleDefStr), 256)
+--         ) AND
+--         score_val BETWEEN lo AND hi
+--     )
+--     ORDER BY
+--         CASE WHEN isAscOrder THEN scoreVal END ASC,
+--         CASE WHEN NOT isAscOrder THEN scoreVal END DESC,
+--         CASE WHEN isAscOrder THEN entID END ASC,
+--         CASE WHEN NOT isAscOrder THEN entID END DESC
+--     LIMIT numOffset, maxNum;
+-- END //
+-- DELIMITER ;
 
 
 -- DELIMITER //
@@ -314,23 +381,6 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE selectScore (
-    IN userID BIGINT UNSIGNED,
-    IN scaleID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT score_val AS scoreVal
-    FROM Scores
-    WHERE (
-        user_id = userID AND
-        scale_id = scaleID AND
-        subj_id = subjID
-    );
-END //
-DELIMITER ;
-
 
 
 
@@ -348,15 +398,22 @@ CREATE PROCEDURE selectEntity (
 )
 BEGIN
     SELECT
-        type_ident AS type,
+        type_ident AS datatype,
         (
-            CASE WHEN maxLen = 0 THEN SUBSTRING(def_str, startPos + 1)
-            ELSE SUBSTRING(def_str, startPos + 1, maxLen)
+            CASE WHEN maxLen = 0 THEN
+                SUBSTRING(
+                    CONCAT(text_def_str, HEX(bin_def_str)), startPos + 1
+                )
+            ELSE
+                SUBSTRING(
+                    CONCAT(text_def_str, HEX(bin_def_str)), startPos + 1,
+                    maxLen
+                )
             END
         ) AS defStr,
-        LENGTH(def_str) AS len,
+        LENGTH(text_def_str) + LENGTH(bin_def_str) AS len,
         creator_id AS creatorID,
-        is_editable AS isEditable
+        editable_until AS editableUntil
     FROM Entities
     WHERE (
         id = entID AND
@@ -376,15 +433,23 @@ CREATE PROCEDURE selectEntityAsUser (
 )
 BEGIN
     SELECT
-        type_ident AS type,
+    SELECT
+        type_ident AS datatype,
         (
-            CASE WHEN maxLen = 0 THEN SUBSTRING(def_str, startPos + 1)
-            ELSE SUBSTRING(def_str, startPos + 1, maxLen)
+            CASE WHEN maxLen = 0 THEN
+                SUBSTRING(
+                    CONCAT(text_def_str, HEX(bin_def_str)), startPos + 1
+                )
+            ELSE
+                SUBSTRING(
+                    CONCAT(text_def_str, HEX(bin_def_str)), startPos + 1,
+                    maxLen
+                )
             END
         ) AS defStr,
-        LENGTH(def_str) AS len,
+        LENGTH(text_def_str) + LENGTH(bin_def_str) AS len,
         creator_id AS creatorID,
-        is_editable AS isEditable,
+        editable_until AS editableUntil,
         is_private AS isPrivate
     FROM Entities
     WHERE (
@@ -397,30 +462,58 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectEntityFromHash (
-    IN defHash CHAR(64),
+CREATE PROCEDURE selectEntityFromSecKey (
+    IN datatype CHAR,
+    IN defKey VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
     IN maxLen INT UNSIGNED,
     IN startPos INT UNSIGNED
 )
 BEGIN
     SELECT
-        type_ident AS type,
+        id AS entID,
         (
-            CASE WHEN maxLen = 0 THEN SUBSTRING(def_str, startPos + 1)
-            ELSE SUBSTRING(def_str, startPos + 1, maxLen)
+            CASE WHEN maxLen = 0 THEN
+                SUBSTRING(
+                    CONCAT(text_def_str, HEX(bin_def_str)), startPos + 1
+                )
+            ELSE
+                SUBSTRING(
+                    CONCAT(text_def_str, HEX(bin_def_str)), startPos + 1,
+                    maxLen
+                )
             END
         ) AS defStr,
-        LENGTH(def_str) AS len
+        LENGTH(text_def_str) + LENGTH(bin_def_str) AS len,
+        creator_id AS creatorID,
+        editable_until AS editableUntil
     FROM Entities
     WHERE id = (
         SELECT ent_id
-        FROM EntityHashes
-        WHERE def_hash = defHash
+        FROM EntitySecKeys
+        WHERE (
+            type_ident = datatype AND
+            def_key = defKey
+        )
     );
 END //
 DELIMITER ;
 
 
+
+DELIMITER //
+CREATE PROCEDURE selectEntityIDFromSecKey (
+    IN datatype CHAR,
+    IN defKey VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
+)
+BEGIN
+    SELECT ent_id AS entID
+    FROM EntitySecKeys
+    WHERE (
+        type_ident = datatype AND
+        def_key = defKey
+    );
+END //
+DELIMITER ;
 
 
 
