@@ -398,11 +398,11 @@ CREATE TABLE Entities (
 
     -- The user who submitted the entity, unless creator_id = 0, which means
     -- that the creator is anonymous.
-    creator_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    creator_id BIGINT UNSIGNED NOT NULL,
 
     -- A boolean representing whether this entity can be viewed by anyone other
     -- than its creator.
-    is_private TINYINT UNSIGNED NOT NULL DEFAULT 1, CHECK (is_private <= 1),
+    is_private TINYINT UNSIGNED NOT NULL, CHECK (is_private <= 1),
 
     -- -- A boolean representing whether this entity can be edited.
     -- is_editable TINYINT UNSIGNED NOT NULL DEFAULT 1, CHECK (is_editable <= 1),

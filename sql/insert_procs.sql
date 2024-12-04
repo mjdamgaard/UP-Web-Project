@@ -119,22 +119,21 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindFunctionalEntity (
     IN userID BIGINT UNSIGNED,
-    IN defStr VARCHAR(3000) CHARACTER SET utf8mb4,
-    IN isAnonymous BOOL,
-    IN daysLeftOfEditing INT
+    IN defStr VARBINARY(3000),
+    IN isAnonymous BOOL
 )
 BEGIN proc: BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
     START TRANSACTION;
 
-    INSERT IGNORE INTO EntitySecKeys (
-        type_ident, def_key, ent_id
+    SELECT ent_id INTO outID
+    FROM EntitySecKeys
+    WHERE (
+        type_ident = "f" AND
+        def_key = defStr
     )
-    VALUES (
-        datatype, defStr, 0
-    );
-    SET outID = LAST_INSERT_ID();
+    FOR UPDATE;
 
     IF (outID IS NOT NULL) THEN
         ROLLBACK;
@@ -148,17 +147,165 @@ BEGIN proc: BEGIN
     )
     VALUES (
         CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        "f", CAST(defStr AS BINARY), 0, NULL
+        "f", defStr, 0, NULL
     );
     SET outID = LAST_INSERT_ID();
 
+    INSERT INTO EntitySecKeys (
+        type_ident, def_key, ent_id
+    )
+    VALUES (
+        datatype, defStr, outID
+    );
+
     COMMIT;
+
     SELECT outID, 0 AS exitCode; -- insert.
 END proc; END //
 DELIMITER ;
 
 
 
+DELIMITER //
+CREATE PROCEDURE insertOrFindAttributeDefinedEntity (
+    IN userID BIGINT UNSIGNED,
+    IN defStr VARBINARY(3000),
+    IN isAnonymous BOOL,
+    IN daysLeftOfEditing INT
+)
+BEGIN proc: BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+
+    IF (isAnonymous || daysLeftOfEditing <= 0) THEN
+        SET daysLeftOfEditing = NULL
+    END IF;
+
+    START TRANSACTION;
+
+    SELECT ent_id INTO outID
+    FROM EntitySecKeys
+    WHERE (
+        type_ident = "a" AND
+        def_key = defStr
+    )
+    FOR UPDATE;
+
+    IF (outID IS NOT NULL) THEN
+        ROLLBACK;
+        SELECT outID, 1 AS exitCode; -- find.
+        LEAVE proc;
+    END IF;
+
+    INSERT INTO Entities (
+        creator_id,
+        type_ident, def_str, is_private,
+        editable_until
+    )
+    VALUES (
+        CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
+        "a", defStr, 0,
+        ADDDATE(CURDATE, INTERVAL daysLeftOfEditing DAY)
+    );
+    SET outID = LAST_INSERT_ID();
+
+    INSERT INTO EntitySecKeys (
+        type_ident, def_key, ent_id
+    )
+    VALUES (
+        datatype, defStr, outID
+    );
+
+    COMMIT;
+
+    SELECT outID, 0 AS exitCode; -- insert.
+END proc; END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE editAttributeDefinedEntity (
+    IN userID BIGINT UNSIGNED,
+    IN entID BIGINT UNSIGNED,
+    IN defStr VARBINARY(3000),
+    IN isAnonymous BOOL,
+    IN daysLeftOfEditing INT
+)
+BEGIN proc: BEGIN
+    DECLARE outID, creatorID BIGINT UNSIGNED;
+    DECLARE prevEditableUntil DATE;
+    DECLARE prevDefStr VARBINARY(3000);
+    DECLARE prevType CHAR;
+
+    IF (isAnonymous || daysLeftOfEditing <= 0) THEN
+        SET daysLeftOfEditing = NULL
+    END IF;
+
+    SELECT creator_id, editable_until, def_str, type_ident
+    INTO creatorID, prevEditableUntil, prevDefStr, prevType
+    FROM Entities
+    WHERE id = entID;
+
+    IF (creatorID != userID) THEN
+        SELECT entID AS outID, 1 AS exitCode; -- user is not the owner.
+        LEAVE proc;
+    END IF;
+
+    IF (prevEditableUntil IS NULL OR prevEditableUntil > CURDATE()) THEN
+        SELECT entID AS outID, 2 AS exitCode; -- can no longer be edited.
+        LEAVE proc;
+    END IF;
+
+    IF (prevType != "a") THEN
+        SELECT entID AS outID, 3 AS exitCode; -- changing datatype not impl.
+        LEAVE proc;
+    END IF;
+
+    IF (prevDefStr <=> defStr) THEN
+        UPDATE Entities
+        SET
+            creator_id = CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
+            editable_until = ADDDATE(CURDATE, INTERVAL daysLeftOfEditing DAY)
+        WHERE id = entID;
+        SELECT entID AS outID, 0 AS exitCode; -- edit.
+    END IF;
+
+
+    START TRANSACTION;
+
+    SELECT ent_id INTO outID
+    FROM EntitySecKeys
+    WHERE (
+        type_ident = "a" AND
+        def_key = defStr
+    )
+    FOR UPDATE;
+
+    IF (outID IS NOT NULL) THEN
+        ROLLBACK;
+        SELECT outID, 1 AS exitCode; -- find.
+        LEAVE proc;
+    END IF;
+
+
+    UPDATE Entities
+    SET
+        creator_id = CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
+        def_str = defStr,
+        editable_until = ADDDATE(CURDATE, INTERVAL daysLeftOfEditing DAY)
+    WHERE id = entID;
+
+    UPDATE EntitySecKeys
+    SET def_key = defStr,
+    WHERE (
+        type_ident = "a" AND
+        def_key = prevDefStr
+    );
+
+    COMMIT;
+
+    SELECT entID AS outID, 0 AS exitCode; -- edit.
+END proc; END //
+DELIMITER ;
 
 
 
@@ -213,24 +360,6 @@ BEGIN
     CALL _insertBinaryEntity(
         "b",
         userID, defStr, isPrivate, isAnonymous, daysLeftOfEditing
-    );
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE insertAttributeDefinedEntity (
-    IN userID BIGINT UNSIGNED,
-    IN defStr VARCHAR(600) CHARACTER SET utf8mb4, -- TODO: Determine this initial size.
-    IN isPrivate BOOL,
-    IN isAnonymous BOOL,
-    IN daysLeftOfEditing INT
-)
-BEGIN
-    CALL _insertBinaryEntity(
-        "a",
-        userID, CAST(defStr AS BINARY), isPrivate, isAnonymous,
-        daysLeftOfEditing
     );
 END //
 DELIMITER ;
@@ -309,7 +438,9 @@ CREATE PROCEDURE _editBinaryEntity (
 )
 BEGIN proc: BEGIN
     DECLARE creatorID BIGINT UNSIGNED;
-    DECLARE editableUntil DATE;
+    DECLARE prevIsPrivate TINYINT UNSIGNED;
+    DECLARE prevEditableUntil DATE;
+    DECLARE prevType CHAR;
 
     IF (isPrivate) THEN
         SET isAnonymous = 0;
@@ -319,8 +450,8 @@ BEGIN proc: BEGIN
         SET daysLeftOfEditing = NULL
     END IF;
 
-    SELECT creator_id, editable_until
-    INTO creatorID, editableUntil
+    SELECT creator_id, is_private, editable_until, type_ident
+    INTO creatorID, prevIsPrivate, prevEditableUntil, prevType
     FROM Entities
     WHERE id = entID;
 
@@ -329,21 +460,28 @@ BEGIN proc: BEGIN
         LEAVE proc;
     END IF;
 
-    IF (editableUntil IS NULL OR editableUntil > CURDATE()) THEN
+    IF (
+        NOT prevIsPrivate AND
+        (prevEditableUntil IS NULL OR prevEditableUntil > CURDATE())
+    ) THEN
         SELECT entID AS outID, 2 AS exitCode; -- can no longer be edited.
+        LEAVE proc;
+    END IF;
+
+    IF (prevType != datatype) THEN
+        SELECT entID AS outID, 3 AS exitCode; -- changing datatype not impl.
         LEAVE proc;
     END IF;
 
     UPDATE Entities
     SET
         creator_id = CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        type_ident = datatype,
         def_str = defStr,
         is_private = isPrivate,
         editable_until = ADDDATE(CURDATE, INTERVAL daysLeftOfEditing DAY)
     WHERE id = entID;
 
-    SELECT entID AS outID, 0 AS exitCode; -- insert.
+    SELECT entID AS outID, 0 AS exitCode; -- edit.
 END proc; END //
 DELIMITER ;
 
@@ -366,26 +504,6 @@ BEGIN
     );
 END //
 DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE insertAttributeDefinedEntity (
-    IN userID BIGINT UNSIGNED,
-    IN entID BIGINT UNSIGNED,
-    IN defStr VARCHAR(600) CHARACTER SET utf8mb4, -- TODO: Determine this initial size.
-    IN isPrivate BOOL,
-    IN isAnonymous BOOL,
-    IN daysLeftOfEditing INT
-)
-BEGIN
-    CALL _editBinaryEntity(
-        "a",
-        userID, entID, CAST(defStr AS BINARY), isPrivate, isAnonymous,
-        daysLeftOfEditing
-    );
-END //
-DELIMITER ;
-
 
 
 DELIMITER //
