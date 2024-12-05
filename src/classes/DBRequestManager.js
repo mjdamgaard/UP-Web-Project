@@ -1,12 +1,11 @@
-import $ from 'jquery';
-
-// TODO: Refactor to remove jquery (also eliminating the redundant JSON-
-// encoding, decoding, and then encoding again.)
+// import $ from 'jquery';
 
 
 // (If it turns out that we'll need manual caching (for more than just
 // collapsed forwarding), I will just use a LRU library, e.g.
 // https://github.com/rsms/js-lru, to implement that pretty easily.)
+
+
 
 export class DBRequestManager {
   static ongoingQueries = {};
@@ -20,11 +19,6 @@ export class DBRequestManager {
       callback = callbackData ?? void(0);
       callbackData = null;
     }
-    // URL-encode the request data.
-    let encodedReqData = {};
-    Object.keys(reqData).forEach(key => {
-      encodedReqData[key] = encodeURIComponent(reqData[key]);
-    });
     // If there is already an ongoing query with this reqData object, simply
     // push the insert data and return.
     let reqDataKey = JSON.stringify(reqData);
@@ -34,12 +28,12 @@ export class DBRequestManager {
       return;
     }
     
-    // Else initialize an ongoing query data queue, and make a $.getJSON()
+    // Else initialize an ongoing query data queue, and make a fetchData()
     // call, which runs all the callbacks in the queue on at a time upon
     // receiving the response from the server.
     this.ongoingQueries[reqDataKey] = [[callback, callbackData]];
     let url = "http://localhost:80/query_handler.php";
-    $.getJSON(url, encodedReqData, (result) => {
+    fetchData(url, reqData, (responseText) => {
       // Get and then delete the ongoing query queue.
       let ongoingQueries = this.ongoingQueries;
       let queryQueue = ongoingQueries[reqDataKey];
@@ -47,11 +41,10 @@ export class DBRequestManager {
 
       // Then call all callbacks in queryQueue with their associated data,
       // but make a deep copy for each individual callback first.
-      let resultJSON = JSON.stringify(result);
       for (let i = 0; i < queryQueue.length; i++) {
         let callback = queryQueue[i][0];
         let callbackData = queryQueue[i][1];
-        callback(JSON.parse(resultJSON), callbackData);
+        callback(JSON.parse(responseText), callbackData);
       }
       // // If cacheQuery is true, cache the query.
       // if (cacheQuery) {
@@ -66,7 +59,8 @@ export class DBRequestManager {
       callbackData = null;
     }
     let url = "http://localhost:80/insert_handler.php";
-    $.post(url, reqData, (result) => {
+    postData(url, reqData, (responseText) => {
+      let result = JSON.parse(responseText);
       callback(result, callbackData);
     });
   }
@@ -178,7 +172,8 @@ export class DBRequestManager {
     }
 
     let url = "http://localhost:80/insert_handler.php";
-    $.post(url, reqData, result => {
+    postData(url, reqData, (responseText) => {
+      let result = JSON.parse(responseText);
       if (key === undefined) {
         setResults({data: result, isFetched: true, isFetching: false});
       } else {
@@ -215,6 +210,52 @@ export class DBRequestManager {
 //     .replaceAll('"', "&quot;")
 //     .replaceAll("'", "&apos;");
 // }
+
+
+
+
+
+
+export function fetchData(url, reqData, callback) {
+  var queryURL = url;
+  Object.entries(reqData).forEach(([key, val], ind) => {
+    let delimiter = (ind === 0) ? "?" : "&";
+    queryURL += delimiter + key + "=" + encodeURIComponent(val);
+  });
+
+  var options;
+  if (queryURL.length <= 2000) {
+    url = queryURL;
+  } else {
+    options = {
+      method: "POST",
+      body: JSON.stringify(reqData),
+    };
+  }
+
+  fetch(url, options).then(response => {
+    if (!response.ok) {
+      throw "HTTP error: " + response.status;
+    }
+    callback(response.text());
+  });
+} 
+
+export function postData(url, reqData, callback) {
+  let options = {
+    method: "POST",
+    body: JSON.stringify(reqData),
+  };
+
+  fetch(url, options).then(response => {
+    if (!response.ok) {
+      throw "HTTP error: " + response.status;
+    }
+    callback(response.text());
+  });
+} 
+
+
 
 
 export default DBRequestManager;
