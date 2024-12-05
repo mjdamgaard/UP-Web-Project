@@ -1,11 +1,23 @@
 
 SELECT "Insert procedures";
 
-DROP PROCEDURE insertOrUpdateScore;
-DROP PROCEDURE deleteScore;
+DROP PROCEDURE insertOrUpdateOpinionScore;
+DROP PROCEDURE deleteOpinionScore;
+DROP PROCEDURE insertOrUpdatePrivateScore;
+DROP PROCEDURE deletePrivateScore;
 
-DROP PROCEDURE insertOrFindEntity;
-DROP PROCEDURE editOrFindEntity;
+DROP PROCEDURE insertOrFindFunctionalEntity;
+DROP PROCEDURE insertOrFindAttributeDefinedEntity;
+DROP PROCEDURE editAttributeDefinedEntity;
+DROP PROCEDURE _insertTextDataEntity;
+DROP PROCEDURE insertUTF8Entity;
+DROP PROCEDURE insertHTMLEntity;
+DROP PROCEDURE insertJSONEntity;
+DROP PROCEDURE _editTextDataEntity;
+DROP PROCEDURE editUTF8Entity;
+DROP PROCEDURE editHTMLEntity;
+DROP PROCEDURE editJSONEntity;
+DROP PROCEDURE anonymizeEntity;
 
 
 
@@ -130,6 +142,7 @@ BEGIN proc: BEGIN
         ROLLBACK;
         SELECT NULL AS outID, 2 AS exitCode; -- rollback due to race condition.
     END;
+
     START TRANSACTION;
 
     SELECT ent_id INTO outID
@@ -181,15 +194,16 @@ CREATE PROCEDURE insertOrFindAttributeDefinedEntity (
 BEGIN proc: BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
-    IF (isAnonymous || daysLeftOfEditing <= 0) THEN
-        SET daysLeftOfEditing = NULL
-    END IF;
-
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
         SELECT NULL AS outID, 2 AS exitCode; -- rollback due to race condition.
     END;
+
+    IF (isAnonymous OR daysLeftOfEditing <= 0) THEN
+        SET daysLeftOfEditing = NULL;
+    END IF;
+
     START TRANSACTION;
 
     SELECT ent_id INTO outID
@@ -246,8 +260,14 @@ BEGIN proc: BEGIN
     DECLARE prevDefStr VARCHAR(700);
     DECLARE prevType CHAR;
 
-    IF (isAnonymous || daysLeftOfEditing <= 0) THEN
-        SET daysLeftOfEditing = NULL
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SELECT NULL AS outID, 4 AS exitCode; -- rollback due to race condition.
+    END;
+
+    IF (isAnonymous OR daysLeftOfEditing <= 0) THEN
+        SET daysLeftOfEditing = NULL;
     END IF;
 
     SELECT creator_id, editable_until, def_str, type_ident
@@ -280,11 +300,6 @@ BEGIN proc: BEGIN
     END IF;
 
 
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SELECT NULL AS outID, 4 AS exitCode; -- rollback due to race condition.
-    END;
     START TRANSACTION;
 
     SELECT ent_id INTO outID
@@ -310,7 +325,7 @@ BEGIN proc: BEGIN
     WHERE id = entID;
 
     UPDATE EntitySecKeys
-    SET def_key = defStr,
+    SET def_key = defStr
     WHERE (
         type_ident = "a" AND
         def_key = prevDefStr
@@ -345,8 +360,8 @@ BEGIN
         SET isAnonymous = 0;
         SET daysLeftOfEditing = NULL;
     END IF;
-    IF (isAnonymous || daysLeftOfEditing <= 0) THEN
-        SET daysLeftOfEditing = NULL
+    IF (isAnonymous OR daysLeftOfEditing <= 0) THEN
+        SET daysLeftOfEditing = NULL;
     END IF;
 
     INSERT INTO Entities (
@@ -448,8 +463,8 @@ BEGIN proc: BEGIN
         SET isAnonymous = 0;
         SET daysLeftOfEditing = NULL;
     END IF;
-    IF (isAnonymous || daysLeftOfEditing <= 0) THEN
-        SET daysLeftOfEditing = NULL
+    IF (isAnonymous OR daysLeftOfEditing <= 0) THEN
+        SET daysLeftOfEditing = NULL;
     END IF;
 
     SELECT creator_id, is_private, editable_until, type_ident

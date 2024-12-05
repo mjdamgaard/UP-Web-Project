@@ -33,7 +33,8 @@ export class DataFetcher {
       m: 700,
       s: 0,
     };
-    DBRequestManager.query(reqData, (result) => {
+    DBRequestManager.query(reqData, (responseText) => {
+      let result = JSON.parse(responseText);
       let [datatype, defStr, len, creatorID, editableUntil] = result[0] ?? [];
       let isContained = (len <= 700); 
       callback(datatype, defStr, isContained, len, creatorID, editableUntil);
@@ -179,7 +180,8 @@ export class DataFetcher {
       o: o ?? 0,
       a: a ?? 0,
     };
-    DBRequestManager.query(reqData, (entList) => {
+    DBRequestManager.query(reqData, (responseText) => {
+      let entList = JSON.parse(responseText);
       callback(entList);
     });
   }
@@ -207,7 +209,8 @@ export class DataFetcher {
       o: 0,
       a: 0,
     };
-    DBRequestManager.query(reqData, (entList) => {
+    DBRequestManager.query(reqData, (responseText) => {
+      let entList = JSON.parse(responseText);
       callback(entList);
     });
   }

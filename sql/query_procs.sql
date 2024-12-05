@@ -1,16 +1,20 @@
 
 SELECT "Query procedures";
 
-DROP PROCEDURE selectEntityList;
-DROP PROCEDURE selectEntityListFromHash;
-DROP PROCEDURE selectEntityListFromDefStr;
-DROP PROCEDURE selectScore;
+DROP PROCEDURE selectUserOpinionEntityList;
+DROP PROCEDURE selectOpinionScore;
+DROP PROCEDURE selectPrivateEntityList;
+DROP PROCEDURE selectPrivateScore;
+DROP PROCEDURE selectScoreHistogram;
+DROP PROCEDURE selectFloatingPointAggregateList;
+DROP PROCEDURE selectFloatingPointScoreAggregate;
 
 -- TODO: Make proc to query for users who has rated a stmt / scale.
 
 DROP PROCEDURE selectEntity;
 DROP PROCEDURE selectEntityAsUser;
-DROP PROCEDURE selectEntityFromHash;
+DROP PROCEDURE selectEntityFromSecKey;
+DROP PROCEDURE selectEntityIDFromSecKey;
 
 
 DROP PROCEDURE selectUserInfo;
@@ -129,7 +133,7 @@ CREATE PROCEDURE selectScoreHistogram (
     IN subjID BIGINT UNSIGNED
 )
 BEGIN
-    SELECT hist_data AS histData
+    SELECT HEX(hist_data) AS histData
     FROM ScoreHistograms
     WHERE (
         list_id = listID AND
@@ -430,7 +434,6 @@ CREATE PROCEDURE selectEntityAsUser (
     IN startPos INT UNSIGNED
 )
 BEGIN
-    SELECT
     SELECT
         type_ident AS datatype,
         (

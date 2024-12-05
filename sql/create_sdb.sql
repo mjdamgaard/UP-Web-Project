@@ -4,15 +4,18 @@ DROP TABLE UserOpinionScores;
 DROP TABLE PrivateScores;
 DROP TABLE ScoreHistograms;
 DROP TABLE FloatingPointScoreAggregates;
-DROP TABLE FloatingPointScoreAggregates;
+
+/* Requests */
+DROP TABLE UpdateEntityListRequests;
+DROP TABLE ScheduledEntityListUpdates;
+DROP TABLE ScheduledSubListUpdates;
 
 /* Entities */
 DROP TABLE Entities;
 
 /* Indexes */
-DROP TABLE EntityHashes;
-DROP TABLE EntityDefStrings;
--- DROP TABLE FulltextIndexedEntities;
+DROP TABLE EntitySecKeys;
+DROP TABLE FulltextIndexedEntities;
 
 
 /* Users */
@@ -51,7 +54,7 @@ CREATE TABLE UserOpinionScores (
 
     PRIMARY KEY (
         user_id,
-        qual_id
+        qual_id,
         score_val,
         subj_id
     ),
@@ -129,7 +132,7 @@ CREATE TABLE UpdateEntityListRequests (
 
     req_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    list_key VARCHAR(3000) NOT NULL,
+    list_key VARCHAR(700) NOT NULL,
 
     user_id BIGINT UNSIGNED NOT NULL
 );
@@ -137,7 +140,7 @@ CREATE TABLE UpdateEntityListRequests (
 
 CREATE TABLE ScheduledEntityListUpdates (
 
-    list_key VARCHAR(3000) NOT NULL,
+    list_key VARCHAR(700) NOT NULL,
 
     user_id BIGINT UNSIGNED NOT NULL,
 
@@ -153,7 +156,7 @@ CREATE TABLE ScheduledEntityListUpdates (
 -- my 23--xx notes.)
 CREATE TABLE ScheduledSubListUpdates (
 
-    list_key VARCHAR(3000) NOT NULL,
+    list_key VARCHAR(700) NOT NULL,
 
     node_id BIGINT UNSIGNED NOT NULL,
 
@@ -399,7 +402,7 @@ CREATE TABLE Entities (
 
     -- A string (possibly a JSON object) that defines the entity. The format
     -- depends on type_ident.
-    def_str LONGTEXT CHARACTER SET utf8mb4 NOT NULL DEFAULT "",
+    def_str LONGTEXT CHARACTER SET utf8mb4 NOT NULL,
 
     -- The user who submitted the entity, unless creator_id = 0, which means
     -- that the creator is anonymous.
@@ -418,13 +421,9 @@ CREATE TABLE Entities (
 
     -- If an entity is private, the creator ID is never 0, and it is always
     -- editable. 
-    CHECK (is_private = 0 OR creator_id != 0 AND is_editable = 1),
+    CHECK (is_private = 0 OR creator_id != 0 AND editable_until IS NULL),
     -- If creator ID is 0, then it is never editable.
-    CHECK (creator_id != 0 OR is_editable = 0)
-
-
-    -- modified_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    -- -- The modified_at field is (potentially) for future use.
+    CHECK (creator_id != 0 OR editable_until IS NULL)
 );
 
 
