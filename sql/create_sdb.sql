@@ -399,15 +399,7 @@ CREATE TABLE Entities (
 
     -- A string (possibly a JSON object) that defines the entity. The format
     -- depends on type_ident.
-    text_def_str LONGTEXT CHARACTER SET utf8mb4 NOT NULL DEFAULT "",
-
-    -- A string that defines the entity, *if* the entity is not defined by the
-    -- text_def_str. Whether an entity uses text_def_str or bin_def_str depends
-    -- on the datatype.
-    bin_def_str LONGBLOB NOT NULL DEFAULT "",
-
-    -- An entity can only use either a text-based or a binary defStr.
-    CHECK(text_def_str = "" XOR bin_def_str = ""),
+    def_str LONGTEXT CHARACTER SET utf8mb4 NOT NULL DEFAULT "",
 
     -- The user who submitted the entity, unless creator_id = 0, which means
     -- that the creator is anonymous.

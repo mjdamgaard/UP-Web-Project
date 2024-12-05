@@ -95,7 +95,8 @@ export class DataFetcher {
       m: 700,
       s: 0,
     };
-    DBRequestManager.query(reqData, (result) => {
+    DBRequestManager.query(reqData, (responseText) => {
+      let result = JSON.parse(responseText);
       let [datatype, defStr, len, creatorID, editableUntil, isPrivate] =
         result[0] ?? [];
       let isContained = (len <= 700); 

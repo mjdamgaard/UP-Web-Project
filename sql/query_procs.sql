@@ -404,17 +404,12 @@ BEGIN
         type_ident AS datatype,
         (
             CASE WHEN maxLen = 0 THEN
-                SUBSTRING(
-                    CONCAT(text_def_str, HEX(bin_def_str)), startPos + 1
-                )
+                SUBSTR(def_str, startPos + 1)
             ELSE
-                SUBSTRING(
-                    CONCAT(text_def_str, HEX(bin_def_str)), startPos + 1,
-                    maxLen
-                )
+                SUBSTR(def_str, startPos + 1, maxLen)
             END
         ) AS defStr,
-        LENGTH(text_def_str) + LENGTH(bin_def_str) AS len,
+        LENGTH(def_str) AS len,
         creator_id AS creatorID,
         editable_until AS editableUntil
     FROM Entities
@@ -440,17 +435,12 @@ BEGIN
         type_ident AS datatype,
         (
             CASE WHEN maxLen = 0 THEN
-                SUBSTRING(
-                    CONCAT(text_def_str, HEX(bin_def_str)), startPos + 1
-                )
+                SUBSTR(def_str, startPos + 1)
             ELSE
-                SUBSTRING(
-                    CONCAT(text_def_str, HEX(bin_def_str)), startPos + 1,
-                    maxLen
-                )
+                SUBSTR(def_str, startPos + 1, maxLen)
             END
         ) AS defStr,
-        LENGTH(text_def_str) + LENGTH(bin_def_str) AS len,
+        LENGTH(def_str) AS len,
         creator_id AS creatorID,
         editable_until AS editableUntil,
         is_private AS isPrivate
@@ -476,17 +466,12 @@ BEGIN
         id AS entID,
         (
             CASE WHEN maxLen = 0 THEN
-                SUBSTRING(
-                    CONCAT(text_def_str, HEX(bin_def_str)), startPos + 1
-                )
+                SUBSTR(def_str, startPos + 1)
             ELSE
-                SUBSTRING(
-                    CONCAT(text_def_str, HEX(bin_def_str)), startPos + 1,
-                    maxLen
-                )
+                SUBSTR(def_str, startPos + 1, maxLen)
             END
         ) AS defStr,
-        LENGTH(text_def_str) + LENGTH(bin_def_str) AS len,
+        LENGTH(def_str) AS len,
         creator_id AS creatorID,
         editable_until AS editableUntil
     FROM Entities

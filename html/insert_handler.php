@@ -96,16 +96,6 @@ switch ($reqType) {
         $paramNameArr = array("u", "e", "def", "a", "days");
         $typeArr = array("id", "id", "text", "bool", "int");
         break;
-    case "binEnt":
-        $sql = "CALL insertBinaryEntity (?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "def", "prv", "a", "days");
-        $typeArr = array("id", "blob", "bool", "bool", "int");
-        break;
-    case "editBinEnt":
-        $sql = "CALL editBinaryEntity (?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "e", "def", "prv", "a", "days");
-        $typeArr = array("id", "id", "blob", "bool", "bool", "int");
-        break;
     case "utf8Ent":
         $sql = "CALL insertUTF8Entity (?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "def", "prv", "a", "days");

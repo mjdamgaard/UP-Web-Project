@@ -148,7 +148,7 @@ BEGIN proc: BEGIN
 
     INSERT INTO Entities (
         creator_id,
-        type_ident, text_def_str, is_private, editable_until
+        type_ident, def_str, is_private, editable_until
     )
     VALUES (
         CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
@@ -208,7 +208,7 @@ BEGIN proc: BEGIN
 
     INSERT INTO Entities (
         creator_id,
-        type_ident, text_def_str, is_private,
+        type_ident, def_str, is_private,
         editable_until
     )
     VALUES (
@@ -250,7 +250,7 @@ BEGIN proc: BEGIN
         SET daysLeftOfEditing = NULL
     END IF;
 
-    SELECT creator_id, editable_until, text_def_str, type_ident
+    SELECT creator_id, editable_until, def_str, type_ident
     INTO creatorID, prevEditableUntil, prevDefStr, prevType
     FROM Entities
     WHERE id = entID;
@@ -305,7 +305,7 @@ BEGIN proc: BEGIN
     UPDATE Entities
     SET
         creator_id = CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        text_def_str = defStr,
+        def_str = defStr,
         editable_until = ADDDATE(CURDATE, INTERVAL daysLeftOfEditing DAY)
     WHERE id = entID;
 
@@ -325,45 +325,12 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE _insertBinaryEntity (
-    IN datatype CHAR,
-    IN userID BIGINT UNSIGNED,
-    IN defStr LONGBLOB,
-    IN isPrivate BOOL,
-    IN isAnonymous BOOL,
-    IN daysLeftOfEditing INT
-)
-BEGIN
-    DECLARE outID BIGINT UNSIGNED;
 
-    IF (isPrivate) THEN
-        SET isAnonymous = 0;
-        SET daysLeftOfEditing = NULL;
-    END IF;
-    IF (isAnonymous || daysLeftOfEditing <= 0) THEN
-        SET daysLeftOfEditing = NULL
-    END IF;
 
-    INSERT INTO Entities (
-        creator_id,
-        type_ident, bin_def_str, is_private,
-        editable_until
-    )
-    VALUES (
-        CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        datatype, defStr, isPrivate,
-        ADDDATE(CURDATE, INTERVAL daysLeftOfEditing DAY)
-    );
-    SET outID = LAST_INSERT_ID();
-
-    SELECT outID, 0 AS exitCode; -- insert.
-END //
-DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE _insertTextBasedEntity (
+CREATE PROCEDURE _insertTextDataEntity (
     IN datatype CHAR,
     IN userID BIGINT UNSIGNED,
     IN defStr LONGTEXT CHARACTER SET utf8mb4,
@@ -384,7 +351,7 @@ BEGIN
 
     INSERT INTO Entities (
         creator_id,
-        type_ident, text_def_str, is_private,
+        type_ident, def_str, is_private,
         editable_until
     )
     VALUES (
@@ -401,23 +368,6 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE insertBinaryEntity (
-    IN userID BIGINT UNSIGNED,
-    IN defStr BLOB,
-    IN isPrivate BOOL,
-    IN isAnonymous BOOL,
-    IN daysLeftOfEditing INT
-)
-BEGIN
-    CALL _insertBinaryEntity(
-        "b",
-        userID, defStr, isPrivate, isAnonymous, daysLeftOfEditing
-    );
-END //
-DELIMITER ;
-
-
 
 DELIMITER //
 CREATE PROCEDURE insertUTF8Entity (
@@ -428,10 +378,9 @@ CREATE PROCEDURE insertUTF8Entity (
     IN daysLeftOfEditing INT
 )
 BEGIN
-    CALL _insertTextBasedEntity (
+    CALL _insertTextDataEntity (
         "u",
-        userID, CAST(defStr AS BINARY), isPrivate, isAnonymous,
-        daysLeftOfEditing
+        userID, defStr, isPrivate, isAnonymous, daysLeftOfEditing
     );
 END //
 DELIMITER ;
@@ -446,10 +395,9 @@ CREATE PROCEDURE insertHTMLEntity (
     IN daysLeftOfEditing INT
 )
 BEGIN
-    CALL _insertTextBasedEntity (
+    CALL _insertTextDataEntity (
         "h",
-        userID, CAST(defStr AS BINARY), isPrivate, isAnonymous,
-        daysLeftOfEditing
+        userID, defStr, isPrivate, isAnonymous, daysLeftOfEditing
     );
 END //
 DELIMITER ;
@@ -464,10 +412,9 @@ CREATE PROCEDURE insertJSONEntity (
     IN daysLeftOfEditing INT
 )
 BEGIN
-    CALL _insertTextBasedEntity (
+    CALL _insertTextDataEntity (
         "j",
-        userID, CAST(defStr AS BINARY), isPrivate, isAnonymous,
-        daysLeftOfEditing
+        userID, defStr, isPrivate, isAnonymous, daysLeftOfEditing
     );
 END //
 DELIMITER ;
@@ -480,68 +427,9 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE _editBinaryEntity (
-    IN datatype CHAR,
-    IN userID BIGINT UNSIGNED,
-    IN entID BIGINT UNSIGNED,
-    IN defStr LONGBLOB,
-    IN isPrivate BOOL,
-    IN isAnonymous BOOL,
-    IN daysLeftOfEditing INT
-)
-BEGIN proc: BEGIN
-    DECLARE creatorID BIGINT UNSIGNED;
-    DECLARE prevIsPrivate TINYINT UNSIGNED;
-    DECLARE prevEditableUntil DATE;
-    DECLARE prevType CHAR;
-
-    IF (isPrivate) THEN
-        SET isAnonymous = 0;
-        SET daysLeftOfEditing = NULL;
-    END IF;
-    IF (isAnonymous || daysLeftOfEditing <= 0) THEN
-        SET daysLeftOfEditing = NULL
-    END IF;
-
-    SELECT creator_id, is_private, editable_until, type_ident
-    INTO creatorID, prevIsPrivate, prevEditableUntil, prevType
-    FROM Entities
-    WHERE id = entID;
-
-    IF (creatorID != userID) THEN
-        SELECT entID AS outID, 1 AS exitCode; -- user is not the owner.
-        LEAVE proc;
-    END IF;
-
-    IF (
-        NOT prevIsPrivate AND
-        (prevEditableUntil IS NULL OR prevEditableUntil > CURDATE())
-    ) THEN
-        SELECT entID AS outID, 2 AS exitCode; -- can no longer be edited.
-        LEAVE proc;
-    END IF;
-
-    IF (prevType != datatype) THEN
-        SELECT entID AS outID, 3 AS exitCode; -- changing datatype not impl.
-        LEAVE proc;
-    END IF;
-
-    UPDATE Entities
-    SET
-        creator_id = CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        bin_def_str = defStr,
-        is_private = isPrivate,
-        editable_until = ADDDATE(CURDATE, INTERVAL daysLeftOfEditing DAY)
-    WHERE id = entID;
-
-    SELECT entID AS outID, 0 AS exitCode; -- edit.
-END proc; END //
-DELIMITER ;
-
 
 DELIMITER //
-CREATE PROCEDURE _editTextBasedEntity (
+CREATE PROCEDURE _editTextDataEntity (
     IN datatype CHAR,
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
@@ -590,7 +478,7 @@ BEGIN proc: BEGIN
     UPDATE Entities
     SET
         creator_id = CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        text_def_str = defStr,
+        def_str = defStr,
         is_private = isPrivate,
         editable_until = ADDDATE(CURDATE, INTERVAL daysLeftOfEditing DAY)
     WHERE id = entID;
@@ -603,24 +491,6 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE editBinaryEntity (
-    IN userID BIGINT UNSIGNED,
-    IN entID BIGINT UNSIGNED,
-    IN defStr BLOB,
-    IN isPrivate BOOL,
-    IN isAnonymous BOOL,
-    IN daysLeftOfEditing INT
-)
-BEGIN
-    CALL _editBinaryEntity (
-        "b",
-        userID, entID, defStr, isPrivate, isAnonymous, daysLeftOfEditing
-    );
-END //
-DELIMITER ;
-
-
-DELIMITER //
 CREATE PROCEDURE editUTF8Entity (
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
@@ -630,10 +500,9 @@ CREATE PROCEDURE editUTF8Entity (
     IN daysLeftOfEditing INT
 )
 BEGIN
-    CALL _editTextBasedEntity (
+    CALL _editTextDataEntity (
         "u",
-        userID, entID, CAST(defStr AS BINARY), isPrivate, isAnonymous,
-        daysLeftOfEditing
+        userID, entID, defStr, isPrivate, isAnonymous, daysLeftOfEditing
     );
 END //
 DELIMITER ;
@@ -649,10 +518,9 @@ CREATE PROCEDURE editHTMLEntity (
     IN daysLeftOfEditing INT
 )
 BEGIN
-    CALL _editTextBasedEntity (
+    CALL _editTextDataEntity (
         "h",
-        userID, entID, CAST(defStr AS BINARY), isPrivate, isAnonymous,
-        daysLeftOfEditing
+        userID, entID, defStr, isPrivate, isAnonymous, daysLeftOfEditing
     );
 END //
 DELIMITER ;
@@ -668,10 +536,9 @@ CREATE PROCEDURE editJSONEntity (
     IN daysLeftOfEditing INT
 )
 BEGIN
-    CALL _editTextBasedEntity (
+    CALL _editTextDataEntity (
         "j",
-        userID, entID, CAST(defStr AS BINARY), isPrivate, isAnonymous,
-        daysLeftOfEditing
+        userID, entID, defStr, isPrivate, isAnonymous, daysLeftOfEditing
     );
 END //
 DELIMITER ;
