@@ -89,24 +89,34 @@ switch ($reqType) {
         $typeArr = array("id", "id", "id");
         break;
     case "funEnt":
-        $sql = "CALL insertOrFindFunctionEntity (?, ?, ?)";
-        $paramNameArr = array("u", "def", "a");
-        $typeArr = array("id", "text", "bool");
+        $sql = "CALL insertOrFindFunctionEntity (?, ?, ?, ?)";
+        $paramNameArr = array("u", "def", "a", "days");
+        $typeArr = array("id", "str", "bool", "int");
+        break;
+    case "editFunEnt":
+        $sql = "CALL editFunctionEntity (?, ?, ?, ?, ?)";
+        $paramNameArr = array("u", "e", "def", "a", "days");
+        $typeArr = array("id", "id", "str", "bool", "int");
         break;
     case "callEnt":
-        $sql = "CALL insertOrFindFunctionCallEntity (?, ?, ?)";
-        $paramNameArr = array("u", "def", "a");
-        $typeArr = array("id", "text", "bool");
+        $sql = "CALL insertOrFindFunctionCallEntity (?, ?, ?, ?)";
+        $paramNameArr = array("u", "def", "a", "days");
+        $typeArr = array("id", "str", "bool", "int");
+        break;
+    case "editCallEnt":
+        $sql = "CALL editFunctionCallEntity (?, ?, ?, ?, ?)";
+        $paramNameArr = array("u", "e", "def", "a", "days");
+        $typeArr = array("id", "id", "str", "bool", "int");
         break;
     case "attrEnt":
         $sql = "CALL insertOrFindAttributeDefinedEntity (?, ?, ?, ?)";
         $paramNameArr = array("u", "def", "a", "days");
-        $typeArr = array("id", "text", "bool", "int");
+        $typeArr = array("id", "str", "bool", "int");
         break;
     case "editAttrEnt":
         $sql = "CALL editAttributeDefinedEntity (?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "e", "def", "a", "days");
-        $typeArr = array("id", "id", "text", "bool", "int");
+        $typeArr = array("id", "id", "str", "bool", "int");
         break;
     case "utf8Ent":
         $sql = "CALL insertUTF8Entity (?, ?, ?, ?, ?)";
@@ -161,6 +171,10 @@ $res = $stmt->get_result()->fetch_assoc();
 header("Content-Type: text/json");
 if ($res["exitCode"] == "0") {
     http_response_code(201);
+}
+if ($res["exitCode"] == "10") {
+    http_response_code(500);
+    $res = "Deadlock encountered in the database";
 }
 
 echo json_encode($res);

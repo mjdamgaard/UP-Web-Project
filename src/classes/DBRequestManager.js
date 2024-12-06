@@ -245,7 +245,17 @@ export function postData(url, reqData, callback) {
 
   fetch(url, options).then(response => {
     if (!response.ok) {
-      throw "HTTP error: " + response.status;
+      response.text().then(responseText => {
+        if (responseText === '"Deadlock encountered in the database"') {
+          callback(null);
+          return;
+        }
+        throw (
+          "HTTP error " + response.status +
+          (responseText ? ": " + responseText : "")
+        );
+      });
+      return;
     }
     response.text().then((responseText) => {
       callback(responseText);

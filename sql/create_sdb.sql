@@ -406,11 +406,11 @@ CREATE TABLE Entities (
 
     -- The user who submitted the entity, unless creator_id = 0, which means
     -- that the creator is anonymous.
-    creator_id BIGINT UNSIGNED NOT NULL,
+    creator_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
     -- A boolean representing whether this entity can be viewed by anyone other
     -- than its creator.
-    is_private TINYINT UNSIGNED NOT NULL, CHECK (is_private <= 1),
+    is_private TINYINT UNSIGNED NOT NULL DEFAULT 0, CHECK (is_private <= 1),
 
     -- -- A boolean representing whether this entity can be edited.
     -- is_editable TINYINT UNSIGNED NOT NULL DEFAULT 1, CHECK (is_editable <= 1),
@@ -477,6 +477,35 @@ CREATE TABLE FulltextIndexedEntities (
 --         ent_id
 --     )
 -- );
+
+
+
+/* Initial datatype ('t') entities */
+
+INSERT INTO Entities (
+    type_ident, def_str
+)
+VALUES
+    ("t", "t"),
+    ("t", "f"),
+    ("t", "c"),
+    ("t", "a"),
+    ("t", "u"),
+    ("t", "h"),
+    ("t", "j");
+
+INSERT INTO EntitySecKeys (
+    type_ident, def_key, ent_id
+)
+VALUES
+    ("t", "t", 1),
+    ("t", "f", 2),
+    ("t", "c", 3),
+    ("t", "a", 4),
+    ("t", "u", 5),
+    ("t", "h", 6),
+    ("t", "j", 7);
+
 
 
 

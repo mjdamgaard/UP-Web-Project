@@ -114,21 +114,21 @@ export function initialInserts(dataInserter) {
         //     ["Class", "@[classes]", "mandatory"],
         //     ["Description", "h", "optional"],
         // ],
-        "Member format": "@[entities/format]",
+        // "Member format": "@[entities/format]",
         "Rejects submissions": true,
         "Description": "@[entities/desc]",
     }),
   );
-  dataInserter.insertOrEditParsedEntity(
-    "entities/format", "f", (
-        "(Description:h?)" +
-        "=>" +
-        JSON.stringify({
-          "Class": "@[entities]",
-          "Description": "%1",
-        })
-    )
-  );
+  // dataInserter.insertOrEditParsedEntity(
+  //   "entities/format", "f", (
+  //       "(Description?:h)" +
+  //       "=>" +
+  //       JSON.stringify({
+  //         "Class": "@[entities]",
+  //         "Description": "%1",
+  //       })
+  //   )
+  // );
   dataInserter.insertOrEditParsedEntity(
     "entities/desc", "h", (
         "<h1><class>Entities</class></h1>" +
@@ -169,13 +169,14 @@ export function initialInserts(dataInserter) {
   );
   dataInserter.insertOrEditParsedEntity(
     "classes/format", "f", (
-        "(" + join(
+        "(" + [
           "Name:string",
           "Member title:string",
-          "Member datatype:string?",
-          "Member format:f?",
+          "Member datatype?:string",
+          "Member format?:f",
           "Description:h",
-        ) + ")=>" +
+        ].join(",") +
+        ")=>" +
         JSON.stringify({
           "Class": "@[classes]",
           "Member title": "%1",
@@ -798,9 +799,13 @@ export function insertInitialScores(dataInserter) {
 
 export function getEntityIDModule(dataInserter, pathArr, objName) {
   var ret = "\nexport const " + objName + " = {\n";
+  let initDatatypes = ["t", "f", "c", "a", "u", "h", "j"];
+  initDatatypes.forEach((datatype, ind) => {
+    ret += '  "' + datatype + '": ' + (ind + 1) + ",\n";
+  });
   pathArr.forEach(path => {
     let entID = dataInserter.getEntIDFromPath(path);
-    ret += '  "' + path + '": ' + (entID || "null") + ",\n"
+    ret += '  "' + path + '": ' + (entID || "null") + ",\n";
   });
   ret += "};"
   return ret;
