@@ -110,13 +110,24 @@ export function initialInserts(dataInserter) {
         "Class": "@[classes]",
         "Name": "Entities",
         "Member title": "Entity",
-        "Special attributes": [
-            ["Class", "@[classes]", "mandatory"],
-            ["Description", "h", "optional"],
-        ],
+        // "Special attributes": [
+        //     ["Class", "@[classes]", "mandatory"],
+        //     ["Description", "h", "optional"],
+        // ],
+        "Member format": "@[entities/format]",
         "Rejects submissions": true,
         "Description": "@[entities/desc]",
     }),
+  );
+  dataInserter.insertOrEditParsedEntity(
+    "entities/format", "f", (
+        "(Description:h?)" +
+        "=>" +
+        JSON.stringify({
+          "Class": "@[entities]",
+          "Description": "%1",
+        })
+    )
   );
   dataInserter.insertOrEditParsedEntity(
     "entities/desc", "h", (
@@ -130,30 +141,49 @@ export function initialInserts(dataInserter) {
         "Class": "@[classes]",
         "Name": "Classes",
         "Member title": "Class",
-        "Special attributes": [
-            ["Name", "string", "mandatory"],
-            ["Member title", "string", "mandatory"],
-            [
-                "Parent class",
-                "@[classes]=@[entities]",
-                // (When missing, the parent class is the 'Entities' class.)
-                "optional"
-            ],
-            ["Member datatype", "string='j'", "optional"],
-            // If Member datatype is set (to not 'j'), then all 'Special
-            // attributes' are interpreted to be 'removed.'
-            [
-                "Special attributes",
-                "[[Attribute name,Type,Option]]",
-                "optional"
-            ],
-            ["Rejects submissions", "bool=false", "optional"],
-            ["Anonymous creators only", "bool=false", "optional"],
-            // ('false' is the default value when missing)
-            ["Description", "h", "mandatory"], // (Overwrites "optional")
-        ],
+        // "Special attributes": [
+        //     ["Name", "string", "mandatory"],
+        //     ["Member title", "string", "mandatory"],
+        //     [
+        //         "Parent class",
+        //         "@[classes]=@[entities]",
+        //         // (When missing, the parent class is the 'Entities' class.)
+        //         "optional"
+        //     ],
+        //     ["Member datatype", "string='j'", "optional"],
+        //     // If Member datatype is set (to not 'j'), then all 'Special
+        //     // attributes' are interpreted to be 'removed.'
+        //     [
+        //         "Special attributes",
+        //         "[[Attribute name,Type,Option]]",
+        //         "optional"
+        //     ],
+        //     ["Rejects submissions", "bool=false", "optional"],
+        //     ["Anonymous creators only", "bool=false", "optional"],
+        //     // ('false' is the default value when missing)
+        //     ["Description", "h", "mandatory"], // (Overwrites "optional")
+        // ],
+        "Member format": "@[classes/format]",
         "Description": "@[classes/desc]",
     }),
+  );
+  dataInserter.insertOrEditParsedEntity(
+    "classes/format", "f", (
+        "(" + join(
+          "Name:string",
+          "Member title:string",
+          "Member datatype:string?",
+          "Member format:f?",
+          "Description:h",
+        ) + ")=>" +
+        JSON.stringify({
+          "Class": "@[classes]",
+          "Member title": "%1",
+          "Member datatype": "%2",
+          "Member format": "%3",
+          "Description": "%4",
+        })
+    )
   );
   dataInserter.insertOrEditParsedEntity(
     "classes/desc", "h", ( // ('x' for 'XML,' or simply 'teXt.')
@@ -201,10 +231,6 @@ export function initialInserts(dataInserter) {
         "Class": "@[classes]",
         "Name": "Users",
         "Member title": "User",
-        "Special attributes": [
-            ["Username", "string", "mandatory"],
-        ],
-        "Rejects submissions": true,
         "Description": "@[users/desc]",
     }),
   );
