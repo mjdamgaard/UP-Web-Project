@@ -1,21 +1,21 @@
 
 /* Scores */
-DROP TABLE UserOpinionScores;
-DROP TABLE PrivateScores;
-DROP TABLE ScoreHistograms;
-DROP TABLE FloatingPointScoreAggregates;
+-- DROP TABLE UserOpinionScores;
+-- DROP TABLE PrivateScores;
+-- DROP TABLE ScoreHistograms;
+-- DROP TABLE FloatingPointScoreAggregates;
 
 /* Requests */
-DROP TABLE UpdateEntityListRequests;
-DROP TABLE ScheduledEntityListUpdates;
-DROP TABLE ScheduledSubListUpdates;
+-- DROP TABLE UpdateEntityListRequests;
+-- DROP TABLE ScheduledEntityListUpdates;
+-- DROP TABLE ScheduledSubListUpdates;
 
 /* Entities */
 DROP TABLE Entities;
 
 /* Indexes */
 DROP TABLE EntitySecKeys;
-DROP TABLE FulltextIndexedEntities;
+-- DROP TABLE FulltextIndexedEntities;
 
 
 /* Users */

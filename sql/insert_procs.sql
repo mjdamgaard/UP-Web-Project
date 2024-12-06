@@ -6,7 +6,8 @@ DROP PROCEDURE deleteOpinionScore;
 DROP PROCEDURE insertOrUpdatePrivateScore;
 DROP PROCEDURE deletePrivateScore;
 
-DROP PROCEDURE insertOrFindFunctionalEntity;
+DROP PROCEDURE insertOrFindFunctionEntity;
+DROP PROCEDURE insertOrFindFunctionCallEntity;
 DROP PROCEDURE insertOrFindAttributeDefinedEntity;
 DROP PROCEDURE editAttributeDefinedEntity;
 DROP PROCEDURE _insertTextDataEntity;
@@ -129,7 +130,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE insertOrFindFunctionalEntity (
+CREATE PROCEDURE insertOrFindFunctionEntity (
     IN userID BIGINT UNSIGNED,
     IN defStr VARCHAR(700) CHARACTER SET utf8mb4,
     IN isAnonymous BOOL
@@ -137,10 +138,10 @@ CREATE PROCEDURE insertOrFindFunctionalEntity (
 BEGIN proc: BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    DECLARE EXIT HANDLER FOR SQLSTATE '40001'
     BEGIN
         ROLLBACK;
-        SELECT NULL AS outID, 2 AS exitCode; -- rollback due to race condition.
+        SELECT NULL AS outID, 2 AS exitCode; -- rollback due to deadlock.
     END;
 
     START TRANSACTION;
@@ -173,7 +174,61 @@ BEGIN proc: BEGIN
         type_ident, def_key, ent_id
     )
     VALUES (
-        datatype, defStr, outID
+        "f", defStr, outID
+    );
+
+    COMMIT;
+
+    SELECT outID, 0 AS exitCode; -- insert.
+END proc; END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE insertOrFindFunctionCallEntity (
+    IN userID BIGINT UNSIGNED,
+    IN defStr VARCHAR(700) CHARACTER SET utf8mb4,
+    IN isAnonymous BOOL
+)
+BEGIN proc: BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+
+    DECLARE EXIT HANDLER FOR SQLSTATE '40001'
+    BEGIN
+        ROLLBACK;
+        SELECT NULL AS outID, 2 AS exitCode; -- rollback due to deadlock.
+    END;
+
+    START TRANSACTION;
+
+    SELECT ent_id INTO outID
+    FROM EntitySecKeys
+    WHERE (
+        type_ident = "c" AND
+        def_key = defStr
+    )
+    FOR UPDATE;
+
+    IF (outID IS NOT NULL) THEN
+        ROLLBACK;
+        SELECT outID, 1 AS exitCode; -- find.
+        LEAVE proc;
+    END IF;
+
+    INSERT INTO Entities (
+        creator_id,
+        type_ident, def_str, is_private, editable_until
+    )
+    VALUES (
+        CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
+        "c", defStr, 0, NULL
+    );
+    SET outID = LAST_INSERT_ID();
+
+    INSERT INTO EntitySecKeys (
+        type_ident, def_key, ent_id
+    )
+    VALUES (
+        "c", defStr, outID
     );
 
     COMMIT;
@@ -194,10 +249,10 @@ CREATE PROCEDURE insertOrFindAttributeDefinedEntity (
 BEGIN proc: BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    DECLARE EXIT HANDLER FOR SQLSTATE '40001'
     BEGIN
         ROLLBACK;
-        SELECT NULL AS outID, 2 AS exitCode; -- rollback due to race condition.
+        SELECT NULL AS outID, 2 AS exitCode; -- rollback due to deadlock.
     END;
 
     IF (isAnonymous OR daysLeftOfEditing <= 0) THEN
@@ -228,7 +283,7 @@ BEGIN proc: BEGIN
     VALUES (
         CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
         "a", defStr, 0,
-        ADDDATE(CURDATE, INTERVAL daysLeftOfEditing DAY)
+        ADDDATE(CURDATE(), INTERVAL daysLeftOfEditing DAY)
     );
     SET outID = LAST_INSERT_ID();
 
@@ -236,7 +291,7 @@ BEGIN proc: BEGIN
         type_ident, def_key, ent_id
     )
     VALUES (
-        datatype, defStr, outID
+        "a", defStr, outID
     );
 
     COMMIT;
@@ -260,10 +315,10 @@ BEGIN proc: BEGIN
     DECLARE prevDefStr VARCHAR(700);
     DECLARE prevType CHAR;
 
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    DECLARE EXIT HANDLER FOR SQLSTATE '40001'
     BEGIN
         ROLLBACK;
-        SELECT NULL AS outID, 4 AS exitCode; -- rollback due to race condition.
+        SELECT NULL AS outID, 4 AS exitCode; -- rollback due to deadlock.
     END;
 
     IF (isAnonymous OR daysLeftOfEditing <= 0) THEN
@@ -294,7 +349,7 @@ BEGIN proc: BEGIN
         UPDATE Entities
         SET
             creator_id = CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-            editable_until = ADDDATE(CURDATE, INTERVAL daysLeftOfEditing DAY)
+            editable_until = ADDDATE(CURDATE(), INTERVAL daysLeftOfEditing DAY)
         WHERE id = entID;
         SELECT entID AS outID, 0 AS exitCode; -- edit.
     END IF;
@@ -321,7 +376,7 @@ BEGIN proc: BEGIN
     SET
         creator_id = CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
         def_str = defStr,
-        editable_until = ADDDATE(CURDATE, INTERVAL daysLeftOfEditing DAY)
+        editable_until = ADDDATE(CURDATE(), INTERVAL daysLeftOfEditing DAY)
     WHERE id = entID;
 
     UPDATE EntitySecKeys
@@ -372,7 +427,7 @@ BEGIN
     VALUES (
         CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
         datatype, defStr, isPrivate,
-        ADDDATE(CURDATE, INTERVAL daysLeftOfEditing DAY)
+        ADDDATE(CURDATE(), INTERVAL daysLeftOfEditing DAY)
     );
     SET outID = LAST_INSERT_ID();
 
@@ -495,7 +550,7 @@ BEGIN proc: BEGIN
         creator_id = CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
         def_str = defStr,
         is_private = isPrivate,
-        editable_until = ADDDATE(CURDATE, INTERVAL daysLeftOfEditing DAY)
+        editable_until = ADDDATE(CURDATE(), INTERVAL daysLeftOfEditing DAY)
     WHERE id = entID;
 
     SELECT entID AS outID, 0 AS exitCode; -- edit.

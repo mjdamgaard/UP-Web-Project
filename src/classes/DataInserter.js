@@ -8,6 +8,7 @@ import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 
 const WORKSPACES_CLASS_ID = basicEntIDs["workspaces"];
 
+const STANDARD_EDITING_DAYS = 100; // TODO: Reduce before going beta.
 
 export class DataInserter {
 
@@ -32,21 +33,17 @@ export class DataInserter {
       return;
     }
     let reqData = {
-      req: "editEnt",
+      req: "editJSONEnt",
       ses: this.getAccountData("sesIDHex"),
       u: this.getAccountData("userID"),
       e: this.workspaceEntID,
-      t: "j",
-      d: JSON.stringify({
-        "Class": WORKSPACES_CLASS_ID,
-        "Workspace object": this.workspaceObj,
-      }),
+      def: JSON.stringify(this.workspaceObj),
       prv: 1,
-      ed: 1,
       a: 0,
-      h: 0,
+      days: 0,
     };
-    DBRequestManager.insert(reqData, (result) => {
+    DBRequestManager.insert(reqData, (responseText) => {
+      let result = JSON.parse(responseText);
       callback(result.outID, result.exitCode);
     });
   }
@@ -56,20 +53,16 @@ export class DataInserter {
       callback = () => {};
     }
     let reqData = {
-      req: "ent",
+      req: "jsonEnt",
       ses: this.getAccountData("sesIDHex"),
       u: this.getAccountData("userID"),
-      t: "j",
-      d: JSON.stringify({
-        "Class": WORKSPACES_CLASS_ID,
-        "Workspace object": this.workspaceObj,
-      }),
+      def: JSON.stringify(this.workspaceObj),
       prv: 1,
-      ed: 1,
       a: 0,
-      h: 0,
+      days: 0,
     };
-    DBRequestManager.insert(reqData, (result) => {
+    DBRequestManager.insert(reqData, (responseText) => {
+      let result = JSON.parse(responseText);
       this.workspaceEntID = result.outID.toString();
       callback(result.outID, result.exitCode);
     });
@@ -82,7 +75,7 @@ export class DataInserter {
     let targetNode = this.#getOrSetNodeFromPath(path);
     targetNode[0] = {
       entID: entID.toString(),
-      c: null,
+      c: null, // 'c' for 'children.'
     }
   }
 
@@ -133,21 +126,27 @@ export class DataInserter {
 
   insertEntity(
     path, datatype, defStr,
-    isAnonymous = 0, isPrivate = 0, isEditable = 1, insertHash = 0,
-    callback = () => {}
+    isAnonymous = 0, isPrivate = 0, isEditable = 1, callback = () => {}
   ) {
+    let req =
+      (datatype === "f") ? "funEnt" :
+      (datatype === "c") ? "callEnt" :
+      (datatype === "a") ? "attrEnt" :
+      (datatype === "u") ? "utf8Ent" :
+      (datatype === "h") ? "htmlEnt" :
+      (datatype === "j") ? "jsonEnt" :
+      "unrecognized datatype";
     let reqData = {
-      req: "ent",
+      req: req,
       ses: this.getAccountData("sesIDHex"),
       u: isAnonymous ? 0 : this.getAccountData("userID"),
-      t: datatype,
-      d: defStr,
+      def: defStr,
       prv: isPrivate,
-      ed: isEditable,
       a: isAnonymous,
-      h: insertHash,
+      days: isEditable ? STANDARD_EDITING_DAYS : 0,
     };
-    DBRequestManager.insert(reqData, (result) => {
+    DBRequestManager.insert(reqData, (responseText) => {
+      let result = JSON.parse(responseText);
       if (parseInt(result.exitCode) >= 2) {
         callback(result.outID, result.exitCode);
         return;
@@ -168,25 +167,20 @@ export class DataInserter {
   }
 
   insertParsedEntity(
-    path, datatype, defStr, isAnonymous, isPrivate, isEditable, insertHash,
-    callback
+    path, datatype, defStr, isAnonymous, isPrivate, isEditable, callback
   ) {
     defStr = this.parseDefStr(defStr);
     this.insertEntity(
-      path, datatype, defStr, isAnonymous, isPrivate, isEditable, insertHash,
+      path, datatype, defStr, isAnonymous, isPrivate, isEditable,
       callback
     );
   }
 
 
   parseDefStr(str) {
-    return str.replaceAll(/@+\[[^\]\]]*\]/g, match => {
+    return str.replaceAll(/@(@@)*\[[^\]\]]*\]/g, match => {
       let ats = match.match(/^@+/g)[0];
       let bracket = match.substring(ats.length);
-      // Handle the fact that '@@' escapes the special '@' character.
-      if (ats.length % 2 === 0) {
-        return match;
-      }
       // Find the entID pointed to by path, or return the match unchanged if
       // this does not exist.
       let path = bracket.slice(1, -1);
@@ -197,32 +191,37 @@ export class DataInserter {
 
   insertOrEditEntity(
     path, datatype, defStr,
-    isAnonymous = 0, isPrivate = 0, isEditable = 1, insertHash = 0,
-    callback = () => {}
+    isAnonymous = 0, isPrivate = 0, isEditable = 1, callback = () => {}
   ) {
     // If an entID is not already recorded at path, simply insert a new entity.
     let entID = this.getEntIDFromPath(path);
     if (!entID) {
       this.insertEntity(
-        path, datatype, defStr, isAnonymous, isPrivate, isEditable, insertHash,
-        callback
+        path, datatype, defStr, isAnonymous, isPrivate, isEditable, callback
       );
       return;
     }
     // Else edit the given entity.
+    let req =
+      (datatype === "f") ? "editFunEnt" :
+      (datatype === "c") ? "editCallEnt" :
+      (datatype === "a") ? "editAttrEnt" :
+      (datatype === "u") ? "editUTF8Ent" :
+      (datatype === "h") ? "editHTMLEnt" :
+      (datatype === "j") ? "editJSONEnt" :
+      "unrecognized datatype";
     let reqData = {
-      req: "editEnt",
+      req: req,
       ses: this.getAccountData("sesIDHex"),
       u: isAnonymous ? 0 : this.getAccountData("userID"),
       e: entID,
-      t: datatype,
-      d: defStr,
+      def: defStr,
       prv: isPrivate,
-      ed: isEditable,
       a: isAnonymous,
-      h: insertHash,
+      days: isEditable ? STANDARD_EDITING_DAYS : 0,
     };
-    DBRequestManager.insert(reqData, (result) => {
+    DBRequestManager.insert(reqData, (responseText) => {
+      let result = JSON.parse(responseText);
       if (parseInt(result.exitCode) >= 2) {
         callback(result.outID, result.exitCode);
         return;
@@ -243,13 +242,11 @@ export class DataInserter {
 
 
   insertOrEditParsedEntity(
-    path, datatype, defStr, isAnonymous, isPrivate, isEditable, insertHash,
-    callback
+    path, datatype, defStr, isAnonymous, isPrivate, isEditable, callback
   ) {
     defStr = this.parseDefStr(defStr);
     this.insertOrEditEntity(
-      path, datatype, defStr, isAnonymous, isPrivate, isEditable, insertHash,
-      callback
+      path, datatype, defStr, isAnonymous, isPrivate, isEditable, callback
     );
   }
 

@@ -21,6 +21,9 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
     echoBadErrorJSONAndExit("Only the POST HTTP method is allowed for inputs");
 }
 
+if (empty($_POST)) {
+    $_POST = json_decode(file_get_contents('php://input'), true);
+}
 
 /* Verification of the session ID  */
 
@@ -44,6 +47,10 @@ $conn = DBConnector::getConnectionOrDie(
 // TODO: Comment in again.
 
 
+// TODO: Consider implementing default values for the InputGetter, defined
+// either as part of $paramNameArr, or perhaps via a third array. ..Ah, we
+// could just pass dyadic name--value arrays instead of the name strings
+// in the case when there's a default value. (But this is not an urgent thing.) 
 
 
 /* Handling of the input request */
@@ -82,7 +89,12 @@ switch ($reqType) {
         $typeArr = array("id", "id", "id");
         break;
     case "funEnt":
-        $sql = "CALL insertOrFindFunctionalEntity (?, ?, ?)";
+        $sql = "CALL insertOrFindFunctionEntity (?, ?, ?)";
+        $paramNameArr = array("u", "def", "a");
+        $typeArr = array("id", "text", "bool");
+        break;
+    case "callEnt":
+        $sql = "CALL insertOrFindFunctionCallEntity (?, ?, ?)";
         $paramNameArr = array("u", "def", "a");
         $typeArr = array("id", "text", "bool");
         break;
@@ -92,7 +104,7 @@ switch ($reqType) {
         $typeArr = array("id", "text", "bool", "int");
         break;
     case "editAttrEnt":
-        $sql = "CALL editAttributeDefinedEntity (?, ?, ?, ?)";
+        $sql = "CALL editAttributeDefinedEntity (?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "e", "def", "a", "days");
         $typeArr = array("id", "id", "text", "bool", "int");
         break;
@@ -147,6 +159,10 @@ DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 $res = $stmt->get_result()->fetch_assoc();
 // Finally echo the JSON-encoded result array (containing outID and exitCode).
 header("Content-Type: text/json");
+if ($res["exitCode"] == "0") {
+    http_response_code(201);
+}
+
 echo json_encode($res);
 
 // The program exits here, which also closes $conn.

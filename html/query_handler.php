@@ -26,6 +26,9 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
     $_POST = array_map('urldecode', $_GET);
 }
 
+if (empty($_POST)) {
+    $_POST = json_decode(file_get_contents('php://input'), true);
+}
 
 // TODO: Consider implementing some limits on the "n"s below (other than just
 // the maximal int).. (Well, I *think* we will need to do this...)

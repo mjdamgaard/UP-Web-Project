@@ -79,7 +79,7 @@ export const EntityPage = ({entID, initTabID}) => {
     return (
       <></>
     );
-  }
+  }return <span>Placeholder...</span>;
 
   return (
     <div className="entity-page">

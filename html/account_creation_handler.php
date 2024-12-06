@@ -23,6 +23,10 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
     );
 }
 
+if (empty($_POST)) {
+    $_POST = json_decode(file_get_contents('php://input'), true);
+}
+
 
 // get the username and password.
 $paramNameArr = array("n", "em", "pw");
