@@ -32,7 +32,7 @@ export const EntityPage = ({entID, initTabID}) => {
   const [results, setState] = useState({});
 
   useMemo(() => {
-    DataFetcher.fetchPublicSmallEntity(
+    DataFetcher.fetchPublicEntity(
       entID, (datatype, defStr, len, creatorID, isContained) => {
         setState(prev => {
           return {

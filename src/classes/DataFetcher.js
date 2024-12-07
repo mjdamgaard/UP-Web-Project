@@ -24,32 +24,41 @@ const RELEVANT_QUAL_ID = basicEntIDs["qualities/relevant"];
 export class DataFetcher {
 
 
-  static fetchPublicSmallEntity(entID, callback) {
+  static fetchPublicEntity(entID, maxLen, callback) {
+    if (!callback && maxLen instanceof Function) {
+      callback = maxLen;
+      maxLen = 700;
+    }
     // TODO: Also query for the highest rated 'representation' and if the
     // score is high enough, use the entity data from that instead.
     let reqData = {
       req: "ent",
       id: entID,
-      m: 700,
+      m: maxLen,
       s: 0,
     };
     DBRequestManager.query(reqData, (responseText) => {
       let result = JSON.parse(responseText);
       let [datatype, defStr, len, creatorID, editableUntil] = result[0] ?? [];
-      let isContained = (len <= 700); 
+      let isContained = (len <= maxLen); 
       callback(datatype, defStr, isContained, len, creatorID, editableUntil);
     });
   }
 
 
-  static fetchSeveralPublicEntities(entIDs, callback) {
+  static fetchSeveralPublicEntities(entIDs, maxLen, callback) {
+    if (!callback && maxLen instanceof Function) {
+      callback = maxLen;
+      maxLen = 700;
+    }
+
     const results = Array(entIDs.length);
 
     const parallelCallbackHandler = new ParallelCallbackHandler;
 
     entIDs.forEach((entID, ind) => {
       parallelCallbackHandler.push((resolve) => {
-        this.fetchPublicSmallEntity(entID,
+        this.fetchPublicEntity(entID, maxLen,
           (datatype, defStr, isContained, len, creatorID, editableUntil) => {
             results[ind] = [
               datatype, defStr, isContained, len, creatorID, editableUntil
@@ -65,27 +74,24 @@ export class DataFetcher {
     });
   }
 
-  static fetchPublicObject(entID, callback) {
-    DataFetcher.fetchPublicSmallEntity(entID,
-      (datatype, defStr, isContained, len, creatorID, editableUntil) => {
-        if (datatype !== "a" || !isContained) {
+  static fetchPublicAttrObject(entID, callback) {
+    DataFetcher.fetchPublicEntity(entID,
+      (datatype, defStr) => {
+        if (datatype !== "a") {
           callback(null);
           return;
         }
-        var obj;
-        try {
-          obj = JSON.parse(defStr);
-        } catch (error) {
-          callback(null);
-          return;
-        }
-        callback(obj);
+        callback(JSON.parse(defStr));
       }
     );
   }
 
 
-  static fetchSmallEntity(getAccountData, entID, callback) {
+  static fetchEntityAsUser(getAccountData, entID, maxLen, callback) {
+    if (!callback && maxLen instanceof Function) {
+      callback = maxLen;
+      maxLen = 700;
+    }
     // TODO: Also query for the highest rated 'representation' and if the
     // score is high enough, use the entity data from that instead.
     let reqData = {
@@ -93,14 +99,14 @@ export class DataFetcher {
       ses: getAccountData("sesIDHex"),
       u: getAccountData("userID"),
       id: entID,
-      m: 700,
+      m: maxLen,
       s: 0,
     };
     DBRequestManager.query(reqData, (responseText) => {
       let result = JSON.parse(responseText);
       let [datatype, defStr, len, creatorID, editableUntil, isPrivate] =
         result[0] ?? [];
-      let isContained = (len <= 700); 
+      let isContained = (len <= maxLen); 
       callback(
         datatype, defStr, isContained, len, creatorID, editableUntil,
         isPrivate
@@ -109,14 +115,21 @@ export class DataFetcher {
   }
 
 
-  static fetchSeveralEntities(getAccountData, entIDs, callback) {
+  static fetchSeveralEntitiesAsUser(
+    getAccountData, entIDs, maxLen, callback
+  ) {
+    if (!callback && maxLen instanceof Function) {
+      callback = maxLen;
+      maxLen = 700;
+    }
+
     const results = Array(entIDs.length);
 
     const parallelCallbackHandler = new ParallelCallbackHandler;
 
     entIDs.forEach((entID, ind) => {
       parallelCallbackHandler.push((resolve) => {
-        this.fetchSmallEntity(getAccountData, entID, 
+        this.fetchEntityAsUser(getAccountData, entID, maxLen,
           (
             datatype, defStr, isContained, len, creatorID, editableUntil,
             isPrivate
@@ -136,26 +149,35 @@ export class DataFetcher {
     });
   }
 
-  static fetchObject(getAccountData, entID, callback) {
-    DataFetcher.fetchSmallEntity(getAccountData, entID,
-      (datatype, defStr, isContained) => {
-        if (datatype !== "a" || !isContained) {
+  static fetchAttrObjectAsUser(getAccountData, entID, callback) {
+    DataFetcher.fetchEntityAsUser(getAccountData, entID,
+      (datatype, defStr) => {
+        if (datatype !== "a") {
           callback(null);
           return;
         }
-        var obj = null;
-        try {
-          obj = JSON.parse(defStr);
-        } catch (error) {
-          callback(null);
-          return;
-        }
-        callback(obj);
+        callback(JSON.parse(defStr));
       }
     );
   }
 
 
+  static fetchJSONObjectAsUser(getAccountData, entID, maxLen, callback) {
+    if (!callback && maxLen instanceof Function) {
+      callback = maxLen;
+      maxLen = 65535;
+    }
+
+    DataFetcher.fetchEntityAsUser(getAccountData, entID, maxLen,
+      (datatype, defStr, isContained) => {
+        if (datatype !== "j" || !isContained) {
+          callback(null);
+          return;
+        }
+        callback(JSON.parse(defStr));
+      }
+    );
+  }
 
 
 

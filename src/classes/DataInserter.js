@@ -19,8 +19,9 @@ export class DataInserter {
   }
 
   fetchWorkspaceObject(callback = () => {}) {
-    DataFetcher.fetchObject(this.getAccountData, this.workspaceEntID, obj => {
-      this.workspaceObj = (obj ?? {})["Workspace object"] ?? {};
+    DataFetcher.fetchJSONObjectAsUser(
+      this.getAccountData, this.workspaceEntID, obj => {
+      this.workspaceObj = (obj ?? {});
       callback(obj);
     });
   }
@@ -43,9 +44,6 @@ export class DataInserter {
       days: 0,
     };
     DBRequestManager.insert(reqData, (responseText) => {
-      if (responseText === null) {
-        throw "Abort: Workspace was not updated.";
-      }
       let result = JSON.parse(responseText);
       callback(result.outID, result.exitCode);
     });
@@ -65,9 +63,6 @@ export class DataInserter {
       days: 0,
     };
     DBRequestManager.insert(reqData, (responseText) => {
-      if (responseText === null) {
-        throw "Abort: Workspace was not created.";
-      }
       let result = JSON.parse(responseText);
       this.workspaceEntID = result.outID.toString();
       callback(result.outID, result.exitCode);
@@ -152,10 +147,6 @@ export class DataInserter {
       days: isEditable ? STANDARD_EDITING_DAYS : 0,
     };
     DBRequestManager.insert(reqData, (responseText) => {
-      if (responseText === null) {
-        callback(null);
-        return;
-      }
       let result = JSON.parse(responseText);
       if (parseInt(result.exitCode) >= 2) {
         callback(result.outID, result.exitCode);
@@ -231,10 +222,6 @@ export class DataInserter {
       days: isEditable ? STANDARD_EDITING_DAYS : 0,
     };
     DBRequestManager.insert(reqData, (responseText) => {
-      if (responseText === null) {
-        callback(null);
-        return;
-      }
       let result = JSON.parse(responseText);
       if (parseInt(result.exitCode) >= 2) {
         callback(result.outID, result.exitCode);

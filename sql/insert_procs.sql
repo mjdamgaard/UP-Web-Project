@@ -145,11 +145,11 @@ CREATE PROCEDURE _insertOrFindStringBasedEntity (
 proc: BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
-    DECLARE EXIT HANDLER FOR 1213 -- Deadlock error.
-    BEGIN
-        ROLLBACK;
-        SELECT NULL AS outID, 10 AS exitCode; -- rollback due to deadlock.
-    END;
+    -- DECLARE EXIT HANDLER FOR 1213 -- Deadlock error.
+    -- BEGIN
+    --     ROLLBACK;
+    --     SELECT NULL AS outID, 10 AS exitCode; -- rollback due to deadlock.
+    -- END;
 
     IF (isAnonymous OR daysLeftOfEditing <= 0) THEN
         SET daysLeftOfEditing = NULL;
@@ -276,11 +276,11 @@ proc: BEGIN
     DECLARE prevDefStr VARCHAR(700);
     DECLARE prevType CHAR;
 
-    DECLARE EXIT HANDLER FOR 1213 -- Deadlock error.
-    BEGIN
-        ROLLBACK;
-        SELECT NULL AS outID, 10 AS exitCode; -- rollback due to deadlock.
-    END;
+    -- DECLARE EXIT HANDLER FOR 1213 -- Deadlock error.
+    -- BEGIN
+    --     ROLLBACK;
+    --     SELECT NULL AS outID, 10 AS exitCode; -- rollback due to deadlock.
+    -- END;
 
     IF (isAnonymous OR daysLeftOfEditing <= 0) THEN
         SET daysLeftOfEditing = NULL;

@@ -129,11 +129,37 @@ class InputValidator {
                 }
                 break;
             case "str":
-                if (
-                    !(iconv_strlen($paramVal, "UFT-8") <= 700)
-                ) {
+                if ( !(iconv_strlen($paramVal, "UFT-8") <= 700) ) {
                     echoTypeErrorJSONAndExit(
                         $paramName, $paramVal, "VARCHAR(700)"
+                    );
+                }
+                break;
+            case "fun_def": // TODO: Add parsing.
+                if ( !(iconv_strlen($paramVal, "UFT-8") <= 700) ) {
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "function definition"
+                    );
+                }
+                break;
+            case "fun_call": // TODO: Add parsing.
+                if ( !(iconv_strlen($paramVal, "UFT-8") <= 700) ) {
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "function call"
+                    );
+                }
+                break;
+            case "json_str": // TODO: Add parsing.
+                if ( !(iconv_strlen($paramVal, "UFT-8") <= 700) ) {
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "JSON VARCHAR(700)"
+                    );
+                }
+                break;
+            case "json_text": // TODO: Add parsing.
+                if ( !(iconv_strlen($paramVal, "UFT-8") <= 65535) ) {
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "JSON TEXT"
                     );
                 }
                 break;

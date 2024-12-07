@@ -5,10 +5,10 @@ import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
 
 
 export const InitialInsertsPage = () => {
-  const workspaceEntID = "2";
+  const workspaceEntID = "9";
   const sesIDHex = "00".repeat(60);
   const getAccountData = useCallback((propName) => {
-    return (propName === "userID") ? "1" :
+    return (propName === "userID") ? "8" :
       (propName === "sesIDHex") ? sesIDHex : null;
   });
   const dataInserter = useRef(

@@ -91,32 +91,32 @@ switch ($reqType) {
     case "funEnt":
         $sql = "CALL insertOrFindFunctionEntity (?, ?, ?, ?)";
         $paramNameArr = array("u", "def", "a", "days");
-        $typeArr = array("id", "str", "bool", "int");
+        $typeArr = array("id", "fun_def", "bool", "int");
         break;
     case "editFunEnt":
         $sql = "CALL editOrFindFunctionEntity (?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "e", "def", "a", "days");
-        $typeArr = array("id", "id", "str", "bool", "int");
+        $typeArr = array("id", "id", "fun_def", "bool", "int");
         break;
     case "callEnt":
         $sql = "CALL insertOrFindFunctionCallEntity (?, ?, ?, ?)";
         $paramNameArr = array("u", "def", "a", "days");
-        $typeArr = array("id", "str", "bool", "int");
+        $typeArr = array("id", "fun_call", "bool", "int");
         break;
     case "editCallEnt":
         $sql = "CALL editOrFindFunctionCallEntity (?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "e", "def", "a", "days");
-        $typeArr = array("id", "id", "str", "bool", "int");
+        $typeArr = array("id", "id", "fun_call", "bool", "int");
         break;
     case "attrEnt":
         $sql = "CALL insertOrFindAttributeDefinedEntity (?, ?, ?, ?)";
         $paramNameArr = array("u", "def", "a", "days");
-        $typeArr = array("id", "str", "bool", "int");
+        $typeArr = array("id", "json_str", "bool", "int");
         break;
     case "editAttrEnt":
         $sql = "CALL editOrFindAttributeDefinedEntity (?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "e", "def", "a", "days");
-        $typeArr = array("id", "id", "str", "bool", "int");
+        $typeArr = array("id", "id", "json_str", "bool", "int");
         break;
     case "utf8Ent":
         $sql = "CALL insertUTF8Entity (?, ?, ?, ?, ?)";
@@ -141,12 +141,12 @@ switch ($reqType) {
     case "jsonEnt":
         $sql = "CALL insertJSONEntity (?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "def", "prv", "a", "days");
-        $typeArr = array("id", "text", "bool", "bool", "int");
+        $typeArr = array("id", "json_text", "bool", "bool", "int");
         break;
     case "editJSONEnt":
         $sql = "CALL editJSONEntity (?, ?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "e", "def", "prv", "a", "days");
-        $typeArr = array("id", "id", "text", "bool", "bool", "int");
+        $typeArr = array("id", "id", "json_text", "bool", "bool", "int");
         break;
     case "anonymizeEnt":
         $sql = "CALL anonymizeEntity (?, ?)";
@@ -172,10 +172,10 @@ header("Content-Type: text/json");
 if ($res["exitCode"] == "0") {
     http_response_code(201);
 }
-if ($res["exitCode"] == "10") {
-    http_response_code(500);
-    $res = "Deadlock encountered in the database";
-}
+// if ($res["exitCode"] == "10") {
+//     http_response_code(500);
+//     $res = "Deadlock encountered in the database";
+// }
 
 echo json_encode($res);
 

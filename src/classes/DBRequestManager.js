@@ -246,10 +246,10 @@ export function postData(url, reqData, callback) {
   fetch(url, options).then(response => {
     if (!response.ok) {
       response.text().then(responseText => {
-        if (responseText === '"Deadlock encountered in the database"') {
-          callback(null);
-          return;
-        }
+        // if (responseText === '"Deadlock encountered in the database"') {
+        //   callback(null);
+        //   return;
+        // }
         throw (
           "HTTP error " + response.status +
           (responseText ? ": " + responseText : "")
