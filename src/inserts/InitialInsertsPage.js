@@ -98,7 +98,6 @@ export function initialInserts(dataInserter) {
         "Class": "@[classes]",
         "Name": "Entities",
         "Member title": "Entity",
-        "Rejects submissions": true,
         "Description": "@[entities/desc]",
     }),
   );
