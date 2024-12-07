@@ -83,26 +83,14 @@ export const InitialInsertsPage = () => {
 
 export function initialInserts(dataInserter) {
 
-  // dataInserter.insertOrEditParsedEntity(
-  //   "users/initial_admin", "a",
-  //   JSON.stringify({
-  //     "Class": "@[users]",
-  //     "Username": "initial_admin",
-  //     "Description": "@[users/initial_admin/desc]",
-  //   }),
-  // );
+  dataInserter.insertOrEditParsedEntity(
+    "users/initial_admin", "a",
+    JSON.stringify({
+      "Class": "@[users]",
+      "Username": "initial_admin",
+    }),
+  );
 
-  // dataInserter.insertOrEditParsedEntity(
-  //   "workspaces/initial_admin's workspace", "j", 
-  //   JSON.stringify({
-  //       "Class": "@[workspaces]",
-  //       "Workspace object": {},
-  //   }),
-  //   0, 1, 1, 0,
-  //   (outID) => {
-  //     event.currentTarget.setAttribute("style", "color:gray;")
-  //   },
-  // );
 
   dataInserter.insertOrEditParsedEntity(
     "entities", "a",
@@ -110,25 +98,10 @@ export function initialInserts(dataInserter) {
         "Class": "@[classes]",
         "Name": "Entities",
         "Member title": "Entity",
-        // "Special attributes": [
-        //     ["Class", "@[classes]", "mandatory"],
-        //     ["Description", "h", "optional"],
-        // ],
-        // "Member format": "@[entities/format]",
         "Rejects submissions": true,
         "Description": "@[entities/desc]",
     }),
   );
-  // dataInserter.insertOrEditParsedEntity(
-  //   "entities/format", "f", (
-  //       "(Description?:h)" +
-  //       "=>" +
-  //       JSON.stringify({
-  //         "Class": "@[entities]",
-  //         "Description": "%1",
-  //       })
-  //   )
-  // );
   dataInserter.insertOrEditParsedEntity(
     "entities/desc", "h", (
         "<h1><class>Entities</class></h1>" +
@@ -141,28 +114,6 @@ export function initialInserts(dataInserter) {
         "Class": "@[classes]",
         "Name": "Classes",
         "Member title": "Class",
-        // "Special attributes": [
-        //     ["Name", "string", "mandatory"],
-        //     ["Member title", "string", "mandatory"],
-        //     [
-        //         "Parent class",
-        //         "@[classes]=@[entities]",
-        //         // (When missing, the parent class is the 'Entities' class.)
-        //         "optional"
-        //     ],
-        //     ["Member datatype", "string='j'", "optional"],
-        //     // If Member datatype is set (to not 'j'), then all 'Special
-        //     // attributes' are interpreted to be 'removed.'
-        //     [
-        //         "Special attributes",
-        //         "[[Attribute name,Type,Option]]",
-        //         "optional"
-        //     ],
-        //     ["Rejects submissions", "bool=false", "optional"],
-        //     ["Anonymous creators only", "bool=false", "optional"],
-        //     // ('false' is the default value when missing)
-        //     ["Description", "h", "mandatory"], // (Overwrites "optional")
-        // ],
         "Member format": "@[classes/format]",
         "Description": "@[classes/desc]",
     }),
@@ -236,43 +187,139 @@ export function initialInserts(dataInserter) {
     }),
   );
   dataInserter.insertOrEditParsedEntity(
-    "scales", "a",
+    "qualities", "a",
     JSON.stringify({
         "Class": "@[classes]",
-        "Name": "Scales",
-        "Member title": "Scale",
-        "Special attributes": [
-            ["Object", "@[entities]", "mandatory"],
-            ["Relation", "@[relations]", "mandatory"],
-            ["Quality", "@[qualities]", "mandatory"],
-            ["Description", "", "removed"],
-        ],
-        "Anonymous creators only": true,
-        "Description": "@[scales/desc]",
+        "Name": "Qualities",
+        "Member title": "Quality",
+        "Member format": "@[qualities/format]",
+        "Description": "@[qualities/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
-    "scales/desc", "h", (
+    "qualities/format", "f", (
+        "(" + [
+          "Label:string",
+          // "Domain:@[sets]",
+          "Object:@[entities]",
+          "Relation:@[relations]",
+          "Metric:@[quality metrics]",
+          "Description?:h",
+        ].join(",") +
+        ")=>" +
+        JSON.stringify({
+          "Class": "@[qualities]",
+          "Label": "%1",
+          "Domain": ["%2", "%3"],
+          "Metric": "%4",
+          "Description": "%5",
+        })
+    )
+  );
+
+  dataInserter.insertOrEditParsedEntity(
+    "relevancy qualities", "a",
+    JSON.stringify({
+        "Class": "@[classes]",
+        "Name": "Relevancy qualities",
+        "Member title": "Relevancy quality",
+        "Member datatype": "c",
+        "Member format": "@[relevancy qualities/format]",
+        "Description": "@[relevancy qualities/desc]",
+    }),
+  );
+  dataInserter.insertOrEditParsedEntity(
+    "relevancy qualities/format", "f", (
+        "(" + [
+          "Object:@[entities]",
+          "Relation:@[relations]",
+        ].join(",") +
+        ")=>" +
+        JSON.stringify({
+          "Class": "@[relevancy qualities]",
+          // "Label": "Relevant for @{Object} → @{Relation}",
+          "Label": "Relevant for %1 → %2",
+          // "Domain": "@[sets/format](%1,%2)",
+          "Domain": ["%1", "%2"],
+          "Metric": "@[quality metrics/predicate metric]",
+          "Object": "%1",
+          "Relation": "%1",
+        })
+    )
+  );
+  dataInserter.insertOrEditParsedEntity(
+    "relevancy qualities/desc", "h", (
       "<h1>Scales</h1>" +
       "..."
     )
   );
 
   dataInserter.insertOrEditParsedEntity(
-    "scalar parameters", "a",
+    "parameters", "a",
     JSON.stringify({
         "Class": "@[classes]",
-        "Name": "Scalar parameters",
-        "Member title": "Scalar parameter",
-        "Special attributes": [
-            ["Scale", "@[scales]", "mandatory"],
-            ["Subject", "@[entities]", "mandatory"],
-            ["Description", "", "removed"],
-        ],
-        "Anonymous creators only": true,
-        "Description": "@[scalar parameters/desc]",
+        "Name": "Parameters",
+        "Member title": "Parameter",
+        "Member datatype": "c",
+        "Member format": "@[parameters/format]",
+        "Description": "@[parameters/desc]",
+        // Let the Description header be: 'Qualitative parameters' instead of
+        // just 'Parameters.'
     }),
   );
+  dataInserter.insertOrEditParsedEntity(
+    "parameters/format", "f", (
+        "(" + [
+          "Subject:@[entities]",
+          "Quality:@[qualities]",
+        ].join(",") +
+        ")=>" +
+        JSON.stringify({
+          "Class": "@[parameters]",
+          "Label": "%1 ⋲ %2",
+          // "Label": "%1 ⥺ %2",
+          // "Label": "%1 :≟ %2",
+          "Subject": "%1",
+          "Quality": "%2",
+        })
+    )
+  );
+
+
+  dataInserter.insertOrEditParsedEntity(
+    "sets", "a",
+    JSON.stringify({
+        "Class": "@[classes]",
+        "Name": "Sets",
+        "Member title": "Set",
+        "Member datatype": "c",
+        "Member format": "@[sets/format]",
+        "Description": "@[sets/desc]",
+        // Let the Description header be: 'Qualitative parameters' instead of
+        // just 'Parameters.'
+    }),
+  );
+  dataInserter.insertOrEditParsedEntity(
+    "sets/format", "f", (
+        "(" + [
+          "Object:@[entities]",
+          "Relation:@[relations]",
+        ].join(",") +
+        ")=>" +
+        JSON.stringify({
+          "Class": "@[sets]",
+          "Label": "%1 → %2",
+          "Object": "%1",
+          "Relation": "%2",
+        })
+    )
+  );
+
+
+
+
+
+
 
   dataInserter.insertOrEditParsedEntity(
     "qualities", "a",
