@@ -94,7 +94,7 @@ switch ($reqType) {
         $typeArr = array("id", "str", "bool", "int");
         break;
     case "editFunEnt":
-        $sql = "CALL editFunctionEntity (?, ?, ?, ?, ?)";
+        $sql = "CALL editOrFindFunctionEntity (?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "e", "def", "a", "days");
         $typeArr = array("id", "id", "str", "bool", "int");
         break;
@@ -104,7 +104,7 @@ switch ($reqType) {
         $typeArr = array("id", "str", "bool", "int");
         break;
     case "editCallEnt":
-        $sql = "CALL editFunctionCallEntity (?, ?, ?, ?, ?)";
+        $sql = "CALL editOrFindFunctionCallEntity (?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "e", "def", "a", "days");
         $typeArr = array("id", "id", "str", "bool", "int");
         break;
@@ -114,7 +114,7 @@ switch ($reqType) {
         $typeArr = array("id", "str", "bool", "int");
         break;
     case "editAttrEnt":
-        $sql = "CALL editAttributeDefinedEntity (?, ?, ?, ?, ?)";
+        $sql = "CALL editOrFindAttributeDefinedEntity (?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "e", "def", "a", "days");
         $typeArr = array("id", "id", "str", "bool", "int");
         break;

@@ -10,10 +10,10 @@ DROP PROCEDURE _insertOrFindStringBasedEntity;
 DROP PROCEDURE insertOrFindFunctionEntity;
 DROP PROCEDURE insertOrFindFunctionCallEntity;
 DROP PROCEDURE insertOrFindAttributeDefinedEntity;
-DROP PROCEDURE _editStringBasedEntity;
-DROP PROCEDURE editFunctionEntity;
-DROP PROCEDURE editFunctionCallEntity;
-DROP PROCEDURE editAttributeDefinedEntity;
+DROP PROCEDURE _editOrFindStringBasedEntity;
+DROP PROCEDURE editOrFindFunctionEntity;
+DROP PROCEDURE editOrFindFunctionCallEntity;
+DROP PROCEDURE editOrFindAttributeDefinedEntity;
 DROP PROCEDURE _insertTextDataEntity;
 DROP PROCEDURE insertUTF8Entity;
 DROP PROCEDURE insertHTMLEntity;
@@ -36,7 +36,7 @@ CREATE PROCEDURE insertOrUpdateOpinionScore (
     IN scoreVal FLOAT,
     IN scoreWidth FLOAT
 )
-BEGIN proc: BEGIN
+proc: BEGIN
     -- Exit if the subject entity does not exist.
     IF ((SELECT type_ident FROM Entities WHERE id = subjID) IS NULL) THEN
         SELECT subjID AS outID, 1 AS exitCode; -- subject does not exist.
@@ -52,7 +52,7 @@ BEGIN proc: BEGIN
     ON DUPLICATE KEY UPDATE score_val = scoreVal, score_width = scoreWidth;
 
     SELECT subjID AS outID, 0 AS exitCode; -- inserted or updated.
-END proc; END //
+END proc //
 DELIMITER ;
 
 
@@ -62,7 +62,7 @@ CREATE PROCEDURE deleteOpinionScore (
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED
 )
-BEGIN proc: BEGIN
+proc: BEGIN
     DELETE FROM UserOpinionScores
     WHERE (
         user_id <=> userID AND
@@ -71,7 +71,7 @@ BEGIN proc: BEGIN
     );
 
     SELECT subjID AS outID, 0 AS exitCode; -- deleted if there.
-END proc; END //
+END proc //
 DELIMITER ;
 
 
@@ -83,7 +83,7 @@ CREATE PROCEDURE insertOrUpdatePrivateScore (
     IN subjID BIGINT UNSIGNED,
     IN scoreVal FLOAT
 )
-BEGIN proc: BEGIN
+proc: BEGIN
     -- Exit if the subject entity does not exist.
     IF ((SELECT type_ident FROM Entities WHERE id = subjID) IS NULL) THEN
         SELECT subjID AS outID, 1 AS exitCode; -- subject does not exist.
@@ -99,7 +99,7 @@ BEGIN proc: BEGIN
     ON DUPLICATE KEY UPDATE score_val = scoreVal;
 
     SELECT subjID AS outID, 0 AS exitCode; -- insert or update.
-END proc; END //
+END proc //
 DELIMITER ;
 
 
@@ -109,7 +109,7 @@ CREATE PROCEDURE deletePrivateScore (
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED
 )
-BEGIN proc: BEGIN
+proc: BEGIN
     DELETE FROM PrivateScores
     WHERE (
         user_id <=> userID AND
@@ -118,7 +118,7 @@ BEGIN proc: BEGIN
     );
 
     SELECT subjID AS outID, 0 AS exitCode; -- deleted if there.
-END proc; END //
+END proc //
 DELIMITER ;
 
 
@@ -142,10 +142,10 @@ CREATE PROCEDURE _insertOrFindStringBasedEntity (
     IN isAnonymous BOOL,
     IN daysLeftOfEditing INT
 )
-BEGIN proc: BEGIN
+proc: BEGIN
     DECLARE outID BIGINT UNSIGNED;
 
-    DECLARE EXIT HANDLER FOR SQLSTATE '40001'
+    DECLARE EXIT HANDLER FOR 1213 -- Deadlock error.
     BEGIN
         ROLLBACK;
         SELECT NULL AS outID, 10 AS exitCode; -- rollback due to deadlock.
@@ -161,20 +161,6 @@ BEGIN proc: BEGIN
 
     START TRANSACTION;
 
-    SELECT ent_id INTO outID
-    FROM EntitySecKeys
-    WHERE (
-        type_ident = datatype AND
-        def_key = defStr
-    )
-    FOR UPDATE;
-
-    IF (outID IS NOT NULL) THEN
-        ROLLBACK;
-        SELECT outID, 1 AS exitCode; -- find.
-        LEAVE proc;
-    END IF;
-
     INSERT INTO Entities (
         creator_id,
         type_ident, def_str, is_private,
@@ -187,17 +173,35 @@ BEGIN proc: BEGIN
     );
     SET outID = LAST_INSERT_ID();
 
-    INSERT INTO EntitySecKeys (
-        type_ident, def_key, ent_id
-    )
-    VALUES (
-        datatype, defStr, outID
-    );
+    -- Insert defStr into EntitySecKeys, and on duplicate key error, return
+    -- the ID of the duplicate instead.
+    BEGIN
+        DECLARE EXIT HANDLER FOR 1586 -- Duplicate key entry error.
+        BEGIN
+            ROLLBACK;
+
+            SELECT ent_id INTO outID
+            FROM EntitySecKeys
+            WHERE (
+                type_ident = datatype AND
+                def_key = defStr
+            );
+
+            SELECT outID, 1 AS exitCode; -- find.
+        END;
+
+        INSERT INTO EntitySecKeys (
+            type_ident, def_key, ent_id
+        )
+        VALUES (
+            datatype, defStr, outID
+        );
+    END;
 
     COMMIT;
 
     SELECT outID, 0 AS exitCode; -- insert.
-END proc; END //
+END proc //
 DELIMITER ;
 
 
@@ -258,7 +262,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE _editStringBasedEntity (
+CREATE PROCEDURE _editOrFindStringBasedEntity (
     IN datatype CHAR,
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
@@ -266,13 +270,13 @@ CREATE PROCEDURE _editStringBasedEntity (
     IN isAnonymous BOOL,
     IN daysLeftOfEditing INT
 )
-BEGIN proc: BEGIN
+proc: BEGIN
     DECLARE outID, creatorID BIGINT UNSIGNED;
     DECLARE prevEditableUntil DATE;
     DECLARE prevDefStr VARCHAR(700);
     DECLARE prevType CHAR;
 
-    DECLARE EXIT HANDLER FOR SQLSTATE '40001'
+    DECLARE EXIT HANDLER FOR 1213 -- Deadlock error.
     BEGIN
         ROLLBACK;
         SELECT NULL AS outID, 10 AS exitCode; -- rollback due to deadlock.
@@ -288,17 +292,17 @@ BEGIN proc: BEGIN
     WHERE id = entID;
 
     IF (creatorID != userID) THEN
-        SELECT entID AS outID, 1 AS exitCode; -- user is not the owner.
+        SELECT entID AS outID, 2 AS exitCode; -- user is not the owner.
         LEAVE proc;
     END IF;
 
-    IF (prevEditableUntil IS NULL OR prevEditableUntil > CURDATE()) THEN
-        SELECT entID AS outID, 2 AS exitCode; -- can no longer be edited.
+    IF (prevEditableUntil IS NULL OR prevEditableUntil < CURDATE()) THEN
+        SELECT entID AS outID, 3 AS exitCode; -- can no longer be edited.
         LEAVE proc;
     END IF;
 
     IF (prevType != datatype) THEN
-        SELECT entID AS outID, 3 AS exitCode; -- changing datatype not impl.
+        SELECT entID AS outID, 4 AS exitCode; -- changing datatype not impl.
         LEAVE proc;
     END IF;
 
@@ -314,21 +318,6 @@ BEGIN proc: BEGIN
 
     START TRANSACTION;
 
-    SELECT ent_id INTO outID
-    FROM EntitySecKeys
-    WHERE (
-        type_ident = datatype AND
-        def_key = defStr
-    )
-    FOR UPDATE;
-
-    IF (outID IS NOT NULL) THEN
-        ROLLBACK;
-        SELECT outID, 1 AS exitCode; -- find.
-        LEAVE proc;
-    END IF;
-
-
     UPDATE Entities
     SET
         creator_id = CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
@@ -336,17 +325,37 @@ BEGIN proc: BEGIN
         editable_until = ADDDATE(CURDATE(), INTERVAL daysLeftOfEditing DAY)
     WHERE id = entID;
 
-    UPDATE EntitySecKeys
-    SET def_key = defStr
-    WHERE (
-        type_ident = datatype AND
-        def_key = prevDefStr
-    );
+    -- Update def_key in EntitySecKeys, and on duplicate key error, return
+    -- the ID of the duplicate instead.
+    BEGIN
+        DECLARE EXIT HANDLER FOR 1586 -- Duplicate key entry error.
+        BEGIN
+            ROLLBACK;
+
+            SELECT ent_id INTO outID
+            FROM EntitySecKeys
+            WHERE (
+                type_ident = datatype AND
+                def_key = defStr
+            );
+
+            SELECT outID, 1 AS exitCode; -- find.
+        END;
+
+
+        UPDATE EntitySecKeys
+        SET def_key = defStr
+        WHERE (
+            type_ident = datatype AND
+            def_key = prevDefStr AND
+            ent_id = entID
+        );
+    END;
 
     COMMIT;
 
     SELECT entID AS outID, 0 AS exitCode; -- edit.
-END proc; END //
+END proc //
 DELIMITER ;
 
 
@@ -354,7 +363,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE editFunctionEntity (
+CREATE PROCEDURE editOrFindFunctionEntity (
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
     IN defStr VARCHAR(700) CHARACTER SET utf8mb4,
@@ -362,7 +371,7 @@ CREATE PROCEDURE editFunctionEntity (
     IN daysLeftOfEditing INT
 )
 BEGIN
-    CALL _editStringBasedEntity (
+    CALL _editOrFindStringBasedEntity (
         "f",
         userID, entID, defStr, isAnonymous, daysLeftOfEditing
     );
@@ -371,7 +380,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE editFunctionCallEntity (
+CREATE PROCEDURE editOrFindFunctionCallEntity (
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
     IN defStr VARCHAR(700) CHARACTER SET utf8mb4,
@@ -379,7 +388,7 @@ CREATE PROCEDURE editFunctionCallEntity (
     IN daysLeftOfEditing INT
 )
 BEGIN
-    CALL _editStringBasedEntity (
+    CALL _editOrFindStringBasedEntity (
         "c",
         userID, entID, defStr, isAnonymous, daysLeftOfEditing
     );
@@ -388,7 +397,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE editAttributeDefinedEntity (
+CREATE PROCEDURE editOrFindAttributeDefinedEntity (
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
     IN defStr VARCHAR(700) CHARACTER SET utf8mb4,
@@ -396,7 +405,7 @@ CREATE PROCEDURE editAttributeDefinedEntity (
     IN daysLeftOfEditing INT
 )
 BEGIN
-    CALL _editStringBasedEntity (
+    CALL _editOrFindStringBasedEntity (
         "a",
         userID, entID, defStr, isAnonymous, daysLeftOfEditing
     );
@@ -521,7 +530,7 @@ CREATE PROCEDURE _editTextDataEntity (
     IN isAnonymous BOOL,
     IN daysLeftOfEditing INT
 )
-BEGIN proc: BEGIN
+proc: BEGIN
     DECLARE creatorID BIGINT UNSIGNED;
     DECLARE prevIsPrivate TINYINT UNSIGNED;
     DECLARE prevEditableUntil DATE;
@@ -541,20 +550,20 @@ BEGIN proc: BEGIN
     WHERE id = entID;
 
     IF (creatorID != userID) THEN
-        SELECT entID AS outID, 1 AS exitCode; -- user is not the owner.
+        SELECT entID AS outID, 2 AS exitCode; -- user is not the owner.
         LEAVE proc;
     END IF;
 
     IF (
         NOT prevIsPrivate AND
-        (prevEditableUntil IS NULL OR prevEditableUntil > CURDATE())
+        (prevEditableUntil IS NULL OR prevEditableUntil < CURDATE())
     ) THEN
-        SELECT entID AS outID, 2 AS exitCode; -- can no longer be edited.
+        SELECT entID AS outID, 3 AS exitCode; -- can no longer be edited.
         LEAVE proc;
     END IF;
 
     IF (prevType != datatype) THEN
-        SELECT entID AS outID, 3 AS exitCode; -- changing datatype not impl.
+        SELECT entID AS outID, 4 AS exitCode; -- changing datatype not impl.
         LEAVE proc;
     END IF;
 
@@ -567,7 +576,7 @@ BEGIN proc: BEGIN
     WHERE id = entID;
 
     SELECT entID AS outID, 0 AS exitCode; -- edit.
-END proc; END //
+END proc //
 DELIMITER ;
 
 
@@ -639,7 +648,7 @@ CREATE PROCEDURE anonymizeEntity (
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED
 )
-BEGIN proc: BEGIN
+proc: BEGIN
     DECLARE creatorID BIGINT UNSIGNED;
 
     SELECT creator_id INTO creatorID
@@ -656,7 +665,7 @@ BEGIN proc: BEGIN
     WHERE id = entID;
 
     SELECT entID AS outID, 0 AS exitCode; -- edit.
-END proc; END //
+END proc //
 DELIMITER ;
 
 
@@ -668,7 +677,7 @@ DELIMITER ;
 
 
 
--- BEGIN proc: BEGIN
+-- proc: BEGIN
 --     DECLARE outID, exitCode BIGINT UNSIGNED;
 --     DECLARE defKey VARBINARY(700);
 
@@ -737,7 +746,7 @@ DELIMITER ;
 --     END IF;
 
 --     SELECT outID, exitCode;
--- END proc; END //
+-- END proc //
 -- DELIMITER ;
 
 
@@ -754,7 +763,7 @@ DELIMITER ;
 --     IN isAnonymous BOOL,
 --     IN insertSK BOOL
 -- )
--- BEGIN proc: BEGIN
+-- proc: BEGIN
 --     DECLARE outID, exitCode, prevCreatorID BIGINT UNSIGNED;
 --     DECLARE prevIsPrivate, prevIsEditable BOOL;
 --     DECLARE defKey VARCHAR(700);
@@ -848,5 +857,5 @@ DELIMITER ;
 
 --     COMMIT; 
 --     SELECT outID, exitCode;
--- END proc; END //
+-- END proc //
 -- DELIMITER ;
