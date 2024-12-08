@@ -5,10 +5,10 @@ import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
 
 
 export const InitialInsertsPage = () => {
-  const workspaceEntID = "9";
+  const workspaceEntID = "10";
   const sesIDHex = "00".repeat(60);
   const getAccountData = useCallback((propName) => {
-    return (propName === "userID") ? "8" :
+    return (propName === "userID") ? "9" :
       (propName === "sesIDHex") ? sesIDHex : null;
   });
   const dataInserter = useRef(
@@ -91,7 +91,6 @@ export function initialInserts(dataInserter) {
     }),
   );
 
-
   dataInserter.insertOrEditParsedEntity(
     "entities", "a",
     JSON.stringify({
@@ -113,6 +112,7 @@ export function initialInserts(dataInserter) {
         "Class": "@[classes]",
         "Name": "Classes",
         "Member title": "Class",
+        "Member datatype": "a",
         "Member format": "@[classes/format]",
         "Description": "@[classes/desc]",
     }),
@@ -143,30 +143,20 @@ export function initialInserts(dataInserter) {
         "<p>A class of all class entities (including itself). " +
         "Classes both serve as a broad way of categorizing entities, " +
         "and they are also used to define the meaning of their instances, " +
-        "as their <attr>description</attr> will be shown on the info page " +
+        "as their <i>description</i> will be shown on the info page " +
         "of each of their instances." +
         "</p>" +
-        "<p>As an example, this description of the <class>class</class> " +
+        "<p>As an example, this description of the Classes " +
         "entity will be shown on the info page of all class entities, just " +
-        "above the description of the general <class>entity</class> class." +
+        "above the description of the general Entities class." +
         "</p>" +
-        "<p>The <attr>description</attr> of a class should include a " +
+        "<p>The <i>description</i> of a class should include a " +
         "section of 'special attributes,' if it defines a new attribute " +
         "or redefines an attribute of a superclass (opposite of 'subclass'). " +
-        "As an example, since the <class>class</class> class introduces an " +
-        "optional <attr>superclass</attr> attribute and expands on the " +
-        "<attr>description</attr> attribute, the following 'special " +
-        "attributes' section will include a description of both these " +
-        "attributes." +
+        "..." +
         "</p>" +
         "<h2>Special attributes</h2>" +
         "<h3><attr>description</attr></h3>" +
-        "<flags><flag>mandatory</flag><flag>extends superclass</flag></flags>" +
-        "<p>..." +
-        "</p>" +
-        "<h3><attr>superclass</attr></h3>" +
-        "<flags><flag>optional</flag></flags>" +
-        "<p>..." +
         "</p>"
     )
         // TODO: Rewrite and add: Unless otherwise specified, entities with
@@ -182,6 +172,7 @@ export function initialInserts(dataInserter) {
         "Class": "@[classes]",
         "Name": "Users",
         "Member title": "User",
+        "Member datatype": "u",
         "Description": "@[users/desc]",
     }),
   );
@@ -191,6 +182,7 @@ export function initialInserts(dataInserter) {
         "Class": "@[classes]",
         "Name": "Qualities",
         "Member title": "Quality",
+        "Member datatype": "c",
         "Member format": "@[qualities/format]",
         "Description": "@[qualities/desc]",
     }),
@@ -199,17 +191,16 @@ export function initialInserts(dataInserter) {
     "qualities/format", "f", (
         "(" + [
           "Label:string",
-          // "Domain:@[sets]",
           "Object:@[entities]",
           "Relation:@[relations]",
-          "Metric:@[quality metrics]",
+          "Metric:@[metrics]",
           "Description?:h",
         ].join(",") +
         ")=>" +
         JSON.stringify({
           "Class": "@[qualities]",
           "Label": "%1",
-          "Domain": ["%2", "%3"],
+          "Domain": {Object: "%2", Relation: "%3"},
           "Metric": "%4",
           "Description": "%5",
         })
@@ -239,8 +230,8 @@ export function initialInserts(dataInserter) {
           // "Label": "Relevant for @{Object} → @{Relation}",
           "Label": "Relevant for %1 → %2",
           // "Domain": "@[sets/format](%1,%2)",
-          "Domain": ["%1", "%2"],
-          "Metric": "@[quality metrics/predicate metric]",
+          "Domain": {Object: "%1", Relation: "%2"},
+          "Metric": "@[metrics/predicate metric]",
           "Object": "%1",
           "Relation": "%1",
         })
@@ -294,8 +285,6 @@ export function initialInserts(dataInserter) {
         "Member datatype": "c",
         "Member format": "@[sets/format]",
         "Description": "@[sets/desc]",
-        // Let the Description header be: 'Qualitative parameters' instead of
-        // just 'Parameters.'
     }),
   );
   dataInserter.insertOrEditParsedEntity(
@@ -316,6 +305,47 @@ export function initialInserts(dataInserter) {
 
 
 
+
+  dataInserter.insertOrEditParsedEntity(
+    "metrics", "a",
+    JSON.stringify({
+        "Class": "@[classes]",
+        "Name": "Metrics",
+        "Member title": "Metric",
+        "Member datatype": "a",
+        "Member format": "@[metrics/format]",
+        "Description": "@[metrics/desc]",
+        // Let the Description header be: 'Quality metrics' instead of just
+        // 'Metrics.'
+    }),
+  );
+  dataInserter.insertOrEditParsedEntity(
+    "metrics/format", "f", (
+        "(" + [
+          "Name:string",
+          "Unit?:string",
+          "Interval labels?:[start:float,end:float,label:string][]",
+          "Upper bound?:float",
+          "Lower bound?:float",
+          "High end?:float",
+          "Low end?:float",
+          "Default bin width?:float",
+        ].join(",") +
+        ")=>" +
+        JSON.stringify({
+          "Class": "@[metrics]",
+          "Name": "%1",
+          "Unit": "%2",
+          "Interval labels": "%3",
+          "Upper bound": "%4",
+          "Lower bound": "%5",
+          "High end": "%6",
+          "Low end": "%7",
+          "Object": "%8",
+          "Default bin width":"%9",
+        })
+    )
+  );
 
 
 
@@ -845,7 +875,7 @@ export function insertInitialScores(dataInserter) {
 
 export function getEntityIDModule(dataInserter, pathArr, objName) {
   var ret = "\nexport const " + objName + " = {\n";
-  let initDatatypes = ["t", "f", "c", "a", "u", "h", "j"];
+  let initDatatypes = ["t", "u", "f", "c", "a", "8", "h", "j"];
   initDatatypes.forEach((datatype, ind) => {
     ret += '  "' + datatype + '": ' + (ind + 1) + ",\n";
   });

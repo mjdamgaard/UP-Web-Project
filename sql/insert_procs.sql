@@ -471,7 +471,7 @@ CREATE PROCEDURE insertUTF8Entity (
 )
 BEGIN
     CALL _insertTextDataEntity (
-        "u",
+        "8",
         userID, defStr, isPrivate, isAnonymous, daysLeftOfEditing
     );
 END //
@@ -593,7 +593,7 @@ CREATE PROCEDURE editUTF8Entity (
 )
 BEGIN
     CALL _editTextDataEntity (
-        "u",
+        "8",
         userID, entID, defStr, isPrivate, isAnonymous, daysLeftOfEditing
     );
 END //

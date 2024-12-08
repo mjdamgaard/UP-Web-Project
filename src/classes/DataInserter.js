@@ -133,7 +133,7 @@ export class DataInserter {
       (datatype === "f") ? "funEnt" :
       (datatype === "c") ? "callEnt" :
       (datatype === "a") ? "attrEnt" :
-      (datatype === "u") ? "utf8Ent" :
+      (datatype === "8") ? "utf8Ent" :
       (datatype === "h") ? "htmlEnt" :
       (datatype === "j") ? "jsonEnt" :
       "unrecognized datatype";
@@ -207,7 +207,7 @@ export class DataInserter {
       (datatype === "f") ? "editFunEnt" :
       (datatype === "c") ? "editCallEnt" :
       (datatype === "a") ? "editAttrEnt" :
-      (datatype === "u") ? "editUTF8Ent" :
+      (datatype === "8") ? "editUTF8Ent" :
       (datatype === "h") ? "editHTMLEnt" :
       (datatype === "j") ? "editJSONEnt" :
       "unrecognized datatype";
