@@ -1,48 +1,6 @@
 
 
 
-
-export function lex(str, lexemePatternArr, wsPattern) {
-  let wsRegEx = (wsPattern instanceof RegExp) ? wsPattern :
-    new RegExp(wsPattern);
-
-  // Construct RegEx of all lexemes and whitespace. 
-  let lexemeOrWSRegEx = new RegExp(
-    wsRegEx.source + "|" +
-    lexemePatternArr.map(
-      pattern => (pattern instanceof RegExp) ? pattern : new RegExp(pattern)
-    ).join("|")
-  );
-
-  // Construct lexer RegEx which also includes an extra final match that
-  // greedily matches the rest of the string on failure of the lexemeOrWSRegEx. 
-  let lexerRegEx = new RegExp(lexemeOrWSRegEx.source + "|" + "[^$]+", "g");
-
-  // Get the initial lexeme array still with whitespace and the potential last
-  // failed string in it, then test and throw if the last match is that last
-  // failure string.
-  let unfilteredLexArr = str.match(lexerRegEx);
-  let lastMatch = unfilteredLexArr[unfilteredLexArr.length - 1];
-  if (!lexemeOrWSRegEx.test(lastMatch)) {
-    let lastIndexOfInvalidLexeme = lastMatch.search(wsRegEx) - 1;
-    throw (
-      `Lexer error at:
-      ${lastMatch.substring(0, 800)}
-      ----
-      Invalid lexeme:
-      ${lastMatch.substring(0, lastIndexOfInvalidLexeme + 1)}
-      `
-    );
-  }
-
-  // If successful, filter out the whitespace from the unfilteredLexArr and
-  // return the resulting array of all lexemes.
-  let lexArr = unfilteredLexArr.filter(val => !wsRegEx.test(val));
-  return lexArr;
-}
-
-
-
 /// <summary>
 /// This Parser class takes a associative list (a plain object) of production
 /// rules. Its parse() method then checks if an input string can be validated,
@@ -100,35 +58,107 @@ export function lex(str, lexemePatternArr, wsPattern) {
 /// </returns>
 
 export class Parser {
-  constructor(grammar, startSym) {
+  constructor(grammar, startSym, lexemePatternArr, wsPattern) {
     this.grammar = grammar;
     // startSym is the default (nonterminal) start symbol. If none is provided,
     // the first key of grammar is used instead. 
     this.startSym = startSym ?? Object.keys(grammar)[0];
+    // Initialize the lexer.
+    this.lexer = !lexemePatternArr ? undefined :
+      new Lexer(lexemePatternArr, wsPattern);
   }
 
   parse(str, startSym) {
-    let nonterminal = startSym ?? this.startSym;
-    let [syntaxTree, endPos] = this.#parseSymbol(str, 0, nonterminal);
+    let ntSym = startSym ?? this.startSym;
+    let [lexemeArr, strPosArr] = this.lexer.lex(str);
+    let [syntaxTree, endPos] = this.#parseNonterminalSymbol(
+      ntSym, lexemeArr, 0, str, strPosArr);
     if (endPos < "TODO...") {
       "...";
     }
   }
 
-  #parseSymbol(str, pos, nonterminal) {
+  #parseNonterminalSymbol(ntSym, lexemeArr, pos, str, strPosArr) {
     // Initialize the array of recorded sub-successes, and an array of the
     // indexes of the record holders.
     var record = 0;
-    var recordedSyntaxTrees = [];
+    var recordedSyntaxTreesAndLastIndexes = [];
     var recordHolders = [];
 
-    // Get and parse the rules of the nonterminal labeled by startSym.
-    let rules = this.grammar[nonterminal];
+    // Get and parse the rules of the nonterminal symbol, ntSym.
+    let rules = this.grammar[ntSym];
     rules.forEach((rule, ind) => {
       rule.some(sym => {
-
+        if (sym instanceof RegExp) {
+          sym.exec()
+        }
       });
     });
 
+  }
+}
+
+
+
+
+
+export class Lexer {
+  constructor(lexemePatternArr, wsPattern) {
+    // Whitespace RegEx.
+    this.wsRegEx = (wsPattern instanceof RegExp) ? wsPattern :
+      new RegExp(wsPattern);
+    // RegEx of all lexemes and whitespace. 
+    this.lexemeOrWSRegEx = new RegExp(
+      wsRegEx.source + "|" +
+      lexemePatternArr.map(
+        pattern => (pattern instanceof RegExp) ? pattern : new RegExp(pattern)
+      ).join("|")
+    );
+    // Lexer RegEx which also includes an extra final match that
+    // greedily matches the rest of the string on failure of the
+    // lexemeOrWSRegEx. 
+    this.lexerRegEx = new RegExp(lexemeOrWSRegEx.source + "|" + "[^$]+", "g");
+  }
+
+
+  lex(str) {
+    // Get the initial lexeme array still with whitespace and the potential last
+    // failed string in it, then test and throw if the last match is that last
+    // failure string.
+    let unfilteredLexemeArr = str.match(this.lexerRegEx);
+    let lastMatch = unfilteredLexemeArr[unfilteredLexArr.length - 1];
+    if (!this.lexemeOrWSRegEx.test(lastMatch)) {
+      let lastIndexOfInvalidLexeme = lastMatch.search(this.wsRegEx) - 1;
+      throw (
+        `Lexer error at:
+        ${lastMatch.substring(0, 800)}
+        ----
+        Invalid lexeme:
+        ${lastMatch.substring(0, lastIndexOfInvalidLexeme + 1)}
+        `
+      );
+    }
+
+    // Construct an array of the positions in str of each of the element in
+    // unfilteredLexemeArr.
+    var strPos = 0;
+    let unfilteredStrPosArr = unfilteredLexemeArr.map(elem => {
+      let ret = strPos;
+      strPos += elem.length;
+      return ret;
+    })
+  
+    // If successful, filter out the whitespace from the unfilteredLexemeArr
+    // and the corresponding positions in strPosArr, and return these two
+    // filtered arrays
+    let lexemeArr = unfilteredLexemeArr.filter((val, ind) => {
+      let isWhitespace = wsRegEx.test(val);
+      if (isWhitespace) {
+        unfilteredStrPosArr[ind] = null;
+      }
+      return !isWhitespace;
+    });
+    let strPosArr = unfilteredStrPosArr.filter(val => val !== null);
+    return [lexemeArr, strPosArr];
   }
 }
