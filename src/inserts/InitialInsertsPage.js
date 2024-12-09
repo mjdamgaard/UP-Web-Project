@@ -25,7 +25,7 @@ export const InitialInsertsPage = () => {
       <h2>Initial inserts</h2>
       <br/>
       <div>
-        <button onClick={(event) => {
+        <button disabled style={{color:"gray"}} onClick={(event) => {
           dataInserter.insertOrEditParsedEntity(
             "users/initial_admin", "a",
             JSON.stringify({
@@ -182,7 +182,7 @@ export function initialInserts(dataInserter) {
         "Class": "@[classes]",
         "Name": "Qualities",
         "Member title": "Quality",
-        "Member datatype": "c",
+        "Member datatype": "a",
         "Member format": "@[qualities/format]",
         "Description": "@[qualities/desc]",
     }),
@@ -191,7 +191,9 @@ export function initialInserts(dataInserter) {
     "qualities/format", "f", (
         "(" + [
           "Label:string",
-          "Object:@[entities]",
+          "Domain:" +
+            "@[classes]::Class" + "|" +
+            "[Object:@[entities],Relation:@[relations]]::Set",
           "Relation:@[relations]",
           "Metric:@[metrics]",
           "Description?:h",
@@ -200,9 +202,9 @@ export function initialInserts(dataInserter) {
         JSON.stringify({
           "Class": "@[qualities]",
           "Label": "%1",
-          "Domain": {Object: "%2", Relation: "%3"},
-          "Metric": "%4",
-          "Description": "%5",
+          "Domain": "%2",
+          "Metric": "%3",
+          "Description": "%4",
         })
     )
   );
@@ -230,7 +232,8 @@ export function initialInserts(dataInserter) {
           // "Label": "Relevant for @{Object} → @{Relation}",
           "Label": "Relevant for %1 → %2",
           // "Domain": "@[sets/format](%1,%2)",
-          "Domain": {Object: "%1", Relation: "%2"},
+          // "Domain": {Object: "%1", Relation: "%2"},
+          "Domain": ["%1", "%2"],
           "Metric": "@[metrics/predicate metric]",
           "Object": "%1",
           "Relation": "%1",
@@ -275,7 +278,6 @@ export function initialInserts(dataInserter) {
     )
   );
 
-
   dataInserter.insertOrEditParsedEntity(
     "sets", "a",
     JSON.stringify({
@@ -303,9 +305,6 @@ export function initialInserts(dataInserter) {
     )
   );
 
-
-
-
   dataInserter.insertOrEditParsedEntity(
     "metrics", "a",
     JSON.stringify({
@@ -330,6 +329,7 @@ export function initialInserts(dataInserter) {
           "High end?:float",
           "Low end?:float",
           "Default bin width?:float",
+          "Description:h",
         ].join(",") +
         ")=>" +
         JSON.stringify({
@@ -343,6 +343,7 @@ export function initialInserts(dataInserter) {
           "Low end": "%7",
           "Object": "%8",
           "Default bin width":"%9",
+          "Description":"%10",
         })
     )
   );

@@ -17,13 +17,6 @@ DROP TABLE Entities;
 DROP TABLE EntitySecKeys;
 -- DROP TABLE FulltextIndexedEntities;
 
-
-/* Users */
--- DROP TABLE Users;
-
-/* Messages */
--- DROP TABLE DirectMessages;
-
 /* Private user data */
 -- DROP TABLE Private_UserData;
 -- DROP TABLE Private_Sessions;
@@ -483,17 +476,19 @@ CREATE TABLE FulltextIndexedEntities (
 /* Initial datatype ('t') entities */
 
 INSERT INTO Entities (
-    type_ident, def_str
+    type_ident, def_str, creator_id, editable_until
 )
 VALUES
-    ("t", "t"),
-    ("t", "u"),
-    ("t", "f"),
-    ("t", "c"),
-    ("t", "a"),
-    ("t", "8"),
-    ("t", "h"),
-    ("t", "j");
+    ("t", "t", 0, NULL),
+    ("t", "u", 0, NULL),
+    ("t", "f", 0, NULL),
+    ("t", "c", 0, NULL),
+    ("t", "a", 0, NULL),
+    ("t", "8", 0, NULL),
+    ("t", "h", 0, NULL),
+    ("t", "j", 0, NULL),
+    ("u", "initial_admin", 0, NULL),
+    ("j", "{}", 9, ADDDATE(CURDATE(), INTERVAL 1000 DAY));
 
 INSERT INTO EntitySecKeys (
     type_ident, def_key, ent_id
@@ -504,9 +499,10 @@ VALUES
     ("t", "f", 3),
     ("t", "c", 4),
     ("t", "a", 5),
-    ("t", "u", 6),
+    ("t", "8", 6),
     ("t", "h", 7),
-    ("t", "j", 8);
+    ("t", "j", 8),
+    ("u", "initial_admin", 9);
 
 
 
@@ -979,40 +975,26 @@ VALUES
 
 /* Users */
 
-CREATE TABLE Users (
-    -- User data key (private).
-    data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+-- CREATE TABLE Users (
+--     -- User data key (private).
+--     data_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    username VARCHAR(50) NOT NULL,
-    -- TODO: Consider adding more restrictions.
+--     username VARCHAR(50) NOT NULL,
+--     -- TODO: Consider adding more restrictions.
 
-    public_keys_for_authentication TEXT,
-    -- (In order for third parties to be able to copy the database and then
-    -- be able to have users log on, without the need to exchange passwords
-    -- between databases.) (This could also be other data than encryption keys,
-    -- and in principle it could even just be some ID to use for authenticating
-    -- the user via a third party.)
+--     public_keys_for_authentication TEXT,
+--     -- (In order for third parties to be able to copy the database and then
+--     -- be able to have users log on, without the need to exchange passwords
+--     -- between databases.) (This could also be other data than encryption keys,
+--     -- and in principle it could even just be some ID to use for authenticating
+--     -- the user via a third party.)
 
-    UNIQUE INDEX (username)
-);
-
-
+--     UNIQUE INDEX (username)
+-- );
 
 
 
 
-/* Direct messages (including reports) */
-
-
-CREATE TABLE DirectMessages (
-    receiver_id BIGINT UNSIGNED NOT NULL,
-
-    -- TODO: Implement.
-
-    PRIMARY KEY (
-        receiver_id
-    )
-);
 
 
 
