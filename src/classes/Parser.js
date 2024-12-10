@@ -40,7 +40,7 @@
 /// but encountered %s' message for all failed rules among those that tied
 /// with the most amount of sub-successes.
 /// </param>
-/// <param name="startSym">
+/// <param name="defaultSym">
 /// The default (nonterminal) start symbol (key of the grammar object), with
 /// which the parsing begins. If none is provided, the first key of the grammar
 /// parameter is used instead. By calling Parser.parse(str, startSym) with a
@@ -58,24 +58,23 @@
 /// </returns>
 
 export class Parser {
-  constructor(grammar, startSym, lexemePatternArr, wsPattern) {
+  constructor(grammar, defaultSym, lexemePatternArr, wsPattern) {
     this.grammar = grammar;
-    // startSym is the default (nonterminal) start symbol.
-    this.startSym = startSym;
+    // defaultSym is the default (nonterminal) start symbol.
+    this.defaultSym = defaultSym;
     // Initialize the lexer.
     this.lexer = new Lexer(lexemePatternArr, wsPattern);
   }
 
   parse(str, startSym) {
-    let ntSym = startSym ?? this.startSym;
+    startSym ??= this.defaultSym;
 
     // Lex the input string.
     let [lexArr, strPosArr] = this.lexer.lex(str);
 
     // Parse the syntax tree, calling a helper method.
-    let [syntaxTree, endPos, callbackArr] = this.parseNonterminalSymbol(
-      ntSym, lexArr, 0, str, strPosArr
-    );
+    let [syntaxTree, endPos, callbackArr] =
+      this.parseNonterminalSymbol( startSym, lexArr, 0, str, strPosArr);
 
 
     // If ...
@@ -92,12 +91,15 @@ export class Parser {
   }
 
   parseNonterminalSymbol(ntSym, lexArr, pos, str, strPosArr) {
+    ntSym ??= this.defaultSym;
+
     // Initialize the array of recorded sub-successes, and an array of the
     // indexes of record holders, and the record successful index. Also
     // initialize a callback array. 
     var recordedSyntaxTrees = [];
     var recordHolders = [];
     var recordIndex = -1;
+    var callbackArr = [];
 
     // Get and parse the rules of the nonterminal symbol, ntSym. Also get the
     // test and callback functions for afterwards.
@@ -118,41 +120,145 @@ export class Parser {
         // If and when these symbols have been successfully skipped, try
         // parsing a new symbol on each iteration.
         var success = false;
+        // If sym is a Regex, we simply try to parse the next lexeme as that.
         if (sym instanceof RegExp) {
           let nextLexeme = lexArr[pos];
           if (!nextLexeme) {
             success = false;
           }
-          let match = nextLexeme.match(sym)[0];
-          if (match === nextLexeme) {
-            // Record the new successful symbol, and increase pos and
-            // recordIndex.
-            recordedSyntaxTrees.push({sym: sym, success: true});
-            recordIndex++;
-            pos++;
-            success = true;
-          }
           else {
-            success = false;
+            let match = nextLexeme.match(sym)[0];
+            if (match === nextLexeme) {
+              // Record the new successful symbol, and increase pos and
+              // recordIndex.
+              recordedSyntaxTrees.push({sym: sym, success: true});
+              recordIndex++;
+              pos++;
+              success = true;
+            }
+            else {
+              success = false;
+            }
           }
         }
+        // Else if sym is a string, treat it as a ntSym, and make a recursive
+        // call to parseNonterminalSymbol() with ntSym = sym.
         else if (typeof sym === "string") {
-          let [syntaxTree, endPos, callbackArr] = this.parseNonterminalSymbol(
-            sym, lexArr, pos, str, strPosArr
-          );
-          if (syntaxTree.success) {
+          let [syntaxTree, endPos, childCallbackArr] =
+            this.parseNonterminalSymbol(sym, lexArr, pos, str, strPosArr);
+          success = syntaxTree.success;
+          if (success) {
             // Record the new successful symbol, and increase pos and
             // recordIndex.
-            recordedSyntaxTrees.push({
-              sym: sym, success: true, tree: syntaxTree,
-            });
+            recordedSyntaxTrees.push(syntaxTree);
             recordIndex++;
             pos = endPos + 1;
+            // Also append the childCallbackArr to callbackArr.
+            callbackArr = callbackArr.concat(childCallbackArr);
+          }
+        }
+        // Else if sym is an array, treat it as sym := [subSym, operator],
+        // where operator is either '?', '*', '+', '{n}' or '{n,m}', and subSym
+        // is the symbol to parse one or several, or zero, times. The operator
+        // symbols means the same as the do for regular expressions.
+        else if (Array.isArray(sym)) {
+          let [subSym, operator] = sym;
+
+          // First parse as many instances of sybSym as possible in a row,
+          // storing the each resulting syntax tree in an array, children, and
+          // storing all the child callback arrays as well. Also record the
+          // initial value of pos in order to revert to that on failure.
+          let children = [];
+          let childCallbackArrays = [];
+          let initPos = pos;
+          for (let i = 0; true; i++) {
+            let [syntaxTree, endPos, childCallbackArr] =
+              this.parseNonterminalSymbol(subSym, lexArr, pos, str, strPosArr);
+            if (syntaxTree.success) {
+              // Add child syntax tree to children and increase pos.
+              children.push(syntaxTree);
+              childCallbackArrays.push(childCallbackArr);
+              pos = endPos + 1;
+
+              // Break already on the first success if '?' is the operator. 
+              if (operator === "?") {
+                break;
+              }
+            }
+            else {
+              break;
+            }
+          }
+
+          // Once this is done, we can branch out and record the a success
+          // depending on the operator.
+          let len = children.length;
+          if (operator === "?") {
+              success = len === 1;
+          }
+          else if (operator === "*") {
             success = true;
+          }
+          else if (operator === "+") {
+            success = true;
+          }
+          else if (operator) {
+            success = true;
+          }
+          else if (/^\{[1-9][0-9]*(,[1-9][0-9]*)?\}$/.test(operator)) {
+            // Parse n and m from operator := "{n(,m)?}"
+            let [n, m] = operator.match(/[1-9][0-9]*/g).map(
+              val => parseInt(val)
+            );
+            if (m === undefined) {
+              success = len === n;
+            } else {
+              success = n <= len && len <= m;
+            }
+          }
+          else {
+            throw (
+              `Parser: unrecognized operator: "${operator}"` 
+            );
+          }
+
+          // On a success, construct and add the syntax tree with the children
+          // array as the children property, and add the child callback arrays
+          // to callbackArr. Also increase indexRecord.
+          if (success) {
+            recordedSyntaxTrees.push({
+              sym: sym, success: true, children: children,
+            });
+            callbackArr = callbackArr.concat(...childCallbackArrays);
+            recordIndex++;
+          }
+          // Else revert pos to its initial value.
+          else {
+            pos = initPos;
+          }
+        }
+        // This only leaves the option of sym being of the form sym :=
+        // {parser, startSym}, where parser might be another Parser instance
+        // (or an object with a similar parseNonterminalSymbol() method).
+        else {
+          let {parser, startSym} = sym;
+          let [syntaxTree, endPos, childCallbackArr] =
+            parser.parseNonterminalSymbol(
+              startSym, lexArr, pos, str, strPosArr
+            );
+          success = syntaxTree.success;
+          if (success) {
+            // Record the new successful symbol, and increase pos and
+            // recordIndex.
+            recordedSyntaxTrees.push(syntaxTree);
+            recordIndex++;
+            pos = endPos + 1;
+            // Also append the childCallbackArr to callbackArr.
+            callbackArr = callbackArr.concat(childCallbackArr);
           }
         }
 
-        // Handle a successfully parsed symbol.
+        // Finally handle ... Handle a successfully parsed symbol.
         if (success) {
           // If symInd === recordIndex + 1, erase any previous record holders,
           // as they are outmatched by this rule.
