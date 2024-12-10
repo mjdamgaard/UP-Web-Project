@@ -60,37 +60,118 @@
 export class Parser {
   constructor(grammar, startSym, lexemePatternArr, wsPattern) {
     this.grammar = grammar;
-    // startSym is the default (nonterminal) start symbol. If none is provided,
-    // the first key of grammar is used instead. 
-    this.startSym = startSym ?? Object.keys(grammar)[0];
+    // startSym is the default (nonterminal) start symbol.
+    this.startSym = startSym;
     // Initialize the lexer.
-    this.lexer = !lexemePatternArr ? undefined :
-      new Lexer(lexemePatternArr, wsPattern);
+    this.lexer = new Lexer(lexemePatternArr, wsPattern);
   }
 
   parse(str, startSym) {
     let ntSym = startSym ?? this.startSym;
-    let [lexemeArr, strPosArr] = this.lexer.lex(str);
-    let [syntaxTree, endPos] = this.#parseNonterminalSymbol(
-      ntSym, lexemeArr, 0, str, strPosArr);
+
+    // Lex the input string.
+    let [lexArr, strPosArr] = this.lexer.lex(str);
+
+    // Parse the syntax tree, calling a helper method.
+    let [syntaxTree, endPos, callbackArr] = this.parseNonterminalSymbol(
+      ntSym, lexArr, 0, str, strPosArr
+    );
+
+
+    // If ...
     if (endPos < "TODO...") {
       "...";
     }
+
+    // On success ... Finally call any and all of generated callbacks
+    // (children's callbacks are called, in order from first to last, before
+    // the parent's). 
+    callbackArr.forEach(callback => {
+      callback();
+    });
   }
 
-  #parseNonterminalSymbol(ntSym, lexemeArr, pos, str, strPosArr) {
+  parseNonterminalSymbol(ntSym, lexArr, pos, str, strPosArr) {
     // Initialize the array of recorded sub-successes, and an array of the
-    // indexes of the record holders.
-    var record = 0;
-    var recordedSyntaxTreesAndLastIndexes = [];
+    // indexes of record holders, and the record successful index. Also
+    // initialize a callback array. 
+    var recordedSyntaxTrees = [];
     var recordHolders = [];
+    var recordIndex = -1;
 
-    // Get and parse the rules of the nonterminal symbol, ntSym.
-    let rules = this.grammar[ntSym];
-    rules.forEach((rule, ind) => {
-      rule.some(sym => {
+    // Get and parse the rules of the nonterminal symbol, ntSym. Also get the
+    // test and callback functions for afterwards.
+    let {rules, test, callback} = this.grammar[ntSym];
+    rules.forEach((rule, ruleInd) => {
+      // Parse as many symbols of the rule as possible.
+      rule.some((sym, symInd) => {
+        // Skip past the symbols that have already been parsed, and fail the
+        // rule if a symbol doesn't match the one that has already been parsed. 
+        if (symInd <= recordIndex) {
+          if (sym === recordedSyntaxTrees[symInd].sym) {
+            return false; // Continue the some() iteration.
+          } else {
+            return true; // Break the some() iteration.
+          }
+        }
+
+        // If and when these symbols have been successfully skipped, try
+        // parsing a new symbol on each iteration.
+        var success = false;
         if (sym instanceof RegExp) {
-          sym.exec()
+          let nextLexeme = lexArr[pos];
+          if (!nextLexeme) {
+            success = false;
+          }
+          let match = nextLexeme.match(sym)[0];
+          if (match === nextLexeme) {
+            // Record the new successful symbol, and increase pos and
+            // recordIndex.
+            recordedSyntaxTrees.push({sym: sym, success: true});
+            recordIndex++;
+            pos++;
+            success = true;
+          }
+          else {
+            success = false;
+          }
+        }
+        else if (typeof sym === "string") {
+          let [syntaxTree, endPos, callbackArr] = this.parseNonterminalSymbol(
+            sym, lexArr, pos, str, strPosArr
+          );
+          if (syntaxTree.success) {
+            // Record the new successful symbol, and increase pos and
+            // recordIndex.
+            recordedSyntaxTrees.push({
+              sym: sym, success: true, tree: syntaxTree,
+            });
+            recordIndex++;
+            pos = endPos + 1;
+            success = true;
+          }
+        }
+
+        // Handle a successfully parsed symbol.
+        if (success) {
+          // If symInd === recordIndex + 1, erase any previous record holders,
+          // as they are outmatched by this rule.
+          if (symInd === recordIndex + 1) {
+            recordHolders = [];
+          }
+          // ...
+          return false; // Continue the some() iteration.
+        }
+        // Handle a failed symbol.
+        else {
+          // ...
+          if (symInd === recordIndex) {
+            recordHolders.push({i: ruleInd, expects: sym});
+          } else {
+            recordHolders = [{i: ruleInd, expects: sym}];
+          }
+          // ...
+          return true; // Break the some() iteration.
         }
       });
     });
@@ -125,8 +206,8 @@ export class Lexer {
     // Get the initial lexeme array still with whitespace and the potential last
     // failed string in it, then test and throw if the last match is that last
     // failure string.
-    let unfilteredLexemeArr = str.match(this.lexerRegEx);
-    let lastMatch = unfilteredLexemeArr[unfilteredLexArr.length - 1];
+    let unfilteredLexArr = str.match(this.lexerRegEx);
+    let lastMatch = unfilteredLexArr.at(-1);
     if (!this.lexemeOrWSRegEx.test(lastMatch)) {
       let lastIndexOfInvalidLexeme = lastMatch.search(this.wsRegEx) - 1;
       throw (
@@ -140,18 +221,18 @@ export class Lexer {
     }
 
     // Construct an array of the positions in str of each of the element in
-    // unfilteredLexemeArr.
+    // unfilteredLexArr.
     var strPos = 0;
-    let unfilteredStrPosArr = unfilteredLexemeArr.map(elem => {
+    let unfilteredStrPosArr = unfilteredLexArr.map(elem => {
       let ret = strPos;
       strPos += elem.length;
       return ret;
     })
   
-    // If successful, filter out the whitespace from the unfilteredLexemeArr
+    // If successful, filter out the whitespace from the unfilteredLexArr
     // and the corresponding positions in strPosArr, and return these two
     // filtered arrays
-    let lexemeArr = unfilteredLexemeArr.filter((val, ind) => {
+    let lexArr = unfilteredLexArr.filter((val, ind) => {
       let isWhitespace = wsRegEx.test(val);
       if (isWhitespace) {
         unfilteredStrPosArr[ind] = null;
@@ -159,6 +240,6 @@ export class Lexer {
       return !isWhitespace;
     });
     let strPosArr = unfilteredStrPosArr.filter(val => val !== null);
-    return [lexemeArr, strPosArr];
+    return [lexArr, strPosArr];
   }
 }
