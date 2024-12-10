@@ -104,8 +104,12 @@ export class Parser {
     // Get and parse the rules of the nonterminal symbol, ntSym. Also get the
     // test and callback functions for afterwards.
     let {rules, test, callback} = this.grammar[ntSym];
-    rules.forEach((rule, ruleInd) => {
-      // Parse as many symbols of the rule as possible.
+    rules.some((rule, ruleInd) => {
+      let ruleLen = rule.length;
+
+      // Parse as many symbols of the rule as possible, and if the rule succeeds
+      // completely, set ruleSuccess as true.
+      var ruleSuccess = false;
       rule.some((sym, symInd) => {
         // Skip past the symbols that have already been parsed, and fail the
         // rule if a symbol doesn't match the one that has already been parsed. 
@@ -118,45 +122,46 @@ export class Parser {
         }
 
         // If and when these symbols have been successfully skipped, try
-        // parsing a new symbol on each iteration.
-        var success = false;
+        // parsing a new symbol on each iteration. In all these branches,
+        // we also make sure to add any new successful parsed syntax tree to
+        // recordedSyntaxTrees, and also to increase pos.
+        var symSuccess = false;
+
         // If sym is a Regex, we simply try to parse the next lexeme as that.
         if (sym instanceof RegExp) {
           let nextLexeme = lexArr[pos];
           if (!nextLexeme) {
-            success = false;
+            symSuccess = false;
           }
           else {
             let match = nextLexeme.match(sym)[0];
             if (match === nextLexeme) {
-              // Record the new successful symbol, and increase pos and
-              // recordIndex.
+              // Record the new successful symbol, and increase pos.
               recordedSyntaxTrees.push({sym: sym, success: true});
-              recordIndex++;
               pos++;
-              success = true;
+              symSuccess = true;
             }
             else {
-              success = false;
+              symSuccess = false;
             }
           }
         }
+
         // Else if sym is a string, treat it as a ntSym, and make a recursive
         // call to parseNonterminalSymbol() with ntSym = sym.
         else if (typeof sym === "string") {
           let [syntaxTree, endPos, childCallbackArr] =
             this.parseNonterminalSymbol(sym, lexArr, pos, str, strPosArr);
-          success = syntaxTree.success;
-          if (success) {
-            // Record the new successful symbol, and increase pos and
-            // recordIndex.
+          symSuccess = syntaxTree.success;
+          if (symSuccess) {
+            // Record the new successful symbol, and increase pos, append the
+            // childCallbackArr to callbackArr.
             recordedSyntaxTrees.push(syntaxTree);
-            recordIndex++;
             pos = endPos + 1;
-            // Also append the childCallbackArr to callbackArr.
             callbackArr = callbackArr.concat(childCallbackArr);
           }
         }
+
         // Else if sym is an array, treat it as sym := [subSym, operator],
         // where operator is either '?', '*', '+', '{n}' or '{n,m}', and subSym
         // is the symbol to parse one or several, or zero, times. The operator
@@ -175,7 +180,8 @@ export class Parser {
             let [syntaxTree, endPos, childCallbackArr] =
               this.parseNonterminalSymbol(subSym, lexArr, pos, str, strPosArr);
             if (syntaxTree.success) {
-              // Add child syntax tree to children and increase pos.
+              // Add child syntax tree to children and childCallbackArr to
+              // childCallbackArrays, and increase pos.
               children.push(syntaxTree);
               childCallbackArrays.push(childCallbackArr);
               pos = endPos + 1;
@@ -194,16 +200,16 @@ export class Parser {
           // depending on the operator.
           let len = children.length;
           if (operator === "?") {
-              success = len === 1;
+              symSuccess = len === 1;
           }
           else if (operator === "*") {
-            success = true;
+            symSuccess = true;
           }
           else if (operator === "+") {
-            success = true;
+            symSuccess = true;
           }
           else if (operator) {
-            success = true;
+            symSuccess = true;
           }
           else if (/^\{[1-9][0-9]*(,[1-9][0-9]*)?\}$/.test(operator)) {
             // Parse n and m from operator := "{n(,m)?}"
@@ -211,9 +217,9 @@ export class Parser {
               val => parseInt(val)
             );
             if (m === undefined) {
-              success = len === n;
+              symSuccess = len === n;
             } else {
-              success = n <= len && len <= m;
+              symSuccess = n <= len && len <= m;
             }
           }
           else {
@@ -225,62 +231,83 @@ export class Parser {
           // On a success, construct and add the syntax tree with the children
           // array as the children property, and add the child callback arrays
           // to callbackArr. Also increase indexRecord.
-          if (success) {
+          if (symSuccess) {
             recordedSyntaxTrees.push({
               sym: sym, success: true, children: children,
             });
             callbackArr = callbackArr.concat(...childCallbackArrays);
-            recordIndex++;
           }
           // Else revert pos to its initial value.
           else {
             pos = initPos;
           }
         }
+
         // This only leaves the option of sym being of the form sym :=
         // {parser, startSym}, where parser might be another Parser instance
         // (or an object with a similar parseNonterminalSymbol() method).
-        else {
+        else if (typeof sym === "object") {
           let {parser, startSym} = sym;
           let [syntaxTree, endPos, childCallbackArr] =
             parser.parseNonterminalSymbol(
               startSym, lexArr, pos, str, strPosArr
             );
-          success = syntaxTree.success;
-          if (success) {
-            // Record the new successful symbol, and increase pos and
-            // recordIndex.
+          symSuccess = syntaxTree.success;
+          if (symSuccess) {
+            // Record the new successful symbol, and increase pos, append the
+            // childCallbackArr to callbackArr.
             recordedSyntaxTrees.push(syntaxTree);
-            recordIndex++;
             pos = endPos + 1;
-            // Also append the childCallbackArr to callbackArr.
             callbackArr = callbackArr.concat(childCallbackArr);
           }
         }
+        else {
+          throw (
+            `Parser: invalid symbol: "${JSON.stringify(sym)}"` 
+          );
+        }
 
-        // Finally handle ... Handle a successfully parsed symbol.
-        if (success) {
-          // If symInd === recordIndex + 1, erase any previous record holders,
-          // as they are outmatched by this rule.
-          if (symInd === recordIndex + 1) {
-            recordHolders = [];
+        // After all these branches, we do some final handling in the case of
+        // a success, and some handling in the case of a failure.
+        if (symSuccess) {
+          // On success, we check if sym was the last symbol of the rule, and
+          // if so, we set ruleSuccess to true, and break out of the some()
+          // iteration.
+          if (symInd === ruleLen - 1) {
+            ruleSuccess = true;
+            return true; // Break the some() iteration.
           }
-          // ...
           return false; // Continue the some() iteration.
         }
-        // Handle a failed symbol.
         else {
-          // ...
+          // On failure, we either add the rule's index to recordHolders if
+          // symInd ties with the previous recordIndex, or set recordHolders
+          // to just the rule's index if symInd is greater than that. Along the
+          // rule's index, we also add the expected next sym for the sake of
+          // error reporting. 
           if (symInd === recordIndex) {
             recordHolders.push({i: ruleInd, expects: sym});
           } else {
             recordHolders = [{i: ruleInd, expects: sym}];
           }
-          // ...
+
+          // Then we set recordIndex to symInd regardless, and break the
+          // iteration.
+          recordIndex = symInd;
           return true; // Break the some() iteration.
         }
       });
+
+      // Now that the rule has been parsed, successfully or not, we then check
+      // for a successful rule, and break the some() iteration of the rules
+      // upon such a success.
+      if (ruleSuccess) {
+        // TODO: Handle successful rule. ..Or just break, and handle outside,
+        // and then also move ruleSuccess out one scope.. 
+      }
     });
+
+    // TODO: Final construction of the return values. 
 
   }
 }
