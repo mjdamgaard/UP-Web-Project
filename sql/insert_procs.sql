@@ -173,6 +173,15 @@ proc: BEGIN
     );
     SET outID = LAST_INSERT_ID();
 
+    -- TODO: Insert an IF (daysLeftOfEditing IS NULL) statement here, and for
+    -- edit string proc, wrapping the EntitySecKeys insertion, such that keys
+    -- are only inserted for non-editable.. Hm, but what about expiring edit-
+    -- until dates..? ..Hm, maybe we should split up and handle 'c' and 'a'
+    -- entities separately.. ..But treat 'f' entities in the same way as 'a'
+    -- entities when it comes to inserting the sec. key.. ..And then make 'c'
+    -- entities always non-editable.. I think so.. (18:20, 10.12.24) ..Yes, for
+    -- sure..
+
     -- Insert defStr into EntitySecKeys, and on duplicate key error, return
     -- the ID of the duplicate instead.
     BEGIN
