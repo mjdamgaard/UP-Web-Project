@@ -410,7 +410,10 @@ CREATE TABLE Entities (
 
     -- A date after which this entity can't be edited. If it is NULL, then
     -- the entity can't be edited
-    editable_until DATE,
+    editable_until DATE, -- NOT NULL DEFAULT (
+    --     -- ADDDATE(SUBDATE(CURDATE(), DAY(CURDATE())), INTERVAL 2 MONTH)
+    --     ADDDATE(CURDATE(), INTERVAL 1 MONTH)
+    -- ),
 
     -- If an entity is private, the creator ID is never 0, and it is always
     -- editable. 

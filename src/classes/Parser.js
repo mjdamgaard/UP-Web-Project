@@ -108,8 +108,13 @@ export class Parser {
 
 
     // If ...
-    if (endPos < "TODO...") {
-      "...";
+    if (endPos < lexArr.length + 1) {
+      syntaxTree = {...syntaxTree,
+        success: false,
+        error: "Failed to parse all of the input string...",
+        // TODO: Append the part after where it reached.
+      };
+      return [syntaxTree, []];
     }
 
     // On success ... Finally call any and all of generated callbacks
@@ -123,14 +128,12 @@ export class Parser {
   parse(lexArr, pos, nonterminalSymbol, str, strPosArr) {
     nonterminalSymbol ??= this.defaultSym;
 
-    // Initialize the array of recorded sub-successes, and an array of the
-    // indexes of record holders, and the record index of successful symbols.
-    // Also initialize an array of the reported errors, and callback array for
-    // post-processing of the syntax tree. 
+    // Initialize the array of recorded sub-successes, and the record index of
+    // successful symbols. Also initialize the reported error on failure, and
+    // a callback array for post-processing of the syntax tree. 
     var recordedSyntaxTrees = [];
-    var recordHolders = [];
     var recordIndex = -1;
-    var errors = [];
+    var error = [[], -1, -1]; // [expectedSymbols, priority, endPos].
     var callbackArr = [];
 
     // Get and parse the rules of the nonterminal symbol, nonterminalSymbol.
@@ -139,7 +142,6 @@ export class Parser {
     let {rules, test, callback} = this.grammar[nonterminalSymbol];
     rules.some((rule, ruleInd) => {
       let ruleLen = rule.length;
-      let ruleErrors = [];
 
       // Parse as many symbols of the rule as possible, and if the rule succeeds
       // completely, set ruleSuccess as true.
@@ -178,11 +180,16 @@ export class Parser {
               symSuccess = true;
             }
             else {
-              // Record terminal symbol error on failure.
-              ruleErrors.push(
-                // Errors here are of the form [priority, expects, pos].
-                [0, sym.toString(), pos]
-              );
+              // Record terminal symbol error on failure, but only if pos is
+              // greater than endPos of the previously stored error (which
+              // might be greater due to a qualifier symbol, or a parser symbol
+              // with subLex set to true).
+              if (pos > error[1]) {
+                error = [[sym.toString()], pos, pos];
+              }
+              if (pos === error[1]) {
+                error[0].push(sym.toString());
+              }
               symSuccess = false;
             }
           }
@@ -209,7 +216,12 @@ export class Parser {
           }
           else {
             // Record contained nonterminal symbol error on failure.
-            ruleErrors.push(syntaxTree.error);
+            if (endPos > error[1]) {
+              error = [["<" + sym + ">"], endPos, endPos];
+            }
+            if (endPos === error[1]) {
+              error[0].push("<" + sym + ">");
+            }
           } 
         }
 
@@ -220,6 +232,20 @@ export class Parser {
         else if (Array.isArray(sym)) {
           let [subSym, qualifier] = sym;
 
+          if (!/^([\?\*\+]|\{[1-9][0-9]*(,[1-9][0-9]*)?\})$/.test(qualifier)) {
+            throw (
+              `Parser: unrecognized qualifier: "${qualifier}"` 
+            );
+          }
+
+          // Parse n and m from qualifier := "{n(,m)?}", and then set max and
+          // min based on those, and on the qualifier in general. 
+          let [n, m] = qualifier.match(/[1-9][0-9]*/g).map(
+            val => parseInt(val)
+          );
+          let max = m ?? n ?? (qualifier === "?") ? 1 : null;
+          let min = n ?? (qualifier === "+") ? 1 : 0;
+
           // First parse as many instances of sybSym as possible in a row,
           // storing the each resulting syntax tree in an array, children, and
           // storing all the child callback arrays as well. Also record the
@@ -227,7 +253,6 @@ export class Parser {
           let children = [];
           let childCallbackArrays = [];
           let initPos = pos;
-          var lastError;
           for (let i = 0; true; i++) {
             let [syntaxTree, childCallbackArr, endPos] =
               this.parse(lexArr, pos, subSym, str, strPosArr);
@@ -238,49 +263,31 @@ export class Parser {
               childCallbackArrays.push(childCallbackArr);
               pos = endPos + 1;
 
-              // Break already on the first success if '?' is the qualifier. 
-              if (qualifier === "?") {
+              // Break if max is reached, and mark it as a success.
+              if (i + 1 === max) {
+                symSuccess = true;
                 break;
               }
             }
             else {
-              // When finally failing, push the last encountered error to
-              // ruleError, only for the sake of error reporting.
-              ruleErrors.push(syntaxTree.error);
+              // If and when failing, mark a success or failure depending on
+              // whether min was reached or not.
+              if (i + 1 >= min) {
+                symSuccess = true;
+                break;
+              }
+              else {
+                if (endPos > error[1]) {
+                  error = [[JSON.stringify(sym)], endPos, endPos];
+                }
+                if (endPos === error[1]) {
+                  error[0].push(JSON.stringify(sym));
+                }
+                symSuccess = false;
+                break;
+              }
               break;
             }
-          }
-
-          // Once this is done, we can branch out and record the a success
-          // depending on the qualifier.
-          let len = children.length;
-          if (qualifier === "?") {
-              symSuccess = true;
-          }
-          else if (qualifier === "*") {
-            symSuccess = true;
-          }
-          else if (qualifier === "+") {
-            symSuccess = true;
-          }
-          else if (qualifier) {
-            symSuccess = true;
-          }
-          else if (/^\{[1-9][0-9]*(,[1-9][0-9]*)?\}$/.test(qualifier)) {
-            // Parse n and m from qualifier := "{n(,m)?}"
-            let [n, m] = qualifier.match(/[1-9][0-9]*/g).map(
-              val => parseInt(val)
-            );
-            if (m === undefined) {
-              symSuccess = len === n;
-            } else {
-              symSuccess = n <= len && len <= m;
-            }
-          }
-          else {
-            throw (
-              `Parser: unrecognized qualifier: "${qualifier}"` 
-            );
           }
 
           // On a success, construct and add the syntax tree with the children
@@ -292,7 +299,7 @@ export class Parser {
             });
             callbackArr = callbackArr.concat(...childCallbackArrays);
           }
-          // Else record error and revert pos to its initial value.
+          // Else record the error and revert pos to its initial value.
           else {
             pos = initPos;
           }
@@ -312,7 +319,7 @@ export class Parser {
               symSuccess = false;
             }
             else {
-              let [syntaxTree, childCallbackArr] =
+              let [syntaxTree, childCallbackArr, endPos] =
                 parser.lexAndParseAll(lexArr, pos, startSym, str, strPosArr);
               symSuccess = syntaxTree.success;
               if (symSuccess) {
@@ -323,7 +330,14 @@ export class Parser {
                 pos++;
               }
               else {
-                ruleErrors.push(syntaxTree.error)
+                // Add pos to the number of successful sub-lexemes, given by
+                // the returned endPos, to get the combined error "priority."
+                if (pos + endPos > error[1]) {
+                  error = [["<" + startSym + ">"], pos + endPos, pos];
+                }
+                if (pos + endPos === error[1]) {
+                  error[0].push("<" + startSym + ">");
+                }
               }
             }
           }
@@ -341,7 +355,12 @@ export class Parser {
               pos = endPos + 1;
             }
             else {
-              ruleErrors.push(syntaxTree.error)
+              if (endPos > error[1]) {
+                error = [["<" + startSym + ">"], endPos, endPos];
+              }
+              if (endPos === error[1]) {
+                error[0].push("<" + startSym + ">");
+              }
             }
           }
         }
@@ -365,19 +384,7 @@ export class Parser {
           return false; // Continue the some() iteration.
         }
         else {
-          // On failure, we either add the rule's index to recordHolders if
-          // symInd ties with the previous recordIndex, or set recordHolders
-          // to just the rule's index if symInd is greater than that. Along the
-          // rule's index, we also add the expected next sym for the sake of
-          // error reporting. 
-          if (symInd === recordIndex) {
-            recordHolders.push({i: ruleInd, expects: sym});
-          } else {
-            recordHolders = [{i: ruleInd, expects: sym}];
-          }
-
-          // Then we set recordIndex to symInd regardless, and break the
-          // iteration.
+          // On failure, we set recordIndex to symInd, and break the iteration.
           recordIndex = symInd;
           return true; // Break the some() iteration.
         }
@@ -385,16 +392,13 @@ export class Parser {
 
       // Now that the rule has been parsed either successfully or not, if it
       // was a success, record the rule's index, and break out of the iteration
-      // over the rules.
+      // over the rules, or else we continue iteration over the rules.
       if (ruleSuccess) {
         successfulRuleIndex = ruleInd;
-        return true; // Break the some() iteration.
+        return true; // Break the some() iteration (over the rules).
       }
-      // And if it was a failure, push ruleErrors to the errors array, and
-      // continue the iteration over the rules.
       else {
-        errors.push(ruleErrors);
-        return false; // Continue the some() iteration.
+        return false; // Continue the some() iteration (over the rules).
       }
     });
 
@@ -404,6 +408,7 @@ export class Parser {
       // Construct the almost successful syntax tree.
       let syntaxTree = {
         sym: nonterminalSymbol,
+        ruleInd: successfulRuleIndex,
         children: recordedSyntaxTrees[successfulRuleIndex],
       }
 
@@ -432,23 +437,27 @@ export class Parser {
       }
     }
 
-    // If on the other hand all rules failed, we construct and appropriate
-    // error message, and return the unsuccessful syntaxTree. 
+    // If on the other hand all rules failed, we return an syntax tree with
+    // an appropriate error, given how far we got.
     else {
-      // First we go through all the recordHolders, and pick out the error with
-      // the highest priority for each.
-      let highestPriorityErrors = recordHolders.map(({i, expects}) => {
-        let ruleErrors = errors[i];
-        let defaultError = [0, expects, pos];
-        let highestPriorityRuleError = ruleErrors.reduce(
-          (acc, error) => {
-            return (error[0] > acc[0]) ? error : acc;
-          },
-          defaultError
-        );
-      });
-    }
+      // Construct the appropriate error.
+      let [expectedSymbols, , endPos] = error;
+      let strPos = strPosArr[endPos];
+      msg = `Parsing error after:
+        ${str.substring(Math.max(strPos - 800, 0), strPos)}
+        ----
+        Expected ${expectedSymbols.join(" or ")}, but got:
+        ${lexArr[endPos]}.
+      `;
 
+      // Construct and return the failed syntax tree, along with endPos
+      let syntaxTree = {
+        sym: nonterminalSymbol,
+        success: false,
+        error: msg,
+      }
+      return [syntaxTree, [], endPos];
+    }
   }
 }
 
