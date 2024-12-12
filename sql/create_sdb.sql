@@ -1,9 +1,10 @@
 
 /* Scores */
--- DROP TABLE UserOpinionScores;
--- DROP TABLE PrivateScores;
--- DROP TABLE ScoreHistograms;
--- DROP TABLE FloatingPointScoreAggregates;
+DROP TABLE FloatingPointScoresWithWeightsAndErrors;
+DROP TABLE PositiveScoreTimes;
+
+/* Score query restrictions */
+DROP TABLE ListQueryRestrictions;
 
 /* Requests */
 -- DROP TABLE UpdateEntityListRequests;
@@ -29,78 +30,17 @@ DROP TABLE EntitySecKeys;
 /* Scores (Entity lists)  */
 
 
-CREATE TABLE UserOpinionScores (
-
-    user_id BIGINT UNSIGNED NOT NULL,
-
-    qual_id BIGINT UNSIGNED NOT NULL,
-
-    score_val FLOAT NOT NULL,
-
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    score_width FLOAT NOT NULL,
-
-    -- This DATETIME is reduced to just a DATE after a day or so, and can also
-    -- be deleted on the user's request, when we implement this at some point.
-    modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-    PRIMARY KEY (
-        user_id,
-        qual_id,
-        score_val,
-        subj_id
-    ),
-
-    -- Index to look up specific score (and restricting one subject per list).
-    UNIQUE INDEX (user_id, qual_id, subj_id)
-);
-
-
-CREATE TABLE PrivateScores (
-
-    user_id BIGINT UNSIGNED NOT NULL,
-
-    qual_id BIGINT UNSIGNED NOT NULL,
-
-    score_val FLOAT NOT NULL,
-
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    PRIMARY KEY (
-        user_id,
-        qual_id,
-        score_val,
-        subj_id
-    ),
-
-    -- Index to look up specific score (and restricting one subject per list).
-    UNIQUE INDEX (user_id, qual_id, subj_id)
-);
-
-
-CREATE TABLE ScoreHistograms (
-
-    list_id BIGINT UNSIGNED NOT NULL,
-
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    hist_data VARBINARY(500) NOT NULL,
-
-    PRIMARY KEY (
-        list_id,
-        subj_id
-    )
-);
-
-
-CREATE TABLE FloatingPointScoreAggregates (
+CREATE TABLE FloatingPointScoresWithWeightsAndErrors (
 
     list_id BIGINT UNSIGNED NOT NULL,
 
     score_val FLOAT NOT NULL,
 
     subj_id BIGINT UNSIGNED NOT NULL,
+
+    score_weight_exp TINYINT NOT NULL,
+
+    score_err_exp TINYINT NOT NULL,
 
     PRIMARY KEY (
         list_id,
@@ -111,6 +51,132 @@ CREATE TABLE FloatingPointScoreAggregates (
     -- Index to look up specific score (and restricting one subject per list).
     UNIQUE INDEX (list_id, subj_id)
 );
+
+
+
+CREATE TABLE PositiveScoreTimes (
+
+    list_id BIGINT UNSIGNED NOT NULL,
+
+    scored_at DATETIME NOT NULL DEFAULT (SUBTIME(NOW(), CURTIME())),
+
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (
+        list_id,
+        scored_at,
+        subj_id
+    ),
+
+    -- Index to look up specific score (and restricting one subject per list).
+    UNIQUE INDEX (list_id, subj_id)
+);
+
+
+
+
+
+
+CREATE TABLE ListQueryRestrictions (
+
+    list_id BIGINT UNSIGNED PRIMARY KEY,
+
+    user_whitelist_id BIGINT UNSIGNED NOT NULL,
+
+    user_whitelist_type CHAR DEFAULT 'f',
+
+    user_whitelist_cutoff FLOAT NOT NULL
+);
+
+
+
+
+
+
+
+
+-- CREATE TABLE UserOpinionScores (
+
+--     user_id BIGINT UNSIGNED NOT NULL,
+
+--     qual_id BIGINT UNSIGNED NOT NULL,
+
+--     score_val FLOAT NOT NULL,
+
+--     subj_id BIGINT UNSIGNED NOT NULL,
+
+--     score_width FLOAT NOT NULL,
+
+--     -- This DATETIME is reduced to just a DATE after a day or so, and can also
+--     -- be deleted on the user's request, when we implement this at some point.
+--     modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+--     PRIMARY KEY (
+--         user_id,
+--         qual_id,
+--         score_val,
+--         subj_id
+--     ),
+
+--     -- Index to look up specific score (and restricting one subject per list).
+--     UNIQUE INDEX (user_id, qual_id, subj_id)
+-- );
+
+
+-- CREATE TABLE PrivateScores (
+
+--     user_id BIGINT UNSIGNED NOT NULL,
+
+--     qual_id BIGINT UNSIGNED NOT NULL,
+
+--     score_val FLOAT NOT NULL,
+
+--     subj_id BIGINT UNSIGNED NOT NULL,
+
+--     PRIMARY KEY (
+--         user_id,
+--         qual_id,
+--         score_val,
+--         subj_id
+--     ),
+
+--     -- Index to look up specific score (and restricting one subject per list).
+--     UNIQUE INDEX (user_id, qual_id, subj_id)
+-- );
+
+
+-- CREATE TABLE ScoreHistograms (
+
+--     list_id BIGINT UNSIGNED NOT NULL,
+
+--     subj_id BIGINT UNSIGNED NOT NULL,
+
+--     hist_data VARBINARY(500) NOT NULL,
+
+--     PRIMARY KEY (
+--         list_id,
+--         subj_id
+--     )
+-- );
+
+
+-- CREATE TABLE FloatingPointScoreAggregates (
+
+--     list_id BIGINT UNSIGNED NOT NULL,
+
+--     score_val FLOAT NOT NULL,
+
+--     subj_id BIGINT UNSIGNED NOT NULL,
+
+--     PRIMARY KEY (
+--         list_id,
+--         score_val,
+--         subj_id
+--     ),
+
+--     -- Index to look up specific score (and restricting one subject per list).
+--     UNIQUE INDEX (list_id, subj_id)
+-- );
 
 
 
@@ -163,220 +229,9 @@ CREATE TABLE ScheduledSubListUpdates (
 
 
 
--- -- The Entity list entity, typically consisting of a User / User group, a
--- -- Quality, and an Estimator. The Quality defines some (scalable) predicate
--- -- or quantity that says something about the Subject. The User (group) is
--- -- the one doing this estimation. And the Estimator can in the case of a
--- -- User group determine if the score measures e.g. the mean or the median,
--- -- etc. And for a User, it can change the score to mean the uncertainty
--- -- instead, or a e.g. a 'wish.' 
 
 
 
--- CREATE TABLE PrivateScores (
---     user_id BIGINT UNSIGNED NOT NULL,
-
---     scale_id BIGINT UNSIGNED NOT NULL,
-
---     subj_id BIGINT UNSIGNED NOT NULL,
-
---     score_val FLOAT NOT NULL,
-
---     PRIMARY KEY (
---         user_id,
---         scale_id,
---         score_val,
---         subj_id
---     ),
-
---     UNIQUE INDEX (user_id, scale_id, subj_id)
--- );
-
-
-
-
-
-
-
-
-
--- CREATE TABLE RecordedScores (
---     user_group_id BIGINT UNSIGNED NOT NULL,
-
---     scale_id BIGINT UNSIGNED NOT NULL,
---     subj_id BIGINT UNSIGNED NOT NULL,
-    
---     weight_val FLOAT NOT NULL,
-
---     user_id BIGINT UNSIGNED NOT NULL,
-
---     submitted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
---     score_val FLOAT,
-
---     PRIMARY KEY (
---         user_group_id,
---         scale_id,
---         subj_id,
---         weight_val,
---         user_id,
---         submitted_at
---     )
--- );
-
-
-
-
-
-
-
-
--- CREATE TABLE LikelihoodScores (
---     -- User (or bot) who scores the "belongs to" statement.
---     user_id BIGINT UNSIGNED NOT NULL,
-
---     -- Class the the Subject may or may not belong to.
---     class_id BIGINT UNSIGNED NOT NULL,
-
---     -- Subject that may or may not belong to the Class.
---     subj_id BIGINT UNSIGNED NOT NULL,
-
---     -- The score value is a number (single-precision float) between 0 and 1
---     -- that denotes the likelihood of Subject belonging to Class, as deemed
---     -- by the user (or bot).
---     score_val FLOAT NOT NULL,
-
---     PRIMARY KEY (
---         user_id,
---         class_id,
---         score_val,
---         subj_id
---     ),
-
---     -- Index to look up specific score (and restricting one score per user).
---     UNIQUE INDEX (user_id, class_id, subj_id)
-
---     -- Still better to use a bot for this instead:
---     -- -- Index to look up users who has rated the stmt / rating scale.
---     -- UNIQUE INDEX (class_id, subj_id, score_val, user_id)
--- );
-
-
-
--- CREATE TABLE ValueScores (
---     -- User (or bot) who scores the "belongs to" statement.
---     user_id BIGINT UNSIGNED NOT NULL,
-
---     -- Function that together with the Subject produces a scalar to be scored.
---     fun_id BIGINT UNSIGNED NOT NULL,
-
---     -- Subject that is the "input" to the Function.
---     subj_id BIGINT UNSIGNED NOT NULL,
-
---     -- The score value is a number (single-precision float) taking any possible
---     -- (MySQL-compatible) value.
---     score_val FLOAT NOT NULL,
-
---     PRIMARY KEY (
---         user_id,
---         fun_id,
---         score_val,
---         subj_id
---     ),
-
---     -- Index to look up specific score (and restricting one score per user).
---     UNIQUE INDEX (user_id, fun_id, subj_id)
-
---     -- Still better to use a bot for this instead:
---     -- -- Index to look up users who has rated the stmt / rating scale.
---     -- UNIQUE INDEX (fun_id, subj_id, score_val, user_id)
--- );
-
-
-
--- CREATE TABLE RatingScores (
---     -- User (or bot) who scores the statement.
---     user_id BIGINT UNSIGNED NOT NULL,
-
---     -- Class that restricts the Subjects being rated.
---     class_id BIGINT UNSIGNED NOT NULL,
-
---     -- Predicate w.r.t. which the Subject is rated.
---     pred_id BIGINT UNSIGNED NOT NULL,
-
---     -- Subject that is rated.
---     subj_id BIGINT UNSIGNED NOT NULL,
-
---     -- Unit-less score value that places Subject on a scale among its peers
---     -- from the same class, Class. The distribution over this scale is always
---     -- normalized to have the same mean and variance for all rating scales.   
---     score_val FLOAT NOT NULL,
-
---     PRIMARY KEY (
---         user_id,
---         class_id,
---         pred_id,
---         score_val,
---         subj_id
---     ),
-
---     -- Index to look up specific score (and restricting one score per user).
---     UNIQUE INDEX (user_id, class_id, pred_id, subj_id)
-
---     -- Still better to use a bot for this instead:
---     -- -- Index to look up users who has rated the stmt / rating scale.
---     -- UNIQUE INDEX (class_id, pred_id, subj_id, score_val, user_id)
--- );
-
-
--- TODO: Compress these tables and their sec. index, as well as other tables
--- and sec. indexes below.
-
-
-
-
--- -- RecordedInputs can first of all be used by time-dependent bots (e.g. a mean-
--- -- of-recent-inputs bot), and can also potentially used by bots that update on
--- -- scheduled events rather than immediately when the input is received. And
--- -- furthermore, they can also potentially be used by third-party bots and by
--- -- SDB peers.
--- CREATE TABLE RecordedInputs (
---     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
---     user_id BIGINT UNSIGNED NOT NULL,
---     -- tag_id BIGINT UNSIGNED NOT NULL,
---     -- inst_id BIGINT UNSIGNED NOT NULL,
---     stmt_id BIGINT UNSIGNED NOT NULL,
---     -- A rating value of NULL means 'take my rating away,' making it 'missing'/
---     -- 'deleted.'
---     rat_val FLOAT UNSIGNED,
-
---     -- UNIQUE INDEX (tag_id, inst_id, id)
---     UNIQUE INDEX (stmt_id, id)
--- );
-
-
-
-
--- CREATE TABLE IndexedEntities (
---     -- Index entity which defines the restrictions on the entity keys.
---     idx_id BIGINT UNSIGNED NOT NULL,
-
---     /* The entity index */
---     -- Given some constants for the above two columns, the "entity indexes"
---     -- contain the "entity keys," which are each just the secondary index of an
---     -- entity.
---     key_str VARCHAR(255) NOT NULL,
-
-
---     ent_id BIGINT UNSIGNED NOT NULL,
-
---     PRIMARY KEY (
---         idx_id,
---         key_str,
---         ent_id -- (A single key might in principle index several entities.) 
---     )
--- );
 
 
 
@@ -401,25 +256,19 @@ CREATE TABLE Entities (
     -- that the creator is anonymous.
     creator_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
-    -- A boolean representing whether this entity can be viewed by anyone other
-    -- than its creator.
-    is_private TINYINT UNSIGNED NOT NULL DEFAULT 0, CHECK (is_private <= 1),
+    -- List of the users allowed to view the entity. Can also just be a single
+    -- user ID (the creator, i.e.). Also, user_whitelist_id IS NULL means that
+    -- everyone can view it
+    user_whitelist_id BIGINT UNSIGNED,
 
-    -- -- A boolean representing whether this entity can be edited.
-    -- is_editable TINYINT UNSIGNED NOT NULL DEFAULT 1, CHECK (is_editable <= 1),
+    -- A boolean representing whether this entity can be edited. (Some entity
+    -- data types have restrictions of how they can be edited, however.)
+    is_editable TINYINT UNSIGNED NOT NULL DEFAULT 0, CHECK (is_editable <= 1),
 
-    -- A date after which this entity can't be edited. If it is NULL, then
-    -- the entity can't be edited
-    editable_until DATE, -- NOT NULL DEFAULT (
-    --     -- ADDDATE(SUBDATE(CURDATE(), DAY(CURDATE())), INTERVAL 2 MONTH)
-    --     ADDDATE(CURDATE(), INTERVAL 1 MONTH)
-    -- ),
-
-    -- If an entity is private, the creator ID is never 0, and it is always
-    -- editable. 
-    CHECK (is_private = 0 OR creator_id != 0 AND editable_until IS NULL),
+    -- If an entity is private, it is always editable. 
+    CHECK (creator_id = 0 OR user_whitelist_id = creator_id OR is_editable),
     -- If creator ID is 0, then it is never editable.
-    CHECK (creator_id != 0 OR editable_until IS NULL)
+    CHECK (creator_id != 0 OR NOT is_editable)
 );
 
 
@@ -452,31 +301,14 @@ CREATE TABLE FulltextIndexedEntities (
 
     FULLTEXT idx (text_str)
 
-) ENGINE=InnoDB;
+) ENGINE = InnoDB;
 
 
 
--- CREATE TABLE EntityHashes (
-
---     type_ident CHAR NOT NULL,
-
---     def_hash CHAR(64) NOT NULL,
-
---     is_editable TINYINT UNSIGNED NOT NULL,
-
---     ent_id BIGINT UNSIGNED NOT NULL,
-
---     PRIMARY KEY (
---         type_ident,
---         def_hash,
---         is_editable,
---         ent_id
---     )
--- );
 
 
 
-/* Initial datatype ('t') entities */
+/* Initial entities */
 
 INSERT INTO Entities (
     type_ident, def_str, creator_id, editable_until
@@ -490,8 +322,8 @@ VALUES
     ("t", "8", 0, NULL),
     ("t", "h", 0, NULL),
     ("t", "j", 0, NULL),
-    ("u", "initial_admin", 0, NULL),
-    ("j", "{}", 9, ADDDATE(CURDATE(), INTERVAL 1000 DAY));
+    ("u", '{"Username":"initial_admin"}', 0, NULL),
+    ("j", '{}', 9, ADDDATE(CURDATE(), INTERVAL 1000 DAY));
 
 INSERT INTO EntitySecKeys (
     type_ident, def_key, ent_id
@@ -505,7 +337,7 @@ VALUES
     ("t", "8", 6),
     ("t", "h", 7),
     ("t", "j", 8),
-    ("u", "initial_admin", 9);
+    ("u", '{"Username":"initial_admin"}', 9);
 
 
 
@@ -515,7 +347,7 @@ VALUES
 -- /* Some initial inserts */
 
 -- INSERT INTO Entities (
---     id, def_strrrrr
+--     id, def_str
 -- )
 -- VALUES
 --     (1, CONCAT(
