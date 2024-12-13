@@ -30,47 +30,85 @@ DROP TABLE EntitySecKeys;
 /* Scores (Entity lists)  */
 
 
-CREATE TABLE FloatingPointScoresWithWeightsAndErrors (
+CREATE TABLE UserScores (
+
+    user_id BIGINT UNSIGNED NOT NULL,
+
+    qual_id BIGINT UNSIGNED NOT NULL,
+
+    score_val FLOAT NOT NULL,
+
+    score_weight_exp TINYINT UNSIGNED NOT NULL,
+
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (
+        user_id,
+        qual_id,
+        score_val,
+        score_weight_exp,
+        subj_id
+    ),
+
+    -- Index to look up specific scores (and restricting one subject per list).
+    UNIQUE INDEX (user_id, qual_id, subj_id),
+
+    -- Index to get a list of all users who has scored the subject, ordered by
+    -- their scored. (Used in particular for updating median aggregates.)
+    UNIQUE INDEX (qual_id, subj_id, score_val)
+);
+
+
+CREATE TABLE RecentUserScores (
+
+    user_id BIGINT UNSIGNED NOT NULL,
+
+    qual_id BIGINT UNSIGNED NOT NULL,
+
+    score_val FLOAT, -- NULL means 'deleted.'
+
+    score_weight_exp TINYINT UNSIGNED NOT NULL,
+
+    prev_score_val FLOAT, -- NULL means 'no prior score.'
+
+    prev_score_weight_exp TINYINT UNSIGNED NOT NULL,
+
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    modified_at TIMESTAMP NOT NULL DEFAULT (NOW()),
+
+
+    PRIMARY KEY (
+        qual_id,
+        subj_id,
+        modified_at,
+        user_id
+    ),
+);
+
+
+
+CREATE TABLE FloatingPointScoreAggregates (
 
     list_id BIGINT UNSIGNED NOT NULL,
 
     score_val FLOAT NOT NULL,
 
-    subj_id BIGINT UNSIGNED NOT NULL,
-
     score_weight_exp TINYINT NOT NULL,
 
-    score_err_exp TINYINT NOT NULL,
+    subj_id BIGINT UNSIGNED NOT NULL,
 
     PRIMARY KEY (
         list_id,
         score_val,
+        score_weight_exp,
         subj_id
     ),
 
-    -- Index to look up specific score (and restricting one subject per list).
+    -- Index to look up specific scores (and restricting one subject per list).
     UNIQUE INDEX (list_id, subj_id)
 );
 
-
-
-CREATE TABLE PositiveScoreTimes (
-
-    list_id BIGINT UNSIGNED NOT NULL,
-
-    scored_at DATETIME NOT NULL DEFAULT (SUBTIME(NOW(), CURTIME())),
-
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    PRIMARY KEY (
-        list_id,
-        scored_at,
-        subj_id
-    ),
-
-    -- Index to look up specific score (and restricting one subject per list).
-    UNIQUE INDEX (list_id, subj_id)
-);
 
 
 
@@ -83,7 +121,7 @@ CREATE TABLE ListQueryRestrictions (
 
     user_whitelist_id BIGINT UNSIGNED NOT NULL,
 
-    user_whitelist_type CHAR DEFAULT 'f',
+    user_whitelist_type CHAR DEFAULT 'f', -- (FloatingPointScoreAggregates)
 
     user_whitelist_cutoff FLOAT NOT NULL
 );
@@ -95,32 +133,6 @@ CREATE TABLE ListQueryRestrictions (
 
 
 
--- CREATE TABLE UserOpinionScores (
-
---     user_id BIGINT UNSIGNED NOT NULL,
-
---     qual_id BIGINT UNSIGNED NOT NULL,
-
---     score_val FLOAT NOT NULL,
-
---     subj_id BIGINT UNSIGNED NOT NULL,
-
---     score_width FLOAT NOT NULL,
-
---     -- This DATETIME is reduced to just a DATE after a day or so, and can also
---     -- be deleted on the user's request, when we implement this at some point.
---     modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
---     PRIMARY KEY (
---         user_id,
---         qual_id,
---         score_val,
---         subj_id
---     ),
-
---     -- Index to look up specific score (and restricting one subject per list).
---     UNIQUE INDEX (user_id, qual_id, subj_id)
--- );
 
 
 -- CREATE TABLE PrivateScores (
@@ -261,14 +273,17 @@ CREATE TABLE Entities (
     -- everyone can view it
     user_whitelist_id BIGINT UNSIGNED,
 
-    -- A boolean representing whether this entity can be edited. (Some entity
-    -- data types have restrictions of how they can be edited, however.)
-    is_editable TINYINT UNSIGNED NOT NULL DEFAULT 0, CHECK (is_editable <= 1),
+    -- List of the users allowed to edit this entity, possibly along with the
+    -- creator, until the creator finalizes the entity, or until the editor
+    -- group does so by scoring an edition of the entity above a certain
+    -- threshold.
+    editor_group_id BIGINT UNSIGNED,
 
-    -- If an entity is private, it is always editable. 
-    CHECK (creator_id = 0 OR user_whitelist_id = creator_id OR is_editable),
-    -- If creator ID is 0, then it is never editable.
-    CHECK (creator_id != 0 OR NOT is_editable)
+    -- A boolean whether the creator can also edit, and finalize, the entity.
+    -- If false, the editor can neither of these things, except as a member of
+    -- the editor group.
+    creator_can_edit TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    CHECK (is_editable <= 1)
 );
 
 
@@ -323,7 +338,9 @@ VALUES
     ("t", "h", 0, NULL),
     ("t", "j", 0, NULL),
     ("u", '{"Username":"initial_admin"}', 0, NULL),
-    ("j", '{}', 9, ADDDATE(CURDATE(), INTERVAL 1000 DAY));
+    ("j", '{}', 9, ADDDATE(CURDATE(), INTERVAL 1000 DAY)),
+    ("t", "p", 0, NULL),
+    ("t", "e", 0, NULL);
 
 INSERT INTO EntitySecKeys (
     type_ident, def_key, ent_id
@@ -337,7 +354,10 @@ VALUES
     ("t", "8", 6),
     ("t", "h", 7),
     ("t", "j", 8),
-    ("u", '{"Username":"initial_admin"}', 9);
+    ("u", "initial_admin", 9),
+    -- No sec. key for ("j", '{}', 9).
+    ("t", "p", 11),
+    ("t", "e", 12);
 
 
 

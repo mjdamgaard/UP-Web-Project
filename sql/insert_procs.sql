@@ -134,6 +134,112 @@ DELIMITER ;
 
 
 
+
+
+DELIMITER //
+CREATE PROCEDURE _insertOrFindEntityWithSecKey (
+    IN userID BIGINT UNSIGNED,
+    IN datatype CHAR,
+    IN defStr TEXT CHARACTER SET utf8mb4,
+    IN isAnonymous BOOL,
+    IN daysLeftOfEditing INT
+)
+proc: BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+
+    -- DECLARE EXIT HANDLER FOR 1213 -- Deadlock error.
+    -- BEGIN
+    --     ROLLBACK;
+    --     SELECT NULL AS outID, 10 AS exitCode; -- rollback due to deadlock.
+    -- END;
+
+    IF (isAnonymous OR daysLeftOfEditing <= 0) THEN
+        SET daysLeftOfEditing = NULL;
+    END IF;
+    -- TODO: Choose a small number instead of 100 for the beta version.
+    IF (daysLeftOfEditing > 100) THEN
+        SET daysLeftOfEditing = 100;
+    END IF;
+
+    START TRANSACTION;
+
+    INSERT INTO Entities (
+        creator_id,
+        type_ident, def_str, is_private,
+        editable_until
+    )
+    VALUES (
+        CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
+        datatype, defStr, 0,
+        ADDDATE(CURDATE(), INTERVAL daysLeftOfEditing DAY)
+    );
+    SET outID = LAST_INSERT_ID();
+
+    -- TODO: Insert an IF (daysLeftOfEditing IS NULL) statement here, and for
+    -- edit string proc, wrapping the EntitySecKeys insertion, such that keys
+    -- are only inserted for non-editable.. Hm, but what about expiring edit-
+    -- until dates..? ..Hm, maybe we should split up and handle 'c' and 'a'
+    -- entities separately.. ..But treat 'f' entities in the same way as 'a'
+    -- entities when it comes to inserting the sec. key.. ..And then make 'c'
+    -- entities always non-editable.. I think so.. (18:20, 10.12.24) ..Yes, for
+    -- sure..
+
+    -- Insert defStr into EntitySecKeys, and on duplicate key error, return
+    -- the ID of the duplicate instead.
+    BEGIN
+        DECLARE EXIT HANDLER FOR 1586 -- Duplicate key entry error.
+        BEGIN
+            ROLLBACK;
+
+            SELECT ent_id INTO outID
+            FROM EntitySecKeys
+            WHERE (
+                type_ident = datatype AND
+                def_key = defStr
+            );
+
+            SELECT outID, 1 AS exitCode; -- find.
+        END;
+
+        INSERT INTO EntitySecKeys (
+            type_ident, def_key, ent_id
+        )
+        VALUES (
+            datatype, defStr, outID
+        );
+    END;
+
+    COMMIT;
+
+    SELECT outID, 0 AS exitCode; -- insert.
+END proc //
+DELIMITER ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 DELIMITER //
 CREATE PROCEDURE _insertOrFindStringBasedEntity (
     IN datatype CHAR,
