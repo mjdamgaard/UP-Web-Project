@@ -57,7 +57,7 @@ CREATE TABLE UserScores (
 
     -- Index to get a list of all users who has scored the subject, ordered by
     -- their scored. (Used in particular for updating median aggregates.)
-    UNIQUE INDEX (qual_id, subj_id, score_val)
+    UNIQUE INDEX (qual_id, subj_id, score_val, score_weight_exp, user_id)
 );
 
 
@@ -112,25 +112,6 @@ CREATE TABLE FloatingPointScoreAggregates (
 );
 
 
-
-
-
-
-
-
--- TODO: Consider parsing the userWhiteListID from the list_id entity itself
--- instead. 
-
-CREATE TABLE ListQueryRestrictions (
-
-    list_id BIGINT UNSIGNED PRIMARY KEY,
-
-    user_whitelist_id BIGINT UNSIGNED NOT NULL,
-
-    user_whitelist_type CHAR DEFAULT 'f', -- (FloatingPointScoreAggregates)
-
-    user_whitelist_cutoff FLOAT NOT NULL
-);
 
 
 
@@ -275,9 +256,9 @@ CREATE TABLE Entities (
     creator_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
     -- List of the users allowed to view the entity. Can also just be a single
-    -- user ID (the creator, i.e.). Also, user_whitelist_id IS NULL means that
-    -- everyone can view it
-    user_whitelist_id BIGINT UNSIGNED,
+    -- user ID (the creator, i.e.). Also, user_whitelist_id = 0 means that
+    -- everyone can view it.
+    user_whitelist_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
     -- Whether the creator can edit the entity or not. (is_editable = 1 will
     -- also typically mean that the creator's profile info (username and
@@ -298,6 +279,8 @@ CREATE TABLE EntitySecKeys (
 
     type_ident CHAR NOT NULL,
 
+    user_whitelist_id BIGINT UNSIGNED NOT NULL DEFAULT 0, -- (0 means public.)
+
     -- is_hashed TINYINT UNSIGNED NOT NULL, CHECK (is_hashed <= 1),
 
     def_key VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
@@ -306,6 +289,7 @@ CREATE TABLE EntitySecKeys (
 
     PRIMARY KEY (
         type_ident,
+        user_whitelist_id,
         def_key
     )
 );

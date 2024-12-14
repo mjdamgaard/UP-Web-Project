@@ -8,19 +8,25 @@ DROP PROCEDURE deletePrivateScore;
 
 DROP PROCEDURE _insertEntityWithoutSecKey;
 DROP PROCEDURE _insertOrFindEntityWithSecKey;
+
 DROP PROCEDURE insertAttributeDefinedEntity;
 DROP PROCEDURE insertFunctionEntity;
 DROP PROCEDURE insertOrFindFunctionCallEntity;
 DROP PROCEDURE insertUTF8Entity;
 DROP PROCEDURE insertHTMLEntity;
 DROP PROCEDURE insertJSONEntity;
+
 DROP PROCEDURE _editEntity;
+
 DROP PROCEDURE editUTF8Entity;
 DROP PROCEDURE editHTMLEntity;
 DROP PROCEDURE editJSONEntity;
+
 DROP PROCEDURE _substitutePlaceholdersInEntity;
+
 DROP PROCEDURE substitutePlaceholdersInAttrEntity;
 DROP PROCEDURE substitutePlaceholdersInFunEntity;
+
 DROP PROCEDURE finalizeEntity;
 DROP PROCEDURE anonymizeEntity;
 
@@ -29,50 +35,122 @@ DROP PROCEDURE anonymizeEntity;
 
 
 DELIMITER //
-CREATE PROCEDURE insertOrUpdateOpinionScore (
+CREATE PROCEDURE insertOrUpdateScore (
     IN userID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN scoreVal FLOAT,
-    IN scoreWidth FLOAT
+    IN scoreWeightExp TINYINT UNSIGNED
 )
 proc: BEGIN
+    DECLARE prevScoreVal FLOAT;
+    DECLARE prevScoreWeightExp TINYINT UNSIGNED;
+
+    -- DECLARE EXIT HANDLER FOR 1213 -- Deadlock error.
+    -- BEGIN
+    --     ROLLBACK;
+    --     SELECT NULL AS outID, 10 AS exitCode; -- rollback due to deadlock.
+    -- END;
+
     -- Exit if the subject entity does not exist.
     IF ((SELECT type_ident FROM Entities WHERE id = subjID) IS NULL) THEN
         SELECT subjID AS outID, 1 AS exitCode; -- subject does not exist.
         LEAVE proc;
     END IF;
 
-    INSERT INTO UserOpinionScores (
-        user_id, qual_id, subj_id, score_val, score_width
+    START TRANSACTION;
+
+    SELECT score_val, score_weight_exp
+    INTO prevScoreVal, prevScoreWeightExp
+    FROM UserScores
+    WHERE (
+        user_id = userID AND
+        qual_id = qualID AND
+        subj_id = subjID
+    );
+
+    INSERT INTO RecentUserScores (
+        user_id, qual_id, subj_id,
+        score_val, score_weight_exp, prev_score_val, prev_score_weight_exp
     )
     VALUES (
-        userID, qualID, subjID, scoreVal, scoreWidth
+        userID, qualID, subjID,
+        scoreVal, scoreWeightExp, prevScoreVal, prevScoreWeightExp
+    )
+    ON DUPLICATE KEY UPDATE
+        score_val = scoreVal,
+        score_weight_exp = scoreWeightExp;
+
+
+    INSERT INTO UserScores (
+        user_id, qual_id, subj_id, score_val, score_weight_exp
+    )
+    VALUES (
+        userID, qualID, subjID, scoreVal, scoreWeightExp
     )
     ON DUPLICATE KEY UPDATE score_val = scoreVal, score_width = scoreWidth;
+
+    COMMIT;
 
     SELECT subjID AS outID, 0 AS exitCode; -- inserted or updated.
 END proc //
 DELIMITER ;
 
 
+
 DELIMITER //
-CREATE PROCEDURE deleteOpinionScore (
+CREATE PROCEDURE deleteUserScore (
     IN userID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED
 )
 proc: BEGIN
-    DELETE FROM UserOpinionScores
+    DECLARE prevScoreVal FLOAT;
+    DECLARE prevScoreWeightExp TINYINT UNSIGNED;
+
+    -- DECLARE EXIT HANDLER FOR 1213 -- Deadlock error.
+    -- BEGIN
+    --     ROLLBACK;
+    --     SELECT NULL AS outID, 10 AS exitCode; -- rollback due to deadlock.
+    -- END;
+
+    START TRANSACTION;
+
+    SELECT score_val, score_weight_exp
+    INTO prevScoreVal, prevScoreWeightExp
+    FROM UserScores
     WHERE (
-        user_id <=> userID AND
-        qual_id <=> qualID AND
-        subj_id <=> subjID
+        user_id = userID AND
+        qual_id = qualID AND
+        subj_id = subjID
     );
 
-    SELECT subjID AS outID, 0 AS exitCode; -- deleted if there.
+    IF (prevScoreVal IS NOT NULL) THEN
+        INSERT INTO RecentUserScores (
+            user_id, qual_id, subj_id,
+            score_val, score_weight_exp, prev_score_val, prev_score_weight_exp
+        )
+        VALUES (
+            userID, qualID, subjID,
+            NULL, 0, prevScoreVal, prevScoreWeightExp
+        )
+        ON DUPLICATE KEY UPDATE
+            score_val = NULL;
+    END IF;
+
+    DELETE FROM UserScores
+    WHERE (
+        user_id = userID AND
+        qual_id = qualID AND
+        subj_id = subjID
+    );
+
+    COMMIT;
+
+    SELECT subjID AS outID, 0 AS exitCode; -- inserted or updated.
 END proc //
 DELIMITER ;
+
 
 
 
@@ -172,6 +250,7 @@ CREATE PROCEDURE _insertOrFindEntityWithSecKey (
     IN datatype CHAR,
     IN userID BIGINT UNSIGNED,
     IN defStr TEXT CHARACTER SET utf8mb4,
+    IN userWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL
 )
 proc: BEGIN
@@ -191,6 +270,7 @@ proc: BEGIN
         FROM EntitySecKeys
         WHERE (
             type_ident = datatype AND
+            user_whitelist_id = userWhitelistID AND
             def_key = defStr
         );
 
@@ -201,19 +281,19 @@ proc: BEGIN
 
     INSERT INTO Entities (
         creator_id,
-        type_ident, def_str, is_editable
+        type_ident, def_str, user_whitelist_id, is_editable
     )
     VALUES (
         CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        datatype, defStr, 0
+        datatype, defStr, userWhitelistID, 0
     );
     SET outID = LAST_INSERT_ID();
 
     INSERT INTO EntitySecKeys (
-        type_ident, def_key, ent_id
+        type_ident, user_whitelist_id, def_key, ent_id
     )
     VALUES (
-        datatype, defStr, outID
+        datatype, userWhitelistID, defStr, outID
     );
 
     COMMIT;
