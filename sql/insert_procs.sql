@@ -133,16 +133,46 @@ DELIMITER ;
 
 
 
+DELIMITER //
+CREATE PROCEDURE _insertEntityWithoutSecKey (
+    IN datatype CHAR,
+    IN userID BIGINT UNSIGNED,
+    IN defStr LONGTEXT CHARACTER SET utf8mb4,
+    IN userWhitelistID BIGINT UNSIGNED,
+    IN isAnonymous BOOL,
+    IN isEditable BOOL
+)
+BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+
+    IF (userWhitelistID = 0) THEN
+        SET userWhitelistID = NULL;
+    END IF;
+
+    INSERT INTO Entities (
+        creator_id,
+        type_ident, def_str, user_whitelist_id, is_editable
+    )
+    VALUES (
+        CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
+        datatype, defStr, userWhitelistID, isEditable AND NOT isAnonymous
+    );
+    SET outID = LAST_INSERT_ID();
+
+    SELECT outID, 0 AS exitCode; -- insert.
+END //
+DELIMITER ;
+
+
 
 
 
 DELIMITER //
 CREATE PROCEDURE _insertOrFindEntityWithSecKey (
-    IN userID BIGINT UNSIGNED,
     IN datatype CHAR,
+    IN userID BIGINT UNSIGNED,
     IN defStr TEXT CHARACTER SET utf8mb4,
-    IN isAnonymous BOOL,
-    IN daysLeftOfEditing INT
+    IN isAnonymous BOOL
 )
 proc: BEGIN
     DECLARE outID BIGINT UNSIGNED;
@@ -153,61 +183,38 @@ proc: BEGIN
     --     SELECT NULL AS outID, 10 AS exitCode; -- rollback due to deadlock.
     -- END;
 
-    IF (isAnonymous OR daysLeftOfEditing <= 0) THEN
-        SET daysLeftOfEditing = NULL;
-    END IF;
-    -- TODO: Choose a small number instead of 100 for the beta version.
-    IF (daysLeftOfEditing > 100) THEN
-        SET daysLeftOfEditing = 100;
-    END IF;
+    DECLARE EXIT HANDLER FOR 1586 -- Duplicate key entry error.
+    BEGIN
+        ROLLBACK;
+
+        SELECT ent_id INTO outID
+        FROM EntitySecKeys
+        WHERE (
+            type_ident = datatype AND
+            def_key = defStr
+        );
+
+        SELECT outID, 1 AS exitCode; -- find.
+    END;
 
     START TRANSACTION;
 
     INSERT INTO Entities (
         creator_id,
-        type_ident, def_str, is_private,
-        editable_until
+        type_ident, def_str, is_editable
     )
     VALUES (
         CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        datatype, defStr, 0,
-        ADDDATE(CURDATE(), INTERVAL daysLeftOfEditing DAY)
+        datatype, defStr, 0
     );
     SET outID = LAST_INSERT_ID();
 
-    -- TODO: Insert an IF (daysLeftOfEditing IS NULL) statement here, and for
-    -- edit string proc, wrapping the EntitySecKeys insertion, such that keys
-    -- are only inserted for non-editable.. Hm, but what about expiring edit-
-    -- until dates..? ..Hm, maybe we should split up and handle 'c' and 'a'
-    -- entities separately.. ..But treat 'f' entities in the same way as 'a'
-    -- entities when it comes to inserting the sec. key.. ..And then make 'c'
-    -- entities always non-editable.. I think so.. (18:20, 10.12.24) ..Yes, for
-    -- sure..
-
-    -- Insert defStr into EntitySecKeys, and on duplicate key error, return
-    -- the ID of the duplicate instead.
-    BEGIN
-        DECLARE EXIT HANDLER FOR 1586 -- Duplicate key entry error.
-        BEGIN
-            ROLLBACK;
-
-            SELECT ent_id INTO outID
-            FROM EntitySecKeys
-            WHERE (
-                type_ident = datatype AND
-                def_key = defStr
-            );
-
-            SELECT outID, 1 AS exitCode; -- find.
-        END;
-
-        INSERT INTO EntitySecKeys (
-            type_ident, def_key, ent_id
-        )
-        VALUES (
-            datatype, defStr, outID
-        );
-    END;
+    INSERT INTO EntitySecKeys (
+        type_ident, def_key, ent_id
+    )
+    VALUES (
+        datatype, defStr, outID
+    );
 
     COMMIT;
 
@@ -221,119 +228,32 @@ DELIMITER ;
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DELIMITER //
-CREATE PROCEDURE _insertOrFindStringBasedEntity (
-    IN datatype CHAR,
+CREATE PROCEDURE insertAttributeDefinedEntity (
     IN userID BIGINT UNSIGNED,
     IN defStr VARCHAR(700) CHARACTER SET utf8mb4,
-    IN isAnonymous BOOL,
-    IN daysLeftOfEditing INT
-)
-proc: BEGIN
-    DECLARE outID BIGINT UNSIGNED;
-
-    -- DECLARE EXIT HANDLER FOR 1213 -- Deadlock error.
-    -- BEGIN
-    --     ROLLBACK;
-    --     SELECT NULL AS outID, 10 AS exitCode; -- rollback due to deadlock.
-    -- END;
-
-    IF (isAnonymous OR daysLeftOfEditing <= 0) THEN
-        SET daysLeftOfEditing = NULL;
-    END IF;
-    -- TODO: Choose a small number instead of 100 for the beta version.
-    IF (daysLeftOfEditing > 100) THEN
-        SET daysLeftOfEditing = 100;
-    END IF;
-
-    START TRANSACTION;
-
-    INSERT INTO Entities (
-        creator_id,
-        type_ident, def_str, is_private,
-        editable_until
-    )
-    VALUES (
-        CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        datatype, defStr, 0,
-        ADDDATE(CURDATE(), INTERVAL daysLeftOfEditing DAY)
-    );
-    SET outID = LAST_INSERT_ID();
-
-    -- TODO: Insert an IF (daysLeftOfEditing IS NULL) statement here, and for
-    -- edit string proc, wrapping the EntitySecKeys insertion, such that keys
-    -- are only inserted for non-editable.. Hm, but what about expiring edit-
-    -- until dates..? ..Hm, maybe we should split up and handle 'c' and 'a'
-    -- entities separately.. ..But treat 'f' entities in the same way as 'a'
-    -- entities when it comes to inserting the sec. key.. ..And then make 'c'
-    -- entities always non-editable.. I think so.. (18:20, 10.12.24) ..Yes, for
-    -- sure..
-
-    -- Insert defStr into EntitySecKeys, and on duplicate key error, return
-    -- the ID of the duplicate instead.
-    BEGIN
-        DECLARE EXIT HANDLER FOR 1586 -- Duplicate key entry error.
-        BEGIN
-            ROLLBACK;
-
-            SELECT ent_id INTO outID
-            FROM EntitySecKeys
-            WHERE (
-                type_ident = datatype AND
-                def_key = defStr
-            );
-
-            SELECT outID, 1 AS exitCode; -- find.
-        END;
-
-        INSERT INTO EntitySecKeys (
-            type_ident, def_key, ent_id
-        )
-        VALUES (
-            datatype, defStr, outID
-        );
-    END;
-
-    COMMIT;
-
-    SELECT outID, 0 AS exitCode; -- insert.
-END proc //
-DELIMITER ;
-
-
-
-
-
-DELIMITER //
-CREATE PROCEDURE insertOrFindFunctionEntity (
-    IN userID BIGINT UNSIGNED,
-    IN defStr VARCHAR(700) CHARACTER SET utf8mb4,
-    IN isAnonymous BOOL,
-    IN daysLeftOfEditing INT
+    IN userWhitelistID BIGINT UNSIGNED,
+    IN isAnonymous BOOL
 )
 BEGIN
-    CALL _insertOrFindStringBasedEntity (
+    CALL _insertEntityWithoutSecKey (
+        "a",
+        userID, defStr, userWhitelistID, isAnonymous, 0
+    );
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE insertFunctionEntity (
+    IN userID BIGINT UNSIGNED,
+    IN defStr VARCHAR(700) CHARACTER SET utf8mb4,
+    IN userWhitelistID BIGINT UNSIGNED,
+    IN isAnonymous BOOL
+)
+BEGIN
+    CALL _insertEntityWithoutSecKey (
         "f",
-        userID, defStr, isAnonymous, daysLeftOfEditing
+        userID, defStr, userWhitelistID, isAnonymous, 0
     );
 END //
 DELIMITER ;
@@ -343,29 +263,62 @@ DELIMITER //
 CREATE PROCEDURE insertOrFindFunctionCallEntity (
     IN userID BIGINT UNSIGNED,
     IN defStr VARCHAR(700) CHARACTER SET utf8mb4,
-    IN isAnonymous BOOL,
-    IN daysLeftOfEditing INT
+    IN isAnonymous BOOL
 )
 BEGIN
-    CALL _insertOrFindStringBasedEntity (
+    CALL _insertOrFindEntityWithSecKey (
         "c",
-        userID, defStr, isAnonymous, daysLeftOfEditing
+        userID, defStr, isAnonymous, 0
     );
 END //
 DELIMITER ;
 
 
+
 DELIMITER //
-CREATE PROCEDURE insertOrFindAttributeDefinedEntity (
+CREATE PROCEDURE insertUTF8Entity (
     IN userID BIGINT UNSIGNED,
-    IN defStr VARCHAR(700) CHARACTER SET utf8mb4,
+    IN defStr TEXT CHARACTER SET utf8mb4,
+    IN userWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL,
-    IN daysLeftOfEditing INT
+    IN isEditable BOOL
 )
 BEGIN
-    CALL _insertOrFindStringBasedEntity (
-        "a",
-        userID, defStr, isAnonymous, daysLeftOfEditing
+    CALL _insertEntityWithoutSecKey (
+        "8",
+        userID, defStr, userWhitelistID, isAnonymous, isEditable
+    );
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE insertHTMLEntity (
+    IN userID BIGINT UNSIGNED,
+    IN defStr TEXT CHARACTER SET utf8mb4,
+    IN userWhitelistID BIGINT UNSIGNED,
+    IN isAnonymous BOOL,
+    IN isEditable BOOL
+)
+BEGIN
+    CALL _insertEntityWithoutSecKey (
+        "h",
+        userID, defStr, userWhitelistID, isAnonymous, isEditable
+    );
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE insertJSONEntity (
+    IN userID BIGINT UNSIGNED,
+    IN defStr TEXT CHARACTER SET utf8mb4,
+    IN userWhitelistID BIGINT UNSIGNED,
+    IN isAnonymous BOOL,
+    IN isEditable BOOL
+)
+BEGIN
+    CALL _insertEntityWithoutSecKey (
+        "j",
+        userID, defStr, userWhitelistID, isAnonymous, isEditable
     );
 END //
 DELIMITER ;
@@ -376,33 +329,34 @@ DELIMITER ;
 
 
 
+
+
+
+
+
+
 DELIMITER //
-CREATE PROCEDURE _editOrFindStringBasedEntity (
+CREATE PROCEDURE _editEntity (
     IN datatype CHAR,
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
-    IN defStr VARCHAR(700) CHARACTER SET utf8mb4,
+    IN defStr LONGTEXT CHARACTER SET utf8mb4,
+    IN userWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL,
-    IN daysLeftOfEditing INT
+    IN isEditable BOOL
 )
 proc: BEGIN
-    DECLARE outID, creatorID BIGINT UNSIGNED;
-    DECLARE prevEditableUntil DATE;
-    DECLARE prevDefStr VARCHAR(700);
+    DECLARE creatorID BIGINT UNSIGNED;
+    DECLARE prevIsEditable TINYINT UNSIGNED;
+    DECLARE prevDefStr LONGTEXT;
     DECLARE prevType CHAR;
 
-    -- DECLARE EXIT HANDLER FOR 1213 -- Deadlock error.
-    -- BEGIN
-    --     ROLLBACK;
-    --     SELECT NULL AS outID, 10 AS exitCode; -- rollback due to deadlock.
-    -- END;
-
-    IF (isAnonymous OR daysLeftOfEditing <= 0) THEN
-        SET daysLeftOfEditing = NULL;
+    IF (userWhitelistID = 0) THEN
+        SET userWhitelistID = NULL;
     END IF;
 
-    SELECT creator_id, editable_until, def_str, type_ident
-    INTO creatorID, prevEditableUntil, prevDefStr, prevType
+    SELECT type_ident, creator_id, def_str, is_editable
+    INTO prevType, creatorID, prevDefStr, prevIsEditable 
     FROM Entities
     WHERE id = entID;
 
@@ -411,67 +365,93 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    IF (prevEditableUntil IS NULL OR prevEditableUntil < CURDATE()) THEN
-        SELECT entID AS outID, 3 AS exitCode; -- can no longer be edited.
+    IF (NOT prevIsEditable) THEN
+        SELECT entID AS outID, 3 AS exitCode; -- can not be edited.
         LEAVE proc;
     END IF;
 
     IF (prevType != datatype) THEN
-        SELECT entID AS outID, 4 AS exitCode; -- changing datatype not impl.
+        SELECT entID AS outID, 4 AS exitCode; -- changing datatype not allowed.
         LEAVE proc;
     END IF;
 
-    IF (prevDefStr <=> defStr) THEN
-        UPDATE Entities
-        SET
-            creator_id = CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-            editable_until = ADDDATE(CURDATE(), INTERVAL daysLeftOfEditing DAY)
-        WHERE id = entID;
-        SELECT entID AS outID, 0 AS exitCode; -- edit.
+    -- If all checks succeed, update the entity.
+    UPDATE Entities
+    SET
+        creator_id = CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
+        def_str = defStr,
+        user_whitelist_id = userWhitelistID,
+        is_editable = isEditable
+    WHERE id = entID;
+
+    SELECT entID AS outID, 0 AS exitCode; -- edit.
+END proc //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE _substitutePlaceholdersInEntity (
+    IN datatype CHAR,
+    IN userID BIGINT UNSIGNED,
+    IN entID BIGINT UNSIGNED,
+    IN paths TEXT, -- List of the form '<path_1>,<path_2>...'
+    IN substitutionEntIDs TEXT -- List of the form '<entID_1>,<entID_2>...'
+)
+proc: BEGIN
+    DECLARE creatorID BIGINT UNSIGNED;
+    DECLARE prevDefStr, newDefStr LONGTEXT;
+    DECLARE prevType CHAR;
+    DECLARE i TINYINT UNSIGNED DEFAULT 0;
+
+    IF (userWhitelistID = 0) THEN
+        SET userWhitelistID = NULL;
     END IF;
 
+    SELECT type_ident, creator_id, def_str, is_editable
+    INTO prevType, creatorID, prevDefStr, prevIsEditable 
+    FROM Entities
+    WHERE id = entID;
 
-    START TRANSACTION;
+    IF (creatorID != userID) THEN
+        SELECT entID AS outID, 2 AS exitCode; -- user is not the owner.
+        LEAVE proc;
+    END IF;
+
+    IF (prevType != datatype) THEN
+        SELECT entID AS outID, 4 AS exitCode; -- changing datatype not allowed.
+        LEAVE proc;
+    END IF;
+
+    -- If all checks succeed, loop through all the paths and substitute any
+    -- occurrences inside prevDefStr with the corresponding entIDs.
+    SET newDefStr = prevDefStr;
+    loop_label: LOOP
+
+        LEAVE loop_label;
+    END loop_label;
 
     UPDATE Entities
     SET
         creator_id = CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
         def_str = defStr,
-        editable_until = ADDDATE(CURDATE(), INTERVAL daysLeftOfEditing DAY)
+        user_whitelist_id = userWhitelistID,
+        is_editable = isEditable
     WHERE id = entID;
-
-    -- Update def_key in EntitySecKeys, and on duplicate key error, return
-    -- the ID of the duplicate instead.
-    BEGIN
-        DECLARE EXIT HANDLER FOR 1586 -- Duplicate key entry error.
-        BEGIN
-            ROLLBACK;
-
-            SELECT ent_id INTO outID
-            FROM EntitySecKeys
-            WHERE (
-                type_ident = datatype AND
-                def_key = defStr
-            );
-
-            SELECT outID, 1 AS exitCode; -- find.
-        END;
-
-
-        UPDATE EntitySecKeys
-        SET def_key = defStr
-        WHERE (
-            type_ident = datatype AND
-            def_key = prevDefStr AND
-            ent_id = entID
-        );
-    END;
-
-    COMMIT;
 
     SELECT entID AS outID, 0 AS exitCode; -- edit.
 END proc //
 DELIMITER ;
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -574,57 +554,6 @@ DELIMITER ;
 
 
 
-
-
-DELIMITER //
-CREATE PROCEDURE insertUTF8Entity (
-    IN userID BIGINT UNSIGNED,
-    IN defStr TEXT CHARACTER SET utf8mb4,
-    IN isPrivate BOOL,
-    IN isAnonymous BOOL,
-    IN daysLeftOfEditing INT
-)
-BEGIN
-    CALL _insertTextDataEntity (
-        "8",
-        userID, defStr, isPrivate, isAnonymous, daysLeftOfEditing
-    );
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE insertHTMLEntity (
-    IN userID BIGINT UNSIGNED,
-    IN defStr TEXT CHARACTER SET utf8mb4,
-    IN isPrivate BOOL,
-    IN isAnonymous BOOL,
-    IN daysLeftOfEditing INT
-)
-BEGIN
-    CALL _insertTextDataEntity (
-        "h",
-        userID, defStr, isPrivate, isAnonymous, daysLeftOfEditing
-    );
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE insertJSONEntity (
-    IN userID BIGINT UNSIGNED,
-    IN defStr TEXT CHARACTER SET utf8mb4,
-    IN isPrivate BOOL,
-    IN isAnonymous BOOL,
-    IN daysLeftOfEditing INT
-)
-BEGIN
-    CALL _insertTextDataEntity (
-        "j",
-        userID, defStr, isPrivate, isAnonymous, daysLeftOfEditing
-    );
-END //
-DELIMITER ;
 
 
 

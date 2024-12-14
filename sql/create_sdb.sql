@@ -273,17 +273,15 @@ CREATE TABLE Entities (
     -- everyone can view it
     user_whitelist_id BIGINT UNSIGNED,
 
-    -- List of the users allowed to edit this entity, possibly along with the
-    -- creator, until the creator finalizes the entity, or until the editor
-    -- group does so by scoring an edition of the entity above a certain
-    -- threshold.
-    editor_group_id BIGINT UNSIGNED,
+    -- Whether the creator can edit the entity or not. (is_editable = 1 will
+    -- also typically mean that the creator's profile info (username and
+    -- possibly profile icon) is shown as well when rendering the entity.)
+    -- Even when is_editable = 0, however, the creator is still able to
+    -- substitute any '@[<path>]' placeholders with real entity ID references.
+    is_editable TINYINT UNSIGNED NOT NULL DEFAULT 0, CHECK (is_editable <= 1),
 
-    -- A boolean whether the creator can also edit, and finalize, the entity.
-    -- If false, the editor can neither of these things, except as a member of
-    -- the editor group.
-    creator_can_edit TINYINT UNSIGNED NOT NULL DEFAULT 0,
-    CHECK (is_editable <= 1)
+    -- If creator_id = 0, then the entity cannot be edited. 
+    CHECK (creator_id != 0 OR is_editable = 0)
 );
 
 
@@ -326,7 +324,7 @@ CREATE TABLE FulltextIndexedEntities (
 /* Initial entities */
 
 INSERT INTO Entities (
-    type_ident, def_str, creator_id, editable_until
+    type_ident, def_str, creator_id, is_editable
 )
 VALUES
     ("t", "t", 0, NULL),
@@ -338,9 +336,7 @@ VALUES
     ("t", "h", 0, NULL),
     ("t", "j", 0, NULL),
     ("u", '{"Username":"initial_admin"}', 0, NULL),
-    ("j", '{}', 9, ADDDATE(CURDATE(), INTERVAL 1000 DAY)),
-    ("t", "p", 0, NULL),
-    ("t", "e", 0, NULL);
+    ("j", '{}', 9, ADDDATE(CURDATE(), INTERVAL 1000 DAY));
 
 INSERT INTO EntitySecKeys (
     type_ident, def_key, ent_id
@@ -354,10 +350,8 @@ VALUES
     ("t", "8", 6),
     ("t", "h", 7),
     ("t", "j", 8),
-    ("u", "initial_admin", 9),
+    ("u", "initial_admin", 9);
     -- No sec. key for ("j", '{}', 9).
-    ("t", "p", 11),
-    ("t", "e", 12);
 
 
 
