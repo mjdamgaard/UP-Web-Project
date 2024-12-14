@@ -179,7 +179,7 @@ export class DataInserter {
 
 
   parseDefStr(str) {
-    return str.replaceAll(/@(@@)*\[[^\]\]@,;]*\]/g, match => {
+    return str.replaceAll(/@(@@)*\[[^\]\]@,;]+\]/g, match => {
       let ats = match.match(/^@+/g)[0];
       let bracket = match.substring(ats.length);
       // Find the entID pointed to by path, or return the match unchanged if

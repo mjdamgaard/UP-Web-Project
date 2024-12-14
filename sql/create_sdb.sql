@@ -1,7 +1,9 @@
 
 /* Scores */
-DROP TABLE FloatingPointScoresWithWeightsAndErrors;
-DROP TABLE PositiveScoreTimes;
+DROP TABLE UserScores;
+DROP TABLE RecentUserScores;
+DROP TABLE FloatingPointScoreAggregates;
+
 
 /* Score query restrictions */
 DROP TABLE ListQueryRestrictions;
@@ -83,7 +85,7 @@ CREATE TABLE RecentUserScores (
         subj_id,
         modified_at,
         user_id
-    ),
+    )
 );
 
 
@@ -114,6 +116,10 @@ CREATE TABLE FloatingPointScoreAggregates (
 
 
 
+
+
+-- TODO: Consider parsing the userWhiteListID from the list_id entity itself
+-- instead. 
 
 CREATE TABLE ListQueryRestrictions (
 
