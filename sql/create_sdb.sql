@@ -40,7 +40,7 @@ CREATE TABLE UserScores (
 
     score_val FLOAT NOT NULL,
 
-    score_weight_exp TINYINT UNSIGNED NOT NULL,
+    score_err_exp TINYINT UNSIGNED NOT NULL,
 
     subj_id BIGINT UNSIGNED NOT NULL,
 
@@ -48,43 +48,68 @@ CREATE TABLE UserScores (
         user_id,
         qual_id,
         score_val,
-        score_weight_exp,
+        score_err_exp,
         subj_id
     ),
 
     -- Index to look up specific scores (and restricting one subject per list).
-    UNIQUE INDEX (user_id, qual_id, subj_id),
-
-    -- Index to get a list of all users who has scored the subject, ordered by
-    -- their scored. (Used in particular for updating median aggregates.)
-    UNIQUE INDEX (qual_id, subj_id, score_val, score_weight_exp, user_id)
+    UNIQUE INDEX (user_id, qual_id, subj_id)
 );
 
 
-CREATE TABLE RecentUserScores (
+CREATE TABLE UserScoreQueryRestrictions (
 
     user_id BIGINT UNSIGNED NOT NULL,
 
     qual_id BIGINT UNSIGNED NOT NULL,
 
-    score_val FLOAT, -- NULL means 'deleted.'
+    user_whitelist_id BIGINT UNSIGNED NOT NULL -- Missing entry means public.
+    -- (And user_whitelist_id = user_id means only viewable by the same user.)
+);
 
-    score_weight_exp TINYINT UNSIGNED NOT NULL,
 
-    prev_score_val FLOAT, -- NULL means 'no prior score.'
+CREATE TABLE GroupedUserScores (
 
-    prev_score_weight_exp TINYINT UNSIGNED NOT NULL,
+    user_group_id BIGINT UNSIGNED NOT NULL DEFAULT 0, -- 0 means 'all users.' 
+
+    user_id BIGINT UNSIGNED NOT NULL,
+
+    qual_id BIGINT UNSIGNED NOT NULL,
+
+    score_val FLOAT NOT NULL,
+
+    score_err_exp TINYINT UNSIGNED NOT NULL,
+
+    user_weight_exp TINYINT UNSIGNED NOT NULL,
 
     subj_id BIGINT UNSIGNED NOT NULL,
 
-    modified_at TIMESTAMP NOT NULL DEFAULT (NOW()),
-
-
     PRIMARY KEY (
+        user_group_id,
         qual_id,
         subj_id,
-        modified_at,
+        score_val,
+        score_err_exp,
+        user_weight_exp,
         user_id
+    )
+);
+
+
+
+
+
+CREATE TABLE ScoreHistograms (
+
+    list_id BIGINT UNSIGNED NOT NULL,
+
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    hist_data VARBINARY(4000) NOT NULL,
+
+    PRIMARY KEY (
+        list_id,
+        subj_id
     )
 );
 
@@ -117,65 +142,42 @@ CREATE TABLE FloatingPointScoreAggregates (
 
 
 
-
-
-
-
-
--- CREATE TABLE PrivateScores (
+-- CREATE TABLE RecentUserScores (
 
 --     user_id BIGINT UNSIGNED NOT NULL,
 
 --     qual_id BIGINT UNSIGNED NOT NULL,
 
---     score_val FLOAT NOT NULL,
+--     score_val FLOAT, -- NULL means 'deleted.'
+
+--     score_weight_exp TINYINT UNSIGNED NOT NULL,
+
+--     prev_score_val FLOAT, -- NULL means 'no prior score.'
+
+--     prev_score_weight_exp TINYINT UNSIGNED NOT NULL,
 
 --     subj_id BIGINT UNSIGNED NOT NULL,
 
+--     modified_at TIMESTAMP NOT NULL DEFAULT (NOW()),
+
+
 --     PRIMARY KEY (
---         user_id,
 --         qual_id,
---         score_val,
---         subj_id
---     ),
-
---     -- Index to look up specific score (and restricting one subject per list).
---     UNIQUE INDEX (user_id, qual_id, subj_id)
--- );
-
-
--- CREATE TABLE ScoreHistograms (
-
---     list_id BIGINT UNSIGNED NOT NULL,
-
---     subj_id BIGINT UNSIGNED NOT NULL,
-
---     hist_data VARBINARY(500) NOT NULL,
-
---     PRIMARY KEY (
---         list_id,
---         subj_id
+--         subj_id,
+--         modified_at,
+--         user_id
 --     )
 -- );
 
 
--- CREATE TABLE FloatingPointScoreAggregates (
 
---     list_id BIGINT UNSIGNED NOT NULL,
 
---     score_val FLOAT NOT NULL,
 
---     subj_id BIGINT UNSIGNED NOT NULL,
 
---     PRIMARY KEY (
---         list_id,
---         score_val,
---         subj_id
---     ),
 
---     -- Index to look up specific score (and restricting one subject per list).
---     UNIQUE INDEX (list_id, subj_id)
--- );
+
+
+
 
 
 

@@ -40,11 +40,11 @@ CREATE PROCEDURE insertOrUpdateScore (
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN scoreVal FLOAT,
-    IN scoreWeightExp TINYINT UNSIGNED
+    IN scoreErrExp TINYINT UNSIGNED
 )
 proc: BEGIN
     DECLARE prevScoreVal FLOAT;
-    DECLARE prevScoreWeightExp TINYINT UNSIGNED;
+    DECLARE prevScoreErrExp TINYINT UNSIGNED;
 
     -- DECLARE EXIT HANDLER FOR 1213 -- Deadlock error.
     -- BEGIN
@@ -60,8 +60,8 @@ proc: BEGIN
 
     START TRANSACTION;
 
-    SELECT score_val, score_weight_exp
-    INTO prevScoreVal, prevScoreWeightExp
+    SELECT score_val, score_err_exp
+    INTO prevScoreVal, prevScoreErrExp
     FROM UserScores
     WHERE (
         user_id = userID AND
@@ -71,22 +71,22 @@ proc: BEGIN
 
     INSERT INTO RecentUserScores (
         user_id, qual_id, subj_id,
-        score_val, score_weight_exp, prev_score_val, prev_score_weight_exp
+        score_val, score_err_exp, prev_score_val, prev_score_err_exp
     )
     VALUES (
         userID, qualID, subjID,
-        scoreVal, scoreWeightExp, prevScoreVal, prevScoreWeightExp
+        scoreVal, scoreErrExp, prevScoreVal, prevScoreErrExp
     )
     ON DUPLICATE KEY UPDATE
         score_val = scoreVal,
-        score_weight_exp = scoreWeightExp;
+        score_err_exp = scoreErrExp;
 
 
     INSERT INTO UserScores (
-        user_id, qual_id, subj_id, score_val, score_weight_exp
+        user_id, qual_id, subj_id, score_val, score_err_exp
     )
     VALUES (
-        userID, qualID, subjID, scoreVal, scoreWeightExp
+        userID, qualID, subjID, scoreVal, scoreErrExp
     )
     ON DUPLICATE KEY UPDATE score_val = scoreVal, score_width = scoreWidth;
 
@@ -106,7 +106,7 @@ CREATE PROCEDURE deleteUserScore (
 )
 proc: BEGIN
     DECLARE prevScoreVal FLOAT;
-    DECLARE prevScoreWeightExp TINYINT UNSIGNED;
+    DECLARE prevScoreErrExp TINYINT UNSIGNED;
 
     -- DECLARE EXIT HANDLER FOR 1213 -- Deadlock error.
     -- BEGIN
@@ -116,8 +116,8 @@ proc: BEGIN
 
     START TRANSACTION;
 
-    SELECT score_val, score_weight_exp
-    INTO prevScoreVal, prevScoreWeightExp
+    SELECT score_val, score_err_exp
+    INTO prevScoreVal, prevScoreErrExp
     FROM UserScores
     WHERE (
         user_id = userID AND
@@ -128,11 +128,11 @@ proc: BEGIN
     IF (prevScoreVal IS NOT NULL) THEN
         INSERT INTO RecentUserScores (
             user_id, qual_id, subj_id,
-            score_val, score_weight_exp, prev_score_val, prev_score_weight_exp
+            score_val, score_err_exp, prev_score_val, prev_score_err_exp
         )
         VALUES (
             userID, qualID, subjID,
-            NULL, 0, prevScoreVal, prevScoreWeightExp
+            NULL, 0, prevScoreVal, prevScoreErrExp
         )
         ON DUPLICATE KEY UPDATE
             score_val = NULL;
