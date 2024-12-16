@@ -24,9 +24,85 @@ DROP PROCEDURE selectUserInfo;
 
 
 
+DELIMITER //
+CREATE PROCEDURE selectAggregatedFloatingPointScores (
+    IN listID BIGINT UNSIGNED,
+    IN hi FLOAT,
+    IN lo FLOAT,
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED,
+    IN isAscOrder BOOL
+)
+BEGIN
+    SELECT
+        score_val AS scoreVal,
+        score_weight_exp AS scoreWeightExp,
+        score_sigma_exp AS scoreSigmaExp,
+        subj_id AS entID
+    FROM AggregatedFloatingPointScores
+    WHERE (
+        list_id = listID AND
+        score_val BETWEEN lo AND hi
+    )
+    ORDER BY
+        CASE WHEN isAscOrder THEN score_val END ASC,
+        CASE WHEN NOT isAscOrder THEN score_val END DESC,
+        CASE WHEN isAscOrder THEN score_weight_exp END ASC,
+        CASE WHEN NOT isAscOrder THEN score_weight_exp END DESC,
+        CASE WHEN isAscOrder THEN score_sigma_exp END ASC,
+        CASE WHEN NOT isAscOrder THEN score_sigma_exp END DESC,
+        CASE WHEN isAscOrder THEN subj_id END ASC,
+        CASE WHEN NOT isAscOrder THEN subj_id END DESC
+    LIMIT numOffset, maxNum;
+END //
+DELIMITER ;
+
 
 DELIMITER //
-CREATE PROCEDURE selectUserOpinionEntityList (
+CREATE PROCEDURE selectAggregatedFloatingPointScore (
+    IN listID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED
+)
+BEGIN
+    SELECT
+        score_val AS scoreVal,
+        score_weight_exp AS scoreWeightExp,
+        score_sigma_exp AS scoreSigmaExp
+    FROM AggregatedFloatingPointScores
+    WHERE (
+        list_id = listID AND
+        subj_id = subjID
+    );
+END //
+DELIMITER ;
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectPublicUserScores (
+    IN qualID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED
+)
+BEGIN
+    SELECT
+        score_val AS scoreVal,
+        subj_id AS entID
+    FROM PublicUserScores
+    WHERE (
+        user_id = userID AND
+        qual_id = qualID
+    )
+    ORDER BY subj_id ASC
+    LIMIT numOffset, maxNum;
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE selectGroupedPublicUserScores (
     IN userID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN hi FLOAT,
@@ -38,41 +114,27 @@ CREATE PROCEDURE selectUserOpinionEntityList (
 BEGIN
     SELECT
         score_val AS scoreVal,
-        subj_id AS entID
-    FROM UserOpinionScores
+        score_sigma_exp AS scoreSigmaExp,
+        user_id AS userID
+    FROM PublicUserScores
     WHERE (
-        user_id = userID AND
         qual_id = qualID AND
+        subj_id = subjID AND
         score_val BETWEEN lo AND hi
     )
     ORDER BY
-        CASE WHEN isAscOrder THEN scoreVal END ASC,
-        CASE WHEN NOT isAscOrder THEN scoreVal END DESC,
-        CASE WHEN isAscOrder THEN entID END ASC,
-        CASE WHEN NOT isAscOrder THEN entID END DESC
+        CASE WHEN isAscOrder THEN score_val END ASC,
+        CASE WHEN NOT isAscOrder THEN score_val END DESC,
+        CASE WHEN isAscOrder THEN score_sigma_exp END ASC,
+        CASE WHEN NOT isAscOrder THEN score_sigma_exp END DESC,
+        CASE WHEN isAscOrder THEN user_id END ASC,
+        CASE WHEN NOT isAscOrder THEN user_id END DESC
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
 
 
-DELIMITER //
-CREATE PROCEDURE selectOpinionScore (
-    IN userID BIGINT UNSIGNED,
-    IN qualID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT
-        score_val AS scoreVal,
-        score_width AS scoreWidth
-    FROM UserOpinionScores
-    WHERE (
-        user_id = userID AND
-        qual_id = qualID AND
-        subj_id = subjID
-    );
-END //
-DELIMITER ;
+
 
 
 
@@ -415,11 +477,11 @@ BEGIN
         ) AS defStr,
         LENGTH(def_str) AS len,
         creator_id AS creatorID,
-        editable_until AS editableUntil
+        is_editable AS isEditable
     FROM Entities
     WHERE (
         id = entID AND
-        is_private = 0
+        user_whitelist_id = 0
     );
 END //
 DELIMITER ;
@@ -445,12 +507,19 @@ BEGIN
         ) AS defStr,
         LENGTH(def_str) AS len,
         creator_id AS creatorID,
-        editable_until AS editableUntil,
-        is_private AS isPrivate
+        is_editable AS isEditable,
+        user_whitelist_id AS userWhitelistID
     FROM Entities
     WHERE (
         id = entID AND
-        (is_private = 0 OR creator_id = userID)
+        0 < (
+            SELECT score_val
+            FROM AggregatedFloatingPointScores
+            WHERE (
+                list_id = userWhitelistID AND
+                subj_id = userID
+            )
+        )
     );
 END //
 DELIMITER ;
@@ -460,11 +529,32 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectEntityFromSecKey (
     IN datatype CHAR,
+    IN userWhitelistID BIGINT UNSIGNED,
     IN defKey VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
     IN maxLen INT UNSIGNED,
     IN startPos INT UNSIGNED
 )
-BEGIN
+proc: BEGIN
+    DECLARE userWHitelistScoreVal FLOAT;
+
+    -- Exit if the user is not currently on the user whitelist. Do this first
+    -- to avoid timing attacks.
+    SELECT score_val INTO userWHitelistScoreVal
+    FROM AggregatedFloatingPointScores
+    WHERE (
+        list_id = userWhitelistID AND
+        subj_id = userID
+    );
+    IF (userWHitelistScoreVal IS NULL OR userWHitelistScoreVal <= 0) THEN
+        SELECT 
+            NULL AS entID,
+            NULL AS defStr,
+            NULL AS len,
+            NULL AS creatorID,
+            NULL AS isEditable;
+        LEAVE proc;
+    END IF;
+
     SELECT
         id AS entID,
         (
@@ -476,17 +566,18 @@ BEGIN
         ) AS defStr,
         LENGTH(def_str) AS len,
         creator_id AS creatorID,
-        editable_until AS editableUntil
+        is_editable AS isEditable
     FROM Entities
     WHERE id = (
         SELECT ent_id
         FROM EntitySecKeys
         WHERE (
             type_ident = datatype AND
+            user_whitelist_id = userWhitelistID AND
             def_key = defKey
         )
     );
-END //
+END proc //
 DELIMITER ;
 
 
@@ -494,16 +585,33 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectEntityIDFromSecKey (
     IN datatype CHAR,
+    IN userWhitelistID BIGINT UNSIGNED,
     IN defKey VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
-BEGIN
+proc: BEGIN
+    DECLARE userWHitelistScoreVal FLOAT;
+
+    -- Exit if the user is not currently on the user whitelist. Do this first
+    -- to avoid timing attacks.
+    SELECT score_val INTO userWHitelistScoreVal
+    FROM AggregatedFloatingPointScores
+    WHERE (
+        list_id = userWhitelistID AND
+        subj_id = userID
+    );
+    IF (userWHitelistScoreVal IS NULL OR userWHitelistScoreVal <= 0) THEN
+        SELECT NULL AS entID;
+        LEAVE proc;
+    END IF;
+
     SELECT ent_id AS entID
     FROM EntitySecKeys
     WHERE (
         type_ident = datatype AND
+        user_whitelist_id = userWhitelistID AND
         def_key = defKey
     );
-END //
+END proc //
 DELIMITER ;
 
 

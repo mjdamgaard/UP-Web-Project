@@ -49,9 +49,7 @@ CREATE TABLE PublicUserScores (
         subj_id
     ),
 
-    UNIQUE INDEX (
-        qual_id, subj_id, score_val, score_sigma_exp, modified_at, user_id
-    )
+    UNIQUE INDEX (qual_id, subj_id, score_val, score_sigma_exp, user_id)
 
     -- PRIMARY KEY (
     --     user_id,
