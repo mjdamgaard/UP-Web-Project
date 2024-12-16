@@ -1,10 +1,11 @@
 
 SELECT "Insert procedures";
 
-DROP PROCEDURE insertOrUpdateOpinionScore;
-DROP PROCEDURE deleteOpinionScore;
-DROP PROCEDURE insertOrUpdatePrivateScore;
-DROP PROCEDURE deletePrivateScore;
+DROP PROCEDURE insertOrUpdatePublicUserScore;
+DROP PROCEDURE deletePublicUserScore;
+DROP PROCEDURE insertOrUpdatePrivateUserScore;
+DROP PROCEDURE deletePrivateUserScore;
+DROP PROCEDURE deleteAllPrivateUserScores;
 
 DROP PROCEDURE _insertEntityWithoutSecKey;
 DROP PROCEDURE _insertOrFindEntityWithSecKey;
@@ -35,168 +36,141 @@ DROP PROCEDURE anonymizeEntity;
 
 
 DELIMITER //
-CREATE PROCEDURE insertOrUpdateScore (
+CREATE PROCEDURE insertOrUpdatePublicUserScore (
     IN userID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN scoreVal FLOAT,
-    IN scoreErrExp TINYINT UNSIGNED
+    IN scoreSigmaExp TINYINT
 )
 proc: BEGIN
-    DECLARE prevScoreVal FLOAT;
-    DECLARE prevScoreErrExp TINYINT UNSIGNED;
-
-    -- DECLARE EXIT HANDLER FOR 1213 -- Deadlock error.
-    -- BEGIN
-    --     ROLLBACK;
-    --     SELECT NULL AS outID, 10 AS exitCode; -- rollback due to deadlock.
-    -- END;
-
     -- Exit if the subject entity does not exist.
     IF ((SELECT type_ident FROM Entities WHERE id = subjID) IS NULL) THEN
         SELECT subjID AS outID, 1 AS exitCode; -- subject does not exist.
         LEAVE proc;
     END IF;
 
-    START TRANSACTION;
-
-    SELECT score_val, score_err_exp
-    INTO prevScoreVal, prevScoreErrExp
-    FROM UserScores
-    WHERE (
-        user_id = userID AND
-        qual_id = qualID AND
-        subj_id = subjID
-    );
-
-    INSERT INTO RecentUserScores (
-        user_id, qual_id, subj_id,
-        score_val, score_err_exp, prev_score_val, prev_score_err_exp
+    INSERT INTO PublicUserScores (
+        user_id, qual_id, subj_id, score_val, score_sigma_exp
     )
     VALUES (
-        userID, qualID, subjID,
-        scoreVal, scoreErrExp, prevScoreVal, prevScoreErrExp
+        userID, qualID, subjID, scoreVal, scoreSigmaExp
     )
     ON DUPLICATE KEY UPDATE
         score_val = scoreVal,
-        score_err_exp = scoreErrExp;
-
-
-    INSERT INTO UserScores (
-        user_id, qual_id, subj_id, score_val, score_err_exp
-    )
-    VALUES (
-        userID, qualID, subjID, scoreVal, scoreErrExp
-    )
-    ON DUPLICATE KEY UPDATE score_val = scoreVal, score_width = scoreWidth;
-
-    COMMIT;
+        score_sigma_exp = scoreSigmaExp;
 
     SELECT subjID AS outID, 0 AS exitCode; -- inserted or updated.
 END proc //
 DELIMITER ;
 
 
-
 DELIMITER //
-CREATE PROCEDURE deleteUserScore (
+CREATE PROCEDURE deletePublicUserScore (
     IN userID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED
 )
-proc: BEGIN
-    DECLARE prevScoreVal FLOAT;
-    DECLARE prevScoreErrExp TINYINT UNSIGNED;
-
-    -- DECLARE EXIT HANDLER FOR 1213 -- Deadlock error.
-    -- BEGIN
-    --     ROLLBACK;
-    --     SELECT NULL AS outID, 10 AS exitCode; -- rollback due to deadlock.
-    -- END;
-
-    START TRANSACTION;
-
-    SELECT score_val, score_err_exp
-    INTO prevScoreVal, prevScoreErrExp
-    FROM UserScores
+BEGIN
+    DELETE FROM PublicUserScores
     WHERE (
         user_id = userID AND
         qual_id = qualID AND
         subj_id = subjID
-    );
-
-    IF (prevScoreVal IS NOT NULL) THEN
-        INSERT INTO RecentUserScores (
-            user_id, qual_id, subj_id,
-            score_val, score_err_exp, prev_score_val, prev_score_err_exp
-        )
-        VALUES (
-            userID, qualID, subjID,
-            NULL, 0, prevScoreVal, prevScoreErrExp
-        )
-        ON DUPLICATE KEY UPDATE
-            score_val = NULL;
-    END IF;
-
-    DELETE FROM UserScores
-    WHERE (
-        user_id = userID AND
-        qual_id = qualID AND
-        subj_id = subjID
-    );
-
-    COMMIT;
-
-    SELECT subjID AS outID, 0 AS exitCode; -- inserted or updated.
-END proc //
-DELIMITER ;
-
-
-
-
-DELIMITER //
-CREATE PROCEDURE insertOrUpdatePrivateScore (
-    IN userID BIGINT UNSIGNED,
-    IN qualID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED,
-    IN scoreVal FLOAT
-)
-proc: BEGIN
-    -- Exit if the subject entity does not exist.
-    IF ((SELECT type_ident FROM Entities WHERE id = subjID) IS NULL) THEN
-        SELECT subjID AS outID, 1 AS exitCode; -- subject does not exist.
-        LEAVE proc;
-    END IF;
-
-    INSERT INTO PrivateScores (
-        user_id, qual_id, subj_id, score_val
-    )
-    VALUES (
-        userID, qualID, subjID, scoreVal
-    )
-    ON DUPLICATE KEY UPDATE score_val = scoreVal;
-
-    SELECT subjID AS outID, 0 AS exitCode; -- insert or update.
-END proc //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE deletePrivateScore (
-    IN userID BIGINT UNSIGNED,
-    IN qualID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED
-)
-proc: BEGIN
-    DELETE FROM PrivateScores
-    WHERE (
-        user_id <=> userID AND
-        qual_id <=> qualID AND
-        subj_id <=> subjID
     );
 
     SELECT subjID AS outID, 0 AS exitCode; -- deleted if there.
+END //
+DELIMITER ;
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertOrUpdatePrivateUserScore (
+    IN userID BIGINT UNSIGNED,
+    IN userWhitelistID BIGINT UNSIGNED,
+    IN qualID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
+    IN scoreVal BIGINT
+)
+proc: BEGIN
+    DECLARE userWHitelistScoreVal FLOAT;
+
+    -- Exit if the user is not currently on the user whitelist.
+    SELECT score_val INTO userWHitelistScoreVal
+    FROM AggregatedFloatingPointScores
+    WHERE (
+        list_id = userWhitelistID AND
+        subj_id = userID
+    );
+    IF (userWHitelistScoreVal IS NULL OR userWHitelistScoreVal <= 0) THEN
+        SELECT subjID AS outID, 1 AS exitCode; -- user is not on the whitelist.
+        LEAVE proc;
+    END IF;
+
+    INSERT INTO PrivateUserScores (
+        user_id, user_whitelist_id, qual_id, subj_id, score_val
+    )
+    VALUES (
+        userID, userWhitelistID, qualID, subjID, scoreVal
+    )
+    ON DUPLICATE KEY UPDATE score_val = scoreVal;
+
+    -- TODO: Also add a request (or reduce the countdown) to go through the
+    -- scores on this list and remove any entries from users no longer on the
+    -- whitelist. (Implement as a procedure.)
+
+    SELECT subjID AS outID, 0 AS exitCode; -- insert if not already there.
 END proc //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE deletePrivateUserScore (
+    IN userID BIGINT UNSIGNED,
+    IN userWhitelistID BIGINT UNSIGNED,
+    IN qualID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
+    IN scoreVal BIGINT
+)
+BEGIN
+    DELETE FROM PrivateUserScores
+    WHERE (
+        user_whitelist_id = userWhitelistID AND
+        qual_id = qualID AND
+        subj_id = subjID AND
+        score_val = scoreVal AND
+        subj_id = subjID AND
+        user_id = userID
+    );
+
+    -- TODO: Also add a request (or reduce the countdown) to go through the
+    -- scores on this list and remove any entries from users no longer on the
+    -- whitelist. (Implement as a procedure.)
+
+    SELECT subjID AS outID, 0 AS exitCode; -- delete if there.
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE deleteAllPrivateUserScores (
+    IN userID BIGINT UNSIGNED,
+    IN userWhitelistID BIGINT UNSIGNED,
+    IN qualID BIGINT UNSIGNED
+)
+BEGIN
+    DELETE FROM PrivateUserScores
+    WHERE (
+        user_whitelist_id = userWhitelistID AND
+        qual_id = qualID AND
+        subj_id = subjID AND
+        user_id = userID
+    );
+
+    SELECT subjID AS outID, 0 AS exitCode; -- delete if there.
+END //
 DELIMITER ;
 
 

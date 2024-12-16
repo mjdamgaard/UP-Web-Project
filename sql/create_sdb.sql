@@ -1,12 +1,9 @@
 
 /* Scores */
-DROP TABLE UserScores;
-DROP TABLE RecentUserScores;
-DROP TABLE FloatingPointScoreAggregates;
-
-
-/* Score query restrictions */
-DROP TABLE ListQueryRestrictions;
+DROP TABLE PublicUserScores;
+DROP TABLE PrivateUserScores;
+DROP TABLE ScoreHistograms;
+DROP TABLE AggregatedFloatingPointScores;
 
 /* Requests */
 -- DROP TABLE UpdateEntityListRequests;
@@ -38,13 +35,13 @@ CREATE TABLE PublicUserScores (
 
     qual_id BIGINT UNSIGNED NOT NULL,
 
-    score_val FLOAT NOT NULL,
-
-    score_err_exp TINYINT NOT NULL,
-
     subj_id BIGINT UNSIGNED NOT NULL,
 
-    modified_at DATETIME DEFAULT (NOW()),
+    score_val FLOAT NOT NULL,
+
+    score_sigma_exp TINYINT NOT NULL,
+
+    modified_at FLOAT DEFAULT (UNIX_TIMESTAMP() DIV 7200),
 
     PRIMARY KEY (
         user_id,
@@ -53,14 +50,14 @@ CREATE TABLE PublicUserScores (
     ),
 
     UNIQUE INDEX (
-        qual_id, subj_id, score_val, score_err_exp, modified_at, user_id
+        qual_id, subj_id, score_val, score_sigma_exp, modified_at, user_id
     )
 
     -- PRIMARY KEY (
     --     user_id,
     --     qual_id,
     --     score_val,
-    --     score_err_exp,
+    --     score_sigma_exp,
     --     subj_id
     -- ),
 
@@ -76,7 +73,7 @@ CREATE TABLE PrivateUserScores (
 
     qual_id BIGINT UNSIGNED NOT NULL,
 
-    score_val FLOAT NOT NULL,
+    score_val BIGINT NOT NULL,
 
     subj_id BIGINT UNSIGNED NOT NULL,
 
@@ -120,7 +117,7 @@ CREATE TABLE AggregatedFloatingPointScores (
 
     score_weight_exp TINYINT NOT NULL,
 
-    score_err_exp TINYINT NOT NULL,
+    score_sigma_exp TINYINT NOT NULL,
 
     subj_id BIGINT UNSIGNED NOT NULL,
 
@@ -128,7 +125,7 @@ CREATE TABLE AggregatedFloatingPointScores (
         list_id,
         score_val,
         score_weight_exp,
-        score_err_exp,
+        score_sigma_exp,
         subj_id
     ),
 
@@ -149,7 +146,7 @@ CREATE TABLE AggregatedFloatingPointScores (
 
 --     score_val FLOAT NOT NULL,
 
---     score_err_exp TINYINT NOT NULL,
+--     score_sigma_exp TINYINT NOT NULL,
 
 --     user_weight_exp TINYINT NOT NULL,
 
@@ -162,7 +159,7 @@ CREATE TABLE AggregatedFloatingPointScores (
 --         qual_id,
 --         subj_id,
 --         score_val,
---         score_err_exp,
+--         score_sigma_exp,
 --         user_weight_exp,
 --         modified_at,
 --         user_id
