@@ -32,7 +32,7 @@ DROP TABLE EntitySecKeys;
 /* Scores (Entity lists)  */
 
 
-CREATE TABLE UserScores (
+CREATE TABLE PublicUserScores (
 
     user_id BIGINT UNSIGNED NOT NULL,
 
@@ -40,60 +40,57 @@ CREATE TABLE UserScores (
 
     score_val FLOAT NOT NULL,
 
-    score_err_exp TINYINT UNSIGNED NOT NULL,
+    score_err_exp TINYINT NOT NULL,
 
     subj_id BIGINT UNSIGNED NOT NULL,
+
+    modified_at DATETIME DEFAULT (NOW()),
 
     PRIMARY KEY (
         user_id,
         qual_id,
-        score_val,
-        score_err_exp,
         subj_id
     ),
 
-    -- Index to look up specific scores (and restricting one subject per list).
-    UNIQUE INDEX (user_id, qual_id, subj_id)
+    UNIQUE INDEX (
+        qual_id, subj_id, score_val, score_err_exp, modified_at, user_id
+    )
+
+    -- PRIMARY KEY (
+    --     user_id,
+    --     qual_id,
+    --     score_val,
+    --     score_err_exp,
+    --     subj_id
+    -- ),
+
+    -- -- Index to look up specific scores (and restricting one subject per list).
+    -- UNIQUE INDEX (user_id, qual_id, subj_id)
 );
 
 
-CREATE TABLE UserScoreQueryRestrictions (
 
-    user_id BIGINT UNSIGNED NOT NULL,
+CREATE TABLE PrivateUserScores (
 
-    qual_id BIGINT UNSIGNED NOT NULL,
-
-    user_whitelist_id BIGINT UNSIGNED NOT NULL -- Missing entry means public.
-    -- (And user_whitelist_id = user_id means only viewable by the same user.)
-);
-
-
-CREATE TABLE GroupedUserScores (
-
-    user_group_id BIGINT UNSIGNED NOT NULL DEFAULT 0, -- 0 means 'all users.' 
-
-    user_id BIGINT UNSIGNED NOT NULL,
+    user_whitelist_id BIGINT UNSIGNED NOT NULL,
 
     qual_id BIGINT UNSIGNED NOT NULL,
 
     score_val FLOAT NOT NULL,
 
-    score_err_exp TINYINT UNSIGNED NOT NULL,
-
-    user_weight_exp TINYINT UNSIGNED NOT NULL,
-
     subj_id BIGINT UNSIGNED NOT NULL,
 
+    user_id BIGINT UNSIGNED NOT NULL,
+
     PRIMARY KEY (
-        user_group_id,
+        user_whitelist_id,
         qual_id,
-        subj_id,
         score_val,
-        score_err_exp,
-        user_weight_exp,
+        subj_id,
         user_id
     )
 );
+
 
 
 
@@ -115,7 +112,7 @@ CREATE TABLE ScoreHistograms (
 
 
 
-CREATE TABLE FloatingPointScoreAggregates (
+CREATE TABLE AggregatedFloatingPointScores (
 
     list_id BIGINT UNSIGNED NOT NULL,
 
@@ -123,12 +120,15 @@ CREATE TABLE FloatingPointScoreAggregates (
 
     score_weight_exp TINYINT NOT NULL,
 
+    score_err_exp TINYINT NOT NULL,
+
     subj_id BIGINT UNSIGNED NOT NULL,
 
     PRIMARY KEY (
         list_id,
         score_val,
         score_weight_exp,
+        score_err_exp,
         subj_id
     ),
 
@@ -138,6 +138,53 @@ CREATE TABLE FloatingPointScoreAggregates (
 
 
 
+
+-- CREATE TABLE GroupedUserScores (
+
+--     user_group_id BIGINT UNSIGNED NOT NULL,
+
+--     user_id BIGINT UNSIGNED NOT NULL,
+
+--     qual_id BIGINT UNSIGNED NOT NULL,
+
+--     score_val FLOAT NOT NULL,
+
+--     score_err_exp TINYINT NOT NULL,
+
+--     user_weight_exp TINYINT NOT NULL,
+
+--     subj_id BIGINT UNSIGNED NOT NULL,
+
+--     modified_at DATETIME NOT NULL DEFAULT (NOW()),
+
+--     PRIMARY KEY (
+--         user_group_id,
+--         qual_id,
+--         subj_id,
+--         score_val,
+--         score_err_exp,
+--         user_weight_exp,
+--         modified_at,
+--         user_id
+--     )
+-- );
+
+
+
+
+
+
+
+
+-- CREATE TABLE UserScoreQueryRestrictions (
+
+--     user_id BIGINT UNSIGNED NOT NULL,
+
+--     qual_id BIGINT UNSIGNED NOT NULL,
+
+--     user_whitelist_id BIGINT UNSIGNED NOT NULL -- Missing entry means public.
+--     -- (And user_whitelist_id = user_id means only viewable by the same user.)
+-- );
 
 
 
