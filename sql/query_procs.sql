@@ -1,8 +1,10 @@
 
 SELECT "Query procedures";
 
-DROP PROCEDURE selectUserOpinionEntityList;
-DROP PROCEDURE selectOpinionScore;
+DROP PROCEDURE selectAggregatedFloatingPointScores;
+DROP PROCEDURE selectAggregatedFloatingPointScore;
+DROP PROCEDURE selectPublicUserScores;
+DROP PROCEDURE selectGroupedPublicUserScores;
 DROP PROCEDURE selectPrivateEntityList;
 DROP PROCEDURE selectPrivateScore;
 DROP PROCEDURE selectScoreHistogram;

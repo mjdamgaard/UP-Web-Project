@@ -182,7 +182,7 @@ export function initialInserts(dataInserter) {
         "Class": "@[classes]",
         "Name": "Qualities",
         "Member title": "Quality",
-        "Member datatype": "a",
+        "Member datatype": "c",
         "Member format": "@[qualities/format]",
         "Description": "@[qualities/desc]",
     }),
@@ -191,9 +191,11 @@ export function initialInserts(dataInserter) {
     "qualities/format", "f", (
         "(" + [
           "Label:string",
-          "Domain:" +
-            "@[classes]::Class" + "|" +
-            "[Object:@[entities],Relation:@[relations]]::Set",
+          // "Domain:" +
+          //   "@[classes]::Class" + "|" +
+          //   "[Object:@[entities],Relation:@[relations]]::Set",
+          // "Domain:[Object:@[entities],Relation:@[relations]]",
+          "Object:@[entities]",
           "Relation:@[relations]",
           "Metric:@[metrics]",
           "Description?:h",
@@ -231,12 +233,12 @@ export function initialInserts(dataInserter) {
           "Class": "@[relevancy qualities]",
           // "Label": "Relevant for @{Object} → @{Relation}",
           "Label": "Relevant for %1 → %2",
-          // "Domain": "@[sets/format](%1,%2)",
-          // "Domain": {Object: "%1", Relation: "%2"},
-          "Domain": ["%1", "%2"],
-          "Metric": "@[metrics/predicate metric]",
+          // // "Domain": "@[sets/format](%1,%2)",
+          // // "Domain": {Object: "%1", Relation: "%2"},
+          // "Domain": ["%1", "%2"],
           "Object": "%1",
-          "Relation": "%1",
+          "Relation": "%2",
+          "Metric": "@[metrics/predicate metric]",
         })
     )
   );

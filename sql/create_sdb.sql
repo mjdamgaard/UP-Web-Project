@@ -6,9 +6,9 @@ DROP TABLE ScoreHistograms;
 DROP TABLE AggregatedFloatingPointScores;
 
 /* Requests */
--- DROP TABLE UpdateEntityListRequests;
--- DROP TABLE ScheduledEntityListUpdates;
--- DROP TABLE ScheduledSubListUpdates;
+DROP TABLE UpdateEntityListRequests;
+DROP TABLE ScheduledEntityListUpdates;
+DROP TABLE ScheduledSubListUpdates;
 
 /* Entities */
 DROP TABLE Entities;
@@ -93,14 +93,17 @@ CREATE TABLE PrivateUserScores (
 
 CREATE TABLE ScoreHistograms (
 
-    list_id BIGINT UNSIGNED NOT NULL,
+    user_group_id BIGINT UNSIGNED NOT NULL DEFAULT 0, -- 0 means all users.
 
-    subj_id BIGINT UNSIGNED NOT NULL,
+    qual_id BIGINT UNSIGNED NOT NULL,
 
     hist_data VARBINARY(4000) NOT NULL,
 
+    subj_id BIGINT UNSIGNED NOT NULL,
+
     PRIMARY KEY (
-        list_id,
+        user_group_id,
+        qual_id,
         subj_id
     )
 );
@@ -226,49 +229,90 @@ CREATE TABLE AggregatedFloatingPointScores (
 
 
 
+CREATE TABLE ScheduledRequests (
 
+    delay_time FLOAT NOT NULL, -- The float-to-time conversion factor depends
+    -- on the influx of new request, and on the speed of the database.
 
+    req_type VARCHAR(100) NOT NULL,
 
-
-CREATE TABLE UpdateEntityListRequests (
-
-    req_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
-    list_key VARCHAR(700) NOT NULL,
-
-    user_id BIGINT UNSIGNED NOT NULL
-);
-
-
-CREATE TABLE ScheduledEntityListUpdates (
-
-    list_key VARCHAR(700) NOT NULL,
-
-    user_id BIGINT UNSIGNED NOT NULL,
-
-    countdown FLOAT NOT NULL,
+    req_data VARBINARY(2900) NOT NULL,
 
     PRIMARY KEY (
-        list_key,
-        user_id
-    )
+        delay_time,
+        req_type,
+        req_data
+    ),
+
+    UNIQUE INDEX (req_type, req_data)
 );
 
--- This table is only used once we start implementing User group trees. (See
--- my 23--xx notes.)
-CREATE TABLE ScheduledSubListUpdates (
 
-    list_key VARCHAR(700) NOT NULL,
 
-    node_id BIGINT UNSIGNED NOT NULL,
 
-    countdown FLOAT NOT NULL,
 
-    PRIMARY KEY (
-        list_key,
-        node_id
-    )
-);
+-- CREATE TABLE ScheduledRequests (
+--     -- Same as a foreign key of a data table, but which table is determined by
+--     -- req_type.
+--     req_key BIGINT UNSIGNED PRIMARY KEY,
+
+--     req_type VARCHAR(255) NOT NULL,
+
+--     scheduled_at INT UNSIGNED NOT NULL DEFAULT (UNIX_TIMESTAMP()),
+
+--     delay_time INT UNSIGNED NOT NULL,
+-- );
+
+
+-- CREATE TABLE ScoreUpdateRequestData (
+
+--     req_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    
+--     qual_id BIGINT UNSIGNED NOT NULL,
+    
+--     subj_id BIGINT UNSIGNED NOT NULL,
+    
+--     user_group_id BIGINT UNSIGNED NOT NULL,
+
+--     UNIQUE INDEX (qual_id, subj_id, user_group_id)
+-- );
+
+
+
+
+
+-- CREATE TABLE ScheduledEntityListUpdates (
+
+--     list_key VARCHAR(700) NOT NULL,
+
+--     user_id BIGINT UNSIGNED NOT NULL,
+
+--     countdown FLOAT NOT NULL,
+
+--     PRIMARY KEY (
+--         list_key,
+--         user_id
+--     )
+-- );
+
+
+
+
+-- -- This table is only used once we start implementing User group trees. (See
+-- -- my 23--xx notes.)
+-- CREATE TABLE ScheduledSubListUpdates (
+
+--     list_key VARCHAR(700) NOT NULL,
+
+--     node_id BIGINT UNSIGNED NOT NULL,
+
+--     countdown FLOAT NOT NULL,
+
+--     PRIMARY KEY (
+--         list_key,
+--         node_id
+--     )
+-- );
 
 
 
