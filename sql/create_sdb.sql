@@ -137,6 +137,15 @@ CREATE TABLE AggregatedFloatingPointScores (
 
 
 
+CREATE TABLE EntityListLengths (
+
+    list_id BIGINT UNSIGNED PRIMARY KEY,
+
+    list_len BIGINT UNSIGNED,
+);
+
+
+
 -- CREATE TABLE GroupedUserScores (
 
 --     user_group_id BIGINT UNSIGNED NOT NULL,
@@ -224,27 +233,20 @@ CREATE TABLE AggregatedFloatingPointScores (
 
 
 
-
-
-
-
-
 CREATE TABLE ScheduledRequests (
 
-    delay_time FLOAT NOT NULL, -- The float-to-time conversion factor depends
-    -- on the influx of new request, and on the speed of the database.
+    exec_at BIGINT UNSIGNED NOT NULL, -- exec_at >> 32 = UNIX timestamp.
 
     req_type VARCHAR(100) NOT NULL,
 
     req_data VARBINARY(2900) NOT NULL,
 
     PRIMARY KEY (
-        delay_time,
         req_type,
-        req_data
+        req_data,
     ),
 
-    UNIQUE INDEX (req_type, req_data)
+    UNIQUE INDEX (exec_at, req_type, req_data)
 );
 
 
@@ -932,12 +934,14 @@ VALUES
 
 CREATE TABLE Private_UserData (
     user_id BIGINT UNSIGNED PRIMARY KEY,
-    password_hash VARBINARY(255),
 
     username VARCHAR(50) NOT NULL UNIQUE,
     -- TODO: Consider adding more restrictions.
 
+    password_salted_hash CHAR(60),
+
     public_keys_for_authentication TEXT,
+    -- TODO: Update column name, and this description.
     -- (In order for third parties to be able to copy the database and then
     -- be able to have users log on, without the need to exchange passwords
     -- between databases.) (This could also be other data than encryption keys,
@@ -945,13 +949,15 @@ CREATE TABLE Private_UserData (
     -- the user via a third party.)
 
 
-    -- TODO: Implement managing of and restrictions on these fields when it
-    -- becomes relevant:
-    private_upload_vol_today BIGINT NOT NULL DEFAULT 0,
-    private_download_vol_today BIGINT NOT NULL DEFAULT 0,
-    private_upload_vol_this_month BIGINT NOT NULL DEFAULT 0,
-    private_download_vol_this_month BIGINT NOT NULL DEFAULT 0
+    upload_data_this_week BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    upload_data_weekly_limit BIGINT UNSIGNED NOT NULL DEFAULT 1000000,
+    -- download_data_this_week BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    -- download_data_weekly_limit BIGINT UNSIGNED NOT NULL DEFAULT 5000000000,
+    computation_weight_this_week BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    computation_weight_weekly_limit BIGINT UNSIGNED NOT NULL DEFAULT (100 << 32),
+    last_refreshed_at DATE NOT NULL DEFAULT (CURDATE())
 );
+
 
 CREATE TABLE Private_Sessions (
     user_id BIGINT UNSIGNED PRIMARY KEY,
