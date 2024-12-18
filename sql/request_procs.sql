@@ -23,9 +23,12 @@ BEGIN
     -- timeReductionOnAdvancement.
     DECLARE EXIT HANDLER FOR 1586 -- Duplicate key entry error.
     BEGIN
-        -- First update the users counters and get isExceeded.
+        ROLLBACK;
+
+        -- First update the users counters and get isExceeded. (uploadDataCost
+        -- only counts for the first user to make the request.)
         CALL _increaseUserCounters(
-            userID, uploadDataCost, timeReductionOnAdvancement, isExceeded
+            userID, 0, timeReductionOnAdvancement, isExceeded
         );
 
         -- If the user counters didn't exceed their limits, advance the request.
@@ -39,6 +42,8 @@ BEGIN
         END IF;
     END;
 
+    START TRANSACTION;
+
     -- The first thing we do is to try to insert the request as a new one, and
     -- if this fails due to a duplicate key entry error, the above exit handler
     -- finishes the procedure.
@@ -49,7 +54,18 @@ BEGIN
         reqType, reqData, UNIX_TIMESTAMP() << 32 + initDelayTime
     );
 
-    -- If this insertion succeeds, we then..
+    -- If this insertion succeeds, we then we increase the user's counters,
+    -- and if these don't exceed their limits, we commit, and otherwise we
+    -- roll back the transaction.
+    CALL _increaseUserCounters(
+        userID, uploadDataCost, timeReductionOnAdvancement, isExceeded
+    );
+
+    IF (isExceeded) THEN
+        ROLLBACK;
+    ELSE
+        COMMIT;
+    END IF;
 END //
 DELIMITER ;
 
