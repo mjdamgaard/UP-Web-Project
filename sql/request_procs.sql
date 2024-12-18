@@ -7,6 +7,47 @@ DROP PROCEDURE insertOrUpdatePublicUserScore;
 
 
 
+
+DELIMITER //
+CREATE PROCEDURE requestUserGroupScoreUpdate (
+    IN userID BIGINT UNSIGNED,
+    IN qualID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
+    IN userGroupID BIGINT UNSIGNED
+)
+proc: BEGIN
+    DECLARE isExceeded TINYINT UNSIGNED;
+    DECLARE reqData VARBINARY(2900) DEFAULT (CONCAT(
+        CAST(qualID AS CHAR), ",",
+        CAST(subjID AS CHAR), ",",
+        CAST(userGroupID AS CHAR)
+    ));
+    -- TODO: initDelayTime should depend on several parameters..
+    DECLARE initDelayTime BIGINT UNSIGNED DEFAULT (5 << 32);
+    DECLARE timeReductionOnAdvancement BIGINT UNSIGNED DEFAULT (1 << 32);
+
+    CALL _scheduleOrAdvanceRequest (
+        userID, "USER_GROUP_SCORE", reqData,
+    );
+
+END proc //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE _executeUserGroupScoreUpdateRequest (
+    IN qualID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
+    IN userGroupID BIGINT UNSIGNED
+)
+proc: BEGIN
+
+END proc //
+DELIMITER ;
+
+
+
+
 DELIMITER //
 CREATE PROCEDURE _scheduleOrAdvanceRequest (
     IN userID BIGINT UNSIGNED,
@@ -27,7 +68,7 @@ BEGIN
 
         -- First update the users counters and get isExceeded. (uploadDataCost
         -- only counts for the first user to make the request.)
-        CALL _increaseUserCounters(
+        CALL _increaseUserCounters (
             userID, 0, timeReductionOnAdvancement, isExceeded
         );
 
@@ -57,7 +98,7 @@ BEGIN
     -- If this insertion succeeds, we then we increase the user's counters,
     -- and if these don't exceed their limits, we commit, and otherwise we
     -- roll back the transaction.
-    CALL _increaseUserCounters(
+    CALL _increaseUserCounters (
         userID, uploadDataCost, timeReductionOnAdvancement, isExceeded
     );
 
@@ -133,14 +174,34 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE requestScoreUpdate (
-    IN userID BIGINT UNSIGNED,
-    IN qualID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED,
-    IN userGroupID BIGINT UNSIGNED
-)
-proc: BEGIN
 
-END proc //
+DELIMITER //
+CREATE PROCEDURE _executeRequest (
+    IN reqType VARCHAR(100),
+    IN reqData VARCHAR(255)
+)
+BEGIN
+    CASE reqType
+        WHEN "USER_GROUP_SCORE" THEN BEGIN
+            DECLARE qualID, subjID, userGroupID BIGINT UNSIGNED;
+            SET qualID = CAST(
+                REGEXP_SUBSTR(paths, "[^,]+", 1, 1) AS UNSIGNED
+            );
+            SET subjID = CAST(
+                REGEXP_SUBSTR(paths, "[^,]+", 1, 2) AS UNSIGNED
+            );
+            SET userGroupID = CAST(
+                REGEXP_SUBSTR(paths, "[^,]+", 1, 3) AS UNSIGNED
+            );
+
+            CALL _executeUserGroupScoreUpdateRequest (
+                qualID, subjID, userGroupID
+            );
+        END
+        ELSE BEGIN
+            SIGNAL SQLSTATE "45000" SET MESSAGE_TEXT = "Unrecognized reqType";
+        END
+    END CASE;
+END //
 DELIMITER ;
+
