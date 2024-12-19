@@ -39,7 +39,7 @@ CREATE TABLE PublicUserScores (
 
     score_val FLOAT NOT NULL,
 
-    score_sigma_exp TINYINT NOT NULL,
+    score_width_exp TINYINT NOT NULL,
 
     modified_at FLOAT DEFAULT (UNIX_TIMESTAMP() DIV 7200),
 
@@ -47,20 +47,9 @@ CREATE TABLE PublicUserScores (
         user_id,
         qual_id,
         subj_id
-    ),
+    )
 
-    UNIQUE INDEX (qual_id, subj_id, score_val, score_sigma_exp, user_id)
-
-    -- PRIMARY KEY (
-    --     user_id,
-    --     qual_id,
-    --     score_val,
-    --     score_sigma_exp,
-    --     subj_id
-    -- ),
-
-    -- -- Index to look up specific scores (and restricting one subject per list).
-    -- UNIQUE INDEX (user_id, qual_id, subj_id)
+    -- UNIQUE INDEX (qual_id, subj_id, score_val, score_width_exp, user_id)
 );
 
 
@@ -86,6 +75,38 @@ CREATE TABLE PrivateUserScores (
     )
 );
 
+
+
+
+CREATE TABLE GroupedUserScores (
+
+    user_group_id BIGINT UNSIGNED NOT NULL,
+
+    qual_id BIGINT UNSIGNED NOT NULL,
+
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    score_val FLOAT NOT NULL,
+
+    user_id BIGINT UNSIGNED NOT NULL,
+
+    score_width_exp TINYINT NOT NULL,
+
+    user_weight_exp TINYINT NOT NULL,
+
+    modified_at DATETIME NOT NULL DEFAULT (NOW()),
+
+    PRIMARY KEY (
+        user_group_id,
+        qual_id,
+        subj_id,
+        score_val,
+        score_width_exp,
+        user_weight_exp,
+        modified_at,
+        user_id
+    )
+);
 
 
 
@@ -118,7 +139,7 @@ CREATE TABLE AggregatedFloatingPointScores (
 
     score_weight_exp TINYINT NOT NULL,
 
-    score_sigma_exp TINYINT NOT NULL,
+    score_width_exp TINYINT NOT NULL,
 
     subj_id BIGINT UNSIGNED NOT NULL,
 
@@ -126,7 +147,7 @@ CREATE TABLE AggregatedFloatingPointScores (
         list_id,
         score_val,
         score_weight_exp,
-        score_sigma_exp,
+        score_width_exp,
         subj_id
     ),
 
@@ -137,44 +158,15 @@ CREATE TABLE AggregatedFloatingPointScores (
 
 
 
-CREATE TABLE EntityListLengths (
+CREATE TABLE EntityListMetadata (
 
     list_id BIGINT UNSIGNED PRIMARY KEY,
 
-    list_len BIGINT UNSIGNED,
+    list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+    queries_this_quarter BIGINT UNSIGNED NOT NULL DEFAULT 0,
 );
 
-
-
--- CREATE TABLE GroupedUserScores (
-
---     user_group_id BIGINT UNSIGNED NOT NULL,
-
---     user_id BIGINT UNSIGNED NOT NULL,
-
---     qual_id BIGINT UNSIGNED NOT NULL,
-
---     score_val FLOAT NOT NULL,
-
---     score_sigma_exp TINYINT NOT NULL,
-
---     user_weight_exp TINYINT NOT NULL,
-
---     subj_id BIGINT UNSIGNED NOT NULL,
-
---     modified_at DATETIME NOT NULL DEFAULT (NOW()),
-
---     PRIMARY KEY (
---         user_group_id,
---         qual_id,
---         subj_id,
---         score_val,
---         score_sigma_exp,
---         user_weight_exp,
---         modified_at,
---         user_id
---     )
--- );
 
 
 
@@ -951,10 +943,6 @@ CREATE TABLE Private_UserData (
 
     upload_data_this_week BIGINT UNSIGNED NOT NULL DEFAULT 0,
     upload_data_weekly_limit BIGINT UNSIGNED NOT NULL DEFAULT 1000000,
-    -- download_data_this_week BIGINT UNSIGNED NOT NULL DEFAULT 0,
-    -- download_data_weekly_limit BIGINT UNSIGNED NOT NULL DEFAULT 5000000000,
-    computation_weight_this_week BIGINT UNSIGNED NOT NULL DEFAULT 0,
-    computation_weight_weekly_limit BIGINT UNSIGNED NOT NULL DEFAULT (100 << 32),
     last_refreshed_at DATE NOT NULL DEFAULT (CURDATE())
 );
 

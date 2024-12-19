@@ -22,9 +22,8 @@ proc: BEGIN
         CAST(subjID AS CHAR), ",",
         CAST(userGroupID AS CHAR)
     ));
-    -- TODO: initDelayTime should depend on several parameters..
-    DECLARE initDelayTime BIGINT UNSIGNED DEFAULT (5 << 32);
-    DECLARE timeReductionOnAdvancement BIGINT UNSIGNED DEFAULT (1 << 32);
+    -- TODO: delayTime should depend on several parameters..
+    DECLARE delayTime BIGINT UNSIGNED DEFAULT (5 << 32);
 
     CALL _scheduleOrAdvanceRequest (
         userID, "USER_GROUP_SCORE", reqData,
@@ -53,8 +52,7 @@ CREATE PROCEDURE _scheduleOrAdvanceRequest (
     IN userID BIGINT UNSIGNED,
     IN reqType VARCHAR(100),
     IN reqData VARBINARY(2900),
-    IN initDelayTime BIGINT UNSIGNED, -- delay time >> 32 = UNIX timestamp.
-    IN timeReductionOnAdvancement BIGINT UNSIGNED,
+    IN delayTime BIGINT UNSIGNED, -- delay time >> 32 = UNIX timestamp.
     IN uploadDataCost BIGINT UNSIGNED,
     OUT isExceeded TINYINT UNSIGNED
 )

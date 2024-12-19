@@ -41,7 +41,7 @@ CREATE PROCEDURE insertOrUpdatePublicUserScore (
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN scoreVal FLOAT,
-    IN scoreSigmaExp TINYINT
+    IN scoreWidthExp TINYINT
 )
 proc: BEGIN
     -- Exit if the subject entity does not exist.
@@ -51,14 +51,14 @@ proc: BEGIN
     END IF;
 
     INSERT INTO PublicUserScores (
-        user_id, qual_id, subj_id, score_val, score_sigma_exp
+        user_id, qual_id, subj_id, score_val, score_width_exp
     )
     VALUES (
-        userID, qualID, subjID, scoreVal, scoreSigmaExp
+        userID, qualID, subjID, scoreVal, scoreWidthExp
     )
     ON DUPLICATE KEY UPDATE
         score_val = scoreVal,
-        score_sigma_exp = scoreSigmaExp;
+        score_width_exp = scoreWidthExp;
 
     SELECT subjID AS outID, 0 AS exitCode; -- inserted or updated.
 END proc //
