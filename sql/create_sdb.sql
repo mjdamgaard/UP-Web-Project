@@ -26,32 +26,7 @@ DROP TABLE EntitySecKeys;
 
 
 
-/* Scores (Entity lists)  */
-
-
-CREATE TABLE PublicUserScores (
-
-    user_id BIGINT UNSIGNED NOT NULL,
-
-    qual_id BIGINT UNSIGNED NOT NULL,
-
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    score_val FLOAT NOT NULL,
-
-    score_width_exp TINYINT NOT NULL,
-
-    modified_at FLOAT DEFAULT (UNIX_TIMESTAMP() DIV 7200),
-
-    PRIMARY KEY (
-        user_id,
-        qual_id,
-        subj_id
-    )
-
-    -- UNIQUE INDEX (qual_id, subj_id, score_val, score_width_exp, user_id)
-);
-
+/* Some fundamental scores tables  */
 
 
 CREATE TABLE PrivateUserScores (
@@ -77,14 +52,42 @@ CREATE TABLE PrivateUserScores (
 
 
 
+CREATE TABLE PublicUserScores (
 
-CREATE TABLE GroupedUserScores (
-
-    user_group_id BIGINT UNSIGNED NOT NULL,
+    user_id BIGINT UNSIGNED NOT NULL,
 
     qual_id BIGINT UNSIGNED NOT NULL,
 
     subj_id BIGINT UNSIGNED NOT NULL,
+
+    score_val FLOAT NOT NULL,
+
+    score_width_exp TINYINT NOT NULL,
+
+    modified_at BIGINT UNSIGNED, -- DEFAULT (
+    --     (UNIX_TIMESTAMP() DIV 7200) * 7200 << 32
+    -- ),
+
+    PRIMARY KEY (
+        user_id,
+        qual_id,
+        subj_id
+    )
+
+    -- UNIQUE INDEX (
+    --     user_group_id,
+    --     qual_id,
+    --     subj_id,
+    --     score_val,
+    --     user_id
+    -- )
+);
+
+
+
+CREATE TABLE GroupedUserScores (
+
+    list_id BIGINT UNSIGNED NOT NULL,
 
     score_val FLOAT NOT NULL,
 
@@ -94,16 +97,16 @@ CREATE TABLE GroupedUserScores (
 
     user_weight_exp TINYINT NOT NULL,
 
-    modified_at DATETIME NOT NULL DEFAULT (NOW()),
+    modified_at BIGINT UNSIGNED,
 
     PRIMARY KEY (
-        user_group_id,
-        qual_id,
-        subj_id,
+        list_id,
+        user_id
+    ),
+
+    UNIQUE INDEX (
+        list_id,
         score_val,
-        score_width_exp,
-        user_weight_exp,
-        modified_at,
         user_id
     )
 );
@@ -111,16 +114,15 @@ CREATE TABLE GroupedUserScores (
 
 
 
-
 CREATE TABLE ScoreHistograms (
 
-    user_group_id BIGINT UNSIGNED NOT NULL DEFAULT 0, -- 0 means all users.
+    user_group_id BIGINT UNSIGNED NOT NULL,
 
     qual_id BIGINT UNSIGNED NOT NULL,
 
-    hist_data VARBINARY(4000) NOT NULL,
-
     subj_id BIGINT UNSIGNED NOT NULL,
+
+    hist_data VARBINARY(4000) NOT NULL,
 
     PRIMARY KEY (
         user_group_id,
@@ -131,41 +133,121 @@ CREATE TABLE ScoreHistograms (
 
 
 
-CREATE TABLE AggregatedFloatingPointScores (
+CREATE TABLE MedianScoresDisregardingScoreWidths (
 
     list_id BIGINT UNSIGNED NOT NULL,
 
     score_val FLOAT NOT NULL,
 
-    score_weight_exp TINYINT NOT NULL,
-
-    score_width_exp TINYINT NOT NULL,
+    hist_weight_exp TINYINT NOT NULL,
 
     subj_id BIGINT UNSIGNED NOT NULL,
 
     PRIMARY KEY (
         list_id,
-        score_val,
-        score_weight_exp,
-        score_width_exp,
         subj_id
     ),
 
-    -- Index to look up specific scores (and restricting one subject per list).
-    UNIQUE INDEX (list_id, subj_id)
+    UNIQUE INDEX (
+        list_id,
+        score_val,
+        hist_weight_exp,
+        subj_id
+    )
 );
+
+CREATE TABLE MedianScoresAccountingForScoreWidths (
+
+    list_id BIGINT UNSIGNED NOT NULL,
+
+    score_val FLOAT NOT NULL,
+
+    hist_weight_exp TINYINT NOT NULL,
+
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (
+        list_id,
+        subj_id
+    ),
+
+    UNIQUE INDEX (
+        list_id,
+        score_val,
+        hist_weight_exp,
+        subj_id
+    )
+);
+
+CREATE TABLE HistogramMaximumScoresDisregardingScoreWidths (
+
+    list_id BIGINT UNSIGNED NOT NULL,
+
+    score_val FLOAT NOT NULL,
+
+    hist_weight_exp TINYINT NOT NULL,
+
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (
+        list_id,
+        subj_id
+    ),
+
+    UNIQUE INDEX (
+        list_id,
+        score_val,
+        hist_weight_exp,
+        subj_id
+    )
+);
+
+CREATE TABLE HistogramMaximumScoresAccountingForScoreWidths (
+
+    list_id BIGINT UNSIGNED NOT NULL,
+
+    score_val FLOAT NOT NULL,
+
+    hist_weight_exp TINYINT NOT NULL,
+
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (
+        list_id,
+        subj_id
+    ),
+
+    UNIQUE INDEX (
+        list_id,
+        score_val,
+        hist_weight_exp,
+        subj_id
+    )
+);
+
+
+
 
 
 
 
 CREATE TABLE EntityListMetadata (
 
-    list_id BIGINT UNSIGNED PRIMARY KEY,
+    list_id BIGINT UNSIGNED NOT NULL,
+
+    aggr_type VARCHAR(255) NOT NULL, -- Identifying the score aggregate table.
 
     list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
     queries_this_quarter BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+    PRIMARY KEY (
+        list_id,
+        aggr_type
+    )
 );
+
+
 
 
 
