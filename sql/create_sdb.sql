@@ -64,23 +64,27 @@ CREATE TABLE PublicUserScores (
 
     score_width_exp TINYINT NOT NULL,
 
-    -- modified_at BIGINT UNSIGNED, -- DEFAULT (
-    -- --     (UNIX_TIMESTAMP() DIV 7200) * 7200 << 32
-    -- -- ),
-
     PRIMARY KEY (
         user_id,
         qual_id,
         subj_id
     )
+);
 
-    -- UNIQUE INDEX (
-    --     user_group_id,
-    --     qual_id,
-    --     subj_id,
-    --     score_val,
-    --     user_id
-    -- )
+
+
+CREATE TABLE UserWeights (
+
+    user_group_id BIGINT UNSIGNED NOT NULL,
+
+    user_id BIGINT UNSIGNED NOT NULL,
+
+    user_weight_exp TINYINT NOT NULL,
+
+    PRIMARY KEY (
+        user_group_id,
+        user_id
+    )
 );
 
 

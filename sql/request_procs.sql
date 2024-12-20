@@ -15,32 +15,43 @@ CREATE PROCEDURE requestUserGroupScoreUpdate (
     IN subjID BIGINT UNSIGNED,
     IN userGroupID BIGINT UNSIGNED
 )
-BEGIN
-    DECLARE isMember, isExceeded TINYINT UNSIGNED;
-    DECLARE reqData VARBINARY(2900) DEFAULT (CONCAT(
-        CAST(qualID AS CHAR), ",",
-        CAST(subjID AS CHAR), ",",
-        CAST(userGroupID AS CHAR)
-    ));
+proc: BEGIN
+    DECLARE userWeightExp, isExceeded TINYINT;
+    DECLARE reqData VARBINARY(2900);
     DECLARE delayTime BIGINT UNSIGNED DEFAULT (1 << 32);
     DECLARE uploadDataCost BIGINT UNSIGNED DEFAULT 20;
 
     -- First we check that the user is in the given user group.
-    CALL _getIsMember (
-        userID, userGroupID, isMember
+    SELECT user_weight_exp INTO userWeightExp
+    FROM UserWeights
+    WHERE (
+        user_group_id = userGroupID AND
+        user_id = userID
     );
+    IF (userWeightExp IS NULL) THEN
+        SELECT 1 AS exitCode; -- user is not a member of the user group.
+        LEAVE proc;
+    END IF;
 
+    -- If the user is a member, construct reqData, and schedule the request if
+    -- the user's upload data limit isn't exceeded. 
+    SET reqData = CONCAT(
+        CAST(qualID AS CHAR), ",",
+        CAST(subjID AS CHAR), ",",
+        CAST(userGroupID AS CHAR), ",",
+        CAST(userWeightExp AS CHAR)
+    );
     CALL _scheduleRequest (
         userID, "USER_GROUP_SCORE", reqData, delayTime, uploadDataCost,
         isExceeded
     );
 
     IF (isExceeded) THEN
-        SELECT 1 AS exitCode; -- weekly upload data is exceeded.
+        SELECT 2 AS exitCode; -- weekly upload data is exceeded.
     ELSE
         SELECT 0 AS exitCode; -- request scheduled.
     END IF;
-END //
+END proc //
 DELIMITER ;
 
 
@@ -48,7 +59,8 @@ DELIMITER //
 CREATE PROCEDURE _executeUserGroupScoreUpdateRequest (
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN userGroupID BIGINT UNSIGNED
+    IN userGroupID BIGINT UNSIGNED,
+    IN userWeightExp TINYINT
 )
 BEGIN
 
@@ -65,7 +77,7 @@ CREATE PROCEDURE _scheduleRequest (
     IN reqData VARBINARY(2900),
     IN delayTime BIGINT UNSIGNED, -- delay time >> 32 = UNIX timestamp.
     IN uploadDataCost BIGINT UNSIGNED,
-    OUT isExceeded TINYINT UNSIGNED
+    OUT isExceeded TINYINT
 )
 BEGIN
     -- If the insert statement following this handler declaration fails, simply
@@ -108,7 +120,7 @@ DELIMITER //
 CREATE PROCEDURE _increaseUserUploadDataCount (
     IN userID BIGINT UNSIGNED,
     IN uploadData BIGINT UNSIGNED,
-    OUT isExceeded TINYINT UNSIGNED
+    OUT isExceeded TINYINT
 )
 proc: BEGIN
     DECLARE uploadCount, uploadLimit BIGINT UNSIGNED;
@@ -167,7 +179,7 @@ CREATE PROCEDURE _executeRequest (
 BEGIN
     CASE reqType
         WHEN "USER_GROUP_SCORE" THEN BEGIN
-            DECLARE qualID, subjID, userGroupID BIGINT UNSIGNED;
+            DECLARE qualID, subjID, userGroupID, userWeightExp BIGINT UNSIGNED;
             SET qualID = CAST(
                 REGEXP_SUBSTR(paths, "[^,]+", 1, 1) AS UNSIGNED
             );
@@ -177,9 +189,12 @@ BEGIN
             SET userGroupID = CAST(
                 REGEXP_SUBSTR(paths, "[^,]+", 1, 3) AS UNSIGNED
             );
+            SET userWeightExp = CAST(
+                REGEXP_SUBSTR(paths, "[^,]+", 1, 4) AS UNSIGNED
+            );
 
             CALL _executeUserGroupScoreUpdateRequest (
-                qualID, subjID, userGroupID
+                qualID, subjID, userGroupID, userWeightExp
             );
         END
         ELSE BEGIN
