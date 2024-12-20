@@ -174,6 +174,27 @@ END //
 DELIMITER ;
 
 
+DELIMITER //
+CREATE PROCEDURE deleteSeveralPrivateUserScores (
+    IN userID BIGINT UNSIGNED,
+    IN userWhitelistID BIGINT UNSIGNED,
+    IN qualID BIGINT UNSIGNED,
+    IN scoreCutoff BIGINT UNSIGNED
+)
+BEGIN
+    DELETE FROM PrivateUserScores
+    WHERE (
+        user_whitelist_id = userWhitelistID AND
+        qual_id = qualID AND
+        subj_id = subjID AND
+        score_val < scoreCutoff AND
+        user_id = userID
+    );
+
+    SELECT subjID AS outID, 0 AS exitCode; -- delete if there.
+END //
+DELIMITER ;
+
 
 
 

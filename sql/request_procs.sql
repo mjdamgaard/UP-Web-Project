@@ -15,21 +15,32 @@ CREATE PROCEDURE requestUserGroupScoreUpdate (
     IN subjID BIGINT UNSIGNED,
     IN userGroupID BIGINT UNSIGNED
 )
-proc: BEGIN
-    DECLARE isExceeded TINYINT UNSIGNED;
+BEGIN
+    DECLARE isMember, isExceeded TINYINT UNSIGNED;
     DECLARE reqData VARBINARY(2900) DEFAULT (CONCAT(
         CAST(qualID AS CHAR), ",",
         CAST(subjID AS CHAR), ",",
         CAST(userGroupID AS CHAR)
     ));
-    -- TODO: delayTime should depend on several parameters..
-    DECLARE delayTime BIGINT UNSIGNED DEFAULT (5 << 32);
+    DECLARE delayTime BIGINT UNSIGNED DEFAULT (1 << 32);
+    DECLARE uploadDataCost BIGINT UNSIGNED DEFAULT 20;
 
-    CALL _scheduleRequest (
-        userID, "USER_GROUP_SCORE", reqData,
+    -- First we check that the user is in the given user group.
+    CALL _getIsMember (
+        userID, userGroupID, isMember
     );
 
-END proc //
+    CALL _scheduleRequest (
+        userID, "USER_GROUP_SCORE", reqData, delayTime, uploadDataCost,
+        isExceeded
+    );
+
+    IF (isExceeded) THEN
+        SELECT 1 AS exitCode; -- weekly upload data is exceeded.
+    ELSE
+        SELECT 0 AS exitCode; -- request scheduled.
+    END IF;
+END //
 DELIMITER ;
 
 
@@ -39,9 +50,9 @@ CREATE PROCEDURE _executeUserGroupScoreUpdateRequest (
     IN subjID BIGINT UNSIGNED,
     IN userGroupID BIGINT UNSIGNED
 )
-proc: BEGIN
+BEGIN
 
-END proc //
+END //
 DELIMITER ;
 
 
@@ -58,27 +69,10 @@ CREATE PROCEDURE _scheduleRequest (
 )
 BEGIN
     -- If the insert statement following this handler declaration fails, simply
-    -- update the request and increase the user's computation counter by
-    -- timeReductionOnAdvancement.
+    -- roll back the transaction.
     DECLARE EXIT HANDLER FOR 1586 -- Duplicate key entry error.
     BEGIN
         ROLLBACK;
-
-        -- First update the users counters and get isExceeded. (uploadDataCost
-        -- only counts for the first user to make the request.)
-        CALL _increaseUserCounters (
-            userID, 0, timeReductionOnAdvancement, isExceeded
-        );
-
-        -- If the user counters didn't exceed their limits, advance the request.
-        IF (NOT isExceeded) THEN
-            UPDATE ScheduledRequests
-            SET exec_at = exec_at - timeReductionOnAdvancement
-            WHERE (
-                req_type = reqType AND
-                req_data = reqData
-            );
-        END IF;
     END;
 
     START TRANSACTION;
@@ -97,7 +91,7 @@ BEGIN
     -- and if these don't exceed their limits, we commit, and otherwise we
     -- roll back the transaction.
     CALL _increaseUserCounters (
-        userID, uploadDataCost, timeReductionOnAdvancement, isExceeded
+        userID, uploadDataCost, isExceeded
     );
 
     IF (isExceeded) THEN
@@ -111,28 +105,23 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE _increaseUserCounters (
+CREATE PROCEDURE _increaseUserUploadDataCount (
     IN userID BIGINT UNSIGNED,
     IN uploadData BIGINT UNSIGNED,
-    IN computationWeight BIGINT UNSIGNED,
     OUT isExceeded TINYINT UNSIGNED
 )
 proc: BEGIN
-    DECLARE uploadCount, uploadLimit, compCount, compLimit BIGINT UNSIGNED;
+    DECLARE uploadCount, uploadLimit BIGINT UNSIGNED;
     DECLARE lastRefreshedAt DATE;
     DECLARE currentDate DATE DEFAULT (CURDATE());
     
     SELECT
         upload_data_this_week + uploadData,
         upload_data_weekly_limit,
-        computation_weight_this_week + computationWeight,
-        computation_weight_weekly_limit,
         last_refreshed_at
     INTO
         uploadCount,
         uploadLimit,
-        compCount,
-        compLimit,
         lastRefreshedAt
     FROM Private_UserData
     WHERE user_id = userID;
@@ -143,17 +132,15 @@ proc: BEGIN
         UPDATE Private_UserData
         SET
             upload_data_this_week = 0,
-            computation_weight_this_week = 0,
             last_refreshed_at = currentDate
         WHERE user_id = userID;
 
         SET uploadCount = uploadData;
-        SET compCount = computationWeight;
     END IF;
 
     -- Then check if any limits are exceeded, and return isExceeded = 1 if so
     -- (without updating the user's counters).
-    IF (uploadCount > uploadLimit OR compCount > compLimit) THEN
+    IF (uploadCount > uploadLimit) THEN
         SET isExceeded = 1;
         LEAVE proc;
     END IF;
@@ -161,8 +148,7 @@ proc: BEGIN
     -- If not, update the counters and return isExceeded = 0.
     UPDATE Private_UserData
     SET
-        upload_data_this_week = uploadCount,
-        computation_weight_this_week = compCount
+        upload_data_this_week = uploadCount
     WHERE user_id = userID;
 
     SET isExceeded = 0;

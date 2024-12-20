@@ -64,9 +64,9 @@ CREATE TABLE PublicUserScores (
 
     score_width_exp TINYINT NOT NULL,
 
-    modified_at BIGINT UNSIGNED, -- DEFAULT (
-    --     (UNIX_TIMESTAMP() DIV 7200) * 7200 << 32
-    -- ),
+    -- modified_at BIGINT UNSIGNED, -- DEFAULT (
+    -- --     (UNIX_TIMESTAMP() DIV 7200) * 7200 << 32
+    -- -- ),
 
     PRIMARY KEY (
         user_id,
@@ -89,15 +89,13 @@ CREATE TABLE ScoreContributors (
 
     list_id BIGINT UNSIGNED NOT NULL,
 
-    score_val FLOAT NOT NULL,
-
     user_id BIGINT UNSIGNED NOT NULL,
+
+    score_val FLOAT NOT NULL,
 
     score_width_exp TINYINT NOT NULL,
 
     user_weight_exp TINYINT NOT NULL,
-
-    modified_at BIGINT UNSIGNED,
 
     PRIMARY KEY (
         list_id,
@@ -107,6 +105,8 @@ CREATE TABLE ScoreContributors (
     UNIQUE INDEX (
         list_id,
         score_val,
+        score_width_exp,
+        user_weight_exp,
         user_id
     )
 );
@@ -162,6 +162,26 @@ CREATE TABLE FloatScoreAndWeightAggregates (
     )
 );
 
+
+CREATE TABLE FloatScoreAggregates (
+
+    list_id BIGINT UNSIGNED NOT NULL,
+
+    score_val FLOAT NOT NULL,
+
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (
+        list_id,
+        subj_id
+    ),
+
+    UNIQUE INDEX (
+        list_id,
+        score_val,
+        subj_id
+    )
+);
 
 
 
@@ -426,8 +446,20 @@ VALUES
     ("t", "j", 0),
     ("u", "initial_admin", 0),
     ("j", '{}', 9),
-    -- TODO: Insert the function entities below in the workspace JSON object
-    -- just above this comment.
+    -- TODO: Insert the entities below in the workspace JSON object just above
+    -- this comment.
+    ("a", CONCAT(
+        '{',
+            '"Class":"@[fundamental user groups]",',
+            '"Name":"All users",',
+        '}'
+    ), 9),
+    ("a", CONCAT(
+        '{',
+            '"Class":"@[fundamental user groups]",',
+            '"Name":"Money-contributing users",',
+        '}'
+    ), 9),
     ("f", CONCAT(
         'score_contributors(',
             'Quality:@[qualities],',
