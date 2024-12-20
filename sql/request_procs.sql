@@ -25,7 +25,7 @@ proc: BEGIN
     -- TODO: delayTime should depend on several parameters..
     DECLARE delayTime BIGINT UNSIGNED DEFAULT (5 << 32);
 
-    CALL _scheduleOrAdvanceRequest (
+    CALL _scheduleRequest (
         userID, "USER_GROUP_SCORE", reqData,
     );
 
@@ -48,7 +48,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE _scheduleOrAdvanceRequest (
+CREATE PROCEDURE _scheduleRequest (
     IN userID BIGINT UNSIGNED,
     IN reqType VARCHAR(100),
     IN reqData VARBINARY(2900),

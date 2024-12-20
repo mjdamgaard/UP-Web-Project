@@ -85,7 +85,7 @@ CREATE TABLE PublicUserScores (
 
 
 
-CREATE TABLE GroupedUserScores (
+CREATE TABLE ScoreContributors (
 
     list_id BIGINT UNSIGNED NOT NULL,
 
@@ -116,6 +116,11 @@ CREATE TABLE GroupedUserScores (
 
 CREATE TABLE ScoreHistograms (
 
+    -- hist_id BIGINT UNSIGNED NOT NULL, -- No, we don't want to have to create
+    -- -- for each histogram. And the table will be compressed anyway.
+
+    hist_fun_id BIGINT UNSIGNED NOT NULL,
+
     user_group_id BIGINT UNSIGNED NOT NULL,
 
     qual_id BIGINT UNSIGNED NOT NULL,
@@ -125,6 +130,7 @@ CREATE TABLE ScoreHistograms (
     hist_data VARBINARY(4000) NOT NULL,
 
     PRIMARY KEY (
+        hist_fun_id,
         user_group_id,
         qual_id,
         subj_id
@@ -133,13 +139,13 @@ CREATE TABLE ScoreHistograms (
 
 
 
-CREATE TABLE MedianScoresDisregardingScoreWidths (
+CREATE TABLE FloatScoreAndWeightAggregates (
 
     list_id BIGINT UNSIGNED NOT NULL,
 
     score_val FLOAT NOT NULL,
 
-    hist_weight_exp TINYINT NOT NULL,
+    weight_exp TINYINT NOT NULL,
 
     subj_id BIGINT UNSIGNED NOT NULL,
 
@@ -151,76 +157,7 @@ CREATE TABLE MedianScoresDisregardingScoreWidths (
     UNIQUE INDEX (
         list_id,
         score_val,
-        hist_weight_exp,
-        subj_id
-    )
-);
-
-CREATE TABLE MedianScoresAccountingForScoreWidths (
-
-    list_id BIGINT UNSIGNED NOT NULL,
-
-    score_val FLOAT NOT NULL,
-
-    hist_weight_exp TINYINT NOT NULL,
-
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    PRIMARY KEY (
-        list_id,
-        subj_id
-    ),
-
-    UNIQUE INDEX (
-        list_id,
-        score_val,
-        hist_weight_exp,
-        subj_id
-    )
-);
-
-CREATE TABLE HistogramMaximumScoresDisregardingScoreWidths (
-
-    list_id BIGINT UNSIGNED NOT NULL,
-
-    score_val FLOAT NOT NULL,
-
-    hist_weight_exp TINYINT NOT NULL,
-
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    PRIMARY KEY (
-        list_id,
-        subj_id
-    ),
-
-    UNIQUE INDEX (
-        list_id,
-        score_val,
-        hist_weight_exp,
-        subj_id
-    )
-);
-
-CREATE TABLE HistogramMaximumScoresAccountingForScoreWidths (
-
-    list_id BIGINT UNSIGNED NOT NULL,
-
-    score_val FLOAT NOT NULL,
-
-    hist_weight_exp TINYINT NOT NULL,
-
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    PRIMARY KEY (
-        list_id,
-        subj_id
-    ),
-
-    UNIQUE INDEX (
-        list_id,
-        score_val,
-        hist_weight_exp,
+        weight_exp,
         subj_id
     )
 );
@@ -234,8 +171,6 @@ CREATE TABLE HistogramMaximumScoresAccountingForScoreWidths (
 CREATE TABLE EntityListMetadata (
 
     list_id BIGINT UNSIGNED NOT NULL,
-
-    aggr_type VARCHAR(255) NOT NULL, -- Identifying the score aggregate table.
 
     list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
@@ -478,19 +413,69 @@ CREATE TABLE FulltextIndexedEntities (
 /* Initial entities */
 
 INSERT INTO Entities (
-    type_ident, def_str, creator_id, is_editable
+    type_ident, def_str, creator_id
 )
 VALUES
-    ("t", "t", 0, NULL),
-    ("t", "u", 0, NULL),
-    ("t", "f", 0, NULL),
-    ("t", "c", 0, NULL),
-    ("t", "a", 0, NULL),
-    ("t", "8", 0, NULL),
-    ("t", "h", 0, NULL),
-    ("t", "j", 0, NULL),
-    ("u", '{"Username":"initial_admin"}', 0, NULL),
-    ("j", '{}', 9, ADDDATE(CURDATE(), INTERVAL 1000 DAY));
+    ("t", "t", 0),
+    ("t", "u", 0),
+    ("t", "f", 0),
+    ("t", "c", 0),
+    ("t", "a", 0),
+    ("t", "8", 0),
+    ("t", "h", 0),
+    ("t", "j", 0),
+    ("u", "initial_admin", 0),
+    ("j", '{}', 9),
+    -- TODO: Insert the function entities below in the workspace JSON object
+    -- just above this comment.
+    ("f", CONCAT(
+        'score_contributors(',
+            'Quality:@[qualities],',
+            'Subject:@[entities],',
+            'User group:@[user groups],',
+        '){',
+            '"Class":"@[score contributor lists]",',
+            '"Quality":"%1"',
+            '"Subject":"%2"',
+            '"User group":"%3"',
+        '}'
+    ), 9),
+    ("f", CONCAT(
+        'hist_cen(',
+            'Quality:@[qualities],',
+            'Subject:@[entities],',
+            'User group:@[user groups],',
+        '){',
+            '"Class":"@[histograms of score centers]",',
+            '"Quality":"%1"',
+            '"Subject":"%2"',
+            '"User group":"%3"',
+        '}'
+    ), 9),
+    ("f", CONCAT(
+        'hist_wid(',
+            'Quality:@[qualities],',
+            'Subject:@[entities],',
+            'User group:@[user groups],',
+        '){',
+            '"Class":"@[histograms accounting for score widths]",',
+            '"Quality":"%1"',
+            '"Subject":"%2"',
+            '"User group":"%3"',
+        '}'
+    ), 9),
+    ("f", CONCAT(
+        'medians(',
+            'Quality:@[qualities],',
+            'User group:@[user groups],',
+            'Histogram function:@[histogram functions]',
+        '){',
+            '"Class":"@[median lists]",',
+            '"Quality":"%1"',
+            '"User group":"%2"',
+            '"Histogram function":"%3"',
+        '}'
+    ), 9);
 
 INSERT INTO EntitySecKeys (
     type_ident, def_key, ent_id

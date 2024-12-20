@@ -182,7 +182,7 @@ export function initialInserts(dataInserter) {
         "Class": "@[classes]",
         "Name": "Qualities",
         "Member title": "Quality",
-        "Member datatype": "c",
+        "Member datatype": "a",
         "Member format": "@[qualities/format]",
         "Description": "@[qualities/desc]",
     }),
