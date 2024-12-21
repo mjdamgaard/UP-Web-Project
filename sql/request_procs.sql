@@ -21,7 +21,7 @@ proc: BEGIN
     DECLARE scoreVal FLOAT;
     DECLARE scoreWidthExp, userWeightExp, isExceeded, wasDeleted TINYINT;
     DECLARE uploadDataCost BIGINT UNSIGNED 0;
-    DECLARE scoreContrListDefStr VARCHAR(700);
+    DECLARE scoreContrListDefStr VARCHAR(700) CHARACTER SET utf8mb4;
     DECLARE scoreContrListID, exitCode BIGINT UNSIGNED;
 
     -- First we check that the user is in the given user group.
@@ -59,6 +59,10 @@ proc: BEGIN
             ELSE CONCAT(',@', filterListID)
         END CASE
     );
+
+    -- TODO: I forgot that _insertOrFindFunctionCallEntity will increase the
+    -- upload counter anyway, so correct the following (after also correcting
+    -- _insertOrFindFunctionCallEntity).
 
     CALL _insertOrFindFunctionCallEntity (
         requestingUserID, scoreContrListDefStr, 1,
@@ -146,7 +150,42 @@ CREATE PROCEDURE requestHistogramOfScoreCentersUpdate (
     IN filterListID BIGINT UNSIGNED
 )
 proc: BEGIN
-    -- Implement..
+    DECLARE scoreContrListDefStr VARCHAR(700) CHARACTER SET utf8mb4 DEFAULT (
+        CONCAT(
+            '@13,@', qualID, ',@', subjID, ',@', userGroupID,
+            CASE filterListID
+                WHEN 0 THEN ',null'
+                ELSE CONCAT(',@', filterListID)
+            END CASE
+        )
+    );
+    DECLARE scoreContrListID = (
+        SELECT ent_id
+        FROM EntitySecKeys
+        WHERE (
+            type_ident = "c",
+            user_whitelist_id = 0,
+            def_key = scoreContrListDefStr
+        )
+    );
+
+    DECLARE listLen = (
+        SELECT list_len
+        FROM EntityListMetadata
+        WHERE list_id = scoreContrListID;
+    );
+
+    DECLARE cur CURSOR FOR
+        SELECT score_val, user_weight_exp
+        FROM ScoreContributors
+        WHERE list_id = scoreContrListID
+        ORDER BY
+            score_val ASC,
+            score_width_exp ASC,
+            user_weight_exp ASC,
+            user_id ASC;
+    
+    -- First check that the user has enough
 
     SELECT 0 AS exitCode; -- request was carried out.
 END proc //

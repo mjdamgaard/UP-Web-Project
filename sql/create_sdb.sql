@@ -144,9 +144,22 @@ CREATE TABLE ScoreContributors (
 
 CREATE TABLE ScoreHistograms (
 
-    hist_id BIGINT UNSIGNED PRIMARY KEY,
+    score_contr_list_id BIGINT UNSIGNED NOT NULL,
 
-    hist_data VARBINARY(4000) NOT NULL
+    hist_fun_id BIGINT UNSIGNED NOT NULL,
+
+    lower_bound_literal VARCHAR(50) NOT NULL,
+
+    upper_bound_literal VARCHAR(50) NOT NULL,
+
+    hist_data VARBINARY(4000) NOT NULL,
+
+    PRIMARY KEY (
+        score_contr_list_id,
+        hist_fun_id,
+        lower_bound_literal,
+        upper_bound_literal
+    )
 );
 
 
