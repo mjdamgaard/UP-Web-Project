@@ -52,7 +52,7 @@ CREATE TABLE PrivateUserScores (
 
 
 
-CREATE TABLE PublicUserScores (
+CREATE TABLE PublicUserFloatAndWidthScores (
 
     user_id BIGINT UNSIGNED NOT NULL,
 
@@ -71,6 +71,43 @@ CREATE TABLE PublicUserScores (
     )
 );
 
+CREATE TABLE PublicUserFloatScores (
+
+    user_id BIGINT UNSIGNED NOT NULL,
+
+    qual_id BIGINT UNSIGNED NOT NULL,
+
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    score_val FLOAT NOT NULL,
+
+    score_width_exp TINYINT NOT NULL,
+
+    PRIMARY KEY (
+        user_id,
+        qual_id,
+        subj_id
+    )
+);
+
+CREATE TABLE PublicUserByteScores (
+
+    user_id BIGINT UNSIGNED NOT NULL,
+
+    qual_id BIGINT UNSIGNED NOT NULL,
+
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    score_val TINYINT NOT NULL,
+
+    PRIMARY KEY (
+        user_id,
+        qual_id,
+        subj_id
+    )
+);
+
+
 
 
 CREATE TABLE UserWeights (
@@ -86,6 +123,7 @@ CREATE TABLE UserWeights (
         user_id
     )
 );
+
 
 
 
@@ -143,13 +181,12 @@ CREATE TABLE ScoreHistograms (
 
 
 
-CREATE TABLE FloatScoreAndWeightAggregates (
+
+CREATE TABLE ByteScoreAggregates (
 
     list_id BIGINT UNSIGNED NOT NULL,
 
-    score_val FLOAT NOT NULL,
-
-    weight_exp TINYINT NOT NULL,
+    score_val TINYINT NOT NULL,
 
     subj_id BIGINT UNSIGNED NOT NULL,
 
@@ -161,7 +198,6 @@ CREATE TABLE FloatScoreAndWeightAggregates (
     UNIQUE INDEX (
         list_id,
         score_val,
-        weight_exp,
         subj_id
     )
 );
@@ -183,6 +219,30 @@ CREATE TABLE FloatScoreAggregates (
     UNIQUE INDEX (
         list_id,
         score_val,
+        subj_id
+    )
+);
+
+
+CREATE TABLE FloatScoreAndWeightAggregates (
+
+    list_id BIGINT UNSIGNED NOT NULL,
+
+    score_val FLOAT NOT NULL,
+
+    weight_exp TINYINT NOT NULL,
+
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (
+        list_id,
+        subj_id
+    ),
+
+    UNIQUE INDEX (
+        list_id,
+        score_val,
+        weight_exp,
         subj_id
     )
 );
@@ -469,35 +529,49 @@ VALUES
             'Quality:@[qualities],',
             'Subject:@[entities],',
             'User group:@[user groups],',
+            'Filter list?:@[lists]',
         '){',
             '"Class":"@[score contributor lists]",',
             '"Quality":"%1"',
             '"Subject":"%2"',
             '"User group":"%3"',
+            '"Filter list":"%4"',
         '}'
     ), 9),
     ("f", CONCAT(
-        'hist_cen(',
+        'histogram_of_score_centers(',
             'Quality:@[qualities],',
             'Subject:@[entities],',
             'User group:@[user groups],',
+            'Lower bound:float,',
+            'Upper bound:float,',
+            'Filter list?:@[lists]',
         '){',
             '"Class":"@[histograms of score centers]",',
             '"Quality":"%1"',
             '"Subject":"%2"',
             '"User group":"%3"',
+            '"Lower bound":"%4"',
+            '"Upper bound":"%5"',
+            '"Filter list":"%6"',
         '}'
     ), 9),
     ("f", CONCAT(
-        'hist_wid(',
+        'histogram_of_scores_with_widths(',
             'Quality:@[qualities],',
             'Subject:@[entities],',
             'User group:@[user groups],',
+            'Lower bound:float,',
+            'Upper bound:float,',
+            'Filter list?:@[lists]',
         '){',
-            '"Class":"@[histograms accounting for score widths]",',
+            '"Class":"@[histograms of scores with widths]",',
             '"Quality":"%1"',
             '"Subject":"%2"',
             '"User group":"%3"',
+            '"Lower bound":"%4"',
+            '"Upper bound":"%5"',
+            '"Filter list":"%6"',
         '}'
     ), 9),
     ("f", CONCAT(
@@ -505,11 +579,17 @@ VALUES
             'Quality:@[qualities],',
             'User group:@[user groups],',
             'Histogram function:@[histogram functions]',
+            'Lower bound:float,',
+            'Upper bound:float,',
+            'Filter list?:@[lists]',
         '){',
             '"Class":"@[median lists]",',
             '"Quality":"%1"',
             '"User group":"%2"',
             '"Histogram function":"%3"',
+            '"Lower bound":"%4"',
+            '"Upper bound":"%5"',
+            '"Filter list":"%6"',
         '}'
     ), 9);
 
@@ -1046,6 +1126,8 @@ CREATE TABLE Private_UserData (
 
     upload_data_this_week BIGINT UNSIGNED NOT NULL DEFAULT 0,
     upload_data_weekly_limit BIGINT UNSIGNED NOT NULL DEFAULT 1000000,
+    computation_usage_this_week BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    computation_usage_weekly_limit BIGINT UNSIGNED NOT NULL DEFAULT (50 << 32),
     last_refreshed_at DATE NOT NULL DEFAULT (CURDATE())
 );
 

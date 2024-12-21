@@ -204,9 +204,10 @@ export function initialInserts(dataInserter) {
         JSON.stringify({
           "Class": "@[qualities]",
           "Label": "%1",
-          "Domain": "%2",
-          "Metric": "%3",
-          "Description": "%4",
+          "Object": "%2",
+          "Relation": "%3",
+          "Metric": "%4",
+          "Description": "%5",
         })
     )
   );
@@ -330,7 +331,6 @@ export function initialInserts(dataInserter) {
           "Lower bound?:float",
           "High end?:float",
           "Low end?:float",
-          "Default bin width?:float",
           "Description:h",
         ].join(",") +
         ")=>" +
@@ -344,8 +344,7 @@ export function initialInserts(dataInserter) {
           "High end": "%6",
           "Low end": "%7",
           "Object": "%8",
-          "Default bin width":"%9",
-          "Description":"%10",
+          "Description":"%9",
         })
     )
   );

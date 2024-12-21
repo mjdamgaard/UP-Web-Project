@@ -11,6 +11,7 @@ DROP PROCEDURE insertOrUpdatePublicUserScore;
 DELIMITER //
 CREATE PROCEDURE requestUserGroupScoreUpdate (
     IN userID BIGINT UNSIGNED,
+    IN targetUserID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN userGroupID BIGINT UNSIGNED
@@ -41,8 +42,12 @@ proc: BEGIN
         CAST(userGroupID AS CHAR), ",",
         CAST(userWeightExp AS CHAR)
     );
+
+    -- TODO: Just run this light-weight request straight away instead of
+    -- queuing it like so:
     CALL _scheduleRequest (
-        userID, "USER_GROUP_SCORE", reqData, delayTime, uploadDataCost,
+        userID, "USER_GROUP_SCORE", reqData, delayTime,
+        uploadDataCost, 0,
         isExceeded
     );
 
@@ -77,6 +82,7 @@ CREATE PROCEDURE _scheduleRequest (
     IN reqData VARBINARY(2900),
     IN delayTime BIGINT UNSIGNED, -- delay time >> 32 = UNIX timestamp.
     IN uploadDataCost BIGINT UNSIGNED,
+    IN compCost BIGINT UNSIGNED,
     OUT isExceeded TINYINT
 )
 BEGIN
@@ -103,7 +109,7 @@ BEGIN
     -- and if these don't exceed their limits, we commit, and otherwise we
     -- roll back the transaction.
     CALL _increaseUserCounters (
-        userID, uploadDataCost, isExceeded
+        userID, uploadDataCost, compCost, isExceeded
     );
 
     IF (isExceeded) THEN
@@ -117,23 +123,29 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE _increaseUserUploadDataCount (
+CREATE PROCEDURE _increaseUserCounters (
     IN userID BIGINT UNSIGNED,
     IN uploadData BIGINT UNSIGNED,
+    IN compUsage BIGINT UNSIGNED,
     OUT isExceeded TINYINT
 )
 proc: BEGIN
-    DECLARE uploadCount, uploadLimit BIGINT UNSIGNED;
+    DECLARE uploadCount, compCount BIGINT UNSIGNED;
+    DECLARE uploadLimit, compLimit BIGINT UNSIGNED;
     DECLARE lastRefreshedAt DATE;
     DECLARE currentDate DATE DEFAULT (CURDATE());
     
     SELECT
         upload_data_this_week + uploadData,
         upload_data_weekly_limit,
+        computation_usage_this_week + compUsage,
+        computation_usage_weekly_limit,
         last_refreshed_at
     INTO
         uploadCount,
         uploadLimit,
+        compCount,
+        compLimit,
         lastRefreshedAt
     FROM Private_UserData
     WHERE user_id = userID;
@@ -144,15 +156,20 @@ proc: BEGIN
         UPDATE Private_UserData
         SET
             upload_data_this_week = 0,
+            computation_usage_this_week = 0,
             last_refreshed_at = currentDate
         WHERE user_id = userID;
 
         SET uploadCount = uploadData;
+        SET compCount = compUsage;
     END IF;
 
     -- Then check if any limits are exceeded, and return isExceeded = 1 if so
     -- (without updating the user's counters).
-    IF (uploadCount > uploadLimit) THEN
+    IF (
+        uploadCount > uploadLimit OR
+        compCount > compLimit
+    ) THEN
         SET isExceeded = 1;
         LEAVE proc;
     END IF;
@@ -160,7 +177,8 @@ proc: BEGIN
     -- If not, update the counters and return isExceeded = 0.
     UPDATE Private_UserData
     SET
-        upload_data_this_week = uploadCount
+        upload_data_this_week = uploadCount,
+        computation_usage_this_week = compCount
     WHERE user_id = userID;
 
     SET isExceeded = 0;
