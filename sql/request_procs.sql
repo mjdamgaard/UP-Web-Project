@@ -21,6 +21,8 @@ proc: BEGIN
     DECLARE scoreVal FLOAT;
     DECLARE scoreWidthExp, userWeightExp, isExceeded TINYINT;
     DECLARE uploadDataCost BIGINT UNSIGNED DEFAULT 30;
+    DECLARE scoreContrListDefStr VARCHAR(700);
+    DECLARE scoreContrListID, exitCode BIGINT UNSIGNED;
 
     -- First we check that the user is in the given user group.
     SELECT user_weight_exp INTO userWeightExp
@@ -29,6 +31,7 @@ proc: BEGIN
         user_group_id = userGroupID AND
         user_id = targetUserID
     );
+
     IF (userWeightExp IS NULL) THEN
         SELECT 1 AS exitCode; -- user is not a member of the user group.
         LEAVE proc;
@@ -44,34 +47,34 @@ proc: BEGIN
         qual_id = qualID AND
         subj_id = subjID
     );
+
     IF (scoreVal IS NULL) THEN
         SELECT 2 AS exitCode; -- user score is missing.
         LEAVE proc;
     END IF;
 
     -- Then we insert or find the List entity, and increase the uploadDataCost
-    -- on find, but roll back the transaction if the upload data exceeds the
-    -- weekly limit for the requesting user.
+    -- on insertion, but roll back the transaction if the upload data exceeds
+    -- the weekly limit for the requesting user.
     START TRANSACTION;
-
-    CALL insertOrFindFunctionCallEntity (
-        requestingUserID,
-        CONCAT(
-            '@13,@', qualID, ',@', subjID, ',@', userGroupID,
-            CASE filterListID
-                WHEN 0 THEN ',null'
-                ELSE CONCAT(',@', filterListID)
-            END CASE
-        ),
-        1
+    
+    SET scoreContrListDefStr = CONCAT(
+        '@13,@', qualID, ',@', subjID, ',@', userGroupID,
+        CASE filterListID
+            WHEN 0 THEN ',null'
+            ELSE CONCAT(',@', filterListID)
+        END CASE
     );
-    -- Oh, I can't select the output here.. ..But I could just make a wrapper
-    -- it that has OUT.. Oh no, I can't do that.. ..I could go the other way,
-    -- though.. ..Well, I can change _insertOrFindEntityWithSecKey() (and the
-    -- like) not matter what.. ..Hm, I could also just add OUT parameters to
-    -- all the API insert procs, and then just not use them in the.. API.. ..Or
-    -- should I just wrap them.. or call _insertOrFindEntityWithSecKey()
-    -- directly..?
+
+    CALL _insertOrFindFunctionCallEntity (
+        requestingUserID, scoreContrListDefStr, 1,
+        scoreContrListID, exitCode
+    );
+
+    IF (exitCode = 0) THEN
+        SET uploadDataCost = uploadDataCost +
+            LENGTH(scoreContrListDefStr) + 20
+    END IF;
 
     -- Then we call _increaseUserCounters() to increase the user's counters,
     -- and if some were exceeded, we also exit early.
@@ -79,15 +82,19 @@ proc: BEGIN
         requestingUserID, 20, 1 << 24, isExceeded
     );
     IF (isExceeded) THEN
+        ROLLBACK;
         SELECT 3 AS exitCode; -- a counter was is exceeded.
+        LEAVE proc;
     END IF;
+
+    COMMIT;
 
     -- If successful so far, we then finally insert the score in the
     -- ScoreContributors table
     INSERT INTO ScoreContributors (
         list_id, user_id, score_val, score_width_exp, user_weight_exp
     ) VALUES (
-        "...", targetUserID, scoreVal, scoreWidthExp, userWeightExp
+        scoreContrListID, targetUserID, scoreVal, scoreWidthExp, userWeightExp
     )
     ON DUPLICATE KEY UPDATE
         score_val = scoreVal,
@@ -98,6 +105,23 @@ proc: BEGIN
 END proc //
 DELIMITER ;
 
+
+
+
+DELIMITER //
+CREATE PROCEDURE requestHistogramUpdate (
+    IN requestingUserID BIGINT UNSIGNED,
+    IN histFunID BIGINT UNSIGNED,
+    IN userGroupID BIGINT UNSIGNED,
+    IN qualID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED
+)
+proc: BEGIN
+    -- Implement..
+
+    SELECT 0 AS exitCode; -- request was carried out.
+END proc //
+DELIMITER ;
 
 
 

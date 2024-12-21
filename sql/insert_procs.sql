@@ -213,11 +213,11 @@ CREATE PROCEDURE _insertEntityWithoutSecKey (
     IN defStr LONGTEXT CHARACTER SET utf8mb4,
     IN userWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL,
-    IN isEditable BOOL
+    IN isEditable BOOL,
+    OUT outID BIGINT UNSIGNED,
+    OUT exitCode TINYINT
 )
 BEGIN
-    DECLARE outID BIGINT UNSIGNED;
-
     IF (userWhitelistID = 0) THEN
         SET userWhitelistID = NULL;
     END IF;
@@ -232,7 +232,8 @@ BEGIN
     );
     SET outID = LAST_INSERT_ID();
 
-    SELECT outID, 0 AS exitCode; -- insert.
+    SET exitCode = 0; -- insert.
+    SELECT outID, exitCode;
 END //
 DELIMITER ;
 
@@ -246,11 +247,11 @@ CREATE PROCEDURE _insertOrFindEntityWithSecKey (
     IN userID BIGINT UNSIGNED,
     IN defStr TEXT CHARACTER SET utf8mb4,
     IN userWhitelistID BIGINT UNSIGNED,
-    IN isAnonymous BOOL
+    IN isAnonymous BOOL,
+    OUT outID BIGINT UNSIGNED,
+    OUT exitCode TINYINT
 )
 proc: BEGIN
-    DECLARE outID BIGINT UNSIGNED;
-
     -- DECLARE EXIT HANDLER FOR 1213 -- Deadlock error.
     -- BEGIN
     --     ROLLBACK;
@@ -269,7 +270,8 @@ proc: BEGIN
             def_key = defStr
         );
 
-        SELECT outID, 1 AS exitCode; -- find.
+        SET exitCode = 1; -- find.
+        SELECT outID, exitCode;
     END;
 
     START TRANSACTION;
@@ -293,7 +295,8 @@ proc: BEGIN
 
     COMMIT;
 
-    SELECT outID, 0 AS exitCode; -- insert.
+    SET exitCode = 0; -- insert.
+    SELECT outID, exitCode; -- insert.
 END proc //
 DELIMITER ;
 
@@ -313,7 +316,8 @@ CREATE PROCEDURE insertAttributeDefinedEntity (
 BEGIN
     CALL _insertEntityWithoutSecKey (
         "a",
-        userID, defStr, userWhitelistID, isAnonymous, 0
+        userID, defStr, userWhitelistID, isAnonymous, 0,
+        @unused, @unused
     );
 END //
 DELIMITER ;
@@ -328,7 +332,8 @@ CREATE PROCEDURE insertFunctionEntity (
 BEGIN
     CALL _insertEntityWithoutSecKey (
         "f",
-        userID, defStr, userWhitelistID, isAnonymous, 0
+        userID, defStr, userWhitelistID, isAnonymous, 0,
+        @unused, @unused
     );
 END //
 DELIMITER ;
@@ -343,7 +348,26 @@ CREATE PROCEDURE insertOrFindFunctionCallEntity (
 BEGIN
     CALL _insertOrFindEntityWithSecKey (
         "c",
-        userID, defStr, isAnonymous, 0
+        userID, defStr, isAnonymous, 0,
+        @unused, @unused
+    );
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE _insertOrFindFunctionCallEntity (
+    IN userID BIGINT UNSIGNED,
+    IN defStr VARCHAR(700) CHARACTER SET utf8mb4,
+    IN isAnonymous BOOL,
+    OUT outID BIGINT UNSIGNED,
+    OUT exitCode TINYINT
+)
+BEGIN
+    CALL _insertOrFindEntityWithSecKey (
+        "c",
+        userID, defStr, isAnonymous, 0,
+        outID, exitCode
     );
 END //
 DELIMITER ;
@@ -361,7 +385,8 @@ CREATE PROCEDURE insertUTF8Entity (
 BEGIN
     CALL _insertEntityWithoutSecKey (
         "8",
-        userID, defStr, userWhitelistID, isAnonymous, isEditable
+        userID, defStr, userWhitelistID, isAnonymous, isEditable,
+        @unused, @unused
     );
 END //
 DELIMITER ;
@@ -377,7 +402,8 @@ CREATE PROCEDURE insertHTMLEntity (
 BEGIN
     CALL _insertEntityWithoutSecKey (
         "h",
-        userID, defStr, userWhitelistID, isAnonymous, isEditable
+        userID, defStr, userWhitelistID, isAnonymous, isEditable,
+        @unused, @unused
     );
 END //
 DELIMITER ;
@@ -393,7 +419,8 @@ CREATE PROCEDURE insertJSONEntity (
 BEGIN
     CALL _insertEntityWithoutSecKey (
         "j",
-        userID, defStr, userWhitelistID, isAnonymous, isEditable
+        userID, defStr, userWhitelistID, isAnonymous, isEditable,
+        @unused, @unused
     );
 END //
 DELIMITER ;

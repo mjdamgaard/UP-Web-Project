@@ -1109,7 +1109,7 @@ CREATE TABLE Private_UserData (
     upload_data_this_week BIGINT UNSIGNED NOT NULL DEFAULT 0,
     upload_data_weekly_limit BIGINT UNSIGNED NOT NULL DEFAULT 1000000,
     computation_usage_this_week BIGINT UNSIGNED NOT NULL DEFAULT 0,
-    computation_usage_weekly_limit BIGINT UNSIGNED NOT NULL DEFAULT (50 << 32),
+    computation_usage_weekly_limit BIGINT UNSIGNED NOT NULL DEFAULT (500 << 32),
     last_refreshed_at DATE NOT NULL DEFAULT (CURDATE())
 );
 
