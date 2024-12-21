@@ -52,6 +52,7 @@ CREATE TABLE PrivateUserScores (
 
 
 
+
 CREATE TABLE PublicUserFloatAndWidthScores (
 
     user_id BIGINT UNSIGNED NOT NULL,
@@ -88,6 +89,7 @@ CREATE TABLE PublicUserByteScores (
         subj_id
     )
 );
+
 
 
 
@@ -138,72 +140,18 @@ CREATE TABLE ScoreContributors (
 
 
 
+
+
 CREATE TABLE ScoreHistograms (
 
-    -- hist_id BIGINT UNSIGNED NOT NULL, -- No, we don't want to have to create
-    -- -- for each histogram. And the table will be compressed anyway.
+    hist_id BIGINT UNSIGNED PRIMARY KEY,
 
-    hist_fun_id BIGINT UNSIGNED NOT NULL,
-
-    user_group_id BIGINT UNSIGNED NOT NULL,
-
-    qual_id BIGINT UNSIGNED NOT NULL,
-
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    hist_data VARBINARY(4000) NOT NULL,
-
-    PRIMARY KEY (
-        hist_fun_id,
-        user_group_id,
-        qual_id,
-        subj_id
-    )
+    hist_data VARBINARY(4000) NOT NULL
 );
 
 
 
 
-CREATE TABLE ByteScoreAggregates (
-
-    list_id BIGINT UNSIGNED NOT NULL,
-
-    score_val TINYINT NOT NULL,
-
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    PRIMARY KEY (
-        list_id,
-        subj_id
-    ),
-
-    UNIQUE INDEX (
-        list_id,
-        score_val,
-        subj_id
-    )
-);
-
-
-CREATE TABLE FloatScoreAggregates (
-
-    list_id BIGINT UNSIGNED NOT NULL,
-
-    score_val FLOAT NOT NULL,
-
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    PRIMARY KEY (
-        list_id,
-        subj_id
-    ),
-
-    UNIQUE INDEX (
-        list_id,
-        score_val,
-        subj_id
-    )
-);
 
 
 CREATE TABLE FloatScoreAndWeightAggregates (
@@ -230,22 +178,57 @@ CREATE TABLE FloatScoreAndWeightAggregates (
 );
 
 
+CREATE TABLE FloatScoreAggregates (
+
+    list_id BIGINT UNSIGNED NOT NULL,
+
+    score_val FLOAT NOT NULL,
+
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (
+        list_id,
+        subj_id
+    ),
+
+    UNIQUE INDEX (
+        list_id,
+        score_val,
+        subj_id
+    )
+);
+
+
+CREATE TABLE ByteScoreAggregates (
+
+    list_id BIGINT UNSIGNED NOT NULL,
+
+    score_val TINYINT NOT NULL,
+
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (
+        list_id,
+        subj_id
+    ),
+
+    UNIQUE INDEX (
+        list_id,
+        score_val,
+        subj_id
+    )
+);
+
+
 
 
 
 
 CREATE TABLE EntityListMetadata (
 
-    list_id BIGINT UNSIGNED NOT NULL,
+    list_id BIGINT UNSIGNED PRIMARY KEY,
 
-    list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    queries_this_quarter BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    PRIMARY KEY (
-        list_id,
-        aggr_type
-    )
+    list_len BIGINT UNSIGNED NOT NULL DEFAULT 0
 );
 
 

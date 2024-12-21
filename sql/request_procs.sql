@@ -19,8 +19,8 @@ CREATE PROCEDURE requestUserGroupScoreUpdate (
 )
 proc: BEGIN
     DECLARE scoreVal FLOAT;
-    DECLARE scoreWidthExp, userWeightExp, isExceeded TINYINT;
-    DECLARE uploadDataCost BIGINT UNSIGNED DEFAULT 30;
+    DECLARE scoreWidthExp, userWeightExp, isExceeded, wasDeleted TINYINT;
+    DECLARE uploadDataCost BIGINT UNSIGNED 0;
     DECLARE scoreContrListDefStr VARCHAR(700);
     DECLARE scoreContrListID, exitCode BIGINT UNSIGNED;
 
@@ -38,8 +38,7 @@ proc: BEGIN
     END IF;
 
     
-    -- If the user is a member, select the scoreVal and the scoreWidthExp. If
-    -- these are missing, we exit early as well.
+    -- If the user is a member, select the scoreVal and the scoreWidthExp.
     SELECT score_val, score_width_exp INTO scoreVal, scoreWidthExp
     FROM PublicUserFloatAndWidthScores
     WHERE (
@@ -47,11 +46,6 @@ proc: BEGIN
         qual_id = qualID AND
         subj_id = subjID
     );
-
-    IF (scoreVal IS NULL) THEN
-        SELECT 2 AS exitCode; -- user score is missing.
-        LEAVE proc;
-    END IF;
 
     -- Then we insert or find the List entity, and increase the uploadDataCost
     -- on insertion, but roll back the transaction if the upload data exceeds
@@ -76,14 +70,38 @@ proc: BEGIN
             LENGTH(scoreContrListDefStr) + 20
     END IF;
 
-    -- Then we call _increaseUserCounters() to increase the user's counters,
-    -- and if some were exceeded, we also exit early.
+    -- If the score is deleted/missing, make sure that it is removed from the
+    -- score contributors list, and exit.
+    IF (scoreVal IS NULL) THEN
+        ROLLBACK;
+
+        DELETE FROM ScoreContributors
+        WHERE (
+            listID = scoreContrListID AND
+            user_id = targetUserID
+        );
+        SET wasDeleted = ROW_COUNT();
+
+        IF (wasDeleted) THEN
+            UPDATE EntityListMetadata
+            SET list_len = list_len - 1
+            WHERE list_id = scoreContrListID;
+        END IF;
+
+        SELECT 0 AS exitCode; -- request was carried out (score deleted).
+        LEAVE proc;
+    ELSE
+        SET uploadDataCost = uploadDataCost + 30;
+    END IF;
+
+    -- If not, then we call _increaseUserCounters() to increase the user's
+    -- counters, and if some were exceeded, we also exit early.
     CALL _increaseUserCounters (
         requestingUserID, 20, 1 << 24, isExceeded
     );
     IF (isExceeded) THEN
         ROLLBACK;
-        SELECT 3 AS exitCode; -- a counter was is exceeded.
+        SELECT 2 AS exitCode; -- a counter was is exceeded.
         LEAVE proc;
     END IF;
 
@@ -101,6 +119,15 @@ proc: BEGIN
         score_width_exp = scoreWidthExp,
         user_weight_exp = userWeightExp;
 
+    -- And we also remember to update the list's length.
+    INSERT INTO EntityListMetadata (
+        list_id, list_len
+    ) VALUES (
+        scoreContrListID, 1
+    )
+    ON DUPLICATE KEY UPDATE
+        list_len = list_len + 1;
+
     SELECT 0 AS exitCode; -- request was carried out.
 END proc //
 DELIMITER ;
@@ -109,12 +136,14 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE requestHistogramUpdate (
+CREATE PROCEDURE requestHistogramOfScoreCentersUpdate (
     IN requestingUserID BIGINT UNSIGNED,
-    IN histFunID BIGINT UNSIGNED,
-    IN userGroupID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED
+    IN subjID BIGINT UNSIGNED,
+    IN userGroupID BIGINT UNSIGNED,
+    IN lowerBoundLiteral VARCHAR(255),
+    IN upperBoundLiteral VARCHAR(255),
+    IN filterListID BIGINT UNSIGNED
 )
 proc: BEGIN
     -- Implement..
