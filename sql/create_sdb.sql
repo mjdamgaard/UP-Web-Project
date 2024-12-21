@@ -71,24 +71,6 @@ CREATE TABLE PublicUserFloatAndWidthScores (
     )
 );
 
-CREATE TABLE PublicUserFloatScores (
-
-    user_id BIGINT UNSIGNED NOT NULL,
-
-    qual_id BIGINT UNSIGNED NOT NULL,
-
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    score_val FLOAT NOT NULL,
-
-    score_width_exp TINYINT NOT NULL,
-
-    PRIMARY KEY (
-        user_id,
-        qual_id,
-        subj_id
-    )
-);
 
 CREATE TABLE PublicUserByteScores (
 
@@ -497,34 +479,34 @@ CREATE TABLE FulltextIndexedEntities (
 /* Initial entities */
 
 INSERT INTO Entities (
-    type_ident, def_str, creator_id
+    id, type_ident, def_str, creator_id
 )
 VALUES
-    ("t", "t", 0),
-    ("t", "u", 0),
-    ("t", "f", 0),
-    ("t", "c", 0),
-    ("t", "a", 0),
-    ("t", "8", 0),
-    ("t", "h", 0),
-    ("t", "j", 0),
-    ("u", "initial_admin", 0),
-    ("j", '{}', 9),
+    (1, "t", "t", 0),
+    (2, "t", "u", 0),
+    (3, "t", "f", 0),
+    (4, "t", "c", 0),
+    (5, "t", "a", 0),
+    (6, "t", "8", 0),
+    (7, "t", "h", 0),
+    (8, "t", "j", 0),
+    (9, "u", "initial_admin", 0),
+    (10, "j", '{}', 9),
     -- TODO: Insert the entities below in the workspace JSON object just above
     -- this comment.
-    ("a", CONCAT(
+    (11, "a", CONCAT(
         '{',
             '"Class":"@[fundamental user groups]",',
             '"Name":"All users",',
         '}'
     ), 9),
-    ("a", CONCAT(
+    (12, "a", CONCAT(
         '{',
             '"Class":"@[fundamental user groups]",',
             '"Name":"Money-contributing users",',
         '}'
     ), 9),
-    ("f", CONCAT(
+    (13, "f", CONCAT(
         'score_contributors(',
             'Quality:@[qualities],',
             'Subject:@[entities],',
@@ -538,7 +520,7 @@ VALUES
             '"Filter list":"%4"',
         '}'
     ), 9),
-    ("f", CONCAT(
+    (14, "f", CONCAT(
         'histogram_of_score_centers(',
             'Quality:@[qualities],',
             'Subject:@[entities],',
@@ -556,7 +538,7 @@ VALUES
             '"Filter list":"%6"',
         '}'
     ), 9),
-    ("f", CONCAT(
+    (15, "f", CONCAT(
         'histogram_of_scores_with_widths(',
             'Quality:@[qualities],',
             'Subject:@[entities],',
@@ -574,7 +556,7 @@ VALUES
             '"Filter list":"%6"',
         '}'
     ), 9),
-    ("f", CONCAT(
+    (16, "f", CONCAT(
         'medians(',
             'Quality:@[qualities],',
             'User group:@[user groups],',
