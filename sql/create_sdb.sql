@@ -144,21 +144,21 @@ CREATE TABLE ScoreContributors (
 
 CREATE TABLE ScoreHistograms (
 
-    score_contr_list_id BIGINT UNSIGNED NOT NULL,
-
     hist_fun_id BIGINT UNSIGNED NOT NULL,
 
     lower_bound_literal VARCHAR(50) NOT NULL,
 
     upper_bound_literal VARCHAR(50) NOT NULL,
 
+    score_contributor_list_id BIGINT UNSIGNED NOT NULL,
+
     hist_data VARBINARY(4000) NOT NULL,
 
     PRIMARY KEY (
-        score_contr_list_id,
         hist_fun_id,
         lower_bound_literal,
-        upper_bound_literal
+        upper_bound_literal,
+        score_contributor_list_id
     )
 );
 
@@ -521,17 +521,15 @@ VALUES
             'Quality:@[qualities],',
             'Subject:@[entities],',
             'User group:@[user groups],',
-            'Lower bound:float,',
-            'Upper bound:float,',
+            'Metric:@[metrics],',
             'Filter list?:@[lists]',
         '){',
             '"Class":"@[histograms of score centers]",',
             '"Quality":"%1"',
             '"Subject":"%2"',
             '"User group":"%3"',
-            '"Lower bound":"%4"',
-            '"Upper bound":"%5"',
-            '"Filter list":"%6"',
+            '"Metric":"%4"',
+            '"Filter list":"%5"',
         '}'
     ), 9),
     (15, "f", CONCAT(
@@ -539,17 +537,15 @@ VALUES
             'Quality:@[qualities],',
             'Subject:@[entities],',
             'User group:@[user groups],',
-            'Lower bound:float,',
-            'Upper bound:float,',
+            'Metric:@[metrics],',
             'Filter list?:@[lists]',
         '){',
             '"Class":"@[histograms of scores with widths]",',
             '"Quality":"%1"',
             '"Subject":"%2"',
             '"User group":"%3"',
-            '"Lower bound":"%4"',
-            '"Upper bound":"%5"',
-            '"Filter list":"%6"',
+            '"Metric":"%4"',
+            '"Filter list":"%5"',
         '}'
     ), 9),
     (16, "f", CONCAT(
@@ -557,19 +553,29 @@ VALUES
             'Quality:@[qualities],',
             'User group:@[user groups],',
             'Histogram function:@[histogram functions]',
-            'Lower bound:float,',
-            'Upper bound:float,',
+            'Metric:@[metrics],',
             'Filter list?:@[lists]',
         '){',
             '"Class":"@[median lists]",',
             '"Quality":"%1"',
             '"User group":"%2"',
             '"Histogram function":"%3"',
-            '"Lower bound":"%4"',
-            '"Upper bound":"%5"',
-            '"Filter list":"%6"',
+            '"Metric":"%4"',
+            '"Filter list":"%5"',
         '}'
-    ), 9);
+    ), 9),
+    (17, "a", CONCAT(
+        '{',
+            '"Class":"@[metrics]",',
+            '"Name":"Percentage metric"',
+            '"Unit":"%"',
+            '"Lower bound":0',
+            '"Upper bound":100',
+            '"Minimum bin width":"0.01"',
+            '"Metric":"%4"',
+            '"Filter list":"%5"',
+        '}'
+    ), 9);;
 
 INSERT INTO EntitySecKeys (
     type_ident, def_key, ent_id

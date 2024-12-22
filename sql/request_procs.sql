@@ -159,7 +159,7 @@ proc: BEGIN
             END CASE
         )
     );
-    DECLARE scoreContrListID = (
+    DECLARE scoreContrListID BIGINT UNSIGNED DEFAULT (
         SELECT ent_id
         FROM EntitySecKeys
         WHERE (
@@ -169,11 +169,15 @@ proc: BEGIN
         )
     );
 
-    DECLARE listLen = (
+    DECLARE listLen BIGINT UNSIGNED DEFAULT (
         SELECT list_len
         FROM EntityListMetadata
         WHERE list_id = scoreContrListID;
     );
+
+    DECLARE binUserNumber BIGINT UNSIGNED DEFAULT listLen DIV 19;
+    DECLARE i BIGINT UNSIGNED DEFAULT 0;
+    DECLARE weightSum FLOAT;
 
     DECLARE cur CURSOR FOR
         SELECT score_val, user_weight_exp
@@ -184,8 +188,45 @@ proc: BEGIN
             score_width_exp ASC,
             user_weight_exp ASC,
             user_id ASC;
-    
-    -- First check that the user has enough
+    DECLARE scoreVal FLOAT;
+    DECLARE userWeightExp TINYINT;
+
+    DECLARE uploadDataCost BIGINT UNSIGNED DEFAULT CASE WHEN (
+        SELECT hist_data
+        FROM ScoreHistograms
+        WHERE (
+            hist_fun_id = 14 AND
+            lower_bound_literal = lowerBoundLiteral AND
+            upper_bound_literal = upperBoundLiteral AND
+            score_contributor_list_id = scoreContrListID
+        )
+        IS NULL
+    ) THEN
+        200 -- TODO: Correct.
+    ELSE
+        0
+    END CASE;
+
+    -- First check that the user has enough upload data and computation usage
+    -- available.
+    CALL _increaseUserCounters (
+        requestingUserID, uploadDataCost, (listLen DIV 4000) << 5,
+        -- TODO: All these compCosts are just loose guesses for now. Correct
+        -- them at some point.
+        isExceeded
+    );
+    IF (isExceeded) THEN
+        SELECT 2 AS exitCode; -- a counter was is exceeded.
+        LEAVE proc;
+    END IF;
+
+    -- If they do, open the cursor and start constructing the histogram.
+    OPEN cur;
+
+    loop_1: LOOP
+        SET i = i + 1;
+        FETCH cur INTO scoreVal, userWeightExp;
+    END LOOP loop_1; 
 
     SELECT 0 AS exitCode; -- request was carried out.
 END proc //

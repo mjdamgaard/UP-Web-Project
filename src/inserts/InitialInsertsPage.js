@@ -327,10 +327,11 @@ export function initialInserts(dataInserter) {
           "Name:string",
           "Unit?:string",
           "Interval labels?:[start:float,end:float,label:string][]",
-          "Upper bound?:float",
           "Lower bound?:float",
+          "Upper bound?:float",
           "High end?:float",
           "Low end?:float",
+          "Minimum bin width?:float",
           "Description:h",
         ].join(",") +
         ")=>" +
@@ -339,11 +340,11 @@ export function initialInserts(dataInserter) {
           "Name": "%1",
           "Unit": "%2",
           "Interval labels": "%3",
-          "Upper bound": "%4",
-          "Lower bound": "%5",
+          "Lower bound": "%4",
+          "Upper bound": "%5",
           "High end": "%6",
           "Low end": "%7",
-          "Object": "%8",
+          "Minimum bin width": "%8",
           "Description":"%9",
         })
     )
