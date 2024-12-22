@@ -251,14 +251,14 @@ CREATE PROCEDURE _constructHistogramOfScoreCenters (
     OUT histData VARBINARY(4000)
 )
 proc: BEGIN
-    DECLARE scoreVal FLOAT;
-    DECLARE userWeightExp TINYINT;
-    DECLARE i, j INT UNSIGNED;
-    -- Initialize a string where every 20 characters encodes a float number,
-    -- padded to left with spaces.
-    DECLARE hiResHistData TEXT DEFAULT (
-        REPEAT(CONCAT(REPEAT(" ", 19), "0"), hiResBinNum)
-    );
+    DECLARE scoreVal, nextBinLimit, userWeight FLOAT;
+    DECLARE userWeightExp, done TINYINT DEFAULT 0;
+    DECLARE i INT UNSIGNED;
+    -- -- Initialize a string where every 20 characters encodes a float number,
+    -- -- padded to left with spaces.
+    -- DECLARE hiResHistData TEXT DEFAULT (
+    --     REPEAT(CONCAT(REPEAT(" ", 19), "0"), hiResBinNum)
+    -- );
 
     DECLARE cur CURSOR FOR
         SELECT score_val, user_weight_exp
@@ -273,41 +273,75 @@ proc: BEGIN
             score_width_exp ASC,
             user_weight_exp ASC,
             user_id ASC;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
 
     CREATE TEMPORARY TABLE histBins (
-        bin_start FLOAT NOT NULL DEFAULT 
+        bin_ind INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        weight_sum FLOAT NOT NULL DEFAULT 0
     );
 
     OPEN cur;
 
+    FETCH cur INTO scoreVal, userWeightExp;
+    SET nextBinLimit = lowerBound;
     SET i = 1;
     bin_loop: LOOP
-        IF (i > hiResBinNum) THEN
+        IF (i > hiResBinNum OR done) THEN
             LEAVE bin_loop;
         END IF;
 
-        SET j = 1;
+        SET nextBinLimit = nextBinLimit + minBinWidth;
+
+        INSERT IGNORE INTO histBins (bin_ind, weight_sum)
+        VALUES (i, 0);
+
         user_loop: LOOP
-            IF (j > hiResBinNum) THEN
+            -- If scoreVal exceeds nextBinLimit, or it is null  break out and iterate bin_loop.
+            IF (scoreVal > nextBinLimit OR done) THEN
                 LEAVE user_loop;
             END IF;
 
-            FETCH cur INTO scoreVal, userWeightExp;
+            -- Else add the user's weight to the ith bin.
+            SET userWeight = POW(1.2, userWeightExp);
+            UPDATE histBins
+            SET weight_sum = weight_sum + userWeight
+            WHERE bin_ind = i;
 
-            SET j = j + 1;
-            ITERATE bin_loop;
-        END LOOP user_loop; 
+            FETCH cur INTO scoreVal, userWeightExp;
+            ITERATE user_loop;
+        END LOOP user_loop;
 
         SET i = i + 1;
         ITERATE bin_loop;
-    END LOOP bin_loop; 
+    END LOOP bin_loop;
 
-    SELECT 0 AS exitCode; -- request was carried out.
+    -- Now that histBins is populated, call a procedure that outputs a lower-
+    -- resolution hist_data by gathering bins with a too small weight_sum.
+    CALL _getHistData (
+        lowerBound, upperBound, minBinWidth, maxBinWidth, hiResBinNum,
+        histData
+    );
+    -- This sub-procedure sets the histData to the desired output, and the
+    -- procedure therefore ends here.
 END proc //
 DELIMITER ;
 
 
 
+DELIMITER //
+CREATE PROCEDURE _getHistData (
+    IN lowerBound FLOAT,
+    IN upperBound FLOAT,
+    IN minBinWidth FLOAT,
+    IN maxBinWidth FLOAT,
+    IN hiResBinNum INT UNSIGNED,
+    OUT histData VARBINARY(4000)
+)
+proc: BEGIN
+    -- TODO: Implement using histData, which should be populated by a
+    -- _constructHistogram...() procedure in the same session.
+END proc //
+DELIMITER ;
 
 
 
