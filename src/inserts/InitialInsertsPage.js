@@ -332,6 +332,7 @@ export function initialInserts(dataInserter) {
           "High end?:float",
           "Low end?:float",
           "Minimum bin width?:float",
+          "Maximum bin width?:float",
           "Description:h",
         ].join(",") +
         ")=>" +
@@ -345,7 +346,8 @@ export function initialInserts(dataInserter) {
           "High end": "%6",
           "Low end": "%7",
           "Minimum bin width": "%8",
-          "Description":"%9",
+          "Maximum bin width": "%9",
+          "Description": "%10",
         })
     )
   );

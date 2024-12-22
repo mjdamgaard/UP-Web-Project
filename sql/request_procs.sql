@@ -145,9 +145,8 @@ CREATE PROCEDURE requestHistogramOfScoreCentersUpdate (
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN userGroupID BIGINT UNSIGNED,
-    IN lowerBoundLiteral VARCHAR(255),
-    IN upperBoundLiteral VARCHAR(255),
-    IN filterListID BIGINT UNSIGNED
+    IN filterListID BIGINT UNSIGNED,
+    IN metricID BIGINT UNSIGNED
 )
 proc: BEGIN
     DECLARE scoreContrListDefStr VARCHAR(700) CHARACTER SET utf8mb4 DEFAULT (
@@ -173,6 +172,12 @@ proc: BEGIN
         SELECT list_len
         FROM EntityListMetadata
         WHERE list_id = scoreContrListID;
+    );
+
+    DECLARE metricDefStr VARCHAR(700) DEFAULT (
+        SELECT def_str
+        FROM Entities
+        WHERE id = metricID;
     );
 
     DECLARE binUserNumber BIGINT UNSIGNED DEFAULT listLen DIV 19;
@@ -231,6 +236,91 @@ proc: BEGIN
     SELECT 0 AS exitCode; -- request was carried out.
 END proc //
 DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE _constructHistogramOfScoreCenters (
+    IN scoreContrListID BIGINT UNSIGNED,
+    IN lowerBound FLOAT,
+    IN upperBound FLOAT,
+    IN minBinWidth FLOAT,
+    IN maxBinWidth FLOAT,
+    IN hiResBinNum INT UNSIGNED,
+    IN listLen BIGINT UNSIGNED,
+    OUT histData VARBINARY(4000)
+)
+proc: BEGIN
+    DECLARE scoreVal FLOAT;
+    DECLARE userWeightExp TINYINT;
+    DECLARE i, j INT UNSIGNED;
+    -- Initialize a string where every 20 characters encodes a float number,
+    -- padded to left with spaces.
+    DECLARE hiResHistData TEXT DEFAULT (
+        REPEAT(CONCAT(REPEAT(" ", 19), "0"), hiResBinNum)
+    );
+
+    DECLARE cur CURSOR FOR
+        SELECT score_val, user_weight_exp
+        FROM ScoreContributors
+        WHERE (
+            list_id = scoreContrListID AND
+            score_val >= lowerBound AND
+            score_val <= upperBound
+        )
+        ORDER BY
+            score_val ASC,
+            score_width_exp ASC,
+            user_weight_exp ASC,
+            user_id ASC;
+
+    CREATE TEMPORARY TABLE histBins (
+        bin_start FLOAT NOT NULL DEFAULT 
+    );
+
+    OPEN cur;
+
+    SET i = 1;
+    bin_loop: LOOP
+        IF (i > hiResBinNum) THEN
+            LEAVE bin_loop;
+        END IF;
+
+        SET j = 1;
+        user_loop: LOOP
+            IF (j > hiResBinNum) THEN
+                LEAVE user_loop;
+            END IF;
+
+            FETCH cur INTO scoreVal, userWeightExp;
+
+            SET j = j + 1;
+            ITERATE bin_loop;
+        END LOOP user_loop; 
+
+        SET i = i + 1;
+        ITERATE bin_loop;
+    END LOOP bin_loop; 
+
+    SELECT 0 AS exitCode; -- request was carried out.
+END proc //
+DELIMITER ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

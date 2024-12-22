@@ -567,15 +567,37 @@ VALUES
     (17, "a", CONCAT(
         '{',
             '"Class":"@[metrics]",',
-            '"Name":"Percentage metric"',
+            '"Name":"Standard percentage metric"',
             '"Unit":"%"',
             '"Lower bound":0',
             '"Upper bound":100',
             '"Minimum bin width":"0.01"',
-            '"Metric":"%4"',
-            '"Filter list":"%5"',
+            '"Description":"@[metrics/std percentage metric/desc]"',
         '}'
-    ), 9);;
+    ), 9),
+    (18, "a", CONCAT(
+        '{',
+            '"Class":"@[metrics]",',
+            '"Name":"Standard predicate metric"',
+            '"Unit":"\\star"',
+            '"Interval labels":[',
+                '[0,1,"extremely not so"],'
+                '[1,2,"very much not so"],'
+                '[2,3,"truly not so"],'
+                '[3,4,"somewhat not so"],'
+                '[4,5,"slightly not so"],'
+                '[5,6,"slightly so"],'
+                '[6,7,"somewhat so"],'
+                '[7,8,"truly so"],'
+                '[8,9,"very much so"],'
+                '[9,10,"extremely so"]'
+            ']',
+            '"Lower bound":0',
+            '"Upper bound":10',
+            '"Minimum bin width":"0.01"',
+            '"Description":"@[metrics/std predicate metric/desc]"',
+        '}'
+    ), 9);
 
 INSERT INTO EntitySecKeys (
     type_ident, def_key, ent_id
