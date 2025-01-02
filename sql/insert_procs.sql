@@ -40,25 +40,37 @@ CREATE PROCEDURE insertOrUpdatePublicUserScore (
     IN userID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN scoreVal FLOAT,
-    IN scoreWidthExp TINYINT
+    IN scoreMin FLOAT,
+    IN scoreMax FLOAT
 )
 proc: BEGIN
+    DECLARE isExceeded TINYINT;
+
+    CALL _increaseUserCounters (
+        userID, 0, 17, 0, isExceeded
+    );
+
+    -- Exit if upload limit was exceeded
+    IF (isExceeded) THEN
+        SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
+        LEAVE proc;
+    END IF;
+
     -- Exit if the subject entity does not exist.
     IF ((SELECT type_ident FROM Entities WHERE id = subjID) IS NULL) THEN
         SELECT subjID AS outID, 1 AS exitCode; -- subject does not exist.
         LEAVE proc;
     END IF;
 
-    INSERT INTO PublicUserScores (
-        user_id, qual_id, subj_id, score_val, score_width_exp
+    INSERT INTO PublicUserFloatMinAndMaxScores (
+        user_id, qual_id, subj_id, score_min, score_min
     )
     VALUES (
-        userID, qualID, subjID, scoreVal, scoreWidthExp
+        userID, qualID, subjID, scoreMin, scoreMax
     )
     ON DUPLICATE KEY UPDATE
-        score_val = scoreVal,
-        score_width_exp = scoreWidthExp;
+        score_min = scoreMin,
+        score_max = scoreMax;
 
     SELECT subjID AS outID, 0 AS exitCode; -- inserted or updated.
 END proc //
@@ -72,7 +84,7 @@ CREATE PROCEDURE deletePublicUserScore (
     IN subjID BIGINT UNSIGNED
 )
 BEGIN
-    DELETE FROM PublicUserScores
+    DELETE FROM PublicUserFloatMinAndMaxScores
     WHERE (
         user_id = userID AND
         qual_id = qualID AND
@@ -95,11 +107,21 @@ CREATE PROCEDURE insertOrUpdatePrivateUserScore (
     IN scoreVal BIGINT
 )
 proc: BEGIN
+    DECLARE isExceeded TINYINT;
     DECLARE userWHitelistScoreVal FLOAT;
+
+    CALL _increaseUserCounters (
+        userID, 0, 25, 0, isExceeded
+    );
+
+    IF (isExceeded) THEN
+        SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
+        LEAVE proc;
+    END IF;
 
     -- Exit if the user is not currently on the user whitelist.
     SELECT score_val INTO userWHitelistScoreVal
-    FROM AggregatedFloatingPointScores
+    FROM FloatScoreAndWeightAggregates
     WHERE (
         list_id = userWhitelistID AND
         subj_id = userID
@@ -116,10 +138,6 @@ proc: BEGIN
         userID, userWhitelistID, qualID, subjID, scoreVal
     )
     ON DUPLICATE KEY UPDATE score_val = scoreVal;
-
-    -- TODO: Also add a request (or reduce the countdown) to go through the
-    -- scores on this list and remove any entries from users no longer on the
-    -- whitelist. (Implement as a procedure.)
 
     SELECT subjID AS outID, 0 AS exitCode; -- insert if not already there.
 END proc //
@@ -217,9 +235,22 @@ CREATE PROCEDURE _insertEntityWithoutSecKey (
     OUT outID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
-BEGIN
+proc: BEGIN
+    DECLARE isExceeded TINYINT;
+
     IF (userWhitelistID = 0) THEN
         SET userWhitelistID = NULL;
+    END IF;
+
+    CALL _increaseUserCounters (
+        userID, 0, LENGTH(CAST(defStr AS BINARY)) + 22, 0, isExceeded
+    );
+
+    IF (isExceeded) THEN
+        SET outID = NULL;
+        SET exitCode = 5; -- upload limit was exceeded.
+        SELECT outID, exitCode;
+        LEAVE proc;
     END IF;
 
     INSERT INTO Entities (
@@ -234,7 +265,7 @@ BEGIN
 
     SET exitCode = 0; -- insert.
     SELECT outID, exitCode;
-END //
+END proc //
 DELIMITER ;
 
 
@@ -252,6 +283,7 @@ CREATE PROCEDURE _insertOrFindEntityWithSecKey (
     OUT exitCode TINYINT
 )
 proc: BEGIN
+    DECLARE isExceeded TINYINT;
     -- DECLARE EXIT HANDLER FOR 1213 -- Deadlock error.
     -- BEGIN
     --     ROLLBACK;
@@ -293,10 +325,22 @@ proc: BEGIN
         datatype, userWhitelistID, defStr, outID
     );
 
+    CALL _increaseUserCounters (
+        userID, 0, LENGTH(CAST(defStr AS BINARY)) * 2 + 31, 0, isExceeded
+    );
+
+    IF (isExceeded) THEN
+        ROLLBACK;
+        SET outID = NULL;
+        SET exitCode = 5; -- upload limit was exceeded.
+        SELECT outID, exitCode;
+        LEAVE proc;
+    END IF;
+
     COMMIT;
 
     SET exitCode = 0; -- insert.
-    SELECT outID, exitCode; -- insert.
+    SELECT outID, exitCode;
 END proc //
 DELIMITER ;
 
@@ -445,6 +489,7 @@ CREATE PROCEDURE _editEntity (
     IN isEditable BOOL
 )
 proc: BEGIN
+    DECLARE isExceeded TINYINT;
     DECLARE creatorID BIGINT UNSIGNED;
     DECLARE prevIsEditable TINYINT UNSIGNED;
     DECLARE prevDefStr LONGTEXT;
@@ -453,6 +498,16 @@ proc: BEGIN
     IF (userWhitelistID = 0) THEN
         SET userWhitelistID = NULL;
     END IF;
+
+    CALL _increaseUserCounters (
+        userID, 0, LENGTH(CAST(defStr AS BINARY)) + 22, 0, isExceeded
+    );
+
+    IF (isExceeded) THEN
+        SELECT entID AS outID, 5 AS extCode; -- upload limit was exceeded.
+        LEAVE proc;
+    END IF;
+
 
     SELECT type_ident, creator_id, def_str, is_editable
     INTO prevType, creatorID, prevDefStr, prevIsEditable 
@@ -534,12 +589,12 @@ CREATE PROCEDURE editJSONEntity (
     IN isAnonymous BOOL,
     IN isEditable BOOL
 )
-BEGIN
+proc: BEGIN
     CALL _editEntity (
         "j",
         userID, entID, defStr, userWhitelistID, isAnonymous, isEditable
     );
-END //
+END proc //
 DELIMITER ;
 
 
@@ -751,3 +806,91 @@ proc: BEGIN
 END proc //
 DELIMITER ;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE _increaseUserCounters (
+    IN userID BIGINT UNSIGNED,
+    IN downloadData BIGINT UNSIGNED, -- Only used for query "as user" requests.
+    IN uploadData BIGINT UNSIGNED,
+    IN compUsage BIGINT UNSIGNED,
+    OUT isExceeded TINYINT
+)
+proc: BEGIN
+    DECLARE downloadCount, uploadCount, compCount BIGINT UNSIGNED;
+    DECLARE downloadLimit, uploadLimit, compLimit BIGINT UNSIGNED;
+    DECLARE lastRefreshedAt DATE;
+    DECLARE currentDate DATE DEFAULT (CURDATE());
+    
+    SELECT
+        download_data_this_week + uploadData,
+        download_data_weekly_limit,
+        upload_data_this_week + uploadData,
+        upload_data_weekly_limit,
+        computation_usage_this_week + compUsage,
+        computation_usage_weekly_limit,
+        last_refreshed_at
+    INTO
+        downloadCount,
+        downloadLimit,
+        uploadCount,
+        uploadLimit,
+        compCount,
+        compLimit,
+        lastRefreshedAt
+    FROM Private_UserData
+    WHERE user_id = userID;
+
+    -- If it has been more than a week since freshing the counters to 0, do so
+    -- first. 
+    IF (currentDate >= ADDDATE(lastRefreshedAt, INTERVAL 1 WEEK)) THEN
+        UPDATE Private_UserData
+        SET
+            download_data_this_week = 0,
+            upload_data_this_week = 0,
+            computation_usage_this_week = 0,
+            last_refreshed_at = currentDate
+        WHERE user_id = userID;
+
+        SET downloadCount = downloadData;
+        SET uploadCount = uploadData;
+        SET compCount = compUsage;
+    END IF;
+
+    -- Then check if any limits are exceeded, and return isExceeded = 1 if so
+    -- (without updating the user's counters).
+    IF (
+        downloadCount > downloadLimit OR
+        uploadCount > uploadLimit OR
+        compCount > compLimit
+    ) THEN
+        SET isExceeded = 1;
+        LEAVE proc;
+    END IF;
+
+    -- If not, update the counters and return isExceeded = 0.
+    UPDATE Private_UserData
+    SET
+        download_data_this_week = downloadCount,
+        upload_data_this_week = uploadCount,
+        computation_usage_this_week = compCount
+    WHERE user_id = userID;
+
+    SET isExceeded = 0;
+END proc //
+DELIMITER ;

@@ -18,8 +18,10 @@ CREATE PROCEDURE requestUserGroupScoreUpdate (
     IN filterListID BIGINT UNSIGNED
 )
 proc: BEGIN
-    DECLARE scoreVal FLOAT;
-    DECLARE scoreWidthExp, userWeightExp, isExceeded, wasDeleted TINYINT;
+    DECLARE scoreMin, scoreMax, userWeight, prevUserWeight FLOAT;
+    DECLARE filterListScore, filterListWeight FLOAT;
+    DECLARE userWeightExp, prevUserWeightExp, isExceeded, wasDeleted TINYINT;
+    DECLARE filterListWeightExp TINYINT;
     DECLARE uploadDataCost BIGINT UNSIGNED 0;
     DECLARE scoreContrListDefStr VARCHAR(700) CHARACTER SET utf8mb4;
     DECLARE scoreContrListID, exitCode BIGINT UNSIGNED;
@@ -37,10 +39,27 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
+    SET userWeight = POW(1.2, userWeightExp);
+
+    -- And then we also check whether the subject is on the filter list, with
+    -- a score above 0 and a weight sum above 10.
+    SELECT score_val, weight_exp INTO filterListScore, filterListWeightExp
+    FROM FloatScoreAndWeightAggregates
+    WHERE (
+        list_id = filterListID AND
+        subj_id = subjID
+    );
+    SET filterListWeight = POW(1.2, filterListWeightExp);
+
+    IF NOT (filterListScore > 0 AND filterListWeight >= 10) THEN
+        SELECT 2 AS exitCode; -- subject is not on the filter list.
+        LEAVE proc;
+    END IF;
+
     
-    -- If the user is a member, select the scoreVal and the scoreWidthExp.
-    SELECT score_val, score_width_exp INTO scoreVal, scoreWidthExp
-    FROM PublicUserFloatAndWidthScores
+    -- If the user is a member, select the scoreMin and the scoreMax.
+    SELECT score_min, score_max INTO scoreMin, scoreMax
+    FROM PublicUserFloatMinAndMaxScores
     WHERE (
         user_id = targetUserID AND
         qual_id = qualID AND
@@ -60,23 +79,33 @@ proc: BEGIN
         END CASE
     );
 
-    -- TODO: I forgot that _insertOrFindFunctionCallEntity will increase the
-    -- upload counter anyway, so correct the following (after also correcting
-    -- _insertOrFindFunctionCallEntity).
-
     CALL _insertOrFindFunctionCallEntity (
         requestingUserID, scoreContrListDefStr, 1,
         scoreContrListID, exitCode
     );
 
-    IF (exitCode = 0) THEN
-        SET uploadDataCost = uploadDataCost +
-            LENGTH(scoreContrListDefStr) + 20
+    IF (exitCode = 5) THEN
+        SELECT 5 AS exitCode; -- a counter was is exceeded.
+        LEAVE proc;
+    END IF;
+
+    -- Get the previous user weight.
+    SELECT user_weight_exp INTO prevUserWeightExp
+    FROM ScoreContributors
+    WHERE (
+        listID = scoreContrListID AND
+        user_id = targetUserID
+    );
+
+    IF (prevUserWeightExp IS NOT NULL) THEN
+        SET prevUserWeight = POW(1.2, prevUserWeightExp);
+    ELSE
+        SET prevUserWeight = 0;
     END IF;
 
     -- If the score is deleted/missing, make sure that it is removed from the
     -- score contributors list, and exit.
-    IF (scoreVal IS NULL) THEN
+    IF (scoreMin IS NULL) THEN
         ROLLBACK;
 
         DELETE FROM ScoreContributors
@@ -88,7 +117,9 @@ proc: BEGIN
 
         IF (wasDeleted) THEN
             UPDATE EntityListMetadata
-            SET list_len = list_len - 1
+            SET
+                list_len = list_len - 1,
+                weight_sum = weight_sum - prevUserWeight
             WHERE list_id = scoreContrListID;
         END IF;
 
@@ -101,11 +132,11 @@ proc: BEGIN
     -- If not, then we call _increaseUserCounters() to increase the user's
     -- counters, and if some were exceeded, we also exit early.
     CALL _increaseUserCounters (
-        requestingUserID, 20, 1 << 24, isExceeded
+        requestingUserID, 0, 20, 1 << 24, isExceeded
     );
     IF (isExceeded) THEN
         ROLLBACK;
-        SELECT 2 AS exitCode; -- a counter was is exceeded.
+        SELECT 5 AS exitCode; -- a counter was is exceeded.
         LEAVE proc;
     END IF;
 
@@ -114,23 +145,24 @@ proc: BEGIN
     -- If successful so far, we then finally insert the score in the
     -- ScoreContributors table
     INSERT INTO ScoreContributors (
-        list_id, user_id, score_val, score_width_exp, user_weight_exp
+        list_id, user_id, score_min, score_max, user_weight_exp
     ) VALUES (
-        scoreContrListID, targetUserID, scoreVal, scoreWidthExp, userWeightExp
+        scoreContrListID, targetUserID, scoreMin, scoreMax, userWeightExp
     )
     ON DUPLICATE KEY UPDATE
-        score_val = scoreVal,
-        score_width_exp = scoreWidthExp,
+        score_min = scoreMin,
+        score_max = scoreMax,
         user_weight_exp = userWeightExp;
 
-    -- And we also remember to update the list's length.
+    -- And we also remember to update the list's length and weight sum.
     INSERT INTO EntityListMetadata (
-        list_id, list_len
+        list_id, list_len, weight_sum
     ) VALUES (
-        scoreContrListID, 1
+        scoreContrListID, 1, userWeight
     )
     ON DUPLICATE KEY UPDATE
-        list_len = list_len + 1;
+        list_len = list_len + 1,
+        weight_sum = weight_sum + userWeight - prevUserWeight;
 
     SELECT 0 AS exitCode; -- request was carried out.
 END proc //
@@ -221,7 +253,7 @@ proc: BEGIN
         isExceeded
     );
     IF (isExceeded) THEN
-        SELECT 2 AS exitCode; -- a counter was is exceeded.
+        SELECT 5 AS exitCode; -- a counter was is exceeded.
         LEAVE proc;
     END IF;
 
@@ -364,148 +396,189 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE _increaseUserCounters (
-    IN userID BIGINT UNSIGNED,
-    IN uploadData BIGINT UNSIGNED,
-    IN compUsage BIGINT UNSIGNED,
-    OUT isExceeded TINYINT
+CREATE PROCEDURE _computeMedian (
+    IN scoreContrListID BIGINT UNSIGNED,
+    IN lowerBound FLOAT,
+    IN upperBound FLOAT,
+    IN minBinWidth FLOAT,
+    IN maxBinWidth FLOAT,
+    IN hiResBinNum INT UNSIGNED,
+    IN listLen BIGINT UNSIGNED,
+    OUT histData VARBINARY(4000)
 )
 proc: BEGIN
-    DECLARE uploadCount, compCount BIGINT UNSIGNED;
-    DECLARE uploadLimit, compLimit BIGINT UNSIGNED;
-    DECLARE lastRefreshedAt DATE;
-    DECLARE currentDate DATE DEFAULT (CURDATE());
-    
-    SELECT
-        upload_data_this_week + uploadData,
-        upload_data_weekly_limit,
-        computation_usage_this_week + compUsage,
-        computation_usage_weekly_limit,
-        last_refreshed_at
-    INTO
-        uploadCount,
-        uploadLimit,
-        compCount,
-        compLimit,
-        lastRefreshedAt
-    FROM Private_UserData
-    WHERE user_id = userID;
+    DECLARE scoreVal, nextBinLimit, userWeight FLOAT;
+    DECLARE userWeightExp, done TINYINT DEFAULT 0;
+    DECLARE i INT UNSIGNED;
+    -- -- Initialize a string where every 20 characters encodes a float number,
+    -- -- padded to left with spaces.
+    -- DECLARE hiResHistData TEXT DEFAULT (
+    --     REPEAT(CONCAT(REPEAT(" ", 19), "0"), hiResBinNum)
+    -- );
 
-    -- If it has been more than a week since freshing the counters to 0, do so
-    -- first. 
-    IF (currentDate >= ADDDATE(lastRefreshedAt, INTERVAL 1 WEEK)) THEN
-        UPDATE Private_UserData
-        SET
-            upload_data_this_week = 0,
-            computation_usage_this_week = 0,
-            last_refreshed_at = currentDate
-        WHERE user_id = userID;
+    DECLARE cur CURSOR FOR
+        SELECT score_val, user_weight_exp
+        FROM ScoreContributors
+        WHERE (
+            list_id = scoreContrListID AND
+            score_val >= lowerBound AND
+            score_val <= upperBound
+        )
+        ORDER BY
+            score_val ASC,
+            score_width_exp ASC,
+            user_weight_exp ASC,
+            user_id ASC;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
 
-        SET uploadCount = uploadData;
-        SET compCount = compUsage;
-    END IF;
+    CREATE TEMPORARY TABLE histBins (
+        bin_ind INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        weight_sum FLOAT NOT NULL DEFAULT 0
+    );
 
-    -- Then check if any limits are exceeded, and return isExceeded = 1 if so
-    -- (without updating the user's counters).
-    IF (
-        uploadCount > uploadLimit OR
-        compCount > compLimit
-    ) THEN
-        SET isExceeded = 1;
-        LEAVE proc;
-    END IF;
+    OPEN cur;
 
-    -- If not, update the counters and return isExceeded = 0.
-    UPDATE Private_UserData
-    SET
-        upload_data_this_week = uploadCount,
-        computation_usage_this_week = compCount
-    WHERE user_id = userID;
+    FETCH cur INTO scoreVal, userWeightExp;
+    SET nextBinLimit = lowerBound;
+    SET i = 1;
+    bin_loop: LOOP
+        IF (i > hiResBinNum OR done) THEN
+            LEAVE bin_loop;
+        END IF;
 
-    SET isExceeded = 0;
+        SET nextBinLimit = nextBinLimit + minBinWidth;
+
+        INSERT IGNORE INTO histBins (bin_ind, weight_sum)
+        VALUES (i, 0);
+
+        user_loop: LOOP
+            -- If scoreVal exceeds nextBinLimit, or it is null  break out and iterate bin_loop.
+            IF (scoreVal > nextBinLimit OR done) THEN
+                LEAVE user_loop;
+            END IF;
+
+            -- Else add the user's weight to the ith bin.
+            SET userWeight = POW(1.2, userWeightExp);
+            UPDATE histBins
+            SET weight_sum = weight_sum + userWeight
+            WHERE bin_ind = i;
+
+            FETCH cur INTO scoreVal, userWeightExp;
+            ITERATE user_loop;
+        END LOOP user_loop;
+
+        SET i = i + 1;
+        ITERATE bin_loop;
+    END LOOP bin_loop;
+
+    -- Now that histBins is populated, call a procedure that outputs a lower-
+    -- resolution hist_data by gathering bins with a too small weight_sum.
+    CALL _getHistData (
+        lowerBound, upperBound, minBinWidth, maxBinWidth, hiResBinNum,
+        histData
+    );
+    -- This sub-procedure sets the histData to the desired output, and the
+    -- procedure therefore ends here.
 END proc //
 DELIMITER ;
 
 
 
 
--- DELIMITER //
--- CREATE PROCEDURE _queueRequest (
---     IN userID BIGINT UNSIGNED,
---     IN reqType VARCHAR(100),
---     IN reqData VARBINARY(2900),
---     IN delayTime BIGINT UNSIGNED, -- delay time >> 32 = UNIX timestamp.
---     IN uploadDataCost BIGINT UNSIGNED,
---     IN compCost BIGINT UNSIGNED,
---     OUT isExceeded TINYINT
--- )
--- BEGIN
---     -- If the insert statement following this handler declaration fails, simply
---     -- roll back the transaction.
---     DECLARE EXIT HANDLER FOR 1586 -- Duplicate key entry error.
---     BEGIN
---         ROLLBACK;
---     END;
-
---     START TRANSACTION;
-
---     -- The first thing we do is to try to insert the request as a new one, and
---     -- if this fails due to a duplicate key entry error, the above exit handler
---     -- finishes the procedure.
---     INSERT INTO ScheduledRequests (
---         req_type, req_data, exec_at
---     )
---     VALUES (
---         reqType, reqData, UNIX_TIMESTAMP() << 32 + initDelayTime
---     );
-
---     -- If this insertion succeeds, we then we increase the user's counters,
---     -- and if these don't exceed their limits, we commit, and otherwise we
---     -- roll back the transaction.
---     CALL _increaseUserCounters (
---         userID, uploadDataCost, compCost, isExceeded
---     );
-
---     IF (isExceeded) THEN
---         ROLLBACK;
---     ELSE
---         COMMIT;
---     END IF;
--- END //
--- DELIMITER ;
 
 
 
--- DELIMITER //
--- CREATE PROCEDURE _executeRequest (
---     IN reqType VARCHAR(100),
---     IN reqData VARCHAR(255)
--- )
--- BEGIN
---     CASE reqType
---         WHEN "USER_GROUP_SCORE" THEN BEGIN
---             DECLARE qualID, subjID, userGroupID, userWeightExp BIGINT UNSIGNED;
---             SET qualID = CAST(
---                 REGEXP_SUBSTR(paths, "[^,]+", 1, 1) AS UNSIGNED
---             );
---             SET subjID = CAST(
---                 REGEXP_SUBSTR(paths, "[^,]+", 1, 2) AS UNSIGNED
---             );
---             SET userGroupID = CAST(
---                 REGEXP_SUBSTR(paths, "[^,]+", 1, 3) AS UNSIGNED
---             );
---             SET userWeightExp = CAST(
---                 REGEXP_SUBSTR(paths, "[^,]+", 1, 4) AS UNSIGNED
---             );
 
---             CALL _executeUserGroupScoreUpdateRequest (
---                 qualID, subjID, userGroupID, userWeightExp
---             );
---         END
---         ELSE BEGIN
---             SIGNAL SQLSTATE "45000" SET MESSAGE_TEXT = "Unrecognized reqType";
---         END
---     END CASE;
--- END //
--- DELIMITER ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE _queueRequest (
+    IN userID BIGINT UNSIGNED,
+    IN reqType VARCHAR(100),
+    IN reqData VARBINARY(2900),
+    IN delayTime BIGINT UNSIGNED, -- delay time >> 32 = UNIX timestamp.
+    IN uploadDataCost BIGINT UNSIGNED,
+    IN compCost BIGINT UNSIGNED,
+    OUT isExceeded TINYINT
+)
+BEGIN
+    -- If the insert statement following this handler declaration fails, simply
+    -- roll back the transaction.
+    DECLARE EXIT HANDLER FOR 1586 -- Duplicate key entry error.
+    BEGIN
+        ROLLBACK;
+    END;
+
+    START TRANSACTION;
+
+    -- The first thing we do is to try to insert the request as a new one, and
+    -- if this fails due to a duplicate key entry error, the above exit handler
+    -- finishes the procedure.
+    INSERT INTO ScheduledRequests (
+        req_type, req_data, exec_at
+    )
+    VALUES (
+        reqType, reqData, UNIX_TIMESTAMP() << 32 + initDelayTime
+    );
+
+    -- If this insertion succeeds, we then we increase the user's counters,
+    -- and if these don't exceed their limits, we commit, and otherwise we
+    -- roll back the transaction.
+    CALL _increaseUserCounters (
+        userID, uploadDataCost, compCost, isExceeded
+    );
+
+    IF (isExceeded) THEN
+        ROLLBACK;
+    ELSE
+        COMMIT;
+    END IF;
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE _executeRequest (
+    IN reqType VARCHAR(100),
+    IN reqData VARCHAR(255)
+)
+BEGIN
+    CASE reqType
+        WHEN "USER_GROUP_SCORE" THEN BEGIN
+            DECLARE qualID, subjID, userGroupID, userWeightExp BIGINT UNSIGNED;
+            SET qualID = CAST(
+                REGEXP_SUBSTR(paths, "[^,]+", 1, 1) AS UNSIGNED
+            );
+            SET subjID = CAST(
+                REGEXP_SUBSTR(paths, "[^,]+", 1, 2) AS UNSIGNED
+            );
+            SET userGroupID = CAST(
+                REGEXP_SUBSTR(paths, "[^,]+", 1, 3) AS UNSIGNED
+            );
+            SET userWeightExp = CAST(
+                REGEXP_SUBSTR(paths, "[^,]+", 1, 4) AS UNSIGNED
+            );
+
+            CALL _executeUserGroupScoreUpdateRequest (
+                qualID, subjID, userGroupID, userWeightExp
+            );
+        END
+        ELSE BEGIN
+            SIGNAL SQLSTATE "45000" SET MESSAGE_TEXT = "Unrecognized reqType";
+        END
+    END CASE;
+END //
+DELIMITER ;
 

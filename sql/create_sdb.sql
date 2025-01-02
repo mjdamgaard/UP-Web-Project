@@ -2,6 +2,7 @@
 /* Scores */
 DROP TABLE PublicUserScores;
 DROP TABLE PrivateUserScores;
+DROP TABLE PublicUserFloatAndWidthScores;
 DROP TABLE ScoreHistograms;
 DROP TABLE AggregatedFloatingPointScores;
 
@@ -53,7 +54,7 @@ CREATE TABLE PrivateUserScores (
 
 
 
-CREATE TABLE PublicUserFloatAndWidthScores (
+CREATE TABLE PublicUserFloatMinAndMaxScores (
 
     user_id BIGINT UNSIGNED NOT NULL,
 
@@ -61,9 +62,9 @@ CREATE TABLE PublicUserFloatAndWidthScores (
 
     subj_id BIGINT UNSIGNED NOT NULL,
 
-    score_val FLOAT NOT NULL,
+    score_min FLOAT NOT NULL,
 
-    score_width_exp TINYINT NOT NULL,
+    score_max FLOAT NOT NULL,
 
     PRIMARY KEY (
         user_id,
@@ -117,9 +118,9 @@ CREATE TABLE ScoreContributors (
 
     user_id BIGINT UNSIGNED NOT NULL,
 
-    score_val FLOAT NOT NULL,
+    score_min FLOAT NOT NULL,
 
-    score_width_exp TINYINT NOT NULL,
+    score_max FLOAT NOT NULL,
 
     user_weight_exp TINYINT NOT NULL,
 
@@ -130,8 +131,8 @@ CREATE TABLE ScoreContributors (
 
     UNIQUE INDEX (
         list_id,
-        score_val,
-        score_width_exp,
+        score_min,
+        score_max,
         user_weight_exp,
         user_id
     )
@@ -142,25 +143,25 @@ CREATE TABLE ScoreContributors (
 
 
 
-CREATE TABLE ScoreHistograms (
+-- CREATE TABLE ScoreHistograms (
 
-    hist_fun_id BIGINT UNSIGNED NOT NULL,
+--     -- hist_fun_id BIGINT UNSIGNED NOT NULL,
 
-    lower_bound_literal VARCHAR(50) NOT NULL,
+--     -- lower_bound_literal VARCHAR(50) NOT NULL,
 
-    upper_bound_literal VARCHAR(50) NOT NULL,
+--     -- upper_bound_literal VARCHAR(50) NOT NULL,
 
-    score_contributor_list_id BIGINT UNSIGNED NOT NULL,
+--     score_contributor_list_id BIGINT UNSIGNED NOT NULL,
 
-    hist_data VARBINARY(4000) NOT NULL,
+--     hist_data VARBINARY(4000) NOT NULL,
 
-    PRIMARY KEY (
-        hist_fun_id,
-        lower_bound_literal,
-        upper_bound_literal,
-        score_contributor_list_id
-    )
-);
+--     PRIMARY KEY (
+--         -- hist_fun_id,
+--         -- lower_bound_literal,
+--         -- upper_bound_literal,
+--         score_contributor_list_id
+--     )
+-- );
 
 
 
@@ -241,7 +242,43 @@ CREATE TABLE EntityListMetadata (
 
     list_id BIGINT UNSIGNED PRIMARY KEY,
 
-    list_len BIGINT UNSIGNED NOT NULL DEFAULT 0
+    list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+    weight_sum DOUBLE NOT NULL DEFAULT 0,
+
+    paid_computation_cost_for_update BIGINT UNSIGNED, -- NOT NULL DEFAULT 0,
+
+    paid_upload_data_cost_for_storage BIGINT UNSIGNED -- NOT NULL DEFAULT 0
+);
+
+
+
+
+
+
+CREATE TABLE ScheduledRequests (
+
+    req_type VARCHAR(100) NOT NULL,
+
+    req_data VARBINARY(2900) NOT NULL,
+
+    -- exec_at BIGINT UNSIGNED NOT NULL, -- exec_at >> 32 = UNIX timestamp.
+
+    fraction_of_computation_cost_paid FLOAT;
+
+    fraction_of_upload_data_cost_paid FLOAT;
+
+    PRIMARY KEY (
+        req_type,
+        req_data,
+    ),
+
+    UNIQUE INDEX (
+        fraction_of_computation_cost_paid,
+        fraction_of_upload_data_cost_paid,
+        req_type,
+        req_data
+    )
 );
 
 
@@ -300,25 +337,6 @@ CREATE TABLE EntityListMetadata (
 
 
 
-
-
-
-
-CREATE TABLE ScheduledRequests (
-
-    exec_at BIGINT UNSIGNED NOT NULL, -- exec_at >> 32 = UNIX timestamp.
-
-    req_type VARCHAR(100) NOT NULL,
-
-    req_data VARBINARY(2900) NOT NULL,
-
-    PRIMARY KEY (
-        req_type,
-        req_data,
-    ),
-
-    UNIQUE INDEX (exec_at, req_type, req_data)
-);
 
 
 
@@ -516,66 +534,63 @@ VALUES
             '"Filter list":"%4"',
         '}'
     ), 9),
+    -- (14, "f", CONCAT(
+    --     'histogram_of_score_centers(',
+    --         'Quality:@[qualities],',
+    --         'Subject:@[entities],',
+    --         'User group:@[user groups],',
+    --         'Metric:@[metrics],',
+    --         'Filter list?:@[lists]',
+    --     '){',
+    --         '"Class":"@[histograms of score centers]",',
+    --         '"Quality":"%1"',
+    --         '"Subject":"%2"',
+    --         '"User group":"%3"',
+    --         '"Metric":"%4"',
+    --         '"Filter list":"%5"',
+    --     '}'
+    -- ), 9),
+    -- (15, "f", CONCAT(
+    --     'histogram_of_scores_with_widths(',
+    --         'Quality:@[qualities],',
+    --         'Subject:@[entities],',
+    --         'User group:@[user groups],',
+    --         'Metric:@[metrics],',
+    --         'Filter list?:@[lists]',
+    --     '){',
+    --         '"Class":"@[histograms of scores with widths]",',
+    --         '"Quality":"%1"',
+    --         '"Subject":"%2"',
+    --         '"User group":"%3"',
+    --         '"Metric":"%4"',
+    --         '"Filter list":"%5"',
+    --     '}'
+    -- ), 9),
     (14, "f", CONCAT(
-        'histogram_of_score_centers(',
-            'Quality:@[qualities],',
-            'Subject:@[entities],',
-            'User group:@[user groups],',
-            'Metric:@[metrics],',
-            'Filter list?:@[lists]',
-        '){',
-            '"Class":"@[histograms of score centers]",',
-            '"Quality":"%1"',
-            '"Subject":"%2"',
-            '"User group":"%3"',
-            '"Metric":"%4"',
-            '"Filter list":"%5"',
-        '}'
-    ), 9),
-    (15, "f", CONCAT(
-        'histogram_of_scores_with_widths(',
-            'Quality:@[qualities],',
-            'Subject:@[entities],',
-            'User group:@[user groups],',
-            'Metric:@[metrics],',
-            'Filter list?:@[lists]',
-        '){',
-            '"Class":"@[histograms of scores with widths]",',
-            '"Quality":"%1"',
-            '"Subject":"%2"',
-            '"User group":"%3"',
-            '"Metric":"%4"',
-            '"Filter list":"%5"',
-        '}'
-    ), 9),
-    (16, "f", CONCAT(
         'medians(',
             'Quality:@[qualities],',
             'User group:@[user groups],',
-            'Histogram function:@[histogram functions]',
             'Metric:@[metrics],',
             'Filter list?:@[lists]',
         '){',
             '"Class":"@[median lists]",',
             '"Quality":"%1"',
             '"User group":"%2"',
-            '"Histogram function":"%3"',
-            '"Metric":"%4"',
-            '"Filter list":"%5"',
+            '"Metric":"%3"',
+            '"Filter list":"%4"',
         '}'
     ), 9),
-    (17, "a", CONCAT(
+    (15, "a", CONCAT(
         '{',
             '"Class":"@[metrics]",',
             '"Name":"Standard percentage metric"',
             '"Unit":"%"',
             '"Lower bound":0',
             '"Upper bound":100',
-            '"Minimum bin width":"0.01"',
             '"Description":"@[metrics/std percentage metric/desc]"',
         '}'
     ), 9),
-    (18, "a", CONCAT(
+    (16, "a", CONCAT(
         '{',
             '"Class":"@[metrics]",',
             '"Name":"Standard predicate metric"',
@@ -594,7 +609,6 @@ VALUES
             ']',
             '"Lower bound":0',
             '"Upper bound":10',
-            '"Minimum bin width":"0.01"',
             '"Description":"@[metrics/std predicate metric/desc]"',
         '}'
     ), 9);
@@ -1130,6 +1144,8 @@ CREATE TABLE Private_UserData (
     -- the user via a third party.)
 
 
+    download_data_this_week BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    download_data_weekly_limit BIGINT UNSIGNED NOT NULL DEFAULT 5000000000,
     upload_data_this_week BIGINT UNSIGNED NOT NULL DEFAULT 0,
     upload_data_weekly_limit BIGINT UNSIGNED NOT NULL DEFAULT 1000000,
     computation_usage_this_week BIGINT UNSIGNED NOT NULL DEFAULT 0,
