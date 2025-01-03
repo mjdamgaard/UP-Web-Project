@@ -176,7 +176,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE _insertUpdateOrDeleteUserGroupMinAndMaxScores (
+CREATE PROCEDURE _insertUpdateOrDeleteUserGroupMinAndMaxScore (
     IN requestingUserID BIGINT UNSIGNED,
     IN targetUserID BIGINT UNSIGNED,
     IN targetUserWeightExp TINYINT, -- nullable if targetUserWeightVal is there.
@@ -190,7 +190,7 @@ CREATE PROCEDURE _insertUpdateOrDeleteUserGroupMinAndMaxScores (
 proc: BEGIN
     IF (minScore IS NULL XOR maxScore IS NULL) THEN
         SIGNAL SQLSTATE "45000" SET MESSAGE_TEXT = CONCAT(
-            "_insertUpdateOrDeleteUserGroupMinAndMaxScores(): ",
+            "_insertUpdateOrDeleteUserGroupMinAndMaxScore(): ",
             "minScore IS NULL XOR maxScore IS NULL"
         );
         LEAVE proc;
@@ -227,45 +227,21 @@ DELIMITER ;
 
 
 
-
-
-
-
-
-
-
-
 DELIMITER //
-CREATE PROCEDURE requestUserGroupMinAndMaxScoreUpdate (
+CREATE PROCEDURE _insertUpdateOrDeleteUserGroupMinAndMaxScoreIfUserIsMember (
     IN requestingUserID BIGINT UNSIGNED,
     IN targetUserID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN userGroupID BIGINT UNSIGNED
+    IN userGroupID BIGINT UNSIGNED,
+    IN userGroupMinScoreListID BIGINT UNSIGNED,
+    IN userGroupMaxScoreListID BIGINT UNSIGNED,
+    OUT exitCode TINYINT
 )
 proc: BEGIN
-    DECLARE minScore, maxScore, userWeight, prevUserWeight,
-        filterListScore, filterListWeight DOUBLE;
-    DECLARE userWeightExp, prevUserWeightExp, isExceeded, wasDeleted,
-        userWeightWeightExp, exitCode TINYINT;
+    DECLARE minScore, maxScore DOUBLE;
 
-    DECLARE userGroupMinScoreListID, userGroupMinScoreListID BIGINT UNSIGNED;
-
-    -- Get (or insert) userGroupMinScoreListID and userGroupMaxScoreListID.
-    CALL _insertOrFindUserGroupMinAndMaxScoreListIDs (
-        qualID,
-        subjID,
-        userGroupID,
-        userGroupMinScoreListID,
-        userGroupMaxScoreListID,
-        exitCode
-    );
-    IF (exitCode = 5) THEN
-        SELECT 5 AS exitCode; -- a counter was is exceeded.
-        LEAVE proc;
-    END IF;
-
-    -- Then we check that the user is in the given user group. If not, make
+    -- We first check that the user is in the given user group. If not, make
     -- sure that any existing score of the user is deleted from the two lists.
     SELECT score_val, weight_exp
     INTO targetUserWeight, targetUserWeightWeightExp
@@ -276,7 +252,7 @@ proc: BEGIN
     );
 
     IF NOT (targetUserWeight > 0 AND targetUserWeightWeightExp >= 13) THEN
-        CALL _insertUpdateOrDeleteUserGroupMinAndMaxScores (
+        CALL _insertUpdateOrDeleteUserGroupMinAndMaxScore (
             requestingUserID,
             targetUserID,
             NULL,
@@ -288,7 +264,7 @@ proc: BEGIN
             exitCode
         );
 
-        SELECT 1 AS exitCode; -- user is not a member of the user group.
+        SET exitCode = 1; -- user is not a member of the user group.
         LEAVE proc;
     END IF;
 
@@ -306,13 +282,61 @@ proc: BEGIN
     -- deleted), the min and max scores. (This sub-procedure fails if the
     -- user's data counters is exceeded when inserting the min score, but the
     -- subsequent max score insertion will always succeed if the min score did.)
-    CALL _insertUpdateOrDeleteUserGroupMinAndMaxScores (
+    CALL _insertUpdateOrDeleteUserGroupMinAndMaxScore (
         requestingUserID,
         targetUserID,
         NULL,
         targetUserWeight,
         minScore,
         maxScore,
+        userGroupMinScoreListID,
+        userGroupMaxScoreListID,
+        exitCode
+    );
+
+    IF NOT (exitCode = 5) THEN
+        SET exitCode = 0; -- request was carried out.
+    END IF;
+END proc //
+DELIMITER ;
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE requestUserGroupMinAndMaxScoreUpdate (
+    IN requestingUserID BIGINT UNSIGNED,
+    IN targetUserID BIGINT UNSIGNED,
+    IN qualID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
+    IN userGroupID BIGINT UNSIGNED
+)
+proc: BEGIN
+    DECLARE minScore, maxScore DOUBLE;
+    DECLARE exitCode TINYINT;
+    DECLARE userGroupMinScoreListID, userGroupMinScoreListID BIGINT UNSIGNED;
+
+    -- Get (or insert) userGroupMinScoreListID and userGroupMaxScoreListID.
+    CALL _insertOrFindUserGroupMinAndMaxScoreListIDs (
+        qualID,
+        subjID,
+        userGroupID,
+        userGroupMinScoreListID,
+        userGroupMaxScoreListID,
+        exitCode
+    );
+    IF (exitCode = 5) THEN
+        SELECT 5 AS exitCode; -- a counter was is exceeded.
+        LEAVE proc;
+    END IF;
+
+    CALL _insertUpdateOrDeleteUserGroupMinAndMaxScoreIfUserIsMember (
+        requestingUserID,
+        targetUserID,
+        qualID,
+        subjID,
+        userGroupID,
         userGroupMinScoreListID,
         userGroupMaxScoreListID,
         exitCode
@@ -331,32 +355,66 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE requestFullUserGroupScoresUpdate (
+CREATE PROCEDURE requestFullUserGroupMinAndMaxScoresUpdate (
     IN requestingUserID BIGINT UNSIGNED,
-    IN targetUserID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN userGroupID BIGINT UNSIGNED,
-    IN filterListID BIGINT UNSIGNED
+    IN userGroupID BIGINT UNSIGNED
 )
 proc: BEGIN
+    DECLARE minScore, maxScore DOUBLE;
+    DECLARE exitCode, done TINYINT;
+    DECLARE userGroupMinScoreListID, userGroupMinScoreListID BIGINT UNSIGNED;
 
-    -- TODO: Implement (by queuing request).
+    DECLARE cur CURSOR FOR
+        SELECT score_val, weight_exp
+        FROM FloatScoreAndWeightAggregates
+        -- WHERE list_id = userGroupID
+        -- ORDER BY subj_id ASC;
+        WHERE (
+            list_id = userGroupID AND
+            score_val > 0
+        );
+        ORDER BY score_val DESC;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+    DECLARE userWeightVal DOUBLE;
+    DECLARE userWeightWeightExp TINYINT;
+
+    -- Get (or insert) userGroupMinScoreListID and userGroupMaxScoreListID.
+    CALL _insertOrFindUserGroupMinAndMaxScoreListIDs (
+        qualID,
+        subjID,
+        userGroupID,
+        userGroupMinScoreListID,
+        userGroupMaxScoreListID,
+        exitCode
+    );
+    IF (exitCode = 5) THEN
+        SELECT 5 AS exitCode; -- a counter was is exceeded.
+        LEAVE proc;
+    END IF;
+
+    -- ...
+    OPEN cur;
+    SET done = 0;
+    loop_1: LOOP
+        SET i = i + 1;
+        FETCH cur INTO userWeightVal, userWeightWeightExp;
+    END LOOP loop_1; 
 
     SELECT 0 AS exitCode; -- request was carried out.
 END proc //
 DELIMITER ;
+
 
 
 
 DELIMITER //
-CREATE PROCEDURE requestFullExistingUserGroupScoresUpdate (
+CREATE PROCEDURE requestFullExistingUserGroupMinAndMaxScoresUpdate (
     IN requestingUserID BIGINT UNSIGNED,
-    IN targetUserID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN userGroupID BIGINT UNSIGNED,
-    IN filterListID BIGINT UNSIGNED
+    IN userGroupID BIGINT UNSIGNED
 )
 proc: BEGIN
 
@@ -365,6 +423,8 @@ proc: BEGIN
     SELECT 0 AS exitCode; -- request was carried out.
 END proc //
 DELIMITER ;
+
+
 
 
 

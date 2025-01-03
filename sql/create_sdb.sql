@@ -574,16 +574,16 @@ VALUES
             '"Name":"Standard predicate metric",',
             '"Unit":"\\star",',
             '"Interval labels":[',
-                '[0,1,"extremely not so"],'
-                '[1,2,"very much not so"],'
-                '[2,3,"truly not so"],'
-                '[3,4,"somewhat not so"],'
-                '[4,5,"slightly not so"],'
-                '[5,6,"slightly so"],'
-                '[6,7,"somewhat so"],'
-                '[7,8,"truly so"],'
-                '[8,9,"very much so"],'
-                '[9,10,"extremely so"]'
+                '[0,1,"extremely not"],'
+                '[1,2,"very much not"],'
+                '[2,3,"truly not"],'
+                '[3,4,"somewhat not"],'
+                '[4,5,"slightly not"],'
+                '[5,6,"slightly"],'
+                '[6,7,"somewhat"],'
+                '[7,8,"truly"],'
+                '[8,9,"very much"],'
+                '[9,10,"extremely"]'
             '],',
             '"Lower bound":0,',
             '"Upper bound":10,',
