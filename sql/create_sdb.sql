@@ -112,31 +112,31 @@ CREATE TABLE PublicUserByteScores (
 
 
 
-CREATE TABLE ScoreContributors (
+-- CREATE TABLE ScoreContributors (
 
-    list_id BIGINT UNSIGNED NOT NULL,
+--     list_id BIGINT UNSIGNED NOT NULL,
 
-    user_id BIGINT UNSIGNED NOT NULL,
+--     user_id BIGINT UNSIGNED NOT NULL,
 
-    score_min FLOAT NOT NULL,
+--     score_min FLOAT NOT NULL,
 
-    score_max FLOAT NOT NULL,
+--     score_max FLOAT NOT NULL,
 
-    user_weight_exp TINYINT NOT NULL,
+--     user_weight_exp TINYINT NOT NULL,
 
-    PRIMARY KEY (
-        list_id,
-        user_id
-    ),
+--     PRIMARY KEY (
+--         list_id,
+--         user_id
+--     ),
 
-    UNIQUE INDEX (
-        list_id,
-        score_min,
-        score_max,
-        user_weight_exp,
-        user_id
-    )
-);
+--     UNIQUE INDEX (
+--         list_id,
+--         score_min,
+--         score_max,
+--         user_weight_exp,
+--         user_id
+--     )
+-- );
 
 
 
@@ -238,17 +238,17 @@ CREATE TABLE ByteScoreAggregates (
 
 
 
-CREATE TABLE EntityListMetadata (
+CREATE TABLE ListMetadata (
 
     list_id BIGINT UNSIGNED PRIMARY KEY,
 
     list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
-    weight_sum DOUBLE NOT NULL DEFAULT 0,
+    weight_sum DOUBLE NOT NULL DEFAULT 0
 
-    paid_computation_cost_for_update BIGINT UNSIGNED, -- NOT NULL DEFAULT 0,
+    -- paid_computation_cost_for_update BIGINT UNSIGNED, -- NOT NULL DEFAULT 0,
 
-    paid_upload_data_cost_for_storage BIGINT UNSIGNED -- NOT NULL DEFAULT 0
+    -- paid_upload_data_cost_for_storage BIGINT UNSIGNED -- NOT NULL DEFAULT 0
 );
 
 
@@ -521,19 +521,79 @@ VALUES
         '}'
     ), 9),
     (13, "f", CONCAT(
-        'score_contributors(',
+        'user_group_min_scores(',
             'Quality:@[qualities],',
             'Subject:@[entities],',
             'User group:@[user groups],',
             'Filter list?:@[lists]',
         '){',
-            '"Class":"@[score contributor lists]",',
+            '"Class":"@[user group min score lists]",',
             '"Quality":"%1"',
             '"Subject":"%2"',
             '"User group":"%3"',
             '"Filter list":"%4"',
         '}'
     ), 9),
+    (14, "f", CONCAT(
+        'user_group_max_scores(',
+            'Quality:@[qualities],',
+            'Subject:@[entities],',
+            'User group:@[user groups],',
+            'Filter list?:@[lists]',
+        '){',
+            '"Class":"@[user group max score lists]",',
+            '"Quality":"%1"',
+            '"Subject":"%2"',
+            '"User group":"%3"',
+            '"Filter list":"%4"',
+        '}'
+    ), 9),
+    (15, "f", CONCAT(
+        'medians(',
+            'Quality:@[qualities],',
+            'User group:@[user groups],',
+            'Metric:@[metrics],',
+            'Filter list?:@[lists]',
+        '){',
+            '"Class":"@[median lists]",',
+            '"Quality":"%1"',
+            '"User group":"%2"',
+            '"Metric":"%3"',
+            '"Filter list":"%4"',
+        '}'
+    ), 9),
+    (16, "a", CONCAT(
+        '{',
+            '"Class":"@[metrics]",',
+            '"Name":"Standard percentage metric"',
+            '"Unit":"%"',
+            '"Lower bound":0',
+            '"Upper bound":100',
+            '"Description":"@[metrics/std percentage metric/desc]"',
+        '}'
+    ), 9),
+    (17, "a", CONCAT(
+        '{',
+            '"Class":"@[metrics]",',
+            '"Name":"Standard predicate metric"',
+            '"Unit":"\\star"',
+            '"Interval labels":[',
+                '[0,1,"extremely not so"],'
+                '[1,2,"very much not so"],'
+                '[2,3,"truly not so"],'
+                '[3,4,"somewhat not so"],'
+                '[4,5,"slightly not so"],'
+                '[5,6,"slightly so"],'
+                '[6,7,"somewhat so"],'
+                '[7,8,"truly so"],'
+                '[8,9,"very much so"],'
+                '[9,10,"extremely so"]'
+            ']',
+            '"Lower bound":0',
+            '"Upper bound":10',
+            '"Description":"@[metrics/std predicate metric/desc]"',
+        '}'
+    ), 9);
     -- (14, "f", CONCAT(
     --     'histogram_of_score_centers(',
     --         'Quality:@[qualities],',
@@ -566,52 +626,6 @@ VALUES
     --         '"Filter list":"%5"',
     --     '}'
     -- ), 9),
-    (14, "f", CONCAT(
-        'medians(',
-            'Quality:@[qualities],',
-            'User group:@[user groups],',
-            'Metric:@[metrics],',
-            'Filter list?:@[lists]',
-        '){',
-            '"Class":"@[median lists]",',
-            '"Quality":"%1"',
-            '"User group":"%2"',
-            '"Metric":"%3"',
-            '"Filter list":"%4"',
-        '}'
-    ), 9),
-    (15, "a", CONCAT(
-        '{',
-            '"Class":"@[metrics]",',
-            '"Name":"Standard percentage metric"',
-            '"Unit":"%"',
-            '"Lower bound":0',
-            '"Upper bound":100',
-            '"Description":"@[metrics/std percentage metric/desc]"',
-        '}'
-    ), 9),
-    (16, "a", CONCAT(
-        '{',
-            '"Class":"@[metrics]",',
-            '"Name":"Standard predicate metric"',
-            '"Unit":"\\star"',
-            '"Interval labels":[',
-                '[0,1,"extremely not so"],'
-                '[1,2,"very much not so"],'
-                '[2,3,"truly not so"],'
-                '[3,4,"somewhat not so"],'
-                '[4,5,"slightly not so"],'
-                '[5,6,"slightly so"],'
-                '[6,7,"somewhat so"],'
-                '[7,8,"truly so"],'
-                '[8,9,"very much so"],'
-                '[9,10,"extremely so"]'
-            ']',
-            '"Lower bound":0',
-            '"Upper bound":10',
-            '"Description":"@[metrics/std predicate metric/desc]"',
-        '}'
-    ), 9);
 
 INSERT INTO EntitySecKeys (
     type_ident, def_key, ent_id

@@ -9,6 +9,248 @@ DROP PROCEDURE insertOrUpdatePublicUserScore;
 
 
 DELIMITER //
+CREATE PROCEDURE _insertOrFindUserGroupMinAndMaxScoreListIDs (
+    IN qualID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
+    IN userGroupID BIGINT UNSIGNED,
+    IN filterListID BIGINT UNSIGNED,
+    OUT userGroupMinScoreListID BIGINT UNSIGNED,
+    OUT userGroupMaxScoreListID BIGINT UNSIGNED,
+    OUT exitCode TINYINT
+)
+proc: BEGIN
+    DECLARE userGroupMinScoreListDefStr, userGroupMaxScoreListDefStr
+        VARCHAR(700) CHARACTER SET utf8mb4;
+
+    SET userGroupMinScoreListDefStr = CONCAT(
+        '@13,@', qualID, ',@', subjID, ',@', userGroupID,
+        CASE filterListID
+            WHEN 0 THEN ',null'
+            ELSE CONCAT(',@', filterListID)
+        END CASE
+    );
+    SET userGroupMaxScoreListDefStr = CONCAT(
+        '@14,@', qualID, ',@', subjID, ',@', userGroupID,
+        CASE filterListID
+            WHEN 0 THEN ',null'
+            ELSE CONCAT(',@', filterListID)
+        END CASE
+    );
+
+    CALL _insertOrFindFunctionCallEntity (
+        requestingUserID, userGroupMinScoreListDefStr, 1,
+        userGroupMinScoreListID, exitCode
+    );
+    IF (exitCode = 5) THEN
+        LEAVE proc;
+    END IF;
+    CALL _insertOrFindFunctionCallEntity (
+        requestingUserID, userGroupMaxScoreListDefStr, 1,
+        userGroupMaxScoreListID, exitCode
+    );
+    IF (exitCode = 5) THEN
+        LEAVE proc;
+    END IF;
+END proc //
+DELIMITER ;
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE _insertOrUpdateScoreAndWeight (
+    IN listID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
+    IN scoreVal FLOAT,
+    IN weightExp TINYINT, -- nullable if weight is provided.
+    IN weight FLOAT, -- nullable unless weightExp is not provided.
+    OUT exitCode TINYINT
+)
+proc: BEGIN
+    DECLARE prevScoreVal, prevUserWeight FLOAT;
+    DECLARE prevWeightExp TINYINT;
+
+    IF (weightExp IS NULL) THEN
+        IF (weight > 1.1E+10) THEN
+            SET weightExp = 127;
+        ELSEIF (weight < 7.4E-11) THEN
+            SET weightExp = -128;
+        ELSE
+            SET weightExp = ROUND(LOG2(weight) / LOG2(1.2));
+        END IF;
+    END IF;
+
+    SET weight = POW(1.2, weightExp);
+
+    -- We select (for update) the previous score on the list, and branch
+    -- accordingly in order to update the ListMetadata table correctly.
+    START TRANSACTION;
+
+    SELECT score_val, weight_exp INTO prevScoreVal, prevWeightExp
+    FROM FloatScoreAndWeightAggregates
+    WHERE (
+        list_id = listID AND
+        subj_id = subjID
+    )
+    FOR UPDATE;
+
+    IF (prevScoreVal IS NULL) THEN
+        INSERT INTO FloatScoreAndWeightAggregates (
+            list_id, subj_id, score_val, weight_exp 
+        ) VALUES (
+            listID, subjID, scoreVal, weightExp
+        );
+
+        COMMIT;
+        
+        UPDATE ListMetadata SET
+            list_len = list_len + 1,
+            weight_sum = weight_sum + weight
+        WHERE list_id = listID;
+
+        SET exitCode = 0; -- insert.
+    ELSE
+        UPDATE FloatScoreAndWeightAggregates SET
+            score_val = scoreVal,
+            weight_exp = weightExp
+        WHERE (
+            list_id = listID AND
+            subj_id = subjID
+        );
+
+        COMMIT;
+        
+        UPDATE ListMetadata SET
+            weight_sum = weight_sum + weight - POW(1.2, prevWeightExp)
+        WHERE list_id = listID;
+
+        SET exitCode = 1; -- update.
+    END IF;
+END proc //
+DELIMITER ;
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE _insertOrUpdateUserGroupMinAndMaxScores (
+    IN userID BIGINT UNSIGNED,
+    IN userWeight FLOAT,
+    IN userGroupMinScoreListID BIGINT UNSIGNED,
+    IN userGroupMaxScoreListID BIGINT UNSIGNED,
+    OUT exitCode TINYINT
+)
+proc: BEGIN
+    DECLARE scoreMin, scoreMax, userWeight, prevUserWeight,
+        filterListScore, filterListWeight FLOAT;
+    DECLARE userWeightExp, prevUserWeightExp, isExceeded, wasDeleted,
+        userWeightWeightExp TINYINT;
+
+    -- Select the scoreMin and the scoreMax.
+    SELECT score_min, score_max INTO scoreMin, scoreMax
+    FROM PublicUserFloatMinAndMaxScores
+    WHERE (
+        user_id = targetUserID AND
+        qual_id = qualID AND
+        subj_id = subjID
+    );
+
+    -- 
+    START TRANSACTION;
+
+    SELECT score_val, weight_exp INTO prevScoreMin, prevUserWeight
+    FROM FloatScoreAndWeightAggregates
+    WHERE (
+        list_id = userGroupMinScoreListID AND
+        subj_id = userID
+    )
+    FOR UPDATE;
+
+    -- Then we get the previous user weight.
+    SELECT user_weight_exp INTO prevUserWeightExp
+    FROM ScoreContributors
+    WHERE (
+        listID = scoreContrListID AND
+        user_id = targetUserID
+    );
+
+    IF (prevUserWeightExp IS NOT NULL) THEN
+        SET prevUserWeight = POW(1.2, prevUserWeightExp);
+    ELSE
+        SET prevUserWeight = 0;
+    END IF;
+
+    -- If the score is deleted/missing, make sure that it is removed from the
+    -- score contributors list, and exit.
+    IF (scoreMin IS NULL) THEN
+        ROLLBACK;
+
+        DELETE FROM ScoreContributors
+        WHERE (
+            listID = scoreContrListID AND
+            user_id = targetUserID
+        );
+        SET wasDeleted = ROW_COUNT();
+
+        IF (wasDeleted) THEN
+            UPDATE ListMetadata
+            SET
+                list_len = list_len - 1,
+                weight_sum = weight_sum - prevUserWeight
+            WHERE list_id = scoreContrListID;
+        END IF;
+
+        SELECT 0 AS exitCode; -- request was carried out (score deleted).
+        LEAVE proc;
+    ELSE
+        SET uploadDataCost = uploadDataCost + 30;
+    END IF;
+
+    -- If not, then we call _increaseUserCounters() to increase the user's
+    -- counters, and if some were exceeded, we also exit early.
+    CALL _increaseUserCounters (
+        requestingUserID, 0, 20, 1 << 24, isExceeded
+    );
+    IF (isExceeded) THEN
+        ROLLBACK;
+        SELECT 5 AS exitCode; -- a counter was is exceeded.
+        LEAVE proc;
+    END IF;
+
+    COMMIT;
+
+    -- If successful so far, we then finally insert the score in the
+    -- ScoreContributors table
+    INSERT INTO ScoreContributors (
+        list_id, user_id, score_min, score_max, user_weight_exp
+    ) VALUES (
+        scoreContrListID, targetUserID, scoreMin, scoreMax, userWeightExp
+    )
+    ON DUPLICATE KEY UPDATE
+        score_min = scoreMin,
+        score_max = scoreMax,
+        user_weight_exp = userWeightExp;
+
+    -- And we also remember to update the list's length and weight sum.
+    INSERT INTO ListMetadata (
+        list_id, list_len, weight_sum
+    ) VALUES (
+        scoreContrListID, 1, userWeight
+    )
+    ON DUPLICATE KEY UPDATE
+        list_len = list_len + 1,
+        weight_sum = weight_sum + userWeight - prevUserWeight;
+
+    SELECT 0 AS exitCode; -- request was carried out.
+END proc //
+DELIMITER ;
+
+
+
+
+DELIMITER //
 CREATE PROCEDURE requestUserGroupScoreUpdate (
     IN requestingUserID BIGINT UNSIGNED,
     IN targetUserID BIGINT UNSIGNED,
@@ -63,9 +305,7 @@ proc: BEGIN
         subj_id = subjID
     );
 
-    -- We then insert or find the List entity, and increase the uploadDataCost
-    -- on insertion, but roll back the transaction if the upload data exceeds
-    -- the weekly limit for the requesting user.
+    -- We then insert or find the List entity.
     START TRANSACTION;
     
     SET scoreContrListDefStr = CONCAT(
@@ -86,7 +326,7 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    -- Get the previous user weight.
+    -- Then we get the previous user weight.
     SELECT user_weight_exp INTO prevUserWeightExp
     FROM ScoreContributors
     WHERE (
@@ -113,7 +353,7 @@ proc: BEGIN
         SET wasDeleted = ROW_COUNT();
 
         IF (wasDeleted) THEN
-            UPDATE EntityListMetadata
+            UPDATE ListMetadata
             SET
                 list_len = list_len - 1,
                 weight_sum = weight_sum - prevUserWeight
@@ -152,7 +392,7 @@ proc: BEGIN
         user_weight_exp = userWeightExp;
 
     -- And we also remember to update the list's length and weight sum.
-    INSERT INTO EntityListMetadata (
+    INSERT INTO ListMetadata (
         list_id, list_len, weight_sum
     ) VALUES (
         scoreContrListID, 1, userWeight
@@ -164,6 +404,54 @@ proc: BEGIN
     SELECT 0 AS exitCode; -- request was carried out.
 END proc //
 DELIMITER ;
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE requestFullUserGroupScoresUpdate (
+    IN requestingUserID BIGINT UNSIGNED,
+    IN targetUserID BIGINT UNSIGNED,
+    IN qualID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
+    IN userGroupID BIGINT UNSIGNED,
+    IN filterListID BIGINT UNSIGNED
+)
+proc: BEGIN
+
+    -- TODO: Implement (by queuing request).
+
+    SELECT 0 AS exitCode; -- request was carried out.
+END proc //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE requestFullExistingUserGroupScoresUpdate (
+    IN requestingUserID BIGINT UNSIGNED,
+    IN targetUserID BIGINT UNSIGNED,
+    IN qualID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
+    IN userGroupID BIGINT UNSIGNED,
+    IN filterListID BIGINT UNSIGNED
+)
+proc: BEGIN
+
+    -- TODO: Implement (by queuing request).
+
+    SELECT 0 AS exitCode; -- request was carried out.
+END proc //
+DELIMITER ;
+
+
+
+
+
+
+
+
 
 
 
@@ -199,7 +487,7 @@ proc: BEGIN
 
     DECLARE listLen BIGINT UNSIGNED DEFAULT (
         SELECT list_len
-        FROM EntityListMetadata
+        FROM ListMetadata
         WHERE list_id = scoreContrListID;
     );
 
