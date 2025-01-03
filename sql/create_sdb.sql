@@ -524,28 +524,24 @@ VALUES
         'user_group_min_scores(',
             'Quality:@[qualities],',
             'Subject:@[entities],',
-            'User group:@[user groups],',
-            'Filter list?:@[lists]',
+            'User group:@[user groups]',
         '){',
             '"Class":"@[user group min score lists]",',
-            '"Quality":"%1"',
-            '"Subject":"%2"',
+            '"Quality":"%1",',
+            '"Subject":"%2",',
             '"User group":"%3"',
-            '"Filter list":"%4"',
         '}'
     ), 9),
     (14, "f", CONCAT(
         'user_group_max_scores(',
             'Quality:@[qualities],',
             'Subject:@[entities],',
-            'User group:@[user groups],',
-            'Filter list?:@[lists]',
+            'User group:@[user groups]',
         '){',
             '"Class":"@[user group max score lists]",',
-            '"Quality":"%1"',
-            '"Subject":"%2"',
+            '"Quality":"%1",',
+            '"Subject":"%2",',
             '"User group":"%3"',
-            '"Filter list":"%4"',
         '}'
     ), 9),
     (15, "f", CONCAT(
@@ -556,27 +552,27 @@ VALUES
             'Filter list?:@[lists]',
         '){',
             '"Class":"@[median lists]",',
-            '"Quality":"%1"',
-            '"User group":"%2"',
-            '"Metric":"%3"',
+            '"Quality":"%1",',
+            '"User group":"%2",',
+            '"Metric":"%3",',
             '"Filter list":"%4"',
         '}'
     ), 9),
     (16, "a", CONCAT(
         '{',
             '"Class":"@[metrics]",',
-            '"Name":"Standard percentage metric"',
-            '"Unit":"%"',
-            '"Lower bound":0',
-            '"Upper bound":100',
+            '"Name":"Standard percentage metric",',
+            '"Unit":"%",',
+            '"Lower bound":0,',
+            '"Upper bound":100,',
             '"Description":"@[metrics/std percentage metric/desc]"',
         '}'
     ), 9),
     (17, "a", CONCAT(
         '{',
             '"Class":"@[metrics]",',
-            '"Name":"Standard predicate metric"',
-            '"Unit":"\\star"',
+            '"Name":"Standard predicate metric",',
+            '"Unit":"\\star",',
             '"Interval labels":[',
                 '[0,1,"extremely not so"],'
                 '[1,2,"very much not so"],'
@@ -588,9 +584,9 @@ VALUES
                 '[7,8,"truly so"],'
                 '[8,9,"very much so"],'
                 '[9,10,"extremely so"]'
-            ']',
-            '"Lower bound":0',
-            '"Upper bound":10',
+            '],',
+            '"Lower bound":0,',
+            '"Upper bound":10,',
             '"Description":"@[metrics/std predicate metric/desc]"',
         '}'
     ), 9);

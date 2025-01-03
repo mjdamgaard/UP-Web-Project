@@ -13,7 +13,6 @@ CREATE PROCEDURE _insertOrFindUserGroupMinAndMaxScoreListIDs (
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN userGroupID BIGINT UNSIGNED,
-    IN filterListID BIGINT UNSIGNED,
     OUT userGroupMinScoreListID BIGINT UNSIGNED,
     OUT userGroupMaxScoreListID BIGINT UNSIGNED,
     OUT exitCode TINYINT
@@ -23,18 +22,10 @@ proc: BEGIN
         VARCHAR(700) CHARACTER SET utf8mb4;
 
     SET userGroupMinScoreListDefStr = CONCAT(
-        '@13,@', qualID, ',@', subjID, ',@', userGroupID,
-        CASE filterListID
-            WHEN 0 THEN ',null'
-            ELSE CONCAT(',@', filterListID)
-        END CASE
+        '@13,@', qualID, ',@', subjID, ',@', userGroupID
     );
     SET userGroupMaxScoreListDefStr = CONCAT(
-        '@14,@', qualID, ',@', subjID, ',@', userGroupID,
-        CASE filterListID
-            WHEN 0 THEN ',null'
-            ELSE CONCAT(',@', filterListID)
-        END CASE
+        '@14,@', qualID, ',@', subjID, ',@', userGroupID
     );
 
     CALL _insertOrFindFunctionCallEntity (
@@ -250,8 +241,7 @@ CREATE PROCEDURE requestUserGroupMinAndMaxScoreUpdate (
     IN targetUserID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN userGroupID BIGINT UNSIGNED,
-    IN filterListID BIGINT UNSIGNED
+    IN userGroupID BIGINT UNSIGNED
 )
 proc: BEGIN
     DECLARE minScore, maxScore, userWeight, prevUserWeight,
@@ -266,7 +256,6 @@ proc: BEGIN
         qualID,
         subjID,
         userGroupID,
-        filterListID,
         userGroupMinScoreListID,
         userGroupMaxScoreListID,
         exitCode
@@ -303,22 +292,8 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    -- And then we also check whether the subject is on the filter list, with
-    -- a score above 0 and a weight sum above 10.
-    SELECT score_val, weight_exp INTO filterListScore, filterListWeightExp
-    FROM FloatScoreAndWeightAggregates
-    WHERE (
-        list_id = filterListID AND
-        subj_id = subjID
-    );
 
-    IF NOT (filterListScore > 0 AND filterListWeightExp >= 13) THEN
-        SELECT 2 AS exitCode; -- subject is not on the filter list.
-        LEAVE proc;
-    END IF;
-
-    
-    -- If the user is a member, select the scoreMin and the scoreMax.
+    -- If the user is a member, select the minScore and the maxScore.
     SELECT min_score, max_score INTO minScore, maxScore
     FROM PublicUserFloatMinAndMaxScores
     WHERE (
@@ -327,101 +302,25 @@ proc: BEGIN
         subj_id = subjID
     );
 
-    -- We then insert or find the List entity.
-    START TRANSACTION;
-    
-    SET scoreContrListDefStr = CONCAT(
-        '@13,@', qualID, ',@', subjID, ',@', userGroupID,
-        CASE filterListID
-            WHEN 0 THEN ',null'
-            ELSE CONCAT(',@', filterListID)
-        END CASE
+    -- And finally we insert or update, or delete (if the public score is
+    -- deleted), the min and max scores. (This sub-procedure fails if the
+    -- user's data counters is exceeded when inserting the min score, but the
+    -- subsequent max score insertion will always succeed if the min score did.)
+    CALL _insertUpdateOrDeleteUserGroupMinAndMaxScores (
+        requestingUserID,
+        targetUserID,
+        NULL,
+        targetUserWeight,
+        minScore,
+        maxScore,
+        userGroupMinScoreListID,
+        userGroupMaxScoreListID,
+        exitCode
     );
-
-    CALL _insertOrFindFunctionCallEntity (
-        requestingUserID, scoreContrListDefStr, 1,
-        scoreContrListID, exitCode
-    );
-
     IF (exitCode = 5) THEN
         SELECT 5 AS exitCode; -- a counter was is exceeded.
         LEAVE proc;
     END IF;
-
-    -- Then we get the previous user weight.
-    SELECT user_weight_exp INTO prevUserWeightExp
-    FROM ScoreContributors
-    WHERE (
-        listID = scoreContrListID AND
-        user_id = targetUserID
-    );
-
-    IF (prevUserWeightExp IS NOT NULL) THEN
-        SET prevUserWeight = POW(1.2, prevUserWeightExp);
-    ELSE
-        SET prevUserWeight = 0;
-    END IF;
-
-    -- If the score is deleted/missing, make sure that it is removed from the
-    -- score contributors list, and exit.
-    IF (scoreMin IS NULL) THEN
-        ROLLBACK;
-
-        DELETE FROM ScoreContributors
-        WHERE (
-            listID = scoreContrListID AND
-            user_id = targetUserID
-        );
-        SET wasDeleted = ROW_COUNT();
-
-        IF (wasDeleted) THEN
-            UPDATE ListMetadata
-            SET
-                list_len = list_len - 1,
-                weight_sum = weight_sum - prevUserWeight
-            WHERE list_id = scoreContrListID;
-        END IF;
-
-        SELECT 0 AS exitCode; -- request was carried out (score deleted).
-        LEAVE proc;
-    ELSE
-        SET uploadDataCost = uploadDataCost + 30;
-    END IF;
-
-    -- If not, then we call _increaseUserCounters() to increase the user's
-    -- counters, and if some were exceeded, we also exit early.
-    CALL _increaseUserCounters (
-        requestingUserID, 0, 20, 1 << 24, isExceeded
-    );
-    IF (isExceeded) THEN
-        ROLLBACK;
-        SELECT 5 AS exitCode; -- a counter was is exceeded.
-        LEAVE proc;
-    END IF;
-
-    COMMIT;
-
-    -- If successful so far, we then finally insert the score in the
-    -- ScoreContributors table
-    INSERT INTO ScoreContributors (
-        list_id, user_id, score_min, score_max, user_weight_exp
-    ) VALUES (
-        scoreContrListID, targetUserID, scoreMin, scoreMax, userWeightExp
-    )
-    ON DUPLICATE KEY UPDATE
-        score_min = scoreMin,
-        score_max = scoreMax,
-        user_weight_exp = userWeightExp;
-
-    -- And we also remember to update the list's length and weight sum.
-    INSERT INTO ListMetadata (
-        list_id, list_len, weight_sum
-    ) VALUES (
-        scoreContrListID, 1, userWeight
-    )
-    ON DUPLICATE KEY UPDATE
-        list_len = list_len + 1,
-        weight_sum = weight_sum + userWeight - prevUserWeight;
 
     SELECT 0 AS exitCode; -- request was carried out.
 END proc //
@@ -471,6 +370,24 @@ DELIMITER ;
 
 
 
+
+
+
+
+
+-- -- And then we also check whether the subject is on the filter list, with
+-- -- a score above 0 and a weight sum above 10.
+-- SELECT score_val, weight_exp INTO filterListScore, filterListWeightExp
+-- FROM FloatScoreAndWeightAggregates
+-- WHERE (
+--     list_id = filterListID AND
+--     subj_id = subjID
+-- );
+
+-- IF NOT (filterListScore > 0 AND filterListWeightExp >= 13) THEN
+--     SELECT 2 AS exitCode; -- subject is not on the filter list.
+--     LEAVE proc;
+-- END IF;
 
 
 
