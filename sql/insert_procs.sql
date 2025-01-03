@@ -872,25 +872,19 @@ proc: BEGIN
         SET compCount = compUsage;
     END IF;
 
-    -- Then check if any limits are exceeded, and return isExceeded = 1 if so
-    -- (without updating the user's counters).
-    IF (
+    -- Then check if any limits are exceeded.
+    SET isExceeded = (
         downloadCount > downloadLimit OR
         uploadCount > uploadLimit OR
         compCount > compLimit
-    ) THEN
-        SET isExceeded = 1;
-        LEAVE proc;
-    END IF;
+    );
 
-    -- If not, update the counters and return isExceeded = 0.
+    -- Finally update the counters and return isExceeded.
     UPDATE Private_UserData
     SET
         download_data_this_week = downloadCount,
         upload_data_this_week = uploadCount,
         computation_usage_this_week = compCount
     WHERE user_id = userID;
-
-    SET isExceeded = 0;
 END proc //
 DELIMITER ;

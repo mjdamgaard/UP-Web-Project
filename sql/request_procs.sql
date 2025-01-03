@@ -60,57 +60,90 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE _insertOrUpdateScoreAndWeight (
+    IN requestingUserID BIGINT UNSIGNED,
     IN listID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN scoreVal FLOAT,
-    IN weightExp TINYINT, -- nullable if weight is provided.
-    IN weight FLOAT, -- nullable unless weightExp is not provided.
+    IN scoreVal DOUBLE,
+    IN weightExp TINYINT, -- nullable if weightVal is provided.
+    IN weightVal DOUBLE, -- nullable unless weightExp is not provided.
+    IN rollBackOnExcess BOOL,
     OUT exitCode TINYINT
 )
-proc: BEGIN
-    DECLARE prevScoreVal, prevUserWeight FLOAT;
-    DECLARE prevWeightExp TINYINT;
+BEGIN
+    DECLARE prevScoreVal, prevWeightVal, prevWeightSum DOUBLE;
+    DECLARE prevWeightExp, isExceeded TINYINT;
 
     IF (weightExp IS NULL) THEN
-        IF (weight > 1.1E+10) THEN
+        IF (weightVal > 1.1E+10) THEN
             SET weightExp = 127;
-        ELSEIF (weight < 7.4E-11) THEN
+        ELSEIF (weightVal < 7.4E-11) THEN
             SET weightExp = -128;
         ELSE
-            SET weightExp = ROUND(LOG2(weight) / LOG2(1.2));
+            SET weightExp = ROUND(LOG2(weightVal) / LOG2(1.2));
         END IF;
     END IF;
 
-    SET weight = POW(1.2, weightExp);
+    SET weightVal = POW(1.2, weightExp);
 
     -- We select (for update) the previous score on the list, and branch
     -- accordingly in order to update the ListMetadata table correctly.
     START TRANSACTION;
 
-    SELECT score_val, weight_exp INTO prevScoreVal, prevWeightExp
-    FROM FloatScoreAndWeightAggregates
+
+    SELECT weight_sum INTO prevWeightSum
+    FROM ListMetadata
     WHERE (
         list_id = listID AND
         subj_id = subjID
     )
     FOR UPDATE;
 
-    IF (prevScoreVal IS NULL) THEN
+    SELECT score_val, weight_exp INTO prevScoreVal, prevWeightExp
+    FROM FloatScoreAndWeightAggregates
+    WHERE (
+        list_id = listID AND
+        subj_id = subjID
+    );
+
+    SET prevWeightVal = POW(1.2, prevWeightExp);
+
+    -- Branch according to whether the score should be inserted, updated, or
+    -- deleted, the latter being the case where the scoreVal input is NULL. 
+    IF (scoreVal IS NOT NULL AND prevScoreVal IS NULL) THEN
         INSERT INTO FloatScoreAndWeightAggregates (
             list_id, subj_id, score_val, weight_exp 
         ) VALUES (
             listID, subjID, scoreVal, weightExp
         );
 
-        COMMIT;
-        
-        UPDATE ListMetadata SET
+        INSERT INTO ListMetadata (
+            list_id, list_len, weight_sum
+        ) VALUES (
+            listID, 1, weightVal
+        )
+        ON DUPLICATE KEY UPDATE
             list_len = list_len + 1,
-            weight_sum = weight_sum + weight
-        WHERE list_id = listID;
+            weight_sum = weight_sum + weightVal - prevWeightVal;
 
-        SET exitCode = 0; -- insert.
-    ELSE
+        IF (prevWeightSum IS NULL) THEN
+            CALL _increaseUserCounters (
+                requestingUserID, 0, 33, 1 << 24, isExceeded
+            );
+        ELSE
+            CALL _increaseUserCounters (
+                requestingUserID, 0, 20, 1 << 24, isExceeded
+            );
+        END IF;
+
+        IF (isExceeded AND rollBackOnExcess) THEN
+            ROLLBACK;
+            SET exitCode = 5; -- a counter was is exceeded.
+        ELSE
+            COMMIT;
+            SET exitCode = 0; -- insert.
+        END IF;
+
+    ELSEIF (scoreVal IS NOT NULL AND prevScoreVal IS NOT NULL) THEN
         UPDATE FloatScoreAndWeightAggregates SET
             score_val = scoreVal,
             weight_exp = weightExp
@@ -118,16 +151,33 @@ proc: BEGIN
             list_id = listID AND
             subj_id = subjID
         );
-
-        COMMIT;
         
         UPDATE ListMetadata SET
-            weight_sum = weight_sum + weight - POW(1.2, prevWeightExp)
+            weight_sum = weight_sum + weightVal - prevWeightVal
         WHERE list_id = listID;
 
+        COMMIT;
         SET exitCode = 1; -- update.
+
+    ELSEIF (scoreVal IS NULL AND prevScoreVal IS NOT NULL) THEN
+        DELETE FROM FloatScoreAndWeightAggregates
+        WHERE (
+            list_id = listID AND
+            subj_id = subjID
+        );
+        
+        UPDATE ListMetadata SET
+            list_len = list_len - 1,
+            weight_sum = weight_sum - prevWeightVal
+        WHERE list_id = listID;
+
+        COMMIT;
+        SET exitCode = 2; -- deletion.
+    ELSE
+        COMMIT;
+        SET exitCode = 3; -- no change.
     END IF;
-END proc //
+END //
 DELIMITER ;
 
 
@@ -136,15 +186,16 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE _insertOrUpdateUserGroupMinAndMaxScores (
-    IN userID BIGINT UNSIGNED,
-    IN userWeight FLOAT,
+    IN requestingUserID BIGINT UNSIGNED,
+    IN targetUserID BIGINT UNSIGNED,
+    IN targetUserWeight DOUBLE,
     IN userGroupMinScoreListID BIGINT UNSIGNED,
     IN userGroupMaxScoreListID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 proc: BEGIN
     DECLARE scoreMin, scoreMax, userWeight, prevUserWeight,
-        filterListScore, filterListWeight FLOAT;
+        filterListScore, filterListWeight DOUBLE;
     DECLARE userWeightExp, prevUserWeightExp, isExceeded, wasDeleted,
         userWeightWeightExp TINYINT;
 
@@ -261,7 +312,7 @@ CREATE PROCEDURE requestUserGroupScoreUpdate (
 )
 proc: BEGIN
     DECLARE scoreMin, scoreMax, userWeight, prevUserWeight,
-        filterListScore, filterListWeight FLOAT;
+        filterListScore, filterListWeight DOUBLE;
     DECLARE userWeightExp, prevUserWeightExp, isExceeded, wasDeleted,
         userWeightWeightExp TINYINT;
     DECLARE uploadDataCost BIGINT UNSIGNED 0;
@@ -499,7 +550,7 @@ proc: BEGIN
 
     DECLARE binUserNumber BIGINT UNSIGNED DEFAULT listLen DIV 19;
     DECLARE i BIGINT UNSIGNED DEFAULT 0;
-    DECLARE weightSum FLOAT;
+    DECLARE weightSum DOUBLE;
 
     DECLARE cur CURSOR FOR
         SELECT score_val, user_weight_exp
@@ -510,7 +561,7 @@ proc: BEGIN
             score_width_exp ASC,
             user_weight_exp ASC,
             user_id ASC;
-    DECLARE scoreVal FLOAT;
+    DECLARE scoreVal DOUBLE;
     DECLARE userWeightExp TINYINT;
 
     DECLARE uploadDataCost BIGINT UNSIGNED DEFAULT CASE WHEN (
