@@ -59,7 +59,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE _insertOrUpdateScoreAndWeight (
+CREATE PROCEDURE _insertUpdateOrDeleteScoreAndWeight (
     IN requestingUserID BIGINT UNSIGNED,
     IN listID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
@@ -185,124 +185,67 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE _insertOrUpdateUserGroupMinAndMaxScores (
+CREATE PROCEDURE _insertUpdateOrDeleteUserGroupMinAndMaxScores (
     IN requestingUserID BIGINT UNSIGNED,
     IN targetUserID BIGINT UNSIGNED,
-    IN targetUserWeight DOUBLE,
+    IN targetUserWeightExp TINYINT, -- nullable if targetUserWeightVal is there.
+    IN targetUserWeightVal DOUBLE, -- nullable if targetUserWeightExp is there.
+    IN minScore DOUBLE,
+    IN maxScore DOUBLE,
     IN userGroupMinScoreListID BIGINT UNSIGNED,
     IN userGroupMaxScoreListID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 proc: BEGIN
-    DECLARE scoreMin, scoreMax, userWeight, prevUserWeight,
-        filterListScore, filterListWeight DOUBLE;
-    DECLARE userWeightExp, prevUserWeightExp, isExceeded, wasDeleted,
-        userWeightWeightExp TINYINT;
-
-    -- Select the scoreMin and the scoreMax.
-    SELECT score_min, score_max INTO scoreMin, scoreMax
-    FROM PublicUserFloatMinAndMaxScores
-    WHERE (
-        user_id = targetUserID AND
-        qual_id = qualID AND
-        subj_id = subjID
-    );
-
-    -- 
-    START TRANSACTION;
-
-    SELECT score_val, weight_exp INTO prevScoreMin, prevUserWeight
-    FROM FloatScoreAndWeightAggregates
-    WHERE (
-        list_id = userGroupMinScoreListID AND
-        subj_id = userID
-    )
-    FOR UPDATE;
-
-    -- Then we get the previous user weight.
-    SELECT user_weight_exp INTO prevUserWeightExp
-    FROM ScoreContributors
-    WHERE (
-        listID = scoreContrListID AND
-        user_id = targetUserID
-    );
-
-    IF (prevUserWeightExp IS NOT NULL) THEN
-        SET prevUserWeight = POW(1.2, prevUserWeightExp);
-    ELSE
-        SET prevUserWeight = 0;
-    END IF;
-
-    -- If the score is deleted/missing, make sure that it is removed from the
-    -- score contributors list, and exit.
-    IF (scoreMin IS NULL) THEN
-        ROLLBACK;
-
-        DELETE FROM ScoreContributors
-        WHERE (
-            listID = scoreContrListID AND
-            user_id = targetUserID
+    IF (minScore IS NULL XOR maxScore IS NULL) THEN
+        SIGNAL SQLSTATE "45000" SET MESSAGE_TEXT = CONCAT(
+            "_insertUpdateOrDeleteUserGroupMinAndMaxScores(): ",
+            "minScore IS NULL XOR maxScore IS NULL"
         );
-        SET wasDeleted = ROW_COUNT();
-
-        IF (wasDeleted) THEN
-            UPDATE ListMetadata
-            SET
-                list_len = list_len - 1,
-                weight_sum = weight_sum - prevUserWeight
-            WHERE list_id = scoreContrListID;
-        END IF;
-
-        SELECT 0 AS exitCode; -- request was carried out (score deleted).
         LEAVE proc;
-    ELSE
-        SET uploadDataCost = uploadDataCost + 30;
     END IF;
 
-    -- If not, then we call _increaseUserCounters() to increase the user's
-    -- counters, and if some were exceeded, we also exit early.
-    CALL _increaseUserCounters (
-        requestingUserID, 0, 20, 1 << 24, isExceeded
+    CALL _insertUpdateOrDeleteScoreAndWeight (
+        requestingUserID,
+        userGroupMinScoreListID,
+        targetUserID,
+        minScore,
+        targetUserWeightExp,
+        targetUserWeightVal,
+        1,
+        exitCode
     );
-    IF (isExceeded) THEN
-        ROLLBACK;
-        SELECT 5 AS exitCode; -- a counter was is exceeded.
+
+    IF (exitCode = 5) THEN
         LEAVE proc;
     END IF;
 
-    COMMIT;
-
-    -- If successful so far, we then finally insert the score in the
-    -- ScoreContributors table
-    INSERT INTO ScoreContributors (
-        list_id, user_id, score_min, score_max, user_weight_exp
-    ) VALUES (
-        scoreContrListID, targetUserID, scoreMin, scoreMax, userWeightExp
-    )
-    ON DUPLICATE KEY UPDATE
-        score_min = scoreMin,
-        score_max = scoreMax,
-        user_weight_exp = userWeightExp;
-
-    -- And we also remember to update the list's length and weight sum.
-    INSERT INTO ListMetadata (
-        list_id, list_len, weight_sum
-    ) VALUES (
-        scoreContrListID, 1, userWeight
-    )
-    ON DUPLICATE KEY UPDATE
-        list_len = list_len + 1,
-        weight_sum = weight_sum + userWeight - prevUserWeight;
-
-    SELECT 0 AS exitCode; -- request was carried out.
+    CALL _insertUpdateOrDeleteScoreAndWeight (
+        requestingUserID,
+        userGroupMaxScoreListID,
+        targetUserID,
+        maxScore,
+        targetUserWeightExp,
+        targetUserWeightVal,
+        0,
+        exitCode
+    );
 END proc //
 DELIMITER ;
 
 
 
 
+
+
+
+
+
+
+
+
 DELIMITER //
-CREATE PROCEDURE requestUserGroupScoreUpdate (
+CREATE PROCEDURE requestUserGroupMinAndMaxScoreUpdate (
     IN requestingUserID BIGINT UNSIGNED,
     IN targetUserID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
@@ -311,23 +254,51 @@ CREATE PROCEDURE requestUserGroupScoreUpdate (
     IN filterListID BIGINT UNSIGNED
 )
 proc: BEGIN
-    DECLARE scoreMin, scoreMax, userWeight, prevUserWeight,
+    DECLARE minScore, maxScore, userWeight, prevUserWeight,
         filterListScore, filterListWeight DOUBLE;
     DECLARE userWeightExp, prevUserWeightExp, isExceeded, wasDeleted,
-        userWeightWeightExp TINYINT;
-    DECLARE uploadDataCost BIGINT UNSIGNED 0;
-    DECLARE scoreContrListDefStr VARCHAR(700) CHARACTER SET utf8mb4;
-    DECLARE scoreContrListID, exitCode BIGINT UNSIGNED;
+        userWeightWeightExp, exitCode TINYINT;
 
-    -- First we check that the user is in the given user group.
-    SELECT score_val, weight_exp INTO userWeight, userWeightWeightExp
+    DECLARE userGroupMinScoreListID, userGroupMinScoreListID BIGINT UNSIGNED;
+
+    -- Get (or insert) userGroupMinScoreListID and userGroupMaxScoreListID.
+    CALL _insertOrFindUserGroupMinAndMaxScoreListIDs (
+        qualID,
+        subjID,
+        userGroupID,
+        filterListID,
+        userGroupMinScoreListID,
+        userGroupMaxScoreListID,
+        exitCode
+    );
+    IF (exitCode = 5) THEN
+        SELECT 5 AS exitCode; -- a counter was is exceeded.
+        LEAVE proc;
+    END IF;
+
+    -- Then we check that the user is in the given user group. If not, make
+    -- sure that any existing score of the user is deleted from the two lists.
+    SELECT score_val, weight_exp
+    INTO targetUserWeight, targetUserWeightWeightExp
     FROM FloatScoreAndWeightAggregates
     WHERE (
         list_id = userGroupID AND
         subj_id = targetUserID
     );
 
-    IF NOT (userWeight > 0 AND userWeightWeightExp >= 13) THEN
+    IF NOT (targetUserWeight > 0 AND targetUserWeightWeightExp >= 13) THEN
+        CALL _insertUpdateOrDeleteUserGroupMinAndMaxScores (
+            requestingUserID,
+            targetUserID,
+            NULL,
+            targetUserWeight,
+            NULL,
+            NULL,
+            userGroupMinScoreListID,
+            userGroupMaxScoreListID,
+            exitCode
+        );
+
         SELECT 1 AS exitCode; -- user is not a member of the user group.
         LEAVE proc;
     END IF;
@@ -348,7 +319,7 @@ proc: BEGIN
 
     
     -- If the user is a member, select the scoreMin and the scoreMax.
-    SELECT score_min, score_max INTO scoreMin, scoreMax
+    SELECT min_score, max_score INTO minScore, maxScore
     FROM PublicUserFloatMinAndMaxScores
     WHERE (
         user_id = targetUserID AND

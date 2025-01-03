@@ -62,9 +62,9 @@ CREATE TABLE PublicUserFloatMinAndMaxScores (
 
     subj_id BIGINT UNSIGNED NOT NULL,
 
-    score_min FLOAT NOT NULL,
+    min_score FLOAT NOT NULL,
 
-    score_max FLOAT NOT NULL,
+    max_score FLOAT NOT NULL,
 
     PRIMARY KEY (
         user_id,
