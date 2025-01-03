@@ -95,19 +95,19 @@ CREATE TABLE PublicUserByteScores (
 
 
 
-CREATE TABLE UserWeights (
+-- CREATE TABLE UserWeights (
 
-    user_group_id BIGINT UNSIGNED NOT NULL,
+--     user_group_id BIGINT UNSIGNED NOT NULL,
 
-    user_id BIGINT UNSIGNED NOT NULL,
+--     user_id BIGINT UNSIGNED NOT NULL,
 
-    user_weight_exp TINYINT NOT NULL,
+--     user_weight_exp TINYINT NOT NULL,
 
-    PRIMARY KEY (
-        user_group_id,
-        user_id
-    )
-);
+--     PRIMARY KEY (
+--         user_group_id,
+--         user_id
+--     )
+-- );
 
 
 

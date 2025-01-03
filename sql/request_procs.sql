@@ -18,28 +18,26 @@ CREATE PROCEDURE requestUserGroupScoreUpdate (
     IN filterListID BIGINT UNSIGNED
 )
 proc: BEGIN
-    DECLARE scoreMin, scoreMax, userWeight, prevUserWeight FLOAT;
-    DECLARE filterListScore, filterListWeight FLOAT;
-    DECLARE userWeightExp, prevUserWeightExp, isExceeded, wasDeleted TINYINT;
-    DECLARE filterListWeightExp TINYINT;
+    DECLARE scoreMin, scoreMax, userWeight, prevUserWeight,
+        filterListScore, filterListWeight FLOAT;
+    DECLARE userWeightExp, prevUserWeightExp, isExceeded, wasDeleted,
+        userWeightWeightExp TINYINT;
     DECLARE uploadDataCost BIGINT UNSIGNED 0;
     DECLARE scoreContrListDefStr VARCHAR(700) CHARACTER SET utf8mb4;
     DECLARE scoreContrListID, exitCode BIGINT UNSIGNED;
 
     -- First we check that the user is in the given user group.
-    SELECT user_weight_exp INTO userWeightExp
-    FROM UserWeights
+    SELECT score_val, weight_exp INTO userWeight, userWeightWeightExp
+    FROM FloatScoreAndWeightAggregates
     WHERE (
-        user_group_id = userGroupID AND
-        user_id = targetUserID
+        list_id = userGroupID AND
+        subj_id = targetUserID
     );
 
-    IF (userWeightExp IS NULL) THEN
+    IF NOT (userWeight > 0 AND userWeightWeightExp >= 13) THEN
         SELECT 1 AS exitCode; -- user is not a member of the user group.
         LEAVE proc;
     END IF;
-
-    SET userWeight = POW(1.2, userWeightExp);
 
     -- And then we also check whether the subject is on the filter list, with
     -- a score above 0 and a weight sum above 10.
@@ -49,9 +47,8 @@ proc: BEGIN
         list_id = filterListID AND
         subj_id = subjID
     );
-    SET filterListWeight = POW(1.2, filterListWeightExp);
 
-    IF NOT (filterListScore > 0 AND filterListWeight >= 10) THEN
+    IF NOT (filterListScore > 0 AND filterListWeightExp >= 13) THEN
         SELECT 2 AS exitCode; -- subject is not on the filter list.
         LEAVE proc;
     END IF;
@@ -66,7 +63,7 @@ proc: BEGIN
         subj_id = subjID
     );
 
-    -- Then we insert or find the List entity, and increase the uploadDataCost
+    -- We then insert or find the List entity, and increase the uploadDataCost
     -- on insertion, but roll back the transaction if the upload data exceeds
     -- the weekly limit for the requesting user.
     START TRANSACTION;
