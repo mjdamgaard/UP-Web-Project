@@ -766,7 +766,7 @@ proc: BEGIN
     loop_1: LOOP
         SET prevScore = curScore;
 
-        IF (maxScore <= minScore OR done) THEN
+        IF (maxScore < minScore OR done) THEN
             SET curScore = maxScore;
             SET curWeightVal = maxUserWeightVal;
             FETCH maxCur INTO maxScore, maxUserWeightExp;
