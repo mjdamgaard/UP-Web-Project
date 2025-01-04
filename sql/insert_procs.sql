@@ -826,14 +826,14 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE _increaseUserCounters (
     IN userID BIGINT UNSIGNED,
-    IN downloadData BIGINT UNSIGNED, -- Only used for query "as user" requests.
-    IN uploadData BIGINT UNSIGNED,
-    IN compUsage BIGINT UNSIGNED,
+    IN downloadData FLOAT, -- Only used for query "as user" requests.
+    IN uploadData FLOAT,
+    IN compUsage FLOAT,
     OUT isExceeded TINYINT
 )
 proc: BEGIN
-    DECLARE downloadCount, uploadCount, compCount BIGINT UNSIGNED;
-    DECLARE downloadLimit, uploadLimit, compLimit BIGINT UNSIGNED;
+    DECLARE downloadCount, uploadCount, compCount FLOAT;
+    DECLARE downloadLimit, uploadLimit, compLimit FLOAT;
     DECLARE lastRefreshedAt DATE;
     DECLARE currentDate DATE DEFAULT (CURDATE());
     

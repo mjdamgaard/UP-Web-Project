@@ -246,9 +246,7 @@ CREATE TABLE ListMetadata (
 
     weight_sum DOUBLE NOT NULL DEFAULT 0,
 
-    paid_computation_cost_for_update BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    paid_upload_data_cost_for_storage BIGINT UNSIGNED NOT NULL DEFAULT 0
+    paid_upload_data_cost FLOAT NOT NULL DEFAULT 0
 );
 
 
@@ -265,8 +263,9 @@ CREATE TABLE ScheduledRequests (
     -- exec_at BIGINT UNSIGNED NOT NULL, -- exec_at >> 32 = UNIX timestamp.
 
     fraction_of_computation_cost_paid FLOAT;
-
     fraction_of_upload_data_cost_paid FLOAT;
+    computation_cost_required FLOAT;
+    upload_data_cost_required FLOAT;
 
     PRIMARY KEY (
         req_type,
@@ -276,6 +275,8 @@ CREATE TABLE ScheduledRequests (
     UNIQUE INDEX (
         fraction_of_computation_cost_paid,
         fraction_of_upload_data_cost_paid,
+        computation_cost_required,
+        upload_data_cost_required,
         req_type,
         req_data
     )
@@ -1154,12 +1155,12 @@ CREATE TABLE Private_UserData (
     -- the user via a third party.)
 
 
-    download_data_this_week BIGINT UNSIGNED NOT NULL DEFAULT 0,
-    download_data_weekly_limit BIGINT UNSIGNED NOT NULL DEFAULT 5000000000,
-    upload_data_this_week BIGINT UNSIGNED NOT NULL DEFAULT 0,
-    upload_data_weekly_limit BIGINT UNSIGNED NOT NULL DEFAULT 1000000,
-    computation_usage_this_week BIGINT UNSIGNED NOT NULL DEFAULT 0,
-    computation_usage_weekly_limit BIGINT UNSIGNED NOT NULL DEFAULT (500 << 32),
+    download_data_this_week FLOAT NOT NULL DEFAULT 0, -- bytes.
+    download_data_weekly_limit FLOAT NOT NULL DEFAULT 5000000000,
+    upload_data_this_week FLOAT NOT NULL DEFAULT 0, -- bytes.
+    upload_data_weekly_limit FLOAT NOT NULL DEFAULT 1000000,
+    computation_usage_this_week FLOAT NOT NULL DEFAULT 0, -- ms.
+    computation_usage_weekly_limit FLOAT NOT NULL DEFAULT 500000,
     last_refreshed_at DATE NOT NULL DEFAULT (CURDATE())
 );
 
