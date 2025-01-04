@@ -32,6 +32,8 @@ DROP TABLE EntitySecKeys;
 
 CREATE TABLE PrivateUserScores (
 
+    list_type_ident CHAR NOT NULL DEFAULT "\0", -- "\0": No aggregation allowed.
+
     user_whitelist_id BIGINT UNSIGNED NOT NULL,
 
     qual_id BIGINT UNSIGNED NOT NULL,
@@ -43,6 +45,7 @@ CREATE TABLE PrivateUserScores (
     user_id BIGINT UNSIGNED NOT NULL,
 
     PRIMARY KEY (
+        list_type_ident,
         user_whitelist_id,
         qual_id,
         score_val,
@@ -245,6 +248,13 @@ CREATE TABLE ListMetadata (
     list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
     weight_sum DOUBLE NOT NULL DEFAULT 0,
+
+    pos_score_list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+    -- pos_score_weight_sum DOUBLE NOT NULL DEFAULT 0,
+
+    -- TODO: Implement:
+    short_lived_pos_score_points FLOAT NOT NULL DEFAULT 0,
 
     paid_upload_data_cost FLOAT NOT NULL DEFAULT 0
 );
@@ -546,13 +556,13 @@ VALUES
         '}'
     ), 9),
     (15, "f", CONCAT(
-        'medians(',
+        'score_medians(',
             'Quality:@[qualities],',
             'User group:@[user groups],',
             'Metric:@[metrics],',
             'Filter list?:@[lists]',
         '){',
-            '"Class":"@[median lists]",',
+            '"Class":"@[score median lists]",',
             '"Quality":"%1",',
             '"User group":"%2",',
             '"Metric":"%3",',

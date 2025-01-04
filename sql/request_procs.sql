@@ -107,31 +107,22 @@ BEGIN
         );
 
         INSERT INTO ListMetadata (
-            list_id, list_len, weight_sum
+            list_id, list_len, weight_sum,
+            pos_score_list_len,
+            -- TODO: Implement:
+            -- short_lived_pos_score_points
         ) VALUES (
-            listID, 1, weightVal
+            listID, 1, weightVal,
+            CASE WHEN scoreVal > 0 THEN 1         ELSE 0 END CASE
         )
         ON DUPLICATE KEY UPDATE
             list_len = list_len + 1,
-            weight_sum = weight_sum + weightVal - prevWeightVal;
-
-        -- IF (prevWeightSum IS NULL) THEN
-        --     CALL _increaseUserCounters (
-        --         requestingUserID, 0, 33, 1 << 24, isExceeded
-        --     );
-        -- ELSE
-        --     CALL _increaseUserCounters (
-        --         requestingUserID, 0, 20, 1 << 24, isExceeded
-        --     );
-        -- END IF;
-
-        -- IF (isExceeded AND rollBackOnExcess) THEN
-        --     ROLLBACK;
-        --     SET exitCode = 5; -- a counter was is exceeded.
-        -- ELSE
-        --     COMMIT;
-        --     SET exitCode = 0; -- insert.
-        -- END IF;
+            weight_sum = weight_sum + weightVal - prevWeightVal,
+            pos_score_list_len = CASE WHEN scoreVal > 0 THEN
+                pos_score_list_len + 1
+            ELSE
+                pos_score_list_len
+            END CASE;
 
         COMMIT;
         SET exitCode = 0; -- insert.
@@ -146,7 +137,16 @@ BEGIN
         );
         
         UPDATE ListMetadata SET
-            weight_sum = weight_sum + weightVal - prevWeightVal
+            weight_sum = weight_sum + weightVal - prevWeightVal,
+            pos_score_list_len = pos_score_list_len +
+                CASE
+                    WHEN (scoreVal > 0 AND prevScoreVal <= 0) THEN
+                        1
+                    WHEN (scoreVal <= 0 AND prevScoreVal > 0) THEN
+                        -1
+                    ELSE
+                        0
+                END CASE
         WHERE list_id = listID;
 
         COMMIT;
@@ -161,7 +161,14 @@ BEGIN
         
         UPDATE ListMetadata SET
             list_len = list_len - 1,
-            weight_sum = weight_sum - prevWeightVal
+            weight_sum = weight_sum - prevWeightVal,
+            pos_score_list_len = pos_score_list_len +
+                CASE
+                    WHEN (prevScoreVal > 0) THEN
+                        -1
+                    ELSE
+                        0
+                END CASE
         WHERE list_id = listID;
 
         COMMIT;
@@ -452,9 +459,9 @@ proc: BEGIN
     -- them.
     OPEN cur;
     SET done = 0;
-    member_loop: LOOP
+    loop_1: LOOP
         IF (done) THEN
-            LEAVE member_loop;
+            LEAVE loop_1;
         END IF;
 
         FETCH cur INTO userWeightVal, userWeightWeightExp, memberID;
@@ -472,8 +479,8 @@ proc: BEGIN
             );
         END IF;
 
-        ITERATE member_loop;
-    END LOOP member_loop;
+        ITERATE loop_1;
+    END LOOP loop_1;
     CLOSE cur;
 END proc //
 DELIMITER ;
@@ -492,12 +499,10 @@ proc: BEGIN
     DECLARE exitCode, done TINYINT;
 
     DECLARE cur CURSOR FOR
-        SELECT score_val, weight_exp, subj_id
+        SELECT subj_id
         FROM FloatScoreAndWeightAggregates
         WHERE list_id = minScoreContrListID;
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
-    DECLARE userWeightVal DOUBLE;
-    DECLARE userWeightWeightExp TINYINT;
     DECLARE memberID BIGINT UNSIGNED;
 
 
@@ -505,12 +510,12 @@ proc: BEGIN
     -- each user on there, call _insertUpdate...IfMember().
     OPEN cur;
     SET done = 0;
-    member_loop: LOOP
+    loop_1: LOOP
         IF (done) THEN
-            LEAVE member_loop;
+            LEAVE loop_1;
         END IF;
 
-        FETCH cur INTO userWeightVal, userWeightWeightExp, memberID;
+        FETCH cur INTO memberID;
 
         CALL _insertUpdateOrDeleteScoreContributionWithInputScoresIfMember (
             memberID,
@@ -522,8 +527,8 @@ proc: BEGIN
             exitCode
         );
 
-        ITERATE member_loop;
-    END LOOP member_loop;
+        ITERATE loop_1;
+    END LOOP loop_1;
     CLOSE cur;
 END proc //
 DELIMITER ;
@@ -589,12 +594,12 @@ proc: BEGIN
         minScoreContrListID, ",", maxScoreContrListID
     );
 
-    SELECT list_len INTO userGroupListLen
+    SELECT pos_score_list_len INTO userGroupListLen
     FROM ListMetadata
     WHERE list_id = userGroupID;
 
     -- TODO: Correct this estimation (quick guess) of the computation cost.
-    SET compCostRequired = CEIL(userGroupListLen / 4000) * 10;
+    SET compCostRequired = CEIL(userGroupListLen * 14 / 4000) * 10;
 
     SELECT list_len INTO curScoreContrListLen
     FROM ListMetadata
@@ -690,6 +695,126 @@ proc: BEGIN
     SELECT 0 AS exitCode; -- request was queued.
 END proc //
 DELIMITER ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Here comes an important sub-procedure to compute and update the 'score
+-- median,' as we might call it.
+
+DELIMITER //
+CREATE PROCEDURE _getScoreMedianAndWeight (
+    IN minScoreContrListID BIGINT UNSIGNED,
+    IN maxScoreContrListID BIGINT UNSIGNED,
+    IN fullWeightSum DOUBLE,
+    OUT scoreMedianVal DOUBLE
+)
+proc: BEGIN
+    DECLARE done TINYINT;
+    DECLARE prevScore, minUserWeightVal, maxUserWeightVal,
+        curScore, curWeightVal, curWeightSum, halfWeightSum DOUBLE;
+
+    DECLARE minCur CURSOR FOR
+        SELECT score_val, weight_exp
+        FROM FloatScoreAndWeightAggregates
+        WHERE list_id = minScoreContrListID
+        ORDER BY
+            score_val ASC,
+            weight_exp ASC,
+            subj_id ASC;
+    DECLARE maxCur CURSOR FOR
+        SELECT score_val, weight_exp
+        FROM FloatScoreAndWeightAggregates
+        WHERE list_id = maxScoreContrListID
+        ORDER BY
+            score_val ASC,
+            weight_exp ASC,
+            subj_id ASC;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+    DECLARE minScore, maxScore DOUBLE;
+    DECLARE minUserWeightExp, maxUserWeightExp TINYINT;
+
+    -- First set halfWeightSum to half of the full weight sum of the score
+    -- contribution. which is assumed contained by the fullWeightSum input.
+    -- and then half it. Also initialize curWeight.
+    SET halfWeightSum = fullWeightSum / 2;
+    SET curWeightSum = 0;
+
+    -- Loop through half (weight-wise) of all min and max score contributions
+    -- until the we have the two contributions (min or max) that divides the
+    -- weight sum in half.
+    OPEN minCur;
+    OPEN maxCur;
+    SET done = 0;
+    FETCH minCur INTO minScore, minUserWeightExp;
+    FETCH maxCur INTO maxScore, maxUserWeightExp;
+    IF (done) THEN
+        SET scoreMedianVal = NULL;
+        LEAVE proc;
+    END IF;
+    SET minUserWeightVal = POW(1.2, minUserWeightExp);
+    SET maxUserWeightVal = POW(1.2, maxUserWeightExp);
+    loop_1: LOOP
+        SET prevScore = curScore;
+
+        IF (maxScore <= minScore OR done) THEN
+            SET curScore = maxScore;
+            SET curWeightVal = maxUserWeightVal;
+            FETCH maxCur INTO maxScore, maxUserWeightExp;
+            SET maxUserWeightVal = POW(1.2, maxUserWeightExp);
+        ELSE
+            SET curScore = minScore;
+            SET curWeightVal = minUserWeightVal;
+            FETCH minCur INTO minScore, minUserWeightExp;
+            SET minUserWeightVal = POW(1.2, minUserWeightExp);
+        END IF;
+
+        SET curWeightSum = curWeightSum + curWeightVal;
+
+        IF (curWeightSum >= halfWeightSum OR done) THEN
+            LEAVE loop_1;
+        ELSE
+            ITERATE loop_1;
+        END IF;
+    END LOOP loop_1;
+    CLOSE cur;
+
+    -- At this point, curScore will hold the first value greater than or equal
+    -- to the desired median, and prevScore will hold the first value
+    -- less than or equal to the desired median. All that's left to do is to
+    -- extract an appropriate score median value between these two scores, more
+    -- precisely given by:
+    SET scoreMedianVal = curScore -
+        (curScore - prevScore) * (curWeightSum - halfWeightSum) / curWeightVal;
+END proc //
+DELIMITER ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
