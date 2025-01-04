@@ -244,11 +244,11 @@ CREATE TABLE ListMetadata (
 
     list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
-    weight_sum DOUBLE NOT NULL DEFAULT 0
+    weight_sum DOUBLE NOT NULL DEFAULT 0,
 
-    -- paid_computation_cost_for_update BIGINT UNSIGNED, -- NOT NULL DEFAULT 0,
+    paid_computation_cost_for_update BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
-    -- paid_upload_data_cost_for_storage BIGINT UNSIGNED -- NOT NULL DEFAULT 0
+    paid_upload_data_cost_for_storage BIGINT UNSIGNED NOT NULL DEFAULT 0
 );
 
 
@@ -521,24 +521,24 @@ VALUES
         '}'
     ), 9),
     (13, "f", CONCAT(
-        'user_group_min_scores(',
+        'min_score_contributions(',
             'Quality:@[qualities],',
             'Subject:@[entities],',
             'User group:@[user groups]',
         '){',
-            '"Class":"@[user group min score lists]",',
+            '"Class":"@[min score contributions]",',
             '"Quality":"%1",',
             '"Subject":"%2",',
             '"User group":"%3"',
         '}'
     ), 9),
     (14, "f", CONCAT(
-        'user_group_max_scores(',
+        'max_score_contributions(',
             'Quality:@[qualities],',
             'Subject:@[entities],',
             'User group:@[user groups]',
         '){',
-            '"Class":"@[user group max score lists]",',
+            '"Class":"@[max score contributions]",',
             '"Quality":"%1",',
             '"Subject":"%2",',
             '"User group":"%3"',
