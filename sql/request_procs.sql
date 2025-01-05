@@ -484,7 +484,7 @@ proc: BEGIN
     -- Increase counters due to a (potential) score contribution insert, and
     -- also potentially a ListMetadata insert.
     CALL _increaseUserCounters (
-        requestingUserID, 0, 40, 1 << 24, isExceeded
+        requestingUserID, 0, 40, 10, isExceeded
     );
     IF (isExceeded) THEN
         SELECT 5 AS exitCode; -- a counter was is exceeded.
@@ -721,11 +721,16 @@ proc: BEGIN
     CALL _queueOrUpdateRequest (
         reqType,
         reqData,
-        compCostPayment,
         uploadDataCostPayment,
+        compCostPayment,
+        uploadDataCostRequired,
         compCostRequired,
-        uploadDataCostRequired
+        isExceeded
     );
+    IF (isExceeded) THEN
+        SELECT 5 AS exitCode; -- a counter was is exceeded.
+        LEAVE proc;
+    END IF;
 
     SELECT 0 AS exitCode; -- request was queued.
 END proc //
@@ -793,11 +798,16 @@ proc: BEGIN
     CALL _queueOrUpdateRequest (
         reqType,
         reqData,
-        compCostPayment,
         uploadDataCostPayment,
+        compCostPayment,
+        uploadDataCostRequired,
         compCostRequired,
-        uploadDataCostRequired
+        isExceeded
     );
+    IF (isExceeded) THEN
+        SELECT 5 AS exitCode; -- a counter was is exceeded.
+        LEAVE proc;
+    END IF;
 
     SELECT 0 AS exitCode; -- request was queued.
 END proc //
@@ -902,6 +912,91 @@ END proc //
 DELIMITER ;
 
 
+
+
+
+
+
+-- And here comes the request for the median score update.
+
+DELIMITER //
+CREATE PROCEDURE requestUpdateOfScoreContributionsForWholeUserGroup (
+    IN requestingUserID BIGINT UNSIGNED,
+    IN compCostPayment FLOAT,
+    IN uploadDataCostPayment FLOAT,
+    IN qualID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
+    IN userGroupID BIGINT UNSIGNED
+)
+proc: BEGIN
+    DECLARE exitCode, isExceeded TINYINT;
+    DECLARE minScoreContrListID, minScoreContrListID BIGINT UNSIGNED;
+    DECLARE fullWeightSum DOUBLE;
+    DECLARE reqType VARCHAR(100) DEFAULT "MEDIAN_SCORE";
+    DECLARE reqData VARCHAR(255);
+    DECLARE compCostRequired, uploadDataCostRequired FLOAT;
+    DECLARE scoreContrListLen BIGINT UNSIGNED;
+
+
+    CALL _increaseUserCounters (
+        requestingUserID, 0, uploadDataCostPayment, compCostPayment,
+        isExceeded
+    );
+    IF (isExceeded) THEN
+        SELECT 5 AS exitCode; -- a counter was is exceeded.
+        LEAVE proc;
+    END IF;
+
+    -- Get (or insert) minScoreContrListID and maxScoreContrListID.
+    CALL _insertOrFindScoreContributionListIDs (
+        requestingUserID,
+        qualID,
+        subjID,
+        userGroupID,
+        minScoreContrListID,
+        maxScoreContrListID,
+        exitCode
+    );
+    IF (exitCode = 5) THEN
+        SELECT 5 AS exitCode; -- a counter was is exceeded.
+        LEAVE proc;
+    END IF;
+
+    -- Get the full weight sum of the contribution score lists.
+    SELECT weight_sum INTO fullWeightSum
+    FROM ListMetadata
+    WHERE list_id = minScoreContrListID;
+
+    SET reqData = CONCAT(
+        minScoreContrListID, ",", maxScoreContrListID, ",", fullWeightSum
+    );
+
+    SELECT pos_score_list_len INTO userGroupListLen
+    FROM ListMetadata
+    WHERE list_id = userGroupID;
+
+    -- TODO: Correct this estimation (quick guess) of the computation cost.
+    SET compCostRequired = CEIL(scoreContrListLen * 14 / 4000) * 10;
+
+    SET uploadDataCostRequired = 20;
+
+    CALL _queueOrUpdateRequest (
+        reqType,
+        reqData,
+        uploadDataCostPayment,
+        compCostPayment,
+        uploadDataCostRequired,
+        compCostRequired,
+        isExceeded
+    );
+    IF (isExceeded) THEN
+        SELECT 5 AS exitCode; -- a counter was is exceeded.
+        LEAVE proc;
+    END IF;
+
+    SELECT 0 AS exitCode; -- request was queued.
+END proc //
+DELIMITER ;
 
 
 
@@ -1035,26 +1130,35 @@ DELIMITER //
 CREATE PROCEDURE _queueOrUpdateRequest (
     IN reqType VARCHAR(100),
     IN reqData VARBINARY(2900),
-    IN paidCompCost FLOAT,
-    IN paidUploadDataCost FLOAT,
-    IN compCostRequired FLOAT,
+    IN uploadDataCostPayment FLOAT,
+    IN compCostPayment FLOAT,
     IN uploadDataCostRequired FLOAT,
+    IN compCostRequired FLOAT,
+    OUT isExceeded TINYINT;
 )
-BEGIN
+proc: BEGIN
+    CALL _increaseUserCounters (
+        requestingUserID, 0, uploadDataCostPayment, compCostPayment,
+        isExceeded
+    );
+    IF (isExceeded) THEN
+        LEAVE proc;
+    END IF;
+
     INSERT INTO ScheduledRequests (
         req_type, req_data,
         fraction_of_computation_cost_paid, fraction_of_upload_data_cost_paid,
         computation_cost_required, upload_data_cost_required
     ) VALUES (
         reqType, reqData,
-        paidCompCost, paidUploadDataCost,
+        compCostPayment, uploadDataCostPayment,
         compCostRequired, uploadDataCostRequired
     )
     ON DUPLICATE KEY UPDATE
         fraction_of_computation_cost_paid = fraction_of_computation_cost_paid +
-            paidCompCost / compCostRequired,
+            compCostPayment / compCostRequired,
         fraction_of_upload_data_cost_paid = fraction_of_upload_data_cost_paid +
-            paidUploadDataCost / uploadDataCostRequired,
+            uploadDataCostPayment / uploadDataCostRequired,
         -- These values might have changed, so we update them as well:
         computation_cost_required = compCostRequired,
         upload_data_cost_required = uploadDataCostRequired
@@ -1062,7 +1166,7 @@ BEGIN
         req_type = reqType AND
         req_data = reqData
     );
-END //
+END proc //
 DELIMITER ;
 
 
@@ -1117,6 +1221,26 @@ BEGIN
             CALL _updateAllExistingScoreContributions (
                 qualID, subjID, userGroupID, minScoreContrListID
             );
+        END
+        WHEN "SCORE_MEDIAN" THEN BEGIN
+            DECLARE scoreMedianVal DOUBLE;
+            DECLARE minScoreContrListID, maxScoreContrListID,
+                fullWeightSum BIGINT UNSIGNED;
+            SET minScoreContrListID = CAST(
+                REGEXP_SUBSTR(paths, "[^,]+", 1, 1) AS UNSIGNED
+            );
+            SET maxScoreContrListID = CAST(
+                REGEXP_SUBSTR(paths, "[^,]+", 1, 2) AS UNSIGNED
+            );
+            SET fullWeightSum = CAST(
+                REGEXP_SUBSTR(paths, "[^,]+", 1, 3) AS DOUBLE
+            );
+
+            CALL _getScoreMedian (
+                minScoreContrListID, maxScoreContrListID, fullWeightSum,
+                scoreMedianVal
+            );
+            -- ...
         END
         ELSE BEGIN
             SIGNAL SQLSTATE "45000" SET MESSAGE_TEXT = "Unrecognized reqType";

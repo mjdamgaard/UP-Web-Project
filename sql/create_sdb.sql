@@ -38,7 +38,7 @@ CREATE TABLE PrivateUserScores (
 
     qual_id BIGINT UNSIGNED NOT NULL,
 
-    score_val BIGINT NOT NULL,
+    score_val BIGINT NOT NULL, -- We use integer here because it's in the PK.
 
     subj_id BIGINT UNSIGNED NOT NULL,
 
@@ -49,8 +49,8 @@ CREATE TABLE PrivateUserScores (
         user_whitelist_id,
         qual_id,
         score_val,
-        subj_id,
-        user_id
+        user_id,
+        subj_id
     )
 );
 

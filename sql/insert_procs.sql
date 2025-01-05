@@ -6,6 +6,7 @@ DROP PROCEDURE deletePublicUserScore;
 DROP PROCEDURE insertOrUpdatePrivateUserScore;
 DROP PROCEDURE deletePrivateUserScore;
 DROP PROCEDURE deleteAllPrivateUserScores;
+DROP PROCEDURE deleteSeveralPrivateUserScores;
 
 DROP PROCEDURE _insertEntityWithoutSecKey;
 DROP PROCEDURE _insertOrFindEntityWithSecKey;
@@ -41,10 +42,14 @@ CREATE PROCEDURE insertOrUpdatePublicUserScore (
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN scoreMin FLOAT,
-    IN scoreMax FLOAT
+    IN scoreMax FLOAT,
+    IN truncateTimeBy TINYINT UNSIGNED
 )
 proc: BEGIN
     DECLARE isExceeded TINYINT;
+    DECLARE unixTime DEFAULT (
+        UNIX_TIMESTAMP() >> truncateTimeBy << truncateTimeBy
+    );
 
     CALL _increaseUserCounters (
         userID, 0, 17, 0, isExceeded
@@ -63,14 +68,15 @@ proc: BEGIN
     END IF;
 
     INSERT INTO PublicUserScores (
-        user_id, qual_id, subj_id, score_min, score_min
+        user_id, qual_id, subj_id, score_min, score_min, unix_time
     )
     VALUES (
-        userID, qualID, subjID, scoreMin, scoreMax
+        userID, qualID, subjID, scoreMin, scoreMax, unixTime
     )
     ON DUPLICATE KEY UPDATE
         score_min = scoreMin,
-        score_max = scoreMax;
+        score_max = scoreMax,
+        unix_time = unixTime;
 
     SELECT subjID AS outID, 0 AS exitCode; -- inserted or updated.
 END proc //
@@ -101,6 +107,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrUpdatePrivateUserScore (
     IN userID BIGINT UNSIGNED,
+    IN listType CHAR,
     IN userWhitelistID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
@@ -108,38 +115,38 @@ CREATE PROCEDURE insertOrUpdatePrivateUserScore (
 )
 proc: BEGIN
     DECLARE isExceeded TINYINT;
-    DECLARE userWHitelistScoreVal FLOAT;
+    DECLARE userWhitelistScoreVal FLOAT;
 
     CALL _increaseUserCounters (
-        userID, 0, 25, 0, isExceeded
+        userID, 0, 25, 10, isExceeded
     );
-
     IF (isExceeded) THEN
-        SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
+        SELECT subjID AS outID, 5 AS exitCode; -- counter was exceeded.
         LEAVE proc;
     END IF;
 
     -- Exit if the user is not currently on the user whitelist.
-    SELECT score_val INTO userWHitelistScoreVal
+    SELECT score_val INTO userWhitelistScoreVal
     FROM FloatScoreAndWeightAggregates
     WHERE (
         list_id = userWhitelistID AND
         subj_id = userID
     );
-    IF (userWHitelistScoreVal IS NULL OR userWHitelistScoreVal <= 0) THEN
+    IF (userWhitelistScoreVal IS NULL OR userWhitelistScoreVal <= 0) THEN
         SELECT subjID AS outID, 1 AS exitCode; -- user is not on the whitelist.
         LEAVE proc;
     END IF;
 
     INSERT INTO PrivateUserScores (
-        user_id, user_whitelist_id, qual_id, subj_id, score_val
+        list_type_ident, user_whitelist_id, qual_id,
+        score_val, user_id, subj_id
     )
     VALUES (
-        userID, userWhitelistID, qualID, subjID, scoreVal
-    )
-    ON DUPLICATE KEY UPDATE score_val = scoreVal;
+        listType, userWhitelistID, qualID,
+        scoreVal, userID, subjID
+    );
 
-    SELECT subjID AS outID, 0 AS exitCode; -- insert if not already there.
+    SELECT subjID AS outID, 0 AS exitCode; -- inserted if not already there.
 END proc //
 DELIMITER ;
 
@@ -147,20 +154,29 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE deletePrivateUserScore (
     IN userID BIGINT UNSIGNED,
+    IN listType CHAR,
     IN userWhitelistID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN scoreVal BIGINT
 )
 BEGIN
+    CALL _increaseUserCounters (
+        userID, 0, 0, 10, isExceeded
+    );
+    IF (isExceeded) THEN
+        SELECT subjID AS outID, 5 AS exitCode; -- counter was exceeded.
+        LEAVE proc;
+    END IF;
+
     DELETE FROM PrivateUserScores
     WHERE (
+        list_type_ident = listType AND
         user_whitelist_id = userWhitelistID AND
         qual_id = qualID AND
-        subj_id = subjID AND
         score_val = scoreVal AND
-        subj_id = subjID AND
-        user_id = userID
+        user_id = userID AND
+        subj_id = subjID
     );
 
     -- TODO: Also add a request (or reduce the countdown) to go through the
@@ -175,43 +191,55 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE deleteAllPrivateUserScores (
     IN userID BIGINT UNSIGNED,
+    IN listType CHAR,
     IN userWhitelistID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED
 )
 BEGIN
+    DECLARE isExceeded TINYINT;
+
+    -- Some arbitrary (pessimistic or optimistic) guess at the computation time.
+    CALL _increaseUserCounters (
+        userID, 0, 0, 1000, isExceeded
+    );
+    IF (isExceeded) THEN
+        SELECT subjID AS outID, 5 AS exitCode; -- counter was exceeded.
+        LEAVE proc;
+    END IF;
+
     DELETE FROM PrivateUserScores
     WHERE (
+        list_type_ident = listType AND
         user_whitelist_id = userWhitelistID AND
         qual_id = qualID AND
-        subj_id = subjID AND
         user_id = userID
     );
 
-    SELECT subjID AS outID, 0 AS exitCode; -- delete if there.
+    SELECT subjID AS outID, 0 AS exitCode; -- deleted if there.
 END //
 DELIMITER ;
 
 
-DELIMITER //
-CREATE PROCEDURE deleteSeveralPrivateUserScores (
-    IN userID BIGINT UNSIGNED,
-    IN userWhitelistID BIGINT UNSIGNED,
-    IN qualID BIGINT UNSIGNED,
-    IN scoreCutoff BIGINT UNSIGNED
-)
-BEGIN
-    DELETE FROM PrivateUserScores
-    WHERE (
-        user_whitelist_id = userWhitelistID AND
-        qual_id = qualID AND
-        subj_id = subjID AND
-        score_val < scoreCutoff AND
-        user_id = userID
-    );
+-- DELIMITER //
+-- CREATE PROCEDURE deleteSeveralPrivateUserScores (
+--     IN userID BIGINT UNSIGNED,
+--     IN userWhitelistID BIGINT UNSIGNED,
+--     IN qualID BIGINT UNSIGNED,
+--     IN scoreCutoff BIGINT UNSIGNED
+-- )
+-- BEGIN
+--     DELETE FROM PrivateUserScores
+--     WHERE (
+--         user_whitelist_id = userWhitelistID AND
+--         qual_id = qualID AND
+--         subj_id = subjID AND
+--         score_val < scoreCutoff AND
+--         user_id = userID
+--     );
 
-    SELECT subjID AS outID, 0 AS exitCode; -- delete if there.
-END //
-DELIMITER ;
+--     SELECT subjID AS outID, 0 AS exitCode; -- delete if there.
+-- END //
+-- DELIMITER ;
 
 
 
