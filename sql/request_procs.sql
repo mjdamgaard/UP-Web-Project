@@ -170,6 +170,129 @@ DELIMITER ;
 
 
 
+DELIMITER //
+CREATE PROCEDURE _insertUpdateOrDeleteScoreWeightAndTime (
+    IN listID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
+    IN scoreVal FLOAT,
+    IN weightVal FLOAT,
+    IN unixTime INT UNSIGNED,
+    OUT exitCode TINYINT
+)
+BEGIN
+    DECLARE prevScoreVal, prevWeightVal, prevWeightSum FLOAT;
+    DECLARE isExceeded TINYINT;
+    DECLARE roundedScoreVal FLOAT(2,2);
+
+    -- FLOAT(M,D) type is now deprecated, so round scoreVal some other way at
+    -- some point when support for it is about to be removed.
+    SET roundedScoreVal = scoreVal;
+    SET scoreVal = roundedScoreVal;
+
+    -- We select (for update) the previous score on the list, and branch
+    -- accordingly in order to update the ListMetadata table correctly.
+    START TRANSACTION;
+
+    SELECT weight_sum INTO prevWeightSum
+    FROM ListMetadata
+    WHERE (
+        list_id = listID AND
+        subj_id = subjID
+    )
+    FOR UPDATE;
+
+    SELECT score_val, weight_val INTO prevScoreVal, prevWeightVal
+    FROM FloatScoreAndWeightAggregatesWithUnixTimes
+    WHERE (
+        list_id = listID AND
+        subj_id = subjID
+    );
+
+    -- Branch according to whether the score should be inserted, updated, or
+    -- deleted, the latter being the case where the scoreVal input is NULL. 
+    IF (scoreVal IS NOT NULL AND prevScoreVal IS NULL) THEN
+        INSERT INTO FloatScoreAndWeightAggregatesWithUnixTimes (
+            list_id, subj_id, score_val, weight_val, unix_time
+        ) VALUES (
+            listID, subjID, scoreVal, weightVal, unixTime
+        );
+
+        INSERT INTO ListMetadata (
+            list_id, list_len, weight_sum,
+            pos_score_list_len,
+        ) VALUES (
+            listID, 1, weightVal,
+            CASE WHEN (scoreVal > 0) THEN 1 ELSE 0 END CASE
+        )
+        ON DUPLICATE KEY UPDATE
+            list_len = list_len + 1,
+            weight_sum = weight_sum + weightVal - prevWeightVal,
+            pos_score_list_len = CASE WHEN (scoreVal > 0) THEN
+                pos_score_list_len + 1
+            ELSE
+                pos_score_list_len
+            END CASE;
+
+        COMMIT;
+        SET exitCode = 0; -- insert.
+
+    ELSEIF (scoreVal IS NOT NULL AND prevScoreVal IS NOT NULL) THEN
+        UPDATE FloatScoreAndWeightAggregatesWithUnixTimes SET
+            score_val = scoreVal,
+            weight_val = weightVal,
+            unix_time = CASE WHEN (unixTime IS NULL) THEN unix_time
+                ELSE unixTime
+        WHERE (
+            list_id = listID AND
+            subj_id = subjID
+        );
+        
+        UPDATE ListMetadata SET
+            weight_sum = weight_sum + weightVal - prevWeightVal,
+            pos_score_list_len = pos_score_list_len +
+                CASE
+                    WHEN (scoreVal > 0 AND prevScoreVal <= 0) THEN
+                        1
+                    WHEN (scoreVal <= 0 AND prevScoreVal > 0) THEN
+                        -1
+                    ELSE
+                        0
+                END CASE
+        WHERE list_id = listID;
+
+        COMMIT;
+        SET exitCode = 1; -- update.
+
+    ELSEIF (scoreVal IS NULL AND prevScoreVal IS NOT NULL) THEN
+        DELETE FROM FloatScoreAndWeightAggregatesWithUnixTimes
+        WHERE (
+            list_id = listID AND
+            subj_id = subjID
+        );
+        
+        UPDATE ListMetadata SET
+            list_len = list_len - 1,
+            weight_sum = weight_sum - prevWeightVal,
+            pos_score_list_len = pos_score_list_len +
+                CASE
+                    WHEN (prevScoreVal > 0) THEN
+                        -1
+                    ELSE
+                        0
+                END CASE
+        WHERE list_id = listID;
+
+        COMMIT;
+        SET exitCode = 2; -- deletion.
+    ELSE
+        COMMIT;
+        SET exitCode = 3; -- no change.
+    END IF;
+END //
+DELIMITER ;
+
+
+
 
 
 DELIMITER //
@@ -178,6 +301,7 @@ CREATE PROCEDURE _insertUpdateOrDeleteScoreContributionWithInputScores (
     IN targetUserWeightVal FLOAT,
     IN minScore FLOAT,
     IN maxScore FLOAT,
+    IN unixTime INT UNSIGNED,
     IN minScoreContrListID BIGINT UNSIGNED,
     IN maxScoreContrListID BIGINT UNSIGNED,
     OUT exitCode TINYINT
@@ -191,19 +315,21 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    CALL _insertUpdateOrDeleteScoreAndWeight (
+    CALL _insertUpdateOrDeleteScoreWeightAndTime (
         minScoreContrListID,
         targetUserID,
         minScore,
         targetUserWeightVal,
+        unixTime,
         exitCode
     );
 
-    CALL _insertUpdateOrDeleteScoreAndWeight (
+    CALL _insertUpdateOrDeleteScoreWeightAndTime (
         maxScoreContrListID,
         targetUserID,
         maxScore,
         targetUserWeightVal,
+        unixTime,
         exitCode
     );
 END proc //
@@ -223,9 +349,10 @@ CREATE PROCEDURE _insertUpdateOrDeleteScoreContribution (
 )
 proc: BEGIN
     DECLARE minScore, maxScore FLOAT;
+    DECLARE unixTime INT UNSIGNED;
 
     -- Select the minScore and the maxScore.
-    SELECT min_score, max_score INTO minScore, maxScore
+    SELECT min_score, max_score, unix_time INTO minScore, maxScore, unixTime
     FROM PublicUserScores
     WHERE (
         user_id = targetUserID AND
@@ -238,6 +365,7 @@ proc: BEGIN
         targetUserID,
         minScore,
         targetUserWeightVal,
+        unixTime,
         exitCode
     );
     CALL _insertUpdateOrDeleteScoreAndWeight (
@@ -245,6 +373,7 @@ proc: BEGIN
         targetUserID,
         maxScore,
         targetUserWeightVal,
+        unixTime,
         exitCode
     );
 END proc //
@@ -281,6 +410,7 @@ proc: BEGIN
             targetUserWeightVal,
             NULL, -- 'NULL, NULL' here means deletion.
             NULL,
+            0,
             minScoreContrListID,
             maxScoreContrListID,
             exitCode
@@ -476,7 +606,7 @@ proc: BEGIN
 
     DECLARE cur CURSOR FOR
         SELECT subj_id
-        FROM FloatScoreAndWeightAggregates
+        FROM FloatScoreAndWeightAggregatesWithUnixTimes
         WHERE list_id = minScoreContrListID;
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
     DECLARE memberID BIGINT UNSIGNED;
@@ -702,7 +832,7 @@ proc: BEGIN
 
     DECLARE minCur CURSOR FOR
         SELECT score_val, weight_val
-        FROM FloatScoreAndWeightAggregates
+        FROM FloatScoreAndWeightAggregatesWithUnixTimes
         WHERE list_id = minScoreContrListID
         ORDER BY
             score_val ASC,
@@ -710,7 +840,7 @@ proc: BEGIN
             subj_id ASC;
     DECLARE maxCur CURSOR FOR
         SELECT score_val, weight_val
-        FROM FloatScoreAndWeightAggregates
+        FROM FloatScoreAndWeightAggregatesWithUnixTimes
         WHERE list_id = maxScoreContrListID
         ORDER BY
             score_val ASC,

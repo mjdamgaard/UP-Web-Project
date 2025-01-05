@@ -69,7 +69,7 @@ CREATE TABLE PublicUserScores (
 
     max_score FLOAT NOT NULL,
 
-    modified_at DATE NOT NULL DEFAULT CURDATE(),
+    unix_time INT UNSIGNED NOT NULL DEFAULT UNIX_TIMESTAMP(),
 
     PRIMARY KEY (
         user_id,
@@ -151,7 +151,7 @@ CREATE TABLE FloatScoreAndWeightAggregates (
 );
 
 
-CREATE TABLE FloatScoreAndWeightAggregatesWithDates (
+CREATE TABLE FloatScoreAndWeightAggregatesWithUnixTimes (
 
     list_id BIGINT UNSIGNED NOT NULL,
 
@@ -159,7 +159,7 @@ CREATE TABLE FloatScoreAndWeightAggregatesWithDates (
 
     weight_val FLOAT NOT NULL,
 
-    modified_at DATE NOT NULL,
+    unix_time INT UNSIGNED NOT NULL DEFAULT UNIX_TIMESTAMP(),
 
     subj_id BIGINT UNSIGNED NOT NULL,
 
