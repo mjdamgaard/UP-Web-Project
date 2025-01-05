@@ -62,7 +62,7 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    INSERT INTO PublicUserFloatMinAndMaxScores (
+    INSERT INTO PublicUserScores (
         user_id, qual_id, subj_id, score_min, score_min
     )
     VALUES (
@@ -84,7 +84,7 @@ CREATE PROCEDURE deletePublicUserScore (
     IN subjID BIGINT UNSIGNED
 )
 BEGIN
-    DELETE FROM PublicUserFloatMinAndMaxScores
+    DELETE FROM PublicUserScores
     WHERE (
         user_id = userID AND
         qual_id = qualID AND

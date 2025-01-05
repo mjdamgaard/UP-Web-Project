@@ -54,31 +54,23 @@ DELIMITER //
 CREATE PROCEDURE _insertUpdateOrDeleteScoreAndWeight (
     IN listID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN scoreVal DOUBLE,
-    IN weightExp TINYINT, -- nullable if weightVal is provided.
-    IN weightVal DOUBLE, -- nullable unless weightExp is not provided.
+    IN scoreVal FLOAT,
+    IN weightVal FLOAT,
     OUT exitCode TINYINT
 )
 BEGIN
-    DECLARE prevScoreVal, prevWeightVal, prevWeightSum DOUBLE;
-    DECLARE prevWeightExp, isExceeded TINYINT;
+    DECLARE prevScoreVal, prevWeightVal, prevWeightSum FLOAT;
+    DECLARE isExceeded TINYINT;
+    DECLARE roundedScoreVal FLOAT(2,2);
 
-    IF (weightExp IS NULL) THEN
-        IF (weightVal > 1.1E+10) THEN
-            SET weightExp = 127;
-        ELSEIF (weightVal < 7.4E-11) THEN
-            SET weightExp = -128;
-        ELSE
-            SET weightExp = ROUND(LOG2(weightVal) / LOG2(1.2));
-        END IF;
-    END IF;
-
-    SET weightVal = POW(1.2, weightExp);
+    -- FLOAT(M,D) type is now deprecated, so round scoreVal some other way at
+    -- some point when support for it is about to be removed.
+    SET roundedScoreVal = scoreVal;
+    SET scoreVal = roundedScoreVal;
 
     -- We select (for update) the previous score on the list, and branch
     -- accordingly in order to update the ListMetadata table correctly.
     START TRANSACTION;
-
 
     SELECT weight_sum INTO prevWeightSum
     FROM ListMetadata
@@ -88,37 +80,33 @@ BEGIN
     )
     FOR UPDATE;
 
-    SELECT score_val, weight_exp INTO prevScoreVal, prevWeightExp
+    SELECT score_val, weight_val INTO prevScoreVal, prevWeightVal
     FROM FloatScoreAndWeightAggregates
     WHERE (
         list_id = listID AND
         subj_id = subjID
     );
 
-    SET prevWeightVal = POW(1.2, prevWeightExp);
-
     -- Branch according to whether the score should be inserted, updated, or
     -- deleted, the latter being the case where the scoreVal input is NULL. 
     IF (scoreVal IS NOT NULL AND prevScoreVal IS NULL) THEN
         INSERT INTO FloatScoreAndWeightAggregates (
-            list_id, subj_id, score_val, weight_exp 
+            list_id, subj_id, score_val, weight_val
         ) VALUES (
-            listID, subjID, scoreVal, weightExp
+            listID, subjID, scoreVal, weightVal
         );
 
         INSERT INTO ListMetadata (
             list_id, list_len, weight_sum,
             pos_score_list_len,
-            -- TODO: Implement:
-            -- short_lived_pos_score_points
         ) VALUES (
             listID, 1, weightVal,
-            CASE WHEN scoreVal > 0 THEN 1         ELSE 0 END CASE
+            CASE WHEN (scoreVal > 0) THEN 1 ELSE 0 END CASE
         )
         ON DUPLICATE KEY UPDATE
             list_len = list_len + 1,
             weight_sum = weight_sum + weightVal - prevWeightVal,
-            pos_score_list_len = CASE WHEN scoreVal > 0 THEN
+            pos_score_list_len = CASE WHEN (scoreVal > 0) THEN
                 pos_score_list_len + 1
             ELSE
                 pos_score_list_len
@@ -130,7 +118,7 @@ BEGIN
     ELSEIF (scoreVal IS NOT NULL AND prevScoreVal IS NOT NULL) THEN
         UPDATE FloatScoreAndWeightAggregates SET
             score_val = scoreVal,
-            weight_exp = weightExp
+            weight_val = weightVal
         WHERE (
             list_id = listID AND
             subj_id = subjID
@@ -187,10 +175,9 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE _insertUpdateOrDeleteScoreContributionWithInputScores (
     IN targetUserID BIGINT UNSIGNED,
-    IN targetUserWeightExp TINYINT, -- nullable if targetUserWeightVal is there.
-    IN targetUserWeightVal DOUBLE, -- nullable if targetUserWeightExp is there.
-    IN minScore DOUBLE,
-    IN maxScore DOUBLE,
+    IN targetUserWeightVal FLOAT,
+    IN minScore FLOAT,
+    IN maxScore FLOAT,
     IN minScoreContrListID BIGINT UNSIGNED,
     IN maxScoreContrListID BIGINT UNSIGNED,
     OUT exitCode TINYINT
@@ -208,7 +195,6 @@ proc: BEGIN
         minScoreContrListID,
         targetUserID,
         minScore,
-        targetUserWeightExp,
         targetUserWeightVal,
         exitCode
     );
@@ -217,7 +203,6 @@ proc: BEGIN
         maxScoreContrListID,
         targetUserID,
         maxScore,
-        targetUserWeightExp,
         targetUserWeightVal,
         exitCode
     );
@@ -229,8 +214,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE _insertUpdateOrDeleteScoreContribution (
     IN targetUserID BIGINT UNSIGNED,
-    IN targetUserWeightExp TINYINT, -- nullable if targetUserWeightVal is there.
-    IN targetUserWeightVal DOUBLE, -- nullable if targetUserWeightExp is there.
+    IN targetUserWeightVal FLOAT,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN minScoreContrListID BIGINT UNSIGNED,
@@ -238,11 +222,11 @@ CREATE PROCEDURE _insertUpdateOrDeleteScoreContribution (
     OUT exitCode TINYINT
 )
 proc: BEGIN
-    DECLARE minScore, maxScore DOUBLE;
+    DECLARE minScore, maxScore FLOAT;
 
     -- Select the minScore and the maxScore.
     SELECT min_score, max_score INTO minScore, maxScore
-    FROM PublicUserFloatMinAndMaxScores
+    FROM PublicUserScores
     WHERE (
         user_id = targetUserID AND
         qual_id = qualID AND
@@ -253,7 +237,6 @@ proc: BEGIN
         minScoreContrListID,
         targetUserID,
         minScore,
-        targetUserWeightExp,
         targetUserWeightVal,
         exitCode
     );
@@ -261,7 +244,6 @@ proc: BEGIN
         maxScoreContrListID,
         targetUserID,
         maxScore,
-        targetUserWeightExp,
         targetUserWeightVal,
         exitCode
     );
@@ -273,7 +255,7 @@ DELIMITER ;
 -- This sub-procedure also deletes any existing score contribution if the user
 -- is no longer a member. 
 DELIMITER //
-CREATE PROCEDURE _insertUpdateOrDeleteScoreContributionWithInputScoresIfMember (
+CREATE PROCEDURE _insertUpdateOrDeleteScoreContributionIfMember (
     IN targetUserID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
@@ -283,23 +265,20 @@ CREATE PROCEDURE _insertUpdateOrDeleteScoreContributionWithInputScoresIfMember (
     OUT exitCode TINYINT
 )
 proc: BEGIN
-    DECLARE minScore, maxScore DOUBLE;
-
     -- We first check that the user is in the given user group. If not, make
     -- sure that any existing score of the user is deleted from the two lists.
-    SELECT score_val, weight_exp
-    INTO targetUserWeight, targetUserWeightWeightExp
+    SELECT score_val, weight_val
+    INTO targetUserWeightVal, targetUserWeightWeight
     FROM FloatScoreAndWeightAggregates
     WHERE (
         list_id = userGroupID AND
         subj_id = targetUserID
     );
 
-    IF NOT (targetUserWeight > 0 AND targetUserWeightWeightExp >= 13) THEN
+    IF NOT (targetUserWeight > 0 AND targetUserWeightWeight >= 10) THEN
         CALL _insertUpdateOrDeleteScoreContributionWithInputScores (
             targetUserID,
-            NULL,
-            targetUserWeight,
+            targetUserWeightVal,
             NULL, -- 'NULL, NULL' here means deletion.
             NULL,
             minScoreContrListID,
@@ -311,12 +290,11 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    -- And finally we insert or update, or delete (if the public score is
-    -- deleted), the min and max scores.
+    -- If the user is a member, we insert or update, or delete (if the public
+    -- score is deleted), the min and max scores.
     CALL _insertUpdateOrDeleteScoreContribution (
         targetUserID,
-        NULL,
-        targetUserWeight,
+        targetUserWeightVal,
         qualID,
         subjID,
         minScoreContrListID,
@@ -355,7 +333,6 @@ CREATE PROCEDURE requestUpdateOfScoreContribution (
     IN userGroupID BIGINT UNSIGNED
 )
 proc: BEGIN
-    DECLARE minScore, maxScore DOUBLE;
     DECLARE exitCode, isExceeded TINYINT;
     DECLARE minScoreContrListID, minScoreContrListID BIGINT UNSIGNED;
 
@@ -384,7 +361,7 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    CALL _insertUpdateOrDeleteScoreContributionWithInputScoresIfMember (
+    CALL _insertUpdateOrDeleteScoreContributionIfMember (
         targetUserID,
         qualID,
         subjID,
@@ -440,7 +417,7 @@ proc: BEGIN
     DECLARE exitCode, done TINYINT;
 
     DECLARE cur CURSOR FOR
-        SELECT score_val, weight_exp, subj_id
+        SELECT score_val, weight_val, subj_id
         FROM FloatScoreAndWeightAggregates
         WHERE (
             list_id = userGroupID AND
@@ -448,11 +425,11 @@ proc: BEGIN
         )
         ORDER BY
             score_val DESC,
-            weight_exp DESC,
+            weight_val DESC,
             subj_id DESC;
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
-    DECLARE userWeightVal DOUBLE;
-    DECLARE userWeightWeightExp TINYINT;
+    DECLARE userWeightVal FLOAT;
+    DECLARE userWeightWeight FLOAT;
     DECLARE memberID BIGINT UNSIGNED;
 
     -- Loop through all members of a group and add any score contributions from
@@ -464,12 +441,11 @@ proc: BEGIN
             LEAVE loop_1;
         END IF;
 
-        FETCH cur INTO userWeightVal, userWeightWeightExp, memberID;
+        FETCH cur INTO userWeightVal, userWeightWeight, memberID;
 
-        IF (userWeightWeightExp >= 13) THEN
+        IF (userWeightWeight >= 10) THEN
             CALL _insertUpdateOrDeleteScoreContribution (
                 memberID,
-                NULL,
                 userWeightVal,
                 qualID,
                 subjID,
@@ -505,7 +481,6 @@ proc: BEGIN
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
     DECLARE memberID BIGINT UNSIGNED;
 
-
     -- Loop through all contributions on the minScoreContrList, and for
     -- each user on there, call _insertUpdate...IfMember().
     OPEN cur;
@@ -517,7 +492,7 @@ proc: BEGIN
 
         FETCH cur INTO memberID;
 
-        CALL _insertUpdateOrDeleteScoreContributionWithInputScoresIfMember (
+        CALL _insertUpdateOrDeleteScoreContributionIfMember (
             memberID,
             qualID,
             subjID,
@@ -567,7 +542,8 @@ proc: BEGIN
 
 
     CALL _increaseUserCounters (
-        requestingUserID, 0, uploadDataCostPayment, compCostPayment, isExceeded
+        requestingUserID, 0, uploadDataCostPayment, compCostPayment,
+        isExceeded
     );
     IF (isExceeded) THEN
         SELECT 5 AS exitCode; -- a counter was is exceeded.
@@ -648,7 +624,8 @@ proc: BEGIN
 
 
     CALL _increaseUserCounters (
-        requestingUserID, 0, uploadDataCostPayment, compCostPayment, isExceeded
+        requestingUserID, 0, uploadDataCostPayment, compCostPayment,
+        isExceeded
     );
     IF (isExceeded) THEN
         SELECT 5 AS exitCode; -- a counter was is exceeded.
@@ -712,7 +689,7 @@ DELIMITER ;
 -- median,' as we might call it.
 
 DELIMITER //
-CREATE PROCEDURE _getScoreMedianAndWeight (
+CREATE PROCEDURE _getScoreMedian (
     IN minScoreContrListID BIGINT UNSIGNED,
     IN maxScoreContrListID BIGINT UNSIGNED,
     IN fullWeightSum DOUBLE,
@@ -720,28 +697,28 @@ CREATE PROCEDURE _getScoreMedianAndWeight (
 )
 proc: BEGIN
     DECLARE done TINYINT;
-    DECLARE prevScore, minUserWeightVal, maxUserWeightVal,
-        curScore, curWeightVal, curWeightSum, halfWeightSum DOUBLE;
+    DECLARE prevScore, curScore, curWeightVal FLOAT;
+    DECLARE curWeightSum, halfWeightSum DOUBLE;
 
     DECLARE minCur CURSOR FOR
-        SELECT score_val, weight_exp
+        SELECT score_val, weight_val
         FROM FloatScoreAndWeightAggregates
         WHERE list_id = minScoreContrListID
         ORDER BY
             score_val ASC,
-            weight_exp ASC,
+            weight_val ASC,
             subj_id ASC;
     DECLARE maxCur CURSOR FOR
-        SELECT score_val, weight_exp
+        SELECT score_val, weight_val
         FROM FloatScoreAndWeightAggregates
         WHERE list_id = maxScoreContrListID
         ORDER BY
             score_val ASC,
-            weight_exp ASC,
+            weight_val ASC,
             subj_id ASC;
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
-    DECLARE minScore, maxScore DOUBLE;
-    DECLARE minUserWeightExp, maxUserWeightExp TINYINT;
+    DECLARE minScore, maxScore FLOAT;
+    DECLARE minUserWeightVal, maxUserWeightVal FLOAT;
 
     -- First set halfWeightSum to half of the full weight sum of the score
     -- contribution. which is assumed contained by the fullWeightSum input.
@@ -755,27 +732,23 @@ proc: BEGIN
     OPEN minCur;
     OPEN maxCur;
     SET done = 0;
-    FETCH minCur INTO minScore, minUserWeightExp;
-    FETCH maxCur INTO maxScore, maxUserWeightExp;
+    FETCH minCur INTO minScore, minUserWeightVal;
+    FETCH maxCur INTO maxScore, maxUserWeightVal;
     IF (done) THEN
         SET scoreMedianVal = NULL;
         LEAVE proc;
     END IF;
-    SET minUserWeightVal = POW(1.2, minUserWeightExp);
-    SET maxUserWeightVal = POW(1.2, maxUserWeightExp);
     loop_1: LOOP
         SET prevScore = curScore;
 
         IF (maxScore < minScore OR done) THEN
             SET curScore = maxScore;
             SET curWeightVal = maxUserWeightVal;
-            FETCH maxCur INTO maxScore, maxUserWeightExp;
-            SET maxUserWeightVal = POW(1.2, maxUserWeightExp);
+            FETCH maxCur INTO maxScore, maxUserWeightVal;
         ELSE
             SET curScore = minScore;
             SET curWeightVal = minUserWeightVal;
-            FETCH minCur INTO minScore, minUserWeightExp;
-            SET minUserWeightVal = POW(1.2, minUserWeightExp);
+            FETCH minCur INTO minScore, minUserWeightVal;
         END IF;
 
         SET curWeightSum = curWeightSum + curWeightVal;
@@ -822,344 +795,92 @@ DELIMITER ;
 
 
 
-
-
-
-
-
-
-
--- -- And then we also check whether the subject is on the filter list, with
--- -- a score above 0 and a weight sum above 10.
--- SELECT score_val, weight_exp INTO filterListScore, filterListWeightExp
--- FROM FloatScoreAndWeightAggregates
--- WHERE (
---     list_id = filterListID AND
---     subj_id = subjID
--- );
-
--- IF NOT (filterListScore > 0 AND filterListWeightExp >= 13) THEN
---     SELECT 2 AS exitCode; -- subject is not on the filter list.
---     LEAVE proc;
--- END IF;
-
-
-
-
-
-
-
-DELIMITER //
-CREATE PROCEDURE requestHistogramOfScoreCentersUpdate (
-    IN requestingUserID BIGINT UNSIGNED,
-    IN qualID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED,
-    IN userGroupID BIGINT UNSIGNED,
-    IN filterListID BIGINT UNSIGNED,
-    IN metricID BIGINT UNSIGNED
-)
-proc: BEGIN
-    DECLARE scoreContrListDefStr VARCHAR(700) CHARACTER SET utf8mb4 DEFAULT (
-        CONCAT(
-            '@13,@', qualID, ',@', subjID, ',@', userGroupID,
-            CASE filterListID
-                WHEN 0 THEN ',null'
-                ELSE CONCAT(',@', filterListID)
-            END CASE
-        )
-    );
-    DECLARE scoreContrListID BIGINT UNSIGNED DEFAULT (
-        SELECT ent_id
-        FROM EntitySecKeys
-        WHERE (
-            type_ident = "c",
-            user_whitelist_id = 0,
-            def_key = scoreContrListDefStr
-        )
-    );
-
-    DECLARE listLen BIGINT UNSIGNED DEFAULT (
-        SELECT list_len
-        FROM ListMetadata
-        WHERE list_id = scoreContrListID;
-    );
-
-    DECLARE metricDefStr VARCHAR(700) DEFAULT (
-        SELECT def_str
-        FROM Entities
-        WHERE id = metricID;
-    );
-
-    DECLARE binUserNumber BIGINT UNSIGNED DEFAULT listLen DIV 19;
-    DECLARE i BIGINT UNSIGNED DEFAULT 0;
-    DECLARE weightSum DOUBLE;
-
-    DECLARE cur CURSOR FOR
-        SELECT score_val, user_weight_exp
-        FROM ScoreContributors
-        WHERE list_id = scoreContrListID
-        ORDER BY
-            score_val ASC,
-            score_width_exp ASC,
-            user_weight_exp ASC,
-            user_id ASC;
-    DECLARE scoreVal DOUBLE;
-    DECLARE userWeightExp TINYINT;
-
-    DECLARE uploadDataCost BIGINT UNSIGNED DEFAULT CASE WHEN (
-        SELECT hist_data
-        FROM ScoreHistograms
-        WHERE (
-            hist_fun_id = 14 AND
-            lower_bound_literal = lowerBoundLiteral AND
-            upper_bound_literal = upperBoundLiteral AND
-            score_contributor_list_id = scoreContrListID
-        )
-        IS NULL
-    ) THEN
-        200 -- TODO: Correct.
-    ELSE
-        0
-    END CASE;
-
-    -- First check that the user has enough upload data and computation usage
-    -- available.
-    CALL _increaseUserCounters (
-        requestingUserID, uploadDataCost, (listLen DIV 4000) << 5,
-        -- TODO: All these compCosts are just loose guesses for now. Correct
-        -- them at some point.
-        isExceeded
-    );
-    IF (isExceeded) THEN
-        SELECT 5 AS exitCode; -- a counter was is exceeded.
-        LEAVE proc;
-    END IF;
-
-    -- If they do, open the cursor and start constructing the histogram.
-    OPEN cur;
-
-    loop_1: LOOP
-        SET i = i + 1;
-        FETCH cur INTO scoreVal, userWeightExp;
-    END LOOP loop_1; 
-
-    SELECT 0 AS exitCode; -- request was carried out.
-END proc //
-DELIMITER ;
-
-
-
-DELIMITER //
-CREATE PROCEDURE _constructHistogramOfScoreCenters (
-    IN scoreContrListID BIGINT UNSIGNED,
-    IN lowerBound FLOAT,
-    IN upperBound FLOAT,
-    IN minBinWidth FLOAT,
-    IN maxBinWidth FLOAT,
-    IN hiResBinNum INT UNSIGNED,
-    IN listLen BIGINT UNSIGNED,
-    OUT histData VARBINARY(4000)
-)
-proc: BEGIN
-    DECLARE scoreVal, nextBinLimit, userWeight FLOAT;
-    DECLARE userWeightExp, done TINYINT DEFAULT 0;
-    DECLARE i INT UNSIGNED;
-    -- -- Initialize a string where every 20 characters encodes a float number,
-    -- -- padded to left with spaces.
-    -- DECLARE hiResHistData TEXT DEFAULT (
-    --     REPEAT(CONCAT(REPEAT(" ", 19), "0"), hiResBinNum)
-    -- );
-
-    DECLARE cur CURSOR FOR
-        SELECT score_val, user_weight_exp
-        FROM ScoreContributors
-        WHERE (
-            list_id = scoreContrListID AND
-            score_val >= lowerBound AND
-            score_val <= upperBound
-        )
-        ORDER BY
-            score_val ASC,
-            score_width_exp ASC,
-            user_weight_exp ASC,
-            user_id ASC;
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
-
-    CREATE TEMPORARY TABLE histBins (
-        bin_ind INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        weight_sum FLOAT NOT NULL DEFAULT 0
-    );
-
-    OPEN cur;
-
-    FETCH cur INTO scoreVal, userWeightExp;
-    SET nextBinLimit = lowerBound;
-    SET i = 1;
-    bin_loop: LOOP
-        IF (i > hiResBinNum OR done) THEN
-            LEAVE bin_loop;
-        END IF;
-
-        SET nextBinLimit = nextBinLimit + minBinWidth;
-
-        INSERT IGNORE INTO histBins (bin_ind, weight_sum)
-        VALUES (i, 0);
-
-        user_loop: LOOP
-            -- If scoreVal exceeds nextBinLimit, or it is null  break out and iterate bin_loop.
-            IF (scoreVal > nextBinLimit OR done) THEN
-                LEAVE user_loop;
-            END IF;
-
-            -- Else add the user's weight to the ith bin.
-            SET userWeight = POW(1.2, userWeightExp);
-            UPDATE histBins
-            SET weight_sum = weight_sum + userWeight
-            WHERE bin_ind = i;
-
-            FETCH cur INTO scoreVal, userWeightExp;
-            ITERATE user_loop;
-        END LOOP user_loop;
-
-        SET i = i + 1;
-        ITERATE bin_loop;
-    END LOOP bin_loop;
-
-    -- Now that histBins is populated, call a procedure that outputs a lower-
-    -- resolution hist_data by gathering bins with a too small weight_sum.
-    CALL _getHistData (
-        lowerBound, upperBound, minBinWidth, maxBinWidth, hiResBinNum,
-        histData
-    );
-    -- This sub-procedure sets the histData to the desired output, and the
-    -- procedure therefore ends here.
-END proc //
-DELIMITER ;
-
-
-
-DELIMITER //
-CREATE PROCEDURE _getHistData (
-    IN lowerBound FLOAT,
-    IN upperBound FLOAT,
-    IN minBinWidth FLOAT,
-    IN maxBinWidth FLOAT,
-    IN hiResBinNum INT UNSIGNED,
-    OUT histData VARBINARY(4000)
-)
-proc: BEGIN
-    -- TODO: Implement using histData, which should be populated by a
-    -- _constructHistogram...() procedure in the same session.
-END proc //
-DELIMITER ;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-DELIMITER //
-CREATE PROCEDURE _computeMedian (
-    IN scoreContrListID BIGINT UNSIGNED,
-    IN lowerBound FLOAT,
-    IN upperBound FLOAT,
-    IN minBinWidth FLOAT,
-    IN maxBinWidth FLOAT,
-    IN hiResBinNum INT UNSIGNED,
-    IN listLen BIGINT UNSIGNED,
-    OUT histData VARBINARY(4000)
-)
-proc: BEGIN
-    DECLARE scoreVal, nextBinLimit, userWeight FLOAT;
-    DECLARE userWeightExp, done TINYINT DEFAULT 0;
-    DECLARE i INT UNSIGNED;
-    -- -- Initialize a string where every 20 characters encodes a float number,
-    -- -- padded to left with spaces.
-    -- DECLARE hiResHistData TEXT DEFAULT (
-    --     REPEAT(CONCAT(REPEAT(" ", 19), "0"), hiResBinNum)
-    -- );
-
-    DECLARE cur CURSOR FOR
-        SELECT score_val, user_weight_exp
-        FROM ScoreContributors
-        WHERE (
-            list_id = scoreContrListID AND
-            score_val >= lowerBound AND
-            score_val <= upperBound
-        )
-        ORDER BY
-            score_val ASC,
-            score_width_exp ASC,
-            user_weight_exp ASC,
-            user_id ASC;
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
-
-    CREATE TEMPORARY TABLE histBins (
-        bin_ind INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        weight_sum FLOAT NOT NULL DEFAULT 0
-    );
-
-    OPEN cur;
-
-    FETCH cur INTO scoreVal, userWeightExp;
-    SET nextBinLimit = lowerBound;
-    SET i = 1;
-    bin_loop: LOOP
-        IF (i > hiResBinNum OR done) THEN
-            LEAVE bin_loop;
-        END IF;
-
-        SET nextBinLimit = nextBinLimit + minBinWidth;
-
-        INSERT IGNORE INTO histBins (bin_ind, weight_sum)
-        VALUES (i, 0);
-
-        user_loop: LOOP
-            -- If scoreVal exceeds nextBinLimit, or it is null  break out and iterate bin_loop.
-            IF (scoreVal > nextBinLimit OR done) THEN
-                LEAVE user_loop;
-            END IF;
-
-            -- Else add the user's weight to the ith bin.
-            SET userWeight = POW(1.2, userWeightExp);
-            UPDATE histBins
-            SET weight_sum = weight_sum + userWeight
-            WHERE bin_ind = i;
-
-            FETCH cur INTO scoreVal, userWeightExp;
-            ITERATE user_loop;
-        END LOOP user_loop;
-
-        SET i = i + 1;
-        ITERATE bin_loop;
-    END LOOP bin_loop;
-
-    -- Now that histBins is populated, call a procedure that outputs a lower-
-    -- resolution hist_data by gathering bins with a too small weight_sum.
-    CALL _getHistData (
-        lowerBound, upperBound, minBinWidth, maxBinWidth, hiResBinNum,
-        histData
-    );
-    -- This sub-procedure sets the histData to the desired output, and the
-    -- procedure therefore ends here.
-END proc //
-DELIMITER ;
-
+-- DELIMITER //
+-- CREATE PROCEDURE _constructHistogramOfScoreCenters (
+--     IN scoreContrListID BIGINT UNSIGNED,
+--     IN lowerBound FLOAT,
+--     IN upperBound FLOAT,
+--     IN minBinWidth FLOAT,
+--     IN maxBinWidth FLOAT,
+--     IN hiResBinNum INT UNSIGNED,
+--     IN listLen BIGINT UNSIGNED,
+--     OUT histData VARBINARY(4000)
+-- )
+-- proc: BEGIN
+--     DECLARE scoreVal, nextBinLimit, userWeight FLOAT;
+--     DECLARE userWeightExp, done TINYINT DEFAULT 0;
+--     DECLARE i INT UNSIGNED;
+--     -- -- Initialize a string where every 20 characters encodes a float number,
+--     -- -- padded to left with spaces.
+--     -- DECLARE hiResHistData TEXT DEFAULT (
+--     --     REPEAT(CONCAT(REPEAT(" ", 19), "0"), hiResBinNum)
+--     -- );
+
+--     DECLARE cur CURSOR FOR
+--         SELECT score_val, user_weight_exp
+--         FROM ScoreContributors
+--         WHERE (
+--             list_id = scoreContrListID AND
+--             score_val >= lowerBound AND
+--             score_val <= upperBound
+--         )
+--         ORDER BY
+--             score_val ASC,
+--             score_width_exp ASC,
+--             user_weight_exp ASC,
+--             user_id ASC;
+--     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+--     CREATE TEMPORARY TABLE histBins (
+--         bin_ind INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+--         weight_sum FLOAT NOT NULL DEFAULT 0
+--     );
+
+--     OPEN cur;
+
+--     FETCH cur INTO scoreVal, userWeightExp;
+--     SET nextBinLimit = lowerBound;
+--     SET i = 1;
+--     bin_loop: LOOP
+--         IF (i > hiResBinNum OR done) THEN
+--             LEAVE bin_loop;
+--         END IF;
+
+--         SET nextBinLimit = nextBinLimit + minBinWidth;
+
+--         INSERT IGNORE INTO histBins (bin_ind, weight_sum)
+--         VALUES (i, 0);
+
+--         user_loop: LOOP
+--             -- If scoreVal exceeds nextBinLimit, or it is null  break out and iterate bin_loop.
+--             IF (scoreVal > nextBinLimit OR done) THEN
+--                 LEAVE user_loop;
+--             END IF;
+
+--             -- Else add the user's weight to the ith bin.
+--             SET userWeight = POW(1.2, userWeightExp);
+--             UPDATE histBins
+--             SET weight_sum = weight_sum + userWeight
+--             WHERE bin_ind = i;
+
+--             FETCH cur INTO scoreVal, userWeightExp;
+--             ITERATE user_loop;
+--         END LOOP user_loop;
+
+--         SET i = i + 1;
+--         ITERATE bin_loop;
+--     END LOOP bin_loop;
+
+--     -- Now that histBins is populated, call a procedure that outputs a lower-
+--     -- resolution hist_data by gathering bins with a too small weight_sum.
+--     CALL _getHistData (
+--         lowerBound, upperBound, minBinWidth, maxBinWidth, hiResBinNum,
+--         histData
+--     );
+--     -- This sub-procedure sets the histData to the desired output, and the
+--     -- procedure therefore ends here.
+-- END proc //
+-- DELIMITER ;
 
 
 

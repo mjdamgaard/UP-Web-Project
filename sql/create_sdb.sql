@@ -57,7 +57,7 @@ CREATE TABLE PrivateUserScores (
 
 
 
-CREATE TABLE PublicUserFloatMinAndMaxScores (
+CREATE TABLE PublicUserScores (
 
     user_id BIGINT UNSIGNED NOT NULL,
 
@@ -69,23 +69,7 @@ CREATE TABLE PublicUserFloatMinAndMaxScores (
 
     max_score FLOAT NOT NULL,
 
-    PRIMARY KEY (
-        user_id,
-        qual_id,
-        subj_id
-    )
-);
-
-
-CREATE TABLE PublicUserByteScores (
-
-    user_id BIGINT UNSIGNED NOT NULL,
-
-    qual_id BIGINT UNSIGNED NOT NULL,
-
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    score_val TINYINT NOT NULL,
+    modified_at DATE NOT NULL DEFAULT CURDATE(),
 
     PRIMARY KEY (
         user_id,
@@ -95,51 +79,23 @@ CREATE TABLE PublicUserByteScores (
 );
 
 
-
-
-
--- CREATE TABLE UserWeights (
-
---     user_group_id BIGINT UNSIGNED NOT NULL,
+-- CREATE TABLE PublicUserByteScores (
 
 --     user_id BIGINT UNSIGNED NOT NULL,
 
---     user_weight_exp TINYINT NOT NULL,
+--     qual_id BIGINT UNSIGNED NOT NULL,
+
+--     subj_id BIGINT UNSIGNED NOT NULL,
+
+--     score_val TINYINT NOT NULL,
 
 --     PRIMARY KEY (
---         user_group_id,
---         user_id
+--         user_id,
+--         qual_id,
+--         subj_id
 --     )
 -- );
 
-
-
-
--- CREATE TABLE ScoreContributors (
-
---     list_id BIGINT UNSIGNED NOT NULL,
-
---     user_id BIGINT UNSIGNED NOT NULL,
-
---     score_min FLOAT NOT NULL,
-
---     score_max FLOAT NOT NULL,
-
---     user_weight_exp TINYINT NOT NULL,
-
---     PRIMARY KEY (
---         list_id,
---         user_id
---     ),
-
---     UNIQUE INDEX (
---         list_id,
---         score_min,
---         score_max,
---         user_weight_exp,
---         user_id
---     )
--- );
 
 
 
@@ -177,7 +133,7 @@ CREATE TABLE FloatScoreAndWeightAggregates (
 
     score_val FLOAT NOT NULL,
 
-    weight_exp TINYINT NOT NULL,
+    weight_val FLOAT NOT NULL,
 
     subj_id BIGINT UNSIGNED NOT NULL,
 
@@ -189,7 +145,34 @@ CREATE TABLE FloatScoreAndWeightAggregates (
     UNIQUE INDEX (
         list_id,
         score_val,
-        weight_exp,
+        weight_val,
+        subj_id
+    )
+);
+
+
+CREATE TABLE FloatScoreAndWeightAggregatesWithDates (
+
+    list_id BIGINT UNSIGNED NOT NULL,
+
+    score_val FLOAT NOT NULL,
+
+    weight_val FLOAT NOT NULL,
+
+    modified_at DATE NOT NULL,
+
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (
+        list_id,
+        subj_id
+    ),
+
+    UNIQUE INDEX (
+        list_id,
+        score_val,
+        weight_val,
+        modified_at,
         subj_id
     )
 );
@@ -216,25 +199,30 @@ CREATE TABLE FloatScoreAggregates (
 );
 
 
-CREATE TABLE ByteScoreAggregates (
+-- CREATE TABLE ByteScoreAggregates (
 
-    list_id BIGINT UNSIGNED NOT NULL,
+--     list_id BIGINT UNSIGNED NOT NULL,
 
-    score_val TINYINT NOT NULL,
+--     score_val TINYINT NOT NULL,
 
-    subj_id BIGINT UNSIGNED NOT NULL,
+--     subj_id BIGINT UNSIGNED NOT NULL,
 
-    PRIMARY KEY (
-        list_id,
-        subj_id
-    ),
+--     PRIMARY KEY (
+--         list_id,
+--         subj_id
+--     ),
 
-    UNIQUE INDEX (
-        list_id,
-        score_val,
-        subj_id
-    )
-);
+--     UNIQUE INDEX (
+--         list_id,
+--         score_val,
+--         subj_id
+--     )
+-- );
+
+
+
+
+
 
 
 
@@ -250,11 +238,6 @@ CREATE TABLE ListMetadata (
     weight_sum DOUBLE NOT NULL DEFAULT 0,
 
     pos_score_list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    -- pos_score_weight_sum DOUBLE NOT NULL DEFAULT 0,
-
-    -- TODO: Implement:
-    short_lived_pos_score_points FLOAT NOT NULL DEFAULT 0,
 
     paid_upload_data_cost FLOAT NOT NULL DEFAULT 0
 );
@@ -302,119 +285,10 @@ CREATE TABLE ScheduledRequests (
 
 
 
--- CREATE TABLE UserScoreQueryRestrictions (
-
---     user_id BIGINT UNSIGNED NOT NULL,
-
---     qual_id BIGINT UNSIGNED NOT NULL,
-
---     user_whitelist_id BIGINT UNSIGNED NOT NULL -- Missing entry means public.
---     -- (And user_whitelist_id = user_id means only viewable by the same user.)
--- );
 
 
 
 
--- CREATE TABLE RecentUserScores (
-
---     user_id BIGINT UNSIGNED NOT NULL,
-
---     qual_id BIGINT UNSIGNED NOT NULL,
-
---     score_val FLOAT, -- NULL means 'deleted.'
-
---     score_weight_exp TINYINT UNSIGNED NOT NULL,
-
---     prev_score_val FLOAT, -- NULL means 'no prior score.'
-
---     prev_score_weight_exp TINYINT UNSIGNED NOT NULL,
-
---     subj_id BIGINT UNSIGNED NOT NULL,
-
---     modified_at TIMESTAMP NOT NULL DEFAULT (NOW()),
-
-
---     PRIMARY KEY (
---         qual_id,
---         subj_id,
---         modified_at,
---         user_id
---     )
--- );
-
-
-
-
-
-
-
-
-
-
-
-
--- CREATE TABLE ScheduledRequests (
---     -- Same as a foreign key of a data table, but which table is determined by
---     -- req_type.
---     req_key BIGINT UNSIGNED PRIMARY KEY,
-
---     req_type VARCHAR(255) NOT NULL,
-
---     scheduled_at INT UNSIGNED NOT NULL DEFAULT (UNIX_TIMESTAMP()),
-
---     delay_time INT UNSIGNED NOT NULL,
--- );
-
-
--- CREATE TABLE ScoreUpdateRequestData (
-
---     req_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    
---     qual_id BIGINT UNSIGNED NOT NULL,
-    
---     subj_id BIGINT UNSIGNED NOT NULL,
-    
---     user_group_id BIGINT UNSIGNED NOT NULL,
-
---     UNIQUE INDEX (qual_id, subj_id, user_group_id)
--- );
-
-
-
-
-
--- CREATE TABLE ScheduledEntityListUpdates (
-
---     list_key VARCHAR(700) NOT NULL,
-
---     user_id BIGINT UNSIGNED NOT NULL,
-
---     countdown FLOAT NOT NULL,
-
---     PRIMARY KEY (
---         list_key,
---         user_id
---     )
--- );
-
-
-
-
--- -- This table is only used once we start implementing User group trees. (See
--- -- my 23--xx notes.)
--- CREATE TABLE ScheduledSubListUpdates (
-
---     list_key VARCHAR(700) NOT NULL,
-
---     node_id BIGINT UNSIGNED NOT NULL,
-
---     countdown FLOAT NOT NULL,
-
---     PRIMARY KEY (
---         list_key,
---         node_id
---     )
--- );
 
 
 
