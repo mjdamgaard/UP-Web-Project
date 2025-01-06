@@ -62,7 +62,7 @@ proc: BEGIN
     END IF;
 
     -- Exit if the subject entity does not exist.
-    IF ((SELECT type_ident FROM Entities WHERE id = subjID) IS NULL) THEN
+    IF ((SELECT ent_type FROM Entities WHERE id = subjID) IS NULL) THEN
         SELECT subjID AS outID, 1 AS exitCode; -- subject does not exist.
         LEAVE proc;
     END IF;
@@ -138,7 +138,7 @@ proc: BEGIN
     END IF;
 
     INSERT INTO PrivateUserScores (
-        list_type_ident, user_whitelist_id, qual_id,
+        list_type, user_whitelist_id, qual_id,
         score_val, user_id, subj_id
     )
     VALUES (
@@ -171,7 +171,7 @@ BEGIN
 
     DELETE FROM PrivateUserScores
     WHERE (
-        list_type_ident = listType AND
+        list_type = listType AND
         user_whitelist_id = userWhitelistID AND
         qual_id = qualID AND
         score_val = scoreVal AND
@@ -209,7 +209,7 @@ BEGIN
 
     DELETE FROM PrivateUserScores
     WHERE (
-        list_type_ident = listType AND
+        list_type = listType AND
         user_whitelist_id = userWhitelistID AND
         qual_id = qualID AND
         user_id = userID
@@ -254,7 +254,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE _insertEntityWithoutSecKey (
-    IN datatype CHAR,
+    IN entType CHAR,
     IN userID BIGINT UNSIGNED,
     IN defStr LONGTEXT CHARACTER SET utf8mb4,
     IN userWhitelistID BIGINT UNSIGNED,
@@ -283,11 +283,11 @@ proc: BEGIN
 
     INSERT INTO Entities (
         creator_id,
-        type_ident, def_str, user_whitelist_id, is_editable
+        ent_type, def_str, user_whitelist_id, is_editable
     )
     VALUES (
         CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        datatype, defStr, userWhitelistID, isEditable AND NOT isAnonymous
+        entType, defStr, userWhitelistID, isEditable AND NOT isAnonymous
     );
     SET outID = LAST_INSERT_ID();
 
@@ -302,7 +302,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE _insertOrFindEntityWithSecKey (
-    IN datatype CHAR,
+    IN entType CHAR,
     IN userID BIGINT UNSIGNED,
     IN defStr TEXT CHARACTER SET utf8mb4,
     IN userWhitelistID BIGINT UNSIGNED,
@@ -325,7 +325,7 @@ proc: BEGIN
         SELECT ent_id INTO outID
         FROM EntitySecKeys
         WHERE (
-            type_ident = datatype AND
+            ent_type = entType AND
             user_whitelist_id = userWhitelistID AND
             def_key = defStr
         );
@@ -338,19 +338,19 @@ proc: BEGIN
 
     INSERT INTO Entities (
         creator_id,
-        type_ident, def_str, user_whitelist_id, is_editable
+        ent_type, def_str, user_whitelist_id, is_editable
     )
     VALUES (
         CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        datatype, defStr, userWhitelistID, 0
+        entType, defStr, userWhitelistID, 0
     );
     SET outID = LAST_INSERT_ID();
 
     INSERT INTO EntitySecKeys (
-        type_ident, user_whitelist_id, def_key, ent_id
+        ent_type, user_whitelist_id, def_key, ent_id
     )
     VALUES (
-        datatype, userWhitelistID, defStr, outID
+        entType, userWhitelistID, defStr, outID
     );
 
     CALL _increaseUserCounters (
@@ -508,7 +508,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE _editEntity (
-    IN datatype CHAR,
+    IN entType CHAR,
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
     IN defStr LONGTEXT CHARACTER SET utf8mb4,
@@ -537,7 +537,7 @@ proc: BEGIN
     END IF;
 
 
-    SELECT type_ident, creator_id, def_str, is_editable
+    SELECT ent_type, creator_id, def_str, is_editable
     INTO prevType, creatorID, prevDefStr, prevIsEditable 
     FROM Entities
     WHERE id = entID;
@@ -552,8 +552,8 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    IF (prevType != datatype) THEN
-        SELECT entID AS outID, 4 AS exitCode; -- changing datatype not allowed.
+    IF (prevType != entType) THEN
+        SELECT entID AS outID, 4 AS exitCode; -- changing entType not allowed.
         LEAVE proc;
     END IF;
 
@@ -637,7 +637,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE _substitutePlaceholdersInEntity (
-    IN datatype CHAR,
+    IN entType CHAR,
     IN maxLen INT UNSIGNED,
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
@@ -652,7 +652,7 @@ proc: BEGIN
     DECLARE pathStr TEXT;
     DECLARE subEntID BIGINT UNSIGNED;
 
-    SELECT type_ident, creator_id, def_str
+    SELECT ent_type, creator_id, def_str
     INTO prevType, creatorID, prevDefStr 
     FROM Entities
     WHERE id = entID;
@@ -662,8 +662,8 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    IF (prevType != datatype) THEN
-        SELECT entID AS outID, 3 AS exitCode; -- datatype is incorrect.
+    IF (prevType != entType) THEN
+        SELECT entID AS outID, 3 AS exitCode; -- entType is incorrect.
         LEAVE proc;
     END IF;
 
@@ -750,19 +750,19 @@ DELIMITER ;
 
 -- DELIMITER //
 -- CREATE PROCEDURE substitutePlaceholdersInEntity (
---     IN datatype CHAR,
+--     IN entType CHAR,
 --     IN userID BIGINT UNSIGNED,
 --     IN entID BIGINT UNSIGNED,
 --     IN paths TEXT, -- List of the form '<path_1>,<path_2>...'
 --     IN substitutionEntIDs TEXT -- List of the form '<entID_1>,<entID_2>...'
 -- )
 -- BEGIN
---     IF (datatype = "a" OR datatype = "f") THEN
+--     IF (entType = "a" OR entType = "f") THEN
 --         CALL _substitutePlaceholdersInEntity (
---             datatype, 700, userID, entID, defStr, paths, substitutionEntIDs
+--             entType, 700, userID, entID, defStr, paths, substitutionEntIDs
 --         );
 --     ELSE
---         SELECT entID AS outID, 5 AS exitCode; -- datatype is not allowed.
+--         SELECT entID AS outID, 5 AS exitCode; -- entType is not allowed.
 --     END IF;
 -- END //
 -- DELIMITER ;

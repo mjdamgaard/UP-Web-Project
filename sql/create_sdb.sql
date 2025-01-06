@@ -32,20 +32,28 @@ DROP TABLE EntitySecKeys;
 
 CREATE TABLE PrivateUserScores (
 
-    list_type_ident CHAR NOT NULL DEFAULT "\0", -- "\0": No aggregation allowed.
+    list_type CHAR NOT NULL DEFAULT "\0", -- "\0": No aggregation allowed.
 
     user_whitelist_id BIGINT UNSIGNED NOT NULL,
 
     qual_id BIGINT UNSIGNED NOT NULL,
 
-    score_val BIGINT NOT NULL, -- We use integer here because it's in the PK.
+    user_id BIGINT UNSIGNED NOT NULL,
+
+    score_val FLOAT NOT NULL,
 
     subj_id BIGINT UNSIGNED NOT NULL,
 
-    user_id BIGINT UNSIGNED NOT NULL,
-
     PRIMARY KEY (
-        list_type_ident,
+        list_type,
+        user_whitelist_id,
+        qual_id,
+        user_id,
+        subj_id
+    ),
+
+    UNIQUE INDEX score_ord_idx (
+        list_type,
         user_whitelist_id,
         qual_id,
         score_val,
@@ -65,15 +73,22 @@ CREATE TABLE PublicUserScores (
 
     subj_id BIGINT UNSIGNED NOT NULL,
 
-    min_score FLOAT NOT NULL,
+    score_mid FLOAT NOT NULL,
 
-    max_score FLOAT NOT NULL,
+    score_rad FLOAT NOT NULL DEFAULT 0,
 
     unix_time INT UNSIGNED NOT NULL DEFAULT UNIX_TIMESTAMP(),
 
     PRIMARY KEY (
         user_id,
         qual_id,
+        subj_id
+    ),
+
+    UNIQUE INDEX score_ord_idx (
+        user_id,
+        qual_id,
+        score_mid,
         subj_id
     )
 );
@@ -98,6 +113,34 @@ CREATE TABLE PublicUserScores (
 
 
 
+
+
+
+CREATE TABLE ScoreContributions (
+
+    list_id BIGINT UNSIGNED NOT NULL,
+
+    score_val FLOAT NOT NULL,
+
+    weight_val FLOAT NOT NULL,
+
+    unix_time INT UNSIGNED NOT NULL DEFAULT UNIX_TIMESTAMP(),
+
+    subj_id BIGINT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (
+        list_id,
+        subj_id
+    ),
+
+    UNIQUE INDEX score_ord_idx (
+        list_id,
+        score_val,
+        weight_val,
+        unix_time,
+        subj_id
+    )
+);
 
 
 
@@ -127,7 +170,9 @@ CREATE TABLE PublicUserScores (
 
 
 
-CREATE TABLE FloatScoreAndWeightAggregates (
+-- CREATE TABLE FloatScoreAndWeightAggregatesWithBothIndexes (
+-- CREATE TABLE ScoreAndWeightIndexedAggregates (
+CREATE TABLE StandardScoreAggregates (
 
     list_id BIGINT UNSIGNED NOT NULL,
 
@@ -142,16 +187,23 @@ CREATE TABLE FloatScoreAndWeightAggregates (
         subj_id
     ),
 
-    UNIQUE INDEX (
+    UNIQUE INDEX score_ord_idx (
         list_id,
         score_val,
+        subj_id
+    ),
+
+    UNIQUE INDEX weight_ord_idx (
+        list_id,
         weight_val,
         subj_id
     )
 );
 
 
-CREATE TABLE FloatScoreAndWeightAggregatesWithUnixTimes (
+-- CREATE TABLE FloatScoreAndWeightAggregatesWithWeightIndex (
+-- CREATE TABLE WeightIndexedScoreAggregates (
+CREATE TABLE AspiringScoreAggregates (
 
     list_id BIGINT UNSIGNED NOT NULL,
 
@@ -159,8 +211,6 @@ CREATE TABLE FloatScoreAndWeightAggregatesWithUnixTimes (
 
     weight_val FLOAT NOT NULL,
 
-    unix_time INT UNSIGNED NOT NULL DEFAULT UNIX_TIMESTAMP(),
-
     subj_id BIGINT UNSIGNED NOT NULL,
 
     PRIMARY KEY (
@@ -168,17 +218,19 @@ CREATE TABLE FloatScoreAndWeightAggregatesWithUnixTimes (
         subj_id
     ),
 
-    UNIQUE INDEX (
+    UNIQUE INDEX weight_ord_idx (
         list_id,
-        score_val,
         weight_val,
-        modified_at,
         subj_id
     )
 );
 
 
-CREATE TABLE FloatScoreAggregates (
+
+
+
+
+CREATE TABLE ScoreAggregates (
 
     list_id BIGINT UNSIGNED NOT NULL,
 
@@ -191,7 +243,7 @@ CREATE TABLE FloatScoreAggregates (
         subj_id
     ),
 
-    UNIQUE INDEX (
+    UNIQUE INDEX score_ord_idx (
         list_id,
         score_val,
         subj_id
@@ -231,7 +283,11 @@ CREATE TABLE FloatScoreAggregates (
 
 CREATE TABLE ListMetadata (
 
-    list_id BIGINT UNSIGNED PRIMARY KEY,
+    list_type CHAR NOT NULL,
+
+    user_or_group_id BIGINT UNSIGNED NOT NULL,
+
+    list_or_qual_id BIGINT UNSIGNED NOT NULL,
 
     list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
@@ -239,8 +295,69 @@ CREATE TABLE ListMetadata (
 
     pos_score_list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
-    paid_upload_data_cost FLOAT NOT NULL DEFAULT 0
+    paid_upload_data_cost FLOAT NOT NULL DEFAULT 0,
+
+    PRIMARY KEY (
+        list_type,
+        user_or_group_id,
+        list_or_qual_id
+    )
 );
+
+
+
+CREATE ALGORITHM = MERGE VIEW AllOrderedEntityLists (
+    list_type,
+    user_or_group_id,
+    list_or_qual_id,
+    float_val,
+    subj_id
+) AS
+    -- The public user scores.
+    SELECT
+        "u" AS list_type,
+        user_id AS user_or_group_id,
+        qual_id AS list_or_qual_id,
+        score_mid AS float_val,
+        subj_id AS subj_id
+    FROM PublicUserScores
+    USE INDEX (score_ord_idx)
+    UNION ALL
+    -- The score contributions (both the min and max ones).
+    SELECT
+        "c" AS list_type,
+        NULL AS user_or_group_id,
+        list_id AS list_or_qual_id,
+        score_val AS float_val,
+        subj_id AS subj_id
+    FROM ScoreContributions
+    USE INDEX (score_ord_idx)
+    UNION ALL
+    -- The standard entity lists with a combined weight >= 10.
+    SELECT
+        "s" AS list_type,
+        NULL AS user_or_group_id,
+        list_id AS list_or_qual_id,
+        score_val AS float_val,
+        subj_id AS subj_id
+    FROM StandardScoreAggregates
+    USE INDEX (score_ord_idx)
+    -- ...
+    -- And finally all the different kinds of private entity lists.
+    UNION ALL
+    SELECT
+        list_type AS list_type,
+        user_whitelist_id AS user_or_group_id,
+        qual_id AS list_or_qual_id,
+        score_val AS float_val,
+        subj_id AS subj_id
+    FROM PrivateUserScores
+    USE INDEX (score_ord_idx)
+
+
+
+
+
 
 
 
@@ -309,10 +426,10 @@ CREATE TABLE Entities (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     -- Type identifier.
-    type_ident CHAR NOT NULL,
+    ent_type CHAR NOT NULL,
 
     -- A string (possibly a JSON object) that defines the entity. The format
-    -- depends on type_ident.
+    -- depends on ent_type.
     def_str LONGTEXT CHARACTER SET utf8mb4 NOT NULL,
 
     -- The user who submitted the entity, unless creator_id = 0, which means
@@ -332,7 +449,11 @@ CREATE TABLE Entities (
     is_editable TINYINT UNSIGNED NOT NULL DEFAULT 0, CHECK (is_editable <= 1),
 
     -- If creator_id = 0, then the entity cannot be edited. 
-    CHECK (creator_id != 0 OR is_editable = 0)
+    CHECK (creator_id != 0 OR is_editable = 0),
+
+    -- A (slowly decaying) counter that can be increased to prevent deletion.
+    -- (An entity will only be deleted if the space is needed, though.)  
+    paid_upload_data_cost FLOAT NOT NULL DEFAULT 80
 );
 
 
@@ -341,7 +462,7 @@ CREATE TABLE Entities (
 
 CREATE TABLE EntitySecKeys (
 
-    type_ident CHAR NOT NULL,
+    ent_type CHAR NOT NULL,
 
     user_whitelist_id BIGINT UNSIGNED NOT NULL DEFAULT 0, -- (0 means public.)
 
@@ -352,7 +473,7 @@ CREATE TABLE EntitySecKeys (
     ent_id BIGINT UNSIGNED NOT NULL,
 
     PRIMARY KEY (
-        type_ident,
+        ent_type,
         user_whitelist_id,
         def_key
     )
@@ -378,7 +499,7 @@ CREATE TABLE FulltextIndexedEntities (
 /* Initial entities */
 
 INSERT INTO Entities (
-    id, type_ident, def_str, creator_id
+    id, ent_type, def_str, creator_id
 )
 VALUES
     (1, "t", "t", 0),
@@ -407,40 +528,46 @@ VALUES
     ), 9),
     (13, "f", CONCAT(
         'min_score_contributions(',
+            'List type="c",', -- 'c' denotes the ScoreContributions table.
             'Quality:@[qualities],',
             'Subject:@[entities],',
             'User group:@[user groups]',
         '){',
             '"Class":"@[min score contributions]",',
-            '"Quality":"%1",',
-            '"Subject":"%2",',
-            '"User group":"%3"',
+            '"List type":"%1",',
+            '"Quality":"%2",',
+            '"Subject":"%3",',
+            '"User group":"%4"',
         '}'
     ), 9),
     (14, "f", CONCAT(
         'max_score_contributions(',
+            'List type="c",', -- 'c' denotes the ScoreContributions table.
             'Quality:@[qualities],',
             'Subject:@[entities],',
             'User group:@[user groups]',
         '){',
             '"Class":"@[max score contributions]",',
-            '"Quality":"%1",',
-            '"Subject":"%2",',
-            '"User group":"%3"',
+            '"List type":"%1",',
+            '"Quality":"%2",',
+            '"Subject":"%3",',
+            '"User group":"%4"',
         '}'
     ), 9),
     (15, "f", CONCAT(
         'score_medians(',
+            'List type:list type,',
             'Quality:@[qualities],',
             'User group:@[user groups],',
             'Metric:@[metrics],',
             'Filter list?:@[lists]',
         '){',
             '"Class":"@[score median lists]",',
-            '"Quality":"%1",',
-            '"User group":"%2",',
-            '"Metric":"%3",',
-            '"Filter list":"%4"',
+            '"List type":"%1",',
+            '"Quality":"%2",',
+            '"User group":"%3",',
+            '"Metric":"%4",',
+            '"Filter list":"%5"',
         '}'
     ), 9),
     (16, "a", CONCAT(
@@ -509,7 +636,7 @@ VALUES
     -- ), 9),
 
 INSERT INTO EntitySecKeys (
-    type_ident, def_key, ent_id
+    ent_type, def_key, ent_id
 )
 VALUES
     ("t", "t", 1),

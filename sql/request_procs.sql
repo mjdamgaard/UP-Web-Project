@@ -23,10 +23,10 @@ proc: BEGIN
         VARCHAR(700) CHARACTER SET utf8mb4;
 
     SET minScoreContrListDefStr = CONCAT(
-        '@13,@', qualID, ',@', subjID, ',@', userGroupID
+        '@13,"c",@', qualID, ',@', subjID, ',@', userGroupID
     );
     SET maxScoreContrListDefStr = CONCAT(
-        '@14,@', qualID, ',@', subjID, ',@', userGroupID
+        '@14,"c",@', qualID, ',@', subjID, ',@', userGroupID
     );
 
     CALL _insertOrFindFunctionCallEntity (
@@ -829,7 +829,7 @@ DELIMITER ;
 -- median,' as we might call it.
 
 DELIMITER //
-CREATE PROCEDURE _getScoreMedian (
+CREATE PROCEDURE _getScoreMedian ( -- TODO: Remember to include and use the filter list.
     IN minScoreContrListID BIGINT UNSIGNED,
     IN maxScoreContrListID BIGINT UNSIGNED,
     IN fullWeightSum DOUBLE,

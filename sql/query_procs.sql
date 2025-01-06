@@ -469,7 +469,7 @@ CREATE PROCEDURE selectEntity (
 )
 BEGIN
     SELECT
-        type_ident AS datatype,
+        ent_type AS entType,
         (
             CASE WHEN maxLen = 0 THEN
                 SUBSTR(def_str, startPos + 1)
@@ -499,7 +499,7 @@ CREATE PROCEDURE selectEntityAsUser (
 )
 BEGIN
     SELECT
-        type_ident AS datatype,
+        ent_type AS entType,
         (
             CASE WHEN maxLen = 0 THEN
                 SUBSTR(def_str, startPos + 1)
@@ -530,7 +530,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectEntityFromSecKey (
-    IN datatype CHAR,
+    IN entType CHAR,
     IN userWhitelistID BIGINT UNSIGNED,
     IN defKey VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
     IN maxLen INT UNSIGNED,
@@ -574,7 +574,7 @@ proc: BEGIN
         SELECT ent_id
         FROM EntitySecKeys
         WHERE (
-            type_ident = datatype AND
+            ent_type = entType AND
             user_whitelist_id = userWhitelistID AND
             def_key = defKey
         )
@@ -586,7 +586,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectEntityIDFromSecKey (
-    IN datatype CHAR,
+    IN entType CHAR,
     IN userWhitelistID BIGINT UNSIGNED,
     IN defKey VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
@@ -609,7 +609,7 @@ proc: BEGIN
     SELECT ent_id AS entID
     FROM EntitySecKeys
     WHERE (
-        type_ident = datatype AND
+        ent_type = entType AND
         user_whitelist_id = userWhitelistID AND
         def_key = defKey
     );
@@ -678,7 +678,7 @@ DELIMITER ;
 --         SELECT CAST(ent_id AS CHAR) INTO outValStr
 --         FROM EntitySecKeys
 --         WHERE (
---             type_ident = "f" AND
+--             ent_type = "f" AND
 --             def_key = fstExp
 --         );
 --         SET outSubStr = CONCAT(outValStr, ",", paramNumStr);
@@ -712,7 +712,7 @@ DELIMITER ;
 --     SELECT CAST(ent_id AS CHAR) INTO outValStr
 --     FROM EntitySecKeys
 --     WHERE (
---         type_ident = "f" AND
+--         ent_type = "f" AND
 --         def_key = defStr;
 --     );
 --     SET outSubStr = CONCAT(outValStr, outSubStr);
