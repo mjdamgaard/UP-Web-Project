@@ -170,17 +170,15 @@ CREATE TABLE ScoreContributions (
 
 
 
--- CREATE TABLE FloatScoreAndWeightAggregatesWithBothIndexes (
--- CREATE TABLE ScoreAndWeightIndexedAggregates (
 CREATE TABLE StandardScoreAggregates (
 
     list_id BIGINT UNSIGNED NOT NULL,
 
     score_val FLOAT NOT NULL,
 
-    weight_val FLOAT NOT NULL,
-
     subj_id BIGINT UNSIGNED NOT NULL,
+
+    weight_val FLOAT NOT NULL,
 
     PRIMARY KEY (
         list_id,
@@ -192,26 +190,18 @@ CREATE TABLE StandardScoreAggregates (
         score_val,
         subj_id
     ),
-
-    UNIQUE INDEX weight_ord_idx (
-        list_id,
-        weight_val,
-        subj_id
-    )
 );
 
 
--- CREATE TABLE FloatScoreAndWeightAggregatesWithWeightIndex (
--- CREATE TABLE WeightIndexedScoreAggregates (
 CREATE TABLE AspiringScoreAggregates (
 
     list_id BIGINT UNSIGNED NOT NULL,
 
-    score_val FLOAT NOT NULL,
-
     weight_val FLOAT NOT NULL,
 
     subj_id BIGINT UNSIGNED NOT NULL,
+
+    score_val FLOAT NOT NULL,
 
     PRIMARY KEY (
         list_id,
@@ -226,11 +216,7 @@ CREATE TABLE AspiringScoreAggregates (
 );
 
 
-
-
-
-
-CREATE TABLE ScoreAggregates (
+CREATE TABLE FloatValueAggregates (
 
     list_id BIGINT UNSIGNED NOT NULL,
 
@@ -249,6 +235,8 @@ CREATE TABLE ScoreAggregates (
         subj_id
     )
 );
+
+
 
 
 -- CREATE TABLE ByteScoreAggregates (
@@ -306,7 +294,9 @@ CREATE TABLE ListMetadata (
 
 
 
-CREATE ALGORITHM = MERGE VIEW AllOrderedEntityLists (
+
+
+CREATE ALGORITHM = MERGE VIEW AllPublicOrderedEntityLists (
     list_type,
     user_or_group_id,
     list_or_qual_id,
@@ -320,8 +310,7 @@ CREATE ALGORITHM = MERGE VIEW AllOrderedEntityLists (
         qual_id AS list_or_qual_id,
         score_mid AS float_val,
         subj_id AS subj_id
-    FROM PublicUserScores
-    USE INDEX (score_ord_idx)
+    FROM PublicUserScores USE INDEX (score_ord_idx)
     UNION ALL
     -- The score contributions (both the min and max ones).
     SELECT
@@ -330,30 +319,65 @@ CREATE ALGORITHM = MERGE VIEW AllOrderedEntityLists (
         list_id AS list_or_qual_id,
         score_val AS float_val,
         subj_id AS subj_id
-    FROM ScoreContributions
-    USE INDEX (score_ord_idx)
+    FROM ScoreContributions USE INDEX (score_ord_idx)
     UNION ALL
-    -- The standard entity lists with a combined weight >= 10.
+    -- The standard entity lists (with a combined weight >= 10).
     SELECT
         "s" AS list_type,
         NULL AS user_or_group_id,
         list_id AS list_or_qual_id,
         score_val AS float_val,
         subj_id AS subj_id
-    FROM StandardScoreAggregates
-    USE INDEX (score_ord_idx)
-    -- ...
-    -- And finally all the different kinds of private entity lists.
+    FROM StandardScoreAggregates USE INDEX (score_ord_idx)
     UNION ALL
+    -- The aspiring entity lists (with a combined weight < 10).
+    SELECT
+        "a" AS list_type,
+        NULL AS user_or_group_id,
+        list_id AS list_or_qual_id,
+        weight_val AS float_val,
+        subj_id AS subj_id
+    FROM AspiringScoreAggregates USE INDEX (weight_ord_idx)
+    UNION ALL
+    -- The float value entity lists (no weights).
+    SELECT
+        "f" AS list_type,
+        NULL AS user_or_group_id,
+        list_id AS list_or_qual_id,
+        score_val AS float_val,
+        subj_id AS subj_id
+    FROM FloatValueAggregates USE INDEX (score_ord_idx);
+
+
+
+CREATE ALGORITHM = MERGE VIEW AllPrivateOrderedEntityLists (
+    list_type,
+    user_or_group_id,
+    list_or_qual_id,
+    float_val,
+    subj_id
+) AS
+    -- All the different kinds of private entity lists.
     SELECT
         list_type AS list_type,
         user_whitelist_id AS user_or_group_id,
         qual_id AS list_or_qual_id,
         score_val AS float_val,
         subj_id AS subj_id
-    FROM PrivateUserScores
-    USE INDEX (score_ord_idx)
+    FROM PrivateUserScores USE INDEX (score_ord_idx);
 
+
+
+CREATE ALGORITHM = MERGE VIEW AllOrderedEntityLists (
+    list_type,
+    user_or_group_id,
+    list_or_qual_id,
+    float_val,
+    subj_id
+) AS
+    SELECT * FROM AllPublicOrderedEntityLists
+    UNION ALL
+    SELECT * FROM AllPrivateOrderedEntityLists;
 
 
 
