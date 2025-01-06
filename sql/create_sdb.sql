@@ -237,27 +237,25 @@ CREATE TABLE FloatValueAggregates (
 );
 
 
+CREATE TABLE ByteValueAggregates (
 
+    list_id BIGINT UNSIGNED NOT NULL,
 
--- CREATE TABLE ByteScoreAggregates (
+    score_val TINYINT NOT NULL,
 
---     list_id BIGINT UNSIGNED NOT NULL,
+    subj_id BIGINT UNSIGNED NOT NULL,
 
---     score_val TINYINT NOT NULL,
+    PRIMARY KEY (
+        list_id,
+        subj_id
+    ),
 
---     subj_id BIGINT UNSIGNED NOT NULL,
-
---     PRIMARY KEY (
---         list_id,
---         subj_id
---     ),
-
---     UNIQUE INDEX (
---         list_id,
---         score_val,
---         subj_id
---     )
--- );
+    UNIQUE INDEX (
+        list_id,
+        score_val,
+        subj_id
+    )
+);
 
 
 
@@ -346,6 +344,15 @@ CREATE ALGORITHM = MERGE VIEW AllPublicOrderedEntityLists (
         list_id AS list_or_qual_id,
         score_val AS float_val,
         subj_id AS subj_id
+    FROM FloatValueAggregates USE INDEX (score_ord_idx)
+    UNION ALL
+    -- The byte value entity lists (if ever needed).
+    SELECT
+        "b" AS list_type,
+        NULL AS user_or_group_id,
+        list_id AS list_or_qual_id,
+        score_val AS float_val,
+        subj_id AS subj_id
     FROM FloatValueAggregates USE INDEX (score_ord_idx);
 
 
@@ -385,41 +392,41 @@ CREATE ALGORITHM = MERGE VIEW AllOrderedEntityLists (
 
 
 
+-- CREATE TABLE ListTypesOfFunctions (
+
+--     fun_id BIGINT UNSIGNED PRIMARY KEY
+
+--     list_type CHAR NOT NULL
+-- );
 
 
+-- INSERT INTO ListTypesOfFunctions (
+--     fun_id, list_type
+-- )
+-- VALUES
+--     (13, "c"),
+--     (14, "c"),
+--     (15, "s");
 
-CREATE TABLE ScheduledRequests (
-
-    req_type VARCHAR(100) NOT NULL,
-
-    req_data VARBINARY(2900) NOT NULL,
-
-    -- exec_at BIGINT UNSIGNED NOT NULL, -- exec_at >> 32 = UNIX timestamp.
-
-    fraction_of_computation_cost_paid FLOAT;
-    fraction_of_upload_data_cost_paid FLOAT;
-    computation_cost_required FLOAT;
-    upload_data_cost_required FLOAT;
-
-    PRIMARY KEY (
-        req_type,
-        req_data,
-    ),
-
-    UNIQUE INDEX (
-        fraction_of_computation_cost_paid,
-        fraction_of_upload_data_cost_paid,
-        computation_cost_required,
-        upload_data_cost_required,
-        req_type,
-        req_data
-    )
-);
-
-
-
-
-
+CREATE ALGORITHM = MERGE VIEW ListTypesOfListFunctions (
+    fun_id,
+    list_type
+) AS
+    SELECT
+        13 AS fun_id,
+        "c" AS list_type
+    UNION ALL
+    SELECT
+        14 AS fun_id,
+        "c" AS list_type
+    UNION ALL
+    SELECT
+        15 AS fun_id,
+        "s" AS list_type
+    UNION ALL
+    SELECT
+        18 AS fun_id,
+        "f" AS list_type;
 
 
 
@@ -552,46 +559,40 @@ VALUES
     ), 9),
     (13, "f", CONCAT(
         'min_score_contributions(',
-            'List type="c",', -- 'c' denotes the ScoreContributions table.
             'Quality:@[qualities],',
             'Subject:@[entities],',
             'User group:@[user groups]',
         '){',
             '"Class":"@[min score contributions]",',
-            '"List type":"%1",',
-            '"Quality":"%2",',
-            '"Subject":"%3",',
-            '"User group":"%4"',
+            '"Quality":"%1",',
+            '"Subject":"%2",',
+            '"User group":"%3"',
         '}'
     ), 9),
     (14, "f", CONCAT(
         'max_score_contributions(',
-            'List type="c",', -- 'c' denotes the ScoreContributions table.
             'Quality:@[qualities],',
             'Subject:@[entities],',
             'User group:@[user groups]',
         '){',
             '"Class":"@[max score contributions]",',
-            '"List type":"%1",',
-            '"Quality":"%2",',
-            '"Subject":"%3",',
-            '"User group":"%4"',
+            '"Quality":"%1",',
+            '"Subject":"%2",',
+            '"User group":"%3"',
         '}'
     ), 9),
     (15, "f", CONCAT(
         'score_medians(',
-            'List type:list type,',
             'Quality:@[qualities],',
             'User group:@[user groups],',
             'Metric:@[metrics],',
             'Filter list?:@[lists]',
         '){',
             '"Class":"@[score median lists]",',
-            '"List type":"%1",',
-            '"Quality":"%2",',
-            '"User group":"%3",',
-            '"Metric":"%4",',
-            '"Filter list":"%5"',
+            '"Quality":"%1",',
+            '"User group":"%2",',
+            '"Metric":"%3",',
+            '"Filter list":"%4"',
         '}'
     ), 9),
     (16, "a", CONCAT(
@@ -624,6 +625,24 @@ VALUES
             '"Lower bound":0,',
             '"Upper bound":10,',
             '"Description":"@[metrics/std predicate metric/desc]"',
+        '}'
+    ), 9),
+    (18, "f", CONCAT(
+        'score_weights(',
+            'List:@[standard entity lists]',
+        '){',
+            '"Class":"@[standard score weight lists]",',
+            '"List":"%1"',
+        '}'
+    ), 9),
+    (19, "f", CONCAT(
+        'user_score_mids(',
+            'User:u,',
+            'Quality:@[qualities]',
+        '){',
+            '"Class":"@[public user score lists]",',
+            '"User":"%1",',
+            '"Quality":"%2"',
         '}'
     ), 9);
     -- (14, "f", CONCAT(
@@ -673,6 +692,55 @@ VALUES
     ("t", "j", 8),
     ("u", "initial_admin", 9);
     -- No sec. key for ("j", '{}', 9).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE TABLE ScheduledRequests (
+
+    req_type VARCHAR(100) NOT NULL,
+
+    req_data VARBINARY(2900) NOT NULL,
+
+    fraction_of_computation_cost_paid FLOAT;
+    fraction_of_upload_data_cost_paid FLOAT;
+    computation_cost_required FLOAT;
+    upload_data_cost_required FLOAT;
+
+    PRIMARY KEY (
+        req_type,
+        req_data,
+    ),
+
+    UNIQUE INDEX (
+        fraction_of_computation_cost_paid,
+        fraction_of_upload_data_cost_paid,
+        computation_cost_required,
+        upload_data_cost_required,
+        req_type,
+        req_data
+    )
+);
+
+
+
+
+
 
 
 

@@ -23,10 +23,10 @@ proc: BEGIN
         VARCHAR(700) CHARACTER SET utf8mb4;
 
     SET minScoreContrListDefStr = CONCAT(
-        '@13,"c",@', qualID, ',@', subjID, ',@', userGroupID
+        '@13,@', qualID, ',@', subjID, ',@', userGroupID
     );
     SET maxScoreContrListDefStr = CONCAT(
-        '@14,"c",@', qualID, ',@', subjID, ',@', userGroupID
+        '@14,@', qualID, ',@', subjID, ',@', userGroupID
     );
 
     CALL _insertOrFindFunctionCallEntity (
