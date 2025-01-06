@@ -293,6 +293,30 @@ CREATE TABLE ListMetadata (
 
 
 
+    -- -- The public user scores.
+    -- SELECT
+    --     t1.id AS list_id,
+    --     t2.score_mid AS float_val,
+    --     t2.subj_id AS subj_id
+    -- FROM Entities AS t1
+    -- INNER JOIN PublicUserScores AS t2 USE INDEX (score_ord_idx)
+    --     ON -- ...
+    -- INNER JOIN ListTypesOfListFunctions AS t3
+    -- ON (
+    --     t3.fun_id =
+    --     t3.list_type <=> "u" AND
+    --     t3.fun_id <=> CAST(
+    --         REGEXP_SUBSTR(
+    --             SELECT def_str
+    --             FROM Entities
+    --             WHERE id = t1.id,
+    --             "[0-9]+"
+    --         )
+    --         AS UNSIGNED
+    --     )
+    -- )
+
+
 
 CREATE ALGORITHM = MERGE VIEW AllPublicOrderedEntityLists (
     list_type,
@@ -309,7 +333,7 @@ CREATE ALGORITHM = MERGE VIEW AllPublicOrderedEntityLists (
         score_mid AS float_val,
         subj_id AS subj_id
     FROM PublicUserScores USE INDEX (score_ord_idx)
-    UNION ALL
+    UNION
     -- The score contributions (both the min and max ones).
     SELECT
         "c" AS list_type,
@@ -318,7 +342,7 @@ CREATE ALGORITHM = MERGE VIEW AllPublicOrderedEntityLists (
         score_val AS float_val,
         subj_id AS subj_id
     FROM ScoreContributions USE INDEX (score_ord_idx)
-    UNION ALL
+    UNION
     -- The standard entity lists (with a combined weight >= 10).
     SELECT
         "s" AS list_type,
@@ -327,7 +351,7 @@ CREATE ALGORITHM = MERGE VIEW AllPublicOrderedEntityLists (
         score_val AS float_val,
         subj_id AS subj_id
     FROM StandardScoreAggregates USE INDEX (score_ord_idx)
-    UNION ALL
+    UNION
     -- The aspiring entity lists (with a combined weight < 10).
     SELECT
         "a" AS list_type,
@@ -336,7 +360,7 @@ CREATE ALGORITHM = MERGE VIEW AllPublicOrderedEntityLists (
         weight_val AS float_val,
         subj_id AS subj_id
     FROM AspiringScoreAggregates USE INDEX (weight_ord_idx)
-    UNION ALL
+    UNION
     -- The float value entity lists (no weights).
     SELECT
         "f" AS list_type,
@@ -345,7 +369,7 @@ CREATE ALGORITHM = MERGE VIEW AllPublicOrderedEntityLists (
         score_val AS float_val,
         subj_id AS subj_id
     FROM FloatValueAggregates USE INDEX (score_ord_idx)
-    UNION ALL
+    UNION
     -- The byte value entity lists (if ever needed).
     SELECT
         "b" AS list_type,
@@ -383,7 +407,7 @@ CREATE ALGORITHM = MERGE VIEW AllOrderedEntityLists (
     subj_id
 ) AS
     SELECT * FROM AllPublicOrderedEntityLists
-    UNION ALL
+    UNION
     SELECT * FROM AllPrivateOrderedEntityLists;
 
 
@@ -391,22 +415,32 @@ CREATE ALGORITHM = MERGE VIEW AllOrderedEntityLists (
 
 
 
+-- CREATE ALGORITHM = MERGE VIEW GeneralizedEntityListKeys (
+--     fun_id,
+--     list_id,
+--     list_def_str,
+--     user_or_group_id,
+--     list_or_qual_id
+-- ) AS
+--     -- The public user scores.
+--     SELECT
+--         18 AS fun_id,
+--         * AS
+--         user_id AS user_or_group_id,
+--         qual_id AS list_or_qual_id,
+--         score_mid AS float_val,
+--         subj_id AS subj_id
+--     FROM PublicUserScores USE INDEX (score_ord_idx)
+--     UNION
 
--- CREATE TABLE ListTypesOfFunctions (
-
---     fun_id BIGINT UNSIGNED PRIMARY KEY
-
---     list_type CHAR NOT NULL
--- );
 
 
--- INSERT INTO ListTypesOfFunctions (
---     fun_id, list_type
--- )
--- VALUES
---     (13, "c"),
---     (14, "c"),
---     (15, "s");
+
+
+
+
+
+
 
 CREATE ALGORITHM = MERGE VIEW ListTypesOfListFunctions (
     fun_id,
