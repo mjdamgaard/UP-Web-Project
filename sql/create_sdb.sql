@@ -30,24 +30,28 @@ DROP TABLE EntitySecKeys;
 /* Some fundamental scores tables  */
 
 
-CREATE TABLE PrivateUserScores (
+CREATE TABLE PrivateEntityLists (
 
     list_type CHAR NOT NULL DEFAULT "\0", -- "\0": No aggregation allowed.
 
     user_whitelist_id BIGINT UNSIGNED NOT NULL,
 
-    qual_id BIGINT UNSIGNED NOT NULL,
+    list_spec_id BIGINT UNSIGNED NOT NULL,
+
+    float_val FLOAT NOT NULL,
+
+    on_index_data VARBINARY(32) NOT NULL, -- can be resized.
 
     user_id BIGINT UNSIGNED NOT NULL,
 
-    score_val FLOAT NOT NULL,
-
     subj_id BIGINT UNSIGNED NOT NULL,
+
+    off_index_data VARBINARY(32) NOT NULL, -- can be resized.
 
     PRIMARY KEY (
         list_type,
         user_whitelist_id,
-        qual_id,
+        list_spec_id,
         user_id,
         subj_id
     ),
@@ -55,46 +59,127 @@ CREATE TABLE PrivateUserScores (
     UNIQUE INDEX score_ord_idx (
         list_type,
         user_whitelist_id,
-        qual_id,
-        score_val,
+        list_spec_id,
+        float_val,
+        on_index_data,
         user_id,
         subj_id
     )
-);
+)
+ROW_FORMAT = COMPRESSED;
 
 
 
 
-CREATE TABLE PublicUserScores (
 
-    user_id BIGINT UNSIGNED NOT NULL,
 
-    qual_id BIGINT UNSIGNED NOT NULL,
+
+
+CREATE TABLE PublicEntityLists (
+
+    user_group_id BIGINT UNSIGNED NOT NULL,
+
+    list_spec_id BIGINT UNSIGNED NOT NULL,
+
+    float_val FLOAT NOT NULL,
+
+    on_index_data VARBINARY(32) NOT NULL, -- can be resized.
 
     subj_id BIGINT UNSIGNED NOT NULL,
 
-    score_mid FLOAT NOT NULL,
-
-    score_rad FLOAT NOT NULL DEFAULT 0,
-
-    unix_time INT UNSIGNED NOT NULL DEFAULT UNIX_TIMESTAMP(),
+    off_index_data VARBINARY(32) NOT NULL, -- can be resized.
 
     PRIMARY KEY (
-        user_id,
-        qual_id,
+        user_group_id,
+        list_spec_id,
         subj_id
     ),
 
-    UNIQUE INDEX score_ord_idx (
-        user_id,
-        qual_id,
-        score_mid,
+    UNIQUE INDEX sec_idx (
+        user_group_id,
+        list_spec_id,
+        float_val,
+        on_index_data,
         subj_id
+    )
+)
+ROW_FORMAT = COMPRESSED;
+
+
+
+
+
+CREATE TABLE PublicListMetadata (
+
+    -- list_type CHAR NOT NULL DEFAULT "s", -- A standard public entity list.
+
+    user_group_id BIGINT UNSIGNED NOT NULL,
+
+    list_spec_id BIGINT UNSIGNED NOT NULL,
+
+    list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+    pos_float_list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+    float_sum DOUBLE NOT NULL DEFAULT 0,
+
+    pos_float_sum DOUBLE NOT NULL DEFAULT 0,
+
+    paid_upload_data_cost FLOAT NOT NULL DEFAULT 0,
+
+    PRIMARY KEY (
+        user_group_id,
+        list_spec_id
+    )
+)
+ROW_FORMAT = COMPRESSED;
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE TABLE ScheduledRequests (
+
+    req_type VARCHAR(100) NOT NULL,
+
+    req_data VARBINARY(2900) NOT NULL,
+
+    fraction_of_computation_cost_paid FLOAT;
+    fraction_of_upload_data_cost_paid FLOAT;
+    computation_cost_required FLOAT;
+    upload_data_cost_required FLOAT;
+
+    PRIMARY KEY (
+        req_type,
+        req_data,
+    ),
+
+    UNIQUE INDEX (
+        fraction_of_computation_cost_paid,
+        fraction_of_upload_data_cost_paid,
+        computation_cost_required,
+        upload_data_cost_required,
+        req_type,
+        req_data
     )
 );
 
 
--- CREATE TABLE PublicUserByteScores (
+
+
+
+
+
+
+-- CREATE TABLE PublicUserScores (
 
 --     user_id BIGINT UNSIGNED NOT NULL,
 
@@ -102,11 +187,186 @@ CREATE TABLE PublicUserScores (
 
 --     subj_id BIGINT UNSIGNED NOT NULL,
 
---     score_val TINYINT NOT NULL,
+--     score_mid FLOAT NOT NULL,
+
+--     score_rad FLOAT NOT NULL DEFAULT 0,
+
+--     unix_time INT UNSIGNED NOT NULL DEFAULT UNIX_TIMESTAMP(),
 
 --     PRIMARY KEY (
 --         user_id,
 --         qual_id,
+--         subj_id
+--     ),
+
+--     UNIQUE INDEX score_ord_idx (
+--         user_id,
+--         qual_id,
+--         score_mid,
+--         subj_id
+--     )
+-- );
+
+
+-- -- CREATE TABLE PublicUserByteScores (
+
+-- --     user_id BIGINT UNSIGNED NOT NULL,
+
+-- --     qual_id BIGINT UNSIGNED NOT NULL,
+
+-- --     subj_id BIGINT UNSIGNED NOT NULL,
+
+-- --     score_val TINYINT NOT NULL,
+
+-- --     PRIMARY KEY (
+-- --         user_id,
+-- --         qual_id,
+-- --         subj_id
+-- --     )
+-- -- );
+
+
+
+
+
+
+-- CREATE TABLE ScoreContributions (
+
+--     list_id BIGINT UNSIGNED NOT NULL,
+
+--     score_val FLOAT NOT NULL,
+
+--     weight_val FLOAT NOT NULL,
+
+--     unix_time INT UNSIGNED NOT NULL DEFAULT UNIX_TIMESTAMP(),
+
+--     subj_id BIGINT UNSIGNED NOT NULL,
+
+--     PRIMARY KEY (
+--         list_id,
+--         subj_id
+--     ),
+
+--     UNIQUE INDEX score_ord_idx (
+--         list_id,
+--         score_val,
+--         weight_val,
+--         unix_time,
+--         subj_id
+--     )
+-- );
+
+
+
+
+-- -- CREATE TABLE ScoreHistograms (
+
+-- --     -- hist_fun_id BIGINT UNSIGNED NOT NULL,
+
+-- --     -- lower_bound_literal VARCHAR(50) NOT NULL,
+
+-- --     -- upper_bound_literal VARCHAR(50) NOT NULL,
+
+-- --     score_contributor_list_id BIGINT UNSIGNED NOT NULL,
+
+-- --     hist_data VARBINARY(4000) NOT NULL,
+
+-- --     PRIMARY KEY (
+-- --         -- hist_fun_id,
+-- --         -- lower_bound_literal,
+-- --         -- upper_bound_literal,
+-- --         score_contributor_list_id
+-- --     )
+-- -- );
+
+
+
+
+
+
+-- CREATE TABLE StandardScoreAggregates (
+
+--     list_id BIGINT UNSIGNED NOT NULL,
+
+--     score_val FLOAT NOT NULL,
+
+--     subj_id BIGINT UNSIGNED NOT NULL,
+
+--     weight_val FLOAT NOT NULL,
+
+--     PRIMARY KEY (
+--         list_id,
+--         subj_id
+--     ),
+
+--     UNIQUE INDEX score_ord_idx (
+--         list_id,
+--         score_val,
+--         subj_id
+--     ),
+-- );
+
+
+-- CREATE TABLE AspiringScoreAggregates (
+
+--     list_id BIGINT UNSIGNED NOT NULL,
+
+--     weight_val FLOAT NOT NULL,
+
+--     subj_id BIGINT UNSIGNED NOT NULL,
+
+--     score_val FLOAT NOT NULL,
+
+--     PRIMARY KEY (
+--         list_id,
+--         subj_id
+--     ),
+
+--     UNIQUE INDEX weight_ord_idx (
+--         list_id,
+--         weight_val,
+--         subj_id
+--     )
+-- );
+
+
+-- CREATE TABLE FloatValueAggregates (
+
+--     list_id BIGINT UNSIGNED NOT NULL,
+
+--     score_val FLOAT NOT NULL,
+
+--     subj_id BIGINT UNSIGNED NOT NULL,
+
+--     PRIMARY KEY (
+--         list_id,
+--         subj_id
+--     ),
+
+--     UNIQUE INDEX score_ord_idx (
+--         list_id,
+--         score_val,
+--         subj_id
+--     )
+-- );
+
+
+-- CREATE TABLE ByteValueAggregates (
+
+--     list_id BIGINT UNSIGNED NOT NULL,
+
+--     score_val TINYINT NOT NULL,
+
+--     subj_id BIGINT UNSIGNED NOT NULL,
+
+--     PRIMARY KEY (
+--         list_id,
+--         subj_id
+--     ),
+
+--     UNIQUE INDEX (
+--         list_id,
+--         score_val,
 --         subj_id
 --     )
 -- );
@@ -116,322 +376,176 @@ CREATE TABLE PublicUserScores (
 
 
 
-CREATE TABLE ScoreContributions (
-
-    list_id BIGINT UNSIGNED NOT NULL,
-
-    score_val FLOAT NOT NULL,
-
-    weight_val FLOAT NOT NULL,
-
-    unix_time INT UNSIGNED NOT NULL DEFAULT UNIX_TIMESTAMP(),
-
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    PRIMARY KEY (
-        list_id,
-        subj_id
-    ),
-
-    UNIQUE INDEX score_ord_idx (
-        list_id,
-        score_val,
-        weight_val,
-        unix_time,
-        subj_id
-    )
-);
 
 
 
 
--- CREATE TABLE ScoreHistograms (
 
---     -- hist_fun_id BIGINT UNSIGNED NOT NULL,
+-- CREATE TABLE ListMetadata (
 
---     -- lower_bound_literal VARCHAR(50) NOT NULL,
+--     list_type CHAR NOT NULL,
 
---     -- upper_bound_literal VARCHAR(50) NOT NULL,
+--     user_or_group_id BIGINT UNSIGNED NOT NULL,
 
---     score_contributor_list_id BIGINT UNSIGNED NOT NULL,
+--     list_or_qual_id BIGINT UNSIGNED NOT NULL,
 
---     hist_data VARBINARY(4000) NOT NULL,
+--     list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+--     weight_sum DOUBLE NOT NULL DEFAULT 0,
+
+--     pos_score_list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+--     paid_upload_data_cost FLOAT NOT NULL DEFAULT 0,
 
 --     PRIMARY KEY (
---         -- hist_fun_id,
---         -- lower_bound_literal,
---         -- upper_bound_literal,
---         score_contributor_list_id
+--         list_type,
+--         user_or_group_id,
+--         list_or_qual_id
 --     )
 -- );
 
 
 
 
-
-
-CREATE TABLE StandardScoreAggregates (
-
-    list_id BIGINT UNSIGNED NOT NULL,
-
-    score_val FLOAT NOT NULL,
-
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    weight_val FLOAT NOT NULL,
-
-    PRIMARY KEY (
-        list_id,
-        subj_id
-    ),
-
-    UNIQUE INDEX score_ord_idx (
-        list_id,
-        score_val,
-        subj_id
-    ),
-);
-
-
-CREATE TABLE AspiringScoreAggregates (
-
-    list_id BIGINT UNSIGNED NOT NULL,
-
-    weight_val FLOAT NOT NULL,
-
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    score_val FLOAT NOT NULL,
-
-    PRIMARY KEY (
-        list_id,
-        subj_id
-    ),
-
-    UNIQUE INDEX weight_ord_idx (
-        list_id,
-        weight_val,
-        subj_id
-    )
-);
-
-
-CREATE TABLE FloatValueAggregates (
-
-    list_id BIGINT UNSIGNED NOT NULL,
-
-    score_val FLOAT NOT NULL,
-
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    PRIMARY KEY (
-        list_id,
-        subj_id
-    ),
-
-    UNIQUE INDEX score_ord_idx (
-        list_id,
-        score_val,
-        subj_id
-    )
-);
-
-
-CREATE TABLE ByteValueAggregates (
-
-    list_id BIGINT UNSIGNED NOT NULL,
-
-    score_val TINYINT NOT NULL,
-
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    PRIMARY KEY (
-        list_id,
-        subj_id
-    ),
-
-    UNIQUE INDEX (
-        list_id,
-        score_val,
-        subj_id
-    )
-);
-
-
-
-
-
-
-
-
-
-
-
-CREATE TABLE ListMetadata (
-
-    list_type CHAR NOT NULL,
-
-    user_or_group_id BIGINT UNSIGNED NOT NULL,
-
-    list_or_qual_id BIGINT UNSIGNED NOT NULL,
-
-    list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    weight_sum DOUBLE NOT NULL DEFAULT 0,
-
-    pos_score_list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    paid_upload_data_cost FLOAT NOT NULL DEFAULT 0,
-
-    PRIMARY KEY (
-        list_type,
-        user_or_group_id,
-        list_or_qual_id
-    )
-);
-
-
-
-
-    -- -- The public user scores.
-    -- SELECT
-    --     t1.id AS list_id,
-    --     t2.score_mid AS float_val,
-    --     t2.subj_id AS subj_id
-    -- FROM Entities AS t1
-    -- INNER JOIN PublicUserScores AS t2 USE INDEX (score_ord_idx)
-    --     ON -- ...
-    -- INNER JOIN ListTypesOfListFunctions AS t3
-    -- ON (
-    --     t3.fun_id =
-    --     t3.list_type <=> "u" AND
-    --     t3.fun_id <=> CAST(
-    --         REGEXP_SUBSTR(
-    --             SELECT def_str
-    --             FROM Entities
-    --             WHERE id = t1.id,
-    --             "[0-9]+"
-    --         )
-    --         AS UNSIGNED
-    --     )
-    -- )
-
-
-
-CREATE ALGORITHM = MERGE VIEW AllPublicOrderedEntityLists (
-    list_type,
-    user_or_group_id,
-    list_or_qual_id,
-    float_val,
-    subj_id
-) AS
-    -- The public user scores.
-    SELECT
-        "u" AS list_type,
-        user_id AS user_or_group_id,
-        qual_id AS list_or_qual_id,
-        score_mid AS float_val,
-        subj_id AS subj_id
-    FROM PublicUserScores USE INDEX (score_ord_idx)
-    UNION
-    -- The score contributions (both the min and max ones).
-    SELECT
-        "c" AS list_type,
-        NULL AS user_or_group_id,
-        list_id AS list_or_qual_id,
-        score_val AS float_val,
-        subj_id AS subj_id
-    FROM ScoreContributions USE INDEX (score_ord_idx)
-    UNION
-    -- The standard entity lists (with a combined weight >= 10).
-    SELECT
-        "s" AS list_type,
-        NULL AS user_or_group_id,
-        list_id AS list_or_qual_id,
-        score_val AS float_val,
-        subj_id AS subj_id
-    FROM StandardScoreAggregates USE INDEX (score_ord_idx)
-    UNION
-    -- The aspiring entity lists (with a combined weight < 10).
-    SELECT
-        "a" AS list_type,
-        NULL AS user_or_group_id,
-        list_id AS list_or_qual_id,
-        weight_val AS float_val,
-        subj_id AS subj_id
-    FROM AspiringScoreAggregates USE INDEX (weight_ord_idx)
-    UNION
-    -- The float value entity lists (no weights).
-    SELECT
-        "f" AS list_type,
-        NULL AS user_or_group_id,
-        list_id AS list_or_qual_id,
-        score_val AS float_val,
-        subj_id AS subj_id
-    FROM FloatValueAggregates USE INDEX (score_ord_idx)
-    UNION
-    -- The byte value entity lists (if ever needed).
-    SELECT
-        "b" AS list_type,
-        NULL AS user_or_group_id,
-        list_id AS list_or_qual_id,
-        score_val AS float_val,
-        subj_id AS subj_id
-    FROM FloatValueAggregates USE INDEX (score_ord_idx);
-
-
-
-CREATE ALGORITHM = MERGE VIEW AllPrivateOrderedEntityLists (
-    list_type,
-    user_or_group_id,
-    list_or_qual_id,
-    float_val,
-    subj_id
-) AS
-    -- All the different kinds of private entity lists.
-    SELECT
-        list_type AS list_type,
-        user_whitelist_id AS user_or_group_id,
-        qual_id AS list_or_qual_id,
-        score_val AS float_val,
-        subj_id AS subj_id
-    FROM PrivateUserScores USE INDEX (score_ord_idx);
-
-
-
-CREATE ALGORITHM = MERGE VIEW AllOrderedEntityLists (
-    list_type,
-    user_or_group_id,
-    list_or_qual_id,
-    float_val,
-    subj_id
-) AS
-    SELECT * FROM AllPublicOrderedEntityLists
-    UNION
-    SELECT * FROM AllPrivateOrderedEntityLists;
-
-
-
-
-
-
--- CREATE ALGORITHM = MERGE VIEW GeneralizedEntityListKeys (
---     fun_id,
---     list_id,
---     list_def_str,
+--     -- -- The public user scores.
+--     -- SELECT
+--     --     t1.id AS list_id,
+--     --     t2.score_mid AS float_val,
+--     --     t2.subj_id AS subj_id
+--     -- FROM Entities AS t1
+--     -- INNER JOIN PublicUserScores AS t2 USE INDEX (score_ord_idx)
+--     --     ON -- ...
+--     -- INNER JOIN ListTypesOfListFunctions AS t3
+--     -- ON (
+--     --     t3.fun_id =
+--     --     t3.list_type <=> "u" AND
+--     --     t3.fun_id <=> CAST(
+--     --         REGEXP_SUBSTR(
+--     --             SELECT def_str
+--     --             FROM Entities
+--     --             WHERE id = t1.id,
+--     --             "[0-9]+"
+--     --         )
+--     --         AS UNSIGNED
+--     --     )
+--     -- )
+
+
+
+-- CREATE ALGORITHM = MERGE VIEW AllPublicOrderedEntityLists (
+--     list_type,
 --     user_or_group_id,
---     list_or_qual_id
+--     list_or_qual_id,
+--     float_val,
+--     subj_id
 -- ) AS
 --     -- The public user scores.
 --     SELECT
---         18 AS fun_id,
---         * AS
+--         "u" AS list_type,
 --         user_id AS user_or_group_id,
 --         qual_id AS list_or_qual_id,
 --         score_mid AS float_val,
 --         subj_id AS subj_id
 --     FROM PublicUserScores USE INDEX (score_ord_idx)
 --     UNION
+--     -- The score contributions (both the min and max ones).
+--     SELECT
+--         "c" AS list_type,
+--         NULL AS user_or_group_id,
+--         list_id AS list_or_qual_id,
+--         score_val AS float_val,
+--         subj_id AS subj_id
+--     FROM ScoreContributions USE INDEX (score_ord_idx)
+--     UNION
+--     -- The standard entity lists (with a combined weight >= 10).
+--     SELECT
+--         "s" AS list_type,
+--         NULL AS user_or_group_id,
+--         list_id AS list_or_qual_id,
+--         score_val AS float_val,
+--         subj_id AS subj_id
+--     FROM StandardScoreAggregates USE INDEX (score_ord_idx)
+--     UNION
+--     -- The aspiring entity lists (with a combined weight < 10).
+--     SELECT
+--         "a" AS list_type,
+--         NULL AS user_or_group_id,
+--         list_id AS list_or_qual_id,
+--         weight_val AS float_val,
+--         subj_id AS subj_id
+--     FROM AspiringScoreAggregates USE INDEX (weight_ord_idx)
+--     UNION
+--     -- The float value entity lists (no weights).
+--     SELECT
+--         "f" AS list_type,
+--         NULL AS user_or_group_id,
+--         list_id AS list_or_qual_id,
+--         score_val AS float_val,
+--         subj_id AS subj_id
+--     FROM FloatValueAggregates USE INDEX (score_ord_idx)
+--     UNION
+--     -- The byte value entity lists (if ever needed).
+--     SELECT
+--         "b" AS list_type,
+--         NULL AS user_or_group_id,
+--         list_id AS list_or_qual_id,
+--         score_val AS float_val,
+--         subj_id AS subj_id
+--     FROM FloatValueAggregates USE INDEX (score_ord_idx);
+
+
+
+-- CREATE ALGORITHM = MERGE VIEW AllPrivateOrderedEntityLists (
+--     list_type,
+--     user_or_group_id,
+--     list_or_qual_id,
+--     float_val,
+--     subj_id
+-- ) AS
+--     -- All the different kinds of private entity lists.
+--     SELECT
+--         list_type AS list_type,
+--         user_whitelist_id AS user_or_group_id,
+--         qual_id AS list_or_qual_id,
+--         score_val AS float_val,
+--         subj_id AS subj_id
+--     FROM PrivateUserScores USE INDEX (score_ord_idx);
+
+
+
+-- CREATE ALGORITHM = MERGE VIEW AllOrderedEntityLists (
+--     list_type,
+--     user_or_group_id,
+--     list_or_qual_id,
+--     float_val,
+--     subj_id
+-- ) AS
+--     SELECT * FROM AllPublicOrderedEntityLists
+--     UNION
+--     SELECT * FROM AllPrivateOrderedEntityLists;
+
+
+
+
+
+
+-- -- CREATE ALGORITHM = MERGE VIEW GeneralizedEntityListKeys (
+-- --     fun_id,
+-- --     list_id,
+-- --     list_def_str,
+-- --     user_or_group_id,
+-- --     list_or_qual_id
+-- -- ) AS
+-- --     -- The public user scores.
+-- --     SELECT
+-- --         18 AS fun_id,
+-- --         * AS
+-- --         user_id AS user_or_group_id,
+-- --         qual_id AS list_or_qual_id,
+-- --         score_mid AS float_val,
+-- --         subj_id AS subj_id
+-- --     FROM PublicUserScores USE INDEX (score_ord_idx)
+-- --     UNION
 
 
 
@@ -442,25 +556,25 @@ CREATE ALGORITHM = MERGE VIEW AllOrderedEntityLists (
 
 
 
-CREATE ALGORITHM = MERGE VIEW ListTypesOfListFunctions (
-    fun_id,
-    list_type
-) AS
-    SELECT
-        13 AS fun_id,
-        "c" AS list_type
-    UNION ALL
-    SELECT
-        14 AS fun_id,
-        "c" AS list_type
-    UNION ALL
-    SELECT
-        15 AS fun_id,
-        "s" AS list_type
-    UNION ALL
-    SELECT
-        18 AS fun_id,
-        "f" AS list_type;
+-- CREATE ALGORITHM = MERGE VIEW ListTypesOfListFunctions (
+--     fun_id,
+--     list_type
+-- ) AS
+--     SELECT
+--         13 AS fun_id,
+--         "c" AS list_type
+--     UNION ALL
+--     SELECT
+--         14 AS fun_id,
+--         "c" AS list_type
+--     UNION ALL
+--     SELECT
+--         15 AS fun_id,
+--         "s" AS list_type
+--     UNION ALL
+--     SELECT
+--         18 AS fun_id,
+--         "f" AS list_type;
 
 
 
@@ -737,39 +851,6 @@ VALUES
 
 
 
-
-
-
-
-
-
-
-
-CREATE TABLE ScheduledRequests (
-
-    req_type VARCHAR(100) NOT NULL,
-
-    req_data VARBINARY(2900) NOT NULL,
-
-    fraction_of_computation_cost_paid FLOAT;
-    fraction_of_upload_data_cost_paid FLOAT;
-    computation_cost_required FLOAT;
-    upload_data_cost_required FLOAT;
-
-    PRIMARY KEY (
-        req_type,
-        req_data,
-    ),
-
-    UNIQUE INDEX (
-        fraction_of_computation_cost_paid,
-        fraction_of_upload_data_cost_paid,
-        computation_cost_required,
-        upload_data_cost_required,
-        req_type,
-        req_data
-    )
-);
 
 
 
@@ -1294,12 +1375,22 @@ CREATE TABLE Private_UserData (
 
     download_data_this_week FLOAT NOT NULL DEFAULT 0, -- bytes.
     download_data_weekly_limit FLOAT NOT NULL DEFAULT 5000000000,
+
     upload_data_this_week FLOAT NOT NULL DEFAULT 0, -- bytes.
     upload_data_weekly_limit FLOAT NOT NULL DEFAULT 1000000,
     computation_usage_this_week FLOAT NOT NULL DEFAULT 0, -- ms.
     computation_usage_weekly_limit FLOAT NOT NULL DEFAULT 500000,
-    last_refreshed_at DATE NOT NULL DEFAULT (CURDATE())
+
+    last_refreshed_at DATE NOT NULL DEFAULT (CURDATE()),
+
+    private_storage_data_usage FLOAT NOT NULL DEFAULT 0, -- bytes.
+    private_storage_data_limit FLOAT NOT NULL DEFAULT 10000000,
+
+    user_profile_count FLOAT NOT NULL DEFAULT 0, -- number of user profiles.
+    user_profile_limit FLOAT NOT NULL DEFAULT 8
 );
+
+
 
 
 CREATE TABLE Private_Sessions (

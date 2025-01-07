@@ -51,49 +51,56 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE _insertUpdateOrDeleteScoreAndWeight (
-    IN listID BIGINT UNSIGNED,
+CREATE PROCEDURE _insertUpdateOrDeletePublicListElement (
+    IN userGroupID BIGINT UNSIGNED,
+    IN listSpecID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN scoreVal FLOAT,
-    IN weightVal FLOAT,
+    IN floatVal FLOAT,
+    IN roundFloatVal BOOL,
+    IN onIndexData VARBINARY(32),
+    IN offIndexData VARBINARY(32),
     OUT exitCode TINYINT
 )
 BEGIN
-    DECLARE prevScoreVal, prevWeightVal, prevWeightSum FLOAT;
+    DECLARE prevFloatVal FLOAT;
+    DECLARE prevListLen BIGINT UNSIGNED; -- only used to lock ListMetadata row.
     DECLARE isExceeded TINYINT;
-    DECLARE roundedScoreVal FLOAT(2,2);
+    DECLARE roundedFloatVal FLOAT(2,2);
 
-    -- FLOAT(M,D) type is now deprecated, so round scoreVal some other way at
-    -- some point when support for it is about to be removed.
-    SET roundedScoreVal = scoreVal;
-    SET scoreVal = roundedScoreVal;
+    IF (roundFloatVal) THEN
+        -- FLOAT(M,D) type is now deprecated, so round floatVal some other way
+        -- at some point when support for it is about to be removed.
+        SET roundedFloatVal = floatVal;
+        SET floatVal = roundedFloatVal;
+    END IF;
 
     -- We select (for update) the previous score on the list, and branch
     -- accordingly in order to update the ListMetadata table correctly.
     START TRANSACTION;
 
-    SELECT weight_sum INTO prevWeightSum
-    FROM ListMetadata
+    SELECT list_len INTO prevListLen
+    FROM PublicListMetadata FORCE INDEX (PRIMARY)
     WHERE (
-        list_id = listID AND
+        user_group_id = userGroupID AND
+        list_spec_id = listSpecID AND
         subj_id = subjID
     )
     FOR UPDATE;
 
-    SELECT score_val, weight_val INTO prevScoreVal, prevWeightVal
-    FROM FloatScoreAndWeightAggregates
+    SELECT float_val INTO prevFloatVal
+    FROM PublicEntityLists FORCE INDEX (PRIMARY)
     WHERE (
-        list_id = listID AND
-        subj_id = subjID
+        user_group_id = userGroupID AND
+        list_spec_id = listSpecID
     );
 
     -- Branch according to whether the score should be inserted, updated, or
-    -- deleted, the latter being the case where the scoreVal input is NULL. 
-    IF (scoreVal IS NOT NULL AND prevScoreVal IS NULL) THEN
+    -- deleted, the latter being the case where the floatVal input is NULL. 
+    IF (floatVal IS NOT NULL AND prevFloatVal IS NULL) THEN
         INSERT INTO FloatScoreAndWeightAggregates (
             list_id, subj_id, score_val, weight_val
         ) VALUES (
-            listID, subjID, scoreVal, weightVal
+            listID, subjID, floatVal, weightVal
         );
 
         INSERT INTO ListMetadata (
@@ -101,12 +108,12 @@ BEGIN
             pos_score_list_len,
         ) VALUES (
             listID, 1, weightVal,
-            CASE WHEN (scoreVal > 0) THEN 1 ELSE 0 END CASE
+            CASE WHEN (floatVal > 0) THEN 1 ELSE 0 END CASE
         )
         ON DUPLICATE KEY UPDATE
             list_len = list_len + 1,
             weight_sum = weight_sum + weightVal - prevWeightVal,
-            pos_score_list_len = CASE WHEN (scoreVal > 0) THEN
+            pos_score_list_len = CASE WHEN (floatVal > 0) THEN
                 pos_score_list_len + 1
             ELSE
                 pos_score_list_len
@@ -115,9 +122,9 @@ BEGIN
         COMMIT;
         SET exitCode = 0; -- insert.
 
-    ELSEIF (scoreVal IS NOT NULL AND prevScoreVal IS NOT NULL) THEN
-        UPDATE FloatScoreAndWeightAggregates SET
-            score_val = scoreVal,
+    ELSEIF (floatVal IS NOT NULL AND prevFloatVal IS NOT NULL) THEN
+        UPDATE PublicEntityLists SET
+            float_val = floatVal,
             weight_val = weightVal
         WHERE (
             list_id = listID AND
@@ -128,9 +135,9 @@ BEGIN
             weight_sum = weight_sum + weightVal - prevWeightVal,
             pos_score_list_len = pos_score_list_len +
                 CASE
-                    WHEN (scoreVal > 0 AND prevScoreVal <= 0) THEN
+                    WHEN (floatVal > 0 AND prevFloatVal <= 0) THEN
                         1
-                    WHEN (scoreVal <= 0 AND prevScoreVal > 0) THEN
+                    WHEN (floatVal <= 0 AND prevFloatVal > 0) THEN
                         -1
                     ELSE
                         0
@@ -140,7 +147,7 @@ BEGIN
         COMMIT;
         SET exitCode = 1; -- update.
 
-    ELSEIF (scoreVal IS NULL AND prevScoreVal IS NOT NULL) THEN
+    ELSEIF (floatVal IS NULL AND prevFloatVal IS NOT NULL) THEN
         DELETE FROM FloatScoreAndWeightAggregates
         WHERE (
             list_id = listID AND
@@ -152,7 +159,7 @@ BEGIN
             weight_sum = weight_sum - prevWeightVal,
             pos_score_list_len = pos_score_list_len +
                 CASE
-                    WHEN (prevScoreVal > 0) THEN
+                    WHEN (prevFloatVal > 0) THEN
                         -1
                     ELSE
                         0
@@ -168,128 +175,6 @@ BEGIN
 END //
 DELIMITER ;
 
-
-
-DELIMITER //
-CREATE PROCEDURE _insertUpdateOrDeleteScoreWeightAndTime (
-    IN listID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED,
-    IN scoreVal FLOAT,
-    IN weightVal FLOAT,
-    IN unixTime INT UNSIGNED,
-    OUT exitCode TINYINT
-)
-BEGIN
-    DECLARE prevScoreVal, prevWeightVal, prevWeightSum FLOAT;
-    DECLARE isExceeded TINYINT;
-    DECLARE roundedScoreVal FLOAT(2,2);
-
-    -- FLOAT(M,D) type is now deprecated, so round scoreVal some other way at
-    -- some point when support for it is about to be removed.
-    SET roundedScoreVal = scoreVal;
-    SET scoreVal = roundedScoreVal;
-
-    -- We select (for update) the previous score on the list, and branch
-    -- accordingly in order to update the ListMetadata table correctly.
-    START TRANSACTION;
-
-    SELECT weight_sum INTO prevWeightSum
-    FROM ListMetadata
-    WHERE (
-        list_id = listID AND
-        subj_id = subjID
-    )
-    FOR UPDATE;
-
-    SELECT score_val, weight_val INTO prevScoreVal, prevWeightVal
-    FROM FloatScoreAndWeightAggregatesWithUnixTimes
-    WHERE (
-        list_id = listID AND
-        subj_id = subjID
-    );
-
-    -- Branch according to whether the score should be inserted, updated, or
-    -- deleted, the latter being the case where the scoreVal input is NULL. 
-    IF (scoreVal IS NOT NULL AND prevScoreVal IS NULL) THEN
-        INSERT INTO FloatScoreAndWeightAggregatesWithUnixTimes (
-            list_id, subj_id, score_val, weight_val, unix_time
-        ) VALUES (
-            listID, subjID, scoreVal, weightVal, unixTime
-        );
-
-        INSERT INTO ListMetadata (
-            list_id, list_len, weight_sum,
-            pos_score_list_len,
-        ) VALUES (
-            listID, 1, weightVal,
-            CASE WHEN (scoreVal > 0) THEN 1 ELSE 0 END CASE
-        )
-        ON DUPLICATE KEY UPDATE
-            list_len = list_len + 1,
-            weight_sum = weight_sum + weightVal - prevWeightVal,
-            pos_score_list_len = CASE WHEN (scoreVal > 0) THEN
-                pos_score_list_len + 1
-            ELSE
-                pos_score_list_len
-            END CASE;
-
-        COMMIT;
-        SET exitCode = 0; -- insert.
-
-    ELSEIF (scoreVal IS NOT NULL AND prevScoreVal IS NOT NULL) THEN
-        UPDATE FloatScoreAndWeightAggregatesWithUnixTimes SET
-            score_val = scoreVal,
-            weight_val = weightVal,
-            unix_time = CASE WHEN (unixTime IS NULL) THEN unix_time
-                ELSE unixTime
-        WHERE (
-            list_id = listID AND
-            subj_id = subjID
-        );
-        
-        UPDATE ListMetadata SET
-            weight_sum = weight_sum + weightVal - prevWeightVal,
-            pos_score_list_len = pos_score_list_len +
-                CASE
-                    WHEN (scoreVal > 0 AND prevScoreVal <= 0) THEN
-                        1
-                    WHEN (scoreVal <= 0 AND prevScoreVal > 0) THEN
-                        -1
-                    ELSE
-                        0
-                END CASE
-        WHERE list_id = listID;
-
-        COMMIT;
-        SET exitCode = 1; -- update.
-
-    ELSEIF (scoreVal IS NULL AND prevScoreVal IS NOT NULL) THEN
-        DELETE FROM FloatScoreAndWeightAggregatesWithUnixTimes
-        WHERE (
-            list_id = listID AND
-            subj_id = subjID
-        );
-        
-        UPDATE ListMetadata SET
-            list_len = list_len - 1,
-            weight_sum = weight_sum - prevWeightVal,
-            pos_score_list_len = pos_score_list_len +
-                CASE
-                    WHEN (prevScoreVal > 0) THEN
-                        -1
-                    ELSE
-                        0
-                END CASE
-        WHERE list_id = listID;
-
-        COMMIT;
-        SET exitCode = 2; -- deletion.
-    ELSE
-        COMMIT;
-        SET exitCode = 3; -- no change.
-    END IF;
-END //
-DELIMITER ;
 
 
 
