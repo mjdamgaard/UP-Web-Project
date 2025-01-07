@@ -59,6 +59,7 @@ CREATE PROCEDURE _insertUpdateOrDeletePublicListElement (
     IN roundFloatVal BOOL,
     IN onIndexData VARBINARY(32),
     IN offIndexData VARBINARY(32),
+    IN addedUploadDataCost FLOAT,
     OUT exitCode TINYINT
 )
 BEGIN
@@ -82,8 +83,7 @@ BEGIN
     FROM PublicListMetadata FORCE INDEX (PRIMARY)
     WHERE (
         user_group_id = userGroupID AND
-        list_spec_id = listSpecID AND
-        subj_id = subjID
+        list_spec_id = listSpecID
     )
     FOR UPDATE;
 
@@ -91,33 +91,33 @@ BEGIN
     FROM PublicEntityLists FORCE INDEX (PRIMARY)
     WHERE (
         user_group_id = userGroupID AND
-        list_spec_id = listSpecID
+        list_spec_id = listSpecID AND
+        subj_id = subjID
     );
 
     -- Branch according to whether the score should be inserted, updated, or
     -- deleted, the latter being the case where the floatVal input is NULL. 
     IF (floatVal IS NOT NULL AND prevFloatVal IS NULL) THEN
-        INSERT INTO FloatScoreAndWeightAggregates (
-            list_id, subj_id, score_val, weight_val
+        INSERT INTO PublicEntityLists (
+            user_group_id, list_spec_id, subj_id,
+            float_val, on_index_data, off_index_data
         ) VALUES (
-            listID, subjID, floatVal, weightVal
+            userGroupID, listSpecID, subjID,
+            floatVal, onIndexData, offIndexData
         );
 
-        INSERT INTO ListMetadata (
-            list_id, list_len, weight_sum,
-            pos_score_list_len,
+        INSERT INTO PublicListMetadata (
+            user_group_id, list_spec_id,
+            list_len, float_sum, paid_upload_data_cost
         ) VALUES (
-            listID, 1, weightVal,
-            CASE WHEN (floatVal > 0) THEN 1 ELSE 0 END CASE
+            userGroupID, listSpecID,
+            1, floatVal, addedUploadDataCost
         )
         ON DUPLICATE KEY UPDATE
             list_len = list_len + 1,
-            weight_sum = weight_sum + weightVal - prevWeightVal,
-            pos_score_list_len = CASE WHEN (floatVal > 0) THEN
-                pos_score_list_len + 1
-            ELSE
-                pos_score_list_len
-            END CASE;
+            float_sum = float_sum + floatVal,
+            paid_upload_data_cost = paid_upload_data_cost +
+                addedUploadDataCost;
 
         COMMIT;
         SET exitCode = 0; -- insert.
@@ -125,46 +125,43 @@ BEGIN
     ELSEIF (floatVal IS NOT NULL AND prevFloatVal IS NOT NULL) THEN
         UPDATE PublicEntityLists SET
             float_val = floatVal,
-            weight_val = weightVal
+            on_index_data = onIndexData,
+            off_index_data = offIndexData
         WHERE (
-            list_id = listID AND
+            user_group_id = userGroupID AND
+            list_spec_id = listSpecID AND
             subj_id = subjID
         );
         
-        UPDATE ListMetadata SET
-            weight_sum = weight_sum + weightVal - prevWeightVal,
-            pos_score_list_len = pos_score_list_len +
-                CASE
-                    WHEN (floatVal > 0 AND prevFloatVal <= 0) THEN
-                        1
-                    WHEN (floatVal <= 0 AND prevFloatVal > 0) THEN
-                        -1
-                    ELSE
-                        0
-                END CASE
-        WHERE list_id = listID;
+        UPDATE PublicListMetadata SET
+            float_sum = float_sum + floatVal - prevFloatVal,
+            paid_upload_data_cost = paid_upload_data_cost +
+                addedUploadDataCost;
+        WHERE (
+            user_group_id = userGroupID AND
+            list_spec_id = listSpecID
+        );
 
         COMMIT;
         SET exitCode = 1; -- update.
 
     ELSEIF (floatVal IS NULL AND prevFloatVal IS NOT NULL) THEN
-        DELETE FROM FloatScoreAndWeightAggregates
+        DELETE FROM PublicEntityLists
         WHERE (
-            list_id = listID AND
+            user_group_id = userGroupID AND
+            list_spec_id = listSpecID AND
             subj_id = subjID
         );
         
-        UPDATE ListMetadata SET
+        UPDATE PublicListMetadata SET
             list_len = list_len - 1,
-            weight_sum = weight_sum - prevWeightVal,
-            pos_score_list_len = pos_score_list_len +
-                CASE
-                    WHEN (prevFloatVal > 0) THEN
-                        -1
-                    ELSE
-                        0
-                END CASE
-        WHERE list_id = listID;
+            float_sum = float_sum - prevFloatVal,
+            paid_upload_data_cost = paid_upload_data_cost +
+                addedUploadDataCost;
+        WHERE (
+            user_group_id = userGroupID AND
+            list_spec_id = listSpecID
+        );
 
         COMMIT;
         SET exitCode = 2; -- deletion.

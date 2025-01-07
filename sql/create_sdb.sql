@@ -111,19 +111,13 @@ ROW_FORMAT = COMPRESSED;
 
 CREATE TABLE PublicListMetadata (
 
-    -- list_type CHAR NOT NULL DEFAULT "s", -- A standard public entity list.
-
     user_group_id BIGINT UNSIGNED NOT NULL,
 
     list_spec_id BIGINT UNSIGNED NOT NULL,
 
     list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
-    pos_float_list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
     float_sum DOUBLE NOT NULL DEFAULT 0,
-
-    pos_float_sum DOUBLE NOT NULL DEFAULT 0,
 
     paid_upload_data_cost FLOAT NOT NULL DEFAULT 0,
 
