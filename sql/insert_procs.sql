@@ -164,6 +164,95 @@ DELIMITER ;
 
 
 
+DELIMITER //
+CREATE PROCEDURE _getModeratorGroupAndUserGroupSpecAndLockedAfterTime (
+    IN userGroupID BIGINT UNSIGNED,
+    OUT moderatorGroupID BIGINT UNSIGNED,
+    OUT userGroupSpecID BIGINT UNSIGNED,
+    OUT lockedAfter DATETIME
+)
+proc: BEGIN
+    DECLARE userGroupEntType CHAR;
+    DECLARE userGroupDefStr VARCHAR(700);
+    DECLARE isLockedList, isList BOOL;
+    -- We first check that the user is in the given user group. If not, make
+    -- sure that any existing score of the user is deleted from the two lists.
+    SELECT ent_type, def_str INTO userGroupEntType, userGroupDefStr
+    FROM Entities FORCE INDEX (PRIMARY)
+    WHERE (
+        id = userGroupID AND
+        user_whitelist_id = 0
+    );
+
+    SET isLockedList = REGEXP_LIKE(userGroupDefStr, CONCAT(
+        "@12,@[1-9][0-9]*,@[1-9][0-9]*,",
+        "[0-9]{4}\\-[0-9]{2}\\-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}"
+    ));
+    SET isList = isLockedList OR REGEXP_LIKE(userGroupDefStr,
+        "@11,@[1-9][0-9]*,@[1-9][0-9]*"
+    );
+
+    IF ( userGroupEntType != "c" OR NOT isList) THEN
+        SET moderatorGroupID = NULL;
+        SET userGroupSpecID = NULL;
+        SET lockedAfter = NULL;
+        LEAVE proc;
+    END IF
+
+    SET moderatorGroupID = REGEXP_SUBSTR(userGroupDefStr,
+        "[1-9][0-9]*", 6, 1
+    );
+    SET userGroupSpecID = REGEXP_SUBSTR(userGroupDefStr,
+        "[1-9][0-9]*", 6, 2
+    );
+    SET lockedAfter = CASE WHEN (isLockedList)
+        THEN REGEXP_SUBSTR(userGroupDefStr, "[^,]+$", 6, 1)
+        ELSE NULL
+    END CASE;
+END proc //
+DELIMITER ;
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE _getIsMemberAndUserWeight (
+    IN userID BIGINT UNSIGNED,
+    IN moderatorGroupID BIGINT UNSIGNED,
+    IN userGroupSpecID BIGINT UNSIGNED,
+    OUT isMember BOOL,
+    OUT userWeightVal FLOAT
+)
+proc: BEGIN
+    IF (userID <=> moderatorGroupID) THEN
+        SET isMember = 1;
+        SET userWeightVal = 10;
+        LEAVE proc;
+    END IF;
+
+    SELECT float_val_1 INTO userWeightVal
+    FROM PublicEntityLists FORCE INDEX (PRIMARY)
+    WHERE (
+        user_group_id = moderatorGroupID AND
+        list_spec_id = userGroupSpecID AND
+        subj_id = userID;
+    );
+
+    SET isMember = (userWeightVal >= 10);
+END proc //
+DELIMITER ;
+
+
+
+
+
+
+
+
+
+
+
+
 
 DELIMITER //
 CREATE PROCEDURE insertOrUpdatePublicUserScore (

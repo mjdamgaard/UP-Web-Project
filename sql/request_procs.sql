@@ -156,49 +156,6 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE _getModeratorGroupAndUserGroupSpec (
-    IN userGroupID BIGINT UNSIGNED,
-    OUT moderatorGroupID BIGINT UNSIGNED,
-    OUT userGroupSpecID BIGINT UNSIGNED
-)
-proc: BEGIN
-    DECLARE userGroupEntType CHAR;
-    DECLARE userGroupDefStr VARCHAR(700);
-    -- We first check that the user is in the given user group. If not, make
-    -- sure that any existing score of the user is deleted from the two lists.
-    SELECT ent_type, def_str INTO userGroupEntType, userGroupDefStr
-    FROM Entities FORCE INDEX (PRIMARY)
-    WHERE (
-        id = userGroupID AND
-        user_whitelist_id = 0
-    );
-END proc //
-DELIMITER ;
-
-
-
-
-DELIMITER //
-CREATE PROCEDURE _getIsMemberAndUserWeight (
-    IN userID BIGINT UNSIGNED,
-    IN moderatorGroupID BIGINT UNSIGNED,
-    IN userGroupSpecID BIGINT UNSIGNED,
-    OUT isMember BOOL,
-    OUT userWeightVal FLOAT
-)
-proc: BEGIN
-    -- We first check that the user is in the given user group. If not, make
-    -- sure that any existing score of the user is deleted from the two lists.
-    SELECT score_val, weight_val
-    INTO targetUserWeightVal, targetUserWeightWeight
-    FROM PublicEntityLists FORCE INDEX (PRIMARY)
-    WHERE (
-        user_group_id = userGroupID AND
-        subj_id = targetUserID
-    );
-END proc //
-DELIMITER ;
 
 
 
@@ -1000,22 +957,22 @@ CREATE PROCEDURE _executeRequest (
 BEGIN
     CASE reqType
         WHEN "SCORE_CONTR_WHOLE_USER_GROUP" THEN BEGIN
-            DECLARE qualID, subjID, userGroupID,
-                minScoreContrListSpecID, maxScoreContrListSpecID BIGINT UNSIGNED;
+            DECLARE qualID, subjID, userGroupID, minScoreContrListSpecID,
+                maxScoreContrListSpecID BIGINT UNSIGNED;
             SET qualID = CAST(
-                REGEXP_SUBSTR(paths, "[^,]+", 1, 1) AS UNSIGNED
+                REGEXP_SUBSTR(reqData, "[^,]+", 1, 1) AS UNSIGNED
             );
             SET subjID = CAST(
-                REGEXP_SUBSTR(paths, "[^,]+", 1, 2) AS UNSIGNED
+                REGEXP_SUBSTR(reqData, "[^,]+", 1, 2) AS UNSIGNED
             );
             SET userGroupID = CAST(
-                REGEXP_SUBSTR(paths, "[^,]+", 1, 3) AS UNSIGNED
+                REGEXP_SUBSTR(reqData, "[^,]+", 1, 3) AS UNSIGNED
             );
             SET minScoreContrListSpecID = CAST(
-                REGEXP_SUBSTR(paths, "[^,]+", 1, 4) AS UNSIGNED
+                REGEXP_SUBSTR(reqData, "[^,]+", 1, 4) AS UNSIGNED
             );
             SET maxScoreContrListSpecID = CAST(
-                REGEXP_SUBSTR(paths, "[^,]+", 1, 5) AS UNSIGNED
+                REGEXP_SUBSTR(reqData, "[^,]+", 1, 5) AS UNSIGNED
             );
 
             CALL _updateScoreContributorsForWholeUserGroup (
@@ -1027,16 +984,16 @@ BEGIN
             DECLARE qualID, subjID, userGroupID,
                 minScoreContrListSpecID BIGINT UNSIGNED;
             SET qualID = CAST(
-                REGEXP_SUBSTR(paths, "[^,]+", 1, 1) AS UNSIGNED
+                REGEXP_SUBSTR(reqData, "[^,]+", 1, 1) AS UNSIGNED
             );
             SET subjID = CAST(
-                REGEXP_SUBSTR(paths, "[^,]+", 1, 2) AS UNSIGNED
+                REGEXP_SUBSTR(reqData, "[^,]+", 1, 2) AS UNSIGNED
             );
             SET userGroupID = CAST(
-                REGEXP_SUBSTR(paths, "[^,]+", 1, 3) AS UNSIGNED
+                REGEXP_SUBSTR(reqData, "[^,]+", 1, 3) AS UNSIGNED
             );
             SET minScoreContrListSpecID = CAST(
-                REGEXP_SUBSTR(paths, "[^,]+", 1, 4) AS UNSIGNED
+                REGEXP_SUBSTR(reqData, "[^,]+", 1, 4) AS UNSIGNED
             );
 
             CALL _updateAllExistingScoreContributors (
