@@ -167,6 +167,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE _getModeratorGroupAndUserGroupSpecAndLockedAfterTime (
     IN userGroupID BIGINT UNSIGNED,
+    IN contextUserGroupID BIGINT UNSIGNED,
     OUT moderatorGroupID BIGINT UNSIGNED,
     OUT userGroupSpecID BIGINT UNSIGNED,
     OUT lockedAfter DATETIME
@@ -184,31 +185,54 @@ proc: BEGIN
         user_whitelist_id = 0
     );
 
-    SET isLockedList = REGEXP_LIKE(userGroupDefStr, CONCAT(
-        "@12,@[1-9][0-9]*,@[1-9][0-9]*,",
-        "[0-9]{4}\\-[0-9]{2}\\-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}"
-    ));
-    SET isList = isLockedList OR REGEXP_LIKE(userGroupDefStr,
-        "@11,@[1-9][0-9]*,@[1-9][0-9]*"
-    );
+    IF (userGroupEntType = "c") THEN
+        -- Check that the entity is either a (dynamic) list or a locked list.
+        SET isLockedList = REGEXP_LIKE(userGroupDefStr, CONCAT(
+            "@12,@[1-9][0-9]*,@[1-9][0-9]*,",
+            "[0-9]{4}\\-[0-9]{2}\\-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}"
+        ));
+        SET isList = isLockedList OR REGEXP_LIKE(userGroupDefStr,
+            "@11,@[1-9][0-9]*,@[1-9][0-9]*"
+        );
 
-    IF ( userGroupEntType != "c" OR NOT isList) THEN
+        IF (NOT isList) THEN
+            SET moderatorGroupID = NULL;
+            SET userGroupSpecID = NULL;
+            SET lockedAfter = NULL;
+            LEAVE proc;
+        END IF
+
+        SET moderatorGroupID = REGEXP_SUBSTR(userGroupDefStr,
+            "[1-9][0-9]*", 6, 1
+        );
+        SET userGroupSpecID = REGEXP_SUBSTR(userGroupDefStr,
+            "[1-9][0-9]*", 6, 2
+        );
+        SET lockedAfter = CASE WHEN (isLockedList)
+            THEN REGEXP_SUBSTR(userGroupDefStr, "[^,]+$", 6, 1)
+            ELSE NULL
+        END CASE;
+        LEAVE proc;
+
+    ELSE IF (userGroupEntType = "a") THEN
+        -- Check that the entity is a user group variable.
+        IF NOT (
+            REGEXP_SUBSTR(userGroupDefStr, '^\\{"Class":"@20",', 1, 1)
+        ) THEN
+            SET moderatorGroupID = NULL;
+            SET userGroupSpecID = NULL;
+            SET lockedAfter = NULL;
+            LEAVE proc;
+        END IF
+
+        -- If so, look up the contextUserGroup's top rated replacement for
+        -- the given user group variable...
+
+    ELSE
         SET moderatorGroupID = NULL;
         SET userGroupSpecID = NULL;
         SET lockedAfter = NULL;
-        LEAVE proc;
-    END IF
-
-    SET moderatorGroupID = REGEXP_SUBSTR(userGroupDefStr,
-        "[1-9][0-9]*", 6, 1
-    );
-    SET userGroupSpecID = REGEXP_SUBSTR(userGroupDefStr,
-        "[1-9][0-9]*", 6, 2
-    );
-    SET lockedAfter = CASE WHEN (isLockedList)
-        THEN REGEXP_SUBSTR(userGroupDefStr, "[^,]+$", 6, 1)
-        ELSE NULL
-    END CASE;
+    END IF;
 END proc //
 DELIMITER ;
 
@@ -218,13 +242,14 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE _getIsMemberAndUserWeight (
     IN userID BIGINT UNSIGNED,
+    IN userGroupID BIGINT UNSIGNED,
     IN moderatorGroupID BIGINT UNSIGNED,
     IN userGroupSpecID BIGINT UNSIGNED,
     OUT isMember BOOL,
     OUT userWeightVal FLOAT
 )
 proc: BEGIN
-    IF (userID <=> moderatorGroupID) THEN
+    IF (userID = userGroupID) THEN
         SET isMember = 1;
         SET userWeightVal = 10;
         LEAVE proc;

@@ -94,70 +94,70 @@ export function initialInserts(dataInserter) {
   dataInserter.insertOrEditParsedEntity(
     "entities", "a",
     JSON.stringify({
-        "Class": "@[classes]",
-        "Name": "Entities",
-        "Member title": "Entity",
-        "Description": "@[entities/desc]",
+      "Class": "@[classes]",
+      "Name": "Entities",
+      "Member title": "Entity",
+      "Description": "@[entities/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
     "entities/desc", "h", (
-        "<h1><class>Entities</class></h1>" +
-        "..."
+      "<h1><class>Entities</class></h1>" +
+      "..."
     )
   );
   dataInserter.insertOrEditParsedEntity(
     "classes", "a",
     JSON.stringify({
-        "Class": "@[classes]",
-        "Name": "Classes",
-        "Member title": "Class",
-        "Member datatype": "a",
-        "Member format": "@[classes/format]",
-        "Description": "@[classes/desc]",
+      "Class": "@[classes]",
+      "Name": "Classes",
+      "Member title": "Class",
+      "Member datatype": "a",
+      "Member format": "@[classes/format]",
+      "Description": "@[classes/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
     "classes/format", "f", (
-        "(" + [
-          "Name:string",
-          "Member title:string",
-          "Member datatype?:string",
-          "Member format?:f",
-          "Description:h",
-        ].join(",") +
-        ")=>" +
-        JSON.stringify({
-          "Class": "@[classes]",
-          "Member title": "%1",
-          "Member datatype": "%2",
-          "Member format": "%3",
-          "Description": "%4",
-        })
+      "(" + [
+        "Name:string",
+        "Member title:string",
+        "Member datatype?:string",
+        "Member format?:f",
+        "Description:h",
+      ].join(",") +
+      ")=>" +
+      JSON.stringify({
+        "Class": "@[classes]",
+        "Member title": "%1",
+        "Member datatype": "%2",
+        "Member format": "%3",
+        "Description": "%4",
+      })
     )
   );
   dataInserter.insertOrEditParsedEntity(
     "classes/desc", "h", ( // ('x' for 'XML,' or simply 'teXt.')
-        "<h1>Classes</h1>" +
-        "<h2>Description</h2>" +
-        "<p>A class of all class entities (including itself). " +
-        "Classes both serve as a broad way of categorizing entities, " +
-        "and they are also used to define the meaning of their instances, " +
-        "as their <i>description</i> will be shown on the info page " +
-        "of each of their instances." +
-        "</p>" +
-        "<p>As an example, this description of the Classes " +
-        "entity will be shown on the info page of all class entities, just " +
-        "above the description of the general Entities class." +
-        "</p>" +
-        "<p>The <i>description</i> of a class should include a " +
-        "section of 'special attributes,' if it defines a new attribute " +
-        "or redefines an attribute of a superclass (opposite of 'subclass'). " +
-        "..." +
-        "</p>" +
-        "<h2>Special attributes</h2>" +
-        "<h3><attr>description</attr></h3>" +
-        "</p>"
+      "<h1>Classes</h1>" +
+      "<h2>Description</h2>" +
+      "<p>A class of all class entities (including itself). " +
+      "Classes both serve as a broad way of categorizing entities, " +
+      "and they are also used to define the meaning of their instances, " +
+      "as their <i>description</i> will be shown on the info page " +
+      "of each of their instances." +
+      "</p>" +
+      "<p>As an example, this description of the Classes " +
+      "entity will be shown on the info page of all class entities, just " +
+      "above the description of the general Entities class." +
+      "</p>" +
+      "<p>The <i>description</i> of a class should include a " +
+      "section of 'special attributes,' if it defines a new attribute " +
+      "or redefines an attribute of a superclass (opposite of 'subclass'). " +
+      "..." +
+      "</p>" +
+      "<h2>Special attributes</h2>" +
+      "<h3><attr>description</attr></h3>" +
+      "</p>"
     )
         // TODO: Rewrite and add: Unless otherwise specified, entities with
         // more popular duplicates are always excluded from the class.
@@ -169,78 +169,78 @@ export function initialInserts(dataInserter) {
   dataInserter.insertOrEditParsedEntity(
     "users", "a",
     JSON.stringify({
-        "Class": "@[classes]",
-        "Name": "Users",
-        "Member title": "User",
-        "Member datatype": "u",
-        "Description": "@[users/desc]",
+      "Class": "@[classes]",
+      "Name": "Users",
+      "Member title": "User",
+      "Member datatype": "u",
+      "Description": "@[users/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
     "qualities", "a",
     JSON.stringify({
-        "Class": "@[classes]",
-        "Name": "Qualities",
-        "Member title": "Quality",
-        "Member datatype": "a",
-        "Member format": "@[qualities/format]",
-        "Description": "@[qualities/desc]",
+      "Class": "@[classes]",
+      "Name": "Qualities",
+      "Member title": "Quality",
+      "Member datatype": "a",
+      "Member format": "@[qualities/format]",
+      "Description": "@[qualities/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
     "qualities/format", "f", (
-        "(" + [
-          "Label:string",
-          // "Domain:" +
-          //   "@[classes]::Class" + "|" +
-          //   "[Object:@[entities],Relation:@[relations]]::Set",
-          // "Domain:[Object:@[entities],Relation:@[relations]]",
-          "Object:@[entities]",
-          "Relation:@[relations]",
-          "Metric:@[metrics]",
-          "Description?:h",
-        ].join(",") +
-        ")=>" +
-        JSON.stringify({
-          "Class": "@[qualities]",
-          "Label": "%1",
-          "Object": "%2",
-          "Relation": "%3",
-          "Metric": "%4",
-          "Description": "%5",
-        })
+      "(" + [
+        "Label:string",
+        // "Domain:" +
+        //   "@[classes]::Class" + "|" +
+        //   "[Object:@[entities],Relation:@[relations]]::Set",
+        // "Domain:[Object:@[entities],Relation:@[relations]]",
+        "Object:@[entities]",
+        "Relation:@[relations]",
+        "Metric:@[metrics]",
+        "Description?:h",
+      ].join(",") +
+      ")=>" +
+      JSON.stringify({
+        "Class": "@[qualities]",
+        "Label": "%1",
+        "Object": "%2",
+        "Relation": "%3",
+        "Metric": "%4",
+        "Description": "%5",
+      })
     )
   );
 
   dataInserter.insertOrEditParsedEntity(
     "relevancy qualities", "a",
     JSON.stringify({
-        "Class": "@[classes]",
-        "Name": "Relevancy qualities",
-        "Member title": "Relevancy quality",
-        "Member datatype": "c",
-        "Member format": "@[relevancy qualities/format]",
-        "Description": "@[relevancy qualities/desc]",
+      "Class": "@[classes]",
+      "Name": "Relevancy qualities",
+      "Member title": "Relevancy quality",
+      "Member datatype": "c",
+      "Member format": "@[relevancy qualities/format]",
+      "Description": "@[relevancy qualities/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
     "relevancy qualities/format", "f", (
-        "(" + [
-          "Object:@[entities]",
-          "Relation:@[relations]",
-        ].join(",") +
-        ")=>" +
-        JSON.stringify({
-          "Class": "@[relevancy qualities]",
-          // "Label": "Relevant for @{Object} → @{Relation}",
-          "Label": "Relevant for %1 → %2",
-          // // "Domain": "@[sets/format](%1,%2)",
-          // // "Domain": {Object: "%1", Relation: "%2"},
-          // "Domain": ["%1", "%2"],
-          "Object": "%1",
-          "Relation": "%2",
-          "Metric": "@[metrics/predicate metric]",
-        })
+      "(" + [
+        "Object:@[entities]",
+        "Relation:@[relations]",
+      ].join(",") +
+      ")=>" +
+      JSON.stringify({
+        "Class": "@[relevancy qualities]",
+        // "Label": "Relevant for @{Object} → @{Relation}",
+        "Label": "Relevant for %1 → %2",
+        // // "Domain": "@[sets/format](%1,%2)",
+        // // "Domain": {Object: "%1", Relation: "%2"},
+        // "Domain": ["%1", "%2"],
+        "Object": "%1",
+        "Relation": "%2",
+        "Metric": "@[metrics/predicate metric]",
+      })
     )
   );
   dataInserter.insertOrEditParsedEntity(
@@ -253,102 +253,102 @@ export function initialInserts(dataInserter) {
   dataInserter.insertOrEditParsedEntity(
     "parameters", "a",
     JSON.stringify({
-        "Class": "@[classes]",
-        "Name": "Parameters",
-        "Member title": "Parameter",
-        "Member datatype": "c",
-        "Member format": "@[parameters/format]",
-        "Description": "@[parameters/desc]",
-        // Let the Description header be: 'Qualitative parameters' instead of
-        // just 'Parameters.'
+      "Class": "@[classes]",
+      "Name": "Parameters",
+      "Member title": "Parameter",
+      "Member datatype": "c",
+      "Member format": "@[parameters/format]",
+      "Description": "@[parameters/desc]",
+      // Let the Description header be: 'Qualitative parameters' instead of
+      // just 'Parameters.'
     }),
   );
   dataInserter.insertOrEditParsedEntity(
     "parameters/format", "f", (
-        "(" + [
-          "Subject:@[entities]",
-          "Quality:@[qualities]",
-        ].join(",") +
-        ")=>" +
-        JSON.stringify({
-          "Class": "@[parameters]",
-          "Label": "%1 ⋲ %2",
-          // "Label": "%1 ⥺ %2",
-          // "Label": "%1 :≟ %2",
-          "Subject": "%1",
-          "Quality": "%2",
-        })
+      "(" + [
+        "Subject:@[entities]",
+        "Quality:@[qualities]",
+      ].join(",") +
+      ")=>" +
+      JSON.stringify({
+        "Class": "@[parameters]",
+        "Label": "%1 ⋲ %2",
+        // "Label": "%1 ⥺ %2",
+        // "Label": "%1 :≟ %2",
+        "Subject": "%1",
+        "Quality": "%2",
+      })
     )
   );
 
   dataInserter.insertOrEditParsedEntity(
     "sets", "a",
     JSON.stringify({
-        "Class": "@[classes]",
-        "Name": "Sets",
-        "Member title": "Set",
-        "Member datatype": "c",
-        "Member format": "@[sets/format]",
-        "Description": "@[sets/desc]",
+      "Class": "@[classes]",
+      "Name": "Sets",
+      "Member title": "Set",
+      "Member datatype": "c",
+      "Member format": "@[sets/format]",
+      "Description": "@[sets/desc]",
     }),
   );
   dataInserter.insertOrEditParsedEntity(
     "sets/format", "f", (
-        "(" + [
-          "Object:@[entities]",
-          "Relation:@[relations]",
-        ].join(",") +
-        ")=>" +
-        JSON.stringify({
-          "Class": "@[sets]",
-          "Label": "%1 → %2",
-          "Object": "%1",
-          "Relation": "%2",
-        })
+      "(" + [
+        "Object:@[entities]",
+        "Relation:@[relations]",
+      ].join(",") +
+      ")=>" +
+      JSON.stringify({
+        "Class": "@[sets]",
+        "Label": "%1 → %2",
+        "Object": "%1",
+        "Relation": "%2",
+      })
     )
   );
 
   dataInserter.insertOrEditParsedEntity(
     "metrics", "a",
     JSON.stringify({
-        "Class": "@[classes]",
-        "Name": "Metrics",
-        "Member title": "Metric",
-        "Member datatype": "a",
-        "Member format": "@[metrics/format]",
-        "Description": "@[metrics/desc]",
-        // Let the Description header be: 'Quality metrics' instead of just
-        // 'Metrics.'
+      "Class": "@[classes]",
+      "Name": "Metrics",
+      "Member title": "Metric",
+      "Member datatype": "a",
+      "Member format": "@[metrics/format]",
+      "Description": "@[metrics/desc]",
+      // Let the Description header be: 'Quality metrics' instead of just
+      // 'Metrics.'
     }),
   );
   dataInserter.insertOrEditParsedEntity(
     "metrics/format", "f", (
-        "(" + [
-          "Name:string",
-          "Unit?:string",
-          "Interval labels?:[start:float,end:float,label:string][]",
-          "Lower bound?:float",
-          "Upper bound?:float",
-          "High end?:float",
-          "Low end?:float",
-          "Minimum bin width?:float",
-          "Maximum bin width?:float",
-          "Description:h",
-        ].join(",") +
-        ")=>" +
-        JSON.stringify({
-          "Class": "@[metrics]",
-          "Name": "%1",
-          "Unit": "%2",
-          "Interval labels": "%3",
-          "Lower bound": "%4",
-          "Upper bound": "%5",
-          "High end": "%6",
-          "Low end": "%7",
-          "Minimum bin width": "%8",
-          "Maximum bin width": "%9",
-          "Description": "%10",
-        })
+      "(" + [
+        "Name:string",
+        "Unit?:string",
+        "Interval labels?:[start:float,end:float,label:string][]",
+        "Lower bound?:float",
+        "Upper bound?:float",
+        "High end?:float",
+        "Low end?:float",
+        "Minimum bin width?:float",
+        "Maximum bin width?:float",
+        "Description:h",
+      ].join(",") +
+      ")=>" +
+      JSON.stringify({
+        "Class": "@[metrics]",
+        "Name": "%1",
+        "Unit": "%2",
+        "Interval labels": "%3",
+        "Lower bound": "%4",
+        "Upper bound": "%5",
+        "High end": "%6",
+        "Low end": "%7",
+        "Minimum bin width": "%8",
+        "Maximum bin width": "%9",
+        "Description": "%10",
+      })
     )
   );
 
