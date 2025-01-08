@@ -53,41 +53,52 @@ DELIMITER ;
 
 
 
+
 DELIMITER //
-CREATE PROCEDURE _insertUpdateOrDeleteScoreContributionWithInputScores (
+CREATE PROCEDURE _insertUpdateOrDeleteScoreContributor (
     IN targetUserID BIGINT UNSIGNED,
     IN targetUserWeightVal FLOAT,
-    IN minScore FLOAT,
-    IN maxScore FLOAT,
-    IN unixTime INT UNSIGNED,
+    IN userGroupID BIGINT UNSIGNED,
+    IN userScoreListSpecID BIGINT UNSIGNED,
     IN minScoreContrListSpecID BIGINT UNSIGNED,
     IN maxScoreContrListSpecID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 proc: BEGIN
-    IF (minScore IS NULL XOR maxScore IS NULL) THEN
-        SIGNAL SQLSTATE "45000" SET MESSAGE_TEXT = CONCAT(
-            "_insertUpdateOrDeleteScoreContributionWithInputScores(): ",
-            "minScore IS NULL XOR maxScore IS NULL"
-        );
-        LEAVE proc;
-    END IF;
+    DECLARE minScore, maxScore FLOAT;
+    DECLARE unixTimeBin VARBINARY(4);
 
-    CALL _insertUpdateOrDeleteScoreWeightAndTime (
+    -- Select the minScore and the maxScore.
+    SELECT float_val_1, float_val_1, on_index_data
+    INTO minScore, maxScore, unixTimeBin
+    FROM PublicEntityLists FORCE INDEX (PRIMARY)
+    WHERE (
+        user_group_id = targetUserID AND
+        list_spec_id = userScoreListSpecID AND
+        subj_id = subjID
+    );
+
+    CALL _insertUpdateOrDeletePublicListElement (
+        userGroupID,
         minScoreContrListSpecID,
         targetUserID,
         minScore,
         targetUserWeightVal,
-        unixTime,
+        unixTimeBin,
+        NULL,
+        20,
         exitCode
     );
-
-    CALL _insertUpdateOrDeleteScoreWeightAndTime (
+    CALL _insertUpdateOrDeletePublicListElement (
+        userGroupID,
         maxScoreContrListSpecID,
         targetUserID,
         maxScore,
         targetUserWeightVal,
-        unixTime,
+        unixTimeBin,
+        NULL,
+        20,
         exitCode
     );
 END proc //
@@ -96,43 +107,95 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE _insertUpdateOrDeleteScoreContribution (
+CREATE PROCEDURE _insertUpdateOrDeleteScoreContributorWithInputScores (
     IN targetUserID BIGINT UNSIGNED,
     IN targetUserWeightVal FLOAT,
-    IN qualID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED,
+    IN userGroupID BIGINT UNSIGNED,
+    IN userScoreListSpecID BIGINT UNSIGNED,
     IN minScoreContrListSpecID BIGINT UNSIGNED,
     IN maxScoreContrListSpecID BIGINT UNSIGNED,
+    IN minScore FLOAT,
+    IN maxScore FLOAT,
+    IN unixTimeBin VARBINARY(4),
     OUT exitCode TINYINT
 )
 proc: BEGIN
-    DECLARE minScore, maxScore FLOAT;
-    DECLARE unixTime INT UNSIGNED;
+    IF (minScore IS NULL XOR maxScore IS NULL) THEN
+        SIGNAL SQLSTATE "45000" SET MESSAGE_TEXT = CONCAT(
+            "_insertUpdateOrDeleteScoreContributorWithInputScores(): ",
+            "minScore IS NULL XOR maxScore IS NULL"
+        );
+        LEAVE proc;
+    END IF;
 
-    -- Select the minScore and the maxScore.
-    SELECT min_score, max_score, unix_time INTO minScore, maxScore, unixTime
-    FROM PublicUserScores
-    WHERE (
-        user_id = targetUserID AND
-        qual_id = qualID AND
-        subj_id = subjID
-    );
-
-    CALL _insertUpdateOrDeleteScoreAndWeight (
+    CALL _insertUpdateOrDeletePublicListElement (
+        userGroupID,
         minScoreContrListSpecID,
         targetUserID,
         minScore,
         targetUserWeightVal,
-        unixTime,
+        unixTimeBin,
+        NULL,
+        20,
         exitCode
     );
-    CALL _insertUpdateOrDeleteScoreAndWeight (
+    CALL _insertUpdateOrDeletePublicListElement (
+        userGroupID,
         maxScoreContrListSpecID,
         targetUserID,
         maxScore,
         targetUserWeightVal,
-        unixTime,
+        unixTimeBin,
+        NULL,
+        20,
         exitCode
+    );
+END proc //
+DELIMITER ;
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE _getModeratorGroupAndUserGroupSpec (
+    IN userGroupID BIGINT UNSIGNED,
+    OUT moderatorGroupID BIGINT UNSIGNED,
+    OUT userGroupSpecID BIGINT UNSIGNED
+)
+proc: BEGIN
+    DECLARE userGroupEntType CHAR;
+    DECLARE userGroupDefStr VARCHAR(700);
+    -- We first check that the user is in the given user group. If not, make
+    -- sure that any existing score of the user is deleted from the two lists.
+    SELECT ent_type, def_str INTO userGroupEntType, userGroupDefStr
+    FROM Entities FORCE INDEX (PRIMARY)
+    WHERE (
+        id = userGroupID AND
+        user_whitelist_id = 0
+    );
+END proc //
+DELIMITER ;
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE _getIsMemberAndUserWeight (
+    IN userID BIGINT UNSIGNED,
+    IN moderatorGroupID BIGINT UNSIGNED,
+    IN userGroupSpecID BIGINT UNSIGNED,
+    OUT isMember BOOL,
+    OUT userWeightVal FLOAT
+)
+proc: BEGIN
+    -- We first check that the user is in the given user group. If not, make
+    -- sure that any existing score of the user is deleted from the two lists.
+    SELECT score_val, weight_val
+    INTO targetUserWeightVal, targetUserWeightWeight
+    FROM PublicEntityLists FORCE INDEX (PRIMARY)
+    WHERE (
+        user_group_id = userGroupID AND
+        subj_id = targetUserID
     );
 END proc //
 DELIMITER ;
@@ -142,13 +205,13 @@ DELIMITER ;
 -- This sub-procedure also deletes any existing score contribution if the user
 -- is no longer a member. 
 DELIMITER //
-CREATE PROCEDURE _insertUpdateOrDeleteScoreContributionIfMember (
+CREATE PROCEDURE _insertUpdateOrDeleteScoreContributorIfMember (
     IN targetUserID BIGINT UNSIGNED,
-    IN qualID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED,
     IN userGroupID BIGINT UNSIGNED,
+    IN userScoreListSpecID BIGINT UNSIGNED,
     IN minScoreContrListSpecID BIGINT UNSIGNED,
     IN maxScoreContrListSpecID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 proc: BEGIN
@@ -156,14 +219,14 @@ proc: BEGIN
     -- sure that any existing score of the user is deleted from the two lists.
     SELECT score_val, weight_val
     INTO targetUserWeightVal, targetUserWeightWeight
-    FROM FloatScoreAndWeightAggregates
+    FROM PublicEntityLists FORCE INDEX (PRIMARY)
     WHERE (
-        list_id = userGroupID AND
+        user_group_id = userGroupID AND
         subj_id = targetUserID
     );
 
     IF NOT (targetUserWeight > 0 AND targetUserWeightWeight >= 10) THEN
-        CALL _insertUpdateOrDeleteScoreContributionWithInputScores (
+        CALL _insertUpdateOrDeleteScoreContributorWithInputScores (
             targetUserID,
             targetUserWeightVal,
             NULL, -- 'NULL, NULL' here means deletion.
@@ -180,7 +243,7 @@ proc: BEGIN
 
     -- If the user is a member, we insert or update, or delete (if the public
     -- score is deleted), the min and max scores.
-    CALL _insertUpdateOrDeleteScoreContribution (
+    CALL _insertUpdateOrDeleteScoreContributor (
         targetUserID,
         targetUserWeightVal,
         qualID,
@@ -213,7 +276,7 @@ DELIMITER ;
 -- (for a given user group, i.e.).
 
 DELIMITER //
-CREATE PROCEDURE requestUpdateOfScoreContribution (
+CREATE PROCEDURE requestUpdateOfScoreContributor (
     IN requestingUserID BIGINT UNSIGNED,
     IN targetUserID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
@@ -225,7 +288,7 @@ proc: BEGIN
     DECLARE minScoreContrListSpecID, minScoreContrListSpecID BIGINT UNSIGNED;
 
     -- Get (or insert) minScoreContrListSpecID and maxScoreContrListSpecID.
-    CALL _insertOrFindScoreContributionListIDs (
+    CALL _insertOrFindScoreContributorListIDs (
         requestingUserID,
         qualID,
         subjID,
@@ -239,7 +302,7 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    -- Increase counters due to a (potential) score contribution insert, and
+    -- Increase counters due to a (potential) score contributor insert, and
     -- also potentially a ListMetadata insert.
     CALL _increaseWeeklyUserCounters (
         requestingUserID, 0, 40, 10, isExceeded
@@ -249,7 +312,7 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    CALL _insertUpdateOrDeleteScoreContributionIfMember (
+    CALL _insertUpdateOrDeleteScoreContributorIfMember (
         targetUserID,
         qualID,
         subjID,
@@ -294,7 +357,7 @@ DELIMITER ;
 -- on the minScoreContrList (or equivalently on the maxScore...List).
 
 DELIMITER //
-CREATE PROCEDURE _updateScoreContributionsForWholeUserGroup (
+CREATE PROCEDURE _updateScoreContributorsForWholeUserGroup (
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN userGroupID BIGINT UNSIGNED,
@@ -332,7 +395,7 @@ proc: BEGIN
         FETCH cur INTO userWeightVal, userWeightWeight, memberID;
 
         IF (userWeightWeight >= 10) THEN
-            CALL _insertUpdateOrDeleteScoreContribution (
+            CALL _insertUpdateOrDeleteScoreContributor (
                 memberID,
                 userWeightVal,
                 qualID,
@@ -353,7 +416,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE _updateAllExistingScoreContributions (
+CREATE PROCEDURE _updateAllExistingScoreContributors (
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN userGroupID BIGINT UNSIGNED,
@@ -369,7 +432,7 @@ proc: BEGIN
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
     DECLARE memberID BIGINT UNSIGNED;
 
-    -- Loop through all contributions on the minScoreContrList, and for
+    -- Loop through all contributors on the minScoreContrList, and for
     -- each user on there, call _insertUpdate...IfMember().
     OPEN cur;
     SET done = 0;
@@ -380,7 +443,7 @@ proc: BEGIN
 
         FETCH cur INTO memberID;
 
-        CALL _insertUpdateOrDeleteScoreContributionIfMember (
+        CALL _insertUpdateOrDeleteScoreContributorIfMember (
             memberID,
             qualID,
             subjID,
@@ -412,7 +475,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE requestUpdateOfScoreContributionsForWholeUserGroup (
+CREATE PROCEDURE requestUpdateOfScoreContributorsForWholeUserGroup (
     IN requestingUserID BIGINT UNSIGNED,
     IN compCostPayment FLOAT,
     IN uploadDataCostPayment FLOAT,
@@ -439,7 +502,7 @@ proc: BEGIN
     END IF;
 
     -- Get (or insert) minScoreContrListSpecID and maxScoreContrListSpecID.
-    CALL _insertOrFindScoreContributionListIDs (
+    CALL _insertOrFindScoreContributorListIDs (
         requestingUserID,
         qualID,
         subjID,
@@ -499,7 +562,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE requestUpdateOfAllExistingScoreContributions (
+CREATE PROCEDURE requestUpdateOfAllExistingScoreContributors (
     IN requestingUserID BIGINT UNSIGNED,
     IN compCostPayment FLOAT,
     IN uploadDataCostPayment FLOAT,
@@ -526,7 +589,7 @@ proc: BEGIN
     END IF;
 
     -- Get (or insert) minScoreContrListSpecID and maxScoreContrListSpecID.
-    CALL _insertOrFindScoreContributionListIDs (
+    CALL _insertOrFindScoreContributorListIDs (
         requestingUserID,
         qualID,
         subjID,
@@ -678,7 +741,7 @@ DELIMITER ;
 -- And here comes the request for the median score update.
 
 DELIMITER //
-CREATE PROCEDURE requestUpdateOfScoreContributionsForWholeUserGroup (
+CREATE PROCEDURE requestUpdateOfScoreContributorsForWholeUserGroup (
     IN requestingUserID BIGINT UNSIGNED,
     IN compCostPayment FLOAT,
     IN uploadDataCostPayment FLOAT,
@@ -706,7 +769,7 @@ proc: BEGIN
     END IF;
 
     -- Get (or insert) minScoreContrListSpecID and maxScoreContrListSpecID.
-    CALL _insertOrFindScoreContributionListIDs (
+    CALL _insertOrFindScoreContributorListIDs (
         requestingUserID,
         qualID,
         subjID,
@@ -955,7 +1018,7 @@ BEGIN
                 REGEXP_SUBSTR(paths, "[^,]+", 1, 5) AS UNSIGNED
             );
 
-            CALL _updateScoreContributionsForWholeUserGroup (
+            CALL _updateScoreContributorsForWholeUserGroup (
                 qualID, subjID, userGroupID,
                 minScoreContrListSpecID, maxScoreContrListSpecID
             );
@@ -976,7 +1039,7 @@ BEGIN
                 REGEXP_SUBSTR(paths, "[^,]+", 1, 4) AS UNSIGNED
             );
 
-            CALL _updateAllExistingScoreContributions (
+            CALL _updateAllExistingScoreContributors (
                 qualID, subjID, userGroupID, minScoreContrListSpecID
             );
         END

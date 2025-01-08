@@ -55,7 +55,9 @@ BEGIN
     DECLARE prevListLen BIGINT UNSIGNED;
     DECLARE isExceeded TINYINT;
 
-    SET floatVal2 = CASE WHEN (floatVal2 IS NULL) THEN 0 ELSE floatVal2;
+    SET floatVal2 = CASE WHEN (floatVal2 IS NULL)
+        THEN 0 ELSE floatVal2
+    END CASE;
 
     -- We select (for update) the previous score on the list, and branch
     -- accordingly in order to update the ListMetadata table correctly.
@@ -251,7 +253,7 @@ BEGIN
         );
 
     SELECT ent_id INTO userScoreListSpecID
-    FROM EntitySecKeys USE INDEX (PRIMARY)
+    FROM EntitySecKeys FORCE INDEX (PRIMARY)
     WHERE (
         ent_type = "c" AND
         user_whitelist_id = 0 AND

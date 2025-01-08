@@ -694,14 +694,16 @@ VALUES
     -- this comment.
     (11, "a", CONCAT(
         '{',
-            '"Class":"@[fundamental user groups]",',
+            '"Class":"@[user groups]",',
             '"Name":"All users",',
+            '"Description":"@[user groups/all users/desc]"',
         '}'
     ), 9),
     (12, "a", CONCAT(
         '{',
-            '"Class":"@[fundamental user groups]",',
+            '"Class":"@[user groups]",',
             '"Name":"Money-contributing users",',
+            '"Description":"@[user groups/money-contributing users/desc]"',
         '}'
     ), 9),
     (13, "f", CONCAT(
@@ -780,6 +782,38 @@ VALUES
             '"Lower bound":0,',
             '"Upper bound":10,',
             '"Description":"@[metrics/std predicate metric/desc]"',
+        '}'
+    ), 9),
+    -- (20, "f", CONCAT(
+    --     'moderated_user_group(',
+    --         'Moderator group:@[user groups],',
+    --         'User list specification:@[list specs]',
+    --     '){',
+    --         '"Class":"@[moderated user groups]",',
+    --         '"Moderator group":"%1",',
+    --         '"User list specification":"%2"',
+    --     '}'
+    -- ), 9),
+    (20, "f", CONCAT(
+        'list(',
+            'User group:@[user groups],',
+            'List specification:@[list specs]',
+        '){',
+            '"Class":"@[lists]",',
+            '"User group":"%1",',
+            '"List specification":"%2"',
+        '}'
+    ), 9),
+    (21, "f", CONCAT(
+        'locked_list(',
+            'User group:@[user groups],',
+            'List specification:@[list specs],',
+            'Locked after:datetime',
+        '){',
+            '"Class":"@[locked lists]",',
+            '"User group":"%1",',
+            '"List specification":"%2",',
+            '"Locked after":"%3"',
         '}'
     ), 9);
     -- (14, "f", CONCAT(
