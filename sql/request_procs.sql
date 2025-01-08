@@ -9,36 +9,36 @@ DROP PROCEDURE insertOrUpdatePublicUserScore;
 
 
 DELIMITER //
-CREATE PROCEDURE _insertOrFindScoreContributionListIDs (
+CREATE PROCEDURE _insertOrFindScoreContributorListSpecIDs (
     IN requestingUserID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN userGroupID BIGINT UNSIGNED,
-    OUT minScoreContrListID BIGINT UNSIGNED,
-    OUT maxScoreContrListID BIGINT UNSIGNED,
+    OUT minScoreContrListSpecID BIGINT UNSIGNED,
+    OUT maxScoreContrListSpecID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 proc: BEGIN
-    DECLARE minScoreContrListDefStr, maxScoreContrListDefStr
+    DECLARE minScoreContrListSpecDefStr, maxScoreContrListSpecDefStr
         VARCHAR(700) CHARACTER SET utf8mb4;
 
-    SET minScoreContrListDefStr = CONCAT(
-        '@13,@', qualID, ',@', subjID, ',@', userGroupID
+    SET minScoreContrListSpecDefStr = CONCAT(
+        '@14,@', qualID, ',@', subjID
     );
-    SET maxScoreContrListDefStr = CONCAT(
-        '@14,@', qualID, ',@', subjID, ',@', userGroupID
+    SET maxScoreContrListSpecDefStr = CONCAT(
+        '@15,@', qualID, ',@', subjID
     );
 
     CALL _insertOrFindFunctionCallEntity (
-        requestingUserID, minScoreContrListDefStr, 1,
-        minScoreContrListID, exitCode
+        requestingUserID, minScoreContrListSpecDefStr, 1,
+        minScoreContrListSpecID, exitCode
     );
     IF (exitCode = 5) THEN
         LEAVE proc;
     END IF;
     CALL _insertOrFindFunctionCallEntity (
-        requestingUserID, maxScoreContrListDefStr, 1,
-        maxScoreContrListID, exitCode
+        requestingUserID, maxScoreContrListSpecDefStr, 1,
+        maxScoreContrListSpecID, exitCode
     );
     IF (exitCode = 5) THEN
         LEAVE proc;
@@ -47,130 +47,6 @@ END proc //
 DELIMITER ;
 
 
-
-
-
-DELIMITER //
-CREATE PROCEDURE _insertUpdateOrDeletePublicListElement (
-    IN userGroupID BIGINT UNSIGNED,
-    IN listSpecID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED,
-    IN floatVal FLOAT,
-    IN roundFloatVal BOOL,
-    IN onIndexData VARBINARY(32),
-    IN offIndexData VARBINARY(32),
-    IN addedUploadDataCost FLOAT,
-    OUT exitCode TINYINT
-)
-BEGIN
-    DECLARE prevFloatVal FLOAT;
-    DECLARE prevListLen BIGINT UNSIGNED; -- only used to lock ListMetadata row.
-    DECLARE isExceeded TINYINT;
-    DECLARE roundedFloatVal FLOAT(2,2);
-
-    IF (roundFloatVal) THEN
-        -- FLOAT(M,D) type is now deprecated, so round floatVal some other way
-        -- at some point when support for it is about to be removed.
-        SET roundedFloatVal = floatVal;
-        SET floatVal = roundedFloatVal;
-    END IF;
-
-    -- We select (for update) the previous score on the list, and branch
-    -- accordingly in order to update the ListMetadata table correctly.
-    START TRANSACTION;
-
-    SELECT list_len INTO prevListLen
-    FROM PublicListMetadata FORCE INDEX (PRIMARY)
-    WHERE (
-        user_group_id = userGroupID AND
-        list_spec_id = listSpecID
-    )
-    FOR UPDATE;
-
-    SELECT float_val INTO prevFloatVal
-    FROM PublicEntityLists FORCE INDEX (PRIMARY)
-    WHERE (
-        user_group_id = userGroupID AND
-        list_spec_id = listSpecID AND
-        subj_id = subjID
-    );
-
-    -- Branch according to whether the score should be inserted, updated, or
-    -- deleted, the latter being the case where the floatVal input is NULL. 
-    IF (floatVal IS NOT NULL AND prevFloatVal IS NULL) THEN
-        INSERT INTO PublicEntityLists (
-            user_group_id, list_spec_id, subj_id,
-            float_val, on_index_data, off_index_data
-        ) VALUES (
-            userGroupID, listSpecID, subjID,
-            floatVal, onIndexData, offIndexData
-        );
-
-        INSERT INTO PublicListMetadata (
-            user_group_id, list_spec_id,
-            list_len, float_sum, paid_upload_data_cost
-        ) VALUES (
-            userGroupID, listSpecID,
-            1, floatVal, addedUploadDataCost
-        )
-        ON DUPLICATE KEY UPDATE
-            list_len = list_len + 1,
-            float_sum = float_sum + floatVal,
-            paid_upload_data_cost = paid_upload_data_cost +
-                addedUploadDataCost;
-
-        COMMIT;
-        SET exitCode = 0; -- insert.
-
-    ELSEIF (floatVal IS NOT NULL AND prevFloatVal IS NOT NULL) THEN
-        UPDATE PublicEntityLists SET
-            float_val = floatVal,
-            on_index_data = onIndexData,
-            off_index_data = offIndexData
-        WHERE (
-            user_group_id = userGroupID AND
-            list_spec_id = listSpecID AND
-            subj_id = subjID
-        );
-        
-        UPDATE PublicListMetadata SET
-            float_sum = float_sum + floatVal - prevFloatVal,
-            paid_upload_data_cost = paid_upload_data_cost +
-                addedUploadDataCost;
-        WHERE (
-            user_group_id = userGroupID AND
-            list_spec_id = listSpecID
-        );
-
-        COMMIT;
-        SET exitCode = 1; -- update.
-
-    ELSEIF (floatVal IS NULL AND prevFloatVal IS NOT NULL) THEN
-        DELETE FROM PublicEntityLists
-        WHERE (
-            user_group_id = userGroupID AND
-            list_spec_id = listSpecID AND
-            subj_id = subjID
-        );
-        
-        UPDATE PublicListMetadata SET
-            list_len = list_len - 1,
-            float_sum = float_sum - prevFloatVal,
-            paid_upload_data_cost = paid_upload_data_cost +
-                addedUploadDataCost;
-        WHERE (
-            user_group_id = userGroupID AND
-            list_spec_id = listSpecID
-        );
-
-        COMMIT;
-        SET exitCode = 2; -- deletion.
-    ELSE
-        COMMIT;
-        SET exitCode = 3; -- no change.
-    END IF;
-END //
-DELIMITER ;
 
 
 
@@ -184,8 +60,8 @@ CREATE PROCEDURE _insertUpdateOrDeleteScoreContributionWithInputScores (
     IN minScore FLOAT,
     IN maxScore FLOAT,
     IN unixTime INT UNSIGNED,
-    IN minScoreContrListID BIGINT UNSIGNED,
-    IN maxScoreContrListID BIGINT UNSIGNED,
+    IN minScoreContrListSpecID BIGINT UNSIGNED,
+    IN maxScoreContrListSpecID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 proc: BEGIN
@@ -198,7 +74,7 @@ proc: BEGIN
     END IF;
 
     CALL _insertUpdateOrDeleteScoreWeightAndTime (
-        minScoreContrListID,
+        minScoreContrListSpecID,
         targetUserID,
         minScore,
         targetUserWeightVal,
@@ -207,7 +83,7 @@ proc: BEGIN
     );
 
     CALL _insertUpdateOrDeleteScoreWeightAndTime (
-        maxScoreContrListID,
+        maxScoreContrListSpecID,
         targetUserID,
         maxScore,
         targetUserWeightVal,
@@ -225,8 +101,8 @@ CREATE PROCEDURE _insertUpdateOrDeleteScoreContribution (
     IN targetUserWeightVal FLOAT,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN minScoreContrListID BIGINT UNSIGNED,
-    IN maxScoreContrListID BIGINT UNSIGNED,
+    IN minScoreContrListSpecID BIGINT UNSIGNED,
+    IN maxScoreContrListSpecID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 proc: BEGIN
@@ -243,7 +119,7 @@ proc: BEGIN
     );
 
     CALL _insertUpdateOrDeleteScoreAndWeight (
-        minScoreContrListID,
+        minScoreContrListSpecID,
         targetUserID,
         minScore,
         targetUserWeightVal,
@@ -251,7 +127,7 @@ proc: BEGIN
         exitCode
     );
     CALL _insertUpdateOrDeleteScoreAndWeight (
-        maxScoreContrListID,
+        maxScoreContrListSpecID,
         targetUserID,
         maxScore,
         targetUserWeightVal,
@@ -271,8 +147,8 @@ CREATE PROCEDURE _insertUpdateOrDeleteScoreContributionIfMember (
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN userGroupID BIGINT UNSIGNED,
-    IN minScoreContrListID BIGINT UNSIGNED,
-    IN maxScoreContrListID BIGINT UNSIGNED,
+    IN minScoreContrListSpecID BIGINT UNSIGNED,
+    IN maxScoreContrListSpecID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
 proc: BEGIN
@@ -293,8 +169,8 @@ proc: BEGIN
             NULL, -- 'NULL, NULL' here means deletion.
             NULL,
             0,
-            minScoreContrListID,
-            maxScoreContrListID,
+            minScoreContrListSpecID,
+            maxScoreContrListSpecID,
             exitCode
         );
 
@@ -309,8 +185,8 @@ proc: BEGIN
         targetUserWeightVal,
         qualID,
         subjID,
-        minScoreContrListID,
-        maxScoreContrListID,
+        minScoreContrListSpecID,
+        maxScoreContrListSpecID,
         exitCode
     );
 
@@ -346,16 +222,16 @@ CREATE PROCEDURE requestUpdateOfScoreContribution (
 )
 proc: BEGIN
     DECLARE exitCode, isExceeded TINYINT;
-    DECLARE minScoreContrListID, minScoreContrListID BIGINT UNSIGNED;
+    DECLARE minScoreContrListSpecID, minScoreContrListSpecID BIGINT UNSIGNED;
 
-    -- Get (or insert) minScoreContrListID and maxScoreContrListID.
+    -- Get (or insert) minScoreContrListSpecID and maxScoreContrListSpecID.
     CALL _insertOrFindScoreContributionListIDs (
         requestingUserID,
         qualID,
         subjID,
         userGroupID,
-        minScoreContrListID,
-        maxScoreContrListID,
+        minScoreContrListSpecID,
+        maxScoreContrListSpecID,
         exitCode
     );
     IF (exitCode = 5) THEN
@@ -365,7 +241,7 @@ proc: BEGIN
 
     -- Increase counters due to a (potential) score contribution insert, and
     -- also potentially a ListMetadata insert.
-    CALL _increaseUserCounters (
+    CALL _increaseWeeklyUserCounters (
         requestingUserID, 0, 40, 10, isExceeded
     );
     IF (isExceeded) THEN
@@ -378,8 +254,8 @@ proc: BEGIN
         qualID,
         subjID,
         userGroupID,
-        minScoreContrListID,
-        maxScoreContrListID,
+        minScoreContrListSpecID,
+        maxScoreContrListSpecID,
         exitCode
     );
     IF (exitCode = 5) THEN
@@ -390,8 +266,8 @@ proc: BEGIN
     UPDATE ListMetadata SET
         paid_upload_data_cost = paid_upload_data_cost + 20
     WHERE (
-        list_id = minScoreContrListID OR
-        list_id = maxScoreContrListID
+        list_id = minScoreContrListSpecID OR
+        list_id = maxScoreContrListSpecID
     )
 
     SELECT 0 AS exitCode; -- request was carried out.
@@ -422,8 +298,8 @@ CREATE PROCEDURE _updateScoreContributionsForWholeUserGroup (
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN userGroupID BIGINT UNSIGNED,
-    IN minScoreContrListID BIGINT UNSIGNED,
-    IN maxScoreContrListID BIGINT UNSIGNED
+    IN minScoreContrListSpecID BIGINT UNSIGNED,
+    IN maxScoreContrListSpecID BIGINT UNSIGNED
 )
 proc: BEGIN
     DECLARE exitCode, done TINYINT;
@@ -461,8 +337,8 @@ proc: BEGIN
                 userWeightVal,
                 qualID,
                 subjID,
-                minScoreContrListID,
-                maxScoreContrListID,
+                minScoreContrListSpecID,
+                maxScoreContrListSpecID,
                 exitCode
             );
         END IF;
@@ -481,7 +357,7 @@ CREATE PROCEDURE _updateAllExistingScoreContributions (
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN userGroupID BIGINT UNSIGNED,
-    IN minScoreContrListID BIGINT UNSIGNED
+    IN minScoreContrListSpecID BIGINT UNSIGNED
 )
 proc: BEGIN
     DECLARE exitCode, done TINYINT;
@@ -489,7 +365,7 @@ proc: BEGIN
     DECLARE cur CURSOR FOR
         SELECT subj_id
         FROM FloatScoreAndWeightAggregatesWithUnixTimes
-        WHERE list_id = minScoreContrListID;
+        WHERE list_id = minScoreContrListSpecID;
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
     DECLARE memberID BIGINT UNSIGNED;
 
@@ -509,8 +385,8 @@ proc: BEGIN
             qualID,
             subjID,
             userGroupID,
-            minScoreContrListID,
-            maxScoreContrListID,
+            minScoreContrListSpecID,
+            maxScoreContrListSpecID,
             exitCode
         );
 
@@ -546,14 +422,14 @@ CREATE PROCEDURE requestUpdateOfScoreContributionsForWholeUserGroup (
 )
 proc: BEGIN
     DECLARE exitCode, isExceeded TINYINT;
-    DECLARE minScoreContrListID, minScoreContrListID BIGINT UNSIGNED;
+    DECLARE minScoreContrListSpecID, minScoreContrListSpecID BIGINT UNSIGNED;
     DECLARE reqType VARCHAR(100) DEFAULT "SCORE_CONTR_WHOLE_USER_GROUP";
     DECLARE reqData VARCHAR(255);
     DECLARE compCostRequired, uploadDataCostRequired FLOAT;
     DECLARE userGroupListLen, curScoreContrListLen BIGINT UNSIGNED;
 
 
-    CALL _increaseUserCounters (
+    CALL _increaseWeeklyUserCounters (
         requestingUserID, 0, uploadDataCostPayment, compCostPayment,
         isExceeded
     );
@@ -562,14 +438,14 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    -- Get (or insert) minScoreContrListID and maxScoreContrListID.
+    -- Get (or insert) minScoreContrListSpecID and maxScoreContrListSpecID.
     CALL _insertOrFindScoreContributionListIDs (
         requestingUserID,
         qualID,
         subjID,
         userGroupID,
-        minScoreContrListID,
-        maxScoreContrListID,
+        minScoreContrListSpecID,
+        maxScoreContrListSpecID,
         exitCode
     );
     IF (exitCode = 5) THEN
@@ -579,7 +455,7 @@ proc: BEGIN
 
     SET reqData = CONCAT(
         qualID, ",", subjID, ",", userGroupID, ",",
-        minScoreContrListID, ",", maxScoreContrListID
+        minScoreContrListSpecID, ",", maxScoreContrListSpecID
     );
 
     SELECT pos_score_list_len INTO userGroupListLen
@@ -591,7 +467,7 @@ proc: BEGIN
 
     SELECT list_len INTO curScoreContrListLen
     FROM ListMetadata
-    WHERE list_id = minScoreContrListID;
+    WHERE list_id = minScoreContrListSpecID;
 
     -- For the required upload data cost, let's just use an optimistic guess,
     -- assuming that curScoreContrListLen will only double at most, or add
@@ -633,14 +509,14 @@ CREATE PROCEDURE requestUpdateOfAllExistingScoreContributions (
 )
 proc: BEGIN
     DECLARE exitCode, isExceeded TINYINT;
-    DECLARE minScoreContrListID, minScoreContrListID BIGINT UNSIGNED;
+    DECLARE minScoreContrListSpecID, minScoreContrListSpecID BIGINT UNSIGNED;
     DECLARE reqType VARCHAR(100) DEFAULT "SCORE_CONTR_ALL_EXISTING";
     DECLARE reqData VARCHAR(255);
     DECLARE compCostRequired, uploadDataCostRequired FLOAT;
     DECLARE userGroupListLen, curScoreContrListLen BIGINT UNSIGNED;
 
 
-    CALL _increaseUserCounters (
+    CALL _increaseWeeklyUserCounters (
         requestingUserID, 0, uploadDataCostPayment, compCostPayment,
         isExceeded
     );
@@ -649,14 +525,14 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    -- Get (or insert) minScoreContrListID and maxScoreContrListID.
+    -- Get (or insert) minScoreContrListSpecID and maxScoreContrListSpecID.
     CALL _insertOrFindScoreContributionListIDs (
         requestingUserID,
         qualID,
         subjID,
         userGroupID,
-        minScoreContrListID,
-        maxScoreContrListID,
+        minScoreContrListSpecID,
+        maxScoreContrListSpecID,
         exitCode
     );
     IF (exitCode = 5) THEN
@@ -665,12 +541,12 @@ proc: BEGIN
     END IF;
 
     SET reqData = CONCAT(
-        qualID, ",", subjID, ",", userGroupID, ",", minScoreContrListID
+        qualID, ",", subjID, ",", userGroupID, ",", minScoreContrListSpecID
     );
 
     SELECT list_len INTO curScoreContrListLen
     FROM ListMetadata
-    WHERE list_id = minScoreContrListID;
+    WHERE list_id = minScoreContrListSpecID;
 
     -- TODO: Correct this estimation (quick guess) of the computation cost.
     SET compCostRequired = CEIL(curScoreContrListLen / 4000) * 10;
@@ -712,8 +588,8 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE _getScoreMedian ( -- TODO: Remember to include and use the filter list.
-    IN minScoreContrListID BIGINT UNSIGNED,
-    IN maxScoreContrListID BIGINT UNSIGNED,
+    IN minScoreContrListSpecID BIGINT UNSIGNED,
+    IN maxScoreContrListSpecID BIGINT UNSIGNED,
     IN fullWeightSum DOUBLE,
     OUT scoreMedianVal DOUBLE
 )
@@ -725,7 +601,7 @@ proc: BEGIN
     DECLARE minCur CURSOR FOR
         SELECT score_val, weight_val
         FROM FloatScoreAndWeightAggregatesWithUnixTimes
-        WHERE list_id = minScoreContrListID
+        WHERE list_id = minScoreContrListSpecID
         ORDER BY
             score_val ASC,
             weight_val ASC,
@@ -733,7 +609,7 @@ proc: BEGIN
     DECLARE maxCur CURSOR FOR
         SELECT score_val, weight_val
         FROM FloatScoreAndWeightAggregatesWithUnixTimes
-        WHERE list_id = maxScoreContrListID
+        WHERE list_id = maxScoreContrListSpecID
         ORDER BY
             score_val ASC,
             weight_val ASC,
@@ -812,7 +688,7 @@ CREATE PROCEDURE requestUpdateOfScoreContributionsForWholeUserGroup (
 )
 proc: BEGIN
     DECLARE exitCode, isExceeded TINYINT;
-    DECLARE minScoreContrListID, minScoreContrListID BIGINT UNSIGNED;
+    DECLARE minScoreContrListSpecID, minScoreContrListSpecID BIGINT UNSIGNED;
     DECLARE fullWeightSum DOUBLE;
     DECLARE reqType VARCHAR(100) DEFAULT "MEDIAN_SCORE";
     DECLARE reqData VARCHAR(255);
@@ -820,7 +696,7 @@ proc: BEGIN
     DECLARE scoreContrListLen BIGINT UNSIGNED;
 
 
-    CALL _increaseUserCounters (
+    CALL _increaseWeeklyUserCounters (
         requestingUserID, 0, uploadDataCostPayment, compCostPayment,
         isExceeded
     );
@@ -829,14 +705,14 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    -- Get (or insert) minScoreContrListID and maxScoreContrListID.
+    -- Get (or insert) minScoreContrListSpecID and maxScoreContrListSpecID.
     CALL _insertOrFindScoreContributionListIDs (
         requestingUserID,
         qualID,
         subjID,
         userGroupID,
-        minScoreContrListID,
-        maxScoreContrListID,
+        minScoreContrListSpecID,
+        maxScoreContrListSpecID,
         exitCode
     );
     IF (exitCode = 5) THEN
@@ -847,10 +723,10 @@ proc: BEGIN
     -- Get the full weight sum of the contribution score lists.
     SELECT weight_sum INTO fullWeightSum
     FROM ListMetadata
-    WHERE list_id = minScoreContrListID;
+    WHERE list_id = minScoreContrListSpecID;
 
     SET reqData = CONCAT(
-        minScoreContrListID, ",", maxScoreContrListID, ",", fullWeightSum
+        minScoreContrListSpecID, ",", maxScoreContrListSpecID, ",", fullWeightSum
     );
 
     SELECT pos_score_list_len INTO userGroupListLen
@@ -1019,7 +895,7 @@ CREATE PROCEDURE _queueOrUpdateRequest (
     OUT isExceeded TINYINT;
 )
 proc: BEGIN
-    CALL _increaseUserCounters (
+    CALL _increaseWeeklyUserCounters (
         requestingUserID, 0, uploadDataCostPayment, compCostPayment,
         isExceeded
     );
@@ -1062,7 +938,7 @@ BEGIN
     CASE reqType
         WHEN "SCORE_CONTR_WHOLE_USER_GROUP" THEN BEGIN
             DECLARE qualID, subjID, userGroupID,
-                minScoreContrListID, maxScoreContrListID BIGINT UNSIGNED;
+                minScoreContrListSpecID, maxScoreContrListSpecID BIGINT UNSIGNED;
             SET qualID = CAST(
                 REGEXP_SUBSTR(paths, "[^,]+", 1, 1) AS UNSIGNED
             );
@@ -1072,21 +948,21 @@ BEGIN
             SET userGroupID = CAST(
                 REGEXP_SUBSTR(paths, "[^,]+", 1, 3) AS UNSIGNED
             );
-            SET minScoreContrListID = CAST(
+            SET minScoreContrListSpecID = CAST(
                 REGEXP_SUBSTR(paths, "[^,]+", 1, 4) AS UNSIGNED
             );
-            SET maxScoreContrListID = CAST(
+            SET maxScoreContrListSpecID = CAST(
                 REGEXP_SUBSTR(paths, "[^,]+", 1, 5) AS UNSIGNED
             );
 
             CALL _updateScoreContributionsForWholeUserGroup (
                 qualID, subjID, userGroupID,
-                minScoreContrListID, maxScoreContrListID
+                minScoreContrListSpecID, maxScoreContrListSpecID
             );
         END
         WHEN "SCORE_CONTR_ALL_EXISTING" THEN BEGIN
             DECLARE qualID, subjID, userGroupID,
-                minScoreContrListID BIGINT UNSIGNED;
+                minScoreContrListSpecID BIGINT UNSIGNED;
             SET qualID = CAST(
                 REGEXP_SUBSTR(paths, "[^,]+", 1, 1) AS UNSIGNED
             );
@@ -1096,22 +972,22 @@ BEGIN
             SET userGroupID = CAST(
                 REGEXP_SUBSTR(paths, "[^,]+", 1, 3) AS UNSIGNED
             );
-            SET minScoreContrListID = CAST(
+            SET minScoreContrListSpecID = CAST(
                 REGEXP_SUBSTR(paths, "[^,]+", 1, 4) AS UNSIGNED
             );
 
             CALL _updateAllExistingScoreContributions (
-                qualID, subjID, userGroupID, minScoreContrListID
+                qualID, subjID, userGroupID, minScoreContrListSpecID
             );
         END
         WHEN "SCORE_MEDIAN" THEN BEGIN
             DECLARE scoreMedianVal DOUBLE;
-            DECLARE minScoreContrListID, maxScoreContrListID,
+            DECLARE minScoreContrListSpecID, maxScoreContrListSpecID,
                 fullWeightSum BIGINT UNSIGNED;
-            SET minScoreContrListID = CAST(
+            SET minScoreContrListSpecID = CAST(
                 REGEXP_SUBSTR(paths, "[^,]+", 1, 1) AS UNSIGNED
             );
-            SET maxScoreContrListID = CAST(
+            SET maxScoreContrListSpecID = CAST(
                 REGEXP_SUBSTR(paths, "[^,]+", 1, 2) AS UNSIGNED
             );
             SET fullWeightSum = CAST(
@@ -1119,7 +995,7 @@ BEGIN
             );
 
             CALL _getScoreMedian (
-                minScoreContrListID, maxScoreContrListID, fullWeightSum,
+                minScoreContrListSpecID, maxScoreContrListSpecID, fullWeightSum,
                 scoreMedianVal
             );
             -- ...

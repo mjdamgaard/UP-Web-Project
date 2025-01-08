@@ -40,13 +40,13 @@ CREATE TABLE PrivateEntityLists (
 
     float_val FLOAT NOT NULL,
 
-    on_index_data VARBINARY(32) NOT NULL, -- can be resized.
+    on_index_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
 
     user_id BIGINT UNSIGNED NOT NULL,
 
     subj_id BIGINT UNSIGNED NOT NULL,
 
-    off_index_data VARBINARY(32) NOT NULL, -- can be resized.
+    off_index_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
 
     PRIMARY KEY (
         list_type,
@@ -81,13 +81,15 @@ CREATE TABLE PublicEntityLists (
 
     list_spec_id BIGINT UNSIGNED NOT NULL,
 
-    float_val FLOAT NOT NULL,
+    float_val_1 FLOAT NOT NULL,
 
-    on_index_data VARBINARY(32) NOT NULL, -- can be resized.
+    float_val_2 FLOAT NOT NULL DEFAULT 0,
+
+    on_index_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
 
     subj_id BIGINT UNSIGNED NOT NULL,
 
-    off_index_data VARBINARY(32) NOT NULL, -- can be resized.
+    off_index_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
 
     PRIMARY KEY (
         user_group_id,
@@ -98,7 +100,8 @@ CREATE TABLE PublicEntityLists (
     UNIQUE INDEX sec_idx (
         user_group_id,
         list_spec_id,
-        float_val,
+        float_val_1,
+        float_val_2,
         on_index_data,
         subj_id
     )
@@ -117,7 +120,9 @@ CREATE TABLE PublicListMetadata (
 
     list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
-    float_sum DOUBLE NOT NULL DEFAULT 0,
+    float_1_sum DOUBLE NOT NULL DEFAULT 0,
+
+    float_2_sum DOUBLE NOT NULL DEFAULT 0,
 
     paid_upload_data_cost FLOAT NOT NULL DEFAULT 0,
 
@@ -700,44 +705,52 @@ VALUES
         '}'
     ), 9),
     (13, "f", CONCAT(
-        'min_score_contributions(',
-            'Quality:@[qualities],',
-            'Subject:@[entities],',
-            'User group:@[user groups]',
+        'user_scores(',
+            'Quality:@[qualities]',
         '){',
-            '"Class":"@[min score contributions]",',
-            '"Quality":"%1",',
-            '"Subject":"%2",',
-            '"User group":"%3"',
+            '"Class":"@[user score list specs]",',
+            '"Quality":"%1"',
         '}'
     ), 9),
     (14, "f", CONCAT(
-        'max_score_contributions(',
+        'min_score_contributors(',
             'Quality:@[qualities],',
-            'Subject:@[entities],',
-            'User group:@[user groups]',
+            'Subject:@[entities]',
         '){',
-            '"Class":"@[max score contributions]",',
+            '"Class":"@[min score contributor list specs]",',
             '"Quality":"%1",',
-            '"Subject":"%2",',
-            '"User group":"%3"',
+            '"Subject":"%2"',
         '}'
     ), 9),
     (15, "f", CONCAT(
-        'score_medians(',
+        'max_score_contributors(',
             'Quality:@[qualities],',
-            'User group:@[user groups],',
-            'Metric:@[metrics],',
-            'Filter list?:@[lists]',
+            'Subject:@[entities]',
         '){',
-            '"Class":"@[score median lists]",',
+            '"Class":"@[max score contributor list specs]",',
             '"Quality":"%1",',
-            '"User group":"%2",',
-            '"Metric":"%3",',
-            '"Filter list":"%4"',
+            '"Subject":"%2"',
         '}'
     ), 9),
-    (16, "a", CONCAT(
+    (16, "f", CONCAT(
+        'score_medians(',
+            'Quality:@[qualities],',
+            'Filter list?:@[lists]',
+        '){',
+            '"Class":"@[score median list specs]",',
+            '"Quality":"%1",',
+            '"Filter list":"%2"',
+        '}'
+    ), 9),
+    (17, "f", CONCAT(
+        'score_weights(',
+            'List:@[list specs]',
+        '){',
+            '"Class":"@[score weight list specs]",',
+            '"List":"%1"',
+        '}'
+    ), 9),
+    (18, "a", CONCAT(
         '{',
             '"Class":"@[metrics]",',
             '"Name":"Standard percentage metric",',
@@ -747,7 +760,7 @@ VALUES
             '"Description":"@[metrics/std percentage metric/desc]"',
         '}'
     ), 9),
-    (17, "a", CONCAT(
+    (19, "a", CONCAT(
         '{',
             '"Class":"@[metrics]",',
             '"Name":"Standard predicate metric",',
@@ -767,24 +780,6 @@ VALUES
             '"Lower bound":0,',
             '"Upper bound":10,',
             '"Description":"@[metrics/std predicate metric/desc]"',
-        '}'
-    ), 9),
-    (18, "f", CONCAT(
-        'score_weights(',
-            'List:@[standard entity lists]',
-        '){',
-            '"Class":"@[standard score weight lists]",',
-            '"List":"%1"',
-        '}'
-    ), 9),
-    (19, "f", CONCAT(
-        'user_score_mids(',
-            'User:u,',
-            'Quality:@[qualities]',
-        '){',
-            '"Class":"@[public user score lists]",',
-            '"User":"%1",',
-            '"Quality":"%2"',
         '}'
     ), 9);
     -- (14, "f", CONCAT(

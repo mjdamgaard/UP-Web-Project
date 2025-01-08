@@ -36,51 +36,205 @@ DROP PROCEDURE anonymizeEntity;
 
 
 
+
+
+DELIMITER //
+CREATE PROCEDURE _insertUpdateOrDeletePublicListElement (
+    IN userGroupID BIGINT UNSIGNED,
+    IN listSpecID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
+    IN floatVal1 FLOAT,
+    IN floatVal2 FLOAT,
+    IN onIndexData VARBINARY(32),
+    IN offIndexData VARBINARY(32),
+    IN addedUploadDataCost FLOAT,
+    OUT exitCode TINYINT
+)
+BEGIN
+    DECLARE prevFloatVal1, prevFloatVal2 FLOAT;
+    DECLARE prevListLen BIGINT UNSIGNED;
+    DECLARE isExceeded TINYINT;
+
+    SET floatVal2 = CASE WHEN (floatVal2 IS NULL) THEN 0 ELSE floatVal2;
+
+    -- We select (for update) the previous score on the list, and branch
+    -- accordingly in order to update the ListMetadata table correctly.
+    START TRANSACTION;
+
+    SELECT list_len INTO prevListLen -- only used to lock ListMetadata row.
+    FROM PublicListMetadata FORCE INDEX (PRIMARY)
+    WHERE (
+        user_group_id = userGroupID AND
+        list_spec_id = listSpecID
+    )
+    FOR UPDATE;
+
+    SELECT float_val_1, float_val_2 INTO prevFloatVal1, prevFloatVal2
+    FROM PublicEntityLists FORCE INDEX (PRIMARY)
+    WHERE (
+        user_group_id = userGroupID AND
+        list_spec_id = listSpecID AND
+        subj_id = subjID
+    );
+
+    -- Branch according to whether the score should be inserted, updated, or
+    -- deleted, the latter being the case where the floatVal input is NULL. 
+    IF (floatVal1 IS NOT NULL AND prevFloatVal1 IS NULL) THEN
+        INSERT INTO PublicEntityLists (
+            user_group_id, list_spec_id, subj_id,
+            float_val_1, float_val_2, on_index_data, off_index_data
+        ) VALUES (
+            userGroupID, listSpecID, subjID,
+            floatVal1, floatVal2, onIndexData, offIndexData
+        );
+
+        INSERT INTO PublicListMetadata (
+            user_group_id, list_spec_id,
+            list_len, float_1_sum, float_1_sum, paid_upload_data_cost
+        ) VALUES (
+            userGroupID, listSpecID,
+            1, floatVal1, floatVal2, addedUploadDataCost
+        )
+        ON DUPLICATE KEY UPDATE
+            list_len = list_len + 1,
+            float_1_sum = float_1_sum + floatVal1,
+            float_2_sum = float_2_sum + floatVal2,
+            paid_upload_data_cost = paid_upload_data_cost +
+                addedUploadDataCost;
+
+        COMMIT;
+        SET exitCode = 0; -- insert.
+
+    ELSEIF (floatVal1 IS NOT NULL AND prevFloatVal1 IS NOT NULL) THEN
+        UPDATE PublicEntityLists SET
+            float_val_1 = floatVal1,
+            float_val_2 = floatVal2,
+            on_index_data = onIndexData,
+            off_index_data = offIndexData
+        WHERE (
+            user_group_id = userGroupID AND
+            list_spec_id = listSpecID AND
+            subj_id = subjID
+        );
+        
+        UPDATE PublicListMetadata SET
+            float_1_sum = float_1_sum + floatVal1 - prevFloatVal1,
+            float_2_sum = float_2_sum + floatVal2 - prevFloatVal2,
+            paid_upload_data_cost = paid_upload_data_cost +
+                addedUploadDataCost;
+        WHERE (
+            user_group_id = userGroupID AND
+            list_spec_id = listSpecID
+        );
+
+        COMMIT;
+        SET exitCode = 1; -- update.
+
+    ELSEIF (floatVal1 IS NULL AND prevFloatVal1 IS NOT NULL) THEN
+        DELETE FROM PublicEntityLists
+        WHERE (
+            user_group_id = userGroupID AND
+            list_spec_id = listSpecID AND
+            subj_id = subjID
+        );
+        
+        UPDATE PublicListMetadata SET
+            list_len = list_len - 1,
+            float_1_sum = float_1_sum - prevFloatVal1,
+            float_2_sum = float_2_sum - prevFloatVal2,
+            paid_upload_data_cost = paid_upload_data_cost +
+                addedUploadDataCost;
+        WHERE (
+            user_group_id = userGroupID AND
+            list_spec_id = listSpecID
+        );
+
+        COMMIT;
+        SET exitCode = 2; -- deletion.
+    ELSE
+        COMMIT;
+        SET exitCode = 3; -- no change.
+    END IF;
+END //
+DELIMITER ;
+
+
+
+
+
+
 DELIMITER //
 CREATE PROCEDURE insertOrUpdatePublicUserScore (
     IN userID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN scoreMin FLOAT,
-    IN scoreMax FLOAT,
+    IN minScore FLOAT,
+    IN maxScore FLOAT,
     IN truncateTimeBy TINYINT UNSIGNED
 )
 proc: BEGIN
-    DECLARE isExceeded TINYINT;
-    DECLARE unixTime DEFAULT (
+    DECLARE isExceeded, exitCode TINYINT;
+    DECLARE userScoreListSpecID BIGINT UNSIGNED;
+    DECLARE userScoreListSpecDefStr VARCHAR(700)
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT (
+            CONCAT('@13,@', qualID)
+        );
+    DECLARE unixTime INT UNSIGNED DEFAULT (
         UNIX_TIMESTAMP() >> truncateTimeBy << truncateTimeBy
     );
-
-    CALL _increaseUserCounters (
-        userID, 0, 17, 0, isExceeded
+    DECLARE unixTimeBin VARBINARY(4) DEFAULT (
+        UNHEX(CONV(unixTime, 10, 16))
     );
 
-    -- Exit if upload limit was exceeded
+    SET maxScore = CASE WHEN (maxScore <= minScore)
+        THEN minScore
+        ELSE maxScore
+    END CASE;
+
+    -- Pay the upload data cost for the score insert.
+    CALL _increaseWeeklyUserCounters (
+        userID, 0, 20, 0, isExceeded
+    );
+    -- Exit if upload limit was exceeded.
     IF (isExceeded) THEN
         SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
         LEAVE proc;
     END IF;
 
-    -- Exit if the subject entity does not exist.
-    IF ((SELECT ent_type FROM Entities WHERE id = subjID) IS NULL) THEN
-        SELECT subjID AS outID, 1 AS exitCode; -- subject does not exist.
+    -- Insert of find the user score list spec entity, and exit if upload limit
+    -- is exceeded.
+    CALL _insertOrFindFunctionCallEntity (
+        userID, userScoreListSpecDefStr, 1,
+        userScoreListSpecID, exitCode
+    );
+    IF (exitCode = 5) THEN
         LEAVE proc;
     END IF;
 
-    INSERT INTO PublicUserScores (
-        user_id, qual_id, subj_id, score_min, score_min, unix_time
-    )
-    VALUES (
-        userID, qualID, subjID, scoreMin, scoreMax, unixTime
-    )
-    ON DUPLICATE KEY UPDATE
-        score_min = scoreMin,
-        score_max = scoreMax,
-        unix_time = unixTime;
+    -- Exit if the subject entity does not exist.
+    IF ((SELECT ent_type FROM Entities WHERE id = subjID) IS NULL) THEN
+        SELECT subjID AS outID, 3 AS exitCode; -- subject does not exist.
+        LEAVE proc;
+    END IF;
 
-    SELECT subjID AS outID, 0 AS exitCode; -- inserted or updated.
+    -- Finally insert the user score, updating the PublicListMetadata in the
+    -- process.
+    CALL _insertUpdateOrDeletePublicListElement (
+        userID
+        userScoreListSpecID
+        subjID,
+        minScore,
+        maxScore,
+        unixTimeBin,
+        NULL,
+        20,
+        exitCode
+    );
+
+    SELECT subjID AS outID, exitCode; -- 0: inserted, or 1: updated.
 END proc //
 DELIMITER ;
+
 
 
 DELIMITER //
@@ -90,19 +244,44 @@ CREATE PROCEDURE deletePublicUserScore (
     IN subjID BIGINT UNSIGNED
 )
 BEGIN
-    DELETE FROM PublicUserScores
+    DECLARE userScoreListSpecID BIGINT UNSIGNED;
+    DECLARE userScoreListSpecDefStr VARCHAR(700)
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT (
+            CONCAT('@13,@', qualID)
+        );
+
+    SELECT ent_id INTO userScoreListSpecID
+    FROM EntitySecKeys USE INDEX (PRIMARY)
     WHERE (
-        user_id = userID AND
-        qual_id = qualID AND
-        subj_id = subjID
+        ent_type = "c" AND
+        user_whitelist_id = 0 AND
+        def_key = userScoreListSpecDefStr
     );
 
-    SELECT subjID AS outID, 0 AS exitCode; -- deleted if there.
+    CALL _insertUpdateOrDeletePublicListElement (
+        userID,
+        userScoreListSpecID,
+        subjID,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        exitCode
+    );
+    SET exitCode CASE WHEN (exitCode = 3)
+        THEN 0 -- deleted.
+        ELSE 1 -- no change.
+    END CASE;
+
+    SELECT subjID AS outID, exitCode; -- score was deleted if there.
 END //
 DELIMITER ;
 
 
 
+
+-- TODO: Correct these private score insert procedures below at some point.
 
 DELIMITER //
 CREATE PROCEDURE insertOrUpdatePrivateUserScore (
@@ -117,7 +296,7 @@ proc: BEGIN
     DECLARE isExceeded TINYINT;
     DECLARE userWhitelistScoreVal FLOAT;
 
-    CALL _increaseUserCounters (
+    CALL _increaseWeeklyUserCounters (
         userID, 0, 25, 10, isExceeded
     );
     IF (isExceeded) THEN
@@ -161,7 +340,7 @@ CREATE PROCEDURE deletePrivateUserScore (
     IN scoreVal BIGINT
 )
 BEGIN
-    CALL _increaseUserCounters (
+    CALL _increaseWeeklyUserCounters (
         userID, 0, 0, 10, isExceeded
     );
     IF (isExceeded) THEN
@@ -199,7 +378,7 @@ BEGIN
     DECLARE isExceeded TINYINT;
 
     -- Some arbitrary (pessimistic or optimistic) guess at the computation time.
-    CALL _increaseUserCounters (
+    CALL _increaseWeeklyUserCounters (
         userID, 0, 0, 1000, isExceeded
     );
     IF (isExceeded) THEN
@@ -270,7 +449,7 @@ proc: BEGIN
         SET userWhitelistID = NULL;
     END IF;
 
-    CALL _increaseUserCounters (
+    CALL _increaseWeeklyUserCounters (
         userID, 0, LENGTH(CAST(defStr AS BINARY)) + 22, 0, isExceeded
     );
 
@@ -304,7 +483,7 @@ DELIMITER //
 CREATE PROCEDURE _insertOrFindEntityWithSecKey (
     IN entType CHAR,
     IN userID BIGINT UNSIGNED,
-    IN defStr TEXT CHARACTER SET utf8mb4,
+    IN defStr TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
     IN userWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL,
     OUT outID BIGINT UNSIGNED,
@@ -353,7 +532,7 @@ proc: BEGIN
         entType, userWhitelistID, defStr, outID
     );
 
-    CALL _increaseUserCounters (
+    CALL _increaseWeeklyUserCounters (
         userID, 0, LENGTH(CAST(defStr AS BINARY)) * 2 + 31, 0, isExceeded
     );
 
@@ -414,7 +593,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrFindFunctionCallEntity (
     IN userID BIGINT UNSIGNED,
-    IN defStr VARCHAR(700) CHARACTER SET utf8mb4,
+    IN defStr VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
     IN isAnonymous BOOL
 )
 BEGIN
@@ -430,7 +609,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE _insertOrFindFunctionCallEntity (
     IN userID BIGINT UNSIGNED,
-    IN defStr VARCHAR(700) CHARACTER SET utf8mb4,
+    IN defStr VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
     IN isAnonymous BOOL,
     OUT outID BIGINT UNSIGNED,
     OUT exitCode TINYINT
@@ -527,7 +706,7 @@ proc: BEGIN
         SET userWhitelistID = NULL;
     END IF;
 
-    CALL _increaseUserCounters (
+    CALL _increaseWeeklyUserCounters (
         userID, 0, LENGTH(CAST(defStr AS BINARY)) + 22, 0, isExceeded
     );
 
@@ -852,7 +1031,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE _increaseUserCounters (
+CREATE PROCEDURE _increaseWeeklyUserCounters (
     IN userID BIGINT UNSIGNED,
     IN downloadData FLOAT, -- Only used for query "as user" requests.
     IN uploadData FLOAT,
