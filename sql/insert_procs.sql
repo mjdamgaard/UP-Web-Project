@@ -40,8 +40,7 @@ DROP PROCEDURE anonymizeEntity;
 
 DELIMITER //
 CREATE PROCEDURE _insertUpdateOrDeletePublicListElement (
-    IN userGroupID BIGINT UNSIGNED,
-    IN listSpecID BIGINT UNSIGNED,
+    IN listID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN floatVal1 FLOAT,
     IN floatVal2 FLOAT,
@@ -65,17 +64,13 @@ BEGIN
 
     SELECT list_len INTO prevListLen -- only used to lock ListMetadata row.
     FROM PublicListMetadata FORCE INDEX (PRIMARY)
-    WHERE (
-        user_group_id = userGroupID AND
-        list_spec_id = listSpecID
-    )
+    WHERE list_id = listID
     FOR UPDATE;
 
     SELECT float_val_1, float_val_2 INTO prevFloatVal1, prevFloatVal2
     FROM PublicEntityLists FORCE INDEX (PRIMARY)
     WHERE (
-        user_group_id = userGroupID AND
-        list_spec_id = listSpecID AND
+        list_id = listID AND
         subj_id = subjID
     );
 
@@ -83,18 +78,18 @@ BEGIN
     -- deleted, the latter being the case where the floatVal input is NULL. 
     IF (floatVal1 IS NOT NULL AND prevFloatVal1 IS NULL) THEN
         INSERT INTO PublicEntityLists (
-            user_group_id, list_spec_id, subj_id,
+            list_id, subj_id,
             float_val_1, float_val_2, on_index_data, off_index_data
         ) VALUES (
-            userGroupID, listSpecID, subjID,
+            listID, subjID,
             floatVal1, floatVal2, onIndexData, offIndexData
         );
 
         INSERT INTO PublicListMetadata (
-            user_group_id, list_spec_id,
+            list_id,
             list_len, float_1_sum, float_1_sum, paid_upload_data_cost
         ) VALUES (
-            userGroupID, listSpecID,
+            listID,
             1, floatVal1, floatVal2, addedUploadDataCost
         )
         ON DUPLICATE KEY UPDATE
@@ -114,8 +109,7 @@ BEGIN
             on_index_data = onIndexData,
             off_index_data = offIndexData
         WHERE (
-            user_group_id = userGroupID AND
-            list_spec_id = listSpecID AND
+            list_id = listID AND
             subj_id = subjID
         );
         
@@ -124,10 +118,7 @@ BEGIN
             float_2_sum = float_2_sum + floatVal2 - prevFloatVal2,
             paid_upload_data_cost = paid_upload_data_cost +
                 addedUploadDataCost;
-        WHERE (
-            user_group_id = userGroupID AND
-            list_spec_id = listSpecID
-        );
+        WHERE list_id = listID;
 
         COMMIT;
         SET exitCode = 1; -- update.
@@ -146,10 +137,7 @@ BEGIN
             float_2_sum = float_2_sum - prevFloatVal2,
             paid_upload_data_cost = paid_upload_data_cost +
                 addedUploadDataCost;
-        WHERE (
-            user_group_id = userGroupID AND
-            list_spec_id = listSpecID
-        );
+        WHERE list_id = listID;
 
         COMMIT;
         SET exitCode = 2; -- deletion.
@@ -164,77 +152,77 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE _getModeratorGroupAndUserGroupSpecAndLockedAfterTime (
-    IN userGroupID BIGINT UNSIGNED,
-    IN contextUserGroupID BIGINT UNSIGNED,
-    OUT moderatorGroupID BIGINT UNSIGNED,
-    OUT userGroupSpecID BIGINT UNSIGNED,
-    OUT lockedAfter DATETIME
-)
-proc: BEGIN
-    DECLARE userGroupEntType CHAR;
-    DECLARE userGroupDefStr VARCHAR(700);
-    DECLARE isLockedList, isList BOOL;
-    -- We first check that the user is in the given user group. If not, make
-    -- sure that any existing score of the user is deleted from the two lists.
-    SELECT ent_type, def_str INTO userGroupEntType, userGroupDefStr
-    FROM Entities FORCE INDEX (PRIMARY)
-    WHERE (
-        id = userGroupID AND
-        user_whitelist_id = 0
-    );
+-- DELIMITER //
+-- CREATE PROCEDURE _getModeratorGroupAndUserGroupSpecAndLockedAfterTime (
+--     IN userGroupID BIGINT UNSIGNED,
+--     IN contextUserGroupID BIGINT UNSIGNED,
+--     OUT moderatorGroupID BIGINT UNSIGNED,
+--     OUT userGroupSpecID BIGINT UNSIGNED,
+--     OUT lockedAfter DATETIME
+-- )
+-- proc: BEGIN
+--     DECLARE userGroupEntType CHAR;
+--     DECLARE userGroupDefStr VARCHAR(700);
+--     DECLARE isLockedList, isList BOOL;
+--     -- We first check that the user is in the given user group. If not, make
+--     -- sure that any existing score of the user is deleted from the two lists.
+--     SELECT ent_type, def_str INTO userGroupEntType, userGroupDefStr
+--     FROM Entities FORCE INDEX (PRIMARY)
+--     WHERE (
+--         id = userGroupID AND
+--         user_whitelist_id = 0
+--     );
 
-    IF (userGroupEntType = "c") THEN
-        -- Check that the entity is either a (dynamic) list or a locked list.
-        SET isLockedList = REGEXP_LIKE(userGroupDefStr, CONCAT(
-            "@12,@[1-9][0-9]*,@[1-9][0-9]*,",
-            "[0-9]{4}\\-[0-9]{2}\\-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}"
-        ));
-        SET isList = isLockedList OR REGEXP_LIKE(userGroupDefStr,
-            "@11,@[1-9][0-9]*,@[1-9][0-9]*"
-        );
+--     IF (userGroupEntType = "c") THEN
+--         -- Check that the entity is either a (dynamic) list or a locked list.
+--         SET isLockedList = REGEXP_LIKE(userGroupDefStr, CONCAT(
+--             "@12,@[1-9][0-9]*,@[1-9][0-9]*,",
+--             "[0-9]{4}\\-[0-9]{2}\\-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}"
+--         ));
+--         SET isList = isLockedList OR REGEXP_LIKE(userGroupDefStr,
+--             "@11,@[1-9][0-9]*,@[1-9][0-9]*"
+--         );
 
-        IF (NOT isList) THEN
-            SET moderatorGroupID = NULL;
-            SET userGroupSpecID = NULL;
-            SET lockedAfter = NULL;
-            LEAVE proc;
-        END IF
+--         IF (NOT isList) THEN
+--             SET moderatorGroupID = NULL;
+--             SET userGroupSpecID = NULL;
+--             SET lockedAfter = NULL;
+--             LEAVE proc;
+--         END IF
 
-        SET moderatorGroupID = REGEXP_SUBSTR(userGroupDefStr,
-            "[1-9][0-9]*", 6, 1
-        );
-        SET userGroupSpecID = REGEXP_SUBSTR(userGroupDefStr,
-            "[1-9][0-9]*", 6, 2
-        );
-        SET lockedAfter = CASE WHEN (isLockedList)
-            THEN REGEXP_SUBSTR(userGroupDefStr, "[^,]+$", 6, 1)
-            ELSE NULL
-        END CASE;
-        LEAVE proc;
+--         SET moderatorGroupID = REGEXP_SUBSTR(userGroupDefStr,
+--             "[1-9][0-9]*", 6, 1
+--         );
+--         SET userGroupSpecID = REGEXP_SUBSTR(userGroupDefStr,
+--             "[1-9][0-9]*", 6, 2
+--         );
+--         SET lockedAfter = CASE WHEN (isLockedList)
+--             THEN REGEXP_SUBSTR(userGroupDefStr, "[^,]+$", 6, 1)
+--             ELSE NULL
+--         END CASE;
+--         LEAVE proc;
 
-    ELSE IF (userGroupEntType = "a") THEN
-        -- Check that the entity is a user group variable.
-        IF NOT (
-            REGEXP_SUBSTR(userGroupDefStr, '^\\{"Class":"@20",', 1, 1)
-        ) THEN
-            SET moderatorGroupID = NULL;
-            SET userGroupSpecID = NULL;
-            SET lockedAfter = NULL;
-            LEAVE proc;
-        END IF
+--     ELSE IF (userGroupEntType = "a") THEN
+--         -- Check that the entity is a user group variable.
+--         IF NOT (
+--             REGEXP_SUBSTR(userGroupDefStr, '^\\{"Class":"@20",', 1, 1)
+--         ) THEN
+--             SET moderatorGroupID = NULL;
+--             SET userGroupSpecID = NULL;
+--             SET lockedAfter = NULL;
+--             LEAVE proc;
+--         END IF
 
-        -- If so, look up the contextUserGroup's top rated replacement for
-        -- the given user group variable...
+--         -- If so, look up the contextUserGroup's top rated replacement for
+--         -- the given user group variable...
 
-    ELSE
-        SET moderatorGroupID = NULL;
-        SET userGroupSpecID = NULL;
-        SET lockedAfter = NULL;
-    END IF;
-END proc //
-DELIMITER ;
+--     ELSE
+--         SET moderatorGroupID = NULL;
+--         SET userGroupSpecID = NULL;
+--         SET lockedAfter = NULL;
+--     END IF;
+-- END proc //
+-- DELIMITER ;
 
 
 
@@ -243,13 +231,11 @@ DELIMITER //
 CREATE PROCEDURE _getIsMemberAndUserWeight (
     IN userID BIGINT UNSIGNED,
     IN userGroupID BIGINT UNSIGNED,
-    IN moderatorGroupID BIGINT UNSIGNED,
-    IN userGroupSpecID BIGINT UNSIGNED,
     OUT isMember BOOL,
     OUT userWeightVal FLOAT
 )
 proc: BEGIN
-    IF (userID = userGroupID) THEN
+    IF (userGroupID <=> 0 OR userID = userGroupID) THEN
         SET isMember = 1;
         SET userWeightVal = 10;
         LEAVE proc;
@@ -258,8 +244,7 @@ proc: BEGIN
     SELECT float_val_1 INTO userWeightVal
     FROM PublicEntityLists FORCE INDEX (PRIMARY)
     WHERE (
-        user_group_id = moderatorGroupID AND
-        list_spec_id = userGroupSpecID AND
+        list_id = userGroupID AND
         subj_id = userID;
     );
 
@@ -284,16 +269,16 @@ CREATE PROCEDURE insertOrUpdatePublicUserScore (
     IN userID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN minScore FLOAT,
-    IN maxScore FLOAT,
+    IN scoreMid FLOAT,
+    IN scoreRad FLOAT,
     IN truncateTimeBy TINYINT UNSIGNED
 )
 proc: BEGIN
     DECLARE isExceeded, exitCode TINYINT;
-    DECLARE userScoreListSpecID BIGINT UNSIGNED;
-    DECLARE userScoreListSpecDefStr VARCHAR(700)
+    DECLARE userScoreListID BIGINT UNSIGNED;
+    DECLARE userScoreListDefStr VARCHAR(700)
         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT (
-            CONCAT('@13,@', qualID)
+            CONCAT('@[11],@[', userID, '],@[', qualID, ']')
         );
     DECLARE unixTime INT UNSIGNED DEFAULT (
         UNIX_TIMESTAMP() >> truncateTimeBy << truncateTimeBy
@@ -301,11 +286,6 @@ proc: BEGIN
     DECLARE unixTimeBin VARBINARY(4) DEFAULT (
         UNHEX(CONV(unixTime, 10, 16))
     );
-
-    SET maxScore = CASE WHEN (maxScore <= minScore)
-        THEN minScore
-        ELSE maxScore
-    END CASE;
 
     -- Pay the upload data cost for the score insert.
     CALL _increaseWeeklyUserCounters (
@@ -320,15 +300,22 @@ proc: BEGIN
     -- Insert of find the user score list spec entity, and exit if upload limit
     -- is exceeded.
     CALL _insertOrFindFunctionCallEntity (
-        userID, userScoreListSpecDefStr, 1,
-        userScoreListSpecID, exitCode
+        userID, userScoreListDefStr, 0, 1,
+        userScoreListID, exitCode
     );
     IF (exitCode = 5) THEN
         LEAVE proc;
     END IF;
 
     -- Exit if the subject entity does not exist.
-    IF ((SELECT ent_type FROM Entities WHERE id = subjID) IS NULL) THEN
+    IF (
+        (
+            SELECT ent_type
+            FROM Entities FORCE INDEX (PRIMARY)
+            WHERE id = subjID
+        )
+        IS NULL
+    ) THEN
         SELECT subjID AS outID, 3 AS exitCode; -- subject does not exist.
         LEAVE proc;
     END IF;
@@ -336,11 +323,10 @@ proc: BEGIN
     -- Finally insert the user score, updating the PublicListMetadata in the
     -- process.
     CALL _insertUpdateOrDeletePublicListElement (
-        userID
-        userScoreListSpecID
+        userScoreListID
         subjID,
-        minScore,
-        maxScore,
+        scoreMid,
+        scoreRad,
         unixTimeBin,
         NULL,
         20,
@@ -360,23 +346,22 @@ CREATE PROCEDURE deletePublicUserScore (
     IN subjID BIGINT UNSIGNED
 )
 BEGIN
-    DECLARE userScoreListSpecID BIGINT UNSIGNED;
-    DECLARE userScoreListSpecDefStr VARCHAR(700)
+    DECLARE userScoreListID BIGINT UNSIGNED;
+    DECLARE userScoreListDefStr VARCHAR(700)
         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT (
-            CONCAT('@13,@', qualID)
+            CONCAT('@[11],@[', userID, '],@[', qualID, ']')
         );
 
-    SELECT ent_id INTO userScoreListSpecID
+    SELECT ent_id INTO userScoreListID
     FROM EntitySecKeys FORCE INDEX (PRIMARY)
     WHERE (
         ent_type = "c" AND
         user_whitelist_id = 0 AND
-        def_key = userScoreListSpecDefStr
+        def_key = userScoreListDefStr
     );
 
     CALL _insertUpdateOrDeletePublicListElement (
-        userID,
-        userScoreListSpecID,
+        userScoreListID,
         subjID,
         NULL,
         NULL,
@@ -710,12 +695,13 @@ DELIMITER //
 CREATE PROCEDURE insertOrFindFunctionCallEntity (
     IN userID BIGINT UNSIGNED,
     IN defStr VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN userWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL
 )
 BEGIN
     CALL _insertOrFindEntityWithSecKey (
         "c",
-        userID, defStr, isAnonymous, 0,
+        userID, defStr, userWhitelistID, isAnonymous,
         @unused, @unused
     );
 END //
@@ -726,6 +712,7 @@ DELIMITER //
 CREATE PROCEDURE _insertOrFindFunctionCallEntity (
     IN userID BIGINT UNSIGNED,
     IN defStr VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN userWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL,
     OUT outID BIGINT UNSIGNED,
     OUT exitCode TINYINT
@@ -733,7 +720,7 @@ CREATE PROCEDURE _insertOrFindFunctionCallEntity (
 BEGIN
     CALL _insertOrFindEntityWithSecKey (
         "c",
-        userID, defStr, isAnonymous, 0,
+        userID, defStr, userWhitelistID, isAnonymous,
         outID, exitCode
     );
 END //
@@ -928,7 +915,7 @@ DELIMITER ;
 
 
 
-
+-- TODO: Add counter increase to this procedure.
 
 DELIMITER //
 CREATE PROCEDURE _substitutePlaceholdersInEntity (
@@ -1043,28 +1030,81 @@ DELIMITER ;
 
 
 
--- DELIMITER //
--- CREATE PROCEDURE substitutePlaceholdersInEntity (
---     IN entType CHAR,
---     IN userID BIGINT UNSIGNED,
---     IN entID BIGINT UNSIGNED,
---     IN paths TEXT, -- List of the form '<path_1>,<path_2>...'
---     IN substitutionEntIDs TEXT -- List of the form '<entID_1>,<entID_2>...'
--- )
--- BEGIN
---     IF (entType = "a" OR entType = "f") THEN
---         CALL _substitutePlaceholdersInEntity (
---             entType, 700, userID, entID, defStr, paths, substitutionEntIDs
---         );
---     ELSE
---         SELECT entID AS outID, 5 AS exitCode; -- entType is not allowed.
---     END IF;
--- END //
--- DELIMITER ;
+DELIMITER //
+CREATE PROCEDURE _nullUserRefsInEntity (
+    IN entType CHAR,
+    IN userID BIGINT UNSIGNED,
+    IN entID BIGINT UNSIGNED,
+    OUT exitCode
+)
+proc: BEGIN
+    DECLARE prevDefStr, newDefStr LONGTEXT CHARACTER SET utf8mb4
+        COLLATE utf8mb4_bin;
+    DECLARE userWhiteListID BIGINT UNSIGNED;
+    DECLARE isMember TINYINT;
+
+    SELECT def_str, user_whitelist_id INTO prevDefStr, userWhiteListID
+    FROM Entities FORCE INDEX (PRIMARY)
+    WHERE (
+        id = entID AND
+        ent_type = entType
+    );
+
+    CALL _getIsMemberAndUserWeight (
+        userID,
+        userWhiteListID,
+        isMember,
+        @unused
+    );
+
+    IF NOT (isMember) THEN
+        SET exitCode = 2; -- user is not on whitelist.
+        LEAVE proc;
+    END IF;
+    
+    SET newDefStr = REGEXP_REPLACE(
+        prevDefStr, CONCAT('@[', userID, ']'), '@[0]'
+    );
+
+    IF (newDefStr <=> prevDefStr) THEN
+        SET exitCode = 1; -- no changes.
+    ELSE
+        START TRANSACTION;
+
+        UPDATE Entities
+        SET def_str = newDefStr
+        WHERE id = entID;
+
+        DELETE FROM EntitySecKeys
+        WHERE (
+            ent_type = entType AND
+            user_whitelist_id = userWhiteListID AND
+            def_key = prevDefStr
+        );
+
+        COMMIT;
+        SET exitCode = 0; -- occurrences was nulled.
+    END IF;
+END proc //
+DELIMITER ;
 
 
 
+DELIMITER //
+CREATE PROCEDURE nullUserRefsInFunCallEntity (
+    IN userID BIGINT UNSIGNED,
+    IN entID BIGINT UNSIGNED
+)
+proc: BEGIN
+    DECLARE exitCode TINYINT;
 
+    CALL _substitutePlaceholdersInEntity (
+        "c", userID, entID, exitCode
+    );
+
+    SELECT entID AS outID, exitCode;
+END proc //
+DELIMITER ;
 
 
 

@@ -36,7 +36,7 @@ CREATE TABLE PrivateEntityLists (
 
     user_whitelist_id BIGINT UNSIGNED NOT NULL,
 
-    list_spec_id BIGINT UNSIGNED NOT NULL,
+    list_id BIGINT UNSIGNED NOT NULL,
 
     float_val FLOAT NOT NULL,
 
@@ -51,7 +51,7 @@ CREATE TABLE PrivateEntityLists (
     PRIMARY KEY (
         list_type,
         user_whitelist_id,
-        list_spec_id,
+        list_id,
         user_id,
         subj_id
     ),
@@ -59,7 +59,7 @@ CREATE TABLE PrivateEntityLists (
     UNIQUE INDEX score_ord_idx (
         list_type,
         user_whitelist_id,
-        list_spec_id,
+        list_id,
         float_val,
         on_index_data,
         user_id,
@@ -77,9 +77,7 @@ ROW_FORMAT = COMPRESSED;
 
 CREATE TABLE PublicEntityLists (
 
-    user_group_id BIGINT UNSIGNED NOT NULL,
-
-    list_spec_id BIGINT UNSIGNED NOT NULL,
+    list_id BIGINT UNSIGNED NOT NULL,
 
     float_val_1 FLOAT NOT NULL,
 
@@ -92,14 +90,12 @@ CREATE TABLE PublicEntityLists (
     off_index_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
 
     PRIMARY KEY (
-        user_group_id,
-        list_spec_id,
+        list_id,
         subj_id
     ),
 
     UNIQUE INDEX sec_idx (
-        user_group_id,
-        list_spec_id,
+        list_id,
         float_val_1,
         float_val_2,
         on_index_data,
@@ -114,9 +110,7 @@ ROW_FORMAT = COMPRESSED;
 
 CREATE TABLE PublicListMetadata (
 
-    user_group_id BIGINT UNSIGNED NOT NULL,
-
-    list_spec_id BIGINT UNSIGNED NOT NULL,
+    list_id BIGINT UNSIGNED PRIMARY KEY,
 
     list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
@@ -124,12 +118,7 @@ CREATE TABLE PublicListMetadata (
 
     float_2_sum DOUBLE NOT NULL DEFAULT 0,
 
-    paid_upload_data_cost FLOAT NOT NULL DEFAULT 0,
-
-    PRIMARY KEY (
-        user_group_id,
-        list_spec_id
-    )
+    paid_upload_data_cost FLOAT NOT NULL DEFAULT 0
 )
 ROW_FORMAT = COMPRESSED;
 
@@ -306,75 +295,81 @@ VALUES
     --         '"Description":"@[user groups/money-contributing users/desc]"',
     --     '}'
     -- ), 9),
+    -- (11, "f", CONCAT(
+    --     'list(',
+    --         'User group:@[user groups],',
+    --         'List specification:@[list spec]',
+    --     '){',
+    --         '"Class":"@[lists]",',
+    --         '"User group":"%1",',
+    --         '"List specification":"%2"',
+    --     '}'
+    -- ), 9),
+    -- (12, "f", CONCAT(
+    --     'locked_list(',
+    --         'User group:@[user groups],',
+    --         'List specification:@[list specs],',
+    --         'Locked after:datetime',
+    --     '){',
+    --         '"Class":"@[locked lists]",',
+    --         '"User group":"%1",',
+    --         '"List specification":"%2",',
+    --         '"Locked after":"%3"',
+    --     '}'
+    -- ), 9),
     (11, "f", CONCAT(
-        'list(',
-            'User group:@[user groups],',
-            'List specification:@[list specs]',
+        'user_scores(',
+            'User:u,',
+            'Quality:@[qualities]',
         '){',
-            '"Class":"@[lists]",',
-            '"User group":"%1",',
-            '"List specification":"%2"',
+            '"Class":"@[user score lists]",',
+            '"User":"%1",',
+            '"Quality":"%2"',
         '}'
     ), 9),
     (12, "f", CONCAT(
-        'locked_list(',
-            'User group:@[user groups],',
-            'List specification:@[list specs],',
-            'Locked after:datetime',
-        '){',
-            '"Class":"@[locked lists]",',
-            '"User group":"%1",',
-            '"List specification":"%2",',
-            '"Locked after":"%3"',
-        '}'
-    ), 9),
-    (13, "f", CONCAT(
-        'user_scores(',
-            'Quality:@[qualities]',
-        '){',
-            '"Class":"@[user score list specs]",',
-            '"Quality":"%1"',
-        '}'
-    ), 9),
-    (14, "f", CONCAT(
         'min_score_contributors(',
             'Quality:@[qualities],',
             'Subject:@[entities]',
         '){',
-            '"Class":"@[min score contributor list specs]",',
+            '"Class":"@[min score contributor lists]",',
             '"Quality":"%1",',
             '"Subject":"%2"',
         '}'
     ), 9),
-    (15, "f", CONCAT(
+    (13, "f", CONCAT(
         'max_score_contributors(',
+            'User group:@[user groups],',
             'Quality:@[qualities],',
             'Subject:@[entities]',
         '){',
-            '"Class":"@[max score contributor list specs]",',
-            '"Quality":"%1",',
-            '"Subject":"%2"',
+            '"Class":"@[max score contributor lists]",',
+            '"User group":"%1",',
+            '"Quality":"%2",',
+            '"Subject":"%3"',
         '}'
     ), 9),
-    (16, "f", CONCAT(
+    (14, "f", CONCAT(
         'score_medians(',
+            'User group:@[user groups],',
             'Quality:@[qualities],',
             'Filter list?:@[lists]',
         '){',
-            '"Class":"@[score median list specs]",',
-            '"Quality":"%1",',
-            '"Filter list":"%2"',
+            '"Class":"@[score median lists]",',
+            '"User group":"%1",',
+            '"Quality":"%2",',
+            '"Filter list":"%3"',
         '}'
     ), 9),
-    (17, "f", CONCAT(
-        'score_weights(',
-            'List:@[list specs]',
+    (15, "f", CONCAT(
+        'float2_ordered_list(',
+            'List:@[lists]',
         '){',
-            '"Class":"@[score weight list specs]",',
+            '"Class":"@[float2-ordered lists]",',
             '"List":"%1"',
         '}'
     ), 9),
-    (18, "a", CONCAT(
+    (16, "a", CONCAT(
         '{',
             '"Class":"@[metrics]",',
             '"Name":"Standard percentage metric",',
@@ -384,7 +379,7 @@ VALUES
             '"Description":"@[metrics/std percentage metric/desc]"',
         '}'
     ), 9),
-    (19, "a", CONCAT(
+    (17, "a", CONCAT(
         '{',
             '"Class":"@[metrics]",',
             '"Name":"Standard predicate metric",',
@@ -406,7 +401,7 @@ VALUES
             '"Description":"@[metrics/std predicate metric/desc]"',
         '}'
     ), 9),
-    (20, "a", CONCAT(
+    (18, "a", CONCAT(
         '{',
             '"Class":"@[classes]",',
             '"Name":"User group variables",',

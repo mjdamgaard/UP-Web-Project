@@ -179,6 +179,7 @@ export class DataInserter {
 
 
   parseDefStr(str) {
+    // TODO: Change to using new path and entRef syntax. (09.01.25, 17:34)
     return str.replaceAll(/@(@@)*\[[^\]\]@,;]+\]/g, match => {
       let ats = match.match(/^@+/g)[0];
       let bracket = match.substring(ats.length);
