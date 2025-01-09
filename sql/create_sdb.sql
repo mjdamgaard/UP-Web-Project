@@ -328,22 +328,22 @@ VALUES
         '}'
     ), 9),
     (12, "f", CONCAT(
-        'min_score_contributors(',
+        'min_score_contributions(',
             'Quality:@[qualities],',
             'Subject:@[entities]',
         '){',
-            '"Class":"@[min score contributor lists]",',
+            '"Class":"@[min score contribution lists]",',
             '"Quality":"%1",',
             '"Subject":"%2"',
         '}'
     ), 9),
     (13, "f", CONCAT(
-        'max_score_contributors(',
+        'max_score_contributions(',
             'User group:@[user groups],',
             'Quality:@[qualities],',
             'Subject:@[entities]',
         '){',
-            '"Class":"@[max score contributor lists]",',
+            '"Class":"@[max score contribution lists]",',
             '"User group":"%1",',
             '"Quality":"%2",',
             '"Subject":"%3"',

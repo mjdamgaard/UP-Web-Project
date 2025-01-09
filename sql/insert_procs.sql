@@ -235,9 +235,19 @@ CREATE PROCEDURE _getIsMemberAndUserWeight (
     OUT userWeightVal FLOAT
 )
 proc: BEGIN
-    IF (userGroupID <=> 0 OR userID = userGroupID) THEN
+    IF (
+        userGroupID <=> 0 AND
+        "u" <=> (
+            SELECT ent_type
+            FROM Entities FORCE INDEX (PRIMARY)
+            WHERE id = userID
+        )
+        OR
+        userGroupID != 0 AND
+        userID = userGroupID
+    ) THEN
         SET isMember = 1;
-        SET userWeightVal = 10;
+        SET userWeightVal = 1;
         LEAVE proc;
     END IF;
 
@@ -248,7 +258,7 @@ proc: BEGIN
         subj_id = userID;
     );
 
-    SET isMember = (userWeightVal >= 10);
+    SET isMember = (userWeightVal > 0);
 END proc //
 DELIMITER ;
 
