@@ -353,14 +353,16 @@ VALUES
     ), 9),
     (14, "f", CONCAT(
         'score_medians(',
+            'Has passed weight threshold:bool,',
             'User group:@[user groups],',
             'Quality:@[qualities],',
             'Filter list?:@[lists]',
         '){',
             '"Class":"@[score median lists]",',
-            '"User group":"%1",',
-            '"Quality":"%2",',
-            '"Filter list":"%3"',
+            '"Has passed weight threshold":"%1",',
+            '"User group":"%2",',
+            '"Quality":"%3",',
+            '"Filter list":"%4"',
         '}'
     ), 9),
     (15, "f", CONCAT(

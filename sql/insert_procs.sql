@@ -1223,6 +1223,12 @@ proc: BEGIN
     DECLARE downloadLimit, uploadLimit, compLimit FLOAT;
     DECLARE lastRefreshedAt DATE;
     DECLARE currentDate DATE DEFAULT (CURDATE());
+
+    -- userID can be set to 0 in order to suppress any counter checks.
+    IF (userID = 0) THEN
+        SET isExceeded = 0;
+        LEAVE proc;
+    END IF;
     
     SELECT
         download_data_this_week + uploadData,

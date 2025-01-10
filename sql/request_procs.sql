@@ -719,7 +719,7 @@ proc: BEGIN
 
     SET reqData = CONCAT(
         minScoreContrListID, ",", maxScoreContrListID, ",", fullWeightSum, ",",
-        userGroupID, ",", qualID,
+        userGroupID, ",", qualID, ",", subjID
     );
 
     SELECT pos_score_list_len INTO userGroupListLen
@@ -754,6 +754,109 @@ DELIMITER ;
 
 
 
+
+
+
+
+-- A sub-procedure to insert values into two-part lists, where one version of
+-- the list is one with the 'Has passed weight threshold' flag set to true,
+-- and the other version is for all the scores whose weight did not reach the
+-- threshold of >= 10.
+DELIMITER //
+CREATE PROCEDURE _insertIntoThresholdSeparatedTwoPartList (
+    IN requestingUserID BIGINT UNSIGNED,
+    IN listFunID BIGINT UNSIGNED,
+    IN listFunInputStringFromTheSecondInputAndOn VARCHAR(700)
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN subjID BIGINT UNSIGNED,
+    IN scoreVal,
+    IN weightVal,
+    IN hasPassedOnIndexData,
+    IN hasPassedOffIndexData,
+    IN hasNotPassedOnIndexData,
+    IN hasNotPassedOffIndexData,
+    OUT exitCode TINYINT
+)
+proc: BEGIN
+    DECLARE hasPassedListFunID, hasNotPassedListFunID BIGINT UNSIGNED;
+    DECLARE hasPassedListFunDefStr, hasNotPassedListFunDefStr VARCHAR(700)
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+    
+    -- Find or insert the two list entities, hasPassedListFunID and
+    -- hasNotPassedListFunID. 
+    SET hasPassedListFunDefStr = CONCAT(
+        '@[', listFunID, '],true,' listFunInputStringFromTheSecondInputAndOn
+    );
+    SET hasNotPassedListFunDefStr = CONCAT(
+        '@[', listFunID, '],false,' listFunInputStringFromTheSecondInputAndOn
+    );
+    CALL _insertOrFindFunctionCallEntity (
+        requestingUserID, hasPassedListFunDefStr, 0, 1,
+        hasPassedListFunID, exitCode
+    );
+    IF (exitCode = 5) THEN
+        LEAVE proc;
+    END IF;
+    CALL _insertOrFindFunctionCallEntity (
+        requestingUserID, hasNotPassedListFunDefStr, 0, 1,
+        hasNotPassedListFunID, exitCode
+    );
+    IF (exitCode = 5) THEN
+        LEAVE proc;
+    END IF;
+
+    -- Then insert or update the subj on one of the list, and also make sure
+    -- that it is removed from the other list (on which it no longer belongs).
+    IF (weightVal >= 10) THEN
+        -- First delete the subject from the has-not-passed list if there.
+        CALL _insertUpdateOrDeletePublicListElement (
+            hasNotPassedListFunID,
+            userID,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            0,
+            exitCode
+        );
+        -- And then insert or update the subject into the has-passed list.
+        CALL _insertUpdateOrDeletePublicListElement (
+            hasPassedListFunID,
+            userID,
+            scoreVal,
+            weightVal,
+            hasPassedOnIndexData,
+            hasPassedOffIndexData,
+            20,
+            exitCode
+        );
+    ELSE
+        -- First delete the subject from the has-passed list if there.
+        CALL _insertUpdateOrDeletePublicListElement (
+            hasPassedListFunID,
+            userID,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            0,
+            exitCode
+        );
+        -- And then insert or update the subject into the has-not-passed list,
+        -- and make sure to store weightVal in float_1, and scoreVal in float_2.
+        CALL _insertUpdateOrDeletePublicListElement (
+            hasNotPassedListFunID,
+            userID,
+            weightVal,
+            scoreVal,
+            hasNotPassedOnIndexData,
+            hasNotPassedOffIndexData,
+            20,
+            exitCode
+        );
+    END IF;
+END proc //
+DELIMITER ;
 
 
 
@@ -993,12 +1096,26 @@ BEGIN
             SET qualID = CAST(
                 REGEXP_SUBSTR(paths, "[^,]+", 1, 5) AS UNSIGNED
             );
+            SET subjID = CAST(
+                REGEXP_SUBSTR(paths, "[^,]+", 1, 6) AS UNSIGNED
+            );
 
+            -- Compute the median score.
             CALL _getScoreMedian (
                 minScoreContrListID, maxScoreContrListID, fullWeightSum,
                 scoreMedianVal
             );
-            -- ...
+            -- Then insert it in either the has-passed or the has_not-passed
+            -- median score list, depending on the fullWeightSum. (The subject
+            -- will also be removed from the other list in this process if
+            -- it was there before.)
+            CALL _insertIntoThresholdSeparatedTwoPartList (
+                0, 14, CONCAT('@[', userGroupID, '],@[', qualID, ']'), subjID,
+                scoreMedianVal,
+                fullWeightSum,
+                NULL, NULL, NULL, NULL,
+                @unused
+            );
         END
         ELSE BEGIN
             SIGNAL SQLSTATE "45000" SET MESSAGE_TEXT = "Unrecognized reqType";
