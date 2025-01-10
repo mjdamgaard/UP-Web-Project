@@ -1007,15 +1007,10 @@ CREATE PROCEDURE _workerThreadBody ()
 BEGIN
     DECLARE reqType VARCHAR(100);
     DECLARE reqData VARCHAR(2900);
+    DECLARE floatVar FLOAT;
 
     loop_1: LOOP
-        -- Make a locking read of the next paid-for queued request, delete it
-        -- and commit to allow for other threads to continue, then carry out
-        -- the request. Repeat this process until there are no paid-for
-        -- requests left, then exit proc and wait another down period to start
-        -- again.
-        START TRANSACTION;
-
+        -- First select the next paid-for request in the queue.
         SELECT req_type, req_data INTO reqType, reqData
         FROM ScheduledRequests USE INDEX (sec_idx) -- No need to force here.
         WHERE (
@@ -1025,14 +1020,41 @@ BEGIN
         ORDER BY
             fraction_of_computation_cost_paid ASC,
             fraction_of_upload_data_cost_paid ASC
-        LIMIT 1
-        FOR UPDATE;
+        LIMIT 1;
 
+        -- Leave and wait another period if there are no more queued paid-for
+        -- requests. 
         IF (reqType IS NULL) THEN
             COMMIT;
             LEAVE loop_1;
         END IF;
 
+        -- Then make a locking read of this next paid-for queued request,
+        -- delete it and commit to allow for other threads to continue, then
+        -- carry out the request. If another process has removed the request
+        -- before we get the lock, simply start over. Repeat this whole process
+        -- until there are no paid-for requests left, then exit and wait
+        -- another period to start again.
+        START TRANSACTION;
+
+        -- (The reason for making this redundant select is to avoid gap locks,
+        -- as these are apparently *deliberately* designed to dead-lock your
+        -- sessions.)
+        SELECT fraction_of_computation_cost_paid INTO floatVar
+        FROM ScheduledRequests USE INDEX (PRIMARY) -- No need to force here.
+        WHERE (
+            req_type = reqType,
+            req_data = reqData
+        )
+        FOR UPDATE;
+
+        -- Restart if another thread beat this one to it.
+        IF (floatVar IS NULL) THEN
+            COMMIT;
+            ITERATE loop_1;
+        END IF;
+
+        -- Else dequeue the request and commit.
         DELETE FROM ScheduledRequests
         WHERE (
             req_type = reqType,
@@ -1041,7 +1063,7 @@ BEGIN
 
         COMMIT;
 
-        -- Carry out the dequeued request.
+        -- Then carry out the dequeued request, and reiterate.
         CALL _executeRequest (
             reqType, reqData
         );
