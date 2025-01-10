@@ -980,6 +980,84 @@ DELIMITER ;
 
 
 
+DELIMITER //
+CREATE EVENT update_worker_thread_1
+ON SCHEDULE EVERY 5 SECOND
+DO
+BEGIN
+    CALL _workerThreadBody ();
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE EVENT update_worker_thread_2
+ON SCHEDULE EVERY 30 SECOND
+DO
+BEGIN
+    CALL _workerThreadBody ();
+END //
+DELIMITER ;
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE _workerThreadBody ()
+BEGIN
+    DECLARE reqType VARCHAR(100);
+    DECLARE reqData VARCHAR(2900);
+
+    loop_1: LOOP
+        -- Make a locking read of the next paid-for queued request, delete it
+        -- and commit to allow for other threads to continue, then carry out
+        -- the request. Repeat this process until there are no paid-for
+        -- requests left, then exit proc and wait another down period to start
+        -- again.
+        START TRANSACTION;
+
+        SELECT req_type, req_data INTO reqType, reqData
+        FROM ScheduledRequests USE INDEX (sec_idx) -- No need to force here.
+        WHERE (
+            fraction_of_computation_cost_paid >= 1 AND
+            fraction_of_upload_data_cost_paid >= 1
+        )
+        ORDER BY
+            fraction_of_computation_cost_paid ASC,
+            fraction_of_upload_data_cost_paid ASC
+        LIMIT 1
+        FOR UPDATE;
+
+        IF (reqType IS NULL) THEN
+            COMMIT;
+            LEAVE loop_1;
+        END IF;
+
+        DELETE FROM ScheduledRequests
+        WHERE (
+            req_type = reqType,
+            req_data = reqData
+        );
+
+        COMMIT;
+
+        -- Carry out the dequeued request.
+        CALL _executeRequest (
+            reqType, reqData
+        );
+
+        ITERATE loop_1;
+    END LOOP loop_1;
+END //
+DELIMITER ;
+
+
+
+
+
+
+
+
 
 DELIMITER //
 CREATE PROCEDURE _queueOrUpdateRequest (

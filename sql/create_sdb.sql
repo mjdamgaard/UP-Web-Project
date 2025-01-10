@@ -152,7 +152,7 @@ CREATE TABLE ScheduledRequests (
         req_data,
     ),
 
-    UNIQUE INDEX (
+    UNIQUE INDEX sec_idx (
         fraction_of_computation_cost_paid,
         fraction_of_upload_data_cost_paid,
         computation_cost_required,
