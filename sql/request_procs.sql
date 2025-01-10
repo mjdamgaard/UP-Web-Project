@@ -985,7 +985,7 @@ CREATE EVENT update_worker_thread_1
 ON SCHEDULE EVERY 5 SECOND
 DO
 BEGIN
-    CALL _workerThreadBody ();
+    CALL _updateWorkerThreadBody ();
 END //
 DELIMITER ;
 
@@ -994,7 +994,7 @@ CREATE EVENT update_worker_thread_2
 ON SCHEDULE EVERY 30 SECOND
 DO
 BEGIN
-    CALL _workerThreadBody ();
+    CALL _updateWorkerThreadBody ();
 END //
 DELIMITER ;
 
@@ -1003,7 +1003,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE _workerThreadBody ()
+CREATE PROCEDURE _updateWorkerThreadBody ()
 BEGIN
     DECLARE reqType VARCHAR(100);
     DECLARE reqData VARCHAR(2900);

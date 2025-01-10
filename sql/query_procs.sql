@@ -27,50 +27,114 @@ DROP PROCEDURE selectUserInfo;
 
 
 DELIMITER //
-CREATE PROCEDURE selectAggregatedFloatingPointScores (
+CREATE PROCEDURE selectEntityList (
     IN listID BIGINT UNSIGNED,
     IN hi FLOAT,
     IN lo FLOAT,
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED,
-    IN isAscOrder BOOL
+    IN isAscOrder BOOL,
+    IN includeFloat2 BOOL,
+    IN includeOnIndexData BOOL,
 )
 BEGIN
-    SELECT
-        score_val AS scoreVal,
-        score_weight_exp AS scoreWeightExp,
-        score_sigma_exp AS scoreSigmaExp,
-        subj_id AS entID
-    FROM AggregatedFloatingPointScores
-    WHERE (
-        list_id = listID AND
-        score_val BETWEEN lo AND hi
-    )
-    ORDER BY
-        CASE WHEN isAscOrder THEN score_val END ASC,
-        CASE WHEN NOT isAscOrder THEN score_val END DESC,
-        CASE WHEN isAscOrder THEN score_weight_exp END ASC,
-        CASE WHEN NOT isAscOrder THEN score_weight_exp END DESC,
-        CASE WHEN isAscOrder THEN score_sigma_exp END ASC,
-        CASE WHEN NOT isAscOrder THEN score_sigma_exp END DESC,
-        CASE WHEN isAscOrder THEN subj_id END ASC,
-        CASE WHEN NOT isAscOrder THEN subj_id END DESC
-    LIMIT numOffset, maxNum;
+    IF (NOT includeFloat2 AND NOT includeOnIndexData) THEN
+        SELECT
+            float_1_val AS float1Val,
+            subj_id AS subjID
+        FROM PublicEntityLists FORCE INDEX (sec_idx)
+        WHERE (
+            list_id = listID AND
+            float_1_val BETWEEN lo AND hi
+        )
+        ORDER BY
+            CASE WHEN isAscOrder THEN float_1_val END ASC,
+            CASE WHEN NOT isAscOrder THEN float_1_val END DESC,
+            CASE WHEN isAscOrder THEN float_2_val END ASC,
+            CASE WHEN NOT isAscOrder THEN float_2_val END DESC,
+            CASE WHEN isAscOrder THEN on_index_data END ASC,
+            CASE WHEN NOT isAscOrder THEN on_index_data END DESC,
+            CASE WHEN isAscOrder THEN subj_id END ASC,
+            CASE WHEN NOT isAscOrder THEN subj_id END DESC
+        LIMIT numOffset, maxNum;
+    ELSE IF (includeFloat2 AND NOT includeOnIndexData) THEN
+        SELECT
+            float_1_val AS float1Val,
+            float_2_val AS float2Val,
+            subj_id AS subjID
+        FROM PublicEntityLists FORCE INDEX (sec_idx)
+        WHERE (
+            list_id = listID AND
+            float_1_val BETWEEN lo AND hi
+        )
+        ORDER BY
+            CASE WHEN isAscOrder THEN float_1_val END ASC,
+            CASE WHEN NOT isAscOrder THEN float_1_val END DESC,
+            CASE WHEN isAscOrder THEN float_2_val END ASC,
+            CASE WHEN NOT isAscOrder THEN float_2_val END DESC,
+            CASE WHEN isAscOrder THEN on_index_data END ASC,
+            CASE WHEN NOT isAscOrder THEN on_index_data END DESC,
+            CASE WHEN isAscOrder THEN subj_id END ASC,
+            CASE WHEN NOT isAscOrder THEN subj_id END DESC
+        LIMIT numOffset, maxNum;
+    ELSE IF (NOT includeFloat2 AND includeOnIndexData) THEN
+        SELECT
+            float_1_val AS float1Val,
+            on_index_data AS onIndexData,
+            subj_id AS subjID
+        FROM PublicEntityLists FORCE INDEX (sec_idx)
+        WHERE (
+            list_id = listID AND
+            float_1_val BETWEEN lo AND hi
+        )
+        ORDER BY
+            CASE WHEN isAscOrder THEN float_1_val END ASC,
+            CASE WHEN NOT isAscOrder THEN float_1_val END DESC,
+            CASE WHEN isAscOrder THEN float_2_val END ASC,
+            CASE WHEN NOT isAscOrder THEN float_2_val END DESC,
+            CASE WHEN isAscOrder THEN on_index_data END ASC,
+            CASE WHEN NOT isAscOrder THEN on_index_data END DESC,
+            CASE WHEN isAscOrder THEN subj_id END ASC,
+            CASE WHEN NOT isAscOrder THEN subj_id END DESC
+        LIMIT numOffset, maxNum;
+    ELSE
+        SELECT
+            float_1_val AS float1Val,
+            float_2_val AS float2Val,
+            on_index_data AS onIndexData,
+            subj_id AS subjID
+        FROM PublicEntityLists FORCE INDEX (sec_idx)
+        WHERE (
+            list_id = listID AND
+            float_1_val BETWEEN lo AND hi
+        )
+        ORDER BY
+            CASE WHEN isAscOrder THEN float_1_val END ASC,
+            CASE WHEN NOT isAscOrder THEN float_1_val END DESC,
+            CASE WHEN isAscOrder THEN float_2_val END ASC,
+            CASE WHEN NOT isAscOrder THEN float_2_val END DESC,
+            CASE WHEN isAscOrder THEN on_index_data END ASC,
+            CASE WHEN NOT isAscOrder THEN on_index_data END DESC,
+            CASE WHEN isAscOrder THEN subj_id END ASC,
+            CASE WHEN NOT isAscOrder THEN subj_id END DESC
+        LIMIT numOffset, maxNum;
+    END IF
 END //
 DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectAggregatedFloatingPointScore (
+CREATE PROCEDURE selectPublicScore (
     IN listID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED
 )
 BEGIN
     SELECT
-        score_val AS scoreVal,
-        score_weight_exp AS scoreWeightExp,
-        score_sigma_exp AS scoreSigmaExp
-    FROM AggregatedFloatingPointScores
+        float_1_val AS float1Val,
+        float_2_val AS float2Val,
+        on_index_data AS onIndexData,
+        off_index_data AS offIndexData
+    FROM PublicEntityLists FORCE INDEX (PRIMARY)
     WHERE (
         list_id = listID AND
         subj_id = subjID
@@ -81,64 +145,10 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE selectPublicUserScores (
-    IN qualID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED,
-    IN maxNum INT UNSIGNED,
-    IN numOffset INT UNSIGNED
-)
-BEGIN
-    SELECT
-        score_val AS scoreVal,
-        subj_id AS entID
-    FROM PublicUserScores
-    WHERE (
-        user_id = userID AND
-        qual_id = qualID
-    )
-    ORDER BY subj_id ASC
-    LIMIT numOffset, maxNum;
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE selectGroupedPublicUserScores (
-    IN userID BIGINT UNSIGNED,
-    IN qualID BIGINT UNSIGNED,
-    IN hi FLOAT,
-    IN lo FLOAT,
-    IN maxNum INT UNSIGNED,
-    IN numOffset INT UNSIGNED,
-    IN isAscOrder BOOL
-)
-BEGIN
-    SELECT
-        score_val AS scoreVal,
-        score_sigma_exp AS scoreSigmaExp,
-        user_id AS userID
-    FROM PublicUserScores
-    WHERE (
-        qual_id = qualID AND
-        subj_id = subjID AND
-        score_val BETWEEN lo AND hi
-    )
-    ORDER BY
-        CASE WHEN isAscOrder THEN score_val END ASC,
-        CASE WHEN NOT isAscOrder THEN score_val END DESC,
-        CASE WHEN isAscOrder THEN score_sigma_exp END ASC,
-        CASE WHEN NOT isAscOrder THEN score_sigma_exp END DESC,
-        CASE WHEN isAscOrder THEN user_id END ASC,
-        CASE WHEN NOT isAscOrder THEN user_id END DESC
-    LIMIT numOffset, maxNum;
-END //
-DELIMITER ;
 
 
 
-
-
+-- TODO: Correct these private score query procedures below at some point.
 
 DELIMITER //
 CREATE PROCEDURE selectPrivateEntityList (
@@ -190,69 +200,7 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE selectScoreHistogram (
-    IN userID BIGINT UNSIGNED, -- TODO: Record download data.
-    IN listID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT HEX(hist_data) AS histData
-    FROM ScoreHistograms
-    WHERE (
-        list_id = listID AND
-        subj_id = subjID
-    );
-END //
-DELIMITER ;
 
-
-
-
-DELIMITER //
-CREATE PROCEDURE selectFloatingPointAggregateList (
-    IN userID BIGINT UNSIGNED, -- TODO: Record download data.
-    IN listID BIGINT UNSIGNED,
-    IN hi FLOAT,
-    IN lo FLOAT,
-    IN maxNum INT UNSIGNED,
-    IN numOffset INT UNSIGNED,
-    IN isAscOrder BOOL
-)
-BEGIN
-    SELECT
-        score_val AS scoreVal,
-        subj_id AS entID
-    FROM FloatingPointScoreAggregates
-    WHERE (
-        list_id = listID AND
-        score_val BETWEEN lo AND hi
-    )
-    ORDER BY
-        CASE WHEN isAscOrder THEN scoreVal END ASC,
-        CASE WHEN NOT isAscOrder THEN scoreVal END DESC,
-        CASE WHEN isAscOrder THEN entID END ASC,
-        CASE WHEN NOT isAscOrder THEN entID END DESC
-    LIMIT numOffset, maxNum;
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE selectFloatingPointScoreAggregate (
-    IN userID BIGINT UNSIGNED, -- TODO: Record download data.
-    IN listID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT score_val AS scoreVal
-    FROM FloatingPointScoreAggregates
-    WHERE (
-        list_id = listID AND
-        subj_id = subjID
-    );
-END //
-DELIMITER ;
 
 
 
@@ -498,31 +446,53 @@ CREATE PROCEDURE selectEntityAsUser (
     IN startPos INT UNSIGNED
 )
 BEGIN
+    DECLARE entType CHAR;
+    DECLARE defStr LONGTEXT;
+    DECLARE len, creatorID, userWhitelistID BIGINT UNSIGNED;
+    DECLARE isEditable TINYINT;
+    DECLARE userWhiteListScoreVal FLOAT;
+
     SELECT
-        ent_type AS entType,
+        ent_type,
         (
             CASE WHEN maxLen = 0 THEN
                 SUBSTR(def_str, startPos + 1)
             ELSE
                 SUBSTR(def_str, startPos + 1, maxLen)
             END
-        ) AS defStr,
-        LENGTH(def_str) AS len,
-        creator_id AS creatorID,
-        is_editable AS isEditable,
-        user_whitelist_id AS userWhitelistID
-    FROM Entities
+        ),
+        LENGTH(def_str),
+        creator_id,
+        is_editable,
+        user_whitelist_id
+    INTO
+        entType,
+        defStr,
+        len,
+        creatorID,
+        isEditable,
+        userWhiteListID
+    FROM Entities FORCE INDEX (PRIMARY)
+    WHERE id = entID;
+
+    SELECT float_1_val INTO userWhiteListScoreVal
+    FROM PublicEntityLists
     WHERE (
-        id = entID AND
-        0 < (
-            SELECT score_val
-            FROM AggregatedFloatingPointScores
-            WHERE (
-                list_id = userWhitelistID AND
-                subj_id = userID
-            )
-        )
+        list_id = userWhitelistID AND
+        subj_id = userID
     );
+
+    IF (userWhiteListScoreVal > 0) THEN
+        SELECT
+            entType,
+            defStr,
+            len,
+            creatorID,
+            isEditable,
+            userWhiteListID;
+    ELSE
+        SELECT NULL AS entType;
+    END IF;
 END //
 DELIMITER ;
 
@@ -537,17 +507,17 @@ CREATE PROCEDURE selectEntityFromSecKey (
     IN startPos INT UNSIGNED
 )
 proc: BEGIN
-    DECLARE userWHitelistScoreVal FLOAT;
+    DECLARE userWhitelistScoreVal FLOAT;
 
     -- Exit if the user is not currently on the user whitelist. Do this first
     -- to avoid timing attacks.
-    SELECT score_val INTO userWHitelistScoreVal
-    FROM AggregatedFloatingPointScores
+    SELECT float_1_val INTO userWhitelistScoreVal
+    FROM PublicEntityLists FORCE INDEX (PRIMARY)
     WHERE (
         list_id = userWhitelistID AND
         subj_id = userID
     );
-    IF (userWHitelistScoreVal IS NULL OR userWHitelistScoreVal <= 0) THEN
+    IF (userWhitelistScoreVal IS NULL OR userWhitelistScoreVal <= 0) THEN
         SELECT 
             NULL AS entID,
             NULL AS defStr,
@@ -569,10 +539,10 @@ proc: BEGIN
         LENGTH(def_str) AS len,
         creator_id AS creatorID,
         is_editable AS isEditable
-    FROM Entities
+    FROM Entities FORCE INDEX (PRIMARY)
     WHERE id = (
         SELECT ent_id
-        FROM EntitySecKeys
+        FROM EntitySecKeys FORCE INDEX (PRIMARY)
         WHERE (
             ent_type = entType AND
             user_whitelist_id = userWhitelistID AND
@@ -591,23 +561,23 @@ CREATE PROCEDURE selectEntityIDFromSecKey (
     IN defKey VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
 proc: BEGIN
-    DECLARE userWHitelistScoreVal FLOAT;
+    DECLARE userWhitelistScoreVal FLOAT;
 
     -- Exit if the user is not currently on the user whitelist. Do this first
     -- to avoid timing attacks.
-    SELECT score_val INTO userWHitelistScoreVal
-    FROM AggregatedFloatingPointScores
+    SELECT float_1_val INTO userWhitelistScoreVal
+    FROM PublicEntityLists FORCE INDEX (PRIMARY)
     WHERE (
         list_id = userWhitelistID AND
         subj_id = userID
     );
-    IF (userWHitelistScoreVal IS NULL OR userWHitelistScoreVal <= 0) THEN
+    IF (userWhitelistScoreVal IS NULL OR userWhitelistScoreVal <= 0) THEN
         SELECT NULL AS entID;
         LEAVE proc;
     END IF;
 
     SELECT ent_id AS entID
-    FROM EntitySecKeys
+    FROM EntitySecKeys FORCE INDEX (PRIMARY)
     WHERE (
         ent_type = entType AND
         user_whitelist_id = userWhitelistID AND
