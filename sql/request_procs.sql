@@ -582,7 +582,7 @@ DELIMITER ;
 -- median,' as we might call it.
 
 DELIMITER //
-CREATE PROCEDURE _getScoreMedian ( -- TODO: Remember to include and use the filter list.
+CREATE PROCEDURE _getScoreMedian (
     IN minScoreContrListID BIGINT UNSIGNED,
     IN maxScoreContrListID BIGINT UNSIGNED,
     IN fullWeightSum DOUBLE,
@@ -677,7 +677,8 @@ CREATE PROCEDURE requestUpdateOfMedianScore (
     IN uploadDataCostPayment FLOAT,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN userGroupID BIGINT UNSIGNED
+    IN userGroupID BIGINT UNSIGNED,
+    IN filterListID BIGINT UNSIGNED -- 0 means no filter list.
 )
 proc: BEGIN
     DECLARE exitCode, isExceeded TINYINT;
@@ -719,7 +720,7 @@ proc: BEGIN
 
     SET reqData = CONCAT(
         minScoreContrListID, ",", maxScoreContrListID, ",", fullWeightSum, ",",
-        userGroupID, ",", qualID, ",", subjID
+        userGroupID, ",", qualID, ",", subjID, ",", filterListID
     );
 
     SELECT pos_score_list_len INTO userGroupListLen
@@ -1078,9 +1079,10 @@ BEGIN
                 @unused
             );
         END
-        WHEN "SCORE_MEDIAN" THEN BEGIN
-            DECLARE scoreMedianVal, fullWeightSum DOUBLE;
-            DECLARE minScoreContrListID, maxScoreContrListID BIGINT UNSIGNED;
+        WHEN "SCORE_MEDIAN" THEN score_median_case: BEGIN
+            DECLARE scoreMedianVal, fullWeightSum, filterListScore DOUBLE;
+            DECLARE minScoreContrListID, maxScoreContrListID,
+                userGroupID, qualID, subjID, filterListID BIGINT UNSIGNED;
             SET minScoreContrListID = CAST(
                 REGEXP_SUBSTR(paths, "[^,]+", 1, 1) AS UNSIGNED
             );
@@ -1099,24 +1101,50 @@ BEGIN
             SET subjID = CAST(
                 REGEXP_SUBSTR(paths, "[^,]+", 1, 6) AS UNSIGNED
             );
+            SET filterListID = CAST(
+                REGEXP_SUBSTR(paths, "[^,]+", 1, 7) AS UNSIGNED
+            );
 
-            -- Compute the median score.
+            -- First check that subjID is on the filter list, and simply abort
+            -- and do nothing if not.
+            IF (filterListID != 0) THEN
+                SELECT float_1_val INTO filterListScore
+                FROM PublicEntityLists FORCE INDEX (PRIMARY)
+                WHERE (
+                    list_id = filterListID AND
+                    subj_id = subjID
+                );
+
+                IF (filterListScore <= 0) THEN
+                    LEAVE score_median_case;
+                END IF;
+            END IF;
+
+            -- Else continue by computing the median score.
             CALL _getScoreMedian (
                 minScoreContrListID, maxScoreContrListID, fullWeightSum,
                 scoreMedianVal
             );
+
             -- Then insert it in either the has-passed or the has_not-passed
             -- median score list, depending on the fullWeightSum. (The subject
             -- will also be removed from the other list in this process if
             -- it was there before.)
             CALL _insertIntoThresholdSeparatedTwoPartList (
-                0, 14, CONCAT('@[', userGroupID, '],@[', qualID, ']'), subjID,
+                0, 14, CONCAT(
+                    '@[', userGroupID, '],@[', qualID, '],',
+                    CASE WHEN (filterListID != 0)
+                        THEN CONCAT('@[', filterListID, ']')
+                        ELSE 'undef'
+                    END CASE
+                ),
+                subjID,
                 scoreMedianVal,
                 fullWeightSum,
                 NULL, NULL, NULL, NULL,
                 @unused
             );
-        END
+        END score_median_case
         ELSE BEGIN
             SIGNAL SQLSTATE "45000" SET MESSAGE_TEXT = "Unrecognized reqType";
         END
