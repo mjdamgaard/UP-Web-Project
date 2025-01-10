@@ -1,15 +1,10 @@
 
 SELECT "Query procedures";
 
-DROP PROCEDURE selectAggregatedFloatingPointScores;
-DROP PROCEDURE selectAggregatedFloatingPointScore;
-DROP PROCEDURE selectPublicUserScores;
-DROP PROCEDURE selectGroupedPublicUserScores;
+DROP PROCEDURE selectEntityList;
+DROP PROCEDURE selectPublicScore;
 DROP PROCEDURE selectPrivateEntityList;
 DROP PROCEDURE selectPrivateScore;
-DROP PROCEDURE selectScoreHistogram;
-DROP PROCEDURE selectFloatingPointAggregateList;
-DROP PROCEDURE selectFloatingPointScoreAggregate;
 
 -- TODO: Make proc to query for users who has rated a stmt / scale.
 
@@ -35,7 +30,7 @@ CREATE PROCEDURE selectEntityList (
     IN numOffset INT UNSIGNED,
     IN isAscOrder BOOL,
     IN includeFloat2 BOOL,
-    IN includeOnIndexData BOOL,
+    IN includeOnIndexData BOOL
 )
 BEGIN
     IF (NOT includeFloat2 AND NOT includeOnIndexData) THEN
@@ -57,11 +52,11 @@ BEGIN
             CASE WHEN isAscOrder THEN subj_id END ASC,
             CASE WHEN NOT isAscOrder THEN subj_id END DESC
         LIMIT numOffset, maxNum;
-    ELSE IF (includeFloat2 AND NOT includeOnIndexData) THEN
+    ELSEIF (includeFloat2 AND NOT includeOnIndexData) THEN
         SELECT
             float_1_val AS float1Val,
-            float_2_val AS float2Val,
-            subj_id AS subjID
+            subj_id AS subjID,
+            float_2_val AS float2Val
         FROM PublicEntityLists FORCE INDEX (sec_idx)
         WHERE (
             list_id = listID AND
@@ -77,7 +72,7 @@ BEGIN
             CASE WHEN isAscOrder THEN subj_id END ASC,
             CASE WHEN NOT isAscOrder THEN subj_id END DESC
         LIMIT numOffset, maxNum;
-    ELSE IF (NOT includeFloat2 AND includeOnIndexData) THEN
+    ELSEIF (NOT includeFloat2 AND includeOnIndexData) THEN
         SELECT
             float_1_val AS float1Val,
             on_index_data AS onIndexData,
@@ -118,7 +113,7 @@ BEGIN
             CASE WHEN isAscOrder THEN subj_id END ASC,
             CASE WHEN NOT isAscOrder THEN subj_id END DESC
         LIMIT numOffset, maxNum;
-    END IF
+    END IF;
 END //
 DELIMITER ;
 

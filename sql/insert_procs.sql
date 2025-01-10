@@ -1,12 +1,17 @@
 
 SELECT "Insert procedures";
 
+DROP PROCEDURE _insertUpdateOrDeletePublicListElement;
+DROP PROCEDURE _getIsMemberAndUserWeight;
+
+
 DROP PROCEDURE insertOrUpdatePublicUserScore;
 DROP PROCEDURE deletePublicUserScore;
+
 DROP PROCEDURE insertOrUpdatePrivateUserScore;
 DROP PROCEDURE deletePrivateUserScore;
 DROP PROCEDURE deleteAllPrivateUserScores;
-DROP PROCEDURE deleteSeveralPrivateUserScores;
+
 
 DROP PROCEDURE _insertEntityWithoutSecKey;
 DROP PROCEDURE _insertOrFindEntityWithSecKey;
@@ -14,6 +19,7 @@ DROP PROCEDURE _insertOrFindEntityWithSecKey;
 DROP PROCEDURE insertAttributeDefinedEntity;
 DROP PROCEDURE insertFunctionEntity;
 DROP PROCEDURE insertOrFindFunctionCallEntity;
+DROP PROCEDURE _insertOrFindFunctionCallEntity;
 DROP PROCEDURE insertUTF8Entity;
 DROP PROCEDURE insertHTMLEntity;
 DROP PROCEDURE insertJSONEntity;
@@ -29,8 +35,15 @@ DROP PROCEDURE _substitutePlaceholdersInEntity;
 DROP PROCEDURE substitutePlaceholdersInAttrEntity;
 DROP PROCEDURE substitutePlaceholdersInFunEntity;
 
+DROP PROCEDURE _nullUserRefsInEntity;
+
+DROP PROCEDURE nullUserRefsInFunCallEntity;
+
 DROP PROCEDURE finalizeEntity;
 DROP PROCEDURE anonymizeEntity;
+
+
+DROP PROCEDURE _increaseWeeklyUserCounters;
 
 
 
@@ -56,7 +69,7 @@ BEGIN
 
     SET float2Val = CASE WHEN (float2Val IS NULL)
         THEN 0 ELSE float2Val
-    END CASE;
+    END;
 
     -- We select (for update) the previous score on the list, and branch
     -- accordingly in order to update the ListMetadata table correctly.
@@ -93,7 +106,7 @@ BEGIN
         ) VALUES (
             listID,
             1, float1Val, float2Val,
-            CASE WHEN (float1Val > 0) THEN 1 ELSE 0 END CASE
+            CASE WHEN (float1Val > 0) THEN 1 ELSE 0 END,
             addedUploadDataCost
         )
         ON DUPLICATE KEY UPDATE
@@ -101,7 +114,7 @@ BEGIN
             float_1_sum = float_1_sum + float1Val,
             float_2_sum = float_2_sum + float2Val,
             pos_list_len = pos_list_len +
-                CASE WHEN (float1Val > 0) THEN 1 ELSE 0 END CASE,
+                CASE WHEN (float1Val > 0) THEN 1 ELSE 0 END,
             paid_upload_data_cost = paid_upload_data_cost +
                 addedUploadDataCost;
 
@@ -125,11 +138,11 @@ BEGIN
             pos_list_len = pos_list_len +
                 CASE
                     WHEN (float1Val > 0 AND prevFloatVal1 <= 0) THEN 1
-                    ELSEIF (float1Val <= 0 AND prevFloatVal1 > 0) THEN -1
+                    WHEN (float1Val <= 0 AND prevFloatVal1 > 0) THEN -1
                     ELSE 0
-                END CASE,
+                END,
             paid_upload_data_cost = paid_upload_data_cost +
-                addedUploadDataCost;
+                addedUploadDataCost
         WHERE list_id = listID;
 
         COMMIT;
@@ -148,9 +161,9 @@ BEGIN
             float_1_sum = float_1_sum - prevFloatVal1,
             float_2_sum = float_2_sum - prevFloatVal2,
             pos_list_len = pos_list_len +
-                CASE WHEN (prevFloatVal1 > 0) THEN -1 ELSE 0 END CASE,
+                CASE WHEN (prevFloatVal1 > 0) THEN -1 ELSE 0 END,
             paid_upload_data_cost = paid_upload_data_cost +
-                addedUploadDataCost;
+                addedUploadDataCost
         WHERE list_id = listID;
 
         COMMIT;
@@ -269,7 +282,7 @@ proc: BEGIN
     FROM PublicEntityLists FORCE INDEX (PRIMARY)
     WHERE (
         list_id = userGroupID AND
-        subj_id = userID;
+        subj_id = userID
     );
 
     SET isMember = (userWeightVal > 0);
@@ -347,7 +360,7 @@ proc: BEGIN
     -- Finally insert the user score, updating the PublicListMetadata in the
     -- process.
     CALL _insertUpdateOrDeletePublicListElement (
-        userScoreListID
+        userScoreListID,
         subjID,
         scoreMid,
         scoreRad,
@@ -375,6 +388,7 @@ BEGIN
         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT (
             CONCAT('@[11],@[', userID, '],@[', qualID, ']')
         );
+    DECLARE exitCode TINYINT;
 
     SELECT ent_id INTO userScoreListID
     FROM EntitySecKeys FORCE INDEX (PRIMARY)
@@ -394,14 +408,21 @@ BEGIN
         NULL,
         exitCode
     );
-    SET exitCode CASE WHEN (exitCode = 3)
+    SET exitCode = CASE WHEN (exitCode = 3)
         THEN 0 -- deleted.
         ELSE 1 -- no change.
-    END CASE;
+    END;
 
     SELECT subjID AS outID, exitCode; -- score was deleted if there.
 END //
 DELIMITER ;
+
+
+
+
+
+
+
 
 
 
@@ -464,7 +485,7 @@ CREATE PROCEDURE deletePrivateUserScore (
     IN subjID BIGINT UNSIGNED,
     IN scoreVal BIGINT
 )
-BEGIN
+proc: BEGIN
     CALL _increaseWeeklyUserCounters (
         userID, 0, 0, 10, isExceeded
     );
@@ -488,7 +509,7 @@ BEGIN
     -- whitelist. (Implement as a procedure.)
 
     SELECT subjID AS outID, 0 AS exitCode; -- delete if there.
-END //
+END proc //
 DELIMITER ;
 
 
@@ -499,7 +520,7 @@ CREATE PROCEDURE deleteAllPrivateUserScores (
     IN userWhitelistID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED
 )
-BEGIN
+proc: BEGIN
     DECLARE isExceeded TINYINT;
 
     -- Some arbitrary (pessimistic or optimistic) guess at the computation time.
@@ -520,7 +541,7 @@ BEGIN
     );
 
     SELECT subjID AS outID, 0 AS exitCode; -- deleted if there.
-END //
+END proc //
 DELIMITER ;
 
 
@@ -1059,7 +1080,7 @@ CREATE PROCEDURE _nullUserRefsInEntity (
     IN entType CHAR,
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
-    OUT exitCode
+    OUT exitCode TINYINT
 )
 proc: BEGIN
     DECLARE prevDefStr, newDefStr LONGTEXT CHARACTER SET utf8mb4

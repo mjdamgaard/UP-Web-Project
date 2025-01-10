@@ -30,15 +30,9 @@ if (empty($_POST)) {
     $_POST = json_decode(file_get_contents('php://input'), true);
 }
 
-// TODO: Consider implementing some limits on the "n"s below (other than just
-// the maximal int).. (Well, I *think* we will need to do this...)
-
-// NOTE: When we want to implement queries for private information, which should
-// then require a valid session ID, let us create a seperate query handler
-// program for this (e.g. "private_query_handler.php").
 
 
-/* Handling of the qeury request */
+/* Handling of the query request */
 
 // Get request type.
 if (!isset($_POST["req"])) {
@@ -75,29 +69,34 @@ $sql = "";
 $paramNameArr = "";
 $typeArr = "";
 switch ($reqType) {
-    case "opList":
+    case "entList":
         header("Cache-Control: max-age=3"); // TODO: Change/adjust.
-        $sql = "CALL selectUserOpinionEntityList (?, ?, ?, ?, ?, ?, ?)";
+        $sql = "CALL selectEntityList (?, ?, ?, ?, ?, ?, ?)";
         $paramNameArr = array(
-            "u", "q",
+            "l",
             "hi", "lo",
             "n", "o",
-            "a"
+            "a",
+            "f", "d"
         );
         $typeArr = array(
             "id", "id",
             "float", "float",
             "uint", "uint",
-            "bool"
+            "bool",
+            "bool", "bool"
         );
-        // output: [[scoreVal, entID], ...].
+        // output: [[float1Val, subjID], ...]
+        //       | [[float1Val, subjID, float2Val], ...]
+        //       | [[float1Val, subjID, onIndexData], ...]
+        //       | [[float1Val, subjID, float2Val, onIndexData], ...].
         break;
-    case "opScore":
+    case "score":
         header("Cache-Control: max-age=3"); // TODO: Change/adjust.
-        $sql = "CALL selectScore (?, ?, ?)";
-        $paramNameArr = array("u", "q", "s");
-        $typeArr = array("id", "id", "id");
-        // output: [[scoreVal, scoreWidth]].
+        $sql = "CALL selectPublicScore (?, ?, ?)";
+        $paramNameArr = array("l", "s");
+        $typeArr = array("id", "id");
+        // output: [[float1Val, float2Val, onIndexData, offIndexData]].
         break;
     case "prvList":
         header("Cache-Control: max-age=3"); // TODO: Change/adjust.
@@ -120,37 +119,6 @@ switch ($reqType) {
         header("Cache-Control: max-age=3"); // TODO: Change/adjust.
         $sql = "CALL selectPrivateScore (?, ?, ?)";
         $paramNameArr = array("u", "q", "s");
-        $typeArr = array("id", "id", "id");
-        // output: [[scoreVal]].
-        break;
-    case "hist":
-        header("Cache-Control: max-age=3"); // TODO: Change/adjust.
-        $sql = "CALL selectScoreHistogram (?, ?, ?)";
-        $paramNameArr = array("u", "l", "s");
-        $typeArr = array("id", "id", "id");
-        // output: [[histDate]].
-        break;
-    case "aggrList":
-        header("Cache-Control: max-age=3"); // TODO: Change/adjust.
-        $sql = "CALL selectFloatingPointAggregateList (?, ?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array(
-            "u", "l",
-            "hi", "lo",
-            "n", "o",
-            "a"
-        );
-        $typeArr = array(
-            "id", "id",
-            "float", "float",
-            "uint", "uint",
-            "bool"
-        );
-        // output: [[scoreVal, entID], ...].
-        break;
-    case "aggrScore":
-        header("Cache-Control: max-age=3"); // TODO: Change/adjust.
-        $sql = "CALL selectFloatingPointScoreAggregate (?, ?, ?)";
-        $paramNameArr = array("u", "l", "s");
         $typeArr = array("id", "id", "id");
         // output: [[scoreVal]].
         break;

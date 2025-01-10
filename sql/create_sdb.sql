@@ -1,21 +1,17 @@
 
 /* Scores */
-DROP TABLE PublicUserScores;
-DROP TABLE PrivateUserScores;
-DROP TABLE PublicUserFloatAndWidthScores;
-DROP TABLE ScoreHistograms;
-DROP TABLE AggregatedFloatingPointScores;
+DROP TABLE PrivateEntityLists;
+DROP TABLE PublicEntityLists;
+DROP TABLE PublicListMetadata;
 
 /* Requests */
-DROP TABLE UpdateEntityListRequests;
-DROP TABLE ScheduledEntityListUpdates;
-DROP TABLE ScheduledSubListUpdates;
+DROP TABLE ScheduledRequests;
 
 /* Entities */
 DROP TABLE Entities;
+DROP TABLE EntitySecKeys;
 
 /* Indexes */
-DROP TABLE EntitySecKeys;
 -- DROP TABLE FulltextIndexedEntities;
 
 /* Private user data */
@@ -138,18 +134,18 @@ ROW_FORMAT = COMPRESSED;
 
 CREATE TABLE ScheduledRequests (
 
-    req_type VARCHAR(100) NOT NULL,
+    req_type VARBINARY(100) NOT NULL,
 
     req_data VARBINARY(2900) NOT NULL,
 
-    fraction_of_computation_cost_paid FLOAT;
-    fraction_of_upload_data_cost_paid FLOAT;
-    computation_cost_required FLOAT;
-    upload_data_cost_required FLOAT;
+    fraction_of_computation_cost_paid FLOAT NOT NULL,
+    fraction_of_upload_data_cost_paid FLOAT NOT NULL,
+    computation_cost_required FLOAT NOT NULL,
+    upload_data_cost_required FLOAT NOT NULL,
 
     PRIMARY KEY (
         req_type,
-        req_data,
+        req_data
     ),
 
     UNIQUE INDEX sec_idx (
