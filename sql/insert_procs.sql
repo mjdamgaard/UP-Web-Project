@@ -42,8 +42,8 @@ DELIMITER //
 CREATE PROCEDURE _insertUpdateOrDeletePublicListElement (
     IN listID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN floatVal1 FLOAT,
-    IN floatVal2 FLOAT,
+    IN float1Val FLOAT,
+    IN float2Val FLOAT,
     IN onIndexData VARBINARY(32),
     IN offIndexData VARBINARY(32),
     IN addedUploadDataCost FLOAT,
@@ -54,8 +54,8 @@ BEGIN
     DECLARE prevListLen BIGINT UNSIGNED;
     DECLARE isExceeded TINYINT;
 
-    SET floatVal2 = CASE WHEN (floatVal2 IS NULL)
-        THEN 0 ELSE floatVal2
+    SET float2Val = CASE WHEN (float2Val IS NULL)
+        THEN 0 ELSE float2Val
     END CASE;
 
     -- We select (for update) the previous score on the list, and branch
@@ -67,7 +67,7 @@ BEGIN
     WHERE list_id = listID
     FOR UPDATE;
 
-    SELECT float_val_1, float_val_2 INTO prevFloatVal1, prevFloatVal2
+    SELECT float_1_val, float_2_val INTO prevFloatVal1, prevFloatVal2
     FROM PublicEntityLists FORCE INDEX (PRIMARY)
     WHERE (
         list_id = listID AND
@@ -76,36 +76,42 @@ BEGIN
 
     -- Branch according to whether the score should be inserted, updated, or
     -- deleted, the latter being the case where the floatVal input is NULL. 
-    IF (floatVal1 IS NOT NULL AND prevFloatVal1 IS NULL) THEN
+    IF (float1Val IS NOT NULL AND prevFloatVal1 IS NULL) THEN
         INSERT INTO PublicEntityLists (
             list_id, subj_id,
-            float_val_1, float_val_2, on_index_data, off_index_data
+            float_1_val, float_2_val, on_index_data, off_index_data
         ) VALUES (
             listID, subjID,
-            floatVal1, floatVal2, onIndexData, offIndexData
+            float1Val, float2Val, onIndexData, offIndexData
         );
 
         INSERT INTO PublicListMetadata (
             list_id,
-            list_len, float_1_sum, float_1_sum, paid_upload_data_cost
+            list_len, float_1_sum, float_1_sum,
+            pos_list_len,
+            paid_upload_data_cost
         ) VALUES (
             listID,
-            1, floatVal1, floatVal2, addedUploadDataCost
+            1, float1Val, float2Val,
+            CASE WHEN (float1Val > 0) THEN 1 ELSE 0 END CASE
+            addedUploadDataCost
         )
         ON DUPLICATE KEY UPDATE
             list_len = list_len + 1,
-            float_1_sum = float_1_sum + floatVal1,
-            float_2_sum = float_2_sum + floatVal2,
+            float_1_sum = float_1_sum + float1Val,
+            float_2_sum = float_2_sum + float2Val,
+            pos_list_len = pos_list_len +
+                CASE WHEN (float1Val > 0) THEN 1 ELSE 0 END CASE,
             paid_upload_data_cost = paid_upload_data_cost +
                 addedUploadDataCost;
 
         COMMIT;
         SET exitCode = 0; -- insert.
 
-    ELSEIF (floatVal1 IS NOT NULL AND prevFloatVal1 IS NOT NULL) THEN
+    ELSEIF (float1Val IS NOT NULL AND prevFloatVal1 IS NOT NULL) THEN
         UPDATE PublicEntityLists SET
-            float_val_1 = floatVal1,
-            float_val_2 = floatVal2,
+            float_1_val = float1Val,
+            float_2_val = float2Val,
             on_index_data = onIndexData,
             off_index_data = offIndexData
         WHERE (
@@ -114,8 +120,14 @@ BEGIN
         );
         
         UPDATE PublicListMetadata SET
-            float_1_sum = float_1_sum + floatVal1 - prevFloatVal1,
-            float_2_sum = float_2_sum + floatVal2 - prevFloatVal2,
+            float_1_sum = float_1_sum + float1Val - prevFloatVal1,
+            float_2_sum = float_2_sum + float2Val - prevFloatVal2,
+            pos_list_len = pos_list_len +
+                CASE
+                    WHEN (float1Val > 0 AND prevFloatVal1 <= 0) THEN 1
+                    ELSEIF (float1Val <= 0 AND prevFloatVal1 > 0) THEN -1
+                    ELSE 0
+                END CASE,
             paid_upload_data_cost = paid_upload_data_cost +
                 addedUploadDataCost;
         WHERE list_id = listID;
@@ -123,7 +135,7 @@ BEGIN
         COMMIT;
         SET exitCode = 1; -- update.
 
-    ELSEIF (floatVal1 IS NULL AND prevFloatVal1 IS NOT NULL) THEN
+    ELSEIF (float1Val IS NULL AND prevFloatVal1 IS NOT NULL) THEN
         DELETE FROM PublicEntityLists
         WHERE (
             user_group_id = userGroupID AND
@@ -135,6 +147,8 @@ BEGIN
             list_len = list_len - 1,
             float_1_sum = float_1_sum - prevFloatVal1,
             float_2_sum = float_2_sum - prevFloatVal2,
+            pos_list_len = pos_list_len +
+                CASE WHEN (prevFloatVal1 > 0) THEN -1 ELSE 0 END CASE,
             paid_upload_data_cost = paid_upload_data_cost +
                 addedUploadDataCost;
         WHERE list_id = listID;
@@ -251,7 +265,7 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    SELECT float_val_1 INTO userWeightVal
+    SELECT float_1_val INTO userWeightVal
     FROM PublicEntityLists FORCE INDEX (PRIMARY)
     WHERE (
         list_id = userGroupID AND

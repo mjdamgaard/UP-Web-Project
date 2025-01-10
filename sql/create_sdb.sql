@@ -79,9 +79,9 @@ CREATE TABLE PublicEntityLists (
 
     list_id BIGINT UNSIGNED NOT NULL,
 
-    float_val_1 FLOAT NOT NULL,
+    float_1_val FLOAT NOT NULL,
 
-    float_val_2 FLOAT NOT NULL DEFAULT 0,
+    float_2_val FLOAT NOT NULL DEFAULT 0,
 
     on_index_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
 
@@ -96,8 +96,8 @@ CREATE TABLE PublicEntityLists (
 
     UNIQUE INDEX sec_idx (
         list_id,
-        float_val_1,
-        float_val_2,
+        float_1_val,
+        float_2_val,
         on_index_data,
         subj_id
     )
@@ -113,6 +113,8 @@ CREATE TABLE PublicListMetadata (
     list_id BIGINT UNSIGNED PRIMARY KEY,
 
     list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+    pos_list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
     float_1_sum DOUBLE NOT NULL DEFAULT 0,
 
