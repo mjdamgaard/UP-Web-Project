@@ -276,8 +276,6 @@ VALUES
     (8, "t", "j", 0),
     (9, "u", "initial_admin", 0),
     (10, "j", '{}', 9),
-    -- TODO: Insert the entities below in the workspace JSON object just above
-    -- this comment.
     --
     -- (11, "a", CONCAT(
     --     '{',

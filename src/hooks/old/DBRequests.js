@@ -1,5 +1,5 @@
 import {useState, useEffect, useMemo} from "react";
-import {DBRequestManager} from "../classes/DBRequestManager.js";
+import {DBRequestManager} from "../../classes/DBRequestManager.js";
 
 // reqData =
 //   data |

@@ -167,10 +167,10 @@ export class DataInserter {
     });
   }
 
-  insertParsedEntity(
+  insertSubbedEntity(
     path, datatype, defStr, isAnonymous, isPrivate, isEditable, callback
   ) {
-    defStr = this.parseDefStr(defStr);
+    defStr = this.getSubbedDefStr(defStr);
     this.insertEntity(
       path, datatype, defStr, isAnonymous, isPrivate, isEditable,
       callback
@@ -178,16 +178,13 @@ export class DataInserter {
   }
 
 
-  parseDefStr(str) {
-    // TODO: Change to using new path and entRef syntax. (09.01.25, 17:34)
-    return str.replaceAll(/@(@@)*\[[^\]\]@,;]+\]/g, match => {
-      let ats = match.match(/^@+/g)[0];
-      let bracket = match.substring(ats.length);
+  getSubbedDefStr(str) {
+    return str.replaceAll(/@\[[^0-9\[\]@,;][^\[\]@,;]*\]/g, match => {
       // Find the entID pointed to by path, or return the match unchanged if
       // this does not exist.
-      let path = bracket.slice(1, -1);
+      let path = match.slice(2, -1);
       let entID = this.getEntIDFromPath(path);
-      return entID ? (ats + entID) : match;
+      return entID ? ('@[' + entID + ']') : match;
     });
   }
 
@@ -243,10 +240,10 @@ export class DataInserter {
   }
 
 
-  insertOrEditParsedEntity(
+  insertOrEditSubbedEntity(
     path, datatype, defStr, isAnonymous, isPrivate, isEditable, callback
   ) {
-    defStr = this.parseDefStr(defStr);
+    defStr = this.getSubbedDefStr(defStr);
     this.insertOrEditEntity(
       path, datatype, defStr, isAnonymous, isPrivate, isEditable, callback
     );

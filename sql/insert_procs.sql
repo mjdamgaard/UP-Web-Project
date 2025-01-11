@@ -994,9 +994,8 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    -- If all checks succeed, first initialize newDefStr by replacing all
-    -- escaped '@'s with some temporary placeholders ("@@" -> "@;").
-    SET newDefStr = REPLACE(newDefStr, "@@", "@;");
+    -- If all checks succeed, first initialize newDefStr.
+    SET newDefStr = prevDefStr;
 
     -- Then loop through all the paths and substitute any
     -- occurrences inside prevDefStr with the corresponding entIDs.
@@ -1013,14 +1012,13 @@ proc: BEGIN
         ELSE
             -- Replace all occurrences of '@[<path>]' with '@<subEntID>'.
             SET newDefStr = REPLACE(
-                newDefStr, CONCAT("@[", pathStr, "]"), CONCAT("@", subEntID)
+                newDefStr,
+                CONCAT("@[", pathStr,  "]"),
+                CONCAT("@[", subEntID, "]")
             );
             ITERATE label;
         END IF;
     END LOOP label;
-
-    -- Restore the escaped '@'s.
-    SET newDefStr = REPLACE(newDefStr, "@;", "@@");
 
     -- Check that newDefStr is not too long.
     IF (LENGTH(newDefStr) > maxLen) THEN
