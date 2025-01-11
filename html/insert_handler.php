@@ -68,14 +68,14 @@ $sql = "";
 $paramNameArr = "";
 $typeArr = "";
 switch ($reqType) {
-    case "opScore":
-        $sql = "CALL insertOrUpdateOpinionScore (?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "q", "s", "v", "w");
-        $typeArr = array("id", "id", "id", "float", "float");
+    case "score":
+        $sql = "CALL insertOrUpdatePublicUserScore (?, ?, ?, ?, ?, ?)";
+        $paramNameArr = array("u", "q", "s", "m", "r", "t");
+        $typeArr = array("id", "id", "id", "float", "float", "tint");
         break;
-    case "delOpScore":
-        $sql = "CALL deleteOpinionScore (?, ?, ?)";
-        $paramNameArr = array("u", "s", "e");
+    case "delScore":
+        $sql = "CALL deletePublicUserScore (?, ?, ?)";
+        $paramNameArr = array("u", "q", "s");
         $typeArr = array("id", "id", "id");
         break;
     case "prvScore":
@@ -148,7 +148,17 @@ switch ($reqType) {
         $paramNameArr = array("u", "e", "def", "prv", "a", "days");
         $typeArr = array("id", "id", "json_text", "bool", "bool", "int");
         break;
-    case "anonymizeEnt":
+    case "nullUserFromFunEnt":
+        $sql = "CALL nullUserRefsInFunCallEntity (?, ?)";
+        $paramNameArr = array("u", "e");
+        $typeArr = array("id", "id");
+        break;
+    case "finEnt":
+        $sql = "CALL finalizeEntity (?, ?)";
+        $paramNameArr = array("u", "e");
+        $typeArr = array("id", "id");
+        break;
+    case "anonEnt":
         $sql = "CALL anonymizeEntity (?, ?)";
         $paramNameArr = array("u", "e");
         $typeArr = array("id", "id");

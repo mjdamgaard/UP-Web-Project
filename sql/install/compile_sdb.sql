@@ -2,6 +2,7 @@
 \. YOUR_FULL_PATH/sql/create_sdb.sql
 \. YOUR_FULL_PATH/sql/query_procs.sql
 \. YOUR_FULL_PATH/sql/insert_procs.sql
+\. YOUR_FULL_PATH/sql/update_procs.sql
 \. YOUR_FULL_PATH/sql/user_data_procs.sql
 
 -- \. YOUR_FULL_PATH/sql/events/publicize_recent_inputs.sql

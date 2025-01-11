@@ -16,9 +16,10 @@ DROP PROCEDURE requestUpdateOfAllExistingScoreContributions;
 
 DROP PROCEDURE _getScoreMedian;
 
-DROP PROCEDURE requestUpdateOfMedianScore;
+DROP PROCEDURE requestUpdateOfScoreMedian;
 
 DROP PROCEDURE _insertIntoThresholdSeparatedTwoPartList;
+
 
 DROP EVENT update_worker_thread_1;
 DROP EVENT update_worker_thread_2;
@@ -436,11 +437,11 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE requestUpdateOfScoreContributionsForWholeUserGroup (
     IN requestingUserID BIGINT UNSIGNED,
-    IN compCostPayment FLOAT,
-    IN uploadDataCostPayment FLOAT,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN userGroupID BIGINT UNSIGNED
+    IN userGroupID BIGINT UNSIGNED,
+    IN compCostPayment FLOAT,
+    IN uploadDataCostPayment FLOAT
 )
 proc: BEGIN
     DECLARE exitCode, isExceeded TINYINT;
@@ -522,11 +523,11 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE requestUpdateOfAllExistingScoreContributions (
     IN requestingUserID BIGINT UNSIGNED,
-    IN compCostPayment FLOAT,
-    IN uploadDataCostPayment FLOAT,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN userGroupID BIGINT UNSIGNED
+    IN userGroupID BIGINT UNSIGNED,
+    IN compCostPayment FLOAT,
+    IN uploadDataCostPayment FLOAT
 )
 proc: BEGIN
     DECLARE exitCode, isExceeded TINYINT;
@@ -697,20 +698,20 @@ DELIMITER ;
 -- And here comes the request for the median score update.
 
 DELIMITER //
-CREATE PROCEDURE requestUpdateOfMedianScore (
+CREATE PROCEDURE requestUpdateOfScoreMedian (
     IN requestingUserID BIGINT UNSIGNED,
-    IN compCostPayment FLOAT,
-    IN uploadDataCostPayment FLOAT,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN userGroupID BIGINT UNSIGNED,
-    IN filterListID BIGINT UNSIGNED -- 0 means no filter list.
+    IN filterListID BIGINT UNSIGNED, -- 0 means no filter list.
+    IN compCostPayment FLOAT,
+    IN uploadDataCostPayment FLOAT
 )
 proc: BEGIN
     DECLARE exitCode, isExceeded TINYINT;
     DECLARE minScoreContrListID, maxScoreContrListID BIGINT UNSIGNED;
     DECLARE fullWeightSum DOUBLE;
-    DECLARE reqType VARCHAR(100) DEFAULT "MEDIAN_SCORE";
+    DECLARE reqType VARCHAR(100) DEFAULT "SCORE_MEDIAN";
     DECLARE reqData VARCHAR(255);
     DECLARE compCostRequired, uploadDataCostRequired FLOAT;
     DECLARE scoreContrListLen, userGroupListLen BIGINT UNSIGNED;
