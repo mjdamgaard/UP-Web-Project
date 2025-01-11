@@ -16,10 +16,9 @@ DROP PROCEDURE deleteAllPrivateUserScores;
 DROP PROCEDURE _insertEntityWithoutSecKey;
 DROP PROCEDURE _insertOrFindEntityWithSecKey;
 
-DROP PROCEDURE insertAttributeDefinedEntity;
 DROP PROCEDURE insertFunctionEntity;
-DROP PROCEDURE insertOrFindFunctionCallEntity;
-DROP PROCEDURE _insertOrFindFunctionCallEntity;
+DROP PROCEDURE insertOrFindRegularEntity;
+DROP PROCEDURE _insertOrFindRegularEntity;
 DROP PROCEDURE insertUTF8Entity;
 DROP PROCEDURE insertHTMLEntity;
 DROP PROCEDURE insertJSONEntity;
@@ -34,7 +33,7 @@ DROP PROCEDURE substitutePlaceholdersInEntity;
 
 DROP PROCEDURE _nullUserRefsInEntity;
 
-DROP PROCEDURE nullUserRefsInFunCallEntity;
+DROP PROCEDURE nullUserRefsInRegularEntity;
 
 DROP PROCEDURE finalizeEntity;
 DROP PROCEDURE anonymizeEntity;
@@ -390,7 +389,7 @@ BEGIN
     SELECT ent_id INTO userScoreListID
     FROM EntitySecKeys FORCE INDEX (PRIMARY)
     WHERE (
-        ent_type = "c" AND
+        ent_type = "r" AND
         user_whitelist_id = 0 AND
         def_key = userScoreListDefStr
     );
@@ -700,21 +699,21 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE insertAttributeDefinedEntity (
-    IN userID BIGINT UNSIGNED,
-    IN defStr TEXT CHARACTER SET utf8mb4,
-    IN userWhitelistID BIGINT UNSIGNED,
-    IN isAnonymous BOOL
-)
-BEGIN
-    CALL _insertEntityWithoutSecKey (
-        "a",
-        userID, defStr, userWhitelistID, isAnonymous, 0,
-        @unused, @unused
-    );
-END //
-DELIMITER ;
+-- DELIMITER //
+-- CREATE PROCEDURE insertAttributeDefinedEntity (
+--     IN userID BIGINT UNSIGNED,
+--     IN defStr TEXT CHARACTER SET utf8mb4,
+--     IN userWhitelistID BIGINT UNSIGNED,
+--     IN isAnonymous BOOL
+-- )
+-- BEGIN
+--     CALL _insertEntityWithoutSecKey (
+--         "a",
+--         userID, defStr, userWhitelistID, isAnonymous, 0,
+--         @unused, @unused
+--     );
+-- END //
+-- DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE insertFunctionEntity (
@@ -734,7 +733,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE insertOrFindFunctionCallEntity (
+CREATE PROCEDURE insertOrFindRegularEntity (
     IN userID BIGINT UNSIGNED,
     IN defStr VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
     IN userWhitelistID BIGINT UNSIGNED,
@@ -742,7 +741,7 @@ CREATE PROCEDURE insertOrFindFunctionCallEntity (
 )
 BEGIN
     CALL _insertOrFindEntityWithSecKey (
-        "c",
+        "r",
         userID, defStr, userWhitelistID, isAnonymous,
         @unused, @unused
     );
@@ -751,7 +750,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE _insertOrFindFunctionCallEntity (
+CREATE PROCEDURE _insertOrFindRegularEntity (
     IN userID BIGINT UNSIGNED,
     IN defStr VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
     IN userWhitelistID BIGINT UNSIGNED,
@@ -761,7 +760,7 @@ CREATE PROCEDURE _insertOrFindFunctionCallEntity (
 )
 BEGIN
     CALL _insertOrFindEntityWithSecKey (
-        "c",
+        "r",
         userID, defStr, userWhitelistID, isAnonymous,
         outID, exitCode
     );
@@ -1029,8 +1028,8 @@ proc: BEGIN
 
     -- Check that newDefStr is not too long.
     SET maxLen = CASE
-        WHEN (entType = "c") THEN 700
-        WHEN (entType = "a" OR entType = "f") THEN 65535
+        WHEN (entType = "r") THEN 700
+        WHEN (entType = "f") THEN 65535
         ELSE 4294967295
     END;
     SET newLen = LENGTH(newDefStr);
@@ -1054,7 +1053,7 @@ proc: BEGIN
     END IF;
 
     -- Then finally update the entity with the new defStr.
-    IF (entType != "c") THEN
+    IF (entType != "r") THEN
         UPDATE Entities
         SET def_str = newDefStr
         WHERE id = entID;
@@ -1068,7 +1067,7 @@ proc: BEGIN
         UPDATE EntitySecKeys
         SET def_key = newDefStr
         WHERE (
-            ent_type = "c" AND
+            ent_type = "r" AND
             user_whitelist_id = userWhiteListID AND
             def_key = prevDefStr AND
             ent_id = entID
@@ -1183,7 +1182,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE nullUserRefsInFunCallEntity (
+CREATE PROCEDURE nullUserRefsInRegularEntity (
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED
 )
@@ -1191,7 +1190,7 @@ proc: BEGIN
     DECLARE exitCode TINYINT;
 
     CALL _substitutePlaceholdersInEntity (
-        "c", userID, entID, exitCode
+        "r", userID, entID, exitCode
     );
 
     SELECT entID AS outID, exitCode;

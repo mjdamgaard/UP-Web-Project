@@ -127,17 +127,16 @@ export class DataInserter {
 
 
   insertEntity(
-    path, datatype, defStr,
+    path, entType, defStr,
     isAnonymous = 0, isPrivate = 0, isEditable = 1, callback = () => {}
   ) {
     let req =
-      (datatype === "f") ? "funEnt" :
-      (datatype === "c") ? "callEnt" :
-      (datatype === "a") ? "attrEnt" :
-      (datatype === "8") ? "utf8Ent" :
-      (datatype === "h") ? "htmlEnt" :
-      (datatype === "j") ? "jsonEnt" :
-      "unrecognized datatype";
+      (entType === "f") ? "funEnt" :
+      (entType === "r") ? "regEnt" :
+      (entType === "8") ? "utf8Ent" :
+      (entType === "h") ? "htmlEnt" :
+      (entType === "j") ? "jsonEnt" :
+      "unrecognized entity type";
     let reqData = {
       req: req,
       ses: this.getAccountData("sesIDHex"),
@@ -169,11 +168,11 @@ export class DataInserter {
   }
 
   insertSubbedEntity(
-    path, datatype, defStr, isAnonymous, isPrivate, isEditable, callback
+    path, entType, defStr, isAnonymous, isPrivate, isEditable, callback
   ) {
     defStr = this.getSubbedDefStr(defStr);
     this.insertEntity(
-      path, datatype, defStr, isAnonymous, isPrivate, isEditable,
+      path, entType, defStr, isAnonymous, isPrivate, isEditable,
       callback
     );
   }
@@ -190,21 +189,21 @@ export class DataInserter {
   }
 
   insertOrSubstituteEntity(
-    path, datatype, defStr,
+    path, entType, defStr,
     isAnonymous = 0, isPrivate = 0, isEditable = 1, callback = () => {}
   ) {
     // If an entID is not already recorded at path, simply insert a new entity.
     let entID = this.getEntIDFromPath(path);
     if (!entID) {
       this.insertEntity(
-        path, datatype, defStr, isAnonymous, isPrivate, isEditable, callback
+        path, entType, defStr, isAnonymous, isPrivate, isEditable, callback
       );
       return;
     }
     // Else substitute the given entity, by first parsing all contained paths
     // in defStr, then looking the entID of them all, and then we make the
     // "subEnt" request for each found path-entID pair.
-    let pathRefs = defStr.match(PATH_REF_REGEX);
+    let pathRefs = defStr.match(PATH_REF_REGEX) ?? [];
     let substitutionEntIDs = pathRefs.map(pathRef => {
       let pathStr = pathRef.slice(2, -1);
       return this.getEntIDFromPath(pathStr);
@@ -239,11 +238,11 @@ export class DataInserter {
 
 
   insertOrEditSubbedEntity(
-    path, datatype, defStr, isAnonymous, isPrivate, isEditable, callback
+    path, entType, defStr, isAnonymous, isPrivate, isEditable, callback
   ) {
     defStr = this.getSubbedDefStr(defStr);
     this.insertOrSubstituteEntity(
-      path, datatype, defStr, isAnonymous, isPrivate, isEditable, callback
+      path, entType, defStr, isAnonymous, isPrivate, isEditable, callback
     );
   }
 

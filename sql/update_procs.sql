@@ -60,14 +60,14 @@ proc: BEGIN
         '@[', maxContrFunID, '],@[', qualID, '],@[', subjID, ']'
     );
 
-    CALL _insertOrFindFunctionCallEntity (
+    CALL _insertOrFindRegularEntity (
         requestingUserID, minScoreContrListDefStr, 0, 1,
         minScoreContrListID, exitCode
     );
     IF (exitCode = 5) THEN
         LEAVE proc;
     END IF;
-    CALL _insertOrFindFunctionCallEntity (
+    CALL _insertOrFindRegularEntity (
         requestingUserID, maxScoreContrListDefStr, 0, 1,
         maxScoreContrListID, exitCode
     );
@@ -111,7 +111,7 @@ proc: BEGIN
     SELECT id INTO userScoreListID
     FROM EntitySecKeys FORCE INDEX (PRIMARY)
     WHERE (
-        ent_type = "c" AND
+        ent_type = "r" AND
         user_whitelist_id = 0 AND
         def_key = userScoreListDefStr
     );
@@ -827,14 +827,14 @@ proc: BEGIN
     SET hasNotPassedListFunDefStr = CONCAT(
         '@[', listFunID, '],false,', listFunInputStringFromTheSecondInputAndOn
     );
-    CALL _insertOrFindFunctionCallEntity (
+    CALL _insertOrFindRegularEntity (
         requestingUserID, hasPassedListFunDefStr, 0, 1,
         hasPassedListFunID, exitCode
     );
     IF (exitCode = 5) THEN
         LEAVE proc;
     END IF;
-    CALL _insertOrFindFunctionCallEntity (
+    CALL _insertOrFindRegularEntity (
         requestingUserID, hasNotPassedListFunDefStr, 0, 1,
         hasNotPassedListFunID, exitCode
     );

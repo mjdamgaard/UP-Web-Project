@@ -93,15 +93,10 @@ switch ($reqType) {
         $paramNameArr = array("u", "d", "w", "a");
         $typeArr = array("id", "fun_def", "id", "bool");
         break;
-    case "callEnt":
-        $sql = "CALL insertOrFindFunctionCallEntity (?, ?, ?, ?)";
+    case "regEnt":
+        $sql = "CALL insertOrFindRegularEntity (?, ?, ?, ?)";
         $paramNameArr = array("u", "d", "w", "a");
         $typeArr = array("id", "fun_call", "id", "bool");
-        break;
-    case "attrEnt":
-        $sql = "CALL insertAttributeDefinedEntity (?, ?, ?, ?)";
-        $paramNameArr = array("u", "d", "w", "a");
-        $typeArr = array("id", "attr_ent_obj", "id", "bool");
         break;
     case "utf8Ent":
         $sql = "CALL insertUTF8Entity (?, ?, ?, ?, ?)";
