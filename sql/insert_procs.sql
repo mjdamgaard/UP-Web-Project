@@ -588,10 +588,6 @@ CREATE PROCEDURE _insertEntityWithoutSecKey (
 proc: BEGIN
     DECLARE isExceeded TINYINT;
 
-    IF (userWhitelistID = 0) THEN
-        SET userWhitelistID = NULL;
-    END IF;
-
     CALL _increaseWeeklyUserCounters (
         userID, 0, LENGTH(CAST(defStr AS BINARY)) + 22, 0, isExceeded
     );
@@ -605,11 +601,13 @@ proc: BEGIN
 
     INSERT INTO Entities (
         creator_id,
-        ent_type, def_str, user_whitelist_id, is_editable
+        ent_type, def_str, user_whitelist_id, is_editable,
+        paid_upload_data_cost
     )
     VALUES (
         CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        entType, defStr, userWhitelistID, isEditable AND NOT isAnonymous
+        entType, defStr, userWhitelistID, isEditable AND NOT isAnonymous,
+        LENGTH(defStr) + 25
     );
     SET outID = LAST_INSERT_ID();
 
@@ -660,11 +658,13 @@ proc: BEGIN
 
     INSERT INTO Entities (
         creator_id,
-        ent_type, def_str, user_whitelist_id, is_editable
+        ent_type, def_str, user_whitelist_id, is_editable,
+        paid_upload_data_cost
     )
     VALUES (
         CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        entType, defStr, userWhitelistID, 0
+        entType, defStr, userWhitelistID, 0,
+        LENGTH(defStr) * 2 + 33
     );
     SET outID = LAST_INSERT_ID();
 
@@ -849,10 +849,6 @@ proc: BEGIN
     DECLARE prevLen, newLen INT UNSIGNED;
     DECLARE prevType CHAR;
 
-    IF (userWhitelistID = 0) THEN
-        SET userWhitelistID = NULL;
-    END IF;
-
     SET newLen = LENGTH(defStr);
 
     IF (newLen > maxLen) THEN
@@ -987,7 +983,7 @@ proc: BEGIN
 
     SELECT ent_type, creator_id, def_str, LENGTH(def_str), user_whitelist_id
     INTO entType, creatorID, prevDefStr, prevLen, userWhiteListID
-    FROM Entities
+    FROM Entities FORCE INDEX (PRIMARY)
     WHERE id = entID;
 
     IF (creatorID != userID) THEN

@@ -8,8 +8,6 @@ import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 
 const WORKSPACES_CLASS_ID = basicEntIDs["workspaces"];
 
-const STANDARD_EDITING_DAYS = 100; // TODO: Reduce before going beta.
-
 const PATH_REF_REGEX = /@\[[^0-9\[\]@,;"][^\[\]@,;"]*\]/g;
 
 
@@ -41,10 +39,10 @@ export class DataInserter {
       ses: this.getAccountData("sesIDHex"),
       u: this.getAccountData("userID"),
       e: this.workspaceEntID,
-      def: JSON.stringify(this.workspaceObj),
-      prv: 1,
+      d: JSON.stringify(this.workspaceObj),
+      w: this.getAccountData("userID"),
       a: 0,
-      days: 0,
+      ed: 1,
     };
     DBRequestManager.insert(reqData, (responseText) => {
       let result = JSON.parse(responseText);
@@ -61,9 +59,9 @@ export class DataInserter {
       ses: this.getAccountData("sesIDHex"),
       u: this.getAccountData("userID"),
       def: JSON.stringify(this.workspaceObj),
-      prv: 1,
+      w: this.getAccountData("userID"),
       a: 0,
-      days: 0,
+      ed: 1,
     };
     DBRequestManager.insert(reqData, (responseText) => {
       let result = JSON.parse(responseText);
@@ -144,10 +142,10 @@ export class DataInserter {
       req: req,
       ses: this.getAccountData("sesIDHex"),
       u: isAnonymous ? 0 : this.getAccountData("userID"),
-      def: defStr,
-      prv: isPrivate,
+      d: defStr,
+      w: isPrivate ? this.getAccountData("userID") : 0,
       a: isAnonymous,
-      days: isEditable ? STANDARD_EDITING_DAYS : 0,
+      ed: isEditable,
     };
     DBRequestManager.insert(reqData, (responseText) => {
       let result = JSON.parse(responseText);

@@ -123,41 +123,48 @@ class InputValidator {
                 break;
             case "char":
                 if (
-                    !(iconv_strlen($paramVal, "UFT-8") === 1)
+                    !(mb_strlen($paramVal) === 1)
                 ) {
                     echoTypeErrorJSONAndExit($paramName, $paramVal, "CHAR");
                 }
                 break;
             case "str":
-                if ( !(iconv_strlen($paramVal, "UFT-8") <= 700) ) {
+                if ( !(mb_strlen($paramVal) <= 700) ) {
                     echoTypeErrorJSONAndExit(
                         $paramName, $paramVal, "VARCHAR(700)"
                     );
                 }
                 break;
             case "fun_def": // TODO: Add parsing.
-                if ( !(iconv_strlen($paramVal, "UFT-8") <= 700) ) {
+                if ( !(mb_strlen($paramVal) <= 700) ) {
                     echoTypeErrorJSONAndExit(
                         $paramName, $paramVal, "function definition"
                     );
                 }
                 break;
             case "fun_call": // TODO: Add parsing.
-                if ( !(iconv_strlen($paramVal, "UFT-8") <= 700) ) {
+                if ( !(mb_strlen($paramVal) <= 700) ) {
                     echoTypeErrorJSONAndExit(
                         $paramName, $paramVal, "function call"
                     );
                 }
                 break;
+            case "attr_ent_obj": // TODO: Add parsing.
+                if ( !(mb_strlen($paramVal) <= 700) ) {
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "attr ent object"
+                    );
+                }
+                break;
             case "json_str": // TODO: Add parsing.
-                if ( !(iconv_strlen($paramVal, "UFT-8") <= 700) ) {
+                if ( !(mb_strlen($paramVal) <= 700) ) {
                     echoTypeErrorJSONAndExit(
                         $paramName, $paramVal, "JSON VARCHAR(700)"
                     );
                 }
                 break;
             case "json_text": // TODO: Add parsing.
-                if ( !(iconv_strlen($paramVal, "UFT-8") <= 65535) ) {
+                if ( !(mb_strlen($paramVal) <= 65535) ) {
                     echoTypeErrorJSONAndExit(
                         $paramName, $paramVal, "JSON TEXT"
                     );

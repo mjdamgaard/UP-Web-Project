@@ -15,7 +15,7 @@ DROP TABLE EntitySecKeys;
 -- DROP TABLE FulltextIndexedEntities;
 
 /* Private user data */
--- DROP TABLE Private_UserData;
+DROP TABLE Private_UserData;
 -- DROP TABLE Private_Sessions;
 -- DROP TABLE Private_EMails;
 

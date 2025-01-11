@@ -89,64 +89,49 @@ switch ($reqType) {
         $typeArr = array("id", "id", "id");
         break;
     case "funEnt":
-        $sql = "CALL insertOrFindFunctionEntity (?, ?, ?, ?)";
-        $paramNameArr = array("u", "def", "a", "days");
-        $typeArr = array("id", "fun_def", "bool", "int");
-        break;
-    case "editFunEnt":
-        $sql = "CALL editOrFindFunctionEntity (?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "e", "def", "a", "days");
-        $typeArr = array("id", "id", "fun_def", "bool", "int");
+        $sql = "CALL insertFunctionEntity (?, ?, ?, ?)";
+        $paramNameArr = array("u", "d", "w", "a");
+        $typeArr = array("id", "fun_def", "id", "bool");
         break;
     case "callEnt":
         $sql = "CALL insertOrFindFunctionCallEntity (?, ?, ?, ?)";
-        $paramNameArr = array("u", "def", "a", "days");
-        $typeArr = array("id", "fun_call", "bool", "int");
-        break;
-    case "editCallEnt":
-        $sql = "CALL editOrFindFunctionCallEntity (?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "e", "def", "a", "days");
-        $typeArr = array("id", "id", "fun_call", "bool", "int");
+        $paramNameArr = array("u", "d", "w", "a");
+        $typeArr = array("id", "fun_call", "id", "bool");
         break;
     case "attrEnt":
-        $sql = "CALL insertOrFindAttributeDefinedEntity (?, ?, ?, ?)";
-        $paramNameArr = array("u", "def", "a", "days");
-        $typeArr = array("id", "attr_ent_obj", "bool", "int");
-        break;
-    case "editAttrEnt":
-        $sql = "CALL editOrFindAttributeDefinedEntity (?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "e", "def", "a", "days");
-        $typeArr = array("id", "id", "attr_ent_obj", "bool", "int");
+        $sql = "CALL insertAttributeDefinedEntity (?, ?, ?, ?)";
+        $paramNameArr = array("u", "d", "w", "a");
+        $typeArr = array("id", "attr_ent_obj", "id", "bool");
         break;
     case "utf8Ent":
         $sql = "CALL insertUTF8Entity (?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "def", "prv", "a", "days");
-        $typeArr = array("id", "text", "bool", "bool", "int");
+        $paramNameArr = array("u", "d", "w", "a", "ed");
+        $typeArr = array("id", "text", "id", "bool", "bool");
         break;
     case "editUTF8Ent":
         $sql = "CALL editUTF8Entity (?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "e", "def", "prv", "a", "days");
-        $typeArr = array("id", "id", "text", "bool", "bool", "int");
+        $paramNameArr = array("u", "e", "d", "w", "a", "ed");
+        $typeArr = array("id", "id", "text", "id", "bool", "bool");
         break;
     case "htmlEnt":
         $sql = "CALL insertHTMLEntity (?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "def", "prv", "a", "days");
-        $typeArr = array("id", "text", "bool", "bool", "int");
+        $paramNameArr = array("u", "d", "w", "a", "ed");
+        $typeArr = array("id", "text", "id", "bool", "bool");
         break;
     case "editHTMLEnt":
         $sql = "CALL editHTMLEntity (?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "e", "def", "prv", "a", "days");
-        $typeArr = array("id", "id", "text", "bool", "bool", "int");
+        $paramNameArr = array("u", "e", "d", "w", "a", "ed");
+        $typeArr = array("id", "id", "text", "id", "bool", "bool");
         break;
     case "jsonEnt":
         $sql = "CALL insertJSONEntity (?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "def", "prv", "a", "days");
-        $typeArr = array("id", "json_text", "bool", "bool", "int");
+        $paramNameArr = array("u", "d", "w", "a", "ed");
+        $typeArr = array("id", "text", "id", "bool", "bool");
         break;
     case "editJSONEnt":
         $sql = "CALL editJSONEntity (?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "e", "def", "prv", "a", "days");
-        $typeArr = array("id", "id", "json_text", "bool", "bool", "int");
+        $paramNameArr = array("u", "e", "d", "w", "a", "ed");
+        $typeArr = array("id", "id", "text", "id", "bool", "bool");
         break;
     case "subEnt":
         $sql = "CALL substitutePlaceholdersInEntity (?, ?, ?, ?)";

@@ -3,12 +3,15 @@ import {DataInserter} from "../classes/DataInserter.js";
 import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
 
 
+const INITIAL_ADMIN_ID = "9";
+const INITIAL_ADMIN_WORKSPACE_ID = "10";
+
 
 export const InitialInsertsPage = () => {
-  const workspaceEntID = "10";
+  const workspaceEntID = INITIAL_ADMIN_WORKSPACE_ID;
   const sesIDHex = "00".repeat(60);
   const getAccountData = useCallback((propName) => {
-    return (propName === "userID") ? "9" :
+    return (propName === "userID") ? INITIAL_ADMIN_ID :
       (propName === "sesIDHex") ? sesIDHex : null;
   });
   const dataInserter = useRef(
