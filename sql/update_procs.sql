@@ -44,14 +44,20 @@ CREATE PROCEDURE _insertOrFindScoreContributionListIDs (
     OUT exitCode TINYINT
 )
 proc: BEGIN
+    DECLARE minContrFunID BIGINT UNSIGNED DEFAULT (
+        SELECT id FROM FundamentalEntityIDs WHERE ident = "min_contr"
+    );
+    DECLARE maxContrFunID BIGINT UNSIGNED DEFAULT (
+        SELECT id FROM FundamentalEntityIDs WHERE ident = "max_contr"
+    );
     DECLARE minScoreContrListDefStr, maxScoreContrListDefStr
         VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 
     SET minScoreContrListDefStr = CONCAT(
-        '@[12],@[', qualID, '],@[', subjID, ']'
+        '@[', minContrFunID, '],@[', qualID, '],@[', subjID, ']'
     );
     SET maxScoreContrListDefStr = CONCAT(
-        '@[13],@[', qualID, '],@[', subjID, ']'
+        '@[', maxContrFunID, '],@[', qualID, '],@[', subjID, ']'
     );
 
     CALL _insertOrFindFunctionCallEntity (
@@ -90,10 +96,13 @@ CREATE PROCEDURE _insertUpdateOrDeleteScoreContribution (
     OUT exitCode TINYINT
 )
 proc: BEGIN
+    DECLARE userScoreFunID BIGINT UNSIGNED DEFAULT (
+        SELECT id FROM FundamentalEntityIDs WHERE ident = "user_score"
+    );
     DECLARE userScoreListID BIGINT UNSIGNED;
     DECLARE userScoreListDefStr VARCHAR(700)
         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT (
-            CONCAT('@[11],@[', userID, '],@[', qualID, ']')
+            CONCAT('@[', userScoreFunID, '],@[', userID, '],@[', qualID, ']')
         );
     DECLARE scoreMid, scoreRad FLOAT;
     DECLARE unixTimeBin VARBINARY(4);
@@ -1254,7 +1263,9 @@ BEGIN
             -- will also be removed from the other list in this process if
             -- it was there before.)
             CALL _insertIntoThresholdSeparatedTwoPartList (
-                0, 14, CONCAT(
+                0,
+                (SELECT id FROM FundamentalEntityIDs WHERE ident = "score_med"),
+                CONCAT(
                     '@[', userGroupID, '],@[', qualID, '],',
                     CASE WHEN (filterListID != 0)
                         THEN CONCAT('@[', filterListID, ']')
