@@ -10,6 +10,9 @@ const WORKSPACES_CLASS_ID = basicEntIDs["workspaces"];
 
 const STANDARD_EDITING_DAYS = 100; // TODO: Reduce before going beta.
 
+const PATH_REF_REGEX = /@\[[^0-9\[\]@,;"][^\[\]@,;"]*\]/g;
+
+
 export class DataInserter {
 
   constructor(getAccountData, workspaceEntID) {
@@ -179,7 +182,7 @@ export class DataInserter {
 
 
   getSubbedDefStr(str) {
-    return str.replaceAll(/@\[[^0-9\[\]@,;][^\[\]@,;]*\]/g, match => {
+    return str.replaceAll(PATH_REF_REGEX, match => {
       // Find the entID pointed to by path, or return the match unchanged if
       // this does not exist.
       let path = match.slice(2, -1);
@@ -188,7 +191,7 @@ export class DataInserter {
     });
   }
 
-  insertOrEditEntity(
+  insertOrSubstituteEntity(
     path, datatype, defStr,
     isAnonymous = 0, isPrivate = 0, isEditable = 1, callback = () => {}
   ) {
@@ -200,24 +203,21 @@ export class DataInserter {
       );
       return;
     }
-    // Else edit the given entity.
-    let req =
-      (datatype === "f") ? "editFunEnt" :
-      (datatype === "c") ? "editCallEnt" :
-      (datatype === "a") ? "editAttrEnt" :
-      (datatype === "8") ? "editUTF8Ent" :
-      (datatype === "h") ? "editHTMLEnt" :
-      (datatype === "j") ? "editJSONEnt" :
-      "unrecognized datatype";
+    // Else substitute the given entity, by first parsing all contained paths
+    // in defStr, then looking the entID of them all, and then we make the
+    // "subEnt" request for each found path-entID pair.
+    let pathRefs = defStr.match(PATH_REF_REGEX);
+    let substitutionEntIDs = pathRefs.map(pathRef => {
+      let pathStr = pathRef.slice(2, -1);
+      return this.getEntIDFromPath(pathStr);
+    });
     let reqData = {
-      req: req,
+      req: "subEnt",
       ses: this.getAccountData("sesIDHex"),
       u: isAnonymous ? 0 : this.getAccountData("userID"),
       e: entID,
-      def: defStr,
-      prv: isPrivate,
-      a: isAnonymous,
-      days: isEditable ? STANDARD_EDITING_DAYS : 0,
+      p: pathRefs.join(","),
+      s: substitutionEntIDs.join(","),
     };
     DBRequestManager.insert(reqData, (responseText) => {
       let result = JSON.parse(responseText);
@@ -244,7 +244,7 @@ export class DataInserter {
     path, datatype, defStr, isAnonymous, isPrivate, isEditable, callback
   ) {
     defStr = this.getSubbedDefStr(defStr);
-    this.insertOrEditEntity(
+    this.insertOrSubstituteEntity(
       path, datatype, defStr, isAnonymous, isPrivate, isEditable, callback
     );
   }

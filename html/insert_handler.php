@@ -111,12 +111,12 @@ switch ($reqType) {
     case "attrEnt":
         $sql = "CALL insertOrFindAttributeDefinedEntity (?, ?, ?, ?)";
         $paramNameArr = array("u", "def", "a", "days");
-        $typeArr = array("id", "json_str", "bool", "int");
+        $typeArr = array("id", "attr_ent_obj", "bool", "int");
         break;
     case "editAttrEnt":
         $sql = "CALL editOrFindAttributeDefinedEntity (?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "e", "def", "a", "days");
-        $typeArr = array("id", "id", "json_str", "bool", "int");
+        $typeArr = array("id", "id", "attr_ent_obj", "bool", "int");
         break;
     case "utf8Ent":
         $sql = "CALL insertUTF8Entity (?, ?, ?, ?, ?)";
@@ -147,6 +147,11 @@ switch ($reqType) {
         $sql = "CALL editJSONEntity (?, ?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "e", "def", "prv", "a", "days");
         $typeArr = array("id", "id", "json_text", "bool", "bool", "int");
+        break;
+    case "subEnt":
+        $sql = "CALL substitutePlaceholdersInEntity (?, ?, ?, ?)";
+        $paramNameArr = array("u", "e", "p", "s");
+        $typeArr = array("id", "id", "text", "text");
         break;
     case "nullUserFromFunEnt":
         $sql = "CALL nullUserRefsInFunCallEntity (?, ?)";

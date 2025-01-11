@@ -30,10 +30,7 @@ DROP PROCEDURE editUTF8Entity;
 DROP PROCEDURE editHTMLEntity;
 DROP PROCEDURE editJSONEntity;
 
-DROP PROCEDURE _substitutePlaceholdersInEntity;
-
-DROP PROCEDURE substitutePlaceholdersInAttrEntity;
-DROP PROCEDURE substitutePlaceholdersInFunEntity;
+DROP PROCEDURE substitutePlaceholdersInEntity;
 
 DROP PROCEDURE _nullUserRefsInEntity;
 
@@ -629,7 +626,7 @@ DELIMITER //
 CREATE PROCEDURE _insertOrFindEntityWithSecKey (
     IN entType CHAR,
     IN userID BIGINT UNSIGNED,
-    IN defStr TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN defStr VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
     IN userWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL,
     OUT outID BIGINT UNSIGNED,
@@ -706,7 +703,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertAttributeDefinedEntity (
     IN userID BIGINT UNSIGNED,
-    IN defStr VARCHAR(700) CHARACTER SET utf8mb4,
+    IN defStr TEXT CHARACTER SET utf8mb4,
     IN userWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL
 )
@@ -722,7 +719,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertFunctionEntity (
     IN userID BIGINT UNSIGNED,
-    IN defStr VARCHAR(700) CHARACTER SET utf8mb4,
+    IN defStr TEXT CHARACTER SET utf8mb4,
     IN userWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL
 )
@@ -836,6 +833,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE _editEntity (
     IN entType CHAR,
+    IN maxLen INT UNSIGNED,
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
     IN defStr LONGTEXT CHARACTER SET utf8mb4,
@@ -848,26 +846,33 @@ proc: BEGIN
     DECLARE creatorID BIGINT UNSIGNED;
     DECLARE prevIsEditable TINYINT UNSIGNED;
     DECLARE prevDefStr LONGTEXT;
+    DECLARE prevLen, newLen INT UNSIGNED;
     DECLARE prevType CHAR;
 
     IF (userWhitelistID = 0) THEN
         SET userWhitelistID = NULL;
     END IF;
 
-    CALL _increaseWeeklyUserCounters (
-        userID, 0, LENGTH(CAST(defStr AS BINARY)) + 22, 0, isExceeded
-    );
+    SET newLen = LENGTH(defStr);
 
+    IF (newLen > maxLen) THEN
+        SELECT entID AS outID, 6 AS exitCode; -- defStr was too long.
+        LEAVE proc;
+    END IF;
+
+    SELECT
+        ent_type, creator_id, def_str, LENGTH(def_str), is_editable
+    INTO prevType, creatorID, prevDefStr, prevLen, prevIsEditable 
+    FROM Entities
+    WHERE id = entID;
+
+    CALL _increaseWeeklyUserCounters (
+        userID, 0, newLen - prevLen + 22, 0, isExceeded
+    );
     IF (isExceeded) THEN
         SELECT entID AS outID, 5 AS extCode; -- upload limit was exceeded.
         LEAVE proc;
     END IF;
-
-
-    SELECT ent_type, creator_id, def_str, is_editable
-    INTO prevType, creatorID, prevDefStr, prevIsEditable 
-    FROM Entities
-    WHERE id = entID;
 
     IF (creatorID != userID) THEN
         SELECT entID AS outID, 2 AS exitCode; -- user is not the owner.
@@ -875,7 +880,7 @@ proc: BEGIN
     END IF;
 
     IF (NOT prevIsEditable) THEN
-        SELECT entID AS outID, 3 AS exitCode; -- can not be edited.
+        SELECT entID AS outID, 3 AS exitCode; -- cannot be edited.
         LEAVE proc;
     END IF;
 
@@ -912,7 +917,7 @@ CREATE PROCEDURE editUTF8Entity (
 )
 BEGIN
     CALL _editEntity (
-        "8",
+        "8", 4294967295,
         userID, entID, defStr, userWhitelistID, isAnonymous, isEditable
     );
 END //
@@ -929,7 +934,7 @@ CREATE PROCEDURE editHTMLEntity (
 )
 BEGIN
     CALL _editEntity (
-        "h",
+        "h", 4294967295,
         userID, entID, defStr, userWhitelistID, isAnonymous, isEditable
     );
 END //
@@ -946,7 +951,7 @@ CREATE PROCEDURE editJSONEntity (
 )
 proc: BEGIN
     CALL _editEntity (
-        "j",
+        "j", 4294967295,
         userID, entID, defStr, userWhitelistID, isAnonymous, isEditable
     );
 END proc //
@@ -963,24 +968,25 @@ DELIMITER ;
 -- TODO: Add counter increase to this procedure.
 
 DELIMITER //
-CREATE PROCEDURE _substitutePlaceholdersInEntity (
-    IN entType CHAR,
-    IN maxLen INT UNSIGNED,
+CREATE PROCEDURE substitutePlaceholdersInEntity (
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
     IN paths TEXT, -- List of the form '<path_1>,<path_2>...'
     IN substitutionEntIDs TEXT -- List of the form '<entID_1>,<entID_2>...'
 )
 proc: BEGIN
-    DECLARE creatorID BIGINT UNSIGNED;
+    DECLARE pathRegExp VARCHAR(80) DEFAULT '[^0-9\[\]@,;"][^\[\]@,;"]*';
+    DECLARE creatorID, subEntID, userWhiteListID BIGINT UNSIGNED;
+    DECLARE entType CHAR;
     DECLARE prevDefStr, newDefStr LONGTEXT;
     DECLARE prevType CHAR;
     DECLARE i TINYINT UNSIGNED DEFAULT 0;
     DECLARE pathStr TEXT;
-    DECLARE subEntID BIGINT UNSIGNED;
+    DECLARE prevLen, newLen, maxLen, addedLen INT UNSIGNED;
+    DECLARE isExceeded TINYINT;
 
-    SELECT ent_type, creator_id, def_str
-    INTO prevType, creatorID, prevDefStr 
+    SELECT ent_type, creator_id, def_str, LENGTH(def_str), user_whitelist_id
+    INTO entType, creatorID, prevDefStr, prevLen, userWhiteListID
     FROM Entities
     WHERE id = entID;
 
@@ -989,17 +995,12 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    IF (prevType != entType) THEN
-        SELECT entID AS outID, 3 AS exitCode; -- entType is incorrect.
-        LEAVE proc;
-    END IF;
-
     -- If all checks succeed, first initialize newDefStr.
     SET newDefStr = prevDefStr;
 
     -- Then loop through all the paths and substitute any
     -- occurrences inside prevDefStr with the corresponding entIDs.
-    label: LOOP
+    loop_1: LOOP
         SET i = i + 1;
 
         SET pathStr = REGEXP_SUBSTR(paths, "[^,]+", 1, i);
@@ -1007,30 +1008,78 @@ proc: BEGIN
             REGEXP_SUBSTR(substitutionEntIDs, "[^,]+", 1, i) AS UNSIGNED
         );
 
-        IF (pathStr IS NULL OR subEntID IS NULL) THEN
-            LEAVE label;
-        ELSE
-            -- Replace all occurrences of '@[<path>]' with '@<subEntID>'.
-            SET newDefStr = REPLACE(
-                newDefStr,
-                CONCAT("@[", pathStr,  "]"),
-                CONCAT("@[", subEntID, "]")
-            );
-            ITERATE label;
+        IF (pathStr IS NULL) THEN
+            LEAVE loop_1;
         END IF;
-    END LOOP label;
+        IF (subEntID IS NULL OR subEntID = 0) THEN
+            ITERATE loop_1;
+        END IF;
+
+        -- If a path is ill-formed, exit and make no updates.
+        IF NOT (REGEXP_LIKE(pathStr, pathRegExp)) THEN
+            SELECT entID AS outID, 3 AS exitCode; -- a path was ill-formed.
+            LEAVE proc;
+        END IF;
+
+        -- Replace all occurrences of '@[<path>]' with '@<subEntID>'.
+        SET newDefStr = REPLACE(
+            newDefStr,
+            CONCAT("@[", pathStr,  "]"),
+            CONCAT("@[", subEntID, "]")
+        );
+
+        ITERATE loop_1;
+    END LOOP loop_1;
 
     -- Check that newDefStr is not too long.
-    IF (LENGTH(newDefStr) > maxLen) THEN
+    SET maxLen = CASE
+        WHEN (entType = "c") THEN 700
+        WHEN (entType = "a" OR entType = "f") THEN 65535
+        ELSE 4294967295
+    END;
+    SET newLen = LENGTH(newDefStr);
+    IF (newLen > maxLen) THEN
         SELECT entID AS outID, 4 AS exitCode; -- new defStr too long.
         LEAVE proc;
     END IF;
-    
+
+    -- Pay the upload data cost for the edit.
+    SET addedLen = CASE WHEN (newLen > prevLen)
+        THEN newLen - prevLen
+        ELSE 0
+    END;
+    CALL _increaseWeeklyUserCounters (
+        userID, 0, addedLen, 10, isExceeded
+    );
+    -- Exit if upload limit was exceeded.
+    IF (isExceeded) THEN
+        SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
+        LEAVE proc;
+    END IF;
 
     -- Then finally update the entity with the new defStr.
-    UPDATE Entities
-    SET def_str = newDefStr
-    WHERE id = entID;
+    IF (entType != "c") THEN
+        UPDATE Entities
+        SET def_str = newDefStr
+        WHERE id = entID;
+    ELSE
+        START TRANSACTION;
+
+        UPDATE Entities
+        SET def_str = newDefStr
+        WHERE id = entID;
+
+        UPDATE EntitySecKeys
+        SET def_key = newDefStr
+        WHERE (
+            ent_type = "c" AND
+            user_whitelist_id = userWhiteListID AND
+            def_key = prevDefStr AND
+            ent_id = entID
+        );
+
+        COMMIT;
+    END IF;
 
     SELECT entID AS outID, 0 AS exitCode; -- edit.
 END proc //
@@ -1040,35 +1089,39 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE substitutePlaceholdersInAttrEntity (
-    IN userID BIGINT UNSIGNED,
-    IN entID BIGINT UNSIGNED,
-    IN paths TEXT, -- List of the form '<path_1>,<path_2>...'
-    IN substitutionEntIDs TEXT -- List of the form '<entID_1>,<entID_2>...'
-)
-BEGIN
-    CALL _substitutePlaceholdersInEntity (
-        "a",
-        700, userID, entID, defStr, paths, substitutionEntIDs
-    );
-END //
-DELIMITER ;
+-- DELIMITER //
+-- CREATE PROCEDURE substitutePlaceholdersInAttrEntity (
+--     IN userID BIGINT UNSIGNED,
+--     IN entID BIGINT UNSIGNED,
+--     IN paths TEXT, -- List of the form '<path_1>,<path_2>...'
+--     IN substitutionEntIDs TEXT -- List of the form '<entID_1>,<entID_2>...'
+-- )
+-- BEGIN
+--     CALL _substitutePlaceholdersInEntity (
+--         "a",
+--         700, userID, entID, defStr, paths, substitutionEntIDs
+--     );
+-- END //
+-- DELIMITER ;
 
-DELIMITER //
-CREATE PROCEDURE substitutePlaceholdersInFunEntity (
-    IN userID BIGINT UNSIGNED,
-    IN entID BIGINT UNSIGNED,
-    IN paths TEXT, -- List of the form '<path_1>,<path_2>...'
-    IN substitutionEntIDs TEXT -- List of the form '<entID_1>,<entID_2>...'
-)
-BEGIN
-    CALL _substitutePlaceholdersInEntity (
-        "f",
-        700, userID, entID, defStr, paths, substitutionEntIDs
-    );
-END //
-DELIMITER ;
+-- DELIMITER //
+-- CREATE PROCEDURE substitutePlaceholdersInFunEntity (
+--     IN userID BIGINT UNSIGNED,
+--     IN entID BIGINT UNSIGNED,
+--     IN paths TEXT, -- List of the form '<path_1>,<path_2>...'
+--     IN substitutionEntIDs TEXT -- List of the form '<entID_1>,<entID_2>...'
+-- )
+-- BEGIN
+--     CALL _substitutePlaceholdersInEntity (
+--         "f",
+--         700, userID, entID, defStr, paths, substitutionEntIDs
+--     );
+-- END //
+-- DELIMITER ;
+
+
+
+
 
 
 
