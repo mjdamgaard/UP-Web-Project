@@ -184,6 +184,35 @@ export function initialInserts(dataInserter) {
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
+    "relations", "r",
+    [
+      '@[relations/format]',
+      '"Relations"',
+      '"Relation"',
+      '_',
+      '@[relations/format]',
+      '@[relations/desc]',
+    ].join(","),
+  );
+  dataInserter.insertSubstituteOrEditEntity(
+    "relations/format", "f", (
+      "relation(" + [
+        "Title:string",
+        "Subject class:@[classes]",
+        "Object class:@[classes]",
+        "Description?:h",
+      ].join(",") +
+      ")=>" +
+      JSON.stringify({
+        "Class": "@[relations]",
+        "Title": "%1",
+        "Subject class": "%2",
+        "Object class": "%3",
+        "Description": "%4",
+      })
+    )
+  );
+  dataInserter.insertSubstituteOrEditEntity(
     "qualities", "r",
     [
       '@[classes/format]',
@@ -663,161 +692,145 @@ export function initialInserts(dataInserter) {
   /* Relations */
 
   dataInserter.insertSubstituteOrEditEntity(
-    "relations", "r",
-    JSON.stringify({
-        "Class": "@[classes]",
-        "Name": "Relations",
-        "Member title": "Relation",
-        "Special attributes": [
-            ["Title", "string", "mandatory"],
-            ["Elaborate title", "string", "optional"],
-            ["Subject class", "@[classes]", "mandatory"],
-            ["Object class", "@[classes]", "mandatory"],
-        ],
-        "Description": "@[relations/desc]",
-    }),
-  );
-  dataInserter.insertSubstituteOrEditEntity(
     "relations/members", "r",
-    JSON.stringify({
-        "Class": "@[relations]",
-        "Title": "Members",
-        "Subject class": "@[entities]",
-        "Object class": "@[classes]",
-        "Description": "@[relations/members/desc]",
-    }),
+    [
+      '@[relations/format]',
+      '"Members"',
+      '@[entities]',
+      '@[classes]',
+      '@[relations/members/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/subclasses", "r",
-    JSON.stringify({
-        "Class": "@[relations]",
-        "Title": "Subclasses",
-        "Subject class": "@[classes]",
-        "Object class": "@[classes]",
-        "Description": "@[relations/subclasses/desc]",
-    }),
+    [
+      '@[relations/format]',
+      '"Subclasses"',
+      '@[classes]',
+      '@[classes]',
+      '@[relations/subclasses/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/relations", "r",
-    JSON.stringify({
-        "Class": "@[relations]",
-        "Title": "Relations",
-        "Subject class": "@[relations]",
-        "Object class": "@[entities]",
-        "Description": "@[relations/relations/desc]",
-    }),
+    [
+      '@[relations/format]',
+      '"Relations"',
+      '@[relations]',
+      '@[entities]',
+      '@[relations/relations/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/relations for members", "r",
-    JSON.stringify({
-        "Class": "@[relations]",
-        "Title": "Relations for members",
-        "Subject class": "@[relations]",
-        "Object class": "@[classes]",
-        "Description": "@[relations/relations for members/desc]",
-    }),
+    [
+      '@[relations/format]',
+      '"Relations for members"',
+      '@[relations]',
+      '@[classes]',
+      '@[relations/relations for members/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/sub-relations", "r",
-    JSON.stringify({
-        "Class": "@[relations]",
-        "Title": "Sub-relations",
-        "Subject class": "@[relations]",
-        "Object class": "@[relations]",
-        "Description": "@[relations/sub-relations/desc]",
-    }),
+    [
+      '@[relations/format]',
+      '"Sub-relations"',
+      '@[relations]',
+      '@[relations]',
+      '@[relations/sub-relations/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/qualities", "r",
-    JSON.stringify({
-        "Class": "@[relations]",
-        "Title": "Qualities",
-        "Subject class": "@[qualities]",
-        "Object class": "@[entities]",
-        "Description": "@[relations/qualities/desc]",
-    }),
+    [
+      '@[relations/format]',
+      '"Qualities"',
+      '@[qualities]',
+      '@[entities]',
+      '@[relations/qualities/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/qualities for members", "r",
-    JSON.stringify({
-        "Class": "@[relations]",
-        "Title": "Qualities for members",
-        "Subject class": "@[qualities]",
-        "Object class": "@[classes]",
-        "Description": "@[relations/qualities for members/desc]",
-    }),
+    [
+      '@[relations/format]',
+      '"Qualities for members"',
+      '@[qualities]',
+      '@[classes]',
+      '@[relations/qualities for members/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/sub-qualities", "r",
-    JSON.stringify({
-        "Class": "@[relations]",
-        "Title": "Sub-qualities",
-        "Subject class": "@[qualities]",
-        "Object class": "@[qualities]",
-        "Description": "@[relations/sub-qualities/desc]",
-    }),
+    [
+      '@[relations/format]',
+      '"Sub-qualities"',
+      '@[qualities]',
+      '@[qualities]',
+      '@[relations/sub-qualities/desc]',
+    ].join(","),
   );
-
 
   dataInserter.insertSubstituteOrEditEntity(
     "relations/arguments", "r",
-    JSON.stringify({
-        "Class": "@[relations]",
-        "Title": "Arguments",
-        "Subject class": "@[scalar parameters]",
-        "Object class": "@[scalar parameters]",
-        "Description": "@[relations/arguments/desc]",
-    }),
+    [
+      '@[relations/format]',
+      '"Arguments"',
+      '@[quality parameters]',
+      '@[quality parameters]',
+      '@[relations/arguments/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/comments", "r",
-    JSON.stringify({
-        "Class": "@[relations]",
-        "Title": "Comments",
-        "Subject class": "@[comments]",
-        "Object class": "@[entities]",
-        "Description": "@[relations/comments/desc]",
-    }),
+    [
+      '@[relations/format]',
+      '"Comments"',
+      '@[texts]',
+      '@[entities]',
+      '@[relations/comments/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/reaction comments", "r",
-    JSON.stringify({
-        "Class": "@[relations]",
-        "Title": "Reaction comments",
-        "Subject class": "@[comments]", // ('comments' is intentional)
-        "Object class": "@[entities]",
-        "Description": "@[relations/reaction comments/desc]",
-    }),
+    [
+      '@[relations/format]',
+      '"Reaction  comments"',
+      '@[texts]',
+      '@[entities]',
+      '@[relations/reaction comments/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/informative comments", "r",
-    JSON.stringify({
-        "Class": "@[relations]",
-        "Title": "Informative comments",
-        "Subject class": "@[comments]", // (also intentional)
-        "Object class": "@[entities]",
-        "Description": "@[relations/informative comments/desc]",
-    }),
+    [
+      '@[relations/format]',
+      '"Informative  comments"',
+      '@[texts]',
+      '@[entities]',
+      '@[relations/informative comments/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/texts", "r",
-    JSON.stringify({
-        "Class": "@[relations]",
-        "Title": "Texts",
-        "Subject class": "@[texts]",
-        "Object class": "@[entities]",
-        "Description": "@[relations/texts/desc]",
-    }),
+    [
+      '@[relations/format]',
+      '"Texts"',
+      '@[texts]',
+      '@[entities]',
+      '@[relations/texts/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/discussions", "r",
-    JSON.stringify({
-        "Class": "@[relations]",
-        "Title": "Discussions",
-        "Subject class": "@[texts]",
-        "Object class": "@[entities]",
-        "Description": "@[relations/discussions/desc]",
-    }),
+    [
+      '@[relations/format]',
+      '"Discussions"',
+      '@[texts]',
+      '@[entities]',
+      '@[relations/discussions/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/facts", "r",
@@ -827,16 +840,6 @@ export function initialInserts(dataInserter) {
         "Subject class": "@[texts]",
         "Object class": "@[entities]",
         "Description": "@[relations/facts/desc]",
-    }),
-  );
-  dataInserter.insertSubstituteOrEditEntity(
-    "relations/scale members", "r",
-    JSON.stringify({
-        "Class": "@[relations]",
-        "Title": "Members",
-        "Subject class": "@[entities]",
-        "Object class": "@[scales]",
-        "Description": "@[relations/members/desc]",
     }),
   );
 
