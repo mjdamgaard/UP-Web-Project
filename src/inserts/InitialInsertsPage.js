@@ -102,6 +102,7 @@ export function initialInserts(dataInserter) {
       '"Entities"',
       '"Entity"',
       '_',
+      '_',
       '@[entities/desc]',
     ].join(","),
   );
@@ -113,20 +114,11 @@ export function initialInserts(dataInserter) {
   );
   dataInserter.insertSubstituteOrEditEntity(
     "classes", "r",
-    JSON.stringify({
-      "Class": "@[classes]",
-      "Name": "Classes",
-      "Member title": "Class",
-      "Member format": "@[classes/format]",
-      "Description": "@[classes/desc]",
-    }),
-  );
-  dataInserter.insertSubstituteOrEditEntity(
-    "classes", "r",
     [
       '@[classes/format]',
       '"Classes"',
       '"Class"',
+      '_',
       '@[classes/format]',
       '@[classes/desc]',
     ].join(","),
@@ -136,6 +128,7 @@ export function initialInserts(dataInserter) {
       "class(" + [
         "Name:string",
         "Member title:string",
+        "Parent class?:@[classes]",
         "Member format?:f",
         "Description:h",
       ].join(",") +
@@ -186,6 +179,7 @@ export function initialInserts(dataInserter) {
       '"Users"',
       '"User"',
       '_',
+      '_',
       '@[users/desc]',
     ].join(","),
   );
@@ -195,6 +189,7 @@ export function initialInserts(dataInserter) {
       '@[classes/format]',
       '"Qualities"',
       '"Quality"',
+      '_',
       '@[qualities/format]',
       '@[qualities/desc]',
     ].join(","),
@@ -208,7 +203,7 @@ export function initialInserts(dataInserter) {
         //   "[Object:@[entities],Relation:@[relations]]::Set",
         // "Domain:[Object:@[entities],Relation:@[relations]]",
         "Object:@[entities]",
-        "Relation:@[relations]",
+        "Relation:@[relations]=@[relations/members]",
         "Metric:@[metrics]",
         "Description?:h",
       ].join(",") +
@@ -229,6 +224,7 @@ export function initialInserts(dataInserter) {
       '@[classes/format]',
       '"Relevancy qualities"',
       '"Relevancy quality"',
+      '@[qualities]',
       '@[relevancy qualities/format]',
       '@[relevancy qualities/desc]',
     ].join(","),
@@ -267,6 +263,7 @@ export function initialInserts(dataInserter) {
       '"Quality parameters"',
       '"Quality parameter"',
       '_',
+      '@[quality parameters/format]',
       '@[quality parameters/desc]',
     ].join(","),
   );
@@ -294,6 +291,7 @@ export function initialInserts(dataInserter) {
       '@[classes/format]',
       '"Sets"',
       '"Set"',
+      '_',
       '@[sets/format]',
       '@[sets/desc]',
     ].join(","),
@@ -320,6 +318,7 @@ export function initialInserts(dataInserter) {
       '@[classes/format]',
       '"Quality metrics"',
       '"Quality metric"',
+      '_',
       '@[metrics/format]',
       '@[metrics/desc]',
     ].join(","),
@@ -329,11 +328,10 @@ export function initialInserts(dataInserter) {
       "metric(" + [
         "Name:string",
         "Unit?:string",
+        "Prepend unit?:bool=false",
         "Interval labels?:[start:float,end:float,label:string][]",
         "Lower bound?:float",
         "Upper bound?:float",
-        "High end?:float",
-        "Low end?:float",
         "Description:h",
       ].join(",") +
       ")=>" +
@@ -341,88 +339,13 @@ export function initialInserts(dataInserter) {
         "Class": "@[metrics]",
         "Name": "%1",
         "Unit": "%2",
-        "Interval labels": "%3",
-        "Lower bound": "%4",
-        "Upper bound": "%5",
-        "High end": "%6",
-        "Low end": "%7",
-        "Description": "%8",
+        "Prepend unit": "%3",
+        "Interval labels": "%4",
+        "Lower bound": "%5",
+        "Upper bound": "%6",
+        "Description": "%7",
       })
     )
-  );
-
-  // dataInserter.insertSubstituteOrEditEntity(
-  //   "metrics/std percentage metric", "r",
-  //   JSON.stringify({
-  //     "Class": "@[metrics]",
-  //     "Name": "Standard percentage metric",
-  //     "Unit":"%",
-  //     "Lower bound": 0,
-  //     "Upper bound": 100,
-  //     "Description": "@[metrics/std percentage metric/desc]",
-  //   }),
-  // );
-  dataInserter.insertSubstituteOrEditEntity(
-    "metrics/std percentage metric", "r",
-    [
-      '@[metrics/format]',
-      '"Standard percentage metric"',
-      '"%"',
-      '_',
-      '0',
-      '100',
-      '_',
-      '_',
-      '@[metrics/std percentage metric/desc]',
-    ].join(","),
-  );
-  // dataInserter.insertSubstituteOrEditEntity(
-  //   "metrics/std predicate metric", "r",
-  //   JSON.stringify({
-  //     "Class": "@[metrics]",
-  //     "Name": "Standard predicate metric",
-  //     "Unit": "\\star",
-  //     "Interval labels": [
-  //         [0, 1, "extremely not"],
-  //         [1, 2, "very much not"],
-  //         [2, 3, "truly not"],
-  //         [3, 4, "somewhat not"],
-  //         [4, 5, "slightly not"],
-  //         [5, 6, "slightly"],
-  //         [6, 7, "somewhat"],
-  //         [7, 8, "truly"],
-  //         [8, 9, "very much"],
-  //         [9, 10, "extremely"],
-  //     ],
-  //     "Lower bound": 0,
-  //     "Upper bound": 10,
-  //     "Description": "@[metrics/std predicate metric/desc]",
-  //   }),
-  // );
-  dataInserter.insertSubstituteOrEditEntity(
-    "metrics/std predicate metric", "r",
-    [
-      '@[metrics/format]',
-      '"Standard predicate metric"',
-      '"\\star"',
-      JSON.stringify([
-        [0, 1, "extremely not"],
-        [1, 2, "very much not"],
-        [2, 3, "truly not"],
-        [3, 4, "somewhat not"],
-        [4, 5, "slightly not"],
-        [5, 6, "slightly"],
-        [6, 7, "somewhat"],
-        [7, 8, "truly"],
-        [8, 9, "very much"],
-        [9, 10, "extremely"],
-      ]),
-      '0',
-      '10',
-      '_',
-      '_',
-      '@[metrics/std predicate metric/desc]',
-    ].join(","),
   );
 
   dataInserter.insertSubstituteOrEditEntity(
@@ -431,6 +354,7 @@ export function initialInserts(dataInserter) {
       '@[classes/format]',
       '"Lists"',
       '"List"',
+      '_',
       '_',
       '@[lists/desc]',
     ].join(","),
@@ -442,6 +366,7 @@ export function initialInserts(dataInserter) {
       '@[classes/format]',
       '"User score lists"',
       '"User score list"',
+      '@[lists]',
       '@[user score lists/format]',
       '@[user score lists/desc]',
     ].join(","),
@@ -466,6 +391,7 @@ export function initialInserts(dataInserter) {
       '@[classes/format]',
       '"Score median lists"',
       '"Score median list"',
+      '@[lists]',
       '@[score median lists/format]',
       '@[score median lists/desc]',
     ].join(","),
@@ -494,6 +420,7 @@ export function initialInserts(dataInserter) {
       '@[classes/format]',
       '"Float2-ordered lists"',
       '"Float2-ordered list"',
+      '@[lists]',
       '@[float2-ordered lists/format]',
       '@[float2-ordered lists/desc]',
     ].join(","),
@@ -513,114 +440,223 @@ export function initialInserts(dataInserter) {
 
 
 
+  /* Some quality metrics*/
 
-
-
+  dataInserter.insertSubstituteOrEditEntity(
+    "metrics/std percentage metric", "r",
+    [
+      '@[metrics/format]',
+      '"Standard percentage metric"',
+      '"%"',
+      '_',
+      '_',
+      '0',
+      '100',
+      '@[metrics/std percentage metric/desc]',
+    ].join(","),
+  );
+  dataInserter.insertSubstituteOrEditEntity(
+    "metrics/std predicate metric", "r",
+    [
+      '@[metrics/format]',
+      '"Standard predicate metric"',
+      '"\\star"',
+      '_',
+      JSON.stringify([
+        [0, 1, "extremely not"],
+        [1, 2, "very much not"],
+        [2, 3, "truly not"],
+        [3, 4, "somewhat not"],
+        [4, 5, "slightly not"],
+        [5, 6, "slightly"],
+        [6, 7, "somewhat"],
+        [7, 8, "truly"],
+        [8, 9, "very much"],
+        [9, 10, "extremely"],
+      ]),
+      '0',
+      '10',
+      '@[metrics/std predicate metric/desc]',
+    ].join(","),
+  );
+  dataInserter.insertSubstituteOrEditEntity(
+    "metrics/price in USD metric", "r",
+    [
+      '@[metrics/format]',
+      '"Price metric (USD)"',
+      '"$"',
+      'true',
+      '_',
+      '_',
+      '_',
+      '@[metrics/price in USD metric/desc]',
+    ].join(","),
+  );
+  dataInserter.insertSubstituteOrEditEntity(
+    "metrics/time in years metric", "r",
+    [
+      '@[metrics/format]',
+      '"Time metric (years)"',
+      '"yr"',
+      '_',
+      '_',
+      '0',
+      '_',
+      '@[metrics/time in years metric/desc]',
+    ].join(","),
+  );
+  dataInserter.insertSubstituteOrEditEntity(
+    "metrics/time in months metric", "r",
+    [
+      '@[metrics/format]',
+      '"Time metric (months)"',
+      '"months"',
+      '_',
+      '_',
+      '0',
+      '_',
+      '@[metrics/time in months metric/desc]',
+    ].join(","),
+  );
+  dataInserter.insertSubstituteOrEditEntity(
+    "metrics/time in days metric", "r",
+    [
+      '@[metrics/format]',
+      '"Time metric (days)"',
+      '"days"',
+      '_',
+      '_',
+      '0',
+      '_',
+      '@[metrics/time in days metric/desc]',
+    ].join(","),
+  );
 
 
   /* Some qualities */
 
   dataInserter.insertSubstituteOrEditEntity(
-    "percentage qualities/probability", "r",
-    JSON.stringify({
-        "Class": "@[qualities]",
-        "Label": "Probability",
-        "Domain": "@[texts]",
-        "Description": "@[percentage qualities/probability/desc]",
-    }),
+    "qualities/probability", "r",
+    [
+      '@[qualities/format]',
+      '"Probability"',
+      '@[texts]',
+      '@[relations/members]',
+      '@[metrics/std percentage metric]',
+      '@[qualities/probability/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
-    "percentage qualities/truthfulness", "r",
-    JSON.stringify({
-        "Class": "@[qualities]",
-        "Label": "Truthfulness",
-        "Domain": "@[texts]",
-        "Description": "@[percentage qualities/truthfulness/desc]",
-    }),
+    "qualities/truthfulness", "r",
+    [
+      '@[qualities/format]',
+      '"Truthfulness"',
+      '@[texts]',
+      '_',
+      '@[metrics/std percentage metric]',
+      '@[qualities/truthfulness/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
-    "percentage qualities/agreement", "r",
-    JSON.stringify({
-        "Class": "@[qualities]",
-        "Label": "Agreement",
-        "Domain": "@[texts]",
-        "Description": "@[percentage qualities/agreement/desc]",
-    }),
+    "qualities/agreement", "r",
+    [
+      '@[qualities/format]',
+      '"Agreement"',
+      '@[texts]',
+      '_',
+      '@[metrics/std percentage metric]',
+      '@[qualities/agreement/desc]',
+    ].join(","),
   );
-
 
   dataInserter.insertSubstituteOrEditEntity(
     "qualities/good (no desc.)", "r",
-    JSON.stringify({
-        "Class": "@[predicate qualities]",
-        "Label": "good",
-        // We use lowercase when Description is not provided.
-        "Description": "@[qualities/good (no desc.)/desc]",
-    }),
+    [
+      '@[qualities/format]',
+      '"good"', // We use lowercase when Description is not provided.
+      '@[entities]',
+      '_',
+      '@[metrics/std predicate metric]',
+      '_',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "qualities/funny (no desc.)", "r",
-    JSON.stringify({
-        "Class": "@[predicate qualities]",
-        "Label": "funny",
-        "Description": "@[qualities/funny (no desc.)/desc]",
-    }),
+    [
+      '@[qualities/format]',
+      '"funny"', // We use lowercase when Description is not provided.
+      '@[entities]',
+      '_',
+      '@[metrics/std predicate metric]',
+      '_',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "qualities/good", "r",
-    JSON.stringify({
-        "Class": "@[predicate qualities]",
-        "Label": "Good",
-        // We capitalize first letter when Description is provided.
-        "Description": "@[qualities/good/desc]",
-    }),
+    [
+      '@[qualities/format]',
+      '"Good"', // We capitalize first letter when Description is provided.
+      '@[entities]',
+      '_',
+      '@[metrics/std predicate metric]',
+      '@[qualities/good/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "qualities/funny", "r",
-    JSON.stringify({
-        "Class": "@[predicate qualities]",
-        "Label": "Funny",
-        "Description": "@[qualities/funny/desc]",
-    }),
+    [
+      '@[qualities/format]',
+      '"Funny"', // We capitalize first letter when Description is provided.
+      '@[entities]',
+      '_',
+      '@[metrics/std predicate metric]',
+      '@[qualities/funny/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "qualities/witty", "r",
-    JSON.stringify({
-        "Class": "@[predicate qualities]",
-        "Label": "Witty",
-        "Description": "@[qualities/witty/desc]",
-    }),
+    [
+      '@[qualities/format]',
+      '"Witty"',
+      '@[entities]',
+      '_',
+      '@[metrics/std predicate metric]',
+      '@[qualities/witty/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "qualities/spoilers", "r",
-    JSON.stringify({
-        "Class": "@[predicate qualities]",
-        "Label": "Spoilers",
-        "Description": "@[qualities/spoilers/desc]",
-    }),
+    [
+      '@[qualities/format]',
+      '"Spoilers"',
+      '@[entities]',
+      '_',
+      '@[metrics/std predicate metric]',
+      '@[qualities/spoilers/desc]',
+    ].join(","),
   );
 
   dataInserter.insertSubstituteOrEditEntity(
-    "qualities/price 0-1,000,000 $", "r",
-    JSON.stringify({
-        "Class": "@[qualities]",
-        "Label": "Price",
-        "Unit": "$",
-        "Lower bound": 0,
-        "Upper bound": 1000000,
-        "Description": "@[qualities/price/desc]",
-    }),
+    "qualities/price", "r",
+    [
+      '@[qualities/format]',
+      '"Price"',
+      '@[entities]',
+      '_',
+      '@[metrics/price in USD metric]',
+      '@[qualities/price/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
-    "qualities/durability 0-20 yr", "r",
-    JSON.stringify({
-        "Class": "@[qualities]",
-        "Label": "Durability",
-        "Unit": "yr",
-        "Lower bound": 0,
-        "Upper bound": 20,
-        "Description": "@[qualities/durability/desc]",
-    }),
+    "qualities/durability in years", "r",
+    [
+      '@[qualities/format]',
+      '"Durability (years)"',
+      '@[entities]',
+      '_',
+      '@[metrics/time in years metric]',
+      '@[qualities/durability in years/desc]',
+    ].join(","),
   );
 
 
