@@ -128,8 +128,12 @@ export class DataInserter {
 
   insertEntity(
     path, entType, defStr,
-    isAnonymous = 0, isPrivate = 0, isEditable = 1, callback = () => {}
+    isAnonymous = 0, userWhiteList = 0, isEditable = 1,
+    callback = () => {}
   ) {
+    if (userWhiteList === true) {
+      userWhiteList = this.getAccountData("userID")
+    }
     let req =
       (entType === "f") ? "funEnt" :
       (entType === "r") ? "regEnt" :
@@ -142,7 +146,7 @@ export class DataInserter {
       ses: this.getAccountData("sesIDHex"),
       u: isAnonymous ? 0 : this.getAccountData("userID"),
       d: defStr,
-      w: isPrivate ? this.getAccountData("userID") : 0,
+      w: userWhiteList,
       a: isAnonymous,
       ed: isEditable,
     };
@@ -158,9 +162,10 @@ export class DataInserter {
         let targetNode = this.#getOrSetNodeFromPath(path);
         targetNode[0] = {
           entID: result.outID.toString(),
-          c: isAnonymous ? 0 : this.getAccountData("userID"),
-          prv: isAnonymous ? undefined : isPrivate,
-          ed: isAnonymous ? undefined : isPrivate ? undefined : isEditable,
+          c: result.exitCode == "1" ? null : isAnonymous ? 0 :
+            this.getAccountData("userID"),
+          w: userWhiteList ? userWhiteList : undefined,
+          ed: isAnonymous ? undefined : userWhiteList ? undefined : isEditable,
         };
       }
       callback(result.outID, result.exitCode);
@@ -168,11 +173,77 @@ export class DataInserter {
   }
 
   insertSubbedEntity(
-    path, entType, defStr, isAnonymous, isPrivate, isEditable, callback
+    path, entType, defStr, isAnonymous, userWhiteList, isEditable, callback
   ) {
     defStr = this.getSubbedDefStr(defStr);
     this.insertEntity(
-      path, entType, defStr, isAnonymous, isPrivate, isEditable,
+      path, entType, defStr, isAnonymous, userWhiteList, isEditable,
+      callback
+    );
+  }
+
+  editEntity(
+    path, entType, defStr,
+    isAnonymous = 0, userWhiteList = 0, isEditable = 1,
+    callback = () => {}
+  ) {
+    if (userWhiteList === true) {
+      userWhiteList = this.getAccountData("userID")
+    }
+    let entID = this.getEntIDFromPath(path);
+    if (!entID) {
+      debugger;throw (
+        "editEntity(): entID was not found."
+      );
+    }
+
+    if (entType === "r" || entType === "f") {
+      debugger;throw (
+        "editEntity(): 'r' and 'f' entities cannot be edited, only substituted."
+      );
+    }
+    let req =
+      (entType === "8") ? "editUTF8Ent" :
+      (entType === "h") ? "editHTMLEnt" :
+      (entType === "j") ? "editJSONEnt" :
+      "unrecognized entity type";
+    let reqData = {
+      req: req,
+      ses: this.getAccountData("sesIDHex"),
+      u: isAnonymous ? 0 : this.getAccountData("userID"),
+      e: entID,
+      d: defStr,
+      w: userWhiteList,
+      a: isAnonymous,
+      ed: isEditable,
+    };
+    DBRequestManager.insert(reqData, (responseText) => {
+      let result = JSON.parse(responseText);
+      if (parseInt(result.exitCode) >= 1) {
+        callback(result.outID, result.exitCode);
+        return;
+      }
+      // If path is provided, get or set the relevant node from path, then
+      // insert entID at this potentially newly created node.
+      if (path) {
+        let targetNode = this.#getOrSetNodeFromPath(path);
+        targetNode[0] = {
+          entID: result.outID.toString(),
+          c: isAnonymous ? 0 : this.getAccountData("userID"),
+          w: userWhiteList ? userWhiteList : undefined,
+          ed: isAnonymous ? undefined : userWhiteList ? undefined : isEditable,
+        };
+      }
+      callback(result.outID, result.exitCode);
+    });
+  }
+
+  editSubbedEntity(
+    path, entType, defStr, isAnonymous, userWhiteList, isEditable, callback
+  ) {
+    defStr = this.getSubbedDefStr(defStr);
+    this.editEntity(
+      path, entType, defStr, isAnonymous, userWhiteList, isEditable,
       callback
     );
   }
@@ -188,15 +259,37 @@ export class DataInserter {
     });
   }
 
-  insertOrSubstituteEntity(
+
+
+  insertOrEditEntity(
     path, entType, defStr,
-    isAnonymous = 0, isPrivate = 0, isEditable = 1, callback = () => {}
+    isAnonymous = 0, userWhiteList = 0, isEditable = 1,
+    callback = () => {}
   ) {
     // If an entID is not already recorded at path, simply insert a new entity.
     let entID = this.getEntIDFromPath(path);
     if (!entID) {
-      this.insertEntity(
-        path, entType, defStr, isAnonymous, isPrivate, isEditable, callback
+      this.insertSubbedEntity(
+        path, entType, defStr, isAnonymous, userWhiteList, isEditable, callback
+      );
+    }
+    else {
+      this.editSubbedEntity(
+        path, entType, defStr, isAnonymous, userWhiteList, isEditable, callback
+      );
+    }
+  }
+
+  insertOrSubstituteEntity(
+    path, entType, defStr,
+    isAnonymous = 0, userWhiteList = 0, isEditable = 1,
+    callback = () => {}
+  ) {
+    // If an entID is not already recorded at path, simply insert a new entity.
+    let entID = this.getEntIDFromPath(path);
+    if (!entID) {
+      this.insertSubbedEntity(
+        path, entType, defStr, isAnonymous, userWhiteList, isEditable, callback
       );
       return;
     }
@@ -204,46 +297,37 @@ export class DataInserter {
     // in defStr, then looking the entID of them all, and then we make the
     // "subEnt" request for each found path-entID pair.
     let pathRefs = defStr.match(PATH_REF_REGEX) ?? [];
-    let substitutionEntIDs = pathRefs.map(pathRef => {
-      let pathStr = pathRef.slice(2, -1);
-      return this.getEntIDFromPath(pathStr);
-    });
+    let paths = pathRefs.map(pathRef => pathRef.slice(2, -1));
+    let substitutionEntIDs = paths.map(
+      pathStr => this.getEntIDFromPath(pathStr)
+    );
     let reqData = {
       req: "subEnt",
       ses: this.getAccountData("sesIDHex"),
       u: isAnonymous ? 0 : this.getAccountData("userID"),
       e: entID,
-      p: pathRefs.join(","),
+      p: paths.join(","),
       s: substitutionEntIDs.join(","),
     };
     DBRequestManager.insert(reqData, (responseText) => {
       let result = JSON.parse(responseText);
-      if (parseInt(result.exitCode) >= 2) {
-        callback(result.outID, result.exitCode);
-        return;
-      }
-      // Get or set the relevant node from path, then insert entID at this
-      // potentially newly created node.
-      let targetNode = this.#getOrSetNodeFromPath(path);
-      targetNode[0] = {
-        entID: result.outID.toString(),
-        c: result.exitCode == "1" ? null :
-          isAnonymous ? 0 : this.getAccountData("userID"),
-        prv: isAnonymous ? undefined : isPrivate,
-        ed: isAnonymous ? undefined : isPrivate ? undefined : isEditable,
-      };
       callback(result.outID, result.exitCode);
     });
   }
 
 
-  insertOrEditSubbedEntity(
-    path, entType, defStr, isAnonymous, isPrivate, isEditable, callback
+  insertSubstituteOrEditEntity(
+    path, entType, defStr, isAnonymous, userWhiteList, isEditable, callback
   ) {
-    defStr = this.getSubbedDefStr(defStr);
-    this.insertOrSubstituteEntity(
-      path, entType, defStr, isAnonymous, isPrivate, isEditable, callback
-    );
+    if (entType === "r" || entType === "f") {
+      this.insertOrSubstituteEntity(
+        path, entType, defStr, isAnonymous, userWhiteList, isEditable, callback
+      );
+    } else {
+      this.insertOrEditEntity(
+        path, entType, defStr, isAnonymous, userWhiteList, isEditable, callback
+      );
+    }
   }
 
 

@@ -637,7 +637,7 @@ proc: BEGIN
     --     SELECT NULL AS outID, 10 AS exitCode; -- rollback due to deadlock.
     -- END;
 
-    DECLARE EXIT HANDLER FOR 1586 -- Duplicate key entry error.
+    DECLARE EXIT HANDLER FOR 1062, 1586 -- Duplicate key entry error.
     BEGIN
         ROLLBACK;
 
@@ -970,7 +970,7 @@ CREATE PROCEDURE substitutePlaceholdersInEntity (
     IN substitutionEntIDs TEXT -- List of the form '<entID_1>,<entID_2>...'
 )
 proc: BEGIN
-    DECLARE pathRegExp VARCHAR(80) DEFAULT '[^0-9\[\]@,;"][^\[\]@,;"]*';
+    DECLARE pathRegExp VARCHAR(80) DEFAULT '[^0-9\\[\\]@,;"][^\\[\\]@,;"]*';
     DECLARE creatorID, subEntID, userWhiteListID BIGINT UNSIGNED;
     DECLARE entType CHAR;
     DECLARE prevDefStr, newDefStr LONGTEXT;
