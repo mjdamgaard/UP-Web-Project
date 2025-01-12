@@ -103,6 +103,7 @@ export function initialInserts(dataInserter) {
       '"Entity"',
       '_',
       '_',
+      '_',
       '@[entities/desc]',
     ].join(","),
   );
@@ -119,6 +120,7 @@ export function initialInserts(dataInserter) {
       '"Classes"',
       '"Class"',
       '_',
+      '_',
       '@[classes/format]',
       '@[classes/desc]',
     ].join(","),
@@ -129,6 +131,8 @@ export function initialInserts(dataInserter) {
         "Name:string",
         "Member title:string",
         "Parent class?:@[classes]",
+        // "Member format?:(f::Function|t::Entity type)",
+        "Member type?:t=@[4]",
         "Member format?:f",
         "Description:h",
       ].join(",") +
@@ -179,8 +183,81 @@ export function initialInserts(dataInserter) {
       '"Users"',
       '"User"',
       '_',
+      '@[2]',
       '_',
       '@[users/desc]',
+    ].join(","),
+  );
+  dataInserter.insertSubstituteOrEditEntity(
+    "workspaces", "r",
+    [
+      '@[classes/format]',
+      '"Workspaces"',
+      '"workspace"',
+      '@[json objects]',
+      '@[6]',
+      '_',
+      '@[workspaces/desc]',
+    ].join(","),
+  );
+  dataInserter.insertSubstituteOrEditEntity(
+    "types", "r",
+    [
+      '@[classes/format]',
+      '"Entity types"',
+      '"Entity type"',
+      '_',
+      '@[1]',
+      '_',
+      '@[texts/desc]',
+    ].join(","),
+  );
+  dataInserter.insertSubstituteOrEditEntity(
+    "functions", "r",
+    [
+      '@[classes/format]',
+      '"Functions"',
+      '"Function"',
+      '_',
+      '@[3]',
+      '_',
+      '@[functions/desc]',
+    ].join(","),
+  );
+  dataInserter.insertSubstituteOrEditEntity(
+    "json objects", "r",
+    [
+      '@[classes/format]',
+      '"JSON objects"',
+      '"JSON object"',
+      '_',
+      '@[6]',
+      '_',
+      '@[json objects/desc]',
+    ].join(","),
+  );
+  dataInserter.insertSubstituteOrEditEntity(
+    "texts", "r",
+    [
+      '@[classes/format]',
+      '"Texts"',
+      '"Text"',
+      '_',
+      '@[7]',
+      '_',
+      '@[texts/desc]', // Include 'HTML' in the title (as well as in the body).
+    ].join(","),
+  );
+  dataInserter.insertSubstituteOrEditEntity(
+    "uft-8 texts", "r",
+    [
+      '@[classes/format]',
+      '"UTF-8 texts"',
+      '"UTF-8 text"',
+      '_',
+      '@[8]',
+      '_',
+      '@[uft-8 texts/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
@@ -189,6 +266,7 @@ export function initialInserts(dataInserter) {
       '@[relations/format]',
       '"Relations"',
       '"Relation"',
+      '_',
       '_',
       '@[relations/format]',
       '@[relations/desc]',
@@ -218,6 +296,7 @@ export function initialInserts(dataInserter) {
       '@[classes/format]',
       '"Qualities"',
       '"Quality"',
+      '_',
       '_',
       '@[qualities/format]',
       '@[qualities/desc]',
@@ -254,6 +333,7 @@ export function initialInserts(dataInserter) {
       '"Relevancy qualities"',
       '"Relevancy quality"',
       '@[qualities]',
+      '_',
       '@[relevancy qualities/format]',
       '@[relevancy qualities/desc]',
     ].join(","),
@@ -292,6 +372,7 @@ export function initialInserts(dataInserter) {
       '"Quality parameters"',
       '"Quality parameter"',
       '_',
+      '_',
       '@[quality parameters/format]',
       '@[quality parameters/desc]',
     ].join(","),
@@ -321,6 +402,7 @@ export function initialInserts(dataInserter) {
       '"Sets"',
       '"Set"',
       '_',
+      '_',
       '@[sets/format]',
       '@[sets/desc]',
     ].join(","),
@@ -347,6 +429,7 @@ export function initialInserts(dataInserter) {
       '@[classes/format]',
       '"Quality metrics"',
       '"Quality metric"',
+      '_',
       '_',
       '@[metrics/format]',
       '@[metrics/desc]',
@@ -385,6 +468,7 @@ export function initialInserts(dataInserter) {
       '"List"',
       '_',
       '_',
+      '_',
       '@[lists/desc]',
     ].join(","),
   );
@@ -396,6 +480,7 @@ export function initialInserts(dataInserter) {
       '"User score lists"',
       '"User score list"',
       '@[lists]',
+      '_',
       '@[user score lists/format]',
       '@[user score lists/desc]',
     ].join(","),
@@ -421,6 +506,7 @@ export function initialInserts(dataInserter) {
       '"Score median lists"',
       '"Score median list"',
       '@[lists]',
+      '_',
       '@[score median lists/format]',
       '@[score median lists/desc]',
     ].join(","),
@@ -450,6 +536,7 @@ export function initialInserts(dataInserter) {
       '"Float2-ordered lists"',
       '"Float2-ordered list"',
       '@[lists]',
+      '_',
       '@[float2-ordered lists/format]',
       '@[float2-ordered lists/desc]',
     ].join(","),
@@ -782,6 +869,8 @@ export function initialInserts(dataInserter) {
       '@[relations/arguments/desc]',
     ].join(","),
   );
+
+  // (Recall that Comments are Texts that include some topic meta header.)
   dataInserter.insertSubstituteOrEditEntity(
     "relations/comments", "r",
     [
@@ -834,73 +923,32 @@ export function initialInserts(dataInserter) {
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/facts", "r",
-    JSON.stringify({
-        "Class": "@[relations]",
-        "Title": "Facts",
-        "Subject class": "@[texts]",
-        "Object class": "@[entities]",
-        "Description": "@[relations/facts/desc]",
-    }),
+    [
+      '@[relations/format]',
+      '"Facts"',
+      '@[texts]',
+      '@[entities]',
+      '@[relations/facts/desc]',
+    ].join(","),
   );
-
-
-  dataInserter.insertSubstituteOrEditEntity(
-    "texts", "r",
-    JSON.stringify({
-        "Class": "@[classes]",
-        "Name": "Texts",
-        "Member title": "Text",
-        "Description": "@[texts/desc]",
-    }),
-  );
-
-  // I think we can just implement Comments as XML texts instead, using some
-  // 'context header'..
-  // dataInserter.insertSubstituteOrEditEntity(
-  //   "comments", "r",
-  //   JSON.stringify({
-  //       "Class": "@[classes]",
-  //       "Name": "Comments",
-  //       "Member title": "Comment",
-  //       // "Parent class": "@[texts]",
-  //       "Special attributes": [
-  //           ["Topic", "@[entities]", "mandatory"],
-  //           ["Description", "", "removed"],
-  //       ],
-  //       "Description": "@[comments/desc]",
-  //   }),
-  // );
-
-
 
 
   dataInserter.insertSubstituteOrEditEntity(
     "relations/workspaces", "r",
-    JSON.stringify({
-        "Class": "@[relations]",
-        "Title": "Workspaces",
-        "Subject class": "@[workspaces]",
-        "Object class": "@[users]",
-        "Description": "@[relations/workspaces/desc]",
-    }),
-  );
-  dataInserter.insertSubstituteOrEditEntity(
-    "workspaces", "r",
-    JSON.stringify({
-        "Class": "@[classes]",
-        "Name": "Workspaces",
-        "Member title": "Workspace",
-        "Special attributes": [
-            ["Workspace object", "object", "mandatory"],
-            ["Description", "", "removed"],
-        ],
-        "Description": "@[workspaces/desc]",
-    }),
+    [
+      '@[relations/format]',
+      '"Workspaces"',
+      '@[workspaces]',
+      '@[users]',
+      '@[relations/workspaces/desc]',
+    ].join(","),
   );
 
 
 
 }
+
+
 
 
 
