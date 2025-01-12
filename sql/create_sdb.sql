@@ -1,11 +1,11 @@
 
 /* Scores */
-DROP TABLE PrivateEntityLists;
-DROP TABLE PublicEntityLists;
-DROP TABLE PublicListMetadata;
+-- DROP TABLE PrivateEntityLists;
+-- DROP TABLE PublicEntityLists;
+-- DROP TABLE PublicListMetadata;
 
 /* Requests */
-DROP TABLE ScheduledRequests;
+-- DROP TABLE ScheduledRequests;
 
 /* Entities */
 DROP TABLE Entities;
@@ -275,7 +275,7 @@ VALUES
     (7, "t", "h", 0),
     (8, "t", "j", 0),
     (9, "u", "initial_admin", 0),
-    (10, "j", '{}', 9),
+    (10, "j", '{}', 9);
     --
     -- (11, "a", CONCAT(
     --     '{',
@@ -313,102 +313,6 @@ VALUES
     --         '"Locked after":"%3"',
     --     '}'
     -- ), 9),
-    (11, "f", CONCAT(
-        'user_scores(',
-            'User:u,',
-            'Quality:@[qualities]',
-        '){',
-            '"Class":"@[user score lists]",',
-            '"User":"%1",',
-            '"Quality":"%2"',
-        '}'
-    ), 9),
-    (12, "f", CONCAT(
-        'min_score_contributions(',
-            'Quality:@[qualities],',
-            'Subject:@[entities]',
-        '){',
-            '"Class":"@[min score contribution lists]",',
-            '"Quality":"%1",',
-            '"Subject":"%2"',
-        '}'
-    ), 9),
-    (13, "f", CONCAT(
-        'max_score_contributions(',
-            'User group:@[user groups],',
-            'Quality:@[qualities],',
-            'Subject:@[entities]',
-        '){',
-            '"Class":"@[max score contribution lists]",',
-            '"User group":"%1",',
-            '"Quality":"%2",',
-            '"Subject":"%3"',
-        '}'
-    ), 9),
-    (14, "f", CONCAT(
-        'score_medians(',
-            'Has passed weight threshold:bool,',
-            'User group:@[user groups],',
-            'Quality:@[qualities],',
-            'Filter list?:@[lists]',
-        '){',
-            '"Class":"@[score median lists]",',
-            '"Has passed weight threshold":"%1",',
-            '"User group":"%2",',
-            '"Quality":"%3",',
-            '"Filter list":"%4"',
-        '}'
-    ), 9),
-    (15, "f", CONCAT(
-        'float2_ordered_list(',
-            'List:@[lists]',
-        '){',
-            '"Class":"@[float2-ordered lists]",',
-            '"List":"%1"',
-        '}'
-    ), 9),
-    (16, "a", CONCAT(
-        '{',
-            '"Class":"@[metrics]",',
-            '"Name":"Standard percentage metric",',
-            '"Unit":"%",',
-            '"Lower bound":0,',
-            '"Upper bound":100,',
-            '"Description":"@[metrics/std percentage metric/desc]"',
-        '}'
-    ), 9),
-    (17, "a", CONCAT(
-        '{',
-            '"Class":"@[metrics]",',
-            '"Name":"Standard predicate metric",',
-            '"Unit":"\\star",',
-            '"Interval labels":[',
-                '[0,1,"extremely not"],'
-                '[1,2,"very much not"],'
-                '[2,3,"truly not"],'
-                '[3,4,"somewhat not"],'
-                '[4,5,"slightly not"],'
-                '[5,6,"slightly"],'
-                '[6,7,"somewhat"],'
-                '[7,8,"truly"],'
-                '[8,9,"very much"],'
-                '[9,10,"extremely"]'
-            '],',
-            '"Lower bound":0,',
-            '"Upper bound":10,',
-            '"Description":"@[metrics/std predicate metric/desc]"',
-        '}'
-    ), 9),
-    (18, "a", CONCAT(
-        '{',
-            '"Class":"@[classes]",',
-            '"Name":"User group variables",',
-            '"Member title":"User group variable",',
-            '"Member entity type":"a",',
-            '"Member format":"@[user group variables/format]",',
-            '"Description":"@[user group variables/desc]"',
-        '}'
-    ), 9);
 
 INSERT INTO EntitySecKeys (
     ent_type, def_key, ent_id

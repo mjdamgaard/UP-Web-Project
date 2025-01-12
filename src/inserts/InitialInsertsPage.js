@@ -86,14 +86,24 @@ export const InitialInsertsPage = () => {
 
 export function initialInserts(dataInserter) {
 
+  // dataInserter.insertSubstituteOrEditEntity(
+  //   "entities", "r",
+  //   JSON.stringify({
+  //     "Class": "@[classes]",
+  //     "Name": "Entities",
+  //     "Member title": "Entity",
+  //     "Description": "@[entities/desc]",
+  //   }),
+  // );
   dataInserter.insertSubstituteOrEditEntity(
     "entities", "r",
-    JSON.stringify({
-      "Class": "@[classes]",
-      "Name": "Entities",
-      "Member title": "Entity",
-      "Description": "@[entities/desc]",
-    }),
+    [
+      '@[classes/format]',
+      '"Entities"',
+      '"Entity"',
+      '_',
+      '@[entities/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "entities/desc", "h", (
@@ -110,6 +120,16 @@ export function initialInserts(dataInserter) {
       "Member format": "@[classes/format]",
       "Description": "@[classes/desc]",
     }),
+  );
+  dataInserter.insertSubstituteOrEditEntity(
+    "classes", "r",
+    [
+      '@[classes/format]',
+      '"Classes"',
+      '"Class"',
+      '@[classes/format]',
+      '@[classes/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "classes/format", "f", (
@@ -161,22 +181,23 @@ export function initialInserts(dataInserter) {
   );
   dataInserter.insertSubstituteOrEditEntity(
     "users", "r",
-    JSON.stringify({
-      "Class": "@[classes]",
-      "Name": "Users",
-      "Member title": "User",
-      "Description": "@[users/desc]",
-    }),
+    [
+      '@[classes/format]',
+      '"Users"',
+      '"User"',
+      '_',
+      '@[users/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "qualities", "r",
-    JSON.stringify({
-      "Class": "@[classes]",
-      "Name": "Qualities",
-      "Member title": "Quality",
-      "Member format": "@[qualities/format]",
-      "Description": "@[qualities/desc]",
-    }),
+    [
+      '@[classes/format]',
+      '"Qualities"',
+      '"Quality"',
+      '@[qualities/format]',
+      '@[qualities/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "qualities/format", "f", (
@@ -202,16 +223,15 @@ export function initialInserts(dataInserter) {
       })
     )
   );
-
   dataInserter.insertSubstituteOrEditEntity(
     "relevancy qualities", "r",
-    JSON.stringify({
-      "Class": "@[classes]",
-      "Name": "Relevancy qualities",
-      "Member title": "Relevancy quality",
-      "Member format": "@[relevancy qualities/format]",
-      "Description": "@[relevancy qualities/desc]",
-    }),
+    [
+      '@[classes/format]',
+      '"Relevancy qualities"',
+      '"Relevancy quality"',
+      '@[relevancy qualities/format]',
+      '@[relevancy qualities/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relevancy qualities/format", "f", (
@@ -242,15 +262,13 @@ export function initialInserts(dataInserter) {
 
   dataInserter.insertSubstituteOrEditEntity(
     "quality parameters", "r",
-    JSON.stringify({
-      "Class": "@[classes]",
-      "Name": "Quality parameters",
-      "Member title": "Quality parameter",
-      "Member format": "@[quality parameters/format]",
-      "Description": "@[quality parameters/desc]",
-      // Let the Description header be: 'Qualitative parameters' instead of
-      // just 'Parameters.'
-    }),
+    [
+      '@[classes/format]',
+      '"Quality parameters"',
+      '"Quality parameter"',
+      '_',
+      '@[quality parameters/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "quality parameters/format", "f", (
@@ -272,13 +290,13 @@ export function initialInserts(dataInserter) {
 
   dataInserter.insertSubstituteOrEditEntity(
     "sets", "r",
-    JSON.stringify({
-      "Class": "@[classes]",
-      "Name": "Sets",
-      "Member title": "Set",
-      "Member format": "@[sets/format]",
-      "Description": "@[sets/desc]",
-    }),
+    [
+      '@[classes/format]',
+      '"Sets"',
+      '"Set"',
+      '@[sets/format]',
+      '@[sets/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "sets/format", "f", (
@@ -298,15 +316,13 @@ export function initialInserts(dataInserter) {
 
   dataInserter.insertSubstituteOrEditEntity(
     "metrics", "r",
-    JSON.stringify({
-      "Class": "@[classes]",
-      "Name": "Metrics",
-      "Member title": "Metric",
-      "Member format": "@[metrics/format]",
-      "Description": "@[metrics/desc]",
-      // Let the Description header be: 'Quality metrics' instead of just
-      // 'Metrics.'
-    }),
+    [
+      '@[classes/format]',
+      '"Quality metrics"',
+      '"Quality metric"',
+      '@[metrics/format]',
+      '@[metrics/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "metrics/format", "f", (
@@ -318,8 +334,6 @@ export function initialInserts(dataInserter) {
         "Upper bound?:float",
         "High end?:float",
         "Low end?:float",
-        "Minimum bin width?:float",
-        "Maximum bin width?:float",
         "Description:h",
       ].join(",") +
       ")=>" +
@@ -332,67 +346,105 @@ export function initialInserts(dataInserter) {
         "Upper bound": "%5",
         "High end": "%6",
         "Low end": "%7",
-        "Minimum bin width": "%8",
-        "Maximum bin width": "%9",
-        "Description": "%10",
+        "Description": "%8",
       })
     )
   );
 
+  // dataInserter.insertSubstituteOrEditEntity(
+  //   "metrics/std percentage metric", "r",
+  //   JSON.stringify({
+  //     "Class": "@[metrics]",
+  //     "Name": "Standard percentage metric",
+  //     "Unit":"%",
+  //     "Lower bound": 0,
+  //     "Upper bound": 100,
+  //     "Description": "@[metrics/std percentage metric/desc]",
+  //   }),
+  // );
   dataInserter.insertSubstituteOrEditEntity(
     "metrics/std percentage metric", "r",
-    JSON.stringify({
-      "Class": "@[metrics]",
-      "Name": "Standard percentage metric",
-      "Unit":"%",
-      "Lower bound": 0,
-      "Upper bound": 100,
-      "Description": "@[metrics/std percentage metric/desc]",
-    }),
+    [
+      '@[metrics/format]',
+      '"Standard percentage metric"',
+      '"%"',
+      '_',
+      '0',
+      '100',
+      '_',
+      '_',
+      '@[metrics/std percentage metric/desc]',
+    ].join(","),
   );
+  // dataInserter.insertSubstituteOrEditEntity(
+  //   "metrics/std predicate metric", "r",
+  //   JSON.stringify({
+  //     "Class": "@[metrics]",
+  //     "Name": "Standard predicate metric",
+  //     "Unit": "\\star",
+  //     "Interval labels": [
+  //         [0, 1, "extremely not"],
+  //         [1, 2, "very much not"],
+  //         [2, 3, "truly not"],
+  //         [3, 4, "somewhat not"],
+  //         [4, 5, "slightly not"],
+  //         [5, 6, "slightly"],
+  //         [6, 7, "somewhat"],
+  //         [7, 8, "truly"],
+  //         [8, 9, "very much"],
+  //         [9, 10, "extremely"],
+  //     ],
+  //     "Lower bound": 0,
+  //     "Upper bound": 10,
+  //     "Description": "@[metrics/std predicate metric/desc]",
+  //   }),
+  // );
   dataInserter.insertSubstituteOrEditEntity(
     "metrics/std predicate metric", "r",
-    JSON.stringify({
-      "Class": "@[metrics]",
-      "Name": "Standard predicate metric",
-      "Unit": "\\star",
-      "Interval labels": [
-          [0, 1, "extremely not"],
-          [1, 2, "very much not"],
-          [2, 3, "truly not"],
-          [3, 4, "somewhat not"],
-          [4, 5, "slightly not"],
-          [5, 6, "slightly"],
-          [6, 7, "somewhat"],
-          [7, 8, "truly"],
-          [8, 9, "very much"],
-          [9, 10, "extremely"],
-      ],
-      "Lower bound": 0,
-      "Upper bound": 10,
-      "Description": "@[metrics/std predicate metric/desc]",
-    }),
+    [
+      '@[metrics/format]',
+      '"Standard predicate metric"',
+      '"\\star"',
+      JSON.stringify([
+        [0, 1, "extremely not"],
+        [1, 2, "very much not"],
+        [2, 3, "truly not"],
+        [3, 4, "somewhat not"],
+        [4, 5, "slightly not"],
+        [5, 6, "slightly"],
+        [6, 7, "somewhat"],
+        [7, 8, "truly"],
+        [8, 9, "very much"],
+        [9, 10, "extremely"],
+      ]),
+      '0',
+      '10',
+      '_',
+      '_',
+      '@[metrics/std predicate metric/desc]',
+    ].join(","),
   );
 
   dataInserter.insertSubstituteOrEditEntity(
     "lists", "r",
-    JSON.stringify({
-      "Class": "@[classes]",
-      "Name": "Lists",
-      "Member title": "List",
-      "Description": "@[lists/desc]",
-    }),
+    [
+      '@[classes/format]',
+      '"Lists"',
+      '"List"',
+      '_',
+      '@[lists/desc]',
+    ].join(","),
   );
 
   dataInserter.insertSubstituteOrEditEntity(
     "user score lists", "r",
-    JSON.stringify({
-      "Class": "@[classes]",
-      "Name": "User score lists",
-      "Member title": "User score list",
-      "Member format": "@[user score sets/format]",
-      "Description": "@[user score sets/desc]",
-    }),
+    [
+      '@[classes/format]',
+      '"User score lists"',
+      '"User score list"',
+      '@[user score lists/format]',
+      '@[user score lists/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "user score lists/format", "f", (
@@ -408,90 +460,62 @@ export function initialInserts(dataInserter) {
       })
     )
   );
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   dataInserter.insertSubstituteOrEditEntity(
-    "qualities", "r",
-    JSON.stringify({
-        "Class": "@[classes]",
-        "Name": "Qualities",
-        "Member title": "Quality",
-        "Special attributes": [
-            ["Label", "string", "mandatory"],
-            // Use purely lowercase labels only when the Description is left
-            // out.
-            ["Elaborate label", "string", "optional"],
-            ["Domain", "@[classes]", "optional"],
-            ["Unit", "string", "optional"],
-            ["Lower bound", "float", "optional"],
-            ["Upper bound", "float", "optional"],
-            // ["Include lower bound", "bool=false", "optional"],
-            // ["Include upper bound", "bool=false", "optional"],
-        ],
-        "Description": "@[qualities/desc]",
-    }),
-  );
-
-  dataInserter.insertSubstituteOrEditEntity(
-    "percentage qualities", "r",
-    JSON.stringify({
-        "Class": "@[classes]",
-        "Name": "Percentage qualities",
-        "Member title": "Percentage quality",
-        "Parent class": "@[qualities]",
-        "Special attributes": [
-            ["Unit", "", "removed"],
-            ["Lower bound", "", "removed"],
-            ["Upper bound", "", "removed"],
-        ],
-        "Description": "@[percentage qualities/desc]",
-    }),
+    "score median lists", "r",
+    [
+      '@[classes/format]',
+      '"Score median lists"',
+      '"Score median list"',
+      '@[score median lists/format]',
+      '@[score median lists/desc]',
+    ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
-    "predicate qualities", "r",
-    JSON.stringify({
-        "Class": "@[classes]",
-        "Name": "Predicate qualities",
-        "Member title": "Predicate quality",
-        "Parent class": "@[qualities]",
-        "Special attributes": [
-            ["Unit", "", "removed"],
-            ["Lower bound", "", "removed"],
-            ["Upper bound", "", "removed"],
-        ],
-        "Description": "@[predicate qualities/desc]",
-    }),
+    "score median lists/format", "f", (
+      "score_medians(" + [
+        "Has passed weight threshold:bool",
+        "User group:@[user groups]",
+        "Quality:@[qualities]",
+        "Filter list?:@[lists]"
+      ].join(",") +
+      ")=>" +
+      JSON.stringify({
+        "Class": "@[score median lists]",
+        "Has passed weight threshold": "%1",
+        "User group": "%2",
+        "Quality": "%3",
+        "Filter list": "%4",
+      })
+    )
   );
   dataInserter.insertSubstituteOrEditEntity(
-    "relevancy qualities", "r",
-    JSON.stringify({
-        "Class": "@[classes]",
-        "Name": "Relevancy qualities",
-        "Member title": "Relevancy quality",
-        "Parent class": "@[predicate qualities]",
-        "Special attributes": [
-            ["Object", "@[entities]", "mandatory"],
-            ["Relation", "@[relations]", "mandatory"],
-            ["Label", "", "removed"],
-            ["Elaborate label", "", "removed"],
-            ["Domain", "", "removed"],
-            ["Description", "", "removed"],
-        ],
-        "Description": "@[relevancy qualities/desc]",
-    }),
+    "float2-ordered lists", "r",
+    [
+      '@[classes/format]',
+      '"Float2-ordered lists"',
+      '"Float2-ordered list"',
+      '@[float2-ordered lists/format]',
+      '@[float2-ordered lists/desc]',
+    ].join(","),
   );
+  dataInserter.insertSubstituteOrEditEntity(
+    "float2-ordered lists/format", "f", (
+      "float2_ordered_list(" + [
+        "List:@[lists with float2 values]",
+      ].join(",") +
+      ")=>" +
+      JSON.stringify({
+        "Class": "@[float2-ordered lists]",
+        "List": "%1",
+      })
+    )
+  );
+
+
+
+
+
+
 
 
   /* Some qualities */
