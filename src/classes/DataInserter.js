@@ -7,6 +7,7 @@ import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 
 
 const WORKSPACES_CLASS_ID = basicEntIDs["workspaces"];
+const RELEVANCY_QUAL_FORMAT_ID = basicEntIDs["relevancy qualities/format"];
 
 const PATH_REF_REGEX = /@\[[^0-9\[\]@,;"][^\[\]@,;"]*\]/g;
 
@@ -141,6 +142,9 @@ export class DataInserter {
       (entType === "h") ? "htmlEnt" :
       (entType === "j") ? "jsonEnt" :
       "unrecognized entity type";
+    if (entType === "f" || entType === "r") {
+      isEditable = undefined;
+    }
     let reqData = {
       req: req,
       ses: this.getAccountData("sesIDHex"),
@@ -339,6 +343,26 @@ export class DataInserter {
 
 
 
+  insertOrSubstituteRelevancyQualityEntity(
+    path, objPath, relPath, isAnonymous, userWhiteListID, callback
+  ) {
+    let objID = this.getEntIDFromPath(objPath);
+    let relID = this.getEntIDFromPath(relPath);
+    if (!objID || !relID) {
+      callback(null, null);
+      return;
+    }
+    let defStr = `@[${RELEVANCY_QUAL_FORMAT_ID}],@[${objID}],@[${relID}]`
+    this.insertOrSubstituteEntity(
+      path, "r", defStr, isAnonymous, userWhiteListID, 0, callback
+    );
+  }
+
+
+
+
+
+
 
 
   scoreEntityPublicly(
@@ -371,6 +395,7 @@ export class DataInserter {
 
     let qualID = this.getEntIDFromPath(qualPath);
     if (!qualID) {
+      callback(null, null);
       return;
     }
 
@@ -381,6 +406,8 @@ export class DataInserter {
         let scoreRad = triple[2] ?? 0;
         let subjID = this.getEntIDFromPath(subjPath);
         if (!subjID) {
+          results(ind) = [null, null];
+          resolve();
           return;
         }
         this.scoreEntityPublicly(
@@ -436,6 +463,7 @@ export class DataInserter {
     let userWhiteListID = this.getEntIDFromPath(userWhiteListPath);
     let listID = this.getEntIDFromPath(listPath);
     if (!userWhiteListID || !listID) {
+      callback(null, null);
       return;
     }
 
@@ -447,6 +475,8 @@ export class DataInserter {
         let offIndexData = quartet[3] ?? null;
         let subjID = this.getEntIDFromPath(subjPath);
         if (!subjID) {
+          results(ind) = [null, null];
+          resolve();
           return;
         }
         this.scoreEntityPrivately(
