@@ -79,14 +79,17 @@ switch ($reqType) {
         $typeArr = array("id", "id", "id");
         break;
     case "prvScore":
-        $sql = "CALL insertOrUpdatePrivateScore (?, ?, ?, ?)";
-        $paramNameArr = array("u", "q", "s", "v");
-        $typeArr = array("id", "id", "id", "float");
+        $sql = "CALL insertOrUpdatePrivateScore (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $paramNameArr = array("u", "t", "w", "l", "s", "v", "d1", "d2", "uc");
+        $typeArr = array(
+            "id", "char", "id", "id", "id", "float",
+            "on_idx_data", "off_idx_data", "float"
+        );
         break;
     case "delPrvScore":
-        $sql = "CALL deletePrivateScore (?, ?, ?)";
-        $paramNameArr = array("u", "s", "e");
-        $typeArr = array("id", "id", "id");
+        $sql = "CALL deletePrivateScore (?, ?, ?, ?, ?)";
+        $paramNameArr = array("u", "t", "w", "l", "s");
+        $typeArr = array("id", "char", "id", "id", "id");
         break;
     case "funEnt":
         $sql = "CALL insertFunctionEntity (?, ?, ?, ?)";

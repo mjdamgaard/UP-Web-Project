@@ -122,6 +122,7 @@ class InputValidator {
                 // }
                 break;
             case "char":
+            case "uft8_char":
                 if (
                     !(mb_strlen($paramVal) === 1)
                 ) {
@@ -167,6 +168,14 @@ class InputValidator {
                 if ( !(mb_strlen($paramVal) <= 65535) ) {
                     echoTypeErrorJSONAndExit(
                         $paramName, $paramVal, "JSON TEXT"
+                    );
+                }
+                break;
+            case "on_idx_data":
+            case "off_idx_data":
+                if ( !($paramVal === NULL || strlen($paramVal) <= 16) ) {
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "VARBINARY(16)"
                     );
                 }
                 break;

@@ -128,11 +128,11 @@ export class DataInserter {
 
   insertEntity(
     path, entType, defStr,
-    isAnonymous = 0, userWhiteList = 0, isEditable = 1,
+    isAnonymous = 0, userWhiteListID = 0, isEditable = 1,
     callback = () => {}
   ) {
-    if (userWhiteList === true) {
-      userWhiteList = this.getAccountData("userID")
+    if (userWhiteListID === true) {
+      userWhiteListID = this.getAccountData("userID")
     }
     let req =
       (entType === "f") ? "funEnt" :
@@ -146,7 +146,7 @@ export class DataInserter {
       ses: this.getAccountData("sesIDHex"),
       u: isAnonymous ? 0 : this.getAccountData("userID"),
       d: defStr,
-      w: userWhiteList,
+      w: userWhiteListID,
       a: isAnonymous,
       ed: isEditable,
     };
@@ -164,8 +164,9 @@ export class DataInserter {
           entID: result.outID.toString(),
           c: result.exitCode == "1" ? null : isAnonymous ? 0 :
             this.getAccountData("userID"),
-          w: userWhiteList ? userWhiteList : undefined,
-          ed: isAnonymous ? undefined : userWhiteList ? undefined : isEditable,
+          w: userWhiteListID ? userWhiteListID : undefined,
+          ed: isAnonymous ? undefined : userWhiteListID ? undefined :
+            isEditable,
         };
       }
       callback(result.outID, result.exitCode);
@@ -173,22 +174,22 @@ export class DataInserter {
   }
 
   insertSubbedEntity(
-    path, entType, defStr, isAnonymous, userWhiteList, isEditable, callback
+    path, entType, defStr, isAnonymous, userWhiteListID, isEditable, callback
   ) {
     defStr = this.getSubbedDefStr(defStr);
     this.insertEntity(
-      path, entType, defStr, isAnonymous, userWhiteList, isEditable,
+      path, entType, defStr, isAnonymous, userWhiteListID, isEditable,
       callback
     );
   }
 
   editEntity(
     path, entType, defStr,
-    isAnonymous = 0, userWhiteList = 0, isEditable = 1,
+    isAnonymous = 0, userWhiteListID = 0, isEditable = 1,
     callback = () => {}
   ) {
-    if (userWhiteList === true) {
-      userWhiteList = this.getAccountData("userID")
+    if (userWhiteListID === true) {
+      userWhiteListID = this.getAccountData("userID")
     }
     let entID = this.getEntIDFromPath(path);
     if (!entID) {
@@ -213,7 +214,7 @@ export class DataInserter {
       u: isAnonymous ? 0 : this.getAccountData("userID"),
       e: entID,
       d: defStr,
-      w: userWhiteList,
+      w: userWhiteListID,
       a: isAnonymous,
       ed: isEditable,
     };
@@ -230,8 +231,9 @@ export class DataInserter {
         targetNode[0] = {
           entID: result.outID.toString(),
           c: isAnonymous ? 0 : this.getAccountData("userID"),
-          w: userWhiteList ? userWhiteList : undefined,
-          ed: isAnonymous ? undefined : userWhiteList ? undefined : isEditable,
+          w: userWhiteListID ? userWhiteListID : undefined,
+          ed: isAnonymous ? undefined : userWhiteListID ? undefined :
+            isEditable,
         };
       }
       callback(result.outID, result.exitCode);
@@ -239,11 +241,11 @@ export class DataInserter {
   }
 
   editSubbedEntity(
-    path, entType, defStr, isAnonymous, userWhiteList, isEditable, callback
+    path, entType, defStr, isAnonymous, userWhiteListID, isEditable, callback
   ) {
     defStr = this.getSubbedDefStr(defStr);
     this.editEntity(
-      path, entType, defStr, isAnonymous, userWhiteList, isEditable,
+      path, entType, defStr, isAnonymous, userWhiteListID, isEditable,
       callback
     );
   }
@@ -263,33 +265,36 @@ export class DataInserter {
 
   insertOrEditEntity(
     path, entType, defStr,
-    isAnonymous = 0, userWhiteList = 0, isEditable = 1,
+    isAnonymous = 0, userWhiteListID = 0, isEditable = 1,
     callback = () => {}
   ) {
     // If an entID is not already recorded at path, simply insert a new entity.
     let entID = this.getEntIDFromPath(path);
     if (!entID) {
       this.insertSubbedEntity(
-        path, entType, defStr, isAnonymous, userWhiteList, isEditable, callback
+        path, entType, defStr, isAnonymous, userWhiteListID, isEditable,
+        callback
       );
     }
     else {
       this.editSubbedEntity(
-        path, entType, defStr, isAnonymous, userWhiteList, isEditable, callback
+        path, entType, defStr, isAnonymous, userWhiteListID, isEditable,
+        callback
       );
     }
   }
 
   insertOrSubstituteEntity(
     path, entType, defStr,
-    isAnonymous = 0, userWhiteList = 0, isEditable = 1,
+    isAnonymous = 0, userWhiteListID = 0, isEditable = 1,
     callback = () => {}
   ) {
     // If an entID is not already recorded at path, simply insert a new entity.
     let entID = this.getEntIDFromPath(path);
     if (!entID) {
       this.insertSubbedEntity(
-        path, entType, defStr, isAnonymous, userWhiteList, isEditable, callback
+        path, entType, defStr, isAnonymous, userWhiteListID, isEditable,
+        callback
       );
       return;
     }
@@ -317,15 +322,17 @@ export class DataInserter {
 
 
   insertSubstituteOrEditEntity(
-    path, entType, defStr, isAnonymous, userWhiteList, isEditable, callback
+    path, entType, defStr, isAnonymous, userWhiteListID, isEditable, callback
   ) {
     if (entType === "r" || entType === "f") {
       this.insertOrSubstituteEntity(
-        path, entType, defStr, isAnonymous, userWhiteList, isEditable, callback
+        path, entType, defStr, isAnonymous, userWhiteListID, isEditable,
+        callback
       );
     } else {
       this.insertOrEditEntity(
-        path, entType, defStr, isAnonymous, userWhiteList, isEditable, callback
+        path, entType, defStr, isAnonymous, userWhiteListID, isEditable,
+        callback
       );
     }
   }
@@ -335,90 +342,129 @@ export class DataInserter {
 
 
   scoreEntityPublicly(
-    entID, qualID, scoreMid, scoreRad, truncateTimeBy, callback = () => {}
+    entID, qualID, scoreMid, scoreRad, truncateTimeBy = 9, // 2^9 s ~ 8.5 min.
+    callback = () => {}
   ) {
-    let parallelCallbackHandler = new ParallelCallbackHandler;
-    let results = [];
-
-    PathScorePairArr.forEach((pathScorePair, ind) => {
-      parallelCallbackHandler.push((resolve) => {
-        let entPath = pathScorePair[0];
-        let scoreVal = pathScorePair[1];
-        let entID = this.getEntIDFromPath(entPath);
-        if (!entID) {
-          return;
-        }
-        let reqData = {
-          req: "score",
-          ses: this.getAccountData("sesIDHex"),
-          u: this.getAccountData("userID"),
-          s: scaleID,
-          e: entID,
-          v: scoreVal,
-        };
-        DBRequestManager.insert(reqData, (result) => {
-          results[ind] = result;
-          resolve();
-        });
-      });
-    });
-
-    parallelCallbackHandler.execAndThen(() => {
-      callback(results);
+    let reqData = {
+      req: "score",
+      ses: this.getAccountData("sesIDHex"),
+      u: this.getAccountData("userID"),
+      q: qualID,
+      s: entID,
+      m: scoreMid,
+      r: scoreRad,
+      t: truncateTimeBy,
+    };
+    DBRequestManager.insert(reqData, (responseText) => {
+      let result = JSON.parse(responseText);
+      callback(result.outID, result.exitCode);
     });
   }
 
 
-  scoreOwnEntitiesPublicly(
-    qualID, PathScorePairArr, callback = () => {}
+
+  scoreWorkspaceEntitiesPublicly(
+    qualPath, PathScoreMidAndRadiusTriples, callback = () => {}
   ) {
     let parallelCallbackHandler = new ParallelCallbackHandler;
     let results = [];
 
-    PathScorePairArr.forEach((pathScorePair, ind) => {
-      parallelCallbackHandler.push((resolve) => {
-        let entPath = pathScorePair[0];
-        let scoreVal = pathScorePair[1];
-        let entID = this.getEntIDFromPath(entPath);
-        if (!entID) {
-          return;
-        }
-        let reqData = {
-          req: "score",
-          ses: this.getAccountData("sesIDHex"),
-          u: this.getAccountData("userID"),
-          s: scaleID,
-          e: entID,
-          v: scoreVal,
-        };
-        DBRequestManager.insert(reqData, (result) => {
-          results[ind] = result;
-          resolve();
-        });
-      });
-    });
-
-    parallelCallbackHandler.execAndThen(() => {
-      callback(results);
-    });
-  }
-
-  addEntitiesToListFromScalePath(scalePath, PathScorePairArr, callback) {
-    let scaleID = this.getEntIDFromPath(scalePath);
-    if (!scaleID) {
+    let qualID = this.getEntIDFromPath(qualPath);
+    if (!qualID) {
       return;
     }
-    this.addEntitiesToListFromScaleID(scaleID, PathScorePairArr, callback);
-  }
 
+    PathScoreMidAndRadiusTriples.forEach((triple, ind) => {
+      parallelCallbackHandler.push((resolve) => {
+        let subjPath = triple[0];
+        let scoreMid = triple[1];
+        let scoreRad = triple[2] ?? 0;
+        let subjID = this.getEntIDFromPath(subjPath);
+        if (!subjID) {
+          return;
+        }
+        this.scoreEntityPublicly(
+          subjID, qualID, scoreMid, scoreRad, truncateTimeBy,
+          (outID, exitCode) => {
+            results(ind) = [outID, exitCode];
+            resolve();
+          }
+        );
+      });
+    });
 
-  addEntitiesToListFromScaleKey(scaleKey, PathScorePairArr, callback) {
-    this.insertOrFindScale(scaleKey, (outID, exitCode) => {
-      if (parseInt(exitCode) <= 1) {
-        this.addEntitiesToListFromScaleID(outID, PathScorePairArr, callback);
-      }
+    parallelCallbackHandler.execAndThen(() => {
+      callback(results);
     });
   }
+
+
+
+
+  scoreEntityPrivately(
+    entID, listType = "\0", userWhiteListID, listID, scoreVal,
+    onIndexData, offIndexData, addedUploadDataCost, callback = () => {}
+  ) {
+    let reqData = {
+      req: "prvScore",
+      ses: this.getAccountData("sesIDHex"),
+      u: this.getAccountData("userID"),
+      t: listType,
+      w: userWhiteListID,
+      l: listID,
+      s: entID,
+      v: scoreVal,
+      d1: onIndexData,
+      d2: offIndexData,
+      uc: addedUploadDataCost,
+    };
+    DBRequestManager.insert(reqData, (responseText) => {
+      let result = JSON.parse(responseText);
+      callback(result.outID, result.exitCode);
+    });
+  }
+
+
+  scoreWorkspaceEntitiesPrivately(
+    listType = "\0", userWhiteListPath, listPath,
+    PathScoreValAndOnOffIndexDataQuartets, addedUploadDataCostPerEntity,
+    callback = () => {}
+  ) {
+    let parallelCallbackHandler = new ParallelCallbackHandler;
+    let results = [];
+
+    let userWhiteListID = this.getEntIDFromPath(userWhiteListPath);
+    let listID = this.getEntIDFromPath(listPath);
+    if (!userWhiteListID || !listID) {
+      return;
+    }
+
+    PathScoreValAndOnOffIndexDataQuartets.forEach((quartet, ind) => {
+      parallelCallbackHandler.push((resolve) => {
+        let subjPath = quartet[0];
+        let scoreVal = quartet[1];
+        let onIndexData = quartet[2] ?? null;
+        let offIndexData = quartet[3] ?? null;
+        let subjID = this.getEntIDFromPath(subjPath);
+        if (!subjID) {
+          return;
+        }
+        this.scoreEntityPrivately(
+          subjID, listType, userWhiteListID, listID, scoreVal,
+          onIndexData, offIndexData, addedUploadDataCostPerEntity,
+          (outID, exitCode) => {
+            results(ind) = [outID, exitCode];
+            resolve();
+          }
+        );
+      });
+    });
+
+    parallelCallbackHandler.execAndThen(() => {
+      callback(results);
+    });
+  }
+
 
 
 
