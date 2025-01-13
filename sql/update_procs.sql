@@ -37,6 +37,7 @@ DROP PROCEDURE _executeRequest;
 DELIMITER //
 CREATE PROCEDURE _insertOrFindScoreContributionListIDs (
     IN requestingUserID BIGINT UNSIGNED,
+    IN userGroupID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     OUT minScoreContrListID BIGINT UNSIGNED,
@@ -54,10 +55,12 @@ proc: BEGIN
         VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 
     SET minScoreContrListDefStr = CONCAT(
-        '@[', minContrFunID, '],@[', qualID, '],@[', subjID, ']'
+        '@[', minContrFunID, '],@[', userGroupID, ']@[', qualID,
+        '],@[', subjID, ']'
     );
     SET maxScoreContrListDefStr = CONCAT(
-        '@[', maxContrFunID, '],@[', qualID, '],@[', subjID, ']'
+        '@[', maxContrFunID, '],@[', userGroupID, ']@[', qualID,
+        '],@[', subjID, ']'
     );
 
     CALL _insertOrFindRegularEntity (
@@ -186,9 +189,9 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE _insertUpdateOrDeleteScoreContributionIfMemberOrElseDelete (
     IN userID BIGINT UNSIGNED,
+    IN userGroupID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN userGroupID BIGINT UNSIGNED,
     IN minScoreContrListID BIGINT UNSIGNED,
     IN maxScoreContrListID BIGINT UNSIGNED,
     OUT exitCode TINYINT
@@ -253,9 +256,9 @@ DELIMITER //
 CREATE PROCEDURE requestUpdateOfScoreContribution (
     IN requestingUserID BIGINT UNSIGNED,
     IN targetUserID BIGINT UNSIGNED,
+    IN userGroupID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED,
-    IN userGroupID BIGINT UNSIGNED
+    IN subjID BIGINT UNSIGNED
 )
 proc: BEGIN
     DECLARE exitCode, isExceeded TINYINT;
@@ -264,6 +267,7 @@ proc: BEGIN
     -- Get (or insert) minScoreContrListID and maxScoreContrListID.
     CALL _insertOrFindScoreContributionListIDs (
         requestingUserID,
+        userGroupID,
         qualID,
         subjID,
         minScoreContrListID,
@@ -287,9 +291,9 @@ proc: BEGIN
 
     CALL _insertUpdateOrDeleteScoreContributionIfMemberOrElseDelete (
         targetUserID,
+        userGroupID,
         qualID,
         subjID,
-        userGroupID,
         minScoreContrListID,
         maxScoreContrListID,
         exitCode
@@ -414,9 +418,9 @@ proc: BEGIN
 
         CALL _insertUpdateOrDeleteScoreContributionIfMemberOrElseDelete (
             memberID,
+            userGroupID,
             qualID,
             subjID,
-            userGroupID,
             minScoreContrListID,
             maxScoreContrListID,
             exitCode
@@ -446,9 +450,9 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE requestUpdateOfScoreContributionsForWholeUserGroup (
     IN requestingUserID BIGINT UNSIGNED,
+    IN userGroupID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN userGroupID BIGINT UNSIGNED,
     IN compCostPayment FLOAT,
     IN uploadDataCostPayment FLOAT
 )
@@ -473,6 +477,7 @@ proc: BEGIN
     -- Get (or insert) minScoreContrListID and maxScoreContrListID.
     CALL _insertOrFindScoreContributionListIDs (
         requestingUserID,
+        userGroupID,
         qualID,
         subjID,
         minScoreContrListID,
@@ -532,9 +537,9 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE requestUpdateOfAllExistingScoreContributions (
     IN requestingUserID BIGINT UNSIGNED,
+    IN userGroupID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN userGroupID BIGINT UNSIGNED,
     IN compCostPayment FLOAT,
     IN uploadDataCostPayment FLOAT
 )
@@ -559,6 +564,7 @@ proc: BEGIN
     -- Get (or insert) minScoreContrListID and maxScoreContrListID.
     CALL _insertOrFindScoreContributionListIDs (
         requestingUserID,
+        userGroupID,
         qualID,
         subjID,
         minScoreContrListID,
@@ -738,6 +744,7 @@ proc: BEGIN
     -- Get (or insert) minScoreContrListID and maxScoreContrListID.
     CALL _insertOrFindScoreContributionListIDs (
         requestingUserID,
+        userGroupID,
         qualID,
         subjID,
         minScoreContrListID,

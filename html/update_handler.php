@@ -70,19 +70,19 @@ $typeArr = "";
 switch ($reqType) {
     case "contrForUser":
         $sql = "CALL requestUpdateOfScoreContribution (?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "t", "q", "s", "g");
+        $paramNameArr = array("u", "t", "g", "q", "s");
         $typeArr = array("id", "id", "id", "id", "id");
         break;
     case "contrForWholeGroup":
         $sql = "CALL requestUpdateOfScoreContributionsForWholeUserGroup " .
             "(?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "q", "s", "g", "cp", "up");
+        $paramNameArr = array("u", "g", "q", "s", "cp", "up");
         $typeArr = array("id", "id", "id", "id", "float", "float");
         break;
     case "contrForExisting":
         $sql = "CALL requestUpdateOfAllExistingScoreContributions " .
             "(?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "q", "s", "g", "cp", "up");
+        $paramNameArr = array("u", "g", "q", "s", "cp", "up");
         $typeArr = array("id", "id", "id", "id", "float", "float");
         break;
     case "scoreMedian":

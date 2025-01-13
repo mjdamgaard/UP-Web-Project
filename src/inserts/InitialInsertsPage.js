@@ -75,8 +75,18 @@ export const InitialInsertsPage = () => {
       </div>
       <hr/>
       <div>
+        <button onClick={(event) => {
+          copyFundamentalEntityIDCreateViewProgramToClipboard(dataInserter);
+          event.target.setAttribute("style", "color:gray;");
+        }}>
+          Generate fundamental_entity_ids.sql
+        </button>
+      </div>
+      <hr/>
+      <div>
         <button onClick={() => insertInitialScores(dataInserter)}>
-          Insert initial scores (update basic_entity_ids.js and reload first!)
+          Insert initial scores (but update [...]_entity_ids.js first, and
+          then recompile the view, and also reload this page first.)
         </button>
       </div>
     </div>
@@ -496,6 +506,50 @@ export function initialInserts(dataInserter) {
         "Class": "@[user score lists]",
         "User": "%1",
         "Quality": "%2",
+      })
+    )
+  );
+  dataInserter.insertSubstituteOrEditEntity(
+    "min contribution lists", "r",
+    [
+      '@[classes/format]',
+      '"Min contribution lists"',
+      '"Min contribution list"',
+      '@[lists]',
+      '_',
+      '@[min contribution lists/format]',
+      '@[min contribution lists/desc]',
+    ].join(","),
+  );
+  dataInserter.insertSubstituteOrEditEntity(
+    "min contribution lists/format", "f", (
+      "min_contr(" + [
+        "User group:@[user groups]",
+        "Quality:@[qualities]",
+        "Subject:@[entities]",
+      ].join(",") +
+      ")=>" +
+      JSON.stringify({
+        "Class": "@[min contribution lists]",
+        "User group": "%1",
+        "Quality": "%2",
+        "Subject": "%3",
+      })
+    )
+  );
+  dataInserter.insertSubstituteOrEditEntity(
+    "max contribution lists/format", "f", (
+      "max_contr(" + [
+        "User group:@[user groups]",
+        "Quality:@[qualities]",
+        "Subject:@[entities]",
+      ].join(",") +
+      ")=>" +
+      JSON.stringify({
+        "Class": "@[max contribution lists]",
+        "User group": "%1",
+        "Quality": "%2",
+        "Subject": "%3",
       })
     )
   );
@@ -1148,6 +1202,54 @@ export function copyEntityIDModuleToClipboard(dataInserter, pathArr, objName) {
   return ret;
 }
 
+
+export function getEntityIDCreateViewProgram(
+  dataInserter, pathIdentPairs, viewName
+) {
+  var ret = (
+    "\nDROP VIEW " + viewName + ";\n\n" +
+    // "CREATE ALGORITHM = MERGE VIEW " + viewName + " AS"
+    // ('ALGORITHM = MERGE' doesn't work here for some reason.)
+    "CREATE VIEW " + viewName + " AS"
+  );
+  pathIdentPairs.forEach(([path, ident], ind) => {
+    let entID = dataInserter.getEntIDFromPath(path);
+    if (ind !== 0) {
+      ret += '\n    UNION';
+    }
+    ret += '\n    SELECT "' + ident + '" AS ident, ' + entID + ' AS id';
+  });
+  ret += ";\n"
+  return ret;
+}
+
+export function copyEntityIDCreateViewProgramToClipboard(
+  dataInserter, pathIdentPairs, viewName
+) {
+  let ret = getEntityIDCreateViewProgram(
+    dataInserter, pathIdentPairs, viewName
+  );
+  navigator.clipboard.writeText(ret);
+  return ret;
+}
+
+
+
+const fundamentalEntPathsAndBackendIdentifiers = [
+  ["user score lists/format", "user_score"],
+  ["min contribution lists/format", "min_contr"],
+  ["max contribution lists/format", "max_contr"],
+  ["score median lists/format", "score_med"],
+];
+
+export function copyFundamentalEntityIDCreateViewProgramToClipboard(
+  dataInserter
+) {
+  return copyEntityIDCreateViewProgramToClipboard(
+    dataInserter, fundamentalEntPathsAndBackendIdentifiers,
+    "FundamentalEntityIDs"
+  );
+}
 
 
 const basicEntPaths = [

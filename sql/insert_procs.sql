@@ -378,10 +378,13 @@ CREATE PROCEDURE insertOrUpdatePublicUserScore (
 )
 proc: BEGIN
     DECLARE isExceeded, exitCode TINYINT;
+    DECLARE userScoreFunID BIGINT UNSIGNED DEFAULT (
+        SELECT id FROM FundamentalEntityIDs WHERE ident = "user_score"
+    );
     DECLARE userScoreListID BIGINT UNSIGNED;
     DECLARE userScoreListDefStr VARCHAR(700)
         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT (
-            CONCAT('@[11],@[', userID, '],@[', qualID, ']')
+            CONCAT('@[', userScoreFunID, '],@[', userID, '],@[', qualID, ']')
         );
     DECLARE unixTime INT UNSIGNED DEFAULT (
         UNIX_TIMESTAMP() >> truncateTimeBy << truncateTimeBy
@@ -449,10 +452,13 @@ CREATE PROCEDURE deletePublicUserScore (
     IN subjID BIGINT UNSIGNED
 )
 BEGIN
+    DECLARE userScoreFunID BIGINT UNSIGNED DEFAULT (
+        SELECT id FROM FundamentalEntityIDs WHERE ident = "user_score"
+    );
     DECLARE userScoreListID BIGINT UNSIGNED;
     DECLARE userScoreListDefStr VARCHAR(700)
         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT (
-            CONCAT('@[11],@[', userID, '],@[', qualID, ']')
+            CONCAT('@[', userScoreFunID, '],@[', userID, '],@[', qualID, ']')
         );
     DECLARE exitCode TINYINT;
 
