@@ -1,6 +1,7 @@
 
 /* Scores */
 -- DROP TABLE PrivateEntityLists;
+-- DROP TABLE PrivateListMetadata;
 -- DROP TABLE PublicEntityLists;
 -- DROP TABLE PublicListMetadata;
 
@@ -60,6 +61,36 @@ CREATE TABLE PrivateEntityLists (
         on_index_data,
         user_id,
         subj_id
+    )
+)
+ROW_FORMAT = COMPRESSED;
+
+
+
+
+CREATE TABLE PrivateListMetadata (
+
+    list_type CHAR NOT NULL,
+
+    user_whitelist_id BIGINT UNSIGNED NOT NULL,
+
+    list_id BIGINT UNSIGNED NOT NULL,
+
+    user_id BIGINT UNSIGNED NOT NULL, -- user_id = 0 refers to the full list.
+
+    list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+    pos_list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+    float_sum DOUBLE NOT NULL DEFAULT 0,
+
+    paid_upload_data_cost FLOAT NOT NULL DEFAULT 0,
+
+    PRIMARY KEY (
+        list_type,
+        user_whitelist_id,
+        list_id,
+        user_id
     )
 )
 ROW_FORMAT = COMPRESSED;

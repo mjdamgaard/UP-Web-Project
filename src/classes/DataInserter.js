@@ -333,30 +333,44 @@ export class DataInserter {
 
 
 
-  insertOrFindScale(scaleKey, callback) {
-    scaleKey = scaleKey.map(val => {
-      if (parseInt(val) > 0) {
-        return val;
-      }
-      else {
-        return this.getEntIDFromPath(val);
-      }
+
+  scoreEntityPublicly(
+    entID, qualID, scoreMid, scoreRad, truncateTimeBy, callback = () => {}
+  ) {
+    let parallelCallbackHandler = new ParallelCallbackHandler;
+    let results = [];
+
+    PathScorePairArr.forEach((pathScorePair, ind) => {
+      parallelCallbackHandler.push((resolve) => {
+        let entPath = pathScorePair[0];
+        let scoreVal = pathScorePair[1];
+        let entID = this.getEntIDFromPath(entPath);
+        if (!entID) {
+          return;
+        }
+        let reqData = {
+          req: "score",
+          ses: this.getAccountData("sesIDHex"),
+          u: this.getAccountData("userID"),
+          s: scaleID,
+          e: entID,
+          v: scoreVal,
+        };
+        DBRequestManager.insert(reqData, (result) => {
+          results[ind] = result;
+          resolve();
+        });
+      });
     });
-    if (!scaleKey.reduce((acc, val) => acc && val)) {
-      return;
-    }
-    let scaleDefStr = getScaleDefStr(...scaleKey);
-    this.insertEntity(
-      "", "j", scaleDefStr,
-      1, 0, 0, 1,
-      (outID, exitCode) => callback(outID, exitCode)
-    );
+
+    parallelCallbackHandler.execAndThen(() => {
+      callback(results);
+    });
   }
 
 
-
-  addEntitiesToListFromScaleID(
-    scaleID, PathScorePairArr, callback = () => {}
+  scoreOwnEntitiesPublicly(
+    qualID, PathScorePairArr, callback = () => {}
   ) {
     let parallelCallbackHandler = new ParallelCallbackHandler;
     let results = [];
