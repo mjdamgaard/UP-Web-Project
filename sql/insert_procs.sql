@@ -402,7 +402,7 @@ proc: BEGIN
 
     -- Insert of find the user score list spec entity, and exit if upload limit
     -- is exceeded.
-    CALL _insertOrFindFunctionCallEntity (
+    CALL _insertOrFindRegularEntity (
         userID, userScoreListDefStr, 0, 1,
         userScoreListID, exitCode
     );

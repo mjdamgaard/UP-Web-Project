@@ -294,19 +294,23 @@ CREATE TABLE FulltextIndexedEntities (
 /* Initial entities */
 
 INSERT INTO Entities (
-    id, ent_type, def_str, creator_id
+    id, ent_type, def_str
 )
 VALUES
-    (1, "t", "t", 0),
-    (2, "t", "u", 0),
-    (3, "t", "f", 0),
-    (4, "t", "r", 0),
-    -- (5, "t", "a", 0),
-    (6, "t", "j", 0),
-    (7, "t", "h", 0),
-    (8, "t", "8", 0),
-    (9, "u", "initial_admin", 0),
-    (10, "j", '{}', 9);
+    (1, "t", "t"),
+    (2, "t", "u"),
+    (3, "t", "f"),
+    (4, "t", "r"),
+    -- (5, "t", "a"),
+    (6, "t", "j"),
+    (7, "t", "h"),
+    (8, "t", "8"),
+    (9, "u", "initial_admin");
+
+INSERT INTO Entities (
+    id, ent_type, def_str, creator_id, is_editable
+)
+VALUES (10, "j", '{}', 9, 1);
     --
     -- (11, "a", CONCAT(
     --     '{',

@@ -21,10 +21,24 @@ export class DataInserter {
   }
 
   fetchWorkspaceObject(callback = () => {}) {
-    DataFetcher.fetchJSONObjectAsUser(
-      this.getAccountData, this.workspaceEntID, obj => {
-      this.workspaceObj = (obj ?? {});
-      callback(obj);
+    // DataFetcher.fetchJSONObjectAsUser(
+    //   this.getAccountData, this.workspaceEntID, obj => {
+    //   this.workspaceObj = (obj ?? {});
+    //   callback(obj);
+    // });
+    let reqData = {
+      req: "entAsUser",
+      ses: this.getAccountData("sesIDHex"),
+      u: this.getAccountData("userID"),
+      id: this.workspaceEntID,
+      m: 0,
+      s: 0,
+    };
+    DBRequestManager.query(reqData, (responseText) => {
+      let result = JSON.parse(responseText);
+      let [datatype, defStr, len, creatorID, editableUntil] = result[0] ?? [];
+      this.workspaceObj = JSON.parse(defStr);
+      callback(datatype, defStr, len, creatorID, editableUntil);
     });
   }
 
@@ -406,14 +420,14 @@ export class DataInserter {
         let scoreRad = triple[2] ?? 0;
         let subjID = this.getEntIDFromPath(subjPath);
         if (!subjID) {
-          results(ind) = [null, null];
+          results[ind] = [null, null];
           resolve();
           return;
         }
         this.scoreEntityPublicly(
-          subjID, qualID, scoreMid, scoreRad, truncateTimeBy,
+          subjID, qualID, scoreMid, scoreRad, undefined,
           (outID, exitCode) => {
-            results(ind) = [outID, exitCode];
+            results[ind] = [outID, exitCode];
             resolve();
           }
         );
@@ -475,7 +489,7 @@ export class DataInserter {
         let offIndexData = quartet[3] ?? null;
         let subjID = this.getEntIDFromPath(subjPath);
         if (!subjID) {
-          results(ind) = [null, null];
+          results[ind] = [null, null];
           resolve();
           return;
         }
@@ -483,7 +497,7 @@ export class DataInserter {
           subjID, listType, userWhiteListID, listID, scoreVal,
           onIndexData, offIndexData, addedUploadDataCostPerEntity,
           (outID, exitCode) => {
-            results(ind) = [outID, exitCode];
+            results[ind] = [outID, exitCode];
             resolve();
           }
         );

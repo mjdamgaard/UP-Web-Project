@@ -1154,7 +1154,6 @@ const basicEntPaths = [
   "classes",
   "entities",
   "workspaces",
-  "scales",
   "relations",
   "qualities",
   "relevancy qualities",

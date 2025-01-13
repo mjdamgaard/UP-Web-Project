@@ -444,7 +444,7 @@ BEGIN
     DECLARE entType CHAR;
     DECLARE defStr LONGTEXT;
     DECLARE len, creatorID, userWhitelistID BIGINT UNSIGNED;
-    DECLARE isEditable TINYINT;
+    DECLARE isEditable, isMember TINYINT;
     DECLARE userWhiteListScoreVal FLOAT;
 
     SELECT
@@ -470,14 +470,11 @@ BEGIN
     FROM Entities FORCE INDEX (PRIMARY)
     WHERE id = entID;
 
-    SELECT float_1_val INTO userWhiteListScoreVal
-    FROM PublicEntityLists
-    WHERE (
-        list_id = userWhitelistID AND
-        subj_id = userID
+    CALL _getIsMemberAndUserWeight (
+        userID, userWhiteListID, isMember, @unused
     );
 
-    IF (userWhiteListScoreVal > 0) THEN
+    IF (isMember) THEN
         SELECT
             entType,
             defStr,
