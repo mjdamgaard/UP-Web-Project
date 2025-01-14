@@ -132,8 +132,8 @@ CREATE TABLE PublicEntityLists (
         on_index_data,
         subj_id
     )
-);
--- ROW_FORMAT = COMPRESSED;
+)
+ROW_FORMAT = COMPRESSED;
 
 
 

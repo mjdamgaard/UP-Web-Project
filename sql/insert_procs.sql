@@ -67,14 +67,10 @@ BEGIN
         THEN 0 ELSE float2Val
     END;
 
-    -- We select (for update) the previous score on the list, and branch
-    -- accordingly in order to update the ListMetadata table correctly.
-    START TRANSACTION;
+    -- We get a lock on the ListMetadata row, and branch accordingly in order
+    -- to update the ListMetadata table correctly.
+    DO GET_LOCK(CONCAT( "PublicListMetadata.", listID ), 10);
 
-    SELECT list_len INTO prevListLen -- only used to lock ListMetadata row.
-    FROM PublicListMetadata FORCE INDEX (PRIMARY)
-    WHERE list_id = listID
-    FOR UPDATE;
 
     SELECT float_1_val, float_2_val INTO prevFloatVal1, prevFloatVal2
     FROM PublicEntityLists FORCE INDEX (PRIMARY)
@@ -118,7 +114,6 @@ BEGIN
             paid_upload_data_cost = paid_upload_data_cost +
                 addedUploadDataCost;
 
-        COMMIT;
         SET exitCode = 0; -- insert.
 
     ELSEIF (float1Val IS NOT NULL AND prevFloatVal1 IS NOT NULL) THEN
@@ -147,7 +142,6 @@ BEGIN
                 addedUploadDataCost
         WHERE list_id = listID;
 
-        COMMIT;
         SET exitCode = 1; -- update.
 
     ELSEIF (float1Val IS NULL AND prevFloatVal1 IS NOT NULL) THEN
@@ -168,12 +162,12 @@ BEGIN
                 addedUploadDataCost
         WHERE list_id = listID;
 
-        COMMIT;
         SET exitCode = 2; -- deletion.
     ELSE
-        COMMIT;
         SET exitCode = 3; -- no change.
     END IF;
+
+    DO RELEASE_LOCK(CONCAT( "PublicListMetadata.", listID ));
 END //
 DELIMITER ;
 
@@ -197,19 +191,11 @@ BEGIN
     DECLARE prevListLen, prevCombListLen BIGINT UNSIGNED;
     DECLARE isExceeded TINYINT;
 
-    -- We select (for update) the previous score on the list, and branch
-    -- accordingly in order to update the ListMetadata table correctly.
-    START TRANSACTION;
-
-    SELECT list_len INTO prevCombListLen -- only used to lock ListMetadata list.
-    FROM PrivateListMetadata FORCE INDEX (PRIMARY)
-    WHERE (
-        list_type = listType AND
-        user_whitelist_id = userWhiteListID AND
-        list_id = listID AND
-        user_id = 0
-    )
-    FOR UPDATE;
+    -- We get a lock on PrivateListMetadata for the full list (all users), and
+    -- branch accordingly in order to update the ListMetadata table correctly.
+    DO GET_LOCK(CONCAT(
+        "PrivateListMetadata.", listType, ".", userWhiteListID, ".", listID
+    ), 10);
 
     SELECT float_val INTO prevFloatVal
     FROM PrivateEntityLists FORCE INDEX (PRIMARY)
@@ -255,7 +241,6 @@ BEGIN
             paid_upload_data_cost = paid_upload_data_cost +
                 addedUploadDataCost;
 
-        COMMIT;
         SET exitCode = 0; -- insert.
 
     ELSEIF (floatVal IS NOT NULL AND prevFloatVal IS NOT NULL) THEN
@@ -285,7 +270,6 @@ BEGIN
                 addedUploadDataCost
         WHERE list_id = listID;
 
-        COMMIT;
         SET exitCode = 1; -- update.
 
     ELSEIF (floatVal IS NULL AND prevFloatVal IS NOT NULL) THEN
@@ -311,12 +295,14 @@ BEGIN
             user_id = 0
         );
 
-        COMMIT;
         SET exitCode = 2; -- deletion.
     ELSE
-        COMMIT;
         SET exitCode = 3; -- no change.
     END IF;
+
+    DO RELEASE_LOCK(CONCAT(
+        "PrivateListMetadata.", listType, ".", userWhiteListID, ".", listID
+    ));
 END //
 DELIMITER ;
 
