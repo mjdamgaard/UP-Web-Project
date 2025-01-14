@@ -2,10 +2,10 @@
 DROP VIEW FundamentalEntityIDs;
 
 CREATE VIEW FundamentalEntityIDs AS
-    SELECT "user_score" AS ident, 56 AS id
+    SELECT "user_score" AS ident, 81 AS id
     UNION
-    SELECT "min_contr" AS ident, 65 AS id
+    SELECT "min_contr" AS ident, 76 AS id
     UNION
-    SELECT "max_contr" AS ident, 64 AS id
+    SELECT "max_contr" AS ident, 75 AS id
     UNION
-    SELECT "score_med" AS ident, 60 AS id;
+    SELECT "score_med" AS ident, 61 AS id;

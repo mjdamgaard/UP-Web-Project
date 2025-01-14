@@ -22,6 +22,7 @@ DROP TABLE Private_UserData;
 
 /* Debugging */
 DROP TABLE DebugLogEntries;
+-- DROP PROCEDURE logMsg;
 
 
 
@@ -131,8 +132,8 @@ CREATE TABLE PublicEntityLists (
         on_index_data,
         subj_id
     )
-)
-ROW_FORMAT = COMPRESSED;
+);
+-- ROW_FORMAT = COMPRESSED;
 
 
 

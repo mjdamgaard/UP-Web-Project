@@ -94,7 +94,7 @@ VALUE ( CONCAT(
 INSERT INTO DebugLogEntries (msg)
 VALUE ( CONCAT(
     "_insertUpdateOrDeletePublicListElement, after prev select, prevFloatVal1=",
-    CASE WHEN (prevFloatVal1 IS NULL) THEN "NULL" ELSE prevFloatVal1 END
+    IFNULL(prevFloatVal1, "NULL")
 ));
 
     -- Branch according to whether the score should be inserted, updated, or
@@ -102,6 +102,11 @@ VALUE ( CONCAT(
     IF (float1Val IS NOT NULL AND prevFloatVal1 IS NULL) THEN
 INSERT INTO DebugLogEntries (msg)
 VALUE ("_insertUpdateOrDeletePublicListElement, ec=0");
+CALL logMsg (CONCAT( "listID=", IFNULL(listID, "NULL") ));
+CALL logMsg (CONCAT( "subjID=", IFNULL(subjID, "NULL") ));
+CALL logMsg (CONCAT( "float1Val=", IFNULL(float1Val, "NULL") ));
+CALL logMsg (CONCAT( "onIndexData=", IFNULL(onIndexData, "NULL") ));
+CALL logMsg (CONCAT( "offIndexData=", IFNULL(offIndexData, "NULL") ));
         INSERT INTO PublicEntityLists (
             list_id, subj_id,
             float_1_val, float_2_val, on_index_data, off_index_data
