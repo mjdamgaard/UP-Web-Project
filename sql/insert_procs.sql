@@ -100,6 +100,8 @@ VALUE ( CONCAT(
     -- Branch according to whether the score should be inserted, updated, or
     -- deleted, the latter being the case where the floatVal input is NULL. 
     IF (float1Val IS NOT NULL AND prevFloatVal1 IS NULL) THEN
+INSERT INTO DebugLogEntries (msg)
+VALUE ("_insertUpdateOrDeletePublicListElement, ec=0");
         INSERT INTO PublicEntityLists (
             list_id, subj_id,
             float_1_val, float_2_val, on_index_data, off_index_data
@@ -108,7 +110,7 @@ VALUE ( CONCAT(
             float1Val, float2Val, onIndexData, offIndexData
         );
 INSERT INTO DebugLogEntries (msg)
-VALUE ("_insertUpdateOrDeletePublicListElement, ec=0");
+VALUE ("_insertUpdateOrDeletePublicListElement, ec=0,2");
 
         INSERT INTO PublicListMetadata (
             list_id,
