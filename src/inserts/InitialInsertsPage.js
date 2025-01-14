@@ -89,6 +89,12 @@ export const InitialInsertsPage = () => {
           then recompile the view, and also reload this page first.)
         </button>
       </div>
+      <hr/>
+      <div>
+        <button onClick={() => dataInserter.updateWorkspace()}>
+          Update workspace
+        </button>
+      </div>
     </div>
   );
 }

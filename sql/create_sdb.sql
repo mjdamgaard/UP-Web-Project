@@ -947,3 +947,13 @@ CREATE TABLE DebugLogEntries (
 
     msg VARCHAR(1000)
 );
+
+DELIMITER //
+CREATE PROCEDURE logMsg (
+    IN logMessage VARCHAR(1000)
+)
+BEGIN
+    INSERT INTO DebugLogEntries (msg)
+    VALUE (logMessage);
+END //
+DELIMITER ;

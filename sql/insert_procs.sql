@@ -74,7 +74,7 @@ VALUE ( CONCAT(
 
     -- We select (for update) the previous score on the list, and branch
     -- accordingly in order to update the ListMetadata table correctly.
-    START TRANSACTION;
+    -- START TRANSACTION;
 INSERT INTO DebugLogEntries (msg)
 VALUE ( CONCAT(
     "_insertUpdateOrDeletePublicListElement, after start transaction"
@@ -94,7 +94,7 @@ VALUE ( CONCAT(
 INSERT INTO DebugLogEntries (msg)
 VALUE ( CONCAT(
     "_insertUpdateOrDeletePublicListElement, after prev select, prevFloatVal1=",
-    prevFloatVal1
+    CASE WHEN (prevFloatVal1 IS NULL) THEN "NULL" ELSE prevFloatVal1 END
 ));
 
     -- Branch according to whether the score should be inserted, updated, or
@@ -130,10 +130,12 @@ VALUE ("_insertUpdateOrDeletePublicListElement, ec=0");
             paid_upload_data_cost = paid_upload_data_cost +
                 addedUploadDataCost;
 
-        COMMIT;
+        -- COMMIT;
         SET exitCode = 0; -- insert.
 
     ELSEIF (float1Val IS NOT NULL AND prevFloatVal1 IS NOT NULL) THEN
+INSERT INTO DebugLogEntries (msg)
+VALUE ("_insertUpdateOrDeletePublicListElement, ec=1");
         UPDATE PublicEntityLists SET
             float_1_val = float1Val,
             float_2_val = float2Val,
@@ -145,8 +147,6 @@ VALUE ("_insertUpdateOrDeletePublicListElement, ec=0");
             list_id = listID AND
             subj_id = subjID
         );
-INSERT INTO DebugLogEntries (msg)
-VALUE ("_insertUpdateOrDeletePublicListElement, ec=1");
         
         UPDATE PublicListMetadata SET
             float_1_sum = float_1_sum + float1Val - prevFloatVal1,
@@ -161,10 +161,12 @@ VALUE ("_insertUpdateOrDeletePublicListElement, ec=1");
                 addedUploadDataCost
         WHERE list_id = listID;
 
-        COMMIT;
+        -- COMMIT;
         SET exitCode = 1; -- update.
 
     ELSEIF (float1Val IS NULL AND prevFloatVal1 IS NOT NULL) THEN
+INSERT INTO DebugLogEntries (msg)
+VALUE ("_insertUpdateOrDeletePublicListElement, ec=2");
         DELETE FROM PublicEntityLists
         WHERE (
             user_group_id = userGroupID AND
@@ -182,12 +184,16 @@ VALUE ("_insertUpdateOrDeletePublicListElement, ec=1");
                 addedUploadDataCost
         WHERE list_id = listID;
 
-        COMMIT;
+        -- COMMIT;
         SET exitCode = 2; -- deletion.
     ELSE
+INSERT INTO DebugLogEntries (msg)
+VALUE ("_insertUpdateOrDeletePublicListElement, ec=3");
         COMMIT;
         SET exitCode = 3; -- no change.
     END IF;
+INSERT INTO DebugLogEntries (msg)
+VALUE ("_insertUpdateOrDeletePublicListElement, end proc");
 END //
 DELIMITER ;
 
@@ -410,8 +416,6 @@ proc: BEGIN
     DECLARE unixTimeBin VARBINARY(4) DEFAULT (
         UNHEX(CONV(unixTime, 10, 16))
     );
-INSERT INTO DebugLogEntries (msg)
-VALUE (CONCAT("insertOrUpdatePublicUserScore, init, scoreMid=", scoreMid));
 
     -- Pay the upload data cost for the score insert.
     CALL _increaseWeeklyUserCounters (
@@ -433,8 +437,6 @@ VALUE (CONCAT("insertOrUpdatePublicUserScore, init, scoreMid=", scoreMid));
         SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
         LEAVE proc;
     END IF;
-INSERT INTO DebugLogEntries (msg)
-VALUE (CONCAT("insertOrUpdatePublicUserScore, after, _insertOrFindRegularEntity"));
 
     -- Exit if the subject entity does not exist.
     IF (
@@ -447,8 +449,7 @@ VALUE (CONCAT("insertOrUpdatePublicUserScore, after, _insertOrFindRegularEntity"
     ) THEN
         SELECT subjID AS outID, 3 AS exitCode; -- subject does not exist.
         LEAVE proc;
-    END IF;INSERT INTO DebugLogEntries (msg)
-VALUE (CONCAT("insertOrUpdatePublicUserScore, after ec=3 exit"));
+    END IF;
 
     -- Finally insert the user score, updating the PublicListMetadata in the
     -- process.
@@ -462,8 +463,6 @@ VALUE (CONCAT("insertOrUpdatePublicUserScore, after ec=3 exit"));
         20,
         exitCode
     );
-INSERT INTO DebugLogEntries (msg)
-VALUE (CONCAT("insertOrUpdatePublicUserScore, ec=", exitCode));
 
     SELECT subjID AS outID, exitCode; -- 0: inserted, or 1: updated.
 END proc //
