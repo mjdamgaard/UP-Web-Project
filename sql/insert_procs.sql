@@ -66,24 +66,15 @@ BEGIN
     SET float2Val = CASE WHEN (float2Val IS NULL)
         THEN 0 ELSE float2Val
     END;
-INSERT INTO DebugLogEntries (msg)
-VALUE ( CONCAT(
-    "_insertUpdateOrDeletePublicListElement, init, float1Val=",
-    float1Val
-));
 
     -- We select (for update) the previous score on the list, and branch
     -- accordingly in order to update the ListMetadata table correctly.
-    -- START TRANSACTION;
-INSERT INTO DebugLogEntries (msg)
-VALUE ( CONCAT(
-    "_insertUpdateOrDeletePublicListElement, after start transaction"
-));
+    START TRANSACTION;
 
-    -- SELECT list_len INTO prevListLen -- only used to lock ListMetadata row.
-    -- FROM PublicListMetadata FORCE INDEX (PRIMARY)
-    -- WHERE list_id = listID
-    -- FOR UPDATE;
+    SELECT list_len INTO prevListLen -- only used to lock ListMetadata row.
+    FROM PublicListMetadata FORCE INDEX (PRIMARY)
+    WHERE list_id = listID
+    FOR UPDATE;
 
     SELECT float_1_val, float_2_val INTO prevFloatVal1, prevFloatVal2
     FROM PublicEntityLists FORCE INDEX (PRIMARY)
@@ -91,31 +82,21 @@ VALUE ( CONCAT(
         list_id = listID AND
         subj_id = subjID
     );
-INSERT INTO DebugLogEntries (msg)
-VALUE ( CONCAT(
-    "_insertUpdateOrDeletePublicListElement, after prev select, prevFloatVal1=",
-    IFNULL(prevFloatVal1, "NULL")
-));
 
     -- Branch according to whether the score should be inserted, updated, or
     -- deleted, the latter being the case where the floatVal input is NULL. 
     IF (float1Val IS NOT NULL AND prevFloatVal1 IS NULL) THEN
-INSERT INTO DebugLogEntries (msg)
-VALUE ("_insertUpdateOrDeletePublicListElement, ec=0");
-CALL logMsg (CONCAT( "listID=", IFNULL(listID, "NULL") ));
-CALL logMsg (CONCAT( "subjID=", IFNULL(subjID, "NULL") ));
-CALL logMsg (CONCAT( "float1Val=", IFNULL(float1Val, "NULL") ));
-CALL logMsg (CONCAT( "onIndexData=", IFNULL(onIndexData, "NULL") ));
-CALL logMsg (CONCAT( "offIndexData=", IFNULL(offIndexData, "NULL") ));
         INSERT INTO PublicEntityLists (
             list_id, subj_id,
-            float_1_val, float_2_val, on_index_data, off_index_data
+            float_1_val, float_2_val,
+            on_index_data,
+            off_index_data
         ) VALUES (
             listID, subjID,
-            float1Val, float2Val, onIndexData, offIndexData
+            float1Val, float2Val,
+            IFNULL(onIndexData, DEFAULT(on_index_data)),
+            IFNULL(offIndexData, DEFAULT(off_index_data))
         );
-INSERT INTO DebugLogEntries (msg)
-VALUE ("_insertUpdateOrDeletePublicListElement, ec=0,2");
 
         INSERT INTO PublicListMetadata (
             list_id,
@@ -137,17 +118,15 @@ VALUE ("_insertUpdateOrDeletePublicListElement, ec=0,2");
             paid_upload_data_cost = paid_upload_data_cost +
                 addedUploadDataCost;
 
-        -- COMMIT;
+        COMMIT;
         SET exitCode = 0; -- insert.
 
     ELSEIF (float1Val IS NOT NULL AND prevFloatVal1 IS NOT NULL) THEN
-INSERT INTO DebugLogEntries (msg)
-VALUE ("_insertUpdateOrDeletePublicListElement, ec=1");
         UPDATE PublicEntityLists SET
             float_1_val = float1Val,
             float_2_val = float2Val,
-            on_index_data = onIndexData,
-            off_index_data = offIndexData,
+            on_index_data = IFNULL(onIndexData, DEFAULT(on_index_data)),
+            off_index_data = IFNULL(offIndexData, DEFAULT(off_index_data)),
             paid_upload_data_cost = paid_upload_data_cost +
                 addedUploadDataCost
         WHERE (
@@ -168,12 +147,10 @@ VALUE ("_insertUpdateOrDeletePublicListElement, ec=1");
                 addedUploadDataCost
         WHERE list_id = listID;
 
-        -- COMMIT;
+        COMMIT;
         SET exitCode = 1; -- update.
 
     ELSEIF (float1Val IS NULL AND prevFloatVal1 IS NOT NULL) THEN
-INSERT INTO DebugLogEntries (msg)
-VALUE ("_insertUpdateOrDeletePublicListElement, ec=2");
         DELETE FROM PublicEntityLists
         WHERE (
             user_group_id = userGroupID AND
@@ -191,16 +168,12 @@ VALUE ("_insertUpdateOrDeletePublicListElement, ec=2");
                 addedUploadDataCost
         WHERE list_id = listID;
 
-        -- COMMIT;
+        COMMIT;
         SET exitCode = 2; -- deletion.
     ELSE
-INSERT INTO DebugLogEntries (msg)
-VALUE ("_insertUpdateOrDeletePublicListElement, ec=3");
         COMMIT;
         SET exitCode = 3; -- no change.
     END IF;
-INSERT INTO DebugLogEntries (msg)
-VALUE ("_insertUpdateOrDeletePublicListElement, end proc");
 END //
 DELIMITER ;
 
@@ -253,10 +226,14 @@ BEGIN
     IF (floatVal IS NOT NULL AND prevFloatVal IS NULL) THEN
         INSERT INTO PrivateEntityLists (
             list_type, user_whitelist_id, list_id, user_id, subj_id,
-            float_val, on_index_data, off_index_data
+            float_val,
+            on_index_data,
+            off_index_data
         ) VALUES (
             listType, userWhitelistID, listID, userID, subjID,
-            floatVal, onIndexData, offIndexData
+            floatVal,
+            IFNULL(onIndexData, DEFAULT(on_index_data)),
+            IFNULL(offIndexData, DEFAULT(off_index_data))
         );
 
         INSERT INTO PrivateListMetadata (
@@ -284,8 +261,8 @@ BEGIN
     ELSEIF (floatVal IS NOT NULL AND prevFloatVal IS NOT NULL) THEN
         UPDATE PrivateEntityLists SET
             float_val = floatVal,
-            on_index_data = onIndexData,
-            off_index_data = offIndexData,
+            on_index_data = IFNULL(onIndexData, DEFAULT(on_index_data)),
+            off_index_data = IFNULL(offIndexData, DEFAULT(off_index_data)),
             paid_upload_data_cost = paid_upload_data_cost +
                 addedUploadDataCost
         WHERE (
@@ -747,7 +724,6 @@ proc: BEGIN
         );
 
         SET exitCode = 1; -- find.
-        SELECT outID, exitCode;
     END;
 
     START TRANSACTION;
@@ -779,14 +755,12 @@ proc: BEGIN
         ROLLBACK;
         SET outID = NULL;
         SET exitCode = 5; -- upload limit was exceeded.
-        SELECT outID, exitCode;
         LEAVE proc;
     END IF;
 
     COMMIT;
 
     SET exitCode = 0; -- insert.
-    SELECT outID, exitCode;
 END proc //
 DELIMITER ;
 
@@ -837,11 +811,15 @@ CREATE PROCEDURE insertOrFindRegularEntity (
     IN isAnonymous BOOL
 )
 BEGIN
+    DECLARE outID, exitCode BIGINT UNSIGNED;
+
     CALL _insertOrFindEntityWithSecKey (
         "r",
         userID, defStr, userWhitelistID, isAnonymous,
-        @unused, @unused
+        outID, exitCode
     );
+
+    SELECT outID, exitCode;
 END //
 DELIMITER ;
 
