@@ -66,15 +66,24 @@ BEGIN
     SET float2Val = CASE WHEN (float2Val IS NULL)
         THEN 0 ELSE float2Val
     END;
+INSERT INTO DebugLogEntries (msg)
+VALUE ( CONCAT(
+    "_insertUpdateOrDeletePublicListElement, init, float1Val=",
+    float1Val
+));
 
     -- We select (for update) the previous score on the list, and branch
     -- accordingly in order to update the ListMetadata table correctly.
     START TRANSACTION;
+INSERT INTO DebugLogEntries (msg)
+VALUE ( CONCAT(
+    "_insertUpdateOrDeletePublicListElement, after start transaction"
+));
 
-    SELECT list_len INTO prevListLen -- only used to lock ListMetadata row.
-    FROM PublicListMetadata FORCE INDEX (PRIMARY)
-    WHERE list_id = listID
-    FOR UPDATE;
+    -- SELECT list_len INTO prevListLen -- only used to lock ListMetadata row.
+    -- FROM PublicListMetadata FORCE INDEX (PRIMARY)
+    -- WHERE list_id = listID
+    -- FOR UPDATE;
 
     SELECT float_1_val, float_2_val INTO prevFloatVal1, prevFloatVal2
     FROM PublicEntityLists FORCE INDEX (PRIMARY)
@@ -82,6 +91,11 @@ BEGIN
         list_id = listID AND
         subj_id = subjID
     );
+INSERT INTO DebugLogEntries (msg)
+VALUE ( CONCAT(
+    "_insertUpdateOrDeletePublicListElement, after prev select, prevFloatVal1=",
+    prevFloatVal1
+));
 
     -- Branch according to whether the score should be inserted, updated, or
     -- deleted, the latter being the case where the floatVal input is NULL. 
@@ -93,6 +107,8 @@ BEGIN
             listID, subjID,
             float1Val, float2Val, onIndexData, offIndexData
         );
+INSERT INTO DebugLogEntries (msg)
+VALUE ("_insertUpdateOrDeletePublicListElement, ec=0");
 
         INSERT INTO PublicListMetadata (
             list_id,
@@ -129,6 +145,8 @@ BEGIN
             list_id = listID AND
             subj_id = subjID
         );
+INSERT INTO DebugLogEntries (msg)
+VALUE ("_insertUpdateOrDeletePublicListElement, ec=1");
         
         UPDATE PublicListMetadata SET
             float_1_sum = float_1_sum + float1Val - prevFloatVal1,
@@ -392,6 +410,8 @@ proc: BEGIN
     DECLARE unixTimeBin VARBINARY(4) DEFAULT (
         UNHEX(CONV(unixTime, 10, 16))
     );
+INSERT INTO DebugLogEntries (msg)
+VALUE (CONCAT("insertOrUpdatePublicUserScore, init, scoreMid=", scoreMid));
 
     -- Pay the upload data cost for the score insert.
     CALL _increaseWeeklyUserCounters (
@@ -410,8 +430,11 @@ proc: BEGIN
         userScoreListID, exitCode
     );
     IF (exitCode = 5) THEN
+        SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
         LEAVE proc;
     END IF;
+INSERT INTO DebugLogEntries (msg)
+VALUE (CONCAT("insertOrUpdatePublicUserScore, after, _insertOrFindRegularEntity"));
 
     -- Exit if the subject entity does not exist.
     IF (
@@ -424,7 +447,8 @@ proc: BEGIN
     ) THEN
         SELECT subjID AS outID, 3 AS exitCode; -- subject does not exist.
         LEAVE proc;
-    END IF;
+    END IF;INSERT INTO DebugLogEntries (msg)
+VALUE (CONCAT("insertOrUpdatePublicUserScore, after ec=3 exit"));
 
     -- Finally insert the user score, updating the PublicListMetadata in the
     -- process.
@@ -438,6 +462,8 @@ proc: BEGIN
         20,
         exitCode
     );
+INSERT INTO DebugLogEntries (msg)
+VALUE (CONCAT("insertOrUpdatePublicUserScore, ec=", exitCode));
 
     SELECT subjID AS outID, exitCode; -- 0: inserted, or 1: updated.
 END proc //

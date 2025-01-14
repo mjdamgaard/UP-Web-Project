@@ -1,12 +1,12 @@
 
 /* Scores */
--- DROP TABLE PrivateEntityLists;
--- DROP TABLE PrivateListMetadata;
--- DROP TABLE PublicEntityLists;
--- DROP TABLE PublicListMetadata;
+DROP TABLE PrivateEntityLists;
+DROP TABLE PrivateListMetadata;
+DROP TABLE PublicEntityLists;
+DROP TABLE PublicListMetadata;
 
 /* Requests */
--- DROP TABLE ScheduledRequests;
+DROP TABLE ScheduledRequests;
 
 /* Entities */
 DROP TABLE Entities;
@@ -19,6 +19,9 @@ DROP TABLE EntitySecKeys;
 DROP TABLE Private_UserData;
 -- DROP TABLE Private_Sessions;
 -- DROP TABLE Private_EMails;
+
+/* Debugging */
+DROP TABLE DebugLogEntries;
 
 
 
@@ -922,4 +925,25 @@ CREATE TABLE Private_EMails (
     -- This field is only temporary, until the e-mail address holder has
     -- confirmed the new account:
     account_1_user_id BIGINT UNSIGNED
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE TABLE DebugLogEntries (
+
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    msg VARCHAR(1000)
 );

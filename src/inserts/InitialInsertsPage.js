@@ -85,7 +85,7 @@ export const InitialInsertsPage = () => {
       <hr/>
       <div>
         <button onClick={() => insertInitialScores(dataInserter)}>
-          Insert initial scores (but update [...]_entity_ids.js first, and
+          Insert initial scores (but update [...]_entity_ids.js/sql first, and
           then recompile the view, and also reload this page first.)
         </button>
       </div>
