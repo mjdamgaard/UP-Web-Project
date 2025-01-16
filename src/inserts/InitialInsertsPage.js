@@ -116,7 +116,7 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Entities"',
-      '"Entity"',
+      '"3$y"',
       '_',
       '_',
       '_',
@@ -134,7 +134,7 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Classes"',
-      '"Class"',
+      '"2$"',
       '_',
       '_',
       '@[classes/format]',
@@ -150,7 +150,7 @@ export function initialInserts(dataInserter) {
         // "Member format?:(f::Function|t::Entity type)",
         "Member type?:t=@[4]",
         "Member format?:f",
-        "Description:h",
+        "Description?:h",
       ].join(",") +
       ")=>" +
       JSON.stringify({
@@ -197,7 +197,7 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Users"',
-      '"User"',
+      '"1$"',
       '_',
       '@[2]',
       '_',
@@ -209,7 +209,7 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Workspaces"',
-      '"workspace"',
+      '"1$"',
       '@[json objects]',
       '@[6]',
       '_',
@@ -221,7 +221,7 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Entity types"',
-      '"Entity type"',
+      '"1$"',
       '_',
       '@[1]',
       '_',
@@ -233,7 +233,7 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Functions"',
-      '"Function"',
+      '"1$"',
       '_',
       '@[3]',
       '_',
@@ -245,7 +245,7 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"JSON objects"',
-      '"JSON object"',
+      '"1$"',
       '_',
       '@[6]',
       '_',
@@ -257,7 +257,7 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Texts"',
-      '"Text"',
+      '"1$"',
       '_',
       '@[7]',
       '_',
@@ -269,7 +269,7 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"UTF-8 texts"',
-      '"UTF-8 text"',
+      '"1$"',
       '_',
       '@[8]',
       '_',
@@ -281,7 +281,7 @@ export function initialInserts(dataInserter) {
     [
       '@[relations/format]',
       '"Relations"',
-      '"Relation"',
+      '"1$"',
       '_',
       '_',
       '@[relations/format]',
@@ -311,7 +311,7 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Qualities"',
-      '"Quality"',
+      '"3$y"',
       '_',
       '_',
       '@[qualities/format]',
@@ -322,12 +322,13 @@ export function initialInserts(dataInserter) {
     "qualities/format", "f", (
       "quality(" + [
         "Label:string",
-        // "Domain:" +
-        //   "@[classes]::Class" + "|" +
-        //   "[Object:@[entities],Relation:@[relations]]::Set",
-        // "Domain:[Object:@[entities],Relation:@[relations]]",
-        "Object:@[entities]",
-        "Relation:@[relations]=@[relations/members]",
+        // // "Domain:" +
+        // //   "@[classes]::Class" + "|" +
+        // //   "[Object:@[entities],Relation:@[relations]]::Set",
+        // // "Domain:[Object:@[entities],Relation:@[relations]]",
+        // "Object:@[entities]",
+        // "Relation:@[relations]=@[relations/members]",
+        "Domain?:@[classes]",
         "Metric:@[metrics]",
         "Description?:h",
       ].join(",") +
@@ -335,10 +336,9 @@ export function initialInserts(dataInserter) {
       JSON.stringify({
         "Class": "@[qualities]",
         "Label": "%1",
-        "Object": "%2",
-        "Relation": "%3",
-        "Metric": "%4",
-        "Description": "%5",
+        "Domain": "%2",
+        "Metric": "%3",
+        "Description": "%4",
       })
     )
   );
@@ -347,7 +347,7 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Relevancy qualities"',
-      '"Relevancy quality"',
+      '"3$y"',
       '@[qualities]',
       '_',
       '@[relevancy qualities/format]',
@@ -357,20 +357,44 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     "relevancy qualities/format", "f", (
       "relevancy_quality(" + [
-        "Object:@[entities]",
-        "Relation:@[relations]",
+        "Class:@[classes]",
       ].join(",") +
       ")=>" +
       JSON.stringify({
         "Class": "@[relevancy qualities]",
-        // "Label": "Relevant for @{Object} → @{Relation}",
-        "Label": "Relevant for %1 → %2",
-        // // "Domain": "@[sets/format](%1,%2)",
-        // // "Domain": {Object: "%1", Relation: "%2"},
-        // "Domain": ["%1", "%2"],
-        "Object": "%1",
-        "Relation": "%2",
+        // // "Label": "Relevant for @{Object} → @{Relation}",
+        // "Label": "Relevant for %1 → %2",
+        "Label": "Relevant for %1",
         "Metric": "@[metrics/std predicate metric]",
+      })
+    )
+  );
+  dataInserter.insertSubstituteOrEditEntity(
+    "relational classes", "r",
+    [
+      '@[classes/format]',
+      '"Relational classes"',
+      '"2$"',
+      '@[classes]',
+      '_',
+      '@[relational classes/format]',
+      '@[relational classes/desc]',
+    ].join(","),
+  );
+  dataInserter.insertSubstituteOrEditEntity(
+    "relational classes/format", "f", (
+      "relational_class(" + [
+        "Object:@[entities]",
+        "Relation:@[relations]",
+        "Relation subject title:string",
+      ].join(",") +
+      ")=>" +
+      JSON.stringify({
+        "Class": "@[relational classes]",
+        "Name": "%1 → %2",
+        // "Member title": "%1 → %3",
+        // "Member title": "%1 → %2[Subject title]",
+        "Member title": "%3",
       })
     )
   );
@@ -382,26 +406,26 @@ export function initialInserts(dataInserter) {
   );
 
   dataInserter.insertSubstituteOrEditEntity(
-    "quality parameters", "r",
+    "semantic parameters", "r",
     [
       '@[classes/format]',
-      '"Quality parameters"',
-      '"Quality parameter"',
+      '"Semantic parameters"',
+      '"1$"',
       '_',
       '_',
-      '@[quality parameters/format]',
-      '@[quality parameters/desc]',
+      '@[semantic parameters/format]',
+      '@[semantic parameters/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
-    "quality parameters/format", "f", (
-      "quality_parameter(" + [
+    "semantic parameters/format", "f", (
+      "semantic_parameter(" + [
         "Subject:@[entities]",
         "Quality:@[qualities]",
       ].join(",") +
       ")=>" +
       JSON.stringify({
-        "Class": "@[quality parameters]",
+        "Class": "@[semantic parameters]",
         "Label": "%1 ⋲ %2",
         // "Label": "%1 ⥺ %2",
         // "Label": "%1 :≟ %2",
@@ -411,40 +435,40 @@ export function initialInserts(dataInserter) {
     )
   );
 
-  dataInserter.insertSubstituteOrEditEntity(
-    "sets", "r",
-    [
-      '@[classes/format]',
-      '"Sets"',
-      '"Set"',
-      '_',
-      '_',
-      '@[sets/format]',
-      '@[sets/desc]',
-    ].join(","),
-  );
-  dataInserter.insertSubstituteOrEditEntity(
-    "sets/format", "f", (
-      "set(" + [
-        "Object:@[entities]",
-        "Relation:@[relations]",
-      ].join(",") +
-      ")=>" +
-      JSON.stringify({
-        "Class": "@[sets]",
-        "Label": "%1 → %2",
-        "Object": "%1",
-        "Relation": "%2",
-      })
-    )
-  );
+  // dataInserter.insertSubstituteOrEditEntity(
+  //   "sets", "r",
+  //   [
+  //     '@[classes/format]',
+  //     '"Sets"',
+  //     '"1$"',
+  //     '_',
+  //     '_',
+  //     '@[sets/format]',
+  //     '@[sets/desc]',
+  //   ].join(","),
+  // );
+  // dataInserter.insertSubstituteOrEditEntity(
+  //   "sets/format", "f", (
+  //     "set(" + [
+  //       "Object:@[entities]",
+  //       "Relation:@[relations]",
+  //     ].join(",") +
+  //     ")=>" +
+  //     JSON.stringify({
+  //       "Class": "@[sets]",
+  //       "Label": "%1 → %2",
+  //       "Object": "%1",
+  //       "Relation": "%2",
+  //     })
+  //   )
+  // );
 
   dataInserter.insertSubstituteOrEditEntity(
     "metrics", "r",
     [
       '@[classes/format]',
       '"Quality metrics"',
-      '"Quality metric"',
+      '"1$"',
       '_',
       '_',
       '@[metrics/format]',
@@ -481,7 +505,7 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Lists"',
-      '"List"',
+      '"1$"',
       '_',
       '_',
       '_',
@@ -494,7 +518,7 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"User score lists"',
-      '"User score list"',
+      '"1$"',
       '@[lists]',
       '_',
       '@[user score lists/format]',
@@ -520,7 +544,7 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Min contribution lists"',
-      '"Min contribution list"',
+      '"1$"',
       '@[lists]',
       '_',
       '@[min contribution lists/format]',
@@ -544,6 +568,18 @@ export function initialInserts(dataInserter) {
     )
   );
   dataInserter.insertSubstituteOrEditEntity(
+    "max contribution lists", "r",
+    [
+      '@[classes/format]',
+      '"Max contribution lists"',
+      '"1$"',
+      '@[lists]',
+      '_',
+      '@[min contribution lists/format]',
+      '@[min contribution lists/desc]',
+    ].join(","),
+  );
+  dataInserter.insertSubstituteOrEditEntity(
     "max contribution lists/format", "f", (
       "max_contr(" + [
         "User group:@[user groups]",
@@ -564,7 +600,7 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Score median lists"',
-      '"Score median list"',
+      '"1$"',
       '@[lists]',
       '_',
       '@[score median lists/format]',
@@ -934,8 +970,8 @@ export function initialInserts(dataInserter) {
     [
       '@[relations/format]',
       '"Arguments"',
-      '@[quality parameters]',
-      '@[quality parameters]',
+      '@[semantic parameters]',
+      '@[semantic parameters]',
       '@[relations/arguments/desc]',
     ].join(","),
   );

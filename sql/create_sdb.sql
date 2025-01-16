@@ -1,9 +1,7 @@
 
 /* Scores */
-DROP TABLE PrivateEntityLists;
-DROP TABLE PrivateListMetadata;
-DROP TABLE PublicEntityLists;
-DROP TABLE PublicListMetadata;
+DROP TABLE EntityLists;
+DROP TABLE ListMetadata;
 
 /* Requests */
 DROP TABLE ScheduledRequests;
@@ -31,94 +29,98 @@ DROP TABLE DebugLogEntries;
 /* Some fundamental scores tables  */
 
 
-CREATE TABLE PrivateEntityLists (
+-- CREATE TABLE PrivateEntityLists (
 
-    list_type CHAR NOT NULL DEFAULT "\0", -- "\0": No aggregation allowed.
+--     list_type CHAR NOT NULL DEFAULT "\0", -- "\0": No aggregation allowed.
 
-    user_whitelist_id BIGINT UNSIGNED NOT NULL,
+--     user_whitelist_id BIGINT UNSIGNED NOT NULL,
+
+--     list_id BIGINT UNSIGNED NOT NULL,
+
+--     float_val FLOAT NOT NULL,
+
+--     on_index_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
+
+--     user_id BIGINT UNSIGNED NOT NULL,
+
+--     subj_id BIGINT UNSIGNED NOT NULL,
+
+--     off_index_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
+
+--     PRIMARY KEY (
+--         list_type,
+--         user_whitelist_id,
+--         list_id,
+--         user_id,
+--         subj_id
+--     ),
+
+--     UNIQUE INDEX score_ord_idx (
+--         list_type,
+--         user_whitelist_id,
+--         list_id,
+--         float_val,
+--         on_index_data,
+--         user_id,
+--         subj_id
+--     )
+-- )
+-- ROW_FORMAT = COMPRESSED;
+
+
+
+
+-- CREATE TABLE PrivateListMetadata (
+
+--     list_type CHAR NOT NULL,
+
+--     user_whitelist_id BIGINT UNSIGNED NOT NULL,
+
+--     list_id BIGINT UNSIGNED NOT NULL,
+
+--     user_id BIGINT UNSIGNED NOT NULL, -- user_id = 0 refers to the full list.
+
+--     list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+--     pos_list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+--     float_sum DOUBLE NOT NULL DEFAULT 0,
+
+--     paid_upload_data_cost FLOAT NOT NULL DEFAULT 0,
+
+--     PRIMARY KEY (
+--         list_type,
+--         user_whitelist_id,
+--         list_id,
+--         user_id
+--     )
+-- )
+-- ROW_FORMAT = COMPRESSED;
+
+
+
+
+
+
+
+
+CREATE TABLE EntityLists (
 
     list_id BIGINT UNSIGNED NOT NULL,
 
-    float_val FLOAT NOT NULL,
+    score_1 FLOAT NOT NULL,
 
-    on_index_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
+    score_2 FLOAT NOT NULL DEFAULT 0,
 
-    user_id BIGINT UNSIGNED NOT NULL,
+    -- on_index_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
 
     subj_id BIGINT UNSIGNED NOT NULL,
 
-    off_index_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
+    -- off_index_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
 
-    PRIMARY KEY (
-        list_type,
-        user_whitelist_id,
-        list_id,
-        user_id,
-        subj_id
-    ),
+    other_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
 
-    UNIQUE INDEX score_ord_idx (
-        list_type,
-        user_whitelist_id,
-        list_id,
-        float_val,
-        on_index_data,
-        user_id,
-        subj_id
-    )
-)
-ROW_FORMAT = COMPRESSED;
-
-
-
-
-CREATE TABLE PrivateListMetadata (
-
-    list_type CHAR NOT NULL,
-
-    user_whitelist_id BIGINT UNSIGNED NOT NULL,
-
-    list_id BIGINT UNSIGNED NOT NULL,
-
-    user_id BIGINT UNSIGNED NOT NULL, -- user_id = 0 refers to the full list.
-
-    list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    pos_list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    float_sum DOUBLE NOT NULL DEFAULT 0,
-
-    paid_upload_data_cost FLOAT NOT NULL DEFAULT 0,
-
-    PRIMARY KEY (
-        list_type,
-        user_whitelist_id,
-        list_id,
-        user_id
-    )
-)
-ROW_FORMAT = COMPRESSED;
-
-
-
-
-
-
-
-
-CREATE TABLE PublicEntityLists (
-
-    list_id BIGINT UNSIGNED NOT NULL,
-
-    float_1_val FLOAT NOT NULL,
-
-    float_2_val FLOAT NOT NULL DEFAULT 0,
-
-    on_index_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
-
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    off_index_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
+    -- unix_time INT UNSIGNED NOT NULL DEFAULT (UNIX_TIMESTAMP()),
 
     PRIMARY KEY (
         list_id,
@@ -127,9 +129,9 @@ CREATE TABLE PublicEntityLists (
 
     UNIQUE INDEX sec_idx (
         list_id,
-        float_1_val,
-        float_2_val,
-        on_index_data,
+        score_1,
+        score_2,
+        -- on_index_data,
         subj_id
     )
 )
@@ -139,7 +141,7 @@ ROW_FORMAT = COMPRESSED;
 
 
 
-CREATE TABLE PublicListMetadata (
+CREATE TABLE ListMetadata (
 
     list_id BIGINT UNSIGNED PRIMARY KEY,
 

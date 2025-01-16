@@ -48,32 +48,29 @@ DROP PROCEDURE _increaseWeeklyUserCounters;
 
 
 DELIMITER //
-CREATE PROCEDURE _insertUpdateOrDeletePublicListElement (
+CREATE PROCEDURE _insertUpdateOrDeleteListElement (
     IN listID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
-    IN float1Val FLOAT,
-    IN float2Val FLOAT,
-    IN onIndexData VARBINARY(16),
-    IN offIndexData VARBINARY(16),
+    IN score1 FLOAT,
+    IN score2 FLOAT,
+    IN otherData VARBINARY(16),
     IN addedUploadDataCost FLOAT,
     OUT exitCode TINYINT
 )
 BEGIN
-    DECLARE prevFloatVal1, prevFloatVal2 FLOAT;
+    DECLARE prevScore1, prevScore2 FLOAT;
     DECLARE prevListLen BIGINT UNSIGNED;
     DECLARE isExceeded TINYINT;
 
-    SET float2Val = CASE WHEN (float2Val IS NULL)
-        THEN 0 ELSE float2Val
-    END;
+    SET score2 = IFNULL(score2, 0);
 
     -- We get a lock on the ListMetadata row, and branch accordingly in order
     -- to update the ListMetadata table correctly.
-    DO GET_LOCK(CONCAT( "PublicListMetadata.", listID ), 10);
+    DO GET_LOCK(CONCAT( "ListMetadata.", listID ), 10);
 
 
-    SELECT float_1_val, float_2_val INTO prevFloatVal1, prevFloatVal2
-    FROM PublicEntityLists FORCE INDEX (PRIMARY)
+    SELECT score_1, score_2 INTO prevScore1, prevScore2
+    FROM EntityLists FORCE INDEX (PRIMARY)
     WHERE (
         list_id = listID AND
         subj_id = subjID
@@ -81,47 +78,47 @@ BEGIN
 
     -- Branch according to whether the score should be inserted, updated, or
     -- deleted, the latter being the case where the floatVal input is NULL. 
-    IF (float1Val IS NOT NULL AND prevFloatVal1 IS NULL) THEN
-        INSERT INTO PublicEntityLists (
+    IF (score1 IS NOT NULL AND prevScore1 IS NULL) THEN
+        INSERT INTO EntityLists (
             list_id, subj_id,
-            float_1_val, float_2_val,
+            score_1, score_2,
             on_index_data,
-            off_index_data
+            other_data
         ) VALUES (
             listID, subjID,
-            float1Val, float2Val,
+            score1, score2,
             IFNULL(onIndexData, DEFAULT(on_index_data)),
-            IFNULL(offIndexData, DEFAULT(off_index_data))
+            IFNULL(otherData, DEFAULT(other_data))
         );
 
-        INSERT INTO PublicListMetadata (
+        INSERT INTO ListMetadata (
             list_id,
-            list_len, float_1_sum, float_2_sum,
+            list_len, score_1_sum, score_2_sum,
             pos_list_len,
             paid_upload_data_cost
         ) VALUES (
             listID,
-            1, float1Val, float2Val,
-            CASE WHEN (float1Val > 0) THEN 1 ELSE 0 END,
+            1, score1, score2,
+            CASE WHEN (score1 > 0) THEN 1 ELSE 0 END,
             addedUploadDataCost
         )
         ON DUPLICATE KEY UPDATE
             list_len = list_len + 1,
-            float_1_sum = float_1_sum + float1Val,
-            float_2_sum = float_2_sum + float2Val,
+            score_1_sum = score_1_sum + score1,
+            score_2_sum = score_2_sum + score2,
             pos_list_len = pos_list_len +
-                CASE WHEN (float1Val > 0) THEN 1 ELSE 0 END,
+                CASE WHEN (score1 > 0) THEN 1 ELSE 0 END,
             paid_upload_data_cost = paid_upload_data_cost +
                 addedUploadDataCost;
 
         SET exitCode = 0; -- insert.
 
-    ELSEIF (float1Val IS NOT NULL AND prevFloatVal1 IS NOT NULL) THEN
-        UPDATE PublicEntityLists SET
-            float_1_val = float1Val,
-            float_2_val = float2Val,
+    ELSEIF (score1 IS NOT NULL AND prevScore1 IS NOT NULL) THEN
+        UPDATE EntityLists SET
+            score_1 = score1,
+            score_2 = score2,
             on_index_data = IFNULL(onIndexData, DEFAULT(on_index_data)),
-            off_index_data = IFNULL(offIndexData, DEFAULT(off_index_data)),
+            other_data = IFNULL(otherData, DEFAULT(other_data)),
             paid_upload_data_cost = paid_upload_data_cost +
                 addedUploadDataCost
         WHERE (
@@ -129,13 +126,13 @@ BEGIN
             subj_id = subjID
         );
         
-        UPDATE PublicListMetadata SET
-            float_1_sum = float_1_sum + float1Val - prevFloatVal1,
-            float_2_sum = float_2_sum + float2Val - prevFloatVal2,
+        UPDATE ListMetadata SET
+            score_1_sum = score_1_sum + score1 - prevScore1,
+            score_2_sum = score_2_sum + score2 - prevScore2,
             pos_list_len = pos_list_len +
                 CASE
-                    WHEN (float1Val > 0 AND prevFloatVal1 <= 0) THEN 1
-                    WHEN (float1Val <= 0 AND prevFloatVal1 > 0) THEN -1
+                    WHEN (score1 > 0 AND prevScore1 <= 0) THEN 1
+                    WHEN (score1 <= 0 AND prevScore1 > 0) THEN -1
                     ELSE 0
                 END,
             paid_upload_data_cost = paid_upload_data_cost +
@@ -144,20 +141,20 @@ BEGIN
 
         SET exitCode = 1; -- update.
 
-    ELSEIF (float1Val IS NULL AND prevFloatVal1 IS NOT NULL) THEN
-        DELETE FROM PublicEntityLists
+    ELSEIF (score1 IS NULL AND prevScore1 IS NOT NULL) THEN
+        DELETE FROM EntityLists
         WHERE (
             user_group_id = userGroupID AND
             list_spec_id = listSpecID AND
             subj_id = subjID
         );
         
-        UPDATE PublicListMetadata SET
+        UPDATE ListMetadata SET
             list_len = list_len - 1,
-            float_1_sum = float_1_sum - prevFloatVal1,
-            float_2_sum = float_2_sum - prevFloatVal2,
+            score_1_sum = score_1_sum - prevScore1,
+            score_2_sum = score_2_sum - prevScore2,
             pos_list_len = pos_list_len +
-                CASE WHEN (prevFloatVal1 > 0) THEN -1 ELSE 0 END,
+                CASE WHEN (prevScore1 > 0) THEN -1 ELSE 0 END,
             paid_upload_data_cost = paid_upload_data_cost +
                 addedUploadDataCost
         WHERE list_id = listID;
@@ -167,142 +164,7 @@ BEGIN
         SET exitCode = 3; -- no change.
     END IF;
 
-    DO RELEASE_LOCK(CONCAT( "PublicListMetadata.", listID ));
-END //
-DELIMITER ;
-
-
-
-DELIMITER //
-CREATE PROCEDURE _insertUpdateOrDeletePrivateListElement (
-    IN listType CHAR,
-    IN userWhiteListID BIGINT UNSIGNED,
-    IN listID BIGINT UNSIGNED,
-    IN userID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED,
-    IN floatVal FLOAT,
-    IN onIndexData VARBINARY(16),
-    IN offIndexData VARBINARY(16),
-    IN addedUploadDataCost FLOAT,
-    OUT exitCode TINYINT
-)
-BEGIN
-    DECLARE prevFloatVal FLOAT;
-    DECLARE prevListLen, prevCombListLen BIGINT UNSIGNED;
-    DECLARE isExceeded TINYINT;
-
-    -- We get a lock on PrivateListMetadata for the full list (all users), and
-    -- branch accordingly in order to update the ListMetadata table correctly.
-    DO GET_LOCK(CONCAT(
-        "PrivateListMetadata.", listType, ".", userWhiteListID, ".", listID
-    ), 10);
-
-    SELECT float_val INTO prevFloatVal
-    FROM PrivateEntityLists FORCE INDEX (PRIMARY)
-    WHERE (
-        list_type = listType AND
-        user_whitelist_id = userWhiteListID AND
-        list_id = listID AND
-        user_id = userID AND
-        subj_id = subjID
-    );
-
-    -- Branch according to whether the score should be inserted, updated, or
-    -- deleted, the latter being the case where the floatVal input is NULL. 
-    IF (floatVal IS NOT NULL AND prevFloatVal IS NULL) THEN
-        INSERT INTO PrivateEntityLists (
-            list_type, user_whitelist_id, list_id, user_id, subj_id,
-            float_val,
-            on_index_data,
-            off_index_data
-        ) VALUES (
-            listType, userWhitelistID, listID, userID, subjID,
-            floatVal,
-            IFNULL(onIndexData, DEFAULT(on_index_data)),
-            IFNULL(offIndexData, DEFAULT(off_index_data))
-        );
-
-        INSERT INTO PrivateListMetadata (
-            list_type, user_whitelist_id, list_id, user_id,
-            list_len, float_sum,
-            pos_list_len,
-            paid_upload_data_cost
-        ) VALUES (
-            listID,
-            1, floatVal,
-            CASE WHEN (floatVal > 0) THEN 1 ELSE 0 END,
-            addedUploadDataCost
-        )
-        ON DUPLICATE KEY UPDATE
-            list_len = list_len + 1,
-            float_sum = float_sum + floatVal,
-            pos_list_len = pos_list_len +
-                CASE WHEN (floatVal > 0) THEN 1 ELSE 0 END,
-            paid_upload_data_cost = paid_upload_data_cost +
-                addedUploadDataCost;
-
-        SET exitCode = 0; -- insert.
-
-    ELSEIF (floatVal IS NOT NULL AND prevFloatVal IS NOT NULL) THEN
-        UPDATE PrivateEntityLists SET
-            float_val = floatVal,
-            on_index_data = IFNULL(onIndexData, DEFAULT(on_index_data)),
-            off_index_data = IFNULL(offIndexData, DEFAULT(off_index_data)),
-            paid_upload_data_cost = paid_upload_data_cost +
-                addedUploadDataCost
-        WHERE (
-            list_type = listType AND
-            user_whitelist_id = userWhiteListID AND
-            list_id = listID AND
-            user_id = userID AND
-            subj_id = subjID
-        );
-        
-        UPDATE PrivateListMetadata SET
-            float_sum = float_sum + floatVal - prevFloatVal,
-            pos_list_len = pos_list_len +
-                CASE
-                    WHEN (floatVal > 0 AND prevFloatVal <= 0) THEN 1
-                    WHEN (floatVal <= 0 AND prevFloatVal > 0) THEN -1
-                    ELSE 0
-                END,
-            paid_upload_data_cost = paid_upload_data_cost +
-                addedUploadDataCost
-        WHERE list_id = listID;
-
-        SET exitCode = 1; -- update.
-
-    ELSEIF (floatVal IS NULL AND prevFloatVal IS NOT NULL) THEN
-        DELETE FROM PrivateEntityLists
-        WHERE (
-            user_group_id = userGroupID AND
-            list_spec_id = listSpecID AND
-            subj_id = subjID
-        );
-        
-        UPDATE PrivateListMetadata SET
-            list_len = list_len - 1,
-            float_1_sum = float_1_sum - prevFloatVal,
-            float_2_sum = float_2_sum - prevFloatVal2,
-            pos_list_len = pos_list_len +
-                CASE WHEN (prevFloatVal > 0) THEN -1 ELSE 0 END,
-            paid_upload_data_cost = paid_upload_data_cost +
-                addedUploadDataCost
-        WHERE (
-            list_type = listType AND
-            user_whitelist_id = userWhiteListID AND
-            list_id = listID AND
-            user_id = 0
-        );
-
-        SET exitCode = 2; -- deletion.
-    ELSE
-        SET exitCode = 3; -- no change.
-    END IF;
-
-    DO RELEASE_LOCK(CONCAT(
-        "PrivateListMetadata.", listType, ".", userWhiteListID, ".", listID
-    ));
+    DO RELEASE_LOCK(CONCAT( "ListMetadata.", listID ));
 END //
 DELIMITER ;
 
@@ -338,8 +200,8 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    SELECT float_1_val INTO userWeightVal
-    FROM PublicEntityLists FORCE INDEX (PRIMARY)
+    SELECT score_1 INTO userWeightVal
+    FROM EntityLists FORCE INDEX (PRIMARY)
     WHERE (
         list_id = userGroupID AND
         subj_id = userID
@@ -359,10 +221,85 @@ DELIMITER ;
 
 
 
+DELIMITER //
+CREATE PROCEDURE insertOrUpdateScore (
+    IN userID BIGINT UNSIGNED,
+    IN listID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED,
+    IN score1 FLOAT,
+    IN score2 FLOAT,
+    IN onIndexData VARBINARY(16),
+    IN otherData VARBINARY(16),
+    IN addedUploadDataCost FLOAT
+)
+proc: BEGIN
+    DECLARE isExceeded, exitCode TINYINT;
+    DECLARE addedUploadDataCost FLOAT DEFAULT (
+        32 + LENGTH(otherData) + 2 * LENGTH(onIndexData)
+    );
+
+    -- Pay the upload data cost for the score insert.
+    CALL _increaseWeeklyUserCounters (
+        userID, 0, addedUploadDataCost, 0, isExceeded
+    );
+    -- Exit if upload limit was exceeded.
+    IF (isExceeded) THEN
+        SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
+        LEAVE proc;
+    END IF;
+
+    -- Finally insert the user score, updating the ListMetadata in the
+    -- process.
+    CALL _insertUpdateOrDeleteListElement (
+        listType,
+        userWhiteListID,
+        listID,
+        userID,
+        subjID,
+        floatVal,
+        onIndexData,
+        otherData,
+        addedUploadDataCost,
+        exitCode
+    );
+
+    SELECT subjID AS outID, exitCode; -- 0: inserted, or 1: updated.
+END proc //
+DELIMITER ;
+
 
 
 DELIMITER //
-CREATE PROCEDURE insertOrUpdatePublicUserScore (
+CREATE PROCEDURE deleteScore (
+    IN userID BIGINT UNSIGNED,
+    IN listType CHAR,
+    IN userWhiteListID BIGINT UNSIGNED,
+    IN listID BIGINT UNSIGNED,
+    IN subjID BIGINT UNSIGNED
+)
+BEGIN
+    CALL _insertUpdateOrDeleteListElement (
+        listType,
+        userWhiteListID,
+        listID,
+        userID,
+        subjID,
+        NULL,
+        NULL,
+        NULL,
+        0,
+        exitCode
+    );
+
+    SELECT subjID AS outID, 0 AS exitCode; -- score was deleted if there.
+END //
+DELIMITER ;
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertOrUpdateUserScore (
     IN userID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
@@ -421,9 +358,9 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    -- Finally insert the user score, updating the PublicListMetadata in the
+    -- Finally insert the user score, updating the ListMetadata in the
     -- process.
-    CALL _insertUpdateOrDeletePublicListElement (
+    CALL _insertUpdateOrDeleteListElement (
         userScoreListID,
         subjID,
         scoreMid,
@@ -441,7 +378,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE deletePublicUserScore (
+CREATE PROCEDURE deleteUserScore (
     IN userID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED
@@ -465,7 +402,7 @@ BEGIN
         def_key = userScoreListDefStr
     );
 
-    CALL _insertUpdateOrDeletePublicListElement (
+    CALL _insertUpdateOrDeleteListElement (
         userScoreListID,
         subjID,
         NULL,
@@ -489,138 +426,7 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE insertOrUpdatePrivateScore (
-    IN userID BIGINT UNSIGNED,
-    IN listType CHAR,
-    IN userWhiteListID BIGINT UNSIGNED,
-    IN listID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED,
-    IN floatVal FLOAT,
-    IN onIndexData VARBINARY(16),
-    IN offIndexData VARBINARY(16),
-    IN addedUploadDataCost FLOAT
-)
-proc: BEGIN
-    DECLARE isExceeded, exitCode TINYINT;
-    DECLARE addedUploadDataCost FLOAT DEFAULT (
-        32 + LENGTH(offIndexData) + 2 * LENGTH(onIndexData)
-    );
 
-    -- Pay the upload data cost for the score insert.
-    CALL _increaseWeeklyUserCounters (
-        userID, 0, addedUploadDataCost, 0, isExceeded
-    );
-    -- Exit if upload limit was exceeded.
-    IF (isExceeded) THEN
-        SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
-        LEAVE proc;
-    END IF;
-
-    -- Finally insert the user score, updating the PrivateListMetadata in the
-    -- process.
-    CALL _insertUpdateOrDeletePrivateListElement (
-        listType,
-        userWhiteListID,
-        listID,
-        userID,
-        subjID,
-        floatVal,
-        onIndexData,
-        offIndexData,
-        addedUploadDataCost,
-        exitCode
-    );
-
-    SELECT subjID AS outID, exitCode; -- 0: inserted, or 1: updated.
-END proc //
-DELIMITER ;
-
-
-
-DELIMITER //
-CREATE PROCEDURE deletePrivateScore (
-    IN userID BIGINT UNSIGNED,
-    IN listType CHAR,
-    IN userWhiteListID BIGINT UNSIGNED,
-    IN listID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED
-)
-BEGIN
-    CALL _insertUpdateOrDeletePrivateListElement (
-        listType,
-        userWhiteListID,
-        listID,
-        userID,
-        subjID,
-        NULL,
-        NULL,
-        NULL,
-        0,
-        exitCode
-    );
-
-    SELECT subjID AS outID, 0 AS exitCode; -- score was deleted if there.
-END //
-DELIMITER ;
-
-
--- DELIMITER //
--- CREATE PROCEDURE deleteAllPrivateScores (
---     IN userID BIGINT UNSIGNED,
---     IN listType CHAR,
---     IN userWhiteListID BIGINT UNSIGNED,
---     IN listID BIGINT UNSIGNED
--- )
--- proc: BEGIN
---     DECLARE isExceeded TINYINT;
-
---     -- Some arbitrary (pessimistic or optimistic) guess at the computation time.
---     CALL _increaseWeeklyUserCounters (
---         userID, 0, 0, 1000, isExceeded
---     );
---     IF (isExceeded) THEN
---         SELECT subjID AS outID, 5 AS exitCode; -- counter was exceeded.
---         LEAVE proc;
---     END IF;
-
---     DELETE FROM PrivateUserScores
---     WHERE (
---         list_type = listType AND
---         user_whitelist_id = userWhitelistID AND
---         qual_id = qualID AND
---         user_id = userID
---     );
---     SET exitCode = CASE WHEN (exitCode = 3)
---         THEN 0 -- deleted.
---         ELSE 1 -- no change.
---     END;
-
---     SELECT subjID AS outID, exitCode; -- deleted if there.
--- END proc //
--- DELIMITER ;
-
-
--- DELIMITER //
--- CREATE PROCEDURE deleteSeveralPrivateUserScores (
---     IN userID BIGINT UNSIGNED,
---     IN userWhitelistID BIGINT UNSIGNED,
---     IN qualID BIGINT UNSIGNED,
---     IN scoreCutoff BIGINT UNSIGNED
--- )
--- BEGIN
---     DELETE FROM PrivateUserScores
---     WHERE (
---         user_whitelist_id = userWhitelistID AND
---         qual_id = qualID AND
---         subj_id = subjID AND
---         score_val < scoreCutoff AND
---         user_id = userID
---     );
-
---     SELECT subjID AS outID, 0 AS exitCode; -- delete if there.
--- END //
--- DELIMITER ;
 
 
 
