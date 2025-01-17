@@ -33,6 +33,8 @@ export class DataFetcher {
     // score is high enough, use the entity data from that instead.
     let reqData = {
       req: "ent",
+      u: "19",
+      ses: "00".repeat(60),
       id: entID,
       m: maxLen,
       s: 0,

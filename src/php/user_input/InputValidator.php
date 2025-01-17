@@ -171,8 +171,7 @@ class InputValidator {
                     );
                 }
                 break;
-            case "on_idx_data":
-            case "off_idx_data":
+            case "other_data":
                 if ( !($paramVal === NULL || strlen($paramVal) <= 16) ) {
                     echoTypeErrorJSONAndExit(
                         $paramName, $paramVal, "VARBINARY(16)"

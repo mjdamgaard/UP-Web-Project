@@ -24,12 +24,12 @@ export class DBRequestManager {
       return;
     }
     
-    // Else initialize an ongoing query data queue, and make a fetchData()
+    // Else initialize an ongoing query data queue, and make a postData()
     // call, which runs all the callbacks in the queue on at a time upon
     // receiving the response from the server.
     this.ongoingQueries[reqDataKey] = [callback];
     let url = "http://localhost:80/query_handler.php";
-    fetchData(url, reqData, (responseText) => {
+    postData(url, reqData, (responseText) => {
       // Get and then delete the ongoing query queue.
       let ongoingQueries = this.ongoingQueries;
       let queryQueue = ongoingQueries[reqDataKey];

@@ -27,7 +27,7 @@ export class DataInserter {
     //   callback(obj);
     // });
     let reqData = {
-      req: "entAsUser",
+      req: "ent",
       ses: this.getAccountData("sesIDHex"),
       u: this.getAccountData("userID"),
       id: this.workspaceEntID,
@@ -143,11 +143,11 @@ export class DataInserter {
 
   insertEntity(
     path, entType, defStr,
-    isAnonymous = 0, userWhiteListID = 0, isEditable = 1,
+    isAnonymous = 0, readerWhiteListID = 0, isEditable = 1,
     callback = () => {}
   ) {
-    if (userWhiteListID === true) {
-      userWhiteListID = this.getAccountData("userID")
+    if (readerWhiteListID === true) {
+      readerWhiteListID = this.getAccountData("userID")
     }
     let req =
       (entType === "f") ? "funEnt" :
@@ -164,7 +164,7 @@ export class DataInserter {
       ses: this.getAccountData("sesIDHex"),
       u: isAnonymous ? 0 : this.getAccountData("userID"),
       d: defStr,
-      w: userWhiteListID,
+      w: readerWhiteListID,
       a: isAnonymous,
       ed: isEditable,
     };
@@ -182,8 +182,8 @@ export class DataInserter {
           entID: result.outID.toString(),
           c: result.exitCode == "1" ? null : isAnonymous ? 0 :
             this.getAccountData("userID"),
-          w: userWhiteListID ? userWhiteListID : undefined,
-          ed: isAnonymous ? undefined : userWhiteListID ? undefined :
+          w: readerWhiteListID ? readerWhiteListID : undefined,
+          ed: isAnonymous ? undefined : readerWhiteListID ? undefined :
             isEditable,
         };
       }
@@ -192,22 +192,22 @@ export class DataInserter {
   }
 
   insertSubbedEntity(
-    path, entType, defStr, isAnonymous, userWhiteListID, isEditable, callback
+    path, entType, defStr, isAnonymous, readerWhiteListID, isEditable, callback
   ) {
     defStr = this.getSubbedDefStr(defStr);
     this.insertEntity(
-      path, entType, defStr, isAnonymous, userWhiteListID, isEditable,
+      path, entType, defStr, isAnonymous, readerWhiteListID, isEditable,
       callback
     );
   }
 
   editEntity(
     path, entType, defStr,
-    isAnonymous = 0, userWhiteListID = 0, isEditable = 1,
+    isAnonymous = 0, readerWhiteListID = 0, isEditable = 1,
     callback = () => {}
   ) {
-    if (userWhiteListID === true) {
-      userWhiteListID = this.getAccountData("userID")
+    if (readerWhiteListID === true) {
+      readerWhiteListID = this.getAccountData("userID")
     }
     let entID = this.getEntIDFromPath(path);
     if (!entID) {
@@ -232,7 +232,7 @@ export class DataInserter {
       u: isAnonymous ? 0 : this.getAccountData("userID"),
       e: entID,
       d: defStr,
-      w: userWhiteListID,
+      w: readerWhiteListID,
       a: isAnonymous,
       ed: isEditable,
     };
@@ -249,8 +249,8 @@ export class DataInserter {
         targetNode[0] = {
           entID: result.outID.toString(),
           c: isAnonymous ? 0 : this.getAccountData("userID"),
-          w: userWhiteListID ? userWhiteListID : undefined,
-          ed: isAnonymous ? undefined : userWhiteListID ? undefined :
+          w: readerWhiteListID ? readerWhiteListID : undefined,
+          ed: isAnonymous ? undefined : readerWhiteListID ? undefined :
             isEditable,
         };
       }
@@ -259,11 +259,11 @@ export class DataInserter {
   }
 
   editSubbedEntity(
-    path, entType, defStr, isAnonymous, userWhiteListID, isEditable, callback
+    path, entType, defStr, isAnonymous, readerWhiteListID, isEditable, callback
   ) {
     defStr = this.getSubbedDefStr(defStr);
     this.editEntity(
-      path, entType, defStr, isAnonymous, userWhiteListID, isEditable,
+      path, entType, defStr, isAnonymous, readerWhiteListID, isEditable,
       callback
     );
   }
@@ -283,20 +283,20 @@ export class DataInserter {
 
   insertOrEditEntity(
     path, entType, defStr,
-    isAnonymous = 0, userWhiteListID = 0, isEditable = 1,
+    isAnonymous = 0, readerWhiteListID = 0, isEditable = 1,
     callback = () => {}
   ) {
     // If an entID is not already recorded at path, simply insert a new entity.
     let entID = this.getEntIDFromPath(path);
     if (!entID) {
       this.insertSubbedEntity(
-        path, entType, defStr, isAnonymous, userWhiteListID, isEditable,
+        path, entType, defStr, isAnonymous, readerWhiteListID, isEditable,
         callback
       );
     }
     else {
       this.editSubbedEntity(
-        path, entType, defStr, isAnonymous, userWhiteListID, isEditable,
+        path, entType, defStr, isAnonymous, readerWhiteListID, isEditable,
         callback
       );
     }
@@ -304,14 +304,14 @@ export class DataInserter {
 
   insertOrSubstituteEntity(
     path, entType, defStr,
-    isAnonymous = 0, userWhiteListID = 0, isEditable = 1,
+    isAnonymous = 0, readerWhiteListID = 0, isEditable = 1,
     callback = () => {}
   ) {
     // If an entID is not already recorded at path, simply insert a new entity.
     let entID = this.getEntIDFromPath(path);
     if (!entID) {
       this.insertSubbedEntity(
-        path, entType, defStr, isAnonymous, userWhiteListID, isEditable,
+        path, entType, defStr, isAnonymous, readerWhiteListID, isEditable,
         callback
       );
       return;
@@ -340,16 +340,16 @@ export class DataInserter {
 
 
   insertSubstituteOrEditEntity(
-    path, entType, defStr, isAnonymous, userWhiteListID, isEditable, callback
+    path, entType, defStr, isAnonymous, readerWhiteListID, isEditable, callback
   ) {
     if (entType === "r" || entType === "f") {
       this.insertOrSubstituteEntity(
-        path, entType, defStr, isAnonymous, userWhiteListID, isEditable,
+        path, entType, defStr, isAnonymous, readerWhiteListID, isEditable,
         callback
       );
     } else {
       this.insertOrEditEntity(
-        path, entType, defStr, isAnonymous, userWhiteListID, isEditable,
+        path, entType, defStr, isAnonymous, readerWhiteListID, isEditable,
         callback
       );
     }
@@ -358,7 +358,7 @@ export class DataInserter {
 
 
   insertOrSubstituteRelevancyQualityEntity(
-    path, objPath, relPath, isAnonymous, userWhiteListID, callback
+    path, objPath, relPath, isAnonymous, readerWhiteListID, callback
   ) {
     let objID = this.getEntIDFromPath(objPath);
     let relID = this.getEntIDFromPath(relPath);
@@ -368,7 +368,7 @@ export class DataInserter {
     }
     let defStr = `@[${RELEVANCY_QUAL_FORMAT_ID}],@[${objID}],@[${relID}]`
     this.insertOrSubstituteEntity(
-      path, "r", defStr, isAnonymous, userWhiteListID, 0, callback
+      path, "r", defStr, isAnonymous, readerWhiteListID, 0, callback
     );
   }
 
@@ -443,7 +443,7 @@ export class DataInserter {
 
 
   scoreEntityPrivately(
-    entID, listType = "\0", userWhiteListID, listID, scoreVal,
+    entID, listType = "\0", readerWhiteListID, listID, scoreVal,
     onIndexData, offIndexData, addedUploadDataCost, callback = () => {}
   ) {
     let reqData = {
@@ -451,7 +451,7 @@ export class DataInserter {
       ses: this.getAccountData("sesIDHex"),
       u: this.getAccountData("userID"),
       t: listType,
-      w: userWhiteListID,
+      w: readerWhiteListID,
       l: listID,
       s: entID,
       v: scoreVal,
@@ -467,16 +467,16 @@ export class DataInserter {
 
 
   scoreWorkspaceEntitiesPrivately(
-    listType = "\0", userWhiteListPath, listPath,
+    listType = "\0", readerWhiteListPath, listPath,
     PathScoreValAndOnOffIndexDataQuartets, addedUploadDataCostPerEntity,
     callback = () => {}
   ) {
     let parallelCallbackHandler = new ParallelCallbackHandler;
     let results = [];
 
-    let userWhiteListID = this.getEntIDFromPath(userWhiteListPath);
+    let readerWhiteListID = this.getEntIDFromPath(readerWhiteListPath);
     let listID = this.getEntIDFromPath(listPath);
-    if (!userWhiteListID || !listID) {
+    if (!readerWhiteListID || !listID) {
       callback(null, null);
       return;
     }
@@ -494,7 +494,7 @@ export class DataInserter {
           return;
         }
         this.scoreEntityPrivately(
-          subjID, listType, userWhiteListID, listID, scoreVal,
+          subjID, listType, readerWhiteListID, listID, scoreVal,
           onIndexData, offIndexData, addedUploadDataCostPerEntity,
           (outID, exitCode) => {
             results[ind] = [outID, exitCode];

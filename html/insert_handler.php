@@ -68,29 +68,20 @@ $sql = "";
 $paramNameArr = "";
 $typeArr = "";
 switch ($reqType) {
+    /* Scores */
     case "score":
-        $sql = "CALL insertOrUpdatePublicUserScore (?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "q", "s", "m", "r", "t");
-        $typeArr = array("id", "id", "id", "float", "float", "tint");
-        break;
-    case "delScore":
-        $sql = "CALL deletePublicUserScore (?, ?, ?)";
-        $paramNameArr = array("u", "q", "s");
-        $typeArr = array("id", "id", "id");
-        break;
-    case "prvScore":
-        $sql = "CALL insertOrUpdatePrivateScore (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "t", "w", "l", "s", "v", "d1", "d2", "uc");
+        $sql = "CALL insertOrUpdateScore (?, ?, ?, ?, ?, ?)";
+        $paramNameArr = array("u", "d", "w", "s", "s1", "s2", "od");
         $typeArr = array(
-            "id", "char", "id", "id", "id", "float",
-            "on_idx_data", "off_idx_data", "float"
+            "id", "str", "id", "id", "float", "float", "other_data"
         );
         break;
-    case "delPrvScore":
-        $sql = "CALL deletePrivateScore (?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "t", "w", "l", "s");
-        $typeArr = array("id", "char", "id", "id", "id");
+    case "delScore":
+        $sql = "CALL deleteScore (?, ?, ?)";
+        $paramNameArr = array("u", "d", "w", "s");
+        $typeArr = array("id", "str", "id", "id");
         break;
+    /* Entities */
     case "funEnt":
         $sql = "CALL insertFunctionEntity (?, ?, ?, ?)";
         $paramNameArr = array("u", "d", "w", "a");

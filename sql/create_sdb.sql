@@ -900,7 +900,7 @@ CREATE TABLE Private_UserData (
     -- the user via a third party.)
 
 
-    download_data_this_week FLOAT NOT NULL DEFAULT 0, -- bytes.
+    download_data_this_week FLOAT NOT NULL DEFAULT 0, -- number of rows/pages.
     download_data_weekly_limit FLOAT NOT NULL DEFAULT 5000000000,
 
     upload_data_this_week FLOAT NOT NULL DEFAULT 0, -- bytes.

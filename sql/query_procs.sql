@@ -7,7 +7,6 @@ DROP PROCEDURE selectScore;
 -- TODO: Make proc to query for users who has rated a stmt / scale.
 
 DROP PROCEDURE selectEntity;
-DROP PROCEDURE selectEntityAsUser;
 DROP PROCEDURE selectEntityFromSecKey;
 DROP PROCEDURE selectEntityIDFromSecKey;
 
@@ -397,48 +396,30 @@ DELIMITER ;
 
 
 
+
 DELIMITER //
 CREATE PROCEDURE selectEntity (
-    IN entID BIGINT UNSIGNED,
-    IN maxLen INT UNSIGNED,
-    IN startPos INT UNSIGNED
-)
-BEGIN
-    SELECT
-        ent_type AS entType,
-        (
-            CASE WHEN maxLen = 0 THEN
-                SUBSTR(def_str, startPos + 1)
-            ELSE
-                SUBSTR(def_str, startPos + 1, maxLen)
-            END
-        ) AS defStr,
-        LENGTH(def_str) AS len,
-        creator_id AS creatorID,
-        is_editable AS isEditable
-    FROM Entities
-    WHERE (
-        id = entID AND
-        reader_whitelist_id = 0
-    );
-END //
-DELIMITER ;
-
-
-
-DELIMITER //
-CREATE PROCEDURE selectEntityAsUser (
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
     IN maxLen INT UNSIGNED,
     IN startPos INT UNSIGNED
 )
-BEGIN
+proc: BEGIN
     DECLARE entType CHAR;
     DECLARE defStr LONGTEXT;
     DECLARE len, creatorID, readerWhitelistID BIGINT UNSIGNED;
-    DECLARE isEditable, isMember TINYINT;
+    DECLARE isEditable, isMember, isExceeded TINYINT;
     DECLARE readerWhitelistScoreVal FLOAT;
+    DECLARE listID, foundRows BIGINT UNSIGNED;
+
+    -- Check that the user isn't out of download data.
+    CALL _increaseWeeklyUserCounters (
+        userID, 0, 0, 1, isExceeded
+    );
+    IF (isExceeded) THEN
+        SELECT 5 AS exitCode; -- download limit was exceeded.
+        LEAVE proc;
+    END IF;
 
     SELECT
         ent_type,
@@ -468,6 +449,14 @@ BEGIN
     );
 
     IF (isMember) THEN
+        CALL _increaseWeeklyUserCounters (
+            userID, 0, 0, LENGTH(defStr) DIV 1000 + 1, isExceeded
+        );
+        IF (isExceeded) THEN
+            SELECT 5 AS exitCode; -- download limit was exceeded.
+            LEAVE proc;
+        END IF;
+
         SELECT
             entType,
             defStr,
@@ -478,13 +467,14 @@ BEGIN
     ELSE
         SELECT NULL AS entType;
     END IF;
-END //
+END proc //
 DELIMITER ;
 
 
-
+-- TODO Continue.
 DELIMITER //
 CREATE PROCEDURE selectEntityFromSecKey (
+    IN userID BIGINT UNSIGNED,
     IN entType CHAR,
     IN readerWhitelistID BIGINT UNSIGNED,
     IN defKey VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
