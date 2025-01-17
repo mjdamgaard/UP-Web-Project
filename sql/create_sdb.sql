@@ -238,9 +238,9 @@ CREATE TABLE Entities (
     creator_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
     -- List of the users allowed to view the entity. Can also just be a single
-    -- user ID (the creator, i.e.). Also, user_whitelist_id = 0 means that
+    -- user ID (the creator, i.e.). Also, reader_whitelist_id = 0 means that
     -- everyone can view it.
-    user_whitelist_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    reader_whitelist_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
     -- Whether the creator can edit the entity or not. (is_editable = 1 will
     -- also typically mean that the creator's profile info (username and
@@ -265,7 +265,7 @@ CREATE TABLE EntitySecKeys (
 
     ent_type CHAR NOT NULL,
 
-    user_whitelist_id BIGINT UNSIGNED NOT NULL DEFAULT 0, -- (0 means public.)
+    reader_whitelist_id BIGINT UNSIGNED NOT NULL DEFAULT 0, -- (0 means public.)
 
     -- is_hashed TINYINT UNSIGNED NOT NULL, CHECK (is_hashed <= 1),
 
@@ -275,7 +275,7 @@ CREATE TABLE EntitySecKeys (
 
     PRIMARY KEY (
         ent_type,
-        user_whitelist_id,
+        reader_whitelist_id,
         def_key
     )
 );

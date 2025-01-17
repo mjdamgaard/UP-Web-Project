@@ -1260,16 +1260,15 @@ export function getEntityIDCreateViewProgram(
   dataInserter, pathIdentPairs, viewName
 ) {
   var ret = (
-    "\nDROP VIEW " + viewName + ";\n\n" +
+    "\nDROP VIEW " + viewName + ";\n" +
     // "CREATE ALGORITHM = MERGE VIEW " + viewName + " AS"
     // ('ALGORITHM = MERGE' doesn't work here for some reason.)
-    "CREATE VIEW " + viewName + " AS"
+    "\nCREATE VIEW " + viewName + " AS" +
+    '\n    SELECT "this_db_node" AS ident, 18 AS id'
   );
   pathIdentPairs.forEach(([path, ident], ind) => {
     let entID = dataInserter.getEntIDFromPath(path);
-    if (ind !== 0) {
-      ret += '\n    UNION';
-    }
+    ret += '\n    UNION';
     ret += '\n    SELECT "' + ident + '" AS ident, ' + entID + ' AS id';
   });
   ret += ";\n"

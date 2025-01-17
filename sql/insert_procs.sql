@@ -1,16 +1,11 @@
 
 SELECT "Insert procedures";
 
-DROP PROCEDURE _insertUpdateOrDeletePublicListElement;
-DROP PROCEDURE _insertUpdateOrDeletePrivateListElement;
+DROP PROCEDURE _insertUpdateOrDeleteListElement;
 DROP PROCEDURE _getIsMemberAndUserWeight;
 
-
-DROP PROCEDURE insertOrUpdatePublicUserScore;
-DROP PROCEDURE deletePublicUserScore;
-
-DROP PROCEDURE insertOrUpdatePrivateScore;
-DROP PROCEDURE deletePrivateScore;
+DROP PROCEDURE insertOrUpdateScore;
+DROP PROCEDURE deleteScore;
 
 
 DROP PROCEDURE _insertEntityWithoutSecKey;
@@ -218,16 +213,27 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE insertOrUpdateScore (
     IN userID BIGINT UNSIGNED,
-    IN listID BIGINT UNSIGNED,
+    IN listDefStr VARCHAR(700),
+    IN listReaderWhitelistID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN score1 FLOAT,
     IN score2 FLOAT,
-    IN otherData VARBINARY(16),
-    IN addedUploadDataCost FLOAT
+    IN otherData VARBINARY(16)
 )
 proc: BEGIN
     DECLARE isExceeded, exitCode TINYINT;
+    DECLARE listID, editorID BIGINT UNSIGNED;
     DECLARE addedUploadDataCost FLOAT DEFAULT (32 + LENGTH(otherData));
+
+    -- Insert of find the list entity.
+    CALL _insertOrFindRegularEntity (
+        userID, listDefStr, listReaderWhitelistID, 0,
+        listID, exitCode
+    );
+    IF (exitCode = 5) THEN
+        SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
+        LEAVE proc;
+    END IF;
 
     -- Pay the upload data cost for the score insert.
     CALL _increaseWeeklyUserCounters (
@@ -239,16 +245,22 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
+    -- Check that user is the editor of the list, which is always the first
+    -- input in a list function (even though the parameter is sometimes named
+    -- something else, like 'User').
+    SET editorID = CAST(REGEXP_SUBSTR(listDefStr, "[0-9]+", 1, 2) AS UNSIGNED);
+    IF NOT (userID <=> editorID) THEN
+        SELECT subjID AS outID, 2 AS exitCode; -- user is not the editor.
+        LEAVE proc;
+    END IF;  
+
     -- Finally insert the user score, updating the ListMetadata in the
     -- process.
     CALL _insertUpdateOrDeleteListElement (
-        listType,
-        userWhiteListID,
         listID,
-        userID,
         subjID,
-        floatVal,
-        onIndexData,
+        score1,
+        score2,
         otherData,
         addedUploadDataCost,
         exitCode
@@ -263,17 +275,36 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE deleteScore (
     IN userID BIGINT UNSIGNED,
-    IN listType CHAR,
-    IN userWhiteListID BIGINT UNSIGNED,
-    IN listID BIGINT UNSIGNED,
+    IN listDefStr VARCHAR(700),
+    IN listReaderWhitelistID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED
 )
-BEGIN
+proc: BEGIN
+    DECLARE isExceeded, exitCode TINYINT;
+    DECLARE listID, editorID BIGINT UNSIGNED;
+
+    -- Insert of find the list entity.
+    CALL _insertOrFindRegularEntity (
+        userID, listDefStr, listReaderWhitelistID, 0,
+        listID, exitCode
+    );
+    IF (exitCode = 5) THEN
+        SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
+        LEAVE proc;
+    END IF;
+
+    -- Check that user is the editor of the list, which is always the first
+    -- input in a list function (even though the parameter is sometimes named
+    -- something else, like 'User').
+    SET editorID = CAST(REGEXP_SUBSTR(listDefStr, "[0-9]+", 1, 2) AS UNSIGNED);
+    IF NOT (userID <=> editorID) THEN
+        SELECT subjID AS outID, 2 AS exitCode; -- user is not the editor.
+        LEAVE proc;
+    END IF;
+
+    -- Finally delete the score.
     CALL _insertUpdateOrDeleteListElement (
-        listType,
-        userWhiteListID,
         listID,
-        userID,
         subjID,
         NULL,
         NULL,
@@ -283,134 +314,89 @@ BEGIN
     );
 
     SELECT subjID AS outID, 0 AS exitCode; -- score was deleted if there.
-END //
-DELIMITER ;
-
-
-
-
-DELIMITER //
-CREATE PROCEDURE insertOrUpdateUserScore (
-    IN userID BIGINT UNSIGNED,
-    IN qualID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED,
-    IN scoreMid FLOAT,
-    IN scoreRad FLOAT,
-    IN truncateTimeBy TINYINT UNSIGNED
-)
-proc: BEGIN
-    DECLARE isExceeded, exitCode TINYINT;
-    DECLARE userScoreFunID BIGINT UNSIGNED DEFAULT (
-        SELECT id FROM FundamentalEntityIDs WHERE ident = "user_score"
-    );
-    DECLARE userScoreListID BIGINT UNSIGNED;
-    DECLARE userScoreListDefStr VARCHAR(700)
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT (
-            CONCAT('@[', userScoreFunID, '],@[', userID, '],@[', qualID, ']')
-        );
-    DECLARE unixTime INT UNSIGNED DEFAULT (
-        UNIX_TIMESTAMP() >> truncateTimeBy << truncateTimeBy
-    );
-    DECLARE unixTimeBin VARBINARY(4) DEFAULT (
-        UNHEX(CONV(unixTime, 10, 16))
-    );
-
-    -- Pay the upload data cost for the score insert.
-    CALL _increaseWeeklyUserCounters (
-        userID, 0, 20, 0, isExceeded
-    );
-    -- Exit if upload limit was exceeded.
-    IF (isExceeded) THEN
-        SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
-        LEAVE proc;
-    END IF;
-
-    -- Insert of find the user score list spec entity, and exit if upload limit
-    -- is exceeded.
-    CALL _insertOrFindRegularEntity (
-        userID, userScoreListDefStr, 0, 1,
-        userScoreListID, exitCode
-    );
-    IF (exitCode = 5) THEN
-        SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
-        LEAVE proc;
-    END IF;
-
-    -- Exit if the subject entity does not exist.
-    IF (
-        (
-            SELECT ent_type
-            FROM Entities FORCE INDEX (PRIMARY)
-            WHERE id = subjID
-        )
-        IS NULL
-    ) THEN
-        SELECT subjID AS outID, 3 AS exitCode; -- subject does not exist.
-        LEAVE proc;
-    END IF;
-
-    -- Finally insert the user score, updating the ListMetadata in the
-    -- process.
-    CALL _insertUpdateOrDeleteListElement (
-        userScoreListID,
-        subjID,
-        scoreMid,
-        scoreRad,
-        unixTimeBin,
-        NULL,
-        20,
-        exitCode
-    );
-
-    SELECT subjID AS outID, exitCode; -- 0: inserted, or 1: updated.
 END proc //
 DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE deleteUserScore (
-    IN userID BIGINT UNSIGNED,
-    IN qualID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED
-)
-BEGIN
-    DECLARE userScoreFunID BIGINT UNSIGNED DEFAULT (
-        SELECT id FROM FundamentalEntityIDs WHERE ident = "user_score"
-    );
-    DECLARE userScoreListID BIGINT UNSIGNED;
-    DECLARE userScoreListDefStr VARCHAR(700)
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT (
-            CONCAT('@[', userScoreFunID, '],@[', userID, '],@[', qualID, ']')
-        );
-    DECLARE exitCode TINYINT;
 
-    SELECT ent_id INTO userScoreListID
-    FROM EntitySecKeys FORCE INDEX (PRIMARY)
-    WHERE (
-        ent_type = "r" AND
-        user_whitelist_id = 0 AND
-        def_key = userScoreListDefStr
-    );
+-- DELIMITER //
+-- CREATE PROCEDURE insertOrUpdateUserScore (
+--     IN userID BIGINT UNSIGNED,
+--     IN qualID BIGINT UNSIGNED,
+--     IN subjID BIGINT UNSIGNED,
+--     IN scoreMid FLOAT,
+--     IN scoreRad FLOAT,
+--     IN truncateTimeBy TINYINT UNSIGNED
+-- )
+-- proc: BEGIN
+--     DECLARE isExceeded, exitCode TINYINT;
+--     DECLARE userScoreFunID BIGINT UNSIGNED DEFAULT (
+--         SELECT id FROM FundamentalEntityIDs WHERE ident = "user_score"
+--     );
+--     DECLARE userScoreListID BIGINT UNSIGNED;
+--     DECLARE userScoreListDefStr VARCHAR(700)
+--         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT (
+--             CONCAT('@[', userScoreFunID, '],@[', userID, '],@[', qualID, ']')
+--         );
+--     DECLARE unixTime INT UNSIGNED DEFAULT (
+--         UNIX_TIMESTAMP() >> truncateTimeBy << truncateTimeBy
+--     );
+--     DECLARE unixTimeBin VARBINARY(4) DEFAULT (
+--         UNHEX(CONV(unixTime, 10, 16))
+--     );
 
-    CALL _insertUpdateOrDeleteListElement (
-        userScoreListID,
-        subjID,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        exitCode
-    );
-    SET exitCode = CASE WHEN (exitCode = 3)
-        THEN 0 -- deleted.
-        ELSE 1 -- no change.
-    END;
+--     -- Pay the upload data cost for the score insert.
+--     CALL _increaseWeeklyUserCounters (
+--         userID, 0, 20, 0, isExceeded
+--     );
+--     -- Exit if upload limit was exceeded.
+--     IF (isExceeded) THEN
+--         SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
+--         LEAVE proc;
+--     END IF;
 
-    SELECT subjID AS outID, exitCode; -- score was deleted if there.
-END //
-DELIMITER ;
+--     -- Insert of find the user score list spec entity, and exit if upload limit
+--     -- is exceeded.
+--     CALL _insertOrFindRegularEntity (
+--         userID, userScoreListDefStr, 0, 1,
+--         userScoreListID, exitCode
+--     );
+--     IF (exitCode = 5) THEN
+--         SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
+--         LEAVE proc;
+--     END IF;
+
+--     -- Exit if the subject entity does not exist.
+--     IF (
+--         (
+--             SELECT ent_type
+--             FROM Entities FORCE INDEX (PRIMARY)
+--             WHERE id = subjID
+--         )
+--         IS NULL
+--     ) THEN
+--         SELECT subjID AS outID, 3 AS exitCode; -- subject does not exist.
+--         LEAVE proc;
+--     END IF;
+
+--     -- Finally insert the user score, updating the ListMetadata in the
+--     -- process.
+--     CALL _insertUpdateOrDeleteListElement (
+--         userScoreListID,
+--         subjID,
+--         scoreMid,
+--         scoreRad,
+--         unixTimeBin,
+--         NULL,
+--         20,
+--         exitCode
+--     );
+
+--     SELECT subjID AS outID, exitCode; -- 0: inserted, or 1: updated.
+-- END proc //
+-- DELIMITER ;
+
 
 
 
@@ -435,7 +421,7 @@ CREATE PROCEDURE _insertEntityWithoutSecKey (
     IN entType CHAR,
     IN userID BIGINT UNSIGNED,
     IN defStr LONGTEXT CHARACTER SET utf8mb4,
-    IN userWhitelistID BIGINT UNSIGNED,
+    IN readerWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL,
     IN isEditable BOOL,
     OUT outID BIGINT UNSIGNED,
@@ -457,12 +443,12 @@ proc: BEGIN
 
     INSERT INTO Entities (
         creator_id,
-        ent_type, def_str, user_whitelist_id, is_editable,
+        ent_type, def_str, reader_whitelist_id, is_editable,
         paid_upload_data_cost
     )
     VALUES (
         CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        entType, defStr, userWhitelistID, isEditable AND NOT isAnonymous,
+        entType, defStr, readerWhitelistID, isEditable AND NOT isAnonymous,
         LENGTH(defStr) + 25
     );
     SET outID = LAST_INSERT_ID();
@@ -481,7 +467,7 @@ CREATE PROCEDURE _insertOrFindEntityWithSecKey (
     IN entType CHAR,
     IN userID BIGINT UNSIGNED,
     IN defStr VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-    IN userWhitelistID BIGINT UNSIGNED,
+    IN readerWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL,
     OUT outID BIGINT UNSIGNED,
     OUT exitCode TINYINT
@@ -502,7 +488,7 @@ proc: BEGIN
         FROM EntitySecKeys
         WHERE (
             ent_type = entType AND
-            user_whitelist_id = userWhitelistID AND
+            reader_whitelist_id = readerWhitelistID AND
             def_key = defStr
         );
 
@@ -513,21 +499,21 @@ proc: BEGIN
 
     INSERT INTO Entities (
         creator_id,
-        ent_type, def_str, user_whitelist_id, is_editable,
+        ent_type, def_str, reader_whitelist_id, is_editable,
         paid_upload_data_cost
     )
     VALUES (
         CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        entType, defStr, userWhitelistID, 0,
+        entType, defStr, readerWhitelistID, 0,
         LENGTH(defStr) * 2 + 33
     );
     SET outID = LAST_INSERT_ID();
 
     INSERT INTO EntitySecKeys (
-        ent_type, user_whitelist_id, def_key, ent_id
+        ent_type, reader_whitelist_id, def_key, ent_id
     )
     VALUES (
-        entType, userWhitelistID, defStr, outID
+        entType, readerWhitelistID, defStr, outID
     );
 
     CALL _increaseWeeklyUserCounters (
@@ -557,13 +543,13 @@ DELIMITER ;
 -- CREATE PROCEDURE insertAttributeDefinedEntity (
 --     IN userID BIGINT UNSIGNED,
 --     IN defStr TEXT CHARACTER SET utf8mb4,
---     IN userWhitelistID BIGINT UNSIGNED,
+--     IN readerWhitelistID BIGINT UNSIGNED,
 --     IN isAnonymous BOOL
 -- )
 -- BEGIN
 --     CALL _insertEntityWithoutSecKey (
 --         "a",
---         userID, defStr, userWhitelistID, isAnonymous, 0,
+--         userID, defStr, readerWhitelistID, isAnonymous, 0,
 --         @unused, @unused
 --     );
 -- END //
@@ -573,13 +559,13 @@ DELIMITER //
 CREATE PROCEDURE insertFunctionEntity (
     IN userID BIGINT UNSIGNED,
     IN defStr TEXT CHARACTER SET utf8mb4,
-    IN userWhitelistID BIGINT UNSIGNED,
+    IN readerWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL
 )
 BEGIN
     CALL _insertEntityWithoutSecKey (
         "f",
-        userID, defStr, userWhitelistID, isAnonymous, 0,
+        userID, defStr, readerWhitelistID, isAnonymous, 0,
         @unused, @unused
     );
 END //
@@ -590,7 +576,7 @@ DELIMITER //
 CREATE PROCEDURE insertOrFindRegularEntity (
     IN userID BIGINT UNSIGNED,
     IN defStr VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-    IN userWhitelistID BIGINT UNSIGNED,
+    IN readerWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL
 )
 BEGIN
@@ -598,7 +584,7 @@ BEGIN
 
     CALL _insertOrFindEntityWithSecKey (
         "r",
-        userID, defStr, userWhitelistID, isAnonymous,
+        userID, defStr, readerWhitelistID, isAnonymous,
         outID, exitCode
     );
 
@@ -611,7 +597,7 @@ DELIMITER //
 CREATE PROCEDURE _insertOrFindRegularEntity (
     IN userID BIGINT UNSIGNED,
     IN defStr VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-    IN userWhitelistID BIGINT UNSIGNED,
+    IN readerWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL,
     OUT outID BIGINT UNSIGNED,
     OUT exitCode TINYINT
@@ -619,7 +605,7 @@ CREATE PROCEDURE _insertOrFindRegularEntity (
 BEGIN
     CALL _insertOrFindEntityWithSecKey (
         "r",
-        userID, defStr, userWhitelistID, isAnonymous,
+        userID, defStr, readerWhitelistID, isAnonymous,
         outID, exitCode
     );
 END //
@@ -631,14 +617,14 @@ DELIMITER //
 CREATE PROCEDURE insertUTF8Entity (
     IN userID BIGINT UNSIGNED,
     IN defStr TEXT CHARACTER SET utf8mb4,
-    IN userWhitelistID BIGINT UNSIGNED,
+    IN readerWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL,
     IN isEditable BOOL
 )
 BEGIN
     CALL _insertEntityWithoutSecKey (
         "8",
-        userID, defStr, userWhitelistID, isAnonymous, isEditable,
+        userID, defStr, readerWhitelistID, isAnonymous, isEditable,
         @unused, @unused
     );
 END //
@@ -648,14 +634,14 @@ DELIMITER //
 CREATE PROCEDURE insertHTMLEntity (
     IN userID BIGINT UNSIGNED,
     IN defStr TEXT CHARACTER SET utf8mb4,
-    IN userWhitelistID BIGINT UNSIGNED,
+    IN readerWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL,
     IN isEditable BOOL
 )
 BEGIN
     CALL _insertEntityWithoutSecKey (
         "h",
-        userID, defStr, userWhitelistID, isAnonymous, isEditable,
+        userID, defStr, readerWhitelistID, isAnonymous, isEditable,
         @unused, @unused
     );
 END //
@@ -665,14 +651,14 @@ DELIMITER //
 CREATE PROCEDURE insertJSONEntity (
     IN userID BIGINT UNSIGNED,
     IN defStr TEXT CHARACTER SET utf8mb4,
-    IN userWhitelistID BIGINT UNSIGNED,
+    IN readerWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL,
     IN isEditable BOOL
 )
 BEGIN
     CALL _insertEntityWithoutSecKey (
         "j",
-        userID, defStr, userWhitelistID, isAnonymous, isEditable,
+        userID, defStr, readerWhitelistID, isAnonymous, isEditable,
         @unused, @unused
     );
 END //
@@ -694,7 +680,7 @@ CREATE PROCEDURE _editEntity (
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
     IN defStr LONGTEXT CHARACTER SET utf8mb4,
-    IN userWhitelistID BIGINT UNSIGNED,
+    IN readerWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL,
     IN isEditable BOOL
 )
@@ -747,7 +733,7 @@ proc: BEGIN
     SET
         creator_id = CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
         def_str = defStr,
-        user_whitelist_id = userWhitelistID,
+        reader_whitelist_id = readerWhitelistID,
         is_editable = isEditable
     WHERE id = entID;
 
@@ -764,14 +750,14 @@ CREATE PROCEDURE editUTF8Entity (
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
     IN defStr TEXT CHARACTER SET utf8mb4,
-    IN userWhitelistID BIGINT UNSIGNED,
+    IN readerWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL,
     IN isEditable BOOL
 )
 BEGIN
     CALL _editEntity (
         "8", 4294967295,
-        userID, entID, defStr, userWhitelistID, isAnonymous, isEditable
+        userID, entID, defStr, readerWhitelistID, isAnonymous, isEditable
     );
 END //
 DELIMITER ;
@@ -781,14 +767,14 @@ CREATE PROCEDURE editHTMLEntity (
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
     IN defStr TEXT CHARACTER SET utf8mb4,
-    IN userWhitelistID BIGINT UNSIGNED,
+    IN readerWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL,
     IN isEditable BOOL
 )
 BEGIN
     CALL _editEntity (
         "h", 4294967295,
-        userID, entID, defStr, userWhitelistID, isAnonymous, isEditable
+        userID, entID, defStr, readerWhitelistID, isAnonymous, isEditable
     );
 END //
 DELIMITER ;
@@ -798,14 +784,14 @@ CREATE PROCEDURE editJSONEntity (
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
     IN defStr TEXT CHARACTER SET utf8mb4,
-    IN userWhitelistID BIGINT UNSIGNED,
+    IN readerWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL,
     IN isEditable BOOL
 )
 proc: BEGIN
     CALL _editEntity (
         "j", 4294967295,
-        userID, entID, defStr, userWhitelistID, isAnonymous, isEditable
+        userID, entID, defStr, readerWhitelistID, isAnonymous, isEditable
     );
 END proc //
 DELIMITER ;
@@ -829,7 +815,7 @@ CREATE PROCEDURE substitutePlaceholdersInEntity (
 )
 proc: BEGIN
     DECLARE pathRegExp VARCHAR(80) DEFAULT '[^0-9\\[\\]@,;"][^\\[\\]@,;"]*';
-    DECLARE creatorID, subEntID, userWhiteListID BIGINT UNSIGNED;
+    DECLARE creatorID, subEntID, userWhitelistID BIGINT UNSIGNED;
     DECLARE entType CHAR;
     DECLARE prevDefStr, newDefStr LONGTEXT;
     DECLARE prevType CHAR;
@@ -838,8 +824,8 @@ proc: BEGIN
     DECLARE prevLen, newLen, maxLen, addedLen INT UNSIGNED;
     DECLARE isExceeded TINYINT;
 
-    SELECT ent_type, creator_id, def_str, LENGTH(def_str), user_whitelist_id
-    INTO entType, creatorID, prevDefStr, prevLen, userWhiteListID
+    SELECT ent_type, creator_id, def_str, LENGTH(def_str), reader_whitelist_id
+    INTO entType, creatorID, prevDefStr, prevLen, userWhitelistID
     FROM Entities FORCE INDEX (PRIMARY)
     WHERE id = entID;
 
@@ -869,7 +855,7 @@ proc: BEGIN
         END IF;
 
         -- If a path is ill-formed, exit and make no updates.
-        IF NOT (REGEXP_LIKE(pathStr, pathRegExp)) THEN
+        IF NOT (IFNULL(REGEXP_LIKE(pathStr, pathRegExp), 0)) THEN
             SELECT entID AS outID, 3 AS exitCode; -- a path was ill-formed.
             LEAVE proc;
         END IF;
@@ -926,7 +912,7 @@ proc: BEGIN
         SET def_key = newDefStr
         WHERE (
             ent_type = "r" AND
-            user_whitelist_id = userWhiteListID AND
+            reader_whitelist_id = userWhitelistID AND
             def_key = prevDefStr AND
             ent_id = entID
         );
@@ -989,10 +975,10 @@ CREATE PROCEDURE _nullUserRefsInEntity (
 proc: BEGIN
     DECLARE prevDefStr, newDefStr LONGTEXT CHARACTER SET utf8mb4
         COLLATE utf8mb4_bin;
-    DECLARE userWhiteListID BIGINT UNSIGNED;
+    DECLARE userWhitelistID BIGINT UNSIGNED;
     DECLARE isMember TINYINT;
 
-    SELECT def_str, user_whitelist_id INTO prevDefStr, userWhiteListID
+    SELECT def_str, reader_whitelist_id INTO prevDefStr, userWhitelistID
     FROM Entities FORCE INDEX (PRIMARY)
     WHERE (
         id = entID AND
@@ -1001,12 +987,12 @@ proc: BEGIN
 
     CALL _getIsMemberAndUserWeight (
         userID,
-        userWhiteListID,
+        userWhitelistID,
         isMember,
         @unused
     );
 
-    IF NOT (isMember) THEN
+    IF NOT (IFNULL(isMember, 0)) THEN
         SET exitCode = 2; -- user is not on whitelist.
         LEAVE proc;
     END IF;
@@ -1027,7 +1013,7 @@ proc: BEGIN
         DELETE FROM EntitySecKeys
         WHERE (
             ent_type = entType AND
-            user_whitelist_id = userWhiteListID AND
+            reader_whitelist_id = userWhitelistID AND
             def_key = prevDefStr
         );
 

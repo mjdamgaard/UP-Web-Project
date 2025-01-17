@@ -40,6 +40,7 @@ CREATE PROCEDURE _insertOrFindScoreContributionListIDs (
     IN userGroupID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
+    IN readerWhitelistID BIGINT UNSIGNED,
     OUT minScoreContrListID BIGINT UNSIGNED,
     OUT maxScoreContrListID BIGINT UNSIGNED,
     OUT exitCode TINYINT
@@ -53,25 +54,28 @@ proc: BEGIN
     );
     DECLARE minScoreContrListDefStr, maxScoreContrListDefStr
         VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+    DECLARE thisDBNodeID BIGINT UNSIGNED DEFAULT (
+        SELECT id FROM FundamentalEntityIDs WHERE ident = "this_db_node"
+    );
 
     SET minScoreContrListDefStr = CONCAT(
-        '@[', minContrFunID, '],@[', userGroupID, ']@[', qualID,
-        '],@[', subjID, ']'
+        '@[', minContrFunID, '],@[', thisDBNodeID, '],@[', userGroupID,
+        ']@[', qualID, '],@[', subjID, ']'
     );
     SET maxScoreContrListDefStr = CONCAT(
-        '@[', maxContrFunID, '],@[', userGroupID, ']@[', qualID,
-        '],@[', subjID, ']'
+        '@[', maxContrFunID, '],@[', thisDBNodeID, '],@[', userGroupID,
+        ']@[', qualID, '],@[', subjID, ']'
     );
 
     CALL _insertOrFindRegularEntity (
-        requestingUserID, minScoreContrListDefStr, 0, 1,
+        requestingUserID, minScoreContrListDefStr, readerWhitelistID, 1,
         minScoreContrListID, exitCode
     );
     IF (exitCode = 5) THEN
         LEAVE proc;
     END IF;
     CALL _insertOrFindRegularEntity (
-        requestingUserID, maxScoreContrListDefStr, 0, 1,
+        requestingUserID, maxScoreContrListDefStr, readerWhitelistID, 1,
         maxScoreContrListID, exitCode
     );
     IF (exitCode = 5) THEN
@@ -93,6 +97,7 @@ CREATE PROCEDURE _insertUpdateOrDeleteScoreContribution (
     IN userID BIGINT UNSIGNED,
     IN qualID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
+    IN readerWhitelistID BIGINT UNSIGNED,
     IN userWeightVal FLOAT,
     IN minScoreContrListID BIGINT UNSIGNED,
     IN maxScoreContrListID BIGINT UNSIGNED,
@@ -115,7 +120,7 @@ proc: BEGIN
     FROM EntitySecKeys FORCE INDEX (PRIMARY)
     WHERE (
         ent_type = "r" AND
-        user_whitelist_id = 0 AND
+        reader_whitelist_id = readerWhitelistID AND
         def_key = userScoreListDefStr
     );
 
@@ -207,7 +212,7 @@ proc: BEGIN
         isMember, targetUserWeightVal
     );
 
-    IF NOT (isMember) THEN
+    IF NOT (IFNULL(isMember, 0)) THEN
         CALL _deleteScoreContribution (
             userID,
             minScoreContrListID,

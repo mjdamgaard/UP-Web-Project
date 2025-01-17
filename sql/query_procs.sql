@@ -426,7 +426,7 @@ BEGIN
     FROM Entities
     WHERE (
         id = entID AND
-        user_whitelist_id = 0
+        reader_whitelist_id = 0
     );
 END //
 DELIMITER ;
@@ -443,9 +443,9 @@ CREATE PROCEDURE selectEntityAsUser (
 BEGIN
     DECLARE entType CHAR;
     DECLARE defStr LONGTEXT;
-    DECLARE len, creatorID, userWhitelistID BIGINT UNSIGNED;
+    DECLARE len, creatorID, readerWhitelistID BIGINT UNSIGNED;
     DECLARE isEditable, isMember TINYINT;
-    DECLARE userWhiteListScoreVal FLOAT;
+    DECLARE readerWhitelistScoreVal FLOAT;
 
     SELECT
         ent_type,
@@ -459,19 +459,19 @@ BEGIN
         LENGTH(def_str),
         creator_id,
         is_editable,
-        user_whitelist_id
+        reader_whitelist_id
     INTO
         entType,
         defStr,
         len,
         creatorID,
         isEditable,
-        userWhiteListID
+        readerWhitelistID
     FROM Entities FORCE INDEX (PRIMARY)
     WHERE id = entID;
 
     CALL _getIsMemberAndUserWeight (
-        userID, userWhiteListID, isMember, @unused
+        userID, readerWhitelistID, isMember, @unused
     );
 
     IF (isMember) THEN
@@ -481,7 +481,7 @@ BEGIN
             len,
             creatorID,
             isEditable,
-            userWhiteListID;
+            readerWhitelistID;
     ELSE
         SELECT NULL AS entType;
     END IF;
@@ -493,23 +493,23 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectEntityFromSecKey (
     IN entType CHAR,
-    IN userWhitelistID BIGINT UNSIGNED,
+    IN readerWhitelistID BIGINT UNSIGNED,
     IN defKey VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
     IN maxLen INT UNSIGNED,
     IN startPos INT UNSIGNED
 )
 proc: BEGIN
-    DECLARE userWhitelistScoreVal FLOAT;
+    DECLARE readerWhitelistScoreVal FLOAT;
 
     -- Exit if the user is not currently on the user whitelist. Do this first
     -- to avoid timing attacks.
-    SELECT float_1_val INTO userWhitelistScoreVal
+    SELECT float_1_val INTO readerWhitelistScoreVal
     FROM PublicEntityLists FORCE INDEX (PRIMARY)
     WHERE (
-        list_id = userWhitelistID AND
+        list_id = readerWhitelistID AND
         subj_id = userID
     );
-    IF (userWhitelistScoreVal IS NULL OR userWhitelistScoreVal <= 0) THEN
+    IF (readerWhitelistScoreVal IS NULL OR readerWhitelistScoreVal <= 0) THEN
         SELECT 
             NULL AS entID,
             NULL AS defStr,
@@ -537,7 +537,7 @@ proc: BEGIN
         FROM EntitySecKeys FORCE INDEX (PRIMARY)
         WHERE (
             ent_type = entType AND
-            user_whitelist_id = userWhitelistID AND
+            reader_whitelist_id = readerWhitelistID AND
             def_key = defKey
         )
     );
@@ -549,21 +549,21 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectEntityIDFromSecKey (
     IN entType CHAR,
-    IN userWhitelistID BIGINT UNSIGNED,
+    IN readerWhitelistID BIGINT UNSIGNED,
     IN defKey VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
 proc: BEGIN
-    DECLARE userWhitelistScoreVal FLOAT;
+    DECLARE readerWhitelistScoreVal FLOAT;
 
     -- Exit if the user is not currently on the user whitelist. Do this first
     -- to avoid timing attacks.
-    SELECT float_1_val INTO userWhitelistScoreVal
+    SELECT float_1_val INTO readerWhitelistScoreVal
     FROM PublicEntityLists FORCE INDEX (PRIMARY)
     WHERE (
-        list_id = userWhitelistID AND
+        list_id = readerWhitelistID AND
         subj_id = userID
     );
-    IF (userWhitelistScoreVal IS NULL OR userWhitelistScoreVal <= 0) THEN
+    IF (readerWhitelistScoreVal IS NULL OR readerWhitelistScoreVal <= 0) THEN
         SELECT NULL AS entID;
         LEAVE proc;
     END IF;
@@ -572,7 +572,7 @@ proc: BEGIN
     FROM EntitySecKeys FORCE INDEX (PRIMARY)
     WHERE (
         ent_type = entType AND
-        user_whitelist_id = userWhitelistID AND
+        reader_whitelist_id = readerWhitelistID AND
         def_key = defKey
     );
 END proc //
