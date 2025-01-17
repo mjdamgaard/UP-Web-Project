@@ -125,7 +125,7 @@ proc: BEGIN
     );
 
     -- Select the scoreMid, the scoreRad, and the unixTime binary.
-    SELECT float_1_val, float_2_val, on_index_data
+    SELECT score_1, score_2, on_index_data
     INTO scoreMid, scoreRad, unixTimeBin
     FROM PublicEntityLists FORCE INDEX (PRIMARY)
     WHERE (
@@ -133,7 +133,7 @@ proc: BEGIN
         subj_id = subjID
     );
 
-    CALL _insertUpdateOrDeletePublicListElement (
+    CALL _insertUpdateOrDeleteListElement (
         minScoreContrListID,
         userID,
         scoreMid - scoreRad,
@@ -143,7 +143,7 @@ proc: BEGIN
         20,
         exitCode
     );
-    CALL _insertUpdateOrDeletePublicListElement (
+    CALL _insertUpdateOrDeleteListElement (
         maxScoreContrListID,
         userID,
         scoreMid + scoreRad,
@@ -165,7 +165,7 @@ CREATE PROCEDURE _deleteScoreContribution (
     IN maxScoreContrListID BIGINT UNSIGNED
 )
 proc: BEGIN
-    CALL _insertUpdateOrDeletePublicListElement (
+    CALL _insertUpdateOrDeleteListElement (
         minScoreContrListID,
         userID,
         NULL,
@@ -175,7 +175,7 @@ proc: BEGIN
         0,
         exitCode
     );
-    CALL _insertUpdateOrDeletePublicListElement (
+    CALL _insertUpdateOrDeleteListElement (
         maxScoreContrListID,
         userID,
         NULL,
@@ -212,7 +212,7 @@ proc: BEGIN
         isMember, targetUserWeightVal
     );
 
-    IF NOT (IFNULL(isMember, 0)) THEN
+    IF NOT (isMember) THEN
         CALL _deleteScoreContribution (
             userID,
             minScoreContrListID,
@@ -345,13 +345,13 @@ BEGIN
     -- DECLARE userWeightWeight FLOAT;
     DECLARE memberID BIGINT UNSIGNED;
     DECLARE cur CURSOR FOR
-        SELECT float_1_val, subj_id
+        SELECT score_1, subj_id
         FROM PublicEntityLists FORCE INDEX (sec_idx)
         WHERE (
             list_id = userGroupID AND
-            float_1_val > 0
+            score_1 > 0
         )
-        ORDER BY float_1_val ASC;
+        ORDER BY score_1 ASC;
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
 
     -- Loop through all members of a group and add any score contributions from
@@ -642,19 +642,19 @@ proc: BEGIN
     DECLARE minScore, maxScore FLOAT;
     DECLARE minUserWeightVal, maxUserWeightVal FLOAT;
     DECLARE minCur CURSOR FOR
-        SELECT float_1_val, float_2_val
+        SELECT score_1, score_2
         FROM PublicEntityLists FORCE INDEX (sec_idx)
         WHERE list_id = minScoreContrListID
         ORDER BY
-            float_1_val ASC,
-            float_2_val ASC;
+            score_1 ASC,
+            score_2 ASC;
     DECLARE maxCur CURSOR FOR
-        SELECT float_1_val, float_2_val
+        SELECT score_1, score_2
         FROM PublicEntityLists FORCE INDEX (sec_idx)
         WHERE list_id = maxScoreContrListID
         ORDER BY
-            float_1_val ASC,
-            float_2_val ASC;
+            score_1 ASC,
+            score_2 ASC;
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
 
     -- First set halfWeightSum to half of the full weight sum of the score
@@ -762,7 +762,7 @@ proc: BEGIN
     END IF;
 
     -- Get the full weight sum and the length of the contribution score lists.
-    SELECT float_2_sum, list_len INTO fullWeightSum, scoreContrListLen
+    SELECT score_2_sum, list_len INTO fullWeightSum, scoreContrListLen
     FROM PublicListMetadata FORCE INDEX (PRIMARY)
     WHERE list_id = minScoreContrListID;
 
@@ -858,7 +858,7 @@ proc: BEGIN
     -- that it is removed from the other list (on which it no longer belongs).
     IF (weightVal >= 10) THEN
         -- First delete the subject from the has-not-passed list if there.
-        CALL _insertUpdateOrDeletePublicListElement (
+        CALL _insertUpdateOrDeleteListElement (
             hasNotPassedListFunID,
             userID,
             NULL,
@@ -869,7 +869,7 @@ proc: BEGIN
             exitCode
         );
         -- And then insert or update the subject into the has-passed list.
-        CALL _insertUpdateOrDeletePublicListElement (
+        CALL _insertUpdateOrDeleteListElement (
             hasPassedListFunID,
             userID,
             scoreVal,
@@ -881,7 +881,7 @@ proc: BEGIN
         );
     ELSE
         -- First delete the subject from the has-passed list if there.
-        CALL _insertUpdateOrDeletePublicListElement (
+        CALL _insertUpdateOrDeleteListElement (
             hasPassedListFunID,
             userID,
             NULL,
@@ -892,8 +892,8 @@ proc: BEGIN
             exitCode
         );
         -- And then insert or update the subject into the has-not-passed list,
-        -- and make sure to store weightVal in float_1, and scoreVal in float_2.
-        CALL _insertUpdateOrDeletePublicListElement (
+        -- and make sure to store weightVal in score_1, and scoreVal in score_2.
+        CALL _insertUpdateOrDeleteListElement (
             hasNotPassedListFunID,
             userID,
             weightVal,
@@ -945,15 +945,15 @@ DELIMITER ;
 --     -- );
 
 --     DECLARE cur CURSOR FOR
---         SELECT score_val, user_weight_exp
+--         SELECT score, user_weight_exp
 --         FROM ScoreContributions
 --         WHERE (
 --             list_id = scoreContrListID AND
---             score_val >= lowerBound AND
---             score_val <= upperBound
+--             score >= lowerBound AND
+--             score <= upperBound
 --         )
 --         ORDER BY
---             score_val ASC,
+--             score ASC,
 --             score_width_exp ASC,
 --             user_weight_exp ASC,
 --             user_id ASC;
@@ -1252,7 +1252,7 @@ BEGIN
             -- First check that subjID is on the filter list, and simply abort
             -- and do nothing if not.
             IF (filterListID != 0) THEN
-                SELECT float_1_val INTO filterListScore
+                SELECT score_1 INTO filterListScore
                 FROM PublicEntityLists FORCE INDEX (PRIMARY)
                 WHERE (
                     list_id = filterListID AND

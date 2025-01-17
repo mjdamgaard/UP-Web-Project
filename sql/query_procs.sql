@@ -2,9 +2,7 @@
 SELECT "Query procedures";
 
 DROP PROCEDURE selectEntityList;
-DROP PROCEDURE selectPublicScore;
-DROP PROCEDURE selectPrivateEntityList;
-DROP PROCEDURE selectPrivateScore;
+DROP PROCEDURE selectScore;
 
 -- TODO: Make proc to query for users who has rated a stmt / scale.
 
@@ -23,174 +21,169 @@ DROP PROCEDURE selectUserInfo;
 
 DELIMITER //
 CREATE PROCEDURE selectEntityList (
-    IN listID BIGINT UNSIGNED,
+    IN userID BIGINT UNSIGNED,
+    IN listDefStr VARCHAR(700),
+    IN readerWhitelistID BIGINT UNSIGNED,
     IN hi FLOAT,
     IN lo FLOAT,
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED,
     IN isAscOrder BOOL,
-    IN includeFloat2 BOOL,
-    IN includeOnIndexData BOOL
+    IN includeScore2 BOOL
 )
-BEGIN
-    IF (NOT includeFloat2 AND NOT includeOnIndexData) THEN
+proc: BEGIN
+    DECLARE isExceeded, isMember, exitCode TINYINT;
+    DECLARE listID, foundRows BIGINT UNSIGNED;
+
+    -- Check that the user isn't out of download data.
+    CALL _increaseWeeklyUserCounters (
+        userID, 0, 0, 1, isExceeded
+    );
+    IF (isExceeded) THEN
+        SELECT 5 AS exitCode; -- download limit was exceeded.
+        LEAVE proc;
+    END IF;
+
+    -- Insert of find the list entity.
+    CALL _insertOrFindRegularEntity (
+        userID, listDefStr, readerWhitelistID, 1, -- Queries are anonymous.
+        listID, exitCode
+    );
+    IF (exitCode = 5) THEN
+        SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
+        LEAVE proc;
+    END IF;
+
+    -- Check that user is on the reader whitelist.
+    CALL _getIsMemberAndUserWeight (
+        userID, readerWhitelistID,
+        isMember, @unused
+    );
+    IF NOT (isMember) THEN
+        -- CAUTION: It should be noted that users can use this request to
+        -- see if they are on any list, even ones they are not otherwise
+        -- allowed to read. They can only see if they themselves are on the
+        -- list, however. But this still means that whenever you make an
+        -- otherwise private entity list with a user as one on the subjects,
+        -- with a score1 > 0, then THE USER CAN STILL IN EFFECTIVELY SEE THAT
+        -- THEY ARE ON THAT LIST.
+        SELECT 2 AS exitCode; -- user is not on the reader whitelist.
+        LEAVE proc;
+    END IF; 
+
+    IF (includeScore2) THEN
         SELECT
-            float_1_val AS float1Val,
+            score_1 AS score1,
+            score_2 AS score2,
             subj_id AS subjID
-        FROM PublicEntityLists FORCE INDEX (sec_idx)
+        FROM EntityLists FORCE INDEX (sec_idx)
         WHERE (
             list_id = listID AND
-            float_1_val BETWEEN lo AND hi
+            score_1 BETWEEN lo AND hi
         )
         ORDER BY
-            CASE WHEN isAscOrder THEN float_1_val END ASC,
-            CASE WHEN NOT isAscOrder THEN float_1_val END DESC,
-            CASE WHEN isAscOrder THEN float_2_val END ASC,
-            CASE WHEN NOT isAscOrder THEN float_2_val END DESC,
-            CASE WHEN isAscOrder THEN on_index_data END ASC,
-            CASE WHEN NOT isAscOrder THEN on_index_data END DESC,
-            CASE WHEN isAscOrder THEN subj_id END ASC,
-            CASE WHEN NOT isAscOrder THEN subj_id END DESC
-        LIMIT numOffset, maxNum;
-    ELSEIF (includeFloat2 AND NOT includeOnIndexData) THEN
-        SELECT
-            float_1_val AS float1Val,
-            subj_id AS subjID,
-            float_2_val AS float2Val
-        FROM PublicEntityLists FORCE INDEX (sec_idx)
-        WHERE (
-            list_id = listID AND
-            float_1_val BETWEEN lo AND hi
-        )
-        ORDER BY
-            CASE WHEN isAscOrder THEN float_1_val END ASC,
-            CASE WHEN NOT isAscOrder THEN float_1_val END DESC,
-            CASE WHEN isAscOrder THEN float_2_val END ASC,
-            CASE WHEN NOT isAscOrder THEN float_2_val END DESC,
-            CASE WHEN isAscOrder THEN on_index_data END ASC,
-            CASE WHEN NOT isAscOrder THEN on_index_data END DESC,
-            CASE WHEN isAscOrder THEN subj_id END ASC,
-            CASE WHEN NOT isAscOrder THEN subj_id END DESC
-        LIMIT numOffset, maxNum;
-    ELSEIF (NOT includeFloat2 AND includeOnIndexData) THEN
-        SELECT
-            float_1_val AS float1Val,
-            on_index_data AS onIndexData,
-            subj_id AS subjID
-        FROM PublicEntityLists FORCE INDEX (sec_idx)
-        WHERE (
-            list_id = listID AND
-            float_1_val BETWEEN lo AND hi
-        )
-        ORDER BY
-            CASE WHEN isAscOrder THEN float_1_val END ASC,
-            CASE WHEN NOT isAscOrder THEN float_1_val END DESC,
-            CASE WHEN isAscOrder THEN float_2_val END ASC,
-            CASE WHEN NOT isAscOrder THEN float_2_val END DESC,
-            CASE WHEN isAscOrder THEN on_index_data END ASC,
-            CASE WHEN NOT isAscOrder THEN on_index_data END DESC,
+            CASE WHEN isAscOrder THEN score_1 END ASC,
+            CASE WHEN NOT isAscOrder THEN score_1 END DESC,
+            CASE WHEN isAscOrder THEN score_2 END ASC,
+            CASE WHEN NOT isAscOrder THEN score_2 END DESC,
             CASE WHEN isAscOrder THEN subj_id END ASC,
             CASE WHEN NOT isAscOrder THEN subj_id END DESC
         LIMIT numOffset, maxNum;
     ELSE
         SELECT
-            float_1_val AS float1Val,
-            float_2_val AS float2Val,
-            on_index_data AS onIndexData,
+            score_1 AS score1,
             subj_id AS subjID
-        FROM PublicEntityLists FORCE INDEX (sec_idx)
+        FROM EntityLists FORCE INDEX (sec_idx)
         WHERE (
             list_id = listID AND
-            float_1_val BETWEEN lo AND hi
+            score_1 BETWEEN lo AND hi
         )
         ORDER BY
-            CASE WHEN isAscOrder THEN float_1_val END ASC,
-            CASE WHEN NOT isAscOrder THEN float_1_val END DESC,
-            CASE WHEN isAscOrder THEN float_2_val END ASC,
-            CASE WHEN NOT isAscOrder THEN float_2_val END DESC,
-            CASE WHEN isAscOrder THEN on_index_data END ASC,
-            CASE WHEN NOT isAscOrder THEN on_index_data END DESC,
+            CASE WHEN isAscOrder THEN score_1 END ASC,
+            CASE WHEN NOT isAscOrder THEN score_1 END DESC,
+            CASE WHEN isAscOrder THEN score_2 END ASC,
+            CASE WHEN NOT isAscOrder THEN score_2 END DESC,
             CASE WHEN isAscOrder THEN subj_id END ASC,
             CASE WHEN NOT isAscOrder THEN subj_id END DESC
         LIMIT numOffset, maxNum;
     END IF;
-END //
+
+    -- We also increase the download counter at the end of this.
+    -- NOTE: FOUND_ROWS() is deprecated and might be removed in the future.
+    SET foundRows = FOUND_ROWS();
+    CALL _increaseWeeklyUserCounters (
+        userID, 0, 0, foundRows, isExceeded
+    );
+END proc //
 DELIMITER ;
+-- SHOW WARNINGS; -- This warning is just the "FOUND_ROWS() is deprecated" one.
+
+
 
 
 DELIMITER //
-CREATE PROCEDURE selectPublicScore (
-    IN listID BIGINT UNSIGNED,
+CREATE PROCEDURE selectScore (
+    IN userID BIGINT UNSIGNED,
+    IN listDefStr VARCHAR(700),
+    IN readerWhitelistID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED
 )
-BEGIN
+proc: BEGIN
+    DECLARE isExceeded, isMember, exitCode TINYINT;
+    DECLARE listID, foundRows BIGINT UNSIGNED;
+
+    -- Check that the user isn't out of download data.
+    CALL _increaseWeeklyUserCounters (
+        userID, 0, 0, 2, isExceeded
+    );
+    IF (isExceeded) THEN
+        SELECT 5 AS exitCode; -- download limit was exceeded.
+        LEAVE proc;
+    END IF;
+
+    -- Insert of find the list entity.
+    CALL _insertOrFindRegularEntity (
+        userID, listDefStr, readerWhitelistID, 1, -- Queries are anonymous.
+        listID, exitCode
+    );
+    IF (exitCode = 5) THEN
+        SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
+        LEAVE proc;
+    END IF;
+
+    -- Check that user is on the reader whitelist.
+    CALL _getIsMemberAndUserWeight (
+        userID, readerWhitelistID,
+        isMember, @unused
+    );
+    IF NOT (isMember) THEN
+        -- CAUTION: It should be noted that users can use this request to
+        -- see if they are on any list, even ones they are not otherwise
+        -- allowed to read. They can only see if they themselves are on the
+        -- list, however. But this still means that whenever you make an
+        -- otherwise private entity list with a user as one on the subjects,
+        -- with a score1 > 0, then THE USER CAN STILL IN EFFECTIVELY SEE THAT
+        -- THEY ARE ON THAT LIST.
+        SELECT 2 AS exitCode; -- user is not on the reader whitelist.
+        LEAVE proc;
+    END IF;
+
     SELECT
-        float_1_val AS float1Val,
-        float_2_val AS float2Val,
-        on_index_data AS onIndexData,
-        off_index_data AS offIndexData
-    FROM PublicEntityLists FORCE INDEX (PRIMARY)
+        score_1 AS score1,
+        score_2 AS score2,
+        other_data AS otherData,
+        listID
+    FROM EntityLists FORCE INDEX (PRIMARY)
     WHERE (
         list_id = listID AND
         subj_id = subjID
     );
-END //
+END proc //
 DELIMITER ;
 
 
 
 
-
-
-
--- TODO: Correct these private score query procedures below at some point.
-
-DELIMITER //
-CREATE PROCEDURE selectPrivateEntityList (
-    IN userID BIGINT UNSIGNED,
-    IN qualID BIGINT UNSIGNED,
-    IN hi FLOAT,
-    IN lo FLOAT,
-    IN maxNum INT UNSIGNED,
-    IN numOffset INT UNSIGNED,
-    IN isAscOrder BOOL
-)
-BEGIN
-    SELECT
-        score_val AS scoreVal,
-        subj_id AS entID
-    FROM PrivateScores
-    WHERE (
-        user_id = userID AND
-        qual_id = qualID AND
-        score_val BETWEEN lo AND hi
-    )
-    ORDER BY
-        CASE WHEN isAscOrder THEN scoreVal END ASC,
-        CASE WHEN NOT isAscOrder THEN scoreVal END DESC,
-        CASE WHEN isAscOrder THEN entID END ASC,
-        CASE WHEN NOT isAscOrder THEN entID END DESC
-    LIMIT numOffset, maxNum;
-END //
-DELIMITER ;
-
-
-DELIMITER //
-CREATE PROCEDURE selectPrivateScore (
-    IN userID BIGINT UNSIGNED,
-    IN qualID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED
-)
-BEGIN
-    SELECT score_val AS scoreVal
-    FROM PrivateScores
-    WHERE (
-        user_id = userID AND
-        qual_id = qualID AND
-        subj_id = subjID
-    );
-END //
-DELIMITER ;
 
 
 
@@ -212,7 +205,7 @@ DELIMITER ;
 -- )
 -- BEGIN
 --     SELECT
---         score_val AS scoreVal,
+--         score AS scoreVal,
 --         subj_id AS entID
 --     FROM Scores
 --     WHERE (
@@ -222,7 +215,7 @@ DELIMITER ;
 --             FROM EntityHashes
 --             WHERE def_hash = scaleHash
 --         ) AND
---         score_val BETWEEN lo AND hi
+--         score BETWEEN lo AND hi
 --     )
 --     ORDER BY
 --         CASE WHEN isAscOrder THEN scoreVal END ASC,
@@ -246,7 +239,7 @@ DELIMITER ;
 -- )
 -- BEGIN
 --     SELECT
---         score_val AS scoreVal,
+--         score AS scoreVal,
 --         subj_id AS entID
 --     FROM Scores
 --     WHERE (
@@ -256,7 +249,7 @@ DELIMITER ;
 --             FROM EntityHashes
 --             WHERE def_hash = SHA2(CONCAT("j.", scaleDefStr), 256)
 --         ) AND
---         score_val BETWEEN lo AND hi
+--         score BETWEEN lo AND hi
 --     )
 --     ORDER BY
 --         CASE WHEN isAscOrder THEN scoreVal END ASC,
@@ -377,7 +370,7 @@ DELIMITER ;
 --         entID5 AS entID
 --     UNION ALL
 --     SELECT
---         score_val AS scoreVal,
+--         score AS scoreVal,
 --         subj_id AS entID
 --     FROM Scores
 --     WHERE (
@@ -503,8 +496,8 @@ proc: BEGIN
 
     -- Exit if the user is not currently on the user whitelist. Do this first
     -- to avoid timing attacks.
-    SELECT float_1_val INTO readerWhitelistScoreVal
-    FROM PublicEntityLists FORCE INDEX (PRIMARY)
+    SELECT score_1 INTO readerWhitelistScoreVal
+    FROM EntityLists FORCE INDEX (PRIMARY)
     WHERE (
         list_id = readerWhitelistID AND
         subj_id = userID
@@ -557,8 +550,8 @@ proc: BEGIN
 
     -- Exit if the user is not currently on the user whitelist. Do this first
     -- to avoid timing attacks.
-    SELECT float_1_val INTO readerWhitelistScoreVal
-    FROM PublicEntityLists FORCE INDEX (PRIMARY)
+    SELECT score_1 INTO readerWhitelistScoreVal
+    FROM EntityLists FORCE INDEX (PRIMARY)
     WHERE (
         list_id = readerWhitelistID AND
         subj_id = userID

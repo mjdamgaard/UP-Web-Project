@@ -196,7 +196,7 @@ proc: BEGIN
         subj_id = userID
     );
 
-    SET isMember = (userWeightVal > 0);
+    SET isMember = IFNULL((userWeightVal > 0), 0);
 END proc //
 DELIMITER ;
 
@@ -214,7 +214,7 @@ DELIMITER //
 CREATE PROCEDURE insertOrUpdateScore (
     IN userID BIGINT UNSIGNED,
     IN listDefStr VARCHAR(700),
-    IN listReaderWhitelistID BIGINT UNSIGNED,
+    IN readerWhitelistID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED,
     IN score1 FLOAT,
     IN score2 FLOAT,
@@ -227,7 +227,7 @@ proc: BEGIN
 
     -- Insert of find the list entity.
     CALL _insertOrFindRegularEntity (
-        userID, listDefStr, listReaderWhitelistID, 0,
+        userID, listDefStr, readerWhitelistID, 0,
         listID, exitCode
     );
     IF (exitCode = 5) THEN
@@ -252,7 +252,7 @@ proc: BEGIN
     IF NOT (userID <=> editorID) THEN
         SELECT subjID AS outID, 2 AS exitCode; -- user is not the editor.
         LEAVE proc;
-    END IF;  
+    END IF;
 
     -- Finally insert the user score, updating the ListMetadata in the
     -- process.
@@ -276,7 +276,7 @@ DELIMITER //
 CREATE PROCEDURE deleteScore (
     IN userID BIGINT UNSIGNED,
     IN listDefStr VARCHAR(700),
-    IN listReaderWhitelistID BIGINT UNSIGNED,
+    IN readerWhitelistID BIGINT UNSIGNED,
     IN subjID BIGINT UNSIGNED
 )
 proc: BEGIN
@@ -285,7 +285,7 @@ proc: BEGIN
 
     -- Insert of find the list entity.
     CALL _insertOrFindRegularEntity (
-        userID, listDefStr, listReaderWhitelistID, 0,
+        userID, listDefStr, readerWhitelistID, 0,
         listID, exitCode
     );
     IF (exitCode = 5) THEN
@@ -992,7 +992,7 @@ proc: BEGIN
         @unused
     );
 
-    IF NOT (IFNULL(isMember, 0)) THEN
+    IF NOT (isMember) THEN
         SET exitCode = 2; -- user is not on whitelist.
         LEAVE proc;
     END IF;

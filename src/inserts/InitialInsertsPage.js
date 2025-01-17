@@ -683,7 +683,7 @@ export function initialInserts(dataInserter) {
     [
       '@[metrics/format]',
       '"Standard predicate metric"',
-      '"\\star"',
+      '"\\std-pred-unit"',
       '_',
       JSON.stringify([
         [-10, -8, "extremely not"],
