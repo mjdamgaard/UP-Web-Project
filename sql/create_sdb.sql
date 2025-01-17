@@ -149,9 +149,9 @@ CREATE TABLE ListMetadata (
 
     pos_list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
-    float_1_sum DOUBLE NOT NULL DEFAULT 0,
+    score_1_sum DOUBLE NOT NULL DEFAULT 0,
 
-    float_2_sum DOUBLE NOT NULL DEFAULT 0,
+    score_2_sum DOUBLE NOT NULL DEFAULT 0,
 
     paid_upload_data_cost FLOAT NOT NULL DEFAULT 0
 )
@@ -305,18 +305,20 @@ INSERT INTO Entities (
 VALUES
     (1, "t", "t"),
     (2, "t", "u"),
-    (3, "t", "f"),
-    (4, "t", "r"),
-    -- (5, "t", "a"),
+    (3, "t", "a"),
+    (4, "t", "f"),
+    (5, "t", "r"),
     (6, "t", "j"),
     (7, "t", "h"),
     (8, "t", "8"),
-    (9, "u", "initial_admin");
+    (9, "t", "d"),
+    (18, "d", "original_DB_node"),
+    (19, "u", "initial_admin");
 
 INSERT INTO Entities (
     id, ent_type, def_str, creator_id, is_editable
 )
-VALUES (10, "j", '{}', 9, 1);
+VALUES (20, "j", '{}', 9, 1);
     --
     -- (11, "a", CONCAT(
     --     '{',
@@ -361,13 +363,15 @@ INSERT INTO EntitySecKeys (
 VALUES
     ("t", "t", 1),
     ("t", "u", 2),
-    ("t", "f", 3),
-    ("t", "r", 4),
-    -- ("t", "a", 5),
+    ("t", "a", 3),
+    ("t", "f", 4),
+    ("t", "r", 5),
     ("t", "j", 6),
     ("t", "h", 7),
     ("t", "8", 8),
-    ("u", "initial_admin", 9);
+    ("t", "d", 9),
+    ("d", "original_DB_node", 18),
+    ("u", "initial_admin", 19);
     -- No sec. key for ("j", '{}', 9).
 
 

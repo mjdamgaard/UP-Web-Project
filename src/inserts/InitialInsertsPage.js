@@ -3,8 +3,9 @@ import {DataInserter} from "../classes/DataInserter.js";
 import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
 
 
-const INITIAL_ADMIN_ID = "9";
-const INITIAL_ADMIN_WORKSPACE_ID = "10";
+const ORIG_DB_NODE_ID = "18";
+const INITIAL_ADMIN_ID = "19";
+const INITIAL_ADMIN_WORKSPACE_ID = "20";
 
 
 export const InitialInsertsPage = () => {
@@ -116,7 +117,6 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Entities"',
-      '"3$y"',
       '_',
       '_',
       '_',
@@ -134,7 +134,6 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Classes"',
-      '"2$"',
       '_',
       '_',
       '@[classes/format]',
@@ -145,7 +144,6 @@ export function initialInserts(dataInserter) {
     "classes/format", "f", (
       "class(" + [
         "Name:string",
-        "Member title:string",
         "Parent class?:@[classes]",
         // "Member format?:(f::Function|t::Entity type)",
         "Member type?:t=@[4]",
@@ -156,9 +154,10 @@ export function initialInserts(dataInserter) {
       JSON.stringify({
         "Class": "@[classes]",
         "Name": "%1",
-        "Member title": "%2",
-        "Member format": "%3",
-        "Description": "%4",
+        "Parent class": "%2",
+        "Member type": "%3",
+        "Member format": "%4",
+        "Description": "%5",
       })
     )
   );
@@ -197,7 +196,6 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Users"',
-      '"1$"',
       '_',
       '@[2]',
       '_',
@@ -205,11 +203,21 @@ export function initialInserts(dataInserter) {
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
+    "accounts", "r",
+    [
+      '@[classes/format]',
+      '"Accounts"',
+      '_',
+      '@[3]',
+      '_',
+      '@[accounts/desc]',
+    ].join(","),
+  );
+  dataInserter.insertSubstituteOrEditEntity(
     "workspaces", "r",
     [
       '@[classes/format]',
       '"Workspaces"',
-      '"1$"',
       '@[json objects]',
       '@[6]',
       '_',
@@ -221,7 +229,6 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Entity types"',
-      '"1$"',
       '_',
       '@[1]',
       '_',
@@ -233,9 +240,8 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Functions"',
-      '"1$"',
       '_',
-      '@[3]',
+      '@[5]',
       '_',
       '@[functions/desc]',
     ].join(","),
@@ -245,7 +251,6 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"JSON objects"',
-      '"1$"',
       '_',
       '@[6]',
       '_',
@@ -257,7 +262,6 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Texts"',
-      '"1$"',
       '_',
       '@[7]',
       '_',
@@ -269,7 +273,6 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"UTF-8 texts"',
-      '"1$"',
       '_',
       '@[8]',
       '_',
@@ -277,11 +280,22 @@ export function initialInserts(dataInserter) {
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
+    "database nodes", "r",
+    [
+      '@[classes/format]',
+      '"Database nodes"',
+      '_',
+      '@[9]',
+      '_',
+      '@[database nodes/desc]',
+    ].join(","),
+  );
+
+  dataInserter.insertSubstituteOrEditEntity(
     "relations", "r",
     [
       '@[relations/format]',
       '"Relations"',
-      '"1$"',
       '_',
       '_',
       '@[relations/format]',
@@ -311,7 +325,6 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Qualities"',
-      '"3$y"',
       '_',
       '_',
       '@[qualities/format]',
@@ -347,7 +360,6 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Relevancy qualities"',
-      '"3$y"',
       '@[qualities]',
       '_',
       '@[relevancy qualities/format]',
@@ -374,7 +386,6 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Relational classes"',
-      '"2$"',
       '@[classes]',
       '_',
       '@[relational classes/format]',
@@ -392,9 +403,9 @@ export function initialInserts(dataInserter) {
       JSON.stringify({
         "Class": "@[relational classes]",
         "Name": "%1 → %2",
-        // "Member title": "%1 → %3",
-        // "Member title": "%1 → %2[Subject title]",
-        "Member title": "%3",
+        // // "Member title": "%1 → %3",
+        // // "Member title": "%1 → %2[Subject title]",
+        // "Member title": "%3",
       })
     )
   );
@@ -410,7 +421,6 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Semantic parameters"',
-      '"1$"',
       '_',
       '_',
       '@[semantic parameters/format]',
@@ -440,7 +450,6 @@ export function initialInserts(dataInserter) {
   //   [
   //     '@[classes/format]',
   //     '"Sets"',
-  //     '"1$"',
   //     '_',
   //     '_',
   //     '@[sets/format]',
@@ -468,7 +477,6 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Quality metrics"',
-      '"1$"',
       '_',
       '_',
       '@[metrics/format]',
@@ -505,7 +513,6 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Lists"',
-      '"1$"',
       '_',
       '_',
       '_',
@@ -518,7 +525,6 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"User score lists"',
-      '"1$"',
       '@[lists]',
       '_',
       '@[user score lists/format]',
@@ -544,7 +550,6 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Min contribution lists"',
-      '"1$"',
       '@[lists]',
       '_',
       '@[min contribution lists/format]',
@@ -554,6 +559,7 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     "min contribution lists/format", "f", (
       "min_contr(" + [
+        "Editor:(@[users]::User|d::Database node)",
         "User group:@[user groups]",
         "Quality:@[qualities]",
         "Subject:@[entities]",
@@ -561,9 +567,10 @@ export function initialInserts(dataInserter) {
       ")=>" +
       JSON.stringify({
         "Class": "@[min contribution lists]",
-        "User group": "%1",
-        "Quality": "%2",
-        "Subject": "%3",
+        "Editor": "%1",
+        "User group": "%2",
+        "Quality": "%3",
+        "Subject": "%4",
       })
     )
   );
@@ -572,7 +579,6 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Max contribution lists"',
-      '"1$"',
       '@[lists]',
       '_',
       '@[min contribution lists/format]',
@@ -582,6 +588,7 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     "max contribution lists/format", "f", (
       "max_contr(" + [
+        "Editor:(@[users]::User|d::Database node)",
         "User group:@[user groups]",
         "Quality:@[qualities]",
         "Subject:@[entities]",
@@ -589,9 +596,10 @@ export function initialInserts(dataInserter) {
       ")=>" +
       JSON.stringify({
         "Class": "@[max contribution lists]",
-        "User group": "%1",
-        "Quality": "%2",
-        "Subject": "%3",
+        "Editor": "%1",
+        "User group": "%2",
+        "Quality": "%3",
+        "Subject": "%4",
       })
     )
   );
@@ -600,7 +608,6 @@ export function initialInserts(dataInserter) {
     [
       '@[classes/format]',
       '"Score median lists"',
-      '"1$"',
       '@[lists]',
       '_',
       '@[score median lists/format]',
@@ -610,6 +617,7 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     "score median lists/format", "f", (
       "score_medians(" + [
+        "Editor:(@[users]::User|d::Database node)",
         "Has passed weight threshold:bool",
         "User group:@[user groups]",
         "Quality:@[qualities]",
@@ -618,34 +626,37 @@ export function initialInserts(dataInserter) {
       ")=>" +
       JSON.stringify({
         "Class": "@[score median lists]",
-        "Has passed weight threshold": "%1",
-        "User group": "%2",
-        "Quality": "%3",
-        "Filter list": "%4",
+        "Editor": "%1",
+        "Has passed weight threshold": "%2",
+        "User group": "%3",
+        "Quality": "%4",
+        "Filter list": "%5",
       })
     )
   );
   dataInserter.insertSubstituteOrEditEntity(
-    "float2-ordered lists", "r",
+    "score2-ordered lists", "r",
     [
       '@[classes/format]',
       '"Float2-ordered lists"',
       '"Float2-ordered list"',
       '@[lists]',
       '_',
-      '@[float2-ordered lists/format]',
-      '@[float2-ordered lists/desc]',
+      '@[score2-ordered lists/format]',
+      '@[score2-ordered lists/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
-    "float2-ordered lists/format", "f", (
-      "float2_ordered_list(" + [
-        "List:@[lists with float2 values]",
+    "score2-ordered lists/format", "f", (
+      "score2_ordered_list(" + [
+        "Editor:(@[users]::User|d::Database node)",
+        "List:@[lists with score2 values]",
       ].join(",") +
       ")=>" +
       JSON.stringify({
-        "Class": "@[float2-ordered lists]",
-        "List": "%1",
+        "Class": "@[score2-ordered lists]",
+        "Editor": "%1",
+        "List": "%2",
       })
     )
   );
@@ -675,18 +686,18 @@ export function initialInserts(dataInserter) {
       '"\\star"',
       '_',
       JSON.stringify([
-        [0, 1, "extremely not"],
-        [1, 2, "very much not"],
-        [2, 3, "truly not"],
-        [3, 4, "somewhat not"],
-        [4, 5, "slightly not"],
-        [5, 6, "slightly"],
-        [6, 7, "somewhat"],
-        [7, 8, "truly"],
-        [8, 9, "very much"],
-        [9, 10, "extremely"],
+        [-10, -8, "extremely not"],
+        [-8, -6, "very much not"],
+        [-6, -4, "truly not"],
+        [-4, -2, "somewhat not"],
+        [-2, 0, "slightly not"],
+        [0, 2, "slightly"],
+        [2, 4, "somewhat"],
+        [4, 6, "truly"],
+        [6, 8, "very much"],
+        [8, 10, "extremely"],
       ]),
-      '0',
+      '-10',
       '10',
       '@[metrics/std predicate metric/desc]',
     ].join(","),

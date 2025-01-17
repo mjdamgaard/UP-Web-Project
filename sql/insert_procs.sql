@@ -82,12 +82,10 @@ BEGIN
         INSERT INTO EntityLists (
             list_id, subj_id,
             score_1, score_2,
-            on_index_data,
             other_data
         ) VALUES (
             listID, subjID,
             score1, score2,
-            IFNULL(onIndexData, DEFAULT(on_index_data)),
             IFNULL(otherData, DEFAULT(other_data))
         );
 
@@ -99,15 +97,14 @@ BEGIN
         ) VALUES (
             listID,
             1, score1, score2,
-            CASE WHEN (score1 > 0) THEN 1 ELSE 0 END,
+            IF(score1 > 0, 1, 0),
             addedUploadDataCost
         )
         ON DUPLICATE KEY UPDATE
             list_len = list_len + 1,
             score_1_sum = score_1_sum + score1,
             score_2_sum = score_2_sum + score2,
-            pos_list_len = pos_list_len +
-                CASE WHEN (score1 > 0) THEN 1 ELSE 0 END,
+            pos_list_len = pos_list_len + IF(score1 > 0, 1, 0),
             paid_upload_data_cost = paid_upload_data_cost +
                 addedUploadDataCost;
 
@@ -117,7 +114,6 @@ BEGIN
         UPDATE EntityLists SET
             score_1 = score1,
             score_2 = score2,
-            on_index_data = IFNULL(onIndexData, DEFAULT(on_index_data)),
             other_data = IFNULL(otherData, DEFAULT(other_data)),
             paid_upload_data_cost = paid_upload_data_cost +
                 addedUploadDataCost
@@ -129,12 +125,11 @@ BEGIN
         UPDATE ListMetadata SET
             score_1_sum = score_1_sum + score1 - prevScore1,
             score_2_sum = score_2_sum + score2 - prevScore2,
-            pos_list_len = pos_list_len +
-                CASE
-                    WHEN (score1 > 0 AND prevScore1 <= 0) THEN 1
-                    WHEN (score1 <= 0 AND prevScore1 > 0) THEN -1
-                    ELSE 0
-                END,
+            pos_list_len = pos_list_len + CASE
+                WHEN (score1 > 0 AND prevScore1 <= 0) THEN 1
+                WHEN (score1 <= 0 AND prevScore1 > 0) THEN -1
+                ELSE 0
+            END,
             paid_upload_data_cost = paid_upload_data_cost +
                 addedUploadDataCost
         WHERE list_id = listID;
@@ -153,8 +148,7 @@ BEGIN
             list_len = list_len - 1,
             score_1_sum = score_1_sum - prevScore1,
             score_2_sum = score_2_sum - prevScore2,
-            pos_list_len = pos_list_len +
-                CASE WHEN (prevScore1 > 0) THEN -1 ELSE 0 END,
+            pos_list_len = pos_list_len + IF(prevScore1 > 0, -1, 0),
             paid_upload_data_cost = paid_upload_data_cost +
                 addedUploadDataCost
         WHERE list_id = listID;
@@ -228,15 +222,12 @@ CREATE PROCEDURE insertOrUpdateScore (
     IN subjID BIGINT UNSIGNED,
     IN score1 FLOAT,
     IN score2 FLOAT,
-    IN onIndexData VARBINARY(16),
     IN otherData VARBINARY(16),
     IN addedUploadDataCost FLOAT
 )
 proc: BEGIN
     DECLARE isExceeded, exitCode TINYINT;
-    DECLARE addedUploadDataCost FLOAT DEFAULT (
-        32 + LENGTH(otherData) + 2 * LENGTH(onIndexData)
-    );
+    DECLARE addedUploadDataCost FLOAT DEFAULT (32 + LENGTH(otherData));
 
     -- Pay the upload data cost for the score insert.
     CALL _increaseWeeklyUserCounters (
