@@ -105,7 +105,7 @@ switch ($reqType) {
         $sql = "CALL selectPublicScore (?, ?, ?)";
         $paramNameArr = array("u", "d", "w", "s");
         $typeArr = array("id", "id", "id", "id");
-        // output: [[score1, score2, otherData, listID]].
+        // output: [[score1, score2, otherDataHex, listID]].
         break;
     /* Entities */
     case "ent":

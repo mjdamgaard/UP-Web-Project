@@ -171,10 +171,11 @@ class InputValidator {
                     );
                 }
                 break;
-            case "other_data":
-                if ( !($paramVal === NULL || strlen($paramVal) <= 16) ) {
+            case "other_data_hex":
+                $pattern = "/^([0-9a-fA-F]{2}){0,16}$/";
+                if (!preg_match($pattern, $paramVal)) {
                     echoTypeErrorJSONAndExit(
-                        $paramName, $paramVal, "VARBINARY(16)"
+                        $paramName, $paramVal, "VARBINARY(16) HEX"
                     );
                 }
                 break;

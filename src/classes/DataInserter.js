@@ -379,24 +379,61 @@ export class DataInserter {
 
 
 
-  scoreEntityPublicly(
-    entID, qualID, scoreMid, scoreRad, truncateTimeBy = 9, // 2^9 s ~ 8.5 min.
+  scoreEntity(
+    entID, listDefStr, readerWhiteListID, score1, score2, otherDataHex,
     callback = () => {}
   ) {
     let reqData = {
       req: "score",
       ses: this.getAccountData("sesIDHex"),
       u: this.getAccountData("userID"),
-      q: qualID,
+      d: listDefStr,
+      w: readerWhiteListID,
       s: entID,
-      m: scoreMid,
-      r: scoreRad,
-      t: truncateTimeBy,
+      s1: score1,
+      s2: score2,
+      odh: otherDataHex,
     };
     DBRequestManager.insert(reqData, (responseText) => {
       let result = JSON.parse(responseText);
       callback(result.outID, result.exitCode);
     });
+  }
+
+  scoreEntityWRTQuality(
+    entID, qualIDOrDefStr, scoreMid, scoreRadius, callback = () => {}
+  ) {
+    let userID = this.getAccountData("userID");
+
+    let qualRef = (/^[1-9][0-9]*$/.test(qualIDOrDefStr.toString())) ?
+      `@[${qualIDOrDefStr}]` :
+      `@<1>${qualIDOrDefStr}@</1>`;
+
+    let listDefStr = (
+      "@[" + basicEntIDs["user score lists/format"] + "],@[", userID, "]," +
+      qualRef
+    );
+    this.scoreEntity(
+      entID, listDefStr, 0, scoreMid, scoreRadius, "", callback
+    );
+  }
+
+  scoreEntityWRTRelevancyQuality(
+    entID, classIDOrDefStr, scoreMid, scoreRadius, callback = () => {}
+  ) {
+    let classRef = (/^[1-9][0-9]*$/.test(classIDOrDefStr.toString())) ?
+      `@[${classIDOrDefStr}]` :
+      `@<2>${classIDOrDefStr}@</2>`;
+
+    let qualDefStr = (
+      "@[" + basicEntIDs["relevancy qualities/format"] + "],@[", userID, "]," +
+      qualRef
+    ); // I should define these outside this class instead.. and in another
+    // module,..
+
+    this.scoreEntityWRTQuality(
+      entID, qualDefStr, scoreMid, scoreRadius, callback
+    );
   }
 
 

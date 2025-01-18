@@ -226,11 +226,12 @@ CREATE PROCEDURE insertOrUpdateScore (
     IN subjID BIGINT UNSIGNED,
     IN score1 FLOAT,
     IN score2 FLOAT,
-    IN otherData VARBINARY(16)
+    IN otherDataHex VARCHAR(32)
 )
 proc: BEGIN
     DECLARE isExceeded, exitCode TINYINT;
     DECLARE listID, editorID BIGINT UNSIGNED;
+    DECLARE otherData VARBINARY(16) DEFAULT (UNHEX(otherDataHex));
     DECLARE addedUploadDataCost FLOAT DEFAULT (32 + LENGTH(otherData));
 
     -- Insert of find the list entity.
@@ -239,7 +240,7 @@ proc: BEGIN
         listID, exitCode
     );
     IF (exitCode >= 2) THEN
-        SELECT subjID AS outID, 3 AS exitCode; -- finding/inserting list failed.
+        SELECT listID AS outID, 3 AS exitCode; -- finding/inserting list failed.
         LEAVE proc;
     END IF;
 
@@ -249,7 +250,7 @@ proc: BEGIN
     );
     -- Exit if upload limit was exceeded.
     IF (isExceeded) THEN
-        SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
+        SELECT listID AS outID, 5 AS exitCode; -- upload limit was exceeded.
         LEAVE proc;
     END IF;
 
@@ -258,7 +259,7 @@ proc: BEGIN
     -- something else, like 'User').
     SET editorID = CAST(REGEXP_SUBSTR(listDefStr, "[0-9]+", 1, 2) AS UNSIGNED);
     IF NOT (userID <=> editorID) THEN
-        SELECT subjID AS outID, 2 AS exitCode; -- user is not the editor.
+        SELECT listID AS outID, 2 AS exitCode; -- user is not the editor.
         LEAVE proc;
     END IF;
 
@@ -274,7 +275,7 @@ proc: BEGIN
         exitCode
     );
 
-    SELECT subjID AS outID, exitCode; -- 0: inserted, or 1: updated.
+    SELECT listID AS outID, exitCode; -- 0: inserted, or 1: updated.
 END proc //
 DELIMITER ;
 
@@ -297,7 +298,7 @@ proc: BEGIN
         listID, exitCode
     );
     IF (exitCode >= 2) THEN
-        SELECT subjID AS outID, 3 AS exitCode; -- finding/inserting list failed.
+        SELECT listID AS outID, 3 AS exitCode; -- finding/inserting list failed.
         LEAVE proc;
     END IF;
 
@@ -306,7 +307,7 @@ proc: BEGIN
     -- something else, like 'User').
     SET editorID = CAST(REGEXP_SUBSTR(listDefStr, "[0-9]+", 1, 2) AS UNSIGNED);
     IF NOT (userID <=> editorID) THEN
-        SELECT subjID AS outID, 2 AS exitCode; -- user is not the editor.
+        SELECT listID AS outID, 2 AS exitCode; -- user is not the editor.
         LEAVE proc;
     END IF;
 
@@ -321,7 +322,7 @@ proc: BEGIN
         exitCode
     );
 
-    SELECT subjID AS outID, 0 AS exitCode; -- score was deleted if there.
+    SELECT listID AS outID, 0 AS exitCode; -- score was deleted if there.
 END proc //
 DELIMITER ;
 

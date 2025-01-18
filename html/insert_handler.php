@@ -71,9 +71,9 @@ switch ($reqType) {
     /* Scores */
     case "score":
         $sql = "CALL insertOrUpdateScore (?, ?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "d", "w", "s", "s1", "s2", "od");
+        $paramNameArr = array("u", "d", "w", "s", "s1", "s2", "odh");
         $typeArr = array(
-            "id", "str", "id", "id", "float", "float", "other_data"
+            "id", "str", "id", "id", "float", "float", "other_data_hex"
         );
         break;
     case "delScore":

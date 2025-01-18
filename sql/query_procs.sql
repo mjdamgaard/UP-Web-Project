@@ -170,7 +170,7 @@ proc: BEGIN
     SELECT
         score_1 AS score1,
         score_2 AS score2,
-        other_data AS otherData,
+        HEX(other_data) AS otherDataHex,
         listID
     FROM EntityLists FORCE INDEX (PRIMARY)
     WHERE (
