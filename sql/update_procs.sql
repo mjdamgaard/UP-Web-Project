@@ -520,6 +520,7 @@ proc: BEGIN
     CALL _queueOrUpdateRequest (
         reqType,
         reqData,
+        0,
         uploadDataCostPayment,
         compCostPayment,
         uploadDataCostRequired,
@@ -597,6 +598,7 @@ proc: BEGIN
     CALL _queueOrUpdateRequest (
         reqType,
         reqData,
+        0,
         uploadDataCostPayment,
         compCostPayment,
         uploadDataCostRequired,
@@ -783,6 +785,7 @@ proc: BEGIN
     CALL _queueOrUpdateRequest (
         reqType,
         reqData,
+        0,
         uploadDataCostPayment,
         compCostPayment,
         uploadDataCostRequired,
@@ -1133,6 +1136,7 @@ DELIMITER //
 CREATE PROCEDURE _queueOrUpdateRequest (
     IN reqType VARBINARY(100),
     IN reqData VARBINARY(2900),
+    IN isHandledExternally TINYINT,
     IN uploadDataCostPayment FLOAT,
     IN compCostPayment FLOAT,
     IN uploadDataCostRequired FLOAT,
@@ -1150,10 +1154,12 @@ proc: BEGIN
 
     INSERT INTO ScheduledRequests (
         req_type, req_data,
+        is_handled_externally,
         fraction_of_computation_cost_paid, fraction_of_upload_data_cost_paid,
         computation_cost_required, upload_data_cost_required
     ) VALUES (
         reqType, reqData,
+        isHandledExternally,
         compCostPayment, uploadDataCostPayment,
         compCostRequired, uploadDataCostRequired
     )

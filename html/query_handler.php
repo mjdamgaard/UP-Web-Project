@@ -117,14 +117,14 @@ switch ($reqType) {
         break;
     case "entFromSK":
         $sql = "CALL selectEntityFromSecKey (?, ?, ?, ?)";
-        $paramNameArr = array("t", "k", "m", "s");
-        $typeArr = array("char", "str", "uint", "uint");
+        $paramNameArr = array("u", "t", "", "m", "s");
+        $typeArr = array("id", "char", "str", "uint", "uint");
         // output: [[datatype, defStr, len, creatorID, editableUntil]].
         break;
     case "entIDFromSK":
         $sql = "CALL selectEntityIDFromSecKey (?, ?)";
-        $paramNameArr = array("t", "k");
-        $typeArr = array("char", "str");
+        $paramNameArr = array("u", "t", "d");
+        $typeArr = array("id", "char", "str");
         // output: [[entID]].
         break;
     // case "creations":

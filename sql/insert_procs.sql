@@ -34,6 +34,7 @@ DROP PROCEDURE finalizeEntity;
 DROP PROCEDURE anonymizeEntity;
 
 
+DROP PROCEDURE _parseAndObtainRegularEntity;
 DROP PROCEDURE _increaseWeeklyUserCounters;
 
 
@@ -210,6 +211,13 @@ DELIMITER ;
 
 
 
+
+
+
+
+
+
+
 DELIMITER //
 CREATE PROCEDURE insertOrUpdateScore (
     IN userID BIGINT UNSIGNED,
@@ -226,12 +234,12 @@ proc: BEGIN
     DECLARE addedUploadDataCost FLOAT DEFAULT (32 + LENGTH(otherData));
 
     -- Insert of find the list entity.
-    CALL _insertOrFindRegularEntity (
-        userID, listDefStr, readerWhitelistID, 0,
+    CALL _parseAndObtainRegularEntity (
+        userID, listDefStr, readerWhitelistID, 0, 1,
         listID, exitCode
     );
-    IF (exitCode = 5) THEN
-        SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
+    IF (exitCode >= 2) THEN
+        SELECT subjID AS outID, 3 AS exitCode; -- finding/inserting list failed.
         LEAVE proc;
     END IF;
 
@@ -284,12 +292,12 @@ proc: BEGIN
     DECLARE listID, editorID BIGINT UNSIGNED;
 
     -- Insert of find the list entity.
-    CALL _insertOrFindRegularEntity (
-        userID, listDefStr, readerWhitelistID, 0,
+    CALL _parseAndObtainRegularEntity (
+        userID, listDefStr, readerWhitelistID, 0, 1,
         listID, exitCode
     );
-    IF (exitCode = 5) THEN
-        SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
+    IF (exitCode >= 2) THEN
+        SELECT subjID AS outID, 3 AS exitCode; -- finding/inserting list failed.
         LEAVE proc;
     END IF;
 
@@ -1117,6 +1125,16 @@ DELIMITER ;
 
 
 
+
+
+
+
+
+
+
+
+
+
 DELIMITER //
 CREATE PROCEDURE _parseAndObtainRegularEntity (
     IN userID BIGINT UNSIGNED,
@@ -1125,19 +1143,16 @@ CREATE PROCEDURE _parseAndObtainRegularEntity (
     IN isAnonymous BOOL,
     IN insertWhenNotFound BOOL,
     OUT outID BIGINT UNSIGNED,
-    OUT uploadDataCost FLOAT,
     OUT exitCode TINYINT
 )
 proc: BEGIN
     DECLARE subbedDefStr, elemContent, startTag, endTag, tagName
         VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
-    DECLARE elemContentPos, endTagPos, curPos, defStrLen INT;
+    DECLARE nextElemPos, elemContentPos, endTagPos, curPos, defStrLen INT;
     DECLARE nestedReaderWhitelistID, nestedEntID BIGINT UNSIGNED;
-    DECLARE nestedUploadDataCost FLOAT;
 
     SET defStrLen = LENGTH(defStr);
     SET subbedDefStr = "";
-    SET uploadDataCost = 0;
 
     -- We loop and find the next occurrence of '@<...>', and then call this
     -- procedure recursively to parse and obtain the regular entity inside the
@@ -1202,16 +1217,14 @@ proc: BEGIN
         -- entity, and exit with the same given exit code if something went
         -- wrong.
         CALL _parseAndObtainRegularEntity (
-            userID
+            userID,
             elemContentPos,
             nestedReaderWhitelistID,
             isAnonymous,
             insertWhenNotFound,
             nestedEntID,
-            nestedUploadDataCost,
             exitCode
         );
-        SET uploadDataCost = uploadDataCost + nestedUploadDataCost;  
         IF (exitCode >= 2) THEN
             SET outID = NULL;
             LEAVE proc;

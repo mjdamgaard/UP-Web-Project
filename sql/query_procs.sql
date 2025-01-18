@@ -43,13 +43,13 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    -- Insert of find the list entity.
-    CALL _insertOrFindRegularEntity (
-        userID, listDefStr, readerWhitelistID, 1, -- Queries are anonymous.
+    -- Find the list entity (with isAnonymous = 1, and insertWhenNotFound = 0).
+    CALL _parseAndObtainRegularEntity (
+        userID, listDefStr, readerWhitelistID, 1, 0,
         listID, exitCode
     );
-    IF (exitCode = 5) THEN
-        SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
+    IF (exitCode >= 2) THEN
+        SELECT 3 AS exitCode; -- finding list failed.
         LEAVE proc;
     END IF;
 
@@ -140,13 +140,13 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    -- Insert of find the list entity.
-    CALL _insertOrFindRegularEntity (
-        userID, listDefStr, readerWhitelistID, 1, -- Queries are anonymous.
+    -- Find the list entity (with isAnonymous = 1, and insertWhenNotFound = 0).
+    CALL _parseAndObtainRegularEntity (
+        userID, listDefStr, readerWhitelistID, 1, 0,
         listID, exitCode
     );
-    IF (exitCode = 5) THEN
-        SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
+    IF (exitCode >= 2) THEN
+        SELECT 3 AS exitCode; -- finding list failed.
         LEAVE proc;
     END IF;
 
@@ -471,7 +471,7 @@ END proc //
 DELIMITER ;
 
 
--- TODO Continue.
+
 DELIMITER //
 CREATE PROCEDURE selectEntityFromSecKey (
     IN userID BIGINT UNSIGNED,
@@ -482,24 +482,15 @@ CREATE PROCEDURE selectEntityFromSecKey (
     IN startPos INT UNSIGNED
 )
 proc: BEGIN
-    DECLARE readerWhitelistScoreVal FLOAT;
+    DECLARE isMember TINYINT;
 
     -- Exit if the user is not currently on the user whitelist. Do this first
     -- to avoid timing attacks.
-    SELECT score_1 INTO readerWhitelistScoreVal
-    FROM EntityLists FORCE INDEX (PRIMARY)
-    WHERE (
-        list_id = readerWhitelistID AND
-        subj_id = userID
+    CALL _getIsMemberAndUserWeight (
+        userID, readerWhitelistID, isMember, @unused
     );
-    IF (readerWhitelistScoreVal IS NULL OR readerWhitelistScoreVal <= 0) THEN
-        SELECT 
-            NULL AS entID,
-            NULL AS defStr,
-            NULL AS len,
-            NULL AS creatorID,
-            NULL AS isEditable;
-        LEAVE proc;
+    IF NOT (isMember) THEN
+        SELECT NULL AS entID;
     END IF;
 
     SELECT
@@ -531,24 +522,21 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectEntityIDFromSecKey (
+    IN userID BIGINT UNSIGNED,
     IN entType CHAR,
     IN readerWhitelistID BIGINT UNSIGNED,
     IN defKey VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
 proc: BEGIN
-    DECLARE readerWhitelistScoreVal FLOAT;
+    DECLARE isMember TINYINT;
 
     -- Exit if the user is not currently on the user whitelist. Do this first
     -- to avoid timing attacks.
-    SELECT score_1 INTO readerWhitelistScoreVal
-    FROM EntityLists FORCE INDEX (PRIMARY)
-    WHERE (
-        list_id = readerWhitelistID AND
-        subj_id = userID
+    CALL _getIsMemberAndUserWeight (
+        userID, readerWhitelistID, isMember, @unused
     );
-    IF (readerWhitelistScoreVal IS NULL OR readerWhitelistScoreVal <= 0) THEN
+    IF NOT (isMember) THEN
         SELECT NULL AS entID;
-        LEAVE proc;
     END IF;
 
     SELECT ent_id AS entID

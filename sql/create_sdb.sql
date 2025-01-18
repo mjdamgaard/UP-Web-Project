@@ -175,6 +175,8 @@ CREATE TABLE ScheduledRequests (
 
     req_data VARBINARY(2900) NOT NULL,
 
+    is_handled_externally TINYINT NOT NULL DEFAULT 0,
+
     fraction_of_computation_cost_paid FLOAT NOT NULL,
     fraction_of_upload_data_cost_paid FLOAT NOT NULL,
     computation_cost_required FLOAT NOT NULL,
@@ -186,6 +188,7 @@ CREATE TABLE ScheduledRequests (
     ),
 
     UNIQUE INDEX sec_idx (
+        is_handled_externally,
         fraction_of_computation_cost_paid,
         fraction_of_upload_data_cost_paid,
         computation_cost_required,
