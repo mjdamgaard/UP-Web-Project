@@ -97,8 +97,10 @@ switch ($reqType) {
             "bool",
             "bool", "bool"
         );
-        // output: [[score1, subjID], ...]
-        //       | [[score1, score2, subjID,], ...].
+        // output: [
+        //   [listID, exitCode],
+        //   ( [score1, subjID] | [[score1, score2, subjID] ), ...
+        // ].
         break;
     case "score":
         header("Cache-Control: max-age=3"); // TODO: Change/adjust.
@@ -113,18 +115,18 @@ switch ($reqType) {
         $paramNameArr = array("u", "id", "m", "s");
         $typeArr = array("id", "id", "uint", "uint");
         // output:
-        //    [[datatype, defStr, len, creatorID, editableUntil, isPrivate]].
+        //  [[entType, defStr, len, creatorID, isEditable, readerWhitelistID]].
         break;
     case "entFromSK":
         $sql = "CALL selectEntityFromSecKey (?, ?, ?, ?)";
-        $paramNameArr = array("u", "t", "", "m", "s");
-        $typeArr = array("id", "char", "str", "uint", "uint");
-        // output: [[datatype, defStr, len, creatorID, editableUntil]].
+        $paramNameArr = array("u", "t", "w", "d");
+        $typeArr = array("id", "char", "id", "str");
+        // output: [[entID, creatorID, editableUntil]].
         break;
     case "entIDFromSK":
         $sql = "CALL selectEntityIDFromSecKey (?, ?)";
-        $paramNameArr = array("u", "t", "d");
-        $typeArr = array("id", "char", "str");
+        $paramNameArr = array("u", "t", "w", "d");
+        $typeArr = array("id", "char", "id", "str");
         // output: [[entID]].
         break;
     // case "creations":
@@ -195,6 +197,9 @@ $stmt = $conn->prepare($sql);
 DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 // Fetch the result as a numeric array.
 $res = $stmt->get_result()->fetch_all();
+while ($stmt->next_result()) {
+    $res = array_merge($res,  $stmt->get_result()->fetch_all());
+}
 
 // Finally echo the JSON-encoded numeric array, containing e.g. the
 // columns: ("ratVal", "instID") for $reqType == "set", etc., so look at

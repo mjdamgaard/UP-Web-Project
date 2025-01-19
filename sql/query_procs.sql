@@ -39,17 +39,7 @@ proc: BEGIN
         userID, 0, 0, 1, isExceeded
     );
     IF (isExceeded) THEN
-        SELECT 5 AS exitCode; -- download limit was exceeded.
-        LEAVE proc;
-    END IF;
-
-    -- Find the list entity (with isAnonymous = 1, and insertWhenNotFound = 0).
-    CALL _parseAndObtainRegularEntity (
-        userID, listDefStr, readerWhitelistID, 1, 0,
-        listID, exitCode
-    );
-    IF (exitCode >= 2) THEN
-        SELECT 3 AS exitCode; -- finding list failed.
+        SELECT listID, 5 AS exitCode; -- download limit was exceeded.
         LEAVE proc;
     END IF;
 
@@ -66,9 +56,22 @@ proc: BEGIN
         -- otherwise private entity list with a user as one on the subjects,
         -- with a score1 > 0, then THE USER CAN STILL IN EFFECTIVELY SEE THAT
         -- THEY ARE ON THAT LIST.
-        SELECT 2 AS exitCode; -- user is not on the reader whitelist.
+        SELECT listID, 2 AS exitCode; -- user is not on the reader whitelist.
         LEAVE proc;
-    END IF; 
+    END IF;
+
+    -- Find the list entity (with isAnonymous = 1, and insertWhenNotFound = 0).
+    CALL _parseAndObtainRegularEntity (
+        userID, listDefStr, readerWhitelistID, 1, 0,
+        listID, exitCode
+    );
+    IF (exitCode >= 2) THEN
+        SELECT listID, 3 AS exitCode; -- finding list failed.
+        LEAVE proc;
+    END IF;
+
+    -- If the list was obtained, return it as the first result.
+    SELECT listID, 0 AS exitCode;
 
     IF (includeScore2) THEN
         SELECT
@@ -409,8 +412,7 @@ proc: BEGIN
     DECLARE defStr LONGTEXT;
     DECLARE len, creatorID, readerWhitelistID BIGINT UNSIGNED;
     DECLARE isEditable, isMember, isExceeded TINYINT;
-    DECLARE readerWhitelistScoreVal FLOAT;
-    DECLARE listID, foundRows BIGINT UNSIGNED;
+    DECLARE listID BIGINT UNSIGNED;
 
     -- Check that the user isn't out of download data.
     CALL _increaseWeeklyUserCounters (
@@ -466,9 +468,106 @@ proc: BEGIN
             readerWhitelistID;
     ELSE
         SELECT NULL AS entType;
+        LEAVE proc;
     END IF;
 END proc //
 DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectEntityRecursively (
+    IN userID BIGINT UNSIGNED,
+    IN entID BIGINT UNSIGNED,
+    IN maxLen INT UNSIGNED,
+    IN startPos INT UNSIGNED,
+    IN recurseInstructions VARCHAR(255),
+    IN maxRowNumber TINYINT UNSIGNED
+)
+proc: BEGIN
+    DECLARE entType CHAR;
+    DECLARE defStr LONGTEXT;
+    DECLARE len, creatorID, readerWhitelistID BIGINT UNSIGNED;
+    DECLARE isEditable, isMember, isExceeded TINYINT;
+    DECLARE listID BIGINT UNSIGNED;
+    DECLARE i, j INT DEFAULT 1;
+    DECLARE nextInstruction VARCHAR(255);
+
+    -- Check that the user isn't out of download data.
+    CALL _increaseWeeklyUserCounters (
+        userID, 0, 0, 1, isExceeded
+    );
+    IF (isExceeded) THEN
+        SELECT 5 AS exitCode; -- download limit was exceeded.
+        LEAVE proc;
+    END IF;
+
+    SELECT
+        ent_type,
+        (
+            CASE WHEN maxLen = 0 THEN
+                SUBSTR(def_str, startPos + 1)
+            ELSE
+                SUBSTR(def_str, startPos + 1, maxLen)
+            END
+        ),
+        LENGTH(def_str),
+        creator_id,
+        is_editable,
+        reader_whitelist_id
+    INTO
+        entType,
+        defStr,
+        len,
+        creatorID,
+        isEditable,
+        readerWhitelistID
+    FROM Entities FORCE INDEX (PRIMARY)
+    WHERE id = entID;
+
+    CALL _getIsMemberAndUserWeight (
+        userID, readerWhitelistID, isMember, @unused
+    );
+
+    IF (isMember) THEN
+        CALL _increaseWeeklyUserCounters (
+            userID, 0, 0, LENGTH(defStr) DIV 1000 + 1, isExceeded
+        );
+        IF (isExceeded) THEN
+            SELECT 5 AS exitCode; -- download limit was exceeded.
+            LEAVE proc;
+        END IF;
+
+        SELECT
+            entType,
+            defStr,
+            len,
+            creatorID,
+            isEditable,
+            readerWhitelistID;
+    ELSE
+        SELECT NULL AS entType;
+        LEAVE proc;
+    END IF;
+
+    IF (entType = "r" AND recurseInstructions != 0 AND maxRowNumber > 0) THEN
+        loop_1: LOOP
+            SET nextInstruction = REGEXP_SUBSTR(
+                recurseInstructions, "[^;]", 1, i
+            );
+            SET funID = REGEXP_SUBSTR(
+                nextInstruction, "[1-9][0-9]*", 1, 1
+            );
+            IF ()
+
+            SET i = i + 1;
+            ITERATE loop_1;
+        END LOOP loop_1;
+    END IF;
+END proc //
+DELIMITER ;
+
+
 
 
 
@@ -477,9 +576,7 @@ CREATE PROCEDURE selectEntityFromSecKey (
     IN userID BIGINT UNSIGNED,
     IN entType CHAR,
     IN readerWhitelistID BIGINT UNSIGNED,
-    IN defKey VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-    IN maxLen INT UNSIGNED,
-    IN startPos INT UNSIGNED
+    IN defKey VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
 proc: BEGIN
     DECLARE isMember TINYINT;
@@ -495,14 +592,6 @@ proc: BEGIN
 
     SELECT
         id AS entID,
-        (
-            CASE WHEN maxLen = 0 THEN
-                SUBSTR(def_str, startPos + 1)
-            ELSE
-                SUBSTR(def_str, startPos + 1, maxLen)
-            END
-        ) AS defStr,
-        LENGTH(def_str) AS len,
         creator_id AS creatorID,
         is_editable AS isEditable
     FROM Entities FORCE INDEX (PRIMARY)
