@@ -1202,7 +1202,7 @@ proc: BEGIN
 
         -- Find the next tag.
         SET nextTagPos = REGEXP_INSTR(
-            defStr, "@</?[a-zA-Z0-9_]*( w=[1-9][0-9]*)?>", curPos, 1
+            defStr, "@</?[a-zA-Z_]+( w=[1-9][0-9]*)?>", curPos, 1
         );
 
         -- If there are no more tags to be found, exit with error if an end tag

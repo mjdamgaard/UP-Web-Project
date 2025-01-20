@@ -2,7 +2,7 @@
 import {DBRequestManager} from "./DBRequestManager.js";
 
 import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
-import {DataFetcher, getScaleDefStr} from "./DataFetcher.js";
+import {DataFetcher, DefStrConstructor} from "./DataFetcher.js";
 import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 
 
@@ -400,18 +400,16 @@ export class DataInserter {
     });
   }
 
+
+
+
+
   scoreEntityWRTQuality(
     entID, qualIDOrDefStr, scoreMid, scoreRadius, callback = () => {}
   ) {
     let userID = this.getAccountData("userID");
-
-    let qualRef = (/^[1-9][0-9]*$/.test(qualIDOrDefStr.toString())) ?
-      `@[${qualIDOrDefStr}]` :
-      `@<1>${qualIDOrDefStr}@</1>`;
-
-    let listDefStr = (
-      "@[" + basicEntIDs["user score lists/format"] + "],@[", userID, "]," +
-      qualRef
+    let listDefStr = DefStrConstructor.getUserScoreListExplodedDefStr(
+      userID, qualIDOrDefStr
     );
     this.scoreEntity(
       entID, listDefStr, 0, scoreMid, scoreRadius, "", callback
@@ -421,20 +419,26 @@ export class DataInserter {
   scoreEntityWRTRelevancyQuality(
     entID, classIDOrDefStr, scoreMid, scoreRadius, callback = () => {}
   ) {
-    let classRef = (/^[1-9][0-9]*$/.test(classIDOrDefStr.toString())) ?
-      `@[${classIDOrDefStr}]` :
-      `@<2>${classIDOrDefStr}@</2>`;
-
-    let qualDefStr = (
-      "@[" + basicEntIDs["relevancy qualities/format"] + "],@[", userID, "]," +
-      qualRef
-    ); // I should define these outside this class instead.. and in another
-    // module,..
-
+    let qualDefStr = DefStrConstructor.getUserScoreListExplodedDefStr(
+      classIDOrDefStr
+    );
     this.scoreEntityWRTQuality(
       entID, qualDefStr, scoreMid, scoreRadius, callback
     );
   }
+
+  scoreEntityWRTRelationalClassRelevancyQuality(
+    entID, objID, relID, scoreMid, scoreRadius, callback = () => {}
+  ) {
+    let classDefStr = DefStrConstructor.getRelationalClassExplodedDefStr(
+      objID, relID
+    );
+    this.scoreEntityWRTRelevancyQuality(
+      entID, classDefStr, scoreMid, scoreRadius, callback
+    );
+  }
+
+
 
 
 

@@ -89,7 +89,7 @@ export class DataFetcher {
   }
 
 
-  static fetchEntityAsUser(getAccountData, entID, maxLen, callback) {
+  static fetchEntityAsUser(getProfileData, entID, maxLen, callback) {
     if (!callback && maxLen instanceof Function) {
       callback = maxLen;
       maxLen = 700;
@@ -98,8 +98,8 @@ export class DataFetcher {
     // score is high enough, use the entity data from that instead.
     let reqData = {
       req: "entAsUser",
-      ses: getAccountData("sesIDHex"),
-      u: getAccountData("userID"),
+      ses: getProfileData("sesIDHex"),
+      u: getProfileData("userID"),
       id: entID,
       m: maxLen,
       s: 0,
@@ -118,7 +118,7 @@ export class DataFetcher {
 
 
   static fetchSeveralEntitiesAsUser(
-    getAccountData, entIDs, maxLen, callback
+    getProfileData, entIDs, maxLen, callback
   ) {
     if (!callback && maxLen instanceof Function) {
       callback = maxLen;
@@ -131,7 +131,7 @@ export class DataFetcher {
 
     entIDs.forEach((entID, ind) => {
       parallelCallbackHandler.push((resolve) => {
-        this.fetchEntityAsUser(getAccountData, entID, maxLen,
+        this.fetchEntityAsUser(getProfileData, entID, maxLen,
           (
             datatype, defStr, isContained, len, creatorID, editableUntil,
             isPrivate
@@ -151,8 +151,8 @@ export class DataFetcher {
     });
   }
 
-  static fetchAttrObjectAsUser(getAccountData, entID, callback) {
-    DataFetcher.fetchEntityAsUser(getAccountData, entID,
+  static fetchAttrObjectAsUser(getProfileData, entID, callback) {
+    DataFetcher.fetchEntityAsUser(getProfileData, entID,
       (datatype, defStr) => {
         if (datatype !== "a") {
           callback(null);
@@ -164,13 +164,13 @@ export class DataFetcher {
   }
 
 
-  static fetchJSONObjectAsUser(getAccountData, entID, maxLen, callback) {
+  static fetchJSONObjectAsUser(getProfileData, entID, maxLen, callback) {
     if (!callback && maxLen instanceof Function) {
       callback = maxLen;
       maxLen = 65535;
     }
 
-    DataFetcher.fetchEntityAsUser(getAccountData, entID, maxLen,
+    DataFetcher.fetchEntityAsUser(getProfileData, entID, maxLen,
       (datatype, defStr, isContained) => {
         if (datatype !== "j" || !isContained) {
           callback(null);

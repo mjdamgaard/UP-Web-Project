@@ -28,7 +28,7 @@ const PAGE_CONTAINER_SELECTOR = ".page-container";
 // }
 
 
-export const AccountContext = createContext();
+export const ProfileContext = createContext();
 
 
 
@@ -38,7 +38,7 @@ export const App = (props) => {
   const hasPath = pathname !== "/";
   // const [state, setState] = useRestorableState("app", {
   const [state, setState] = useState({
-    accountState: {
+    profileState: {
       userID: localStorage.session && localStorage.session.userID,
       sesIDHex: localStorage.session && localStorage.session.sesIDHex,
     },
@@ -67,9 +67,9 @@ export const App = (props) => {
   );
 
 
-  const getAccountData = useCallback((propName) => {
-    return state.accountState[propName];
-  }, Object.values(state.accountState))
+  const getProfileData = useCallback((propName) => {
+    return state.profileState[propName];
+  }, Object.values(state.profileState))
 
 
   useLayoutEffect(() => {
@@ -119,7 +119,7 @@ export const App = (props) => {
       //   refCallback2(node);
       // }}
     >
-      <AccountContext.Provider value={getAccountData}>
+      <ProfileContext.Provider value={getProfileData}>
         <AppHeader
           setAppPage={void(0)}
           pageKeyArr={pageKeyArr} pagePathStore={pagePathStore}
@@ -128,7 +128,7 @@ export const App = (props) => {
         <div className="page-list-container">
           {appPages}
         </div>
-      </AccountContext.Provider>
+      </ProfileContext.Provider>
     </div>
   );
 };
@@ -223,7 +223,7 @@ const appActions = {
     return;
   },
 
-  /* Account reducers */
+  /* Profile reducers */
 
   "LOG_IN": (input, setState, {state, props}, node, dispatch) => {
     // TODO: Implement.
