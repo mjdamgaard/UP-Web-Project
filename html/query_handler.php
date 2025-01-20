@@ -114,8 +114,8 @@ switch ($reqType) {
         break;
     /* Entities */
     case "ent":
-        $sql = "CALL selectEntity (?, ?, ?, ?, ?)";
-        $paramNameArr = array("u", "id", "m", "s");
+        $sql = "CALL selectEntity (?, ?, ?, ?)";
+        $paramNameArr = array("u", "e", "m", "s");
         $typeArr = array("id", "id", "uint", "uint");
         // output: [[
         //  [entType, defStr, len, creatorID, isEditable, readerWhitelistID] |
@@ -123,7 +123,7 @@ switch ($reqType) {
         // ]].
         break;
     case "entRec":
-        $sql = "CALL selectEntityRecursively (?, ?, ?, ?)";
+        $sql = "CALL selectEntityRecursively (?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "id", "m", "i", "l");
         $typeArr = array("id", "id", "uint", "rec_instr_list", "utint");
         // output: [[

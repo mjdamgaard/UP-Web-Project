@@ -9,7 +9,8 @@ import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 const WORKSPACES_CLASS_ID = basicEntIDs["workspaces"];
 const RELEVANCY_QUAL_FORMAT_ID = basicEntIDs["relevancy qualities/format"];
 
-const PATH_REF_REGEX = /@\[[^0-9\[\]@,;"][^\[\]@,;"]*\]/g;
+const PATH_REF_REGEX = /@\[[^0-9\[\]@,;"][^\[\]@,;"]+\]/g;
+const PATH_REGEX = /^[^0-9\[\]@,;"][^\[\]@,;"]+$/g;
 
 
 export class DataInserter {
@@ -97,6 +98,9 @@ export class DataInserter {
   }
 
   #getOrSetNodeFromPath(path) {
+    if (!PATH_REGEX.test(path)) {
+      return null;
+    }
     let pathParts = path.split("/");
     var wsObj = this.workspaceObj;
     var targetNode;
@@ -414,9 +418,17 @@ export class DataInserter {
     this.scoreEntity(
       entID, listDefStr, 0, scoreMid, scoreRadius, "", (listID, exitCode) => {
         if (exitCode <= 1) {
-          // TODO: Correct: Figure out how and where to store the
-          // userScoreListIDs..
-          this.workspaceObj.userScoreListIDs.push(listID);
+          // We store the ID of the user score list at "@userScoreListIDs"
+          // (which is an illegal entity path) in the workspaceObj if it is
+          // not already there.
+          let userScoreListIDs = this.workspaceObj["@userScoreListIDs"];
+          if (!userScoreListIDs) {
+            userScoreListIDs = (this.workspaceObj["@userScoreListIDs"] = []);
+          }
+          if (!userScoreListIDs.contains(listID)) {
+            userScoreListIDs.push(listID);
+            this.updateWorkspace();
+          }
         }
         callback(listID, exitCode);
       }
@@ -426,7 +438,7 @@ export class DataInserter {
   scoreEntityWRTRelevancyQuality(
     entID, classIDOrDefStr, scoreMid, scoreRadius, callback = () => {}
   ) {
-    let qualDefStr = DefStrConstructor.getUserScoreListExplodedDefStr(
+    let qualDefStr = DefStrConstructor.getRelevancyQualityExplodedDefStr(
       classIDOrDefStr
     );
     this.scoreEntityWRTQuality(

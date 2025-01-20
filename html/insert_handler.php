@@ -70,14 +70,14 @@ $typeArr = "";
 switch ($reqType) {
     /* Scores */
     case "score":
-        $sql = "CALL insertOrUpdateScore (?, ?, ?, ?, ?, ?)";
+        $sql = "CALL insertOrUpdateScore (?, ?, ?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "d", "w", "s", "s1", "s2", "odh");
         $typeArr = array(
             "id", "str", "id", "id", "float", "float", "other_data_hex"
         );
         break;
     case "delScore":
-        $sql = "CALL deleteScore (?, ?, ?)";
+        $sql = "CALL deleteScore (?, ?, ?, ?)";
         $paramNameArr = array("u", "d", "w", "s");
         $typeArr = array("id", "str", "id", "id");
         break;

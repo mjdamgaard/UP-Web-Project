@@ -825,7 +825,7 @@ CREATE PROCEDURE substitutePlaceholdersInEntity (
     IN substitutionEntIDs TEXT -- List of the form '<entID_1>,<entID_2>...'
 )
 proc: BEGIN
-    DECLARE pathRegExp VARCHAR(80) DEFAULT '[^0-9\\[\\]@,;"][^\\[\\]@,;"]*';
+    DECLARE pathRegExp VARCHAR(80) DEFAULT '[^0-9\\[\\]@,;"][^\\[\\]@,;"]+';
     DECLARE creatorID, subEntID, readerWhitelistID BIGINT UNSIGNED;
     DECLARE entType CHAR;
     DECLARE prevDefStr, newDefStr LONGTEXT;
@@ -1261,7 +1261,7 @@ proc: BEGIN
             userID,
             defStr,
             nestedReaderWhitelistID,
-            isAnonymous,
+            1, -- We set isAnonymous = 1 for all inserts of nested entities.
             insertWhenNotFound,
             tagName,
             defStrLen,
