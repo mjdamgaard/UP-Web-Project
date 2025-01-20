@@ -10,7 +10,7 @@ const WORKSPACES_CLASS_ID = basicEntIDs["workspaces"];
 const RELEVANCY_QUAL_FORMAT_ID = basicEntIDs["relevancy qualities/format"];
 
 const PATH_REF_REGEX = /@\[[^0-9\[\]@,;"][^\[\]@,;"]+\]/g;
-const PATH_REGEX = /^[^0-9\[\]@,;"][^\[\]@,;"]+$/g;
+const PATH_REGEX = /^[^0-9\[\]@,;"][^\[\]@,;"]*$/;
 
 
 export class DataInserter {
@@ -31,13 +31,13 @@ export class DataInserter {
       req: "ent",
       ses: this.getAccountData("sesIDHex"),
       u: this.getAccountData("userID"),
-      id: this.workspaceEntID,
+      e: this.workspaceEntID,
       m: 0,
       s: 0,
     };
     DBRequestManager.query(reqData, (responseText) => {
       let result = JSON.parse(responseText);
-      let [datatype, defStr, len, creatorID, editableUntil] = result[0] ?? [];
+      let [[[datatype, defStr, len, creatorID, editableUntil]]] = result;
       this.workspaceObj = JSON.parse(defStr);
       callback(datatype, defStr, len, creatorID, editableUntil);
     });
@@ -425,7 +425,7 @@ export class DataInserter {
           if (!userScoreListIDs) {
             userScoreListIDs = (this.workspaceObj["@userScoreListIDs"] = []);
           }
-          if (!userScoreListIDs.contains(listID)) {
+          if (!userScoreListIDs.includes(listID)) {
             userScoreListIDs.push(listID);
             this.updateWorkspace();
           }

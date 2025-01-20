@@ -112,9 +112,7 @@ BEGIN
         UPDATE EntityLists SET
             score_1 = score1,
             score_2 = score2,
-            other_data = IFNULL(otherData, DEFAULT(other_data)),
-            paid_upload_data_cost = paid_upload_data_cost +
-                addedUploadDataCost
+            other_data = IFNULL(otherData, DEFAULT(other_data))
         WHERE (
             list_id = listID AND
             subj_id = subjID
@@ -700,7 +698,7 @@ proc: BEGIN
     DECLARE creatorID BIGINT UNSIGNED;
     DECLARE prevIsEditable TINYINT UNSIGNED;
     DECLARE prevDefStr LONGTEXT;
-    DECLARE prevLen, newLen INT UNSIGNED;
+    DECLARE prevLen, newLen, addedLen INT UNSIGNED;
     DECLARE prevType CHAR;
 
     SET newLen = LENGTH(defStr);
@@ -716,8 +714,9 @@ proc: BEGIN
     FROM Entities
     WHERE id = entID;
 
+    SET addedLen = IF(newLen > prevLen, newLen - prevLen, 0);
     CALL _increaseWeeklyUserCounters (
-        userID, 0, newLen - prevLen + 22, 0, isExceeded
+        userID, 0, addedLen, 0, isExceeded
     );
     IF (isExceeded) THEN
         SELECT entID AS outID, 5 AS extCode; -- upload limit was exceeded.
@@ -1122,6 +1121,7 @@ CREATE PROCEDURE _parseAndObtainRegularEntity (
     OUT exitCode TINYINT
 )
 BEGIN
+    SET max_sp_recursion_depth = 255;
     CALL __parseAndObtainRegularEntityHelper (
         userID,
         defStr,
@@ -1165,7 +1165,7 @@ proc: BEGIN
         VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
     DECLARE nextTagPos, curPos, nextPos INT;
     DECLARE nestedReaderWhitelistID, nestedEntID BIGINT UNSIGNED;
-    DECLARE isEndTag TINYINT;
+    DECLARE isEndTag, isMember TINYINT;
 
     SET outID = NULL;
 
@@ -1263,6 +1263,7 @@ proc: BEGIN
             nestedReaderWhitelistID,
             1, -- We set isAnonymous = 1 for all inserts of nested entities.
             insertWhenNotFound,
+            selectWhenFound,
             tagName,
             defStrLen,
             nextTagPos + LENGTH(nextTag),

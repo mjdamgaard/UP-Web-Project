@@ -1251,7 +1251,6 @@ const basicEntPaths = [
   "relations",
   "qualities",
   "relevancy qualities",
-  "relevancy qualities/format",
   "predicate qualities",
   "relations/members",
   "relations/subclasses",
@@ -1261,6 +1260,9 @@ const basicEntPaths = [
   "relations/qualities",
   "relations/qualities for members",
   "relations/sub-qualities",
+  "user score lists/format",
+  "relevancy qualities/format",
+  "relational classes/format",
 ];
 
 export function copyBasicEntityIDModuleToClipboard(dataInserter) {

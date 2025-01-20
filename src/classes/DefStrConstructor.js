@@ -28,7 +28,7 @@ export class DefStrConstructor {
 
   static getRelationalClassExplodedDefStr(objID, relID) {
     return (
-      "@[" + basicEntIDs["user score lists/format"] + "],@[" + objID + "],@[" +
+      "@[" + basicEntIDs["relational classes/format"] + "],@[" + objID + "],@[" +
       relID + "]"
     );
   }
