@@ -7,6 +7,7 @@ DROP PROCEDURE selectScore;
 -- TODO: Make proc to query for users who has rated a stmt / scale.
 
 DROP PROCEDURE selectEntity;
+DROP PROCEDURE selectEntityRecursively;
 DROP PROCEDURE selectEntityIDFromSecKey;
 DROP PROCEDURE parseAndObtainRegularEntity;
 
@@ -352,13 +353,28 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    IF (entType = "r" AND recurseInstructions != 0 AND maxRecLevel > 0) THEN
+    -- If the entity is a regular/referential entity, then we loop through all
+    -- the instructions, each of the form 'instrFunID,refNum1,refNum2,...;',
+    -- until a instrFunID is found that matches entFunID, and then we loop
+    -- through all the refNum's, and for each one parse the refNum^th entity
+    -- reference in defStr, and query the defStr in the entity via a recursive
+    -- call to this procedure. Note that refNum = 0 here will point to the
+    -- entFunID function entity itself.
+    -- Also, if recurseInstructions begins with '0,refNum1,refNum2,...;', then
+    -- we also treat this as if it matches the entFunID, except that we don't
+    -- short circuit the loop here.
+    IF (entType = "r" AND maxRecLevel > 0) THEN
         SET entFunID = REGEXP_SUBSTR(
             defStr, "[1-9][0-9]*", 1, 1
         );
         loop_1: LOOP
+            -- (Here we actually "cheat" and use a RegExp that skips all
+            -- irrelevant instructions immediately, such that the loop only
+            -- runs for up to two iterations.)
             SET nextInstruction = REGEXP_SUBSTR(
-                recurseInstructions, "[^;]", 1, i
+                recurseInstructions,
+                CONCAT("0,[^;]+|(^|;)", entFunID, ",[^;]+"),
+                1, i
             );
 
             IF (nextInstruction IS NULL) THEN
@@ -367,12 +383,12 @@ proc: BEGIN
 
             SET instrFunID = CAST(
                 REGEXP_SUBSTR(
-                    nextInstruction, "[1-9][0-9]*", 1, 1
+                    nextInstruction, "0|[1-9][0-9]*", 1, 1
                 )
                 AS UNSIGNED
             );
 
-            IF (instrFunID <=> entFunID) THEN
+            IF (instrFunID <=> 0 OR instrFunID <=> entFunID) THEN
                 loop_2: LOOP
                     SET refNum = CAST(
                         REGEXP_SUBSTR(
@@ -412,6 +428,11 @@ proc: BEGIN
                 SET j = 1;
             END IF;
 
+            -- If the instrFunID matches entFunID exactly, short circuit the
+            -- loop here.
+            IF (instrFunID <=> entFunID) THEN
+                LEAVE loop_1;
+            END IF;
             SET i = i + 1;
             ITERATE loop_1;
         END LOOP loop_1;
