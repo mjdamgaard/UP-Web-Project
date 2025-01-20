@@ -2,7 +2,7 @@
 import {DBRequestManager} from "./DBRequestManager.js";
 
 import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
-import {DataFetcher, DefStrConstructor} from "./DataFetcher.js";
+import {DefStrConstructor} from "./DefStrConstructor.js";
 import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 
 
@@ -380,7 +380,7 @@ export class DataInserter {
 
 
   scoreEntity(
-    entID, listDefStr, readerWhiteListID, score1, score2, otherDataHex,
+    entID, listDefStr, readerWhiteListID, score1, score2 = 0, otherDataHex = "",
     callback = () => {}
   ) {
     let reqData = {
@@ -412,7 +412,14 @@ export class DataInserter {
       userID, qualIDOrDefStr
     );
     this.scoreEntity(
-      entID, listDefStr, 0, scoreMid, scoreRadius, "", callback
+      entID, listDefStr, 0, scoreMid, scoreRadius, "", (listID, exitCode) => {
+        if (exitCode <= 1) {
+          // TODO: Correct: Figure out how and where to store the
+          // userScoreListIDs..
+          this.workspaceObj.userScoreListIDs.push(listID);
+        }
+        callback(listID, exitCode);
+      }
     );
   }
 
@@ -442,7 +449,7 @@ export class DataInserter {
 
 
 
-  scoreWorkspaceEntitiesPublicly(
+  scoreWorkspaceEntitiesWRTQuality(
     qualPath, PathScoreMidAndRadiusTriples, callback = () => {}
   ) {
     let parallelCallbackHandler = new ParallelCallbackHandler;
@@ -465,9 +472,83 @@ export class DataInserter {
           resolve();
           return;
         }
-        this.scoreEntityPublicly(
-          subjID, qualID, scoreMid, scoreRad, undefined,
-          (outID, exitCode) => {
+        this.scoreEntityWRTQuality(
+          subjID, qualID, scoreMid, scoreRad, (outID, exitCode) => {
+            results[ind] = [outID, exitCode];
+            resolve();
+          }
+        );
+      });
+    });
+
+    parallelCallbackHandler.execAndThen(() => {
+      callback(results);
+    });
+  }
+
+  scoreWorkspaceEntitiesWRTRelevancyQuality(
+    classPath, PathScoreMidAndRadiusTriples, callback = () => {}
+  ) {
+    let parallelCallbackHandler = new ParallelCallbackHandler;
+    let results = [];
+
+    let classID = this.getEntIDFromPath(classPath);
+    if (!classID) {
+      callback(null, null);
+      return;
+    }
+
+    PathScoreMidAndRadiusTriples.forEach((triple, ind) => {
+      parallelCallbackHandler.push((resolve) => {
+        let subjPath = triple[0];
+        let scoreMid = triple[1];
+        let scoreRad = triple[2] ?? 0;
+        let subjID = this.getEntIDFromPath(subjPath);
+        if (!subjID) {
+          results[ind] = [null, null];
+          resolve();
+          return;
+        }
+        this.scoreEntityWRTRelevancyQuality(
+          subjID, classID, scoreMid, scoreRad, (outID, exitCode) => {
+            results[ind] = [outID, exitCode];
+            resolve();
+          }
+        );
+      });
+    });
+
+    parallelCallbackHandler.execAndThen(() => {
+      callback(results);
+    });
+  }
+
+  scoreWorkspaceEntitiesWRTRelationalClassRelevancyQuality(
+    objPath, relPath, PathScoreMidAndRadiusTriples, callback = () => {}
+  ) {
+    let parallelCallbackHandler = new ParallelCallbackHandler;
+    let results = [];
+
+    let objID = this.getEntIDFromPath(objPath);
+    let relID = this.getEntIDFromPath(relPath);
+    if (!objID || !relID) {
+      callback(null, null);
+      return;
+    }
+
+    PathScoreMidAndRadiusTriples.forEach((triple, ind) => {
+      parallelCallbackHandler.push((resolve) => {
+        let subjPath = triple[0];
+        let scoreMid = triple[1];
+        let scoreRad = triple[2] ?? 0;
+        let subjID = this.getEntIDFromPath(subjPath);
+        if (!subjID) {
+          results[ind] = [null, null];
+          resolve();
+          return;
+        }
+        this.scoreEntityWRTRelationalClassRelevancyQuality(
+          subjID, objID, relID, scoreMid, scoreRad, (outID, exitCode) => {
             results[ind] = [outID, exitCode];
             resolve();
           }

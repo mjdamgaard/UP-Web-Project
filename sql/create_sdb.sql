@@ -321,7 +321,7 @@ VALUES
 INSERT INTO Entities (
     id, ent_type, def_str, creator_id, is_editable
 )
-VALUES (20, "j", '{}', 9, 1);
+VALUES (20, "j", '{}', 19, 1);
     --
     -- (11, "a", CONCAT(
     --     '{',

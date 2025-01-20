@@ -1072,154 +1072,94 @@ export function initialInserts(dataInserter) {
 
 export function insertInitialScores(dataInserter) {
 
-  dataInserter.insertOrSubstituteRelevancyQualityEntity(
-    "relevancy qualities/classes->members",
-    "classes", "relations/members",
-    0, 0, (outID, exitCode) => {
-      dataInserter.scoreWorkspaceEntitiesPublicly(
-        "relevancy qualities/classes->members",
-        [
-          ["classes", "10"],
-          ["entities", "10"],
-          ["users", "8"],
-          ["scales", "5"],
-          ["texts", "10"],
-          ["comments", "9.5"],
-        ],
-      );
-    }
+  dataInserter.scoreWorkspaceEntitiesWRTRelevancyQuality(
+    "classes",
+    [
+      ["classes", "10"],
+      ["entities", "10"],
+      ["users", "8"],
+      ["scales", "5"],
+      ["texts", "10"],
+      ["comments", "9.5"],
+    ]
   );
-  dataInserter.insertOrSubstituteRelevancyQualityEntity(
-    "relevancy qualities/classes->subclasses",
+  dataInserter.scoreWorkspaceEntitiesWRTRelationalClassRelevancyQuality(
     "classes", "relations/subclasses",
-    0, 0, (outID, exitCode) => {
-      dataInserter.scoreWorkspaceEntitiesPublicly(
-        "relevancy qualities/classes->subclasses",
-        [
-          ["users", "8"],
-          ["qualities", "8"],
-          ["texts", "10"],
-          ["relations", "9.5"],
-        ],
-      );
-    }
+    [
+      ["users", "8"],
+      ["qualities", "8"],
+      ["texts", "10"],
+      ["relations", "9.5"],
+    ]
   );
-  dataInserter.insertOrSubstituteRelevancyQualityEntity(
-    "relevancy qualities/entities->members",
-    "entities", "relations/members",
-    0, 0, (outID, exitCode) => {
-      dataInserter.scoreWorkspaceEntitiesPublicly(
-        "relevancy qualities/entities->members",
-        [
-          ["classes", "10"],
-          ["entities", "6"],
-          ["relations/members", "5"],
-          ["texts", "10"],
-          ["relations", "9.5"],
-        ],
-      );
-    }
+  dataInserter.scoreWorkspaceEntitiesWRTRelevancyQuality(
+    "entities",
+    [
+      ["classes", "10"],
+      ["entities", "6"],
+      ["relations/members", "5"],
+      ["texts", "10"],
+      ["relations", "9.5"],
+    ]
   );
-  dataInserter.insertOrSubstituteRelevancyQualityEntity(
-    "relevancy qualities/entities->subclasses",
+  dataInserter.scoreWorkspaceEntitiesWRTRelationalClassRelevancyQuality(
     "entities", "relations/subclasses",
-    0, 0, (outID, exitCode) => {
-      dataInserter.scoreWorkspaceEntitiesPublicly(
-        "relevancy qualities/entities->subclasses",
-        [
-          ["classes", "10"],
-          ["users", "8"],
-          ["scales", "8"],
-          ["texts", "10"],
-          ["qualities", "9.5"],
-        ],
-      );
-    }
+    [
+      ["classes", "10"],
+      ["users", "8"],
+      ["scales", "8"],
+      ["texts", "10"],
+      ["qualities", "9.5"],
+    ]
   );
 
 
 
-  dataInserter.insertOrSubstituteRelevancyQualityEntity(
-    "relevancy qualities/classes->relations for members",
+  dataInserter.scoreWorkspaceEntitiesWRTRelationalClassRelevancyQuality(
     "classes", "relations/relations for members",
-    0, 0, (outID, exitCode) => {
-      dataInserter.scoreWorkspaceEntitiesPublicly(
-        "relevancy qualities/classes->relations for members",
-        [
-          ["relations/members", "10"],
-          ["relations/subclasses", "6"],
-          ["relations/texts", "9"],
-          ["relations/comments", "8"],
-        ],
-      );
-    }
+    [
+      ["relations/members", "10"],
+      ["relations/subclasses", "6"],
+      ["relations/texts", "9"],
+      ["relations/comments", "8"],
+    ]
   );
 
 
-  dataInserter.insertOrSubstituteRelevancyQualityEntity(
-    "relevancy qualities/(relations/texts)->sub-relations",
+  dataInserter.scoreWorkspaceEntitiesWRTRelationalClassRelevancyQuality(
     "relations/texts", "relations/sub-relations",
-    0, 0, (outID, exitCode) => {
-      dataInserter.scoreWorkspaceEntitiesPublicly(
-        "relevancy qualities/(relations/texts)->sub-relations",
-        [
-          ["relations/comments", "10"],
-        ],
-      );
-    }
+    [
+      ["relations/comments", "10"],
+    ]
   );
 
 
 
-  dataInserter.insertOrSubstituteRelevancyQualityEntity(
-    "relevancy qualities/(relations/texts)->qualities for subjects",
+  dataInserter.scoreWorkspaceEntitiesWRTRelationalClassRelevancyQuality(
     "relations/texts", "relations/qualities for subjects",
-    0, 0, (outID, exitCode) => {
-      dataInserter.scoreWorkspaceEntitiesPublicly(
-        "relevancy qualities/(relations/texts)->qualities for subjects",
-        [
-          ["qualities/good (no desc.)", "9"],
-          ["qualities/funny (no desc.)", "9"],
-        ],
-      );
-    }
+    [
+      ["qualities/good (no desc.)", "9"],
+      ["qualities/funny (no desc.)", "9"],
+    ]
   );
-  dataInserter.insertOrSubstituteRelevancyQualityEntity(
-    "relevancy qualities/texts->qualities for members",
+  dataInserter.scoreWorkspaceEntitiesWRTRelationalClassRelevancyQuality(
     "texts", "relations/qualities for members",
-    0, 0, (outID, exitCode) => {
-      dataInserter.scoreWorkspaceEntitiesPublicly(
-        "relevancy qualities/texts->qualities for members",
-        [
-          ["qualities/good", "8"],
-          ["qualities/funny (no desc.)", "6"],
-        ],
-      );
-    }
+    [
+      ["qualities/good", "8"],
+      ["qualities/funny (no desc.)", "6"],
+    ]
   );
-  dataInserter.insertOrSubstituteRelevancyQualityEntity(
-    "relevancy qualities/(qualities/good (no desc.))->sub-qualities",
+  dataInserter.scoreWorkspaceEntitiesWRTRelationalClassRelevancyQuality(
     "qualities/good (no desc.)", "relations/sub-qualities",
-    0, 0, (outID, exitCode) => {
-      dataInserter.scoreWorkspaceEntitiesPublicly(
-        "relevancy qualities/(qualities/good (no desc.))->sub-qualities",
-        [
-          ["qualities/funny (no desc.)", "9"],
-        ],
-      );
-    }
+    [
+      ["qualities/funny (no desc.)", "9"],
+    ]
   );
-  dataInserter.insertOrSubstituteRelevancyQualityEntity(
-    "relevancy qualities/(qualities/funny (no desc.))->sub-qualities",
+  dataInserter.scoreWorkspaceEntitiesWRTRelationalClassRelevancyQuality(
     "qualities/funny (no desc.)", "relations/sub-qualities",
-    0, 0, (outID, exitCode) => {
-      dataInserter.scoreWorkspaceEntitiesPublicly(
-        "relevancy qualities/(qualities/funny (no desc.))->sub-qualities",
-        [
-          ["qualities/witty", "8"],
-        ],
-      );
-    }
+    [
+      ["qualities/witty", "8"],
+    ]
   );
 
 
