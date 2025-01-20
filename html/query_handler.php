@@ -171,22 +171,35 @@ require $db_io_path . "sdb_config.php";
 $conn = DBConnector::getConnectionOrDie(
     DB_SERVER_NAME, DB_DATABASE_NAME, DB_USERNAME, DB_PASSWORD
 );
-// Prepare input MySQLi statement.
-$stmt = $conn->prepare($sql);
-// Execute query statement.
-DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
-// Fetch the result as a numeric array.
-$res = array($stmt->get_result()->fetch_all());
-// If there are more results, return instead an array of all the results.
-while ($stmt->next_result()) {
-    array_push($res, $stmt->get_result()->fetch_all());
+// // Prepare input MySQLi statement.
+// $stmt = $conn->prepare($sql);
+// // Execute query statement.
+// DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
+// // Fetch the result as a numeric array.
+// $res = array($stmt->get_result()->fetch_all());
+// // If there are more results, return instead an array of all the results.
+// while ($stmt->more_results()) {
+//     // $stmt->next_result();
+//     $stmt->nextRowset();
+//     array_push($res, $stmt->get_result()->fetch_all());
+// }
+DBConnector::executeMultiQuerySuccessfulOrDie(
+    $conn, $sql, $paramValArr
+);
+$resArr = array();
+do {
+    if ($nextRes = $conn->store_result()) {
+        array_push($resArr, $nextRes->fetch_all());
+        $nextRes->free_result();
+    }
 }
+while ($conn->next_result());
 
 // Finally echo the JSON-encoded numeric array, containing e.g. the
 // columns: ("ratVal", "instID") for $reqType == "set", etc., so look at
 // the comments above for what the resulting arrays will contain.
 header("Content-Type: text/json");
-echo json_encode($res);
+echo json_encode($resArr);
 
 // The program exits here, which also closes $conn.
 ?>

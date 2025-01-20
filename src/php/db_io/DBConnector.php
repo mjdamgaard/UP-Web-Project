@@ -35,5 +35,21 @@ class DBConnector {
         }
     }
 
+
+    public static function executeMultiQuerySuccessfulOrDie(
+        $conn, $sql, $paramValArr
+    ) {
+        foreach ($paramValArr as $val) {
+            $replace = "'" . $conn->real_escape_string($val) . "'";
+            $sql = preg_replace("/\\?/", $replace, $sql, 1);
+        }
+        $conn->multi_query($sql);
+
+        $error = \mysqli_error($conn);
+        if ($error) {
+            throw new \Exception("MySQLi error: " . $error);
+        }
+    }
+
 }
 ?>
