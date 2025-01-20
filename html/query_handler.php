@@ -99,7 +99,7 @@ switch ($reqType) {
         );
         // output: [
         //   [listID, exitCode],
-        //   ( [score1, subjID] | [[score1, score2, subjID] ), ...
+        //   ( [score1, subjID] | [score1, score2, subjID] ), ...
         // ].
         break;
     case "score":
@@ -112,6 +112,13 @@ switch ($reqType) {
     /* Entities */
     case "ent":
         $sql = "CALL selectEntity (?, ?, ?, ?)";
+        $paramNameArr = array("u", "id", "m", "s");
+        $typeArr = array("id", "id", "uint", "uint");
+        // output:
+        //  [[entType, defStr, len, creatorID, isEditable, readerWhitelistID]].
+        break;
+    case "entRec":
+        $sql = "CALL selectEntityRecursively (?, ?, ?, ?)";
         $paramNameArr = array("u", "id", "m", "s");
         $typeArr = array("id", "id", "uint", "uint");
         // output:
@@ -197,8 +204,14 @@ $stmt = $conn->prepare($sql);
 DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 // Fetch the result as a numeric array.
 $res = $stmt->get_result()->fetch_all();
-while ($stmt->next_result()) {
-    $res = array_merge($res,  $stmt->get_result()->fetch_all());
+// If there are more results, return instead an array of all the results.
+$i = 0;
+while ($stmt->next_result() && ++$i) {
+    if($i === 1) {
+        $res = array($res, $stmt->get_result()->fetch_all());
+    } else {
+        array_push($res, $stmt->get_result()->fetch_all());
+    }
 }
 
 // Finally echo the JSON-encoded numeric array, containing e.g. the

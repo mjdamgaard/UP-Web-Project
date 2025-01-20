@@ -826,7 +826,7 @@ CREATE PROCEDURE substitutePlaceholdersInEntity (
 )
 proc: BEGIN
     DECLARE pathRegExp VARCHAR(80) DEFAULT '[^0-9\\[\\]@,;"][^\\[\\]@,;"]*';
-    DECLARE creatorID, subEntID, userWhitelistID BIGINT UNSIGNED;
+    DECLARE creatorID, subEntID, readerWhitelistID BIGINT UNSIGNED;
     DECLARE entType CHAR;
     DECLARE prevDefStr, newDefStr LONGTEXT;
     DECLARE prevType CHAR;
@@ -836,7 +836,7 @@ proc: BEGIN
     DECLARE isExceeded TINYINT;
 
     SELECT ent_type, creator_id, def_str, LENGTH(def_str), reader_whitelist_id
-    INTO entType, creatorID, prevDefStr, prevLen, userWhitelistID
+    INTO entType, creatorID, prevDefStr, prevLen, readerWhitelistID
     FROM Entities FORCE INDEX (PRIMARY)
     WHERE id = entID;
 
@@ -923,7 +923,7 @@ proc: BEGIN
         SET def_key = newDefStr
         WHERE (
             ent_type = "r" AND
-            reader_whitelist_id = userWhitelistID AND
+            reader_whitelist_id = readerWhitelistID AND
             def_key = prevDefStr AND
             ent_id = entID
         );
@@ -986,10 +986,10 @@ CREATE PROCEDURE _nullUserRefsInEntity (
 proc: BEGIN
     DECLARE prevDefStr, newDefStr LONGTEXT CHARACTER SET utf8mb4
         COLLATE utf8mb4_bin;
-    DECLARE userWhitelistID BIGINT UNSIGNED;
+    DECLARE readerWhitelistID BIGINT UNSIGNED;
     DECLARE isMember TINYINT;
 
-    SELECT def_str, reader_whitelist_id INTO prevDefStr, userWhitelistID
+    SELECT def_str, reader_whitelist_id INTO prevDefStr, readerWhitelistID
     FROM Entities FORCE INDEX (PRIMARY)
     WHERE (
         id = entID AND
@@ -998,7 +998,7 @@ proc: BEGIN
 
     CALL _getIsMemberAndUserWeight (
         userID,
-        userWhitelistID,
+        readerWhitelistID,
         isMember,
         @unused
     );
@@ -1024,7 +1024,7 @@ proc: BEGIN
         DELETE FROM EntitySecKeys
         WHERE (
             ent_type = entType AND
-            reader_whitelist_id = userWhitelistID AND
+            reader_whitelist_id = readerWhitelistID AND
             def_key = prevDefStr
         );
 
@@ -1279,6 +1279,7 @@ CREATE PROCEDURE _parseAndObtainRegularEntity (
     IN readerWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL,
     IN insertWhenNotFound BOOL,
+    IN selectWhenFound BOOL,
     OUT outID BIGINT UNSIGNED,
     OUT exitCode TINYINT
 )
@@ -1289,6 +1290,7 @@ BEGIN
         readerWhitelistID,
         isAnonymous,
         insertWhenNotFound,
+        selectWhenFound,
         NULL,
         LENGTH(defStr),
         1,
@@ -1311,6 +1313,7 @@ CREATE PROCEDURE __parseAndObtainRegularEntityHelper (
     IN readerWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL,
     IN insertWhenNotFound BOOL,
+    IN selectWhenFound BOOL,
     IN curTagName VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
     IN defStrLen INT,
     IN inPos INT,
@@ -1326,6 +1329,21 @@ proc: BEGIN
     DECLARE nestedReaderWhitelistID, nestedEntID BIGINT UNSIGNED;
     DECLARE isEndTag TINYINT;
 
+    SET outID = NULL;
+
+    -- Before parsing the defStr, we first check that the user is on the reader
+    -- whitelist.
+    CALL _getIsMemberAndUserWeight (
+        userID, readerWhitelistID, isMember, @unused
+    );
+    IF NOT (isMember) THEN
+        SET exitCode = 4; -- user is not on whitelist.
+        IF (selectWhenFound) THEN
+            SELECT tagName, outID, exitCode;
+        END IF; 
+        LEAVE proc;
+    END IF;
+
     SET subbedDefStr = "";
     SET curPos = inPos;
     loop_1: LOOP
@@ -1334,6 +1352,9 @@ proc: BEGIN
         IF (curPos > defStrLen) THEN
             IF (curTagName IS NOT NULL) THEN
                 SET exitCode = 2; -- No end tag was found matching a start tag.
+                IF (selectWhenFound) THEN
+                    SELECT tagName, outID, exitCode;
+                END IF; 
                 LEAVE proc;
             END IF;
 
@@ -1352,6 +1373,9 @@ proc: BEGIN
         IF (nextTagPos IS NULL OR nextTagPos = 0) THEN
             IF (curTagName IS NOT NULL) THEN
                 SET exitCode = 2; -- No end tag was found matching a start tag.
+                IF (selectWhenFound) THEN
+                    SELECT tagName, outID, exitCode;
+                END IF; 
                 LEAVE proc;
             END IF;
 
@@ -1379,6 +1403,9 @@ proc: BEGIN
         IF (isEndTag) THEN
             IF (curTagName IS NULL OR tagName != curTagName) THEN
                 SET exitCode = 3; -- An end tag did not match the start tag.
+                IF (selectWhenFound) THEN
+                    SELECT tagName, outID, exitCode;
+                END IF; 
                 LEAVE proc;
             END IF;
 
@@ -1407,6 +1434,9 @@ proc: BEGIN
         );
         -- If something went wrong, exit all calls of this helper procedure.
         IF (exitCode >= 2) THEN
+            IF (selectWhenFound) THEN
+                SELECT tagName, outID, 6 AS exitCode; -- Error in a nested call.
+            END IF; 
             LEAVE proc;
         END IF;
 
@@ -1442,8 +1472,13 @@ proc: BEGIN
             userID, subbedDefStr, readerWhitelistID, isAnonymous,
             outID, exitCode
         );
-        -- exitCode will here be either 0 if inserted, or 1 if found.
+        -- exitCode will here be either 0 if inserted, 1 if found, or 5 if a
+        -- counter was exceeded.
     END IF;
+
+    IF (selectWhenFound) THEN
+        SELECT tagName, outID, exitCode;
+    END IF; 
 END proc //
 DELIMITER ;
 

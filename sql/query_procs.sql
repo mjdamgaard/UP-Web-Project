@@ -60,9 +60,10 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    -- Find the list entity (with isAnonymous = 1, and insertWhenNotFound = 0).
+    -- Find the list entity (with isAnonymous = 1, insertWhenNotFound = 0, and
+    -- selectWhenFound = 1).
     CALL _parseAndObtainRegularEntity (
-        userID, listDefStr, readerWhitelistID, 1, 0,
+        userID, listDefStr, readerWhitelistID, 1, 0, 1,
         listID, exitCode
     );
     IF (exitCode >= 2) THEN
@@ -143,9 +144,10 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    -- Find the list entity (with isAnonymous = 1, and insertWhenNotFound = 0).
+    -- Find the list entity (with isAnonymous = 1, insertWhenNotFound = 0, and
+    -- selectWhenFound = 1).
     CALL _parseAndObtainRegularEntity (
-        userID, listDefStr, readerWhitelistID, 1, 0,
+        userID, listDefStr, readerWhitelistID, 1, 0, 1,
         listID, exitCode
     );
     IF (exitCode >= 2) THEN
@@ -419,7 +421,7 @@ proc: BEGIN
         userID, 0, 0, 1, isExceeded
     );
     IF (isExceeded) THEN
-        SELECT 5 AS exitCode; -- download limit was exceeded.
+        SELECT NULL AS entType, 5 AS exitCode; -- Download limit was exceeded.
         LEAVE proc;
     END IF;
 
@@ -446,16 +448,16 @@ proc: BEGIN
     FROM Entities FORCE INDEX (PRIMARY)
     WHERE id = entID;
 
+    -- Check that the user is on the reader whitelist.
     CALL _getIsMemberAndUserWeight (
         userID, readerWhitelistID, isMember, @unused
     );
-
     IF (isMember) THEN
         CALL _increaseWeeklyUserCounters (
             userID, 0, 0, LENGTH(defStr) DIV 1000 + 1, isExceeded
         );
         IF (isExceeded) THEN
-            SELECT 5 AS exitCode; -- download limit was exceeded.
+            SELECT NULL AS entType, 5 AS exitCode; -- Counter was exceeded.
             LEAVE proc;
         END IF;
 
@@ -467,7 +469,7 @@ proc: BEGIN
             isEditable,
             readerWhitelistID;
     ELSE
-        SELECT NULL AS entType;
+        SELECT NULL AS entType, 2 AS exitCode; -- User is not on whitelist.
         LEAVE proc;
     END IF;
 END proc //
@@ -480,17 +482,17 @@ CREATE PROCEDURE selectEntityRecursively (
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
     IN maxLen INT UNSIGNED,
-    IN startPos INT UNSIGNED,
     IN recurseInstructions VARCHAR(255),
-    IN maxRowNumber TINYINT UNSIGNED
+    IN maxRowNumber TINYINT UNSIGNED,
+    OUT rowNumber INT
 )
 proc: BEGIN
     DECLARE entType CHAR;
     DECLARE defStr LONGTEXT;
     DECLARE len, creatorID, readerWhitelistID BIGINT UNSIGNED;
     DECLARE isEditable, isMember, isExceeded TINYINT;
-    DECLARE listID BIGINT UNSIGNED;
-    DECLARE i, j INT DEFAULT 1;
+    DECLARE listID, instFunID, entFunID, nestedEntID BIGINT UNSIGNED;
+    DECLARE i, j, refNum, newRowNumber INT DEFAULT 1;
     DECLARE nextInstruction VARCHAR(255);
 
     -- Check that the user isn't out of download data.
@@ -498,7 +500,7 @@ proc: BEGIN
         userID, 0, 0, 1, isExceeded
     );
     IF (isExceeded) THEN
-        SELECT 5 AS exitCode; -- download limit was exceeded.
+        SELECT NULL AS entType, 5 AS exitCode; -- Download limit was exceeded.
         LEAVE proc;
     END IF;
 
@@ -506,9 +508,9 @@ proc: BEGIN
         ent_type,
         (
             CASE WHEN maxLen = 0 THEN
-                SUBSTR(def_str, startPos + 1)
+                SUBSTR(def_str, 1)
             ELSE
-                SUBSTR(def_str, startPos + 1, maxLen)
+                SUBSTR(def_str, 1, maxLen)
             END
         ),
         LENGTH(def_str),
@@ -534,7 +536,7 @@ proc: BEGIN
             userID, 0, 0, LENGTH(defStr) DIV 1000 + 1, isExceeded
         );
         IF (isExceeded) THEN
-            SELECT 5 AS exitCode; -- download limit was exceeded.
+            SELECT NULL AS entType, 5 AS exitCode; -- Counter was exceeded.
             LEAVE proc;
         END IF;
 
@@ -551,14 +553,59 @@ proc: BEGIN
     END IF;
 
     IF (entType = "r" AND recurseInstructions != 0 AND maxRowNumber > 0) THEN
+        SET entFunID = REGEXP_SUBSTR(
+            defStr, "[1-9][0-9]*", 1, 1
+        );
         loop_1: LOOP
             SET nextInstruction = REGEXP_SUBSTR(
                 recurseInstructions, "[^;]", 1, i
             );
-            SET funID = REGEXP_SUBSTR(
-                nextInstruction, "[1-9][0-9]*", 1, 1
+            SET funID = CAST(
+                REGEXP_SUBSTR(
+                    nextInstruction, "[1-9][0-9]*", 1, 1
+                )
+                AS UNSIGNED
             );
-            IF ()
+            IF (funID <=> entFunID) THEN
+                loop_2: LOOP
+                    SET refNum = CAST(
+                        REGEXP_SUBSTR(
+                            nextInstruction, "0|[1-9][0-9]*", 1, 1 + j
+                        )
+                        AS UNSIGNED
+                    );
+                    IF (refNum IS NULL) THEN
+                        LEAVE loop_2;
+                    END IF;
+
+                    SET nestedEntID = CAST(
+                        SUBSTR(
+                            REGEXP_SUBSTR(
+                                defStr, "@\\[0|[1-9][0-9]*", 1, 1 + refNum
+                            ),
+                            3
+                        )
+                        AS UNSIGNED
+                    );
+                    IF (nestedEntID IS NULL OR nestedEntID = 0) THEN
+                        SELECT NULL AS entType;
+                    ELSE
+                        CALL selectEntityRecursively (
+                            userID,
+                            IN entID,
+                            IN maxLen,
+                            0,
+                            recurseInstruction,
+                            maxRowNumber - j, -- ...
+                            newRowNumber,
+                        );
+                    END IF;
+
+                    SET j = j + 1;
+                    ITERATE loop_2;
+                END LOOP loop_2;
+                SET j = 1;
+            END IF;
 
             SET i = i + 1;
             ITERATE loop_1;
