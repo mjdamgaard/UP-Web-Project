@@ -7,8 +7,8 @@ DROP PROCEDURE selectScore;
 -- TODO: Make proc to query for users who has rated a stmt / scale.
 
 DROP PROCEDURE selectEntity;
-DROP PROCEDURE selectEntityFromSecKey;
 DROP PROCEDURE selectEntityIDFromSecKey;
+DROP PROCEDURE parseAndObtainRegularEntity;
 
 
 DROP PROCEDURE selectUserInfo;
@@ -70,9 +70,6 @@ proc: BEGIN
         SELECT listID, 3 AS exitCode; -- finding list failed.
         LEAVE proc;
     END IF;
-
-    -- If the list was obtained, return it as the first result.
-    SELECT listID, 0 AS exitCode;
 
     IF (includeScore2) THEN
         SELECT
@@ -175,8 +172,7 @@ proc: BEGIN
     SELECT
         score_1 AS score1,
         score_2 AS score2,
-        HEX(other_data) AS otherDataHex,
-        listID
+        HEX(other_data) AS otherDataHex
     FROM EntityLists FORCE INDEX (PRIMARY)
     WHERE (
         list_id = listID AND
@@ -194,201 +190,6 @@ DELIMITER ;
 
 
 
-
-
-
--- DELIMITER //
--- CREATE PROCEDURE selectEntityListFromHash (
---     IN userID BIGINT UNSIGNED,
---     IN scaleHash CHAR(64),
---     IN hi FLOAT,
---     IN lo FLOAT,
---     IN maxNum INT UNSIGNED,
---     IN numOffset INT UNSIGNED,
---     IN isAscOrder BOOL
--- )
--- BEGIN
---     SELECT
---         score AS scoreVal,
---         subj_id AS entID
---     FROM Scores
---     WHERE (
---         user_id = userID AND
---         scale_id = (
---             SELECT ent_id
---             FROM EntityHashes
---             WHERE def_hash = scaleHash
---         ) AND
---         score BETWEEN lo AND hi
---     )
---     ORDER BY
---         CASE WHEN isAscOrder THEN scoreVal END ASC,
---         CASE WHEN NOT isAscOrder THEN scoreVal END DESC,
---         CASE WHEN isAscOrder THEN entID END ASC,
---         CASE WHEN NOT isAscOrder THEN entID END DESC
---     LIMIT numOffset, maxNum;
--- END //
--- DELIMITER ;
-
-
--- DELIMITER //
--- CREATE PROCEDURE selectEntityListFromDefStr (
---     IN userID BIGINT UNSIGNED,
---     IN scaleDefStr CHAR(64),
---     IN hi FLOAT,
---     IN lo FLOAT,
---     IN maxNum INT UNSIGNED,
---     IN numOffset INT UNSIGNED,
---     IN isAscOrder BOOL
--- )
--- BEGIN
---     SELECT
---         score AS scoreVal,
---         subj_id AS entID
---     FROM Scores
---     WHERE (
---         user_id = userID AND
---         scale_id = (
---             SELECT ent_id
---             FROM EntityHashes
---             WHERE def_hash = SHA2(CONCAT("j.", scaleDefStr), 256)
---         ) AND
---         score BETWEEN lo AND hi
---     )
---     ORDER BY
---         CASE WHEN isAscOrder THEN scoreVal END ASC,
---         CASE WHEN NOT isAscOrder THEN scoreVal END DESC,
---         CASE WHEN isAscOrder THEN entID END ASC,
---         CASE WHEN NOT isAscOrder THEN entID END DESC
---     LIMIT numOffset, maxNum;
--- END //
--- DELIMITER ;
-
-
--- DELIMITER //
--- CREATE PROCEDURE selectEntityListFromDefStrings (
---     IN userID BIGINT UNSIGNED,
---     IN defStrList TEXT,
---     IN maxNum INT UNSIGNED,
---     IN numOffset INT UNSIGNED,
---     IN isAscOrder BOOL
--- )
--- BEGIN
---     DECLARE entID1, entID2, entID3, entID4, entID5, scaleID BIGINT UNSIGNED;
---     DECLARE defStr1, defStr2, defStr3, defStr4, defStr5, scaleDefStr TEXT;
-
---     entID_search: BEGIN 
---         SET defStr1 = SUBSTRING_INDEX(defStrList, "@;", 1);
---         SET defStr1 = SUBSTRING_INDEX(defStrList, "@;", 1);
---         SELECT id INTO entID1
---         FROM Entities
---         WHERE (
---             is_private = 0 AND
---             creator_id = 0 AND
---             def_hash = SHA2(CONCAT("j.", defStr1, 256))
---         );
---         IF (entID1 IS NULL) THEN LEAVE entID_search; END IF;
-
---         SET defStr2 = SUBSTRING_INDEX(defStrList, "@;", 2);
---         SET defStr2 = REPLACE(defStr2, "@e1", CONCAT("@", entID1));
---         SELECT id INTO entID2
---         FROM Entities
---         WHERE (
---             is_private = 0 AND
---             creator_id = 0 AND
---             def_hash = SHA2(CONCAT("j.", defStr2, 256))
---         );
---         IF (entID2 IS NULL) THEN LEAVE entID_search; END IF;
-
---         SET defStr3 = SUBSTRING_INDEX(defStrList, "@;", 3);
---         SET defStr3 = REPLACE(defStr3, "@e1", CONCAT("@", entID1));
---         SET defStr3 = REPLACE(defStr3, "@e2", CONCAT("@", entID2));
---         SELECT id INTO entID3
---         FROM Entities
---         WHERE (
---             is_private = 0 AND
---             creator_id = 0 AND
---             def_hash = SHA2(CONCAT("j.", defStr3, 256))
---         );
---         IF (entID3 IS NULL) THEN LEAVE entID_search; END IF;
-
---         SET defStr4 = SUBSTRING_INDEX(defStrList, "@;", 4);
---         SET defStr4 = REPLACE(defStr4, "@e1", CONCAT("@", entID1));
---         SET defStr4 = REPLACE(defStr4, "@e2", CONCAT("@", entID2));
---         SET defStr4 = REPLACE(defStr4, "@e3", CONCAT("@", entID3));
---         SELECT id INTO entID4
---         FROM Entities
---         WHERE (
---             is_private = 0 AND
---             creator_id = 0 AND
---             def_hash = SHA2(CONCAT("j.", defStr4, 256))
---         );
---         IF (entID4 IS NULL) THEN LEAVE entID_search; END IF;
-
---         SET defStr5 = SUBSTRING_INDEX(defStrList, "@;", 5);
---         SET defStr5 = REPLACE(defStr5, "@e1", CONCAT("@", entID1));
---         SET defStr5 = REPLACE(defStr5, "@e2", CONCAT("@", entID2));
---         SET defStr5 = REPLACE(defStr5, "@e3", CONCAT("@", entID3));
---         SET defStr5 = REPLACE(defStr5, "@e4", CONCAT("@", entID4));
---         SELECT id INTO entID5
---         FROM Entities
---         WHERE (
---             is_private = 0 AND
---             creator_id = 0 AND
---             def_hash = SHA2(CONCAT("j.", defStr5, 256))
---         );
---     END entID_search;
-
---     SET scaleDefStr = SUBSTRING_INDEX(defStrList, "@;", -1);
---     SET scaleDefStr = REPLACE(scaleDefStr, "@e1", CONCAT("@", entID1));
---     SET scaleDefStr = REPLACE(scaleDefStr, "@e2", CONCAT("@", entID2));
---     SET scaleDefStr = REPLACE(scaleDefStr, "@e3", CONCAT("@", entID3));
---     SET scaleDefStr = REPLACE(scaleDefStr, "@e4", CONCAT("@", entID4));
---     SET scaleDefStr = REPLACE(scaleDefStr, "@e5", CONCAT("@", entID5));
---     SELECT id INTO scaleID
---     FROM Entities
---     WHERE (
---         is_private = 0 AND
---         creator_id = 0 AND
---         def_hash = SHA2(CONCAT("j.", scaleDefStr, 256))
---     );
-
---     SELECT
---         NULL AS scoreVal,
---         entID1 AS entID
---     UNION ALL
---     SELECT
---         NULL AS scoreVal,
---         entID2 AS entID
---     UNION ALL
---     SELECT
---         NULL AS scoreVal,
---         entID3 AS entID
---     UNION ALL
---     SELECT
---         NULL AS scoreVal,
---         entID4 AS entID
---     UNION ALL
---     SELECT
---         NULL AS scoreVal,
---         entID5 AS entID
---     UNION ALL
---     SELECT
---         score AS scoreVal,
---         subj_id AS entID
---     FROM Scores
---     WHERE (
---         user_id = userID AND
---         scale_id = scaleID
---     )
---     ORDER BY
---         CASE WHEN isAscOrder THEN scoreVal END ASC,
---         CASE WHEN NOT isAscOrder THEN scoreVal END DESC,
---         CASE WHEN isAscOrder THEN entID END ASC,
---         CASE WHEN NOT isAscOrder THEN entID END DESC
---     LIMIT numOffset, maxNum;
--- END //
--- DELIMITER ;
 
 
 
@@ -483,15 +284,14 @@ CREATE PROCEDURE selectEntityRecursively (
     IN entID BIGINT UNSIGNED,
     IN maxLen INT UNSIGNED,
     IN recurseInstructions VARCHAR(255),
-    IN maxRowNumber TINYINT UNSIGNED,
-    OUT rowNumber INT
+    IN maxRecLevel TINYINT UNSIGNED
 )
 proc: BEGIN
     DECLARE entType CHAR;
     DECLARE defStr LONGTEXT;
     DECLARE len, creatorID, readerWhitelistID BIGINT UNSIGNED;
     DECLARE isEditable, isMember, isExceeded TINYINT;
-    DECLARE listID, instFunID, entFunID, nestedEntID BIGINT UNSIGNED;
+    DECLARE listID, instrFunID, entFunID, nestedEntID BIGINT UNSIGNED;
     DECLARE i, j, refNum, newRowNumber INT DEFAULT 1;
     DECLARE nextInstruction VARCHAR(255);
 
@@ -552,7 +352,7 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    IF (entType = "r" AND recurseInstructions != 0 AND maxRowNumber > 0) THEN
+    IF (entType = "r" AND recurseInstructions != 0 AND maxRecLevel > 0) THEN
         SET entFunID = REGEXP_SUBSTR(
             defStr, "[1-9][0-9]*", 1, 1
         );
@@ -560,13 +360,19 @@ proc: BEGIN
             SET nextInstruction = REGEXP_SUBSTR(
                 recurseInstructions, "[^;]", 1, i
             );
-            SET funID = CAST(
+
+            IF (nextInstruction IS NULL) THEN
+                LEAVE loop_1;
+            END IF;
+
+            SET instrFunID = CAST(
                 REGEXP_SUBSTR(
                     nextInstruction, "[1-9][0-9]*", 1, 1
                 )
                 AS UNSIGNED
             );
-            IF (funID <=> entFunID) THEN
+
+            IF (instrFunID <=> entFunID) THEN
                 loop_2: LOOP
                     SET refNum = CAST(
                         REGEXP_SUBSTR(
@@ -592,12 +398,11 @@ proc: BEGIN
                     ELSE
                         CALL selectEntityRecursively (
                             userID,
-                            IN entID,
-                            IN maxLen,
+                            nestedEntID,
+                            maxLen,
                             0,
                             recurseInstruction,
-                            maxRowNumber - j, -- ...
-                            newRowNumber,
+                            maxRecLevel - 1
                         );
                     END IF;
 
@@ -618,42 +423,6 @@ DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE selectEntityFromSecKey (
-    IN userID BIGINT UNSIGNED,
-    IN entType CHAR,
-    IN readerWhitelistID BIGINT UNSIGNED,
-    IN defKey VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
-)
-proc: BEGIN
-    DECLARE isMember TINYINT;
-
-    -- Exit if the user is not currently on the user whitelist. Do this first
-    -- to avoid timing attacks.
-    CALL _getIsMemberAndUserWeight (
-        userID, readerWhitelistID, isMember, @unused
-    );
-    IF NOT (isMember) THEN
-        SELECT NULL AS entID;
-    END IF;
-
-    SELECT
-        id AS entID,
-        creator_id AS creatorID,
-        is_editable AS isEditable
-    FROM Entities FORCE INDEX (PRIMARY)
-    WHERE id = (
-        SELECT ent_id
-        FROM EntitySecKeys FORCE INDEX (PRIMARY)
-        WHERE (
-            ent_type = entType AND
-            reader_whitelist_id = readerWhitelistID AND
-            def_key = defKey
-        )
-    );
-END proc //
-DELIMITER ;
-
 
 
 DELIMITER //
@@ -665,6 +434,11 @@ CREATE PROCEDURE selectEntityIDFromSecKey (
 )
 proc: BEGIN
     DECLARE isMember TINYINT;
+
+    -- Check that the user isn't out of download data.
+    CALL _increaseWeeklyUserCounters (
+        userID, 0, 0, 1, isExceeded
+    );
 
     -- Exit if the user is not currently on the user whitelist. Do this first
     -- to avoid timing attacks.
@@ -689,105 +463,67 @@ DELIMITER ;
 
 
 
+DELIMITER //
+CREATE PROCEDURE parseAndObtainRegularEntity (
+    IN userID BIGINT UNSIGNED,
+    IN entType CHAR,
+    IN readerWhitelistID BIGINT UNSIGNED,
+    IN defStr VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
+)
+proc: BEGIN
+    -- Find the entity (with isAnonymous = 1, insertWhenNotFound = 0, and
+    -- selectWhenFound = 1).
+    CALL _parseAndObtainRegularEntity (
+        userID, defStr, readerWhitelistID, 1, 0, 1,
+        @unused, @unused
+    );
+END proc //
+DELIMITER ;
 
 
-
-
-
-
-
--- TODO: Remake selectFunctionalEntityAndChildren() such that it only replaces
--- the function calls that are preceded by '&'. ..And maybe IDs preceded by @
--- should be replaced by the entity's defStr (when it's an 'f' entity, at
--- least).
-
-
--- DELIMITER //
--- CREATE PROCEDURE selectFunctionalEntityAndChildren (
---     IN funCallStr VARCHAR(3000) CHARACTER SET utf8mb4
--- )
--- BEGIN
---     DECLARE outValStr, outSubStr TEXT;
---     DECLARE len INT;
-
---     CALL _selectFunctionalEntityAndChildren(
---         funCallStr, outValStr, outSubStr, len
---     );
-
---     SELECT outValStr, outSubStr;
--- END //
--- DELIMITER ;
 
 
 
 -- DELIMITER //
--- CREATE PROCEDURE _selectFunctionalEntityAndChildren (
---     IN funCallStr VARCHAR(3000),
---     OUT outValStr TEXT,
---     OUT outSubStr TEXT,
---     OUT len INT
+-- CREATE PROCEDURE selectEntityFromSecKey (
+--     IN userID BIGINT UNSIGNED,
+--     IN entType CHAR,
+--     IN readerWhitelistID BIGINT UNSIGNED,
+--     IN defKey VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 -- )
--- BEGIN proc: BEGIN
---     DECLARE fstExp      TEXT DEFAULT (SUBSTRING_INDEX(funCallStr, 1));
---     DECLARE paramNumStr TEXT DEFAULT (SUBSTRING_INDEX(funCallStr, 2));
---     DECLARE p TINYINT UNSIGNED DEFAULT (
---         CAST(paramNumStr AS UNSIGNED INTEGER)
---     );
---     DECLARE valStr, subStr, defStr TEXT;
---     DECLARE l INT;
+-- proc: BEGIN
+--     DECLARE isMember TINYINT;
 
---     IF (SUBSTR(fstExp, 1, 1) NOT REGEXP "[a-zA-z_\\$]") THEN
---         SET outValStr = fstExp;
---         SET outSubStr = fstExp;
---         SET len = LENGTH(fstExp);
---         LEAVE proc;
+--     -- Exit if the user is not currently on the user whitelist. Do this first
+--     -- to avoid timing attacks.
+--     CALL _getIsMemberAndUserWeight (
+--         userID, readerWhitelistID, isMember, @unused
+--     );
+--     IF NOT (isMember) THEN
+--         SELECT NULL AS entID;
 --     END IF;
 
---     IF (p = 0) THEN
---         SELECT CAST(ent_id AS CHAR) INTO outValStr
---         FROM EntitySecKeys
+--     SELECT
+--         id AS entID,
+--         creator_id AS creatorID,
+--         is_editable AS isEditable
+--     FROM Entities FORCE INDEX (PRIMARY)
+--     WHERE id = (
+--         SELECT ent_id
+--         FROM EntitySecKeys FORCE INDEX (PRIMARY)
 --         WHERE (
---             ent_type = "f" AND
---             def_key = fstExp
---         );
---         SET outSubStr = CONCAT(outValStr, ",", paramNumStr);
---         SET len = LENGTH(fstExp) + 1 + LENGTH(paramNumStr);
---         LEAVE proc;
---     END IF;
-
---     SET outSubStr = CONCAT(",", paramNumStr);
---     SET defStr = "";
---     SET len = LENGTH(fstExp) + 1 + LENGTH(paramNumStr);
---     for_loop: LOOP
-
---         CALL _selectFunctionalEntityAndChildren(
---             SUBSTR(funCallStr, len + 2), valStr, subStr, l
---         );
-
---         SET outSubStr = CONCAT(outSubStr, ",", subStr);
---         SET defStr = CONCAT(defStr, ",", valStr);
---         SET len = len + 1 + l;
-
---         SET p = p - 1;
---         IF (p > 0) THEN
---             ITERATE for_loop;
---         END IF;
---         LEAVE for_loop;
---     END LOOP for_loop;
-
-
---     SET defStr = CONCAT(fstExp, defStr);
-
---     SELECT CAST(ent_id AS CHAR) INTO outValStr
---     FROM EntitySecKeys
---     WHERE (
---         ent_type = "f" AND
---         def_key = defStr;
+--             ent_type = entType AND
+--             reader_whitelist_id = readerWhitelistID AND
+--             def_key = defKey
+--         )
 --     );
---     SET outSubStr = CONCAT(outValStr, outSubStr);
-
--- END proc; END //
+-- END proc //
 -- DELIMITER ;
+
+
+
+
+
 
 
 

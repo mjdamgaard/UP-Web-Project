@@ -238,7 +238,7 @@ proc: BEGIN
 
     -- Insert of find the list entity.
     CALL _parseAndObtainRegularEntity (
-        userID, listDefStr, readerWhitelistID, 0, 1,
+        userID, listDefStr, readerWhitelistID, 0, 1, 0,
         listID, exitCode
     );
     IF (exitCode >= 2) THEN
@@ -296,7 +296,7 @@ proc: BEGIN
 
     -- Insert of find the list entity.
     CALL _parseAndObtainRegularEntity (
-        userID, listDefStr, readerWhitelistID, 0, 1,
+        userID, listDefStr, readerWhitelistID, 0, 1, 0,
         listID, exitCode
     );
     IF (exitCode >= 2) THEN
@@ -939,35 +939,6 @@ DELIMITER ;
 
 
 
--- DELIMITER //
--- CREATE PROCEDURE substitutePlaceholdersInAttrEntity (
---     IN userID BIGINT UNSIGNED,
---     IN entID BIGINT UNSIGNED,
---     IN paths TEXT, -- List of the form '<path_1>,<path_2>...'
---     IN substitutionEntIDs TEXT -- List of the form '<entID_1>,<entID_2>...'
--- )
--- BEGIN
---     CALL _substitutePlaceholdersInEntity (
---         "a",
---         700, userID, entID, defStr, paths, substitutionEntIDs
---     );
--- END //
--- DELIMITER ;
-
--- DELIMITER //
--- CREATE PROCEDURE substitutePlaceholdersInFunEntity (
---     IN userID BIGINT UNSIGNED,
---     IN entID BIGINT UNSIGNED,
---     IN paths TEXT, -- List of the form '<path_1>,<path_2>...'
---     IN substitutionEntIDs TEXT -- List of the form '<entID_1>,<entID_2>...'
--- )
--- BEGIN
---     CALL _substitutePlaceholdersInEntity (
---         "f",
---         700, userID, entID, defStr, paths, substitutionEntIDs
---     );
--- END //
--- DELIMITER ;
 
 
 
@@ -1137,139 +1108,6 @@ DELIMITER ;
 
 
 
-
--- DELIMITER //
--- CREATE PROCEDURE _parseAndObtainRegularEntity (
---     IN userID BIGINT UNSIGNED,
---     IN defStr VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
---     IN readerWhitelistID BIGINT UNSIGNED,
---     IN isAnonymous BOOL,
---     IN insertWhenNotFound BOOL,
---     OUT outID BIGINT UNSIGNED,
---     OUT exitCode TINYINT
--- )
--- proc: BEGIN
---     DECLARE subbedDefStr, elemContent, startTag, endTag, tagName
---         VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
---     DECLARE nextElemPos, elemContentPos, endTagPos, curPos, defStrLen INT;
---     DECLARE nestedReaderWhitelistID, nestedEntID BIGINT UNSIGNED;
-
---     SET defStrLen = LENGTH(defStr);
---     SET subbedDefStr = "";
-
---     -- We loop and find the next occurrence of '@<...>', and then call this
---     -- procedure recursively to parse and obtain the regular entity inside the
---     -- XML-like element that begins with said '@<...>' occurrence, and ends
---     -- with a matching '@</...>' occurrence (with no nested "tags" of the same
---     -- name.)
---     SET curPos = 1;
---     loop_1: LOOP
---         IF (curPos > defStrLen) THEN
---             LEAVE loop_1;
---         END IF;
-
---         -- Find the next tag, and finish the loop if there are no more.
---         SET nextElemPos = REGEXP_INSTR(
---             defStr, "@</?[1-9][0-9]*(,[1-9][0-9]*)?>,", curPos, 1
---         );
---         IF (nextElemPos IS NULL OR nextElemPos = 0) THEN
---             SET subbedDefStr = CONCAT(subbedDefStr, SUBSTR(defStr, curPos));
---             LEAVE loop_1;
---         END IF;
-
---         -- Parse the start tag and the contained tag name and optional reader
---         -- whitelist ID.
---         SET startTag = REGEXP_SUBSTR(
---             defStr, "@</?[1-9][0-9]*(,[1-9][0-9]*)?>,", nextElemPos, 1
---         );
---         SET tagName = REGEXP_SUBSTR(startTag, "[1-9][0-9]*>,", 1, 1);
---         SET nestedReaderWhitelistID = CAST(
---             IFNULL(   REGEXP_SUBSTR(startTag, "[1-9][0-9]*>,", 1, 2), 0   )
---             AS UNSIGNED
---         );
-
---         -- If the start tag is actually an end tag, exit with exit code 2.
---         IF (SUBSTR(startTag, 3, 1) = "/") THEN
---             SET outID = NULL;
---             SET exitCode = 2; -- An end tag occurred before its start tag.
---             LEAVE proc;
---         END IF;
-
---         -- Construct the end tag, and finds its position in defStr.
---         SET endTag = CONCAT("@</", tagName, ">");
---         SET endTagPos = REGEXP_INSTR(
---             defStr, endTag, nextElemPos, 1
---         );
-
---         -- Exit with exit code 3 if no corresponding end tag was found. 
---         IF (endTagPos IS NULL OR endTagPos = 0) THEN
---             SET outID = NULL; 
---             SET exitCode = 3; -- A tag occurred with no corresponding end tag.
---             LEAVE proc;
---         END IF;
-
---         -- Get the content string inside the element.
---         SET elemContentPos = nextElemPos + LENGTH(startTag);
---         SET elemContent = SUBSTR(
---             defStr,
---             elemContentPos,
---             endTagPos - elemContentPos
---         );
-
---         -- Then parse and "obtain" (find or insert) the ID of this nested
---         -- entity, and exit with the same given exit code if something went
---         -- wrong.
---         CALL _parseAndObtainRegularEntity (
---             userID,
---             elemContentPos,
---             nestedReaderWhitelistID,
---             isAnonymous,
---             insertWhenNotFound,
---             nestedEntID,
---             exitCode
---         );
---         IF (exitCode >= 2) THEN
---             SET outID = NULL;
---             LEAVE proc;
---         END IF;
-
---         -- Now add the substring before the element to subbedDefStr, followed
---         -- by an entity reference in place of the element, and update the
---         -- current position before reiterating the loop.
---         SET subbedDefStr = CONCAT(
---             subbedDefStr,
---             SUBSTR(defStr, curPos, nextElemPos - curPos),
---             "@[", nestedEntID, "]"
---         );
---         SET curPos = endTagPos + LENGTH(endTag);
-
---         ITERATE loop_1;
---     END LOOP loop_1;
-
---     -- After the loop, if no error occurred, we now have the substituted
---     -- defStr, and all that is left is to find the corresponding ID of the
---     -- regular entity, and if insertWhenNotFound is set as true, we also
---     -- try to insert it in case it wasn't found.
---     SELECT ent_id INTO outID
---     FROM EntitySecKeys FORCE INDEX (PRIMARY)
---     WHERE (
---         ent_type = "r" AND
---         reader_whitelist_id = readerWhitelistID AND
---         def_key = subbedDefStr
---     );
-
---     IF (outID IS NULL AND NOT insertWhenNotFound) THEN
---         SET exitCode = 4; -- Entity was not found.
---         LEAVE proc;
---     ELSEIF (outID IS NULL AND insertWhenNotFound) THEN
---         CALL _insertOrFindRegularEntity (
---             userID, subbedDefStr, readerWhitelistID, isAnonymous,
---             outID, exitCode
---         );
---         -- exitCode will here be either 0 if inserted, or 1 if found.
---     END IF;
--- END proc //
--- DELIMITER ;
 
 
 DELIMITER //

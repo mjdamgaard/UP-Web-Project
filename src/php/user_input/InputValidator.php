@@ -197,6 +197,19 @@ class InputValidator {
                     );
                 }
                 break;
+            case "rec_instr_list":
+                $pattern =
+    "/^($|[1-9][0-9]*(,(0|[1-9][0-9]*))+(;[1-9][0-9]*(,(0|[1-9][0-9]*))+)*$)/";
+                $len = strlen($paramVal);
+                if (
+                    $len > 255 ||
+                    !preg_match($pattern, $paramVal)
+                ) {
+                    echoTypeErrorJSONAndExit(
+                        $paramName, $paramVal, "Recursion instruction list"
+                    );
+                }
+                break;
             case "list_list":
                 $pattern =
                     "/^((this|[1-9][0-9]*)([,\|](this|[1-9][0-9]*))*)?$/";

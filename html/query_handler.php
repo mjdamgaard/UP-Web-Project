@@ -98,8 +98,8 @@ switch ($reqType) {
             "bool", "bool"
         );
         // output: [
-        //   [listID, exitCode],
-        //   ( [score1, subjID] | [score1, score2, subjID] ), ...
+        //   [[tagName | null, outID, exitCode]], ...
+        //   [( [score1, subjID] | [score1, score2, subjID] ), ...]
         // ].
         break;
     case "score":
@@ -107,46 +107,49 @@ switch ($reqType) {
         $sql = "CALL selectPublicScore (?, ?, ?)";
         $paramNameArr = array("u", "d", "w", "s");
         $typeArr = array("id", "id", "id", "id");
-        // output: [[score1, score2, otherDataHex, listID]].
+        // output: [
+        //   [[tagName | null, outID, exitCode]], ...
+        //   [[score1, score2, otherDataHex]]
+        // ].
         break;
     /* Entities */
     case "ent":
-        $sql = "CALL selectEntity (?, ?, ?, ?)";
+        $sql = "CALL selectEntity (?, ?, ?, ?, ?)";
         $paramNameArr = array("u", "id", "m", "s");
         $typeArr = array("id", "id", "uint", "uint");
-        // output:
-        //  [[entType, defStr, len, creatorID, isEditable, readerWhitelistID]].
+        // output: [[
+        //  [entType, defStr, len, creatorID, isEditable, readerWhitelistID] |
+        //  [null, exitCode]
+        // ]].
         break;
     case "entRec":
         $sql = "CALL selectEntityRecursively (?, ?, ?, ?)";
-        $paramNameArr = array("u", "id", "m", "s");
-        $typeArr = array("id", "id", "uint", "uint");
-        // output:
-        //  [[entType, defStr, len, creatorID, isEditable, readerWhitelistID]].
-        break;
-    case "entFromSK":
-        $sql = "CALL selectEntityFromSecKey (?, ?, ?, ?)";
-        $paramNameArr = array("u", "t", "w", "d");
-        $typeArr = array("id", "char", "id", "str");
-        // output: [[entID, creatorID, editableUntil]].
+        $paramNameArr = array("u", "id", "m", "i", "l");
+        $typeArr = array("id", "id", "uint", "rec_instr_list", "utint");
+        // output: [[
+        //  [entType, defStr, len, creatorID, isEditable, readerWhitelistID] |
+        //  [null, exitCode]
+        // ], ...].
         break;
     case "entIDFromSK":
-        $sql = "CALL selectEntityIDFromSecKey (?, ?)";
+        $sql = "CALL selectEntityIDFromSecKey (?, ?, ?, ?)";
         $paramNameArr = array("u", "t", "w", "d");
         $typeArr = array("id", "char", "id", "str");
-        // output: [[entID]].
+        // output: [[[entID]]].
         break;
-    // case "creations":
-    //     $sql = "CALL selectCreations (?, ?, ?, ?)";
-    //     $paramNameArr = array("c", "m", "o", "a");
-    //     $typeArr = array("id", "uint", "uint", "bool");
-    //     // output: [[ident, entID], ...].
-    //     break;
-    // case "creationsAsUser":
-    //     $sql = "CALL selectCreationsAsUser (?, ?, ?, ?)";
-    //     $paramNameArr = array("u", "m", "o", "a");
-    //     $typeArr = array("id", "uint", "uint", "bool");
-    //     // output: [[ident, entID], ...].
+    case "regEnt":
+        $sql = "CALL parseAndObtainRegularEntity (?, ?, ?, ?)";
+        $paramNameArr = array("u", "t", "w", "d");
+        $typeArr = array("id", "char", "id", "str");
+        // output: [
+        //   [[tagName | null, outID, exitCode]], ...
+        // ].
+        break;
+    // case "entFromSK":
+    //     $sql = "CALL selectEntityFromSecKey (?, ?, ?, ?)";
+    //     $paramNameArr = array("u", "t", "w", "d");
+    //     $typeArr = array("id", "char", "id", "str");
+    //     // output: [[entID, creatorID, editableUntil]].
     //     break;
     /* User data */
     // case "user":
@@ -154,36 +157,6 @@ switch ($reqType) {
     //     $paramNameArr = array("id");
     //     $typeArr = array("id");
     //     // output: [[username, publicKeys]].
-    //     break;
-    // case "bot":
-    //     $sql = "CALL selectBotInfo (?)";
-    //     $paramNameArr = array("id");
-    //     $typeArr = array("id");
-    //     // output: [[botName, botDescription]].
-    //     break;
-    // case "userID":
-    //     $sql = "CALL selectUserEntityID (?)";
-    //     $paramNameArr = array("n");
-    //     $typeArr = array("str");
-    //     // output: [[entID]].
-    //     break;
-    // case "botID":
-    //     $sql = "CALL selectBotEntityID (?)";
-    //     $paramNameArr = array("n");
-    //     $typeArr = array("str");
-    //     // output: [[entID]].
-    //     break;
-    // case "ancBotData1e2d":
-    //     $sql = "CALL selectAncillaryBotData1e2d (?, ?)";
-    //     $paramNameArr = array("n", "e");
-    //     $typeArr = array("str", "id");
-    //     // output: [[data1, data2]].
-    //     break;
-    // case "ancBotData1e4d":
-    //     $sql = "CALL selectAncillaryBotData1e4d (?, ?)";
-    //     $paramNameArr = array("n", "e");
-    //     $typeArr = array("str", "id");
-    //     // output: [[data1, data2, data3, data4]].
     //     break;
     default:
         echoBadErrorJSONAndExit("Unrecognized request type");
@@ -203,15 +176,10 @@ $stmt = $conn->prepare($sql);
 // Execute query statement.
 DBConnector::executeSuccessfulOrDie($stmt, $paramValArr);
 // Fetch the result as a numeric array.
-$res = $stmt->get_result()->fetch_all();
+$res = array($stmt->get_result()->fetch_all());
 // If there are more results, return instead an array of all the results.
-$i = 0;
-while ($stmt->next_result() && ++$i) {
-    if($i === 1) {
-        $res = array($res, $stmt->get_result()->fetch_all());
-    } else {
-        array_push($res, $stmt->get_result()->fetch_all());
-    }
+while ($stmt->next_result()) {
+    array_push($res, $stmt->get_result()->fetch_all());
 }
 
 // Finally echo the JSON-encoded numeric array, containing e.g. the
