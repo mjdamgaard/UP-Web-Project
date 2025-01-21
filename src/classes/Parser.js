@@ -171,7 +171,7 @@ export class Parser {
             symSuccess = false;
           }
           else {
-            let match = nextLexeme.match(sym)[0];
+            let match = (nextLexeme.match(sym) ?? [])[0];
             if (match === nextLexeme) {
               // Record the new successful symbol, and increase pos.
               recordedSyntaxTrees.push({
@@ -218,10 +218,10 @@ export class Parser {
           else {
             // Record contained nonterminal symbol error on failure.
             if (endPos > error[1]) {
-              error = [["<" + sym + ">"], endPos, endPos];
+              error = [[sym], endPos, endPos];
             }
             if (endPos === error[1]) {
-              error[0].push("<" + sym + ">");
+              error[0].push(sym);
             }
           } 
         }
@@ -287,7 +287,6 @@ export class Parser {
                 symSuccess = false;
                 break;
               }
-              break;
             }
           }
 
@@ -308,7 +307,7 @@ export class Parser {
 
         // This only leaves the option of sym being of the form sym :=
         // {parser, startSym}, where parser might be another Parser instance
-        // (or an object with a similar parse() method).
+        // (or an object with a similar lexAndParseAll() method).
         else if (typeof sym === "object") {
           let {parser, startSym, subLex} = sym;
 
@@ -321,7 +320,7 @@ export class Parser {
             }
             else {
               let [syntaxTree, childCallbackArr, endPos] =
-                parser.lexAndParseAll(lexArr, pos, startSym, str, strPosArr);
+                parser.lexAndParseAll(nextLexeme, startSym);
               symSuccess = syntaxTree.success;
               if (symSuccess) {
                 // Record the new successful symbol, append the childCallbackArr
@@ -334,10 +333,10 @@ export class Parser {
                 // Add pos to the number of successful sub-lexemes, given by
                 // the returned endPos, to get the combined error "priority."
                 if (pos + endPos > error[1]) {
-                  error = [["<" + startSym + ">"], pos + endPos, pos];
+                  error = [[startSym], pos + endPos, pos];
                 }
                 if (pos + endPos === error[1]) {
-                  error[0].push("<" + startSym + ">");
+                  error[0].push(startSym);
                 }
               }
             }
@@ -357,16 +356,16 @@ export class Parser {
             }
             else {
               if (endPos > error[1]) {
-                error = [["<" + startSym + ">"], endPos, endPos];
+                error = [[startSym], endPos, endPos];
               }
               if (endPos === error[1]) {
-                error[0].push("<" + startSym + ">");
+                error[0].push(startSym);
               }
             }
           }
         }
         else {
-          throw (
+          debugger;throw (
             `Parser: invalid symbol: "${JSON.stringify(sym)}"` 
           );
         }
@@ -416,9 +415,9 @@ export class Parser {
       // But before the nonterminal symbol succeeds fully, we first need to run
       // the test() function, if one is supplied.
       if (test) {
-        let [success, error] = test(syntaxTree);
-        syntaxTree.success = success;
-        syntaxTree.error = error;
+        let [testIsSuccessful, testError] = test(syntaxTree);
+        syntaxTree.success = testIsSuccessful;
+        syntaxTree.error = testError;
       }
 
       // If any test succeeded, and the nonterminal symbol is now successful,
@@ -431,10 +430,10 @@ export class Parser {
         }
         return [syntaxTree, callbackArr, pos];
       }
-      // Else just return the syntaxTree, where syntaxTree error is determined
+      // Else return the syntaxTree, where syntaxTree error is determined by
       // test().
       else {
-        return [syntaxTree];
+        return [syntaxTree, [], pos];
       }
     }
 
@@ -461,6 +460,10 @@ export class Parser {
     }
   }
 }
+
+
+
+
 
 
 

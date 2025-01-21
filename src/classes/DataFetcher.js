@@ -43,10 +43,10 @@ export class DataFetcher {
       //  [entType, defStr, len, creatorID, isEditable, readerWhitelistID] |
       //  [null, exitCode]
       // ]].
-      let [[[
+      let [
         entType, defStrOrExitCode, len, creatorID, isEditable,
         readerWhitelistID
-      ]]] = result;
+      ] = (result[0][0] ?? [])[0];
       callback(
         entType, defStrOrExitCode, len, creatorID, isEditable,
         readerWhitelistID
