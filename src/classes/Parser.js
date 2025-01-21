@@ -59,6 +59,7 @@
 
 export class Parser {
   constructor(grammar, defaultSym, lexemePatternArr, wsPattern) {
+    wsPattern ||= //;
     this.grammar = grammar;
     // defaultSym is the default (nonterminal) start symbol.
     this.defaultSym = defaultSym;
@@ -469,7 +470,8 @@ export class Lexer {
   constructor(lexemePatternArr, wsPattern) {
     // Whitespace RegEx.
     this.wsRegEx = (wsPattern instanceof RegExp) ? wsPattern :
-      new RegExp(wsPattern);
+      wsPattern ? new RegExp(wsPattern) :
+      /[^\s\S]/;
     // RegEx of all lexemes and whitespace. 
     this.lexemeOrWSRegEx = new RegExp(
       wsRegEx.source + "|" +

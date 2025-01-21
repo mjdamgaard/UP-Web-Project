@@ -2,7 +2,7 @@
 import {DBRequestManager} from "./DBRequestManager.js";
 
 import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
-import {DefStrConstructor} from "./DefStrConstructor.js";
+import {DataConstructor} from "./DataConstructor.js";
 import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 
 
@@ -389,7 +389,7 @@ export class DataInserter {
     entID, qualIDOrDefStr, scoreMid, scoreRadius, callback = () => {}
   ) {
     let userID = this.getAccountData("userID");
-    let listDefStr = DefStrConstructor.getUserScoreListExplodedDefStr(
+    let listDefStr = DataConstructor.getUserScoreListExplodedDefStr(
       userID, qualIDOrDefStr
     );
     this.scoreEntity(
@@ -415,7 +415,7 @@ export class DataInserter {
   scoreEntityWRTRelevancyQuality(
     entID, classIDOrDefStr, scoreMid, scoreRadius, callback = () => {}
   ) {
-    let qualDefStr = DefStrConstructor.getRelevancyQualityExplodedDefStr(
+    let qualDefStr = DataConstructor.getRelevancyQualityExplodedDefStr(
       classIDOrDefStr
     );
     this.scoreEntityWRTQuality(

@@ -2,6 +2,7 @@
 import {DBRequestManager} from "../classes/DBRequestManager.js";
 
 import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
+import {DataParser} from "./DataParser.js";
 import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 
 
@@ -130,6 +131,44 @@ export class DataFetcher {
       );
     });
   }
+
+
+
+
+  static fetchAndParseSmallEntity(entID, callback) {
+    this.fetchEntity(
+      entID, 700, (
+        entType, defStrOrExitCode, len, creatorID, isEditable,
+        readerWhitelistID
+      ) => {
+        if (!entType) {
+          callback(null);
+        } else {
+          let defStr = defStrOrExitCode;
+          callback(
+            DataParser.parseEntity(
+              entType, defStr, len, creatorID, isEditable, readerWhitelistID
+            )
+          );
+        }
+      }
+    )
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
   static fetchSeveralPublicEntities(entIDs, maxLen, callback) {
