@@ -301,7 +301,7 @@ proc: BEGIN
         userID, 0, 0, 1, isExceeded
     );
     IF (isExceeded) THEN
-        SELECT NULL AS entType, 5 AS exitCode; -- Download limit was exceeded.
+        SELECT entID, NULL AS entType, 5 AS exitCode; -- Counter was exceeded.
         LEAVE proc;
     END IF;
 
@@ -337,11 +337,12 @@ proc: BEGIN
             userID, 0, 0, LENGTH(defStr) DIV 1000 + 1, isExceeded
         );
         IF (isExceeded) THEN
-            SELECT NULL AS entType, 5 AS exitCode; -- Counter was exceeded.
+            SELECT entID, NULL AS entType, 5 AS exitCode; -- Counter exceeded.
             LEAVE proc;
         END IF;
 
         SELECT
+            entID,
             entType,
             defStr,
             len,
@@ -349,7 +350,7 @@ proc: BEGIN
             isEditable,
             readerWhitelistID;
     ELSE
-        SELECT NULL AS entType;
+        SELECT entID, NULL AS entType;
         LEAVE proc;
     END IF;
 
@@ -487,7 +488,6 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE parseAndObtainRegularEntity (
     IN userID BIGINT UNSIGNED,
-    IN entType CHAR,
     IN readerWhitelistID BIGINT UNSIGNED,
     IN defStr VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )

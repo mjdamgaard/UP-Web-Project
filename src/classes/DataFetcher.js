@@ -4,13 +4,6 @@ import {DBRequestManager} from "../classes/DBRequestManager.js";
 import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
 import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 
-// const CLASS_CLASS_METADATA_JSON = JSON.stringify({
-//   entID: 1,
-//   tmplID: 0,
-//   mainProps: {title: "class"},
-//   classID: 1,
-//   otherPropsLen: 0,
-// });
 
 
 const CLASSES_CLASS_ID = basicEntIDs["classes"];
@@ -23,12 +16,16 @@ const RELEVANT_QUAL_ID = basicEntIDs["qualities/relevant"];
 
 export class DataFetcher {
 
+  constructor(getAccountData) {
+    this.getAccountData = getAccountData;
+  }
 
-  static fetchPublicEntity(entID, maxLen, callback) {
+  static fetchEntity(entID, maxLen, callback) {
     if (!callback && maxLen instanceof Function) {
       callback = maxLen;
       maxLen = 700;
     }
+    maxLen ??= 700;
     // TODO: Also query for the highest rated 'representation' and if the
     // score is high enough, use the entity data from that instead.
     let reqData = {
@@ -41,9 +38,96 @@ export class DataFetcher {
     };
     DBRequestManager.query(reqData, (responseText) => {
       let result = JSON.parse(responseText);
-      let [datatype, defStr, len, creatorID, editableUntil] = result[0] ?? [];
-      let isContained = (len <= maxLen); 
-      callback(datatype, defStr, isContained, len, creatorID, editableUntil);
+      // output: [[
+      //  [entType, defStr, len, creatorID, isEditable, readerWhitelistID] |
+      //  [null, exitCode]
+      // ]].
+      let [[[
+        entType, defStrOrExitCode, len, creatorID, isEditable,
+        readerWhitelistID
+      ]]] = result;
+      callback(
+        entType, defStrOrExitCode, len, creatorID, isEditable,
+        readerWhitelistID
+      );
+    });
+  }
+
+  static fetchEntityRecursively(
+    entID, recurseInstructions, maxRecLevel, maxLen, callback
+  ) {
+    if (!callback && maxLen instanceof Function) {
+      callback = maxLen;
+      maxLen = 700;
+    }
+    if (!callback && maxRecLevel instanceof Function) {
+      callback = maxRecLevel;
+      maxRecLevel = 2;
+    }
+    maxLen ??= 700;
+    maxRecLevel ??= 2;
+    // TODO: Also query for the highest rated 'representation' and if the
+    // score is high enough, use the entity data from that instead.
+    let reqData = {
+      req: "entRec",
+      u: "19",
+      ses: "00".repeat(60),
+      e: entID,
+      m: maxLen,
+      i: recurseInstructions,
+      l: maxRecLevel,
+    };
+    DBRequestManager.query(reqData, (responseText) => {
+      let result = JSON.parse(responseText);
+      // output: [[
+      //  [entID, entType, defStr, len, creatorID, isEditable,
+      //    readerWhitelistID
+      //  ] |
+      //  [entID, null, exitCode]
+      // ], ...].
+      callback(
+        result.map(resArrArr => resArrArr[0] ?? [])
+      );
+    });
+  }
+
+  static fetchEntityID(
+    entType, readerWhiteListID, defStr
+  ) {
+    let reqData = {
+      req: "entID",
+      u: "19",
+      ses: "00".repeat(60),
+      t: entType,
+      w: readerWhiteListID,
+      d: defStr, // ("def_key" is always equal to def_str currently.)
+    };
+    DBRequestManager.query(reqData, (responseText) => {
+      let result = JSON.parse(responseText);
+      // output: [[[entID | null]]].
+      let [[[entID]]] = result;
+      callback(entID);
+    });
+  }
+
+  static fetchParsedRegularEntity(
+    readerWhiteListID, explodedDefStr
+  ) {
+    let reqData = {
+      req: "regEnt",
+      u: "19",
+      ses: "00".repeat(60),
+      w: readerWhiteListID,
+      d: explodedDefStr,
+    };
+    DBRequestManager.query(reqData, (responseText) => {
+      let result = JSON.parse(responseText);
+      // output: [
+      //   [[(tagName | null), outID, exitCode]], ...
+      // ].
+      callback(
+        result.map(resArrArr => resArrArr[0] ?? [])
+      );
     });
   }
 
@@ -61,9 +145,9 @@ export class DataFetcher {
     entIDs.forEach((entID, ind) => {
       parallelCallbackHandler.push((resolve) => {
         this.fetchPublicEntity(entID, maxLen,
-          (datatype, defStr, isContained, len, creatorID, editableUntil) => {
+          (entType, defStr, isContained, len, creatorID, isEditable) => {
             results[ind] = [
-              datatype, defStr, isContained, len, creatorID, editableUntil
+              entType, defStr, isContained, len, creatorID, isEditable
             ];
             resolve();
           }
@@ -78,8 +162,8 @@ export class DataFetcher {
 
   static fetchPublicAttrObject(entID, callback) {
     DataFetcher.fetchPublicEntity(entID,
-      (datatype, defStr) => {
-        if (datatype !== "a") {
+      (entType, defStr) => {
+        if (entType !== "a") {
           callback(null);
           return;
         }
@@ -106,11 +190,11 @@ export class DataFetcher {
     };
     DBRequestManager.query(reqData, (responseText) => {
       let result = JSON.parse(responseText);
-      let [datatype, defStr, len, creatorID, editableUntil, isPrivate] =
+      let [entType, defStr, len, creatorID, isEditable, isPrivate] =
         result[0] ?? [];
       let isContained = (len <= maxLen); 
       callback(
-        datatype, defStr, isContained, len, creatorID, editableUntil,
+        entType, defStr, isContained, len, creatorID, isEditable,
         isPrivate
       );
     });
@@ -133,11 +217,11 @@ export class DataFetcher {
       parallelCallbackHandler.push((resolve) => {
         this.fetchEntityAsUser(getProfileData, entID, maxLen,
           (
-            datatype, defStr, isContained, len, creatorID, editableUntil,
+            entType, defStr, isContained, len, creatorID, isEditable,
             isPrivate
           ) => {
             results[ind] = [
-              datatype, defStr, isContained, len, creatorID, editableUntil,
+              entType, defStr, isContained, len, creatorID, isEditable,
               isPrivate
             ];
             resolve();
@@ -153,8 +237,8 @@ export class DataFetcher {
 
   static fetchAttrObjectAsUser(getProfileData, entID, callback) {
     DataFetcher.fetchEntityAsUser(getProfileData, entID,
-      (datatype, defStr) => {
-        if (datatype !== "a") {
+      (entType, defStr) => {
+        if (entType !== "a") {
           callback(null);
           return;
         }
@@ -171,8 +255,8 @@ export class DataFetcher {
     }
 
     DataFetcher.fetchEntityAsUser(getProfileData, entID, maxLen,
-      (datatype, defStr, isContained) => {
-        if (datatype !== "j" || !isContained) {
+      (entType, defStr, isContained) => {
+        if (entType !== "j" || !isContained) {
           callback(null);
           return;
         }

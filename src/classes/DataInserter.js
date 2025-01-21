@@ -6,11 +6,9 @@ import {DefStrConstructor} from "./DefStrConstructor.js";
 import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 
 
-const WORKSPACES_CLASS_ID = basicEntIDs["workspaces"];
-const RELEVANCY_QUAL_FORMAT_ID = basicEntIDs["relevancy qualities/format"];
-
 const PATH_REF_REGEX = /@\[[^0-9\[\]@,;"][^\[\]@,;"]+\]/g;
 const PATH_REGEX = /^[^0-9\[\]@,;"][^\[\]@,;"]*$/;
+
 
 
 export class DataInserter {
@@ -22,11 +20,6 @@ export class DataInserter {
   }
 
   fetchWorkspaceObject(callback = () => {}) {
-    // DataFetcher.fetchJSONObjectAsUser(
-    //   this.getAccountData, this.workspaceEntID, obj => {
-    //   this.workspaceObj = (obj ?? {});
-    //   callback(obj);
-    // });
     let reqData = {
       req: "ent",
       ses: this.getAccountData("sesIDHex"),
@@ -361,22 +354,6 @@ export class DataInserter {
 
 
 
-  insertOrSubstituteRelevancyQualityEntity(
-    path, objPath, relPath, isAnonymous, readerWhiteListID, callback
-  ) {
-    let objID = this.getEntIDFromPath(objPath);
-    let relID = this.getEntIDFromPath(relPath);
-    if (!objID || !relID) {
-      callback(null, null);
-      return;
-    }
-    let defStr = `@[${RELEVANCY_QUAL_FORMAT_ID}],@[${objID}],@[${relID}]`
-    this.insertOrSubstituteEntity(
-      path, "r", defStr, isAnonymous, readerWhiteListID, 0, callback
-    );
-  }
-
-
 
 
 
@@ -574,74 +551,6 @@ export class DataInserter {
   }
 
 
-
-
-  scoreEntityPrivately(
-    entID, listType = "\0", readerWhiteListID, listID, scoreVal,
-    onIndexData, offIndexData, addedUploadDataCost, callback = () => {}
-  ) {
-    let reqData = {
-      req: "prvScore",
-      ses: this.getAccountData("sesIDHex"),
-      u: this.getAccountData("userID"),
-      t: listType,
-      w: readerWhiteListID,
-      l: listID,
-      s: entID,
-      v: scoreVal,
-      d1: onIndexData,
-      d2: offIndexData,
-      uc: addedUploadDataCost,
-    };
-    DBRequestManager.insert(reqData, (responseText) => {
-      let result = JSON.parse(responseText);
-      callback(result.outID, result.exitCode);
-    });
-  }
-
-
-  scoreWorkspaceEntitiesPrivately(
-    listType = "\0", readerWhiteListPath, listPath,
-    PathScoreValAndOnOffIndexDataQuartets, addedUploadDataCostPerEntity,
-    callback = () => {}
-  ) {
-    let parallelCallbackHandler = new ParallelCallbackHandler;
-    let results = [];
-
-    let readerWhiteListID = this.getEntIDFromPath(readerWhiteListPath);
-    let listID = this.getEntIDFromPath(listPath);
-    if (!readerWhiteListID || !listID) {
-      callback(null, null);
-      return;
-    }
-
-    PathScoreValAndOnOffIndexDataQuartets.forEach((quartet, ind) => {
-      parallelCallbackHandler.push((resolve) => {
-        let subjPath = quartet[0];
-        let scoreVal = quartet[1];
-        let onIndexData = quartet[2] ?? null;
-        let offIndexData = quartet[3] ?? null;
-        let subjID = this.getEntIDFromPath(subjPath);
-        if (!subjID) {
-          results[ind] = [null, null];
-          resolve();
-          return;
-        }
-        this.scoreEntityPrivately(
-          subjID, listType, readerWhiteListID, listID, scoreVal,
-          onIndexData, offIndexData, addedUploadDataCostPerEntity,
-          (outID, exitCode) => {
-            results[ind] = [outID, exitCode];
-            resolve();
-          }
-        );
-      });
-    });
-
-    parallelCallbackHandler.execAndThen(() => {
-      callback(results);
-    });
-  }
 
 
 

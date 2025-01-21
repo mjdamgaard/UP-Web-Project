@@ -127,22 +127,24 @@ switch ($reqType) {
         $paramNameArr = array("u", "id", "m", "i", "l");
         $typeArr = array("id", "id", "uint", "rec_instr_list", "utint");
         // output: [[
-        //  [entType, defStr, len, creatorID, isEditable, readerWhitelistID] |
-        //  [null, exitCode]
+        //  [entID, entType, defStr, len, creatorID, isEditable,
+        //    readerWhitelistID
+        //  ] |
+        //  [entID, null, exitCode]
         // ], ...].
         break;
-    case "entIDFromSK":
+    case "entID":
         $sql = "CALL selectEntityIDFromSecKey (?, ?, ?, ?)";
         $paramNameArr = array("u", "t", "w", "d");
         $typeArr = array("id", "char", "id", "str");
-        // output: [[[entID]]].
+        // output: [[[entID | null]]].
         break;
     case "regEnt":
         $sql = "CALL parseAndObtainRegularEntity (?, ?, ?, ?)";
-        $paramNameArr = array("u", "t", "w", "d");
-        $typeArr = array("id", "char", "id", "str");
+        $paramNameArr = array("u", "w", "d");
+        $typeArr = array("id", "id", "str");
         // output: [
-        //   [[tagName | null, outID, exitCode]], ...
+        //   [[(tagName | null), outID, exitCode]], ...
         // ].
         break;
     // case "entFromSK":
