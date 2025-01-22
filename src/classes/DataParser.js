@@ -70,7 +70,7 @@ const regEntWSPattern = false;
 const regEntGrammar = {
   "ExpList": {
     rules: [
-      ["Exp", ",", "ExpList"],
+      ["Exp", "/,/", "ExpList"],
       ["Exp"],
     ]
   },
