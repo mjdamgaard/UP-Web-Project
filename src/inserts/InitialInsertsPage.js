@@ -153,11 +153,11 @@ export function initialInserts(dataInserter) {
       ")=>" +
       JSON.stringify({
         "Class": "@[classes]",
-        "Name": "%1",
-        "Parent class": "%2",
-        "Member type": "%3",
-        "Member format": "%4",
-        "Description": "%5",
+        "Name": "@{1}",
+        "Parent class": "@{2}",
+        "Member type": "@{3}",
+        "Member format": "@{4}",
+        "Description": "@{5}",
       })
     )
   );
@@ -313,10 +313,10 @@ export function initialInserts(dataInserter) {
       ")=>" +
       JSON.stringify({
         "Class": "@[relations]",
-        "Title": "%1",
-        "Subject class": "%2",
-        "Object class": "%3",
-        "Description": "%4",
+        "Title": "@{1}",
+        "Subject class": "@{2}",
+        "Object class": "@{3}",
+        "Description": "@{4}",
       })
     )
   );
@@ -348,10 +348,10 @@ export function initialInserts(dataInserter) {
       ")=>" +
       JSON.stringify({
         "Class": "@[qualities]",
-        "Label": "%1",
-        "Domain": "%2",
-        "Metric": "%3",
-        "Description": "%4",
+        "Label": "@{1}",
+        "Domain": "@{2}",
+        "Metric": "@{3}",
+        "Description": "@{4}",
       })
     )
   );
@@ -375,8 +375,8 @@ export function initialInserts(dataInserter) {
       JSON.stringify({
         "Class": "@[relevancy qualities]",
         // // "Label": "Relevant for @{Object} → @{Relation}",
-        // "Label": "Relevant for %1 → %2",
-        "Label": "Relevant for %1",
+        // "Label": "Relevant for @{1} → @{2}",
+        "Label": "Relevant for @{1}",
         "Metric": "@[metrics/std predicate metric]",
       })
     )
@@ -402,10 +402,10 @@ export function initialInserts(dataInserter) {
       ")=>" +
       JSON.stringify({
         "Class": "@[relational classes]",
-        "Name": "%1 → %2",
-        // // "Member title": "%1 → %3",
-        // // "Member title": "%1 → %2[Subject title]",
-        // "Member title": "%3",
+        "Name": "@{1} → @{2}",
+        // // "Member title": "@{1} → @{3}",
+        // // "Member title": "@{1} → @{2}[Subject title]",
+        // "Member title": "@{3}",
       })
     )
   );
@@ -436,11 +436,11 @@ export function initialInserts(dataInserter) {
       ")=>" +
       JSON.stringify({
         "Class": "@[semantic parameters]",
-        "Label": "%1 ⋲ %2",
-        // "Label": "%1 ⥺ %2",
-        // "Label": "%1 :≟ %2",
-        "Subject": "%1",
-        "Quality": "%2",
+        "Label": "@{1} ⋲ @{2}",
+        // "Label": "@{1} ⥺ @{2}",
+        // "Label": "@{1} :≟ @{2}",
+        "Subject": "@{1}",
+        "Quality": "@{2}",
       })
     )
   );
@@ -465,9 +465,9 @@ export function initialInserts(dataInserter) {
   //     ")=>" +
   //     JSON.stringify({
   //       "Class": "@[sets]",
-  //       "Label": "%1 → %2",
-  //       "Object": "%1",
-  //       "Relation": "%2",
+  //       "Label": "@{1} → @{2}",
+  //       "Object": "@{1}",
+  //       "Relation": "@{2}",
   //     })
   //   )
   // );
@@ -497,13 +497,13 @@ export function initialInserts(dataInserter) {
       ")=>" +
       JSON.stringify({
         "Class": "@[metrics]",
-        "Name": "%1",
-        "Unit": "%2",
-        "Prepend unit": "%3",
-        "Interval labels": "%4",
-        "Lower bound": "%5",
-        "Upper bound": "%6",
-        "Description": "%7",
+        "Name": "@{1}",
+        "Unit": "@{2}",
+        "Prepend unit": "@{3}",
+        "Interval labels": "@{4}",
+        "Lower bound": "@{5}",
+        "Upper bound": "@{6}",
+        "Description": "@{7}",
       })
     )
   );
@@ -540,8 +540,8 @@ export function initialInserts(dataInserter) {
       ")=>" +
       JSON.stringify({
         "Class": "@[user score lists]",
-        "User": "%1",
-        "Quality": "%2",
+        "User": "@{1}",
+        "Quality": "@{2}",
       })
     )
   );
@@ -567,10 +567,10 @@ export function initialInserts(dataInserter) {
       ")=>" +
       JSON.stringify({
         "Class": "@[min contribution lists]",
-        "Editor": "%1",
-        "User group": "%2",
-        "Quality": "%3",
-        "Subject": "%4",
+        "Editor": "@{1}",
+        "User group": "@{2}",
+        "Quality": "@{3}",
+        "Subject": "@{4}",
       })
     )
   );
@@ -596,10 +596,10 @@ export function initialInserts(dataInserter) {
       ")=>" +
       JSON.stringify({
         "Class": "@[max contribution lists]",
-        "Editor": "%1",
-        "User group": "%2",
-        "Quality": "%3",
-        "Subject": "%4",
+        "Editor": "@{1}",
+        "User group": "@{2}",
+        "Quality": "@{3}",
+        "Subject": "@{4}",
       })
     )
   );
@@ -626,11 +626,11 @@ export function initialInserts(dataInserter) {
       ")=>" +
       JSON.stringify({
         "Class": "@[score median lists]",
-        "Editor": "%1",
-        "Has passed weight threshold": "%2",
-        "User group": "%3",
-        "Quality": "%4",
-        "Filter list": "%5",
+        "Editor": "@{1}",
+        "Has passed weight threshold": "@{2}",
+        "User group": "@{3}",
+        "Quality": "@{4}",
+        "Filter list": "@{5}",
       })
     )
   );
@@ -655,8 +655,8 @@ export function initialInserts(dataInserter) {
       ")=>" +
       JSON.stringify({
         "Class": "@[score2-ordered lists]",
-        "Editor": "%1",
-        "List": "%2",
+        "Editor": "@{1}",
+        "List": "@{2}",
       })
     )
   );
@@ -683,7 +683,7 @@ export function initialInserts(dataInserter) {
     [
       '@[metrics/format]',
       '"Standard predicate metric"',
-      '"\\std-pred-unit"',
+      '"std-pred-unit"',
       '_',
       JSON.stringify([
         [-10, -8, "extremely not"],

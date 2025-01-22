@@ -1,4 +1,5 @@
 
+const ERROR_ECHO_STR_LEN = 400;
 
 
 /// <summary>
@@ -68,9 +69,11 @@ export class Parser {
   }
 
 
-  lexParseAndProcess(str, startSym) {
+  lexParseAndProcess(str, startSym, isPartial = false) {
     // Lex the input string.
-    let [syntaxTree, callbackArr] = this.lexAndParseAll(str, startSym);
+    let [syntaxTree, callbackArr] = this.lexAndParseAll (
+      str, startSym, isPartial
+    );
 
     // Then process the syntax tree by calling all callbacks (in order of
     // children before parent, and first sibling through last sibling).
@@ -82,17 +85,18 @@ export class Parser {
     return syntaxTree;
   }
 
-  lexAndParseAll(str, startSym) {
+  lexAndParseAll(str, startSym, isPartial = false) {
     // Lex the input string.
+    let lexArr, strPosArr;
     try {
-      let [lexArr, strPosArr] = this.lexer.lex(str);
+      [lexArr, strPosArr] = this.lexer.lex(str, isPartial);
     } catch (error) {
       if (error instanceof LexError) {
         let syntaxTree = {success: false, error: error.msq};
         return [syntaxTree, []];
       }
-      // else throw error;
-      else this.lexer.lex(str); // Better for debugging.
+      // Else throw error;
+      else this.lexer.lex(str, isPartial); // Better for debugging.
     }
 
     // Then parse the resulting lexeme array.
@@ -108,14 +112,17 @@ export class Parser {
       this.parse(lexArr, pos, startSym, str, strPosArr);
 
 
-    // If ...
+    // If only a part of the string was parsed, return the same syntax tree
+    // but unsuccessful, and with an appropriate error set.
     if (endPos < lexArr.length + 1) {
-      syntaxTree = {...syntaxTree,
+      syntaxTree = {
+        ...syntaxTree,
         success: false,
-        error: "Failed to parse all of the input string...",
-        // TODO: Append the part after where it reached.
+        error: "Parser.parseAll(): Only part of the input string was parsed." +
+          " The parsing ended right before:\n" +
+          str.substring(strPosArr[endPos + 1]).substring(0, ERROR_ECHO_STR_LEN),
       };
-      return [syntaxTree, []];
+      return [syntaxTree, [], endPos];
     }
 
     // On success ... Finally call any and all of generated callbacks
@@ -163,11 +170,32 @@ export class Parser {
         // we also make sure to add any new successful parsed syntax tree to
         // recordedSyntaxTrees, and also to increase pos.
         var symSuccess = false;
+        let nextLexeme = lexArr[pos];
 
-        // If sym is a Regex, we simply try to parse the next lexeme as that.
-        if (sym instanceof RegExp) {
-          let nextLexeme = lexArr[pos];
+        // If sym is the reserved empty string symbol, "empty", then succeed
+        // the symbol, but without increasing pos.
+        if (sym === "empty") {
+          symSuccess = true;
+        }
+
+        // Else if EOS is reached, which is located at the end of the lexArr if
+        // and only if isPartial is true, fail the rule with an "EOS" error,
+        // and signal to stop parsing new rules by setting ruleSuccess = EOS.
+        if (nextLexeme === EOS) {
+          error = [["EOS"], pos, pos];
+          symSuccess = false;
+          ruleSuccess = EOS;
+        }
+
+        // Else if sym is a Regex, simply try to parse the next lexeme as that.
+        else if (sym instanceof RegExp) {
           if (!nextLexeme) {
+            if (pos > error[1]) {
+              error = [["EOS"], pos, pos];
+            }
+            if (pos === error[1]) {
+              error[0].push("EOS");
+            }
             symSuccess = false;
           }
           else {
@@ -194,12 +222,6 @@ export class Parser {
               symSuccess = false;
             }
           }
-        }
-
-        // Else if sym is the reserved empty string symbol, "empty", then
-        // succeed the symbol, but without increasing pos.
-        else if (sym === "empty") {
-          symSuccess = true;
         }
 
         // Else if sym is a string, treat it as a nonterminalSymbol, and make
@@ -314,13 +336,12 @@ export class Parser {
           // If subLex is true, parse only a single (possibly big) lexeme, and
           // lex it first.
           if (subLex) {
-            let nextLexeme = lexArr[pos];
             if (!nextLexeme) {
               symSuccess = false;
             }
             else {
               let [syntaxTree, childCallbackArr, endPos] =
-                parser.lexAndParseAll(nextLexeme, startSym);
+                parser.lexAndParseAll(nextLexeme, startSym, false);
               symSuccess = syntaxTree.success;
               if (symSuccess) {
                 // Record the new successful symbol, append the childCallbackArr
@@ -365,7 +386,7 @@ export class Parser {
           }
         }
         else {
-          debugger;throw (
+          throw (
             `Parser: invalid symbol: "${JSON.stringify(sym)}"` 
           );
         }
@@ -394,6 +415,9 @@ export class Parser {
       // was a success, record the rule's index, and break out of the iteration
       // over the rules, or else we continue iteration over the rules.
       if (ruleSuccess) {
+        if (ruleSuccess === EOS) {
+          successfulRuleIndex = ruleInd; // ...
+        }
         successfulRuleIndex = ruleInd;
         return true; // Break the some() iteration (over the rules).
       }
@@ -444,7 +468,7 @@ export class Parser {
       let [expectedSymbols, , endPos] = error;
       let strPos = strPosArr[endPos];
       msg = `Parsing error after:
-        ${str.substring(Math.max(strPos - 800, 0), strPos)}
+        ${str.substring(Math.max(strPos - ERROR_ECHO_STR_LEN, 0), strPos)}
         ----
         Expected ${expectedSymbols.join(" or ")}, but got:
         ${lexArr[endPos]}.
@@ -455,8 +479,211 @@ export class Parser {
         sym: nonterminalSymbol,
         success: false,
         error: msg,
+        ruleInd: recordIndex,
+        children: recordedSyntaxTrees[recordIndex],
       }
       return [syntaxTree, [], endPos];
+    }
+  }
+
+
+  #parseRule(lexArr, pos, rule) {
+    let ruleLen = rule.length;
+
+    // Parse as many symbols of the rule as possible, and if the rule succeeds
+    // completely, set ruleSuccess as true.
+    var ruleSuccess = false;
+    rule.some((sym, symInd) => {
+      let ruleLen = rule.length;
+
+      // Parse as many symbols of the rule as possible, and if the rule succeeds
+      // completely, set ruleSuccess as true.
+      var ruleSuccess = false;
+      rule.some((sym, symInd) => {
+        // Skip past the symbols that have already been parsed, and fail the
+        // rule if a symbol doesn't match the one that has already been parsed. 
+        if (symInd <= recordIndex) {
+          if (sym === recordedSyntaxTrees[symInd].sym) {
+            return false; // Continue the some() iteration.
+          } else {
+            return true; // Break the some() iteration.
+          }
+        }
+
+        this.#parseRuleSymbol(lexArr, pos, sym);
+      });
+    });
+
+
+    // Now that the rule has been parsed either successfully or not, if it
+    // was a success, record the rule's index, and break out of the iteration
+    // over the rules, or else we continue iteration over the rules.
+    if (ruleSuccess) {
+      if (ruleSuccess === EOS) {
+        successfulRuleIndex = ruleInd; // ...
+      }
+      successfulRuleIndex = ruleInd;
+      return true; // Break the some() iteration (over the rules).
+    }
+    else {
+      return false; // Continue the some() iteration (over the rules).
+    }
+  }
+
+
+
+  #parseRuleSymbol(lexArr, pos, sym) {
+    let nextLexeme = lexArr[pos];
+    let syntaxTree;
+
+    // If sym is the reserved empty string symbol, "empty", then succeed
+    // the symbol, but without increasing nextPos.
+    if (sym === "empty") {
+      syntaxTree = {
+        sym: sym, success: true,
+        pos: pos, nextPos: pos,
+      };
+    }
+
+    // Else if EOS is reached, which is located at the end of the lexArr if
+    // and only if isPartial is true, fail the rule with an "EOS" error,
+    else if (nextLexeme === EOS) {
+      syntaxTree = {
+        sym: sym, success: false, error: "EOS",
+        pos: pos, nextPos: pos,
+        // Note that on failure, nextPos is supposed to be where the error
+        // occurred. 
+      };
+    }
+
+    // Else if sym is a Regex, simply try to parse the next lexeme as that.
+    else if (sym instanceof RegExp) {
+      if (!nextLexeme) {
+        syntaxTree = {
+          sym: sym, success: false,
+          pos: pos, nextPos: pos,
+          // (Note that on failure, nextPos is supposed to be where the error
+          // occurred.)
+        };
+      }
+      else {
+        let match = (nextLexeme.match(sym) ?? [])[0];
+        if (match === nextLexeme) {
+          syntaxTree = {
+            sym: sym, success: true, children: [match],
+            pos: pos, nextPos: pos + 1,
+          };
+        }
+        else {
+          syntaxTree = {
+            sym: sym, success: false,
+            pos: pos, nextPos: pos,
+          };
+        }
+      }
+    }
+
+    // Else if sym is a string, treat it as a nonterminalSymbol, and make
+    // a recursive call to parse() with nonterminalSymbol = sym.
+    else if (typeof sym === "string") {
+      syntaxTree = this.parse(lexArr, pos, sym);
+    }
+
+    // Else if sym is an array, treat it as sym := [subSym, qualifier],
+    // where qualifier is either '?', '*', '+', '{n}' or '{n,m}', and
+    // subSym is the symbol to parse one or several, or zero, times. The
+    // qualifier symbols mean the same thing as they do for regular expressions.
+    else if (Array.isArray(sym)) {
+      let [subSym, qualifier] = sym;
+
+      if (!/^([\?\*\+]|\{[1-9][0-9]*(,[1-9][0-9]*)?\})$/.test(qualifier)) {
+        throw (
+          `Parser: unrecognized qualifier: "${qualifier}"` 
+        );
+      }
+
+      // Parse n and m from qualifier := "{n(,m)?}", and then set max and
+      // min based on those, and on the qualifier in general. 
+      let [n, m] = qualifier.match(/[1-9][0-9]*/g).map(
+        val => parseInt(val)
+      );
+      let max = m ?? n ?? (qualifier === "?") ? 1 : null;
+      let min = n ?? (qualifier === "+") ? 1 : 0;
+
+      // Then parse as many instances of sybSym as possible in a row,
+      // storing the each resulting syntax tree in an array, children.
+      let children = [];
+      let nextPos = pos;
+      for (let i = 0; true; i++) {
+        let childSyntaxTree = this.parse(lexArr, pos, subSym);
+        if (childSyntaxTree.success) {
+          // Add child syntax tree to children and increase pos.
+          children.push(childSyntaxTree);
+          nextPos = childSyntaxTree.nextPos;
+
+          // Break if max is reached, and construct a successful syntax tree.
+          if (i + 1 === max) {
+            syntaxTree = {
+              sym: sym, success: true, children: children,
+              pos: pos, nextPos: nextPos,
+            };
+            break;
+          }
+        }
+        else {
+          // If and when failing, mark a success or failure depending on
+          // whether min was reached or not. Note that nextPos is at this
+          // point the next position after the last successful child, not the
+          // the current failed one. 
+          if (i + 1 >= min) {
+            syntaxTree = {
+              sym: sym, success: true, children: children,
+              pos: pos, nextPos: nextPos,
+            };
+            break;
+          }
+          else {
+            syntaxTree = {
+              sym: sym, success: false, children: children,
+              pos: pos, nextPos: nextPos,
+              // (Note that on failure, nextPos is supposed to be where the
+              // error occurred.)
+            };
+            break;
+          }
+        }
+      }
+    }
+
+    // This only leaves the option of sym being of the form sym :=
+    // {parser, startSym}, where parser might be another Parser instance
+    // (or an object with a similar parse() and/or lexAndParseAll() method).
+    else if (typeof sym === "object") {
+      let {parser, startSym, subLex} = sym;
+
+      // If subLex is true, parse only a single (possibly big) lexeme, and
+      // lex it first.
+      if (subLex) {
+        if (!nextLexeme) {
+          syntaxTree = {
+            sym: sym, success: false,
+            pos: pos, nextPos: pos,
+          };
+        }
+        else {
+          syntaxTree = parser.lexAndParseAll(nextLexeme, startSym, false);
+        }
+      }
+      // Else let the parser parse as many lexemes as it can, using the
+      // same lexeme array. 
+      else {
+        syntaxTree = parser.parse(lexArr, pos, startSym);
+      }
+    }
+    else {
+      throw (
+        `Parser: invalid symbol: "${JSON.stringify(sym)}"` 
+      );
     }
   }
 }
@@ -474,7 +701,7 @@ export class Lexer {
     // Whitespace RegEx.
     this.wsRegEx = (wsPattern instanceof RegExp) ? wsPattern :
       wsPattern ? new RegExp(wsPattern) :
-      /[^\s\S]/;
+      /[^a[^a]]/;
     // RegEx of all lexemes and whitespace. 
     this.lexemeOrWSRegEx = new RegExp(
       wsRegEx.source + "|" +
@@ -489,22 +716,29 @@ export class Lexer {
   }
 
 
-  lex(str) {
+  lex(str, isPartial = false) {
     // Get the initial lexeme array still with whitespace and the potential last
     // failed string in it, then test and throw if the last match is that last
     // failure string.
     let unfilteredLexArr = str.match(this.lexerRegEx);
-    let lastMatch = unfilteredLexArr.at(-1);
-    if (!this.lexemeOrWSRegEx.test(lastMatch)) {
-      let lastIndexOfInvalidLexeme = lastMatch.search(this.wsRegEx) - 1;
-      throw new LexError(
-        `Lexer error at:
-        ${lastMatch.substring(0, 800)}
-        ----
-        Invalid lexeme:
-        ${lastMatch.substring(0, lastIndexOfInvalidLexeme + 1)}
-        `
-      );
+    if (isPartial) {
+      // If str is only a partial string, remove the last lexeme, and replace
+      // it the end-of-string constant.
+      unfilteredLexArr[unfilteredLexArr - 1] = EOS;
+    }  else {
+      // Else check that the last lexeme isn't the greedy "[^$]+" one.
+      let lastMatch = unfilteredLexArr.at(-1);
+      if (!this.lexemeOrWSRegEx.test(lastMatch)) {
+        let lastIndexOfInvalidLexeme = lastMatch.search(this.wsRegEx) - 1;
+        throw new LexError(
+          `Lexer error at:
+          ${lastMatch.substring(0, ERROR_ECHO_STR_LEN)}
+          ----
+          Invalid lexeme:
+          ${lastMatch.substring(0, lastIndexOfInvalidLexeme + 1)}
+          `
+        );
+      }
     }
 
     // Construct an array of the positions in str of each of the element in
@@ -519,14 +753,22 @@ export class Lexer {
     // If successful, filter out the whitespace from the unfilteredLexArr
     // and the corresponding positions in strPosArr, and return these two
     // filtered arrays
-    let lexArr = unfilteredLexArr.filter((val, ind) => {
-      let isWhitespace = wsRegEx.test(val);
-      if (isWhitespace) {
-        unfilteredStrPosArr[ind] = null;
-      }
-      return !isWhitespace;
-    });
-    let strPosArr = unfilteredStrPosArr.filter(val => val !== null);
+    let lexArr, strPosArr;
+    if (wsPattern) {
+      lexArr = unfilteredLexArr.filter((val, ind) => {
+        let isWhitespace = wsRegEx.test(val);
+        if (isWhitespace) {
+          unfilteredStrPosArr[ind] = null;
+        }
+        return !isWhitespace;
+      });
+      strPosArr = unfilteredStrPosArr.filter(val => val !== null);
+    }
+    else {
+      lexArr = unfilteredLexArr;
+      strPosArr = unfilteredStrPosArr;
+    }
+
     return [lexArr, strPosArr];
   }
 }
@@ -537,3 +779,5 @@ class LexError {
     this.msg = msg;
   }
 }
+
+const EOS = {};
