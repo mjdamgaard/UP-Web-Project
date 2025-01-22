@@ -309,55 +309,89 @@ export class Parser {
 
 
   #parseRules(lexArr, pos, rules) {
+    let successfulSymbols = [];
+    let successfulSyntaxTrees = [];
+    let recordRuleNextPos = -1;
+    let recordRuleInd = -1;
+    let recordRuleChildren;
+
+    let ruleSuccess = true;
     for (let i = 0; i < rulesNum; i++) {
       let rule = rules[i];
       let ruleLen = rule.length;
+
+      let ruleChildren = [];
+      let nextPos = pos;
       for (let j = 0; j < ruleLen; j++) {
         let ruleSym = rule[j];
-        // ...
-      }
-    }
-
-    // ----
-
-    // Parse as many symbols of the rule as possible, and if the rule succeeds
-    // completely, set ruleSuccess as true.
-    var ruleSuccess = false;
-    rule.some((sym, symInd) => {
-      let ruleLen = rule.length;
-
-      // Parse as many symbols of the rule as possible, and if the rule succeeds
-      // completely, set ruleSuccess as true.
-      var ruleSuccess = false;
-      rule.some((sym, symInd) => {
-        // Skip past the symbols that have already been parsed, and fail the
-        // rule if a symbol doesn't match the one that has already been parsed. 
-        if (symInd <= recordIndex) {
-          if (sym === recordedSyntaxTrees[symInd].sym) {
-            return false; // Continue the some() iteration.
-          } else {
-            return true; // Break the some() iteration.
-          }
+        let parseAgain = false;
+        if (ruleSym.at(-1) === "!") {
+          ruleSym = ruleSym.slice(0, -1);
+          parseAgain = true;
         }
 
-        this.#parseRuleSymbol(lexArr, pos, sym);
-      });
-    });
+        let childSyntaxTree;
+        let prevSuccesses = successfulSymbols[j];
+        if (!prevSuccesses || parseAgain) {
+          childSyntaxTree = this.#parseRuleSymbol(lexArr, nextPos, ruleSym);
+          if (childSyntaxTree.success) {
+            ruleChildren.push(childSyntaxTree);
+            nextPos = childSyntaxTree.nextPos;
+            successfulSymbols[j] ??= [];
+            successfulSymbols[j].push(ruleSym);
+            successfulSyntaxTrees[j] ??= {};
+            successfulSyntaxTrees[j][ruleSym] = childSyntaxTree;
+          }
+          else {
+            // Store the failed child at the end of the children array.
+            ruleChildren.push(childSyntaxTree);
 
-
-    // Now that the rule has been parsed either successfully or not, if it
-    // was a success, record the rule's index, and break out of the iteration
-    // over the rules, or else we continue iteration over the rules.
-    if (ruleSuccess) {
-      if (ruleSuccess === EOS) {
-        successfulRuleIndex = ruleInd; // ...
+            // If a parsing failed with error = "End of partial string", abort
+            // the parsing immediately, propagating this error outwards.
+            if (childSyntaxTree.error === "End of partial string") {
+              syntaxTree = {
+                sym: sym, success: false, error: "End of partial string",
+                ruleInd: i, children: ruleChildren,
+                pos: pos, nextPos: nextPos,
+              };
+              return syntaxTree;
+            }
+          }
+        }
+        else if (prevSuccesses.includes(ruleSym)) {
+          childSyntaxTree = successfulSyntaxTrees[j][ruleSym];
+          ruleChildren.push(childSyntaxTree);
+          nextPos = childSyntaxTree.nextPos;
+          continue;
+        }
+        else {
+          ruleSuccess = false;
+          break;
+        }
       }
-      successfulRuleIndex = ruleInd;
-      return true; // Break the some() iteration (over the rules).
+
+      if (ruleSuccess) {
+        syntaxTree = {
+          sym: sym, success: true, ruleInd: i, children: ruleChildren,
+          pos: pos, nextPos: nextPos,
+        };
+        return syntaxTree;
+      }
+      else if (nextPos > recordRuleNextPos) {
+        recordRuleNextPos = nextPos;
+        recordRuleInd = i;
+        recordRuleChildren = ruleChildren;
+      }
     }
-    else {
-      return false; // Continue the some() iteration (over the rules).
-    }
+
+    // If the for loop ends, meaning that all rules failed, we return a failed
+    // syntax tree containing the children of the "record rule."
+    syntaxTree = {
+      sym: sym, success: false, ruleInd: recordRuleInd,
+      children: recordRuleChildren,
+      pos: pos, nextPos: pos,
+    };
+    return syntaxTree;
   }
 
 
@@ -379,7 +413,7 @@ export class Parser {
     // and only if isPartial is true, fail the rule with an "EOS" error,
     else if (nextLexeme === EOS) {
       syntaxTree = {
-        sym: sym, success: false, error: "EOS",
+        sym: sym, success: false, error: "End of partial string",
         pos: pos, nextPos: pos,
         // Note that on failure, nextPos is supposed to be where the error
         // occurred. 
@@ -549,7 +583,7 @@ export class Lexer {
     let unfilteredLexArr = str.match(this.lexerRegEx);
     if (isPartial) {
       // If str is only a partial string, remove the last lexeme, and replace
-      // it the end-of-string constant.
+      // it the end-of-partial-string constant.
       unfilteredLexArr[unfilteredLexArr - 1] = EOS;
     }  else {
       // Else check that the last lexeme isn't the greedy "[^$]+" one.

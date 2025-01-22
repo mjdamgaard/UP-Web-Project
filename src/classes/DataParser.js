@@ -78,7 +78,7 @@ const regEntGrammar = {
     rules: [
       ["EntRef"],
       ["Literal"],
-      [/_/],
+      ["/_/"],
     ]
   },
   "EntRef": {
@@ -100,9 +100,9 @@ const regEntGrammar = {
       ["String"],
       ["Number"],
       ["Array"],
-      [/true/],
-      [/false/],
-      [/null/],
+      ["/true/"],
+      ["/false/"],
+      ["/null/"],
     ]
   },
   // TODO: Continue.
