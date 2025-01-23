@@ -3,15 +3,15 @@ const ERROR_ECHO_STR_LEN = 400;
 
 
 const REGULAR_OR_QUANTIFIED_SYM_REGEXP =
-  /^[^\?\*\+\{\}\[\]$!]+[\?\*\+(\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\})]?$/;
+  /^[^\/\?\*\+\{\}\[\]$!]+[\?\*\+(\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\})]?$/;
 const REGULAR_SYM_SUBSTR_REGEXP =
-  /[^\?\*\+\{\}\[\]$!]+/;
+  /[^\/\?\*\+\{\}\[\]$!]+/;
 const ENDS_IN_QUANTIFIER_REGEXP =
   /[\?\*\+(\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\})]$/;
 const QUANTIFIER_SUBSTR_REGEXP =
   /[\?\*\+(\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\})]/;
 const SUB_PARSER_SYM_REGEXP =
-  /^$$?[^$\[\]]+(\[[^\?\*\+\{\}\[\]$]+\])?$/;
+  /^$$?[^$\[\]]+(\[[^\/\?\*\+\{\}\[\]$!]+\])?$/;
 const SUB_PARSER_KEY_REGEXP =
   /^[^$\[\]]+$/;
 const SQUARE_BRACKET_SUBSTR_REGEXP =
@@ -19,7 +19,7 @@ const SQUARE_BRACKET_SUBSTR_REGEXP =
 const SUB_PARSER_KEY_SUBSTR_REGEXP =
   /[^$\[\]]+/;
 const GRAMMAR_SYM_REGEXP =
-  /^[^\?\*\+\{\}\[\]$!]+$/;
+  /^[^\/\?\*\+\{\}\[\]$!]+$/;
 
 const NUMBER_SUBSTR_REGEXP =
   /0|[1-9][0-9]*/;
@@ -73,10 +73,10 @@ const NUMBER_SUBSTR_REGEXP =
 // 
 // The symbols inside each rule of the grammar can either be another (or the
 // same) nonterminal symbol, or a RegExp pattern beginning and ending in '/',
-// which succeeds a lexeme if and only it the lexeme is fully matched by the
-// pattern. (No need to include '^' and '$' at the beginning and end of the
-// pattern.) A RegExp instance is also accepted instead of a pattern. The rule
-// symbols can also be of the form
+// with *no* '^' or '$' at the two ends, which succeeds a lexeme if and only if
+// the lexeme is fully matched by the pattern. A RegExp instance is also
+// accepted instead of a pattern, again with neither '^' nor '$' at the ends.
+// The rule symbols can also be of the form
 // '$$?<Sub-parser key>(\[Nonterminal symbol\])?', where one or two '$'s
 // determines whether the called sub-parser will parse using the same lexeme
 // array as its parent is currently parsing, or if it will parse a single
@@ -116,7 +116,6 @@ const NUMBER_SUBSTR_REGEXP =
 // (If wanting to call sub-parsers recursively, use the Parser.addSubParser()
 // method instead.) 
 // </param>
-
 export class Parser {
   constructor(grammar, defaultSym, lexemePatternArr, wsPattern, subParsers) {
     wsPattern ||= //;
@@ -136,7 +135,8 @@ export class Parser {
     Object.entries(grammar).forEach(([sym, {rules}]) => {
       // First validate the nonterminal symbol.
       if (!GRAMMAR_SYM_REGEXP.test(sym)) {
-        throw "Parser: Grammar symbols cannot contain '?*+{}[]$!' characters.";
+        throw "Parser: Nonterminal symbols cannot any of the special" +
+        "characters '/?*+{}[]$!'.";
       }
       // Then go through each rule symbol and process patterns and RegExps.
       let rulesNum = rules.length;
@@ -153,7 +153,9 @@ export class Parser {
           if (ruleSym instanceof RegExp) {
             let newSym = ruleSym.source;
             rule[j] = newSym;
-            this.regularExpressions[newSym] = ruleSym;
+            this.regularExpressions[newSym] = new RegExp(
+              "^(" + ruleSym.source + ")$"
+            );
             break;
           }
 
@@ -168,7 +170,9 @@ export class Parser {
           // construct and store a corresponding RegExp instance in
           // this.regularExpressions.
           if (ruleSym.at(0) === "/" && ruleSym.at(-1) === "/") {
-            this.regularExpressions[ruleSym] = new RegExp(ruleSym);
+            this.regularExpressions[newSym] = new RegExp(
+              "^(" + ruleSym.slice(1, -1) + ")$"
+            );
           }
 
           // If the symbol is a sub-parser symbol, validate it.
@@ -533,10 +537,9 @@ export class Parser {
       }
       else {
         let regExp = this.regularExpressions[sym];
-        let match = (nextLexeme.match(regExp) ?? [])[0];
-        if (match === nextLexeme) {
+        if (regExp.test(nextLexeme)) {
           syntaxTree = {
-            sym: sym, isSuccess: true, children: [match],
+            sym: sym, isSuccess: true, children: [nextLexeme],
             pos: pos, nextPos: pos + 1,
           };
         }

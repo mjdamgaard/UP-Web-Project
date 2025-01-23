@@ -54,20 +54,85 @@ export class DataParser {
 }
 
 
-const regEntLexemePatternArr = [
-  /(,|\[|\]|true|false|null|_)/,
-  /"(\\[\S\s]|[^"])*"/, // We test() this further when parsing.
-  /(0|\-?[1-9][0-9])(\.[0-9]*)?([eE][+\-]?[0-9]*)/, // We test() when parsing.
-  /@\[[^\[\]]\]/,
-  /@\{[^\{\}]\}/,
-  /@<\/?[a-zA-z_]+[^>]*>/, // Correct if/when we impl. such non-substituted
-  // secondary-key entity references.
+const specialCharPattern =
+  /[,;:"'\\\?\|\(\)\[\]\{\}]/;
+const nonSpecialCharsPattern = new RegExp (
+  "[^" + specialCharsPattern.source.substring(1) + "+"
+);
+
+const funAndRegEntLexemePatternArr = [
+  specialCharPattern,
+  nonSpecialCharsPattern,
+  // /[,;:\?\*\+]/,
+  // /"(\\[\S\s]|[^"])*"/, // We test() this further when parsing.
+  // /(0|\-?[1-9][0-9])(\.[0-9]*)?([eE][+\-]?[0-9]*)/, // We test() when parsing.
+  // /@\[[^\[\]]\]/,
+  // /@\{[^\{\}]\}/,
+  // /@<\/?[a-zA-z_]+[^>]*>/, // Correct if/when we impl. such non-substituted
+  // // secondary-key entity references.
   
 ];
 
-const regEntWSPattern = false;
 
-const regEntGrammar = {
+const jsonLiteralGrammar = {
+  "Literal": {
+    rules: [
+      ["String"],
+      ["Number"],
+      ["Array"],
+      ["/true/"],
+      ["/false/"],
+      ["/null/"],
+    ],
+  },
+  "String": {
+    rules: [
+      [/"/, "CharsNoDoubleQuote*", /"/],
+    ],
+    test: (syntaxTree) => {
+      let stringContent = syntaxTree.children[1].children.reduce(
+        (acc, val) => (acc + val.children[0]),
+        ""
+      );
+      try {
+        JSON.parse(`"${stringContent}"`);
+      } catch (error) {
+        return [false, `Invalid JSON string: "${stringContent}"`];
+      }
+      // Some early post-processing now that we have the string:
+      syntaxTree.children = [`"${stringContent}"`];
+
+      return [true];
+    },
+  },
+  "CharsNoDoubleQuote": {
+    rules: [
+      [/([^"]+|\\[a[^a]])+/,],
+    ],
+  },
+  "Number": {
+    rules: [
+      [/......./,],
+    ],
+    test: (syntaxTree) => {
+      let stringContent = syntaxTree.children[1].children.reduce(
+        (acc, val) => (acc + val.children[0]),
+        ""
+      );
+      try {
+        JSON.parse(`"${stringContent}"`);
+      } catch (error) {
+        return [false, `Invalid JSON string: "${stringContent}"`];
+      }
+      // Some early post-processing now that we have the string:
+      syntaxTree.children = [`"${stringContent}"`];
+
+      return [true];
+    },
+  },
+};
+
+const regEntGrammar = new Object (jsonLiteralGrammar, {
   "ExpList": {
     rules: [
       ["Exp", "/,/", "ExpList"],
@@ -106,8 +171,8 @@ const regEntGrammar = {
     ]
   },
   // TODO: Continue.
-};
+});
 
 const regularEntityParser = new Parser(
-  regEntGrammar, "ExpList", regEntLexemePatternArr, regEntWSPattern
+  regEntGrammar, "ExpList", funAndRegEntLexemePatternArr, false
 );
