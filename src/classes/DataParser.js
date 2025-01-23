@@ -55,31 +55,25 @@ export class DataParser {
 
 
 const specialCharPattern =
-  /[,;:"'\\\?\|\(\)\[\]\{\}]/;
+  /[,;:"'\\\?\|@\(\)\[\]\{\}]/;
 const nonSpecialCharsPattern = new RegExp (
-  "[^" + specialCharsPattern.source.substring(1) + "+"
+  "[^" + specialCharPattern.source.substring(1) + "+"
 );
 
 const funAndRegEntLexemePatternArr = [
   specialCharPattern,
   nonSpecialCharsPattern,
-  // /[,;:\?\*\+]/,
-  // /"(\\[\S\s]|[^"])*"/, // We test() this further when parsing.
-  // /(0|\-?[1-9][0-9])(\.[0-9]*)?([eE][+\-]?[0-9]*)/, // We test() when parsing.
-  // /@\[[^\[\]]\]/,
-  // /@\{[^\{\}]\}/,
-  // /@<\/?[a-zA-z_]+[^>]*>/, // Correct if/when we impl. such non-substituted
-  // // secondary-key entity references.
   
 ];
 
 
-const jsonLiteralGrammar = {
+const jsonGrammar = {
   "Literal": {
     rules: [
       ["String"],
       ["Number"],
       ["Array"],
+      ["Object"],
       ["/true/"],
       ["/false/"],
       ["/null/"],
@@ -105,14 +99,63 @@ const jsonLiteralGrammar = {
       return [true];
     },
   },
-  "CharsNoDoubleQuote": {
+  "Chars": {
     rules: [
-      [/([^"]+|\\[a[^a]])+/,],
+      [/([^"]+|\\["\\\/bfnrt(u[0-9A-Fa-f]{4})])+/,],
     ],
   },
   "Number": {
     rules: [
-      [/......./,],
+      [/\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-+]?(0|[1-9][0-9]*))?/],
+    ],
+  },
+  "Array": {
+    rules: [
+      [/\[/, "Literal_list", /\]/],
+    ],
+  },
+  "Literal_list": {
+    rules: [
+      ["Literal", "/,/", "Literal_list"],
+      ["Literal"],
+    ],
+  },
+  "Object": {
+    rules: [
+      [/\{/, "Member_list", /\}/],
+    ],
+  },
+  "Member_list": {
+    rules: [
+      ["Member", "/,/", "Member_list"],
+      ["Member"],
+    ],
+  },
+  "Member": {
+    rules: [
+      ["String", "/:/", "Literal"],
+    ],
+  },
+};
+
+
+// We only overwrite some of the nonterminal symbols in the prototype.
+const regEntGrammar = Object.create(jsonGrammar, {
+  "Literal": {
+    rules: [
+      ["@-literal"],
+      ["/_/"],
+      ["String"],
+      ["Number"],
+      ["Array"],
+      ["/true/"],
+      ["/false/"],
+      ["/null/"],
+    ],
+  },
+  "String": {
+    rules: [
+      [/"/, "Chars_or_@-literal*", /"/],
     ],
     test: (syntaxTree) => {
       let stringContent = syntaxTree.children[1].children.reduce(
@@ -130,48 +173,38 @@ const jsonLiteralGrammar = {
       return [true];
     },
   },
-};
-
-const regEntGrammar = new Object (jsonLiteralGrammar, {
-  "ExpList": {
+  "Chars_or_@-literal": {
     rules: [
-      ["Exp", "/,/", "ExpList"],
-      ["Exp"],
-    ]
-  },
-  "Exp": {
-    rules: [
-      ["EntRef"],
-      ["Literal"],
-      ["/_/"],
-    ]
-  },
-  "EntRef": {
-    rules: [
-      [/@\[[^\[\]]\]/],
+      ["@-Literal"],
+      ["Chars"],
     ],
-    test: (syntaxTree) => {
-      let match = syntaxTree.children[0].children[0];
-      let entID = match.slice(2, -1);
-      if (parseInt(entID).toString() === entID) {
-        return [true];
-      } else {
-        return [false, "Ill-formed entity ID"];
-      }
-    },
   },
-  "Literal": {
+  "@-literal": {
     rules: [
-      ["String"],
-      ["Number"],
-      ["Array"],
-      ["/true/"],
-      ["/false/"],
-      ["/null/"],
-    ]
+      ["/@/", /\[/, "/0|[1-9][0-9]*/",  /\]/],
+      ["/@/", /\[/, "Path_substrings+", /\]/],
+      ["/@/", /\{/, "/[1-9][0-9]*/",    /\}/],
+    ],
   },
-  // TODO: Continue.
+  "Path_substrings": {
+    rules: [
+      [/[^0-9\[\]@,;"][^\[\]@,;"]+/],
+    ],
+  },
 });
+
+
+
+
+const funEntGrammar = Object.create(regEntGrammar, {
+  // TODO: make.
+});
+
+
+
+
+
+
 
 const regularEntityParser = new Parser(
   regEntGrammar, "ExpList", funAndRegEntLexemePatternArr, false
