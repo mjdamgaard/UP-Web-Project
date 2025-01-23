@@ -171,74 +171,140 @@ export class Parser {
 
 
 
-  lexParseAndProcess(str, startSym, isPartial = false) {
-    // Lex the input string.
-    let [syntaxTree, callbackArr] = this.lexAndParseAll (
-      str, startSym, isPartial
-    );
+  parseAndProcess(str, startSym, isPartial = false) {
+    // Lex and parse the input string. 
+    let syntaxTree = this.parse(str, startSym, isPartial);
 
-    // Then process the syntax tree by calling all callbacks (in order of
-    // children before parent, and first sibling through last sibling).
-    callbackArr.forEach(([callback, node]) => {
-      callback(node);
-    });
+    // Then process the syntax tree by calling all postProcess() callbacks (in
+    // order of children before parents, and first sibling through last
+    // sibling).
+    this.process(syntaxTree);
+
+    // If the syntax tree was unsuccessful, and an error has not already been
+    // set, construct an appropriate one.
+    if (!syntaxTree.isSuccess && !syntaxTree.error) {
+      let [error] = this.getErrorAndLastSymbol(syntaxTree, str);
+      syntaxTree.error = error;
+    }
 
     // Return the now processed syntax tree.
     return syntaxTree;
   }
 
-  lexAndParseAll(str, startSym, isPartial = false) {
+
+  process(syntaxTree) {
+    // Process the children first.
+    if (syntaxTree.children) {
+      syntaxTree.children.forEach(this.process);
+    }
+
+    // Then process this syntax tree, and delete the given callback property
+    // afterwards.
+    if (syntaxTree.postProcess) {
+      syntaxTree.postProcess(syntaxTree);
+      delete syntaxTree.postProcess;
+    }
+  }
+
+  getErrorAndLastSymbol(syntaxTree, str) {
+    // If the syntax tree has an error set, simply return that and its symbol.
+    if (syntaxTree.error) {
+      return [syntaxTree.error, syntaxTree.sym];
+    }
+
+    // Else if the syntax tree has children, get the last (assumed failed)
+    // child's error, and the last failed symbol, and return this, unless this
+    // syntax tree was produced by a call to parse() and no error has been
+    // returned yet, in which case construct and return an appropriate error.
+    if (syntaxTree.children && syntaxTree.children[0]) {
+      let lastChild = syntaxTree.children.at(-1);
+      let [error, lastSymbol] = this.getErrorAndLastSymbol(lastChild);
+
+      // If error is so far undefined, and syntaxTree.nextStrPos is set, which
+      // it only is when the syntax tree the outer one returned by a call to
+      // parse() (potentially from a sub-parser, though), construct an
+      // appropriate error.
+      let strPos = syntaxTree.nextStrPos;
+      if (!error && strPos !== undefined) {
+        error = `Parsing error after:
+          ${str.substring(strPos - ERROR_ECHO_STR_LEN - 1, strPos - 1)}
+          ----
+          Expected <${lastSymbol}>, but got:
+          ${str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4))}.
+        `;
+
+      }
+
+      return [error, lastSymbol];
+    }
+    // Else simply return this (final, failed) syntax tree's error (perhaps
+    // undefined), as well as its nonterminal symbol.
+    else {
+      return [syntaxTree.error || undefined, syntaxTree.sym];
+    }
+  }
+
+
+
+  parse(str, startSym, isPartial = false) {
     // Lex the input string.
     let lexArr, strPosArr;
     try {
       [lexArr, strPosArr] = this.lexer.lex(str, isPartial);
     } catch (error) {
       if (error instanceof LexError) {
-        let syntaxTree = {success: false, error: error.msq};
-        return [syntaxTree, []];
+        let syntaxTree = {isSuccess: false, error: error.msq};
+        return syntaxTree;
       }
       // Else throw error;
       else this.lexer.lex(str, isPartial); // Better for debugging.
     }
 
     // Then parse the resulting lexeme array.
-    return parseAll(lexArr, pos, startSym, str, strPosArr);
+    let syntaxTree = this.parseLexArr(
+      lexArr, pos, startSym, str, strPosArr
+    );
+
+    // If the input string was not fully parsed, make sure that isSuccess is
+    // set to false, and attach the the string position that was reached in
+    // the parsing.
+    if (syntaxTree.nextPos !== strPosArr.length) {
+      syntaxTree.nextStrPos = strPosArr[syntaxTree.nextPos];
+    }
+  
+    // Then return the resulting syntax tree.
+    return syntaxTree;
   }
 
 
-  parseAll(lexArr, pos = 0, startSym, str, strPosArr) {
+
+  parseWholeLexArr(lexArr, pos = 0, startSym, str, strPosArr) {
     startSym ??= this.defaultSym;
 
-    // Parse the syntax tree, calling a helper method.
-    let [syntaxTree, callbackArr, endPos] =
-      this.parse(lexArr, pos, startSym, str, strPosArr);
+    // Parse the syntax tree.
+    let syntaxTree = this.parseLexArr(lexArr, pos, startSym);
 
 
     // If only a part of the string was parsed, return the same syntax tree
     // but unsuccessful, and with an appropriate error set.
-    if (endPos < lexArr.length + 1) {
-      syntaxTree = {
-        ...syntaxTree,
-        success: false,
-        error: "Parser.parseAll(): Only part of the input string was parsed." +
-          " The parsing ended right before:\n" +
-          str.substring(strPosArr[endPos + 1]).substring(0, ERROR_ECHO_STR_LEN),
-      };
-      return [syntaxTree, [], endPos];
+    if (syntaxTree.isSuccess && syntaxTree.nextPos < lexArr.length) {
+      syntaxTree.isSuccess = false;
+      syntaxTree.error =
+        "Parser.parseAll(): Only part of the input string was parsed." +
+        " The parsing ended right before:\n" +
+        str.substring(strPosArr[endPos + 1]).substring(0, ERROR_ECHO_STR_LEN);
     }
 
-    // On success ... Finally call any and all of generated callbacks
-    // (children's callbacks are called, in order from first to last, before
-    // the parent's). 
-
-    return [syntaxTree, callbackArr];
+    return syntaxTree;
   }
 
 
 
 
 
-  parse(lexArr, pos, nonterminalSymbol) {
+
+
+  parseLexArr(lexArr, pos, nonterminalSymbol) {
     nonterminalSymbol ??= this.defaultSym;
 
     // Parse the rules of the nonterminal symbol.
@@ -247,10 +313,10 @@ export class Parser {
 
     // If a syntax tree was parsed successfully, run the optional test()
     // function if there in order to finally succeed or fail it. 
-    if (syntaxTree.success) {
+    if (syntaxTree.isSuccess) {
       if (test) {
-        let [success, error] = test(syntaxTree);
-        syntaxTree.success = success;
+        let [isSuccess, error] = test(syntaxTree);
+        syntaxTree.isSuccess = isSuccess;
         syntaxTree.error = error || undefined;
       }
     }
@@ -266,32 +332,6 @@ export class Parser {
 
 
 
-
-
-
-    // If on the other hand all rules failed, we return an syntax tree with
-    // an appropriate error, given how far we got.
-    // else {
-    //   // Construct the appropriate error.
-    //   let [expectedSymbols, , endPos] = error;
-    //   let strPos = strPosArr[endPos];
-    //   msg = `Parsing error after:
-    //     ${str.substring(Math.max(strPos - ERROR_ECHO_STR_LEN, 0), strPos)}
-    //     ----
-    //     Expected ${expectedSymbols.join(" or ")}, but got:
-    //     ${lexArr[endPos]}.
-    //   `;
-
-    //   // Construct and return the failed syntax tree, along with endPos
-    //   let syntaxTree = {
-    //     sym: nonterminalSymbol,
-    //     success: false,
-    //     error: msg,
-    //     ruleInd: recordIndex,
-    //     children: recordedSyntaxTrees[recordIndex],
-    //   }
-    //   return [syntaxTree, [], endPos];
-    // }
 
 
 
@@ -339,7 +379,7 @@ export class Parser {
         let prevSuccesses = successfulSymbols[j];
         if (!prevSuccesses || parseAgain) {
           childSyntaxTree = this.#parseRuleSymbol(lexArr, nextPos, ruleSym);
-          if (childSyntaxTree.success) {
+          if (childSyntaxTree.isSuccess) {
             // Record the new success.
             ruleChildren.push(childSyntaxTree);
             nextPos = childSyntaxTree.nextPos;
@@ -356,7 +396,7 @@ export class Parser {
             // the parsing immediately, propagating this error outwards.
             if (childSyntaxTree.error === "End of partial string") {
               syntaxTree = {
-                sym: sym, success: false, error: "End of partial string",
+                sym: sym, isSuccess: false, error: "End of partial string",
                 ruleInd: i, children: ruleChildren,
                 pos: pos, nextPos: nextPos,
               };
@@ -387,7 +427,7 @@ export class Parser {
       // for the largest nextPos reached. 
       if (ruleSuccess) {
         syntaxTree = {
-          sym: sym, success: true, ruleInd: i, children: ruleChildren,
+          sym: sym, isSuccess: true, ruleInd: i, children: ruleChildren,
           pos: pos, nextPos: nextPos,
         };
         return syntaxTree;
@@ -402,7 +442,7 @@ export class Parser {
     // If the for loop ends, meaning that all rules failed, we return a failed
     // syntax tree containing the children of the "record rule."
     syntaxTree = {
-      sym: sym, success: false, ruleInd: recordRuleInd,
+      sym: sym, isSuccess: false, ruleInd: recordRuleInd,
       children: recordRuleChildren,
       pos: pos, nextPos: pos,
     };
@@ -419,7 +459,7 @@ export class Parser {
     // the symbol, but without increasing nextPos.
     if (sym === "") {
       syntaxTree = {
-        sym: sym, success: true,
+        sym: sym, isSuccess: true,
         pos: pos, nextPos: pos,
       };
     }
@@ -428,7 +468,7 @@ export class Parser {
     // and only if isPartial is true, fail the rule with an "EOS" error,
     else if (nextLexeme === EOS) {
       syntaxTree = {
-        sym: sym, success: false, error: "End of partial string",
+        sym: sym, isSuccess: false, error: "End of partial string",
         pos: pos, nextPos: pos,
         // Note that on failure, nextPos is supposed to be where the error
         // occurred. 
@@ -439,7 +479,7 @@ export class Parser {
     else if (sym.at(0) === "/" && sym.at(-1) === "/") {
       if (!nextLexeme) {
         syntaxTree = {
-          sym: sym, success: false,
+          sym: sym, isSuccess: false,
           pos: pos, nextPos: pos,
           // (Note that on failure, nextPos is supposed to be where the error
           // occurred.)
@@ -450,13 +490,13 @@ export class Parser {
         let match = (nextLexeme.match(regExp) ?? [])[0];
         if (match === nextLexeme) {
           syntaxTree = {
-            sym: sym, success: true, children: [match],
+            sym: sym, isSuccess: true, children: [match],
             pos: pos, nextPos: pos + 1,
           };
         }
         else {
           syntaxTree = {
-            sym: sym, success: false,
+            sym: sym, isSuccess: false,
             pos: pos, nextPos: pos,
           };
         }
@@ -482,18 +522,18 @@ export class Parser {
       if (subLex) {
         if (!nextLexeme) {
           syntaxTree = {
-            sym: sym, success: false,
+            sym: sym, isSuccess: false,
             pos: pos, nextPos: pos,
           };
         }
         else {
-          syntaxTree = subParser.lexAndParseAll(nextLexeme, startSym, false);
+          syntaxTree = subParser.parse(nextLexeme, startSym, false);
         }
       }
       // Else let the parser parse as many lexemes as it can, using the
       // same lexeme array. 
       else {
-        syntaxTree = subParser.parse(lexArr, pos, startSym);
+        syntaxTree = subParser.parseLexArr(lexArr, pos, startSym);
       }
     }
 
@@ -519,15 +559,15 @@ export class Parser {
         // Break if max is reached, and construct a successful syntax tree.
         if (i + 1 > max) {
           syntaxTree = {
-            sym: sym, success: true, children: children,
+            sym: sym, isSuccess: true, children: children,
             pos: pos, nextPos: nextPos,
           };
           break;
         }
 
         // Else parse a new child.
-        let childSyntaxTree = this.parse(lexArr, pos, subSym);
-        if (childSyntaxTree.success) {
+        let childSyntaxTree = this.parseLexArr(lexArr, pos, subSym);
+        if (childSyntaxTree.isSuccess) {
           // Add child syntax tree to children and increase pos.
           children.push(childSyntaxTree);
           nextPos = childSyntaxTree.nextPos;
@@ -539,14 +579,14 @@ export class Parser {
           // the current failed one. 
           if (i + 1 >= min) {
             syntaxTree = {
-              sym: sym, success: true, children: children,
+              sym: sym, isSuccess: true, children: children,
               pos: pos, nextPos: nextPos,
             };
             break;
           }
           else {
             syntaxTree = {
-              sym: sym, success: false, children: children,
+              sym: sym, isSuccess: false, children: children,
               pos: pos, nextPos: nextPos,
               // (Note that on failure, nextPos is supposed to be where the
               // error occurred.)
@@ -560,7 +600,7 @@ export class Parser {
     // Else treat sym as a non-terminal symbol, and make a recursive call to
     // parse() with nonterminalSymbol = sym.
     else {
-      syntaxTree = this.parse(lexArr, pos, sym);
+      syntaxTree = this.parseLexArr(lexArr, pos, sym);
     }
   }
 }
