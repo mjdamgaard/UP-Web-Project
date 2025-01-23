@@ -33,61 +33,89 @@ const NUMBER_SUBSTR_REGEXP =
 
 
 
-/// <summary>
-/// This Parser class takes a associative list (a plain object) of production
-/// rules. Its parse() method then checks if an input string can be validated,
-/// and return the syntax tree if so.
-/// </summary>
-/// <param name="grammar">
-/// A key-value object where the keys function as the nonterminal symbols of
-/// the grammar, and the values are the production rules of the given
-/// nonterminal symbol. (See e.g. https://en.wikipedia.org/wiki/Formal_grammar.)
-/// 
-/// The production rules contained in this parameter are more precisely each an
-/// array of rules, where each rule is typically an array containing either
-/// nonterminal "symbols" (keys of the grammar parameter), or RexExp objects/
-/// literals, other Parser instances, or dyadic arrays containing a Parser
-/// instance and a start symbol (startSym) parameter. These elements are then
-/// to be parsed in sequence for the rule to succeed.
-  // /// A production can also potentially be a string with a single nonterminal
-  // /// symbol, instead of an array. The difference between a rule of just "Foo"
-  // /// vs. ["Foo"] is subtle, yet it matters for performance and error reporting.
-  // /// The difference lies in that fact that
-  // *No, one can just make a different nonterminal symbol for that instead.
-/// if a rule of the form ["Foo", ...]
-/// fails, the partial list of all the successful elements of the rule are
-/// recorded (if it is the longest one so far), and then used for all
-/// subsequent rules, allowing them to skip parsing these parts again.
-/// So if e.g. only "Foo" succeeds in ["Foo", "Bar"], and the next rule in line
-/// is ["Foo", "Baz"], then the latter does not have to parse "Foo" all over
-/// again. However, if the rule is simply the string "Foo" alone, then none of
-/// its sub-successes will be carried over the the next rule in line.
-///
-/// When a rule succeeds, the rest of the rules of the same nonterminal symbol
-/// is also tried afterwards. The rule that is finally chosen is then the one
-/// among the successful rules with the greatest amount of elements (and thus
-/// the most amount of sub-successes).
-/// 
-/// In terms of error reporting, the error thrown will contain a 'Expected %s,
-/// but encountered %s' message for all failed rules among those that tied
-/// with the most amount of sub-successes.
-/// </param>
-/// <param name="defaultSym">
-/// The default (nonterminal) start symbol (key of the grammar object), with
-/// which the parsing begins. If none is provided, the first key of the grammar
-/// parameter is used instead. By calling Parser.parse(str, startSym) with a
-/// second parameter, startSym, this start symbol is used instead. 
-/// </param>
-/// <returns>
-/// On success, Parser.parse(str) returns a syntax tree consisting of nodes of
-/// the form {key, i, children}, where key is the nonterminal "symbol" (string)
-/// of the given nonterminal symbol, i is the index of the chosen successful
-/// rule, and children is an array of the syntax trees of the all the elements
-/// contained in the array of the rule.
-/// 
-/// On failure, Parser.parse(str) returns ParseError object containing.. TODO:
-/// Finish this..
-/// </returns>
+// <summary>
+// A Parser class to lex and parse strings with a given grammar, and a given
+// array of lexeme patterns plus an optional whitespace pattern, which together
+// defines how the string is lexed before the parsing itself.
+//
+// The main method of this class, used for lexing and parsing (and potentially
+// post-processing) a string, is Parser.parseAndProcess().
+// 
+// The constructor can also take key-value object of other Parser instances,
+// which can be used in the grammar rules. (And the Parser.addSubParser()
+// method even makes it possible to have parsers that can recursively call each
+// other.)
+// </summary>
+// 
+// <param name="grammar">
+// A key-value object where the keys function as the nonterminal symbols of
+// the grammar, and the values contain the production rules of the given
+// nonterminal symbol. (See e.g. https://en.wikipedia.org/wiki/Formal_grammar.)
+// 
+// The values of the grammar object has to be of the form
+// {rules, test?, postProcesses?}, where rules first of all is an array of
+// rules, which are each an array of symbols (terminal or nonterminal) symbols
+// to try parsing.
+// The the optional test() function is a final test in the case of a
+// successfully parsed nonterminal symbol, which has the power to fail the
+// symbol even if otherwise successful. It does so by returning
+// [isSuccess, error?] when called on the resulting syntax tree object, i.e.
+// test(syntaxTree) -> [isSuccess, error?].
+// The optional postProcess() function is a function that is called at the end
+// of a call to the Parser class's main method, parseAndProcess(), regardless
+// of whether the whole parsing was successful or not. It can be used in
+// particular to restructure the syntax tree before further handling. For
+// example, when parsing a list via a rule of the form
+// 'List := Elem , List | Elem', the resulting syntax tree will initially be
+// of the form List(elem1, ',', List(elem2, ',', List(...(List(elemN))))),
+// which one might want to transform into simply List(elem1, elem2, ..., elemN)
+// before further handling.
+// 
+// The symbols inside each rule of the grammar can either be another (or the
+// same) nonterminal symbol, or a RegExp pattern beginning and ending in '/',
+// which succeeds a lexeme if and only it the lexeme is fully matched by the
+// pattern. (No need to include '^' and '$' at the beginning and end of the
+// pattern.) A RegExp instance is also accepted instead of a pattern. The rule
+// symbols can also be of the form
+// '$$?<Sub-parser key>(\[Nonterminal symbol\])?', where one or two '$'s
+// determines whether the called sub-parser will parse using the same lexeme
+// array as its parent is currently parsing, or if it will parse a single
+// (compound, possibly big) lexeme as its input string. And the optional
+// nonterminal symbol makes it possible to parse another nonterminal symbol
+// instead of the sub-parser's default one.
+// Furthermore, any nonterminal rule symbol can also be followed by a RegExp
+// quantifier, '?', '*', '+', or '{<n>,<m>}', which parses a variable number of
+// the preceding nonterminal symbol. And lastly, any of these types of symbols
+// can also be followed by a '!' at the very end, which tells the parser to
+// parse the symbol even if a different symbol has already been successfully
+// parsed at the same array index of a previous rule. Otherwise the parser will
+// automatically fail a rule symbol if a different symbol has been successfully
+// parsed at that same array index.
+// 
+// The first rule to succeed for a nonterminal symbol will short circuit it,
+// and the subsequent rules will not be tried.
+// </param>
+// 
+// <param name="defaultSym">
+// The default (nonterminal) start symbol for the parser.
+// </param>
+// <param name="lexemePatternArr">
+// An array of lexeme pattern, which are tried in order from the first to the
+// last when constructing the lexeme array.
+// </param>
+// <param name="wsPattern">
+// A pattern of what the parser considers "whitespace" (might also include
+// comments) when lexing the string. This whitespace pattern will be tried
+// first thing whenever a new lexeme is lexed.
+// </param>
+// <param name="subParsers">
+// A plain object containing so-called sub-parsers, which can be used in the
+// rules of the grammar (via rule symbols that starts with '$' or '$$',
+// followed by the sub-parser's key). The keys of this plain object is the keys
+// of the given sub-parsers, by which they are referenced in the rule.
+// (If wanting to call sub-parsers recursively, use the Parser.addSubParser()
+// method instead.) 
+// </param>
 
 export class Parser {
   constructor(grammar, defaultSym, lexemePatternArr, wsPattern, subParsers) {
@@ -171,6 +199,37 @@ export class Parser {
 
 
 
+// <summary>
+// The main method of this Parser class, used for lexing and parsing (and
+// potentially post-processing) a string.
+// </summary>
+// <param name="str">
+// The input string to be lexed and parsed.
+// </param>
+// <param name="startSym">
+// An optional start symbol, i.e. the nonterminal symbol that the whole input
+// string should be parsed as. If undefined or null, the default start symbol,
+// defaultSym, will be used. 
+// </param>
+// <param name="isPartial">
+// An optional boolean flag, with a default value of false, that if set to true
+// will make the parsing end with an "End of partial string" error *the moment*
+// the parser touches the end of the input string. Note that the syntax tree
+// will still be still be returned, however, even if always unsuccessful. This
+// option can thus be used to partially parse an incomplete string, otherwise
+// of the grammar in its complete form, and then only use the successfully
+// parsed part of it.
+// </param>
+// <returns>
+// A syntax tree consisting of nodes of the form
+// {sym, isSuccess, error?, children?, ruleInd?}, where sym the nonterminal
+// symbol or the rule symbol of the node, isSuccess (bool) tells if the node
+// was successfully parsed or not, children is an array of the node's child
+// nodes (which on failure will be those of the rule that reached the furthest
+// in the string, and also include the last failed node), and ruleInd is the
+// index of the rule that the children was obtained from in the given "rules"
+// array in the case of a nonterminal symbol.
+// </returns>
   parseAndProcess(str, startSym, isPartial = false) {
     // Lex and parse the input string. 
     let syntaxTree = this.parse(str, startSym, isPartial);
@@ -179,13 +238,6 @@ export class Parser {
     // order of children before parents, and first sibling through last
     // sibling).
     this.process(syntaxTree);
-
-    // If the syntax tree was unsuccessful, and an error has not already been
-    // set, construct an appropriate one.
-    if (!syntaxTree.isSuccess && !syntaxTree.error) {
-      let [error] = this.getErrorAndLastSymbol(syntaxTree, str);
-      syntaxTree.error = error;
-    }
 
     // Return the now processed syntax tree.
     return syntaxTree;
@@ -204,7 +256,60 @@ export class Parser {
       syntaxTree.postProcess(syntaxTree);
       delete syntaxTree.postProcess;
     }
+
+    // Also always delete the no longer needed pos and nextPos properties.
+    delete syntaxTree.pos;
+    delete syntaxTree.nextPos;
   }
+
+
+  parse(str, startSym, isPartial = false) {
+    // Lex the input string.
+    let lexArr, strPosArr;
+    try {
+      [lexArr, strPosArr] = this.lexer.lex(str, isPartial);
+    } catch (error) {
+      if (error instanceof LexError) {
+        let syntaxTree = {isSuccess: false, error: error.msq};
+        return syntaxTree;
+      }
+      // Else throw error;
+      else this.lexer.lex(str, isPartial); // Better for debugging.
+    }
+
+    // Then parse the resulting lexeme array.
+    let syntaxTree = this.parseLexArr(
+      lexArr, pos, startSym, str, strPosArr
+    );
+
+    // If the input string was not fully parsed, make sure that isSuccess is
+    // set to false, and set an appropriate error for the syntax tree.
+    if (syntaxTree.nextPos !== strPosArr.length) {
+      // If the syntax tree was otherwise successful, meaning that only a part
+      // of the string was parsed, construct an error saying so. 
+      if (syntaxTree.isSuccess) {
+        syntaxTree.isSuccess = false;
+        syntaxTree.error = `Parsing error after:
+          ${str.substring(strPos - ERROR_ECHO_STR_LEN - 1, strPos - 1)}
+          ----
+          Expected an empty string, but got:
+          ${str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4))}.
+        `;
+      }
+      // Else extract an appropriate error from the syntax tree, via a call to
+      // getErrorAndLastSymbol().
+      else {
+        syntaxTree.isSuccess = false;
+        let [error] = this.getErrorAndLastSymbol(syntaxTree, str);
+        syntaxTree.error = error;
+      }
+    }
+  
+    // Then return the resulting syntax tree.
+    return syntaxTree;
+  }
+
+
 
   getErrorAndLastSymbol(syntaxTree, str) {
     // If the syntax tree has an error set, simply return that and its symbol.
@@ -246,63 +351,6 @@ export class Parser {
 
 
 
-  parse(str, startSym, isPartial = false) {
-    // Lex the input string.
-    let lexArr, strPosArr;
-    try {
-      [lexArr, strPosArr] = this.lexer.lex(str, isPartial);
-    } catch (error) {
-      if (error instanceof LexError) {
-        let syntaxTree = {isSuccess: false, error: error.msq};
-        return syntaxTree;
-      }
-      // Else throw error;
-      else this.lexer.lex(str, isPartial); // Better for debugging.
-    }
-
-    // Then parse the resulting lexeme array.
-    let syntaxTree = this.parseLexArr(
-      lexArr, pos, startSym, str, strPosArr
-    );
-
-    // If the input string was not fully parsed, make sure that isSuccess is
-    // set to false, and attach the the string position that was reached in
-    // the parsing.
-    if (syntaxTree.nextPos !== strPosArr.length) {
-      syntaxTree.nextStrPos = strPosArr[syntaxTree.nextPos];
-    }
-  
-    // Then return the resulting syntax tree.
-    return syntaxTree;
-  }
-
-
-
-  parseWholeLexArr(lexArr, pos = 0, startSym, str, strPosArr) {
-    startSym ??= this.defaultSym;
-
-    // Parse the syntax tree.
-    let syntaxTree = this.parseLexArr(lexArr, pos, startSym);
-
-
-    // If only a part of the string was parsed, return the same syntax tree
-    // but unsuccessful, and with an appropriate error set.
-    if (syntaxTree.isSuccess && syntaxTree.nextPos < lexArr.length) {
-      syntaxTree.isSuccess = false;
-      syntaxTree.error =
-        "Parser.parseAll(): Only part of the input string was parsed." +
-        " The parsing ended right before:\n" +
-        str.substring(strPosArr[endPos + 1]).substring(0, ERROR_ECHO_STR_LEN);
-    }
-
-    return syntaxTree;
-  }
-
-
-
-
-
-
 
   parseLexArr(lexArr, pos, nonterminalSymbol) {
     nonterminalSymbol ??= this.defaultSym;
@@ -328,9 +376,6 @@ export class Parser {
     // Then return the syntax tree.
     return syntaxTree;
   }
-
-
-
 
 
 
@@ -448,6 +493,7 @@ export class Parser {
     };
     return syntaxTree;
   }
+
 
 
 
