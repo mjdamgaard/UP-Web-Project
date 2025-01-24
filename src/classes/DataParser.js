@@ -67,8 +67,16 @@ const funAndRegEntLexemePatternArr = [
 ];
 
 
+const doubleQuoteStringPattern =
+  /"([^"\\]|\\[a[^a]])*"/;
 
 const xmlWSPattern = /\s+/;
+const xmlLexemePatternArr = [
+  doubleQuoteStringPattern,
+  specialCharPattern,
+  nonSpecialCharsPattern,
+
+];
 
 const xmlGrammar = {
   "xml-text": {
@@ -104,13 +112,14 @@ const xmlGrammar = {
   },
   "attr-member": {
     rules: [
-      ["attr-name", "/=/", "string..."], // TODO continue.
+      ["attr-name", "/=/", "$$JSON_PARSER[non-object-literal]"],
       ["attr-name"],
     ],
   },
   "attr-name": {
     rules: [
-      // TODO: Continue.
+      // NOTE: This might very well be wrong. TODO: Correct.
+      [/[_a-sA-Z]+/, "/[_a-sA-Z0-9\\-\\.]+/*"],
     ],
   },
 }
@@ -124,6 +133,13 @@ const jsonGrammar = {
       ["array"],
     ],
   },
+  "literal-list": {
+    rules: [
+      ["literal", "/,/", "literal-list"],
+      ["literal"],
+    ],
+    process: straightenListSyntaxTree,
+  },
   "literal": {
     rules: [
       ["string"],
@@ -133,6 +149,14 @@ const jsonGrammar = {
       ["/true/"],
       ["/false/"],
       ["/null/"],
+    ],
+  },
+  "non-object-literal": {
+    rules: [
+      ["string"],
+      ["number"],
+      ["/true/"],
+      ["/false/"],
     ],
   },
   "string": {
@@ -179,13 +203,6 @@ const jsonGrammar = {
     rules: [
       [/\[/, "literal-list", /\]/],
     ],
-  },
-  "literal-list": {
-    rules: [
-      ["literal", "/,/", "literal-list"],
-      ["literal"],
-    ],
-    process: straightenListSyntaxTree,
   },
   "object": {
     rules: [
