@@ -55,7 +55,7 @@ export class DataParser {
 
 
 const specialCharPattern =
-  /[,;:"'\/\\+\-\.\*\?\|@\(\)\[\]\{\}]/;
+  /[,;:"'\/\\+\-\.\*\?\|@\(\)\[\]\{\}(=>)=<>]/;
 const nonSpecialCharsPattern = new RegExp (
   "[^" + specialCharPattern.source.substring(1) + "+"
 );
@@ -68,20 +68,20 @@ const funAndRegEntLexemePatternArr = [
 
 
 const jsonGrammar = {
-  "Literal": {
+  "literal": {
     rules: [
-      ["String"],
-      ["Number"],
-      ["Array"],
-      ["Object"],
+      ["string"],
+      ["number"],
+      ["array"],
+      ["object"],
       ["/true/"],
       ["/false/"],
       ["/null/"],
     ],
   },
-  "String": {
+  "string": {
     rules: [
-      ['/"/', "Chars*", '/"/'],
+      ['/"/', "chars*", '/"/'],
     ],
     test: (syntaxTree) => {
       // Concat all the nested lexemes.
@@ -108,84 +108,97 @@ const jsonGrammar = {
       return [true];
     },
   },
-  "Chars": {
+  "chars": {
     rules: [
       [/[^"\\]+/],
       [/\\/, /["\\\/bfnrt(u[0-9A-Fa-f]{4})].*/],
     ],
   },
-  "Number": {
+  "number": {
     rules: [
       [/\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-+]?(0|[1-9][0-9]*))?/],
     ],
   },
-  "Array": {
+  "array": {
     rules: [
-      [/\[/, "Literal_list", /\]/],
+      [/\[/, "literal-list", /\]/],
     ],
   },
-  "Literal_list": {
+  "literal-list": {
     rules: [
-      ["Literal", "/,/", "Literal_list"],
-      ["Literal"],
+      ["literal", "/,/", "literal-list"],
+      ["literal"],
+    ],
+    postProcess: straightenListSyntaxTree,
+  },
+  "object": {
+    rules: [
+      [/\{/, "member-list", /\}/],
     ],
   },
-  "Object": {
+  "member-list": {
     rules: [
-      [/\{/, "Member_list", /\}/],
+      ["member", "/,/", "member-list"],
+      ["member"],
     ],
+    postProcess: straightenListSyntaxTree,
   },
-  "Member_list": {
+  "member": {
     rules: [
-      ["Member", "/,/", "Member_list"],
-      ["Member"],
-    ],
-  },
-  "Member": {
-    rules: [
-      ["String", "/:/", "Literal"],
+      ["string", "/:/", "literal"],
     ],
   },
 };
 
+export function straightenListSyntaxTree(syntaxTree) {
+  syntaxTree.children = (syntaxTree.ruleInd === 0) ? [
+    syntaxTree.children[0],
+    ...straightenListSyntaxTree(syntaxTree.children[2]),
+  ] : [
+    syntaxTree.children[0]
+  ];
+}
 
-// We only overwrite some of the nonterminal symbols in the prototype.
+
+
+// We only overwrite some of the nonterminal symbols in the "parent" JSON
+// grammar.
 const regEntGrammar = {
   ...jsonGrammar,
-  "Literal": {
+  "literal": {
     rules: [
       ["@-literal"],
-      ["/_/"],
-      ["String"],
-      ["Number"],
-      ["Array"],
+      ["/-/"],
+      ["string"],
+      ["number"],
+      ["array"],
       ["/true/"],
       ["/false/"],
       ["/null/"],
     ],
   },
-  "String": {
+  "string": {
     rules: [
-      [/"/, "Chars_or_@-literal*", /"/],
+      [/"/, "chars-or-@-literal*", /"/],
     ],
     test: (syntaxTree) => {
       // TODO: make.
     },
   },
-  "Chars_or_@-literal": {
+  "chars-or-@-literal": {
     rules: [
-      ["@-Literal"],
-      ["Chars"],
+      ["@-literal"],
+      ["chars"],
     ],
   },
   "@-literal": {
     rules: [
       ["/@/", /\[/, "/0|[1-9][0-9]*/",  /\]/],
-      ["/@/", /\[/, "Path_substrings+", /\]/],
+      ["/@/", /\[/, "path-substrings+", /\]/],
       ["/@/", /\{/, "/[1-9][0-9]*/",    /\}/],
     ],
   },
-  "Path_substrings": {
+  "path-substrings": {
     rules: [
       [/[^0-9\[\]@,;"][^\[\]@,;"]+/],
     ],
@@ -197,7 +210,50 @@ const regEntGrammar = {
 
 const funEntGrammar = {
   ...regEntGrammar,
-  // TODO: make.
+  "function": {
+    rules: [
+      [
+        "function-name", /\(/, "param-list", /\)/, "/=>/",  /\{/,
+        "member-list", /\}/,
+      ],
+    ],
+  },
+  "param-list": {
+    rules: [
+      ["param", "/,/", "param-list"],
+      ["param"],
+    ],
+    postProcess: straightenListSyntaxTree,
+  },
+  "param": {
+    rules: [
+      ["string", "type-operator?", "/:/", "type"],
+    ],
+  },
+  "type-operator": {
+    rules: [
+      [/\?/],
+      ["/=/", "literal"],
+    ],
+  },
+  "type": {
+    rules: [
+      ["@-literal"], // TODO: Change to "ent-ref" instead..
+      // TODO: Continue.
+      [/\(/, "type-disjunction-list", /\)/],
+    ],
+    test: (syntaxTree) => {
+      if (syntaxTree.ruleInd === 0) {
+        // If @-literal is not an entity reference (ruleInd === 0), fail.
+        let atLiteralSyntaxTree = syntaxTree.children[0];
+        if (atLiteralSyntaxTree.ruleInd !== 0) {
+          return [false, `Invalid type: wrong type of @-literal.`];
+        } else {
+          return [true];
+        }
+      }
+    }
+  },
 };
 
 
@@ -207,5 +263,5 @@ const funEntGrammar = {
 
 
 const regularEntityParser = new Parser(
-  regEntGrammar, "ExpList", funAndRegEntLexemePatternArr, false
+  regEntGrammar, "literal-list", funAndRegEntLexemePatternArr, false
 );

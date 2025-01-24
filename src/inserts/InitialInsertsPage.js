@@ -141,23 +141,23 @@ export function initialInserts(dataInserter) {
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
-    "classes/format", "f", (
-      "class(" + [
-        "Name:string",
-        "Parent class?:@[classes]",
-        // "Member format?:(f::Function|t::Entity type)",
-        "Member type?:t=@[4]",
-        "Member format?:f",
-        "Description?:h",
-      ].join(",") +
-      ")=>{" + [
-        "Class:@[classes]",
-        "Name:@{1}",
-        "Parent class:@{2}",
-        "Member type:@{3}",
-        "Member format:@{4}",
-        "Description:@{5}",
-      ].join(",") + "}"
+    'classes/format', 'f', (
+      'class(' + [
+        '"Name":string',
+        '"Parent class"?:@[classes]',
+        // 'Member format?:(f::Function|t::Entity type)',
+        '"Member type"?:t=@[4]',
+        '"Member format"?:f',
+        '"Description"?:h',
+      ].join(',') +
+      ')=>{' + [
+        '"Class":@[classes]',
+        '"Name":@{1}',
+        '"Parent class":@{2}',
+        '"Member type":@{3}',
+        '"Member format":@{4}',
+        '"Description":@{5}',
+      ].join(',') + '}'
     )
   );
   dataInserter.insertSubstituteOrEditEntity(
@@ -302,20 +302,20 @@ export function initialInserts(dataInserter) {
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
-    "relations/format", "f", (
-      "relation(" + [
-        "Title:string",
-        "Subject class:@[classes]",
-        "Object class:@[classes]",
-        "Description?:h",
-      ].join(",") +
-      ")=>{" + [
-        "Class:@[relations]",
-        "Title:@{1}",
-        "Subject class:@{2}",
-        "Object class:@{3}",
-        "Description:@{4}",
-      ].join(",") + "}"
+    'relations/format', 'f', (
+      'relation(' + [
+        '"Title":string',
+        '"Subject" class:@[classes]',
+        '"Object" class:@[classes]',
+        '"Description"?:h',
+      ].join(',') +
+      ')=>{' + [
+        '"Class":@[relations]',
+        '"Title":@{1}',
+        '"Subject" class:@{2}',
+        '"Object" class:@{3}',
+        '"Description":@{4}',
+      ].join(',') + '}'
     )
   );
   dataInserter.insertSubstituteOrEditEntity(
@@ -364,17 +364,17 @@ export function initialInserts(dataInserter) {
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
-    "relevancy qualities/format", "f", (
-      "relevancy_quality(" + [
-        "Class:@[classes]",
-      ].join(",") +
-      ")=>{" + [
-        "Class:@[relevancy qualities]",
-        // // "Label": "Relevant for @{Object} → @{Relation}",
-        // "Label": "Relevant for @{1} → @{2}",
-        'Label:"Relevant for @{1}"',
-        "Metric:@[metrics/std predicate metric]",
-      ].join(",") + "}"
+    'relevancy qualities/format', 'f', (
+      'relevancy_quality(' + [
+        '"Class":@[classes]',
+      ].join(',') +
+      ')=>{' + [
+        '"Class":@[relevancy qualities]',
+        // // 'Label': 'Relevant for @{Object} → @{Relation}',
+        // 'Label': 'Relevant for @{1} → @{2}',
+        '"Label":"Relevant for @{1}"',
+        '"Metric":@[metrics/std predicate metric]',
+      ].join(',') + '}'
     )
   );
   dataInserter.insertSubstituteOrEditEntity(
@@ -389,19 +389,18 @@ export function initialInserts(dataInserter) {
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
-    "relational classes/format", "f", (
-      "relational_class(" + [
-        "Object:@[entities]",
-        "Relation:@[relations]",
-        "Relation subject title:string",
-      ].join(",") +
-      ")=>{" + [
-        "Class:@[relational classes]",
-        'Name:"@{1} → @{2}"',
-        // // "Member title": "@{1} → @{3}",
-        // // "Member title": "@{1} → @{2}[Subject title]",
-        // "Member title": "@{3}",
-      ].join(",") + "}"
+    'relational classes/format', 'f', (
+      'relational_class(' + [
+        '"Object":@[entities]',
+        '"Relation":@[relations]',
+      ].join(',') +
+      ')=>{' + [
+        '"Class":@[relational classes]',
+        '"Name":"@{1} → @{2}"',
+        // // 'Member title': '@{1} → @{3}',
+        // // 'Member title': '@{1} → @{2}[Subject title]',
+        // 'Member title': '@{3}',
+      ].join(',') + '}'
     )
   );
   dataInserter.insertSubstituteOrEditEntity(
@@ -423,19 +422,19 @@ export function initialInserts(dataInserter) {
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
-    "semantic parameters/format", "f", (
-      "semantic_parameter(" + [
-        "Subject:@[entities]",
-        "Quality:@[qualities]",
-      ].join(",") +
-      ")=>{" + [
-        "Class:@[semantic parameters]",
-        'Label:"@{1} ⋲ @{2}"',
-        // "Label:@{1} ⥺ @{2}",
-        // "Label:@{1} :≟ @{2}",
-        "Subject:@{1}",
-        "Quality:@{2}",
-      ].join(",") + "}"
+    'semantic parameters/format', 'f', (
+      'semantic_parameter(' + [
+        '"Subject":@[entities]',
+        '"Quality":@[qualities]',
+      ].join(',') +
+      ')=>{' + [
+        '"Class":@[semantic parameters]',
+        '"Label":"@{1} ⋲ @{2}"',
+        // 'Label:@{1} ⥺ @{2}',
+        // 'Label:@{1} :≟ @{2}',
+        '"Subject":@{1}',
+        '"Quality":@{2}',
+      ].join(',') + '}'
     )
   );
 
@@ -478,26 +477,26 @@ export function initialInserts(dataInserter) {
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
-    "metrics/format", "f", (
-      "metric(" + [
-        "Name:string",
-        "Unit?:string",
-        "Prepend unit?:bool=false",
-        "Interval labels?:[start:float,end:float,label:string][]",
-        "Lower bound?:float",
-        "Upper bound?:float",
-        "Description:h",
-      ].join(",") +
-      ")=>{" + [
-        "Class:@[metrics]",
-        "Name:@{1}",
-        "Unit:@{2}",
-        "Prepend unit:@{3}",
-        "Interval labels:@{4}",
-        "Lower bound:@{5}",
-        "Upper bound:@{6}",
-        "Description:@{7}",
-      ].join(",") + "}"
+    'metrics/format', 'f', (
+      'metric(' + [
+        '"Name":string',
+        '"Unit"?:string',
+        '"Prepend unit"?:bool=false',
+        '"Interval labels"?:[start:float,end:float,label:string][]',
+        '"Lower bound"?:float',
+        '"Upper bound"?:float',
+        '"Description":h',
+      ].join(',') +
+      ')=>{' + [
+        '"Class":@[metrics]',
+        '"Name":@{1}',
+        '"Unit":@{2}',
+        '"Prepend unit":@{3}',
+        '"Interval labels":@{4}',
+        '"Lower bound":@{5}',
+        '"Upper bound":@{6}',
+        '"Description":@{7}',
+      ].join(',') + '}'
     )
   );
 
@@ -525,16 +524,16 @@ export function initialInserts(dataInserter) {
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
-    "user score lists/format", "f", (
-      "user_scores(" + [
-        "User:u",
-        "Quality:@[qualities]",
-      ].join(",") +
-      ")=>{" + [
-        "Class:@[user score lists]",
-        "User:@{1}",
-        "Quality:@{2}",
-      ].join(",") + "}"
+    'user score lists/format', 'f', (
+      'user_scores(' + [
+        '"User":u',
+        '"Quality":@[qualities]',
+      ].join(',') +
+      ')=>{' + [
+        '"Class":@[user score lists]',
+        '"User":@{1}',
+        '"Quality":@{2}',
+      ].join(',') + '}'
     )
   );
   dataInserter.insertSubstituteOrEditEntity(
@@ -549,20 +548,20 @@ export function initialInserts(dataInserter) {
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
-    "min contribution lists/format", "f", (
-      "min_contr(" + [
-        "Editor:(@[users]::User|d::Database node)",
-        "User group:@[user groups]",
-        "Quality:@[qualities]",
-        "Subject:@[entities]",
-      ].join(",") +
-      ")=>{" + [
-        "Class:@[min contribution lists]",
-        "Editor:@{1}",
-        "User group:@{2}",
-        "Quality:@{3}",
-        "Subject:@{4}",
-      ].join(",") + "}"
+    'min contribution lists/format', 'f', (
+      'min_contr(' + [
+        '"Editor":(@[users]::User|d::Database node)',
+        '"User group":@[user groups]',
+        '"Quality":@[qualities]',
+        '"Subject":@[entities]',
+      ].join(',') +
+      ')=>{' + [
+        '"Class":@[min contribution lists]',
+        '"Editor":@{1}',
+        '"User group":@{2}',
+        '"Quality":@{3}',
+        '"Subject":@{4}',
+      ].join(',') + '}'
     )
   );
   dataInserter.insertSubstituteOrEditEntity(
@@ -577,20 +576,20 @@ export function initialInserts(dataInserter) {
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
-    "max contribution lists/format", "f", (
-      "max_contr(" + [
-        "Editor:(@[users]::User|d::Database node)",
-        "User group:@[user groups]",
-        "Quality:@[qualities]",
-        "Subject:@[entities]",
-      ].join(",") +
-      ")=>{" + [
-        "Class:@[max contribution lists]",
-        "Editor:@{1}",
-        "User group:@{2}",
-        "Quality:@{3}",
-        "Subject:@{4}",
-      ].join(",") + "}"
+    'max contribution lists/format', 'f', (
+      'max_contr(' + [
+        '"Editor":(@[users]::User|d::Database node)',
+        '"User group":@[user groups]',
+        '"Quality":@[qualities]',
+        '"Subject":@[entities]',
+      ].join(',') +
+      ')=>{' + [
+        '"Class":@[max contribution lists]',
+        '"Editor":@{1}',
+        '"User group":@{2}',
+        '"Quality":@{3}',
+        '"Subject":@{4}',
+      ].join(',') + '}'
     )
   );
   dataInserter.insertSubstituteOrEditEntity(
@@ -605,22 +604,22 @@ export function initialInserts(dataInserter) {
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
-    "score median lists/format", "f", (
-      "score_medians(" + [
-        "Editor:(@[users]::User|d::Database node)",
-        "Has passed weight threshold:bool",
-        "User group:@[user groups]",
-        "Quality:@[qualities]",
-        "Filter list?:@[lists]"
-      ].join(",") +
-      ")=>{" + [
-        "Class:@[score median lists]",
-        "Editor:@{1}",
-        "Has passed weight threshold:@{2}",
-        "User group:@{3}",
-        "Quality:@{4}",
-        "Filter list:@{5}",
-      ].join(",") + "}"
+    'score median lists/format', 'f', (
+      'score_medians(' + [
+        '"Editor":(@[users]::User|d::Database node)',
+        '"Has passed weight threshold":bool',
+        '"User group":@[user groups]',
+        '"Quality":@[qualities]',
+        '"Filter list"?:@[lists]'
+      ].join(',') +
+      ')=>{' + [
+        '"Class":@[score median lists]',
+        '"Editor":@{1}',
+        '"Has passed weight threshold":@{2}',
+        '"User group":@{3}',
+        '"Quality":@{4}',
+        '"Filter list":@{5}',
+      ].join(',') + '}'
     )
   );
   dataInserter.insertSubstituteOrEditEntity(
@@ -636,16 +635,16 @@ export function initialInserts(dataInserter) {
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
-    "score2-ordered lists/format", "f", (
-      "score2_ordered_list(" + [
-        "Editor:(@[users]::User|d::Database node)",
-        "List:@[lists with score2 values]",
-      ].join(",") +
-      ")=>{" + [
-        "Class:@[score2-ordered lists]",
-        "Editor:@{1}",
-        "List:@{2}",
-      ].join(",") + "}"
+    'score2-ordered lists/format', 'f', (
+      'score2_ordered_list(' + [
+        '"Editor":(@[users]::User|d::Database node)',
+        '"List":@[lists with score2 values]',
+      ].join(',') +
+      ')=>{' + [
+        '"Class":@[score2-ordered lists]',
+        '"Editor":@{1}',
+        '"List":@{2}',
+      ].join(',') + '}'
     )
   );
 
