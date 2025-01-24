@@ -2,24 +2,18 @@
 const ERROR_ECHO_STR_LEN = 400;
 
 
-const REGULAR_OR_QUANTIFIED_SYM_REGEXP =
-  /^[^\/\?\*\+\{\}\[\]$!]+[\?\*\+(\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\})]?$/;
-const REGULAR_SYM_SUBSTR_REGEXP =
-  /[^\/\?\*\+\{\}\[\]$!]+/;
-const ENDS_IN_QUANTIFIER_REGEXP =
-  /[\?\*\+(\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\})]$/;
-const QUANTIFIER_SUBSTR_REGEXP =
-  /[\?\*\+(\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\})]/;
+const NONTERMINAL_SYM_REGEXP =
+  /^[^\/\?\*\+\{\}\[\]$!]+$/;
+const NONTERMINAL_SYM_SUBSTR_REGEXP =
+   /[^\/\?\*\+\{\}\[\]$!]+/;
 const SUB_PARSER_SYM_REGEXP =
-  /^$$?[^$\[\]]+(\[[^\/\?\*\+\{\}\[\]$!]+\])?$/;
-const SUB_PARSER_KEY_REGEXP =
-  /^[^$\[\]]+$/;
+  /^$$?[^\/\?\*\+\{\}\[\]$!]+(\[[^\/\?\*\+\{\}\[\]$!]+\])?$/;
+const TRAILING_QUANTIFIER_SUBSTR_REGEXP =
+  /[\?\*\+(\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\})]$/;
+const SUB_PARSER_KEY_REGEXP = NONTERMINAL_SYM_REGEXP;
+const SUB_PARSER_KEY_SUBSTR_REGEXP = NONTERMINAL_SYM_SUBSTR_REGEXP;
 const SQUARE_BRACKET_SUBSTR_REGEXP =
   /\[[^\]]+\]/;
-const SUB_PARSER_KEY_SUBSTR_REGEXP =
-  /[^$\[\]]+/;
-const GRAMMAR_SYM_REGEXP =
-  /^[^\/\?\*\+\{\}\[\]$!]+$/;
 
 const NUMBER_SUBSTR_REGEXP =
   /0|[1-9][0-9]*/;
@@ -83,31 +77,35 @@ const NUMBER_SUBSTR_REGEXP =
 // (compound, possibly big) lexeme as its input string. And the optional
 // nonterminal symbol makes it possible to parse another nonterminal symbol
 // instead of the sub-parser's default one.
-// Furthermore, any nonterminal rule symbol can also be followed by a RegExp
-// quantifier, '?', '*', '+', or '{<n>,<m>}', which parses a variable number of
-// the preceding nonterminal symbol. And lastly, any of these types of symbols
-// can also be followed by a '!' at the very end, which tells the parser to
-// parse the symbol even if a different symbol has already been successfully
-// parsed at the same array index of a previous rule. Otherwise the parser will
+// Furthermore, any rule symbol can also be followed by a RegExp quantifier,
+// i.e. '?', '*', '+', or '{<n>,<m>}', which parses a variable number of the
+// preceding nonterminal symbol.
+// And lastly, any of these rule symbols, quantified or not, can also be
+// followed by a '!' at the very end, which tells the parser to parse the
+// symbol even if a different symbol has already been successfully parsed at
+// the same array index of a previous rule. Otherwise the parser will
 // automatically fail a rule symbol if a different symbol has been successfully
 // parsed at that same array index.
 // 
 // The first rule to succeed for a nonterminal symbol will short circuit it,
-// and the subsequent rules will not be tried.
+// such that the subsequent rules will not be tried.
 // </param>
 // 
 // <param name="defaultSym">
 // The default (nonterminal) start symbol for the parser.
 // </param>
+
 // <param name="lexemePatternArr">
 // An array of lexeme pattern, which are tried in order from the first to the
 // last when constructing the lexeme array.
 // </param>
+
 // <param name="wsPattern">
 // A pattern of what the parser considers "whitespace" (might also include
 // comments) when lexing the string. This whitespace pattern will be tried
 // first thing whenever a new lexeme is lexed.
 // </param>
+
 // <param name="subParsers">
 // A plain object containing so-called sub-parsers, which can be used in the
 // rules of the grammar (via rule symbols that starts with '$' or '$$',
@@ -134,9 +132,9 @@ export class Parser {
   #validateAndPreprocess() {
     Object.entries(grammar).forEach(([sym, {rules}]) => {
       // First validate the nonterminal symbol.
-      if (!GRAMMAR_SYM_REGEXP.test(sym)) {
-        throw "Parser: Nonterminal symbols cannot any of the special" +
-        "characters '/?*+{}[]$!'.";
+      if (!NONTERMINAL_SYM_REGEXP.test(sym)) {
+        throw `Parser: Nonterminal symbols cannot any of the special \
+          characters '/?*+{}[]$!'. Received "${sym}".`;
       }
       // Then go through each rule symbol and process patterns and RegExps.
       let rulesNum = rules.length;
@@ -166,6 +164,13 @@ export class Parser {
             ruleSym = ruleSym.slice(0, -1);
           }
 
+          // Then remove any optional RegExp quantifier at the end, which is
+          // also allowed for all symbols.
+          let quantifierArr = ruleSym.match(TRAILING_QUANTIFIER_SUBSTR_REGEXP);
+          if (quantifierArr) {
+            ruleSym = ruleSym.slice(0, -quantifierArr[0].length);
+          }
+
           // If a symbol in a rule is a pattern beginning and ending with "/",
           // construct and store a corresponding RegExp instance in
           // this.regularExpressions.
@@ -177,16 +182,17 @@ export class Parser {
 
           // If the symbol is a sub-parser symbol, validate it.
           else if (ruleSym.at(0) === "$") {
-            if (!SUB_PARSER_SYM_REGEXP.test(sym)) {
-              throw `Parser: Invalid sub-parser symbol: "${sym}"`;
+            if (!SUB_PARSER_SYM_REGEXP.test(ruleSym)) {
+              throw `Parser: Sub-parser keys cannot any of the special \
+                characters '/?*+{}[]$!'. Received "${ruleSym}".`;
             }
           }
 
           // Else validate it as either a regular symbol or a quantified
           // symbol.
           else {
-            if (!REGULAR_OR_QUANTIFIED_SYM_REGEXP.test(sym)) {
-              throw `Parser: Invalid symbol: "${sym}"`;
+            if (!NONTERMINAL_SYM_SUBSTR_REGEXP.test(ruleSym)) {
+              throw `Parser: Invalid symbol: "${ruleSym}"`;
             }
           }
         }
@@ -207,14 +213,17 @@ export class Parser {
 // The main method of this Parser class, used for lexing and parsing (and
 // potentially post-processing) a string.
 // </summary>
+// 
 // <param name="str">
 // The input string to be lexed and parsed.
 // </param>
+// 
 // <param name="startSym">
 // An optional start symbol, i.e. the nonterminal symbol that the whole input
 // string should be parsed as. If undefined or null, the default start symbol,
 // defaultSym, will be used. 
 // </param>
+// 
 // <param name="isPartial">
 // An optional boolean flag, with a default value of false, that if set to true
 // will make the parsing end with an "End of partial string" error *the moment*
@@ -224,6 +233,7 @@ export class Parser {
 // of the grammar in its complete form, and then only use the successfully
 // parsed part of it.
 // </param>
+// 
 // <returns>
 // A syntax tree consisting of nodes of the form
 // {sym, isSuccess, error?, children?, ruleInd?}, where sym the nonterminal
@@ -292,6 +302,9 @@ export class Parser {
       // If the syntax tree was otherwise successful, meaning that only a part
       // of the string was parsed, construct an error saying so. 
       if (syntaxTree.isSuccess) {
+        // (We could parse column and line number here, but let's not, as it
+        // would cost some extra time, and it would be wrong when using sub-
+        // parsers anyway.)
         syntaxTree.isSuccess = false;
         syntaxTree.error = `Parsing error after:
           ${str.substring(strPos - ERROR_ECHO_STR_LEN - 1, strPos - 1)}
@@ -346,6 +359,7 @@ export class Parser {
 
       return [error, lastSymbol];
     }
+
     // Else simply return this (final, failed) syntax tree's error (perhaps
     // undefined), as well as its nonterminal symbol.
     else {
@@ -377,7 +391,6 @@ export class Parser {
     // is provided.
     syntaxTree.postProcess = postProcess || undefined;
 
-    // Then return the syntax tree.
     return syntaxTree;
   }
 
@@ -505,13 +518,65 @@ export class Parser {
     let nextLexeme = lexArr[pos];
     let syntaxTree;
 
-    // If sym is the reserved empty string symbol, "", then succeed
-    // the symbol, but without increasing nextPos.
-    if (sym === "") {
-      syntaxTree = {
-        sym: sym, isSuccess: true,
-        pos: pos, nextPos: pos,
-      };
+    // If sym ends in either '?', '*', '+', '{n}' or '{n,m}', try parsing an
+    // appropriate number of instances of the symbol preceding the quantifier.
+    let quantifierArr = sym.match(TRAILING_QUANTIFIER_SUBSTR_REGEXP);
+    if (quantifierArr) {
+      let quantifier = quantifierArr[0];
+      let subSym = sym.slice(0, -quantifier.length);
+
+      // Parse n and m from quantifier := "{n(,m)?}", and then set max and
+      // min based on those, and on the quantifier in general. 
+      let [n, m] = (quantifier.match(NUMBER_SUBSTR_REGEXP) ?? []).map(
+        val => parseInt(val)
+      );
+      let max = m ?? n ?? (quantifier === "?") ? 1 : null;
+      let min = n ?? (quantifier === "+") ? 1 : 0;
+
+      // Then parse as many instances of sybSym as possible in a row,
+      // storing the each resulting syntax tree in an array, children.
+      let children = [];
+      let nextPos = pos;
+      for (let i = 0; true; i++) {
+        // Break if max is reached, and construct a successful syntax tree.
+        if (i + 1 > max) {
+          syntaxTree = {
+            sym: sym, isSuccess: true, children: children,
+            pos: pos, nextPos: nextPos,
+          };
+          break;
+        }
+
+        // Else parse a new child.
+        let childSyntaxTree = this.#parseRuleSymbol(lexArr, pos, subSym);
+        if (childSyntaxTree.isSuccess) {
+          // Add child syntax tree to children and increase pos.
+          children.push(childSyntaxTree);
+          nextPos = childSyntaxTree.nextPos;
+        }
+        else {
+          // If and when failing, mark a success or failure depending on
+          // whether min was reached or not. Note that nextPos is at this
+          // point the next position after the last successful child, not the
+          // the current failed one. 
+          if (i + 1 >= min) {
+            syntaxTree = {
+              sym: sym, isSuccess: true, children: children,
+              pos: pos, nextPos: nextPos,
+            };
+            break;
+          }
+          else {
+            syntaxTree = {
+              sym: sym, isSuccess: false, children: children,
+              pos: pos, nextPos: nextPos,
+              // (Note that on failure, nextPos is supposed to be where the
+              // error occurred.)
+            };
+            break;
+          }
+        }
+      }
     }
 
     // Else if EOS is reached, which is located at the end of the lexArr if
@@ -586,71 +651,13 @@ export class Parser {
       }
     }
 
-    // Else if sym ends in either '?', '*', '+', '{n}' or '{n,m}', parse an
-    // appropriate number of the same symbol.
-    else if (ENDS_IN_QUANTIFIER_REGEXP.test(sym)) {
-      let subSym = sym.match(REGULAR_SYM_SUBSTR_REGEXP)[0];
-      let quantifier = sym.match(QUANTIFIER_SUBSTR_REGEXP)[0];
-
-      // Parse n and m from quantifier := "{n(,m)?}", and then set max and
-      // min based on those, and on the quantifier in general. 
-      let [n, m] = (quantifier.match(NUMBER_SUBSTR_REGEXP) ?? []).map(
-        val => parseInt(val)
-      );
-      let max = m ?? n ?? (quantifier === "?") ? 1 : null;
-      let min = n ?? (quantifier === "+") ? 1 : 0;
-
-      // Then parse as many instances of sybSym as possible in a row,
-      // storing the each resulting syntax tree in an array, children.
-      let children = [];
-      let nextPos = pos;
-      for (let i = 0; true; i++) {
-        // Break if max is reached, and construct a successful syntax tree.
-        if (i + 1 > max) {
-          syntaxTree = {
-            sym: sym, isSuccess: true, children: children,
-            pos: pos, nextPos: nextPos,
-          };
-          break;
-        }
-
-        // Else parse a new child.
-        let childSyntaxTree = this.parseLexArr(lexArr, pos, subSym);
-        if (childSyntaxTree.isSuccess) {
-          // Add child syntax tree to children and increase pos.
-          children.push(childSyntaxTree);
-          nextPos = childSyntaxTree.nextPos;
-        }
-        else {
-          // If and when failing, mark a success or failure depending on
-          // whether min was reached or not. Note that nextPos is at this
-          // point the next position after the last successful child, not the
-          // the current failed one. 
-          if (i + 1 >= min) {
-            syntaxTree = {
-              sym: sym, isSuccess: true, children: children,
-              pos: pos, nextPos: nextPos,
-            };
-            break;
-          }
-          else {
-            syntaxTree = {
-              sym: sym, isSuccess: false, children: children,
-              pos: pos, nextPos: nextPos,
-              // (Note that on failure, nextPos is supposed to be where the
-              // error occurred.)
-            };
-            break;
-          }
-        }
-      }
-    }
-
     // Else treat sym as a non-terminal symbol, and make a recursive call to
     // parse() with nonterminalSymbol = sym.
     else {
       syntaxTree = this.parseLexArr(lexArr, pos, sym);
     }
+
+    return syntaxTree;
   }
 }
 

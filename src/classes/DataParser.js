@@ -55,7 +55,7 @@ export class DataParser {
 
 
 const specialCharPattern =
-  /[,;:"'\\\?\|@\(\)\[\]\{\}]/;
+  /[,;:"'\/\\+\-\.\*\?\|@\(\)\[\]\{\}]/;
 const nonSpecialCharsPattern = new RegExp (
   "[^" + specialCharPattern.source.substring(1) + "+"
 );
@@ -81,19 +81,28 @@ const jsonGrammar = {
   },
   "String": {
     rules: [
-      [/"/, "CharsNoDoubleQuote*", /"/],
+      ['/"/', "Chars*", '/"/'],
     ],
     test: (syntaxTree) => {
+      // Concat all the nested lexemes.
       let stringContent = syntaxTree.children[1].children.reduce(
-        (acc, val) => (acc + val.children[0]),
+        (acc, val) => acc + val.children.reduce(
+          (acc, val) => acc + (
+            val.children[0]
+          ),
+          ""
+        ),
         ""
       );
+
+      // Test that the resulting string is a valid JSON string. 
       try {
         JSON.parse(`"${stringContent}"`);
       } catch (error) {
         return [false, `Invalid JSON string: "${stringContent}"`];
       }
-      // Some early post-processing now that we have the string:
+
+      // Also do some early post-processing now that we have the string:
       syntaxTree.children = [`"${stringContent}"`];
 
       return [true];
@@ -101,7 +110,8 @@ const jsonGrammar = {
   },
   "Chars": {
     rules: [
-      [/([^"]+|\\["\\\/bfnrt(u[0-9A-Fa-f]{4})])+/,],
+      [/[^"\\]+/],
+      [/\\/, /["\\\/bfnrt(u[0-9A-Fa-f]{4})].*/],
     ],
   },
   "Number": {
@@ -140,7 +150,8 @@ const jsonGrammar = {
 
 
 // We only overwrite some of the nonterminal symbols in the prototype.
-const regEntGrammar = Object.create(jsonGrammar, {
+const regEntGrammar = {
+  ...jsonGrammar,
   "Literal": {
     rules: [
       ["@-literal"],
@@ -158,19 +169,7 @@ const regEntGrammar = Object.create(jsonGrammar, {
       [/"/, "Chars_or_@-literal*", /"/],
     ],
     test: (syntaxTree) => {
-      let stringContent = syntaxTree.children[1].children.reduce(
-        (acc, val) => (acc + val.children[0]),
-        ""
-      );
-      try {
-        JSON.parse(`"${stringContent}"`);
-      } catch (error) {
-        return [false, `Invalid JSON string: "${stringContent}"`];
-      }
-      // Some early post-processing now that we have the string:
-      syntaxTree.children = [`"${stringContent}"`];
-
-      return [true];
+      // TODO: make.
     },
   },
   "Chars_or_@-literal": {
@@ -191,14 +190,15 @@ const regEntGrammar = Object.create(jsonGrammar, {
       [/[^0-9\[\]@,;"][^\[\]@,;"]+/],
     ],
   },
-});
+};
 
 
 
 
-const funEntGrammar = Object.create(regEntGrammar, {
+const funEntGrammar = {
+  ...regEntGrammar,
   // TODO: make.
-});
+};
 
 
 
