@@ -8,7 +8,7 @@ export class DataConstructor {
   static getUserScoreListExplodedDefStr(userID, qualIDOrDefStr) {
     let qualRef = (/^[1-9][0-9]*$/.test(qualIDOrDefStr.toString())) ?
       `@[${qualIDOrDefStr}]` :
-      `@<qual>${qualIDOrDefStr}@</qual>`;
+      `@<qual s>${qualIDOrDefStr}@</qual>`;
 
     return (
       "@[" + basicEntIDs["user score lists/format"] + "],@[" + userID + "]," +
@@ -19,7 +19,7 @@ export class DataConstructor {
   static getRelevancyQualityExplodedDefStr(classIDOrDefStr) {
     let classRef = (/^[1-9][0-9]*$/.test(classIDOrDefStr.toString())) ?
       `@[${classIDOrDefStr}]` :
-      `@<class>${classIDOrDefStr}@</class>`;
+      `@<class s>${classIDOrDefStr}@</class>`;
 
     return (
       "@[" + basicEntIDs["relevancy qualities/format"] + "]," + classRef

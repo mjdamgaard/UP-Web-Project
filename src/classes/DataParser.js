@@ -150,10 +150,13 @@ const jsonGrammar = {
   },
 };
 
-export function straightenListSyntaxTree(syntaxTree) {
+export function straightenListSyntaxTree(syntaxTree, delimiterLexNum = 1) {
   syntaxTree.children = (syntaxTree.ruleInd === 0) ? [
     syntaxTree.children[0],
-    ...straightenListSyntaxTree(syntaxTree.children[2]),
+    ...straightenListSyntaxTree(
+      syntaxTree.children[1 + delimiterLexNum],
+      delimiterLexNum
+    ),
   ] : [
     syntaxTree.children[0]
   ];

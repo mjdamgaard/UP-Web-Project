@@ -19,7 +19,7 @@ const NUMBER_SUBSTR_REGEXP =
   /0|[1-9][0-9]*/;
 
 
-
+export const EOS_ERROR = "End of partial string";
 
 
 
@@ -236,13 +236,14 @@ export class Parser {
 // 
 // <returns>
 // A syntax tree consisting of nodes of the form
-// {sym, isSuccess, error?, children?, ruleInd?}, where sym the nonterminal
-// symbol or the rule symbol of the node, isSuccess (bool) tells if the node
-// was successfully parsed or not, children is an array of the node's child
-// nodes (which on failure will be those of the rule that reached the furthest
-// in the string, and also include the last failed node), and ruleInd is the
-// index of the rule that the children was obtained from in the given "rules"
-// array in the case of a nonterminal symbol.
+// {sym, isSuccess, error?, children?, ruleInd? lexeme?}, where sym the
+// nonterminal symbol or the rule symbol of the node, isSuccess (bool) tells
+// if the node was successfully parsed or not, children is an array of the
+// node's child nodes (which on failure will be those of the rule that reached
+// the furthest in the string, and also include the last failed node), ruleInd
+// is the index of the rule that the children was obtained from in the given
+// "rules" array in the case of a nonterminal symbol that has more than one
+// rule, and lexeme is the matched lexeme in case of a pattern symbol.
 // </returns>
   parseAndProcess(str, startSym, isPartial = false) {
     // Lex and parse the input string. 
@@ -302,23 +303,32 @@ export class Parser {
       // If the syntax tree was otherwise successful, meaning that only a part
       // of the string was parsed, construct an error saying so. 
       if (syntaxTree.isSuccess) {
-        // (We could parse column and line number here, but let's not, as it
-        // would cost some extra time, and it would be wrong when using sub-
-        // parsers anyway.)
+        // (We could parse column and line number here, but let's not, at least
+        // not for now. *Or maybe let us, after all, so a possible TODO here..)
         syntaxTree.isSuccess = false;
-        syntaxTree.error = `Parsing error after:
+        syntaxTree.error = `Parsing error "Incomplete parsing" after:
           ${str.substring(strPos - ERROR_ECHO_STR_LEN - 1, strPos - 1)}
           ----
           Expected an empty string, but got:
-          ${str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4))}.
+          ${str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4))}
         `;
       }
       // Else extract an appropriate error from the syntax tree, via a call to
-      // getErrorAndLastSymbol().
+      // #getErrorAndFailedNode().
       else {
         syntaxTree.isSuccess = false;
-        let [error] = this.getErrorAndLastSymbol(syntaxTree, str);
-        syntaxTree.error = error;
+        let [error, failedNode] = this.#getErrorAndFailedNode(syntaxTree);
+        error ??= `Failed symbol ${failedNode.sym}`;
+
+        if (error !== EOS_ERROR) {
+          let strPos = strPosArr[failedNode.nextPos] ?? str.length - 1;
+          syntaxTree.error = `Parsing error "${error}" after:
+            ${str.substring(strPos - ERROR_ECHO_STR_LEN - 1, strPos - 1)}
+            ----
+            Expected ${failedNode.sym}, but got:
+            ${str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4))}
+          `;
+        }
       }
     }
   
@@ -328,43 +338,19 @@ export class Parser {
 
 
 
-  getErrorAndLastSymbol(syntaxTree, str) {
-    // If the syntax tree has an error set, simply return that and its symbol.
-    if (syntaxTree.error) {
-      return [syntaxTree.error, syntaxTree.sym];
-    }
-
-    // Else if the syntax tree has children, get the last (assumed failed)
-    // child's error, and the last failed symbol, and return this, unless this
-    // syntax tree was produced by a call to parse() and no error has been
-    // returned yet, in which case construct and return an appropriate error.
-    if (syntaxTree.children && syntaxTree.children[0]) {
+  #getErrorAndFailedNode(syntaxTree) {
+    // If the syntax tree has an error set, and has children, get the last
+    // (assumed failed) child's error, and the last failed symbol, and return
+    // this. (Note that a node will have no children if none of the rules
+    // advanced the position.)
+    if (!syntaxTree.error && syntaxTree.children && syntaxTree.children[0]) {
       let lastChild = syntaxTree.children.at(-1);
-      let [error, lastSymbol] = this.getErrorAndLastSymbol(lastChild);
-
-      // If error is so far undefined, and syntaxTree.nextStrPos is set, which
-      // it only is when the syntax tree the outer one returned by a call to
-      // parse() (potentially from a sub-parser, though), construct an
-      // appropriate error.
-      let strPos = syntaxTree.nextStrPos;
-      if (!error && strPos !== undefined) {
-        error = `Parsing error after:
-          ${str.substring(strPos - ERROR_ECHO_STR_LEN - 1, strPos - 1)}
-          ----
-          Expected <${lastSymbol}>, but got:
-          ${str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4))}.
-        `;
-
-      }
-
-      return [error, lastSymbol];
+      return this.#getErrorAndFailedNode(lastChild);
     }
 
     // Else simply return this (final, failed) syntax tree's error (perhaps
     // undefined), as well as its nonterminal symbol.
-    else {
-      return [syntaxTree.error || undefined, syntaxTree.sym];
-    }
+    return [syntaxTree.error || undefined, syntaxTree];
   }
 
 
@@ -407,15 +393,17 @@ export class Parser {
     let successfulSyntaxTrees = [];
     // Initialize a variable holding the record nextPos obtaining in a (failed)
     // rule so far, and also one holding the index of the "record rule" that
-    // obtained it. 
-    let recordRuleNextPos = -1;
-    let recordRuleInd = -1;
+    // obtained it. Initialize recordRuleNextPos to pos such that rules are
+    // not recorded if they do not advance the position
+    let recordRuleNextPos = pos;
+    let recordRuleInd;
     // Initialize and array containing all children of the "record rule," also
     // including the last, failed one.
     let recordRuleChildren;
 
     // Loop through all rules until a success is encountered, and keep track of
-    // the "record" all the while, i.e. of the rule that got the furthest.  
+    // the "record" all the while, i.e. of the rule that got the furthest.
+    let rulesNum = rules.length;
     let ruleSuccess = true;
     for (let i = 0; i < rulesNum; i++) {
       let rule = rules[i];
@@ -454,12 +442,13 @@ export class Parser {
             // Store the failed child at the end of the children array.
             ruleChildren.push(childSyntaxTree);
 
-            // If a parsing failed with error = "End of partial string", abort
-            // the parsing immediately, propagating this error outwards.
-            if (childSyntaxTree.error === "End of partial string") {
+            // If a parsing failed with error = EOS_ERROR, abort the parsing
+            // immediately, propagating this error outwards.
+            if (childSyntaxTree.error === EOS_ERROR) {
               syntaxTree = {
-                sym: sym, isSuccess: false, error: "End of partial string",
-                ruleInd: i, children: ruleChildren,
+                sym: sym, isSuccess: false, error: EOS_ERROR,
+                ruleInd: (rulesNum) ? i : undefined,
+                children: ruleChildren,
                 pos: pos, nextPos: nextPos,
               };
               return syntaxTree;
@@ -489,7 +478,9 @@ export class Parser {
       // for the largest nextPos reached. 
       if (ruleSuccess) {
         syntaxTree = {
-          sym: sym, isSuccess: true, ruleInd: i, children: ruleChildren,
+          sym: sym, isSuccess: true,
+          ruleInd: (rulesNum) ? i : undefined,
+          children: ruleChildren,
           pos: pos, nextPos: nextPos,
         };
         return syntaxTree;
@@ -504,8 +495,9 @@ export class Parser {
     // If the for loop ends, meaning that all rules failed, we return a failed
     // syntax tree containing the children of the "record rule."
     syntaxTree = {
-      sym: sym, isSuccess: false, ruleInd: recordRuleInd,
-      children: recordRuleChildren,
+      sym: sym, isSuccess: false,
+      ruleInd: (rulesNum) ? recordRuleInd || undefined : undefined,
+      children: recordRuleChildren || undefined,
       pos: pos, nextPos: pos,
     };
     return syntaxTree;
@@ -583,7 +575,7 @@ export class Parser {
     // and only if isPartial is true, fail the rule with an "EOS" error,
     else if (nextLexeme === EOS) {
       syntaxTree = {
-        sym: sym, isSuccess: false, error: "End of partial string",
+        sym: sym, isSuccess: false, error: EOS_ERROR,
         pos: pos, nextPos: pos,
         // Note that on failure, nextPos is supposed to be where the error
         // occurred. 
@@ -604,7 +596,7 @@ export class Parser {
         let regExp = this.regularExpressions[sym];
         if (regExp.test(nextLexeme)) {
           syntaxTree = {
-            sym: sym, isSuccess: true, children: [nextLexeme],
+            sym: sym, isSuccess: true, lexeme: [nextLexeme],
             pos: pos, nextPos: pos + 1,
           };
         }

@@ -1202,7 +1202,7 @@ proc: BEGIN
 
         -- Find the next tag.
         SET nextTagPos = REGEXP_INSTR(
-            defStr, "@</?[a-zA-Z_]+( w=[1-9][0-9]*)?>", curPos, 1
+            defStr, "@</?[a-zA-Z_]+( w=[1-9][0-9]*)? s>", curPos, 1
         );
 
         -- If there are no more tags to be found, exit with error if an end tag
@@ -1226,7 +1226,7 @@ proc: BEGIN
 
         -- If a tag was found, then first parse the next tag.
         SET nextTag = REGEXP_SUBSTR(
-            defStr, "@</?[a-zA-Z_]+( w=[1-9][0-9]*)?>", nextTagPos, 1
+            defStr, "@</?[a-zA-Z_]+( w=[1-9][0-9]*)? s>", nextTagPos, 1
         );
         SET tagName = REGEXP_SUBSTR(nextTag, "[a-zA-Z_]+", 1, 1);
         SET nestedReaderWhitelistID = CAST(
