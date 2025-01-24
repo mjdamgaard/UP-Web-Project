@@ -55,7 +55,7 @@ export class DataParser {
 
 
 const specialCharPattern =
-  /[,;:"'\/\\+\-\.\*\?\|@\(\)\[\]\{\}(=>)=<>]/;
+  /[,;:"'\/\\+\-\.\*\?\|&@\(\)\[\]\{\}(=>)=<>]/;
 const nonSpecialCharsPattern = new RegExp (
   "[^" + specialCharPattern.source.substring(1) + "+"
 );
@@ -67,7 +67,63 @@ const funAndRegEntLexemePatternArr = [
 ];
 
 
+
+const xmlWSPattern = /\s+/;
+
+const xmlGrammar = {
+  "xml-text": {
+    rules: [
+      ["text-or-element*"],
+    ],
+  },
+  "text-or-element": {
+    rules: [
+      ["element"],
+      [/[^&'"<>]+/],
+      ["/&/", /[#\w]+/, "/;/"],
+    ],
+  },
+  "element": {
+    rules: [
+      [
+        "/</", "element-name", "attr-member*", "/>/",
+        "xml-text",
+        "/</", /\//, "tag-name", "/>/"
+      ],
+      [
+        "/</", "element-name", "attr-member*", /\//, "/>/",
+      ]
+    ],
+  },
+  "element-name": {
+    rules: [
+      [/[_a-sA-Z]+/, "/[_a-sA-Z0-9\\-\\.]+/*"],
+    ],
+    // (One could include a test() here to make sure it doesn't start with
+    // /[xX][mM][lL]/.)
+  },
+  "attr-member": {
+    rules: [
+      ["attr-name", "/=/", "string..."], // TODO continue.
+      ["attr-name"],
+    ],
+  },
+  "attr-name": {
+    rules: [
+      // TODO: Continue.
+    ],
+  },
+}
+
+
+
 const jsonGrammar = {
+  "json-text": {
+    rules: [
+      ["object"],
+      ["array"],
+    ],
+  },
   "literal": {
     rules: [
       ["string"],
@@ -129,7 +185,7 @@ const jsonGrammar = {
       ["literal", "/,/", "literal-list"],
       ["literal"],
     ],
-    postProcess: straightenListSyntaxTree,
+    process: straightenListSyntaxTree,
   },
   "object": {
     rules: [
@@ -141,7 +197,7 @@ const jsonGrammar = {
       ["member", "/,/", "member-list"],
       ["member"],
     ],
-    postProcess: straightenListSyntaxTree,
+    process: straightenListSyntaxTree,
   },
   "member": {
     rules: [
@@ -226,7 +282,7 @@ const funEntGrammar = {
       ["param", "/,/", "param-list"],
       ["param"],
     ],
-    postProcess: straightenListSyntaxTree,
+    process: straightenListSyntaxTree,
   },
   "param": {
     rules: [

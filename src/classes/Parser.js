@@ -47,15 +47,15 @@ export const EOS_ERROR = "End of partial string";
 // nonterminal symbol. (See e.g. https://en.wikipedia.org/wiki/Formal_grammar.)
 // 
 // The values of the grammar object has to be of the form
-// {rules, test?, postProcesses?}, where rules first of all is an array of
-// rules, which are each an array of symbols (terminal or nonterminal) symbols
-// to try parsing.
+// {rules, test?, processes?}, where rules first of all is an array of rules,
+// which are each an array of symbols (terminal or nonterminal) symbols to try
+// parsing.
 // The the optional test() function is a final test in the case of a
 // successfully parsed nonterminal symbol, which has the power to fail the
 // symbol even if otherwise successful. It does so by returning
 // [isSuccess, error?] when called on the resulting syntax tree object, i.e.
 // test(syntaxTree) -> [isSuccess, error?].
-// The optional postProcess() function is a function that is called at the end
+// The optional process() function is a function that is called at the end
 // of a call to the Parser class's main method, parseAndProcess(), regardless
 // of whether the whole parsing was successful or not. It can be used in
 // particular to restructure the syntax tree before further handling. For
@@ -249,7 +249,7 @@ export class Parser {
     // Lex and parse the input string. 
     let syntaxTree = this.parse(str, startSym, isPartial);
 
-    // Then process the syntax tree by calling all postProcess() callbacks (in
+    // Then process the syntax tree by calling all process() callbacks (in
     // order of children before parents, and first sibling through last
     // sibling).
     this.process(syntaxTree);
@@ -267,9 +267,9 @@ export class Parser {
 
     // Then process this syntax tree, and delete the given callback property
     // afterwards.
-    if (syntaxTree.postProcess) {
-      syntaxTree.postProcess(syntaxTree);
-      delete syntaxTree.postProcess;
+    if (syntaxTree.process) {
+      syntaxTree.process(syntaxTree);
+      delete syntaxTree.process;
     }
 
     // Also always delete the no longer needed pos and nextPos properties.
@@ -360,7 +360,7 @@ export class Parser {
     nonterminalSymbol ??= this.defaultSym;
 
     // Parse the rules of the nonterminal symbol.
-    let {rules, test, postProcess} = this.grammar[nonterminalSymbol];
+    let {rules, test, process} = this.grammar[nonterminalSymbol];
     let syntaxTree = this.#parseRules(lexArr, pos, rules);
 
     // If a syntax tree was parsed successfully, run the optional test()
@@ -375,7 +375,7 @@ export class Parser {
 
     // Append the optional post-processing callback to the syntax tree if one
     // is provided.
-    syntaxTree.postProcess = postProcess || undefined;
+    syntaxTree.process = process || undefined;
 
     return syntaxTree;
   }
