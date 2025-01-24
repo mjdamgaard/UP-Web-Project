@@ -55,7 +55,7 @@ export class DataParser {
 
 
 const specialCharPattern =
-  /[,;:"'\/\\+\-\.\*\?\|&@\(\)\[\]\{\}(=>)=<>]/;
+  /[,;(::):"'\/\\+\-\.\*\?\|&@\(\)\[\]\{\}(=>)=<>]/;
 const nonSpecialCharsPattern = new RegExp (
   "[^" + specialCharPattern.source.substring(1) + "+"
 );
@@ -112,7 +112,9 @@ const xmlGrammar = {
   },
   "attr-member": {
     rules: [
-      ["attr-name", "/=/", "$$JSON_PARSER[non-object-literal]"],
+      ["attr-name", "/=/", "string"],
+      ["attr-name", "/=/", "number"],
+      ["attr-name", "/=/", "/true|false/"],
       ["attr-name"],
     ],
   },
@@ -146,17 +148,7 @@ const jsonGrammar = {
       ["number"],
       ["array"],
       ["object"],
-      ["/true/"],
-      ["/false/"],
-      ["/null/"],
-    ],
-  },
-  "non-object-literal": {
-    rules: [
-      ["string"],
-      ["number"],
-      ["/true/"],
-      ["/false/"],
+      ["/true|false|null/"],
     ],
   },
   "string": {
@@ -226,10 +218,7 @@ const jsonGrammar = {
 export function straightenListSyntaxTree(syntaxTree, delimiterLexNum = 1) {
   syntaxTree.children = (syntaxTree.ruleInd === 0) ? [
     syntaxTree.children[0],
-    ...straightenListSyntaxTree(
-      syntaxTree.children[1 + delimiterLexNum],
-      delimiterLexNum
-    ),
+    ...syntaxTree.children[1 + delimiterLexNum].children,
   ] : [
     syntaxTree.children[0]
   ];
@@ -243,14 +232,13 @@ const regEntGrammar = {
   ...jsonGrammar,
   "literal": {
     rules: [
-      ["@-literal"],
-      ["/-/"],
+      ["ent-ref"],
+      ["input-placeholder"],
+      ["/_/"],
       ["string"],
       ["number"],
       ["array"],
-      ["/true/"],
-      ["/false/"],
-      ["/null/"],
+      ["/true|false|null/"],
     ],
   },
   "string": {
@@ -263,14 +251,27 @@ const regEntGrammar = {
   },
   "chars-or-@-literal": {
     rules: [
-      ["@-literal"],
+      ["ent-ref"],
+      ["input-placeholder"],
       ["chars"],
     ],
   },
-  "@-literal": {
+  "chars": {
+    rules: [
+      [/[^"\\@]+/],
+      [/\\/, /["\\\/bfnrt(u[0-9A-Fa-f]{4})].*/],
+      ["/@/", /[^\[\{<]/],
+      ["/@/", /[\[\{<]/, "/;/"],
+    ],
+  },
+  "ent-ref": {
     rules: [
       ["/@/", /\[/, "/0|[1-9][0-9]*/",  /\]/],
       ["/@/", /\[/, "path-substrings+", /\]/],
+    ],
+  },
+  "input-placeholder": {
+    rules: [
       ["/@/", /\{/, "/[1-9][0-9]*/",    /\}/],
     ],
   },
@@ -303,32 +304,41 @@ const funEntGrammar = {
   },
   "param": {
     rules: [
-      ["string", "type-operator?", "/:/", "type"],
+      ["string", "/\\?/?", "/:/", "type", "default-val-def?"],
     ],
   },
-  "type-operator": {
+  "default-val-def": {
     rules: [
-      [/\?/],
       ["/=/", "literal"],
     ],
   },
   "type": {
     rules: [
-      ["@-literal"], // TODO: Change to "ent-ref" instead..
-      // TODO: Continue.
       [/\(/, "type-disjunction-list", /\)/],
+      ["type^(1)"],
     ],
-    test: (syntaxTree) => {
-      if (syntaxTree.ruleInd === 0) {
-        // If @-literal is not an entity reference (ruleInd === 0), fail.
-        let atLiteralSyntaxTree = syntaxTree.children[0];
-        if (atLiteralSyntaxTree.ruleInd !== 0) {
-          return [false, `Invalid type: wrong type of @-literal.`];
-        } else {
-          return [true];
-        }
-      }
-    }
+  },
+  "type-disjunction-list": {
+    rules: [
+      ["type^(1)", "/::/", "string", /\|/, "type-disjunction-list"],
+      ["type^(1)", "/::/", "string"],
+    ],
+  },
+  "type^(1)": {
+    rules: [
+      ["type^(2)", "array-type-operator?"],
+    ],
+  },
+  "array-type-operator": {
+    rules: [
+      [/\[/, "/[1-9][0-9]*/?", /\]/],
+    ],
+  },
+  "type^(2)": {
+    rules: [
+      ["ent-ref"],
+      [/[tuafrjh8d]|string|bool|int|float/],
+    ],
   },
 };
 
