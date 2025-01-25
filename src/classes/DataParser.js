@@ -105,7 +105,7 @@ const xmlGrammar = {
   },
   "element-name": {
     rules: [
-      [/[_a-sA-Z]+/, "/[_a-sA-Z0-9\\-\\.]+/*"],
+      [/[_a-zA-Z]+/, "/[_a-zA-Z0-9\\-\\.]+/*"],
     ],
     // (One could include a test() here to make sure it doesn't start with
     // /[xX][mM][lL]/.)
@@ -151,9 +151,9 @@ export const xmlParser = new Parser(
 );
 
 // Tests:
-console.log(xmlParser.parseAndProcess(
-  `Hello, world!`
-));
+// console.log(xmlParser.parseAndProcess(
+//   `Hello, world!`
+// ));
 
 
 

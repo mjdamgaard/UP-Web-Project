@@ -132,8 +132,8 @@ export class Parser {
     Object.entries(this.grammar).forEach(([sym, {rules}]) => {
       // First validate the nonterminal symbol.
       if (!NONTERMINAL_SYM_REGEXP.test(sym)) {
-        throw `Parser: Nonterminal symbols cannot any of the special \
-          characters '/?*+{}[]$!'. Received "${sym}".`;
+        throw "Parser: Nonterminal symbols cannot contain any of the " +
+          "special characters '/?*+{}[]$!'. Received \"" + sym + '"';
       }
       // Then go through each rule symbol and process patterns and RegExps.
       let rulesNum = rules.length;
@@ -148,12 +148,12 @@ export class Parser {
           // this input in the constructor), and store the RegExp in
           // this.regularExpressions.
           if (ruleSym instanceof RegExp) {
-            let newSym = ruleSym.source;
+            let newSym = "/" + ruleSym.source + "/";
             rule[j] = newSym;
             this.regularExpressions[newSym] = new RegExp(
               "^(" + ruleSym.source + ")$"
             );
-            break;
+            continue;
           }
 
           // Else assume that it is string, and first remove any optional "!"
@@ -182,8 +182,8 @@ export class Parser {
           // If the symbol is a sub-parser symbol, validate it.
           else if (ruleSym.at(0) === "$") {
             if (!SUB_PARSER_SYM_REGEXP.test(ruleSym)) {
-              throw `Parser: Sub-parser keys cannot any of the special \
-                characters '/?*+{}[]$!'. Received "${ruleSym}".`;
+              throw "Parser: Sub-parser keys cannot contain any of the " +
+                "special characters '/?*+{}[]$!'. Received \"" + ruleSym + '"';
             }
           }
 
@@ -201,7 +201,8 @@ export class Parser {
 
   addSubParser(key, parser) {
     if (!SUB_PARSER_KEY_REGEXP.test(key)) {
-      throw "Parser.addSubParser(): key cannot contain '[', ']', or '$'.";
+      throw "Parser.addSubParser(): Sub-parser keys cannot contain any of " +
+        "the special characters '/?*+{}[]$!'. Received \"" + key + '"';
     }
     this.subParsers[key] = parser;
   }
@@ -292,9 +293,7 @@ export class Parser {
     }
 
     // Then parse the resulting lexeme array.
-    let syntaxTree = this.parseLexArr(
-      lexArr, 0, startSym, str, strPosArr
-    );
+    let syntaxTree = this.parseLexArr(lexArr, 0, startSym);
 
     // If the input string was not fully parsed, make sure that isSuccess is
     // set to false, and set an appropriate error for the syntax tree.
@@ -306,12 +305,11 @@ export class Parser {
         // not for now. *Or maybe let us, after all, so a possible TODO here..)
         syntaxTree.isSuccess = false;
         let strPos = strPosArr[syntaxTree.nextPos] ?? str.length - 1;
-        syntaxTree.error = `Parsing error "Incomplete parsing" after:
-          ${str.substring(strPos - ERROR_ECHO_STR_LEN - 1, strPos - 1)}
-          ----
-          Expected an empty string, but got:
-          ${str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4))}
-        `;
+        syntaxTree.error = 'Parsing error "Incomplete parsing" after:\n' +
+          str.substring(strPos - ERROR_ECHO_STR_LEN - 1, strPos - 1) +
+          "\n----\n" +
+          "Expected an empty string, but got:\n" +
+          str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4));
       }
       // Else extract an appropriate error from the syntax tree, via a call to
       // #getErrorAndFailedNode().
@@ -322,12 +320,11 @@ export class Parser {
 
         if (error !== EOS_ERROR) {
           let strPos = strPosArr[failedNode.nextPos] ?? str.length - 1;
-          syntaxTree.error = `Parsing error "${error}" after:
-            ${str.substring(strPos - ERROR_ECHO_STR_LEN - 1, strPos - 1)}
-            ----
-            Expected ${failedNode.sym}, but got:
-            ${str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4))}
-          `;
+          syntaxTree.error = `Parsing error "${error}" after:\n` +
+          str.substring(strPos - ERROR_ECHO_STR_LEN - 1, strPos - 1) +
+          "\n----\n" +
+          "Expected an empty string, but got:\n" +
+          str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4));
         }
       }
     }
@@ -356,12 +353,14 @@ export class Parser {
 
 
 
-  parseLexArr(lexArr, pos = 0, nonterminalSymbol) {
+  parseLexArr(lexArr, pos = 0, nonterminalSymbol, triedSymbols) {
     nonterminalSymbol ??= this.defaultSym;
 
     // Parse the rules of the nonterminal symbol.
     let {rules, test, process} = this.grammar[nonterminalSymbol];
-    let syntaxTree = this.#parseRules(lexArr, pos, rules, nonterminalSymbol);
+    let syntaxTree = this.#parseRules(
+      lexArr, pos, rules, nonterminalSymbol, triedSymbols
+    );
 
     // If a syntax tree was parsed successfully, run the optional test()
     // function if there in order to finally succeed or fail it. 
@@ -383,7 +382,7 @@ export class Parser {
 
 
 
-  #parseRules(lexArr, pos, rules, sym) {
+  #parseRules(lexArr, pos, rules, sym, triedSymbols) {
     // Initialize an array of arrays for each rule symbol index, j, each
     // supposed contain all recorded successful symbols for that j.
     let successfulSymbols = [];
@@ -428,7 +427,9 @@ export class Parser {
         // set to true, try parsing the symbol.
         let prevSuccesses = successfulSymbols[j];
         if (!prevSuccesses || parseAgain) {
-          childSyntaxTree = this.#parseRuleSymbol(lexArr, nextPos, ruleSym);
+          childSyntaxTree = this.#parseRuleSymbol(
+            lexArr, nextPos, ruleSym, (j === 0) ? triedSymbols : []
+          );
           if (childSyntaxTree.isSuccess) {
             // Record the new success.
             ruleChildren.push(childSyntaxTree);
@@ -506,9 +507,19 @@ export class Parser {
 
 
 
-  #parseRuleSymbol(lexArr, pos, sym) {
+  #parseRuleSymbol(lexArr, pos, sym, triedSymbols = []) {
+console.log(pos);console.log(sym);debugger;
     let nextLexeme = lexArr[pos];
     let syntaxTree;
+
+    // Before anything else, check  that sym hasn't already been tried at this
+    // position in order to prevent infinite recursion.
+    if (triedSymbols.includes(sym)) {
+      throw "Parser: Infinite recursion detected. Symbol: \"" + sym + '". ' +
+        "Symbols tried in same place: \"" + triedSymbols.join('","') + '"';
+    } else {
+      triedSymbols.push(sym);
+    }
 
     // If sym ends in either '?', '*', '+', '{n}' or '{n,m}', try parsing an
     // appropriate number of instances of the symbol preceding the quantifier.
@@ -522,7 +533,7 @@ export class Parser {
       let [n, m] = (quantifier.match(NUMBER_SUBSTR_REGEXP) ?? []).map(
         val => parseInt(val)
       );
-      let max = m ?? n ?? (quantifier === "?") ? 1 : null;
+      let max = m ?? n ?? (quantifier === "?") ? 1 : Infinity;
       let min = n ?? (quantifier === "+") ? 1 : 0;
 
       // Then parse as many instances of sybSym as possible in a row,
@@ -540,7 +551,9 @@ export class Parser {
         }
 
         // Else parse a new child.
-        let childSyntaxTree = this.#parseRuleSymbol(lexArr, pos, subSym);
+        let childSyntaxTree = this.#parseRuleSymbol(
+          lexArr, pos, subSym, (i === 0) ? triedSymbols : []
+        );
         if (childSyntaxTree.isSuccess) {
           // Add child syntax tree to children and increase pos.
           children.push(childSyntaxTree);
@@ -639,14 +652,14 @@ export class Parser {
       // Else let the parser parse as many lexemes as it can, using the
       // same lexeme array. 
       else {
-        syntaxTree = subParser.parseLexArr(lexArr, pos, startSym);
+        syntaxTree = subParser.parseLexArr(lexArr, pos, startSym, triedSymbols);
       }
     }
 
     // Else treat sym as a non-terminal symbol, and make a recursive call to
     // parse() with nonterminalSymbol = sym.
-    else {
-      syntaxTree = this.parseLexArr(lexArr, pos, sym);
+    else {debugger;
+      syntaxTree = this.parseLexArr(lexArr, pos, sym, triedSymbols);
     }
 
     return syntaxTree;
@@ -672,7 +685,8 @@ export class Lexer {
     this.lexemeOrWSRegEx = new RegExp(
       this.wsRegEx.source + "|" +
       lexemePatternArr.map(
-        pattern => (pattern instanceof RegExp) ? pattern : new RegExp(pattern)
+        pattern => (pattern instanceof RegExp) ? pattern.source :
+          pattern.slice(1, -1)
       ).join("|")
     );
     // Lexer RegEx which also includes an extra final match that
@@ -700,12 +714,11 @@ export class Lexer {
       if (!this.lexemeOrWSRegEx.test(lastMatch)) {
         let lastIndexOfInvalidLexeme = lastMatch.search(this.wsRegEx) - 1;
         throw new LexError(
-          `Lexer error at:
-          ${lastMatch.substring(0, ERROR_ECHO_STR_LEN)}
-          ----
-          Invalid lexeme:
-          ${lastMatch.substring(0, lastIndexOfInvalidLexeme + 1)}
-          `
+          "Lexer error at: \n" +
+          lastMatch.substring(0, ERROR_ECHO_STR_LEN) +
+          "\n----\n" +
+          "Invalid lexeme:\n" +
+          lastMatch.substring(0, lastIndexOfInvalidLexeme + 1)
         );
       }
     }
