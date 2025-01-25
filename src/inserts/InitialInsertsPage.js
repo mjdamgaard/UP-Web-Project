@@ -144,11 +144,11 @@ export function initialInserts(dataInserter) {
     'classes/format', 'f', (
       'class(' + [
         '"Name":string',
-        '"Parent class"?:@[classes]',
+        '"Parent class":@[classes]?',
         // 'Member format?:(f::Function|t::Entity type)',
-        '"Member type"?:t=@[4]',
-        '"Member format"?:f',
-        '"Description"?:h',
+        '"Member type":t=@[4]',
+        '"Member format":f?',
+        '"Description":h?',
       ].join(',') +
       ')=>{' + [
         '"Class":@[classes]',
@@ -307,7 +307,7 @@ export function initialInserts(dataInserter) {
         '"Title":string',
         '"Subject" class:@[classes]',
         '"Object" class:@[classes]',
-        '"Description"?:h',
+        '"Description":h?',
       ].join(',') +
       ')=>{' + [
         '"Class":@[relations]',
@@ -339,9 +339,9 @@ export function initialInserts(dataInserter) {
         // // "Domain:[Object:@[entities],Relation:@[relations]]",
         // "Object:@[entities]",
         // "Relation:@[relations]=@[relations/members]",
-        "Domain?:@[classes]",
+        "Domain:@[classes]?",
         "Metric:@[metrics]",
-        "Description?:h",
+        "Description:h?",
       ].join(",") +
       ")=>{" + [
         "Class:@[qualities]",
@@ -480,12 +480,12 @@ export function initialInserts(dataInserter) {
     'metrics/format', 'f', (
       'metric(' + [
         '"Name":string',
-        '"Unit"?:string',
-        '"Prepend unit"?:bool=false',
-        '"Interval labels"?:[start:float,end:float,label:string][]',
-        '"Lower bound"?:float',
-        '"Upper bound"?:float',
-        '"Description":h',
+        '"Unit":string?',
+        '"Prepend unit":bool=false',
+        '"Interval labels":["start":float,"end":float,"label":string][]?',
+        '"Lower bound":float?',
+        '"Upper bound":float?',
+        '"Description":h?',
       ].join(',') +
       ')=>{' + [
         '"Class":@[metrics]',
@@ -550,7 +550,7 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     'min contribution lists/format', 'f', (
       'min_contr(' + [
-        '"Editor":(@[users]::User|d::Database node)',
+        '"Editor":("User":@[users]|"Database node":d)',
         '"User group":@[user groups]',
         '"Quality":@[qualities]',
         '"Subject":@[entities]',
@@ -578,7 +578,7 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     'max contribution lists/format', 'f', (
       'max_contr(' + [
-        '"Editor":(@[users]::User|d::Database node)',
+        '"Editor":("User":@[users]|"Database node":d)',
         '"User group":@[user groups]',
         '"Quality":@[qualities]',
         '"Subject":@[entities]',
@@ -606,11 +606,11 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     'score median lists/format', 'f', (
       'score_medians(' + [
-        '"Editor":(@[users]::User|d::Database node)',
+        '"Editor":("User":@[users]|"Database node":d)',
         '"Has passed weight threshold":bool',
         '"User group":@[user groups]',
         '"Quality":@[qualities]',
-        '"Filter list"?:@[lists]'
+        '"Filter list":@[lists]?'
       ].join(',') +
       ')=>{' + [
         '"Class":@[score median lists]',

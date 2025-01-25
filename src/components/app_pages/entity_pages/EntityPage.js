@@ -32,24 +32,25 @@ export const EntityPage = ({entID, initTabID}) => {
   const [results, setState] = useState({});
 
   useMemo(() => {
-    DataFetcher.fetchPublicEntity(
-      entID, (datatype, defStr, len, creatorID, isContained) => {
-        setState(prev => {
-          return {
-            ...prev,
-            datatype: datatype,
-            defStr: defStr,
-            len: len,
-            creatorID: creatorID,
-            isContained: isContained,
-            isFetched: true,
-          };
-        });
+    DataFetcher.fetchEntity(
+      entID,
+      (entType, defStr, len, creatorID, isEditable, readerWhitelistID) => {
+        // setState(prev => {
+        //   return {
+        //     ...prev,
+        //     entType: entType,
+        //     defStr: defStr,
+        //     len: len,
+        //     creatorID: creatorID,
+        //     isContained: isContained,
+        //     isFetched: true,
+        //   };
+        // });
       }
     );
   }, []);
 
-  const {datatype, defStr, isContained, isFetched} = results;
+  const {entType, defStr, isContained, isFetched} = results;
 
   var classID;
   try {

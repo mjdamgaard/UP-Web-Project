@@ -93,7 +93,7 @@ export class DataFetcher {
   }
 
   static fetchEntityID(
-    entType, readerWhiteListID, defStr
+    entType, readerWhiteListID, defStr, callback
   ) {
     let reqData = {
       req: "entID",
@@ -112,7 +112,7 @@ export class DataFetcher {
   }
 
   static fetchParsedRegularEntity(
-    readerWhiteListID, explodedDefStr
+    readerWhiteListID, explodedDefStr, callback
   ) {
     let reqData = {
       req: "regEnt",

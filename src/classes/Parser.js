@@ -3,13 +3,13 @@ const ERROR_ECHO_STR_LEN = 400;
 
 
 const NONTERMINAL_SYM_REGEXP =
-  /^[^\/\?\*\+\{\}\[\]$!]+$/;
+  /^[^\/\?\*\+\{\}\[\]\$!]+$/;
 const NONTERMINAL_SYM_SUBSTR_REGEXP =
-   /[^\/\?\*\+\{\}\[\]$!]+/;
+   /[^\/\?\*\+\{\}\[\]\$!]+/;
 const SUB_PARSER_SYM_REGEXP =
-  /^$$?[^\/\?\*\+\{\}\[\]$!]+(\[[^\/\?\*\+\{\}\[\]$!]+\])?$/;
+  /^\$\$?[^\/\?\*\+\{\}\[\]\$!]+(\[[^\/\?\*\+\{\}\[\]\$!]+\])?$/;
 const TRAILING_QUANTIFIER_SUBSTR_REGEXP =
-  /[\?\*\+(\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\})]$/;
+  /[\?\*\+]$|\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\}$/;
 const SUB_PARSER_KEY_REGEXP = NONTERMINAL_SYM_REGEXP;
 const SUB_PARSER_KEY_SUBSTR_REGEXP = NONTERMINAL_SYM_SUBSTR_REGEXP;
 const SQUARE_BRACKET_SUBSTR_REGEXP =
@@ -116,7 +116,6 @@ export const EOS_ERROR = "End of partial string";
 // </param>
 export class Parser {
   constructor(grammar, defaultSym, lexemePatternArr, wsPattern, subParsers) {
-    wsPattern ||= //;
     this.grammar = grammar;
     this.subParsers = subParsers ?? {};
     // defaultSym is the default (nonterminal) start symbol.
@@ -130,7 +129,7 @@ export class Parser {
   }
 
   #validateAndPreprocess() {
-    Object.entries(grammar).forEach(([sym, {rules}]) => {
+    Object.entries(this.grammar).forEach(([sym, {rules}]) => {
       // First validate the nonterminal symbol.
       if (!NONTERMINAL_SYM_REGEXP.test(sym)) {
         throw `Parser: Nonterminal symbols cannot any of the special \
@@ -175,7 +174,7 @@ export class Parser {
           // construct and store a corresponding RegExp instance in
           // this.regularExpressions.
           if (ruleSym.at(0) === "/" && ruleSym.at(-1) === "/") {
-            this.regularExpressions[newSym] = new RegExp(
+            this.regularExpressions[ruleSym] = new RegExp(
               "^(" + ruleSym.slice(1, -1) + ")$"
             );
           }
@@ -262,7 +261,7 @@ export class Parser {
   process(syntaxTree) {
     // Process the children first.
     if (syntaxTree.children) {
-      syntaxTree.children.forEach(this.process);
+      syntaxTree.children.forEach(this.process.bind(this));
     }
 
     // Then process this syntax tree, and delete the given callback property
@@ -294,7 +293,7 @@ export class Parser {
 
     // Then parse the resulting lexeme array.
     let syntaxTree = this.parseLexArr(
-      lexArr, pos, startSym, str, strPosArr
+      lexArr, 0, startSym, str, strPosArr
     );
 
     // If the input string was not fully parsed, make sure that isSuccess is
@@ -306,6 +305,7 @@ export class Parser {
         // (We could parse column and line number here, but let's not, at least
         // not for now. *Or maybe let us, after all, so a possible TODO here..)
         syntaxTree.isSuccess = false;
+        let strPos = strPosArr[syntaxTree.nextPos] ?? str.length - 1;
         syntaxTree.error = `Parsing error "Incomplete parsing" after:
           ${str.substring(strPos - ERROR_ECHO_STR_LEN - 1, strPos - 1)}
           ----
@@ -356,12 +356,12 @@ export class Parser {
 
 
 
-  parseLexArr(lexArr, pos, nonterminalSymbol) {
+  parseLexArr(lexArr, pos = 0, nonterminalSymbol) {
     nonterminalSymbol ??= this.defaultSym;
 
     // Parse the rules of the nonterminal symbol.
     let {rules, test, process} = this.grammar[nonterminalSymbol];
-    let syntaxTree = this.#parseRules(lexArr, pos, rules);
+    let syntaxTree = this.#parseRules(lexArr, pos, rules, nonterminalSymbol);
 
     // If a syntax tree was parsed successfully, run the optional test()
     // function if there in order to finally succeed or fail it. 
@@ -383,7 +383,7 @@ export class Parser {
 
 
 
-  #parseRules(lexArr, pos, rules) {
+  #parseRules(lexArr, pos, rules, sym) {
     // Initialize an array of arrays for each rule symbol index, j, each
     // supposed contain all recorded successful symbols for that j.
     let successfulSymbols = [];
@@ -445,7 +445,7 @@ export class Parser {
             // If a parsing failed with error = EOS_ERROR, abort the parsing
             // immediately, propagating this error outwards.
             if (childSyntaxTree.error === EOS_ERROR) {
-              syntaxTree = {
+              let syntaxTree = {
                 sym: sym, isSuccess: false, error: EOS_ERROR,
                 ruleInd: (rulesNum) ? i : undefined,
                 children: ruleChildren,
@@ -477,7 +477,7 @@ export class Parser {
       // we record the failed rule if and only if it breaks the previous record
       // for the largest nextPos reached. 
       if (ruleSuccess) {
-        syntaxTree = {
+        let syntaxTree = {
           sym: sym, isSuccess: true,
           ruleInd: (rulesNum) ? i : undefined,
           children: ruleChildren,
@@ -494,7 +494,7 @@ export class Parser {
 
     // If the for loop ends, meaning that all rules failed, we return a failed
     // syntax tree containing the children of the "record rule."
-    syntaxTree = {
+    let syntaxTree = {
       sym: sym, isSuccess: false,
       ruleInd: (rulesNum) ? recordRuleInd || undefined : undefined,
       children: recordRuleChildren || undefined,
@@ -666,10 +666,11 @@ export class Lexer {
     // Whitespace RegEx.
     this.wsRegEx = (wsPattern instanceof RegExp) ? wsPattern :
       wsPattern ? new RegExp(wsPattern) :
-      /[^a[^a]]/;
+      /[^\s\S]/;
+    this.hasWhitespace = wsPattern ? true : false;
     // RegEx of all lexemes and whitespace. 
     this.lexemeOrWSRegEx = new RegExp(
-      wsRegEx.source + "|" +
+      this.wsRegEx.source + "|" +
       lexemePatternArr.map(
         pattern => (pattern instanceof RegExp) ? pattern : new RegExp(pattern)
       ).join("|")
@@ -677,7 +678,10 @@ export class Lexer {
     // Lexer RegEx which also includes an extra final match that
     // greedily matches the rest of the string on failure of the
     // lexemeOrWSRegEx. 
-    this.lexerRegEx = new RegExp(lexemeOrWSRegEx.source + "|" + "[^$]+", "g");
+    this.lexerRegEx = new RegExp(
+      this.lexemeOrWSRegEx.source + "|" + "[^$]+",
+      "g"
+    );
   }
 
 
@@ -719,9 +723,9 @@ export class Lexer {
     // and the corresponding positions in strPosArr, and return these two
     // filtered arrays
     let lexArr, strPosArr;
-    if (wsPattern) {
+    if (this.hasWhitespace) {
       lexArr = unfilteredLexArr.filter((val, ind) => {
-        let isWhitespace = wsRegEx.test(val);
+        let isWhitespace = this.wsRegEx.test(val);
         if (isWhitespace) {
           unfilteredStrPosArr[ind] = null;
         }

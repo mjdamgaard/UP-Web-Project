@@ -55,7 +55,7 @@ export class DataParser {
 
 
 const specialCharPattern =
-  /[,;(::):"'\/\\+\-\.\*\?\|&@\(\)\[\]\{\}(=>)=<>]/;
+  /=>|[,;:"'\/\\+\-\.\*\?\|&@\(\)\[\]\{\}=<>]/;
 const nonSpecialCharsPattern = new RegExp (
   "[^" + specialCharPattern.source.substring(1) + "+"
 );
@@ -68,7 +68,7 @@ const funAndRegEntLexemePatternArr = [
 
 
 const doubleQuoteStringPattern =
-  /"([^"\\]|\\[a[^a]])*"/;
+  /"([^"\\]|\\[\s\S])*"/;
 
 const xmlWSPattern = /\s+/;
 const xmlLexemePatternArr = [
@@ -124,7 +124,38 @@ const xmlGrammar = {
       [/[_a-sA-Z]+/, "/[_a-sA-Z0-9\\-\\.]+/*"],
     ],
   },
+  "string": {
+    rules: [
+      [doubleQuoteStringPattern],
+    ],
+    test: (syntaxTree) => {
+      // Test that the string is a valid JSON string.
+      let stringLiteral = syntaxTree.children[0].lexeme;
+      try {
+        JSON.parse(stringLiteral);
+      } catch (error) {
+        return [false, `Invalid JSON string: ${stringLiteral}`];
+      }
+      return [true];
+    },
+  },
+  "number": {
+    rules: [
+      [/\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-+]?(0|[1-9][0-9]*))?/],
+    ],
+  },
 }
+
+export const xmlParser = new Parser(
+  xmlGrammar, "xml-text", xmlLexemePatternArr, xmlWSPattern
+);
+
+// Tests:
+console.log(xmlParser.parseAndProcess(
+  `Hello, world!`
+));
+
+
 
 
 
@@ -183,7 +214,7 @@ const jsonGrammar = {
   "chars": {
     rules: [
       [/[^"\\]+/],
-      [/\\/, /["\\\/bfnrt(u[0-9A-Fa-f]{4})].*/],
+      [/\\/, /(["\\\/bfnrt]|u[0-9A-Fa-f]{4}).*/],
     ],
   },
   "number": {
@@ -259,7 +290,7 @@ const regEntGrammar = {
   "chars": {
     rules: [
       [/[^"\\@]+/],
-      [/\\/, /["\\\/bfnrt(u[0-9A-Fa-f]{4})].*/],
+      [/\\/, /(["\\\/bfnrt]|u[0-9A-Fa-f]{4}).*/],
       ["/@/", /[^\[\{<]/],
       ["/@/", /[\[\{<]/, "/;/"],
     ],
@@ -314,30 +345,49 @@ const funEntGrammar = {
   },
   "type": {
     rules: [
-      [/\(/, "type-disjunction-list", /\)/],
+      ["type^(1)", "/\\?/"],
+      ["type^(1)", "/=/", "literal"],
       ["type^(1)"],
-    ],
-  },
-  "type-disjunction-list": {
-    rules: [
-      ["type^(1)", "/::/", "string", /\|/, "type-disjunction-list"],
-      ["type^(1)", "/::/", "string"],
     ],
   },
   "type^(1)": {
     rules: [
-      ["type^(2)", "array-type-operator?"],
+      [/\(/, "type-disjunction-list", /\)/],
+      ["type^(2)"],
     ],
   },
-  "array-type-operator": {
+  "type-disjunction-list": {
     rules: [
-      [/\[/, "/[1-9][0-9]*/?", /\]/],
+      ["string", "/:/", "type^(2)", /\|/, "type-disjunction-list"],
+      ["string", "/:/", "type^(2)"],
     ],
   },
   "type^(2)": {
     rules: [
-      ["ent-ref"],
+      [/\[/, "type^(3)-list", /\]/, "array-type-operator"],
+      [/\[/, "type^(3)-list", /\]/],
+      ["type^(3)"],
+    ],
+  },
+  "array-type-operator": {
+    rules: [
+      [/\[/, "/[1-9][0-9]*/", /\]/],
+      [/\[/, /\]/],
+    ],
+  },
+  "type^(3)-list": {
+    rules: [
+      ["type^(3)", "/,/", "type^(3)-list"],
+      ["type^(3)"],
+    ],
+    process: straightenListSyntaxTree,
+  },
+  "type^(3)": {
+    rules: [
+      ["ent-ref"], // A class.
       [/[tuafrjh8d]|string|bool|int|float/],
+      [/array|object/], // User has to manually type in a parsable JS array/
+      // object.
     ],
   },
 };
@@ -348,6 +398,6 @@ const funEntGrammar = {
 
 
 
-const regularEntityParser = new Parser(
-  regEntGrammar, "literal-list", funAndRegEntLexemePatternArr, false
-);
+// const regularEntityParser = new Parser(
+//   regEntGrammar, "literal-list", funAndRegEntLexemePatternArr, false
+// );
