@@ -7,7 +7,7 @@ const NONTERMINAL_SYM_REGEXP =
 const NONTERMINAL_SYM_SUBSTR_REGEXP =
    /[^\/\?\*\+\{\}\[\]\$!]+/;
 const SUB_PARSER_SYM_REGEXP =
-  /^\$\$?[^\/\?\*\+\{\}\[\]\$!]+(\[[^\/\?\*\+\{\}\[\]\$!]+\])?$/;
+  /^\$\$?[^\/\?\*\+\{\}\[\]\$!]+(\[[^\/\?\*\+\{\}\[\]\$!]+([\?\*\+]$|\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\})?\])?$/;
 const TRAILING_QUANTIFIER_SUBSTR_REGEXP =
   /[\?\*\+]$|\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\}$/;
 const SUB_PARSER_KEY_REGEXP = NONTERMINAL_SYM_REGEXP;
@@ -33,7 +33,7 @@ export const EOS_ERROR = "End of partial string";
 // defines how the string is lexed before the parsing itself.
 //
 // The main method of this class, used for lexing and parsing (and potentially
-// post-processing) a string, is Parser.parseAndProcess().
+// processing) a string, is Parser.parse(str, startSym?, isPartial?).
 // 
 // The constructor can also take key-value object of other Parser instances,
 // which can be used in the grammar rules. (And the Parser.addSubParser()
@@ -47,23 +47,26 @@ export const EOS_ERROR = "End of partial string";
 // nonterminal symbol. (See e.g. https://en.wikipedia.org/wiki/Formal_grammar.)
 // 
 // The values of the grammar object has to be of the form
-// {rules, test?, processes?}, where rules first of all is an array of rules,
-// which are each an array of symbols (terminal or nonterminal) symbols to try
-// parsing.
-// The the optional test() function is a final test in the case of a
-// successfully parsed nonterminal symbol, which has the power to fail the
-// symbol even if otherwise successful. It does so by returning
-// [isSuccess, error?] when called on the resulting syntax tree object, i.e.
-// test(syntaxTree) -> [isSuccess, error?].
-// The optional process() function is a function that is called at the end
-// of a call to the Parser class's main method, parseAndProcess(), regardless
-// of whether the whole parsing was successful or not. It can be used in
-// particular to restructure the syntax tree before further handling. For
-// example, when parsing a list via a rule of the form
-// 'List := Elem , List | Elem', the resulting syntax tree will initially be
+// {rules, process?}, where rules first of all is an array of rules, which are
+// each an array of symbols (terminal or nonterminal) to try parsing.
+// The the optional process() function can process the syntax tree node
+// right after it has been parsed, and also potentially perform some initial
+// tests on the syntax tree, which can turn a success into a failure. It does
+// so by returning a truthy error message (string). Otherwise if the test
+// succeeds, process() should return void, or just a falsy value. The input
+// parameters are: process(children, ruleInd), where children is the (mutable)
+// array of children of the nonterminal given node, and ruleInd is the index of
+// the rule that succeeded.
+// 
+// An example could be when parsing a list via a rule of the form
+// 'List := Elem , List | Elem'. The resulting syntax tree will initially be
 // of the form List(elem1, ',', List(elem2, ',', List(...(List(elemN))))),
 // which one might want to transform into simply List(elem1, elem2, ..., elemN)
-// before further handling.
+// before further handling. Furthermore, say that one also wanted to test that
+// the first element is equal to the last (for whatever reason). Then process()
+// could make this test on children (potentially after the aforementioned
+// list processing), and then return a non-empty error string in case they are
+// not equal.
 // 
 // The symbols inside each rule of the grammar can either be another (or the
 // same) nonterminal symbol, or a RegExp pattern beginning and ending in '/',
@@ -71,12 +74,12 @@ export const EOS_ERROR = "End of partial string";
 // the lexeme is fully matched by the pattern. A RegExp instance is also
 // accepted instead of a pattern, again with neither '^' nor '$' at the ends.
 // The rule symbols can also be of the form
-// '$$?<Sub-parser key>(\[Nonterminal symbol\])?', where one or two '$'s
+// '$$?<Sub-parser key>(\[<Symbol>\])?', where one or two '$'s
 // determines whether the called sub-parser will parse using the same lexeme
 // array as its parent is currently parsing, or if it will parse a single
-// (compound, possibly big) lexeme as its input string. And the optional
-// nonterminal symbol makes it possible to parse another nonterminal symbol
-// instead of the sub-parser's default one.
+// (compound, possibly big) lexeme as its input string. And the optional symbol
+// makes it possible to parse another symbol instead of the sub-parser's default
+// one.
 // Furthermore, any rule symbol can also be followed by a RegExp quantifier,
 // i.e. '?', '*', '+', or '{<n>,<m>}', which parses a variable number of the
 // preceding nonterminal symbol.
@@ -210,7 +213,7 @@ export class Parser {
 
 // <summary>
 // The main method of this Parser class, used for lexing and parsing (and
-// potentially post-processing) a string.
+// potentially processing) a string.
 // </summary>
 // 
 // <param name="str">
@@ -235,48 +238,18 @@ export class Parser {
 // 
 // <returns>
 // A syntax tree consisting of nodes of the form
-// {sym, isSuccess, error?, children?, ruleInd? lexeme?}, where sym the
-// nonterminal symbol or the rule symbol of the node, isSuccess (bool) tells
-// if the node was successfully parsed or not, children is an array of the
-// node's child nodes (which on failure will be those of the rule that reached
-// the furthest in the string, and also include the last failed node), ruleInd
-// is the index of the rule that the children was obtained from in the given
-// "rules" array in the case of a nonterminal symbol that has more than one
-// rule, and lexeme is the matched lexeme in case of a pattern symbol.
+// {sym, isSuccess, error?, children?, ruleInd? lexeme?, nextPos},
+// where sym is the nonterminal symbol or the rule symbol of the node,
+// isSuccess (bool) tells if the node was successfully parsed or not, children
+// is an array of the node's child nodes (which on failure will be those of the
+// rule that reached the furthest in the string, and also include the last
+// failed node), ruleInd is the index of the rule that the children was
+// obtained from in the given "rules" array in the case of a nonterminal symbol
+// that has more than one rule, and lexeme is the matched lexeme in case of a
+// pattern symbol.
+// Also the returned nextPos is a number denoting the number of lexemes that
+// successfully parsed as part of some rule (successful or unsuccessful).
 // </returns>
-  parseAndProcess(str, startSym, isPartial = false) {
-    // Lex and parse the input string. 
-    let syntaxTree = this.parse(str, startSym, isPartial);
-
-    // Then process the syntax tree by calling all process() callbacks (in
-    // order of children before parents, and first sibling through last
-    // sibling).
-    this.process(syntaxTree);
-
-    // Return the now processed syntax tree.
-    return syntaxTree;
-  }
-
-
-  process(syntaxTree) {
-    // Process the children first.
-    if (syntaxTree.children) {
-      syntaxTree.children.forEach(this.process.bind(this));
-    }
-
-    // Then process this syntax tree, and delete the given callback property
-    // afterwards.
-    if (syntaxTree.process) {
-      syntaxTree.process(syntaxTree);
-      delete syntaxTree.process;
-    }
-
-    // Also always delete the no longer needed pos and nextPos properties.
-    delete syntaxTree.pos;
-    delete syntaxTree.nextPos;
-  }
-
-
   parse(str, startSym, isPartial = false) {
     // Lex the input string.
     let lexArr, strPosArr;
@@ -356,24 +329,24 @@ export class Parser {
     nonterminalSymbol ??= this.defaultSym;
 
     // Parse the rules of the nonterminal symbol.
-    let {rules, test, process} = this.grammar[nonterminalSymbol];
-    let syntaxTree = this.#parseRules(
+    let {rules, process} = this.grammar[nonterminalSymbol] ||
+      (() => {
+        throw "Parser.parseLexArr(): Undefined nonterminal symbol: \"" +
+          nonterminalSymbol + '"';
+      })();
+    let syntaxTree = this.parseRules(
       lexArr, pos, rules, nonterminalSymbol, triedSymbols
     );
 
-    // If a syntax tree was parsed successfully, run the optional test()
+    // If a syntax tree was parsed successfully, run the optional process()
     // function if there in order to finally succeed or fail it. 
     if (syntaxTree.isSuccess) {
-      if (test) {
-        let [isSuccess, error] = test(syntaxTree);
-        syntaxTree.isSuccess = isSuccess;
+      if (process) {
+        let error = process(syntaxTree.children, syntaxTree.ruleInd);
+        syntaxTree.isSuccess = !error;
         syntaxTree.error = error || undefined;
       }
     }
-
-    // Append the optional post-processing callback to the syntax tree if one
-    // is provided.
-    syntaxTree.process = process || undefined;
 
     return syntaxTree;
   }
@@ -381,7 +354,7 @@ export class Parser {
 
 
 
-  #parseRules(lexArr, pos, rules, sym, triedSymbols) {
+  parseRules(lexArr, pos, rules, sym, triedSymbols) {
     // Initialize a variable holding the record nextPos obtaining in a (failed)
     // rule so far, and also one that holds the index of the "record rule" that
     // obtained it.
@@ -451,7 +424,7 @@ export class Parser {
 
         // After this initial skipping of previously recorded matching
         // successes, First of all try parsing the rule symbol.
-        childSyntaxTree = this.#parseRuleSymbol(
+        childSyntaxTree = this.parseRuleSymbol(
           lexArr, nextPos, ruleSym, (j === 0) ? triedSymbols : []
         );
 
@@ -482,7 +455,7 @@ export class Parser {
             sym: sym, isSuccess: false, error: EOS_ERROR,
             ruleInd: (rulesNum) ? i : undefined,
             children: ruleChildren,
-            pos: pos, nextPos: nextPos,
+            nextPos: nextPos,
           };
           return syntaxTree;
         }
@@ -501,7 +474,7 @@ export class Parser {
           sym: sym, isSuccess: true,
           ruleInd: (rulesNum) ? i : undefined,
           children: ruleChildren,
-          pos: pos, nextPos: nextPos,
+          nextPos: nextPos,
         };
         return syntaxTree;
       }
@@ -526,7 +499,7 @@ export class Parser {
       sym: sym, isSuccess: false,
       ruleInd: (rulesNum) ? recordRuleInd || undefined : undefined,
       children: recordRuleChildren || undefined,
-      pos: pos, nextPos: pos,
+      nextPos: pos,
     };
     return syntaxTree;
   }
@@ -534,7 +507,7 @@ export class Parser {
 
 
 
-  #parseRuleSymbol(lexArr, pos, sym, triedSymbols = []) {
+  parseRuleSymbol(lexArr, pos, sym, triedSymbols = []) {
     let nextLexeme = lexArr[pos];
     let syntaxTree;
 
@@ -571,13 +544,13 @@ export class Parser {
         if (i + 1 > max) {
           syntaxTree = {
             sym: sym, isSuccess: true, children: children,
-            pos: pos, nextPos: nextPos,
+            nextPos: nextPos,
           };
           break;
         }
 
         // Else parse a new child.
-        let childSyntaxTree = this.#parseRuleSymbol(
+        let childSyntaxTree = this.parseRuleSymbol(
           lexArr, nextPos, subSym, (i === 0) ? triedSymbols : []
         );
         if (childSyntaxTree.isSuccess) {
@@ -593,14 +566,14 @@ export class Parser {
           if (i + 1 >= min) {
             syntaxTree = {
               sym: sym, isSuccess: true, children: children,
-              pos: pos, nextPos: nextPos,
+              nextPos: nextPos,
             };
             break;
           }
           else {
             syntaxTree = {
               sym: sym, isSuccess: false, children: children,
-              pos: pos, nextPos: nextPos,
+              nextPos: nextPos,
               // (Note that on failure, nextPos is supposed to be where the
               // error occurred.)
             };
@@ -615,7 +588,7 @@ export class Parser {
     else if (nextLexeme === EOS) {
       syntaxTree = {
         sym: sym, isSuccess: false, error: EOS_ERROR,
-        pos: pos, nextPos: pos,
+        nextPos: pos,
         // Note that on failure, nextPos is supposed to be where the error
         // occurred. 
       };
@@ -626,7 +599,7 @@ export class Parser {
       if (!nextLexeme) {
         syntaxTree = {
           sym: sym, isSuccess: false,
-          pos: pos, nextPos: pos,
+          nextPos: pos,
           // (Note that on failure, nextPos is supposed to be where the error
           // occurred.)
         };
@@ -636,13 +609,13 @@ export class Parser {
         if (regExp.test(nextLexeme)) {
           syntaxTree = {
             sym: sym, isSuccess: true, lexeme: nextLexeme,
-            pos: pos, nextPos: pos + 1,
+            nextPos: pos + 1,
           };
         }
         else {
           syntaxTree = {
             sym: sym, isSuccess: false,
-            pos: pos, nextPos: pos,
+            nextPos: pos,
           };
         }
       }
@@ -668,7 +641,7 @@ export class Parser {
         if (!nextLexeme) {
           syntaxTree = {
             sym: sym, isSuccess: false,
-            pos: pos, nextPos: pos,
+            nextPos: pos,
           };
         }
         else {
@@ -678,7 +651,7 @@ export class Parser {
       // Else let the parser parse as many lexemes as it can, using the
       // same lexeme array. 
       else {
-        syntaxTree = subParser.parseLexArr(lexArr, pos, startSym, triedSymbols);
+        syntaxTree = subParser.parseRuleSymbol(lexArr, pos, startSym);
       }
     }
 

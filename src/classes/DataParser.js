@@ -96,12 +96,26 @@ const xmlGrammar = {
       [
         "/</", "element-name", "attr-member*", "/>/",
         "xml-text",
-        "/</", /\//, "tag-name", "/>/"
+        "/</", /\//, "element-name", "/>/"
       ],
       [
         "/</", "element-name", "attr-member*", /\//, "/>/",
       ]
     ],
+    // process: (children, ruleInd) => {
+    //   if (syntaxTree.ruleInd === 0) {debugger;
+    //     let startTagName = syntaxTree.children[1].children;
+    //     let endTagName = syntaxTree.children[6];
+    //     if (endTagName !== startTagName) {
+    //       return [false,
+    //         "End tag </" + endTagName + "> does not match start tag <" +
+    //         startTagName + ">"
+    //       ];
+    //     } else {
+    //       return [true];
+    //     }
+    //   }
+    // },
   },
   "element-name": {
     rules: [
@@ -128,16 +142,16 @@ const xmlGrammar = {
     rules: [
       [doubleQuoteStringPattern],
     ],
-    test: (syntaxTree) => {
-      // Test that the string is a valid JSON string.
-      let stringLiteral = syntaxTree.children[0].lexeme;
-      try {
-        JSON.parse(stringLiteral);
-      } catch (error) {
-        return [false, `Invalid JSON string: ${stringLiteral}`];
-      }
-      return [true];
-    },
+    // process: (children, ruleInd) => {
+    //   // Test that the string is a valid JSON string.
+    //   let stringLiteral = syntaxTree.children[0].lexeme;
+    //   try {
+    //     JSON.parse(stringLiteral);
+    //   } catch (error) {
+    //     return [false, `Invalid JSON string: ${stringLiteral}`];
+    //   }
+    //   return [true];
+    // },
   },
   "number": {
     rules: [
@@ -153,6 +167,12 @@ export const xmlParser = new Parser(
 // Tests:
 xmlParser.log(xmlParser.parseAndProcess(
   `Hello, world!`
+));
+xmlParser.log(xmlParser.parseAndProcess(
+  `Hello, <i>world</i>.`
+));
+xmlParser.log(xmlParser.parseAndProcess(
+  `Hello, <i>world</wrong>.`
 ));
 
 
@@ -186,7 +206,7 @@ const jsonGrammar = {
     rules: [
       ['/"/', "chars*", '/"/'],
     ],
-    test: (syntaxTree) => {
+    process: (children, ruleInd) => {
       // Concat all the nested lexemes.
       let stringContent = syntaxTree.children[1].children.reduce(
         (acc, val) => acc + val.children.reduce(
@@ -246,9 +266,11 @@ const jsonGrammar = {
   },
 };
 
-export function straightenListSyntaxTree(syntaxTree, delimiterLexNum = 1) {
-  syntaxTree.children = (syntaxTree.ruleInd === 0) ? [
-    syntaxTree.children[0],
+export function straightenListSyntaxTree(
+  children, ruleInd, delimiterLexNum = 1
+) {
+  children = (ruleInd === 0) ? [
+    children[0],
     ...syntaxTree.children[1 + delimiterLexNum].children,
   ] : [
     syntaxTree.children[0]
@@ -276,7 +298,7 @@ const regEntGrammar = {
     rules: [
       [/"/, "chars-or-@-literal*", /"/],
     ],
-    test: (syntaxTree) => {
+    process: (children, ruleInd) => {
       // TODO: make.
     },
   },
