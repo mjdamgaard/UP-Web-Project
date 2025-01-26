@@ -85,7 +85,7 @@ const xmlGrammar = {
     rules: [
       ["text-or-element*"],
     ],
-    process: (children, ruleInd, isEOS) => {
+    process: (children, ruleInd) => {
       let contentArr = children[0].children;
       return contentArr;
     },
@@ -108,7 +108,7 @@ const xmlGrammar = {
         "/</", /[_a-zA-Z][_a-zA-Z0-9\-\.]*/, "attr-member*", /\//, "/>/",
       ]
     ],
-    process: (children, ruleInd, isEOS) => {
+    process: (children, ruleInd) => {
       let startTagName = children[1].lexeme;
       if (/^[xX][mM][lL]/.test(startTagName)) {
         return [null, "Element name cannot start with 'xml'"]
