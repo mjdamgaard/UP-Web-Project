@@ -69,11 +69,13 @@ const funAndRegEntLexemePatternArr = [
 
 const doubleQuoteStringPattern =
   /"([^"\\]|\\[\s\S])*"/;
+const xmlSpecialCharPattern =
+  /[<>"'\\\/&;]/;
 
 const xmlWSPattern = /\s+/;
 const xmlLexemePatternArr = [
   doubleQuoteStringPattern,
-  specialCharPattern,
+  xmlSpecialCharPattern,
   nonSpecialCharsPattern,
 
 ];
@@ -83,6 +85,10 @@ const xmlGrammar = {
     rules: [
       ["text-or-element*"],
     ],
+    process: (children, ruleInd, isEOS) => {
+      let contentArr = children[0].children;
+      return contentArr;
+    },
   },
   "text-or-element": {
     rules: [
@@ -94,28 +100,36 @@ const xmlGrammar = {
   "element": {
     rules: [
       [
-        "/</", "element-name", "attr-member*", "/>/",
+        "/</", /[_a-zA-Z][_a-zA-Z0-9\-\.]*/, "attr-member*", "/>/",
         "xml-text",
         "/</", /\//, "element-name", "/>/"
       ],
       [
-        "/</", "element-name", "attr-member*", /\//, "/>/",
+        "/</", /[_a-zA-Z][_a-zA-Z0-9\-\.]*/, "attr-member*", /\//, "/>/",
       ]
     ],
-    // process: (children, ruleInd) => {
-    //   if (syntaxTree.ruleInd === 0) {debugger;
-    //     let startTagName = syntaxTree.children[1].children;
-    //     let endTagName = syntaxTree.children[6];
-    //     if (endTagName !== startTagName) {
-    //       return [false,
-    //         "End tag </" + endTagName + "> does not match start tag <" +
-    //         startTagName + ">"
-    //       ];
-    //     } else {
-    //       return [true];
-    //     }
-    //   }
-    // },
+    process: (children, ruleInd, isEOS) => {
+      let startTagName = children[1].lexeme;
+      if (/^[xX][mM][lL]/.test(startTagName)) {
+        return [null, "Element name cannot start with 'xml'"]
+      }
+
+      let attrMembers = syntaxTree.children[2].children;
+      let content = (ruleInd === 0) ? syntaxTree.children[4] : undefined;
+      let isSelfClosing = (ruleInd === 1);
+
+      if (ruleInd === 0) {
+        let endTagName = syntaxTree.children[7].lexeme;
+        if (endTagName !== startTagName) {
+          return [null,
+            "End tag </" + endTagName + "> does not match start tag <" +
+            startTagName + ">"
+          ];
+        }
+      }
+
+      return [startTagName, attrMembers, content, isSelfClosing];
+    },
   },
   "element-name": {
     rules: [
@@ -142,16 +156,16 @@ const xmlGrammar = {
     rules: [
       [doubleQuoteStringPattern],
     ],
-    // process: (children, ruleInd) => {
-    //   // Test that the string is a valid JSON string.
-    //   let stringLiteral = syntaxTree.children[0].lexeme;
-    //   try {
-    //     JSON.parse(stringLiteral);
-    //   } catch (error) {
-    //     return [false, `Invalid JSON string: ${stringLiteral}`];
-    //   }
-    //   return [true];
-    // },
+    process: (children) => {
+      // Test that the string is a valid JSON string.
+      let stringLiteral = children[0].lexeme;
+      try {
+        JSON.parse(stringLiteral);
+      } catch (error) {
+        return [false, `Invalid JSON string: ${stringLiteral}`];
+      }
+      return [];
+    },
   },
   "number": {
     rules: [

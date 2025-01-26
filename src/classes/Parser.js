@@ -51,22 +51,35 @@ export const EOS_ERROR = "End of partial string";
 // each an array of symbols (terminal or nonterminal) to try parsing.
 // The the optional process() function can process the syntax tree node
 // right after it has been parsed, and also potentially perform some initial
-// tests on the syntax tree, which can turn a success into a failure. It does
+// tests on the syntax tree, which can turn a success into a failure. It its
+// input parameters are: process(children, ruleInd, isEOS), where children is
+// the
+// initial children of the successfully parsed node
+// It does
 // so by returning a truthy error message (string). Otherwise if the test
 // succeeds, process() should return void, or just a falsy value. The input
-// parameters are: process(children, ruleInd), where children is the (mutable)
-// array of children of the nonterminal given node, and ruleInd is the index of
-// the rule that succeeded.
+// parameters are: process(children, ruleInd, isEOS), where children is the
+// (mutable) array of children of the nonterminal given node, ruleInd is the
+// index of the rule that succeeded (or the record rule in case isEOS == true),
+// and isEOS is a bool that is true iff the node failed with EOS_ERROR, meaning
+// that the end of the partial string is touched (i.e. when isPartial == true).
+// If the node failed with any other error, process() will not be called. The
+// return value of process should be an array of [children?, error?], where
+// children, if defined, is a new children array that overwrites the initial
+// one in the node. And error, if defined, is a non-empty error message that
+// turns the node into a failed one after all. If error is falsy, the test will
+// be considered successful, and the node will succeed.
 // 
-// An example could be when parsing a list via a rule of the form
-// 'List := Elem , List | Elem'. The resulting syntax tree will initially be
-// of the form List(elem1, ',', List(elem2, ',', List(...(List(elemN))))),
-// which one might want to transform into simply List(elem1, elem2, ..., elemN)
-// before further handling. Furthermore, say that one also wanted to test that
+// As an example of what process() might do could be when parsing a list via a
+// rule of the form 'List := Elem , List | Elem'.
+// The resulting syntax tree will initially be of the form
+// List(elem1, ',', List(elem2, ',', List(...(List(elemN))))), which one might
+// then want to transform into simply List(elem1, elem2, ..., elemN) before
+// further handling. Furthermore, say that one also wanted to test that
 // the first element is equal to the last (for whatever reason). Then process()
-// could make this test on children (potentially after the aforementioned
-// list processing), and then return a non-empty error string in case they are
-// not equal.
+// could perform this test on children (potentially after the aforementioned
+// list processing), and return a non-empty error string in case they are not
+// equal.
 // 
 // The symbols inside each rule of the grammar can either be another (or the
 // same) nonterminal symbol, or a RegExp pattern beginning and ending in '/',
@@ -339,12 +352,16 @@ export class Parser {
     );
 
     // If a syntax tree was parsed successfully, run the optional process()
-    // function if there in order to finally succeed or fail it. 
-    if (syntaxTree.isSuccess) {
+    // function if there in order to finally succeed or fail it.
+    let isEOS = (syntaxTree.error === EOS_ERROR);
+    if (syntaxTree.isSuccess || isEOS) {
       if (process) {
-        let error = process(syntaxTree.children, syntaxTree.ruleInd);
-        syntaxTree.isSuccess = !error;
-        syntaxTree.error = error || undefined;
+        let [children, error] = process(
+          syntaxTree.children, syntaxTree.ruleInd, isEOS
+        ) || [];
+        syntaxTree.children = children || syntaxTree.children;
+        syntaxTree.isSuccess &&= !error;
+        syntaxTree.error ||= error || undefined;
       }
     }
 
