@@ -151,9 +151,9 @@ export const xmlParser = new Parser(
 );
 
 // Tests:
-// console.log(xmlParser.parseAndProcess(
-//   `Hello, world!`
-// ));
+xmlParser.log(xmlParser.parseAndProcess(
+  `Hello, world!`
+));
 
 
 

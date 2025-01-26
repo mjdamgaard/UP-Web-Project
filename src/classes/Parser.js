@@ -81,11 +81,10 @@ export const EOS_ERROR = "End of partial string";
 // i.e. '?', '*', '+', or '{<n>,<m>}', which parses a variable number of the
 // preceding nonterminal symbol.
 // And lastly, any of these rule symbols, quantified or not, can also be
-// followed by a '!' at the very end, which tells the parser to parse the
-// symbol even if a different symbol has already been successfully parsed at
-// the same array index of a previous rule. Otherwise the parser will
-// automatically fail a rule symbol if a different symbol has been successfully
-// parsed at that same array index.
+// followed by a '!' at the very end, which tells the parser that if it reaches
+// this symbol in the rule, regardless of whether it succeeds or not, then no
+// other rules should by tried after the current one. In other words, its "do
+// or die" for the rule in question if such a symbol is reached.
 // 
 // The first rule to succeed for a nonterminal symbol will short circuit it,
 // such that the subsequent rules will not be tried.
@@ -306,8 +305,8 @@ export class Parser {
         syntaxTree.isSuccess = false;
         let strPos = strPosArr[syntaxTree.nextPos] ?? str.length - 1;
         syntaxTree.error = 'Parsing error "Incomplete parsing" after:\n' +
-          str.substring(strPos - ERROR_ECHO_STR_LEN - 1, strPos - 1) +
-          "\n----\n" +
+          str.substring(0, strPos).substring(strPos - ERROR_ECHO_STR_LEN) +
+          "\n--------\n" +
           "Expected an empty string, but got:\n" +
           str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4));
       }
@@ -321,8 +320,8 @@ export class Parser {
         if (error !== EOS_ERROR) {
           let strPos = strPosArr[failedNode.nextPos] ?? str.length - 1;
           syntaxTree.error = `Parsing error "${error}" after:\n` +
-          str.substring(strPos - ERROR_ECHO_STR_LEN - 1, strPos - 1) +
-          "\n----\n" +
+          str.substring(0, strPos).substring(strPos - ERROR_ECHO_STR_LEN) +
+          "\n--------\n" +
           "Expected an empty string, but got:\n" +
           str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4));
         }
@@ -383,94 +382,114 @@ export class Parser {
 
 
   #parseRules(lexArr, pos, rules, sym, triedSymbols) {
-    // Initialize an array of arrays for each rule symbol index, j, each
-    // supposed contain all recorded successful symbols for that j.
-    let successfulSymbols = [];
-    // Initialize an array of objects for each rule symbol index, j, each
-    // supposed contain all recorded successful syntax trees, and with the
-    // corresponding successful symbol as the key.
-    let successfulSyntaxTrees = [];
     // Initialize a variable holding the record nextPos obtaining in a (failed)
-    // rule so far, and also one holding the index of the "record rule" that
-    // obtained it. Initialize recordRuleNextPos to pos such that rules are
-    // not recorded if they do not advance the position
-    let recordRuleNextPos = pos;
+    // rule so far, and also one that holds the index of the "record rule" that
+    // obtained it.
+    let recordRuleNextPos = -1;
     let recordRuleInd;
     // Initialize and array containing all children of the "record rule," also
     // including the last, failed one.
     let recordRuleChildren;
+    // Initialize a doOrDie variable, that is set to true if a symbol ending in
+    // '!' is reached, which will mean that no more rules will be tried after
+    // the current one.
+    let doOrDie = false;
 
     // Loop through all rules until a success is encountered, and keep track of
     // the "record" all the while, i.e. of the rule that got the furthest.
     let rulesNum = rules.length;
-    let ruleSuccess = true;
     for (let i = 0; i < rulesNum; i++) {
       let rule = rules[i];
       let ruleLen = rule.length;
+      let nextPos = pos;
+      let lookUpPrevSuccess = true;
 
       let ruleChildren = [];
-      let nextPos = pos;
+      let ruleSuccess = false;
       for (let j = 0; j < ruleLen; j++) {
         let childSyntaxTree;
         let ruleSym = rule[j];
 
-        // If the rule symbol ends with "!", we remove it and instead record
-        // a boolean, parseAgain, telling us to try parsing a symbol even if
-        // a previous different symbol has succeeded with the same j. 
-        let parseAgain = false;
+        // If the rule symbol ends with "!", we remove it and set doOrDie to
+        // true.
         if (ruleSym.at(-1) === "!") {
           ruleSym = ruleSym.slice(0, -1);
-          parseAgain = true;
+          doOrDie = true;
         }
 
-        // If there is no previous successes, or the parseAgain has (just) been
-        // set to true, try parsing the symbol.
-        let prevSuccesses = successfulSymbols[j];
-        if (!prevSuccesses || parseAgain) {
-          childSyntaxTree = this.#parseRuleSymbol(
-            lexArr, nextPos, ruleSym, (j === 0) ? triedSymbols : []
-          );
-          if (childSyntaxTree.isSuccess) {
-            // Record the new success.
-            ruleChildren.push(childSyntaxTree);
-            nextPos = childSyntaxTree.nextPos;
-            successfulSymbols[j] ??= [];
-            successfulSymbols[j].push(ruleSym);
-            successfulSyntaxTrees[j] ??= {};
-            successfulSyntaxTrees[j][ruleSym] = childSyntaxTree;
-          }
-          else {
-            // Store the failed child at the end of the children array.
-            ruleChildren.push(childSyntaxTree);
-
-            // If a parsing failed with error = EOS_ERROR, abort the parsing
-            // immediately, propagating this error outwards.
-            if (childSyntaxTree.error === EOS_ERROR) {
-              let syntaxTree = {
-                sym: sym, isSuccess: false, error: EOS_ERROR,
-                ruleInd: (rulesNum) ? i : undefined,
-                children: ruleChildren,
-                pos: pos, nextPos: nextPos,
-              };
-              return syntaxTree;
+        // At first we try to copy as many successes from the "record rule"
+        // until a symbol is reached that doesn't match the one in
+        // recordRuleChildren at the same position.
+        if (lookUpPrevSuccess && recordRuleChildren) {
+          let prevChildSyntaxTree = recordRuleChildren[j];
+          if (prevChildSyntaxTree.sym === ruleSym) {
+            if (prevChildSyntaxTree.isSuccess) {
+              // Add the previous success to ruleChildren and increase nextPos.
+              ruleChildren.push(prevChildSyntaxTree);
+              nextPos = prevChildSyntaxTree.nextPos;
+              // If it was the last rule symbol, succeed the rule. Else continue
+              // to the next rule symbol.
+              if (j === ruleLen - 1) {
+                ruleSuccess = true;
+                break;
+              } else {
+                continue;
+              }
+            }
+            else {
+              ruleSuccess = false;
+              break;
             }
           }
+          // When a symbol is reached that doesn't match the corresponding one
+          // in the "rule record", we start parsing the rule symbols from there,
+          // setting lookUpPrevSuccess = false for the remainder of the rule.
+          else {
+            lookUpPrevSuccess = false;
+          }
         }
 
-        // Else we simply check whether there is a previous success with the
-        // same symbol, and succeed or fail depending on that.
-        else if (prevSuccesses.includes(ruleSym)) {
-          // If there was matching success, we also push the same child to
-          // this rule's ruleChildren array.
-          childSyntaxTree = successfulSyntaxTrees[j][ruleSym];
+        // After this initial skipping of previously recorded matching
+        // successes, First of all try parsing the rule symbol.
+        childSyntaxTree = this.#parseRuleSymbol(
+          lexArr, nextPos, ruleSym, (j === 0) ? triedSymbols : []
+        );
+
+        // If the symbol is successful, record the successful child and
+        // continue to the next rule symbol.
+        if (childSyntaxTree.isSuccess) {
+          // Add the successful child to ruleChildren and increase nextPos.
           ruleChildren.push(childSyntaxTree);
           nextPos = childSyntaxTree.nextPos;
-          continue;
+          // If it was the last rule symbol, succeed the rule. Else continue
+          // to the next rule symbol.
+          if (j === ruleLen - 1) {
+            ruleSuccess = true;
+            break;
+          } else {
+            continue;
+          }
         }
-        else {
-          ruleSuccess = false;
-          break;
+        
+        // Else if failed, store the failed child at the end of the children
+        // array, first of all.
+        ruleChildren.push(childSyntaxTree);
+
+        // And if the child failed with error = EOS_ERROR, abort the parsing
+        // immediately, propagating this error all the way out to the root.
+        if (childSyntaxTree.error === EOS_ERROR) {
+          let syntaxTree = {
+            sym: sym, isSuccess: false, error: EOS_ERROR,
+            ruleInd: (rulesNum) ? i : undefined,
+            children: ruleChildren,
+            pos: pos, nextPos: nextPos,
+          };
+          return syntaxTree;
         }
+
+        // Else simply fail this current rule and continue to the next one.
+        ruleSuccess = false;
+        break;
       }
 
       // After a rule has either succeeded or failed, we respectively either
@@ -491,6 +510,14 @@ export class Parser {
         recordRuleInd = i;
         recordRuleChildren = ruleChildren;
       }
+
+      // Break the parsing if doOrDie is true, or else continue to the next
+      // rule.
+      if (doOrDie) {
+        break;
+      } else {
+        continue;
+      }
     }
 
     // If the for loop ends, meaning that all rules failed, we return a failed
@@ -508,7 +535,6 @@ export class Parser {
 
 
   #parseRuleSymbol(lexArr, pos, sym, triedSymbols = []) {
-console.log(pos);console.log(sym);debugger;
     let nextLexeme = lexArr[pos];
     let syntaxTree;
 
@@ -552,7 +578,7 @@ console.log(pos);console.log(sym);debugger;
 
         // Else parse a new child.
         let childSyntaxTree = this.#parseRuleSymbol(
-          lexArr, pos, subSym, (i === 0) ? triedSymbols : []
+          lexArr, nextPos, subSym, (i === 0) ? triedSymbols : []
         );
         if (childSyntaxTree.isSuccess) {
           // Add child syntax tree to children and increase pos.
@@ -609,7 +635,7 @@ console.log(pos);console.log(sym);debugger;
         let regExp = this.regularExpressions[sym];
         if (regExp.test(nextLexeme)) {
           syntaxTree = {
-            sym: sym, isSuccess: true, lexeme: [nextLexeme],
+            sym: sym, isSuccess: true, lexeme: nextLexeme,
             pos: pos, nextPos: pos + 1,
           };
         }
@@ -658,11 +684,18 @@ console.log(pos);console.log(sym);debugger;
 
     // Else treat sym as a non-terminal symbol, and make a recursive call to
     // parse() with nonterminalSymbol = sym.
-    else {debugger;
+    else {
       syntaxTree = this.parseLexArr(lexArr, pos, sym, triedSymbols);
     }
 
     return syntaxTree;
+  }
+
+
+
+  log(syntaxTree) {
+    console.log(syntaxTree);
+    (syntaxTree.error || "").split("\n").forEach(val => console.log(val));
   }
 }
 
@@ -716,7 +749,7 @@ export class Lexer {
         throw new LexError(
           "Lexer error at: \n" +
           lastMatch.substring(0, ERROR_ECHO_STR_LEN) +
-          "\n----\n" +
+          "\n--------\n" +
           "Invalid lexeme:\n" +
           lastMatch.substring(0, lastIndexOfInvalidLexeme + 1)
         );
