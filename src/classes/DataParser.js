@@ -6,6 +6,8 @@ import {Parser} from "./Parser.js";
 
 const entitySyntaxTreeCache = new LRUCache(200);
 
+const ARRAY_TYPE_MAX_LEN = 20;
+
 
 
 export class DataParser {
@@ -15,7 +17,7 @@ export class DataParser {
   ) {
     switch (entType) {
       case "r":
-        return this.parseRegularEntity(
+        return this.parseRegularfEntity(
           defStr, len, creatorID, isEditable, readerWhitelistID
         );
       case "f":
@@ -32,7 +34,7 @@ export class DataParser {
     }
   }
 
-  static parseRegularEntity(
+  static parseRegularfEntity(
     defStr, len, creatorID, isEditable, readerWhitelistID
   ) {
 
@@ -166,6 +168,7 @@ const jsonGrammar = {
 
 const jsonParser = new Parser(
   jsonGrammar,
+  "literal",
   [
     /"([^"\\]|\\[.\n])*"/,
     /\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-+]?(0|[1-9][0-9]*))?/,
@@ -220,6 +223,56 @@ export function makeChildrenIntoLexemeArray(syntaxTree) {
 
 
 
+
+const rfEntStringContentGrammar = {
+  "string-content": {
+    rules: [
+      ["string-part*"]
+    ],
+    process: becomeChildExceptSym,
+  },
+  "string-part": {
+    rules: [
+      ["ent-ref"],
+      ["input-placeholder"],
+      ["escaped-bracket"],
+      ["plain-text"],
+    ],
+  },
+  "ent-ref": {
+    ...rfEntGrammar["ent-ref"],
+  },
+  "input-placeholder": {
+    ...rfEntGrammar["input-placeholder"],
+  },
+  "escaped-bracket": {
+    rules: [
+      [/@[\[\{<];/],
+    ],
+    process: becomeChildExceptSym,
+  },
+  "plain-text": {
+    rules: [
+      [/([^"\\@\]\}>]|\\[^@\]\}>]|)+/],
+    ],
+    process: becomeChildExceptSym,
+  },
+};
+
+
+export const rfEntStringContentParser = new Parser(
+  rfEntStringContentGrammar,
+  "string-content",
+  [
+    /@[\[\{<];?/,
+    /([^"\\@\]\}>]|\\[^@\]\}>]|)+/,
+  ],
+  false
+);
+
+
+
+
 // We only overwrite some of the nonterminal symbols in the JSON grammar.
 const rEntGrammar = {
   ...jsonGrammar,
@@ -245,7 +298,9 @@ const rEntGrammar = {
         return error;
       }
 
-      let subSyntaxTree = rfEntStringParser.parse(stringLiteral);
+      let subSyntaxTree = rfEntStringContentParser.parse(
+        stringLiteral.slice(1, -1)
+      );
       if (!subSyntaxTree.isSuccess) {
         return subSyntaxTree.error;
       }
@@ -275,19 +330,18 @@ const rEntGrammar = {
     rules: [
       [/[^0-9\[\]@,;"][^\[\]@,;"]*/],
     ],
-    process: (syntaxTree) => {
-      syntaxTree.num = syntaxTree.children[1].lexeme;
-    }
+    process: becomeChildExceptSym,
   },
 };
 
 export const rEntParser = new Parser(
   rEntGrammar,
+  "literal-list",
   [
     /"([^"\\]|\\[.\n])*"/,
     /\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-+]?(0|[1-9][0-9]*))?/,
-    /=>|@[\[\{<]|[,:\[\]\{\}\(\)>\?=]/,
-    // "/true|false|null/",
+    /@[\[\{<];?|[,:\[\]\{\}>]/,
+    // "/true|false|null|_/",
     /[^0-9\[\]@,;"][^\[\]@,;"]*/,
   ],
   /\s+/
@@ -296,103 +350,114 @@ export const rEntParser = new Parser(
 
 
 
-const rfEntStringGrammar = {
-  "string": {
-    rules: [
-      ['/"/', "string-part*", '/"/']
-    ],
-    process: (children) => {
-      let contentArr = children[0].children;
-      children = contentArr;
-      return [children];
-    },
-  },
-  "string-part": {
-    rules: [
-      ["ent-ref"],
-      ["input-placeholder"],
-      ["chars"],
-    ],
-  },
-  // ...
-};
-
-
-export const rfEntStringParser = new Parser(
-  rfEntStringGrammar,
-  [
-    '/"/',
-    /@[\[\{<];?|@/,
-    /([^@"\\]|\\[^@]|)+/,
-  ],
-  false
-);
-
-
 
 
 const fEntGrammar = {
-  ...regEntGrammar,
+  ...rEntGrammar,
   "function": {
     rules: [
       [
-        "function-name", /\(/, "param-list", /\)/, "/=>/",  /\{/,
-        "member-list", /\}/,
+        /[^0-9\[\]@,;"\s][^\[\]@,;"\s]*/, /\(/, "param-list", /\)/, "/=>/", 
+        /\{/, "member-list", /\}/,
       ],
     ],
+    process: (syntaxTree) => {
+      let children = syntaxTree.children;
+      Object.assign(syntaxTree, {
+        name: children[0].lexeme,
+        params: children[2].children,
+        members: children[6].children,
+      });
+    },
   },
   "param-list": {
     rules: [
-      ["param", "/,/", "param-list"],
+      ["param", "/,/", "param-list!"],
       ["param"],
     ],
     process: straightenListSyntaxTree,
   },
   "param": {
     rules: [
-      ["string", "/\\?/?", "/:/", "type", "default-val-def?"],
+      [/"([^"\\]|\\[.\n])*"/, "/:/", "type"],
     ],
-  },
-  "default-val-def": {
-    rules: [
-      ["/=/", "literal"],
-    ],
+    process: (syntaxTree) => {
+      let children = syntaxTree.children;
+      Object.assign(syntaxTree, {
+        name: children[0].lexeme,
+        type: children[2],
+      });
+    },
   },
   "type": {
     rules: [
       ["type^(1)", "/\\?/"],
-      ["type^(1)", "/=/", "literal"],
+      ["type^(1)", "/=/", "literal!"],
       ["type^(1)"],
     ],
+    process: (syntaxTree) => {
+      syntaxTree.type = syntaxTree.children[0];
+      syntaxTree.isOptional = syntaxTree.children[1] ? true : false;
+      syntaxTree.defaultVal = syntaxTree.children[2] || undefined;
+    },
   },
   "type^(1)": {
     rules: [
-      [/\(/, "type-disjunction-list", /\)/],
+      [/\{/, "type^(2)-list!", /\}/],
       ["type^(2)"],
     ],
+    process: (syntaxTree) => {
+      syntaxTree.types = (syntaxTree.ruleInd === 0) ?
+        syntaxTree.children[1].children :
+        [syntaxTree.children[0]];
+    },
   },
-  "type-disjunction-list": {
+  "type^(2)-list": {
     rules: [
-      ["string", "/:/", "type^(2)", /\|/, "type-disjunction-list"],
-      ["string", "/:/", "type^(2)"],
+      ["type^(2)", "/,/", "type^(2)-list!"],
+      ["type^(2)"],
     ],
+    process: straightenListSyntaxTree,
   },
   "type^(2)": {
     rules: [
       [/\[/, "type^(3)-list", /\]/, "array-type-operator"],
-      [/\[/, "type^(3)-list", /\]/],
+      [/\[/, "type^(3)-list!", /\]/],
+      ["type^(3)", "array-type-operator"],
       ["type^(3)"],
     ],
+    process: (syntaxTree) => {
+      syntaxTree.types = (syntaxTree.ruleInd <= 1) ?
+        syntaxTree.children[1].children :
+        [syntaxTree.children[0]];
+      syntaxTree.arrayLen = (syntaxTree.ruleInd === 0) ?
+        syntaxTree.children[3].num :
+        (syntaxTree.ruleInd === 2) ?
+          syntaxTree.children[1].num :
+          0;
+    },
   },
   "array-type-operator": {
     rules: [
-      [/\[/, "/[1-9][0-9]*/", /\]/],
+      [/\[/, "/[1-9][0-9]*/", "/\\]/!"],
       [/\[/, /\]/],
     ],
+    process: (syntaxTree) => {
+      let numLiteral = (syntaxTree.ruleInd === 0) ?
+        syntaxTree.children[1].lexeme :
+        null;
+      let num = parseInt(numLiteral);
+
+      if (numLiteral !== null && (num.toString !== numLiteral || num === 1)) {
+        return `Invalid array length: ${numLiteral}`;
+      }
+
+      syntaxTree.num = (numLiteral === null) ? null : num;
+    },
   },
   "type^(3)-list": {
     rules: [
-      ["type^(3)", "/,/", "type^(3)-list"],
+      ["type^(3)", "/,/", "type^(3)-list!"],
       ["type^(3)"],
     ],
     process: straightenListSyntaxTree,
@@ -401,21 +466,26 @@ const fEntGrammar = {
     rules: [
       ["ent-ref"], // A class.
       [/[tuafrjh8d]|string|bool|int|float/],
-      [/array|object/], // User has to manually type in a parsable JS array/
-      // object.
+      [/object|array/], // User has to manually type in a parsable JS object/
+      // array.
     ],
   },
 };
 
 
-
-
-
-
-
-const regularEntityParser = new Parser(
-  regEntGrammar, "literal-list", funAndRegEntLexemePatternArr, false
+export const fEntParser = new Parser(
+  fEntGrammar,
+  "function",
+  [
+    /"([^"\\]|\\[.\n])*"/,
+    /\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-+]?(0|[1-9][0-9]*))?/,
+    /=>|@[\[\{<];?|[,:\[\]\{\}\(\)>\?=]/,
+    // "/true|false|null/",
+    /[^0-9\[\]@,;"][^\[\]@,;"]*/,
+  ],
+  /\s+/
 );
+
 
 
 
