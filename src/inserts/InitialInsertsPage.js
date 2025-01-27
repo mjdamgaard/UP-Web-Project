@@ -33,7 +33,7 @@ export const InitialInsertsPage = () => {
           dataInserter.insertSubstituteOrEditEntity(
             "users/initial_admin", "r",
             JSON.stringify({
-              "Class": "@["users"]",
+              "Class": "@[users]",
               "Username": "initial_admin",
             }),
             undefined, undefined, undefined,
@@ -106,10 +106,10 @@ export function initialInserts(dataInserter) {
   // dataInserter.insertSubstituteOrEditEntity(
   //   "entities", "r",
   //   JSON.stringify({
-  //     "Class": "@["classes"]",
+  //     "Class": "@[classes]",
   //     "Name": "Entities",
   //     "Member title": "Entity",
-  //     "Description": "@["entities/desc"]",
+  //     "Description": "@[entities/desc]",
   //   }),
   // );
   dataInserter.insertSubstituteOrEditEntity(
@@ -120,7 +120,7 @@ export function initialInserts(dataInserter) {
       '_',
       '_',
       '_',
-      '@["entities/desc"]',
+      '@[entities/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
@@ -132,26 +132,26 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     "classes", "r",
     [
-      '@["classes/format"]',
+      '@[classes/format]',
       '"Classes"',
       '_',
       '_',
-      '@["classes/format"]',
-      '@["classes/desc"]',
+      '@[classes/format]',
+      '@[classes/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     'classes/format', 'f', (
       'class(' + [
         '"Name":string',
-        '"Parent class":@["classes"]?',
+        '"Parent class":@[classes]?',
         // 'Member format?:(f::Function|t::Entity type)',
         '"Member type":t=@[4]',
         '"Member format":f?',
         '"Description":h?',
       ].join(',') +
       ')=>{' + [
-        '"Class":@["classes"]',
+        '"Class":@[classes]',
         '"Name":@{1}',
         '"Parent class":@{2}',
         '"Member type":@{3}',
@@ -193,124 +193,124 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     "users", "r",
     [
-      '@["classes/format"]',
+      '@[classes/format]',
       '"Users"',
       '_',
       '@[2]',
       '_',
-      '@["users/desc"]',
+      '@[users/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "accounts", "r",
     [
-      '@["classes/format"]',
+      '@[classes/format]',
       '"Accounts"',
       '_',
       '@[3]',
       '_',
-      '@["accounts/desc"]',
+      '@[accounts/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "workspaces", "r",
     [
-      '@["classes/format"]',
+      '@[classes/format]',
       '"Workspaces"',
-      '@["json objects"]',
+      '@[json objects]',
       '@[6]',
       '_',
-      '@["workspaces/desc"]',
+      '@[workspaces/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "types", "r",
     [
-      '@["classes/format"]',
+      '@[classes/format]',
       '"Entity types"',
       '_',
       '@[1]',
       '_',
-      '@["texts/desc"]',
+      '@[texts/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "functions", "r",
     [
-      '@["classes/format"]',
+      '@[classes/format]',
       '"Functions"',
       '_',
       '@[5]',
       '_',
-      '@["functions/desc"]',
+      '@[functions/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "json objects", "r",
     [
-      '@["classes/format"]',
+      '@[classes/format]',
       '"JSON objects"',
       '_',
       '@[6]',
       '_',
-      '@["json objects/desc"]',
+      '@[json objects/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "texts", "r",
     [
-      '@["classes/format"]',
+      '@[classes/format]',
       '"Texts"',
       '_',
       '@[7]',
       '_',
-      '@["texts/desc"]', // Include 'HTML' in the title (as well as in the body).
+      '@[texts/desc]', // Include 'HTML' in the title (as well as in the body).
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "uft-8 texts", "r",
     [
-      '@["classes/format"]',
+      '@[classes/format]',
       '"UTF-8 texts"',
       '_',
       '@[8]',
       '_',
-      '@["uft-8 texts/desc"]',
+      '@[uft-8 texts/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "database nodes", "r",
     [
-      '@["classes/format"]',
+      '@[classes/format]',
       '"Database nodes"',
       '_',
       '@[9]',
       '_',
-      '@["database nodes/desc"]',
+      '@[database nodes/desc]',
     ].join(","),
   );
 
   dataInserter.insertSubstituteOrEditEntity(
     "relations", "r",
     [
-      '@["relations/format"]',
+      '@[relations/format]',
       '"Relations"',
       '_',
       '_',
-      '@["relations/format"]',
-      '@["relations/desc"]',
+      '@[relations/format]',
+      '@[relations/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     'relations/format', 'f', (
       'relation(' + [
         '"Title":string',
-        '"Subject" class:@["classes"]',
-        '"Object" class:@["classes"]',
+        '"Subject" class:@[classes]',
+        '"Object" class:@[classes]',
         '"Description":h?',
       ].join(',') +
       ')=>{' + [
-        '"Class":@["relations"]',
+        '"Class":@[relations]',
         '"Title":@{1}',
         '"Subject" class:@{2}',
         '"Object" class:@{3}',
@@ -321,12 +321,12 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     "qualities", "r",
     [
-      '@["classes/format"]',
+      '@[classes/format]',
       '"Qualities"',
       '_',
       '_',
-      '@["qualities/format"]',
-      '@["qualities/desc"]',
+      '@[qualities/format]',
+      '@[qualities/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
@@ -334,17 +334,17 @@ export function initialInserts(dataInserter) {
       "quality(" + [
         '"Label":string',
         // // "Domain:" +
-        // //   "@["classes"]::Class" + "|" +
-        // //   "[Object:@["entities"],Relation:@["relations"]]::Set",
-        // // "Domain:[Object:@["entities"],Relation:@["relations"]]",
-        // "Object:@["entities"]",
-        // "Relation:@["relations"]=@["relations/members"]",
-        '"Domain":@["classes"]?',
-        '"Metric":@["metrics"]',
+        // //   "@[classes]::Class" + "|" +
+        // //   "[Object:@[entities],Relation:@[relations]]::Set",
+        // // "Domain:[Object:@[entities],Relation:@[relations]]",
+        // "Object:@[entities]",
+        // "Relation:@[relations]=@[relations/members]",
+        '"Domain":@[classes]?',
+        '"Metric":@[metrics]',
         '"Description":h?',
       ].join(",") +
       ")=>{" + [
-        '"Class":@["qualities"]',
+        '"Class":@[qualities]',
         '"Label":@{1}',
         '"Domain":@{2}',
         '"Metric":@{3}',
@@ -355,47 +355,47 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     "relevancy qualities", "r",
     [
-      '@["classes/format"]',
+      '@[classes/format]',
       '"Relevancy qualities"',
-      '@["qualities"]',
+      '@[qualities]',
       '_',
-      '@["relevancy qualities/format"]',
-      '@["relevancy qualities/desc"]',
+      '@[relevancy qualities/format]',
+      '@[relevancy qualities/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     'relevancy qualities/format', 'f', (
       'relevancy_quality(' + [
-        '"Class":@["classes"]',
+        '"Class":@[classes]',
       ].join(',') +
       ')=>{' + [
-        '"Class":@["relevancy qualities"]',
+        '"Class":@[relevancy qualities]',
         // // 'Label': 'Relevant for @{Object} → @{Relation}',
         // 'Label': 'Relevant for @{1} → @{2}',
         '"Label":"Relevant for @{1}"',
-        '"Metric":@["metrics/std predicate metric"]',
+        '"Metric":@[metrics/std predicate metric]',
       ].join(',') + '}'
     )
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relational classes", "r",
     [
-      '@["classes/format"]',
+      '@[classes/format]',
       '"Relational classes"',
-      '@["classes"]',
+      '@[classes]',
       '_',
-      '@["relational classes/format"]',
-      '@["relational classes/desc"]',
+      '@[relational classes/format]',
+      '@[relational classes/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     'relational classes/format', 'f', (
       'relational_class(' + [
-        '"Object":@["entities"]',
-        '"Relation":@["relations"]',
+        '"Object":@[entities]',
+        '"Relation":@[relations]',
       ].join(',') +
       ')=>{' + [
-        '"Class":@["relational classes"]',
+        '"Class":@[relational classes]',
         '"Name":"@{1} → @{2}"',
         // // 'Member title': '@{1} → @{3}',
         // // 'Member title': '@{1} → @{2}[Subject title]',
@@ -413,22 +413,22 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     "semantic parameters", "r",
     [
-      '@["classes/format"]',
+      '@[classes/format]',
       '"Semantic parameters"',
       '_',
       '_',
-      '@["semantic parameters/format"]',
-      '@["semantic parameters/desc"]',
+      '@[semantic parameters/format]',
+      '@[semantic parameters/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     'semantic parameters/format', 'f', (
       'semantic_parameter(' + [
-        '"Subject":@["entities"]',
-        '"Quality":@["qualities"]',
+        '"Subject":@[entities]',
+        '"Quality":@[qualities]',
       ].join(',') +
       ')=>{' + [
-        '"Class":@["semantic parameters"]',
+        '"Class":@[semantic parameters]',
         '"Label":"@{1} ⋲ @{2}"',
         // 'Label:@{1} ⥺ @{2}',
         // 'Label:@{1} :≟ @{2}',
@@ -441,23 +441,23 @@ export function initialInserts(dataInserter) {
   // dataInserter.insertSubstituteOrEditEntity(
   //   "sets", "r",
   //   [
-  //     '@["classes/format"]',
+  //     '@[classes/format]',
   //     '"Sets"',
   //     '_',
   //     '_',
-  //     '@["sets/format"]',
-  //     '@["sets/desc"]',
+  //     '@[sets/format]',
+  //     '@[sets/desc]',
   //   ].join(","),
   // );
   // dataInserter.insertSubstituteOrEditEntity(
   //   "sets/format", "f", (
   //     "set(" + [
-  //       "Object:@["entities"]",
-  //       "Relation:@["relations"]",
+  //       "Object:@[entities]",
+  //       "Relation:@[relations]",
   //     ].join(",") +
   //     ")=>" +
   //     JSON.stringify({
-  //       "Class": "@["sets"]",
+  //       "Class": "@[sets]",
   //       "Label": "@{1} → @{2}",
   //       "Object": "@{1}",
   //       "Relation": "@{2}",
@@ -468,12 +468,12 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     "metrics", "r",
     [
-      '@["classes/format"]',
+      '@[classes/format]',
       '"Quality metrics"',
       '_',
       '_',
-      '@["metrics/format"]',
-      '@["metrics/desc"]',
+      '@[metrics/format]',
+      '@[metrics/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
@@ -488,7 +488,7 @@ export function initialInserts(dataInserter) {
         '"Description":h?',
       ].join(',') +
       ')=>{' + [
-        '"Class":@["metrics"]',
+        '"Class":@[metrics]',
         '"Name":@{1}',
         '"Unit":@{2}',
         '"Prepend unit":@{3}',
@@ -503,34 +503,34 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     "lists", "r",
     [
-      '@["classes/format"]',
+      '@[classes/format]',
       '"Lists"',
       '_',
       '_',
       '_',
-      '@["lists/desc"]',
+      '@[lists/desc]',
     ].join(","),
   );
 
   dataInserter.insertSubstituteOrEditEntity(
     "user score lists", "r",
     [
-      '@["classes/format"]',
+      '@[classes/format]',
       '"User score lists"',
-      '@["lists"]',
+      '@[lists]',
       '_',
-      '@["user score lists/format"]',
-      '@["user score lists/desc"]',
+      '@[user score lists/format]',
+      '@[user score lists/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     'user score lists/format', 'f', (
       'user_scores(' + [
         '"User":u',
-        '"Quality":@["qualities"]',
+        '"Quality":@[qualities]',
       ].join(',') +
       ')=>{' + [
-        '"Class":@["user score lists"]',
+        '"Class":@[user score lists]',
         '"User":@{1}',
         '"Quality":@{2}',
       ].join(',') + '}'
@@ -539,24 +539,24 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     "min contribution lists", "r",
     [
-      '@["classes/format"]',
+      '@[classes/format]',
       '"Min contribution lists"',
-      '@["lists"]',
+      '@[lists]',
       '_',
-      '@["min contribution lists/format"]',
-      '@["min contribution lists/desc"]',
+      '@[min contribution lists/format]',
+      '@[min contribution lists/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     'min contribution lists/format', 'f', (
       'min_contr(' + [
-        '"Editor":{"User":@["users"],"Database node":d}',
-        '"User group":@["user groups"]',
-        '"Quality":@["qualities"]',
-        '"Subject":@["entities"]',
+        '"Editor":{"User":@[users],"Database node":d}',
+        '"User group":@[user groups]',
+        '"Quality":@[qualities]',
+        '"Subject":@[entities]',
       ].join(',') +
       ')=>{' + [
-        '"Class":@["min contribution lists"]',
+        '"Class":@[min contribution lists]',
         '"Editor":@{1}',
         '"User group":@{2}',
         '"Quality":@{3}',
@@ -567,24 +567,24 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     "max contribution lists", "r",
     [
-      '@["classes/format"]',
+      '@[classes/format]',
       '"Max contribution lists"',
-      '@["lists"]',
+      '@[lists]',
       '_',
-      '@["min contribution lists/format"]',
-      '@["min contribution lists/desc"]',
+      '@[min contribution lists/format]',
+      '@[min contribution lists/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     'max contribution lists/format', 'f', (
       'max_contr(' + [
-        '"Editor":{"User":@["users"],"Database node":d}',
-        '"User group":@["user groups"]',
-        '"Quality":@["qualities"]',
-        '"Subject":@["entities"]',
+        '"Editor":{"User":@[users],"Database node":d}',
+        '"User group":@[user groups]',
+        '"Quality":@[qualities]',
+        '"Subject":@[entities]',
       ].join(',') +
       ')=>{' + [
-        '"Class":@["max contribution lists"]',
+        '"Class":@[max contribution lists]',
         '"Editor":@{1}',
         '"User group":@{2}',
         '"Quality":@{3}',
@@ -595,25 +595,25 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     "score median lists", "r",
     [
-      '@["classes/format"]',
+      '@[classes/format]',
       '"Score median lists"',
-      '@["lists"]',
+      '@[lists]',
       '_',
-      '@["score median lists/format"]',
-      '@["score median lists/desc"]',
+      '@[score median lists/format]',
+      '@[score median lists/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     'score median lists/format', 'f', (
       'score_medians(' + [
-        '"Editor":{"User":@["users"],"Database node":d}',
+        '"Editor":{"User":@[users],"Database node":d}',
         '"Has passed weight threshold":bool',
-        '"User group":@["user groups"]',
-        '"Quality":@["qualities"]',
-        '"Filter list":@["lists"]?'
+        '"User group":@[user groups]',
+        '"Quality":@[qualities]',
+        '"Filter list":@[lists]?'
       ].join(',') +
       ')=>{' + [
-        '"Class":@["score median lists"]',
+        '"Class":@[score median lists]',
         '"Editor":@{1}',
         '"Has passed weight threshold":@{2}',
         '"User group":@{3}',
@@ -625,23 +625,23 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     "score2-ordered lists", "r",
     [
-      '@["classes/format"]',
+      '@[classes/format]',
       '"Float2-ordered lists"',
       '"Float2-ordered list"',
-      '@["lists"]',
+      '@[lists]',
       '_',
-      '@["score2-ordered lists/format"]',
-      '@["score2-ordered lists/desc"]',
+      '@[score2-ordered lists/format]',
+      '@[score2-ordered lists/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     'score2-ordered lists/format', 'f', (
       'score2_ordered_list(' + [
-        '"Editor":{"User":@["users"],"Database node":d}',
-        '"List":@["lists with score2 values"]',
+        '"Editor":{"User":@[users],"Database node":d}',
+        '"List":@[lists with score2 values]',
       ].join(',') +
       ')=>{' + [
-        '"Class":@["score2-ordered lists"]',
+        '"Class":@[score2-ordered lists]',
         '"Editor":@{1}',
         '"List":@{2}',
       ].join(',') + '}'
@@ -655,20 +655,20 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     "metrics/std percentage metric", "r",
     [
-      '@["metrics/format"]',
+      '@[metrics/format]',
       '"Standard percentage metric"',
       '"%"',
       '_',
       '_',
       '0',
       '100',
-      '@["metrics/std percentage metric/desc"]',
+      '@[metrics/std percentage metric/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "metrics/std predicate metric", "r",
     [
-      '@["metrics/format"]',
+      '@[metrics/format]',
       '"Standard predicate metric"',
       '"std-pred-unit"',
       '_',
@@ -686,59 +686,59 @@ export function initialInserts(dataInserter) {
       ]),
       '-10',
       '10',
-      '@["metrics/std predicate metric/desc"]',
+      '@[metrics/std predicate metric/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "metrics/price in USD metric", "r",
     [
-      '@["metrics/format"]',
+      '@[metrics/format]',
       '"Price metric (USD)"',
       '"$"',
       'true',
       '_',
       '_',
       '_',
-      '@["metrics/price in USD metric/desc"]',
+      '@[metrics/price in USD metric/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "metrics/time in years metric", "r",
     [
-      '@["metrics/format"]',
+      '@[metrics/format]',
       '"Time metric (years)"',
       '"yr"',
       '_',
       '_',
       '0',
       '_',
-      '@["metrics/time in years metric/desc"]',
+      '@[metrics/time in years metric/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "metrics/time in months metric", "r",
     [
-      '@["metrics/format"]',
+      '@[metrics/format]',
       '"Time metric (months)"',
       '"months"',
       '_',
       '_',
       '0',
       '_',
-      '@["metrics/time in months metric/desc"]',
+      '@[metrics/time in months metric/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "metrics/time in days metric", "r",
     [
-      '@["metrics/format"]',
+      '@[metrics/format]',
       '"Time metric (days)"',
       '"days"',
       '_',
       '_',
       '0',
       '_',
-      '@["metrics/time in days metric/desc"]',
+      '@[metrics/time in days metric/desc]',
     ].join(","),
   );
 
@@ -748,124 +748,124 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     "qualities/probability", "r",
     [
-      '@["qualities/format"]',
+      '@[qualities/format]',
       '"Probability"',
-      '@["texts"]',
-      '@["relations/members"]',
-      '@["metrics/std percentage metric"]',
-      '@["qualities/probability/desc"]',
+      '@[texts]',
+      '@[relations/members]',
+      '@[metrics/std percentage metric]',
+      '@[qualities/probability/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "qualities/truthfulness", "r",
     [
-      '@["qualities/format"]',
+      '@[qualities/format]',
       '"Truthfulness"',
-      '@["texts"]',
+      '@[texts]',
       '_',
-      '@["metrics/std percentage metric"]',
-      '@["qualities/truthfulness/desc"]',
+      '@[metrics/std percentage metric]',
+      '@[qualities/truthfulness/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "qualities/agreement", "r",
     [
-      '@["qualities/format"]',
+      '@[qualities/format]',
       '"Agreement"',
-      '@["texts"]',
+      '@[texts]',
       '_',
-      '@["metrics/std percentage metric"]',
-      '@["qualities/agreement/desc"]',
+      '@[metrics/std percentage metric]',
+      '@[qualities/agreement/desc]',
     ].join(","),
   );
 
   dataInserter.insertSubstituteOrEditEntity(
     "qualities/good (no desc.)", "r",
     [
-      '@["qualities/format"]',
+      '@[qualities/format]',
       '"good"', // We use lowercase when Description is not provided.
-      '@["entities"]',
+      '@[entities]',
       '_',
-      '@["metrics/std predicate metric"]',
+      '@[metrics/std predicate metric]',
       '_',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "qualities/funny (no desc.)", "r",
     [
-      '@["qualities/format"]',
+      '@[qualities/format]',
       '"funny"', // We use lowercase when Description is not provided.
-      '@["entities"]',
+      '@[entities]',
       '_',
-      '@["metrics/std predicate metric"]',
+      '@[metrics/std predicate metric]',
       '_',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "qualities/good", "r",
     [
-      '@["qualities/format"]',
+      '@[qualities/format]',
       '"Good"', // We capitalize first letter when Description is provided.
-      '@["entities"]',
+      '@[entities]',
       '_',
-      '@["metrics/std predicate metric"]',
-      '@["qualities/good/desc"]',
+      '@[metrics/std predicate metric]',
+      '@[qualities/good/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "qualities/funny", "r",
     [
-      '@["qualities/format"]',
+      '@[qualities/format]',
       '"Funny"', // We capitalize first letter when Description is provided.
-      '@["entities"]',
+      '@[entities]',
       '_',
-      '@["metrics/std predicate metric"]',
-      '@["qualities/funny/desc"]',
+      '@[metrics/std predicate metric]',
+      '@[qualities/funny/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "qualities/witty", "r",
     [
-      '@["qualities/format"]',
+      '@[qualities/format]',
       '"Witty"',
-      '@["entities"]',
+      '@[entities]',
       '_',
-      '@["metrics/std predicate metric"]',
-      '@["qualities/witty/desc"]',
+      '@[metrics/std predicate metric]',
+      '@[qualities/witty/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "qualities/spoilers", "r",
     [
-      '@["qualities/format"]',
+      '@[qualities/format]',
       '"Spoilers"',
-      '@["entities"]',
+      '@[entities]',
       '_',
-      '@["metrics/std predicate metric"]',
-      '@["qualities/spoilers/desc"]',
+      '@[metrics/std predicate metric]',
+      '@[qualities/spoilers/desc]',
     ].join(","),
   );
 
   dataInserter.insertSubstituteOrEditEntity(
     "qualities/price", "r",
     [
-      '@["qualities/format"]',
+      '@[qualities/format]',
       '"Price"',
-      '@["entities"]',
+      '@[entities]',
       '_',
-      '@["metrics/price in USD metric"]',
-      '@["qualities/price/desc"]',
+      '@[metrics/price in USD metric]',
+      '@[qualities/price/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "qualities/durability in years", "r",
     [
-      '@["qualities/format"]',
+      '@[qualities/format]',
       '"Durability (years)"',
-      '@["entities"]',
+      '@[entities]',
       '_',
-      '@["metrics/time in years metric"]',
-      '@["qualities/durability in years/desc"]',
+      '@[metrics/time in years metric]',
+      '@[qualities/durability in years/desc]',
     ].join(","),
   );
 
@@ -875,102 +875,102 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     "relations/members", "r",
     [
-      '@["relations/format"]',
+      '@[relations/format]',
       '"Members"',
-      '@["entities"]',
-      '@["classes"]',
-      '@["relations/members/desc"]',
+      '@[entities]',
+      '@[classes]',
+      '@[relations/members/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/subclasses", "r",
     [
-      '@["relations/format"]',
+      '@[relations/format]',
       '"Subclasses"',
-      '@["classes"]',
-      '@["classes"]',
-      '@["relations/subclasses/desc"]',
+      '@[classes]',
+      '@[classes]',
+      '@[relations/subclasses/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/relations", "r",
     [
-      '@["relations/format"]',
+      '@[relations/format]',
       '"Relations"',
-      '@["relations"]',
-      '@["entities"]',
-      '@["relations/relations/desc"]',
+      '@[relations]',
+      '@[entities]',
+      '@[relations/relations/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/relations for members", "r",
     [
-      '@["relations/format"]',
+      '@[relations/format]',
       '"Relations for members"',
-      '@["relations"]',
-      '@["classes"]',
-      '@["relations/relations for members/desc"]',
+      '@[relations]',
+      '@[classes]',
+      '@[relations/relations for members/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/sub-relations", "r",
     [
-      '@["relations/format"]',
+      '@[relations/format]',
       '"Sub-relations"',
-      '@["relations"]',
-      '@["relations"]',
-      '@["relations/sub-relations/desc"]',
+      '@[relations]',
+      '@[relations]',
+      '@[relations/sub-relations/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/qualities", "r",
     [
-      '@["relations/format"]',
+      '@[relations/format]',
       '"Qualities"',
-      '@["qualities"]',
-      '@["entities"]',
-      '@["relations/qualities/desc"]',
+      '@[qualities]',
+      '@[entities]',
+      '@[relations/qualities/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/qualities for members", "r",
     [
-      '@["relations/format"]',
+      '@[relations/format]',
       '"Qualities for members"',
-      '@["qualities"]',
-      '@["classes"]',
-      '@["relations/qualities for members/desc"]',
+      '@[qualities]',
+      '@[classes]',
+      '@[relations/qualities for members/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/qualities for subjects", "r",
     [
-      '@["relations/format"]',
+      '@[relations/format]',
       '"Qualities for subjects"',
-      '@["qualities"]',
-      '@["relations"]',
-      '@["relations/qualities for subjects/desc"]',
+      '@[qualities]',
+      '@[relations]',
+      '@[relations/qualities for subjects/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/sub-qualities", "r",
     [
-      '@["relations/format"]',
+      '@[relations/format]',
       '"Sub-qualities"',
-      '@["qualities"]',
-      '@["qualities"]',
-      '@["relations/sub-qualities/desc"]',
+      '@[qualities]',
+      '@[qualities]',
+      '@[relations/sub-qualities/desc]',
     ].join(","),
   );
 
   dataInserter.insertSubstituteOrEditEntity(
     "relations/arguments", "r",
     [
-      '@["relations/format"]',
+      '@[relations/format]',
       '"Arguments"',
-      '@["semantic parameters"]',
-      '@["semantic parameters"]',
-      '@["relations/arguments/desc"]',
+      '@[semantic parameters]',
+      '@[semantic parameters]',
+      '@[relations/arguments/desc]',
     ].join(","),
   );
 
@@ -978,61 +978,61 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     "relations/comments", "r",
     [
-      '@["relations/format"]',
+      '@[relations/format]',
       '"Comments"',
-      '@["texts"]',
-      '@["entities"]',
-      '@["relations/comments/desc"]',
+      '@[texts]',
+      '@[entities]',
+      '@[relations/comments/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/reaction comments", "r",
     [
-      '@["relations/format"]',
+      '@[relations/format]',
       '"Reaction  comments"',
-      '@["texts"]',
-      '@["entities"]',
-      '@["relations/reaction comments/desc"]',
+      '@[texts]',
+      '@[entities]',
+      '@[relations/reaction comments/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/informative comments", "r",
     [
-      '@["relations/format"]',
+      '@[relations/format]',
       '"Informative  comments"',
-      '@["texts"]',
-      '@["entities"]',
-      '@["relations/informative comments/desc"]',
+      '@[texts]',
+      '@[entities]',
+      '@[relations/informative comments/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/texts", "r",
     [
-      '@["relations/format"]',
+      '@[relations/format]',
       '"Texts"',
-      '@["texts"]',
-      '@["entities"]',
-      '@["relations/texts/desc"]',
+      '@[texts]',
+      '@[entities]',
+      '@[relations/texts/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/discussions", "r",
     [
-      '@["relations/format"]',
+      '@[relations/format]',
       '"Discussions"',
-      '@["texts"]',
-      '@["entities"]',
-      '@["relations/discussions/desc"]',
+      '@[texts]',
+      '@[entities]',
+      '@[relations/discussions/desc]',
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
     "relations/facts", "r",
     [
-      '@["relations/format"]',
+      '@[relations/format]',
       '"Facts"',
-      '@["texts"]',
-      '@["entities"]',
-      '@["relations/facts/desc"]',
+      '@[texts]',
+      '@[entities]',
+      '@[relations/facts/desc]',
     ].join(","),
   );
 
@@ -1040,11 +1040,11 @@ export function initialInserts(dataInserter) {
   dataInserter.insertSubstituteOrEditEntity(
     "relations/workspaces", "r",
     [
-      '@["relations/format"]',
+      '@[relations/format]',
       '"Workspaces"',
-      '@["workspaces"]',
-      '@["users"]',
-      '@["relations/workspaces/desc"]',
+      '@[workspaces]',
+      '@[users]',
+      '@[relations/workspaces/desc]',
     ].join(","),
   );
 

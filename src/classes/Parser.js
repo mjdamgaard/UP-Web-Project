@@ -38,27 +38,13 @@ export const EOS_ERROR = "End of partial string";
 // The values of the grammar object has to be of the form
 // {rules, process?}, where rules first of all is an array of rules, which are
 // each an array of symbols (terminal or nonterminal) to try parsing.
-// The the optional process() function can process the syntax tree node
-// right after it has been parsed, and also potentially perform a a test on
-// the syntax tree, which can turn a success into a failure. Its input
-// parameters are: process(children, ruleInd), where children is the
-// (mutable) array of children of the given node, and ruleInd is the index of
-// the rule that succeeded. The return value of process() should either be
-// falsy, if no changes are to be made (other than any side effects), or an
-// array of [children?, error?], where children, if defined, is a new children
-// array that overwrites the initial one, and error, if defined, is a non-empty
-// error message that turns the node into a failed one after all. If error is
-// falsy, the test will be considered successful, and the node will succeed.
-// 
-// As an example of what process() might do could be when parsing a list via a
-// rule of the form 'List := Elem , List | Elem'.
-// The resulting syntax tree will then initially be of the form
-// List(elem1, ',', List(elem2, ',', List(...(List(elemN))))), which one might
-// then want to transform into simply List(elem1, elem2, ..., elemN) before
-// further handling. Furthermore, say that one also wanted to test that
-// the no elements are identical. Then process() could perform this test on
-// children (potentially after the list processing), and return a non-empty
-// error string in case some are identical.
+// The the optional process(syntaxTree) function can process and reformat the
+// syntax tree node right after it has been successfully parsed, and also
+// potentially perform a test on it, which can turn a success into a failure.
+// It can do the latter either by manipulating syntaxTree.isSuccess and
+// syntaxTree.error directly, but it can also simply return a non-empty error
+// message string, in which case the two properties will be changed
+// automatically.
 // 
 // The symbols inside each rule of the grammar can either be another (or the
 // same) nonterminal symbol, or a RegExp pattern beginning and ending in '/',
@@ -81,12 +67,12 @@ export const EOS_ERROR = "End of partial string";
 // <param name="defaultSym">
 // The default (nonterminal) start symbol for the parser.
 // </param>
-
+// 
 // <param name="lexemePatternArr">
 // An array of lexeme pattern, which are tried in order from the first to the
 // last when constructing the lexeme array.
 // </param>
-
+// 
 // <param name="wsPattern">
 // A pattern of what the parser considers "whitespace" (might also include
 // comments) when lexing the string. This whitespace pattern will be tried
@@ -299,13 +285,11 @@ export class Parser {
     );
 
     // If a syntax tree was parsed successfully, run the optional process()
-    // function if there in order to finally succeed or fail it.
+    // function if there in order to test and process it.
     if (syntaxTree.isSuccess) {
       if (process) {
-        let [children, error] =
-          process(syntaxTree.children, syntaxTree.ruleInd) || [];
-        syntaxTree.children = children || syntaxTree.children;
-        syntaxTree.isSuccess &&= !error;
+        let error = process(syntaxTree);
+        syntaxTree.isSuccess = !error;
         syntaxTree.error = error || undefined;
       }
     }
