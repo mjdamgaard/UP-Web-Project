@@ -6,14 +6,8 @@ const NONTERMINAL_SYM_REGEXP =
   /^[^\/\?\*\+\{\}\[\]\$!]+$/;
 const NONTERMINAL_SYM_SUBSTR_REGEXP =
    /[^\/\?\*\+\{\}\[\]\$!]+/;
-const SUB_PARSER_SYM_REGEXP =
-  /^\$\$?[^\/\?\*\+\{\}\[\]\$!]+(\[[^\/\?\*\+\{\}\[\]\$!]+([\?\*\+]$|\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\})?\])?$/;
 const TRAILING_QUANTIFIER_SUBSTR_REGEXP =
   /[\?\*\+]$|\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\}$/;
-const SUB_PARSER_KEY_REGEXP = NONTERMINAL_SYM_REGEXP;
-const SUB_PARSER_KEY_SUBSTR_REGEXP = NONTERMINAL_SYM_SUBSTR_REGEXP;
-const SQUARE_BRACKET_SUBSTR_REGEXP =
-  /\[[^\]]+\]/;
 
 const NUMBER_SUBSTR_REGEXP =
   /0|[1-9][0-9]*/;
@@ -32,13 +26,8 @@ export const EOS_ERROR = "End of partial string";
 // array of lexeme patterns plus an optional whitespace pattern, which together
 // defines how the string is lexed before the parsing itself.
 //
-// The main method of this class, used for lexing and parsing (and potentially
-// processing) a string, is Parser.parse(str, startSym?, isPartial?).
-// 
-// The constructor can also take key-value object of other Parser instances,
-// which can be used in the grammar rules. (And the Parser.addSubParser()
-// method even makes it possible to have parsers that can recursively call each
-// other.)
+// The main method of this class is Parser.parse(str, startSym?, isPartial?),
+// used for lexing and parsing (and potentially processing) a string.
 // </summary>
 // 
 // <param name="grammar">
@@ -53,37 +42,29 @@ export const EOS_ERROR = "End of partial string";
 // right after it has been parsed, and also potentially perform a a test on
 // the syntax tree, which can turn a success into a failure. Its input
 // parameters are: process(children, ruleInd), where children is the
-// (mutable) array of children of the given node,and ruleInd is the index of
+// (mutable) array of children of the given node, and ruleInd is the index of
 // the rule that succeeded. The return value of process() should either be
-// falsy, if no changes are to be made, or an array of [children?, error?],
-// where children, if defined, is a new children array that overwrites the
-// initial one, and error, if defined, is a non-empty error message that
-// turns the node into a failed one after all. If error is falsy, the test will
-// be considered successful, and the node will succeed.
+// falsy, if no changes are to be made (other than any side effects), or an
+// array of [children?, error?], where children, if defined, is a new children
+// array that overwrites the initial one, and error, if defined, is a non-empty
+// error message that turns the node into a failed one after all. If error is
+// falsy, the test will be considered successful, and the node will succeed.
 // 
 // As an example of what process() might do could be when parsing a list via a
 // rule of the form 'List := Elem , List | Elem'.
-// The resulting syntax tree will initially be of the form
+// The resulting syntax tree will then initially be of the form
 // List(elem1, ',', List(elem2, ',', List(...(List(elemN))))), which one might
 // then want to transform into simply List(elem1, elem2, ..., elemN) before
 // further handling. Furthermore, say that one also wanted to test that
-// the first element is equal to the last (for whatever reason). Then process()
-// could perform this test on children (potentially after the aforementioned
-// list processing), and return a non-empty error string in case they are not
-// equal.
+// the no elements are identical. Then process() could perform this test on
+// children (potentially after the list processing), and return a non-empty
+// error string in case some are identical.
 // 
 // The symbols inside each rule of the grammar can either be another (or the
 // same) nonterminal symbol, or a RegExp pattern beginning and ending in '/',
 // with *no* '^' or '$' at the two ends, which succeeds a lexeme if and only if
 // the lexeme is fully matched by the pattern. A RegExp instance is also
 // accepted instead of a pattern, again with neither '^' nor '$' at the ends.
-// The rule symbols can also be of the form
-// '$$?<Sub-parser key>(\[<Symbol>\])?', where one or two '$'s
-// determines whether the called sub-parser will parse using the same lexeme
-// array as its parent is currently parsing, or if it will parse a single
-// (compound, possibly big) lexeme as its input string. And the optional symbol
-// makes it possible to parse another symbol instead of the sub-parser's default
-// one.
 // Furthermore, any rule symbol can also be followed by a RegExp quantifier,
 // i.e. '?', '*', '+', or '{<n>,<m>}', which parses a variable number of the
 // preceding nonterminal symbol.
@@ -93,7 +74,7 @@ export const EOS_ERROR = "End of partial string";
 // other rules should by tried after the current one. In other words, its "do
 // or die" for the rule in question if such a symbol is reached.
 // 
-// The first rule to succeed for a nonterminal symbol will short circuit it,
+// The first rule to succeed for a nonterminal symbol will short-circuit it,
 // such that the subsequent rules will not be tried.
 // </param>
 // 
@@ -111,21 +92,11 @@ export const EOS_ERROR = "End of partial string";
 // comments) when lexing the string. This whitespace pattern will be tried
 // first thing whenever a new lexeme is lexed.
 // </param>
-
-// <param name="subParsers">
-// A plain object containing so-called sub-parsers, which can be used in the
-// rules of the grammar (via rule symbols that starts with '$' or '$$',
-// followed by the sub-parser's key). The keys of this plain object is the keys
-// of the given sub-parsers, by which they are referenced in the rule.
-// (If wanting to call sub-parsers recursively, use the Parser.addSubParser()
-// method instead.) 
-// </param>
 export class Parser {
-  constructor(grammar, defaultSym, lexemePatternArr, wsPattern, subParsers) {
+  constructor(grammar, defaultSym, lexemePatternArr, wsPattern) {
     this.grammar = grammar;
-    this.subParsers = subParsers ?? {};
-    // defaultSym is the default (nonterminal) start symbol.
     this.defaultSym = defaultSym;
+
     // Initialize the lexer.
     this.lexer = new Lexer(lexemePatternArr, wsPattern);
     
@@ -185,14 +156,6 @@ export class Parser {
             );
           }
 
-          // If the symbol is a sub-parser symbol, validate it.
-          else if (ruleSym.at(0) === "$") {
-            if (!SUB_PARSER_SYM_REGEXP.test(ruleSym)) {
-              throw "Parser: Sub-parser keys cannot contain any of the " +
-                "special characters '/?*+{}[]$!'. Received \"" + ruleSym + '"';
-            }
-          }
-
           // Else validate it as either a regular symbol or a quantified
           // symbol.
           else {
@@ -207,55 +170,46 @@ export class Parser {
 
 
 
-  addSubParser(key, parser) {
-    if (!SUB_PARSER_KEY_REGEXP.test(key)) {
-      throw "Parser.addSubParser(): Sub-parser keys cannot contain any of " +
-        "the special characters '/?*+{}[]$!'. Received \"" + key + '"';
-    }
-    this.subParsers[key] = parser;
-  }
 
-
-
-// <summary>
-// The main method of this Parser class, used for lexing and parsing (and
-// potentially processing) a string.
-// </summary>
-// 
-// <param name="str">
-// The input string to be lexed and parsed.
-// </param>
-// 
-// <param name="startSym">
-// An optional start symbol, i.e. the nonterminal symbol that the whole input
-// string should be parsed as. If undefined or null, the default start symbol,
-// defaultSym, will be used. 
-// </param>
-// 
-// <param name="isPartial">
-// An optional boolean flag, with a default value of false, that if set to true
-// will make the parsing end with an "End of partial string" error *the moment*
-// the parser touches the end of the input string. Note that the syntax tree
-// will still be still be returned, however, even if always unsuccessful. This
-// option can thus be used to partially parse an incomplete string, otherwise
-// of the grammar in its complete form, and then only use the successfully
-// parsed part of it.
-// </param>
-// 
-// <returns>
-// A syntax tree consisting of nodes of the form
-// {sym, isSuccess, error?, children?, ruleInd? lexeme?, nextPos},
-// where sym is the nonterminal symbol or the rule symbol of the node,
-// isSuccess (bool) tells if the node was successfully parsed or not, children
-// is an array of the node's child nodes (which on failure will be those of the
-// rule that reached the furthest in the string, and also include the last
-// failed node), ruleInd is the index of the rule that the children was
-// obtained from in the given "rules" array in the case of a nonterminal symbol
-// that has more than one rule, and lexeme is the matched lexeme in case of a
-// pattern symbol.
-// Also the returned nextPos is a number denoting the number of lexemes that
-// successfully parsed as part of some rule (successful or unsuccessful).
-// </returns>
+  // <summary>
+  // The main method of this Parser class, used for lexing and parsing (and
+  // potentially processing) a string.
+  // </summary>
+  // 
+  // <param name="str">
+  // The input string to be lexed and parsed.
+  // </param>
+  // 
+  // <param name="startSym">
+  // An optional start symbol, i.e. the nonterminal symbol that the whole input
+  // string should be parsed as. If undefined or null, the default start symbol,
+  // defaultSym, will be used. 
+  // </param>
+  // 
+  // <param name="isPartial">
+  // An optional boolean flag, with a default value of false, that if set to
+  // true will make the parsing end with an "End of partial string" error
+  // *the moment* the parser touches the end of the input string. Note that
+  // the syntax tree will still be still be returned, however, even if always
+  // unsuccessful. This option can thus be used to partially parse an
+  // incomplete string, otherwise of the grammar in its complete form, and
+  // then only use the successfully parsed part of it.
+  // </param>
+  // 
+  // <returns>
+  // A syntax tree consisting of nodes of the form
+  // {sym, isSuccess, error?, children?, ruleInd? lexeme?, nextPos},
+  // where sym is the nonterminal symbol or the rule symbol of the node,
+  // isSuccess (bool) tells if the node was successfully parsed or not,
+  // children is an array of the node's child nodes (which on failure will be
+  // those of the rule that reached the furthest in the string, and also
+  // include the last failed node),
+  // ruleInd, in the case of a nonterminal symbol that has more than one rule,
+  // is the index in the given rules array from which the children was obtained,
+  // and lexeme is the matched lexeme in case of a pattern symbol.
+  // Also the returned nextPos is a number denoting the number of lexemes that
+  // successfully parsed as part of some rule (successful or unsuccessful).
+  // </returns>
   parse(str, startSym, isPartial = false) {
     // Lex the input string.
     let lexArr, strPosArr;
@@ -626,40 +580,6 @@ export class Parser {
             nextPos: pos,
           };
         }
-      }
-    }
-
-    // Else if sym is on the form '$$?<ParserKey>(\[<StartSym>\])?',
-    // continue parsing with the given sub-parser instead, either with its
-    // default start symbol, or another start symbol if '\[<StartSym>\]' is
-    // there. Also, if there are two leading '$'s instead of one, parse only
-    // a single compound (possibly big) lexeme with the sub-parser, using that
-    // parser's own lexer to "sub-lex" this compound lexeme.
-    else if (sym.at(0) === "$") {
-      let parserKey = sym.match(SUB_PARSER_KEY_SUBSTR_REGEXP)[0];
-      let subParser = this.subParsers[parserKey];
-      let startSym = (sym.match(SQUARE_BRACKET_SUBSTR_REGEXP) ?? ["[]"])[0]
-        .slice(1, -1) ||
-        undefined;
-      let subLex = (sym.at(1) === "$");
-
-      // If subLex is true, parse only a single (possibly big) lexeme, and
-      // lex it first.
-      if (subLex) {
-        if (!nextLexeme) {
-          syntaxTree = {
-            sym: sym, isSuccess: false,
-            nextPos: pos,
-          };
-        }
-        else {
-          syntaxTree = subParser.parse(nextLexeme, startSym, false);
-        }
-      }
-      // Else let the parser parse as many lexemes as it can, using the
-      // same lexeme array. 
-      else {
-        syntaxTree = subParser.parseRuleSymbol(lexArr, pos, startSym);
       }
     }
 
