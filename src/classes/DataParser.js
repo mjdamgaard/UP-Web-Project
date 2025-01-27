@@ -61,140 +61,17 @@ const nonSpecialCharsPattern = new RegExp (
 );
 
 const funAndRegEntLexemePatternArr = [
-  specialCharPattern,
-  nonSpecialCharsPattern,
-  
+  /"([^"\\]|\\[.\n])*"/,
+  /\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-+]?(0|[1-9][0-9]*))?/,
+  /=>|@[\[\{<]|[,:\[\]\{\}\(\)>\?=]/,
+  "/true|false|null/",
 ];
-
-
-const doubleQuoteStringPattern =
-  /"([^"\\]|\\[\s\S])*"/;
-const xmlSpecialCharPattern =
-  /[<>"'\\\/&;]/;
-
-const xmlWSPattern = /\s+/;
-const xmlLexemePatternArr = [
-  doubleQuoteStringPattern,
-  xmlSpecialCharPattern,
-  nonSpecialCharsPattern,
-
-];
-
-const xmlGrammar = {
-  "xml-text": {
-    rules: [
-      ["text-or-element*"],
-    ],
-    process: (children, ruleInd) => {
-      let contentArr = children[0].children;
-      return contentArr;
-    },
-  },
-  "text-or-element": {
-    rules: [
-      ["element"],
-      [/[^&'"<>]+/],
-      ["/&/", /[#\w]+/, "/;/"],
-    ],
-  },
-  "element": {
-    rules: [
-      [
-        "/</", /[_a-zA-Z][_a-zA-Z0-9\-\.]*/, "attr-member*", "/>/",
-        "xml-text",
-        "/</", /\//, "element-name", "/>/"
-      ],
-      [
-        "/</", /[_a-zA-Z][_a-zA-Z0-9\-\.]*/, "attr-member*", /\//, "/>/",
-      ]
-    ],
-    process: (children, ruleInd) => {
-      let startTagName = children[1].lexeme;
-      if (/^[xX][mM][lL]/.test(startTagName)) {
-        return [null, "Element name cannot start with 'xml'"]
-      }
-
-      let attrMembers = syntaxTree.children[2].children;
-      let content = (ruleInd === 0) ? syntaxTree.children[4] : undefined;
-      let isSelfClosing = (ruleInd === 1);
-
-      if (ruleInd === 0) {
-        let endTagName = syntaxTree.children[7].lexeme;
-        if (endTagName !== startTagName) {
-          return [null,
-            "End tag </" + endTagName + "> does not match start tag <" +
-            startTagName + ">"
-          ];
-        }
-      }
-
-      return [startTagName, attrMembers, content, isSelfClosing];
-    },
-  },
-  "element-name": {
-    rules: [
-      [/[_a-zA-Z]+/, "/[_a-zA-Z0-9\\-\\.]+/*"],
-    ],
-    // (One could include a test() here to make sure it doesn't start with
-    // /[xX][mM][lL]/.)
-  },
-  "attr-member": {
-    rules: [
-      ["attr-name", "/=/", "string"],
-      ["attr-name", "/=/", "number"],
-      ["attr-name", "/=/", "/true|false/"],
-      ["attr-name"],
-    ],
-  },
-  "attr-name": {
-    rules: [
-      // NOTE: This might very well be wrong. TODO: Correct.
-      [/[_a-sA-Z]+/, "/[_a-sA-Z0-9\\-\\.]+/*"],
-    ],
-  },
-  "string": {
-    rules: [
-      [doubleQuoteStringPattern],
-    ],
-    process: (children) => {
-      // Test that the string is a valid JSON string.
-      let stringLiteral = children[0].lexeme;
-      try {
-        JSON.parse(stringLiteral);
-      } catch (error) {
-        return [false, `Invalid JSON string: ${stringLiteral}`];
-      }
-      return [];
-    },
-  },
-  "number": {
-    rules: [
-      [/\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-+]?(0|[1-9][0-9]*))?/],
-    ],
-  },
-}
-
-export const xmlParser = new Parser(
-  xmlGrammar, "xml-text", xmlLexemePatternArr, xmlWSPattern
-);
-
-// Tests:
-xmlParser.log(xmlParser.parseAndProcess(
-  `Hello, world!`
-));
-xmlParser.log(xmlParser.parseAndProcess(
-  `Hello, <i>world</i>.`
-));
-xmlParser.log(xmlParser.parseAndProcess(
-  `Hello, <i>world</wrong>.`
-));
-
 
 
 
 
 const jsonGrammar = {
-  "json-text": {
+  "json-object": {
     rules: [
       ["object"],
       ["array"],
@@ -218,38 +95,22 @@ const jsonGrammar = {
   },
   "string": {
     rules: [
-      ['/"/', "chars*", '/"/'],
+      [/"([^"\\]|\\[.\n])*"/],
     ],
     process: (children, ruleInd) => {
       // Concat all the nested lexemes.
-      let stringContent = syntaxTree.children[1].children.reduce(
-        (acc, val) => acc + val.children.reduce(
-          (acc, val) => acc + (
-            val.children[0]
-          ),
-          ""
-        ),
-        ""
-      );
+      let stringLiteral = children[0].lexeme;
 
       // Test that the resulting string is a valid JSON string. 
       try {
-        JSON.parse(`"${stringContent}"`);
+        JSON.parse(stringLiteral);
       } catch (error) {
-        return [false, `Invalid JSON string: "${stringContent}"`];
+        return [null, `Invalid JSON string: ${stringLiteral}`];
       }
 
-      // Also do some early post-processing now that we have the string:
-      syntaxTree.children = [`"${stringContent}"`];
-
-      return [true];
+      children = stringLiteral;
+      return [children];
     },
-  },
-  "chars": {
-    rules: [
-      [/[^"\\]+/],
-      [/\\/, /(["\\\/bfnrt]|u[0-9A-Fa-f]{4}).*/],
-    ],
   },
   "number": {
     rules: [
@@ -285,16 +146,15 @@ export function straightenListSyntaxTree(
 ) {
   children = (ruleInd === 0) ? [
     children[0],
-    ...syntaxTree.children[1 + delimiterLexNum].children,
+    ...children[1 + delimiterLexNum].children,
   ] : [
-    syntaxTree.children[0]
+    children[0]
   ];
 }
 
 
 
-// We only overwrite some of the nonterminal symbols in the "parent" JSON
-// grammar.
+// We only overwrite some of the nonterminal symbols in the JSON grammar.
 const regEntGrammar = {
   ...jsonGrammar,
   "literal": {
@@ -309,11 +169,14 @@ const regEntGrammar = {
     ],
   },
   "string": {
-    rules: [
-      [/"/, "chars-or-@-literal*", /"/],
-    ],
-    process: (children, ruleInd) => {
-      // TODO: make.
+    rules: jsonGrammar["string"].rules,
+    process: (children) => {
+      let [stringLiteral, error] = jsonGrammar["string"].process(children);
+      if (error) {
+        return [null, error];
+      }
+      let stringSyntaxTree = regAndFunEntStringParser.parse(stringLiteral);
+      return [stringSyntaxTree.children, stringSyntaxTree.error];
     },
   },
   "chars-or-@-literal": {
@@ -434,6 +297,150 @@ const funEntGrammar = {
 
 
 
-// const regularEntityParser = new Parser(
-//   regEntGrammar, "literal-list", funAndRegEntLexemePatternArr, false
-// );
+const regularEntityParser = new Parser(
+  regEntGrammar, "literal-list", funAndRegEntLexemePatternArr, false
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const doubleQuoteStringPattern =
+  /"([^"\\]|\\[\s\S])*"/;
+const xmlSpecialCharPattern =
+  /[<>"'\\\/&;]/;
+
+const xmlWSPattern = /\s+/;
+const xmlLexemePatternArr = [
+  doubleQuoteStringPattern,
+  xmlSpecialCharPattern,
+  nonSpecialCharsPattern,
+
+];
+
+const xmlGrammar = {
+  "xml-text": {
+    rules: [
+      ["text-or-element*"],
+    ],
+    process: (children, ruleInd) => {
+      let contentArr = children[0].children;
+      children = contentArr;
+      return [children];
+    },
+  },
+  "text-or-element": {
+    rules: [
+      ["element"],
+      [/[^&'"<>]+/],
+      ["/&/", /[#\w]+/, "/;/"],
+    ],
+  },
+  "element": {
+    rules: [
+      [
+        "/</", /[_a-zA-Z][_a-zA-Z0-9\-\.]*/, "attr-member*", "/>/",
+        "xml-text",
+        "/</", /\//, "element-name", "/>/"
+      ],
+      [
+        "/</", /[_a-zA-Z][_a-zA-Z0-9\-\.]*/, "attr-member*", /\//, "/>/",
+      ]
+    ],
+    process: (children, ruleInd) => {
+      let startTagName = children[1].lexeme;
+      if (/^[xX][mM][lL]/.test(startTagName)) {
+        return [null, "Element name cannot start with 'xml'"]
+      }
+
+      if (ruleInd === 0) {
+        let endTagName = syntaxTree.children[7].lexeme;
+        if (endTagName !== startTagName) {
+          return [null,
+            "End tag </" + endTagName + "> does not match start tag <" +
+            startTagName + ">"
+          ];
+        }
+      }
+
+      children = {
+        name: startTagName,
+        attrMembers: syntaxTree.children[2].children,
+        content: (ruleInd === 0) ? syntaxTree.children[4] : undefined,
+        isSelfClosing: (ruleInd === 1),
+      };
+      return [children];
+    },
+  },
+  "element-name": {
+    rules: [
+      [/[_a-zA-Z]+/, "/[_a-zA-Z0-9\\-\\.]+/*"],
+    ],
+    // (One could include a test() here to make sure it doesn't start with
+    // /[xX][mM][lL]/.)
+  },
+  "attr-member": {
+    rules: [
+      ["attr-name", "/=/", "string"],
+      ["attr-name", "/=/", "number"],
+      ["attr-name", "/=/", "/true|false/"],
+      ["attr-name"],
+    ],
+  },
+  "attr-name": {
+    rules: [
+      // NOTE: This might very well be wrong. TODO: Correct.
+      [/[_a-sA-Z]+/, "/[_a-sA-Z0-9\\-\\.]+/*"],
+    ],
+  },
+  "string": {
+    rules: [
+      [doubleQuoteStringPattern],
+    ],
+    process: (children) => {
+      // Test that the string is a valid JSON string.
+      let stringLiteral = children[0].lexeme;
+      try {
+        JSON.parse(stringLiteral);
+      } catch (error) {
+        return [false, `Invalid JSON string: ${stringLiteral}`];
+      }
+      return [];
+    },
+  },
+  "number": {
+    rules: [
+      [/\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-+]?(0|[1-9][0-9]*))?/],
+    ],
+  },
+}
+
+export const xmlParser = new Parser(
+  xmlGrammar, "xml-text", xmlLexemePatternArr, xmlWSPattern
+);
+
+// Tests:
+xmlParser.log(xmlParser.parseAndProcess(
+  `Hello, world!`
+));
+xmlParser.log(xmlParser.parseAndProcess(
+  `Hello, <i>world</i>.`
+));
+xmlParser.log(xmlParser.parseAndProcess(
+  `Hello, <i>world</wrong>.`
+));
