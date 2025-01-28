@@ -99,7 +99,7 @@ const jsonGrammar = {
       try {
         JSON.parse(stringLiteral);
       } catch (error) {
-        return `Invalid JSON string: ${stringLiteral}`;
+        return [false, `Invalid JSON string: ${stringLiteral}`];
       }
 
       syntaxTree.strLit = stringLiteral;
@@ -223,8 +223,8 @@ const regEntGrammar = {
       ["object"],
       ["/_|true|false|null/"],
     ],
-    process: (children, ruleInd) => {
-
+    process: (syntaxTree) => {
+      // TODO..
     }
   },
   "string": {
@@ -232,14 +232,14 @@ const regEntGrammar = {
     process: (syntaxTree) => {
       let error = jsonGrammar["string"].process(syntaxTree);
       if (error) {
-        return error;
+        return [false, error];
       }
 
       let subSyntaxTree = regEntStringContentParser.parse(
         syntaxTree.strLit.slice(1, -1)
       );
       if (!subSyntaxTree.isSuccess) {
-        return subSyntaxTree.error;
+        return [false, subSyntaxTree.error];
       }
 
       Object.assign(syntaxTree, subSyntaxTree);
@@ -326,7 +326,7 @@ export const regEntStringContentParser = new Parser(
   "string-content",
   [
     /@[\[\{<];?/,
-    /([^"\\@\]\}>]|\\[^@\]\}>]|)+/,
+    /([^"\\@\]\}>]|\\[^@\]\}>])+/,
   ],
   false
 );
@@ -434,7 +434,7 @@ const funEntGrammar = {
       let num = parseInt(numLiteral);
 
       if (numLiteral !== null && (num.toString !== numLiteral || num === 1)) {
-        return `Invalid array length: ${numLiteral}`;
+        return [false, `Invalid array length: ${numLiteral}`];
       }
 
       syntaxTree.num = (numLiteral === null) ? null : num;
@@ -476,46 +476,46 @@ export const funEntParser = new Parser(
 
 /* Tests */
 
-// regEntParser.log(regEntParser.parse(
-//   `12`
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `12, 13`
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `"Hello, world!"`
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `@`
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `@[`
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `12,`
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `12,\[,`
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `"Hello, world!",@[7],_,false`
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `"Hello, world!",@[7],_,false,`
-// ));
-// // Works.
+regEntParser.log(regEntParser.parse(
+  `12`
+));
+// Works.
+regEntParser.log(regEntParser.parse(
+  `12, 13`
+));
+// Works.
+regEntParser.log(regEntParser.parse(
+  `"Hello, world!"`
+));
+// Works.
+regEntParser.log(regEntParser.parse(
+  `@`
+));
+// Works.
+regEntParser.log(regEntParser.parse(
+  `@[`
+));
+// Works.
+regEntParser.log(regEntParser.parse(
+  `12,`
+));
+// Works.
+regEntParser.log(regEntParser.parse(
+  `12,\[,`
+));
+// Works.
+regEntParser.log(regEntParser.parse(
+  `"Hello, world!",@[7],_,false`
+));
+// Works.
+regEntParser.log(regEntParser.parse(
+  `"Hello, world!",@[7],_,false,`
+));
+// Works.
 regEntParser.log(regEntParser.parse(
   `"Hello, @[7]!"`
 ));
-// Works.
+// ...
 
 
 

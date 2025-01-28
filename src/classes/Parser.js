@@ -10,8 +10,8 @@ const NONTERMINAL_SYM_SUBSTR_REGEXP =
 const TRAILING_QUANTIFIER_SUBSTR_REGEXP =
   /[\?\*\+]\$?$|\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\}\$?$/;
 
-const NUMBER_SUBSTR_REGEXP =
-  /0|[1-9][0-9]*/;
+const NUMBER_SUBSTR_REGEXP_G =
+  /0|[1-9][0-9]*/g;
 
 
 export const EOS_ERROR = "End of partial string";
@@ -42,7 +42,9 @@ export const EOS_ERROR = "End of partial string";
 // The the optional process(syntaxTree) function can process and reformat the
 // syntax tree node right after it has been successfully parsed, and also
 // potentially perform a test on it, which can turn a success into a failure.
-// The latter is done by returning  a non-empty error message string.
+// The latter is done by returning [isSuccess = true, error], where the node
+// fails silently if isSuccess is defined and falsy, and fails with an error
+// that aborts the parsing if error is a non-empty error message string.
 // 
 // The symbols inside each rule of the grammar can either be another (or the
 // same) nonterminal symbol, or a RegExp pattern beginning and ending in '/',
@@ -256,8 +258,8 @@ export class Parser {
     }
 
     // Else if node has a quantified symbol, which means that the minimum
-    // number of instances was not parsed, call this function recursively on
-    // the last, failed child.
+    // number of instances was not parsed (or the end of string was not
+    // reached), call this function recursively on the last, failed child.
     let failedChild = children.at(-1);
     if (TRAILING_QUANTIFIER_SUBSTR_REGEXP.test(syntaxTree.sym)) {
       return this.#getErrorAndFailedSymbols(failedChild);
@@ -273,17 +275,17 @@ export class Parser {
       return this.#getErrorAndFailedSymbols(failedChild);
     }
 
-    // Else if there is only one child, which means that the first symbol in
-    // every rule failed, return the node itself, and an appropriate error.
-    let childrenLen = children.length;
-    if (childrenLen <= 1) {
-      return [`Failed symbol '${syntaxTree.sym}'`, syntaxTree.sym];
-    }
+    // // Else if there is only one child, which means that the first symbol in
+    // // every rule failed, return the node itself, and an appropriate error.
+    // let childrenLen = children.length;
+    // if (childrenLen <= 1) {
+    //   return [`Failed symbol '${syntaxTree.sym}'`, syntaxTree.sym];
+    // }
 
-    // Else do a similar thing, but make the error a disjunction of all the
-    // symbols that was expected at that point.
+    // Else make a joined symbol of all the symbols that was one of the
+    // expected ones at that point where the parsing reached.
     let rules = this.grammar[syntaxTree.sym].rules;
-    let successfulChildren = children.slice(-1);
+    let childrenLen = children.length;
     let failedSymArr = [];
     rules.forEach(rule => {
       if (rule.length < childrenLen) return;
@@ -297,10 +299,10 @@ export class Parser {
       }
     });
     if (failedSymArr.length === 1) {
-      return [`Failed symbol '${syntaxTree.sym}'`, syntaxTree.sym];
+      return [`Failed symbol '${syntaxTree.sym}'`, failedSymArr[0]];
     } else {
       let joinedSymbols = failedSymArr.join("' or '");
-      return [`Failed symbols '${joinedSymbols}'`, joinedSymbols];
+      return [`Failed symbols '${syntaxTree.sym}'`, joinedSymbols];
     }
   }
 
@@ -327,9 +329,9 @@ export class Parser {
         let nextPos = syntaxTree.nextPos;
         let sym = syntaxTree.sym;
 
-        let error = process(syntaxTree);
+        let [isSuccess = true, error] = process(syntaxTree) || [];
 
-        syntaxTree.isSuccess = !error;
+        syntaxTree.isSuccess = isSuccess && !error;
         if (error) syntaxTree.error = error;
         // (We make sure that nextPos and sym isn't changed by the user, as
         // they are used for error reporting.)
@@ -369,7 +371,7 @@ export class Parser {
 
       let ruleChildren = [];
       let ruleSuccess = false;
-      for (let j = 0; j < ruleLen; j++) { if (j > 0) debugger;
+      for (let j = 0; j < ruleLen; j++) {
         let childSyntaxTree;
         let ruleSym = rule[j];
 
@@ -438,11 +440,11 @@ export class Parser {
         // array, first of all.
         ruleChildren.push(childSyntaxTree);
 
-        // And if the child failed with error = EOS_ERROR, abort the parsing
-        // immediately, propagating this error all the way out to the root.
-        if (childSyntaxTree.error === EOS_ERROR) {
+        // And if the child failed with an error, abort the parsing immediately,
+        // propagating this error all the way out to the root.
+        if (childSyntaxTree.error) {
           let syntaxTree = {
-            sym: sym, isSuccess: false, error: EOS_ERROR,
+            sym: sym, isSuccess: false, error: childSyntaxTree.error,
             ruleInd: (rulesNum) ? i : undefined,
             children: ruleChildren,
             nextPos: childSyntaxTree.nextPos,
@@ -497,7 +499,7 @@ export class Parser {
 
 
 
-  parseRuleSymbol(lexArr, pos, sym, triedSymbols = []) { console.log(sym);
+  parseRuleSymbol(lexArr, pos, sym, triedSymbols = []) {
     let nextLexeme = lexArr[pos];
     let syntaxTree;
 
@@ -526,7 +528,7 @@ export class Parser {
 
       // Parse n and m from quantifier := "{n(,m)?}", and then set max and
       // min based on those, and on the quantifier in general. 
-      let [n, m] = (quantifier.match(NUMBER_SUBSTR_REGEXP) ?? []).map(
+      let [n, m] = (quantifier.match(NUMBER_SUBSTR_REGEXP_G) ?? []).map(
         val => parseInt(val)
       );
       let max = m ?? n ?? (quantifier === "?") ? 1 : Infinity;
