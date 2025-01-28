@@ -203,7 +203,7 @@ export class Parser {
       [lexArr, strPosArr] = this.lexer.lex(str, isPartial);
     } catch (error) {
       if (error instanceof LexError) {
-        let syntaxTree = {isSuccess: false, error: error.msq};
+        let syntaxTree = {isSuccess: false, error: error.msg};
         return syntaxTree;
       }
       // Else throw error;
@@ -220,7 +220,7 @@ export class Parser {
       // (We could parse column and line number here, but let's not, at least
       // not for now. *Or maybe let us, after all, so a possible TODO here..)
       syntaxTree.isSuccess = false;
-      let strPos = strPosArr[syntaxTree.nextPos] ?? str.length - 1;
+      let strPos = strPosArr[syntaxTree.nextPos] ?? str.length;
       syntaxTree.error = 'Parsing error "Incomplete parsing" after:\n' +
         str.substring(0, strPos).substring(strPos - ERROR_ECHO_STR_LEN) +
         "\n--------\n" +
@@ -232,7 +232,7 @@ export class Parser {
     else if (!syntaxTree.isSuccess) {
       let [error, failedSymbols] = this.#getErrorAndFailedSymbols(syntaxTree);
       if (error !== EOS_ERROR) {
-        let strPos = strPosArr[syntaxTree.nextPos] ?? str.length - 1;
+        let strPos = strPosArr[syntaxTree.nextPos] ?? str.length;
         syntaxTree.error = `Parsing error "${error}" after:\n` +
         str.substring(0, strPos).substring(strPos - ERROR_ECHO_STR_LEN) +
         "\n--------\n" +
@@ -283,18 +283,19 @@ export class Parser {
     // Else do a similar thing, but make the error a disjunction of all the
     // symbols that was expected at that point.
     let rules = this.grammar[syntaxTree.sym].rules;
-    let failedSymArr = rules
-      .map(rule => {
-        if (rule.length < childrenLen) return false;
-        return rule.reduce(
-          (acc, sym, ind) => (
-            (ind > childrenLen - 1) ? acc :
-              acc && (children[ind] ?? {}).sym
-          ),
-          true
-        )
-      })
-      .filter(val => val);
+    let successfulChildren = children.slice(-1);
+    let failedSymArr = [];
+    rules.forEach(rule => {
+      if (rule.length < childrenLen) return;
+      let partialRule = rule.slice(0, childrenLen - 1);
+      let isAlmostSuccessful = partialRule.reduce(
+        (acc, sym, ind) => acc && (children[ind] ?? {}).sym === sym,
+        true
+      );
+      if (isAlmostSuccessful) {
+        failedSymArr.push(rule[childrenLen - 1]);
+      }
+    });
     if (failedSymArr.length === 1) {
       return [`Failed symbol '${syntaxTree.sym}'`, syntaxTree.sym];
     } else {
@@ -496,7 +497,7 @@ export class Parser {
 
 
 
-  parseRuleSymbol(lexArr, pos, sym, triedSymbols = []) {console.log(sym);
+  parseRuleSymbol(lexArr, pos, sym, triedSymbols = []) {
     let nextLexeme = lexArr[pos];
     let syntaxTree;
 
@@ -670,13 +671,13 @@ export class Lexer {
       // Else check that the last lexeme isn't the greedy "[^$]+" one.
       let lastMatch = unfilteredLexArr.at(-1);
       if (!this.lexemeOrWSRegEx.test(lastMatch)) {
-        let lastIndexOfInvalidLexeme = lastMatch.search(this.wsRegEx) - 1;
+        let prevStr = unfilteredLexArr.slice(0, -1).join("");
         throw new LexError(
-          "Lexer error at: \n" +
-          lastMatch.substring(0, ERROR_ECHO_STR_LEN) +
+          "Lexer error after: \n" +
+          prevStr.slice(-ERROR_ECHO_STR_LEN) +
           "\n--------\n" +
-          "Invalid lexeme:\n" +
-          lastMatch.substring(0, lastIndexOfInvalidLexeme + 1)
+          "Invalid lexeme at:\n" +
+          lastMatch.substring(0, Math.floor(ERROR_ECHO_STR_LEN/4))
         );
       }
     }

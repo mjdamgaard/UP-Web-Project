@@ -483,24 +483,39 @@ export const funEntParser = new Parser(
 // regEntParser.log(regEntParser.parse(
 //   `12`
 // ));
+// Works.
 // regEntParser.log(regEntParser.parse(
 //   `12, 13`
 // ));
-regEntParser.log(regEntParser.parse(
-  `"Hello, world!"`
-));
+// Works.
+// regEntParser.log(regEntParser.parse(
+//   `"Hello, world!"`
+// ));
+// Works.
 // regEntParser.log(regEntParser.parse(
 //   `@`
 // ));
+// Works.
+// regEntParser.log(regEntParser.parse(
+//   `@[`
+// ));
+// Works.
 // regEntParser.log(regEntParser.parse(
 //   `12,`
 // ));
+// Works.
+// regEntParser.log(regEntParser.parse(
+//   `12,\[,`
+// ));
+// Works.
 // regEntParser.log(regEntParser.parse(
 //   `"Hello, world!",@[7],_,false`
 // ));
+// Works.
 // regEntParser.log(regEntParser.parse(
 //   `"Hello, world!",@[7],_,false,`
 // ));
+// Works.
 
 
 
