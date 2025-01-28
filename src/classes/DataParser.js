@@ -17,7 +17,7 @@ export class DataParser {
   ) {
     switch (entType) {
       case "r":
-        return this.parseRegularfEntity(
+        return this.parseRegularEntity(
           defStr, len, creatorID, isEditable, readerWhitelistID
         );
       case "f":
@@ -34,7 +34,7 @@ export class DataParser {
     }
   }
 
-  static parseRegularfEntity(
+  static parseRegularEntity(
     defStr, len, creatorID, isEditable, readerWhitelistID
   ) {
 
@@ -56,24 +56,7 @@ export class DataParser {
 }
 
 
-const specialCharPattern =
-  /=>|[,;:"'\/\\+\-\.\*\?\|&@\(\)\[\]\{\}=<>]/;
-const nonSpecialCharsPattern = new RegExp (
-  "[^" + specialCharPattern.source.substring(1) + "+"
-);
 
-
-
-
-
-
-
-const rfEntLexemePatternArr = [
-  /"([^"\\]|\\[.\n])*"/,
-  /\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-+]?(0|[1-9][0-9]*))?/,
-  /[,:\[\]\{\}]/,
-  "/true|false|null/",
-];
 
 
 
@@ -119,7 +102,7 @@ const jsonGrammar = {
         return `Invalid JSON string: ${stringLiteral}`;
       }
 
-      syntaxTree.children = stringLiteral;
+      syntaxTree.strLit = stringLiteral;
     },
   },
   "number": {
@@ -157,26 +140,26 @@ const jsonGrammar = {
     rules: [
       ["string", "/:/", "literal"],
     ],
+    process: (syntaxTree) => {
+      syntaxTree.children = {
+        name: syntaxTree.children[0],
+        val: syntaxTree.children[2],
+      }
+    },
   },
-  process: (syntaxTree) => {
-    syntaxTree.children = {
-      name: syntaxTree.children[0],
-      val: syntaxTree.children[2],
-    }
-  }
 };
 
-const jsonParser = new Parser(
-  jsonGrammar,
-  "literal",
-  [
-    /"([^"\\]|\\[.\n])*"/,
-    /\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-+]?(0|[1-9][0-9]*))?/,
-    /=>|@[\[\{<]|[,:\[\]\{\}\(\)>\?=]/,
-    "/true|false|null/",
-  ],
-  /\s+/
-);
+// const jsonParser = new Parser(
+//   jsonGrammar,
+//   "literal",
+//   [
+//     /"([^"\\]|\\[.\n])*"/,
+//     /\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-+]?(0|[1-9][0-9]*))?/,
+//     /=>|@[\[\{<]|[,:\[\]\{\}\(\)>\?=]/,
+//     "/true|false|null/",
+//   ],
+//   /\s+/
+// );
 
 
 
@@ -185,7 +168,7 @@ export function straightenListSyntaxTree(syntaxTree, delimiterLexNum = 1) {
     syntaxTree.children[0],
     ...syntaxTree.children[1 + delimiterLexNum].children,
   ] : [
-    children[0]
+    syntaxTree.children[0]
   ];
 }
 
@@ -224,57 +207,11 @@ export function makeChildrenIntoLexemeArray(syntaxTree) {
 
 
 
-const rfEntStringContentGrammar = {
-  "string-content": {
-    rules: [
-      ["string-part*"]
-    ],
-    process: becomeChildExceptSym,
-  },
-  "string-part": {
-    rules: [
-      ["ent-ref"],
-      ["input-placeholder"],
-      ["escaped-bracket"],
-      ["plain-text"],
-    ],
-  },
-  "ent-ref": {
-    ...rfEntGrammar["ent-ref"],
-  },
-  "input-placeholder": {
-    ...rfEntGrammar["input-placeholder"],
-  },
-  "escaped-bracket": {
-    rules: [
-      [/@[\[\{<];/],
-    ],
-    process: becomeChildExceptSym,
-  },
-  "plain-text": {
-    rules: [
-      [/([^"\\@\]\}>]|\\[^@\]\}>]|)+/],
-    ],
-    process: becomeChildExceptSym,
-  },
-};
-
-
-export const rfEntStringContentParser = new Parser(
-  rfEntStringContentGrammar,
-  "string-content",
-  [
-    /@[\[\{<];?/,
-    /([^"\\@\]\}>]|\\[^@\]\}>]|)+/,
-  ],
-  false
-);
-
 
 
 
 // We only overwrite some of the nonterminal symbols in the JSON grammar.
-const rEntGrammar = {
+const regEntGrammar = {
   ...jsonGrammar,
   "literal": {
     rules: [
@@ -298,8 +235,8 @@ const rEntGrammar = {
         return error;
       }
 
-      let subSyntaxTree = rfEntStringContentParser.parse(
-        stringLiteral.slice(1, -1)
+      let subSyntaxTree = regEntStringContentParser.parse(
+        syntaxTree.strLit.slice(1, -1)
       );
       if (!subSyntaxTree.isSuccess) {
         return subSyntaxTree.error;
@@ -314,6 +251,7 @@ const rEntGrammar = {
       [/@\[/, "path", /\]/],
     ],
     process: (syntaxTree) => {
+      let ruleInd = syntaxTree.ruleInd;
       Object.assign(syntaxTree, {
         isTBD: (ruleInd === 1),
         entID: (ruleInd === 0) ? syntaxTree.children[1].lexeme : undefined,
@@ -334,8 +272,8 @@ const rEntGrammar = {
   },
 };
 
-export const rEntParser = new Parser(
-  rEntGrammar,
+export const regEntParser = new Parser(
+  regEntGrammar,
   "literal-list",
   [
     /"([^"\\]|\\[.\n])*"/,
@@ -352,8 +290,60 @@ export const rEntParser = new Parser(
 
 
 
-const fEntGrammar = {
-  ...rEntGrammar,
+const regEntStringContentGrammar = {
+  "string-content": {
+    rules: [
+      ["string-part*"]
+    ],
+    process: becomeChildExceptSym,
+  },
+  "string-part": {
+    rules: [
+      ["ent-ref"],
+      ["input-placeholder"],
+      ["escaped-bracket"],
+      ["plain-text"],
+    ],
+  },
+  "ent-ref": {
+    ...regEntGrammar["ent-ref"],
+  },
+  "input-placeholder": {
+    ...regEntGrammar["input-placeholder"],
+  },
+  "escaped-bracket": {
+    rules: [
+      [/@[\[\{<];/],
+    ],
+    process: becomeChildExceptSym,
+  },
+  "plain-text": {
+    rules: [
+      [/([^"\\@\]\}>]|\\[^@\]\}>]|)+/],
+    ],
+    process: becomeChildExceptSym,
+  },
+};
+
+
+export const regEntStringContentParser = new Parser(
+  regEntStringContentGrammar,
+  "string-content",
+  [
+    /@[\[\{<];?/,
+    /([^"\\@\]\}>]|\\[^@\]\}>]|)+/,
+  ],
+  false
+);
+
+
+
+
+
+
+
+const funEntGrammar = {
+  ...regEntGrammar,
   "function": {
     rules: [
       [
@@ -473,8 +463,8 @@ const fEntGrammar = {
 };
 
 
-export const fEntParser = new Parser(
-  fEntGrammar,
+export const funEntParser = new Parser(
+  funEntGrammar,
   "function",
   [
     /"([^"\\]|\\[.\n])*"/,
@@ -489,6 +479,28 @@ export const fEntParser = new Parser(
 
 
 
+// Tests:
+// regEntParser.log(regEntParser.parse(
+//   `12`
+// ));
+// regEntParser.log(regEntParser.parse(
+//   `12, 13`
+// ));
+regEntParser.log(regEntParser.parse(
+  `"Hello, world!"`
+));
+// regEntParser.log(regEntParser.parse(
+//   `@`
+// ));
+// regEntParser.log(regEntParser.parse(
+//   `12,`
+// ));
+// regEntParser.log(regEntParser.parse(
+//   `"Hello, world!",@[7],_,false`
+// ));
+// regEntParser.log(regEntParser.parse(
+//   `"Hello, world!",@[7],_,false,`
+// ));
 
 
 
@@ -504,6 +516,15 @@ export const fEntParser = new Parser(
 
 
 
+
+
+
+
+const specialCharPattern =
+  /=>|[,;:"'\/\\+\-\.\*\?\|&@\(\)\[\]\{\}=<>]/;
+const nonSpecialCharsPattern = new RegExp (
+  "[^" + specialCharPattern.source.substring(1) + "+"
+);
 
 
 const doubleQuoteStringPattern =
@@ -524,11 +545,11 @@ const xmlGrammar = {
     rules: [
       ["text-or-element*"],
     ],
-    process: (children, ruleInd) => {
-      let contentArr = children[0].children;
-      children = contentArr;
-      return [children];
-    },
+    // process: (syntaxTree) => {
+    //   let contentArr = syntaxTree.children[0].children;
+    //   let children = contentArr;
+    //   return [children];
+    // },
   },
   "text-or-element": {
     rules: [
@@ -548,12 +569,13 @@ const xmlGrammar = {
         "/</", /[_a-zA-Z][_a-zA-Z0-9\-\.]*/, "attr-member*", /\//, "/>/",
       ]
     ],
-    process: (children, ruleInd) => {
-      let startTagName = children[1].lexeme;
+    process: (syntaxTree) => {
+      let startTagName = syntaxTree.children[1].lexeme;
       if (/^[xX][mM][lL]/.test(startTagName)) {
         return [null, "Element name cannot start with 'xml'"]
       }
 
+      let ruleInd = syntaxTree.ruleInd;
       if (ruleInd === 0) {
         let endTagName = syntaxTree.children[7].lexeme;
         if (endTagName !== startTagName) {
@@ -564,13 +586,12 @@ const xmlGrammar = {
         }
       }
 
-      children = {
+      Object.assign(syntaxTree, {
         name: startTagName,
         attrMembers: syntaxTree.children[2].children,
         content: (ruleInd === 0) ? syntaxTree.children[4] : undefined,
         isSelfClosing: (ruleInd === 1),
-      };
-      return [children];
+      });
     },
   },
   "element-name": {
@@ -620,13 +641,13 @@ export const xmlParser = new Parser(
   xmlGrammar, "xml-text", xmlLexemePatternArr, xmlWSPattern
 );
 
-// Tests:
-xmlParser.log(xmlParser.parseAndProcess(
-  `Hello, world!`
-));
-xmlParser.log(xmlParser.parseAndProcess(
-  `Hello, <i>world</i>.`
-));
-xmlParser.log(xmlParser.parseAndProcess(
-  `Hello, <i>world</wrong>.`
-));
+// // Tests:
+// xmlParser.log(xmlParser.parse(
+//   `Hello, world!`
+// ));
+// xmlParser.log(xmlParser.parse(
+//   `Hello, <i>world</i>.`
+// ));
+// xmlParser.log(xmlParser.parse(
+//   `Hello, <i>world</wrong>.`
+// ));

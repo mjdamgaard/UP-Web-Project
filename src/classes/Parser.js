@@ -1,3 +1,4 @@
+import { error } from "jquery";
 
 const ERROR_ECHO_STR_LEN = 400;
 
@@ -41,10 +42,7 @@ export const EOS_ERROR = "End of partial string";
 // The the optional process(syntaxTree) function can process and reformat the
 // syntax tree node right after it has been successfully parsed, and also
 // potentially perform a test on it, which can turn a success into a failure.
-// It can do the latter either by manipulating syntaxTree.isSuccess and
-// syntaxTree.error directly, but it can also simply return a non-empty error
-// message string, in which case the two properties will be changed
-// automatically.
+// The latter is done by returning  a non-empty error message string.
 // 
 // The symbols inside each rule of the grammar can either be another (or the
 // same) nonterminal symbol, or a RegExp pattern beginning and ending in '/',
@@ -96,13 +94,15 @@ export class Parser {
       // First validate the nonterminal symbol.
       if (!NONTERMINAL_SYM_REGEXP.test(sym)) {
         throw "Parser: Nonterminal symbols cannot contain any of the " +
-          "special characters '/?*+{}!'. Received \"" + sym + '"';
+          "special characters '/?*+{}!'. Received \"" + sym + '".';
       }
       // Then go through each rule symbol and process patterns and RegExps.
       let rulesNum = rules.length;
+      if (!(rulesNum > 0)) throw "Parser: rules array cannot be empty.";
       for (let i = 0; i < rulesNum; i++) {
         let rule = rules[i];
         let ruleLen = rule.length;
+        if (!(ruleLen > 0)) throw "Parser: rule cannot be an empty array.";
         for (let j = 0; j < ruleLen; j++) {
           let ruleSym = rule[j];
 
@@ -193,8 +193,8 @@ export class Parser {
   // ruleInd, in the case of a nonterminal symbol that has more than one rule,
   // is the index in the given rules array from which the children was obtained,
   // and lexeme is the matched lexeme in case of a pattern symbol.
-  // Also the returned nextPos is a number denoting the number of lexemes that
-  // successfully parsed as part of some rule (successful or unsuccessful).
+  // Also the returned nextPos is a number denoting the maximal number of
+  // lexemes that was successfully parsed as part of one of the rules.
   // </returns>
   parse(str, startSym, isPartial = false) {
     // Lex the input string.
@@ -213,37 +213,31 @@ export class Parser {
     // Then parse the resulting lexeme array.
     let syntaxTree = this.parseLexArr(lexArr, 0, startSym);
 
-    // If the input string was not fully parsed, make sure that isSuccess is
-    // set to false, and set an appropriate error for the syntax tree.
-    if (syntaxTree.nextPos !== strPosArr.length) {
-      // If the syntax tree was otherwise successful, meaning that only a part
-      // of the string was parsed, construct an error saying so. 
-      if (syntaxTree.isSuccess) {
-        // (We could parse column and line number here, but let's not, at least
-        // not for now. *Or maybe let us, after all, so a possible TODO here..)
-        syntaxTree.isSuccess = false;
+    // If the input string was not fully parsed, but the syntax tree was
+    // otherwise successful, meaning that only a part of the string was parsed,
+    // construct an error saying so. 
+    if (syntaxTree.isSuccess && syntaxTree.nextPos !== strPosArr.length) {
+      // (We could parse column and line number here, but let's not, at least
+      // not for now. *Or maybe let us, after all, so a possible TODO here..)
+      syntaxTree.isSuccess = false;
+      let strPos = strPosArr[syntaxTree.nextPos] ?? str.length - 1;
+      syntaxTree.error = 'Parsing error "Incomplete parsing" after:\n' +
+        str.substring(0, strPos).substring(strPos - ERROR_ECHO_STR_LEN) +
+        "\n--------\n" +
+        "Expected an empty string, but got:\n" +
+        str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4));
+    }
+    // Else extract an appropriate error from the syntax tree, via a call to
+    // #getErrorAndFailedSymbols().
+    else if (!syntaxTree.isSuccess) {
+      let [error, failedSymbols] = this.#getErrorAndFailedSymbols(syntaxTree);
+      if (error !== EOS_ERROR) {
         let strPos = strPosArr[syntaxTree.nextPos] ?? str.length - 1;
-        syntaxTree.error = 'Parsing error "Incomplete parsing" after:\n' +
-          str.substring(0, strPos).substring(strPos - ERROR_ECHO_STR_LEN) +
-          "\n--------\n" +
-          "Expected an empty string, but got:\n" +
-          str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4));
-      }
-      // Else extract an appropriate error from the syntax tree, via a call to
-      // #getErrorAndFailedNode().
-      else {
-        syntaxTree.isSuccess = false;
-        let [error, failedNode] = this.#getErrorAndFailedNode(syntaxTree);
-        error ??= `Failed symbol ${failedNode.sym}`;
-
-        if (error !== EOS_ERROR) {
-          let strPos = strPosArr[failedNode.nextPos] ?? str.length - 1;
-          syntaxTree.error = `Parsing error "${error}" after:\n` +
-          str.substring(0, strPos).substring(strPos - ERROR_ECHO_STR_LEN) +
-          "\n--------\n" +
-          "Expected an empty string, but got:\n" +
-          str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4));
-        }
+        syntaxTree.error = `Parsing error "${error}" after:\n` +
+        str.substring(0, strPos).substring(strPos - ERROR_ECHO_STR_LEN) +
+        "\n--------\n" +
+        `Expected symbol(s) '${failedSymbols}', but got:\n` +
+        str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4));
       }
     }
   
@@ -253,19 +247,60 @@ export class Parser {
 
 
 
-  #getErrorAndFailedNode(syntaxTree) {
-    // If the syntax tree has an error set, and has children, get the last
-    // (assumed failed) child's error, and the last failed symbol, and return
-    // this. (Note that a node will have no children if none of the rules
-    // advanced the position.)
-    if (!syntaxTree.error && syntaxTree.children && syntaxTree.children[0]) {
-      let lastChild = syntaxTree.children.at(-1);
-      return this.#getErrorAndFailedNode(lastChild);
+  #getErrorAndFailedSymbols(syntaxTree, pos = 0) {
+    let children = syntaxTree.children;
+
+    // If the node has an error set, simply return that, along with pos.
+    if (syntaxTree.error) {
+      return [syntaxTree.error, syntaxTree.sym];
     }
 
-    // Else simply return this (final, failed) syntax tree's error (perhaps
-    // undefined), as well as its nonterminal symbol.
-    return [syntaxTree.error || undefined, syntaxTree];
+    // Else if node has a quantified symbol, which means that the minimum
+    // number of instances was not parsed, call this function recursively on
+    // the last, failed child.
+    let failedChild = children.at(-1);
+    if (TRAILING_QUANTIFIER_SUBSTR_REGEXP.test(syntaxTree.sym)) {
+      return this.#getErrorAndFailedSymbols(failedChild);
+    }
+
+    // Else if the last failed symbol is a nonterminal or quantified symbol
+    // which managed to advance the position (meaning that its nextPos is
+    // greater than the previous sibling, and greater than the parent's
+    // position, pos), then call this function recursively to get the error and
+    // failed node from that.
+    let prevPos = (children.at(-2) || {nextPos: pos}).nextPos;
+    if (failedChild.nextPos > prevPos) {
+      return this.#getErrorAndFailedSymbols(failedChild);
+    }
+
+    // Else if there is only one child, which means that the first symbol in
+    // every rule failed, return the node itself, and an appropriate error.
+    let childrenLen = children.length;
+    if (childrenLen <= 1) {
+      return [`Failed symbol '${syntaxTree.sym}'`, syntaxTree.sym];
+    }
+
+    // Else do a similar thing, but make the error a disjunction of all the
+    // symbols that was expected at that point.
+    let rules = this.grammar[syntaxTree.sym].rules;
+    let failedSymArr = rules
+      .map(rule => {
+        if (rule.length < childrenLen) return false;
+        return rule.reduce(
+          (acc, sym, ind) => (
+            (ind > childrenLen - 1) ? acc :
+              acc && (children[ind] ?? {}).sym
+          ),
+          true
+        )
+      })
+      .filter(val => val);
+    if (failedSymArr.length === 1) {
+      return [`Failed symbol '${syntaxTree.sym}'`, syntaxTree.sym];
+    } else {
+      let joinedSymbols = failedSymArr.join("' or '");
+      return [`Failed symbols '${joinedSymbols}'`, joinedSymbols];
+    }
   }
 
 
@@ -288,9 +323,17 @@ export class Parser {
     // function if there in order to test and process it.
     if (syntaxTree.isSuccess) {
       if (process) {
+        let nextPos = syntaxTree.nextPos;
+        let sym = syntaxTree.sym;
+
         let error = process(syntaxTree);
+
         syntaxTree.isSuccess = !error;
-        syntaxTree.error = error || undefined;
+        if (error) syntaxTree.error = error;
+        // (We make sure that nextPos and sym isn't changed by the user, as
+        // they are used for error reporting.)
+        syntaxTree.nextPos = nextPos;
+        syntaxTree.sym = sym;
       }
     }
 
@@ -301,12 +344,12 @@ export class Parser {
 
 
   parseRules(lexArr, pos, rules, sym, triedSymbols) {
-    // Initialize a variable holding the record nextPos obtaining in a (failed)
+    // Initialize a variable holding the record nextPos obtained in a (failed)
     // rule so far, and also one that holds the index of the "record rule" that
     // obtained it.
     let recordRuleNextPos = -1;
     let recordRuleInd;
-    // Initialize and array containing all children of the "record rule," also
+    // Initialize an array containing all children of the "record rule," also
     // including the last, failed one.
     let recordRuleChildren;
     // Initialize a doOrDie variable, that is set to true if a symbol ending in
@@ -401,7 +444,7 @@ export class Parser {
             sym: sym, isSuccess: false, error: EOS_ERROR,
             ruleInd: (rulesNum) ? i : undefined,
             children: ruleChildren,
-            nextPos: nextPos,
+            nextPos: childSyntaxTree.nextPos,
           };
           return syntaxTree;
         }
@@ -445,7 +488,7 @@ export class Parser {
       sym: sym, isSuccess: false,
       ruleInd: (rulesNum) ? recordRuleInd || undefined : undefined,
       children: recordRuleChildren || undefined,
-      nextPos: pos,
+      nextPos: recordRuleChildren.at(-1).nextPos,
     };
     return syntaxTree;
   }
@@ -453,7 +496,7 @@ export class Parser {
 
 
 
-  parseRuleSymbol(lexArr, pos, sym, triedSymbols = []) {
+  parseRuleSymbol(lexArr, pos, sym, triedSymbols = []) {console.log(sym);
     let nextLexeme = lexArr[pos];
     let syntaxTree;
 
@@ -517,11 +560,10 @@ export class Parser {
             break;
           }
           else {
+            children.push(childSyntaxTree);
             syntaxTree = {
               sym: sym, isSuccess: false, children: children,
-              nextPos: nextPos,
-              // (Note that on failure, nextPos is supposed to be where the
-              // error occurred.)
+              nextPos: childSyntaxTree.nextPos,
             };
             break;
           }
@@ -535,8 +577,6 @@ export class Parser {
       syntaxTree = {
         sym: sym, isSuccess: false, error: EOS_ERROR,
         nextPos: pos,
-        // Note that on failure, nextPos is supposed to be where the error
-        // occurred. 
       };
     }
 
@@ -546,8 +586,6 @@ export class Parser {
         syntaxTree = {
           sym: sym, isSuccess: false,
           nextPos: pos,
-          // (Note that on failure, nextPos is supposed to be where the error
-          // occurred.)
         };
       }
       else {
@@ -598,6 +636,7 @@ export class Lexer {
     this.wsRegEx = (wsPattern instanceof RegExp) ? wsPattern :
       wsPattern ? new RegExp(wsPattern) :
       /[^\s\S]/;
+    this.onlyWSRegEx = new RegExp("^(" + this.wsRegEx.source + ")$");
     this.hasWhitespace = wsPattern ? true : false;
     // RegEx of all lexemes and whitespace. 
     this.lexemeOrWSRegEx = new RegExp(
@@ -621,7 +660,8 @@ export class Lexer {
     // Get the initial lexeme array still with whitespace and the potential last
     // failed string in it, then test and throw if the last match is that last
     // failure string.
-    let unfilteredLexArr = str.match(this.lexerRegEx);
+    let unfilteredLexArr = str.match(this.lexerRegEx)
+      .filter(val => val !== "");
     if (isPartial) {
       // If str is only a partial string, remove the last lexeme, and replace
       // it the end-of-partial-string constant.
@@ -656,7 +696,7 @@ export class Lexer {
     let lexArr, strPosArr;
     if (this.hasWhitespace) {
       lexArr = unfilteredLexArr.filter((val, ind) => {
-        let isWhitespace = this.wsRegEx.test(val);
+        let isWhitespace = this.onlyWSRegEx.test(val);
         if (isWhitespace) {
           unfilteredStrPosArr[ind] = null;
         }
