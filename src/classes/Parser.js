@@ -4,11 +4,11 @@ const ERROR_ECHO_STR_LEN = 400;
 
 
 const NONTERMINAL_SYM_REGEXP =
-  /^[^\/\?\*\+\{\}!]+$/;
+  /^[^\/\?\*\+\{\}\$!]+$/;
 const NONTERMINAL_SYM_SUBSTR_REGEXP =
-   /[^\/\?\*\+\{\}!]+/;
+   /[^\/\?\*\+\{\}\$!]+/;
 const TRAILING_QUANTIFIER_SUBSTR_REGEXP =
-  /[\?\*\+]$|\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\}$/;
+  /[\?\*\+]\$?$|\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\}\$?$/;
 
 const NUMBER_SUBSTR_REGEXP =
   /0|[1-9][0-9]*/;
@@ -94,7 +94,7 @@ export class Parser {
       // First validate the nonterminal symbol.
       if (!NONTERMINAL_SYM_REGEXP.test(sym)) {
         throw "Parser: Nonterminal symbols cannot contain any of the " +
-          "special characters '/?*+{}!'. Received \"" + sym + '".';
+          "special characters '/?*+{}$!'. Received \"" + sym + '".';
       }
       // Then go through each rule symbol and process patterns and RegExps.
       let rulesNum = rules.length;
@@ -369,7 +369,7 @@ export class Parser {
 
       let ruleChildren = [];
       let ruleSuccess = false;
-      for (let j = 0; j < ruleLen; j++) {
+      for (let j = 0; j < ruleLen; j++) { if (j > 0) debugger;
         let childSyntaxTree;
         let ruleSym = rule[j];
 
@@ -497,7 +497,7 @@ export class Parser {
 
 
 
-  parseRuleSymbol(lexArr, pos, sym, triedSymbols = []) {
+  parseRuleSymbol(lexArr, pos, sym, triedSymbols = []) { console.log(sym);
     let nextLexeme = lexArr[pos];
     let syntaxTree;
 
@@ -516,6 +516,13 @@ export class Parser {
     if (quantifierArr) {
       let quantifier = quantifierArr[0];
       let subSym = sym.slice(0, -quantifier.length);
+
+      // If the quantifier ends in '$', set failIfEOSIsNotReached = true, and
+      // remove it from the symbol for further handling.
+      let failIfEOSIsNotReached = (quantifier.at(-1) === "$");
+      if (failIfEOSIsNotReached) {
+        quantifier = quantifier.slice(0, -1);
+      }
 
       // Parse n and m from quantifier := "{n(,m)?}", and then set max and
       // min based on those, and on the quantifier in general. 
@@ -550,10 +557,9 @@ export class Parser {
         }
         else {
           // If and when failing, mark a success or failure depending on
-          // whether min was reached or not. Note that nextPos is at this
-          // point the next position after the last successful child, not the
-          // the current failed one. 
-          if (i + 1 >= min) {
+          // whether min was reached or not, or whether or not the boolean
+          // failIfEOSIsNotReached is true or not.
+          if (i + 1 >= min && !(failIfEOSIsNotReached && lexArr[nextPos])) {
             syntaxTree = {
               sym: sym, isSuccess: true, children: children,
               nextPos: nextPos,

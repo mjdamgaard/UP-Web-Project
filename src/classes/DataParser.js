@@ -72,7 +72,7 @@ const jsonGrammar = {
   },
   "literal-list": {
     rules: [
-      ["literal", "/,/", "literal-list"],
+      ["literal", "/,/", "literal-list!"],
       ["literal"],
     ],
     process: straightenListSyntaxTree,
@@ -131,7 +131,7 @@ const jsonGrammar = {
   },
   "member-list": {
     rules: [
-      ["member", "/,/", "member-list"],
+      ["member", "/,/", "member-list!"],
       ["member"],
     ],
     process: straightenListSyntaxTree,
@@ -291,9 +291,10 @@ export const regEntParser = new Parser(
 
 
 const regEntStringContentGrammar = {
+  ...regEntGrammar,
   "string-content": {
     rules: [
-      ["string-part*"]
+      ["string-part*$"]
     ],
     process: becomeChildExceptSym,
   },
@@ -304,12 +305,6 @@ const regEntStringContentGrammar = {
       ["escaped-bracket"],
       ["plain-text"],
     ],
-  },
-  "ent-ref": {
-    ...regEntGrammar["ent-ref"],
-  },
-  "input-placeholder": {
-    ...regEntGrammar["input-placeholder"],
   },
   "escaped-bracket": {
     rules: [
@@ -479,42 +474,47 @@ export const funEntParser = new Parser(
 
 
 
-// Tests:
+/* Tests */
+
 // regEntParser.log(regEntParser.parse(
 //   `12`
 // ));
-// Works.
+// // Works.
 // regEntParser.log(regEntParser.parse(
 //   `12, 13`
 // ));
-// Works.
+// // Works.
 // regEntParser.log(regEntParser.parse(
 //   `"Hello, world!"`
 // ));
-// Works.
+// // Works.
 // regEntParser.log(regEntParser.parse(
 //   `@`
 // ));
-// Works.
+// // Works.
 // regEntParser.log(regEntParser.parse(
 //   `@[`
 // ));
-// Works.
+// // Works.
 // regEntParser.log(regEntParser.parse(
 //   `12,`
 // ));
-// Works.
+// // Works.
 // regEntParser.log(regEntParser.parse(
 //   `12,\[,`
 // ));
-// Works.
+// // Works.
 // regEntParser.log(regEntParser.parse(
 //   `"Hello, world!",@[7],_,false`
 // ));
-// Works.
+// // Works.
 // regEntParser.log(regEntParser.parse(
 //   `"Hello, world!",@[7],_,false,`
 // ));
+// // Works.
+regEntParser.log(regEntParser.parse(
+  `"Hello, @[7]!"`
+));
 // Works.
 
 
