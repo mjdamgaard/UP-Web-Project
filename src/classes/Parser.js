@@ -223,7 +223,7 @@ export class Parser {
       // not for now. *Or maybe let us, after all, so a possible TODO here..)
       syntaxTree.isSuccess = false;
       let strPos = strPosArr[syntaxTree.nextPos] ?? str.length;
-      syntaxTree.error = 'Parsing error "Incomplete parsing" after:\n' +
+      syntaxTree.error = 'Incomplete parsing after:\n' +
         str.substring(0, strPos).substring(strPos - ERROR_ECHO_STR_LEN) +
         "\n--------\n" +
         "Expected an empty string, but got:\n" +
@@ -232,13 +232,20 @@ export class Parser {
     // Else extract an appropriate error from the syntax tree, via a call to
     // #getErrorAndFailedSymbols().
     else if (!syntaxTree.isSuccess) {
-      let [error, failedSymbols] = this.#getErrorAndFailedSymbols(syntaxTree);
-      if (error !== EOS_ERROR) {
-        let strPos = strPosArr[syntaxTree.nextPos] ?? str.length;
-        syntaxTree.error = `Parsing error "${error}" after:\n` +
+      let [error, failedNodeSymbol, expectedSymbols] =
+        this.#getErrorAndFailedSymbols(syntaxTree);
+      if (error) {
+        let strPos = strPosArr[syntaxTree.nextPos - 1] ?? str.length;
+        syntaxTree.error = 'Error after:\n' +
         str.substring(0, strPos).substring(strPos - ERROR_ECHO_STR_LEN) +
         "\n--------\n" +
-        `Expected symbol(s) '${failedSymbols}', but got:\n` +
+        'Error:\n\t' + error.replaceAll("\n", "\n\t");
+      } else {
+        let strPos = strPosArr[syntaxTree.nextPos] ?? str.length;
+        syntaxTree.error = `Failed symbol '${failedNodeSymbol}' after:\n` +
+        str.substring(0, strPos).substring(strPos - ERROR_ECHO_STR_LEN) +
+        "\n--------\n" +
+        `Expected symbol(s) '${expectedSymbols}', but got:\n` +
         str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4));
       }
     }
@@ -252,9 +259,9 @@ export class Parser {
   #getErrorAndFailedSymbols(syntaxTree, pos = 0) {
     let children = syntaxTree.children;
 
-    // If the node has an error set, simply return that, along with pos.
+    // If the node has an error set, simply return that.
     if (syntaxTree.error) {
-      return [syntaxTree.error, syntaxTree.sym];
+      return [syntaxTree.error];
     }
 
     // Else if node has a quantified symbol, which means that the minimum
@@ -275,15 +282,9 @@ export class Parser {
       return this.#getErrorAndFailedSymbols(failedChild);
     }
 
-    // // Else if there is only one child, which means that the first symbol in
-    // // every rule failed, return the node itself, and an appropriate error.
-    // let childrenLen = children.length;
-    // if (childrenLen <= 1) {
-    //   return [`Failed symbol '${syntaxTree.sym}'`, syntaxTree.sym];
-    // }
-
-    // Else make a joined symbol of all the symbols that was one of the
-    // expected ones at that point where the parsing reached.
+    // Else get all the symbols that was one of the expected ones at that point
+    // where the parsing reached, and return those, along with the symbol of
+    // the current node, and an undefined error.
     let rules = this.grammar[syntaxTree.sym].rules;
     let childrenLen = children.length;
     let failedSymArr = [];
@@ -299,10 +300,10 @@ export class Parser {
       }
     });
     if (failedSymArr.length === 1) {
-      return [`Failed symbol '${syntaxTree.sym}'`, failedSymArr[0]];
+      return [undefined, syntaxTree.sym, `'${failedSymArr[0]}'`];
     } else {
       let joinedSymbols = failedSymArr.join("' or '");
-      return [`Failed symbols '${syntaxTree.sym}'`, joinedSymbols];
+      return [undefined, syntaxTree.sym, `'${joinedSymbols}'`];;
     }
   }
 

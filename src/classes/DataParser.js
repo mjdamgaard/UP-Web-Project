@@ -230,8 +230,9 @@ const regEntGrammar = {
   "string": {
     ...jsonGrammar["string"],
     process: (syntaxTree) => {
-      let error = jsonGrammar["string"].process(syntaxTree);
-      if (error) {
+      let [isSuccess = true, error] =
+        jsonGrammar["string"].process(syntaxTree) || [];
+      if (!isSuccess) {
         return [false, error];
       }
 
@@ -476,42 +477,54 @@ export const funEntParser = new Parser(
 
 /* Tests */
 
-regEntParser.log(regEntParser.parse(
-  `12`
-));
+// regEntParser.log(regEntParser.parse(
+//   `12`
+// ));
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12, 13`
+// ));
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `"Hello, world!"`
+// ));
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `@`
+// ));
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `@[`
+// ));
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12,`
+// ));
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12,\[,`
+// ));
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `"Hello, world!",@[7],_,false`
+// ));
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `"Hello, world!",@[7],_,false,`
+// ));
 // Works.
+// regEntParser.log(regEntParser.parse(
+//   `"Hello, world!",@[7],_,false`, "literal-list"
+// ));
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `"Hello, world!",@[7],_,false`, "literal"
+// ));
+// // Works.
 regEntParser.log(regEntParser.parse(
-  `12, 13`
+  `"Hello, world!",@[7],_,false,`, "literal-list", true
 ));
-// Works.
-regEntParser.log(regEntParser.parse(
-  `"Hello, world!"`
-));
-// Works.
-regEntParser.log(regEntParser.parse(
-  `@`
-));
-// Works.
-regEntParser.log(regEntParser.parse(
-  `@[`
-));
-// Works.
-regEntParser.log(regEntParser.parse(
-  `12,`
-));
-// Works.
-regEntParser.log(regEntParser.parse(
-  `12,\[,`
-));
-// Works.
-regEntParser.log(regEntParser.parse(
-  `"Hello, world!",@[7],_,false`
-));
-// Works.
-regEntParser.log(regEntParser.parse(
-  `"Hello, world!",@[7],_,false,`
-));
-// Works.
+// ...
 regEntParser.log(regEntParser.parse(
   `"Hello, @[7]!"`
 ));

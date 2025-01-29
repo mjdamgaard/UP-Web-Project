@@ -8,7 +8,7 @@ import ReactDOM from 'react-dom/client';
 // } from "react-router-dom";
 
 
-import {App} from './components/root/App.js';
+import {App} from './components/App.js';
 
 import './style/style01.scss';
 import './style/entity_refs/ref_style.scss';

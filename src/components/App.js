@@ -1,13 +1,13 @@
 import {useState, useLayoutEffect, createContext, useCallback} from "react";
 
-import {useDispatch} from "../../hooks/useDispatch.js";
-import {useRestore} from "../../hooks/useRestore.js";
-import {basicEntIDs} from "../../entity_ids/basic_entity_ids.js";
+import {useDispatch} from "../hooks/useDispatch.js";
+import {useRestore} from "../hooks/useRestore.js";
+import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
 
 // import {appReducers} from "./appReducers.js";
 
-import {AppHeader} from "./AppHeader.js";
-import {AppPage} from "../app_pages/AppPage.js";
+import {AppHeader} from "./header/AppHeader.js";
+import {AppPage} from "./app_pages/AppPage.js";
 
 
 export const HOME_ENTITY_ID = basicEntIDs["entities"];
