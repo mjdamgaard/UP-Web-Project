@@ -315,6 +315,8 @@ VALUES
     (7, "t", "h"),
     (8, "t", "8"),
     (9, "t", "d"),
+    (10, "t", "l"), -- TODO: Make the two initial entity list types, once
+    -- these are implemented, along with any initial fulltext list types. 
     (18, "d", "original_DB_node"),
     (19, "u", "initial_admin");
 
@@ -373,6 +375,7 @@ VALUES
     ("t", "h", 7),
     ("t", "8", 8),
     ("t", "d", 9),
+    ("l", "d", 10),
     ("d", "original_DB_node", 18),
     ("u", "initial_admin", 19);
     -- No sec. key for ("j", '{}', 9).

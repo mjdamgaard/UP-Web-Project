@@ -228,6 +228,7 @@ export class Parser {
         "\n--------\n" +
         "Expected an empty string, but got:\n" +
         str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4));
+      syntaxTree.lexArr = lexArr;
     }
     // Else extract an appropriate error from the syntax tree, via a call to
     // #getErrorAndFailedSymbols().
@@ -237,16 +238,18 @@ export class Parser {
       if (error) {
         let strPos = strPosArr[syntaxTree.nextPos - 1] ?? str.length;
         syntaxTree.error = 'Error after:\n' +
-        str.substring(0, strPos).substring(strPos - ERROR_ECHO_STR_LEN) +
-        "\n--------\n" +
-        'Error:\n\t' + error.replaceAll("\n", "\n\t");
+          str.substring(0, strPos).substring(strPos - ERROR_ECHO_STR_LEN) +
+          "\n--------\n" +
+          'Error:\n\t' + error.replaceAll("\n", "\n\t");
+        syntaxTree.lexArr = lexArr;
       } else {
         let strPos = strPosArr[syntaxTree.nextPos] ?? str.length;
         syntaxTree.error = `Failed symbol '${failedNodeSymbol}' after:\n` +
-        str.substring(0, strPos).substring(strPos - ERROR_ECHO_STR_LEN) +
-        "\n--------\n" +
-        `Expected symbol(s) '${expectedSymbols}', but got:\n` +
-        str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4));
+          str.substring(0, strPos).substring(strPos - ERROR_ECHO_STR_LEN) +
+          "\n--------\n" +
+          `Expected symbol(s) '${expectedSymbols}', but got:\n` +
+          str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4));
+        syntaxTree.lexArr = lexArr;
       }
     }
   
@@ -348,10 +351,9 @@ export class Parser {
 
 
   parseRules(lexArr, pos, rules, sym, triedSymbols) {
-    // Initialize a variable holding the record nextPos obtained in a (failed)
-    // rule so far, and also one that holds the index of the "record rule" that
-    // obtained it.
-    let recordRuleNextPos = -1;
+    // Initialize a variable holding the index of the "record rule," which is
+    // the most recent rule who broke or tied with the record of having the
+    // largest nextPos (after a failure). 
     let recordRuleInd;
     // Initialize an array containing all children of the "record rule," also
     // including the last, failed one.
@@ -360,6 +362,11 @@ export class Parser {
     // '!' is reached, which will mean that no more rules will be tried after
     // the current one.
     let doOrDie = false;
+    // Initialize an array of all failed first symbols, used for skipping
+    // already tried symbols, even if they are not part of the "record rule."
+    // Also initialize an array with the corresponding failed nodes. 
+    let failedFirstSymbols = [];
+    let failedFirstNodes = [];
 
     // Loop through all rules until a success is encountered, and keep track of
     // the "record" all the while, i.e. of the rule that got the furthest.
@@ -383,8 +390,18 @@ export class Parser {
           doOrDie = true;
         }
 
-        // At first we try to copy as many successes from the "record rule"
-        // until a symbol is reached that doesn't match the one in
+        // If the j is 0 and ruleSym is one of the previously failed first
+        // symbols, break the rule parsing and copy the previously failed node
+        // to ruleChildren.
+        let failedSymbolIndex = failedFirstSymbols.indexOf(ruleSym);
+        if (j === 0 && failedSymbolIndex !== -1) {
+          ruleChildren.push(failedFirstNodes[failedSymbolIndex]);
+          ruleSuccess = false;
+          break;
+        }
+
+        // Else we at first we try to copy as many successes from the "record
+        // rule" until a symbol is reached that doesn't match the one in
         // recordRuleChildren at the same position.
         if (lookUpPrevSuccess && recordRuleChildren) {
           let prevChildSyntaxTree = recordRuleChildren[j];
@@ -403,6 +420,9 @@ export class Parser {
               }
             }
             else {
+              // Also add the child in case of a failure in case the rule ties
+              // with the previous record.
+              ruleChildren.push(prevChildSyntaxTree);
               ruleSuccess = false;
               break;
             }
@@ -440,6 +460,11 @@ export class Parser {
         // Else if failed, store the failed child at the end of the children
         // array, first of all.
         ruleChildren.push(childSyntaxTree);
+        // And if j is 0, push the failed symbol to failedFirstSymbols.
+        if (j === 0) {
+          failedFirstSymbols.push(ruleSym);
+          failedFirstNodes.push(childSyntaxTree);
+        }
 
         // And if the child failed with an error, abort the parsing immediately,
         // propagating this error all the way out to the root.
@@ -460,8 +485,8 @@ export class Parser {
 
       // After a rule has either succeeded or failed, we respectively either
       // return the successful syntax tree, skipping all subsequent rules, or
-      // we record the failed rule if and only if it breaks the previous record
-      // for the largest nextPos reached. 
+      // we record the failed rule if it breaks or ties with the previous
+      // record for the largest nextPos reached. 
       if (ruleSuccess) {
         let syntaxTree = {
           sym: sym, isSuccess: true,
@@ -471,8 +496,9 @@ export class Parser {
         };
         return syntaxTree;
       }
-      else if (nextPos > recordRuleNextPos) {
-        recordRuleNextPos = nextPos;
+      else if (
+        !recordRuleChildren || nextPos >= recordRuleChildren.at(-1).nextPos
+      ) {
         recordRuleInd = i;
         recordRuleChildren = ruleChildren;
       }

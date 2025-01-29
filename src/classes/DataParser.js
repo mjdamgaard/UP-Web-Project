@@ -217,7 +217,7 @@ const regEntGrammar = {
     rules: [
       ["ent-ref"],
       ["input-placeholder"],
-      ["string"],
+      ["value-string"],
       ["number"],
       ["array"],
       ["object"],
@@ -227,7 +227,7 @@ const regEntGrammar = {
       // TODO..
     }
   },
-  "string": {
+  "value-string": {
     ...jsonGrammar["string"],
     process: (syntaxTree) => {
       let [isSuccess = true, error] =
@@ -267,7 +267,7 @@ const regEntGrammar = {
   },
   "path": {
     rules: [
-      [/[^0-9\[\]@,;"][^\[\]@,;"]*/],
+      [/'([^'\\]|\\[.\n])*'/],
     ],
     process: becomeChildExceptSym,
   },
@@ -278,10 +278,10 @@ export const regEntParser = new Parser(
   "literal-list",
   [
     /"([^"\\]|\\[.\n])*"/,
+    /'([^'\\]|\\[.\n])*'/,
     /\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-+]?(0|[1-9][0-9]*))?/,
     /@[\[\{<];?|[,:\[\]\{\}>]/,
-    // "/true|false|null|_/",
-    /[^0-9\[\]@,;"][^\[\]@,;"]*/,
+    /[^\s,:\[\]\{\}\(\)>\?='"]+/,
   ],
   /\s+/
 );
@@ -452,7 +452,7 @@ const funEntGrammar = {
   "type^(3)": {
     rules: [
       ["ent-ref"], // A class.
-      [/[tuafrjh8d]|string|bool|int|float/],
+      [/[tuafrjh8dl]|string|bool|int|float/],
       [/object|array/], // User has to manually type in a parsable JS object/
       // array.
     ],
@@ -465,10 +465,10 @@ export const funEntParser = new Parser(
   "function",
   [
     /"([^"\\]|\\[.\n])*"/,
+    /'([^'\\]|\\[.\n])*'/,
     /\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-+]?(0|[1-9][0-9]*))?/,
     /=>|@[\[\{<];?|[,:\[\]\{\}\(\)>\?=]/,
-    // "/true|false|null/",
-    /[^0-9\[\]@,;"][^\[\]@,;"]*/,
+    /[^\s,:\[\]\{\}\(\)>\?='"]+/,
   ],
   /\s+/
 );
@@ -541,7 +541,7 @@ export const funEntParser = new Parser(
 // regEntParser.log(regEntParser.parse(
 //   `12, "Hello, @[7]!"`
 // ));
-// // // Works.
+// // Works.
 // regEntParser.log(regEntParser.parse(
 //   `12, "Hello, @[7!"`
 // ));
@@ -554,7 +554,46 @@ export const funEntParser = new Parser(
 //   `12, {"prop": [13]}, 13`
 // ));
 // // Works.
-
+//
+//
+// funEntParser.log(funEntParser.parse(
+//   'class(' + [
+//     '"Name":string',
+//     '"Parent class":@[\'classes\']?',
+//     // 'Member format?:(f::Function|t::Entity type)',
+//     '"Member type":t=@[4]',
+//     '"Member format":f?',
+//     '"Description":h?',
+//   ].join(',') +
+//   ')=>{' + [
+//     '"Class":@[\'classes\']',
+//     '"Name":@{1}',
+//     '"Parent class":@{2}',
+//     '"Member type":@{3}',
+//     '"Member format":@{4}',
+//     '"Description":@{5}',
+//   ].join(',') + '}'
+// ));
+// // Works.
+// funEntParser.log(funEntParser.parse(
+//   'class(' + [
+//     '"Name":string',
+//     '"Parent class":@[classes]?',
+//     // 'Member format?:(f::Function|t::Entity type)',
+//     '"Member type":t=@[4]',
+//     '"Member format":f?',
+//     '"Description":h?',
+//   ].join(',') +
+//   ')=>{' + [
+//     '"Class":@[\'classes\']',
+//     '"Name":@{1}',
+//     '"Parent class":@{2}',
+//     '"Member type":@{3}',
+//     '"Member format":@{4}',
+//     '"Description":@{5}',
+//   ].join(',') + '}'
+// ));
+// // Works.
 
 
 
