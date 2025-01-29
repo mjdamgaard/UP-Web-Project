@@ -327,6 +327,7 @@ export const regEntStringContentParser = new Parser(
   "string-content",
   [
     /@[\[\{<];?/,
+    /[\]\}>]/,
     /([^"\\@\]\}>]|\\[^@\]\}>])+/,
   ],
   false
@@ -512,7 +513,7 @@ export const funEntParser = new Parser(
 // regEntParser.log(regEntParser.parse(
 //   `"Hello, world!",@[7],_,false,`
 // ));
-// Works.
+// // Works.
 // regEntParser.log(regEntParser.parse(
 //   `"Hello, world!",@[7],_,false`, "literal-list"
 // ));
@@ -521,14 +522,38 @@ export const funEntParser = new Parser(
 //   `"Hello, world!",@[7],_,false`, "literal"
 // ));
 // // Works.
-regEntParser.log(regEntParser.parse(
-  `"Hello, world!",@[7],_,false,`, "literal-list", true
-));
-// ...
-regEntParser.log(regEntParser.parse(
-  `"Hello, @[7]!"`
-));
-// ...
+// regEntParser.log(regEntParser.parse(
+//   `"H`, "literal"
+// ));
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12`, "literal-list", true
+// ));
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12,`, "literal-list", true
+// ));
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12,@`, "literal-list", true
+// ));
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12, "Hello, @[7]!"`
+// ));
+// // // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12, "Hello, @[7!"`
+// ));
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12, [13, [14,[15 ,  16]]]`
+// ));
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12, {"prop": [13]}, 13`
+// ));
+// // Works.
 
 
 

@@ -502,7 +502,6 @@ export class Parser {
 
   parseRuleSymbol(lexArr, pos, sym, triedSymbols = []) {
     let nextLexeme = lexArr[pos];
-    let syntaxTree;
 
     // Before anything else, check  that sym hasn't already been tried at this
     // position in order to prevent infinite recursion.
@@ -542,11 +541,10 @@ export class Parser {
       for (let i = 0; true; i++) {
         // Break if max is reached, and construct a successful syntax tree.
         if (i + 1 > max) {
-          syntaxTree = {
+          return {
             sym: sym, isSuccess: true, children: children,
             nextPos: nextPos,
           };
-          break;
         }
 
         // Else parse a new child.
@@ -563,19 +561,17 @@ export class Parser {
           // whether min was reached or not, or whether or not the boolean
           // failIfEOSIsNotReached is true or not.
           if (i + 1 >= min && !(failIfEOSIsNotReached && lexArr[nextPos])) {
-            syntaxTree = {
+            return {
               sym: sym, isSuccess: true, children: children,
               nextPos: nextPos,
             };
-            break;
           }
           else {
             children.push(childSyntaxTree);
-            syntaxTree = {
+            return {
               sym: sym, isSuccess: false, children: children,
               nextPos: childSyntaxTree.nextPos,
             };
-            break;
           }
         }
       }
@@ -583,17 +579,17 @@ export class Parser {
 
     // Else if EOS is reached, which is located at the end of the lexArr if
     // and only if isPartial is true, fail the rule with an "EOS" error,
-    else if (nextLexeme === EOS) {
-      syntaxTree = {
+    if (nextLexeme === EOS) {
+      return {
         sym: sym, isSuccess: false, error: EOS_ERROR,
         nextPos: pos,
       };
     }
 
     // Else if sym is a pattern, simply try to parse the next lexeme as that.
-    else if (sym.at(0) === "/" && sym.at(-1) === "/") {
+    if (sym.at(0) === "/" && sym.at(-1) === "/") {
       if (!nextLexeme) {
-        syntaxTree = {
+        return {
           sym: sym, isSuccess: false,
           nextPos: pos,
         };
@@ -601,13 +597,13 @@ export class Parser {
       else {
         let regExp = this.regularExpressions[sym];
         if (regExp.test(nextLexeme)) {
-          syntaxTree = {
+          return {
             sym: sym, isSuccess: true, lexeme: nextLexeme,
             nextPos: pos + 1,
           };
         }
         else {
-          syntaxTree = {
+          return {
             sym: sym, isSuccess: false,
             nextPos: pos,
           };
@@ -617,11 +613,7 @@ export class Parser {
 
     // Else treat sym as a non-terminal symbol, and make a recursive call to
     // parse() with nonterminalSymbol = sym.
-    else {
-      syntaxTree = this.parseLexArr(lexArr, pos, sym, triedSymbols);
-    }
-
-    return syntaxTree;
+    return this.parseLexArr(lexArr, pos, sym, triedSymbols);
   }
 
 
@@ -672,14 +664,12 @@ export class Lexer {
     // failure string.
     let unfilteredLexArr = str.match(this.lexerRegEx)
       .filter(val => val !== "");
-    if (isPartial) {
-      // If str is only a partial string, remove the last lexeme, and replace
-      // it the end-of-partial-string constant.
-      unfilteredLexArr[unfilteredLexArr - 1] = EOS;
-    }  else {
-      // Else check that the last lexeme isn't the greedy "[^$]+" one.
-      let lastMatch = unfilteredLexArr.at(-1);
-      if (!this.lexemeOrWSRegEx.test(lastMatch)) {
+
+    // Check that the last lexeme isn't the greedy "[^$]+" one, unless
+    // isPartial = true, in which case change it for the EOS constant. 
+    let lastMatch = unfilteredLexArr.at(-1);
+    if (!this.lexemeOrWSRegEx.test(lastMatch)) {
+      if (!isPartial) {
         let prevStr = unfilteredLexArr.slice(0, -1).join("");
         throw new LexError(
           "Lexer error after: \n" +
@@ -688,7 +678,14 @@ export class Lexer {
           "Invalid lexeme at:\n" +
           lastMatch.substring(0, Math.floor(ERROR_ECHO_STR_LEN/4))
         );
+      } else {
+        unfilteredLexArr[unfilteredLexArr.length - 1] = EOS;
       }
+    }
+    // If isPartial is true, but the last match is not the greedy one, append
+    // EOS at the end of the lexeme array instead.
+    else if (isPartial) {
+      unfilteredLexArr[unfilteredLexArr.length] = EOS;
     }
 
     // Construct an array of the positions in str of each of the element in
@@ -730,4 +727,4 @@ class LexError {
   }
 }
 
-const EOS = {};
+const EOS = {enumName: "EOS"};
