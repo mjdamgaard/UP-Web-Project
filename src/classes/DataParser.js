@@ -83,6 +83,12 @@ const jsonGrammar = {
       ["number"],
       ["array"],
       ["object"],
+      ["constant"],
+    ],
+    process: becomeChild,
+  },
+  "constant": {
+    rules: [
       ["/true|false|null/"],
     ],
     process: becomeChild,
@@ -121,13 +127,13 @@ const jsonGrammar = {
     rules: [
       [/\[/, "literal-list", /\]/],
     ],
-    process: (syntaxTree) => becomeChildExceptSym(syntaxTree, 1),
+    process: (syntaxTree) => becomeChild(syntaxTree, 1),
   },
   "object": {
     rules: [
       [/\{/, "member-list", /\}/],
     ],
-    process: (syntaxTree) => becomeChildExceptSym(syntaxTree, 1),
+    process: (syntaxTree) => becomeChild(syntaxTree, 1),
   },
   "member-list": {
     rules: [
@@ -176,15 +182,7 @@ export function becomeChild(syntaxTree, ind = 0) {
   Object.assign(syntaxTree, {
     ruleInd: null,
     ...syntaxTree.children[ind],
-    prevSym: syntaxTree.sym,
-  });
-}
-
-export function becomeChildExceptSym(syntaxTree, ind = 0) {
-  Object.assign(syntaxTree, {
-    ruleInd: null,
-    ...syntaxTree.children[ind],
-    sym: syntaxTree.sym,
+    type: syntaxTree.children[ind].sym,
   });
 }
 
@@ -221,11 +219,15 @@ const regEntGrammar = {
       ["number"],
       ["array"],
       ["object"],
+      ["constant"],
+    ],
+    process: becomeChild,
+  },
+  "constant": {
+    rules: [
       ["/_|true|false|null/"],
     ],
-    process: (syntaxTree) => {
-      // TODO..
-    }
+    process: becomeChild,
   },
   "value-string": {
     ...jsonGrammar["string"],
@@ -269,7 +271,7 @@ const regEntGrammar = {
     rules: [
       [/'([^'\\]|\\[.\n])*'/],
     ],
-    process: becomeChildExceptSym,
+    process: becomeChild,
   },
 };
 
@@ -297,7 +299,7 @@ const regEntStringContentGrammar = {
     rules: [
       ["string-part*$"]
     ],
-    process: becomeChildExceptSym,
+    process: becomeChild,
   },
   "string-part": {
     rules: [
@@ -311,13 +313,13 @@ const regEntStringContentGrammar = {
     rules: [
       [/@[\[\{<];/],
     ],
-    process: becomeChildExceptSym,
+    process: becomeChild,
   },
   "plain-text": {
     rules: [
       [/([^"\\@\]\}>]|\\[^@\]\}>]|)+/],
     ],
-    process: becomeChildExceptSym,
+    process: becomeChild,
   },
 };
 
@@ -345,7 +347,7 @@ const funEntGrammar = {
     rules: [
       [
         /[^0-9\[\]@,;"\s][^\[\]@,;"\s]*/, /\(/, "param-list", /\)/, "/=>/", 
-        /\{/, "member-list", /\}/,
+        "literal",
       ],
     ],
     process: (syntaxTree) => {
@@ -353,7 +355,7 @@ const funEntGrammar = {
       Object.assign(syntaxTree, {
         name: children[0].lexeme,
         params: children[2].children,
-        members: children[6].children,
+        return: children[5],
       });
     },
   },
@@ -453,8 +455,8 @@ const funEntGrammar = {
     rules: [
       ["ent-ref"], // A class.
       [/[tuafrjh8dl]|string|bool|int|float/],
-      [/object|array/], // User has to manually type in a parsable JS object/
-      // array.
+      [/object|array|mixed/], // User has to manually type in a parsable
+      // literal.
     ],
   },
 };
@@ -488,6 +490,10 @@ export const funEntParser = new Parser(
 // // Works.
 // regEntParser.log(regEntParser.parse(
 //   `"Hello, world!"`
+// ));
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `,`
 // ));
 // // Works.
 // regEntParser.log(regEntParser.parse(
@@ -559,41 +565,29 @@ export const funEntParser = new Parser(
 // funEntParser.log(funEntParser.parse(
 //   'class(' + [
 //     '"Name":string',
-//     '"Parent class":@[\'classes\']?',
-//     // 'Member format?:(f::Function|t::Entity type)',
-//     '"Member type":t=@[4]',
-//     '"Member format":f?',
-//     '"Description":h?',
-//   ].join(',') +
-//   ')=>{' + [
-//     '"Class":@[\'classes\']',
-//     '"Name":@{1}',
-//     '"Parent class":@{2}',
-//     '"Member type":@{3}',
-//     '"Member format":@{4}',
-//     '"Description":@{5}',
-//   ].join(',') + '}'
-// ));
-// // Works.
-// funEntParser.log(funEntParser.parse(
-//   'class(' + [
-//     '"Name":string',
 //     '"Parent class":@[classes]?',
-//     // 'Member format?:(f::Function|t::Entity type)',
-//     '"Member type":t=@[4]',
-//     '"Member format":f?',
-//     '"Description":h?',
-//   ].join(',') +
-//   ')=>{' + [
-//     '"Class":@[\'classes\']',
-//     '"Name":@{1}',
-//     '"Parent class":@{2}',
-//     '"Member type":@{3}',
-//     '"Member format":@{4}',
-//     '"Description":@{5}',
-//   ].join(',') + '}'
+//   ].join(',')
 // ));
 // // Works.
+funEntParser.log(funEntParser.parse(
+  'class(' + [
+    '"Name":string',
+    '"Parent class":@[\'classes\']?',
+    // 'Member format?:(f::Function|t::Entity type)',
+    '"Member type":t=@[4]',
+    '"Member format":f?',
+    '"Description":h?',
+  ].join(',') +
+  ')=>{' + [
+    '"Class":@[\'classes\']',
+    '"Name":@{1}',
+    '"Parent class":@{2}',
+    '"Member type":@{3}',
+    '"Member format":@{4}',
+    '"Description":@{5}',
+  ].join(',') + '}'
+));
+// Works.
 
 
 

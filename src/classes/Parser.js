@@ -247,7 +247,7 @@ export class Parser {
         syntaxTree.error = `Failed symbol '${failedNodeSymbol}' after:\n` +
           str.substring(0, strPos).substring(strPos - ERROR_ECHO_STR_LEN) +
           "\n--------\n" +
-          `Expected symbol(s) '${expectedSymbols}', but got:\n` +
+          `Expected symbol(s) ${expectedSymbols}, but got:\n` +
           str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4));
         syntaxTree.lexArr = lexArr;
       }
@@ -302,6 +302,7 @@ export class Parser {
         failedSymArr.push(rule[childrenLen - 1]);
       }
     });
+    failedSymArr = [...new Set([...failedSymArr])];
     if (failedSymArr.length === 1) {
       return [undefined, syntaxTree.sym, `'${failedSymArr[0]}'`];
     } else {

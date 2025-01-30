@@ -116,7 +116,7 @@ export function initialInserts(dataInserter) {
     "entities", "r",
     [
       "@['classes/format']",
-      '"Entities"',
+      '"All entities"',
       '_',
       '_',
       '_',
@@ -429,9 +429,10 @@ export function initialInserts(dataInserter) {
       ].join(',') +
       ')=>{' + [
         '"Class":@[\'semantic parameters\']',
-        '"Label":"@{1} ⋲ @{2}"',
-        // 'Label:@{1} ⥺ @{2}',
-        // 'Label:@{1} :≟ @{2}',
+        // '"Label":"@{1} ⋲ @{2}"',
+        // // 'Label:@{1} ⥺ @{2}',
+        // // 'Label:@{1} :≟ @{2}',
+        '"Label":"@{2} ⇥ @{1}"',
         '"Subject":@{1}',
         '"Quality":@{2}',
       ].join(',') + '}'
@@ -622,31 +623,53 @@ export function initialInserts(dataInserter) {
       ].join(',') + '}'
     )
   );
+
+
+
+
   dataInserter.insertSubstituteOrEditEntity(
-    "score2-ordered lists", "r",
+    "entity title formats", "r",
     [
       "@['classes/format']",
-      '"Float2-ordered lists"',
-      '"Float2-ordered list"',
-      "@['lists']",
+      '"Entity title formats"',
       '_',
-      "@['score2-ordered lists/format']",
-      "@['score2-ordered lists/desc']",
+      "@[5]",
+      '_',
+      "@['functions/desc']",
     ].join(","),
   );
   dataInserter.insertSubstituteOrEditEntity(
-    'score2-ordered lists/format', 'f', (
-      'score2_ordered_list(' + [
-        '"Editor":{"User":@[\'users\'],"Database node":d}',
-        '"List":@[lists with score2 values]',
+    'entity title formats/simple entity title format', 'f', (
+      'simple_title(' + [
+        '"1st parameter":string',
       ].join(',') +
-      ')=>{' + [
-        '"Class":@[score2-ordered lists]',
-        '"Editor":@{1}',
-        '"List":@{2}',
-      ].join(',') + '}'
+      ')=>' +
+      '${1}'
     )
   );
+  dataInserter.insertSubstituteOrEditEntity(
+    'entity title formats/relational class title format', 'f', (
+      'simple_title(' + [
+        '"1st parameter":@[\'entity\']',
+        '"2nd parameter":@[\'classes\']',
+      ].join(',') +
+      ')=>' +
+      '"@{1}⟶@{2}"'
+    )
+  );
+  dataInserter.insertSubstituteOrEditEntity(
+    'entity title formats/semantic parameter title format', 'f', (
+      'simple_title(' + [
+        '"1st parameter":@[\'entity\']',
+        '"2nd parameter":@[\'qualities\']',
+      ].join(',') +
+      ')=>' +
+      '"@{2} ⇥ @{1}"'
+    )
+  );
+
+  
+
 
 
 
