@@ -509,7 +509,7 @@ export const funEntParser = new Parser(
 // ));
 // // Works.
 // regEntParser.log(regEntParser.parse(
-//   `12,\[,`
+//   `12,\[`
 // ));
 // // Works.
 // regEntParser.log(regEntParser.parse(
@@ -530,6 +530,18 @@ export const funEntParser = new Parser(
 // // Works.
 // regEntParser.log(regEntParser.parse(
 //   `"H`, "literal"
+// ));
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12`, "literal", true
+// ));
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12`, "literal", true, true
+// ));
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12`, "literal+", true, true
 // ));
 // // Works.
 // regEntParser.log(regEntParser.parse(

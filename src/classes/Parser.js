@@ -198,22 +198,24 @@ export class Parser {
   // Also the returned nextPos is a number denoting the maximal number of
   // lexemes that was successfully parsed as part of one of the rules.
   // </returns>
-  parse(str, startSym, isPartial = false) {
+  parse(str, startSym, isPartial = false, keepLastLexeme = false) {
+    startSym ??= this.defaultSym;
+
     // Lex the input string.
     let lexArr, strPosArr;
     try {
-      [lexArr, strPosArr] = this.lexer.lex(str, isPartial);
+      [lexArr, strPosArr] = this.lexer.lex(str, isPartial, keepLastLexeme);
     } catch (error) {
       if (error instanceof LexError) {
         let syntaxTree = {isSuccess: false, error: error.msg};
         return syntaxTree;
       }
       // Else throw error;
-      else this.lexer.lex(str, isPartial); // Better for debugging.
+      else this.lexer.lex(str, isPartial, keepLastLexeme); // For debugging.
     }
 
     // Then parse the resulting lexeme array.
-    let syntaxTree = this.parseLexArr(lexArr, 0, startSym);
+    let syntaxTree = this.parseRuleSymbol(lexArr, 0, startSym);
 
     // If the input string was not fully parsed, but the syntax tree was
     // otherwise successful, meaning that only a part of the string was parsed,
@@ -314,7 +316,7 @@ export class Parser {
 
 
 
-  parseLexArr(lexArr, pos = 0, nonterminalSymbol, triedSymbols) {
+  parseLexArr(lexArr, pos = 0, nonterminalSymbol, triedSymbols = []) {
     nonterminalSymbol ??= this.defaultSym;
 
     // Parse the rules of the nonterminal symbol.
@@ -351,7 +353,7 @@ export class Parser {
 
 
 
-  parseRules(lexArr, pos, rules, sym, triedSymbols) {
+  parseRules(lexArr, pos, rules, sym, triedSymbols = []) {
     // Initialize a variable holding the index of the "record rule," which is
     // the most recent rule who broke or tied with the record of having the
     // largest nextPos (after a failure). 
@@ -578,15 +580,25 @@ export class Parser {
         let childSyntaxTree = this.parseRuleSymbol(
           lexArr, nextPos, subSym, (i === 0) ? triedSymbols : []
         );
+
+        // If an error was raised, abort parsing here immediately.
+        if (childSyntaxTree.error) {
+          children.push(childSyntaxTree);
+          return {
+            sym: sym, isSuccess: false, error: childSyntaxTree.error,
+            children: children,
+            nextPos: childSyntaxTree.nextPos,
+          };
+        }
+        // Else on success, add child syntax tree to children and increase pos.
         if (childSyntaxTree.isSuccess) {
-          // Add child syntax tree to children and increase pos.
           children.push(childSyntaxTree);
           nextPos = childSyntaxTree.nextPos;
         }
+        // If and when failing, mark a success or failure depending on
+        // whether min was reached or not, or whether or not the boolean
+        // failIfEOSIsNotReached is true or not.
         else {
-          // If and when failing, mark a success or failure depending on
-          // whether min was reached or not, or whether or not the boolean
-          // failIfEOSIsNotReached is true or not.
           if (i + 1 >= min && !(failIfEOSIsNotReached && lexArr[nextPos])) {
             return {
               sym: sym, isSuccess: true, children: children,
@@ -685,12 +697,21 @@ export class Lexer {
   }
 
 
-  lex(str, isPartial = false) {
+  lex(str, isPartial = false, keepLastLexeme = false) {
     // Get the initial lexeme array still with whitespace and the potential last
     // failed string in it, then test and throw if the last match is that last
     // failure string.
     let unfilteredLexArr = str.match(this.lexerRegEx)
       .filter(val => val !== "");
+
+    // Construct an array of the positions in str of each of the element in
+    // unfilteredLexArr.
+    var strPos = 0;
+    let unfilteredStrPosArr = unfilteredLexArr.map(elem => {
+      let ret = strPos;
+      strPos += elem.length;
+      return ret;
+    })
 
     // Check that the last lexeme isn't the greedy "[^$]+" one, unless
     // isPartial = true, in which case change it for the EOS constant. 
@@ -712,17 +733,13 @@ export class Lexer {
     // If isPartial is true, but the last match is not the greedy one, append
     // EOS at the end of the lexeme array instead.
     else if (isPartial) {
-      unfilteredLexArr[unfilteredLexArr.length] = EOS;
+      if (keepLastLexeme) {
+        unfilteredLexArr[unfilteredLexArr.length] = EOS;
+        unfilteredStrPosArr.push(str.length);
+      } else {
+        unfilteredLexArr[unfilteredLexArr.length - 1] = EOS;
+      }
     }
-
-    // Construct an array of the positions in str of each of the element in
-    // unfilteredLexArr.
-    var strPos = 0;
-    let unfilteredStrPosArr = unfilteredLexArr.map(elem => {
-      let ret = strPos;
-      strPos += elem.length;
-      return ret;
-    })
   
     // If successful, filter out the whitespace from the unfilteredLexArr
     // and the corresponding positions in strPosArr, and return these two
