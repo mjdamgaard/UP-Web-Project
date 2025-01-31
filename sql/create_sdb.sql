@@ -26,136 +26,90 @@ DROP TABLE DebugLogEntries;
 
 
 
-/* Some fundamental scores tables  */
-
-
--- CREATE TABLE PrivateEntityLists (
-
---     list_type CHAR NOT NULL DEFAULT "\0", -- "\0": No aggregation allowed.
-
---     user_whitelist_id BIGINT UNSIGNED NOT NULL,
-
---     list_id BIGINT UNSIGNED NOT NULL,
-
---     float_val FLOAT NOT NULL,
-
---     on_index_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
-
---     user_id BIGINT UNSIGNED NOT NULL,
-
---     subj_id BIGINT UNSIGNED NOT NULL,
-
---     off_index_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
-
---     PRIMARY KEY (
---         list_type,
---         user_whitelist_id,
---         list_id,
---         user_id,
---         subj_id
---     ),
-
---     UNIQUE INDEX score_ord_idx (
---         list_type,
---         user_whitelist_id,
---         list_id,
---         float_val,
---         on_index_data,
---         user_id,
---         subj_id
---     )
--- )
--- ROW_FORMAT = COMPRESSED;
-
-
-
-
--- CREATE TABLE PrivateListMetadata (
-
---     list_type CHAR NOT NULL,
-
---     user_whitelist_id BIGINT UNSIGNED NOT NULL,
-
---     list_id BIGINT UNSIGNED NOT NULL,
-
---     user_id BIGINT UNSIGNED NOT NULL, -- user_id = 0 refers to the full list.
-
---     list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
---     pos_list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
---     float_sum DOUBLE NOT NULL DEFAULT 0,
-
---     paid_upload_data_cost FLOAT NOT NULL DEFAULT 0,
-
---     PRIMARY KEY (
---         list_type,
---         user_whitelist_id,
---         list_id,
---         user_id
---     )
--- )
--- ROW_FORMAT = COMPRESSED;
-
-
-
-
-
-
+/* Scores / entity lists tables  */
 
 
 CREATE TABLE EntityLists (
 
-    list_id BIGINT UNSIGNED NOT NULL,
+    list_elem_key VARCHAR(64) -- Can be resized.
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin PRIMARY KEY,
 
-    score_1 FLOAT NOT NULL,
-
-    score_2 FLOAT NOT NULL DEFAULT 0,
-
-    -- on_index_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
-
-    subj_id BIGINT UNSIGNED NOT NULL,
-
-    -- off_index_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
-
-    other_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
-
-    -- unix_time INT UNSIGNED NOT NULL DEFAULT (UNIX_TIMESTAMP()),
-
-    PRIMARY KEY (
-        list_id,
-        subj_id
-    ),
-
-    UNIQUE INDEX sec_idx (
-        list_id,
-        score_1,
-        score_2,
-        -- on_index_data,
-        subj_id
-    )
+    elem_data VARCHAR(32) -- Can be resized.
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 )
 ROW_FORMAT = COMPRESSED;
-
 
 
 
 
 CREATE TABLE ListMetadata (
 
-    list_id BIGINT UNSIGNED PRIMARY KEY,
+    list_key VARCHAR(32) -- Can be resized.
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin PRIMARY KEY,
 
-    list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    pos_list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    score_1_sum DOUBLE NOT NULL DEFAULT 0,
-
-    score_2_sum DOUBLE NOT NULL DEFAULT 0,
-
-    paid_upload_data_cost FLOAT NOT NULL DEFAULT 0
+    list_metadata VARCHAR(64) -- Can be resized.
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 )
 ROW_FORMAT = COMPRESSED;
+
+
+
+
+
+
+
+-- CREATE TABLE EntityLists (
+
+--     list_id BIGINT UNSIGNED NOT NULL,
+
+--     score_1 FLOAT NOT NULL,
+
+--     score_2 FLOAT NOT NULL DEFAULT 0,
+
+--     -- on_index_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
+
+--     subj_id BIGINT UNSIGNED NOT NULL,
+
+--     -- off_index_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
+
+--     other_data VARBINARY(16) NOT NULL DEFAULT "", -- can be resized.
+
+--     -- unix_time INT UNSIGNED NOT NULL DEFAULT (UNIX_TIMESTAMP()),
+
+--     PRIMARY KEY (
+--         list_id,
+--         subj_id
+--     ),
+
+--     UNIQUE INDEX sec_idx (
+--         list_id,
+--         score_1,
+--         score_2,
+--         -- on_index_data,
+--         subj_id
+--     )
+-- )
+-- ROW_FORMAT = COMPRESSED;
+
+
+
+
+
+-- CREATE TABLE ListMetadata (
+
+--     list_id BIGINT UNSIGNED PRIMARY KEY,
+
+--     list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+--     pos_list_len BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+--     score_1_sum DOUBLE NOT NULL DEFAULT 0,
+
+--     score_2_sum DOUBLE NOT NULL DEFAULT 0,
+
+--     paid_upload_data_cost FLOAT NOT NULL DEFAULT 0
+-- )
+-- ROW_FORMAT = COMPRESSED;
 
 
 
@@ -234,7 +188,7 @@ CREATE TABLE Entities (
 
     -- A string (possibly a JSON object) that defines the entity. The format
     -- depends on ent_type.
-    def_str LONGTEXT CHARACTER SET utf8mb4 NOT NULL,
+    def_str LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
     -- The user who submitted the entity, unless creator_id = 0, which means
     -- that the creator is anonymous.
@@ -284,6 +238,15 @@ CREATE TABLE EntitySecKeys (
 );
 
 
+
+
+
+/* Fulltext indexes */
+
+-- TODO: Implement, and make several of them; one for relations, one for
+-- classes, one for qualities, and one for all real-world/non-meta entities,
+-- and possibly more. *Well, maybe it should be the control server's
+-- responsibility to create (and maintain) fulltext indexes..
 
 CREATE TABLE FulltextIndexedEntities (
 

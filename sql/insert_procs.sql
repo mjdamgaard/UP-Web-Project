@@ -2,7 +2,6 @@
 SELECT "Insert procedures";
 
 DROP PROCEDURE _insertUpdateOrDeleteListElement;
-DROP PROCEDURE _getIsMemberAndUserWeight;
 
 DROP PROCEDURE insertOrUpdateScore;
 DROP PROCEDURE deleteScore;
@@ -158,48 +157,6 @@ BEGIN
 END //
 DELIMITER ;
 
-
-
-
-
-
-
-
-
-DELIMITER //
-CREATE PROCEDURE _getIsMemberAndUserWeight (
-    IN userID BIGINT UNSIGNED,
-    IN userGroupID BIGINT UNSIGNED,
-    OUT isMember BOOL,
-    OUT userWeightVal FLOAT
-)
-proc: BEGIN
-    IF (
-        userGroupID <=> 0 AND
-        "u" <=> (
-            SELECT ent_type
-            FROM Entities FORCE INDEX (PRIMARY)
-            WHERE id = userID
-        )
-        OR
-        userGroupID != 0 AND
-        userID = userGroupID
-    ) THEN
-        SET isMember = 1;
-        SET userWeightVal = 1;
-        LEAVE proc;
-    END IF;
-
-    SELECT score_1 INTO userWeightVal
-    FROM EntityLists FORCE INDEX (PRIMARY)
-    WHERE (
-        list_id = userGroupID AND
-        subj_id = userID
-    );
-
-    SET isMember = IFNULL((userWeightVal > 0), 0);
-END proc //
-DELIMITER ;
 
 
 
@@ -972,7 +929,7 @@ proc: BEGIN
         ent_type = entType
     );
 
-    CALL _getIsMemberAndUserWeight (
+    CALL _getIsMember (
         userID,
         readerWhitelistID,
         isMember,
@@ -1177,7 +1134,7 @@ proc: BEGIN
 
     -- Before parsing the defStr, we first check that the user is on the reader
     -- whitelist.
-    CALL _getIsMemberAndUserWeight (
+    CALL _getIsMember (
         userID, readerWhitelistID, isMember, @unused
     );
     IF NOT (isMember) THEN

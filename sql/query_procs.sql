@@ -1,6 +1,8 @@
 
 SELECT "Query procedures";
 
+DROP PROCEDURE _getIsMember;
+
 DROP PROCEDURE selectEntityList;
 DROP PROCEDURE selectScore;
 
@@ -20,34 +22,81 @@ DROP PROCEDURE selectUserInfo;
 
 
 DELIMITER //
+CREATE PROCEDURE _getIsMember (
+    IN userID BIGINT UNSIGNED,
+    IN userGroupID BIGINT UNSIGNED,
+    OUT isMember BOOL
+)
+proc: BEGIN
+    DECLARE elemData VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+
+    IF (
+        userGroupID <=> 0 AND
+        "u" <=> (
+            SELECT ent_type
+            FROM Entities FORCE INDEX (PRIMARY)
+            WHERE id = userID
+        )
+        OR
+        userGroupID != 0 AND
+        userID = userGroupID
+    ) THEN
+        SET isMember = 1;
+        LEAVE proc;
+    END IF;
+
+    SELECT elem_data INTO elemData
+    FROM EntityLists FORCE INDEX (PRIMARY)
+    WHERE list_elem_key = CONCAT(
+        CONV(userGroupID, 10, 16), ',0,', CONV(userID, 10, 16)
+    );
+
+    IF (elemData IS NULL) THEN
+        SET isMember = 0;
+    ELSE
+        SET isMember = 1;
+    END IF;
+END proc //
+DELIMITER ;
+
+
+
+
+
+
+
+DELIMITER //
 CREATE PROCEDURE selectEntityList (
     IN userID BIGINT UNSIGNED,
-    IN listDefStr VARCHAR(700),
+    IN listDefStr VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
     IN readerWhitelistID BIGINT UNSIGNED,
-    IN hi FLOAT,
-    IN lo FLOAT,
+    IN hiStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN loStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN isAsc BOOL,
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED,
-    IN isAscOrder BOOL,
-    IN includeScore2 BOOL
+    IN fistCharToKeep TINYINT UNSIGNED
 )
 proc: BEGIN
     DECLARE isExceeded, isMember, exitCode TINYINT;
     DECLARE listID, foundRows BIGINT UNSIGNED;
+    DECLARE downloadData, downloadDataLimit FLOAT;
 
     -- Check that the user isn't out of download data.
-    CALL _increaseWeeklyUserCounters (
-        userID, 0, 0, 1, isExceeded
-    );
-    IF (isExceeded) THEN
-        SELECT listID, 5 AS exitCode; -- download limit was exceeded.
+    SELECT download_data_this_week, download_data_weekly_limit
+    INTO downloadData, downloadDataLimit
+    FROM Private_UserData FORCE INDEX (PRIMARY)
+    WHERE user_id = userID;
+
+    IF (downloadData + maxNum DIV 1000 + 1 > downloadDataLimit) THEN
+        SELECT listID, 5 AS exitCode; -- Download limit is exceeded.
         LEAVE proc;
     END IF;
 
     -- Check that user is on the reader whitelist.
-    CALL _getIsMemberAndUserWeight (
+    CALL _getIsMember (
         userID, readerWhitelistID,
-        isMember, @unused
+        isMember
     );
     IF NOT (isMember) THEN
         -- CAUTION: It should be noted that users can use this request to
@@ -55,8 +104,7 @@ proc: BEGIN
         -- allowed to read. They can only see if they themselves are on the
         -- list, however. But this still means that whenever you make an
         -- otherwise private entity list with a user as one on the subjects,
-        -- with a score1 > 0, then THE USER CAN STILL IN EFFECTIVELY SEE THAT
-        -- THEY ARE ON THAT LIST.
+        -- then user can in principle see that they are on that list.
         SELECT listID, 2 AS exitCode; -- user is not on the reader whitelist.
         LEAVE proc;
     END IF;
@@ -68,46 +116,29 @@ proc: BEGIN
         listID, exitCode
     );
     IF (exitCode >= 2) THEN
-        SELECT listID, 3 AS exitCode; -- finding list failed.
+        SELECT listID, 3 AS exitCode; -- Finding list failed.
         LEAVE proc;
     END IF;
 
-    IF (includeScore2) THEN
-        SELECT
-            score_1 AS score1,
-            score_2 AS score2,
-            subj_id AS subjID
-        FROM EntityLists FORCE INDEX (sec_idx)
-        WHERE (
-            list_id = listID AND
-            score_1 BETWEEN lo AND hi
-        )
-        ORDER BY
-            CASE WHEN isAscOrder THEN score_1 END ASC,
-            CASE WHEN NOT isAscOrder THEN score_1 END DESC,
-            CASE WHEN isAscOrder THEN score_2 END ASC,
-            CASE WHEN NOT isAscOrder THEN score_2 END DESC,
-            CASE WHEN isAscOrder THEN subj_id END ASC,
-            CASE WHEN NOT isAscOrder THEN subj_id END DESC
-        LIMIT numOffset, maxNum;
-    ELSE
-        SELECT
-            score_1 AS score1,
-            subj_id AS subjID
-        FROM EntityLists FORCE INDEX (sec_idx)
-        WHERE (
-            list_id = listID AND
-            score_1 BETWEEN lo AND hi
-        )
-        ORDER BY
-            CASE WHEN isAscOrder THEN score_1 END ASC,
-            CASE WHEN NOT isAscOrder THEN score_1 END DESC,
-            CASE WHEN isAscOrder THEN score_2 END ASC,
-            CASE WHEN NOT isAscOrder THEN score_2 END DESC,
-            CASE WHEN isAscOrder THEN subj_id END ASC,
-            CASE WHEN NOT isAscOrder THEN subj_id END DESC
-        LIMIT numOffset, maxNum;
-    END IF;
+    SET hiStr = CONCAT(CONV(listID, 10, 16), ',', hiStr);
+    SET loStr = CONCAT(CONV(listID, 10, 16), ',', loStr);
+
+    -- Select the list.
+    SELECT
+        CONCAT(SUBSTR(list_elem_key, fistCharToKeep), elem_data) AS elemStr
+    FROM EntityLists FORCE INDEX (PRIMARY)
+    WHERE (
+        list_id = listID AND
+        score_1 BETWEEN lo AND hi
+    )
+    ORDER BY
+        CASE WHEN isAscOrder THEN score_1 END ASC,
+        CASE WHEN NOT isAscOrder THEN score_1 END DESC,
+        CASE WHEN isAscOrder THEN score_2 END ASC,
+        CASE WHEN NOT isAscOrder THEN score_2 END DESC,
+        CASE WHEN isAscOrder THEN subj_id END ASC,
+        CASE WHEN NOT isAscOrder THEN subj_id END DESC
+    LIMIT numOffset, maxNum;
 
     -- We also increase the download counter at the end of this.
     -- NOTE: FOUND_ROWS() is deprecated and might be removed in the future.
@@ -154,7 +185,7 @@ proc: BEGIN
     END IF;
 
     -- Check that user is on the reader whitelist.
-    CALL _getIsMemberAndUserWeight (
+    CALL _getIsMember (
         userID, readerWhitelistID,
         isMember, @unused
     );
@@ -251,7 +282,7 @@ proc: BEGIN
     WHERE id = entID;
 
     -- Check that the user is on the reader whitelist.
-    CALL _getIsMemberAndUserWeight (
+    CALL _getIsMember (
         userID, readerWhitelistID, isMember, @unused
     );
     IF (isMember) THEN
@@ -328,7 +359,7 @@ proc: BEGIN
     FROM Entities FORCE INDEX (PRIMARY)
     WHERE id = entID;
 
-    CALL _getIsMemberAndUserWeight (
+    CALL _getIsMember (
         userID, readerWhitelistID, isMember, @unused
     );
 
@@ -464,7 +495,7 @@ proc: BEGIN
 
     -- Exit if the user is not currently on the user whitelist. Do this first
     -- to avoid timing attacks.
-    CALL _getIsMemberAndUserWeight (
+    CALL _getIsMember (
         userID, readerWhitelistID, isMember, @unused
     );
     IF NOT (isMember) THEN
@@ -517,7 +548,7 @@ DELIMITER ;
 
 --     -- Exit if the user is not currently on the user whitelist. Do this first
 --     -- to avoid timing attacks.
---     CALL _getIsMemberAndUserWeight (
+--     CALL _getIsMember (
 --         userID, readerWhitelistID, isMember, @unused
 --     );
 --     IF NOT (isMember) THEN
