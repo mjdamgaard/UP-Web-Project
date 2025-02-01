@@ -66,21 +66,24 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectEntityList (
+CREATE PROCEDURE selectEntityList_01 (
     IN userID BIGINT UNSIGNED,
-    IN listDefStr VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN listID BIGINT UNSIGNED,
     IN readerWhitelistID BIGINT UNSIGNED,
     IN hiStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN includeHiStr BOOL,
     IN loStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN includeLoStr BOOL,
     IN isAsc BOOL,
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED,
-    IN fistCharToKeep TINYINT UNSIGNED
+    IN fistCol TINYINT UNSIGNED,
+    IN colNum TINYINT UNSIGNED
 )
 proc: BEGIN
-    DECLARE isExceeded, isMember, exitCode TINYINT;
-    DECLARE listID, foundRows BIGINT UNSIGNED;
+    DECLARE isMember, fistChar, lastCol TINYINT UNSIGNED;
     DECLARE downloadData, downloadDataLimit FLOAT;
+    DECLARE listHead VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 
     -- Check that the user isn't out of download data.
     SELECT download_data_this_week, download_data_weekly_limit
@@ -109,85 +112,79 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    -- Find the list entity (with isAnonymous = 1, insertWhenNotFound = 0, and
-    -- selectWhenFound = 1).
-    CALL _parseAndObtainRegularEntity (
-        userID, listDefStr, readerWhitelistID, 1, 0, 1,
-        listID, exitCode
-    );
-    IF (exitCode >= 2) THEN
-        SELECT listID, 3 AS exitCode; -- Finding list failed.
-        LEAVE proc;
-    END IF;
-
-    SET hiStr = CONCAT(CONV(listID, 10, 16), ',', hiStr);
-    SET loStr = CONCAT(CONV(listID, 10, 16), ',', loStr);
-
     -- Select the list.
+    SET listHead = CONCAT(
+        CONV(listID, 10, 16), ';', CONV(readerWhitelistID, 10, 16), ';'
+    );
+    SET fistChar = LENGTH(listHead) + 1;
+    SET hiStr = CONCAT(listHead, hiStr);
+    SET loStr = CONCAT(listHead, loStr);
+    SET lastCol = firstCol + colNum - 1;
+
     SELECT
-        CONCAT(SUBSTR(list_elem_key, fistCharToKeep), elem_data) AS elemStr
-    FROM EntityLists FORCE INDEX (PRIMARY)
+        SUBSTRING_INDEX(
+            SUBSTRING_INDEX(
+                SUBSTR(CONCAT(list_elem_key, ';', elem_data), fistChar),
+                ';',
+                lastCol
+            ),
+            ';',
+            -colNum
+        )
+        AS elemStr
+    FROM EntityLists_01 FORCE INDEX (PRIMARY)
     WHERE (
-        list_id = listID AND
-        score_1 BETWEEN lo AND hi
+        (NOT includeHiStr OR list_elem_key <= hiStr) AND
+        (includeHiStr OR list_elem_key < hiStr) AND
+        (NOT includeLoStr OR list_elem_key >= loStr) AND
+        (includeLoStr OR list_elem_key > loStr)
     )
     ORDER BY
-        CASE WHEN isAscOrder THEN score_1 END ASC,
-        CASE WHEN NOT isAscOrder THEN score_1 END DESC,
-        CASE WHEN isAscOrder THEN score_2 END ASC,
-        CASE WHEN NOT isAscOrder THEN score_2 END DESC,
-        CASE WHEN isAscOrder THEN subj_id END ASC,
-        CASE WHEN NOT isAscOrder THEN subj_id END DESC
+        CASE WHEN isAsc THEN list_elem_key END ASC,
+        CASE WHEN NOT isAsc THEN list_elem_key END DESC
     LIMIT numOffset, maxNum;
-
-    -- We also increase the download counter at the end of this.
-    -- NOTE: FOUND_ROWS() is deprecated and might be removed in the future.
-    SET foundRows = FOUND_ROWS();
-    CALL _increaseWeeklyUserCounters (
-        userID, 0, 0, foundRows, isExceeded
-    );
 END proc //
 DELIMITER ;
--- SHOW WARNINGS; -- This warning is just the "FOUND_ROWS() is deprecated" one.
 
 
 
 
 DELIMITER //
-CREATE PROCEDURE selectScore (
+CREATE PROCEDURE selectEntityListFromListDefStr_01 (
     IN userID BIGINT UNSIGNED,
-    IN listDefStr VARCHAR(700),
+    IN listDefStr VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN listEntityReaderWhitelistID BIGINT UNSIGNED,
     IN readerWhitelistID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED
+    IN hiStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN includeHiStr BOOL,
+    IN loStr VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    IN includeLoStr BOOL,
+    IN isAsc BOOL,
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED,
+    IN fistCol TINYINT UNSIGNED,
+    IN colNum TINYINT UNSIGNED
 )
 proc: BEGIN
-    DECLARE isExceeded, isMember, exitCode TINYINT;
-    DECLARE listID, foundRows BIGINT UNSIGNED;
+    DECLARE isMember TINYINT UNSIGNED;
+    DECLARE listID BIGINT UNSIGNED;
+    DECLARE downloadData, downloadDataLimit FLOAT;
 
     -- Check that the user isn't out of download data.
-    CALL _increaseWeeklyUserCounters (
-        userID, 0, 0, 2, isExceeded
-    );
-    IF (isExceeded) THEN
-        SELECT 5 AS exitCode; -- download limit was exceeded.
-        LEAVE proc;
-    END IF;
+    SELECT download_data_this_week, download_data_weekly_limit
+    INTO downloadData, downloadDataLimit
+    FROM Private_UserData FORCE INDEX (PRIMARY)
+    WHERE user_id = userID;
 
-    -- Find the list entity (with isAnonymous = 1, insertWhenNotFound = 0, and
-    -- selectWhenFound = 1).
-    CALL _parseAndObtainRegularEntity (
-        userID, listDefStr, readerWhitelistID, 1, 0, 1,
-        listID, exitCode
-    );
-    IF (exitCode >= 2) THEN
-        SELECT 3 AS exitCode; -- finding list failed.
+    IF (downloadData + 1 > downloadDataLimit) THEN
+        SELECT listID, 5 AS exitCode; -- Download limit is exceeded.
         LEAVE proc;
     END IF;
 
     -- Check that user is on the reader whitelist.
     CALL _getIsMember (
         userID, readerWhitelistID,
-        isMember, @unused
+        isMember
     );
     IF NOT (isMember) THEN
         -- CAUTION: It should be noted that users can use this request to
@@ -195,23 +192,107 @@ proc: BEGIN
         -- allowed to read. They can only see if they themselves are on the
         -- list, however. But this still means that whenever you make an
         -- otherwise private entity list with a user as one on the subjects,
-        -- with a score1 > 0, then THE USER CAN STILL IN EFFECTIVELY SEE THAT
-        -- THEY ARE ON THAT LIST.
-        SELECT 2 AS exitCode; -- user is not on the reader whitelist.
+        -- then user can in principle see that they are on that list.
+        SELECT listID, 2 AS exitCode; -- user is not on the reader whitelist.
         LEAVE proc;
     END IF;
 
-    SELECT
-        score_1 AS score1,
-        score_2 AS score2,
-        HEX(other_data) AS otherDataHex
-    FROM EntityLists FORCE INDEX (PRIMARY)
-    WHERE (
-        list_id = listID AND
-        subj_id = subjID
+    -- Find the list entity (with isAnonymous = 1, insertWhenNotFound = 0,
+    -- and selectWhenFound = 1).
+    CALL _parseAndObtainRegularEntity (
+        userID, listDefStr, listEntityReaderWhitelistID, 1, 0, 1,
+        listID, exitCode
+    );
+    IF (exitCode >= 2) THEN
+        SELECT listID, 3 AS exitCode; -- Finding list failed.
+        LEAVE proc;
+    END IF;
+
+    CALL selectEntityList_01 (
+        userID,
+        listID,
+        readerWhitelistID,
+        hiStr,
+        includeHiStr,
+        loStr,
+        includeLoStr,
+        isAsc,
+        maxNum,
+        numOffset,
+        fistCol,
+        colNum
     );
 END proc //
 DELIMITER ;
+
+
+
+
+
+
+
+
+
+
+-- DELIMITER //
+-- CREATE PROCEDURE selectScore (
+--     IN userID BIGINT UNSIGNED,
+--     IN listDefStr VARCHAR(700),
+--     IN readerWhitelistID BIGINT UNSIGNED,
+--     IN subjID BIGINT UNSIGNED
+-- )
+-- proc: BEGIN
+--     DECLARE isExceeded, isMember, exitCode TINYINT;
+--     DECLARE listID, foundRows BIGINT UNSIGNED;
+
+--     -- Check that the user isn't out of download data.
+--     CALL _increaseWeeklyUserCounters (
+--         userID, 0, 0, 2, isExceeded
+--     );
+--     IF (isExceeded) THEN
+--         SELECT 5 AS exitCode; -- download limit was exceeded.
+--         LEAVE proc;
+--     END IF;
+
+--     -- Find the list entity (with isAnonymous = 1, insertWhenNotFound = 0, and
+--     -- selectWhenFound = 1).
+--     CALL _parseAndObtainRegularEntity (
+--         userID, listDefStr, readerWhitelistID, 1, 0, 1,
+--         listID, exitCode
+--     );
+--     IF (exitCode >= 2) THEN
+--         SELECT 3 AS exitCode; -- finding list failed.
+--         LEAVE proc;
+--     END IF;
+
+--     -- Check that user is on the reader whitelist.
+--     CALL _getIsMember (
+--         userID, readerWhitelistID,
+--         isMember, @unused
+--     );
+--     IF NOT (isMember) THEN
+--         -- CAUTION: It should be noted that users can use this request to
+--         -- see if they are on any list, even ones they are not otherwise
+--         -- allowed to read. They can only see if they themselves are on the
+--         -- list, however. But this still means that whenever you make an
+--         -- otherwise private entity list with a user as one on the subjects,
+--         -- with a score1 > 0, then THE USER CAN STILL IN EFFECTIVELY SEE THAT
+--         -- THEY ARE ON THAT LIST.
+--         SELECT 2 AS exitCode; -- user is not on the reader whitelist.
+--         LEAVE proc;
+--     END IF;
+
+--     SELECT
+--         score_1 AS score1,
+--         score_2 AS score2,
+--         HEX(other_data) AS otherDataHex
+--     FROM EntityLists FORCE INDEX (PRIMARY)
+--     WHERE (
+--         list_id = listID AND
+--         subj_id = subjID
+--     );
+-- END proc //
+-- DELIMITER ;
 
 
 

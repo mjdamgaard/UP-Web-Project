@@ -28,8 +28,10 @@ DROP TABLE DebugLogEntries;
 
 /* Scores / entity lists tables  */
 
+-- The default _01 entity lists use VARCHARs and convention of using
+-- hexadecimal-encoded numbers  
 
-CREATE TABLE EntityLists (
+CREATE TABLE EntityLists_01 (
 
     list_elem_key VARCHAR(64) -- Can be resized.
         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin PRIMARY KEY,
@@ -41,16 +43,17 @@ ROW_FORMAT = COMPRESSED;
 
 
 
+-- CREATE TABLE ListMetadata_01 (
 
-CREATE TABLE ListMetadata (
+--     list_key VARCHAR(32) -- Can be resized.
+--         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin PRIMARY KEY,
 
-    list_key VARCHAR(32) -- Can be resized.
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin PRIMARY KEY,
+--     list_metadata VARCHAR(64) -- Can be resized.
+--         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+-- )
+-- ROW_FORMAT = COMPRESSED;
 
-    list_metadata VARCHAR(64) -- Can be resized.
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-)
-ROW_FORMAT = COMPRESSED;
+
 
 
 

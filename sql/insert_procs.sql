@@ -44,120 +44,118 @@ DROP PROCEDURE _increaseWeeklyUserCounters;
 
 
 
-DELIMITER //
-CREATE PROCEDURE _insertUpdateOrDeleteListElement (
-    IN listID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED,
-    IN score1 FLOAT,
-    IN score2 FLOAT,
-    IN otherData VARBINARY(16),
-    IN addedUploadDataCost FLOAT,
-    OUT exitCode TINYINT
-)
-BEGIN
-    DECLARE prevScore1, prevScore2 FLOAT;
-    DECLARE prevListLen BIGINT UNSIGNED;
-    DECLARE isExceeded TINYINT;
+-- DELIMITER //
+-- CREATE PROCEDURE _insertUpdateOrDeleteListElement (
+--     IN listID BIGINT UNSIGNED,
+--     IN subjID BIGINT UNSIGNED,
+--     IN score1 FLOAT,
+--     IN score2 FLOAT,
+--     IN otherData VARBINARY(16),
+--     IN addedUploadDataCost FLOAT,
+--     OUT exitCode TINYINT
+-- )
+-- BEGIN
+--     DECLARE prevScore1, prevScore2 FLOAT;
+--     DECLARE prevListLen BIGINT UNSIGNED;
+--     DECLARE isExceeded TINYINT;
 
-    SET score2 = IFNULL(score2, 0);
+--     SET score2 = IFNULL(score2, 0);
 
-    -- We get a lock on the ListMetadata row, and branch accordingly in order
-    -- to update the ListMetadata table correctly.
-    DO GET_LOCK(CONCAT( "ListMetadata.", listID ), 10);
+--     -- We get a lock on the ListMetadata row, and branch accordingly in order
+--     -- to update the ListMetadata table correctly.
+--     DO GET_LOCK(CONCAT( "ListMetadata.", listID ), 10);
 
 
-    SELECT score_1, score_2 INTO prevScore1, prevScore2
-    FROM EntityLists FORCE INDEX (PRIMARY)
-    WHERE (
-        list_id = listID AND
-        subj_id = subjID
-    );
+--     SELECT score_1, score_2 INTO prevScore1, prevScore2
+--     FROM EntityLists FORCE INDEX (PRIMARY)
+--     WHERE (
+--         list_id = listID AND
+--         subj_id = subjID
+--     );
 
-    -- Branch according to whether the score should be inserted, updated, or
-    -- deleted, the latter being the case where the floatVal input is NULL. 
-    IF (score1 IS NOT NULL AND prevScore1 IS NULL) THEN
-        INSERT INTO EntityLists (
-            list_id, subj_id,
-            score_1, score_2,
-            other_data
-        ) VALUES (
-            listID, subjID,
-            score1, score2,
-            IFNULL(otherData, DEFAULT(other_data))
-        );
+--     -- Branch according to whether the score should be inserted, updated, or
+--     -- deleted, the latter being the case where the floatVal input is NULL. 
+--     IF (score1 IS NOT NULL AND prevScore1 IS NULL) THEN
+--         INSERT INTO EntityLists (
+--             list_id, subj_id,
+--             score_1, score_2,
+--             other_data
+--         ) VALUES (
+--             listID, subjID,
+--             score1, score2,
+--             IFNULL(otherData, DEFAULT(other_data))
+--         );
 
-        INSERT INTO ListMetadata (
-            list_id,
-            list_len, score_1_sum, score_2_sum,
-            pos_list_len,
-            paid_upload_data_cost
-        ) VALUES (
-            listID,
-            1, score1, score2,
-            IF(score1 > 0, 1, 0),
-            addedUploadDataCost
-        )
-        ON DUPLICATE KEY UPDATE
-            list_len = list_len + 1,
-            score_1_sum = score_1_sum + score1,
-            score_2_sum = score_2_sum + score2,
-            pos_list_len = pos_list_len + IF(score1 > 0, 1, 0),
-            paid_upload_data_cost = paid_upload_data_cost +
-                addedUploadDataCost;
+--         INSERT INTO ListMetadata (
+--             list_id,
+--             list_len, score_1_sum, score_2_sum,
+--             pos_list_len,
+--             paid_upload_data_cost
+--         ) VALUES (
+--             listID,
+--             1, score1, score2,
+--             IF(score1 > 0, 1, 0),
+--             addedUploadDataCost
+--         )
+--         ON DUPLICATE KEY UPDATE
+--             list_len = list_len + 1,
+--             score_1_sum = score_1_sum + score1,
+--             score_2_sum = score_2_sum + score2,
+--             pos_list_len = pos_list_len + IF(score1 > 0, 1, 0),
+--             paid_upload_data_cost = paid_upload_data_cost +
+--                 addedUploadDataCost;
 
-        SET exitCode = 0; -- insert.
+--         SET exitCode = 0; -- insert.
 
-    ELSEIF (score1 IS NOT NULL AND prevScore1 IS NOT NULL) THEN
-        UPDATE EntityLists SET
-            score_1 = score1,
-            score_2 = score2,
-            other_data = IFNULL(otherData, DEFAULT(other_data))
-        WHERE (
-            list_id = listID AND
-            subj_id = subjID
-        );
+--     ELSEIF (score1 IS NOT NULL AND prevScore1 IS NOT NULL) THEN
+--         UPDATE EntityLists SET
+--             score_1 = score1,
+--             score_2 = score2,
+--             other_data = IFNULL(otherData, DEFAULT(other_data))
+--         WHERE (
+--             list_id = listID AND
+--             subj_id = subjID
+--         );
         
-        UPDATE ListMetadata SET
-            score_1_sum = score_1_sum + score1 - prevScore1,
-            score_2_sum = score_2_sum + score2 - prevScore2,
-            pos_list_len = pos_list_len + CASE
-                WHEN (score1 > 0 AND prevScore1 <= 0) THEN 1
-                WHEN (score1 <= 0 AND prevScore1 > 0) THEN -1
-                ELSE 0
-            END,
-            paid_upload_data_cost = paid_upload_data_cost +
-                addedUploadDataCost
-        WHERE list_id = listID;
+--         UPDATE ListMetadata SET
+--             score_1_sum = score_1_sum + score1 - prevScore1,
+--             score_2_sum = score_2_sum + score2 - prevScore2,
+--             pos_list_len = pos_list_len + CASE
+--                 WHEN (score1 > 0 AND prevScore1 <= 0) THEN 1
+--                 WHEN (score1 <= 0 AND prevScore1 > 0) THEN -1
+--                 ELSE 0
+--             END,
+--             paid_upload_data_cost = paid_upload_data_cost +
+--                 addedUploadDataCost
+--         WHERE list_id = listID;
 
-        SET exitCode = 1; -- update.
+--         SET exitCode = 1; -- update.
 
-    ELSEIF (score1 IS NULL AND prevScore1 IS NOT NULL) THEN
-        DELETE FROM EntityLists
-        WHERE (
-            user_group_id = userGroupID AND
-            list_spec_id = listSpecID AND
-            subj_id = subjID
-        );
+--     ELSEIF (score1 IS NULL AND prevScore1 IS NOT NULL) THEN
+--         DELETE FROM EntityLists
+--         WHERE (
+--             user_group_id = userGroupID AND
+--             list_spec_id = listSpecID AND
+--             subj_id = subjID
+--         );
         
-        UPDATE ListMetadata SET
-            list_len = list_len - 1,
-            score_1_sum = score_1_sum - prevScore1,
-            score_2_sum = score_2_sum - prevScore2,
-            pos_list_len = pos_list_len + IF(prevScore1 > 0, -1, 0),
-            paid_upload_data_cost = paid_upload_data_cost +
-                addedUploadDataCost
-        WHERE list_id = listID;
+--         UPDATE ListMetadata SET
+--             list_len = list_len - 1,
+--             score_1_sum = score_1_sum - prevScore1,
+--             score_2_sum = score_2_sum - prevScore2,
+--             pos_list_len = pos_list_len + IF(prevScore1 > 0, -1, 0),
+--             paid_upload_data_cost = paid_upload_data_cost +
+--                 addedUploadDataCost
+--         WHERE list_id = listID;
 
-        SET exitCode = 2; -- deletion.
-    ELSE
-        SET exitCode = 3; -- no change.
-    END IF;
+--         SET exitCode = 2; -- deletion.
+--     ELSE
+--         SET exitCode = 3; -- no change.
+--     END IF;
 
-    DO RELEASE_LOCK(CONCAT( "ListMetadata.", listID ));
-END //
-DELIMITER ;
-
-
+--     DO RELEASE_LOCK(CONCAT( "ListMetadata.", listID ));
+-- END //
+-- DELIMITER ;
 
 
 
@@ -173,115 +171,113 @@ DELIMITER ;
 
 
 
+-- DELIMITER //
+-- CREATE PROCEDURE insertOrUpdateScore (
+--     IN userID BIGINT UNSIGNED,
+--     IN listDefStr VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+--     IN readerWhitelistID BIGINT UNSIGNED,
+--     IN subjID BIGINT UNSIGNED,
+--     IN score1 FLOAT,
+--     IN score2 FLOAT,
+--     IN otherDataHex VARCHAR(32)
+-- )
+-- proc: BEGIN
+--     DECLARE isExceeded, exitCode TINYINT;
+--     DECLARE listID, editorID BIGINT UNSIGNED;
+--     DECLARE otherData VARBINARY(16) DEFAULT (UNHEX(otherDataHex));
+--     DECLARE addedUploadDataCost FLOAT DEFAULT (32 + LENGTH(otherData));
 
+--     -- Insert of find the list entity.
+--     CALL _parseAndObtainRegularEntity (
+--         userID, listDefStr, readerWhitelistID, 0, 1, 0,
+--         listID, exitCode
+--     );
+--     IF (exitCode >= 2) THEN
+--         SELECT listID AS outID, 3 AS exitCode; -- finding/inserting list failed.
+--         LEAVE proc;
+--     END IF;
 
-DELIMITER //
-CREATE PROCEDURE insertOrUpdateScore (
-    IN userID BIGINT UNSIGNED,
-    IN listDefStr VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-    IN readerWhitelistID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED,
-    IN score1 FLOAT,
-    IN score2 FLOAT,
-    IN otherDataHex VARCHAR(32)
-)
-proc: BEGIN
-    DECLARE isExceeded, exitCode TINYINT;
-    DECLARE listID, editorID BIGINT UNSIGNED;
-    DECLARE otherData VARBINARY(16) DEFAULT (UNHEX(otherDataHex));
-    DECLARE addedUploadDataCost FLOAT DEFAULT (32 + LENGTH(otherData));
+--     -- Pay the upload data cost for the score insert.
+--     CALL _increaseWeeklyUserCounters (
+--         userID, 0, addedUploadDataCost, 0, isExceeded
+--     );
+--     -- Exit if upload limit was exceeded.
+--     IF (isExceeded) THEN
+--         SELECT listID AS outID, 5 AS exitCode; -- upload limit was exceeded.
+--         LEAVE proc;
+--     END IF;
 
-    -- Insert of find the list entity.
-    CALL _parseAndObtainRegularEntity (
-        userID, listDefStr, readerWhitelistID, 0, 1, 0,
-        listID, exitCode
-    );
-    IF (exitCode >= 2) THEN
-        SELECT listID AS outID, 3 AS exitCode; -- finding/inserting list failed.
-        LEAVE proc;
-    END IF;
+--     -- Check that user is the editor of the list, which is always the first
+--     -- input in a list function (even though the parameter is sometimes named
+--     -- something else, like 'User').
+--     SET editorID = CAST(REGEXP_SUBSTR(listDefStr, "[0-9]+", 1, 2) AS UNSIGNED);
+--     IF NOT (userID <=> editorID) THEN
+--         SELECT listID AS outID, 2 AS exitCode; -- user is not the editor.
+--         LEAVE proc;
+--     END IF;
 
-    -- Pay the upload data cost for the score insert.
-    CALL _increaseWeeklyUserCounters (
-        userID, 0, addedUploadDataCost, 0, isExceeded
-    );
-    -- Exit if upload limit was exceeded.
-    IF (isExceeded) THEN
-        SELECT listID AS outID, 5 AS exitCode; -- upload limit was exceeded.
-        LEAVE proc;
-    END IF;
+--     -- Finally insert the user score, updating the ListMetadata in the
+--     -- process.
+--     CALL _insertUpdateOrDeleteListElement (
+--         listID,
+--         subjID,
+--         score1,
+--         score2,
+--         otherData,
+--         addedUploadDataCost,
+--         exitCode
+--     );
 
-    -- Check that user is the editor of the list, which is always the first
-    -- input in a list function (even though the parameter is sometimes named
-    -- something else, like 'User').
-    SET editorID = CAST(REGEXP_SUBSTR(listDefStr, "[0-9]+", 1, 2) AS UNSIGNED);
-    IF NOT (userID <=> editorID) THEN
-        SELECT listID AS outID, 2 AS exitCode; -- user is not the editor.
-        LEAVE proc;
-    END IF;
-
-    -- Finally insert the user score, updating the ListMetadata in the
-    -- process.
-    CALL _insertUpdateOrDeleteListElement (
-        listID,
-        subjID,
-        score1,
-        score2,
-        otherData,
-        addedUploadDataCost,
-        exitCode
-    );
-
-    SELECT listID AS outID, exitCode; -- 0: inserted, or 1: updated.
-END proc //
-DELIMITER ;
+--     SELECT listID AS outID, exitCode; -- 0: inserted, or 1: updated.
+-- END proc //
+-- DELIMITER ;
 
 
 
-DELIMITER //
-CREATE PROCEDURE deleteScore (
-    IN userID BIGINT UNSIGNED,
-    IN listDefStr VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-    IN readerWhitelistID BIGINT UNSIGNED,
-    IN subjID BIGINT UNSIGNED
-)
-proc: BEGIN
-    DECLARE isExceeded, exitCode TINYINT;
-    DECLARE listID, editorID BIGINT UNSIGNED;
+-- DELIMITER //
+-- CREATE PROCEDURE deleteScore (
+--     IN userID BIGINT UNSIGNED,
+--     IN listDefStr VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+--     IN readerWhitelistID BIGINT UNSIGNED,
+--     IN subjID BIGINT UNSIGNED
+-- )
+-- proc: BEGIN
+--     DECLARE isExceeded, exitCode TINYINT;
+--     DECLARE listID, editorID BIGINT UNSIGNED;
 
-    -- Insert of find the list entity.
-    CALL _parseAndObtainRegularEntity (
-        userID, listDefStr, readerWhitelistID, 0, 1, 0,
-        listID, exitCode
-    );
-    IF (exitCode >= 2) THEN
-        SELECT listID AS outID, 3 AS exitCode; -- finding/inserting list failed.
-        LEAVE proc;
-    END IF;
+--     -- Insert of find the list entity.
+--     CALL _parseAndObtainRegularEntity (
+--         userID, listDefStr, readerWhitelistID, 0, 1, 0,
+--         listID, exitCode
+--     );
+--     IF (exitCode >= 2) THEN
+--         SELECT listID AS outID, 3 AS exitCode; -- finding/inserting list failed.
+--         LEAVE proc;
+--     END IF;
 
-    -- Check that user is the editor of the list, which is always the first
-    -- input in a list function (even though the parameter is sometimes named
-    -- something else, like 'User').
-    SET editorID = CAST(REGEXP_SUBSTR(listDefStr, "[0-9]+", 1, 2) AS UNSIGNED);
-    IF NOT (userID <=> editorID) THEN
-        SELECT listID AS outID, 2 AS exitCode; -- user is not the editor.
-        LEAVE proc;
-    END IF;
+--     -- Check that user is the editor of the list, which is always the first
+--     -- input in a list function (even though the parameter is sometimes named
+--     -- something else, like 'User').
+--     SET editorID = CAST(REGEXP_SUBSTR(listDefStr, "[0-9]+", 1, 2) AS UNSIGNED);
+--     IF NOT (userID <=> editorID) THEN
+--         SELECT listID AS outID, 2 AS exitCode; -- user is not the editor.
+--         LEAVE proc;
+--     END IF;
 
-    -- Finally delete the score.
-    CALL _insertUpdateOrDeleteListElement (
-        listID,
-        subjID,
-        NULL,
-        NULL,
-        NULL,
-        0,
-        exitCode
-    );
+--     -- Finally delete the score.
+--     CALL _insertUpdateOrDeleteListElement (
+--         listID,
+--         subjID,
+--         NULL,
+--         NULL,
+--         NULL,
+--         0,
+--         exitCode
+--     );
 
-    SELECT listID AS outID, 0 AS exitCode; -- score was deleted if there.
-END proc //
-DELIMITER ;
+--     SELECT listID AS outID, 0 AS exitCode; -- score was deleted if there.
+-- END proc //
+-- DELIMITER ;
 
 
 
