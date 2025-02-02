@@ -21,7 +21,6 @@ class InputValidator {
     public static function validateParam($paramVal, $type, $paramName) {
         switch($type) {
             case "id":
-            case "unix_time":
             case "ulong":
                 $pattern = "/^[1-9][0-9]*|0$/";
                 if (
@@ -36,6 +35,7 @@ class InputValidator {
                 }
                 break;
             case "uint":
+            case "unix_time":
                 $pattern = "/^[1-9][0-9]*|0$/";
                 if (
                     !preg_match($pattern, $paramVal) ||
@@ -212,7 +212,7 @@ class InputValidator {
                 break;
             case "list_list":
                 $pattern =
-                    "/^((this|[1-9][0-9]*)([,\|](this|[1-9][0-9]*))*)?$/";
+                    "/^((this|[1-9][0-9]*)([,\\|](this|[1-9][0-9]*))*)?$/";
                 $len = strlen($paramVal);
                 if (
                     $len > 209 ||
@@ -294,8 +294,8 @@ class InputValidator {
                 //         $paramName, $paramVal, "VARCHAR(1,50)"
                 //     );
                 // }
-                // $pattern = "/^[\S]+$/";
-                $pattern = "/^[a-zA-Z][\w\-]*$/"; // TODO: Make this a lot less
+                // $pattern = "/^[\\S]+$/";
+                $pattern = "/^[a-zA-Z][\\w\\-]*$/"; // TODO: Make this a lot less
                 // restrictive. (But do not include integers, as these are
                 // reserved for IDs.)
                 if (!preg_match($pattern, $paramVal)) {

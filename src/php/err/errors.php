@@ -1,7 +1,7 @@
 <?php
 
 function getErrorJSON($msg) {
-    return '{"error":"' . $msg . '"}';
+    return json_encode(array("error"=>$msg));
 }
 
 function echoBadErrorJSONAndExit($msg) {

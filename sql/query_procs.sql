@@ -30,6 +30,11 @@ CREATE PROCEDURE _getIsMember_01 (
 proc: BEGIN
     DECLARE elemData VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 
+    IF (userGroupID = 1) THEN
+        SET isMember = 0;
+        LEAVE proc;
+    END IF;
+
     IF (
         userGroupID <=> 0 AND
         "u" <=> (
@@ -47,7 +52,7 @@ proc: BEGIN
 
     SELECT elem_data INTO elemData
     FROM ListData_01 FORCE INDEX (PRIMARY)
-    WHERE list_elem_key = CONCAT(userGroupID, ';0;', userID, ';');
+    WHERE list_elem_key = CONCAT(userGroupID, ';1;', userID);
 
     IF (elemData IS NULL) THEN
         SET isMember = 0;
