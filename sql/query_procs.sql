@@ -1,7 +1,7 @@
 
 SELECT "Query procedures";
 
-DROP PROCEDURE _getIsMember;
+DROP PROCEDURE _getIsMember_01;
 
 DROP PROCEDURE selectEntityList;
 DROP PROCEDURE selectScore;
@@ -22,7 +22,7 @@ DROP PROCEDURE selectUserInfo;
 
 
 DELIMITER //
-CREATE PROCEDURE _getIsMember (
+CREATE PROCEDURE _getIsMember_01 (
     IN userID BIGINT UNSIGNED,
     IN userGroupID BIGINT UNSIGNED,
     OUT isMember BOOL
@@ -46,10 +46,8 @@ proc: BEGIN
     END IF;
 
     SELECT elem_data INTO elemData
-    FROM EntityLists FORCE INDEX (PRIMARY)
-    WHERE list_elem_key = CONCAT(
-        CONV(userGroupID, 10, 16), ',0,', CONV(userID, 10, 16)
-    );
+    FROM ListData_01 FORCE INDEX (PRIMARY)
+    WHERE list_elem_key = CONCAT(userGroupID, ';0;', userID, ';');
 
     IF (elemData IS NULL) THEN
         SET isMember = 0;
@@ -83,7 +81,7 @@ CREATE PROCEDURE selectEntityList_01 (
 proc: BEGIN
     DECLARE isMember, fistChar, lastCol TINYINT UNSIGNED;
     DECLARE downloadData, downloadDataLimit FLOAT;
-    DECLARE listHead VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+    DECLARE listHeader VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 
     -- Check that the user isn't out of download data.
     SELECT download_data_this_week, download_data_weekly_limit
@@ -97,7 +95,7 @@ proc: BEGIN
     END IF;
 
     -- Check that user is on the reader whitelist.
-    CALL _getIsMember (
+    CALL _getIsMember_01 (
         userID, readerWhitelistID,
         isMember
     );
@@ -113,12 +111,10 @@ proc: BEGIN
     END IF;
 
     -- Select the list.
-    SET listHead = CONCAT(
-        CONV(listID, 10, 16), ';', CONV(readerWhitelistID, 10, 16), ';'
-    );
-    SET fistChar = LENGTH(listHead) + 1;
-    SET hiStr = CONCAT(listHead, hiStr);
-    SET loStr = CONCAT(listHead, loStr);
+    SET listHeader = CONCAT(listID, ';', readerWhitelistID, ';');
+    SET fistChar = LENGTH(listHeader) + 1;
+    SET hiStr = CONCAT(listHeader, hiStr);
+    SET loStr = CONCAT(listHeader, loStr);
     SET lastCol = firstCol + colNum - 1;
 
     SELECT
@@ -132,7 +128,7 @@ proc: BEGIN
             -colNum
         )
         AS elemStr
-    FROM EntityLists_01 FORCE INDEX (PRIMARY)
+    FROM ListData_01 FORCE INDEX (PRIMARY)
     WHERE (
         (NOT includeHiStr OR list_elem_key <= hiStr) AND
         (includeHiStr OR list_elem_key < hiStr) AND
@@ -182,7 +178,7 @@ proc: BEGIN
     END IF;
 
     -- Check that user is on the reader whitelist.
-    CALL _getIsMember (
+    CALL _getIsMember_01 (
         userID, readerWhitelistID,
         isMember
     );
@@ -266,7 +262,7 @@ DELIMITER ;
 --     END IF;
 
 --     -- Check that user is on the reader whitelist.
---     CALL _getIsMember (
+--     CALL _getIsMember_01 (
 --         userID, readerWhitelistID,
 --         isMember, @unused
 --     );
@@ -363,7 +359,7 @@ proc: BEGIN
     WHERE id = entID;
 
     -- Check that the user is on the reader whitelist.
-    CALL _getIsMember (
+    CALL _getIsMember_01 (
         userID, readerWhitelistID, isMember, @unused
     );
     IF (isMember) THEN
@@ -440,7 +436,7 @@ proc: BEGIN
     FROM Entities FORCE INDEX (PRIMARY)
     WHERE id = entID;
 
-    CALL _getIsMember (
+    CALL _getIsMember_01 (
         userID, readerWhitelistID, isMember, @unused
     );
 
@@ -576,7 +572,7 @@ proc: BEGIN
 
     -- Exit if the user is not currently on the user whitelist. Do this first
     -- to avoid timing attacks.
-    CALL _getIsMember (
+    CALL _getIsMember_01 (
         userID, readerWhitelistID, isMember, @unused
     );
     IF NOT (isMember) THEN
@@ -629,7 +625,7 @@ DELIMITER ;
 
 --     -- Exit if the user is not currently on the user whitelist. Do this first
 --     -- to avoid timing attacks.
---     CALL _getIsMember (
+--     CALL _getIsMember_01 (
 --         userID, readerWhitelistID, isMember, @unused
 --     );
 --     IF NOT (isMember) THEN

@@ -925,7 +925,7 @@ proc: BEGIN
         ent_type = entType
     );
 
-    CALL _getIsMember (
+    CALL _getIsMember_01 (
         userID,
         readerWhitelistID,
         isMember,
@@ -1130,7 +1130,7 @@ proc: BEGIN
 
     -- Before parsing the defStr, we first check that the user is on the reader
     -- whitelist.
-    CALL _getIsMember (
+    CALL _getIsMember_01 (
         userID, readerWhitelistID, isMember, @unused
     );
     IF NOT (isMember) THEN
