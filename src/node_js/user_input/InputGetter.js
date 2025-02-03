@@ -1,19 +1,35 @@
 import * as querystring from 'querystring';
 import * as url from 'url';
 
-import {endWithError} from "../err/errors.js";
+import {Error, endWithError} from "../err/errors.js";
 
-
+console.log(querystring.parse(""));
+console.log(querystring.parse("??"));
+console.log(querystring.parse("?#"));
+console.log(querystring.parse("?.."));
 
 export class InputGetter {
 
-  static getParams (req, res, paramNameArr, defaultValArr) {
+  static getParamsPromise(req, paramNameArr, defaultValArr) {
+    return new Promise((resolve, reject) => {
+      this.#getParamsPromiseHelper(
+        req, paramNameArr, defaultValArr, resolve, reject
+      );
+    });
+  }
+
+  static #getParamsPromiseHelper(
+    req, paramNameArr, defaultValArr, resolve, reject
+  ) {
     let body;
 
     if (req.method === 'POST') {
       let data = '';
       req.on('data', chunk => {
         data += chunk.toString();
+        if (data.length > 10000) reject(
+          new Error("Post data maximum size exceeded")
+        );
       });
       req.on('end', () => {
         try {
@@ -22,44 +38,39 @@ export class InputGetter {
           try {
             body = querystring.parse(data);
           } catch (err) {
-            endWithError(res, "Ill-formed POST data");
-            return false;
+            reject(new Error("Ill-formed POST data"));
           }
         }
       });
     }
     else if (req.method === 'GET') {
       try {
-        body = url.parse(req.url, true).query;
+        body = url.parse(decodeURI(req.url), true).query;
       } catch (err) {
-        endWithError(res, "Ill-formed URL");
-        return false;
+        reject(new Error("Ill-formed URL"));
       }
     } else {
-      endWithError(res, "Only accepts POST and GET requests");
-      return false;
+      reject(new Error("Only accepts POST and GET requests"));
     }
 
     let paramValArr = [];
-    try {
-      let receivedParamNames = Object.keys(body);
-      paramNameArr.forEach((name, ind) => {
-        if (!receivedParamNames.includes(name)) {
-          let defaultVal = defaultValArr[ind];
-          if (!defaultVal) {
-            throw "Missing mandatory parameter: " + name;
-          } else {
-            paramValArr[ind] = defaultVal.toString();
-          }
+    let receivedParamNames = Object.keys(body);
+    paramNameArr.forEach((name, ind) => {
+      if (!receivedParamNames.includes(name)) {
+        let defaultVal = defaultValArr[ind];
+        if (defaultVal === undefined) {
+          reject(new Error("Missing mandatory parameter: " + name));
         } else {
-          paramValArr[ind] = body[name].toString();
+          paramValArr[ind] = defaultVal.toString();
         }
-      });
-    } catch (err) {
-      endWithError(res, err);
-      return false;
-    }
+      } else {
+        if (typeof body[name] !== "string") {
+          reject(new Error("Received same parameter twice"));
+        }
+        paramValArr[ind] = body[name];
+      }
+    });
 
-    return paramValArr;
+    resolve(paramValArr);
   }
 }

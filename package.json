@@ -42,5 +42,6 @@
   "devDependencies": {
     "@types/jquery": "^3.5.18",
     "react-router-dom": "^6.26.1"
-  }
+  },
+  "type": "module"
 }

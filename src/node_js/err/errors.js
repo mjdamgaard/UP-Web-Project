@@ -1,18 +1,31 @@
 
 
-export function endWithError(res, msg) {
+export class Error {
+  constructor(msg) {
+    this.error = msg;
+  }
+}
+
+export function endWithError(res, error) {
   res.writeHead(400, {'Content-Type': 'text/json'});
-  res.end(JSON.stringify({error: msg}));
+  if (typeof error === "object") {
+    res.end(JSON.stringify(error));
+  } else {
+    res.end(JSON.stringify({error: error}));
+  }
 }
 
 
+export function endWithInternalError(res, error) {
+  res.writeHead(500, {'Content-Type': 'text/html'});
+  res.end("");
+  throw error;
+}
 
-export function endWithTypeErrorJSON(res, paramName, paramVal, expectedType) {
-  res.writeHead(400, {'Content-Type': 'text/json'});
-  res.end(JSON.stringify({
-    error: (
-      "Parameter " + paramName + "=" + paramVal + " has a wrong type; " +
-      "expected type is " + expectedType
-    )
-  }));
+
+export function throwTypeError(res, paramName, paramVal, expectedType) {
+  throw new Error (
+    "Parameter " + paramName + "=" + paramVal + " has a wrong type; " +
+    "expected type is " + expectedType
+  );
 }

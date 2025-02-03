@@ -28,7 +28,7 @@ CREATE PROCEDURE _getIsMember_01 (
     OUT isMember BOOL
 )
 proc: BEGIN
-    DECLARE elemData VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+    DECLARE listElemKey VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 
     IF (userGroupID = 1) THEN
         SET isMember = 0;
@@ -36,25 +36,21 @@ proc: BEGIN
     END IF;
 
     IF (
-        userGroupID <=> 0 AND
-        "u" <=> (
-            SELECT ent_type
-            FROM Entities FORCE INDEX (PRIMARY)
-            WHERE id = userID
-        )
-        OR
-        userGroupID != 0 AND
-        userID = userGroupID
+        userGroupID <=> 0 OR
+        userGroupID != 0 AND userID = userGroupID
     ) THEN
         SET isMember = 1;
         LEAVE proc;
     END IF;
 
-    SELECT elem_data INTO elemData
+    SELECT list_elem_key INTO listElemKey
     FROM ListData_01 FORCE INDEX (PRIMARY)
-    WHERE list_elem_key = CONCAT(userGroupID, ';1;', userID);
+    WHERE (
+        list_elem_key = CONCAT(userGroupID, ';0;', userID) OR
+        list_elem_key = CONCAT(userGroupID, ';1;', userID)
+    );
 
-    IF (elemData IS NULL) THEN
+    IF (listElemKey IS NULL) THEN
         SET isMember = 0;
     ELSE
         SET isMember = 1;
