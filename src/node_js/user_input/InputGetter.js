@@ -1,12 +1,9 @@
 import * as querystring from 'querystring';
 import * as url from 'url';
 
-import {Error, endWithError} from "../err/errors.js";
+import {Error} from "../err/errors.js";
 
-console.log(querystring.parse(""));
-console.log(querystring.parse("??"));
-console.log(querystring.parse("?#"));
-console.log(querystring.parse("?.."));
+
 
 export class InputGetter {
 

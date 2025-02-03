@@ -19,13 +19,13 @@ export function endWithError(res, error) {
 export function endWithInternalError(res, error) {
   res.writeHead(500, {'Content-Type': 'text/html'});
   res.end("");
-  throw error;
+  console.error(error);
 }
 
 
-export function throwTypeError(res, paramName, paramVal, expectedType) {
+export function throwTypeError(paramName, paramVal, expectedType) {
   throw new Error (
-    "Parameter " + paramName + "=" + paramVal + " has a wrong type; " +
+    "Parameter " + paramName + " = " + paramVal + " has a wrong type; " +
     "expected type is " + expectedType
   );
 }

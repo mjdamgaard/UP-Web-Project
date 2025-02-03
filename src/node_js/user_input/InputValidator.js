@@ -19,7 +19,7 @@ export class InputValidator {
     switch (type) {
       case "id":
       case "ulong":
-        pattern = "/^[1-9][0-9]*|0$/";
+        pattern = "^(0|[1-9][0-9]*)$";
         regExp = new RegExp(pattern);
         if (
           !regExp.test(paramVal) ||
@@ -34,7 +34,7 @@ export class InputValidator {
         break;
       case "uint":
       case "unix_time":
-        pattern = "/^[1-9][0-9]*|0$/";
+        pattern = "^[1-9][0-9]*|0$";
         regExp = new RegExp(pattern);
         if (
           !regExp.test(paramVal) ||
@@ -47,7 +47,7 @@ export class InputValidator {
         }
         break;
       case "int":
-        pattern = "/^-?[1-9][0-9]{0,9}|0$/";
+        pattern = "^-?[1-9][0-9]{0,9}|0$";
         regExp = new RegExp(pattern);
         n = parseInt(paramVal);
         if (
@@ -60,7 +60,7 @@ export class InputValidator {
         break;
       case "tint":
       // case "rat":
-        pattern = "/^-?[1-9][0-9]{0,2}|0$/";
+        pattern = "^-?[1-9][0-9]{0,2}|0$";
         regExp = new RegExp(pattern);
         n = parseInt(paramVal);
         if (
@@ -73,7 +73,7 @@ export class InputValidator {
         break;
       case "bool":
       // case "rat":
-        pattern = "/^[01]$/";
+        pattern = "^[01]$";
         regExp = new RegExp(pattern);
         if (!regExp.test(paramVal)) {
           throwTypeError(paramName, paramVal, pattern);
@@ -82,7 +82,7 @@ export class InputValidator {
       case "utint":
       case "uchar":
       case "rat":
-        pattern = "/^[1-9][0-9][0-9]|0$/";
+        pattern = "^[1-9][0-9][0-9]|0$";
         regExp = new RegExp(pattern);
         n = parseInt(paramVal);
         if (
@@ -98,7 +98,7 @@ export class InputValidator {
       case "ushort":
       // case "encoded_rat":
       // case "enc_rat":
-        pattern = "/^[1-9][0-9]{0,4}|0$/";
+        pattern = "^[1-9][0-9]{0,4}|0$";
         regExp = new RegExp(pattern);
         n = parseInt(paramVal);
         if (
@@ -113,7 +113,7 @@ export class InputValidator {
       case "float":
       // TODO: Restricting syntax, unless it's fine..
         pattern =
-        "/^\\-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+\\-]?[1-9][0-9]?)?$/";
+        "^\\-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+\\-]?[1-9][0-9]?)?$";
         regExp = new RegExp(pattern);
         if (!regExp.test(paramVal)) {
           throwTypeError(paramName, paramVal, "FLOAT");
@@ -177,7 +177,7 @@ export class InputValidator {
         }
         break;
       case "other_data_hex":
-        pattern = "/^([0-9a-fA-F]{2}){0,16}$/";
+        pattern = "^([0-9a-fA-F]{2}){0,16}$";
         regExp = new RegExp(pattern);
         if (!regExp.test(paramVal)) {
           throwTypeError(
@@ -186,14 +186,14 @@ export class InputValidator {
         }
         break;
       case "hash":
-        pattern = "/^[0-9a-f]{128}$/";
+        pattern = "^[0-9a-f]{128}$";
         regExp = new RegExp(pattern);
         if (regExp.test(paramVal)) {
           throwTypeError(paramName, paramVal, pattern);
         }
         break;
       case "id_list":
-        pattern = "/^((this|[1-9][0-9]*)(,(this|[1-9][0-9]*))*)?$/";
+        pattern = "^((this|[1-9][0-9]*)(,(this|[1-9][0-9]*))*)?$";
         regExp = new RegExp(pattern);
         len = paramVal.length;
         if (
@@ -207,7 +207,7 @@ export class InputValidator {
         break;
       case "rec_instr_list":
         pattern =
-    "/^(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))+(;[1-9][0-9]*(,(0|[1-9][0-9]*))+)*$/";
+    "^(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))+(;[1-9][0-9]*(,(0|[1-9][0-9]*))+)*$";
         regExp = new RegExp(pattern);
         len = paramVal.length;
         if (
@@ -221,7 +221,7 @@ export class InputValidator {
         break;
       case "list_list":
         pattern =
-          "/^((this|[1-9][0-9]*)([,\\|](this|[1-9][0-9]*))*)?$/";
+          "^((this|[1-9][0-9]*)([,\\|](this|[1-9][0-9]*))*)?$";
         regExp = new RegExp(pattern);
         len = paramVal.length;
         if (
@@ -263,7 +263,7 @@ export class InputValidator {
         }
         break;
       case "list_text":
-        pattern = "/^[1-9][0-9]*(,[1-9][0-9]*)*$/";
+        pattern = "^[1-9][0-9]*(,[1-9][0-9]*)*$";
         if (
           paramVal.length > 65535 ||
           !regExp.test(paramVal)
@@ -273,7 +273,7 @@ export class InputValidator {
         break;
       // case "time":
       //   pattern =
-      //     "/^(" .
+      //     "^(" .
       //       "([12]?[0-9]|3[0-4]) ".
       //       "([01][0-9]|2[0-3])" .
       //       "(:[0-5][0-9]){0,2}" .
@@ -281,7 +281,7 @@ export class InputValidator {
       //       "([01][0-9]|2[0-3]:)?" .
       //       "([0-5][0-9])" .
       //       "(:[0-5][0-9])?" .
-      //     ")$/";
+      //     ")$";
       //   if (!regExp.test(paramVal)) {
       //     throwTypeError(paramName, paramVal, pattern);
       //   }
@@ -292,8 +292,8 @@ export class InputValidator {
         //     paramName, paramVal, "VARCHAR(1,50)"
         //   );
         // }
-        // pattern = "/^[\\S]+$/";
-        pattern = "/^[a-zA-Z][\\w\\-]*$/"; // TODO: Make this a lot less
+        // pattern = "^[\\S]+$";
+        pattern = "^[a-zA-Z][\\w\\-]*$"; // TODO: Make this a lot less
         // restrictive. (But do not include integers, as these are
         // reserved for IDs.)
         regExp = new RegExp(pattern);
@@ -322,7 +322,7 @@ export class InputValidator {
         }
         break;
       case "session_id_hex":
-        pattern = "/^([0-9a-zA-Z]{2}){60}$/";
+        pattern = "^([0-9a-zA-Z]{2}){60}$";
         regExp = new RegExp(pattern);
         if (!regExp.test(paramVal)) {
           throwTypeError(paramName, paramVal, pattern);
