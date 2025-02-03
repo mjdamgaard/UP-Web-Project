@@ -3,6 +3,7 @@ import * as mysql from 'mysql';
 import {InputGetter} from './user_input/InputGetter.js';
 import {Error} from './err/errors.js';
 import {InputValidator} from './user_input/InputValidator.js';
+import {DBConnector} from './db_io/DBConnector.js';
 
 
 export async function query_handler(req, res) {
@@ -125,6 +126,10 @@ export async function query_handler(req, res) {
 
   // Validate the input.
   InputValidator.validateParams(paramValArr, typeArr, paramNameArr);
+
+  // Get connection to database.
+  let conn = await DBConnector.getConnectionPromise();
+
 
   // ...
 
