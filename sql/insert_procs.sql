@@ -522,12 +522,13 @@ CREATE PROCEDURE insertFunctionEntity (
     IN userID BIGINT UNSIGNED,
     IN defStr TEXT CHARACTER SET utf8mb4,
     IN readerWhitelistID BIGINT UNSIGNED,
-    IN isAnonymous BOOL
+    IN isAnonymous BOOL,
+    IN isEditable BOOL
 )
 BEGIN
     CALL _insertEntityWithoutSecKey (
         "f",
-        userID, defStr, readerWhitelistID, isAnonymous, 0,
+        userID, defStr, readerWhitelistID, isAnonymous, isEditable,
         @unused, @unused
     );
 END //
@@ -712,6 +713,23 @@ DELIMITER ;
 
 
 DELIMITER //
+CREATE PROCEDURE editFunctionEntity (
+    IN userID BIGINT UNSIGNED,
+    IN entID BIGINT UNSIGNED,
+    IN defStr VARCHAR(700) CHARACTER SET utf8mb4,
+    IN readerWhitelistID BIGINT UNSIGNED,
+    IN isAnonymous BOOL,
+    IN isEditable BOOL
+)
+BEGIN
+    CALL _editEntity (
+        "f", 700,
+        userID, entID, defStr, readerWhitelistID, isAnonymous, isEditable
+    );
+END //
+DELIMITER ;
+
+DELIMITER //
 CREATE PROCEDURE editUTF8Entity (
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
@@ -784,7 +802,7 @@ CREATE PROCEDURE substitutePlaceholdersInEntity (
 )
 proc: BEGIN
     DECLARE pathRegExp VARCHAR(80) DEFAULT '[^0-9\\[\\]@,;"][^\\[\\]@,;"]*';
-    DECLARE creatorID, subEntID, readerWhitelistID BIGINT UNSIGNED;
+    DECLARE creatorID, subEntID, readerWhitelistID, outID BIGINT UNSIGNED;
     DECLARE entType CHAR;
     DECLARE prevDefStr, newDefStr LONGTEXT;
     DECLARE prevType CHAR;
@@ -871,22 +889,35 @@ proc: BEGIN
         SET def_str = newDefStr
         WHERE id = entID;
     ELSE
-        START TRANSACTION;
+        BEGIN
+            DECLARE outID BIGINT UNSIGNED;
+            DECLARE EXIT HANDLER FOR 1062, 1586 -- Duplicate key entry error.
+            BEGIN
+                SELECT ent_id INTO outID
+                FROM EntitySecKeys
+                WHERE (
+                    ent_type = "r" AND
+                    reader_whitelist_id = readerWhitelistID AND
+                    def_key = prevDefStr AND
+                    ent_id = entID
+                );
 
-        UPDATE Entities
-        SET def_str = newDefStr
-        WHERE id = entID;
+                SELECT outID, 3 AS exitCode; -- Resulting entity already exists.
+            END;
 
-        UPDATE EntitySecKeys
-        SET def_key = newDefStr
-        WHERE (
-            ent_type = "r" AND
-            reader_whitelist_id = readerWhitelistID AND
-            def_key = prevDefStr AND
-            ent_id = entID
-        );
+            UPDATE EntitySecKeys
+            SET def_key = newDefStr
+            WHERE (
+                ent_type = "r" AND
+                reader_whitelist_id = readerWhitelistID AND
+                def_key = prevDefStr AND
+                ent_id = entID
+            );
 
-        COMMIT;
+            UPDATE Entities
+            SET def_str = newDefStr
+            WHERE id = entID;
+        END;
     END IF;
 
     SELECT entID AS outID, 0 AS exitCode; -- edit.
@@ -944,8 +975,6 @@ proc: BEGIN
     IF (newDefStr <=> prevDefStr) THEN
         SET exitCode = 1; -- no changes.
     ELSE
-        START TRANSACTION;
-
         UPDATE Entities
         SET def_str = newDefStr
         WHERE id = entID;
@@ -957,7 +986,6 @@ proc: BEGIN
             def_key = prevDefStr
         );
 
-        COMMIT;
         SET exitCode = 0; -- occurrences was nulled.
     END IF;
 END proc //

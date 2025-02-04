@@ -127,12 +127,10 @@ export async function query_handler(req, res) {
   // Validate the input.
   InputValidator.validateParams(paramValArr, typeArr, paramNameArr);
 
-  // Get connection to database.
-  let conn = await DBConnector.getConnectionPromise();
+  // Query the database.
+  let [results] = await DBConnector.connectAndQuery(sql, paramValArr);
 
-
-  // ...
-
+  // Return the results.
   res.writeHead(200, {'Content-Type': 'text/json'});
-  res.end(JSON.stringify(paramValArr));
+  res.end(JSON.stringify(results));
 }

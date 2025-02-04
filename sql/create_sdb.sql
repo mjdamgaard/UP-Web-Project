@@ -248,10 +248,9 @@ CREATE TABLE EntitySecKeys (
 
 /* Fulltext indexes */
 
--- TODO: Implement, and make several of them; one for relations, one for
--- classes, one for qualities, and one for all real-world/non-meta entities,
--- and possibly more. *Well, maybe it should be the control server's
--- responsibility to create (and maintain) fulltext indexes..
+-- TODO: Fulltext indexed tables should actually instead be created and
+-- updated on demand from user groups that has pooled enough "upload data
+-- cost" to do so, as described in my notes.
 
 CREATE TABLE FulltextIndexedEntities (
 
@@ -274,17 +273,15 @@ INSERT INTO Entities (
     id, ent_type, def_str
 )
 VALUES
-    (1, "t", "t"),
-    (2, "t", "u"),
-    (3, "t", "a"),
-    (4, "t", "f"),
-    (5, "t", "r"),
-    (6, "t", "j"),
-    (7, "t", "h"),
-    (8, "t", "8"),
-    (9, "t", "d"),
-    (10, "t", "l"), -- TODO: Make the two initial entity list types, once
-    -- these are implemented, along with any initial fulltext list types. 
+    -- (2, "t", "u"),
+    -- (3, "t", "a"),
+    -- (4, "t", "f"),
+    -- (5, "t", "r"),
+    -- (6, "t", "j"),
+    -- (7, "t", "h"),
+    -- (8, "t", "8"),
+    -- (9, "t", "d"),
+    -- (10, "t", "t"),
     (18, "d", "original_DB_node"),
     (19, "u", "initial_admin");
 
@@ -292,58 +289,23 @@ INSERT INTO Entities (
     id, ent_type, def_str, creator_id, is_editable
 )
 VALUES (20, "j", '{}', 19, 1);
-    --
-    -- (11, "a", CONCAT(
-    --     '{',
-    --         '"Class":"@[user groups]",',
-    --         '"Name":"All users",',
-    --         '"Description":"@[user groups/all users/desc]"',
-    --     '}'
-    -- ), 9),
-    -- (12, "a", CONCAT(
-    --     '{',
-    --         '"Class":"@[user groups]",',
-    --         '"Name":"Money-contributing users",',
-    --         '"Description":"@[user groups/money-contributing users/desc]"',
-    --     '}'
-    -- ), 9),
-    -- (11, "f", CONCAT(
-    --     'list(',
-    --         'User group:@[user groups],',
-    --         'List specification:@[list spec]',
-    --     '){',
-    --         '"Class":"@[lists]",',
-    --         '"User group":"%1",',
-    --         '"List specification":"%2"',
-    --     '}'
-    -- ), 9),
-    -- (12, "f", CONCAT(
-    --     'locked_list(',
-    --         'User group:@[user groups],',
-    --         'List specification:@[list specs],',
-    --         'Locked after:datetime',
-    --     '){',
-    --         '"Class":"@[locked lists]",',
-    --         '"User group":"%1",',
-    --         '"List specification":"%2",',
-    --         '"Locked after":"%3"',
-    --     '}'
-    -- ), 9),
+
+
+
 
 INSERT INTO EntitySecKeys (
     ent_type, def_key, ent_id
 )
 VALUES
-    ("t", "t", 1),
-    ("t", "u", 2),
-    ("t", "a", 3),
-    ("t", "f", 4),
-    ("t", "r", 5),
-    ("t", "j", 6),
-    ("t", "h", 7),
-    ("t", "8", 8),
-    ("t", "d", 9),
-    ("l", "d", 10),
+    -- ("t", "u", 2),
+    -- ("t", "a", 3),
+    -- ("t", "f", 4),
+    -- ("t", "r", 5),
+    -- ("t", "j", 6),
+    -- ("t", "h", 7),
+    -- ("t", "8", 8),
+    -- ("t", "d", 9),
+    -- ("t", "t", 10),
     ("d", "original_DB_node", 18),
     ("u", "initial_admin", 19);
     -- No sec. key for ("j", '{}', 9).
