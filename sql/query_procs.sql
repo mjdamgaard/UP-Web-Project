@@ -361,7 +361,8 @@ proc: BEGIN
 
     -- Check that the user is on the reader whitelist.
     CALL _getIsMember_01 (
-        userID, readerWhitelistID, isMember, @unused
+        userID, readerWhitelistID,
+        isMember
     );
     IF (isMember) THEN
         CALL _increaseWeeklyUserCounters (
@@ -438,7 +439,8 @@ proc: BEGIN
     WHERE id = entID;
 
     CALL _getIsMember_01 (
-        userID, readerWhitelistID, isMember, @unused
+        userID, readerWhitelistID,
+        isMember
     );
 
     IF (isMember) THEN
@@ -574,7 +576,8 @@ proc: BEGIN
     -- Exit if the user is not currently on the user whitelist. Do this first
     -- to avoid timing attacks.
     CALL _getIsMember_01 (
-        userID, readerWhitelistID, isMember, @unused
+        userID, readerWhitelistID,
+        isMember
     );
     IF NOT (isMember) THEN
         SELECT NULL AS entID;

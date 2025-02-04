@@ -128,7 +128,7 @@ export async function query_handler(req, res) {
   InputValidator.validateParams(paramValArr, typeArr, paramNameArr);
 
   // Query the database.
-  let [results] = await DBConnector.connectAndQuery(sql, paramValArr);
+  let results = await DBConnector.connectAndQuery(sql, paramValArr);
 
   // Return the results.
   res.writeHead(200, {'Content-Type': 'text/json'});

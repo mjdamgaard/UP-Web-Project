@@ -19,6 +19,7 @@ DROP PROCEDURE insertJSONEntity;
 
 DROP PROCEDURE _editEntity;
 
+DROP PROCEDURE editFunctionEntity;
 DROP PROCEDURE editUTF8Entity;
 DROP PROCEDURE editHTMLEntity;
 DROP PROCEDURE editJSONEntity;
@@ -658,7 +659,7 @@ proc: BEGIN
     DECLARE prevLen, newLen, addedLen INT UNSIGNED;
     DECLARE prevType CHAR;
 
-    DO GET_LOCK(CONCAT("EntID.", entID));
+    DO GET_LOCK(CONCAT("EntID.", entID), 10);
 
     SET newLen = LENGTH(defStr);
 
@@ -964,7 +965,7 @@ proc: BEGIN
     DECLARE readerWhitelistID BIGINT UNSIGNED;
     DECLARE isMember TINYINT;
 
-    DO GET_LOCK(CONCAT("EntID.", entID));
+    DO GET_LOCK(CONCAT("EntID.", entID), 10);
 
     SELECT def_str, reader_whitelist_id INTO prevDefStr, readerWhitelistID
     FROM Entities FORCE INDEX (PRIMARY)
