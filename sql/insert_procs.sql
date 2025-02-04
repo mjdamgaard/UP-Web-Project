@@ -658,9 +658,12 @@ proc: BEGIN
     DECLARE prevLen, newLen, addedLen INT UNSIGNED;
     DECLARE prevType CHAR;
 
+    DO GET_LOCK(CONCAT("EntID.", entID));
+
     SET newLen = LENGTH(defStr);
 
     IF (newLen > maxLen) THEN
+        DO RELEASE_LOCK(CONCAT("EntID.", entID));
         SELECT entID AS outID, 6 AS exitCode; -- defStr was too long.
         LEAVE proc;
     END IF;
@@ -676,21 +679,25 @@ proc: BEGIN
         userID, 0, addedLen, 0, isExceeded
     );
     IF (isExceeded) THEN
+        DO RELEASE_LOCK(CONCAT("EntID.", entID));
         SELECT entID AS outID, 5 AS extCode; -- upload limit was exceeded.
         LEAVE proc;
     END IF;
 
     IF (creatorID != userID) THEN
+        DO RELEASE_LOCK(CONCAT("EntID.", entID));
         SELECT entID AS outID, 2 AS exitCode; -- user is not the owner.
         LEAVE proc;
     END IF;
 
     IF (NOT prevIsEditable) THEN
+        DO RELEASE_LOCK(CONCAT("EntID.", entID));
         SELECT entID AS outID, 3 AS exitCode; -- cannot be edited.
         LEAVE proc;
     END IF;
 
     IF (prevType != entType) THEN
+        DO RELEASE_LOCK(CONCAT("EntID.", entID));
         SELECT entID AS outID, 4 AS exitCode; -- changing entType not allowed.
         LEAVE proc;
     END IF;
@@ -704,6 +711,7 @@ proc: BEGIN
         is_editable = isEditable
     WHERE id = entID;
 
+    DO RELEASE_LOCK(CONCAT("EntID.", entID));
     SELECT entID AS outID, 0 AS exitCode; -- edit.
 END proc //
 DELIMITER ;
@@ -811,12 +819,15 @@ proc: BEGIN
     DECLARE prevLen, newLen, maxLen, addedLen INT UNSIGNED;
     DECLARE isExceeded TINYINT;
 
+    DO GET_LOCK(CONCAT("EntID.", entID), 10);
+
     SELECT ent_type, creator_id, def_str, LENGTH(def_str), reader_whitelist_id
     INTO entType, creatorID, prevDefStr, prevLen, readerWhitelistID
     FROM Entities FORCE INDEX (PRIMARY)
     WHERE id = entID;
 
     IF (creatorID != userID) THEN
+        DO RELEASE_LOCK(CONCAT("EntID.", entID));
         SELECT entID AS outID, 2 AS exitCode; -- user is not the owner.
         LEAVE proc;
     END IF;
@@ -843,6 +854,7 @@ proc: BEGIN
 
         -- If a path is ill-formed, exit and make no updates.
         IF NOT (IFNULL(REGEXP_LIKE(pathStr, pathRegExp), 0)) THEN
+            DO RELEASE_LOCK(CONCAT("EntID.", entID));
             SELECT entID AS outID, 3 AS exitCode; -- a path was ill-formed.
             LEAVE proc;
         END IF;
@@ -865,6 +877,7 @@ proc: BEGIN
     END;
     SET newLen = LENGTH(newDefStr);
     IF (newLen > maxLen) THEN
+        DO RELEASE_LOCK(CONCAT("EntID.", entID));
         SELECT entID AS outID, 4 AS exitCode; -- new defStr too long.
         LEAVE proc;
     END IF;
@@ -879,6 +892,7 @@ proc: BEGIN
     );
     -- Exit if upload limit was exceeded.
     IF (isExceeded) THEN
+        DO RELEASE_LOCK(CONCAT("EntID.", entID));
         SELECT subjID AS outID, 5 AS exitCode; -- upload limit was exceeded.
         LEAVE proc;
     END IF;
@@ -920,6 +934,7 @@ proc: BEGIN
         END;
     END IF;
 
+    DO RELEASE_LOCK(CONCAT("EntID.", entID));
     SELECT entID AS outID, 0 AS exitCode; -- edit.
 END proc //
 DELIMITER ;
@@ -949,6 +964,8 @@ proc: BEGIN
     DECLARE readerWhitelistID BIGINT UNSIGNED;
     DECLARE isMember TINYINT;
 
+    DO GET_LOCK(CONCAT("EntID.", entID));
+
     SELECT def_str, reader_whitelist_id INTO prevDefStr, readerWhitelistID
     FROM Entities FORCE INDEX (PRIMARY)
     WHERE (
@@ -964,6 +981,7 @@ proc: BEGIN
     );
 
     IF NOT (isMember) THEN
+        DO RELEASE_LOCK(CONCAT("EntID.", entID));
         SET exitCode = 2; -- user is not on whitelist.
         LEAVE proc;
     END IF;
@@ -988,6 +1006,8 @@ proc: BEGIN
 
         SET exitCode = 0; -- occurrences was nulled.
     END IF;
+
+    DO RELEASE_LOCK(CONCAT("EntID.", entID));
 END proc //
 DELIMITER ;
 
