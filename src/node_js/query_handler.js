@@ -1,5 +1,4 @@
 
-import * as mysql from 'mysql';
 import {InputGetter} from './user_input/InputGetter.js';
 import {Error} from './err/errors.js';
 import {InputValidator} from './user_input/InputValidator.js';
