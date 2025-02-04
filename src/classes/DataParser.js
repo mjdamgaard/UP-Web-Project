@@ -347,7 +347,11 @@ const funEntGrammar = {
     rules: [
       [
         /[^0-9\[\]@,;"\s][^\[\]@,;"\s]*/, /\(/, "param-list", /\)/, "/=>/", 
-        "literal",
+        /\(/, "literal", /\)/,
+      ],
+      [
+        /[^0-9\[\]@,;"\s][^\[\]@,;"\s]*/, /\(/, "param-list", /\)/, "/=>/", 
+        /\{/, "statement-list", /\}/
       ],
     ],
     process: (syntaxTree) => {
@@ -458,6 +462,101 @@ const funEntGrammar = {
       [/object|array|mixed/], // User has to manually type in a parsable
       // literal.
     ],
+  },
+  "statement-list": {
+    rules: [
+      ["statement", "statement-list"],
+      ["statement"],
+    ],
+    process: (syntaxTree) => straightenListSyntaxTree(syntaxTree, 0),
+  },
+  "statement": {
+    rules: [
+      ["block-statement"],
+      ["variable-declaration"],
+      ["if-else-statement"],
+      ["loop-statement"],
+      ["assignment"],
+      ["expression", "/;/"],
+      ["/;/"],
+    ],
+    process: becomeChild,
+  },
+  "block-statement": {
+    rules: [
+      [/\{/, "statement-list", /\}/],
+    ],
+    process: (syntaxTree) => becomeChild(syntaxTree, 1),
+  },
+  "variable-declaration": {
+    rules: [
+      ["/var/", "identifier-list", "/=/", "expression!", "/;/"],
+      ["/var/", "identifier-list", "/;/"],
+    ],
+    process: (syntaxTree) => {
+      Object.assign(syntaxTree, {
+        identList: syntaxTree.children[1],
+        exp: syntaxTree.children[3],
+      });
+    },
+  },
+  "identifier-list": {
+    rules: [
+      ["identifier", "/,/", "identifier-list!"],
+      ["identifier"],
+    ],
+    process: straightenListSyntaxTree,
+  },
+  "identifier": {
+    rules: [
+      [/[_\$a-zA-Z][_\$a-zA-Z0-9]/],
+    ],
+    process: (syntaxTree) => {
+      Object.assign(syntaxTree, {
+        ident: syntaxTree.children[0].lexeme
+      });
+    },
+  },
+  "if-else-statement": {
+    rules: [
+      ["/if/", /\(/, "expression", /\)/, "statement"/, "/else/", "statement!"],
+      ["/if/", /\(/, "expression", /\)/, "statement"/],
+    ],
+    process: (syntaxTree) => {
+      Object.assign(syntaxTree, {
+        cond: syntaxTree.children[2],
+        ifStmt: syntaxTree.children[4],
+        elseStmt: syntaxTree.children[6],
+      });
+    },
+  },
+  "loop-statement": {
+    rules: [
+      [
+        "/for/", "/\\(/!",
+          "variable-declaration?", "/;/" "expression?", "/;/", "statement?"/,
+        "/\\)/", "statement",
+      ],
+      [
+        "/while/", "/\\(/!", "expression", "/\\)/", "statement",
+      ],
+      [
+        "/do/", "statement", "/while/", "/\\(/!", "expression", "/\\)/"
+      ],
+    ],
+    process: (syntaxTree) => {
+      let ruleInd = syntaxTree.ruleInd;
+      Object.assign(syntaxTree, {
+        dec: (ruleInd === 0) ? syntaxTree.children[2].children[0] : undefined,
+        cond: (ruleInd === 0) ? syntaxTree.children[4].children[0] :
+                (ruleInd === 1) ? syntaxTree.children[2] :
+                  syntaxTree.children[4],
+        updateStmt: (ruleInd === 0) ? syntaxTree.children[6].children[0] :
+          undefined,
+        stmt: "..." // Hm, maybe should just treat ';' as a statement, and
+        // nothing else..
+      });
+    },
   },
 };
 
@@ -586,18 +685,18 @@ funEntParser.log(funEntParser.parse(
     '"Name":string',
     '"Parent class":@[\'classes\']?',
     // 'Member format?:(f::Function|t::Entity type)',
-    '"Member type":t=@[4]',
+    '"Member type":string="r"',
     '"Member format":f?',
     '"Description":h?',
   ].join(',') +
-  ')=>{' + [
+  ')=>({' + [
     '"Class":@[\'classes\']',
     '"Name":@{1}',
     '"Parent class":@{2}',
     '"Member type":@{3}',
     '"Member format":@{4}',
     '"Description":@{5}',
-  ].join(',') + '}'
+  ].join(',') + '})'
 ));
 // Works.
 

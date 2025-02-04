@@ -150,14 +150,14 @@ export function initialInserts(dataInserter) {
         '"Member format":f?',
         '"Description":h?',
       ].join(',') +
-      ')=>{' + [
+      ')=>({' + [
         '"Class":@[\'classes\']',
         '"Name":@{1}',
         '"Parent class":@{2}',
         '"Member type":@{3}',
         '"Member format":@{4}',
         '"Description":@{5}',
-      ].join(',') + '}'
+      ].join(',') + '})'
     )
   );
   dataInserter.insertSubstituteOrEditEntity(
@@ -309,13 +309,13 @@ export function initialInserts(dataInserter) {
         '"Object" class:@[\'classes\']',
         '"Description":h?',
       ].join(',') +
-      ')=>{' + [
+      ')=>({' + [
         '"Class":@[\'relations\']',
         '"Title":@{1}',
         '"Subject" class:@{2}',
         '"Object" class:@{3}',
         '"Description":@{4}',
-      ].join(',') + '}'
+      ].join(',') + '})'
     )
   );
   dataInserter.insertSubstituteOrEditEntity(
@@ -343,7 +343,7 @@ export function initialInserts(dataInserter) {
         '"Metric":@[\'metrics\']',
         '"Description":h?',
       ].join(",") +
-      ")=>{" + [
+      ")=>({" + [
         '"Class":@[\'qualities\']',
         '"Label":@{1}',
         '"Domain":@{2}',
@@ -368,13 +368,13 @@ export function initialInserts(dataInserter) {
       'relevancy_quality(' + [
         '"Class":@[\'classes\']',
       ].join(',') +
-      ')=>{' + [
+      ')=>({' + [
         '"Class":@[\'relevancy qualities\']',
         // // 'Label': 'Relevant for @{Object} → @{Relation}',
         // 'Label': 'Relevant for @{1} → @{2}',
         '"Label":"Relevant for @{1}"',
         '"Metric":@[\'metrics/std predicate metric\']',
-      ].join(',') + '}'
+      ].join(',') + '})'
     )
   );
   dataInserter.insertSubstituteOrEditEntity(
@@ -394,13 +394,13 @@ export function initialInserts(dataInserter) {
         '"Object":@[\'entities\']',
         '"Relation":@[\'relations\']',
       ].join(',') +
-      ')=>{' + [
+      ')=>({' + [
         '"Class":@[\'relational classes\']',
         '"Name":"@{1} → @{2}"',
         // // 'Member title': '@{1} → @{3}',
         // // 'Member title': '@{1} → @{2}[Subject title]',
         // 'Member title': '@{3}',
-      ].join(',') + '}'
+      ].join(',') + '})'
     )
   );
   dataInserter.insertSubstituteOrEditEntity(
@@ -427,7 +427,7 @@ export function initialInserts(dataInserter) {
         '"Subject":@[\'entities\']',
         '"Quality":@[\'qualities\']',
       ].join(',') +
-      ')=>{' + [
+      ')=>({' + [
         '"Class":@[\'semantic parameters\']',
         // '"Label":"@{1} ⋲ @{2}"',
         // // 'Label:@{1} ⥺ @{2}',
@@ -435,7 +435,7 @@ export function initialInserts(dataInserter) {
         '"Label":"@{2} ⇥ @{1}"',
         '"Subject":@{1}',
         '"Quality":@{2}',
-      ].join(',') + '}'
+      ].join(',') + '})'
     )
   );
 
@@ -488,7 +488,7 @@ export function initialInserts(dataInserter) {
         '"Upper bound":float?',
         '"Description":h?',
       ].join(',') +
-      ')=>{' + [
+      ')=>({' + [
         '"Class":@[\'metrics\']',
         '"Name":@{1}',
         '"Unit":@{2}',
@@ -497,7 +497,7 @@ export function initialInserts(dataInserter) {
         '"Lower bound":@{5}',
         '"Upper bound":@{6}',
         '"Description":@{7}',
-      ].join(',') + '}'
+      ].join(',') + '})'
     )
   );
 
@@ -530,11 +530,11 @@ export function initialInserts(dataInserter) {
         '"User":u',
         '"Quality":@[\'qualities\']',
       ].join(',') +
-      ')=>{' + [
+      ')=>({' + [
         '"Class":@[\'user score lists\']',
         '"User":@{1}',
         '"Quality":@{2}',
-      ].join(',') + '}'
+      ].join(',') + '})'
     )
   );
   dataInserter.insertSubstituteOrEditEntity(
@@ -556,13 +556,13 @@ export function initialInserts(dataInserter) {
         '"Quality":@[\'qualities\']',
         '"Subject":@[\'entities\']',
       ].join(',') +
-      ')=>{' + [
+      ')=>({' + [
         '"Class":@[\'min contribution lists\']',
         '"Editor":@{1}',
         '"User group":@{2}',
         '"Quality":@{3}',
         '"Subject":@{4}',
-      ].join(',') + '}'
+      ].join(',') + '})'
     )
   );
   dataInserter.insertSubstituteOrEditEntity(
@@ -584,13 +584,13 @@ export function initialInserts(dataInserter) {
         '"Quality":@[\'qualities\']',
         '"Subject":@[\'entities\']',
       ].join(',') +
-      ')=>{' + [
+      ')=>({' + [
         '"Class":@[\'max contribution lists\']',
         '"Editor":@{1}',
         '"User group":@{2}',
         '"Quality":@{3}',
         '"Subject":@{4}',
-      ].join(',') + '}'
+      ].join(',') + '})'
     )
   );
   dataInserter.insertSubstituteOrEditEntity(
@@ -613,14 +613,14 @@ export function initialInserts(dataInserter) {
         '"Quality":@[\'qualities\']',
         '"Filter list":@[\'lists\']?'
       ].join(',') +
-      ')=>{' + [
+      ')=>({' + [
         '"Class":@[\'score median lists\']',
         '"Editor":@{1}',
         '"Has passed weight threshold":@{2}',
         '"User group":@{3}',
         '"Quality":@{4}',
         '"Filter list":@{5}',
-      ].join(',') + '}'
+      ].join(',') + '})'
     )
   );
 

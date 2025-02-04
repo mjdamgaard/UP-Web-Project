@@ -3,8 +3,9 @@
 
 export class PriorityLRUCache {
 
-  constructor(limit) {
-    this.limit = limit;
+  constructor(cacheLimit, maxPriority) {
+    this.limit = cacheLimit;
+    this.maxPriority = maxPriority ? Math.min(maxPriority, 1E+15) : 1E+15;
     this.cache = [];
     this.cacheKeys = [];
   }
@@ -47,7 +48,7 @@ export class PriorityLRUCache {
         this.#updatePosition(i- 1, val, priority, nextKey, cache, cacheKeys);
       }
     }
-    if (priority > 1E+15) {
+    if (priority > this.maxPriority) {
       this.cache = cache.map(
         ([val, priority]) => [val, Math.ceil(priority/10)]
       );
