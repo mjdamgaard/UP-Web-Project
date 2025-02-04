@@ -52,7 +52,7 @@ export async function query_handler(req, res) {
       // ].
       break;
     case "score":
-      header("Cache-Control: max-age=3"); // TODO: Change/adjust.
+      res.setHeader("Cache-Control", "max-age=3"); // TODO: Change/adjust.
       sql = "CALL selectPublicScore (?, ?, ?)";
       paramNameArr = ["u", "d", "w", "s"];
       typeArr = ["id", "id", "id", "id"];

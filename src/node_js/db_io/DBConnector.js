@@ -37,19 +37,4 @@ export class DBConnector {
     return results;
   }
 }
-
-
-// return new Promise((resolve, reject) => {
-//   con.connect((err) => {
-//     if (err) reject(err);
-//     else resolve(con);
-//   });
-// });
-
-// conn.connect(function(err) {
-//   if (err) throw err;
-//   let sql = 'CALL logMsg("Hello from query handler")';
-//   conn.query(sql, function (err, result) {
-//     if (err) throw err;
-//   });
-// });
+ 

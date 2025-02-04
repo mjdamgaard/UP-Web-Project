@@ -1,7 +1,7 @@
 
 import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
 
-import {LRUCache} from "../classes/LRUCache.js";
+import {LRUCache} from "./PriorityLRUCache.js";
 import {Parser} from "./Parser.js";
 
 const entitySyntaxTreeCache = new LRUCache(200);
