@@ -3,14 +3,15 @@
 
 export class PriorityLRUCache {
 
-  constructor(cacheLimit, maxPriority) {
+  constructor(cacheLimit, halftime) {
     this.limit = cacheLimit;
-    this.maxPriority = maxPriority ? Math.min(maxPriority, 1E+15) : 1E+15;
     this.cache = [];
     this.cacheKeys = [];
+    this.halftime = halftime;
+    this.nextDecayTime = Date.now() + halftime;
   }
 
-  static get(key) {
+  get(key) {
     key = key.toString();
     let cache = this.cache;
     let cacheKeys = this.cacheKeys;
@@ -25,7 +26,7 @@ export class PriorityLRUCache {
   }
 
 
-  static set(key, val) {
+  set(key, val) {
     key = key.toString();
     let cache = this.cache;
     let len = cache.length;
@@ -33,11 +34,15 @@ export class PriorityLRUCache {
     let priority = cache[i - 1] + 1;
     cache[i] = [val, priority];
     this.#updatePosition(i, val, priority, key, cache, this.cacheKeys);
+    let now = Date.now();
+    if (now > this.nextDecayTime) {
+      this.#decay(now);
+    }
     return;
   }
 
 
-  static #updatePosition(i, val, priority, key, cache, cacheKeys) {
+  #updatePosition(i, val, priority, key, cache, cacheKeys) {
     if (i > 0) {
       let [nextVal, nextPriority] = cache[i - 1];
       if (priority > nextPriority) {
@@ -48,12 +53,18 @@ export class PriorityLRUCache {
         this.#updatePosition(i- 1, val, priority, nextKey, cache, cacheKeys);
       }
     }
-    if (priority > this.maxPriority) {
-      this.cache = cache.map(
-        ([val, priority]) => [val, Math.ceil(priority/10)]
-      );
-    }
     return;
+  }
+
+  #decay(now) {
+    let timeSinceLastDecay = now - (this.nextDecayTime - this.halftime);
+    let decayFactor = 2 ** (-timeSinceLastDecay / this.halftime);
+    this.cache = this.cache.filter(([, priority], ind, arr) => {
+      let newPriority = priority * decayFactor;
+      arr[ind][1] = newPriority;
+      return (newPriority > 1);
+    });
+    this.nextDecayTime = now + this.halftime;
   }
 
 }
