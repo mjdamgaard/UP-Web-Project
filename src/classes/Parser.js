@@ -336,14 +336,21 @@ export class Parser {
         let nextPos = syntaxTree.nextPos;
         let sym = syntaxTree.sym;
 
+        // Process the would-be successful syntax tree.
         let [isSuccess = true, error] = process(syntaxTree) || [];
 
-        syntaxTree.isSuccess = isSuccess && !error;
-        if (error) syntaxTree.error = error;
-        // (We make sure that nextPos and sym isn't changed by the user, as
-        // they are used for error reporting.)
+        // Make sure that nextPos and sym isn't changed by the user (as they
+        // are used for error reporting).
         syntaxTree.nextPos = nextPos;
         syntaxTree.sym = sym;
+
+        // Set error and isSuccess depending on the returned values, and also
+        // reset nextPos on an error.
+        syntaxTree.isSuccess = isSuccess && !error;
+        if (error) {
+          syntaxTree.error = error;
+          syntaxTree.nextPos = pos;
+        }
       }
     }
 
