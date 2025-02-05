@@ -31,9 +31,9 @@ DROP TABLE DebugLogEntries;
 -- The default _01 entity lists use VARCHARs and convention of using
 -- hexadecimal-encoded numbers  
 
-CREATE TABLE ListData_01 (
+CREATE TABLE DataStructures_01 (
 
-    list_elem_key VARCHAR(64) -- Can be resized.
+    struct_elem_key VARCHAR(64) -- Can be resized.
         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin PRIMARY KEY,
 
     elem_data VARCHAR(32) -- Can be resized.
@@ -43,9 +43,9 @@ ROW_FORMAT = COMPRESSED;
 
 
 
-CREATE TABLE ListCounters_01 (
+CREATE TABLE DataStructureCounters_01 (
 
-    list_key VARCHAR(32) -- Can be resized.
+    struct_key VARCHAR(32) -- Can be resized.
         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin PRIMARY KEY,
 
     paid_upload_data_cost FLOAT NOT NULL
@@ -250,9 +250,10 @@ CREATE TABLE EntitySecKeys (
 
 -- TODO: Fulltext indexed tables should actually instead be created and
 -- updated on demand from user groups that has pooled enough "upload data
--- cost" to do so, as described in my notes.
+-- cost" to do so, as described in my notes. *But at first, I will just use one
+-- and only one such fulltext index table.
 
-CREATE TABLE FulltextIndexedEntities (
+CREATE TABLE FulltextIndexEntries (
 
     ent_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     
