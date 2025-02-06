@@ -725,14 +725,14 @@ DELIMITER //
 CREATE PROCEDURE editFunctionEntity (
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
-    IN defStr VARCHAR(700) CHARACTER SET utf8mb4,
+    IN defStr TEXT CHARACTER SET utf8mb4,
     IN readerWhitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL,
     IN isEditable BOOL
 )
 BEGIN
     CALL _editEntity (
-        "f", 700,
+        "f", 4294967295,
         userID, entID, defStr, readerWhitelistID, isAnonymous, isEditable
     );
 END //

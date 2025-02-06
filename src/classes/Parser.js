@@ -8,7 +8,9 @@ const NONTERMINAL_SYM_REGEXP =
 const NONTERMINAL_SYM_SUBSTR_REGEXP =
    /[^\/\?\*\+\{\}\$!]+/;
 const TRAILING_QUANTIFIER_SUBSTR_REGEXP =
-  /[\?\*\+]\$?$|\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\}\$?$/;
+  /([\?\*\+]\$?|\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\}\$?)$/;
+const TRAILING_DOD_OP_SUBSTR_REGEXP =
+  /!(0|[1-9][0-9]*)?$/;
 
 const NUMBER_SUBSTR_REGEXP_G =
   /0|[1-9][0-9]*/g;
@@ -121,11 +123,12 @@ export class Parser {
             continue;
           }
 
-          // Else assume that it is string, and first remove any optional "!"
-          // (always valid) at the end of it, before validating and
-          // preprocessing the remainder.
-          if (ruleSym.at(-1) === "!") {
-            ruleSym = ruleSym.slice(0, -1);
+          // Else assume that it is string, and first remove any optional do-
+          // or-die operator at the end, before validating and reprocessing
+          // the remainder.
+          let doOrDieOpArr = ruleSym.match(TRAILING_DOD_OP_SUBSTR_REGEXP);
+          if (doOrDieOpArr) {
+            ruleSym = ruleSym.slice(0, -doOrDieOpArr[0].length);
           }
 
           // Then remove any optional RegExp quantifier at the end, which is
@@ -369,8 +372,8 @@ export class Parser {
     // including the last, failed one.
     let recordRuleChildren;
     // Initialize a doOrDie variable, that is set to true if a symbol ending in
-    // '!' is reached, which will mean that no more rules will be tried after
-    // the current one.
+    // '!<n>?' advances the pos with n or more lexemes, and which will then
+    // mean that no more rules will be tried after the current one.
     let doOrDie = false;
     // Initialize an array of all failed first symbols, used for skipping
     // already tried symbols, even if they are not part of the "record rule."
@@ -393,11 +396,18 @@ export class Parser {
         let childSyntaxTree;
         let ruleSym = rule[j];
 
-        // If the rule symbol ends with "!", we remove it and set doOrDie to
-        // true.
-        if (ruleSym.at(-1) === "!") {
-          ruleSym = ruleSym.slice(0, -1);
-          doOrDie = true;
+        // If the rule symbol ends with '!<n>?' (where '!' is equivalent to
+        // '!0'), we parse n as the doOrDieLevel, which is the minimum
+        // increment of pos that can be reached by the symbol before doOrDie is
+        // set to true. (As an example, a rule symbol of "if-statement!1",
+        // where "if-statement" is a nonterminal symbol always starting with
+        // "if" as the first lexeme, will mark the rule as do-or-die if "if"
+        // was successfully parsed within this rule symbol.)
+        let doOrDieLevel = Infinity;
+        let doOrDieOpArr = ruleSym.match(TRAILING_DOD_OP_SUBSTR_REGEXP);
+        if (doOrDieOpArr) {
+          doOrDieLevel = parseInt(doOrDieOpArr[0].substring(1)) || 0;
+          ruleSym = ruleSym.slice(0, -doOrDieOpArr[0].length);
         }
 
         // If the j is 0 and ruleSym is one of the previously failed first
@@ -450,6 +460,12 @@ export class Parser {
         childSyntaxTree = this.parseRuleSymbol(
           lexArr, nextPos, ruleSym, (j === 0) ? triedSymbols : []
         );
+
+        // First set doOrDie depending how how far nextPos got, regardless
+        // of whether the rule symbol succeeded or not.
+        if (nextPos - pos >= doOrDieLevel) {
+          doOrDie = true;
+        }
 
         // If the symbol is successful, record the successful child and
         // continue to the next rule symbol.

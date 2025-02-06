@@ -477,14 +477,16 @@ const funEntGrammar = {
       ["if-else-statement"],
       ["loop-statement"],
       ["variable-declaration"],
-      ["expression", "/;/!"],
+      ["return-statement"],
+      ["instruction-statement"],
       ["/;/"],
+      ["expression", "/;/"],
     ],
     process: becomeChild,
   },
   "block-statement": {
     rules: [
-      [/\{/, "statement-list", /\}/],
+      [/\{/, "statement-list?", /\}/],
     ],
     process: (syntaxTree) => becomeChild(syntaxTree, 1),
   },
@@ -575,6 +577,75 @@ const funEntGrammar = {
     process: (syntaxTree) => {
       Object.assign(syntaxTree, {
         ident: syntaxTree.children[0].lexeme
+      });
+    },
+  },
+  "variable-assignment-list": {
+    rules: [
+      ["variable-assignment", "/,/", "variable-assignment-list!"],
+      ["variable-assignment"],
+    ],
+    process: straightenListSyntaxTree,
+  },
+  "return-statement": {
+    rules: [
+      ["/return/", "expression", "/;/"],
+    ],
+    process: (syntaxTree) => {
+      Object.assign(syntaxTree, {
+        exp: syntaxTree.children[1],
+      });
+    },
+  },
+  "instruction-keyword": {
+    rules: [
+      ["/break|continue/"],
+    ],
+    process: (syntaxTree) => {
+      
+    },
+  },
+  "expression": {
+    rules: [
+      ["variable-assignment"],
+      ["variable-member-assignment"],
+      ["destructuring-assignment"],
+      ["expression^(1)"],
+    ],
+    process: (syntaxTree) => {
+      Object.assign(syntaxTree, {
+        ident: syntaxTree.children[0],
+        memberSpecList: syntaxTree.children[1],
+        exp: syntaxTree.children[3],
+      });
+    },
+  },
+  "variable-assignment": {
+    rules: [
+      [
+        "identifier", "assignment-operator", "expression",
+      ],
+    ],
+    process: (syntaxTree) => {
+      Object.assign(syntaxTree, {
+        ident: syntaxTree.children[0],
+        memberSpecList: syntaxTree.children[1],
+        exp: syntaxTree.children[3],
+      });
+    },
+  },
+  "variable-member-assignment": {
+    rules: [
+      [
+        "identifier", "member-specification+", "assignment-operator",
+        "expression",
+      ],
+    ],
+    process: (syntaxTree) => {
+      Object.assign(syntaxTree, {
+        ident: syntaxTree.children[0],
+        memberSpecList: syntaxTree.children[1],
+        exp: syntaxTree.children[3],
       });
     },
   },
