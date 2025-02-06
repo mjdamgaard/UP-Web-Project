@@ -1,6 +1,6 @@
 
 
-export class Error {
+export class ClientError {
   constructor(msg) {
     this.error = msg;
   }
@@ -24,7 +24,7 @@ export function endWithInternalError(res, error) {
 
 
 export function throwTypeError(paramName, paramVal, expectedType) {
-  throw new Error (
+  throw new ClientError (
     "Parameter " + paramName + " = " + paramVal + " has a wrong type; " +
     "expected type is " + expectedType
   );

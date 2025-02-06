@@ -1,5 +1,5 @@
 
-import {Error, throwTypeError} from "../err/errors.js";
+import {throwTypeError} from "../err/errors.js";
 
 
 

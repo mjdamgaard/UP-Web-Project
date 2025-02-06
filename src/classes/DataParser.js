@@ -68,7 +68,7 @@ const jsonGrammar = {
       ["object"],
       ["array"],
     ],
-    process: becomeChild,
+    process: becomeChild(0)
   },
   "literal-list": {
     rules: [
@@ -85,13 +85,13 @@ const jsonGrammar = {
       ["object"],
       ["constant"],
     ],
-    process: becomeChild,
+    process: becomeChild(0)
   },
   "constant": {
     rules: [
       ["/true|false|null/"],
     ],
-    process: becomeChild,
+    process: becomeChild(0)
   },
   "string": {
     rules: [
@@ -127,13 +127,13 @@ const jsonGrammar = {
     rules: [
       [/\[/, "literal-list", /\]/],
     ],
-    process: (syntaxTree) => becomeChild(syntaxTree, 1),
+    process: becomeChild(1),
   },
   "object": {
     rules: [
       [/\{/, "member-list", /\}/],
     ],
-    process: (syntaxTree) => becomeChild(syntaxTree, 1),
+    process: becomeChild(1),
   },
   "member-list": {
     rules: [
@@ -178,13 +178,15 @@ export function straightenListSyntaxTree(syntaxTree, delimiterLexNum = 1) {
   ];
 }
 
-export function becomeChild(syntaxTree, ind = 0) {
-  let child = syntaxTree.children[ind];
-  Object.assign(syntaxTree, {
-    ruleInd: null,
-    ...child,
-    type: child.type ?? child.sym,
-  });
+export function becomeChild(ind = 0) {
+  return (syntaxTree) => {
+    let child = syntaxTree.children[ind];
+    Object.assign(syntaxTree, {
+      ruleInd: null,
+      ...child,
+      type: child.type ?? child.sym,
+    });
+  }
 }
 
 
@@ -222,13 +224,13 @@ const regEntGrammar = {
       ["object"],
       ["constant"],
     ],
-    process: becomeChild,
+    process: becomeChild(0)
   },
   "constant": {
     rules: [
       ["/_|true|false|null/"],
     ],
-    process: becomeChild,
+    process: becomeChild(0)
   },
   "value-string": {
     ...jsonGrammar["string"],
@@ -272,7 +274,7 @@ const regEntGrammar = {
     rules: [
       [/'([^'\\]|\\[.\n])*'/],
     ],
-    process: becomeChild,
+    process: becomeChild(0)
   },
 };
 
@@ -300,7 +302,7 @@ const regEntStringContentGrammar = {
     rules: [
       ["string-part*$"]
     ],
-    process: becomeChild,
+    process: becomeChild(0)
   },
   "string-part": {
     rules: [
@@ -314,13 +316,13 @@ const regEntStringContentGrammar = {
     rules: [
       [/@[\[\{<];/],
     ],
-    process: becomeChild,
+    process: becomeChild(0)
   },
   "plain-text": {
     rules: [
       [/([^"\\@\]\}>]|\\[^@\]\}>]|)+/],
     ],
-    process: becomeChild,
+    process: becomeChild(0)
   },
 };
 
@@ -473,22 +475,22 @@ const funEntGrammar = {
   },
   "statement": {
     rules: [
-      ["block-statement"],
-      ["if-else-statement"],
-      ["loop-statement"],
-      ["variable-declaration"],
-      ["return-statement"],
-      ["instruction-statement"],
-      ["/;/"],
+      ["block-statement!1"],
+      ["if-else-statement!1"],
+      ["loop-statement!1"],
+      ["variable-declaration!1"],
+      ["return-statement!1"],
+      ["instruction-statement!1"],
+      ["empty-statement!1"],
       ["expression", "/;/"],
     ],
-    process: becomeChild,
+    process: becomeChild(0)
   },
   "block-statement": {
     rules: [
       [/\{/, "statement-list?", /\}/],
     ],
-    process: (syntaxTree) => becomeChild(syntaxTree, 1),
+    process: becomeChild(1),
   },
   "if-else-statement": {
     rules: [
@@ -547,18 +549,21 @@ const funEntGrammar = {
       ["/var/", "identifier-list", "/;/"],
     ],
     process: (syntaxTree) => {
-      // TODO: Correct...
       if (syntaxTree.ruleInd === 0) {
         Object.assign(syntaxTree, {
+          type: "destruct",
           identList: syntaxTree.children[2],
           exp: syntaxTree.children[5],
-          isDestruct: true,
+        });
+      } else if (syntaxTree.ruleInd === 0) {
+        Object.assign(syntaxTree, {
+          type: "def",
+          assignList: syntaxTree.children[1],
         });
       } else {
         Object.assign(syntaxTree, {
+          type: "dec",
           identList: syntaxTree.children[1],
-          exp: syntaxTree.children[3],
-          isDestruct: false,
         });
       }
     },
@@ -587,6 +592,19 @@ const funEntGrammar = {
     ],
     process: straightenListSyntaxTree,
   },
+  "variable-assignment": {
+    rules: [
+      [
+        "identifier", "/=/", "expression",
+      ],
+    ],
+    process: (syntaxTree) => {
+      Object.assign(syntaxTree, {
+        ident: syntaxTree.children[0],
+        exp: syntaxTree.children[2],
+      });
+    },
+  },
   "return-statement": {
     rules: [
       ["/return/", "expression", "/;/"],
@@ -597,73 +615,43 @@ const funEntGrammar = {
       });
     },
   },
-  "instruction-keyword": {
+  "instruction-statement": {
     rules: [
-      ["/break|continue/"],
+      ["/break|continue/", "/;/"],
     ],
     process: (syntaxTree) => {
-      
+      Object.assign(syntaxTree, {
+        inst: syntaxTree.children[0].lexeme,
+      });
     },
+  },
+  "empty-statement": {
+    rules: [
+      ["/;/"],
+    ],
+  },
+  "expression-list": {
+    rules: [
+      ["expression", "/,/", "expression-list!"],
+      ["expression"],
+    ],
+    process: straightenListSyntaxTree,
   },
   "expression": {
     rules: [
-      ["variable-assignment"],
-      ["variable-member-assignment"],
-      ["destructuring-assignment"],
+      ["expression^(1)", "/=/", "expression!"],
       ["expression^(1)"],
     ],
     process: (syntaxTree) => {
-      Object.assign(syntaxTree, {
-        ident: syntaxTree.children[0],
-        memberSpecList: syntaxTree.children[1],
-        exp: syntaxTree.children[3],
-      });
-    },
-  },
-  "variable-assignment": {
-    rules: [
-      [
-        "identifier", "assignment-operator", "expression",
-      ],
-    ],
-    process: (syntaxTree) => {
-      Object.assign(syntaxTree, {
-        ident: syntaxTree.children[0],
-        memberSpecList: syntaxTree.children[1],
-        exp: syntaxTree.children[3],
-      });
-    },
-  },
-  "variable-member-assignment": {
-    rules: [
-      [
-        "identifier", "member-specification+", "assignment-operator",
-        "expression",
-      ],
-    ],
-    process: (syntaxTree) => {
-      Object.assign(syntaxTree, {
-        ident: syntaxTree.children[0],
-        memberSpecList: syntaxTree.children[1],
-        exp: syntaxTree.children[3],
-      });
-    },
-  },
-  "expression": {
-    rules: [
-      [/\[/, "identifier-list", /\]/,  "/=/", "expression"],
-      [
-        "identifier", "member-specification*", "assignment-operator",
-        "expression^(1)",
-      ],
-      ["expression^(1)"],
-    ],
-    process: (syntaxTree) => {
-      Object.assign(syntaxTree, {
-        ident: syntaxTree.children[0],
-        memberSpecList: syntaxTree.children[1],
-        exp: syntaxTree.children[3],
-      });
+      if (syntaxTree.ruleInd === 0) {
+        Object.assign(syntaxTree, {
+          type: "assignment",
+          exp1: syntaxTree.children[0],
+          exp2: syntaxTree.children[2],
+        });
+      } else {
+        becomeChild(0)(syntaxTree);
+      }
     },
   },
   "expression^(1)": {
@@ -671,31 +659,65 @@ const funEntGrammar = {
       ["expression^(1)", /\?/, "expression!", "/:/", "expression"],
       ["expression^(2)"],
     ],
-  },
-  "expression^(1)": {
-    rules: [
-      ["or-expression"],
-      ["expression^(2)"],
-    ],
+    process: (syntaxTree) => {
+      if (syntaxTree.ruleInd === 0) {
+        Object.assign(syntaxTree, {
+          type: "conditional-expression",
+          cond: syntaxTree.children[0],
+          exp1: syntaxTree.children[2],
+          exp2: syntaxTree.children[4],
+        });
+      } else {
+        becomeChild(0)(syntaxTree);
+      }
+    },
   },
   "expression^(2)": {
     rules: [
-      ["and-expression"],
+      ["expression^(3)", /(\|\|)|(\?\?)/, "expression^(2)!"],
       ["expression^(3)"],
     ],
-    process: becomeChild,
+    process: (syntaxTree) => {
+      if (syntaxTree.ruleInd === 0) {
+        Object.assign(syntaxTree, {
+          type: (syntaxTree.children[1].lexeme === "||") ?
+            "or-expression" : "nullish-coalescing",
+          exp1: syntaxTree.children[0],
+          exp2: syntaxTree.children[2],
+        });
+      } else {
+        becomeChild(0)(syntaxTree);
+      }
+    },
   },
   "expression^(3)": {
     rules: [
-      ["bitwise-operator-expression"],
+      ["expression^(3)", "/&&/", "expression^(2)!"],
       ["expression^(4)"],
+    ],
+    process: (syntaxTree) => {
+      if (syntaxTree.ruleInd === 0) {
+        Object.assign(syntaxTree, {
+          type: "and-expression",
+          exp1: syntaxTree.children[0],
+          exp2: syntaxTree.children[2],
+        });
+      } else {
+        becomeChild(0)(syntaxTree);
+      }
+    },
+  },
+  "expression^(4)": {
+    rules: [
+      ["bitwise-operator-expression"],
+      ["expression^(5)"],
     ],
   },
   "grouped-expression": {
     rules: [
       [/\(/, "expression", /\)/],
     ],
-    process: (syntaxTree) => becomeChild(syntaxTree, 1),
+    process: becomeChild(1),
   },
 };
 

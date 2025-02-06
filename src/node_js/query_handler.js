@@ -1,6 +1,6 @@
 
 import {InputGetter} from './user_input/InputGetter.js';
-import {Error} from './err/errors.js';
+import {ClientError} from './err/errors.js';
 import {InputValidator} from './user_input/InputValidator.js';
 import {DBConnector} from './db_io/DBConnector.js';
 
@@ -114,7 +114,7 @@ export async function query_handler(req, res) {
     //     // output: [[username, publicKeys]].
     //     break;
     default:
-        throw new Error("Unrecognized request type");
+        throw new ClientError("Unrecognized request type");
   }
 
 
