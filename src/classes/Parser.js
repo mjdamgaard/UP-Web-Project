@@ -57,10 +57,11 @@ export const EOS_ERROR = "End of partial string";
 // i.e. '?', '*', '+', or '{<n>,<m>}', which parses a variable number of the
 // preceding nonterminal symbol.
 // And lastly, any of these rule symbols, quantified or not, can also be
-// followed by a '!' at the very end, which tells the parser that if it reaches
-// this symbol in the rule, regardless of whether it succeeds or not, then no
-// other rules should by tried after the current one. In other words, its "do
-// or die" for the rule in question if such a symbol is reached.
+// followed by a '!<n>?' at the very end, which tells the parser that if it
+// reaches this symbol in the rule, and manages to parse n lexemes within it,
+// then no other rules should by tried after the current one. Note also that
+// '!' is equivalent to "!0", meaning that the rule will always be "do or die"
+// from there once this symbol is reached.
 // 
 // The first rule to succeed for a nonterminal symbol will short-circuit it,
 // such that the subsequent rules will not be tried.
@@ -188,7 +189,8 @@ export class Parser {
   // </param>
   // 
   // <returns>
-  // A syntax tree consisting of nodes of the form
+  // [syntaxTree, lexArr, strPosArr], where syntaxTree is a syntax tree
+  // consisting of nodes of the form
   // {sym, isSuccess, error?, children?, ruleInd? lexeme?, nextPos},
   // where sym is the nonterminal symbol or the rule symbol of the node,
   // isSuccess (bool) tells if the node was successfully parsed or not,
@@ -200,6 +202,9 @@ export class Parser {
   // and lexeme is the matched lexeme in case of a pattern symbol.
   // Also the returned nextPos is a number denoting the maximal number of
   // lexemes that was successfully parsed as part of one of the rules.
+  // The other two returned variables, lexArr and strPosArr, are respectively
+  // the lexeme array, and an array with all the positions in the input string,
+  // str, where these lexemes are located.
   // </returns>
   parse(str, startSym, isPartial = false, keepLastLexeme = false) {
     startSym ??= this.defaultSym;
@@ -258,8 +263,8 @@ export class Parser {
       }
     }
   
-    // Then return the resulting syntax tree.
-    return syntaxTree;
+    // Then return the resulting syntax tree, along with lexArr and strPosArr.
+    return [syntaxTree, lexArr, strPosArr];
   }
 
 

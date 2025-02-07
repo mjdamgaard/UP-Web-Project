@@ -941,8 +941,15 @@ const funEntGrammar = {
   "expression^(16)": {
     rules: [
       [/\(/, "expression", /\)/],
+      ["literal"],
     ],
-    process: becomeChild(1),
+    process: (syntaxTree) => {
+      if (syntaxTree.ruleInd === 0) {
+        becomeChild(1)(syntaxTree);
+      } else {
+        becomeChild(0)(syntaxTree);
+      }
+    },
   },
 };
 
