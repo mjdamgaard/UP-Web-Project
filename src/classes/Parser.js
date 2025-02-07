@@ -248,7 +248,7 @@ export class Parser {
         syntaxTree.error = 'Error after:\n' +
           str.substring(0, strPos).substring(strPos - ERROR_ECHO_STR_LEN) +
           "\n--------\n" +
-          'Error:\n\t' + error.replaceAll("\n", "\n\t");
+          'Error:\n  ' + error.replaceAll("\n", "\n  ");
         syntaxTree.lexArr = lexArr;
       } else {
         let strPos = strPosArr[syntaxTree.nextPos] ?? str.length;
@@ -334,6 +334,7 @@ export class Parser {
     let syntaxTree = this.parseRules(
       lexArr, pos, rules, nonterminalSymbol, triedSymbols
     );
+    syntaxTree.pos = pos;
 
     // If a syntax tree was parsed successfully, run the optional process()
     // function if there in order to test and process it.
@@ -345,8 +346,8 @@ export class Parser {
         // Process the would-be successful syntax tree.
         let [isSuccess = true, error] = process(syntaxTree) || [];
 
-        // Make sure that nextPos and sym isn't changed by the user (as they
-        // are used for error reporting). Also, record pos on the node as well.
+        // Make sure that pos, nextPos and sym isn't changed by the user (as
+        // they are used for error reporting).
         syntaxTree.nextPos = nextPos;
         syntaxTree.sym = sym;
         syntaxTree.pos = pos;

@@ -290,14 +290,15 @@ const regEntGrammar = {
         return [false, error];
       }
 
-      let subSyntaxTree = regEntStringContentParser.parse(
+      let [subSyntaxTree] = regEntStringContentParser.parse(
         syntaxTree.strLit.slice(1, -1)
       );
+
+      Object.assign(syntaxTree, subSyntaxTree);
+
       if (!subSyntaxTree.isSuccess) {
         return [false, subSyntaxTree.error];
       }
-
-      Object.assign(syntaxTree, subSyntaxTree);
     },
   },
   "ent-ref": {
@@ -823,7 +824,7 @@ const funEntGrammar = {
   },
   "expression^(9)": {
     rules: [
-      ["expression^(10)", "/+|\\-/", "expression^(9)!"],
+      ["expression^(10)", "/\\+|\\-/", "expression^(9)!"],
       ["expression^(10)"],
     ],
     process: (syntaxTree) => {

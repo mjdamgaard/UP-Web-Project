@@ -30,7 +30,7 @@ const SubmitEntityMenu = () => <template></template>;
 
 export const EntityPage = ({entID, initTabID}) => {
   const [results, setState] = useState({});
-
+  return <span>Placeholder...</span>;
   useMemo(() => {
     DataFetcher.fetchEntity(
       entID,
@@ -80,7 +80,7 @@ export const EntityPage = ({entID, initTabID}) => {
     return (
       <></>
     );
-  }return <span>Placeholder...</span>;
+  }
 
   return (
     <div className="entity-page">
