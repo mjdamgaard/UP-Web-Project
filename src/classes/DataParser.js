@@ -62,110 +62,10 @@ export class DataParser {
 
 
 
-const jsonGrammar = {
-  "json-object": {
-    rules: [
-      ["object"],
-      ["array"],
-    ],
-    process: becomeChild(0)
-  },
-  "literal-list": {
-    rules: [
-      ["literal", "/,/", "literal-list!"],
-      ["literal"],
-    ],
-    process: straightenListSyntaxTree(1),
-  },
-  "literal": {
-    rules: [
-      ["string"],
-      ["number"],
-      ["array"],
-      ["object"],
-      ["constant"],
-    ],
-    process: becomeChild(0)
-  },
-  "constant": {
-    rules: [
-      ["/true|false|null/"],
-    ],
-    process: becomeChild(0)
-  },
-  "string": {
-    rules: [
-      [/"([^"\\]|\\[.\n])*"/],
-    ],
-    process: (syntaxTree) => {
-      // Concat all the nested lexemes.
-      let stringLiteral = syntaxTree.children[0].lexeme;
 
-      // Test that the resulting string is a valid JSON string. 
-      try {
-        JSON.parse(stringLiteral);
-      } catch (error) {
-        return [false, `Invalid JSON string: ${stringLiteral}`];
-      }
 
-      syntaxTree.strLit = stringLiteral;
-    },
-  },
-  "number": {
-    rules: [
-      [/\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/],
-    ],
-    process: makeChildrenIntoLexemeArray,
-  },
-  "constant": {
-    rules: [
-      ["/true|false|null/"],
-    ],
-    process: makeChildrenIntoLexemeArray,
-  },
-  "array": {
-    rules: [
-      [/\[/, "literal-list", /\]/],
-    ],
-    process: becomeChild(1),
-  },
-  "object": {
-    rules: [
-      [/\{/, "member-list", /\}/],
-    ],
-    process: becomeChild(1),
-  },
-  "member-list": {
-    rules: [
-      ["member", "/,/", "member-list!"],
-      ["member"],
-    ],
-    process: straightenListSyntaxTree(1),
-  },
-  "member": {
-    rules: [
-      ["string", "/:/", "literal"],
-    ],
-    process: (syntaxTree) => {
-      syntaxTree.children = {
-        name: syntaxTree.children[0],
-        val: syntaxTree.children[2],
-      }
-    },
-  },
-};
 
-// const jsonParser = new Parser(
-//   jsonGrammar,
-//   "literal",
-//   [
-//     /"([^"\\]|\\[.\n])*"/,
-//     /\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
-//     /=>|@[\[\{<]|[,:\[\]\{\}\(\)>\?=]/,
-//     "/true|false|null/",
-//   ],
-//   /\s+/
-// );
+
 
 
 
@@ -218,7 +118,14 @@ export function becomeChild(ind = 0) {
       ruleInd: null,
       ...child,
       type: child.type ?? child.sym,
+      sym: syntaxTree.sym,
     });
+  }
+}
+
+export function copyLexemeFromChild(ind = 0) {
+  return (syntaxTree) => {
+    syntaxTree.lexeme = syntaxTree.children[ind].lexeme;
   }
 }
 
@@ -244,28 +151,137 @@ export function makeChildrenIntoLexemeArray(syntaxTree) {
 
 
 
+
+const jsonGrammar = {
+  "json-object": {
+    rules: [
+      ["object"],
+      ["array"],
+    ],
+    process: becomeChild(0),
+  },
+  "literal-list": {
+    rules: [
+      ["literal", "/,/", "literal-list!"],
+      ["literal"],
+    ],
+    process: straightenListSyntaxTree(1),
+  },
+  "literal": {
+    rules: [
+      ["string"],
+      ["number"],
+      ["constant"],
+      ["array!1"],
+      ["object"],
+    ],
+    process: becomeChild(0),
+  },
+  "string": {
+    rules: [
+      [/"([^"\\]|\\[.\n])*"/],
+    ],
+    process: (syntaxTree) => {
+      // Concat all the nested lexemes.
+      let stringLiteral = syntaxTree.children[0].lexeme;
+
+      // Test that the resulting string is a valid JSON string. 
+      try {
+        JSON.parse(stringLiteral);
+      } catch (error) {
+        return [false, `Invalid JSON string: ${stringLiteral}`];
+      }
+
+      syntaxTree.strLit = stringLiteral;
+    },
+  },
+  "number": {
+    rules: [
+      [/\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/],
+    ],
+    process: copyLexemeFromChild(0),
+  },
+  "constant": {
+    rules: [
+      ["/true|false|null/"],
+    ],
+    process: copyLexemeFromChild(0),
+  },
+  "array": {
+    rules: [
+      [/\[/, "literal-list?", /\]/],
+    ],
+    process: (syntaxTree) => {
+      becomeChild(1)(syntaxTree);
+      if (syntaxTree.children[0]) becomeChild(0)(syntaxTree);
+    },
+  },
+  "object": {
+    rules: [
+      [/\{/, "member-list?", /\}/],
+    ],
+    process: (syntaxTree) => {
+      becomeChild(1)(syntaxTree);
+      if (syntaxTree.children[0]) becomeChild(0)(syntaxTree);
+    },
+  },
+  "member-list": {
+    rules: [
+      ["member", "/,/", "member-list!"],
+      ["member"],
+    ],
+    process: straightenListSyntaxTree(1),
+  },
+  "member": {
+    rules: [
+      ["string", "/:/", "literal"],
+    ],
+    process: (syntaxTree) => {
+      syntaxTree.children = {
+        name: syntaxTree.children[0],
+        val: syntaxTree.children[2],
+      }
+    },
+  },
+};
+
+// const jsonParser = new Parser(
+//   jsonGrammar,
+//   "literal",
+//   [
+//     /"([^"\\]|\\[.\n])*"/,
+//     /\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
+//     /=>|@[\[\{<]|[,:\[\]\{\}\(\)>\?=]/,
+//     "/true|false|null/",
+//   ],
+//   /\s+/
+// );
+
+
+
+
 // We only overwrite some of the nonterminal symbols in the JSON grammar.
 const regEntGrammar = {
   ...jsonGrammar,
   "literal": {
     rules: [
-      ["ent-ref"],
-      ["input-placeholder"],
-      ["value-string"],
+      ["ent-ref!1"],
+      ["input-placeholder!1"],
+      ["mixed-string"],
       ["number"],
-      ["array"],
-      ["object"],
       ["constant"],
+      ["array!1"],
+      ["object"],
     ],
-    process: becomeChild(0)
+    process: becomeChild(0),
   },
   "constant": {
     rules: [
       ["/_|true|false|null/"],
     ],
-    process: becomeChild(0)
+    process: copyLexemeFromChild(0),
   },
-  "value-string": {
+  "mixed-string": {
     ...jsonGrammar["string"],
     process: (syntaxTree) => {
       let [isSuccess = true, error] =
@@ -290,24 +306,21 @@ const regEntGrammar = {
       [/@\[/, "path", /\]/],
     ],
     process: (syntaxTree) => {
-      let ruleInd = syntaxTree.ruleInd;
-      Object.assign(syntaxTree, {
-        isTBD: (ruleInd === 1),
-        entID: (ruleInd === 0) ? syntaxTree.children[1].lexeme : undefined,
-        path:  (ruleInd === 1) ? syntaxTree.children[1].lexeme : undefined,
-      });
+      copyLexemeFromChild(1)(syntaxTree);
+      syntaxTree.isTBD = (ruleInd === 1);
     }
   },
   "input-placeholder": {
     rules: [
       [/@\{/, "/[1-9][0-9]*/",    /\}/],
     ],
+    process: copyLexemeFromChild(1),
   },
   "path": {
     rules: [
       [/'([^'\\]|\\[.\n])*'/],
     ],
-    process: becomeChild(0)
+    process: copyLexemeFromChild(0),
   },
 };
 
@@ -335,12 +348,12 @@ const regEntStringContentGrammar = {
     rules: [
       ["string-part*$"]
     ],
-    process: becomeChild(0)
+    process: becomeChild(0),
   },
   "string-part": {
     rules: [
-      ["ent-ref"],
-      ["input-placeholder"],
+      ["ent-ref!1"],
+      ["input-placeholder!1"],
       ["escaped-bracket"],
       ["plain-text"],
     ],
@@ -349,13 +362,13 @@ const regEntStringContentGrammar = {
     rules: [
       [/@[\[\{<];/],
     ],
-    process: becomeChild(0)
+    process: copyLexemeFromChild(0),
   },
   "plain-text": {
     rules: [
       [/([^"\\@\]\}>]|\\[^@\]\}>]|)+/],
     ],
-    process: becomeChild(0)
+    process: copyLexemeFromChild(0),
   },
 };
 
@@ -383,26 +396,36 @@ const funEntGrammar = {
     rules: [
       [
         /[^0-9\[\]@,;"\s][^\[\]@,;"\s]*/, /\(/, "param-list", /\)/, "/=>/", 
-        /\(/, "literal", /\)/,
+        /\{/, "statement-list!", /\}/
       ],
       [
         /[^0-9\[\]@,;"\s][^\[\]@,;"\s]*/, /\(/, "param-list", /\)/, "/=>/", 
-        /\{/, "statement-list", /\}/
+        /\(/, "expression!", /\)/,
       ],
     ],
     process: (syntaxTree) => {
       let children = syntaxTree.children;
-      Object.assign(syntaxTree, {
-        name: children[0].lexeme,
-        params: children[2].children,
-        return: children[5],
-      });
+      if (syntaxTree.ruleInd === 0) {
+        Object.assign(syntaxTree, {
+          type: "procedure-function",
+          name: children[0].lexeme,
+          params: children[2].children,
+          stmts: children[5],
+        });
+      } else {
+        Object.assign(syntaxTree, {
+          type: "expression-function",
+          name: children[0].lexeme,
+          params: children[2].children,
+          return: children[5],
+        });
+      }
     },
   },
   "param-list": {
     rules: [
       ["param", "/,/", "param-list!"],
-      ["param"],
+      ["param", "/,/?"],
     ],
     process: straightenListSyntaxTree(1),
   },
@@ -444,7 +467,7 @@ const funEntGrammar = {
   "type^(2)-list": {
     rules: [
       ["type^(2)", "/,/", "type^(2)-list!"],
-      ["type^(2)"],
+      ["type^(2)", "/,/?"],
     ],
     process: straightenListSyntaxTree(1),
   },
@@ -456,14 +479,15 @@ const funEntGrammar = {
       ["type^(3)"],
     ],
     process: (syntaxTree) => {
-      syntaxTree.types = (syntaxTree.ruleInd <= 1) ?
-        syntaxTree.children[1].children :
-        [syntaxTree.children[0]];
-      syntaxTree.arrayLen = (syntaxTree.ruleInd === 0) ?
-        syntaxTree.children[3].num :
-        (syntaxTree.ruleInd === 2) ?
-          syntaxTree.children[1].num :
-          0;
+      let ruleInd = syntaxTree.ruleInd;
+      let children = syntaxTree.children;
+      if (ruleInd <= 1) {
+        syntaxTree.types = children[1].children;
+        syntaxTree.arrayLen = (ruleInd === 0) ? children[3].num : 0;
+      } else {
+        syntaxTree.types = [children[0]];
+        syntaxTree.arrayLen = (ruleInd === 2) ? children[1].num : 0;
+      }
     },
   },
   "array-type-operator": {
@@ -487,7 +511,7 @@ const funEntGrammar = {
   "type^(3)-list": {
     rules: [
       ["type^(3)", "/,/", "type^(3)-list!"],
-      ["type^(3)"],
+      ["type^(3)", "/,/?"],
     ],
     process: straightenListSyntaxTree(1),
   },
@@ -498,6 +522,7 @@ const funEntGrammar = {
       [/object|array|mixed/], // User has to manually type in a parsable
       // literal.
     ],
+    process: copyLexemeFromChild(0),
   },
   "statement-list": {
     rules: [
@@ -513,6 +538,7 @@ const funEntGrammar = {
       ["loop-statement!1"],
       ["variable-declaration!1"],
       ["return-statement!1"],
+      ["throw-statement!1"],
       ["instruction-statement!1"],
       ["empty-statement!1"],
       ["expression", "/;/"],
@@ -577,34 +603,24 @@ const funEntGrammar = {
   },
   "variable-declaration": {
     rules: [
-      ["/var/", /\[/, "identifier-list"," /\\]/!", "/=/", "expression", "/;/"],
-      ["/var/", "variable-assignment-list", "/;/"],
-      ["/var/", "identifier-list", "/;/"],
+      ["/let/", "variable-definition-list", "/;/!"],
+      ["/let/", /\[/, "identifier-list"," /\\]/!", "/=/", "expression", "/;/"],
     ],
     process: (syntaxTree) => {
       if (syntaxTree.ruleInd === 0) {
-        Object.assign(syntaxTree, {
-          type: "destruct",
-          identList: syntaxTree.children[2],
-          exp: syntaxTree.children[5],
-        });
-      } else if (syntaxTree.ruleInd === 0) {
-        Object.assign(syntaxTree, {
-          type: "def",
-          assignList: syntaxTree.children[1],
-        });
+        syntaxTree.type = "definition-list";
+        syntaxTree.defList = syntaxTree.children[1];
       } else {
-        Object.assign(syntaxTree, {
-          type: "dec",
-          identList: syntaxTree.children[1],
-        });
+        syntaxTree.type = "destructuring";
+        syntaxTree.identList = syntaxTree.children[2];
+        syntaxTree.exp = syntaxTree.children[5];
       }
     },
   },
   "identifier-list": {
     rules: [
       ["identifier", "/,/", "identifier-list!"],
-      ["identifier"],
+      ["identifier", "/,/?"],
     ],
     process: straightenListSyntaxTree(1),
   },
@@ -612,29 +628,24 @@ const funEntGrammar = {
     rules: [
       [/[_\$a-zA-Z][_\$a-zA-Z0-9]/],
     ],
-    process: (syntaxTree) => {
-      Object.assign(syntaxTree, {
-        ident: syntaxTree.children[0].lexeme
-      });
-    },
+    process: copyLexemeFromChild(0),
   },
-  "variable-assignment-list": {
+  "variable-definition-list": {
     rules: [
-      ["variable-assignment", "/,/", "variable-assignment-list!"],
-      ["variable-assignment"],
+      ["variable-definition", "/,/", "variable-definition-list!"],
+      ["variable-definition"],
     ],
     process: straightenListSyntaxTree(1),
   },
-  "variable-assignment": {
+  "variable-definition": {
     rules: [
-      [
-        "identifier", "/=/", "expression",
-      ],
+      ["identifier", "/=/", "expression"],
+      ["identifier"],
     ],
     process: (syntaxTree) => {
       Object.assign(syntaxTree, {
         ident: syntaxTree.children[0],
-        exp: syntaxTree.children[2],
+        exp: syntaxTree.children[2] || undefined,
       });
     },
   },
@@ -643,20 +654,22 @@ const funEntGrammar = {
       ["/return/", "expression", "/;/"],
     ],
     process: (syntaxTree) => {
-      Object.assign(syntaxTree, {
-        exp: syntaxTree.children[1],
-      });
+      syntaxTree.exp = syntaxTree.children[1];
+    },
+  },
+  "throw-statement": {
+    rules: [
+      ["/throw/", "expression", "/;/"],
+    ],
+    process: (syntaxTree) => {
+      syntaxTree.exp = syntaxTree.children[1];
     },
   },
   "instruction-statement": {
     rules: [
       ["/break|continue/", "/;/"],
     ],
-    process: (syntaxTree) => {
-      Object.assign(syntaxTree, {
-        inst: syntaxTree.children[0].lexeme,
-      });
-    },
+    process: copyLexemeFromChild(0),
   },
   "empty-statement": {
     rules: [
@@ -666,20 +679,21 @@ const funEntGrammar = {
   "expression-list": {
     rules: [
       ["expression", "/,/", "expression-list!"],
-      ["expression"],
+      ["expression", "/,/?"],
     ],
     process: straightenListSyntaxTree(1),
   },
   "expression": {
     rules: [
-      ["expression^(1)", "/=/", "expression!"],
-      ["expression^(1)", /\?/, "expression!", "/:/", "expression"],
+      ["expression^(1)", /=|\+=|\-=|\*=|&&=|\|\|=|\?\?=/, "expression!"],
+      ["expression^(1)", /\?/, "expression!", /:/, "expression"],
       ["expression^(1)"],
     ],
     process: (syntaxTree) => {
       if (syntaxTree.ruleInd === 0) {
         Object.assign(syntaxTree, {
           type: "assignment",
+          op: syntaxTree.children[1].lexeme,
           exp1: syntaxTree.children[0],
           exp2: syntaxTree.children[2],
         });
@@ -885,14 +899,28 @@ const funEntGrammar = {
   },
   "expression^(14)": {
     rules: [
-      ["expression^(15)", "expression-tuple+"],
+      ["expression^(15)", "expression-tuple+!1"],
+      ["expression^(15)", "/->/", "expression^(15)!", "expression-tuple+"],
       ["expression^(15)"],
     ],
     process: (syntaxTree) => {
+      let children = syntaxTree.children;
       if (syntaxTree.ruleInd === 0) {
         syntaxTree.type = "function-call";
-        syntaxTree.fun = syntaxTree.children[0];
-        syntaxTree.tuples = syntaxTree.children[1].children;
+        syntaxTree.fun = children[0];
+        syntaxTree.tuples = children[1].children;
+      } else if (syntaxTree.ruleInd === 1) {
+        // A "virtual method call" is a syntactic sugar over a function call.
+        let obj = children[0];
+        let fun = children[2];
+        let fstTuple = children[3].children[0];
+        // Prepend obj as the first argument of the first tuple.
+        fstTuple.children = [obj].concat(fstTuple.children);
+        let tuples = [fstTuple].concat(children[3].children.slice(1));
+        // Construct the resulting function call node.
+        syntaxTree.type = "function-call";
+        syntaxTree.fun = fun;
+        syntaxTree.tuples = tuples;
       } else {
         becomeChild(0)(syntaxTree);
       }
@@ -941,6 +969,8 @@ const funEntGrammar = {
   "expression^(16)": {
     rules: [
       [/\(/, "expression", /\)/],
+      ["array!1"],
+      ["object!1"],
       ["literal"],
     ],
     process: (syntaxTree) => {
@@ -950,6 +980,58 @@ const funEntGrammar = {
         becomeChild(0)(syntaxTree);
       }
     },
+  },
+  "array": {
+    rules: [
+      [/\[/, "expression-list?", /\]/],
+    ],
+    process: (syntaxTree) => {
+      becomeChild(1)(syntaxTree);
+      if (syntaxTree.children[0]) becomeChild(0)(syntaxTree);
+    },
+  },
+  "object": {
+    rules: [
+      [/\{/, "member-list?", /\}/],
+    ],
+    process: (syntaxTree) => {
+      becomeChild(1)(syntaxTree);
+      if (syntaxTree.children[0]) becomeChild(0)(syntaxTree);
+    },
+  },
+  "member-list": {
+    rules: [
+      ["member", "/,/", "member-list!"],
+      ["member", "/,/?"],
+    ],
+    process: straightenListSyntaxTree(1),
+  },
+  "member": {
+    rules: [
+      ["identifier", "/:/", "expression"],
+      ["string", "/:/", "expression"],
+    ],
+    process: (syntaxTree) => {
+      syntaxTree.children = {
+        name: syntaxTree.children[0],
+        val: syntaxTree.children[2],
+      }
+    },
+  },
+  "literal": {
+    rules: [
+      ["ent-ref!1"],
+      ["input-placeholder!1"],
+      ["string"],
+      ["number"],
+      ["constant"],
+    ],
+  },
+  "constant": {
+    rules: [
+      ["/true|false|null|undefined/"],
+    ],
+    process: copyLexemeFromChild(0),
   },
 };
 
