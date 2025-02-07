@@ -209,7 +209,8 @@ const jsonGrammar = {
   },
   "array": {
     rules: [
-      [/\[/, "literal-list?", /\]/],
+      [/\[/, "literal-list!1", /\]/],
+      [/\[/, /\]/],
     ],
     process: (syntaxTree) => {
       becomeChild(1)(syntaxTree);
@@ -218,7 +219,8 @@ const jsonGrammar = {
   },
   "object": {
     rules: [
-      [/\{/, "member-list?", /\}/],
+      [/\{/, "member-list!1", /\}/],
+      [/\{/, /\}/],
     ],
     process: (syntaxTree) => {
       becomeChild(1)(syntaxTree);
@@ -265,7 +267,7 @@ const regEntGrammar = {
   ...jsonGrammar,
   "literal": {
     rules: [
-      ["ent-ref!1"],
+      ["entity-reference!1"],
       ["input-placeholder!1"],
       ["mixed-string"],
       ["number"],
@@ -301,7 +303,7 @@ const regEntGrammar = {
       }
     },
   },
-  "ent-ref": {
+  "entity-reference": {
     rules: [
       [/@\[/, "/0|[1-9][0-9]*/",  /\]/],
       [/@\[/, "path", /\]/],
@@ -353,7 +355,7 @@ const regEntStringContentGrammar = {
   },
   "string-part": {
     rules: [
-      ["ent-ref!1"],
+      ["entity-reference!1"],
       ["input-placeholder!1"],
       ["escaped-bracket"],
       ["plain-text"],
@@ -395,14 +397,8 @@ const funEntGrammar = {
   ...regEntGrammar,
   "function": {
     rules: [
-      [
-        /[^0-9\[\]@,;"\s][^\[\]@,;"\s]*/, /\(/, "param-list", /\)/, "/=>/", 
-        /\{/, "statement-list!", /\}/
-      ],
-      [
-        /[^0-9\[\]@,;"\s][^\[\]@,;"\s]*/, /\(/, "param-list", /\)/, "/=>/", 
-        /\(/, "expression!", /\)/,
-      ],
+      [/\(/, "param-list", /\)/, "/=>/", /\{/, "statement-list!", /\}/],
+      [/\(/, "param-list", /\)/, "/=>/", /\(/, "expression!", /\)/],
     ],
     process: (syntaxTree) => {
       let children = syntaxTree.children;
@@ -425,7 +421,7 @@ const funEntGrammar = {
   },
   "param-list": {
     rules: [
-      ["param", "/,/", "param-list!"],
+      ["param", "/,/", "param-list!1"],
       ["param", "/,/?"],
     ],
     process: straightenListSyntaxTree(1),
@@ -467,7 +463,7 @@ const funEntGrammar = {
   },
   "type^(2)-list": {
     rules: [
-      ["type^(2)", "/,/", "type^(2)-list!"],
+      ["type^(2)", "/,/", "type^(2)-list!1"],
       ["type^(2)", "/,/?"],
     ],
     process: straightenListSyntaxTree(1),
@@ -511,14 +507,14 @@ const funEntGrammar = {
   },
   "type^(3)-list": {
     rules: [
-      ["type^(3)", "/,/", "type^(3)-list!"],
+      ["type^(3)", "/,/", "type^(3)-list!1"],
       ["type^(3)", "/,/?"],
     ],
     process: straightenListSyntaxTree(1),
   },
   "type^(3)": {
     rules: [
-      ["ent-ref"], // A class.
+      ["entity-reference"], // A class.
       [/[tuafrjh8dl]|string|bool|int|float/],
       [/object|array|mixed/], // User has to manually type in a parsable
       // literal.
@@ -620,7 +616,7 @@ const funEntGrammar = {
   },
   "identifier-list": {
     rules: [
-      ["identifier", "/,/", "identifier-list!"],
+      ["identifier", "/,/", "identifier-list!1"],
       ["identifier", "/,/?"],
     ],
     process: straightenListSyntaxTree(1),
@@ -679,7 +675,7 @@ const funEntGrammar = {
   },
   "expression-list": {
     rules: [
-      ["expression", "/,/", "expression-list!"],
+      ["expression", "/,/", "expression-list!1"],
       ["expression", "/,/?"],
     ],
     process: straightenListSyntaxTree(1),
@@ -984,7 +980,8 @@ const funEntGrammar = {
   },
   "array": {
     rules: [
-      [/\[/, "expression-list?", /\]/],
+      [/\[/, "expression-list!1", /\]/],
+      [/\[/, /\]/],
     ],
     process: (syntaxTree) => {
       becomeChild(1)(syntaxTree);
@@ -993,7 +990,8 @@ const funEntGrammar = {
   },
   "object": {
     rules: [
-      [/\{/, "member-list?", /\}/],
+      [/\{/, "member-list!1", /\}/],
+      [/\{/, /\}/],
     ],
     process: (syntaxTree) => {
       becomeChild(1)(syntaxTree);
@@ -1002,7 +1000,7 @@ const funEntGrammar = {
   },
   "member-list": {
     rules: [
-      ["member", "/,/", "member-list!"],
+      ["member", "/,/", "member-list!1"],
       ["member", "/,/?"],
     ],
     process: straightenListSyntaxTree(1),
@@ -1021,7 +1019,8 @@ const funEntGrammar = {
   },
   "literal": {
     rules: [
-      ["ent-ref!1"],
+      ["entity-reference!1"],
+      ["input-placeholder!1"],
       ["string"],
       ["number"],
       ["constant"],
@@ -1060,109 +1059,109 @@ export const funEntParser = new Parser(
 
 /* Tests */
 
-regEntParser.log(regEntParser.parse(
-  `12`
-)[0]);
-// Works.
-regEntParser.log(regEntParser.parse(
-  `12, 13`
-)[0]);
-// Works.
-regEntParser.log(regEntParser.parse(
-  `"Hello, world!"`
-)[0]);
-// Works.
-regEntParser.log(regEntParser.parse(
-  `,`
-)[0]);
-// Works.
-regEntParser.log(regEntParser.parse(
-  `@`
-)[0]);
-// Works.
-regEntParser.log(regEntParser.parse(
-  `@[`
-)[0]);
-// Works.
-regEntParser.log(regEntParser.parse(
-  `12,`
-)[0]);
-// Works.
-regEntParser.log(regEntParser.parse(
-  `12,\[`
-)[0]);
-// Works.
-regEntParser.log(regEntParser.parse(
-  `"Hello, world!",@[7],_,false`
-)[0]);
-// Works.
-regEntParser.log(regEntParser.parse(
-  `"Hello, world!",@[7],_,false,`
-)[0]);
-// Works.
-regEntParser.log(regEntParser.parse(
-  `"Hello, world!",@[7],_,false`, "literal-list"
-)[0]);
-// Works.
-regEntParser.log(regEntParser.parse(
-  `"Hello, world!",@[7],_,false`, "literal"
-)[0]);
-// Works.
-regEntParser.log(regEntParser.parse(
-  `"H`, "literal"
-)[0]);
-// Works.
-regEntParser.log(regEntParser.parse(
-  `12`, "literal", true
-)[0]);
-// Works.
-regEntParser.log(regEntParser.parse(
-  `12`, "literal", true, true
-)[0]);
-// Works.
-regEntParser.log(regEntParser.parse(
-  `12`, "literal+", true, true
-)[0]);
-// Works.
-regEntParser.log(regEntParser.parse(
-  `12`, "literal-list", true
-)[0]);
-// Works.
-regEntParser.log(regEntParser.parse(
-  `12,`, "literal-list", true
-)[0]);
-// Works.
-regEntParser.log(regEntParser.parse(
-  `12,@`, "literal-list", true
-)[0]);
-// Works.
-regEntParser.log(regEntParser.parse(
-  `12, "Hello, @[7]!"`
-)[0]);
-// Works.
-regEntParser.log(regEntParser.parse(
-  `12, "Hello, @[7!"`
-)[0]);
-// Works.
-regEntParser.log(regEntParser.parse(
-  `12, [13, [14,[15 ,  16]]]`
-)[0]);
-// Works.
-regEntParser.log(regEntParser.parse(
-  `12, {"prop": [13]}, 13`
-)[0]);
-// Works.
+// regEntParser.log(regEntParser.parse(
+//   `12`
+// )[0]);
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12, 13`
+// )[0]);
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `"Hello, world!"`
+// )[0]);
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `,`
+// )[0]);
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `@`
+// )[0]);
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `@[`
+// )[0]);
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12,`
+// )[0]);
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12,\[`
+// )[0]);
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `"Hello, world!",@[7],_,false`
+// )[0]);
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `"Hello, world!",@[7],_,false,`
+// )[0]);
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `"Hello, world!",@[7],_,false`, "literal-list"
+// )[0]);
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `"Hello, world!",@[7],_,false`, "literal"
+// )[0]);
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `"H`, "literal"
+// )[0]);
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12`, "literal", true
+// )[0]);
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12`, "literal", true, true
+// )[0]);
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12`, "literal+", true, true
+// )[0]);
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12`, "literal-list", true
+// )[0]);
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12,`, "literal-list", true
+// )[0]);
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12,@`, "literal-list", true
+// )[0]);
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12, "Hello, @[7]!"`
+// )[0]);
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12, "Hello, @[7!"`
+// )[0]);
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12, [13, [14,[15 ,  16]]]`
+// )[0]);
+// // Works.
+// regEntParser.log(regEntParser.parse(
+//   `12, {"prop": [13]}, 13`
+// )[0]);
+// // Works.
 
 
+// funEntParser.log(funEntParser.parse(
+//   '(' + [
+//     '"Name":string',
+//     '"Parent class":@[classes]?',
+//   ].join(',')
+// )[0]);
+// // Works.
 funEntParser.log(funEntParser.parse(
-  'class(' + [
-    '"Name":string',
-    '"Parent class":@[classes]?',
-  ].join(',')
-)[0]);
-// Works.
-funEntParser.log(funEntParser.parse(
-  'class(' + [
+  '(' + [
     '"Name":string',
     '"Parent class":@[\'classes\']?',
     // 'Member format?:(f::Function|t::Entity type)',
@@ -1179,7 +1178,7 @@ funEntParser.log(funEntParser.parse(
     '"Description":@{5}',
   ].join(',') + '})'
 )[0]);
-// Works.
+// ...
 
 
 
