@@ -214,7 +214,7 @@ const jsonGrammar = {
     ],
     process: (syntaxTree) => {
       if (syntaxTree.ruleInd === 0) {
-        becomeChild(1)(syntaxTree);
+        syntaxTree.children = syntaxTree.children[1].children;
       } else {
         syntaxTree.children = []
       }
@@ -227,7 +227,7 @@ const jsonGrammar = {
     ],
     process: (syntaxTree) => {
       if (syntaxTree.ruleInd === 0) {
-        becomeChild(1)(syntaxTree);
+        syntaxTree.children = syntaxTree.children[1].children;
       } else {
         syntaxTree.children = []
       }
@@ -989,7 +989,7 @@ const funEntGrammar = {
     ],
     process: (syntaxTree) => {
       if (syntaxTree.ruleInd === 0) {
-        becomeChild(1)(syntaxTree);
+        syntaxTree.children = syntaxTree.children[1].children;
       } else {
         syntaxTree.children = []
       }
@@ -1002,7 +1002,7 @@ const funEntGrammar = {
     ],
     process: (syntaxTree) => {
       if (syntaxTree.ruleInd === 0) {
-        becomeChild(1)(syntaxTree);
+        syntaxTree.children = syntaxTree.children[1].children;
       } else {
         syntaxTree.children = []
       }
