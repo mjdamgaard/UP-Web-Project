@@ -1,5 +1,5 @@
 import {useState, useMemo} from "react";
-import {DataFetcher} from "../../classes/DataFetcher";
+import {DataFetcher} from "../../classes/DataFetcher.js";
 
 
 export const XMLTextFromEntID = ({entID}) => {

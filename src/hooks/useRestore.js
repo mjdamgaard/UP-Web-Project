@@ -1,7 +1,7 @@
 import {
   useState, useCallback, useEffect, useRef, useId,
 } from "react";
-import {LazyCallbackHandler} from "../classes/LazyCallbackHandler";
+import {LazyCallbackHandler} from "../classes/LazyCallbackHandler.js";
 
 
 

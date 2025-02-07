@@ -1,10 +1,10 @@
 
 import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
 
-import {LRUCache} from "./PriorityLRUCache.js";
+import {PriorityCache} from "./PriorityCache.js";
 import {Parser} from "./Parser.js";
 
-const entitySyntaxTreeCache = new LRUCache(200);
+const entitySyntaxTreeCache = new PriorityCache(200);
 
 const ARRAY_TYPE_MAX_LEN = 20;
 
@@ -307,7 +307,7 @@ const regEntGrammar = {
     ],
     process: (syntaxTree) => {
       copyLexemeFromChild(1)(syntaxTree);
-      syntaxTree.isTBD = (ruleInd === 1);
+      syntaxTree.isTBD = (syntaxTree.ruleInd === 1);
     }
   },
   "input-placeholder": {
@@ -1059,107 +1059,107 @@ export const funEntParser = new Parser(
 
 /* Tests */
 
-// regEntParser.log(regEntParser.parse(
-//   `12`
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `12, 13`
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `"Hello, world!"`
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `,`
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `@`
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `@[`
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `12,`
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `12,\[`
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `"Hello, world!",@[7],_,false`
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `"Hello, world!",@[7],_,false,`
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `"Hello, world!",@[7],_,false`, "literal-list"
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `"Hello, world!",@[7],_,false`, "literal"
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `"H`, "literal"
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `12`, "literal", true
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `12`, "literal", true, true
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `12`, "literal+", true, true
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `12`, "literal-list", true
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `12,`, "literal-list", true
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `12,@`, "literal-list", true
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `12, "Hello, @[7]!"`
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `12, "Hello, @[7!"`
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `12, [13, [14,[15 ,  16]]]`
-// ));
-// // Works.
-// regEntParser.log(regEntParser.parse(
-//   `12, {"prop": [13]}, 13`
-// ));
-// // Works.
-//
-//
-// funEntParser.log(funEntParser.parse(
-//   'class(' + [
-//     '"Name":string',
-//     '"Parent class":@[classes]?',
-//   ].join(',')
-// ));
-// // Works.
+regEntParser.log(regEntParser.parse(
+  `12`
+)[0]);
+// Works.
+regEntParser.log(regEntParser.parse(
+  `12, 13`
+)[0]);
+// Works.
+regEntParser.log(regEntParser.parse(
+  `"Hello, world!"`
+)[0]);
+// Works.
+regEntParser.log(regEntParser.parse(
+  `,`
+)[0]);
+// Works.
+regEntParser.log(regEntParser.parse(
+  `@`
+)[0]);
+// Works.
+regEntParser.log(regEntParser.parse(
+  `@[`
+)[0]);
+// Works.
+regEntParser.log(regEntParser.parse(
+  `12,`
+)[0]);
+// Works.
+regEntParser.log(regEntParser.parse(
+  `12,\[`
+)[0]);
+// Works.
+regEntParser.log(regEntParser.parse(
+  `"Hello, world!",@[7],_,false`
+)[0]);
+// Works.
+regEntParser.log(regEntParser.parse(
+  `"Hello, world!",@[7],_,false,`
+)[0]);
+// Works.
+regEntParser.log(regEntParser.parse(
+  `"Hello, world!",@[7],_,false`, "literal-list"
+)[0]);
+// Works.
+regEntParser.log(regEntParser.parse(
+  `"Hello, world!",@[7],_,false`, "literal"
+)[0]);
+// Works.
+regEntParser.log(regEntParser.parse(
+  `"H`, "literal"
+)[0]);
+// Works.
+regEntParser.log(regEntParser.parse(
+  `12`, "literal", true
+)[0]);
+// Works.
+regEntParser.log(regEntParser.parse(
+  `12`, "literal", true, true
+)[0]);
+// Works.
+regEntParser.log(regEntParser.parse(
+  `12`, "literal+", true, true
+)[0]);
+// Works.
+regEntParser.log(regEntParser.parse(
+  `12`, "literal-list", true
+)[0]);
+// Works.
+regEntParser.log(regEntParser.parse(
+  `12,`, "literal-list", true
+)[0]);
+// Works.
+regEntParser.log(regEntParser.parse(
+  `12,@`, "literal-list", true
+)[0]);
+// Works.
+regEntParser.log(regEntParser.parse(
+  `12, "Hello, @[7]!"`
+)[0]);
+// Works.
+regEntParser.log(regEntParser.parse(
+  `12, "Hello, @[7!"`
+)[0]);
+// Works.
+regEntParser.log(regEntParser.parse(
+  `12, [13, [14,[15 ,  16]]]`
+)[0]);
+// Works.
+regEntParser.log(regEntParser.parse(
+  `12, {"prop": [13]}, 13`
+)[0]);
+// Works.
+
+
+funEntParser.log(funEntParser.parse(
+  'class(' + [
+    '"Name":string',
+    '"Parent class":@[classes]?',
+  ].join(',')
+)[0]);
+// Works.
 funEntParser.log(funEntParser.parse(
   'class(' + [
     '"Name":string',
@@ -1177,7 +1177,7 @@ funEntParser.log(funEntParser.parse(
     '"Member format":@{4}',
     '"Description":@{5}',
   ].join(',') + '})'
-));
+)[0]);
 // Works.
 
 

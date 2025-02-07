@@ -426,7 +426,7 @@ export class DataInserter {
   scoreEntityWRTRelationalClassRelevancyQuality(
     entID, objID, relID, scoreMid, scoreRadius, callback = () => {}
   ) {
-    let classDefStr = DefStrConstructor.getRelationalClassExplodedDefStr(
+    let classDefStr = DataConstructor.getRelationalClassExplodedDefStr(
       objID, relID
     );
     this.scoreEntityWRTRelevancyQuality(

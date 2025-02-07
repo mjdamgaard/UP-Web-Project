@@ -1,15 +1,15 @@
 import {useState, useMemo, useCallback} from "react";
 
 import {basicEntIDs} from "../../../entity_ids/basic_entity_ids.js";
-import {DataFetcher} from "../../../classes/DataFetcher";
+import {DataFetcher} from "../../../classes/DataFetcher.js";
 import {
   EntityReference, ScaleReference
-} from "../../entity_refs/EntityReference";
-import {EntityInfoPage} from "./subpages/InfoPage";
-import {DropdownMenu} from "../../menus/DropdownMenu";
-import {SubpagesWithTabs} from "./subpages/SubpagesWithTabs";
+} from "../../entity_refs/EntityReference.js";
+import {EntityInfoPage} from "./subpages/InfoPage.js";
+import {DropdownMenu} from "../../menus/DropdownMenu.js";
+import {SubpagesWithTabs} from "./subpages/SubpagesWithTabs.js";
 
-import {EntityList} from "../../entity_lists/EntityList";
+import {EntityList} from "../../entity_lists/EntityList.js";
 import {ClassSubpage} from "./subpages/ClassSubpage.js";
 import {RelationSubpage} from "./subpages/RelationSubpage.js";
 

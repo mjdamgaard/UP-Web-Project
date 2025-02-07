@@ -1,7 +1,7 @@
 
 
 
-export class PriorityLRUCache {
+export class PriorityCache {
 
   constructor(cacheLimit, halftime) {
     this.limit = cacheLimit;

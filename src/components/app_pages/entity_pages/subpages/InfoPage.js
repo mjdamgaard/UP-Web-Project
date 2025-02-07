@@ -1,9 +1,9 @@
 import {useState, useMemo, useContext} from "react";
 
-import {DataFetcher} from "../../../../classes/DataFetcher";
-import {DropdownMenu} from "../../../menus/DropdownMenu";
-import {EntityReference} from "../../../entity_refs/EntityReference";
-import {XMLText, XMLTextFromEntID} from "../../../texts/XMLText";
+import {DataFetcher} from "../../../../classes/DataFetcher.js";
+import {DropdownMenu} from "../../../menus/DropdownMenu.js";
+import {EntityReference} from "../../../entity_refs/EntityReference.js";
+import {XMLText, XMLTextFromEntID} from "../../../texts/XMLText.js";
 
 /* Placeholders */
 // const XMLText = () => <template></template>;

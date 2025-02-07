@@ -1,7 +1,7 @@
 import {useState, useMemo, useContext} from "react";
 
 import {basicEntIDs} from "../../../entity_ids/basic_entity_ids.js";
-import {DataFetcher} from "../../../classes/DataFetcher";
+import {DataFetcher} from "../../../classes/DataFetcher.js";
 import {EntityReference} from "../../entity_refs/EntityReference.js";
 
 /* Placeholders */
