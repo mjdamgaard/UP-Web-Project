@@ -213,8 +213,11 @@ const jsonGrammar = {
       [/\[/, /\]/],
     ],
     process: (syntaxTree) => {
-      becomeChild(1)(syntaxTree);
-      if (syntaxTree.children[0]) becomeChild(0)(syntaxTree);
+      if (syntaxTree.ruleInd === 0) {
+        becomeChild(1)(syntaxTree);
+      } else {
+        syntaxTree.children = []
+      }
     },
   },
   "object": {
@@ -223,8 +226,11 @@ const jsonGrammar = {
       [/\{/, /\}/],
     ],
     process: (syntaxTree) => {
-      becomeChild(1)(syntaxTree);
-      if (syntaxTree.children[0]) becomeChild(0)(syntaxTree);
+      if (syntaxTree.ruleInd === 0) {
+        becomeChild(1)(syntaxTree);
+      } else {
+        syntaxTree.children = []
+      }
     },
   },
   "member-list": {
@@ -239,10 +245,8 @@ const jsonGrammar = {
       ["string", "/:/", "literal"],
     ],
     process: (syntaxTree) => {
-      syntaxTree.children = {
-        name: syntaxTree.children[0],
-        val: syntaxTree.children[2],
-      }
+      syntaxTree.name = syntaxTree.children[0];
+      syntaxTree.val = syntaxTree.children[2];
     },
   },
 };
@@ -897,7 +901,7 @@ const funEntGrammar = {
   "expression^(14)": {
     rules: [
       ["expression^(15)", "expression-tuple+!1"],
-      ["expression^(15)", "/->/", "expression^(15)!", "expression-tuple+"],
+      ["expression^(15)", /\->/, "expression^(15)!", "expression-tuple+"],
       ["expression^(15)"],
     ],
     process: (syntaxTree) => {
@@ -984,8 +988,11 @@ const funEntGrammar = {
       [/\[/, /\]/],
     ],
     process: (syntaxTree) => {
-      becomeChild(1)(syntaxTree);
-      if (syntaxTree.children[0]) becomeChild(0)(syntaxTree);
+      if (syntaxTree.ruleInd === 0) {
+        becomeChild(1)(syntaxTree);
+      } else {
+        syntaxTree.children = []
+      }
     },
   },
   "object": {
@@ -994,8 +1001,11 @@ const funEntGrammar = {
       [/\{/, /\}/],
     ],
     process: (syntaxTree) => {
-      becomeChild(1)(syntaxTree);
-      if (syntaxTree.children[0]) becomeChild(0)(syntaxTree);
+      if (syntaxTree.ruleInd === 0) {
+        becomeChild(1)(syntaxTree);
+      } else {
+        syntaxTree.children = []
+      }
     },
   },
   "member-list": {
@@ -1011,10 +1021,8 @@ const funEntGrammar = {
       ["string", "/:/", "expression"],
     ],
     process: (syntaxTree) => {
-      syntaxTree.children = {
-        name: syntaxTree.children[0],
-        val: syntaxTree.children[2],
-      }
+      syntaxTree.name = syntaxTree.children[0];
+      syntaxTree.val = syntaxTree.children[2];
     },
   },
   "literal": {
@@ -1045,7 +1053,7 @@ export const funEntParser = new Parser(
     /\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
     /\+=|\-=|\*=|&&=|\|\|=|\?\?=/,
     /&&|\|\||\?\?|\+\+|\-\-|\*\*/,
-    /=>|->/,
+    /=>|\->/,
     /===|==|!==|!=|<=|>=/,
     /@[\[\{<];?/,
     /[\.,:;\[\]\{\}\(\)<>\?=\+\-\*\|\^&!%\/]/,

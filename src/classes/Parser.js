@@ -236,7 +236,6 @@ export class Parser {
         "\n--------\n" +
         "Expected an empty string, but got:\n" +
         str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4));
-      syntaxTree.lexArr = lexArr;
     }
     // Else extract an appropriate error from the syntax tree, via a call to
     // #getErrorAndFailedSymbols().
@@ -257,7 +256,6 @@ export class Parser {
           "\n--------\n" +
           `Expected symbol(s) ${expectedSymbols}, but got:\n` +
           str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4));
-        syntaxTree.lexArr = lexArr;
       }
     }
   
@@ -400,6 +398,7 @@ export class Parser {
       for (let j = 0; j < ruleLen; j++) {
         let childSyntaxTree;
         let ruleSym = rule[j];
+        let ruleSymPos = nextPos;
 
         // If the rule symbol ends with '!<n>?' (where '!' is equivalent to
         // '!0'), we parse n as the doOrDieLevel, which is the minimum
@@ -468,7 +467,7 @@ export class Parser {
 
         // First set doOrDie depending how how far nextPos got, regardless
         // of whether the rule symbol succeeded or not.
-        if (nextPos - pos >= doOrDieLevel) {
+        if (nextPos - ruleSymPos >= doOrDieLevel) {
           doOrDie = true;
         }
 
@@ -627,7 +626,7 @@ export class Parser {
         // whether min was reached or not, or whether or not the boolean
         // failIfEOSIsNotReached is true or not.
         else {
-          if (i + 1 >= min && !(failIfEOSIsNotReached && lexArr[nextPos])) {
+          if (i >= min && !(failIfEOSIsNotReached && lexArr[nextPos])) {
             return {
               sym: sym, isSuccess: true, children: children,
               nextPos: nextPos,
