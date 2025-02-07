@@ -191,7 +191,7 @@ export class Parser {
   // <returns>
   // [syntaxTree, lexArr, strPosArr], where syntaxTree is a syntax tree
   // consisting of nodes of the form
-  // {sym, isSuccess, error?, children?, ruleInd? lexeme?, nextPos},
+  // {sym, isSuccess, error?, children?, ruleInd? lexeme?, pos?, nextPos},
   // where sym is the nonterminal symbol or the rule symbol of the node,
   // isSuccess (bool) tells if the node was successfully parsed or not,
   // children is an array of the node's child nodes (which on failure will be
@@ -200,11 +200,9 @@ export class Parser {
   // ruleInd, in the case of a nonterminal symbol that has more than one rule,
   // is the index in the given rules array from which the children was obtained,
   // and lexeme is the matched lexeme in case of a pattern symbol.
-  // Also the returned nextPos is a number denoting the maximal number of
-  // lexemes that was successfully parsed as part of one of the rules.
-  // The other two returned variables, lexArr and strPosArr, are respectively
-  // the lexeme array, and an array with all the positions in the input string,
-  // str, where these lexemes are located.
+  // Also the returned pos is the index position of the first lexeme of the
+  // parsed nonterminal symbol, and nextPos is the index of the last lexeme
+  // plus 1.
   // </returns>
   parse(str, startSym, isPartial = false, keepLastLexeme = false) {
     startSym ??= this.defaultSym;
@@ -348,9 +346,10 @@ export class Parser {
         let [isSuccess = true, error] = process(syntaxTree) || [];
 
         // Make sure that nextPos and sym isn't changed by the user (as they
-        // are used for error reporting).
+        // are used for error reporting). Also, record pos on the node as well.
         syntaxTree.nextPos = nextPos;
         syntaxTree.sym = sym;
+        syntaxTree.pos = pos;
 
         // Set error and isSuccess depending on the returned values, and also
         // reset nextPos on an error.
