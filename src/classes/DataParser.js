@@ -309,8 +309,8 @@ const regEntGrammar = {
   },
   "entity-reference": {
     rules: [
-      [/@\[/, "/0|[1-9][0-9]*/",  /\]/],
-      [/@\[/, "path", /\]/],
+      [/@\[/, /[_\$a-zA-Z0-9]+/,  "/\\]/!"],
+      [/@\[/, /"[^"\\]*"/, /\]/],
     ],
     process: (syntaxTree) => {
       copyLexemeFromChild(1)(syntaxTree);
@@ -319,15 +319,9 @@ const regEntGrammar = {
   },
   "input-placeholder": {
     rules: [
-      [/@\{/, "/[1-9][0-9]*/",    /\}/],
+      [/@\{/, /0|[1-9][0-9]*/, /\}/],
     ],
     process: copyLexemeFromChild(1),
-  },
-  "path": {
-    rules: [
-      [/'([^'\\]|\\[.\n])*'/],
-    ],
-    process: copyLexemeFromChild(0),
   },
 };
 
@@ -336,10 +330,10 @@ export const regEntParser = new Parser(
   "literal-list",
   [
     /"([^"\\]|\\[.\n])*"/,
-    /'([^'\\]|\\[.\n])*'/,
+    // /'([^'\\]|\\[.\n])*'/,
     /\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
     /@[\[\{<];?|[,:\[\]\{\}>]/,
-    /[^\s,:\[\]\{\}\(\)>\?='"]+/,
+    /[_\$a-zA-Z0-9]+/,
   ],
   /\s+/
 );
@@ -395,14 +389,139 @@ export const regEntStringContentParser = new Parser(
 
 
 
+const RESERVED_KEYWORD_REGEXP =
+  /^(let|var|const|function|export|import|break|continue|return|throw)$/;
 
 
-const funEntGrammar = {
+
+
+const scriptGrammar = {
   ...regEntGrammar,
-  "function": {
+  "script": {
     rules: [
-      [/\(/, "param-list", /\)/, "/=>/", /\{/, "statement-list!", /\}/],
-      [/\(/, "param-list", /\)/, "/=>/", /\(/, "expression!", /\)/],
+      ["import-statement-list", "declaration-list"],
+      ["import-statement-list", "expression", "/;/?"],
+      ["declaration-list"],
+    ],
+    process: (syntaxTree) => {
+      // ...
+    },
+  },
+  "import-statement-list": {
+    rules: [
+      ["import-statement", "import-statement-list"],
+      ["import-statement"],
+    ],
+    process: straightenListSyntaxTree(0),
+  },
+  "import-statement": {
+    rules: [
+      [
+        "/import/", /\{/, "import-list", /\}/,
+        "/from/", "entity-reference", "/;/"
+      ],
+    ],
+    process: (syntaxTree) => {
+      // ...
+    },
+  },
+  "import-list": {
+    rules: [
+      ["import", "/,/", "import-list!1"],
+      ["import", "/,/?"],
+    ],
+    process: straightenListSyntaxTree(1),
+  },
+  "import": {
+    rules: [
+      ["identifier", "/as/", "identifier!"],
+      ["identifier"],
+    ],
+    process: (syntaxTree) => {
+      // ...
+    },
+  },
+  "declaration-list": {
+    rules: [
+      ["declaration", "declaration-list"],
+      ["declaration"],
+    ],
+    process: straightenListSyntaxTree(0),
+  },
+  "declaration": {
+    rules: [
+      ["/export/", "/default/", "variable-declaration"],
+      ["/export/", "/default/", "function-declaration"],
+      ["/export/", "variable-declaration"],
+      ["/export/", "function-declaration"],
+      ["variable-declaration"],
+      ["function-declaration"],
+    ],
+    process: straightenListSyntaxTree(0),
+  },
+  "variable-declaration": {
+    rules: [
+      ["/let/", "variable-definition-list", "/;/!"],
+      ["/let/", /\[/, "identifier-list"," /\\]/!", "/=/", "expression", "/;/"],
+    ],
+    process: (syntaxTree) => {
+      if (syntaxTree.ruleInd === 0) {
+        syntaxTree.type = "definition-list";
+        syntaxTree.defList = syntaxTree.children[1];
+      } else {
+        syntaxTree.type = "destructuring";
+        syntaxTree.identList = syntaxTree.children[2];
+        syntaxTree.exp = syntaxTree.children[5];
+      }
+    },
+  },
+  "identifier-list": {
+    rules: [
+      ["identifier", "/,/", "identifier-list!1"],
+      ["identifier", "/,/?"],
+    ],
+    process: straightenListSyntaxTree(1),
+  },
+  "identifier": {
+    rules: [
+      [/[_\$a-zA-Z][_\$a-zA-Z0-9]*/],
+    ],
+    process: (syntaxTree) => {
+      syntaxTree.lexeme = syntaxTree.children[0].lexeme;
+      return [
+        !RESERVED_KEYWORD_REGEXP.test(syntaxTree.lexeme)
+      ];
+    },
+  },
+  "variable-definition-list": {
+    rules: [
+      ["variable-definition", "/,/", "variable-definition-list!"],
+      ["variable-definition"],
+    ],
+    process: straightenListSyntaxTree(1),
+  },
+  "variable-definition": {
+    rules: [
+      ["identifier", "/=/", "expression"],
+      ["identifier"],
+    ],
+    process: (syntaxTree) => {
+      Object.assign(syntaxTree, {
+        ident: syntaxTree.children[0],
+        exp: syntaxTree.children[2] || undefined,
+      });
+    },
+  },
+  "function-declaration": {
+    rules: [
+      [
+        "/function/", "identifier", /\(/, "parameter-list", /\)/,
+        /\{/, "statement-list!", /\}/
+      ],
+      [
+        "identifier", /\(/, "parameter-list", /\)/, "/=>/",
+        /\(/, "expression!", /\)/
+      ],
     ],
     process: (syntaxTree) => {
       let children = syntaxTree.children;
@@ -423,14 +542,14 @@ const funEntGrammar = {
       }
     },
   },
-  "param-list": {
+  "parameter-list": {
     rules: [
-      ["param", "/,/", "param-list!1"],
-      ["param", "/,/?"],
+      ["parameter", "/,/", "parameter-list!1"],
+      ["parameter", "/,/?"],
     ],
     process: straightenListSyntaxTree(1),
   },
-  "param": {
+  "parameter": {
     rules: [
       [/"([^"\\]|\\[.\n])*"/, "/:/", "type"],
     ],
@@ -600,54 +719,6 @@ const funEntGrammar = {
           doFirst:    false,
         });
       }
-    },
-  },
-  "variable-declaration": {
-    rules: [
-      ["/let/", "variable-definition-list", "/;/!"],
-      ["/let/", /\[/, "identifier-list"," /\\]/!", "/=/", "expression", "/;/"],
-    ],
-    process: (syntaxTree) => {
-      if (syntaxTree.ruleInd === 0) {
-        syntaxTree.type = "definition-list";
-        syntaxTree.defList = syntaxTree.children[1];
-      } else {
-        syntaxTree.type = "destructuring";
-        syntaxTree.identList = syntaxTree.children[2];
-        syntaxTree.exp = syntaxTree.children[5];
-      }
-    },
-  },
-  "identifier-list": {
-    rules: [
-      ["identifier", "/,/", "identifier-list!1"],
-      ["identifier", "/,/?"],
-    ],
-    process: straightenListSyntaxTree(1),
-  },
-  "identifier": {
-    rules: [
-      [/[_\$a-zA-Z][_\$a-zA-Z0-9]/],
-    ],
-    process: copyLexemeFromChild(0),
-  },
-  "variable-definition-list": {
-    rules: [
-      ["variable-definition", "/,/", "variable-definition-list!"],
-      ["variable-definition"],
-    ],
-    process: straightenListSyntaxTree(1),
-  },
-  "variable-definition": {
-    rules: [
-      ["identifier", "/=/", "expression"],
-      ["identifier"],
-    ],
-    process: (syntaxTree) => {
-      Object.assign(syntaxTree, {
-        ident: syntaxTree.children[0],
-        exp: syntaxTree.children[2] || undefined,
-      });
     },
   },
   "return-statement": {
@@ -900,8 +971,8 @@ const funEntGrammar = {
   },
   "expression^(14)": {
     rules: [
-      ["expression^(15)", "expression-tuple+!1"],
-      ["expression^(15)", /\->/, "expression^(15)!", "expression-tuple+"],
+      ["identifier", "expression-tuple!1"],
+      ["expression^(15)", /\->/, "identifier!", "expression-tuple"],
       ["expression^(15)"],
     ],
     process: (syntaxTree) => {
@@ -909,19 +980,15 @@ const funEntGrammar = {
       if (syntaxTree.ruleInd === 0) {
         syntaxTree.type = "function-call";
         syntaxTree.fun = children[0];
-        syntaxTree.tuples = children[1].children;
-      } else if (syntaxTree.ruleInd === 1) {
-        // A "virtual method call" is a syntactic sugar over a function call.
-        let obj = children[0];
-        let fun = children[2];
-        let fstTuple = children[3].children[0];
-        // Prepend obj as the first argument of the first tuple.
-        fstTuple.children = [obj].concat(fstTuple.children);
-        let tuples = [fstTuple].concat(children[3].children.slice(1));
-        // Construct the resulting function call node.
+        syntaxTree.tuple = children[1];
+      }
+      // A "virtual method call" is a syntactic sugar over a function call.
+      else if (syntaxTree.ruleInd === 1) {
         syntaxTree.type = "function-call";
-        syntaxTree.fun = fun;
-        syntaxTree.tuples = tuples;
+        syntaxTree.fun = children[0];
+        let tuple = children[3];
+        tuple.children = [obj].concat(tuple.children);
+        syntaxTree.tuple = tuple;
       } else {
         becomeChild(0)(syntaxTree);
       }
@@ -1035,6 +1102,8 @@ const funEntGrammar = {
     ],
     process: becomeChild(0),
   },
+  // "string": {
+  // },
   "constant": {
     rules: [
       ["/true|false|null|undefined/"],
@@ -1044,20 +1113,20 @@ const funEntGrammar = {
 };
 
 
-export const funEntParser = new Parser(
-  funEntGrammar,
+export const scriptParser = new Parser(
+  scriptGrammar,
   "function",
   [
     /"([^"\\]|\\[.\n])*"/,
-    /'([^'\\]|\\[.\n])*'/,
+    // /'([^'\\]|\\[.\n])*'/,
     /\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
     /\+=|\-=|\*=|&&=|\|\|=|\?\?=/,
     /&&|\|\||\?\?|\+\+|\-\-|\*\*/,
-    /=>|\->/,
+    /<>|\->/,
     /===|==|!==|!=|<=|>=/,
     /@[\[\{<];?/,
     /[\.,:;\[\]\{\}\(\)<>\?=\+\-\*\|\^&!%\/]/,
-    /[_\$a-zA-Z][_\$a-zA-Z0-9]*/,
+    /[_\$a-zA-Z0-9]+/,
   ],
   /\s+|\/\/.*\n\s*|\/\*([^\*]|\*(?!\/))*(\*\/\s*|$)/
 );
@@ -1161,14 +1230,14 @@ export const funEntParser = new Parser(
 // // Works.
 
 
-// funEntParser.log(funEntParser.parse(
+// scriptParser.log(scriptParser.parse(
 //   '(' + [
 //     '"Name":string',
 //     '"Parent class":@[classes]?',
 //   ].join(',')
 // )[0]);
 // // Works.
-funEntParser.log(funEntParser.parse(
+scriptParser.log(scriptParser.parse(
   '(' + [
     '"Name":string',
     '"Parent class":@[\'classes\']?',
@@ -1186,7 +1255,7 @@ funEntParser.log(funEntParser.parse(
     '"Description":@{5}',
   ].join(',') + '})'
 )[0]);
-// ...
+// Works.
 
 
 

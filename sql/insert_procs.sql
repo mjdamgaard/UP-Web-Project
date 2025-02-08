@@ -519,7 +519,7 @@ DELIMITER ;
 -- DELIMITER ;
 
 DELIMITER //
-CREATE PROCEDURE insertFunctionEntity (
+CREATE PROCEDURE insertScriptEntity (
     IN userID BIGINT UNSIGNED,
     IN defStr TEXT CHARACTER SET utf8mb4,
     IN readerWhitelistID BIGINT UNSIGNED,
@@ -528,7 +528,7 @@ CREATE PROCEDURE insertFunctionEntity (
 )
 BEGIN
     CALL _insertEntityWithoutSecKey (
-        "f",
+        "s",
         userID, defStr, readerWhitelistID, isAnonymous, isEditable,
         @unused, @unused
     );
@@ -722,7 +722,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE editFunctionEntity (
+CREATE PROCEDURE editScriptEntity (
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
     IN defStr TEXT CHARACTER SET utf8mb4,
@@ -732,7 +732,7 @@ CREATE PROCEDURE editFunctionEntity (
 )
 BEGIN
     CALL _editEntity (
-        "f", 4294967295,
+        "s", 4294967295,
         userID, entID, defStr, readerWhitelistID, isAnonymous, isEditable
     );
 END //
