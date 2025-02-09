@@ -3,12 +3,12 @@
 
 export class PriorityCache {
 
-  constructor(cacheLimit, halftime) {
+  constructor(cacheLimit, halftime_s) {
     this.limit = cacheLimit;
     this.cache = [];
     this.cacheKeys = [];
-    this.halftime = halftime;
-    this.nextDecayTime = Date.now() + halftime;
+    this.halftime_ms = halftime_s * 1000;
+    this.nextDecayTime = Date.now() + this.halftime_ms;
   }
 
   get(key) {
@@ -57,14 +57,14 @@ export class PriorityCache {
   }
 
   #decay(now) {
-    let timeSinceLastDecay = now - (this.nextDecayTime - this.halftime);
-    let decayFactor = 2 ** (-timeSinceLastDecay / this.halftime);
+    let timeSinceLastDecay = now - (this.nextDecayTime - this.halftime_ms);
+    let decayFactor = 2 ** (-timeSinceLastDecay / this.halftime_ms);
     this.cache = this.cache.filter(([, priority], ind, arr) => {
       let newPriority = priority * decayFactor;
       arr[ind][1] = newPriority;
       return (newPriority > 1);
     });
-    this.nextDecayTime = now + this.halftime;
+    this.nextDecayTime = now + this.halftime_ms;
   }
 
 }
