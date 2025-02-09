@@ -993,6 +993,7 @@ const scriptGrammar = {
       [/\(/, "expression", /\)/],
       ["array!1"],
       ["object!1"],
+      ["identifier"],
       ["literal"],
     ],
     process: (syntaxTree) => {

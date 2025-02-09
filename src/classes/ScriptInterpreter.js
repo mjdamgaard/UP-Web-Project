@@ -50,10 +50,22 @@ export class ScriptInterpreter {
     // environment of variables.
     // Also increase counters inside gas.
 
-    // return [liveScript, liveModules];
+    // No, let's just return an environment, but let all variables in it,
+    // including functions, be typed, and for all functions, we attach a (live)
+    // environment to them. Then we don't need to think about modules from
+    // there.
+
+    // ..Wait, so should all expression values be typed, then? ..Or what..?
+    // ..Or i could also just wrap functions in a Function class monad, and
+    // then it will just look like an empty object (since we will not prefix
+    // properties of the Function class with '#') to any user that tries to do
+    // operations on it.. Hm.. (16:43) ..Hm, yeah, this could work.. ..Yes, let
+    // me do that.. (16:45)
+
+    // return environment;
   }
 
-  static executeMainFunction(gas, liveScript, liveModules) {
+  static executeMainFunction(gas, scriptTree, environment) {
     // Execute the main function of the script, and if no function is called
     // 'main', execute the default export. If there are no default export, but
     // only one declaration (including an anonymous declaration, meaning that
@@ -64,9 +76,7 @@ export class ScriptInterpreter {
 
   }
 
-  static executeFunction(
-    gas, funSyntaxTree, inputValueArr, environment, liveModules
-  ) {
+  static executeFunction( gas, funSyntaxTree, inputValueArr, environment) {
     // TODO: Pair the input values with the parameters, and convert the values
     // automatically to the type of the input parameter, if the type is a
     // primitive one. Then create a new environment, and start executing the
@@ -82,9 +92,7 @@ export class ScriptInterpreter {
   }
 
 
-  static executeStatementList(
-    gas, stmtListSyntaxTree, environment, liveModules
-  ) {
+  static executeStatementList(gas, stmtListSyntaxTree, environment) {
     // TODO: Pair the input values with the parameters, and convert the values
     // automatically to the type of the input parameter, if the type is a
     // primitive one. Then create a new environment, and start executing the
@@ -98,17 +106,13 @@ export class ScriptInterpreter {
     // Make changes to environment (and gas) as side-effects.
   }
 
-  static executeBlockStatement(
-    gas, blockStmtSyntaxTree, environment, liveModules
-  ) {
+  static executeBlockStatement(gas, blockStmtSyntaxTree, environment) {
     // TODO: Create a new empty environment (with input environment as
     // the prototype), and execute the statement list inside the block.
 
   }
 
-  static executeLoop(
-    gas, loopListSyntaxTree, environment, liveModules
-  ) {
+  static executeLoop(gas, loopListSyntaxTree, environment) {
     // TODO: Make a environment (with the input as its parent/prototype), and 
     // run the declaration statement, if any, inside it at first. Then
     // depending on the doFirst flag, evaluate and check the condition
@@ -118,9 +122,7 @@ export class ScriptInterpreter {
     // if any. Then make the condition check again and repeat.
   }
 
-  static executeIfElseStatement(
-    gas, ifElseStmtSyntaxTree, environment, liveModules
-  ) {
+  static executeIfElseStatement(gas, ifElseStmtSyntaxTree, environment) {
     // TODO: Simply check the condition, and then either run the ifStmt or
     // elseStmt depending, or do nothing if the to-be-run elseStmt is undefined.
   }
@@ -129,9 +131,7 @@ export class ScriptInterpreter {
   // TODO: Implement switch-case grammar and handling at some point.
 
 
-  static executeVariableDeclaration(
-    gas, varDecSyntaxTree, environment, liveModules
-  ) {
+  static executeVariableDeclaration(gas, varDecSyntaxTree, environment) {
     // TODO: If the statement is a definition list, iterate over each variable
     // definition, evaluate that expression if any, and then add the variable
     // to the environment, or throw a runtime error, if it already defined in
@@ -145,9 +145,7 @@ export class ScriptInterpreter {
   }
 
 
-  static executeStatement(
-    gas, stmtSyntaxTree, environment, liveModules
-  ) {
+  static executeStatement(gas, stmtSyntaxTree, environment) {
     if (--gas.comp < 0) throw new ScriptError(
       COMP_GAS_ERROR,
       stmtSyntaxTree
@@ -162,9 +160,7 @@ export class ScriptInterpreter {
   }
 
 
-  static evaluateExpression(
-    gas, expSyntaxTree, environment, liveModules
-  ) {
+  static evaluateExpression(gas, expSyntaxTree, environment) {
     if (--gas.comp < 0) throw new ScriptError(
       COMP_GAS_ERROR,
       stmtSyntaxTree
@@ -189,88 +185,92 @@ export class ScriptInterpreter {
           let nextVal = this.evaluateExpression(
             gas, children[ind + 1], environment, liveModules
           );
-          switch (op) {
-            case "||":
-              acc = acc || nextVal;
-              break;
-            case "??":
-              acc = acc ?? nextVal;
-              break;
-            case "&&":
-              acc = acc && nextVal;
-              break;
-            case "|":
-              acc = acc | nextVal;
-              break;
-            case "^":
-              acc = acc ^ nextVal;
-              break;
-            case "&":
-              acc = acc & nextVal;
-              break;
-            case "===":
-              acc = acc === nextVal;
-              break;
-            case "==":
-              acc = acc == nextVal;
-              break;
-            case "!==":
-              acc = acc !== nextVal;
-              break;
-            case "!=":
-              acc = acc != nextVal;
-              break;
-            case ">":
-              acc = acc > nextVal;
-              break;
-            case "<":
-              acc = acc < nextVal;
-              break;
-            case "<=":
-              acc = acc <= nextVal;
-              break;
-            case ">=":
-              acc = acc >= nextVal;
-              break;
-            case "<<":
-              acc = acc << nextVal;
-              break;
-            case ">>":
-              acc = acc >> nextVal;
-              break;
-            case ">>>":
-              acc = acc >>> nextVal;
-              break;
-            case "+":
-              acc = parseFloat(acc) + parseFloat(nextVal);
-              break;
-            case "<>":
-              if (Array.isArray(acc)) {
-                if (!Array.isArray(nextVal)) throw new ScriptError(
-                  "Cannot concat a non-array to an array",
-                  children[ind + 1]
-                );
-                acc = [acc, ...nextVal];
-              } else {
-                acc = acc.toString() + nextVal;
-              }
-              break;
-            case "-":
-              acc = acc - nextVal;
-              break;
-            case "*":
-              acc = acc * nextVal;
-              break;
-            case "/":
-              acc = acc / nextVal;
-              break;
-            case "%":
-              acc = acc % nextVal;
-              break;
-            default: throw (
-              "ScriptInterpreter.evaluateExpression(): Unrecognized " +
-              `operator: "${op}"`
-            );
+          try {
+            switch (op) {
+              case "||":
+                acc = acc || nextVal;
+                break;
+              case "??":
+                acc = acc ?? nextVal;
+                break;
+              case "&&":
+                acc = acc && nextVal;
+                break;
+              case "|":
+                acc = acc | nextVal;
+                break;
+              case "^":
+                acc = acc ^ nextVal;
+                break;
+              case "&":
+                acc = acc & nextVal;
+                break;
+              case "===":
+                acc = acc === nextVal;
+                break;
+              case "==":
+                acc = acc == nextVal;
+                break;
+              case "!==":
+                acc = acc !== nextVal;
+                break;
+              case "!=":
+                acc = acc != nextVal;
+                break;
+              case ">":
+                acc = acc > nextVal;
+                break;
+              case "<":
+                acc = acc < nextVal;
+                break;
+              case "<=":
+                acc = acc <= nextVal;
+                break;
+              case ">=":
+                acc = acc >= nextVal;
+                break;
+              case "<<":
+                acc = acc << nextVal;
+                break;
+              case ">>":
+                acc = acc >> nextVal;
+                break;
+              case ">>>":
+                acc = acc >>> nextVal;
+                break;
+              case "+":
+                acc = parseFloat(acc) + parseFloat(nextVal);
+                break;
+              case "<>":
+                if (Array.isArray(acc)) {
+                  if (!Array.isArray(nextVal)) throw new ScriptError(
+                    "Cannot concat a non-array to an array",
+                    children[ind + 1]
+                  );
+                  acc = [acc, ...nextVal];
+                } else {
+                  acc = acc.toString() + nextVal;
+                }
+                break;
+              case "-":
+                acc = acc - nextVal;
+                break;
+              case "*":
+                acc = acc * nextVal;
+                break;
+              case "/":
+                acc = acc / nextVal;
+                break;
+              case "%":
+                acc = acc % nextVal;
+                break;
+              default: throw (
+                "ScriptInterpreter.evaluateExpression(): Unrecognized " +
+                `operator: "${op}"`
+              );
+            }
+          } catch (err) {
+            throw new ScriptError("Type error", children[ind + 1]);
           }
         });
         return acc;
@@ -282,42 +282,50 @@ export class ScriptInterpreter {
         let exp = this.evaluateExpression(
           gas, expSyntaxTree.exp, environment, liveModules
         );
-        return root ** exp;
+        try {
+          return root ** exp;
+        } catch (err) {
+          throw new ScriptError("Type error", expSyntaxTree);
+        }
       }
       case "prefix-expression": {
         let val = this.evaluateExpression(
           gas, expSyntaxTree.exp, environment, liveModules
         );
         let op = expSyntaxTree.op;
-        switch (op) {
-          case "++":
-            // TODO: Implement.
-            return;
-          case "--":
-            // TODO: Implement.
-            return;
-          case "!":
-            return !val;
-          case "~":
-            return ~val;
-          case "+":
-            return +val;
-          case "-":
-            return -val;
-          case "typeof":
-            if (Array.isArray(val)) {
-              return "array"
-            } else {
-              return typeof val;
-            }
-          case "void":
-            return void val;
-          case "delete":
-            // TODO: Implement
-            return;
-          case "await":
-            // TODO: Implement
-            return;
+        try {
+          switch (op) {
+            case "++":
+              // TODO: Implement.
+              return;
+            case "--":
+              // TODO: Implement.
+              return;
+            case "!":
+              return !val;
+            case "~":
+              return ~val;
+            case "+":
+              return +val;
+            case "-":
+              return -val;
+            case "typeof":
+              if (Array.isArray(val)) {
+                return "array"
+              } else {
+                return typeof val;
+              }
+            case "void":
+              return void val;
+            case "delete":
+              // TODO: Implement
+              return;
+            case "await":
+              // TODO: Implement
+              return;
+          }
+        } catch (error) {
+          throw new ScriptError("Type error", expSyntaxTree.exp);
         }
       }
       case "postfix-expression": {
@@ -348,6 +356,9 @@ export class ScriptInterpreter {
         } else {
           return new EntityReference(expSyntaxTree.lexeme);
         }
+      case "identifier":
+        let ident = expSyntaxTree.lexeme;
+        return environment.get(ident);
       case "string":
         return JSON.parse(expSyntaxTree.lexeme);
       case "number":
@@ -366,8 +377,115 @@ export class ScriptInterpreter {
   }
 
 
+  static assignToVariableOrMember(expSyntaxTree, val, environment) {
+    if (expSyntaxTree.type === "identifier") {
+      let ident = expSyntaxTree.lexeme;
+      let prevVal = environment.assign(ident, val, expSyntaxTree);
+      return prevVal;
+    }
+    else if (expSyntaxTree.type === "member-access") {
+      let identTree = expSyntaxTree.exp;
+      if (expSyntaxTree.type !== "identifier") throw new ScriptError(
+        "Assignment to invalid expression",
+        expSyntaxTree
+      );
+      let indices = expSyntaxTree.indices;
+      // ...
+    }
+    else {
+      throw new ScriptError(
+        "Assignment to invalid expression",
+        expSyntaxTree
+      );
+    }
+  }
+
+
 }
 
+
+
+
+class Environment {
+  constructor(parent = undefined, scopeType = "block") {
+    this.parent = parent;
+    this.scopeType = scopeType;
+    this.variables = {};
+  }
+
+  get(ident) {
+    let safeIdent = "#" + ident;
+    let [val] = this.variables[safeIdent];
+    if (val !== undefined) {
+      return val;
+    } else if (this.parent) {
+      return this.parent.get(ident);
+    } else {
+      return undefined;
+    }
+  }
+
+  declare(ident, val, isConst, scopeType, node) {
+    let safeIdent = "#" + ident;
+    let [prevVal] = this.variables[safeIdent];
+    if (scopeType === "block") {
+      if (prevVal !== undefined) {
+        throw new ScriptError(
+          "Redeclaration of variable '" + ident + "'",
+          node
+        );
+      } else {
+        this.variables[safeIdent] = [val, isConst];
+      }
+    } else if (scopeType === "function") {
+      throw "Environment.declare(): 'var' keyword not implemented";
+    } else {
+      throw "Environment.declare(): scope type not recognized/implemented"
+    }
+  }
+
+  assign(ident, val, node) {
+    let safeIdent = "#" + ident;
+    let [prevVal, isConst] = this.variables[safeIdent];
+    if (prevVal !== undefined) {
+      if (isConst) {
+        throw new ScriptError(
+          "Reassignment of constant variable or function '" + ident + "'",
+          node
+        );
+      } else {
+        this.variables[safeIdent][0] = val;
+        return prevVal;
+      }
+    } else if (this.parent) {
+      return this.parent.assign(ident, val, node);
+    } else {
+      throw new ScriptError(
+        "Assignment of undefined variable '" + ident + "'",
+        node
+      );
+    }
+  }
+}
+
+
+
+
+
+
+class DefinedFunction {
+  constructor(funTree, environment) {
+    this.fun = funTree;
+    this.env = environment;
+  }
+}
+
+class BuiltInFunction {
+  constructor(fun, gasCosts) {
+    this.fun = fun;
+    this.gasCosts = gasCosts;
+  }
+}
 
 
 
