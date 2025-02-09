@@ -145,10 +145,13 @@ export function makeChildrenIntoLexemeArray(syntaxTree) {
 }
 
 
+let straightenPolyadicOperation = straightenListSyntaxTree(1, true);
+
 export function processPolyadicOperation(syntaxTree) {
   if (syntaxTree.ruleInd === 0) {
     syntaxTree.type = "polyadic-operation";
-    straightenListSyntaxTree(1, true)(syntaxTree);
+    straightenPolyadicOperation(syntaxTree);
+    syntaxTree.operators = syntaxTree.delimiters;
   } else {
     becomeChild(0)(syntaxTree);
   }
@@ -938,7 +941,7 @@ const scriptGrammar = {
         syntaxTree.type = "function-call";
         syntaxTree.fun = children[0];
         let tuple = children[3];
-        tuple.children = [obj].concat(tuple.children);
+        tuple.children = [obj, ...tuple.children];
         syntaxTree.tuple = tuple;
       } else {
         becomeChild(0)(syntaxTree);

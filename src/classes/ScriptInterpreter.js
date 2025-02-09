@@ -7,6 +7,8 @@ import {EntityReference, EntityPlaceholder} from "./DataParser.js";
 
 const cache = new PriorityCache(5000, 3600 * 2);
 
+const COMP_GAS_ERROR = "Ran out of computation gas.";
+
 
 
 export class ScriptInterpreter {
@@ -146,6 +148,10 @@ export class ScriptInterpreter {
   static executeStatement(
     gas, stmtSyntaxTree, environment, liveModules
   ) {
+    if (--gas.comp < 0) throw new ScriptError(
+      COMP_GAS_ERROR,
+      stmtSyntaxTree
+    );
     // TODO: switch-case the type of the statement, and then call any of the
     // above flow methods, or one of the below singular statements, depending
     // on the type. For some of the simple statements, like return, throw,
@@ -159,7 +165,10 @@ export class ScriptInterpreter {
   static evaluateExpression(
     gas, expSyntaxTree, environment, liveModules
   ) {
-    gas.comp++;
+    if (--gas.comp < 0) throw new ScriptError(
+      COMP_GAS_ERROR,
+      stmtSyntaxTree
+    );
     // TODO: switch-case the type of the expression, and just handle each one
     // inside this statement.. ..Sure (unless they turn out to be too
     // complicated). ..Oh, which some are, especially the function call, but
@@ -171,14 +180,160 @@ export class ScriptInterpreter {
         break;
       case "conditional-expression":
         break;
-      case "polyadic-operation":
-        break;
-      case "exponential-expression":
-        break;
-      case "prefix-expression":
-        break;
-      case "postfix-expression":
-        break;
+      case "polyadic-operation": {
+        let children = expSyntaxTree.children;
+        let acc = this.evaluateExpression(
+          gas, children[0], environment, liveModules
+        );
+        expSyntaxTree.operators.forEach((op, ind) => {
+          let nextVal = this.evaluateExpression(
+            gas, children[ind + 1], environment, liveModules
+          );
+          switch (op) {
+            case "||":
+              acc = acc || nextVal;
+              break;
+            case "??":
+              acc = acc ?? nextVal;
+              break;
+            case "&&":
+              acc = acc && nextVal;
+              break;
+            case "|":
+              acc = acc | nextVal;
+              break;
+            case "^":
+              acc = acc ^ nextVal;
+              break;
+            case "&":
+              acc = acc & nextVal;
+              break;
+            case "===":
+              acc = acc === nextVal;
+              break;
+            case "==":
+              acc = acc == nextVal;
+              break;
+            case "!==":
+              acc = acc !== nextVal;
+              break;
+            case "!=":
+              acc = acc != nextVal;
+              break;
+            case ">":
+              acc = acc > nextVal;
+              break;
+            case "<":
+              acc = acc < nextVal;
+              break;
+            case "<=":
+              acc = acc <= nextVal;
+              break;
+            case ">=":
+              acc = acc >= nextVal;
+              break;
+            case "<<":
+              acc = acc << nextVal;
+              break;
+            case ">>":
+              acc = acc >> nextVal;
+              break;
+            case ">>>":
+              acc = acc >>> nextVal;
+              break;
+            case "+":
+              acc = parseFloat(acc) + parseFloat(nextVal);
+              break;
+            case "<>":
+              if (Array.isArray(acc)) {
+                if (!Array.isArray(nextVal)) throw new ScriptError(
+                  "Cannot concat a non-array to an array",
+                  children[ind + 1]
+                );
+                acc = [acc, ...nextVal];
+              } else {
+                acc = acc.toString() + nextVal;
+              }
+              break;
+            case "-":
+              acc = acc - nextVal;
+              break;
+            case "*":
+              acc = acc * nextVal;
+              break;
+            case "/":
+              acc = acc / nextVal;
+              break;
+            case "%":
+              acc = acc % nextVal;
+              break;
+            default: throw (
+              "ScriptInterpreter.evaluateExpression(): Unrecognized " +
+              `operator: "${op}"`
+            );
+          }
+        });
+        return acc;
+      }
+      case "exponential-expression": {
+        let root = this.evaluateExpression(
+          gas, expSyntaxTree.root, environment, liveModules
+        );
+        let exp = this.evaluateExpression(
+          gas, expSyntaxTree.exp, environment, liveModules
+        );
+        return root ** exp;
+      }
+      case "prefix-expression": {
+        let val = this.evaluateExpression(
+          gas, expSyntaxTree.exp, environment, liveModules
+        );
+        let op = expSyntaxTree.op;
+        switch (op) {
+          case "++":
+            // TODO: Implement.
+            return;
+          case "--":
+            // TODO: Implement.
+            return;
+          case "!":
+            return !val;
+          case "~":
+            return ~val;
+          case "+":
+            return +val;
+          case "-":
+            return -val;
+          case "typeof":
+            if (Array.isArray(val)) {
+              return "array"
+            } else {
+              return typeof val;
+            }
+          case "void":
+            return void val;
+          case "delete":
+            // TODO: Implement
+            return;
+          case "await":
+            // TODO: Implement
+            return;
+        }
+      }
+      case "postfix-expression": {
+        let val = this.evaluateExpression(
+          gas, expSyntaxTree.exp, environment, liveModules
+        );
+        let op = expSyntaxTree.op;
+        switch (op) {
+          case "++":
+            // TODO: Implement.
+            return;
+          case "--":
+            // TODO: Implement.
+            return;
+        }
+      }
       case "function-call":
         break;
       case "member-access":
@@ -217,13 +372,15 @@ export class ScriptInterpreter {
 
 
 export class ScriptError {
-  constructor(msg) {
+  constructor(msg, node) {
     this.msg = msg;
+    this.node = node;
   }
 }
 
 export class CustomError {
-  constructor(msg) {
+  constructor(msg, node) {
     this.msg = msg;
+    this.node = node;
   }
 }
