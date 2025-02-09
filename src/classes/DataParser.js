@@ -145,6 +145,35 @@ export function makeChildrenIntoLexemeArray(syntaxTree) {
 }
 
 
+export function processPolyadicOperation(syntaxTree) {
+  if (syntaxTree.ruleInd === 0) {
+    syntaxTree.type = "polyadic-operation";
+    straightenListSyntaxTree(1, true)(syntaxTree);
+  } else {
+    becomeChild(0)(syntaxTree);
+  }
+}
+
+
+
+
+
+
+export class EntityReference {
+  constructor(id) {
+    this.id = id;
+  }
+}
+
+export class EntityPlaceholder {
+  constructor(path) {
+    this.path = path;
+  }
+}
+
+
+
+
 
 
 
@@ -192,7 +221,7 @@ const jsonGrammar = {
         return [false, `Invalid JSON string: ${stringLiteral}`];
       }
 
-      syntaxTree.strLit = stringLiteral;
+      syntaxTree.lexeme = stringLiteral;
     },
   },
   "number": {
@@ -272,8 +301,7 @@ const regEntGrammar = {
   "literal": {
     rules: [
       ["entity-reference!1"],
-      ["input-placeholder!1"],
-      ["mixed-string"],
+      ["string"],
       ["number"],
       ["constant"],
       ["array!1"],
@@ -287,26 +315,26 @@ const regEntGrammar = {
     ],
     process: copyLexemeFromChild(0),
   },
-  "mixed-string": {
-    ...jsonGrammar["string"],
-    process: (syntaxTree) => {
-      let [isSuccess = true, error] =
-        jsonGrammar["string"].process(syntaxTree) || [];
-      if (!isSuccess) {
-        return [false, error];
-      }
+  // "mixed-string": {
+  //   ...jsonGrammar["string"],
+  //   process: (syntaxTree) => {
+  //     let [isSuccess = true, error] =
+  //       jsonGrammar["string"].process(syntaxTree) || [];
+  //     if (!isSuccess) {
+  //       return [false, error];
+  //     }
 
-      let [subSyntaxTree] = regEntStringContentParser.parse(
-        syntaxTree.strLit.slice(1, -1)
-      );
+  //     let [subSyntaxTree] = regEntStringContentParser.parse(
+  //       syntaxTree.strLit.slice(1, -1)
+  //     );
 
-      Object.assign(syntaxTree, subSyntaxTree);
+  //     Object.assign(syntaxTree, subSyntaxTree);
 
-      if (!subSyntaxTree.isSuccess) {
-        return [false, subSyntaxTree.error];
-      }
-    },
-  },
+  //     if (!subSyntaxTree.isSuccess) {
+  //       return [false, subSyntaxTree.error];
+  //     }
+  //   },
+  // },
   "entity-reference": {
     rules: [
       [/@\[/, /[_\$a-zA-Z0-9]+/,  "/\\]/!"],
@@ -316,12 +344,6 @@ const regEntGrammar = {
       copyLexemeFromChild(1)(syntaxTree);
       syntaxTree.isTBD = (syntaxTree.ruleInd === 1);
     }
-  },
-  "input-placeholder": {
-    rules: [
-      [/@\{/, /0|[1-9][0-9]*/, /\}/],
-    ],
-    process: copyLexemeFromChild(1),
   },
 };
 
@@ -354,7 +376,6 @@ const regEntStringContentGrammar = {
   "string-part": {
     rules: [
       ["entity-reference!1"],
-      ["input-placeholder!1"],
       ["escaped-bracket"],
       ["plain-text"],
     ],
@@ -689,8 +710,8 @@ const scriptGrammar = {
       ["/while/", "/\\(/!", "expression", "/\\)/", "statement",],
       ["/do/", "statement!", "/while/", "/\\(/", "expression", "/\\)/"],
       [
-        "/for/", "/\\(/", "statement", "statement", "expression", "/\\)/",
-        "statement",
+        "/for/", "/\\(/", "statement", "expression", "/;/", "expression",
+        "/\\)/", "statement",
       ],
     ],
     process: (syntaxTree) => {
@@ -714,8 +735,8 @@ const scriptGrammar = {
         Object.assign(syntaxTree, {
           dec:        syntaxTree.children[2],
           cond:       syntaxTree.children[3],
-          updateStmt: syntaxTree.children[4],
-          stmt:       syntaxTree.children[6],
+          updateStmt: syntaxTree.children[5],
+          stmt:       syntaxTree.children[7],
           doFirst:    false,
         });
       }
@@ -786,140 +807,70 @@ const scriptGrammar = {
       ["expression^(2)", /(\|\|)|(\?\?)/, "expression^(1)!"],
       ["expression^(2)"],
     ],
-    process: (syntaxTree) => {
-      if (syntaxTree.ruleInd === 0) {
-        syntaxTree.type = "or-expression";
-        straightenListSyntaxTree(1, true)(syntaxTree);
-      } else {
-        becomeChild(0)(syntaxTree);
-      }
-    },
+    process: processPolyadicOperation,
   },
   "expression^(2)": {
     rules: [
       ["expression^(3)", "/&&/", "expression^(2)!"],
       ["expression^(3)"],
     ],
-    process: (syntaxTree) => {
-      if (syntaxTree.ruleInd === 0) {
-        syntaxTree.type = "and-expression";
-        straightenListSyntaxTree(1, false)(syntaxTree);
-      } else {
-        becomeChild(0)(syntaxTree);
-      }
-    },
+    process: processPolyadicOperation,
   },
   "expression^(3)": {
     rules: [
       ["expression^(4)", /\|/, "expression^(3)!"],
       ["expression^(4)"],
     ],
-    process: (syntaxTree) => {
-      if (syntaxTree.ruleInd === 0) {
-        syntaxTree.type = "bitwise-or-expression";
-        straightenListSyntaxTree(1, false)(syntaxTree);
-      } else {
-        becomeChild(0)(syntaxTree);
-      }
-    },
+    process: processPolyadicOperation,
   },
   "expression^(4)": {
     rules: [
       ["expression^(5)", /\^/, "expression^(4)!"],
       ["expression^(5)"],
     ],
-    process: (syntaxTree) => {
-      if (syntaxTree.ruleInd === 0) {
-        syntaxTree.type = "bitwise-xor-expression";
-        straightenListSyntaxTree(1, false)(syntaxTree);
-      } else {
-        becomeChild(0)(syntaxTree);
-      }
-    },
+    process: processPolyadicOperation,
   },
   "expression^(5)": {
     rules: [
       ["expression^(6)", /\&/, "expression^(5)!"],
       ["expression^(6)"],
     ],
-    process: (syntaxTree) => {
-      if (syntaxTree.ruleInd === 0) {
-        syntaxTree.type = "bitwise-and-expression";
-        straightenListSyntaxTree(1, false)(syntaxTree);
-      } else {
-        becomeChild(0)(syntaxTree);
-      }
-    },
+    process: processPolyadicOperation,
   },
   "expression^(6)": {
     rules: [
       ["expression^(7)", "/===|!==|==|!=/", "expression^(6)!"],
       ["expression^(7)"],
     ],
-    process: (syntaxTree) => {
-      if (syntaxTree.ruleInd === 0) {
-        syntaxTree.type = "equality-expression";
-        straightenListSyntaxTree(1, true)(syntaxTree);
-      } else {
-        becomeChild(0)(syntaxTree);
-      }
-    },
+    process: processPolyadicOperation,
   },
   "expression^(7)": {
     rules: [
       ["expression^(8)", "/<|>|<=|>=/", "expression^(7)!"],
       ["expression^(8)"],
     ],
-    process: (syntaxTree) => {
-      if (syntaxTree.ruleInd === 0) {
-        syntaxTree.type = "relational-expression";
-        straightenListSyntaxTree(1, true)(syntaxTree);
-      } else {
-        becomeChild(0)(syntaxTree);
-      }
-    },
+    process: processPolyadicOperation,
   },
   "expression^(8)": {
     rules: [
       ["expression^(9)", "/<<|>>|>>>/", "expression^(8)!"],
       ["expression^(9)"],
     ],
-    process: (syntaxTree) => {
-      if (syntaxTree.ruleInd === 0) {
-        syntaxTree.type = "shift-expression";
-        straightenListSyntaxTree(1, true)(syntaxTree);
-      } else {
-        becomeChild(0)(syntaxTree);
-      }
-    },
+    process: processPolyadicOperation,
   },
   "expression^(9)": {
     rules: [
-      ["expression^(10)", "/\\+|\\-/", "expression^(9)!"],
+      ["expression^(10)", "/\\+|\\-|<>/", "expression^(9)!"],
       ["expression^(10)"],
     ],
-    process: (syntaxTree) => {
-      if (syntaxTree.ruleInd === 0) {
-        syntaxTree.type = "additive-expression";
-        straightenListSyntaxTree(1, true)(syntaxTree);
-      } else {
-        becomeChild(0)(syntaxTree);
-      }
-    },
+    process: processPolyadicOperation,
   },
   "expression^(10)": {
     rules: [
       ["expression^(11)", "/\\*|\\/|%/", "expression^(10)!"],
       ["expression^(11)"],
     ],
-    process: (syntaxTree) => {
-      if (syntaxTree.ruleInd === 0) {
-        syntaxTree.type = "multiplicative-expression";
-        straightenListSyntaxTree(1, true)(syntaxTree);
-      } else {
-        becomeChild(0)(syntaxTree);
-      }
-    },
+    process: processPolyadicOperation,
   },
   "expression^(11)": {
     rules: [
@@ -1095,7 +1046,6 @@ const scriptGrammar = {
   "literal": {
     rules: [
       ["entity-reference!1"],
-      ["input-placeholder!1"],
       ["string"],
       ["number"],
       ["constant"],

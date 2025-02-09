@@ -2,6 +2,7 @@
 import {scriptParser} from "./DataParser.js";
 import {PriorityCache} from "./PriorityCache.js";
 // import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
+import {EntityReference, EntityPlaceholder} from "./DataParser.js";
 
 
 const cache = new PriorityCache(5000, 3600 * 2);
@@ -67,7 +68,10 @@ export class ScriptInterpreter {
     // TODO: Pair the input values with the parameters, and convert the values
     // automatically to the type of the input parameter, if the type is a
     // primitive one. Then create a new environment, and start executing the
-    // statement list with that environment.
+    // statement list with that environment. The return statement inside the
+    // function will throw the returned value, so try-catch it. And if no
+    // return value is thrown, the return value should be regarded as
+    // undefined.
 
     // Return the return value of the function (or throw either a ScriptError
     // on runtime error, or if the gas runs up, or a CustomError, if a throw
@@ -86,9 +90,8 @@ export class ScriptInterpreter {
 
     // If a return statement is reached, return the returned value, else return
     // undefined if the end of the list is reached. If a break or continue
-    // statement is reached.. ..Hm, it's easiest to throw rather than return,
-    // then just let the loop executor function catch it (or catch it and turn
-    // it into a ScriptError, if not caught by a loop execution function).
+    // statement is reached, throw a break or continue signal, which can be
+    // caught by a loop (or if not caught can be turned into a ScriptError).
 
     // Make changes to environment (and gas) as side-effects.
   }
@@ -104,15 +107,108 @@ export class ScriptInterpreter {
   static executeLoop(
     gas, loopListSyntaxTree, environment, liveModules
   ) {
-    // TODO: If their is a declaration statement for the loop, first create a
-    // new environment (with previous environment as the prototype, of course)
-    // and run the declaration statement in that, then create a new empty 
-    // environment with the other new environment as the parent/prototype (or
-    // if there is no declaration statement, just start by doing this). Then
-    // run the looped statement, and catch any.. ..Oh, we should trow the return
-    // statements as well.. ..Sure..
+    // TODO: Make a environment (with the input as its parent/prototype), and 
+    // run the declaration statement, if any, inside it at first. Then
+    // depending on the doFirst flag, evaluate and check the condition
+    // initially or not. Then run the statement inside the environment and
+    // catch any break or continue exceptions, and pass on any other
+    // exceptions/errors. Then run the update expression inside the environment,
+    // if any. Then make the condition check again and repeat.
   }
 
+  static executeIfElseStatement(
+    gas, ifElseStmtSyntaxTree, environment, liveModules
+  ) {
+    // TODO: Simply check the condition, and then either run the ifStmt or
+    // elseStmt depending, or do nothing if the to-be-run elseStmt is undefined.
+  }
+
+
+  // TODO: Implement switch-case grammar and handling at some point.
+
+
+  static executeVariableDeclaration(
+    gas, varDecSyntaxTree, environment, liveModules
+  ) {
+    // TODO: If the statement is a definition list, iterate over each variable
+    // definition, evaluate that expression if any, and then add the variable
+    // to the environment, or throw a runtime error, if it already defined in
+    // the environment (or a function of the same name is defined), but not
+    // if its defined in a parent environment.
+    // If it is a destructuring statement, evaluate the expression, then make
+    // sure that is has all the required "0", "1", ... entries. Then for each
+    // identifier (on the LHS), assign it the value on the corresponding entry,
+    // and also make a similar check that it isn't defined already in the
+    // current environment.
+  }
+
+
+  static executeStatement(
+    gas, stmtSyntaxTree, environment, liveModules
+  ) {
+    // TODO: switch-case the type of the statement, and then call any of the
+    // above flow methods, or one of the below singular statements, depending
+    // on the type. For some of the simple statements, like return, throw,
+    // break, continue or the empty statement, just handle them inside the
+    // switch-case statement. ..Oh, and do the same for the expression
+    // statement. (So let me just move executeVariableDeclaration() up above
+    // this one..)
+  }
+
+
+  static evaluateExpression(
+    gas, expSyntaxTree, environment, liveModules
+  ) {
+    gas.comp++;
+    // TODO: switch-case the type of the expression, and just handle each one
+    // inside this statement.. ..Sure (unless they turn out to be too
+    // complicated). ..Oh, which some are, especially the function call, but
+    // then just factor those ones out.
+
+    let type = expSyntaxTree.type;
+    switch (type) {
+      case "assignment":
+        break;
+      case "conditional-expression":
+        break;
+      case "polyadic-operation":
+        break;
+      case "exponential-expression":
+        break;
+      case "prefix-expression":
+        break;
+      case "postfix-expression":
+        break;
+      case "function-call":
+        break;
+      case "member-access":
+        break;
+      case "array":
+        break;
+      case "object":
+        break;
+      case "entity-reference":
+        if (expSyntaxTree.isTBD) {
+          return new EntityPlaceholder(expSyntaxTree.lexeme);
+        } else {
+          return new EntityReference(expSyntaxTree.lexeme);
+        }
+      case "string":
+        return JSON.parse(expSyntaxTree.lexeme);
+      case "number":
+        return parseFloat(expSyntaxTree.lexeme);
+      case "constant":
+        let lexeme = expSyntaxTree.lexeme;
+        return (lexeme === "true") ? true :
+               (lexeme === "false") ? false :
+               (lexeme === "null") ? null :
+               undefined;
+      default: throw (
+        "ScriptInterpreter.evaluateExpression(): Unrecognized type: " +
+        `"${type}"`
+      );
+    }
+  }
 
 
 }
