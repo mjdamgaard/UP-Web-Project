@@ -397,7 +397,10 @@ export class ScriptInterpreter {
       }
 
       // Now get the index value.
-      let indexVal = this.evaluateExpression(gas, lastIndex.exp, environment);
+      let indexVal = lastIndex.ident;
+      if (!lastIndex) {
+        indexVal = this.evaluateExpression(gas, lastIndex.exp, environment);
+      }
 
       // If valBeforeLastInd is an array, check that indexVal is a non-negative
       // integer, and if it is an object, append "#" to the indexVal.

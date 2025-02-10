@@ -970,7 +970,11 @@ const scriptGrammar = {
       // [/\?/, /\./, "identifier"],
     ],
     process: (syntaxTree) => {
-      syntaxTree.exp = syntaxTree.children[1];
+      if (syntaxTree.ruleInd === 0) {
+        syntaxTree.exp = syntaxTree.children[1];
+      } else {
+        syntaxTree.ident = syntaxTree.children[1].lexeme;
+      }
     },
   },
   "expression^(16)": {
