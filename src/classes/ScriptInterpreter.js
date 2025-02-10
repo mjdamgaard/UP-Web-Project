@@ -5,8 +5,6 @@ import {PriorityCache} from "./CombinedCache.js";
 import {EntityReference, EntityPlaceholder} from "./DataParser.js";
 
 
-const cache = new PriorityCache(5000, 3600 * 2);
-
 const COMP_GAS_ERROR = "Ran out of computation gas.";
 
 
@@ -174,9 +172,83 @@ export class ScriptInterpreter {
     let type = expSyntaxTree.type;
     switch (type) {
       case "assignment":
-        break;
+        let val = this.evaluateExpression(gas, expSyntaxTree.exp2, environment);
+        let op = expSyntaxTree.op;
+        switch (op) {
+          case "=":
+            return this.assignToVariableOrMember(
+              expSyntaxTree.exp1, environment, () => {
+                let newVal = val;
+                return [newVal, newVal]
+              }
+            );
+          case "+=":
+            return this.assignToVariableOrMember(
+              expSyntaxTree.exp1, environment, prevVal => {
+                let newVal = parseFloat(prevVal) + parseFloat(val);
+                return [newVal, newVal]
+              }
+            );
+          case "-=":
+            return this.assignToVariableOrMember(
+              expSyntaxTree.exp1, environment, prevVal => {
+                let newVal = parseFloat(prevVal) - parseFloat(val);
+                return [newVal, newVal]
+              }
+            );
+          case "*=":
+            return this.assignToVariableOrMember(
+              expSyntaxTree.exp1, environment, prevVal => {
+                let newVal = parseFloat(prevVal) * parseFloat(val);
+                return [newVal, newVal]
+              }
+            );
+          case "/=":
+            return this.assignToVariableOrMember(
+              expSyntaxTree.exp1, environment, prevVal => {
+                let newVal = parseFloat(prevVal) / parseFloat(val);
+                return [newVal, newVal]
+              }
+            );
+          case "&&=":
+            return this.assignToVariableOrMember(
+              expSyntaxTree.exp1, environment, prevVal => {
+                let newVal = prevVal && val;
+                return [newVal, newVal]
+              }
+            );
+          case "||=":
+            return this.assignToVariableOrMember(
+              expSyntaxTree.exp1, environment, prevVal => {
+                let newVal = prevVal || val;
+                return [newVal, newVal]
+              }
+            );
+          case "??=":
+            return this.assignToVariableOrMember(
+              expSyntaxTree.exp1, environment, prevVal => {
+                let newVal = prevVal ?? val;
+                return [newVal, newVal]
+              }
+            );
+          default: throw (
+            "ScriptInterpreter.evaluateExpression(): Unrecognized " +
+            `operator: "${op}"`
+          );
+        }
       case "conditional-expression":
-        break;
+        let cond = this.evaluateExpression(
+          gas, expSyntaxTree.cond, environment
+        );
+        if (cond) {
+          return this.evaluateExpression(
+            gas, expSyntaxTree.exp1, environment
+          );
+        } else {
+          return this.evaluateExpression(
+            gas, expSyntaxTree.exp2, environment
+          );
+        }
       case "polyadic-operation": {
         let children = expSyntaxTree.children;
         let acc = this.evaluateExpression(gas, children[0], environment);
@@ -371,7 +443,21 @@ export class ScriptInterpreter {
         }
       }
       case "function-call":
-        break;
+        let fun = this.evaluateExpression(gas, expSyntaxTree.fun, environment);
+        let tuples; // TODO: Implement higher-order function call syntax again.
+        if (fun instanceof DefinedFunction) {
+          let funEnvironment = fun.environment;
+          let funSyntaxTree = fun.environment;
+          return this.executeFunction(
+            gas, funSyntaxTree, /* inputs... ,*/ funEnvironment
+          );
+        } else if (fun instanceof BuiltInFunction) {
+          // ...
+          return;
+        } else throw new ScriptError(
+          "Function call with a non-function-valued expression",
+          expSyntaxTree
+        );
       case "member-access":
         break;
       case "array":
