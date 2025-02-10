@@ -537,7 +537,7 @@ const scriptGrammar = {
         /\{/, "statement-list!", /\}/
       ],
       [
-        "identifier", /\(/, "parameter-list", /\)/, "/=>/",
+        "/function/", "identifier", /\(/, "parameter-list", /\)/,
         /\(/, "expression!", /\)/
       ],
     ],
@@ -555,7 +555,7 @@ const scriptGrammar = {
           type: "expression-function",
           name: children[0].lexeme,
           params: children[2].children,
-          return: children[5],
+          exp: children[5],
         });
       }
     },
@@ -675,6 +675,7 @@ const scriptGrammar = {
       ["if-else-statement!1"],
       ["loop-statement!1"],
       ["variable-declaration!1"],
+      ["function-declaration!1"],
       ["return-statement!1"],
       ["throw-statement!1"],
       ["instruction-statement!1"],

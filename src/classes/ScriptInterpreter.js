@@ -279,30 +279,44 @@ export class ScriptInterpreter {
         let exp = this.evaluateExpression(
           gas, expSyntaxTree.exp, environment
         );
-        try {
-          return root ** exp;
-        } catch (err) {
-          throw new ScriptError("Type error", expSyntaxTree);
-        }
+        return parseFloat(root) ** parseFloat(exp);
       }
       case "prefix-expression": {
-        let val = this.evaluateExpression(gas, expSyntaxTree.exp, environment);
         let op = expSyntaxTree.op;
         switch (op) {
           case "++":
-            // TODO: Implement.
-            return;
+            return this.assignToVariableOrMember(
+              expSyntaxTree.exp, environment, prevVal => {
+                let int = parseFloat(prevVal);
+                if (!int && int !== 0) throw new ScriptError(
+                  "Increment of a non-numeric value",
+                  expSyntaxTree
+                );
+                let newVal = int + 1;
+                return [newVal, newVal]
+              }
+            );
           case "--":
-            // TODO: Implement.
-            return;
+            return this.assignToVariableOrMember(
+              expSyntaxTree.exp, environment, prevVal => {
+                let int = parseFloat(prevVal);
+                if (!int && int !== 0) throw new ScriptError(
+                  "Decrement of a non-numeric value",
+                  expSyntaxTree
+                );
+                let newVal = int - 1;
+                return [newVal, newVal]
+              }
+            );
           case "!":
+            val = this.evaluateExpression(gas, expSyntaxTree.exp, environment);
             return !val;
           case "~":
-            return ~val;
+            return ~parseInt(val);
           case "+":
-            return +val;
+            return +parseFloat(val);
           case "-":
-            return -val;
+            return -parseFloat(val);
           case "typeof":
             if (Array.isArray(val)) {
               return "array"
@@ -312,9 +326,15 @@ export class ScriptInterpreter {
           case "void":
             return void val;
           case "delete":
-            // TODO: Implement
-            return;
-            return;
+            return this.assignToVariableOrMember(
+              expSyntaxTree.exp, environment, prevVal => {
+                if (prevVal === undefined) {
+                  return [undefined, false];
+                } else {
+                  return [undefined, true];
+                }
+              }
+            );
           default: throw (
             "ScriptInterpreter.evaluateExpression(): Unrecognized " +
             `operator: "${op}"`
@@ -322,15 +342,32 @@ export class ScriptInterpreter {
         }
       }
       case "postfix-expression": {
-        let val = this.evaluateExpression(gas, expSyntaxTree.exp, environment);
         let op = expSyntaxTree.op;
         switch (op) {
           case "++":
-            // TODO: Implement.
-            return;
+            return this.assignToVariableOrMember(
+              expSyntaxTree.exp, environment, prevVal => {
+                let int = parseFloat(prevVal);
+                if (!int && int !== 0) throw new ScriptError(
+                  "Increment of a non-numeric value",
+                  expSyntaxTree
+                );
+                let newVal = int + 1;
+                return [newVal, prevVal]
+              }
+            );
           case "--":
-            // TODO: Implement.
-            return;
+            return this.assignToVariableOrMember(
+              expSyntaxTree.exp, environment, prevVal => {
+                let int = parseFloat(prevVal);
+                if (!int && int !== 0) throw new ScriptError(
+                  "Decrement of a non-numeric value",
+                  expSyntaxTree
+                );
+                let newVal = int - 1;
+                return [newVal, prevVal]
+              }
+            );
         }
       }
       case "function-call":
@@ -368,10 +405,10 @@ export class ScriptInterpreter {
   }
 
 
-  static assignToVariableOrMember(expSyntaxTree, assignFun, environment) {
+  static assignToVariableOrMember(expSyntaxTree, environment, assignFun) {
     if (expSyntaxTree.type === "identifier") {
       let ident = expSyntaxTree.lexeme;
-      return environment.assign(ident, assignFun, expSyntaxTree);;
+      return environment.assign(ident, expSyntaxTree, assignFun);
     }
     else if (expSyntaxTree.type === "member-access") {
       let identTree = expSyntaxTree.exp;
@@ -481,7 +518,7 @@ class Environment {
     }
   }
 
-  assign(ident, assignFun, node) {
+  assign(ident, node, assignFun) {
     let safeIdent = "#" + ident;
     let [prevVal, isConst] = this.variables[safeIdent];
     if (prevVal !== undefined) {
@@ -496,7 +533,7 @@ class Environment {
         return ret;
       }
     } else if (this.parent) {
-      return this.parent.assign(ident, assignFun, node);
+      return this.parent.assign(ident, node, assignFun);
     } else {
       throw new ScriptError(
         "Assignment of undefined variable '" + ident + "'",
