@@ -1,7 +1,7 @@
 
 import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
 
-import {PriorityCache} from "./PriorityCache.js";
+import {PriorityCache} from "./CombinedCache.js";
 import {Parser} from "./Parser.js";
 
 const entitySyntaxTreeCache = new PriorityCache(200);
@@ -187,8 +187,8 @@ export class EntityPlaceholder {
 const jsonGrammar = {
   "json-object": {
     rules: [
-      ["object"],
-      ["array"],
+      ["object-literal"],
+      ["array-literal"],
     ],
     process: becomeChild(0),
   },
@@ -204,8 +204,8 @@ const jsonGrammar = {
       ["string"],
       ["number"],
       ["constant"],
-      ["array!1"],
-      ["object"],
+      ["array-literal!1"],
+      ["object-literal"],
     ],
     process: becomeChild(0),
   },
@@ -239,7 +239,7 @@ const jsonGrammar = {
     ],
     process: copyLexemeFromChild(0),
   },
-  "array": {
+  "array-literal": {
     rules: [
       [/\[/, "literal-list!1", /\]/],
       [/\[/, /\]/],
@@ -252,7 +252,7 @@ const jsonGrammar = {
       }
     },
   },
-  "object": {
+  "object-literal": {
     rules: [
       [/\{/, "member-list!1", /\}/],
       [/\{/, /\}/],
@@ -307,8 +307,8 @@ const regEntGrammar = {
       ["string"],
       ["number"],
       ["constant"],
-      ["array!1"],
-      ["object"],
+      ["array-literal!1"],
+      ["object-literal"],
     ],
     process: becomeChild(0),
   },
@@ -423,9 +423,10 @@ const scriptGrammar = {
   ...regEntGrammar,
   "script": {
     rules: [
-      ["import-statement-list", "declaration-list"],
+      ["import-statement-list", "declaration+$"],
       ["import-statement-list", "expression", "/;/?"],
-      ["declaration-list"],
+      ["declaration+$"],
+      ["expression", "/;/?"],
     ],
     process: (syntaxTree) => {
       // ...
@@ -464,13 +465,6 @@ const scriptGrammar = {
     process: (syntaxTree) => {
       // ...
     },
-  },
-  "declaration-list": {
-    rules: [
-      ["declaration", "declaration-list"],
-      ["declaration"],
-    ],
-    process: straightenListSyntaxTree(0),
   },
   "declaration": {
     rules: [
@@ -575,7 +569,7 @@ const scriptGrammar = {
   },
   "parameter": {
     rules: [
-      [/"([^"\\]|\\[.\n])*"/, "/:/", "type"],
+      ["identifier", "/:/", "type"],
     ],
     process: (syntaxTree) => {
       let children = syntaxTree.children;
@@ -1043,21 +1037,19 @@ const scriptGrammar = {
       ["string", "/:/", "expression"],
     ],
     process: (syntaxTree) => {
-      syntaxTree.name = syntaxTree.children[0];
+      syntaxTree.nameStr = (syntaxTree.ruleInd === 0) ?
+        JSON.stringify(syntaxTree.children[0]) :
+        syntaxTree.children[0];
       syntaxTree.val = syntaxTree.children[2];
     },
   },
-  "literal": {
+  "literal-list": {
     rules: [
-      ["entity-reference!1"],
-      ["string"],
-      ["number"],
-      ["constant"],
+      ["literal", "/,/", "literal-list!1"],
+      ["literal", "/,/?"],
     ],
-    process: becomeChild(0),
+    process: straightenListSyntaxTree(1),
   },
-  // "string": {
-  // },
   "constant": {
     rules: [
       ["/true|false|null|undefined/"],

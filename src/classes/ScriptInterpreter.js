@@ -1,6 +1,6 @@
 
 import {scriptParser} from "./DataParser.js";
-import {PriorityCache} from "./PriorityCache.js";
+import {PriorityCache} from "./CombinedCache.js";
 // import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 import {EntityReference, EntityPlaceholder} from "./DataParser.js";
 
@@ -182,19 +182,29 @@ export class ScriptInterpreter {
           gas, children[0], environment, liveModules
         );
         expSyntaxTree.operators.forEach((op, ind) => {
-          let nextVal = this.evaluateExpression(
-            gas, children[ind + 1], environment, liveModules
-          );
+          let nextChild = children[ind + 1];
+          let nextVal;
+          if (op !== "||" && op !== "??" && op !== "&&") {
+            nextVal = this.evaluateExpression(
+              gas, nextChild, environment, liveModules
+            );
+          }
           try {
             switch (op) {
               case "||":
-                acc = acc || nextVal;
+                acc = acc || this.evaluateExpression(
+                  gas, nextChild, environment, liveModules
+                );
                 break;
               case "??":
-                acc = acc ?? nextVal;
+                acc = acc ?? this.evaluateExpression(
+                  gas, nextChild, environment, liveModules
+                );
                 break;
               case "&&":
-                acc = acc && nextVal;
+                acc = acc && this.evaluateExpression(
+                  gas, nextChild, environment, liveModules
+                );
                 break;
               case "|":
                 acc = acc | nextVal;
@@ -264,7 +274,7 @@ export class ScriptInterpreter {
               case "%":
                 acc = acc % nextVal;
                 break;
-              default: throw (
+              default: return (
                 "ScriptInterpreter.evaluateExpression(): Unrecognized " +
                 `operator: "${op}"`
               );
@@ -323,6 +333,10 @@ export class ScriptInterpreter {
             case "await":
               // TODO: Implement
               return;
+            default: return (
+              "ScriptInterpreter.evaluateExpression(): Unrecognized " +
+              `operator: "${op}"`
+            );
           }
         } catch (error) {
           throw new ScriptError("Type error", expSyntaxTree.exp);
@@ -390,6 +404,9 @@ export class ScriptInterpreter {
         expSyntaxTree
       );
       let indices = expSyntaxTree.indices;
+      let expVal = this.evaluateExpression(
+        gas, expSyntaxTree, environment, liveModules
+      );
       // ...
     }
     else {
@@ -484,6 +501,13 @@ class BuiltInFunction {
   constructor(fun, gasCosts) {
     this.fun = fun;
     this.gasCosts = gasCosts;
+  }
+}
+
+class PromiseValue {
+  constructor(funTree, environment) {
+    this.fun = funTree;
+    this.env = environment;
   }
 }
 
