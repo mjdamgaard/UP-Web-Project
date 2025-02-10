@@ -13,9 +13,10 @@ const COMP_GAS_ERROR = "Ran out of computation gas.";
 
 export class ScriptInterpreter {
 
-  constructor(queryEntity, builtInFunctions) {
+  constructor(queryEntity, builtInFunctions, cache) {
     this.queryEntity = queryEntity;
     this.builtInFunctions = builtInFunctions;
+    this.moduleCache = cache;
   }
 
   static parseScript(str) {
@@ -178,119 +179,105 @@ export class ScriptInterpreter {
         break;
       case "polyadic-operation": {
         let children = expSyntaxTree.children;
-        let acc = this.evaluateExpression(
-          gas, children[0], environment, liveModules
-        );
+        let acc = this.evaluateExpression(gas, children[0], environment);
         expSyntaxTree.operators.forEach((op, ind) => {
           let nextChild = children[ind + 1];
           let nextVal;
           if (op !== "||" && op !== "??" && op !== "&&") {
-            nextVal = this.evaluateExpression(
-              gas, nextChild, environment, liveModules
-            );
+            nextVal = this.evaluateExpression(gas, nextChild, environment);
           }
-          try {
-            switch (op) {
-              case "||":
-                acc = acc || this.evaluateExpression(
-                  gas, nextChild, environment, liveModules
+          switch (op) {
+            case "||":
+              acc = acc || this.evaluateExpression(gas, nextChild, environment);
+              break;
+            case "??":
+              acc = acc ?? this.evaluateExpression(gas, nextChild, environment);
+              break;
+            case "&&":
+              acc = acc && this.evaluateExpression(gas, nextChild, environment);
+              break;
+            case "|":
+              acc = parseInt(acc) | parseInt(nextVal);
+              break;
+            case "^":
+              acc = parseInt(acc) ^ parseInt(nextVal);
+              break;
+            case "&":
+              acc = parseInt(acc) & parseInt(nextVal);
+              break;
+            case "===":
+              acc = acc === nextVal;
+              break;
+            case "==":
+              acc = acc == nextVal;
+              break;
+            case "!==":
+              acc = acc !== nextVal;
+              break;
+            case "!=":
+              acc = acc != nextVal;
+              break;
+            case ">":
+              acc = parseFloat(acc) > parseFloat(nextVal);
+              break;
+            case "<":
+              acc = parseFloat(acc) < parseFloat(nextVal);
+              break;
+            case "<=":
+              acc = parseFloat(acc) <= parseFloat(nextVal);
+              break;
+            case ">=":
+              acc = parseFloat(acc) >= parseFloat(nextVal);
+              break;
+            case "<<":
+              acc = parseFloat(acc) << parseInt(nextVal);
+              break;
+            case ">>":
+              acc = parseFloat(acc) >> parseInt(nextVal);
+              break;
+            case ">>>":
+              acc = parseFloat(acc) >>> parseInt(nextVal);
+              break;
+            case "+":
+              acc = parseFloat(acc) + parseFloat(nextVal);
+              break;
+            case "<>":
+              if (Array.isArray(acc)) {
+                if (!Array.isArray(nextVal)) throw new ScriptError(
+                  "Cannot concat a non-array to an array",
+                  children[ind + 1]
                 );
-                break;
-              case "??":
-                acc = acc ?? this.evaluateExpression(
-                  gas, nextChild, environment, liveModules
-                );
-                break;
-              case "&&":
-                acc = acc && this.evaluateExpression(
-                  gas, nextChild, environment, liveModules
-                );
-                break;
-              case "|":
-                acc = acc | nextVal;
-                break;
-              case "^":
-                acc = acc ^ nextVal;
-                break;
-              case "&":
-                acc = acc & nextVal;
-                break;
-              case "===":
-                acc = acc === nextVal;
-                break;
-              case "==":
-                acc = acc == nextVal;
-                break;
-              case "!==":
-                acc = acc !== nextVal;
-                break;
-              case "!=":
-                acc = acc != nextVal;
-                break;
-              case ">":
-                acc = acc > nextVal;
-                break;
-              case "<":
-                acc = acc < nextVal;
-                break;
-              case "<=":
-                acc = acc <= nextVal;
-                break;
-              case ">=":
-                acc = acc >= nextVal;
-                break;
-              case "<<":
-                acc = acc << nextVal;
-                break;
-              case ">>":
-                acc = acc >> nextVal;
-                break;
-              case ">>>":
-                acc = acc >>> nextVal;
-                break;
-              case "+":
-                acc = parseFloat(acc) + parseFloat(nextVal);
-                break;
-              case "<>":
-                if (Array.isArray(acc)) {
-                  if (!Array.isArray(nextVal)) throw new ScriptError(
-                    "Cannot concat a non-array to an array",
-                    children[ind + 1]
-                  );
-                  acc = [acc, ...nextVal];
-                } else {
-                  acc = acc.toString() + nextVal;
-                }
-                break;
-              case "-":
-                acc = acc - nextVal;
-                break;
-              case "*":
-                acc = acc * nextVal;
-                break;
-              case "/":
-                acc = acc / nextVal;
-                break;
-              case "%":
-                acc = acc % nextVal;
-                break;
-              default: return (
-                "ScriptInterpreter.evaluateExpression(): Unrecognized " +
-                `operator: "${op}"`
-              );
-            }
-          } catch (err) {
-            throw new ScriptError("Type error", children[ind + 1]);
+                acc = [acc, ...nextVal];
+              } else {
+                acc = acc.toString() + nextVal;
+              }
+              break;
+            case "-":
+              acc = parseFloat(acc) - parseFloat(nextVal);
+              break;
+            case "*":
+              acc = parseFloat(acc) * parseFloat(nextVal);
+              break;
+            case "/":
+              acc = parseFloat(acc) / parseFloat(nextVal);
+              break;
+            case "%":
+              acc = parseFloat(acc) % parseFloat(nextVal);
+              break;
+            default: throw (
+              "ScriptInterpreter.evaluateExpression(): Unrecognized " +
+              `operator: "${op}"`
+            );
           }
         });
         return acc;
       }
       case "exponential-expression": {
         let root = this.evaluateExpression(
-          gas, expSyntaxTree.root, environment, liveModules
+          gas, expSyntaxTree.root, environment
         );
         let exp = this.evaluateExpression(
-          gas, expSyntaxTree.exp, environment, liveModules
+          gas, expSyntaxTree.exp, environment
         );
         try {
           return root ** exp;
@@ -299,53 +286,43 @@ export class ScriptInterpreter {
         }
       }
       case "prefix-expression": {
-        let val = this.evaluateExpression(
-          gas, expSyntaxTree.exp, environment, liveModules
-        );
+        let val = this.evaluateExpression(gas, expSyntaxTree.exp, environment);
         let op = expSyntaxTree.op;
-        try {
-          switch (op) {
-            case "++":
-              // TODO: Implement.
-              return;
-            case "--":
-              // TODO: Implement.
-              return;
-            case "!":
-              return !val;
-            case "~":
-              return ~val;
-            case "+":
-              return +val;
-            case "-":
-              return -val;
-            case "typeof":
-              if (Array.isArray(val)) {
-                return "array"
-              } else {
-                return typeof val;
-              }
-            case "void":
-              return void val;
-            case "delete":
-              // TODO: Implement
-              return;
-            case "await":
-              // TODO: Implement
-              return;
-            default: return (
-              "ScriptInterpreter.evaluateExpression(): Unrecognized " +
-              `operator: "${op}"`
-            );
-          }
-        } catch (error) {
-          throw new ScriptError("Type error", expSyntaxTree.exp);
+        switch (op) {
+          case "++":
+            // TODO: Implement.
+            return;
+          case "--":
+            // TODO: Implement.
+            return;
+          case "!":
+            return !val;
+          case "~":
+            return ~val;
+          case "+":
+            return +val;
+          case "-":
+            return -val;
+          case "typeof":
+            if (Array.isArray(val)) {
+              return "array"
+            } else {
+              return typeof val;
+            }
+          case "void":
+            return void val;
+          case "delete":
+            // TODO: Implement
+            return;
+            return;
+          default: throw (
+            "ScriptInterpreter.evaluateExpression(): Unrecognized " +
+            `operator: "${op}"`
+          );
         }
       }
       case "postfix-expression": {
-        let val = this.evaluateExpression(
-          gas, expSyntaxTree.exp, environment, liveModules
-        );
+        let val = this.evaluateExpression(gas, expSyntaxTree.exp, environment);
         let op = expSyntaxTree.op;
         switch (op) {
           case "++":
@@ -391,11 +368,10 @@ export class ScriptInterpreter {
   }
 
 
-  static assignToVariableOrMember(expSyntaxTree, val, environment) {
+  static assignToVariableOrMember(expSyntaxTree, assignFun, environment) {
     if (expSyntaxTree.type === "identifier") {
       let ident = expSyntaxTree.lexeme;
-      let prevVal = environment.assign(ident, val, expSyntaxTree);
-      return prevVal;
+      return environment.assign(ident, assignFun, expSyntaxTree);;
     }
     else if (expSyntaxTree.type === "member-access") {
       let identTree = expSyntaxTree.exp;
@@ -403,11 +379,52 @@ export class ScriptInterpreter {
         "Assignment to invalid expression",
         expSyntaxTree
       );
-      let indices = expSyntaxTree.indices;
-      let expVal = this.evaluateExpression(
-        gas, expSyntaxTree, environment, liveModules
-      );
-      // ...
+
+      // Remove and record the last index.
+      let lastIndex = expSyntaxTree.indices.pop();
+
+      // If the remaining indices array is empty, evaluate the identifier, or
+      // else evaluate the whole member access with the last index removed.
+      let valBeforeLastInd;
+      if (expSyntaxTree.indices.length === 0) {
+        valBeforeLastInd = this.evaluateExpression(
+          gas, expSyntaxTree, environment
+        );
+      } else {
+        valBeforeLastInd = this.evaluateExpression(
+          gas, identTree, environment
+        );
+      }
+
+      // Now get the index value.
+      let indexVal = this.evaluateExpression(gas, lastIndex.exp, environment);
+
+      // If valBeforeLastInd is an array, check that indexVal is a non-negative
+      // integer, and if it is an object, append "#" to the indexVal.
+      if (Array.isArray(valBeforeLastInd)) {
+        indexVal = parseInt(indexVal);
+        if (!(indexVal >= 0)) {
+          throw new ScriptError(
+            "Assignment to an array with a non-integer or a " +
+            "negative integer key",
+            lastIndex
+          );
+        }
+      }
+      else if (!valBeforeLastInd || typeof valBeforeLastInd !== "object") {
+        throw new ScriptError(
+          "Assignment to a member of a non-object",
+          expSyntaxTree
+        );
+      }
+      else {
+        indexVal = "#" + indexVal;
+      }
+
+      // And then we simply assign the member of our valBeforeLastInd.
+      let [newVal, ret] = assignFun(valBeforeLastInd[indexVal]);
+      valBeforeLastInd[indexVal] = newVal;
+      return ret;
     }
     else {
       throw new ScriptError(
@@ -461,7 +478,7 @@ class Environment {
     }
   }
 
-  assign(ident, val, node) {
+  assign(ident, assignFun, node) {
     let safeIdent = "#" + ident;
     let [prevVal, isConst] = this.variables[safeIdent];
     if (prevVal !== undefined) {
@@ -471,11 +488,12 @@ class Environment {
           node
         );
       } else {
-        this.variables[safeIdent][0] = val;
-        return prevVal;
+        let [newVal, ret] = assignFun(prevVal);
+        this.variables[safeIdent][0] = newVal;
+        return ret;
       }
     } else if (this.parent) {
-      return this.parent.assign(ident, val, node);
+      return this.parent.assign(ident, assignFun, node);
     } else {
       throw new ScriptError(
         "Assignment of undefined variable '" + ident + "'",
@@ -483,6 +501,7 @@ class Environment {
       );
     }
   }
+
 }
 
 
@@ -501,13 +520,6 @@ class BuiltInFunction {
   constructor(fun, gasCosts) {
     this.fun = fun;
     this.gasCosts = gasCosts;
-  }
-}
-
-class PromiseValue {
-  constructor(funTree, environment) {
-    this.fun = funTree;
-    this.env = environment;
   }
 }
 

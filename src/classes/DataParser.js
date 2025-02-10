@@ -887,7 +887,7 @@ const scriptGrammar = {
   "expression^(12)": {
     rules: [
       [
-        "/\\+\\+|\\-\\-|!|~|\\+|\\-|typeof|void|delete|await/",
+        "/\\+\\+|\\-\\-|!|~|\\+|\\-|typeof|void|delete/",
         "expression^(13)!"
       ],
       ["expression^(13)"],
@@ -967,19 +967,10 @@ const scriptGrammar = {
     rules: [
       [/\[/, "expression!", /\]/],
       [/\./, "identifier!"],
-      [/\?/, /\./, "identifier"],
+      // [/\?/, /\./, "identifier"],
     ],
     process: (syntaxTree) => {
-      if (syntaxTree.ruleInd === 0) {
-        syntaxTree.type = "computed-accessor";
-        syntaxTree.exp = syntaxTree.children[1];
-      } else if (syntaxTree.ruleInd === 1) {
-        syntaxTree.type = "identifier-accessor";
-        syntaxTree.ident = syntaxTree.children[1];
-      } else {
-        syntaxTree.type = "optional-identifier-accessor";
-        syntaxTree.ident = syntaxTree.children[2];
-      }
+      syntaxTree.exp = syntaxTree.children[1];
     },
   },
   "expression^(16)": {
