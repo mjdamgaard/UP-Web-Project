@@ -5,6 +5,8 @@ import {PriorityCache} from "./CombinedCache.js";
 import {EntityReference, EntityPlaceholder} from "./DataParser.js";
 
 
+const MAX_ARRAY_INDEX = 1E+15;
+
 const GAS_NAMES = {
   comp: "computation",
 };
@@ -160,14 +162,10 @@ export class ScriptInterpreter {
 
   static evaluateExpression(gas, expSyntaxTree, environment) {
     decrCompGas(gas);
-    // TODO: switch-case the type of the expression, and just handle each one
-    // inside this statement.. ..Sure (unless they turn out to be too
-    // complicated). ..Oh, which some are, especially the function call, but
-    // then just factor those ones out.
 
     let type = expSyntaxTree.type;
     switch (type) {
-      case "assignment":
+      case "assignment": {
         let val = this.evaluateExpression(gas, expSyntaxTree.exp2, environment);
         let op = expSyntaxTree.op;
         switch (op) {
@@ -232,7 +230,8 @@ export class ScriptInterpreter {
             `operator: "${op}"`
           );
         }
-      case "conditional-expression":
+      }
+      case "conditional-expression": {
         let cond = this.evaluateExpression(
           gas, expSyntaxTree.cond, environment
         );
@@ -245,6 +244,7 @@ export class ScriptInterpreter {
             gas, expSyntaxTree.exp2, environment
           );
         }
+      }
       case "polyadic-operation": {
         let children = expSyntaxTree.children;
         let acc = this.evaluateExpression(gas, children[0], environment);
@@ -438,7 +438,7 @@ export class ScriptInterpreter {
             );
         }
       }
-      case "function-call":
+      case "function-call": {
         let fun = this.evaluateExpression(gas, expSyntaxTree.exp, environment);
         let inputExpArr = expSyntaxTree.postfix.children;
         let inputVals = inputExpArr.map(exp => (
@@ -457,7 +457,8 @@ export class ScriptInterpreter {
           "Function call with a non-function-valued expression",
           expSyntaxTree
         );
-      case "member-access":
+      }
+      case "member-access": {
         // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
         let [expVal, indexVal] = this.getMemberAccessExpValAndSafeIndex(
           expSyntaxTree, environment
@@ -470,10 +471,25 @@ export class ScriptInterpreter {
         }
         // Then return the value held in expVal.
         return expVal[indexVal];
-      case "array":
-        break;
-      case "object":
-        break;
+      }
+      case "array": {
+        let expValArr = expSyntaxTree.children.map(exp => (
+          this.evaluateExpression(gas, exp, environment)
+        ));
+        return expValArr;
+      }
+      case "object": {
+        let memberEntries = expSyntaxTree.children.map(exp => (
+          [
+            "#" + (
+              exp.ident ??
+              this.evaluateExpression(gas, exp.nameExp, environment)
+            ),
+            this.evaluateExpression(gas, valExp, environment)
+          ]
+        ));
+        return Object.fromEntries(memberEntries);
+      }
       case "entity-reference":
         if (expSyntaxTree.isTBD) {
           return new EntityPlaceholder(expSyntaxTree.lexeme);
@@ -492,6 +508,7 @@ export class ScriptInterpreter {
         return (lexeme === "true") ? true :
                (lexeme === "false") ? false :
                (lexeme === "null") ? null :
+               (lexeme === "Infinity") ? Infinity :
                undefined;
       default: throw (
         "ScriptInterpreter.evaluateExpression(): Unrecognized type: " +
@@ -551,7 +568,7 @@ export class ScriptInterpreter {
     // integer, and if it is an object, append "#" to the indexVal.
     if (Array.isArray(expVal)) {
       indexVal = parseInt(indexVal);
-      if (!(indexVal >= 0)) {
+      if (!(indexVal >= 0 && indexVal <= MAX_ARRAY_INDEX)) {
         throw new ScriptError(
           "Assignment to an array with a non-integer or a " +
           "negative integer key",

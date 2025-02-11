@@ -1055,14 +1055,21 @@ const scriptGrammar = {
   },
   "member": {
     rules: [
-      ["identifier", "/:/", "expression"],
-      ["string", "/:/", "expression"],
+      ["identifier", "/:/!", "expression"],
+      ["string", "/:/!", "expression"],
+      [/\[/, "expression", /\]/, "/:/", "expression"],
     ],
     process: (syntaxTree) => {
-      syntaxTree.nameStr = (syntaxTree.ruleInd === 0) ?
-        JSON.stringify(syntaxTree.children[0]) :
-        syntaxTree.children[0];
-      syntaxTree.val = syntaxTree.children[2];
+      if (syntaxTree.ruleInd === 0) {
+        syntaxTree.ident = syntaxTree.children[0].lexeme;
+        syntaxTree.valExp = syntaxTree.children[2];
+      } else if (syntaxTree.ruleInd === 1) {
+        syntaxTree.nameExp = syntaxTree.children[0];
+        syntaxTree.valExp = syntaxTree.children[2];
+      } else {
+        syntaxTree.nameExp = syntaxTree.children[1];
+        syntaxTree.valExp = syntaxTree.children[4];
+      }
     },
   },
   "literal-list": {
@@ -1074,7 +1081,7 @@ const scriptGrammar = {
   },
   "constant": {
     rules: [
-      ["/true|false|null|undefined/"],
+      ["/true|false|null|undefined|Infinity/"],
     ],
     process: copyLexemeFromChild(0),
   },
