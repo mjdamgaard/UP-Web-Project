@@ -158,6 +158,23 @@ export function processPolyadicOperation(syntaxTree) {
 }
 
 
+export function processLeftAssocPostfixes(expInd, postfixListInd, type) {
+  return (syntaxTree) => {
+    let ret = syntaxTree.children[expInd];
+    let postfixes = syntaxTree.children[postfixListInd].children;
+    let len = postfixes.length;
+    for (let i = 0; i < len; i++) {
+      ret = {
+        type: type,
+        exp: ret,
+        postfix: postfixes[i],
+      }
+    }
+    return ret;
+  }
+}
+
+
 
 
 
@@ -920,24 +937,25 @@ const scriptGrammar = {
   },
   "expression^(14)": {
     rules: [
-      ["identifier", "expression-tuple!1"],
-      ["expression^(15)", /\->/, "identifier!", "expression-tuple"],
+      ["expression^(15)", "expression-tuple+!1"],
+      ["expression^(15)", /\->/, "identifier!", "expression-tuple+"],
       ["expression^(15)"],
     ],
     process: (syntaxTree) => {
       let children = syntaxTree.children;
-      if (syntaxTree.ruleInd === 0) {
-        syntaxTree.type = "function-call";
-        syntaxTree.fun = children[0];
-        syntaxTree.tuple = children[1];
+      // Preprocess rule 2, a "virtual method call," as syntactic sugar over
+      // a function call with the expression to the left of '->' as the first
+      // argument (in the first of the following tuples).
+      if (syntaxTree.ruleInd === 1) {
+        let obj = children[0];
+        children[0] = children[2];
+        children[1] = children[3];
+        let firstTuple = children[1].children[0];
+        firstTuple.children = [obj, ...firstTuple.children];
       }
-      // A "virtual method call" is a syntactic sugar over a function call.
-      else if (syntaxTree.ruleInd === 1) {
-        syntaxTree.type = "function-call";
-        syntaxTree.fun = children[0];
-        let tuple = children[3];
-        tuple.children = [obj, ...tuple.children];
-        syntaxTree.tuple = tuple;
+      // Then process the function call.
+      if (syntaxTree.ruleInd <= 1) {
+        processLeftAssocPostfixes(0, 1, "function-call")(syntaxTree);
       } else {
         becomeChild(0)(syntaxTree);
       }
@@ -945,9 +963,16 @@ const scriptGrammar = {
   },
   "expression-tuple": {
     rules: [
-      [/\(/, "expression-list?", /\)/],
+      [/\(/, "expression-list", "/\\)/!"],
+      [/\(/, /\)/],
     ],
-    process: becomeChild(1),
+    process: (syntaxTree) => {
+      if (syntaxTree.ruleInd === 0) {
+        becomeChild(1)(syntaxTree);
+      } else {
+        syntaxTree.children = [];
+      }
+    },
   },
   "expression^(15)": {
     rules: [
@@ -956,9 +981,7 @@ const scriptGrammar = {
     ],
     process: (syntaxTree) => {
       if (syntaxTree.ruleInd === 0) {
-        syntaxTree.type = "member-access";
-        syntaxTree.exp = syntaxTree.children[0];
-        syntaxTree.indices = syntaxTree.children[1].children;
+        processLeftAssocPostfixes(0, 1, "member-access")(syntaxTree);
       } else {
         becomeChild(0)(syntaxTree);
       }
@@ -968,13 +991,16 @@ const scriptGrammar = {
     rules: [
       [/\[/, "expression!", /\]/],
       [/\./, "identifier!"],
-      // [/\?/, /\./, "identifier"],
+      [/\?/, /\./, "identifier"],
     ],
     process: (syntaxTree) => {
       if (syntaxTree.ruleInd === 0) {
         syntaxTree.exp = syntaxTree.children[1];
+      } else if (syntaxTree.ruleInd === 1) {
+        syntaxTree.ident = syntaxTree.children[1].lexeme;
       } else {
         syntaxTree.ident = syntaxTree.children[1].lexeme;
+        syntaxTree.isOpt = true;
       }
     },
   },

@@ -5,7 +5,9 @@ import {PriorityCache} from "./CombinedCache.js";
 import {EntityReference, EntityPlaceholder} from "./DataParser.js";
 
 
-const COMP_GAS_ERROR = "Ran out of computation gas.";
+const GAS_NAMES = {
+  comp: "computation",
+};
 
 
 
@@ -145,10 +147,7 @@ export class ScriptInterpreter {
 
 
   static executeStatement(gas, stmtSyntaxTree, environment) {
-    if (--gas.comp < 0) throw new ScriptError(
-      COMP_GAS_ERROR,
-      stmtSyntaxTree
-    );
+    decrCompGas(gas);
     // TODO: switch-case the type of the statement, and then call any of the
     // above flow methods, or one of the below singular statements, depending
     // on the type. For some of the simple statements, like return, throw,
@@ -160,10 +159,7 @@ export class ScriptInterpreter {
 
 
   static evaluateExpression(gas, expSyntaxTree, environment) {
-    if (--gas.comp < 0) throw new ScriptError(
-      COMP_GAS_ERROR,
-      stmtSyntaxTree
-    );
+    decrCompGas(gas);
     // TODO: switch-case the type of the expression, and just handle each one
     // inside this statement.. ..Sure (unless they turn out to be too
     // complicated). ..Oh, which some are, especially the function call, but
@@ -443,23 +439,37 @@ export class ScriptInterpreter {
         }
       }
       case "function-call":
-        let fun = this.evaluateExpression(gas, expSyntaxTree.fun, environment);
-        let tuples; // TODO: Implement higher-order function call syntax again.
+        let fun = this.evaluateExpression(gas, expSyntaxTree.exp, environment);
+        let inputExpArr = expSyntaxTree.postfix.children;
+        let inputVals = inputExpArr.map(exp => (
+          this.evaluateExpression(gas, exp, environment)
+        ));
         if (fun instanceof DefinedFunction) {
-          let funEnvironment = fun.environment;
-          let funSyntaxTree = fun.environment;
           return this.executeFunction(
-            gas, funSyntaxTree, /* inputs... ,*/ funEnvironment
+            gas, fun.syntaxTree, inputVals, fun.environment
           );
-        } else if (fun instanceof BuiltInFunction) {
-          // ...
-          return;
-        } else throw new ScriptError(
+        }
+        else if (fun instanceof BuiltInFunction) {
+          payGas(gas, fun.gasCost);
+          return fun.fun(inputVals);
+        }
+        else throw new ScriptError(
           "Function call with a non-function-valued expression",
           expSyntaxTree
         );
       case "member-access":
-        break;
+        // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
+        let [expVal, indexVal] = this.getMemberAccessExpValAndSafeIndex(
+          expSyntaxTree, environment
+        );
+        // Handle graceful return in case of an optional chaining.
+        if (expSyntaxTree.postfix.isOpt) {
+          if (expVal === null || expVal === undefined) {
+            return undefined;
+          }
+        }
+        // Then return the value held in expVal.
+        return expVal[indexVal];
       case "array":
         break;
       case "object":
@@ -496,60 +506,18 @@ export class ScriptInterpreter {
       let ident = expSyntaxTree.lexeme;
       return environment.assign(ident, expSyntaxTree, assignFun);
     }
-    else if (expSyntaxTree.type === "member-access") {
-      let identTree = expSyntaxTree.exp;
-      if (expSyntaxTree.type !== "identifier") throw new ScriptError(
-        "Assignment to invalid expression",
-        expSyntaxTree
+    else if (
+      expSyntaxTree.type === "member-access" && !expSyntaxTree.postfix.isOpt
+    ) {
+      // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
+      let [expVal, indexVal] = this.getMemberAccessExpValAndSafeIndex(
+        expSyntaxTree, environment
       );
 
-      // Remove and record the last index.
-      let lastIndex = expSyntaxTree.indices.pop();
-
-      // If the remaining indices array is empty, evaluate the identifier, or
-      // else evaluate the whole member access with the last index removed.
-      let valBeforeLastInd;
-      if (expSyntaxTree.indices.length === 0) {
-        valBeforeLastInd = this.evaluateExpression(
-          gas, expSyntaxTree, environment
-        );
-      } else {
-        valBeforeLastInd = this.evaluateExpression(
-          gas, identTree, environment
-        );
-      }
-
-      // Now get the index value.
-      let indexVal = lastIndex.ident;
-      if (!lastIndex) {
-        indexVal = this.evaluateExpression(gas, lastIndex.exp, environment);
-      }
-
-      // If valBeforeLastInd is an array, check that indexVal is a non-negative
-      // integer, and if it is an object, append "#" to the indexVal.
-      if (Array.isArray(valBeforeLastInd)) {
-        indexVal = parseInt(indexVal);
-        if (!(indexVal >= 0)) {
-          throw new ScriptError(
-            "Assignment to an array with a non-integer or a " +
-            "negative integer key",
-            lastIndex
-          );
-        }
-      }
-      else if (!valBeforeLastInd || typeof valBeforeLastInd !== "object") {
-        throw new ScriptError(
-          "Assignment to a member of a non-object",
-          expSyntaxTree
-        );
-      }
-      else {
-        indexVal = "#" + indexVal;
-      }
-
-      // And then we simply assign the member of our valBeforeLastInd.
-      let [newVal, ret] = assignFun(valBeforeLastInd[indexVal]);
-      valBeforeLastInd[indexVal] = newVal;
+      // Then assign the member of our expVal and return the value specified by
+      // assignFun.
+      let [newVal, ret] = assignFun(expVal[indexVal]);
+      expVal[indexVal] = newVal;
       return ret;
     }
     else {
@@ -560,6 +528,49 @@ export class ScriptInterpreter {
     }
   }
 
+  static getMemberAccessExpValAndSafeIndex(memAccSyntaxTree, environment) {
+    // Evaluate the expression.
+    let expVal = this.evaluateExpression(
+      gas, memAccSyntaxTree.exp, environment
+    );
+
+    // Now get the index value.
+    let indexExp = memAccSyntaxTree.postfix;
+    let indexVal = indexExp.ident;
+    if (!indexVal) {
+      indexVal = this.evaluateExpression(gas, indexExp.exp, environment);
+    }
+    if (typeof indexVal !== "string" && typeof indexVal !== "number") {
+      throw new ScriptError(
+        "Indexing with a non-primitive value",
+        indexExp
+      );
+    }
+
+    // If expVal is an array, check that indexVal is a non-negative
+    // integer, and if it is an object, append "#" to the indexVal.
+    if (Array.isArray(expVal)) {
+      indexVal = parseInt(indexVal);
+      if (!(indexVal >= 0)) {
+        throw new ScriptError(
+          "Assignment to an array with a non-integer or a " +
+          "negative integer key",
+          lastIndex
+        );
+      }
+    }
+    else if (!expVal || typeof expVal !== "object") {
+      throw new ScriptError(
+        "Assignment to a member of a non-object",
+        memAccSyntaxTree
+      );
+    }
+    else {
+      indexVal = "#" + indexVal;
+    }
+
+    return [expVal, indexVal];
+  }
 
 }
 
@@ -634,18 +645,38 @@ class Environment {
 
 
 
+function payGas(gas, gasCost, node) {
+  Object.keys(this.gasCost).forEach(key => {
+    if (gas[key] ??= 0) {
+      gas[key] -= gasCost[key];
+    }
+    if (gas[key] < 0) throw new ScriptError(
+      "Ran out of " + GAS_NAMES[key] + "gas",
+      node
+    );
+  });
+}
+
+function decrCompGas(gas, node) {
+  if (0 > --gas.comp) throw new ScriptError(
+    "Ran out of " + GAS_NAMES.comp + " gas",
+    node
+  );
+}
+
+
 
 class DefinedFunction {
-  constructor(funTree, environment) {
-    this.fun = funTree;
-    this.env = environment;
+  constructor(syntaxTree, environment) {
+    this.syntaxTree = syntaxTree;
+    this.environment = environment;
   }
 }
 
 class BuiltInFunction {
-  constructor(fun, gasCosts) {
+  constructor(fun, gasCost) {
     this.fun = fun;
-    this.gasCosts = gasCosts;
+    this.gasCost = gasCost;
   }
 }
 
