@@ -440,13 +440,16 @@ const scriptGrammar = {
   ...regEntGrammar,
   "script": {
     rules: [
-      ["import-statement-list", "declaration+$"],
-      ["import-statement-list", "expression", "/;/?"],
-      ["declaration+$"],
-      ["expression", "/;/?"],
+      ["import-statement-list", "outer-statement+$!"],
+      ["outer-statement+$"],
     ],
     process: (syntaxTree) => {
-      // ...
+      if (syntaxTree.ruleInd === 0) {
+        syntaxTree.importStmtArr = syntaxTree.children[0].children;
+        syntaxTree.stmtArr = syntaxTree.children[1].children;
+      } else {
+        syntaxTree.stmtArr = syntaxTree.children[0].children;
+      }
     },
   },
   "import-statement-list": {
@@ -483,14 +486,13 @@ const scriptGrammar = {
       // ...
     },
   },
-  "declaration": {
+  "outer-statement": {
     rules: [
       ["/export/", "/default/", "variable-declaration"],
-      ["/export/", "/default/", "function-declaration"],
+      ["/export/", "/default/", "function-declaration!"],
       ["/export/", "variable-declaration"],
-      ["/export/", "function-declaration"],
-      ["variable-declaration"],
-      ["function-declaration"],
+      ["/export/", "function-declaration!"],
+      ["statement"],
     ],
     process: straightenListSyntaxTree(0),
   },
@@ -510,24 +512,6 @@ const scriptGrammar = {
       }
     },
   },
-  "identifier-list": {
-    rules: [
-      ["identifier", "/,/", "identifier-list!1"],
-      ["identifier", "/,/?"],
-    ],
-    process: straightenListSyntaxTree(1),
-  },
-  "identifier": {
-    rules: [
-      [/[_\$a-zA-Z][_\$a-zA-Z0-9]*/],
-    ],
-    process: (syntaxTree) => {
-      syntaxTree.lexeme = syntaxTree.children[0].lexeme;
-      return [
-        !RESERVED_KEYWORD_REGEXP.test(syntaxTree.lexeme)
-      ];
-    },
-  },
   "variable-definition-list": {
     rules: [
       ["variable-definition", "/,/", "variable-definition-list!"],
@@ -545,6 +529,24 @@ const scriptGrammar = {
         ident: syntaxTree.children[0],
         exp: syntaxTree.children[2] || undefined,
       });
+    },
+  },
+  "identifier-list": {
+    rules: [
+      ["identifier", "/,/", "identifier-list!1"],
+      ["identifier", "/,/?"],
+    ],
+    process: straightenListSyntaxTree(1),
+  },
+  "identifier": {
+    rules: [
+      [/[_\$a-zA-Z][_\$a-zA-Z0-9]*/],
+    ],
+    process: (syntaxTree) => {
+      syntaxTree.lexeme = syntaxTree.children[0].lexeme;
+      return [
+        !RESERVED_KEYWORD_REGEXP.test(syntaxTree.lexeme)
+      ];
     },
   },
   "function-declaration": {
@@ -691,21 +693,28 @@ const scriptGrammar = {
       ["block-statement!1"],
       ["if-else-statement!1"],
       ["loop-statement!1"],
-      ["variable-declaration!1"],
-      ["function-declaration!1"],
       ["return-statement!1"],
       ["throw-statement!1"],
       ["instruction-statement!1"],
       ["empty-statement!1"],
+      ["variable-declaration!1"],
+      ["function-declaration!1"],
       ["expression", "/;/"],
     ],
     process: becomeChild(0)
   },
   "block-statement": {
     rules: [
-      [/\{/, "statement-list?", /\}/],
+      [/\{/, "statement-list", "/\\}/!"],
+      [/\{/, /\}/],
     ],
-    process: becomeChild(1),
+    process: (syntaxTree) => {
+      if (syntaxTree.ruleInd === 0) {
+        syntaxTree.children = syntaxTree.children[1].children;
+      } else {
+        syntaxTree.children = []
+      }
+    },
   },
   "if-else-statement": {
     rules: [
@@ -760,17 +769,21 @@ const scriptGrammar = {
   "return-statement": {
     rules: [
       ["/return/", "expression", "/;/"],
+      ["/return/", "/;/"],
     ],
     process: (syntaxTree) => {
-      syntaxTree.exp = syntaxTree.children[1];
+      syntaxTree.exp = (syntaxTree.ruleInd === 0) ? syntaxTree.children[1] :
+        undefined;
     },
   },
   "throw-statement": {
     rules: [
       ["/throw/", "expression", "/;/"],
+      ["/throw/", "/;/"],
     ],
     process: (syntaxTree) => {
-      syntaxTree.exp = syntaxTree.children[1];
+      syntaxTree.exp = (syntaxTree.ruleInd === 0) ? syntaxTree.children[1] :
+        undefined;
     },
   },
   "instruction-statement": {
@@ -1097,7 +1110,7 @@ export const scriptParser = new Parser(
     /\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
     /\+=|\-=|\*=|\/=|&&=|\|\|=|\?\?=/,
     /&&|\|\||\?\?|\+\+|\-\-|\*\*/,
-    /<>|\->/,
+    /<>|=>|\->/,
     /===|==|!==|!=|<=|>=/,
     /@[\[\{<];?/,
     /[\.,:;\[\]\{\}\(\)<>\?=\+\-\*\|\^&!%\/]/,

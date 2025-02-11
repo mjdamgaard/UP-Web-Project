@@ -22,7 +22,7 @@ export class ScriptInterpreter {
   }
 
   static parseScript(str) {
-    // TODO: Throw a ScriptError on failure.
+    // TODO: Throw a RuntimeError on failure.
     return scriptParser.parse(str);
   }
 
@@ -88,76 +88,137 @@ export class ScriptInterpreter {
     // return value is thrown, the return value should be regarded as
     // undefined.
 
-    // Return the return value of the function (or throw either a ScriptError
+    // Return the return value of the function (or throw either a RuntimeError
     // on runtime error, or if the gas runs up, or a CustomError, if a throw
     // statement is reached).
 
   }
 
 
-  static executeStatementList(gas, stmtListSyntaxTree, environment) {
-    // TODO: Pair the input values with the parameters, and convert the values
-    // automatically to the type of the input parameter, if the type is a
-    // primitive one. Then create a new environment, and start executing the
-    // statement list with that environment.
-
-    // If a return statement is reached, return the returned value, else return
-    // undefined if the end of the list is reached. If a break or continue
-    // statement is reached, throw a break or continue signal, which can be
-    // caught by a loop (or if not caught can be turned into a ScriptError).
-
-    // Make changes to environment (and gas) as side-effects.
-  }
-
-  static executeBlockStatement(gas, blockStmtSyntaxTree, environment) {
-    // TODO: Create a new empty environment (with input environment as
-    // the prototype), and execute the statement list inside the block.
-
-  }
-
-  static executeLoop(gas, loopListSyntaxTree, environment) {
-    // TODO: Make a environment (with the input as its parent/prototype), and 
-    // run the declaration statement, if any, inside it at first. Then
-    // depending on the doFirst flag, evaluate and check the condition
-    // initially or not. Then run the statement inside the environment and
-    // catch any break or continue exceptions, and pass on any other
-    // exceptions/errors. Then run the update expression inside the environment,
-    // if any. Then make the condition check again and repeat.
-  }
-
-  static executeIfElseStatement(gas, ifElseStmtSyntaxTree, environment) {
-    // TODO: Simply check the condition, and then either run the ifStmt or
-    // elseStmt depending, or do nothing if the to-be-run elseStmt is undefined.
-  }
-
 
   // TODO: Implement switch-case grammar and handling at some point.
 
 
   static executeVariableDeclaration(gas, varDecSyntaxTree, environment) {
-    // TODO: If the statement is a definition list, iterate over each variable
-    // definition, evaluate that expression if any, and then add the variable
-    // to the environment, or throw a runtime error, if it already defined in
-    // the environment (or a function of the same name is defined), but not
-    // if its defined in a parent environment.
-    // If it is a destructuring statement, evaluate the expression, then make
-    // sure that is has all the required "0", "1", ... entries. Then for each
-    // identifier (on the LHS), assign it the value on the corresponding entry,
-    // and also make a similar check that it isn't defined already in the
-    // current environment.
+    let type = varDecSyntaxTree.type;
+    if (type === "definition-list") {
+      varDecSyntaxTree.defList.forEach(varDef => {
+        let ident = varDef.ident.lexeme;
+        let val = (!varDef.exp) ? undefined :
+          this.evaluateExpression(gas, varDef.exp, environment);
+        environment.declare(ident, val, false, "block", varDecSyntaxTree);
+      });
+    }
+    else if (type === "destructuring") {
+      let val = this.evaluateExpression(
+        gas, varDecSyntaxTree.exp, environment
+      );
+      if (!Array.isArray(val)) throw new RuntimeError(
+        "Destructuring of a non-array expression",
+        varDecSyntaxTree
+      );
+      varDecSyntaxTree.identList.forEach((ident, ind) => {
+        let ident = ident.lexeme;
+        let nestedVal = val[ind];
+        environment.declare(
+          ident, nestedVal, false, "block", varDecSyntaxTree
+        );
+      });
+    }
+    else throw (
+      "ScriptInterpreter.evaluateExpression(): Unrecognized " +
+      `variable declaration type: "${type}"`
+    );
   }
+
+
+  static executeFunctionDeclaration(gas, funDecSyntaxTree, environment) {
+    
+  }
+
 
 
   static executeStatement(gas, stmtSyntaxTree, environment) {
     decrCompGas(gas);
-    // TODO: switch-case the type of the statement, and then call any of the
-    // above flow methods, or one of the below singular statements, depending
-    // on the type. For some of the simple statements, like return, throw,
-    // break, continue or the empty statement, just handle them inside the
-    // switch-case statement. ..Oh, and do the same for the expression
-    // statement. (So let me just move executeVariableDeclaration() up above
-    // this one..)
+
+    let type = stmtSyntaxTree.type;
+    switch (type) {
+      case "block-statement": {
+        let newEnv = new Environment(environment, "block");
+        let stmtArr = stmtSyntaxTree.children;
+        let len = stmtArr.length;
+        for (let i = 0; i < len; i++) {
+          this.executeStatement(gas, stmtArr[i], newEnv);
+        }
+      }
+      case "if-else-statement": {
+        let condVal = this.evaluateExpression(
+          gas, stmtSyntaxTree.cond, environment
+        );
+        if (condVal) {
+          this.executeStatement(gas, stmtSyntaxTree.isStmt, environment);
+        } else if (stmtSyntaxTree.elseStmt) {
+          this.executeStatement(gas, stmtSyntaxTree.elseStmt, environment);
+        }
+      }
+      case "loop-statement": {
+        let newEnv = new Environment(environment, "block");
+        let innerStmt = stmtSyntaxTree.stmt;
+        let updateStmt = stmtSyntaxTree.updateStmt;
+        let condExp = stmtSyntaxTree.updateStmt;
+        if (stmtSyntaxTree.dec) {
+          this.executeStatement(gas, stmtSyntaxTree.dec, newEnv);
+        }
+        let postponeCond = stmtSyntaxTree.doFirst;
+        while (postponeCond || this.evaluateExpression(gas, condExp, newEnv)) {
+          postponeCond = false;
+          try {
+            this.executeStatement(gas, innerStmt, newEnv);
+          } catch (err) {
+            if (err instanceof BreakException) {
+              return;
+            } else if (!(err instanceof ContinueException)) {
+              throw err;
+            }
+          }
+          this.executeStatement(gas, updateStmt, newEnv);
+        }
+      }
+      case "return-statement": {
+        let expVal = (!syntaxTree.exp) ? undefined :
+          this.evaluateExpression(gas, stmtSyntaxTree.cond, environment);
+        throw new ReturnException(expVal, stmtSyntaxTree);
+      }
+      case "throw-statement": {
+        let expVal = (!syntaxTree.exp) ? undefined :
+          this.evaluateExpression(gas, stmtSyntaxTree.cond, environment);
+        throw new ThrownException(expVal, stmtSyntaxTree);
+      }
+      case "instruction-statement": {
+        if (stmtSyntaxTree.lexeme === "break") {
+          throw new BreakException(stmtSyntaxTree);
+        } else {
+          throw new ContinueException(stmtSyntaxTree);
+        }
+      }
+      case "empty-statement": {
+        return;
+      }
+      case "variable-declaration": {
+        this.executeVariableDeclaration(gas, stmtSyntaxTree, environment);
+      }
+      case "function-declaration": {
+        this.executeFunctionDeclaration(gas, stmtSyntaxTree, environment);
+      }
+      default: throw (
+        "ScriptInterpreter.evaluateExpression(): Unrecognized " +
+        `statement type: "${type}"`
+      );
+    }
+
   }
+
+
 
 
   static evaluateExpression(gas, expSyntaxTree, environment) {
@@ -311,7 +372,7 @@ export class ScriptInterpreter {
               break;
             case "<>":
               if (Array.isArray(acc)) {
-                if (!Array.isArray(nextVal)) throw new ScriptError(
+                if (!Array.isArray(nextVal)) throw new RuntimeError(
                   "Cannot concat a non-array to an array",
                   children[ind + 1]
                 );
@@ -356,7 +417,7 @@ export class ScriptInterpreter {
             return this.assignToVariableOrMember(
               expSyntaxTree.exp, environment, prevVal => {
                 let int = parseFloat(prevVal);
-                if (!int && int !== 0) throw new ScriptError(
+                if (!int && int !== 0) throw new RuntimeError(
                   "Increment of a non-numeric value",
                   expSyntaxTree
                 );
@@ -368,7 +429,7 @@ export class ScriptInterpreter {
             return this.assignToVariableOrMember(
               expSyntaxTree.exp, environment, prevVal => {
                 let int = parseFloat(prevVal);
-                if (!int && int !== 0) throw new ScriptError(
+                if (!int && int !== 0) throw new RuntimeError(
                   "Decrement of a non-numeric value",
                   expSyntaxTree
                 );
@@ -416,7 +477,7 @@ export class ScriptInterpreter {
             return this.assignToVariableOrMember(
               expSyntaxTree.exp, environment, prevVal => {
                 let int = parseFloat(prevVal);
-                if (!int && int !== 0) throw new ScriptError(
+                if (!int && int !== 0) throw new RuntimeError(
                   "Increment of a non-numeric value",
                   expSyntaxTree
                 );
@@ -428,7 +489,7 @@ export class ScriptInterpreter {
             return this.assignToVariableOrMember(
               expSyntaxTree.exp, environment, prevVal => {
                 let int = parseFloat(prevVal);
-                if (!int && int !== 0) throw new ScriptError(
+                if (!int && int !== 0) throw new RuntimeError(
                   "Decrement of a non-numeric value",
                   expSyntaxTree
                 );
@@ -453,7 +514,7 @@ export class ScriptInterpreter {
           payGas(gas, fun.gasCost);
           return fun.fun(inputVals);
         }
-        else throw new ScriptError(
+        else throw new RuntimeError(
           "Function call with a non-function-valued expression",
           expSyntaxTree
         );
@@ -538,7 +599,7 @@ export class ScriptInterpreter {
       return ret;
     }
     else {
-      throw new ScriptError(
+      throw new RuntimeError(
         "Assignment to invalid expression",
         expSyntaxTree
       );
@@ -558,18 +619,26 @@ export class ScriptInterpreter {
       indexVal = this.evaluateExpression(gas, indexExp.exp, environment);
     }
     if (typeof indexVal !== "string" && typeof indexVal !== "number") {
-      throw new ScriptError(
+      throw new RuntimeError(
         "Indexing with a non-primitive value",
         indexExp
       );
     }
 
+    // Validate the indexVal, and transform it depending on expVal.
+    indexVal = getSafeKeyGivenExpVal(indexVal, expVal);
+
+    return [expVal, indexVal];
+  }
+
+
+  static getSafeKeyGivenExpVal(indexVal, expVal) {
     // If expVal is an array, check that indexVal is a non-negative
     // integer, and if it is an object, append "#" to the indexVal.
     if (Array.isArray(expVal)) {
       indexVal = parseInt(indexVal);
       if (!(indexVal >= 0 && indexVal <= MAX_ARRAY_INDEX)) {
-        throw new ScriptError(
+        throw new RuntimeError(
           "Assignment to an array with a non-integer or a " +
           "negative integer key",
           lastIndex
@@ -577,7 +646,7 @@ export class ScriptInterpreter {
       }
     }
     else if (!expVal || typeof expVal !== "object") {
-      throw new ScriptError(
+      throw new RuntimeError(
         "Assignment to a member of a non-object",
         memAccSyntaxTree
       );
@@ -586,7 +655,7 @@ export class ScriptInterpreter {
       indexVal = "#" + indexVal;
     }
 
-    return [expVal, indexVal];
+    return indexVal;
   }
 
 }
@@ -618,7 +687,7 @@ class Environment {
     let [prevVal] = this.variables[safeIdent];
     if (scopeType === "block") {
       if (prevVal !== undefined) {
-        throw new ScriptError(
+        throw new RuntimeError(
           "Redeclaration of variable '" + ident + "'",
           node
         );
@@ -637,7 +706,7 @@ class Environment {
     let [prevVal, isConst] = this.variables[safeIdent];
     if (prevVal !== undefined) {
       if (isConst) {
-        throw new ScriptError(
+        throw new RuntimeError(
           "Reassignment of constant variable or function '" + ident + "'",
           node
         );
@@ -649,7 +718,7 @@ class Environment {
     } else if (this.parent) {
       return this.parent.assign(ident, node, assignFun);
     } else {
-      throw new ScriptError(
+      throw new RuntimeError(
         "Assignment of undefined variable '" + ident + "'",
         node
       );
@@ -667,7 +736,7 @@ function payGas(gas, gasCost, node) {
     if (gas[key] ??= 0) {
       gas[key] -= gasCost[key];
     }
-    if (gas[key] < 0) throw new ScriptError(
+    if (gas[key] < 0) throw new RuntimeError(
       "Ran out of " + GAS_NAMES[key] + "gas",
       node
     );
@@ -675,7 +744,7 @@ function payGas(gas, gasCost, node) {
 }
 
 function decrCompGas(gas, node) {
-  if (0 > --gas.comp) throw new ScriptError(
+  if (0 > --gas.comp) throw new RuntimeError(
     "Ran out of " + GAS_NAMES.comp + " gas",
     node
   );
@@ -699,7 +768,32 @@ class BuiltInFunction {
 
 
 
-export class ScriptError {
+class ReturnException {
+  constructor(val, node) {
+    this.val = val;
+    this.node = node;
+  }
+}
+class ThrownException {
+  constructor(val, node) {
+    this.val = val;
+    this.node = node;
+  }
+}
+class BreakException {
+  constructor(node) {
+    this.node = node;
+  }
+}
+class ContinueException {
+  constructor(node) {
+    this.node = node;
+  }
+}
+
+
+
+export class RuntimeError {
   constructor(msg, node) {
     this.msg = msg;
     this.node = node;
