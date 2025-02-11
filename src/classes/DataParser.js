@@ -430,8 +430,12 @@ export const regEntStringContentParser = new Parser(
 
 
 
-const RESERVED_KEYWORD_REGEXP =
-  /^(let|var|const|function|export|import|break|continue|return|throw)$/;
+const RESERVED_KEYWORD_REGEXP = new RegExp(
+  "^(let|var|const|this|function|export|import|break|continue|return|throw|" +
+  "if|else|switch|case|void|typeof|instanceof|delete|await|class|static|" +
+  "true|false|null|undefined|Infinity|try|catch|for|while|do|default)$"
+  // TODO: Continue this list.
+);
 
 
 
@@ -951,24 +955,15 @@ const scriptGrammar = {
   "expression^(14)": {
     rules: [
       ["expression^(15)", "expression-tuple+!1"],
-      ["expression^(15)", /\->/, "identifier!", "expression-tuple+"],
+      ["expression^(15)", /\->/, "expression^(15)!", "expression-tuple+"],
       ["expression^(15)"],
     ],
     process: (syntaxTree) => {
-      let children = syntaxTree.children;
-      // Preprocess rule 2, a "virtual method call," as syntactic sugar over
-      // a function call with the expression to the left of '->' as the first
-      // argument (in the first of the following tuples).
-      if (syntaxTree.ruleInd === 1) {
-        let obj = children[0];
-        children[0] = children[2];
-        children[1] = children[3];
-        let firstTuple = children[1].children[0];
-        firstTuple.children = [obj, ...firstTuple.children];
-      }
-      // Then process the function call.
-      if (syntaxTree.ruleInd <= 1) {
+      if (syntaxTree.ruleInd === 0) {
         processLeftAssocPostfixes(0, 1, "function-call")(syntaxTree);
+      } else if (syntaxTree.ruleInd === 1) {
+        syntaxTree.thisValExp = syntaxTree.children[0]
+        processLeftAssocPostfixes(2, 3, "function-call")(syntaxTree);
       } else {
         becomeChild(0)(syntaxTree);
       }
@@ -1023,6 +1018,7 @@ const scriptGrammar = {
       ["array!1"],
       ["object!1"],
       ["identifier"],
+      ["this-keyword"],
       ["literal"],
     ],
     process: (syntaxTree) => {
@@ -1091,6 +1087,12 @@ const scriptGrammar = {
       ["literal", "/,/?"],
     ],
     process: straightenListSyntaxTree(1),
+  },
+  "this-keyword": {
+    rules: [
+      ["/this/"],
+    ],
+    process: copyLexemeFromChild(0),
   },
   "constant": {
     rules: [

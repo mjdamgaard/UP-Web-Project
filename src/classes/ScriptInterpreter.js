@@ -79,7 +79,9 @@ export class ScriptInterpreter {
 
   }
 
-  static executeFunction(gas, funSyntaxTree, inputValueArr, environment) {
+  static executeFunction(
+    gas, funSyntaxTree, inputValueArr, environment, thisVal = undefined
+  ) {
     decrCompGas(gas);
     // TODO: Pair the input values with the parameters, and convert the values
     // automatically to the type of the input parameter, if the type is a
@@ -92,6 +94,8 @@ export class ScriptInterpreter {
     // Return the return value of the function (or throw either a RuntimeError
     // on runtime error, or if the gas runs up, or a CustomError, if a throw
     // statement is reached).
+
+    let newEnv = new Environment(environment, "function", thisVal);
 
     let paramTypeArr = funSyntaxTree
 
@@ -527,9 +531,27 @@ export class ScriptInterpreter {
         let inputVals = inputExpArr.map(exp => (
           this.evaluateExpression(gas, exp, environment)
         ));
+
+        // If syntaxTree.thisValExp is defined, i.e. from a "virtual method
+        // call," evaluate the expression and bind this to the value.
+        let thisVal = undefined;
+        if (expSyntaxTree.thisValExp) {
+          thisVal = this.evaluateExpression(
+            gas, expSyntaxTree.thisValExp, environment
+          );
+          fun = this.getThisBoundFunction(fun, thisVal);
+        }
+
+        // Potentially get function and thisVal from ThisBoundFunction wrapper.
+        if (fun instanceof ThisBoundFunction) {
+          thisVal = fun.thisVal;
+          fun = fun.funVal;
+        }
+
+        // Then execute the function depending on its type.
         if (fun instanceof DefinedFunction) {
           return this.executeFunction(
-            gas, fun.syntaxTree, inputVals, fun.environment
+            gas, fun.syntaxTree, inputVals, fun.environment, thisVal
           );
         }
         else if (fun instanceof BuiltInFunction) {
@@ -552,8 +574,14 @@ export class ScriptInterpreter {
             return undefined;
           }
         }
-        // Then return the value held in expVal.
-        return expVal[indexVal];
+        // Then get the value held in expVal.
+        let ret = expVal[indexVal];
+
+        // And if the value is a function, bind this to expVal for it. (Note
+        // that this differs from the conventional semantics of JavaScript,
+        // where 'this' is normally only bound at the time when the method is
+        // being called.)
+        return this.getThisBoundFunction(ret, expVal);
       }
       case "array": {
         let expValArr = expSyntaxTree.children.map(exp => (
@@ -573,26 +601,34 @@ export class ScriptInterpreter {
         ));
         return Object.fromEntries(memberEntries);
       }
-      case "entity-reference":
+      case "this-keyword": {
+        return environment.get("this");
+      }
+      case "entity-reference": {
         if (expSyntaxTree.isTBD) {
           return new EntityPlaceholder(expSyntaxTree.lexeme);
         } else {
           return new EntityReference(expSyntaxTree.lexeme);
         }
-      case "identifier":
+      }
+      case "identifier": {
         let ident = expSyntaxTree.lexeme;
         return environment.get(ident);
-      case "string":
+      }
+      case "string": {
         return JSON.parse(expSyntaxTree.lexeme);
-      case "number":
+      }
+      case "number": {
         return parseFloat(expSyntaxTree.lexeme);
-      case "constant":
+      }
+      case "constant": {
         let lexeme = expSyntaxTree.lexeme;
         return (lexeme === "true") ? true :
                (lexeme === "false") ? false :
                (lexeme === "null") ? null :
                (lexeme === "Infinity") ? Infinity :
                undefined;
+      }
       default: throw (
         "ScriptInterpreter.evaluateExpression(): Unrecognized type: " +
         `"${type}"`
@@ -680,23 +716,37 @@ export class ScriptInterpreter {
     return indexVal;
   }
 
+
+  static getThisBoundFunction(fun, thisVal) {
+    if (fun instanceof DefinedFunction || fun instanceof BuiltInFunction) {
+      return new ThisBoundFunction(fun, expVal);
+    } else if (fun instanceof ThisBoundFunction) {
+      return new ThisBoundFunction(fun.funVal, thisVal);
+    } else {
+      return fun;
+    }
+  }
+
 }
 
 
 
 
+const UNDEFINED = {};
+
+
 class Environment {
-  constructor(parent = undefined, scopeType = "block") {
+  constructor(parent = undefined, scopeType = "block", thisVal) {
     this.parent = parent;
     this.scopeType = scopeType;
-    this.variables = {};
+    this.variables = {"#this": thisVal ?? UNDEFINED};
   }
 
   get(ident) {
     let safeIdent = "#" + ident;
     let [val] = this.variables[safeIdent];
     if (val !== undefined) {
-      return val;
+      return (val === UNDEFINED) ? undefined : val;
     } else if (this.parent) {
       return this.parent.get(ident);
     } else {
@@ -705,6 +755,7 @@ class Environment {
   }
 
   declare(ident, val, isConst, scopeType, node) {
+    val = (val === undefined) ? UNDEFINED : val;
     let safeIdent = "#" + ident;
     let [prevVal] = this.variables[safeIdent];
     if (scopeType === "block") {
@@ -734,6 +785,7 @@ class Environment {
         );
       } else {
         let [newVal, ret] = assignFun(prevVal);
+        newVal = (newVal === undefined) ? UNDEFINED : newVal;
         this.variables[safeIdent][0] = newVal;
         return ret;
       }
@@ -785,6 +837,14 @@ class BuiltInFunction {
   constructor(fun, gasCost) {
     this.fun = fun;
     this.gasCost = gasCost;
+    this.gasCost = gasCost;
+  }
+}
+
+class ThisBoundFunction {
+  constructor(funVal, thisVal) {
+    this.funVal = funVal;
+    this.thisVal = thisVal;
   }
 }
 
