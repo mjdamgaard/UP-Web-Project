@@ -79,7 +79,8 @@ export class ScriptInterpreter {
 
   }
 
-  static executeFunction( gas, funSyntaxTree, inputValueArr, environment) {
+  static executeFunction(gas, funSyntaxTree, inputValueArr, environment) {
+    decrCompGas(gas);
     // TODO: Pair the input values with the parameters, and convert the values
     // automatically to the type of the input parameter, if the type is a
     // primitive one. Then create a new environment, and start executing the
@@ -92,6 +93,19 @@ export class ScriptInterpreter {
     // on runtime error, or if the gas runs up, or a CustomError, if a throw
     // statement is reached).
 
+    let paramTypeArr = funSyntaxTree
+
+    let type = varDecSyntaxTree.type;
+    if (type === "procedure-function") {
+      
+    }
+    else if (type === "expression-function") {
+      
+    }
+    else throw (
+      "ScriptInterpreter.evaluateExpression(): Unrecognized " +
+      `function declaration type: "${type}"`
+    );
   }
 
 
@@ -100,6 +114,8 @@ export class ScriptInterpreter {
 
 
   static executeVariableDeclaration(gas, varDecSyntaxTree, environment) {
+    decrCompGas(gas);
+
     let type = varDecSyntaxTree.type;
     if (type === "definition-list") {
       varDecSyntaxTree.defList.forEach(varDef => {
@@ -133,8 +149,14 @@ export class ScriptInterpreter {
 
 
   static executeFunctionDeclaration(gas, funDecSyntaxTree, environment) {
-    
+    decrCompGas(gas);
+
+    let funVal = new DefinedFunction(funDecSyntaxTree, environment);
+    environment.declare(
+      funDecSyntaxTree.name, funVal, false, "block", funDecSyntaxTree
+    );
   }
+
 
 
 
@@ -164,7 +186,7 @@ export class ScriptInterpreter {
       case "loop-statement": {
         let newEnv = new Environment(environment, "block");
         let innerStmt = stmtSyntaxTree.stmt;
-        let updateStmt = stmtSyntaxTree.updateStmt;
+        let updateExp = stmtSyntaxTree.updateExp;
         let condExp = stmtSyntaxTree.updateStmt;
         if (stmtSyntaxTree.dec) {
           this.executeStatement(gas, stmtSyntaxTree.dec, newEnv);
@@ -181,7 +203,7 @@ export class ScriptInterpreter {
               throw err;
             }
           }
-          this.executeStatement(gas, updateStmt, newEnv);
+          this.evaluateExpression(gas, updateExp, newEnv);
         }
       }
       case "return-statement": {

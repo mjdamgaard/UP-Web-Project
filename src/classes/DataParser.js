@@ -741,27 +741,27 @@ const scriptGrammar = {
     process: (syntaxTree) => {
       if (syntaxTree.ruleInd === 0) {
         Object.assign(syntaxTree, {
-          dec:        undefined,
-          cond:       syntaxTree.children[2],
-          updateStmt: undefined,
-          stmt:       syntaxTree.children[4],
-          doFirst:    false,
+          dec:       undefined,
+          cond:      syntaxTree.children[2],
+          updateExp: undefined,
+          stmt:      syntaxTree.children[4],
+          doFirst:   false,
         });
       } else if (syntaxTree.ruleInd === 1) {
         Object.assign(syntaxTree, {
-          dec:        undefined,
-          cond:       syntaxTree.children[4],
-          updateStmt: undefined,
-          stmt:       syntaxTree.children[1],
-          doFirst:    true,
+          dec:       undefined,
+          cond:      syntaxTree.children[4],
+          updateExp: undefined,
+          stmt:      syntaxTree.children[1],
+          doFirst:   true,
         });
       } else {
         Object.assign(syntaxTree, {
-          dec:        syntaxTree.children[2],
-          cond:       syntaxTree.children[3],
-          updateStmt: syntaxTree.children[5],
-          stmt:       syntaxTree.children[7],
-          doFirst:    false,
+          dec:       syntaxTree.children[2],
+          cond:      syntaxTree.children[3],
+          updateExp: syntaxTree.children[5],
+          stmt:      syntaxTree.children[7],
+          doFirst:   false,
         });
       }
     },
