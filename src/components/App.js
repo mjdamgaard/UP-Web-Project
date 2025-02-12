@@ -9,6 +9,11 @@ import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
 import {AppHeader} from "./header/AppHeader.js";
 import {AppPage} from "./app_pages/AppPage.js";
 
+/* Tests */
+import {runTests} from "../classes/tests/parsing_interpreting_tests.js";
+
+runTests();
+
 
 export const HOME_ENTITY_ID = basicEntIDs["entities"];
 

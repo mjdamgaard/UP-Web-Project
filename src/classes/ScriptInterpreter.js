@@ -170,7 +170,7 @@ export class ScriptInterpreter {
         varDecSyntaxTree
       );
       varDecSyntaxTree.identList.forEach((ident, ind) => {
-        let ident = ident.lexeme;
+        ident = ident.lexeme;
         let nestedVal = val[ind];
         environment.declare(
           ident, nestedVal, false, "block", varDecSyntaxTree
@@ -243,12 +243,12 @@ export class ScriptInterpreter {
         }
       }
       case "return-statement": {
-        let expVal = (!syntaxTree.exp) ? undefined :
+        let expVal = (!stmtSyntaxTree.exp) ? undefined :
           this.evaluateExpression(gas, stmtSyntaxTree.cond, environment);
         throw new ReturnException(expVal, stmtSyntaxTree);
       }
       case "throw-statement": {
-        let expVal = (!syntaxTree.exp) ? undefined :
+        let expVal = (!stmtSyntaxTree.exp) ? undefined :
           this.evaluateExpression(gas, stmtSyntaxTree.cond, environment);
         throw new ThrownException(expVal, stmtSyntaxTree);
       }
@@ -317,56 +317,56 @@ export class ScriptInterpreter {
         switch (op) {
           case "=":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp1, environment, () => {
+              gas, expSyntaxTree.exp1, environment, () => {
                 let newVal = val;
                 return [newVal, newVal]
               }
             );
           case "+=":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp1, environment, prevVal => {
+              gas, expSyntaxTree.exp1, environment, prevVal => {
                 let newVal = parseFloat(prevVal) + parseFloat(val);
                 return [newVal, newVal]
               }
             );
           case "-=":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp1, environment, prevVal => {
+              gas, expSyntaxTree.exp1, environment, prevVal => {
                 let newVal = parseFloat(prevVal) - parseFloat(val);
                 return [newVal, newVal]
               }
             );
           case "*=":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp1, environment, prevVal => {
+              gas, expSyntaxTree.exp1, environment, prevVal => {
                 let newVal = parseFloat(prevVal) * parseFloat(val);
                 return [newVal, newVal]
               }
             );
           case "/=":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp1, environment, prevVal => {
+              gas, expSyntaxTree.exp1, environment, prevVal => {
                 let newVal = parseFloat(prevVal) / parseFloat(val);
                 return [newVal, newVal]
               }
             );
           case "&&=":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp1, environment, prevVal => {
+              gas, expSyntaxTree.exp1, environment, prevVal => {
                 let newVal = prevVal && val;
                 return [newVal, newVal]
               }
             );
           case "||=":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp1, environment, prevVal => {
+              gas, expSyntaxTree.exp1, environment, prevVal => {
                 let newVal = prevVal || val;
                 return [newVal, newVal]
               }
             );
           case "??=":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp1, environment, prevVal => {
+              gas, expSyntaxTree.exp1, environment, prevVal => {
                 let newVal = prevVal ?? val;
                 return [newVal, newVal]
               }
@@ -500,7 +500,7 @@ export class ScriptInterpreter {
         switch (op) {
           case "++":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp, environment, prevVal => {
+              gas, expSyntaxTree.exp, environment, prevVal => {
                 let int = parseFloat(prevVal);
                 if (!int && int !== 0) throw new RuntimeError(
                   "Increment of a non-numeric value",
@@ -512,7 +512,7 @@ export class ScriptInterpreter {
             );
           case "--":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp, environment, prevVal => {
+              gas, expSyntaxTree.exp, environment, prevVal => {
                 let int = parseFloat(prevVal);
                 if (!int && int !== 0) throw new RuntimeError(
                   "Decrement of a non-numeric value",
@@ -522,8 +522,10 @@ export class ScriptInterpreter {
                 return [newVal, newVal]
               }
             );
+        }
+        let val = this.evaluateExpression(gas, expSyntaxTree.exp, environment);
+        switch (op) {
           case "!":
-            val = this.evaluateExpression(gas, expSyntaxTree.exp, environment);
             return !val;
           case "~":
             return ~parseInt(val);
@@ -537,7 +539,7 @@ export class ScriptInterpreter {
             return void val;
           case "delete":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp, environment, prevVal => {
+              gas, expSyntaxTree.exp, environment, prevVal => {
                 if (prevVal === undefined) {
                   return [undefined, false];
                 } else {
@@ -556,7 +558,7 @@ export class ScriptInterpreter {
         switch (op) {
           case "++":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp, environment, prevVal => {
+              gas, expSyntaxTree.exp, environment, prevVal => {
                 let int = parseFloat(prevVal);
                 if (!int && int !== 0) throw new RuntimeError(
                   "Increment of a non-numeric value",
@@ -568,7 +570,7 @@ export class ScriptInterpreter {
             );
           case "--":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp, environment, prevVal => {
+              gas, expSyntaxTree.exp, environment, prevVal => {
                 let int = parseFloat(prevVal);
                 if (!int && int !== 0) throw new RuntimeError(
                   "Decrement of a non-numeric value",
@@ -588,6 +590,7 @@ export class ScriptInterpreter {
         ));
 
         // Potentially get function and thisVal from ThisBoundFunction wrapper.
+        let thisVal = undefined;
         if (fun instanceof ThisBoundFunction) {
           thisVal = fun.thisVal;
           fun = fun.funVal;
@@ -632,7 +635,7 @@ export class ScriptInterpreter {
       case "member-access": {
         // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
         let [expVal, indexVal] = this.getMemberAccessExpValAndSafeIndex(
-          expSyntaxTree, environment
+          gas, expSyntaxTree, environment
         );
 
         // Handle graceful return in case of an optional chaining.
@@ -671,7 +674,7 @@ export class ScriptInterpreter {
               exp.ident ??
               this.evaluateExpression(gas, exp.nameExp, environment)
             ),
-            this.evaluateExpression(gas, valExp, environment)
+            this.evaluateExpression(gas, exp.valExp, environment)
           ]
         ));
         return Object.fromEntries(memberEntries);
@@ -713,7 +716,7 @@ export class ScriptInterpreter {
   }
 
 
-  static assignToVariableOrMember(expSyntaxTree, environment, assignFun) {
+  static assignToVariableOrMember(gas, expSyntaxTree, environment, assignFun) {
     if (expSyntaxTree.type === "identifier") {
       let ident = expSyntaxTree.lexeme;
       return environment.assign(ident, expSyntaxTree, assignFun);
@@ -723,7 +726,7 @@ export class ScriptInterpreter {
     ) {
       // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
       let [expVal, indexVal] = this.getMemberAccessExpValAndSafeIndex(
-        expSyntaxTree, environment
+        gas, expSyntaxTree, environment
       );
 
       // Then assign the member of our expVal and return the value specified by
@@ -740,7 +743,7 @@ export class ScriptInterpreter {
     }
   }
 
-  static getMemberAccessExpValAndSafeIndex(memAccSyntaxTree, environment) {
+  static getMemberAccessExpValAndSafeIndex(gas, memAccSyntaxTree, environment) {
     // Evaluate the expression.
     let expVal = this.evaluateExpression(
       gas, memAccSyntaxTree.exp, environment
@@ -759,14 +762,6 @@ export class ScriptInterpreter {
       );
     }
 
-    // Validate the indexVal, and transform it depending on expVal.
-    indexVal = getSafeKeyGivenExpVal(indexVal, expVal);
-
-    return [expVal, indexVal];
-  }
-
-
-  static getSafeKeyGivenExpVal(indexVal, expVal) {
     // If expVal is an array, check that indexVal is a non-negative
     // integer, and if it is an object, append "#" to the indexVal.
     if (Array.isArray(expVal)) {
@@ -775,7 +770,7 @@ export class ScriptInterpreter {
         throw new RuntimeError(
           "Assignment to an array with a non-integer or a " +
           "negative integer key",
-          lastIndex
+          indexExp
         );
       }
     }
@@ -789,7 +784,7 @@ export class ScriptInterpreter {
       indexVal = "#" + indexVal;
     }
 
-    return indexVal;
+    return [expVal, indexVal];
   }
 
 }
