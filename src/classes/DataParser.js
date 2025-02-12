@@ -575,53 +575,43 @@ const scriptGrammar = {
   },
   "parameter": {
     rules: [
+      ["identifier", "/:/", "type", "/=/", "literal!"],
+      ["identifier", "/:/", "type", /\?/],
       ["identifier", "/:/", "type!"],
       ["identifier"],
     ],
     process: (syntaxTree) => {
       let children = syntaxTree.children;
-      Object.assign(syntaxTree, {
-        lexeme: children[0].lexeme,
-        type: children[2],
-      });
+      syntaxTree.lexeme = children[0].lexeme;
+      syntaxTree.paramType = children[2];
+      syntaxTree.isOpt = (syntaxTree.ruleInd <= 1);
+      syntaxTree.defaultVal = children[4];
     },
   },
   "type": {
     rules: [
-      ["type^(1)", "/\\?/"],
-      ["type^(1)", "/=/", "literal!"],
+      [/\{/, "type^(1)-list!", /\}/],
       ["type^(1)"],
     ],
     process: (syntaxTree) => {
-      syntaxTree.type = syntaxTree.children[0];
-      syntaxTree.isOptional = syntaxTree.children[1] ? true : false;
-      syntaxTree.defaultVal = syntaxTree.children[2] || undefined;
-    },
-  },
-  "type^(1)": {
-    rules: [
-      [/\{/, "type^(2)-list!", /\}/],
-      ["type^(2)"],
-    ],
-    process: (syntaxTree) => {
-      syntaxTree.types = (syntaxTree.ruleInd === 0) ?
+      syntaxTree.typeDisjunctionArr = (syntaxTree.ruleInd === 0) ?
         syntaxTree.children[1].children :
         [syntaxTree.children[0]];
     },
   },
-  "type^(2)-list": {
+  "type^(1)-list": {
     rules: [
-      ["type^(2)", "/,/", "type^(2)-list!1"],
-      ["type^(2)", "/,/?"],
+      ["type^(1)", "/,/", "type^(1)-list!1"],
+      ["type^(1)", "/,/?"],
     ],
     process: straightenListSyntaxTree(1),
   },
-  "type^(2)": {
+  "type^(1)": {
     rules: [
-      [/\[/, "type^(3)-list", /\]/, "array-type-operator"],
-      [/\[/, "type^(3)-list!", /\]/],
-      ["type^(3)", "array-type-operator"],
-      ["type^(3)"],
+      [/\[/, "type^(2)-list", /\]/, "array-type-operator"],
+      [/\[/, "type^(2)-list!", /\]/],
+      ["type^(2)", "array-type-operator"],
+      ["type^(2)"],
     ],
     process: (syntaxTree) => {
       let ruleInd = syntaxTree.ruleInd;
@@ -653,14 +643,14 @@ const scriptGrammar = {
       syntaxTree.num = (numLiteral === null) ? null : num;
     },
   },
-  "type^(3)-list": {
+  "type^(2)-list": {
     rules: [
-      ["type^(3)", "/,/", "type^(3)-list!1"],
-      ["type^(3)", "/,/?"],
+      ["type^(2)", "/,/", "type^(2)-list!1"],
+      ["type^(2)", "/,/?"],
     ],
     process: straightenListSyntaxTree(1),
   },
-  "type^(3)": {
+  "type^(2)": {
     rules: [
       ["entity-reference"], // A class.
       [/[tuafrjh8dl]|string|bool|int|float/],
@@ -805,32 +795,33 @@ const scriptGrammar = {
       ["expression^(1)"],
     ],
     process: (syntaxTree) => {
+      let children = syntaxTree.children;
       if (syntaxTree.ruleInd === 0) {
         syntaxTree.type = "arrow-function";
-        syntaxTree.params = syntaxTree.children[1].children;
-        syntaxTree.body = syntaxTree.children[4];
+        syntaxTree.params = children[1].children;
+        syntaxTree.body = children[4];
       } else if (syntaxTree.ruleInd === 1) {
         syntaxTree.type = "arrow-function";
         syntaxTree.params = [];
-        syntaxTree.body = syntaxTree.children[3];
+        syntaxTree.body = children[3];
       } else if (syntaxTree.ruleInd === 2) {
         syntaxTree.type = "function-expression";
-        syntaxTree.params = syntaxTree.children[2].children;
-        syntaxTree.body = syntaxTree.children[4];
+        syntaxTree.params = children[2].children;
+        syntaxTree.body = children[4];
       } else if (syntaxTree.ruleInd === 3) {
         syntaxTree.type = "function-expression";
         syntaxTree.params = [];
-        syntaxTree.body = syntaxTree.children[3];
+        syntaxTree.body = children[3];
       } else if (syntaxTree.ruleInd === 4) {
         syntaxTree.type = "assignment";
-        syntaxTree.op = syntaxTree.children[1].lexeme;
-        syntaxTree.exp1 = syntaxTree.children[0];
-        syntaxTree.exp2 = syntaxTree.children[2];
+        syntaxTree.op = children[1].lexeme;
+        syntaxTree.exp1 = children[0];
+        syntaxTree.exp2 = children[2];
       } else if (syntaxTree.ruleInd === 5) {
         syntaxTree.type = "conditional-expression";
-        syntaxTree.cond = syntaxTree.children[0];
-        syntaxTree.exp1 = syntaxTree.children[2];
-        syntaxTree.exp2 = syntaxTree.children[4];
+        syntaxTree.cond = children[0];
+        syntaxTree.exp1 = children[2];
+        syntaxTree.exp2 = children[4];
       } else {
         becomeChild(0)(syntaxTree);
       }

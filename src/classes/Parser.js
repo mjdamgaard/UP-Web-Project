@@ -8,9 +8,11 @@ const NONTERMINAL_SYM_REGEXP =
 const NONTERMINAL_SYM_SUBSTR_REGEXP =
    /[^\/\?\*\+\{\}\$!]+/;
 const TRAILING_QUANTIFIER_SUBSTR_REGEXP =
-  /([\?\*\+]\$?|\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\}\$?)$/;
+  /(![[1-9][0-9]*])?([\?\*\+]\$?|\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\}\$?)$/;
 const TRAILING_DOD_OP_SUBSTR_REGEXP =
   /!(0|[1-9][0-9]*)?$/;
+const LEADING_POS_DOD_OP_SUBSTR_REGEXP =
+  /^![1-9][0-9]*/;
 
 const NUMBER_SUBSTR_REGEXP_G =
   /0|[1-9][0-9]*/g;
@@ -273,9 +275,8 @@ export class Parser {
       return [syntaxTree.error];
     }
 
-    // Else if node has a quantified symbol, which means that the minimum
-    // number of instances was not parsed (or the end of string was not
-    // reached), call this function recursively on the last, failed child.
+    // Else if node has a quantified symbol, call this function recursively on
+    // the last, failed child.
     let failedChild = children.at(-1);
     if (TRAILING_QUANTIFIER_SUBSTR_REGEXP.test(syntaxTree.sym)) {
       return this.#getErrorAndFailedSymbols(failedChild);
@@ -582,6 +583,17 @@ export class Parser {
         quantifier = quantifier.slice(0, -1);
       }
 
+      // If the quantifier has a prefix of the form '!n', set doOrDieLevel = n,
+      // meaning that is a symbol fails with n or more lexemes successfully
+      // parsed, fail the whole quantified symbol.
+      let doOrDieLevel = Infinity;
+      let doOrDiePrefixArr = quantifier.match(LEADING_POS_DOD_OP_SUBSTR_REGEXP);
+      if (doOrDiePrefixArr) {
+        let doOrDiePrefix = doOrDiePrefixArr[0];
+        doOrDieLevel = parseInt(doOrDiePrefix.substring(1));
+        quantifier = quantifier.substring(doOrDiePrefix.length);
+      }
+
       // Parse n and m from quantifier := "{n(,m)?}", and then set max and
       // min based on those, and on the quantifier in general. 
       let [n, m] = (quantifier.match(NUMBER_SUBSTR_REGEXP_G) ?? []).map(
@@ -626,7 +638,11 @@ export class Parser {
         // whether min was reached or not, or whether or not the boolean
         // failIfEOSIsNotReached is true or not.
         else {
-          if (i >= min && !(failIfEOSIsNotReached && lexArr[nextPos])) {
+          if (
+            i >= min &&
+            !(failIfEOSIsNotReached && lexArr[nextPos]) &&
+            childSyntaxTree.nextPos - nextPos < doOrDieLevel
+          ) {
             return {
               sym: sym, isSuccess: true, children: children,
               nextPos: nextPos,

@@ -97,7 +97,8 @@ export class ScriptInterpreter {
 
     let newEnv = new Environment(environment, "function", thisVal);
 
-    let paramTypeArr = funSyntaxTree
+    let paramNames = funSyntaxTree.params.map(param => param.lexeme);
+    let typeArr = funSyntaxTree.params.map(param => param.type)
 
     let type = varDecSyntaxTree.type;
     if (type === "procedure-function") {
@@ -112,9 +113,6 @@ export class ScriptInterpreter {
     );
   }
 
-
-
-  // TODO: Implement switch-case grammar and handling at some point.
 
 
   static executeVariableDeclaration(gas, varDecSyntaxTree, environment) {
