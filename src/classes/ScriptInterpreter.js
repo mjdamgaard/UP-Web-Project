@@ -252,6 +252,19 @@ export class ScriptInterpreter {
 
     let type = expSyntaxTree.type;
     switch (type) {
+      case "arrow-function": 
+      case "function-expression": {
+        let funSyntaxTree = {
+          sym: "function-declaration",
+          ...expSyntaxTree,
+        };
+        let funVal = new DefinedFunction(funSyntaxTree, environment);
+        if (type === "arrow-function") {
+          let thisVal = environment.get("this");
+          funVal = new ThisBoundFunction(funVal, thisVal);
+        }
+        return funVal;
+      }
       case "assignment": {
         let val = this.evaluateExpression(gas, expSyntaxTree.exp2, environment);
         let op = expSyntaxTree.op;
@@ -532,16 +545,6 @@ export class ScriptInterpreter {
           this.evaluateExpression(gas, exp, environment)
         ));
 
-        // If syntaxTree.thisValExp is defined, i.e. from a "virtual method
-        // call," evaluate the expression and bind this to the value.
-        let thisVal = undefined;
-        if (expSyntaxTree.thisValExp) {
-          thisVal = this.evaluateExpression(
-            gas, expSyntaxTree.thisValExp, environment
-          );
-          fun = this.getThisBoundFunction(fun, thisVal);
-        }
-
         // Potentially get function and thisVal from ThisBoundFunction wrapper.
         if (fun instanceof ThisBoundFunction) {
           thisVal = fun.thisVal;
@@ -563,17 +566,40 @@ export class ScriptInterpreter {
           expSyntaxTree
         );
       }
+      case "virtual-method": {
+        let objVal = this.evaluateExpression(
+          gas, expSyntaxTree.obj, environment
+        );
+        let funVal = this.evaluateExpression(
+          gas, expSyntaxTree.fun, environment
+        );
+        if (
+          funVal instanceof DefinedFunction ||
+          funVal instanceof BuiltInFunction
+        ) {
+          return new ThisBoundFunction(funVal, objVal);
+        }
+        else if (funVal instanceof ThisBoundFunction) {
+          return new ThisBoundFunction(funVal.funVal, objVal);
+        }
+        else throw new RuntimeError(
+          "Virtual method with a non-function type",
+          expSyntaxTree.fun
+        );
+      }
       case "member-access": {
         // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
         let [expVal, indexVal] = this.getMemberAccessExpValAndSafeIndex(
           expSyntaxTree, environment
         );
+
         // Handle graceful return in case of an optional chaining.
         if (expSyntaxTree.postfix.isOpt) {
           if (expVal === null || expVal === undefined) {
             return undefined;
           }
         }
+
         // Then get the value held in expVal.
         let ret = expVal[indexVal];
 
@@ -581,7 +607,14 @@ export class ScriptInterpreter {
         // that this differs from the conventional semantics of JavaScript,
         // where 'this' is normally only bound at the time when the method is
         // being called.)
-        return this.getThisBoundFunction(ret, expVal);
+        if (ret instanceof DefinedFunction || ret instanceof BuiltInFunction) {
+          ret = new ThisBoundFunction(ret, expVal);
+        }
+        else if (ret instanceof ThisBoundFunction) {
+          ret = new ThisBoundFunction(ret.retVal, expVal);
+        }
+
+        return ret;
       }
       case "array": {
         let expValArr = expSyntaxTree.children.map(exp => (
@@ -714,17 +747,6 @@ export class ScriptInterpreter {
     }
 
     return indexVal;
-  }
-
-
-  static getThisBoundFunction(fun, thisVal) {
-    if (fun instanceof DefinedFunction || fun instanceof BuiltInFunction) {
-      return new ThisBoundFunction(fun, expVal);
-    } else if (fun instanceof ThisBoundFunction) {
-      return new ThisBoundFunction(fun.funVal, thisVal);
-    } else {
-      return fun;
-    }
   }
 
 }

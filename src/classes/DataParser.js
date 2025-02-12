@@ -557,30 +557,13 @@ const scriptGrammar = {
     rules: [
       [
         "/function/", "identifier", /\(/, "parameter-list", /\)/,
-        /\{/, "statement-list!", /\}/
-      ],
-      [
-        "/function/", "identifier", /\(/, "parameter-list", /\)/,
-        /\(/, "expression!", /\)/
+        "function-body"
       ],
     ],
     process: (syntaxTree) => {
-      let children = syntaxTree.children;
-      if (syntaxTree.ruleInd === 0) {
-        Object.assign(syntaxTree, {
-          type: "procedure-function",
-          name: children[0].lexeme,
-          params: children[2].children,
-          stmts: children[5],
-        });
-      } else {
-        Object.assign(syntaxTree, {
-          type: "expression-function",
-          name: children[0].lexeme,
-          params: children[2].children,
-          exp: children[5],
-        });
-      }
+      syntaxTree.name = syntaxTree.children[1].lexeme;
+      syntaxTree.params = syntaxTree.children[3].children;
+      syntaxTree.body = syntaxTree.children[5];
     },
   },
   "parameter-list": {
@@ -592,12 +575,13 @@ const scriptGrammar = {
   },
   "parameter": {
     rules: [
-      ["identifier", "/:/", "type"],
+      ["identifier", "/:/", "type!"],
+      ["identifier"],
     ],
     process: (syntaxTree) => {
       let children = syntaxTree.children;
       Object.assign(syntaxTree, {
-        name: children[0].lexeme,
+        lexeme: children[0].lexeme,
         type: children[2],
       });
     },
@@ -703,6 +687,8 @@ const scriptGrammar = {
       ["empty-statement!1"],
       ["variable-declaration!1"],
       ["function-declaration!1"],
+      // ("!1" here in the rule above avoids expression statement starting with
+      // 'function' in the rule below.)
       ["expression", "/;/"],
     ],
     process: becomeChild(0)
@@ -810,25 +796,41 @@ const scriptGrammar = {
   },
   "expression": {
     rules: [
+      [/\(/, "identifier-list", /\)/, "/=>/", "function-body!"],
+      [/\(/, /\)/, "/=>/", "function-body!"],
+      ["/function/", /\(/, "identifier-list", /\)/, "function-body!"],
+      ["/function/", /\(/, /\)/, "function-body!"],
       ["expression^(1)", /=|\+=|\-=|\*=|\/=|&&=|\|\|=|\?\?=/, "expression!"],
       ["expression^(1)", /\?/, "expression!", /:/, "expression"],
       ["expression^(1)"],
     ],
     process: (syntaxTree) => {
       if (syntaxTree.ruleInd === 0) {
-        Object.assign(syntaxTree, {
-          type: "assignment",
-          op: syntaxTree.children[1].lexeme,
-          exp1: syntaxTree.children[0],
-          exp2: syntaxTree.children[2],
-        });
+        syntaxTree.type = "arrow-function";
+        syntaxTree.params = syntaxTree.children[1].children;
+        syntaxTree.body = syntaxTree.children[4];
       } else if (syntaxTree.ruleInd === 1) {
-        Object.assign(syntaxTree, {
-          type: "conditional-expression",
-          cond: syntaxTree.children[0],
-          exp1: syntaxTree.children[2],
-          exp2: syntaxTree.children[4],
-        });
+        syntaxTree.type = "arrow-function";
+        syntaxTree.params = [];
+        syntaxTree.body = syntaxTree.children[3];
+      } else if (syntaxTree.ruleInd === 2) {
+        syntaxTree.type = "function-expression";
+        syntaxTree.params = syntaxTree.children[2].children;
+        syntaxTree.body = syntaxTree.children[4];
+      } else if (syntaxTree.ruleInd === 3) {
+        syntaxTree.type = "function-expression";
+        syntaxTree.params = [];
+        syntaxTree.body = syntaxTree.children[3];
+      } else if (syntaxTree.ruleInd === 4) {
+        syntaxTree.type = "assignment";
+        syntaxTree.op = syntaxTree.children[1].lexeme;
+        syntaxTree.exp1 = syntaxTree.children[0];
+        syntaxTree.exp2 = syntaxTree.children[2];
+      } else if (syntaxTree.ruleInd === 5) {
+        syntaxTree.type = "conditional-expression";
+        syntaxTree.cond = syntaxTree.children[0];
+        syntaxTree.exp1 = syntaxTree.children[2];
+        syntaxTree.exp2 = syntaxTree.children[4];
       } else {
         becomeChild(0)(syntaxTree);
       }
@@ -955,15 +957,12 @@ const scriptGrammar = {
   "expression^(14)": {
     rules: [
       ["expression^(15)", "expression-tuple+!1"],
-      ["expression^(15)", /\->/, "expression^(15)!", "expression-tuple+"],
+      // ["expression^(15)", /\->/, "expression^(15)!", "expression-tuple+"],
       ["expression^(15)"],
     ],
     process: (syntaxTree) => {
       if (syntaxTree.ruleInd === 0) {
         processLeftAssocPostfixes(0, 1, "function-call")(syntaxTree);
-      } else if (syntaxTree.ruleInd === 1) {
-        syntaxTree.thisValExp = syntaxTree.children[0]
-        processLeftAssocPostfixes(2, 3, "function-call")(syntaxTree);
       } else {
         becomeChild(0)(syntaxTree);
       }
@@ -984,8 +983,23 @@ const scriptGrammar = {
   },
   "expression^(15)": {
     rules: [
-      ["expression^(16)", "member-accessor+"],
+      ["expression^(16)", /\->/, "expression^(16)!"],
       ["expression^(16)"],
+    ],
+    process: (syntaxTree) => {
+      if (syntaxTree.ruleInd === 0) {
+        syntaxTree.type = "virtual-method";
+        syntaxTree.obj = syntaxTree.children[0];
+        syntaxTree.fun = syntaxTree.children[2];
+      } else {
+        becomeChild(0)(syntaxTree);
+      }
+    },
+  },
+  "expression^(16)": {
+    rules: [
+      ["expression^(17)", "member-accessor+"],
+      ["expression^(17)"],
     ],
     process: (syntaxTree) => {
       if (syntaxTree.ruleInd === 0) {
@@ -998,8 +1012,8 @@ const scriptGrammar = {
   "member-accessor": {
     rules: [
       [/\[/, "expression!", /\]/],
-      [/\./, "identifier!"],
-      [/\?/, /\./, "identifier"],
+      [/\./, "/[_\\$a-zA-Z][_\\$a-zA-Z0-9]*/!"],
+      [/\?\./, "/[_\\$a-zA-Z][_\\$a-zA-Z0-9]*/!"],
     ],
     process: (syntaxTree) => {
       if (syntaxTree.ruleInd === 0) {
@@ -1012,7 +1026,7 @@ const scriptGrammar = {
       }
     },
   },
-  "expression^(16)": {
+  "expression^(17)": {
     rules: [
       [/\(/, "expression", /\)/],
       ["array!1"],
@@ -1112,7 +1126,7 @@ export const scriptParser = new Parser(
     /\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
     /\+=|\-=|\*=|\/=|&&=|\|\|=|\?\?=/,
     /&&|\|\||\?\?|\+\+|\-\-|\*\*/,
-    /<>|=>|\->/,
+    /\?\.|<>|=>|\->/,
     /===|==|!==|!=|<=|>=/,
     /@[\[\{<];?/,
     /[\.,:;\[\]\{\}\(\)<>\?=\+\-\*\|\^&!%\/]/,
