@@ -8,7 +8,7 @@ const NONTERMINAL_SYM_REGEXP =
 const NONTERMINAL_SYM_SUBSTR_REGEXP =
    /[^\/\?\*\+\{\}\$!]+/;
 const TRAILING_QUANTIFIER_SUBSTR_REGEXP =
-  /(![[1-9][0-9]*])?([\?\*\+]\$?|\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\}\$?)$/;
+  /(![1-9][0-9]*)?([\?\*\+]\$?|\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\}\$?)$/;
 const TRAILING_DOD_OP_SUBSTR_REGEXP =
   /!(0|[1-9][0-9]*)?$/;
 const LEADING_POS_DOD_OP_SUBSTR_REGEXP =
@@ -216,7 +216,7 @@ export class Parser {
     } catch (error) {
       if (error instanceof LexError) {
         let syntaxTree = {isSuccess: false, error: error.msg};
-        return syntaxTree;
+        return [syntaxTree, lexArr, strPosArr];
       }
       // Else throw error;
       else this.lexer.lex(str, isPartial, keepLastLexeme); // For debugging.
@@ -323,6 +323,16 @@ export class Parser {
 
   parseLexArr(lexArr, pos = 0, nonterminalSymbol, triedSymbols = []) {
     nonterminalSymbol ??= this.defaultSym;
+
+    // Before anything else, check  that sym hasn't already been tried at this
+    // position in order to prevent infinite recursion.
+    if (triedSymbols.includes(nonterminalSymbol)) {
+      throw "Parser: Infinite recursion detected. Symbol: \"" +
+      nonterminalSymbol + '". Symbols tried in same place: "' +
+      triedSymbols.join('","') + '"';
+    } else {
+      triedSymbols = [nonterminalSymbol, ...triedSymbols];
+    }
 
     // Parse the rules of the nonterminal symbol.
     let {rules, process} = this.grammar[nonterminalSymbol] ||
@@ -559,15 +569,6 @@ export class Parser {
 
   parseRuleSymbol(lexArr, pos, sym, triedSymbols = []) {
     let nextLexeme = lexArr[pos];
-
-    // Before anything else, check  that sym hasn't already been tried at this
-    // position in order to prevent infinite recursion.
-    if (triedSymbols.includes(sym)) {
-      throw "Parser: Infinite recursion detected. Symbol: \"" + sym + '". ' +
-        "Symbols tried in same place: \"" + triedSymbols.join('","') + '"';
-    } else {
-      triedSymbols.push(sym);
-    }
 
     // If sym ends in either '?', '*', '+', '{n}' or '{n,m}', try parsing an
     // appropriate number of instances of the symbol preceding the quantifier.
