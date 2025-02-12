@@ -498,7 +498,9 @@ const scriptGrammar = {
       ["/export/", "function-declaration!"],
       ["statement"],
     ],
-    process: straightenListSyntaxTree(0),
+    process: (syntaxTree) => {
+      // ...
+    },
   },
   "variable-declaration": {
     rules: [
@@ -582,19 +584,55 @@ const scriptGrammar = {
     ],
     process: (syntaxTree) => {
       let children = syntaxTree.children;
-      syntaxTree.lexeme = children[0].lexeme;
-      syntaxTree.paramType = children[2];
-      syntaxTree.isOpt = (syntaxTree.ruleInd <= 1);
-      syntaxTree.defaultVal = children[4];
+      let types = children[2]?.types;
+      let isRequired = (syntaxTree.ruleInd === 2);
+      if (!types) {
+        syntaxTree.invalidTypes = undefined;
+        syntaxTree.defaultVal = undefined;
+      } else {
+        // Initialize a invalidTypes, with nullish types plucked out from the
+        // start if isRequired is false.
+        let invalidTypes = isRequired ? [
+          "entity", "string", "int", "float", "object", "array", "null",
+          "undefined"
+        ] : [
+          "entity", "string", "int", "float", "object", "array"
+        ];
+
+        // Then iterate over each type in types, and pluck out additional
+        // elements of invalidTypes.
+        types.forEach(type => {
+          if (type.ruleInd === 0) {
+            invalidTypes = invalidTypes.filter(val => val !== "entity");
+          } else {
+            let lexeme = type.lexeme;
+            if (lexeme === "any") {
+              invalidTypes = invalidTypes.filter(val => (
+                val === "null" || val === "undefined"
+              ));
+            } else if (lexeme === "float") {
+              invalidTypes = invalidTypes.filter(val => (
+                val !== "float" || val !== "int"
+              ));
+            } else {
+              invalidTypes = invalidTypes.filter(val => val !== lexeme);
+            }
+          }
+        });
+
+        syntaxTree.defaultVal = children[4];
+        syntaxTree.invalidTypes = invalidTypes;
+      }
     },
   },
   "type": {
     rules: [
       [/\{/, "type^(1)-list!", /\}/],
       ["type^(1)"],
+      [/any/],
     ],
     process: (syntaxTree) => {
-      syntaxTree.typeDisjunctionArr = (syntaxTree.ruleInd === 0) ?
+      syntaxTree.types = (syntaxTree.ruleInd === 0) ?
         syntaxTree.children[1].children :
         [syntaxTree.children[0]];
     },
@@ -608,56 +646,40 @@ const scriptGrammar = {
   },
   "type^(1)": {
     rules: [
-      [/\[/, "type^(2)-list", /\]/, "array-type-operator"],
-      [/\[/, "type^(2)-list!", /\]/],
-      ["type^(2)", "array-type-operator"],
-      ["type^(2)"],
-    ],
-    process: (syntaxTree) => {
-      let ruleInd = syntaxTree.ruleInd;
-      let children = syntaxTree.children;
-      if (ruleInd <= 1) {
-        syntaxTree.types = children[1].children;
-        syntaxTree.arrayLen = (ruleInd === 0) ? children[3].num : 0;
-      } else {
-        syntaxTree.types = [children[0]];
-        syntaxTree.arrayLen = (ruleInd === 2) ? children[1].num : 0;
-      }
-    },
-  },
-  "array-type-operator": {
-    rules: [
-      [/\[/, "/[1-9][0-9]*/", "/\\]/!"],
-      [/\[/, /\]/],
-    ],
-    process: (syntaxTree) => {
-      let numLiteral = (syntaxTree.ruleInd === 0) ?
-        syntaxTree.children[1].lexeme :
-        null;
-      let num = parseInt(numLiteral);
-
-      if (numLiteral !== null && (num.toString !== numLiteral || num === 1)) {
-        return [false, `Invalid array length: ${numLiteral}`];
-      }
-
-      syntaxTree.num = (numLiteral === null) ? null : num;
-    },
-  },
-  "type^(2)-list": {
-    rules: [
-      ["type^(2)", "/,/", "type^(2)-list!1"],
-      ["type^(2)", "/,/?"],
-    ],
-    process: straightenListSyntaxTree(1),
-  },
-  "type^(2)": {
-    rules: [
       ["entity-reference"], // A class.
-      [/[tuafrjh8dl]|string|bool|int|float/],
-      [/object|array|mixed/], // User has to manually type in a parsable
-      // literal.
+      [/string|bool|int|float|array|object/],
     ],
-    process: copyLexemeFromChild(0),
+    process: becomeChild(0),
+  },
+  "function-body": {
+    rules: [
+      [/\{/, "statement-list!1", /\}/],
+      [/\{/, /\}/],
+    ],
+    process: (syntaxTree) => {
+      if (syntaxTree.ruleInd === 0) {
+        syntaxTree.stmtArr = syntaxTree.children[1].children;
+      } else {
+        syntaxTree.stmtArr = []
+      }
+    },
+  },
+  "function-body-or-expression": {
+    rules: [
+      ["function-body!1"], // '!1' here means that that object expressions have
+      // to be wrapped in '()'.
+      ["expression"],
+    ],
+    process: (syntaxTree) => {
+      if (syntaxTree.ruleInd === 0) {
+        becomeChild(0)(syntaxTree);
+      } else {
+        syntaxTree.stmtArr = [{
+          sym: "return-statement",
+          exp: children[4],
+        }];
+      }
+    },
   },
   "statement-list": {
     rules: [
@@ -673,6 +695,7 @@ const scriptGrammar = {
       ["loop-statement!1"],
       ["return-statement!1"],
       ["throw-statement!1"],
+      // TODO: Implement a try-catch statement.
       ["instruction-statement!1"],
       ["empty-statement!1"],
       ["variable-declaration!1"],
@@ -786,8 +809,9 @@ const scriptGrammar = {
   },
   "expression": {
     rules: [
-      [/\(/, "identifier-list", /\)/, "/=>/", "function-body!"],
-      [/\(/, /\)/, "/=>/", "function-body!"],
+      [/\(/, "identifier-list", /\)/, "/=>/", "function-body-or-expression!"],
+      [/\(/, /\)/, "/=>/", "function-body-or-expression!"],
+      ["identifier", "/=>/", "function-body-or-expression!"],
       ["/function/", /\(/, "identifier-list", /\)/, "function-body!"],
       ["/function/", /\(/, /\)/, "function-body!"],
       ["expression^(1)", /=|\+=|\-=|\*=|\/=|&&=|\|\|=|\?\?=/, "expression!"],
@@ -805,19 +829,23 @@ const scriptGrammar = {
         syntaxTree.params = [];
         syntaxTree.body = children[3];
       } else if (syntaxTree.ruleInd === 2) {
+        syntaxTree.type = "arrow-function";
+        syntaxTree.params = [children[0]];
+        syntaxTree.body = children[2];
+      } else if (syntaxTree.ruleInd === 3) {
         syntaxTree.type = "function-expression";
         syntaxTree.params = children[2].children;
         syntaxTree.body = children[4];
-      } else if (syntaxTree.ruleInd === 3) {
+      } else if (syntaxTree.ruleInd === 4) {
         syntaxTree.type = "function-expression";
         syntaxTree.params = [];
         syntaxTree.body = children[3];
-      } else if (syntaxTree.ruleInd === 4) {
+      } else if (syntaxTree.ruleInd === 5) {
         syntaxTree.type = "assignment";
         syntaxTree.op = children[1].lexeme;
         syntaxTree.exp1 = children[0];
         syntaxTree.exp2 = children[2];
-      } else if (syntaxTree.ruleInd === 5) {
+      } else if (syntaxTree.ruleInd === 6) {
         syntaxTree.type = "conditional-expression";
         syntaxTree.cond = children[0];
         syntaxTree.exp1 = children[2];
@@ -947,7 +975,7 @@ const scriptGrammar = {
   },
   "expression^(14)": {
     rules: [
-      ["expression^(15)", "expression-tuple+!1"],
+      ["expression^(15)", "expression-tuple!1+!1"],
       // ["expression^(15)", /\->/, "expression^(15)!", "expression-tuple+"],
       ["expression^(15)"],
     ],
@@ -989,7 +1017,7 @@ const scriptGrammar = {
   },
   "expression^(16)": {
     rules: [
-      ["expression^(17)", "member-accessor+"],
+      ["expression^(17)", "member-accessor!1+"],
       ["expression^(17)"],
     ],
     process: (syntaxTree) => {
@@ -1101,7 +1129,7 @@ const scriptGrammar = {
   },
   "constant": {
     rules: [
-      ["/true|false|null|undefined|Infinity/"],
+      ["/true|false|null|undefined|Infinity|NaN/"],
     ],
     process: copyLexemeFromChild(0),
   },
@@ -1292,7 +1320,7 @@ const xmlLexemePatternArr = [
 const xmlGrammar = {
   "xml-text": {
     rules: [
-      ["text-or-element*"],
+      ["text-or-element*$"],
     ],
     // process: (syntaxTree) => {
     //   let contentArr = syntaxTree.children[0].children;

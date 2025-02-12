@@ -83,34 +83,54 @@ export class ScriptInterpreter {
     gas, funSyntaxTree, inputValueArr, environment, thisVal = undefined
   ) {
     decrCompGas(gas);
-    // TODO: Pair the input values with the parameters, and convert the values
-    // automatically to the type of the input parameter, if the type is a
-    // primitive one. Then create a new environment, and start executing the
-    // statement list with that environment. The return statement inside the
-    // function will throw the returned value, so try-catch it. And if no
-    // return value is thrown, the return value should be regarded as
-    // undefined.
 
-    // Return the return value of the function (or throw either a RuntimeError
-    // on runtime error, or if the gas runs up, or a CustomError, if a throw
-    // statement is reached).
-
+    // Initialize a new environment for the execution of the function.
     let newEnv = new Environment(environment, "function", thisVal);
 
-    let paramNames = funSyntaxTree.params.map(param => param.lexeme);
-    let typeArr = funSyntaxTree.params.map(param => param.type)
+    // Add the input parameters to the new environment.
+    funSyntaxTree.params.forEach((param, ind) => {
+      let paramName = param.lexeme;
+      let paramVal = inputValueArr[ind];
 
-    let type = varDecSyntaxTree.type;
-    if (type === "procedure-function") {
-      
+      // If the parameter is typed, check the type.
+      if (param.invalidTypes) {
+        let inputValType = getType(paramVal);
+        if (param.invalidTypes.includes(inputValType)) {
+          throw new RuntimeError(
+            `Input parameter of invalid type "${inputValType}"`,
+            param,
+          );
+        }
+      }
+
+      // Else declare the parameter in the new environment.
+      newEnv.declare(paramName, paramVal, false, "block", param);
+    });
+
+    // Now execute the statements inside a try-catch statement to catch any
+    // return exception, or any uncaught break or continue exceptions. On a
+    // return exception, return the held value. 
+    let stmtArr = funSyntaxTree.body.stmtArr;
+    try {
+      stmtArr.forEach(stmt => this.executeStatement(gas, stmt, newEnv));
+    } catch (err) {
+      if (err instanceof ReturnException) {
+        return err.val;
+      }
+      else if (
+        err instanceof BreakException || err instanceof ContinueException
+      ) {
+        throw new RuntimeError(
+          "Invalid break or continue statement",
+          err.node
+        );
+      }
+      else {
+        throw err;
+      }
     }
-    else if (type === "expression-function") {
-      
-    }
-    else throw (
-      "ScriptInterpreter.evaluateExpression(): Unrecognized " +
-      `function declaration type: "${type}"`
-    );
+
+    return undefined;
   }
 
 
@@ -484,11 +504,7 @@ export class ScriptInterpreter {
           case "-":
             return -parseFloat(val);
           case "typeof":
-            if (Array.isArray(val)) {
-              return "array"
-            } else {
-              return typeof val;
-            }
+            return getType(val);
           case "void":
             return void val;
           case "delete":
@@ -658,6 +674,7 @@ export class ScriptInterpreter {
                (lexeme === "false") ? false :
                (lexeme === "null") ? null :
                (lexeme === "Infinity") ? Infinity :
+               (lexeme === "NaN") ? NaN :
                undefined;
       }
       default: throw (
@@ -843,6 +860,35 @@ function decrCompGas(gas, node) {
     node
   );
 }
+
+
+
+function getType(val) {
+  let jsType = typeof val;
+  if (jsType === "object") {
+    if (Array.isArray(val)) {
+      return "array"
+    } else if (val === null) {
+      return "null";
+    } else if (
+      val instanceof EntityReference || val instanceof EntityPlaceholder
+    ) {
+      return "entity";
+    } else {
+      return "object";
+    }
+  }
+  else if (jsType === "number") {
+    if (parseInt(val).toString() === val.toString()) {
+      return "int"
+    } else {
+      return "float";
+    }
+  }
+  else return jsType;
+}
+
+
 
 
 
