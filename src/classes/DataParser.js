@@ -433,7 +433,7 @@ export const regEntStringContentParser = new Parser(
 const RESERVED_KEYWORD_REGEXP = new RegExp(
   "^(let|var|const|this|function|export|import|break|continue|return|throw|" +
   "if|else|switch|case|void|typeof|instanceof|delete|await|class|static|" +
-  "true|false|null|undefined|Infinity|try|catch|for|while|do|default)$"
+  "true|false|null|undefined|Infinity|try|catch|finally|for|while|do|default)$"
   // TODO: Continue this list.
 );
 
@@ -695,7 +695,7 @@ const scriptGrammar = {
       ["loop-statement!1"],
       ["return-statement!1"],
       ["throw-statement!1"],
-      // TODO: Implement a try-catch statement.
+      ["try-catch-statement!1"],
       ["instruction-statement!1"],
       ["empty-statement!1"],
       ["variable-declaration!1"],
@@ -787,6 +787,17 @@ const scriptGrammar = {
     process: (syntaxTree) => {
       syntaxTree.exp = (syntaxTree.ruleInd === 0) ? syntaxTree.children[1] :
         undefined;
+    },
+  },
+  "try-catch-statement": {
+    rules: [
+      ["/try/", "statement", "/catch/", /\(/, "identifier", /\)/, "statement"],
+    ],
+    process: (syntaxTree) => {
+      let children = syntaxTree.children;
+      syntaxTree.tryStmt = children[1];
+      syntaxTree.ident = children[4].lexeme;
+      syntaxTree.catchStmt = children[6];
     },
   },
   "instruction-statement": {

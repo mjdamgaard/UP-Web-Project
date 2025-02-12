@@ -21,6 +21,25 @@ export class ScriptInterpreter {
     this.moduleCache = cache;
   }
 
+
+  static executeFunctionsInModule(gas, moduleID, funArr, inputArrArr) {
+    // Import modules and sub-modules, then execute each function in funArr,
+    // with its inputs found in inputArrArr. If any function is undefined for
+    // a given inputArr, execute the main function of the script instead, and
+    // if no function is called 'main', execute the default export.
+    
+    // If there
+    // are no default export, but nly one declaration (including an anonymous
+    // declaration, meaning that
+    // the script only includes a single expression after the imports), then
+    // execute that. If the default/only declaration is a variable, simply
+    // return that right away (it is already computed as part of the
+    // initialization).
+
+  }
+
+
+
   static parseScript(str) {
     // TODO: Throw a RuntimeError on failure.
     return scriptParser.parse(str);
@@ -68,16 +87,10 @@ export class ScriptInterpreter {
     // return environment;
   }
 
-  static executeMainFunction(gas, scriptTree, environment) {
-    // Execute the main function of the script, and if no function is called
-    // 'main', execute the default export. If there are no default export, but
-    // only one declaration (including an anonymous declaration, meaning that
-    // the script only includes a single expression after the imports), then
-    // execute that. If the default/only declaration is a variable, simply
-    // return that right away (it is already computed as part of the
-    // initialization).
 
-  }
+
+
+
 
   static executeFunction(
     gas, funSyntaxTree, inputValueArr, environment, thisVal = undefined
@@ -132,6 +145,7 @@ export class ScriptInterpreter {
 
     return undefined;
   }
+
 
 
 
@@ -237,6 +251,20 @@ export class ScriptInterpreter {
         let expVal = (!syntaxTree.exp) ? undefined :
           this.evaluateExpression(gas, stmtSyntaxTree.cond, environment);
         throw new ThrownException(expVal, stmtSyntaxTree);
+      }
+      case "try-catch-statement": {
+        try {
+          this.executeStatement(gas, stmtSyntaxTree.tryStmt, environment);
+        } catch (err) {
+          if (err instanceof RuntimeError || err instanceof CustomError) {
+            let newEnv = new Environment(environment, "block");
+            newEnv.declare(
+              stmtSyntaxTree.ident, err.msg, false, "block", stmtSyntaxTree
+            );
+            this.executeStatement(gas, stmtSyntaxTree.catchStmt, newEnv);
+          }
+          else throw err;
+        }
       }
       case "instruction-statement": {
         if (stmtSyntaxTree.lexeme === "break") {
