@@ -171,7 +171,7 @@ function script_parsing_tests_01() {
                 children: [
                   {type: "number", lexeme: "2"},
                   {lexeme: "+"},
-                  {type: "number", lexeme: "2"},
+                  {type: "number", lexeme: "3"},
                 ],
               },
             ],
