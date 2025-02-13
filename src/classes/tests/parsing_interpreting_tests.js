@@ -36,28 +36,30 @@ function script_parsing_tests_01() {
 
 function testParser({
   parser, str, startSym, isPartial, keepLastLexeme,
-  exceptedIsSuccess, expectedNextPos,
-  testMsgPrefix, testKey, logParserOutput,
+  expectedIsSuccess, expectedNextPos,
+  testMsgPrefix, testKey, logParserOutput, logOnlyFailures,
 }) {
-  let [syntaxTree, lexArr, strPosArr] = parser.parse(
+  let [syntaxTree, lexArr] = parser.parse(
     str, startSym, isPartial, keepLastLexeme
   );
 
-  expectedNextPos ??= lexArr.length;
+  expectedNextPos ??= lexArr?.length;
   let isSuccessMsg = "SUCCESS";
   if (
-    syntaxTree.isSuccess != exceptedIsSuccess ||
+    syntaxTree.isSuccess != expectedIsSuccess ||
     syntaxTree.nextPos !== expectedNextPos
   ) {
     isSuccessMsg = "FAILURE";
   }
 
-  console.log(
-    testMsgPrefix + testKey + ": " + isSuccessMsg +
-    (logParserOutput ? ":" : "")
-  );
-  if (logParserOutput) {
-    parser.log(syntaxTree);
+  if (!logOnlyFailures || isSuccessMsg === "FAILURE") {
+    console.log(
+      testMsgPrefix + "." + testKey + ": " + isSuccessMsg +
+      (logParserOutput ? ":" : "")
+    );
+    if (logParserOutput) {
+      parser.log(syntaxTree);
+    }
   }
 }
 
@@ -65,122 +67,202 @@ function testParser({
 
 
 function regEnt_parsing_tests_01() {
+  let testMsgPrefix = "regEnt_parsing_tests_01";
+
+  console.log("Running " + testMsgPrefix + ":");
+
   let defaultParams = {
     parser: regEntParser, str: "", startSym: undefined, isPartial: undefined,
     keepLastLexeme: undefined,
-    exceptedIsSuccess: true, expectedNextPos: null,
-    testMsgPrefix: "regEnt_parsing_tests_01.", testKey: "",
-    logParserOutput: true,
+    expectedIsSuccess: true, expectedNextPos: null,
+    testMsgPrefix: testMsgPrefix, testKey: "",
+    logParserOutput: true, logOnlyFailures: true,
   }
   let params;
 
 
   params = Object.assign({}, defaultParams, {
     str: `12`,
-    exceptedIsSuccess: true,
+    expectedIsSuccess: true,
     testKey: "01"
   });
   testParser(params);
 
   params = Object.assign({}, defaultParams, {
     str: `12, 13`,
-    exceptedIsSuccess: true,
+    expectedIsSuccess: true,
     testKey: "02"
   });
   testParser(params);
-  regEntParser.log(regEntParser.parse(
-    `12`
-  )[0]);
-  // Works.
-  regEntParser.log(regEntParser.parse(
-    `12, 13`
-  )[0]);
-  // Works.
-  regEntParser.log(regEntParser.parse(
-    `"Hello, world!"`
-  )[0]);
-  // Works.
-  regEntParser.log(regEntParser.parse(
-    `,`
-  )[0]);
-  // Works.
-  regEntParser.log(regEntParser.parse(
-    `@`
-  )[0]);
-  // Works.
-  regEntParser.log(regEntParser.parse(
-    `@[`
-  )[0]);
-  // Works.
-  regEntParser.log(regEntParser.parse(
-    `12,`
-  )[0]);
-  // Works.
-  regEntParser.log(regEntParser.parse(
-    `12,\[`
-  )[0]);
-  // Works.
-  regEntParser.log(regEntParser.parse(
-    `"Hello, world!",@[7],_,false`
-  )[0]);
-  // Works.
-  regEntParser.log(regEntParser.parse(
-    `"Hello, world!",@[7],_,false,`
-  )[0]);
-  // Works.
-  regEntParser.log(regEntParser.parse(
-    `"Hello, world!",@[7],_,false`, "literal-list"
-  )[0]);
-  // Works.
-  regEntParser.log(regEntParser.parse(
-    `"Hello, world!",@[7],_,false`, "literal"
-  )[0]);
-  // Works.
-  regEntParser.log(regEntParser.parse(
-    `"H`, "literal"
-  )[0]);
-  // Works.
-  regEntParser.log(regEntParser.parse(
-    `12`, "literal", true
-  )[0]);
-  // Works.
-  regEntParser.log(regEntParser.parse(
-    `12`, "literal", true, true
-  )[0]);
-  // Works.
-  regEntParser.log(regEntParser.parse(
-    `12`, "literal+", true, true
-  )[0]);
-  // Works.
-  regEntParser.log(regEntParser.parse(
-    `12`, "literal-list", true
-  )[0]);
-  // Works.
-  regEntParser.log(regEntParser.parse(
-    `12,`, "literal-list", true
-  )[0]);
-  // Works.
-  regEntParser.log(regEntParser.parse(
-    `12,@`, "literal-list", true
-  )[0]);
-  // Works.
-  regEntParser.log(regEntParser.parse(
-    `12, "Hello, @[7]!"`
-  )[0]);
-  // Works.
-  regEntParser.log(regEntParser.parse(
-    `12, "Hello, @[7!"`
-  )[0]);
-  // Works.
-  regEntParser.log(regEntParser.parse(
-    `12, [13, [14,[15 ,  16]]]`
-  )[0]);
-  // Works.
-  regEntParser.log(regEntParser.parse(
-    `12, {"prop": [13]}, 13`
-  )[0]);
-  // Works.
+
+  params = Object.assign({}, defaultParams, {
+    str: `"Hello, world!"`,
+    expectedIsSuccess: true,
+    testKey: "03"
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `,`,
+    expectedIsSuccess: false, expectedNextPos: 0,
+    testKey: "04"
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `@`,
+    expectedIsSuccess: false, expectedNextPos: undefined, // Lexer error,
+    testKey: "05"
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `@[`,
+    expectedIsSuccess: false, expectedNextPos: 1,
+    testKey: "06"
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `12,`,
+    expectedIsSuccess: false, expectedNextPos: 2,
+    testKey: "07"
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `12,[`,
+    expectedIsSuccess: false, expectedNextPos: 3,
+    testKey: "08"
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `"Hello, world!",@[7],_,false`,
+    expectedIsSuccess: true, expectedNextPos: 9,
+    testKey: "09"
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `"Hello, world!",@[7],_,false,`,
+    expectedIsSuccess: false, expectedNextPos: 10,
+    testKey: "10"
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `"Hello, world!",@[7],_,false`,
+    startSym: "literal-list",
+    expectedIsSuccess: true, expectedNextPos: 9,
+    testKey: "11"
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `"Hello, world!",@[7],_,false`,
+    startSym: "literal",
+    expectedIsSuccess: false, expectedNextPos: 1,
+    testKey: "12"
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `"H`,
+    startSym: "literal",
+    expectedIsSuccess: false, expectedNextPos: 0,
+    testKey: "13"
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `12`,
+    startSym: "literal",
+    expectedIsSuccess: true, expectedNextPos: 1,
+    testKey: "14"
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `12`,
+    startSym: "literal",
+    isPartial: true, keepLastLexeme: false,
+    expectedIsSuccess: false, expectedNextPos: 0,
+    testKey: "15"
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `12`,
+    startSym: "literal",
+    isPartial: true, keepLastLexeme: true,
+    expectedIsSuccess: false, expectedNextPos: 1,
+    testKey: "16"
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `12`,
+    startSym: "literal+",
+    isPartial: true, keepLastLexeme: true,
+    expectedIsSuccess: false, expectedNextPos: 1,
+    testKey: "17"
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `12`,
+    isPartial: true, keepLastLexeme: false,
+    expectedIsSuccess: false, expectedNextPos: 0,
+    testKey: "18"
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `12`,
+    isPartial: true, keepLastLexeme: true,
+    expectedIsSuccess: false, expectedNextPos: 1,
+    testKey: "19"
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `12,`,
+    isPartial: true, keepLastLexeme: false,
+    expectedIsSuccess: false, expectedNextPos: 1,
+    testKey: "20"
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `12,@`,
+    isPartial: true, keepLastLexeme: false,
+    expectedIsSuccess: false, expectedNextPos: 2,
+    testKey: "21"
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `12, "Hello", @[7]!`,
+    expectedIsSuccess: false, expectedNextPos: undefined, // Lexer error.
+    testKey: "22"
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `12, [13, [14,[15 ,  16]]]`,
+    expectedIsSuccess: true,
+    testKey: "23"
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `12, {"prop": [13]}, 13`,
+    expectedIsSuccess: true,
+    testKey: "24"
+  });
+  testParser(params);
 
 
-
+  console.log("Finished " + testMsgPrefix + ".");
 }
