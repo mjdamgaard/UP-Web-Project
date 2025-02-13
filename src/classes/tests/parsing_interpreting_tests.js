@@ -6,8 +6,8 @@ import {ScriptInterpreter} from "../ScriptInterpreter.js";
 
 
 export function runTests() {
-  // parsing_tests_01();
-  interpreter_tests_01();
+  regEnt_parsing_tests_01();
+  // interpreter_tests_01();
 
 }
 
@@ -17,7 +17,7 @@ export function runTests() {
 
 
 
-function interpreter_tests_01() {
+function script_parsing_tests_01() {
   scriptParser.log(scriptParser.parse(
     `2 + 2`,
     "expression"
@@ -34,16 +34,60 @@ function interpreter_tests_01() {
 
 
 
+function testParser({
+  parser, str, startSym, isPartial, keepLastLexeme,
+  exceptedIsSuccess, expectedNextPos,
+  testMsgPrefix, testKey, logParserOutput,
+}) {
+  let [syntaxTree, lexArr, strPosArr] = parser.parse(
+    str, startSym, isPartial, keepLastLexeme
+  );
+
+  expectedNextPos ??= lexArr.length;
+  let isSuccessMsg = "SUCCESS";
+  if (
+    syntaxTree.isSuccess != exceptedIsSuccess ||
+    syntaxTree.nextPos !== expectedNextPos
+  ) {
+    isSuccessMsg = "FAILURE";
+  }
+
+  console.log(
+    testMsgPrefix + testKey + ": " + isSuccessMsg +
+    (logParserOutput ? ":" : "")
+  );
+  if (logParserOutput) {
+    parser.log(syntaxTree);
+  }
+}
 
 
 
 
+function regEnt_parsing_tests_01() {
+  let defaultParams = {
+    parser: regEntParser, str: "", startSym: undefined, isPartial: undefined,
+    keepLastLexeme: undefined,
+    exceptedIsSuccess: true, expectedNextPos: null,
+    testMsgPrefix: "regEnt_parsing_tests_01.", testKey: "",
+    logParserOutput: true,
+  }
+  let params;
 
-function parsing_tests_01() {
 
-  // (If I had a good, easy way to make that tests return true on success, I
-  // would..)
+  params = Object.assign({}, defaultParams, {
+    str: `12`,
+    exceptedIsSuccess: true,
+    testKey: "01"
+  });
+  testParser(params);
 
+  params = Object.assign({}, defaultParams, {
+    str: `12, 13`,
+    exceptedIsSuccess: true,
+    testKey: "02"
+  });
+  testParser(params);
   regEntParser.log(regEntParser.parse(
     `12`
   )[0]);

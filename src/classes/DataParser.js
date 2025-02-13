@@ -147,12 +147,12 @@ export function makeChildrenIntoLexemeArray(syntaxTree) {
 
 let straightenPolyadicOperation = straightenListSyntaxTree(1, true);
 
-export function processPolyadicOperation(syntaxTree) {console.log(syntaxTree);
+export function processPolyadicOperation(syntaxTree) {
   if (syntaxTree.ruleInd === 0) {
     syntaxTree.type = "polyadic-operation";
     straightenPolyadicOperation(syntaxTree);
     syntaxTree.operators = syntaxTree.delimiters;
-  } else {console.log(2, syntaxTree);
+  } else {
     becomeChild(0)(syntaxTree);
   }
 }

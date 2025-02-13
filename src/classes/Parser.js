@@ -745,7 +745,7 @@ export class Lexer {
     // Get the initial lexeme array still with whitespace and the potential last
     // failed string in it, then test and throw if the last match is that last
     // failure string.
-    let unfilteredLexArr = str.match(this.lexerRegEx)
+    let unfilteredLexArr = (str.match(this.lexerRegEx) ?? [])
       .filter(val => val !== "");
 
     // Construct an array of the positions in str of each of the element in
