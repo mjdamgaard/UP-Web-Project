@@ -1,4 +1,4 @@
-import { error } from "jquery";
+
 
 const ERROR_ECHO_STR_LEN = 400;
 
