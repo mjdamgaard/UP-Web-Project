@@ -105,7 +105,7 @@ export class ScriptInterpreter {
       let paramName = param.lexeme;
       let paramVal = inputValueArr[ind];
 
-      // If the parameter is typed, check the type.
+      // If the parameter is typed, check the type. //TODO: Also substitute default parameters.
       if (param.invalidTypes) {
         let inputValType = getType(paramVal);
         if (param.invalidTypes.includes(inputValType)) {
@@ -405,8 +405,8 @@ export class ScriptInterpreter {
         let children = expSyntaxTree.children;
         let acc = this.evaluateExpression(gas, children[0], environment);
         let lastOpIndex = children.length - 2;
-        for (let i = 0; i < lastOpIndex - 2; i += 2) {
-          let op = children[i + 1];
+        for (let i = 0; i < lastOpIndex; i += 2) {
+          let op = children[i + 1].lexeme;
           let nextChild = children[i + 2];
           let nextVal;
           if (op !== "||" && op !== "??" && op !== "&&") {
@@ -473,7 +473,7 @@ export class ScriptInterpreter {
               if ( accType === "string" || accType === "int") {
                 if (accType !== "string" && accType !== "int") {
                     throw new RuntimeError(
-                    "Cannot concat a non-string/int to a string/int",
+                    "Concatenation of a non-string/int to a string/int",
                     nextChild
                   );
                 }
@@ -481,20 +481,20 @@ export class ScriptInterpreter {
               }
               if (accType === "array") {
                 if (nextType !== "array") throw new RuntimeError(
-                  "Cannot concat a non-array to an array",
+                  "Concatenation of a non-array to an array",
                   nextChild
                 );
                 acc = [...acc, ...nextVal];
               }
               else if (accType === "object") {
                 if (nextType !== "object") throw new RuntimeError(
-                  "Cannot merge a non-object with an object",
+                  "Merger of a non-object with an object",
                   nextChild
                 );
                 acc = {...acc, ...nextVal};
               }
               else throw new RuntimeError(
-                "Concatenation a float, entity, null, or undefined value",
+                "Concatenation of a float, entity, null, or undefined value",
                 children[i]
               );
               break;
@@ -831,8 +831,8 @@ export class ScriptInterpreter {
 const UNDEFINED = {};
 
 
-class Environment {
-  constructor(parent = undefined, scopeType = "block", thisVal) {
+export class Environment {
+  constructor(parent = undefined, scopeType = "block", thisVal = undefined) {
     this.parent = parent;
     this.scopeType = scopeType;
     this.variables = {"#this": thisVal ?? UNDEFINED};

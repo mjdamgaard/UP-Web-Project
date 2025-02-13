@@ -1,14 +1,100 @@
 
 import {regEntParser, scriptParser} from "../DataParser.js";
-import {ScriptInterpreter} from "../ScriptInterpreter.js";
+import {ScriptInterpreter, Environment} from "../ScriptInterpreter.js";
 
 
 
 
 export function runTests() {
   // regEnt_parsing_tests_01(); // Last tested: (13.02.25, 14:24).
-  script_parsing_tests_01();
+  // script_parsing_tests_01();
+  script_interpreter_tests_01();
 
+}
+
+
+
+
+
+
+
+function testInterpreter({
+  str, startSym = "script",
+  gas = {comp: 1000},
+  expectedOutput, expectedLog,
+  testMsgPrefix, testKey,
+  logParserOutput, logOutput, logLog, logOnlyFailures,
+}) {
+  let [syntaxTree] = scriptParser.parse(str, startSym);
+  if (!syntaxTree.isSuccess) {
+    scriptParser.log(syntaxTree);
+    debugger;throw "Could not lex or parse input";
+  }
+
+  let freshEnv = new Environment();
+  gas = Object.assign({}, gas);
+
+  let output;
+  switch (startSym) {
+    case "expression":
+      output = ScriptInterpreter.evaluateExpression(gas, syntaxTree, freshEnv);
+      break
+    default:
+      debugger;throw `testing of "${startSym}" not implemented`;
+  }
+
+  let isSuccessMsg;
+  if (getMissingMember({out: output}, {out: expectedOutput})) {
+    isSuccessMsg = "FAILURE";
+  } else {
+    isSuccessMsg = "SUCCESS";
+  }
+
+  if (!logOnlyFailures || isSuccessMsg === "FAILURE") {
+    console.log(
+      testMsgPrefix + "." + testKey + ": " + isSuccessMsg +
+      (logParserOutput ? ":" : "")
+    );
+    if (logOutput) {
+      console.log("Output: ", output);
+    }
+    if (logParserOutput) {
+      scriptParser.log(syntaxTree);
+    }
+  }
+}
+
+
+
+
+
+
+function script_interpreter_tests_01() {
+  let testMsgPrefix = "script_interpreter_tests_01";
+
+  console.log("Running " + testMsgPrefix + ":");
+
+  let defaultParams = {
+    parser: scriptParser, str: "", startSym: undefined,
+    gas: {comp: 1000},
+    expectedOutput: undefined, expectedLog: undefined,
+    testMsgPrefix: testMsgPrefix, testKey: "",
+    logOutput: true, logLog: undefined,
+    logParserOutput: true, logOnlyFailures: false,
+  }
+  let params;
+
+
+  params = Object.assign({}, defaultParams, {
+    str: `2 + 2`,
+    startSym: "expression",
+    expectedOutput: 4,
+    testKey: "01",
+  });
+  testInterpreter(params);
+
+
+  console.log("Finished " + testMsgPrefix + ".");
 }
 
 
