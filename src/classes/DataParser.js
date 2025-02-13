@@ -1067,7 +1067,8 @@ const scriptGrammar = {
     ],
     process: (syntaxTree) => {
       if (syntaxTree.ruleInd === 0) {
-        becomeChild(1)(syntaxTree);
+        syntaxTree.type = "grouped-expression";
+        syntaxTree.exp = syntaxTree.children[1];
       } else {
         becomeChild(0)(syntaxTree);
       }

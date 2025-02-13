@@ -65,14 +65,16 @@ function getMissingMember(testObj, propObj, prefix = "") {
     if (typeof propObjVal === "object" && propObjVal !== null) {
       if (typeof testObjVal === "object" && testObjVal !== null) {
         ret = getMissingMember(testObjVal, propObjVal, prefix + "." + key);
-        return (ret === undefined);
+        return (ret !== undefined);
       } else {
         ret = key;
+        debugger; // Useful to let this debugger statement remain.
         return true;
       }
     } else {
-      ret = (testObjVal === propObjVal) ? undefined : key; 
-      return (ret === undefined);
+      ret = (testObjVal === propObjVal) ? undefined : key;
+      if (ret !== undefined) debugger; // Useful to let this statement remain.
+      return (ret !== undefined);
     }
   });
   return ret;
@@ -158,24 +160,32 @@ function script_parsing_tests_01() {
                     root: {type: "number", lexeme: "2"},
                     exp: {type: "number", lexeme: "4"},
                   },
+                  {lexeme: "/"},
                   {type: "number", lexeme: "5"},
                 ],
               },
               {lexeme: "+"},
               {type: "number", lexeme: "2"},
               {lexeme: "-"},
-              {type: "number", lexeme: "3"},
+              {
+                type: "grouped-expression",
+                exp: {type: "number", lexeme: "3"},
+              },
               {lexeme: "+"},
               {
-                type: "additive-expression",
-                children: [
-                  {type: "number", lexeme: "2"},
-                  {lexeme: "+"},
-                  {type: "number", lexeme: "3"},
-                ],
+                type: "grouped-expression",
+                exp: {
+                  type: "additive-expression",
+                  children: [
+                    {type: "number", lexeme: "2"},
+                    {lexeme: "+"},
+                    {type: "number", lexeme: "2"},
+                  ],
+                },
               },
             ],
           },
+          {lexeme: "||"},
           {type: "constant", lexeme: "true"},
         ],
       });

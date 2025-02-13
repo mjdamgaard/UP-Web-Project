@@ -694,6 +694,9 @@ export class ScriptInterpreter {
 
         return ret;
       }
+      case "grouped-expression": {
+        return this.evaluateExpression(gas, expSyntaxTree.exp, environment);
+      }
       case "array": {
         let expValArr = expSyntaxTree.children.map(exp => (
           this.evaluateExpression(gas, exp, environment)
