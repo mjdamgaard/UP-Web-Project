@@ -46,7 +46,7 @@ export class CombinedCache {
 
   set(key, val, evictionCallback = () => {}, priority = 1) {
     // Insert the element in the LRU cache.
-    this.lruCache.set(key, val, callback, priority);
+    this.lruCache.set(key, val, undefined, priority);
 
     // Then check if it is time for the priorities in the priority cache to
     // decay.
