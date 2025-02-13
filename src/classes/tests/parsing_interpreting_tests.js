@@ -17,39 +17,6 @@ export function runTests() {
 
 
 
-function script_parsing_tests_01() {
-  let testMsgPrefix = "regEnt_parsing_tests_01";
-
-  console.log("Running " + testMsgPrefix + ":");
-
-  let defaultParams = {
-    parser: scriptParser, str: "", startSym: undefined, isPartial: undefined,
-    keepLastLexeme: undefined,
-    expectedIsSuccess: true, expectedNextPos: null,
-    testMsgPrefix: testMsgPrefix, testKey: "",
-    logParserOutput: true, logOnlyFailures: false,
-  }
-  let params;
-
-
-  params = Object.assign({}, defaultParams, {
-    str: `2 + 2`,
-    startSym: "expression",
-    expectedIsSuccess: true,
-    testKey: "01"
-  });
-  testParser(params);
-
-
-
-  console.log("Finished " + testMsgPrefix + ".");
-}
-
-
-
-
-
-
 
 
 
@@ -59,8 +26,9 @@ function testParser({
   parser, str, startSym, isPartial, keepLastLexeme,
   expectedIsSuccess, expectedNextPos,
   testMsgPrefix, testKey, logParserOutput, logOnlyFailures,
+  additionalTest = () => true,
 }) {
-  let [syntaxTree, lexArr] = parser.parse(
+  let [syntaxTree, lexArr, strPosArr] = parser.parse(
     str, startSym, isPartial, keepLastLexeme
   );
 
@@ -70,6 +38,9 @@ function testParser({
     syntaxTree.isSuccess != expectedIsSuccess ||
     syntaxTree.nextPos !== expectedNextPos
   ) {
+    isSuccessMsg = "FAILURE";
+  }
+  else if (!additionalTest(syntaxTree, lexArr, strPosArr)) {
     isSuccessMsg = "FAILURE";
   }
 
@@ -87,6 +58,76 @@ function testParser({
 
 
 
+
+
+
+function script_parsing_tests_01() {
+  let testMsgPrefix = "regEnt_parsing_tests_01";
+
+  console.log("Running " + testMsgPrefix + ":");
+
+  let defaultParams = {
+    parser: scriptParser, str: "", startSym: undefined, isPartial: undefined,
+    keepLastLexeme: undefined,
+    expectedIsSuccess: true, expectedNextPos: null,
+    testMsgPrefix: testMsgPrefix, testKey: "",
+    logParserOutput: true, logOnlyFailures: false,
+    additionalTest: undefined,
+  }
+  let params;
+
+
+  params = Object.assign({}, defaultParams, {
+    str: `2 + 2`,
+    startSym: "expression",
+    expectedIsSuccess: true,
+    testKey: "01",
+    additionalTest: (syntaxTree) => {
+      return (
+        syntaxTree.type === "additive-expression" &&
+        syntaxTree.children[0].type === "number" &&
+        syntaxTree.children[0].lexeme === "2" &&
+        syntaxTree.children[1].lexeme === "+" &&
+        syntaxTree.children[2].type === "number" &&
+        syntaxTree.children[2].lexeme === "2"
+      );
+    },
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `2 + 2 - 3`,
+    startSym: "expression",
+    expectedIsSuccess: true,
+    testKey: "02",
+    additionalTest: (syntaxTree) => {
+      return (
+        syntaxTree.type === "additive-expression" &&
+        syntaxTree.children[0].type === "number" &&
+        syntaxTree.children[0].lexeme === "2" &&
+        syntaxTree.children[1].lexeme === "+" &&
+        syntaxTree.children[2].type === "number" &&
+        syntaxTree.children[2].lexeme === "2" &&
+        syntaxTree.children[3].lexeme === "-" &&
+        syntaxTree.children[4].type === "number" &&
+        syntaxTree.children[2].lexeme === "3"
+      );
+    },
+  });
+  testParser(params);
+
+
+
+  console.log("Finished " + testMsgPrefix + ".");
+}
+
+
+
+
+
+
+
+
 function regEnt_parsing_tests_01() {
   let testMsgPrefix = "regEnt_parsing_tests_01";
 
@@ -98,6 +139,7 @@ function regEnt_parsing_tests_01() {
     expectedIsSuccess: true, expectedNextPos: null,
     testMsgPrefix: testMsgPrefix, testKey: "",
     logParserOutput: true, logOnlyFailures: true,
+    additionalTest: undefined,
   }
   let params;
 

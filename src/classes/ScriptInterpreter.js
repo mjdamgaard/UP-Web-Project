@@ -391,13 +391,23 @@ export class ScriptInterpreter {
           );
         }
       }
-      // TODO: Divide these up into "or-expression" through "multiplicative-
-      // expression".
-      case "polyadic-operation": {
+      case "or-expression":
+      case "and-expression":
+      case "and-expression":
+      case "bitwise-or-expression":
+      case "bitwise-xor-expression":
+      case "bitwise-and-expression":
+      case "bitwise-and-expression":
+      case "equality-expression":
+      case "relational-expression":
+      case "additive-expression":
+      case "multiplicative-expression": {
         let children = expSyntaxTree.children;
         let acc = this.evaluateExpression(gas, children[0], environment);
-        expSyntaxTree.operators.forEach((op, ind) => {
-          let nextChild = children[ind + 1];
+        let lastOpIndex = children.length - 2;
+        for (let i = 0; i < lastOpIndex - 2; i += 2) {
+          let op = children[i + 1];
+          let nextChild = children[i + 2];
           let nextVal;
           if (op !== "||" && op !== "??" && op !== "&&") {
             nextVal = this.evaluateExpression(gas, nextChild, environment);
@@ -457,17 +467,38 @@ export class ScriptInterpreter {
             case "+":
               acc = parseFloat(acc) + parseFloat(nextVal);
               break;
-            case "<>":
-              if (Array.isArray(acc)) {
-                if (!Array.isArray(nextVal)) throw new RuntimeError(
-                  "Cannot concat a non-array to an array",
-                  children[ind + 1]
-                );
-                acc = [acc, ...nextVal];
-              } else {
+            case "<>": {
+              let accType = getType(acc);
+              let nextType = getType(nextVal);
+              if ( accType === "string" || accType === "int") {
+                if (accType !== "string" && accType !== "int") {
+                    throw new RuntimeError(
+                    "Cannot concat a non-string/int to a string/int",
+                    nextChild
+                  );
+                }
                 acc = acc.toString() + nextVal;
               }
+              if (accType === "array") {
+                if (nextType !== "array") throw new RuntimeError(
+                  "Cannot concat a non-array to an array",
+                  nextChild
+                );
+                acc = [...acc, ...nextVal];
+              }
+              else if (accType === "object") {
+                if (nextType !== "object") throw new RuntimeError(
+                  "Cannot merge a non-object with an object",
+                  nextChild
+                );
+                acc = {...acc, ...nextVal};
+              }
+              else throw new RuntimeError(
+                "Concatenation a float, entity, null, or undefined value",
+                children[i]
+              );
               break;
+            }
             case "-":
               acc = parseFloat(acc) - parseFloat(nextVal);
               break;
@@ -485,7 +516,7 @@ export class ScriptInterpreter {
               `operator: "${op}"`
             );
           }
-        });
+        }
         return acc;
       }
       case "exponential-expression": {
