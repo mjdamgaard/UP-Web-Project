@@ -70,44 +70,23 @@ export class DataParser {
 
 
 export function straightenListSyntaxTree(
-  delimiterNum = 1, storeDelimiters = false, ruleNum = 2,
+  syntaxTree, keepDelimiters = false, ruleNum = 2,
 ) {
   let maxRuleInd = ruleNum - 1;
-  if (storeDelimiters && delimiterNum === 1) {
-    return (syntaxTree) => {
-      syntaxTree.children = (syntaxTree.ruleInd !== maxRuleInd) ? [
-        syntaxTree.children[0],
-        ...syntaxTree.children[2].children,
-      ] : [
-        syntaxTree.children[0]
-      ];
-      syntaxTree.delimiters = [
-        syntaxTree.children[1],
-        ...syntaxTree.children[2].delimiters,
-      ];
-    }
-  } else if (storeDelimiters) {
-    return (syntaxTree) => {
-      syntaxTree.children = (syntaxTree.ruleInd !== maxRuleInd) ? [
-        syntaxTree.children[0],
-        ...syntaxTree.children[1 + delimiterNum].children,
-      ] : [
-        syntaxTree.children[0]
-      ];
-      syntaxTree.delimiters = [
-        syntaxTree.children.slice(1, -1),
-        ...syntaxTree.children[1 + delimiterNum].delimiters,
-      ];
-    }
+  if (keepDelimiters) {
+    syntaxTree.children = (syntaxTree.ruleInd !== maxRuleInd) ? [
+      syntaxTree.children.slice(0, -1),
+      ...syntaxTree.children.at(-1).children,
+    ] : [
+      syntaxTree.children[0]
+    ];
   } else {
-    return (syntaxTree) => {
-      syntaxTree.children = (syntaxTree.ruleInd !== maxRuleInd) ? [
-        syntaxTree.children[0],
-        ...syntaxTree.children[1 + delimiterNum].children,
-      ] : [
-        syntaxTree.children[0]
-      ];
-    }
+    syntaxTree.children = (syntaxTree.ruleInd !== maxRuleInd) ? [
+      syntaxTree.children[0],
+      ...syntaxTree.children.at(-1).children,
+    ] : [
+      syntaxTree.children[0]
+    ];
   }
 }
 
@@ -145,13 +124,14 @@ export function makeChildrenIntoLexemeArray(syntaxTree) {
 }
 
 
-let straightenPolyadicOperation = straightenListSyntaxTree(1, true);
 
-export function processPolyadicOperation(syntaxTree) {
+
+export function processPolyadicInfixOperation(syntaxTree, type, ruleNum = 2) {
   if (syntaxTree.ruleInd === 0) {
-    syntaxTree.type = "polyadic-operation";
-    straightenPolyadicOperation(syntaxTree);
-    syntaxTree.operators = syntaxTree.delimiters;
+    syntaxTree.type = type;
+    if (syntaxTree.children.at(-1).type === type) {
+      straightenListSyntaxTree(syntaxTree, true, ruleNum);
+    }
   } else {
     becomeChild(0)(syntaxTree);
   }
@@ -214,7 +194,7 @@ const jsonGrammar = {
       ["literal", "/,/", "literal-list!"],
       ["literal"],
     ],
-    process: straightenListSyntaxTree(1),
+    process: straightenListSyntaxTree,
   },
   "literal": {
     rules: [
@@ -287,7 +267,7 @@ const jsonGrammar = {
       ["member", "/,/", "member-list!"],
       ["member"],
     ],
-    process: straightenListSyntaxTree(1),
+    process: straightenListSyntaxTree,
   },
   "member": {
     rules: [
@@ -461,7 +441,7 @@ const scriptGrammar = {
       ["import-statement", "import-statement-list"],
       ["import-statement"],
     ],
-    process: straightenListSyntaxTree(0),
+    process: straightenListSyntaxTree,
   },
   "import-statement": {
     rules: [
@@ -479,7 +459,7 @@ const scriptGrammar = {
       ["import", "/,/", "import-list!1"],
       ["import", "/,/?"],
     ],
-    process: straightenListSyntaxTree(1),
+    process: straightenListSyntaxTree,
   },
   "import": {
     rules: [
@@ -523,7 +503,7 @@ const scriptGrammar = {
       ["variable-definition", "/,/", "variable-definition-list!"],
       ["variable-definition"],
     ],
-    process: straightenListSyntaxTree(1),
+    process: straightenListSyntaxTree,
   },
   "variable-definition": {
     rules: [
@@ -542,7 +522,7 @@ const scriptGrammar = {
       ["identifier", "/,/", "identifier-list!1"],
       ["identifier", "/,/?"],
     ],
-    process: straightenListSyntaxTree(1),
+    process: straightenListSyntaxTree,
   },
   "identifier": {
     rules: [
@@ -573,7 +553,7 @@ const scriptGrammar = {
       ["parameter", "/,/", "parameter-list!1"],
       ["parameter", "/,/?"],
     ],
-    process: straightenListSyntaxTree(1),
+    process: straightenListSyntaxTree,
   },
   "parameter": {
     rules: [
@@ -642,7 +622,7 @@ const scriptGrammar = {
       ["type^(1)", "/,/", "type^(1)-list!1"],
       ["type^(1)", "/,/?"],
     ],
-    process: straightenListSyntaxTree(1),
+    process: straightenListSyntaxTree,
   },
   "type^(1)": {
     rules: [
@@ -686,7 +666,7 @@ const scriptGrammar = {
       ["statement", "statement-list"],
       ["statement"],
     ],
-    process: straightenListSyntaxTree(0),
+    process: straightenListSyntaxTree,
   },
   "statement": {
     rules: [
@@ -816,7 +796,7 @@ const scriptGrammar = {
       ["expression", "/,/", "expression-list!1"],
       ["expression", "/,/?"],
     ],
-    process: straightenListSyntaxTree(1),
+    process: straightenListSyntaxTree,
   },
   "expression": {
     rules: [
@@ -871,70 +851,90 @@ const scriptGrammar = {
       ["expression^(2)", /(\|\|)|(\?\?)/, "expression^(1)!"],
       ["expression^(2)"],
     ],
-    process: processPolyadicOperation,
+    process: (syntaxTree) => processPolyadicInfixOperation(
+      syntaxTree, "or-expression"
+    ),
   },
   "expression^(2)": {
     rules: [
       ["expression^(3)", "/&&/", "expression^(2)!"],
       ["expression^(3)"],
     ],
-    process: processPolyadicOperation,
+    process: (syntaxTree) => processPolyadicInfixOperation(
+      syntaxTree, "and-expression"
+    ),
   },
   "expression^(3)": {
     rules: [
       ["expression^(4)", /\|/, "expression^(3)!"],
       ["expression^(4)"],
     ],
-    process: processPolyadicOperation,
+    process: (syntaxTree) => processPolyadicInfixOperation(
+      syntaxTree, "bitwise-or-expression"
+    ),
   },
   "expression^(4)": {
     rules: [
       ["expression^(5)", /\^/, "expression^(4)!"],
       ["expression^(5)"],
     ],
-    process: processPolyadicOperation,
+    process: (syntaxTree) => processPolyadicInfixOperation(
+      syntaxTree, "bitwise-xor-expression"
+    ),
   },
   "expression^(5)": {
     rules: [
       ["expression^(6)", /\&/, "expression^(5)!"],
       ["expression^(6)"],
     ],
-    process: processPolyadicOperation,
+    process: (syntaxTree) => processPolyadicInfixOperation(
+      syntaxTree, "bitwise-and-expression"
+    ),
   },
   "expression^(6)": {
     rules: [
       ["expression^(7)", "/===|!==|==|!=/", "expression^(6)!"],
       ["expression^(7)"],
     ],
-    process: processPolyadicOperation,
+    process: (syntaxTree) => processPolyadicInfixOperation(
+      syntaxTree, "equality-expression"
+    ),
   },
   "expression^(7)": {
     rules: [
       ["expression^(8)", "/<|>|<=|>=/", "expression^(7)!"],
       ["expression^(8)"],
     ],
-    process: processPolyadicOperation,
+    process: (syntaxTree) => processPolyadicInfixOperation(
+      syntaxTree, "relational-expression"
+    ),
   },
   "expression^(8)": {
     rules: [
       ["expression^(9)", "/<<|>>|>>>/", "expression^(8)!"],
       ["expression^(9)"],
     ],
-    process: processPolyadicOperation,
+    process: (syntaxTree) => processPolyadicInfixOperation(
+      syntaxTree, "shift-expression"
+    ),
   },
   "expression^(9)": {
     rules: [
       ["expression^(10)", "/\\+|\\-|<>/", "expression^(9)!"],
       ["expression^(10)"],
     ],
-    process: processPolyadicOperation,
+    process: (syntaxTree) => processPolyadicInfixOperation(
+      syntaxTree, "additive-expression"
+    ),
   },
   "expression^(10)": {
     rules: [
       ["expression^(11)", "/\\*|\\/|%/", "expression^(10)!"],
       ["expression^(11)"],
     ],
-    process: processPolyadicOperation,
+    process: (syntaxTree) => processPolyadicInfixOperation(
+      syntaxTree, "multiplicative-expression"
+    ),
   },
   "expression^(11)": {
     rules: [
@@ -1104,7 +1104,7 @@ const scriptGrammar = {
       ["member", "/,/", "member-list!1"],
       ["member", "/,/?"],
     ],
-    process: straightenListSyntaxTree(1),
+    process: straightenListSyntaxTree,
   },
   "member": {
     rules: [
@@ -1130,7 +1130,7 @@ const scriptGrammar = {
       ["literal", "/,/", "literal-list!1"],
       ["literal", "/,/?"],
     ],
-    process: straightenListSyntaxTree(1),
+    process: straightenListSyntaxTree,
   },
   "this-keyword": {
     rules: [

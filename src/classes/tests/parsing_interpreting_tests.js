@@ -6,8 +6,8 @@ import {ScriptInterpreter} from "../ScriptInterpreter.js";
 
 
 export function runTests() {
-  regEnt_parsing_tests_01();
-  // interpreter_tests_01();
+  // regEnt_parsing_tests_01(); // Last tested: (13.02.25, 14:24).
+  script_parsing_tests_01();
 
 }
 
@@ -18,10 +18,31 @@ export function runTests() {
 
 
 function script_parsing_tests_01() {
-  scriptParser.log(scriptParser.parse(
-    `2 + 2`,
-    "expression"
-  )[0]);
+  let testMsgPrefix = "regEnt_parsing_tests_01";
+
+  console.log("Running " + testMsgPrefix + ":");
+
+  let defaultParams = {
+    parser: scriptParser, str: "", startSym: undefined, isPartial: undefined,
+    keepLastLexeme: undefined,
+    expectedIsSuccess: true, expectedNextPos: null,
+    testMsgPrefix: testMsgPrefix, testKey: "",
+    logParserOutput: true, logOnlyFailures: false,
+  }
+  let params;
+
+
+  params = Object.assign({}, defaultParams, {
+    str: `2 + 2`,
+    startSym: "expression",
+    expectedIsSuccess: true,
+    testKey: "01"
+  });
+  testParser(params);
+
+
+
+  console.log("Finished " + testMsgPrefix + ".");
 }
 
 

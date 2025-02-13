@@ -391,6 +391,8 @@ export class ScriptInterpreter {
           );
         }
       }
+      // TODO: Divide these up into "or-expression" through "multiplicative-
+      // expression".
       case "polyadic-operation": {
         let children = expSyntaxTree.children;
         let acc = this.evaluateExpression(gas, children[0], environment);
