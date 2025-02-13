@@ -74,14 +74,14 @@ export function straightenListSyntaxTree(
 ) {
   let maxRuleInd = ruleNum - 1;
   if (keepDelimiters) {
-    syntaxTree.children = (syntaxTree.ruleInd !== maxRuleInd) ? [
-      syntaxTree.children.slice(0, -1),
+    syntaxTree.children = (syntaxTree.ruleInd < maxRuleInd) ? [
+      ...syntaxTree.children.slice(0, -1),
       ...syntaxTree.children.at(-1).children,
     ] : [
       syntaxTree.children[0]
     ];
   } else {
-    syntaxTree.children = (syntaxTree.ruleInd !== maxRuleInd) ? [
+    syntaxTree.children = (syntaxTree.ruleInd < maxRuleInd) ? [
       syntaxTree.children[0],
       ...syntaxTree.children.at(-1).children,
     ] : [

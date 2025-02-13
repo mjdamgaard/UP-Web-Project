@@ -58,6 +58,28 @@ function testParser({
 
 
 
+function getMissingMember(testObj, propObj, prefix = "") {
+  let ret = undefined;
+  Object.entries(propObj).some(([key, propObjVal]) => {
+    let testObjVal = testObj[key];
+    if (typeof propObjVal === "object" && propObjVal !== null) {
+      if (typeof testObjVal === "object" && testObjVal !== null) {
+        ret = getMissingMember(testObjVal, propObjVal, prefix + "." + key);
+        return (ret === undefined);
+      } else {
+        ret = key;
+        return true;
+      }
+    } else {
+      ret = (testObjVal === propObjVal) ? undefined : key; 
+      return (ret === undefined);
+    }
+  });
+  return ret;
+}
+
+
+
 
 
 
@@ -110,9 +132,54 @@ function script_parsing_tests_01() {
         syntaxTree.children[2].lexeme === "2" &&
         syntaxTree.children[3].lexeme === "-" &&
         syntaxTree.children[4].type === "number" &&
-        syntaxTree.children[2].lexeme === "3"
+        syntaxTree.children[4].lexeme === "3"
       );
     },
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `2 ** 4 / 5 + 2 - (3) + (2 + 2) || true`,
+    startSym: "expression",
+    expectedIsSuccess: true,
+    testKey: "03",
+    additionalTest: (syntaxTree) => {
+      return undefined === getMissingMember(syntaxTree, {
+        type: "or-expression",
+        children: [
+          {
+            type: "additive-expression",
+            children: [
+              {
+                type: "multiplicative-expression",
+                children: [
+                  {
+                    type: "exponential-expression",
+                    root: {type: "number", lexeme: "2"},
+                    exp: {type: "number", lexeme: "4"},
+                  },
+                  {type: "number", lexeme: "5"},
+                ],
+              },
+              {lexeme: "+"},
+              {type: "number", lexeme: "2"},
+              {lexeme: "-"},
+              {type: "number", lexeme: "3"},
+              {lexeme: "+"},
+              {
+                type: "additive-expression",
+                children: [
+                  {type: "number", lexeme: "2"},
+                  {lexeme: "+"},
+                  {type: "number", lexeme: "2"},
+                ],
+              },
+            ],
+          },
+          {type: "constant", lexeme: "true"},
+        ],
+      });
+    }
   });
   testParser(params);
 
