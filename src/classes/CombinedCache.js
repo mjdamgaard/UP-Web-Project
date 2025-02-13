@@ -27,12 +27,9 @@ export class CombinedCache {
       ret = this.lruCache.get(key, priority, (key, val, count) => {
         let ret = [key, val, count];
         if (count > this.priorityCache.minPriority) {
-          // Returning ["", undefined] will remove the gotten (now first)
-          // element of the LRU cache.
-          ret = ["", undefined];
-          // TODO: (This current API of LRUCache's get() method, regarding the
-          // update input in particular, is a bit involved, so consider
-          // refactoring.)
+          // Returning null will remove the gotten (now first) element of the
+          // LRU cache.
+          ret = null;
           this.priorityCache.set(
             key, val, count, (firstKey, firstVal, firstPriority) => {
               // This will transform the first element of the LRU cache.
@@ -209,7 +206,8 @@ export class LRUCache {
 
       // Call optional update function to potentially change the new first
       // entry.
-      [entry[3], entry[0], entry[4]] = update(entry[3], entry[0], entry[4]);
+      [entry[3], entry[0], entry[4]] = update(entry[3], entry[0], entry[4]) ||
+        [];
       if (entry[3] !== key) {
         if (entry[0] !== undefined) {
           // Update this.cache as well, if the returned value is not undefined.
@@ -220,6 +218,7 @@ export class LRUCache {
           delete this.cache[safeKey];
           this.firstEntry = this.firstEntry[2];
           this.firstEntry[1] = null;
+          this.entryNum--;
         }
       }
 
@@ -255,9 +254,10 @@ export class LRUCache {
       this.cache[safeKey] = entry;
       this.firstEntry[1] = entry;
       this.firstEntry = entry;
+      this.entryNum++;
 
       // Evict last entry if the cache is full.
-      if (this.limit < ++this.entryNum) {
+      if (this.limit < this.entryNum) {
         let [lastVal,,, lastKey, lastCount] = this.lastEntry;
         this.lastEntry = this.lastEntry[1];
         this.lastEntry[2] = null;
