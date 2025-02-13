@@ -1,6 +1,7 @@
 
 
 
+
 export class CombinedCache {
 
   constructor(
@@ -16,46 +17,55 @@ export class CombinedCache {
 
 
   get(key, priority = 1) {
-    // First try to get from the priority cache.
+    // First try to get from the priority cache, then from LRU cache.
     let ret = this.priorityCache.get(key, priority);
-
-    // Then if not found there, get from the LRU cache, and if the
-    // count/priority of the the gotten element, if any, exceeds priorityCache
-    // .minPriority, swap the element with the first element of the priority
-    // cache.
     if (ret === undefined) {
-      ret = this.lruCache.get(key, priority, (key, val, count) => {
-        let ret = [key, val, count];
-        if (count > this.priorityCache.minPriority) {
-          // Returning ["", undefined] will remove the gotten (now first)
-          // element of the LRU cache.
-          ret = ["", undefined];
-          // TODO: (This current API of LRUCache's get() method, regarding the
-          // update input in particular, is a bit involved, so consider
-          // refactoring.)
-          this.priorityCache.set(
-            key, val, count, (firstKey, firstVal, firstPriority) => {
-              // This will transform the first element of the LRU cache.
-              ret = [firstKey, firstVal, firstPriority];
-            }
-          );
-        }
-        return ret;
-      });
+      ret = this.lruCache.get(key, priority);
     }
     return ret;
   }
 
 
   set(key, val, evictionCallback = () => {}, priority = 1) {
-    // Insert the element in the LRU cache.
-    this.lruCache.set(key, val, callback, priority);
+    // Insert first in the LRU cache, and if an element is evicted, see if its
+    // count/priority exceeds priorityCache.minPriority. In case it does,
+    // insert it in the priority cache, and if an entry is evicted from the
+    // priority cache as a consequence insert it back into the LRU cache with
+    // a recursive call to this method. This method then halts once an element
+    // in the LRU cache is reached with a lower priority than the current
+    // minPriority.
 
-    // Then check if it is time for the priorities in the priority cache to
-    // decay.
+    // First define a callback for the potential eviction from the LRU cache.
+    let callback = ((lastKey, lastVal, lastPriority) => {
+      // If the priority of the LRU-cache-evicted element exceeds minPriority,
+      // insert it in the priority cache.
+      if (lastPriority > this.priorityCache.minPriority) {
+        // Define callback in case of an eviction from the priority cache.
+        let callback = ((firstKey, firstVal, firstPriority) => {
+          // If an element is evicted from the priority cache, call the outer
+          // method again recursively, with the same input evictionCallback.
+          this.set(firstKey, firstVal, evictionCallback, firstPriority);
+        }).bind(this);
+
+        // Then insert the LRU-cache-evicted element into the priority cache.
+        this.priorityCache.set(key, val, priority, callback);
+      }
+      else {
+        // If and when minPriority is not exceeded, and by calling
+        // evictionCallback on the final LRU-cache-evicted element.
+        evictionCallback(lastKey, lastVal, lastPriority);
+      }
+    }).bind(this);
+
+    // Before we insert into the LRU cache, check if it is time for the
+    // priorities in the priority cache to decay.
     if (this.numOfSetsBeforeDecay < ++this.curNumOfSets) {
       this.decay();
     }
+
+    // Then set all this in motion by inserting into the LRU-cache, with the
+    // recursive callback just defined.
+    this.lruCache.set(key, val, callback, priority);
   }
 
 
@@ -191,7 +201,7 @@ export class LRUCache {
   // cache = {["#" + key]: entry, ...},
   // entry = [value, prevEntry, nextEntry, key, touchedCount].
 
-  get(key, count = 1, update = (key, val, count) => [key, val, count]) {
+  get(key, count = 1) {
     let safeKey = "#" + key;
     let entry = this.cache[safeKey];
 
@@ -206,22 +216,6 @@ export class LRUCache {
       entry[2] = this.firstEntry;
       this.firstEntry[1] = entry;
       this.firstEntry = entry;
-
-      // Call optional update function to potentially change the new first
-      // entry.
-      [entry[3], entry[0], entry[4]] = update(entry[3], entry[0], entry[4]);
-      if (entry[3] !== key) {
-        if (entry[0] !== undefined) {
-          // Update this.cache as well, if the returned value is not undefined.
-          delete this.cache[safeKey];
-          this.cache["#" + entry[3]] = entry;
-        } else {
-          // Else simply remove the first entry entirely.
-          delete this.cache[safeKey];
-          this.firstEntry = this.firstEntry[2];
-          this.firstEntry[1] = null;
-        }
-      }
 
       // Return value.
       return entry[0];
