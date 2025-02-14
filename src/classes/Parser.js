@@ -356,8 +356,9 @@ export class Parser {
         let [isSuccess = true, error] = process(syntaxTree) || [];
 
         // Make sure that pos, nextPos and sym isn't changed by the user (as
-        // they are used for error reporting).
-        syntaxTree.nextPos = nextPos;
+        // they are used for error reporting). Also, make sure to reset nextPos
+        // to pos on a silent failure (error = undefined).
+        syntaxTree.nextPos = isSuccess ? nextPos : pos;
         syntaxTree.sym = sym;
         syntaxTree.pos = pos;
 
