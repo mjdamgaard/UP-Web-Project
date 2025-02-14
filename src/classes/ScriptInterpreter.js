@@ -179,7 +179,7 @@ export class ScriptInterpreter {
         let newEnv = new Environment(environment, "block");
         let innerStmt = stmtSyntaxTree.stmt;
         let updateExp = stmtSyntaxTree.updateExp;
-        let condExp = stmtSyntaxTree.updateStmt;
+        let condExp = stmtSyntaxTree.cond;
         if (stmtSyntaxTree.dec) {
           this.executeStatement(gas, stmtSyntaxTree.dec, newEnv);
         }
@@ -195,7 +195,9 @@ export class ScriptInterpreter {
               throw err;
             }
           }
-          this.evaluateExpression(gas, updateExp, newEnv);
+          if (updateExp) {
+            this.evaluateExpression(gas, updateExp, newEnv);
+          }
         }
         break;
       }

@@ -166,6 +166,27 @@ function script_interpreter_tests_01() {
   });
   testInterpreter(params);
 
+  params = Object.assign({}, defaultParams, {
+    str: `let x = 0; while(x < 12) { x += 5; }`,
+    startSym: "statement-list",
+    expectedOutput: {variables: {
+      "#this": UNDEFINED,
+      "#x": [15],
+    }},
+    testKey: "07",
+  });
+  testInterpreter(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `let x = 0; while(true) { x += 5; }`,
+    startSym: "statement-list",
+    expectedOutput: {
+      msg: "Ran out of computation gas"
+    },
+    testKey: "08",
+  });
+  testInterpreter(params);
+
 
   console.log("Finished " + testMsgPrefix + ".");
 }
