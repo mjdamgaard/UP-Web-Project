@@ -684,9 +684,17 @@ const scriptGrammar = {
       ["function-declaration!1"],
       // ("!1" here in the rule above avoids expression statement starting with
       // 'function' in the rule below.)
-      ["expression", "/;/"],
+      ["expression-statement"],
     ],
     process: becomeChild(0)
+  },
+  "expression-statement": {
+    rules: [
+      ["expression", "/;/"],
+    ],
+    process: (syntaxTree) => {
+      syntaxTree.exp = syntaxTree.children[0];
+    },
   },
   "block-statement": {
     rules: [

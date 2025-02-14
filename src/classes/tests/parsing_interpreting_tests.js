@@ -52,6 +52,19 @@ function testInterpreter({
         else throw err;
       }
       break;
+    case "statement-list":
+      try {
+        syntaxTree.children.forEach(stmt => {
+          ScriptInterpreter.executeStatement(gas, stmt, env);
+        });
+        output = env;
+      } catch (err) {
+        if (err instanceof RuntimeError || err instanceof CustomError) {
+          output = err;
+        }
+        else throw err;
+      }
+      break;
     default:
       debugger;throw `testing of "${startSym}" not implemented`;
   }
@@ -138,6 +151,18 @@ function script_interpreter_tests_01() {
       "#x": [1],
     }},
     testKey: "05",
+  });
+  testInterpreter(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `let x = 2; let y = 1; x = 2*x + y;`,
+    startSym: "statement-list",
+    expectedOutput: {variables: {
+      "#this": UNDEFINED,
+      "#x": [5],
+      "#y": [1],
+    }},
+    testKey: "06",
   });
   testInterpreter(params);
 
@@ -384,6 +409,13 @@ function script_parsing_tests_01() {
   });
   testParser(params);
 
+  params = Object.assign({}, defaultParams, {
+    str: `{ let x = 2; let y = 1; x = 2*x + y; }`,
+    startSym: "statement",
+    expectedIsSuccess: true,
+    testKey: "06",
+  });
+  testParser(params);
 
 
   console.log("Finished " + testMsgPrefix + ".");

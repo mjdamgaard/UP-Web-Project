@@ -260,7 +260,7 @@ export class ScriptInterpreter {
           });
         }
         else throw (
-          "ScriptInterpreter.evaluateExpression(): Unrecognized " +
+          "ScriptInterpreter.executeStatement(): Unrecognized " +
           `variable declaration type: "${decType}"`
         );
         break;
@@ -272,8 +272,12 @@ export class ScriptInterpreter {
         );
         break;
       }
+      case "expression-statement": {
+        this.evaluateExpression(gas, stmtSyntaxTree.exp, environment);
+        break;
+      }
       default: throw (
-        "ScriptInterpreter.evaluateExpression(): Unrecognized " +
+        "ScriptInterpreter.executeStatement(): Unrecognized " +
         `statement type: "${type}"`
       );
     }
