@@ -1,13 +1,15 @@
 
 import {regEntParser, scriptParser} from "../DataParser.js";
-import {ScriptInterpreter, Environment} from "../ScriptInterpreter.js";
+import {
+  ScriptInterpreter, RuntimeError, CustomError, Environment, UNDEFINED,
+} from "../ScriptInterpreter.js";
 
 
 
 
 export function runTests() {
   // regEnt_parsing_tests_01(); // Last tested: (13.02.25, 14:24).
-  // script_parsing_tests_01();
+  script_parsing_tests_01();
   script_interpreter_tests_01();
 
 }
@@ -31,14 +33,25 @@ function testInterpreter({
     debugger;throw "Could not lex or parse input";
   }
 
-  let freshEnv = new Environment();
+  let env = new Environment();
   gas = Object.assign({}, gas);
 
   let output;
   switch (startSym) {
     case "expression":
-      output = ScriptInterpreter.evaluateExpression(gas, syntaxTree, freshEnv);
-      break
+      output = ScriptInterpreter.evaluateExpression(gas, syntaxTree, env);
+      break;
+    case "statement":
+      try {
+        ScriptInterpreter.executeStatement(gas, syntaxTree, env);
+        output = env;
+      } catch (err) {
+        if (err instanceof RuntimeError || err instanceof CustomError) {
+          output = err;
+        }
+        else throw err;
+      }
+      break;
     default:
       debugger;throw `testing of "${startSym}" not implemented`;
   }
@@ -90,6 +103,41 @@ function script_interpreter_tests_01() {
     startSym: "expression",
     expectedOutput: 4,
     testKey: "01",
+  });
+  testInterpreter(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `2 + 2 - 3`,
+    startSym: "expression",
+    expectedOutput: 1,
+    testKey: "02",
+  });
+  testInterpreter(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `2 ** 4 / 5 + 2 - (3) - (2 - 7)`,
+    startSym: "expression",
+    expectedOutput: 2 ** 4 / 5 + 2 - (3) - (2 - 7),
+    testKey: "03",
+  });
+  testInterpreter(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `2 / 0`,
+    startSym: "expression",
+    expectedOutput: Infinity,
+    testKey: "04",
+  });
+  testInterpreter(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `let x = 1;`,
+    startSym: "statement",
+    expectedOutput: {variables: {
+      "#this": UNDEFINED,
+      "#x": [1],
+    }},
+    testKey: "05",
   });
   testInterpreter(params);
 
@@ -273,6 +321,63 @@ function script_parsing_tests_01() {
           },
           {lexeme: "||"},
           {type: "constant", lexeme: "true"},
+        ],
+      });
+    }
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `let x = 1;`,
+    startSym: "statement",
+    expectedIsSuccess: true,
+    testKey: "04",
+    additionalTest: (syntaxTree) => {
+      return undefined === getMissingMember(syntaxTree, {
+        decType: "definition-list",
+        defList: [
+          {
+            sym: "variable-definition",
+            ident: "x",
+            exp: {type: "number", lexeme: "1"}
+          },
+        ],
+      });
+    }
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `let x = 1, y = 2 + 3, z;`,
+    startSym: "statement",
+    expectedIsSuccess: true,
+    testKey: "05",
+    additionalTest: (syntaxTree) => {
+      return undefined === getMissingMember(syntaxTree, {
+        decType: "definition-list",
+        defList: [
+          {
+            sym: "variable-definition",
+            ident: "x",
+            exp: {type: "number", lexeme: "1"}
+          },
+          {
+            sym: "variable-definition",
+            ident: "y",
+            exp: {
+              type: "additive-expression",
+              children: [
+                {type: "number", lexeme: "2"},
+                {lexeme: "+"},
+                {type: "number", lexeme: "3"},
+              ],
+            },
+          },
+          {
+            sym: "variable-definition",
+            ident: "z",
+            exp: undefined,
+          },
         ],
       });
     }

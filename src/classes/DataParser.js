@@ -489,11 +489,13 @@ const scriptGrammar = {
     ],
     process: (syntaxTree) => {
       if (syntaxTree.ruleInd === 0) {
-        syntaxTree.type = "definition-list";
-        syntaxTree.defList = syntaxTree.children[1];
+        syntaxTree.decType = "definition-list";
+        syntaxTree.defList = syntaxTree.children[1].children;
       } else {
-        syntaxTree.type = "destructuring";
-        syntaxTree.identList = syntaxTree.children[2];
+        syntaxTree.decType = "destructuring";
+        syntaxTree.identList = syntaxTree.children[2].children.map(
+          val => val.lexeme
+        );
         syntaxTree.exp = syntaxTree.children[5];
       }
     },
@@ -512,7 +514,7 @@ const scriptGrammar = {
     ],
     process: (syntaxTree) => {
       Object.assign(syntaxTree, {
-        ident: syntaxTree.children[0],
+        ident: syntaxTree.children[0].lexeme,
         exp: syntaxTree.children[2] || undefined,
       });
     },

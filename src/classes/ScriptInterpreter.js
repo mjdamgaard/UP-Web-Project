@@ -149,52 +149,6 @@ export class ScriptInterpreter {
 
 
 
-  static executeVariableDeclaration(gas, varDecSyntaxTree, environment) {
-    decrCompGas(gas);
-
-    let type = varDecSyntaxTree.type;
-    if (type === "definition-list") {
-      varDecSyntaxTree.defList.forEach(varDef => {
-        let ident = varDef.ident.lexeme;
-        let val = (!varDef.exp) ? undefined :
-          this.evaluateExpression(gas, varDef.exp, environment);
-        environment.declare(ident, val, false, "block", varDecSyntaxTree);
-      });
-    }
-    else if (type === "destructuring") {
-      let val = this.evaluateExpression(
-        gas, varDecSyntaxTree.exp, environment
-      );
-      if (!Array.isArray(val)) throw new RuntimeError(
-        "Destructuring of a non-array expression",
-        varDecSyntaxTree
-      );
-      varDecSyntaxTree.identList.forEach((ident, ind) => {
-        ident = ident.lexeme;
-        let nestedVal = val[ind];
-        environment.declare(
-          ident, nestedVal, false, "block", varDecSyntaxTree
-        );
-      });
-    }
-    else throw (
-      "ScriptInterpreter.evaluateExpression(): Unrecognized " +
-      `variable declaration type: "${type}"`
-    );
-  }
-
-
-  static executeFunctionDeclaration(gas, funDecSyntaxTree, environment) {
-    decrCompGas(gas);
-
-    let funVal = new DefinedFunction(funDecSyntaxTree, environment);
-    environment.declare(
-      funDecSyntaxTree.name, funVal, false, "block", funDecSyntaxTree
-    );
-  }
-
-
-
 
   static executeStatement(gas, stmtSyntaxTree, environment) {
     decrCompGas(gas);
@@ -208,6 +162,7 @@ export class ScriptInterpreter {
         for (let i = 0; i < len; i++) {
           this.executeStatement(gas, stmtArr[i], newEnv);
         }
+        break;
       }
       case "if-else-statement": {
         let condVal = this.evaluateExpression(
@@ -218,6 +173,7 @@ export class ScriptInterpreter {
         } else if (stmtSyntaxTree.elseStmt) {
           this.executeStatement(gas, stmtSyntaxTree.elseStmt, environment);
         }
+        break;
       }
       case "loop-statement": {
         let newEnv = new Environment(environment, "block");
@@ -241,6 +197,7 @@ export class ScriptInterpreter {
           }
           this.evaluateExpression(gas, updateExp, newEnv);
         }
+        break;
       }
       case "return-statement": {
         let expVal = (!stmtSyntaxTree.exp) ? undefined :
@@ -265,6 +222,7 @@ export class ScriptInterpreter {
           }
           else throw err;
         }
+        break;
       }
       case "instruction-statement": {
         if (stmtSyntaxTree.lexeme === "break") {
@@ -277,10 +235,42 @@ export class ScriptInterpreter {
         return;
       }
       case "variable-declaration": {
-        this.executeVariableDeclaration(gas, stmtSyntaxTree, environment);
+        let decType = stmtSyntaxTree.decType;
+        if (decType === "definition-list") {
+          stmtSyntaxTree.defList.forEach(varDef => {
+            let ident = varDef.ident;
+            let val = (!varDef.exp) ? undefined :
+              this.evaluateExpression(gas, varDef.exp, environment);
+            environment.declare(ident, val, false, "block", stmtSyntaxTree);
+          });
+        }
+        else if (decType === "destructuring") {
+          let val = this.evaluateExpression(
+            gas, stmtSyntaxTree.exp, environment
+          );
+          if (!Array.isArray(val)) throw new RuntimeError(
+            "Destructuring of a non-array expression",
+            stmtSyntaxTree
+          );
+          stmtSyntaxTree.identList.forEach((ident, ind) => {
+            let nestedVal = val[ind];
+            environment.declare(
+              ident, nestedVal, false, "block", stmtSyntaxTree
+            );
+          });
+        }
+        else throw (
+          "ScriptInterpreter.evaluateExpression(): Unrecognized " +
+          `variable declaration type: "${decType}"`
+        );
+        break;
       }
       case "function-declaration": {
-        this.executeFunctionDeclaration(gas, stmtSyntaxTree, environment);
+        let funVal = new DefinedFunction(stmtSyntaxTree, environment);
+        environment.declare(
+          stmtSyntaxTree.name, funVal, false, "block", stmtSyntaxTree
+        );
+        break;
       }
       default: throw (
         "ScriptInterpreter.evaluateExpression(): Unrecognized " +
@@ -828,7 +818,7 @@ export class ScriptInterpreter {
 
 
 
-const UNDEFINED = {};
+export const UNDEFINED = {enum: "undefined"};
 
 
 export class Environment {
@@ -840,7 +830,7 @@ export class Environment {
 
   get(ident) {
     let safeIdent = "#" + ident;
-    let [val] = this.variables[safeIdent];
+    let [val] = this.variables[safeIdent] ?? [];
     if (val !== undefined) {
       return (val === UNDEFINED) ? undefined : val;
     } else if (this.parent) {
@@ -853,7 +843,7 @@ export class Environment {
   declare(ident, val, isConst, scopeType, node) {
     val = (val === undefined) ? UNDEFINED : val;
     let safeIdent = "#" + ident;
-    let [prevVal] = this.variables[safeIdent];
+    let [prevVal] = this.variables[safeIdent] ?? [];
     if (scopeType === "block") {
       if (prevVal !== undefined) {
         throw new RuntimeError(
@@ -872,7 +862,7 @@ export class Environment {
 
   assign(ident, node, assignFun) {
     let safeIdent = "#" + ident;
-    let [prevVal, isConst] = this.variables[safeIdent];
+    let [prevVal, isConst] = this.variables[safeIdent] ?? [];
     if (prevVal !== undefined) {
       if (isConst) {
         throw new RuntimeError(
