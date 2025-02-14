@@ -169,7 +169,7 @@ export class ScriptInterpreter {
           gas, stmtSyntaxTree.cond, environment
         );
         if (condVal) {
-          this.executeStatement(gas, stmtSyntaxTree.isStmt, environment);
+          this.executeStatement(gas, stmtSyntaxTree.ifStmt, environment);
         } else if (stmtSyntaxTree.elseStmt) {
           this.executeStatement(gas, stmtSyntaxTree.elseStmt, environment);
         }
@@ -278,7 +278,7 @@ export class ScriptInterpreter {
         this.evaluateExpression(gas, stmtSyntaxTree.exp, environment);
         break;
       }
-      default: throw (
+      default: debugger;throw (
         "ScriptInterpreter.executeStatement(): Unrecognized " +
         `statement type: "${type}"`
       );
@@ -367,7 +367,7 @@ export class ScriptInterpreter {
                 return [newVal, newVal]
               }
             );
-          default: throw (
+          default: debugger;throw (
             "ScriptInterpreter.evaluateExpression(): Unrecognized " +
             `operator: "${op}"`
           );
@@ -507,7 +507,7 @@ export class ScriptInterpreter {
             case "%":
               acc = parseFloat(acc) % parseFloat(nextVal);
               break;
-            default: throw (
+            default: debugger;throw (
               "ScriptInterpreter.evaluateExpression(): Unrecognized " +
               `operator: "${op}"`
             );
@@ -576,7 +576,7 @@ export class ScriptInterpreter {
                 }
               }
             );
-          default: throw (
+          default: debugger;throw (
             "ScriptInterpreter.evaluateExpression(): Unrecognized " +
             `operator: "${op}"`
           );
@@ -609,6 +609,10 @@ export class ScriptInterpreter {
                 return [newVal, prevVal]
               }
             );
+          default: debugger;throw (
+            "ScriptInterpreter.evaluateExpression(): Unrecognized " +
+            `operator: "${op}"`
+          );
         }
       }
       case "function-call": {
@@ -740,7 +744,7 @@ export class ScriptInterpreter {
                (lexeme === "NaN") ? NaN :
                undefined;
       }
-      default: throw (
+      default: debugger;throw (
         "ScriptInterpreter.evaluateExpression(): Unrecognized type: " +
         `"${type}"`
       );

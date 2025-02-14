@@ -987,8 +987,8 @@ const scriptGrammar = {
     process: (syntaxTree) => {
       if (syntaxTree.ruleInd === 0) {
         syntaxTree.type = "postfix-expression";
-        syntaxTree.op = syntaxTree.children[0].lexeme;
-        syntaxTree.exp = syntaxTree.children[1];
+        syntaxTree.exp = syntaxTree.children[0];
+        syntaxTree.op = syntaxTree.children[1].lexeme;
       } else {
         becomeChild(0)(syntaxTree);
       }

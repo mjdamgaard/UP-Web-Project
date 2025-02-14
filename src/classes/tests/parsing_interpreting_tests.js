@@ -52,7 +52,7 @@ function testInterpreter({
         else throw err;
       }
       break;
-    case "statement-list":
+    case "statement*$":
       try {
         syntaxTree.children.forEach(stmt => {
           ScriptInterpreter.executeStatement(gas, stmt, env);
@@ -156,7 +156,7 @@ function script_interpreter_tests_01() {
 
   params = Object.assign({}, defaultParams, {
     str: `let x = 2; let y = 1; x = 2*x + y;`,
-    startSym: "statement-list",
+    startSym: "statement*$",
     expectedOutput: {variables: {
       "#this": UNDEFINED,
       "#x": [5],
@@ -168,7 +168,7 @@ function script_interpreter_tests_01() {
 
   params = Object.assign({}, defaultParams, {
     str: `let x = 0; while(x < 12) { x += 5; }`,
-    startSym: "statement-list",
+    startSym: "statement*$",
     expectedOutput: {variables: {
       "#this": UNDEFINED,
       "#x": [15],
@@ -179,13 +179,45 @@ function script_interpreter_tests_01() {
 
   params = Object.assign({}, defaultParams, {
     str: `let x = 0; while(true) { x += 5; }`,
-    startSym: "statement-list",
+    startSym: "statement*$",
     expectedOutput: {
       msg: "Ran out of computation gas"
     },
     testKey: "08",
   });
   testInterpreter(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `let x = 0, y = 2; if (x * y) break; else { x -= y++; }`,
+    startSym: "statement*$",
+    expectedOutput: {variables: {
+      "#y": [2 + 1],
+      "#x": [-2],
+    }},
+    testKey: "09",
+  });
+  testInterpreter(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `let x = 2; if (true) { x *= 3; }`,
+    startSym: "statement*$",
+    expectedOutput: {variables: {
+      "#x": [6],
+    }},
+    testKey: "10",
+  });
+  testInterpreter(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `let x = 2; if (false) { x *= 3; }`,
+    startSym: "statement*$",
+    expectedOutput: {variables: {
+      "#x": [2],
+    }},
+    testKey: "11",
+  });
+  testInterpreter(params);
+
 
 
   console.log("Finished " + testMsgPrefix + ".");
