@@ -93,21 +93,21 @@ export class ScriptInterpreter {
 
 
   static executeFunction(
-    gas, funSyntaxTree, inputValueArr, environment, thisVal = undefined
+    funSyntaxTree, inputValueArr, environment, thisVal = undefined
   ) {
-    decrCompGas(gas);
+    decrCompGas(environment.gas);
 
     // Initialize a new environment for the execution of the function.
-    let newEnv = new Environment(environment, "function", thisVal);
+    let newEnv = new Environment(environment, thisVal, "function");
 
     // Add the input parameters to the new environment.
     funSyntaxTree.params.forEach((param, ind) => {
-      let paramName = param.lexeme;
+      let paramName = param.ident;
       let paramVal = inputValueArr[ind];
+      let inputValType = getType(paramVal);
 
-      // If the parameter is typed, check the type. //TODO: Also substitute default parameters.
+      // If the parameter is typed, check the type. 
       if (param.invalidTypes) {
-        let inputValType = getType(paramVal);
         if (param.invalidTypes.includes(inputValType)) {
           throw new RuntimeError(
             `Input parameter of invalid type "${inputValType}"`,
@@ -116,7 +116,15 @@ export class ScriptInterpreter {
         }
       }
 
-      // Else declare the parameter in the new environment.
+      // If the input value is undefined, and the parameter has a default
+      // value, use that value, evaluated at the time (each time) the function
+      // is called. We use newEnv each time such that a parameter can depend
+      // on a previous one.
+      if (param.defaultExp && inputValType === "undefined") {
+        paramVal = this.evaluateExpression(param.defaultExp, newEnv);
+      }
+
+      // Then declare the parameter in the new environment.
       newEnv.declare(paramName, paramVal, false, "block", param);
     });
 
@@ -125,7 +133,7 @@ export class ScriptInterpreter {
     // return exception, return the held value. 
     let stmtArr = funSyntaxTree.body.stmtArr;
     try {
-      stmtArr.forEach(stmt => this.executeStatement(gas, stmt, newEnv));
+      stmtArr.forEach(stmt => this.executeStatement(stmt, newEnv));
     } catch (err) {
       if (err instanceof ReturnException) {
         return err.val;
@@ -150,44 +158,42 @@ export class ScriptInterpreter {
 
 
 
-  static executeStatement(gas, stmtSyntaxTree, environment) {
-    decrCompGas(gas);
+  static executeStatement(stmtSyntaxTree, environment) {
+    decrCompGas(environment.gas);
 
     let type = stmtSyntaxTree.type;
     switch (type) {
       case "block-statement": {
-        let newEnv = new Environment(environment, "block");
+        let newEnv = new Environment(environment);
         let stmtArr = stmtSyntaxTree.children;
         let len = stmtArr.length;
         for (let i = 0; i < len; i++) {
-          this.executeStatement(gas, stmtArr[i], newEnv);
+          this.executeStatement(stmtArr[i], newEnv);
         }
         break;
       }
       case "if-else-statement": {
-        let condVal = this.evaluateExpression(
-          gas, stmtSyntaxTree.cond, environment
-        );
+        let condVal = this.evaluateExpression(stmtSyntaxTree.cond, environment);
         if (condVal) {
-          this.executeStatement(gas, stmtSyntaxTree.ifStmt, environment);
+          this.executeStatement(stmtSyntaxTree.ifStmt, environment);
         } else if (stmtSyntaxTree.elseStmt) {
-          this.executeStatement(gas, stmtSyntaxTree.elseStmt, environment);
+          this.executeStatement(stmtSyntaxTree.elseStmt, environment);
         }
         break;
       }
       case "loop-statement": {
-        let newEnv = new Environment(environment, "block");
+        let newEnv = new Environment(environment);
         let innerStmt = stmtSyntaxTree.stmt;
         let updateExp = stmtSyntaxTree.updateExp;
         let condExp = stmtSyntaxTree.cond;
         if (stmtSyntaxTree.dec) {
-          this.executeStatement(gas, stmtSyntaxTree.dec, newEnv);
+          this.executeStatement(stmtSyntaxTree.dec, newEnv);
         }
         let postponeCond = stmtSyntaxTree.doFirst;
-        while (postponeCond || this.evaluateExpression(gas, condExp, newEnv)) {
+        while (postponeCond || this.evaluateExpression(condExp, newEnv)) {
           postponeCond = false;
           try {
-            this.executeStatement(gas, innerStmt, newEnv);
+            this.executeStatement(innerStmt, newEnv);
           } catch (err) {
             if (err instanceof BreakException) {
               return;
@@ -196,31 +202,31 @@ export class ScriptInterpreter {
             }
           }
           if (updateExp) {
-            this.evaluateExpression(gas, updateExp, newEnv);
+            this.evaluateExpression(updateExp, newEnv);
           }
         }
         break;
       }
       case "return-statement": {
         let expVal = (!stmtSyntaxTree.exp) ? undefined :
-          this.evaluateExpression(gas, stmtSyntaxTree.cond, environment);
+          this.evaluateExpression(stmtSyntaxTree.exp, environment);
         throw new ReturnException(expVal, stmtSyntaxTree);
       }
       case "throw-statement": {
         let expVal = (!stmtSyntaxTree.exp) ? undefined :
-          this.evaluateExpression(gas, stmtSyntaxTree.cond, environment);
+          this.evaluateExpression(stmtSyntaxTree.exp, environment);
         throw new ThrownException(expVal, stmtSyntaxTree);
       }
       case "try-catch-statement": {
         try {
-          this.executeStatement(gas, stmtSyntaxTree.tryStmt, environment);
+          this.executeStatement(stmtSyntaxTree.tryStmt, environment);
         } catch (err) {
           if (err instanceof RuntimeError || err instanceof CustomError) {
-            let newEnv = new Environment(environment, "block");
+            let newEnv = new Environment(environment);
             newEnv.declare(
               stmtSyntaxTree.ident, err.msg, false, "block", stmtSyntaxTree
             );
-            this.executeStatement(gas, stmtSyntaxTree.catchStmt, newEnv);
+            this.executeStatement(stmtSyntaxTree.catchStmt, newEnv);
           }
           else throw err;
         }
@@ -242,14 +248,12 @@ export class ScriptInterpreter {
           stmtSyntaxTree.defList.forEach(varDef => {
             let ident = varDef.ident;
             let val = (!varDef.exp) ? undefined :
-              this.evaluateExpression(gas, varDef.exp, environment);
+              this.evaluateExpression(varDef.exp, environment);
             environment.declare(ident, val, false, "block", stmtSyntaxTree);
           });
         }
         else if (decType === "destructuring") {
-          let val = this.evaluateExpression(
-            gas, stmtSyntaxTree.exp, environment
-          );
+          let val = this.evaluateExpression(stmtSyntaxTree.exp, environment);
           if (!Array.isArray(val)) throw new RuntimeError(
             "Destructuring of a non-array expression",
             stmtSyntaxTree
@@ -275,7 +279,7 @@ export class ScriptInterpreter {
         break;
       }
       case "expression-statement": {
-        this.evaluateExpression(gas, stmtSyntaxTree.exp, environment);
+        this.evaluateExpression(stmtSyntaxTree.exp, environment);
         break;
       }
       default: debugger;throw (
@@ -289,8 +293,8 @@ export class ScriptInterpreter {
 
 
 
-  static evaluateExpression(gas, expSyntaxTree, environment) {
-    decrCompGas(gas);
+  static evaluateExpression(expSyntaxTree, environment) {
+    decrCompGas(environment.gas);
 
     let type = expSyntaxTree.type;
     switch (type) {
@@ -308,61 +312,61 @@ export class ScriptInterpreter {
         return funVal;
       }
       case "assignment": {
-        let val = this.evaluateExpression(gas, expSyntaxTree.exp2, environment);
+        let val = this.evaluateExpression(expSyntaxTree.exp2, environment);
         let op = expSyntaxTree.op;
         switch (op) {
           case "=":
             return this.assignToVariableOrMember(
-              gas, expSyntaxTree.exp1, environment, () => {
+              expSyntaxTree.exp1, environment, () => {
                 let newVal = val;
                 return [newVal, newVal]
               }
             );
           case "+=":
             return this.assignToVariableOrMember(
-              gas, expSyntaxTree.exp1, environment, prevVal => {
+              expSyntaxTree.exp1, environment, prevVal => {
                 let newVal = parseFloat(prevVal) + parseFloat(val);
                 return [newVal, newVal]
               }
             );
           case "-=":
             return this.assignToVariableOrMember(
-              gas, expSyntaxTree.exp1, environment, prevVal => {
+              expSyntaxTree.exp1, environment, prevVal => {
                 let newVal = parseFloat(prevVal) - parseFloat(val);
                 return [newVal, newVal]
               }
             );
           case "*=":
             return this.assignToVariableOrMember(
-              gas, expSyntaxTree.exp1, environment, prevVal => {
+              expSyntaxTree.exp1, environment, prevVal => {
                 let newVal = parseFloat(prevVal) * parseFloat(val);
                 return [newVal, newVal]
               }
             );
           case "/=":
             return this.assignToVariableOrMember(
-              gas, expSyntaxTree.exp1, environment, prevVal => {
+              expSyntaxTree.exp1, environment, prevVal => {
                 let newVal = parseFloat(prevVal) / parseFloat(val);
                 return [newVal, newVal]
               }
             );
           case "&&=":
             return this.assignToVariableOrMember(
-              gas, expSyntaxTree.exp1, environment, prevVal => {
+              expSyntaxTree.exp1, environment, prevVal => {
                 let newVal = prevVal && val;
                 return [newVal, newVal]
               }
             );
           case "||=":
             return this.assignToVariableOrMember(
-              gas, expSyntaxTree.exp1, environment, prevVal => {
+              expSyntaxTree.exp1, environment, prevVal => {
                 let newVal = prevVal || val;
                 return [newVal, newVal]
               }
             );
           case "??=":
             return this.assignToVariableOrMember(
-              gas, expSyntaxTree.exp1, environment, prevVal => {
+              expSyntaxTree.exp1, environment, prevVal => {
                 let newVal = prevVal ?? val;
                 return [newVal, newVal]
               }
@@ -374,17 +378,11 @@ export class ScriptInterpreter {
         }
       }
       case "conditional-expression": {
-        let cond = this.evaluateExpression(
-          gas, expSyntaxTree.cond, environment
-        );
+        let cond = this.evaluateExpression(expSyntaxTree.cond, environment);
         if (cond) {
-          return this.evaluateExpression(
-            gas, expSyntaxTree.exp1, environment
-          );
+          return this.evaluateExpression(expSyntaxTree.exp1, environment);
         } else {
-          return this.evaluateExpression(
-            gas, expSyntaxTree.exp2, environment
-          );
+          return this.evaluateExpression(expSyntaxTree.exp2, environment);
         }
       }
       case "or-expression":
@@ -399,24 +397,24 @@ export class ScriptInterpreter {
       case "additive-expression":
       case "multiplicative-expression": {
         let children = expSyntaxTree.children;
-        let acc = this.evaluateExpression(gas, children[0], environment);
+        let acc = this.evaluateExpression(children[0], environment);
         let lastOpIndex = children.length - 2;
         for (let i = 0; i < lastOpIndex; i += 2) {
           let op = children[i + 1].lexeme;
           let nextChild = children[i + 2];
           let nextVal;
           if (op !== "||" && op !== "??" && op !== "&&") {
-            nextVal = this.evaluateExpression(gas, nextChild, environment);
+            nextVal = this.evaluateExpression(nextChild, environment);
           }
           switch (op) {
             case "||":
-              acc = acc || this.evaluateExpression(gas, nextChild, environment);
+              acc = acc || this.evaluateExpression(nextChild, environment);
               break;
             case "??":
-              acc = acc ?? this.evaluateExpression(gas, nextChild, environment);
+              acc = acc ?? this.evaluateExpression(nextChild, environment);
               break;
             case "&&":
-              acc = acc && this.evaluateExpression(gas, nextChild, environment);
+              acc = acc && this.evaluateExpression(nextChild, environment);
               break;
             case "|":
               acc = parseInt(acc) | parseInt(nextVal);
@@ -516,12 +514,8 @@ export class ScriptInterpreter {
         return acc;
       }
       case "exponential-expression": {
-        let root = this.evaluateExpression(
-          gas, expSyntaxTree.root, environment
-        );
-        let exp = this.evaluateExpression(
-          gas, expSyntaxTree.exp, environment
-        );
+        let root = this.evaluateExpression(expSyntaxTree.root, environment);
+        let exp = this.evaluateExpression(expSyntaxTree.exp, environment);
         return parseFloat(root) ** parseFloat(exp);
       }
       case "prefix-expression": {
@@ -529,7 +523,7 @@ export class ScriptInterpreter {
         switch (op) {
           case "++":
             return this.assignToVariableOrMember(
-              gas, expSyntaxTree.exp, environment, prevVal => {
+              expSyntaxTree.exp, environment, prevVal => {
                 let int = parseFloat(prevVal);
                 if (!int && int !== 0) throw new RuntimeError(
                   "Increment of a non-numeric value",
@@ -541,7 +535,7 @@ export class ScriptInterpreter {
             );
           case "--":
             return this.assignToVariableOrMember(
-              gas, expSyntaxTree.exp, environment, prevVal => {
+              expSyntaxTree.exp, environment, prevVal => {
                 let int = parseFloat(prevVal);
                 if (!int && int !== 0) throw new RuntimeError(
                   "Decrement of a non-numeric value",
@@ -552,7 +546,7 @@ export class ScriptInterpreter {
               }
             );
         }
-        let val = this.evaluateExpression(gas, expSyntaxTree.exp, environment);
+        let val = this.evaluateExpression(expSyntaxTree.exp, environment);
         switch (op) {
           case "!":
             return !val;
@@ -568,7 +562,7 @@ export class ScriptInterpreter {
             return void val;
           case "delete":
             return this.assignToVariableOrMember(
-              gas, expSyntaxTree.exp, environment, prevVal => {
+              expSyntaxTree.exp, environment, prevVal => {
                 if (prevVal === undefined) {
                   return [undefined, false];
                 } else {
@@ -587,7 +581,7 @@ export class ScriptInterpreter {
         switch (op) {
           case "++":
             return this.assignToVariableOrMember(
-              gas, expSyntaxTree.exp, environment, prevVal => {
+              expSyntaxTree.exp, environment, prevVal => {
                 let int = parseFloat(prevVal);
                 if (!int && int !== 0) throw new RuntimeError(
                   "Increment of a non-numeric value",
@@ -599,7 +593,7 @@ export class ScriptInterpreter {
             );
           case "--":
             return this.assignToVariableOrMember(
-              gas, expSyntaxTree.exp, environment, prevVal => {
+              expSyntaxTree.exp, environment, prevVal => {
                 let int = parseFloat(prevVal);
                 if (!int && int !== 0) throw new RuntimeError(
                   "Decrement of a non-numeric value",
@@ -616,10 +610,10 @@ export class ScriptInterpreter {
         }
       }
       case "function-call": {
-        let fun = this.evaluateExpression(gas, expSyntaxTree.exp, environment);
+        let fun = this.evaluateExpression(expSyntaxTree.exp, environment);
         let inputExpArr = expSyntaxTree.postfix.children;
         let inputVals = inputExpArr.map(exp => (
-          this.evaluateExpression(gas, exp, environment)
+          this.evaluateExpression(exp, environment)
         ));
 
         // Potentially get function and thisVal from ThisBoundFunction wrapper.
@@ -632,11 +626,11 @@ export class ScriptInterpreter {
         // Then execute the function depending on its type.
         if (fun instanceof DefinedFunction) {
           return this.executeFunction(
-            gas, fun.syntaxTree, inputVals, fun.environment, thisVal
+            fun.syntaxTree, inputVals, fun.environment, thisVal
           );
         }
         else if (fun instanceof BuiltInFunction) {
-          payGas(gas, fun.gasCost);
+          payGas(environment.gas, fun.gasCost);
           return fun.fun(inputVals);
         }
         else throw new RuntimeError(
@@ -645,12 +639,8 @@ export class ScriptInterpreter {
         );
       }
       case "virtual-method": {
-        let objVal = this.evaluateExpression(
-          gas, expSyntaxTree.obj, environment
-        );
-        let funVal = this.evaluateExpression(
-          gas, expSyntaxTree.fun, environment
-        );
+        let objVal = this.evaluateExpression(expSyntaxTree.obj, environment);
+        let funVal = this.evaluateExpression(expSyntaxTree.fun, environment);
         if (
           funVal instanceof DefinedFunction ||
           funVal instanceof BuiltInFunction
@@ -668,7 +658,7 @@ export class ScriptInterpreter {
       case "member-access": {
         // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
         let [expVal, indexVal] = this.getMemberAccessExpValAndSafeIndex(
-          gas, expSyntaxTree, environment
+          expSyntaxTree, environment
         );
 
         // Handle graceful return in case of an optional chaining.
@@ -695,11 +685,11 @@ export class ScriptInterpreter {
         return ret;
       }
       case "grouped-expression": {
-        return this.evaluateExpression(gas, expSyntaxTree.exp, environment);
+        return this.evaluateExpression(expSyntaxTree.exp, environment);
       }
       case "array": {
         let expValArr = expSyntaxTree.children.map(exp => (
-          this.evaluateExpression(gas, exp, environment)
+          this.evaluateExpression(exp, environment)
         ));
         return expValArr;
       }
@@ -708,9 +698,9 @@ export class ScriptInterpreter {
           [
             "#" + (
               exp.ident ??
-              this.evaluateExpression(gas, exp.nameExp, environment)
+              this.evaluateExpression(exp.nameExp, environment)
             ),
-            this.evaluateExpression(gas, exp.valExp, environment)
+            this.evaluateExpression(exp.valExp, environment)
           ]
         ));
         return Object.fromEntries(memberEntries);
@@ -752,7 +742,7 @@ export class ScriptInterpreter {
   }
 
 
-  static assignToVariableOrMember(gas, expSyntaxTree, environment, assignFun) {
+  static assignToVariableOrMember(expSyntaxTree, environment, assignFun) {
     if (expSyntaxTree.type === "identifier") {
       let ident = expSyntaxTree.lexeme;
       return environment.assign(ident, expSyntaxTree, assignFun);
@@ -762,7 +752,7 @@ export class ScriptInterpreter {
     ) {
       // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
       let [expVal, indexVal] = this.getMemberAccessExpValAndSafeIndex(
-        gas, expSyntaxTree, environment
+        expSyntaxTree, environment
       );
 
       // Then assign the member of our expVal and return the value specified by
@@ -779,17 +769,15 @@ export class ScriptInterpreter {
     }
   }
 
-  static getMemberAccessExpValAndSafeIndex(gas, memAccSyntaxTree, environment) {
+  static getMemberAccessExpValAndSafeIndex(memAccSyntaxTree, environment) {
     // Evaluate the expression.
-    let expVal = this.evaluateExpression(
-      gas, memAccSyntaxTree.exp, environment
-    );
+    let expVal = this.evaluateExpression( memAccSyntaxTree.exp, environment);
 
     // Now get the index value.
     let indexExp = memAccSyntaxTree.postfix;
     let indexVal = indexExp.ident;
     if (!indexVal) {
-      indexVal = this.evaluateExpression(gas, indexExp.exp, environment);
+      indexVal = this.evaluateExpression(indexExp.exp, environment);
     }
     if (typeof indexVal !== "string" && typeof indexVal !== "number") {
       throw new RuntimeError(
@@ -832,10 +820,19 @@ export const UNDEFINED = {enum: "undefined"};
 
 
 export class Environment {
-  constructor(parent = undefined, scopeType = "block", thisVal = undefined) {
+  constructor(
+    parent = undefined, thisVal = undefined, scopeType = "block",
+    log = undefined, gas = undefined,
+  ) {
     this.parent = parent;
     this.scopeType = scopeType;
     this.variables = {"#this": thisVal ?? UNDEFINED};
+    this.log = log ?? parent?.log ?? (() => {
+      throw "Environment: No log object provided";
+    })() 
+    this.gas = gas ?? parent?.gas ?? (() => {
+      throw "Environment: No gas object provided";
+    })()
   }
 
   get(ident) {

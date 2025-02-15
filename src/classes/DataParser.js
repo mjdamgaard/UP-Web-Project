@@ -150,7 +150,7 @@ export function processLeftAssocPostfixes(expInd, postfixListInd, type) {
         postfix: postfixes[i],
       }
     }
-    return ret;
+    Object.assign(syntaxTree, ret);
   }
 }
 
@@ -569,8 +569,9 @@ const scriptGrammar = {
       let types = children[2]?.types;
       let isRequired = (syntaxTree.ruleInd === 2);
       if (!types) {
+        syntaxTree.ident = children[0].lexeme;
         syntaxTree.invalidTypes = undefined;
-        syntaxTree.defaultVal = undefined;
+        syntaxTree.defaultExp = undefined;
       } else {
         // Initialize a invalidTypes, with nullish types plucked out from the
         // start if isRequired is false.
@@ -602,7 +603,8 @@ const scriptGrammar = {
           }
         });
 
-        syntaxTree.defaultVal = children[4];
+        syntaxTree.ident = children[0].lexeme;
+        syntaxTree.defaultExp = children[4];
         syntaxTree.invalidTypes = invalidTypes;
       }
     },

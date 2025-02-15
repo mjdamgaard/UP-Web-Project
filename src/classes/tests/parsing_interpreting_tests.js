@@ -33,17 +33,18 @@ function testInterpreter({
     debugger;throw "Could not lex or parse input";
   }
 
-  let env = new Environment();
+  let log = {};
   gas = Object.assign({}, gas);
+  let env = new Environment(undefined, undefined, "module", log, gas);
 
   let output;
   switch (startSym) {
     case "expression":
-      output = ScriptInterpreter.evaluateExpression(gas, syntaxTree, env);
+      output = ScriptInterpreter.evaluateExpression(syntaxTree, env);
       break;
     case "statement":
       try {
-        ScriptInterpreter.executeStatement(gas, syntaxTree, env);
+        ScriptInterpreter.executeStatement(syntaxTree, env);
         output = env;
       } catch (err) {
         if (err instanceof RuntimeError || err instanceof CustomError) {
@@ -55,7 +56,7 @@ function testInterpreter({
     case "statement*$":
       try {
         syntaxTree.children.forEach(stmt => {
-          ScriptInterpreter.executeStatement(gas, stmt, env);
+          ScriptInterpreter.executeStatement(stmt, env);
         });
         output = env;
       } catch (err) {
@@ -215,6 +216,17 @@ function script_interpreter_tests_01() {
       "#x": [2],
     }},
     testKey: "11",
+  });
+  testInterpreter(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `function foo(x, y) { let z = x * y; return z + y - x; }` +
+      `let x = foo(2, 3);`,
+    startSym: "statement*$",
+    expectedOutput: {variables: {
+      "#x": [7],
+    }},
+    testKey: "12",
   });
   testInterpreter(params);
 
@@ -458,7 +470,7 @@ function script_parsing_tests_01() {
           },
         ],
       });
-    }
+    },
   });
   testParser(params);
 
@@ -469,6 +481,23 @@ function script_parsing_tests_01() {
     testKey: "06",
   });
   testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `function foo(x, y) { let z = x * y; return z + y; }`,
+    startSym: "statement",
+    expectedIsSuccess: true,
+    testKey: "07",
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `foo(x, y)(z);`,
+    startSym: "statement",
+    expectedIsSuccess: true,
+    testKey: "08",
+  });
+  testParser(params);
+
 
 
   console.log("Finished " + testMsgPrefix + ".");
