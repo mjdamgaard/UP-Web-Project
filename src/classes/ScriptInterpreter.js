@@ -833,6 +833,10 @@ export class Environment {
     this.gas = gas ?? parent?.gas ?? (() => {
       throw "Environment: No gas object provided";
     })()
+    if (scopeType === "module") {
+      this.exports = {};
+      this.finalExports = null;
+    }
   }
 
   get(ident) {
@@ -892,6 +896,46 @@ export class Environment {
     }
   }
 
+
+  export(ident, alias = ident, isDefault, flags = null, node) {
+    if (this.scopeType !== "module") throw new RuntimeError (
+      "Export from a nested scope",
+      node
+    );
+    this.export["#" + alias] = [ident, isDefault, flags, node];
+  }
+
+  getFinalExports() {
+    if (this.scopeType !== "module") throw new RuntimeError (
+      "Export from a nested scope",
+      node
+    );
+    if (this.finalExports) {
+      return this.finalExports;
+    } else {
+      let ret = {...this.exports};
+      let defaultExport = false;
+
+      Object.keys(this.exports).map(key => {
+        let curExport = ret[key];
+        let ident = curExport[0];
+        curExport[0] = this.get(ident);
+
+        let isDefault = curExport[1];
+        if (isDefault) {
+          if (defaultExport) throw new RuntimeError(
+            "More than one default export detected",
+            curExport[3]
+          );
+          defaultExport = curExport;
+        }
+      });
+
+      ret.defaultExport = defaultExport;
+      this.finalExports = ret;
+      return ret;
+    }
+  }
 }
 
 

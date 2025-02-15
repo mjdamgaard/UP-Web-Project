@@ -424,34 +424,23 @@ const scriptGrammar = {
   ...regEntGrammar,
   "script": {
     rules: [
-      ["import-statement-list", "outer-statement+$!"],
-      ["outer-statement+$"],
+      ["import-statement!1*", "outer-statement+$"],
     ],
     process: (syntaxTree) => {
-      if (syntaxTree.ruleInd === 0) {
-        syntaxTree.importStmtArr = syntaxTree.children[0].children;
-        syntaxTree.stmtArr = syntaxTree.children[1].children;
-      } else {
-        syntaxTree.stmtArr = syntaxTree.children[0].children;
-      }
+      syntaxTree.importStmtArr = syntaxTree.children[0].children;
+      syntaxTree.stmtArr = syntaxTree.children[1].children;
     },
-  },
-  "import-statement-list": {
-    rules: [
-      ["import-statement", "import-statement-list"],
-      ["import-statement"],
-    ],
-    process: straightenListSyntaxTree,
   },
   "import-statement": {
     rules: [
       [
-        "/import/", /\{/, "import-list", /\}/,
-        "/from/", "entity-reference", "/;/"
+        "/import/", "string?", "import-list", "/from/", "entity-reference",
+        "/;/"
       ],
     ],
     process: (syntaxTree) => {
-      // ...
+      syntaxTree.importArr = syntaxTree.children[1].children;
+      syntaxTree.moduleRef = syntaxTree.children[3];
     },
   },
   "import-list": {
@@ -463,23 +452,95 @@ const scriptGrammar = {
   },
   "import": {
     rules: [
+      [/\*/, "/as/", "identifier"],
+      [/\{/, "named-import-list", /\}/],
+      ["identifier"],
+    ],
+    process: (syntaxTree) => {
+      if (syntaxTree.ruleInd === 0) {
+        syntaxTree.namespaceIdent = syntaxTree.children[2].lexeme;
+      } else if (syntaxTree.ruleInd === 1) {
+        syntaxTree.namedImportArr = syntaxTree.children[1].children;
+      } else {
+        syntaxTree.defaultIdent = syntaxTree.children[0].lexeme;
+      }
+    },
+  },
+  "named-import-list": {
+    rules: [
+      ["named-import", "/,/", "named-import-list!1"],
+      ["named-import", "/,/?"],
+    ],
+    process: straightenListSyntaxTree,
+  },
+  "named-import": {
+    rules: [
       ["identifier", "/as/", "identifier!"],
       ["identifier"],
     ],
     process: (syntaxTree) => {
-      // ...
+      syntaxTree.moduleIdent = syntaxTree.children[0].lexeme;
+      syntaxTree.alias = syntaxTree.children[2]?.lexeme;
     },
   },
   "outer-statement": {
     rules: [
-      ["/export/", "/default/", "variable-declaration"],
-      ["/export/", "/default/", "function-declaration!"],
-      ["/export/", "variable-declaration"],
-      ["/export/", "function-declaration!"],
+      ["export-statement!1"],
       ["statement"],
     ],
+    process: becomeChild(0),
+  },
+  "export-statement": {
+    rules: [
+      ["/export/", "string?", "/default/", "variable-declaration"],
+      ["/export/", "string?", "/default/", "function-declaration"],
+      ["/export/", "string?", "/default/", "expression!", "/;/"],
+      ["/export/", "string?", "variable-declaration"],
+      ["/export/", "string?", "function-declaration"],
+      ["/export/", "string?",  /\{/, "export-list", /\}/],
+    ],
     process: (syntaxTree) => {
-      // ...
+      let ruleInd = syntaxTree.ruleInd;
+      syntaxTree.flagStr = syntaxTree.children[1];
+      syntaxTree.isDefault = (ruleInd <= 2);
+      if (ruleInd === 0) {
+        syntaxTree.varDec = syntaxTree.children[3];
+      } else if (ruleInd === 1) {
+        syntaxTree.funDec = syntaxTree.children[3];
+      } else if (ruleInd === 2) {
+        syntaxTree.exp = syntaxTree.children[3];
+      } else if (ruleInd === 3) {
+        syntaxTree.varDec = syntaxTree.children[2];
+      } else if (ruleInd === 4) {
+        syntaxTree.funDec = syntaxTree.children[2];
+      } else {
+        syntaxTree.exportArr = syntaxTree.children[3].children;
+      }
+    },
+  },
+  "export-list": {
+    rules: [
+      ["export", "/,/", "export-list!1"],
+      ["export", "/,/?"],
+    ],
+    process: straightenListSyntaxTree,
+  },
+  "export": {
+    rules: [
+      ["/default/", "/as/", "identifier!"],
+      ["identifier", "/as/", "identifier!"],
+      ["identifier"],
+    ],
+    process: (syntaxTree) => {
+      if (syntaxTree.ruleInd === 0) {
+        syntaxTree.alias = syntaxTree.children[2].lexeme;
+        syntaxTree.isDefault = true;
+      } else if (syntaxTree.ruleInd === 1) {
+        syntaxTree.ident = syntaxTree.children[0].lexeme;
+        syntaxTree.alias = syntaxTree.children[2].lexeme;
+      } else {
+        syntaxTree.ident = syntaxTree.children[0].lexeme;
+      }
     },
   },
   "variable-declaration": {
