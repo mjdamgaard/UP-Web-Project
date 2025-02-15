@@ -474,7 +474,7 @@ export class Parser {
         // After this initial skipping of previously recorded matching
         // successes, First of all try parsing the rule symbol.
         childSyntaxTree = this.parseRuleSymbol(
-          lexArr, nextPos, ruleSym, (j === 0) ? triedSymbols : []
+          lexArr, nextPos, ruleSym, (nextPos === pos) ? triedSymbols : []
         );
 
         // First set doOrDie depending how how far nextPos got, regardless
