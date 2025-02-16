@@ -3,7 +3,6 @@ import {DBRequestManager} from "../classes/DBRequestManager.js";
 
 import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
 import {DataParser} from "./DataParser.js";
-import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 
 
 
@@ -178,11 +177,10 @@ export class DataFetcher {
     }
 
     const results = Array(entIDs.length);
-
-    const parallelCallbackHandler = new ParallelCallbackHandler;
+    const promiseArr = [];
 
     entIDs.forEach((entID, ind) => {
-      parallelCallbackHandler.push((resolve) => {
+      promiseArr.push((resolve) => {
         this.fetchPublicEntity(entID, maxLen,
           (entType, defStr, isContained, len, creatorID, isEditable) => {
             results[ind] = [
@@ -194,9 +192,7 @@ export class DataFetcher {
       });
     });
 
-    parallelCallbackHandler.execAndThen(() => {
-      callback(results);
-    });
+    Promise.all(promiseArr).then(() => callback(results));
   }
 
   static fetchPublicAttrObject(entID, callback) {
@@ -249,11 +245,10 @@ export class DataFetcher {
     }
 
     const results = Array(entIDs.length);
-
-    const parallelCallbackHandler = new ParallelCallbackHandler;
+    const promiseArr = [];
 
     entIDs.forEach((entID, ind) => {
-      parallelCallbackHandler.push((resolve) => {
+      promiseArr.push((resolve) => {
         this.fetchEntityAsUser(getProfileData, entID, maxLen,
           (
             entType, defStr, isContained, len, creatorID, isEditable,
@@ -269,9 +264,7 @@ export class DataFetcher {
       });
     });
 
-    parallelCallbackHandler.execAndThen(() => {
-      callback(results);
-    });
+    Promise.all(promiseArr).then(() => callback(results));
   }
 
   static fetchAttrObjectAsUser(getProfileData, entID, callback) {
@@ -396,11 +389,10 @@ export class DataFetcher {
     }
 
     const entLists = Array(scaleKeys.length);
-
-    const parallelCallbackHandler = new ParallelCallbackHandler;
+    const promiseArr = [];
 
     scaleKeys.forEach((scaleKey, ind) => {
-      parallelCallbackHandler.push((resolve) => {
+      promiseArr.push((resolve) => {
         this.fetchEntityListFromScaleKey(
           userIDs[ind], scaleKey, n, lo, hi, o, a, (entList) => {
             entLists[ind] = entList;
@@ -410,9 +402,7 @@ export class DataFetcher {
       });
     });
 
-    parallelCallbackHandler.execAndThen(() => {
-      callback(entLists);
-    });
+    Promise.all(promiseArr).then(() => callback(entLists));
   }
 
 

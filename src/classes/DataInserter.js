@@ -3,8 +3,7 @@ import {DBRequestManager} from "./DBRequestManager.js";
 
 import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
 import {DataConstructor} from "./DataConstructor.js";
-import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
-
+const ParallelCallbackHandler = {};
 
 const PATH_REF_REGEX = /@\[[^0-9\[\]@,;"][^\[\]@,;"]+\]/g;
 const PATH_REGEX = /^[^0-9\[\]@,;"][^\[\]@,;"]*$/;

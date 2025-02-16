@@ -161,6 +161,46 @@ export class ScriptInterpreter {
 
 
   static executeImportStatement(stmtSyntaxTree, environment, liveModules) {
+    decrCompGas(environment.gas);
+
+    // Get the live environment of the module, and get the exports of that
+    // module.
+    let moduleID = stmtSyntaxTree.moduleRef.lexeme;
+    let moduleEnv = liveModules["#" + moduleID];
+    let exports = moduleEnv.getFinalExports()
+
+
+    // Then iterate through all the imports, and declare the imports in the
+    // environment.
+    stmtSyntaxTree.importArr.forEach(imp => {
+      if (imp.namespaceIdent) {
+        let nsObj = {};
+        Object.entries(exports).forEach(([key, val]) => {
+          nsObj[key] = val[0];
+        });
+        moduleEnv.declare(imp.namespaceIdent, nsObj, true, "module", imp);
+      }
+      else if (imp.structIdent) {
+        let structObj = {};
+        Object.entries(exports).forEach(([key, val]) => {
+          let exportFlags = val[2];
+          let importFlagArr = (imp.flagStr ?? "").split("");
+          let intendToImport = true;
+          for (let exportFlag of exportFlags) {
+            if (!importFlagArr.includes(exportFlag)) {
+              intendToImport = false;
+              break;
+            }
+          }
+          if (canImportStructMethod()) {
+
+          }
+          structObj[key] = val[0];
+        });
+        moduleEnv.declare(imp.namespaceIdent, nsObj, true, "module", imp);
+      }
+    });
+
     // First, if the import statement imports 
   }
 
@@ -950,9 +990,7 @@ export class Environment {
       throw "Environment: No gas object provided";
     })();
     this.permissions = permissions ?? parent?.permissions ?? undefined;
-    this.scriptID = scriptID ?? parent?.scriptID ?? (() => {
-      throw "Environment: No scriptID provided";
-    })();
+    this.scriptID = scriptID ?? parent?.scriptID ?? undefined;
     this.reqUserID = reqUserID ?? parent?.reqUserID ?? undefined;
     this.structID = structID ?? parent?.structID ?? undefined;
     this.structDefStr = structDefStr ?? parent?.structDefStr ?? undefined;

@@ -433,17 +433,11 @@ const scriptGrammar = {
   },
   "import-statement": {
     rules: [
-      [
-        "/import/", "import-list", "/from/", "entity-reference",
-        "/with/", "entity-reference!", "string?", "/;/"
-      ],
       ["/import/", "import-list", "/from/", "entity-reference", "/;/"],
     ],
     process: (syntaxTree) => {
       syntaxTree.importArr = syntaxTree.children[1].children;
       syntaxTree.moduleRef = syntaxTree.children[3];
-      syntaxTree.structRef = syntaxTree.children[5];
-      syntaxTree.flagStr = syntaxTree.children[6];
     },
   },
   "import-list": {
@@ -458,14 +452,19 @@ const scriptGrammar = {
       [/\*/, "/as/", "identifier"],
       [/\{/, "named-import-list", /\}/],
       ["identifier"],
+      ["entity-reference", "permission-specification?", "/as/", "identifier"],
     ],
     process: (syntaxTree) => {
       if (syntaxTree.ruleInd === 0) {
         syntaxTree.namespaceIdent = syntaxTree.children[2].lexeme;
       } else if (syntaxTree.ruleInd === 1) {
         syntaxTree.namedImportArr = syntaxTree.children[1].children;
-      } else {
+      } else if (syntaxTree.ruleInd === 2) {
         syntaxTree.defaultIdent = syntaxTree.children[0].lexeme;
+      } else {
+        syntaxTree.structRef = syntaxTree.children[0];
+        syntaxTree.flagStr = syntaxTree.children[1].children[0]?.flagStr;
+        syntaxTree.structIdent = syntaxTree.children[4].lexeme;
       }
     },
   },
@@ -486,6 +485,14 @@ const scriptGrammar = {
       syntaxTree.alias = syntaxTree.children[2]?.lexeme;
     },
   },
+  "permission-specification": {
+    rules: [
+      ["/with/", "string"],
+    ],
+    process: (syntaxTree) => {
+      syntaxTree.flagStr = JSON.parse(syntaxTree.children[1].lexeme);
+    },
+  },
   "outer-statement": {
     rules: [
       ["export-statement!1"],
@@ -495,29 +502,36 @@ const scriptGrammar = {
   },
   "export-statement": {
     rules: [
-      ["/export/", "string?", "/default/", "variable-declaration"],
-      ["/export/", "string?", "/default/", "function-declaration"],
-      ["/export/", "string?", "/default/", "expression!", "/;/"],
-      ["/export/", "string?", "variable-declaration"],
-      ["/export/", "string?", "function-declaration"],
-      ["/export/", "string?",  /\{/, "export-list", /\}/],
+      [
+        "/export/", "permission-specification", "/default/",
+        "function-declaration"
+      ],
+      ["/export/", "permission-specification", "function-declaration!"],
+      ["/export/", "/default/", "function-declaration!1"],
+      ["/export/", "/default/", "variable-declaration!1"],
+      ["/export/", "/default/", "expression!", "/;/"],
+      ["/export/", "function-declaration!1"],
+      ["/export/", "variable-declaration!1"],
+      ["/export/", /\{/, "export-list", /\}/],
     ],
     process: (syntaxTree) => {
       let ruleInd = syntaxTree.ruleInd;
-      syntaxTree.flagStr = syntaxTree.children[1];
-      syntaxTree.isDefault = (ruleInd <= 2);
+      syntaxTree.isDefault = (ruleInd === 0 || 2 <= ruleInd && ruleInd <= 4);
       if (ruleInd === 0) {
-        syntaxTree.varDec = syntaxTree.children[3];
-      } else if (ruleInd === 1) {
+        syntaxTree.flagStr = syntaxTree.children[1].flagStr;
         syntaxTree.funDec = syntaxTree.children[3];
-      } else if (ruleInd === 2) {
-        syntaxTree.exp = syntaxTree.children[3];
-      } else if (ruleInd === 3) {
-        syntaxTree.varDec = syntaxTree.children[2];
-      } else if (ruleInd === 4) {
+      } else if (ruleInd === 1) {
         syntaxTree.funDec = syntaxTree.children[2];
+      } else if (ruleInd === 1) {
+        syntaxTree.varDec = syntaxTree.children[2];
+      } else if (ruleInd === 2) {
+        syntaxTree.exp = syntaxTree.children[2];
+      } else if (ruleInd === 3) {
+        syntaxTree.funDec = syntaxTree.children[1];
+      } else if (ruleInd === 4) {
+        syntaxTree.varDec = syntaxTree.children[1];
       } else {
-        syntaxTree.exportArr = syntaxTree.children[3].children;
+        syntaxTree.exportArr = syntaxTree.children[2].children;
       }
     },
   },
