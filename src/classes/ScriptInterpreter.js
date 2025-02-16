@@ -26,6 +26,9 @@ export class ScriptInterpreter {
     this.fetchScript = builtInFunctions.fetchScript ?? (() => {
       throw "ScriptInterpreter: builtInFunctions need to include fetchScript()"
     })();
+    this.fetchRegEnt = builtInFunctions.fetchRegEnt ?? (() => {
+      throw "ScriptInterpreter: builtInFunctions need to include fetchRegEnt()"
+    })();
     this.parsedScriptCache = parsedScriptCache;
   }
 
@@ -33,28 +36,9 @@ export class ScriptInterpreter {
 
 
   static async preprocessScript(
-    scriptID, gas, parsedScripts = {}, requestedScriptIDs = [],
-    callerScriptIDs = []
+    gas, scriptID, structID, parsedScripts = {}, structDefs = {},
+    requestedScriptIDs = [], callerScriptIDs = []
   ) {
-    // TODO: Get all moduleIDs, look for them in cache, and if not found,
-    // query the defStr of the script entity, parse it, and add it to the cache.
-    // When a module is found, add it to importedModules, then call this method
-    // recursively on the parsed script, until all modules are found. Do this
-    // as much in parallel as possible.
-    // Then run the main module, and for each import statement, run the given
-    // module, except if it has already been run, in which case just deep-copy
-    // the initial environment from the cache. (This includes the main module.)
-    // Note that this method contains no permissions or requestingUserID, and
-    // thus the module should fail if it calls or uses any of these. (And
-    // the initial environment should always be deterministic and the same for
-    // each time it is run.) ..Hm, so how do we prevent e.g. time-dependent
-    // calls? Or should we just not cache the initial environments?.. ..Hm, we
-    // *could* just include a flag in "gas" which throws if the module tries to
-    // query the database, or call a time-depending function, or anything that
-    // does not have a constant behavior.. ...Maybe we should just run the
-    // modules, why not.. Okay, let me do that.. ..Ah, and then we *can* the
-    // permissions when we import structs..
-
     // First check that scriptID is not one of the callers, meaning that the
     // preprocess recursion is infinite.
     let indOfSelf = callerScriptIDs.indexOf(scriptID)
@@ -65,6 +49,13 @@ export class ScriptInterpreter {
           .join(" -> ") +
         " -> @[" + scriptID + "]"
       );
+    }
+
+    // Before fetching the script, we also immediately send a request for the
+    // definition string of the struct, if one is provided.
+    let structDefStrPromise;
+    if (structID) {
+      structDefStrPromise = this.fetchRegEnt(gas, structID);
     }
 
     // Try to get the parsed script first from the buffer, then from the cache.
@@ -85,12 +76,12 @@ export class ScriptInterpreter {
       // fetched (assuming that the request won't be sent twice in that case).
       let isRequested = requestedScriptIDs.includes(scriptID);
       if (!isRequested) decrFetchGas(gas);
-      let script = await this.fetchScript(scriptID, gas);
+      let script = await this.fetchScript(gas, scriptID);
       if (!isRequested) requestedScriptIDs.push(scriptID);
 
       // Parse.
       payGas({comp: getParsingGasCost(script)});
-      let scriptSyntaxTree = this.parseScript(script);
+      let scriptSyntaxTree = scriptParser.parse(script);
 
       // Cache.
       parsedScripts["#" + scriptID] = scriptSyntaxTree;
@@ -101,12 +92,12 @@ export class ScriptInterpreter {
     // Once the script syntax tree is gotten, we look for any import statements
     // at the top of the script, then call this method recursively in parallel
     // to import dependencies.
-    if (syntaxTree.importStmtArr.length !== 0) {
+    if (scriptSyntaxTree.importStmtArr.length !== 0) {
       // Append scriptID to callerScriptIDs (without muting the input), and
       // initialize a promiseArr to process all the modules in parallel.
       callerScriptIDs = [...callerScriptIDs, scriptID];
       let promiseArr = [];
-      syntaxTree.importStmtArr.forEach((stmt, ind) => {
+      scriptSyntaxTree.importStmtArr.forEach((stmt, ind) => {
         // Get the moduleID for the given import statement.
         let moduleRef = stmt.moduleRef;
         if (moduleRef.isTBD) throw new ImportError(
@@ -123,26 +114,90 @@ export class ScriptInterpreter {
       // When having pushed all the callbacks to our promiseArr, we can execute
       // them in parallel.
       await Promise.all(promiseArr);
+
+      // We also wait for the structDefStr to return, if is is provided, and
+      // add it to structDefs.
+      if (structID) {
+        structDefs["#" + structID] = await structDefStrPromise;
+      }
     }
 
-    // When finally returning, parsedScripts should contain all the parsed
-    // modules that the script depends on, as well as the parsed script itself.
-    return; /* parsedScripts has now been muted. */
+    // Finally return parsedScripts and structDefs.
+    return [parsedScripts, structDefs];
   }
 
 
 
-  static parseScript(str) {
-    // TODO: Throw a RuntimeError on failure.
-    return scriptParser.parse(str);
+
+  static executeScript(
+    gas, scriptID, parsedScript, structID, structDefs, reqUserID, permissions,
+    liveModules = {}, log = {}
+  ) {
+    let structDefStr = (structID) ? structDefs["#" + structID] : undefined;
+
+    // Create a new environment.
+    let environment = new Environment(
+      undefined, undefined, "module", log, gas, permissions,
+      scriptID, reqUserID, structID, structDefStr,
+    );
+
+
+    // First execute all import statements.
+    parsedScript.importStmtArr.forEach((stmt) => {
+      this.executeImportStatement(stmt, environment, liveModules);
+    });
+
+    // Then execute all other (outer) statements of the script.
+    parsedScript.importStmtArr.forEach((stmt) => {
+      this.executeOuterStatement(stmt, environment);
+    });
+
+    // Then return the liveModules, ready to be returned e.g. to an import
+    // statement, or to be used by callStructProcedures().
+    return liveModules;
   }
 
+
+
+
+  static executeImportStatement(stmtSyntaxTree, environment, liveModules) {
+    // First, if the import statement imports 
+  }
+
+
+
+  static executeOuterStatement(stmtSyntaxTree, environment) {
+    decrCompGas(environment.gas);
+
+    let type = stmtSyntaxTree.type;
+    switch (type) {
+      case "statement": {
+        this.executeStatement(stmtSyntaxTree, environment);
+        break;
+      }
+      case "export-statement": {
+        this.executeExportStatement(stmtSyntaxTree, environment);
+        break;
+      }
+      default: debugger;throw (
+        "ScriptInterpreter.executeOuterStatement(): Unrecognized " +
+        `statement type: "${type}"`
+      );
+    }
+
+  }
+
+
+  static executeExportStatement(stmtSyntaxTree, gas, environment) {
+    // ...
+
+  }
 
 
 
 
   static callStructProcedures(
-    moduleID, structID, permissions, gas, callSpecArr, requestingUserID,
+    moduleID, structID, permissions, gas, callSpecArr, reqUserID,
   ) {
     // ...
 
@@ -881,17 +936,26 @@ export const UNDEFINED = {enum: "undefined"};
 export class Environment {
   constructor(
     parent = undefined, thisVal = undefined, scopeType = "block",
-    log = undefined, gas = undefined,
+    log = undefined, gas = undefined, permissions = undefined,
+    scriptID = undefined, reqUserID = undefined, structID = undefined,
+    structDefStr = undefined,
   ) {
     this.parent = parent;
     this.scopeType = scopeType;
     this.variables = {"#this": thisVal ?? UNDEFINED};
     this.log = log ?? parent?.log ?? (() => {
       throw "Environment: No log object provided";
-    })() 
+    })();
     this.gas = gas ?? parent?.gas ?? (() => {
       throw "Environment: No gas object provided";
-    })()
+    })();
+    this.permissions = permissions ?? parent?.permissions ?? undefined;
+    this.scriptID = scriptID ?? parent?.scriptID ?? (() => {
+      throw "Environment: No scriptID provided";
+    })();
+    this.reqUserID = reqUserID ?? parent?.reqUserID ?? undefined;
+    this.structID = structID ?? parent?.structID ?? undefined;
+    this.structDefStr = structDefStr ?? parent?.structDefStr ?? undefined;
     if (scopeType === "module") {
       this.exports = {};
       this.finalExports = null;
