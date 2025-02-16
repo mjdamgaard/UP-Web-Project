@@ -3,6 +3,7 @@ import {scriptParser} from "./DataParser.js";
 import {PriorityCache} from "./CombinedCache.js";
 // import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 import {EntityReference, EntityPlaceholder} from "./DataParser.js";
+import {LexError} from "./Parser.js";
 
 
 const MAX_ARRAY_INDEX = 1E+15;
@@ -15,26 +16,38 @@ const GAS_NAMES = {
 
 export class ScriptInterpreter {
 
-  constructor(queryEntity, builtInFunctions, cache) {
+  constructor(queryEntity, cache, builtInFunctions) {
     this.queryEntity = queryEntity;
-    this.builtInFunctions = builtInFunctions;
     this.moduleCache = cache;
+    this.builtInFunctions = builtInFunctions;
   }
 
 
-  static executeFunctionsInModule(gas, moduleID, funArr, inputArrArr) {
-    // Import modules and sub-modules, then execute each function in funArr,
-    // with its inputs found in inputArrArr. If any function is undefined for
-    // a given inputArr, execute the main function of the script instead, and
-    // if no function is called 'main', execute the default export.
+
+
+  static preprocessScript(
+    moduleID, gas, importedModules = [], callerModules = []
+  ) {
+    // TODO: Get all moduleIDs, look for them in cache, and if not found,
+    // query the defStr of the script entity, parse it, and add it to the cache.
+    // When a module is found, add it to importedModules, then call this method
+    // recursively on the parsed script, until all modules are found. Do this
+    // as much in parallel as possible.
+    // Then run the main module, and for each import statement, run the given
+    // module, except if it has already been run, in which case just deep-copy
+    // the initial environment from the cache. (This includes the main module.)
+    // Note that this method contains no permissions or requestingUserID, and
+    // thus the module should fail if it calls or uses any of these. (And
+    // the initial environment should always be deterministic and the same for
+    // each time it is run.) ..Hm, so how do we prevent e.g. time-dependent
+    // calls? Or should we just not cache the initial environments?.. ..Hm, we
+    // *could* just include a flag in "gas" which throws if the module tries to
+    // query the database, or call a time-depending function, or anything that
+    // does not have a constant behavior.. ...Maybe we should just run the
+    // modules, why not.. Okay, let me do that.. ..Ah, and then we *can* the
+    // permissions when we import structs..
+
     
-    // If there
-    // are no default export, but nly one declaration (including an anonymous
-    // declaration, meaning that
-    // the script only includes a single expression after the imports), then
-    // execute that. If the default/only declaration is a variable, simply
-    // return that right away (it is already computed as part of the
-    // initialization).
 
   }
 
@@ -45,49 +58,16 @@ export class ScriptInterpreter {
     return scriptParser.parse(str);
   }
 
-  static importModules(gas, scriptTree, importedModules = []) {
-    // TODO: Get all module scriptIDs, look for them in cache, and if not found,
-    // query the defStr of the script entity, parse it, and add it to the cache.
-    // When a module is found, add it to importedModules, then call this method
-    // recursively on the parsed script, until all modules or found. *Do this as
-    // much in parallel as possible.
 
-    // Then return modules, and increase counters inside gas object as a side-
-    // effect.
 
-  }
 
-  static initializeScript(
-    gas, scriptTree, modules, importingScriptIDs = []
+
+  static callStructProcedures(
+    moduleID, structID, permissions, gas, callSpecArr, requestingUserID,
   ) {
-    // TODO: Run all the imported modules in order, and run all their modules
-    // as well, etc. If a module imports a module that has imported it, throw.
-    // For each module, including the outer script, look in the cache *(actually
-    // look in modules instead, which is a subset of the cache) if the module/
-    // script has already been initialized before, and if so, just copy
-    // the initial variables from that instead.
-    // Return initialized script and array of initialized objects, which are
-    // all new objects that can be muted without changing the inputs of this
-    // method, except gas, and where each initialized script/module holds a live
-    // environment of variables.
-    // Also increase counters inside gas.
+    // ...
 
-    // No, let's just return an environment, but let all variables in it,
-    // including functions, be typed, and for all functions, we attach a (live)
-    // environment to them. Then we don't need to think about modules from
-    // there.
-
-    // ..Wait, so should all expression values be typed, then? ..Or what..?
-    // ..Or i could also just wrap functions in a Function class monad, and
-    // then it will just look like an empty object (since we will not prefix
-    // properties of the Function class with '#') to any user that tries to do
-    // operations on it.. Hm.. (16:43) ..Hm, yeah, this could work.. ..Yes, let
-    // me do that.. (16:45)
-
-    // return environment;
   }
-
-
 
 
 
@@ -906,10 +886,6 @@ export class Environment {
   }
 
   getFinalExports() {
-    if (this.scopeType !== "module") throw new RuntimeError (
-      "Export from a nested scope",
-      node
-    );
     if (this.finalExports) {
       return this.finalExports;
     } else {
@@ -1040,6 +1016,13 @@ class ContinueException {
 }
 
 
+
+export class SyntaxError {
+  constructor(msg, node) {
+    this.msg = msg;
+    this.node = node;
+  }
+}
 
 export class RuntimeError {
   constructor(msg, node) {

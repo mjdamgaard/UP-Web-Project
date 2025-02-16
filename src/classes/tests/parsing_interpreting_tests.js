@@ -8,7 +8,7 @@ import {
 
 
 export function runTests() {
-  // regEnt_parsing_tests_01(); // Last tested: (13.02.25, 14:24).
+  // regEnt_parsing_tests_01(); // Last tested: (16.02.25, 10:27).
   script_parsing_tests_01();
   script_interpreter_tests_01();
 
@@ -520,7 +520,7 @@ function regEnt_parsing_tests_01() {
     keepLastLexeme: undefined,
     expectedIsSuccess: true, expectedNextPos: null,
     testMsgPrefix: testMsgPrefix, testKey: "",
-    logParserOutput: true, logOnlyFailures: true,
+    logParserOutput: true, logOnlyFailures: false,
     additionalTest: undefined,
   }
   let params;

@@ -215,7 +215,7 @@ export class Parser {
       [lexArr, strPosArr] = this.lexer.lex(str, isPartial, keepLastLexeme);
     } catch (error) {
       if (error instanceof LexError) {
-        let syntaxTree = {isSuccess: false, error: error.msg};
+        let syntaxTree = {isSuccess: false, error: error};
         return [syntaxTree, lexArr, strPosArr];
       }
       // Else throw error;
@@ -229,15 +229,18 @@ export class Parser {
     // otherwise successful, meaning that only a part of the string was parsed,
     // construct an error saying so. 
     if (syntaxTree.isSuccess && syntaxTree.nextPos !== strPosArr.length) {
-      // (We could parse column and line number here, but let's not, at least
-      // not for now. *Or maybe let us, after all, so a possible TODO here..)
       syntaxTree.isSuccess = false;
       let strPos = strPosArr[syntaxTree.nextPos] ?? str.length;
-      syntaxTree.error = 'Incomplete parsing after:\n' +
-        str.substring(0, strPos).substring(strPos - ERROR_ECHO_STR_LEN) +
-        "\n--------\n" +
-        "Expected an empty string, but got:\n" +
-        str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4));
+      let subStr = str.substring(0, strPos);
+      let [ln, col] = getLnAndCol(subStr);
+      syntaxTree.error = new SyntaxError(
+        'Incomplete parsing after:\n' +
+          subStr.substring(strPos - ERROR_ECHO_STR_LEN) +
+          "\n--------\n" +
+          "Expected an empty string, but got:\n" +
+          str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4)),
+        ln, col
+      );
     }
     // Else extract an appropriate error from the syntax tree, via a call to
     // #getErrorAndFailedSymbols().
@@ -246,18 +249,28 @@ export class Parser {
         this.#getErrorAndFailedSymbols(syntaxTree);
       if (error) {
         let strPos = strPosArr[syntaxTree.nextPos - 1] ?? str.length;
-        syntaxTree.error = 'Error after:\n' +
-          str.substring(0, strPos).substring(strPos - ERROR_ECHO_STR_LEN) +
-          "\n--------\n" +
-          'Error:\n  ' + error.replaceAll("\n", "\n  ");
+        let subStr = str.substring(0, strPos);
+        let [ln, col] = getLnAndCol(subStr);
+        syntaxTree.error = new SyntaxError(
+          'Error after:\n' +
+            subStr.substring(strPos - ERROR_ECHO_STR_LEN) +
+            "\n--------\n" +
+            'Error:\n  ' + error.replaceAll("\n", "\n  "),
+          ln, col
+        );
         syntaxTree.lexArr = lexArr;
       } else {
         let strPos = strPosArr[syntaxTree.nextPos] ?? str.length;
-        syntaxTree.error = `Failed symbol '${failedNodeSymbol}' after:\n` +
-          str.substring(0, strPos).substring(strPos - ERROR_ECHO_STR_LEN) +
-          "\n--------\n" +
-          `Expected symbol(s) ${expectedSymbols}, but got:\n` +
-          str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4));
+        let subStr = str.substring(0, strPos);
+        let [ln, col] = getLnAndCol(subStr);
+        syntaxTree.error = new SyntaxError(
+          `Failed symbol '${failedNodeSymbol}' after:\n` +
+            subStr.substring(strPos - ERROR_ECHO_STR_LEN) +
+            "\n--------\n" +
+            `Expected symbol(s) ${expectedSymbols}, but got:\n` +
+            str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4)),
+          ln, col
+        );
       }
     }
   
@@ -704,7 +717,11 @@ export class Parser {
 
   log(syntaxTree) {
     console.log(syntaxTree);
-    (syntaxTree.error || "").split("\n").forEach(val => console.log(val));
+    let err = syntaxTree.error;
+    if (err) {
+      let combMsg = `Ln ${err.ln}, Col ${err.col}: ${err.msg}`;
+      combMsg.split("\n").forEach(val => console.log(val));
+    };
   }
 }
 
@@ -764,12 +781,14 @@ export class Lexer {
     if (!this.lexemeOrWSRegEx.test(lastMatch)) {
       if (!isPartial) {
         let prevStr = unfilteredLexArr.slice(0, -1).join("");
+        let [ln, col] = getLnAndCol(prevStr);
         throw new LexError(
           "Lexer error after: \n" +
-          prevStr.slice(-ERROR_ECHO_STR_LEN) +
-          "\n--------\n" +
-          "Invalid lexeme at:\n" +
-          lastMatch.substring(0, Math.floor(ERROR_ECHO_STR_LEN/4))
+            prevStr.slice(-ERROR_ECHO_STR_LEN) +
+            "\n--------\n" +
+            "Invalid lexeme at:\n" +
+            lastMatch.substring(0, Math.floor(ERROR_ECHO_STR_LEN/4)),
+          ln, col
         );
       } else {
         unfilteredLexArr[unfilteredLexArr.length - 1] = EOS;
@@ -810,10 +829,39 @@ export class Lexer {
 }
 
 
-class LexError {
-  constructor(msg) {
+
+
+
+
+export class LexError {
+  constructor(msg, ln, col) {
     this.msg = msg;
+    this.ln = ln;
+    this.col = col;
+  }
+}
+
+export class SyntaxError {
+  constructor(msg, ln, col) {
+    this.msg = msg;
+    this.ln = ln;
+    this.col = col;
   }
 }
 
 const EOS = {enumName: "EOS"};
+
+
+
+
+export function getLnAndCol(str) {
+  let lineArr = str.match(/.*(\n|$)/).filter(val => val !== "");
+  if (lineArr.length === 0) {
+    lineArr = [""];
+  }
+  let ln = lineArr.length;
+  let col = lineArr.at(-1).length + 1;
+  return [ln, col];
+}
+
+

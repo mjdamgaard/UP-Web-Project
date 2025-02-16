@@ -434,13 +434,16 @@ const scriptGrammar = {
   "import-statement": {
     rules: [
       [
-        "/import/", "string?", "import-list", "/from/", "entity-reference",
-        "/;/"
+        "/import/", "import-list", "/from/", "entity-reference",
+        "/with/", "entity-reference!", "string?", "/;/"
       ],
+      ["/import/", "import-list", "/from/", "entity-reference", "/;/"],
     ],
     process: (syntaxTree) => {
       syntaxTree.importArr = syntaxTree.children[1].children;
       syntaxTree.moduleRef = syntaxTree.children[3];
+      syntaxTree.structRef = syntaxTree.children[5];
+      syntaxTree.flagStr = syntaxTree.children[6];
     },
   },
   "import-list": {
