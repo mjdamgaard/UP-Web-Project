@@ -1,32 +1,40 @@
 
 import {scriptParser} from "./DataParser.js";
 import {PriorityCache} from "./CombinedCache.js";
-// import {ParallelCallbackHandler} from "./ParallelCallbackHandler.js";
 import {EntityReference, EntityPlaceholder} from "./DataParser.js";
-import {LexError} from "./Parser.js";
+import {LexError, SyntaxError} from "./Parser.js";
 
 
 const MAX_ARRAY_INDEX = 1E+15;
 
 const GAS_NAMES = {
   comp: "computation",
+  fetch: "fetching",
+  cacheSet: "cache inserting",
 };
+
+function getParsingGasCost(str) {
+  return {comp: str.length / 100 + 1};
+}
 
 
 
 export class ScriptInterpreter {
 
-  constructor(queryEntity, cache, builtInFunctions) {
-    this.queryEntity = queryEntity;
-    this.moduleCache = cache;
+  constructor(builtInFunctions, parsedScriptCache) {
     this.builtInFunctions = builtInFunctions;
+    this.fetchScript = builtInFunctions.fetchScript ?? (() => {
+      throw "ScriptInterpreter: builtInFunctions need to include fetchScript()"
+    })();
+    this.parsedScriptCache = parsedScriptCache;
   }
 
 
 
 
-  static preprocessScript(
-    moduleID, gas, importedModules = [], callerModules = []
+  static async preprocessScript(
+    scriptID, gas, parsedScripts = {}, requestedScriptIDs = [],
+    callerScriptIDs = []
   ) {
     // TODO: Get all moduleIDs, look for them in cache, and if not found,
     // query the defStr of the script entity, parse it, and add it to the cache.
@@ -47,8 +55,79 @@ export class ScriptInterpreter {
     // modules, why not.. Okay, let me do that.. ..Ah, and then we *can* the
     // permissions when we import structs..
 
-    
+    // First check that scriptID is not one of the callers, meaning that the
+    // preprocess recursion is infinite.
+    let indOfSelf = callerScriptIDs.indexOf(scriptID)
+    if (indOfSelf !== -1) {
+      throw new ImportError(
+        `Script @[${scriptID}] imports itself recursively through ` +
+        callerScriptIDs.slice(indOfSelf + 1).map(id => "@[" + id + "]")
+          .join(" -> ") +
+        " -> @[" + scriptID + "]"
+      );
+    }
 
+    // Try to get the parsed script first from the buffer, then from the cache.
+    let scriptSyntaxTree = parsedScripts["#" + scriptID];
+    if (!scriptSyntaxTree) {
+      scriptSyntaxTree = this.parsedScriptCache.get(scriptID);
+
+      // If gotten from the cache, also add it to parsedScripts.
+      if (scriptSyntaxTree) {
+        parsedScripts["#" + scriptID] = scriptSyntaxTree;
+      }
+    }
+
+    // Else fetch, parse, and cache it.
+    if (!scriptSyntaxTree) {
+      // Fetch.
+      // We pay the fetching gas only if the script is not already being
+      // fetched (assuming that the request won't be sent twice in that case).
+      let isRequested = requestedScriptIDs.includes(scriptID);
+      if (!isRequested) decrFetchGas(gas);
+      let script = await this.fetchScript(scriptID, gas);
+      if (!isRequested) requestedScriptIDs.push(scriptID);
+
+      // Parse.
+      payGas({comp: getParsingGasCost(script)});
+      let scriptSyntaxTree = this.parseScript(script);
+
+      // Cache.
+      parsedScripts["#" + scriptID] = scriptSyntaxTree;
+      payGas({cacheSet: 1});
+      this.parsedScriptCache.set(scriptID, scriptSyntaxTree);
+    }
+
+    // Once the script syntax tree is gotten, we look for any import statements
+    // at the top of the script, then call this method recursively in parallel
+    // to import dependencies.
+    if (syntaxTree.importStmtArr.length !== 0) {
+      // Append scriptID to callerScriptIDs (without muting the input), and
+      // initialize a promiseArr to process all the modules in parallel.
+      callerScriptIDs = [...callerScriptIDs, scriptID];
+      let promiseArr = [];
+      syntaxTree.importStmtArr.forEach((stmt, ind) => {
+        // Get the moduleID for the given import statement.
+        let moduleRef = stmt.moduleRef;
+        if (moduleRef.isTBD) throw new ImportError(
+          `Script @[${scriptID}] imports from a TBD entity reference`
+        );
+        let moduleID = moduleRef.lexeme;
+
+        // Then push callback to promiseArr.
+        promiseArr[ind] = this.preprocessScript(
+          moduleID, gas, parsedScripts, callerScriptIDs
+        );
+      });
+
+      // When having pushed all the callbacks to our promiseArr, we can execute
+      // them in parallel.
+      await Promise.all(promiseArr);
+    }
+
+    // When finally returning, parsedScripts should contain all the parsed
+    // modules that the script depends on, as well as the parsed script itself.
+    return; /* parsedScripts has now been muted. */
   }
 
 
@@ -878,10 +957,6 @@ export class Environment {
 
 
   export(ident, alias = ident, isDefault, flags = null, node) {
-    if (this.scopeType !== "module") throw new RuntimeError (
-      "Export from a nested scope",
-      node
-    );
     this.export["#" + alias] = [ident, isDefault, flags, node];
   }
 
@@ -933,6 +1008,13 @@ function payGas(gas, gasCost, node) {
 function decrCompGas(gas, node) {
   if (0 > --gas.comp) throw new RuntimeError(
     "Ran out of " + GAS_NAMES.comp + " gas",
+    node
+  );
+}
+
+function decrFetchGas(gas, node) {
+  if (0 > --gas.fetch) throw new RuntimeError(
+    "Ran out of " + GAS_NAMES.fetch + " gas",
     node
   );
 }
@@ -1017,7 +1099,7 @@ class ContinueException {
 
 
 
-export class SyntaxError {
+export class ImportError {
   constructor(msg, node) {
     this.msg = msg;
     this.node = node;
