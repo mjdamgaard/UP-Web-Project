@@ -10,7 +10,7 @@ const ARRAY_TYPE_MAX_LEN = 20;
 
 
 
-export class DataParser {
+export default class DataParser {
 
   static parseEntity(
     entType, defStr, len, creatorID, isEditable, readerWhitelistID
@@ -434,13 +434,20 @@ const scriptGrammar = {
   "import-statement": {
     rules: [
       ["/import/", "import-list", "/from/", "entity-reference", "/;/"],
+      ["/import/", "entity-reference", "/;/"],
     ],
     process: (syntaxTree) => {
-      syntaxTree.importArr = syntaxTree.children[1].children;
-      syntaxTree.moduleRef = syntaxTree.children[3];
-      syntaxTree.structImports = syntaxTree.importArr
-        .map(val => val.structRef ? [val.structRef, val.flagStr] : undefined)
-        .filter(val => val);
+      if (syntaxTree.ruleInd === 0) {
+        syntaxTree.importArr = syntaxTree.children[1].children;
+        syntaxTree.moduleRef = syntaxTree.children[3];
+        syntaxTree.structImports = syntaxTree.importArr
+          .map(val => val.structRef ? [val.structRef, val.flagStr] : undefined)
+          .filter(val => val);
+      } else {
+        syntaxTree.importArr = [];
+        syntaxTree.moduleRef = syntaxTree.children[1];
+        syntaxTree.structImports = [];
+      }
     },
   },
   "import-list": {
@@ -644,7 +651,7 @@ const scriptGrammar = {
   },
   "parameter": {
     rules: [
-      ["identifier", "/:/", "type", "/=/", "literal!"],
+      ["identifier", "/:/", "type", "/=/", "expression!"],
       ["identifier", "/:/", "type", /\?/],
       ["identifier", "/:/", "type!"],
       ["identifier"],

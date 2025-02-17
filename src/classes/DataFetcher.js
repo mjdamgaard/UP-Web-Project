@@ -14,7 +14,7 @@ const RELEVANT_QUAL_ID = basicEntIDs["qualities/relevant"];
 
 
 
-export class DataFetcher {
+export default class DataFetcher {
 
   constructor(getAccountData) {
     this.getAccountData = getAccountData;

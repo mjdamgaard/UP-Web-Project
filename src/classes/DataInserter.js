@@ -10,7 +10,7 @@ const PATH_REGEX = /^[^0-9\[\]@,;"][^\[\]@,;"]*$/;
 
 
 
-export class DataInserter {
+export default class DataInserter {
 
   constructor(getAccountData, workspaceEntID) {
     this.getAccountData = getAccountData;

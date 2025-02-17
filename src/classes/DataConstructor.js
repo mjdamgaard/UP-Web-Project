@@ -3,7 +3,7 @@ import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
 
 
 
-export class DataConstructor {
+export default class DataConstructor {
 
   static getUserScoreListExplodedDefStr(userID, qualIDOrDefStr) {
     let qualRef = (/^[1-9][0-9]*$/.test(qualIDOrDefStr.toString())) ?

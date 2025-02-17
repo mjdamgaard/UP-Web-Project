@@ -2,7 +2,7 @@
 
 
 
-export class LazyCallbackHandler {
+export default class LazyCallbackHandler {
 
   constructor(delay) {
     this.delay = delay;
