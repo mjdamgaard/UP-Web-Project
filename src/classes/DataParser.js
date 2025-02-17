@@ -520,19 +520,19 @@ const scriptGrammar = {
   "export-statement": {
     rules: [
       [
-        "/export/", "/default/", "/struct/", "permission-specification!1?",
+        "/export/", "/default/", "/struct/!1", "permission-specification!1?",
         "function-declaration"
       ],
       ["/export/", "/default/", "function-declaration!1"],
       ["/export/", "/default/", "variable-declaration!1"],
       ["/export/", "/default/", "expression!", "/;/"],
       [
-        "/export/", "/struct/", "permission-specification!1?",
-        "function-declaration!"
+        "/export/", "/struct/!1", "permission-specification!1?",
+        "function-declaration"
       ],
       ["/export/", "function-declaration!1"],
       ["/export/", "variable-declaration!1"],
-      ["/export/", /\{/, "export-list", /\}/],
+      ["/export/", /\{/, "export-list!1?", /\}/],
     ],
     process: (syntaxTree) => {
       let ruleInd = syntaxTree.ruleInd;
@@ -554,7 +554,8 @@ const scriptGrammar = {
       } else if (ruleInd === 6) {
         syntaxTree.varDec = syntaxTree.children[1];
       } else {
-        syntaxTree.exportArr = syntaxTree.children[2].children;
+        syntaxTree.exportArr = syntaxTree.children[2].children[0]?.children ??
+          [];
       }
     },
   },
@@ -596,6 +597,7 @@ const scriptGrammar = {
       if (syntaxTree.ruleInd === 0) {
         syntaxTree.decType = "definition-list";
         syntaxTree.defList = syntaxTree.children[1].children;
+        syntaxTree.identList = syntaxTree.defList.map(val => val.ident);
       } else {
         syntaxTree.decType = "destructuring";
         syntaxTree.identList = syntaxTree.children[2].children.map(

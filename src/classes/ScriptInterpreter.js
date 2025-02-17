@@ -259,6 +259,15 @@ export class ScriptInterpreter {
         });
         environment.declare(imp.namespaceIdent, nsObj, true, imp);
       }
+      else if (imp.structRef) {
+        let structObj = new StructObject(imp.structRef.lexeme);
+        let requiredFlagStr = imp.flagStr;
+        Object.entries(exports).forEach(([safeKey, val]) => {
+          // TODO: Add only 'struct' exports where the permissions allow
+          // the flagStr.
+        });
+        environment.declare(imp.structIdent, structObj, true, imp);
+      }
       else if (imp.namedImportArr) {
         imp.namedImportArr.forEach(namedImp => {
           let ident = namedImp.ident;
@@ -272,38 +281,17 @@ export class ScriptInterpreter {
           environment.declare(alias, val, true, namedImp);
         });
       }
-      else if (imp.structRef) {
-        let structObj = {};
-        Object.entries(exports).forEach(([key, val]) => {
-          let exportFlags = val[2];
-          let importFlagArr = (imp.flagStr ?? "").split("");
-          let intendToImport = true;
-          for (let exportFlag of exportFlags) {
-            if (!importFlagArr.includes(exportFlag)) {
-              intendToImport = false;
-              break;
-            }
-          }
-          // if (canImportStructMethod()) {
-
-          // }
-          structObj[key] = val[0];
-        });
-        environment.declare(imp.structIdent, structObj, true, imp);
-      }
       else {
-
+        environment.declare(
+          imp.defaultIdent, exports.defaultExport, true, imp
+        );
       }
     });
-
-    // First, if the import statement imports 
   }
 
 
 
   executeOuterStatement(stmtSyntaxTree, environment) {
-    decrCompGas(environment.gas);
-
     let type = stmtSyntaxTree.type;
     switch (type) {
       case "statement": {
@@ -319,13 +307,32 @@ export class ScriptInterpreter {
         `statement type: "${type}"`
       );
     }
-
   }
 
 
-  executeExportStatement(stmtSyntaxTree, gas, environment) {
-    // ...
+  executeExportStatement(stmtSyntaxTree, environment) {
+    decrCompGas(environment.gas);
 
+    if (syntaxTree.exportArr) {
+      syntaxTree.exportArr.forEach(({ident, alias, isDefault}) => {
+
+      });
+    }
+    else {
+      let isDefault = stmtSyntaxTree.isDefault;
+      let isStructMethod = stmtSyntaxTree.flagStr !== undefined;
+      let flags = stmtSyntaxTree.flagStr;
+  
+      if (stmtSyntaxTree.funDec) {
+        this.executeStatement(stmtSyntaxTree.funDec, environment);
+        environment.export(stmtSyntaxTree.funDec.name);
+      }
+      else if (stmtSyntaxTree.varDec) {
+        this.executeStatement(stmtSyntaxTree.varDec, environment);
+        val = environment.get(stmtSyntaxTree.funDec.name);
+      }
+  
+    }
   }
 
 
@@ -715,7 +722,7 @@ export class ScriptInterpreter {
             case "<>": {
               let accType = getType(acc);
               let nextType = getType(nextVal);
-              if ( accType === "string" || accType === "int") {
+              if (accType === "string" || accType === "int") {
                 if (accType !== "string" && accType !== "int") {
                     throw new RuntimeError(
                     "Concatenation of a non-string/int to a string/int",
@@ -927,10 +934,14 @@ export class ScriptInterpreter {
         // where 'this' is normally only bound at the time when the method is
         // being called.)
         if (ret instanceof DefinedFunction || ret instanceof BuiltInFunction) {
-          ret = new ThisBoundFunction(ret, expVal);
+          ret = new ThisBoundFunction(
+            ret, expVal, (exp instanceof StructObject)
+          );
         }
         else if (ret instanceof ThisBoundFunction) {
-          ret = new ThisBoundFunction(ret.retVal, expVal);
+          ret = new ThisBoundFunction(
+            ret.funVal, expVal, (exp instanceof StructObject)
+          );
         }
 
         return ret;
@@ -1022,7 +1033,7 @@ export class ScriptInterpreter {
 
   getMemberAccessExpValAndSafeIndex(memAccSyntaxTree, environment) {
     // Evaluate the expression.
-    let expVal = this.evaluateExpression( memAccSyntaxTree.exp, environment);
+    let expVal = this.evaluateExpression(memAccSyntaxTree.exp, environment);
 
     // Now get the index value.
     let indexExp = memAccSyntaxTree.postfix;
@@ -1052,6 +1063,12 @@ export class ScriptInterpreter {
     else if (!expVal || typeof expVal !== "object") {
       throw new RuntimeError(
         "Assignment to a member of a non-object",
+        memAccSyntaxTree
+      );
+    }
+    else if (expVal instanceof StructObject) {
+      throw new RuntimeError(
+        "Assignment to a member of an immutable struct object",
         memAccSyntaxTree
       );
     }
@@ -1146,35 +1163,18 @@ export class Environment {
   }
 
 
-  export(ident, alias = ident, isDefault, flags = null, node) {
-    this.export["#" + alias] = [ident, isDefault, flags, node];
-  }
-
-  getFinalExports() {
-    if (this.finalExports) {
-      return this.finalExports;
+  export(
+    ident = "default", alias = ident, isDefault, isStructMethod, flags, node
+  ) {
+    if (isDefault) {
+      if (this.export.defaultExport) throw new RuntimeError(
+        "More than one default export detected",
+        node
+      );
+      this.export.defaultExport = [ident, isStructMethod, flags];
+      this.export["#default"] = [ident, isStructMethod, flags];
     } else {
-      let ret = {...this.exports};
-      let defaultExport = false;
-
-      Object.keys(this.exports).map(key => {
-        let curExport = ret[key];
-        let ident = curExport[0];
-        curExport[0] = this.get(ident);
-
-        let isDefault = curExport[1];
-        if (isDefault) {
-          if (defaultExport) throw new RuntimeError(
-            "More than one default export detected",
-            curExport[3]
-          );
-          defaultExport = curExport;
-        }
-      });
-
-      ret.defaultExport = defaultExport;
-      this.finalExports = ret;
-      return ret;
+      this.export["#" + alias] = [ident, isStructMethod, flags];
     }
   }
 }
@@ -1256,15 +1256,16 @@ class BuiltInFunction {
 }
 
 class ThisBoundFunction {
-  constructor(funVal, thisVal) {
+  constructor(funVal, thisVal, isStructMethod = false) {
     this.funVal = funVal;
     this.thisVal = thisVal;
+    this.isStructMethod = isStructMethod;
   }
 }
 
 class StructObject {
-  constructor(methods) {
-    this.methods = methods;
+  constructor(structID) {
+    this.structID = structID;
   }
 }
 
