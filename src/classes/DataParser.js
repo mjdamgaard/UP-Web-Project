@@ -413,7 +413,8 @@ export const regEntStringContentParser = new Parser(
 const RESERVED_KEYWORD_REGEXP = new RegExp(
   "^(let|var|const|this|function|export|import|break|continue|return|throw|" +
   "if|else|switch|case|void|typeof|instanceof|delete|await|class|static|" +
-  "true|false|null|undefined|Infinity|try|catch|finally|for|while|do|default)$"
+  "true|false|null|undefined|Infinity|NaN|try|catch|finally|for|while|do|" +
+  "default|struct)$"
   // TODO: Continue this list.
 );
 
@@ -519,32 +520,38 @@ const scriptGrammar = {
   "export-statement": {
     rules: [
       [
-        "/export/", "permission-specification", "/default/",
+        "/export/", "/default/", "/struct/", "permission-specification!1?",
         "function-declaration"
       ],
-      ["/export/", "permission-specification", "function-declaration!"],
       ["/export/", "/default/", "function-declaration!1"],
       ["/export/", "/default/", "variable-declaration!1"],
       ["/export/", "/default/", "expression!", "/;/"],
+      [
+        "/export/", "/struct/", "permission-specification!1?",
+        "function-declaration!"
+      ],
       ["/export/", "function-declaration!1"],
       ["/export/", "variable-declaration!1"],
       ["/export/", /\{/, "export-list", /\}/],
     ],
     process: (syntaxTree) => {
       let ruleInd = syntaxTree.ruleInd;
-      syntaxTree.isDefault = (ruleInd === 0 || 2 <= ruleInd && ruleInd <= 4);
+      syntaxTree.isDefault = (ruleInd <= 3);
       if (ruleInd === 0) {
-        syntaxTree.flagStr = syntaxTree.children[1].flagStr;
-        syntaxTree.funDec = syntaxTree.children[3];
+        syntaxTree.flagStr = syntaxTree.children[3].children[0]?.flagStr ?? "";
+        syntaxTree.funDec = syntaxTree.children[4];
       } else if (ruleInd === 1) {
         syntaxTree.funDec = syntaxTree.children[2];
-      } else if (ruleInd === 1) {
-        syntaxTree.varDec = syntaxTree.children[2];
       } else if (ruleInd === 2) {
-        syntaxTree.exp = syntaxTree.children[2];
+        syntaxTree.varDec = syntaxTree.children[2];
       } else if (ruleInd === 3) {
-        syntaxTree.funDec = syntaxTree.children[1];
+        syntaxTree.exp = syntaxTree.children[2];
       } else if (ruleInd === 4) {
+        syntaxTree.flagStr = syntaxTree.children[2].children[0]?.flagStr ?? "";
+        syntaxTree.funDec = syntaxTree.children[3];
+      } else if (ruleInd === 5) {
+        syntaxTree.funDec = syntaxTree.children[1];
+      } else if (ruleInd === 6) {
         syntaxTree.varDec = syntaxTree.children[1];
       } else {
         syntaxTree.exportArr = syntaxTree.children[2].children;

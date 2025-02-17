@@ -1073,8 +1073,8 @@ export const UNDEFINED = {enum: "undefined"};
 export class Environment {
   constructor(
     parent = undefined, thisVal = undefined, scopeType = "block",
-    log = undefined, gas = undefined, scriptID = undefined,
-    reqUserID = undefined, structID = undefined, structDefStr = undefined,
+    log = undefined, gas = undefined, reqUserID = undefined,
+    structID = undefined, structDefs = undefined,
   ) {
     this.parent = parent;
     this.scopeType = scopeType;
@@ -1086,6 +1086,7 @@ export class Environment {
       throw "Environment: No gas object provided";
     })();
     this.reqUserID = reqUserID ?? parent?.reqUserID ?? undefined;
+    this.structID = structID ?? parent?.structID ?? undefined;
     this.structDefs = structDefs ?? parent?.structDefs ?? undefined;
     if (scopeType === "module") {
       this.exports = {};
@@ -1258,6 +1259,12 @@ class ThisBoundFunction {
   constructor(funVal, thisVal) {
     this.funVal = funVal;
     this.thisVal = thisVal;
+  }
+}
+
+class StructObject {
+  constructor(methods) {
+    this.methods = methods;
   }
 }
 
