@@ -216,7 +216,7 @@ const jsonGrammar = {
 
       // Test that the resulting string is a valid JSON string. 
       try {
-        JSON.parse(stringLiteral);
+        syntaxTree.str = JSON.parse(stringLiteral);
       } catch (error) {
         return [false, `Invalid JSON string: ${stringLiteral}`];
       }
@@ -462,10 +462,8 @@ const scriptGrammar = {
     rules: [
       [/\*/, "/as/!", "identifier"],
       [/\{/, "named-import-list!1?", /\}/],
-      [
-        "/struct/", "entity-reference!", "permission-specification!1?", "/as/",
-        "identifier",
-      ],
+      ["/struct/", "string", "entity-reference!", "/as/", "identifier"],
+      ["/struct/", "entity-reference!", "/as/", "identifier"],
       ["identifier"],
     ],
     process: (syntaxTree) => {
@@ -476,7 +474,11 @@ const scriptGrammar = {
           ?.children ?? [];
       } else if (syntaxTree.ruleInd === 2) {
         syntaxTree.structRef = syntaxTree.children[1];
-        syntaxTree.flagStr = syntaxTree.children[2].children[0]?.flagStr;
+        syntaxTree.flagStr = syntaxTree.children[1].str;
+        syntaxTree.structIdent = syntaxTree.children[4].lexeme;
+      } else if (syntaxTree.ruleInd === 3) {
+        syntaxTree.structRef = syntaxTree.children[1];
+        syntaxTree.flagStr = "";
         syntaxTree.structIdent = syntaxTree.children[4].lexeme;
       } else {
         syntaxTree.defaultIdent = syntaxTree.children[0].lexeme;
@@ -502,14 +504,6 @@ const scriptGrammar = {
       syntaxTree.alias = syntaxTree.children[2]?.lexeme;
     },
   },
-  "permission-specification": {
-    rules: [
-      ["/with/", "string"],
-    ],
-    process: (syntaxTree) => {
-      syntaxTree.flagStr = JSON.parse(syntaxTree.children[1].lexeme);
-    },
-  },
   "outer-statement": {
     rules: [
       ["export-statement!1"],
@@ -519,44 +513,65 @@ const scriptGrammar = {
   },
   "export-statement": {
     rules: [
-      [
-        "/export/", "/default/", "/struct/!1", "permission-specification!1?",
-        "function-declaration"
-      ],
-      ["/export/", "/default/", "function-declaration!1"],
-      ["/export/", "/default/", "variable-declaration!1"],
-      ["/export/", "/default/", "expression!", "/;/"],
-      [
-        "/export/", "/struct/!1", "permission-specification!1?",
-        "function-declaration"
-      ],
-      ["/export/", "function-declaration!1"],
-      ["/export/", "variable-declaration!1"],
-      ["/export/", /\{/, "export-list!1?", /\}/],
+      ["/export/", "/default/", "/struct/", "string", "statement!"],
+      ["/export/", "/default/", "/struct/", "statement!"],
+      ["/export/", "/default/", "statement!"],
+      ["/export/", "/struct/", "string", /\{/, "export-list!1?!", /\}/],
+      ["/export/", "/struct/", "string", "statement!"],
+      ["/export/", "/struct/", /\{/, "export-list!1?!", /\}/],
+      ["/export/", "/struct/", "statement!"],
+      ["/export/", /\{/, "export-list!1?!", /\}/],
+      ["/export/", "statement"],
     ],
     process: (syntaxTree) => {
       let ruleInd = syntaxTree.ruleInd;
-      syntaxTree.isDefault = (ruleInd <= 3);
+      syntaxTree.isDefault = (ruleInd <= 2);
       if (ruleInd === 0) {
-        syntaxTree.flagStr = syntaxTree.children[3].children[0]?.flagStr ?? "";
-        syntaxTree.funDec = syntaxTree.children[4];
+        syntaxTree.flagStr = syntaxTree.children[3].str;
+        syntaxTree.stmt = syntaxTree.children[4];
       } else if (ruleInd === 1) {
-        syntaxTree.funDec = syntaxTree.children[2];
+        syntaxTree.flagStr = "";
+        syntaxTree.stmt = syntaxTree.children[3];
       } else if (ruleInd === 2) {
-        syntaxTree.varDec = syntaxTree.children[2];
+        syntaxTree.stmt = syntaxTree.children[2];
       } else if (ruleInd === 3) {
-        syntaxTree.exp = syntaxTree.children[2];
+        syntaxTree.flagStr = syntaxTree.children[2].str;
+        syntaxTree.exportArr =
+          syntaxTree.children[4].children[0]?.children ?? [];
       } else if (ruleInd === 4) {
-        syntaxTree.flagStr = syntaxTree.children[2].children[0]?.flagStr ?? "";
-        syntaxTree.funDec = syntaxTree.children[3];
+        syntaxTree.flagStr = syntaxTree.children[2].str;
+        syntaxTree.stmt = syntaxTree.children[3];
       } else if (ruleInd === 5) {
-        syntaxTree.funDec = syntaxTree.children[1];
+        syntaxTree.flagStr = "";
+        syntaxTree.exportArr =
+          syntaxTree.children[3].children[0]?.children ?? [];
+      } else if (ruleInd === 5) {
+        syntaxTree.flagStr = "";
+        syntaxTree.stmt = syntaxTree.children[2];
       } else if (ruleInd === 6) {
-        syntaxTree.varDec = syntaxTree.children[1];
+        syntaxTree.exportArr =
+          syntaxTree.children[2].children[0]?.children ?? [];
       } else {
-        syntaxTree.exportArr = syntaxTree.children[2].children[0]?.children ??
-          [];
+        syntaxTree.stmt = syntaxTree.children[1];
       }
+
+      let allowedStmtTypes = (ruleInd <= 2) ? [
+        "function-declaration", "variable-declaration", "expression-statement"
+      ] : [
+        "function-declaration", "variable-declaration"
+      ];
+      if (syntaxTree.stmt && !allowedStmtTypes.includes(syntaxTree.type)) {
+        if (syntaxTree.type === "expression-statement") {
+          return [false, "Unnamed export for a non-default export statement"];
+        } else {
+          return [
+            false,
+            "Export statement must be a function or variable declaration"
+          ];
+        }
+      }
+
+      syntaxTree.exportArr = [/*TODO...*/];
     },
   },
   "export-list": {

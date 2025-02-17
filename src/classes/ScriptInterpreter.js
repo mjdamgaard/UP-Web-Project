@@ -313,26 +313,22 @@ export class ScriptInterpreter {
   executeExportStatement(stmtSyntaxTree, environment) {
     decrCompGas(environment.gas);
 
-    if (syntaxTree.exportArr) {
-      syntaxTree.exportArr.forEach(({ident, alias, isDefault}) => {
-
-      });
-    }
-    else {
-      let isDefault = stmtSyntaxTree.isDefault;
-      let isStructMethod = stmtSyntaxTree.flagStr !== undefined;
-      let flags = stmtSyntaxTree.flagStr;
-  
-      if (stmtSyntaxTree.funDec) {
-        this.executeStatement(stmtSyntaxTree.funDec, environment);
-        environment.export(stmtSyntaxTree.funDec.name);
+    let isStructProp = (syntaxTree.flagStr !== undefined);
+    let stmt = syntaxTree.stmt;
+    if (stmt) {
+      if (stmt.type === "expression-statement") {
+        let val = this.evaluateExpression(stmt.exp);
+        environment.export(
+          undefined, undefined, true, isStructProp, syntaxTree.flagStr,
+          stmtSyntaxTree
+        );
+      } else {
+        this.executeStatement(stmtSyntaxTree.stmt, environment);
       }
-      else if (stmtSyntaxTree.varDec) {
-        this.executeStatement(stmtSyntaxTree.varDec, environment);
-        val = environment.get(stmtSyntaxTree.funDec.name);
-      }
-  
     }
+    stmtSyntaxTree.exportArr.forEach(([ident, alias, isDefault, flags]) => {
+      environment.export(ident, alias, isDefault, isStructProp, flags);
+    });
   }
 
 
@@ -1164,17 +1160,17 @@ export class Environment {
 
 
   export(
-    ident = "default", alias = ident, isDefault, isStructMethod, flags, node
+    ident = "default", alias = ident, isDefault, isStructProp, flags, node
   ) {
     if (isDefault) {
       if (this.export.defaultExport) throw new RuntimeError(
         "More than one default export detected",
         node
       );
-      this.export.defaultExport = [ident, isStructMethod, flags];
-      this.export["#default"] = [ident, isStructMethod, flags];
+      this.export.defaultExport = [ident, isStructProp, flags];
+      this.export["#default"] = [ident, isStructProp, flags];
     } else {
-      this.export["#" + alias] = [ident, isStructMethod, flags];
+      this.export["#" + alias] = [ident, isStructProp, flags];
     }
   }
 }
@@ -1256,10 +1252,10 @@ class BuiltInFunction {
 }
 
 class ThisBoundFunction {
-  constructor(funVal, thisVal, isStructMethod = false) {
+  constructor(funVal, thisVal, isStructProp = false) {
     this.funVal = funVal;
     this.thisVal = thisVal;
-    this.isStructMethod = isStructMethod;
+    this.isStructProp = isStructProp;
   }
 }
 
