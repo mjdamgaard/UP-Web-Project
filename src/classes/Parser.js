@@ -83,7 +83,7 @@ export const EOS_ERROR = "End of partial string";
 // comments) when lexing the string. This whitespace pattern will be tried
 // first thing whenever a new lexeme is lexed.
 // </param>
-export default class Parser {
+export class Parser {
   constructor(grammar, defaultSym, lexemePatternArr, wsPattern) {
     this.grammar = grammar;
     this.defaultSym = defaultSym;
@@ -832,7 +832,6 @@ export class Lexer {
 
 
 
-
 export class LexError {
   constructor(msg, ln, col) {
     this.msg = msg;
@@ -865,3 +864,6 @@ export function getLnAndCol(str) {
 }
 
 
+
+
+export {Parser as default};

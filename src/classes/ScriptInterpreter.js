@@ -19,7 +19,7 @@ function getParsingGasCost(str) {
 
 
 
-export default class ScriptInterpreter {
+export class ScriptInterpreter {
 
   constructor(builtInFunctions, parsedScriptCache) {
     this.builtInFunctions = builtInFunctions;
@@ -49,7 +49,7 @@ export default class ScriptInterpreter {
     // preprocess recursion is infinite.
     let indOfSelf = callerScriptIDs.indexOf(scriptID)
     if (indOfSelf !== -1) {
-      throw new ImportError(
+      throw new PreprocessingError(
         `Script @[${scriptID}] imports itself recursively through ` +
         callerScriptIDs.slice(indOfSelf + 1).map(id => "@[" + id + "]")
           .join(" -> ") +
@@ -98,7 +98,7 @@ export default class ScriptInterpreter {
       scriptSyntaxTree.importStmtArr.forEach(stmt => {
         // Get the moduleID for the given import statement.
         let moduleRef = stmt.moduleRef;
-        if (moduleRef.isTBD) throw new ImportError(
+        if (moduleRef.isTBD) throw new PreprocessingError(
           `Script @[${scriptID}] imports from a TBD module reference`
         );
         let moduleID = moduleRef.lexeme;
@@ -117,7 +117,7 @@ export default class ScriptInterpreter {
         stmt.structImports.forEach(([structRef, flagStr]) => {
           // Get the structID, or throw if the structRef is yet just a
           // placeholder.
-          if (structRef.isTBD) throw new ImportError(
+          if (structRef.isTBD) throw new PreprocessingError(
             `Script @[${scriptID}] imports a TBD struct reference`
           );
           let structID = structRef.lexeme;
@@ -128,11 +128,13 @@ export default class ScriptInterpreter {
           let permFlagArr = (modulePermissions + structPermissions).split("");
           let requiredFlagArr = flagStr.split("");
           for (let requiredFlag of requiredFlagArr) {
-            if (!permFlagArr.includes(requiredFlag)) throw new ImportError(
-              `Script @[${scriptID}] imports Struct @[${structID}] ` +
-              `from Module @[${moduleID}] with Permission flag ` +
-              `"${requiredFlag}" not granted`
-            );
+            if (!permFlagArr.includes(requiredFlag)) {
+              throw new PreprocessingError(
+                `Script @[${scriptID}] imports Struct @[${structID}] ` +
+                `from Module @[${moduleID}] with Permission flag ` +
+                `"${requiredFlag}" not granted`
+              );
+            }
           }
 
           // We also push [structID, moduleID] to structAndModulePairs such
@@ -159,9 +161,8 @@ export default class ScriptInterpreter {
         structModuleIDs[safeKey] = this.getStructModuleIDs(gas, structDef);
       });
       structAndModulePairs.forEach(([structID, moduleID]) => {
-        let 
         if (!structModuleIDs["#" + structID].includes(moduleID)) {
-          throw new ImportError(
+          throw new PreprocessingError(
             `Script @[${scriptID}] imports Struct @[${structID}] from a ` +
             `module, @[${moduleID}], that is not one of the struct's own`
           );
@@ -246,6 +247,16 @@ export default class ScriptInterpreter {
         });
         moduleEnv.declare(imp.namespaceIdent, nsObj, true, imp);
       }
+      if (imp.namedImportArr) {
+        imp.namedImportArr.forEach(namedImp => {
+          let ident = syntaxTree.ident;
+          if (!ident) {
+            
+          }
+
+          moduleEnv.declare(imp.namespaceIdent, nsObj, true, imp);
+        });
+      }
       else if (imp.structIdent) {
         let structObj = {};
         Object.entries(exports).forEach(([key, val]) => {
@@ -264,6 +275,9 @@ export default class ScriptInterpreter {
           structObj[key] = val[0];
         });
         moduleEnv.declare(imp.structIdent, structObj, true, imp);
+      }
+      else {
+
       }
     });
 
@@ -1158,7 +1172,7 @@ function payGas(gas, gasCost, node) {
     if (gas[key] ??= 0) {
       gas[key] -= gasCost[key];
     }
-    if (gas[key] < 0) throw new RuntimeError(
+    if (gas[key] < 0) throw new OutOfGasError(
       "Ran out of " + GAS_NAMES[key] + "gas",
       node
     );
@@ -1166,14 +1180,14 @@ function payGas(gas, gasCost, node) {
 }
 
 function decrCompGas(gas, node) {
-  if (0 > --gas.comp) throw new RuntimeError(
+  if (0 > --gas.comp) throw new OutOfGasError(
     "Ran out of " + GAS_NAMES.comp + " gas",
     node
   );
 }
 
 function decrFetchGas(gas, node) {
-  if (0 > --gas.fetch) throw new RuntimeError(
+  if (0 > --gas.fetch) throw new OutOfGasError(
     "Ran out of " + GAS_NAMES.fetch + " gas",
     node
   );
@@ -1259,7 +1273,14 @@ class ContinueException {
 
 
 
-export class ImportError {
+export class PreprocessingError {
+  constructor(msg, node) {
+    this.msg = msg;
+    this.node = node;
+  }
+}
+
+export class OutOfGasError {
   constructor(msg, node) {
     this.msg = msg;
     this.node = node;
@@ -1279,3 +1300,8 @@ export class CustomError {
     this.node = node;
   }
 }
+
+
+
+
+export {ScriptInterpreter as default};

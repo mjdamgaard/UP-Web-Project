@@ -10,7 +10,7 @@ const ARRAY_TYPE_MAX_LEN = 20;
 
 
 
-export default class DataParser {
+export class DataParser {
 
   static parseEntity(
     entType, defStr, len, creatorID, isEditable, readerWhitelistID
@@ -459,22 +459,26 @@ const scriptGrammar = {
   },
   "import": {
     rules: [
-      [/\*/, "/as/", "identifier"],
-      [/\{/, "named-import-list", /\}/],
+      [/\*/, "/as/!", "identifier"],
+      [/\{/, "named-import-list!1?", /\}/],
+      [
+        "/struct/", "entity-reference!", "permission-specification!1?", "/as/",
+        "identifier",
+      ],
       ["identifier"],
-      ["entity-reference", "permission-specification?", "/as/", "identifier"],
     ],
     process: (syntaxTree) => {
       if (syntaxTree.ruleInd === 0) {
         syntaxTree.namespaceIdent = syntaxTree.children[2].lexeme;
       } else if (syntaxTree.ruleInd === 1) {
-        syntaxTree.namedImportArr = syntaxTree.children[1].children;
+        syntaxTree.namedImportArr = syntaxTree.children[1].children[0]
+          ?.children ?? [];
       } else if (syntaxTree.ruleInd === 2) {
-        syntaxTree.defaultIdent = syntaxTree.children[0].lexeme;
-      } else {
-        syntaxTree.structRef = syntaxTree.children[0];
-        syntaxTree.flagStr = syntaxTree.children[1].children[0]?.flagStr;
+        syntaxTree.structRef = syntaxTree.children[1];
+        syntaxTree.flagStr = syntaxTree.children[2].children[0]?.flagStr;
         syntaxTree.structIdent = syntaxTree.children[4].lexeme;
+      } else {
+        syntaxTree.defaultIdent = syntaxTree.children[0].lexeme;
       }
     },
   },
@@ -487,11 +491,13 @@ const scriptGrammar = {
   },
   "named-import": {
     rules: [
+      ["/default/", "/as/!", "identifier"],
       ["identifier", "/as/", "identifier!"],
       ["identifier"],
     ],
     process: (syntaxTree) => {
-      syntaxTree.moduleIdent = syntaxTree.children[0].lexeme;
+      syntaxTree.ident = (syntaxTree.ruleInd === 0) ? undefined :
+        syntaxTree.children[0].lexeme;
       syntaxTree.alias = syntaxTree.children[2]?.lexeme;
     },
   },

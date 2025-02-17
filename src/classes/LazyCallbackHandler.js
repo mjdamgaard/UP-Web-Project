@@ -2,7 +2,7 @@
 
 
 
-export default class LazyCallbackHandler {
+export class LazyCallbackHandler {
 
   constructor(delay) {
     this.delay = delay;
@@ -22,6 +22,8 @@ export default class LazyCallbackHandler {
     );
   }
 }
+
+export {LazyCallbackHandler as default};
 
 
 // export class LazyDelayedPromise {

@@ -1,7 +1,7 @@
 
 
 
-export default class CombinedCache {
+export class CombinedCache {
 
   constructor(
     lruCacheLimit, priorityCachelimit,
@@ -276,3 +276,8 @@ export class LRUCache {
   }
 
 }
+
+
+
+
+export {CombinedCache as default};

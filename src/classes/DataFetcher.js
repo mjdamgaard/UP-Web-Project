@@ -14,7 +14,7 @@ const RELEVANT_QUAL_ID = basicEntIDs["qualities/relevant"];
 
 
 
-export default class DataFetcher {
+export class DataFetcher {
 
   constructor(getAccountData) {
     this.getAccountData = getAccountData;
@@ -438,3 +438,10 @@ export async function hashPromise(string) {
     .join("");
   return hashHex;
 }
+
+
+
+
+
+
+export {DataFetcher as default};
