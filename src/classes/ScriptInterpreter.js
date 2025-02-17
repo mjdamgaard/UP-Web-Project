@@ -24,10 +24,11 @@ export class ScriptInterpreter {
   constructor(builtInFunctions, parsedScriptCache) {
     this.builtInFunctions = builtInFunctions;
     this.fetchScript = builtInFunctions.fetchScript ?? (() => {
-      throw "ScriptInterpreter: builtInFunctions need to include fetchScript()"
+      throw "ScriptInterpreter: builtInFunctions need to include fetchScript()";
     })();
-    this.fetchRegEnt = builtInFunctions.fetchRegEnt ?? (() => {
-      throw "ScriptInterpreter: builtInFunctions need to include fetchRegEnt()"
+    this.fetchStructDef = builtInFunctions.fetchStructDef ?? (() => {
+      throw "ScriptInterpreter: builtInFunctions need to include " +
+        "fetchStructDef()";
     })();
     this.parsedScriptCache = parsedScriptCache;
   }
@@ -36,9 +37,11 @@ export class ScriptInterpreter {
 
 
   static async preprocessScript(
-    gas, scriptID, structID, parsedScripts = {}, structDefs = {},
-    requestedScriptIDs = [], callerScriptIDs = []
+    gas, scriptID, parsedScripts = {}, structDefs = {}, structModuleIDs = {},
+    callerScriptIDs = []
   ) {
+    decrCompGas(gas);
+
     // First check that scriptID is not one of the callers, meaning that the
     // preprocess recursion is infinite.
     let indOfSelf = callerScriptIDs.indexOf(scriptID)
@@ -51,19 +54,12 @@ export class ScriptInterpreter {
       );
     }
 
-    // Before fetching the script, we also immediately send a request for the
-    // definition string of the struct, if one is provided.
-    let structDefStrPromise;
-    if (structID) {
-      structDefStrPromise = this.fetchRegEnt(gas, structID);
-    }
-
     // Try to get the parsed script first from the buffer, then from the cache.
     let scriptSyntaxTree = parsedScripts["#" + scriptID];
     if (!scriptSyntaxTree) {
       scriptSyntaxTree = this.parsedScriptCache.get(scriptID);
 
-      // If gotten from the cache, also add it to parsedScripts.
+      // If gotten from the cache, also add it to the parsedScripts buffer.
       if (scriptSyntaxTree) {
         parsedScripts["#" + scriptID] = scriptSyntaxTree;
       }
@@ -72,12 +68,7 @@ export class ScriptInterpreter {
     // Else fetch, parse, and cache it.
     if (!scriptSyntaxTree) {
       // Fetch.
-      // We pay the fetching gas only if the script is not already being
-      // fetched (assuming that the request won't be sent twice in that case).
-      let isRequested = requestedScriptIDs.includes(scriptID);
-      if (!isRequested) decrFetchGas(gas);
       let script = await this.fetchScript(gas, scriptID);
-      if (!isRequested) requestedScriptIDs.push(scriptID);
 
       // Parse.
       payGas({comp: getParsingGasCost(script)});
@@ -94,32 +85,88 @@ export class ScriptInterpreter {
     // to import dependencies.
     if (scriptSyntaxTree.importStmtArr.length !== 0) {
       // Append scriptID to callerScriptIDs (without muting the input), and
-      // initialize a promiseArr to process all the modules in parallel.
+      // initialize a promiseArr to process all the modules in parallel, as
+      // well as an array with all imported structs' IDs, and the IDs of the
+      // modules they import from, which will later be used to verify that no
+      // struct imports from a wrong module.
       callerScriptIDs = [...callerScriptIDs, scriptID];
       let promiseArr = [];
-      scriptSyntaxTree.importStmtArr.forEach((stmt, ind) => {
+      let structAndModulePairs = [];
+      scriptSyntaxTree.importStmtArr.forEach(stmt => {
         // Get the moduleID for the given import statement.
         let moduleRef = stmt.moduleRef;
         if (moduleRef.isTBD) throw new ImportError(
-          `Script @[${scriptID}] imports from a TBD entity reference`
+          `Script @[${scriptID}] imports from a TBD module reference`
         );
         let moduleID = moduleRef.lexeme;
 
-        // Then push callback to promiseArr.
-        promiseArr[ind] = this.preprocessScript(
-          moduleID, gas, parsedScripts, callerScriptIDs
+        // Then push a promise preprocess the module to promiseArr.
+        promiseArr.push(
+          this.preprocessScript(
+            gas, moduleID, parsedScripts, structDefs, structModuleIDs,
+            callerScriptIDs,
+          )
         );
+
+        // And for each structRef in the import statement, we also want to push
+        // a promise to get the struct's definition, as well as to verify that
+        // the permissions that the struct import requires is granted.
+        let modulePermissions = permissions.modules["#" + moduleID] ?? "";
+        stmt.structImports.forEach(([structRef, flagStr]) => {
+          // Get the structID, or throw if the structRef is yet just a
+          // placeholder.
+          if (structRef.isTBD) throw new ImportError(
+            `Script @[${scriptID}] imports a TBD struct reference`
+          );
+          let structID = structRef.lexeme;
+
+          // Also check that the struct has the required permissions, or that
+          // its module does.
+          let structPermissions = permissions.structs["#" + structID] ?? "";
+          let permFlagArr = (modulePermissions + structPermissions).split("");
+          let requiredFlagArr = flagStr.split("");
+          for (let requiredFlag of requiredFlagArr) {
+            if (!permFlagArr.includes(requiredFlag)) throw new ImportError(
+              `Script @[${scriptID}] imports Struct @[${structID}] ` +
+              `from Module @[${moduleID}] with Permission flag ` +
+              `"${requiredFlag}" not granted`
+            );
+          }
+
+          // We also push [structID, moduleID] to structAndModulePairs such
+          // that we can quickly verify that no struct imports from a wrong
+          // module once we have all the structDefs.
+          structAndModulePairs.push([structID, moduleID]);
+
+          // Then push a promise to fetch and store the struct's definition,
+          // as well as its moduleIDs, to promiseArr.
+          promiseArr.push(
+            this.fetchAndStoreStructDef(
+              gas, structID, structDefs, structModuleIDs
+            )
+          );
+        });
       });
 
-      // When having pushed all the callbacks to our promiseArr, we can execute
+      // When having pushed all the promises to promiseArr, we can execute
       // them in parallel.
       await Promise.all(promiseArr);
 
-      // We also wait for the structDefStr to return, if is is provided, and
-      // add it to structDefs.
-      if (structID) {
-        structDefs["#" + structID] = await structDefStrPromise;
-      }
+      // At this point structDefs ought to be completed, and we can therefore
+      // now also verify that no struct imports from a wrong module.
+      let structModuleIDs = {};
+      Object.entries(structDefs).forEach(([key, structDef]) => {
+        structModuleIDs[key] = this.getStructModuleIDs(gas, structDef);
+      });
+      structAndModulePairs.forEach(([structID, moduleID]) => {
+        let 
+        if (!structModuleIDs["#" + structID].includes(moduleID)) {
+          throw new ImportError(
+            `Script @[${scriptID}] imports Struct @[${structID}] from a ` +
+            `module, @[${moduleID}], that is not one of the struct's own`
+          );
+        }
+      });
     }
 
     // Finally return parsedScripts and structDefs.
@@ -128,11 +175,23 @@ export class ScriptInterpreter {
 
 
 
+  static async fetchAndStoreStructDef(
+    gas, structID, structDefs = {}, structModuleIDs = {},
+  ) {
+    let def = await this.fetchStructDef(gas, structID);
+    structDefs["#" + structID] = def;
+    structModuleIDs["#" + structID] = this.getStructIDs(gas, def);
+    return [structDefs, structModuleIDs];
+  }
+
+
+
 
   static executeScript(
-    gas, scriptID, parsedScript, structID, structDefs, reqUserID, permissions,
-    liveModules = {}, log = {}
+    gas, scriptID, parsedScripts, structID, structDefs, structModuleIDs,
+    reqUserID, permissions, liveModules = {}, log = {},
   ) {
+    let scriptSyntaxTree = parsedScripts["#" + scriptID];
     let structDefStr = (structID) ? structDefs["#" + structID] : undefined;
 
     // Create a new environment.
@@ -143,30 +202,43 @@ export class ScriptInterpreter {
 
 
     // First execute all import statements.
-    parsedScript.importStmtArr.forEach((stmt) => {
-      this.executeImportStatement(stmt, environment, liveModules);
+    scriptSyntaxTree.importStmtArr.forEach((stmt) => {
+      this.executeImportStatement(
+        stmt, environment, liveModules, // .............
+      );
     });
 
     // Then execute all other (outer) statements of the script.
-    parsedScript.importStmtArr.forEach((stmt) => {
+    scriptSyntaxTree.importStmtArr.forEach((stmt) => {
       this.executeOuterStatement(stmt, environment);
     });
 
     // Then return the liveModules, ready to be returned e.g. to an import
-    // statement, or to be used by callStructProcedures().
-    return liveModules;
+    // statement, or to be used by callStructProcedures(). Also return the log
+    // object.
+    return [liveModules, log];
   }
 
 
 
 
-  static executeImportStatement(stmtSyntaxTree, environment, liveModules) {
+  static executeImportStatement(
+    stmtSyntaxTree, environment, scriptID, parsedScripts, structID, structDefs,
+    reqUserID, permissions, liveModules, log,
+  ) {
     decrCompGas(environment.gas);
 
-    // Get the live environment of the module, and get the exports of that
-    // module.
+    // Get the live environment of the module, either from liveModules if the
+    // module has already been executed, or otherwise by executing it.
     let moduleID = stmtSyntaxTree.moduleRef.lexeme;
     let moduleEnv = liveModules["#" + moduleID];
+    if (!moduleEnv) {
+      this.executeScript(
+        gas, moduleID, parsedScripts, undefined, structDefs, reqUserID,
+        permissions, liveModules, log,
+      );
+      moduleEnv = liveModules["#" + moduleID];
+    }
     let exports = moduleEnv.getFinalExports()
 
 
@@ -178,7 +250,7 @@ export class ScriptInterpreter {
         Object.entries(exports).forEach(([key, val]) => {
           nsObj[key] = val[0];
         });
-        moduleEnv.declare(imp.namespaceIdent, nsObj, true, "module", imp);
+        moduleEnv.declare(imp.namespaceIdent, nsObj, true, imp);
       }
       else if (imp.structIdent) {
         let structObj = {};
@@ -192,12 +264,12 @@ export class ScriptInterpreter {
               break;
             }
           }
-          if (canImportStructMethod()) {
+          // if (canImportStructMethod()) {
 
-          }
+          // }
           structObj[key] = val[0];
         });
-        moduleEnv.declare(imp.namespaceIdent, nsObj, true, "module", imp);
+        moduleEnv.declare(imp.structIdent, structObj, true, imp);
       }
     });
 
@@ -279,7 +351,7 @@ export class ScriptInterpreter {
       }
 
       // Then declare the parameter in the new environment.
-      newEnv.declare(paramName, paramVal, false, "block", param);
+      newEnv.declare(paramName, paramVal, false, param);
     });
 
     // Now execute the statements inside a try-catch statement to catch any
@@ -378,7 +450,7 @@ export class ScriptInterpreter {
           if (err instanceof RuntimeError || err instanceof CustomError) {
             let newEnv = new Environment(environment);
             newEnv.declare(
-              stmtSyntaxTree.ident, err.msg, false, "block", stmtSyntaxTree
+              stmtSyntaxTree.ident, err.msg, false, stmtSyntaxTree
             );
             this.executeStatement(stmtSyntaxTree.catchStmt, newEnv);
           }
@@ -403,7 +475,9 @@ export class ScriptInterpreter {
             let ident = varDef.ident;
             let val = (!varDef.exp) ? undefined :
               this.evaluateExpression(varDef.exp, environment);
-            environment.declare(ident, val, false, "block", stmtSyntaxTree);
+            environment.declare(
+              ident, val, stmtSyntaxTree.isConst, stmtSyntaxTree
+            );
           });
         }
         else if (decType === "destructuring") {
@@ -415,7 +489,7 @@ export class ScriptInterpreter {
           stmtSyntaxTree.identList.forEach((ident, ind) => {
             let nestedVal = val[ind];
             environment.declare(
-              ident, nestedVal, false, "block", stmtSyntaxTree
+              ident, nestedVal, stmtSyntaxTree.isConst, stmtSyntaxTree
             );
           });
         }
@@ -428,7 +502,7 @@ export class ScriptInterpreter {
       case "function-declaration": {
         let funVal = new DefinedFunction(stmtSyntaxTree, environment);
         environment.declare(
-          stmtSyntaxTree.name, funVal, false, "block", stmtSyntaxTree
+          stmtSyntaxTree.name, funVal, false, stmtSyntaxTree
         );
         break;
       }
@@ -1012,23 +1086,17 @@ export class Environment {
     }
   }
 
-  declare(ident, val, isConst, scopeType, node) {
+  declare(ident, val, isConst, node) {
     val = (val === undefined) ? UNDEFINED : val;
     let safeIdent = "#" + ident;
     let [prevVal] = this.variables[safeIdent] ?? [];
-    if (scopeType === "block") {
-      if (prevVal !== undefined) {
-        throw new RuntimeError(
-          "Redeclaration of variable '" + ident + "'",
-          node
-        );
-      } else {
-        this.variables[safeIdent] = [val, isConst];
-      }
-    } else if (scopeType === "function") {
-      throw "Environment.declare(): 'var' keyword not implemented";
+    if (prevVal !== undefined) {
+      throw new RuntimeError(
+        "Redeclaration of variable '" + ident + "'",
+        node
+      );
     } else {
-      throw "Environment.declare(): scope type not recognized/implemented"
+      this.variables[safeIdent] = [val, isConst];
     }
   }
 

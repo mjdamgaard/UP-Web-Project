@@ -438,6 +438,9 @@ const scriptGrammar = {
     process: (syntaxTree) => {
       syntaxTree.importArr = syntaxTree.children[1].children;
       syntaxTree.moduleRef = syntaxTree.children[3];
+      syntaxTree.structImports = syntaxTree.importArr
+        .map(val => val.structRef ? [val.structRef, val.flagStr] : undefined)
+        .filter(val => val);
     },
   },
   "import-list": {
@@ -562,10 +565,14 @@ const scriptGrammar = {
   },
   "variable-declaration": {
     rules: [
-      ["/let/", "variable-definition-list", "/;/!"],
-      ["/let/", /\[/, "identifier-list"," /\\]/!", "/=/", "expression", "/;/"],
+      ["/let|const/", "variable-definition-list", "/;/!"],
+      [
+        "/let|const/", /\[/, "identifier-list"," /\\]/!", "/=/", "expression",
+        "/;/"
+      ],
     ],
     process: (syntaxTree) => {
+      syntaxTree.isConst = (syntaxTree.children[0].lexeme === "const");
       if (syntaxTree.ruleInd === 0) {
         syntaxTree.decType = "definition-list";
         syntaxTree.defList = syntaxTree.children[1].children;
@@ -1244,7 +1251,7 @@ export const scriptParser = new Parser(
   [
     /"([^"\\]|\\[.\n])*"/,
     // /'([^'\\]|\\[.\n])*'/,
-    /\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
+    /(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
     /\+=|\-=|\*=|\/=|&&=|\|\|=|\?\?=/,
     /&&|\|\||\?\?|\+\+|\-\-|\*\*/,
     /\?\.|<>|=>|\->/,
