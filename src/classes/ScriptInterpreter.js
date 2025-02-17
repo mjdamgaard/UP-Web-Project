@@ -41,7 +41,8 @@ export class ScriptInterpreter {
 
 
   async preprocessScript(
-    gas, scriptID, parsedScripts = {}, structDefs = {}, callerScriptIDs = [],
+    gas, scriptID, permissions,
+    parsedScripts = {}, structDefs = {}, callerScriptIDs = [],
   ) {
     decrCompGas(gas);
 
@@ -106,7 +107,8 @@ export class ScriptInterpreter {
         // Then push a promise preprocess the module to promiseArr.
         promiseArr.push(
           this.preprocessScript(
-            gas, moduleID, parsedScripts, structDefs, callerScriptIDs,
+            gas, moduleID, permissions,
+            parsedScripts, structDefs, callerScriptIDs,
           )
         );
 
@@ -125,17 +127,15 @@ export class ScriptInterpreter {
           // Also check that the struct has the required permissions, or that
           // its module does.
           let structPermissions = permissions.structs["#" + structID] ?? "";
-          let permFlagArr = (modulePermissions + structPermissions).split("");
-          let requiredFlagArr = flagStr.split("");
-          for (let requiredFlag of requiredFlagArr) {
-            if (!permFlagArr.includes(requiredFlag)) {
-              throw new PreprocessingError(
-                `Script @[${scriptID}] imports Struct @[${structID}] ` +
-                `from Module @[${moduleID}] with Permission flag ` +
-                `"${requiredFlag}" not granted`
-              );
-            }
-          }
+          let combinedPermissions = modulePermissions + structPermissions;
+          let hasPermission = this.checkPermissions(
+            combinedPermissions, flagStr
+          );
+          if (!hasPermission) throw new PreprocessingError(
+            `Script @[${scriptID}] imports Struct @[${structID}] from ` +
+            `Module @[${moduleID}] with Permission flag "${requiredFlag}" ` +
+            `not granted`
+          );
 
           // We also push [structID, moduleID] to structAndModulePairs such
           // that we can quickly verify that no struct imports from a wrong
@@ -180,6 +180,18 @@ export class ScriptInterpreter {
     let def = await this.fetchStructDef(gas, structID);
     structDefs["#" + structID] = def;
     return structDefs;
+  }
+
+
+  checkPermissions(permissionFlagStr, requiredFlagStr) {
+    let permissionFlagArr = permissionFlagStr.split("");
+    let requiredFlagArr = requiredFlagStr.split("");
+    for (let requiredFlag of requiredFlagArr) {
+      if (!permissionFlagArr.includes(requiredFlag)) {
+        return false;
+      }
+    }
+    return true;
   }
 
 
@@ -245,19 +257,22 @@ export class ScriptInterpreter {
         Object.entries(exports).forEach(([safeKey, val]) => {
           nsObj[safeKey] = val[0];
         });
-        moduleEnv.declare(imp.namespaceIdent, nsObj, true, imp);
+        environment.declare(imp.namespaceIdent, nsObj, true, imp);
       }
-      if (imp.namedImportArr) {
+      else if (imp.namedImportArr) {
         imp.namedImportArr.forEach(namedImp => {
-          let ident = syntaxTree.ident;
+          let ident = namedImp.ident;
+          let alias = namedImp.alias ?? ident;
+          let val;
           if (!ident) {
-            
+            val = exports.defaultExport;
+          } else {
+            val = exports["#" + ident][0];
           }
-
-          moduleEnv.declare(imp.namespaceIdent, nsObj, true, imp);
+          environment.declare(alias, val, true, namedImp);
         });
       }
-      else if (imp.structIdent) {
+      else if (imp.structRef) {
         let structObj = {};
         Object.entries(exports).forEach(([key, val]) => {
           let exportFlags = val[2];
@@ -274,7 +289,7 @@ export class ScriptInterpreter {
           // }
           structObj[key] = val[0];
         });
-        moduleEnv.declare(imp.structIdent, structObj, true, imp);
+        environment.declare(imp.structIdent, structObj, true, imp);
       }
       else {
 
