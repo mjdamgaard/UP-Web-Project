@@ -40,9 +40,58 @@ export class ScriptInterpreter {
 
 
 
+  async interpretScript(
+    gas, reqUserID, script, permissions, scriptID = undefined
+  ) {
+    // If only a scriptID is provided, rather than a script, fetch and 
+    // preprocess the script from scratch, via a call to preprocessScript().
+    let log;
+    try {
+      let parsedScripts, structDefs;
+      if (!script && scriptID !== undefined) {
+        [parsedScripts, structDefs] = await this.preprocessScript(
+          gas, permissions, scriptID
+        );
+      }
+      
+      // Else pretend that the input script has the otherwise invalid ID, "0",
+      // parse it, and add it to the parsedScripts buffer before calling
+      // preprocessScript() to continue from there
+      else {
+        let scriptSyntaxTree = scriptParser.parse(script);
+        scriptID = "0";
+        parsedScripts = {"#0": scriptSyntaxTree};
+        [parsedScripts, structDefs] = await this.preprocessScript(
+          gas, permissions, scriptID, parsedScripts
+        );
+      }
+
+      // After this preprocessing, execute the script, and return the log.
+      log = this.executeScript(
+        gas, scriptID, parsedScripts, structDefs, reqUserID
+      );
+    } catch (err) {
+      // If any non-internal error occurred, log it in log.error.
+      if (
+        err instanceof LexError || err instanceof SyntaxError ||
+        err instanceof PreprocessingError || err instanceof RuntimeError ||
+        err instanceof CustomError || err instanceof OutOfGasError
+      ) {
+        log.error = err;
+      } else {
+        throw err;
+      }
+    }
+
+    // Then finally return the log.
+    return log;
+  }
+
+
+
 
   async preprocessScript(
-    gas, scriptID, permissions,
+    gas, permissions, scriptID,
     parsedScripts = {}, structDefs = {}, callerScriptIDs = [],
   ) {
     decrCompGas(gas);
@@ -97,6 +146,7 @@ export class ScriptInterpreter {
       callerScriptIDs = [...callerScriptIDs, scriptID];
       let promiseArr = [];
       let structAndModulePairs = [];
+      let scriptPermissions = permissions?.scripts["#" + scriptID] ?? "";
       scriptSyntaxTree.importStmtArr.forEach(stmt => {
         // Get the moduleID for the given import statement.
         let moduleRef = stmt.moduleRef;
@@ -108,7 +158,7 @@ export class ScriptInterpreter {
         // Then push a promise preprocess the module to promiseArr.
         promiseArr.push(
           this.preprocessScript(
-            gas, moduleID, permissions,
+            gas, permissions, moduleID,
             parsedScripts, structDefs, callerScriptIDs,
           )
         );
@@ -116,7 +166,7 @@ export class ScriptInterpreter {
         // And for each structRef in the import statement, we also want to push
         // a promise to get the struct's definition, as well as to verify that
         // the permissions that the struct import requires is granted.
-        let modulePermissions = permissions.modules["#" + moduleID] ?? "";
+        let modulePermissions = permissions?.modules["#" + moduleID] ?? "";
         stmt.structImports.forEach(([structRef, flagStr]) => {
           // Get the structID, or throw if the structRef is yet just a
           // placeholder.
@@ -127,8 +177,9 @@ export class ScriptInterpreter {
 
           // Also check that the struct has the required permissions, or that
           // its module does.
-          let structPermissions = permissions.structs["#" + structID] ?? "";
-          let combinedPermissions = modulePermissions + structPermissions;
+          let structPermissions = permissions?.structs["#" + structID] ?? "";
+          let combinedPermissions =
+            scriptPermissions + modulePermissions + structPermissions;
           let hasPermission = this.checkPermissions(
             combinedPermissions, flagStr
           );
@@ -226,7 +277,8 @@ export class ScriptInterpreter {
 
     // Create a new environment.
     let environment = new Environment(
-      globalEnvironment, undefined, "module", log, gas, reqUserID, structDefs,
+      globalEnvironment, undefined, "module", log, gas, reqUserID, scriptID,
+      structDefs,
     );
 
     // First execute all import statements.
@@ -242,10 +294,9 @@ export class ScriptInterpreter {
       this.executeOuterStatement(stmt, environment);
     });
 
-    // Then return the liveModules, ready to be returned e.g. to an import
-    // statement, or to be used by callStructProcedures(). Also return the log
-    // object.
-    return [liveModules, log];
+    // Then return add the environment to liveModules and return the log.
+    liveModules["#" + scriptID] = environment;
+    return log;
   }
 
 
@@ -363,14 +414,6 @@ export class ScriptInterpreter {
   }
 
 
-
-
-  callStructProcedures(
-    moduleID, structID, permissions, gas, callSpecArr, reqUserID,
-  ) {
-    // ...
-
-  }
 
 
 
@@ -946,8 +989,9 @@ export class ScriptInterpreter {
       }
       case "member-access": {
         // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
+        let expVal, indexVal;
         try {
-          let [expVal, indexVal] = this.getMemberAccessExpValAndSafeIndex(
+          [expVal, indexVal] = this.getMemberAccessExpValAndSafeIndex(
             expSyntaxTree, environment
           );
         } catch (err) {
@@ -1061,8 +1105,9 @@ export class ScriptInterpreter {
       expSyntaxTree.type === "member-access" && !expSyntaxTree.postfix.isOpt
     ) {
       // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
+      let expVal, indexVal;
       try {
-        let [expVal, indexVal] = this.getMemberAccessExpValAndSafeIndex(
+        [expVal, indexVal] = this.getMemberAccessExpValAndSafeIndex(
           expSyntaxTree, environment
         );
       } catch (err) {
@@ -1151,7 +1196,7 @@ export class Environment {
   constructor(
     parent = undefined, thisVal = undefined, scopeType = "block",
     log = undefined, gas = undefined, reqUserID = undefined,
-    scriptID = undefined, structID = undefined, structDefs = undefined,
+    scriptID = undefined, structDefs = undefined,
   ) {
     this.parent = parent;
     this.scopeType = scopeType;
@@ -1164,7 +1209,6 @@ export class Environment {
     })();
     this.reqUserID = reqUserID ?? parent?.reqUserID ?? undefined;
     this.scriptID = scriptID ?? parent?.scriptID ?? undefined;
-    this.structID = structID ?? parent?.structID ?? undefined;
     this.structDefs = structDefs ?? parent?.structDefs ?? undefined;
     if (scopeType === "module") {
       this.exports = {};
