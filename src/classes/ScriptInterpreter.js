@@ -196,12 +196,23 @@ export class ScriptInterpreter {
   }
 
 
+  // (We might move the global environment up as a property of this class at
+  // some point when we know that it is safe to do so (but this will mean
+  // that all users will share the same global environment on the server).)
   createGlobalEnvironment() {
     let globalEnv = new Environment(undefined, undefined, "global");
-    Object.assign(
-      globalEnv.variables, this.builtInFunctions, this.builtInConstants
-    );
+    Object.entries(this.builtInFunctions).forEach(([name, {fun, gasCost}]) => {
+      let val = new BuiltInFunction(fun, gasCost);
+      globalEnv.declare(name, val, true);
+    });
+    Object.entries(this.builtInConstants).forEach(([ident, val]) => {
+      globalEnv.declare(ident, val, true);
+    });
   }
+
+
+
+
 
 
   executeScript(
@@ -567,7 +578,7 @@ export class ScriptInterpreter {
 
 
 
-  evaluateExpression(expSyntaxTree, environment) {
+  evaluateExpression(expSyntaxTree, environment, isMemberAccessChild = false) {
     decrCompGas(environment.gas);
 
     let type = expSyntaxTree.type;
@@ -915,6 +926,10 @@ export class ScriptInterpreter {
       case "virtual-method": {
         let objVal = this.evaluateExpression(expSyntaxTree.obj, environment);
         let funVal = this.evaluateExpression(expSyntaxTree.fun, environment);
+        if (objVal instanceof StructObject) throw new RuntimeError(
+          'Virtual methods not allowed for "struct" types',
+          expSyntaxTree
+        );
         if (
           funVal instanceof DefinedFunction ||
           funVal instanceof BuiltInFunction
@@ -931,14 +946,31 @@ export class ScriptInterpreter {
       }
       case "member-access": {
         // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
-        let [expVal, indexVal] = this.getMemberAccessExpValAndSafeIndex(
-          expSyntaxTree, environment
-        );
+        try {
+          let [expVal, indexVal] = this.getMemberAccessExpValAndSafeIndex(
+            expSyntaxTree, environment
+          );
+        } catch (err) {
+          // If err is an BrokenOptionalChainException either return undefined,
+          // or throw the exception up to the parent if nested in another
+          // member-access node.
+          if (
+            err instanceof BrokenOptionalChainException && isMemberAccessChild
+          ) {
+            return undefined;
+          } else {
+            throw err;
+          }
+        }
 
         // Handle graceful return in case of an optional chaining.
         if (expSyntaxTree.postfix.isOpt) {
           if (expVal === null || expVal === undefined) {
-            return undefined;
+            if (isMemberAccessChild) {
+              throw new BrokenOptionalChainException();
+            } else {
+              return undefined;
+            }
           }
         }
 
@@ -1029,9 +1061,19 @@ export class ScriptInterpreter {
       expSyntaxTree.type === "member-access" && !expSyntaxTree.postfix.isOpt
     ) {
       // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
-      let [expVal, indexVal] = this.getMemberAccessExpValAndSafeIndex(
-        expSyntaxTree, environment
-      );
+      try {
+        let [expVal, indexVal] = this.getMemberAccessExpValAndSafeIndex(
+          expSyntaxTree, environment
+        );
+      } catch (err) {
+        // If err is an BrokenOptionalChainException, do nothing and return
+        // undefined.
+        if (err instanceof BrokenOptionalChainException) {
+          return undefined;
+        } else {
+          throw err;
+        }
+      }
 
       // Then assign the member of our expVal and return the value specified by
       // assignFun.
@@ -1049,7 +1091,9 @@ export class ScriptInterpreter {
 
   getMemberAccessExpValAndSafeIndex(memAccSyntaxTree, environment) {
     // Evaluate the expression.
-    let expVal = this.evaluateExpression(memAccSyntaxTree.exp, environment);
+    let expVal = this.evaluateExpression(
+      memAccSyntaxTree.exp, environment, true
+    );
 
     // Now get the index value.
     let indexExp = memAccSyntaxTree.postfix;
@@ -1241,6 +1285,12 @@ export function getType(val) {
       val instanceof EntityReference || val instanceof EntityPlaceholder
     ) {
       return "entity";
+    } else if (
+      val instanceof DefinedFunction || val instanceof BuiltInFunction
+    ) {
+      return "function";
+    } else if (val instanceof StructObject) {
+      return "struct";
     } else {
       return "object";
     }
@@ -1311,6 +1361,9 @@ class ContinueException {
   constructor(node) {
     this.node = node;
   }
+}
+class BrokenOptionalChainException {
+  constructor() {}
 }
 
 

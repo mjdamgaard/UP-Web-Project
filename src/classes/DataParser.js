@@ -712,10 +712,11 @@ const scriptGrammar = {
         // Initialize a invalidTypes, with nullish types plucked out from the
         // start if isRequired is false.
         let invalidTypes = isRequired ? [
-          "entity", "string", "int", "float", "object", "array", "null",
-          "undefined"
+          "entity", "string", "int", "float", "object", "array", "function",
+          "struct", "null", "undefined"
         ] : [
-          "entity", "string", "int", "float", "object", "array"
+          "entity", "string", "int", "float", "object", "array", "function",
+          "struct",
         ];
 
         // Then iterate over each type in types, and pluck out additional
@@ -948,10 +949,10 @@ const scriptGrammar = {
   },
   "expression": {
     rules: [
-      [/\(/, "identifier-list", /\)/, "/=>/", "function-body-or-expression!"],
+      [/\(/, "parameter-list", /\)/, "/=>/", "function-body-or-expression!"],
       [/\(/, /\)/, "/=>/", "function-body-or-expression!"],
       ["identifier", "/=>/", "function-body-or-expression!"],
-      ["/function/", /\(/, "identifier-list", /\)/, "function-body!"],
+      ["/function/", /\(/, "parameter-list", /\)/, "function-body!"],
       ["/function/", /\(/, /\)/, "function-body!"],
       ["expression^(1)", /=|\+=|\-=|\*=|\/=|&&=|\|\|=|\?\?=/, "expression!"],
       ["expression^(1)", /\?/, "expression!", /:/, "expression"],
