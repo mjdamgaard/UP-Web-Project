@@ -24,10 +24,10 @@ export class ScriptInterpreter {
     this.builtInFunctions = builtInFunctions;
     this.builtInConstants = builtInConstants;
     this.parsedScriptCache = parsedScriptCache;
-    this.fetchScript = builtInFunctions.fetchScript ?? (() => {
+    this.fetchScript = builtInFunctions.fetchScript?.fun ?? (() => {
       throw "ScriptInterpreter: builtInFunctions need to include fetchScript()";
     })();
-    this.fetchStructDef = builtInFunctions.fetchStructDef ?? (() => {
+    this.fetchStructDef = builtInFunctions.fetchStructDef?.fun  ?? (() => {
       throw "ScriptInterpreter: builtInFunctions need to include " +
         "fetchStructDef()";
     })();
@@ -235,6 +235,13 @@ export class ScriptInterpreter {
   }
 
 
+  executeBuiltInFunction(gas, environment, fun, inputArr) {
+    payGas(gas, fun.gasCost);
+    return fun.fun(environment, ...inputArr);
+  }
+
+
+
   checkPermissions(flagStr, requiredFlagStr) {
     let flagArr = flagStr.split("");
     let requiredFlagArr = requiredFlagStr.split("");
@@ -252,9 +259,8 @@ export class ScriptInterpreter {
   // that all users will share the same global environment on the server).)
   createGlobalEnvironment() {
     let globalEnv = new Environment(undefined, undefined, "global");
-    Object.entries(this.builtInFunctions).forEach(([name, {fun, gasCost}]) => {
-      let val = new BuiltInFunction(fun, gasCost);
-      globalEnv.declare(name, val, true);
+    Object.entries(this.builtInFunctions).forEach(([name, funFun]) => {
+      globalEnv.declare(name, funFun(), true);
     });
     Object.entries(this.builtInConstants).forEach(([ident, val]) => {
       globalEnv.declare(ident, val, true);
@@ -940,7 +946,7 @@ export class ScriptInterpreter {
       case "function-call": {
         let fun = this.evaluateExpression(expSyntaxTree.exp, environment);
         let inputExpArr = expSyntaxTree.postfix.children;
-        let inputVals = inputExpArr.map(exp => (
+        let inputValArr = inputExpArr.map(exp => (
           this.evaluateExpression(exp, environment)
         ));
 
@@ -954,12 +960,13 @@ export class ScriptInterpreter {
         // Then execute the function depending on its type.
         if (fun instanceof DefinedFunction) {
           return this.executeFunction(
-            fun.syntaxTree, inputVals, fun.environment, thisVal
+            fun.syntaxTree, inputValArr, fun.environment, thisVal
           );
         }
         else if (fun instanceof BuiltInFunction) {
-          payGas(environment.gas, fun.gasCost);
-          return fun.fun(inputVals);
+          return this.executeBuiltInFunction(
+            environment.gas, environment, fun, inputValArr
+          );
         }
         else throw new RuntimeError(
           "Function call with a non-function-valued expression",
@@ -1353,22 +1360,21 @@ export function getType(val) {
 
 
 
-class DefinedFunction {
+export class DefinedFunction {
   constructor(syntaxTree, environment) {
     this.syntaxTree = syntaxTree;
     this.environment = environment;
   }
 }
 
-class BuiltInFunction {
+export class BuiltInFunction {
   constructor(fun, gasCost) {
     this.fun = fun;
-    this.gasCost = gasCost;
     this.gasCost = gasCost;
   }
 }
 
-class ThisBoundFunction {
+export class ThisBoundFunction {
   constructor(funVal, thisVal, isStructProp = false) {
     this.funVal = funVal;
     this.thisVal = thisVal;
@@ -1376,7 +1382,7 @@ class ThisBoundFunction {
   }
 }
 
-class StructObject {
+export class StructObject {
   constructor(structID) {
     this.structID = structID;
   }
