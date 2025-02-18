@@ -1,8 +1,7 @@
 
-import {scriptParser} from "./DataParser.js";
-import {PriorityCache} from "./CombinedCache.js";
-import {EntityReference, EntityPlaceholder} from "./DataParser.js";
-import {LexError, SyntaxError} from "./Parser.js";
+import {ScriptParser} from "./ScriptParser.js";
+import {EntityReference, EntityPlaceholder} from "../parsing/RegEntParser.js";
+import {LexError, SyntaxError} from "../parsing/Parser.js";
 
 
 const MAX_ARRAY_INDEX = 1E+15;
@@ -58,7 +57,8 @@ export class ScriptInterpreter {
       // parse it, and add it to the parsedScripts buffer before calling
       // preprocessScript() to continue from there
       else {
-        let scriptSyntaxTree = scriptParser.parse(script);
+        payGas(gas, {comp: getParsingGasCost(script)});
+        let scriptSyntaxTree = ScriptParser.parse(script);
         scriptID = "0";
         parsedScripts = {"#0": scriptSyntaxTree};
         [parsedScripts, structDefs] = await this.preprocessScript(
@@ -126,7 +126,7 @@ export class ScriptInterpreter {
 
       // Parse.
       payGas(gas, {comp: getParsingGasCost(script)});
-      let scriptSyntaxTree = scriptParser.parse(script);
+      let scriptSyntaxTree = ScriptParser.parse(script);
 
       // Cache.
       parsedScripts["#" + scriptID] = scriptSyntaxTree;

@@ -1,9 +1,12 @@
 
-import {regEntParser, scriptParser} from "../DataParser.js";
+import {RegEntParser} from "../parsing/RegEntParser.js";
+import {ScriptParser} from "../parsing/ScriptParser.js";
 import {
   ScriptInterpreter, RuntimeError, CustomError, Environment, UNDEFINED,
-} from "../ScriptInterpreter.js";
+} from "../interpreting/ScriptInterpreter.js";
 
+let regEntParser = new RegEntParser();
+let scriptParser = new ScriptParser();
 
 
 
