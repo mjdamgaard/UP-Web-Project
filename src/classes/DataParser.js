@@ -525,43 +525,41 @@ const scriptGrammar = {
     ],
     process: (syntaxTree) => {
       let ruleInd = syntaxTree.ruleInd;
-      syntaxTree.isDefault = (ruleInd <= 2);
+      let stmt, flagStr, namedExportArr;
       if (ruleInd === 0) {
-        syntaxTree.flagStr = syntaxTree.children[3].str;
-        syntaxTree.stmt = syntaxTree.children[4];
+        flagStr = syntaxTree.children[3].str;
+        stmt = syntaxTree.children[4];
       } else if (ruleInd === 1) {
-        syntaxTree.flagStr = "";
-        syntaxTree.stmt = syntaxTree.children[3];
+        flagStr = "";
+        stmt = syntaxTree.children[3];
       } else if (ruleInd === 2) {
-        syntaxTree.stmt = syntaxTree.children[2];
+        stmt = syntaxTree.children[2];
       } else if (ruleInd === 3) {
-        syntaxTree.flagStr = syntaxTree.children[2].str;
-        syntaxTree.exportArr =
-          syntaxTree.children[4].children[0]?.children ?? [];
+        flagStr = syntaxTree.children[2].str;
+        namedExportArr = syntaxTree.children[4].children[0]?.children ?? [];
       } else if (ruleInd === 4) {
-        syntaxTree.flagStr = syntaxTree.children[2].str;
-        syntaxTree.stmt = syntaxTree.children[3];
+        flagStr = syntaxTree.children[2].str;
+        stmt = syntaxTree.children[3];
       } else if (ruleInd === 5) {
-        syntaxTree.flagStr = "";
-        syntaxTree.exportArr =
-          syntaxTree.children[3].children[0]?.children ?? [];
+        flagStr = "";
+        namedExportArr = syntaxTree.children[3].children[0]?.children ?? [];
       } else if (ruleInd === 5) {
-        syntaxTree.flagStr = "";
-        syntaxTree.stmt = syntaxTree.children[2];
+        flagStr = "";
+        stmt = syntaxTree.children[2];
       } else if (ruleInd === 6) {
-        syntaxTree.exportArr =
-          syntaxTree.children[2].children[0]?.children ?? [];
+        namedExportArr = syntaxTree.children[2].children[0]?.children ?? [];
       } else {
-        syntaxTree.stmt = syntaxTree.children[1];
+        stmt = syntaxTree.children[1];
       }
 
-      let allowedStmtTypes = (ruleInd <= 2) ? [
+      let allowedStmtTypes = (ruleInd === 2) ? [
         "function-declaration", "variable-declaration", "expression-statement"
       ] : [
         "function-declaration", "variable-declaration"
       ];
-      if (syntaxTree.stmt && !allowedStmtTypes.includes(syntaxTree.type)) {
-        if (syntaxTree.type === "expression-statement") {
+      let isExpStmt = (syntaxTree.type === "expression-statement");
+      if (stmt && !allowedStmtTypes.includes(syntaxTree.type)) {
+        if (isExpStmt) {
           return [false, "Unnamed export for a non-default export statement"];
         } else {
           return [
@@ -571,26 +569,42 @@ const scriptGrammar = {
         }
       }
 
-      syntaxTree.exportArr = [/*TODO...*/];
+      syntaxTree.isDefault = (ruleInd <= 2);
+      syntaxTree.stmt = stmt;
+      syntaxTree.isStructProp = (flagStr !== undefined);
+      syntaxTree.flagStr = flagStr;
+      if (isExpStmt) {
+        syntaxTree.exportArr = [];
+      } else if (namedExportArr) {
+        syntaxTree.exportArr = namedExportArr.map(ex => [ex.ident, ex.alias]);
+      } else if (stmt.name) {
+        syntaxTree.exportArr = [[stmt.name]];
+      } else {
+        syntaxTree.exportArr = stmt.identArr.map(ident => [ident]);
+      }
+
+      if (syntaxTree.isDefault && syntaxTree.exportArr.length > 1) {
+        return [false, "Only one default export allowed"]
+      }
     },
   },
-  "export-list": {
+  "named-export-list": {
     rules: [
-      ["export", "/,/", "export-list!1"],
-      ["export", "/,/?"],
+      ["named-export", "/,/", "named-export-list!1"],
+      ["named-export", "/,/?"],
     ],
     process: straightenListSyntaxTree,
   },
-  "export": {
+  "named-export": {
     rules: [
-      ["/default/", "/as/", "identifier!"],
+      ["identifier", "/as/", "/default/"],
       ["identifier", "/as/", "identifier!"],
       ["identifier"],
     ],
     process: (syntaxTree) => {
       if (syntaxTree.ruleInd === 0) {
-        syntaxTree.alias = syntaxTree.children[2].lexeme;
-        syntaxTree.isDefault = true;
+        syntaxTree.ident = syntaxTree.children[2].lexeme;
+        syntaxTree.alias = "default";
       } else if (syntaxTree.ruleInd === 1) {
         syntaxTree.ident = syntaxTree.children[0].lexeme;
         syntaxTree.alias = syntaxTree.children[2].lexeme;
@@ -611,11 +625,11 @@ const scriptGrammar = {
       syntaxTree.isConst = (syntaxTree.children[0].lexeme === "const");
       if (syntaxTree.ruleInd === 0) {
         syntaxTree.decType = "definition-list";
-        syntaxTree.defList = syntaxTree.children[1].children;
-        syntaxTree.identList = syntaxTree.defList.map(val => val.ident);
+        syntaxTree.defArr = syntaxTree.children[1].children;
+        syntaxTree.identArr = syntaxTree.defArr.map(val => val.ident);
       } else {
         syntaxTree.decType = "destructuring";
-        syntaxTree.identList = syntaxTree.children[2].children.map(
+        syntaxTree.identArr = syntaxTree.children[2].children.map(
           val => val.lexeme
         );
         syntaxTree.exp = syntaxTree.children[5];
@@ -1195,8 +1209,8 @@ const scriptGrammar = {
       [/\(/, "expression", /\)/],
       ["array!1"],
       ["object!1"],
-      ["identifier"],
       ["this-keyword"],
+      ["identifier"],
       ["literal"],
     ],
     process: (syntaxTree) => {

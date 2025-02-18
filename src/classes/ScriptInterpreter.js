@@ -204,6 +204,7 @@ export class ScriptInterpreter {
     let scriptSyntaxTree = parsedScripts["#" + scriptID];
 
     // Create a new environment.
+    // TODO: Use a parent environment of the built-in functions and constants.
     let environment = new Environment(
       undefined, undefined, "module", log, gas, reqUserID, structDefs,
     );
@@ -313,22 +314,27 @@ export class ScriptInterpreter {
   executeExportStatement(stmtSyntaxTree, environment) {
     decrCompGas(environment.gas);
 
-    let isStructProp = (syntaxTree.flagStr !== undefined);
-    let stmt = syntaxTree.stmt;
+    let stmt = stmtSyntaxTree.stmt;
     if (stmt) {
       if (stmt.type === "expression-statement") {
-        let val = this.evaluateExpression(stmt.exp);
-        environment.export(
-          undefined, undefined, true, isStructProp, syntaxTree.flagStr,
-          stmtSyntaxTree
-        );
-      } else {
-        this.executeStatement(stmtSyntaxTree.stmt, environment);
+        let val = this.evaluateExpression(stmt.exp, environment);
+        environment.exportDefault(val, undefined, stmtSyntaxTree);
+        return;
       }
+      this.executeStatement(stmtSyntaxTree.stmt, environment);
     }
-    stmtSyntaxTree.exportArr.forEach(([ident, alias, isDefault, flags]) => {
-      environment.export(ident, alias, isDefault, isStructProp, flags);
-    });
+    if (stmtSyntaxTree.isDefault) {
+      let [[ident]] = stmtSyntaxTree.exportArr;
+      let val = environment.get(ident, stmtSyntaxTree);
+      environment.exportDefault(val, ident, stmtSyntaxTree);
+    }
+    else {
+      let isStructProp = stmtSyntaxTree.isStructProp;
+      let flagStr = stmtSyntaxTree.flagStr;
+      stmtSyntaxTree.exportArr.forEach(([ident, alias]) => {
+        environment.export(ident, alias, isStructProp, flagStr);
+      });
+    }
   }
 
 
@@ -497,7 +503,7 @@ export class ScriptInterpreter {
       case "variable-declaration": {
         let decType = stmtSyntaxTree.decType;
         if (decType === "definition-list") {
-          stmtSyntaxTree.defList.forEach(varDef => {
+          stmtSyntaxTree.defArr.forEach(varDef => {
             let ident = varDef.ident;
             let val = (!varDef.exp) ? undefined :
               this.evaluateExpression(varDef.exp, environment);
@@ -512,7 +518,7 @@ export class ScriptInterpreter {
             "Destructuring of a non-array expression",
             stmtSyntaxTree
           );
-          stmtSyntaxTree.identList.forEach((ident, ind) => {
+          stmtSyntaxTree.identArr.forEach((ident, ind) => {
             let nestedVal = val[ind];
             environment.declare(
               ident, nestedVal, stmtSyntaxTree.isConst, stmtSyntaxTree
@@ -975,7 +981,7 @@ export class ScriptInterpreter {
       }
       case "identifier": {
         let ident = expSyntaxTree.lexeme;
-        return environment.get(ident);
+        return environment.get(ident, expSyntaxTree);
       }
       case "string": {
         return JSON.parse(expSyntaxTree.lexeme);
@@ -1107,15 +1113,18 @@ export class Environment {
     }
   }
 
-  get(ident) {
+  get(ident, node) {
     let safeIdent = "#" + ident;
     let [val] = this.variables[safeIdent] ?? [];
     if (val !== undefined) {
       return (val === UNDEFINED) ? undefined : val;
     } else if (this.parent) {
-      return this.parent.get(ident);
+      return this.parent.get(ident, node);
     } else {
-      return undefined;
+      throw new RuntimeError(
+        "Undeclared variable",
+        node
+      );
     }
   }
 
@@ -1159,19 +1168,21 @@ export class Environment {
   }
 
 
-  export(
-    ident = "default", alias = ident, isDefault, isStructProp, flags, node
-  ) {
-    if (isDefault) {
-      if (this.export.defaultExport) throw new RuntimeError(
-        "More than one default export detected",
-        node
-      );
-      this.export.defaultExport = [ident, isStructProp, flags];
-      this.export["#default"] = [ident, isStructProp, flags];
-    } else {
-      this.export["#" + alias] = [ident, isStructProp, flags];
-    }
+  export(ident, alias = ident, isStructProp, flagStr) {
+    this.export["#" + alias] = [ident, isStructProp, flagStr];
+  }
+
+  exportDefault(val, ident = undefined, node) {
+    if (this.export.defaultExport) throw new RuntimeError(
+      "Only one default export allowed",
+      node
+    );
+    if (val === undefined) throw new RuntimeError(
+      "Exporting undefined value as the default export",
+      node
+    );
+    this.export.defaultExport = val;
+    if (ident) this.export["#" + ident] = [ident, false];
   }
 }
 
