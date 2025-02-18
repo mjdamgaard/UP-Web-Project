@@ -21,8 +21,10 @@ function getParsingGasCost(str) {
 
 export class ScriptInterpreter {
 
-  constructor(builtInFunctions, parsedScriptCache) {
+  constructor(builtInFunctions, builtInConstants, parsedScriptCache) {
     this.builtInFunctions = builtInFunctions;
+    this.builtInConstants = builtInConstants;
+    this.parsedScriptCache = parsedScriptCache;
     this.fetchScript = builtInFunctions.fetchScript ?? (() => {
       throw "ScriptInterpreter: builtInFunctions need to include fetchScript()";
     })();
@@ -34,7 +36,6 @@ export class ScriptInterpreter {
       throw "ScriptInterpreter: builtInFunctions need to include " +
         "getStructModuleIDs()";
     })();
-    this.parsedScriptCache = parsedScriptCache;
   }
 
 
@@ -75,12 +76,12 @@ export class ScriptInterpreter {
       let script = await this.fetchScript(gas, scriptID);
 
       // Parse.
-      payGas({comp: getParsingGasCost(script)});
+      payGas(gas, {comp: getParsingGasCost(script)});
       let scriptSyntaxTree = scriptParser.parse(script);
 
       // Cache.
       parsedScripts["#" + scriptID] = scriptSyntaxTree;
-      payGas({cacheSet: 1});
+      payGas(gas, {cacheSet: 1});
       this.parsedScriptCache.set(scriptID, scriptSyntaxTree);
     }
 
@@ -183,11 +184,11 @@ export class ScriptInterpreter {
   }
 
 
-  checkPermissions(permissionFlagStr, requiredFlagStr) {
-    let permissionFlagArr = permissionFlagStr.split("");
+  checkPermissions(flagStr, requiredFlagStr) {
+    let flagArr = flagStr.split("");
     let requiredFlagArr = requiredFlagStr.split("");
     for (let requiredFlag of requiredFlagArr) {
-      if (!permissionFlagArr.includes(requiredFlag)) {
+      if (!flagArr.includes(requiredFlag)) {
         return false;
       }
     }
@@ -195,25 +196,33 @@ export class ScriptInterpreter {
   }
 
 
+  createGlobalEnvironment() {
+    let globalEnv = new Environment(undefined, undefined, "global");
+    Object.assign(
+      globalEnv.variables, this.builtInFunctions, this.builtInConstants
+    );
+  }
 
 
   executeScript(
     gas, scriptID, parsedScripts, structDefs, reqUserID,
-    liveModules = {}, log = {},
+    globalEnvironment = undefined, liveModules = {}, log = {},
   ) {
     let scriptSyntaxTree = parsedScripts["#" + scriptID];
 
+    // Create global environment if not yet done.
+    if (!globalEnvironment) globalEnvironment = this.createGlobalEnvironment();
+
     // Create a new environment.
-    // TODO: Use a parent environment of the built-in functions and constants.
     let environment = new Environment(
-      undefined, undefined, "module", log, gas, reqUserID, structDefs,
+      globalEnvironment, undefined, "module", log, gas, reqUserID, structDefs,
     );
 
     // First execute all import statements.
     scriptSyntaxTree.importStmtArr.forEach((stmt) => {
       this.executeImportStatement(
         stmt, environment, parsedScripts, structDefs, reqUserID,
-        liveModules, log,
+        globalEnvironment, liveModules, log,
       );
     });
 
@@ -233,7 +242,7 @@ export class ScriptInterpreter {
 
   executeImportStatement(
     stmtSyntaxTree, environment, parsedScripts, structDefs, reqUserID,
-    liveModules, log,
+    globalEnvironment, liveModules, log,
   ) {
     decrCompGas(environment.gas);
 
@@ -243,7 +252,8 @@ export class ScriptInterpreter {
     let moduleEnv = liveModules["#" + moduleID];
     if (!moduleEnv) {
       this.executeScript(
-        gas, moduleID, parsedScripts, structDefs, reqUserID, liveModules, log,
+        gas, moduleID, parsedScripts, structDefs, reqUserID,
+        globalEnvironment, liveModules, log,
       );
       moduleEnv = liveModules["#" + moduleID];
     }
@@ -251,7 +261,7 @@ export class ScriptInterpreter {
 
     // Get the combined exports, and then iterate through all the imports,
     // and add each import to the environment.
-    let exports = moduleEnv.getFinalExports();
+    let exports = moduleEnv.exports;
     stmtSyntaxTree.importArr.forEach(imp => {
       if (imp.namespaceIdent) {
         let nsObj = {};
@@ -262,11 +272,14 @@ export class ScriptInterpreter {
       }
       else if (imp.structRef) {
         let structObj = new StructObject(imp.structRef.lexeme);
-        let requiredFlagStr = imp.flagStr;
-        Object.entries(exports).forEach(([safeKey, val]) => {
-          // TODO: Add only 'struct' exports where the permissions allow
-          // the flagStr.
-        });
+        let impFlagStr = imp.flagStr;
+        Object.entries(exports).forEach(
+          ([safeKey, [origIdent, isStructProp, exFlagStr]]) => {
+            if (isStructProp && this.checkPermissions(impFlagStr, exFlagStr)) {
+              structObj[safeKey] = moduleEnv.get(origIdent);
+            }
+          }
+        );
         environment.declare(imp.structIdent, structObj, true, imp);
       }
       else if (imp.namedImportArr) {
@@ -277,7 +290,8 @@ export class ScriptInterpreter {
           if (!ident) {
             val = exports.defaultExport;
           } else {
-            val = exports["#" + ident][0];
+            let origIdent = exports["#" + alias][0];
+            val = moduleEnv.get(origIdent, namedImp, environment);
           }
           environment.declare(alias, val, true, namedImp);
         });
@@ -369,7 +383,7 @@ export class ScriptInterpreter {
         if (param.invalidTypes.includes(inputValType)) {
           throw new RuntimeError(
             `Input parameter of invalid type "${inputValType}"`,
-            param,
+            param, environment
           );
         }
       }
@@ -401,7 +415,7 @@ export class ScriptInterpreter {
       ) {
         throw new RuntimeError(
           "Invalid break or continue statement",
-          err.node
+          err.node, environment
         );
       }
       else {
@@ -516,7 +530,7 @@ export class ScriptInterpreter {
           let val = this.evaluateExpression(stmtSyntaxTree.exp, environment);
           if (!Array.isArray(val)) throw new RuntimeError(
             "Destructuring of a non-array expression",
-            stmtSyntaxTree
+            stmtSyntaxTree, environment
           );
           stmtSyntaxTree.identArr.forEach((ident, ind) => {
             let nestedVal = val[ind];
@@ -728,7 +742,7 @@ export class ScriptInterpreter {
                 if (accType !== "string" && accType !== "int") {
                     throw new RuntimeError(
                     "Concatenation of a non-string/int to a string/int",
-                    nextChild
+                    nextChild, environment
                   );
                 }
                 acc = acc.toString() + nextVal;
@@ -736,7 +750,7 @@ export class ScriptInterpreter {
               if (accType === "array") {
                 if (nextType !== "array") throw new RuntimeError(
                   "Concatenation of a non-array to an array",
-                  nextChild
+                  nextChild, environment
                 );
                 acc = [...acc, ...nextVal];
               }
@@ -749,7 +763,7 @@ export class ScriptInterpreter {
               }
               else throw new RuntimeError(
                 "Concatenation of a float, entity, null, or undefined value",
-                children[i]
+                children[i], environment
               );
               break;
             }
@@ -799,7 +813,7 @@ export class ScriptInterpreter {
                 let int = parseFloat(prevVal);
                 if (!int && int !== 0) throw new RuntimeError(
                   "Decrement of a non-numeric value",
-                  expSyntaxTree
+                  expSyntaxTree, environment
                 );
                 let newVal = int - 1;
                 return [newVal, newVal]
@@ -845,7 +859,7 @@ export class ScriptInterpreter {
                 let int = parseFloat(prevVal);
                 if (!int && int !== 0) throw new RuntimeError(
                   "Increment of a non-numeric value",
-                  expSyntaxTree
+                  expSyntaxTree, environment
                 );
                 let newVal = int + 1;
                 return [newVal, prevVal]
@@ -857,7 +871,7 @@ export class ScriptInterpreter {
                 let int = parseFloat(prevVal);
                 if (!int && int !== 0) throw new RuntimeError(
                   "Decrement of a non-numeric value",
-                  expSyntaxTree
+                  expSyntaxTree, environment
                 );
                 let newVal = int - 1;
                 return [newVal, prevVal]
@@ -895,7 +909,7 @@ export class ScriptInterpreter {
         }
         else throw new RuntimeError(
           "Function call with a non-function-valued expression",
-          expSyntaxTree
+          expSyntaxTree, environment
         );
       }
       case "virtual-method": {
@@ -912,7 +926,7 @@ export class ScriptInterpreter {
         }
         else throw new RuntimeError(
           "Virtual method with a non-function type",
-          expSyntaxTree.fun
+          expSyntaxTree.fun, environment
         );
       }
       case "member-access": {
@@ -1028,7 +1042,7 @@ export class ScriptInterpreter {
     else {
       throw new RuntimeError(
         "Assignment to invalid expression",
-        expSyntaxTree
+        expSyntaxTree, environment
       );
     }
   }
@@ -1046,7 +1060,7 @@ export class ScriptInterpreter {
     if (typeof indexVal !== "string" && typeof indexVal !== "number") {
       throw new RuntimeError(
         "Indexing with a non-primitive value",
-        indexExp
+        indexExp, environment
       );
     }
 
@@ -1058,20 +1072,20 @@ export class ScriptInterpreter {
         throw new RuntimeError(
           "Assignment to an array with a non-integer or a " +
           "negative integer key",
-          indexExp
+          indexExp, environment
         );
       }
     }
     else if (!expVal || typeof expVal !== "object") {
       throw new RuntimeError(
         "Assignment to a member of a non-object",
-        memAccSyntaxTree
+        memAccSyntaxTree, environment
       );
     }
     else if (expVal instanceof StructObject) {
       throw new RuntimeError(
         "Assignment to a member of an immutable struct object",
-        memAccSyntaxTree
+        memAccSyntaxTree, environment
       );
     }
     else {
@@ -1093,7 +1107,7 @@ export class Environment {
   constructor(
     parent = undefined, thisVal = undefined, scopeType = "block",
     log = undefined, gas = undefined, reqUserID = undefined,
-    structID = undefined, structDefs = undefined,
+    scriptID = undefined, structID = undefined, structDefs = undefined,
   ) {
     this.parent = parent;
     this.scopeType = scopeType;
@@ -1105,25 +1119,26 @@ export class Environment {
       throw "Environment: No gas object provided";
     })();
     this.reqUserID = reqUserID ?? parent?.reqUserID ?? undefined;
+    this.scriptID = scriptID ?? parent?.scriptID ?? undefined;
     this.structID = structID ?? parent?.structID ?? undefined;
     this.structDefs = structDefs ?? parent?.structDefs ?? undefined;
     if (scopeType === "module") {
       this.exports = {};
-      this.finalExports = null;
+      this.defaultExport = undefined;
     }
   }
 
-  get(ident, node) {
+  get(ident, node, nodeEnvironment = undefined) {
     let safeIdent = "#" + ident;
     let [val] = this.variables[safeIdent] ?? [];
     if (val !== undefined) {
       return (val === UNDEFINED) ? undefined : val;
     } else if (this.parent) {
-      return this.parent.get(ident, node);
+      return this.parent.get(ident, node, nodeEnvironment);
     } else {
       throw new RuntimeError(
         "Undeclared variable",
-        node
+        node, nodeEnvironment ?? this
       );
     }
   }
@@ -1135,7 +1150,7 @@ export class Environment {
     if (prevVal !== undefined) {
       throw new RuntimeError(
         "Redeclaration of variable '" + ident + "'",
-        node
+        node, this
       );
     } else {
       this.variables[safeIdent] = [val, isConst];
@@ -1149,7 +1164,7 @@ export class Environment {
       if (isConst) {
         throw new RuntimeError(
           "Reassignment of constant variable or function '" + ident + "'",
-          node
+          node, this
         );
       } else {
         let [newVal, ret] = assignFun(prevVal);
@@ -1162,7 +1177,7 @@ export class Environment {
     } else {
       throw new RuntimeError(
         "Assignment of undefined variable '" + ident + "'",
-        node
+        node, this
       );
     }
   }
@@ -1175,11 +1190,11 @@ export class Environment {
   exportDefault(val, ident = undefined, node) {
     if (this.export.defaultExport) throw new RuntimeError(
       "Only one default export allowed",
-      node
+      node, this
     );
     if (val === undefined) throw new RuntimeError(
       "Exporting undefined value as the default export",
-      node
+      node, this
     );
     this.export.defaultExport = val;
     if (ident) this.export["#" + ident] = [ident, false];
@@ -1190,29 +1205,26 @@ export class Environment {
 
 
 
-function payGas(gas, gasCost, node) {
+function payGas(gas, gasCost) {
   Object.keys(this.gasCost).forEach(key => {
     if (gas[key] ??= 0) {
       gas[key] -= gasCost[key];
     }
     if (gas[key] < 0) throw new OutOfGasError(
-      "Ran out of " + GAS_NAMES[key] + "gas",
-      node
+      "Ran out of " + GAS_NAMES[key] + "gas"
     );
   });
 }
 
-function decrCompGas(gas, node) {
+function decrCompGas(gas) {
   if (0 > --gas.comp) throw new OutOfGasError(
-    "Ran out of " + GAS_NAMES.comp + " gas",
-    node
+    "Ran out of " + GAS_NAMES.comp + " gas"
   );
 }
 
-function decrFetchGas(gas, node) {
+function decrFetchGas(gas) {
   if (0 > --gas.fetch) throw new OutOfGasError(
     "Ran out of " + GAS_NAMES.fetch + " gas",
-    node
   );
 }
 
@@ -1304,30 +1316,30 @@ class ContinueException {
 
 
 export class PreprocessingError {
-  constructor(msg, node) {
+  constructor(msg) {
     this.msg = msg;
-    this.node = node;
   }
 }
 
 export class OutOfGasError {
-  constructor(msg, node) {
+  constructor(msg) {
     this.msg = msg;
-    this.node = node;
   }
 }
 
 export class RuntimeError {
-  constructor(msg, node) {
+  constructor(msg, node, scriptID) {
     this.msg = msg;
     this.node = node;
+    this.scriptID = scriptID;
   }
 }
 
 export class CustomError {
-  constructor(msg, node) {
+  constructor(msg, node, scriptID) {
     this.msg = msg;
     this.node = node;
+    this.scriptID = scriptID;
   }
 }
 
