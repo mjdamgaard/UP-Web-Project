@@ -65,28 +65,40 @@ class _IDTree {
 
   _remove(key, keyMaxPos) {
     let char = key[this.charPos];
-    let child, wasDeleted;
+    let child, wasRemoved;
     if (keyMaxPos <= this.charPos) {
-      wasDeleted = this.leafs[char];
+      wasRemoved = this.leafs[char];
       delete this.leafs[char];
     }
     else if (child = this.childTrees[char]) {
-      wasDeleted = child._remove(key, keyMaxPos);
+      wasRemoved = child._remove(key, keyMaxPos);
     }
     else {
       return false;
     }
 
     if (
-      wasDeleted && this.parent &&
+      wasRemoved && this.parent &&
       Object.keys(this.leafs).length === 0 &&
       Object.keys(this.childTrees).length === 0
     ) {
       let ownKey = key.substring(0, this.charPos);
       this.parent.remove(ownKey);
     }
-    return wasDeleted;
+    return wasRemoved;
   }
+
+
+  forEach(callback) {
+    let i = [0];
+    this._forEach(callback, i);
+  }
+
+  _forEach(callback, i) {
+    this.leafs.forEach(val => callback(val, i[0]++));
+    this.childTrees.forEach(node => node_forEach(callback, i));
+  }
+
 }
 
 

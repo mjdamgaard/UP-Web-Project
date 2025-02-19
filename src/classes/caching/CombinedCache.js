@@ -26,21 +26,12 @@ export class CombinedCache {
     // .minPriority, swap the element with the first element of the priority
     // cache.
     if (ret === undefined) {
-      ret = this.lruCache.get(key, priority, (key, val, count) => {
-        let ret = [key, val, count];
-        if (count > this.priorityCache.minPriority) {
-          // Returning null will remove the gotten (now first) element of the
-          // LRU cache.
-          ret = null;
-          this.priorityCache.set(
-            key, val, count, (firstKey, firstVal, firstPriority) => {
-              // This will transform the first element of the LRU cache.
-              ret = [firstKey, firstVal, firstPriority];
-            }
-          );
-        }
-        return ret;
-      });
+      ret = this.lruCache.get(key, priority);
+      let firstPriority = this.lruCache.firstEntryCount;
+      if (ret && firstPriority > this.priorityCache.minPriority) {
+        this.priorityCache.set(key, ret, firstPriority);
+        this.lruCache.remove(key);
+      }
     }
     return ret;
   }

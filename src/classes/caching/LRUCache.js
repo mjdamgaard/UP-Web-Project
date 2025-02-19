@@ -14,10 +14,15 @@ export class LRUCache {
     this.entryNum = 2;
   }
 
+  get firstEntryCount() {
+    return this.firstEntry[4];
+  }
+
+
   // cache = {["#" + key]: entry, ...},
   // entry = [value, prevEntry, nextEntry, key, touchedCount].
 
-  get(key, count = 1, update = (key, val, count) => [key, val, count]) {
+  get(key, count = 1) {
     let entry = this.cache.get(key);
 
     if (entry) {
@@ -31,24 +36,6 @@ export class LRUCache {
       entry[2] = this.firstEntry;
       this.firstEntry[1] = entry;
       this.firstEntry = entry;
-
-      // Call optional update function to potentially change the new first
-      // entry.
-      [entry[3], entry[0], entry[4]] = update(entry[3], entry[0], entry[4]) ||
-        [];
-      if (entry[3] !== key) {
-        if (entry[0] !== undefined) {
-          // Update this.cache as well, if the returned value is not undefined.
-          this.cache.remove(key);
-          this.cache.set(entry[3], entry);
-        } else {
-          // Else simply remove the first entry entirely.
-          this.cache.remove(key);
-          this.firstEntry = this.firstEntry[2];
-          this.firstEntry[1] = null;
-          this.entryNum--;
-        }
-      }
 
       // Return value.
       return entry[0];

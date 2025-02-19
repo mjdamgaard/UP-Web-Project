@@ -10,6 +10,7 @@ const GAS_NAMES = {
   comp: "computation",
   fetch: "fetching",
   cacheSet: "cache inserting",
+  time: "time",
 };
 
 function getParsingGasCost(str) {
@@ -20,10 +21,11 @@ function getParsingGasCost(str) {
 
 export class ScriptInterpreter {
 
-  constructor(builtInFunctions, builtInConstants, parsedScriptCache) {
+  constructor(builtInFunctions, builtInConstants, entityCache) {
     this.builtInFunctions = builtInFunctions;
     this.builtInConstants = builtInConstants;
-    this.parsedScriptCache = parsedScriptCache;
+    this.entityCache = entityCache;
+    this.globalEnv = undefined;
     this.fetchScript = builtInFunctions.fetchScript?.fun ?? (() => {
       throw "ScriptInterpreter: builtInFunctions need to include fetchScript()";
     })();
@@ -111,7 +113,7 @@ export class ScriptInterpreter {
     // Try to get the parsed script first from the buffer, then from the cache.
     let scriptSyntaxTree = parsedScripts["#" + scriptID];
     if (!scriptSyntaxTree) {
-      scriptSyntaxTree = this.parsedScriptCache.get(scriptID);
+      scriptSyntaxTree = this.entityCache.get(scriptID);
 
       // If gotten from the cache, also add it to the parsedScripts buffer.
       if (scriptSyntaxTree) {
@@ -131,7 +133,7 @@ export class ScriptInterpreter {
       // Cache.
       parsedScripts["#" + scriptID] = scriptSyntaxTree;
       payGas(gas, {cacheSet: 1});
-      this.parsedScriptCache.set(scriptID, scriptSyntaxTree);
+      this.entityCache.set(scriptID, scriptSyntaxTree);
     }
 
     // Once the script syntax tree is gotten, we look for any import statements
@@ -254,10 +256,10 @@ export class ScriptInterpreter {
   }
 
 
-  // (We might move the global environment up as a property of this class at
-  // some point when we know that it is safe to do so (but this will mean
-  // that all users will share the same global environment on the server).)
   createGlobalEnvironment() {
+    if (this.globalEnv) {
+      return this.globalEnv;
+    }
     let globalEnv = new Environment(undefined, undefined, "global");
     Object.entries(this.builtInFunctions).forEach(([name, funFun]) => {
       globalEnv.declare(name, funFun(), true);
@@ -265,6 +267,7 @@ export class ScriptInterpreter {
     Object.entries(this.builtInConstants).forEach(([ident, val]) => {
       globalEnv.declare(ident, val, true);
     });
+    return this.globalEnv = globalEnv;
   }
 
 
@@ -274,12 +277,14 @@ export class ScriptInterpreter {
 
   executeScript(
     gas, scriptID, parsedScripts, structDefs, reqUserID,
-    globalEnvironment = undefined, liveModules = {}, log = {},
+    liveModules = {}, log = {},
   ) {
     let scriptSyntaxTree = parsedScripts["#" + scriptID];
 
     // Create global environment if not yet done.
-    if (!globalEnvironment) globalEnvironment = this.createGlobalEnvironment();
+    if (!this.globalEnv) {
+      this.createGlobalEnvironment();
+    }
 
     // Create a new environment.
     let environment = new Environment(
@@ -320,8 +325,7 @@ export class ScriptInterpreter {
     let moduleEnv = liveModules["#" + moduleID];
     if (!moduleEnv) {
       this.executeScript(
-        gas, moduleID, parsedScripts, structDefs, reqUserID,
-        globalEnvironment, liveModules, log,
+        gas, moduleID, parsedScripts, structDefs, reqUserID, liveModules, log
       );
       moduleEnv = liveModules["#" + moduleID];
     }
@@ -1112,9 +1116,9 @@ export class ScriptInterpreter {
       expSyntaxTree.type === "member-access" && !expSyntaxTree.postfix.isOpt
     ) {
       // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
-      let expVal, indexVal;
+      let expVal, indexVal, isStruct;
       try {
-        [expVal, indexVal] = this.getMemberAccessExpValAndSafeIndex(
+        [expVal, indexVal, isStruct] = this.getMemberAccessExpValAndSafeIndex(
           expSyntaxTree, environment
         );
       } catch (err) {
@@ -1126,6 +1130,12 @@ export class ScriptInterpreter {
           throw err;
         }
       }
+
+      // Throw runtime error if trying to mute a struct.
+      if (isStruct) throw new RuntimeError(
+        "Assignment to a member of an immutable object",
+        expSyntaxTree, environment
+      );
 
       // Then assign the member of our expVal and return the value specified by
       // assignFun.
@@ -1162,7 +1172,9 @@ export class ScriptInterpreter {
 
     // If expVal is an array, check that indexVal is a non-negative
     // integer, and if it is an object, append "#" to the indexVal.
-    if (Array.isArray(expVal)) {
+    let valType = getType(expVal);
+    let isStruct = (valType === "struct");
+    if (valType === "array") {
       indexVal = parseInt(indexVal);
       if (!(indexVal >= 0 && indexVal <= MAX_ARRAY_INDEX)) {
         throw new RuntimeError(
@@ -1172,15 +1184,9 @@ export class ScriptInterpreter {
         );
       }
     }
-    else if (!expVal || typeof expVal !== "object") {
+    else if (valType !== "object" && !isStruct) {
       throw new RuntimeError(
-        "Assignment to a member of a non-object",
-        memAccSyntaxTree, environment
-      );
-    }
-    else if (expVal instanceof StructObject) {
-      throw new RuntimeError(
-        "Assignment to a member of an immutable struct object",
+        "Accessing or assignment to a member of a non-object",
         memAccSyntaxTree, environment
       );
     }
@@ -1188,7 +1194,7 @@ export class ScriptInterpreter {
       indexVal = "#" + indexVal;
     }
 
-    return [expVal, indexVal];
+    return [expVal, indexVal, isStruct];
   }
 
 }
@@ -1300,7 +1306,7 @@ export class Environment {
 
 
 
-function payGas(gas, gasCost) {
+export function payGas(gas, gasCost) {
   Object.keys(this.gasCost).forEach(key => {
     if (gas[key] ??= 0) {
       gas[key] -= gasCost[key];
@@ -1311,13 +1317,13 @@ function payGas(gas, gasCost) {
   });
 }
 
-function decrCompGas(gas) {
+export function decrCompGas(gas) {
   if (0 > --gas.comp) throw new OutOfGasError(
     "Ran out of " + GAS_NAMES.comp + " gas"
   );
 }
 
-function decrFetchGas(gas) {
+export function decrFetchGas(gas) {
   if (0 > --gas.fetch) throw new OutOfGasError(
     "Ran out of " + GAS_NAMES.fetch + " gas",
   );
@@ -1385,6 +1391,12 @@ export class ThisBoundFunction {
 export class StructObject {
   constructor(structID) {
     this.structID = structID;
+  }
+}
+
+export class PromiseValue {
+  constructor(promise) {
+    this.promise = promise;
   }
 }
 
