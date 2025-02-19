@@ -24,13 +24,13 @@ export class ExpiryCache {
   }
 
 
-  set(key, val, expiryTime) {
+  set(key = this.entryNum + 1, val, expiryTime) {
     if (this.entryNum >= this.limit) {
       return false;
     }
     this.entryNum++;
     this.cache.set(key, [val, key, expiryTime]);
-    return true;
+    return key;
   }
 
 

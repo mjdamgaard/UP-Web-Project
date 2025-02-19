@@ -3,6 +3,8 @@ import {ScriptParser} from "./ScriptParser.js";
 import {EntityReference, EntityPlaceholder} from "../parsing/RegEntParser.js";
 import {LexError, SyntaxError} from "../parsing/Parser.js";
 
+export {LexError, SyntaxError};
+
 
 const MAX_ARRAY_INDEX = 1E+15;
 
@@ -46,7 +48,7 @@ export class ScriptInterpreter {
   ) {
     // If only a scriptID is provided, rather than a script, fetch and 
     // preprocess the script from scratch, via a call to preprocessScript().
-    let log;
+    let log, shouldExit;
     try {
       let parsedScripts, structDefs;
       if (!script && scriptID !== undefined) {
@@ -74,19 +76,13 @@ export class ScriptInterpreter {
       );
     } catch (err) {
       // If any non-internal error occurred, log it in log.error.
-      if (
-        err instanceof LexError || err instanceof SyntaxError ||
-        err instanceof PreprocessingError || err instanceof RuntimeError ||
-        err instanceof CustomError || err instanceof OutOfGasError
-      ) {
-        log.error = err;
-      } else {
-        throw err;
-      }
+      let shouldExit = logOrThrowUncaughtException(
+        err, log, undefined, scriptID
+      );
     }
 
     // Then finally return the log.
-    return log;
+    return [log, shouldExit];
   }
 
 
@@ -253,6 +249,41 @@ export class ScriptInterpreter {
       }
     }
     return true;
+  }
+
+
+  logOrThrowUncaughtException(err, log, environment, scriptID) {
+    if (
+      err instanceof LexError || err instanceof SyntaxError ||
+      err instanceof PreprocessingError || err instanceof RuntimeError ||
+      err instanceof CustomError || err instanceof OutOfGasError
+    ) {
+      log.error = err;
+    } else if (err instanceof ReturnException) {
+      log.error = new RuntimeError(
+        "Cannot return from outside of a function",
+        err.node, environment ?? {scriptID: scriptID}
+      );
+    } else if (err instanceof ThrownException) {
+      log.error = new RuntimeError(
+        `Uncaught exception: "${err.val.toString()}"`,
+        err.node, environment ?? {scriptID: scriptID}
+      );
+    } else if (err instanceof BreakException) {
+      log.error = new RuntimeError(
+        `Invalid break statement outside of loop`,
+        err.node, environment ?? {scriptID: scriptID}
+      );
+    } else if (err instanceof ContinueException) {
+      log.error = new RuntimeError(
+        `Invalid continue statement outside of loop or switch-case statement`,
+        err.node, environment ?? {scriptID: scriptID}
+      );
+    } else if (err instanceof ExitException) {
+      return true;
+    } else {
+      throw err;
+    }
   }
 
 
@@ -1394,12 +1425,6 @@ export class StructObject {
   }
 }
 
-export class PromiseValue {
-  constructor(promise) {
-    this.promise = promise;
-  }
-}
-
 
 
 class ReturnException {
@@ -1423,6 +1448,9 @@ class ContinueException {
   constructor(node) {
     this.node = node;
   }
+}
+class ExitException {
+  constructor() {}
 }
 class BrokenOptionalChainException {
   constructor() {}
