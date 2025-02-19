@@ -58,12 +58,12 @@ class _IDTree {
   }
 
 
-  delete(key) {
+  remove(key) {
     key = key.toString();
-    return this._delete(key, key.length - 1);
+    return this._remove(key, key.length - 1);
   }
 
-  _delete(key, keyMaxPos) {
+  _remove(key, keyMaxPos) {
     let char = key[this.charPos];
     let child, wasDeleted;
     if (keyMaxPos <= this.charPos) {
@@ -71,7 +71,7 @@ class _IDTree {
       delete this.leafs[char];
     }
     else if (child = this.childTrees[char]) {
-      wasDeleted = child._delete(key, keyMaxPos);
+      wasDeleted = child._remove(key, keyMaxPos);
     }
     else {
       return false;
@@ -83,7 +83,7 @@ class _IDTree {
       Object.keys(this.childTrees).length === 0
     ) {
       let ownKey = key.substring(0, this.charPos);
-      this.parent.delete(ownKey);
+      this.parent.remove(ownKey);
     }
     return wasDeleted;
   }

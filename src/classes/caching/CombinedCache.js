@@ -63,6 +63,17 @@ export class CombinedCache {
   }
 
 
+  remove(key) {
+    let wasDeleted = this.priorityCache.remove(key);
+    if (!wasDeleted) {
+      wasDeleted = this.lruCache.remove(key);
+    }
+    return wasDeleted;
+  }
+
+
+
+
   decay(decayFactor) {
     decayFactor ??= this.decayFactor;
     this.curNumOfSets = 0;

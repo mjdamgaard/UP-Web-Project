@@ -70,7 +70,7 @@ export class PriorityCache {
         let [firstVal,,, firstPriority, firstKey] = this.firstEntry;
         this.firstEntry = this.firstEntry[2];
         this.firstEntry[1] = [];
-        this.cache.delete(firstKey);
+        this.cache.remove(firstKey);
         this.entryNum--;
   
         // Call evictionCallback() on the properties of the evicted entry.
@@ -95,6 +95,30 @@ export class PriorityCache {
       nextEntry = entry[2];
     }
   }
+
+
+
+
+  remove(key) {
+    let entry = this.cache.get(key);
+
+    if (entry) {
+      // Remove entry from cache and update the queue.
+      this.cache.remove(key);
+      if (this.firstEntry === entry) {
+        this.firstEntry[0] = undefined;
+        this.firstEntry[4] = undefined;
+        this.firstEntry[3] = 0;
+      }
+      else {
+        entry[1][2] = entry[2];
+        entry[2][1] = entry[1];
+      }
+      return true;
+    }
+    return false;
+  }
+
 
 }
 

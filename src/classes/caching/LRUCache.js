@@ -25,8 +25,8 @@ export class LRUCache {
       entry[4] += count;
 
       // Update queue.
-      entry[1][2] = entry[2];
-      entry[2][1] = entry[1];
+      if (entry[1]) entry[1][2] = entry[2];
+      if (entry[2]) entry[2][1] = entry[1];
       entry[1] = null;
       entry[2] = this.firstEntry;
       this.firstEntry[1] = entry;
@@ -39,11 +39,11 @@ export class LRUCache {
       if (entry[3] !== key) {
         if (entry[0] !== undefined) {
           // Update this.cache as well, if the returned value is not undefined.
-          this.cache.delete(key);
+          this.cache.remove(key);
           this.cache.set(entry[3], entry);
         } else {
           // Else simply remove the first entry entirely.
-          this.cache.delete(key);
+          this.cache.remove(key);
           this.firstEntry = this.firstEntry[2];
           this.firstEntry[1] = null;
           this.entryNum--;
@@ -68,8 +68,8 @@ export class LRUCache {
       entry[4] += count;
 
       // Update queue.
-      entry[1][2] = entry[2];
-      entry[2][1] = entry[1];
+      if (entry[1]) entry[1][2] = entry[2];
+      if (entry[2]) entry[2][1] = entry[1];
       entry[1] = null;
       entry[2] = this.firstEntry;
       this.firstEntry[1] = entry;
@@ -88,7 +88,7 @@ export class LRUCache {
         let [lastVal,,, lastKey, lastCount] = this.lastEntry;
         this.lastEntry = this.lastEntry[1];
         this.lastEntry[2] = null;
-        this.cache.delete(lastKey);
+        this.cache.remove(lastKey);
         this.entryNum--;
   
         // Call evictionCallback() on the properties of the evicted entry.
@@ -96,6 +96,33 @@ export class LRUCache {
       }
     }
   }
+
+
+  remove(key) {
+    let entry = this.cache.get(key);
+
+    if (entry) {
+      // Remove entry from cache and update the queue.
+      this.cache.remove(key);
+      if (this.firstEntry === entry) {
+        this.firstEntry[0] = undefined;
+        this.firstEntry[3] = undefined;
+        this.firstEntry[4] = 0;
+      }
+      else if (this.lastEntry === entry) {
+        this.lastEntry[0] = undefined;
+        this.lastEntry[3] = undefined;
+        this.firstEntry[4] = 0;
+      }
+      else {
+        entry[1][2] = entry[2];
+        entry[2][1] = entry[1];
+      }
+      return true;
+    }
+    return false;
+  }
+
 
 }
 
