@@ -321,6 +321,24 @@ VALUES
 
 
 
+CREATE TABLE RecentlyEditedEntities (
+
+    entry_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    ent_id BIGINT UNSIGNED NOT NULL
+)
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

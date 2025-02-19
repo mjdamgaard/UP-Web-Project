@@ -713,6 +713,10 @@ proc: BEGIN
     WHERE id = entID;
 
     DO RELEASE_LOCK(CONCAT("EntID.", entID));
+
+    INSERT INTO RecentlyEditedEntities (ent_ID)
+    VALUES (entID);
+
     SELECT entID AS outID, 0 AS exitCode; -- edit.
 END proc //
 DELIMITER ;
