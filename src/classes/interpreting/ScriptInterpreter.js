@@ -23,8 +23,9 @@ function getParsingGasCost(str) {
 
 export class ScriptInterpreter {
 
-  constructor(builtInFunctions, builtInConstants) {
+  constructor(builtInFunctions, functionOptions, builtInConstants) {
     this.builtInFunctions = builtInFunctions;
+    this.functionOptions = functionOptions;
     this.builtInConstants = builtInConstants;
     this.globalEnv = undefined;
     this.fetchScript = builtInFunctions.fetchScript?.fun ?? (() => {
@@ -49,6 +50,7 @@ export class ScriptInterpreter {
       gas: gas, log: {}, reqUserID: reqUserID, scriptID: scriptID,
       permissions: permissions, shouldExit: false, parsedScripts: {},
       structDefs: {}, liveModules: {}, resolveScript: undefined,
+      funOptions: this.functionOptions, scriptInterpreter: this,
     };
 
     // First create global environment if not yet done, and then create an
@@ -311,12 +313,6 @@ export class ScriptInterpreter {
   }
 
 
-  executeBuiltInFunction(fun, inputArr, environment) {
-    payGas(environment, fun.gasCost);
-    return fun.fun(environment, ...inputArr);
-  }
-
-
 
   checkPermissions(flagStr, requiredFlagStr) {
     let flagArr = flagStr.split("");
@@ -471,13 +467,64 @@ export class ScriptInterpreter {
 
 
 
-  executeFunction(
-    funSyntaxTree, inputValueArr, environment, thisVal = undefined
+  executeFunction(fun, inputArr, callerNode, callerEnv) {
+    // Potentially get function and thisVal from ThisBoundFunction wrapper.
+    let thisVal = undefined;
+    if (fun instanceof ThisBoundFunction) {
+      thisVal = fun.thisVal;
+      fun = fun.funVal;
+    }
+
+    // Then execute the function depending on its type.
+    let ret;
+    if (fun instanceof DefinedFunction) {
+      ret = this.executeDefinedFunction(
+        fun.syntaxTree, fun.decEnv, inputArr, callerNode, thisVal
+      );
+    }
+    else if (fun instanceof BuiltInFunction) {
+      ret = this.executeBuiltInFunction(
+        fun, inputArr, callerNode, callerEnv
+      );
+    }
+    else throw new RuntimeError(
+      "Function call with a non-function-valued expression",
+      callerNode, callerEnv
+    );
+
+    // If the function reached an exit statement, throw an exit exception.
+    if (callerEnv.scriptGlobals.shouldExit) {
+      throw new ExitException();
+    }
+    return ret;
+  }
+
+
+
+
+  executeBuiltInFunction(fun, inputArr, callerNode, callerEnv) {
+    payGas(callerEnv, fun.gasCost);
+    return fun.fun(
+      {
+        callerNode: callerNode, callerEnv : callerEnv,
+        scriptGlobals: callerEnv.scriptGlobals,
+      },
+      ...inputArr
+    );
+  }
+
+
+
+
+
+  executeDefinedFunction(
+    funSyntaxTree, funDecEnv, inputValueArr, callerNode, callerEnv,
+    thisVal = undefined
   ) {
-    decrCompGas(environment);
+    decrCompGas(callerEnv);
 
     // Initialize a new environment for the execution of the function.
-    let funEnv = new Environment(environment, thisVal, "function");
+    let newEnv = new Environment(funDecEnv, thisVal, "function");
 
     // Add the input parameters to the new environment.
     funSyntaxTree.params.forEach((param, ind) => {
@@ -489,8 +536,8 @@ export class ScriptInterpreter {
       if (param.invalidTypes) {
         if (param.invalidTypes.includes(inputValType)) {
           throw new RuntimeError(
-            `Input parameter of invalid type "${inputValType}"`,
-            param, environment
+            `Input parameter "${paramName}" of invalid type "${inputValType}"`,
+            callerNode, callerEnv
           );
         }
       }
@@ -500,11 +547,11 @@ export class ScriptInterpreter {
       // is called. We use newEnv each time such that a parameter can depend
       // on a previous one.
       if (param.defaultExp && inputValType === "undefined") {
-        paramVal = this.evaluateExpression(param.defaultExp, funEnv);
+        paramVal = this.evaluateExpression(param.defaultExp, newEnv);
       }
 
       // Then declare the parameter in the new environment.
-      funEnv.declare(paramName, paramVal, false, param);
+      newEnv.declare(paramName, paramVal, false, param);
     });
 
     // Now execute the statements inside a try-catch statement to catch any
@@ -512,13 +559,13 @@ export class ScriptInterpreter {
     // return exception, return the held value. 
     let stmtArr = funSyntaxTree.body.stmtArr;
     try {
-      stmtArr.forEach(stmt => this.executeStatement(stmt, funEnv));
+      stmtArr.forEach(stmt => this.executeStatement(stmt, newEnv));
     } catch (err) {
       if (err instanceof ReturnException) {
         return err.val;
       }
       else {
-        this.handleException(err, environment);
+        this.handleException(err, callerEnv);
       }
     }
 
@@ -991,33 +1038,7 @@ export class ScriptInterpreter {
           this.evaluateExpression(exp, environment)
         ));
 
-        // Potentially get function and thisVal from ThisBoundFunction wrapper.
-        let thisVal = undefined;
-        if (fun instanceof ThisBoundFunction) {
-          thisVal = fun.thisVal;
-          fun = fun.funVal;
-        }
-
-        // Then execute the function depending on its type.
-        let ret;
-        if (fun instanceof DefinedFunction) {
-          ret = this.executeFunction(
-            fun.syntaxTree, inputValArr, fun.environment, thisVal
-          );
-        }
-        else if (fun instanceof BuiltInFunction) {
-          ret = this.executeBuiltInFunction(fun, inputValArr, environment);
-        }
-        else throw new RuntimeError(
-          "Function call with a non-function-valued expression",
-          expSyntaxTree, environment
-        );
-
-        // If the function reached an exit statement, throw an exit exception.
-        if (environment.scriptGlobals.shouldExit) {
-          throw new ExitException();
-        }
-        return ret;
+        return executeFunction(fun, inputValArr, expSyntaxTree, environment);
       }
       case "virtual-method": {
         let objVal = this.evaluateExpression(expSyntaxTree.obj, environment);
@@ -1406,9 +1427,9 @@ export function getType(val) {
 
 
 export class DefinedFunction {
-  constructor(syntaxTree, environment) {
+  constructor(syntaxTree, decEnv) {
     this.syntaxTree = syntaxTree;
-    this.environment = environment;
+    this.decEnv = decEnv;
   }
 }
 
