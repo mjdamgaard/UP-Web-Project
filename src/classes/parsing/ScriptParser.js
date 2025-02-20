@@ -14,7 +14,7 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
   "^(let|var|const|this|function|export|import|break|continue|return|throw|" +
   "if|else|switch|case|void|typeof|instanceof|delete|await|class|static|" +
   "true|false|null|undefined|Infinity|NaN|try|catch|finally|for|while|do|" +
-  "default|struct)$"
+  "default|struct|exit)$"
   // TODO: Continue this list.
 );
 
@@ -531,7 +531,7 @@ export const scriptGrammar = {
   },
   "instruction-statement": {
     rules: [
-      ["/break|continue/", "/;/"],
+      ["/break|continue|exit/", "/;/"],
     ],
     process: copyLexemeFromChild(0),
   },

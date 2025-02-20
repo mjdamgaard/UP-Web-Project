@@ -55,3 +55,22 @@ export class ExpiryCache {
 
 
 export {ExpiryCache as default};
+
+
+
+
+export class ExpiryCacheWAutomaticKeys extends ExpiryCache {
+  constructor(limit, delay, evictionCallback) {
+    super(limit, delay, evictionCallback);
+  }
+
+  set(val, expiryTime) {
+    let key = this.entryNum + 1
+    if (this.entryNum >= this.limit) {
+      return false;
+    }
+    this.entryNum++;
+    this.cache.set(key, [val, key, expiryTime]);
+    return key;
+  }
+}
