@@ -54,7 +54,7 @@ export class ScriptInterpreter {
     // First create global environment if not yet done, and then create an
     // initial user environment, used for the , and as a parent environment
     // for all scripts/modules.
-    let globalEnv = this.#createGlobalEnvironment(scriptGlobals);
+    let globalEnv = this.createGlobalEnvironment(scriptGlobals);
 
     // If only a scriptID is provided, rather than a script, fetch and 
     // preprocess the script from scratch, via a call to preprocessScript().
@@ -80,7 +80,7 @@ export class ScriptInterpreter {
     } catch (err) {
       // If any non-internal error occurred, log it in log.error and set
       // shouldExit to true (both contained in globalEnv).
-      this.#logOrThrowUncaughtException(err, globalEnv);
+      this.handleException(err, globalEnv);
     }
 
     // If the shouldExit is true, we can return the resulting log.
@@ -118,7 +118,7 @@ export class ScriptInterpreter {
       }
       else {
         scriptGlobals.log.error = new OutOfGasError(
-          "Ran out of " + GAS_NAMES.time + " gas"
+          "Ran out of " + GAS_NAMES.time + " gas (no exit statement reached)"
         );
         return scriptGlobals.log;
       }
@@ -128,7 +128,7 @@ export class ScriptInterpreter {
 
 
 
-  #createGlobalEnvironment(scriptGlobals) {
+  createGlobalEnvironment(scriptGlobals) {
     let globalEnv = new Environment(
       undefined, undefined, "global", undefined, scriptGlobals
     );
@@ -142,9 +142,9 @@ export class ScriptInterpreter {
   }
 
 
-  // TODO: Correct.
-  #logOrThrowUncaughtException(err, environment) {
-    let {log} = environment.scriptGlobals; 
+
+  handleException(err, environment) {
+    let scriptGlobals = environment.scriptGlobals, {log} = scriptGlobals; 
     if (
       err instanceof LexError || err instanceof SyntaxError ||
       err instanceof PreprocessingError || err instanceof RuntimeError ||
@@ -172,7 +172,8 @@ export class ScriptInterpreter {
         err.node, environment
       );
     } else if (err instanceof ExitException) {
-      return true;
+      scriptGlobals.shouldExit;
+      if (scriptGlobals.resolveScript) scriptGlobals.resolveScript();
     } else {
       throw err;
     }
@@ -184,7 +185,7 @@ export class ScriptInterpreter {
 
   async preprocessScript(curScriptID, globalEnv, callerScriptIDs = []) {
     decrCompGas(globalEnv);
-    let {parsedScripts, structDefs} = globalEnv.scriptGlobals;
+    let {parsedScripts, structDefs, permissions} = globalEnv.scriptGlobals;
 
     // First check that scriptID is not one of the callers, meaning that the
     // preprocess recursion is infinite.
@@ -232,10 +233,7 @@ export class ScriptInterpreter {
 
         // Then push a promise preprocess the module to promiseArr.
         promiseArr.push(
-          this.preprocessScript(
-            gas, permissions, moduleID,
-            parsedScripts, structDefs, callerScriptIDs,
-          )
+          this.preprocessScript(moduleID, globalEnv, callerScriptIDs)
         );
 
         // And for each structRef in the import statement, we also want to push
@@ -479,7 +477,7 @@ export class ScriptInterpreter {
     decrCompGas(environment);
 
     // Initialize a new environment for the execution of the function.
-    let newEnv = new Environment(environment, thisVal, "function");
+    let funEnv = new Environment(environment, thisVal, "function");
 
     // Add the input parameters to the new environment.
     funSyntaxTree.params.forEach((param, ind) => {
@@ -502,11 +500,11 @@ export class ScriptInterpreter {
       // is called. We use newEnv each time such that a parameter can depend
       // on a previous one.
       if (param.defaultExp && inputValType === "undefined") {
-        paramVal = this.evaluateExpression(param.defaultExp, newEnv);
+        paramVal = this.evaluateExpression(param.defaultExp, funEnv);
       }
 
       // Then declare the parameter in the new environment.
-      newEnv.declare(paramName, paramVal, false, param);
+      funEnv.declare(paramName, paramVal, false, param);
     });
 
     // Now execute the statements inside a try-catch statement to catch any
@@ -514,21 +512,13 @@ export class ScriptInterpreter {
     // return exception, return the held value. 
     let stmtArr = funSyntaxTree.body.stmtArr;
     try {
-      stmtArr.forEach(stmt => this.executeStatement(stmt, newEnv));
+      stmtArr.forEach(stmt => this.executeStatement(stmt, funEnv));
     } catch (err) {
       if (err instanceof ReturnException) {
         return err.val;
       }
-      else if (
-        err instanceof BreakException || err instanceof ContinueException
-      ) {
-        throw new RuntimeError(
-          "Invalid break or continue statement",
-          err.node, environment
-        );
-      }
       else {
-        throw err;
+        this.handleException(err, environment);
       }
     }
 
@@ -1009,18 +999,25 @@ export class ScriptInterpreter {
         }
 
         // Then execute the function depending on its type.
+        let ret;
         if (fun instanceof DefinedFunction) {
-          return this.executeFunction(
+          ret = this.executeFunction(
             fun.syntaxTree, inputValArr, fun.environment, thisVal
           );
         }
         else if (fun instanceof BuiltInFunction) {
-          return this.executeBuiltInFunction(fun, inputValArr, environment);
+          ret = this.executeBuiltInFunction(fun, inputValArr, environment);
         }
         else throw new RuntimeError(
           "Function call with a non-function-valued expression",
           expSyntaxTree, environment
         );
+
+        // If the function reached an exit statement, throw an exit exception.
+        if (environment.scriptGlobals.shouldExit) {
+          throw new ExitException();
+        }
+        return ret;
       }
       case "virtual-method": {
         let objVal = this.evaluateExpression(expSyntaxTree.obj, environment);
