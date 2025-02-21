@@ -46,9 +46,11 @@ export const EOS_ERROR = "End of partial string";
 // The the optional process(syntaxTree) function can process and reformat the
 // syntax tree node right after it has been successfully parsed, and also
 // potentially perform a test on it, which can turn a success into a failure.
-// The latter is done by returning [isSuccess = true, error], where the node
-// fails silently if isSuccess is defined and falsy, and fails with an error
-// that aborts the parsing if error is a non-empty error message string.
+// It returns [res, isSuccess = true, error?], where res is a processed result
+// that is stored at syntaxTree.res, isSuccess can be set to false in order to
+// fail the symbol (but allow other symbols to be tried instead), and error can
+// be set to a truthy error message, which will then make the whole parsing
+// halt there and return a failed syntax tree.
 // 
 // The symbols inside each rule of the grammar can either be another (or the
 // same) nonterminal symbol, or a RegExp pattern beginning and ending in '/',
@@ -362,26 +364,16 @@ export class Parser {
     // function if there in order to test and process it.
     if (syntaxTree.isSuccess) {
       if (process) {
-        let nextPos = syntaxTree.nextPos;
-        let sym = syntaxTree.sym;
-
         // Process the would-be successful syntax tree.
-        let [isSuccess = true, error] = process(syntaxTree) || [];
+        let [res, isSuccess = true, error] = process(syntaxTree) || [];
+        isSuccess &&= !error;
 
-        // Make sure that pos, nextPos and sym isn't changed by the user (as
-        // they are used for error reporting). Also, make sure to reset nextPos
-        // to pos on a silent failure (error = undefined).
+        // Set res, isSuccess, error depending on the returned values, and
+        // also reset nextPos on a failure.
+        syntaxTree.res = res;
+        syntaxTree.isSuccess = isSuccess;
+        if (error) syntaxTree.error = error;
         syntaxTree.nextPos = isSuccess ? nextPos : pos;
-        syntaxTree.sym = sym;
-        syntaxTree.pos = pos;
-
-        // Set error and isSuccess depending on the returned values, and also
-        // reset nextPos on an error.
-        syntaxTree.isSuccess = isSuccess && !error;
-        if (error) {
-          syntaxTree.error = error;
-          syntaxTree.nextPos = pos;
-        }
       }
     }
 

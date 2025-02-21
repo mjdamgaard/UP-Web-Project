@@ -19,26 +19,30 @@ function getParsingGasCost(str) {
   return {comp: str.length / 100 + 1};
 }
 
+function getStructModuleIDs(structNode) {
+  let fstInput = structNode[1];
+  if (fstInput instanceof EntityReference) {
+    return fstInput.id;
+  }
+  else if (Array.isArray(fstInput)) {
+    return fstInput.map(val => val.id);
+  }
+  else return false;
+}
+
 
 
 export class ScriptInterpreter {
 
-  constructor(builtInFunctions, functionOptions, builtInConstants) {
+  constructor(
+    builtInFunctions, functionOptions, builtInConstants, fetchScript,
+    fetchStruct
+  ) {
     this.builtInFunctions = builtInFunctions;
     this.functionOptions = functionOptions;
     this.builtInConstants = builtInConstants;
-    this.globalEnv = undefined;
-    this.fetchScript = builtInFunctions.fetchScript?.fun ?? (() => {
-      throw "ScriptInterpreter: builtInFunctions need to include fetchScript()";
-    })();
-    this.fetchStructDef = builtInFunctions.fetchStructDef?.fun  ?? (() => {
-      throw "ScriptInterpreter: builtInFunctions need to include " +
-        "fetchStructDef()";
-    })();
-    this.getStructModuleIDs = builtInFunctions.getStructModuleIDs ?? (() => {
-      throw "ScriptInterpreter: builtInFunctions need to include " +
-        "getStructModuleIDs()";
-    })();
+    this.fetchScript = fetchScript;
+    this.fetchStruct = fetchStruct;
   }
 
 
@@ -191,7 +195,7 @@ export class ScriptInterpreter {
 
     // First check that scriptID is not one of the callers, meaning that the
     // preprocess recursion is infinite.
-    let indOfSelf = callerScriptIDs.indexOf(curScriptID)
+    let indOfSelf = callerScriptIDs.indexOf(curScriptID);
     if (indOfSelf !== -1) {
       throw new PreprocessingError(
         `Script @[${curScriptID}] imports itself recursively through ` +
@@ -205,8 +209,8 @@ export class ScriptInterpreter {
     // else fetch it and add it to said buffer.
     let scriptSyntaxTree = parsedScripts["#" + curScriptID];
     if (!scriptSyntaxTree) {
-      let scriptSyntaxTree = await this.fetchParsedScript(
-        globalEnv, curScriptID
+      let scriptSyntaxTree = await this.fetchEnt(
+        {callerEnv: globalEnv, callerNode: scriptSyntaxTree}, curScriptID
       );
       parsedScripts["#" + curScriptID] = scriptSyntaxTree;
     }
@@ -285,7 +289,7 @@ export class ScriptInterpreter {
       // now also verify that no struct imports from a wrong module.
       let structModuleIDs = {};
       Object.entries(structDefs).forEach(([safeKey, structDef]) => {
-        structModuleIDs[safeKey] = this.getStructModuleIDs(gas, structDef);
+        structModuleIDs[safeKey] = getStructModuleIDs(structDef);
       });
       structAndModulePairs.forEach(([structID, moduleID]) => {
         if (!structModuleIDs["#" + structID].includes(moduleID)) {
@@ -307,7 +311,7 @@ export class ScriptInterpreter {
 
 
   async fetchAndStoreStructDef(gas, structID, structDefs = {}) {
-    let def = await this.fetchStructDef(gas, structID);
+    let def = await this.fetchStruct(gas, structID);
     structDefs["#" + structID] = def;
     return structDefs;
   }
@@ -505,10 +509,7 @@ export class ScriptInterpreter {
   executeBuiltInFunction(fun, inputArr, callerNode, callerEnv) {
     payGas(callerEnv, fun.gasCost);
     return fun.fun(
-      {
-        callerNode: callerNode, callerEnv : callerEnv,
-        scriptGlobals: callerEnv.scriptGlobals,
-      },
+      callerNode, callerEnv,
       ...inputArr
     );
   }

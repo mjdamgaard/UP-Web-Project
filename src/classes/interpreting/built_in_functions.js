@@ -6,6 +6,24 @@ import {
 
 
 
+function callFunction({callerNode, callerEnv}, fun, inputArr) {
+  if (fun instanceof Function) {
+    return fun(...inputArr);
+  }
+  else if (
+    fun instanceof DefinedFunction || fun instanceof BuiltInFunction ||
+    fun instanceof ThisBoundFunction 
+  ) {
+    let {scriptInterpreter} = callerEnv.scriptGlobals;
+    scriptInterpreter.executeFunction(
+      callback, inputArr, callerNode, callerEnv
+    );
+  }
+  else throw "callFunction(): callback is not a function";
+}
+
+
+
 export const builtInFunctions = {
 
   getStructModuleIDs: function ({callerEnv}, structDef) {
@@ -15,36 +33,49 @@ export const builtInFunctions = {
   },
 
 
-  fetchStructDef: function (
-    {callerNode, callerEnv, scriptGlobals}, structID, callback
-  ) {
+  fetchStructDef: function (envData, structID, callback) {
+    let {callerEnv, scriptGlobals} = envData;
     decrCompGas(callerEnv);
-    let {scriptInterpreter} = scriptGlobals;
     let {
-      fetchRegEnt, entityCache, structPriority = 1,
+      fetchEnt, entityCache, structPriority = 1,
     } = scriptGlobals.funOptions;
 
     let [defStr] = entityCache.get(structID, structPriority) ?? [];
     if (defStr !== undefined) {
-      scriptInterpreter.executeFunction(
-        callback, [defStr], callerNode, callerEnv
-      );
+      callFunction(envData, callback, [defStr]);
     }
     else {
-      fetchRegEnt(structID, (defStr) => {
+      fetchEnt(structID, 700, (entType, defStr) => {
         entityCache.set(structID, [defStr], structPriority);
-        scriptInterpreter.executeFunction(
-          callback, [defStr], callerNode, callerEnv
-        );
+        callFunction(envData, callback, [defStr]);
       });
     }
   },
 
 
   fetchScript: function (
-    {callerNode, callerEnv, scriptGlobals}, structID, callback
+    {callerNode, callerEnv, scriptGlobals}, scriptID, callback
   ) {
-    // TODO: Implement.
+    decrCompGas(callerEnv);
+    let {scriptInterpreter} = scriptGlobals;
+    let {
+      fetchEnt, entityCache, scriptPriority = 1, maxScriptLen = 4294967295,
+    } = scriptGlobals.funOptions;
+
+    let [defStr] = entityCache.get(scriptID, scriptPriority) ?? [];
+    if (defStr !== undefined) {
+      scriptInterpreter.executeFunction(
+        callback, [defStr], callerNode, callerEnv
+      );
+    }
+    else {
+      fetchEnt(scriptID, maxScriptLen, (defStr) => {
+        entityCache.set(scriptID, [defStr], scriptPriority);
+        scriptInterpreter.executeFunction(
+          callback, [defStr], callerNode, callerEnv
+        );
+      });
+    }
   },
 
 }
