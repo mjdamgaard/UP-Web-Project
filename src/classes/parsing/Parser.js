@@ -392,6 +392,9 @@ export class Parser {
         }
         // Else if resType is e.g. "undefined", do nothing.
       }
+
+      // Set res to {type: sym} if it hasn't been defined otherwise.
+      if (!syntaxTree.res) syntaxTree.res = {type: syntaxTree.sym};
     }
 
     // Revert nextPos to pos if the node failed somehow at tis point.

@@ -66,21 +66,21 @@ export const scriptGrammar = {
       ["/struct/", "entity-reference!", "/as/", "identifier"],
       ["identifier"],
     ],
-    process: (syntaxTree) => {
-      return (syntaxTree.ruleInd === 0) ? {
-        namespaceIdent: syntaxTree.children[2].res.ident,
-      } : (syntaxTree.ruleInd === 1) ? {
-        namedImportArr: syntaxTree.children[1].children[0]?.res ?? [],
-      } : (syntaxTree.ruleInd === 2) ? {
-        structRef: syntaxTree.children[1].res,
-        flagStr: syntaxTree.children[1].res.str,
-        structIdent: syntaxTree.children[4].res.ident,
-      } : (syntaxTree.ruleInd === 3) ? {
-        structRef: syntaxTree.children[1].res,
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
+        namespaceIdent: children[2].ident,
+      } : (ruleInd === 1) ? {
+        namedImportArr: children[1][0],
+      } : (ruleInd === 2) ? {
+        structRef: children[2],
+        flagStr: children[1].str,
+        structIdent: children[4].ident,
+      } : (ruleInd === 3) ? {
+        structRef: children[1],
         flagStr: "",
-        structIdent: syntaxTree.children[4].res.ident,
+        structIdent: children[4].ident,
       } : {
-        defaultIdent: syntaxTree.children[0].res.ident,
+        defaultIdent: children[0].ident,
       }
     },
   },
@@ -97,11 +97,10 @@ export const scriptGrammar = {
       ["identifier", "/as/", "identifier!"],
       ["identifier"],
     ],
-    process: (syntaxTree) => {
+    process: (children, ruleInd) => {
       return {
-        ident: (syntaxTree.ruleInd === 0) ? undefined :
-          syntaxTree.children[0].res.ident,
-        alias: syntaxTree.children[2]?.res.ident,
+        ident: (ruleInd === 0) ? undefined : children[0].ident,
+        alias: children[2]?.ident,
       }
     },
   },
@@ -110,7 +109,7 @@ export const scriptGrammar = {
       ["export-statement!1"],
       ["statement"],
     ],
-    process: becomeChild(0),
+    process: (children) => children[0],
   },
   "export-statement": {
     rules: [
@@ -124,33 +123,32 @@ export const scriptGrammar = {
       ["/export/", /\{/, "export-list!1?!", /\}/],
       ["/export/", "statement"],
     ],
-    process: (syntaxTree) => {
-      let ruleInd = syntaxTree.ruleInd;
+    process: (children, ruleInd) => {
       let stmt, flagStr, namedExportArr;
       if (ruleInd === 0) {
-        flagStr = syntaxTree.children[3].res.str;
-        stmt = syntaxTree.children[4].res;
+        flagStr = children[3].str;
+        stmt = children[4];
       } else if (ruleInd === 1) {
         flagStr = "";
-        stmt = syntaxTree.children[3].res;
+        stmt = children[3];
       } else if (ruleInd === 2) {
-        stmt = syntaxTree.children[2].res;
+        stmt = children[2];
       } else if (ruleInd === 3) {
-        flagStr = syntaxTree.children[2].res.str;
-        namedExportArr = syntaxTree.children[4].children[0]?.res ?? [];
+        flagStr = children[2].str;
+        namedExportArr = children[4][0];
       } else if (ruleInd === 4) {
-        flagStr = syntaxTree.children[2].res.str;
-        stmt = syntaxTree.children[3].res;
+        flagStr = children[2].str;
+        stmt = children[3];
       } else if (ruleInd === 5) {
         flagStr = "";
-        namedExportArr = syntaxTree.children[3].children[0]?.res ?? [];
+        namedExportArr = children[3][0];
       } else if (ruleInd === 5) {
         flagStr = "";
-        stmt = syntaxTree.children[2].res;
+        stmt = children[2];
       } else if (ruleInd === 6) {
-        namedExportArr = syntaxTree.children[2].children[0]?.res ?? [];
+        namedExportArr = children[2][0];
       } else {
-        stmt = syntaxTree.children[1].res;
+        stmt = children[1];
       }
 
       let allowedStmtTypes = (ruleInd === 2) ? [
@@ -158,8 +156,8 @@ export const scriptGrammar = {
       ] : [
         "function-declaration", "variable-declaration"
       ];
-      let isExpStmt = (syntaxTree.type === "expression-statement");
-      if (stmt && !allowedStmtTypes.includes(syntaxTree.type)) {
+      let isExpStmt = (stmt.type === "expression-statement");
+      if (stmt && !allowedStmtTypes.includes(stmt.type)) {
         if (isExpStmt) {
           throw new SymbolError(
             "Unnamed export for a non-default export statement"
@@ -182,11 +180,12 @@ export const scriptGrammar = {
         exportArr = stmt.identArr.map(ident => [ident]);
       }
 
-      if (syntaxTree.isDefault && syntaxTree.exportArr.length > 1) {
+      let isDefault = (ruleInd <= 2);
+      if (isDefault && exportArr.length > 1) {
         throw new SymbolError("Only one default export allowed");
       }
       return {
-        isDefault: (ruleInd <= 2),
+        isDefault: isDefault,
         stmt: stmt,
         isStructProp: (flagStr !== undefined),
         flagStr: flagStr,
@@ -207,15 +206,15 @@ export const scriptGrammar = {
       ["identifier", "/as/", "identifier!"],
       ["identifier"],
     ],
-    process: (syntaxTree) => {
-      return (syntaxTree.ruleInd === 0) ? {
-        ident: syntaxTree.children[2].res.ident,
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
+        ident: children[2].ident,
         alias: "default",
-      } : (syntaxTree.ruleInd === 1) ? {
-        ident: syntaxTree.children[0].res.ident,
-        alias: syntaxTree.children[2].res.ident,
+      } : (ruleInd === 1) ? {
+        ident: children[0].ident,
+        alias: children[2].ident,
       } : {
-        ident: syntaxTree.children[0].res.ident,
+        ident: children[0].ident,
       }
     },
   },
@@ -227,17 +226,17 @@ export const scriptGrammar = {
         "/;/"
       ],
     ],
-    process: (syntaxTree) => {
-      return (syntaxTree.ruleInd === 0) ? {
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
         decType: "definition-list",
-        isConst: (syntaxTree.children[0].lexeme === "const"),
-        defArr: syntaxTree.children[1].res,
-        identArr: syntaxTree.defArr.map(val => val.res.ident),
+        isConst: (children[0] === "const"),
+        defArr: children[1],
+        identArr: children[1].map(val => val.ident),
       } : {
         decType: "destructuring",
-        isConst: (syntaxTree.children[0].lexeme === "const"),
-        identArr: syntaxTree.children[2].children.map( val => val.res.ident),
-        exp: syntaxTree.children[5].res,
+        isConst: (children[0] === "const"),
+        identArr: children[2].map(val => val.ident),
+        exp: children[5],
       }
     },
   },
@@ -253,11 +252,11 @@ export const scriptGrammar = {
       ["identifier", "/=/", "expression"],
       ["identifier"],
     ],
-    process: (syntaxTree) => {
-      Object.assign(syntaxTree, {
-        ident: syntaxTree.children[0].res.ident,
-        exp: syntaxTree.children[2] || undefined,
-      });
+    process: (children) => {
+      return {
+        ident: children[0].ident,
+        exp: children[2] || undefined,
+      };
     },
   },
   "identifier-list": {
@@ -271,8 +270,8 @@ export const scriptGrammar = {
     rules: [
       [/[_\$a-zA-Z][_\$a-zA-Z0-9]*/],
     ],
-    process: (syntaxTree) => {
-      let lexeme = syntaxTree.children[0].lexeme;
+    process: (children) => {
+      let lexeme = children[0];
       if (RESERVED_KEYWORD_REGEXP.test(lexeme)) {
         return false;
       } else {
@@ -287,10 +286,10 @@ export const scriptGrammar = {
         "function-body"
       ],
     ],
-    process: (syntaxTree) => ({
-      name: syntaxTree.children[1].ident,
-      params: syntaxTree.children[3].res,
-      body: syntaxTree.children[5].res,
+    process: (children) => ({
+      name: children[1].ident,
+      params: children[3],
+      body: children[5],
     }),
   },
   "parameter-list": {
@@ -307,13 +306,12 @@ export const scriptGrammar = {
       ["identifier", "/:/", "type!"],
       ["identifier"],
     ],
-    process: (syntaxTree) => {
-      let children = syntaxTree.children;
-      let types = children[2]?.res.types;
-      let isRequired = (syntaxTree.ruleInd === 2);
+    process: (children, ruleInd) => {
+      let types = children[2].types;
+      let isRequired = (ruleInd === 2);
       if (!types) {
         return {
-          ident: children[0].res.ident,
+          ident: children[0].ident,
           invalidTypes: undefined,
           defaultExp: undefined,
         };
@@ -330,6 +328,7 @@ export const scriptGrammar = {
 
         // Then iterate over each type in types, and pluck out additional
         // elements of invalidTypes.
+// TODO: Correct.
         types.forEach((type) => {
           if (type.ruleInd === 0) {
             invalidTypes = invalidTypes.filter(val => val !== "entity");
@@ -350,7 +349,7 @@ export const scriptGrammar = {
         });
         return {
           ident: children[0].ident,
-          defaultExp: children[4].res,
+          defaultExp: children[4],
           invalidTypes: invalidTypes,
         };
       }
@@ -362,11 +361,9 @@ export const scriptGrammar = {
       ["type^(1)"],
       [/any/],
     ],
-    process: (syntaxTree) => {
-      syntaxTree.types = (syntaxTree.ruleInd === 0) ?
-        syntaxTree.children[1].res :
-        [syntaxTree.children[0].res];
-    },
+    process: (children, ruleInd) => ({
+      types: (ruleInd === 0) ? children[1] : [children[0]],
+    }),
   },
   "type^(1)-list": {
     rules: [
@@ -380,16 +377,16 @@ export const scriptGrammar = {
       ["entity-reference"], // A class.
       [/string|bool|int|float|array|object/],
     ],
-    process: becomeChild(0),
+    process: (children) => children[0],
   },
   "function-body": {
     rules: [
       [/\{/, "statement-list!1", /\}/],
       [/\{/, /\}/],
     ],
-    process: (syntaxTree) => {
-      return (syntaxTree.ruleInd === 0) ? {
-        stmtArr: syntaxTree.children[1].children,
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
+        stmtArr: children[1],
       } : {
         stmtArr: [],
       }
@@ -401,13 +398,11 @@ export const scriptGrammar = {
       // to be wrapped in '()'.
       ["expression"],
     ],
-    process: (syntaxTree) => {
-      return (syntaxTree.ruleInd === 0) ? {
-        res: becomeChild(0)(syntaxTree), // TODO...
-      } : {
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? children[0] : {
         stmtArr: [{
-          sym: "return-statement",
-          exp: syntaxTree.children[4],
+          type: "return-statement",
+          exp: children[0],
         }],
       }
     },
@@ -435,14 +430,14 @@ export const scriptGrammar = {
       // 'function' in the rule below.)
       ["expression-statement"],
     ],
-    process: becomeChild(0)
+    process: (children) => children[0],
   },
   "expression-statement": {
     rules: [
       ["expression", "/;/"],
     ],
-    process: (syntaxTree) => ({
-      exp: syntaxTree.children[0],
+    process: (children) => ({
+      exp: children[0],
     }),
   },
   "block-statement": {
@@ -450,11 +445,11 @@ export const scriptGrammar = {
       [/\{/, "statement-list", "/\\}/!"],
       [/\{/, /\}/],
     ],
-    process: (syntaxTree) => {
-      return (syntaxTree.ruleInd === 0) ? {
-        children: syntaxTree.children[1].children,
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
+        stmtArr: children[1],
       } : {
-        children: [],
+        stmtArr: [],
       }
     },
   },
@@ -463,13 +458,11 @@ export const scriptGrammar = {
       ["/if/", /\(/, "expression", /\)/, "statement", "/else/", "statement!"],
       ["/if/", /\(/, "expression", /\)/, "statement"],
     ],
-    process: (syntaxTree) => {
-      Object.assign(syntaxTree, {
-        cond: syntaxTree.children[2],
-        ifStmt: syntaxTree.children[4],
-        elseStmt: syntaxTree.children[6],
-      });
-    },
+    process: (children) => ({
+      cond: children[2],
+      ifStmt: children[4],
+      elseStmt: children[6],
+    }),
   },
   "loop-statement": {
     rules: [
@@ -480,24 +473,24 @@ export const scriptGrammar = {
         "/\\)/", "statement",
       ],
     ],
-    process: (syntaxTree) => {
-      return (syntaxTree.ruleInd === 0) ? {
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
         dec:       undefined,
-        cond:      syntaxTree.children[2],
+        cond:      children[2],
         updateExp: undefined,
-        stmt:      syntaxTree.children[4],
+        stmt:      children[4],
         doFirst:   false,
-      } : (syntaxTree.ruleInd === 1) ? {
+      } : (ruleInd === 1) ? {
         dec:       undefined,
-        cond:      syntaxTree.children[4],
+        cond:      children[4],
         updateExp: undefined,
-        stmt:      syntaxTree.children[1],
+        stmt:      children[1],
         doFirst:   true,
       } : {
-        dec:       syntaxTree.children[2],
-        cond:      syntaxTree.children[3],
-        updateExp: syntaxTree.children[5],
-        stmt:      syntaxTree.children[7],
+        dec:       children[2],
+        cond:      children[3],
+        updateExp: children[5],
+        stmt:      children[7],
         doFirst:   false,
       }
     },
@@ -507,29 +500,27 @@ export const scriptGrammar = {
       ["/return/", "expression", "/;/"],
       ["/return/", "/;/"],
     ],
-    process: (syntaxTree) => {
-      syntaxTree.exp = (syntaxTree.ruleInd === 0) ? syntaxTree.children[1] :
-        undefined;
-    },
+    process: (children, ruleInd) => ({
+      exp: (ruleInd === 0) ? children[1] : undefined,
+    }),
   },
   "throw-statement": {
     rules: [
       ["/throw/", "expression", "/;/"],
       ["/throw/", "/;/"],
     ],
-    process: (syntaxTree) => {
-      syntaxTree.exp = (syntaxTree.ruleInd === 0) ? syntaxTree.children[1] :
-        undefined;
-    },
+    process: (children, ruleInd) => ({
+      exp: (ruleInd === 0) ? children[1] : undefined,
+    }),
   },
   "try-catch-statement": {
     rules: [
       ["/try/", "statement", "/catch/", /\(/, "identifier", /\)/, "statement"],
     ],
-    process: (syntaxTree) => ({
-      tryStmt: syntaxTree.children[1],
-      ident: syntaxTree.children[4].ident,
-      catchStmt: syntaxTree.children[6],
+    process: (children) => ({
+      tryStmt: children[1],
+      ident: children[4].ident,
+      catchStmt: children[6],
     }),
   },
   "instruction-statement": {
@@ -561,34 +552,34 @@ export const scriptGrammar = {
       ["expression^(1)", /\?/, "expression!", /:/, "expression"],
       ["expression^(1)"],
     ],
-    process: (syntaxTree) => {
-      let children = syntaxTree.children;
-      return (syntaxTree.ruleInd === 0) ? {
+    process: (children, ruleInd) => {
+      let children = children;
+      return (ruleInd === 0) ? {
         type: "arrow-function",
         params: children[1].children,
         body: children[4],
-      } : (syntaxTree.ruleInd === 1) ? {
+      } : (ruleInd === 1) ? {
         type: "arrow-function",
         params: [],
         body: children[3],
-      } : (syntaxTree.ruleInd === 2) ? {
+      } : (ruleInd === 2) ? {
         type: "arrow-function",
         params: [children[0]],
         body: children[2],
-      } : (syntaxTree.ruleInd === 3) ? {
+      } : (ruleInd === 3) ? {
         type: "function-expression",
         params: children[2].children,
         body: children[4],
-      } : (syntaxTree.ruleInd === 4) ? {
+      } : (ruleInd === 4) ? {
         type: "function-expression",
         params: [],
         body: children[3],
-      } : (syntaxTree.ruleInd === 5) ? {
+      } : (ruleInd === 5) ? {
         type: "assignment",
         op: children[1].lexeme,
         exp1: children[0],
         exp2: children[2],
-      } : (syntaxTree.ruleInd === 6) ? {
+      } : (ruleInd === 6) ? {
         type: "conditional-expression",
         cond: children[0],
         exp1: children[2],
@@ -693,11 +684,11 @@ export const scriptGrammar = {
       ["expression^(12)", "/\\*\\*/", "expression^(11)!"],
       ["expression^(12)"],
     ],
-    process: (syntaxTree) => {
-      return (syntaxTree.ruleInd === 0) ? {
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
         type: "exponential-expression",
-        root: syntaxTree.children[0],
-        exp: syntaxTree.children[2],
+        root: children[0],
+        exp: children[2],
       } : {
         res: becomeChild(0)(syntaxTree), // TODO.
       }
@@ -711,11 +702,11 @@ export const scriptGrammar = {
       ],
       ["expression^(13)"],
     ],
-    process: (syntaxTree) => {
-      return (syntaxTree.ruleInd === 0) ? {
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
         type: "prefix-expression",
-        op: syntaxTree.children[0].lexeme,
-        exp: syntaxTree.children[1],
+        op: children[0].lexeme,
+        exp: children[1],
       } : {
         res: becomeChild(0)(syntaxTree), // TODO.
       }
@@ -726,11 +717,11 @@ export const scriptGrammar = {
       ["expression^(14)", "/\\+\\+|\\-\\-/"],
       ["expression^(14)"],
     ],
-    process: (syntaxTree) => {
-      return (syntaxTree.ruleInd === 0) ? {
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
         type: "postfix-expression",
-        exp: syntaxTree.children[0],
-        op: syntaxTree.children[1].lexeme,
+        exp: children[0],
+        op: children[1].lexeme,
       } : {
         res: becomeChild(0)(syntaxTree), // TODO.
       }
@@ -742,8 +733,8 @@ export const scriptGrammar = {
       // ["expression^(15)", /\->/, "expression^(15)!", "expression-tuple+"],
       ["expression^(15)"],
     ],
-    process: (syntaxTree) => {
-      return (syntaxTree.ruleInd === 0) ? {
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
         res: processLeftAssocPostfixes(0, 1, "function-call")(syntaxTree),
       } : {
         res: becomeChild(0)(syntaxTree), // TODO.
@@ -755,8 +746,8 @@ export const scriptGrammar = {
       [/\(/, "expression-list", "/\\)/!"],
       [/\(/, /\)/],
     ],
-    process: (syntaxTree) => {
-      return (syntaxTree.ruleInd === 0) ? {
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
         res: becomeChild(0)(syntaxTree), // TODO.
       } : {
         children: [],
@@ -768,11 +759,11 @@ export const scriptGrammar = {
       ["expression^(16)", /\->/, "expression^(16)!"],
       ["expression^(16)"],
     ],
-    process: (syntaxTree) => {
-      return (syntaxTree.ruleInd === 0) ? {
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
         type: "virtual-method",
-        obj: syntaxTree.children[0],
-        fun: syntaxTree.children[2],
+        obj: children[0],
+        fun: children[2],
       } : {
         res: becomeChild(0)(syntaxTree), // TODO.
       }
@@ -783,8 +774,8 @@ export const scriptGrammar = {
       ["expression^(17)", "member-accessor!1+"],
       ["expression^(17)"],
     ],
-    process: (syntaxTree) => {
-      return (syntaxTree.ruleInd === 0) ? {
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
         res: processLeftAssocPostfixes(0, 1, "member-access")(syntaxTree),
       } : {
         res: becomeChild(0)(syntaxTree), // TODO.
@@ -797,13 +788,13 @@ export const scriptGrammar = {
       [/\./, "/[_\\$a-zA-Z][_\\$a-zA-Z0-9]*/!"],
       [/\?\./, "/[_\\$a-zA-Z][_\\$a-zA-Z0-9]*/!"],
     ],
-    process: (syntaxTree) => {
-      return (syntaxTree.ruleInd === 0) ? {
-        exp: syntaxTree.children[1],
-      } : (syntaxTree.ruleInd === 1) ? {
-        ident: syntaxTree.children[1].ident,
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
+        exp: children[1],
+      } : (ruleInd === 1) ? {
+        ident: children[1].ident,
       } : {
-        ident: syntaxTree.children[1].ident,
+        ident: children[1].ident,
         isOpt: true,
       }
     },
@@ -817,10 +808,10 @@ export const scriptGrammar = {
       ["identifier"],
       ["literal"],
     ],
-    process: (syntaxTree) => {
-      return (syntaxTree.ruleInd === 0) ? {
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
         type: "grouped-expression",
-        exp: syntaxTree.children[1],
+        exp: children[1],
       } : {
         res: becomeChild(0)(syntaxTree), // TODO.
       }
@@ -831,9 +822,9 @@ export const scriptGrammar = {
       [/\[/, "expression-list!1", /\]/],
       [/\[/, /\]/],
     ],
-    process: (syntaxTree) => {
-      return (syntaxTree.ruleInd === 0) ? {
-        children: syntaxTree.children[1].children,
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
+        children: children[1].children,
       } : {
         children: [],
       }
@@ -844,9 +835,9 @@ export const scriptGrammar = {
       [/\{/, "member-list!1", /\}/],
       [/\{/, /\}/],
     ],
-    process: (syntaxTree) => {
-      return (syntaxTree.ruleInd === 0) ? {
-        children: syntaxTree.children[1].children,
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
+        children: children[1].children,
       } : {
         children: [],
       }
@@ -865,16 +856,16 @@ export const scriptGrammar = {
       ["string", "/:/!", "expression"],
       [/\[/, "expression", /\]/, "/:/", "expression"],
     ],
-    process: (syntaxTree) => {
-      return (syntaxTree.ruleInd === 0) ? {
-        ident: syntaxTree.children[0].ident,
-        valExp: syntaxTree.children[2],
-      } : (syntaxTree.ruleInd === 1) ? {
-        nameExp: syntaxTree.children[0],
-        valExp: syntaxTree.children[2],
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
+        ident: children[0].ident,
+        valExp: children[2],
+      } : (ruleInd === 1) ? {
+        nameExp: children[0],
+        valExp: children[2],
       } : {
-        nameExp: syntaxTree.children[1],
-        valExp: syntaxTree.children[4],
+        nameExp: children[1],
+        valExp: children[4],
       }
     },
   },
