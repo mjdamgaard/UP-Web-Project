@@ -43,14 +43,14 @@ export const EOS_ERROR = "End of partial string";
 // The values of the grammar object has to be of the form
 // {rules, process?}, where rules first of all is an array of rules, which are
 // each an array of symbols (terminal or nonterminal) to try parsing.
-// The the optional process(syntaxTree) function can process and reformat the
-// syntax tree node right after it has been successfully parsed, and also
-// potentially perform a test on it, which can turn a success into a failure.
-// It returns [res, isSuccess = true, error?], where res is a processed result
-// that is stored at syntaxTree.res, isSuccess can be set to false in order to
-// fail the symbol (but allow other symbols to be tried instead), and error can
-// be set to a truthy error message, which will then make the whole parsing
-// halt there and return a failed syntax tree.
+// The the optional process(syntaxTree) function can process the syntax tree
+// node right after it has been successfully parsed, and also potentially
+// perform a test on it, which can turn a success into a failure. If process
+// returns a truthy value, such as a processed node object, syntaxTree.res is
+// set to that value. If is returns a falsy value, the symbol is marked as
+// failed, but other symbols can be tried in its place. And if process() throws
+// a SymbolError (exported below), the overall parsing halts there and returns
+// a failed syntax tree immediately.
 // 
 // The symbols inside each rule of the grammar can either be another (or the
 // same) nonterminal symbol, or a RegExp pattern beginning and ending in '/',
@@ -365,15 +365,23 @@ export class Parser {
     if (syntaxTree.isSuccess) {
       if (process) {
         // Process the would-be successful syntax tree.
-        let [res, isSuccess = true, error] = process(syntaxTree) || [];
-        isSuccess &&= !error;
+        let res, error;
+        try {
+          res = process(syntaxTree);
+        } catch (err) {
+          if (err instanceof SymbolError) {
+            error = err.msg;
+          } else {
+            throw err;
+          }
+        }
 
         // Set res, isSuccess, error depending on the returned values, and
         // also reset nextPos on a failure.
         syntaxTree.res = res;
-        syntaxTree.isSuccess = isSuccess;
+        if (!res || error) syntaxTree.isSuccess = false;
         if (error) syntaxTree.error = error;
-        syntaxTree.nextPos = isSuccess ? nextPos : pos;
+        syntaxTree.nextPos = syntaxTree.isSuccess ? nextPos : pos;
       }
     }
 
@@ -837,6 +845,12 @@ export class SyntaxError {
     this.msg = msg;
     this.ln = ln;
     this.col = col;
+  }
+}
+
+export class SymbolError {
+  constructor(msg) {
+    this.msg = msg;
   }
 }
 
