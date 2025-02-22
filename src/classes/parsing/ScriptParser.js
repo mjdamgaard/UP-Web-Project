@@ -29,7 +29,7 @@ export const scriptGrammar = {
     ],
     process: (children) => ({
       importStmtArr: children[0],
-      stmtArr: children[1].children,
+      stmtArr: children[1],
     }),
   },
   "import-statement": {

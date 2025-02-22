@@ -63,16 +63,18 @@ export const EOS_ERROR = "End of partial string";
 // The the optional process(children, ruleInd) function can process the
 // syntax tree node right after it has been successfully parsed, and also
 // potentially perform a test on it, which can turn a success into a failure.
-// If process() returns an object, syntaxTree res will be set to that object.
-// If it returns false, the symbol is marked as failed, but other symbols can
-// be tried in its place. And if process() returns a string, the overall
-// parsing halts there and returns a failed syntax tree immediately. The inputs
-// of process() is (children, syntaxTree), where children is an array of
-// preprocessed children, where all nonterminal symbol children are replaced
-// with there syntaxTree.res object, all terminal symbol children are replaced
-// with their parsed lexeme, and all quantified symbols are replaced with an
-// array of similarly preprocessed children. And the ruleInd input is the index
-// of the rule that succeeded.
+// If process() returns an object, syntaxTree.res will be set to that object.
+// syntaxTree.res.type will also automatically be set to the nonterminal symbol
+// if it has not already been set by process. If it process() returns false
+// (exactly), the symbol is marked as failed, but other symbols can be tried in
+// its place. And if process() returns a string, the overall parsing halts
+// there and returns a failed syntax tree immediately.
+// The inputs of process() is (children, syntaxTree), where children is an
+// array of preprocessed children, where all nonterminal symbol children are
+// replaced with there syntaxTree.res object, all terminal symbol children are
+// replaced with their parsed lexeme, and all quantified symbols are replaced
+// with an array of similarly preprocessed children. And the ruleInd input is
+// the index of the rule that succeeded.
 // 
 // The first rule to succeed for a nonterminal symbol will short-circuit it,
 // such that the subsequent rules will not be tried.
@@ -379,7 +381,10 @@ export class Parser {
         // also reset nextPos on a failure.
         let resType = typeof res;
         if (resType === "object") {
-          syntaxTree.res = res;
+          syntaxTree.res = {
+            type: syntaxTree.sym,
+            ...res,
+          };
         } else if (resType === "boolean") {
           syntaxTree.isSuccess = resType;
         } else if (resType === "string") {
