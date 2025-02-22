@@ -42,15 +42,8 @@ export const EOS_ERROR = "End of partial string";
 // 
 // The values of the grammar object has to be of the form
 // {rules, process?}, where rules first of all is an array of rules, which are
-// each an array of symbols (terminal or nonterminal) to try parsing.
-// The the optional process(syntaxTree) function can process the syntax tree
-// node right after it has been successfully parsed, and also potentially
-// perform a test on it, which can turn a success into a failure. If process
-// returns a truthy value, such as a processed node object, syntaxTree.res is
-// set to that value. If is returns a falsy value, the symbol is marked as
-// failed, but other symbols can be tried in its place. And if process() throws
-// a SymbolError (exported below), the overall parsing halts there and returns
-// a failed syntax tree immediately.
+// each an array of symbols (terminal or nonterminal) to try parsing, and
+// process() is an optional function that will be explained below.
 // 
 // The symbols inside each rule of the grammar can either be another (or the
 // same) nonterminal symbol, or a RegExp pattern beginning and ending in '/',
@@ -66,6 +59,20 @@ export const EOS_ERROR = "End of partial string";
 // then no other rules should by tried after the current one. Note also that
 // '!' is equivalent to "!0", meaning that the rule will always be "do or die"
 // from there once this symbol is reached.
+
+// The the optional process(children, ruleInd) function can process the
+// syntax tree node right after it has been successfully parsed, and also
+// potentially perform a test on it, which can turn a success into a failure.
+// If process() returns an object, syntaxTree res will be set to that object.
+// If it returns false, the symbol is marked as failed, but other symbols can
+// be tried in its place. And if process() returns a string, the overall
+// parsing halts there and returns a failed syntax tree immediately. The inputs
+// of process() is (children, syntaxTree), where children is an array of
+// preprocessed children, where all nonterminal symbol children are replaced
+// with there syntaxTree.res object, all terminal symbol children are replaced
+// with their parsed lexeme, and all quantified symbols are replaced with an
+// array of similarly preprocessed children. And the ruleInd input is the index
+// of the rule that succeeded.
 // 
 // The first rule to succeed for a nonterminal symbol will short-circuit it,
 // such that the subsequent rules will not be tried.
@@ -195,7 +202,7 @@ export class Parser {
   // <returns>
   // [syntaxTree, lexArr, strPosArr], where syntaxTree is a syntax tree
   // consisting of nodes of the form
-  // {sym, isSuccess, error?, children?, ruleInd? lexeme?, pos?, nextPos},
+  // {sym, isSuccess, error?, children?, ruleInd? lexeme?, pos?, nextPos, res?},
   // where sym is the nonterminal symbol or the rule symbol of the node,
   // isSuccess (bool) tells if the node was successfully parsed or not,
   // children is an array of the node's child nodes (which on failure will be
@@ -203,10 +210,10 @@ export class Parser {
   // include the last failed node),
   // ruleInd, in the case of a nonterminal symbol that has more than one rule,
   // is the index in the given rules array from which the children was obtained,
-  // and lexeme is the matched lexeme in case of a pattern symbol.
-  // Also the returned pos is the index position of the first lexeme of the
-  // parsed nonterminal symbol, and nextPos is the index of the last lexeme
-  // plus 1.
+  // and lexeme is the matched lexeme in case of a pattern symbol. The returned
+  // pos is the index position of the first lexeme of the parsed nonterminal
+  // symbol, and nextPos is the index of the last lexeme plus 1. And lastly,
+  // res is the returned object from the optional process() function.
   // </returns>
   parse(str, startSym, isPartial = false, keepLastLexeme = false) {
     startSym ??= this.defaultSym;
@@ -365,28 +372,47 @@ export class Parser {
     if (syntaxTree.isSuccess) {
       if (process) {
         // Process the would-be successful syntax tree.
-        let res, error;
-        try {
-          res = process(syntaxTree);
-        } catch (err) {
-          if (err instanceof SymbolError) {
-            error = err.msg;
-          } else {
-            throw err;
-          }
-        }
+        let preprocessedChildren = this.getPreprocessedChildren(syntaxTree);
+        let res = process(preprocessedChildren, syntaxTree.ruleInd);
 
-        // Set res, isSuccess, error depending on the returned values, and
+        // Set res, isSuccess, or error depending on the returned values, and
         // also reset nextPos on a failure.
-        syntaxTree.res = res;
-        if (!res || error) syntaxTree.isSuccess = false;
-        if (error) syntaxTree.error = error;
-        syntaxTree.nextPos = syntaxTree.isSuccess ? nextPos : pos;
+        let resType = typeof res;
+        if (resType === "object") {
+          syntaxTree.res = res;
+        } else if (resType === "boolean") {
+          syntaxTree.isSuccess = resType;
+        } else if (resType === "string") {
+          syntaxTree.error = res;
+        }
+        // Else if resType is e.g. "undefined", do nothing.
       }
     }
 
+    // Revert nextPos to pos if the node failed somehow at tis point.
+    syntaxTree.nextPos = syntaxTree.isSuccess ? nextPos : pos;
+
     return syntaxTree;
   }
+
+
+  getPreprocessedChildren(syntaxTree) {
+    // For each quantified symbol child, call this method recursively to get
+    // an array of arrays of all the processed children. For terminal symbols,
+    // extract the lexeme, and for terminal symbols, simply extract the res
+    // property, set from the process() function.
+    return syntaxTree.children.map(child => {
+      if (TRAILING_QUANTIFIER_SUBSTR_REGEXP.test(child.sym)) {
+        return child.children.map(this.getPreprocessedChildren.bind(this));
+      } else if (sym.at(0) === "/" && sym.at(-1) === "/") {
+        return child.lexeme;
+      } else {
+        child.res;
+      }
+    });
+  }
+
+
 
 
 
@@ -845,12 +871,6 @@ export class SyntaxError {
     this.msg = msg;
     this.ln = ln;
     this.col = col;
-  }
-}
-
-export class SymbolError {
-  constructor(msg) {
-    this.msg = msg;
   }
 }
 
