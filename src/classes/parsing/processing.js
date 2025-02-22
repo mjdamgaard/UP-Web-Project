@@ -5,47 +5,63 @@
 
 
 export function straightenListSyntaxTree(
-  children, ruleInd, keepDelimiters = false, maxRuleInd = 1,
+  children, ruleInd, type, keepDelimiters = false, maxRuleInd = 1,
 ) {
+  let children;
   if (!keepDelimiters) {
     if (ruleInd < maxRuleInd) {
-      return [
-        children[0],
-        ...children.at(-1),
-      ];
-    } else {
-      return [children[0]];
+      let lastChild = children.at(-1);
+      if (lastChild.type = type) {
+        children = [children[0], ...lastChild.children];
+      }
+      else {
+        children = [children[0], lastChild];
+      };
     }
-  } else {
-    if (ruleInd < maxRuleInd) {
-      return [
-        ...children.slice(0, -1),
-        ...children.at(-1),
-      ];
-    } else {
-      return [children[0]];
+    else {
+      children = [children[0]];
     }
   }
+  else {
+    if (ruleInd < maxRuleInd) {
+      let lastChild = children.at(-1);
+      if (lastChild.type = type) {
+        children = [children.slice(0, -1), ...lastChild.children];
+      }
+      else {
+        children = [children.slice(0, -1), lastChild];
+      };
+    }
+    else {
+      children = [children[0]];
+    }
+  }
+  return {
+    type: type,
+    children: children,
+  };
+}
+
+
+export function copyFromChild(
+  children, _, childInd = 0, subtypeName = "subtype"
+) {
+  return {
+    ...children[childInd],
+    type: undefined,
+    [subtypeName]: children[childInd].type,
+  };
 }
 
 
 
-
-
 export function processPolyadicInfixOperation(
-  children, ruleInd, type, ruleNum = 2
+  children, ruleInd, type, maxRuleInd = 1
 ) {
-  if (ruleInd === 0) {
-    if (children.at(-1).type === type) {
-      return {
-        type: type,
-        ...straightenListSyntaxTree(children, ruleInd, true, ruleNum),
-      };
-    }
-    else return {type: type};
-  }
-  else {
-    return becomeFstChild(syntaxTree);
+  if (ruleInd === maxRuleInd) {
+    return copyFromChild(children);
+  } else {
+    return straightenListSyntaxTree(children, ruleInd, type, true, maxRuleInd);
   }
 }
 

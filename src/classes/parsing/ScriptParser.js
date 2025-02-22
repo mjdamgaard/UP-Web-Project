@@ -1,8 +1,8 @@
 
-import {Parser, SymbolError} from "./Parser.js";
+import {Parser} from "./Parser.js";
 import {regEntGrammar} from "./RegEntParser.js";
 import {
-  straightenListSyntaxTree, becomeChild, copyLexemeFromChild,
+  straightenListSyntaxTree, copyFromChild, copyLexemeFromChild,
   processPolyadicInfixOperation, processLeftAssocPostfixes,
 } from "./processing.js";
 
@@ -39,9 +39,9 @@ export const scriptGrammar = {
     ],
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? {
-        importArr: children[1],
+        importArr: children[1].children,
         moduleRef: children[3],
-        structImports: children[1].map(val => {
+        structImports: children[1].children.map(val => {
           return val.structRef ? [val.structRef, val.flagStr] : undefined;
         }).filter(val => val),
       } : {
@@ -70,7 +70,7 @@ export const scriptGrammar = {
       return (ruleInd === 0) ? {
         namespaceIdent: children[2].ident,
       } : (ruleInd === 1) ? {
-        namedImportArr: children[1][0],
+        namedImportArr: children[1][0]?.children,
       } : (ruleInd === 2) ? {
         structRef: children[2],
         flagStr: children[1].str,
@@ -135,18 +135,18 @@ export const scriptGrammar = {
         stmt = children[2];
       } else if (ruleInd === 3) {
         flagStr = children[2].str;
-        namedExportArr = children[4][0];
+        namedExportArr = children[4][0]?.children;
       } else if (ruleInd === 4) {
         flagStr = children[2].str;
         stmt = children[3];
       } else if (ruleInd === 5) {
         flagStr = "";
-        namedExportArr = children[3][0];
+        namedExportArr = children[3][0]?.children;
       } else if (ruleInd === 5) {
         flagStr = "";
         stmt = children[2];
       } else if (ruleInd === 6) {
-        namedExportArr = children[2][0];
+        namedExportArr = children[2][0]?.children;
       } else {
         stmt = children[1];
       }
@@ -230,12 +230,12 @@ export const scriptGrammar = {
       return (ruleInd === 0) ? {
         decType: "definition-list",
         isConst: (children[0] === "const"),
-        defArr: children[1],
-        identArr: children[1].map(val => val.ident),
+        defArr: children[1].children,
+        identArr: children[1].children.map(val => val.ident),
       } : {
         decType: "destructuring",
         isConst: (children[0] === "const"),
-        identArr: children[2].map(val => val.ident),
+        identArr: children[2].children.map(val => val.ident),
         exp: children[5],
       }
     },
@@ -282,13 +282,13 @@ export const scriptGrammar = {
   "function-declaration": {
     rules: [
       [
-        "/function/", "identifier", /\(/, "parameter-list", /\)/,
+        "/function/", "identifier", /\(/, "parameter-list!1?", /\)/,
         "function-body"
       ],
     ],
     process: (children) => ({
       name: children[1].ident,
-      params: children[3],
+      params: children[3][0]?.children,
       body: children[5],
     }),
   },
@@ -359,10 +359,10 @@ export const scriptGrammar = {
     rules: [
       [/\{/, "type^(1)-list!", /\}/],
       ["type^(1)"],
-      [/any/],
+      ["/any/"],
     ],
     process: (children, ruleInd) => ({
-      types: (ruleInd === 0) ? children[1] : [children[0]],
+      types: (ruleInd === 0) ? children[1].children : children[0],
     }),
   },
   "type^(1)-list": {
@@ -386,7 +386,7 @@ export const scriptGrammar = {
     ],
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? {
-        stmtArr: children[1],
+        stmtArr: children[1].children,
       } : {
         stmtArr: [],
       }
@@ -430,7 +430,8 @@ export const scriptGrammar = {
       // 'function' in the rule below.)
       ["expression-statement"],
     ],
-    process: (children) => children[0],
+    process: copyFromChild,
+    params: [0, "stmtType"]
   },
   "expression-statement": {
     rules: [
@@ -447,7 +448,7 @@ export const scriptGrammar = {
     ],
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? {
-        stmtArr: children[1],
+        stmtArr: children[1].children,
       } : {
         stmtArr: [],
       }
@@ -555,7 +556,7 @@ export const scriptGrammar = {
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? {
         type: "arrow-function",
-        params: children[1],
+        params: children[1].children,
         body: children[4],
       } : (ruleInd === 1) ? {
         type: "arrow-function",
@@ -567,7 +568,7 @@ export const scriptGrammar = {
         body: children[2],
       } : (ruleInd === 3) ? {
         type: "function-expression",
-        params: children[2],
+        params: children[2].children,
         body: children[4],
       } : (ruleInd === 4) ? {
         type: "function-expression",
@@ -584,7 +585,7 @@ export const scriptGrammar = {
         exp1: children[2],
         exp2: children[4],
       } :
-        children[0];
+        copyFromChild(children, ruleInd);
     },
   },
   "expression^(1)": {
@@ -592,90 +593,80 @@ export const scriptGrammar = {
       ["expression^(2)", /(\|\|)|(\?\?)/, "expression^(1)!"],
       ["expression^(2)"],
     ],
-    process: (children, ruleInd) => processPolyadicInfixOperation(
-      children, ruleInd, "or-expression"
-    ),
+    process: processPolyadicInfixOperation,
+    params: ["or-expression"],
   },
   "expression^(2)": {
     rules: [
       ["expression^(3)", "/&&/", "expression^(2)!"],
       ["expression^(3)"],
     ],
-    process: (syntaxTree) => processPolyadicInfixOperation(
-      syntaxTree, "and-expression"
-    ),
+    process: processPolyadicInfixOperation,
+    params: ["and-expression"],
   },
   "expression^(3)": {
     rules: [
       ["expression^(4)", /\|/, "expression^(3)!"],
       ["expression^(4)"],
     ],
-    process: (syntaxTree) => processPolyadicInfixOperation(
-      syntaxTree, "bitwise-or-expression"
-    ),
+    process: processPolyadicInfixOperation,
+    params: ["bitwise-or-expression"],
   },
   "expression^(4)": {
     rules: [
       ["expression^(5)", /\^/, "expression^(4)!"],
       ["expression^(5)"],
     ],
-    process: (syntaxTree) => processPolyadicInfixOperation(
-      syntaxTree, "bitwise-xor-expression"
-    ),
+    process: processPolyadicInfixOperation,
+    params: ["bitwise-xor-expression"],
   },
   "expression^(5)": {
     rules: [
       ["expression^(6)", /\&/, "expression^(5)!"],
       ["expression^(6)"],
     ],
-    process: (syntaxTree) => processPolyadicInfixOperation(
-      syntaxTree, "bitwise-and-expression"
-    ),
+    process: processPolyadicInfixOperation,
+    params: ["bitwise-and-expression"],
   },
   "expression^(6)": {
     rules: [
       ["expression^(7)", "/===|!==|==|!=/", "expression^(6)!"],
       ["expression^(7)"],
     ],
-    process: (syntaxTree) => processPolyadicInfixOperation(
-      syntaxTree, "equality-expression"
-    ),
+    process: processPolyadicInfixOperation,
+    params: ["equality-expression"],
   },
   "expression^(7)": {
     rules: [
       ["expression^(8)", "/<|>|<=|>=/", "expression^(7)!"],
       ["expression^(8)"],
     ],
-    process: (syntaxTree) => processPolyadicInfixOperation(
-      syntaxTree, "relational-expression"
-    ),
+    process: processPolyadicInfixOperation,
+    params: ["relational-expression"],
   },
   "expression^(8)": {
     rules: [
       ["expression^(9)", "/<<|>>|>>>/", "expression^(8)!"],
       ["expression^(9)"],
     ],
-    process: (syntaxTree) => processPolyadicInfixOperation(
-      syntaxTree, "shift-expression"
-    ),
+    process: processPolyadicInfixOperation,
+    params: ["shift-expression"],
   },
   "expression^(9)": {
     rules: [
       ["expression^(10)", "/\\+|\\-|<>/", "expression^(9)!"],
       ["expression^(10)"],
     ],
-    process: (syntaxTree) => processPolyadicInfixOperation(
-      syntaxTree, "additive-expression"
-    ),
+    process: processPolyadicInfixOperation,
+    params: ["additive-expression"],
   },
   "expression^(10)": {
     rules: [
       ["expression^(11)", "/\\*|\\/|%/", "expression^(10)!"],
       ["expression^(11)"],
     ],
-    process: (syntaxTree) => processPolyadicInfixOperation(
-      syntaxTree, "multiplicative-expression"
-    ),
+    process: processPolyadicInfixOperation,
+    params: ["multiplicative-expression"],
   },
   "expression^(11)": {
     rules: [
@@ -687,9 +678,8 @@ export const scriptGrammar = {
         type: "exponential-expression",
         root: children[0],
         exp: children[2],
-      } : {
-        res: becomeChild(0)(syntaxTree), // TODO.
-      }
+      } :
+        copyFromChild(children);
     },
   },
   "expression^(12)": {
@@ -705,9 +695,8 @@ export const scriptGrammar = {
         type: "prefix-expression",
         op: children[0].lexeme,
         exp: children[1],
-      } : {
-        res: becomeChild(0)(syntaxTree), // TODO.
-      }
+      } :
+        copyFromChild(children);
     },
   },
   "expression^(13)": {
@@ -720,23 +709,19 @@ export const scriptGrammar = {
         type: "postfix-expression",
         exp: children[0],
         op: children[1].lexeme,
-      } : {
-        res: becomeChild(0)(syntaxTree), // TODO.
-      }
+      } :
+        copyFromChild(children);
     },
   },
   "expression^(14)": {
     rules: [
       ["expression^(15)", "expression-tuple!1+!1"],
-      // ["expression^(15)", /\->/, "expression^(15)!", "expression-tuple+"],
       ["expression^(15)"],
     ],
     process: (children, ruleInd) => {
-      return (ruleInd === 0) ? {
-        res: processLeftAssocPostfixes(0, 1, "function-call")(syntaxTree),
-      } : {
-        res: becomeChild(0)(syntaxTree), // TODO.
-      }
+      return (ruleInd === 0) ?
+        processLeftAssocPostfixes(0, 1, "function-call")(children, ruleInd) :
+        copyFromChild(children);
     },
   },
   "expression-tuple": {
@@ -746,7 +731,7 @@ export const scriptGrammar = {
     ],
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? {
-        res: becomeChild(0)(syntaxTree), // TODO.
+        children: children[1].children,
       } : {
         children: [],
       }
@@ -763,7 +748,7 @@ export const scriptGrammar = {
         obj: children[0],
         fun: children[2],
       } : {
-        res: becomeChild(0)(syntaxTree), // TODO.
+        res: copyFromChild(0)(syntaxTree), // TODO.
       }
     },
   },
@@ -773,11 +758,9 @@ export const scriptGrammar = {
       ["expression^(17)"],
     ],
     process: (children, ruleInd) => {
-      return (ruleInd === 0) ? {
-        res: processLeftAssocPostfixes(0, 1, "member-access")(syntaxTree),
-      } : {
-        res: becomeChild(0)(syntaxTree), // TODO.
-      }
+      return (ruleInd === 0) ?
+        processLeftAssocPostfixes(0, 1, "member-access")(children, ruleInd) :
+        copyFromChild(children);
     },
   },
   "member-accessor": {
@@ -807,12 +790,9 @@ export const scriptGrammar = {
       ["literal"],
     ],
     process: (children, ruleInd) => {
-      return (ruleInd === 0) ? {
-        type: "grouped-expression",
-        exp: children[1],
-      } : {
-        res: becomeChild(0)(syntaxTree), // TODO.
-      }
+      return (ruleInd === 0) ?
+        children[1] :
+        copyFromChild(children, _, 0, "expType");
     },
   },
   "array": {
