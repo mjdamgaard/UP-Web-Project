@@ -553,10 +553,9 @@ export const scriptGrammar = {
       ["expression^(1)"],
     ],
     process: (children, ruleInd) => {
-      let children = children;
       return (ruleInd === 0) ? {
         type: "arrow-function",
-        params: children[1].children,
+        params: children[1],
         body: children[4],
       } : (ruleInd === 1) ? {
         type: "arrow-function",
@@ -568,7 +567,7 @@ export const scriptGrammar = {
         body: children[2],
       } : (ruleInd === 3) ? {
         type: "function-expression",
-        params: children[2].children,
+        params: children[2],
         body: children[4],
       } : (ruleInd === 4) ? {
         type: "function-expression",
@@ -576,7 +575,7 @@ export const scriptGrammar = {
         body: children[3],
       } : (ruleInd === 5) ? {
         type: "assignment",
-        op: children[1].lexeme,
+        op: children[1],
         exp1: children[0],
         exp2: children[2],
       } : (ruleInd === 6) ? {
@@ -584,9 +583,8 @@ export const scriptGrammar = {
         cond: children[0],
         exp1: children[2],
         exp2: children[4],
-      } : {
-        res: becomeChild(0)(syntaxTree), // TODO...
-      }
+      } :
+        children[0];
     },
   },
   "expression^(1)": {
@@ -594,8 +592,8 @@ export const scriptGrammar = {
       ["expression^(2)", /(\|\|)|(\?\?)/, "expression^(1)!"],
       ["expression^(2)"],
     ],
-    process: (syntaxTree) => processPolyadicInfixOperation(
-      syntaxTree, "or-expression"
+    process: (children, ruleInd) => processPolyadicInfixOperation(
+      children, ruleInd, "or-expression"
     ),
   },
   "expression^(2)": {

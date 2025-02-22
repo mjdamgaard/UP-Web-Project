@@ -41,9 +41,11 @@ export const EOS_ERROR = "End of partial string";
 // nonterminal symbol. (See e.g. https://en.wikipedia.org/wiki/Formal_grammar.)
 // 
 // The values of the grammar object has to be of the form
-// {rules, process?}, where rules first of all is an array of rules, which are
-// each an array of symbols (terminal or nonterminal) to try parsing, and
-// process() is an optional function that will be explained below.
+// {rules, process?, params?}, where rules first of all is an array of rules,
+// which are each an array of symbols (terminal or nonterminal) to try parsing.
+// Also process() is an optional function to process the syntaxTree on a,
+// success, which will be explained below, and params is an optional input
+// array that is appended to process()'s other inputs.
 // 
 // The symbols inside each rule of the grammar can either be another (or the
 // same) nonterminal symbol, or a RegExp pattern beginning and ending in '/',
@@ -60,8 +62,8 @@ export const EOS_ERROR = "End of partial string";
 // '!' is equivalent to "!0", meaning that the rule will always be "do or die"
 // from there once this symbol is reached.
 
-// The the optional process(children, ruleInd) function can process the
-// syntax tree node right after it has been successfully parsed, and also
+// The the optional process(children, ruleInd, ...params) function can process
+// the syntax tree node right after it has been successfully parsed, and also
 // potentially perform a test on it, which can turn a success into a failure.
 // If process() returns an object, syntaxTree.res will be set to that object.
 // syntaxTree.res.type will also automatically be set to the nonterminal symbol
@@ -359,7 +361,7 @@ export class Parser {
     }
 
     // Parse the rules of the nonterminal symbol.
-    let {rules, process} = this.grammar[nonterminalSymbol] ||
+    let {rules, process, params = []} = this.grammar[nonterminalSymbol] ||
       (() => {
         throw "Parser.parseLexArr(): Undefined nonterminal symbol: \"" +
           nonterminalSymbol + '"';
@@ -375,7 +377,7 @@ export class Parser {
       if (process) {
         // Process the would-be successful syntax tree.
         let preprocessedChildren = this.getPreprocessedChildren(syntaxTree);
-        let res = process(preprocessedChildren, syntaxTree.ruleInd);
+        let res = process(preprocessedChildren, syntaxTree.ruleInd, ...params);
 
         // Set res, isSuccess, or error depending on the returned values, and
         // also reset nextPos on a failure.
