@@ -388,9 +388,12 @@ export class Parser {
             type: res.type ?? syntaxTree.sym,
           };
         } else if (resType === "boolean") {
-          syntaxTree.isSuccess = resType;
+          syntaxTree.isSuccess = res;
+          if (!res) syntaxTree.nextPos = pos;
         } else if (resType === "string") {
+          syntaxTree.isSuccess = false;
           syntaxTree.error = res;
+          syntaxTree.nextPos = pos;
         }
         // Else if resType is e.g. "undefined", do nothing.
       }
@@ -398,9 +401,6 @@ export class Parser {
       // Set res to {type: sym} if it hasn't been defined otherwise.
       if (!syntaxTree.res) syntaxTree.res = {type: syntaxTree.sym};
     }
-
-    // Revert nextPos to pos if the node failed somehow at tis point.
-    syntaxTree.nextPos = syntaxTree.isSuccess ? syntaxTree.nextPos : pos;
 
     return syntaxTree;
   }

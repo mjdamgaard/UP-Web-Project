@@ -11,7 +11,7 @@ export function straightenListSyntaxTree(
   if (!keepDelimiters) {
     if (ruleInd < maxRuleInd) {
       let lastChild = children.at(-1);
-      if (lastChild.type = type) {
+      if (!type || lastChild.type === type) {
         listChildren = [children[0], ...lastChild.children];
       }
       else {
@@ -25,7 +25,7 @@ export function straightenListSyntaxTree(
   else {
     if (ruleInd < maxRuleInd) {
       let lastChild = children.at(-1);
-      if (lastChild.type = type) {
+      if (!type || lastChild.type === type) {
         listChildren = [children.slice(0, -1), ...lastChild.children];
       }
       else {
@@ -36,8 +36,10 @@ export function straightenListSyntaxTree(
       listChildren = [children[0]];
     }
   }
-  return {
+  return type ? {
     type: type,
+    children: listChildren,
+  } : {
     children: listChildren,
   };
 }

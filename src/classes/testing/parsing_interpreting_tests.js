@@ -23,6 +23,44 @@ export function runTests() {
 
 
 
+function testParser({
+  parser, str, startSym, isPartial, keepLastLexeme,
+  expectedIsSuccess, expectedNextPos, expectedOutput,
+  testMsgPrefix, testKey, logParserOutput, logOnlyFailures,
+  additionalTest = () => true,
+}) {
+  let [syntaxTree, lexArr, strPosArr] = parser.parse(
+    str, startSym, isPartial, keepLastLexeme
+  );
+
+  expectedNextPos ??= lexArr?.length;
+  let isSuccessMsg = "SUCCESS";
+  if (
+    syntaxTree.isSuccess != expectedIsSuccess ||
+    syntaxTree.nextPos !== expectedNextPos ||
+    expectedOutput && getMissingMember(syntaxTree, expectedOutput)
+  ) {
+    isSuccessMsg = "FAILURE";
+  }
+  else if (!additionalTest(syntaxTree, lexArr, strPosArr)) {
+    isSuccessMsg = "FAILURE";
+  }
+
+  if (!logOnlyFailures || isSuccessMsg === "FAILURE") {
+    console.log(
+      testMsgPrefix + "." + testKey + ": " + isSuccessMsg +
+      (logParserOutput ? ":" : "")
+    );
+    if (logParserOutput) {
+      parser.log(syntaxTree);
+    }
+  }
+}
+
+
+
+
+
 function testInterpreter({
   str, startSym = "script",
   gas = {comp: 1000},
@@ -244,43 +282,6 @@ function script_interpreter_tests_01() {
 
 
 
-
-
-
-
-
-function testParser({
-  parser, str, startSym, isPartial, keepLastLexeme,
-  expectedIsSuccess, expectedNextPos,
-  testMsgPrefix, testKey, logParserOutput, logOnlyFailures,
-  additionalTest = () => true,
-}) {
-  let [syntaxTree, lexArr, strPosArr] = parser.parse(
-    str, startSym, isPartial, keepLastLexeme
-  );
-
-  expectedNextPos ??= lexArr?.length;
-  let isSuccessMsg = "SUCCESS";
-  if (
-    syntaxTree.isSuccess != expectedIsSuccess ||
-    syntaxTree.nextPos !== expectedNextPos
-  ) {
-    isSuccessMsg = "FAILURE";
-  }
-  else if (!additionalTest(syntaxTree, lexArr, strPosArr)) {
-    isSuccessMsg = "FAILURE";
-  }
-
-  if (!logOnlyFailures || isSuccessMsg === "FAILURE") {
-    console.log(
-      testMsgPrefix + "." + testKey + ": " + isSuccessMsg +
-      (logParserOutput ? ":" : "")
-    );
-    if (logParserOutput) {
-      parser.log(syntaxTree);
-    }
-  }
-}
 
 
 
@@ -523,7 +524,7 @@ function regEnt_parsing_tests_01() {
     keepLastLexeme: undefined,
     expectedIsSuccess: true, expectedNextPos: null,
     testMsgPrefix: testMsgPrefix, testKey: "",
-    logParserOutput: true, logOnlyFailures: false,
+    logParserOutput: true, logOnlyFailures: true,
     additionalTest: undefined,
   }
   let params;
@@ -532,9 +533,15 @@ function regEnt_parsing_tests_01() {
   params = Object.assign({}, defaultParams, {
     str: `12`,
     expectedIsSuccess: true,
-    // expectedOutput: {variables: {
-    //   "#x": [6],
-    // }},
+    expectedOutput: {
+      sym: "literal-list",
+      res: {
+        type: "literal-list",
+        children: [
+          {type: "literal", subtype: "number", lexeme: "12"}
+        ]
+      },
+    },
     testKey: "01"
   });
   testParser(params);
@@ -542,6 +549,10 @@ function regEnt_parsing_tests_01() {
   params = Object.assign({}, defaultParams, {
     str: `12, 13`,
     expectedIsSuccess: true,
+    expectedOutput: {res: {children: [
+      {type: "literal", subtype: "number", lexeme: "12"},
+      {type: "literal", subtype: "number", lexeme: "13"}
+    ]}},
     testKey: "02"
   });
   testParser(params);
@@ -549,6 +560,12 @@ function regEnt_parsing_tests_01() {
   params = Object.assign({}, defaultParams, {
     str: `"Hello, world!"`,
     expectedIsSuccess: true,
+    expectedOutput: {res: {children: [
+      {
+        type: "literal", subtype: "string",
+        lexeme: '"Hello, world!"', str: "Hello, world!",
+      },
+    ]}},
     testKey: "03"
   });
   testParser(params);
