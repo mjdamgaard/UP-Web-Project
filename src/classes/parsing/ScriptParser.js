@@ -1,4 +1,5 @@
 
+import { param } from "jquery";
 import {Parser} from "./Parser.js";
 import {regEntGrammar} from "./RegEntParser.js";
 import {
@@ -28,6 +29,7 @@ export const scriptGrammar = {
       ["import-statement!1*", "outer-statement+$"],
     ],
     process: (children) => ({
+      type: "script",
       importStmtArr: children[0],
       stmtArr: children[1],
     }),
@@ -39,12 +41,14 @@ export const scriptGrammar = {
     ],
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? {
+        type: "import-statement",
         importArr: children[1].children,
         moduleRef: children[3],
         structImports: children[1].children.map(val => {
           return val.structRef ? [val.structRef, val.flagStr] : undefined;
         }).filter(val => val),
       } : {
+        type: "import-statement",
         importArr: [],
         moduleRef: children[1],
         structImports: [],
@@ -67,7 +71,7 @@ export const scriptGrammar = {
       ["identifier"],
     ],
     process: (children, ruleInd) => {
-      return (ruleInd === 0) ? {
+      let ret = (ruleInd === 0) ? {
         namespaceIdent: children[2].ident,
       } : (ruleInd === 1) ? {
         namedImportArr: children[1][0]?.children,
@@ -81,7 +85,9 @@ export const scriptGrammar = {
         structIdent: children[4].ident,
       } : {
         defaultIdent: children[0].ident,
-      }
+      };
+      ret.type = "import";
+      return ret;
     },
   },
   "named-import-list": {
@@ -99,6 +105,7 @@ export const scriptGrammar = {
     ],
     process: (children, ruleInd) => {
       return {
+        type: "named-import",
         ident: (ruleInd === 0) ? undefined : children[0].ident,
         alias: children[2]?.ident,
       }
@@ -109,7 +116,7 @@ export const scriptGrammar = {
       ["export-statement!1"],
       ["statement"],
     ],
-    process: (children) => children[0],
+    process: copyFromChild,
   },
   "export-statement": {
     rules: [
@@ -156,7 +163,7 @@ export const scriptGrammar = {
       ] : [
         "function-declaration", "variable-declaration"
       ];
-      let isExpStmt = (stmt.type === "expression-statement");
+      let isExpStmt = (stmt.subtype === "expression-statement");
       if (stmt && !allowedStmtTypes.includes(stmt.type)) {
         if (isExpStmt) {
           return "Unnamed export for a non-default export statement";
@@ -181,6 +188,7 @@ export const scriptGrammar = {
         return "Only one default export allowed";
       }
       return {
+        type: "export-statement",
         isDefault: isDefault,
         stmt: stmt,
         isStructProp: (flagStr !== undefined),
@@ -203,7 +211,7 @@ export const scriptGrammar = {
       ["identifier"],
     ],
     process: (children, ruleInd) => {
-      return (ruleInd === 0) ? {
+      let ret = (ruleInd === 0) ? {
         ident: children[2].ident,
         alias: "default",
       } : (ruleInd === 1) ? {
@@ -211,7 +219,9 @@ export const scriptGrammar = {
         alias: children[2].ident,
       } : {
         ident: children[0].ident,
-      }
+      };
+      ret.type = "named-export";
+      return ret;
     },
   },
   "variable-declaration": {
@@ -224,11 +234,13 @@ export const scriptGrammar = {
     ],
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? {
+        type: "variable-declaration",
         decType: "definition-list",
         isConst: (children[0] === "const"),
         defArr: children[1].children,
         identArr: children[1].children.map(val => val.ident),
       } : {
+        type: "variable-declaration",
         decType: "destructuring",
         isConst: (children[0] === "const"),
         identArr: children[2].children.map(val => val.ident),
@@ -250,6 +262,7 @@ export const scriptGrammar = {
     ],
     process: (children) => {
       return {
+        type: "variable-definition",
         ident: children[0].ident,
         exp: children[2] || undefined,
       };
@@ -283,6 +296,7 @@ export const scriptGrammar = {
       ],
     ],
     process: (children) => ({
+      type: "function-declaration",
       name: children[1].ident,
       params: children[3][0]?.children,
       body: children[5],
@@ -427,7 +441,6 @@ export const scriptGrammar = {
       ["expression-statement"],
     ],
     process: copyFromChild,
-    params: [0, "stmtType"]
   },
   "expression-statement": {
     rules: [
@@ -727,8 +740,10 @@ export const scriptGrammar = {
     ],
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? {
+        type: "expression-tuple",
         children: children[1].children,
       } : {
+        type: "expression-tuple",
         children: [],
       }
     },
@@ -786,8 +801,8 @@ export const scriptGrammar = {
     ],
     process: (children, ruleInd) => {
       return (ruleInd === 0) ?
-        children[1] :
-        copyFromChild(children, ruleInd, 0, "expType");
+        {type: "grouped-expression", exp: children[1]} :
+        copyFromChild(children, ruleInd);
     },
   },
   "array": {
@@ -797,8 +812,10 @@ export const scriptGrammar = {
     ],
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? {
+        type: "array",
         children: children[1].children,
       } : {
+        type: "array",
         children: [],
       }
     },
@@ -810,8 +827,10 @@ export const scriptGrammar = {
     ],
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? {
+        type: "object",
         children: children[1].children,
       } : {
+        type: "object",
         children: [],
       }
     },
@@ -830,7 +849,7 @@ export const scriptGrammar = {
       [/\[/, "expression", /\]/, "/:/", "expression"],
     ],
     process: (children, ruleInd) => {
-      return (ruleInd === 0) ? {
+      let ret = (ruleInd === 0) ? {
         ident: children[0].ident,
         valExp: children[2],
       } : (ruleInd === 1) ? {
@@ -839,7 +858,9 @@ export const scriptGrammar = {
       } : {
         nameExp: children[1],
         valExp: children[4],
-      }
+      };
+      ret.type = "member";
+      return ret;
     },
   },
   "literal-list": {
@@ -853,12 +874,14 @@ export const scriptGrammar = {
     rules: [
       ["/this/"],
     ],
+    process: (children) => ({type: "this-keyword"}),
   },
   "constant": {
     rules: [
       ["/true|false|null|undefined|Infinity|NaN/"],
     ],
     process: copyLexemeFromChild,
+    params: ["constant"],
   },
 };
 

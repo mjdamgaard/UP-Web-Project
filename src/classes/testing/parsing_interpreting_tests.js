@@ -11,8 +11,8 @@ let scriptParser = new ScriptParser();
 
 
 export function runTests() {
-  regEnt_parsing_tests_01(); // Last tested: (16.02.25, 10:27).
-  // script_parsing_tests_01();
+  // regEnt_parsing_tests_01(); // Last tested: (23.02.25).
+  script_parsing_tests_01();
   // script_interpreter_tests_01();
 
 }
@@ -334,16 +334,14 @@ function script_parsing_tests_01() {
     startSym: "expression",
     expectedIsSuccess: true,
     testKey: "01",
-    additionalTest: (syntaxTree) => {
-      return (
-        syntaxTree.type === "additive-expression" &&
-        syntaxTree.children[0].type === "number" &&
-        syntaxTree.children[0].lexeme === "2" &&
-        syntaxTree.children[1].lexeme === "+" &&
-        syntaxTree.children[2].type === "number" &&
-        syntaxTree.children[2].lexeme === "2"
-      );
-    },
+    expectedOutput: {res: {
+      type: "additive-expression",
+      children: [
+        {type: "number", lexeme: "2"},
+        "+",
+        {type: "number", lexeme: "2"},
+      ],
+    }},
   });
   testParser(params);
 
@@ -352,19 +350,16 @@ function script_parsing_tests_01() {
     startSym: "expression",
     expectedIsSuccess: true,
     testKey: "02",
-    additionalTest: (syntaxTree) => {
-      return (
-        syntaxTree.type === "additive-expression" &&
-        syntaxTree.children[0].type === "number" &&
-        syntaxTree.children[0].lexeme === "2" &&
-        syntaxTree.children[1].lexeme === "+" &&
-        syntaxTree.children[2].type === "number" &&
-        syntaxTree.children[2].lexeme === "2" &&
-        syntaxTree.children[3].lexeme === "-" &&
-        syntaxTree.children[4].type === "number" &&
-        syntaxTree.children[4].lexeme === "3"
-      );
-    },
+    expectedOutput: {res: {
+      type: "additive-expression",
+      children: [
+        {type: "number", lexeme: "2"},
+        "+",
+        {type: "number", lexeme: "2"},
+        "-",
+        {type: "number", lexeme: "3"},
+      ],
+    }},
   });
   testParser(params);
 
@@ -373,51 +368,49 @@ function script_parsing_tests_01() {
     startSym: "expression",
     expectedIsSuccess: true,
     testKey: "03",
-    additionalTest: (syntaxTree) => {
-      return undefined === getMissingMember(syntaxTree, {
-        type: "or-expression",
-        children: [
-          {
-            type: "additive-expression",
-            children: [
-              {
-                type: "multiplicative-expression",
+    expectedOutput: {res: {
+      type: "or-expression",
+      children: [
+        {
+          type: "additive-expression",
+          children: [
+            {
+              type: "multiplicative-expression",
+              children: [
+                {
+                  type: "exponential-expression",
+                  root: {type: "number", lexeme: "2"},
+                  exp: {type: "number", lexeme: "4"},
+                },
+                "/",
+                {type: "number", lexeme: "5"},
+              ],
+            },
+            "+",
+            {type: "number", lexeme: "2"},
+            "-",
+            {
+              type: "grouped-expression",
+              exp: {type: "number", lexeme: "3"},
+            },
+            "+",
+            {
+              type: "grouped-expression",
+              exp: {
+                type: "additive-expression",
                 children: [
-                  {
-                    type: "exponential-expression",
-                    root: {type: "number", lexeme: "2"},
-                    exp: {type: "number", lexeme: "4"},
-                  },
-                  {lexeme: "/"},
-                  {type: "number", lexeme: "5"},
+                  {type: "number", lexeme: "2"},
+                  "+",
+                  {type: "number", lexeme: "2"},
                 ],
               },
-              {lexeme: "+"},
-              {type: "number", lexeme: "2"},
-              {lexeme: "-"},
-              {
-                type: "grouped-expression",
-                exp: {type: "number", lexeme: "3"},
-              },
-              {lexeme: "+"},
-              {
-                type: "grouped-expression",
-                exp: {
-                  type: "additive-expression",
-                  children: [
-                    {type: "number", lexeme: "2"},
-                    {lexeme: "+"},
-                    {type: "number", lexeme: "2"},
-                  ],
-                },
-              },
-            ],
-          },
-          {lexeme: "||"},
-          {type: "constant", lexeme: "true"},
-        ],
-      });
-    }
+            },
+          ],
+        },
+        "||",
+        {type: "constant", lexeme: "true"},
+      ],
+    }},
   });
   testParser(params);
 
@@ -426,18 +419,17 @@ function script_parsing_tests_01() {
     startSym: "statement",
     expectedIsSuccess: true,
     testKey: "04",
-    additionalTest: (syntaxTree) => {
-      return undefined === getMissingMember(syntaxTree, {
-        decType: "definition-list",
-        defList: [
-          {
-            sym: "variable-definition",
-            ident: "x",
-            exp: {type: "number", lexeme: "1"}
-          },
-        ],
-      });
-    }
+    expectedOutput: {res: {
+      type: "variable-declaration",
+      decType: "definition-list",
+      defArr: [
+        {
+          type: "variable-definition",
+          ident: "x",
+          exp: {type: "number", lexeme: "1"}
+        },
+      ],
+    }},
   });
   testParser(params);
 
@@ -446,35 +438,34 @@ function script_parsing_tests_01() {
     startSym: "statement",
     expectedIsSuccess: true,
     testKey: "05",
-    additionalTest: (syntaxTree) => {
-      return undefined === getMissingMember(syntaxTree, {
-        decType: "definition-list",
-        defList: [
-          {
-            sym: "variable-definition",
-            ident: "x",
-            exp: {type: "number", lexeme: "1"}
+    expectedOutput: {res: {
+      type: "variable-declaration",
+      decType: "definition-list",
+      defArr: [
+        {
+          type: "variable-definition",
+          ident: "x",
+          exp: {type: "number", lexeme: "1"}
+        },
+        {
+          type: "variable-definition",
+          ident: "y",
+          exp: {
+            type: "additive-expression",
+            children: [
+              {type: "number", lexeme: "2"},
+              "+",
+              {type: "number", lexeme: "3"},
+            ],
           },
-          {
-            sym: "variable-definition",
-            ident: "y",
-            exp: {
-              type: "additive-expression",
-              children: [
-                {type: "number", lexeme: "2"},
-                {lexeme: "+"},
-                {type: "number", lexeme: "3"},
-              ],
-            },
-          },
-          {
-            sym: "variable-definition",
-            ident: "z",
-            exp: undefined,
-          },
-        ],
-      });
-    },
+        },
+        {
+          type: "variable-definition",
+          ident: "z",
+          exp: undefined,
+        },
+      ],
+    }},
   });
   testParser(params);
 
@@ -536,9 +527,8 @@ function regEnt_parsing_tests_01() {
     expectedOutput: {
       sym: "literal-list",
       res: {
-        type: "literal-list",
         children: [
-          {type: "literal", subtype: "number", lexeme: "12"}
+          {type: "number", lexeme: "12"}
         ]
       },
     },
@@ -550,8 +540,8 @@ function regEnt_parsing_tests_01() {
     str: `12, 13`,
     expectedIsSuccess: true,
     expectedOutput: {res: {children: [
-      {type: "literal", subtype: "number", lexeme: "12"},
-      {type: "literal", subtype: "number", lexeme: "13"}
+      {type: "number", lexeme: "12"},
+      {type: "number", lexeme: "13"}
     ]}},
     testKey: "02"
   });
@@ -561,10 +551,7 @@ function regEnt_parsing_tests_01() {
     str: `"Hello, world!"`,
     expectedIsSuccess: true,
     expectedOutput: {res: {children: [
-      {
-        type: "literal", subtype: "string",
-        lexeme: '"Hello, world!"', str: "Hello, world!",
-      },
+      {type: "string", lexeme: '"Hello, world!"', str: "Hello, world!"},
     ]}},
     testKey: "03"
   });
@@ -609,10 +596,10 @@ function regEnt_parsing_tests_01() {
     str: `"Hello, world!",@[7],_,false`,
     expectedIsSuccess: true, expectedNextPos: 9,
     expectedOutput: {res: {children: [
-      {subtype: "string", lexeme: '"Hello, world!"'},
-      {subtype: "entity-reference", id: "7"},
-      {subtype: "constant", lexeme: "_"},
-      {subtype: "constant", lexeme: "false"},
+      {type: "string", lexeme: '"Hello, world!"'},
+      {type: "entity-reference", id: "7"},
+      {type: "constant", lexeme: "_"},
+      {type: "constant", lexeme: "false"},
     ]}},
     testKey: "09"
   });
@@ -727,18 +714,18 @@ function regEnt_parsing_tests_01() {
     str: `12, [13, [14, 15, [16 ,  17]],18]`,
     expectedIsSuccess: true,
     expectedOutput: {res: {children: [
-      {subtype: "number", lexeme: "12"},
-      {subtype: "array", children: [
-        {subtype: "number", lexeme: "13"},
-        {subtype: "array", children: [
-          {subtype: "number", lexeme: "14"},
-          {subtype: "number", lexeme: "15"},
-          {subtype: "array", children: [
-            {subtype: "number", lexeme: "16"},
-            {subtype: "number", lexeme: "17"},
+      {type: "number", lexeme: "12"},
+      {type: "array", children: [
+        {type: "number", lexeme: "13"},
+        {type: "array", children: [
+          {type: "number", lexeme: "14"},
+          {type: "number", lexeme: "15"},
+          {type: "array", children: [
+            {type: "number", lexeme: "16"},
+            {type: "number", lexeme: "17"},
           ]},
         ]},
-        {subtype: "number", lexeme: "18"},
+        {type: "number", lexeme: "18"},
       ]},
     ]}},
     testKey: "23"
@@ -749,15 +736,15 @@ function regEnt_parsing_tests_01() {
     str: `12, {"prop": [13]}, 13`,
     expectedIsSuccess: true,
     expectedOutput: {res: {children: [
-      {subtype: "number", lexeme: "12"},
-      {subtype: "object", children: [
+      {type: "number", lexeme: "12"},
+      {type: "object", children: [
         {type: "member", name: "prop", val: {
-          subtype: "array", children: [
-            {subtype: "number", lexeme: "13"},
+          type: "array", children: [
+            {type: "number", lexeme: "13"},
           ],
         }},
       ]},
-      {subtype: "number", lexeme: "13"},
+      {type: "number", lexeme: "13"},
     ]}},
     testKey: "24"
   });

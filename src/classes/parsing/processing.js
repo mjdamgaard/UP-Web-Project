@@ -26,10 +26,10 @@ export function straightenListSyntaxTree(
     if (ruleInd < maxRuleInd) {
       let lastChild = children.at(-1);
       if (!type || lastChild.type === type) {
-        listChildren = [children.slice(0, -1), ...lastChild.children];
+        listChildren = [...children.slice(0, -1), ...lastChild.children];
       }
       else {
-        listChildren = [children.slice(0, -1), lastChild];
+        listChildren = [...children.slice(0, -1), lastChild];
       };
     }
     else {
@@ -45,25 +45,18 @@ export function straightenListSyntaxTree(
 }
 
 
-export function copyFromChild(
-  children, _, childInd = 0, subtypeName = "subtype"
-) {
-  return {
-    ...children[childInd],
-    type: undefined,
-    [subtypeName]: children[childInd].type,
-  };
+export function copyFromChild(children, _, type, childInd = 0) {
+  return type ?
+    {...children[childInd], type: type} :
+    children[childInd];
 }
 
-export function copyLexemeFromChild(children, _, childInd = 0) {
-  return {
-    lexeme: children[childInd],
-  };
+export function copyLexemeFromChild(children, _, type, childInd = 0,) {
+  return type ?
+    {lexeme: children[childInd], type: type} :
+    {lexeme: children[childInd]};
 }
 
-export function becomeChild(children, _, childInd = 0) {
-  return children[childInd];
-}
 
 
 

@@ -383,23 +383,19 @@ export class Parser {
         // also reset nextPos on a failure.
         let resType = typeof res;
         if (resType === "object") {
-          syntaxTree.res = {
-            ...res,
-            type: res.type ?? syntaxTree.sym,
-          };
-        } else if (resType === "boolean") {
+          syntaxTree.res = res;
+        }
+        else if (resType === "boolean") {
           syntaxTree.isSuccess = res;
           if (!res) syntaxTree.nextPos = pos;
-        } else if (resType === "string") {
+        }
+        else if (resType === "string") {
           syntaxTree.isSuccess = false;
           syntaxTree.error = res;
           syntaxTree.nextPos = pos;
         }
         // Else if resType is e.g. "undefined", do nothing.
       }
-
-      // Set res to {type: sym} if it hasn't been defined otherwise.
-      if (!syntaxTree.res) syntaxTree.res = {type: syntaxTree.sym};
     }
 
     return syntaxTree;

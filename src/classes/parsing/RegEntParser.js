@@ -44,10 +44,11 @@ export class EntityPlaceholder {
 export const jsonGrammar = {
   "json-object": {
     rules: [
-      ["object-literal"],
-      ["array-literal"],
+      ["object"],
+      ["array"],
     ],
     process: copyFromChild,
+    params: ["json-object"],
   },
   "literal-list": {
     rules: [
@@ -55,6 +56,7 @@ export const jsonGrammar = {
       ["literal"],
     ],
     process: straightenListSyntaxTree,
+    params: ["literal-list"],
   },
   "literal": {
     rules: [
@@ -82,7 +84,7 @@ export const jsonGrammar = {
         return [false, `Invalid JSON string: ${stringLiteral}`];
       }
 
-      return {lexeme: stringLiteral, str: str};
+      return {type: "string", lexeme: stringLiteral, str: str};
     },
   },
   "number": {
@@ -90,12 +92,14 @@ export const jsonGrammar = {
       [/\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/],
     ],
     process: copyLexemeFromChild,
+    params: ["number"],
   },
   "constant": {
     rules: [
       ["/true|false|null/"],
     ],
     process: copyLexemeFromChild,
+    params: ["constant"],
   },
   "array": {
     rules: [
@@ -104,8 +108,10 @@ export const jsonGrammar = {
     ],
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? {
+        type: "array",
         children: children[1].children,
       } : {
+        type: "array",
         children: [],
       };
     },
@@ -117,8 +123,10 @@ export const jsonGrammar = {
     ],
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? {
+        type: "object",
         children: children[1].children,
       } : {
+        type: "object",
         children: [],
       };
     },
@@ -134,7 +142,8 @@ export const jsonGrammar = {
     rules: [
       ["string", "/:/", "literal"],
     ],
-    process: (children, ruleInd) => ({
+    process: (children) => ({
+      type: "member",
       name: children[0].str,
       val: children[2],
     }),
@@ -175,6 +184,7 @@ export const regEntGrammar = {
       ["/_|true|false|null/"],
     ],
     process: copyLexemeFromChild,
+    params: ["constant"],
   },
   // "mixed-string": {
   //   ...jsonGrammar["string"],
@@ -203,8 +213,10 @@ export const regEntGrammar = {
     ],
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? {
+        type: "entity-reference",
         id: children[1],
       } : {
+        type: "entity-reference",
         path: children[1],
       };
     },
