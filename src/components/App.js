@@ -10,7 +10,7 @@ import {AppHeader} from "./header/AppHeader.js";
 import {AppPage} from "./app_pages/AppPage.js";
 
 /* Tests */
-import {runTests} from "../classes/tests/parsing_interpreting_tests.js";
+import {runTests} from "../classes/testing/parsing_interpreting_tests.js";
 
 runTests();
 

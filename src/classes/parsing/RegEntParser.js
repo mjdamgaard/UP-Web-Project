@@ -1,5 +1,8 @@
 
-
+import {Parser} from "./Parser.js";
+import {
+  straightenListSyntaxTree, copyFromChild, copyLexemeFromChild,
+} from "./processing.js";
 
 
 
@@ -44,7 +47,7 @@ export const jsonGrammar = {
       ["object-literal"],
       ["array-literal"],
     ],
-    process: becomeChild(0),
+    process: copyFromChild,
   },
   "literal-list": {
     rules: [
@@ -61,49 +64,50 @@ export const jsonGrammar = {
       ["array-literal!1"],
       ["object-literal"],
     ],
-    process: becomeChild(0),
+    process: copyFromChild,
   },
   "string": {
     rules: [
       [/"([^"\\]|\\[.\n])*"/],
     ],
-    process: (syntaxTree) => {
+    process: (children) => {
       // Concat all the nested lexemes.
-      let stringLiteral = syntaxTree.children[0].lexeme;
+      let stringLiteral = children[0];
 
-      // Test that the resulting string is a valid JSON string. 
+      // Test that the resulting string is a valid JSON string.
+      let str;
       try {
-        syntaxTree.str = JSON.parse(stringLiteral);
+        str = JSON.parse(stringLiteral);
       } catch (error) {
         return [false, `Invalid JSON string: ${stringLiteral}`];
       }
 
-      syntaxTree.lexeme = stringLiteral;
+      return {lexeme: stringLiteral, str: str};
     },
   },
   "number": {
     rules: [
       [/\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/],
     ],
-    process: copyLexemeFromChild(0),
+    process: copyLexemeFromChild,
   },
   "constant": {
     rules: [
       ["/true|false|null/"],
     ],
-    process: copyLexemeFromChild(0),
+    process: copyLexemeFromChild,
   },
   "array-literal": {
     rules: [
       [/\[/, "literal-list!1", /\]/],
       [/\[/, /\]/],
     ],
-    process: (syntaxTree) => {
-      if (syntaxTree.ruleInd === 0) {
-        syntaxTree.children = syntaxTree.children[1].children;
-      } else {
-        syntaxTree.children = []
-      }
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
+        children: children[1].children,
+      } : {
+        children: [],
+      };
     },
   },
   "object-literal": {
@@ -111,12 +115,12 @@ export const jsonGrammar = {
       [/\{/, "member-list!1", /\}/],
       [/\{/, /\}/],
     ],
-    process: (syntaxTree) => {
-      if (syntaxTree.ruleInd === 0) {
-        syntaxTree.children = syntaxTree.children[1].children;
-      } else {
-        syntaxTree.children = []
-      }
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
+        children: children[1].children,
+      } : {
+        children: [],
+      };
     },
   },
   "member-list": {
@@ -130,10 +134,10 @@ export const jsonGrammar = {
     rules: [
       ["string", "/:/", "literal"],
     ],
-    process: (syntaxTree) => {
-      syntaxTree.name = syntaxTree.children[0];
-      syntaxTree.val = syntaxTree.children[2];
-    },
+    process: (children, ruleInd) => ({
+      name: children[0],
+      val: children[2],
+    }),
   },
 };
 
@@ -164,17 +168,17 @@ export const regEntGrammar = {
       ["array-literal!1"],
       ["object-literal"],
     ],
-    process: becomeChild(0),
+    process: copyFromChild,
   },
   "constant": {
     rules: [
       ["/_|true|false|null/"],
     ],
-    process: copyLexemeFromChild(0),
+    process: copyLexemeFromChild,
   },
   // "mixed-string": {
   //   ...jsonGrammar["string"],
-  //   process: (syntaxTree) => {
+  //   process: (children, ruleInd) => {
   //     let [isSuccess = true, error] =
   //       jsonGrammar["string"].process(syntaxTree) || [];
   //     if (!isSuccess) {
@@ -197,10 +201,13 @@ export const regEntGrammar = {
       [/@\[/, /[_\$a-zA-Z0-9]+/,  "/\\]/!"],
       [/@\[/, /"[^"\\]*"/, /\]/],
     ],
-    process: (syntaxTree) => {
-      copyLexemeFromChild(1)(syntaxTree);
-      syntaxTree.isTBD = (syntaxTree.ruleInd === 1);
-    }
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
+        id: children[1],
+      } : {
+        path: children[1],
+      };
+    },
   },
 };
 
@@ -220,53 +227,75 @@ export const regEntParser = new Parser(
 
 
 
-
-
-const regEntStringContentGrammar = {
-  ...regEntGrammar,
-  "string-content": {
-    rules: [
-      ["string-part*$"]
-    ],
-    process: becomeChild(0),
-  },
-  "string-part": {
-    rules: [
-      ["entity-reference!1"],
-      ["escaped-bracket"],
-      ["plain-text"],
-    ],
-  },
-  "escaped-bracket": {
-    rules: [
-      [/@[\[\{<];/],
-    ],
-    process: copyLexemeFromChild(0),
-  },
-  "plain-text": {
-    rules: [
-      [/([^"\\@\]\}>]|\\[^@\]\}>]|)+/],
-    ],
-    process: copyLexemeFromChild(0),
-  },
-};
-
-
-
 export class RegEntParser extends Parser {
   constructor() {
     super(
-      regEntStringContentGrammar,
-      "string-content",
+      regEntGrammar,
+      "literal-list",
       [
-        /@[\[\{<];?/,
-        /[\]\}>]/,
-        /([^"\\@\]\}>]|\\[^@\]\}>])+/,
+        /"([^"\\]|\\[.\n])*"/,
+        // /'([^'\\]|\\[.\n])*'/,
+        /\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
+        /@[\[\{<];?|[,:\[\]\{\}>]/,
+        /[_\$a-zA-Z0-9]+/,
       ],
-      false
+      /\s+/
     );
   }
 }
 
 
 export {RegEntParser as default};
+
+
+
+
+
+
+
+
+// const regEntStringContentGrammar = {
+//   ...regEntGrammar,
+//   "string-content": {
+//     rules: [
+//       ["string-part*$"]
+//     ],
+//     process: copyFromChild(0),
+//   },
+//   "string-part": {
+//     rules: [
+//       ["entity-reference!1"],
+//       ["escaped-bracket"],
+//       ["plain-text"],
+//     ],
+//   },
+//   "escaped-bracket": {
+//     rules: [
+//       [/@[\[\{<];/],
+//     ],
+//     process: copyLexemeFromChild(0),
+//   },
+//   "plain-text": {
+//     rules: [
+//       [/([^"\\@\]\}>]|\\[^@\]\}>]|)+/],
+//     ],
+//     process: copyLexemeFromChild(0),
+//   },
+// };
+
+
+
+// export class RegEntStringContentParser extends Parser {
+//   constructor() {
+//     super(
+//       regEntStringContentGrammar,
+//       "string-content",
+//       [
+//         /@[\[\{<];?/,
+//         /[\]\}>]/,
+//         /([^"\\@\]\}>]|\\[^@\]\}>])+/,
+//       ],
+//       false
+//     );
+//   }
+// }

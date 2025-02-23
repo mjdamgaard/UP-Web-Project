@@ -1,7 +1,7 @@
 
 import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
 
-import {PriorityCache} from "./caching/CombinedCache.js";
+import {PriorityCache} from "./caching/PriorityCache.js";
 import {Parser} from "./parsing/Parser.js";
 
 const entitySyntaxTreeCache = new PriorityCache(200);

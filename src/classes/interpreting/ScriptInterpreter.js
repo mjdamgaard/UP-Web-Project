@@ -1,5 +1,5 @@
 
-import {ScriptParser} from "./ScriptParser.js";
+import {ScriptParser} from "../parsing/ScriptParser.js";
 import {EntityReference, EntityPlaceholder} from "../parsing/RegEntParser.js";
 import {LexError, SyntaxError} from "../parsing/Parser.js";
 
@@ -178,7 +178,7 @@ export class ScriptInterpreter {
         err.node, environment
       );
     } else if (err instanceof ExitException) {
-      scriptGlobals.shouldExit;
+      scriptGlobals.shouldExit = true;
       if (scriptGlobals.resolveScript) scriptGlobals.resolveScript();
     } else {
       throw err;
@@ -264,7 +264,7 @@ export class ScriptInterpreter {
           );
           if (!hasPermission) throw new PreprocessingError(
             `Script @[${curScriptID}] imports Struct @[${structID}] from ` +
-            `Module @[${moduleID}] with Permission flag "${requiredFlag}" ` +
+            `Module @[${moduleID}] with Permission flags "${flagStr}" ` +
             `not granted`
           );
 
@@ -276,7 +276,7 @@ export class ScriptInterpreter {
           // Then push a promise to fetch and store the struct's definition,
           // as well as its moduleIDs, to promiseArr.
           promiseArr.push(
-            this.fetchAndStoreStructDef(gas, structID, structDefs)
+            this.fetchAndStoreStructDef(structID, structDefs)
           );
         });
       });
@@ -363,7 +363,7 @@ export class ScriptInterpreter {
 
   executeImportStatement(stmtSyntaxTree, environment) {
     decrCompGas(environment);
-    let {liveModules} = globalEnv.scriptGlobals;
+    let {liveModules} = environment.scriptGlobals;
 
     // Get the live environment of the module, either from liveModules if the
     // module has already been executed, or otherwise by executing it.
@@ -1039,7 +1039,9 @@ export class ScriptInterpreter {
           this.evaluateExpression(exp, environment)
         ));
 
-        return executeFunction(fun, inputValArr, expSyntaxTree, environment);
+        return this.executeFunction(
+          fun, inputValArr, expSyntaxTree, environment
+        );
       }
       case "virtual-method": {
         let objVal = this.evaluateExpression(expSyntaxTree.obj, environment);
@@ -1102,12 +1104,12 @@ export class ScriptInterpreter {
         // being called.)
         if (ret instanceof DefinedFunction || ret instanceof BuiltInFunction) {
           ret = new ThisBoundFunction(
-            ret, expVal, (exp instanceof StructObject)
+            ret, expVal, (expVal instanceof StructObject)
           );
         }
         else if (ret instanceof ThisBoundFunction) {
           ret = new ThisBoundFunction(
-            ret.funVal, expVal, (exp instanceof StructObject)
+            ret.funVal, expVal, (expVal instanceof StructObject)
           );
         }
 
@@ -1509,14 +1511,6 @@ export class OutOfGasError {
 }
 
 export class RuntimeError {
-  constructor(msg, node, environment) {
-    this.msg = msg;
-    this.node = node;
-    this.environment = environment;
-  }
-}
-
-export class CustomException {
   constructor(msg, node, environment) {
     this.msg = msg;
     this.node = node;

@@ -2,7 +2,7 @@
 import {RegEntParser} from "../parsing/RegEntParser.js";
 import {ScriptParser} from "../parsing/ScriptParser.js";
 import {
-  ScriptInterpreter, RuntimeError, CustomError, Environment, UNDEFINED,
+  ScriptInterpreter, RuntimeError, CustomException, Environment, UNDEFINED,
 } from "../interpreting/ScriptInterpreter.js";
 
 let regEntParser = new RegEntParser();
@@ -11,9 +11,9 @@ let scriptParser = new ScriptParser();
 
 
 export function runTests() {
-  // regEnt_parsing_tests_01(); // Last tested: (16.02.25, 10:27).
-  script_parsing_tests_01();
-  script_interpreter_tests_01();
+  regEnt_parsing_tests_01(); // Last tested: (16.02.25, 10:27).
+  // script_parsing_tests_01();
+  // script_interpreter_tests_01();
 
 }
 

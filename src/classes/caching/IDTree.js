@@ -1,13 +1,5 @@
 
 
-export class IDTree extends _IDTree {
-
-  constructor() {
-    super();
-  }
-}
-
-
 class _IDTree {
 
   constructor(parent = undefined, charPos = 0) {
@@ -96,9 +88,19 @@ class _IDTree {
 
   _forEach(callback, i) {
     this.leafs.forEach(val => callback(val, i[0]++));
-    this.childTrees.forEach(node => node_forEach(callback, i));
+    this.childTrees.forEach(node => node._forEach(callback, i));
   }
 
+}
+
+
+
+
+export class IDTree extends _IDTree {
+
+  constructor() {
+    super();
+  }
 }
 
 

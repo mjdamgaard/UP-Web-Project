@@ -7,38 +7,38 @@
 export function straightenListSyntaxTree(
   children, ruleInd, type, keepDelimiters = false, maxRuleInd = 1,
 ) {
-  let children;
+  let listChildren;
   if (!keepDelimiters) {
     if (ruleInd < maxRuleInd) {
       let lastChild = children.at(-1);
       if (lastChild.type = type) {
-        children = [children[0], ...lastChild.children];
+        listChildren = [children[0], ...lastChild.children];
       }
       else {
-        children = [children[0], lastChild];
+        listChildren = [children[0], lastChild];
       };
     }
     else {
-      children = [children[0]];
+      listChildren = [children[0]];
     }
   }
   else {
     if (ruleInd < maxRuleInd) {
       let lastChild = children.at(-1);
       if (lastChild.type = type) {
-        children = [children.slice(0, -1), ...lastChild.children];
+        listChildren = [children.slice(0, -1), ...lastChild.children];
       }
       else {
-        children = [children.slice(0, -1), lastChild];
+        listChildren = [children.slice(0, -1), lastChild];
       };
     }
     else {
-      children = [children[0]];
+      listChildren = [children[0]];
     }
   }
   return {
     type: type,
-    children: children,
+    children: listChildren,
   };
 }
 
@@ -51,6 +51,16 @@ export function copyFromChild(
     type: undefined,
     [subtypeName]: children[childInd].type,
   };
+}
+
+export function copyLexemeFromChild(children, _, childInd = 0) {
+  return {
+    lexeme: children[childInd],
+  };
+}
+
+export function becomeChild(children, _, childInd = 0) {
+  return children[childInd];
 }
 
 

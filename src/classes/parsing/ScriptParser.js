@@ -159,13 +159,9 @@ export const scriptGrammar = {
       let isExpStmt = (stmt.type === "expression-statement");
       if (stmt && !allowedStmtTypes.includes(stmt.type)) {
         if (isExpStmt) {
-          throw new SymbolError(
-            "Unnamed export for a non-default export statement"
-          );
+          return "Unnamed export for a non-default export statement";
         } else {
-          throw new SymbolError(
-            "Export statement must be a function or variable declaration"
-          );
+          return "Export statement must be a function or variable declaration";
         }
       }
 
@@ -182,7 +178,7 @@ export const scriptGrammar = {
 
       let isDefault = (ruleInd <= 2);
       if (isDefault && exportArr.length > 1) {
-        throw new SymbolError("Only one default export allowed");
+        return "Only one default export allowed";
       }
       return {
         isDefault: isDefault,
@@ -528,7 +524,7 @@ export const scriptGrammar = {
     rules: [
       ["/break|continue|exit/", "/;/"],
     ],
-    process: copyLexemeFromChild(0),
+    process: copyLexemeFromChild,
   },
   "empty-statement": {
     rules: [
@@ -747,9 +743,8 @@ export const scriptGrammar = {
         type: "virtual-method",
         obj: children[0],
         fun: children[2],
-      } : {
-        res: copyFromChild(0)(syntaxTree), // TODO.
-      }
+      } :
+        copyFromChild(children);
     },
   },
   "expression^(16)": {
@@ -773,9 +768,9 @@ export const scriptGrammar = {
       return (ruleInd === 0) ? {
         exp: children[1],
       } : (ruleInd === 1) ? {
-        ident: children[1].ident,
+        ident: children[1],
       } : {
-        ident: children[1].ident,
+        ident: children[1],
         isOpt: true,
       }
     },
@@ -792,7 +787,7 @@ export const scriptGrammar = {
     process: (children, ruleInd) => {
       return (ruleInd === 0) ?
         children[1] :
-        copyFromChild(children, _, 0, "expType");
+        copyFromChild(children, ruleInd, 0, "expType");
     },
   },
   "array": {
@@ -858,13 +853,12 @@ export const scriptGrammar = {
     rules: [
       ["/this/"],
     ],
-    process: copyLexemeFromChild(0),
   },
   "constant": {
     rules: [
       ["/true|false|null|undefined|Infinity|NaN/"],
     ],
-    process: copyLexemeFromChild(0),
+    process: copyLexemeFromChild,
   },
 };
 

@@ -400,7 +400,7 @@ export class Parser {
     }
 
     // Revert nextPos to pos if the node failed somehow at tis point.
-    syntaxTree.nextPos = syntaxTree.isSuccess ? nextPos : pos;
+    syntaxTree.nextPos = syntaxTree.isSuccess ? syntaxTree.nextPos : pos;
 
     return syntaxTree;
   }
@@ -414,10 +414,10 @@ export class Parser {
     return syntaxTree.children.map(child => {
       if (TRAILING_QUANTIFIER_SUBSTR_REGEXP.test(child.sym)) {
         return child.children.map(this.getPreprocessedChildren.bind(this));
-      } else if (sym.at(0) === "/" && sym.at(-1) === "/") {
+      } else if (child.sym.at(0) === "/" && child.sym.at(-1) === "/") {
         return child.lexeme;
       } else {
-        child.res;
+        return child.res;
       }
     });
   }
