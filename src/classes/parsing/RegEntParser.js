@@ -61,8 +61,8 @@ export const jsonGrammar = {
       ["string"],
       ["number"],
       ["constant"],
-      ["array-literal!1"],
-      ["object-literal"],
+      ["array!1"],
+      ["object"],
     ],
     process: copyFromChild,
   },
@@ -97,7 +97,7 @@ export const jsonGrammar = {
     ],
     process: copyLexemeFromChild,
   },
-  "array-literal": {
+  "array": {
     rules: [
       [/\[/, "literal-list!1", /\]/],
       [/\[/, /\]/],
@@ -110,7 +110,7 @@ export const jsonGrammar = {
       };
     },
   },
-  "object-literal": {
+  "object": {
     rules: [
       [/\{/, "member-list!1", /\}/],
       [/\{/, /\}/],
@@ -135,7 +135,7 @@ export const jsonGrammar = {
       ["string", "/:/", "literal"],
     ],
     process: (children, ruleInd) => ({
-      name: children[0],
+      name: children[0].str,
       val: children[2],
     }),
   },
@@ -165,8 +165,8 @@ export const regEntGrammar = {
       ["string"],
       ["number"],
       ["constant"],
-      ["array-literal!1"],
-      ["object-literal"],
+      ["array!1"],
+      ["object"],
     ],
     process: copyFromChild,
   },

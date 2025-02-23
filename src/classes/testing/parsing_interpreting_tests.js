@@ -608,6 +608,12 @@ function regEnt_parsing_tests_01() {
   params = Object.assign({}, defaultParams, {
     str: `"Hello, world!",@[7],_,false`,
     expectedIsSuccess: true, expectedNextPos: 9,
+    expectedOutput: {res: {children: [
+      {subtype: "string", lexeme: '"Hello, world!"'},
+      {subtype: "entity-reference", id: "7"},
+      {subtype: "constant", lexeme: "_"},
+      {subtype: "constant", lexeme: "false"},
+    ]}},
     testKey: "09"
   });
   testParser(params);
@@ -718,8 +724,23 @@ function regEnt_parsing_tests_01() {
   testParser(params);
 
   params = Object.assign({}, defaultParams, {
-    str: `12, [13, [14,[15 ,  16]]]`,
+    str: `12, [13, [14, 15, [16 ,  17]],18]`,
     expectedIsSuccess: true,
+    expectedOutput: {res: {children: [
+      {subtype: "number", lexeme: "12"},
+      {subtype: "array", children: [
+        {subtype: "number", lexeme: "13"},
+        {subtype: "array", children: [
+          {subtype: "number", lexeme: "14"},
+          {subtype: "number", lexeme: "15"},
+          {subtype: "array", children: [
+            {subtype: "number", lexeme: "16"},
+            {subtype: "number", lexeme: "17"},
+          ]},
+        ]},
+        {subtype: "number", lexeme: "18"},
+      ]},
+    ]}},
     testKey: "23"
   });
   testParser(params);
@@ -727,6 +748,17 @@ function regEnt_parsing_tests_01() {
   params = Object.assign({}, defaultParams, {
     str: `12, {"prop": [13]}, 13`,
     expectedIsSuccess: true,
+    expectedOutput: {res: {children: [
+      {subtype: "number", lexeme: "12"},
+      {subtype: "object", children: [
+        {type: "member", name: "prop", val: {
+          subtype: "array", children: [
+            {subtype: "number", lexeme: "13"},
+          ],
+        }},
+      ]},
+      {subtype: "number", lexeme: "13"},
+    ]}},
     testKey: "24"
   });
   testParser(params);
