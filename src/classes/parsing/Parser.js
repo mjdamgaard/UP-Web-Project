@@ -384,8 +384,8 @@ export class Parser {
         let resType = typeof res;
         if (resType === "object") {
           syntaxTree.res = {
-            type: syntaxTree.sym,
             ...res,
+            type: res.type ?? syntaxTree.sym,
           };
         } else if (resType === "boolean") {
           syntaxTree.isSuccess = resType;

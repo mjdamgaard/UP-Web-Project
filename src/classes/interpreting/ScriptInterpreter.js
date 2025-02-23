@@ -1466,13 +1466,6 @@ class ReturnException {
     this.environment = environment;
   }
 }
-class CustomException {
-  constructor(val, node, environment) {
-    this.val = val;
-    this.node = node;
-    this.environment = environment;
-  }
-}
 class BreakException {
   constructor(node, environment) {
     this.node = node;
@@ -1518,6 +1511,13 @@ export class RuntimeError {
   }
 }
 
+export class CustomException {
+  constructor(val, node, environment) {
+    this.val = val;
+    this.node = node;
+    this.environment = environment;
+  }
+}
 
 
 

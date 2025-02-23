@@ -50,7 +50,7 @@ function testInterpreter({
         ScriptInterpreter.executeStatement(syntaxTree, env);
         output = env;
       } catch (err) {
-        if (err instanceof RuntimeError || err instanceof CustomError) {
+        if (err instanceof RuntimeError || err instanceof CustomException) {
           output = err;
         }
         else throw err;
@@ -63,7 +63,7 @@ function testInterpreter({
         });
         output = env;
       } catch (err) {
-        if (err instanceof RuntimeError || err instanceof CustomError) {
+        if (err instanceof RuntimeError || err instanceof CustomException) {
           output = err;
         }
         else throw err;
@@ -532,6 +532,9 @@ function regEnt_parsing_tests_01() {
   params = Object.assign({}, defaultParams, {
     str: `12`,
     expectedIsSuccess: true,
+    // expectedOutput: {variables: {
+    //   "#x": [6],
+    // }},
     testKey: "01"
   });
   testParser(params);
