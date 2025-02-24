@@ -284,7 +284,7 @@ export const scriptGrammar = {
       if (RESERVED_KEYWORD_REGEXP.test(lexeme)) {
         return false;
       } else {
-        return {ident: lexeme};
+        return {type: "identifier", ident: lexeme};
       }
     },
   },
@@ -298,7 +298,7 @@ export const scriptGrammar = {
     process: (children) => ({
       type: "function-declaration",
       name: children[1].ident,
-      params: children[3][0]?.children,
+      params: children[3][0]?.children || [],
       body: children[5],
     }),
   },
@@ -317,10 +317,11 @@ export const scriptGrammar = {
       ["identifier"],
     ],
     process: (children, ruleInd) => {
-      let types = children[2].types;
+      let types = children[2]?.types;
       let isRequired = (ruleInd === 2);
-      if (!types) {
+      if (!children[2]) {
         return {
+          type: "parameter",
           ident: children[0].ident,
           invalidTypes: undefined,
           defaultExp: undefined,
@@ -358,6 +359,7 @@ export const scriptGrammar = {
           }
         });
         return {
+          type: "parameter",
           ident: children[0].ident,
           defaultExp: children[4],
           invalidTypes: invalidTypes,
@@ -447,6 +449,7 @@ export const scriptGrammar = {
       ["expression", "/;/"],
     ],
     process: (children) => ({
+      type: "expression-statement",
       exp: children[0],
     }),
   },
@@ -457,8 +460,10 @@ export const scriptGrammar = {
     ],
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? {
+        type: "block-statement",
         stmtArr: children[1].children,
       } : {
+        type: "block-statement",
         stmtArr: [],
       }
     },
@@ -729,7 +734,7 @@ export const scriptGrammar = {
     ],
     process: (children, ruleInd) => {
       return (ruleInd === 0) ?
-        processLeftAssocPostfixes(0, 1, "function-call")(children, ruleInd) :
+        processLeftAssocPostfixes(children, ruleInd, "function-call") :
         copyFromChild(children);
     },
   },
@@ -769,7 +774,7 @@ export const scriptGrammar = {
     ],
     process: (children, ruleInd) => {
       return (ruleInd === 0) ?
-        processLeftAssocPostfixes(0, 1, "member-access")(children, ruleInd) :
+        processLeftAssocPostfixes(children, ruleInd, "member-access") :
         copyFromChild(children);
     },
   },

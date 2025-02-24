@@ -403,13 +403,13 @@ export class Parser {
 
 
   getPreprocessedChildren(syntaxTree) {
-    // For each quantified symbol child, call this method recursively to get
-    // an array of arrays of all the processed children. For terminal symbols,
-    // extract the lexeme, and for terminal symbols, simply extract the res
-    // property, set from the process() function.
+    // For each quantified symbol child, return an array of the res property
+    // (set by the process() function) of all the children. For all terminal
+    // symbol children, extract the lexeme. And for all terminal symbols,
+    // simply extract the res property.
     return syntaxTree.children.map(child => {
       if (TRAILING_QUANTIFIER_SUBSTR_REGEXP.test(child.sym)) {
-        return child.children.map(this.getPreprocessedChildren.bind(this));
+        return child.children.map(val => val.res);
       } else if (child.sym.at(0) === "/" && child.sym.at(-1) === "/") {
         return child.lexeme;
       } else {

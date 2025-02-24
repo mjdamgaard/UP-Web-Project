@@ -11,7 +11,7 @@ let scriptParser = new ScriptParser();
 
 
 export function runTests() {
-  // regEnt_parsing_tests_01(); // Last tested: (23.02.25).
+  regEnt_parsing_tests_01(); // Last tested: (23.02.25).
   script_parsing_tests_01();
   // script_interpreter_tests_01();
 
@@ -333,7 +333,6 @@ function script_parsing_tests_01() {
     str: `2 + 2`,
     startSym: "expression",
     expectedIsSuccess: true,
-    testKey: "01",
     expectedOutput: {res: {
       type: "additive-expression",
       children: [
@@ -342,6 +341,7 @@ function script_parsing_tests_01() {
         {type: "number", lexeme: "2"},
       ],
     }},
+    testKey: "01",
   });
   testParser(params);
 
@@ -349,7 +349,6 @@ function script_parsing_tests_01() {
     str: `2 + 2 - 3`,
     startSym: "expression",
     expectedIsSuccess: true,
-    testKey: "02",
     expectedOutput: {res: {
       type: "additive-expression",
       children: [
@@ -360,6 +359,7 @@ function script_parsing_tests_01() {
         {type: "number", lexeme: "3"},
       ],
     }},
+    testKey: "02",
   });
   testParser(params);
 
@@ -367,7 +367,6 @@ function script_parsing_tests_01() {
     str: `2 ** 4 / 5 + 2 - (3) + (2 + 2) || true`,
     startSym: "expression",
     expectedIsSuccess: true,
-    testKey: "03",
     expectedOutput: {res: {
       type: "or-expression",
       children: [
@@ -411,6 +410,7 @@ function script_parsing_tests_01() {
         {type: "constant", lexeme: "true"},
       ],
     }},
+    testKey: "03",
   });
   testParser(params);
 
@@ -418,7 +418,6 @@ function script_parsing_tests_01() {
     str: `let x = 1;`,
     startSym: "statement",
     expectedIsSuccess: true,
-    testKey: "04",
     expectedOutput: {res: {
       type: "variable-declaration",
       decType: "definition-list",
@@ -430,6 +429,7 @@ function script_parsing_tests_01() {
         },
       ],
     }},
+    testKey: "04",
   });
   testParser(params);
 
@@ -437,7 +437,6 @@ function script_parsing_tests_01() {
     str: `let x = 1, y = 2 + 3, z;`,
     startSym: "statement",
     expectedIsSuccess: true,
-    testKey: "05",
     expectedOutput: {res: {
       type: "variable-declaration",
       decType: "definition-list",
@@ -466,6 +465,7 @@ function script_parsing_tests_01() {
         },
       ],
     }},
+    testKey: "05",
   });
   testParser(params);
 
@@ -473,6 +473,22 @@ function script_parsing_tests_01() {
     str: `{ let x = 2; let y = 1; x = 2*x + y; }`,
     startSym: "statement",
     expectedIsSuccess: true,
+    expectedOutput: {res: {
+      type: "block-statement",
+      stmtArr: [
+        {type: "variable-declaration"},
+        {type: "variable-declaration"},
+        {
+          type: "expression-statement",
+          exp: {
+            type: "assignment",
+            op: "=",
+            exp1: {type: "identifier"},
+            exp2: {type: "additive-expression"},
+          }
+        },
+      ],
+    }},
     testKey: "06",
   });
   testParser(params);
@@ -481,6 +497,18 @@ function script_parsing_tests_01() {
     str: `function foo(x, y) { let z = x * y; return z + y; }`,
     startSym: "statement",
     expectedIsSuccess: true,
+    expectedOutput: {res: {
+      type: "function-declaration",
+      name: "foo",
+      params: [
+        {type: "parameter", ident: "x"},
+        {type: "parameter", ident: "y"},
+      ],
+      body: {stmtArr: [
+        {type: "variable-declaration"},
+        {type: "return-statement"},
+      ]},
+    }},
     testKey: "07",
   });
   testParser(params);

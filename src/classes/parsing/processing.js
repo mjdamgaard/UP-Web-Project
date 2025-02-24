@@ -71,18 +71,18 @@ export function processPolyadicInfixOperation(
 }
 
 
-export function processLeftAssocPostfixes(expInd, postfixListInd, type) {
-  return (syntaxTree) => {
-    let ret = syntaxTree.children[expInd].res;
-    let postfixes = syntaxTree.children[postfixListInd].res;
-    let len = postfixes.length;
-    for (let i = 0; i < len; i++) {
-      ret = {
-        type: type,
-        exp: ret,
-        postfix: postfixes[i],
-      }
+export function processLeftAssocPostfixes(
+  children, _, type, expInd = 0, postfixListInd = 1, 
+) {
+  let ret = children[expInd];
+  let postfixes = children[postfixListInd];
+  let len = postfixes.length;
+  for (let i = 0; i < len; i++) {
+    ret = {
+      type: type,
+      exp: ret,
+      postfix: postfixes[i],
     }
-    return ret;
   }
+  return ret;
 }
