@@ -1,5 +1,5 @@
 
-import {ScriptParser} from "../parsing/ScriptParser.js";
+import {scriptParser} from "../parsing/ScriptParser.js";
 import {EntityReference, EntityPlaceholder} from "../parsing/RegEntParser.js";
 import {LexError, SyntaxError} from "../parsing/Parser.js";
 
@@ -19,8 +19,8 @@ function getParsingGasCost(str) {
   return {comp: str.length / 100 + 1};
 }
 
-function getStructModuleIDs(structNode) {
-  let fstInput = structNode[1];
+function getStructModuleIDs(structDef) {
+  let fstInput = structDef[1];
   if (fstInput instanceof EntityReference) {
     return fstInput.id;
   }
@@ -34,15 +34,13 @@ function getStructModuleIDs(structNode) {
 
 export class ScriptInterpreter {
 
-  constructor(
-    builtInFunctions, functionOptions, builtInConstants, fetchScript,
-    fetchStruct
-  ) {
-    this.builtInFunctions = builtInFunctions;
-    this.functionOptions = functionOptions;
+  constructor(builtInFunctions, builtInConstants, options) {
     this.builtInConstants = builtInConstants;
-    this.fetchScript = fetchScript;
-    this.fetchStruct = fetchStruct;
+    this.builtInFunctions = builtInFunctions;
+    this.options = options;
+    this.dataFetcher = options?.dataFetcher ?? (() => {
+      throw "ScriptInterpreter: options.dataFetcher is undefined";
+    })();
   }
 
 
@@ -54,7 +52,7 @@ export class ScriptInterpreter {
       gas: gas, log: {}, reqUserID: reqUserID, scriptID: scriptID,
       permissions: permissions, shouldExit: false, parsedScripts: {},
       structDefs: {}, liveModules: {}, resolveScript: undefined,
-      funOptions: this.functionOptions, scriptInterpreter: this,
+      scriptInterpreter: this,
     };
 
     // First create global environment if not yet done, and then create an
@@ -74,7 +72,7 @@ export class ScriptInterpreter {
       // preprocessScript() to continue from there
       else {
         payGas(globalEnv, {comp: getParsingGasCost(script)});
-        let scriptNode = ScriptParser.parse(script);
+        let scriptNode = scriptParser.parse(script);
         if (scriptNode.error) throw scriptNode.error;
         scriptID = "0";
         scriptGlobals.parsedScripts = {"#0": scriptNode};
@@ -228,7 +226,6 @@ export class ScriptInterpreter {
       let promiseArr = [];
       let structAndModulePairs = [];
       let globalPermissions = permissions?.global ?? "";
-      let curScriptPermissions = permissions?.scripts["#" + curScriptID] ?? "";
       scriptNode.importStmtArr.forEach(stmt => {
         // Get the moduleID for the given import statement.
         let moduleRef = stmt.moduleRef;
@@ -245,7 +242,6 @@ export class ScriptInterpreter {
         // And for each structRef in the import statement, we also want to push
         // a promise to get the struct's definition, as well as to verify that
         // the permissions that the struct import requires is granted.
-        let modulePermissions = permissions?.modules["#" + moduleID] ?? "";
         stmt.structImports.forEach(([structRef, flagStr]) => {
           // Get the structID, or throw if the structRef is yet just a
           // placeholder.
@@ -257,11 +253,8 @@ export class ScriptInterpreter {
           // Also check that the struct has the required permissions, or that
           // its module does.
           let structPermissions = permissions?.structs["#" + structID] ?? "";
-          let combinedPermissions = globalPermissions + curScriptPermissions +
-            modulePermissions + structPermissions;
-          let hasPermission = this.checkPermissions(
-            combinedPermissions, flagStr
-          );
+          let combPermissions = globalPermissions + structPermissions;
+          let hasPermission = this.checkPermissions(combPermissions, flagStr);
           if (!hasPermission) throw new PreprocessingError(
             `Script @[${curScriptID}] imports Struct @[${structID}] from ` +
             `Module @[${moduleID}] with Permission flags "${flagStr}" ` +
@@ -488,7 +481,7 @@ export class ScriptInterpreter {
     }
     else if (fun instanceof BuiltInFunction) {
       ret = this.executeBuiltInFunction(
-        fun, inputArr, callerNode, callerEnv
+        fun, inputArr, callerNode, callerEnv, thisVal
       );
     }
     else throw new RuntimeError(
@@ -506,10 +499,13 @@ export class ScriptInterpreter {
 
 
 
-  executeBuiltInFunction(fun, inputArr, callerNode, callerEnv) {
+  executeBuiltInFunction(fun, inputArr, callerNode, callerEnv, thisVal) {
     payGas(callerEnv, fun.gasCost);
     return fun.fun(
-      callerNode, callerEnv,
+      {
+        callerNode: callerNode, callerEnv: callerEnv, thisVal: thisVal,
+        options: this.options, gas: callerEnv.scriptGlobals.gas,
+      },
       ...inputArr
     );
   }
@@ -1367,7 +1363,7 @@ export class Environment {
 
 
 export function payGas(environment, gasCost) {
-  let gas = environment.scriptGlobals.gas;
+  let gas = environment?.scriptGlobals.gas ?? environment;
   Object.keys(this.gasCost).forEach(key => {
     if (gas[key] ??= 0) {
       gas[key] -= gasCost[key];
@@ -1379,14 +1375,14 @@ export function payGas(environment, gasCost) {
 }
 
 export function decrCompGas(environment) {
-  let gas = environment.scriptGlobals.gas;
+  let gas = environment?.scriptGlobals.gas ?? environment;
   if (0 > --gas.comp) throw new OutOfGasError(
     "Ran out of " + GAS_NAMES.comp + " gas"
   );
 }
 
 export function decrFetchGas(environment) {
-  let gas = environment.scriptGlobals.gas;
+  let gas = environment?.scriptGlobals.gas ?? environment;
   if (0 > --gas.fetch) throw new OutOfGasError(
     "Ran out of " + GAS_NAMES.fetch + " gas",
   );

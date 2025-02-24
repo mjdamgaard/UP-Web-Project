@@ -946,4 +946,7 @@ export class ScriptParser extends Parser {
 }
 
 
-export {ScriptParser as default};
+
+export const scriptParser = new ScriptParser();
+
+export default {scriptParser};

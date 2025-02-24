@@ -7,7 +7,7 @@ import {
 
 let regEntParser = new RegEntParser();
 let scriptParser = new ScriptParser();
-let scriptInterpreter = new ScriptInterpreter();
+let scriptInterpreter = new ScriptInterpreter({}, {}, {dataFetcher: {}});
 
 
 
