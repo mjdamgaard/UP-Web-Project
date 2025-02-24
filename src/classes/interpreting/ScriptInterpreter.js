@@ -51,7 +51,7 @@ export class ScriptInterpreter {
     let scriptGlobals = {
       gas: gas, log: {}, reqUserID: reqUserID, scriptID: scriptID,
       permissions: permissions, shouldExit: false, parsedScripts: {},
-      structDefs: {}, liveModules: {}, resolveScript: undefined,
+      parsedStructs: {}, liveModules: {}, resolveScript: undefined,
       scriptInterpreter: this,
     };
 
@@ -189,7 +189,9 @@ export class ScriptInterpreter {
 
   async preprocessScript(curScriptID, globalEnv, callerScriptIDs = []) {
     decrCompGas(globalEnv);
-    let {parsedScripts, structDefs, permissions} = globalEnv.scriptGlobals;
+    let {
+      parsedScripts, parsedStructs, permissions, gas
+    } = globalEnv.scriptGlobals;
 
     // First check that scriptID is not one of the callers, meaning that the
     // preprocess recursion is infinite.
@@ -207,10 +209,11 @@ export class ScriptInterpreter {
     // else fetch it and add it to said buffer.
     let scriptNode = parsedScripts["#" + curScriptID];
     if (!scriptNode) {
-      let scriptNode = await this.fetchEnt(
-        {callerEnv: globalEnv, callerNode: scriptNode}, curScriptID
+      let {error, entDef} = await this.dataFetcher.fetchAndParseEntity(
+        gas, curScriptID, "s"
       );
-      parsedScripts["#" + curScriptID] = scriptNode;
+      if (!error) throw new PreprocessingError(error);
+      parsedScripts["#" + curScriptID] = entDef;
     }
 
     // Once the script syntax tree is gotten, we look for any import statements
@@ -245,10 +248,10 @@ export class ScriptInterpreter {
         stmt.structImports.forEach(([structRef, flagStr]) => {
           // Get the structID, or throw if the structRef is yet just a
           // placeholder.
-          if (structRef.isTBD) throw new PreprocessingError(
+          if (!structRef.id) throw new PreprocessingError(
             `Script @[${curScriptID}] imports a TBD struct reference`
           );
-          let structID = structRef.lexeme;
+          let structID = structRef.id;
 
           // Also check that the struct has the required permissions, or that
           // its module does.
@@ -263,13 +266,13 @@ export class ScriptInterpreter {
 
           // We also push [structID, moduleID] to structAndModulePairs such
           // that we can quickly verify that no struct imports from a wrong
-          // module once we have all the structDefs.
+          // module once we have all the parsedStructs.
           structAndModulePairs.push([structID, moduleID]);
 
           // Then push a promise to fetch and store the struct's definition,
           // as well as its moduleIDs, to promiseArr.
           promiseArr.push(
-            this.fetchAndStoreStructDef(structID, structDefs)
+            this.fetchAndStoreStructDef(structID, parsedStructs)
           );
         });
       });
@@ -278,10 +281,10 @@ export class ScriptInterpreter {
       // them in parallel.
       await Promise.all(promiseArr);
 
-      // At this point structDefs ought to be completed, and we can therefore
-      // now also verify that no struct imports from a wrong module.
+      // At this point, parsedStructs ought to be completed, and we can
+      // therefore now also verify that no struct imports from a wrong module.
       let structModuleIDs = {};
-      Object.entries(structDefs).forEach(([safeKey, structDef]) => {
+      Object.entries(parsedStructs).forEach(([safeKey, structDef]) => {
         structModuleIDs[safeKey] = getStructModuleIDs(structDef);
       });
       structAndModulePairs.forEach(([structID, moduleID]) => {
@@ -295,18 +298,20 @@ export class ScriptInterpreter {
     }
 
     // On a successful preprocessing, parsedScripts will now have been updated
-    // to include this script and all its dependencies as well, and structDefs
-    // will have been updated to contain the definition strings of all the
-    // imported structs. 
+    // to include this script and all its dependencies as well, and
+    // parsedStructs will have been updated to contain the (parsed) definitions
+    // of all the imported structs. 
     return;
   }
 
 
 
-  async fetchAndStoreStructDef(gas, structID, structDefs = {}) {
-    let def = await this.fetchStruct(gas, structID);
-    structDefs["#" + structID] = def;
-    return structDefs;
+  async fetchAndStoreStructDef(gas, structID, parsedStructs) {
+    let {error, entDef} = await this.dataFetcher.fetchAndParseEntity(
+      gas, structID, "r"
+    );
+    if (!error) throw new PreprocessingError(error);
+    parsedStructs["#" + structID] = entDef;
   }
 
 
@@ -1426,16 +1431,16 @@ export function getType(val) {
 
 
 export class DefinedFunction {
-  constructor(node, decEnv) {
+  constructor(node, decEnv, exportPermissions) {
     this.node = node;
     this.decEnv = decEnv;
+    if (exportPermissions) this.exportPermissions = exportPermissions;
   }
 }
 
 export class BuiltInFunction {
-  constructor(fun, gasCost) {
+  constructor(fun) {
     this.fun = fun;
-    this.gasCost = gasCost;
   }
 }
 

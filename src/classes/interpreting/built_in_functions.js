@@ -26,35 +26,35 @@ import {
 
 export const basicBuiltInFunctions = {
 
-  getStructModuleIDs: function ({callerEnv}, structDef) {
+  getStructModuleIDs: new BuiltInFunction(function ({callerEnv}, structDef) {
     decrCompGas(callerEnv);
     return getStructModuleIDs(structDef)
-  },
+  }),
 
 
-  fetchEntity: function (
+  fetchEntity: new BuiltInFunction(function (
     {gas, callerEnv, callerNode, options: {dataFetcher}},
     entID, callback
   ) {
     decrCompGas(callerEnv);
     // TODO: Check permissions first.
     let {scriptInterpreter} = callerEnv.scriptGlobals;
-    dataFetcher.fetchEntity(gas, entID, (res) => {
+    dataFetcher.fetchEntity(gas, entID).then(res => {
       scriptInterpreter.executeFunction(callback, [res], callerNode, callerEnv);
     });
-  },
+  }),
 
-  fetchAndParseEntity: function (
+  fetchAndParseEntity: new BuiltInFunction(function (
     {gas, callerEnv, callerNode, options: {dataFetcher}},
     entID, entType, callback
   ) {
     decrCompGas(callerEnv);
     // TODO: Check permissions first.
     let {scriptInterpreter} = callerEnv.scriptGlobals;
-    dataFetcher.fetchAndParseEntity(gas, entID, entType, (res) => {
+    dataFetcher.fetchAndParseEntity(gas, entID, entType).then(res => {
       scriptInterpreter.executeFunction(callback, [res], callerNode, callerEnv);
     });
-  },
+  }),
 
 
 }
