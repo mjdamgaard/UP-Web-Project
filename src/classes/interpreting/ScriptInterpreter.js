@@ -74,10 +74,10 @@ export class ScriptInterpreter {
       // preprocessScript() to continue from there
       else {
         payGas(globalEnv, {comp: getParsingGasCost(script)});
-        let scriptSyntaxTree = ScriptParser.parse(script);
-        if (scriptSyntaxTree.error) throw scriptSyntaxTree.error;
+        let scriptNode = ScriptParser.parse(script);
+        if (scriptNode.error) throw scriptNode.error;
         scriptID = "0";
-        scriptGlobals.parsedScripts = {"#0": scriptSyntaxTree};
+        scriptGlobals.parsedScripts = {"#0": scriptNode};
         await this.preprocessScript(scriptID, globalEnv);
       }
 
@@ -207,18 +207,18 @@ export class ScriptInterpreter {
 
     // Try to get the parsed script first from the parsedScripts buffer, or
     // else fetch it and add it to said buffer.
-    let scriptSyntaxTree = parsedScripts["#" + curScriptID];
-    if (!scriptSyntaxTree) {
-      let scriptSyntaxTree = await this.fetchEnt(
-        {callerEnv: globalEnv, callerNode: scriptSyntaxTree}, curScriptID
+    let scriptNode = parsedScripts["#" + curScriptID];
+    if (!scriptNode) {
+      let scriptNode = await this.fetchEnt(
+        {callerEnv: globalEnv, callerNode: scriptNode}, curScriptID
       );
-      parsedScripts["#" + curScriptID] = scriptSyntaxTree;
+      parsedScripts["#" + curScriptID] = scriptNode;
     }
 
     // Once the script syntax tree is gotten, we look for any import statements
     // at the top of the script, then call this method recursively in parallel
     // to import dependencies.
-    if (scriptSyntaxTree.importStmtArr.length !== 0) {
+    if (scriptNode.importStmtArr.length !== 0) {
       // Append scriptID to callerScriptIDs (without muting the input), and
       // initialize a promiseArr to process all the modules in parallel, as
       // well as an array with all imported structs' IDs, and the IDs of the
@@ -229,7 +229,7 @@ export class ScriptInterpreter {
       let structAndModulePairs = [];
       let globalPermissions = permissions?.global ?? "";
       let curScriptPermissions = permissions?.scripts["#" + curScriptID] ?? "";
-      scriptSyntaxTree.importStmtArr.forEach(stmt => {
+      scriptNode.importStmtArr.forEach(stmt => {
         // Get the moduleID for the given import statement.
         let moduleRef = stmt.moduleRef;
         if (moduleRef.isTBD) throw new PreprocessingError(
@@ -336,7 +336,7 @@ export class ScriptInterpreter {
 
   executeScript(curScriptID, globalEnv) {
     let {parsedScripts, liveModules} = globalEnv.scriptGlobals;
-    let scriptSyntaxTree = parsedScripts["#" + curScriptID];
+    let scriptNode = parsedScripts["#" + curScriptID];
 
     // Create a new environment for the script.
     let environment = new Environment(
@@ -344,12 +344,12 @@ export class ScriptInterpreter {
     );
 
     // First execute all import statements.
-    scriptSyntaxTree.importStmtArr.forEach((stmt) => {
+    scriptNode.importStmtArr.forEach((stmt) => {
       this.executeImportStatement(stmt, environment);
     });
 
     // Then execute all other (outer) statements of the script.
-    scriptSyntaxTree.importStmtArr.forEach((stmt) => {
+    scriptNode.importStmtArr.forEach((stmt) => {
       this.executeOuterStatement(stmt, environment);
     });
 
@@ -361,13 +361,13 @@ export class ScriptInterpreter {
 
 
 
-  executeImportStatement(stmtSyntaxTree, environment) {
+  executeImportStatement(stmtNode, environment) {
     decrCompGas(environment);
     let {liveModules} = environment.scriptGlobals;
 
     // Get the live environment of the module, either from liveModules if the
     // module has already been executed, or otherwise by executing it.
-    let moduleID = stmtSyntaxTree.moduleRef.lexeme;
+    let moduleID = stmtNode.moduleRef.lexeme;
     let moduleEnv = liveModules["#" + moduleID];
     if (!moduleEnv) {
       this.executeScript(moduleID, moduleEnv);
@@ -377,7 +377,7 @@ export class ScriptInterpreter {
     // Get the combined exports, and then iterate through all the imports,
     // and add each import to the environment.
     let exports = moduleEnv.exports;
-    stmtSyntaxTree.importArr.forEach(imp => {
+    stmtNode.importArr.forEach(imp => {
       if (imp.namespaceIdent) {
         let nsObj = {};
         Object.entries(exports).forEach(([safeKey, val]) => {
@@ -421,15 +421,15 @@ export class ScriptInterpreter {
 
 
 
-  executeOuterStatement(stmtSyntaxTree, environment) {
-    let type = stmtSyntaxTree.type;
+  executeOuterStatement(stmtNode, environment) {
+    let type = stmtNode.type;
     switch (type) {
       case "statement": {
-        this.executeStatement(stmtSyntaxTree, environment);
+        this.executeStatement(stmtNode, environment);
         break;
       }
       case "export-statement": {
-        this.executeExportStatement(stmtSyntaxTree, environment);
+        this.executeExportStatement(stmtNode, environment);
         break;
       }
       default: debugger;throw (
@@ -440,27 +440,27 @@ export class ScriptInterpreter {
   }
 
 
-  executeExportStatement(stmtSyntaxTree, environment) {
+  executeExportStatement(stmtNode, environment) {
     decrCompGas(environment);
 
-    let stmt = stmtSyntaxTree.stmt;
+    let stmt = stmtNode.stmt;
     if (stmt) {
       if (stmt.type === "expression-statement") {
         let val = this.evaluateExpression(stmt.exp, environment);
-        environment.exportDefault(val, undefined, stmtSyntaxTree);
+        environment.exportDefault(val, undefined, stmtNode);
         return;
       }
-      this.executeStatement(stmtSyntaxTree.stmt, environment);
+      this.executeStatement(stmtNode.stmt, environment);
     }
-    if (stmtSyntaxTree.isDefault) {
-      let [[ident]] = stmtSyntaxTree.exportArr;
-      let val = environment.get(ident, stmtSyntaxTree);
-      environment.exportDefault(val, ident, stmtSyntaxTree);
+    if (stmtNode.isDefault) {
+      let [[ident]] = stmtNode.exportArr;
+      let val = environment.get(ident, stmtNode);
+      environment.exportDefault(val, ident, stmtNode);
     }
     else {
-      let isStructProp = stmtSyntaxTree.isStructProp;
-      let flagStr = stmtSyntaxTree.flagStr;
-      stmtSyntaxTree.exportArr.forEach(([ident, alias]) => {
+      let isStructProp = stmtNode.isStructProp;
+      let flagStr = stmtNode.flagStr;
+      stmtNode.exportArr.forEach(([ident, alias]) => {
         environment.export(ident, alias, isStructProp, flagStr);
       });
     }
@@ -483,7 +483,7 @@ export class ScriptInterpreter {
     let ret;
     if (fun instanceof DefinedFunction) {
       ret = this.executeDefinedFunction(
-        fun.syntaxTree, fun.decEnv, inputArr, callerNode, thisVal
+        fun.node, fun.decEnv, inputArr, callerNode, callerEnv, thisVal
       );
     }
     else if (fun instanceof BuiltInFunction) {
@@ -519,7 +519,7 @@ export class ScriptInterpreter {
 
 
   executeDefinedFunction(
-    funSyntaxTree, funDecEnv, inputValueArr, callerNode, callerEnv,
+    funNode, funDecEnv, inputValueArr, callerNode, callerEnv,
     thisVal = undefined
   ) {
     decrCompGas(callerEnv);
@@ -528,7 +528,7 @@ export class ScriptInterpreter {
     let newEnv = new Environment(funDecEnv, thisVal, "function");
 
     // Add the input parameters to the new environment.
-    funSyntaxTree.params.forEach((param, ind) => {
+    funNode.params.forEach((param, ind) => {
       let paramName = param.ident;
       let paramVal = inputValueArr[ind];
       let inputValType = getType(paramVal);
@@ -558,7 +558,7 @@ export class ScriptInterpreter {
     // Now execute the statements inside a try-catch statement to catch any
     // return exception, or any uncaught break or continue exceptions. On a
     // return exception, return the held value. 
-    let stmtArr = funSyntaxTree.body.stmtArr;
+    let stmtArr = funNode.body.stmtArr;
     try {
       stmtArr.forEach(stmt => this.executeStatement(stmt, newEnv));
     } catch (err) {
@@ -577,14 +577,14 @@ export class ScriptInterpreter {
 
 
 
-  executeStatement(stmtSyntaxTree, environment) {
+  executeStatement(stmtNode, environment) {
     decrCompGas(environment);
 
-    let type = stmtSyntaxTree.type;
+    let type = stmtNode.type;
     switch (type) {
       case "block-statement": {
         let newEnv = new Environment(environment);
-        let stmtArr = stmtSyntaxTree.children;
+        let stmtArr = stmtNode.stmtArr;
         let len = stmtArr.length;
         for (let i = 0; i < len; i++) {
           this.executeStatement(stmtArr[i], newEnv);
@@ -592,23 +592,23 @@ export class ScriptInterpreter {
         break;
       }
       case "if-else-statement": {
-        let condVal = this.evaluateExpression(stmtSyntaxTree.cond, environment);
+        let condVal = this.evaluateExpression(stmtNode.cond, environment);
         if (condVal) {
-          this.executeStatement(stmtSyntaxTree.ifStmt, environment);
-        } else if (stmtSyntaxTree.elseStmt) {
-          this.executeStatement(stmtSyntaxTree.elseStmt, environment);
+          this.executeStatement(stmtNode.ifStmt, environment);
+        } else if (stmtNode.elseStmt) {
+          this.executeStatement(stmtNode.elseStmt, environment);
         }
         break;
       }
       case "loop-statement": {
         let newEnv = new Environment(environment);
-        let innerStmt = stmtSyntaxTree.stmt;
-        let updateExp = stmtSyntaxTree.updateExp;
-        let condExp = stmtSyntaxTree.cond;
-        if (stmtSyntaxTree.dec) {
-          this.executeStatement(stmtSyntaxTree.dec, newEnv);
+        let innerStmt = stmtNode.stmt;
+        let updateExp = stmtNode.updateExp;
+        let condExp = stmtNode.cond;
+        if (stmtNode.dec) {
+          this.executeStatement(stmtNode.dec, newEnv);
         }
-        let postponeCond = stmtSyntaxTree.doFirst;
+        let postponeCond = stmtNode.doFirst;
         while (postponeCond || this.evaluateExpression(condExp, newEnv)) {
           postponeCond = false;
           try {
@@ -627,64 +627,64 @@ export class ScriptInterpreter {
         break;
       }
       case "return-statement": {
-        let expVal = (!stmtSyntaxTree.exp) ? undefined :
-          this.evaluateExpression(stmtSyntaxTree.exp, environment);
-        throw new ReturnException(expVal, stmtSyntaxTree, environment);
+        let expVal = (!stmtNode.exp) ? undefined :
+          this.evaluateExpression(stmtNode.exp, environment);
+        throw new ReturnException(expVal, stmtNode, environment);
       }
       case "throw-statement": {
-        let expVal = (!stmtSyntaxTree.exp) ? undefined :
-          this.evaluateExpression(stmtSyntaxTree.exp, environment);
-        throw new CustomException(expVal, stmtSyntaxTree, environment);
+        let expVal = (!stmtNode.exp) ? undefined :
+          this.evaluateExpression(stmtNode.exp, environment);
+        throw new CustomException(expVal, stmtNode, environment);
       }
       case "try-catch-statement": {
         try {
-          this.executeStatement(stmtSyntaxTree.tryStmt, environment);
+          this.executeStatement(stmtNode.tryStmt, environment);
         } catch (err) {
           if (err instanceof RuntimeError || err instanceof CustomException) {
             let newEnv = new Environment(environment);
             newEnv.declare(
-              stmtSyntaxTree.ident, err.msg, false, stmtSyntaxTree
+              stmtNode.ident, err.msg, false, stmtNode
             );
-            this.executeStatement(stmtSyntaxTree.catchStmt, newEnv);
+            this.executeStatement(stmtNode.catchStmt, newEnv);
           }
           else throw err;
         }
         break;
       }
       case "instruction-statement": {
-        if (stmtSyntaxTree.lexeme === "break") {
-          throw new BreakException(stmtSyntaxTree, environment);
-        } else if (stmtSyntaxTree.lexeme === "continue") {
-          throw new ContinueException(stmtSyntaxTree, environment);
+        if (stmtNode.lexeme === "break") {
+          throw new BreakException(stmtNode, environment);
+        } else if (stmtNode.lexeme === "continue") {
+          throw new ContinueException(stmtNode, environment);
         } else {
-          throw new ExitException(stmtSyntaxTree, environment);
+          throw new ExitException(stmtNode, environment);
         }
       }
       case "empty-statement": {
         return;
       }
       case "variable-declaration": {
-        let decType = stmtSyntaxTree.decType;
+        let decType = stmtNode.decType;
         if (decType === "definition-list") {
-          stmtSyntaxTree.defArr.forEach(varDef => {
+          stmtNode.defArr.forEach(varDef => {
             let ident = varDef.ident;
             let val = (!varDef.exp) ? undefined :
               this.evaluateExpression(varDef.exp, environment);
             environment.declare(
-              ident, val, stmtSyntaxTree.isConst, stmtSyntaxTree
+              ident, val, stmtNode.isConst, stmtNode
             );
           });
         }
         else if (decType === "destructuring") {
-          let val = this.evaluateExpression(stmtSyntaxTree.exp, environment);
+          let val = this.evaluateExpression(stmtNode.exp, environment);
           if (!Array.isArray(val)) throw new RuntimeError(
             "Destructuring of a non-array expression",
-            stmtSyntaxTree, environment
+            stmtNode, environment
           );
-          stmtSyntaxTree.identArr.forEach((ident, ind) => {
+          stmtNode.identArr.forEach((ident, ind) => {
             let nestedVal = val[ind];
             environment.declare(
-              ident, nestedVal, stmtSyntaxTree.isConst, stmtSyntaxTree
+              ident, nestedVal, stmtNode.isConst, stmtNode
             );
           });
         }
@@ -695,14 +695,14 @@ export class ScriptInterpreter {
         break;
       }
       case "function-declaration": {
-        let funVal = new DefinedFunction(stmtSyntaxTree, environment);
+        let funVal = new DefinedFunction(stmtNode, environment);
         environment.declare(
-          stmtSyntaxTree.name, funVal, false, stmtSyntaxTree
+          stmtNode.name, funVal, false, stmtNode
         );
         break;
       }
       case "expression-statement": {
-        this.evaluateExpression(stmtSyntaxTree.exp, environment);
+        this.evaluateExpression(stmtNode.exp, environment);
         break;
       }
       default: debugger;throw (
@@ -716,18 +716,18 @@ export class ScriptInterpreter {
 
 
 
-  evaluateExpression(expSyntaxTree, environment, isMemberAccessChild = false) {
+  evaluateExpression(expNode, environment, isMemberAccessChild = false) {
     decrCompGas(environment);
 
-    let type = expSyntaxTree.type;
+    let type = expNode.type;
     switch (type) {
       case "arrow-function": 
       case "function-expression": {
-        let funSyntaxTree = {
-          sym: "function-declaration",
-          ...expSyntaxTree,
+        let funNode = {
+          type: "function-declaration",
+          ...expNode,
         };
-        let funVal = new DefinedFunction(funSyntaxTree, environment);
+        let funVal = new DefinedFunction(funNode, environment);
         if (type === "arrow-function") {
           let thisVal = environment.get("this");
           funVal = new ThisBoundFunction(funVal, thisVal);
@@ -735,61 +735,61 @@ export class ScriptInterpreter {
         return funVal;
       }
       case "assignment": {
-        let val = this.evaluateExpression(expSyntaxTree.exp2, environment);
-        let op = expSyntaxTree.op;
+        let val = this.evaluateExpression(expNode.exp2, environment);
+        let op = expNode.op;
         switch (op) {
           case "=":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp1, environment, () => {
+              expNode.exp1, environment, () => {
                 let newVal = val;
                 return [newVal, newVal]
               }
             );
           case "+=":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp1, environment, prevVal => {
+              expNode.exp1, environment, prevVal => {
                 let newVal = parseFloat(prevVal) + parseFloat(val);
                 return [newVal, newVal]
               }
             );
           case "-=":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp1, environment, prevVal => {
+              expNode.exp1, environment, prevVal => {
                 let newVal = parseFloat(prevVal) - parseFloat(val);
                 return [newVal, newVal]
               }
             );
           case "*=":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp1, environment, prevVal => {
+              expNode.exp1, environment, prevVal => {
                 let newVal = parseFloat(prevVal) * parseFloat(val);
                 return [newVal, newVal]
               }
             );
           case "/=":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp1, environment, prevVal => {
+              expNode.exp1, environment, prevVal => {
                 let newVal = parseFloat(prevVal) / parseFloat(val);
                 return [newVal, newVal]
               }
             );
           case "&&=":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp1, environment, prevVal => {
+              expNode.exp1, environment, prevVal => {
                 let newVal = prevVal && val;
                 return [newVal, newVal]
               }
             );
           case "||=":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp1, environment, prevVal => {
+              expNode.exp1, environment, prevVal => {
                 let newVal = prevVal || val;
                 return [newVal, newVal]
               }
             );
           case "??=":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp1, environment, prevVal => {
+              expNode.exp1, environment, prevVal => {
                 let newVal = prevVal ?? val;
                 return [newVal, newVal]
               }
@@ -801,11 +801,11 @@ export class ScriptInterpreter {
         }
       }
       case "conditional-expression": {
-        let cond = this.evaluateExpression(expSyntaxTree.cond, environment);
+        let cond = this.evaluateExpression(expNode.cond, environment);
         if (cond) {
-          return this.evaluateExpression(expSyntaxTree.exp1, environment);
+          return this.evaluateExpression(expNode.exp1, environment);
         } else {
-          return this.evaluateExpression(expSyntaxTree.exp2, environment);
+          return this.evaluateExpression(expNode.exp2, environment);
         }
       }
       case "or-expression":
@@ -819,11 +819,11 @@ export class ScriptInterpreter {
       case "relational-expression":
       case "additive-expression":
       case "multiplicative-expression": {
-        let children = expSyntaxTree.children;
+        let children = expNode.children;
         let acc = this.evaluateExpression(children[0], environment);
         let lastOpIndex = children.length - 2;
         for (let i = 0; i < lastOpIndex; i += 2) {
-          let op = children[i + 1].lexeme;
+          let op = children[i + 1];
           let nextChild = children[i + 2];
           let nextVal;
           if (op !== "||" && op !== "??" && op !== "&&") {
@@ -937,20 +937,20 @@ export class ScriptInterpreter {
         return acc;
       }
       case "exponential-expression": {
-        let root = this.evaluateExpression(expSyntaxTree.root, environment);
-        let exp = this.evaluateExpression(expSyntaxTree.exp, environment);
+        let root = this.evaluateExpression(expNode.root, environment);
+        let exp = this.evaluateExpression(expNode.exp, environment);
         return parseFloat(root) ** parseFloat(exp);
       }
       case "prefix-expression": {
-        let op = expSyntaxTree.op;
+        let op = expNode.op;
         switch (op) {
           case "++":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp, environment, prevVal => {
+              expNode.exp, environment, prevVal => {
                 let int = parseFloat(prevVal);
                 if (!int && int !== 0) throw new RuntimeError(
                   "Increment of a non-numeric value",
-                  expSyntaxTree, environment
+                  expNode, environment
                 );
                 let newVal = int + 1;
                 return [newVal, newVal]
@@ -958,18 +958,18 @@ export class ScriptInterpreter {
             );
           case "--":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp, environment, prevVal => {
+              expNode.exp, environment, prevVal => {
                 let int = parseFloat(prevVal);
                 if (!int && int !== 0) throw new RuntimeError(
                   "Decrement of a non-numeric value",
-                  expSyntaxTree, environment
+                  expNode, environment
                 );
                 let newVal = int - 1;
                 return [newVal, newVal]
               }
             );
         }
-        let val = this.evaluateExpression(expSyntaxTree.exp, environment);
+        let val = this.evaluateExpression(expNode.exp, environment);
         switch (op) {
           case "!":
             return !val;
@@ -985,7 +985,7 @@ export class ScriptInterpreter {
             return void val;
           case "delete":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp, environment, prevVal => {
+              expNode.exp, environment, prevVal => {
                 if (prevVal === undefined) {
                   return [undefined, false];
                 } else {
@@ -1000,15 +1000,15 @@ export class ScriptInterpreter {
         }
       }
       case "postfix-expression": {
-        let op = expSyntaxTree.op;
+        let op = expNode.op;
         switch (op) {
           case "++":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp, environment, prevVal => {
+              expNode.exp, environment, prevVal => {
                 let int = parseFloat(prevVal);
                 if (!int && int !== 0) throw new RuntimeError(
                   "Increment of a non-numeric value",
-                  expSyntaxTree, environment
+                  expNode, environment
                 );
                 let newVal = int + 1;
                 return [newVal, prevVal]
@@ -1016,11 +1016,11 @@ export class ScriptInterpreter {
             );
           case "--":
             return this.assignToVariableOrMember(
-              expSyntaxTree.exp, environment, prevVal => {
+              expNode.exp, environment, prevVal => {
                 let int = parseFloat(prevVal);
                 if (!int && int !== 0) throw new RuntimeError(
                   "Decrement of a non-numeric value",
-                  expSyntaxTree, environment
+                  expNode, environment
                 );
                 let newVal = int - 1;
                 return [newVal, prevVal]
@@ -1033,22 +1033,22 @@ export class ScriptInterpreter {
         }
       }
       case "function-call": {
-        let fun = this.evaluateExpression(expSyntaxTree.exp, environment);
-        let inputExpArr = expSyntaxTree.postfix.children;
+        let fun = this.evaluateExpression(expNode.exp, environment);
+        let inputExpArr = expNode.postfix.children;
         let inputValArr = inputExpArr.map(exp => (
           this.evaluateExpression(exp, environment)
         ));
 
         return this.executeFunction(
-          fun, inputValArr, expSyntaxTree, environment
+          fun, inputValArr, expNode, environment
         );
       }
       case "virtual-method": {
-        let objVal = this.evaluateExpression(expSyntaxTree.obj, environment);
-        let funVal = this.evaluateExpression(expSyntaxTree.fun, environment);
+        let objVal = this.evaluateExpression(expNode.obj, environment);
+        let funVal = this.evaluateExpression(expNode.fun, environment);
         if (objVal instanceof StructObject) throw new RuntimeError(
           'Virtual methods not allowed for "struct" types',
-          expSyntaxTree, environment
+          expNode, environment
         );
         if (
           funVal instanceof DefinedFunction ||
@@ -1061,7 +1061,7 @@ export class ScriptInterpreter {
         }
         else throw new RuntimeError(
           "Virtual method with a non-function type",
-          expSyntaxTree.fun, environment
+          expNode.fun, environment
         );
       }
       case "member-access": {
@@ -1069,7 +1069,7 @@ export class ScriptInterpreter {
         let expVal, indexVal;
         try {
           [expVal, indexVal] = this.getMemberAccessExpValAndSafeIndex(
-            expSyntaxTree, environment
+            expNode, environment
           );
         } catch (err) {
           // If err is an BrokenOptionalChainException either return undefined,
@@ -1085,7 +1085,7 @@ export class ScriptInterpreter {
         }
 
         // Handle graceful return in case of an optional chaining.
-        if (expSyntaxTree.postfix.isOpt) {
+        if (expNode.postfix.isOpt) {
           if (expVal === null || expVal === undefined) {
             if (isMemberAccessChild) {
               throw new BrokenOptionalChainException();
@@ -1116,16 +1116,16 @@ export class ScriptInterpreter {
         return ret;
       }
       case "grouped-expression": {
-        return this.evaluateExpression(expSyntaxTree.exp, environment);
+        return this.evaluateExpression(expNode.exp, environment);
       }
       case "array": {
-        let expValArr = expSyntaxTree.children.map(exp => (
+        let expValArr = expNode.children.map(exp => (
           this.evaluateExpression(exp, environment)
         ));
         return expValArr;
       }
       case "object": {
-        let memberEntries = expSyntaxTree.children.map(exp => (
+        let memberEntries = expNode.children.map(exp => (
           [
             "#" + (
               exp.ident ??
@@ -1140,24 +1140,24 @@ export class ScriptInterpreter {
         return environment.get("this");
       }
       case "entity-reference": {
-        if (expSyntaxTree.isTBD) {
-          return new EntityPlaceholder(expSyntaxTree.lexeme);
+        if (expNode.id) {
+          return new EntityReference(expNode.id);
         } else {
-          return new EntityReference(expSyntaxTree.lexeme);
+          return new EntityPlaceholder(expNode.path);
         }
       }
       case "identifier": {
-        let ident = expSyntaxTree.lexeme;
-        return environment.get(ident, expSyntaxTree);
+        let ident = expNode.ident;
+        return environment.get(ident, expNode);
       }
       case "string": {
-        return JSON.parse(expSyntaxTree.lexeme);
+        return expNode.str;
       }
       case "number": {
-        return parseFloat(expSyntaxTree.lexeme);
+        return parseFloat(expNode.lexeme);
       }
       case "constant": {
-        let lexeme = expSyntaxTree.lexeme;
+        let lexeme = expNode.lexeme;
         return (lexeme === "true") ? true :
                (lexeme === "false") ? false :
                (lexeme === "null") ? null :
@@ -1173,19 +1173,19 @@ export class ScriptInterpreter {
   }
 
 
-  assignToVariableOrMember(expSyntaxTree, environment, assignFun) {
-    if (expSyntaxTree.type === "identifier") {
-      let ident = expSyntaxTree.lexeme;
-      return environment.assign(ident, expSyntaxTree, assignFun);
+  assignToVariableOrMember(expNode, environment, assignFun) {
+    if (expNode.type === "identifier") {
+      let ident = expNode.ident;
+      return environment.assign(ident, expNode, assignFun);
     }
     else if (
-      expSyntaxTree.type === "member-access" && !expSyntaxTree.postfix.isOpt
+      expNode.type === "member-access" && !expNode.postfix.isOpt
     ) {
       // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
       let expVal, indexVal, isStruct;
       try {
         [expVal, indexVal, isStruct] = this.getMemberAccessExpValAndSafeIndex(
-          expSyntaxTree, environment
+          expNode, environment
         );
       } catch (err) {
         // If err is an BrokenOptionalChainException, do nothing and return
@@ -1200,7 +1200,7 @@ export class ScriptInterpreter {
       // Throw runtime error if trying to mute a struct.
       if (isStruct) throw new RuntimeError(
         "Assignment to a member of an immutable object",
-        expSyntaxTree, environment
+        expNode, environment
       );
 
       // Then assign the member of our expVal and return the value specified by
@@ -1212,19 +1212,19 @@ export class ScriptInterpreter {
     else {
       throw new RuntimeError(
         "Assignment to invalid expression",
-        expSyntaxTree, environment
+        expNode, environment
       );
     }
   }
 
-  getMemberAccessExpValAndSafeIndex(memAccSyntaxTree, environment) {
+  getMemberAccessExpValAndSafeIndex(memAccNode, environment) {
     // Evaluate the expression.
     let expVal = this.evaluateExpression(
-      memAccSyntaxTree.exp, environment, true
+      memAccNode.exp, environment, true
     );
 
     // Now get the index value.
-    let indexExp = memAccSyntaxTree.postfix;
+    let indexExp = memAccNode.postfix;
     let indexVal = indexExp.ident;
     if (!indexVal) {
       indexVal = this.evaluateExpression(indexExp.exp, environment);
@@ -1253,7 +1253,7 @@ export class ScriptInterpreter {
     else if (valType !== "object" && !isStruct) {
       throw new RuntimeError(
         "Accessing or assignment to a member of a non-object",
-        memAccSyntaxTree, environment
+        memAccNode, environment
       );
     }
     else {
@@ -1430,8 +1430,8 @@ export function getType(val) {
 
 
 export class DefinedFunction {
-  constructor(syntaxTree, decEnv) {
-    this.syntaxTree = syntaxTree;
+  constructor(node, decEnv) {
+    this.node = node;
     this.decEnv = decEnv;
   }
 }

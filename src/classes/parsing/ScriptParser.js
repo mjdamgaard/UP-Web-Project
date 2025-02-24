@@ -718,7 +718,7 @@ export const scriptGrammar = {
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? {
         type: "prefix-expression",
-        op: children[0].lexeme,
+        op: children[0],
         exp: children[1],
       } :
         copyFromChild(children);
@@ -733,7 +733,7 @@ export const scriptGrammar = {
       return (ruleInd === 0) ? {
         type: "postfix-expression",
         exp: children[0],
-        op: children[1].lexeme,
+        op: children[1],
       } :
         copyFromChild(children);
     },
@@ -922,6 +922,26 @@ export class ScriptParser extends Parser {
       ],
       /\s+|\/\/.*\n\s*|\/\*([^\*]|\*(?!\/))*(\*\/\s*|$)/
     );
+  }
+
+  parse(str, startSym, isPartial, keepLastLexeme) {
+    let [syntaxTree, lexArr, strPosArr] = super.parse(
+      str, startSym, isPartial, keepLastLexeme
+    );
+    this.addPosAndNextPosToResults(syntaxTree);
+    return [syntaxTree, lexArr, strPosArr];
+  }
+
+  addPosAndNextPosToResults(syntaxTree) {
+    if (syntaxTree.res && syntaxTree.pos !== undefined) {
+      syntaxTree.res.pos = syntaxTree.pos;
+      syntaxTree.res.nextPos = syntaxTree.nextPos;
+    }
+    if (syntaxTree.children) {
+      syntaxTree.children.forEach(child => {
+        this.addPosAndNextPosToResults(child);
+      });
+    }
   }
 }
 
