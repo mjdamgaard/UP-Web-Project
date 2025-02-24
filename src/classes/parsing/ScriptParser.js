@@ -317,8 +317,6 @@ export const scriptGrammar = {
       ["identifier"],
     ],
     process: (children, ruleInd) => {
-      let types = children[2]?.types;
-      let isRequired = (ruleInd === 2);
       if (!children[2]) {
         return {
           type: "parameter",
@@ -327,6 +325,9 @@ export const scriptGrammar = {
           defaultExp: undefined,
         };
       } else {
+        let types = children[2]?.types;
+        let isRequired = (ruleInd === 2);
+
         // Initialize a invalidTypes, with nullish types plucked out from the
         // start if isRequired is false.
         let invalidTypes = isRequired ? [
@@ -369,6 +370,8 @@ export const scriptGrammar = {
   },
   "type": {
     rules: [
+      // TODO: Consider changing this back (or to something else) as to not
+      // clash with Typescript object types. 
       [/\{/, "type^(1)-list!", /\}/],
       ["type^(1)"],
       ["/any/"],
@@ -474,6 +477,7 @@ export const scriptGrammar = {
       ["/if/", /\(/, "expression", /\)/, "statement"],
     ],
     process: (children) => ({
+      type: "if-else-statement",
       cond: children[2],
       ifStmt: children[4],
       elseStmt: children[6],
@@ -489,7 +493,7 @@ export const scriptGrammar = {
       ],
     ],
     process: (children, ruleInd) => {
-      return (ruleInd === 0) ? {
+      let ret = (ruleInd === 0) ? {
         dec:       undefined,
         cond:      children[2],
         updateExp: undefined,
@@ -507,7 +511,9 @@ export const scriptGrammar = {
         updateExp: children[5],
         stmt:      children[7],
         doFirst:   false,
-      }
+      };
+      ret.type = "loop-statement";
+      return ret;
     },
   },
   "return-statement": {
@@ -516,6 +522,7 @@ export const scriptGrammar = {
       ["/return/", "/;/"],
     ],
     process: (children, ruleInd) => ({
+      type: "return-statement",
       exp: (ruleInd === 0) ? children[1] : undefined,
     }),
   },
@@ -525,6 +532,7 @@ export const scriptGrammar = {
       ["/throw/", "/;/"],
     ],
     process: (children, ruleInd) => ({
+      type: "throw-statement",
       exp: (ruleInd === 0) ? children[1] : undefined,
     }),
   },
@@ -533,6 +541,7 @@ export const scriptGrammar = {
       ["/try/", "statement", "/catch/", /\(/, "identifier", /\)/, "statement"],
     ],
     process: (children) => ({
+      type: "try-catch-statement",
       tryStmt: children[1],
       ident: children[4].ident,
       catchStmt: children[6],
@@ -543,11 +552,13 @@ export const scriptGrammar = {
       ["/break|continue|exit/", "/;/"],
     ],
     process: copyLexemeFromChild,
+    params: ["instruction-statement"],
   },
   "empty-statement": {
     rules: [
       ["/;/"],
     ],
+    process: () => ({type: "empty-statement"}),
   },
   "expression-list": {
     rules: [

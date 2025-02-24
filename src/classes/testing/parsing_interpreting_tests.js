@@ -517,6 +517,23 @@ function script_parsing_tests_01() {
     str: `foo(x, y)(z);`,
     startSym: "statement",
     expectedIsSuccess: true,
+    expectedOutput: {res: {
+      type: "expression-statement",
+      exp: {
+        type: "function-call",
+        exp: {
+          type: "function-call",
+          exp: {type: "identifier", ident: "foo"},
+          postfix: {type: "expression-tuple", children: [
+            {type: "identifier", ident: "x"},
+            {type: "identifier", ident: "y"},
+          ]}
+        },
+        postfix: {type: "expression-tuple", children: [
+          {type: "identifier", ident: "z"},
+        ]}
+      }
+    }},
     testKey: "08",
   });
   testParser(params);
