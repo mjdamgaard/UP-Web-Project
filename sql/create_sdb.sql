@@ -33,11 +33,22 @@ DROP TABLE DebugLogEntries;
 
 CREATE TABLE DataStructures_01 (
 
-    struct_elem_key VARCHAR(64) -- Can be resized.
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin PRIMARY KEY,
+    ent_id_keys VARCHAR(64) -- Can be resized.
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
-    elem_data VARCHAR(32) -- Can be resized.
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL
+    bin_keys VARBINARY(64) -- Can be resized.
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+
+    ent_id_data VARCHAR(32) -- Can be resized.
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+
+    bin_data VARBINARY(32) -- Can be resized.
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+
+    PRIMARY KEY (
+        ent_id_keys,
+        bin_keys
+    )
 )
 ROW_FORMAT = COMPRESSED;
 
@@ -45,13 +56,10 @@ ROW_FORMAT = COMPRESSED;
 
 CREATE TABLE DataStructureCounters_01 (
 
-    struct_key VARCHAR(32) -- Can be resized.
+    struct_keys VARCHAR(32) -- Can be resized.
         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin PRIMARY KEY,
 
     paid_upload_data_cost FLOAT NOT NULL
-
-    -- list_metadata VARCHAR(64) -- Can be resized.
-    --     CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL
 )
 ROW_FORMAT = COMPRESSED;
 
@@ -274,17 +282,15 @@ INSERT INTO Entities (
     id, ent_type, def_str
 )
 VALUES
-    -- (2, "t", "u"),
+    -- (2, "t", "p"),
     -- (3, "t", "a"),
-    -- (4, "t", "f"),
-    -- (5, "t", "r"),
+    -- (4, "t", "s"),
+    -- (5, "t", "f"),
     -- (6, "t", "j"),
     -- (7, "t", "h"),
     -- (8, "t", "8"),
-    -- (9, "t", "d"),
-    -- (10, "t", "t"),
-    (18, "d", "original_DB_node"),
-    (19, "u", "initial_admin");
+    -- (18, "d", "original_DB_node"),
+    (19, "p", "initial_admin");
 
 INSERT INTO Entities (
     id, ent_type, def_str, creator_id, is_editable
@@ -298,17 +304,15 @@ INSERT INTO EntitySecKeys (
     ent_type, def_key, ent_id
 )
 VALUES
-    -- ("t", "u", 2),
+    -- ("t", "p", 2),
     -- ("t", "a", 3),
-    -- ("t", "f", 4),
-    -- ("t", "r", 5),
+    -- ("t", "s", 4),
+    -- ("t", "f", 5),
     -- ("t", "j", 6),
     -- ("t", "h", 7),
     -- ("t", "8", 8),
-    -- ("t", "d", 9),
-    -- ("t", "t", 10),
-    ("d", "original_DB_node", 18),
-    ("u", "initial_admin", 19);
+    -- ("d", "original_DB_node", 18),
+    ("p", "initial_admin", 19);
     -- No sec. key for ("j", '{}', 9).
 
 

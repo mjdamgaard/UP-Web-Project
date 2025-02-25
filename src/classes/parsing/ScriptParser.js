@@ -15,7 +15,7 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
   "^(let|var|const|this|function|export|import|break|continue|return|throw|" +
   "if|else|switch|case|void|typeof|instanceof|delete|await|class|static|" +
   "true|false|null|undefined|Infinity|NaN|try|catch|finally|for|while|do|" +
-  "default|struct|exit)$"
+  "default|protected|public|exit)$"
   // TODO: Continue this list.
 );
 
@@ -28,16 +28,38 @@ export const scriptGrammar = {
     rules: [
       ["import-statement!1*", "outer-statement+$"],
     ],
-    process: (children) => ({
-      type: "script",
-      importStmtArr: children[0],
-      stmtArr: children[1],
-    }),
+    process: (children) => {
+      let ret = {
+        type: "script",
+        importStmtArr: children[0],
+        stmtArr: children[1],
+      };
+      if (
+        ret.stmtArr.length === 1 &&
+        ret.stmtArr[0].type === "expression-statement"
+      ) {
+        ret.stmtArr[0] = {
+          type: "export-statement",
+          isDefault: true,
+          stmt: ret.stmtArr[0], // TODO: Correct.
+          isProtected: false,
+          flagStr: undefined,
+          exportArr: [{ident: "default", alias: "default"}], // TODO: Correct.
+
+        }
+      }
+      return ret;
+    }
   },
   "import-statement": {
     rules: [
-      ["/import/", "import-list", "/from/", "entity-reference", "/;/"],
-      ["/import/", "entity-reference", "/;/"],
+      [
+        "/import/", "import-list", "/from/", "entity-reference",
+        "script-parameter-range!1?", "/;/"
+      ],
+      [
+        "/import/", "entity-import-list", "/;/"
+      ],
     ],
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? {
@@ -120,17 +142,17 @@ export const scriptGrammar = {
   },
   "export-statement": {
     rules: [
-      ["/export/", "/default/", "/struct/", "string", "statement!"],
-      ["/export/", "/default/", "/struct/", "statement!"],
-      ["/export/", "/default/", "statement!"],
-      ["/export/", "/struct/", "string", /\{/, "export-list!1?!", /\}/],
-      ["/export/", "/struct/", "string", "statement!"],
-      ["/export/", "/struct/", /\{/, "export-list!1?!", /\}/],
-      ["/export/", "/struct/", "statement!"],
-      ["/export/", /\{/, "export-list!1?!", /\}/],
-      ["/export/", "statement"],
+      ["/export/", "/default/?", "permission!1?", "function-declaration!1"],
+      ["/export/", "/default/?", "permission!1?", "variable-declaration!1"],
+      [
+        "/export/", "/default/?", "permission!1?", /\{/,
+        "named-export-list!1?", /\}/, "/;/"
+      ],
+      ["/export/", "/default/?", "permission!1?", "expression", "/;/"],
+      ["/export/", "/default/?", "permission!1?", "expression"],
     ],
     process: (children, ruleInd) => {
+      // TODO: Correct.
       let stmt, flagStr, namedExportArr;
       if (ruleInd === 0) {
         flagStr = children[3].str;
@@ -196,6 +218,15 @@ export const scriptGrammar = {
         exportArr: exportArr,
       }
     },
+  },
+  "permission": {
+    rules: [
+      ["/protected/", "string!"],
+      ["/public/"],
+    ],
+    process: (children) => ({
+      flagStr: children[1]?.str ?? "", 
+    }),
   },
   "named-export-list": {
     rules: [
