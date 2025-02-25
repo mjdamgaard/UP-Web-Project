@@ -19,17 +19,6 @@ function getParsingGasCost(str) {
   return {comp: str.length / 100 + 1};
 }
 
-function getStructModuleIDs(structDef) {
-  let fstInput = structDef[1];
-  if (fstInput instanceof EntityReference) {
-    return fstInput.id;
-  }
-  else if (Array.isArray(fstInput)) {
-    return fstInput.map(val => val.id);
-  }
-  else return false;
-}
-
 
 
 export class ScriptInterpreter {
@@ -46,18 +35,18 @@ export class ScriptInterpreter {
 
 
   async interpretScript(
-    gas, reqUserID, script, scriptID = "0", permissions
+    gas, reqUserID, script, scriptID = "0", scriptParams, permissions
   ) {
     let scriptGlobals = {
       gas: gas, log: {}, reqUserID: reqUserID, scriptID: scriptID,
-      permissions: permissions, shouldExit: false, parsedScripts: {},
-      parsedStructs: {}, liveModules: {}, resolveScript: undefined,
+      scriptParams: scriptParams, permissions: permissions, shouldExit: false,
+      parsedScripts: {}, liveModules: {}, resolveScript: undefined,
       scriptInterpreter: this,
     };
 
     // First create global environment if not yet done, and then create an
-    // initial user environment, used for the , and as a parent environment
-    // for all scripts/modules.
+    // initial user environment, used for the preprocessing, and as a parent
+    // environment for all scripts/modules.
     let globalEnv = this.createGlobalEnvironment(scriptGlobals);
 
     // If only a scriptID is provided, rather than a script, fetch and 
@@ -175,7 +164,7 @@ export class ScriptInterpreter {
         `Invalid continue statement outside of loop or switch-case statement`,
         err.node, environment
       );
-    } else if (err instanceof ExitException) {
+    } else if (err instanceof ExitException) { // TODO: Correct.
       scriptGlobals.shouldExit = true;
       if (scriptGlobals.resolveScript) scriptGlobals.resolveScript();
     } else {
@@ -384,7 +373,7 @@ export class ScriptInterpreter {
         environment.declare(imp.namespaceIdent, nsObj, true, imp);
       }
       else if (imp.structRef) {
-        let structObj = new StructObject(imp.structRef.lexeme);
+        let structObj = new ProtectedObject(imp.structRef.lexeme);
         let impFlagStr = imp.flagStr;
         Object.entries(exports).forEach(
           ([safeKey, [origIdent, isStructProp, exFlagStr]]) => {
@@ -496,7 +485,7 @@ export class ScriptInterpreter {
 
     // If the function reached an exit statement, throw an exit exception.
     if (callerEnv.scriptGlobals.shouldExit) {
-      throw new ExitException();
+      throw new ExitException(); // TODO: Correct.
     }
     return ret;
   }
@@ -632,6 +621,11 @@ export class ScriptInterpreter {
           this.evaluateExpression(stmtNode.exp, environment);
         throw new ReturnException(expVal, stmtNode, environment);
       }
+      case "exit-statement": {
+        let expVal = (!stmtNode.exp) ? undefined :
+          this.evaluateExpression(stmtNode.exp, environment);
+        throw new ExitException(expVal, stmtNode, environment);
+      }
       case "throw-statement": {
         let expVal = (!stmtNode.exp) ? undefined :
           this.evaluateExpression(stmtNode.exp, environment);
@@ -655,10 +649,8 @@ export class ScriptInterpreter {
       case "instruction-statement": {
         if (stmtNode.lexeme === "break") {
           throw new BreakException(stmtNode, environment);
-        } else if (stmtNode.lexeme === "continue") {
-          throw new ContinueException(stmtNode, environment);
         } else {
-          throw new ExitException(stmtNode, environment);
+          throw new ContinueException(stmtNode, environment);
         }
       }
       case "empty-statement": {
@@ -1047,8 +1039,8 @@ export class ScriptInterpreter {
       case "virtual-method": {
         let objVal = this.evaluateExpression(expNode.obj, environment);
         let funVal = this.evaluateExpression(expNode.fun, environment);
-        if (objVal instanceof StructObject) throw new RuntimeError(
-          'Virtual methods not allowed for "struct" types',
+        if (objVal instanceof ProtectedObject) throw new RuntimeError(
+          'Virtual methods not allowed for protected objects',
           expNode, environment
         );
         if (
@@ -1105,12 +1097,12 @@ export class ScriptInterpreter {
         // being called.)
         if (ret instanceof DefinedFunction || ret instanceof BuiltInFunction) {
           ret = new ThisBoundFunction(
-            ret, expVal, (expVal instanceof StructObject)
+            ret, expVal, (expVal instanceof ProtectedObject)
           );
         }
         else if (ret instanceof ThisBoundFunction) {
           ret = new ThisBoundFunction(
-            ret.funVal, expVal, (expVal instanceof StructObject)
+            ret.funVal, expVal, (expVal instanceof ProtectedObject)
           );
         }
 
@@ -1410,8 +1402,8 @@ export function getType(val) {
       val instanceof DefinedFunction || val instanceof BuiltInFunction
     ) {
       return "function";
-    } else if (val instanceof StructObject) {
-      return "struct";
+    } else if (val instanceof ProtectedObject) {
+      return "protected";
     } else {
       return "object";
     }
@@ -1452,15 +1444,23 @@ export class ThisBoundFunction {
   }
 }
 
-export class StructObject {
-  constructor(structID) {
-    this.structID = structID;
+export class ProtectedObject {
+  constructor(moduleID, flagStrAndPropPairs) {
+    this.moduleID = moduleID;
+    this.flagStrAndPropPairs = flagStrAndPropPairs;
   }
 }
 
 
 
 class ReturnException {
+  constructor(val, node, environment) {
+    this.val = val;
+    this.node = node;
+    this.environment = environment;
+  }
+}
+class ExitException {
   constructor(val, node, environment) {
     this.val = val;
     this.node = node;
@@ -1474,12 +1474,6 @@ class BreakException {
   }
 }
 class ContinueException {
-  constructor(node, environment) {
-    this.node = node;
-    this.environment = environment;
-  }
-}
-class ExitException {
   constructor(node, environment) {
     this.node = node;
     this.environment = environment;

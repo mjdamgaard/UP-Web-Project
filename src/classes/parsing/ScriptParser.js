@@ -1,5 +1,4 @@
 
-import { param } from "jquery";
 import {Parser} from "./Parser.js";
 import {regEntGrammar} from "./RegEntParser.js";
 import {
@@ -26,13 +25,18 @@ export const scriptGrammar = {
   ...regEntGrammar,
   "script": {
     rules: [
-      ["import-statement!1*", "outer-statement+$"],
+      [
+        "script-parameter-declaration!1?",
+        "import-statement!1*",
+        "outer-statement+$"
+      ],
     ],
     process: (children) => {
       let ret = {
         type: "script",
-        importStmtArr: children[0],
-        stmtArr: children[1],
+        scriptParams: children[0][0]?.params ?? [],
+        importStmtArr: children[1],
+        stmtArr: children[2],
       };
       if (
         ret.stmtArr.length === 1 &&
@@ -51,6 +55,14 @@ export const scriptGrammar = {
       return ret;
     }
   },
+  "script-parameter-declaration": {
+    rules: [
+      ["/parameters/", "parameter-list!1?", "/;/"],
+    ],
+    process: (children) => ({
+      params: children[1][0]?.children,
+    }),
+  },
   "import-statement": {
     rules: [
       [
@@ -58,22 +70,22 @@ export const scriptGrammar = {
         "script-parameter-range!1?", "/;/"
       ],
       [
+        "/import/", "import-list", "/from/", "identifier",
+        "script-parameter-range!1?", "/;/"
+      ],
+      [
         "/import/", "entity-import-list", "/;/"
       ],
     ],
     process: (children, ruleInd) => {
-      return (ruleInd === 0) ? {
+      return (ruleInd <= 1) ? {
         type: "import-statement",
         importArr: children[1].children,
-        moduleRef: children[3],
-        structImports: children[1].children.map(val => {
-          return val.structRef ? [val.structRef, val.flagStr] : undefined;
-        }).filter(val => val),
+        moduleExp: children[3],
+        paramRange: children[4][0] ?? undefined,
       } : {
         type: "import-statement",
-        importArr: [],
-        moduleRef: children[1],
-        structImports: [],
+        entImportArr: [],
       };
     },
   },
@@ -88,25 +100,23 @@ export const scriptGrammar = {
     rules: [
       [/\*/, "/as/!", "identifier"],
       [/\{/, "named-import-list!1?", /\}/],
-      ["/struct/", "string", "entity-reference!", "/as/", "identifier"],
-      ["/struct/", "entity-reference!", "/as/", "identifier"],
+      ["permissions!1", "/as/", "identifier"],
       ["identifier"],
     ],
     process: (children, ruleInd) => {
       let ret = (ruleInd === 0) ? {
-        namespaceIdent: children[2].ident,
+        importType: "namespace-import",
+        ident: children[2].ident,
       } : (ruleInd === 1) ? {
+        importType: "named-imports",
         namedImportArr: children[1][0]?.children,
       } : (ruleInd === 2) ? {
-        structRef: children[2],
-        flagStr: children[1].str,
-        structIdent: children[4].ident,
-      } : (ruleInd === 3) ? {
-        structRef: children[1],
-        flagStr: "",
-        structIdent: children[4].ident,
+        importType: "protected-import", // ("protected-namespace-import".)
+        flagStr: children[0].flagStr,
+        ident: children[2].ident,
       } : {
-        defaultIdent: children[0].ident,
+        importType: "default-import",
+        ident: children[0].ident,
       };
       ret.type = "import";
       return ret;
@@ -142,14 +152,14 @@ export const scriptGrammar = {
   },
   "export-statement": {
     rules: [
-      ["/export/", "/default/?", "permission!1?", "function-declaration!1"],
-      ["/export/", "/default/?", "permission!1?", "variable-declaration!1"],
+      ["/export/", "/default/?", "permissions!1?", "function-declaration!1"],
+      ["/export/", "/default/?", "permissions!1?", "variable-declaration!1"],
       [
-        "/export/", "/default/?", "permission!1?", /\{/,
+        "/export/", "/default/?", "permissions!1?", /\{/,
         "named-export-list!1?", /\}/, "/;/"
       ],
-      ["/export/", "/default/?", "permission!1?", "expression", "/;/"],
-      ["/export/", "/default/?", "permission!1?", "expression"],
+      ["/export/", "/default/?", "permissions!1?", "expression", "/;/"],
+      ["/export/", "/default/?", "permissions!1?", "expression"],
     ],
     process: (children, ruleInd) => {
       // TODO: Correct.
@@ -219,7 +229,7 @@ export const scriptGrammar = {
       }
     },
   },
-  "permission": {
+  "permissions": {
     rules: [
       ["/protected/", "string!"],
       ["/public/"],
@@ -466,6 +476,7 @@ export const scriptGrammar = {
       ["if-else-statement!1"],
       ["loop-statement!1"],
       ["return-statement!1"],
+      ["exit-statement!1"],
       ["throw-statement!1"],
       ["try-catch-statement!1"],
       ["instruction-statement!1"],
@@ -557,6 +568,16 @@ export const scriptGrammar = {
       exp: (ruleInd === 0) ? children[1] : undefined,
     }),
   },
+  "exit-statement": {
+    rules: [
+      ["/exit/", "expression", "/;/"],
+      ["/exit/", "/;/"],
+    ],
+    process: (children, ruleInd) => ({
+      type: "exit-statement",
+      exp: (ruleInd === 0) ? children[1] : undefined,
+    }),
+  },
   "throw-statement": {
     rules: [
       ["/throw/", "expression", "/;/"],
@@ -580,7 +601,7 @@ export const scriptGrammar = {
   },
   "instruction-statement": {
     rules: [
-      ["/break|continue|exit/", "/;/"],
+      ["/break|continue/", "/;/"],
     ],
     process: copyLexemeFromChild,
     params: ["instruction-statement"],

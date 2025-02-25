@@ -33,6 +33,12 @@ DROP TABLE DebugLogEntries;
 
 CREATE TABLE DataStructures_01 (
 
+    struct_id VARBINARY(8) -- Can be resized.
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+
+    reader_whitelist_id VARBINARY(8) -- Can be resized.
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+
     ent_id_keys VARCHAR(64) -- Can be resized.
         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
@@ -46,6 +52,8 @@ CREATE TABLE DataStructures_01 (
         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
     PRIMARY KEY (
+        struct_id,
+        reader_whitelist_id,
         ent_id_keys,
         bin_keys
     )
