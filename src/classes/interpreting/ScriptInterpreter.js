@@ -35,27 +35,26 @@ export class ScriptInterpreter {
 
 
   async interpretScript(
-    gas, reqUserID, script, scriptID = "0", scriptParams, permissions
+    gas, reqUserID, script, scriptID = "0", scriptParamJSONArr, permissions
   ) {
-    let scriptGlobals = {
-      gas: gas, log: {}, reqUserID: reqUserID, scriptID: scriptID,
-      scriptParams: scriptParams, permissions: permissions, shouldExit: false,
+    let runtimeGlobals = {
+      gas: gas, log: {}, output: undefined, reqUserID: reqUserID,
+      mainScriptID: scriptID, permissions: permissions, shouldExit: false,
       parsedScripts: {}, liveModules: {}, resolveScript: undefined,
       scriptInterpreter: this,
     };
 
     // First create global environment if not yet done, and then create an
-    // initial user environment, used for the preprocessing, and as a parent
-    // environment for all scripts/modules.
-    let globalEnv = this.createGlobalEnvironment(scriptGlobals);
+    // initial global environment, used as a parent environment for all
+    // scripts/modules.
+    let globalEnv = this.createGlobalEnvironment(runtimeGlobals);
 
-    // If only a scriptID is provided, rather than a script, fetch and 
-    // preprocess the script from scratch, via a call to preprocessScript().
     try {
+      // If only a scriptID is provided, rather than a script, fetch and 
+      // preprocess the script from scratch, via a call to preprocessScript().
       if (!script && scriptID !== "0") {
-        await this.preprocessScript(scriptID, globalEnv);
+        await this.preprocessScript(scriptID, scriptParamJSONArr, globalEnv);
       }
-      
       // Else pretend that the input script has the otherwise invalid ID, "0",
       // parse it, and add it to the parsedScripts buffer before calling
       // preprocessScript() to continue from there
@@ -64,12 +63,12 @@ export class ScriptInterpreter {
         let scriptNode = scriptParser.parse(script);
         if (scriptNode.error) throw scriptNode.error;
         scriptID = "0";
-        scriptGlobals.parsedScripts = {"#0": scriptNode};
-        await this.preprocessScript(scriptID, globalEnv);
+        runtimeGlobals.parsedScripts = {"#0": scriptNode};
+        await this.preprocessScript(scriptID, scriptParamJSONArr, globalEnv);
       }
 
       // After this preprocessing, execute the script, and return the log.
-      this.executeScript(scriptID, globalEnv);
+      this.executeScript(scriptID, scriptParamJSONArr, globalEnv);
     } catch (err) {
       // If any non-internal error occurred, log it in log.error and set
       // shouldExit to true (both contained in globalEnv).
@@ -77,8 +76,8 @@ export class ScriptInterpreter {
     }
 
     // If the shouldExit is true, we can return the resulting log.
-    if (scriptGlobals.shouldExit) {
-      return scriptGlobals.log;
+    if (runtimeGlobals.shouldExit) {
+      return runtimeGlobals.log;
     }
 
     // Else we create and wait for a promise for obtaining the log, which might
@@ -88,19 +87,19 @@ export class ScriptInterpreter {
     else {
       if (gas.time >= 10) {
         // Create a new promise to get the log, and store a modified resolve()
-        // callback on scriptGlobals (which is contained by globalEnv).
+        // callback on runtimeGlobals (which is contained by globalEnv).
         let logPromise = new Promise(resolve => {
-          scriptGlobals.resolveScript = () => resolve(scriptGlobals.log);
+          runtimeGlobals.resolveScript = () => resolve(runtimeGlobals.log);
         });
 
         // Then set an expiration time after which the script resolves with an
         // error. 
         setTimeout(
           () => {
-            scriptGlobals.log.error = new OutOfGasError(
+            runtimeGlobals.log.error = new OutOfGasError(
               "Ran out of " + GAS_NAMES.time + " gas"
             );
-            scriptGlobals.resolveScript();
+            runtimeGlobals.resolveScript();
           },
           Date.now() + gas.time
         );
@@ -110,10 +109,10 @@ export class ScriptInterpreter {
         return await logPromise;
       }
       else {
-        scriptGlobals.log.error = new OutOfGasError(
+        runtimeGlobals.log.error = new OutOfGasError(
           "Ran out of " + GAS_NAMES.time + " gas (no exit statement reached)"
         );
-        return scriptGlobals.log;
+        return runtimeGlobals.log;
       }
     }
   }
@@ -121,9 +120,9 @@ export class ScriptInterpreter {
 
 
 
-  createGlobalEnvironment(scriptGlobals) {
+  createGlobalEnvironment(runtimeGlobals) {
     let globalEnv = new Environment(
-      undefined, undefined, "global", undefined, scriptGlobals
+      undefined, undefined, "global", undefined, undefined, runtimeGlobals
     );
     Object.entries(this.builtInFunctions).forEach(([funName, fun]) => {
       globalEnv.declare(funName, fun, true);
@@ -137,7 +136,7 @@ export class ScriptInterpreter {
 
 
   handleException(err, environment) {
-    let scriptGlobals = environment.scriptGlobals, {log} = scriptGlobals; 
+    let runtimeGlobals = environment.runtimeGlobals, {log} = runtimeGlobals; 
     if (
       err instanceof LexError || err instanceof SyntaxError ||
       err instanceof PreprocessingError || err instanceof RuntimeError ||
@@ -164,9 +163,9 @@ export class ScriptInterpreter {
         `Invalid continue statement outside of loop or switch-case statement`,
         err.node, environment
       );
-    } else if (err instanceof ExitException) { // TODO: Correct.
-      scriptGlobals.shouldExit = true;
-      if (scriptGlobals.resolveScript) scriptGlobals.resolveScript();
+    } else if (err instanceof ExitException) {
+      runtimeGlobals.shouldExit = true;
+      if (runtimeGlobals.resolveScript) runtimeGlobals.resolveScript();
     } else {
       throw err;
     }
@@ -176,33 +175,53 @@ export class ScriptInterpreter {
 
 
 
-  async preprocessScript(curScriptID, globalEnv, callerScriptIDs = []) {
-    decrCompGas(globalEnv);
+  async preprocessScript(
+    scriptID, scriptParamJSONArr, environment, callerScriptIDs = []
+  ) {
+    decrCompGas(environment);
     let {
-      parsedScripts, parsedStructs, permissions, gas
-    } = globalEnv.scriptGlobals;
+      parsedScripts, parsedStructs, permissions, gas, nextIsolationKey,
+    } = environment.runtimeGlobals;
 
     // First check that scriptID is not one of the callers, meaning that the
     // preprocess recursion is infinite.
-    let indOfSelf = callerScriptIDs.indexOf(curScriptID);
+    let indOfSelf = callerScriptIDs.indexOf(scriptID);
     if (indOfSelf !== -1) {
       throw new PreprocessingError(
-        `Script @[${curScriptID}] imports itself recursively through ` +
+        `Script @[${scriptID}] imports itself recursively through ` +
         callerScriptIDs.slice(indOfSelf + 1).map(id => "@[" + id + "]")
           .join(" -> ") +
-        " -> @[" + curScriptID + "]",
+        " -> @[" + scriptID + "]",
       );
     }
 
     // Try to get the parsed script first from the parsedScripts buffer, or
     // else fetch it and add it to said buffer.
-    let scriptNode = parsedScripts["#" + curScriptID];
+    let scriptNode = parsedScripts["#" + scriptID];
     if (!scriptNode) {
       let {error, entDef} = await this.dataFetcher.fetchAndParseEntity(
-        gas, curScriptID, "s"
+        gas, scriptID, "s"
       );
       if (!error) throw new PreprocessingError(error);
-      parsedScripts["#" + curScriptID] = entDef;
+      parsedScripts["#" + scriptID] = entDef;
+    }
+
+    // Then see the script should have environments, and if so, create a new
+    // environment with a new, unique isolation key.
+    let scriptEnv;
+    if (scriptNode.isolate) {
+      scriptEnv = new Environment(environment, undefined, "module")
+    }
+
+    // Then initialize the script parameters into an array.
+    let scriptParams;
+    try {
+      scriptParams = JSON.parse(scriptParamJSONArr);
+      if (!Array.isArray(scriptParams)) throw "";
+    } catch (err) {
+      throw new PreprocessingError(
+        `Ill-formatted JSON array: '${scriptParamJSONArr}'`
+      );
     }
 
     // Once the script syntax tree is gotten, we look for any import statements
@@ -214,7 +233,7 @@ export class ScriptInterpreter {
       // well as an array with all imported structs' IDs, and the IDs of the
       // modules they import from, which will later be used to verify that no
       // struct imports from a wrong module.
-      callerScriptIDs = [...callerScriptIDs, curScriptID];
+      callerScriptIDs = [...callerScriptIDs, scriptID];
       let promiseArr = [];
       let structAndModulePairs = [];
       let globalPermissions = permissions?.global ?? "";
@@ -222,13 +241,13 @@ export class ScriptInterpreter {
         // Get the moduleID for the given import statement.
         let moduleRef = stmt.moduleRef;
         if (moduleRef.isTBD) throw new PreprocessingError(
-          `Script @[${curScriptID}] imports from a TBD module reference`
+          `Script @[${scriptID}] imports from a TBD module reference`
         );
         let moduleID = moduleRef.lexeme;
 
         // Then push a promise preprocess the module to promiseArr.
         promiseArr.push(
-          this.preprocessScript(moduleID, globalEnv, callerScriptIDs)
+          this.preprocessScript(moduleID, environment, callerScriptIDs)
         );
 
         // And for each structRef in the import statement, we also want to push
@@ -238,7 +257,7 @@ export class ScriptInterpreter {
           // Get the structID, or throw if the structRef is yet just a
           // placeholder.
           if (!structRef.id) throw new PreprocessingError(
-            `Script @[${curScriptID}] imports a TBD struct reference`
+            `Script @[${scriptID}] imports a TBD struct reference`
           );
           let structID = structRef.id;
 
@@ -248,7 +267,7 @@ export class ScriptInterpreter {
           let combPermissions = globalPermissions + structPermissions;
           let hasPermission = this.checkPermissions(combPermissions, flagStr);
           if (!hasPermission) throw new PreprocessingError(
-            `Script @[${curScriptID}] imports Struct @[${structID}] from ` +
+            `Script @[${scriptID}] imports Struct @[${structID}] from ` +
             `Module @[${moduleID}] with Permission flags "${flagStr}" ` +
             `not granted`
           );
@@ -279,7 +298,7 @@ export class ScriptInterpreter {
       structAndModulePairs.forEach(([structID, moduleID]) => {
         if (!structModuleIDs["#" + structID].includes(moduleID)) {
           throw new PreprocessingError(
-            `Script @[${curScriptID}] imports Struct @[${structID}] from a ` +
+            `Script @[${scriptID}] imports Struct @[${structID}] from a ` +
             `module, @[${moduleID}], that is not one of the struct's own`
           );
         }
@@ -321,13 +340,14 @@ export class ScriptInterpreter {
 
 
 
-  executeScript(curScriptID, globalEnv) {
-    let {parsedScripts, liveModules} = globalEnv.scriptGlobals;
-    let scriptNode = parsedScripts["#" + curScriptID];
+  executeScript(scriptID, /* scriptParamJSONArr, */ globalEnv) {
+    let {parsedScripts, liveModules} = globalEnv.runtimeGlobals;
+    let scriptNode = parsedScripts["#" + scriptID];
 
+    // TODO: Get environment instead from a store set by the preprocessing.
     // Create a new environment for the script.
     let environment = new Environment(
-      globalEnv, undefined, "module", curScriptID, globalEnv.scriptGlobals
+      globalEnv, undefined, "module", scriptID, /*,*/ globalEnv.runtimeGlobals
     );
 
     // First execute all import statements.
@@ -341,7 +361,7 @@ export class ScriptInterpreter {
     });
 
     // Then return add the environment to liveModules.
-    liveModules["#" + curScriptID] = environment;
+    liveModules["#" + scriptID] = environment;
     return;
   }
 
@@ -350,7 +370,7 @@ export class ScriptInterpreter {
 
   executeImportStatement(stmtNode, environment) {
     decrCompGas(environment);
-    let {liveModules} = environment.scriptGlobals;
+    let {liveModules} = environment.runtimeGlobals;
 
     // Get the live environment of the module, either from liveModules if the
     // module has already been executed, or otherwise by executing it.
@@ -484,7 +504,7 @@ export class ScriptInterpreter {
     );
 
     // If the function reached an exit statement, throw an exit exception.
-    if (callerEnv.scriptGlobals.shouldExit) {
+    if (callerEnv.runtimeGlobals.shouldExit) {
       throw new ExitException(); // TODO: Correct.
     }
     return ret;
@@ -498,7 +518,7 @@ export class ScriptInterpreter {
     return fun.fun(
       {
         callerNode: callerNode, callerEnv: callerEnv, thisVal: thisVal,
-        options: this.options, gas: callerEnv.scriptGlobals.gas,
+        options: this.options, gas: callerEnv.runtimeGlobals.gas,
       },
       ...inputArr
     );
@@ -624,7 +644,8 @@ export class ScriptInterpreter {
       case "exit-statement": {
         let expVal = (!stmtNode.exp) ? undefined :
           this.evaluateExpression(stmtNode.exp, environment);
-        throw new ExitException(expVal, stmtNode, environment);
+        environment.runtimeGlobals.output = expVal;
+        throw new ExitException();
       }
       case "throw-statement": {
         let expVal = (!stmtNode.exp) ? undefined :
@@ -1261,22 +1282,24 @@ export class ScriptInterpreter {
 
 
 
-export const UNDEFINED = {enum: "undefined"};
+export const UNDEFINED = Symbol("undefined");
 
 
 export class Environment {
   constructor(
     parent = undefined, thisVal = undefined, scopeType = "block",
-    moduleID = undefined, scriptGlobals = undefined,
+    moduleID = undefined, isolationKey = undefined,
+    runtimeGlobals = undefined,
   ) {
     this.parent = parent;
     this.variables = {"#this": thisVal ?? UNDEFINED};
     this.scopeType = scopeType;
     this.moduleID = moduleID ?? parent?.moduleID ?? undefined;
-    this.scriptGlobals = scriptGlobals ?? parent?.scriptGlobals ?? (() => {
-      throw "Environment: No scriptGlobals object provided";
+    this.runtimeGlobals = runtimeGlobals ?? parent?.runtimeGlobals ?? (() => {
+      throw "Environment: No runtimeGlobals object provided";
     })();
     if (scopeType === "module") {
+      this.isolationKey = isolationKey ?? parent?.isolationKey ?? undefined;
       this.exports = {};
       this.defaultExport = undefined;
     }
@@ -1360,7 +1383,7 @@ export class Environment {
 
 
 export function payGas(environment, gasCost) {
-  let gas = environment?.scriptGlobals.gas ?? environment;
+  let gas = environment?.runtimeGlobals.gas ?? environment;
   Object.keys(this.gasCost).forEach(key => {
     if (gas[key] ??= 0) {
       gas[key] -= gasCost[key];
@@ -1372,14 +1395,14 @@ export function payGas(environment, gasCost) {
 }
 
 export function decrCompGas(environment) {
-  let gas = environment?.scriptGlobals.gas ?? environment;
+  let gas = environment?.runtimeGlobals.gas ?? environment;
   if (0 > --gas.comp) throw new OutOfGasError(
     "Ran out of " + GAS_NAMES.comp + " gas"
   );
 }
 
 export function decrFetchGas(environment) {
-  let gas = environment?.scriptGlobals.gas ?? environment;
+  let gas = environment?.runtimeGlobals.gas ?? environment;
   if (0 > --gas.fetch) throw new OutOfGasError(
     "Ran out of " + GAS_NAMES.fetch + " gas",
   );
@@ -1461,11 +1484,7 @@ class ReturnException {
   }
 }
 class ExitException {
-  constructor(val, node, environment) {
-    this.val = val;
-    this.node = node;
-    this.environment = environment;
-  }
+  constructor() {}
 }
 class BreakException {
   constructor(node, environment) {

@@ -880,7 +880,7 @@ export class SyntaxError {
   }
 }
 
-const EOS = {enumName: "EOS"};
+const EOS = Symbol("EOS");
 
 
 

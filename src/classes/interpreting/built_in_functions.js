@@ -14,7 +14,7 @@ import {
 //     fun instanceof DefinedFunction || fun instanceof BuiltInFunction ||
 //     fun instanceof ThisBoundFunction 
 //   ) {
-//     let {scriptInterpreter} = callerEnv.scriptGlobals;
+//     let {scriptInterpreter} = callerEnv.runtimeGlobals;
 //     scriptInterpreter.executeFunction(
 //       callback, inputArr, callerNode, callerEnv
 //     );
@@ -38,7 +38,7 @@ export const basicBuiltInFunctions = {
   ) {
     decrCompGas(callerEnv);
     // TODO: Check permissions first.
-    let {scriptInterpreter} = callerEnv.scriptGlobals;
+    let {scriptInterpreter} = callerEnv.runtimeGlobals;
     dataFetcher.fetchEntity(gas, entID).then(res => {
       scriptInterpreter.executeFunction(callback, [res], callerNode, callerEnv);
     });
@@ -50,7 +50,7 @@ export const basicBuiltInFunctions = {
   ) {
     decrCompGas(callerEnv);
     // TODO: Check permissions first.
-    let {scriptInterpreter} = callerEnv.scriptGlobals;
+    let {scriptInterpreter} = callerEnv.runtimeGlobals;
     dataFetcher.fetchAndParseEntity(gas, entID, entType).then(res => {
       scriptInterpreter.executeFunction(callback, [res], callerNode, callerEnv);
     });

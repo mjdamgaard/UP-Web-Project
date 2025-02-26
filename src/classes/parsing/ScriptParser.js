@@ -26,7 +26,8 @@ export const scriptGrammar = {
   "script": {
     rules: [
       [
-        "script-parameter-declaration!1?",
+        "isolate-statement!1?",
+        "script-parameter-declaration",
         "import-statement!1*",
         "outer-statement+$"
       ],
@@ -34,9 +35,10 @@ export const scriptGrammar = {
     process: (children) => {
       let ret = {
         type: "script",
-        scriptParams: children[0][0]?.params ?? [],
-        importStmtArr: children[1],
-        stmtArr: children[2],
+        isolate: children[0][0] ? true : false,
+        scriptParams: children[1].params,
+        importStmtArr: children[2],
+        stmtArr: children[3],
       };
       if (
         ret.stmtArr.length === 1 &&
@@ -54,6 +56,12 @@ export const scriptGrammar = {
       }
       return ret;
     }
+  },
+  "isolate-statement": {
+    rules: [
+      ["/isolate/", "/;/"],
+    ],
+    process: undefined,
   },
   "script-parameter-declaration": {
     rules: [
