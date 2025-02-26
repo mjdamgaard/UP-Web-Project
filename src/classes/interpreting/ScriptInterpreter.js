@@ -40,7 +40,7 @@ export class ScriptInterpreter {
     let runtimeGlobals = {
       gas: gas, log: {}, output: undefined, reqUserID: reqUserID,
       mainScriptID: scriptID, permissions: permissions, shouldExit: false,
-      parsedScripts: {}, liveModules: {}, resolveScript: undefined,
+      parsedEntities: {}, liveModules: {}, resolveScript: undefined,
       scriptInterpreter: this,
     };
 
@@ -56,14 +56,14 @@ export class ScriptInterpreter {
         await this.preprocessScript(scriptID, scriptParamJSONArr, globalEnv);
       }
       // Else pretend that the input script has the otherwise invalid ID, "0",
-      // parse it, and add it to the parsedScripts buffer before calling
+      // parse it, and add it to the parsedEntities buffer before calling
       // preprocessScript() to continue from there
       else {
         payGas(globalEnv, {comp: getParsingGasCost(script)});
         let scriptNode = scriptParser.parse(script);
         if (scriptNode.error) throw scriptNode.error;
         scriptID = "0";
-        runtimeGlobals.parsedScripts = {"#0": scriptNode};
+        runtimeGlobals.parsedEntities = {"#0": scriptNode};
         await this.preprocessScript(scriptID, scriptParamJSONArr, globalEnv);
       }
 
@@ -180,7 +180,7 @@ export class ScriptInterpreter {
   ) {
     decrCompGas(environment);
     let {
-      parsedScripts, parsedStructs, permissions, gas, nextIsolationKeyRef,
+      parsedEntities, parsedStructs, permissions, gas, nextIsolationKeyRef,
     } = environment.runtimeGlobals;
 
     // First check that scriptID is not one of the callers, meaning that the
@@ -195,9 +195,9 @@ export class ScriptInterpreter {
       );
     }
 
-    // Try to get the parsed script first from the parsedScripts buffer, or
+    // Try to get the parsed script first from the parsedEntities buffer, or
     // else fetch it and add it to said buffer.
-    let scriptNode = parsedScripts["#" + scriptID];
+    let scriptNode = parsedEntities["#" + scriptID];
     if (!scriptNode) {
       let {error, entDef} = await this.dataFetcher.fetchAndParseEntity(
         gas, scriptID, "s"
@@ -240,60 +240,47 @@ export class ScriptInterpreter {
     // in parallel to import dependencies.
     if (scriptNode.importStmtArr.length !== 0) {
       // Append scriptID to callerScriptIDs (without muting the input), and
-      // initialize a promiseArr to process all the modules in parallel, as
-      // well as an array with all imported structs' IDs, and the IDs of the
-      // modules they import from, which will later be used to verify that no
-      // struct imports from a wrong module.
+      // initialize a promiseArr to process all the modules in parallel.
       callerScriptIDs = [...callerScriptIDs, scriptID];
       let promiseArr = [];
-      let structAndModulePairs = [];
       let globalPermissions = permissions?.global ?? "";
-      scriptNode.importStmtArr.forEach(stmt => {
-        // Get the moduleID for the given import statement.
-        let moduleRef = stmt.moduleRef;
-        if (moduleRef.isTBD) throw new PreprocessingError(
-          `Script @[${scriptID}] imports from a TBD module reference`
-        );
-        let moduleID = moduleRef.lexeme;
+      scriptNode.importStmtArr.forEach(impStmt => {
+        // If the import statement is an "entity import statement," iterate
+        // through each entity import and push a promise to..
+        if (impStmt.type === "entity-import-statement") {
 
-        // Then push a promise preprocess the module to promiseArr.
-        promiseArr.push(
-          this.preprocessScript(moduleID, environment, callerScriptIDs)
-        );
+        }
+        else {
+          // Get the moduleID for the given import statement.
+          let moduleExp = impStmt.moduleExp;
+          let moduleParamArr = [];
+          if (
+            moduleExp.type === "function-call" &&
+            moduleExp.exp.type === "entity-reference"
+          ) {
+            moduleExp =  moduleExp.exp;
+            moduleParamArr = moduleExp.postfix.children;
+          }
+          let moduleRef = this.evaluateExpression(moduleExp, scriptEnv);
+          if (!(moduleRef instanceof EntityReference)) {
+            if (moduleRef instanceof EntityPlaceholder) {
+              throw new PreprocessingError(
+                `Script @[${scriptID}] imports from a TBD module reference`
+              );
+            } else {
+              throw new PreprocessingError(
+                `Script @[${scriptID}] imports from a value that is not an ` +
+                `entity reference`
+              );
+            }
+          }
+          let moduleID = moduleRef.id;
 
-        // And for each structRef in the import statement, we also want to push
-        // a promise to get the struct's definition, as well as to verify that
-        // the permissions that the struct import requires is granted.
-        stmt.structImports.forEach(([structRef, flagStr]) => {
-          // Get the structID, or throw if the structRef is yet just a
-          // placeholder.
-          if (!structRef.id) throw new PreprocessingError(
-            `Script @[${scriptID}] imports a TBD struct reference`
-          );
-          let structID = structRef.id;
-
-          // Also check that the struct has the required permissions, or that
-          // its module does.
-          let structPermissions = permissions?.structs["#" + structID] ?? "";
-          let combPermissions = globalPermissions + structPermissions;
-          let hasPermission = this.checkPermissions(combPermissions, flagStr);
-          if (!hasPermission) throw new PreprocessingError(
-            `Script @[${scriptID}] imports Struct @[${structID}] from ` +
-            `Module @[${moduleID}] with Permission flags "${flagStr}" ` +
-            `not granted`
-          );
-
-          // We also push [structID, moduleID] to structAndModulePairs such
-          // that we can quickly verify that no struct imports from a wrong
-          // module once we have all the parsedStructs.
-          structAndModulePairs.push([structID, moduleID]);
-
-          // Then push a promise to fetch and store the struct's definition,
-          // as well as its moduleIDs, to promiseArr.
+          // Then push a promise preprocess the module to promiseArr.
           promiseArr.push(
-            this.fetchAndStoreStructDef(structID, parsedStructs)
+            this.preprocessScript(moduleID, environment, callerScriptIDs)
           );
-        });
+        }
       });
 
       // When having pushed all the promises to promiseArr, we can execute

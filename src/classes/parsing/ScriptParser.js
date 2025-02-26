@@ -14,7 +14,7 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
   "^(let|var|const|this|function|export|import|break|continue|return|throw|" +
   "if|else|switch|case|void|typeof|instanceof|delete|await|class|static|" +
   "true|false|null|undefined|Infinity|NaN|try|catch|finally|for|while|do|" +
-  "default|protected|public|exit)$"
+  "default|protected|public|exit|immutable|mutable)$"
   // TODO: Continue this list.
 );
 
@@ -27,7 +27,7 @@ export const scriptGrammar = {
     rules: [
       [
         "isolate-statement!1?",
-        "script-parameter-declaration",
+        "script-parameter-declaration!1?",
         "import-statement!1*",
         "outer-statement+$"
       ],
@@ -36,7 +36,7 @@ export const scriptGrammar = {
       let ret = {
         type: "script",
         isolate: children[0][0] ? true : false,
-        scriptParams: children[1].params,
+        scriptParams: children[1][0]?.params ?? [],
         importStmtArr: children[2],
         stmtArr: children[3],
       };
@@ -82,7 +82,7 @@ export const scriptGrammar = {
         importArr: children[1].children,
         moduleExp: children[3],
       } : {
-        type: "import-statement",
+        type: "entity-import-statement",
         entImportArr: [],
       };
     },
