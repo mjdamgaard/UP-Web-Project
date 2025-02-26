@@ -73,24 +73,14 @@ export const scriptGrammar = {
   },
   "import-statement": {
     rules: [
-      [
-        "/import/", "import-list", "/from/", "entity-reference",
-        "script-parameter-range!1?", "/;/"
-      ],
-      [
-        "/import/", "import-list", "/from/", "identifier",
-        "script-parameter-range!1?", "/;/"
-      ],
-      [
-        "/import/", "entity-import-list", "/;/"
-      ],
+      ["/import/", "import-list", "/from/", "expression", "/;/"],
+      ["/import/", "entity-import-list", "/;/"],
     ],
     process: (children, ruleInd) => {
       return (ruleInd <= 1) ? {
         type: "import-statement",
         importArr: children[1].children,
         moduleExp: children[3],
-        paramRange: children[4][0] ?? undefined,
       } : {
         type: "import-statement",
         entImportArr: [],

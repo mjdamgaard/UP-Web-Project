@@ -180,7 +180,7 @@ export class ScriptInterpreter {
   ) {
     decrCompGas(environment);
     let {
-      parsedScripts, parsedStructs, permissions, gas, nextIsolationKey,
+      parsedScripts, parsedStructs, permissions, gas, nextIsolationKeyRef,
     } = environment.runtimeGlobals;
 
     // First check that scriptID is not one of the callers, meaning that the
@@ -210,23 +210,34 @@ export class ScriptInterpreter {
     // environment with a new, unique isolation key.
     let scriptEnv;
     if (scriptNode.isolate) {
-      scriptEnv = new Environment(environment, undefined, "module")
+      scriptEnv = new Environment(
+        environment, undefined, "module", scriptID, nextIsolationKeyRef[0]++
+      );
+    } else {
+      scriptEnv = new Environment(environment, undefined, "module", scriptID);
     }
 
-    // Then initialize the script parameters into an array.
-    let scriptParams;
+    // Also execute the mandatory 'parameters' statement at the top of the
+    // script in order to initialize some initial parameters, which the user is
+    // also allowed to use in the import statements.
+    let scriptParamValues;
     try {
-      scriptParams = JSON.parse(scriptParamJSONArr);
-      if (!Array.isArray(scriptParams)) throw "";
+      scriptParamValues = JSON.parse(scriptParamJSONArr);
+      if (!Array.isArray(scriptParamValues)) throw "";
     } catch (err) {
       throw new PreprocessingError(
         `Ill-formatted JSON array: '${scriptParamJSONArr}'`
       );
     }
+    this.declareInputParameters(
+      scriptEnv, scriptNode.scriptParams, scriptParamValues, scriptNode,
+      environment
+    );
 
-    // Once the script syntax tree is gotten, we look for any import statements
-    // at the top of the script, then call this method recursively in parallel
-    // to import dependencies.
+    // Once the script syntax tree is gotten and the script parameters have
+    // been declared in the new script environment, we look for any import
+    // statements at the top of the script, then call this method recursively
+    // in parallel to import dependencies.
     if (scriptNode.importStmtArr.length !== 0) {
       // Append scriptID to callerScriptIDs (without muting the input), and
       // initialize a promiseArr to process all the modules in parallel, as
@@ -537,33 +548,10 @@ export class ScriptInterpreter {
     // Initialize a new environment for the execution of the function.
     let newEnv = new Environment(funDecEnv, thisVal, "function");
 
-    // Add the input parameters to the new environment.
-    funNode.params.forEach((param, ind) => {
-      let paramName = param.ident;
-      let paramVal = inputValueArr[ind];
-      let inputValType = getType(paramVal);
-
-      // If the parameter is typed, check the type. 
-      if (param.invalidTypes) {
-        if (param.invalidTypes.includes(inputValType)) {
-          throw new RuntimeError(
-            `Input parameter "${paramName}" of invalid type "${inputValType}"`,
-            callerNode, callerEnv
-          );
-        }
-      }
-
-      // If the input value is undefined, and the parameter has a default
-      // value, use that value, evaluated at the time (each time) the function
-      // is called. We use newEnv each time such that a parameter can depend
-      // on a previous one.
-      if (param.defaultExp && inputValType === "undefined") {
-        paramVal = this.evaluateExpression(param.defaultExp, newEnv);
-      }
-
-      // Then declare the parameter in the new environment.
-      newEnv.declare(paramName, paramVal, false, param);
-    });
+    // Add the input parameters to the environment.
+    this.declareInputParameters(
+      newEnv, funNode.params, inputValueArr, callerNode, callerEnv
+    );
 
     // Now execute the statements inside a try-catch statement to catch any
     // return exception, or any uncaught break or continue exceptions. On a
@@ -584,6 +572,36 @@ export class ScriptInterpreter {
   }
 
 
+  declareInputParameters(
+    environment, params, inputArr, callerNode, callerEnv
+  ) {
+    params.forEach((param, ind) => {
+      let paramName = param.ident;
+      let paramVal = inputArr[ind];
+      let inputValType = getType(paramVal);
+
+      // If the parameter is typed, check the type. 
+      if (param.invalidTypes) {
+        if (param.invalidTypes.includes(inputValType)) {
+          throw new RuntimeError(
+            `Input parameter "${paramName}" of invalid type "${inputValType}"`,
+            callerNode, callerEnv
+          );
+        }
+      }
+
+      // If the input value is undefined, and the parameter has a default
+      // value, use that value, evaluated at the time (each time) the function
+      // is called. We use the same environment each time such that a parameter
+      // can depend on a previous one.
+      if (param.defaultExp && inputValType === "undefined") {
+        paramVal = this.evaluateExpression(param.defaultExp, newEnv);
+      }
+
+      // Then declare the parameter in the environment.
+      environment.declare(paramName, paramVal, false, param);
+    });
+  }
 
 
 

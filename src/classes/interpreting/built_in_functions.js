@@ -34,7 +34,7 @@ export const basicBuiltInFunctions = {
 
   fetchEntity: new BuiltInFunction(function (
     {gas, callerEnv, callerNode, options: {dataFetcher}},
-    entID, callback
+    entID, callback // TODO: Change to entRef instead.
   ) {
     decrCompGas(callerEnv);
     // TODO: Check permissions first.
