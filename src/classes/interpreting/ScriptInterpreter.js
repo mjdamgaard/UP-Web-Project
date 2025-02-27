@@ -53,12 +53,13 @@ export class ScriptInterpreter {
 
     // If script is provided, rather than the scriptID, first parse it and add
     // it to the parsedEntities buffer.
+    let parsedScript;
     if (scriptID === "0") {
       payGas(globalEnv, {comp: getParsingGasCost(script)});
       let [scriptSyntaxTree] = scriptParser.parse(script);
       if (scriptSyntaxTree.error) throw scriptSyntaxTree.error;
-      let scriptNode = scriptSyntaxTree.res;
-      parsedEntities["#0"] = scriptNode;
+      parsedScript = scriptSyntaxTree.res;
+      parsedEntities["#0"] = parsedScript;
     }
     
     // Then extract all entity IDs from all entity references in scriptParams,
@@ -67,7 +68,7 @@ export class ScriptInterpreter {
     let entIDArr = [...(new Set([
       scriptID,
       ...getEntIDsFromParams(scriptParams),
-      ...getEntIDsFromScriptHeader(script),
+      ...(parsedScript ? getEntIDsFromScriptHeader(parsedScript) : []),
     ]))];
 
     // Then preprocess and execute the script.
@@ -156,7 +157,7 @@ export class ScriptInterpreter {
 
   }
 
-  getEntIDsFromScriptHeader(script) {
+  getEntIDsFromScriptHeader(scriptNode) {
 
   }
 
@@ -235,7 +236,7 @@ export class ScriptInterpreter {
       // promiseArr.
       promiseArr.push(
         this.fetchParseAndPreprocessEntity(
-          id, parsedEntities, globalEnv, [...ancestorEntIDs, id]
+          id, parsedEntities, globalEnv, ancestorEntIDs
         )
       );
     });
@@ -247,90 +248,36 @@ export class ScriptInterpreter {
   }
 
 
+
   async fetchParseAndPreprocessEntity(entID, globalEnv, ancestorEntIDs) {
+    let {gas, parsedEntities} = globalEnv.scriptGlobals;
 
-    // Try to get the parsed module first from the parsedEntities buffer, or
-    // else fetch it and add it to said buffer.
-    let moduleNode = parsedEntities["#" + moduleID];
-    if (!moduleNode) {
-      let {error, entDef} = await this.dataFetcher.fetchAndParseEntity(
-        gas, moduleID, "s"
-      );
-      if (!error) throw new PreprocessingError(error);
-      parsedEntities["#" + moduleID] = entDef;
+    // Fetch and parse the entity, and add it to parsedEntities.
+    let {error, entType, parsedEnt} =
+      await this.dataFetcher.fetchAndParseEntity(gas, entID);
+    if (error) throw new PreprocessingError(error);
+    parsedEntities["#" + entID] = parsedEnt;
+
+    // Then if it is a script, extract all the dependencies from the script
+    // header.
+    let entIDArr;
+    if (entType === "s") {
+      entIDArr = this.getEntIDsFromScriptHeader(parsedEnt);
+    } else if (entType === "f") {
+      entIDArr = this.getFormatID(parsedEnt);
+    } else {
+      entIDArr = [];
     }
 
-    // Now initialize a promise array, to which we will push promises to fetch
-    // and parse entities.
-
-    // Once the module syntax tree is gotten and the module parameters have
-    // been declared in the new module environment, we look for any import
-    // statements at the top of the module, then call this method recursively
-    // in parallel to import dependencies.
-    if (moduleNode.importStmtArr.length !== 0) {
-      // Append moduleID to callerScriptIDs (without muting the input), and
-      // initialize a promiseArr to process all the modules in parallel.
-      callerModuleIDs = [...callerModuleIDs, moduleID];
-      let promiseArr = [];
-      let globalPermissions = permissions?.global ?? "";
-      moduleNode.importStmtArr.forEach(impStmt => {
-        // If the import statement is an "entity import statement," iterate
-        // through each entity import and push a promise to..
-        if (impStmt.type === "entity-import-statement") {
-
-        }
-        else {
-          // Get the moduleID for the given import statement.
-          let moduleExp = impStmt.moduleExp;
-          let moduleParamArr = [];
-          if (
-            moduleExp.type === "function-call" &&
-            moduleExp.exp.type === "entity-reference"
-          ) {
-            moduleExp =  moduleExp.exp;
-            moduleParamArr = moduleExp.postfix.children;
-          }
-          let moduleRef = this.evaluateExpression(moduleExp, moduleEnv);
-          if (!(moduleRef instanceof EntityReference)) {
-            if (moduleRef instanceof EntityPlaceholder) {
-              throw new PreprocessingError(
-                `Script @[${moduleID}] imports from a TBD module reference`
-              );
-            } else {
-              throw new PreprocessingError(
-                `Script @[${moduleID}] imports from a value that is not an ` +
-                `entity reference`
-              );
-            }
-          }
-          let moduleID = moduleRef.id;
-
-          // Then push a promise preprocess the module to promiseArr.
-          promiseArr.push(
-            this.preprocessModule(moduleID, environment, callerModuleIDs)
-          );
-        }
-      });
-
-      // When having pushed all the promises to promiseArr, we can execute
-      // them in parallel.
-      await Promise.all(promiseArr);
-    }
-
-    // On a successful preprocessing, parsedEntities will now have been updated
-    // to include this module and all its dependencies as well. 
-    return parsedEntities;
+    // Then call preprocessEntities() to preprocess all entities that haven't
+    // yet been preprocessed, and make sure to add entID to ancestorEntIDs,
+    // without muting it.
+    ancestorEntIDs = [...ancestorEntIDs, entID];
+    await this.preprocessEntities(entIDArr, globalEnv, ancestorEntIDs);
+    return;
   }
 
 
-
-  async fetchAndStoreStructDef(gas, structID, parsedStructs) {
-    let {error, entDef} = await this.dataFetcher.fetchAndParseEntity(
-      gas, structID, "r"
-    );
-    if (!error) throw new PreprocessingError(error);
-    parsedStructs["#" + structID] = entDef;
-  }
 
 
 
@@ -390,6 +337,63 @@ export class ScriptInterpreter {
       moduleEnv, moduleNode.moduleParams, moduleParamValues, moduleNode,
       environment
     );
+
+
+
+
+
+
+
+    // Once the module syntax tree is gotten and the module parameters have
+    // been declared in the new module environment, we look for any import
+    // statements at the top of the module, then call this method recursively
+    // in parallel to import dependencies.
+    if (moduleNode.importStmtArr.length !== 0) {
+      // Append moduleID to callerScriptIDs (without muting the input), and
+      // initialize a promiseArr to process all the modules in parallel.
+      callerModuleIDs = [...callerModuleIDs, moduleID];
+      let promiseArr = [];
+      let globalPermissions = permissions?.global ?? "";
+      moduleNode.importStmtArr.forEach(impStmt => {
+        // If the import statement is an "entity import statement," iterate
+        // through each entity import and push a promise to..
+        if (impStmt.type === "entity-import-statement") {
+
+        }
+        else {
+          // Get the moduleID for the given import statement.
+          let moduleExp = impStmt.moduleExp;
+          let moduleParamArr = [];
+          if (
+            moduleExp.type === "function-call" &&
+            moduleExp.exp.type === "entity-reference"
+          ) {
+            moduleExp =  moduleExp.exp;
+            moduleParamArr = moduleExp.postfix.children;
+          }
+          let moduleRef = this.evaluateExpression(moduleExp, moduleEnv);
+          if (!(moduleRef instanceof EntityReference)) {
+            if (moduleRef instanceof EntityPlaceholder) {
+              throw new PreprocessingError(
+                `Script @[${moduleID}] imports from a TBD module reference`
+              );
+            } else {
+              throw new PreprocessingError(
+                `Script @[${moduleID}] imports from a value that is not an ` +
+                `entity reference`
+              );
+            }
+          }
+          let moduleID = moduleRef.id;
+
+          // Then push a promise preprocess the module to promiseArr.
+          promiseArr.push(
+            this.preprocessModule(moduleID, environment, callerModuleIDs)
+          );
+        }
+      });
+    }
+
 
 
 
