@@ -46,7 +46,7 @@ export const basicBuiltInFunctions = {
 
   fetchAndParseEntity: new BuiltInFunction(function (
     {gas, callerEnv, callerNode, options: {dataFetcher}},
-    entID, entType, callback
+    entID, entType = "any", callback
   ) {
     decrCompGas(callerEnv);
     // TODO: Check permissions first.

@@ -79,7 +79,7 @@ export class ScriptInterpreter {
       // dependency is just the so-called 'format,' which is the first entry
       // in the comma-separated list. We thus wait here for preprocessEntities()
       // to fill up parsedEntities with all relevant parsed entities.
-      await this.preprocessEntities(id, parsedEntities, globalEnv);
+      await this.preprocessEntities(entIDArr, parsedEntities, globalEnv);
 
       // And after this we are now ready to execute the script. (We don't need
       // to pass parsedEntities here, as it is also stored inside globalEnv.)
@@ -152,6 +152,15 @@ export class ScriptInterpreter {
 
 
 
+  getEntIDsFromParams(scriptParams) {
+
+  }
+
+  getEntIDsFromScriptHeader(script) {
+
+  }
+
+
   handleException(err, environment) {
     let scriptGlobals = environment.scriptGlobals, {log} = scriptGlobals; 
     if (
@@ -192,23 +201,53 @@ export class ScriptInterpreter {
 
 
 
-  async preprocessModule(
-    moduleID, scriptParams = undefined, globalEnv, callerModuleIDs = []
+  async preprocessEntities(
+    entIDArr, globalEnv, ancestorEntIDs = []
   ) {
     decrCompGas(globalEnv);
     let {parsedEntities} = globalEnv.scriptGlobals;
 
-    // First check that moduleID is not one of the callers, meaning that the
-    // preprocess recursion is infinite.
-    let indOfSelf = callerModuleIDs.indexOf(moduleID);
-    if (indOfSelf !== -1) {
-      throw new PreprocessingError(
-        `Script @[${moduleID}] imports itself recursively through ` +
-        callerModuleIDs.slice(indOfSelf + 1).map(id => "@[" + id + "]")
-          .join(" -> ") +
-        " -> @[" + moduleID + "]",
+    // For each entity ID, first check that none of the entIDs are included in
+    // the ancestorEntIDs array, which would mean that an entity depend on
+    // itself in an infinite recursion. And then also push a promise to a
+    // promise array to fetch, parse and preprocess the given entity.
+    let promiseArr = [];
+    entIDArr.forEach(id => {
+      if (!id || id === "0" || id === 0) return;
+
+      // If the entity have already been parsed and added to the parsedEntities
+      // buffer, simply return.
+      if (parsedEntities["#" + id]) return;
+
+      // Also check for infinite recursion in the dependencies, and throw if
+      // one is found.
+      let indOfSelf = ancestorEntIDs.indexOf(id);
+      if (indOfSelf !== -1) {
+        throw new PreprocessingError(
+          `Script @[${id}] imports itself recursively through ` +
+          callerModuleIDs.slice(indOfSelf + 1).map(val => "@[" + val + "]")
+            .join(" -> ") +
+          " -> @[" + id + "]",
+        );
+      }
+
+      // Else push a promise to fetch, parse and preprocess the entity to
+      // promiseArr.
+      promiseArr.push(
+        this.fetchParseAndPreprocessEntity(
+          id, parsedEntities, globalEnv, [...ancestorEntIDs, id]
+        )
       );
-    }
+    });
+
+    // When having pushed all the promises to promiseArr, we can execute
+    // them in parallel.
+    await Promise.all(promiseArr);
+    return;
+  }
+
+
+  async fetchParseAndPreprocessEntity(entID, globalEnv, ancestorEntIDs) {
 
     // Try to get the parsed module first from the parsedEntities buffer, or
     // else fetch it and add it to said buffer.
