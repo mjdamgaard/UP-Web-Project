@@ -14,7 +14,7 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
   "^(let|var|const|this|function|export|import|break|continue|return|throw|" +
   "if|else|switch|case|void|typeof|instanceof|delete|await|class|static|" +
   "true|false|null|undefined|Infinity|NaN|try|catch|finally|for|while|do|" +
-  "default|protected|public|exit|immutable|mutable)$"
+  "default|protected|public|exit|immutable|mutable|settings)$"
   // TODO: Continue this list.
 );
 
@@ -65,15 +65,21 @@ export const scriptGrammar = {
   },
   "script-parameter-declaration": {
     rules: [
+      ["/parameters/", /\(/, "parameter-list!1?", /\)/, "/;/"],
       ["/parameters/", "parameter-list!1?", "/;/"],
     ],
-    process: (children) => ({
-      params: children[1][0]?.children,
+    process: (children, ruleInd) => ({
+      params: (ruleInd === 0) ?
+      children[2][0]?.children :
+      children[1][0]?.children
     }),
   },
   "import-statement": {
     rules: [
-      ["/import/", "import-list", "/from/", "expression", "/;/"],
+      [
+        "/import/", "import-list", "/from/", "expression!",
+        "parameter-renaming-list!1?", "/;/"
+      ],
       ["/import/", "entity-import-list", "/;/"],
     ],
     process: (children, ruleInd) => {
@@ -81,9 +87,10 @@ export const scriptGrammar = {
         type: "import-statement",
         importArr: children[1].children,
         moduleExp: children[3],
+        renamingArr: children[4][0]?.children ?? [],
       } : {
         type: "entity-import-statement",
-        entImportArr: [],
+        entImportArr: children[1].children,
       };
     },
   },
@@ -138,6 +145,25 @@ export const scriptGrammar = {
         type: "named-import",
         ident: (ruleInd === 0) ? undefined : children[0].ident,
         alias: children[2]?.ident,
+      }
+    },
+  },
+  "parameter-renaming-list": {
+    rules: [
+      ["parameter-renaming", "/,/", "parameter-renaming-list!1"],
+      ["parameter-renaming", "/,/?"],
+    ],
+    process: straightenListSyntaxTree,
+  },
+  "parameter-renaming": {
+    rules: [
+      ["identifier", "/as/", "identifier"],
+    ],
+    process: (children, ruleInd) => {
+      return {
+        type: "parameter-renaming",
+        ident: children[0].ident,
+        alias: children[2].ident,
       }
     },
   },
@@ -414,6 +440,7 @@ export const scriptGrammar = {
       [/\{/, "type^(1)-list!", /\}/],
       ["type^(1)"],
       ["/any/"],
+      ["/const/"], // Pseudo-type, mainly used for constant script parameters. 
     ],
     process: (children, ruleInd) => ({
       types: (ruleInd === 0) ? children[1].children : children[0],
@@ -429,7 +456,7 @@ export const scriptGrammar = {
   "type^(1)": {
     rules: [
       ["entity-reference"], // A class.
-      [/string|bool|int|float|array|object/],
+      ["/string|bool|int|float|array|object|entity/"],
     ],
     process: (children) => children[0],
   },
