@@ -14,7 +14,7 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
   "^(let|var|const|this|function|export|import|break|continue|return|throw|" +
   "if|else|switch|case|void|typeof|instanceof|delete|await|class|static|" +
   "true|false|null|undefined|Infinity|NaN|try|catch|finally|for|while|do|" +
-  "default|protected|public|exit|immutable|mutable|settings)$"
+  "default|protected|public|exit|immutable|mutable)$"
   // TODO: Continue this list.
 );
 
@@ -26,47 +26,22 @@ export const scriptGrammar = {
   "script": {
     rules: [
       [
-        "isolate-statement!1?",
-        "script-parameter-declaration!1?",
+        "statement!1*",
         "import-statement!1*",
         "outer-statement+$"
       ],
     ],
-    process: (children) => {
-      let ret = {
-        type: "script",
-        isolate: children[0][0] ? true : false,
-        scriptParams: children[1][0]?.params ?? [],
-        importStmtArr: children[2],
-        stmtArr: children[3],
-      };
-      if (
-        ret.stmtArr.length === 1 &&
-        ret.stmtArr[0].type === "expression-statement"
-      ) {
-        ret.stmtArr[0] = {
-          type: "export-statement",
-          isDefault: true,
-          stmt: ret.stmtArr[0], // TODO: Correct.
-          isProtected: false,
-          flagStr: undefined,
-          exportArr: [{ident: "default", alias: "default"}], // TODO: Correct.
-
-        }
-      }
-      return ret;
-    }
-  },
-  "isolate-statement": {
-    rules: [
-      ["/isolate/", "/;/"],
-    ],
-    process: undefined,
+    process: (children) => ({
+      type: "script",
+      headerStmtArr: children[0],
+      importStmtArr: children[1],
+      bodyStmtArr: children[2],
+    }),
   },
   "script-parameter-declaration": {
     rules: [
-      ["/parameters/", /\(/, "parameter-list!1?", /\)/, "/;/"],
-      ["/parameters/", "parameter-list!1?", "/;/"],
+      ["/parameters/?", /\(/, "parameter-list!1?", /\)/, "/;/"],
+      ["/parameters/?", "parameter-list!1?", "/;/"],
     ],
     process: (children, ruleInd) => ({
       params: (ruleInd === 0) ?

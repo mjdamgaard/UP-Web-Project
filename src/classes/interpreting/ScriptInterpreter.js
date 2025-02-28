@@ -35,15 +35,15 @@ export class ScriptInterpreter {
 
 
   async interpretScript(
-    gas, script = "", scriptID = "0", scriptParams = {},
-    permissions = {}, settings = {}, reqUserID = undefined,
-    parsedEntities = {},
+    gas, script = "", scriptID = "0", scriptInputs = [],
+    reqUserID = undefined, permissions = {}, settings = {},
+    parsedEntities = new Map(),
   ) {
     let scriptGlobals = {
-      gas: gas, log: {}, output: undefined, scriptParams: scriptParams,
+      gas: gas, log: {}, output: undefined, scriptInputs: scriptInputs,
       reqUserID: reqUserID, scriptID: scriptID, permissions: permissions,
-      setting: settings, parsedEntities: parsedEntities, liveModules: {},
-      shouldExit: false, resolveScript: undefined, scriptInterpreter: this,
+      setting: settings, shouldExit: false, resolveScript: undefined,
+      scriptInterpreter: this, parsedEntities: parsedEntities,
     };
 
     // First create global environment if not yet done, and then create an
@@ -51,53 +51,46 @@ export class ScriptInterpreter {
     // scripts/modules.
     let globalEnv = this.createGlobalEnvironment(scriptGlobals);
 
-    // If script is provided, rather than the scriptID, first parse it and add
-    // it to the parsedEntities buffer.
+    // If script is provided, rather than the scriptID, first parse it.
     let parsedScript;
     if (scriptID === "0") {
       payGas(globalEnv, {comp: getParsingGasCost(script)});
       let [scriptSyntaxTree] = scriptParser.parse(script);
       if (scriptSyntaxTree.error) throw scriptSyntaxTree.error;
       parsedScript = scriptSyntaxTree.res;
-      parsedEntities["#0"] = parsedScript;
+      parsedEntities.set(scriptID, parsedScript);
     }
-    
-    // Then extract all entity IDs from all entity references in scriptParams,
-    // and extract all entity IDs from the header section of script, and add
-    // the scriptID as well to this collection.
-    let entIDArr = [...(new Set([
-      scriptID,
-      ...getEntIDsFromParams(scriptParams),
-      ...(parsedScript ? getEntIDsFromScriptHeader(parsedScript) : []),
-    ]))];
+    // Else fetch and parse the script first thing.
+    else {
+      parsedScript = parsedEntities.get(scriptID);
+      if (!parsedScript) {
+        let {error, parsedEnt} = await this.dataFetcher.fetchAndParseEntity(
+          gas, scriptID, "s"
+        );
+        if (error) throw new RuntimeError(error);
+        parsedScript = parsedEnt;
+        parsedEntities.set(scriptID, parsedScript);
+      }
+    }
 
-    // Then preprocess and execute the script.
+    // Then execute the script as a module, and try-catch any exceptions or
+    // errors.
     try {
-      // We first call preprocessEntities() to fetch and parse each of the
-      // extracted entities, as well as all of their dependencies. A script
-      // entity's dependencies are those IDs from the header that we extract
-      // through getEntIDsFromScriptHeader(), and a formal entity's
-      // dependency is just the so-called 'format,' which is the first entry
-      // in the comma-separated list. We thus wait here for preprocessEntities()
-      // to fill up parsedEntities with all relevant parsed entities.
-      await this.preprocessEntities(entIDArr, parsedEntities, globalEnv);
-
-      // And after this we are now ready to execute the script. (We don't need
-      // to pass parsedEntities here, as it is also stored inside globalEnv.)
-      this.executeModule(scriptID, scriptParams, [], globalEnv);
+      await this.executeModule(parsedScript, scriptInputs, globalEnv);
     }
     catch (err) {
+      // TODO: Correct:
       // If any non-internal error occurred, log it in log.error and set
       // shouldExit to true (both contained in globalEnv).
       this.handleException(err, globalEnv);
-    }
+    } 
 
-
-    // If the shouldExit is true, we can return the resulting log.
+    // If the shouldExit is true, we can return the resulting output and log.
     if (scriptGlobals.shouldExit) {
-      return scriptGlobals.log;
+      return [scriptGlobals.output, scriptGlobals.log];
     }
 
+    // TODO: Correct:
     // Else we create and wait for a promise for obtaining the log, which might
     // be resolved by a custom callback function within the script, waiting to
     // be called, possibly after some data has been fetched. We also set a timer
@@ -151,15 +144,6 @@ export class ScriptInterpreter {
     return globalEnv;
   }
 
-
-
-  getEntIDsFromParams(scriptParams) {
-
-  }
-
-  getEntIDsFromScriptHeader(scriptNode) {
-
-  }
 
 
   handleException(err, environment) {
@@ -297,46 +281,38 @@ export class ScriptInterpreter {
 
 
 
-  executeModule(moduleID, /* moduleParamJSONArr, */ globalEnv) {
-    let {parsedEntities, liveModules} = globalEnv.scriptGlobals;
-    let moduleNode = parsedEntities["#" + moduleID];
+  async executeModule(moduleNode, moduleInputs, globalEnv) {
+    let {parsedEntities} = globalEnv.scriptGlobals;
 
     // Create a new environment for the module.
-    let environment = new Environment(
-      globalEnv, undefined, "module", moduleID, /*,*/ globalEnv.scriptGlobals
+    let moduleEnv = new Environment(
+      globalEnv, undefined, "module", moduleID, moduleInputs
     );
 
+    // Then first execute header statements, before the import statement block.
+    moduleNode.headerStmtArr.forEach((stmt) => {
+      this.executeStatement(stmt, moduleEnv);
+    });
 
-
-
-
-    // Then see the module should have environments, and if so, create a new
-    // environment with a new, unique isolation key.
-    let moduleEnv;
-    if (moduleNode.isolate) {
-      moduleEnv = new Environment(
-        environment, undefined, "module", moduleID, nextIsolationKeyRef[0]++
-      );
-    } else {
-      moduleEnv = new Environment(environment, undefined, "module", moduleID);
-    }
-
-    // Also execute the mandatory 'parameters' statement at the top of the
-    // module in order to initialize some initial parameters, which the user is
-    // also allowed to use in the import statements.
-    let moduleParamValues;
-    try {
-      moduleParamValues = JSON.parse(moduleParamJSONArr);
-      if (!Array.isArray(moduleParamValues)) throw "";
-    } catch (err) {
-      throw new PreprocessingError(
-        `Ill-formatted JSON array: '${moduleParamJSONArr}'`
-      );
-    }
-    this.declareInputParameters(
-      moduleEnv, moduleNode.moduleParams, moduleParamValues, moduleNode,
-      environment
+    // Then run all the import statements in parallel and get their live
+    // environments, but without making any changes to moduleEnv yet.
+    let subModuleEnvArr = await Promise.all(
+      impStmtArr.map(impStmt => (
+        this.executeSubmoduleOfImportStatement(impStmt, moduleEnv, globalEnv)
+      ))
     );
+
+    // We can then run all the import statements again, this time where each
+    // import statement is paired with the environment from the already
+    // executed module, and where the changes are now
+
+    // And finally, execute the body of the script, consisting of "outer
+    // statements" (export statements as well as normal statements).
+    moduleNode.bodyStmtArr.forEach((stmt) => {
+      this.executeOuterStatement(stmt, moduleEnv);
+    });
+
+    return;
 
 
 
@@ -394,28 +370,62 @@ export class ScriptInterpreter {
       });
     }
 
-
-
-
-
-
-
-    // First execute all import statements.
-    moduleNode.importStmtArr.forEach((stmt) => {
-      this.executeImportStatement(stmt, environment);
-    });
-
-    // Then execute all other (outer) statements of the module.
-    moduleNode.importStmtArr.forEach((stmt) => {
-      this.executeOuterStatement(stmt, environment);
-    });
-
-    // Then return add the environment to liveModules.
-    liveModules["#" + moduleID] = environment;
-    return;
   }
 
 
+
+
+  async executeSubmoduleOfImportStatement(impStmt, callerModuleEnv, globalEnv) {
+    // Evaluate the submodule entity reference expression (right after 'from').
+    let submoduleRef = this.evaluateExpression(
+      impStmt.moduleExp, callerModuleEnv
+    );
+    if (submoduleRef instanceof EntityPlaceholder) {
+      throw new RuntimeError (
+        `Importing from a TBD module`,
+        impStmt.moduleExp, callerModuleEnv
+      );
+    } else if (!(submoduleRef instanceof EntityReference)) {
+      throw new RuntimeError (
+        `Module is not an entity reference`,
+        impStmt.moduleExp, callerModuleEnv
+      );
+    }
+    let moduleID = submoduleRef.id;
+
+    // Also evaluate all the module inputs, if any.
+    let submoduleInputs = impStmt.moduleInputArr.map(inputExp => (
+      this.evaluateExpression(inputExp, moduleEnv)
+    ));
+
+    // Then fetch and parse the module.
+    let submoduleNode = parsedEntities.get(moduleID);
+    if (!submoduleNode) {
+      let {error, parsedEnt} = await this.dataFetcher.fetchAndParseEntity(
+        gas, moduleID, "s"
+      );
+      if (error) throw new RuntimeError(error);
+      submoduleNode = parsedEnt;
+      parsedEntities.set(moduleID, submoduleNode);
+    }
+
+    // Then execute the module, inside the global environment, and return the
+    // resulting environment.
+    return await this.executeModule(submoduleNode, submoduleInputs, globalEnv);
+  }
+
+
+  // async executeImportStatementBlock(impStmtArr, environment) {
+  //   // First preprocess all import statement, by which all imported entities
+  //   // will be fetched and parsed (and added to the global parsedEntities),
+  //   // and also including all the dependencies of those entities.
+  //   let resultingImportStatementArr = await Promise.all(
+  //     impStmtArr.map(stmt => preprocessImportStatement(stmt, environment))
+  //   );
+
+  //   // resultingImportStatementArr should now hold the same import statements,
+  //   // but where all expressions have now been evaluated.
+  // }
 
 
   executeImportStatement(stmtNode, environment) {
@@ -1339,14 +1349,15 @@ export class ScriptInterpreter {
 
 
 
-export const UNDEFINED = Symbol("undefined");
 
+
+
+// TODO: Consider refactoring Environment.
 
 export class Environment {
   constructor(
     parent = undefined, thisVal = undefined, scopeType = "block",
-    moduleID = undefined, isolationKey = undefined,
-    scriptGlobals = undefined,
+    moduleID = undefined, scriptGlobals = undefined
   ) {
     this.parent = parent;
     this.variables = {"#this": thisVal ?? UNDEFINED};
@@ -1356,9 +1367,12 @@ export class Environment {
       throw "Environment: No scriptGlobals object provided";
     })();
     if (scopeType === "module") {
-      this.isolationKey = isolationKey ?? parent?.isolationKey ?? undefined;
       this.exports = {};
       this.defaultExport = undefined;
+    }
+    if (scriptGlobals) {
+      let settingsObj = getSafeObj(scriptGlobals.settings);
+      this.declare("settings", settingsObj, true);
     }
   }
 
@@ -1437,6 +1451,20 @@ export class Environment {
 
 
 
+function getSafeObj(obj) {
+  if (!obj || typeof object !== "object") {
+    return obj;
+  } else if (Array.isArray(obj)) {
+    return obj.map(val => getSafeObj(val));
+  } else {
+    return Object.fromEntries(
+      Object.entries(obj).map(([key, val]) => ["#" + key, getSafeObj(val)])
+    );
+  }
+}
+
+
+
 
 
 export function payGas(environment, gasCost) {
@@ -1499,6 +1527,10 @@ export function getType(val) {
 }
 
 
+
+
+
+export const UNDEFINED = Symbol("undefined");
 
 
 
