@@ -184,87 +184,6 @@ export class ScriptInterpreter {
 
 
 
-
-
-  async preprocessEntities(
-    entIDArr, globalEnv, ancestorEntIDs = []
-  ) {
-    decrCompGas(globalEnv);
-    let {parsedEntities} = globalEnv.scriptGlobals;
-
-    // For each entity ID, first check that none of the entIDs are included in
-    // the ancestorEntIDs array, which would mean that an entity depend on
-    // itself in an infinite recursion. And then also push a promise to a
-    // promise array to fetch, parse and preprocess the given entity.
-    let promiseArr = [];
-    entIDArr.forEach(id => {
-      if (!id || id === "0" || id === 0) return;
-
-      // If the entity have already been parsed and added to the parsedEntities
-      // buffer, simply return.
-      if (parsedEntities["#" + id]) return;
-
-      // Also check for infinite recursion in the dependencies, and throw if
-      // one is found.
-      let indOfSelf = ancestorEntIDs.indexOf(id);
-      if (indOfSelf !== -1) {
-        throw new PreprocessingError(
-          `Script @[${id}] imports itself recursively through ` +
-          callerModuleIDs.slice(indOfSelf + 1).map(val => "@[" + val + "]")
-            .join(" -> ") +
-          " -> @[" + id + "]",
-        );
-      }
-
-      // Else push a promise to fetch, parse and preprocess the entity to
-      // promiseArr.
-      promiseArr.push(
-        this.fetchParseAndPreprocessEntity(
-          id, parsedEntities, globalEnv, ancestorEntIDs
-        )
-      );
-    });
-
-    // When having pushed all the promises to promiseArr, we can execute
-    // them in parallel.
-    await Promise.all(promiseArr);
-    return;
-  }
-
-
-
-  async fetchParseAndPreprocessEntity(entID, globalEnv, ancestorEntIDs) {
-    let {gas, parsedEntities} = globalEnv.scriptGlobals;
-
-    // Fetch and parse the entity, and add it to parsedEntities.
-    let {error, entType, parsedEnt} =
-      await this.dataFetcher.fetchAndParseEntity(gas, entID);
-    if (error) throw new PreprocessingError(error);
-    parsedEntities["#" + entID] = parsedEnt;
-
-    // Then if it is a script, extract all the dependencies from the script
-    // header.
-    let entIDArr;
-    if (entType === "s") {
-      entIDArr = this.getEntIDsFromScriptHeader(parsedEnt);
-    } else if (entType === "f") {
-      entIDArr = this.getFormatID(parsedEnt);
-    } else {
-      entIDArr = [];
-    }
-
-    // Then call preprocessEntities() to preprocess all entities that haven't
-    // yet been preprocessed, and make sure to add entID to ancestorEntIDs,
-    // without muting it.
-    ancestorEntIDs = [...ancestorEntIDs, entID];
-    await this.preprocessEntities(entIDArr, globalEnv, ancestorEntIDs);
-    return;
-  }
-
-
-
-
-
   checkPermissions(flagStr, requiredFlagStr) {
     let flagArr = flagStr.split("");
     let requiredFlagArr = requiredFlagStr.split("");
@@ -282,6 +201,7 @@ export class ScriptInterpreter {
 
 
   async executeModule(moduleNode, moduleInputs, globalEnv) {
+    decrCompGas(globalEnv);
     let {parsedEntities} = globalEnv.scriptGlobals;
 
     // Create a new environment for the module.
@@ -296,86 +216,33 @@ export class ScriptInterpreter {
 
     // Then run all the import statements in parallel and get their live
     // environments, but without making any changes to moduleEnv yet.
-    let subModuleEnvArr = await Promise.all(
-      impStmtArr.map(impStmt => (
+    let submoduleEnvArr = await Promise.all(
+      moduleNode.importStmtArr.map(impStmt => (
         this.executeSubmoduleOfImportStatement(impStmt, moduleEnv, globalEnv)
       ))
     );
 
     // We can then run all the import statements again, this time where each
     // import statement is paired with the environment from the already
-    // executed module, and where the changes are now
+    // executed module, and where the changes are now made to moduleEnv.
+    moduleNode.importStmtArr.forEach((impStmt, ind) => {
+      this.finalizeImportStatement(impStmt, submoduleEnvArr[ind], moduleEnv);
+    });
 
     // And finally, execute the body of the script, consisting of "outer
     // statements" (export statements as well as normal statements).
     moduleNode.bodyStmtArr.forEach((stmt) => {
       this.executeOuterStatement(stmt, moduleEnv);
     });
-
     return;
-
-
-
-
-
-
-
-    // Once the module syntax tree is gotten and the module parameters have
-    // been declared in the new module environment, we look for any import
-    // statements at the top of the module, then call this method recursively
-    // in parallel to import dependencies.
-    if (moduleNode.importStmtArr.length !== 0) {
-      // Append moduleID to callerScriptIDs (without muting the input), and
-      // initialize a promiseArr to process all the modules in parallel.
-      callerModuleIDs = [...callerModuleIDs, moduleID];
-      let promiseArr = [];
-      let globalPermissions = permissions?.global ?? "";
-      moduleNode.importStmtArr.forEach(impStmt => {
-        // If the import statement is an "entity import statement," iterate
-        // through each entity import and push a promise to..
-        if (impStmt.type === "entity-import-statement") {
-
-        }
-        else {
-          // Get the moduleID for the given import statement.
-          let moduleExp = impStmt.moduleExp;
-          let moduleParamArr = [];
-          if (
-            moduleExp.type === "function-call" &&
-            moduleExp.exp.type === "entity-reference"
-          ) {
-            moduleExp =  moduleExp.exp;
-            moduleParamArr = moduleExp.postfix.children;
-          }
-          let moduleRef = this.evaluateExpression(moduleExp, moduleEnv);
-          if (!(moduleRef instanceof EntityReference)) {
-            if (moduleRef instanceof EntityPlaceholder) {
-              throw new PreprocessingError(
-                `Script @[${moduleID}] imports from a TBD module reference`
-              );
-            } else {
-              throw new PreprocessingError(
-                `Script @[${moduleID}] imports from a value that is not an ` +
-                `entity reference`
-              );
-            }
-          }
-          let moduleID = moduleRef.id;
-
-          // Then push a promise preprocess the module to promiseArr.
-          promiseArr.push(
-            this.preprocessModule(moduleID, environment, callerModuleIDs)
-          );
-        }
-      });
-    }
-
   }
 
 
 
 
   async executeSubmoduleOfImportStatement(impStmt, callerModuleEnv, globalEnv) {
+    decrCompGas(globalEnv);
+
     // Evaluate the submodule entity reference expression (right after 'from').
     let submoduleRef = this.evaluateExpression(
       impStmt.moduleExp, callerModuleEnv
@@ -415,56 +282,28 @@ export class ScriptInterpreter {
   }
 
 
-  // async executeImportStatementBlock(impStmtArr, environment) {
-  //   // First preprocess all import statement, by which all imported entities
-  //   // will be fetched and parsed (and added to the global parsedEntities),
-  //   // and also including all the dependencies of those entities.
-  //   let resultingImportStatementArr = await Promise.all(
-  //     impStmtArr.map(stmt => preprocessImportStatement(stmt, environment))
-  //   );
-
-  //   // resultingImportStatementArr should now hold the same import statements,
-  //   // but where all expressions have now been evaluated.
-  // }
 
 
-  executeImportStatement(stmtNode, environment) {
-    decrCompGas(environment);
-    let {liveModules} = environment.scriptGlobals;
+  finalizeImportStatement(impStmt, submoduleEnv, moduleEnv) {
+    decrCompGas(moduleEnv);
 
-    // Get the live environment of the module, either from liveModules if the
-    // module has already been executed, or otherwise by executing it.
-    let moduleID = stmtNode.moduleRef.lexeme;
-    let moduleEnv = liveModules["#" + moduleID];
-    if (!moduleEnv) {
-      this.executeModule(moduleID, moduleEnv);
-      moduleEnv = liveModules["#" + moduleID];
-    }
-
-    // Get the combined exports, and then iterate through all the imports,
-    // and add each import to the environment.
-    let exports = moduleEnv.exports;
-    stmtNode.importArr.forEach(imp => {
-      if (imp.namespaceIdent) {
-        let nsObj = {};
-        Object.entries(exports).forEach(([safeKey, val]) => {
-          nsObj[safeKey] = val[0];
-        });
-        environment.declare(imp.namespaceIdent, nsObj, true, imp);
+    // Iterate through all the imports and add each import to the environment.
+    impStmt.importArr.forEach(imp => {
+      let impType = imp.importType
+      if (impType === "namespace-import") {
+        let namespaceObj = Object.fromEntries(submoduleEnv.getExport());
+        moduleEnv.declare(imp.ident, namespaceObj, true, imp);
       }
-      else if (imp.structRef) {
-        let structObj = new ProtectedObject(imp.structRef.lexeme);
+      else if (impType === "protected-import") {
         let impFlagStr = imp.flagStr;
-        Object.entries(exports).forEach(
-          ([safeKey, [origIdent, isStructProp, exFlagStr]]) => {
-            if (isStructProp && this.checkPermissions(impFlagStr, exFlagStr)) {
-              structObj[safeKey] = moduleEnv.get(origIdent);
-            }
-          }
-        );
-        environment.declare(imp.structIdent, structObj, true, imp);
+        let protObj = new ProtectedObject(
+          submoduleEnv.getProtectedExports().filter(([ , , exFlagStr]) => (
+            this.checkPermissions(impFlagStr, exFlagStr)
+          )
+        ));
+        moduleEnv.declare(imp.ident, protObj, true, imp);
       }
-      else if (imp.namedImportArr) {
+      else if (impType === "named-imports") {
         imp.namedImportArr.forEach(namedImp => {
           let ident = namedImp.ident;
           let alias = namedImp.alias ?? ident;
@@ -473,15 +312,14 @@ export class ScriptInterpreter {
             val = exports.defaultExport;
           } else {
             let origIdent = exports["#" + alias][0];
-            val = moduleEnv.get(origIdent, namedImp, environment);
+            val = submoduleEnv.get(origIdent, namedImp, moduleEnv);
           }
-          environment.declare(alias, val, true, namedImp);
+          moduleEnv.declare(alias, val, true, namedImp);
         });
       }
       else {
-        environment.declare(
-          imp.defaultIdent, exports.defaultExport, true, imp
-        );
+        defaultExportVal = submoduleEnv.get("default", namedImp, moduleEnv);
+        moduleEnv.declare(imp.ident, defaultExportVal, true, imp);
       }
     });
   }
@@ -525,10 +363,10 @@ export class ScriptInterpreter {
       environment.exportDefault(val, ident, stmtNode);
     }
     else {
-      let isStructProp = stmtNode.isStructProp;
+      let isProtected = stmtNode.isProtected;
       let flagStr = stmtNode.flagStr;
       stmtNode.exportArr.forEach(([ident, alias]) => {
-        environment.export(ident, alias, isStructProp, flagStr);
+        environment.export(ident, alias, isProtected, flagStr);
       });
     }
   }
@@ -1357,7 +1195,7 @@ export class ScriptInterpreter {
 export class Environment {
   constructor(
     parent = undefined, thisVal = undefined, scopeType = "block",
-    moduleID = undefined, scriptGlobals = undefined
+    moduleID = undefined, moduleInputs = undefined, scriptGlobals = undefined
   ) {
     this.parent = parent;
     this.variables = {"#this": thisVal ?? UNDEFINED};
@@ -1369,20 +1207,23 @@ export class Environment {
     if (scopeType === "module") {
       this.exports = {};
       this.defaultExport = undefined;
-    }
-    if (scriptGlobals) {
       let settingsObj = getSafeObj(scriptGlobals.settings);
       this.declare("settings", settingsObj, true);
     }
+    if (scriptGlobals) {
+      let moduleInputsObj = new ImmutableObject(getSafeObj(moduleInputs));
+      this.declare("scriptInputs", moduleInputsObj, true);
+    }
   }
 
-  get(ident, node, nodeEnvironment = undefined) {
+  #get(ident, node, nodeEnvironment) {
     let safeIdent = "#" + ident;
-    let [val] = this.variables[safeIdent] ?? [];
+    let entry = this.variables[safeIdent] ?? [];
+    let val = entry[0];
     if (val !== undefined) {
-      return (val === UNDEFINED) ? undefined : val;
+      return (val === UNDEFINED) ? undefined : entry;
     } else if (this.parent) {
-      return this.parent.get(ident, node, nodeEnvironment);
+      return this.parent.#get(ident, node, nodeEnvironment);
     } else {
       throw new RuntimeError(
         "Undeclared variable",
@@ -1391,7 +1232,27 @@ export class Environment {
     }
   }
 
-  declare(ident, val, isConst, node) {
+
+  get(ident, node, nodeEnvironment = undefined) {
+    let entry = this.#get(ident, node, nodeEnvironment);
+    let [val] = entry;
+    return val;
+  }
+
+  getExported(ident, node, nodeEnvironment = undefined) {
+    let entry = this.#get(ident, node, nodeEnvironment);
+    let [val, , isExported] = entry;
+    return (isExported) ? val : UNDEFINED;
+  }
+
+  getProtected(ident, node, nodeEnvironment = undefined) {
+    let entry = this.#get(ident, node, nodeEnvironment);
+    let [val, , isExported, isProtected, flagStr] = entry;
+    return (isExported && isProtected) ? [val, flagStr]  : UNDEFINED;
+  }
+
+
+  declare(ident, val, isConst, node, isExported, isProtected, flagStr) {
     val = (val === undefined) ? UNDEFINED : val;
     let safeIdent = "#" + ident;
     let [prevVal] = this.variables[safeIdent] ?? [];
@@ -1401,7 +1262,9 @@ export class Environment {
         node, this
       );
     } else {
-      this.variables[safeIdent] = [val, isConst];
+      this.variables[safeIdent] = [
+        val, isConst, isExported, isProtected, flagStr
+      ];
     }
   }
 
@@ -1431,22 +1294,20 @@ export class Environment {
   }
 
 
-  export(ident, alias = ident, isStructProp, flagStr) {
-    this.export["#" + alias] = [ident, isStructProp, flagStr];
+  getExports() {
+    return Object.entries(this.variables)
+      .filter(([ , [ , , isExported]]) => isExported)
+      .map(([safeKey, [val]]) => [safeKey, val]);
   }
 
-  exportDefault(val, ident = undefined, node) {
-    if (this.export.defaultExport) throw new RuntimeError(
-      "Only one default export allowed",
-      node, this
-    );
-    if (val === undefined) throw new RuntimeError(
-      "Exporting undefined value as the default export",
-      node, this
-    );
-    this.export.defaultExport = val;
-    if (ident) this.export["#" + ident] = [ident, false];
+  getProtectedExports() {
+    return Object.entries(this.variables)
+      .filter(([ , [ , , isExported, isProtected]]) => (
+        isExported && isProtected
+      ))
+      .map(([safeKey, [val, , , , flagStr]]) => [safeKey, val, flagStr]);
   }
+
 }
 
 
@@ -1549,10 +1410,10 @@ export class BuiltInFunction {
 }
 
 export class ThisBoundFunction {
-  constructor(funVal, thisVal, isStructProp = false) {
+  constructor(funVal, thisVal, isProtected = false) {
     this.funVal = funVal;
     this.thisVal = thisVal;
-    this.isStructProp = isStructProp;
+    this.isProtected = isProtected;
   }
 }
 
