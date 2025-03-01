@@ -35,16 +35,15 @@ export class ScriptInterpreter {
 
 
   async interpretScript(
-    gas, script = "", scriptID = "0", scriptInputs = [],
+    gas, script = "", scriptID = "0", mainInputs = [],
     reqUserID = undefined, permissions = {}, settings = {},
     parsedEntities = new Map(),
   ) {
     let scriptGlobals = {
-      gas: gas, log: {}, output: undefined, scriptInputs: scriptInputs,
+      gas: gas, log: {}, output: undefined, mainInputs: mainInputs,
       reqUserID: reqUserID, scriptID: scriptID, permissions: permissions,
       setting: settings, shouldExit: false, resolveScript: undefined,
-      scriptInterpreter: this, parsedEntities: parsedEntities,
-      liveModules: {},
+      scriptInterpreter: this, parsedEntities: parsedEntities, liveModules: {},
     };
 
     // First create global environment if not yet done, and then create an
@@ -79,7 +78,7 @@ export class ScriptInterpreter {
     // found, and make sure to try-catch any exceptions or errors.
     try {
       let liveScriptEnv = await this.executeModule(parsedScript, globalEnv);
-      this.executeMainFunction(liveScriptEnv, scriptInputs);
+      this.executeMainFunction(liveScriptEnv, mainInputs);
     }
     catch (err) {
       // TODO: Correct:
@@ -136,7 +135,7 @@ export class ScriptInterpreter {
 
   createGlobalEnvironment(scriptGlobals) {
     let globalEnv = new Environment(
-      undefined, undefined, "global", undefined, undefined, scriptGlobals
+      undefined, undefined, "global", undefined, scriptGlobals
     );
     Object.entries(this.builtInFunctions).forEach(([funName, fun]) => {
       globalEnv.declare(funName, fun, true);
@@ -191,13 +190,12 @@ export class ScriptInterpreter {
 
 
 
-  async executeModule(moduleNode, moduleInputs, globalEnv) {
+  async executeModule(moduleNode, globalEnv) {
     decrCompGas(globalEnv);
-    let {parsedEntities} = globalEnv.scriptGlobals;
 
     // Create a new environment for the module.
     let moduleEnv = new Environment(
-      globalEnv, undefined, "module", moduleID, moduleInputs
+      globalEnv, undefined, "module", moduleID
     );
 
     // Then run all the import statements in parallel and get their live
@@ -230,7 +228,7 @@ export class ScriptInterpreter {
 
   async executeSubmoduleOfImportStatement(impStmt, callerModuleEnv, globalEnv) {
     decrCompGas(globalEnv);
-    let {liveModules} = globalEnv.scriptGlobals;
+    let {liveModules, parsedEntities} = globalEnv.scriptGlobals;
 
     // Evaluate the submodule entity reference expression (right after 'from').
     let submoduleRef = impStmt.moduleRef;
@@ -246,11 +244,6 @@ export class ScriptInterpreter {
       return existingEnv;
     }
 
-    // Also evaluate all the module inputs, if any.
-    let submoduleInputs = impStmt.moduleInputArr.map(inputExp => (
-      this.evaluateExpression(inputExp, moduleEnv)
-    ));
-
     // Then fetch and parse the module.
     let submoduleNode = parsedEntities.get(moduleID);
     if (!submoduleNode) {
@@ -264,9 +257,7 @@ export class ScriptInterpreter {
 
     // Then execute the module, inside the global environment, and return the
     // resulting environment, after also adding it to liveModules.
-    let liveEnv = await this.executeModule(
-      submoduleNode, submoduleInputs, globalEnv
-    );
+    let liveEnv = await this.executeModule(submoduleNode, globalEnv);
     return liveModules["#" + moduleID] = liveEnv;
   }
 
@@ -1050,11 +1041,10 @@ export class ScriptInterpreter {
       }
       case "member-access": {
         // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
-        let expVal, indexVal;
+        let expVal, indexVal, isImmutable;
         try {
-          [expVal, indexVal] = this.getMemberAccessExpValAndSafeIndex(
-            expNode, environment
-          );
+          [expVal, indexVal, isImmutable] =
+            this.getMemberAccessExpValAndSafeIndex(expNode, environment);
         } catch (err) {
           // If err is an BrokenOptionalChainException either return undefined,
           // or throw the exception up to the parent if nested in another
@@ -1081,6 +1071,9 @@ export class ScriptInterpreter {
 
         // Then get the value held in expVal.
         let ret = expVal[indexVal];
+        if (isImmutable) {
+          ret = turnImmutable(ret);
+        }
 
         // And if the value is a function, bind this to expVal for it. (Note
         // that this differs from the conventional semantics of JavaScript,
@@ -1166,9 +1159,9 @@ export class ScriptInterpreter {
       expNode.type === "member-access" && !expNode.postfix.isOpt
     ) {
       // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
-      let expVal, indexVal, isProtected;
+      let expVal, indexVal, isImmutable, isProtected, isThisAccess;
       try {
-        [expVal, indexVal, isProtected, isThisAccess] =
+        [expVal, indexVal, isImmutable, isProtected, isThisAccess] =
           this.getMemberAccessExpValAndSafeIndex(expNode, environment);
       } catch (err) {
         // If err is an BrokenOptionalChainException, do nothing and return
@@ -1180,14 +1173,12 @@ export class ScriptInterpreter {
         }
       }
 
-      // Throw runtime error if trying to mute a struct.
-      if (isProtected && !isThisAccess) throw new RuntimeError(
+      // Throw runtime error if trying to mute an protected object from outside
+      // its own methods, or if the object is immutable.
+      if (isProtected && !isThisAccess || isImmutable) throw new RuntimeError(
         "Assignment to a member of an immutable object",
         expNode, environment
       );
-
-      // TODO: Correct such that isThisAccess and (expVal instanceof
-      // ProtectedObject) is handled correctly, muting the protected object.
 
       // Then assign the member of our expVal and return the value specified by
       // assignFun.
@@ -1225,12 +1216,16 @@ export class ScriptInterpreter {
     // If expVal is an array, check that indexVal is a non-negative
     // integer, and if it is an object, append "#" to the indexVal.
     let valType = getType(expVal);
-    let isProtected = (valType === "struct");
+    let isProtected = (valType === "protected");
+    let isImmutable = (expVal instanceof Immutable);
+    if (isImmutable) {
+      expVal = expVal.val;
+    }
     if (valType === "array") {
       indexVal = parseInt(indexVal);
       if (!(indexVal >= 0 && indexVal <= MAX_ARRAY_INDEX)) {
         throw new RuntimeError(
-          "Assignment to an array with a non-integer or a " +
+          "Trying to access member of an array with a non-integer or a " +
           "negative integer key",
           indexExp, environment
         );
@@ -1238,7 +1233,7 @@ export class ScriptInterpreter {
     }
     else if (valType !== "object" && !isProtected) {
       throw new RuntimeError(
-        "Accessing or assignment to a member of a non-object",
+        "Trying to access member of a non-object",
         memAccNode, environment
       );
     }
@@ -1247,7 +1242,7 @@ export class ScriptInterpreter {
     }
 
     let isThisAccess = (memAccNode.exp.type === "this-keyword");
-    return [expVal, indexVal, isProtected, isThisAccess];
+    return [expVal, indexVal, isImmutable, isProtected, isThisAccess];
   }
 
 }
@@ -1263,7 +1258,7 @@ export class ScriptInterpreter {
 export class Environment {
   constructor(
     parent = undefined, thisVal = undefined, scopeType = "block",
-    moduleID = undefined, moduleInputs = undefined, scriptGlobals = undefined
+    moduleID = undefined, scriptGlobals = undefined
   ) {
     this.parent = parent;
     this.variables = {"#this": thisVal ?? UNDEFINED};
@@ -1278,10 +1273,6 @@ export class Environment {
       let settingsObj = getSafeObj(scriptGlobals.settings);
       this.declare("settings", settingsObj, true);
     }
-    if (scriptGlobals) {
-      let moduleInputsObj = new ImmutableObject(getSafeObj(moduleInputs));
-      this.declare("scriptInputs", moduleInputsObj, true);
-    }
   }
 
   #get(ident, node, nodeEnvironment) {
@@ -1291,7 +1282,11 @@ export class Environment {
     if (val !== undefined) {
       return (val === UNDEFINED) ? undefined : entry;
     } else if (this.parent) {
-      return this.parent.#get(ident, node, nodeEnvironment);
+      let entry = this.parent.#get(ident, node, nodeEnvironment);
+      if (this.scopeType === "function") {
+        entry[5] = true
+      };
+      return entry;
     } else {
       throw new RuntimeError(
         "Undeclared variable",
@@ -1303,8 +1298,12 @@ export class Environment {
 
   get(ident, node, nodeEnvironment = undefined) {
     let entry = this.#get(ident, node, nodeEnvironment);
-    let [val] = entry;
-    return val;
+    let [val, , , , , isFromOutsideFunctionScope] = entry;
+    if (isFromOutsideFunctionScope) {
+      return turnImmutable(val);
+    } else {
+      return val;
+    }
   }
 
   getExported(ident, node, nodeEnvironment = undefined) {
@@ -1351,11 +1350,11 @@ export class Environment {
         this.variables[safeIdent][0] = newVal;
         return ret;
       }
-    } else if (this.parent) {
+    } else if (this.parent && this.scopeType !== "function") {
       return this.parent.assign(ident, node, assignFun);
     } else {
       throw new RuntimeError(
-        "Assignment of undefined variable '" + ident + "'",
+        "Assignment of undefined or non-local variable '" + ident + "'",
         node, this
       );
     }
@@ -1401,6 +1400,15 @@ function getSafeObj(obj) {
   }
 }
 
+
+function turnImmutable(val) {
+  let valType = getType(val);
+  if (valType === "array" || valType === "object") {
+    return new Immutable(val);
+  } else {
+    return val;
+  }
+}
 
 
 
@@ -1450,6 +1458,8 @@ export function getType(val) {
       return "function";
     } else if (val instanceof ProtectedObject) {
       return "protected";
+    } else if (val instanceof Immutable) {
+      return getType(val.val);
     } else {
       return "object";
     }
@@ -1495,9 +1505,10 @@ export class ThisBoundFunction {
 }
 
 export class ProtectedObject {
-  constructor(moduleID, flagStrAndPropPairs) {
-    this.moduleID = moduleID;
-    this.flagStrAndPropPairs = flagStrAndPropPairs;
+  constructor(safeIdentPropValAndFlagStrTriples) {
+    safeIdentPropValAndFlagStrTriples.forEach(([safeIdent, val, flagStr]) => {
+      this[safeIdent] = [val, flagStr];
+    });
   }
 }
 
