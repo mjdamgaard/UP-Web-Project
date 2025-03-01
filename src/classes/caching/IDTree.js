@@ -11,17 +11,17 @@ class _IDTree {
 
   get(key) {
     key = key.toString();
-    return this._get(key, key.length - 1);
+    return this.#get(key, key.length - 1);
   }
 
-  _get(key, keyMaxPos) {
+  #get(key, keyMaxPos) {
     let char = key[this.charPos];
     let child;
     if (keyMaxPos <= this.charPos) {
       return this.leafs[char];
     }
     else if (child = this.childTrees[char]) {
-      return child._get(key, keyMaxPos);
+      return child.#get(key, keyMaxPos);
     }
     else {
       return undefined;
@@ -29,41 +29,52 @@ class _IDTree {
   }
 
 
-  set(key, val) {
+  set(key, val, updateCallback = undefined) {
     key = key.toString();
-    return this._set(key, val, key.length - 1);
+    return this.#set(key, val, key.length - 1, updateCallback);
   }
 
-  _set(key, val, keyMaxPos) {
+  #set(key, val, keyMaxPos, updateCallback) {
     let char = key[this.charPos];
     let child;
     if (keyMaxPos <= this.charPos) {
-      this.leafs[char] = val;
+      let prevVal = this.leafs[char];
+      let didExist = (prevVal !== undefined);
+      let newVal;
+      if (updateCallback && didExist) {
+        newVal = updateCallback(prevVal);
+      }
+      this.leafs[char] = newVal ?? prevVal;
+      return didExist;
     }
     else if (child = this.childTrees[char]) {
-      return child._set(key, val, keyMaxPos);
+      return child.#set(key, val, keyMaxPos);
     }
     else {
       this.childTrees[char] = child = new _IDTree(this, this.charPos + 1);
-      child._set(key, val, keyMaxPos);
+      return child.#set(key, val, keyMaxPos);
     }
   }
 
 
-  remove(key) {
+  remove(key, removeCallback) {
     key = key.toString();
-    return this._remove(key, key.length - 1);
+    return this.#remove(key, key.length - 1, removeCallback);
   }
 
-  _remove(key, keyMaxPos) {
+  #remove(key, keyMaxPos, removeCallback) {
     let char = key[this.charPos];
     let child, wasRemoved;
     if (keyMaxPos <= this.charPos) {
-      wasRemoved = this.leafs[char];
+      let prevVal = this.leafs[char];
+      wasRemoved = (prevVal !== undefined);
+      if (updateCallback && didExist) {
+        removeCallback(prevVal);
+      }
       delete this.leafs[char];
     }
     else if (child = this.childTrees[char]) {
-      wasRemoved = child._remove(key, keyMaxPos);
+      wasRemoved = child.#remove(key, keyMaxPos);
     }
     else {
       return false;
@@ -83,12 +94,12 @@ class _IDTree {
 
   forEach(callback) {
     let i = [0];
-    this._forEach(callback, i);
+    this.#forEach(callback, i);
   }
 
-  _forEach(callback, i) {
+  #forEach(callback, i) {
     this.leafs.forEach(val => callback(val, i[0]++));
-    this.childTrees.forEach(node => node._forEach(callback, i));
+    this.childTrees.forEach(node => node.#forEach(callback, i));
   }
 
 }

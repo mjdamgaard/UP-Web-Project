@@ -438,7 +438,7 @@ export class ScriptInterpreter {
     // Then execute the function depending on its type.
     let ret;
     if (fun instanceof DefinedFunction) {
-      if (fun.isProtected) {
+      if (thisVal instanceof ProtectedObject) {
         ret = this.executeProtectedObjectMethod(
           fun.node, fun.decEnv, inputArr, callerNode, callerEnv, thisVal
         );
@@ -1483,10 +1483,9 @@ export const UNDEFINED = Symbol("undefined");
 
 
 export class DefinedFunction {
-  constructor(node, decEnv, exportPermissions) {
+  constructor(node, decEnv) {
     this.node = node;
     this.decEnv = decEnv;
-    if (exportPermissions) this.exportPermissions = exportPermissions;
   }
 }
 
