@@ -26,16 +26,14 @@ export const scriptGrammar = {
   "script": {
     rules: [
       [
-        "statement!1*",
         "import-statement!1*",
         "outer-statement+$"
       ],
     ],
     process: (children) => ({
       type: "script",
-      headerStmtArr: children[0],
-      importStmtArr: children[1],
-      bodyStmtArr: children[2],
+      importStmtArr: children[0],
+      stmtArr: children[1],
     }),
   },
   "script-parameter-declaration": {
@@ -51,17 +49,13 @@ export const scriptGrammar = {
   },
   "import-statement": {
     rules: [
-      [
-        "/import/", "import-list", "/from/", "expression!",
-        "expression-tuple!1?", "/;/"
-      ],
+      ["/import/", "import-list", "/from/", "entity-reference", "/;/"],
     ],
     process: (children) => {
       return {
         type: "import-statement",
         importArr: children[1].children,
-        moduleExp: children[3],
-        renamingArr: children[4][0]?.children ?? [],
+        moduleRef: children[3],
       };
     },
   },
@@ -130,79 +124,44 @@ export const scriptGrammar = {
     rules: [
       ["/export/", "/default/?", "permissions!1?", "function-declaration!1"],
       ["/export/", "/default/?", "permissions!1?", "variable-declaration!1"],
-      [
-        "/export/", "/default/?", "permissions!1?", /\{/,
-        "named-export-list!1?", /\}/, "/;/"
-      ],
-      ["/export/", "/default/?", "permissions!1?", "expression", "/;/"],
-      ["/export/", "/default/?", "permissions!1?", "expression"],
+      ["/export/", "/default/", "permissions!1?", "expression-statement"],
+      ["/export/", "permissions!1?", /\{/, "named-export-list!1?", /\}/, "/;/"],
     ],
     process: (children, ruleInd) => {
-      // TODO: Correct.
-      let stmt, flagStr, namedExportArr;
-      if (ruleInd === 0) {
-        flagStr = children[3].str;
-        stmt = children[4];
-      } else if (ruleInd === 1) {
-        flagStr = "";
-        stmt = children[3];
-      } else if (ruleInd === 2) {
-        stmt = children[2];
-      } else if (ruleInd === 3) {
-        flagStr = children[2].str;
-        namedExportArr = children[4][0]?.children;
-      } else if (ruleInd === 4) {
-        flagStr = children[2].str;
-        stmt = children[3];
-      } else if (ruleInd === 5) {
-        flagStr = "";
-        namedExportArr = children[3][0]?.children;
-      } else if (ruleInd === 5) {
-        flagStr = "";
-        stmt = children[2];
-      } else if (ruleInd === 6) {
-        namedExportArr = children[2][0]?.children;
-      } else {
-        stmt = children[1];
-      }
-
-      let allowedStmtTypes = (ruleInd === 2) ? [
-        "function-declaration", "variable-declaration", "expression-statement"
-      ] : [
-        "function-declaration", "variable-declaration"
-      ];
-      let isExpStmt = (stmt.subtype === "expression-statement");
-      if (stmt && !allowedStmtTypes.includes(stmt.type)) {
-        if (isExpStmt) {
-          return "Unnamed export for a non-default export statement";
+      let ret;
+      if (ruleInd <= 2) {
+        ret = {
+          type: "export-statement",
+          flagStr: children[2][0]?.flagStr,
+          isProtected: (flagStr !== undefined) ? true : false,
+        }
+        if (ruleInd <= 1) {
+          ret.isDefault = children[1][0] ? true : false;
+          ret.stmt = children[3];
         } else {
-          return "Export statement must be a function or variable declaration";
+          ret.isDefault = true;
+          ret.exp = children[3];
+        }
+        if (ruleInd === 0) {
+          ret.ident = children[3].name;
+        }
+        if (ruleInd === 1) {
+          let {decType, defArr} = children[3];
+          if (decType !== "definition-list" || defArr.length !== 1) {
+            return "Invalid variable declaration for export statement (only " +
+              "one variable allowed, and no destructuring)";
+          }
+          ret.ident = defArr[0].ident;
         }
       }
-
-      let exportArr;
-      if (isExpStmt) {
-        exportArr = [];
-      } else if (namedExportArr) {
-        exportArr = namedExportArr.map(ex => [ex.ident, ex.alias]);
-      } else if (stmt.name) {
-        exportArr = [[stmt.name]];
-      } else {
-        exportArr = stmt.identArr.map(ident => [ident]);
+      else {
+        ret = {
+          type: "export-statement",
+          subtype: "named-exports",
+          namedExportArr: children[3].children,
+        };
       }
-
-      let isDefault = (ruleInd <= 2);
-      if (isDefault && exportArr.length > 1) {
-        return "Only one default export allowed";
-      }
-      return {
-        type: "export-statement",
-        isDefault: isDefault,
-        stmt: stmt,
-        isProtected: (flagStr !== undefined),
-        flagStr: flagStr,
-        exportArr: exportArr,
-      }
+      return ret;
     },
   },
   "permissions": {

@@ -44,6 +44,7 @@ export class ScriptInterpreter {
       reqUserID: reqUserID, scriptID: scriptID, permissions: permissions,
       setting: settings, shouldExit: false, resolveScript: undefined,
       scriptInterpreter: this, parsedEntities: parsedEntities,
+      liveModules: {},
     };
 
     // First create global environment if not yet done, and then create an
@@ -67,16 +68,18 @@ export class ScriptInterpreter {
         let {error, parsedEnt} = await this.dataFetcher.fetchAndParseEntity(
           gas, scriptID, "s"
         );
-        if (error) throw new RuntimeError(error);
+        if (error) throw new PreprocessingError(error);
         parsedScript = parsedEnt;
         parsedEntities.set(scriptID, parsedScript);
       }
     }
 
-    // Then execute the script as a module, and try-catch any exceptions or
-    // errors.
+    // Then execute the script as a module, followed by an execution of any
+    // function called 'main,' or the default export if no 'main' function is
+    // found, and make sure to try-catch any exceptions or errors.
     try {
-      await this.executeModule(parsedScript, scriptInputs, globalEnv);
+      let liveScriptEnv = await this.executeModule(parsedScript, globalEnv);
+      this.executeMainFunction(liveScriptEnv, scriptInputs);
     }
     catch (err) {
       // TODO: Correct:
@@ -184,18 +187,6 @@ export class ScriptInterpreter {
 
 
 
-  checkPermissions(flagStr, requiredFlagStr) {
-    let flagArr = flagStr.split("");
-    let requiredFlagArr = requiredFlagStr.split("");
-    for (let requiredFlag of requiredFlagArr) {
-      if (!flagArr.includes(requiredFlag)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-
 
 
 
@@ -208,11 +199,6 @@ export class ScriptInterpreter {
     let moduleEnv = new Environment(
       globalEnv, undefined, "module", moduleID, moduleInputs
     );
-
-    // Then first execute header statements, before the import statement block.
-    moduleNode.headerStmtArr.forEach((stmt) => {
-      this.executeStatement(stmt, moduleEnv);
-    });
 
     // Then run all the import statements in parallel and get their live
     // environments, but without making any changes to moduleEnv yet.
@@ -229,12 +215,14 @@ export class ScriptInterpreter {
       this.finalizeImportStatement(impStmt, submoduleEnvArr[ind], moduleEnv);
     });
 
-    // And finally, execute the body of the script, consisting of "outer
-    // statements" (export statements as well as normal statements).
-    moduleNode.bodyStmtArr.forEach((stmt) => {
+    // Then execute the body of the script, consisting of "outer statements"
+    // (export statements as well as normal statements).
+    moduleNode.stmtArr.forEach((stmt) => {
       this.executeOuterStatement(stmt, moduleEnv);
     });
-    return;
+
+    // And finally add the
+    return moduleEnv;
   }
 
 
@@ -242,23 +230,21 @@ export class ScriptInterpreter {
 
   async executeSubmoduleOfImportStatement(impStmt, callerModuleEnv, globalEnv) {
     decrCompGas(globalEnv);
+    let {liveModules} = globalEnv.scriptGlobals;
 
     // Evaluate the submodule entity reference expression (right after 'from').
-    let submoduleRef = this.evaluateExpression(
+    let submoduleRef = impStmt.moduleRef;
+    if (!submoduleRef.id) throw new PreprocessingError(
+      `Importing from a TBD module`,
       impStmt.moduleExp, callerModuleEnv
     );
-    if (submoduleRef instanceof EntityPlaceholder) {
-      throw new RuntimeError (
-        `Importing from a TBD module`,
-        impStmt.moduleExp, callerModuleEnv
-      );
-    } else if (!(submoduleRef instanceof EntityReference)) {
-      throw new RuntimeError (
-        `Module is not an entity reference`,
-        impStmt.moduleExp, callerModuleEnv
-      );
-    }
     let moduleID = submoduleRef.id;
+
+    // If the module has already been executed, we can return early.
+    let existingEnv = liveModules["#" + moduleID];
+    if (existingEnv) {
+      return existingEnv;
+    }
 
     // Also evaluate all the module inputs, if any.
     let submoduleInputs = impStmt.moduleInputArr.map(inputExp => (
@@ -277,8 +263,11 @@ export class ScriptInterpreter {
     }
 
     // Then execute the module, inside the global environment, and return the
-    // resulting environment.
-    return await this.executeModule(submoduleNode, submoduleInputs, globalEnv);
+    // resulting environment, after also adding it to liveModules.
+    let liveEnv = await this.executeModule(
+      submoduleNode, submoduleInputs, globalEnv
+    );
+    return liveModules["#" + moduleID] = liveEnv;
   }
 
 
@@ -286,6 +275,7 @@ export class ScriptInterpreter {
 
   finalizeImportStatement(impStmt, submoduleEnv, moduleEnv) {
     decrCompGas(moduleEnv);
+    let {permissions} = moduleEnv.scriptGlobals; 
 
     // Iterate through all the imports and add each import to the environment.
     impStmt.importArr.forEach(imp => {
@@ -295,10 +285,23 @@ export class ScriptInterpreter {
         moduleEnv.declare(imp.ident, namespaceObj, true, imp);
       }
       else if (impType === "protected-import") {
+        // For a protected namespace import, we first check if the required
+        // permissions are granted to allow for the given import flags.
+        let moduleID = moduleEnv.moduleID;
+        let submoduleID = impStmt.moduleRef.id;
         let impFlagStr = imp.flagStr;
+        if (!checkPermissions(impFlagStr, moduleID, submoduleID, permissions)) {
+          throw new PreprocessingError(
+            `Module @[${moduleID}] imports from Module @[${submoduleID}] ` +
+            `with permissions "${impFlagStr}" not granted`
+          );
+        }
+        // Then we construct and declare a "protected object" which only
+        // includes the 'public' exports, and the 'protected' exports where the
+        // export flags are all included among the import flags. 
         let protObj = new ProtectedObject(
           submoduleEnv.getProtectedExports().filter(([ , , exFlagStr]) => (
-            this.checkPermissions(impFlagStr, exFlagStr)
+            this.checkPermissionFlags(impFlagStr, exFlagStr)
           )
         ));
         moduleEnv.declare(imp.ident, protObj, true, imp);
@@ -326,6 +329,31 @@ export class ScriptInterpreter {
 
 
 
+  checkPermissions(flagStr, importerID, exporterID, permissions) {
+    let globalFlags = permissions.global;
+    let importFlags = permissions.import["#" + importerID];
+    let exportFlags = permissions.export["#" + exporterID];
+    let importExportFlags =
+      permissions.importExport["#" + importerID]["#" + exporterID];
+    let combPermissions = globalFlags + importFlags + exportFlags +
+      importExportFlags;
+    return this.checkPermissionFlags(combPermissions, flagStr);
+  }
+
+  checkPermissionFlags(flagStr, requiredFlagStr) {
+    let flagArr = flagStr.split("");
+    let requiredFlagArr = requiredFlagStr.split("");
+    for (let requiredFlag of requiredFlagArr) {
+      if (!flagArr.includes(requiredFlag)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+
+
+
   executeOuterStatement(stmtNode, environment) {
     let type = stmtNode.type;
     switch (type) {
@@ -347,6 +375,10 @@ export class ScriptInterpreter {
 
   executeExportStatement(stmtNode, environment) {
     decrCompGas(environment);
+
+    if (stmtNode.subtype === "named-exports") {
+      stmtNode
+    }
 
     let stmt = stmtNode.stmt;
     if (stmt) {
@@ -374,6 +406,34 @@ export class ScriptInterpreter {
 
 
 
+  executeMainFunction(scriptEnv, inputArr, scriptNode) {
+    let mainFun;
+    try {
+      mainFun = scriptEnv.get("main", scriptNode, scriptEnv);
+    }
+    catch (err) {
+      if (!(err instanceof RuntimeError)) throw err;
+      try {
+        mainFun = scriptEnv.get("default", scriptNode, scriptEnv);
+      }
+      catch (err) {
+        if (!(err instanceof RuntimeError)) throw err;
+      }
+    }
+    if (
+      mainFun instanceof DefinedFunction ||
+      mainFun instanceof ThisBoundFunction
+    ) {
+      this.executeFunction(
+        mainFun, inputArr, callerNode, scriptNode, scriptEnv
+      );
+    }
+    // If no main function was found, simply do nothing (expecting the script
+    // to eventually exit itself via a callback function (or timing out)).
+  }
+
+
+
 
 
   executeFunction(fun, inputArr, callerNode, callerEnv) {
@@ -387,9 +447,15 @@ export class ScriptInterpreter {
     // Then execute the function depending on its type.
     let ret;
     if (fun instanceof DefinedFunction) {
-      ret = this.executeDefinedFunction(
-        fun.node, fun.decEnv, inputArr, callerNode, callerEnv, thisVal
-      );
+      if (fun.isProtected) {
+        ret = this.executeProtectedObjectMethod(
+          fun.node, fun.decEnv, inputArr, callerNode, callerEnv, thisVal
+        );
+      } else {
+        ret = this.executeDefinedFunction(
+          fun.node, fun.decEnv, inputArr, callerNode, callerEnv, thisVal
+        );
+      }
     }
     else if (fun instanceof BuiltInFunction) {
       ret = this.executeBuiltInFunction(
@@ -957,7 +1023,6 @@ export class ScriptInterpreter {
         let inputValArr = inputExpArr.map(exp => (
           this.evaluateExpression(exp, environment)
         ));
-
         return this.executeFunction(
           fun, inputValArr, expNode, environment
         );
@@ -1101,11 +1166,10 @@ export class ScriptInterpreter {
       expNode.type === "member-access" && !expNode.postfix.isOpt
     ) {
       // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
-      let expVal, indexVal, isStruct;
+      let expVal, indexVal, isProtected;
       try {
-        [expVal, indexVal, isStruct] = this.getMemberAccessExpValAndSafeIndex(
-          expNode, environment
-        );
+        [expVal, indexVal, isProtected, isThisAccess] =
+          this.getMemberAccessExpValAndSafeIndex(expNode, environment);
       } catch (err) {
         // If err is an BrokenOptionalChainException, do nothing and return
         // undefined.
@@ -1117,10 +1181,13 @@ export class ScriptInterpreter {
       }
 
       // Throw runtime error if trying to mute a struct.
-      if (isStruct) throw new RuntimeError(
+      if (isProtected && !isThisAccess) throw new RuntimeError(
         "Assignment to a member of an immutable object",
         expNode, environment
       );
+
+      // TODO: Correct such that isThisAccess and (expVal instanceof
+      // ProtectedObject) is handled correctly, muting the protected object.
 
       // Then assign the member of our expVal and return the value specified by
       // assignFun.
@@ -1158,7 +1225,7 @@ export class ScriptInterpreter {
     // If expVal is an array, check that indexVal is a non-negative
     // integer, and if it is an object, append "#" to the indexVal.
     let valType = getType(expVal);
-    let isStruct = (valType === "struct");
+    let isProtected = (valType === "struct");
     if (valType === "array") {
       indexVal = parseInt(indexVal);
       if (!(indexVal >= 0 && indexVal <= MAX_ARRAY_INDEX)) {
@@ -1169,7 +1236,7 @@ export class ScriptInterpreter {
         );
       }
     }
-    else if (valType !== "object" && !isStruct) {
+    else if (valType !== "object" && !isProtected) {
       throw new RuntimeError(
         "Accessing or assignment to a member of a non-object",
         memAccNode, environment
@@ -1179,7 +1246,8 @@ export class ScriptInterpreter {
       indexVal = "#" + indexVal;
     }
 
-    return [expVal, indexVal, isStruct];
+    let isThisAccess = (memAccNode.exp.type === "this-keyword");
+    return [expVal, indexVal, isProtected, isThisAccess];
   }
 
 }
@@ -1293,6 +1361,15 @@ export class Environment {
     }
   }
 
+
+  export(ident, alias, isProtected, flagStr, node, nodeEnvironment) {
+    let entry = this.#get(ident, node, nodeEnvironment);
+    entry[2] = true;
+    entry[3] = isProtected;
+    entry[4] = flagStr;
+    // TODO: Oh, the alias.. So I should probably go back to having the exports
+    // object..
+  }
 
   getExports() {
     return Object.entries(this.variables)
