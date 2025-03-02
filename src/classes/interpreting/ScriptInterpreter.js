@@ -78,7 +78,6 @@ export class ScriptInterpreter {
       this.executeMainFunction(liveScriptEnv, mainInputs);
     }
     catch (err) {
-      // TODO: Correct:
       // If any non-internal error occurred, log it in log.error and set
       // shouldExit to true (both contained in globalEnv).
       this.handleException(err, globalEnv);
@@ -89,17 +88,19 @@ export class ScriptInterpreter {
       return [scriptGlobals.output, scriptGlobals.log];
     }
 
-    // TODO: Correct:
-    // Else we create and wait for a promise for obtaining the log, which might
-    // be resolved by a custom callback function within the script, waiting to
-    // be called, possibly after some data has been fetched. We also set a timer
-    // dependent on gas.time, which might resolve the log with an error first.
+    // Else we create and wait for a promise for obtaining the output and log,
+    // which might be resolved by a custom callback function within the script,
+    // waiting to be called, possibly after some data has been fetched. We also
+    // set a timer dependent on gas.time, which might resolve the log with an
+    // error first.
     else {
       if (gas.time >= 10) {
         // Create a new promise to get the log, and store a modified resolve()
         // callback on scriptGlobals (which is contained by globalEnv).
-        let logPromise = new Promise(resolve => {
-          scriptGlobals.resolveScript = () => resolve(scriptGlobals.log);
+        let outputPromise = new Promise(resolve => {
+          scriptGlobals.resolveScript = () => resolve(
+            [scriptGlobals.output, scriptGlobals.log]
+          );
         });
 
         // Then set an expiration time after which the script resolves with an
@@ -122,7 +123,7 @@ export class ScriptInterpreter {
         scriptGlobals.log.error = new OutOfGasError(
           "Ran out of " + GAS_NAMES.time + " gas (no exit statement reached)"
         );
-        return scriptGlobals.log;
+        return [undefined, scriptGlobals.log];
       }
     }
   }
@@ -146,32 +147,33 @@ export class ScriptInterpreter {
 
 
   handleException(err, environment) {
-    let scriptGlobals = environment.scriptGlobals, {log} = scriptGlobals; 
+    let scriptGlobals = environment.scriptGlobals, {log} = scriptGlobals;
     if (
       err instanceof LexError || err instanceof SyntaxError ||
       err instanceof PreprocessingError || err instanceof RuntimeError ||
       err instanceof CustomException || err instanceof OutOfGasError
     ) {
       log.error = err;
+      scriptGlobals.shouldExit = true;
     } else if (err instanceof ReturnException) {
       log.error = new RuntimeError(
         "Cannot return from outside of a function",
-        err.node, environment
+        err.node, err.environment
       );
     } else if (err instanceof CustomException) {
       log.error = new RuntimeError(
         `Uncaught exception: "${err.val.toString()}"`,
-        err.node, environment
+        err.node, err.environment
       );
     } else if (err instanceof BreakException) {
       log.error = new RuntimeError(
         `Invalid break statement outside of loop`,
-        err.node, environment
+        err.node, err.environment
       );
     } else if (err instanceof ContinueException) {
       log.error = new RuntimeError(
         `Invalid continue statement outside of loop or switch-case statement`,
-        err.node, environment
+        err.node, err.environment
       );
     } else if (err instanceof ExitException) {
       scriptGlobals.shouldExit = true;
@@ -474,9 +476,8 @@ export class ScriptInterpreter {
 
 
   // This method is supposed to be overwritten in a client-side extension of
-  // this class, in particular in order to send all methods with a "w" or "W"
-  // flag (for "write data (as user)") to be executed server-side instead,
-  // always.
+  // this class, in particular in order to always send all methods with a "w" or "W"
+  // flag (for "write data (as user)") to be executed server-side.
   executeProtectedObjectMethod(
     funNode, funDecEnv, inputValueArr, callerNode, callerEnv, thisVal,
     thisFlags // unused here, but will be used in the client-side extension.
@@ -488,11 +489,13 @@ export class ScriptInterpreter {
 
 
 
+
   executeDefinedFunction(
     funNode, funDecEnv, inputValueArr, callerNode, callerEnv,
     thisVal = undefined,
   ) {
     decrCompGas(callerEnv);
+    let scriptGlobals = callerEnv.scriptGlobals;
 
     // Initialize a new environment for the execution of the function.
     let newEnv = new Environment(funDecEnv, "function", thisVal);
@@ -512,8 +515,21 @@ export class ScriptInterpreter {
       if (err instanceof ReturnException) {
         return err.val;
       }
-      else {
-        this.handleException(err, callerEnv);
+      else if (err instanceof ExitException) {
+        scriptGlobals.shouldExit = true;
+        if (scriptGlobals.resolveScript) scriptGlobals.resolveScript();
+      }
+      else if (err instanceof BreakException) {
+        throw new RuntimeError(
+          `Invalid break statement outside of loop`,
+          err.node, err.environment
+        );
+      }
+      else if (err instanceof ContinueException) {
+        throw new RuntimeError(
+          `Invalid continue statement outside of loop or switch-case statement`,
+          err.node, err.environment
+        );
       }
     }
 
