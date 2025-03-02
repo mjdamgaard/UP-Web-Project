@@ -23,13 +23,10 @@ function getParsingGasCost(str) {
 
 export class ScriptInterpreter {
 
-  constructor(builtInFunctions, builtInConstants, options) {
+  constructor(builtInFunctions, builtInConstants, dataFetcher) {
     this.builtInConstants = builtInConstants;
     this.builtInFunctions = builtInFunctions;
-    this.options = options;
-    this.dataFetcher = options?.dataFetcher ?? (() => {
-      throw "ScriptInterpreter: options.dataFetcher is undefined";
-    })();
+    this.dataFetcher = dataFetcher;
   }
 
 
@@ -135,7 +132,7 @@ export class ScriptInterpreter {
 
   createGlobalEnvironment(scriptGlobals) {
     let globalEnv = new Environment(
-      undefined, undefined, "global", undefined, scriptGlobals
+      undefined, "global", undefined, undefined, undefined, scriptGlobals
     );
     Object.entries(this.builtInFunctions).forEach(([funName, fun]) => {
       globalEnv.declare(funName, fun, true);
@@ -195,7 +192,7 @@ export class ScriptInterpreter {
 
     // Create a new environment for the module.
     let moduleEnv = new Environment(
-      globalEnv, undefined, "module", moduleID
+      globalEnv, "module", undefined, undefined, moduleID
     );
 
     // Then run all the import statements in parallel and get their live
@@ -291,6 +288,7 @@ export class ScriptInterpreter {
         // includes the 'public' exports, and the 'protected' exports where the
         // export flags are all included among the import flags. 
         let protObj = new ProtectedObject(
+          submoduleID,
           submoduleEnv.getProtectedExports().filter(([ , , exFlagStr]) => (
             this.checkPermissionFlags(impFlagStr, exFlagStr)
           )
@@ -430,27 +428,30 @@ export class ScriptInterpreter {
   executeFunction(fun, inputArr, callerNode, callerEnv) {
     // Potentially get function and thisVal from ThisBoundFunction wrapper.
     let thisVal = undefined;
+    let thisFlags = undefined;
     if (fun instanceof ThisBoundFunction) {
       thisVal = fun.thisVal;
+      thisFlags = fun.thisFlags;
       fun = fun.funVal;
     }
 
     // Then execute the function depending on its type.
     let ret;
     if (fun instanceof DefinedFunction) {
-      if (thisVal instanceof ProtectedObject) {
-        ret = this.executeProtectedObjectMethod(
+      if (thisFlags === undefined) {
+        ret = this.executeDefinedFunction(
           fun.node, fun.decEnv, inputArr, callerNode, callerEnv, thisVal
         );
       } else {
-        ret = this.executeDefinedFunction(
-          fun.node, fun.decEnv, inputArr, callerNode, callerEnv, thisVal
+        ret = this.executeProtectedObjectMethod(
+          fun.node, fun.decEnv, inputArr, callerNode, callerEnv, thisVal,
+          thisFlags
         );
       }
     }
     else if (fun instanceof BuiltInFunction) {
       ret = this.executeBuiltInFunction(
-        fun, inputArr, callerNode, callerEnv, thisVal
+        fun, inputArr, callerNode, callerEnv, thisVal, thisFlags
       );
     }
     else throw new RuntimeError(
@@ -468,12 +469,15 @@ export class ScriptInterpreter {
 
 
 
-  executeBuiltInFunction(fun, inputArr, callerNode, callerEnv, thisVal) {
-    payGas(callerEnv, fun.gasCost);
+  executeBuiltInFunction(
+    fun, inputArr, callerNode, callerEnv, thisVal, thisFlags
+  ) {
+    let scriptGlobals = callerEnv.scriptGlobals;
     return fun.fun(
       {
         callerNode: callerNode, callerEnv: callerEnv, thisVal: thisVal,
-        options: this.options, gas: callerEnv.scriptGlobals.gas,
+        thisFlags: thisFlags, gas: scriptGlobals.gas,
+        scriptGlobals: scriptGlobals,
       },
       ...inputArr
     );
@@ -481,16 +485,29 @@ export class ScriptInterpreter {
 
 
 
+  // This method is supposed to be overwritten in a client-side extension of
+  // this class, in particular in order to send all methods with a "w" or "W"
+  // flag (for "write data (as user)") to be executed server-side instead,
+  // always.
+  executeProtectedObjectMethod(
+    funNode, funDecEnv, inputValueArr, callerNode, callerEnv, thisVal,
+    thisFlags // unused here, but will be used in the client-side extension.
+  ) {
+    return this.executeDefinedFunction(
+      funNode, funDecEnv, inputValueArr, callerNode, callerEnv, thisVal
+    )
+  }
+
 
 
   executeDefinedFunction(
     funNode, funDecEnv, inputValueArr, callerNode, callerEnv,
-    thisVal = undefined
+    thisVal = undefined,
   ) {
     decrCompGas(callerEnv);
 
     // Initialize a new environment for the execution of the function.
-    let newEnv = new Environment(funDecEnv, thisVal, "function");
+    let newEnv = new Environment(funDecEnv, "function", thisVal, thisFlags);
 
     // Add the input parameters to the environment.
     this.declareInputParameters(
@@ -1041,10 +1058,11 @@ export class ScriptInterpreter {
       }
       case "member-access": {
         // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
-        let expVal, indexVal, isImmutable;
+        let expVal, indexVal, isImmutable, isProtected, isThisAccess;
         try {
-          [expVal, indexVal, isImmutable] =
-            this.getMemberAccessExpValAndSafeIndex(expNode, environment);
+          [
+            expVal, indexVal, isImmutable, isProtected, isThisAccess
+          ] = this.getMemberAccessExpValAndSafeIndex(expNode, environment);
         } catch (err) {
           // If err is an BrokenOptionalChainException either return undefined,
           // or throw the exception up to the parent if nested in another
@@ -1071,7 +1089,7 @@ export class ScriptInterpreter {
 
         // Then get the value held in expVal.
         let ret = expVal[indexVal];
-        if (isImmutable) {
+        if (isImmutable || isProtected && !isThisAccess) {
           ret = turnImmutable(ret);
         }
 
@@ -1081,12 +1099,12 @@ export class ScriptInterpreter {
         // being called.)
         if (ret instanceof DefinedFunction || ret instanceof BuiltInFunction) {
           ret = new ThisBoundFunction(
-            ret, expVal, (expVal instanceof ProtectedObject)
+            ret, expVal, isProtected ? expVal.flags[indexVal] : undefined
           );
         }
         else if (ret instanceof ThisBoundFunction) {
           ret = new ThisBoundFunction(
-            ret.funVal, expVal, (expVal instanceof ProtectedObject)
+            ret.funVal, expVal, isProtected ? expVal.flags[indexVal] : undefined
           );
         }
 
@@ -1114,7 +1132,7 @@ export class ScriptInterpreter {
         return Object.fromEntries(memberEntries);
       }
       case "this-keyword": {
-        return environment.get("this");
+        return environment.getThisVal(expNode, environment);
       }
       case "entity-reference": {
         if (expNode.id) {
@@ -1159,9 +1177,9 @@ export class ScriptInterpreter {
       expNode.type === "member-access" && !expNode.postfix.isOpt
     ) {
       // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
-      let expVal, indexVal, isImmutable, isProtected, isThisAccess;
+      let expVal, indexVal, isImmutable, isProtected;
       try {
-        [expVal, indexVal, isImmutable, isProtected, isThisAccess] =
+        [expVal, indexVal, isImmutable, isProtected] =
           this.getMemberAccessExpValAndSafeIndex(expNode, environment);
       } catch (err) {
         // If err is an BrokenOptionalChainException, do nothing and return
@@ -1175,14 +1193,21 @@ export class ScriptInterpreter {
 
       // Throw runtime error if trying to mute an protected object from outside
       // its own methods, or if the object is immutable.
-      if (isProtected && !isThisAccess || isImmutable) throw new RuntimeError(
-        "Assignment to a member of an immutable object",
+      if (isImmutable || isProtected && !isThisAccess) throw new RuntimeError(
+        "Assignment to a member of an immutable or protected object",
+        expNode, environment
+      );
+      let prevVal = expVal[indexVal];
+      if (
+        isProtected && isThisAccess && isFunction(prevVal)
+      ) throw new RuntimeError(
+        "Cannot overwrite a method of a protected object",
         expNode, environment
       );
 
       // Then assign the member of our expVal and return the value specified by
       // assignFun.
-      let [newVal, ret] = assignFun(expVal[indexVal]);
+      let [newVal, ret] = assignFun(prevVal);
       expVal[indexVal] = newVal;
       return ret;
     }
@@ -1257,12 +1282,14 @@ export class ScriptInterpreter {
 
 export class Environment {
   constructor(
-    parent = undefined, thisVal = undefined, scopeType = "block",
-    moduleID = undefined, scriptGlobals = undefined
+    parent = undefined, scopeType = "block", thisVal = undefined,
+    thisFlags = undefined, moduleID = undefined, scriptGlobals = undefined
   ) {
     this.parent = parent;
-    this.variables = {"#this": thisVal ?? UNDEFINED};
     this.scopeType = scopeType;
+    if (scopeType === "function") {
+      this.variables = {"#this": [thisVal, thisFlags]};
+    }
     this.moduleID = moduleID ?? parent?.moduleID ?? undefined;
     this.scriptGlobals = scriptGlobals ?? parent?.scriptGlobals ?? (() => {
       throw "Environment: No scriptGlobals object provided";
@@ -1270,8 +1297,6 @@ export class Environment {
     if (scopeType === "module") {
       this.exports = {};
       this.defaultExport = undefined;
-      let settingsObj = getSafeObj(scriptGlobals.settings);
-      this.declare("settings", settingsObj, true);
     }
   }
 
@@ -1296,7 +1321,7 @@ export class Environment {
   }
 
 
-  get(ident, node, nodeEnvironment = undefined) {
+  get(ident, node, nodeEnvironment) {
     let entry = this.#get(ident, node, nodeEnvironment);
     let [val, , , , , isFromOutsideFunctionScope] = entry;
     if (isFromOutsideFunctionScope) {
@@ -1306,16 +1331,28 @@ export class Environment {
     }
   }
 
-  getExported(ident, node, nodeEnvironment = undefined) {
+  getExported(ident, node, nodeEnvironment) {
     let entry = this.#get(ident, node, nodeEnvironment);
     let [val, , isExported] = entry;
     return (isExported) ? val : UNDEFINED;
   }
 
-  getProtected(ident, node, nodeEnvironment = undefined) {
+  getProtected(ident, node, nodeEnvironment) {
     let entry = this.#get(ident, node, nodeEnvironment);
     let [val, , isExported, isProtected, flagStr] = entry;
     return (isExported && isProtected) ? [val, flagStr]  : UNDEFINED;
+  }
+
+  getThisVal(node, nodeEnvironment) {
+    let entry = this.#get("this", node, nodeEnvironment);
+    let [[thisVal], , , , , isFromOutsideFunctionScope] = entry;
+    return isFromOutsideFunctionScope ? undefined : thisVal;
+  }
+
+  getThisFlags(node, nodeEnvironment) {
+    let entry = this.#get("this", node, nodeEnvironment);
+    let [[ , thisFlags], , , , , isFromOutsideFunctionScope] = entry;
+    return isFromOutsideFunctionScope ? undefined : thisFlags;
   }
 
 
@@ -1474,7 +1511,12 @@ export function getType(val) {
   else return jsType;
 }
 
-
+export function isFunction(val) {
+  return (
+    val instanceof DefinedFunction || val instanceof BuiltInFunction ||
+    val instanceof ThisBoundFunction
+  );
+}
 
 
 
@@ -1496,17 +1538,20 @@ export class BuiltInFunction {
 }
 
 export class ThisBoundFunction {
-  constructor(funVal, thisVal, isProtected = false) {
+  constructor(funVal, thisVal, thisFlags) {
     this.funVal = funVal;
     this.thisVal = thisVal;
-    this.isProtected = isProtected;
+    this.thisFlags = thisFlags;
   }
 }
 
 export class ProtectedObject {
-  constructor(safeIdentPropValAndFlagStrTriples) {
+  constructor(moduleID, safeIdentPropValAndFlagStrTriples) {
+    this.moduleID = moduleID;
+    let flags = this.flags = {};
     safeIdentPropValAndFlagStrTriples.forEach(([safeIdent, val, flagStr]) => {
-      this[safeIdent] = [val, flagStr];
+      this[safeIdent] = val;
+      flags[safeIdent] = flagStr;
     });
   }
 }
