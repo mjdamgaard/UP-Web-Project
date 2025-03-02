@@ -14,28 +14,29 @@ export class LRUCache extends GeneralCache {
   // entry = [value, priority].
 
   get firstEntryPriority() {
-    return this.getFirstVal()[1];
+    return this.getFirstEntry()[1];
   }
 
   get(key, priority = 1) {
-    let val = this.getVal(key);
-    if (val !== undefined) {
-      this.updateCurEntryVal(entry => entry[1] += priority);
-      this.moveCurEntryInFront();
+    let entry = this.getEntry(key);
+    if (entry !== undefined) {
+      this.updateCurElemEntry(entry => entry[1] += priority);
+      this.moveCurElemInFront();
     }
-    return val;
+    return entry[0];
   }
 
 
   set(key, val, evictionCallback = () => {}, priority = 1) {
-    let didExist = this.setPrevOrAppendNewEntry(key, [val, 1], entry => {
+    let didExist = this.setPrevOrAppendNewElem(key, [val, 1], entry => {
       entry[0] = val;
       entry[1] += priority;
     });
     if (didExist) {
-      this.moveCurEntryInFront();
-    } else if (this.size > this.limit) {
-      this.evictLastEntry((key, [val, priority]) => {
+      this.moveCurElemInFront();
+    }
+    else if (this.size > this.limit) {
+      this.evictLastElem((key, [val, priority]) => {
         evictionCallback(key, val, priority);
       });
     }
@@ -43,10 +44,11 @@ export class LRUCache extends GeneralCache {
 
 
   remove(key, evictionCallback) {
-    return evictEntry(key, (key, [val, priority]) => {
+    return this.evictElem(key, (key, [val, priority]) => {
       evictionCallback(key, val, priority);
     });
   }
+
 
   forEach(callback) {
     let moddedCallback = ([val, priority], ind, key) => {
@@ -54,7 +56,6 @@ export class LRUCache extends GeneralCache {
     };
     super.forEach(moddedCallback);
   }
-
 
 }
 

@@ -1,124 +1,63 @@
 
-import {IDTree} from "./IDTree.js";
+import GeneralCache from "./GeneralCache.js";
 
 
 
-export class PriorityCache {
+export class PriorityCache extends GeneralCache {
 
   constructor(limit) {
+    super();
     this.limit = limit;
-    this.cache = new IDTree();
-    this.firstEntry = [undefined, [], undefined, 0];
-    this.virtualLastEntry = [undefined, this.firstEntry, [], Infinity];
-    this.firstEntry[2] = this.virtualLastEntry;
-    this.entryNum = 1;
   }
 
-  // cache = {["#" + key]: entry, ...},
-  // entry = [value, prevEntry, nextEntry, priority, key].
+  // entry = [value, priority].
 
   get minPriority() {
-    return this.firstEntry[1];
+    return this.getFirstEntry()[1];
   }
   get maxPriority() {
-    return this.lastVirtualEntry[2][1];
+    return this.getLastEntry()[1];
   }
 
 
   get(key, priority = 1) {
-    let entry = this.cache.get(key);
-
-    if (entry) {
-      // Increase priority.
-      entry[3] += priority;
-
-      // Update queue.
-      this.#moveEntryUpToRightPlace(entry);
-
-      // Return value.
-      return entry[0];
+    let entry = this.getEntry(key);
+    if (entry !== undefined) {
+      this.updateCurElemEntry(entry => entry[1] += priority);
+      this.moveCurElemUpWhile((entry, nextEntry) => entry[1] > nextEntry[1]);
     }
-    else {
-      return undefined;
-    }
+    return entry[0];
   }
 
-
-  set(key, val, priority = 1, evictionCallback = () => {}) {
-    let entry = this.cache.get(key);
-
-    if (entry) {
-      // Set new value and increase priority.
+  set(key, val, evictionCallback = () => {}, priority = 1) {
+    let didExist = this.setPrevOrAppendNewElem(key, [val, 1], entry => {
       entry[0] = val;
-      entry[3] += priority;
-
-      // Update queue.
-      this.#moveEntryUpToRightPlace(entry);
+      entry[1] += priority;
+    });
+    if (didExist) {
+      this.moveCurElemUpWhile((entry, nextEntry) => entry[1] > nextEntry[1]);
     }
-    else {
-      // Insert new entry.
-      let entry = [val, [], this.firstEntry, priority, key];
-      this.cache.set(key, entry);
-      this.firstEntry[1] = entry;
-      this.firstEntry = entry;
-
-      // Update queue.
-      this.#moveEntryUpToRightPlace(entry);
-
-      // Evict first entry if the cache is full.
-      if (this.limit < ++this.entryNum) {
-        let [firstVal,,, firstPriority, firstKey] = this.firstEntry;
-        this.firstEntry = this.firstEntry[2];
-        this.firstEntry[1] = [];
-        this.cache.remove(firstKey);
-        this.entryNum--;
-  
-        // Call evictionCallback() on the properties of the evicted entry.
-        evictionCallback(firstKey, firstVal, firstPriority);
-      }
+    else if (this.size > this.limit) {
+      this.evictFirstElem((key, [val, priority]) => {
+        evictionCallback(key, val, priority);
+      });
     }
   }
 
 
-  #moveEntryUpToRightPlace(entry) {
-    let nextEntry = entry[2];
-    let prevEntry = entry[1];
-    while (entry[3] > nextEntry[3]) {
-      // Move the element up one place.
-      entry[2] = nextEntry[2];
-      entry[1] = nextEntry;
-      nextEntry[2] = entry;
-      nextEntry[1] = prevEntry;
-      prevEntry[2] = nextEntry;
-
-      // Update what nextEntry refers to.
-      nextEntry = entry[2];
-    }
+  remove(key, evictionCallback) {
+    return this.evictElem(key, (key, [val, priority]) => {
+      evictionCallback(key, val, priority);
+    });
   }
 
 
-
-
-  remove(key) {
-    let entry = this.cache.get(key);
-
-    if (entry) {
-      // Remove entry from cache and update the queue.
-      this.cache.remove(key);
-      if (this.firstEntry === entry) {
-        this.firstEntry[0] = undefined;
-        this.firstEntry[4] = undefined;
-        this.firstEntry[3] = 0;
-      }
-      else {
-        entry[1][2] = entry[2];
-        entry[2][1] = entry[1];
-      }
-      return true;
-    }
-    return false;
+  forEach(callback) {
+    let moddedCallback = ([val, priority], ind, key) => {
+      callback(val, priority, ind, key);
+    };
+    super.forEach(moddedCallback);
   }
-
 
 }
 

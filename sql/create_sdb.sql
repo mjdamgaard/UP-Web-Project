@@ -29,7 +29,7 @@ DROP TABLE DebugLogEntries;
 /* Scores / entity lists tables  */
 
 -- The default _01 entity lists use VARCHARs and convention of using
--- hexadecimal-encoded numbers  
+-- decimal numbers (in its API; can by implemented more compactly underneath).
 
 CREATE TABLE DataStructures_01 (
 
@@ -277,7 +277,8 @@ CREATE TABLE FulltextIndexEntries (
 
     FULLTEXT idx (text_str)
 
-) ENGINE = InnoDB;
+)
+ENGINE = InnoDB;
 
 
 

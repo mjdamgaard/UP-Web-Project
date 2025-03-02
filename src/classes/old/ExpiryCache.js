@@ -1,5 +1,5 @@
 
-import {IDTree} from "./IDTree.js";
+import {IDTree} from "../caching/IDTree.js";
 
 
 
