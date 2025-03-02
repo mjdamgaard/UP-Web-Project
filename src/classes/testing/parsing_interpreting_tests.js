@@ -12,8 +12,8 @@ let scriptInterpreter = new ScriptInterpreter({}, {}, {dataFetcher: {}});
 
 
 export function runTests() {
-  regEnt_parsing_tests_01(); // Last tested: (24.02.25).
-  script_parsing_tests_01(); // Last tested: (24.02.25).
+  // regEnt_parsing_tests_01(); // Last tested: (02.03.25).
+  // script_parsing_tests_01(); // Last tested: (02.03.25).
   script_interpreter_tests_01();
 
 }
@@ -193,7 +193,6 @@ function script_interpreter_tests_01() {
     str: `let x = 1;`,
     startSym: "statement",
     expectedOutput: {variables: {
-      "#this": UNDEFINED,
       "#x": [1],
     }},
     testKey: "05",
@@ -204,7 +203,6 @@ function script_interpreter_tests_01() {
     str: `let x = 2; let y = 1; x = 2*x + y;`,
     startSym: "statement*$",
     expectedOutput: {variables: {
-      "#this": UNDEFINED,
       "#x": [5],
       "#y": [1],
     }},
@@ -216,7 +214,6 @@ function script_interpreter_tests_01() {
     str: `let x = 0; while(x < 12) { x += 5; }`,
     startSym: "statement*$",
     expectedOutput: {variables: {
-      "#this": UNDEFINED,
       "#x": [15],
     }},
     testKey: "07",

@@ -1290,12 +1290,12 @@ export class ScriptInterpreter {
 
 export class Environment {
   constructor(
-    parent = undefined, scopeType = "block", thisVal = undefined,
+    parent = undefined, scopeType = "block", thisVal = UNDEFINED,
     moduleID = undefined, scriptGlobals = undefined
   ) {
     this.parent = parent;
     this.scopeType = scopeType;
-    this.variables = {"#this": thisVal};
+    this.variables = (scopeType === "function") ? {"#this": thisVal} : {};
     this.moduleID = moduleID ?? parent?.moduleID ?? undefined;
     this.scriptGlobals = scriptGlobals ?? parent?.scriptGlobals ?? (() => {
       throw "Environment: No scriptGlobals object provided";
@@ -1340,13 +1340,13 @@ export class Environment {
   getExported(ident, node, nodeEnvironment) {
     let entry = this.#get(ident, node, nodeEnvironment);
     let [val, , isExported] = entry;
-    return (isExported) ? val : UNDEFINED;
+    return (isExported) ? val : undefined;
   }
 
   getProtected(ident, node, nodeEnvironment) {
     let entry = this.#get(ident, node, nodeEnvironment);
     let [val, , isExported, isProtected, flagStr] = entry;
-    return (isExported && isProtected) ? [val, flagStr]  : UNDEFINED;
+    return (isExported && isProtected) ? [val, flagStr]  : undefined;
   }
 
   getThisVal(node, nodeEnvironment) {
