@@ -290,27 +290,22 @@ export class ScriptInterpreter {
         }
         // Then we construct and declare a "protected object."
         let protObj = new ProtectedObject(
-          submoduleID, impFlagStr, liveSubmodule
+          submoduleID, impFlagStr,
+          Object.entries(liveSubmodule).filter(([ , [ , exFlagStr]]) => (
+            this.checkPermissionFlags(impFlagStr, exFlagStr)
+          ))
         );
         moduleEnv.declare(imp.ident, protObj, true, imp);
       }
       else if (impType === "named-imports") {
         imp.namedImportArr.forEach(namedImp => {
-          let ident = namedImp.ident;
+          let ident = namedImp.ident ?? "default";
           let alias = namedImp.alias ?? ident;
-          let val;
-          if (!ident) {
-            val = exports.defaultExport;
-          } else {
-            let origIdent = exports["#" + alias][0];
-            val = submoduleEnv.get(origIdent, namedImp, moduleEnv);
-          }
-          moduleEnv.declare(alias, val, true, namedImp);
+          moduleEnv.declare(alias, liveSubmodule["#" + ident], true, namedImp);
         });
       }
       else {
-        defaultExportVal = submoduleEnv.get("default", namedImp, moduleEnv);
-        moduleEnv.declare(imp.ident, defaultExportVal, true, imp);
+        moduleEnv.declare(imp.ident, liveSubmodule["#default"], true, imp);
       }
     });
   }
@@ -365,29 +360,23 @@ export class ScriptInterpreter {
     decrCompGas(environment);
 
     if (stmtNode.subtype === "named-exports") {
-      stmtNode
+      stmtNode.namedExportArr.forEach(({ident, alias}) => {
+        environment.export(ident, alias, undefined, stmtNode);
+      });
     }
-
-    let stmt = stmtNode.stmt;
-    if (stmt) {
-      if (stmt.type === "expression-statement") {
-        let val = this.evaluateExpression(stmt.exp, environment);
-        environment.exportDefault(val, undefined, stmtNode);
-        return;
-      }
-      this.executeStatement(stmtNode.stmt, environment);
-    }
-    if (stmtNode.isDefault) {
-      let [[ident]] = stmtNode.exportArr;
-      let val = environment.get(ident, stmtNode);
-      environment.exportDefault(val, ident, stmtNode);
+    else if (stmtNode.exp) {
+      let val = this.evaluateExpression(stmtNode.exp, environment);
+      environment.declare("default", val, true, stmtNode);
+      environment.export("default", undefined, stmtNode.flagStr, stmtNode);
     }
     else {
-      let isProtected = stmtNode.isProtected;
-      let flagStr = stmtNode.flagStr;
-      stmtNode.exportArr.forEach(([ident, alias]) => {
-        environment.export(ident, alias, isProtected, flagStr);
-      });
+      this.executeStatement(stmtNode.stmt, environment);
+      environment.export(stmtNode.ident, undefined, stmtNode.flagStr, stmtNode);
+      if (stmtNode.isDefault) {
+        environment.export(
+          stmtNode.ident, "default", stmtNode.flagStr, stmtNode
+        );
+      }
     }
   }
 
@@ -721,7 +710,12 @@ export class ScriptInterpreter {
         };
         let funVal = new DefinedFunction(funNode, environment);
         if (type === "arrow-function") {
-          let thisVal = environment.get("this");
+          let thisVal;
+          try {
+           thisVal = environment.getThisVal();
+          } catch (err) {
+            if (!(err instanceof RuntimeError)) throw err;
+          }
           funVal = new ThisBoundFunction(funVal, thisVal);
         }
         return funVal;
@@ -1349,7 +1343,7 @@ export class Environment {
   }
 
 
-  declare(ident, val, isConst, node, isExported, isProtected, flagStr) {
+  declare(ident, val, isConst, node) {
     val = (val === undefined) ? UNDEFINED : val;
     let safeIdent = "#" + ident;
     let [prevVal] = this.variables[safeIdent] ?? [];
@@ -1360,7 +1354,7 @@ export class Environment {
       );
     } else {
       this.variables[safeIdent] = [
-        val, isConst, isExported, isProtected, flagStr
+        val, isConst
       ];
     }
   }
@@ -1391,7 +1385,7 @@ export class Environment {
   }
 
 
-  export(ident, alias = ident, flagStr, node, nodeEnvironment) {
+  export(ident, alias = ident, flagStr, node, nodeEnvironment = this) {
     flagStr ??= undefined;
     prevExport = this.exports["#" + alias];
     if (prevExport !== undefined) throw new RuntimeError(
@@ -1555,11 +1549,10 @@ export class ThisBoundFunction {
 }
 
 export class ProtectedObject {
-  constructor(moduleID, flagStr, liveModule) {
+  constructor(moduleID, filteredLiveModuleEntries) {
     this.moduleID = moduleID;
-    // TODO: Correct:
     let flags = this.flags = {};
-    safeIdentPropValAndFlagStrTriples.forEach(([safeIdent, val, flagStr]) => {
+    filteredLiveModuleEntries.forEach(([safeIdent, [val, flagStr]]) => {
       this[safeIdent] = val;
       flags[safeIdent] = flagStr;
     });
