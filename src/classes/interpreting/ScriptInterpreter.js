@@ -132,7 +132,7 @@ export class ScriptInterpreter {
 
   createGlobalEnvironment(scriptGlobals) {
     let globalEnv = new Environment(
-      undefined, "global", undefined, undefined, undefined, scriptGlobals
+      undefined, "global", undefined, undefined, scriptGlobals
     );
     Object.entries(this.builtInFunctions).forEach(([funName, fun]) => {
       globalEnv.declare(funName, fun, true);
@@ -192,12 +192,12 @@ export class ScriptInterpreter {
 
     // Create a new environment for the module.
     let moduleEnv = new Environment(
-      globalEnv, "module", undefined, undefined, moduleID
+      globalEnv, "module", undefined, moduleID
     );
 
     // Then run all the import statements in parallel and get their live
     // environments, but without making any changes to moduleEnv yet.
-    let submoduleEnvArr = await Promise.all(
+    let liveSubmoduleArr = await Promise.all(
       moduleNode.importStmtArr.map(impStmt => (
         this.executeSubmoduleOfImportStatement(impStmt, moduleEnv, globalEnv)
       ))
@@ -207,7 +207,7 @@ export class ScriptInterpreter {
     // import statement is paired with the environment from the already
     // executed module, and where the changes are now made to moduleEnv.
     moduleNode.importStmtArr.forEach((impStmt, ind) => {
-      this.finalizeImportStatement(impStmt, submoduleEnvArr[ind], moduleEnv);
+      this.finalizeImportStatement(impStmt, liveSubmoduleArr[ind], moduleEnv);
     });
 
     // Then execute the body of the script, consisting of "outer statements"
@@ -216,8 +216,8 @@ export class ScriptInterpreter {
       this.executeOuterStatement(stmt, moduleEnv);
     });
 
-    // And finally add the
-    return moduleEnv;
+    // And finally get the exported "live module," and return it.
+    return moduleEnv.getLiveModule();
   }
 
 
@@ -253,23 +253,27 @@ export class ScriptInterpreter {
     }
 
     // Then execute the module, inside the global environment, and return the
-    // resulting environment, after also adding it to liveModules.
-    let liveEnv = await this.executeModule(submoduleNode, globalEnv);
-    return liveModules["#" + moduleID] = liveEnv;
+    // resulting liveModule, after also adding it to liveModules.
+    let liveModule = await this.executeModule(submoduleNode, globalEnv);
+    return liveModules["#" + moduleID] = liveModule;
   }
 
 
 
 
-  finalizeImportStatement(impStmt, submoduleEnv, moduleEnv) {
+  finalizeImportStatement(impStmt, liveSubmodule, moduleEnv) {
     decrCompGas(moduleEnv);
-    let {permissions} = moduleEnv.scriptGlobals; 
+    let {permissions} = moduleEnv.scriptGlobals;
 
     // Iterate through all the imports and add each import to the environment.
     impStmt.importArr.forEach(imp => {
       let impType = imp.importType
       if (impType === "namespace-import") {
-        let namespaceObj = Object.fromEntries(submoduleEnv.getExport());
+        let namespaceObj = Object.fromEntries(
+          Object.entries(liveSubmodule).map(
+            ([safeIdent, [val]]) => [safeIdent, val]
+          )
+        );
         moduleEnv.declare(imp.ident, namespaceObj, true, imp);
       }
       else if (impType === "protected-import") {
@@ -284,15 +288,10 @@ export class ScriptInterpreter {
             `with permissions "${impFlagStr}" not granted`
           );
         }
-        // Then we construct and declare a "protected object" which only
-        // includes the 'public' exports, and the 'protected' exports where the
-        // export flags are all included among the import flags. 
+        // Then we construct and declare a "protected object."
         let protObj = new ProtectedObject(
-          submoduleID,
-          submoduleEnv.getProtectedExports().filter(([ , , exFlagStr]) => (
-            this.checkPermissionFlags(impFlagStr, exFlagStr)
-          )
-        ));
+          submoduleID, impFlagStr, liveSubmodule
+        );
         moduleEnv.declare(imp.ident, protObj, true, imp);
       }
       else if (impType === "named-imports") {
@@ -507,7 +506,7 @@ export class ScriptInterpreter {
     decrCompGas(callerEnv);
 
     // Initialize a new environment for the execution of the function.
-    let newEnv = new Environment(funDecEnv, "function", thisVal, thisFlags);
+    let newEnv = new Environment(funDecEnv, "function", thisVal);
 
     // Add the input parameters to the environment.
     this.declareInputParameters(
@@ -1283,20 +1282,20 @@ export class ScriptInterpreter {
 export class Environment {
   constructor(
     parent = undefined, scopeType = "block", thisVal = undefined,
-    thisFlags = undefined, moduleID = undefined, scriptGlobals = undefined
+    moduleID = undefined, scriptGlobals = undefined
   ) {
     this.parent = parent;
     this.scopeType = scopeType;
     if (scopeType === "function") {
-      this.variables = {"#this": [thisVal, thisFlags]};
+      this.variables = {"#this": thisVal};
     }
     this.moduleID = moduleID ?? parent?.moduleID ?? undefined;
     this.scriptGlobals = scriptGlobals ?? parent?.scriptGlobals ?? (() => {
       throw "Environment: No scriptGlobals object provided";
     })();
     if (scopeType === "module") {
-      this.exports = {};
-      this.defaultExport = undefined;
+      this.exports = [];
+      this.liveModule = undefined;
     }
   }
 
@@ -1345,14 +1344,8 @@ export class Environment {
 
   getThisVal(node, nodeEnvironment) {
     let entry = this.#get("this", node, nodeEnvironment);
-    let [[thisVal], , , , , isFromOutsideFunctionScope] = entry;
+    let [thisVal, , , , , isFromOutsideFunctionScope] = entry;
     return isFromOutsideFunctionScope ? undefined : thisVal;
-  }
-
-  getThisFlags(node, nodeEnvironment) {
-    let entry = this.#get("this", node, nodeEnvironment);
-    let [[ , thisFlags], , , , , isFromOutsideFunctionScope] = entry;
-    return isFromOutsideFunctionScope ? undefined : thisFlags;
   }
 
 
@@ -1398,28 +1391,44 @@ export class Environment {
   }
 
 
-  export(ident, alias, isProtected, flagStr, node, nodeEnvironment) {
-    let entry = this.#get(ident, node, nodeEnvironment);
-    entry[2] = true;
-    entry[3] = isProtected;
-    entry[4] = flagStr;
-    // TODO: Oh, the alias.. So I should probably go back to having the exports
-    // object..
+  export(ident, alias = ident, flagStr, node, nodeEnvironment) {
+    flagStr ??= undefined;
+    prevExport = this.exports["#" + alias];
+    if (prevExport !== undefined) throw new RuntimeError(
+      `Duplicate export of the same name: "${alias}"`,
+      node, nodeEnvironment
+    );
+    // We evaluate the exported variable *when* it is exported, as that seems
+    // more secure.
+    let val = this.get(ident, node, nodeEnvironment)
+    if (val === undefined) throw new RuntimeError(
+      `Exported variable or function is undefined: "${ident}"`,
+      node, nodeEnvironment
+    );
+    this.exports.push([alias, val, isProtected, flagStr]);
   }
 
-  getExports() {
-    return Object.entries(this.variables)
-      .filter(([ , [ , , isExported]]) => isExported)
-      .map(([safeKey, [val]]) => [safeKey, val]);
+  getLiveModule() {
+    if (!this.liveModule ) {
+      this.liveModule = {};
+      this.exports.forEach(([alias, val, flagStr]) => {
+        liveModule["#" + alias] = [val, flagStr];
+      });
+    }
+    return this.liveModule;
   }
 
-  getProtectedExports() {
-    return Object.entries(this.variables)
-      .filter(([ , [ , , isExported, isProtected]]) => (
-        isExported && isProtected
-      ))
-      .map(([safeKey, [val, , , , flagStr]]) => [safeKey, val, flagStr]);
-  }
+  // getExports() {
+  //   let liveModule = getLiveModule();
+  //   return Object.entries(liveModule).map(([safeKey, [val]]) => [safeKey, val]);
+  // }
+
+  // getProtectedExports() {
+  //   let liveModule = getLiveModule();
+  //   return Object.entries(liveModule).filter(
+  //     ([ , [ , flagStr]]) => (flagStr !== undefined)
+  //   );
+  // }
 
 }
 
@@ -1546,8 +1555,9 @@ export class ThisBoundFunction {
 }
 
 export class ProtectedObject {
-  constructor(moduleID, safeIdentPropValAndFlagStrTriples) {
+  constructor(moduleID, flagStr, liveModule) {
     this.moduleID = moduleID;
+    // TODO: Correct:
     let flags = this.flags = {};
     safeIdentPropValAndFlagStrTriples.forEach(([safeIdent, val, flagStr]) => {
       this[safeIdent] = val;
