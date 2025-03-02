@@ -68,7 +68,7 @@ class _IDTree {
     if (keyMaxPos <= this.charPos) {
       let prevVal = this.leafs[char];
       wasRemoved = (prevVal !== undefined);
-      if (updateCallback && didExist) {
+      if (removeCallback && wasRemoved) {
         removeCallback(prevVal);
       }
       delete this.leafs[char];

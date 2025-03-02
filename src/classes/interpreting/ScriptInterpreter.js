@@ -74,7 +74,9 @@ export class ScriptInterpreter {
     // function called 'main,' or the default export if no 'main' function is
     // found, and make sure to try-catch any exceptions or errors.
     try {
-      let liveScriptEnv = await this.executeModule(parsedScript, globalEnv);
+      let liveScriptEnv = await this.executeModule(
+        parsedScript, scriptID, globalEnv
+      );
       this.executeMainFunction(liveScriptEnv, mainInputs);
     }
     catch (err) {
@@ -115,9 +117,9 @@ export class ScriptInterpreter {
           Date.now() + gas.time
         );
 
-        // Then wait for the log to be resolved, either by a custom callback,
-        // or by the timeout callback.
-        return await logPromise;
+        // Then wait for the output and log to be resolved, either by a custom
+        // callback, or by the timeout callback.
+        return await outputPromise;
       }
       else {
         scriptGlobals.log.error = new OutOfGasError(
@@ -189,7 +191,7 @@ export class ScriptInterpreter {
 
 
 
-  async executeModule(moduleNode, globalEnv) {
+  async executeModule(moduleNode, moduleID, globalEnv) {
     decrCompGas(globalEnv);
 
     // Create a new environment for the module.
@@ -227,7 +229,7 @@ export class ScriptInterpreter {
 
   async executeSubmoduleOfImportStatement(impStmt, callerModuleEnv, globalEnv) {
     decrCompGas(globalEnv);
-    let {liveModules, parsedEntities} = globalEnv.scriptGlobals;
+    let {liveModules, parsedEntities, gas} = globalEnv.scriptGlobals;
 
     // Evaluate the submodule entity reference expression (right after 'from').
     let submoduleRef = impStmt.moduleRef;
@@ -235,29 +237,31 @@ export class ScriptInterpreter {
       `Importing from a TBD module`,
       impStmt.moduleExp, callerModuleEnv
     );
-    let moduleID = submoduleRef.id;
+    let submoduleID = submoduleRef.id;
 
     // If the module has already been executed, we can return early.
-    let existingEnv = liveModules["#" + moduleID];
+    let existingEnv = liveModules["#" + submoduleID];
     if (existingEnv) {
       return existingEnv;
     }
 
     // Then fetch and parse the module.
-    let submoduleNode = parsedEntities.get(moduleID);
+    let submoduleNode = parsedEntities.get(submoduleID);
     if (!submoduleNode) {
       let {error, parsedEnt} = await this.dataFetcher.fetchAndParseEntity(
-        gas, moduleID, "s"
+        gas, submoduleID, "s"
       );
       if (error) throw new RuntimeError(error);
       submoduleNode = parsedEnt;
-      parsedEntities.set(moduleID, submoduleNode);
+      parsedEntities.set(submoduleID, submoduleNode);
     }
 
     // Then execute the module, inside the global environment, and return the
     // resulting liveModule, after also adding it to liveModules.
-    let liveModule = await this.executeModule(submoduleNode, globalEnv);
-    return liveModules["#" + moduleID] = liveModule;
+    let liveModule = await this.executeModule(
+      submoduleNode, submoduleID, globalEnv
+    );
+    return liveModules["#" + submoduleID] = liveModule;
   }
 
 
@@ -284,7 +288,9 @@ export class ScriptInterpreter {
         let moduleID = moduleEnv.moduleID;
         let submoduleID = impStmt.moduleRef.id;
         let impFlagStr = imp.flagStr;
-        if (!checkPermissions(impFlagStr, moduleID, submoduleID, permissions)) {
+        if (
+          !this.checkPermissions(impFlagStr, moduleID, submoduleID, permissions)
+        ) {
           throw new PreprocessingError(
             `Module @[${moduleID}] imports from Module @[${submoduleID}] ` +
             `with permissions "${impFlagStr}" not granted`
@@ -403,9 +409,7 @@ export class ScriptInterpreter {
       mainFun instanceof DefinedFunction ||
       mainFun instanceof ThisBoundFunction
     ) {
-      this.executeFunction(
-        mainFun, inputArr, callerNode, scriptNode, scriptEnv
-      );
+      this.executeFunction(mainFun, inputArr, scriptNode, scriptEnv);
     }
     // If no main function was found, simply do nothing (expecting the script
     // to eventually exit itself via a callback function (or timing out)).
@@ -560,7 +564,7 @@ export class ScriptInterpreter {
       // is called. We use the same environment each time such that a parameter
       // can depend on a previous one.
       if (param.defaultExp && inputValType === "undefined") {
-        paramVal = this.evaluateExpression(param.defaultExp, newEnv);
+        paramVal = this.evaluateExpression(param.defaultExp, environment);
       }
 
       // Then declare the parameter in the environment.
@@ -726,12 +730,7 @@ export class ScriptInterpreter {
         };
         let funVal = new DefinedFunction(funNode, environment);
         if (type === "arrow-function") {
-          let thisVal;
-          try {
-           thisVal = environment.getThisVal();
-          } catch (err) {
-            if (!(err instanceof RuntimeError)) throw err;
-          }
+          let thisVal = environment.getThisVal();
           funVal = new ThisBoundFunction(funVal, thisVal);
         }
         return funVal;
@@ -1186,9 +1185,9 @@ export class ScriptInterpreter {
       expNode.type === "member-access" && !expNode.postfix.isOpt
     ) {
       // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
-      let expVal, indexVal, isImmutable, isProtected;
+      let expVal, indexVal, isImmutable, isProtected, isThisAccess;
       try {
-        [expVal, indexVal, isImmutable, isProtected] =
+        [expVal, indexVal, isImmutable, isProtected, isThisAccess] =
           this.getMemberAccessExpValAndSafeIndex(expNode, environment);
       } catch (err) {
         // If err is an BrokenOptionalChainException, do nothing and return
@@ -1296,9 +1295,7 @@ export class Environment {
   ) {
     this.parent = parent;
     this.scopeType = scopeType;
-    if (scopeType === "function") {
-      this.variables = {"#this": thisVal};
-    }
+    this.variables = {"#this": thisVal};
     this.moduleID = moduleID ?? parent?.moduleID ?? undefined;
     this.scriptGlobals = scriptGlobals ?? parent?.scriptGlobals ?? (() => {
       throw "Environment: No scriptGlobals object provided";
@@ -1403,7 +1400,7 @@ export class Environment {
 
   export(ident, alias = ident, flagStr, node, nodeEnvironment = this) {
     flagStr ??= undefined;
-    prevExport = this.exports["#" + alias];
+    let prevExport = this.exports["#" + alias];
     if (prevExport !== undefined) throw new RuntimeError(
       `Duplicate export of the same name: "${alias}"`,
       node, nodeEnvironment
@@ -1415,12 +1412,12 @@ export class Environment {
       `Exported variable or function is undefined: "${ident}"`,
       node, nodeEnvironment
     );
-    this.exports.push([alias, val, isProtected, flagStr]);
+    this.exports.push([alias, val, flagStr]);
   }
 
   getLiveModule() {
     if (!this.liveModule ) {
-      this.liveModule = {};
+      let liveModule = this.liveModule = {};
       this.exports.forEach(([alias, val, flagStr]) => {
         liveModule["#" + alias] = [val, flagStr];
       });
@@ -1572,6 +1569,12 @@ export class ProtectedObject {
       this[safeIdent] = val;
       flags[safeIdent] = flagStr;
     });
+  }
+}
+
+export class Immutable {
+  constructor(val) {
+    this.val = val;
   }
 }
 

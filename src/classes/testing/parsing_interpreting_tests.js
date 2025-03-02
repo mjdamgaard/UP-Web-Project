@@ -12,8 +12,8 @@ let scriptInterpreter = new ScriptInterpreter({}, {}, {dataFetcher: {}});
 
 
 export function runTests() {
-  // regEnt_parsing_tests_01(); // Last tested: (24.02.25).
-  // script_parsing_tests_01(); // Last tested: (24.02.25).
+  regEnt_parsing_tests_01(); // Last tested: (24.02.25).
+  script_parsing_tests_01(); // Last tested: (24.02.25).
   script_interpreter_tests_01();
 
 }
@@ -329,7 +329,7 @@ function script_parsing_tests_01() {
     keepLastLexeme: undefined,
     expectedIsSuccess: true, expectedNextPos: null,
     testMsgPrefix: testMsgPrefix, testKey: "",
-    logParserOutput: true, logOnlyFailures: false,
+    logParserOutput: true, logOnlyFailures: true,
     additionalTest: undefined,
   }
   let params;

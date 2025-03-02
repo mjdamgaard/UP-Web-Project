@@ -130,9 +130,10 @@ export const scriptGrammar = {
     process: (children, ruleInd) => {
       let ret;
       if (ruleInd <= 2) {
+        let flagStr = children[2][0]?.flagStr;
         ret = {
           type: "export-statement",
-          flagStr: children[2][0]?.flagStr,
+          flagStr: flagStr,
           isProtected: (flagStr !== undefined) ? true : false,
         }
         if (ruleInd <= 1) {

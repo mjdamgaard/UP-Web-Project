@@ -843,7 +843,7 @@ export class Lexer {
     let lexArr, strPosArr;
     if (this.hasWhitespace) {
       lexArr = unfilteredLexArr.filter((val, ind) => {
-        let isWhitespace = this.onlyWSRegEx.test(val);
+        let isWhitespace = val !== EOS && this.onlyWSRegEx.test(val);
         if (isWhitespace) {
           unfilteredStrPosArr[ind] = null;
         }
