@@ -26,51 +26,121 @@ DROP TABLE DebugLogEntries;
 
 
 
-/* Scores / entity lists tables  */
+/* Data structures  */
 
--- The default _01 entity lists use VARCHARs and convention of using
--- decimal numbers (in its API; can by implemented more compactly underneath).
+-- Note that the column types of the DataStructures can be converted at some
+-- point when we implement a more compressed way of storing the data,
+-- underneath the database's API.
 
-CREATE TABLE DataStructures_01 (
+CREATE TABLE DataStructures_SingleIndex (
 
-    struct_id VARBINARY(8) -- Can be resized.
+    handler_id BIGINT UNSIGNED NOT NULL, -- Type can be changed.
+
+    reader_whitelist_id BIGINT UNSIGNED NOT NULL, -- Type can be changed.
+
+    format_ident TINYINT UNSIGNED NOT NULL,
+
+    struct_key VARCHAR(64) -- Type can be resized/changed.
         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
-    reader_whitelist_id VARBINARY(8) -- Can be resized.
+    entry_key_data VARCHAR(64) -- Type can be resized/changed.
         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
-    ent_id_keys VARCHAR(64) -- Can be resized.
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-
-    bin_keys VARBINARY(64) -- Can be resized.
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-
-    ent_id_data VARCHAR(32) -- Can be resized.
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-
-    bin_data VARBINARY(32) -- Can be resized.
+    entry_payload_data VARCHAR(32) -- Type can be resized/changed.
         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
     PRIMARY KEY (
-        struct_id,
+        handler_id,
         reader_whitelist_id,
-        ent_id_keys,
-        bin_keys
+        format_ident,
+        struct_key,
+        entry_key_data,
+        entry_payload_data
+    )
+)
+ROW_FORMAT = COMPRESSED;
+
+
+CREATE TABLE DataStructures_TwoIndexes (
+
+    handler_id BIGINT UNSIGNED NOT NULL, -- Type can be changed.
+
+    reader_whitelist_id BIGINT UNSIGNED NOT NULL, -- Type can be changed.
+
+    format_ident TINYINT UNSIGNED NOT NULL,
+
+    struct_key VARCHAR(64) -- Type can be resized/changed.
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+
+    entry_score_data VARCHAR(64) -- Type can be resized/changed.
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+
+    entry_key_data VARCHAR(32) -- Type can be resized/changed.
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+
+    entry_payload_data VARCHAR(32) -- Type can be resized/changed.
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+
+    PRIMARY KEY (
+        handler_id,
+        reader_whitelist_id,
+        format_ident,
+        struct_key,
+        entry_key_data
+    )
+
+    UNIQUE INDEX (
+        handler_id,
+        reader_whitelist_id,
+        format_ident,
+        struct_key,
+        entry_score_data,
+        entry_key_data
     )
 )
 ROW_FORMAT = COMPRESSED;
 
 
 
-CREATE TABLE DataStructureCounters_01 (
+CREATE TABLE DataStructureFormats (
 
-    struct_keys VARCHAR(32) -- Can be resized.
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin PRIMARY KEY,
+    handler_id BIGINT UNSIGNED NOT NULL,
 
-    paid_upload_data_cost FLOAT NOT NULL
+    format_ident TINYINT UNSIGNED NOT NULL,
+
+    format_def VARCHAR(255) -- Type can resized/changed.
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+
+    PRIMARY KEY (
+        handler_id,
+        format_ident,
+        format_def
+    )
+);
+-- ROW_FORMAT = COMPRESSED;
+
+
+
+
+
+
+/* Fulltext indexes */
+
+-- TODO: Fulltext indexed tables should actually instead be created and
+-- updated on demand from user groups that has pooled enough "upload data
+-- cost" to do so, as described in my notes. *But at first, I will just use one
+-- and only one such fulltext index table.
+
+CREATE TABLE FulltextIndexEntries (
+
+    ent_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    
+    text_str VARCHAR(700) CHARACTER SET utf8mb4 NOT NULL,
+
+    FULLTEXT idx (text_str)
+
 )
-ROW_FORMAT = COMPRESSED;
-
+ENGINE = InnoDB;
 
 
 
@@ -259,26 +329,6 @@ CREATE TABLE EntitySecKeys (
 );
 
 
-
-
-
-/* Fulltext indexes */
-
--- TODO: Fulltext indexed tables should actually instead be created and
--- updated on demand from user groups that has pooled enough "upload data
--- cost" to do so, as described in my notes. *But at first, I will just use one
--- and only one such fulltext index table.
-
-CREATE TABLE FulltextIndexEntries (
-
-    ent_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    
-    text_str VARCHAR(700) CHARACTER SET utf8mb4 NOT NULL,
-
-    FULLTEXT idx (text_str)
-
-)
-ENGINE = InnoDB;
 
 
 
