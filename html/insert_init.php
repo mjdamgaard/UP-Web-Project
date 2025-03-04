@@ -15,7 +15,7 @@
 
 // This exit statement can by commented out temporarily in order to run
 // initial_inserts.php:
-exit;
+// exit;
 
 
 $inserts_path = $_SERVER['DOCUMENT_ROOT'] . "/../src/php/inserts/";
