@@ -7,4 +7,4 @@ fxn318@alumni.ku.dk.
 
 As of the time of writing, I am only one person working on this project, but I
 really hope to attract some others soon who could be interested in joining it
-to some capacity.
+in any capacity.
