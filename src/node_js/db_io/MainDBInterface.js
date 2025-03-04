@@ -117,9 +117,20 @@ export class MainDBInterface {
   }
 
 
+  static substitutePlaceholdersInEntity() {
+    // TODO: Make soon.
+  }
+
+  static nullUserRefsInEntity() {
+    // TODO: Make at some point.
+  }
+
 
 
 
   /*  Data structure reads */
+
+  // TODO: Make data read and write methods.
+
 }
 
