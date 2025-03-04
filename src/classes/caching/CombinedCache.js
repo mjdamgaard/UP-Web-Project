@@ -6,14 +6,21 @@ import {PriorityCache} from "./PriorityCache.js";
 export class CombinedCache {
 
   constructor(
-    lruCacheLimit, priorityCachelimit,
-    numOfSetsBeforeDecay = Infinity, decayFactor = 0.9
+    lruCacheLimit, priorityCachelimit, decayFactor = 0.9,
+    decayFrequencyParameter = 10,
   ) {
     this.lruCache = new LRUCache(lruCacheLimit);
     this.priorityCache = new PriorityCache(priorityCachelimit);
-    this.numOfSetsBeforeDecay = numOfSetsBeforeDecay;
     this.decayFactor = decayFactor;
+    this.numOfSetsBeforeDecay =
+      (lruCacheLimit + priorityCachelimit) * decayFrequencyParameter;
     this.curNumOfSets = 0;
+  }
+
+  // entry = [value, priority].
+
+  get size() {
+    return this.lruCache.size + this.priorityCache.size;
   }
 
 
@@ -27,7 +34,7 @@ export class CombinedCache {
     // cache.
     if (ret === undefined) {
       ret = this.lruCache.get(key, priority);
-      let firstPriority = this.lruCache.firstEntryCount;
+      let firstPriority = this.lruCache.firstEntryPriority;
       if (ret && firstPriority > this.priorityCache.minPriority) {
         this.priorityCache.set(key, ret, firstPriority);
         this.lruCache.remove(key);
@@ -37,7 +44,7 @@ export class CombinedCache {
   }
 
 
-  set(key, val, evictionCallback = () => {}, priority = 1) {
+  set(key, val, priority = 1) {
     // Insert the element in the LRU cache, unless minPriority is less than
     // priority.
     if (this.priorityCache.minPriority < priority) {
@@ -68,8 +75,8 @@ export class CombinedCache {
   decay(decayFactor) {
     decayFactor ??= this.decayFactor;
     this.curNumOfSets = 0;
-    Object.values(this.priorityCache).forEach(entry => {
-      entry[3] *= decayFactor;
+    this.priorityCache.forEach((entry) => {
+      entry[1] *= decayFactor;
     });
   }
 

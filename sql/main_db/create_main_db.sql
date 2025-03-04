@@ -34,65 +34,108 @@ DROP TABLE DebugLogEntries;
 
 CREATE TABLE DataStructures_SingleIndex (
 
-    handler_id BIGINT UNSIGNED NOT NULL, -- Type can be changed.
+    handler_id VARBINARY(8) NOT NULL, -- Type can be changed.
 
     format_ident TINYINT UNSIGNED NOT NULL,
 
-    struct_key VARCHAR(64) -- Type can be resized/changed.
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    struct_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
-    entry_key_data VARCHAR(64) -- Type can be resized/changed.
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    entry_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
-    entry_payload_data VARCHAR(32) -- Type can be resized/changed.
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    entry_payload VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
     PRIMARY KEY (
         handler_id,
         format_ident,
         struct_key,
-        entry_key_data,
-        entry_payload_data
+        entry_key
     )
 )
 ROW_FORMAT = COMPRESSED;
 
 
 
-CREATE TABLE DataStructures_TwoIndexes (
+CREATE TABLE DataStructures_DoubleIndex (
 
-    handler_id BIGINT UNSIGNED NOT NULL, -- Type can be changed.
+    handler_id VARBINARY(8) NOT NULL, -- Type can be changed.
 
     format_ident TINYINT UNSIGNED NOT NULL,
 
-    struct_key VARCHAR(64) -- Type can be resized/changed.
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    struct_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
-    entry_score_data VARCHAR(64) -- Type can be resized/changed.
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    entry_score VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
-    entry_key_data VARCHAR(32) -- Type can be resized/changed.
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    entry_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
-    entry_payload_data VARCHAR(32) -- Type can be resized/changed.
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    entry_payload VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
     PRIMARY KEY (
         handler_id,
         format_ident,
         struct_key,
-        entry_key_data
+        entry_key
     )
 
     UNIQUE INDEX (
         handler_id,
         format_ident,
         struct_key,
-        entry_score_data,
-        entry_key_data
+        entry_score,
+        entry_key
     )
 )
 ROW_FORMAT = COMPRESSED;
+
+
+
+CREATE TABLE DataStructures_SingleIndex_CharKey (
+
+    handler_id VARBINARY(8) NOT NULL, -- Type can be changed.
+
+    format_ident TINYINT UNSIGNED NOT NULL,
+
+    struct_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
+
+    entry_key VARCHAR(64) NOT NULL, -- Type can be resized/changed.
+
+    entry_payload VARCHAR(32) NOT NULL, -- Type can be resized/changed.
+
+    PRIMARY KEY (
+        handler_id,
+        format_ident,
+        struct_key,
+        entry_key
+    )
+)
+ROW_FORMAT = COMPRESSED;
+
+
+
+CREATE TABLE DataStructures_SingleIndex_FloatKey (
+
+    handler_id VARBINARY(8) NOT NULL, -- Type can be changed.
+
+    format_ident TINYINT UNSIGNED NOT NULL,
+
+    struct_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
+
+    entry_key FLOAT NOT NULL, -- Type can be resized/changed.
+
+    entry_payload VARCHAR(32) NOT NULL, -- Type can be resized/changed.
+
+    PRIMARY KEY (
+        handler_id,
+        format_ident,
+        struct_key,
+        entry_key
+    )
+)
+ROW_FORMAT = COMPRESSED;
+
+
+-- TODO: Potentially make more DataStructures tables if needed.
+
+
 
 
 
@@ -107,8 +150,7 @@ CREATE TABLE DataStructureFormats (
 
     PRIMARY KEY (
         handler_id,
-        format_ident,
-        format_def
+        format_ident
     )
 );
 -- ROW_FORMAT = COMPRESSED;
@@ -180,11 +222,7 @@ CREATE TABLE Entities (
     is_editable TINYINT UNSIGNED NOT NULL DEFAULT 0, CHECK (is_editable <= 1),
 
     -- If creator_id = 0, then the entity cannot be edited. 
-    CHECK (creator_id != 0 OR is_editable = 0),
-
-    -- A (slowly decaying) counter that can be increased to prevent deletion.
-    -- (An entity will only be deleted if the space is needed, though.)  
-    paid_upload_data_cost FLOAT NOT NULL DEFAULT 80
+    CHECK (creator_id != 0 OR is_editable = 0)
 );
 
 

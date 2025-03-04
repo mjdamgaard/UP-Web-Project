@@ -51,10 +51,7 @@ export class LRUCache extends GeneralCache {
 
 
   forEach(callback) {
-    let moddedCallback = ([val, priority], ind, key) => {
-      callback(val, priority, ind, key);
-    };
-    super.forEach(moddedCallback);
+    super.forEach(callback);
   }
 
 }

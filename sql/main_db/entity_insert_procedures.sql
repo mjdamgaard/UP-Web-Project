@@ -27,13 +27,11 @@ CREATE PROCEDURE insertEntityWithoutSecKey (
 proc: BEGIN
     INSERT INTO Entities (
         creator_id,
-        ent_type, def_str, whitelist_id, is_editable,
-        paid_upload_data_cost
+        ent_type, def_str, whitelist_id, is_editable
     )
     VALUES (
         CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        entType, defStr, whitelistID, isEditable AND NOT isAnonymous,
-        LENGTH(defStr) + 25
+        entType, defStr, whitelistID, isEditable AND NOT isAnonymous
     );
     SET outID = LAST_INSERT_ID();
 
@@ -80,13 +78,11 @@ proc: BEGIN
 
     INSERT INTO Entities (
         creator_id,
-        ent_type, def_str, whitelist_id, is_editable,
-        paid_upload_data_cost
+        ent_type, def_str, whitelist_id, is_editable
     )
     VALUES (
         CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        entType, defStr, whitelistID, 0,
-        LENGTH(defStr) * 2 + 33
+        entType, defStr, whitelistID, 0
     );
     SET outID = LAST_INSERT_ID();
 
@@ -173,7 +169,6 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE editEntity (
     IN entType CHAR,
-    IN maxLen INT UNSIGNED,
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
     IN defStr LONGTEXT CHARACTER SET utf8mb4,
@@ -190,39 +185,30 @@ proc: BEGIN
 
     DO GET_LOCK(CONCAT("EntID.", entID), 10);
 
-    SET newLen = LENGTH(defStr);
-
-    IF (newLen > maxLen) THEN
-        DO RELEASE_LOCK(CONCAT("EntID.", entID));
-        SELECT entID AS outID, 6 AS exitCode; -- defStr was too long.
-        LEAVE proc;
-    END IF;
-
-    SELECT
-        ent_type, creator_id, def_str, LENGTH(def_str), is_editable
-    INTO prevType, creatorID, prevDefStr, prevLen, prevIsEditable 
-    FROM Entities
+    SELECT ent_type, creator_id, def_str, is_editable
+    INTO prevType, creatorID, prevDefStr, prevIsEditable 
+    FROM Entities FORCE INDEX (PRIMARY)
     WHERE id = entID;
 
     IF (creatorID != userID) THEN
         DO RELEASE_LOCK(CONCAT("EntID.", entID));
-        SELECT entID AS outID, 2 AS exitCode; -- user is not the owner.
+        SELECT entID AS outID, 2 AS exitCode; -- User is not the owner.
         LEAVE proc;
     END IF;
 
     IF (NOT prevIsEditable) THEN
         DO RELEASE_LOCK(CONCAT("EntID.", entID));
-        SELECT entID AS outID, 3 AS exitCode; -- cannot be edited.
+        SELECT entID AS outID, 3 AS exitCode; -- Cannot be edited.
         LEAVE proc;
     END IF;
 
     IF (prevType != entType) THEN
         DO RELEASE_LOCK(CONCAT("EntID.", entID));
-        SELECT entID AS outID, 4 AS exitCode; -- changing entType not allowed.
+        SELECT entID AS outID, 4 AS exitCode; -- Changing entType not allowed.
         LEAVE proc;
     END IF;
 
-    -- If all checks succeed, update the entity.
+    -- If all checks succeeded, update the entity.
     UPDATE Entities
     SET
         creator_id = CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
@@ -233,8 +219,8 @@ proc: BEGIN
 
     DO RELEASE_LOCK(CONCAT("EntID.", entID));
 
-    INSERT INTO RecentlyEditedEntities (ent_ID)
-    VALUES (entID);
+    -- INSERT INTO RecentlyEditedEntities (ent_ID)
+    -- VALUES (entID);
 
     SELECT entID AS outID, 0 AS exitCode; -- edit.
 END proc //

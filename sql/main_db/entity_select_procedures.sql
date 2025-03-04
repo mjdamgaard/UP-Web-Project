@@ -10,79 +10,28 @@ DROP PROCEDURE selectEntityIDFromSecKey;
 
 
 
-
-
 DELIMITER //
 CREATE PROCEDURE selectEntity (
-    IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
     IN maxLen INT UNSIGNED,
     IN startPos INT UNSIGNED
 )
 proc: BEGIN
-    DECLARE entType CHAR;
-    DECLARE defStr LONGTEXT;
-    DECLARE len, creatorID, whitelistID BIGINT UNSIGNED;
-    DECLARE isEditable, isMember, isExceeded TINYINT;
-    DECLARE listID BIGINT UNSIGNED;
-
-    -- Check that the user isn't out of download data.
-    CALL _increaseWeeklyUserCounters (
-        userID, 0, 0, 1, isExceeded
-    );
-    IF (isExceeded) THEN
-        SELECT NULL AS entType, 5 AS exitCode; -- Download limit was exceeded.
-        LEAVE proc;
-    END IF;
-
     SELECT
-        ent_type,
+        ent_type AS entType,
         (
             CASE WHEN maxLen = 0 THEN
                 SUBSTR(def_str, startPos + 1)
             ELSE
                 SUBSTR(def_str, startPos + 1, maxLen)
             END
-        ),
-        LENGTH(def_str),
-        creator_id,
-        is_editable,
-        whitelist_id
-    INTO
-        entType,
-        defStr,
-        len,
-        creatorID,
-        isEditable,
-        whitelistID
+        ) AS defStr,
+        LENGTH(def_str) AS len,
+        creator_id AS creatorID,
+        is_editable AS isEditable,
+        whitelist_id AS whitelistID
     FROM Entities FORCE INDEX (PRIMARY)
     WHERE id = entID;
-
-    -- Check that the user is on the reader whitelist.
-    CALL _getIsMember (
-        userID, whitelistID,
-        isMember
-    );
-    IF (isMember) THEN
-        CALL _increaseWeeklyUserCounters (
-            userID, 0, 0, LENGTH(defStr) DIV 1000 + 1, isExceeded
-        );
-        IF (isExceeded) THEN
-            SELECT NULL AS entType, 5 AS exitCode; -- Counter was exceeded.
-            LEAVE proc;
-        END IF;
-
-        SELECT
-            entType,
-            defStr,
-            len,
-            creatorID,
-            isEditable,
-            whitelistID;
-    ELSE
-        SELECT NULL AS entType, 2 AS exitCode; -- User is not on whitelist.
-        LEAVE proc;
-    END IF;
 END proc //
 DELIMITER ;
 
@@ -93,29 +42,11 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectEntityIDFromSecKey (
-    IN userID BIGINT UNSIGNED,
     IN entType CHAR,
     IN whitelistID BIGINT UNSIGNED,
     IN defKey VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
 proc: BEGIN
-    DECLARE isMember TINYINT;
-
-    -- Check that the user isn't out of download data.
-    CALL _increaseWeeklyUserCounters (
-        userID, 0, 0, 1, isExceeded
-    );
-
-    -- Exit if the user is not currently on the user whitelist. Do this first
-    -- to avoid timing attacks.
-    CALL _getIsMember (
-        userID, whitelistID,
-        isMember
-    );
-    IF NOT (isMember) THEN
-        SELECT NULL AS entID;
-    END IF;
-
     SELECT ent_id AS entID
     FROM EntitySecKeys FORCE INDEX (PRIMARY)
     WHERE (
