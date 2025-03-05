@@ -70,7 +70,7 @@ export const scriptGrammar = {
     rules: [
       [/\*/, "/as/!", "identifier"],
       [/\{/, "named-import-list!1?", /\}/],
-      ["permissions!1", "/as/", "identifier"],
+      ["/protected/", "/as/", "identifier"],
       ["identifier"],
     ],
     process: (children, ruleInd) => {
@@ -82,7 +82,6 @@ export const scriptGrammar = {
         namedImportArr: children[1][0]?.children,
       } : (ruleInd === 2) ? {
         importType: "protected-import", // ("protected-namespace-import".)
-        flagStr: children[0].flagStr,
         ident: children[2].ident,
       } : {
         importType: "default-import",
@@ -122,19 +121,17 @@ export const scriptGrammar = {
   },
   "export-statement": {
     rules: [
-      ["/export/", "/default/?", "permissions!1?", "function-declaration!1"],
-      ["/export/", "/default/?", "permissions!1?", "variable-declaration!1"],
-      ["/export/", "/default/", "permissions!1?", "expression-statement"],
-      ["/export/", "permissions!1?", /\{/, "named-export-list!1?", /\}/, "/;/"],
+      ["/export/", "/default/?", "/protected/?", "function-declaration!1"],
+      ["/export/", "/default/?", "/protected/?", "variable-declaration!1"],
+      ["/export/", "/default/", "/protected/?", "expression-statement"],
+      ["/export/", "/protected/?", /\{/, "named-export-list!1?", /\}/, "/;/"],
     ],
     process: (children, ruleInd) => {
       let ret;
       if (ruleInd <= 2) {
-        let flagStr = children[2][0]?.flagStr;
         ret = {
           type: "export-statement",
-          flagStr: flagStr,
-          isProtected: (flagStr !== undefined) ? true : false,
+          isProtected: (children[2][0] !== undefined) ? true : false,
         }
         if (ruleInd <= 1) {
           ret.isDefault = children[1][0] ? true : false;
@@ -159,20 +156,12 @@ export const scriptGrammar = {
         ret = {
           type: "export-statement",
           subtype: "named-exports",
+          isProtected: (children[1][0] !== undefined) ? true : false,
           namedExportArr: children[3].children,
         };
       }
       return ret;
     },
-  },
-  "permissions": {
-    rules: [
-      ["/protected/", "string!"],
-      ["/public/"],
-    ],
-    process: (children) => ({
-      flagStr: children[1]?.str ?? "", 
-    }),
   },
   "named-export-list": {
     rules: [

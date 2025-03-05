@@ -1,7 +1,7 @@
 
-import {scriptParser} from "../parsing/ScriptParser.js";
-import {EntityReference, EntityPlaceholder} from "../parsing/RegEntParser.js";
-import {LexError, SyntaxError} from "../parsing/Parser.js";
+import {scriptParser} from "./ScriptParser.js";
+import {EntityReference, EntityPlaceholder} from "./RegEntParser.js";
+import {LexError, SyntaxError} from "./Parser.js";
 
 export {LexError, SyntaxError};
 
@@ -283,22 +283,10 @@ export class ScriptInterpreter {
         moduleEnv.declare(imp.ident, namespaceObj, true, imp);
       }
       else if (impType === "protected-import") {
-        // For a protected namespace import, we first check if the required
-        // permissions are granted to allow for the given import flags.
         let moduleID = moduleEnv.moduleID;
         let submoduleID = impStmt.moduleRef.id;
-        let impFlagStr = imp.flagStr;
-        if (
-          !this.checkPermissions(impFlagStr, moduleID, submoduleID, permissions)
-        ) {
-          throw new PreprocessingError(
-            `Module @[${moduleID}] imports from Module @[${submoduleID}] ` +
-            `with permissions "${impFlagStr}" not granted`
-          );
-        }
-        // Then we construct and declare a "protected object."
         let protObj = new ProtectedObject(
-          submoduleID, impFlagStr,
+          submoduleID, moduleID, // TODO: Correct.
           Object.entries(liveSubmodule).filter(([ , [ , exFlagStr]]) => (
             this.checkPermissionFlags(impFlagStr, exFlagStr)
           ))
@@ -1561,6 +1549,9 @@ export class ThisBoundFunction {
   }
 }
 
+// TODO: Correct, and make sure that all method calls are checked with a
+// protect() function, which should have access to the moduleID and the
+// importerModuleID.. ..And have access to information about the function.. Hm..
 export class ProtectedObject {
   constructor(moduleID, filteredLiveModuleEntries) {
     this.moduleID = moduleID;
@@ -1609,6 +1600,7 @@ class BrokenOptionalChainException {
 
 
 
+// TODO: Consider renaming to e.g. LoadError, or something like that.
 export class PreprocessingError {
   constructor(msg) {
     this.msg = msg;
