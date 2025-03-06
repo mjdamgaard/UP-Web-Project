@@ -19,28 +19,31 @@ function getParsingGasCost(str) {
   return {comp: str.length / 100 + 1};
 }
 
+async function fetchEntity(libraryPaths, funMetadata, entID, entType) {
+  let io = await import(libraryPaths.get("io"));
+  return await io.selectEntity(funMetadata, entID, entType);
+}
+
 
 
 export class ScriptInterpreter {
 
-  constructor(builtInFunctions, builtInConstants, dataFetcher) {
-    this.builtInConstants = builtInConstants;
-    this.builtInFunctions = builtInFunctions;
-    this.dataFetcher = dataFetcher;
+  constructor(libraryPaths) {
+    this.libraryPaths = libraryPaths;
   }
 
 
-
   async interpretScript(
-    gas, script = "", scriptID = "0", mainInputs = [],
-    reqUserID = undefined, permissions = {}, settings = {},
+    gas, script = "", scriptID = "1", mainInputs = [], reqUserID = undefined,
+    protect = () => {}, permissions = {}, settings = {},
     parsedEntities = new Map(),
   ) {
     let scriptGlobals = {
-      gas: gas, log: {}, output: undefined, mainInputs: mainInputs,
-      reqUserID: reqUserID, scriptID: scriptID, permissions: permissions,
-      setting: settings, shouldExit: false, resolveScript: undefined,
-      scriptInterpreter: this, parsedEntities: parsedEntities, liveModules: {},
+      gas: gas, log: {}, output: undefined, scriptID: scriptID,
+      reqUserID: reqUserID,
+      protect: protect, permissions: permissions, setting: settings,
+      shouldExit: false, resolveScript: undefined, scriptInterpreter: this,
+      parsedEntities: parsedEntities, liveModules: {},
     };
 
     // First create global environment if not yet done, and then create an
@@ -50,7 +53,7 @@ export class ScriptInterpreter {
 
     // If script is provided, rather than the scriptID, first parse it.
     let parsedScript;
-    if (scriptID === "0") {
+    if (scriptID === "1") {
       payGas(globalEnv, {comp: getParsingGasCost(script)});
       let [scriptSyntaxTree] = scriptParser.parse(script);
       if (scriptSyntaxTree.error) throw scriptSyntaxTree.error;
@@ -61,10 +64,9 @@ export class ScriptInterpreter {
     else {
       parsedScript = parsedEntities.get(scriptID);
       if (!parsedScript) {
-        let {error, parsedEnt} = await this.dataFetcher.fetchAndParseEntity(
-          gas, scriptID, "s"
+        let {parsedEnt} = await fetchEntity(
+          this.libraryPaths, {callerEnv: globalEnv}, entID, "s",
         );
-        if (error) throw new PreprocessingError(error);
         parsedScript = parsedEnt;
         parsedEntities.set(scriptID, parsedScript);
       }
@@ -110,7 +112,8 @@ export class ScriptInterpreter {
         setTimeout(
           () => {
             scriptGlobals.log.error = new OutOfGasError(
-              "Ran out of " + GAS_NAMES.time + " gas"
+              "Ran out of " + GAS_NAMES.time + " gas",
+              parsedScript, globalEnv,
             );
             scriptGlobals.resolveScript();
           },
@@ -123,7 +126,8 @@ export class ScriptInterpreter {
       }
       else {
         scriptGlobals.log.error = new OutOfGasError(
-          "Ran out of " + GAS_NAMES.time + " gas (no exit statement reached)"
+          "Ran out of " + GAS_NAMES.time + " gas (no exit statement reached)",
+          parsedScript, globalEnv,
         );
         return [undefined, scriptGlobals.log];
       }
@@ -135,14 +139,9 @@ export class ScriptInterpreter {
 
   createGlobalEnvironment(scriptGlobals) {
     let globalEnv = new Environment(
-      undefined, "global", undefined, undefined, scriptGlobals
+      undefined, "global", undefined, undefined, undefined, undefined,
+      scriptGlobals
     );
-    Object.entries(this.builtInFunctions).forEach(([funName, fun]) => {
-      globalEnv.declare(funName, fun, true);
-    });
-    Object.entries(this.builtInConstants).forEach(([ident, val]) => {
-      globalEnv.declare(ident, val, true);
-    });
     return globalEnv;
   }
 
@@ -152,7 +151,7 @@ export class ScriptInterpreter {
     let scriptGlobals = environment.scriptGlobals, {log} = scriptGlobals;
     if (
       err instanceof LexError || err instanceof SyntaxError ||
-      err instanceof PreprocessingError || err instanceof RuntimeError ||
+      err instanceof LoadError || err instanceof RuntimeError ||
       err instanceof CustomException || err instanceof OutOfGasError
     ) {
       log.error = err;
@@ -196,7 +195,7 @@ export class ScriptInterpreter {
 
     // Create a new environment for the module.
     let moduleEnv = new Environment(
-      globalEnv, "module", undefined, moduleID
+      globalEnv, "module", undefined, undefined, undefined, moduleID
     );
 
     // Then run all the import statements in parallel and get their live
@@ -229,18 +228,18 @@ export class ScriptInterpreter {
 
   async executeSubmoduleOfImportStatement(impStmt, callerModuleEnv, globalEnv) {
     decrCompGas(globalEnv);
-    let {liveModules, parsedEntities, gas} = globalEnv.scriptGlobals;
+    let {liveModules, parsedEntities} = globalEnv.scriptGlobals;
 
     // Evaluate the submodule entity reference expression (right after 'from').
     let submoduleRef = impStmt.moduleRef;
-    if (!submoduleRef.id) throw new PreprocessingError(
+    if (!submoduleRef.id) throw new LoadError(
       `Importing from a TBD module`,
       impStmt.moduleExp, callerModuleEnv
     );
     let submoduleID = submoduleRef.id;
 
     // If the module has already been executed, we can return early.
-    let existingEnv = liveModules["#" + submoduleID];
+    let existingEnv = liveModules["&" + submoduleID];
     if (existingEnv) {
       return existingEnv;
     }
@@ -248,10 +247,10 @@ export class ScriptInterpreter {
     // Then fetch and parse the module.
     let submoduleNode = parsedEntities.get(submoduleID);
     if (!submoduleNode) {
-      let {error, parsedEnt} = await this.dataFetcher.fetchAndParseEntity(
-        gas, submoduleID, "s"
+      let {parsedEnt} = await fetchEntity(
+        this.libraryPaths, {callerNode: impStmt, callerEnv: callerModuleEnv},
+        entID, "s",
       );
-      if (error) throw new RuntimeError(error);
       submoduleNode = parsedEnt;
       parsedEntities.set(submoduleID, submoduleNode);
     }
@@ -261,7 +260,7 @@ export class ScriptInterpreter {
     let liveModule = await this.executeModule(
       submoduleNode, submoduleID, globalEnv
     );
-    return liveModules["#" + submoduleID] = liveModule;
+    return liveModules["&" + submoduleID] = liveModule;
   }
 
 
@@ -269,7 +268,6 @@ export class ScriptInterpreter {
 
   finalizeImportStatement(impStmt, liveSubmodule, moduleEnv) {
     decrCompGas(moduleEnv);
-    let {permissions} = moduleEnv.scriptGlobals;
 
     // Iterate through all the imports and add each import to the environment.
     impStmt.importArr.forEach(imp => {
@@ -286,10 +284,7 @@ export class ScriptInterpreter {
         let moduleID = moduleEnv.moduleID;
         let submoduleID = impStmt.moduleRef.id;
         let protObj = new ProtectedObject(
-          submoduleID, moduleID, // TODO: Correct.
-          Object.entries(liveSubmodule).filter(([ , [ , exFlagStr]]) => (
-            this.checkPermissionFlags(impFlagStr, exFlagStr)
-          ))
+          submoduleID, moduleID, liveSubmodule
         );
         moduleEnv.declare(imp.ident, protObj, true, imp);
       }
@@ -297,38 +292,38 @@ export class ScriptInterpreter {
         imp.namedImportArr.forEach(namedImp => {
           let ident = namedImp.ident ?? "default";
           let alias = namedImp.alias ?? ident;
-          moduleEnv.declare(alias, liveSubmodule["#" + ident], true, namedImp);
+          moduleEnv.declare(alias, liveSubmodule["&" + ident], true, namedImp);
         });
       }
       else {
-        moduleEnv.declare(imp.ident, liveSubmodule["#default"], true, imp);
+        moduleEnv.declare(imp.ident, liveSubmodule["&default"], true, imp);
       }
     });
   }
 
 
 
-  checkPermissions(flagStr, importerID, exporterID, permissions) {
-    let globalFlags = permissions.global;
-    let importFlags = permissions.import["#" + importerID];
-    let exportFlags = permissions.export["#" + exporterID];
-    let importExportFlags =
-      permissions.importExport["#" + importerID]["#" + exporterID];
-    let combPermissions = globalFlags + importFlags + exportFlags +
-      importExportFlags;
-    return this.checkPermissionFlags(combPermissions, flagStr);
-  }
+  // checkPermissions(flagStr, importerID, exporterID, permissions) {
+  //   let globalFlags = permissions.global;
+  //   let importFlags = permissions.import["&" + importerID];
+  //   let exportFlags = permissions.export["&" + exporterID];
+  //   let importExportFlags =
+  //     permissions.importExport["&" + importerID]["&" + exporterID];
+  //   let combPermissions = globalFlags + importFlags + exportFlags +
+  //     importExportFlags;
+  //   return this.checkPermissionFlags(combPermissions, flagStr);
+  // }
 
-  checkPermissionFlags(flagStr, requiredFlagStr) {
-    let flagArr = flagStr.split("");
-    let requiredFlagArr = requiredFlagStr.split("");
-    for (let requiredFlag of requiredFlagArr) {
-      if (!flagArr.includes(requiredFlag)) {
-        return false;
-      }
-    }
-    return true;
-  }
+  // checkPermissionFlags(flagStr, requiredFlagStr) {
+  //   let flagArr = flagStr.split("");
+  //   let requiredFlagArr = requiredFlagStr.split("");
+  //   for (let requiredFlag of requiredFlagArr) {
+  //     if (!flagArr.includes(requiredFlag)) {
+  //       return false;
+  //     }
+  //   }
+  //   return true;
+  // }
 
 
 
@@ -363,14 +358,16 @@ export class ScriptInterpreter {
     else if (stmtNode.exp) {
       let val = this.evaluateExpression(stmtNode.exp, environment);
       environment.declare("default", val, true, stmtNode);
-      environment.export("default", undefined, stmtNode.flagStr, stmtNode);
+      environment.export("default", undefined, stmtNode.isProtected, stmtNode);
     }
     else {
       this.executeStatement(stmtNode.stmt, environment);
-      environment.export(stmtNode.ident, undefined, stmtNode.flagStr, stmtNode);
+      environment.export(
+        stmtNode.ident, undefined, stmtNode.isProtected, stmtNode
+      );
       if (stmtNode.isDefault) {
         environment.export(
-          stmtNode.ident, "default", stmtNode.flagStr, stmtNode
+          stmtNode.ident, "default", stmtNode.isProtected, stmtNode
         );
       }
     }
@@ -443,7 +440,7 @@ export class ScriptInterpreter {
 
     // If the function reached an exit statement, throw an exit exception.
     if (callerEnv.scriptGlobals.shouldExit) {
-      throw new ExitException(); // TODO: Correct.
+      throw new ExitException();
     }
     return ret;
   }
@@ -490,7 +487,9 @@ export class ScriptInterpreter {
     let scriptGlobals = callerEnv.scriptGlobals;
 
     // Initialize a new environment for the execution of the function.
-    let newEnv = new Environment(funDecEnv, "function", thisVal);
+    let newEnv = new Environment(
+      funDecEnv, "function", callerNode, callerEnv, thisVal
+    );
 
     // Add the input parameters to the environment.
     this.declareInputParameters(
@@ -873,7 +872,7 @@ export class ScriptInterpreter {
             case "+":
               acc = parseFloat(acc) + parseFloat(nextVal);
               break;
-            case "<>": {
+            case "@": {
               let accType = getType(acc);
               let nextType = getType(nextVal);
               if (accType === "string" || accType === "int") {
@@ -1118,7 +1117,7 @@ export class ScriptInterpreter {
       case "object": {
         let memberEntries = expNode.children.map(exp => (
           [
-            "#" + (
+            "&" + (
               exp.ident ??
               this.evaluateExpression(exp.nameExp, environment)
             ),
@@ -1235,7 +1234,7 @@ export class ScriptInterpreter {
     }
 
     // If expVal is an array, check that indexVal is a non-negative
-    // integer, and if it is an object, append "#" to the indexVal.
+    // integer, and if it is an object, append "&" to the indexVal.
     let valType = getType(expVal);
     let isProtected = (valType === "protected");
     let isImmutable = (expVal instanceof Immutable);
@@ -1259,7 +1258,7 @@ export class ScriptInterpreter {
       );
     }
     else {
-      indexVal = "#" + indexVal;
+      indexVal = "&" + indexVal;
     }
 
     let isThisAccess = (memAccNode.exp.type === "this-keyword");
@@ -1274,16 +1273,23 @@ export class ScriptInterpreter {
 
 
 
-// TODO: Consider refactoring Environment.
+
 
 export class Environment {
   constructor(
-    parent = undefined, scopeType = "block", thisVal = UNDEFINED,
+    parent = undefined, scopeType = "block",
+    callerNode = undefined, callerEnv = undefined, thisVal = UNDEFINED,
     moduleID = undefined, scriptGlobals = undefined
   ) {
     this.parent = parent;
     this.scopeType = scopeType;
-    this.variables = (scopeType === "function") ? {"#this": thisVal} : {};
+    if (scopeType === "function") {
+      this.callerNode = callerNode;
+      this.callerEnv = callerEnv;
+      this.variables = {"&this": thisVal};
+    } else {
+      this.variables = {};
+    }
     this.moduleID = moduleID ?? parent?.moduleID ?? undefined;
     this.scriptGlobals = scriptGlobals ?? parent?.scriptGlobals ?? (() => {
       throw "Environment: No scriptGlobals object provided";
@@ -1295,7 +1301,7 @@ export class Environment {
   }
 
   #get(ident, node, nodeEnvironment) {
-    let safeIdent = "#" + ident;
+    let safeIdent = "&" + ident;
     let entry = this.variables[safeIdent] ?? [];
     let val = entry[0];
     if (val !== undefined) {
@@ -1346,7 +1352,7 @@ export class Environment {
 
   declare(ident, val, isConst, node) {
     val = (val === undefined) ? UNDEFINED : val;
-    let safeIdent = "#" + ident;
+    let safeIdent = "&" + ident;
     let [prevVal] = this.variables[safeIdent] ?? [];
     if (prevVal !== undefined) {
       throw new RuntimeError(
@@ -1361,7 +1367,7 @@ export class Environment {
   }
 
   assign(ident, node, assignFun) {
-    let safeIdent = "#" + ident;
+    let safeIdent = "&" + ident;
     let [prevVal, isConst] = this.variables[safeIdent] ?? [];
     if (prevVal !== undefined) {
       if (isConst) {
@@ -1386,9 +1392,8 @@ export class Environment {
   }
 
 
-  export(ident, alias = ident, flagStr, node, nodeEnvironment = this) {
-    flagStr ??= undefined;
-    let prevExport = this.exports["#" + alias];
+  export(ident, alias = ident, isProtected, node, nodeEnvironment = this) {
+    let prevExport = this.exports["&" + alias];
     if (prevExport !== undefined) throw new RuntimeError(
       `Duplicate export of the same name: "${alias}"`,
       node, nodeEnvironment
@@ -1400,14 +1405,14 @@ export class Environment {
       `Exported variable or function is undefined: "${ident}"`,
       node, nodeEnvironment
     );
-    this.exports.push([alias, val, flagStr]);
+    this.exports.push([alias, val, isProtected]);
   }
 
   getLiveModule() {
     if (!this.liveModule ) {
       let liveModule = this.liveModule = {};
-      this.exports.forEach(([alias, val, flagStr]) => {
-        liveModule["#" + alias] = [val, flagStr];
+      this.exports.forEach(([alias, val, isProtected]) => {
+        liveModule["&" + alias] = [val, isProtected];
       });
     }
     return this.liveModule;
@@ -1436,7 +1441,7 @@ function getSafeObj(obj) {
     return obj.map(val => getSafeObj(val));
   } else {
     return Object.fromEntries(
-      Object.entries(obj).map(([key, val]) => ["#" + key, getSafeObj(val)])
+      Object.entries(obj).map(([key, val]) => ["&" + key, getSafeObj(val)])
     );
   }
 }
@@ -1454,29 +1459,32 @@ function turnImmutable(val) {
 
 
 
-export function payGas(environment, gasCost) {
+export function payGas(node, environment, gasCost) {
   let gas = environment?.scriptGlobals.gas ?? environment;
   Object.keys(this.gasCost).forEach(key => {
     if (gas[key] ??= 0) {
       gas[key] -= gasCost[key];
     }
     if (gas[key] < 0) throw new OutOfGasError(
-      "Ran out of " + GAS_NAMES[key] + "gas"
+      "Ran out of " + GAS_NAMES[key] + "gas",
+      node, environment,
     );
   });
 }
 
-export function decrCompGas(environment) {
+export function decrCompGas(node, environment) {
   let gas = environment?.scriptGlobals.gas ?? environment;
   if (0 > --gas.comp) throw new OutOfGasError(
-    "Ran out of " + GAS_NAMES.comp + " gas"
+    "Ran out of " + GAS_NAMES.comp + " gas",
+    node, environment,
   );
 }
 
-export function decrFetchGas(environment) {
+export function decrFetchGas(node, environment) {
   let gas = environment?.scriptGlobals.gas ?? environment;
   if (0 > --gas.fetch) throw new OutOfGasError(
     "Ran out of " + GAS_NAMES.fetch + " gas",
+    node, environment,
   );
 }
 
@@ -1549,17 +1557,12 @@ export class ThisBoundFunction {
   }
 }
 
-// TODO: Correct, and make sure that all method calls are checked with a
-// protect() function, which should have access to the moduleID and the
-// importerModuleID.. ..And have access to information about the function.. Hm..
+
 export class ProtectedObject {
-  constructor(moduleID, filteredLiveModuleEntries) {
+  constructor(moduleID, callerModule, liveModule) {
     this.moduleID = moduleID;
-    let flags = this.flags = {};
-    filteredLiveModuleEntries.forEach(([safeIdent, [val, flagStr]]) => {
-      this[safeIdent] = val;
-      flags[safeIdent] = flagStr;
-    });
+    this.callerModule = callerModule;
+    this.liveModule = liveModule;
   }
 }
 
@@ -1600,16 +1603,20 @@ class BrokenOptionalChainException {
 
 
 
-// TODO: Consider renaming to e.g. LoadError, or something like that.
-export class PreprocessingError {
-  constructor(msg) {
+
+export class LoadError {
+  constructor(msg, node, environment) {
     this.msg = msg;
+    this.node = node;
+    this.environment = environment;
   }
 }
 
 export class OutOfGasError {
-  constructor(msg) {
+  constructor(msg, node, environment) {
     this.msg = msg;
+    this.node = node;
+    this.environment = environment;
   }
 }
 

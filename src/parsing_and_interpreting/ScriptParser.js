@@ -14,7 +14,7 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
   "^(let|var|const|this|function|export|import|break|continue|return|throw|" +
   "if|else|switch|case|void|typeof|instanceof|delete|await|class|static|" +
   "true|false|null|undefined|Infinity|NaN|try|catch|finally|for|while|do|" +
-  "default|protected|public|exit|immutable|mutable)$"
+  "default|protected|public|exit|immutable|mutable|debugger)$"
   // TODO: Continue this list.
 );
 
@@ -22,7 +22,8 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
 
 
 export const scriptGrammar = {
-  ...regEntGrammar,
+  ...regEntGrammar, // TODO: Remove such that the whole grammar is contained
+  // here.
   "script": {
     rules: [
       [
@@ -657,7 +658,7 @@ export const scriptGrammar = {
   },
   "expression^(9)": {
     rules: [
-      ["expression^(10)", "/\\+|\\-|<>/", "expression^(9)!"],
+      ["expression^(10)", "/\\+|\\-|@/", "expression^(9)!"],
       ["expression^(10)"],
     ],
     process: processPolyadicInfixOperation,
@@ -868,7 +869,7 @@ export const scriptGrammar = {
     rules: [
       ["/this/"],
     ],
-    process: (children) => ({type: "this-keyword"}),
+    process: () => ({type: "this-keyword"}),
   },
   "constant": {
     rules: [
@@ -876,6 +877,21 @@ export const scriptGrammar = {
     ],
     process: copyLexemeFromChild,
     params: ["constant"],
+  },
+  "entity-reference": {
+    rules: [
+      [/#[_\$a-zA-Z0-9]+/],
+      [/#"([^"\\]|\\[.\n])*"/],
+    ],
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
+        type: "entity-reference",
+        id: children[0].substring(1),
+      } : {
+        type: "entity-reference",
+        path: children[0].substring(1),
+      };
+    },
   },
 };
 
@@ -888,15 +904,16 @@ export class ScriptParser extends Parser {
       "function",
       [
         /"([^"\\]|\\[.\n])*"/,
-        // /'([^'\\]|\\[.\n])*'/,
+        /'([^'\\]|\\[.\n])*'/,
         /(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
         /\+=|\-=|\*=|\/=|&&=|\|\|=|\?\?=/,
         /&&|\|\||\?\?|\+\+|\-\-|\*\*/,
-        /\?\.|<>|=>|\->/,
+        /\?\.|=>|\->/,
         /===|==|!==|!=|<=|>=/,
-        /@[\[\{<];?/,
-        /[\.,:;\[\]\{\}\(\)<>\?=\+\-\*\|\^&!%\/]/,
+        /[\.,:;\[\]\{\}\(\)<>\?=\+\-@\*\|\^&!%\/]/,
         /[_\$a-zA-Z0-9]+/,
+        /#[_\$a-zA-Z0-9]+/,
+        /#"([^"\\]|\\[.\n])*"/,
       ],
       /\s+|\/\/.*\n\s*|\/\*([^\*]|\*(?!\/))*(\*\/\s*|$)/
     );
