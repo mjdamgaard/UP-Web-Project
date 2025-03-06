@@ -448,16 +448,9 @@ export class ScriptInterpreter {
 
 
 
-  executeBuiltInFunction(
-    fun, inputArr, callerNode, callerEnv, thisVal, thisFlags
-  ) {
-    let scriptGlobals = callerEnv.scriptGlobals;
+  executeBuiltInFunction(fun, inputArr, callerNode, callerEnv, thisVal) {
     return fun.fun(
-      {
-        callerNode: callerNode, callerEnv: callerEnv, thisVal: thisVal,
-        thisFlags: thisFlags, gas: scriptGlobals.gas,
-        scriptGlobals: scriptGlobals,
-      },
+      {callerNode: callerNode, callerEnv: callerEnv, thisVal: thisVal},
       ...inputArr
     );
   }
@@ -1279,14 +1272,23 @@ export class Environment {
   constructor(
     parent = undefined, scopeType = "block",
     callerNode = undefined, callerEnv = undefined, thisVal = UNDEFINED,
+    isProtected = undefined,
     moduleID = undefined, scriptGlobals = undefined
   ) {
     this.parent = parent;
     this.scopeType = scopeType;
+    this.isProtected = isProtected || callerEnv?.isProtected;
+    this.protectData = isProtected ?
+      {parent: callerEnv.protectData} :
+      parent.protectData;
     if (scopeType === "function") {
       this.callerNode = callerNode;
       this.callerEnv = callerEnv;
       this.variables = {"&this": thisVal};
+      if (isProtected) {
+        if (callerEnv.scopeType)
+        this.protectData = callerEnv;
+      }
     } else {
       this.variables = {};
     }
@@ -1556,7 +1558,6 @@ export class ThisBoundFunction {
     this.thisFlags = thisFlags;
   }
 }
-
 
 export class ProtectedObject {
   constructor(moduleID, callerModule, liveModule) {

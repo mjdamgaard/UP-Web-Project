@@ -27,36 +27,60 @@ export const scriptGrammar = {
   "script": {
     rules: [
       [
-        "import-statement!1*",
+        "protect-with-statement!1?",
+        "dev-library-import-statement*",
+        "module-import-statement!1*",
         "outer-statement+$"
       ],
     ],
     process: (children) => ({
       type: "script",
-      importStmtArr: children[0],
-      stmtArr: children[1],
+      protectorScriptRef: children[0][0],
+      devLibImportStmtArr: children[1],
+      moduleImportStmtArr: children[2],
+      stmtArr: children[3],
     }),
   },
-  "script-parameter-declaration": {
+  "protect-with-statement": {
     rules: [
-      ["/parameters/?", /\(/, "parameter-list!1?", /\)/, "/;/"],
-      ["/parameters/?", "parameter-list!1?", "/;/"],
+      ["/protect/", "/with/", "entity-reference", "/;/"],
     ],
-    process: (children, ruleInd) => ({
-      params: (ruleInd === 0) ?
-      children[2][0]?.children :
-      children[1][0]?.children
-    }),
+    process: (children) => {
+      return {
+        type: "protect-with-statement",
+        moduleRef: children[2],
+      };
+    },
   },
-  "import-statement": {
+  "module-import-statement": {
     rules: [
       ["/import/", "import-list", "/from/", "entity-reference", "/;/"],
     ],
     process: (children) => {
       return {
-        type: "import-statement",
+        type: "module-import-statement",
         importArr: children[1].children,
         moduleRef: children[3],
+      };
+    },
+  },
+  "dev-library-import-statement": {
+    rules: [
+      ["/import/", "/all/", "/from/!", "string", "/;/"],
+      [
+        "/import/", /\{/, "named-import-list!1?", /\}/, "/from/", "string",
+        "/;/",
+      ],
+    ],
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
+        type: "dev-library-import-statement",
+        importAll: true,
+        libraryName: children[3].str,
+      } : {
+        type: "dev-library-import-statement",
+        namedImportArr: children[2][0]?.children,
+        libraryName: children[5].str,
       };
     },
   },
@@ -70,8 +94,8 @@ export const scriptGrammar = {
   "import": {
     rules: [
       [/\*/, "/as/!", "identifier"],
-      [/\{/, "named-import-list!1?", /\}/],
-      ["/protected/", "/as/", "identifier"],
+      [/\{/, "named-import-list!1?!", /\}/],
+      ["protection-signal", "/as/!", "identifier"],
       ["identifier"],
     ],
     process: (children, ruleInd) => {
@@ -83,6 +107,7 @@ export const scriptGrammar = {
         namedImportArr: children[1][0]?.children,
       } : (ruleInd === 2) ? {
         importType: "protected-import", // ("protected-namespace-import".)
+        signalStr: children[0].signalStr,
         ident: children[2].ident,
       } : {
         importType: "default-import",
@@ -105,13 +130,20 @@ export const scriptGrammar = {
       ["identifier", "/as/", "identifier!"],
       ["identifier"],
     ],
-    process: (children, ruleInd) => {
-      return {
-        type: "named-import",
-        ident: (ruleInd === 0) ? undefined : children[0].ident,
-        alias: children[2]?.ident,
-      }
-    },
+    process: (children, ruleInd) => ({
+      type: "named-import",
+      ident: (ruleInd === 0) ? undefined : children[0].ident,
+      alias: children[2]?.ident,
+    }),
+  },
+  "protection-signal": {
+    rules: [
+      ["/protected/", "string?"],
+    ],
+    process: (children) => ({
+      type: "protection-signal",
+      signalStr: children[1][0]?.str,
+    }),
   },
   "outer-statement": {
     rules: [
@@ -122,10 +154,17 @@ export const scriptGrammar = {
   },
   "export-statement": {
     rules: [
-      ["/export/", "/default/?", "/protected/?", "function-declaration!1"],
-      ["/export/", "/default/?", "/protected/?", "variable-declaration!1"],
-      ["/export/", "/default/", "/protected/?", "expression-statement"],
-      ["/export/", "/protected/?", /\{/, "named-export-list!1?", /\}/, "/;/"],
+      [
+        "/export/", "/default/?", "protection-signal?", "function-declaration!1"
+      ],
+      [
+        "/export/", "/default/?", "protection-signal?", "variable-declaration!1"
+      ],
+      ["/export/", "/default/", "protection-signal?", "expression-statement"],
+      [
+        "/export/", "protection-signal?", /\{/, "named-export-list!1?",
+        /\}/, "/;/"
+      ],
     ],
     process: (children, ruleInd) => {
       let ret;
@@ -133,6 +172,7 @@ export const scriptGrammar = {
         ret = {
           type: "export-statement",
           isProtected: (children[2][0] !== undefined) ? true : false,
+          signalStr: children[2][0]?.signalStr,
         }
         if (ruleInd <= 1) {
           ret.isDefault = children[1][0] ? true : false;
@@ -158,6 +198,7 @@ export const scriptGrammar = {
           type: "export-statement",
           subtype: "named-exports",
           isProtected: (children[1][0] !== undefined) ? true : false,
+          signalStr: children[1][0]?.signalStr,
           namedExportArr: children[3].children,
         };
       }
