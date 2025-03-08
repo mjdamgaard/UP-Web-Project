@@ -1,7 +1,7 @@
 
-import {scriptParser} from "./ScriptParser.js";
-import {EntityReference, EntityPlaceholder} from "./RegEntParser.js";
-import {LexError, SyntaxError} from "./Parser.js";
+import {scriptParser} from "../parsing/ScriptParser.js";
+import {EntityReference, EntityPlaceholder} from "../parsing/RegEntParser.js";
+import {LexError, SyntaxError} from "../parsing/Parser.js";
 
 export {LexError, SyntaxError};
 
@@ -65,7 +65,7 @@ export class ScriptInterpreter {
       parsedScript = parsedEntities.get(scriptID);
       if (!parsedScript) {
         let {parsedEnt} = await fetchEntity(
-          this.libraryPaths, {callerEnv: globalEnv}, entID, "s",
+          this.libraryPaths, {callerEnv: globalEnv}, scriptID, "s",
         );
         parsedScript = parsedEnt;
         parsedEntities.set(scriptID, parsedScript);
@@ -261,7 +261,7 @@ export class ScriptInterpreter {
       // module.
       let {parsedEnt} = await fetchEntity(
         this.libraryPaths, {callerNode: impStmt, callerEnv: callerModuleEnv},
-        entID, "s",
+        submoduleID, "s",
       );
       submoduleNode = parsedEnt;
       parsedEntities.set(submoduleID, submoduleNode);
@@ -352,7 +352,7 @@ export class ScriptInterpreter {
         this.executeExportStatement(stmtNode, environment);
         break;
       }
-      default: debugger;throw (
+      default: throw (
         "ScriptInterpreter.executeOuterStatement(): Unrecognized " +
         `statement type: "${type}"`
       );
@@ -699,7 +699,7 @@ export class ScriptInterpreter {
         this.evaluateExpression(stmtNode.exp, environment);
         break;
       }
-      default: debugger;throw (
+      default: throw (
         "ScriptInterpreter.executeStatement(): Unrecognized " +
         `statement type: "${type}"`
       );
@@ -788,7 +788,7 @@ export class ScriptInterpreter {
                 return [newVal, newVal]
               }
             );
-          default: debugger;throw (
+          default: throw (
             "ScriptInterpreter.evaluateExpression(): Unrecognized " +
             `operator: "${op}"`
           );
@@ -834,13 +834,13 @@ export class ScriptInterpreter {
               acc = acc && this.evaluateExpression(nextChild, environment);
               break;
             case "|":
-              acc = parseInt(acc) | parseInt(nextVal);
+              acc = acc | nextVal;
               break;
             case "^":
-              acc = parseInt(acc) ^ parseInt(nextVal);
+              acc = acc ^ nextVal;
               break;
             case "&":
-              acc = parseInt(acc) & parseInt(nextVal);
+              acc = acc & nextVal;
               break;
             case "===":
               acc = acc === nextVal;
@@ -855,74 +855,42 @@ export class ScriptInterpreter {
               acc = acc != nextVal;
               break;
             case ">":
-              acc = parseFloat(acc) > parseFloat(nextVal);
+              acc = acc > nextVal;
               break;
             case "<":
-              acc = parseFloat(acc) < parseFloat(nextVal);
+              acc = acc < nextVal;
               break;
             case "<=":
-              acc = parseFloat(acc) <= parseFloat(nextVal);
+              acc = acc <= nextVal;
               break;
             case ">=":
-              acc = parseFloat(acc) >= parseFloat(nextVal);
+              acc = acc >= nextVal;
               break;
             case "<<":
-              acc = parseFloat(acc) << parseInt(nextVal);
+              acc = acc << nextVal;
               break;
             case ">>":
-              acc = parseFloat(acc) >> parseInt(nextVal);
+              acc = acc >> nextVal;
               break;
             case ">>>":
-              acc = parseFloat(acc) >>> parseInt(nextVal);
+              acc = acc >>> nextVal;
               break;
             case "+":
-              acc = parseFloat(acc) + parseFloat(nextVal);
+              acc = acc + nextVal;
               break;
-            case "@": {
-              let accType = getType(acc);
-              let nextType = getType(nextVal);
-              if (accType === "string" || accType === "int") {
-                if (accType !== "string" && accType !== "int") {
-                    throw new RuntimeError(
-                    "Concatenation of a non-string/int to a string/int",
-                    nextChild, environment
-                  );
-                }
-                acc = acc.toString() + nextVal;
-              }
-              if (accType === "array") {
-                if (nextType !== "array") throw new RuntimeError(
-                  "Concatenation of a non-array to an array",
-                  nextChild, environment
-                );
-                acc = [...acc, ...nextVal];
-              }
-              else if (accType === "object") {
-                if (nextType !== "object") throw new RuntimeError(
-                  "Merger of a non-object with an object",
-                  nextChild, environment
-                );
-                acc = {...acc, ...nextVal};
-              }
-              else throw new RuntimeError(
-                "Concatenation of a float, entity, null, or undefined value",
-                children[i], environment
-              );
-              break;
-            }
             case "-":
-              acc = parseFloat(acc) - parseFloat(nextVal);
+              acc = acc - nextVal;
               break;
             case "*":
-              acc = parseFloat(acc) * parseFloat(nextVal);
+              acc = acc * nextVal;
               break;
             case "/":
-              acc = parseFloat(acc) / parseFloat(nextVal);
+              acc = acc / nextVal;
               break;
             case "%":
-              acc = parseFloat(acc) % parseFloat(nextVal);
+              acc = acc % nextVal;
               break;
-            default: debugger;throw (
+            default: throw (
               "ScriptInterpreter.evaluateExpression(): Unrecognized " +
               `operator: "${op}"`
             );
@@ -933,7 +901,7 @@ export class ScriptInterpreter {
       case "exponential-expression": {
         let root = this.evaluateExpression(expNode.root, environment);
         let exp = this.evaluateExpression(expNode.exp, environment);
-        return parseFloat(root) ** parseFloat(exp);
+        return root ** exp;
       }
       case "prefix-expression": {
         let op = expNode.op;
@@ -987,7 +955,12 @@ export class ScriptInterpreter {
                 }
               }
             );
-          default: debugger;throw (
+          case "new":
+            throw new RuntimeError(
+              "'new' operator not implemented yet",
+              expNode, environment
+            );
+          default: throw (
             "ScriptInterpreter.evaluateExpression(): Unrecognized " +
             `operator: "${op}"`
           );
@@ -1020,7 +993,7 @@ export class ScriptInterpreter {
                 return [newVal, prevVal]
               }
             );
-          default: debugger;throw (
+          default: throw (
             "ScriptInterpreter.evaluateExpression(): Unrecognized " +
             `operator: "${op}"`
           );
@@ -1034,27 +1007,6 @@ export class ScriptInterpreter {
         ));
         return this.executeFunction(
           fun, inputValArr, expNode, environment
-        );
-      }
-      case "virtual-method": {
-        let objVal = this.evaluateExpression(expNode.obj, environment);
-        let funVal = this.evaluateExpression(expNode.fun, environment);
-        if (objVal instanceof ProtectedObject) throw new RuntimeError(
-          'Virtual methods not allowed for protected objects',
-          expNode, environment
-        );
-        if (
-          funVal instanceof DefinedFunction ||
-          funVal instanceof DeveloperFunction
-        ) {
-          return new ThisBoundFunction(funVal, objVal);
-        }
-        else if (funVal instanceof ThisBoundFunction) {
-          return new ThisBoundFunction(funVal.funVal, objVal);
-        }
-        else throw new RuntimeError(
-          "Virtual method with a non-function type",
-          expNode.fun, environment
         );
       }
       case "member-access": {
@@ -1137,13 +1089,13 @@ export class ScriptInterpreter {
       case "this-keyword": {
         return environment.getThisVal(expNode, environment);
       }
-      case "entity-reference": {
-        if (expNode.id) {
-          return new EntityReference(expNode.id);
-        } else {
-          return new EntityPlaceholder(expNode.path);
-        }
-      }
+      // case "entity-reference": {
+      //   if (expNode.id) {
+      //     return new EntityReference(expNode.id);
+      //   } else {
+      //     return new EntityPlaceholder(expNode.path);
+      //   }
+      // }
       case "identifier": {
         let ident = expNode.ident;
         return environment.get(ident, expNode);
@@ -1163,7 +1115,7 @@ export class ScriptInterpreter {
                (lexeme === "NaN") ? NaN :
                undefined;
       }
-      default: debugger;throw (
+      default: throw (
         "ScriptInterpreter.evaluateExpression(): Unrecognized type: " +
         `"${type}"`
       );

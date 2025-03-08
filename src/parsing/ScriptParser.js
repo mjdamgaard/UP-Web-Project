@@ -27,38 +27,32 @@ export const scriptGrammar = {
   "script": {
     rules: [
       [
-        "use-statement!1?",
+        "string-expression-statement!1*", // These are used for defining
+        // protection schemes, and also dev library names, and potentially more. 
         "import-statement!1*",
         "outer-statement+$"
       ],
     ],
     process: (children) => ({
       type: "script",
-      protectScriptRef: children[0][0]?.scriptRef,
-      importStmtArr: children[1],
-      stmtArr: children[2],
+      importStmtArr: children[0],
+      stmtArr: children[0],
     }),
-  },
-  "use-statement": {
-    rules: [
-      ["/use/", "entity-reference", "/;/"],
-    ],
-    process: (children) => {
-      return {
-        type: "use-statement",
-        scriptRef: children[1],
-      };
-    },
   },
   "import-statement": {
     rules: [
-      ["/import/", "import-list", "/from/", "entity-reference", "/;/"],
+      ["/import/", "import-list", "/from/", "string", "/;/"],
+      ["/import/", "/from/", "string", "/;/"],
     ],
-    process: (children) => {
-      return {
-        type: "module-import-statement",
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
+        type: "import-statement",
         importArr: children[1].children,
-        moduleRef: children[3],
+        moduleStr: children[3].str,
+      } : {
+        type: "import-statement",
+        importArr: [],
+        moduleStr: children[2].str,
       };
     },
   },
@@ -73,7 +67,6 @@ export const scriptGrammar = {
     rules: [
       [/\*/, "/as/!", "identifier"],
       [/\{/, "named-import-list!1?!", /\}/],
-      // ["protect-signal", "/as/!", "identifier"],
       ["identifier"],
     ],
     process: (children, ruleInd) => {
@@ -83,10 +76,6 @@ export const scriptGrammar = {
       } : (ruleInd === 1) ? {
         importType: "named-imports",
         namedImportArr: children[1][0]?.children,
-      // } : (ruleInd === 2) ? {
-      //   importType: "protected-import", // ("protected-namespace-import".)
-      //   signalStr: children[0].signalStr,
-      //   ident: children[2].ident,
       } : {
         importType: "default-import",
         ident: children[0].ident,
@@ -114,15 +103,6 @@ export const scriptGrammar = {
       alias: children[2]?.ident,
     }),
   },
-  "protect-signal": {
-    rules: [
-      ["/protected/", "string?"],
-    ],
-    process: (children) => ({
-      type: "protect-signal",
-      signalStr: children[1][0]?.str,
-    }),
-  },
   "outer-statement": {
     rules: [
       ["export-statement!1"],
@@ -132,37 +112,28 @@ export const scriptGrammar = {
   },
   "export-statement": {
     rules: [
-      [
-        "/export/", "protect-signal?", "/default/?", "function-declaration!1"
-      ],
-      [
-        "/export/", "protect-signal?", "/default/?", "variable-declaration!1"
-      ],
-      ["/export/", "protect-signal?", "/default/", "expression-statement"],
-      [
-        "/export/", "protect-signal?", /\{/, "named-export-list!1?",
-        /\}/, "/;/"
-      ],
+      ["/export/", "/default/?", "function-declaration!1"],
+      ["/export/", "/default/?", "variable-declaration!1"],
+      ["/export/", "/default/", "expression-statement"],
+      ["/export/", /\{/, "named-export-list!1?", /\}/, "/;/"],
     ],
     process: (children, ruleInd) => {
       let ret = {
         type: "export-statement",
-        isProtected: (children[1][0] !== undefined) ? true : false,
-        signalStr: children[1][0]?.signalStr,
       };
       if (ruleInd <= 2) {
         if (ruleInd <= 1) {
-          ret.isDefault = children[2][0] ? true : false;
-          ret.stmt = children[3];
+          ret.isDefault = children[1][0] ? true : false;
+          ret.stmt = children[2];
         } else {
           ret.isDefault = true;
-          ret.exp = children[3];
+          ret.exp = children[2];
         }
         if (ruleInd === 0) {
-          ret.ident = children[3].name;
+          ret.ident = children[2].name;
         }
         if (ruleInd === 1) {
-          let {decType, defArr} = children[3];
+          let {decType, defArr} = children[2];
           if (decType !== "definition-list" || defArr.length !== 1) {
             return "Invalid variable declaration for export statement (only " +
               "one variable allowed, and no destructuring)";
@@ -172,7 +143,7 @@ export const scriptGrammar = {
       }
       else {
         ret.subtype = "named-exports";
-        ret.namedExportArr = children[3].children;
+        ret.namedExportArr = children[2].children;
       }
       return ret;
     },
@@ -289,6 +260,9 @@ export const scriptGrammar = {
     ],
     process: straightenListSyntaxTree,
   },
+  // TODO: Implement the types as a subset of TS, and where we use types
+  // declared by statements of the form 'type MyClass = "#<entID>";' refer to
+  // entity classes, each defined by the formal entity referenced by entID. 
   "parameter": {
     rules: [
       ["identifier", "/:/", "type", "/=/", "expression!"],
@@ -351,7 +325,8 @@ export const scriptGrammar = {
   "type": {
     rules: [
       // TODO: Consider changing this back (or to something else) as to not
-      // clash with Typescript object types. 
+      // clash with Typescript object types. *Yes, these types should conform
+      // to a subset of TS.
       [/\{/, "type^(1)-list!", /\}/],
       ["type^(1)"],
       ["/any/"],
@@ -370,11 +345,12 @@ export const scriptGrammar = {
   },
   "type^(1)": {
     rules: [
-      ["entity-reference"], // A class.
+      // ["entity-reference"], // A class.
       ["/string|bool|int|float|array|object|entity/"],
     ],
     process: (children) => children[0],
   },
+  // TODO: Correct the type syntax above.
   "function-body": {
     rules: [
       [/\{/, "statement-list!1", /\}/],
@@ -416,7 +392,7 @@ export const scriptGrammar = {
       ["if-else-statement!1"],
       ["loop-statement!1"],
       ["return-statement!1"],
-      ["exit-statement!1"],
+      // ["exit-statement!1"],
       ["throw-statement!1"],
       ["try-catch-statement!1"],
       ["instruction-statement!1"],
@@ -436,6 +412,15 @@ export const scriptGrammar = {
     process: (children) => ({
       type: "expression-statement",
       exp: children[0],
+    }),
+  },
+  "string-expression-statement": {
+    rules: [
+      ["string", "/;/"],
+    ],
+    process: (children) => ({
+      type: "string-expression-statement",
+      str: children[0].str,
     }),
   },
   "block-statement": {
@@ -505,16 +490,6 @@ export const scriptGrammar = {
     ],
     process: (children, ruleInd) => ({
       type: "return-statement",
-      exp: (ruleInd === 0) ? children[1] : undefined,
-    }),
-  },
-  "exit-statement": {
-    rules: [
-      ["/exit/", "expression", "/;/"],
-      ["/exit/", "/;/"],
-    ],
-    process: (children, ruleInd) => ({
-      type: "exit-statement",
       exp: (ruleInd === 0) ? children[1] : undefined,
     }),
   },
@@ -671,7 +646,7 @@ export const scriptGrammar = {
   },
   "expression^(9)": {
     rules: [
-      ["expression^(10)", "/\\+|\\-|@/", "expression^(9)!"],
+      ["expression^(10)", "/\\+|\\-/", "expression^(9)!"],
       ["expression^(10)"],
     ],
     process: processPolyadicInfixOperation,
@@ -687,7 +662,7 @@ export const scriptGrammar = {
   },
   "expression^(11)": {
     rules: [
-      ["expression^(12)", "/\\*\\*/", "expression^(11)!"],
+      ["expression^(12)", /\*\*/, "expression^(11)!"],
       ["expression^(12)"],
     ],
     process: (children, ruleInd) => {
@@ -702,7 +677,7 @@ export const scriptGrammar = {
   "expression^(12)": {
     rules: [
       [
-        "/\\+\\+|\\-\\-|!|~|\\+|\\-|typeof|void|delete/",
+        "/\\+\\+|\\-\\-|!|~|\\+|\\-|typeof|void|delete|new/",
         "expression^(13)!"
       ],
       ["expression^(13)"],
@@ -758,22 +733,8 @@ export const scriptGrammar = {
   },
   "expression^(15)": {
     rules: [
-      ["expression^(16)", /\->/, "expression^(16)!"],
+      ["expression^(16)", "member-accessor!1+"],
       ["expression^(16)"],
-    ],
-    process: (children, ruleInd) => {
-      return (ruleInd === 0) ? {
-        type: "virtual-method",
-        obj: children[0],
-        fun: children[2],
-      } :
-        copyFromChild(children);
-    },
-  },
-  "expression^(16)": {
-    rules: [
-      ["expression^(17)", "member-accessor!1+"],
-      ["expression^(17)"],
     ],
     process: (children, ruleInd) => {
       return (ruleInd === 0) ?
@@ -798,7 +759,7 @@ export const scriptGrammar = {
       }
     },
   },
-  "expression^(17)": {
+  "expression^(16)": {
     rules: [
       [/\(/, "expression", /\)/],
       ["array!1"],
@@ -891,21 +852,21 @@ export const scriptGrammar = {
     process: copyLexemeFromChild,
     params: ["constant"],
   },
-  "entity-reference": {
-    rules: [
-      [/#[_\$a-zA-Z0-9]+/],
-      [/#"([^"\\]|\\[.\n])*"/],
-    ],
-    process: (children, ruleInd) => {
-      return (ruleInd === 0) ? {
-        type: "entity-reference",
-        id: children[0].substring(1),
-      } : {
-        type: "entity-reference",
-        path: children[0].substring(1),
-      };
-    },
-  },
+  // "entity-reference": {
+  //   rules: [
+  //     [/#[_\$a-zA-Z0-9]+/],
+  //     [/#"([^"\\]|\\[.\n])*"/],
+  //   ],
+  //   process: (children, ruleInd) => {
+  //     return (ruleInd === 0) ? {
+  //       type: "entity-reference",
+  //       id: children[0].substring(1),
+  //     } : {
+  //       type: "entity-reference",
+  //       path: children[0].substring(1),
+  //     };
+  //   },
+  // },
 };
 
 
@@ -921,9 +882,9 @@ export class ScriptParser extends Parser {
         /(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
         /\+=|\-=|\*=|\/=|&&=|\|\|=|\?\?=/,
         /&&|\|\||\?\?|\+\+|\-\-|\*\*/,
-        /\?\.|=>|\->/,
+        /\?\.|=>/,
         /===|==|!==|!=|<=|>=/,
-        /[\.,:;\[\]\{\}\(\)<>\?=\+\-@\*\|\^&!%\/]/,
+        /[\.,:;\[\]\{\}\(\)<>\?=\+\-\*\|\^&!%\/]/,
         /[_\$a-zA-Z0-9]+/,
         /#[_\$a-zA-Z0-9]+/,
         /#"([^"\\]|\\[.\n])*"/,

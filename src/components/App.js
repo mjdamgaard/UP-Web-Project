@@ -1,21 +1,22 @@
+
 import {useState, useLayoutEffect, createContext, useCallback} from "react";
 
-import {useDispatch} from "../hooks/useDispatch.js";
-import {useRestore} from "../hooks/useRestore.js";
-import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
+// import {useDispatch} from "../hooks/useDispatch.js";
+// import {useRestore} from "../hooks/useRestore.js";
+// import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
 
 // import {appReducers} from "./appReducers.js";
 
 import {AppHeader} from "./header/AppHeader.js";
-import {AppPage} from "./app_pages/AppPage.js";
+// import {AppPage} from "./app_pages/AppPage.js";
 
 /* Tests */
-import {runTests} from "../classes/testing/parsing_interpreting_tests.js";
+import {runTests} from "../testing/parsing_interpreting_tests.js";
 
 runTests();
 
 
-export const HOME_ENTITY_ID = basicEntIDs["entities"];
+// export const HOME_ENTITY_ID = basicEntIDs["entities"];
 
 
 
@@ -39,75 +40,75 @@ export const ProfileContext = createContext();
 
 
 export const App = (props) => {
-  const pathname = window.location.pathname;
-  const hasPath = pathname !== "/";
-  // const [state, setState] = useRestorableState("app", {
-  const [state, setState] = useState({
-    profileState: {
-      userID: localStorage.session && localStorage.session.userID,
-      sesIDHex: localStorage.session && localStorage.session.sesIDHex,
-    },
-    pagesState: {
-      pageKeyArr: hasPath ? [0, 1] : [0],
-      pagePathStore: {
-        0: "/e" + HOME_ENTITY_ID,
-        1: hasPath ? pathname : undefined,
-      },
-      nonce: 1,
-      curInd: hasPath ? 1 : 0,
-      prevInd: hasPath ? 0 : null,
-    },
-    // scrollLeft: 0, scrollVelocity: 0, lastScrollAt: 0,
+  // const pathname = window.location.pathname;
+  // const hasPath = pathname !== "/";
+  // // const [state, setState] = useRestorableState("app", {
+  // const [state, setState] = useState({
+  //   profileState: {
+  //     userID: localStorage.session && localStorage.session.userID,
+  //     sesIDHex: localStorage.session && localStorage.session.sesIDHex,
+  //   },
+  //   pagesState: {
+  //     pageKeyArr: hasPath ? [0, 1] : [0],
+  //     pagePathStore: {
+  //       0: "/e" + HOME_ENTITY_ID,
+  //       1: hasPath ? pathname : undefined,
+  //     },
+  //     nonce: 1,
+  //     curInd: hasPath ? 1 : 0,
+  //     prevInd: hasPath ? 0 : null,
+  //   },
+  //   // scrollLeft: 0, scrollVelocity: 0, lastScrollAt: 0,
 
-  });
-  const {pagePathStore, pageKeyArr, curInd} = state.pagesState;
+  // });
+  // const {pagePathStore, pageKeyArr, curInd} = state.pagesState;
 
   // TODO: See below.
   // const [isReady, refCallback2] = useRestore("root", state, prevState => {
   //   setState(prevState);
   // });
 
-  const [dispatch, refCallback] = useDispatch(
-    appActions, setState, state, props
-  );
+  // const [dispatch, refCallback] = useDispatch(
+  //   appActions, setState, state, props
+  // );
 
 
-  const getProfileData = useCallback((propName) => {
-    return state.profileState[propName];
-  }, Object.values(state.profileState))
+  // const getProfileData = useCallback((propName) => {
+  //   return state.profileState[propName];
+  // }, Object.values(state.profileState))
 
 
-  useLayoutEffect(() => {
-    let curPagePath = pagePathStore[pageKeyArr[curInd]];
-    let newPath = curPagePath.entID ? "e" + curPagePath.entID : "";
-    window.history.pushState(null, "", newPath);
-    // TODO: Refactor:
-    appActions["SCROLL_INTO_VIEW"](curInd);
-    window.onresize = (event) => {
-      appActions["SCROLL_INTO_VIEW"](curInd);
-    };
-  }, [curInd])
+  // useLayoutEffect(() => {
+  //   let curPagePath = pagePathStore[pageKeyArr[curInd]];
+  //   let newPath = curPagePath.entID ? "e" + curPagePath.entID : "";
+  //   window.history.pushState(null, "", newPath);
+  //   // TODO: Refactor:
+  //   appActions["SCROLL_INTO_VIEW"](curInd);
+  //   window.onresize = (event) => {
+  //     appActions["SCROLL_INTO_VIEW"](curInd);
+  //   };
+  // }, [curInd])
 
 
 
-  const appPages = pageKeyArr.map((pageKey, ind) => {
-    let pagePath = pagePathStore[pageKey];
-    return (
-      <div key={pageKey} className={
-        "page-container" + ((curInd === ind) ? " active" : "")
-      }
-        onClick={(e) => {
-          if (curInd === ind) {
-            appActions["SCROLL_INTO_VIEW"](ind);
-          } else {
-            dispatch(e.target, "GO_TO_PAGE", ind);
-          }
-        }}
-      >
-        <AppPage pageKey={pageKey} pagePath={pagePath} />
-      </div>
-    );
-  });
+  // const appPages = pageKeyArr.map((pageKey, ind) => {
+  //   let pagePath = pagePathStore[pageKey];
+  //   return (
+  //     <div key={pageKey} className={
+  //       "page-container" + ((curInd === ind) ? " active" : "")
+  //     }
+  //       onClick={(e) => {
+  //         if (curInd === ind) {
+  //           appActions["SCROLL_INTO_VIEW"](ind);
+  //         } else {
+  //           dispatch(e.target, "GO_TO_PAGE", ind);
+  //         }
+  //       }}
+  //     >
+  //       <AppPage pageKey={pageKey} pagePath={pagePath} />
+  //     </div>
+  //   );
+  // });
 
   // TODO: comment-in and debug useRestore(). ..(And also make a combined
   // hook to that we can combine the two refCallbacks instead.)
@@ -118,22 +119,22 @@ export const App = (props) => {
   // }
 
   return (
-    <div className="app" ref={refCallback}
+    <div className="app" // ref={refCallback}
       // ref={(node) => {
       //   refCallback(node);
       //   refCallback2(node);
       // }}
     >
-      <ProfileContext.Provider value={getProfileData}>
+      {/* <ProfileContext.Provider value={getProfileData}> */}
         <AppHeader
-          setAppPage={void(0)}
-          pageKeyArr={pageKeyArr} pagePathStore={pagePathStore}
-          curInd={curInd}
+          // setAppPage={void(0)}
+          // pageKeyArr={pageKeyArr} pagePathStore={pagePathStore}
+          // curInd={curInd}
         />
-        <div className="page-list-container">
+        {/* <div className="page-list-container">
           {appPages}
-        </div>
-      </ProfileContext.Provider>
+        </div> */}
+      {/* </ProfileContext.Provider> */}
     </div>
   );
 };
