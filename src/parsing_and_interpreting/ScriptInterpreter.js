@@ -35,13 +35,13 @@ export class ScriptInterpreter {
 
   async interpretScript(
     gas, script = "", scriptID = "1", mainInputs = [], reqUserID = undefined,
-    protect = () => {}, permissions = {}, settings = {},
+    protectScriptID, permissions = {}, settings = {},
     parsedEntities = new Map(),
   ) {
     let scriptGlobals = {
       gas: gas, log: {}, output: undefined, scriptID: scriptID,
-      reqUserID: reqUserID,
-      protect: protect, permissions: permissions, setting: settings,
+      reqUserID: reqUserID, protectScriptID: protectScriptID,
+      permissions: permissions, setting: settings,
       shouldExit: false, resolveScript: undefined, scriptInterpreter: this,
       parsedEntities: parsedEntities, liveModules: {},
     };
@@ -239,14 +239,26 @@ export class ScriptInterpreter {
     let submoduleID = submoduleRef.id;
 
     // If the module has already been executed, we can return early.
-    let existingEnv = liveModules["&" + submoduleID];
-    if (existingEnv) {
-      return existingEnv;
+    let liveModule = liveModules["&" + submoduleID];
+    if (liveModule) {
+      return liveModule;
     }
 
-    // Then fetch and parse the module.
+    // Then fetch and parse the module. First, try to get it from the
+    // parsedEntities buffer.
     let submoduleNode = parsedEntities.get(submoduleID);
+
+    // Else check if submoduleID refers to a developer library, and import it
+    // in a special way if so.
     if (!submoduleNode) {
+      liveModule = await this.getDeveloperLibrary(submoduleID);
+      if (liveModule) {
+        liveModules["&" + submoduleID] = liveModule;
+        return liveModule;
+      }
+
+      // And if it is not a developer module, then fetch and parse the user
+      // module.
       let {parsedEnt} = await fetchEntity(
         this.libraryPaths, {callerNode: impStmt, callerEnv: callerModuleEnv},
         entID, "s",
@@ -257,10 +269,11 @@ export class ScriptInterpreter {
 
     // Then execute the module, inside the global environment, and return the
     // resulting liveModule, after also adding it to liveModules.
-    let liveModule = await this.executeModule(
+    liveModule = await this.executeModule(
       submoduleNode, submoduleID, globalEnv
     );
-    return liveModules["&" + submoduleID] = liveModule;
+    liveModules["&" + submoduleID] = liveModule;
+    return liveModule;
   }
 
 
@@ -428,8 +441,8 @@ export class ScriptInterpreter {
         );
       }
     }
-    else if (fun instanceof BuiltInFunction) {
-      ret = this.executeBuiltInFunction(
+    else if (fun instanceof DeveloperFunction) {
+      ret = this.executeDeveloperFunction(
         fun, inputArr, callerNode, callerEnv, thisVal, thisFlags
       );
     }
@@ -448,7 +461,7 @@ export class ScriptInterpreter {
 
 
 
-  executeBuiltInFunction(fun, inputArr, callerNode, callerEnv, thisVal) {
+  executeDeveloperFunction(fun, inputArr, callerNode, callerEnv, thisVal) {
     return fun.fun(
       {callerNode: callerNode, callerEnv: callerEnv, thisVal: thisVal},
       ...inputArr
@@ -1032,7 +1045,7 @@ export class ScriptInterpreter {
         );
         if (
           funVal instanceof DefinedFunction ||
-          funVal instanceof BuiltInFunction
+          funVal instanceof DeveloperFunction
         ) {
           return new ThisBoundFunction(funVal, objVal);
         }
@@ -1085,7 +1098,9 @@ export class ScriptInterpreter {
         // that this differs from the conventional semantics of JavaScript,
         // where 'this' is normally only bound at the time when the method is
         // being called.)
-        if (ret instanceof DefinedFunction || ret instanceof BuiltInFunction) {
+        if (
+          ret instanceof DefinedFunction || ret instanceof DeveloperFunction
+        ) {
           ret = new ThisBoundFunction(
             ret, expVal, isProtected ? expVal.flags[indexVal] : undefined
           );
@@ -1504,7 +1519,7 @@ export function getType(val) {
     ) {
       return "entity";
     } else if (
-      val instanceof DefinedFunction || val instanceof BuiltInFunction
+      val instanceof DefinedFunction || val instanceof DeveloperFunction
     ) {
       return "function";
     } else if (val instanceof ProtectedObject) {
@@ -1527,7 +1542,7 @@ export function getType(val) {
 
 export function isFunction(val) {
   return (
-    val instanceof DefinedFunction || val instanceof BuiltInFunction ||
+    val instanceof DefinedFunction || val instanceof DeveloperFunction ||
     val instanceof ThisBoundFunction
   );
 }
@@ -1545,7 +1560,7 @@ export class DefinedFunction {
   }
 }
 
-export class BuiltInFunction {
+export class DeveloperFunction {
   constructor(fun) {
     this.fun = fun;
   }

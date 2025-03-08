@@ -96,7 +96,7 @@ CREATE TABLE DataStructures_SingleIndex_CharKey (
 
     struct_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
-    entry_key VARCHAR(64) NOT NULL, -- Type can be resized/changed.
+    entry_key VARCHAR(255) NOT NULL, -- Type can be resized/changed.
 
     entry_payload VARCHAR(32) NOT NULL, -- Type can be resized/changed.
 
@@ -221,7 +221,7 @@ CREATE TABLE Entities (
     -- substitute any '@[<path>]' placeholders with real entity ID references.
     is_editable TINYINT UNSIGNED NOT NULL DEFAULT 0, CHECK (is_editable <= 1),
 
-    -- If creator_id = 0, then the entity cannot be edited. 
+    -- If creator_id = 0, then the entity cannot be edited.
     CHECK (creator_id != 0 OR is_editable = 0)
 );
 
