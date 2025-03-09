@@ -1,6 +1,6 @@
 
 import {scriptParser} from "../parsing/ScriptParser.js";
-import {EntityReference, EntityPlaceholder} from "../parsing/RegEntParser.js";
+// import {EntityReference, EntityPlaceholder} from "../parsing/RegEntParser.js";
 import {LexError, SyntaxError} from "../parsing/Parser.js";
 
 export {LexError, SyntaxError};
@@ -621,12 +621,6 @@ export class ScriptInterpreter {
           this.evaluateExpression(stmtNode.exp, environment);
         throw new ReturnException(expVal, stmtNode, environment);
       }
-      case "exit-statement": {
-        let expVal = (!stmtNode.exp) ? undefined :
-          this.evaluateExpression(stmtNode.exp, environment);
-        environment.scriptGlobals.output = expVal;
-        throw new ExitException();
-      }
       case "throw-statement": {
         let expVal = (!stmtNode.exp) ? undefined :
           this.evaluateExpression(stmtNode.exp, environment);
@@ -999,6 +993,13 @@ export class ScriptInterpreter {
           );
         }
       }
+      case "chained-expression": {
+        let expVal = this.evaluateExpression(expNode.exp, environment);
+        let len = expNode.memAccArr.length;
+        for (let i = 0; i < len - 1; i++) {
+          
+        }
+      }
       case "function-call": {
         let fun = this.evaluateExpression(expNode.exp, environment);
         let inputExpArr = expNode.postfix.children;
@@ -1089,13 +1090,15 @@ export class ScriptInterpreter {
       case "this-keyword": {
         return environment.getThisVal(expNode, environment);
       }
-      // case "entity-reference": {
-      //   if (expNode.id) {
-      //     return new EntityReference(expNode.id);
-      //   } else {
-      //     return new EntityPlaceholder(expNode.path);
-      //   }
-      // }
+      case "entity-reference": {
+        return new EntityReference(expNode.path);
+      }
+      case "exit-call": {
+        let expVal = (!expNode.exp) ? undefined :
+          this.evaluateExpression(expNode.exp, environment);
+        environment.scriptGlobals.output = expVal;
+        throw new ExitException();
+      }
       case "identifier": {
         let ident = expNode.ident;
         return environment.get(ident, expNode);
@@ -1467,7 +1470,7 @@ export function getType(val) {
     } else if (val === null) {
       return "null";
     } else if (
-      val instanceof EntityReference || val instanceof EntityPlaceholder
+      val instanceof EntityReference // || val instanceof EntityPlaceholder
     ) {
       return "entity";
     } else if (
@@ -1506,15 +1509,20 @@ export const UNDEFINED = Symbol("undefined");
 
 
 export class DefinedFunction {
-  constructor(node, decEnv) {
+  constructor(node, decEnv, isImported = undefined, protectSignal = undefined) {
     this.node = node;
     this.decEnv = decEnv;
+    if (isImported) this.isImported = isImported;
+    if (protectSignal) this.protectSignal = protectSignal;
   }
 }
 
 export class DeveloperFunction {
-  constructor(fun) {
+  constructor(fun, protectSignal = undefined) {
     this.fun = fun;
+    if (protectSignal) {
+      this.protectSignal = protectSignal;
+    }
   }
 }
 
@@ -1537,6 +1545,12 @@ export class ProtectedObject {
 export class Immutable {
   constructor(val) {
     this.val = val;
+  }
+}
+
+export class EntityReference {
+  constructor(path) {
+    this.path = path;
   }
 }
 
@@ -1563,10 +1577,6 @@ class ContinueException {
     this.node = node;
     this.environment = environment;
   }
-}
-
-class BrokenOptionalChainException {
-  constructor() {}
 }
 
 

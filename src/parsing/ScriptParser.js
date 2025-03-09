@@ -14,7 +14,7 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
   "^(let|var|const|this|function|export|import|break|continue|return|throw|" +
   "if|else|switch|case|void|typeof|instanceof|delete|await|class|static|" +
   "true|false|null|undefined|Infinity|NaN|try|catch|finally|for|while|do|" +
-  "default|protected|public|exit|immutable|mutable|debugger|new)$"
+  "default|public|debugger|new|exit|Entity|Protected|Mutable)$"
   // TODO: Continue this list.
 );
 
@@ -112,40 +112,67 @@ export const scriptGrammar = {
   },
   "export-statement": {
     rules: [
+      [
+        "/export/", "/default/?", "/const|let|var/", "identifier", "/=/",
+        "/Protected/!1", /\(/, "expression", "/,/", "expression", "/,/?", /\)/,
+        "/;/"
+      ],
+      [
+        "/export/", "/default/?", "/const|let|var/", "identifier!", "/=/",
+        "expression", "/;/"
+      ],
       ["/export/", "/default/?", "function-declaration!1"],
-      ["/export/", "/default/?", "variable-declaration!1"],
       ["/export/", "/default/", "expression-statement"],
       ["/export/", /\{/, "named-export-list!1?", /\}/, "/;/"],
     ],
     process: (children, ruleInd) => {
-      let ret = {
-        type: "export-statement",
-      };
-      if (ruleInd <= 2) {
-        if (ruleInd <= 1) {
-          ret.isDefault = children[1][0] ? true : false;
-          ret.stmt = children[2];
-        } else {
-          ret.isDefault = true;
-          ret.exp = children[2];
+      if (ruleInd === 0) {
+        let funExp = children[9];
+        if (funExp.type !== "function-expression") {
+          return "Second input of Protected() must be a function " +
+            "expression, using the 'function' keyword";
         }
-        if (ruleInd === 0) {
-          ret.ident = children[2].name;
+        return {
+          type: "export-statement",
+          isDefault: children[1][0] ? true : false,
+          isConst: children[2] === "const",
+          ident: children[3].ident,
+          isProtected: true,
+          signalExp: children[7],
+          funExp: funExp,
         }
-        if (ruleInd === 1) {
-          let {decType, defArr} = children[2];
-          if (decType !== "definition-list" || defArr.length !== 1) {
-            return "Invalid variable declaration for export statement (only " +
-              "one variable allowed, and no destructuring)";
-          }
-          ret.ident = defArr[0].ident;
-        }
+      }
+      else if (ruleInd === 1) {
+        return {
+          type: "export-statement",
+          isDefault: children[1][0] ? true : false,
+          isConst: children[2] === "const",
+          ident: children[3].ident,
+          exp: children[5],
+        };
+      }
+      else if (ruleInd === 2) {
+        return {
+          type: "export-statement",
+          isDefault: children[1][0] ? true : false,
+          ident: children[2].name,
+          stmt: children[2],
+        };
+      }
+      else if (ruleInd === 3) {
+        return {
+          type: "export-statement",
+          isDefault: true,
+          exp: children[2],
+        };
       }
       else {
-        ret.subtype = "named-exports";
-        ret.namedExportArr = children[2].children;
+        return {
+          type: "export-statement",
+          subtype: "named-exports",
+          namedExportArr: children[2].children,
+        };
       }
-      return ret;
     },
   },
   "named-export-list": {
@@ -707,13 +734,30 @@ export const scriptGrammar = {
   },
   "expression^(14)": {
     rules: [
-      ["expression^(15)", "expression-tuple!1+!1"],
-      ["expression^(15)"],
+      ["expression^(15)", "member-accessor!1*", "expression-tuple!1*"],
+    ],
+    process: (children) => ({
+      type: "chained-expression",
+      exp: children[0],
+      memAccArr: children[1],
+      tupleArr: children[2],
+    }),
+  },
+  "member-accessor": {
+    rules: [
+      [/\[/, "expression!", /\]/],
+      [/\./, "/[_\\$a-zA-Z][_\\$a-zA-Z0-9]*/!"],
+      [/\?\./, "/[_\\$a-zA-Z][_\\$a-zA-Z0-9]*/!"],
     ],
     process: (children, ruleInd) => {
-      return (ruleInd === 0) ?
-        processLeftAssocPostfixes(children, ruleInd, "function-call") :
-        copyFromChild(children);
+      return (ruleInd === 0) ? {
+        exp: children[1],
+      } : (ruleInd === 1) ? {
+        ident: children[1],
+      } : {
+        ident: children[1],
+        isOpt: true,
+      }
     },
   },
   "expression-tuple": {
@@ -733,38 +777,12 @@ export const scriptGrammar = {
   },
   "expression^(15)": {
     rules: [
-      ["expression^(16)", "member-accessor!1+"],
-      ["expression^(16)"],
-    ],
-    process: (children, ruleInd) => {
-      return (ruleInd === 0) ?
-        processLeftAssocPostfixes(children, ruleInd, "member-access") :
-        copyFromChild(children);
-    },
-  },
-  "member-accessor": {
-    rules: [
-      [/\[/, "expression!", /\]/],
-      [/\./, "/[_\\$a-zA-Z][_\\$a-zA-Z0-9]*/!"],
-      [/\?\./, "/[_\\$a-zA-Z][_\\$a-zA-Z0-9]*/!"],
-    ],
-    process: (children, ruleInd) => {
-      return (ruleInd === 0) ? {
-        exp: children[1],
-      } : (ruleInd === 1) ? {
-        ident: children[1],
-      } : {
-        ident: children[1],
-        isOpt: true,
-      }
-    },
-  },
-  "expression^(16)": {
-    rules: [
       [/\(/, "expression", /\)/],
       ["array!1"],
       ["object!1"],
-      ["this-keyword"],
+      ["this-keyword!1"],
+      ["entity-reference!1"],
+      ["exit-call!1"],
       ["identifier"],
       ["literal"],
     ],
@@ -845,6 +863,25 @@ export const scriptGrammar = {
     ],
     process: () => ({type: "this-keyword"}),
   },
+  "entity-reference": {
+    rules: [
+      ["/Entity/", /\(/, "string", /\)/],
+    ],
+    process: (children) => ({
+      type: "entity-reference",
+      path: children[2].str,
+    }),
+  },
+  "exit-call": {
+    rules: [
+      ["/exit/", /\(/, "expression!1", /\)/],
+      ["/exit/", /\(/, /\)/],
+    ],
+    process: (children, ruleInd) => ({
+      type: "exit-call",
+      exp: (ruleInd === 0) ? children[2] : undefined,
+    }),
+  },
   "constant": {
     rules: [
       ["/true|false|null|undefined|Infinity|NaN/"],
@@ -852,21 +889,6 @@ export const scriptGrammar = {
     process: copyLexemeFromChild,
     params: ["constant"],
   },
-  // "entity-reference": {
-  //   rules: [
-  //     [/#[_\$a-zA-Z0-9]+/],
-  //     [/#"([^"\\]|\\[.\n])*"/],
-  //   ],
-  //   process: (children, ruleInd) => {
-  //     return (ruleInd === 0) ? {
-  //       type: "entity-reference",
-  //       id: children[0].substring(1),
-  //     } : {
-  //       type: "entity-reference",
-  //       path: children[0].substring(1),
-  //     };
-  //   },
-  // },
 };
 
 
