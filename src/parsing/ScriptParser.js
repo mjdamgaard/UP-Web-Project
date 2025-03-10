@@ -732,14 +732,20 @@ export const scriptGrammar = {
   },
   "expression^(14)": {
     rules: [
-      ["expression^(15)", "member-accessor!1*", "expression-tuple!1*"],
+      ["expression^(15)", "member-accessor-or-expression-tuple!1*"],
     ],
     process: (children) => ({
       type: "chained-expression",
       exp: children[0],
-      memAccArr: children[1],
-      tupleArr: children[2],
+      postfixArr: children[1],
     }),
+  },
+  "member-accessor-or-expression-tuple": {
+    rules: [
+      ["member-accessor"],
+      ["expression-tuple"],
+    ],
+    process: copyFromChild,
   },
   "member-accessor": {
     rules: [
@@ -748,7 +754,7 @@ export const scriptGrammar = {
       [/\?\./, "/[_\\$a-zA-Z][_\\$a-zA-Z0-9]*/!"],
     ],
     process: (children, ruleInd) => {
-      return (ruleInd === 0) ? {
+      let ret = (ruleInd === 0) ? {
         exp: children[1],
       } : (ruleInd === 1) ? {
         ident: children[1],
@@ -756,6 +762,8 @@ export const scriptGrammar = {
         ident: children[1],
         isOpt: true,
       }
+      ret.type = "member-accessor";
+      return ret;
     },
   },
   "expression-tuple": {

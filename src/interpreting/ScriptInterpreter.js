@@ -1131,12 +1131,60 @@ export class ScriptInterpreter {
   }
 
 
-  assignToVariableOrMember(chainExpNode, environment, assignFun) {
-    if (expNode.type === "identifier") {
-      let ident = expNode.ident;
-      return environment.assign(ident, expNode, assignFun);
+  assignToVariableOrMember(expNode, environment, assignFun) {
+    if(expNode.type !== "chained-expression") throw new RuntimeError(
+      "Invalid assignment", expNode, environment
+    );
+    let postfixArrLen = expNode.postfixArr.length;
+    if (postfixArrLen === 0) {
+      if(expNode.exp.type !== "identifier") throw new RuntimeError(
+        "Invalid assignment", expNode, environment
+      );
+      return environment.assign(expNode.exp.ident, expNode.exp, assignFun);
     }
-    else if (
+    else {
+      let lastPostfix = expNode.postfixArr.at(-1);
+      if (lastPostfix.type !== "member-accessor") throw new RuntimeError(
+        "Invalid assignment", expNode, environment
+      );
+      if (lastPostfix.isOpt) throw new RuntimeError(
+        "Invalid use of optional chaining for the last member accessor in " +
+        "an assignment",
+        expNode, environment
+      );
+      let objVal, prevVal;
+      try {
+        [objVal, prevVal] =
+          this.evaluateChainedMemberAccess(expNode, environment);
+      } catch (err) {
+        // Unlike what JS currently does, we do not throw when assigning to
+        // a broken optional chaining. Rather we simply do nothing, and return
+        // undefined from the assignment expression.
+        if (err instanceof BrokenOptionalChainException) {
+          return undefined;
+        } else {
+          throw err;
+        }
+      }
+
+      // Throw if the object being assigned to is not an object, or is
+      // immutable.
+      if (!objVal || typeof objVal !== "object") {
+        throw new RuntimeError(
+          "Assignment to a non-object", expNode, environment
+        );
+      }
+      if (objVal instanceof Immutable || objVal instanceof ProtectedObject) {
+        throw new RuntimeError(
+          "Assignment to an immutable object", expNode, environment
+        );
+      }
+      // TODO: Now evaluate the accessor (which is never isOpt at this point),
+      // get the resulting safe index (and throw if the type is not an almost
+      // string), and then mute the object, using the prevVal and the assignFun.
+    }
+
+    /* else */ if (
       expNode.type === "member-access" && !expNode.postfix.isOpt
     ) {
       // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
