@@ -14,7 +14,7 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
   "^(let|var|const|this|function|export|import|break|continue|return|throw|" +
   "if|else|switch|case|void|typeof|instanceof|delete|await|class|static|" +
   "true|false|null|undefined|Infinity|NaN|try|catch|finally|for|while|do|" +
-  "default|public|debugger|new|exit|Entity|Protected|Mutable)$"
+  "default|public|debugger|new|exit|Entity|Protected|PassAsMutable)$"
   // TODO: Continue this list.
 );
 
@@ -783,6 +783,7 @@ export const scriptGrammar = {
       ["this-keyword!1"],
       ["entity-reference!1"],
       ["exit-call!1"],
+      ["mutable-call!1"],
       ["identifier"],
       ["literal"],
     ],
@@ -879,6 +880,16 @@ export const scriptGrammar = {
     ],
     process: (children, ruleInd) => ({
       type: "exit-call",
+      exp: (ruleInd === 0) ? children[2] : undefined,
+    }),
+  },
+  "mutable-call": {
+    rules: [
+      ["/PassAsMutable/", /\(/, "expression!1", /\)/],
+      ["/PassAsMutable/", /\(/, /\)/],
+    ],
+    process: (children, ruleInd) => ({
+      type: "mutable-call",
       exp: (ruleInd === 0) ? children[2] : undefined,
     }),
   },

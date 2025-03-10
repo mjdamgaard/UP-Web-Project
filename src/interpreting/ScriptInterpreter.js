@@ -996,6 +996,11 @@ export class ScriptInterpreter {
       case "chained-expression": {
         let expVal = this.evaluateExpression(expNode.exp, environment);
         let len = expNode.memAccArr.length;
+        let member
+        for (let i = 0; i < len - 1; i++) {
+          let index = memAccArr[i];
+          let safeIndex = (parseInt(index) == index) ? index : "&" + index;
+        }
         for (let i = 0; i < len - 1; i++) {
           
         }
@@ -1155,6 +1160,11 @@ export class ScriptInterpreter {
         "Assignment to a member of an immutable or protected object",
         expNode, environment
       );
+  throw new RuntimeError(
+    `Assignment to a member of a variable, "${ident}", from outside ` +
+    "the local function scope",
+    node, nodeEnvironment
+  );
       let prevVal = expVal[indexVal];
       if (
         isProtected && isThisAccess && isFunction(prevVal)
@@ -1241,129 +1251,112 @@ export class ScriptInterpreter {
 export class Environment {
   constructor(
     parent = undefined, scopeType = "block",
-    callerNode = undefined, callerEnv = undefined, thisVal = UNDEFINED,
-    isProtected = undefined,
+    callerNode = undefined, callerEnv = undefined, funArgs = undefined,
+    thisVal = undefined, protectPrivileges = undefined, protectData = undefined,
     moduleID = undefined, scriptGlobals = undefined
   ) {
     this.parent = parent;
     this.scopeType = scopeType;
-    this.isProtected = isProtected || callerEnv?.isProtected;
-    this.protectData = isProtected ?
-      {parent: callerEnv.protectData} :
-      parent.protectData;
+    this.variables = {};
     if (scopeType === "function") {
       this.callerNode = callerNode;
       this.callerEnv = callerEnv;
-      this.variables = {"&this": thisVal};
-      if (isProtected) {
-        if (callerEnv.scopeType)
-        this.protectData = callerEnv;
-      }
-    } else {
-      this.variables = {};
+      this.funArgs = funArgs; // : {[&<argIdent>]: [val, isMutable], ...}.
+      if (thisVal) this.thisVal = thisVal;
+      if (protectPrivileges) this.protectPrivileges = protectPrivileges;
+      if (protectData) this.protectData = protectData;
     }
-    this.moduleID = moduleID ?? parent?.moduleID ?? undefined;
-    this.scriptGlobals = scriptGlobals ?? parent?.scriptGlobals ?? (() => {
-      throw "Environment: No scriptGlobals object provided";
-    })();
-    if (scopeType === "module") {
+    else if (scopeType === "module") {
+      this.moduleID = moduleID;
       this.exports = [];
       this.liveModule = undefined;
     }
+    this.scriptGlobals = scriptGlobals ?? parent?.scriptGlobals ?? (() => {
+      throw "Environment: No scriptGlobals object provided";
+    })();
   }
 
-  #get(ident, node, nodeEnvironment) {
-    let safeIdent = "&" + ident;
-    let entry = this.variables[safeIdent] ?? [];
-    let val = entry[0];
-    if (val !== undefined) {
-      return (val === UNDEFINED) ? undefined : entry;
-    } else if (this.parent) {
-      let entry = this.parent.#get(ident, node, nodeEnvironment);
-      if (this.scopeType === "function") {
-        entry[5] = true
-      };
-      return entry;
-    } else {
-      throw new RuntimeError(
-        "Undeclared variable",
-        node, nodeEnvironment ?? this
-      );
-    }
-  }
-
-
-  get(ident, node, nodeEnvironment) {
-    let entry = this.#get(ident, node, nodeEnvironment);
-    let [val, , , , , isFromOutsideFunctionScope] = entry;
-    if (isFromOutsideFunctionScope) {
-      return turnImmutable(val);
-    } else {
-      return val;
-    }
-  }
-
-  getExported(ident, node, nodeEnvironment) {
-    let entry = this.#get(ident, node, nodeEnvironment);
-    let [val, , isExported] = entry;
-    return (isExported) ? val : undefined;
-  }
-
-  getProtected(ident, node, nodeEnvironment) {
-    let entry = this.#get(ident, node, nodeEnvironment);
-    let [val, , isExported, isProtected, flagStr] = entry;
-    return (isExported && isProtected) ? [val, flagStr]  : undefined;
-  }
-
-  getThisVal(node, nodeEnvironment) {
-    let entry = this.#get("this", node, nodeEnvironment);
-    let [thisVal, , , , , isFromOutsideFunctionScope] = entry;
-    return isFromOutsideFunctionScope ? undefined : thisVal;
-  }
-
-
-  declare(ident, val, isConst, node) {
+  declare(ident, val, isConst, node, nodeEnvironment = this) {
     val = (val === undefined) ? UNDEFINED : val;
     let safeIdent = "&" + ident;
     let [prevVal] = this.variables[safeIdent] ?? [];
     if (prevVal !== undefined) {
       throw new RuntimeError(
         "Redeclaration of variable '" + ident + "'",
-        node, this
+        node, nodeEnvironment
       );
     } else {
-      this.variables[safeIdent] = [
-        val, isConst
-      ];
+      this.variables[safeIdent] = [val, isConst];
     }
   }
 
-  assign(ident, node, assignFun) {
+  // get() => [val, isConst, isMutable, decEnv].
+  get(ident, node, nodeEnvironment = this) {
     let safeIdent = "&" + ident;
-    let [prevVal, isConst] = this.variables[safeIdent] ?? [];
-    if (prevVal !== undefined) {
-      if (isConst) {
-        throw new RuntimeError(
-          "Reassignment of constant variable or function '" + ident + "'",
-          node, this
-        );
+    let entry = this.variables[safeIdent] ?? [];
+    let val = entry[0];
+    if (val !== undefined) {
+      return (val === UNDEFINED) ? undefined : [...entry, true, this];
+    }
+    let isNonTransparentFunction = (this.scopeType === "function");
+    if (isNonTransparentFunction) {
+      let arg = this.funArgs[safeIdent] ?? [];
+      val = arg[0];
+      if (val !== undefined) {
+        return (val === UNDEFINED) ? undefined : [val, false, arg[1], this];
+      }
+    }
+    if (this.parent) {
+      let ret = this.parent.get(ident, node, nodeEnvironment);
+      if (isNonTransparentFunction) {
+        return [val, true, false];
       } else {
-        let [newVal, ret] = assignFun(prevVal);
-        newVal = (newVal === undefined) ? UNDEFINED : newVal;
-        this.variables[safeIdent][0] = newVal;
         return ret;
       }
-    } else if (this.parent && this.scopeType !== "function") {
-      return this.parent.assign(ident, node, assignFun);
-    } else {
+    }
+    else {
       throw new RuntimeError(
-        "Assignment of undefined or non-local variable '" + ident + "'",
-        node, this
+        `Undeclared variable "${ident}"`,
+        node, nodeEnvironment
       );
     }
   }
 
+  getVal(ident, node, nodeEnvironment = this) {
+    return this.get(ident, node, nodeEnvironment)[0];
+  }
 
+  getThisVal() {
+    let thisVal = this.thisVal;
+    if (thisVal !== undefined) {
+      return (val === UNDEFINED) ? undefined : val;
+    }
+    else if (this.scopeType !== "function" && this.parent) {
+      return this.parent.getThisVal();
+    }
+    else {
+      return undefined;
+    }
+  }
+
+
+  assign(ident, assignFun, node, nodeEnvironment = this) {
+    let [prevVal, isConst, , decEnv] =
+      this.get(ident, node, nodeEnvironment);
+    if (isConst) {
+      throw new RuntimeError(
+        "Reassignment of constant variable or function '" + ident + "'",
+        node, this
+      );
+    }
+    let [newVal, ret] = assignFun(prevVal);
+    newVal = (newVal === undefined) ? UNDEFINED : newVal;
+    decEnv.variables["&" + ident][0] = newVal;
+    return ret;
+  }
+
+
+  // TODO: Correct.
   export(ident, alias = ident, isProtected, node, nodeEnvironment = this) {
     let prevExport = this.exports["&" + alias];
     if (prevExport !== undefined) throw new RuntimeError(
@@ -1509,48 +1502,45 @@ export const UNDEFINED = Symbol("undefined");
 
 
 export class DefinedFunction {
-  constructor(node, decEnv, isImported = undefined, protectSignal = undefined) {
+  constructor(
+    node, decEnv, thisVal = undefined, canAffectDecEnv = undefined,
+    protectPrivileges = undefined,
+  ) {
     this.node = node;
     this.decEnv = decEnv;
-    if (isImported) this.isImported = isImported;
-    if (protectSignal) this.protectSignal = protectSignal;
+    if (thisVal) this.thisVal = thisVal;
+    if (canAffectDecEnv) this.canAffectDecEnv = canAffectDecEnv;
+    if (protectPrivileges) this.protectPrivileges = protectPrivileges;
   }
 }
 
 export class DeveloperFunction {
   constructor(fun, protectSignal = undefined) {
     this.fun = fun;
-    if (protectSignal) {
-      this.protectSignal = protectSignal;
-    }
-  }
-}
-
-export class ThisBoundFunction {
-  constructor(funVal, thisVal, thisFlags) {
-    this.funVal = funVal;
-    this.thisVal = thisVal;
-    this.thisFlags = thisFlags;
+    if (protectSignal) this.protectSignal = protectSignal;
   }
 }
 
 export class ProtectedObject {
-  constructor(moduleID, callerModule, liveModule) {
+  constructor(moduleID, privateMethods, publicMethods, otherProps) {
     this.moduleID = moduleID;
-    this.callerModule = callerModule;
-    this.liveModule = liveModule;
-  }
-}
-
-export class Immutable {
-  constructor(val) {
-    this.val = val;
+    // Method := [signal : string, fun : DefinedFunction | DeveloperFunction].
+    this.privateMethods = privateMethods;
+    this.publicMethods = publicMethods;
+    // Other props are readonly, and can be anything.
+    this.otherProps = otherProps;
   }
 }
 
 export class EntityReference {
   constructor(path) {
     this.path = path;
+  }
+}
+
+export class PassAsMutable {
+  constructor(val) {
+    this.val = val;
   }
 }
 
