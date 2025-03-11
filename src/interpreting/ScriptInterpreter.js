@@ -417,33 +417,44 @@ export class ScriptInterpreter {
 
 
 
-  executeFunction(fun, inputArr, callerNode, callerEnv, thisVal) {
-    // Potentially get function and thisVal from ThisBoundFunction wrapper.
-    let thisVal = undefined;
-    let thisFlags = undefined;
-    if (fun instanceof ThisBoundFunction) {
-      thisVal = fun.thisVal;
-      thisFlags = fun.thisFlags;
-      fun = fun.funVal;
+  executeFunction(
+    fun, inputArr, callerNode, callerEnv, thisVal, protectSignal
+  ) {
+    let {protect, permissions} = callerEnv.scriptGlobals;
+    let {protectData} = callerEnv;
+
+    // If the function is a method of a protected object, call protect() in
+    // order to check the protectSignal (will throw on failure), and also to
+    // get the new protectData to give to the new function environment.
+    if (thisVal instanceof ProtectedObject) {
+      protectData = protect(protectSignal, permissions, protectData);
     }
 
-    // Then execute the function depending on its type.
+    // Execute the function depending on its type.
     let ret;
-    if (fun instanceof DefinedFunction) {
-      if (thisFlags === undefined) {
-        ret = this.executeDefinedFunction(
-          fun.node, fun.decEnv, inputArr, callerNode, callerEnv, thisVal
-        );
-      } else {
-        ret = this.executeProtectedObjectMethod(
-          fun.node, fun.decEnv, inputArr, callerNode, callerEnv, thisVal,
-          thisFlags
-        );
+    if (fun instanceof DeveloperFunction) {
+      // If the called developer function has a protectSignal, then call
+      // protect() (again, if called already), and also reassign protectData
+      // the return value.
+      if (fun.protectSignal !== undefined) {
+        protectData = protect(fun.protectSignal, permissions, protectData);
       }
+
+      // Then execute the dev function, with a first argument in the form of an
+      // object with some standard members, followed by all the other inputs
+      // in the inputArr.
+      ret = fun.fun(
+        {
+          callerNode: callerNode, callerEnv: callerEnv, thisVal: thisVal,
+          protectData: protectData,
+        },
+        ...inputArr
+      );
     }
-    else if (fun instanceof DeveloperFunction) {
-      ret = this.executeDeveloperFunction(
-        fun, inputArr, callerNode, callerEnv, thisVal, thisFlags
+    else if (fun instanceof DefinedFunction) {
+      ret = this.executeDefinedFunction(
+        fun.node, fun.decEnv, inputArr, callerNode, callerEnv,
+        thisVal, protectData
       );
     }
     else throw new RuntimeError(
@@ -461,43 +472,45 @@ export class ScriptInterpreter {
 
 
 
-  executeDeveloperFunction(fun, inputArr, callerNode, callerEnv, thisVal) {
-    return fun.fun(
-      {callerNode: callerNode, callerEnv: callerEnv, thisVal: thisVal},
-      ...inputArr
-    );
-  }
-
-
-
-  // This method is supposed to be overwritten in a client-side extension of
-  // this class, in particular in order to always send all methods with a "w" or "W"
-  // flag (for "write data (as user)") to be executed server-side.
-  executeProtectedObjectMethod(
-    funNode, funDecEnv, inputValueArr, callerNode, callerEnv, thisVal,
-    thisFlags // unused here, but will be used in the client-side extension.
-  ) {
-    return this.executeDefinedFunction(
-      funNode, funDecEnv, inputValueArr, callerNode, callerEnv, thisVal
-    )
-  }
-
 
 
 
   executeDefinedFunction(
     funNode, funDecEnv, inputValueArr, callerNode, callerEnv,
-    thisVal = undefined,
+    thisVal = undefined, protectData = undefined,
   ) {
     decrCompGas(callerEnv);
     let scriptGlobals = callerEnv.scriptGlobals;
 
-    // Initialize a new environment for the execution of the function.
-    let newEnv = new Environment(
-      funDecEnv, "function", callerNode, callerEnv, thisVal
-    );
+    // Initialize a new environment for the execution of the function. If the
+    // function is an arrow function, check that it isn't called outside of the
+    // "caller environment stack" that has its funDecEnv as an ancestor in the
+    // stack.
+    let newEnv;
+    if (funNode.type = "arrow-function") {
+      let curCallerEnv = callerEnv;
+      let isValid = (curCallerEnv === funDecEnv);
+      while (!isValid && (curCallerEnv = curCallerEnv.parent)) {
+        isValid = (curCallerEnv === funDecEnv);
+      }
+      if (!isValid) throw new RuntimeError(
+        "An arrow function was called outside of the call stack " +
+        "in which it was declared. (Do not return arrow functions created " +
+        "within a function, or use them as methods, or export them.)",
+        callerNode, callerEnv
+      );
+      newEnv = new Environment(
+        funDecEnv, "arrow-function", callerNode, callerEnv
+      );
+    }
+    else {
+      newEnv = new Environment(
+        funDecEnv, "function", callerNode, callerEnv, thisVal, protectData
+      );
+    }
 
-    // Add the input parameters to the environment.
+    // Add the input parameters to the environment (and turn all object inputs
+    // immutable, unless wrapped in PassAsMutable()).
     this.declareInputParameters(
       newEnv, funNode.params, inputValueArr, callerNode, callerEnv
     );
@@ -528,6 +541,7 @@ export class ScriptInterpreter {
           err.node, err.environment
         );
       }
+      else throw err;
     }
 
     return undefined;
@@ -1136,7 +1150,7 @@ export class ScriptInterpreter {
     decrCompGas(environment);
 
     // Evaluate the chained expression accumulatively, one postfix at a time. 
-    let postfix, objVal, thisVal, safeIndex;
+    let postfix, objVal, thisVal, safeIndex, protectSignal;
     for (let i = 0; i < len; i++) {
       postfix = postfixArr[i];
 
@@ -1144,6 +1158,7 @@ export class ScriptInterpreter {
       // current val to objVal.
       if (postfix.type === "member-accessor") {
         objVal = thisVal = val;
+        protectSignal = undefined;
 
         // Throw a BrokenOptionalChainException if an optional chaining is
         // broken.
@@ -1164,12 +1179,17 @@ export class ScriptInterpreter {
         else if (objVal instanceof Immutable) {
           val = turnImmutable(objVal.val[safeIndex])
         }
+        // Else if the object is wrapped in PassAsMutable(), simply get the
+        // member.
+        else if (objVal instanceof PassAsMutable) {
+          val = objVal.val[safeIndex];
+        }
         // Else if objVal is a protected object, get the public or private
         // method, or the otherProps property, but with some additional checks.
         else if (objVal instanceof ProtectedObject) {
           // First look in the privateMethods, and if one is found, check that
           // rootExp is a 'this' keyword, and that i === 1.
-          val = objVal.privateMethods[safeIndex];
+          [val, protectSignal] = objVal.privateMethods[safeIndex];
           if (val !== undefined) {
             if (i !== 1 || rootExp.type !== "this-keyword") {
               throw new RuntimeError(
@@ -1181,7 +1201,7 @@ export class ScriptInterpreter {
           }
           // Else look in the public methods.
           else {
-            val = objVal.publicMethods[safeIndex];
+            [val, protectSignal] = objVal.publicMethods[safeIndex];
           }
 
           // Regardless of whether it be public or private, if a method was
@@ -1235,7 +1255,7 @@ export class ScriptInterpreter {
 
         // Then execute the function and assign its return value to val.
         val = this.executeFunction(
-          val, inputValArr, postfix, environment, thisVal
+          val, inputValArr, postfix, environment, thisVal, protectSignal
         );
       }
       else throw "evaluateChainedExpression(); Unrecognized postfix type";
@@ -1275,7 +1295,7 @@ export class Environment {
   constructor(
     parent = undefined, scopeType = "block",
     callerNode = undefined, callerEnv = undefined, thisVal = undefined,
-    protectPrivileges = undefined, protectData = undefined,
+    protectData = undefined,
     moduleID = undefined, scriptGlobals = undefined
   ) {
     this.parent = parent;
@@ -1285,7 +1305,6 @@ export class Environment {
       this.callerNode = callerNode;
       this.callerEnv = callerEnv;
       if (thisVal) this.thisVal = thisVal;
-      if (protectPrivileges) this.protectPrivileges = protectPrivileges;
       if (protectData) this.protectData = protectData;
     }
     else if (scopeType === "module") {
@@ -1531,15 +1550,9 @@ export const UNDEFINED = Symbol("undefined");
 
 
 export class DefinedFunction {
-  constructor(
-    node, decEnv, thisVal = undefined, canAffectDecEnv = undefined,
-    protectPrivileges = undefined,
-  ) {
+  constructor(node, decEnv) {
     this.node = node;
     this.decEnv = decEnv;
-    if (thisVal) this.thisVal = thisVal;
-    if (canAffectDecEnv) this.canAffectDecEnv = canAffectDecEnv;
-    if (protectPrivileges) this.protectPrivileges = protectPrivileges;
   }
 }
 
@@ -1553,7 +1566,7 @@ export class DeveloperFunction {
 export class ProtectedObject {
   constructor(moduleID, privateMethods, publicMethods, otherProps) {
     this.moduleID = moduleID;
-    // Method := [signal : string, fun : DefinedFunction | DeveloperFunction].
+    // Method := [fun : DefinedFunction | DeveloperFunction, signal : string].
     this.privateMethods = privateMethods;
     this.publicMethods = publicMethods;
     // Attributes are also readonly, and can be anything.
