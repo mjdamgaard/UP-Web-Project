@@ -287,97 +287,21 @@ export const scriptGrammar = {
     ],
     process: straightenListSyntaxTree,
   },
-  // TODO: Implement the types as a subset of TS, and where we use types
-  // declared by statements of the form 'type MyClass = "#<entID>";' refer to
-  // entity classes, each defined by the formal entity referenced by entID. 
+  // TODO: Implement types (as a subset of TS).
   "parameter": {
     rules: [
-      ["identifier", "/:/", "type", "/=/", "expression!"],
-      ["identifier", "/:/", "type", /\?/],
-      ["identifier", "/:/", "type!"],
+      // ["identifier", "/:/", "type", "/=/", "expression!"],
+      // ["identifier", "/:/", "type", /\?/],
+      // ["identifier", "/:/", "type!"],
+      ["identifier", "/=/", "expression!"],
       ["identifier"],
     ],
-    process: (children, ruleInd) => {
-      if (!children[2]) {
-        return {
-          type: "parameter",
-          ident: children[0].ident,
-          invalidTypes: undefined,
-          defaultExp: undefined,
-        };
-      } else {
-        let types = children[2]?.types;
-        let isRequired = (ruleInd === 2);
-
-        // Initialize a invalidTypes, with nullish types plucked out from the
-        // start if isRequired is false.
-        let invalidTypes = isRequired ? [
-          "entity", "string", "int", "float", "object", "array", "function",
-          "struct", "null", "undefined"
-        ] : [
-          "entity", "string", "int", "float", "object", "array", "function",
-          "struct",
-        ];
-
-        // Then iterate over each type in types, and pluck out additional
-        // elements of invalidTypes.
-// TODO: Correct.
-        types.forEach((type) => {
-          if (type.ruleInd === 0) {
-            invalidTypes = invalidTypes.filter(val => val !== "entity");
-          } else {
-            let lexeme = type.lexeme;
-            if (lexeme === "any") {
-              invalidTypes = invalidTypes.filter(val => (
-                val === "null" || val === "undefined"
-              ));
-            } else if (lexeme === "float") {
-              invalidTypes = invalidTypes.filter(val => (
-                val !== "float" && val !== "int"
-              ));
-            } else {
-              invalidTypes = invalidTypes.filter(val => val !== lexeme);
-            }
-          }
-        });
-        return {
-          type: "parameter",
-          ident: children[0].ident,
-          defaultExp: children[4],
-          invalidTypes: invalidTypes,
-        };
-      }
-    },
-  },
-  "type": {
-    rules: [
-      // TODO: Consider changing this back (or to something else) as to not
-      // clash with Typescript object types. *Yes, these types should conform
-      // to a subset of TS.
-      [/\{/, "type^(1)-list!", /\}/],
-      ["type^(1)"],
-      ["/any/"],
-      ["/const/"], // Pseudo-type, mainly used for constant script parameters. 
-    ],
-    process: (children, ruleInd) => ({
-      types: (ruleInd === 0) ? children[1].children : children[0],
+    process: (children) => ({
+      type: "parameter",
+      ident: children[0].ident,
+      defaultExp: children[2],
     }),
   },
-  "type^(1)-list": {
-    rules: [
-      ["type^(1)", "/,/", "type^(1)-list!1"],
-      ["type^(1)", "/,/?"],
-    ],
-    process: straightenListSyntaxTree,
-  },
-  "type^(1)": {
-    rules: [
-      // ["entity-reference"], // A class.
-      ["/string|bool|int|float|array|object|entity/"],
-    ],
-    process: (children) => children[0],
-  },
-  // TODO: Correct the type syntax above.
   "function-body": {
     rules: [
       [/\{/, "statement-list!1", /\}/],
@@ -789,7 +713,7 @@ export const scriptGrammar = {
       ["this-keyword!1"],
       ["entity-reference!1"],
       ["exit-call!1"],
-      ["mutable-call!1"],
+      ["pass-as-mutable-call!1"],
       ["identifier"],
       ["literal"],
     ],
@@ -889,14 +813,13 @@ export const scriptGrammar = {
       exp: (ruleInd === 0) ? children[2] : undefined,
     }),
   },
-  "mutable-call": {
+  "pass-as-mutable-call": {
     rules: [
-      ["/PassAsMutable/", /\(/, "expression!1", /\)/],
-      ["/PassAsMutable/", /\(/, /\)/],
+      ["/PassAsMutable/", /\(/, "expression", /\)/],
     ],
-    process: (children, ruleInd) => ({
-      type: "mutable-call",
-      exp: (ruleInd === 0) ? children[2] : undefined,
+    process: (children) => ({
+      type: "pass-as-mutable-call",
+      exp: children[2],
     }),
   },
   "constant": {

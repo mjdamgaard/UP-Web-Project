@@ -548,30 +548,25 @@ export class ScriptInterpreter {
   }
 
 
-  declareInputParameters(
-    environment, params, inputArr, callerNode, callerEnv
-  ) {
+  declareInputParameters(environment, params, inputArr) {
     params.forEach((param, ind) => {
       let paramName = param.ident;
       let paramVal = inputArr[ind];
-      let inputValType = getType(paramVal);
-
-      // If the parameter is typed, check the type. 
-      if (param.invalidTypes) {
-        if (param.invalidTypes.includes(inputValType)) {
-          throw new RuntimeError(
-            `Input parameter "${paramName}" of invalid type "${inputValType}"`,
-            callerNode, callerEnv
-          );
-        }
-      }
 
       // If the input value is undefined, and the parameter has a default
       // value, use that value, evaluated at the time (each time) the function
       // is called. We use the same environment each time such that a parameter
       // can depend on a previous one.
-      if (param.defaultExp && inputValType === "undefined") {
+      if (param.defaultExp && paramVal === undefined) {
         paramVal = this.evaluateExpression(param.defaultExp, environment);
+      }
+
+      // If the paramVal is wrapped in PassAsMutable(), we remove that wrapper,
+      // and else we turn the paramVal immutable.
+      if (paramVal instanceof PassAsMutable) {
+        paramVal = paramVal.val;
+      } else {
+        paramVal = turnImmutable(paramVal);
       }
 
       // Then declare the parameter in the environment.
@@ -1053,6 +1048,16 @@ export class ScriptInterpreter {
           this.evaluateExpression(expNode.exp, environment);
         environment.scriptGlobals.output = expVal;
         throw new ExitException();
+      }
+      case "pass-as-mutable-call": {
+        let expVal = this.evaluateExpression(expNode.exp, environment);
+        if (Object.getPrototypeOf(expVal) === null || expVal instanceof Array) {
+          return new PassAsMutable(expVal);
+        } else {
+          throw new RuntimeError(
+            "PassAsMutable() called on with non-mutable argument"
+          );
+        }
       }
       case "identifier": {
         let ident = expNode.ident;
