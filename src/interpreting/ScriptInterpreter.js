@@ -6,7 +6,7 @@ import {LexError, SyntaxError} from "../parsing/Parser.js";
 export {LexError, SyntaxError};
 
 
-const MAX_ARRAY_INDEX = 1E+15;
+// const MAX_ARRAY_INDEX = 1E+15;
 
 const GAS_NAMES = {
   comp: "computation",
@@ -1154,13 +1154,14 @@ export class ScriptInterpreter {
         "an assignment",
         expNode, environment
       );
-      let objVal, prevVal;
+      let prevVal, objVal, safeIndex;
       try {
-        [prevVal, objVal] =
-          this.evaluateChainedMemberAccess(expNode, environment);
+        [prevVal, objVal] = this.evaluateChainedExpression(
+          expNode.rootExp, expNode.postfixArr, environment
+        );
       } catch (err) {
         // Unlike what JS currently does, we do not throw when assigning to
-        // a broken optional chaining. Rather we simply do nothing, and return
+        // a broken optional chaining. Instead we simply do nothing, and return
         // undefined from the assignment expression.
         if (err instanceof BrokenOptionalChainException) {
           return undefined;
@@ -1169,70 +1170,24 @@ export class ScriptInterpreter {
         }
       }
 
-      // Throw if the object being assigned to is not an object, or is
-      // immutable.
-      if (!objVal || typeof objVal !== "object") {
-        throw new RuntimeError(
-          "Assignment to a non-object", expNode, environment
-        );
-      }
+      // Throw if the object being assigned to is immutable (including
+      // protected objects).
       if (objVal instanceof Immutable || objVal instanceof ProtectedObject) {
         throw new RuntimeError(
           "Assignment to an immutable object", expNode, environment
         );
       }
-      // TODO: Now evaluate the accessor (which is never isOpt at this point),
-      // get the resulting safe index (and throw if the type is not an almost
-      // string), and then mute the object, using the prevVal and the assignFun.
-    }
 
-    /* else */ if (
-      expNode.type === "member-access" && !expNode.postfix.isOpt
-    ) {
-      // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
-      let expVal, indexVal, isImmutable, isProtected, isThisAccess;
-      try {
-        [expVal, indexVal, isImmutable, isProtected, isThisAccess] =
-          this.getMemberAccessExpValAndSafeIndex(expNode, environment);
-      } catch (err) {
-        // If err is an BrokenOptionalChainException, do nothing and return
-        // undefined.
-        if (err instanceof BrokenOptionalChainException) {
-          return undefined;
-        } else {
-          throw err;
-        }
-      }
-
-      // Throw runtime error if trying to mute an protected object from outside
-      // its own methods, or if the object is immutable.
-      if (isImmutable || isProtected && !isThisAccess) throw new RuntimeError(
-        "Assignment to a member of an immutable or protected object",
-        expNode, environment
-      );
-      let prevVal = expVal[indexVal];
-      if (
-        isProtected && isThisAccess && isFunction(prevVal)
-      ) throw new RuntimeError(
-        "Cannot overwrite a method of a protected object",
-        expNode, environment
-      );
-
-      // Then assign the member of our expVal and return the value specified by
-      // assignFun.
+      // Then assign newVal to the member of objVal and return ret, where
+      // newVal and ret are both specified by the assignFun.
       let [newVal, ret] = assignFun(prevVal);
-      expVal[indexVal] = newVal;
+      objVal[safeIndex] = newVal;
       return ret;
-    }
-    else {
-      throw new RuntimeError(
-        "Assignment to invalid expression",
-        expNode, environment
-      );
     }
   }
 
-  // evaluateChainedExpression() => [val, objVal], or throws a
+
+  // evaluateChainedExpression() => [val, objVal, safeIndex], or throws a
   // BrokenOptionalChainException. Here, val is the value of the whole
   // expression, and objVal, is the value of the object before the last member
   // accessor (if the last postfix is a member accessor and not a tuple).
@@ -1245,7 +1200,7 @@ export class ScriptInterpreter {
     decrCompGas(environment);
 
     // Evaluate the chained expression accumulatively, one postfix at a time. 
-    let postfix, objVal;
+    let postfix, objVal, safeIndex;
     for (let i = 0; i < len; i++) {
       postfix = postfixArr[i];
       if (postfix.type === "member-accessor") {
@@ -1257,14 +1212,21 @@ export class ScriptInterpreter {
           throw new BrokenOptionalChainException();
         }
 
-        // Else, first get or evaluate the index of the accessor.
+        // Else, first get or evaluate the index of the accessor, and throw if
+        // it is not a string or a number.
         let index = postfix.ident;
         if (postfix.exp) {
           index = this.evaluateExpression(postfix.exp, environment);
         }
+        if (typeof index !== "string" && typeof index !== "number") {
+          throw new RuntimeError(
+            "Indexing with a value that is not a string or a number",
+            postfix, environment
+          );
+        }
 
         // Then get the safe index (safe from object injection).
-        let safeIndex = (parseInt(index) == index) ? index : "&" + index;
+        safeIndex = (parseInt(index) == index) ? index : "&" + index;
 
         // If objVal is regular object or array, just get the member.
         if (Object.getPrototypeOf(objVal) === null || objVal instanceof Array) {
@@ -1278,81 +1240,78 @@ export class ScriptInterpreter {
         // Else if objVal is a protected object, get the public or private
         // method, or the otherProps property, but with some additional checks.
         else if (objVal instanceof ProtectedObject) {
-          let method;
-          // First look in the privateMethods.
-          val = _;
+          // First look in the privateMethods, and if one is found, check that
+          // rootExp is a 'this' keyword, and that i === 1.
+          val = objVal.privateMethods[safeIndex];
+          if (val !== undefined) {
+            if (i !== 1 || rootExp.type !== "this-keyword") {
+              throw new RuntimeError(
+                "Trying to access a private method outside of a protected " +
+                "object's own methods",
+                postfix, environment
+              );
+            }
+          }
+          // Else look in the public methods.
+          else {
+            val = objVal.publicMethods[safeIndex];
+          }
 
+          // Regardless of whether it be public or private, if a method was
+          // found, check that the next postfix after this member accessor is
+          // an expression tuple, as protected objects' methods cannot be
+          // accessed without immediately being called.
+          if (val !== undefined) {
+            if (postfixArr[i + 1]?.type !== "expression-tuple") {
+              throw new RuntimeError(
+                "Cannot access a method of a protected object without " +
+                "calling it",
+                postfix, environment
+              );
+            }
+          }
+          // And if no method was gotten, finally also look in the attributes.
+          else {
+            val = objVal.attributes[safeIndex];
+          }
         }
         // Else throw if objVal is not an (accessible) object at all.
         else throw new RuntimeError(
-          "Accessing a member of a non-abject", postfix, environment
+          "Trying to access a member of a non-object",
+          postfix, environment
         );
       }
       else if (postfix.type === "expression-tuple") {
-        // let fun = this.evaluateExpression(expNode.exp, environment);
-        // let inputExpArr = expNode.postfix.children;
-        // let inputValArr = inputExpArr.map(exp => (
-        //   this.evaluateExpression(exp, environment)
-        // ));
-        // return this.executeFunction(
-        //   fun, inputValArr, expNode, environment
-        // );
+        objVal = safeIndex = undefined;
+
+        // Throw if val is not a function.
+        if (
+          !(val instanceof DefinedFunction || val instanceof DeveloperFunction)
+        ) {
+          throw new RuntimeError(
+            "Call to a non-function", postfix, environment
+          );
+        }
+
+        // Evaluate the expressions inside the tuple.
+        let inputExpArr = postfix.children;
+        let inputValArr = inputExpArr.map(exp => (
+          this.evaluateExpression(exp, environment)
+        ));
+
+        // Then execute the function and assign val to its return value.
+        val = this.executeFunction(
+          val, inputValArr, postfix, environment
+        );
       }
       else throw "evaluateChainedExpression(); Unrecognized postfix type";
     }
 
-    return [val, prevVal];
-  
-
-
-    // // Evaluate the expression.
-    // let expVal = this.evaluateExpression(
-    //   memAccNode.exp, environment, true
-    // );
-
-    // Now get the index value.
-    let indexExp = memAccNode.postfix;
-    let indexVal = indexExp.ident;
-    if (!indexVal) {
-      indexVal = this.evaluateExpression(indexExp.exp, environment);
-    }
-    if (typeof indexVal !== "string" && typeof indexVal !== "number") {
-      throw new RuntimeError(
-        "Indexing with a non-primitive value",
-        indexExp, environment
-      );
-    }
-
-    // If expVal is an array, check that indexVal is a non-negative
-    // integer, and if it is an object, append "&" to the indexVal.
-    let valType = getType(expVal);
-    let isProtected = (valType === "protected");
-    let isImmutable = (expVal instanceof Immutable);
-    if (isImmutable) {
-      expVal = expVal.val;
-    }
-    if (valType === "array") {
-      indexVal = parseInt(indexVal);
-      if (!(indexVal >= 0 && indexVal <= MAX_ARRAY_INDEX)) {
-        throw new RuntimeError(
-          "Trying to access member of an array with a non-integer or a " +
-          "negative integer key",
-          indexExp, environment
-        );
-      }
-    }
-    else if (valType !== "object" && !isProtected) {
-      throw new RuntimeError(
-        "Trying to access member of a non-object",
-        memAccNode, environment
-      );
-    }
-    else {
-      indexVal = "&" + indexVal;
-    }
-
-    isThisAccess = (memAccNode.exp.type === "this-keyword");
-    return [expVal, indexVal, isImmutable, isProtected, isThisAccess];
+    // Finally return val and objVal, which should now respectively hold the
+    // value of the full expression and the value of the object before the
+    // last member access, or undefined if the last postfix was an expression
+    // tuple. Also return the safeIndex.
+    return [val, objVal, safeIndex];
   }
 
 }
@@ -1650,6 +1609,8 @@ export class ProtectedObject {
     // Method := [signal : string, fun : DefinedFunction | DeveloperFunction].
     this.privateMethods = privateMethods;
     this.publicMethods = publicMethods;
+    // Attributes are also readonly, and can be anything.
+    this.attributes = attributes;
   }
 }
 
