@@ -417,7 +417,7 @@ export class ScriptInterpreter {
 
 
 
-  executeFunction(fun, inputArr, callerNode, callerEnv) {
+  executeFunction(fun, inputArr, callerNode, callerEnv, thisVal) {
     // Potentially get function and thisVal from ThisBoundFunction wrapper.
     let thisVal = undefined;
     let thisFlags = undefined;
@@ -994,82 +994,20 @@ export class ScriptInterpreter {
         }
       }
       case "chained-expression": {
-        let expVal = this.evaluateExpression(expNode.exp, environment);
-        let len = expNode.memAccArr.length;
-        let member
-        for (let i = 0; i < len - 1; i++) {
-          let index = memAccArr[i];
-          let safeIndex = (parseInt(index) == index) ? index : "&" + index;
-        }
-        for (let i = 0; i < len - 1; i++) {
-          
-        }
-      }
-      case "function-call": {
-        let fun = this.evaluateExpression(expNode.exp, environment);
-        let inputExpArr = expNode.postfix.children;
-        let inputValArr = inputExpArr.map(exp => (
-          this.evaluateExpression(exp, environment)
-        ));
-        return this.executeFunction(
-          fun, inputValArr, expNode, environment
-        );
-      }
-      case "member-access": {
-        // Call sub-procedure to get the expVal, and the safe-to-use indexVal.
-        let expVal, indexVal, isImmutable, isProtected, isThisAccess;
+        let val;
         try {
-          [
-            expVal, indexVal, isImmutable, isProtected, isThisAccess
-          ] = this.getMemberAccessExpValAndSafeIndex(expNode, environment);
-        } catch (err) {
-          // If err is an BrokenOptionalChainException either return undefined,
-          // or throw the exception up to the parent if nested in another
-          // member-access node.
-          if (
-            err instanceof BrokenOptionalChainException && isMemberAccessChild
-          ) {
+          [val] = this.evaluateChainedExpression(
+            expNode.rootExp, expNode.postfixArr, environment
+          );
+        }
+        catch (err) {
+          if (err instanceof BrokenOptionalChainException) {
             return undefined;
           } else {
             throw err;
           }
         }
-
-        // Handle graceful return in case of an optional chaining.
-        if (expNode.postfix.isOpt) {
-          if (expVal === null || expVal === undefined) {
-            if (isMemberAccessChild) {
-              throw new BrokenOptionalChainException();
-            } else {
-              return undefined;
-            }
-          }
-        }
-
-        // Then get the value held in expVal.
-        let ret = expVal[indexVal];
-        if (isImmutable || isProtected && !isThisAccess) {
-          ret = turnImmutable(ret);
-        }
-
-        // And if the value is a function, bind this to expVal for it. (Note
-        // that this differs from the conventional semantics of JavaScript,
-        // where 'this' is normally only bound at the time when the method is
-        // being called.)
-        if (
-          ret instanceof DefinedFunction || ret instanceof DeveloperFunction
-        ) {
-          ret = new ThisBoundFunction(
-            ret, expVal, isProtected ? expVal.flags[indexVal] : undefined
-          );
-        }
-        else if (ret instanceof ThisBoundFunction) {
-          ret = new ThisBoundFunction(
-            ret.funVal, expVal, isProtected ? expVal.flags[indexVal] : undefined
-          );
-        }
-
-        return ret;
+        return val;
       }
       case "grouped-expression": {
         return this.evaluateExpression(expNode.exp, environment);
@@ -1081,19 +1019,17 @@ export class ScriptInterpreter {
         return expValArr;
       }
       case "object": {
-        let memberEntries = expNode.children.map(exp => (
-          [
-            "&" + (
-              exp.ident ??
-              this.evaluateExpression(exp.nameExp, environment)
-            ),
-            this.evaluateExpression(exp.valExp, environment)
-          ]
-        ));
-        return Object.fromEntries(memberEntries);
+        let ret = Object.create(null);
+        expNode.children.forEach(exp => {
+          let safeIndex = getSafeIndex(
+            postfix.ident, postfix.nameExp, environment
+          );
+          ret[safeIndex] = this.evaluateExpression(exp.valExp, environment);
+        });
+        return ret;
       }
       case "this-keyword": {
-        return environment.getThisVal(expNode, environment);
+        return environment.getThisVal();
       }
       case "entity-reference": {
         return new EntityReference(expNode.path);
@@ -1200,11 +1136,14 @@ export class ScriptInterpreter {
     decrCompGas(environment);
 
     // Evaluate the chained expression accumulatively, one postfix at a time. 
-    let postfix, objVal, safeIndex;
+    let postfix, objVal, thisVal, safeIndex;
     for (let i = 0; i < len; i++) {
       postfix = postfixArr[i];
+
+      // If postfix is a member accessor, get the member value, and assign the
+      // current val to objVal.
       if (postfix.type === "member-accessor") {
-        objVal = val;
+        objVal = thisVal = val;
 
         // Throw a BrokenOptionalChainException if an optional chaining is
         // broken.
@@ -1212,21 +1151,9 @@ export class ScriptInterpreter {
           throw new BrokenOptionalChainException();
         }
 
-        // Else, first get or evaluate the index of the accessor, and throw if
-        // it is not a string or a number.
-        let index = postfix.ident;
-        if (postfix.exp) {
-          index = this.evaluateExpression(postfix.exp, environment);
-        }
-        if (typeof index !== "string" && typeof index !== "number") {
-          throw new RuntimeError(
-            "Indexing with a value that is not a string or a number",
-            postfix, environment
-          );
-        }
-
-        // Then get the safe index (safe from object injection).
-        safeIndex = (parseInt(index) == index) ? index : "&" + index;
+        // Else, first get the safe index (safe from object injection) and
+        // throw if it is not a string or a number.
+        safeIndex = getSafeIndex(postfix.ident, postfix.exp, environment);
 
         // If objVal is regular object or array, just get the member.
         if (Object.getPrototypeOf(objVal) === null || objVal instanceof Array) {
@@ -1270,9 +1197,13 @@ export class ScriptInterpreter {
               );
             }
           }
-          // And if no method was gotten, finally also look in the attributes.
+          // And if no method was gotten, finally also look in the attributes,
+          // and make sure to set thisVal to undefined, as we do not allow a
+          // function-valued attribute of a protected object to be used as a
+          // method.
           else {
             val = objVal.attributes[safeIndex];
+            thisVal = undefined;
           }
         }
         // Else throw if objVal is not an (accessible) object at all.
@@ -1281,6 +1212,9 @@ export class ScriptInterpreter {
           postfix, environment
         );
       }
+
+      // Else if postfix is an expression tuple, execute the current val as a
+      // function, and reassign it to the return value.
       else if (postfix.type === "expression-tuple") {
         objVal = safeIndex = undefined;
 
@@ -1299,9 +1233,9 @@ export class ScriptInterpreter {
           this.evaluateExpression(exp, environment)
         ));
 
-        // Then execute the function and assign val to its return value.
+        // Then execute the function and assign its return value to val.
         val = this.executeFunction(
-          val, inputValArr, postfix, environment
+          val, inputValArr, postfix, environment, thisVal
         );
       }
       else throw "evaluateChainedExpression(); Unrecognized postfix type";
@@ -1312,6 +1246,19 @@ export class ScriptInterpreter {
     // last member access, or undefined if the last postfix was an expression
     // tuple. Also return the safeIndex.
     return [val, objVal, safeIndex];
+  }
+
+
+  getSafeIndex(ident = undefined, exp = undefined, environment) {
+    let index = ident;
+    if (exp) index = this.evaluateExpression(exp, environment);
+    if (typeof index !== "string" && typeof index !== "number") {
+      throw new RuntimeError(
+        "Indexing with a value that is not a string or a number",
+        postfix, environment
+      );
+    }
+    return (parseInt(index) == index) ? index : "&" + index;
   }
 
 }
