@@ -1137,10 +1137,12 @@ export class ScriptInterpreter {
     );
     let postfixArrLen = expNode.postfixArr.length;
     if (postfixArrLen === 0) {
-      if(expNode.exp.type !== "identifier") throw new RuntimeError(
+      if(expNode.rootExp.type !== "identifier") throw new RuntimeError(
         "Invalid assignment", expNode, environment
       );
-      return environment.assign(expNode.exp.ident, expNode.exp, assignFun);
+      return environment.assign(
+        expNode.rootExp.ident, expNode.rootExp, assignFun
+      );
     }
     else {
       let lastPostfix = expNode.postfixArr.at(-1);
@@ -1154,7 +1156,7 @@ export class ScriptInterpreter {
       );
       let objVal, prevVal;
       try {
-        [objVal, prevVal] =
+        [prevVal, objVal] =
           this.evaluateChainedMemberAccess(expNode, environment);
       } catch (err) {
         // Unlike what JS currently does, we do not throw when assigning to
@@ -1230,11 +1232,83 @@ export class ScriptInterpreter {
     }
   }
 
-  getMemberAccessExpValAndSafeIndex(memAccNode, environment) {
-    // Evaluate the expression.
-    let expVal = this.evaluateExpression(
-      memAccNode.exp, environment, true
-    );
+  // evaluateChainedExpression() => [val, objVal], or throws a
+  // BrokenOptionalChainException. Here, val is the value of the whole
+  // expression, and objVal, is the value of the object before the last member
+  // accessor (if the last postfix is a member accessor and not a tuple).
+  evaluateChainedExpression(rootExp, postfixArr, environment) {
+    let val = this.evaluateExpression(rootExp, environment);
+    let len = postfixArr.length;
+    if (len === 0) {
+      return [val];
+    }
+    decrCompGas(environment);
+
+    // Evaluate the chained expression accumulatively, one postfix at a time. 
+    let postfix, objVal;
+    for (let i = 0; i < len; i++) {
+      postfix = postfixArr[i];
+      if (postfix.type === "member-accessor") {
+        objVal = val;
+
+        // Throw a BrokenOptionalChainException if an optional chaining is
+        // broken.
+        if (postfix.isOpt && (val === undefined || val === null)) {
+          throw new BrokenOptionalChainException();
+        }
+
+        // Else, first get or evaluate the index of the accessor.
+        let index = postfix.ident;
+        if (postfix.exp) {
+          index = this.evaluateExpression(postfix.exp, environment);
+        }
+
+        // Then get the safe index (safe from object injection).
+        let safeIndex = (parseInt(index) == index) ? index : "&" + index;
+
+        // If objVal is regular object or array, just get the member.
+        if (Object.getPrototypeOf(objVal) === null || objVal instanceof Array) {
+          val = objVal[safeIndex];
+        }
+        // Else if it is an instance of Immutable, also get the member, but
+        // turn it Immutable of it is not so already.
+        else if (objVal instanceof Immutable) {
+          val = turnImmutable(objVal.val[safeIndex])
+        }
+        // Else if objVal is a protected object, get the public or private
+        // method, or the otherProps property, but with some additional checks.
+        else if (objVal instanceof ProtectedObject) {
+          let method;
+          // First look in the privateMethods.
+          val = _;
+
+        }
+        // Else throw if objVal is not an (accessible) object at all.
+        else throw new RuntimeError(
+          "Accessing a member of a non-abject", postfix, environment
+        );
+      }
+      else if (postfix.type === "expression-tuple") {
+        // let fun = this.evaluateExpression(expNode.exp, environment);
+        // let inputExpArr = expNode.postfix.children;
+        // let inputValArr = inputExpArr.map(exp => (
+        //   this.evaluateExpression(exp, environment)
+        // ));
+        // return this.executeFunction(
+        //   fun, inputValArr, expNode, environment
+        // );
+      }
+      else throw "evaluateChainedExpression(); Unrecognized postfix type";
+    }
+
+    return [val, prevVal];
+  
+
+
+    // // Evaluate the expression.
+    // let expVal = this.evaluateExpression(
+    //   memAccNode.exp, environment, true
+    // );
 
     // Now get the index value.
     let indexExp = memAccNode.postfix;
@@ -1277,7 +1351,7 @@ export class ScriptInterpreter {
       indexVal = "&" + indexVal;
     }
 
-    let isThisAccess = (memAccNode.exp.type === "this-keyword");
+    isThisAccess = (memAccNode.exp.type === "this-keyword");
     return [expVal, indexVal, isImmutable, isProtected, isThisAccess];
   }
 
@@ -1340,14 +1414,8 @@ export class Environment {
     }
     else if (this.parent) {
       let val = parent.get(ident, node, nodeEnvironment);
-      if (
-        this.scopeType === "function" && val && typeof val === "object" &&
-        !(val instanceof Immutable)
-      ) {
-        return new Immutable(val);
-      }
-      else {
-        return val;
+      if (this.scopeType === "function") {
+        return turnImmutable(val);
       }
     }
     else {
@@ -1469,8 +1537,7 @@ function getSafeObj(obj) {
 
 
 function turnImmutable(val) {
-  let valType = getType(val);
-  if (valType === "array" || valType === "object") {
+  if (Object.getPrototypeOf(val) === null || val instanceof Array) {
     return new Immutable(val);
   } else {
     return val;
@@ -1583,8 +1650,6 @@ export class ProtectedObject {
     // Method := [signal : string, fun : DefinedFunction | DeveloperFunction].
     this.privateMethods = privateMethods;
     this.publicMethods = publicMethods;
-    // Other props are readonly, and can be anything.
-    this.otherProps = otherProps;
   }
 }
 

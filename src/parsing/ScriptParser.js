@@ -736,7 +736,7 @@ export const scriptGrammar = {
     ],
     process: (children) => ({
       type: "chained-expression",
-      exp: children[0],
+      rootExp: children[0],
       postfixArr: children[1],
     }),
   },
