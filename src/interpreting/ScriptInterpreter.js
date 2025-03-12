@@ -140,7 +140,7 @@ export class ScriptInterpreter {
   createGlobalEnvironment(scriptGlobals) {
     let globalEnv = new Environment(
       undefined, "global", undefined, undefined, undefined, undefined,
-      scriptGlobals
+      undefined, scriptGlobals
     );
     return globalEnv;
   }
@@ -195,8 +195,10 @@ export class ScriptInterpreter {
 
     // Create a new environment for the module.
     let moduleEnv = new Environment(
-      globalEnv, "module", undefined, undefined, undefined, moduleID
+      globalEnv, "module", undefined, undefined, undefined, undefined, moduleID
     );
+
+    // First...
 
     // Then run all the import statements in parallel and get their live
     // environments, but without making any changes to moduleEnv yet.
@@ -427,7 +429,7 @@ export class ScriptInterpreter {
     // order to check the protectSignal (will throw on failure), and also to
     // get the new protectData to give to the new function environment.
     if (thisVal instanceof ProtectedObject) {
-      protectData = protect(protectSignal, permissions, protectData);
+      protectData = protect(protectSignal, permissions, protectData, thisVal);
     }
 
     // Execute the function depending on its type.
@@ -1111,8 +1113,8 @@ export class ScriptInterpreter {
       );
       let prevVal, objVal, safeIndex;
       try {
-        [prevVal, objVal] = this.evaluateChainedExpression(
-          expNode.rootExp, expNode.postfixArr, environment
+        [prevVal, objVal, safeIndex] = this.evaluateChainedExpression(
+          expNode.rootExp, expNode.postfixArr, environment, true
         );
       } catch (err) {
         // Unlike what JS currently does, we do not throw when assigning to
@@ -1126,10 +1128,13 @@ export class ScriptInterpreter {
       }
 
       // Throw if the object being assigned to is immutable (including
-      // protected objects).
-      if (objVal instanceof Immutable || objVal instanceof ProtectedObject) {
+      // protected objects). (Consider refactoring if wanting a more precise
+      // error message.)
+      if (!objVal) {
         throw new RuntimeError(
-          "Assignment to an immutable object", expNode, environment
+          "Assignment to a object member that is immutable in the current " +
+          "scope",
+          expNode, environment
         );
       }
 
@@ -1142,11 +1147,11 @@ export class ScriptInterpreter {
   }
 
 
-  // evaluateChainedExpression() => [val, objVal, safeIndex], or throws a
-  // BrokenOptionalChainException. Here, val is the value of the whole
+  // evaluateChainedExpression() => [val, objVal, safeIndex], or throws
+  // a BrokenOptionalChainException. Here, val is the value of the whole
   // expression, and objVal, is the value of the object before the last member
   // accessor (if the last postfix is a member accessor and not a tuple).
-  evaluateChainedExpression(rootExp, postfixArr, environment) {
+  evaluateChainedExpression(rootExp, postfixArr, environment, forAssignment) {
     let val = this.evaluateExpression(rootExp, environment);
     let len = postfixArr.length;
     if (len === 0) {
@@ -1179,31 +1184,37 @@ export class ScriptInterpreter {
         if (Object.getPrototypeOf(objVal) === null || objVal instanceof Array) {
           val = objVal[safeIndex];
         }
+
         // Else if it is an instance of Immutable, also get the member, but
-        // turn it Immutable of it is not so already.
+        // turn it Immutable of it is not so already. Also set objVal =
+        // undefined, as objVal should only be defined when it is mutable.
         else if (objVal instanceof Immutable) {
-          val = turnImmutable(objVal.val[safeIndex])
+          val = turnImmutable(objVal.val[safeIndex]);
+          objVal = undefined;
         }
+
         // Else if the object is wrapped in PassAsMutable(), simply get the
         // member.
         else if (objVal instanceof PassAsMutable) {
           val = objVal.val[safeIndex];
         }
+
         // Else if objVal is a protected object, get the public or private
         // method, or the otherProps property, but with some additional checks.
         else if (objVal instanceof ProtectedObject) {
           // First look in the privateMethods, and if one is found, check that
           // rootExp is a 'this' keyword, and that i === 1.
           [val, protectSignal] = objVal.privateMethods[safeIndex];
-          if (val !== undefined) {
-            if (i !== 1 || rootExp.type !== "this-keyword") {
-              throw new RuntimeError(
-                "Trying to access a private method outside of a protected " +
-                "object's own methods",
-                postfix, environment
-              );
-            }
+          if (
+            val !== undefined && (i !== 1 || rootExp.type !== "this-keyword")
+          ) {
+            throw new RuntimeError(
+              "Trying to access a private method outside of a protected " +
+              "object's own methods",
+              postfix, environment
+            );
           }
+
           // Else look in the public methods.
           else {
             [val, protectSignal] = objVal.publicMethods[safeIndex];
@@ -1221,16 +1232,53 @@ export class ScriptInterpreter {
                 postfix, environment
               );
             }
+
+            // And we also want to check that the object isn't being used
+            // (method-wise) outside of its own declaration environment call
+            // stack.
+            // TODO: Check this here....
+
+            // We also want to set objVal = undefined, as objVal should only be
+            // defined if the member can be assigned a new value,
+            objVal = undefined;
           }
-          // And if no method was gotten, finally also look in the attributes,
-          // and make sure to set thisVal to undefined, as we do not allow a
-          // function-valued attribute of a protected object to be used as a
-          // method.
+
+          // And if no method was gotten, look in first in the private
+          // attributes, and also throw if one is accessed without 'this'. Also
+          // make sure the set thisVal = undefined, as function-valued 
+          // attributes must not be used as methods.
           else {
-            val = objVal.attributes[safeIndex];
             thisVal = undefined;
+            val = objVal.privateAttributes[safeIndex];
+            if (val !== undefined) {
+              if (i !== 1 || rootExp.type !== "this-keyword") {
+                throw new RuntimeError(
+                  "Trying to access a private method outside of a protected " +
+                  "object's own methods",
+                  postfix, environment
+                );
+              }
+
+              // And if a private method was found, also emit an "g" signal
+              // (for 'get') to protect(), unless the forAssignment flag is
+              // true in which case emit an "s" signal (for 'set').
+              let {protect, permissions} = environment.scriptGlobals;
+              let {protectData} = environment;
+              protect(
+                forAssignment ? "s" : "g", permissions, protectData, objVal
+              );
+            }
+
+            // And finally look in the public attributes, if no match was found
+            // so far. And since public attributes must not be reassigned or
+            // muted, also turn objVal undefined in this case.
+            else {
+              val = objVal.attributes[safeIndex];
+              objVal = undefined;
+            }
           }
         }
+
         // Else throw if objVal is not an (accessible) object at all.
         else throw new RuntimeError(
           "Trying to access a member of a non-object",
@@ -1569,13 +1617,17 @@ export class DeveloperFunction {
 }
 
 export class ProtectedObject {
-  constructor(moduleID, privateMethods, publicMethods, otherProps) {
+  constructor(
+    moduleID, decEnv, privateMethods, publicMethods,
+    privateAttributes, publicAttributes
+  ) {
     this.moduleID = moduleID;
+    this.decEnv = decEnv;
     // Method := [fun : DefinedFunction | DeveloperFunction, signal : string].
     this.privateMethods = privateMethods;
     this.publicMethods = publicMethods;
-    // Attributes are also readonly, and can be anything.
-    this.attributes = attributes;
+    this.privateAttributes = privateAttributes;
+    this.publicAttributes = publicAttributes;
   }
 }
 
