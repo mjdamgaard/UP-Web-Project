@@ -35,12 +35,12 @@ export class ScriptInterpreter {
 
   async interpretScript(
     gas, script = "", scriptID = "1", mainInputs = [], reqUserID = undefined,
-    protectScriptID, permissions = {}, settings = {},
-    parsedEntities = new Map(),
+    useScriptID, permissions = {}, settings = {}, parsedEntities = new Map(),
   ) {
     let scriptGlobals = {
       gas: gas, log: {}, output: undefined, scriptID: scriptID,
-      reqUserID: reqUserID, protectScriptID: protectScriptID,
+      reqUserID: reqUserID, useScriptID: useScriptID,
+      protect: undefined, convertSignal: undefined, moduleIDs: undefined,
       permissions: permissions, setting: settings,
       shouldExit: false, resolveScript: undefined, scriptInterpreter: this,
       parsedEntities: parsedEntities, liveModules: {},
@@ -232,16 +232,26 @@ export class ScriptInterpreter {
 
   async executeSubmoduleOfImportStatement(impStmt, callerModuleEnv, globalEnv) {
     decrCompGas(globalEnv);
-    let {liveModules, parsedEntities} = globalEnv.scriptGlobals;
+    let {liveModules, parsedEntities, moduleIDs} = globalEnv.scriptGlobals;
 
-    // Evaluate the submodule entity reference expression (right after 'from').
-// TODO: Correct:
-    let submoduleRef = impStmt.moduleRef;
-    if (!submoduleRef.id) throw new LoadError(
-      `Importing from a TBD module`,
-      impStmt.moduleExp, callerModuleEnv
+    // If the module is referenced by a path, and not directly by an ID, first
+    // convert it to an ID via a lookup in moduleIDs.
+    let submoduleID = impStmt.moduleID;
+    if (!submoduleID) {
+      if (!impStmt.modulePath) throw new LoadError(
+        `Importing from a TBD module`,
+        impStmt, callerModuleEnv
+      );
+      submoduleID = moduleIDs.get(impStmt.modulePath);
+    }
+    if (!submoduleID) throw new LoadError(
+      `Module ${JSON.stringify(impStmt.modulePath)} not found`,
+      impStmt, callerModuleEnv
     );
-    let submoduleID = submoduleRef.id;
+
+    // TODO: Look in libraryPaths here, but maybe also use a buffer with all
+    // imported dev libraries.. ..Hm, maybe we should just have a flag in each
+    // entry of liveModules that tells if it's a dev module or not..? ..Yeah..
 
     // If the module has already been executed, we can return early.
     let liveModule = liveModules["&" + submoduleID];

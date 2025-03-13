@@ -38,10 +38,13 @@ export const scriptGrammar = {
       let useStr = children[0][0]?.str;
       let useScriptID;
       if (useStr !== undefined) {
-        if (!/^use #[$_a-zA-Z0-9]+$/.test(useStr)) {
-          return "'use' string must be of the form /^use #[$_a-zA-Z0-9]+$/";
+        if (/^use #[$_a-zA-Z0-9]+$/.test(useStr)) {
+          useScriptID = useStr.substring(5);
         }
-        useScriptID = useStr.substring(5);
+        else if (!/^use \$\{[^{}\n]+\}$/.test(useStr)) {
+          return "'use' string must be of the form /^use #[$_a-zA-Z0-9]+$/, " +
+            "or /^use \\$\\{[^{}\\n]+\\}$/";
+        }
       }
 
       return {
@@ -58,14 +61,29 @@ export const scriptGrammar = {
       ["/import/", "/from/", "string", "/;/"],
     ],
     process: (children, ruleInd) => {
+      let moduleStr = children[3].str;
+      let moduleID, modulePath;
+      if (/^#[$_a-zA-Z0-9]+$/.test(moduleStr)) {
+        moduleID = moduleStr.substring(5);
+      }
+      else if (!/^[a-zA-Z][_a-zA-Z0-9/]*$/.test(moduleStr)) {
+        modulePath = moduleStr;
+      }
+      else if (!/^use \$\{[^{}\n]+\}$/.test(moduleStr)) {
+        return "'use' string must be of the form /^use #[$_a-zA-Z0-9]+$/, " +
+          "or /^use \\$\\{[^{}\\n]+\\}$/";
+      }
+
       return (ruleInd === 0) ? {
         type: "import-statement",
         importArr: children[1].children,
-        moduleStr: children[3].str,
+        moduleID: moduleID,
+        modulePath: modulePath,
       } : {
         type: "import-statement",
         importArr: [],
-        moduleStr: children[2].str,
+        moduleID: moduleID,
+        modulePath: modulePath,
       };
     },
   },
@@ -807,10 +825,22 @@ export const scriptGrammar = {
     rules: [
       ["/Entity/", /\(/, "string", /\)/],
     ],
-    process: (children) => ({
-      type: "entity-reference",
-      path: children[2].str,
-    }),
+    process: (children) => {
+      let refStr = children[2].str;
+      let entID;
+      if (/^#[$_a-zA-Z0-9]+$/.test(refStr)) {
+        entID = refStr.substring(5);
+      }
+      else if (!/^\$\{[/\-_a-zA-Z0-9]+\}$/.test(refStr)) {
+        return "Entity reference string must be of the form " +
+        "/^#[$_a-zA-Z0-9]+$/, or /^\\$\\{[^{}\\n]+\\}$/";
+      }
+
+      return {
+        type: "entity-reference",
+        id: entID,
+      };
+    },
   },
   "exit-call": {
     rules: [
