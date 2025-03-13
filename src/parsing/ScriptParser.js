@@ -14,7 +14,8 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
   "^(let|var|const|this|function|export|import|break|continue|return|throw|" +
   "if|else|switch|case|void|typeof|instanceof|delete|await|class|static|" +
   "true|false|null|undefined|Infinity|NaN|try|catch|finally|for|while|do|" +
-  "default|public|debugger|new|exit|Entity|Protected|PassAsMutable)$"
+  "default|public|debugger|new|exit|Entity|Protected|Private|Public|" +
+  "PassAsMutable)$"
   // TODO: Continue this list.
 );
 
@@ -114,12 +115,11 @@ export const scriptGrammar = {
   "export-statement": {
     rules: [
       [
-        "/export/", "/default/?", "/const|let|var/", "identifier", "/=/",
-        "/Protected/!1", /\(/, "expression", "/,/", "expression", "/,/?", /\)/,
-        "/;/"
+        "/export/", "/const/", "identifier", "/=/", "/Protected|Private/!1",
+        /\(/, "string", "/,/", "expression", "/,/?", /\)/, "/;/"
       ],
       [
-        "/export/", "/default/?", "/const|let|var/", "identifier!", "/=/",
+        "/export/", "/default/?", "/const/", "identifier!", "/=/",
         "expression", "/;/"
       ],
       ["/export/", "/default/?", "function-declaration!1"],
@@ -128,26 +128,21 @@ export const scriptGrammar = {
     ],
     process: (children, ruleInd) => {
       if (ruleInd === 0) {
-        let funExp = children[9];
-        if (funExp.type !== "function-expression") {
-          return "Second input of Protected() must be a function " +
-            "expression, using the 'function' keyword";
-        }
         return {
           type: "export-statement",
-          isDefault: children[1][0] ? true : false,
-          isConst: children[2] === "const",
-          ident: children[3].ident,
-          isProtected: true,
-          signalExp: children[7],
-          funExp: funExp,
-        }
+          subtype: "protected-object-export",
+          ident: children[2].ident,
+          isPrivate: (children[4] === "Private") ? true : false,
+          signal: children[6].str,
+          exp: children[8],
+        };
       }
       else if (ruleInd === 1) {
         return {
           type: "export-statement",
+          subtype: "variable-export",
           isDefault: children[1][0] ? true : false,
-          isConst: children[2] === "const",
+          // isConst: children[2] === "const",
           ident: children[3].ident,
           exp: children[5],
         };
@@ -155,6 +150,7 @@ export const scriptGrammar = {
       else if (ruleInd === 2) {
         return {
           type: "export-statement",
+          subtype: "function-export",
           isDefault: children[1][0] ? true : false,
           ident: children[2].name,
           stmt: children[2],
@@ -163,6 +159,7 @@ export const scriptGrammar = {
       else if (ruleInd === 3) {
         return {
           type: "export-statement",
+          subtype: "anonymous-export",
           isDefault: true,
           exp: children[2],
         };

@@ -365,27 +365,40 @@ export class ScriptInterpreter {
   executeExportStatement(stmtNode, environment) {
     decrCompGas(environment);
 
-    if (stmtNode.subtype === "named-exports") {
-      stmtNode.namedExportArr.forEach(({ident, alias}) => {
-        environment.export(ident, alias, undefined, stmtNode);
-      });
-    }
-    else if (stmtNode.exp) {
+    if (stmtNode.subtype === "protected-object-export") {
       let val = this.evaluateExpression(stmtNode.exp, environment);
-      environment.declare("default", val, true, stmtNode);
-      environment.export("default", undefined, stmtNode.isProtected, stmtNode);
-    }
-    else {
-      this.executeStatement(stmtNode.stmt, environment);
+      environment.declare(stmtNode.ident, val, true, stmtNode);
       environment.export(
-        stmtNode.ident, undefined, stmtNode.isProtected, stmtNode
+        stmtNode.ident, undefined, stmtNode, stmtNode.signal,
+        stmtNode.isPrivate
       );
+    }
+    else if (stmtNode.subtype === "variable-export") {
+      let val = this.evaluateExpression(stmtNode.exp, environment);
+      environment.declare(stmtNode.ident, val, true, stmtNode);
+      environment.export(stmtNode.ident, undefined, stmtNode);
       if (stmtNode.isDefault) {
-        environment.export(
-          stmtNode.ident, "default", stmtNode.isProtected, stmtNode
-        );
+        environment.export(stmtNode.ident, "default", stmtNode);
       }
     }
+    else if (stmtNode.subtype === "function-export") {
+      this.executeStatement(stmtNode.stmt, environment);
+      environment.export(stmtNode.ident, undefined, stmtNode);
+      if (stmtNode.isDefault) {
+        environment.export(stmtNode.ident, "default", stmtNode);
+      }
+    }
+    else if (stmtNode.subtype === "anonymous-export") {
+      let val = this.evaluateExpression(stmtNode.exp, environment);
+      environment.declare("default", val, true, stmtNode);
+      environment.export("default", undefined, stmtNode);
+    }
+    else if (stmtNode.subtype === "named-exports") {
+      stmtNode.namedExportArr.forEach(({ident, alias}) => {
+        environment.export(ident, alias, stmtNode);
+      });
+    }
+    else throw "executeExportStatement(): Unrecognized export subtype";
   }
 
 
@@ -492,8 +505,10 @@ export class ScriptInterpreter {
     if (funNode.type = "arrow-function") {
       let curCallerEnv = callerEnv;
       let isValid = (curCallerEnv === funDecEnv);
-      while (!isValid && (curCallerEnv = curCallerEnv.parent)) {
-        isValid = (curCallerEnv === funDecEnv);
+      while (!isValid) {
+        curCallerEnv = curCallerEnv.callerEnv ?? curCallerEnv.parent;
+        if (!curCallerEnv) break;
+        isValid = (curCallerEnv === decEnv);
       }
       if (!isValid) throw new RuntimeError(
         "An arrow function was called outside of the call stack " +
@@ -1032,7 +1047,7 @@ export class ScriptInterpreter {
       case "object": {
         let ret = Object.create(null);
         expNode.children.forEach(exp => {
-          let safeIndex = getSafeIndex(
+          let safeIndex = this.getSafeIndex(
             postfix.ident, postfix.nameExp, environment
           );
           ret[safeIndex] = this.evaluateExpression(exp.valExp, environment);
@@ -1116,7 +1131,8 @@ export class ScriptInterpreter {
         [prevVal, objVal, safeIndex] = this.evaluateChainedExpression(
           expNode.rootExp, expNode.postfixArr, environment, true
         );
-      } catch (err) {
+      }
+      catch (err) {
         // Unlike what JS currently does, we do not throw when assigning to
         // a broken optional chaining. Instead we simply do nothing, and return
         // undefined from the assignment expression.
@@ -1125,17 +1141,6 @@ export class ScriptInterpreter {
         } else {
           throw err;
         }
-      }
-
-      // Throw if the object being assigned to is immutable (including
-      // protected objects). (Consider refactoring if wanting a more precise
-      // error message.)
-      if (!objVal) {
-        throw new RuntimeError(
-          "Assignment to a object member that is immutable in the current " +
-          "scope",
-          expNode, environment
-        );
       }
 
       // Then assign newVal to the member of objVal and return ret, where
@@ -1161,6 +1166,7 @@ export class ScriptInterpreter {
 
     // Evaluate the chained expression accumulatively, one postfix at a time. 
     let postfix, objVal, thisVal, safeIndex, protectSignal;
+    let {protectData} = environment;
     for (let i = 0; i < len; i++) {
       postfix = postfixArr[i];
 
@@ -1178,7 +1184,7 @@ export class ScriptInterpreter {
 
         // Else, first get the safe index (safe from object injection) and
         // throw if it is not a string or a number.
-        safeIndex = getSafeIndex(postfix.ident, postfix.exp, environment);
+        safeIndex = this.getSafeIndex(postfix.ident, postfix.exp, environment);
 
         // If objVal is regular object or array, just get the member.
         if (Object.getPrototypeOf(objVal) === null || objVal instanceof Array) {
@@ -1186,11 +1192,14 @@ export class ScriptInterpreter {
         }
 
         // Else if it is an instance of Immutable, also get the member, but
-        // turn it Immutable of it is not so already. Also set objVal =
-        // undefined, as objVal should only be defined when it is mutable.
+        // turn it Immutable of it is not so already. And throw if forAssignment
+        // = true.
         else if (objVal instanceof Immutable) {
           val = turnImmutable(objVal.val[safeIndex]);
-          objVal = undefined;
+          if (forAssignment) throw new RuntimeError(
+            "Assignment to a member of an immutable object",
+            postfix, environment
+          );
         }
 
         // Else if the object is wrapped in PassAsMutable(), simply get the
@@ -1199,32 +1208,76 @@ export class ScriptInterpreter {
           val = objVal.val[safeIndex];
         }
 
-        // Else if objVal is a protected object, get the public or private
-        // method, or the otherProps property, but with some additional checks.
+        // Else if objVal is a protected object, get the public method/property,
+        // or the protected or private property with some additional checks.
         else if (objVal instanceof ProtectedObject) {
-          // First look in the privateMethods, and if one is found, check that
-          // rootExp is a 'this' keyword, and that i === 1.
-          [val, protectSignal] = objVal.privateMethods[safeIndex];
-          if (
-            val !== undefined && (i !== 1 || rootExp.type !== "this-keyword")
-          ) {
-            throw new RuntimeError(
-              "Trying to access a private method outside of a protected " +
-              "object's own methods",
+          // We first of all want to check that the object isn't being used
+          // outside of its own declaration environment call stack.
+          let curCallerEnv = environment, decEnv = objVal.decEnv;
+          let isValid = (curCallerEnv === decEnv);
+          while (!isValid) {
+            curCallerEnv = curCallerEnv.callerEnv ?? curCallerEnv.parent;
+            if (!curCallerEnv) break;
+            isValid = (curCallerEnv === decEnv);
+          }
+          if (!isValid) throw new RuntimeError(
+            "A protected object was used outside of the " +
+            "environment call stack in which it was defined",
+            postfix, environment
+          );
+
+          // Then first look in the private members, and if one is found, check
+          // that rootExp is a 'this' keyword, and that i === 1.
+          [val, protectSignal] = objVal.privateMembers[safeIndex];
+          if (val !== undefined) {
+            if (i !== 1 || rootExp.type !== "this-keyword") {
+              throw new RuntimeError(
+                "Trying to access a private member from outside a protected " +
+                "object",
+                postfix, environment
+              );
+            }
+
+            // Also, if the accessed member is a method, check that the user
+            // isn't trying to assign to it.
+            if (
+              val instanceof DeveloperFunction || val instanceof DefinedFunction
+            ) {
+              if (forAssignment) throw new RuntimeError(
+                "Assignment to a read-only private method",
+                postfix, environment
+              );
+            }
+
+            // And if it is a private attribute, either emit a "g" or an "s"
+            // signal (for 'get' ad 'set,' respectively), depending on whether
+            // it is accessed forAssignment or not. 
+            else {
+              let {protect, permissions} = environment.scriptGlobals;
+              protectData = protect(
+                forAssignment ? "s" : "g", permissions, protectData, objVal
+              );
+            }
+          }
+
+          // Else look in the protected members.
+          else {
+            [val, protectSignal] = objVal.protectedMembers[safeIndex];
+
+            // And throw if the user tries to assign to a non-private member,
+            if (val !== undefined && forAssignment) throw new RuntimeError(
+              "Assignment to a read-only non-private member of a " +
+              "protected object",
               postfix, environment
             );
           }
 
-          // Else look in the public methods.
-          else {
-            [val, protectSignal] = objVal.publicMethods[safeIndex];
-          }
-
-          // Regardless of whether it be public or private, if a method was
-          // found, check that the next postfix after this member accessor is
-          // an expression tuple, as protected objects' methods cannot be
-          // accessed without immediately being called.
-          if (val !== undefined) {
+          // Then if val is defined and is a method (function-valued), check
+          // that it is also called immediately, as the methods of protected
+          // objects cannot be accessed without being called immediately.
+          if (
+            val instanceof DeveloperFunction || val instanceof DefinedFunction
+          ) {
             if (postfixArr[i + 1]?.type !== "expression-tuple") {
               throw new RuntimeError(
                 "Cannot access a method of a protected object without " +
@@ -1232,50 +1285,15 @@ export class ScriptInterpreter {
                 postfix, environment
               );
             }
-
-            // And we also want to check that the object isn't being used
-            // (method-wise) outside of its own declaration environment call
-            // stack.
-            // TODO: Check this here....
-
-            // We also want to set objVal = undefined, as objVal should only be
-            // defined if the member can be assigned a new value,
-            objVal = undefined;
           }
 
-          // And if no method was gotten, look in first in the private
-          // attributes, and also throw if one is accessed without 'this'. Also
-          // make sure the set thisVal = undefined, as function-valued 
-          // attributes must not be used as methods.
-          else {
-            thisVal = undefined;
-            val = objVal.privateAttributes[safeIndex];
-            if (val !== undefined) {
-              if (i !== 1 || rootExp.type !== "this-keyword") {
-                throw new RuntimeError(
-                  "Trying to access a private method outside of a protected " +
-                  "object's own methods",
-                  postfix, environment
-                );
-              }
-
-              // And if a private method was found, also emit an "g" signal
-              // (for 'get') to protect(), unless the forAssignment flag is
-              // true in which case emit an "s" signal (for 'set').
-              let {protect, permissions} = environment.scriptGlobals;
-              let {protectData} = environment;
-              protect(
-                forAssignment ? "s" : "g", permissions, protectData, objVal
-              );
-            }
-
-            // And finally look in the public attributes, if no match was found
-            // so far. And since public attributes must not be reassigned or
-            // muted, also turn objVal undefined in this case.
-            else {
-              val = objVal.attributes[safeIndex];
-              objVal = undefined;
-            }
+          // Then finally, if a value was found, and with a truthy
+          // protectSignal, emit that signal to protect().
+          if (val !== undefined && protectSignal) {
+            let {protect, permissions} = environment.scriptGlobals;
+            protectData = protect(
+              protectSignal, permissions, protectData, objVal
+            );
           }
         }
 
@@ -1289,7 +1307,12 @@ export class ScriptInterpreter {
       // Else if postfix is an expression tuple, execute the current val as a
       // function, and reassign it to the return value.
       else if (postfix.type === "expression-tuple") {
-        objVal = safeIndex = undefined;
+        // Throw if assigning to a chained expression including a function call,
+        // as functions will always return something immutable anyway.
+        if (forAssignment) throw new RuntimeError(
+          "Assignment to a member of an immutable object",
+          postfix, environment
+        );
 
         // Throw if val is not a function.
         if (
@@ -1306,9 +1329,12 @@ export class ScriptInterpreter {
           this.evaluateExpression(exp, environment)
         ));
 
-        // Then execute the function and assign its return value to val.
-        val = this.executeFunction(
-          val, inputValArr, postfix, environment, thisVal, protectSignal
+        // Then execute the function and assign its return value, turned
+        // immutable, to val.
+        val = turnImmutable(
+          this.executeFunction(
+            val, inputValArr, postfix, environment, thisVal, protectSignal
+          )
         );
       }
       else throw "evaluateChainedExpression(); Unrecognized postfix type";
@@ -1458,8 +1484,11 @@ export class Environment {
   }
 
 
-  // TODO: Correct.
-  export(ident, alias = ident, isProtected, node, nodeEnvironment = this) {
+
+  export(
+    ident, alias = ident, node, signal = undefined, isPrivate = undefined,
+    nodeEnvironment = this
+  ) {
     let prevExport = this.exports["&" + alias];
     if (prevExport !== undefined) throw new RuntimeError(
       `Duplicate export of the same name: "${alias}"`,
@@ -1472,30 +1501,18 @@ export class Environment {
       `Exported variable or function is undefined: "${ident}"`,
       node, nodeEnvironment
     );
-    this.exports.push([alias, val, isProtected]);
+    this.exports.push([alias, turnImmutable(val), type]);
   }
 
   getLiveModule() {
     if (!this.liveModule ) {
       let liveModule = this.liveModule = {};
-      this.exports.forEach(([alias, val, isProtected]) => {
-        liveModule["&" + alias] = [val, isProtected];
+      this.exports.forEach(([alias, val, type]) => {
+        liveModule["&" + alias] = [val, type];
       });
     }
     return this.liveModule;
   }
-
-  // getExports() {
-  //   let liveModule = getLiveModule();
-  //   return Object.entries(liveModule).map(([safeKey, [val]]) => [safeKey, val]);
-  // }
-
-  // getProtectedExports() {
-  //   let liveModule = getLiveModule();
-  //   return Object.entries(liveModule).filter(
-  //     ([ , [ , flagStr]]) => (flagStr !== undefined)
-  //   );
-  // }
 
 }
 
@@ -1618,16 +1635,13 @@ export class DeveloperFunction {
 
 export class ProtectedObject {
   constructor(
-    moduleID, decEnv, privateMethods, publicMethods,
-    privateAttributes, publicAttributes
+    moduleID, decEnv, privateMembers, protectedMembers,
   ) {
     this.moduleID = moduleID;
     this.decEnv = decEnv;
-    // Method := [fun : DefinedFunction | DeveloperFunction, signal : string].
-    this.privateMethods = privateMethods;
-    this.publicMethods = publicMethods;
-    this.privateAttributes = privateAttributes;
-    this.publicAttributes = publicAttributes;
+    // prt./prv. member := [propVal : any, signal : string].
+    this.privateMembers = privateMembers;
+    this.protectedMembers = protectedMembers;
   }
 }
 
