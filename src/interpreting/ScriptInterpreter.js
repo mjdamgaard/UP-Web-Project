@@ -139,8 +139,10 @@ export class ScriptInterpreter {
 
   createGlobalEnvironment(scriptGlobals) {
     let globalEnv = new Environment(
-      undefined, "global", undefined, undefined, undefined, undefined,
-      undefined, scriptGlobals
+      undefined, "global",
+      undefined, undefined, undefined, undefined,
+      undefined, undefined,
+      scriptGlobals
     );
     return globalEnv;
   }
@@ -195,10 +197,10 @@ export class ScriptInterpreter {
 
     // Create a new environment for the module.
     let moduleEnv = new Environment(
-      globalEnv, "module", undefined, undefined, undefined, undefined, moduleID
+      globalEnv, "module",
+      undefined, undefined, undefined, undefined,
+      moduleID, moduleNode.useScriptID
     );
-
-    // First...
 
     // Then run all the import statements in parallel and get their live
     // environments, but without making any changes to moduleEnv yet.
@@ -233,6 +235,7 @@ export class ScriptInterpreter {
     let {liveModules, parsedEntities} = globalEnv.scriptGlobals;
 
     // Evaluate the submodule entity reference expression (right after 'from').
+// TODO: Correct:
     let submoduleRef = impStmt.moduleRef;
     if (!submoduleRef.id) throw new LoadError(
       `Importing from a TBD module`,
@@ -1375,7 +1378,8 @@ export class Environment {
     parent = undefined, scopeType = "block",
     callerNode = undefined, callerEnv = undefined, thisVal = undefined,
     protectData = undefined,
-    moduleID = undefined, scriptGlobals = undefined
+    moduleID = undefined, useScriptID = undefined,
+    scriptGlobals = undefined
   ) {
     this.parent = parent;
     this.scopeType = scopeType;
@@ -1388,6 +1392,7 @@ export class Environment {
     }
     else if (scopeType === "module") {
       this.moduleID = moduleID;
+      this.useScriptID = useScriptID;
       this.exports = [];
       this.liveModule = undefined;
     }
@@ -1501,14 +1506,16 @@ export class Environment {
       `Exported variable or function is undefined: "${ident}"`,
       node, nodeEnvironment
     );
-    this.exports.push([alias, turnImmutable(val), type]);
+    this.exports.push([alias, turnImmutable(val), signal, isPrivate]);
   }
 
   getLiveModule() {
     if (!this.liveModule ) {
-      let liveModule = this.liveModule = {};
-      this.exports.forEach(([alias, val, type]) => {
-        liveModule["&" + alias] = [val, type];
+      let liveModule = this.liveModule = {
+        useScriptID: this.useScriptID
+      };
+      this.exports.forEach(([alias, val, signal, isPrivate]) => {
+        liveModule["&" + alias] = [val, signal, isPrivate];
       });
     }
     return this.liveModule;

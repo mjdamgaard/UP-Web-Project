@@ -34,12 +34,23 @@ export const scriptGrammar = {
         "outer-statement+$"
       ],
     ],
-    process: (children) => ({
-      type: "script",
-      useStr: children[0][0]?.str,
-      importStmtArr: children[1],
-      stmtArr: children[2],
-    }),
+    process: (children) => {
+      let useStr = children[0][0]?.str;
+      let useScriptID;
+      if (useStr !== undefined) {
+        if (!/^use #[$_a-zA-Z0-9]+$/.test(useStr)) {
+          return "'use' string must be of the form /^use #[$_a-zA-Z0-9]+$/";
+        }
+        useScriptID = useStr.substring(5);
+      }
+
+      return {
+        type: "script",
+        useScriptID: useScriptID,
+        importStmtArr: children[1],
+        stmtArr: children[2],
+      };
+    },
   },
   "import-statement": {
     rules: [
