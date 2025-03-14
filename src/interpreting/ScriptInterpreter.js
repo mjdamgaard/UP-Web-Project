@@ -25,6 +25,16 @@ async function fetchEntity(libraryPaths, funMetadata, entID, entType) {
   return await io.selectEntity(funMetadata, entID, entType);
 }
 
+function getModuleID(moduleIDs, modulePath) {
+  let ret = moduleIDs.val;
+  let pathPartArr = modulePath.split("/");
+  pathPartArr.forEach(pathPart => {
+    ret = (ret) ? ret["&" + pathPart] : undefined;
+  });
+  return ret;
+}
+
+
 
 
 export class ScriptInterpreter {
@@ -64,17 +74,35 @@ export class ScriptInterpreter {
     }
     // Else fetch and parse the script first thing.
     else {
-      parsedScript = parsedEntities.get(scriptID);
-      if (!parsedScript) {
-        let {parsedEnt} = await fetchEntity(
-          this.libraryPaths, {callerEnv: globalEnv}, scriptID, "s",
-        );
-        parsedScript = parsedEnt;
-        parsedEntities.set(scriptID, parsedScript);
-      }
+      parsedScript = this.fetchParsedScript(
+        scriptID, parsedEntities, globalEnv
+      );
     }
 
-    // Then execute the script as a module, followed by an execution of any
+    // Then execute the script's "base module," if any, which is declared by a
+    // string expression statement at the top of the form
+    // '"use #<baseModuleID>";'. From this module we get the protect() and
+    // convertSignal() functions, as well as the moduleIDs object.
+    let baseModuleID = parsedScript.baseModuleID;
+    if (baseModuleID) {
+      let baseModuleNode = this.fetchParsedScript(
+        baseModuleID, parsedEntities, globalEnv
+      );
+      let [liveBaseModule] = this.executeModule(
+        baseModuleNode, baseModuleID, globalEnv
+      );
+      scriptGlobals.protect       = liveBaseModule["&protect"][0];
+      scriptGlobals.convertSignal = liveBaseModule["&convertSignal"][0];
+      scriptGlobals.moduleIDs     = liveBaseModule["&moduleIDs"][0];
+    }
+    else if (parsedScript.baseModulePlaceholderPath) {
+      throw new RuntimeError(
+        "Base module has not yet been defined",
+        parsedScript, globalEnv
+      );
+    }
+
+    // Now execute the script as a module, followed by an execution of any
     // function called 'main,' or the default export if no 'main' function is
     // found, and make sure to try-catch any exceptions or errors.
     try {
@@ -143,6 +171,8 @@ export class ScriptInterpreter {
 
 
 
+
+
   createGlobalEnvironment(scriptGlobals) {
     let globalEnv = new Environment(
       undefined, "global",
@@ -152,6 +182,21 @@ export class ScriptInterpreter {
     );
     return globalEnv;
   }
+
+
+
+  async fetchParsedScript(scriptID, parsedEntities, callerEnv) {
+    let parsedScript = parsedEntities.get(scriptID);
+    if (!parsedScript) {
+      let {parsedEnt} = await fetchEntity(
+        this.libraryPaths, {callerEnv: callerEnv}, scriptID, "s",
+      );
+      parsedScript = parsedEnt;
+      parsedEntities.set(scriptID, parsedScript);
+    }
+    return parsedScript;
+  }
+
 
 
 
@@ -248,7 +293,7 @@ export class ScriptInterpreter {
         `Importing from a TBD module`,
         impStmt, callerModuleEnv
       );
-      submoduleID = moduleIDs.get(impStmt.modulePath);
+      submoduleID = getModuleID(moduleIDs, impStmt.modulePath);
     }
     if (!submoduleID) throw new LoadError(
       `Module ${JSON.stringify(impStmt.modulePath)} not found`,
@@ -276,15 +321,9 @@ export class ScriptInterpreter {
 
     // Else if the module is a user module, first try to get it from the
     // parsedEntities buffer, then try to fetch it.
-    let submoduleNode = parsedEntities.get(submoduleID);
-    if (!submoduleNode) {
-      let {parsedEnt} = await fetchEntity(
-        this.libraryPaths, {callerNode: impStmt, callerEnv: callerModuleEnv},
-        submoduleID, "s",
-      );
-      submoduleNode = parsedEnt;
-      parsedEntities.set(submoduleID, submoduleNode);
-    }
+    let submoduleNode = this.fetchParsedScript(
+      submoduleID, parsedEntities, callerModuleEnv
+    );
 
     // Then execute the module, inside the global environment, and return the
     // resulting liveModule, after also adding it to liveModules.

@@ -36,20 +36,24 @@ export const scriptGrammar = {
     ],
     process: (children) => {
       let useStr = children[0][0]?.str;
-      let useScriptID;
+      let baseModuleID, baseModulePlaceholderPath;
       if (useStr !== undefined) {
         if (/^use #[$_a-zA-Z0-9]+$/.test(useStr)) {
-          useScriptID = useStr.substring(5);
+          baseModuleID = useStr.substring(5);
         }
-        else if (!/^use \$\{[$_a-zA-Z0-9/\-]+\}$/.test(useStr)) {
-          return "'use' string must be of the form /^use #[$_a-zA-Z0-9]+$/, " +
-            "or /^use \\$\\{[$_a-zA-Z0-9/\\-]+\\}$/";
+        else if (/^use \#\{[$_a-zA-Z0-9/\-]+\}$/.test(useStr)) {
+          baseModulePlaceholderPath = useStr.slice(6, -1);
+        }
+        else {
+          return "Base script string must be of the form " +
+            "/^use #[$_a-zA-Z0-9]+$/, or /^use #\\{[$_a-zA-Z0-9/\\-]+\\}$/";
         }
       }
 
       return {
         type: "script",
-        useScriptID: useScriptID,
+        baseModuleID: baseModuleID,
+        baseModulePlaceholderPath: baseModulePlaceholderPath,
         importStmtArr: children[1],
         stmtArr: children[2],
       };
