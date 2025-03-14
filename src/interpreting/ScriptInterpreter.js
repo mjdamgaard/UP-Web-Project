@@ -10,6 +10,7 @@ export {LexError, SyntaxError};
 
 const GAS_NAMES = {
   comp: "computation",
+  import: "import",
   fetch: "fetching",
   cacheSet: "cache inserting",
   time: "time",
@@ -36,6 +37,7 @@ export class ScriptInterpreter {
   async interpretScript(
     gas, script = "", scriptID = "1", mainInputs = [], reqUserID = undefined,
     useScriptID, permissions = {}, settings = {}, parsedEntities = new Map(),
+    liveModules = new Map(),
   ) {
     let scriptGlobals = {
       gas: gas, log: {}, output: undefined, scriptID: scriptID,
@@ -43,7 +45,7 @@ export class ScriptInterpreter {
       protect: undefined, convertSignal: undefined, moduleIDs: undefined,
       permissions: permissions, setting: settings,
       shouldExit: false, resolveScript: undefined, scriptInterpreter: this,
-      parsedEntities: parsedEntities, liveModules: {},
+      parsedEntities: parsedEntities, liveModules: liveModules,
     };
 
     // First create global environment if not yet done, and then create an
@@ -76,10 +78,12 @@ export class ScriptInterpreter {
     // function called 'main,' or the default export if no 'main' function is
     // found, and make sure to try-catch any exceptions or errors.
     try {
-      let liveScriptEnv = await this.executeModule(
+      let [liveScriptModule, scriptEnv] = await this.executeModule(
         parsedScript, scriptID, globalEnv
       );
-      this.executeMainFunction(liveScriptEnv, mainInputs);
+      this.executeMainFunction(
+        liveScriptModule, mainInputs, parsedScript, scriptEnv
+      );
     }
     catch (err) {
       // If any non-internal error occurred, log it in log.error and set
@@ -102,9 +106,11 @@ export class ScriptInterpreter {
         // Create a new promise to get the log, and store a modified resolve()
         // callback on scriptGlobals (which is contained by globalEnv).
         let outputPromise = new Promise(resolve => {
-          scriptGlobals.resolveScript = () => resolve(
-            [scriptGlobals.output, scriptGlobals.log]
-          );
+          scriptGlobals.resolveScript = () => {
+            scriptGlobals.shouldExit = true;
+            scriptGlobals.resolveScript = undefined;
+            resolve([scriptGlobals.output, scriptGlobals.log]);
+          }
         });
 
         // Then set an expiration time after which the script resolves with an
@@ -179,7 +185,6 @@ export class ScriptInterpreter {
         err.node, err.environment
       );
     } else if (err instanceof ExitException) {
-      scriptGlobals.shouldExit = true;
       if (scriptGlobals.resolveScript) scriptGlobals.resolveScript();
     } else {
       throw err;
@@ -193,7 +198,7 @@ export class ScriptInterpreter {
 
 
   async executeModule(moduleNode, moduleID, globalEnv) {
-    decrCompGas(globalEnv);
+    decrCompGas(moduleNode, globalEnv);
 
     // Create a new environment for the module.
     let moduleEnv = new Environment(
@@ -224,14 +229,15 @@ export class ScriptInterpreter {
     });
 
     // And finally get the exported "live module," and return it.
-    return moduleEnv.getLiveModule();
+    return [moduleEnv.getLiveModule(), moduleEnv];
   }
 
 
 
 
   async executeSubmoduleOfImportStatement(impStmt, callerModuleEnv, globalEnv) {
-    decrCompGas(globalEnv);
+    decrCompGas(impStmt, globalEnv);
+    decrGas(impStmt, globalEnv, "import");
     let {liveModules, parsedEntities, moduleIDs} = globalEnv.scriptGlobals;
 
     // If the module is referenced by a path, and not directly by an ID, first
@@ -249,31 +255,29 @@ export class ScriptInterpreter {
       impStmt, callerModuleEnv
     );
 
-    // TODO: Look in libraryPaths here, but maybe also use a buffer with all
-    // imported dev libraries.. ..Hm, maybe we should just have a flag in each
-    // entry of liveModules that tells if it's a dev module or not..? ..Yeah..
-
     // If the module has already been executed, we can return early.
-    let liveModule = liveModules["&" + submoduleID];
+    let liveModule = liveModules.get(submoduleID);
     if (liveModule) {
       return liveModule;
     }
 
-    // Then fetch and parse the module. First, try to get it from the
-    // parsedEntities buffer.
+    // If not, first query the libraryPaths map to see if the module is a
+    // developer library. and if so, import it via import().
+    let libPath = this.libraryPaths.get(submoduleID); 
+    if (libPath) {
+      let devMod = await import(libPath);
+      let liveModule = {};
+      Object.entries(devMod).forEach(([key, val]) => {
+        liveModule["&" + key] = [val];
+      });
+      liveModules.set(submoduleID, liveModule);
+      return liveModule;
+    }
+
+    // Else if the module is a user module, first try to get it from the
+    // parsedEntities buffer, then try to fetch it.
     let submoduleNode = parsedEntities.get(submoduleID);
-
-    // Else check if submoduleID refers to a developer library, and import it
-    // in a special way if so.
     if (!submoduleNode) {
-      liveModule = await this.getDeveloperLibrary(submoduleID);
-      if (liveModule) {
-        liveModules["&" + submoduleID] = liveModule;
-        return liveModule;
-      }
-
-      // And if it is not a developer module, then fetch and parse the user
-      // module.
       let {parsedEnt} = await fetchEntity(
         this.libraryPaths, {callerNode: impStmt, callerEnv: callerModuleEnv},
         submoduleID, "s",
@@ -284,10 +288,10 @@ export class ScriptInterpreter {
 
     // Then execute the module, inside the global environment, and return the
     // resulting liveModule, after also adding it to liveModules.
-    liveModule = await this.executeModule(
+    [liveModule] = await this.executeModule(
       submoduleNode, submoduleID, globalEnv
     );
-    liveModules["&" + submoduleID] = liveModule;
+    liveModules.set(submoduleID, liveModule);
     return liveModule;
   }
 
@@ -295,7 +299,7 @@ export class ScriptInterpreter {
 
 
   finalizeImportStatement(impStmt, liveSubmodule, moduleEnv) {
-    decrCompGas(moduleEnv);
+    decrCompGas(impStmt, moduleEnv);
 
     // Iterate through all the imports and add each import to the environment.
     impStmt.importArr.forEach(imp => {
@@ -308,24 +312,19 @@ export class ScriptInterpreter {
         );
         moduleEnv.declare(imp.ident, namespaceObj, true, imp);
       }
-      else if (impType === "protected-import") {
-        let moduleID = moduleEnv.moduleID;
-        let submoduleID = impStmt.moduleRef.id;
-        let protObj = new ProtectedObject(
-          submoduleID, moduleID, liveSubmodule
-        );
-        moduleEnv.declare(imp.ident, protObj, true, imp);
-      }
       else if (impType === "named-imports") {
         imp.namedImportArr.forEach(namedImp => {
           let ident = namedImp.ident ?? "default";
           let alias = namedImp.alias ?? ident;
-          moduleEnv.declare(alias, liveSubmodule["&" + ident], true, namedImp);
+          let [val] = liveSubmodule["&" + ident];
+          moduleEnv.declare(alias, val, true, namedImp);
         });
       }
-      else {
-        moduleEnv.declare(imp.ident, liveSubmodule["&default"], true, imp);
+      else if (impType === "default-import") {
+        let [val] = liveSubmodule["&default"];
+        moduleEnv.declare(imp.ident, val, true, imp);
       }
+      else throw "finalizeImportStatement(): Unrecognized import type";
     });
   }
 
@@ -376,7 +375,7 @@ export class ScriptInterpreter {
 
 
   executeExportStatement(stmtNode, environment) {
-    decrCompGas(environment);
+    decrCompGas(stmtNode, environment);
 
     if (stmtNode.subtype === "protected-object-export") {
       let val = this.evaluateExpression(stmtNode.exp, environment);
@@ -417,25 +416,20 @@ export class ScriptInterpreter {
 
 
 
-  executeMainFunction(scriptEnv, inputArr, scriptNode) {
-    let mainFun;
-    try {
-      mainFun = scriptEnv.get("main", scriptNode, scriptEnv);
+
+
+
+  executeMainFunction(liveScriptModule, inputArr, scriptNode, scriptEnv) {
+    let [mainFun] = liveScriptModule["&main"];
+    if (mainFun === undefined) {
+      [mainFun] = liveScriptModule["&default"];
     }
-    catch (err) {
-      if (!(err instanceof RuntimeError)) throw err;
-      try {
-        mainFun = scriptEnv.get("default", scriptNode, scriptEnv);
-      }
-      catch (err) {
-        if (!(err instanceof RuntimeError)) throw err;
-      }
-    }
-    if (
-      mainFun instanceof DefinedFunction ||
-      mainFun instanceof ThisBoundFunction
-    ) {
-      this.executeFunction(mainFun, inputArr, scriptNode, scriptEnv);
+    if (mainFun !== undefined) {
+      this.executeFunction(
+        mainFun, inputArr,
+        mainFun instanceof DefinedFunction ? mainFun.node : scriptNode,
+        scriptEnv
+      );
     }
     // If no main function was found, simply do nothing (expecting the script
     // to eventually exit itself via a callback function (or timing out)).
@@ -449,7 +443,7 @@ export class ScriptInterpreter {
     fun, inputArr, callerNode, callerEnv, thisVal, protectSignal
   ) {
     let {protect, permissions} = callerEnv.scriptGlobals;
-    let {protectData} = callerEnv;
+    let protectData = callerEnv.getProtectData();
 
     // If the function is a method of a protected object, call protect() in
     // order to check the protectSignal (will throw on failure), and also to
@@ -507,7 +501,7 @@ export class ScriptInterpreter {
     funNode, funDecEnv, inputValueArr, callerNode, callerEnv,
     thisVal = undefined, protectData = undefined,
   ) {
-    decrCompGas(callerEnv);
+    decrCompGas(callerNode, callerEnv);
     let scriptGlobals = callerEnv.scriptGlobals;
 
     // Initialize a new environment for the execution of the function. If the
@@ -516,13 +510,7 @@ export class ScriptInterpreter {
     // stack.
     let newEnv;
     if (funNode.type = "arrow-function") {
-      let curCallerEnv = callerEnv;
-      let isValid = (curCallerEnv === funDecEnv);
-      while (!isValid) {
-        curCallerEnv = curCallerEnv.callerEnv ?? curCallerEnv.parent;
-        if (!curCallerEnv) break;
-        isValid = (curCallerEnv === decEnv);
-      }
+      let isValid = callerEnv.isCallStackDescendentOf(funDecEnv);
       if (!isValid) throw new RuntimeError(
         "An arrow function was called outside of the call stack " +
         "in which it was declared. (Do not return arrow functions created " +
@@ -556,7 +544,6 @@ export class ScriptInterpreter {
         return err.val;
       }
       else if (err instanceof ExitException) {
-        scriptGlobals.shouldExit = true;
         if (scriptGlobals.resolveScript) scriptGlobals.resolveScript();
       }
       else if (err instanceof BreakException) {
@@ -607,7 +594,7 @@ export class ScriptInterpreter {
 
 
   executeStatement(stmtNode, environment) {
-    decrCompGas(environment);
+    decrCompGas(stmtNode, environment);
 
     let type = stmtNode.type;
     switch (type) {
@@ -743,8 +730,8 @@ export class ScriptInterpreter {
 
 
 
-  evaluateExpression(expNode, environment, isMemberAccessChild = false) {
-    decrCompGas(environment);
+  evaluateExpression(expNode, environment) {
+    decrCompGas(expNode, environment);
 
     let type = expNode.type;
     switch (type) {
@@ -1071,9 +1058,15 @@ export class ScriptInterpreter {
         return environment.getThisVal();
       }
       case "entity-reference": {
-        return new EntityReference(expNode.path);
+        return new EntityReference(expNode.id, expNode.placeholderPath);
       }
       case "exit-call": {
+        // Send an "e" (for 'exit') signal to protect.
+        let {protect, permissions} = environment.scriptGlobals;
+        let protectData = environment.getProtectData();
+        protect("e", permissions, protectData);
+        // Then evaluate the argument, record the resulting output, and throw
+        // an exit exception.
         let expVal = (!expNode.exp) ? undefined :
           this.evaluateExpression(expNode.exp, environment);
         environment.scriptGlobals.output = expVal;
@@ -1175,11 +1168,11 @@ export class ScriptInterpreter {
     if (len === 0) {
       return [val];
     }
-    decrCompGas(environment);
+    decrCompGas(rootExp, environment);
 
     // Evaluate the chained expression accumulatively, one postfix at a time. 
     let postfix, objVal, thisVal, safeIndex, protectSignal;
-    let {protectData} = environment;
+    let protectData = environment.getProtectData();
     for (let i = 0; i < len; i++) {
       postfix = postfixArr[i];
 
@@ -1226,13 +1219,7 @@ export class ScriptInterpreter {
         else if (objVal instanceof ProtectedObject) {
           // We first of all want to check that the object isn't being used
           // outside of its own declaration environment call stack.
-          let curCallerEnv = environment, decEnv = objVal.decEnv;
-          let isValid = (curCallerEnv === decEnv);
-          while (!isValid) {
-            curCallerEnv = curCallerEnv.callerEnv ?? curCallerEnv.parent;
-            if (!curCallerEnv) break;
-            isValid = (curCallerEnv === decEnv);
-          }
+          let isValid = environment.isCallStackDescendentOf(objVal.decEnv);
           if (!isValid) throw new RuntimeError(
             "A protected object was used outside of the " +
             "environment call stack in which it was defined",
@@ -1403,6 +1390,7 @@ export class Environment {
     else if (scopeType === "module") {
       this.moduleID = moduleID;
       this.useScriptID = useScriptID;
+      this.protectData = {moduleID: moduleID};
       this.exports = [];
       this.liveModule = undefined;
     }
@@ -1498,6 +1486,29 @@ export class Environment {
     }
   }
 
+  getProtectData() {
+    let protectData = this.protectData;
+    if (protectData !== undefined) {
+      return protectData;
+    }
+    else if (this.scopeType !== "function" && this.parent) {
+      return this.parent.getProtectData();
+    }
+    else {
+      return this.callerEnv.getProtectData();
+    }
+  }
+
+  isCallStackDescendentOf(decEnv) {
+    let curCallerEnv = this;
+    let isDescendent = (curCallerEnv === decEnv);
+    while (!isDescendent) {
+      curCallerEnv = curCallerEnv.callerEnv ?? curCallerEnv.parent;
+      if (!curCallerEnv) break;
+      isDescendent = (curCallerEnv === decEnv);
+    }
+    return isDescendent;
+  }
 
 
   export(
@@ -1579,17 +1590,16 @@ export function decrCompGas(node, environment) {
     node, environment,
   );
 }
-
-export function decrFetchGas(node, environment) {
+export function decrGas(node, environment, gasName) {
   let gas = environment?.scriptGlobals.gas ?? environment;
-  if (0 > --gas.fetch) throw new OutOfGasError(
-    "Ran out of " + GAS_NAMES.fetch + " gas",
+  if (0 > --gas[gasName]) throw new OutOfGasError(
+    "Ran out of " + GAS_NAMES[gasName] + " gas",
     node, environment,
   );
 }
 
 
-
+// TODO: Correct.
 export function getType(val) {
   let jsType = typeof val;
   if (jsType === "object") {
@@ -1644,7 +1654,11 @@ export class DefinedFunction {
 }
 
 export class DeveloperFunction {
-  constructor(fun, protectSignal = undefined) {
+  constructor(protectSignal = undefined, fun) {
+    if (!fun) {
+      fun = protectSignal;
+      protectSignal = undefined;
+    }
     this.fun = fun;
     if (protectSignal) this.protectSignal = protectSignal;
   }
@@ -1663,8 +1677,9 @@ export class ProtectedObject {
 }
 
 export class EntityReference {
-  constructor(path) {
-    this.path = path;
+  constructor(id, placeholderPath) {
+    if (id) this.id = id;
+    if (placeholderPath) this.placeholderPath = placeholderPath;
   }
 }
 

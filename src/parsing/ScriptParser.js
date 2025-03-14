@@ -14,7 +14,7 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
   "^(let|var|const|this|function|export|import|break|continue|return|throw|" +
   "if|else|switch|case|void|typeof|instanceof|delete|await|class|static|" +
   "true|false|null|undefined|Infinity|NaN|try|catch|finally|for|while|do|" +
-  "default|public|debugger|new|exit|Entity|Protected|Private|Public|" +
+  "default|public|debugger|new|exit|Protected|Private|Public|" +
   "PassAsMutable)$"
   // TODO: Continue this list.
 );
@@ -41,9 +41,9 @@ export const scriptGrammar = {
         if (/^use #[$_a-zA-Z0-9]+$/.test(useStr)) {
           useScriptID = useStr.substring(5);
         }
-        else if (!/^use \$\{[^{}\n]+\}$/.test(useStr)) {
+        else if (!/^use \$\{[$_a-zA-Z0-9/\-]+\}$/.test(useStr)) {
           return "'use' string must be of the form /^use #[$_a-zA-Z0-9]+$/, " +
-            "or /^use \\$\\{[^{}\\n]+\\}$/";
+            "or /^use \\$\\{[$_a-zA-Z0-9/\\-]+\\}$/";
         }
       }
 
@@ -57,33 +57,28 @@ export const scriptGrammar = {
   },
   "import-statement": {
     rules: [
+      ["/import/", "import-list", "/from/", "entity-reference", "/;/!"],
       ["/import/", "import-list", "/from/", "string", "/;/"],
+      ["/import/", "/from/", "entity-reference", "/;/!"],
       ["/import/", "/from/", "string", "/;/"],
     ],
     process: (children, ruleInd) => {
-      let moduleStr = children[3].str;
-      let moduleID, modulePath;
-      if (/^#[$_a-zA-Z0-9]+$/.test(moduleStr)) {
-        moduleID = moduleStr.substring(5);
-      }
-      else if (!/^[a-zA-Z][_a-zA-Z0-9/]*$/.test(moduleStr)) {
-        modulePath = moduleStr;
-      }
-      else if (!/^use \$\{[^{}\n]+\}$/.test(moduleStr)) {
-        return "'use' string must be of the form /^use #[$_a-zA-Z0-9]+$/, " +
-          "or /^use \\$\\{[^{}\\n]+\\}$/";
-      }
-
       return (ruleInd === 0) ? {
         type: "import-statement",
         importArr: children[1].children,
-        moduleID: moduleID,
-        modulePath: modulePath,
+        moduleID: children[3].id,
+      } : (ruleInd === 1) ? {
+        type: "import-statement",
+        importArr: children[1].children,
+        modulePath: children[3].str,
+      } : (ruleInd === 2) ? {
+        type: "import-statement",
+        importArr: [],
+        moduleID: children[2].id,
       } : {
         type: "import-statement",
         importArr: [],
-        moduleID: moduleID,
-        modulePath: modulePath,
+        modulePath: children[2].str,
       };
     },
   },
@@ -737,8 +732,8 @@ export const scriptGrammar = {
       [/\(/, "expression", /\)/],
       ["array!1"],
       ["object!1"],
-      ["this-keyword!1"],
-      ["entity-reference!1"],
+      ["this-keyword"],
+      ["entity-reference"],
       ["exit-call!1"],
       ["pass-as-mutable-call!1"],
       ["identifier"],
@@ -823,23 +818,19 @@ export const scriptGrammar = {
   },
   "entity-reference": {
     rules: [
-      ["/Entity/", /\(/, "string", /\)/],
+      [/"#[$_a-zA-Z0-9]+"/],
+      [/"#\{[$_a-zA-Z0-9/\-]+\}"/],
     ],
-    process: (children) => {
-      let refStr = children[2].str;
-      let entID;
-      if (/^#[$_a-zA-Z0-9]+$/.test(refStr)) {
-        entID = refStr.substring(5);
-      }
-      else if (!/^\$\{[/\-_a-zA-Z0-9]+\}$/.test(refStr)) {
-        return "Entity reference string must be of the form " +
-        "/^#[$_a-zA-Z0-9]+$/, or /^\\$\\{[^{}\\n]+\\}$/";
-      }
-
-      return {
+    process: (children, ruleInd) => {
+      let ret = {
         type: "entity-reference",
-        id: entID,
-      };
+      }
+      if (ruleInd === 0) {
+        ret.id = children[0].slice(2, -1);
+      } else {
+        ret.placeholderPath = children[0].slice(3, -2);
+      }
+      return ret;
     },
   },
   "exit-call": {
