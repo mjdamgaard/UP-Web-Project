@@ -482,14 +482,31 @@ export const scriptGrammar = {
   },
   "try-catch-statement": {
     rules: [
-      ["/try/", "statement", "/catch/", /\(/, "identifier", /\)/, "statement"],
+      [
+        "/try/", /\{/, "statement!1*", /\}/, "/catch/", /\(/, /\[/,
+        "identifier", "/,/", "identifier!1", "/,/?", /\]/, /\)/, /{/,
+        "statement!1*", /\}/
+      ],
+      [
+        "/try/", /\{/, "statement!1*", /\}/, "/catch/", /\(/, /\[/,
+        "identifier", "/,/?", /\]/, /\)/, /{/,
+        "statement!1*", /\}/
+      ],
     ],
-    process: (children) => ({
-      type: "try-catch-statement",
-      tryStmt: children[1],
-      ident: children[4].ident,
-      catchStmt: children[6],
-    }),
+    process: (children) => {
+      return (ruleInd === 0) ? {
+        type: "try-catch-statement",
+        tryStmtArr: children[2],
+        errIdent: children[7].ident,
+        numIdent: children[9].ident,
+        catchStmtArr: children[14],
+      } : {
+        type: "try-catch-statement",
+        tryStmtArr: children[2],
+        errIdent: children[7].ident,
+        catchStmtArr: children[12],
+      };
+    },
   },
   "instruction-statement": {
     rules: [

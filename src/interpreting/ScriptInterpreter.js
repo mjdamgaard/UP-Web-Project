@@ -54,7 +54,7 @@ export class ScriptInterpreter {
       reqUserID: reqUserID, baseModuleID: baseModuleID,
       protect: undefined, convertSignal: undefined, moduleIDs: {},
       permissions: permissions, setting: settings,
-      shouldExit: false, resolveScript: undefined,
+      shouldExit: false, resolveScript: undefined, interpreter: this,
       parsedEntities: parsedEntities, liveModules: liveModules,
     };
 
@@ -685,15 +685,25 @@ export class ScriptInterpreter {
         throw new CustomException(expVal, stmtNode, environment);
       }
       case "try-catch-statement": {
+        let tryCatchEnv = new Environment(
+          environment, "try-catch",
+          undefined, undefined, undefined, undefined,
+          undefined, undefined,
+          undefined,
+          stmtNode.catchStmtArr, stmtNode.errIdent, stmtNode.numIdent,
+        );
         try {
-          this.executeStatement(stmtNode.tryStmt, environment);
+          stmtNode.tryStmtArr.forEach(stmt => {
+            this.executeStatement(stmt, tryCatchEnv);
+          });
         } catch (err) {
           if (err instanceof RuntimeError || err instanceof CustomException) {
-            let newEnv = new Environment(environment);
-            newEnv.declare(
-              stmtNode.ident, err.msg, false, stmtNode
-            );
-            this.executeStatement(stmtNode.catchStmt, newEnv);
+            let catchEnv = new Environment(environment);
+            catchEnv.declare(stmtNode.errIdent, err.msg, false, stmtNode);
+            catchEnv.declare(stmtNode.numIdent, 0, false, stmtNode);
+            stmtNode.catchStmt.forEach(stmt => {
+              this.executeStatement(stmt, catchEnv);
+            });
           }
           else throw err;
         }
@@ -1413,7 +1423,8 @@ export class Environment {
     callerNode = undefined, callerEnv = undefined, thisVal = undefined,
     protectData = undefined,
     moduleID = undefined, baseModuleID = undefined,
-    scriptGlobals = undefined
+    scriptGlobals = undefined,
+    catchStmtArr = undefined, errIdent, numIdent,
   ) {
     this.parent = parent;
     this.scopeType = scopeType;
@@ -1430,6 +1441,12 @@ export class Environment {
       this.protectData = {moduleID: moduleID};
       this.exports = [];
       this.liveModule = undefined;
+    }
+    else if (scopeType === "try-catch") {
+      this.catchStmtArr = catchStmtArr;
+      this.errIdent = errIdent;
+      this.numIdent = numIdent;
+      this.numOfAsyncExceptions = 0;
     }
     this.scriptGlobals = scriptGlobals ?? parent?.scriptGlobals ?? (() => {
       throw "Environment: No scriptGlobals object provided";
@@ -1579,6 +1596,27 @@ export class Environment {
     return this.liveModule;
   }
 
+
+  runNearestCatchStmtAncestor(err, node, nodeEnvironment = this) {
+    if (this.scopeType === "try-catch") {
+      let {interpreter} = this.scriptGlobals;
+      let catchEnv = new Environment(this.parent);
+      catchEnv.declare(this.errIdent, err.msg, false);
+      catchEnv.declare(this.numIdent, ++this.numOfAsyncExceptions, false);
+      stmtNode.catchStmt.forEach(stmt => {
+        interpreter.executeStatement(stmt, catchEnv);
+      });
+    }
+    else if (this.scopeType === "function") {
+      this.callerEnv.runNearestCatchStmtAncestor(err, node, nodeEnvironment);
+    }
+    else if (this.parent) {
+      this.parent.runNearestCatchStmtAncestor(err, node, nodeEnvironment);
+    }
+    else throw new RuntimeError(
+      err.msg, node, nodeEnvironment
+    );
+  }
 }
 
 

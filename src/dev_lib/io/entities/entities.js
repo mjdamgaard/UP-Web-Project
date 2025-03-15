@@ -1,6 +1,7 @@
 
 import {
   DeveloperFunction, decrCompGas, decrGas, payGas, RuntimeError,
+  getParsingGasCost,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {MainDBInterface} from "../../../node_js/db_io/MainDBInterface.js";
 import {
@@ -17,18 +18,32 @@ export const selectEntity = new DeveloperFunction(
       callerNode, callerEnv
     );
     decrCompGas(callerNode, callerEnv);
-    let [parsedEnt, entType, creatorID, isEditable] =
+    let [parsedEnt, entType, creatorID, isEditable, whitelistID] =
       entityCacheServerSide.get(entID);
     if (parsedEnt) {
-      interpreter.executeFunction(
-        callback, [parsedEnt, entType, creatorID, isEditable],
-        callerNode, callerEnv
-      );
+      if (whitelistID == "0") {
+        interpreter.executeFunction(
+          callback, [parsedEnt, entType, creatorID, isEditable],
+          callerNode, callerEnv
+        );
+      } else {
+        interpreter.executeFunction(
+          callback, [], callerNode, callerEnv
+        );
+      }
       return;
     }
     MainDBInterface.selectEntity(entID, maxLen).then(res => {
       let [entType, defStr, len, creatorID, isEditable, whitelistID] = res;
-      // ...
+      if (whitelistID != "0") {
+        interpreter.executeFunction(
+          callback, [], callerNode, callerEnv
+        );
+        return;
+      }
+      if (defStr.length != len) {
+
+      }
     });
   }
 );
