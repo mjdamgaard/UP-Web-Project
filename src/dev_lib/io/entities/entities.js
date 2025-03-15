@@ -1,15 +1,45 @@
 
-import {MainDBInterface} from "../../../node_js/db_io/MainDBInterface";
+import {
+  DeveloperFunction, decrCompGas, decrGas, payGas, RuntimeError,
+} from "../../../interpreting/ScriptInterpreter.js";
+import {MainDBInterface} from "../../../node_js/db_io/MainDBInterface.js";
+import {
+  entityCacheServerSide
+} from "../../../caching/entity_caches/entityCahceServerSide.js";
 
 
+export const selectEntity = new DeveloperFunction(
+  ["10", "r"],
+  function ({callerNode, callerEnv, interpreter}, entID, callback) {
+    entID = entID.toString();
+    if (!/^[$_a-zA-Z0-9]+$/.test(entID)) throw new RuntimeError(
+      "selectEntity(): entID has to be of the form /^[$_a-zA-Z0-9]+$/",
+      callerNode, callerEnv
+    );
+    decrCompGas(callerNode, callerEnv);
+    let [parsedEnt, entType, creatorID, isEditable] =
+      entityCacheServerSide.get(entID);
+    if (parsedEnt) {
+      interpreter.executeFunction(
+        callback, [parsedEnt, entType, creatorID, isEditable],
+        callerNode, callerEnv
+      );
+      return;
+    }
+    MainDBInterface.selectEntity(entID, maxLen).then(res => {
+      let [entType, defStr, len, creatorID, isEditable, whitelistID] = res;
+      // ...
+    });
+  }
+);
 
-export function selectEntity(entID, asUser, maxLen = 4294967295) {
-  MainDBInterface.selectEntity();
-}
-
-export function selectEntity_flags(entID, asUser, maxLen) {
-  return asUser ? "R" : "r";
-};
+export const selectEntityAsUser = new DeveloperFunction(
+  ["10", "R"],
+  function ({callerEnv}, entID, entType) {
+    decrCompGas(callerEnv);
+    MainDBInterface.selectEntity(entID, maxLen);
+  }
+);
 
 
 
@@ -41,7 +71,7 @@ export function selectEntity_flags(entID, asUser, maxLen) {
 
 export const basicBuiltInFunctions = {
 
-  getStructModuleIDs: new BuiltInFunction(function ({callerEnv}, structDef) {
+  getStructModuleIDs: new DeveloperFunction(function ({callerEnv}, structDef) {
     decrCompGas(callerEnv);
     return getStructModuleIDs(structDef)
   }),

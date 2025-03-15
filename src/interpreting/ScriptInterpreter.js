@@ -12,7 +12,7 @@ const GAS_NAMES = {
   comp: "computation",
   import: "import",
   fetch: "fetching",
-  cacheSet: "cache inserting",
+  cachePriority: "cache priority",
   time: "time",
 };
 
@@ -45,16 +45,16 @@ export class ScriptInterpreter {
 
 
   async interpretScript(
-    gas, script = "", scriptID = "1", mainInputs = [], reqUserID = undefined,
-    useScriptID, permissions = {}, settings = {}, parsedEntities = new Map(),
+    gas, script = "", scriptID = "0", mainInputs = [], reqUserID = undefined,
+    baseModuleID, permissions = {}, settings = {}, parsedEntities = new Map(),
     liveModules = new Map(),
   ) {
     let scriptGlobals = {
       gas: gas, log: {}, output: undefined, scriptID: scriptID,
-      reqUserID: reqUserID, useScriptID: useScriptID,
-      protect: undefined, convertSignal: undefined, moduleIDs: undefined,
+      reqUserID: reqUserID, baseModuleID: baseModuleID,
+      protect: undefined, convertSignal: undefined, moduleIDs: {},
       permissions: permissions, setting: settings,
-      shouldExit: false, resolveScript: undefined, scriptInterpreter: this,
+      shouldExit: false, resolveScript: undefined,
       parsedEntities: parsedEntities, liveModules: liveModules,
     };
 
@@ -64,8 +64,8 @@ export class ScriptInterpreter {
     let globalEnv = this.createGlobalEnvironment(scriptGlobals);
 
     // If script is provided, rather than the scriptID, first parse it.
-    let parsedScript;
-    if (scriptID === "1") {
+    let parsedScript, parsedScriptPromise;
+    if (scriptID === "0") {
       payGas(globalEnv, {comp: getParsingGasCost(script)});
       let [scriptSyntaxTree] = scriptParser.parse(script);
       if (scriptSyntaxTree.error) throw scriptSyntaxTree.error;
@@ -74,37 +74,26 @@ export class ScriptInterpreter {
     }
     // Else fetch and parse the script first thing.
     else {
-      parsedScript = this.fetchParsedScript(
+      parsedScriptPromise = this.fetchParsedScript(
         scriptID, parsedEntities, globalEnv
       );
     }
 
-    // Then execute the script's "base module," if any, which is declared by a
-    // string expression statement at the top of the form
-    // '"use #<baseModuleID>";'. From this module we get the protect() and
-    // convertSignal() functions, as well as the moduleIDs object.
-    let baseModuleID = parsedScript.baseModuleID;
-    if (baseModuleID) {
-      let baseModuleNode = this.fetchParsedScript(
-        baseModuleID, parsedEntities, globalEnv
-      );
-      let [liveBaseModule] = this.executeModule(
-        baseModuleNode, baseModuleID, globalEnv
-      );
-      scriptGlobals.protect       = liveBaseModule["&protect"][0];
-      scriptGlobals.convertSignal = liveBaseModule["&convertSignal"][0];
-      scriptGlobals.moduleIDs     = liveBaseModule["&moduleIDs"][0];
-    }
-    else if (parsedScript.baseModulePlaceholderPath) {
-      throw new RuntimeError(
-        "Base module has not yet been defined",
-        parsedScript, globalEnv
-      );
-    }
+    // Then execute the script's "base module." From this module we get the
+    // protect() function, first of all, as well as the moduleIDs object.
+    let baseModuleNode = await this.fetchParsedScript(
+      baseModuleID, parsedEntities, globalEnv
+    );
+    let [liveBaseModule] = await this.executeModule(
+      baseModuleNode, baseModuleID, globalEnv
+    );
+    scriptGlobals.protect = liveBaseModule["&protect"][0];
+    scriptGlobals.moduleIDs = liveBaseModule["&moduleIDs"][0];
 
     // Now execute the script as a module, followed by an execution of any
     // function called 'main,' or the default export if no 'main' function is
     // found, and make sure to try-catch any exceptions or errors.
+    if (parsedScriptPromise) parsedScript = await parsedScriptPromise;
     try {
       let [liveScriptModule, scriptEnv] = await this.executeModule(
         parsedScript, scriptID, globalEnv
@@ -249,7 +238,7 @@ export class ScriptInterpreter {
     let moduleEnv = new Environment(
       globalEnv, "module",
       undefined, undefined, undefined, undefined,
-      moduleID, moduleNode.useScriptID
+      moduleID, moduleNode.baseModuleID
     );
 
     // Then run all the import statements in parallel and get their live
@@ -320,8 +309,8 @@ export class ScriptInterpreter {
     }
 
     // Else if the module is a user module, first try to get it from the
-    // parsedEntities buffer, then try to fetch it.
-    let submoduleNode = this.fetchParsedScript(
+    // parsedEntities buffer, then try to fetch it from the database.
+    let submoduleNode = await this.fetchParsedScript(
       submoduleID, parsedEntities, callerModuleEnv
     );
 
@@ -479,26 +468,30 @@ export class ScriptInterpreter {
 
 
   executeFunction(
-    fun, inputArr, callerNode, callerEnv, thisVal, protectSignal
+    fun, inputArr, callerNode, callerEnv, thisVal, signalPair
   ) {
-    let {protect, permissions} = callerEnv.scriptGlobals;
+    let {protect, baseModuleID, permissions} = callerEnv.scriptGlobals;
     let protectData = callerEnv.getProtectData();
 
     // If the function is a method of a protected object, call protect() in
-    // order to check the protectSignal (will throw on failure), and also to
+    // order to check the signalPair (will throw on failure), and also to
     // get the new protectData to give to the new function environment.
     if (thisVal instanceof ProtectedObject) {
-      protectData = protect(protectSignal, permissions, protectData, thisVal);
+      protectData = protect(
+        signalPair, baseModuleID, permissions, protectData, thisVal
+      );
     }
 
     // Execute the function depending on its type.
     let ret;
     if (fun instanceof DeveloperFunction) {
-      // If the called developer function has a protectSignal, then call
-      // protect() (again, if called already), and also reassign protectData
-      // the return value.
-      if (fun.protectSignal !== undefined) {
-        protectData = protect(fun.protectSignal, permissions, protectData);
+      // If the called developer function has a signalPair, then call protect()
+      // (again, if called already), and also reassign protectData the return
+      // value.
+      if (fun.signalPair !== undefined) {
+        protectData = protect(
+          fun.signalPair, baseModuleID, permissions, protectData
+        );
       }
 
       // Then execute the dev function, with a first argument in the form of an
@@ -507,7 +500,7 @@ export class ScriptInterpreter {
       ret = fun.fun(
         {
           callerNode: callerNode, callerEnv: callerEnv, thisVal: thisVal,
-          protectData: protectData,
+          protectData: protectData, interpreter: this,
         },
         ...inputArr
       );
@@ -795,56 +788,56 @@ export class ScriptInterpreter {
             return this.assignToVariableOrMember(
               expNode.exp1, environment, () => {
                 let newVal = val;
-                return [newVal, newVal]
+                return [newVal, newVal];
               }
             );
           case "+=":
             return this.assignToVariableOrMember(
               expNode.exp1, environment, prevVal => {
                 let newVal = parseFloat(prevVal) + parseFloat(val);
-                return [newVal, newVal]
+                return [newVal, newVal];
               }
             );
           case "-=":
             return this.assignToVariableOrMember(
               expNode.exp1, environment, prevVal => {
                 let newVal = parseFloat(prevVal) - parseFloat(val);
-                return [newVal, newVal]
+                return [newVal, newVal];
               }
             );
           case "*=":
             return this.assignToVariableOrMember(
               expNode.exp1, environment, prevVal => {
                 let newVal = parseFloat(prevVal) * parseFloat(val);
-                return [newVal, newVal]
+                return [newVal, newVal];
               }
             );
           case "/=":
             return this.assignToVariableOrMember(
               expNode.exp1, environment, prevVal => {
                 let newVal = parseFloat(prevVal) / parseFloat(val);
-                return [newVal, newVal]
+                return [newVal, newVal];
               }
             );
           case "&&=":
             return this.assignToVariableOrMember(
               expNode.exp1, environment, prevVal => {
                 let newVal = prevVal && val;
-                return [newVal, newVal]
+                return [newVal, newVal];
               }
             );
           case "||=":
             return this.assignToVariableOrMember(
               expNode.exp1, environment, prevVal => {
                 let newVal = prevVal || val;
-                return [newVal, newVal]
+                return [newVal, newVal];
               }
             );
           case "??=":
             return this.assignToVariableOrMember(
               expNode.exp1, environment, prevVal => {
                 let newVal = prevVal ?? val;
-                return [newVal, newVal]
+                return [newVal, newVal];
               }
             );
           default: throw (
@@ -893,13 +886,13 @@ export class ScriptInterpreter {
               acc = acc && this.evaluateExpression(nextChild, environment);
               break;
             case "|":
-              acc = acc | nextVal;
+              acc = parseInt(acc) | parseInt(nextVal);
               break;
             case "^":
-              acc = acc ^ nextVal;
+              acc = parseInt(acc) ^ parseInt(nextVal);
               break;
             case "&":
-              acc = acc & nextVal;
+              acc = parseInt(acc) & parseInt(nextVal);
               break;
             case "===":
               acc = acc === nextVal;
@@ -914,40 +907,41 @@ export class ScriptInterpreter {
               acc = acc != nextVal;
               break;
             case ">":
-              acc = acc > nextVal;
+              acc = parseFloat(acc) > parseFloat(nextVal);
               break;
             case "<":
-              acc = acc < nextVal;
+              acc = parseFloat(acc) < parseFloat(nextVal);
               break;
             case "<=":
-              acc = acc <= nextVal;
+              acc = parseFloat(acc) <= parseFloat(nextVal);
               break;
             case ">=":
-              acc = acc >= nextVal;
+              acc = parseFloat(acc) >= parseFloat(nextVal);
               break;
             case "<<":
-              acc = acc << nextVal;
+              acc = parseInt(acc) << parseInt(nextVal);
               break;
             case ">>":
-              acc = acc >> nextVal;
+              acc = parseInt(acc) >> parseInt(nextVal);
               break;
             case ">>>":
-              acc = acc >>> nextVal;
+              acc = parseInt(acc) >>> parseInt(nextVal);
               break;
             case "+":
-              acc = acc + nextVal;
+              acc = (typeof acc === "string") ? acc + nextVal :
+                parseFloat(acc) + parseFloat(nextVal);
               break;
             case "-":
-              acc = acc - nextVal;
+              acc = parseFloat(acc) - parseFloat(nextVal);
               break;
             case "*":
-              acc = acc * nextVal;
+              acc = parseFloat(acc) * parseFloat(nextVal);
               break;
             case "/":
-              acc = acc / nextVal;
+              acc = parseFloat(acc) / parseFloat(nextVal);
               break;
             case "%":
-              acc = acc % nextVal;
+              acc = parseFloat(acc) % parseFloat(nextVal);
               break;
             default: throw (
               "ScriptInterpreter.evaluateExpression(): Unrecognized " +
@@ -986,7 +980,7 @@ export class ScriptInterpreter {
                   expNode, environment
                 );
                 let newVal = int - 1;
-                return [newVal, newVal]
+                return [newVal, newVal];
               }
             );
         }
@@ -1037,7 +1031,7 @@ export class ScriptInterpreter {
                   expNode, environment
                 );
                 let newVal = int + 1;
-                return [newVal, prevVal]
+                return [newVal, prevVal];
               }
             );
           case "--":
@@ -1049,7 +1043,7 @@ export class ScriptInterpreter {
                   expNode, environment
                 );
                 let newVal = int - 1;
-                return [newVal, prevVal]
+                return [newVal, prevVal];
               }
             );
           default: throw (
@@ -1101,9 +1095,9 @@ export class ScriptInterpreter {
       }
       case "exit-call": {
         // Send an "e" (for 'exit') signal to protect.
-        let {protect, permissions} = environment.scriptGlobals;
+        let {protect, baseModuleID, permissions} = environment.scriptGlobals;
         let protectData = environment.getProtectData();
-        protect("e", permissions, protectData);
+        protect(["10", "e"], baseModuleID, permissions, protectData);
         // Then evaluate the argument, record the resulting output, and throw
         // an exit exception.
         let expVal = (!expNode.exp) ? undefined :
@@ -1210,7 +1204,7 @@ export class ScriptInterpreter {
     decrCompGas(rootExp, environment);
 
     // Evaluate the chained expression accumulatively, one postfix at a time. 
-    let postfix, objVal, thisVal, safeIndex, protectSignal;
+    let postfix, objVal, thisVal, safeIndex, signal;
     let protectData = environment.getProtectData();
     for (let i = 0; i < len; i++) {
       postfix = postfixArr[i];
@@ -1219,7 +1213,7 @@ export class ScriptInterpreter {
       // current val to objVal.
       if (postfix.type === "member-accessor") {
         objVal = thisVal = val;
-        protectSignal = undefined;
+        signal = undefined;
 
         // Throw a BrokenOptionalChainException if an optional chaining is
         // broken.
@@ -1267,7 +1261,7 @@ export class ScriptInterpreter {
 
           // Then first look in the private members, and if one is found, check
           // that rootExp is a 'this' keyword, and that i === 1.
-          [val, protectSignal] = objVal.privateMembers[safeIndex];
+          [val, signal] = objVal.privateMembers[safeIndex];
           if (val !== undefined) {
             if (i !== 1 || rootExp.type !== "this-keyword") {
               throw new RuntimeError(
@@ -1292,16 +1286,18 @@ export class ScriptInterpreter {
             // signal (for 'get' ad 'set,' respectively), depending on whether
             // it is accessed forAssignment or not. 
             else {
-              let {protect, permissions} = environment.scriptGlobals;
+              let {protect, baseModuleID, permissions} =
+                environment.scriptGlobals;
               protectData = protect(
-                forAssignment ? "s" : "g", permissions, protectData, objVal
+                ["10", forAssignment ? "s" : "g"], baseModuleID, permissions,
+                protectData, objVal
               );
             }
           }
 
           // Else look in the protected members.
           else {
-            [val, protectSignal] = objVal.protectedMembers[safeIndex];
+            [val, signal] = objVal.protectedMembers[safeIndex];
 
             // And throw if the user tries to assign to a non-private member,
             if (val !== undefined && forAssignment) throw new RuntimeError(
@@ -1326,12 +1322,14 @@ export class ScriptInterpreter {
             }
           }
 
-          // Then finally, if a value was found, and with a truthy
-          // protectSignal, emit that signal to protect().
-          if (val !== undefined && protectSignal) {
+          // Then finally, if a value was found, and with a truthy signal, emit
+          // that signal to protect(), together with the baseModuleID of the
+          // protected object, which defines the meaning of the signal.
+          if (val !== undefined && signal) {
             let {protect, permissions} = environment.scriptGlobals;
             protectData = protect(
-              protectSignal, permissions, protectData, objVal
+              [objVal.baseModuleID, signal], baseModuleID, permissions,
+              protectData, objVal
             );
           }
         }
@@ -1372,7 +1370,7 @@ export class ScriptInterpreter {
         // immutable, to val.
         val = turnImmutable(
           this.executeFunction(
-            val, inputValArr, postfix, environment, thisVal, protectSignal
+            val, inputValArr, postfix, environment, thisVal, signal
           )
         );
       }
@@ -1414,7 +1412,7 @@ export class Environment {
     parent = undefined, scopeType = "block",
     callerNode = undefined, callerEnv = undefined, thisVal = undefined,
     protectData = undefined,
-    moduleID = undefined, useScriptID = undefined,
+    moduleID = undefined, baseModuleID = undefined,
     scriptGlobals = undefined
   ) {
     this.parent = parent;
@@ -1428,7 +1426,7 @@ export class Environment {
     }
     else if (scopeType === "module") {
       this.moduleID = moduleID;
-      this.useScriptID = useScriptID;
+      this.baseModuleID = baseModuleID;
       this.protectData = {moduleID: moduleID};
       this.exports = [];
       this.liveModule = undefined;
@@ -1572,7 +1570,7 @@ export class Environment {
   getLiveModule() {
     if (!this.liveModule ) {
       let liveModule = this.liveModule = {
-        useScriptID: this.useScriptID
+        baseModuleID: this.baseModuleID
       };
       this.exports.forEach(([alias, val, signal, isPrivate]) => {
         liveModule["&" + alias] = [val, signal, isPrivate];
@@ -1693,21 +1691,22 @@ export class DefinedFunction {
 }
 
 export class DeveloperFunction {
-  constructor(protectSignal = undefined, fun) {
+  constructor(signalPair = undefined, fun) {
     if (!fun) {
-      fun = protectSignal;
-      protectSignal = undefined;
+      fun = signalPair;
+      signalPair = undefined;
     }
     this.fun = fun;
-    if (protectSignal) this.protectSignal = protectSignal;
+    if (signalPair) this.signalPair = signalPair;
   }
 }
 
 export class ProtectedObject {
   constructor(
-    moduleID, decEnv, privateMembers, protectedMembers,
+    moduleID, baseModuleID, decEnv, privateMembers, protectedMembers,
   ) {
     this.moduleID = moduleID;
+    this.baseModuleID = baseModuleID;
     this.decEnv = decEnv;
     // prt./prv. member := [propVal : any, signal : string].
     this.privateMembers = privateMembers;

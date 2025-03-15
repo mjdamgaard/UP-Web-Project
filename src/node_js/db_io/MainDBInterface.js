@@ -20,7 +20,10 @@ export class MainDBInterface {
     paramValArr = [entID, maxLen, startPos];
     paramNameArr = ["entID", "maxLen", "startPos"];
     typeArr = ["id", "uint", "uint"];
-    return this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    // TODO: Possibly wrap in more destructuring:
+    let [entType, defStr, len, creatorID, isEditable, whitelistID] =
+      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    return [entType, defStr, len, creatorID, isEditable, whitelistID];
   }
 
   static selectFormalEntityID(defStr, whitelistID = "0") {
@@ -28,7 +31,9 @@ export class MainDBInterface {
     paramValArr = [whitelistID, defStr];
     paramNameArr = ["whitelistID", "defStr"];
     typeArr = ["id", "string"];
-    return this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    let [entID] =
+      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    return entID;
   }
 
 
