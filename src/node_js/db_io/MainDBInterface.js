@@ -15,15 +15,15 @@ export class MainDBInterface {
 
   /* Entity selects */
 
-  static selectEntity(entID, maxLen = 4294967295, startPos = 0) {
+  static selectEntity(entID, maxLen = 0, startPos = 0) {
     let sql = `CALL selectEntity (?, ?, ?)`;
     paramValArr = [entID, maxLen, startPos];
     paramNameArr = ["entID", "maxLen", "startPos"];
     typeArr = ["id", "uint", "uint"];
     // TODO: Possibly wrap in more destructuring:
-    let [entType, defStr, len, creatorID, isEditable, whitelistID] =
+    let [entType, defStr, creatorID, isEditable, whitelistID] =
       this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return [entType, defStr, len, creatorID, isEditable, whitelistID];
+    return [entType, defStr, creatorID, isEditable, whitelistID];
   }
 
   static selectFormalEntityID(defStr, whitelistID = "0") {

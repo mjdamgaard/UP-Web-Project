@@ -295,7 +295,14 @@ export class ScriptInterpreter {
       let devMod = await import(libPath);
       let liveModule = {};
       Object.entries(devMod).forEach(([key, val]) => {
-        liveModule["&" + key] = [val];
+        if (
+          val instanceof DeveloperFunction || val instanceof EntityReference ||
+          val instanceof FormalEntity || val instanceof ExpressionEntity ||
+          val instanceof ScriptEntity || val instanceof Immutable ||
+          typeof val === "number" || typeof val === "string"
+        ) {
+          liveModule["&" + key] = [val];
+        }
       });
       liveModules.set(submoduleID, liveModule);
       return liveModule;
@@ -1110,10 +1117,10 @@ export class ScriptInterpreter {
         return new EntityReference(expNode.id, expNode.placeholderPath);
       }
       case "exit-call": {
-        // Send an "e" (for 'exit') signal to protect.
+        // Send an "exit" signal to protect.
         let {protect, baseModuleID, permissions} = environment.scriptGlobals;
         let protectData = environment.getProtectData();
-        protect(["10", "e"], baseModuleID, permissions, protectData);
+        protect(["10", "exit"], baseModuleID, permissions, protectData);
         // Then evaluate the argument, record the resulting output, and throw
         // an exit exception.
         let expVal = (!expNode.exp) ? undefined :
@@ -1305,7 +1312,7 @@ export class ScriptInterpreter {
               let {protect, baseModuleID, permissions} =
                 environment.scriptGlobals;
               protectData = protect(
-                ["10", forAssignment ? "s" : "g"], baseModuleID, permissions,
+                ["10", forAssignment ? "set" : "get"], baseModuleID, permissions,
                 protectData, objVal.moduleRef
               );
             }
@@ -1783,37 +1790,35 @@ export class PassAsMutable {
 
 
 export class ScriptEntity {
-  constructor(scriptNode, id, creatorID, whitelistID) {
+  constructor(scriptNode, id, creatorID, isEditable, whitelistID = "0") {
     this.scriptNode = scriptNode;
     this.id = id;
     this.creatorID = creatorID;
+    this.isEditable = isEditable;
     this.whitelistID = whitelistID;
   }
 }
 export class ExpressionEntity {
-  constructor(expNode, id, creatorID, whitelistID) {
+  constructor(expNode, id, creatorID, isEditable, whitelistID = "0") {
     this.scriptNode = expNode;
     this.id = id;
     this.creatorID = creatorID;
+    this.isEditable = isEditable;
     this.whitelistID = whitelistID;
   }
 }
 export class FormalEntity {
-  constructor(scriptOrExpID, inputValArr, id, creatorID, whitelistID, resObj) {
-    this.scriptOrExpID = scriptOrExpID;
-    this.inputValArr = inputValArr;
+  constructor(
+    funEntID, inputArr, id, creatorID, isEditable, whitelistID = "0",
+    resObj = undefined
+  ) {
+    this.funEntID = funEntID;
+    this.inputArr = inputArr;
     this.id = id;
     this.creatorID = creatorID;
+    this.isEditable = isEditable;
     this.whitelistID = whitelistID;
-    this.resObj = resObj ?? undefined;
-  }
-}
-export class PlainTextEntity {
-  constructor(text, id, creatorID, whitelistID) {
-    this.text = text;
-    this.id = id;
-    this.creatorID = creatorID;
-    this.whitelistID = whitelistID;
+    this.resObj = resObj;
   }
 }
 

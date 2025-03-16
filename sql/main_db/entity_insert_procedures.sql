@@ -19,7 +19,7 @@ DELIMITER //
 CREATE PROCEDURE insertEntityWithoutSecKey (
     IN entType CHAR,
     IN userID BIGINT UNSIGNED,
-    IN defStr LONGTEXT CHARACTER SET utf8mb4,
+    IN defStr TEXT CHARACTER SET utf8mb4,
     IN whitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL,
     IN isEditable BOOL
@@ -171,7 +171,7 @@ CREATE PROCEDURE editEntity (
     IN entType CHAR,
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
-    IN defStr LONGTEXT CHARACTER SET utf8mb4,
+    IN defStr TEXT CHARACTER SET utf8mb4,
     IN whitelistID BIGINT UNSIGNED,
     IN isAnonymous BOOL,
     IN isEditable BOOL
@@ -179,7 +179,7 @@ CREATE PROCEDURE editEntity (
 proc: BEGIN
     DECLARE creatorID BIGINT UNSIGNED;
     DECLARE prevIsEditable TINYINT UNSIGNED;
-    DECLARE prevDefStr LONGTEXT;
+    DECLARE prevDefStr TEXT;
     DECLARE prevLen, newLen INT UNSIGNED;
     DECLARE prevType CHAR;
 
@@ -353,7 +353,7 @@ DELIMITER ;
 --     DECLARE pathRegExp VARCHAR(80) DEFAULT '[^0-9\\[\\]@,;"][^\\[\\]@,;"]*';
 --     DECLARE creatorID, subEntID, whitelistID, outID BIGINT UNSIGNED;
 --     DECLARE entType CHAR;
---     DECLARE prevDefStr, newDefStr LONGTEXT;
+--     DECLARE prevDefStr, newDefStr TEXT;
 --     DECLARE prevType CHAR;
 --     DECLARE i TINYINT UNSIGNED DEFAULT 0;
 --     DECLARE pathStr TEXT;
@@ -491,7 +491,7 @@ DELIMITER ;
 --     OUT exitCode TINYINT
 -- )
 -- proc: BEGIN
---     DECLARE prevDefStr, newDefStr LONGTEXT CHARACTER SET utf8mb4
+--     DECLARE prevDefStr, newDefStr TEXT CHARACTER SET utf8mb4
 --         COLLATE utf8mb4_bin;
 --     DECLARE whitelistID BIGINT UNSIGNED;
 --     DECLARE isMember TINYINT;

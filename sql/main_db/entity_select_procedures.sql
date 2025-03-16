@@ -26,7 +26,6 @@ proc: BEGIN
                 SUBSTR(def_str, startPos + 1, maxLen)
             END
         ) AS defStr,
-        LENGTH(def_str) AS len,
         creator_id AS creatorID,
         is_editable AS isEditable,
         whitelist_id AS whitelistID
@@ -75,7 +74,7 @@ DELIMITER ;
 -- )
 -- proc: BEGIN
 --     DECLARE entType CHAR;
---     DECLARE defStr LONGTEXT;
+--     DECLARE defStr TEXT;
 --     DECLARE len, creatorID, whitelistID BIGINT UNSIGNED;
 --     DECLARE isEditable, isMember, isExceeded TINYINT;
 --     DECLARE listID, instrFunID, entFunID, nestedEntID BIGINT UNSIGNED;

@@ -34,20 +34,20 @@ DROP TABLE DebugLogEntries;
 
 CREATE TABLE DataStructures_SingleIndex (
 
-    handler_id VARBINARY(8) NOT NULL, -- Type can be changed.
+    struct_id VARBINARY(8) NOT NULL, -- Type can be changed.
 
     format_ident TINYINT UNSIGNED NOT NULL,
 
-    struct_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
+    list_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
     entry_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
     entry_payload VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
     PRIMARY KEY (
-        handler_id,
+        struct_id,
         format_ident,
-        struct_key,
+        list_key,
         entry_key
     )
 )
@@ -57,11 +57,11 @@ ROW_FORMAT = COMPRESSED;
 
 CREATE TABLE DataStructures_DoubleIndex (
 
-    handler_id VARBINARY(8) NOT NULL, -- Type can be changed.
+    struct_id VARBINARY(8) NOT NULL, -- Type can be changed.
 
     format_ident TINYINT UNSIGNED NOT NULL,
 
-    struct_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
+    list_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
     entry_score VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
@@ -70,16 +70,16 @@ CREATE TABLE DataStructures_DoubleIndex (
     entry_payload VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
     PRIMARY KEY (
-        handler_id,
+        struct_id,
         format_ident,
-        struct_key,
+        list_key,
         entry_key
     )
 
     UNIQUE INDEX (
-        handler_id,
+        struct_id,
         format_ident,
-        struct_key,
+        list_key,
         entry_score,
         entry_key
     )
@@ -90,20 +90,20 @@ ROW_FORMAT = COMPRESSED;
 
 CREATE TABLE DataStructures_SingleIndex_CharKey (
 
-    handler_id VARBINARY(8) NOT NULL, -- Type can be changed.
+    struct_id VARBINARY(8) NOT NULL, -- Type can be changed.
 
     format_ident TINYINT UNSIGNED NOT NULL,
 
-    struct_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
+    list_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
     entry_key VARCHAR(255) NOT NULL, -- Type can be resized/changed.
 
     entry_payload VARCHAR(32) NOT NULL, -- Type can be resized/changed.
 
     PRIMARY KEY (
-        handler_id,
+        struct_id,
         format_ident,
-        struct_key,
+        list_key,
         entry_key
     )
 )
@@ -113,20 +113,20 @@ ROW_FORMAT = COMPRESSED;
 
 CREATE TABLE DataStructures_SingleIndex_FloatKey (
 
-    handler_id VARBINARY(8) NOT NULL, -- Type can be changed.
+    struct_id VARBINARY(8) NOT NULL, -- Type can be changed.
 
     format_ident TINYINT UNSIGNED NOT NULL,
 
-    struct_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
+    list_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
     entry_key FLOAT NOT NULL, -- Type can be resized/changed.
 
     entry_payload VARCHAR(32) NOT NULL, -- Type can be resized/changed.
 
     PRIMARY KEY (
-        handler_id,
+        struct_id,
         format_ident,
-        struct_key,
+        list_key,
         entry_key
     )
 )
@@ -141,7 +141,7 @@ ROW_FORMAT = COMPRESSED;
 
 CREATE TABLE DataStructureFormats (
 
-    handler_id BIGINT UNSIGNED NOT NULL,
+    struct_id BIGINT UNSIGNED NOT NULL,
 
     format_ident TINYINT UNSIGNED NOT NULL,
 
@@ -149,7 +149,7 @@ CREATE TABLE DataStructureFormats (
         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
     PRIMARY KEY (
-        handler_id,
+        struct_id,
         format_ident
     )
 );
@@ -203,7 +203,7 @@ CREATE TABLE Entities (
 
     -- A string (possibly a JSON object) that defines the entity. The format
     -- depends on ent_type.
-    def_str LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    def_str TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
 
     -- The user who submitted the entity, unless creator_id = 0, which means
     -- that the creator is anonymous.
