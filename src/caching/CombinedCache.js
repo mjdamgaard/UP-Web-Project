@@ -1,16 +1,18 @@
 
 import {LRUCache} from "./LRUCache.js";
-import {PriorityCache} from "./PriorityCache.js";
+import {PriorityDecayCache} from "./PriorityDecayCache.js";
 
 
 export class CombinedCache {
 
-  constructor(lruCacheLimit, priorityCachelimit, decayFactor = 0.95) {
+  constructor(
+    lruCacheLimit, priorityCachelimit, decayFactor = 0.9,
+    setNumBeforeFullDecay = lruCacheLimit * 10,
+  ) {
     this.lruCache = new LRUCache(lruCacheLimit);
-    this.priorityCache = new PriorityCache(priorityCachelimit);
-    this.decayFactor = decayFactor;
-    this.limitSum = lruCacheLimit + priorityCachelimit;
-    this.curNumOfSets = 0;
+    this.priorityCache = new PriorityDecayCache(
+      priorityCachelimit, decayFactor, setNumBeforeFullDecay
+    );
   }
 
   // entry = [value, priority].
@@ -25,8 +27,8 @@ export class CombinedCache {
     let ret = this.priorityCache.get(key, priority);
 
     // Then if not found there, get from the LRU cache, and if the
-    // count/priority of the the gotten element, if any, exceeds priorityCache
-    // .minPriority, swap the element with the first element of the priority
+    // count/priority of the the gotten entry, if any, exceeds priorityCache
+    // .minPriority, swap the entry with the first entry of the priority
     // cache.
     if (ret === undefined) {
       ret = this.lruCache.get(key, priority);
@@ -41,7 +43,7 @@ export class CombinedCache {
 
 
   set(key, val, priority = 1) {
-    // Insert the element in the LRU cache, unless minPriority is less than
+    // Insert the entry in the LRU cache, unless minPriority is less than
     // priority.
     if (this.priorityCache.minPriority < priority) {
       this.priorityCache.set(key, val, priority);
@@ -49,11 +51,8 @@ export class CombinedCache {
       this.lruCache.set(key, val, undefined, priority);
     }
 
-    // Then check if it is time for the priorities in the priority cache to
-    // decay.
-    if (this.numOfSetsBeforeDecay < ++this.curNumOfSets) {
-      this.decay();
-    }
+    // Tick the priority-decay cache regardless of where the entry was inserted.
+    this.priorityCache.tick();
   }
 
 
@@ -65,16 +64,6 @@ export class CombinedCache {
     return wasDeleted;
   }
 
-
-
-
-  decay(decayFactor) {
-    decayFactor ??= this.decayFactor;
-    this.curNumOfSets = 0;
-    this.priorityCache.forEach((entry) => {
-      entry[1] *= decayFactor;
-    });
-  }
 
 }
 

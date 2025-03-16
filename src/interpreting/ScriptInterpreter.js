@@ -1808,6 +1808,14 @@ export class FormalEntity {
     this.resObj = resObj ?? undefined;
   }
 }
+export class PlainTextEntity {
+  constructor(text, id, creatorID, whitelistID) {
+    this.text = text;
+    this.id = id;
+    this.creatorID = creatorID;
+    this.whitelistID = whitelistID;
+  }
+}
 
 
 
