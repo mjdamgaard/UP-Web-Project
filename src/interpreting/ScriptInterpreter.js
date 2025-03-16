@@ -165,31 +165,29 @@ export class ScriptInterpreter {
     // error first.
     else {
       if (gas.time < MINIMAL_TIME_GAS) {
-        scriptGlobals.log.error = new OutOfGasError(
+        scriptGlobals.resolveScript(undefined, new OutOfGasError(
           "Ran out of " + GAS_NAMES.time + " gas (no exit statement reached)",
           parsedScript, globalEnv,
-        );
-        return [undefined, scriptGlobals.log];
+        ));
       }
-      else {
+      else if (gas.time !== Infinity) {
         // Set an expiration time after which the script resolves with an
         // error. 
         setTimeout(
           () => {
-            scriptGlobals.log.error = new OutOfGasError(
+            scriptGlobals.resolveScript(undefined, new OutOfGasError(
               "Ran out of " + GAS_NAMES.time +
                 " gas (no exit statement reached)",
               parsedScript, globalEnv,
-            );
-            scriptGlobals.resolveScript();
+            ));
           },
           gas.time
         );
-
-        // Then wait for the output and log to be resolved, either by a custom
-        // callback, or by the timeout callback.
-        return await outputAndLogPromise;
       }
+
+      // Then wait for the output and log to be resolved, either by a custom
+      // callback, or by the timeout callback.
+      return await outputAndLogPromise;
     }
   }
 
