@@ -2,11 +2,11 @@
 import {
   DeveloperFunction, decrCompGas, decrGas, payGas, RuntimeError,
   getParsingGasCost, EntityReference,
-} from "../../../interpreting/ScriptInterpreter.js";
-import {MainDBInterface} from "../../../node_js/db_io/MainDBInterface.js";
+} from "../interpreting/ScriptInterpreter.js";
+import {MainDBInterface} from "../node_js/db_io/MainDBInterface.js";
 import {
   entityCacheServerSide
-} from "../../../caching/entity_caches/entityCacheServerSide.js";
+} from "../caching/entity_caches/entityCacheServerSide.js";
 
 
 

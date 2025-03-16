@@ -5,10 +5,10 @@ import GeneralCache from "./GeneralCache.js";
 
 export class PriorityDecayCache extends GeneralCache {
 
-  constructor(limit, decayFactorPerTick) {
+  constructor(limit, halfTimeInTicks) {
     super();
     this.limit = limit;
-    this.decayFactorPerTick = decayFactorPerTick;
+    this.decayFactorPerTick = 2 ** (-1 / halfTimeInTicks);
     this.ticks = 1;
   }
 

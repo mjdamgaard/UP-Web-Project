@@ -3,8 +3,8 @@ import CombinedCache from "../CombinedCache.js";
 
 
 export class EntityCache extends CombinedCache {
-  constructor(lruCacheLimit, priorityCachelimit, decayFactorPerSet) {
-    super(lruCacheLimit, priorityCachelimit, decayFactorPerSet);
+  constructor(lruCacheLimit, priorityCachelimit, halfTimeInSets) {
+    super(lruCacheLimit, priorityCachelimit, halfTimeInSets);
   }
 
   get(entID) {
