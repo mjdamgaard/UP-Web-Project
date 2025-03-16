@@ -1,22 +1,23 @@
 
 import {
   DeveloperFunction, decrCompGas, decrGas, payGas, RuntimeError,
-  getParsingGasCost,
+  getParsingGasCost, EntityReference,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {MainDBInterface} from "../../../node_js/db_io/MainDBInterface.js";
 import {
   entityCacheServerSide
-} from "../../../caching/entity_caches/entityCahceServerSide.js";
+} from "../../../caching/entity_caches/entityCacheServerSide.js";
+
 
 
 export const selectEntity = new DeveloperFunction(
   ["10", "r"],
-  function ({callerNode, callerEnv, interpreter}, entID, callback) {
-    entID = entID.toString();
-    if (!/^[$_a-zA-Z0-9]+$/.test(entID)) throw new RuntimeError(
-      "selectEntity(): entID has to be of the form /^[$_a-zA-Z0-9]+$/",
+  function ({callerNode, callerEnv, interpreter}, entRef, callback) {
+    if (!(entRef instanceof EntityReference)) throw new RuntimeError(
+      "selectEntity(): entRef has to be an EntityReference instance",
       callerNode, callerEnv
     );
+    let entID = entRef.id;
     decrCompGas(callerNode, callerEnv);
     let [parsedEnt, entType, creatorID, isEditable, whitelistID] =
       entityCacheServerSide.get(entID);

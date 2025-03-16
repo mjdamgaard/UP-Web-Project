@@ -7,6 +7,7 @@ export {LexError, SyntaxError};
 
 
 // const MAX_ARRAY_INDEX = 1E+15;
+const MINIMAL_TIME_GAS = 10;
 
 const GAS_NAMES = {
   comp: "computation",
@@ -50,11 +51,10 @@ export class ScriptInterpreter {
     liveModules = new Map(),
   ) {
     let scriptGlobals = {
-      gas: gas, log: {}, output: undefined, scriptID: scriptID,
-      reqUserID: reqUserID, baseModuleID: baseModuleID,
-      protect: undefined, convertSignal: undefined, moduleIDs: {},
-      permissions: permissions, setting: settings,
-      shouldExit: false, resolveScript: undefined, interpreter: this,
+      gas: gas, log: {}, scriptID: scriptID, reqUserID: reqUserID,
+      baseModuleID: baseModuleID, protect: undefined, moduleIDs: {},
+      permissions: permissions, settings: settings,
+      isExiting: false, resolveScript: undefined, interpreter: this,
       parsedEntities: parsedEntities, liveModules: liveModules,
     };
 
@@ -90,6 +90,19 @@ export class ScriptInterpreter {
     scriptGlobals.protect = liveBaseModule["&protect"][0];
     scriptGlobals.moduleIDs = liveBaseModule["&moduleIDs"][0];
 
+
+    // Create a promise to get the output and log, and store a modified
+    // resolve() callback on scriptGlobals (which is contained by globalEnv).
+    // This promise is resolved when the user calls the exit() function.
+    let outputAndLogPromise = new Promise(resolve => {
+      scriptGlobals.resolveScript = (output, error) => {
+        let {log} = scriptGlobals;
+        if (!log.error) log.error = error;
+        scriptGlobals.isExiting = true;
+        resolve([output, log]);
+      };
+    });
+
     // Now execute the script as a module, followed by an execution of any
     // function called 'main,' or the default export if no 'main' function is
     // found, and make sure to try-catch any exceptions or errors.
@@ -103,14 +116,46 @@ export class ScriptInterpreter {
       );
     }
     catch (err) {
-      // If any non-internal error occurred, log it in log.error and set
-      // shouldExit to true (both contained in globalEnv).
-      this.handleException(err, globalEnv);
+      // If any non-internal error occurred, log it in log.error and resolve
+      // the script with an undefined output.
+      let {log} = scriptGlobals;
+      if (
+        err instanceof LexError || err instanceof SyntaxError ||
+        err instanceof LoadError || err instanceof RuntimeError ||
+        err instanceof CustomException || err instanceof OutOfGasError
+      ) {
+        scriptGlobals.resolveScript(undefined, err);
+      } else if (err instanceof ReturnException) {
+        scriptGlobals.resolveScript(undefined, new RuntimeError(
+          "Cannot return from outside of a function",
+          err.node, err.environment
+        ));
+      } else if (err instanceof CustomException) {
+        scriptGlobals.resolveScript(undefined, new RuntimeError(
+          `Uncaught exception: "${err.val.toString()}"`,
+          err.node, err.environment
+        ));
+      } else if (err instanceof BreakException) {
+        scriptGlobals.resolveScript(undefined, new RuntimeError(
+          `Invalid break statement outside of loop or switch-case statement`,
+          err.node, err.environment
+        ));
+      } else if (err instanceof ContinueException) {
+        scriptGlobals.resolveScript(undefined, new RuntimeError(
+          "Invalid continue statement outside of loop",
+          err.node, err.environment
+        ));
+      } else if (err instanceof ExitException) {
+        // Do nothing, as the the script will already have been resolved,
+        // before the exception was thrown.
+      } else {
+        throw err;
+      }
     } 
 
-    // If the shouldExit is true, we can return the resulting output and log.
-    if (scriptGlobals.shouldExit) {
-      return [scriptGlobals.output, scriptGlobals.log];
+    // If isExiting is true, we can return the resulting output and log.
+    if (scriptGlobals.isExiting) {
+      return await outputAndLogPromise;
     }
 
     // Else we create and wait for a promise for obtaining the output and log,
@@ -119,45 +164,34 @@ export class ScriptInterpreter {
     // set a timer dependent on gas.time, which might resolve the log with an
     // error first.
     else {
-      if (gas.time >= 10) {
-        // Create a new promise to get the log, and store a modified resolve()
-        // callback on scriptGlobals (which is contained by globalEnv).
-        let outputPromise = new Promise(resolve => {
-          scriptGlobals.resolveScript = () => {
-            scriptGlobals.shouldExit = true;
-            scriptGlobals.resolveScript = undefined;
-            resolve([scriptGlobals.output, scriptGlobals.log]);
-          }
-        });
-
-        // Then set an expiration time after which the script resolves with an
-        // error. 
-        setTimeout(
-          () => {
-            scriptGlobals.log.error = new OutOfGasError(
-              "Ran out of " + GAS_NAMES.time + " gas",
-              parsedScript, globalEnv,
-            );
-            scriptGlobals.resolveScript();
-          },
-          Date.now() + gas.time
-        );
-
-        // Then wait for the output and log to be resolved, either by a custom
-        // callback, or by the timeout callback.
-        return await outputPromise;
-      }
-      else {
+      if (gas.time < MINIMAL_TIME_GAS) {
         scriptGlobals.log.error = new OutOfGasError(
           "Ran out of " + GAS_NAMES.time + " gas (no exit statement reached)",
           parsedScript, globalEnv,
         );
         return [undefined, scriptGlobals.log];
       }
+      else {
+        // Set an expiration time after which the script resolves with an
+        // error. 
+        setTimeout(
+          () => {
+            scriptGlobals.log.error = new OutOfGasError(
+              "Ran out of " + GAS_NAMES.time +
+                " gas (no exit statement reached)",
+              parsedScript, globalEnv,
+            );
+            scriptGlobals.resolveScript();
+          },
+          gas.time
+        );
+
+        // Then wait for the output and log to be resolved, either by a custom
+        // callback, or by the timeout callback.
+        return await outputAndLogPromise;
+      }
     }
   }
-
-
 
 
 
@@ -184,45 +218,6 @@ export class ScriptInterpreter {
       parsedEntities.set(scriptID, parsedScript);
     }
     return parsedScript;
-  }
-
-
-
-
-  handleException(err, environment) {
-    let scriptGlobals = environment.scriptGlobals, {log} = scriptGlobals;
-    if (
-      err instanceof LexError || err instanceof SyntaxError ||
-      err instanceof LoadError || err instanceof RuntimeError ||
-      err instanceof CustomException || err instanceof OutOfGasError
-    ) {
-      log.error = err;
-      scriptGlobals.shouldExit = true;
-    } else if (err instanceof ReturnException) {
-      log.error = new RuntimeError(
-        "Cannot return from outside of a function",
-        err.node, err.environment
-      );
-    } else if (err instanceof CustomException) {
-      log.error = new RuntimeError(
-        `Uncaught exception: "${err.val.toString()}"`,
-        err.node, err.environment
-      );
-    } else if (err instanceof BreakException) {
-      log.error = new RuntimeError(
-        `Invalid break statement outside of loop`,
-        err.node, err.environment
-      );
-    } else if (err instanceof ContinueException) {
-      log.error = new RuntimeError(
-        `Invalid continue statement outside of loop or switch-case statement`,
-        err.node, err.environment
-      );
-    } else if (err instanceof ExitException) {
-      if (scriptGlobals.resolveScript) scriptGlobals.resolveScript();
-    } else {
-      throw err;
-    }
   }
 
 
@@ -470,7 +465,9 @@ export class ScriptInterpreter {
   executeFunction(
     fun, inputArr, callerNode, callerEnv, thisVal, signalPair
   ) {
-    let {protect, baseModuleID, permissions} = callerEnv.scriptGlobals;
+    let {
+      protect, baseModuleID, permissions, settings
+    } = callerEnv.scriptGlobals;
     let protectData = callerEnv.getProtectData();
 
     // If the function is a method of a protected object, call protect() in
@@ -478,12 +475,11 @@ export class ScriptInterpreter {
     // get the new protectData to give to the new function environment.
     if (thisVal instanceof ProtectedObject) {
       protectData = protect(
-        signalPair, baseModuleID, permissions, protectData, thisVal
+        signalPair, baseModuleID, permissions, protectData, thisVal.moduleRef
       );
     }
 
     // Execute the function depending on its type.
-    let ret;
     if (fun instanceof DeveloperFunction) {
       // If the called developer function has a signalPair, then call protect()
       // (again, if called already), and also reassign protectData the return
@@ -497,16 +493,16 @@ export class ScriptInterpreter {
       // Then execute the dev function, with a first argument in the form of an
       // object with some standard members, followed by all the other inputs
       // in the inputArr.
-      ret = fun.fun(
+      return fun.fun(
         {
           callerNode: callerNode, callerEnv: callerEnv, thisVal: thisVal,
-          protectData: protectData, interpreter: this,
+          protectData: protectData, interpreter: this, settings: settings,
         },
         ...inputArr
       );
     }
     else if (fun instanceof DefinedFunction) {
-      ret = this.executeDefinedFunction(
+      return this.executeDefinedFunction(
         fun.node, fun.decEnv, inputArr, callerNode, callerEnv,
         thisVal, protectData
       );
@@ -515,15 +511,28 @@ export class ScriptInterpreter {
       "Function call with a non-function-valued expression",
       callerNode, callerEnv
     );
-
-    // If the function reached an exit statement, throw an exit exception.
-    if (callerEnv.scriptGlobals.shouldExit) {
-      throw new ExitException();
-    }
-    return ret;
   }
 
 
+
+  executeAsyncCallback(fun, inputArr, callerNode, callerEnv) {
+    try {
+      this.executeFunction(fun, inputArr, callerNode, callerEnv)
+    }
+    catch (err) {
+      if (
+        err instanceof ReturnException || err instanceof CustomException ||
+        err instanceof OutOfGasError
+      ) {
+        let wasCaught = callerEnv.runNearestCatchStmtAncestor(err, callerNode);
+        if (!wasCaught) {
+          callerEnv.scriptGlobals.resolveScript(undefined, err);
+        }
+      } else {
+        throw err;
+      }
+    }
+  }
 
 
 
@@ -575,18 +584,15 @@ export class ScriptInterpreter {
       if (err instanceof ReturnException) {
         return err.val;
       }
-      else if (err instanceof ExitException) {
-        if (scriptGlobals.resolveScript) scriptGlobals.resolveScript();
-      }
       else if (err instanceof BreakException) {
         throw new RuntimeError(
-          `Invalid break statement outside of loop`,
+          `Invalid break statement outside of loop or switch-case statement`,
           err.node, err.environment
         );
       }
       else if (err instanceof ContinueException) {
         throw new RuntimeError(
-          `Invalid continue statement outside of loop or switch-case statement`,
+          `Invalid continue statement outside of loop`,
           err.node, err.environment
         );
       }
@@ -700,7 +706,9 @@ export class ScriptInterpreter {
           if (err instanceof RuntimeError || err instanceof CustomException) {
             let catchEnv = new Environment(environment);
             catchEnv.declare(stmtNode.errIdent, err.msg, false, stmtNode);
-            catchEnv.declare(stmtNode.numIdent, 0, false, stmtNode);
+            if (stmtNode.numIdent) {
+              catchEnv.declare(stmtNode.numIdent, 0, false, stmtNode);
+            }
             stmtNode.catchStmt.forEach(stmt => {
               this.executeStatement(stmt, catchEnv);
             });
@@ -1005,7 +1013,7 @@ export class ScriptInterpreter {
           case "-":
             return -parseFloat(val);
           case "typeof":
-            return getType(val);
+            return typeof val;
           case "void":
             return void val;
           case "delete":
@@ -1112,7 +1120,7 @@ export class ScriptInterpreter {
         // an exit exception.
         let expVal = (!expNode.exp) ? undefined :
           this.evaluateExpression(expNode.exp, environment);
-        environment.scriptGlobals.output = expVal;
+        environment.scriptGlobals.resolveScript(expVal);
         throw new ExitException();
       }
       case "pass-as-mutable-call": {
@@ -1300,7 +1308,7 @@ export class ScriptInterpreter {
                 environment.scriptGlobals;
               protectData = protect(
                 ["10", forAssignment ? "s" : "g"], baseModuleID, permissions,
-                protectData, objVal
+                protectData, objVal.moduleRef
               );
             }
           }
@@ -1339,7 +1347,7 @@ export class ScriptInterpreter {
             let {protect, permissions} = environment.scriptGlobals;
             protectData = protect(
               [objVal.baseModuleID, signal], baseModuleID, permissions,
-              protectData, objVal
+              protectData, objVal.moduleRef
             );
           }
         }
@@ -1606,17 +1614,21 @@ export class Environment {
       stmtNode.catchStmt.forEach(stmt => {
         interpreter.executeStatement(stmt, catchEnv);
       });
+      return true;
     }
     else if (this.scopeType === "function") {
-      this.callerEnv.runNearestCatchStmtAncestor(err, node, nodeEnvironment);
+      return this.callerEnv.runNearestCatchStmtAncestor(
+        err, node, nodeEnvironment
+      );
     }
     else if (this.parent) {
-      this.parent.runNearestCatchStmtAncestor(err, node, nodeEnvironment);
+      return this.parent.runNearestCatchStmtAncestor(
+        err, node, nodeEnvironment
+      );
     }
-    else throw new RuntimeError(
-      err.msg, node, nodeEnvironment
-    );
+    else return false;
   }
+
 }
 
 
@@ -1739,23 +1751,23 @@ export class DeveloperFunction {
   }
 }
 
+export class EntityReference {
+  constructor(id, placeholderPath) {
+    if (id) this.id = id;
+    if (placeholderPath) this.placeholderPath = placeholderPath;
+  }
+}
+
 export class ProtectedObject {
   constructor(
     moduleID, baseModuleID, decEnv, privateMembers, protectedMembers,
   ) {
-    this.moduleID = moduleID;
+    this.moduleRef = new EntityReference(moduleID);
     this.baseModuleID = baseModuleID;
     this.decEnv = decEnv;
     // prt./prv. member := [propVal : any, signal : string].
     this.privateMembers = privateMembers;
     this.protectedMembers = protectedMembers;
-  }
-}
-
-export class EntityReference {
-  constructor(id, placeholderPath) {
-    if (id) this.id = id;
-    if (placeholderPath) this.placeholderPath = placeholderPath;
   }
 }
 
@@ -1770,6 +1782,35 @@ export class PassAsMutable {
     this.val = val;
   }
 }
+
+
+export class ScriptEntity {
+  constructor(scriptNode, id, creatorID, whitelistID) {
+    this.scriptNode = scriptNode;
+    this.id = id;
+    this.creatorID = creatorID;
+    this.whitelistID = whitelistID;
+  }
+}
+export class ExpressionEntity {
+  constructor(expNode, id, creatorID, whitelistID) {
+    this.scriptNode = expNode;
+    this.id = id;
+    this.creatorID = creatorID;
+    this.whitelistID = whitelistID;
+  }
+}
+export class FormalEntity {
+  constructor(scriptOrExpID, inputValArr, id, creatorID, whitelistID, resObj) {
+    this.scriptOrExpID = scriptOrExpID;
+    this.inputValArr = inputValArr;
+    this.id = id;
+    this.creatorID = creatorID;
+    this.whitelistID = whitelistID;
+    this.resObj = resObj ?? undefined;
+  }
+}
+
 
 
 

@@ -5,15 +5,11 @@ import {PriorityCache} from "./PriorityCache.js";
 
 export class CombinedCache {
 
-  constructor(
-    lruCacheLimit, priorityCachelimit, decayFactor = 0.9,
-    decayFrequencyParameter = 10,
-  ) {
+  constructor(lruCacheLimit, priorityCachelimit, decayFactor = 0.95) {
     this.lruCache = new LRUCache(lruCacheLimit);
     this.priorityCache = new PriorityCache(priorityCachelimit);
     this.decayFactor = decayFactor;
-    this.numOfSetsBeforeDecay =
-      (lruCacheLimit + priorityCachelimit) * decayFrequencyParameter;
+    this.limitSum = lruCacheLimit + priorityCachelimit;
     this.curNumOfSets = 0;
   }
 
