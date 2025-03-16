@@ -6,12 +6,11 @@ import {PriorityDecayCache} from "./PriorityDecayCache.js";
 export class CombinedCache {
 
   constructor(
-    lruCacheLimit, priorityCachelimit, decayFactor = 0.9,
-    setNumBeforeFullDecay = lruCacheLimit * 10,
+    lruCacheLimit, priorityCachelimit, decayFactorPerSet,
   ) {
     this.lruCache = new LRUCache(lruCacheLimit);
     this.priorityCache = new PriorityDecayCache(
-      priorityCachelimit, decayFactor, setNumBeforeFullDecay
+      priorityCachelimit, decayFactorPerSet
     );
   }
 
