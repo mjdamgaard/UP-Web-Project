@@ -6,7 +6,9 @@ import {LexError, SyntaxError} from "../parsing/Parser.js";
 export {LexError, SyntaxError};
 
 
+const INIT_PROTECT_DOC_ID = "10";
 const THIS_PROVIDER_ID = "11";
+const INIT_PROTECT_MODULE_ID = "12";
 
 // const MAX_ARRAY_INDEX = 1E+15;
 const MINIMAL_TIME_GAS = 10;
@@ -42,7 +44,7 @@ export class ScriptInterpreter {
 
   async interpretScript(
     gas, script = "", scriptID = "0", mainInputs = [], reqUserID = undefined,
-    protectModuleID, permissions = {}, settings = {},
+    protectModuleID = INIT_PROTECT_MODULE_ID, permissions = {}, settings = {},
     parsedEntities = new Map(), liveModules = new Map(),
   ) {
     let scriptGlobals = {
@@ -1132,7 +1134,10 @@ export class ScriptInterpreter {
         // Send an "exit" signal to protect.
         let {protect, protectModuleID, permissions} = environment.scriptGlobals;
         let protectData = environment.getProtectData();
-        protect(["10", "exit"], protectModuleID, permissions, protectData);
+        protect(
+          [INIT_PROTECT_DOC_ID, "exit"], protectModuleID, permissions,
+          protectData
+        );
         // Then evaluate the argument, record the resulting output, and throw
         // an exit exception.
         let expVal = (!expNode.exp) ? undefined :
@@ -1296,7 +1301,7 @@ export class ScriptInterpreter {
 
           // Then first look in the private members, and if one is found, check
           // that rootExp is a 'this' keyword, and that i === 1.
-          [val, signal] = objVal.privateMembers[safeIndex];
+          [val, docID, signal] = objVal.privateMembers[safeIndex];
           if (val !== undefined) {
             if (i !== 1 || rootExp.type !== "this-keyword") {
               throw new RuntimeError(
@@ -1317,22 +1322,22 @@ export class ScriptInterpreter {
               );
             }
 
-            // And if it is a private attribute, either emit a "g" or an "s"
-            // signal (for 'get' ad 'set,' respectively), depending on whether
-            // it is accessed forAssignment or not. 
+            // And if it is a private attribute, either emit a "get" or a
+            // "set" signal, depending on whether it is accessed forAssignment
+            // or not. 
             else {
               let {protect, protectModuleID, permissions} =
                 environment.scriptGlobals;
               protectData = protect(
-                ["10", forAssignment ? "set" : "get"], protectModuleID, permissions,
-                protectData, objVal.moduleRef
+                [INIT_PROTECT_DOC_ID, forAssignment ? "set" : "get"],
+                protectModuleID, permissions, protectData, objVal.moduleRef
               );
             }
           }
 
           // Else look in the protected members.
           else {
-            [val, signal] = objVal.protectedMembers[safeIndex];
+            [val, docID, signal] = objVal.protectedMembers[safeIndex];
 
             // And throw if the user tries to assign to a non-private member,
             if (val !== undefined && forAssignment) throw new RuntimeError(
@@ -1360,11 +1365,11 @@ export class ScriptInterpreter {
           // Then finally, if a value was found, and with a truthy signal, emit
           // that signal to protect(), together with the protectModuleID of the
           // protected object, which defines the meaning of the signal.
-          if (val !== undefined && signal) {
+          if (val !== undefined && signal !== "") {
             let {protect, permissions} = environment.scriptGlobals;
             protectData = protect(
-              [objVal.protectModuleID, signal], protectModuleID, permissions,
-              protectData, objVal.moduleRef
+              [docID, signal], protectModuleID, permissions, protectData,
+              objVal.moduleRef
             );
           }
         }
@@ -1792,7 +1797,7 @@ export class ProtectedObject {
     this.moduleRef = new EntityReference(moduleID);
     this.protectModuleID = protectModuleID;
     this.decEnv = decEnv;
-    // prt./prv. member := [propVal : any, signal : string].
+    // prt./prv. member := [propVal : any, docID: ID, signal : string].
     this.privateMembers = privateMembers;
     this.protectedMembers = protectedMembers;
   }
@@ -1822,7 +1827,7 @@ export class ScriptEntity {
 }
 export class ExpressionEntity {
   constructor(expNode, id, creatorID, isEditable, whitelistID = "0") {
-    this.scriptNode = expNode;
+    this.expNode = expNode;
     this.id = id;
     this.creatorID = creatorID;
     this.isEditable = isEditable;
@@ -1831,8 +1836,7 @@ export class ExpressionEntity {
 }
 export class FormalEntity {
   constructor(
-    funEntID, inputArr, id, creatorID, isEditable, whitelistID = "0",
-    resObj = undefined
+    funEntID, inputArr, id, creatorID, isEditable, whitelistID = "0"
   ) {
     this.funEntID = funEntID;
     this.inputArr = inputArr;
@@ -1840,7 +1844,6 @@ export class FormalEntity {
     this.creatorID = creatorID;
     this.isEditable = isEditable;
     this.whitelistID = whitelistID;
-    this.resObj = resObj;
   }
 }
 

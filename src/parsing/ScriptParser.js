@@ -48,6 +48,7 @@ export const scriptGrammar = {
         type: "import-statement",
         importArr: children[1].children,
         entID: children[3].id,
+        placeholderPath: children[3].placeholderPath,
         libPath: children[3].libPath,
       } : {
         type: "import-statement",
@@ -154,7 +155,8 @@ export const scriptGrammar = {
     rules: [
       [
         "/export/", "/const/", "identifier", "/=/", "/Protected|Private/!1",
-        /\(/, "string", "/,/", "expression", "/,/?", /\)/, "/;/"
+        /\(/, "entity-reference", "/,/", "string", "/,/", "expression", "/,/?",
+        /\)/, "/;/"
       ],
       [
         "/export/", "/default/?", "/const/", "identifier!", "/=/",
@@ -171,8 +173,9 @@ export const scriptGrammar = {
           subtype: "protected-object-export",
           ident: children[2].ident,
           isPrivate: (children[4] === "Private") ? true : false,
-          signal: children[6].str,
-          exp: children[8],
+          docID: children[6].id,
+          signal: children[8].str,
+          exp: children[10],
         };
       }
       else if (ruleInd === 1) {
