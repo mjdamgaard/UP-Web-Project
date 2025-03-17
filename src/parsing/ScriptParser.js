@@ -61,42 +61,38 @@ export const scriptGrammar = {
   "module-reference": {
     rules: [
       [/"#[$_a-zA-Z0-9]+"/],
-      [/"#\{[$_\-/a-zA-Z0-9]+\}"/],
+      [/"#\{[$_\-a-zA-Z0-9]+(\/[$_\-a-zA-Z0-9]+)*\}"/],
       [/"\/#[$_a-zA-Z0-9]+(\/[_\-a-zA-Z0-9])+"/],
-      [/"\/#\{[$_\-/a-zA-Z0-9]+\}(\/[_\-a-zA-Z0-9])+"/],
+      [/"\/#\{[$_\-a-zA-Z0-9]+(\/[$_\-a-zA-Z0-9]+)*\}(\/[_\-a-zA-Z0-9])+"/],
     ],
     process: (children) => {
       let str = children[0];
       if (ruleInd === 0) {
+        return {
+          type: "module-reference",
+          id: str.slice(2, -1),
+        };
+      } else if (ruleInd === 1) {
+        return {
+          type: "module-reference",
+          placeholderPath: str.slice(3, -2),
+        };
+      } else if (ruleInd === 2) {
         let indOfSlash = str.indexOf("/");
-        if (indOfSlash === -1) {
-          return {
-            type: "entity-reference",
-            id: str.slice(2, -1),
-          };
-        } else {
-          return {
-            type: "entity-reference",
-            id: str.slice(2, indOfSlash),
-            libPath: str.slice(indOfSlash, -1),
-          };
-        }
+        return {
+          type: "module-reference",
+          id: str.slice(3, indOfSlash),
+          libPath: str.slice(indOfSlash, -1),
+        };
       } else {
-        let placeholderPath = str.match(/[$_\-/a-zA-Z0-9]+/)[0];
+        let [placeholderPath] =
+          str.match(/[$_\-a-zA-Z0-9]+(\/[$_\-a-zA-Z0-9]+)*/);
         let indOfSlash = str.indexOf("/", 3 + placeholderPath.length);
-        if (indOfSlash === -1) {
-          return {
-            type: "entity-reference",
-            placeholderPath: placeholderPath,
-          };
-        }
-        else {
-          return {
-            type: "entity-reference",
-            placeholderPath: placeholderPath,
-            libPath: str.slice(indOfSlash, -1),
-          };
-        }
+        return {
+          type: "module-reference",
+          placeholderPath: placeholderPath,
+          libPath: str.slice(indOfSlash, -1),
+        };
       }
     },
   },
@@ -845,7 +841,7 @@ export const scriptGrammar = {
   "entity-reference": {
     rules: [
       [/"#[$_a-zA-Z0-9]+"/],
-      [/"#\{[$_\-/a-zA-Z0-9]+\}"/],
+      [/"#\{[$_\-a-zA-Z0-9]+(\/[$_\-a-zA-Z0-9]+)*\}"/],
     ],
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? {

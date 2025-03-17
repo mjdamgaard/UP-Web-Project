@@ -34,9 +34,9 @@ async function fetchEntity(libraryPaths, funMetadata, entID, entType) {
 
 export class ScriptInterpreter {
 
-  constructor(isServerSide, devLibPath) {
+  constructor(isServerSide, getDevLibPath) {
     this.isServerSide = isServerSide;
-    this.devLibPath = devLibPath;
+    this.getDevLibPath = getDevLibPath;
   }
 
 
@@ -50,7 +50,8 @@ export class ScriptInterpreter {
       protectModuleID: protectModuleID, protect: undefined,
       providerID: THIS_PROVIDER_ID, permissions: permissions,
       settings: settings, isServerSide: this.isServerSide, isExiting: false,
-      resolveScript: undefined, interpreter: this, devLibPath: this.devLibPath,
+      resolveScript: undefined, interpreter: this,
+      getDevLibPath: this.getDevLibPath,
       parsedEntities: parsedEntities, liveModules: liveModules,
     };
 
@@ -261,34 +262,40 @@ export class ScriptInterpreter {
   async executeSubmoduleOfImportStatement(impStmt, callerModuleEnv, globalEnv) {
     decrCompGas(impStmt, globalEnv);
     decrGas(impStmt, globalEnv, "import");
-    let {liveModules, parsedEntities, moduleIDs} = globalEnv.scriptGlobals;
+    let {liveModules, parsedEntities} = globalEnv.scriptGlobals;
 
     // If the module is referenced by a path, and not directly by an ID, first
     // convert it to an ID via a lookup in moduleIDs.
-    let submoduleID = impStmt.entID;
-    if (!submoduleID) {
+    if (!impStmt.entID) {
       if (!impStmt.modulePath) throw new LoadError(
         `Importing from a TBD module, "${impStmt.placeholderPath}"`,
         impStmt, callerModuleEnv
       );
-      submoduleID = getModuleID(moduleIDs, impStmt.modulePath);
     }
-    if (!submoduleID) throw new LoadError(
-      `Module ${JSON.stringify(impStmt.modulePath)} not found`,
-      impStmt, callerModuleEnv
-    );
 
     // If the module has already been executed, we can return early.
-    let liveModule = liveModules.get(submoduleID);
+    let moduleRefStr = impStmt.entID + (impStmt.libPath ?? "");
+    let liveModule = liveModules.get(moduleRefStr);
     if (liveModule) {
       return liveModule;
     }
 
-    // If not, first query the libraryPaths map to see if the module is a
-    // developer library. and if so, import it via import().
-    let libPath = this.libraryPaths.get(submoduleID); 
-    if (libPath) {
-      let devMod = await import(libPath);
+    // If the module reference is a dev library reference, try to import the
+    // given library.
+    if (impStmt.libPath) {
+      let trueLibraryPath = this.getDevLibPath(moduleRefStr);
+      let devMod;
+      try {
+        devMod = await import(trueLibraryPath);
+      } catch (err) {
+        throw new LoadError(
+          `Library "${impStmt.libPath}" not found`,
+          impStmt, callerModuleEnv
+        );
+      }
+
+      // If the dev library module was found, create a "liveModule" object from
+      // it, store it in the liveModules buffer, and return it. 
       let liveModule = {};
       Object.entries(devMod).forEach(([key, val]) => {
         if (
@@ -300,12 +307,13 @@ export class ScriptInterpreter {
           liveModule["&" + key] = [val];
         }
       });
-      liveModules.set(submoduleID, liveModule);
+      liveModules.set(moduleRefStr, liveModule);
       return liveModule;
     }
 
     // Else if the module is a user module, first try to get it from the
     // parsedEntities buffer, then try to fetch it from the database.
+    let submoduleID = impStmt.entID;
     let submoduleNode = await this.fetchParsedScript(
       submoduleID, parsedEntities, callerModuleEnv
     );
