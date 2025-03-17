@@ -27,72 +27,77 @@ export const scriptGrammar = {
   // here.
   "script": {
     rules: [
-      [
-        "base-module-declaration?", // These are used for defining
-        // protection schemes, and also dev library names, and potentially more. 
+      [ 
         "import-statement!1*",
         "outer-statement+$"
       ],
     ],
-    process: (children) => {
-      let useStr = children[0][0]?.str;
-      let baseModuleID, baseModulePlaceholderPath;
-      if (useStr !== undefined) {
-        if (/^use #[$_a-zA-Z0-9]+$/.test(useStr)) {
-          baseModuleID = useStr.substring(5);
-        }
-        else if (/^use \#\{[$_a-zA-Z0-9/\-]+\}$/.test(useStr)) {
-          baseModulePlaceholderPath = useStr.slice(6, -1);
-        }
-        else {
-          return "Base script string must be of the form " +
-            "/^use #[$_a-zA-Z0-9]+$/, or /^use #\\{[$_a-zA-Z0-9/\\-]+\\}$/";
-        }
-      }
-
-      return {
-        type: "script",
-        baseModuleID: baseModuleID,
-        baseModulePlaceholderPath: baseModulePlaceholderPath,
-        importStmtArr: children[1],
-        stmtArr: children[2],
-      };
-    },
-  },
-  "base-module-declaration": {
-    rules: [
-      ["string", "/;/"],
-    ],
     process: (children) => ({
-      type: "base-module-declaration",
-      str: children[0].str,
+      type: "script",
+      importStmtArr: children[0],
+      stmtArr: children[1],
     }),
   },
   "import-statement": {
     rules: [
-      ["/import/", "import-list", "/from/", "entity-reference", "/;/!"],
-      ["/import/", "import-list", "/from/", "string", "/;/"],
-      ["/import/", "/from/", "entity-reference", "/;/!"],
-      ["/import/", "/from/", "string", "/;/"],
+      ["/import/", "import-list", "/from/!", "module-reference", "/;/"],
+      ["/import/", "/from/", "module-reference", "/;/"],
     ],
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? {
         type: "import-statement",
         importArr: children[1].children,
-        moduleID: children[3].id,
-      } : (ruleInd === 1) ? {
-        type: "import-statement",
-        importArr: children[1].children,
-        modulePath: children[3].str,
-      } : (ruleInd === 2) ? {
-        type: "import-statement",
-        importArr: [],
-        moduleID: children[2].id,
+        entID: children[3].id,
+        libPath: children[3].libPath,
       } : {
         type: "import-statement",
         importArr: [],
-        modulePath: children[2].str,
+        entID: children[2].id,
+        placeholderPath: children[2].placeholderPath,
+        libPath: children[2].libPath,
       };
+    },
+  },
+  "module-reference": {
+    rules: [
+      [/"#[$_a-zA-Z0-9]+"/],
+      [/"#\{[$_\-/a-zA-Z0-9]+\}"/],
+      [/"\/#[$_a-zA-Z0-9]+(\/[_\-a-zA-Z0-9])+"/],
+      [/"\/#\{[$_\-/a-zA-Z0-9]+\}(\/[_\-a-zA-Z0-9])+"/],
+    ],
+    process: (children) => {
+      let str = children[0];
+      if (ruleInd === 0) {
+        let indOfSlash = str.indexOf("/");
+        if (indOfSlash === -1) {
+          return {
+            type: "entity-reference",
+            id: str.slice(2, -1),
+          };
+        } else {
+          return {
+            type: "entity-reference",
+            id: str.slice(2, indOfSlash),
+            libPath: str.slice(indOfSlash, -1),
+          };
+        }
+      } else {
+        let placeholderPath = str.match(/[$_\-/a-zA-Z0-9]+/)[0];
+        let indOfSlash = str.indexOf("/", 3 + placeholderPath.length);
+        if (indOfSlash === -1) {
+          return {
+            type: "entity-reference",
+            placeholderPath: placeholderPath,
+          };
+        }
+        else {
+          return {
+            type: "entity-reference",
+            placeholderPath: placeholderPath,
+            libPath: str.slice(indOfSlash, -1),
+          };
+        }
+      }
     },
   },
   "import-list": {
@@ -840,18 +845,16 @@ export const scriptGrammar = {
   "entity-reference": {
     rules: [
       [/"#[$_a-zA-Z0-9]+"/],
-      [/"#\{[$_a-zA-Z0-9/\-]+\}"/],
+      [/"#\{[$_\-/a-zA-Z0-9]+\}"/],
     ],
     process: (children, ruleInd) => {
-      let ret = {
+      return (ruleInd === 0) ? {
         type: "entity-reference",
-      }
-      if (ruleInd === 0) {
-        ret.id = children[0].slice(2, -1);
-      } else {
-        ret.placeholderPath = children[0].slice(3, -2);
-      }
-      return ret;
+        id: children[0].slice(2, -1),
+      } : {
+        type: "entity-reference",
+        placeholderPath: children[0].slice(3, -2),
+      };
     },
   },
   "exit-call": {

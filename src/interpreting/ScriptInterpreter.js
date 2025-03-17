@@ -28,22 +28,15 @@ async function fetchEntity(libraryPaths, funMetadata, entID, entType) {
   return await io.selectEntity(funMetadata, entID, entType);
 }
 
-function getModuleID(moduleIDs, modulePath) {
-  let ret = moduleIDs.val;
-  let pathPartArr = modulePath.split("/");
-  pathPartArr.forEach(pathPart => {
-    ret = (ret) ? ret["&" + pathPart] : undefined;
-  });
-  return ret;
-}
 
 
 
 
 export class ScriptInterpreter {
 
-  constructor(isServerSide) {
+  constructor(isServerSide, devLibPath) {
     this.isServerSide = isServerSide;
+    this.devLibPath = devLibPath;
   }
 
 
@@ -57,7 +50,7 @@ export class ScriptInterpreter {
       protectModuleID: protectModuleID, protect: undefined,
       providerID: THIS_PROVIDER_ID, permissions: permissions,
       settings: settings, isServerSide: this.isServerSide, isExiting: false,
-      resolveScript: undefined, interpreter: this,
+      resolveScript: undefined, interpreter: this, devLibPath: this.devLibPath,
       parsedEntities: parsedEntities, liveModules: liveModules,
     };
 
@@ -82,15 +75,15 @@ export class ScriptInterpreter {
       );
     }
 
-    // Then execute the input "base module," from which we get the global
+    // Then execute the input "protect module," from which we get the global
     // protect() function.
-    let baseModuleNode = await this.fetchParsedScript(
-      baseModuleID, parsedEntities, globalEnv
+    let protectModuleNode = await this.fetchParsedScript(
+      protectModuleID, parsedEntities, globalEnv
     );
     let [liveBaseModule] = await this.executeModule(
-      baseModuleNode, baseModuleID, globalEnv
+      protectModuleNode, protectModuleID, globalEnv
     );
-    scriptGlobals.liveModules.set(baseModuleID, liveBaseModule);
+    scriptGlobals.liveModules.set(protectModuleID, liveBaseModule);
     scriptGlobals.protect = liveBaseModule["&protect"][0];
 
 
@@ -121,7 +114,6 @@ export class ScriptInterpreter {
     catch (err) {
       // If any non-internal error occurred, log it in log.error and resolve
       // the script with an undefined output.
-      let {log} = scriptGlobals;
       if (
         err instanceof LexError || err instanceof SyntaxError ||
         err instanceof LoadError || err instanceof RuntimeError ||
@@ -212,6 +204,7 @@ export class ScriptInterpreter {
   async fetchParsedScript(scriptID, parsedEntities, callerEnv) {
     let parsedScript = parsedEntities.get(scriptID);
     if (!parsedScript) {
+// TODO: Change.
       let {parsedEnt} = await fetchEntity(
         this.libraryPaths, {callerEnv: callerEnv}, scriptID, "s",
       );
@@ -234,10 +227,10 @@ export class ScriptInterpreter {
     let moduleEnv = new Environment(
       globalEnv, "module",
       undefined, undefined, undefined, undefined,
-      moduleID, moduleNode.baseModuleID
+      moduleID, moduleNode.protectModuleID
     );
 
-    // Then run all the import statements in parallel and get their live
+    // Run all the import statements in parallel and get their live
     // environments, but without making any changes to moduleEnv yet.
     let liveSubmoduleArr = await Promise.all(
       moduleNode.importStmtArr.map(impStmt => (
@@ -245,7 +238,7 @@ export class ScriptInterpreter {
       ))
     );
 
-    // We can then run all the import statements again, this time where each
+    // We then run all the import statements again, this time where each
     // import statement is paired with the environment from the already
     // executed module, and where the changes are now made to moduleEnv.
     moduleNode.importStmtArr.forEach((impStmt, ind) => {
@@ -272,10 +265,10 @@ export class ScriptInterpreter {
 
     // If the module is referenced by a path, and not directly by an ID, first
     // convert it to an ID via a lookup in moduleIDs.
-    let submoduleID = impStmt.moduleID;
+    let submoduleID = impStmt.entID;
     if (!submoduleID) {
       if (!impStmt.modulePath) throw new LoadError(
-        `Importing from a TBD module`,
+        `Importing from a TBD module, "${impStmt.placeholderPath}"`,
         impStmt, callerModuleEnv
       );
       submoduleID = getModuleID(moduleIDs, impStmt.modulePath);
@@ -474,7 +467,7 @@ export class ScriptInterpreter {
     fun, inputArr, callerNode, callerEnv, thisVal, signalPair
   ) {
     let {
-      protect, baseModuleID, permissions, settings
+      protect, protectModuleID, permissions, settings
     } = callerEnv.scriptGlobals;
     let protectData = callerEnv.getProtectData();
 
@@ -483,7 +476,7 @@ export class ScriptInterpreter {
     // get the new protectData to give to the new function environment.
     if (thisVal instanceof ProtectedObject) {
       protectData = protect(
-        signalPair, baseModuleID, permissions, protectData, thisVal.moduleRef
+        signalPair, protectModuleID, permissions, protectData, thisVal.moduleRef
       );
     }
 
@@ -494,7 +487,7 @@ export class ScriptInterpreter {
       // value.
       if (fun.signalPair !== undefined) {
         protectData = protect(
-          fun.signalPair, baseModuleID, permissions, protectData
+          fun.signalPair, protectModuleID, permissions, protectData
         );
       }
 
@@ -1129,9 +1122,9 @@ export class ScriptInterpreter {
       }
       case "exit-call": {
         // Send an "exit" signal to protect.
-        let {protect, baseModuleID, permissions} = environment.scriptGlobals;
+        let {protect, protectModuleID, permissions} = environment.scriptGlobals;
         let protectData = environment.getProtectData();
-        protect(["10", "exit"], baseModuleID, permissions, protectData);
+        protect(["10", "exit"], protectModuleID, permissions, protectData);
         // Then evaluate the argument, record the resulting output, and throw
         // an exit exception.
         let expVal = (!expNode.exp) ? undefined :
@@ -1320,10 +1313,10 @@ export class ScriptInterpreter {
             // signal (for 'get' ad 'set,' respectively), depending on whether
             // it is accessed forAssignment or not. 
             else {
-              let {protect, baseModuleID, permissions} =
+              let {protect, protectModuleID, permissions} =
                 environment.scriptGlobals;
               protectData = protect(
-                ["10", forAssignment ? "set" : "get"], baseModuleID, permissions,
+                ["10", forAssignment ? "set" : "get"], protectModuleID, permissions,
                 protectData, objVal.moduleRef
               );
             }
@@ -1357,12 +1350,12 @@ export class ScriptInterpreter {
           }
 
           // Then finally, if a value was found, and with a truthy signal, emit
-          // that signal to protect(), together with the baseModuleID of the
+          // that signal to protect(), together with the protectModuleID of the
           // protected object, which defines the meaning of the signal.
           if (val !== undefined && signal) {
             let {protect, permissions} = environment.scriptGlobals;
             protectData = protect(
-              [objVal.baseModuleID, signal], baseModuleID, permissions,
+              [objVal.protectModuleID, signal], protectModuleID, permissions,
               protectData, objVal.moduleRef
             );
           }
@@ -1446,7 +1439,7 @@ export class Environment {
     parent = undefined, scopeType = "block",
     callerNode = undefined, callerEnv = undefined, thisVal = undefined,
     protectData = undefined,
-    moduleID = undefined, baseModuleID = undefined,
+    moduleID = undefined, protectModuleID = undefined,
     scriptGlobals = undefined,
     catchStmtArr = undefined, errIdent, numIdent,
   ) {
@@ -1461,7 +1454,7 @@ export class Environment {
     }
     else if (scopeType === "module") {
       this.moduleID = moduleID;
-      this.baseModuleID = baseModuleID;
+      this.protectModuleID = protectModuleID;
       this.protectData = {moduleID: moduleID};
       this.exports = [];
       this.liveModule = undefined;
@@ -1611,7 +1604,7 @@ export class Environment {
   getLiveModule() {
     if (!this.liveModule ) {
       let liveModule = this.liveModule = {
-        baseModuleID: this.baseModuleID
+        protectModuleID: this.protectModuleID
       };
       this.exports.forEach(([alias, val, signal, isPrivate]) => {
         liveModule["&" + alias] = [val, signal, isPrivate];
@@ -1786,10 +1779,10 @@ export class EntityReference {
 
 export class ProtectedObject {
   constructor(
-    moduleID, baseModuleID, decEnv, privateMembers, protectedMembers,
+    moduleID, protectModuleID, decEnv, privateMembers, protectedMembers,
   ) {
     this.moduleRef = new EntityReference(moduleID);
-    this.baseModuleID = baseModuleID;
+    this.protectModuleID = protectModuleID;
     this.decEnv = decEnv;
     // prt./prv. member := [propVal : any, signal : string].
     this.privateMembers = privateMembers;
