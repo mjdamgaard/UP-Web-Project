@@ -28,7 +28,7 @@ export const scriptGrammar = {
   "script": {
     rules: [
       [
-        "string-expression-statement!1?", // These are used for defining
+        "base-module-declaration?", // These are used for defining
         // protection schemes, and also dev library names, and potentially more. 
         "import-statement!1*",
         "outer-statement+$"
@@ -58,6 +58,15 @@ export const scriptGrammar = {
         stmtArr: children[2],
       };
     },
+  },
+  "base-module-declaration": {
+    rules: [
+      ["string", "/;/"],
+    ],
+    process: (children) => ({
+      type: "base-module-declaration",
+      str: children[0].str,
+    }),
   },
   "import-statement": {
     rules: [
@@ -389,15 +398,6 @@ export const scriptGrammar = {
     process: (children) => ({
       type: "expression-statement",
       exp: children[0],
-    }),
-  },
-  "string-expression-statement": {
-    rules: [
-      ["string", "/;/"],
-    ],
-    process: (children) => ({
-      type: "string-expression-statement",
-      str: children[0].str,
     }),
   },
   "block-statement": {

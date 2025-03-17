@@ -3,11 +3,10 @@ import {
   DeveloperFunction, decrCompGas, decrGas, payGas, RuntimeError,
   getParsingGasCost, EntityReference, ScriptEntity, ExpressionEntity,
   FormalEntity,
-} from "../interpreting/ScriptInterpreter.js";
-import {MainDBInterface} from "../node_js/db_io/MainDBInterface.js";
+} from "../../src/interpreting/ScriptInterpreter.js";
 import {
   entityCacheServerSide
-} from "../caching/entity_caches/entityCacheServerSide.js";
+} from "../../src/caching/entity_caches/entityCacheServerSide.js";
 
 
 
@@ -15,6 +14,7 @@ export const selectEntity = new DeveloperFunction(
   ["10", "read"],
   function ({callerNode, callerEnv, interpreter}, entRef, callback) {
     decrCompGas(callerNode, callerEnv);
+    let {isServerSide} = callerEnv.scriptGlobals;
 
     if (!(entRef instanceof EntityReference)) throw new RuntimeError(
       "selectEntity(): entRef has to be an EntityReference instance",
@@ -22,50 +22,59 @@ export const selectEntity = new DeveloperFunction(
     );
     let entID = entRef.id;
 
-    // Try to get the entity from the entity cache.
-    let [parsedEnt, entType, creatorID, isEditable, whitelistID] =
-      entityCacheServerSide.get(entID);
-    if (parsedEnt) {
-      if (whitelistID != "0") {
-        interpreter.executeAsyncCallback(
-          callback, ["access denied"], callerNode, callerEnv
-        );
-      } else {
-        // If the entity was found in the cache, and it is a public entity,
-        // get an appropriate class-wrapped entity, and call callback on that.
-        interpreter.executeAsyncCallback(
-          callback, [
-            getEntity(entType, parsedEnt, creatorID, isEditable)
-          ],
-          callerNode, callerEnv
-        );
-      }
-      return;
+    if (isServerSide) {
+      import("../../src/node_js/db_io/MainDBInterface.js").then(mod => {
+        let MainDBInterface = mod.MainDBInterface;
+
+        // Try to get the entity from the entity cache.
+        let [parsedEnt, entType, creatorID, isEditable, whitelistID] =
+        entityCacheServerSide.get(entID);
+        if (parsedEnt) {
+          if (whitelistID != "0") {
+            interpreter.executeAsyncCallback(
+              callback, ["access denied"], callerNode, callerEnv
+            );
+          } else {
+            // If the entity was found in the cache, and it is a public entity,
+            // get an appropriate class-wrapped entity, and call callback on
+            // that.
+            interpreter.executeAsyncCallback(
+              callback, [
+                getEntity(entType, parsedEnt, creatorID, isEditable)
+              ],
+              callerNode, callerEnv
+            );
+          }
+          return;
+        }
+
+        // Else fetch and parse the entity from the database.
+        MainDBInterface.selectEntity(entID).then(res => {
+          let [entType, defStr, creatorID, isEditable, whitelistID] = res;
+          if (whitelistID != "0") {
+            interpreter.executeAsyncCallback(
+              callback, ["access denied"], callerNode, callerEnv
+            );
+          } else {
+            // If the entity was gotten successfully, first parse it.
+            let parsedEnt = getParsedEntity(entType, defStr);
+
+            // Also make sure to cache the parsed entity.
+            entityCacheServerSide.set(entID, parsedEnt);
+
+            // Then get call the callback on an appropriate class-wrapped
+            // entity.
+            interpreter.executeAsyncCallback(
+              callback, [
+                getEntity(entType, parsedEnt, creatorID, isEditable)
+              ],
+              callerNode, callerEnv
+            );
+          }
+        });
+      })
     }
 
-    // Else fetch and parse the entity from the database.
-    MainDBInterface.selectEntity(entID).then(res => {
-      let [entType, defStr, creatorID, isEditable, whitelistID] = res;
-      if (whitelistID != "0") {
-        interpreter.executeAsyncCallback(
-          callback, ["access denied"], callerNode, callerEnv
-        );
-      } else {
-        // If the entity was gotten successfully, first parse it.
-        let parsedEnt = getParsedEntity(entType, defStr);
-
-        // Also make sure to cache the parsed entity.
-        entityCacheServerSide.set(entID, parsedEnt);
-
-        // Then get call the callback on an appropriate class-wrapped entity.
-        interpreter.executeAsyncCallback(
-          callback, [
-            getEntity(entType, parsedEnt, creatorID, isEditable)
-          ],
-          callerNode, callerEnv
-        );
-      }
-    });
   }
 );
 

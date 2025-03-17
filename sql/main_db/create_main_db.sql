@@ -40,15 +40,15 @@ CREATE TABLE DataStructures_SingleIndex (
 
     list_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
-    entry_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
+    elem_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
-    entry_payload VARBINARY(64) NOT NULL, -- Type can be resized/changed.
+    elem_payload VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
     PRIMARY KEY (
         struct_id,
         format_ident,
         list_key,
-        entry_key
+        elem_key
     )
 )
 ROW_FORMAT = COMPRESSED;
@@ -63,25 +63,25 @@ CREATE TABLE DataStructures_DoubleIndex (
 
     list_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
-    entry_score VARBINARY(64) NOT NULL, -- Type can be resized/changed.
+    elem_score VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
-    entry_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
+    elem_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
-    entry_payload VARBINARY(64) NOT NULL, -- Type can be resized/changed.
+    elem_payload VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
     PRIMARY KEY (
         struct_id,
         format_ident,
         list_key,
-        entry_key
+        elem_key
     )
 
     UNIQUE INDEX (
         struct_id,
         format_ident,
         list_key,
-        entry_score,
-        entry_key
+        elem_score,
+        elem_key
     )
 )
 ROW_FORMAT = COMPRESSED;
@@ -96,15 +96,15 @@ CREATE TABLE DataStructures_SingleIndex_CharKey (
 
     list_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
-    entry_key VARCHAR(255) NOT NULL, -- Type can be resized/changed.
+    elem_key VARCHAR(255) NOT NULL, -- Type can be resized/changed.
 
-    entry_payload VARCHAR(32) NOT NULL, -- Type can be resized/changed.
+    elem_payload VARBINARY(32) NOT NULL, -- Type can be resized/changed.
 
     PRIMARY KEY (
         struct_id,
         format_ident,
         list_key,
-        entry_key
+        elem_key
     )
 )
 ROW_FORMAT = COMPRESSED;
@@ -119,15 +119,15 @@ CREATE TABLE DataStructures_SingleIndex_FloatKey (
 
     list_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
-    entry_key FLOAT NOT NULL, -- Type can be resized/changed.
+    elem_key FLOAT NOT NULL, -- Type can be resized/changed.
 
-    entry_payload VARCHAR(32) NOT NULL, -- Type can be resized/changed.
+    elem_payload VARBINARY(32) NOT NULL, -- Type can be resized/changed.
 
     PRIMARY KEY (
         struct_id,
         format_ident,
         list_key,
-        entry_key
+        elem_key
     )
 )
 ROW_FORMAT = COMPRESSED;

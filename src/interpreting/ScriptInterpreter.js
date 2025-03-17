@@ -6,6 +6,8 @@ import {LexError, SyntaxError} from "../parsing/Parser.js";
 export {LexError, SyntaxError};
 
 
+const THIS_PROVIDER_ID = "11";
+
 // const MAX_ARRAY_INDEX = 1E+15;
 const MINIMAL_TIME_GAS = 10;
 
@@ -40,21 +42,22 @@ function getModuleID(moduleIDs, modulePath) {
 
 export class ScriptInterpreter {
 
-  constructor(libraryPaths) {
-    this.libraryPaths = libraryPaths;
+  constructor(isServerSide) {
+    this.isServerSide = isServerSide;
   }
 
 
   async interpretScript(
     gas, script = "", scriptID = "0", mainInputs = [], reqUserID = undefined,
-    baseModuleID, permissions = {}, settings = {}, parsedEntities = new Map(),
-    liveModules = new Map(),
+    protectModuleID, permissions = {}, settings = {},
+    parsedEntities = new Map(), liveModules = new Map(),
   ) {
     let scriptGlobals = {
       gas: gas, log: {}, scriptID: scriptID, reqUserID: reqUserID,
-      baseModuleID: baseModuleID, protect: undefined, moduleIDs: {},
-      permissions: permissions, settings: settings,
-      isExiting: false, resolveScript: undefined, interpreter: this,
+      protectModuleID: protectModuleID, protect: undefined,
+      providerID: THIS_PROVIDER_ID, permissions: permissions,
+      settings: settings, isServerSide: this.isServerSide, isExiting: false,
+      resolveScript: undefined, interpreter: this,
       parsedEntities: parsedEntities, liveModules: liveModules,
     };
 
@@ -79,16 +82,16 @@ export class ScriptInterpreter {
       );
     }
 
-    // Then execute the script's "base module." From this module we get the
-    // protect() function, first of all, as well as the moduleIDs object.
+    // Then execute the input "base module," from which we get the global
+    // protect() function.
     let baseModuleNode = await this.fetchParsedScript(
       baseModuleID, parsedEntities, globalEnv
     );
     let [liveBaseModule] = await this.executeModule(
       baseModuleNode, baseModuleID, globalEnv
     );
+    scriptGlobals.liveModules.set(baseModuleID, liveBaseModule);
     scriptGlobals.protect = liveBaseModule["&protect"][0];
-    scriptGlobals.moduleIDs = liveBaseModule["&moduleIDs"][0];
 
 
     // Create a promise to get the output and log, and store a modified
@@ -710,13 +713,21 @@ export class ScriptInterpreter {
         } catch (err) {
           if (err instanceof RuntimeError || err instanceof CustomException) {
             let catchEnv = new Environment(environment);
-            catchEnv.declare(stmtNode.errIdent, err.msg, false, stmtNode);
+            catchEnv.declare(stmtNode.errIdent, err.val, false, stmtNode);
             if (stmtNode.numIdent) {
               catchEnv.declare(stmtNode.numIdent, 0, false, stmtNode);
             }
-            stmtNode.catchStmt.forEach(stmt => {
-              this.executeStatement(stmt, catchEnv);
-            });
+            try {
+              stmtNode.catchStmt.forEach(stmt => {
+                this.executeStatement(stmt, catchEnv);
+              });
+            } catch (err2) {
+              if (err2 instanceof CustomException && err2.val === err.val) {
+                throw err;
+              } else {
+                throw err2
+              }
+            }
           }
           else throw err;
         }
@@ -1614,11 +1625,21 @@ export class Environment {
     if (this.scopeType === "try-catch") {
       let {interpreter} = this.scriptGlobals;
       let catchEnv = new Environment(this.parent);
-      catchEnv.declare(this.errIdent, err.msg, false);
-      catchEnv.declare(this.numIdent, ++this.numOfAsyncExceptions, false);
-      stmtNode.catchStmt.forEach(stmt => {
-        interpreter.executeStatement(stmt, catchEnv);
-      });
+      catchEnv.declare(this.errIdent, err.val, false);
+      if (stmtNode.numIdent) {
+        catchEnv.declare(this.numIdent, ++this.numOfAsyncExceptions, false);
+      }
+      try {
+        stmtNode.catchStmt.forEach(stmt => {
+          interpreter.executeStatement(stmt, catchEnv);
+        });
+      } catch (err2) {
+        if (err2 instanceof CustomException && err2.val === err.val) {
+          throw err;
+        } else {
+          throw err2
+        }
+      }
       return true;
     }
     else if (this.scopeType === "function") {
@@ -1852,24 +1873,24 @@ class ContinueException {
 
 
 export class LoadError {
-  constructor(msg, node, environment) {
-    this.msg = msg;
+  constructor(val, node, environment) {
+    this.val = val;
     this.node = node;
     this.environment = environment;
   }
 }
 
 export class OutOfGasError {
-  constructor(msg, node, environment) {
-    this.msg = msg;
+  constructor(val, node, environment) {
+    this.val = val;
     this.node = node;
     this.environment = environment;
   }
 }
 
 export class RuntimeError {
-  constructor(msg, node, environment) {
-    this.msg = msg;
+  constructor(val, node, environment) {
+    this.val = val;
     this.node = node;
     this.environment = environment;
   }
