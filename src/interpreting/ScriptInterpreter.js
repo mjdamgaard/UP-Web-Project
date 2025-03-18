@@ -1,13 +1,16 @@
 
-import {scriptParser} from "../parsing/ScriptParser.js";
+import {scriptParser} from "./parsing/ScriptParser.js";
 // import {EntityReference, EntityPlaceholder} from "../parsing/RegEntParser.js";
-import {LexError, SyntaxError} from "../parsing/Parser.js";
+import {LexError, SyntaxError} from "./parsing/Parser.js";
+
+// Following module paths are substituted by module mapping webpack plugin.
+import {IS_SERVER_SIDE, getDevLibPath} from "interpreter_config";
 
 export {LexError, SyntaxError};
 
 
 const INIT_PROTECT_DOC_ID = "10";
-const THIS_PROVIDER_ID = "11";
+const INIT_DEV_LIB_DOC_ID = "11";
 const INIT_PROTECT_MODULE_ID = "12";
 
 // const MAX_ARRAY_INDEX = 1E+15;
@@ -36,13 +39,7 @@ async function fetchEntity(libraryPaths, funMetadata, entID, entType) {
 
 export class ScriptInterpreter {
 
-  constructor(isServerSide, getDevLibPath) {
-    this.isServerSide = isServerSide;
-    this.getDevLibPath = getDevLibPath;
-  }
-
-
-  async interpretScript(
+  static async interpretScript(
     gas, script = "", scriptID = "0", mainInputs = [], reqUserID = undefined,
     protectModuleID = INIT_PROTECT_MODULE_ID, permissions = {}, settings = {},
     parsedEntities = new Map(), liveModules = new Map(),
@@ -50,10 +47,8 @@ export class ScriptInterpreter {
     let scriptGlobals = {
       gas: gas, log: {}, scriptID: scriptID, reqUserID: reqUserID,
       protectModuleID: protectModuleID, protect: undefined,
-      providerID: THIS_PROVIDER_ID, permissions: permissions,
-      settings: settings, isServerSide: this.isServerSide, isExiting: false,
-      resolveScript: undefined, interpreter: this,
-      getDevLibPath: this.getDevLibPath,
+      permissions: permissions, settings: settings,
+      isExiting: false, resolveScript: undefined, interpreter: this,
       parsedEntities: parsedEntities, liveModules: liveModules,
     };
 
@@ -192,7 +187,7 @@ export class ScriptInterpreter {
 
 
 
-  createGlobalEnvironment(scriptGlobals) {
+  static createGlobalEnvironment(scriptGlobals) {
     let globalEnv = new Environment(
       undefined, "global",
       undefined, undefined, undefined, undefined,
@@ -204,7 +199,7 @@ export class ScriptInterpreter {
 
 
 
-  async fetchParsedScript(scriptID, parsedEntities, callerEnv) {
+  static async fetchParsedScript(scriptID, parsedEntities, callerEnv) {
     let parsedScript = parsedEntities.get(scriptID);
     if (!parsedScript) {
 // TODO: Change.
@@ -223,7 +218,7 @@ export class ScriptInterpreter {
 
 
 
-  async executeModule(moduleNode, moduleID, globalEnv) {
+  static async executeModule(moduleNode, moduleID, globalEnv) {
     decrCompGas(moduleNode, globalEnv);
 
     // Create a new environment for the module.
@@ -261,7 +256,7 @@ export class ScriptInterpreter {
 
 
 
-  async executeSubmoduleOfImportStatement(impStmt, callerModuleEnv, globalEnv) {
+  static async executeSubmoduleOfImportStatement(impStmt, callerModuleEnv, globalEnv) {
     decrCompGas(impStmt, globalEnv);
     decrGas(impStmt, globalEnv, "import");
     let {liveModules, parsedEntities} = globalEnv.scriptGlobals;
@@ -285,7 +280,7 @@ export class ScriptInterpreter {
     // If the module reference is a dev library reference, try to import the
     // given library.
     if (impStmt.libPath) {
-      let trueLibraryPath = this.getDevLibPath(moduleRefStr);
+      let trueLibraryPath = getDevLibPath(moduleRefStr);
       if (!trueLibraryPath) throw new LoadError(
         `Library "${impStmt.libPath}" not found`,
         impStmt, callerModuleEnv
@@ -336,7 +331,7 @@ export class ScriptInterpreter {
 
 
 
-  finalizeImportStatement(impStmt, liveSubmodule, moduleEnv) {
+  static finalizeImportStatement(impStmt, liveSubmodule, moduleEnv) {
     decrCompGas(impStmt, moduleEnv);
 
     // Iterate through all the imports and add each import to the environment.
@@ -393,7 +388,7 @@ export class ScriptInterpreter {
 
 
 
-  executeOuterStatement(stmtNode, environment) {
+  static executeOuterStatement(stmtNode, environment) {
     let type = stmtNode.type;
     switch (type) {
       case "statement": {
@@ -412,7 +407,7 @@ export class ScriptInterpreter {
   }
 
 
-  executeExportStatement(stmtNode, environment) {
+  static executeExportStatement(stmtNode, environment) {
     decrCompGas(stmtNode, environment);
 
     if (stmtNode.subtype === "protected-object-export") {
@@ -457,7 +452,9 @@ export class ScriptInterpreter {
 
 
 
-  executeMainFunction(liveScriptModule, inputArr, scriptNode, scriptEnv) {
+  static executeMainFunction(
+    liveScriptModule, inputArr, scriptNode, scriptEnv
+  ) {
     let [mainFun] = liveScriptModule["&main"];
     if (mainFun === undefined) {
       [mainFun] = liveScriptModule["&default"];
@@ -477,7 +474,7 @@ export class ScriptInterpreter {
 
 
 
-  executeFunction(
+  static executeFunction(
     fun, inputArr, callerNode, callerEnv, thisVal, docRef, signal, funName
   ) {
     let {
@@ -499,7 +496,7 @@ export class ScriptInterpreter {
       // function client-side. We also always expect the callback to be the
       // last input in inputArr, so we execute that upon the return of the
       // result from the server.
-      if (protectData.runOnServer && !this.isServerSide) {
+      if (protectData.runOnServer && !IS_SERVER_SIDE) {
         let callback = inputArr.at(-1);
         let inputDataArr = inputArr.slice(0, -1);
         this.executeProtectedMethodOnServer(
@@ -547,7 +544,7 @@ export class ScriptInterpreter {
 
 
 
-  executeAsyncCallback(fun, inputArr, callerNode, callerEnv) {
+  static executeAsyncCallback(fun, inputArr, callerNode, callerEnv) {
     try {
       this.executeFunction(fun, inputArr, callerNode, callerEnv)
     }
@@ -567,7 +564,7 @@ export class ScriptInterpreter {
   }
 
 
-  executeProtectedMethodOnServer(
+  static executeProtectedMethodOnServer(
     moduleID, funName, inputDataArr, callback, callerNode, callerEnv
   ) {
     // TODO: Implement.
@@ -577,7 +574,7 @@ export class ScriptInterpreter {
 
 
 
-  executeDefinedFunction(
+  static executeDefinedFunction(
     funNode, funDecEnv, inputValueArr, callerNode, callerEnv,
     thisVal = undefined, protectData = undefined,
   ) {
@@ -642,7 +639,7 @@ export class ScriptInterpreter {
   }
 
 
-  declareInputParameters(environment, params, inputArr) {
+  static declareInputParameters(environment, params, inputArr) {
     params.forEach((param, ind) => {
       let paramName = param.ident;
       let paramVal = inputArr[ind];
@@ -670,7 +667,7 @@ export class ScriptInterpreter {
 
 
 
-  executeStatement(stmtNode, environment) {
+  static executeStatement(stmtNode, environment) {
     decrCompGas(stmtNode, environment);
 
     let type = stmtNode.type;
@@ -827,7 +824,7 @@ export class ScriptInterpreter {
 
 
 
-  evaluateExpression(expNode, environment) {
+  static evaluateExpression(expNode, environment) {
     decrCompGas(expNode, environment);
 
     let type = expNode.type;
@@ -1210,7 +1207,7 @@ export class ScriptInterpreter {
   }
 
 
-  assignToVariableOrMember(expNode, environment, assignFun) {
+  static assignToVariableOrMember(expNode, environment, assignFun) {
     if(expNode.type !== "chained-expression") throw new RuntimeError(
       "Invalid assignment", expNode, environment
     );
@@ -1263,7 +1260,9 @@ export class ScriptInterpreter {
   // a BrokenOptionalChainException. Here, val is the value of the whole
   // expression, and objVal, is the value of the object before the last member
   // accessor (if the last postfix is a member accessor and not a tuple).
-  evaluateChainedExpression(rootExp, postfixArr, environment, forAssignment) {
+  static evaluateChainedExpression(
+    rootExp, postfixArr, environment, forAssignment
+  ) {
     let val = this.evaluateExpression(rootExp, environment);
     let len = postfixArr.length;
     if (len === 0) {
@@ -1455,7 +1454,7 @@ export class ScriptInterpreter {
   }
 
 
-  getSafeIndex(ident = undefined, exp = undefined, environment) {
+  static getSafeIndex(ident = undefined, exp = undefined, environment) {
     let index = ident;
     if (exp) index = this.evaluateExpression(exp, environment);
     if (typeof index !== "string" && typeof index !== "number") {
@@ -1845,10 +1844,10 @@ export class PassAsMutable {
 
 export class ScriptEntity {
   constructor(
-    scriptNode, entRef, creatorRef, isEditable, whitelistRef = null
+    scriptNode, entID, creatorRef, isEditable, whitelistRef = null
   ) {
     this.scriptNode = scriptNode;
-    this.entRef = entRef;
+    this.entRef = new EntityReference(entID);
     this.creatorRef = creatorRef;
     this.isEditable = isEditable;
     this.whitelistRef = whitelistRef;
@@ -1856,10 +1855,10 @@ export class ScriptEntity {
 }
 export class ExpressionEntity {
   constructor(
-    expNode, entRef, creatorRef, isEditable, whitelistRef = null
+    expNode, entID, creatorRef, isEditable, whitelistRef = null
   ) {
     this.expNode = expNode;
-    this.entRef = entRef;
+    this.entRef = new EntityReference(entID);
     this.creatorRef = creatorRef;
     this.isEditable = isEditable;
     this.whitelistRef = whitelistRef;
@@ -1867,11 +1866,11 @@ export class ExpressionEntity {
 }
 export class FormalEntity {
   constructor(
-    funEntRef, inputArr, entRef, creatorRef, isEditable, whitelistRef = null
+    funEntRef, inputArr, entID, creatorRef, isEditable, whitelistRef = null
   ) {
     this.funEntRef = funEntRef;
     this.inputArr = inputArr;
-    this.entRef = entRef;
+    this.entRef = new EntityReference(entID);
     this.creatorRef = creatorRef;
     this.isEditable = isEditable;
     this.whitelistRef = whitelistRef;
