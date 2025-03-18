@@ -4,7 +4,7 @@ import {scriptParser} from "./parsing/ScriptParser.js";
 import {LexError, SyntaxError} from "./parsing/Parser.js";
 
 // Following module paths are substituted by module mapping webpack plugin.
-import {IS_SERVER_SIDE, getDevLibPath} from "interpreter_config";
+import {IS_SERVER_SIDE, getDevLibPath, stdProtect} from "interpreter_config";
 
 export {LexError, SyntaxError};
 
@@ -41,13 +41,12 @@ export class ScriptInterpreter {
 
   static async interpretScript(
     gas, script = "", scriptID = "0", mainInputs = [], reqUserID = undefined,
-    protectModuleID = INIT_PROTECT_MODULE_ID, permissions = {}, settings = {},
+    protect = stdProtect, permissions = {}, settings = {},
     parsedEntities = new Map(), liveModules = new Map(),
   ) {
     let scriptGlobals = {
       gas: gas, log: {}, scriptID: scriptID, reqUserID: reqUserID,
-      protectModuleID: protectModuleID, protect: undefined,
-      permissions: permissions, settings: settings,
+      protect: protect, permissions: permissions, settings: settings,
       isExiting: false, resolveScript: undefined, interpreter: this,
       parsedEntities: parsedEntities, liveModules: liveModules,
     };
@@ -58,7 +57,7 @@ export class ScriptInterpreter {
     let globalEnv = this.createGlobalEnvironment(scriptGlobals);
 
     // If script is provided, rather than the scriptID, first parse it.
-    let parsedScript, parsedScriptPromise;
+    let parsedScript;
     if (scriptID === "0") {
       payGas(globalEnv, {comp: getParsingGasCost(script)});
       let [scriptSyntaxTree] = scriptParser.parse(script);
@@ -68,22 +67,10 @@ export class ScriptInterpreter {
     }
     // Else fetch and parse the script first thing.
     else {
-      parsedScriptPromise = this.fetchParsedScript(
+      parsedScript = await this.fetchParsedScript(
         scriptID, parsedEntities, globalEnv
       );
     }
-
-    // Then execute the input "protect module," from which we get the global
-    // protect() function.
-    let protectModuleNode = await this.fetchParsedScript(
-      protectModuleID, parsedEntities, globalEnv
-    );
-    let [liveBaseModule] = await this.executeModule(
-      protectModuleNode, protectModuleID, globalEnv
-    );
-    scriptGlobals.liveModules.set(protectModuleID, liveBaseModule);
-    scriptGlobals.protect = liveBaseModule["&protect"][0];
-
 
     // Create a promise to get the output and log, and store a modified
     // resolve() callback on scriptGlobals (which is contained by globalEnv).
@@ -100,7 +87,6 @@ export class ScriptInterpreter {
     // Now execute the script as a module, followed by an execution of any
     // function called 'main,' or the default export if no 'main' function is
     // found, and make sure to try-catch any exceptions or errors.
-    if (parsedScriptPromise) parsedScript = await parsedScriptPromise;
     try {
       let [liveScriptModule, scriptEnv] = await this.executeModule(
         parsedScript, scriptID, globalEnv
