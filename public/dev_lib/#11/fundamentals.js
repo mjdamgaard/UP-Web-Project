@@ -10,15 +10,27 @@ import {entityCache} from "entityCache";
 import * as io from "io";
 
 
+export function executeUserOrJSCallback(
+  callback, res, callerNode, callerEnv, interpreter
+) {
+  if (callback instanceof Function) {
+    callback(res);
+  }
+  else {
+    interpreter.executeAsyncCallback( callback, [res], callerNode, callerEnv);
+  }
+}
 
 
-export function _selectEntity(
+
+
+export function _fetchEntity(
   {callerNode, callerEnv, interpreter}, entRef, callback
 ) {
   decrCompGas(callerNode, callerEnv);
 
   if (!(entRef instanceof EntityReference)) throw new RuntimeError(
-    "selectEntity(): entRef has to be an EntityReference instance",
+    "fetchEntity(): entRef has to be an EntityReference instance",
     callerNode, callerEnv
   );
   let entID = entRef.id;
@@ -29,19 +41,17 @@ export function _selectEntity(
   ] = entityCache.get(entID);
   if (parsedEnt) {
     if (whitelistID != "0") {
-      interpreter.executeAsyncCallback(
-        callback, ["access denied"], callerNode, callerEnv
+      executeUserOrJSCallback(
+        callback, ["access denied"], callerNode, callerEnv, interpreter
       );
     }
     else {
       // If the entity was found in the cache, and it is a public entity,
       // get an appropriate class-wrapped entity, and call callback on
       // that.
-      interpreter.executeAsyncCallback(
-        callback, [
-          getEntity(entType, parsedEnt, creatorID, isEditable)
-        ],
-        callerNode, callerEnv
+      let ent = getEntity(entType, parsedEnt, creatorID, isEditable);
+      executeUserOrJSCallback(
+        callback, ent, callerNode, callerEnv, interpreter
       );
     }
     return;
@@ -51,11 +61,11 @@ export function _selectEntity(
   else {
     decrGas(callerNode, callerEnv, "fetch");
 
-    io.selectEntity(entID).then(res => {
+    io.fetchEntity(entID).then(res => {
       let [entType, defStr, creatorID, isEditable, whitelistID] = res;
       if (whitelistID != "0") {
-        interpreter.executeAsyncCallback(
-          callback, ["access denied"], callerNode, callerEnv
+        executeUserOrJSCallback(
+          callback, ["access denied"], callerNode, callerEnv, interpreter
         );
       } else {
         // If the entity was gotten successfully, first parse it.
@@ -66,11 +76,9 @@ export function _selectEntity(
 
         // Then get call the callback on an appropriate class-wrapped
         // entity.
-        interpreter.executeAsyncCallback(
-          callback, [
-            getEntity(entType, parsedEnt, creatorID, isEditable)
-          ],
-          callerNode, callerEnv
+        let ent = getEntity(entType, parsedEnt, creatorID, isEditable);
+        executeUserOrJSCallback(
+          callback, ent, callerNode, callerEnv, interpreter
         );
       }
     });
@@ -78,23 +86,21 @@ export function _selectEntity(
 }
 
 
-export const selectEntity = new DeveloperFunction(
-  "10", "read", _selectEntity
+export const fetchEntity = new DeveloperFunction(
+  "10", "read", _fetchEntity
 );
 
 
 
 
 
-
-export function _selectPrivateEntity(
+export function _fetchPrivateEntity(
   {callerNode, callerEnv, interpreter}, entRef, callback
 ) {
   decrCompGas(callerNode, callerEnv);
-  let {gas, reqUserID} = callerEnv.scriptGlobals;
 
   if (!(entRef instanceof EntityReference)) throw new RuntimeError(
-    "selectEntity(): entRef has to be an EntityReference instance",
+    "fetchPrivateEntity(): entRef has to be an EntityReference instance",
     callerNode, callerEnv
   );
   let entID = entRef.id;
@@ -104,44 +110,19 @@ export function _selectPrivateEntity(
     parsedEnt, entType, creatorID, isEditable, whitelistID
   ] = entityCache.get(entID);
   if (parsedEnt) {
+    let ent = getEntity(
+      entType, parsedEnt, creatorID, isEditable, whitelistID
+    );
     if (whitelistID != "0") {
-      if (whitelistID == reqUserID) {
-        interpreter.executeAsyncCallback(
-          callback, [
-            getEntity(entType, parsedEnt, creatorID, isEditable, whitelistID)
-          ],
-          callerNode, callerEnv
-        );
-      }
-      else {
-        selectPrivateEntity(
-          {callerNode, callerEnv, interpreter},
-          new EntityReference(whitelistID),
-          // TODO: Replace this with a.. DefinedFunction.. Hm..
-          ([whitelistScriptEnt]) => {
-            interpreter.interpretScript(
-              gas, undefined, whitelistScriptEnt.id,
-              [new EntityReference(reqUserID)]
-            )
-            .then(([output, log]) => {
-              // ...
-            })
-            .catch((err) => {
-              // ...
-            });
-          }, 
-        );
-      }
+      let {gas, reqUserID} = callerEnv.scriptGlobals;
+      checkWhitelistThenResolve(
+        whitelistID, callerNode, callerEnv, interpreter, gas, reqUserID,
+        ent, callback
+      );
     }
     else {
-      // If the entity was found in the cache, and it is a public entity,
-      // get an appropriate class-wrapped entity, and call callback on
-      // that.
-      interpreter.executeAsyncCallback(
-        callback, [
-          getEntity(entType, parsedEnt, creatorID, isEditable)
-        ],
-        callerNode, callerEnv
+      executeUserOrJSCallback(
+        callback, ent, callerNode, callerEnv, interpreter
       );
     }
     return;
@@ -151,40 +132,70 @@ export function _selectPrivateEntity(
   else {
     decrGas(callerNode, callerEnv, "fetch");
 
-    io.selectEntity(entID).then(res => {
+    io.fetchEntity(entID).then(res => {
       let [entType, defStr, creatorID, isEditable, whitelistID] = res;
+
+      // If the entity was gotten successfully, first parse it.
+      let parsedEnt = getParsedEntity(entType, defStr);
+      let ent = getEntity(
+        entType, parsedEnt, creatorID, isEditable, whitelistID
+      );
+
+      // Also make sure to cache the parsed entity.
+      entityCacheServerSide.set(entID, parsedEnt);
+
       if (whitelistID != "0") {
-        interpreter.executeAsyncCallback(
-          callback, ["access denied"], callerNode, callerEnv
+        let {gas, reqUserID} = callerEnv.scriptGlobals;
+        checkWhitelistThenResolve(
+          whitelistID, callerNode, callerEnv, interpreter, gas, reqUserID,
+          ent, callback
         );
       } else {
-        // If the entity was gotten successfully, first parse it.
-        let parsedEnt = getParsedEntity(entType, defStr);
-
-        // Also make sure to cache the parsed entity.
-        entityCacheServerSide.set(entID, parsedEnt);
-
-        // Then get call the callback on an appropriate class-wrapped
-        // entity.
-        interpreter.executeAsyncCallback(
-          callback, [
-            getEntity(entType, parsedEnt, creatorID, isEditable)
-          ],
-          callerNode, callerEnv
+        executeUserOrJSCallback(
+          callback, ent, callerNode, callerEnv, interpreter
         );
       }
     });
   }
 }
 
-export const selectPrivateEntity = new DeveloperFunction(
-  "10", "read_prv", _selectPrivateEntity
-);
 
 
 
 
 
+export function checkWhitelistThenResolve(
+  whitelistID, callerNode, callerEnv, interpreter, gas, reqUserID,
+  res, callback
+) {
+  if (whitelistID == reqUserID) {
+    executeUserOrJSCallback(
+      callback, ent, callerNode, callerEnv, interpreter
+    );
+  }
+  else {
+    _fetchPrivateEntity(
+      {callerNode, callerEnv, interpreter},
+      new EntityReference(whitelistID),
+      ([whitelistScriptEnt]) => {
+        interpreter.interpretScript(
+          gas, undefined, whitelistScriptEnt.id,
+          [new EntityReference(reqUserID)]
+        )
+        .then(([output]) => {
+          if (output){
+            executeUserOrJSCallback(
+              callback, res, callerNode, callerEnv, interpreter
+            );
+          }
+        })
+        .catch((err) => {
+          interpreter,throwAsyncException(err, callerNode, callerEnv);
+        });
+      }, 
+    );
+  }
+}
 
 
 

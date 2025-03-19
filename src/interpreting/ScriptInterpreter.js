@@ -24,7 +24,7 @@ const GAS_NAMES = {
   time: "time",
 };
 
-function getParsingGasCost(str) {
+export function getParsingGasCost(str) {
   return {comp: str.length / 100 + 1};
 }
 
@@ -511,7 +511,6 @@ export class ScriptInterpreter {
         {
           callerNode: callerNode, callerEnv: callerEnv, thisVal: thisVal,
           protectData: protectData, protect: protect, interpreter: this,
-          settings: settings,
         },
         ...inputArr
       );
@@ -546,6 +545,13 @@ export class ScriptInterpreter {
       } else {
         throw err;
       }
+    }
+  }
+
+  static throwAsyncException(err, callerNode, callerEnv) {
+    let wasCaught = callerEnv.runNearestCatchStmtAncestor(err, callerNode);
+    if (!wasCaught) {
+      callerEnv.scriptGlobals.resolveScript(undefined, err);
     }
   }
 

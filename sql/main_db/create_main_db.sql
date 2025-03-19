@@ -36,7 +36,7 @@ CREATE TABLE DataStructures_SingleIndex (
 
     struct_id VARBINARY(8) NOT NULL, -- Type can be changed.
 
-    format_ident TINYINT UNSIGNED NOT NULL,
+    format_id TINYINT UNSIGNED NOT NULL,
 
     list_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
@@ -46,7 +46,7 @@ CREATE TABLE DataStructures_SingleIndex (
 
     PRIMARY KEY (
         struct_id,
-        format_ident,
+        format_id,
         list_key,
         elem_key
     )
@@ -59,7 +59,7 @@ CREATE TABLE DataStructures_DoubleIndex (
 
     struct_id VARBINARY(8) NOT NULL, -- Type can be changed.
 
-    format_ident TINYINT UNSIGNED NOT NULL,
+    format_id TINYINT UNSIGNED NOT NULL,
 
     list_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
@@ -71,14 +71,14 @@ CREATE TABLE DataStructures_DoubleIndex (
 
     PRIMARY KEY (
         struct_id,
-        format_ident,
+        format_id,
         list_key,
         elem_key
     )
 
     UNIQUE INDEX (
         struct_id,
-        format_ident,
+        format_id,
         list_key,
         elem_score,
         elem_key
@@ -92,7 +92,7 @@ CREATE TABLE DataStructures_SingleIndex_CharKey (
 
     struct_id VARBINARY(8) NOT NULL, -- Type can be changed.
 
-    format_ident TINYINT UNSIGNED NOT NULL,
+    format_id TINYINT UNSIGNED NOT NULL,
 
     list_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
@@ -102,7 +102,7 @@ CREATE TABLE DataStructures_SingleIndex_CharKey (
 
     PRIMARY KEY (
         struct_id,
-        format_ident,
+        format_id,
         list_key,
         elem_key
     )
@@ -115,7 +115,7 @@ CREATE TABLE DataStructures_SingleIndex_FloatKey (
 
     struct_id VARBINARY(8) NOT NULL, -- Type can be changed.
 
-    format_ident TINYINT UNSIGNED NOT NULL,
+    format_id TINYINT UNSIGNED NOT NULL,
 
     list_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
 
@@ -125,7 +125,7 @@ CREATE TABLE DataStructures_SingleIndex_FloatKey (
 
     PRIMARY KEY (
         struct_id,
-        format_ident,
+        format_id,
         list_key,
         elem_key
     )
@@ -133,27 +133,7 @@ CREATE TABLE DataStructures_SingleIndex_FloatKey (
 ROW_FORMAT = COMPRESSED;
 
 
--- TODO: Potentially make more DataStructures tables if needed.
 
-
-
-
-
-CREATE TABLE DataStructureFormats (
-
-    struct_id BIGINT UNSIGNED NOT NULL,
-
-    format_ident TINYINT UNSIGNED NOT NULL,
-
-    format_def VARCHAR(255) -- Type can resized/changed.
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-
-    PRIMARY KEY (
-        struct_id,
-        format_ident
-    )
-);
--- ROW_FORMAT = COMPRESSED;
 
 
 
