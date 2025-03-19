@@ -213,7 +213,9 @@ CREATE TABLE EntitySecKeys (
 
     ent_type CHAR NOT NULL,
 
-    whitelist_id BIGINT UNSIGNED NOT NULL DEFAULT 0, -- (0 means public.)
+    editor_id BIGINT UNSIGNED NOT NULL, -- (0 means 'not editable.')
+
+    whitelist_id BIGINT UNSIGNED NOT NULL, -- (0 means 'public.')
 
     -- is_hashed TINYINT UNSIGNED NOT NULL, CHECK (is_hashed <= 1),
 
@@ -223,7 +225,8 @@ CREATE TABLE EntitySecKeys (
 
     PRIMARY KEY (
         ent_type,
-        reader_whitelist_id,
+        editor_id,
+        whitelist_id,
         def_key
     )
 );

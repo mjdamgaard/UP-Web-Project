@@ -5,6 +5,8 @@ DROP PROCEDURE insertEntityWithoutSecKey;
 DROP PROCEDURE insertOrFindEntityWithSecKey;
 
 DROP PROCEDURE editEntity;
+DROP PROCEDURE editEntityWithoutSecKey;
+DROP PROCEDURE editEntityWithSecKey;
 
 DROP PROCEDURE finalizeEntity;
 DROP PROCEDURE anonymizeEntity;
@@ -24,20 +26,22 @@ CREATE PROCEDURE insertEntityWithoutSecKey (
     IN isAnonymous BOOL,
     IN isEditable BOOL
 )
-proc: BEGIN
+BEGIN
+    DECLARE outID BIGINT UNSIGNED;
+    DECLARE creatorID BIGINT UNSIGNED DEFAULT (
+        IF(isAnonymous, 0, userID)
+    );
+
     INSERT INTO Entities (
-        creator_id,
-        ent_type, def_str, whitelist_id, is_editable
+        ent_type, def_str, creator_id, whitelist_id, is_editable
     )
     VALUES (
-        CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        entType, defStr, whitelistID, isEditable AND NOT isAnonymous
+        entType, defStr, creatorID, whitelistID, isEditable AND NOT isAnonymous
     );
     SET outID = LAST_INSERT_ID();
 
-    SET exitCode = 0; -- insert.
-    SELECT outID, exitCode;
-END proc //
+    SELECT outID, 0 AS exitCode; -- Insert.
+END //
 DELIMITER ;
 
 
@@ -50,7 +54,8 @@ CREATE PROCEDURE insertOrFindEntityWithSecKey (
     IN userID BIGINT UNSIGNED,
     IN defStr VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
     IN whitelistID BIGINT UNSIGNED,
-    IN isAnonymous BOOL
+    IN isAnonymous BOOL,
+    IN isEditable BOOL
 )
 proc: BEGIN
     -- DECLARE EXIT HANDLER FOR 1213 -- Deadlock error.
@@ -59,38 +64,45 @@ proc: BEGIN
     --     SELECT NULL AS outID, 10 AS exitCode; -- rollback due to deadlock.
     -- END;
 
+    DECLARE outID BIGINT UNSIGNED;
+    DECLARE creatorID BIGINT UNSIGNED DEFAULT (
+        IF(isAnonymous, 0, userID)
+    );
+    DECLARE editorID BIGINT UNSIGNED DEFAULT (
+        IF(isAnonymous OR NOT isEditable, 0, userID)
+    );
+
     DECLARE EXIT HANDLER FOR 1062, 1586 -- Duplicate key entry error.
     BEGIN
         ROLLBACK;
 
         SELECT ent_id INTO outID
-        FROM EntitySecKeys
+        FROM EntitySecKeys FORCE INDEX (PRIMARY)
         WHERE (
             ent_type = entType AND
+            editor_id = editorID AND
             whitelist_id = whitelistID AND
             def_key = defStr
         );
 
-        SET exitCode = 1; -- find.
+        SET exitCode = 1; -- Find.
     END;
 
     START TRANSACTION;
 
     INSERT INTO Entities (
-        creator_id,
-        ent_type, def_str, whitelist_id, is_editable
+        ent_type, def_str, creator_id, whitelist_id, is_editable
     )
     VALUES (
-        CASE WHEN (isAnonymous) THEN 0 ELSE userID END,
-        entType, defStr, whitelistID, 0
+        entType, defStr, creatorID, whitelistID, isEditable AND NOT isAnonymous
     );
     SET outID = LAST_INSERT_ID();
 
     INSERT INTO EntitySecKeys (
-        ent_type, whitelist_id, def_key, ent_id
+        ent_type, editor_id, whitelist_id, def_key, ent_id
     )
     VALUES (
-        entType, whitelistID, defStr, outID
+        entType, editorID, whitelistID, defStr, outID
     );
 
     COMMIT;
@@ -167,7 +179,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE editEntity (
+CREATE PROCEDURE editEntityWithoutSecKey (
     IN entType CHAR,
     IN userID BIGINT UNSIGNED,
     IN entID BIGINT UNSIGNED,
@@ -226,6 +238,108 @@ proc: BEGIN
 END proc //
 DELIMITER ;
 
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE editEntityWithSecKey (
+    IN entType CHAR,
+    IN userID BIGINT UNSIGNED,
+    IN entID BIGINT UNSIGNED,
+    IN defStr TEXT CHARACTER SET utf8mb4,
+    IN whitelistID BIGINT UNSIGNED,
+    IN isAnonymous BOOL,
+    IN isEditable BOOL
+)
+proc: BEGIN
+    DECLARE prevCreatorID, prevWhiteListID, outID BIGINT UNSIGNED;
+    DECLARE prevIsEditable TINYINT UNSIGNED;
+    DECLARE prevDefStr TEXT;
+    DECLARE prevLen, newLen INT UNSIGNED;
+    DECLARE prevType CHAR;
+
+    DECLARE creatorID BIGINT UNSIGNED DEFAULT (
+        IF(isAnonymous, 0, userID)
+    );
+    DECLARE editorID BIGINT UNSIGNED DEFAULT (
+        IF(isAnonymous OR NOT isEditable, 0, userID)
+    );
+
+    DECLARE EXIT HANDLER FOR 1062, 1586 -- Duplicate key entry error.
+    BEGIN
+        ROLLBACK;
+
+        SELECT ent_id INTO outID
+        FROM EntitySecKeys FORCE INDEX (PRIMARY)
+        WHERE (
+            ent_type = entType AND
+            editor_id = editorID AND
+            whitelist_id = whitelistID AND
+            def_key = defStr
+        );
+
+        DO RELEASE_LOCK(CONCAT("EntID.", entID));
+
+        SELECT outID, 1 AS exitCode; -- Find.
+    END;
+
+    DO GET_LOCK(CONCAT("EntID.", entID), 10);
+
+    SELECT ent_type, creator_id, def_str, whitelist_id, is_editable
+    INTO prevType, prevCreatorID, prevDefStr, prevWhiteListID, prevIsEditable 
+    FROM Entities FORCE INDEX (PRIMARY)
+    WHERE id = entID;
+
+    IF (prevCreatorID != userID) THEN
+        DO RELEASE_LOCK(CONCAT("EntID.", entID));
+        SELECT entID AS outID, 2 AS exitCode; -- User is not the owner.
+        LEAVE proc;
+    END IF;
+
+    IF (NOT prevIsEditable) THEN
+        DO RELEASE_LOCK(CONCAT("EntID.", entID));
+        SELECT entID AS outID, 3 AS exitCode; -- Cannot be edited.
+        LEAVE proc;
+    END IF;
+
+    IF (prevType != entType) THEN
+        DO RELEASE_LOCK(CONCAT("EntID.", entID));
+        SELECT entID AS outID, 4 AS exitCode; -- Changing entType not allowed.
+        LEAVE proc;
+    END IF;
+
+    -- If all checks succeeded, update the entity.
+    START TRANSACTION;
+
+    UPDATE EntitySecKeys
+    SET
+        editor_id = editorID,
+        whitelist_id = whitelistID,
+        def_key = defStr,
+    WHERE (
+        ent_type = entType AND
+        editor_id = userID AND
+        whitelist_id = prevWhiteListID AND
+        def_key = prevDefStr
+    );
+
+    UPDATE Entities
+    SET
+        def_str = defStr,
+        creator_id = creatorID,
+        whitelist_id = whitelistID,
+        is_editable = isEditable
+    WHERE id = entID;
+
+    COMMIT;
+
+    DO RELEASE_LOCK(CONCAT("EntID.", entID));
+
+    SELECT entID AS outID, 0 AS exitCode; -- edit.
+END proc //
+DELIMITER ;
 
 
 

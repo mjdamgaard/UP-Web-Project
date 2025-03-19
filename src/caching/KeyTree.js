@@ -1,6 +1,10 @@
 
 
-class _IDTree {
+// TODO: At some point implement that node keys can have lengths greater than
+// just char (and then propagate this parameter up through the cache classes).
+
+
+class _KeyTree {
 
   constructor(parent = undefined, charPos = 0) {
     this.parent = parent;
@@ -51,7 +55,7 @@ class _IDTree {
       return child.#set(key, val, keyMaxPos);
     }
     else {
-      this.childTrees.set(char, child = new _IDTree(this, this.charPos + 1));
+      this.childTrees.set(char, child = new _KeyTree(this, this.charPos + 1));
       return child.#set(key, val, keyMaxPos);
     }
   }
@@ -107,7 +111,7 @@ class _IDTree {
 
 
 
-export class IDTree extends _IDTree {
+export class KeyTree extends _KeyTree {
 
   constructor() {
     super();
@@ -115,4 +119,4 @@ export class IDTree extends _IDTree {
 }
 
 
-export {IDTree as default};
+export {KeyTree as default};

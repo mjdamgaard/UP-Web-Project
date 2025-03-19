@@ -1,5 +1,5 @@
 
-import {IDTree} from "./IDTree.js";
+import {KeyTree} from "./KeyTree.js";
 
 
 
@@ -7,7 +7,7 @@ import {IDTree} from "./IDTree.js";
 export class GeneralCache {
 
   constructor() {
-    this.cache = new IDTree();
+    this.cache = new KeyTree();
     this.headRef = [null, undefined];
     this.tailEndRef = [this.headRef, null];
     this.headRef[1] = this.tailEndRef;
@@ -16,7 +16,7 @@ export class GeneralCache {
   }
 
 
-  // cache = new IDTree,
+  // cache = new KeyTree,
   // elem = [prevElem, nextElem, key, entry].
 
   getCurEntry() {
