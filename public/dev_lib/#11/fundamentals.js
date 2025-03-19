@@ -2,7 +2,7 @@
 import {
   DeveloperFunction, decrCompGas, decrGas, payGas, RuntimeError,
   getParsingGasCost, EntityReference, ScriptEntity, ExpressionEntity,
-  FormalEntity,
+  FormalEntity, throwExceptionAsyncOrNot,
 } from "../../../src/interpreting/ScriptInterpreter.js";
 
 // Following module paths are substituted by module mapping webpack plugin.
@@ -25,14 +25,17 @@ export function executeUserOrJSCallback(
 
 
 export function _fetchEntity(
-  {callerNode, callerEnv, interpreter}, entRef, callback
+  {callerNode, callerEnv, interpreter, isAsync}, entRef, callback
 ) {
   decrCompGas(callerNode, callerEnv);
 
-  if (!(entRef instanceof EntityReference)) throw new RuntimeError(
-    "fetchEntity(): entRef has to be an EntityReference instance",
-    callerNode, callerEnv
-  );
+  if (!(entRef instanceof EntityReference)) {
+    let err = new RuntimeError(
+      "fetchEntity(): entRef has to be an EntityReference instance",
+      callerNode, callerEnv
+    );
+    throwExceptionAsyncOrNot(err, node, environment, isAsync);
+  }
   let entID = entRef.id;
 
   // Try to get the entity from the entity cache.
@@ -63,17 +66,24 @@ export function _fetchEntity(
 
     io.fetchEntity(entID).then(res => {
       let [entType, defStr, creatorID, isEditable, whitelistID] = res;
+      if (!entType) {
+        executeUserOrJSCallback(
+          callback, ["missing entity"], callerNode, callerEnv, interpreter
+        );
+        return;
+      }
+
+      // If the entity was gotten successfully, first parse it.
+      let parsedEnt = getParsedEntity(entType, defStr);
+
+      // Also make sure to cache the parsed entity.
+      entityCacheServerSide.set(entID, parsedEnt);
+
       if (whitelistID != "0") {
         executeUserOrJSCallback(
           callback, ["access denied"], callerNode, callerEnv, interpreter
         );
       } else {
-        // If the entity was gotten successfully, first parse it.
-        let parsedEnt = getParsedEntity(entType, defStr);
-
-        // Also make sure to cache the parsed entity.
-        entityCacheServerSide.set(entID, parsedEnt);
-
         // Then get call the callback on an appropriate class-wrapped
         // entity.
         let ent = getEntity(entType, parsedEnt, creatorID, isEditable);
@@ -94,15 +104,18 @@ export const fetchEntity = new DeveloperFunction(
 
 
 
-export function _fetchPrivateEntity(
-  {callerNode, callerEnv, interpreter}, entRef, callback
+export function _fetchEntityAsUser(
+  {callerNode, callerEnv, interpreter, isAsync}, entRef, callback
 ) {
   decrCompGas(callerNode, callerEnv);
 
-  if (!(entRef instanceof EntityReference)) throw new RuntimeError(
-    "fetchPrivateEntity(): entRef has to be an EntityReference instance",
-    callerNode, callerEnv
-  );
+  if (!(entRef instanceof EntityReference)) {
+    let err = new RuntimeError(
+      "fetchEntity(): entRef has to be an EntityReference instance",
+      callerNode, callerEnv
+    );
+    throwExceptionAsyncOrNot(err, node, environment, isAsync);
+  }
   let entID = entRef.id;
 
   // Try to get the entity from the entity cache.
@@ -134,6 +147,12 @@ export function _fetchPrivateEntity(
 
     io.fetchEntity(entID).then(res => {
       let [entType, defStr, creatorID, isEditable, whitelistID] = res;
+      if (!entType) {
+        executeUserOrJSCallback(
+          callback, ["missing entity"], callerNode, callerEnv, interpreter
+        );
+        return;
+      }
 
       // If the entity was gotten successfully, first parse it.
       let parsedEnt = getParsedEntity(entType, defStr);
@@ -174,7 +193,7 @@ export function checkWhitelistThenResolve(
     );
   }
   else {
-    _fetchPrivateEntity(
+    _fetchEntityAsUser(
       {callerNode, callerEnv, interpreter},
       new EntityReference(whitelistID),
       ([whitelistScriptEnt]) => {
@@ -190,7 +209,7 @@ export function checkWhitelistThenResolve(
           }
         })
         .catch((err) => {
-          interpreter,throwAsyncException(err, callerNode, callerEnv);
+          interpreter.throwAsyncException(err, callerNode, callerEnv);
         });
       }, 
     );
@@ -200,19 +219,25 @@ export function checkWhitelistThenResolve(
 
 
 export function getParsedEntity(entType, defStr) {
+  // First parse the entity definition string.
   payGas(callerEnv, {comp: getParsingGasCost(defStr)});
+  let parsedEnt;
   if (entType === "s") {
-    let [parsedEnt] = scriptParser.parse(defStr);
-    return parsedEnt;
+    [parsedEnt] = scriptParser.parse(defStr);
   }
   else if (entType === "e") {
-    let [parsedEnt] = scriptParser.parse(defStr, "expression");
-    return parsedEnt;
+    [parsedEnt] = scriptParser.parse(defStr, "expression");
   }
   else if (entType === "f") {
-    let [parsedEnt] = formEntParser.parse(defStr);
-    return parsedEnt;
+    [parsedEnt] = formEntParser.parse(defStr);
   }
+
+  // Then swap parsedEnt for its result (res) property, only if it was parsed
+  // successfully. 
+  if (!parsedEnt.error) {
+    parsedEnt = parsedEnt.res;
+  }
+  return parsedEnt;
 }
 
 

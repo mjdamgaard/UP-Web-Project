@@ -28,11 +28,6 @@ export function getParsingGasCost(str) {
   return {comp: str.length / 100 + 1};
 }
 
-async function fetchEntity(libraryPaths, funMetadata, entID, entType) {
-  let io = await import(libraryPaths.get("io"));
-  return await io.selectEntity(funMetadata, entID, entType);
-}
-
 
 
 
@@ -68,7 +63,7 @@ export class ScriptInterpreter {
     // Else fetch and parse the script first thing.
     else {
       parsedScript = await this.fetchParsedScript(
-        scriptID, parsedEntities, globalEnv
+        scriptID, parsedEntities, undefined, globalEnv
       );
     }
 
@@ -185,14 +180,31 @@ export class ScriptInterpreter {
 
 
 
-  static async fetchParsedScript(scriptID, parsedEntities, callerEnv) {
+  static async fetchParsedScript(
+    scriptID, parsedEntities, callerNode, callerEnv
+  ) {
     let parsedScript = parsedEntities.get(scriptID);
     if (!parsedScript) {
-// TODO: Change.
-      let {parsedEnt} = await fetchEntity(
-        this.libraryPaths, {callerEnv: callerEnv}, scriptID, "s",
-      );
-      parsedScript = parsedEnt;
+      let fundPath = getDevLibPath("11/fundamentals");
+      let fundMod = await import(fundPath);
+      let parsedScript = await new Promise((resolve, reject) => {
+        fundMod._fetchEntityAsUser(
+          {callerNode: callerNode, callerEnv: callerEnv, interpreter: this},
+          new EntityReference(scriptID),
+          (ent) => {
+            if (!(ent instanceof ScriptEntity)) reject(new LoadError(
+              `Entity #${scriptID} is not a script`,
+              callerNode, callerEnv
+            ));
+            if (ent.error) reject(new LoadError(
+              `Parsing of Script #${scriptID} failed with error: ` +
+              `"${ent.error}"`,
+              callerNode, callerEnv
+            ));
+            resolve(ent.scriptNode);
+          },
+        );
+      }); 
       parsedEntities.set(scriptID, parsedScript);
     }
     return parsedScript;
@@ -302,7 +314,7 @@ export class ScriptInterpreter {
     // parsedEntities buffer, then try to fetch it from the database.
     let submoduleID = impStmt.entID;
     let submoduleNode = await this.fetchParsedScript(
-      submoduleID, parsedEntities, callerModuleEnv
+      submoduleID, parsedEntities, impStmt, callerModuleEnv
     );
 
     // Then execute the module, inside the global environment, and return the
@@ -1710,32 +1722,51 @@ function turnImmutable(val) {
 
 
 
-export function payGas(node, environment, gasCost) {
-  let gas = environment?.scriptGlobals.gas ?? environment;
+export function payGas(node, environment, gasCost, isAsync) {
+  let {gas} = environment.scriptGlobals;
   Object.keys(this.gasCost).forEach(key => {
     if (gas[key] ??= 0) {
       gas[key] -= gasCost[key];
     }
-    if (gas[key] < 0) throw new OutOfGasError(
-      "Ran out of " + GAS_NAMES[key] + "gas",
-      node, environment,
-    );
+    if (gas[key] < 0) {
+      let err = new OutOfGasError(
+        "Ran out of " + GAS_NAMES[key] + "gas",
+        node, environment,
+      );
+      throwExceptionAsyncOrNot(err, node, environment, isAsync);
+    }
   });
 }
 
-export function decrCompGas(node, environment) {
-  let gas = environment?.scriptGlobals.gas ?? environment;
-  if (0 > --gas.comp) throw new OutOfGasError(
-    "Ran out of " + GAS_NAMES.comp + " gas",
-    node, environment,
-  );
+export function decrCompGas(node, environment, isAsync) {
+  let {gas} = environment.scriptGlobals;
+  if (0 > --gas.comp) {
+    let err = new OutOfGasError(
+      "Ran out of " + GAS_NAMES.comp + " gas",
+      node, environment,
+    );
+    throwExceptionAsyncOrNot(err, node, environment, isAsync);
+  }
 }
-export function decrGas(node, environment, gasName) {
-  let gas = environment?.scriptGlobals.gas ?? environment;
-  if (0 > --gas[gasName]) throw new OutOfGasError(
-    "Ran out of " + GAS_NAMES[gasName] + " gas",
-    node, environment,
-  );
+export function decrGas(node, environment, gasName, isAsync) {
+  let {gas} = environment.scriptGlobals;
+  if (0 > --gas[gasName]) {
+    let err = new OutOfGasError(
+      "Ran out of " + GAS_NAMES[gasName] + " gas",
+      node, environment,
+    );
+    throwExceptionAsyncOrNot(err, node, environment, isAsync);
+  }
+}
+
+export function throwExceptionAsyncOrNot(err, node, environment, isAsync) {
+  if (isAsync) {
+    let {interpreter} = environment.scriptGlobals;
+    interpreter.throwAsyncException(err, node, environment);
+  }
+  else {
+    throw err;
+  }
 }
 
 
